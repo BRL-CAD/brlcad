@@ -167,9 +167,9 @@ proc forward_key_bindings { w } {
 # that .$id.t gets the event.
     bind $w <KeyPress> "\
 	    focus .$id.t;\
-	    set dm_insert_char_flag(.$id.t) 1;\
+	    set mged_gui(.$id.t,insert_char_flag) 1;\
 	    event generate .$id.t <KeyPress> -state %s -keysym %K;\
-	    set dm_insert_char_flag(.$id.t) 0;\
+	    set mged_gui(.$id.t,insert_char_flag) 0;\
 	    focus %W; break"
 }
 
@@ -246,15 +246,14 @@ proc default_mouse_bindings { w } {
 
 proc update_axes_draw { w type } {
     global mged_players
-    global mged_active_dm
-    global mged_axes
+    global mged_gui
 
     winset $w;
     rset ax $type\_draw !
 
     foreach id $mged_players {
-	if {$mged_active_dm($id) == $w} {
-	    set mged_axes($id,$type\_draw) [rset ax $type\_draw]
+	if {$mged_gui($id,active_dm) == $w} {
+	    set mged_gui($id,$type\_draw) [rset ax $type\_draw]
 	    break
 	}
     }

@@ -39,7 +39,7 @@ proc solclick { } {
 
 	set solids [solids_on_ray $x $y]
 
-#	toplevel $w -screen $player_screen($id)
+#	toplevel $w -screen $mged_gui($id,screen)
 	toplevel $w
 	wm title $w "Solid edit"
 	set i 0
@@ -55,18 +55,18 @@ proc solclick { } {
 }
 
 proc init_solclick { id } {
-    global player_screen
+    global mged_gui
     global solclick_user
 
     set w .metasolclick
     if [winfo exists $w] {
-	mged_dialog .solclick_dialog $player_screen($id) "In Use" "The solid click tool is in use by $solclick_user" info 0 OK
+	mged_dialog .solclick_dialog $mged_gui($id,screen) "In Use" "The solid click tool is in use by $solclick_user" info 0 OK
 	return
     }
     
 #    catch { destroy $w }
     set solclick_user $id
-    toplevel $w -screen $player_screen($id)
+    toplevel $w -screen $mged_gui($id,screen)
     wm title $w "My 1st menu"
     button $w.s0 -text "SOLID CLICK" -command "solclick"
     pack $w.s0 -side top -fill x -fill y -expand yes

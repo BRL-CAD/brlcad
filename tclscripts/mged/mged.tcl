@@ -109,25 +109,25 @@ proc ia_apropos { parent screen } {
 }
 
 proc ia_changestate { args } {
-    global mged_display ia_illum_label
-    global mged_active_dm
+    global mged_display
+    global mged_gui
     global transform
     global transform_what
 
     set id [lindex $args 0]
 
-    if {$mged_display($mged_active_dm($id),adc) != ""} {
-	set ia_illum_label($id) $mged_display($mged_active_dm($id),adc)
+    if {$mged_display($mged_gui($id,active_dm),adc) != ""} {
+	set mged_gui($id,illum_label) $mged_display($mged_gui($id,active_dm),adc)
     } elseif {[string length $mged_display(keypoint)]>0} {
-	set ia_illum_label($id) $mged_display(keypoint)
+	set mged_gui($id,illum_label) $mged_display(keypoint)
     } elseif {$mged_display(state) == "VIEWING"} {
-	set ia_illum_label($id) $mged_display($mged_active_dm($id),fps)
+	set mged_gui($id,illum_label) $mged_display($mged_gui($id,active_dm),fps)
     } else {
 	if {$mged_display(state) == "OBJ PATH"} {
-	    set ia_illum_label($id) [format "Illuminated path: %s/__MATRIX__%s" \
+	    set mged_gui($id,illum_label) [format "Illuminated path: %s/__MATRIX__%s" \
 		    $mged_display(path_lhs) $mged_display(path_rhs)]
 	} else {
-	    set ia_illum_label($id) [format "Illuminated path: %s    %s" \
+	    set mged_gui($id,illum_label) [format "Illuminated path: %s    %s" \
 		    $mged_display(path_lhs) $mged_display(path_rhs)]
 	}
     }
@@ -166,44 +166,44 @@ proc get_player_id_t { w } {
 }
 
 proc do_Open { id } {
-    global player_screen
+    global mged_gui
 
     set file_types {{{MGED Database} {.g}}}
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
 	    -initialdir . -title "Open MGED Database" -defaultextension ".g"]
     if {$ia_filename != ""} {
 	opendb $ia_filename
-	cad_dialog .$id.cool $player_screen($id) "File loaded" \
+	cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
 		"Database $ia_filename successfully loaded." info 0 OK
     }
 }
 
 proc do_New { id } {
-    global player_screen
+    global mged_gui
 
-    set ret [cad_input_dialog .$id.new $player_screen($id) "New MGED Database" \
+    set ret [cad_input_dialog .$id.new $mged_gui($id,screen) "New MGED Database" \
 	    "Enter new database filename:" ia_filename "" 0 OK CANCEL]
 
     if {$ia_filename != "" && $ret == 0} {
 	if [file exists $ia_filename] {
-	    cad_dialog .$id.uncool $player_screen($id) "Existing Database" \
+	    cad_dialog .$id.uncool $mged_gui($id,screen) "Existing Database" \
 		    "$ia_filename already exists" info 0 OK
 	} else {
 	    opendb $ia_filename y
-	    cad_dialog .$id.cool $player_screen($id) "File loaded" \
+	    cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
 		    "Database $ia_filename successfully loaded." info 0 OK
 	}
     }
 }
 
 proc do_Concat { id } {
-    global player_screen
+    global mged_gui
 
     set file_types {{{MGED Database} {.g}}}
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
 	    -initialdir . -title "Insert MGED Database" -defaultextension ".g"]
     if {$ia_filename != ""} {
-	cad_input_dialog .$id.prefix $player_screen($id) "Prefix" \
+	cad_input_dialog .$id.prefix $mged_gui($id,screen) "Prefix" \
 		"Enter prefix:" prefix "" 0 OK
 
 	if {$prefix != ""} {
@@ -221,22 +221,22 @@ proc do_Units { id } {
 }
 
 proc do_rt_script { id } {
-    global player_screen
+    global mged_gui
 
     set ia_filename [fs_dialog .$id.rtscript .$id "./*"]
     if {[string length $ia_filename] > 0} {
 	saveview $ia_filename
     } else {
-	cad_dialog .$id.uncool $player_screen($id) "Error" \
+	cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
 		"No such file exists." warning 0 OK
     }
 }
 
 proc do_About_MGED { id } {
-    global player_screen
+    global mged_gui
     global version
 
-    cad_dialog .$id.about $player_screen($id) "About MGED..." \
+    cad_dialog .$id.about $mged_gui($id,screen) "About MGED..." \
 	    "$version
 MGED (Multi-device Geometry EDitor) is part
 of the BRL-CAD(TM) package.
@@ -246,45 +246,42 @@ Aberdeen Proving Ground, Maryland  21005-5068  USA" \
 }
 
 proc command_help { id } {
-    global player_screen
+    global mged_gui
 
-    ia_help .$id $player_screen($id) [concat [?]]
+    ia_help .$id $mged_gui($id,screen) [concat [?]]
 }
 
 proc on_context_help { id } {
 }
 
 proc ia_invoke { w } {
-    global ia_cmd_prefix
-    global ia_more_default
-    global mged_apply_to
+    global mged_gui
     global glob_compat_mode
-    global dm_insert_char_flag
 
     set id [get_player_id_t $w]
 
     if {([string length [$w get promptEnd insert]] == 1) &&\
-	    ([string length $ia_more_default($id)] > 0)} {
+	    ([string length $mged_gui($id,more_default)] > 0)} {
 	#If no input and a default is supplied then use it
-	set hcmd [concat $ia_cmd_prefix($id) $ia_more_default($id)]
+	set hcmd [concat $mged_gui($id,cmd_prefix) $mged_gui($id,more_default)]
     } else {
-	set hcmd [concat $ia_cmd_prefix($id) [$w get promptEnd insert]]
+	set hcmd [concat $mged_gui($id,cmd_prefix) [$w get promptEnd insert]]
     }
 
-    if {$mged_apply_to($id) == 1} {
+    if {$mged_gui($id,apply_to) == 1} {
 	set cmd "mged_apply_local $id \"$hcmd\""
-    } elseif {$mged_apply_to($id) == 2} {
+    } elseif {$mged_gui($id,apply_to) == 2} {
 	set cmd "mged_apply_using_list $id \"$hcmd\""
-    } elseif {$mged_apply_to($id) == 3} {
+    } elseif {$mged_gui($id,apply_to) == 3} {
 	set cmd "mged_apply_all \"$hcmd\""
     } else {
 	set cmd $hcmd
     }
 
-    set ia_more_default($id) ""
+    set mged_gui($id,more_default) ""
 
     if [info complete $cmd] {
-	if {!$dm_insert_char_flag($w)} {
+	if {!$mged_gui($w,insert_char_flag)} {
 	    cmd_set $id
 	}
 
@@ -311,9 +308,9 @@ proc ia_invoke { w } {
 		
 		set ia_prompt [string range $ia_msg [expr $i + 23] end]
 		mged_print_prompt $w $ia_prompt
-		set ia_cmd_prefix($id) $hcmd
+		set mged_gui($id,cmd_prefix) $hcmd
 		$w see insert
-		set ia_more_default($id) [get_more_default]
+		set mged_gui($id,more_default) [get_more_default]
 		return
 	    }
 	    .$id.t tag add oldcmd promptEnd insert
@@ -330,7 +327,7 @@ proc ia_invoke { w } {
 	}
 
 	hist_add $hcmd
-	set ia_cmd_prefix($id) ""
+	set mged_gui($id,cmd_prefix) ""
 	mged_print_prompt $w "mged> "
     }
     $w see insert

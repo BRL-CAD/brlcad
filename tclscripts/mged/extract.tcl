@@ -9,9 +9,8 @@
 check_externs "_mged_opendb _mged_keep db_glob"
 
 proc init_extractTool { id } {
-    global player_screen
-    global ex_file
-    global ex_objects
+    global mged_gui
+    global ex_control
 
     set top .$id.do_extract
 
@@ -20,29 +19,29 @@ proc init_extractTool { id } {
 	return
     }
 
-    if ![info exists ex_file($id)] {
+    if ![info exists ex_control($id,file)] {
 	regsub \.g$ [_mged_opendb] .keep default_file
-	set ex_file($id) $default_file
+	set ex_control($id,file) $default_file
     }
 
     if { 1 } {
-	set ex_objects($id) [_mged_who]
+	set ex_control($id,objects) [_mged_who]
     } else {
-	if ![info exists ex_objects($id)] {
-	    set ex_objects($id) ""
+	if ![info exists ex_control($id,objects)] {
+	    set ex_control($id,objects) ""
 	}
     }
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF
     frame $top.gridF2
 
     label $top.fileL -text "File Name" -anchor w
-    entry $top.fileE -width 24 -textvar ex_file($id)
+    entry $top.fileE -width 24 -textvar ex_control($id,file)
 
     label $top.objectsL -text "Objects" -anchor w
-    entry $top.objectsE -width 24 -textvar ex_objects($id)
+    entry $top.objectsE -width 24 -textvar ex_control($id,objects)
 
     button $top.extractB -relief raised -text "Extract"\
 	    -command "do_extract $id"
@@ -67,18 +66,17 @@ proc init_extractTool { id } {
 }
 
 proc do_extract { id } {
-    global player_screen
-    global ex_file
-    global ex_objects
+    global mged_gui
+    global ex_control
 
     cmd_set $id
     set ex_cmd "_mged_keep"
 
-    if {$ex_file($id) != ""} {
-	if [file exists $ex_file($id)] {
-	    set result [cad_dialog .$id.exDialog $player_screen($id)\
-		    "Append to $ex_file($id)?"\
-		    "Append to $ex_file($id)?"\
+    if {$ex_control($id,file) != ""} {
+	if [file exists $ex_control($id,file)] {
+	    set result [cad_dialog .$id.exDialog $mged_gui($id,screen)\
+		    "Append to $ex_control($id,file)?"\
+		    "Append to $ex_control($id,file)?"\
 		    "" 0 OK CANCEL]
 
 	    if {$result} {
@@ -86,7 +84,7 @@ proc do_extract { id } {
 	    }
 	}
     } else {
-	cad_dialog .$id.exDialog $player_screen($id)\
+	cad_dialog .$id.exDialog $mged_gui($id,screen)\
 		"No file name specified!"\
 		"No file name specified!"\
 		"" 0 OK
@@ -94,13 +92,13 @@ proc do_extract { id } {
 	return
     }
 
-    append ex_cmd " $ex_file($id)"
+    append ex_cmd " $ex_control($id,file)"
 
-    if {$ex_objects($id) != ""} {
-	set globbed_str [db_glob $ex_objects($id)]
+    if {$ex_control($id,objects) != ""} {
+	set globbed_str [db_glob $ex_control($id,objects)]
 	append ex_cmd " $globbed_str"
     } else {
-	cad_dialog .$id.exDialog $player_screen($id)\
+	cad_dialog .$id.exDialog $mged_gui($id,screen)\
 		"No objects specified!"\
 		"No objects specified!"\
 		"" 0 OK

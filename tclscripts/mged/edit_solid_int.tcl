@@ -28,19 +28,9 @@ solid_data_init
 ## - init_edit_solid_int
 #
 proc init_edit_solid_int { id } {
-    global player_screen
+    global mged_gui
     global solid_data
-    global esolint_db_cmd
-    global esolint_inc_operation
-    global esolint_dec_operation
-    global esolint_format_string
-    global esolint_name
-    global esolint_pathname
-    global esolint_type
-    global esolint_row
-    global esolint_cflag
-    global esolint_form
-    global edit_info_pos
+    global esolint_control
 
     set w .$id.edit_solid_int
 
@@ -49,54 +39,54 @@ proc init_edit_solid_int { id } {
 	return
     }
 
-    if ![info exists esolint_inc_operation($id)] {
-	set esolint_inc_operation($id) $solid_data(entry,incr_op)
+    if ![info exists esolint_control($id,inc_op)] {
+	set esolint_control($id,inc_op) $solid_data(entry,incr_op)
     }
 
-    if ![info exists esolint_dec_operation($id)] {
-	set esolint_dec_operation($id) $solid_data(entry,decr_op)
+    if ![info exists esolint_control($id,dec_op)] {
+	set esolint_control($id,dec_op) $solid_data(entry,decr_op)
     }
 
-    if ![info exists esolint_format_string($id)] {
-	set esolint_format_string($id) $solid_data(entry,fmt)
+    if ![info exists esolint_control($id,format_string)] {
+	set esolint_control($id,format_string) $solid_data(entry,fmt)
     }
 
-    if ![info exists esolint_cflag($id)] {
-	set esolint_cflag($id) 0
+    if ![info exists esolint_control($id,cflag)] {
+	set esolint_control($id,cflag) 0
     }
 
     set esolint_info [get_edit_solid]
-    set esolint_name [lindex $esolint_info 0]
-    set esolint_type [lindex $esolint_info 1]
+    set esolint_control(name) [lindex $esolint_info 0]
+    set esolint_control(type) [lindex $esolint_info 1]
     set esolint_vals [lrange $esolint_info 2 end]
 
     set esolint_info [get_edit_solid -c]
-    set esolint_pathname [lindex $esolint_info 0]
+    set esolint_control(pathname) [lindex $esolint_info 0]
     set esolint_cvals [lrange $esolint_info 2 end]
 
     set row -1
-    toplevel $w -screen $player_screen($id)
+    toplevel $w -screen $mged_gui($id,screen)
 
     incr row
-    set esolint_form(name) $w.sformF._F
-    set esolint_row(form) $row
-    set esolint_db_cmd($id) "put_edit_solid $esolint_type"
-    if $esolint_cflag($id) {
-	esolint_build_form $id $w.sformF "** SOLID -- $esolint_name: $esolint_type" $esolint_type $esolint_vals disabled 1 1 1 1
+    set esolint_control(form_name) $w.sformF._F
+    set esolint_control(form) $row
+    set esolint_control($id,cmd) "put_edit_solid $esolint_control(type)"
+    if $esolint_control($id,cflag) {
+	esolint_build_form $id $w.sformF "** SOLID -- $esolint_control(name): $esolint_control(type)" $esolint_control(type) $esolint_vals disabled 1 1 1 1
     } else {
-	esolint_build_form $id $w.sformF "** SOLID -- $esolint_name: $esolint_type" $esolint_type $esolint_vals normal 1 1 1 1
+	esolint_build_form $id $w.sformF "** SOLID -- $esolint_control(name): $esolint_control(type)" $esolint_control(type) $esolint_vals normal 1 1 1 1
     }
     grid $w.sformF -row $row -column 0 -sticky nsew -padx 8 -pady 8
     grid rowconfigure $w $row -weight 1
 
     incr row
-    set esolint_form(cname) $w.scformF._F
-    set esolint_row(cform) $row
-    set esolint_db_cmd($id,context) "put_edit_solid -c $esolint_type"
-    if $esolint_cflag($id) {
-	esolint_build_form $id $w.scformF "** PATH -- $esolint_pathname: $esolint_type" $esolint_type $esolint_cvals normal 1 2 1 1
+    set esolint_control(form_cname) $w.scformF._F
+    set esolint_control(cform) $row
+    set esolint_control($id,context_cmd) "put_edit_solid -c $esolint_control(type)"
+    if $esolint_control($id,cflag) {
+	esolint_build_form $id $w.scformF "** PATH -- $esolint_control(pathname): $esolint_control(type)" $esolint_control(type) $esolint_cvals normal 1 2 1 1
     } else {
-	esolint_build_form $id $w.scformF "** PATH -- $esolint_pathname: $esolint_type" $esolint_type $esolint_cvals disabled 1 2 1 1
+	esolint_build_form $id $w.scformF "** PATH -- $esolint_control(pathname): $esolint_control(type)" $esolint_control(type) $esolint_cvals disabled 1 2 1 1
     }
     grid $w.scformF -row $row -column 0 -sticky nsew -padx 8
     grid rowconfigure $w $row -weight 1
@@ -106,21 +96,21 @@ proc init_edit_solid_int { id } {
     #
     frame $w.decF
     label $w.decL -text "-operator:" -width 9 -anchor e
-    entry $w.decE -relief sunken -bd 2 -textvar esolint_dec_operation($id)
+    entry $w.decE -relief sunken -bd 2 -textvar esolint_control($id,dec_op)
     grid $w.decL $w.decE -in $w.decF -sticky nsew
     grid columnconfigure $w.decF 0 -weight 0
     grid columnconfigure $w.decF 1 -weight 1
     #
     frame $w.incF
     label $w.incL -text "+operator:" -width 9 -anchor e
-    entry $w.incE -relief sunken -bd 2 -textvar esolint_inc_operation($id)
+    entry $w.incE -relief sunken -bd 2 -textvar esolint_control($id,inc_op)
     grid $w.incL $w.incE -in $w.incF -sticky nsew
     grid columnconfigure $w.incF 0 -weight 0
     grid columnconfigure $w.incF 1 -weight 1
     #
     frame $w.fmtF
     label $w.fmtL -text "format:" -width 9 -anchor e
-    entry $w.fmtE -relief sunken -bd 2 -textvar esolint_format_string($id)
+    entry $w.fmtE -relief sunken -bd 2 -textvar esolint_control($id,format_string)
     grid $w.fmtL $w.fmtE -in $w.fmtF -sticky nsew
     grid columnconfigure $w.fmtF 0 -weight 0
     grid columnconfigure $w.fmtF 1 -weight 1
@@ -136,13 +126,13 @@ proc init_edit_solid_int { id } {
 
     incr row
     checkbutton $w.contextCB -relief flat -bd 2 -text "Context Edit"\
-	     -offvalue 0 -onvalue 1 -variable esolint_cflag($id)\
+	     -offvalue 0 -onvalue 1 -variable esolint_control($id,cflag)\
 	     -command "esolint_toggle_context $id $w"
     grid $w.contextCB -row $row -column 0 -sticky nsew -padx 8
     grid rowconfigure $w $row -weight 0
 
     incr row
-    set esolint_row(buttons) $row
+    set esolint_control(buttons) $row
     frame $w._F$row -borderwidth 2
     button $w.applyB -text "Apply" -command "esolint_apply $id $w"
     button $w.resetB -text "Reset" -command "esolint_reset"
@@ -159,7 +149,7 @@ proc init_edit_solid_int { id } {
     grid columnconfigure $w 0 -weight 1
 
     wm protocol $w WM_DELETE_WINDOW "catch { destroy $w }"
-    wm geometry $w $edit_info_pos($id)
+    wm geometry $w $mged_gui($id,edit_info_pos)
     wm title $w "Internal Solid Editor ($id)"
 }
 
@@ -171,9 +161,7 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
     global base2local
     global local2base
     global solid_data
-    global esolint_db_cmd
-    global esolint_format_string
-    global esolint_type
+    global esolint_control
 
     set row -1
     set sform $w._F
@@ -198,10 +186,10 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 
 	switch $do_cmd {
 	    1 {
-		set esolint_db_cmd($id) [eval concat \[set esolint_db_cmd($id)\] $attr \\\"]
+		set esolint_control($id,cmd) [eval concat \[set esolint_control($id,cmd)\] $attr \\\"]
 	    }
 	    2 {
-		set esolint_db_cmd($id,context) [eval concat \[set esolint_db_cmd($id,context)\] $attr \\\"]
+		set esolint_control($id,context_cmd) [eval concat \[set esolint_control($id,context_cmd)\] $attr \\\"]
 	    }
 	}
 
@@ -240,7 +228,7 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 		    $sform._$attr\E$num configure -state normal
 		    $sform._$attr\E$num delete 0 end
 		    $sform._$attr\E$num insert insert \
-			    [format $esolint_format_string($id) [expr [lindex \
+			    [format $esolint_control($id,format_string) [expr [lindex \
 			    [lindex $vals $i] $num] * $base2local]]
 		    $sform._$attr\E$num configure -state [lindex $save_state 4]
 		}
@@ -253,11 +241,11 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 
 		switch $do_cmd {
 		    1 {
-			set esolint_db_cmd($id) [eval concat \[set esolint_db_cmd($id)\] \
+			set esolint_control($id,cmd) [eval concat \[set esolint_control($id,cmd)\] \
 				\\\[expr \\\[$sform._$attr\E$num get\\\] * $local2base\\\]]
 		    }
 		    2 {
-			set esolint_db_cmd($id,context) [eval concat \[set esolint_db_cmd($id,context)\] \
+			set esolint_control($id,context_cmd) [eval concat \[set esolint_control($id,context_cmd)\] \
 				\\\[expr \\\[$sform._$attr\E$num get\\\] * $local2base\\\]]
 		    }
 		}
@@ -273,10 +261,10 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 
 	switch $do_cmd {
 	    1 {
-		set esolint_db_cmd($id) [eval concat \[set esolint_db_cmd($id)\] \\\"]
+		set esolint_control($id,cmd) [eval concat \[set esolint_control($id,cmd)\] \\\"]
 	    }
 	    2 {
-		set esolint_db_cmd($id,context) [eval concat \[set esolint_db_cmd($id,context)\] \\\"]
+		set esolint_control($id,context_cmd) [eval concat \[set esolint_control($id,context_cmd)\] \\\"]
 	    }
 	}
     }
@@ -291,16 +279,12 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 ## - esolint_apply
 #
 proc esolint_apply { id w } {
-    global esolint_db_cmd
-    global esolint_type
-    global esolint_cflag
-    global esolint_name
-    global esolint_pathname
+    global esolint_control
 
-    if $esolint_cflag($id) {
-	eval [set esolint_db_cmd($id,context)]
+    if $esolint_control($id,cflag) {
+	eval [set esolint_control($id,context_cmd)]
     } else {
-	eval [set esolint_db_cmd($id)]
+	eval [set esolint_control($id,cmd)]
     }
 
     esolint_update
@@ -309,25 +293,23 @@ proc esolint_apply { id w } {
 ## - esolint_inc
 #
 proc esolint_inc { id entryfield } {
-    global esolint_inc_operation
-    global esolint_format_string
+    global esolint_control
 
     set val [$entryfield get]
 
     $entryfield delete 0 end
-    $entryfield insert insert [format $esolint_format_string($id) [expr $esolint_inc_operation($id)]]
+    $entryfield insert insert [format $esolint_control($id,format_string) [expr $esolint_control($id,inc_op)]]
 }
 
 ## - esolint_dec
 #
 proc esolint_dec { id entryfield } {
-    global esolint_dec_operation
-    global esolint_format_string
+    global esolint_control
 
     set val [$entryfield get]
 
     $entryfield delete 0 end
-    $entryfield insert insert [format $esolint_format_string($id) [expr $esolint_dec_operation($id)]]
+    $entryfield insert insert [format $esolint_control($id,format_string) [expr $esolint_control($id,dec_op)]]
 }
 
 ## - esolint_reset
@@ -338,43 +320,41 @@ proc esolint_reset {} {
 }
 
 proc esolint_format_entries { id } {
-    global esolint_format_string
-    global esolint_form
-    global esolint_cflag
+    global esolint_control
 
-    if $esolint_cflag($id) {
-	foreach child [winfo children $esolint_form(name)] {
+    if $esolint_control($id,cflag) {
+	foreach child [winfo children $esolint_control(form_name)] {
 	    if { [winfo class $child] == "Entry" } {
 		$child configure -state normal
 		set val [$child get]
 		$child delete 0 end
-		$child insert insert [format $esolint_format_string($id) $val]
+		$child insert insert [format $esolint_control($id,format_string) $val]
 		$child configure -state disabled
 	    }
 	}
 
-	foreach child [winfo children $esolint_form(cname)] {
+	foreach child [winfo children $esolint_control(form_cname)] {
 	    if { [winfo class $child] == "Entry" } {
 		set val [$child get]
 		$child delete 0 end
-		$child insert insert [format $esolint_format_string($id) $val]
+		$child insert insert [format $esolint_control($id,format_string) $val]
 	    }
 	}
     } else {
-	foreach child [winfo children $esolint_form(name)] {
+	foreach child [winfo children $esolint_control(form_name)] {
 	    if { [winfo class $child] == "Entry" } {
 		set val [$child get]
 		$child delete 0 end
-		$child insert insert [format $esolint_format_string($id) $val]
+		$child insert insert [format $esolint_control($id,format_string) $val]
 	    }
 	}
 
-	foreach child [winfo children $esolint_form(cname)] {
+	foreach child [winfo children $esolint_control(form_cname)] {
 	    if { [winfo class $child] == "Entry" } {
 		$child configure -state normal
 		set val [$child get]
 		$child delete 0 end
-		$child insert insert [format $esolint_format_string($id) $val]
+		$child insert insert [format $esolint_control($id,format_string) $val]
 		$child configure -state disabled
 	    }
 	}
@@ -382,34 +362,29 @@ proc esolint_format_entries { id } {
 }
 
 proc esolint_toggle_context { id w } {
-    global esolint_type
-    global esolint_cflag
-    global esolint_name
-    global esolint_pathname
+    global esolint_control
 
-    if $esolint_cflag($id) {
+    if $esolint_control($id,cflag) {
 	esolint_build_form $id $w.sformF \
-		"** SOLID -- $esolint_name: $esolint_type" \
-		$esolint_type {} disabled 0 0 0 1
+		"** SOLID -- $esolint_control(name): $esolint_control(type)" \
+		$esolint_control(type) {} disabled 0 0 0 1
 	esolint_build_form $id $w.scformF \
-		"** PATH -- $esolint_pathname: $esolint_type" \
-		$esolint_type {} normal 0 0 0 1
+		"** PATH -- $esolint_control(pathname): $esolint_control(type)" \
+		$esolint_control(type) {} normal 0 0 0 1
     } else {
 	esolint_build_form $id $w.sformF \
-		"** SOLID -- $esolint_name: $esolint_type" \
-		$esolint_type {} normal 0 0 0 1
+		"** SOLID -- $esolint_control(name): $esolint_control(type)" \
+		$esolint_control(type) {} normal 0 0 0 1
 	esolint_build_form $id $w.scformF \
-		"** PATH -- $esolint_pathname: $esolint_type" \
-		$esolint_type {} disabled 0 0 0 1
+		"** PATH -- $esolint_control(pathname): $esolint_control(type)" \
+		$esolint_control(type) {} disabled 0 0 0 1
     }
 }
 
 proc esolint_update {} {
     global mged_players
     global solid_data
-    global esolint_type
-    global esolint_name
-    global esolint_pathname
+    global esolint_control
 
     set esolint_info [get_edit_solid]
     set esolint_vals [lrange $esolint_info 2 end]
@@ -425,24 +400,24 @@ proc esolint_update {} {
 
 	# set entries for non-context form
 	esolint_build_form $id $w.sformF \
-		"** SOLID -- $esolint_name: $esolint_type" \
-		$esolint_type $esolint_vals {} 0 0 1 0
+		"** SOLID -- $esolint_control(name): $esolint_control(type)" \
+		$esolint_control(type) $esolint_vals {} 0 0 1 0
 
 	# set entries for context form
 	esolint_build_form $id $w.scformF \
-		"** PATH -- $esolint_pathname: $esolint_type" \
-		$esolint_type $esolint_cvals {} 0 0 1 0
+		"** PATH -- $esolint_control(pathname): $esolint_control(type)" \
+		$esolint_control(type) $esolint_cvals {} 0 0 1 0
     }
 }
 
 proc esolint_destroy { id } {
-    global edit_info_pos
+    global mged_gui
 
     if ![winfo exists .$id.edit_solid_int] {
 	return
     }
 
     regexp "\[-+\]\[0-9\]+\[-+\]\[0-9\]+" [wm geometry .$id.edit_solid_int] match
-    set edit_info_pos($id) $match
+    set mged_gui($id,edit_info_pos) $match
     destroy .$id.edit_solid_int
 }

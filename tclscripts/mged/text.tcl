@@ -190,8 +190,7 @@ proc delete_beginning_of_line { w } {
 }
 
 proc next_command { w } {
-    global freshline
-    global scratchline
+    global mged_gui
 
     set id [get_player_id_t $w]
     cmd_set $id
@@ -206,29 +205,28 @@ proc next_command { w } {
 	cursor_highlight $w
 	$w see insert
     } else {
-	if {!$freshline($w)} {
+	if {!$mged_gui($w,freshline)} {
 	    $w delete promptEnd {end - 2c}
 	    $w mark set insert promptEnd
-	    $w insert insert [string range $scratchline($w) 0\
-		    [expr [string length $scratchline($w)] - 1]]
-	    set freshline($w) 1
+	    $w insert insert [string range $mged_gui($w,scratchline) 0\
+		    [expr [string length $mged_gui($w,scratchline)] - 1]]
+	    set mged_gui($w,freshline) 1
 	    cursor_highlight $w
 	}
     }
 }
 
 proc prev_command { w } {
-    global freshline
-    global scratchline
+    global mged_gui
 
     set id [get_player_id_t $w]
     cmd_set $id
     set result [catch hist_prev msg]
 
     if {$result==0} {
-	if {$freshline($w)} {
-	    set scratchline($w) [$w get promptEnd {end -2c}]
-	    set freshline($w) 0
+	if {$mged_gui($w,freshline)} {
+	    set mged_gui($w,scratchline) [$w get promptEnd {end -2c}]
+	    set mged_gui($w,freshline) 0
 	}
 
 	$w delete promptEnd {end - 2c}
@@ -259,7 +257,7 @@ proc transpose { w } {
 }
 
 proc execute_cmd { w } {
-    global freshline
+    global mged_gui
 
     $w mark set insert {end - 2c}
     $w insert insert \n
@@ -268,17 +266,16 @@ proc execute_cmd { w } {
     update
 
     ia_invoke $w
-    set freshline($w) 1
+    set mged_gui($w,freshline) 1
     cursor_highlight $w
 }
 
 proc interrupt_cmd { w } {
-    global ia_cmd_prefix
-    global ia_more_default
+    global mged_gui
 
     set id [get_player_id_t $w]
-    set ia_cmd_prefix($id) ""
-    set ia_more_default(id) ""
+    set mged_gui($id,cmd_prefix) ""
+    set mged_gui($id,more_default) ""
     $w insert insert \n
     mged_print_prompt $w "mged> "
     $w see insert
@@ -336,38 +333,32 @@ proc vi_insert_mode { w } {
 }
 
 proc vi_process_edit_cmd { w c state } {
-    global vi_overwrite_flag
-    global vi_change_flag
-    global vi_delete_flag
-    global vi_search_flag
-    global vi_search_char
-    global vi_search_dir
-    global vi_debug
+    global vi_state
 
-    set vi_debug($w) $c
+    set vi_state($w,debug) $c
 
     # Throw away all non-visible characters
     if {![string match \[!-~\] $c] || $state > 1} {
 	return
     }
 
-    if {$vi_overwrite_flag($w)} {
+    if {$vi_state($w,overwrite_flag)} {
 	delete_char $w
 	$w insert insert $c
-	set vi_overwrite_flag($w) 0
+	set vi_state($w,overwrite_flag) 0
 
 	return
     }
 
-    switch $vi_search_flag($w) {
+    switch $vi_state($w,search_flag) {
 	f {
-	    set vi_search_dir($w) forward
-	    set vi_search_char($w) $c
+	    set vi_state($w,search_dir) forward
+	    set vi_state($w,search_char) $c
 	    set newindex [$w search $c {insert + 1c} {end - 2c}]
 	    if {$newindex != ""} {
-		if {$vi_delete_flag($w)} {
+		if {$vi_state($w,delete_flag)} {
 		    $w delete insert $newindex+1c
-		} elseif {$vi_change_flag($w)} {
+		} elseif {$vi_state($w,change_flag)} {
 		    $w delete insert $newindex+1c
 		    vi_insert_mode $w
 		} else {
@@ -377,20 +368,20 @@ proc vi_process_edit_cmd { w c state } {
 		cursor_highlight $w
 	    }
 
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
-	    set vi_search_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
+	    set vi_state($w,search_flag) 0
 
 	    return
 	}
 	F {
-	    set vi_search_dir($w) backward
-	    set vi_search_char($w) $c
+	    set vi_state($w,search_dir) backward
+	    set vi_state($w,search_char) $c
 	    set newindex [$w search -backwards $c {insert - 1c} promptEnd]
 	    if {$newindex != ""} {
-		if {$vi_delete_flag($w)} {
+		if {$vi_state($w,delete_flag)} {
 		    $w delete $newindex insert
-		} elseif {$vi_change_flag($w)} {
+		} elseif {$vi_state($w,change_flag)} {
 		    $w delete $newindex insert
 		    vi_insert_mode $w
 		} else {
@@ -400,9 +391,9 @@ proc vi_process_edit_cmd { w c state } {
 		cursor_highlight $w
 	    }
 
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
-	    set vi_search_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
+	    set vi_state($w,search_flag) 0
 
 	    return
 	}
@@ -410,22 +401,22 @@ proc vi_process_edit_cmd { w c state } {
 
     switch $c {
 	; {
-	    set vi_delete_flag($w) 0
-	    if {$vi_search_char($w) == ""} {
+	    set vi_state($w,delete_flag) 0
+	    if {$vi_state($w,search_char) == ""} {
 		return
 	    }
 
-	    switch $vi_search_dir($w) {
+	    switch $vi_state($w,search_dir) {
 		forward {
-		    set newindex [$w search $vi_search_char($w) {insert + 1c} {end - 2c}]
+		    set newindex [$w search $vi_state($w,search_char) {insert + 1c} {end - 2c}]
 		    if {$newindex != ""} {
-			if {$vi_delete_flag($w)} {
+			if {$vi_state($w,delete_flag)} {
 			    $w delete insert $newindex+1c
-			    set vi_delete_flag($w) 0
-			} elseif {$vi_change_flag($w)} {
+			    set vi_state($w,delete_flag) 0
+			} elseif {$vi_state($w,change_flag)} {
 			    $w delete insert $newindex+1c
 			    vi_insert_mode $w
-			    set vi_change_flag($w) 0
+			    set vi_state($w,change_flag) 0
 			} else {
 			    $w mark set insert $newindex
 			}
@@ -433,15 +424,15 @@ proc vi_process_edit_cmd { w c state } {
 		    }
 		}
 		backward {
-		    set newindex [$w search -backwards $vi_search_char($w) {insert - 1c} promptEnd]
+		    set newindex [$w search -backwards $vi_state($w,search_char) {insert - 1c} promptEnd]
 		    if {$newindex != ""} {
-			if {$vi_delete_flag($w)} {
+			if {$vi_state($w,delete_flag)} {
 			    $w delete $newindex insert
-			    set vi_delete_flag($w) 0
-			} elseif {$vi_change_flag($w)} {
+			    set vi_state($w,delete_flag) 0
+			} elseif {$vi_state($w,change_flag)} {
 			    $w delete $newindex insert
 			    vi_insert_mode $w
-			    set vi_change_flag($w) 0
+			    set vi_state($w,change_flag) 0
 			} else {
 			    $w mark set insert $newindex
 			}
@@ -451,22 +442,22 @@ proc vi_process_edit_cmd { w c state } {
 	    }
 	}
 	, {
-	    set vi_delete_flag($w) 0
-	    if {$vi_search_char($w) == ""} {
+	    set vi_state($w,delete_flag) 0
+	    if {$vi_state($w,search_char) == ""} {
 		return
 	    }
 
-	    switch $vi_search_dir($w) {
+	    switch $vi_state($w,search_dir) {
 		backward {
-		    set newindex [$w search $vi_search_char($w) {insert + 1c} {end - 2c}]
+		    set newindex [$w search $vi_state($w,search_char) {insert + 1c} {end - 2c}]
 		    if {$newindex != ""} {
-			if {$vi_delete_flag($w)} {
+			if {$vi_state($w,delete_flag)} {
 			    $w delete insert $newindex+1c
-			    set vi_delete_flag($w) 0
-			} elseif {$vi_change_flag($w)} {
+			    set vi_state($w,delete_flag) 0
+			} elseif {$vi_state($w,change_flag)} {
 			    $w delete insert $newindex+1c
 			    vi_insert_mode $w
-			    set vi_change_flag($w) 0
+			    set vi_state($w,change_flag) 0
 			} else {
 			    $w mark set insert $newindex
 			}
@@ -474,15 +465,15 @@ proc vi_process_edit_cmd { w c state } {
 		    }
 		}
 		forward {
-		    set newindex [$w search -backwards $vi_search_char($w) {insert - 1c} promptEnd]
+		    set newindex [$w search -backwards $vi_state($w,search_char) {insert - 1c} promptEnd]
 		    if {$newindex != ""} {
-			if {$vi_delete_flag($w)} {
+			if {$vi_state($w,delete_flag)} {
 			    $w delete $newindex insert
-			    set vi_delete_flag($w) 0
-			} elseif {$vi_change_flag($w)} {
+			    set vi_state($w,delete_flag) 0
+			} elseif {$vi_state($w,change_flag)} {
 			    $w delete $newindex insert
 			    vi_insert_mode $w
-			    set vi_change_flag($w) 0
+			    set vi_state($w,change_flag) 0
 			} else {
 			    $w mark set insert $newindex
 			}
@@ -492,13 +483,13 @@ proc vi_process_edit_cmd { w c state } {
 	    }
 	}
 	0 {
-	    if {$vi_delete_flag($w)} {
+	    if {$vi_state($w,delete_flag)} {
 		delete_beginning_of_line $w
-		set vi_delete_flag($w) 0
-	    } elseif {$vi_change_flag($w)} {
+		set vi_state($w,delete_flag) 0
+	    } elseif {$vi_state($w,change_flag)} {
 		delete_beginning_of_line $w
 		vi_insert_mode $w
-		set vi_change_flag($w) 0
+		set vi_state($w,change_flag) 0
 	    } else {
 		beginning_of_line $w
 	    }
@@ -506,173 +497,173 @@ proc vi_process_edit_cmd { w c state } {
 	a {
 	    forward_char $w
 	    vi_insert_mode $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	b {
-	    if {$vi_delete_flag($w)} {
+	    if {$vi_state($w,delete_flag)} {
 		backward_delete_word $w
-		set vi_delete_flag($w) 0
-	    } elseif {$vi_change_flag($w)} {
+		set vi_state($w,delete_flag) 0
+	    } elseif {$vi_state($w,change_flag)} {
 		backward_delete_word $w
 		vi_insert_mode $w
-		set vi_change_flag($w) 0
+		set vi_state($w,change_flag) 0
 	    } else {
 		backward_word $w
 	    }
 	}
 	c {
-	    if {$vi_change_flag($w)} {
+	    if {$vi_state($w,change_flag)} {
 		delete_line $w
 		vi_insert_mode $w
-		set vi_change_flag($w) 0
+		set vi_state($w,change_flag) 0
 	    } else {
-		set vi_change_flag($w) 1
+		set vi_state($w,change_flag) 1
 	    }
-	    set vi_delete_flag($w) 0
+	    set vi_state($w,delete_flag) 0
 	}
 	d {
-	    if {$vi_delete_flag($w)} {
+	    if {$vi_state($w,delete_flag)} {
 		delete_line $w
-		set vi_delete_flag($w) 0
+		set vi_state($w,delete_flag) 0
 	    } else {
-		set vi_delete_flag($w) 1
+		set vi_state($w,delete_flag) 1
 	    }
-	    set vi_change_flag($w) 0
+	    set vi_state($w,change_flag) 0
 	}
 	e {
-	    if {$vi_delete_flag($w)} {
+	    if {$vi_state($w,delete_flag)} {
 		delete_end_word $w
-	    } elseif {$vi_change_flag($w)} {
+	    } elseif {$vi_state($w,change_flag)} {
 		delete_end_word $w
 		vi_insert_mode $w
-		set vi_change_flag($w) 0
+		set vi_state($w,change_flag) 0
 	    } else {
 		end_word $w
 	    }
-	    set vi_delete_flag($w) 0
+	    set vi_state($w,delete_flag) 0
 	}
 	f {
-	    set vi_search_flag($w) f
+	    set vi_state($w,search_flag) f
 	}
 	h {
-	    if {$vi_delete_flag($w)} {
+	    if {$vi_state($w,delete_flag)} {
 		backward_delete_char $w
-		set vi_delete_flag($w) 0
-	    } elseif {$vi_change_flag($w)} {
+		set vi_state($w,delete_flag) 0
+	    } elseif {$vi_state($w,change_flag)} {
 		backward_delete_char $w
 		vi_insert_mode $w
-		set vi_change_flag($w) 0
+		set vi_state($w,change_flag) 0
 	    } else {
 		backward_char $w
 	    }
 	}
 	i {
 	    vi_insert_mode $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	j {
 	    next_command $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	k {
 	    prev_command $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	l {
-	    if {$vi_delete_flag($w)} {
+	    if {$vi_state($w,delete_flag)} {
 		delete_char $w
-		set vi_delete_flag($w) 0
-	    } elseif {$vi_change_flag($w)} {
+		set vi_state($w,delete_flag) 0
+	    } elseif {$vi_state($w,change_flag)} {
 		delete_char $w
 		vi_insert_mode $w
-		set vi_change_flag($w) 0
+		set vi_state($w,change_flag) 0
 	    } else {
 		forward_char $w
 	    }
 	}
 	r {
-	    set vi_overwrite_flag($w) 1
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,overwrite_flag) 1
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	s {
 	    delete_char $w
 	    vi_insert_mode $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	w {
-	    if {$vi_delete_flag($w)} {
+	    if {$vi_state($w,delete_flag)} {
 		delete_word $w
-		set vi_delete_flag($w) 0
-	    } elseif {$vi_change_flag($w)} {
+		set vi_state($w,delete_flag) 0
+	    } elseif {$vi_state($w,change_flag)} {
 		delete_word $w
 		vi_insert_mode $w
-		set vi_change_flag($w) 0
+		set vi_state($w,change_flag) 0
 	    } else {
 		forward_word $w
 	    }
 	}
 	x {
 	    delete_char $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	A {
 	    end_of_line $w
 	    vi_insert_mode $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	C {
 	    delete_end_of_line $w
 	    vi_insert_mode $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	D {
 	    delete_end_of_line $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	F {
-	    set vi_search_flag($w) F
+	    set vi_state($w,search_flag) F
 	}
 	I {
 	    beginning_of_line $w
 	    vi_insert_mode $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	R {
 	    vi_overwrite_mode $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	X {
 	    backward_delete_char $w
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
 	$ {
-	    if {$vi_delete_flag($w)} {
+	    if {$vi_state($w,delete_flag)} {
 		delete_end_of_line $w
-		set vi_delete_flag($w) 0
-	    } elseif {$vi_change_flag($w)} {
+		set vi_state($w,delete_flag) 0
+	    } elseif {$vi_state($w,change_flag)} {
 		delete_end_of_line $w
 		vi_insert_mode $w
-		set vi_change_flag($w) 0
+		set vi_state($w,change_flag) 0
 	    } else {
 		end_of_line $w
 	    }
 	}
 	default {
-	    set vi_delete_flag($w) 0
-	    set vi_change_flag($w) 0
+	    set vi_state($w,delete_flag) 0
+	    set vi_state($w,change_flag) 0
 	}
     }
 }
@@ -690,16 +681,16 @@ proc vi_process_overwrite { w c state } {
 
 
 proc text_op_begin { w x y } {
-    global moveView
+    global mged_gui
 
-    set moveView($w) 0
+    set mged_gui($w,moveView) 0
     $w scan mark $x $y
 }
 
 proc text_paste { w } {
-    global moveView
+    global mged_gui
 
-    if {!$moveView($w)} {
+    if {!$mged_gui($w,moveView)} {
 	catch {$w insert insert [selection get -displayof $w]}
 	$w see insert
     }
@@ -710,9 +701,9 @@ proc text_paste { w } {
 }
 
 proc text_scroll { w x y } {
-    global moveView
+    global mged_gui
 
-    set moveView($w) 1
+    set mged_gui($w,moveView) 1
     $w scan dragto $x $y
 }
 
@@ -814,11 +805,10 @@ proc cursor_highlight { w } {
 }
 
 proc set_text_key_bindings { id } {
-    global mged_edit_style
-    global vi_debug_char
+    global mged_gui
 
     set w .$id.t
-    switch $mged_edit_style($id) {
+    switch $mged_gui($id,edit_style) {
 	vi {
 	    vi_insert_mode $w
 
@@ -910,7 +900,7 @@ proc set_text_key_bindings { id } {
 
 # Common Key Bindings
     bind $w <Control-a> "\
-	if {\$mged_edit_style($id) == \"vi\"} {\
+	if {\$mged_gui($id,edit_style) == \"vi\"} {\
 	    first_char_in_line %W\
 	} else {\
 	    beginning_of_line %W\
@@ -924,7 +914,7 @@ proc set_text_key_bindings { id } {
 
     bind $w <Control-c> "\
 	interrupt_cmd %W;\
-	if {\$mged_edit_style($id) == \"vi\"} {\
+	if {\$mged_gui($id,edit_style) == \"vi\"} {\
 	    vi_insert_mode %W\
 	};\
 	break"

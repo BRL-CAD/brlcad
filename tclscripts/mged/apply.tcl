@@ -7,52 +7,49 @@
 #
 
 proc mged_apply { id cmd } {
-    global mged_active_dm
-    global mged_dm_loc
-    global mged_apply_to
+    global mged_gui
 
-    if {$mged_apply_to($id) == 1} {
+    if {$mged_gui($id,apply_to) == 1} {
 	mged_apply_local $id $cmd
-    } elseif {$mged_apply_to($id) == 2} {
+    } elseif {$mged_gui($id,apply_to) == 2} {
 	mged_apply_using_list $id $cmd
-    } elseif {$mged_apply_to($id) == 3} {
+    } elseif {$mged_gui($id,apply_to) == 3} {
 	mged_apply_all $cmd
     } else {
-	winset $mged_active_dm($id)
+	winset $mged_gui($id,active_dm)
 #	catch [list uplevel #0 $cmd]
 	catch { uplevel #0 $cmd }
     }
 }
 
 proc mged_apply_local { id cmd } {
-    global mged_top
-    global mged_active_dm
+    global mged_gui
 
-    winset $mged_top($id).ul
+    winset $mged_gui($id,top).ul
 #    catch [list uplevel #0 $cmd]
     catch { uplevel #0 $cmd } msg
 
-    winset $mged_top($id).ur
+    winset $mged_gui($id,top).ur
 #    catch [list uplevel #0 $cmd]
     catch { uplevel #0 $cmd } msg
 
-    winset $mged_top($id).ll
+    winset $mged_gui($id,top).ll
 #    catch [list uplevel #0 $cmd]
     catch { uplevel #0 $cmd } msg
 
-    winset $mged_top($id).lr
+    winset $mged_gui($id,top).lr
 #    catch [list uplevel #0 $cmd] msg
     catch { uplevel #0 $cmd } msg
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
     return $msg
 }
 
 proc mged_apply_using_list { id cmd } {
-    global mged_apply_list
+    global mged_gui
 
-    foreach dm $mged_apply_list($id) {
+    foreach dm $mged_gui($id,apply_list) {
 	winset $dm
 #	catch [list uplevel #0 $cmd] msg
 	catch { uplevel #0 $cmd } msg

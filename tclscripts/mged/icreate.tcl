@@ -46,7 +46,7 @@ set ic(default_operation) "incr index"
 proc icreate { id args } {
     global ic
     global $ic(default_indexvar)
-    global player_screen
+    global mged_gui
 
     set w .ic$ic(winnum)
     incr ic(winnum)
@@ -58,7 +58,7 @@ proc icreate { id args } {
     }
 
     catch { destroy $w }
-    toplevel $w -screen $player_screen($id)
+    toplevel $w -screen $mged_gui($id,screen)
     wm title $w "Instance Creation"
 
     # Make two frames: top one for entry fields and labels, buttom one for
@@ -211,7 +211,7 @@ proc ic_create { w } {
 
 proc ic_reflist { w id } {
     global ic
-    global player_screen
+    global mged_gui
 
     catch { destroy $w.ref }
     if {[llength $ic($w,type)]==0} then {
@@ -219,7 +219,7 @@ proc ic_reflist { w id } {
 	return
     }
     
-    toplevel $w.ref -screen $player_screen($id)
+    toplevel $w.ref -screen $mged_gui($id,screen)
     wm title $w.ref "Reference solid list"
 
     listbox $w.ref.lbox

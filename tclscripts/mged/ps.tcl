@@ -9,14 +9,8 @@
 check_externs "_mged_opendb _mged_ps"
 
 proc init_psTool { id } {
-    global player_screen
-    global ps_file
-    global ps_title
-    global ps_creator
-    global ps_font
-    global ps_size
-    global ps_linewidth
-    global ps_zclip
+    global mged_gui
+    global ps_control
 
     set top .$id.do_ps
 
@@ -25,36 +19,36 @@ proc init_psTool { id } {
 	return
     }
 
-    if ![info exists ps_file($id)] {
+    if ![info exists ps_control($id,file)] {
 	regsub \.g$ [_mged_opendb] .ps default_file
-	set ps_file($id) $default_file
+	set ps_control($id,file) $default_file
     }
 
-    if ![info exists ps_title($id)] {
-	set ps_title($id) "No Title"
+    if ![info exists ps_control($id,title)] {
+	set ps_control($id,title) "No Title"
     }
 
-    if ![info exists ps_creator($id)] {
-	set ps_creator($id) "$id"
+    if ![info exists ps_control($id,creator)] {
+	set ps_control($id,creator) "$id"
     }
 
-    if ![info exists ps_font($id)] {
-	set ps_font($id) "Courier"
+    if ![info exists ps_control($id,font)] {
+	set ps_control($id,font) "Courier"
     }
 
-    if ![info exists ps_size($id)] {
-	set ps_size($id) 4.5
+    if ![info exists ps_control($id,size)] {
+	set ps_control($id,size) 4.5
     }
 
-    if ![info exists ps_linewidth($id)] {
-	set ps_linewidth($id) 1
+    if ![info exists ps_control($id,linewidth)] {
+	set ps_control($id,linewidth) 1
     }
 
-    if ![info exists ps_zclip($id)] {
-	set ps_zclip($id) 1
+    if ![info exists ps_control($id,zclip)] {
+	set ps_control($id,zclip) 1
     }
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.elF
     frame $top.fileF -relief sunken -bd 2
@@ -67,16 +61,16 @@ proc init_psTool { id } {
     frame $top.buttonF2
 
     label $top.fileL -text "File Name" -anchor w
-    entry $top.fileE -relief flat -width 10 -textvar ps_file($id)
+    entry $top.fileE -relief flat -width 10 -textvar ps_control($id,file)
 
     label $top.titleL -text "Title" -anchor w
-    entry $top.titleE -relief flat -width 10 -textvar ps_title($id)
+    entry $top.titleE -relief flat -width 10 -textvar ps_control($id,title)
 
     label $top.creatorL -text "Creator" -anchor w
-    entry $top.creatorE -relief flat -width 10 -textvar ps_creator($id)
+    entry $top.creatorE -relief flat -width 10 -textvar ps_control($id,creator)
 
     label $top.fontL -text "Font" -anchor w
-    entry $top.fontE -relief flat -width 17 -textvar ps_font($id)
+    entry $top.fontE -relief flat -width 17 -textvar ps_control($id,font)
     menubutton $top.fontMB -relief raised -bd 2\
 	    -menu $top.fontMB.fontM -indicatoron 1
     menu $top.fontMB.fontM -tearoff 0
@@ -89,42 +83,42 @@ proc init_psTool { id } {
 
     menu $top.fontMB.fontM.courierM -tearoff 0
     $top.fontMB.fontM.courierM add command -label "Normal"\
-	    -command "set ps_font($id) Courier"
+	    -command "set ps_control($id,font) Courier"
     $top.fontMB.fontM.courierM add command -label "Oblique"\
-	    -command "set ps_font($id) Courier-Oblique"
+	    -command "set ps_control($id,font) Courier-Oblique"
     $top.fontMB.fontM.courierM add command -label "Bold"\
-	    -command "set ps_font($id) Courier-Bold"
+	    -command "set ps_control($id,font) Courier-Bold"
     $top.fontMB.fontM.courierM add command -label "BoldOblique"\
-	    -command "set ps_font($id) Courier-BoldOblique"
+	    -command "set ps_control($id,font) Courier-BoldOblique"
 
     menu $top.fontMB.fontM.helveticaM -tearoff 0
     $top.fontMB.fontM.helveticaM add command -label "Normal"\
-	    -command "set ps_font($id) Helvetica"
+	    -command "set ps_control($id,font) Helvetica"
     $top.fontMB.fontM.helveticaM add command -label "Oblique"\
-	    -command "set ps_font($id) Helvetica-Oblique"
+	    -command "set ps_control($id,font) Helvetica-Oblique"
     $top.fontMB.fontM.helveticaM add command -label "Bold"\
-	    -command "set ps_font($id) Helvetica-Bold"
+	    -command "set ps_control($id,font) Helvetica-Bold"
     $top.fontMB.fontM.helveticaM add command -label "BoldOblique"\
-	    -command "set ps_font($id) Helvetica-BoldOblique"
+	    -command "set ps_control($id,font) Helvetica-BoldOblique"
 
     menu $top.fontMB.fontM.timesM -tearoff 0
     $top.fontMB.fontM.timesM add command -label "Roman"\
-	    -command "set ps_font($id) Times-Roman"
+	    -command "set ps_control($id,font) Times-Roman"
     $top.fontMB.fontM.timesM add command -label "Italic"\
-	    -command "set ps_font($id) Times-Italic"
+	    -command "set ps_control($id,font) Times-Italic"
     $top.fontMB.fontM.timesM add command -label "Bold"\
-	    -command "set ps_font($id) Times-Bold"
+	    -command "set ps_control($id,font) Times-Bold"
     $top.fontMB.fontM.timesM add command -label "BoldItalic"\
-	    -command "set ps_font($id) Times-BoldItalic"
+	    -command "set ps_control($id,font) Times-BoldItalic"
 
     label $top.sizeL -text "Size" -anchor w
-    entry $top.sizeE -relief flat -width 10 -textvar ps_size($id)
+    entry $top.sizeE -relief flat -width 10 -textvar ps_control($id,size)
 
     label $top.linewidthL -text "Line Width" -anchor w
-    entry $top.linewidthE -relief flat -width 10 -textvar ps_linewidth($id)
+    entry $top.linewidthE -relief flat -width 10 -textvar ps_control($id,linewidth)
 
     checkbutton $top.zclipCB -relief raised -text "Z Clipping"\
-	    -variable ps_zclip($id)
+	    -variable ps_control($id,zclip)
 
     button $top.createB -relief raised -text "Create"\
 	    -command "do_ps $id"
@@ -167,23 +161,17 @@ proc init_psTool { id } {
 }
 
 proc do_ps { id } {
-    global player_screen
-    global ps_file
-    global ps_title
-    global ps_creator
-    global ps_font
-    global ps_size
-    global ps_linewidth
-    global ps_zclip
+    global mged_gui
+    global ps_control
 
     cmd_set $id
     set ps_cmd "_mged_ps"
 
-    if {$ps_file($id) != ""} {
-	if {[file exists $ps_file($id)]} {
-	    set result [cad_dialog .$id.psDialog $player_screen($id)\
-		    "Overwrite $ps_file($id)?"\
-		    "Overwrite $ps_file($id)?"\
+    if {$ps_control($id,file) != ""} {
+	if {[file exists $ps_control($id,file)]} {
+	    set result [cad_dialog .$id.psDialog $mged_gui($id,screen)\
+		    "Overwrite $ps_control($id,file)?"\
+		    "Overwrite $ps_control($id,file)?"\
 		    "" 0 OK CANCEL]
 
 	    if {$result} {
@@ -191,37 +179,37 @@ proc do_ps { id } {
 	    }
 	}
     } else {
-	cad_dialog .$id.psDialog $player_screen($id)\
+	cad_dialog .$id.psDialog $mged_gui($id,screen)\
 		"No file name specified!"\
 		"No file name specified!"\
 		"" 0 OK
 	return
     }
 
-    if {$ps_title($id) != ""} {
-	append ps_cmd " -t \"$ps_title($id)\""
+    if {$ps_control($id,title) != ""} {
+	append ps_cmd " -t \"$ps_control($id,title)\""
     }
 
-    if {$ps_creator($id) != ""} {
-	 append ps_cmd " -c \"$ps_creator($id)\""
+    if {$ps_control($id,creator) != ""} {
+	 append ps_cmd " -c \"$ps_control($id,creator)\""
     }
 
-    if {$ps_font($id) != ""} {
-	 append ps_cmd " -f $ps_font($id)"
+    if {$ps_control($id,font) != ""} {
+	 append ps_cmd " -f $ps_control($id,font)"
     }
 
-    if {$ps_size($id) != ""} {
-	 append ps_cmd " -s $ps_size($id)"
+    if {$ps_control($id,size) != ""} {
+	 append ps_cmd " -s $ps_control($id,size)"
     }
 
-    if {$ps_linewidth($id) != ""} {
-	 append ps_cmd " -l $ps_linewidth($id)"
+    if {$ps_control($id,linewidth) != ""} {
+	 append ps_cmd " -l $ps_control($id,linewidth)"
     }
 
-    if {$ps_zclip($id) != 0} {
+    if {$ps_control($id,zclip) != 0} {
 	append ps_cmd " -z"
     }
 
-    append ps_cmd " $ps_file($id)"
+    append ps_cmd " $ps_control($id,file)"
     catch {eval $ps_cmd}
 }

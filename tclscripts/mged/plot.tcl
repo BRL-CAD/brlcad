@@ -9,13 +9,8 @@
 check_externs "_mged_opendb _mged_pl"
 
 proc init_plotTool { id } {
-    global player_screen
-    global pl_file_or_filter
-    global pl_file
-    global pl_filter
-    global pl_zclip
-    global pl_2d
-    global pl_float
+    global mged_gui
+    global pl_control
 
     set top .$id.do_plot
 
@@ -24,38 +19,38 @@ proc init_plotTool { id } {
 	return
     }
 
-    if ![info exists pl_file_or_filter($id)] {
-	set pl_file_or_filter($id) file
+    if ![info exists pl_control($id,file_or_filter)] {
+	set pl_control($id,file_or_filter) file
     }
 
-    if ![info exists pl_file($id)] {
+    if ![info exists pl_control($id,file)] {
 	regsub \.g$ [_mged_opendb] .plot default_file
-	set pl_file($id) $default_file
+	set pl_control($id,file) $default_file
     }
 
-    if ![info exists pl_filter($id)] {
-	set pl_filter($id) ""
+    if ![info exists pl_control($id,filter)] {
+	set pl_control($id,filter) ""
     }
 
-    if ![info exists pl_zclip($id)] {
-	set pl_zclip($id) 1
+    if ![info exists pl_control($id,zclip)] {
+	set pl_control($id,zclip) 1
     }
 
-    if ![info exists pl_2d($id)] {
-	set pl_2d($id) 0
+    if ![info exists pl_control($id,2d)] {
+	set pl_control($id,2d) 0
     }
 
-    if ![info exists pl_float($id)] {
-	set pl_float($id) 0
+    if ![info exists pl_control($id,float)] {
+	set pl_control($id,float) 0
     }
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF
     frame $top.gridF2
     frame $top.gridF3
 
-    if {$pl_file_or_filter($id) == "file"} {
+    if {$pl_control($id,file_or_filter) == "file"} {
 	set file_state normal
 	set filter_state disabled
     } else {
@@ -63,24 +58,24 @@ proc init_plotTool { id } {
 	set file_state disabled
     }
 
-    entry $top.fileE -width 12 -textvar pl_file($id)\
+    entry $top.fileE -width 12 -textvar pl_control($id,file)\
 	    -state $file_state
     radiobutton $top.fileRB -text "File Name" -anchor w\
-	    -value file -variable pl_file_or_filter($id)\
+	    -value file -variable pl_control($id,file_or_filter)\
 	    -command "pl_set_file_state $id"
 
-    entry $top.filterE -width 12 -textvar pl_filter($id)\
+    entry $top.filterE -width 12 -textvar pl_control($id,filter)\
 	    -state $filter_state
     radiobutton $top.filterRB -text "Filter" -anchor w\
-	    -value filter -variable pl_file_or_filter($id)\
+	    -value filter -variable pl_control($id,file_or_filter)\
 	    -command "pl_set_filter_state $id"
 
     checkbutton $top.zclip -relief raised -text "Z Clipping"\
-	    -variable pl_zclip($id)
+	    -variable pl_control($id,zclip)
     checkbutton $top.twoDCB -relief raised -text "2D"\
-	    -variable pl_2d($id)
+	    -variable pl_control($id,2d)
     checkbutton $top.floatCB -relief raised -text "Float"\
-	    -variable pl_float($id)
+	    -variable pl_control($id,float)
 
     button $top.createB -relief raised -text "Create"\
 	    -command "do_plot $id"
@@ -110,35 +105,30 @@ proc init_plotTool { id } {
 }
 
 proc do_plot { id } {
-    global player_screen
-    global pl_file_or_filter
-    global pl_file
-    global pl_filter
-    global pl_zclip
-    global pl_2d
-    global pl_float
+    global mged_gui
+    global pl_control
 
     cmd_set $id
     set pl_cmd "_mged_pl"
 
-    if {$pl_zclip($id)} {
+    if {$pl_control($id,zclip)} {
 	append pl_cmd " -zclip"
     }
 
-    if {$pl_2d($id)} {
+    if {$pl_control($id,2d)} {
 	append pl_cmd " -2d"
     }
 
-    if {$pl_float($id)} {
+    if {$pl_control($id,float)} {
 	append pl_cmd " -float"
     }
 
-    if {$pl_file_or_filter($id) == "file"} {
-	if {$pl_file($id) != ""} {
-	    if [file exists $pl_file($id)] {
-		set result [cad_dialog .$id.plotDialog $player_screen($id)\
-			"Overwrite $pl_file($id)?"\
-			"Overwrite $pl_file($id)?"\
+    if {$pl_control($id,file_or_filter) == "file"} {
+	if {$pl_control($id,file) != ""} {
+	    if [file exists $pl_control($id,file)] {
+		set result [cad_dialog .$id.plotDialog $mged_gui($id,screen)\
+			"Overwrite $pl_control($id,file)?"\
+			"Overwrite $pl_control($id,file)?"\
 			"" 0 OK CANCEL]
 
 		if {$result} {
@@ -146,7 +136,7 @@ proc do_plot { id } {
 		}
 	    }
 	} else {
-	    cad_dialog .$id.plotDialog $player_screen($id)\
+	    cad_dialog .$id.plotDialog $mged_gui($id,screen)\
 		    "No file name specified!"\
 		    "No file name specified!"\
 		    "" 0 OK
@@ -154,10 +144,10 @@ proc do_plot { id } {
 	    return
 	}
 
-	append pl_cmd " $pl_file($id)"
+	append pl_cmd " $pl_control($id,file)"
     } else {
-	if {$pl_filter($id) == ""} {
-	    cad_dialog .$id.plotDialog $player_screen($id)\
+	if {$pl_control($id,filter) == ""} {
+	    cad_dialog .$id.plotDialog $mged_gui($id,screen)\
 		    "No filter specified!"\
 		    "No filter specified!"\
 		    "" 0 OK
@@ -165,7 +155,7 @@ proc do_plot { id } {
 	    return
 	}
 
-	append pl_cmd " |$pl_filter($id)"
+	append pl_cmd " |$pl_control($id,filter)"
     }
 
     catch {eval $pl_cmd}

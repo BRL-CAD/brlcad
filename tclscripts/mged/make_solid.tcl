@@ -17,12 +17,12 @@
 # Description -
 #	Tcl/Tk interface to MGED's "make" command.
 
-if ![info exists mged_solid_name_fmt] {
-    set mged_solid_name_fmt "default_name"
+if ![info exists mged_default(solid_name_fmt)] {
+    set mged_default(solid_name_fmt) "default_name"
 }
 
 proc init_solid_create { id type } {
-    global player_screen
+    global mged_gui
 
     set top .$id.make_solid
 
@@ -31,11 +31,11 @@ proc init_solid_create { id type } {
 	return
     }
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.nameF 
     label $top.nameL -text "Enter name for $type:" -anchor w
-    entry $top.nameE -relief sunken -bd 2 -textvar mged_solid_name($id)
+    entry $top.nameE -relief sunken -bd 2 -textvar mged_gui($id,solid_name)
     button $top.applyB -relief raised -text "Apply"\
 	    -command "make_solid $id $top $type"
     button $top.autonameB -relief raised -text "Autoname"\
@@ -63,15 +63,15 @@ proc init_solid_create { id type } {
 }
 
 proc solid_auto_name { id } {
-    global mged_solid_name
-    global mged_solid_name_fmt
+    global mged_gui
+    global mged_default
 
-    set result [catch {_mged_make_name $mged_solid_name_fmt} name]
+    set result [catch {_mged_make_name $mged_default(solid_name_fmt)} name]
 
     if {$result == 0} {
-	set mged_solid_name($id) $name
+	set mged_gui($id,solid_name) $name
     } else {
-	cad_dialog .$id.solidDialog $player_screen($id)\
+	cad_dialog .$id.solidDialog $mged_gui($id,screen)\
 		"Failed to automatically create a solid name!"\
 		$name\
 		"" 0 OK
@@ -80,16 +80,15 @@ proc solid_auto_name { id } {
 }
 
 proc make_solid { id w type } {
-    global player_screen
-    global mged_solid_name
+    global mged_gui
 
-    set result [catch {_mged_make $mged_solid_name($id) $type} msg]
+    set result [catch {_mged_make $mged_gui($id,solid_name) $type} msg]
 
     if {$result == 0} {
-	catch {_mged_sed $mged_solid_name($id)}
+	catch {_mged_sed $mged_gui($id,solid_name)}
 	catch {destroy $w}
     } else {
-	cad_dialog .$id.solidDialog $player_screen($id)\
+	cad_dialog .$id.solidDialog $mged_gui($id,screen)\
 		"Bad solid name!"\
 		$msg\
 		"" 0 OK

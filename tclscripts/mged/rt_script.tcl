@@ -9,9 +9,8 @@
 check_externs "_mged_opendb _mged_saveview"
 
 proc init_rtScriptTool { id } {
-    global player_screen
-    global rts_file
-    global rts_args
+    global mged_gui
+    global rts_control
 
     set top .$id.do_rtScript
 
@@ -20,25 +19,25 @@ proc init_rtScriptTool { id } {
 	return
     }
 
-    if ![info exists rts_file($id)] {
+    if ![info exists rts_control($id,file)] {
 	regsub \.g$ [_mged_opendb] .sh default_file
-	set rts_file($id) $default_file
+	set rts_control($id,file) $default_file
     }
 
-    if ![info exists rts_args($id)] {
-	set rts_args($id) ""
+    if ![info exists rts_control($id,args)] {
+	set rts_control($id,args) ""
     }
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF
     frame $top.gridF2
 
     label $top.fileL -text "File Name" -anchor w
-    entry $top.fileE -width 12 -textvar rts_file($id)
+    entry $top.fileE -width 12 -textvar rts_control($id,file)
 
     label $top.argsL -text "Other args..." -anchor w
-    entry $top.argsE -width 12 -textvar rts_args($id)
+    entry $top.argsE -width 12 -textvar rts_control($id,args)
 
     button $top.createB -relief raised -text "Create"\
 	    -command "do_rtScript $id"
@@ -63,18 +62,17 @@ proc init_rtScriptTool { id } {
 }
 
 proc do_rtScript { id } {
-    global player_screen
-    global rts_file
-    global rts_args
+    global mged_gui
+    global rts_control
 
     cmd_set $id
     set rts_cmd "_mged_saveview"
 
-    if {$rts_file($id) != ""} {
-	if [file exists $rts_file($id)] {
-	    set result [cad_dialog .$id.rtsDialog $player_screen($id)\
-		    "Overwrite $rts_file($id)?"\
-		    "Overwrite $rts_file($id)?"\
+    if {$rts_control($id,file) != ""} {
+	if [file exists $rts_control($id,file)] {
+	    set result [cad_dialog .$id.rtsDialog $mged_gui($id,screen)\
+		    "Overwrite $rts_control($id,file)?"\
+		    "Overwrite $rts_control($id,file)?"\
 		    "" 0 OK CANCEL]
 
 	    if {$result} {
@@ -82,7 +80,7 @@ proc do_rtScript { id } {
 	    }
 	}
     } else {
-	cad_dialog .$id.rtsDialog $player_screen($id)\
+	cad_dialog .$id.rtsDialog $mged_gui($id,screen)\
 		"No file name specified!"\
 		"No file name specified!"\
 		"" 0 OK
@@ -90,10 +88,10 @@ proc do_rtScript { id } {
 	return
     }
 
-    append rts_cmd " $rts_file($id)"
+    append rts_cmd " $rts_control($id,file)"
 
-    if {$rts_args($id) != ""} {
-	append rts_cmd " $rts_args($id)"
+    if {$rts_control($id,args) != ""} {
+	append rts_cmd " $rts_control($id,args)"
     }
 
     catch {eval $rts_cmd}

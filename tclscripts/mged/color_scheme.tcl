@@ -93,8 +93,7 @@ proc color_scheme_init {} {
 # Build the color scheme GUI.
 #
 proc color_scheme_build { id primary_title primary_map secondary_title secondary_map } {
-    global player_screen
-    global mged_active_dm
+    global mged_gui
     global mged_color_scheme
 
     set top .$id.color_scheme
@@ -109,9 +108,9 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
 	set mged_color_scheme($id,smflag) 0
     }
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
     set entry_width 12
 
     set row -1
@@ -305,10 +304,10 @@ proc color_scheme_apply { id } {
 }
 
 proc color_scheme_reset { id top } {
-    global mged_active_dm
+    global mged_gui
     global mged_color_scheme
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
     foreach key_name_pair $mged_color_scheme(primary_map) {
 	set key [lindex $key_name_pair 0]

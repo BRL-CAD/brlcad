@@ -9,8 +9,7 @@
 check_externs "get_comb put_comb"
 
 proc init_comb { id } {
-    global player_screen
-    global mged_active_dm
+    global mged_gui
     global comb_control
     global shader_params
 
@@ -37,7 +36,7 @@ proc init_comb { id } {
     set comb_control($id,shader) ""
     set comb_control($id,shader_gui) ""
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF1
     frame $top.gridF2 -relief groove -bd 2
@@ -88,7 +87,7 @@ in question until the button is released. To select a combination,
 double click with the left mouse button." } }
     menu $top.nameMB.m -title "Combination Selection Method" -tearoff 0
     $top.nameMB.m add command -label "Select from all displayed"\
-	    -command "winset \$mged_active_dm($id); build_comb_menu_all"
+	    -command "winset \$mged_gui($id,active_dm); build_comb_menu_all"
     hoc_register_menu_data "Combination Selection Method" "Select from all displayed"\
 	    "Select Combination From All Displayed"\
 	    { { summary "This pops up a listbox containing the combinations
@@ -99,7 +98,7 @@ highlights the combination in question until the button is
 released. To select a combination, double click with the left
 mouse button." } }
     $top.nameMB.m add command -label "Select along ray"\
-	    -command "winset \$mged_active_dm($id); set mouse_behavior c"
+	    -command "winset \$mged_gui($id,active_dm); set mouse_behavior c"
     hoc_register_menu_data "Combination Selection Method" "Select along ray"\
 	    "Select Combination Along Ray"\
 	    { { summary "This method allows the user to use the
@@ -390,7 +389,7 @@ proc comb_ok { id top } {
 }
 
 proc comb_apply { id } {
-    global player_screen
+    global mged_gui
     global comb_control
 
     set top .$id.comb
@@ -403,7 +402,7 @@ proc comb_apply { id } {
 
     if {$comb_control($id,isRegion)} {
 	if {$comb_control($id,id) < 0} {
-	    cad_dialog .$id.combDialog $player_screen($id)\
+	    cad_dialog .$id.combDialog $mged_gui($id,screen)\
 		    "Bad region id!"\
 		    "Region id must be >= 0"\
 		    "" 0 OK
@@ -411,7 +410,7 @@ proc comb_apply { id } {
 	}
 
 	if {$comb_control($id,air) < 0} {
-	    cad_dialog .$id.combDialog $player_screen($id)\
+	    cad_dialog .$id.combDialog $mged_gui($id,screen)\
 		    "Bad air code!"\
 		    "Air code must be >= 0"\
 		    "" 0 OK
@@ -419,7 +418,7 @@ proc comb_apply { id } {
 	}
 
 	if {$comb_control($id,id) == 0 && $comb_control($id,air) == 0} {
-	    cad_dialog .$id.combDialog $player_screen($id)\
+	    cad_dialog .$id.combDialog $mged_gui($id,screen)\
 		    "Warning: both region id and air code are 0"\
 		    "Warning: both region id and air code are 0"\
 		    "" 0 OK
@@ -447,13 +446,13 @@ proc comb_apply { id } {
 }
 
 proc comb_reset { id } {
-    global player_screen
+    global mged_gui
     global comb_control
 
     set top .$id.comb
 
     if {$comb_control($id,name) == ""} {
-	cad_dialog .$id.combDialog $player_screen($id)\
+	cad_dialog .$id.combDialog $mged_gui($id,screen)\
 		"You must specify a region/combination name!"\
 		"You must specify a region/combination name!"\
 		"" 0 OK
@@ -463,7 +462,7 @@ proc comb_reset { id } {
     set save_isRegion $comb_control($id,isRegion)
     set result [catch {get_comb $comb_control($id,name)} comb_defs]
     if {$result == 1} {
-	cad_dialog .$id.combDialog $player_screen($id)\
+	cad_dialog .$id.combDialog $mged_gui($id,screen)\
 		"comb_reset: Error"\
 		$comb_defs\
 		"" 0 OK
@@ -627,7 +626,7 @@ proc comb_callback { id master } {
 }
 
 #proc comb_select_material { id } {
-#    global player_screen
+#    global mged_gui
 #    global comb_control
 #
 #    set top .$id.sel_material
@@ -637,7 +636,7 @@ proc comb_callback { id master } {
 #	return
 #    }
 #
-#    toplevel $top -screen $player_screen($id)
+#    toplevel $top -screen $mged_gui($id,screen)
 #
 #    frame $top.gridF1
 #    frame $top.gridF3

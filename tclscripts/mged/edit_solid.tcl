@@ -28,16 +28,9 @@ solid_data_init
 ## - init_edit_solid
 #
 proc init_edit_solid { id args } {
-    global player_screen
+    global mged_gui
     global solid_data
-    global esol_db_cmd
-    global esol_inc_operation
-    global esol_dec_operation
-    global esol_format_string
-    global esol_name
-    global esol_type
-    global esol_row
-    global esol_draw
+    global esol_control
 
     set w .$id.edit_solid
 
@@ -46,37 +39,37 @@ proc init_edit_solid { id args } {
 	return
     }
 
-    set esol_db_cmd($id) ""
+    set esol_control($id,cmd) ""
 
-    if ![info exists esol_inc_operation($id)] {
-	set esol_inc_operation($id) $solid_data(entry,incr_op)
+    if ![info exists esol_control($id,inc_op)] {
+	set esol_control($id,inc_op) $solid_data(entry,incr_op)
     }
 
-    if ![info exists esol_dec_operation($id)] {
-	set esol_dec_operation($id) $solid_data(entry,decr_op)
+    if ![info exists esol_control($id,dec_op)] {
+	set esol_control($id,dec_op) $solid_data(entry,decr_op)
     }
 
-    if ![info exists esol_format_string($id)] {
-	set esol_format_string($id) $solid_data(entry,fmt)
+    if ![info exists esol_control($id,format_string)] {
+	set esol_control($id,format_string) $solid_data(entry,fmt)
     }
 
     if {[llength $args] > 0} {
 	# if a name is provided, use it
-	set esol_name($id) [lindex $args 0]
-    } elseif {![info exists esol_name($id)] || $esol_name($id) == "" } {
-	set esol_name($id) $solid_data(name,default)
+	set esol_control($id,name) [lindex $args 0]
+    } elseif {![info exists esol_control($id,name)] || $esol_control($id,name) == "" } {
+	set esol_control($id,name) $solid_data(name,default)
     }
 
-    if ![info exists esol_type($id)] {
-	set esol_type($id) $solid_data(type,default)
+    if ![info exists esol_control($id,type)] {
+	set esol_control($id,type) $solid_data(type,default)
     }
 
-    if ![info exists esol_draw($id)] {
-	set esol_draw($id) 1
+    if ![info exists esol_control($id,draw)] {
+	set esol_control($id,draw) 1
     }
 
     set row -1
-    toplevel $w -screen $player_screen($id)
+    toplevel $w -screen $mged_gui($id,screen)
 
     incr row
     frame $w._F$row -relief flat -bd 2
@@ -85,7 +78,7 @@ proc init_edit_solid { id args } {
     set hoc_data { { summary "The name of a solid must be unique
 within a database." } }
     hoc_register_data $w.nameL "Solid Name" $hoc_data
-    entry $w.nameE -relief sunken -bd 2 -textvar esol_name($id)
+    entry $w.nameE -relief sunken -bd 2 -textvar esol_control($id,name)
     hoc_register_data $w.nameE "Solid Name" $hoc_data
     grid $w.nameL $w.nameE -in $w.nameF
     bind $w.nameE <Return> "esol_reset $id $w 0"
@@ -96,7 +89,7 @@ within a database." } }
 	    { { summary "The supported solid types are: arb8, sph,
 ell, tor, rec, half, rpc, rhc, epa, ehy, eto
 and part." } }
-    menubutton $w.typeMB -relief raised -bd 2 -textvariable esol_type($id)\
+    menubutton $w.typeMB -relief raised -bd 2 -textvariable esol_control($id,type)\
 	    -menu $w.typeMB.m -indicatoron 1
     hoc_register_data $w.typeMB "Solid Type"\
 	    { { summary "Indicates the current solid type. Note that
@@ -121,7 +114,7 @@ of the supported solid types." } }
     grid rowconfigure $w $row -weight 0
 
     incr row
-    set esol_row(form) $row
+    set esol_control(form) $row
     esol_build_default_form $id $w.sformF
     grid $w.sformF -row $row -column 0 -sticky nsew -padx 8
     grid rowconfigure $w $row -weight 1
@@ -137,7 +130,7 @@ parameter entry widget and must be present
 somewhere in the equation." } }
     label $w.decL -text "-operator:" -width 9 -anchor e
     hoc_register_data $w.decL "Decrement Operator Equation" $hoc_data
-    entry $w.decE -relief sunken -bd 2 -textvar esol_dec_operation($id)
+    entry $w.decE -relief sunken -bd 2 -textvar esol_control($id,dec_op)
     hoc_register_data $w.decE "Decrement Operator Equation" $hoc_data
     grid $w.decL $w.decE -in $w.decF -sticky nsew
     grid columnconfigure $w.decF 0 -weight 0
@@ -151,7 +144,7 @@ parameter entry widget and must be present
 somewhere in the equation." } }
     label $w.incL -text "+operator:" -width 9 -anchor e
     hoc_register_data $w.incL "Increment Operator Equation" $hoc_data
-    entry $w.incE -relief sunken -bd 2 -textvar esol_inc_operation($id)
+    entry $w.incE -relief sunken -bd 2 -textvar esol_control($id,inc_op)
     hoc_register_data $w.incE "Increment Operator Equation" $hoc_data
     grid $w.incL $w.incE -in $w.incF -sticky nsew
     grid columnconfigure $w.incF 0 -weight 0
@@ -164,7 +157,7 @@ of the solid parameter entries." }
               { see_also format } }
     label $w.fmtL -text "format:" -width 9 -anchor e
     hoc_register_data $w.fmtL "Format" $hoc_data
-    entry $w.fmtE -relief sunken -bd 2 -textvar esol_format_string($id)
+    entry $w.fmtE -relief sunken -bd 2 -textvar esol_control($id,format_string)
     hoc_register_data $w.fmtE "Format" $hoc_data
     grid $w.fmtL $w.fmtE -in $w.fmtF -sticky nsew
     grid columnconfigure $w.fmtF 0 -weight 0
@@ -181,7 +174,7 @@ of the solid parameter entries." }
 
     incr row
     checkbutton $w.drawCB -relief flat -bd 2 -text "Draw"\
-	    -offvalue 0 -onvalue 1 -variable esol_draw($id)
+	    -offvalue 0 -onvalue 1 -variable esol_control($id,draw)
     hoc_register_data $w.drawCB "Draw"\
 	    { { summary "Toggle drawing/updating the solid
 in the panes (geometry windows)." } }
@@ -189,7 +182,7 @@ in the panes (geometry windows)." } }
     grid rowconfigure $w $row -weight 0
 
     incr row
-    set esol_row(buttons) $row
+    set esol_control(buttons) $row
     frame $w._F$row -borderwidth 2
     button $w.okB -text "Ok" \
 	    -command "esol_ok $id $w $w.sformF"
@@ -229,35 +222,32 @@ with values from the database." } }
 
 ## - esol_build_default_form
 #
-# Using $esol_name($id), determine if a solid exists by this name.
+# Using $esol_control($id,name), determine if a solid exists by this name.
 # If so, then use its values to initialize the form. Otherwise, use
 # the default values for the current solid type to initialize the form.
 #
 proc esol_build_default_form { id w } {
     global solid_data
-    global esol_db_cmd
-    global esol_name
-    global esol_type
-    global esol_edit
+    global esol_control
 
-    if [catch {set vals [db get $esol_name($id)]} msg] {
+    if [catch {set vals [db get $esol_control($id,name)]} msg] {
 	# This solid doesn't exist yet, so use the last solid type
 	#   to get attributes and their values.
-	set vals $solid_data(attr,$esol_type($id))
+	set vals $solid_data(attr,$esol_control($id,type))
 
 	# create mode
-	set esol_edit($id) 0
-	set esol_db_cmd($id) "db put $esol_name($id) $esol_type($id)"
+	set esol_control($id,edit) 0
+	set esol_control($id,cmd) "db put $esol_control($id,name) $esol_control($id,type)"
     } else {
-	set esol_edit($id) 1
-	set esol_type($id) [lindex $vals 0]
-	set esol_db_cmd($id) "db adjust $esol_name($id)"
+	set esol_control($id,edit) 1
+	set esol_control($id,type) [lindex $vals 0]
+	set esol_control($id,cmd) "db adjust $esol_control($id,name)"
 
 	# skip solid type
 	set vals [lrange $vals 1 end]
     }
 
-    esol_build_form $id $w $esol_type($id) $vals 1 1 1
+    esol_build_form $id $w $esol_control($id,type) $vals 1 1 1
 }
 
 ## - esol_build_form
@@ -268,9 +258,7 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
     global base2local
     global local2base
     global solid_data
-    global esol_db_cmd
-    global esol_format_string
-    global esol_name
+    global esol_control
 
     set sform $w._F
 
@@ -287,7 +275,7 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	incr i
 
 	if $do_cmd {
-	    set esol_db_cmd($id) [eval concat \[set esol_db_cmd($id)\] $attr \\\"]
+	    set esol_control($id,cmd) [eval concat \[set esol_control($id,cmd)\] $attr \\\"]
 	}
 
 	if $do_gui {
@@ -322,12 +310,12 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 		if $do_entries {
 		    $sform._$attr\E$num delete 0 end
 		    $sform._$attr\E$num insert insert \
-			    [format $esol_format_string($id) [expr [lindex \
+			    [format $esol_control($id,format_string) [expr [lindex \
 			    [lindex $vals $i] $num] * $base2local]]
 		}
 
 		if $do_cmd {
-		    set esol_db_cmd($id) [eval concat \[set esol_db_cmd($id)\] \
+		    set esol_control($id,cmd) [eval concat \[set esol_control($id,cmd)\] \
 			    \\\[expr \\\[$sform._$attr\E$num get\\\] * $local2base\\\]]
 		}
 	    } else {
@@ -341,7 +329,7 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	}
 
 	if $do_cmd {
-	    set esol_db_cmd($id) [eval concat \[set esol_db_cmd($id)\] \\\"]
+	    set esol_control($id,cmd) [eval concat \[set esol_control($id,cmd)\] \\\"]
 	}
     }
 
@@ -360,20 +348,16 @@ proc esol_ok { id w sform } {
 ## - esol_apply
 #
 proc esol_apply { id w sform } {
-    global esol_db_cmd
-    global esol_name
-    global esol_type
-    global esol_edit
-    global esol_draw
+    global esol_control
 
-    set solid_exists [expr ![catch {db get $esol_name($id)} vals]]
-    if {$esol_name($id) != [lindex $esol_db_cmd($id) 2] ||\
-	    ($esol_edit($id) && !$solid_exists)} {
+    set solid_exists [expr ![catch {db get $esol_control($id,name)} vals]]
+    if {$esol_control($id,name) != [lindex $esol_control($id,cmd) 2] ||\
+	    ($esol_control($id,edit) && !$solid_exists)} {
 	# Here we assume (yikes!!!) that the user is aware
 	# of what he/she is doing and oblige by making
 	# a last minute change to the command list.
 
-	switch $esol_edit($id) {
+	switch $esol_control($id,edit) {
 	    0 {
 		set last 3
 	    }
@@ -386,38 +370,38 @@ proc esol_apply { id w sform } {
 	}
 
 	if $solid_exists {
-	    if {$esol_type($id) == [lindex $vals 0]} {
-		set tmp_db_cmd [lreplace $esol_db_cmd($id)\
-			0 $last db adjust $esol_name($id)]
+	    if {$esol_control($id,type) == [lindex $vals 0]} {
+		set tmp_db_cmd [lreplace $esol_control($id,cmd)\
+			0 $last db adjust $esol_control($id,name)]
 	    } else {
-		set tmp_db_cmd "kill $esol_name($id);\
-			[lreplace $esol_db_cmd($id)\
-			0 $last db put $esol_name($id) $esol_type($id)]"
+		set tmp_db_cmd "kill $esol_control($id,name);\
+			[lreplace $esol_control($id,cmd)\
+			0 $last db put $esol_control($id,name) $esol_control($id,type)]"
 	    }
 	} else {
 	    # This solid doesn't exist.
-	    set tmp_db_cmd [lreplace $esol_db_cmd($id)\
-		    0 $last db put $esol_name($id) $esol_type($id)]
+	    set tmp_db_cmd [lreplace $esol_control($id,cmd)\
+		    0 $last db put $esol_control($id,name) $esol_control($id,type)]
 	}
 
 	# fix the broken command list
-	regsub -all "\[{}\]" $tmp_db_cmd \" esol_db_cmd($id)
+	regsub -all "\[{}\]" $tmp_db_cmd \" esol_control($id,cmd)
     }
 
-    eval [set esol_db_cmd($id)]
+    eval [set esol_control($id,cmd)]
 
-    set esol_edit($id) 1
+    set esol_control($id,edit) 1
     esol_rename_applyB $id $w
 
-    # rebuild esol_db_cmd
-    set esol_db_cmd($id) "db adjust $esol_name($id)"
-    esol_build_form $id $sform $esol_type($id) {} 0 1 0
+    # rebuild esol_control($id,db_cmd)
+    set esol_control($id,cmd) "db adjust $esol_control($id,name)"
+    esol_build_form $id $sform $esol_control($id,type) {} 0 1 0
 
-    if $esol_draw($id) {
-	if [esol_isdrawn $esol_name($id)] {
+    if $esol_control($id,draw) {
+	if [esol_isdrawn $esol_control($id,name)] {
 	    eval _mged_draw [_mged_who]
 	} else {
-	    _mged_draw $esol_name($id)
+	    _mged_draw $esol_control($id,name)
 	}
     }
 }
@@ -435,48 +419,42 @@ proc esol_isdrawn { sol } {
 ## - esol_inc
 #
 proc esol_inc { id entryfield } {
-    global esol_inc_operation
-    global esol_format_string
+    global esol_control
 
     set val [$entryfield get]
 
     $entryfield delete 0 end
-    $entryfield insert insert [format $esol_format_string($id) [expr $esol_inc_operation($id)]]
+    $entryfield insert insert [format $esol_control($id,format_string) [expr $esol_control($id,inc_op)]]
 }
 
 ## - esol_dec
 #
 proc esol_dec { id entryfield } {
-    global esol_dec_operation
-    global esol_format_string
+    global esol_control
 
     set val [$entryfield get]
 
     $entryfield delete 0 end
-    $entryfield insert insert [format $esol_format_string($id) [expr $esol_dec_operation($id)]]
+    $entryfield insert insert [format $esol_control($id,format_string) [expr $esol_control($id,dec_op)]]
 }
 
 ## - esol_process_type
 #
 proc esol_process_type { id w newType } {
     global solid_data
-    global esol_db_cmd
-    global esol_name
-    global esol_type
-    global esol_row
-    global esol_edit
+    global esol_control
 
     # nothing to do
-    if {$newType == $esol_type($id)} {
+    if {$newType == $esol_control($id,type)} {
 	return
     }
 
-    if [catch {db get $esol_name($id)} vals] {
+    if [catch {db get $esol_control($id,name)} vals] {
 	# This solid doesn't exist.
 
 	# create mode
-	set esol_edit($id) 0
-	set esol_db_cmd($id) "db put $esol_name($id) $newType"
+	set esol_control($id,edit) 0
+	set esol_control($id,cmd) "db put $esol_control($id,name) $newType"
 	set vals $solid_data(attr,$newType)
     } else {
 	# This solid exists
@@ -486,18 +464,18 @@ proc esol_process_type { id w newType } {
 	    # skip type
 	    set vals [lrange $vals 1 end]
 
-	    set esol_edit($id) 1
-	    set esol_db_cmd($id) "db adjust $esol_name($id)"
+	    set esol_control($id,edit) 1
+	    set esol_control($id,cmd) "db adjust $esol_control($id,name)"
 	} else {
 	    # changing solid type, so use default values
 	    set vals $solid_data(attr,$newType)
 
-	    set esol_edit($id) 2
-	    set esol_db_cmd($id) "kill $esol_name($id); db put $esol_name($id) $newType"
+	    set esol_control($id,edit) 2
+	    set esol_control($id,cmd) "kill $esol_control($id,name); db put $esol_control($id,name) $newType"
 	}
     }
 
-    set esol_type($id) $newType
+    set esol_control($id,type) $newType
 
     # remove and destroy existing form
     grid forget $w
@@ -505,57 +483,53 @@ proc esol_process_type { id w newType } {
 
     # create and install a new form
     esol_build_form $id $w $newType $vals 1 1 1
-    grid $w -row $esol_row(form) -column 0 -sticky nsew -padx 8 -pady 8
+    grid $w -row $esol_control(form) -column 0 -sticky nsew -padx 8 -pady 8
 }
 
 ## - esol_reset
 #
 proc esol_reset { id w reset_entry_values } {
     global solid_data
-    global esol_db_cmd
-    global esol_name
-    global esol_type
-    global esol_row
-    global esol_edit
+    global esol_control
 
-    if [catch {db get $esol_name($id)} vals] {
+    if [catch {db get $esol_control($id,name)} vals] {
 	# This solid doesn't exist.
 
 	# create mode
-	set esol_edit($id) 0
-	set esol_db_cmd($id) "db put $esol_name($id) $esol_type($id)"
+	set esol_control($id,edit) 0
+	set esol_control($id,cmd) "db put $esol_control($id,name) $esol_control($id,type)"
 
 	if $reset_entry_values {
-	    set vals $solid_data(attr,$esol_type($id))
+	    set vals $solid_data(attr,$esol_control($id,type))
 
 	    # reset command and entry values
-	    esol_build_form $id $w.sformF $esol_type($id) $vals 0 1 1
+	    esol_build_form $id $w.sformF $esol_control($id,type) $vals 0 1 1
 	} else {
 	    # reset command
-	    esol_build_form $id $w.sformF $esol_type($id) {} 0 1 0
+	    esol_build_form $id $w.sformF $esol_control($id,type) {} 0 1 0
 	}
     } else {
 	# This solid exists
 
 	# edit mode
-	set esol_edit($id) 1
-	set esol_db_cmd($id) "db adjust $esol_name($id)"
+	set esol_control($id,edit) 1
+	set esol_control($id,cmd) "db adjust $esol_control($id,name)"
 
 	set type [lindex $vals 0]
 	set vals [lrange $vals 1 end]
-	if { $esol_type($id) == $type } {
+	if { $esol_control($id,type) == $type } {
 	    # reset command and entry values
-	    esol_build_form $id $w.sformF $esol_type($id) $vals 0 1 1
+	    esol_build_form $id $w.sformF $esol_control($id,type) $vals 0 1 1
 	} else {
-	    set esol_type($id) $type
+	    set esol_control($id,type) $type
 
 	    # remove and destroy existing form
 	    grid forget $w.sformF
 	    destroy $w.sformF
 
 	    # create and install a new form
-	    esol_build_form $id $w.sformF $esol_type($id) $vals 1 1 1
-	    grid $w.sformF -row $esol_row(form) -column 0 -sticky nsew -padx 8 -pady 8
+	    esol_build_form $id $w.sformF $esol_control($id,type) $vals 1 1 1
+	    grid $w.sformF -row $esol_control(form) -column 0 -sticky nsew -padx 8 -pady 8
 	}
     }
 
@@ -563,11 +537,11 @@ proc esol_reset { id w reset_entry_values } {
 }
 
 proc esol_rename_applyB { id w } {
-    global esol_edit
+    global esol_control
 
     #XXX Disable for now.
     if { 0 } {
-	if { $esol_edit($id) } {
+	if { $esol_control($id,edit) } {
 	    $w.applyB configure -text "Apply"
 	} else {
 	    $w.applyB configure -text "Create"
@@ -576,13 +550,13 @@ proc esol_rename_applyB { id w } {
 }
 
 proc esol_format_entries { id w } {
-    global esol_format_string
+    global esol_control
 
     foreach child [winfo children $w] {
 	if { [winfo class $child] == "Entry" } {
 	    set val [$child get]
 	    $child delete 0 end
-	    $child insert insert [format $esol_format_string($id) $val]
+	    $child insert insert [format $esol_control($id,format_string) $val]
 	}
     }
 }

@@ -54,9 +54,9 @@ if ![info exists eoformat_string] {
 }
 
 proc editobj { id oname } {
+    global mged_gui
     global eofin$oname
     global eoname
-    global player_screen
     global base2local
     global local2base
     global eoformat_string
@@ -70,7 +70,7 @@ proc editobj { id oname } {
 	return
     }
 
-    toplevel .eo$oname -screen $player_screen($id)
+    toplevel .eo$oname -screen $mged_gui($id,screen)
 
     frame .eo$oname.t -borderwidth 2
     pack .eo$oname.t -side top -fill x -expand yes

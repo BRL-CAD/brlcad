@@ -18,9 +18,7 @@
 #
 
 proc init_qray_control { id } {
-    global player_screen
-    global mged_qray_control
-    global mged_qray_effects
+    global mged_gui
     global qray_control
     global mouse_behavior
     global use_air
@@ -29,7 +27,6 @@ proc init_qray_control { id } {
 
     if [winfo exists $top] {
 	raise $top
-	set mged_qray_control($id) 1
 
 	return
     }
@@ -54,7 +51,7 @@ proc init_qray_control { id } {
     set qray_control($id,padx) 4
     set qray_control($id,pady) 4
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF1 -relief groove -bd 2
     frame $top.gridFF1
@@ -248,7 +245,7 @@ to MGED's internal state." } }
 	    { { summary "Set the query ray control panel according
 to MGED's internal state." } }
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top; set mged_qray_control($id) 0 }"
+	    -command "catch { destroy $top }"
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Close the query ray control panel." } }
     grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF5
@@ -272,38 +269,31 @@ to MGED's internal state." } }
     set x [lindex $pxy 0]
     set y [lindex $pxy 1]
 
-    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top; set mged_qray_control($id) 0 }"
+    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
     wm geometry $top +$x+$y
     wm title $top "Query Ray Control Panel ($id)"
 }
 
 proc qray_ok { id top } {
-    global mged_qray_control
-
     qray_apply $id
     catch { destroy $top }
-
-    set mged_qray_control($id) 0
 }
 
 proc qray_apply { id } {
-    global mged_mouse_behavior
-    global mged_use_air
-    global mged_qray_effects
+    global mged_gui
     global use_air
     global mouse_behavior
     global qray_control
 
     if {$qray_control($id,active)} {
-	set mged_mouse_behavior($id) q
+	set mged_gui($id,mouse_behavior) q
     } elseif {$mouse_behavior == "q"} {
-	set mged_mouse_behavior($id) d
+	set mged_gui($id,mouse_behavior) d
     }
 
-    set mged_use_air($id) $qray_control($id,use_air)
-    set mged_qray_control($id,effects) $qray_control($id,effects)
+    set mged_gui($id,use_air) $qray_control($id,use_air)
 
-    mged_apply $id "set mouse_behavior $mged_mouse_behavior($id);\
+    mged_apply $id "set mouse_behavior $mged_gui($id,mouse_behavior);\
 	    set use_air $qray_control($id,use_air);\
 	    qray echo $qray_control($id,cmd_echo);\
 	    qray effects $qray_control($id,effects);\
@@ -315,8 +305,7 @@ proc qray_apply { id } {
 }
 
 proc qray_reset { id } {
-    global mged_active_dm
-    global mged_use_air
+    global mged_gui
     global qray_control
     global use_air
     global mouse_behavior
@@ -327,7 +316,7 @@ proc qray_reset { id } {
 	return
     }
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
     if {$mouse_behavior == "q"} {
 	set qray_control($id,active) 1
@@ -354,7 +343,6 @@ proc qray_reset { id } {
 }
 
 proc qray_effects { id } {
-    global mged_qray_effects
     global qray_control
 
     set top .$id.qray_control
@@ -373,7 +361,7 @@ proc qray_effects { id } {
 }
 
 proc init_qray_adv { id } {
-    global player_screen
+    global mged_gui
     global qray_control
 
     set top .$id.qray_adv
@@ -384,7 +372,7 @@ proc init_qray_adv { id } {
 	return
     }
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
     qray_reset_fmt $id
 
     frame $top.gridF1 -relief groove -bd 2
@@ -539,10 +527,10 @@ proc qray_ok_fmt { id top } {
 }
 
 proc qray_apply_fmt { id } {
-    global mged_active_dm
+    global mged_gui
     global qray_control
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
     qray fmt r $qray_control($id,fmt_ray)
     qray fmt h $qray_control($id,fmt_head)
     qray fmt p $qray_control($id,fmt_partition)
@@ -552,10 +540,10 @@ proc qray_apply_fmt { id } {
 }
 
 proc qray_reset_fmt { id } {
-    global mged_active_dm
+    global mged_gui
     global qray_control
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
     set qray_control($id,fmt_ray) [qray fmt r]
     set qray_control($id,fmt_head) [qray fmt h]
     set qray_control($id,fmt_partition) [qray fmt p]

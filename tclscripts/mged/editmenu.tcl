@@ -9,16 +9,16 @@
 #		Robert Parker
 #
 
-if ![info exists mged_default_display] {
+if ![info exists mged_default(display)] {
     if [info exists env(DISPLAY)] {
-	set mged_default_display $env(DISPLAY)
+	set mged_default(display) $env(DISPLAY)
     } else {
-	set mged_default_display :0
+	set mged_default(display) :0
     }
 }
 
-if ![info exists player_screen(mged)] {
-    set player_screen(mged) $mged_default_display
+if ![info exists mged_gui(mged,screen)] {
+    set mged_gui(mged,screen) $mged_default(display)
 }
 
 #	Ensure that all commands that this script uses without defining
@@ -26,24 +26,21 @@ if ![info exists player_screen(mged)] {
 check_externs "_mged_x _mged_press _mged_who _mged_ill"
 
 proc build_edit_menu_all { type } {
-    global player_screen
     global mged_players
-    global mged_mouse_behavior
+    global mged_gui
     global mouse_behavior
-    global mged_active_dm
-    global mged_edit_menu
 
     set win [winset]
     set id [get_player_id_dm $win]
 
-    if {[info exists mged_edit_menu($id)] && \
-	    [winfo exists $mged_edit_menu($id)]} {
-	destroy $mged_edit_menu($id)
+    if {[info exists mged_gui($id,edit_menu)] && \
+	    [winfo exists $mged_gui($id,edit_menu)]} {
+	destroy $mged_gui($id,edit_menu)
     }
 
     set paths [_mged_x -1]
     if {![llength $paths]} {
-	cad_dialog .$id.editDialog $player_screen($id)\
+	cad_dialog .$id.editDialog $mged_gui($id,screen)\
 		"No solids are being displayed!"\
 		"No solids are being displayed!"\
 		"" 0 OK
@@ -55,31 +52,28 @@ proc build_edit_menu_all { type } {
 
     mged_apply_all "set mouse_behavior d"
     foreach id $mged_players {
-	set mged_mouse_behavior($id) d
+	set mged_gui($id,mouse_behavior) d
     }
 }
 
 proc ray_build_edit_menu { type x y } {
-    global player_screen
     global mged_players
-    global mged_mouse_behavior
+    global mged_gui
     global mouse_behavior
-    global mged_active_dm
-    global mged_edit_menu
 
     set win [winset]
     set id [get_player_id_dm $win]
 
-    if {[info exists mged_edit_menu($id)] && \
-	    [winfo exists $mged_edit_menu($id)]} {
-	destroy $mged_edit_menu($id)
+    if {[info exists mged_gui($id,edit_menu)] && \
+	    [winfo exists $mged_gui($id,edit_menu)]} {
+	destroy $mged_gui($id,edit_menu)
     }
 
     set ray [mouse_shoot_ray $x $y]
     set paths [ray_get_info $ray in path]
 
     if {![llength $paths]} {
-	cad_dialog .$id.editDialog $player_screen($id)\
+	cad_dialog .$id.editDialog $mged_gui($id,screen)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK
@@ -113,17 +107,16 @@ proc ray_build_edit_menu { type x y } {
 
     mged_apply_all "set mouse_behavior d"
     foreach id $mged_players {
-	set mged_mouse_behavior($id) d
+	set mged_gui($id,mouse_behavior) d
     }
 }
 
 proc build_solid_menu { type id paths } {
-    global player_screen
-    global mged_edit_menu
+    global mged_gui
 
-    if {[info exists mged_edit_menu($id)] && \
-	    [winfo exists $mged_edit_menu($id)]} {
-	destroy $mged_edit_menu($id)
+    if {[info exists mged_gui($id,edit_menu)] && \
+	    [winfo exists $mged_gui($id,edit_menu)]} {
+	destroy $mged_gui($id,edit_menu)
     }
 
     set top .em$id
@@ -131,15 +124,15 @@ proc build_solid_menu { type id paths } {
 	destroy $top
     }
 
-    if [info exists player_screen($id)] {
-	set screen $player_screen($id)
+    if [info exists mged_gui($id,screen)] {
+	set screen $mged_gui($id,screen)
     } else {
 	set win [winset]
 	set screen [winfo screen $win]
     }
 
     create_listbox $top $screen Solid $paths "destroy $top"
-    set mged_edit_menu($id) $top
+    set mged_gui($id,edit_menu) $top
 
     switch $type {
 	s {
@@ -171,12 +164,11 @@ proc build_solid_menu { type id paths } {
 }
 
 proc build_matrix_menu { id path } {
-    global player_screen
-    global mged_edit_menu
+    global mged_gui
 
-    if {[info exists mged_edit_menu($id)] && \
-	    [winfo exists $mged_edit_menu($id)]} {
-	destroy $mged_edit_menu($id)
+    if {[info exists mged_gui($id,edit_menu)] && \
+	    [winfo exists $mged_gui($id,edit_menu)]} {
+	destroy $mged_gui($id,edit_menu)
     }
 
     set top .mm$id
@@ -184,8 +176,8 @@ proc build_matrix_menu { id path } {
 	destroy $top
     }
 
-    if [info exists player_screen($id)] {
-	set screen $player_screen($id)
+    if [info exists mged_gui($id,screen)] {
+	set screen $mged_gui($id,screen)
     } else {
 	set win [winset]
 	set screen [winfo screen $win]
@@ -194,7 +186,7 @@ proc build_matrix_menu { id path } {
     regexp "\[^/\].*" $path match
     set path_components [split $match /]
     create_listbox $top $screen Matrix $path_components "_mged_press reject; destroy $top"
-    set mged_edit_menu($id) $top
+    set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<ButtonPress-1>"\
 	    "set path_pos \[%W index @%x,%y\];\

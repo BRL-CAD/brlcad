@@ -18,7 +18,7 @@
 #
 
 proc do_grid_spacing { id spacing_type } {
-    global player_screen
+    global mged_gui
     global grid_control_spacing
     global localunit
 
@@ -29,7 +29,7 @@ proc do_grid_spacing { id spacing_type } {
 	return
     }
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF1 -relief groove -bd 2
     frame $top.gridF2
@@ -123,8 +123,7 @@ and 200. The tick spacing will be a power of
 }
 
 proc do_grid_anchor { id } {
-    global player_screen
-    global mged_active_dm
+    global mged_gui
     global grid_control_anchor
 
     set top .$id.grid_anchor
@@ -136,10 +135,10 @@ proc do_grid_anchor { id } {
     }
 
     # Initialize variables
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
     set grid_control_anchor($id) [_mged_rset grid anchor]
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF1 -relief groove -bd 2
     frame $top.gridF2
@@ -173,7 +172,7 @@ control panel." } }
 	    { { summary "Apply the grid anchor control panel
 settings to the grid." } }
     button $top.resetB -relief raised -text "Reset"\
-	    -command "winset \$mged_active_dm($id);\
+	    -command "winset \$mged_gui($id,active_dm);\
 	    set grid_control_anchor($id) \[rset grid anchor\]"
     hoc_register_data $top.resetB "Reset"\
 	    { { summary "Reset the control panel from the grid." } }
@@ -207,9 +206,8 @@ settings to the grid." } }
 }
 
 proc init_grid_control { id } {
-    global player_screen
+    global mged_gui
     global grid_control
-    global mged_grid
     global localunit
 
     set top .$id.grid_control
@@ -223,7 +221,7 @@ proc init_grid_control { id } {
     set grid_control($id,padx) 4
     set grid_control($id,pady) 4
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF1
     frame $top.gridFF1 -relief groove -bd 2
@@ -504,7 +502,7 @@ proc grid_control_ok { id top } {
 
 proc grid_control_apply { id } {
     global grid_control
-    global mged_grid
+    global mged_gui
 
     if {$grid_control($id,square)} {
 	mged_apply $id "rset grid anchor $grid_control($id,anchor);\
@@ -528,20 +526,19 @@ proc grid_control_apply { id } {
     }
 
     # update the main GUI
-    set mged_grid($id,draw) $grid_control($id,draw)
-    set mged_grid($id,snap) $grid_control($id,snap)
+    set mged_gui($id,grid_draw) $grid_control($id,draw)
+    set mged_gui($id,grid_snap) $grid_control($id,snap)
 }
 
 proc grid_control_reset { id } {
-    global mged_active_dm
-    global mged_grid
+    global mged_gui
     global grid_control
 
     if ![winfo exists .$id.grid_control] {
 	return
     }
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
     set grid_control($id,draw) [rset grid draw]
     set grid_control($id,snap) [rset grid snap]
@@ -557,8 +554,8 @@ proc grid_control_reset { id } {
 	set_grid_square $id
     }
 
-    set mged_grid($id,draw) $grid_control($id,draw)
-    set mged_grid($id,snap) $grid_control($id,snap)
+    set mged_gui($id,grid_draw) $grid_control($id,draw)
+    set mged_gui($id,grid_snap) $grid_control($id,snap)
 }
 
 proc set_grid_square { id } {
@@ -630,10 +627,10 @@ proc grid_autosize {} {
 }
 
 proc grid_spacing_autosize { id } {
-    global mged_active_dm
+    global mged_gui
     global grid_control_spacing
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
     set val [grid_autosize]
 
     set grid_control_spacing($id,tick) $val
@@ -641,10 +638,10 @@ proc grid_spacing_autosize { id } {
 }
 
 proc grid_control_autosize { id } {
-    global mged_active_dm
+    global mged_gui
     global grid_control
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
     set val [grid_autosize]
 
     set grid_control($id,rh) $val
@@ -676,10 +673,10 @@ proc grid_spacing_apply { id spacing_type } {
 }
 
 proc grid_spacing_reset { id spacing_type } {
-    global mged_active_dm
+    global mged_gui
     global grid_control_spacing
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
     if {$spacing_type == "v"} {
 	set grid_control_spacing($id,tick) [eval format "%.5f" [rset grid rv]]

@@ -1,4 +1,8 @@
 #
+# Description -
+#	The routines herein are used to implement traditional MGED
+#	menus in Tcl/Tk.
+#
 # Modifications -
 #	Bob Parker:
 #		*- Generalized the code to accommodate multiple instances of the
@@ -8,8 +12,6 @@
 
 proc mmenu_set { w id i menu } {
     global mmenu
-
-#    do_edit_pulldown $id $i $menu
 
     if {![winfo exists $w]} {
 	return
@@ -49,13 +51,13 @@ proc mmenu_set { w id i menu } {
 
 proc mmenu_init { id } {
     global mmenu
-    global player_screen
+    global mged_gui
     global mged_display
 
     cmd_set $id
     set w .mmenu$id
     catch { destroy $w }
-    toplevel $w -screen $player_screen($id)
+    toplevel $w -screen $mged_gui($id,screen)
 
     label $w.state -textvariable mged_display(state)
     pack $w.state -side top
@@ -122,12 +124,9 @@ proc reconfig_mmenu { id } {
 
 proc do_arb_edit_menu { type menu1 menu2 menu3 } {
     global mged_players
-    global mged_top
+    global mged_gui
+    global mged_default
     global edit_type
-    global mged_transform
-    global mged_coords
-    global mged_rotate_about
-    global do_tearoffs
 
     if ![info exists mged_players] {
 	return
@@ -136,16 +135,16 @@ proc do_arb_edit_menu { type menu1 menu2 menu3 } {
     set edit_type "none of above"
     foreach id $mged_players {
 	.$id.menubar.settings.transform entryconfigure 2 -state normal
-	set mged_transform($id) "e"
+	set mged_gui($id,transform) "e"
 	set_transform $id
 
 	.$id.menubar.settings.coord entryconfigure 2 -state normal
-	set mged_coords($id) "o"
-	mged_apply $id "set coords $mged_coords($id)"
+	set mged_gui($id,coords) "o"
+	mged_apply $id "set coords $mged_gui($id,coords)"
 
 	.$id.menubar.settings.origin entryconfigure 3 -state normal
-	set mged_rotate_about($id) "k"
-	mged_apply $id "set rotate_about $mged_rotate_about($id)"
+	set mged_gui($id,rotate_about) "k"
+	mged_apply $id "set rotate_about $mged_gui($id,rotate_about)"
 
 	.$id.menubar.edit entryconfigure 0 -state disabled
 	.$id.menubar.edit entryconfigure 1 -state disabled
@@ -162,16 +161,16 @@ proc do_arb_edit_menu { type menu1 menu2 menu3 } {
 	.$id.menubar.edit insert 3 separator
 	.$id.menubar.edit insert 4 radiobutton -variable edit_type \
 		-label "Rotate" -underline 0 -command "press srot; \
-		set mged_transform($id) e; set_transform $id"
+		set mged_gui($id,transform) e; set_transform $id"
 	.$id.menubar.edit insert 5 radiobutton -variable edit_type \
 		-label "Translate" -underline 0 -command "press sxy; \
-		set mged_transform($id) e; set_transform $id"
+		set mged_gui($id,transform) e; set_transform $id"
 	.$id.menubar.edit insert 6 radiobutton -variable edit_type \
 		-label "Scale" -underline 0 -command "press sscale; \
-		set mged_transform($id) e; set_transform $id"
+		set mged_gui($id,transform) e; set_transform $id"
 	.$id.menubar.edit insert 7 radiobutton -variable edit_type \
 		 -label "none of above" -command "press \"edit menu\"; \
-		 set mged_transform($id) e; set_transform $id"
+		 set mged_gui($id,transform) e; set_transform $id"
 	.$id.menubar.edit insert 8 separator
 	.$id.menubar.edit insert 9 command -label "Reject" -underline 0 \
 		-command "press reject"
@@ -179,30 +178,30 @@ proc do_arb_edit_menu { type menu1 menu2 menu3 } {
 		-command "press accept"
 	.$id.menubar.edit insert 11 separator
 
-	menu .$id.menubar.edit.mvedges -tearoff $do_tearoffs
+	menu .$id.menubar.edit.mvedges -tearoff $mged_default(tearoff_menus)
 	foreach item $menu1 {
 	    if {$item != "RETURN"} {
 		.$id.menubar.edit.mvedges add radiobutton -variable edit_type -label $item \
 			-command "press \"edit menu\"; press \"move edges\"; \
-			press \"$item\"; set mged_transform($id) e; set_transform $id"
+			press \"$item\"; set mged_gui($id,transform) e; set_transform $id"
 	    }
 	}
 
-	menu .$id.menubar.edit.mvfaces -tearoff $do_tearoffs
+	menu .$id.menubar.edit.mvfaces -tearoff $mged_default(tearoff_menus)
 	foreach item $menu2 {
 	    if {$item != "RETURN"} {
 		.$id.menubar.edit.mvfaces add radiobutton -variable edit_type -label $item \
 			-command "press \"edit menu\"; press \"move faces\"; \
-			press \"$item\"; set mged_transform($id) e; set_transform $id"
+			press \"$item\"; set mged_gui($id,transform) e; set_transform $id"
 	    }
 	}
     
-	menu .$id.menubar.edit.rotfaces -tearoff $do_tearoffs
+	menu .$id.menubar.edit.rotfaces -tearoff $mged_default(tearoff_menus)
 	foreach item $menu3 {
 	    if {$item != "RETURN"} {
 		.$id.menubar.edit.rotfaces add radiobutton -variable edit_type -label $item \
 			-command "press \"edit menu\"; press \"rotate faces\"; \
-			press \"$item\"; set mged_transform($id) e; set_transform $id"
+			press \"$item\"; set mged_gui($id,transform) e; set_transform $id"
 	    }
 	}
     }
@@ -211,11 +210,8 @@ proc do_arb_edit_menu { type menu1 menu2 menu3 } {
 proc do_edit_menu { type menu1 } {
     global mged_display
     global mged_players
-    global mged_top
+    global mged_gui
     global edit_type
-    global mged_transform
-    global mged_coords
-    global mged_rotate_about
 
     if ![info exists mged_players] {
 	return
@@ -224,16 +220,16 @@ proc do_edit_menu { type menu1 } {
     set edit_type "none of above"
     foreach id $mged_players {
 	.$id.menubar.settings.transform entryconfigure 2 -state normal
-	set mged_transform($id) "e"
+	set mged_gui($id,transform) "e"
 	set_transform $id
 
 	.$id.menubar.settings.coord entryconfigure 2 -state normal
-	set mged_coords($id) "o"
-	mged_apply $id "set coords $mged_coords($id)"
+	set mged_gui($id,coords) "o"
+	mged_apply $id "set coords $mged_gui($id,coords)"
 
 	.$id.menubar.settings.origin entryconfigure 3 -state normal
-	set mged_rotate_about($id) "k"
-	mged_apply $id "set rotate_about $mged_rotate_about($id)"
+	set mged_gui($id,rotate_about) "k"
+	mged_apply $id "set rotate_about $mged_gui($id,rotate_about)"
 
 	.$id.menubar.edit entryconfigure 0 -state disabled
 	.$id.menubar.edit entryconfigure 1 -state disabled
@@ -246,7 +242,7 @@ proc do_edit_menu { type menu1 } {
 	    if {$item != "RETURN"} {
 		.$id.menubar.edit insert $i radiobutton -variable edit_type \
 			-label $item -command "press \"$item\"; \
-			set mged_transform($id) e; set_transform $id"
+			set mged_gui($id,transform) e; set_transform $id"
 		incr i
 	    }
 	}
@@ -259,58 +255,58 @@ proc do_edit_menu { type menu1 } {
 	if {$mged_display(state) == "SOL EDIT"} {
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Rotate" -underline 0 -command "press srot; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Translate" -underline 0 -command "press sxy; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Scale" -underline 0 -command "press sscale; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "none of above" -command "set edit_solid_flag 0; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i separator
 	    incr i
 	} else {
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Scale" -command "press \"Scale\"; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "X move" -command "press \"X move\"; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Y move" -command "press \"Y move\"; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "XY move" -command "press \"XY move\"; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Rotate" -command "press \"Rotate\"; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Scale X" -command "press \"Scale X\"; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Scale Y" -command "press \"Scale Y\"; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Scale Z" -command "press \"Scale Z\"; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "none of above" -command "set edit_object_flag 0; \
-		    set mged_transform($id) e; set_transform $id"
+		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i separator
 	    incr i
@@ -330,10 +326,7 @@ proc do_edit_menu { type menu1 } {
 
 proc undo_edit_menu {} {
     global mged_players
-    global mged_top
-    global mged_transform
-    global mged_coords
-    global mged_rotate_about
+    global mged_gui
 
     if ![info exists mged_players] {
 	return
@@ -368,21 +361,21 @@ proc undo_edit_menu {} {
 #	.$id.menubar.edit entryconfigure 4 -state normal
 
 	.$id.menubar.settings.transform entryconfigure 2 -state disabled
-	if {$mged_transform($id) == "e"} {
-	    set mged_transform($id) "v"
+	if {$mged_gui($id,transform) == "e"} {
+	    set mged_gui($id,transform) "v"
 	    set_transform $id
 	}
 
 	.$id.menubar.settings.coord entryconfigure 2 -state disabled
-	if {$mged_coords($id) == "o"} {
-	    set mged_coords($id) "v"
-	    mged_apply $id "set coords $mged_coords($id)"
+	if {$mged_gui($id,coords) == "o"} {
+	    set mged_gui($id,coords) "v"
+	    mged_apply $id "set coords $mged_gui($id,coords)"
 	}
 
 	.$id.menubar.settings.origin entryconfigure 3 -state disabled
-	if {$mged_rotate_about($id) == "k"} {
-	    set mged_rotate_about($id) "v"
-	    mged_apply $id "set rotate_about $mged_rotate_about($id)"
+	if {$mged_gui($id,rotate_about) == "k"} {
+	    set mged_gui($id,rotate_about) "v"
+	    mged_apply $id "set rotate_about $mged_gui($id,rotate_about)"
 	}
     }
 }

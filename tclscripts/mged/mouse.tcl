@@ -7,24 +7,22 @@
 #
 
 proc mouse_get_spath { x y } {
-    global player_screen
-    global mged_edit_menu
-    global mgs_spath
+    global mged_gui
 
     set win [winset]
     set id [get_player_id_dm $win]
 
-    if {[info exists mged_edit_menu($id)] && \
-	    [winfo exists $mged_edit_menu($id)]} {
-	destroy $mged_edit_menu($id)
+    if {[info exists mged_gui($id,edit_menu)] && \
+	    [winfo exists $mged_gui($id,edit_menu)]} {
+	destroy $mged_gui($id,edit_menu)
     }
 
-    set mgs_spath ""
+    set mged_gui($id,mgs_path) ""
     set ray [mouse_shoot_ray $x $y]
     set paths [ray_get_info $ray in path]
 
     if {![llength $paths]} {
-	cad_dialog .$id.spathDialog $player_screen($id)\
+	cad_dialog .$id.spathDialog $mged_gui($id,screen)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK
@@ -40,95 +38,90 @@ proc mouse_get_spath { x y } {
 	destroy $top
     }
 
-    if [info exists player_screen($id)] {
-	set screen $player_screen($id)
+    if [info exists mged_gui($id,screen)] {
+	set screen $mged_gui($id,screen)
     } else {
 	set screen [winfo screen $win]
     }
 
     create_listbox $top $screen Solid $paths "destroy $top"
-    set mged_edit_menu($id) $top
+    set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[get_listbox_entry %W %x %y\];\
 	    solid_illum \$item; break"
     bind_listbox $top "<Double-1>"\
-	    "set mgs_spath \[get_listbox_entry %W %x %y\];\
+	    "set mged_gui($id,mgs_path) \[get_listbox_entry %W %x %y\];\
 	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end; _mged_press reject; break"
 
-    while {$mgs_spath == ""} {
+    while {$mged_gui($id,mgs_path) == ""} {
 	mged_update
     }
 
-    return $mgs_spath
+    return $mged_gui($id,mgs_path)
 }
 
 proc mouse_get_spath_and_pos { x y } {
-    global player_screen
-    global mged_edit_menu
-    global mgsp_spath
-    global mgsp_path_pos
+    global mged_gui
 
     set win [winset]
     set id [get_player_id_dm $win]
 
-    set mgsp_spath [mouse_get_spath $x $y]
+    set mged_gui($id,mgs_path) [mouse_get_spath $x $y]
 
-    if {$mgsp_spath == ""} {
+    if {$mged_gui($id,mgs_path) == ""} {
 	return ""
     }
 
-    set mgsp_path_pos -1
+    set mged_gui($id,mgs_pos) -1
     set top .mgsp$id
 
-    if [info exists player_screen($id)] {
-	set screen $player_screen($id)
+    if [info exists mged_gui($id,screen)] {
+	set screen $mged_gui($id,screen)
     } else {
 	set screen [winfo screen $win]
     }
-    regexp "\[^/\].*" $mgsp_spath match
+    regexp "\[^/\].*" $mged_gui($id,mgs_path) match
     set path_components [split $match /]
     create_listbox $top $screen Matrix $path_components "destroy $top"
-    set mged_edit_menu($id) $top
+    set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[%W index @%x,%y\];\
 	    _mged_press oill;\
-	    _mged_ill \$mgsp_spath;\
+	    _mged_ill \$mged_gui($id,mgs_path);\
 	    _mged_matpick -n \$item; break"
     bind_listbox $top "<Double-1>"\
-	    "set mgsp_path_pos \[%W index @%x,%y\];\
+	    "set mged_gui($id,mgs_pos) \[%W index @%x,%y\];\
 	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end; _mged_press reject; break"
 
-    while {$mgsp_path_pos == -1} {
+    while {$mged_gui($id,mgs_pos) == -1} {
 	mged_update
     }
 
-    return "$mgsp_spath $mgsp_path_pos"
+    return "$mged_gui($id,mgs_path) $mged_gui($id,mgs_pos)"
 }
 
 proc mouse_get_comb { x y } {
-    global player_screen
-    global mged_edit_menu
-    global mgc_comb
+    global mged_gui
 
     set win [winset]
     set id [get_player_id_dm $win]
 
-    if {[info exists mged_edit_menu($id)] && \
-	    [winfo exists $mged_edit_menu($id)]} {
-	destroy $mged_edit_menu($id)
+    if {[info exists mged_gui($id,edit_menu)] && \
+	    [winfo exists $mged_gui($id,edit_menu)]} {
+	destroy $mged_gui($id,edit_menu)
     }
 
-    set mgc_comb ""
+    set mged_gui($id,mgc_comb) ""
     set ray [mouse_shoot_ray $x $y]
     set paths [ray_get_info $ray in path]
     if {![llength $paths]} {
-	cad_dialog .$id.combDialog $player_screen($id)\
+	cad_dialog .$id.combDialog $mged_gui($id,screen)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK
@@ -137,8 +130,8 @@ proc mouse_get_comb { x y } {
     set combs [build_comb_list $paths]
 
     if {[llength $combs] == 1} {
-	set mgc_comb [lindex $combs 0]
-	return $mgc_comb
+	set mged_gui($id,mgc_comb) [lindex $combs 0]
+	return $mged_gui($id,mgc_comb)
     }
 
     set top .mgc$id
@@ -146,15 +139,15 @@ proc mouse_get_comb { x y } {
 	destroy $top
     }
 
-    if [info exists player_screen($id)] {
-	set screen $player_screen($id)
+    if [info exists mged_gui($id,screen)] {
+	set screen $mged_gui($id,screen)
     } else {
 	set win [winset]
 	set screen [winfo screen $win]
     }
 
     create_listbox $top $screen Combination $combs "destroy $top"
-    set mged_edit_menu($id) $top
+    set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<ButtonPress-1>"\
 	    "set comb \[%W get @%x,%y\];\
@@ -162,22 +155,22 @@ proc mouse_get_comb { x y } {
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
 	    matrix_illum \$spath \$path_pos; break"
     bind_listbox $top "<Double-1>"\
-	    "set mgc_comb \[%W get @%x,%y\];\
+	    "set mged_gui($id,mgc_comb) \[%W get @%x,%y\];\
 	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
 	    _mged_press reject; break"
 
-    while {$mgc_comb == ""} {
+    while {$mged_gui($id,mgc_comb) == ""} {
 	mged_update
     }
 
-    return $mgc_comb
+    return $mged_gui($id,mgc_comb)
 }
 
 proc mouse_solid_edit_select { x y } {
     global mged_players
-    global mged_mouse_behavior
+    global mged_gui
 
     set spath [mouse_get_spath $x $y]
     if {$spath == ""} {
@@ -189,13 +182,13 @@ proc mouse_solid_edit_select { x y } {
 
     mged_apply_all "set mouse_behavior d"
     foreach id $mged_players {
-	set mged_mouse_behavior($id) d
+	set mged_gui($id,mouse_behavior) d
     }
 }
 
 proc mouse_matrix_edit_select { x y } {
     global mged_players
-    global mged_mouse_behavior
+    global mged_gui
 
     set spath_and_pos [mouse_get_spath_and_pos $x $y]
     if {[llength $spath_and_pos] != 2} {
@@ -208,13 +201,13 @@ proc mouse_matrix_edit_select { x y } {
 
     mged_apply_all "set mouse_behavior d"
     foreach id $mged_players {
-	set mged_mouse_behavior($id) d
+	set mged_gui($id,mouse_behavior) d
     }
 }
 
 proc mouse_comb_edit_select { x y } {
     global mged_players
-    global mged_mouse_behavior
+    global mged_gui
     global comb_control
 
     set comb [mouse_get_comb $x $y]
@@ -230,6 +223,6 @@ proc mouse_comb_edit_select { x y } {
 
     mged_apply_all "set mouse_behavior d"
     foreach id $mged_players {
-	set mged_mouse_behavior($id) d
+	set mged_gui($id,mouse_behavior) d
     }
 }

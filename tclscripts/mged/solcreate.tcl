@@ -96,7 +96,7 @@ set solc(default_operation) "incr index"
 proc solcreate { id args } {
     global solc
     global $solc(default_indexvar)
-    global player_screen
+    global mged_gui
 
     set w .solc$solc(winnum)
     incr solc(winnum)
@@ -108,7 +108,7 @@ proc solcreate { id args } {
     }
 
     catch { destroy $w }
-    toplevel $w -screen $player_screen($id)
+    toplevel $w -screen $mged_gui($id,screen)
     wm title $w "Solid Creation"
 
     # Make three frames: top one for entry fields and labels, middle one for
@@ -191,10 +191,10 @@ proc solcreate { id args } {
 proc solc_list { w id } {
     global solc
     global $solc($w,indexvar)
-    global player_screen
+    global mged_gui
     
     catch { destroy $w.slist }
-    toplevel $w.slist -screen $player_screen($id)
+    toplevel $w.slist -screen $mged_gui($id,screen)
     wm title $w.slist "Solid type list"
 
     set solc($w,descr) ""

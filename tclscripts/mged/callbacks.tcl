@@ -39,13 +39,13 @@ proc new_db_callback { dbname } {
 # This is called at the start of an edit.
 #
 proc begin_edit_callback {} {
+    global mged_gui
     global mged_display
     global mged_players
-    global show_edit_info
 
     if {$mged_display(state) == "SOL EDIT"} {
 	foreach id $mged_players {
-	    if {$show_edit_info($id)} {
+	    if {$mged_gui($id,show_edit_info)} {
 		init_edit_solid_int $id
 	    }
 	}

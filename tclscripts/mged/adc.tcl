@@ -18,11 +18,10 @@
 #
 
 proc init_adc_control { id } {
-    global player_screen
-    global mged_active_dm
+    global mged_gui
     global mged_adc_control
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
     set top .$id.adc_control
 
     if [winfo exists $top] {
@@ -46,7 +45,7 @@ proc init_adc_control { id } {
 	set mged_adc_control($id,interpval) abs
     }
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF1
     menubutton $top.coordsMB -textvariable mged_adc_control($id,coords_text)\
@@ -315,7 +314,7 @@ proc adc_apply_abs { id } {
 }
 
 proc adc_apply_rel { id } {
-    global mged_active_dm
+    global mged_gui
     global mged_adc_control
 
     switch $mged_adc_control($id,coords) {
@@ -335,14 +334,14 @@ proc adc_apply_rel { id } {
 }
 
 proc adc_load { id } {
-    global mged_active_dm
+    global mged_gui
     global mged_adc_control
 
     if ![winfo exists .$id.adc_control] {
 	return
     }
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
     set mged_adc_control($id,draw) [adc draw]
     set mged_adc_control($id,dst) [format "%.4f" [adc dst]]
@@ -374,14 +373,14 @@ proc adc_load { id } {
 }
 
 proc convert_coords { id } {
-    global mged_active_dm
+    global mged_gui
     global mged_adc_control
 
     if {$mged_adc_control($id,coords) == $mged_adc_control($id,last_coords)} {
 	return
     }
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
     switch $mged_adc_control($id,coords) {
 	model {
