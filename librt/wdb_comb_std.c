@@ -322,7 +322,6 @@ wdb_do_paren(hp)
 
 	for (BU_LIST_FOR(tok, tokens, hp)) {
 		struct tokens *prev, *next;
-		union tree *tp;
 
 		if (tok->type != WDB_TOK_TREE)
 			continue;
@@ -592,8 +591,6 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 	last_tok = WDB_TOK_LPAREN;
 	for (i=0 ; i<argc ; i++) {
 		char *ptr;
-		char *ptr_next;
-		union tree *node;
 
 		ptr = argv[i];
 		while (*ptr) {
