@@ -15,14 +15,6 @@ encouraged to follow these guidelines.  There are simply too many
 religious wars over what usually come down to personal preferences and
 familiarity that are distractions from making productive progress.
 
-Although BRL-CAD was originally developed and supported primarily by
-the U.S. Army Research Laboratory and it's affiliates, it is now a
-true Open Source project with contributors partipating to the source
-code from around the world.  The U.S. Army Research Laboratory
-continues to support and contribute to BRL-CAD, but now the source
-code is primarily driven by a team of core developers and the BRL-CAD
-open source community.
-
 
 TABLE OF CONTENTS
 -----------------
@@ -46,39 +38,6 @@ TABLE OF CONTENTS
 GETTING STARTED
 ---------------
 
-As there are many ways to get started with BRL-CAD, one of the most
-important steps for new developers to do is get involved in the
-discussions and communicate with the BRL-CAD developers.  There are
-mailing lists, on-line forums, and an irc channel dedicated to BRL-CAD
-developer discussions.  Developers are encouraged to participate in
-all of them.
-
-* E-mail Mailing Lists
-
-  Go to http://sf.net/projects/brlcad/ and join the "brlcad-devel"
-  mailing list.  More involved developers will also want to join the
-  "brlcad-commits" and "brlcad-tracker" lists.
-
-* On-line Forum
-
-  Discussion forums are available at http://sf.net/projects/brlcad/
-  under the forums section.  Of particular interest to developers is,
-  of course, the Developers forum.
-
-* Internet Relay Chat
-
-  The primary and generally preferred mechanism for interactive
-  developer discussions is via IRC.  Several of the core developers
-  and users of BRL-CAD hang out in #brlcad on the Freenode network.
-  With most any irc client you should be able to join #brlcad on
-  irc.freenode.net, port 6667.  See http://brlcad.org/irc/ for more
-  information.
-
-To contribute source code to BRL-CAD, begin by submiting source code
-patches to the patches section at http://sf.net/projects/brlcad/.
-Patches in the universal diff format (diff -u) are preferred.
-
-
 HOW TO CONTRIBUTE
 -----------------
 
@@ -91,15 +50,6 @@ highly encouraged that you interact with the developers and discuss
 your intentions.  When in doubt, working on resolving existing bugs,
 improving performance, documentation, and writing tests are perfect
 places to begin.
-
-Bugs are listed in BUGS as well as on http://sf.net/projects/brlcad.
-Running the benchmark suite (see README) and working out ways to
-improve the core performance in a maintainable manner is a good
-direction for working on performance.  BRL-CAD has always gone to
-great lengths to minimize mistakes, and patches are most always
-welcome.  There is much documentation in the form of manpages, source
-code comments, and larger documents located in doc/.  Unit tests are
-needed for just about everything.
 
 For many, at first, it can be overwhelming at just how much there is.
 To a certain extent, you will need to familiarize yourself with the
@@ -581,82 +531,3 @@ patch version.  Every development version modification that is
 backwards incompatible in some manner should increment the patch
 version number.
 
-
-MAKING A RELEASE
-----------------
-
-When making a release, certain public repositories, mailing lists, and
-news outlets require updating and notification.  Especially when the
-major or minor version of BRL-CAD is going to be updated, it is
-important to follow and ensure that the following steps have been
-successfully performed:
-
-0) All code is commited to CVS
-
-1) ChangeLog includes a comment for all items added since the previous
-minor release.
-
-2) All existing manpages are updated with the latest changes.
-
-3) Version numbers (minimally in configure.ac and README) are updated
-appropriately (see VERSION NUMBERS & COMPATIBILITY section).
-
-4) A "./configure && make" completes successfully on all platforms.
-
-5) Perform a "make distcheck" successfully.  This will ensure that a
-proper source distribution tarball may be generated and that a
-non-autotools build should compile properly.
-
-6) Tag the release using the format "rel-MAJOR-MINOR-PATCH".  See the
-doc/cvspolicy.txt document for details.  e.g. cvs tag rel-7-2-3
-
-7) Export the tagged release "cvs export -r rel-MAJOR-MINOR-PATCH" to
-obtain a tagged version of the sources.
-
-8) Perform a "make dist" on the exported sources to generate a source
-tarball.
-
-9) Verify that the source tarball may be expanded; and that it builds,
-runs, and that the file permissions are correct.
-
-10) Use the source tarball to generate platform-specific builds.  Test
-the build.
-
-11) Post the source and platform-specific binaries to the SourceForge
-file tracker (i.e. upload the archives via ftp to http://cvs.sf.net).
-
-12) Increment and commit the BRL-CAD release number in CVS in the
-configure.ac file immediately.
-
-13) Notify the following:
-
-	BRL-CAD Announce mailing list
-	brlcad-announce@lists.sourceforge.net
-
-	BRL-CAD Users mailing list
-	brlcad-users@lists.sourceforge.net
-
-	News on the BRL-CAD website
-	http://brlcad.org/
-
-	SourceForge News
-	http://sf.net/projects/brlcad/
-
-	Freshmeat
-	http://freshmeat.net/projects/brl-cad/
-
-	Slashdot
-	http://slashdot.org
-
-	CAD on Linux mailing list
-	cad-linux@freelists.org
-
-14) Sit back and enjoy a beverage for a job well done.
-
-
-GETTING HELP
-------------
-
-See the GETTING STARTED section.  Basically communicate with the
-developers.  There is an IRC channel, e-mail mailing lists, and
-on-line forums.
