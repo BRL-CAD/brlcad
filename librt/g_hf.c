@@ -710,14 +710,11 @@ struct seg		*seghead;
 {
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
-	register struct seg *segp;
 
 	LOCAL	struct hit	hits[MAXHITS];
 	struct hit *hp;
 	LOCAL	int		nhits;
 	double	xWidth, yWidth;
-
-	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 
 	vect_t  peqn;
 	fastf_t pdist;
@@ -1539,9 +1536,6 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-	register struct hf_specific *hf =
-		(struct hf_specific *)stp->st_specific;
-
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
