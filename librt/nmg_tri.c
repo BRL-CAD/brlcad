@@ -1074,7 +1074,8 @@ struct vertexuse *vu_p;
  *	The primary purpose of this routine is to find the vertexuses
  *	that should be the parameters to nmg_cut_loop() and nmg_join_loop().
  */
-nmg_find_first_and_last_use_of_v_in_fu_on_ray( v, first_vu, last_vu, dir, fu, tol)
+void
+nmg_find_first_last_use_of_v_in_fu(v, first_vu, last_vu, dir, fu, tol)
 struct vertex *v;
 struct vertexuse **first_vu;
 struct vertexuse **last_vu;
@@ -1101,6 +1102,7 @@ struct rt_tol	*tol;
 		rt_bomb("terminating\n");
 	}
 
+	VUNITIZE(dir);
 
 	/* Look at all the uses of this vertex, and find the uses
 	 * associated with an edgeuse in this faceuse.  
@@ -1128,12 +1130,26 @@ struct rt_tol	*tol;
 		NMG_CK_VERTEX(vu_next->v_p);
 		NMG_CK_VERTEX_G(vu_next->v_p->vg_p);
 		VSUB2(eu_dir, vu_next->v_p->vg_p->coord, vu->v_p->vg_p->coord);
+		VUNITIZE(eu_dir);
 		if (MAGSQ(eu_dir) >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
+				if (tri_debug)
+					rt_log("new_max 0x%08x %g %g %g -> %g %g %g vdot %g\n",
+						vu,
+						V3ARGS(vu->v_p->vg_p->coord),
+						V3ARGS(vu_next->v_p->vg_p->coord),
+						vu_dot);
 				dot_max = vu_dot;
 				*first_vu = vu;
 			}
 			if (vu_dot < dot_min) {
+				if (tri_debug)
+					rt_log("new_min 0x%08x %g %g %g -> %g %g %g vdot %g\n",
+						vu, 
+						V3ARGS(vu->v_p->vg_p->coord),
+						V3ARGS(vu_next->v_p->vg_p->coord),
+						vu_dot);
+
 				dot_min = vu_dot;
 				*last_vu = vu;
 			}
@@ -1145,13 +1161,26 @@ struct rt_tol	*tol;
 		NMG_CK_VERTEXUSE(vu_last);
 		NMG_CK_VERTEX(vu_last->v_p);
 		NMG_CK_VERTEX_G(vu_last->v_p->vg_p);
-		VSUB2(eu_dir, vu->v_p->vg_p->coord, vu_last->v_p->vg_p->coord);
+		VSUB2(eu_dir, vu_last->v_p->vg_p->coord, vu->v_p->vg_p->coord);
+		VUNITIZE(eu_dir);
 		if (MAGSQ(eu_dir) >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
+				if (tri_debug)
+					rt_log("new_max 0x%08x %g %g %g <- %g %g %g vdot %g\n",
+						vu, 
+						V3ARGS(vu->v_p->vg_p->coord),
+						V3ARGS(vu_last->v_p->vg_p->coord),
+						vu_dot);
 				dot_max = vu_dot;
 				*first_vu = vu;
 			}
 			if (vu_dot < dot_min) {
+				if (tri_debug)
+					rt_log("new_min 0x%08x %g %g %g <- %g %g %g vdot %g\n",
+						vu,
+						V3ARGS(vu->v_p->vg_p->coord),
+						V3ARGS(vu_last->v_p->vg_p->coord),
+						vu_dot);
 				dot_min = vu_dot;
 				*last_vu = vu;
 			}
@@ -1160,213 +1189,83 @@ struct rt_tol	*tol;
 }
 
 
-static struct pt2d *
-sort_pt(tbl2d, pt1, pt2, tol)
-struct rt_list *tbl2d;
-struct pt2d *pt1, *pt2;
-CONST struct rt_tol *tol;
-{
-	struct pt2d *save_pt, *pt_next, *pt_prev, *pt;
-	vect_t ray_dir, eu_dir;
-	struct vertexuse *vu, *vu1, *vu2;
-	struct faceuse *fu1;
-	double prev_max;
-
-	RT_CK_TOL(tol);
-	NMG_CK_PT2D(pt1);
-	NMG_CK_PT2D(pt2);
-
-	NMG_CK_VERTEXUSE(pt1->vu_p);
-	NMG_CK_VERTEX(pt1->vu_p->v_p);
-	NMG_CK_VERTEX_G(pt1->vu_p->v_p->vg_p);
-
-	NMG_CK_VERTEXUSE(pt2->vu_p);
-	NMG_CK_VERTEX(pt2->vu_p->v_p);
-	NMG_CK_VERTEX_G(pt2->vu_p->v_p->vg_p);
-
-	vu1 = pt1->vu_p;
-	vu2 = pt2->vu_p;
-
-	/* form a vector to represent the cut we want to make */
-	/* XXX what if the points are the same? */
-	VSUB2(ray_dir, pt2->coord, pt1->coord);
-
-	if ((fu1 = nmg_find_fu_of_vu(vu1)) == (struct faceuse *)NULL) {
-		rt_log("no faceuse parent of vertexuse %s %d\n", __FILE__, __LINE__);
-		rt_bomb("help!\n");
-	}
-
-	prev_max = 0.0;
-	save_pt = pt1;
-
-	for (RT_LIST_FOR(vu, vertexuse, &vu1->v_p->vu_hd)) {
-		NMG_CK_VERTEXUSE(vu);
-		NMG_CK_VERTEX(vu->v_p);
-		NMG_CK_VERTEX_G(vu->v_p->vg_p);
-
-		if (nmg_find_fu_of_vu(vu) != fu1 ||
-		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC) continue;
-
-		if ((pt = find_pt2d(tbl2d, vu)) == (struct pt2d *)NULL)
-			rt_bomb("I want my mommy\n");
-
-		/* compute the angle of the outbound edgeuse to the ray */
-		pt_next = PT2D_NEXT(tbl2d, pt1);
-		VSUB2(eu_dir, pt_next->coord, pt->coord);
-		if (VDOT(ray_dir, eu_dir) > prev_max)
-			save_pt = pt;
-
-		/* compute the angle of the inbound edgeuse to the ray */
-		pt_prev = PT2D_PREV(tbl2d, pt1);
-		VSUB2(eu_dir, pt_prev->coord, pt->coord);
-		if (VDOT(ray_dir, eu_dir) > prev_max)
-			save_pt = pt;
-	}
-	return save_pt;
-}
-
-
-
-
 static void
-collect_and_sort_vu(tbl2d, p1, p2, tol)
+pick_pt2d_for_cutjoin(tbl2d, p1, p2, tol)
 struct rt_list *tbl2d;
 struct pt2d **p1, **p2;
 CONST struct rt_tol *tol;
 {
-	struct nmg_ray_state rs;
-	struct nmg_ptbl b;
-	struct pt2d *pt1, *pt2, *sp;
-	point_t pt;
+	struct vertexuse *cut_vu1, *cut_vu2, *junk_vu;
+	struct faceuse *fu;
 	vect_t dir;
-	struct faceuse *fu1, *fu2;
-	struct loopuse *lu;
-	struct vertexuse *vu, *vu1, *vu2;
-	int mid, end, k;
 
-	/* build the nmg_ptbl that nmg_face_rs_init() needs */
+	if (tri_debug)
+		rt_log("pick_pt2d_for_cutjoin()\n");
 
 	RT_CK_TOL(tol);
 	NMG_CK_PT2D(*p1);
 	NMG_CK_PT2D(*p2);
+	NMG_CK_VERTEXUSE((*p1)->vu_p);
+	NMG_CK_VERTEXUSE((*p2)->vu_p);
 	
-	pt1 = *p1;
-	pt2 = *p2;
-	NMG_CK_VERTEXUSE(pt1->vu_p);
-	NMG_CK_VERTEXUSE(pt2->vu_p);
+	cut_vu1 = (*p1)->vu_p;
+	cut_vu2 = (*p2)->vu_p;
 
-	if (tri_debug)
-	    rt_log("collect_and_sort_vu(tbl2d,\n\t0x%08x (%g %g),\n\t0x%08x (%g %g))\n",
-		pt1->vu_p, pt1->coord[0], pt1->coord[1],
-		pt2->vu_p, pt2->coord[0], pt2->coord[1]);
+	NMG_CK_VERTEX(cut_vu1->v_p);
+	NMG_CK_VERTEX_G(cut_vu1->v_p->vg_p);
+	NMG_CK_VERTEX(cut_vu2->v_p);
+	NMG_CK_VERTEX_G(cut_vu2->v_p->vg_p);
 
-	sp = sort_pt(tbl2d, p1, p2, tol);
-	sp = sort_pt(tbl2d, p2, p1, tol);
+	/* form direction vector for the cut we want to make */
+	VSUB2(dir, cut_vu2->v_p->vg_p->coord,
+		   cut_vu1->v_p->vg_p->coord);
 
-	nmg_tbl(&b, TBL_INIT, (long *)NULL); 
-	
-	vu1 = pt1->vu_p;
-	vu2 = pt2->vu_p;
-
-	/* put the vertexuses for vu1->v_p from this loop on the list */
-	if ((fu1 = nmg_find_fu_of_vu(vu1)) == (struct faceuse *)NULL) {
-		rt_log("no faceuse parent of vertexuse %s %d\n", __FILE__, __LINE__);
-		rt_bomb("help!\n");
-	}
-	for (RT_LIST_FOR(vu, vertexuse, &vu1->v_p->vu_hd)) {
-		NMG_CK_VERTEXUSE(vu);
-		if (nmg_find_fu_of_vu(vu) == fu1)
-			mid = nmg_tbl(&b, TBL_INS, (long *)vu);
+	if ( ! (fu = nmg_find_fu_of_vu(cut_vu1)) ) {
+		rt_log("%s: %d no faceuse parent of vu\n", __FILE__, __LINE__);
+		rt_bomb("Bye now\n");
 	}
 
-	/* put the vertexuses for vu2->v_p from this loop on the list */
-	if ((fu2 = nmg_find_fu_of_vu(vu2)) == (struct faceuse *)NULL) {
-		rt_log("no faceuse parent of vertexuse %s %d\n", __FILE__, __LINE__);
-		rt_bomb("help!\n");
-	} else if (fu2 != fu1) {
-		rt_log("faceuses are not the same %s %d\n", __FILE__, __LINE__);
-		rt_bomb("The vertexuse is familiar, but I can't place the face\n");
-	}
-	for (RT_LIST_FOR(vu, vertexuse, &vu2->v_p->vu_hd)) {
-		NMG_CK_VERTEXUSE(vu);
-		if (nmg_find_fu_of_vu(vu) == fu2)
-			end = nmg_tbl(&b, TBL_INS, (long *)vu);
-	}
- 
+	nmg_find_first_last_use_of_v_in_fu((*p1)->vu_p->v_p,
+		&junk_vu, &cut_vu1, dir, fu, tol);
 
-	VMOVE(pt,  vu1->v_p->vg_p->coord);
-	VSUB2(dir, vu2->v_p->vg_p->coord, pt);
-	VUNITIZE(dir);
-	nmg_face_rs_init(&rs, &b, fu1, fu1->fumate_p, pt, dir, tol);
-
-	if (mid == 0 && end == 1) {
-		if (tri_debug) rt_log("\tNo sorting necessary\n");
-		return;
-	}
+	*p1 = find_pt2d(tbl2d, cut_vu1);
 
 	if (tri_debug) {
-		rt_log("\tunsorted vertexuse lists\n\t--list1--\n");
-		for (k = 0 ; k <= mid ; k++) {
-			vu = (struct vertexuse *)b.buffer[k];
-			NMG_CK_VERTEXUSE( vu );
-			pt1 = find_pt2d(tbl2d, vu);
-			pt2 = PT2D_NEXT(tbl2d, pt1);
+		struct pt2d *pj, *pj_n, *p1_n;
 
-			rt_log("\t0x%08x %g %g -> 0x%08x %g %g\n",
-				pt1->vu_p, pt1->coord[0], pt1->coord[1], 
-				pt2->vu_p, pt2->coord[0], pt2->coord[1]);
-		}
+		pj = find_pt2d(tbl2d, junk_vu);
+		pj_n = PT2D_NEXT(tbl2d, pj);
+
+		p1_n = PT2D_NEXT(tbl2d, (*p1));
+
+		rt_log("\tp1 pick %g %g -> %g %g (first)\n\t\t%g %g -> %g %g (last)\n",
+			pj->coord[0], pj->coord[1],
+			pj_n->coord[0], pj_n->coord[1],
+			(*p1)->coord[0], (*p1)->coord[1],
+			p1_n->coord[0], p1_n->coord[1]);
 	}
-	if (mid > 0)
-		nmg_face_coincident_vu_sort(&rs, 0, mid+1);
-	else if (tri_debug)
-		rt_log("\tlist of length 1 is sorted\n");
 
 
+	nmg_find_first_last_use_of_v_in_fu((*p2)->vu_p->v_p,
+		&cut_vu2, &junk_vu, dir, fu, tol);
+
+
+	*p2 = find_pt2d(tbl2d, cut_vu2);
 	if (tri_debug) {
-		rt_log("\t--list2--\n");
-		for (k = mid+1 ; k <= end ; k++) {
-			vu = (struct vertexuse *)b.buffer[k];
-			NMG_CK_VERTEXUSE( vu );
-			pt1 = find_pt2d(tbl2d, vu);
-			pt2 = PT2D_NEXT(tbl2d, pt1);
+		struct pt2d *pj, *pj_n, *p2_n;
 
-			rt_log("\t0x%08x %g %g -> 0x%08x %g %g\n",
-				pt1->vu_p, pt1->coord[0], pt1->coord[1], 
-				pt2->vu_p, pt2->coord[0], pt2->coord[1]);
-		}
+		pj = find_pt2d(tbl2d, junk_vu);
+		pj_n = PT2D_NEXT(tbl2d, pj);
+
+		p2_n = PT2D_NEXT(tbl2d, (*p2));
+		rt_log("\tp2 pick %g %g -> %g %g (first)\n\t\t%g %g -> %g %g (last)\n",
+			(*p2)->coord[0], (*p2)->coord[1],
+			p2_n->coord[0], p2_n->coord[1],
+			pj->coord[0], pj->coord[1],
+			pj_n->coord[0], pj_n->coord[1]);
 	}
-	if (end-mid > 1)
-		nmg_face_coincident_vu_sort(&rs, mid+1, end+1);
-	else if (tri_debug)
-		rt_log("\tlist of length 1 is sorted\n");
 
-
-	if (tri_debug) {
-		rt_log("\tsorted vertexuses:\n\t--list1--\n");
-
-		for (k=0 ; k <= end ; k++) {
-			vu = (struct vertexuse *)b.buffer[k];
-			NMG_CK_VERTEXUSE( vu );
-			pt1 = find_pt2d(tbl2d, vu);
-			pt2 = PT2D_NEXT(tbl2d, pt1);
-
-			if (k == mid) *p1 = pt1;
-			else if (k== mid+1) *p2 = pt1;
-
-			rt_log("\t0x%08x %g %g -> 0x%08x %g %g\n",
-				pt1->vu_p, pt1->coord[0], pt1->coord[1], 
-				pt2->vu_p, pt2->coord[0], pt2->coord[1]);
-
-			if (k== mid) rt_log("\t--list2--\n");
-		}
-	    rt_log("\tpicking 0x%08x %g %g -> 0x%08x %g %g\n",
-		(*p1)->vu_p, (*p1)->coord[0], (*p1)->coord[1], 
-		(*p2)->vu_p, (*p2)->coord[0], (*p2)->coord[1]);
-	}
 }
-
-
 
 
 
@@ -1395,6 +1294,7 @@ int void_ok;
 	struct vertex *v;
 	struct pt2d *new_pt2d, *p;
 
+
 	RT_CK_TOL(tol);
 	NMG_CK_PT2D(p1);
 	NMG_CK_PT2D(p2);
@@ -1410,7 +1310,9 @@ int void_ok;
 		rt_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
 		rt_bomb("cut_mapped_loop() goodnight 1\n");
 	}
-	collect_and_sort_vu(tbl2d, &p1, &p2, tol);
+	
+	pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
+
 	if (p1->vu_p->up.eu_p->up.lu_p != p2->vu_p->up.eu_p->up.lu_p) {
 		if (void_ok) {
 			rt_log("parent loops are not the same %s %d,\n\ttrying join ", __FILE__, __LINE__);
@@ -1431,10 +1333,10 @@ int void_ok;
 	new_lu = nmg_cut_loop(p1->vu_p, p2->vu_p);
 	NMG_CK_LOOPUSE(new_lu);
 
-	/* XXX Does anyone care about loopuse orientations at this stage? */
+	/* XXX Does anyone care about loopuse orientations at this stage?
 	nmg_lu_reorient( old_lu, tol );
 	nmg_lu_reorient( new_lu, tol );
-
+ */
 	/* get the edgeuse of the new vertexuse we just created */
 	eu = RT_LIST_PREV(edgeuse, &new_lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
@@ -1477,7 +1379,7 @@ CONST struct rt_tol	*tol;
 		rt_bomb("goodnight\n");
 	}
 
-	collect_and_sort_vu(tbl2d, &p1, &p2, tol);
+	pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);	
 
 	if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 		rt_log("parent loops are the same %s %d\n", __FILE__, __LINE__);
@@ -1569,14 +1471,12 @@ CONST struct rt_tol	*tol;
 		if (tri_debug) {
 			rt_log("trying to cut ...\n");
 			print_trap(tp, tbl2d);
-
-			rt_log("postulating....\n");
 		}
 
-		collect_and_sort_vu(tbl2d, &top, &bot, tol);
+/*		pick_pt2d_for_cutjoin(tbl2d, &top, &bot, tol);
 
 		if (tri_debug)
-			rt_log("....postulated\n");
+			rt_log("....postulated\n"); */
 
 		/* top/bottom points are not on same side of trapezoid. */
 
