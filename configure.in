@@ -269,17 +269,17 @@ AC_CONFIG_FILES([
 	libdm/Makefile
 	libfb/Makefile
 	libfft/Makefile
-	libitcl3.2/Makefile
-	libitcl3.2/itcl/Makefile
-	libitcl3.2/itcl/doc/Makefile
-	libitcl3.2/itcl/generic/Makefile
-	libitcl3.2/itcl/library/Makefile
-	libitcl3.2/itcl/unix/Makefile
-	libitcl3.2/itk/Makefile
-	libitcl3.2/itk/doc/Makefile
-	libitcl3.2/itk/generic/Makefile
-	libitcl3.2/itk/library/Makefile
-	libitcl3.2/itk/unix/Makefile
+	libitcl/Makefile
+	libitcl/itcl/Makefile
+	libitcl/itcl/doc/Makefile
+	libitcl/itcl/generic/Makefile
+	libitcl/itcl/library/Makefile
+	libitcl/itcl/unix/Makefile
+	libitcl/itk/Makefile
+	libitcl/itk/doc/Makefile
+	libitcl/itk/generic/Makefile
+	libitcl/itk/library/Makefile
+	libitcl/itk/unix/Makefile
 	liboptical/Makefile
 	liborle/Makefile
 	libpkg/Makefile

@@ -5,7 +5,7 @@ SUBDIRS=\
 	libpng\
 	libtcl8.4\
 	libtk8.4\
-	libitcl3.2\
+	libitcl\
 	iwidgets4.0.1\
 	libz\
 	libbn\
