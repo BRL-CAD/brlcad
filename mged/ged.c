@@ -852,6 +852,10 @@ event_check( non_blocking )
 int	non_blocking;
 {
     vect_t		knobvec;	/* knob slew */
+#ifdef MULTI_ATTACH
+    register struct dm_list *p;
+    struct dm_list *save_dm_list;
+#endif
 
     /* Let cool Tk event handler do most of the work */
 
@@ -918,6 +922,13 @@ again:
     windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
     dmp->dmr_window(windowbounds);	/* hack */
 
+#ifdef MULTI_ATTACH
+    save_dm_list = curr_dm_list;
+    for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+
+      curr_dm_list = p;
+#endif
+
     /*********************************
      *  Handle rate-based processing *
      *********************************/
@@ -960,6 +971,10 @@ again:
 	dmaflag = 1;
 	new_mats();
     }
+#ifdef MULTI_ATTACH
+        curr_dm_list = save_dm_list;
+    }
+#endif
 
     return( non_blocking );
 }

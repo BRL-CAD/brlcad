@@ -22,9 +22,6 @@ struct device_values  {
 };
 extern struct device_values dm_values;
 
-/* Used to ignore the old scrollbars and menus */
-extern int ignore_scroll_and_menu;
-
 /* Interface to a specific Display Manager */
 struct dm {
 	int	(*dmr_open)();
@@ -55,11 +52,7 @@ struct dm {
 	int	(*dmr_cmd)();		/* dm-specific cmds to perform */
 };
 
-#ifndef MULTI_ATTACH
-
-extern struct dm *dmp;			/* ptr to current display mgr */
-
-#else
+#ifdef MULTI_ATTACH
 
 struct dm_list {
   struct rt_list l;
@@ -80,6 +73,11 @@ struct dm_list {
 
 /* Angle/distance cursor stuff */
   int     _adcflag;
+  int     _dv_xadc;
+  int     _dv_yadc;
+  int     _dv_1adc;
+  int     _dv_2adc;
+  int     _dv_distadc;
   fastf_t _curs_x;
   fastf_t _curs_y;
   fastf_t _c_tdist;
@@ -117,6 +115,11 @@ extern struct dm_list *curr_dm_list;
 #define c_tdist curr_dm_list->_c_tdist
 #define angle1 curr_dm_list->_angle1
 #define angle2 curr_dm_list->_angle2
+#define dv_xadc curr_dm_list->_dv_xadc
+#define dv_yadc curr_dm_list->_dv_yadc
+#define dv_1adc curr_dm_list->_dv_1adc
+#define dv_2adc curr_dm_list->_dv_2adc
+#define dv_distadc curr_dm_list->_dv_distadc
 
 #define rateflag_slew curr_dm_list->_rateflag_slew
 #define rate_slew curr_dm_list->_rate_slew
@@ -135,6 +138,12 @@ extern struct dm_list *curr_dm_list;
 #define view2model curr_dm_list->_view2model
 #define model2objview curr_dm_list->_model2objview
 #define objview2model curr_dm_list->_objview2model
+
+#else
+/* Not MULTI_ATTACH */
+
+extern struct dm *dmp;			/* ptr to current display mgr */
+
 #endif
 
 /*
