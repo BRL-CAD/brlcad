@@ -714,12 +714,6 @@ read_rc_file()
 			return;
 		}
 	}
-
-	if( (fp = fopen("/usr/brlcad/etc/.remrtrc", "r")) != NULL )  {
-		source(fp);
-		fclose(fp);
-		return;
-	}
 }
 
 /*
