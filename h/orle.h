@@ -23,8 +23,10 @@
  */
 
 /********* Be certain to update this!! **********/
-#if defined( gould ) || defined( sel ) || defined(sun) || defined(sgi) || defined(alliant)
-#define BIGENDIAN
+#if !defined( vax )
+#define BIGENDIAN	/* Byte [0] on left side of word */
+#else
+/* Little-endian.  Byte [0] on right side of word */
 #endif
 
 #ifdef BIGENDIAN
