@@ -578,6 +578,9 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACE(fu->f_p);
 	NMG_CK_FACE_G(fu->f_p->fg_p);
 
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		rt_log("nmg_class_lu_fu(lu=x%x) START\n", lu);
+
 	/* Pick first vertex in loopuse, for point */
 	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
@@ -638,7 +641,8 @@ again:
 	}
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		rt_log("nmg_class_lu_fu\tdist=%g, return=%s\n",
+		rt_log("nmg_class_lu_fu(lu=x%x) END, dist=%g, ret=%s\n",
+			lu,
 			closest.dist,
 			nmg_class_name(closest.class) );
 	}
