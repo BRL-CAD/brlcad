@@ -69,6 +69,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "pkg.h"
 #include "externs.h"
+#include "../librt/debug.h"
 
 #include "./list.h"
 #include "./protocol.h"
@@ -367,7 +368,7 @@ char	file_fullname[128];	/* contains full file name */
 char	object_list[512];	/* contains list of "MGED" objects */
 
 FILE	*helper_fp;		/* pipe to rexec helper process */
-char	ourname[128];
+char	ourname[512];
 
 int	tcp_listen_fd;
 extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
@@ -469,8 +470,23 @@ char	**argv;
 	register struct servers *sp;
 
 	/* Random inits */
-	gethostname( ourname, sizeof(ourname) );
-	fprintf(stderr,"%s %s\n", stamp(), version+5 );
+	/*
+	 * There is a problem in some hosts that gethostname() will only
+	 * return the host name and *not* the fully qualified host name
+	 * with domain name.
+	 *
+	 * gethostbyname() will return a host table (nameserver) entry
+	 * where h_name is the "offical name", i.e. fully qualified.
+	 * Therefore the following piece of code.
+	 */
+	{
+		char temp[512];
+		struct hostent *hp;
+		gethostname(temp, sizeof(temp));
+		hp = gethostbyname(temp);
+		strcpy(ourname, hp->h_name);
+	}
+	fprintf(stderr,"%s %s %s\n", stamp(), ourname, version+5 );
 	fflush(stderr);
 
 	width = height = 512;			/* same size as RT */
@@ -2311,6 +2327,7 @@ int		a, b;
 		if( lp->li_start == a )  {
 			if( lp->li_stop == b )  {
 				DEQUEUE_LIST(lp);
+				FREE_LIST(lp);
 				return;
 			}
 			lp->li_start = b+1;
@@ -2429,6 +2446,7 @@ register struct frame *fr;
 	line = (unsigned char *)rt_malloc( nby, "scanline" );
 	if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
 		perror( fr->fr_filename );
+		rt_free( (char *)line, "scanline" );
 		return;
 	}
 	w = fr->fr_width;
@@ -2841,7 +2859,7 @@ start_helper()
 		FILE	*fp;
 
 		(void)close(fds[1]);
-		if( (fp = fdopen( fds[0], "r" )) == NULL )  {
+		if( (fp = fdopen( fds[0], "r" )) == (FILE *)NULL )  {
 			perror("fdopen");
 			exit(3);
 		}
@@ -2853,7 +2871,7 @@ start_helper()
 		exit(2);
 	}
 	/* Parent process */
-	if( (helper_fp = fdopen( fds[1], "w" )) == NULL )  {
+	if( (helper_fp = fdopen( fds[1], "w" )) == (FILE *)NULL )  {
 		perror("fdopen");
 		exit(4);
 	}
@@ -3458,6 +3476,18 @@ char	**argv;
 	}
 }
 
+cd_memprint( argc, argv)
+int	argc;
+char	**argv;
+{
+	if (strcmp(argv[1],"on")==0) {
+		rt_g.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
+	} else if (strcmp(argv[1], "off") == 0) {
+		rt_g.debug &= ~(DEBUG_MEM|DEBUG_MEM_FULL);
+	} else {
+		rt_prmem("memprint command");
+	}
+}
 /*
  *			C D _ S T A T
  *
@@ -3864,6 +3894,8 @@ struct command_tab cmd_tab[] = {
 		cd_persp,	2, 2,
 	"print", "[0|1]",	"set/toggle remote message printing",
 		cd_print,	1, 2,
+	"memprint", "on|off|NULL",	"debug dump of memory usage",
+		cd_memprint,	1, 2,
 	/* HELP */
 	"?", "",		"help",
 		cd_help,	1, 1,
