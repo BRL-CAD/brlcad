@@ -1226,6 +1226,7 @@ CONST struct bn_tol *tol;
 /*
  *			N M G _ M O D E L _ E D G E _ F U S E
  */
+#if 0
 int
 nmg_model_edge_fuse( m, tol )
 struct model		*m;
@@ -1358,6 +1359,58 @@ again:
 
 	return total;
 }
+#else
+int
+nmg_model_edge_fuse( m, tol )
+struct model *m;
+struct bn_tol *tol;
+{
+	struct bu_ptbl edges;
+	int i, j;
+	int count=0;
+
+	NMG_CK_MODEL( m );
+	BN_CK_TOL( tol );
+
+	nmg_edge_tabulate( &edges, &m->magic );
+
+	for( i=0 ; i<BU_PTBL_END( &edges )-1 ; i++ )
+	{
+		struct edge *e1;
+		struct edgeuse *eu1;
+
+		e1 = (struct edge *)BU_PTBL_GET( &edges, i );
+		eu1 = e1->eu_p;
+		if( !eu1 )
+			continue;
+		if( *eu1->g.magic_p != NMG_EDGE_G_LSEG_MAGIC )
+			continue;
+
+		for( j=i+1 ; j<BU_PTBL_END( &edges ) ; j++ )
+		{
+			struct edge *e2;
+			struct edgeuse *eu2;
+
+			e2 = (struct edge *)BU_PTBL_GET( &edges, j );
+			eu2 = e2->eu_p;
+			if( !eu2 )
+				continue;
+			if( *eu2->g.magic_p != NMG_EDGE_G_LSEG_MAGIC )
+				continue;
+
+			if( NMG_ARE_EUS_ADJACENT( eu1, eu2 ) )
+			{
+				count++;
+				nmg_radial_join_eu(eu1, eu2, tol);
+			}
+		}
+	}
+
+	bu_ptbl_free( &edges );
+
+	return( count );
+}
+#endif
 
 /* XXX move to nmg_info.c */
 /*
@@ -1873,6 +1926,7 @@ CONST struct bn_tol *tol;
 	for( i=0 ; i<BU_PTBL_END( &eus ) ; i++ )
 	{
 		struct edgeuse *eu;
+		struct edgeuse *eu_next, *eu_prev;
 		struct vertex *va;
 		struct vertex *vb;
 		fastf_t dist;
@@ -1890,6 +1944,15 @@ CONST struct bn_tol *tol;
 
 		if( va == v ) continue;
 		if( vb == v ) continue;
+
+		eu_next = BU_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+		eu_prev = BU_LIST_PPREV_CIRC( edgeuse, &eu->l );
+
+		if( eu_prev->vu_p->v_p == v )
+			continue;
+
+		if( eu_next->eumate_p->vu_p->v_p == v )
+			continue;
 
 		code = bn_isect_pt_lseg( &dist, va->vg_p->coord, vb->vg_p->coord,
 			v->vg_p->coord, tol );
