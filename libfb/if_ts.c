@@ -287,6 +287,15 @@ int	x, y;
 RGBpixel	*pixelp;
 int	count;
 {
+	struct	point dest;
+	struct	size size;
+
+	dest.x = x;
+	dest.y = y;
+	size.width = count;
+	size.height = 1;	/*XXX*/
+
+	f_rdpixar_f(&dest,&size,2,pixelp);
 	return(count);
 }
 
@@ -560,8 +569,21 @@ int	xmin, ymin;
 int	width, height;
 RGBpixel	*pp;
 {
-	/* XXX */
+#if 0
+	struct	point dest;
+	struct	size size;
+
+	dest.x = xmin;
+	dest.y = ymin;
+	size.width = width;
+	size.height = height;
+	f_rdpixar_f(&dest,&size,2,pp);
+
 	return( width*height );
+#else
+	/* until we get 24bit reads that work... sigh */
+	return fb_sim_readrect(ifp, xmin, ymin, width, height, pp);
+#endif
 }
 
 _LOCAL_ int
