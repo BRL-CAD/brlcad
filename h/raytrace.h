@@ -72,6 +72,11 @@ struct hit {
  *			C U R V A T U R E
  *
  *  Information about curvature of the surface at a hit point.
+ *  The principal direction pdir has unit length and principal curvature c1.
+ *  Principal curvature c1 is <= c2.  A POSITIVE curvature in a
+ *  particular direction indicates that the surface bends AWAY
+ *  from the (outward pointing) normal vector.  (Thanks to GIFT).
+ *  c1 and c2 are inverse radii.
  */
 struct curvature {
 	vect_t		crv_pdir;	/* Principle direction */
@@ -80,6 +85,12 @@ struct curvature {
 };
 #define CURVE_NULL	((struct curvature *)0)
 
+/*
+ *  Use this macro after having computed the normal, to
+ *  compute the curvature at a hit point.
+ */
+#define RT_CURVE( curvp, hitp, stp, rayp ) \
+	rt_functab[(stp)->st_id].ft_curve( curvp, hitp, stp, rayp )
 
 /*
  *			U V C O O R D
