@@ -1035,7 +1035,7 @@ struct rt_db_internal	*intern;
 	dsp->dsp_xcnt = atoi( cmd_argvs[5] );
 	dsp->dsp_ycnt = atoi( cmd_argvs[6] );
 	dsp->dsp_smooth = atoi( cmd_argvs[7] );
-	switch ( *cmd_argvs[8] == 'a' ) {
+	switch ( *cmd_argvs[8] ) {
 	case 'a':	/* adaptive */
 	case 'A': 
 	    dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
@@ -1046,7 +1046,10 @@ struct rt_db_internal	*intern;
 	case 'L':	/* Upper Left to lower right */
 	    dsp->dsp_cuttype = DSP_CUT_DIR_ULlr;
 	    break;
-	
+	default:
+	    bu_log("Error: dsp_cuttype:\"%s\"\n", cmd_argvs[8]);
+	    return -1;
+	    break;
 	}
 
 	MAT_IDN( dsp->dsp_stom );

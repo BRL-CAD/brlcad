@@ -252,7 +252,7 @@ hook_file(
  */
 const struct bu_structparse rt_dsp_parse[] = {
     {"%S",	1, "file", DSP_O(dsp_name), hook_file },
-    {"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+    {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%f", 16, "stom", DSP_AO(dsp_stom), hook_mtos_from_stom },
@@ -261,7 +261,7 @@ const struct bu_structparse rt_dsp_parse[] = {
 
 const struct bu_structparse rt_dsp_ptab[] = {
     {"%S",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+    {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
@@ -522,8 +522,7 @@ dsp_print_v4(vls, dsp_ip)
     point_t pt, v;
     RT_DSP_CK_MAGIC(dsp_ip);
     BU_CK_VLS(&dsp_ip->dsp_name);
-
-    bu_vls_init( vls );
+    BU_CK_VLS(vls);
 
     bu_vls_printf( vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d ",
 		   bu_vls_addr(&dsp_ip->dsp_name),
@@ -556,19 +555,23 @@ dsp_print_v4(vls, dsp_ip)
  *
  */
 static void
-dsp_print_v5(vls, dsp_ip)
-     struct bu_vls *vls;
-     const struct rt_dsp_internal *dsp_ip;
+dsp_print_v5(struct bu_vls *vls,
+	     const struct rt_dsp_internal *dsp_ip)
 {
     point_t pt, v;
+
+    BU_CK_VLS(vls);
+
     RT_DSP_CK_MAGIC(dsp_ip);
     BU_CK_VLS(&dsp_ip->dsp_name);
 
-    bu_vls_init( vls );
 
     bu_vls_printf( vls, "Displacement Map\n" );
 
     switch (dsp_ip->dsp_datasrc) {
+    case RT_DSP_SRC_V4_FILE:
+	bu_vls_printf( vls, "  Error Error Error");
+	break;
     case RT_DSP_SRC_FILE:
 	bu_vls_printf( vls, "  file");
 	break;
@@ -593,6 +596,8 @@ dsp_print_v5(vls, dsp_ip)
 	bu_vls_printf( vls, "cut=lR" ); break;
     case DSP_CUT_DIR_ULlr:
 	bu_vls_printf( vls, "cut=Lr" ); break;
+    default:
+	bu_vls_printf( vls, "cut'%c'/%d",dsp_ip->dsp_cuttype,dsp_ip->dsp_cuttype ); break;
     }
 
 
@@ -631,11 +636,19 @@ rt_dsp_print( stp )
     RT_DSP_CK_MAGIC(dsp);
     BU_CK_VLS(&dsp->dsp_i.dsp_name);
 
+    bu_vls_init( &vls );
+    BU_CK_VLS(&vls);
+
+    bu_vls_printf(&vls, "\n---------db version: %d----------\n",
+		  stp->st_rtip->rti_dbip->dbi_version );
+
     switch (stp->st_rtip->rti_dbip->dbi_version) {
     case 4: 
+	BU_CK_VLS(&vls);
 	dsp_print_v4(&vls, &(dsp->dsp_i) );
 	break;
     case 5:
+	BU_CK_VLS(&vls);
 	dsp_print_v5(&vls, &(dsp->dsp_i) );
 	break;
     }
@@ -3611,23 +3624,35 @@ rt_dsp_export5( ep, ip, local2mm, dbip )
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_dsp_describe( str, ip, verbose, mm2local )
-     struct bu_vls		*str;
-     const struct rt_db_internal *ip;
-     int			verbose;
-     double			mm2local;
+rt_dsp_describe(struct bu_vls		*str,
+		const struct rt_db_internal *ip,
+		int			verbose,
+		double			mm2local,
+		struct resource		*resp,
+		struct db_i		*db_ip)
 {
     register struct rt_dsp_internal	*dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     struct bu_vls vls;
 
+    RT_CK_DBI(db_ip);
+
+    bu_vls_init( &vls );
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_describe()\n");
 
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    dsp_print_v5(&vls, dsp_ip);
+    switch (db_ip->dbi_version) {
+    case 4: 
+	dsp_print_v4(&vls, dsp_ip );
+	break;
+    case 5:
+	dsp_print_v5(&vls, dsp_ip );
+	break;
+    }
+
     bu_vls_vlscat( str, &vls );
 
     if (BU_VLS_IS_INITIALIZED( &vls )) bu_vls_free( &vls );
