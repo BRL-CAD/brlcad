@@ -10,10 +10,10 @@ rcs_id[] = "$Header$";
 #include	<errno.h>
 #include	<signal.h>
 #include	<fcntl.h>
-#if defined(vax) && defined(BSD)
-# undef BSD	/* is defined in sys/param.h */
+#if defined(BSD)
+# undef BSD	/* is defined in sys/param.h, and isn't needed aftere here */
 #endif
-#include	<sys/param.h>
+#include	<sys/param.h>		/* for NOFILE */
 
 extern	List	*active_procs;		/* of Proc	*/
 
@@ -202,7 +202,7 @@ reg	int	pid;
 		return status.w_status;
 	}
 
-#if defined(__convexc__) || defined(__bsdi__)
+#if defined(__convexc__) || defined(__bsdi__) || defined(__FreeBSD__)
 	while ((exitpid = wait(&status.w_status)) != -1)
 #else
 	while ((exitpid = wait(&status)) != -1)

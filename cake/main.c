@@ -420,7 +420,7 @@ build_cppargv()
 		fclose(fp);
 
 		/* Slurp up dead process indication from popen() */
-#if defined(__convexc__) || defined(__bsdi__)
+#if defined(__convexc__) || defined(__bsdi__) || defined(__FreeBSD__)
 		while (wait(&status.w_status) != -1) ;
 #else
 		while (wait(&status) != -1) ;
