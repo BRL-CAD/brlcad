@@ -38,6 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #undef	VMIN
 #include "machine.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "raytrace.h"
 #include "pkg.h"
 #include "fb.h"
@@ -511,7 +512,7 @@ char *buf;
 
 	do_prep( rtip );
 
-	if( rtip->HeadSolid == SOLTAB_NULL )  {
+	if( RT_LIST_IS_EMPTY( &rtip->rti_headsolid ) )  {
 		rt_log("ph_matrix: No solids remain after prep.\n");
 		exit(3);
 	}
