@@ -10,6 +10,7 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
+ *	John R. Anderson
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -1237,4 +1238,467 @@ struct edgeuse *eu;
 			return eu->up.lu_p->up.fu_p;
 
 	return (struct faceuse *)NULL;			
+}
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+#include "machine.h"
+#include "db.h"
+#include "externs.h"
+#include "vmath.h"
+#include "nmg.h"
+#include "rtgeom.h"
+#include "raytrace.h"
+#include "../librt/debug.h"
+
+
+/*
+ *	O R D E R _ T B L
+ *
+ *	private support routine for nmg_close_shell
+ *	creates an array of indices into a table of edgeuses, ordered
+ *	to create a loop.
+ *
+ *	Arguments:
+ *	tbl is the table (provided by caller)
+ *	index is the array of indices created by order_tbl
+ *	tbl_size is the size of the table (provided by caller)
+ *	loop_size is the number of edgeuses in the loop (calculated by order_tbl)
+ */
+static void
+order_tbl( struct nmg_ptbl *tbl , int **index , int tbl_size , int *loop_size )
+{
+	int i,j;
+	int found;
+	struct edgeuse *eu,*eu1;
+
+	/* create an index into the table, ordered to create a loop */
+	if( *index == NULL )
+		(*index) = (int *)rt_calloc( tbl_size , sizeof( int ) , "Table index" );
+
+	for( i=0 ; i<tbl_size ; i++ )
+		(*index)[i] = (-1);
+
+	/* start the loop at index = 0 */
+	(*index)[0] = 0;
+	*loop_size = 1;
+	eu = (struct edgeuse *)NMG_TBL_GET( tbl , 0 );
+	found = 1;
+	i = 0;
+	while( found )
+	{
+		found = 0;
+
+		/* Look for edgeuse that starts where "eu" ends */
+		for( j=1 ; j<tbl_size ; j++ )
+		{
+			eu1 = (struct edgeuse *)NMG_TBL_GET( tbl , j );
+			if( eu1->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+			{
+				/* Found it */
+				found = 1;
+				(*index)[++i] = j;
+				(*loop_size)++;
+				eu = eu1;
+				break;
+			}
+		}
+	}
+}
+
+/*
+ *	N M G _ C L O S E _ S H E L L
+ *
+ *	Examines the passed shell and, if there are holes, closes them
+ *	note that note much care is taken as to how the holes are closed
+ *	so the results are not entirely predictable.
+ *	A list of free edges is created (edges bounding only one face).
+ *	New faces are constructed by taking two consecutive edges
+ *	and making a face. The newly created edge is added to the list
+ *	of free edges and the two used ones are removed.
+ *
+ */
+void
+nmg_close_shell( struct shell *s , struct rt_tol *tol )
+{
+	struct nmg_ptbl eu_tbl;		/* table of free edgeuses from shell */
+	struct nmg_ptbl vert_tbl;	/* table of vertices for use in nmg_cface */
+	int *index;			/* array of indices into eu_tbl, ordered to form a loop */
+	int loop_size;			/* number of edgeueses in loop */
+	struct faceuse **fu_list;	/* array of pointers to faceuses, for use in nmg_gluefaces */
+	int fu_counter=0;		/* number of faceuses in above array */
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu,*eu1,*eu2,*eu3,*eu_new;
+	int i,j;
+	int found;
+
+	index = NULL;
+
+	NMG_CK_SHELL( s );
+
+	/* construct a table of free edges */
+	(void)nmg_tbl( &eu_tbl , TBL_INIT , NULL );
+
+	/* loop through all the faces in the shell */
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		/* only look at OT_SAME faces */
+		if( fu->orientation == OT_SAME )
+		{
+			/* count 'em */
+			fu_counter++;
+			/* loop through each loopuse in the face */
+			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			{
+				NMG_CK_LOOPUSE( lu );
+				/* ignore loops that are just a vertex */
+				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) ==
+					NMG_VERTEXUSE_MAGIC )
+						continue;
+
+				/* loop through all the edgeuses in the loop */
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					NMG_CK_EDGEUSE( eu );
+					/* if this edgeuse is a free edge, add its mate to the list */
+					if( eu->radial_p == eu->eumate_p )
+						(void)nmg_tbl( &eu_tbl , TBL_INS , (long *) eu->eumate_p );
+				}
+			}
+		}
+	}
+
+	/* if there is nothing in our list of free edges, the shell is already closed */
+	if( NMG_TBL_END( &eu_tbl ) == 0 )
+	{
+		nmg_tbl( &eu_tbl , TBL_FREE , NULL );
+		return;
+	}
+
+	/* put all the existing faces in a list (needed later for "nmg_gluefaces") */
+	fu_list = (struct faceuse **)rt_calloc( fu_counter + NMG_TBL_END( &eu_tbl ) - 2 , sizeof( struct faceuse *) , "face use list " );
+	fu_counter = 0;
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation == OT_SAME )
+			fu_list[fu_counter++] = fu;
+	}
+
+	/* create a table of vertices */
+	(void)nmg_tbl( &vert_tbl , TBL_INIT , NULL );
+
+	while( NMG_TBL_END( &eu_tbl ) )
+	{
+		vect_t normal,v1,v2,tmp_norm;
+		int give_up_on_face=0;
+
+		/* Create an index into the table that orders the edgeuses into a loop */
+		order_tbl( &eu_tbl , &index , NMG_TBL_END( &eu_tbl ) , &loop_size );
+
+		/* Calculate normal for new face, used to insure that we don't
+		 * accidently create a face with the opposite normal */
+		VSET( normal , 0.0 , 0.0 , 0.0 );
+		for( i=0 ; i<loop_size ; i++ )
+		{
+			j = i+1;
+			if( j == loop_size )
+				j = 0;
+
+			eu1 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
+			eu2 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[j] );
+			VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
+			VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord , eu2->vu_p->v_p->vg_p->coord );
+			VCROSS( tmp_norm , v1 , v2 );
+			VADD2( normal , normal , tmp_norm );
+		}
+
+		/* Create new faces to close the shell */
+		while( loop_size > 3 )
+		{
+			vect_t inside;			/* vector pointing to left of edge (inside face) */
+			struct edgeuse **eu_used;	/* array of edgueses used, for deletion */
+			vect_t v1,v2;			/* edge vectors */
+			int edges_used;			/* number of edges used in making a face */
+			int found_face=0;		/* flag - indicates that a face with the correct normal will be created */
+			int start_index,end_index;	/* start and stop index for loop */
+			int coplanar;			/* flag - indicates entire loop is coplanar */
+			plane_t pl1,pl2;		/* planes for checking coplanarity of loop */
+			point_t pt[3];			/* points for calculating planes */
+
+			/* Look for an easy way out, maybe this loop is planar */
+			/* first, calculate a plane from the first three non-collinear vertices */
+			start_index = 0;
+			end_index = start_index + 3;
+			
+			for( i=start_index ; i<end_index ; i++ )
+			{
+				eu = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
+				VMOVE( pt[i-start_index] , eu->vu_p->v_p->vg_p->coord );
+			}
+			while( rt_mk_plane_3pts( pl1 , pt[0] , pt[1] , pt[2] , tol ) && end_index<loop_size )
+			{
+				start_index++;
+				end_index++;
+				for( i=start_index ; i<end_index ; i++ )
+				{
+					eu = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
+					VMOVE( pt[i-start_index] , eu->vu_p->v_p->vg_p->coord );
+				}
+			}
+			if( end_index == loop_size )
+			{
+				/* Could not even make a plane, this is some serious screw-up */
+				rt_bomb( "nmg_close_shell: cannot make any planes from loop\n" );
+			}
+
+			/* now we have one plane, let's check the others */
+			coplanar = 1;
+			while( end_index < loop_size && coplanar )
+			{
+				end_index +=3;
+				if( end_index > loop_size )
+					end_index = loop_size;
+				start_index = end_index - 3;
+
+				for( i=start_index ; i<end_index ; i++ )
+				{
+					eu = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
+					VMOVE( pt[i-start_index] , eu->vu_p->v_p->vg_p->coord );
+				}
+
+				/* if these three points make a plane, is it coplanar with
+				 * our first one??? */
+				if( !rt_mk_plane_3pts( pl2 , pt[0] , pt[1] , pt[2] , tol ) )
+				{
+					if( rt_coplanar( pl1 , pl2 , tol ) < 1 )
+						coplanar = 0;
+				}
+			}
+
+			if( coplanar )	/* excellent! - just make one big face */
+			{
+				/* put vertices in table */
+				nmg_tbl( &vert_tbl , TBL_RST , NULL );
+				for( i=0 ; i<loop_size ; i++ )
+				{
+					eu = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
+					nmg_tbl( &vert_tbl , TBL_INS , (long *)eu->vu_p->v_p );
+				}
+
+				/* make face */
+				fu = nmg_cface( s , (struct vertex **)NMG_TBL_BASEADDR(&vert_tbl) , loop_size );
+
+				/* already have face geometry, so don't need to call nmg_fu_planeeqn */
+				nmg_face_g( fu , pl1 );
+
+				/* add this face to list for glueing */
+				fu_list[fu_counter++] = fu;
+
+				/* now eliminate loop from table */
+				eu_used = (struct edgeuse **)rt_calloc( loop_size , sizeof( struct edguse *) , "edges used list" );
+				for( i=0 ; i<loop_size ; i++ )
+					eu_used[i] = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
+
+				for( i=0 ; i<loop_size ; i++ )
+					nmg_tbl( &eu_tbl , TBL_RM , (long *)eu_used[i] );
+
+				rt_free( (char *)eu_used , "edge used list" );
+
+				/* set some flags to get us back to start of loop */
+				found_face = 1;
+				give_up_on_face = 1;
+			}
+
+			/* OK, so we have to do this one little-by-little */
+			start_index = 0;
+			while( !found_face )
+			{
+				/* refresh the vertex list */
+				(void)nmg_tbl( &vert_tbl , TBL_RST , NULL );
+
+				end_index = start_index + 1;
+				if( end_index == loop_size )
+					end_index = 0;
+
+				/* Get two edgeuses from the loop */
+				eu1 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[start_index] );
+				nmg_tbl( &vert_tbl , TBL_INS , (long *)eu1->vu_p->v_p );
+
+				VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
+				VCROSS( inside , normal , v1 );
+
+				eu2 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[end_index] );
+				nmg_tbl( &vert_tbl , TBL_INS , (long *)eu2->vu_p->v_p );
+
+				edges_used = 2;	
+				/* if the edges are collinear, we can't make a face */
+				while( rt_3pts_collinear(
+					eu1->vu_p->v_p->vg_p->coord,
+					eu2->vu_p->v_p->vg_p->coord,
+					eu2->eumate_p->vu_p->v_p->vg_p->coord,
+					tol ) && edges_used < loop_size )
+				{
+					/* So, add another edge */
+					end_index++;
+					if( end_index == loop_size )
+						end_index = 0;
+					eu1 = eu2;
+					eu2 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[end_index]);
+					nmg_tbl( &vert_tbl , TBL_INS , (long *)eu2->vu_p->v_p );
+					edges_used++;
+				}
+
+				found_face = 1;
+				VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord , eu2->vu_p->v_p->vg_p->coord );
+				if( VDOT( inside , v2 ) < 0.0 )
+				{
+					/* this face normal would be in the wrong direction */
+					found_face = 0;
+
+					/* move along the loop by one edge and try again */
+					start_index++;
+					if( start_index > loop_size-2 )
+					{
+						/* can't make a face from this loop, so delete it */
+						eu_used = (struct edgeuse **)rt_calloc( loop_size , sizeof( struct edguse *) , "edges used list" );
+						for( i=0 ; i<loop_size ; i++ )
+							eu_used[i] = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
+						for( i=0 ; i<loop_size ; i++ )
+							nmg_tbl( &eu_tbl , TBL_RM , (long *)eu_used[i] );
+
+						rt_free( (char *)eu_used , "edge used list" );
+
+						give_up_on_face = 1;
+						break;
+					}
+				}
+			}
+
+			if( give_up_on_face )
+				break;			
+
+			/* add last vertex to table */
+			nmg_tbl( &vert_tbl , TBL_INS , (long *)eu2->eumate_p->vu_p->v_p );
+
+			/* save list of used edges to be removed later */
+			eu_used = (struct edgeuse **)rt_calloc( edges_used , sizeof( struct edguse *) , "edges used list" );
+			for( i=0 ; i<edges_used ; i++ )
+				eu_used[i] = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
+
+			/* make a face */
+			fu = nmg_cface( s , (struct vertex **)NMG_TBL_BASEADDR(&vert_tbl) , edges_used+1 );
+			if( nmg_fu_planeeqn( fu , tol ) )
+				rt_log( "Failed planeeq\n" );
+
+			/* add new face to the list of faces */
+			fu_list[fu_counter++] = fu;
+
+			/* find the newly created edgeuse */
+			found = 0;
+			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			{
+				NMG_CK_LOOPUSE( lu );
+				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) ==
+					NMG_VERTEXUSE_MAGIC )
+						continue;
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					NMG_CK_EDGEUSE( eu );
+					if( eu->vu_p->v_p == (struct vertex *)NMG_TBL_GET( &vert_tbl , 0 )
+					&& eu->eumate_p->vu_p->v_p == (struct vertex *)NMG_TBL_GET( &vert_tbl , edges_used) )
+					{
+						eu_new = eu;
+						found = 1;
+						break;
+					}
+					else if( eu->vu_p->v_p == (struct vertex *)NMG_TBL_GET( &vert_tbl , edges_used)
+					&& eu->eumate_p->vu_p->v_p == (struct vertex *)NMG_TBL_GET( &vert_tbl , 0 ) )
+					{
+						eu_new = eu->eumate_p;
+						found = 1;
+						break;
+					}
+
+				}
+				if( found )
+					break;
+			}
+
+			/* out with the old, in with the new */
+			for( i=0 ; i<edges_used ; i++ )
+				nmg_tbl( &eu_tbl , TBL_RM , (long *)eu_used[i] );
+			nmg_tbl( &eu_tbl , TBL_INS , (long *)eu_new );
+
+			rt_free( (char *)eu_used , "edge used list" );
+
+			/* re-order loop */
+			order_tbl( &eu_tbl , &index , NMG_TBL_END( &eu_tbl ) , &loop_size );
+		}
+
+		if( give_up_on_face )
+			continue;
+
+		if( loop_size != 3 )
+		{
+			rt_log( "Error, loop size should be 3\n" );
+			nmg_tbl( &eu_tbl , TBL_FREE , NULL );
+			nmg_tbl( &vert_tbl , TBL_FREE , NULL );
+			rt_free( (char *)index , "index" );
+			rt_free( (char *)fu_list , "faceuse list " );
+			return;
+		}
+
+		/* if the last 3 vertices are collinear, then don't make the last face */
+		nmg_tbl( &vert_tbl , TBL_RST , NULL );
+		for( i=0 ; i<3 ; i++ )
+		{
+			eu = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
+			(void)nmg_tbl( &vert_tbl , TBL_INS , (long *)eu->vu_p->v_p);
+		}
+
+		if( !rt_3pts_collinear(
+			((struct vertex *)NMG_TBL_GET( &vert_tbl , 0 ))->vg_p->coord,
+			((struct vertex *)NMG_TBL_GET( &vert_tbl , 1 ))->vg_p->coord,
+			((struct vertex *)NMG_TBL_GET( &vert_tbl , 2 ))->vg_p->coord,
+			tol ) )
+		{
+		
+			/* Create last face from remaining 3 edges */
+			fu = nmg_cface( s , (struct vertex **)NMG_TBL_BASEADDR(&vert_tbl) , 3 );
+			if( nmg_fu_planeeqn( fu , tol ) )
+				rt_log( "Failed planeeq\n" );
+
+			/* and add it to the list */
+			fu_list[fu_counter++] = fu;
+
+		}
+
+		/* remove the last three edges from the table */
+		eu1 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[0] );
+		eu2 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[1] );
+		eu3 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[2] );
+		nmg_tbl( &eu_tbl , TBL_RM , (long *)eu1 );
+		nmg_tbl( &eu_tbl , TBL_RM , (long *)eu2 );
+		nmg_tbl( &eu_tbl , TBL_RM , (long *)eu3 );
+	}
+
+	/* finally, glue it all together */
+	nmg_gluefaces( fu_list , fu_counter );
+
+	/* Free up all the memory */
+	rt_free( (char *)index , "index" );
+	rt_free( (char *)fu_list , "faceuse list " );
+	nmg_tbl( &eu_tbl , TBL_FREE , NULL );
+	nmg_tbl( &vert_tbl , TBL_FREE , NULL );
+
+	/* we may have constructed some coplanar faces */
+	nmg_shell_coplanar_face_merge( s , tol , 1 );
+	if( nmg_simplify_shell( s ) )
+	{
+		rt_log( "nmg_close_shell(): Simplified shell is empty" );
+		return;
+	}
 }
