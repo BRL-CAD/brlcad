@@ -36,17 +36,17 @@
 
 #include <ctype.h>
 #ifdef NO_LIMITS_H
-#   include "compat/limits.h"
+#   include "../compat/limits.h"
 #else
 #   include <limits.h>
 #endif
 #ifdef NO_STDLIB_H
-#   include "compat/stdlib.h"
+#   include "../compat/stdlib.h"
 #else
 #   include <stdlib.h>
 #endif
 #ifdef NO_STRING_H
-#include "compat/string.h"
+#include "../compat/string.h"
 #else
 #include <string.h>
 #endif

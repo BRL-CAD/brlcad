@@ -1,7 +1,9 @@
 #ifndef SEEN_CMD_H
 #define SEEN_CMD_H
 
+#ifdef USE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <time.h>
 #include "bu.h"
 
