@@ -1272,7 +1272,9 @@ int			copy;
 	}
 
 	for( i=0; i < vbp->nused; i++ )  {
+#if 0
 		if( vbp->rgb[i] == 0 )  continue;
+#endif
 		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 
 		sprintf( namebuf, "%s%lx",
