@@ -92,12 +92,11 @@ lib_LTLIBRARIES = \
 	libtcl.la \
 	libtcl@TCL_VERSION@.la
 
-libtcl_la_CFLAGS = 
+AM_CFLAGS =
 libtcl_la_SOURCES = $(generic_src) $(unix_src)
 libtcl_la_LDFLAGS = -version-info 19:1
 libtcl_la_LIBADD = ${LIBZ} ${LIBM}
 
-libtcl@TCL_VERSION@_la_CFLAGS = $(libtcl_la_CFLAGS)
 libtcl@TCL_VERSION@_la_SOURCES = $(libtcl_la_SOURCES)
 libtcl@TCL_VERSION@_la_LDFLAGS = $(libtcl_la_LDFLAGS)
 libtcl@TCL_VERSION@_la_LIBADD = $(libtcl_la_LIBADD)
