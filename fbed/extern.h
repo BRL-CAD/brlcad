@@ -92,7 +92,13 @@ extern void	fb_Get_Pixel();
 extern void	pos_close();
 extern void	init_Status();
 extern void	init_Tty(), restore_Tty();
-extern void	prnt_Status(), prnt_Usage(), prnt_Scroll();
+extern void	prnt_Status();
+extern void	prnt_Usage();
+#if __STDC__
+extern void	prnt_Scroll( char * fmt, ... );
+#else
+extern void	prnt_Scroll();
+#endif
 extern void	prnt_Rectangle();
 extern void	do_Key_Cmd();
 
