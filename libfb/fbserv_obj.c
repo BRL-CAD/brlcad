@@ -246,11 +246,6 @@ existing_client_handler(ClientData clientData, int mask)
     if ((pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
       bu_log("pkg_process error encountered (1)\n");
 
-#if 0
-    if (npp > 0)
-      dirty = 1;
-#endif
-
     if (fbsp->fbs_clients[i].fbsc_fd != fd)
       continue;
 
@@ -263,11 +258,6 @@ existing_client_handler(ClientData clientData, int mask)
 
     if ((pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
       bu_log("pkg_process error encountered (2)\n");
-
-#if 0
-    if(npp > 0)
-      dirty = 1;
-#endif
   }
 
   if (fbsp->fbs_callback != FBS_CALLBACK_NULL)
