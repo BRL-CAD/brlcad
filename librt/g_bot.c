@@ -83,11 +83,12 @@ rt_botface(struct soltab	*stp,
 	if( m1 < 0.00001 || m2 < 0.00001 ||
 	    m3 < 0.00001 || m4 < 0.00001 )  {
 		bu_free( (char *)trip, "getstruct tri_specific");
-	    	{
-			bu_log("%s: degenerate facet #%d\n",
-				stp->st_name, face_no);
-	    		bu_log( "\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
-	    			V3ARGS( ap ), V3ARGS( bp ), V3ARGS( cp ) );
+
+		if( RT_G_DEBUG & DEBUG_SHOOT ) {
+		    bu_log("%s: degenerate facet #%d\n",
+			   stp->st_name, face_no);
+		    bu_log( "\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
+			    V3ARGS( ap ), V3ARGS( bp ), V3ARGS( cp ) );
 	    	}
 		return(0);			/* BAD */
 	}		
