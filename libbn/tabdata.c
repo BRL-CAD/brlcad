@@ -445,6 +445,42 @@ CONST struct bn_tabdata		*in3;
 }
 
 /*
+ *			B N _ T A B D A T A _ B L E N D 2
+ */
+void
+bn_tabdata_blend2( out, scale1, in1, scale2, in2 )
+struct bn_tabdata		*out;
+register double			scale1;
+CONST struct bn_tabdata		*in1;
+register double			scale2;
+CONST struct bn_tabdata		*in2;
+{
+	register int		j;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1, *i2;
+
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend2(x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2 );
+
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 );
+	BN_CK_TABDATA( in2 );
+
+	if( in1->table != out->table )
+		bu_bomb("bn_tabdata_blend2(): samples drawn from different tables\n");
+	if( in1->table != in2->table )
+		bu_bomb("bn_tabdata_blend2(): samples drawn from different tables\n");
+	if( in1->ny != out->ny )
+		bu_bomb("bn_tabdata_blend2(): different tabdata lengths?\n");
+
+	op = out->y;
+	i1 = in1->y;
+	i2 = in2->y;
+	for( j = in1->ny; j > 0; j-- )
+		*op++ = scale1 * *i1++ + scale2 * *i2++;
+	/* VBLEND2N( out->y, scale1, in1->y, scale2, in2->y ); */
+}
+
+/*
  *			B N _ T A B D A T A _ B L E N D 3
  */
 void
