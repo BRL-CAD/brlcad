@@ -649,7 +649,7 @@ struct db_full_path *pathp;
 		fp_name = DB_FULL_PATH_CUR_DIR( pathp );
 		fprintf( fp_id , "%d %d %s %d %d %d %s\n" , id_counter , tsp->ts_regionid ,
 			fp_name->d_namep , tsp->ts_aircode , tsp->ts_gmater , tsp->ts_los ,
-			tsp->ts_mater.ma_matname );
+			tsp->ts_mater.ma_shader );
 	}
 
  outt:	rt_free( (char *)flags , "g-tankill: flags" );
