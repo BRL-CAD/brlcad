@@ -29,8 +29,9 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=3.13;	RCS_REVISION=9;		REL_DATE=Today
-RELEASE=3.12;	RCS_REVISION=9;		REL_DATE=8-Jul-91	# Beta
+#RELEASE=3.14;	RCS_REVISION=9;		REL_DATE=Today
+RELEASE=3.13;	RCS_REVISION=9;		REL_DATE=9-Jul-91	# Beta+1
+#RELEASE=3.12;	RCS_REVISION=9;		REL_DATE=8-Jul-91	# Beta
 #RELEASE=3.11;	RCS_REVISION=9;		REL_DATE=2-Jul-91	# alpha+1
 #RELEASE=3.10;	RCS_REVISION=9;		REL_DATE=1-Jul-91	# alpha
 #RELEASE=3.9;	RCS_REVISION=9;		REL_DATE=28-Jan-91	# internal
@@ -105,9 +106,9 @@ TOP_FILES="Copyright* README Cakefile* Makefile \
 		cakeinclude.sh newbindir.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
-ADIRS="h doc pix vfont awf brlman"
+ADIRS="h doc pix vfont whetstone awf brlman"
 
-# Has no Cakefile, just copy it verbatim
+# Has no Cakefile, just copy it verbatim.  Only used in "dist" command.
 CDIRS="cake cakeaux papers contributed patch"
 
 # Source directories that will have Machine specific binary directories
@@ -149,7 +150,7 @@ BDIRS="bench \
 	halftone \
 	edpix \
 	nirt irprep \
-	whetstone dhrystone"
+	dhrystone"
 
 # If there is no TCP networking, eliminate network-only directories.
 if test "${HAS_TCP}" = "0"
