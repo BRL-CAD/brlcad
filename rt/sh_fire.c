@@ -249,7 +249,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	MAT_SCALE_VEC(fire_sp->fire_sh_to_noise, fire_sp->noise_vscale);
 
 	/* get matrix for performing spline of fire colors */
-	rt_dspline_matrix(fire_sp->fire_colorspline_mat, "Catmull", 0.5);
+	rt_dspline_matrix(fire_sp->fire_colorspline_mat, "Catmull", 0.5, 0.0);
 
 
 
@@ -468,7 +468,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	else if (lumens > 1.0) lumens = 1.0;
 
 
-	rt_dspline_n(color, fire_sp->fire_colorspline_mat, flame_colors,
+	rt_dspline_n(color, fire_sp->fire_colorspline_mat, (double *)flame_colors,
 		18, 3, lumens);
 
 	VMOVE(swp->sw_color, color);
