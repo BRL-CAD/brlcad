@@ -816,13 +816,51 @@ char	**argv;
 	mat_default = atoi(argv[4]);
 }
 
+static int frac_stat;
+void
+mged_add_nmg_part(newname, m, old_dp)
+char *newname;
+struct model *m;
+struct directory *old_dp;
+{
+	struct rt_db_internal	new_intern;
+	struct directory *new_dp;
+
+	if( db_lookup( dbip,  newname, LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( newname );
+		/* Free memory here */
+		nmg_km(m);
+		frac_stat = 1;
+		return;
+	}
+
+	if( (new_dp=db_diradd( dbip, newname, -1, 0, DIR_SOLID)) == DIR_NULL )  {
+	    	ALLOC_ERR_return;
+	}
+
+	/* Export NMG as a new solid */
+	RT_INIT_DB_INTERNAL(&new_intern);
+	new_intern.idb_type = ID_NMG;
+	new_intern.idb_ptr = (genptr_t)m;
+
+	if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )  {
+		/* Free memory */
+		nmg_km(m);
+		printf("rt_db_put_internal() failure\n");
+		frac_stat = 1;
+		return;
+	}
+	/* Internal representation has been freed by rt_db_put_internal */
+	new_intern.idb_ptr = (genptr_t)NULL;
+	frac_stat = 0;
+}
 /*
  *			F _ F R A C T U R E
  *
  * Usage: fracture nmgsolid [prefix]
  *
- *
- *
+ *	given an NMG solid, break it up into several NMG solids, each
+ *	containing a single shell with a single sub-element.
  */
 void
 f_fracture( argc, argv )
@@ -833,9 +871,18 @@ char	**argv;
 	struct directory *old_dp;
 	struct rt_db_internal	old_intern;
 	struct rt_db_internal	new_intern;
-	struct model	*m;
+	struct model	*m, *new_model;
 	char		newname[32];
-	struct directory *new_dp;
+	char		prefix[32];
+	int	maxdigits;
+	struct nmgregion *r, *new_r;
+	struct shell *s, *new_s;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct vertex *v_new, *v;
+	int tw, tf, tp;
+	double log10();
 
 	rt_log("fracture:");
 	for (i=0 ; i < argc ; i++)
@@ -853,29 +900,107 @@ char	**argv;
 	m = (struct model *)old_intern.idb_ptr;
 	NMG_CK_MODEL(m);
 
+
+	/* how many characters of the solid names do we reserve for digits? */
+	nmg_count_shell_kids(m, &tf, &tw, &tp);
+	
+	maxdigits = (int)(log10((double)(tf+tw+tp)) + 1.0);
+
+	rt_log("%d = %d digits\n", tf+tw+tp, maxdigits);
+
+	/*	for(maxdigits=1,i=tf+tw+tp ; i > 0 ; i /= 10)
+	 *	maxdigits++;
+	 */
+
+	/* get the prefix for the solids to be created. */
+	bzero(prefix, sizeof(prefix));
+	strncpy(prefix, argv[argc-1], sizeof(prefix)-2-maxdigits);
+	strcat(prefix, "_");
+
 	/* Bust it up here */
-	sprintf( newname, "newname" );
 
-	if( db_lookup( dbip,  newname, LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( newname );
-		/* Free memory here */
-		return;
+	i = 1;
+	for (RT_LIST_FOR(r, nmgregion, &m->r_hd)) {
+		NMG_CK_REGION(r);
+		for (RT_LIST_FOR(s, shell, &r->s_hd)) {
+			NMG_CK_SHELL(s);
+			if (s->vu_p) {
+				NMG_CK_VERTEXUSE(s->vu_p);
+				NMG_CK_VERTEX(s->vu_p->v_p);
+				v = s->vu_p->v_p;
+
+	nmg_start_dup(m);
+				new_model = nmg_mm();
+				new_r = nmg_mrsv(new_model);
+				new_s = RT_LIST_FIRST(shell, &r->s_hd);
+				v_new = new_s->vu_p->v_p;
+				if (v->vg_p) {
+					nmg_vertex_gv(v_new, v->vg_p->coord);
+				}
+	nmg_end_dup();
+
+				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
+
+				mged_add_nmg_part(newname, new_model,
+							dbip, old_dp);
+				if (frac_stat) return;
+				continue;
+			}
+			for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+				if (fu->orientation != OT_SAME)
+					continue;
+
+				NMG_CK_FACEUSE(fu);
+
+				new_model = nmg_mm();
+				NMG_CK_MODEL(new_model);
+				new_r = nmg_mrsv(new_model);
+				NMG_CK_REGION(new_r);
+				new_s = RT_LIST_FIRST(shell, &new_r->s_hd);
+				NMG_CK_SHELL(new_s);
+	nmg_start_dup(m);
+				NMG_CK_SHELL(new_s);
+				nmg_dup_face(fu, new_s);
+	nmg_end_dup();
+
+				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
+				mged_add_nmg_part(newname, new_model,
+							dbip, old_dp);
+				if (frac_stat) return;
+			}
+#if 0
+			while (RT_LIST_NON_EMPTY(&s->lu_hd)) {
+				lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
+				new_model = nmg_mm();
+				r = nmg_mrsv(new_model);
+				new_s = RT_LIST_FIRST(shell, &r->s_hd);
+
+				nmg_dup_loop(lu, new_s);
+				nmg_klu(lu);
+
+				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
+				mged_add_nmg_part(newname, new_model,
+							dbip, old_dp);
+				if (frac_stat) return;
+			}
+			while (RT_LIST_NON_EMPTY(&s->eu_hd)) {
+				eu = RT_LIST_FIRST(edgeuse, &s->eu_hd);
+				new_model = nmg_mm();
+				r = nmg_mrsv(new_model);
+				new_s = RT_LIST_FIRST(shell, &r->s_hd);
+
+				nmg_dup_edge(eu, new_s);
+				nmg_keu(eu);
+
+				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
+
+				mged_add_nmg_part(newname, new_model,
+							dbip, old_dp);
+				if (frac_stat) return;
+			}
+#endif
+		}
 	}
 
-	if( (new_dp=db_diradd( dbip, newname, -1, 0, old_dp->d_flags)) == DIR_NULL )  {
-	    	ALLOC_ERR_return;
-	}
-
-	/* Export NMG as a new solid */
-	RT_INIT_DB_INTERNAL(&new_intern);
-	new_intern.idb_type = ID_NMG;
-	new_intern.idb_ptr = (genptr_t)m;
-
-	if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )  {
-		/* Free memory */
-		printf("rt_db_put_internal() failure\n");
-		return;
-	}
-	/* Internal representation has been freed by rt_db_put_internal */
-	new_intern.idb_ptr = (genptr_t)NULL;
 }
+
