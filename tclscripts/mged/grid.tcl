@@ -34,9 +34,6 @@ proc do_grid_spacing { id spacing_type } {
     frame $top.gridF1 -relief groove -bd 2
     frame $top.gridF2
 
-    label $top.tickSpacingL -text "Tick Spacing\n($localunit/tick)"
-    label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
-
     if {$spacing_type == "h"} {
 	label $top.resL -text "Horiz." -anchor w
 	entry $top.resE -relief sunken -width 12 -textvar grid_control_spacing($id,tick)
@@ -47,21 +44,55 @@ proc do_grid_spacing { id spacing_type } {
 	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_spacing($id,ticksPerMajor)
     } elseif {$spacing_type == "b"} {
 	label $top.resL -text "Horiz. & Vert." -anchor w
+	hoc_register_data $top.resL "Horiz. & Vert."\
+		{ { summary "The tick spacing and major spacing are set
+for both horizontal and vertical directions." } }
+
+	set hoc_data { { summary "Tick spacing, here, is the distance between each
+tick in both the horizontal and vertical directions." } }
+	label $top.tickSpacingL -text "Tick Spacing\n($localunit/tick)"
+	hoc_register_data $top.tickSpacingL "Tick Spacing" $hoc_data
 	entry $top.resE -relief sunken -width 12 -textvar grid_control_spacing($id,tick)
+	hoc_register_data $top.resE "Tick Spacing" $hoc_data
+
+        set hoc_data { { summary "Major spacing is measured in ticks
+and determines how often lines of
+ticks are drawn." } }
+        label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
+        hoc_register_data $top.majorSpacingL "Major Spacing" $hoc_data
 	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_spacing($id,ticksPerMajor)
+	hoc_register_data $top.maj_resE "Major Spacing" $hoc_data
     } else {
 	catch {destroy $top}
 	return
     }
 
+    button $top.okB -relief raised -text "Ok"\
+	    -command "grid_spacing_ok $id $spacing_type $top"
+    hoc_register_data $top.okB "Ok"\
+	    { { summary "Apply the grid spacing settings
+to the grid, then close the grid
+spacing control panel." } }
     button $top.applyB -relief raised -text "Apply"\
 	    -command "grid_spacing_apply $id $spacing_type"
+    hoc_register_data $top.applyB "Apply"\
+	    { { summary "Apply the grid spacing settings
+to the grid." } }
     button $top.resetB -relief raised -text "Reset"\
 	    -command "grid_spacing_reset $id $spacing_type"
+    hoc_register_data $top.resetB "Reset"\
+	    { { summary "Reset the control panel from the grid." } }
     button $top.autosizeB -relief raised -text "Autosize"\
 	    -command "grid_spacing_autosize $id"
+    hoc_register_data $top.autosizeB "Autosize"\
+	    { { summary "Set the grid spacing according to the view
+size. The number of ticks will be between 20
+and 200. The tick spacing will be a power of
+10 in local units." } }
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
+    hoc_register_data $top.dismissB "Dismiss"\
+	    { { summary "Dismiss/close the grid spacing control panel." } }
 
     grid x $top.tickSpacingL x $top.majorSpacingL -in $top.gridF1 -padx 8 -pady 8
     grid $top.resL $top.resE x $top.maj_resE -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
@@ -69,11 +100,11 @@ proc do_grid_spacing { id spacing_type } {
     grid columnconfigure $top.gridF1 1 -weight 1
     grid columnconfigure $top.gridF1 3 -weight 1
 
-    grid $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF2
-    grid columnconfigure $top.gridF2 1 -weight 1
-    grid columnconfigure $top.gridF2 1 -minsize 10
-    grid columnconfigure $top.gridF2 4 -weight 1
-    grid columnconfigure $top.gridF2 4 -minsize 10
+    grid $top.okB $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF2
+    grid columnconfigure $top.gridF2 2 -weight 1
+    grid columnconfigure $top.gridF2 2 -minsize 10
+    grid columnconfigure $top.gridF2 5 -weight 1
+    grid columnconfigure $top.gridF2 5 -minsize 10
 
     grid $top.gridF1 -sticky "ew" -padx 8 -pady 8
     grid $top.gridF2 -sticky "ew" -padx 8 -pady 8
@@ -115,16 +146,41 @@ proc do_grid_anchor { id } {
 
     frame $top.anchorF
 
+    set hoc_data { { summary "The grid anchor point is a point such that
+when the grid is drawn, one of its points
+must be located exactly at the anchor point.
+The anchor point is specified using model
+coordinates and local units. The anchor point
+and tick spacings work together to give the
+user accurate information about where things
+are in the view as well as a high degree of
+accuracy when snapping." } }
     label $top.anchorL -text "Anchor Point" -anchor w
+    hoc_register_data $top.anchorL "Anchor Point" $hoc_data
     entry $top.anchorE -relief sunken -bd 2 -width 12 -textvar grid_control_anchor($id)
+    hoc_register_data $top.anchorE "Anchor Point" $hoc_data
 
+    button $top.okB -relief raised -text "Ok"\
+	    -command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\";
+                      catch { destroy $top }"
+    hoc_register_data $top.okB "Ok"\
+	    { { summary "Apply the grid anchor control panel
+settings to the grid, then close the
+control panel." } }
     button $top.applyB -relief raised -text "Apply"\
 	    -command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\""
+    hoc_register_data $top.applyB "Apply"\
+	    { { summary "Apply the grid anchor control panel
+settings to the grid." } }
     button $top.resetB -relief raised -text "Reset"\
 	    -command "winset \$mged_active_dm($id);\
 	    set grid_control_anchor($id) \[rset grid anchor\]"
+    hoc_register_data $top.resetB "Reset"\
+	    { { summary "Reset the control panel from the grid." } }
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
+    hoc_register_data $top.dismissB "Dismiss"\
+	    { { summary "Dismiss/close the grid anchor control panel." } }
 
     grid $top.anchorL -sticky "ew" -in $top.anchorF
     grid $top.anchorE -sticky "ew" -in $top.anchorF
@@ -133,9 +189,9 @@ proc do_grid_anchor { id } {
     grid $top.anchorF -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
     grid columnconfigure $top.gridF1 0 -weight 1
 
-    grid $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF2
-    grid columnconfigure $top.gridF2 1 -weight 1
-    grid columnconfigure $top.gridF2 1 -weight 3
+    grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF2
+    grid columnconfigure $top.gridF2 2 -weight 1
+    grid columnconfigure $top.gridF2 4 -weight 3
 
     grid $top.gridF1 -sticky "ew" -padx 8 -pady 8
     grid $top.gridF2 -sticky "ew" -padx 8 -pady 8
@@ -195,61 +251,59 @@ in either the horizontal or vertical direction." } }
 	    { { summary "Major spacing is measured in ticks and determines
 how often lines of ticks are drawn." } }
 
+    set hoc_data { { summary "This row is for horizontal tick spacing
+and horizontal major spacing. These two
+attributes help determine how the grid is
+drawn and how snapping is performed." } }
     label $top.hL -text "Horiz." -anchor w
-    hoc_register_data $top.hL "Horizontal Spacing"\
-	    { { summary "This row is for horizontal tick spacing
-and horizontal major spacing. These two attributes
-help determine how the grid is drawn and how snapping
-is performed." } }
+    hoc_register_data $top.hL "Horizontal Spacing" $hoc_data
     entry $top.hE -relief flat -width 12 -textvar grid_control($id,rh)
-    hoc_register_data $top.hE "Horizontal Tick Spacing"\
-	    { { summary "Enter the horizontal tick spacing here." } }
+    hoc_register_data $top.hE "Horizontal Tick Spacing" $hoc_data
     menubutton $top.hMB -relief raised -bd 2\
 	    -menu $top.hMB.spacing -indicatoron 1
     hoc_register_data $top.hMB "Horizontal Tick Spacings"\
-	    { { summary "Pops up a menu of distances to choose from for
-horizontal tick spacing." } }
+	    { { summary "Pops up a menu of distances to choose
+from for horizontal tick spacing." } }
     menu $top.hMB.spacing -title "Grid Spacing" -tearoff 0
     $top.hMB.spacing add command -label "micrometer" -underline 4\
-	    -command "set_grid_spacing_htick $id micrometer 0"
+	    -command "set_grid_spacing_htick $id micrometer"
     $top.hMB.spacing add command -label "millimeter" -underline 2\
-	    -command "set_grid_spacing_htick $id millimeter 0"
+	    -command "set_grid_spacing_htick $id millimeter"
     $top.hMB.spacing add command -label "centimeter" -underline 0\
-	    -command "set_grid_spacing_htick $id centimeter 0"
+	    -command "set_grid_spacing_htick $id centimeter"
     $top.hMB.spacing add command -label "decimeter" -underline 0\
-	    -command "set_grid_spacing_htick $id decimeter 0"
+	    -command "set_grid_spacing_htick $id decimeter"
     $top.hMB.spacing add command -label "meter" -underline 0\
-	    -command "set_grid_spacing_htick $id meter 0"
+	    -command "set_grid_spacing_htick $id meter"
     $top.hMB.spacing add command -label "kilometer" -underline 0\
-	    -command "set_grid_spacing_htick $id kilometer 0"
+	    -command "set_grid_spacing_htick $id kilometer"
     $top.hMB.spacing add separator
     $top.hMB.spacing add command -label "1/10 inch" -underline 0\
-	    -command "set_grid_spacing_htick $id \"1/10 inch\" 0"
+	    -command "set_grid_spacing_htick $id \"1/10 inch\""
     $top.hMB.spacing add command -label "1/4 inch" -underline 2\
-	    -command "set_grid_spacing_htick $id \"1/4 inch\" 0"
+	    -command "set_grid_spacing_htick $id \"1/4 inch\""
     $top.hMB.spacing add command -label "1/2 inch" -underline 2\
-	    -command "set_grid_spacing_htick $id \"1/2 inch\" 0"
+	    -command "set_grid_spacing_htick $id \"1/2 inch\""
     $top.hMB.spacing add command -label "inch" -underline 0\
-	    -command "set_grid_spacing_htick $id inch 0"
+	    -command "set_grid_spacing_htick $id inch"
     $top.hMB.spacing add command -label "foot" -underline 0\
-	    -command "set_grid_spacing_htick $id foot 0"
+	    -command "set_grid_spacing_htick $id foot"
     $top.hMB.spacing add command -label "yard" -underline 0\
-	    -command "set_grid_spacing_htick $id yard 0"
+	    -command "set_grid_spacing_htick $id yard"
     $top.hMB.spacing add command -label "mile" -underline 0\
-	    -command "set_grid_spacing_htick $id mile 0"
+	    -command "set_grid_spacing_htick $id mile"
     entry $top.maj_hE -relief flat -width 12 -textvar grid_control($id,mrh)
     hoc_register_data $top.maj_hE "Horizontal Major Spacing"\
 	    { { summary "Enter horizontal major spacing here." } }
 
+    set hoc_data { { summary "This row is for vertical tick spacing
+and vertical major spacing. These two
+attributes help determine how the grid
+is drawn and how snapping is performed." } }
     label $top.vL -text "Vert." -anchor w
-    hoc_register_data $top.vL "Vertical Spacing"\
-	    { { summary "This row is for vertical tick spacing
-and vertical major spacing. These two attributes
-help determine how the grid is drawn and how snapping
-is performed." } }
+    hoc_register_data $top.vL "Vertical Spacing" $hoc_data
     entry $top.vE -relief flat -width 12 -textvar grid_control($id,rv)
-    hoc_register_data $top.vE "Vertical Tick Spacing"\
-	    { { summary "Enter the vertical tick spacing here." } }
+    hoc_register_data $top.vE "Vertical Tick Spacing" $hoc_data
     menubutton $top.vMB -relief raised -bd 2\
 	    -menu $top.vMB.spacing -indicatoron 1
     hoc_register_data $top.vMB "Vertical Tick Spacings"\
@@ -257,32 +311,32 @@ is performed." } }
 vertical tick spacing." } }
     menu $top.vMB.spacing -title "Grid Spacing" -tearoff 0
     $top.vMB.spacing add command -label "micrometer" -underline 4\
-	    -command "set_grid_spacing_vtick $id micrometer 0"
+	    -command "set_grid_spacing_vtick $id micrometer"
     $top.vMB.spacing add command -label "millimeter" -underline 2\
-	    -command "set_grid_spacing_vtick $id millimeter 0"
+	    -command "set_grid_spacing_vtick $id millimeter"
     $top.vMB.spacing add command -label "centimeter" -underline 0\
-	    -command "set_grid_spacing_vtick $id centimeter 0"
+	    -command "set_grid_spacing_vtick $id centimeter"
     $top.vMB.spacing add command -label "decimeter" -underline 0\
-	    -command "set_grid_spacing_vtick $id decimeter 0"
+	    -command "set_grid_spacing_vtick $id decimeter"
     $top.vMB.spacing add command -label "meter" -underline 0\
-	    -command "set_grid_spacing_vtick $id meter 0"
+	    -command "set_grid_spacing_vtick $id meter"
     $top.vMB.spacing add command -label "kilometer" -underline 0\
-	    -command "set_grid_spacing_vtick $id kilometer 0"
+	    -command "set_grid_spacing_vtick $id kilometer"
     $top.vMB.spacing add separator
     $top.vMB.spacing add command -label "1/10 inch" -underline 0\
-	    -command "set_grid_spacing_vtick $id \"1/10 inch\" 0"
+	    -command "set_grid_spacing_vtick $id \"1/10 inch\""
     $top.vMB.spacing add command -label "1/4 inch" -underline 2\
-	    -command "set_grid_spacing_vtick $id \"1/4 inch\" 0"
+	    -command "set_grid_spacing_vtick $id \"1/4 inch\""
     $top.vMB.spacing add command -label "1/2 inch" -underline 2\
-	    -command "set_grid_spacing_vtick $id \"1/2 inch\" 0"
+	    -command "set_grid_spacing_vtick $id \"1/2 inch\""
     $top.vMB.spacing add command -label "inch" -underline 0\
-	    -command "set_grid_spacing_vtick $id inch 0"
+	    -command "set_grid_spacing_vtick $id inch"
     $top.vMB.spacing add command -label "foot" -underline 0\
-	    -command "set_grid_spacing_vtick $id foot 0"
+	    -command "set_grid_spacing_vtick $id foot"
     $top.vMB.spacing add command -label "yard" -underline 0\
-	    -command "set_grid_spacing_vtick $id yard 0"
+	    -command "set_grid_spacing_vtick $id yard"
     $top.vMB.spacing add command -label "mile" -underline 0\
-	    -command "set_grid_spacing_vtick $id mile 0"
+	    -command "set_grid_spacing_vtick $id mile"
     entry $top.maj_vE -relief flat -width 12 -textvar grid_control($id,mrv)
     hoc_register_data $top.maj_vE "Vertical Major Spacing"\
 	    { { summary "Enter vertical major spacing here." } }
@@ -292,55 +346,61 @@ vertical tick spacing." } }
 	    -command "set_grid_square $id"
     hoc_register_data $top.squareGridCB "Square Grid"\
 	    { { synopsis "Toggle square grid mode." }
-              { description "In square grid mode the horizontal and vertical
-attributes are the same. For example, if the horizontal
-tick spacing is 12 inches, then the vertical tick spacing
-is 12 inches. And if the horizontal major spacing is 10
-ticks, then the vertical major spacing is 10 ticks." } }
+              { description "In square grid mode the horizontal and
+vertical attributes are the same. For
+example, if the horizontal tick spacing
+is 12 inches, then the vertical tick spacing
+is 12 inches. And if the horizontal major
+spacing is 10 ticks, then the vertical major
+spacing is 10 ticks." } }
 
+    set hoc_data { { summary "The grid anchor point is a point such that
+when the grid is drawn, one of its points
+must be located exactly at the anchor point.
+The anchor point is specified using model
+coordinates and local units. The anchor point
+and tick spacings work together to give the
+user accurate information about where things
+are in the view as well as a high degree of
+accuracy when snapping." } }
     label $top.anchorL -text "Anchor Point" -anchor w
-    hoc_register_data $top.anchorL "Grid Anchor Point"\
-	    { { summary "The grid anchor point is a point such that
-when the grid is drawn, one of its points must
-be located exactly at the anchor point. The anchor
-point is specified using model coordinates and local
-units. The anchor point and tick spacings work
-together to give the user accurate information about
-where things are in the view as well as a high degree
-of accuracy when snapping." } }
+    hoc_register_data $top.anchorL "Grid Anchor Point" $hoc_data
     entry $top.anchorE -relief flat -width 12 -textvar grid_control($id,anchor)
-    hoc_register_data $top.anchorE "Grid Anchor Point"\
-	    { { summary "Enter grid anchor point here." } }
+    hoc_register_data $top.anchorE "Grid Anchor Point" $hoc_data
 
     label $top.gridEffectsL -text "Grid Effects" -anchor w
     hoc_register_data $top.gridEffectsL "Grid Effects"\
 	    { { summary "The grid can be drawn on the screen and
-it can be used for snapping. Note - the grid exists
-whether it is drawn or not." } }
+it can be used for snapping. Note - the
+grid exists whether it is drawn or not." } }
 
     checkbutton $top.drawCB -relief flat -text "Draw"\
 	    -offvalue 0 -onvalue 1 -variable grid_control($id,draw)
     hoc_register_data $top.drawCB "Draw Grid"\
 	    { { synopsis "Toggle drawing the grid." }
               { description "The grid is a lattice of points over the pane
-(geometry window). The regular spacing between the
-points gives the user accurate visual cues regarding
-dimension. This spacing can be set by the user." }
+(geometry window). The regular spacing between
+the points gives the user accurate visual cues
+regarding dimension. This spacing can be set by
+the user." }
             { see_also "rset" } }
 
     checkbutton $top.snapCB -relief flat -text "Snap"\
 	    -offvalue 0 -onvalue 1 -variable grid_control($id,snap)
     hoc_register_data $top.snapCB "Snap To Grid"\
 	    { { synopsis "Toggle grid snapping." }
-              { description "When snapping to grid the internal routines
-that use the mouse pointer location, move/snap that
-location to the nearest grid point. This gives the
-user high accuracy with the mouse for transforming
-the view or editing solids/matrices." }
+              { description "When snapping to grid, the internal routines
+that use the mouse pointer location, move/snap
+that location to the nearest grid point. This
+gives the user high accuracy with the mouse for
+transforming the view or editing solids/matrices." }
             { see_also "rset" } }
 
     button $top.okB -relief raised -text "Ok"\
 	    -command "grid_control_ok $id $top"
+    hoc_register_data $top.okB "Ok"\
+	    { { summary "Apply grid control panel settings to
+the grid, then close the control panel." } }
     button $top.applyB -relief raised -text "Apply"\
 	    -command "grid_control_apply $id"
     hoc_register_data $top.applyB "Apply"\
@@ -445,22 +505,26 @@ proc grid_control_apply { id } {
     global grid_control
     global mged_grid
 
-    mged_apply $id "rset grid anchor \$grid_control($id,anchor)"
-    mged_apply $id "rset grid rh \$grid_control($id,rh)"
-    mged_apply $id "rset grid mrh \$grid_control($id,mrh)"
-
     if {$grid_control($id,square)} {
-	mged_apply $id "rset grid rv \$grid_control($id,rh)"
-	mged_apply $id "rset grid mrv \$grid_control($id,mrh)"
+	mged_apply $id "rset grid anchor $grid_control($id,anchor);\
+		rset grid rh $grid_control($id,rh);\
+		rset grid mrh $grid_control($id,mrh);\
+		rset grid rv $grid_control($id,rh);\
+		rset grid mrv $grid_control($id,mrh);\
+		rset grid snap $grid_control($id,snap);\
+		rset grid draw $grid_control($id,draw)"
+
 	set grid_control($id,rv) $grid_control($id,rh)
 	set grid_control($id,mrv) $grid_control($id,mrh)
     } else {
-	mged_apply $id "rset grid rv \$grid_control($id,rv)"
-	mged_apply $id "rset grid mrv \$grid_control($id,mrv)"
+	mged_apply $id "rset grid anchor $grid_control($id,anchor);\
+		rset grid rh $grid_control($id,rh);\
+		rset grid mrh $grid_control($id,mrh);\
+		rset grid rv $grid_control($id,rv);\
+		rset grid mrv $grid_control($id,mrv);\
+		rset grid snap $grid_control($id,snap);\
+		rset grid draw $grid_control($id,draw)"
     }
-
-    mged_apply $id "rset grid snap \$grid_control($id,snap)"
-    mged_apply $id "rset grid draw \$grid_control($id,draw)"
 
     # update the main GUI
     set mged_grid($id,draw) $grid_control($id,draw)
@@ -477,9 +541,9 @@ proc grid_control_reset { id top } {
     set grid_control($id,draw) [rset grid draw]
     set grid_control($id,snap) [rset grid snap]
     set grid_control($id,anchor) [rset grid anchor]
-    set grid_control($id,rh) [rset grid rh]
+    set grid_control($id,rh) [eval format "%.5f" [rset grid rh]]
     set grid_control($id,mrh) [rset grid mrh]
-    set grid_control($id,rv) [rset grid rv]
+    set grid_control($id,rv) [eval format "%.5f" [rset grid rv]]
     set grid_control($id,mrv) [rset grid mrv]
 
     if {$grid_control($id,rh) != $grid_control($id,rv) ||\
@@ -584,26 +648,26 @@ proc grid_control_autosize { id } {
     set grid_control($id,mrv) 10
 }
 
+proc grid_spacing_ok { id spacing_type top } {
+    grid_spacing_apply $id $spacing_type
+    catch { destroy $top }
+}
+
 proc grid_spacing_apply { id spacing_type } {
-    global mged_active_dm
     global grid_control_spacing
 
-    winset $mged_active_dm($id)
-
     if {$spacing_type == "h"} {
-	rset grid rh $grid_control_spacing($id,tick)
-	rset grid mrh $grid_control_spacing($id,ticksPerMajor)
+	mged_apply $id "rset grid rh $grid_control_spacing($id,tick);\
+		rset grid mrh $grid_control_spacing($id,ticksPerMajor)"
     } elseif {$spacing_type == "v"} {
-	rset grid rv $grid_control_spacing($id,tick)
-	rset grid mrv $grid_control_spacing($id,ticksPerMajor)
+	mged_apply $id "rset grid rv $grid_control_spacing($id,tick);\
+		rset grid mrv $grid_control_spacing($id,ticksPerMajor)"
     } else {
-	rset grid rh $grid_control_spacing($id,tick)
-	rset grid mrh $grid_control_spacing($id,ticksPerMajor)
-	rset grid rv $grid_control_spacing($id,tick)
-	rset grid mrv $grid_control_spacing($id,ticksPerMajor)
+	mged_apply $id "rset grid rh $grid_control_spacing($id,tick);\
+		rset grid mrh $grid_control_spacing($id,ticksPerMajor);\
+		rset grid rv $grid_control_spacing($id,tick);\
+		rset grid mrv $grid_control_spacing($id,ticksPerMajor)"
     }
-
-    catch { destroy .$id.grid_spacing }
 }
 
 proc grid_spacing_reset { id spacing_type } {
@@ -613,11 +677,11 @@ proc grid_spacing_reset { id spacing_type } {
     winset $mged_active_dm($id)
 
     if {$spacing_type == "v"} {
-	set grid_control_spacing($id,tick) [rset grid rv]
-	set grid_control_spacing($id,ticksPerMajor) [rset grid mrv]
+	set grid_control_spacing($id,tick) [eval format "%.5f" [rset grid rv]]
+	set grid_control_spacing($id,ticksPerMajor) [eval format "%.5f" [rset grid mrv]]
     } else {
-	set grid_control_spacing($id,tick) [rset grid rh]
-	set grid_control_spacing($id,ticksPerMajor) [rset grid mrh]
+	set grid_control_spacing($id,tick) [eval format "%.5f" [rset grid rh]]
+	set grid_control_spacing($id,ticksPerMajor) [eval format "%.5f" [rset grid mrh]]
     }
 }
 
@@ -627,10 +691,8 @@ proc set_grid_spacing { id grid_unit apply } {
     set_grid_res res res_major $grid_unit
 
     if {$apply} {
-	mged_apply $id "rset grid rh $res"
-	mged_apply $id "rset grid rv $res"
-	mged_apply $id "rset grid mrh $res_major"
-	mged_apply $id "rset grid mrv $res_major"
+	mged_apply $id "rset grid rh $res; rset grid rv $res;\
+		rset grid mrh $res_major; rset grid mrv $res_major"
     } else {
 	set grid_control($id,rh) $res
 	set grid_control($id,rv) $res
@@ -639,37 +701,31 @@ proc set_grid_spacing { id grid_unit apply } {
     }
 }
 
-proc set_grid_spacing_htick { id grid_unit apply } {
+proc set_grid_spacing_htick { id grid_unit } {
     global grid_control
 
-    if {$grid_control($id,square)} {
-	set_grid_spacing $id $grid_unit $apply
-	return
-    }
-
+    # set res according to grid_unit
     set_grid_res res res_major $grid_unit
 
-    if {$apply} {
-	mged_apply $id "rset grid rh $res"
-    } else {
-	set grid_control($id,rh) $res
+    # set the horizontal tick resolution
+    set grid_control($id,rh) $res
+
+    if {$grid_control($id,square)} {
+	set grid_control($id,rv) $res
     }
 }
 
-proc set_grid_spacing_vtick { id grid_unit apply } {
+proc set_grid_spacing_vtick { id grid_unit } {
     global grid_control
 
-    if {$grid_control($id,square)} {
-	set_grid_spacing $id $grid_unit $apply
-	return
-    }
-
+    # set res according to grid_unit
     set_grid_res res res_major $grid_unit
 
-    if {$apply} {
-	mged_apply $id "rset grid rv $res"
-    } else {
-	set grid_control($id,rv) $res
+    # set the vertical tick resolution
+    set grid_control($id,rv) $res
+
+    if {$grid_control($id,square)} {
+	set grid_control($id,rh) $res
     }
 }
 
