@@ -24,6 +24,9 @@ static char rcsid[] = "$Header$";
  *
  *
  * $Log$
+ * Revision 1.4  91/07/25  01:26:10  butler
+ * added magic number and checking to struct msr_unif & msr_gauss
+ * 
  * Revision 1.3  91/06/22  05:43:33  cjohnson
  * Change to rt_malloc, add to many comments, add some NULL pointer tests.
  * 
