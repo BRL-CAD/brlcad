@@ -155,53 +155,9 @@ proc start_vrmgr {} {
 label .rtnode_title -text "RTNODE hosts:"
 pack .rtnode_title -side top -in .rtnode_fr
 
-
-proc find_db {} {
-	global nodes
-	global	fds
-	global db_path
-	global status
-
-	# loop through list of nodes selected, starting each one.
-	set j [array startsearch nodes]
-	while { [array anymore nodes $j] } {
-		set host [array nextelement nodes $j]
-		if { $fds($host) == "dead" } continue
-		puts "Finding $host"
-		set code "!error?"
-		if { [ catch {
-			puts $fds($host) "find .db.6d/moss.g"
-			flush $fds($host)
-		} code ] } {
-			# error condition on write
-			puts "$host error $code"
-
-			close $fds($host)
-			set fds($host) "dead"
-			set status($host) "$host -died-"
-			continue
-		}
-		if { [gets $fds($host) reply] <= 0 } {
-			puts "EOF from $host"
-			close $fds($host)
-			set fds($host) "dead"
-			set status($host) "$host -died-"
-			set code "eof"
-			continue
-		}
-		# First word should be OK or FAIL, 2nd word is path.
-		if { [lindex $reply 0] != "OK" }  {
-			continue
-		}
-		set db_path($host) [lindex $reply 1]
-	}
-	array donesearch nodes $j
-}
-
 proc server_sense {host} {
 	global nodes
 	global	fds
-	global db_path
 	global status
 
 	if { $fds($host) == "dead" } continue
@@ -232,7 +188,6 @@ proc server_sense {host} {
 proc sense_servers {} {
 	global nodes
 	global	fds
-	global db_path
 	global status
 
 # XXX to conquer latency of computing uptime, should really
@@ -253,7 +208,6 @@ proc sense_servers {} {
 proc reconnect {} {
 	global nodes
 	global	fds
-	global db_path
 	global status
 
 	set j [array startsearch nodes]
@@ -271,7 +225,6 @@ proc reconnect {} {
 		}
 		# fds($host) is now set non-dead, to the actual fd.
 		# establish per-connection state
-		set db_path($host) "unknown"
 
 		server_sense $host
 	}
@@ -281,7 +234,6 @@ proc reconnect {} {
 proc register {informal_name formalname} {
 	global nodes
 	global	fds
-	global db_path
 	global status
 
 	# Establish connection-invarient state
@@ -292,20 +244,18 @@ proc register {informal_name formalname} {
 	frame .fr_$informal_name
 	checkbutton .button_$informal_name -variable nodes($formalname)
 	label .title_$informal_name -textvariable status($formalname)
-	entry .entry_$informal_name -width 20 -relief sunken -bd 2 -textvariable db_path($formalname)
-	pack .button_$informal_name .title_$informal_name .entry_$informal_name -side left -in .fr_$informal_name
+	pack .button_$informal_name .title_$informal_name -side left -in .fr_$informal_name
 	pack .fr_$informal_name -side top -in .rtnode_fr
 }
 
 frame .button1_fr
 frame .button2_fr
-button .sense_button -text "SENSE" -command sense_servers
-button .find_button -text "FIND_DB" -command find_db
-button .rtnode_button -text "Start NODES" -command start_nodes
-pack .sense_button .find_button .rtnode_button -side left -in .button1_fr
+button .rtnode_button -text "Start Checked NODES" -command start_nodes
+pack .rtnode_button -side left -in .button1_fr
+button .sense_button -text "Re-SENSE" -command sense_servers
 button .reconnect_button -text "RECONNECT" -command reconnect
 button .restart_button -text "(Restart RTMON)" -command restart_rtmon
-pack .reconnect_button .restart_button -side left -in .button2_fr
+pack .sense_button .reconnect_button .restart_button -side left -in .button2_fr
 pack .button1_fr .button2_fr -side top -in .button_fr
 
 proc restart_rtmon {} {
@@ -336,7 +286,6 @@ proc start_nodes {} {
 	global rtsync_port
 	global nodes
 	global	fds
-	global db_path
 	global status
 
 	puts "start_nodes"
