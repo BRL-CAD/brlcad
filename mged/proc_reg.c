@@ -364,10 +364,8 @@ struct rt_external	*ep;
 int			regionid;
 struct mater_info	*materp;
 {
-	register struct rt_vlist *vp;
 	register int i;
 	int dashflag;		/* draw with dashed lines */
-	int count;
 	struct rt_list	vhead;
 	struct rt_tess_tol	ttol;
 	struct rt_tol		toler;

@@ -356,7 +356,7 @@ char	**argv;
 	if( argc >= 2 )  {
 		sscanf( argv[1], "%x", &rt_g.debug );
 	} else {
-		rt_printb( "Possible flags", -1, DEBUG_FORMAT );
+		rt_printb( "Possible flags", 0xffffffffL, DEBUG_FORMAT );
 		rt_log("\n");
 	}
 	rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
@@ -383,7 +383,7 @@ char	**argv;
 	if( argc >= 2 )  {
 		sscanf( argv[1], "%x", &rt_g.NMG_debug );
 	} else {
-		rt_printb( "possible flags", -1, NMG_DEBUG_FORMAT );
+		rt_printb( "possible flags", 0xffffffffL, NMG_DEBUG_FORMAT );
 		rt_log("\n");
 	}
 	rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
@@ -1175,10 +1175,7 @@ char	**argv;
     double	dx, dy, dz;
     double	az;
     double	el;
-    double	three_halves_pi = 270.0 * radtodeg;
     double	theta;
-    int		i, j;
-    mat_t	mat1, mat2, mat3;
 
     dx = atof(argv[1]);
     dy = atof(argv[2]);

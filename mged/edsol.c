@@ -994,6 +994,17 @@ mat_t		mat;
 			*strp = "V";
 			break;
 		}
+	case ID_HF:
+		{
+			struct rt_hf_internal *hf =
+				(struct rt_hf_internal *)ip->idb_ptr;
+
+			RT_HF_CK_MAGIC( hf );
+
+			VMOVE( mpt, hf->v );
+			*strp = "V";
+			break;
+		}
 	case ID_VOL:
 		{
 			struct rt_vol_internal *vol =
@@ -1386,7 +1397,7 @@ int type;
 void
 init_sedit()
 {
-	register int i, type, p1, p2, p3;
+	register int		type;
 	int			id;
 
 	/*
@@ -1481,13 +1492,9 @@ init_sedit()
 void
 replot_editing_solid()
 {
-	int			id;
-	struct rt_external	ext;
-	struct rt_db_internal	intern;
 	struct rt_db_internal	*ip;
-	struct directory	*dp;
 
-	dp = illump->s_path[illump->s_last];
+	(void)illump->s_path[illump->s_last];
 
 	ip = &es_int;
 	RT_CK_DB_INTERNAL( ip );
@@ -1507,8 +1514,6 @@ mat_t			mat;
 struct rt_db_internal	*is;		/* input solid */
 int			free;
 {
-	struct directory	*dp;
-
 	RT_CK_DB_INTERNAL( is );
 	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free ) < 0 )
 		rt_bomb("transform_editing_solid");
@@ -1518,6 +1523,8 @@ int			free;
  * modified into rt_generic_xform() in librt/table.c
  * rt_generic_xform is normally called via rt_functab[id].ft_xform()
  */
+	struct directory	*dp;
+
 	dp = illump->s_path[illump->s_last];
 	if( rt_db_xform_internal( os, mat, is, free, dp->d_namep ) < 0 )
 		rt_bomb("transform_editing_solid");		/* FAIL */
@@ -1636,7 +1643,6 @@ int type;
 void
 sedit()
 {
-	register dbfloat_t *op;
 	struct rt_arb_internal *arb;
 	fastf_t	*eqp;
 	static vect_t work;
@@ -1893,7 +1899,7 @@ sedit()
 		}
 		if(inpara) {
 			/* Keyboard parameter:  new position in model space.
-			/* XXX for now, splines only here */
+			 * XXX for now, splines only here */
 			register struct rt_nurb_internal *sip =
 				(struct rt_nurb_internal *) es_int.idb_ptr;
 			register struct snurb	*surf;
@@ -2389,10 +2395,7 @@ register struct rt_vls		*vp;
 CONST struct rt_db_internal	*ip;
 CONST mat_t			mat;
 {
-	struct rt_external	ext;
 	struct rt_db_internal	intern;
-	struct solidrec		sol;
-	mat_t			ident;
 	int			id;
 
 	RT_VLS_CHECK(vp);
@@ -2415,9 +2418,7 @@ CONST mat_t			mat;
 void
 pscale()
 {
-	register dbfloat_t *op;
 	static fastf_t ma,mb;
-	static fastf_t mr1,mr2;
 
 	switch( es_menu ) {
 
@@ -2598,7 +2599,6 @@ pscale()
 		{
 			struct rt_rpc_internal	*rpc = 
 				(struct rt_rpc_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
 
 			RT_RPC_CK_MAGIC(rpc);
 			if( inpara ) {
@@ -2647,7 +2647,6 @@ pscale()
 		{
 			struct rt_rhc_internal	*rhc = 
 				(struct rt_rhc_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
 
 			RT_RHC_CK_MAGIC(rhc);
 			if( inpara ) {
@@ -2664,7 +2663,6 @@ pscale()
 		{
 			struct rt_rhc_internal	*rhc = 
 				(struct rt_rhc_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
 
 			RT_RHC_CK_MAGIC(rhc);
 			if( inpara ) {
@@ -2697,7 +2695,6 @@ pscale()
 		{
 			struct rt_epa_internal	*epa = 
 				(struct rt_epa_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
 
 			RT_EPA_CK_MAGIC(epa);
 			if( inpara ) {
@@ -2715,7 +2712,6 @@ pscale()
 		{
 			struct rt_epa_internal	*epa = 
 				(struct rt_epa_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
 
 			RT_EPA_CK_MAGIC(epa);
 			if( inpara ) {
@@ -2749,7 +2745,6 @@ pscale()
 		{
 			struct rt_ehy_internal	*ehy = 
 				(struct rt_ehy_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
 
 			RT_EHY_CK_MAGIC(ehy);
 			if( inpara ) {
@@ -2767,7 +2762,6 @@ pscale()
 		{
 			struct rt_ehy_internal	*ehy = 
 				(struct rt_ehy_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
 
 			RT_EHY_CK_MAGIC(ehy);
 			if( inpara ) {
@@ -2785,7 +2779,6 @@ pscale()
 		{
 			struct rt_ehy_internal	*ehy = 
 				(struct rt_ehy_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
 
 			RT_EHY_CK_MAGIC(ehy);
 			if( inpara ) {
@@ -2992,8 +2985,6 @@ pscale()
 void
 init_objedit()
 {
-	register int		i;
-	register int		type;
 	int			id;
 	char			*strp="";
 
@@ -3177,7 +3168,6 @@ void
 sedit_accept()
 {
 	struct directory	*dp;
-	int	id;
 
 	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
 

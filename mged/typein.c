@@ -338,7 +338,6 @@ f_in(argc, argv)
 int argc;
 char **argv;
 {
-	register int i;
 	register struct directory *dp;
 	char			name[NAMESIZE+2];
 	struct rt_db_internal	internal;
@@ -608,7 +607,6 @@ char			*promp[];
 	int			cv;	/* current curve (waterline) # */
 	int			axis;	/* current fastf_t in waterline */
 	int			ncurves_minus_one;
-	int arg;
 
 	int num_pts, num_curves;
 
@@ -731,7 +729,7 @@ arb_in(cmd_argvs, intern)
 char			*cmd_argvs[];
 struct rt_db_internal	*intern;
 {
-	int			argcnt, i, j, n;
+	int			i, j, n;
 	struct rt_arb_internal	*aip;
 
 	intern->idb_type = ID_ARB8;
@@ -884,7 +882,6 @@ tor_in(cmd_argvs, intern)
 char			*cmd_argvs[];
 struct rt_db_internal	*intern;
 {
-	fastf_t			r;
 	int			i;
 	struct rt_tor_internal	*tip;
 
@@ -975,7 +972,6 @@ struct rt_db_internal	*intern;
 	fastf_t			r;
 	int			i;
 	struct rt_tgc_internal	*tip;
-	vect_t			work;
 
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal),
@@ -1058,7 +1054,6 @@ struct rt_db_internal	*intern;
 {
 	int			i;
 	struct rt_tgc_internal	*tip;
-	vect_t			work;
 
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal),
@@ -1198,9 +1193,7 @@ char			*cmd_argvs[];
 struct rt_db_internal	*intern;
 {
 	fastf_t			xmin, xmax, ymin, ymax, zmin, zmax;
-	int			i;
 	struct rt_arb_internal	*aip;
-	vect_t			Dpth, Hgt, Vrtx, Wdth;
 
 	intern->idb_type = ID_ARB8;
 	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal),

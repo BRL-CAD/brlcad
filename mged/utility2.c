@@ -348,11 +348,7 @@ int flag;
 
 	struct directory *nextdp;
 	mat_t new_xlate;
-	int nparts, i, k, j;
-	int arslen, npt, n;
-	int	kk = 0;
-	vect_t	vertex;
-	vect_t	vec;
+	int nparts, i, k;
 
 	if( pathpos >= MAX_LEVELS ) {
 		(void)printf("nesting exceeds %d levels\n",MAX_LEVELS);
@@ -473,7 +469,6 @@ struct db_full_path	*pathp;
 struct rt_external	*ep;
 int			id;
 {
-	struct rt_db_internal intern;
 	union tree	*curtree;
 	struct directory *dp;
 	register struct push_id *pip;
@@ -593,7 +588,9 @@ char **argv;
 	int	ncpu;
 	int	c;
 	int	old_debug;
-	int	levels;
+#if 0
+	int	levels;	/* XXX levels option on push command not yet implemented */
+#endif
 	extern 	int optind;
 	extern	char *optarg;
 	extern	struct rt_tol	mged_tol;	/* from ged.c */
@@ -619,7 +616,9 @@ char **argv;
 	while ( (c=getopt(argc, argv, "l:P:d")) != EOF) {
 		switch(c) {
 		case 'l':
+#if 0
 			levels=atoi(optarg);
+#endif
 			break;
 		case 'P':
 			ncpu = atoi(optarg);

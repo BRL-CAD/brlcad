@@ -86,7 +86,6 @@ char	**argv;
 	struct rt_db_internal	internal;
 	struct rt_external	external;
 	struct rt_arb_internal	*aip;
-	struct rt_arb_internal	ai;
 
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
@@ -127,8 +126,6 @@ char	**argv;
 		return CMD_BAD;
 	}
 	VSCALE(norm, norm, 1.0/length);
-
-coordin:  	/* sent here to input coordinate to find again */
 
 	if( argc < 12 ) {
 		(void)printf("Enter coordinate to solve for (x, y, or z): ");
@@ -200,8 +197,6 @@ coordin:  	/* sent here to input coordinate to find again */
 		return CMD_BAD;
 	}
 
-
-thickagain:
 
 	if ( argc < 15 ) {
 		(void)printf("Enter thickness for this arb: ");
@@ -385,7 +380,6 @@ char	**argv;
 	norm[2] = sin(fba);
 
 	for(i=0; i<3; i++) {
-coordagain:	/* sent here to redo a point */
 		if( argc < 8+3*i ) {
 			(void)printf("POINT %d...",i+2);
 			(void)printf("Enter coordinate to solve for (x, y, or z): ");
@@ -455,8 +449,6 @@ coordagain:	/* sent here to redo a point */
 			return CMD_BAD;
 		}
 	}
-
-thckagain:
 
 	if( argc < 8+3*3 ) {
 		(void)printf("Enter thickness for this arb: ");
@@ -847,31 +839,6 @@ register int *svec;	/* array of like points */
 }
 
 /*
- *			R T _ A R B _ P T M O V E
- *
- *  Note:  arbo and arbi must not point to same structure!
- */
-static void
-rt_arb_ptmove( arbo, arbi, p0, p1, p2, p3, p4, p5, p6, p7 )
-struct rt_arb_internal	*arbo;
-struct rt_arb_internal	*arbi;
-int			p0, p1, p2, p3, p4, p5, p6, p7;
-{
-
-	RT_ARB_CK_MAGIC( arbo );
-	RT_ARB_CK_MAGIC( arbi );
-
-	VMOVE( arbo->pt[0], arbi->pt[p0] );
-	VMOVE( arbo->pt[1], arbi->pt[p1] );
-	VMOVE( arbo->pt[2], arbi->pt[p2] );
-	VMOVE( arbo->pt[3], arbi->pt[p3] );
-	VMOVE( arbo->pt[4], arbi->pt[p4] );
-	VMOVE( arbo->pt[5], arbi->pt[p5] );
-	VMOVE( arbo->pt[6], arbi->pt[p6] );
-	VMOVE( arbo->pt[7], arbi->pt[p7] );
-}
-
-/*
  *			R T _ A R B _ S T D _ T Y P E
  *
  *  Given an ARB in internal form, return it's specific ARB type.
@@ -895,9 +862,7 @@ struct rt_db_internal	*ip;
 struct rt_tol		*tol;
 {
 	struct rt_arb_internal	*arb;
-	int i;
 	int uvec[8], svec[11];
-	int	nedge;
 	int	cgtype = 0;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -908,7 +873,7 @@ struct rt_tol		*tol;
 	arb = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if( (nedge = rt_arb_get_cgtype( &cgtype, arb, tol, uvec, svec )) == 0 )
+	if( rt_arb_get_cgtype( &cgtype, arb, tol, uvec, svec ) == 0 )
 		return(0);
 
 	return( cgtype );

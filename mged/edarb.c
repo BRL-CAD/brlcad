@@ -189,7 +189,6 @@ vect_t pos_model;
 	static int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
 	short *edptr;		/* pointer to arb edit array */
 	short *final;		/* location of points to redo */
-	register dbfloat_t *op;
 	static int i, *iptr;
 	struct rt_arb_internal *arb;
 
@@ -518,7 +517,6 @@ char	**argv;
 	static int pt[4];
 	static int prod;
 	static fastf_t dist;
-	static struct solidrec lsolid;	/* local copy of solid */
 	struct rt_arb_internal larb;	/* local copy of arb for new way */
 
 	if( not_state( ST_S_EDIT, "Extrude" ) )
@@ -707,7 +705,6 @@ char	**argv;
 	struct rt_db_internal	internal;
 	struct rt_external	external;
 	struct rt_arb_internal	arb;
-	union record record;
 	int i, j;
 	fastf_t rota, fb;
 	vect_t norm1,norm2,norm3;
@@ -800,7 +797,6 @@ char	**argv;
 	static int pt[4];
 	static int prod;
 	static vect_t work;
-	static struct solidrec lsolid;	/* local copy of solid */
 	struct rt_arb_internal *arb;
 	struct rt_arb_internal larb;	/* local copy of solid */
 
@@ -1070,7 +1066,7 @@ register struct solidrec *sp;
 }
 
 /* Permute command - permute the vertex labels of an ARB
-/* Format: permute tuple	*/
+ * Format: permute tuple	*/
 
 /*
  *	     Minimum and maximum tuple lengths

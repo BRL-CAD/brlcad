@@ -739,14 +739,15 @@ CONST struct rt_db_internal	*ip;
 	rt_vls_printf(vp,"ARS analyze not implemented\n");
 }
 
-/*	analyze spline */
-static void
-spline_anal(vp, ip)
-struct rt_vls	*vp;
-CONST struct rt_db_internal	*ip;
-{
-	rt_vls_printf(vp,"SPLINE analyze not implemented\n");
-}
+/*	XXX	analyze spline needed
+ * static void
+ * spline_anal(vp, ip)
+ * struct rt_vls	*vp;
+ * CONST struct rt_db_internal	*ip;
+ * {
+ * 	rt_vls_printf(vp,"SPLINE analyze not implemented\n");
+ * }
+ */
 
 #define arcsinh(x) (log((x) + sqrt((x)*(x) + 1.)))
 
@@ -756,7 +757,7 @@ rpc_anal(vp, ip)
 struct rt_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
-	fastf_t	area_parab, area_body, area_rect, b, h, r, vol_parab;
+	fastf_t	area_parab, area_body, b, h, r, vol_parab;
 	struct rt_rpc_internal	*rpc = (struct rt_rpc_internal *)ip->idb_ptr;
 
 	RT_RPC_CK_MAGIC( rpc );
@@ -791,8 +792,7 @@ rhc_anal(vp, ip)
 struct rt_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
-	fastf_t	area_hyperb, area_body, area_rect, b, c, h, k, r, vol_hyperb,
-		work1, work2, work3, work4;
+	fastf_t	area_hyperb, area_body, b, c, h, r, vol_hyperb,	work1;
 	struct rt_rhc_internal	*rhc = (struct rt_rhc_internal *)ip->idb_ptr;
 
 	RT_RHC_CK_MAGIC( rhc );

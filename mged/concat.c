@@ -63,8 +63,6 @@ long			laddr;
 int			len;
 int			flags;
 {
-	register struct directory **headp;
-	register struct directory *dp;
 	struct directory	*dupdp;
 	char			local[NAMESIZE+2];
 

@@ -132,7 +132,7 @@ char **argv;
 	if (argc >= 2) {
 		sscanf( argv[1], "%x", &joint_debug);
 	} else {
-		rt_printb( "possible flags", -1, JOINT_DEBUG_FORMAT );
+		rt_printb( "possible flags", 0xffffffffL, JOINT_DEBUG_FORMAT );
 		rt_log("\n");
 	}
 	rt_printb( "joint_debug", joint_debug, JOINT_DEBUG_FORMAT );
@@ -207,7 +207,6 @@ static void
 free_joint(jp)
 struct joint *jp;
 {
-	int i;
 	free_arc(&jp->path);
 	if (jp->name) rt_free(jp->name, "joint name");
 	rt_free((char *)jp, "joint structure");
@@ -217,8 +216,8 @@ static void
 free_hold(hp)
 struct hold *hp;
 {
-	register int i;
 	register struct jointH *jh;
+
 	if (!hp || hp->l.magic != MAGIC_HOLD_STRUCT) return;
 	if (hp->objective.type != ID_FIXED) {
 		if (hp->objective.path.fp_maxlen) {
@@ -426,7 +425,6 @@ char **argv;
 {
 	register struct joint *jp;
 	register struct hold *hp;
-	register struct jointH *jh;
 	int joints, holds;
 
 	db_free_anim(dbip);
@@ -739,7 +737,6 @@ FILE *fip;
 struct rt_vls *str;
 {
 	union rt_lex_token token;
-	register int i;
 	int max;
 
 	if (joint_debug & DEBUG_J_PARSE) {
@@ -818,7 +815,6 @@ FILE *fip;
 struct rt_vls *str;
 {
 	union rt_lex_token token;
-	register int i;
 	int max;
 
 	if (joint_debug & DEBUG_J_PARSE) {
@@ -881,7 +877,6 @@ FILE *fip;
 struct rt_vls *str;
 {
 	union rt_lex_token token;
-	register int i;
 	int max;
 	char *error;
 
@@ -973,6 +968,8 @@ struct rt_vls *str;
 		parse_error(str,"parse_double: syntax error.  Expecting number.");
 		return 0;
 	}
+
+	return 1;
 }
 static int
 parse_assign(dbl, fip, str)
@@ -1000,7 +997,6 @@ vect_t vect;
 FILE *fip;
 struct rt_vls *str;
 {
-	union rt_lex_token token;
 	int i;
 
 	if (joint_debug & DEBUG_J_PARSE) {
@@ -1683,7 +1679,6 @@ struct rt_vls *str;
 		pp->type = ID_FIXED;
 		if (!parse_vect(&pp->point[0], fip, str)) return 0;
 		return gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str);
-		break;
 	case ID_SPH:
 		pp->type = ID_SPH;
 		break;
@@ -1879,7 +1874,6 @@ char **argv;
 	FILE *fip;
 	struct rt_vls	*instring;
 	union rt_lex_token token;
-	int used;
 	int	no_unload = 0, no_apply=0, no_mesh=0;
 	int	c;
 	struct	joint *jp;
@@ -2196,7 +2190,6 @@ vect_t loc;
 struct hold_point *hp;
 {
 	mat_t mat;
-	vect_t startloc;
 	struct joint *jp;
 	struct rt_grip_internal *gip;
 	struct rt_external	es_ext;
@@ -2253,6 +2246,7 @@ struct hold_point *hp;
 		return 1;
 	}
 	/* NEVER REACHED */
+	return 1;	/* For the picky compilers */
 }
 double
 hold_eval(hp)
@@ -2314,7 +2308,7 @@ double limits;
 double tol;
 {
 	register struct joint *jp;
-	double f0,f1,f2,f3;
+	double f0,f1,f2;
 	double ax,bx,cx;
 	double x0,x1,x2,x3;
 	double besteval, bestvalue, origvalue;
@@ -2665,7 +2659,7 @@ double epsilon;
 	struct solve_stack *ssp;
 
 	if (pri < 0) return 1;
-Top:
+
 	for (i=0; i<=pri; i++) 	pri_weights[i]=0.0;
 	for (RT_LIST_FOR(hp,hold,&hold_head)) {
 		hp->eval = hold_eval(hp);
@@ -2849,7 +2843,6 @@ char **argv;
 	int	found;
 	char **myargv;
 	int myargc;
-	register int i;
 	int result;
 
 	/*
@@ -3044,7 +3037,6 @@ void
 print_hold(hp)
 struct hold *hp;
 {
-	int i;
 	char *t1, *t2;
 
 	t1 = hold_point_to_string(&hp->effector);
@@ -3213,7 +3205,6 @@ f_jmove(argc, argv)
 int argc;
 char **argv;
 {
-	register struct animate *anp;
 	struct joint *jp;
 	int i;
 	double tmp;

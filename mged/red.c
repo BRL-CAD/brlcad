@@ -150,7 +150,6 @@ struct directory *dp;
 /*	Writes the file for later editing */
 	union record record;
 	FILE *fp;
-	mat_t matrix;
 	int offset,i;
 
 	/* open the file */
@@ -204,7 +203,6 @@ checkcomb()
 	char relation;
 	char name[NAMESIZE+1];
 	char line[MAXLINE];
-	struct directory *dp;
 
 	if( (fp=fopen( red_tmpfil , "r" )) == NULL )
 	{
@@ -292,7 +290,7 @@ checkcomb()
 			return( 1 );
 		}
 
-		if( (dp=db_lookup( dbip , name , LOOKUP_NOISY )) == DIR_NULL )
+		if( db_lookup( dbip , name , LOOKUP_NOISY ) == DIR_NULL )
 		{
 			(void)printf( " %s does not exist\n" , name );
 			fclose( fp );
@@ -354,7 +352,7 @@ struct directory *dp;
 	int i;
 	int done=0;
 	int region;
-	struct directory *dp1,*dp2;
+	struct directory *dp1;
 
 	if( (fp=fopen( red_tmpfil , "r" )) == NULL )
 	{
@@ -416,7 +414,7 @@ struct directory *dp;
 		}
 
 		/* Add it to the combination */
-		if( (dp2=combadd( dp1 , dp->d_namep , region , relation , ident , air ) ) == DIR_NULL )
+		if( combadd( dp1 , dp->d_namep , region , relation , ident , air ) == DIR_NULL )
 		{
 			(void)printf( " Error in rebuilding combination\n" );
 			return( 1 );
@@ -433,7 +431,6 @@ char *str;
 	a template name is expected as in "mk_temp()" with 
 	5 trailing X's */
 
-	struct directory *dp;
 	int counter,done;
 	char *ptr;
 
@@ -453,7 +450,7 @@ char *str;
 	while( !done && counter < 99999 )
 	{
 		sprintf( ptr , "%d" , counter );
-		if( (dp=db_lookup( dbip , str , LOOKUP_QUIET )) == DIR_NULL )
+		if( db_lookup( dbip , str , LOOKUP_QUIET ) == DIR_NULL )
 			done = 1;
 		else
 			counter++;
