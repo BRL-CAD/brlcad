@@ -21,15 +21,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <fcntl.h>
 #include <sgtty.h>
 
 #ifdef BSD
-#include <sys/time.h>
-#include <sys/file.h>
+# include <sys/time.h>
+# include <sys/file.h>
 #endif
 
 #ifdef SYSV
-#include <fcntl.h>
 struct timeval {
 	int	tv_sec;
 	int	tv_usec;
