@@ -861,6 +861,19 @@ struct rt_piecestate	*psp;
 	    bu_log( "dist=%g, normal = (%g %g %g), %s\n", hits[i].hit_dist, V3ARGS( hits[i].hit_normal), hits[i].hit_vpriv[X] > 0 ? "exit" : "entrance" );
     }
 #endif
+
+    /* if first hit is an exit, it is likely due to the "piece" for the corresponding entrance
+     * not being processed (this is OK, but we need to eliminate the stray exit hit)
+     */
+    while( nhits > 0 && hits[0].hit_vpriv[X] > 0.0 ) {
+	    int j;
+
+	    for( j=1 ; j<nhits ; j++ ) {
+		    hits[j-1] = hits[j];
+	    }
+	    nhits--;
+    }
+
     if( (nhits&1) )  {
 	register int i;
 	/*
@@ -871,6 +884,7 @@ struct rt_piecestate	*psp;
 	 * presence of this solid known.  There may be something
 	 * better we can do.
 	 */
+
 	if( nhits > 2 )
 	    {
 		fastf_t dot1,dot2;
