@@ -44,6 +44,7 @@ struct db5_ondisk_header {
 #define DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT	0
 #define DB5HDR_HFLAGS_DLI_HEADER_OBJECT			1
 #define DB5HDR_HFLAGS_DLI_FREE_STORAGE			2
+#define	DB5HDR_HFLAGS_HIDDEN_OBJECT			0x4
 #define DB5HDR_HFLAGS_NAME_PRESENT			0x20
 #define DB5HDR_HFLAGS_OBJECT_WIDTH_MASK			0xc0
 #define DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT		6
@@ -151,6 +152,7 @@ struct db5_ondisk_header {
 struct db5_raw_internal {
 	long		magic;
 	unsigned char	h_object_width;		/* DB5HDR_WIDTHCODE_x */
+	unsigned char	h_name_hidden;
 	unsigned char	h_name_present;
 	unsigned char	h_name_width;		/* DB5HDR_WIDTHCODE_x */
 	unsigned char	h_dli;
@@ -184,3 +186,5 @@ const unsigned char *db5_get_raw_internal_ptr(
 
 
 #endif	/* DB5_H */
+
+

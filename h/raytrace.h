@@ -821,6 +821,8 @@ struct directory  {
 	long		d_len;			/* # of db granules used */
 	long		d_nref;			/* # times ref'ed by COMBs */
 	int		d_flags;		/* flags */
+	unsigned char	d_major_type;		/* object major type */
+	unsigned char 	d_minor_type;		/* object minor type */
 	struct bu_list	d_use_hd;		/* heads list of uses (struct soltab l2) */
 	char		d_shortname[16];	/* Stash short names locally */
 };
@@ -834,6 +836,7 @@ struct directory  {
 #define DIR_SOLID	0x1		/* this name is a solid */
 #define DIR_COMB	0x2		/* combination */
 #define DIR_REGION	0x4		/* region */
+#define DIR_HIDDEN	0x8		/* object name is hidden */
 #define DIR_USED	0x80		/* One bit, used similar to d_nref */
 #define RT_DIR_INMEM	0x100		/* object is in memory (only) */
 
@@ -2530,6 +2533,7 @@ extern int db5_realloc( struct db_i *dbip,
 extern void db5_export_object3 (struct bu_external *out, 
 		int				dli,
 		CONST char			*name,
+		CONST unsigned char		hidden,
 		CONST struct bu_external	*attrib,
 		CONST struct bu_external	*body,
 		int				major,
