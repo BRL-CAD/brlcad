@@ -1009,11 +1009,6 @@ double			norm_tol;
 	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_plot pts[]" );
 
-#define VJOIN4(a,b,c,d,e,f,g,h,i,j)	\
-	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X] + (i)*(j)[X];\
-	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y] + (i)*(j)[Y];\
-	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z] + (i)*(j)[Z]
-
 #define PT(www,lll)	((((www)%nw)*nlen)+((lll)%nlen))
 #define PTA(ww,ll)	(&pts[PT(ww,ll)*3])
 
