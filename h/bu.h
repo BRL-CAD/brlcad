@@ -799,8 +799,9 @@ struct bu_file  {
 	char		*file_name;
 	struct bu_vls	file_buf;	/* contents of current line */
 	char		*file_bp;	/* pointer into current line */
+	int		file_needline;	/* time to grab another line? */
 	int		file_linenm;
-	char		file_comment;	/* the comment character */
+	int		file_comment;	/* the comment character */
 	int		file_buflen;	/* length of intact buffer */
 };
 typedef struct bu_file		BU_FILE;
@@ -809,6 +810,7 @@ typedef struct bu_file		BU_FILE;
 
 #define bu_stdin		(&bu_iob[0])
 extern BU_FILE			bu_iob[1];
+#define BU_FILE_NO_COMMENT	-1
 
 /*----------------------------------------------------------------------*/
 /*
