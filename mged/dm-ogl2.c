@@ -13,8 +13,6 @@
  *	All rights reserved.
  */
 
-#define CJDEBUG 0
-
 #include "conf.h"
 
 #include <stdio.h>
@@ -49,7 +47,7 @@
 #include <GL/glx.h>
 #include <GL/gl.h>
 /*XXXX*/
-#if 0
+#if 1
 #include <gl/device.h>
 #endif
 
@@ -95,8 +93,6 @@ static struct dm_list *get_dm_list();
 static int irisX2ged();
 static int irisY2ged();
 
-static char    ogl_is_direct = 0;
-
 /* Display Manager package interface */
 
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
@@ -138,8 +134,7 @@ struct dm dm_ogl2 = {
 
 
 /* ogl stuff */
-static int ogl2_index_size;
-
+#define NSLOTS		4080	/* The mostest possible - may be fewer */
 #define dpy (((struct ogl_vars *)dm_vars)->_dpy)
 #define win (((struct ogl_vars *)dm_vars)->_win)
 #define xtkwin (((struct ogl_vars *)dm_vars)->_xtkwin)
@@ -157,6 +152,12 @@ static int ogl2_index_size;
 #define glxc (((struct ogl_vars *)dm_vars)->_glxc)
 #define fontstruct (((struct ogl_vars *)dm_vars)->_fontstruct)
 #define fontOffset (((struct ogl_vars *)dm_vars)->_fontOffset)
+#define ovec (((struct ogl_vars *)dm_vars)->_ovec)
+#define ogl_is_direct (((struct ogl_vars *)dm_vars)->_ogl_is_direct)
+#define ogl_index_size (((struct ogl_vars *)dm_vars)->_ogl_index_size)
+#define ogl_nslots (((struct ogl_vars *)dm_vars)->_ogl_nslots)
+#define slotsused (((struct ogl_vars *)dm_vars)->_slotsused)
+#define ogl_rgbtab (((struct ogl_vars *)dm_vars)->_ogl_rgbtab)
 
 struct modifiable_ogl_vars {
   int cueing_on;
@@ -202,6 +203,19 @@ struct ogl_vars {
   GLXContext _glxc;
   XFontStruct *_fontstruct;
   int _fontOffset;
+  int _ovec;		/* Old color map entry number */
+  char    _ogl_is_direct;
+  int _ogl_index_size;
+/*
+ * SGI Color Map table
+ */
+  int _ogl_nslots;		/* how many we have, <= NSLOTS */
+  int _slotsused;		/* how many actually used */
+  struct rgbtab {
+	unsigned char	r;
+	unsigned char	g;
+	unsigned char	b;
+  }_ogl_rgbtab[NSLOTS];
   struct modifiable_ogl_vars mvars;
 };
 
@@ -247,21 +261,8 @@ static char	*kn2_knobs[] = {
 static struct ogl_vars head_ogl_vars;
 static int perspective_table[] = {
 	30, 45, 60, 90 };
-static int ovec = -1;		/* Old color map entry number */
 static double	xlim_view = 1.0;	/* args for glOrtho*/
 static double	ylim_view = 1.0;
-
-/*
- * SGI Color Map table
- */
-#define NSLOTS		4080	/* The mostest possible - may be fewer */
-static int ogl2_nslots=0;		/* how many we have, <= NSLOTS */
-static int slotsused;		/* how many actually used */
-static struct rgbtab {
-	unsigned char	r;
-	unsigned char	g;
-	unsigned char	b;
-} ogl2_rgbtab[NSLOTS];
 
 extern struct device_values dm_values;	/* values read from devices */
 
@@ -582,7 +583,7 @@ Ogl2_epilog()
    * This is drawn last, to always come out on top.
    */
 
-  glColor3ub( (short)ogl2_rgbtab[4].r, (short)ogl2_rgbtab[4].g, (short)ogl2_rgbtab[4].b );
+  glColor3ub( (short)ogl_rgbtab[4].r, (short)ogl_rgbtab[4].g, (short)ogl_rgbtab[4].b );
   glBegin(GL_POINTS);
   glVertex2i(0,0);
   glEnd();
@@ -599,7 +600,7 @@ Ogl2_epilog()
   /* Prevent lag between events and updates */
   XSync(dpy, 0);
 
-  if(CJDEBUG){
+  if(((struct ogl_vars *)dm_vars)->mvars.debug){
     int error;
 
     rt_log("ANY ERRORS?\n");
@@ -626,8 +627,11 @@ int which_eye;
 	mat_t	newm;
 	int	i;
 
+	
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
+		rt_log( "Ogl2_newrot()\n");
 
-	if(CJDEBUG){
+	if(((struct ogl_vars *)dm_vars)->mvars.debug){
 		printf("which eye = %d\t", which_eye);
 		printf("newrot matrix = \n");
 		printf("%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
@@ -636,9 +640,6 @@ int which_eye;
 		printf("%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
 	}
 
-
-	if (((struct ogl_vars *)dm_vars)->mvars.debug)
-		rt_log( "Ogl2_newrot()\n");
 	switch(which_eye)  {
 	case 0:
 		/* Non-stereo */
@@ -678,91 +679,10 @@ int which_eye;
 	gtmat[11] = *(mptr++);
 	gtmat[15] = *(mptr++);
 
-
-	/* If all the display managers end up doing this maybe it's 
-	 * dozoom that has a bug */
-	gtmat[2]  = -gtmat[2];
-	gtmat[6]  = -gtmat[6];
-	gtmat[10]  = -gtmat[10];
-	gtmat[14]  = -gtmat[14];
-
-	/* we know that mat = P*T*M
-	 *	where 	P = the perspective matrix based on the
-	 *			eye at the origin
-	 *		T = a translation of one in the -Z direction
-	 *		M = model2view matrix
-	 *
-	 * Therefore P = mat*M'*T'
-	 * 
-	 * In order for depthcueing and lighting to work correctly, 
-	 * P must be stored in the GL_PROJECTION matrix and T*M must
-	 * be stored the the GL_MODELVIEW matrix.
-	 */
-	if ( ((struct ogl_vars *)dm_vars)->mvars.perspective_mode){
-		float inv_view[16];
-
-		/* disassemble supplied matrix */
-
-		/* convert from row-major to column-major and from double
-		 * to float
-		 */
-		inv_view[0] = view2model[0];
-		inv_view[1] = view2model[4];
-		inv_view[2] = view2model[8];
-		inv_view[3] = view2model[12];
-		inv_view[4] = view2model[1];
-		inv_view[5] = view2model[5];
-		inv_view[6] = view2model[9];
-		inv_view[7] = view2model[13];
-		inv_view[8] = view2model[2];
-		inv_view[9] = view2model[6];
-		inv_view[10] = view2model[10];
-		inv_view[11] = view2model[14];
-		inv_view[12] = view2model[3];
-		inv_view[13] = view2model[7];
-		inv_view[14] = view2model[11];
-		inv_view[15] = view2model[15];
-
-		/* do P = P*T*M*M'*T' = mat*M'*T' (see explanation above) */
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf( gtmat );
-		glMultMatrixf( inv_view );
-		glTranslatef( 0.0, 0.0, 1.0);
-
-	} else {
-		/* Orthographic projection */
-		glMatrixMode(	GL_PROJECTION);
-		glLoadMatrixd( ((struct ogl_vars *)dm_vars)->faceplate_mat);
-
-	}
-
-
-	/* convert from row-major to column-major and from double
-	 * to float
-	 */
-	view[0] = model2view[0];
-	view[1] = model2view[4];
-	view[2] = model2view[8];
-	view[3] = model2view[12];
-	view[4] = model2view[1];
-	view[5] = model2view[5];
-	view[6] = model2view[9];
-	view[7] = model2view[13];
-	view[8] = model2view[2];
-	view[9] = model2view[6];
-	view[10] = model2view[10];
-	view[11] = model2view[14];
-	view[12] = model2view[3];
-	view[13] = model2view[7];
-	view[14] = model2view[11];
-	view[15] = model2view[15];
-
-	/* do T*M (see above explanation) */
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glTranslatef( 0.0, 0.0, -1.0 );
-	glMultMatrixf( view );
-
+	glMultMatrixf( gtmat );
 
 	/* Make sure that new matrix is applied to the lights */
 	if (((struct ogl_vars *)dm_vars)->mvars.lighting_on ){
@@ -772,21 +692,6 @@ int which_eye;
 		glLightfv(GL_LIGHT3, GL_POSITION, light3_position);
 
 	}
-
-
-	if(CJDEBUG){
-		GLfloat pmat[16];
-		int mode;
-
-		glGetIntegerv(GL_MATRIX_MODE, &mode);
-		printf("matrix mode %s\n", (mode==GL_MODELVIEW) ? "modelview" : "projection");
-		glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-		printf("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-		printf("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-		printf("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-		printf("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
-	}
-
 }
 
 
@@ -1021,7 +926,7 @@ int x,y,size, colour;
 	
 /*	glRasterPos2f( GED2IRIS(x),  GED2IRIS(y));*/
 	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
-		glColor3ub( (short)ogl2_rgbtab[colour].r,  (short)ogl2_rgbtab[colour].g,  (short)ogl2_rgbtab[colour].b );
+		glColor3ub( (short)ogl_rgbtab[colour].r,  (short)ogl_rgbtab[colour].g,  (short)ogl_rgbtab[colour].b );
 	} else {
 		ovec = MAP_ENTRY(colour);
 		glIndexi( ovec );
@@ -1063,16 +968,16 @@ int dashed;
 	
 /*	glColor3ub( (short)255,  (short)255,  (short) 0 );*/
 
-	if(CJDEBUG){
+	if(((struct ogl_vars *)dm_vars)->mvars.debug){
 		GLfloat pmat[16];
 		glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-		printf("projection matrix:");
+		printf("projection matrix:\n");
 		printf("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
 		printf("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
 		printf("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
 		printf("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
 		glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-		printf("modelview matrix:");
+		printf("modelview matrix:\n");
 		printf("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
 		printf("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
 		printf("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
@@ -1143,7 +1048,15 @@ XEvent *eventPtr;
 #endif
 
   if ( eventPtr->type == Expose && eventPtr->xexpose.count == 0 ) {
+#if 0
     Ogl2_configure_window_shape();
+#else
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    if (((struct ogl_vars *)dm_vars)->mvars.zbuf)
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    else
+       glClear(GL_COLOR_BUFFER_BIT);
+#endif
     dmaflag = 1;
     refresh();
     goto end;
@@ -1198,9 +1111,6 @@ XEvent *eventPtr;
 	y = (0.5 - eventPtr->xmotion.y/(double)((struct ogl_vars *)dm_vars)->height) * 4095;
 	rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
 #endif
-#if 1
-  }
-#else
   }else if( eventPtr->type == devmotionnotify ){
     XDeviceMotionEvent *M;
     int setting;
@@ -1298,7 +1208,6 @@ XEvent *eventPtr;
     if(B->button == 1)
       button0 = 0;
   }
-#endif
 
   (void)cmdline(&cmd, FALSE);
 end:
@@ -1413,19 +1322,19 @@ Ogl2_colorchange()
 	if( ((struct ogl_vars *)dm_vars)->mvars.debug )  rt_log("colorchange\n");
 
 	/* Program the builtin colors */
-	ogl2_rgbtab[0].r=0; 
-	ogl2_rgbtab[0].g=0; 
-	ogl2_rgbtab[0].b=0;/* Black */
-	ogl2_rgbtab[1].r=255; 
-	ogl2_rgbtab[1].g=0; 
-	ogl2_rgbtab[1].b=0;/* Red */
-	ogl2_rgbtab[2].r=0; 
-	ogl2_rgbtab[2].g=0; 
-	ogl2_rgbtab[2].b=255;/* Blue */
-	ogl2_rgbtab[3].r=255; 
-	ogl2_rgbtab[3].g=255;
-	ogl2_rgbtab[3].b=0;/*Yellow */
-	ogl2_rgbtab[4].r = ogl2_rgbtab[4].g = ogl2_rgbtab[4].b = 255; /* White */
+	ogl_rgbtab[0].r=0; 
+	ogl_rgbtab[0].g=0; 
+	ogl_rgbtab[0].b=0;/* Black */
+	ogl_rgbtab[1].r=255; 
+	ogl_rgbtab[1].g=0; 
+	ogl_rgbtab[1].b=0;/* Red */
+	ogl_rgbtab[2].r=0; 
+	ogl_rgbtab[2].g=0; 
+	ogl_rgbtab[2].b=255;/* Blue */
+	ogl_rgbtab[3].r=255; 
+	ogl_rgbtab[3].g=255;
+	ogl_rgbtab[3].b=0;/*Yellow */
+	ogl_rgbtab[4].r = ogl_rgbtab[4].g = ogl_rgbtab[4].b = 255; /* White */
 	slotsused = 5;
 
 	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
@@ -1443,19 +1352,19 @@ Ogl2_colorchange()
 		return;
 	}
 
-	if(USE_RAMP && (ogl2_index_size < 7)) {
+	if(USE_RAMP && (ogl_index_size < 7)) {
 		rt_log("Too few bitplanes: depthcueing and lighting disabled\n");
 		((struct ogl_vars *)dm_vars)->mvars.cueing_on = 0;
 		((struct ogl_vars *)dm_vars)->mvars.lighting_on = 0;
 	}
 	/* number of slots is 2^indexsize */
-	ogl2_nslots = 1<<ogl2_index_size;
-	if( ogl2_nslots > NSLOTS )  ogl2_nslots = NSLOTS;
+	ogl_nslots = 1<<ogl_index_size;
+	if( ogl_nslots > NSLOTS )  ogl_nslots = NSLOTS;
 	if(USE_RAMP) {
 		/* peel off reserved ones */
-		ogl2_nslots = (ogl2_nslots - CMAP_BASE) / CMAP_RAMP_WIDTH;
+		ogl_nslots = (ogl_nslots - CMAP_BASE) / CMAP_RAMP_WIDTH;
 	} else {
-		ogl2_nslots -= CMAP_BASE;	/* peel off the reserved entries */
+		ogl_nslots -= CMAP_BASE;	/* peel off the reserved entries */
 	}
 
 	ovec = -1;	/* Invalidate the old colormap entry */
@@ -1473,7 +1382,7 @@ Ogl2_colorchange()
 	Ogl2_colorit();
 
 	for( i=0; i < slotsused; i++ )  {
-		Ogl2_gen_color( i, ogl2_rgbtab[i].r, ogl2_rgbtab[i].g, ogl2_rgbtab[i].b);
+		Ogl2_gen_color( i, ogl_rgbtab[i].r, ogl_rgbtab[i].g, ogl_rgbtab[i].b);
 	}
 
 	/* best to do this after the colorit */
@@ -1830,7 +1739,7 @@ Tk_Window tkwin;
 						((struct ogl_vars *)dm_vars)->mvars.zbuf = 1;
 					((struct ogl_vars *)dm_vars)->mvars.rgb = m_rgba;
 					if (!m_rgba){
-						glXGetConfig(dpy, maxvip, GLX_BUFFER_SIZE, &ogl2_index_size);
+						glXGetConfig(dpy, maxvip, GLX_BUFFER_SIZE, &ogl_index_size);
 					}
 					stereo_is_on = m_stereo;
 					return (maxvip); /* sucess */
@@ -1913,6 +1822,8 @@ Ogl2_configure_window_shape()
 	glLoadIdentity();
 	glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
 	glMatrixMode(mm);
+	aspect = (fastf_t)((struct ogl_vars *)dm_vars)->height/
+	  (fastf_t)((struct ogl_vars *)dm_vars)->width;
 
 
 	/* First time through, load a font or quit */
@@ -2223,7 +2134,7 @@ Ogl2_colorit()
 		}
 
 		/* First, see if this matches an existing color map entry */
-		rgb = ogl2_rgbtab;
+		rgb = ogl_rgbtab;
 		for( i = 0; i < slotsused; i++, rgb++ )  {
 			if( rgb->r == r && rgb->g == g && rgb->b == b )  {
 				sp->s_dmindex = i;
@@ -2232,8 +2143,8 @@ Ogl2_colorit()
 		}
 
 		/* If slots left, create a new color map entry, first-come basis */
-		if( slotsused < ogl2_nslots )  {
-			rgb = &ogl2_rgbtab[i=(slotsused++)];
+		if( slotsused < ogl_nslots )  {
+			rgb = &ogl_rgbtab[i=(slotsused++)];
 			rgb->r = r;
 			rgb->g = g;
 			rgb->b = b;
@@ -2293,14 +2204,14 @@ int c;
 			fastf_t red, green, blue;
 			XColor cells[CMAP_RAMP_WIDTH];
 
-			red = r_inc = ogl2_rgbtab[c].r * (256/CMAP_RAMP_WIDTH);
-			green = g_inc = ogl2_rgbtab[c].g * (256/CMAP_RAMP_WIDTH);
-			blue = b_inc = ogl2_rgbtab[c].b * (256/CMAP_RAMP_WIDTH);
+			red = r_inc = ogl_rgbtab[c].r * (256/CMAP_RAMP_WIDTH);
+			green = g_inc = ogl_rgbtab[c].g * (256/CMAP_RAMP_WIDTH);
+			blue = b_inc = ogl_rgbtab[c].b * (256/CMAP_RAMP_WIDTH);
 
 #if 0
-			red = ogl2_rgbtab[c].r * 256;
-			green = ogl2_rgbtab[c].g * 256;
-			blue = ogl2_rgbtab[c].b * 256;
+			red = ogl_rgbtab[c].r * 256;
+			green = ogl_rgbtab[c].g * 256;
+			blue = ogl_rgbtab[c].b * 256;
 #endif
 			
 
@@ -2331,9 +2242,9 @@ int c;
 		XColor cell, celltest;
 
 		cell.pixel = c + CMAP_BASE;
-		cell.red = ogl2_rgbtab[c].r * 256;
-		cell.green = ogl2_rgbtab[c].g * 256;
-		cell.blue = ogl2_rgbtab[c].b * 256;
+		cell.red = ogl_rgbtab[c].r * 256;
+		cell.green = ogl_rgbtab[c].g * 256;
+		cell.blue = ogl_rgbtab[c].b * 256;
 		cell.flags = DoRed|DoGreen|DoBlue;
 		XStoreColor(dpy, ((struct ogl_vars *)dm_vars)->cmap, &cell);
 
@@ -2378,6 +2289,8 @@ ogl_var_init()
   devbuttonrelease = LASTEvent;
   ((struct ogl_vars *)dm_vars)->dm_list = curr_dm_list;
   perspective_angle = 3;
+  aspect = 1.0;
+  ovec = -1;
 
   /* initialize the modifiable variables */
   ((struct ogl_vars *)dm_vars)->mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
@@ -2386,6 +2299,8 @@ ogl_var_init()
   ((struct ogl_vars *)dm_vars)->mvars.linewidth = 1;      /* Line drawing width */
   ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective = 1;
   ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = 1;
+  ((struct ogl_vars *)dm_vars)->mvars.fastfog = 1;
+  ((struct ogl_vars *)dm_vars)->mvars.fogdensity = 1.0;
 }
 
 static struct dm_list *
