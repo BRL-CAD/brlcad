@@ -77,8 +77,6 @@ char	*file;
 {
 	struct stat	sb;
 	int	fd;
-	char	*proto;
-	register char	*ip, *op;
 
 	if( (fd = open( file, 0 )) < 0 || stat( file, &sb ) < 0 )  {
 		perror(file);
@@ -88,27 +86,12 @@ char	*file;
 		fprintf(stderr,"tabsub:  %s is empty\n", file );
 		exit(1);
 	}
-	prototype = rt_malloc( sb.st_size, "prototype document");
-	proto = rt_malloc( sb.st_size, "temporary prototype document");
-	if( read( fd, proto, sb.st_size ) != sb.st_size )  {
+	prototype = rt_malloc( sb.st_size+4, "prototype document");
+	if( read( fd, prototype, sb.st_size ) != sb.st_size )  {
 		perror(file);
 		exit(2);
 	}
-
-	/* Eliminate comments from input */
-	ip = proto;
-	op = prototype;
-	while( *ip )  {
-		if( *ip != '#' )  {
-			*op++ = *ip++;
-			continue;
-		}
-		/* Start of comment seen, gobble until newline or EOF */
-		ip++;
-		while( *ip && *ip != '\n' )
-			ip++;
-	}
-	rt_free( proto, "temporary prototype document" );
+	prototype[sb.st_size] = '\0';
 }
 
 #define	NCHANS	1024
