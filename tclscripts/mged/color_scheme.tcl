@@ -44,6 +44,10 @@ proc color_scheme_init {} {
 	    "0 0 0" "255 255 255" "255 0 0" "255 0 0" "100 255 100" "100 255 100"\
 	    "100 100 255" "150 150 255" "0 0 0" "255 255 255" "0 0 0" "255 255 255"\
 	    "100 100 255" "255 255 150" "255 0 0" "255 0 0" "0 0 0" "255 255 255" }
+    set mged_color_scheme(default) { "0 0 50" "0 0 0" "255 255 0" "255 255 0"\
+	    "255 255 255" "255 255 255" "255 0 0" "255 0 0" "100 255 100" "100 255 100"\
+	    "100 100 255" "100 100 255" "255 255 255" "255 255 255" "255 255 255" "255 255 255"\
+	    "255 255 0" "255 255 0" "255 0 0" "255 0 0" "255 255 255" "255 255 255" }
 #    set mged_color_scheme() { "" "" "" ""\
 #	    "" "" "" "" "" ""\
 #	    "" "" "" "" "" ""\
@@ -178,7 +182,7 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
     $top.cannedMB.m add command -label Desert\
 	    -command "color_scheme_load_canned $id $top $mged_color_scheme(desert)"
     $top.cannedMB.m add command -label Default\
-	    -command "color_scheme_load_default $id $top"
+	    -command "color_scheme_load_canned $id $top $mged_color_scheme(default)"
 
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
@@ -328,39 +332,6 @@ proc color_scheme_reset { id top } {
 	set key_ia $key\_ia
 	set color_a [rset cs $key_a]
 	set color_ia [rset cs $key_ia]
-
-	set mged_color_scheme($id,$key_a) $color_a
-	set mged_color_scheme($id,$key_ia) $color_ia
-
-	if $mged_color_scheme($id,smflag) {
-	    color_entry_update $top $key_a $color_a
-	    color_entry_update $top $key_ia $color_ia
-	}
-    }
-}
-
-proc color_scheme_load_default { id top } {
-    global mged_color_scheme
-
-    foreach key_name_pair $mged_color_scheme(primary_map) {
-	set key [lindex $key_name_pair 0]
-	set key_a $key\_a
-	set key_ia $key\_ia
-	set color_a [cs_def $key_a]
-	set color_ia [cs_def $key_ia]
-
-	set mged_color_scheme($id,$key_a) $color_a
-	set mged_color_scheme($id,$key_ia) $color_ia
-	color_entry_update $top $key_a $color_a
-	color_entry_update $top $key_ia $color_ia
-    }
-
-    foreach key_name_pair $mged_color_scheme(secondary_map) {
-	set key [lindex $key_name_pair 0]
-	set key_a $key\_a
-	set key_ia $key\_ia
-	set color_a [cs_def $key_a]
-	set color_ia [cs_def $key_ia]
 
 	set mged_color_scheme($id,$key_a) $color_a
 	set mged_color_scheme($id,$key_ia) $color_ia
