@@ -59,7 +59,8 @@ export PATH
 # will NOT run .profile, so our remote commands will be stuck with
 # the system default path.  Hence, the uglyness of having to know
 # where CAD programs are installed on the remote machine.  Sigh.
-BINDIR=/usr/brlcad/bin
+eval `machinetype.sh -b`;	# sets BASEDIR
+BINDIR=$BASEDIR/bin
 
 PROG_NAME=$0
 
