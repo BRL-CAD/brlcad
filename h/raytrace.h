@@ -476,17 +476,17 @@ struct region  {
 	long		reg_magic;
 	CONST char	*reg_name;	/* Identifying string */
 	union tree	*reg_treetop;	/* Pointer to boolean tree */
-	short		reg_bit;	/* constant index into Regions[] */
-	short		reg_regionid;	/* Region ID code.  If <=0, use reg_aircode */
-	short		reg_aircode;	/* Region ID AIR code */
-	short		reg_gmater;	/* GIFT Material code */
-	short		reg_los;	/* equivalent LOS estimate ?? */
+	int		reg_bit;	/* constant index into Regions[] */
+	int		reg_regionid;	/* Region ID code.  If <=0, use reg_aircode */
+	int		reg_aircode;	/* Region ID AIR code */
+	int		reg_gmater;	/* GIFT Material code */
+	int		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
 	struct mater_info reg_mater;	/* Real material information */
 	genptr_t	reg_mfuncs;	/* User appl. funcs for material */
 	genptr_t	reg_udata;	/* User appl. data for material */
-	short		reg_transmit;	/* flag:  material transmits light */
-	short		reg_instnum;	/* instance number, from d_uses */
+	int		reg_transmit;	/* flag:  material transmits light */
+	int		reg_instnum;	/* instance number, from d_uses */
 };
 #define REGION_NULL	((struct region *)0)
 #define RT_REGION_MAGIC	0xdffb8001
@@ -669,8 +669,8 @@ union cutter  {
 		fastf_t	bn_min[3];
 		fastf_t	bn_max[3];
 		struct soltab **bn_list;
-		short	bn_len;		/* # of solids in list */
-		short	bn_maxlen;	/* # of ptrs allocated to list */
+		int	bn_len;		/* # of solids in list */
+		int	bn_maxlen;	/* # of ptrs allocated to list */
 	} bn;
 };
 #define CUTTER_NULL	((union cutter *)0)
@@ -747,7 +747,7 @@ struct directory  {
 	long		d_uses;			/* # uses, from instancing */
 	long		d_len;			/* # of db granules used */
 	long		d_nref;			/* # times ref'ed by COMBs */
-	short		d_flags;		/* flags */
+	int		d_flags;		/* flags */
 };
 #define DIR_NULL	((struct directory *)0)
 #define RT_DIR_MAGIC	0x05551212		/* Directory assistance */
@@ -908,7 +908,7 @@ union tree {
  *  order given.
  */
 struct anim_mat {
-	short		anm_op;			/* ANM_RSTACK, ANM_RARC... */
+	int		anm_op;			/* ANM_RSTACK, ANM_RARC... */
 	mat_t		anm_mat;		/* Matrix */
 };
 #define ANM_RSTACK	1			/* Replace stacked matrix */
@@ -919,7 +919,7 @@ struct anim_mat {
 
 struct rt_anim_property {
 	/* XXX magic */
-	short		anp_op;			/* RT_ANP_RBOTH, etc */
+	int		anp_op;			/* RT_ANP_RBOTH, etc */
 	struct rt_vls	anp_matname;		/* Changes for material name */
 	struct rt_vls	anp_matparam;		/* Changes for mat. params */
 };
@@ -936,7 +936,7 @@ struct animate {
 	int	magic;				/* magic number */
 	struct animate	*an_forw;		/* forward link */
 	struct db_full_path an_path;		/* (sub)-path pattern */
-	short		an_type;		/* AN_MATRIX, AN_COLOR... */
+	int		an_type;		/* AN_MATRIX, AN_COLOR... */
 	union animate_specific {
 		struct anim_mat		anu_m;
 		struct rt_anim_property	anu_p;
