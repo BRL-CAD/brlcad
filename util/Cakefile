@@ -4,7 +4,6 @@
  *  $Header$
  */
 
-#define STATIC_PRODUCTS morphedit.tcl
 #define SRCDIR	util
 #define PRODUCTS	\
 	alias-pix ap-pix asc-pl azel bary buffer dbcp \
@@ -422,5 +421,9 @@ terrain:	terrain.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 dsp_add:	dsp_add.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 	CC LDFLAGS -o dsp_add dsp_add.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
 
+morphedit.tcl:	../SRCDIR/morphedit.tcl
+	#ifdef NFS
+	cp ../SRCDIR/morphedit.tcl morphedit.tcl
+	#endif
 
 #include "../Cakefile.rules"
