@@ -63,7 +63,7 @@
 #include "fb.h"
 #include "./fblocal.h"
 
-#define CJDEBUG 0
+#define CJDEBUG 1
 
 /*WWW these come from Iris gl gl.h*/
 #define XMAXSCREEN	1279
@@ -121,8 +121,10 @@ _LOCAL_ Pixmap  	make_bitmap();
 _LOCAL_ XVisualInfo *	ogl_choose_visual();
 static int		is_linear_cmap();
 
-static Widget popup;
-static int	ogl_nwindows = 0;
+static Widget 	popup;
+static int	ogl_nwindows = 0; 	/* track of open windows */
+_LOCAL_	XColor	color_cell[256];		/* used to set colormap */
+
 
 _LOCAL_ int	ogl_open(),
 		ogl_close(),
@@ -219,6 +221,11 @@ struct ogl_clip {
 	int	xscrmax;
 	int	yscrmin;
 	int	yscrmax;
+	double	oleft;		/* glOrtho parameters */
+	double	oright;
+	double	otop;
+	double	obottom;
+	
 };
 
 /*
@@ -336,7 +343,7 @@ static struct modeflags {
 	{ 'f',	MODE_3MASK, MODE_3FULLSCR,
 		"Full centered screen - else windowed" },
 	{ 'd',  MODE_4MASK, MODE_4NODITH,
-		"Suppress dithering - else dither if deemed appropriate" },
+		"Suppress dithering - else dither if not 24-bit buffer" },
 	{ 'c',	MODE_7MASK, MODE_7SWCMAP,
 		"Perform software colormap - else use hardware colormap if possible" },
 	{ 's',	MODE_9MASK, MODE_9SINGLEBUF,
@@ -584,7 +591,7 @@ int		npix;
 	if(ybase < clp->ypixmin)
 		ybase = clp->ypixmin;
 
-	if((xbase + npix - 1) > clp->xpixmax)
+	if((xbase + npix -1) > clp->xpixmax)
 		npix = clp->xpixmax - xbase + 1;
 	if((ybase + nlines - 1) > clp->ypixmax)
 		nlines = clp->ypixmax - ybase + 1;
@@ -599,12 +606,17 @@ int		npix;
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();	/* store current view clipping matrix*/
 		glLoadIdentity();
-		glOrtho((GLdouble) 0, (GLdouble) OGL(ifp)->vp_width,
-			(GLdouble) 0, (GLdouble) OGL(ifp)->vp_height,
+		glOrtho( -0.5, ((GLdouble) OGL(ifp)->vp_width)-0.5,
+			-0.5, ((GLdouble) OGL(ifp)->vp_height)-0.5,
 			-1.0, 1.0);
 		glPixelZoom( 1.0, 1.0);
+#if 0
+	} else {
+	/* Draw an extra edge of pixels for cleanness when zooming*/
+	if ((xbase + npix) < ifp->if_width) npix++;
+	if ((ybase + nlines) < ifp->if_height) nlines++;
+#endif
 	}
-
 
 	if( sw_cmap) { 
 		/* Software colormap each line as it's transmitted */
@@ -626,9 +638,9 @@ int		npix;
 				op[x].blue  = CMB(ifp)[oglp[x].blue];
 			}
 			
-				
+
 			glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
-			glRasterPos3i(xbase,y,0);
+			glRasterPos2i(xbase,y);
 			glDrawPixels(npix,1,GL_RGBA,GL_UNSIGNED_BYTE,
 					(unsigned long *) op);
 
@@ -641,19 +653,26 @@ int		npix;
 		glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
 		glPixelStorei(GL_UNPACK_SKIP_ROWS,ybase);
 		
-		glRasterPos3i(xbase,ybase,-1);
+		glRasterPos2i(xbase,ybase);
 if (CJDEBUG) {
-	int valid, rpos[4], error;
+	int valid, error;
+	float rpos[4];
 
 	glGetIntegerv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
-	glGetIntegerv(GL_CURRENT_RASTER_POSITION, rpos);
+	glGetFloatv(GL_CURRENT_RASTER_POSITION, rpos);
 	error = glGetError();
-	printf("Raster position (%d, %d, %d, %d) has validity %d.\n",rpos[0],rpos[1],rpos[2],rpos[3],valid);
-	printf("Error code %d\n",error);
+	printf("Raster position (%g, %g, %g, %g) has validity %d.\n",rpos[0],rpos[1],rpos[2],rpos[3],valid);
+	printf("Error code %d\t",error);
 }
-
 		glDrawPixels(npix,nlines,GL_RGBA,GL_UNSIGNED_BYTE,
 				(unsigned long *) ifp->if_mem);
+
+
+if (CJDEBUG) {
+	int error;
+	error = glGetError();
+	printf("Error code %d\n",error);
+}
 
 	}
 
@@ -683,16 +702,16 @@ if (CJDEBUG) {
 			0);
 
 		/* Blank out area right of image */
-		if( clp->xscrmax >= ifp->if_width )  glRecti(
-			ifp->if_width - 1,
+		if( clp->xscrmax > ifp->if_width )  glRecti(
+			ifp->if_width,
 			clp->yscrmin - CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
 		
 		/* Blank out area above image */
-		if( clp->yscrmax >= ifp->if_height )  glRecti(
+		if( clp->yscrmax > ifp->if_height )  glRecti(
 			clp->xscrmin - CLIP_XTRA,
-			ifp->if_height - 1,
+			ifp->if_height,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
 		
@@ -720,7 +739,6 @@ int	width, height;
 	FBIO 		*client_data1;
 	GLXContext 	client_data2;
 	XEvent 		event;
-	XColor		cells[256];
 	int fargc = 0;
 	/* superceded by new visual selection procedure */
 #if 0
@@ -928,7 +946,7 @@ int	width, height;
 
 	/* Create a colormap for this visual */
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-	if (OGL(ifp)->soft_cmap_flag) {
+	if (!OGL(ifp)->soft_cmap_flag) {
 		OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
 					RootWindow(OGL(ifp)->dispp,
 						OGL(ifp)->vip->screen),
@@ -939,13 +957,13 @@ int	width, height;
 		 */
 		if(CJDEBUG) printf("Attempting colormap change\n");
 	    	for (i = 0; i < 256; i++) {
-	    		cells[i].pixel = i;
-	    		cells[i].red = CMR(ifp)[i];
-	    		cells[i].green = CMG(ifp)[i];
-	    		cells[i].blue = CMB(ifp)[i];
-	    		cells[i].flags = DoRed | DoGreen | DoBlue;
+	    		color_cell[i].pixel = i;
+	    		color_cell[i].red = CMR(ifp)[i];
+	    		color_cell[i].green = CMG(ifp)[i];
+	    		color_cell[i].blue = CMB(ifp)[i];
+	    		color_cell[i].flags = DoRed | DoGreen | DoBlue;
 	    	}
-    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, cells, 256);
+    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
 	} else { /* read only colormap */
 		OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
 					RootWindow(OGL(ifp)->dispp,
@@ -1057,13 +1075,13 @@ int	width, height;
 		if(CJDEBUG) printf("Attempted colormap change\n");
 
 	    	for (i = 0; i < 256; i++) {
-	    		cells[i].pixel = i;
-	    		cells[i].red = CMR(ifp)[i];
-	    		cells[i].green = CMG(ifp)[i];
-	    		cells[i].blue = CMB(ifp)[i];
-	    		cells[i].flags = DoRed | DoGreen | DoBlue;
+	    		color_cell[i].pixel = i;
+	    		color_cell[i].red = CMR(ifp)[i];
+	    		color_cell[i].green = CMG(ifp)[i];
+	    		color_cell[i].blue = CMB(ifp)[i];
+	    		color_cell[i].flags = DoRed | DoGreen | DoBlue;
 	    	}
-    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, cells, 256);
+    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
 	}
 #endif
 	/* Loop through events until first exposure event is processed */
@@ -1371,9 +1389,12 @@ int	xzoom, yzoom;
 	glLoadIdentity();
 	ogl_clipper(ifp);
 	clp = &(OGL(ifp)->clip);
-	glOrtho((GLdouble) clp->xscrmin, (GLdouble) (clp->xscrmax + 1), 
-		(GLdouble) clp->yscrmin, (GLdouble) (clp->yscrmax + 1), 
+	glOrtho( clp->oleft,clp->oright,clp->obottom,clp->otop,-1.0,1.0);
+#if 0
+	glOrtho(((GLdouble) clp->xscrmin)-0.5, ((GLdouble) clp->xscrmax)-0.5, 
+		((GLdouble) clp->yscrmin)-0.5, ((GLdouble) clp->yscrmax)-0.5, 
 		-1.0, 1.0);
+#endif
 	glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 
 	if (OGL(ifp)->copy_flag){
@@ -1757,8 +1778,6 @@ register CONST ColorMap	*cmp;
 	Arg args[1];	
 	XVisualInfo *vi;
     	int num;
-	XColor cells[256];	
-
 	
 	if(CJDEBUG) printf("entering ogl_wmap\n");
 
@@ -1802,16 +1821,16 @@ register CONST ColorMap	*cmp;
 		/* This code has yet to be tested */
 
 	    	for (i = 0; i < 256; i++) {
-	    		cells[i].pixel = i;
-	    		cells[i].red = CMR(ifp)[i];
-	    		cells[i].green = CMG(ifp)[i];
-	    		cells[i].blue = CMB(ifp)[i];
-	    		cells[i].flags = DoRed | DoGreen | DoBlue;
+	    		color_cell[i].pixel = i;
+	    		color_cell[i].red = CMR(ifp)[i];
+	    		color_cell[i].green = CMG(ifp)[i];
+	    		color_cell[i].blue = CMB(ifp)[i];
+	    		color_cell[i].flags = DoRed | DoGreen | DoBlue;
 	    	}
-    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, cells, 256);
+    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
 	}
 
-	/* unattach context for other threads to use */
+	/* unattach context for other threads to use, also flushes */
 	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
 
 	return(0);
@@ -1968,18 +1987,25 @@ register FBIO	*ifp;
 {
 	register struct ogl_clip *clp;
 	register int	i;
+	double pixels;
 
 	clp = &(OGL(ifp)->clip);
 
 	i = OGL(ifp)->vp_width/(2*ifp->if_xzoom);
 	clp->xscrmin = ifp->if_xcenter - i;
 	i = OGL(ifp)->vp_width/ifp->if_xzoom;
-	clp->xscrmax = clp->xscrmin + i - 1;
+	clp->xscrmax = clp->xscrmin + i;
+	pixels = (double) i;
+	clp->oleft = ((double) clp->xscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_width);
+	clp->oright = clp->oleft + pixels;
 
 	i = OGL(ifp)->vp_height/(2*ifp->if_yzoom);
 	clp->yscrmin = ifp->if_ycenter - i;
 	i = OGL(ifp)->vp_height/ifp->if_yzoom;
-	clp->yscrmax = clp->yscrmin + i - 1;
+	clp->yscrmax = clp->yscrmin + i;
+	pixels = (double) i;
+	clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_height);
+	clp->otop = clp->obottom + pixels;
 
 	clp->xpixmin = clp->xscrmin;
 	clp->xpixmax = clp->xscrmax;
@@ -2013,6 +2039,7 @@ register FBIO	*ifp;
 			clp->ypixmax = ifp->if_height-1;
 		}
 	}
+
 }
 
 
@@ -2068,7 +2095,7 @@ init_window(Widget w, XtPointer client_data, XtPointer call)
         OGL(ifp)->glxc = glXCreateContext(XtDisplay(w), vi, 0, GL_FALSE);
 #endif
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,OGL(ifp)->vip, 0, GL_FALSE);
-	
+#if 0	
 	if(CJDEBUG) {
 
 
@@ -2087,7 +2114,7 @@ init_window(Widget w, XtPointer client_data, XtPointer call)
 		printf("GL %d rgba %d %d/%d/%d/%d dbfr %d stereo %d\n",use,rgba,red,green,blue,alpha,dbfr,stereo);
 		printf("CLass is %d\n",vi->class);
 	}
-#if 0
+
 	/* Determine whether the selected visual supports hardware cmapping.
 	 * This may never happen. In future, choose our own visual to find one
 	 * which does support hardware mapping
@@ -2181,9 +2208,13 @@ static void expose_callback (Widget w, XtPointer client_data, XtPointer call)
 		clp = &(OGL(ifp)->clip);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho((GLdouble) clp->xscrmin, (GLdouble) (clp->xscrmax + 1), 
-			(GLdouble) clp->yscrmin, (GLdouble) (clp->yscrmax + 1), 
+		glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop,
+				-1.0,1.0);
+#if 0
+		glOrtho(((GLdouble) clp->xscrmin)-0.5, ((GLdouble) clp->xscrmax)-0.5, 
+			((GLdouble) clp->yscrmin)-0.5, ((GLdouble) clp->yscrmax)-0.5, 
 			-1.0, 1.0);
+#endif
 		glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 	} else if 
 	((call_data->width > ifp->if_width) || 
@@ -2372,7 +2403,13 @@ int		one_y;
 	if (one_y > clp->ypixmax) {
 		return;
 	} else if (one_y < 0) { /* do whole visible screen */
-		glRasterPos3i(clp->xpixmin,clp->ypixmin,0);
+#if 0
+		xpixels = clp->xpixmax - clp->xpixmin +1;
+		if( (clp->xpixmin + xpixels) < ifp->if_width) xpixels++;
+		ypixels = clp->ypixmax - clp->ypixmin + 1;
+		if( (clp->ypixmin + xpixels) < ifp->if_height) ypixels++;
+#endif
+		glRasterPos2i(clp->xpixmin,clp->ypixmin);
 		glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
 			SGI(ifp)->mi_yoff + clp->ypixmin,
 			clp->xpixmax - clp->xpixmin +1,
@@ -2387,7 +2424,6 @@ int		one_y;
 			0,
 			clp->yscrmax + CLIP_XTRA);
 
-
 		/* Blank out area below image */
 		if( clp->yscrmin < 0 )  glRecti(
 			clp->xscrmin - CLIP_XTRA,
@@ -2399,16 +2435,16 @@ int		one_y;
 		 * than if_width
 		 */
 		/* Blank out area right of image */
-		if( clp->xscrmax >= OGL(ifp)->vp_width )  glRecti(
-			ifp->if_width - 1,
+		if( clp->xscrmax > OGL(ifp)->vp_width )  glRecti(
+			ifp->if_width,
 			clp->yscrmin - CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
 		
 		/* Blank out area above image */
-		if( clp->yscrmax >= OGL(ifp)->vp_height )  glRecti(
+		if( clp->yscrmax > OGL(ifp)->vp_height )  glRecti(
 			clp->xscrmin - CLIP_XTRA,
-			OGL(ifp)->vp_height - 1,
+			OGL(ifp)->vp_height,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
 
@@ -2416,7 +2452,7 @@ int		one_y;
 	} else if (one_y < clp->ypixmin) {
 		return;
 	} else { /* draw one scanline */
-		glRasterPos3i(clp->xpixmin,one_y,0);
+		glRasterPos2i(clp->xpixmin,one_y);
 		glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
 			SGI(ifp)->mi_yoff + one_y,
 			clp->xpixmax - clp->xpixmin +1,
