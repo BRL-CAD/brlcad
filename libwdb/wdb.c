@@ -357,9 +357,12 @@ fastf_t		rad2;
 	vect_t		dvec;		/* another nose radius vector */
 	vect_t		h_unitv;	/* local copy of dirv */
 	vect_t		hgtv;		/* height vector */
+	fastf_t		f;
 
-	VMOVE(h_unitv, dirv);
-	VUNITIZE(h_unitv);
+	if( (f = MAGNITUDE(dirv)) <= SQRT_SMALL_FASTF )
+		return -2;
+	f = 1/f;
+	VSCALE( h_unitv, dirv, f );
 	VSCALE(hgtv, h_unitv, height);
 
 	/* Now make a, b, c, and d vectors. */
