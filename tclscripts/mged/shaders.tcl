@@ -1670,7 +1670,7 @@ proc set_light_values { shader_str id } {
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
 	        set shader_name [lindex $shader_str 0]
-	        if { $shader_str != "light" } {
+	        if { $shader_name != "light" } {
 		    return
 		}
 	} else {
