@@ -194,7 +194,7 @@ char **argv;
 	  transform_editing_solid( &intern, es_mat, &es_int, 0 );
 	  outdp = illump->s_path[illump->s_last];
 
-	  Tcl_AppendResult(interp, "Outside solid: ", (char *)NULL);
+	  Tcl_AppendResult(interp, "You are in Solid Edit mode, using edited solid as outside solid: ", (char *)NULL);
 	  for(i=0; i <= illump->s_last; i++) {
 	    Tcl_AppendResult(interp, "/", illump->s_path[i]->d_namep, (char *)NULL);
 	  }
@@ -213,7 +213,7 @@ char **argv;
 	  transform_editing_solid( &intern, newmat, &es_int, 0 );
 	  outdp = illump->s_path[illump->s_last];
 
-	  Tcl_AppendResult(interp, "Outside solid: ", (char *)NULL);
+	  Tcl_AppendResult(interp, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
 	  for(i=0; i <= illump->s_last; i++) {
 	    Tcl_AppendResult(interp, "/", illump->s_path[i]->d_namep, (char *)NULL);
 	  }
@@ -268,7 +268,9 @@ char **argv;
 	  goto end;
 	}
 	if( db_lookup( dbip, argv[arg], LOOKUP_QUIET ) != DIR_NULL ) {
-	  aexists( argv[arg] );
+	  Tcl_AppendResult(interp, "you are attempting to use ", argv[arg],
+		" as the inside solid.\n", "(Note that if you are in an edit mode",
+		" the outside solid will be the solid you are editing)\n", (char *)NULL );
 	  status = TCL_ERROR;
 	  goto end;
 	}
