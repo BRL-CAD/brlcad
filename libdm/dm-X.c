@@ -152,6 +152,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 	st = XAllocColor(dpy, cmap, color);
 	switch (st) {
 	case 1: 
+#if 0
 		if ( (color->red & CSCK) != (rgb.red & CSCK) ||
 		     (color->green & CSCK) != (rgb.green & CSCK) ||
 		     (color->blue & CSCK) != (rgb.blue & CSCK) ) {
@@ -162,6 +163,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 			       (color->red >> 8), (color->green >> 8), (color->blue >> 8),
 			       color->red, color->green, color->blue);
 		}
+#endif
 		break;
 	case BadColor:
 		bu_log("XAllocColor failed (BadColor) for (%3d,%3d,%3d) %04x,%04x,%04x\n", 
