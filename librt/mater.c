@@ -5,6 +5,8 @@
  *  map region ID codes into worthwhile material information
  *  (colors and outboard database "handles").
  *
+ *  These really are "db_" routines, more fundamental than "rt_".
+ *
  *  Functions -
  *	color_addrec	Called by rt_dirbuild on startup
  *	color_map	Map one region reference to a material
@@ -53,7 +55,7 @@ register struct mater *mp;
 /*
  *  			R T _ C O L O R _ A D D R E C
  *  
- *  Called from rt_dirbuild() when initially scanning database.
+ *  Called from db_scan() when initially scanning database.
  */
 void
 rt_color_addrec( recp, addr )
@@ -207,5 +209,23 @@ register struct region *regp;
 				(((double)mp->mt_b)+0.5)*rt_inv255;
 			return;
 		}
+	}
+}
+
+/*
+ *			R T _ C O L O R _ F R E E
+ *
+ *  Really should be db_color_free().
+ *  Called from db_close().
+ */
+void
+rt_color_free()
+{
+	register struct mater *mp;
+
+	while( (mp = MaterHead) != MATER_NULL )  {
+		MaterHead = mp->mt_forw;	/* Dequeue 'mp' */
+		/* mt_handle? */
+		rt_free( (char *)mp, "getstruct mater" );
 	}
 }
