@@ -36,6 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm-Null.h"
 #include "./ged.h"
+#include "./titles.h"
 #include "./sedit.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
@@ -84,6 +85,7 @@ extern struct _mged_variables default_mged_variables;
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
 char tmp_str[1024];
+static int windowbounds[6] = { XMAX, XMIN, YMAX, YMIN, 2047, -2048 };
 
 static char *default_view_strings[] = {
   "top",
@@ -437,7 +439,9 @@ char *argv[];
 #endif
 
   color_soltab();
-  ++dmaflag;
+  ++dirty;
+  dmp->dm_setWinBounds(dmp, windowbounds);
+
   return TCL_OK;
 
 Bad:
