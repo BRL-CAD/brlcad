@@ -3,7 +3,7 @@
  *			G _ N M G . C
  *
  *  Purpose -
- *	Intersect a ray with a 
+ *	Intersect a ray with an NMG solid
  *
  *  Authors -
  *
@@ -63,7 +63,8 @@ struct rt_i		*rtip;
 	struct nmgregion *rp;
 	vect_t work;	
 
-	rt_g.NMG_debug |= DEBUG_NMGRT;
+	/* XXX  Cause debugging output always */
+	rt_g.NMG_debug |= DEBUG_NMGRT;	
 
 	RT_CK_DB_INTERNAL(ip);
 	m = (struct model *)ip->idb_ptr;
@@ -76,7 +77,7 @@ struct rt_i		*rtip;
 	nmg->nmg_smagic = G_NMG_START_MAGIC;
 	nmg->nmg_emagic = G_NMG_END_MAGIC;
 
-	/* get bounding box of solid */
+	/* get bounding box of NMG solid */
 	VSETALL(stp->st_min, MAX_FASTF);
 	VSETALL(stp->st_max, -MAX_FASTF);
 
@@ -95,6 +96,9 @@ struct rt_i		*rtip;
 	VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
 	stp->st_aradius = stp->st_bradius = MAGNITUDE(work);
 
+	/* build table indicating the manifold level
+	 * of each sub-element of NMG solid
+	 */
 	nmg_manifolds(m);
 
 	return(0);
@@ -199,10 +203,10 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-/*	register struct nmg_specific *nmg =
+	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
 
-	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir ); */
+	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
 
 /*
