@@ -69,7 +69,7 @@ void	f_prcolor(), f_color(), f_edcolor(), f_3ptarb(), f_rfarb(), f_which_id();
 void	f_plot(), f_area(), f_find(), f_edgedir();
 void	f_regdef(), f_aeview(), f_in(), f_tables(), f_edcodes(), f_dup(), f_cat();
 void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack();
-void	f_tabobj(), f_pathsum(), f_copyeval(), f_push();
+void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
 
 static struct funtab {
 	char *ft_name;
@@ -253,7 +253,11 @@ static struct funtab {
 "killtree", "object[s]", "kill complete tree[s] - BE CAREFUL",
 	f_killtree, 2, MAXARGS,
 "memprint", "", "print memory maps",
-	f_memprint, 1, 1
+	f_memprint, 1, 1,
+"facedef", "####", "define new face for an arb",
+	f_facedef, 2, MAXARGS,
+"eqn", "A B C", "planar equation coefficients",
+	f_eqn, 4, 4
 };
 #define NFUNC	( (sizeof(funtab)) / (sizeof(struct funtab)) )
 
@@ -414,6 +418,7 @@ f_param()
 		case STRANS:
 		case PSCALE:
 		case EARB:
+		case MVFACE:
 		case MOVEH:
 		case MOVEHH:
 		case PTARB:
