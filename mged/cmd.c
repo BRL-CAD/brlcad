@@ -77,7 +77,7 @@ void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack(
 void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
 void	f_overlay(), f_rtcheck(), f_comb();
 void	f_preview();
-void	f_enmg(), f_nmgtest();
+void	f_enmg(), f_nmgtest(); f_debugnmg();
 void	f_tol();
 
 static struct funtab {
@@ -129,6 +129,8 @@ static struct funtab {
 	f_debuglib,1,2,
 "debugmem", "", "Print librt memory use map",
 	f_debugmem, 1, 1,
+"debugnmg", "[hex code]", "Show/set debugging bit vector for NMG",
+	f_debugnmg,1,2,
 "dup", "file [prefix]", "check for dup names in 'file'",
 	f_dup, 1, 27,
 "E", "<objects>", "evaluated edit of objects",

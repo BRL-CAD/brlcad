@@ -345,6 +345,20 @@ char	**argv;
 }
 
 void
+f_debugnmg(argc, argv)
+int	argc;
+char	**argv;
+{
+	if( argc >= 2 )  {
+		sscanf( argv[1], "%x", &rt_g.NMG_debug );
+	}
+	rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+	rt_log("\n");
+}
+
+
+
+void
 do_list( dp, verbose )
 register struct directory *dp;
 int	verbose;
