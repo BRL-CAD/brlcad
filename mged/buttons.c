@@ -905,8 +905,14 @@ char *str;
 	  curr_dm_list = save_dm_list;
 	}
 
-	Tcl_SetVar(interp, "mged_display(state)", state_str[state],
-		    TCL_GLOBAL_ONLY);
+	{
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_strcpy(&vls, "mged_display(state)");
+	  Tcl_SetVar(interp, bu_vls_addr(&vls), state_str[state], TCL_GLOBAL_ONLY);
+	  bu_vls_free(&vls);
+	}
 
 	return(0);		/* GOOD */
 }

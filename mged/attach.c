@@ -511,34 +511,29 @@ char *dstr;
   if(tkwin != NULL)
     return TCL_OK;
 
-  if(dstr != (char *)NULL)
-    Tcl_SetVar2(interp, "env", "DISPLAY", dstr, TCL_GLOBAL_ONLY);
+  bu_vls_init(&vls);
+
+  if(dstr != (char *)NULL){
+    bu_vls_strcpy(&vls, "env(DISPLAY)");
+    Tcl_SetVar(interp, bu_vls_addr(&vls), dstr, TCL_GLOBAL_ONLY);
+  }
 
   /* This runs the tk.tcl script */
   if(Tk_Init(interp) == TCL_ERROR){
     Tcl_AppendResult(interp, "\ngui_setup: Couldn't initialize Tk\n", (char *)NULL);
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
   if((tkwin = Tk_MainWindow(interp)) == NULL){
     Tcl_AppendResult(interp, "gui_setup: Failed to get main window.\n", (char *)NULL);
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "wm withdraw . ; tk appname mged");
+  bu_vls_strcpy(&vls, "wm withdraw . ; tk appname mged");
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
-
-#if 0
-  /* Check to see if user specified MGED_GUIRC */
-  if((filename = getenv("MGED_GUIRC")) != (char *)NULL )  {
-	if( Tcl_EvalFile( interp, filename ) != TCL_OK )  {
-		bu_log("Error reading %s:\n%s\n", filename,
-			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
-	}
-  }
-#endif
 
   return TCL_OK;
 }
