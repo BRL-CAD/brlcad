@@ -48,6 +48,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+#define ISECT_NONE	0
+#define ISECT_SHARED_V	1
+#define ISECT_SPLIT1	2
+#define ISECT_SPLIT2	4
+
 struct nmg_inter_struct {
 	long		magic;
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
@@ -782,7 +787,7 @@ rt_log("%%%%%% point is outside face loop, no need to break eu1?\n");
  *
  *  A wrapper for nmg_isect_two_colinear_edge2p().
  */
-int
+static int
 nmg_isect_two_colinear_edge2p_both_ways( dist, l1, l2, vu1a, vu1b, vu2a, vu2b, eu1, eu2, fu1, fu2, tol )
 CONST fastf_t		dist[2];
 struct nmg_ptbl		*l1;
@@ -797,9 +802,12 @@ struct faceuse		*fu1;		/* fu of eu1, for plane equation */
 struct faceuse		*fu2;		/* fu of eu2, for error checks */
 CONST struct rt_tol	*tol;
 {
-	fastf_t	eu2dist[2];
-	fastf_t	ptol;
-	int	ret = 0;
+	fastf_t		eu2dist[2];
+	fastf_t		ptol;
+	int		status;
+	int		ret = 0;
+	vect_t		eu1_dir;
+	vect_t		eu2_dir;
 
 	RT_CK_TOL(tol);
 
@@ -818,11 +826,13 @@ CONST struct rt_tol	*tol;
 		ret |= ISECT_SPLIT1;	/* eu1 was broken */
 	}
 
+#if 0
 	/*
 	 *  If the segments only partially overlap, need to intersect
 	 *  the other way as well.
 	 *  Find break points on eu2 caused by vu1[ab].
 	 */
+/*XXX Couldn't this also be more intuitively done by re-calling rt_isect_*? */
 	if( fabs(eu2_dir[X]) >= fabs(eu2_dir[Y]) )  {
 		eu2dist[0] = (eu1_start[X] - eu2_start[X])/eu2_dir[X];
 		eu2dist[1] = (eu1_start[X] + eu1_dir[X] - eu2_start[X])/eu2_dir[X];
@@ -836,11 +846,32 @@ CONST struct rt_tol	*tol;
 	else if( eu2dist[0] > 1-ptol && eu2dist[0] < 1+ptol ) eu2dist[0] = 1;
 		if( eu2dist[1] > -ptol && eu2dist[1] < ptol )  eu2dist[1] = 0;
 	else if( eu2dist[1] > 1-ptol && eu2dist[1] < 1+ptol ) eu2dist[1] = 1;
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-	rt_log("\trt_isect_line2_lseg2()=%d, eu2dist: %g, %g\n",
-			status, eu2dist[0], eu2dist[1] );
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("\tnmg_isect_two_colinear_edge2p_both_ways() eu2dist: %g, %g\n",
+			eu2dist[0], eu2dist[1] );
 		rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 	}
+#else
+	/* For new eu1, find break points on eu2 caused by vu1a and vu1b. */
+	vu1a = eu1->vu_p;
+	vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
+	VSUB2( eu1_dir, vu1b->v_p->vg_p->coord, vu1a->v_p->vg_p->coord );
+	VSUB2( eu2_dir, vu2b->v_p->vg_p->coord, vu2a->v_p->vg_p->coord );
+
+	eu2dist[0] = eu2dist[1] = 0;	/* for clean prints, below */
+
+	status = rt_isect_lseg3_lseg3( eu2dist,
+			vu2a->v_p->vg_p->coord, eu2_dir,
+			vu1a->v_p->vg_p->coord, eu1_dir,
+			tol );
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("\tnmg_isect_two_colinear_edge2p_both_ways()=%d, dist: %g, %g\n",
+			status, eu2dist[0], eu2dist[1] );
+	}
+	
+	if( status != 0 )  return ret;
+#endif
 
 	/*  Find break points on eu2 caused by vu1[ab]. */
 	if( nmg_isect_two_colinear_edge2p( eu2dist, l2, l1,
@@ -1000,16 +1031,11 @@ CONST char		*str;
  *  If so, the vert_list's are unimportant.
  *
  *  Returns a bit vector -
- *	0	no intersection
- *	1	intersection was at (at least one) shared vertex
- *	2	eu1 was split at (geometric) intersection.
- *	4	eu2 was split at (geometric) intersection.
+ *	ISECT_NONE	no intersection
+ *	ISECT_SHARED_V	intersection was at (at least one) shared vertex
+ *	ISECT_SPLIT1	eu1 was split at (geometric) intersection.
+ *	ISECT_SPLIT2	eu2 was split at (geometric) intersection.
  */
-#define ISECT_NONE	0
-#define ISECT_SHARED_V	1
-#define ISECT_SPLIT1	2
-#define ISECT_SPLIT2	4
-
 int
 nmg_isect_edge2p_edge2p( is, eu1, eu2, fu1, fu2 )
 struct nmg_inter_struct	*is;
@@ -1144,7 +1170,8 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		ret |= nmg_isect_two_colinear_edge2p_both_ways( dist,
 			is->l1, is->l2,
 			vu1a, vu1b, vu2a, vu2b,
-			eu1, eu2, fu1, fu2, &is->tol );
+			eu1, eu2, fu1, fu2,
+			&is->tol );
 		goto out;
 	}
 
@@ -3077,7 +3104,6 @@ top:
 
 	dist[0] = dist[1] = 0;	/* for clean prints, below */
 
-	/* A is vu2a, B is vu2b */
 	status = rt_isect_lseg3_lseg3( dist,
 			vu1a->v_p->vg_p->coord, eu1_dir,
 			vu2a->v_p->vg_p->coord, eu2_dir, &is->tol );
@@ -3095,6 +3121,7 @@ top:
 	if( status == 0 )  {
 		int	nbreak;
 		/* lines are colinear */
+#if 1
 rt_g.NMG_debug |= DEBUG_POLYSECT;
 /* XXX must use a 3-D version!! */
 		nbreak = nmg_isect_two_colinear_edge2p_both_ways( dist,
@@ -3104,8 +3131,10 @@ rt_g.NMG_debug |= DEBUG_POLYSECT;
 			nmg_find_fu_of_eu(eu1),
 			nmg_find_fu_of_eu(eu2),
 			&is->tol );
+#else
 		/* XXXXXXXX */
 		rt_bomb("nmg_isect_edge3p_edge3p colinear case!\n");
+#endif
 	}
 
 	/* dist[0] is distance along eu1 */
