@@ -51,17 +51,6 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 #define AUTO /*let the compiler decide*/
 #endif
 
-/* compare two bounding RPPs;  return true if disjoint */
-#define RT_2RPP_DISJOINT(_l1, _h1, _l2, _h2) \
-      ( (_l1)[0] > (_h2)[0] || (_l1)[1] > (_h2)[1] || (_l1)[2] > (_h2)[2] || \
-	(_l2)[0] > (_h1)[0] || (_l2)[1] > (_h1)[1] || (_l2)[2] > (_h1)[2] )
-
-/* Test for point being inside or on an RPP */
-#define RT_POINT_IN_RPP(_pt, _min, _max)	\
-	( ( (_pt)[X] >= (_min)[X] && (_pt)[X] <= (_max)[X] ) &&  \
-	  ( (_pt)[Y] >= (_min)[Y] && (_pt)[Y] <= (_max)[Y] ) &&  \
-	  ( (_pt)[Z] >= (_min)[Z] && (_pt)[Z] <= (_max)[Z] ) )
-
 /* start NUgrid XXX  --  associated with cut.c */
 #define RT_NUGRID_CELL(_array,_x,_y,_z)		(&(_array)[ \
 	((((_z)*nu_cells_per_axis[Y])+(_y))*nu_cells_per_axis[X])+(_x) ])
@@ -124,6 +113,7 @@ struct shootray_status {
 /*
  *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
  *
+ *  This version uses Gigante's non-uniform 3-D space grid/mesh discretization.
  */
 union cutter *
 rt_advance_to_next_cell( ssp )
@@ -354,17 +344,18 @@ if(rt_g.debug&DEBUG_ADVANCE)rt_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
 /*
  *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
  *
+ *  This version uses Muuss' non-uniform binary space partitioning tree.
  */
 union cutter *
 rt_advance_to_next_cell( ssp )
 register struct shootray_status	*ssp;
 {
-	register union cutter	*cutp;
+	register CONST union cutter	*cutp;
 	int			push_flag = 0;
 	double			fraction;
 	int			exponent;
 	register CONST struct application *ap = ssp->ap;
-	register fastf_t	*pt = ssp->newray.r_pt;
+	register fastf_t	px, py, pz;	/* Adjusted ray pt */
 
 	for(;;)  {
 		/*
@@ -390,19 +381,39 @@ register struct shootray_status	*ssp;
 top:
 		if( ssp->dist_corr >= ssp->model_end )
 			break;	/* done! */
-		VJOIN1( pt, ap->a_ray.r_pt,
-			ssp->dist_corr, ap->a_ray.r_dir );
+		/* VJOIN1( pt, ap->a_ray.r_pt, ssp->dist_corr, ap->a_ray.r_dir ); */
+		px = ap->a_ray.r_pt[X] + ssp->dist_corr * ap->a_ray.r_dir[X];
+		py = ap->a_ray.r_pt[Y] + ssp->dist_corr * ap->a_ray.r_dir[Y];
+		pz = ap->a_ray.r_pt[Z] + ssp->dist_corr * ap->a_ray.r_dir[Z];
 		if( rt_g.debug&DEBUG_ADVANCE) {
 			rt_log("rt_advance_to_next_cell() dist_corr=%g, pt=(%g, %g, %g)\n",
-				ssp->dist_corr, V3ARGS( pt ) );
+				ssp->dist_corr, px, py, pz );
 		}
 
 		cutp = &(ap->a_rt_i->rti_CutHead);
 		while( cutp->cut_type == CUT_CUTNODE )  {
-			if( pt[cutp->cn.cn_axis] >= cutp->cn.cn_point )  {
-				cutp=cutp->cn.cn_r;
-			}  else  {
-				cutp=cutp->cn.cn_l;
+			switch( cutp->cn.cn_axis )  {
+			case X:
+				if( px >= cutp->cn.cn_point )  {
+					cutp=cutp->cn.cn_r;
+				}  else  {
+					cutp=cutp->cn.cn_l;
+				}
+				break;
+			case Y:
+				if( py >= cutp->cn.cn_point )  {
+					cutp=cutp->cn.cn_r;
+				}  else  {
+					cutp=cutp->cn.cn_l;
+				}
+				break;
+			case Z:
+				if( pz >= cutp->cn.cn_point )  {
+					cutp=cutp->cn.cn_r;
+				}  else  {
+					cutp=cutp->cn.cn_l;
+				}
+				break;
 			}
 		}
 
@@ -410,13 +421,15 @@ top:
 			rt_bomb("rt_advance_to_next_cell(): leaf not boxnode");
 
 		/* Ensure point is located in the indicated cell */
-		if( ! RT_POINT_IN_RPP( pt, cutp->bn.bn_min, cutp->bn.bn_max ) )  {
+		if( px < cutp->bn.bn_min[X] || px > cutp->bn.bn_max[X] ||
+		    py < cutp->bn.bn_min[Y] || py > cutp->bn.bn_max[Y] ||
+		    pz < cutp->bn.bn_min[Z] || pz > cutp->bn.bn_max[Z] )  {
 			rt_log("rt_advance_to_next_cell(): point not in cell, advancing\n");
 #if 0
-		    	rt_log(" newray.r_pt (%.20e,%.20e,%.20e)\n", V3ARGS(pt) );
+		    	rt_log(" pt (%.20e,%.20e,%.20e)\n", px, py, pz );
 		    	rt_log("  min (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_min) );
 		    	rt_log("  max (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_max) );
-		    	VPRINT(" newray.r_pt", pt);
+			rt_log("pt=(%g,%g,%g)\n", px, py, pz );
 		     	rt_pr_cut( cutp, 0 );
 #endif
 			/*
@@ -437,7 +450,7 @@ push:			;
 				ssp->obox_end, ssp->box_end );
 #if 0
 			VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-		     	VPRINT("Point", pt);
+			rt_log("Point=(%g,%g,%g)\n", px, py, pz );
 			VPRINT("Dir", ssp->newray.r_dir);
 		     	rt_pr_cut( cutp, 0 );
 #endif
@@ -475,6 +488,10 @@ rt_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
 				ssp->dist_corr, ssp->box_start, ssp->box_end );
 		}
 		ssp->lastcut = cutp;
+
+		ssp->newray.r_pt[X] = px;
+		ssp->newray.r_pt[Y] = py;
+		ssp->newray.r_pt[Z] = pz;
 
 		if( !rt_in_rpp(&ssp->newray, ssp->inv_dir,
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
