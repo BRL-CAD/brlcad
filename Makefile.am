@@ -76,7 +76,7 @@ endif
 
 DIST_SUBDIRS = $(SUBDIRS)
 
-EXTRA_DIST = ChangeLog $(PACKAGE).spec.in
+EXTRA_DIST = $(PACKAGE).spec.in
 
 MAINTAINERCLEANFILES = \
 	COPYING \
