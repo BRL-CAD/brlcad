@@ -595,20 +595,16 @@ struct partition *pt_headp;
 			regp->reg_gmater,
 			regp->reg_los
 			);
-	if( regp->reg_mater.ma_matname && regp->reg_mater.ma_matname[0] != '\0' )
+	if( regp->reg_mater.ma_shader && regp->reg_mater.ma_shader[0] != '\0' )
 		{
-		prnt_Scroll(	"\tmaterial info \"%.32s\"\n",
-				regp->reg_mater.ma_matname
+		prnt_Scroll(	"\tmaterial info \"%s\"\n",
+				regp->reg_mater.ma_shader
 				);
 		if( regp->reg_mater.ma_override )
 			prnt_Scroll(	"\t\t\tcolor: {%5.2f,%5.2f,%5.2f}\n",
 					regp->reg_mater.ma_color[0],
 					regp->reg_mater.ma_color[1],
 					regp->reg_mater.ma_color[2]
-					);
-		if( regp->reg_mater.ma_matparm && regp->reg_mater.ma_matparm[0] != '\0' )
-			prnt_Scroll(	"\t\t\tparameters: \"%.60s\"\n",
-					regp->reg_mater.ma_matparm
 					);
 		}
 	return	1;
@@ -672,11 +668,6 @@ struct partition *pt_headp;
 
 #define MA_WHITESP ", \t"	/* seperators for parameter list */
 #define MA_MID	   "mid"
-#define MA_LENPARM 512 /* Must be 1 byte longer than length of ma_matparm
-			field of mater_info struct in raytrace.h; last
-			time I looked it was 60, but I anticipate that
-			we will outgrow that soon.  A defined constant
-			in raytrace.h would be nice, but no-o-o-o. */
 /*
 	bool getMaMID( struct mater_info *map, int *id )
 
@@ -690,29 +681,25 @@ STATIC bool
 getMaMID( map, id )
 struct mater_info *map;
 int *id;
-	{	char matparm[MA_LENPARM];
+	{
+		char *copy;
 		char *name;
 		char *value;
 		register char *p;
-		unsigned lenparm = MA_LENPARM-1;
-	if( map->ma_matname && map->ma_matname[0] == '\0' )
+	if( map->ma_shader && map->ma_shader[0] == '\0' )
 		return	false;
-	/* guard against changes to length of ma_matparm field */
-	if( lenparm > MA_LENPARM-1 )
+	/* copy parameter string to scratch buffer and null terminate */
+	copy = bu_strdup( map->ma_shader );
+	/* get <name>=<value> string */
+	if( (name = strtok( copy, MA_WHITESP )) == NULL )
 		{
-		rt_log( "BUG: Must lengthen MA_LENPARM to be %u bytes.\n",
-			lenparm );
+		bu_free( (genptr_t)copy, "getMaMID" );
 		return	false;
 		}
-	/* copy parameter string to scratch buffer and null terminate */
-	(void) strncpy( matparm, map->ma_matparm, lenparm );
-	matparm[lenparm] = '\0';
-	/* get <name>=<value> string */
-	if( (name = strtok( matparm, MA_WHITESP )) == NULL )
-		return	false;
 	do
 		{
 		/* break it down into name and value */
+again:
 		value = NULL;
 		for( p = name; *p != '\0'; p++ )
 			if( *p == '=' )
@@ -726,10 +713,14 @@ int *id;
 		/* if we have a material id, get it and return */
 		if(	strcmp( name, MA_MID ) == 0
 		    &&	sscanf( value, "%d", id ) == 1 )
+			{
+			bu_free( (genptr_t)copy, "getMaMID" );
 			return	true;
+			}
 		}
 	/* keep trying for rest of parameter string */
 	while( (name = strtok( NULL, MA_WHITESP )) != NULL );
+	bu_free( (genptr_t)copy, "getMaMID" );
 	return	false;		
 	}
 
