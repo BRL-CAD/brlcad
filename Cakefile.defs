@@ -1183,11 +1183,11 @@ set -S2 "/bin/sh"
 /* #		define	BUILD_LIBRARY	cc -bundle -flat_namespace -undefined suppress -o */
 /*#		define	BUILD_LIBRARY	libtool -dynamic -o */
 /*#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR*/
-/*#		define  RANLIB	ranlib -c -s*/
+#		define  RANLIB	true
 #	else
 /*		Static linked executables */
 #		define	CC_DEFS -pipe -Wall
-#		define  RANLIB	ranlib -c
+#		define  RANLIB	ranlib
 #	endif
 
 #	define	LIBTERMLIB	-lcurses
