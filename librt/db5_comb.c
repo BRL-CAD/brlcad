@@ -253,13 +253,10 @@ CONST struct db_i		*dbip;
 	max_stack_depth = db_tree_counter( comb->tree, &tcs );
 bu_log("n_max=%d, n_leaf=%d, n_oper=%d, namebytes=%d, non_union_seen=%d, max_stack_depth=%d\n",
 tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.namebytes, tcs.non_union_seen, max_stack_depth);
-rt_pr_tree( comb->tree, 1 );
 
 	if( tcs.non_union_seen )  {
 		/* RPN expression needs one byte for each leaf or operator node */
 		rpn_len = tcs.n_leaf + tcs.n_oper;
-		bu_log("Only do groups so far, sorry\n");
-		return -1;	/* FAIL */
 	} else {
 		rpn_len = 0;
 	}
@@ -322,9 +319,7 @@ bu_hexdump_external( stderr, ep, "v5comb" );
 
 	/* How to encode all the other stuff as attributes??? */
 
-	if( rpn_len == 0 )  return 0;	/* OK */
-
-	return -1;	/* FAIL */
+	return 0;	/* OK */
 }
 
 /*
@@ -346,7 +341,7 @@ const struct db_i	*dbip;
 	unsigned char	*leafp;
 	unsigned char	*leafp_end;
 	unsigned char	*exprp;
-#define MAX_V5_STACK	100
+#define MAX_V5_STACK	8000
 	union tree	*stack[MAX_V5_STACK];
 	union tree	**sp;			/* stack pointer */
 	int		i;
@@ -417,8 +412,6 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 				comb->tree = unionp;
 			}
 		}
-		db_ck_tree( comb->tree );
-		rt_pr_tree( comb->tree, 1 );
 		BU_ASSERT_PTR( leafp, ==, leafp_end );
 		return 0;
 	}
@@ -514,8 +507,6 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 
 	comb->tree = stack[0];
 	RT_CK_TREE(comb->tree);
-	db_ck_tree( comb->tree );
-	rt_pr_tree( comb->tree, 1 );
 
 	return 0;			/* OK */
 }
