@@ -109,6 +109,8 @@ CDIRS="cake cakeaux papers contributed patch"
 BDIRS="bench \
 	libsysv \
 	libmalloc \
+	libplot3 \
+	libwdb \
 	conv \
 	db \
 	libpkg \
@@ -117,9 +119,7 @@ BDIRS="bench \
 	fbserv \
 	libtermio \
 	libcursor \
-	libplot3 \
 	libtig \
-	libwdb \
 	libfont \
 	liborle \
 	librle \
@@ -200,6 +200,8 @@ benchmark)
 	(cd ${DIRPRE}libsysv${DIRSUF};  cake -k)
 	(cd ${DIRPRE}libmalloc${DIRSUF};  cake -k)
 	(cd ${DIRPRE}bench${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libwdb${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libplot3${DIRSUF};  cake -k)
 	(cd ${DIRPRE}conv${DIRSUF}; cake -k)
 	(cd ${DIRPRE}db${DIRSUF}; cake -k)
 	if test ${HAS_TCP} = 1
@@ -207,7 +209,6 @@ benchmark)
 		(cd ${DIRPRE}libpkg${DIRSUF};  cake -k)  # needed for IF_REMOTE
 	fi
 	(cd ${DIRPRE}libfb${DIRSUF};  cake -k)
-	(cd ${DIRPRE}libplot3${DIRSUF};  cake -k)
 	(cd ${DIRPRE}libspl${DIRSUF};  cake -k)
 	(cd ${DIRPRE}librt${DIRSUF};  cake -k)
 	(cd ${DIRPRE}rt${DIRSUF};  cake -k)
