@@ -934,6 +934,20 @@ proc init_solid_edit_menu_hoc { stype } {
 		    "Solid Edit - Scale ALT" \
 		    {{summary "Scale ALT"}}
 	}
+	fgp {
+		# FGP
+	    hoc_register_menu_data "Edit" "referenced solid" \
+		    "Solid Edit - referenced solid" \
+		    {{summary "This sets the name of the underlying solid"}}
+	    hoc_register_menu_data "Edit" "Scale thickness" \
+		    "Solid Edit - Scale thickness" \
+		    {{summary "This allows changing the thickness of the plate"}}
+	    hoc_register_menu_data "Edit" "mode" \
+		    "Solid Edit - mode" \
+		    {{summary "The mode determines whether the plate thickness is centered\n\
+			about the hit points of the underlying solid, or extended in the\n\
+			ray direction from the hit points of the underlying solid"}}
+	}
     }
 }
 
