@@ -89,14 +89,21 @@ cmdInit(interp)
 /***************************** BWISH/BTCLSH COMMANDS *****************************/
 
 HIDDEN int
-cmd_quit(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+cmd_quit(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
 {
-	Cad_Exit(TCL_OK);
-	/* NOTREACHED */
+	int status;
+
+	if (argc == 2)
+		status = atoi(argv[1]);
+	else
+		status = 0;
+
+	Cad_Exit(status);
+
+	/* NOT REACHED */
 	return TCL_OK;
 }
 
@@ -311,32 +318,27 @@ cmd_history(clientData, interp, argc, argv )
 	struct bu_vls str;
 	struct timeval tvdiff;
 
-	if(argc < 1 || 4 < argc){
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help history");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
+	if (argc < 1 || 4 < argc) {
+		Tcl_AppendResult(interp, "history [-delays] [-outfile file]\n\tlist command history", (char *)0);
 		return TCL_ERROR;
 	}
 
 	fp = NULL;
-	while( argc >= 2 ) {
-		if( strcmp(argv[1], "-delays") == 0 )
+	while (argc > 1) {
+		if (strcmp(argv[1], "-delays") == 0)
 			with_delays = 1;
-		else if( strcmp(argv[1], "-outfile") == 0 ) {
-			if( fp != NULL ) {
+		else if (strcmp(argv[1], "-outfile") == 0) {
+			if (fp != NULL) {
 				fclose(fp);
 				Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 						 (char *)NULL);
 				return TCL_ERROR;
-			} else if( argc < 3 || strcmp(argv[2], "-delays") == 0 ) {
+			} else if (argc < 3 || strcmp(argv[2], "-delays") == 0) {
 				Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 				return TCL_ERROR;
 			} else {
 				fp = fopen( argv[2], "a+" );
-				if( fp == NULL ) {
+				if (fp == NULL) {
 					Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
 					return TCL_ERROR;
 				}
@@ -346,6 +348,7 @@ cmd_history(clientData, interp, argc, argv )
 		} else {
 			Tcl_AppendResult(interp, "Invalid option ", argv[1], "\n", (char *)NULL);
 		}
+
 		--argc;
 		++argv;
 	}
@@ -440,9 +443,7 @@ cmd_hist(clientData, interp, argc, argv)
 	bu_vls_init(&vls);
 
 	if(argc < 2){
-		bu_vls_printf(&vls, "helpdevel hist");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
+		Tcl_AppendResult(interp, "hist command\n\troutine for maintaining command history", (char *)0);
 		return TCL_ERROR;
 	}
 
@@ -450,9 +451,7 @@ cmd_hist(clientData, interp, argc, argv)
 		struct timeval zero;
 
 		if(argc != 3){
-			bu_vls_printf(&vls, "helpdevel hist");
-			Tcl_Eval(interp, bu_vls_addr(&vls));
-			bu_vls_free(&vls);
+			Tcl_AppendResult(interp, "hist add command\n\tadd command to history", (char *)0);
 			return TCL_ERROR;
 		}
 
@@ -472,9 +471,7 @@ cmd_hist(clientData, interp, argc, argv)
 
 	if(strcmp(argv[1], "next") == 0){
 		if(argc != 2){
-			bu_vls_printf(&vls, "helpdevel hist");
-			Tcl_Eval(interp, bu_vls_addr(&vls));
-			bu_vls_free(&vls);
+			Tcl_AppendResult(interp, "hist next\n\treturn next command in history", (char *)0);
 			return TCL_ERROR;
 		}
 
@@ -489,9 +486,7 @@ cmd_hist(clientData, interp, argc, argv)
 
 	if(strcmp(argv[1], "prev") == 0){
 		if(argc != 2){
-			bu_vls_printf(&vls, "helpdevel hist");
-			Tcl_Eval(interp, bu_vls_addr(&vls));
-			bu_vls_free(&vls);
+			Tcl_AppendResult(interp, "hist prev\n\treturn previous command in history", (char *)0);
 			return TCL_ERROR;
 		}
 
@@ -504,8 +499,6 @@ cmd_hist(clientData, interp, argc, argv)
 		return TCL_OK;
 	}
 
-	bu_vls_printf(&vls, "helpdevel hist");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+	Tcl_AppendResult(interp, "hist command\n\troutine for maintaining command history", (char *)0);
 	return TCL_ERROR;
 }
