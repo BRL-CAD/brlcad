@@ -237,7 +237,7 @@ extern int	edobj;		/* object editing options */
 /*
  *  Editor States
  */
-extern int state;			/* (defined in dozoom.c) */
+extern int state;			/* (defined in titles.c) */
 extern char *state_str[];		/* identifying strings */
 #define ST_VIEW		1		/* Viewing only */
 #define ST_S_PICK	2		/* Picking for Solid Edit */
@@ -245,6 +245,7 @@ extern char *state_str[];		/* identifying strings */
 #define ST_O_PICK	4		/* Picking for Object Edit */
 #define ST_O_PATH	5		/* Path select for Object Edit */
 #define ST_O_EDIT	6		/* Object Editing */
+#define ST_S_VPICK	7		/* Vertex Pick */
 
 #define MIN(a,b)	if( (b) < (a) )  a = b
 #define MAX(a,b)	if( (b) > (a) )  a = b

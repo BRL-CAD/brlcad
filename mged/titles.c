@@ -48,6 +48,7 @@ char	*state_str[] = {
 	"OBJ PICK",
 	"OBJ PATH",
 	"OBJ EDIT",
+	"VERTPICK",
 	"UNKNOWN",
 };
 
