@@ -40,7 +40,7 @@ bin_PROGRAMS = \
 	rlestereo \
 	rleswap \
 	rletoabA60 \
-	rletoabA62
+	rletoabA62 \
 	rletoascii \
 	rletogif \
 	rletogray \
@@ -76,11 +76,11 @@ painttorle_SOURCES = painttorle.c
 pyrmask_SOURCES = pyrmask.c pyrlib.c
 rawtorle_SOURCES = rawtorle.c
 repos_SOURCES = repos.c
+rleClock_SOURCES = rleClock.c font.c
 rleaddcom_SOURCES = rleaddcom.c
 rlebg_SOURCES = rlebg.c
 rlebox_SOURCES = rlebox.c rle_box.c
 rlecat_SOURCES = rlecat.c
-rleClock_SOURCES = rleClock.c font.c
 rlecomp_SOURCES = rlecomp.c
 rledither_SOURCES = rledither.c
 rleflip_SOURCES = rleflip.c
