@@ -145,12 +145,14 @@ tty_sig:
 				(void) signal( i,  norml_sig );
 				}
 			break;
-#if defined( BSD )
+#ifdef SIGCHLD
 		case SIGCHLD :
-#else
-		case SIGCLD :
+			break; /* Leave SIGCHLD alone. */
 #endif
-			break; /* Leave SIGCLD alone.			*/
+#ifdef SIGCLD
+		case SIGCLD :
+			break; /* Leave SIGCLD alone. */
+#endif
 		case SIGPIPE :
 			(void) signal( i, SIG_IGN );
 			break;
