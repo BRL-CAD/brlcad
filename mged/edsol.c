@@ -7488,7 +7488,7 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  struct menu_item *mip;
+  struct menu_item *mip = (struct menu_item *)NULL;
   struct bu_vls vls;
 
   if(state != ST_S_EDIT)
