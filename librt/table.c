@@ -289,7 +289,7 @@ register union record *rec;
 		id = ID_NULL;		/* BAD */
 		break;
 	case DBID_ARBN:
-		id = ID_ARB8;
+		id = ID_ARBN;
 		break;
 	default:
 		rt_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
