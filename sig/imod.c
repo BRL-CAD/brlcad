@@ -1,141 +1,200 @@
-/*	I M O D . C --- program to manipulate files of short ints
+/*
+ *		I M O D . C
  *
- *	Author	Lee Butler	Dec. 19 1988
+ *  Modify intensities in a stream of short (16 bit) unsigned integers.
  *
+ *  Allows any number of add, subtract, multiply, divide, or
+ *  exponentiation operations to be performed on a picture.
+ *  Keeps track of and reports clipping.
  *
- *	Options:
- *	h	help
- *	a	add int
- *	s	subtract int
- *	m	multiply int
- *	d	divide int
+ *  Author -
+ *  	Lee A. Butler
+ *	25 October 1990
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
+#include <math.h>
+/* #include "externs.h" */
 
-/* declarations to support use of getopt() system call */
-char *options = "ha:s:m:d:";
-char optflags[sizeof(options)];
-extern char *optarg;
-extern int optind, opterr, getopt();
-
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
 char *progname = "(noname)";
 
-#define STKSIZE 16	/* Number of operations we can have */
-#define EOP	0	/* end of operations */
+char	*file_name;
+
+char usage[] = "\
+Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n";
+
 #define	ADD	1
-#define SUB	2
-#define MUL	3
-#define DIV	4
+#define MULT	2
+#define	ABS	3
+#define	POW	4
+#define	BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
 
-struct op {
-	int n, func;
-} stack[STKSIZE];
-int stklen=0;
+int	numop = 0;		/* number of operations */
+int	op[256];		/* operations */
+double	val[256];		/* arguments to operations */
+short iobuf[BUFLEN];		/* input buffer */
+int mapbuf[65536];		/* translation buffer/lookup table */
 
-#define BUFSIZ 1024
-short sb[BUFSIZ];
-
-
-/*
- *	D O I T --- Main function of program
- */
-void doit(fd)
-FILE *fd;
+get_args( argc, argv )
+register char **argv;
 {
-	short s;
-	int i, n, j;
+	register int c;
+	double	d;
+
+	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
+		switch( c )  {
+		case 'a':
+			op[ numop ] = ADD;
+			val[ numop++ ] = atof(optarg);
+			break;
+		case 's':
+			op[ numop ] = ADD;
+			val[ numop++ ] = - atof(optarg);
+			break;
+		case 'm':
+			op[ numop ] = MULT;
+			val[ numop++ ] = atof(optarg);
+			break;
+		case 'd':
+			op[ numop ] = MULT;
+			d = atof(optarg);
+			if( d == 0.0 ) {
+				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
+				exit( 2 );
+			}
+			val[ numop++ ] = 1.0 / d;
+			break;
+		case 'A':
+			op[ numop ] = ABS;
+			val[ numop++ ] = 0;
+			break;
+		case 'e':
+			op[ numop ] = POW;
+			val[ numop++ ] = atof(optarg);
+			break;
+		case 'r':
+			op[ numop ] = POW;
+			d = atof(optarg);
+			if( d == 0.0 ) {
+				(void)fprintf( stderr, "bwmod: zero root!\n" );
+				exit( 2 );
+			}
+			val[ numop++ ] = 1.0 / d;
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc )  {
+		if( isatty((int)fileno(stdin)) )
+			return(0);
+		file_name = "-";
+	} else {
+		file_name = argv[optind];
+		if( freopen(file_name, "r", stdin) == NULL )  {
+			(void)fprintf( stderr,
+				"bwmod: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "bwmod: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
+
+void mk_trans_tbl()
+{
+	register int i, j;
+	register double d;
+
+	/* create translation map */
+	for (j = -32768; j < 32768 ; ++j) {
+		d = j;
+		for (i=0 ; i < numop ; i++) {
+			switch (op[i]) {
+			case ADD : d += val[i]; break;
+			case MULT: d *= val[i]; break;
+			case POW : d = pow( d, val[i]); break;
+			case ABS : if (d < 0.0) d = - d; break;
+			default  : (void)fprintf(stderr, "%s: error in op\n",
+					progname); break;
+			}
+		}
+
+		if (d > 32767.0)
+			mapbuf[j+32768] = 65537;
+		else if (d < -32768.0)
+			mapbuf[j+32768] = -65536;
+		else if (d < 0.0)
+			mapbuf[j+32768] = d - 0.5;
+		else	
+			mapbuf[j+32768] = d + 0.5;
+	}
+}
+
+int main( argc, argv )
+int argc;
+char **argv;
+{
+	register short *p, *q;
+	register int i;
+	register unsigned int	n;
+	unsigned long clip_high, clip_low;
+	char *strrchr();
 	
-	while ((n=fread(sb, sizeof(*sb), BUFSIZ, stdin)) > 0) {
-		for (j=0 ; j < n ; j++) {
-			register int tmp = (int)sb[j];
+	if (!(progname=strrchr(*argv, '/')))
+		progname = *argv;
 
-			for (i=0 ; i < stklen ; ++i)
-				switch (stack[i].func) {
-				case ADD	: tmp += stack[i].n; break;
-				case SUB	: tmp -= stack[i].n; break;
-				case MUL	: tmp *= stack[i].n; break;
-				case DIV	: tmp /= stack[i].n; break;
-				default		: fprintf(stderr, "Unknow operation\n"); exit(1); break;
-				}
-			sb[j] = (short)tmp;
-		}
-		if (fwrite(sb, sizeof(*sb), n, stdout) != n) {
-			fprintf(stderr, "Error writing stdout\n");
-			exit(1);
-		}
+	if( !get_args( argc, argv ) || isatty(fileno(stdin))
+	    || isatty(fileno(stdout)) ) {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
-}
 
-/*	O F F S E T
- *
- *	return offset of character c in string s, or strlen(s) if c not in s
- */
-int offset(s, c)
-char s[], c;
-{
-	register unsigned int i=0;
-	while (s[i] != '\0' && s[i] != c) i++;
-	return(i);
-}
+	mk_trans_tbl();
 
-void usage()
-{
-	fprintf(stderr, "Usage: %s [-a n -s n -m n -d n ] < file \n", progname);
-	exit(1);
-}
+	clip_high = clip_low = 0;
 
-/*
- *	P U S H
- *
- *	push an operation and an argument onto a stack
- */
-void push(f, n)
-int f, n;
-{
-	if (stklen >= STKSIZE) usage();
-
-	stack[stklen].n = n;
-	stack[stklen++].func = f;
-}
-
-main(ac,av)
-int ac;
-char *av[];
-{
-	int  c, optlen;
-	FILE *fd, *fopen();
-
-	progname = *av;
-	if (ac < 3 || isatty(fileno(stdin))) usage();
-	
-	/* Get # of options & turn all the option flags off */
-	optlen = strlen(options);
-	for (c=0 ; c < optlen ; optflags[c++] = '\0');
-
-
-	/* clear the operation stack */
-	for (stklen = 0 ; stklen < STKSIZE ; stklen ++) {
-		stack[stklen].n = 0;
-		stack[stklen].func = 0;
-	}
-	stklen = 0;
-
-	/* Turn off getopt's error messages */
-	opterr = 0;
-
-	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF) {
-		switch (c) {
-		case '?'	: usage(); break;
-		case 'a'	: push(ADD, atoi(optarg)); break;
-		case 's'	: push(SUB, atoi(optarg)); break;
-		case 'm'	: push(MUL, atoi(optarg)); break;
-		case 'd'	: push(DIV, atoi(optarg)); break;
-		case 'h'	: 
-		default		: usage(); break;
+	while ( (n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
+		/* translate */
+		for (p=iobuf, q= &iobuf[n] ; p < q ; ++p) {
+			i = *p + 32768;
+			if (mapbuf[i] > 32767) { ++clip_high; *p = 32767; }
+			else if (mapbuf[i] < -32768) { ++clip_low; *p = -32768; }
+			else *p = (short)mapbuf[i];
+		}
+		/* output */
+		if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
+			(void)fprintf(stderr, "%s: Error writing stdout\n",
+				progname);
+			exit(-1);
 		}
 	}
 
-	if (optind >= ac) doit(stdin);
-	else usage();
+	if( clip_high != 0L || clip_low != 0L ) {
+		(void)fprintf( stderr, "%s: clipped %lu high, %lu low\n",
+			progname,
+			clip_high, clip_low );
+	}
+	return(0);
 }
