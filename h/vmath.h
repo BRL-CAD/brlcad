@@ -172,6 +172,17 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(_v)[Y] = -(_m)[MDY]; \
 			(_v)[Z] = -(_m)[MDZ]; }
 
+/* Macro versions of librt/mat.c functions, for when speed really matters */
+#define MAT_ZERO(m)	{\
+	register int _j; \
+	for(_j=0; _j<16; _j++) (m)[_j]=0.0; }
+
+#define MAT_IDN(m)	{\
+	int _j;	for(_j=0;_j<16;_j++) (m)[_j]=0.0;\
+	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0;}
+
+#define MAT_COPY(o,m)   VMOVEN(o,m,16)
+
 /* Set vector at `a' to have coordinates `b', `c', `d' */
 #define VSET(a,b,c,d)	{ \
 			(a)[X] = (b);\
@@ -180,6 +191,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /* Set all elements of vector to same scalar value */
 #define VSETALL(a,s)	{ (a)[X] = (a)[Y] = (a)[Z] = (s); }
+
+#define VSETALLN(v,s,n)  {\
+	register int _j;\
+	for (_j=0; _j<n; _j++) v[_j]=(s);}
 
 /* Transfer vector at `b' to vector at `a' */
 #define VMOVE(a,b)	{ \
@@ -571,6 +586,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(a)[Y] = (b)[Y] * (c)[Y];\
 	(a)[Z] = (b)[Z] * (c)[Z]; }
 #endif /* SHORT_VECTORS */
+
+/* Similar to VELMUL */
+#define VELDIV(a,b,c)	{ \
+	(a)[0] = (b)[0] / (c)[0];\
+	(a)[1] = (b)[1] / (c)[1];\
+	(a)[2] = (b)[2] / (c)[2]; }
+
 /* Given a direction vector, compute the inverses of each element. */
 /* When division by zero would have occured, mark inverse as INFINITY. */
 #define VINVDIR( _inv, _dir )	{ \

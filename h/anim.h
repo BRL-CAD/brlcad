@@ -25,7 +25,6 @@
 
 #define DTOR    M_PI/180.0
 #define RTOD	180.0/M_PI
-#define MAT_MOVE(o,m)   VMOVEN(o,m,16)
 				
 #define VSUBUNIT(a,b,c) {VSUB2(a,b,c);\
                         VUNITIZE(a);}
@@ -36,31 +35,18 @@
 #define VPRINTS(t,a)	printf("%s %f %f %f ",t,(a)[0],(a)[1],(a)[2])
 #define VPRINTN(t,a)	printf("%s %f %f %f\n",t,(a)[0],(a)[1],(a)[2])
 
-#define VELDIV(a,b,c)	{ \
-	(a)[0] = (b)[0] / (c)[0];\
-	(a)[1] = (b)[1] / (c)[1];\
-	(a)[2] = (b)[2] / (c)[2]; } /*similar to VELMUL*/
-
-#define VSETALLN(v,s,n)  {\
-	int _ijkx_l;\
-	for (_ijkx_l=0;_ijkx_l<n;_ijkx_l++) v[_ijkx_l]=s;}
-
-#define MAT0(m)		{\
-	int _ih_;	for(_ih_=0;_ih_<16;_ih_++) m[_ih_]=0.0;}
-
-#define MAT_IDN(m)	{\
-	int _ih_;	for(_ih_=0;_ih_<16;_ih_++) m[_ih_]=0.0;\
-	m[0] = m[5] = m[10] = m[15] = 1.0;}
+#define MAT0(m)		MAT_ZERO(m)
+#define MAT_MOVE(m)	MAT_COPY(m)
 
 /***** 3x3 matrix format *****/
 
 typedef fastf_t  mat3_t[9];
 
 #define MAT3ZERO(m) 	{\
-	int _ih_;	for(_ih_=0;_ih_<9;_ih_++) m[_ih_]=0.0;}
+	int _j;	for(_j=0;_j<9;_j++) m[_j]=0.0;}
 
 #define MAT3IDN(m)	{\
-	int _ih_;	for(_ih_=0;_ih_<9;_ih_++) m[_ih_]=0.0;\
+	int _j;	for(_j=0;_j<9;_j++) m[_j]=0.0;\
 	m[0] = m[4] = m[8] = 1.0;}
 
 #define MAT3MUL(o,a,b)	{\
@@ -75,16 +61,16 @@ typedef fastf_t  mat3_t[9];
 	(o)[8] = (a)[6]*(b)[2] + (a)[7]*(b)[5] + (a)[8]*(b)[8];}
 
 #define MAT3SUM(o,a,b)	{\
-	int _ih_; for(_ih_=0;_ih_<9;_ih_++) (o)[_ih_]=(a)[_ih_]+(b)[_ih_];}
+	int _j; for(_j=0;_j<9;_j++) (o)[_j]=(a)[_j]+(b)[_j];}
 
 #define MAT3DIF(o,a,b)	{\
-	int _ih_; for(_ih_=0;_ih_<9;_ih_++) (o)[_ih_]=(a)[_ih_]-(b)[_ih_];}
+	int _j; for(_j=0;_j<9;_j++) (o)[_j]=(a)[_j]-(b)[_j];}
 
 #define MAT3SCALE(o,a,s)	{\
-	int _ih_; for(_ih_=0;_ih_<9;_ih_++) (o)[_ih_]=(a)[_ih_] * (s);}
+	int _j; for(_j=0;_j<9;_j++) (o)[_j]=(a)[_j] * (s);}
 
 #define MAT3MOVE(o,a)	{\
-	int _ih_; for(_ih_=0;_ih_<9;_ih_++) (o)[_ih_] = (a)[_ih_];}
+	int _j; for(_j=0;_j<9;_j++) (o)[_j] = (a)[_j];}
 
 #define MAT3XVEC(u,m,v)	{\
 	(u)[0] = (m)[0]*(v)[0] + (m)[1]*(v)[1] + (m)[2]*(v)[2];\
