@@ -84,7 +84,6 @@ extern char	*framebuffer;		/* desired framebuffer */
 extern struct command_tab	rt_cmdtab[];
 
 extern char	version[];		/* From vers.c */
-extern char	rt_version[];		/* From librt/vers.c */
 
 /*
  *			M A I N
