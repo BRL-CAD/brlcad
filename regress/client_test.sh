@@ -18,16 +18,19 @@ initializeVariable TESTS_DIR "${REGRESS_DIR}/brlcad/regress/tests.d"
 
 if [ -d $TESTS_DIR ] ; then
     log "Running tests found in $TESTS_DIR"
+    log "cd ${REGRESS_DIR}/.regress.${ARCH}"
+    cd "${REGRESS_DIR}/.regress.${ARCH}"
 
     SCRIPTS=`ls -A $TESTS_DIR`
     for SCRIPT in $SCRIPTS ; do
 	if [ -f ${TESTS_DIR}/$SCRIPT ] && [ -x ${TESTS_DIR}/$SCRIPT ] ; then
 		log "Running [${TESTS_DIR}/$SCRIPT] test" 
 		log "RUNNING TEST:" >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG
-		log ${TESTS_DIR}/$SCRIPT >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG
+		log "${TESTS_DIR}/$SCRIPT" >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG
 		${TESTS_DIR}/$SCRIPT $REGRESS_DIR >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG 2>&1
 	fi
     done
+    cd "$LPWD"
 else
     log "WARNING: could not find any tests to run in $TESTS_DIR"
 fi
