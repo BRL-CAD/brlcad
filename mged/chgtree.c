@@ -462,13 +462,15 @@ char	**argv;
 	num_deleted = 0;
 	ret = TCL_OK;
 	for( i = 2; i < argc; i++ )  {
-		Tcl_AppendResult(interp, "deleting member ", argv[i],
-				   "\n", (char *)NULL);
-		if( db_tree_del_dbleaf( comb->tree, argv[i] ) < 0 )  {
-			Tcl_AppendResult(interp, "  ERROR in deleting member ",
-				argv[1], "\n", (char *)NULL);
+		if( db_tree_del_dbleaf( &(comb->tree), argv[i] ) < 0 )  {
+			Tcl_AppendResult(interp, "  ERROR_deleting ",
+				dp->d_namep, "/", argv[i],
+				"\n", (char *)NULL);
 			ret = TCL_ERROR;
 		} else {
+			Tcl_AppendResult(interp, "deleted ",
+				dp->d_namep, "/", argv[i],
+				"\n", (char *)NULL);
 			num_deleted++;
 		}
 	}
