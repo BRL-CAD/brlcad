@@ -656,7 +656,8 @@ struct bu_vls  {
  *  Section for manifest constants for bu_semaphore_acquire()
  */
 #define BU_SEM_SYSCALL	0
-#define BU_SEM_BN_NOISE	1
+#define BU_SEM_LISTS	1
+#define BU_SEM_BN_NOISE	2
 #define BU_SEM_LAST	(BU_SEM_BN_NOISE+1)	/* allocate this many for LIBBU+LIBBN */
 /*
  *  Automatic restart capability in bu_bomb().
@@ -894,6 +895,9 @@ BU_EXTERN(void			bu_setlinebuf, (FILE *fp) );
 BU_EXTERN(int			bu_list_len, (CONST struct bu_list *hd));
 BU_EXTERN(void			bu_list_reverse, (struct bu_list *hd));
 BU_EXTERN(void			bu_list_free, (struct bu_list *hd));
+BU_EXTERN(void			bu_list_parallel_append, (struct bu_list *headp,
+					struct bu_list *itemp));
+BU_EXTERN(struct bu_list *	bu_list_parallel_dequeue, (struct bu_list *headp));
 
 /* log.c */
 BU_EXTERN(void			bu_log_indent_delta, (int delta) );
