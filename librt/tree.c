@@ -1590,6 +1590,7 @@ register struct rt_i *rtip;
 {
 	register struct region *regp;
 	register struct soltab *stp;
+	int	i;
 
 	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_clean:  bad rtip\n");
 
@@ -1639,6 +1640,15 @@ register struct rt_i *rtip;
 		bzero( (char *)&(rtip->rti_CutHead), sizeof(union cutter) );
 		rt_fr_cut( &(rtip->rti_inf_box) );
 		bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
+	}
+
+	/* Reset instancing counters in database directory */
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		register struct directory	*dp;
+
+		dp = rtip->rti_dbip->dbi_Head[i];
+		for( ; dp != DIR_NULL; dp = dp->d_forw )
+			dp->d_uses = 0;
 	}
 
 	/* Free animation structures */
