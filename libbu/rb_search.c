@@ -2,8 +2,10 @@
  *
  *	Written by:	Paul Tanenbaum
  *
- *  $Header$
  */
+#ifndef lint
+static char RCSid[] = "@(#) $Header$";
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
