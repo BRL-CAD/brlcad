@@ -330,7 +330,7 @@ dotitles()
 	 * General status information on the next to last line
 	 */
 	(void)sprintf( &linebuf[0],
-		" view:  cent=(%.3f, %.3f, %.3f), size=%.3f, ",
+		" view:  cent=(%.3f, %.3f, %.3f), sz=%.3f, ",
 		-toViewcenter[MDX]*base2local,
 		-toViewcenter[MDY]*base2local,
 		-toViewcenter[MDZ]*base2local,
@@ -338,7 +338,7 @@ dotitles()
 
 	cp = &linebuf[0];
 	FINDNULL(cp);
-	(void)sprintf( cp, "angles=(%.2f, %.2f, %.2f)",
+	(void)sprintf( cp, "ang=(%.2f, %.2f, %.2f)",
 		dm_values.dv_xjoy * 6,
 		dm_values.dv_yjoy * 6,
 		dm_values.dv_zjoy * 6 );
@@ -356,14 +356,8 @@ dotitles()
 				(curs_y / 2047.0) / VIEWFACTOR*base2local
 			     );
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_CYAN );
-	}
-	else {
-		/* display title and units */
-		(void)sprintf(&linebuf[0], " Title = %s",cur_title);
-		cp = &linebuf[0];
-		FINDNULL( cp );
-		(void)sprintf(cp, "   UNITS = %s",local_unit[localunit]);
-		linebuf[80] = '\0';
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_BLUE );
+	} else {
+		(void)sprintf(&linebuf[0], " %s", cur_title);
+		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	}
 }
