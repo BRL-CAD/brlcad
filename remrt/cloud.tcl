@@ -49,7 +49,7 @@ for {set time 0} {1} {set time [expr $time + $duration_sec]} {
 	# Change displacement in texture space of the clouds.
 	set cloud_region_name cloud.r
 	set cloud_shader \
-"scloud s=5000/5000/5000 m=1 d=[expr $time/100+10]/21.25/10] o=3"
+"scloud s=5000/5000/5000 m=1 d=[expr $time/30+10]/21.25/10] o=3"
 
 
 	send rtsync \
