@@ -1183,7 +1183,7 @@ dgo_rtcheck_vector_handler(clientData, mask)
 
 		/* wait for the forked process */
 		while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1)
-			dgo_wait_status(retcode);
+			dgo_wait_status(interp, retcode);
 
 		/* free rtcp */
 		bu_free((genptr_t)rtcp, "dgo_rtcheck_vector_handler: rtcp");
