@@ -1,13 +1,13 @@
 /*
- *	@(#) cgarbs.c			retrieved 8/13/86 at 07:59:15,
- *	@(#) version 1.3		  created 3/23/83 at 12:37:46.
+ *	@(#) cgarbs.c			retrieved 8/13/86 at 07:59:24,
+ *	@(#) version 1.4		  created 3/29/83 at 10:53:12.
  *
  *	Written by Keith Applin.
  *	All rights reserved, Ballistic Research Laboratory.
  */
 #include "ged_types.h"
 #include "3d.h"
-#include "./view.h"
+#include "./deck.h"
 extern double	fabs();
 
 /* C G A R B S :   determines COMGEOM arb types from GED general arbs
@@ -108,10 +108,90 @@ int uvec[], svec[], numvec;
 {
 	register int	i, j;
 	int		prod, cgtype;
+	float		testm;
+	float		vec[3];
+	int		nleg1, nleg2, nleg3;
 
 	cgtype = rec->s.s_num * -1;
 	switch( cgtype ) {
-	case ARB8:		/* do nothing */
+	case ARB8: /* New stuff Mar 29, 1983.				*/
+		/* Convert to vector notation to check for BOX and RPP.	*/
+		vectors( rec );
+
+		/* ARB8 is a BOX if all following true:
+		 *   1.  vectors [3],[9],[12] mutually perpendicular
+		 *   2.  |[15]-[3]|  == |[12]|
+		 *   3.  |[6]-[3]|   == |[9]|
+		 *   4.  |[18]-[15]| == |[9]|
+		 *   5.  |[21]-[12]| == |[9]|
+		 */
+
+		/* Test condition 1.					*/
+		if(	fabs(	DOT(	&(rec->s.s_values[3]),
+					&(rec->s.s_values[9])
+				)) > .0001
+		    ||	fabs(	DOT(	&(rec->s.s_values[9]),
+					&(rec->s.s_values[12])
+				)) > .0001
+		) { 
+			points( rec );
+			break;
+		}
+
+		/* Test condition 2.					*/
+		testm = MAGNITUDE( &(rec->s.s_values[12]) );
+		VSUB2(vec, &(rec->s.s_values[15]), &(rec->s.s_values[3]) );
+		if( fabs( MAGNITUDE( vec ) - testm ) > .0001 ) {
+			points( rec );
+			break;
+		}
+		testm = MAGNITUDE( &(rec->s.s_values[9]) );
+
+		/* Test condition 3.					*/
+		VSUB2( vec, &(rec->s.s_values[6]), &(rec->s.s_values[3]) );
+		if( fabs( MAGNITUDE( vec ) - testm ) > .0001 ) {
+			points( rec );
+			break;
+		}
+
+		/* Test condition 4.					*/
+		VSUB2(	vec,
+			&(rec->s.s_values[18]),
+			&(rec->s.s_values[15])
+		);
+		if( fabs( MAGNITUDE( vec ) - testm ) > .0001 ) {
+			points( rec );
+			break;
+		}
+
+		/* Test condition 5.					*/
+		VSUB2(	vec,
+			&(rec->s.s_values[21]),
+			&(rec->s.s_values[12])
+		);
+		if( fabs( MAGNITUDE( vec ) - testm ) > .0001 ) {
+			points( rec );
+			break;
+		}
+
+		/* Have a BOX.						*/
+		rec->s.s_num = -2;
+
+		/* Check for RPP.					*/
+		nleg1 = nleg2 = nleg3 = 0;
+		for( i = 0; i < 3; i++ ) {
+			if( fabs( rec->s.s_values[3+i] ) < .0001 )
+				nleg1++;
+			if( fabs( rec->s.s_values[9+i] ) < .0001 )
+				nleg2++;
+			if( fabs( rec->s.s_values[12+i] ) < .0001 )
+				nleg3++;
+		}
+		if( nleg1 == 2 && nleg2 == 2 && nleg3 == 2 )
+			rec->s.s_num = -1;	/* RPP */
+
+		/* Back to point notation.				*/
+		points( rec );
 		break;
 	case ARB7:	/* arb7 vectors: 0 1 2 3 4 5 6 4 */
 		switch( svec[2] ) {
