@@ -795,6 +795,22 @@ Tcl_Interp *interp;
 	Tcl_SetVar(interp, "bn_version", (char *)bn_version+5, TCL_GLOBAL_ONLY);
 }
 
+/*
+ *			B N _ I N I T
+ *
+ *  Allows LIBBN to be dynamically loade to a vanilla tclsh/wish with
+ *  "load /usr/brlcad/lib/libbn.so"
+ *
+ *  The name of this function is specified by TCL.
+ */
+int
+Bn_Init(interp)
+Tcl_Interp *interp;
+{
+	bn_tcl_setup(interp);
+	return TCL_OK;
+}
+
 
 double bn_noise_fbm(point_t point,double h_val,double lacunarity,double octaves);
 double bn_noise_turb(point_t point,double h_val,double lacunarity,double octaves);
