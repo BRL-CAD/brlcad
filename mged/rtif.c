@@ -53,7 +53,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern int mged_svbase();
 void		setup_rt();
 
-static int	tree_walk_needed;
+static int tree_walk_needed;
+
+struct rtcheck {
+       int			fd;
+       FILE			*fp;
+       int			pid;
+       struct bn_vlblock	*vbp;
+       struct bu_list		*vhead;
+       double			csize;  
+};
 
 /*
  *			P R _ W A I T _ S T A T U S
@@ -294,8 +303,6 @@ int mask;
 #if 0
   if((count = read((int)fd, line, MAXLINE)) == 0){
 #else
-    /* anything bigger than 5120 causes the last line (i.e. bu_log("%s", line);)
-       to hang if writing to a pipe */
   if((count = read((int)fd, line, 5120)) == 0){
 #endif
     Tcl_DeleteFileHandler(fd);
@@ -542,11 +549,73 @@ char	**argv;
 	return TCL_OK;
 }
 
-/*
- *			F _ R T C H E C K
- *
- *  Invoke "rtcheck" to find overlaps, and display them as a vector overlay.
- */
+static void
+rtcheck_vector_handler(clientData, mask)
+ClientData clientData;
+int mask;
+{
+  int value;
+  struct solid *sp;
+  struct rtcheck *rtcp = (struct rtcheck *)clientData;
+
+  /* Get vector output from rtcheck */
+  if ((value = getc(rtcp->fp)) == EOF) {
+    int retcode;
+    int rpid;
+
+    Tcl_DeleteFileHandler(rtcp->fd);
+    fclose(rtcp->fp);
+
+    FOR_ALL_SOLIDS(sp, &HeadSolid.l)
+      sp->s_iflag = DOWN;
+
+    /* Add overlay */
+    cvt_vlblock_to_solids( rtcp->vbp, "OVERLAPS", 0 );
+    rt_vlblock_free(rtcp->vbp);
+
+    /* wait for the forked process */
+    while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1)
+      pr_wait_status(retcode);
+
+    /* free rtcp */
+    bu_free((genptr_t)rtcp, "rtcheck_vector_handler: rtcp");
+
+    update_views = 1;
+    return;
+  }
+
+  (void)rt_process_uplot_value( rtcp->vhead,
+				rtcp->vbp,
+				rtcp->fp,
+				value,
+				rtcp->csize );
+}
+
+static void
+rtcheck_output_handler(clientData, mask)
+ClientData clientData;
+int mask;
+{
+  int count;
+  char line[MAXLINE];
+  int fd = (int)clientData;
+
+  /* Get textual output from rtcheck */
+#if 0
+  if((count = read((int)fd, line, MAXLINE)) == 0){
+#else
+  if((count = read((int)fd, line, 5120)) == 0){
+#endif
+    Tcl_DeleteFileHandler(fd);
+    close(fd);
+
+    return;
+  }
+
+  line[count] = '\0';
+  bu_log("%s", line);
+}
+
 int
 f_rtcheck(clientData, interp, argc, argv)
 ClientData clientData;
@@ -556,13 +625,13 @@ char	**argv;
 {
 	register char **vp;
 	register int i;
-	int	pid, rpid;
+	int	pid; 	 
 	int	retcode;
-	int	o_pipe[2];
-	int	i_pipe[2];
+	int	i_pipe[2];	/* MGED reads results for building vectors */
+	int	o_pipe[2];	/* MGED writes view parameters */
+	int	e_pipe[2];	/* MGED reads textual results */
 	FILE	*fp;
-	struct solid *sp;
-	struct bn_vlblock	*vbp;
+	struct rtcheck *rtcp;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -590,14 +659,27 @@ char	**argv;
 
 	setup_rt( vp, 1 );
 
-	(void)pipe( o_pipe );			/* output from mged */
-	(void)pipe( i_pipe );			/* input back to mged */
+	(void)pipe( i_pipe );
+	(void)pipe( o_pipe );
+	(void)pipe( e_pipe );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
+		/* Redirect stdin, stdout and stderr */
 		(void)close(0);
 		(void)dup( o_pipe[0] );
 		(void)close(1);
 		(void)dup( i_pipe[1] );
+		(void)close(2);
+		(void)dup( e_pipe[1] );
+
+		/* close pipes */
+		(void)close(i_pipe[0]);
+		(void)close(i_pipe[1]);
+		(void)close(o_pipe[0]);
+		(void)close(o_pipe[1]);
+		(void)close(e_pipe[0]);
+		(void)close(e_pipe[1]);
+
 		for( i=3; i < 20; i++ )
 			(void)close(i);
 
@@ -616,48 +698,33 @@ char	**argv;
 
 		VSET( temp, 0.0, 0.0, 1.0 );
 		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
-#if 0
-		/* This old way is no longer needed for RT */
-		rt_oldwrite(fp, eye_model );
-#endif
 		rt_write(fp, eye_model );
 	}
 	(void)fclose( fp );
 
-	/* Prepare to receive UNIX-plot back from child */
+	/* close write end of pipes */
 	(void)close(i_pipe[1]);
-	fp = fdopen(i_pipe[0], "r");
-	vbp = rt_vlblock_init();
-	(void)rt_uplot_to_vlist( vbp, fp, view_state->vs_Viewscale * 0.01 );
-	fclose(fp);
+	(void)close(e_pipe[1]);
 
-	/* Wait for program to finish */
-	while ((rpid = wait(&retcode)) != pid && rpid != -1)
-		;	/* NULL */
+	BU_GETSTRUCT(rtcp, rtcheck);
 
-	if( retcode != 0 )
-		pr_wait_status( retcode );
+	/* initialize the rtcheck struct */
+	rtcp->fd = i_pipe[0];
+	rtcp->fp = fdopen(i_pipe[0], "r");
+	rtcp->pid = pid;
+	rtcp->vbp = rt_vlblock_init();
+	rtcp->vhead = rt_vlblock_find( rtcp->vbp, 0xFF, 0xFF, 0x00 );
+	rtcp->csize = view_state->vs_Viewscale * 0.01;
 
-#if 0
-	(void)signal(SIGINT, cur_sigint);
-#else
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
-	  return TCL_OK;
-#endif
+	/* register file handlers */
+	Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
+			      rtcheck_vector_handler, (ClientData)rtcp);
+	Tcl_CreateFileHandler(e_pipe[0], TCL_READABLE,
+			      rtcheck_output_handler, (ClientData)e_pipe[0]);
 
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-		sp->s_iflag = DOWN;
-
-	/* Add overlay */
-	cvt_vlblock_to_solids( vbp, "OVERLAPS", 0 );
-	rt_vlblock_free(vbp);
-	view_state->vs_flag = 1;
-
-	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
+
 
 /*
  *			B A S E N A M E
