@@ -551,11 +551,28 @@ char	**argv;
 	register struct solid	*sp;
 	char			*cp;
 	register int		j;
+	int			illum_only = 0;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
 
-	if(argc < 2 || 2 < argc){
+	if(argc < 2 || 3 < argc){
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help matpick");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+	}
+
+	if(!strcmp("-n", argv[1])){
+	  illum_only = 1;
+	  --argc;
+	  ++argv;
+	}
+
+	if(argc != 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -600,13 +617,18 @@ got:
 		}
 		/* Only accept if top of tree is identical */
 		if( j == ipathpos+1 )
-			sp->s_iflag = UP;
+		  sp->s_iflag = UP;
+		else
+		  sp->s_iflag = DOWN;
 	}
-	(void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
-	chg_l2menu(ST_O_EDIT);
 
-	/* begin object editing - initialize */
-	init_objedit();
+	if(!illum_only){
+	  (void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
+	  chg_l2menu(ST_O_EDIT);
+
+	  /* begin object editing - initialize */
+	  init_objedit();
+	}
 
 	dmaflag++;
 	return TCL_OK;
