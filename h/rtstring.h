@@ -82,5 +82,6 @@ RT_VLS_EXTERN(void rt_vls_vlscatzap, (struct rt_vls *dest, struct rt_vls *src) )
 RT_VLS_EXTERN(void rt_vls_from_argv, (struct rt_vls *vp, int argc, char **argv) );
 RT_VLS_EXTERN(void rt_vls_bomb, (CONST char *str, CONST struct rt_vls *badp) );
 RT_VLS_EXTERN(void rt_vls_fwrite, (FILE *fp, CONST struct rt_vls *vp) );
+RT_VLS_EXTERN(int rt_vls_gets, (struct rt_vls *vp, FILE *fp) );
 
 #endif /* SEEN_RTSTRING_H */
