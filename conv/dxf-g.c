@@ -1848,6 +1848,7 @@ main( int argc, char *argv[] )
 	cos_delta = cos( delta_angle );
 
 	/* get command line arguments */
+	scale_factor = 1.0;
 	while ((c = getopt(argc, argv, "cdvt:s:")) != EOF)
 	{
 		switch( c )
