@@ -7,7 +7,7 @@ sampleapplications_DATA = \
 EXTRA_DIST = \
 	S(sampleapplications_DATA) \
 	Cakefile.defs \
-	Description.txt \
+	Description.txt
 
 SUBDIRS = \
 	macosx \
