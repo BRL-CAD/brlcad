@@ -16,7 +16,6 @@
 
 #include "tcl.h"
 #include "tk.h"
-#include "tclcad.h"
 
 extern Tk_PhotoImageFormat tkImgFmtPIX;
 
