@@ -361,6 +361,23 @@ struct seg {
 		RT_FREE_SEG( _a, _res ); \
 	} }
 
+/*
+ *  Macros to operate on Right Rectangular Parallelpipeds (RPPs).
+ */
+
+/*
+ *  Compare two bounding RPPs;  return true if disjoint.
+ *  RPP 1 is defined by lo1, hi1, RPP 2 by lo2, hi2.
+ */
+#define RT_2RPP_DISJOINT(_l1, _h1, _l2, _h2) \
+      ( (_l1)[X] > (_h2)[X] || (_l1)[Y] > (_h2)[Y] || (_l1)[2] > (_h2)[2] || \
+	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[1] || (_l2)[2] > (_h1)[2] )
+
+/* Test for point being inside or on an RPP */
+#define RT_POINT_IN_RPP(_pt, _min, _max)	\
+	( ( (_pt)[X] >= (_min)[X] && (_pt)[X] <= (_max)[X] ) &&  \
+	  ( (_pt)[Y] >= (_min)[Y] && (_pt)[Y] <= (_max)[Y] ) &&  \
+	  ( (_pt)[Z] >= (_min)[Z] && (_pt)[Z] <= (_max)[Z] ) )
 
 /*
  *			S O L T A B
