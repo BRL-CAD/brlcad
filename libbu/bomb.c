@@ -66,5 +66,8 @@ CONST char *str;
 		fprintf(stderr,"bu_bomb causing intentional core dump due to debug flag\n");
 		abort();	/* should dump */
 	}
+
+	/* In parallel mode, should we try to signal the others to die too? */
+
 	exit(12);
 }
