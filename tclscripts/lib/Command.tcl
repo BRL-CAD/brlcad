@@ -35,7 +35,7 @@ class Command {
     itk_option define -oldcmd_color oldcmd_color TextColor red3
     itk_option define -result_color result_color TextColor blue3
 
-    public method history {args}
+    public method history {}
     public method edit_style {args}
 
     private method invoke {}
@@ -174,8 +174,8 @@ body Command::destructor {} {
 
 
 ############################## Public Methods ##############################
-body Command::history {args} {
-    eval $hist history $args
+body Command::history {} {
+    eval $hist history
 }
 
 body Command::edit_style {args} {
