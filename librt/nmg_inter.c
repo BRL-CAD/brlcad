@@ -1053,11 +1053,7 @@ CONST struct rt_tol	*tol;
 		if( NEAR_ZERO( b-vdist, tol->dist ) )  continue;
 		if( !rt_between( a, vdist, b, tol ) )  continue;
 		new_eu = nmg_ebreaker( v, *eup, tol );
-#if 0
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-#else
-		{
-#endif
 			rt_log("nmg_break_eg_on_v( eg=x%x, v=x%x ) new_eu=x%x\n",
 				eg, v, new_eu );
 		}
