@@ -2469,7 +2469,12 @@ Extrude_faces()
 
 		/* Extrude distance is one-half the thickness */
 		if( Adjust_vertices( shells[ thick_no*2 + center - 1 ] , (fastf_t)(thicks[thick_no]/2.0) ) )
-			rt_bomb( "Failure in Adjusting vertices\n" );
+		{
+			rt_free( (char *)thicks , "Extrude_faces: thicks" );
+			rt_free( (char *)shells , "Extrude_faces: shells" );
+			rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
+			return( 1 );
+		}
 	}
 
 	/* make a translation table to store correspondence between original and dups */
@@ -2503,7 +2508,13 @@ Extrude_faces()
 			nmg_invert_shell( dup_shells[ thick_no*2 + center - 1 ] , &tol );
 
 			if( Adjust_vertices( dup_shells[ thick_no*2 + center - 1 ] , thicks[thick_no] ) )
-				rt_bomb( "Failure in Adjust vertices\n" );
+			{
+				rt_free( (char *)thicks , "Extrude_faces: thicks" );
+				rt_free( (char *)shells , "Extrude_faces: shells" );
+				rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
+				rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
+				return( 1 );
+			}
 		}
 	}
 
@@ -3034,7 +3045,7 @@ make_nmg_objects()
 		return( 1 );
 
 	/* Check radial orientation around all edges */
-	if( mode == PLATE_MODE && Check_radials( s ) )
+	if( Check_radials( s ) )
 		return( 1 );
 
 	if( debug )
@@ -3922,6 +3933,8 @@ do_section( final )
 int final;
 {
 
+	static int	old_region_id;
+
 	if( debug )
 		rt_log( "do_section: %s\n" , line );
 
@@ -3930,6 +3943,9 @@ int final;
 
 	if( pass )
 	{
+		if( try_count )
+			region_id = old_region_id;
+
 		if( region_id )
 		{
 			if( !try_count )
@@ -4024,9 +4040,11 @@ int final;
 							rt_log( "Retrying group %d, component %d\n",
 								group_id , comp_id );
 							(void)getline();
+							old_region_id = region_id;
 						}
 					}
 				}
+				conv_count--;
 
 			}
 			make_cline_regions();
@@ -4602,4 +4620,5 @@ char *argv[];
 
 	rt_log( "%d components converted out of %d attempted\n" , conv_count , comp_count );
 	rt_log( "\t%d failures converted on second try (as a group of ARB6 solids)\n", second_chance );
+	rt_log( "\tFor a total of %d components converted\n" , conv_count+second_chance );
 }
