@@ -125,6 +125,9 @@ typedef fastf_t hpoint_t[HPT_LEN];
  */
 typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
+/* Compute distance from a point to a plane */
+#define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[H])
+
 /* Element names in homogeneous vector (4-tuple) */
 #define	X	0
 #define	Y	1
@@ -805,5 +808,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(a)[Z] = (b) * (c)[Z] + (d) * (e)[Z];\
 	(a)[W] = (b) * (c)[W] + (d) * (e)[W]; }
 #endif /* SHORT_VECTORS */
+
+/* Compare two extents represented as RPPs. if they overlap, return true */
+#define V3RPP_OVERLAP(_l1, _h1, _l2, _h2) \
+    (! ((_l1)[0] > (_h2)[0] || (_l1)[1] > (_h2)[1] || (_l1)[2] > (_h2)[2] || \
+	(_l2)[0] > (_h1)[0] || (_l2)[1] > (_h1)[1] || (_l2)[2] > (_h1)[2]) )
 
 #endif /* VMATH_H */
