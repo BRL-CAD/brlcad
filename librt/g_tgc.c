@@ -588,7 +588,7 @@ register struct xray	*rp;
 		 *  whether this lies within the governing ellipse.
 		 */
 		if( dprime[Z] == 0.0 )  {
-			rtlog("tgc: A dprime[Z] = 0!\n" );
+			rtlog("tgc: dprime[Z] = 0!\n" );
 			return(SEG_NULL);
 		}
 		b = ( -pprime[Z] )/dprime[Z];
@@ -647,14 +647,13 @@ register struct xray	*rp;
 	 *  so) to the planes, it (obviously) won't intersect
 	 *  either of them.
 	 */
+	if( dprime[Z] == 0.0 )
+		return(SEG_NULL);
+
 	dir = VDOT( tgc->tgc_N, rp->r_dir );	/* direc */
 	if ( NEAR_ZERO( dir ) )
 		return( SEG_NULL );
 
-	if( dprime[Z] == 0.0 )  {
-		rtlog("tgc: B dprime[Z] = 0!\n" );
-		return(SEG_NULL);
-	}
 	b = ( -pprime[Z] )/dprime[Z];
 	/* Height vector is unitized (tgc->tgc_sH == 1.0) */
 	t = ( 1.0 - pprime[Z] )/dprime[Z];
