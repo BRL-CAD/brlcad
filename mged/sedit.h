@@ -81,6 +81,10 @@
 
 #define ECMD_PIPE_PICK		28	/* Pick pipe segment */
 #define	ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
+#define	ECMD_PIPE_SEG_ADD	30	/* Add a pipe segment to end of pipe */
+#define	ECMD_PIPE_SEG_INS	31	/* Add a pipe segment to start of pipe */
+#define	ECMD_PIPE_SEG_SEL	32	/* Delete a pipe segment */
+#define	ECMD_PIPE_SEG_MOVE	33	/* Move a pipe segment */
 
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
