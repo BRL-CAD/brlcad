@@ -2529,6 +2529,63 @@ struct dir_check_stuff {
 	struct directory **dup_dirp;
 };
 
+BU_EXTERN(void wdb_dir_check5, ( struct db_i *input_dbip, const struct db5_raw_internal *rip, long addr, genptr_t ptr));
+
+void
+wdb_dir_check5( input_dbip, rip, addr, ptr )
+     register struct db_i		*input_dbip;
+     const struct db5_raw_internal	*rip;
+     long				addr;
+     genptr_t				ptr;
+{
+	char			*name;
+	struct directory	*dupdp;
+	struct bu_vls		local;
+	struct dir_check_stuff	*dcsp = (struct dir_check_stuff *)ptr;
+
+	if (dcsp->main_dbip == DBI_NULL)
+		return;
+
+	RT_CK_DBI(input_dbip);
+	RT_CK_RIP( rip );
+
+	if( !rip->h_name_present )
+		return;
+
+	name = (char *)rip->name.ext_buf;
+
+	/* do not compare _GLOBAL */
+	if( !strcmp( name, "_GLOBAL" ) )
+		return;
+
+	/* Add the prefix, if any */
+	bu_vls_init( &local );
+	if( dcsp->main_dbip->dbi_version < 5 ) {
+		if (dcsp->wdbp->wdb_ncharadd > 0) {
+			bu_vls_strncpy( &local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
+			bu_vls_strcat( &local, name );
+		} else {
+			bu_vls_strncpy( &local, name, RT_NAMESIZE );
+		}
+		bu_vls_trunc( &local, RT_NAMESIZE );
+	} else {
+		if (dcsp->wdbp->wdb_ncharadd > 0) {
+			(void)bu_vls_vlscat( &local, &dcsp->wdbp->wdb_prestr );
+			(void)bu_vls_strcat( &local, name );
+		} else {
+			(void)bu_vls_strcat( &local, name );
+		}
+	}
+		
+	/* Look up this new name in the existing (main) database */
+	if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != DIR_NULL) {
+		/* Duplicate found, add it to the list */
+		dcsp->wdbp->wdb_num_dups++;
+		*dcsp->dup_dirp++ = dupdp;
+	}
+	return;
+}
+
 /*
  *			W D B _ D I R _ C H E C K
  *
@@ -2544,7 +2601,7 @@ wdb_dir_check(input_dbip, name, laddr, len, flags, ptr)
      genptr_t			ptr;
 {
 	struct directory	*dupdp;
-	char			local[RT_NAMESIZE+2];
+	struct bu_vls		local;
 	struct dir_check_stuff	*dcsp = (struct dir_check_stuff *)ptr;
 
 	if (dcsp->main_dbip == DBI_NULL)
@@ -2553,20 +2610,31 @@ wdb_dir_check(input_dbip, name, laddr, len, flags, ptr)
 	RT_CK_DBI(input_dbip);
 
 	/* Add the prefix, if any */
-	if (dcsp->wdbp->wdb_ncharadd > 0) {
-		(void)strncpy( local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
-		(void)strncpy( local+dcsp->wdbp->wdb_ncharadd, name, RT_NAMESIZE-dcsp->wdbp->wdb_ncharadd );
+	bu_vls_init( &local );
+	if( dcsp->main_dbip->dbi_version < 5 ) {
+		if (dcsp->wdbp->wdb_ncharadd > 0) {
+			bu_vls_strncpy( &local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
+			bu_vls_strcat( &local, name );
+		} else {
+			bu_vls_strncpy( &local, name, RT_NAMESIZE );
+		}
+		bu_vls_trunc( &local, RT_NAMESIZE );
 	} else {
-		(void)strncpy( local, name, RT_NAMESIZE );
+		if (dcsp->wdbp->wdb_ncharadd > 0) {
+			bu_vls_vlscat( &local, &dcsp->wdbp->wdb_prestr );
+			bu_vls_strcat( &local, name );
+		} else {
+			bu_vls_strcat( &local, name );
+		}
 	}
-	local[RT_NAMESIZE] = '\0';
 		
 	/* Look up this new name in the existing (main) database */
-	if ((dupdp = db_lookup(dcsp->main_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
+	if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != DIR_NULL) {
 		/* Duplicate found, add it to the list */
 		dcsp->wdbp->wdb_num_dups++;
 		*dcsp->dup_dirp++ = dupdp;
 	}
+	bu_vls_free( &local );
 	return 0;
 }
 
@@ -2603,9 +2671,13 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 		(void)bu_vls_strcpy(&wdbp->wdb_prestr, argv[3]);
 
 	wdbp->wdb_num_dups = 0;
-	if ((wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr)) > 12) {
-		wdbp->wdb_ncharadd = 12;
-		bu_vls_trunc( &wdbp->wdb_prestr, 12 );
+	if( wdbp->dbip->dbi_version < 5 ) {
+		if ((wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr)) > 12) {
+			wdbp->wdb_ncharadd = 12;
+			bu_vls_trunc( &wdbp->wdb_prestr, 12 );
+		}
+	} else {
+		wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr);
 	}
 
 	/* open the input file */
@@ -2635,11 +2707,20 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 	dcs.main_dbip = wdbp->dbip;
 	dcs.wdbp = wdbp;
 	dcs.dup_dirp = dirp0;
-	if (db_scan(newdbp, wdb_dir_check, 0, (genptr_t)&dcs) < 0) {
-		Tcl_AppendResult(interp, "dup: db_scan failure", (char *)NULL);
-		bu_free((genptr_t)dirp0, "wdb_getspace array");
-		db_close(newdbp);
-		return TCL_ERROR;
+	if( newdbp->dbi_version < 5 ) {
+		if (db_scan(newdbp, wdb_dir_check, 0, (genptr_t)&dcs) < 0) {
+			Tcl_AppendResult(interp, "dup: db_scan failure", (char *)NULL);
+			bu_free((genptr_t)dirp0, "wdb_getspace array");
+			db_close(newdbp);
+			return TCL_ERROR;
+		}
+	} else {
+		if( db5_scan( newdbp, wdb_dir_check5, (genptr_t)&dcs) < 0) {
+			Tcl_AppendResult(interp, "dup: db_scan failure", (char *)NULL);
+			bu_free((genptr_t)dirp0, "wdb_getspace array");
+			db_close(newdbp);
+			return TCL_ERROR;
+		}
 	}
 	rt_mempurge( &(newdbp->dbi_freep) );        /* didn't really build a directory */
 
