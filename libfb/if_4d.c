@@ -73,6 +73,9 @@ static Cursor	cursor =  {
 #include "./sgicursor.h"
  };
 
+extern int	fb_sim_readrect(), fb_sim_writerect();
+
+
 /* Internal routines */
 _LOCAL_ void	sgi_cminit();
 
@@ -108,6 +111,8 @@ FBIO sgi_interface =
 		sgi_curs_set,
 		sgi_cmemory_addr,
 		fb_null,		/* cscreen_addr */
+		fb_sim_readrect,
+		fb_sim_writerect,
 		sgi_help,
 		"Silicon Graphics Iris '4D'",
 		XMAXSCREEN+1,		/* max width */
