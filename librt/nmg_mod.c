@@ -1659,15 +1659,26 @@ struct shell *s;
 	struct loopuse *new_lu, *lu;
 	struct faceuse *new_fu = (struct faceuse *)NULL;
 	struct model	*m;
+	struct model	*m_f;
 	long		**trans_tbl;
+	long		tbl_size;
 
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
 	NMG_CK_SHELL(s);
 
+	/* allocate the table that holds the translations between existing
+	 * elements and the duplicates we will create.
+	 */
 	m = nmg_find_model( (long *)s );
+	tbl_size = m->maxindex;
+
+	m_f = nmg_find_model( (long *)fu );
+	if (m != m_f)
+		tbl_size += m_f->maxindex;
+
 	/* Needs double space, because model will grow as dup proceeds */
-	trans_tbl = (long **)rt_calloc(m->maxindex*2, sizeof(long *),
+	trans_tbl = (long **)rt_calloc(tbl_size*2, sizeof(long *),
 			"nmg_dup_face trans_tbl");
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
