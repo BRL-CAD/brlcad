@@ -165,6 +165,8 @@ static struct trail	tE, tF, tG, tH;
 
 /*
  *			P R E D I C T O R _ K I L L
+ *
+ *  Don't use mged "kill" command, just use "d".
  */
 void
 predictor_kill()
@@ -172,11 +174,11 @@ predictor_kill()
 	struct rt_vls	str;
 
 	rt_vls_init( &str );
-	rt_vls_printf( &str, "kill %s\n", PREDICTOR_NAME );
+	rt_vls_printf( &str, "d %s\n", PREDICTOR_NAME );
 	(void)cmdline( &str );
 	rt_vls_trunc( &str, 0 );
 
-	rt_vls_strcat( &str, "kill _PREDIC_TRAIL_*\n" );
+	rt_vls_strcat( &str, "d _PREDIC_TRAIL_*\n" );
 	(void)cmdline( &str );
 	rt_vls_free( &str );
 
