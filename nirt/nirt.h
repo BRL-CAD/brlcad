@@ -32,11 +32,12 @@
 
 /*	FLAG VALUES FOR nirt_debug	*/
 #define	DEBUG_INTERACT	0x001
-#define	DEBUG_MAT	0x002
-#define	DEBUG_BACKOUT	0x004
+#define	DEBUG_SCRIPTS	0x002
+#define	DEBUG_MAT	0x004
+#define	DEBUG_BACKOUT	0x008
 
 /*	STRING FOR USE WITH GETOPT(3)	*/
-#define	OPT_STRING      "be:f:Msu:vx:X:?"
+#define	OPT_STRING      "bEe:f:Msu:vx:X:?"
 
 #define	made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
@@ -75,6 +76,7 @@ struct nirt_obj
 extern void		az_el();
 extern void		dir_vect();
 extern void	        grid_coor();
+extern void		interact();
 extern void	        target_coor();
 extern void	        backout();
 extern void		shoot();
