@@ -1,4 +1,3 @@
-#define NUgrid 1
 /*
  *  			C U T . C
  *  
@@ -307,7 +306,7 @@ int				 just_collect_info;
 			       pow( (double)fromp->bn_len, 1.0/3.0 ) );
 #define EXPERIMENT 0
 #if EXPERIMENT
-	if( nu_ncells > 10 ) nu_ncells = 10;
+	if( nu_ncells > 6 ) nu_ncells = 6;
 #endif
 		
 	nu_sol_per_cell = (fromp->bn_len + nu_ncells - 1) / nu_ncells;
@@ -474,10 +473,15 @@ int				 just_collect_info;
 					continue;
 
 				/* Don't make really teeny intervals. */
-
+#if 0
 				if( pos <= nugnp->nu_axis[i][axi].nu_spos +
 				           rtip->rti_tol.dist )
 					continue;
+#else
+				if( pos <= nugnp->nu_axis[i][axi].nu_spos +
+				           2.0 )
+					continue;
+#endif				
 				/* don't make any more cuts if we've gone
 				   past the end. */
 				if( pos >= fromp->bn_max[i] )
@@ -643,12 +647,15 @@ int				 just_collect_info;
 				       nu_zbox.bn_len *
 				       sizeof(struct soltab *) );
 
+#if EXPERIMENT
+#if 1				
+				rt_ct_optim( rtip, cutp, 0 );
+#else
 				/* Recurse, but only if we're cutting down on
 				   the cellsize. */
-#if EXPERIMENT
-				if( cutp->bn.bn_len > 30 &&
+				if( cutp->bn.bn_len > 5 &&
 				    cutp->bn.bn_len < fromp->bn_len>>1 ) {
-#if 0
+#if 1
 					/* Make a little NUBSPT node here
 					   to clean things up */
 					union cutter *firstp;
@@ -676,6 +683,7 @@ int				 just_collect_info;
 						       &temp, rtip, 0 );
 #endif					
 				}
+#endif
 #endif					
 			}
 		}
