@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle.h	1.1
-	Last edit: 	3/21/85 at 13:59:50	G S M
-	Retrieved: 	8/13/86 at 10:30:50
+	SCCS id:	@(#) rle.h	1.2
+	Last edit: 	3/21/85 at 16:22:07	G S M
+	Retrieved: 	8/13/86 at 10:30:54
 	SCCS archive:	/m/cad/librle/RCS/s.rle.h
 
 	Modified for by :	Gary S. Moss
