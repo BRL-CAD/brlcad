@@ -909,10 +909,13 @@ struct nmg_exp_counts	*ecnt;
 	return( ret );
 }
 
+/* forw may never be null;  back may be null for loopuse (sigh) */
 #define INDEX(o,i,elem)	\
 	(void)rt_plong((o)->elem, rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo,ii,elem)	{ \
-	(void)rt_plong( (oo)->elem.forw, rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt) ); \
+	register long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt); \
+	if( _f == DISK_INDEX_NULL )  rt_bomb("rt_nmg_edisk: reindex forw to null?\n"); \
+	(void)rt_plong( (oo)->elem.forw, _f ); \
 	(void)rt_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
 
 /*
@@ -1399,13 +1402,15 @@ mat_t		mat;
 			lu->orientation = rt_glong( d->orientation );
 			INDEX( d, lu, loop, l_p );
 			INDEX( d, lu, loopuse_a, lua_p );
-			INDEXL_HD( d, lu, down_hd, lu->down_hd );
 			up_kind = ecnt[up_index].kind;
 			if( up_kind == NMG_KIND_FACEUSE )  {
 				INDEXL_HD( d, lu, l, lu->up.fu_p->lu_hd );
 			} else if( up_kind == NMG_KIND_SHELL )  {
 				INDEXL_HD( d, lu, l, lu->up.s_p->lu_hd );
 			} else rt_log("bad loopuse up, index=%d, kind=%d\n", up_index, up_kind);
+			INDEXL_HD( d, lu, down_hd, lu->down_hd );
+			if( lu->down_hd.forw == RT_LIST_NULL )
+				rt_bomb("rt_nmg_idisk: null loopuse down_hd.forw\n");
 			NMG_CK_LOOP(lu->l_p);
 		}
 		return;
