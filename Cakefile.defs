@@ -744,7 +744,7 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
 #	define	BSD	44
-#	define	CC	/usr/bin/cc
+#	define	CC	/usr/bin/gcc2
 #	define	OPTIMIZER	/**/
 #	define	CC_OPTS -O
 #	define	XINCDIR	/usr/X11/include
