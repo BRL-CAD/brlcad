@@ -353,6 +353,7 @@ register char **argv;
 			/* Specify a single pixel to be done */
 			/* Actually processed in do_frame() */
 			string_pix_start = bu_optarg;
+			npsw = 1;	/* Cancel running in parallel */
 			break;
 		case 'f':
 			/* set expected playback rate in frames-per-second.
