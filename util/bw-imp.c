@@ -171,7 +171,8 @@ char		*argv[];
 	im_wpatches = (im_width+31) / 32;
 	im_hpatches = ((height * im_mag)+31) / 32;
 	if( im_wpatches*32 > 2560 )  {
-		fprintf(stderr,"bw-imp:  output too wide\n");
+		fprintf(stderr,"bw-imp:  output %d too wide, limit is 2560\n",
+			im_wpatches*32);
 		return(1);
 	}
 
@@ -198,14 +199,15 @@ im_header()
 	file_name
 	    );
 
+	/* The margins need to be multiples of 16 (printer word align) */
 	(void)putchar(205);		/* SET_HV_SYSTEM (whole page) */
 	(void)putchar(0x54);
 	(void)putchar(135);		/* SET_ABS_H (left margin) */
-	(void)putchar(0);
-	(void)putchar(192);
+	(void)putchar(0);		/* 0,192 gave approx 3/4" margin */
+	(void)putchar(150);		/* 1/2" margin */
 	(void)putchar(137);		/* SET_ABS_V (top margin) */
-	(void)putchar(2);
-	(void)putchar(32);
+	(void)putchar(0);		/* Was 2,32;  gave 1.75" top margin */
+	(void)putchar(80);		/* 1/2" top margin */
 	(void)putchar(205);		/* SET_HV_SYSTEM (set origin) */
 	(void)putchar(0x74);
 	(void)putchar(206);		/* SET_ADV_DIRS (normal raster scan) */
