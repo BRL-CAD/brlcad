@@ -352,7 +352,7 @@ register struct application *ap;
 
 			RES_ACQUIRE( &rt_g.res_syscall );
 			if( fseek( outfp, ap->a_y*width*pwidth, 0 ) != 0 )
-				rt_log("fseek error\n");
+				fprintf(stderr, "fseek error\n");
 			count = fwrite( scanline[ap->a_y].sl_buf,
 				sizeof(char), width*pwidth, outfp );
 			RES_RELEASE( &rt_g.res_syscall );
