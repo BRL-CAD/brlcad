@@ -54,19 +54,25 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)if_X24.c version 1.40 (22 Nov 1994)";
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char sccsid[] = "@(#)if_X24.c version 1.40 (22 Nov 1994)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
 
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/types.h>
 
 #if defined(USE_SYS_TIME_H)
 # include <sys/time.h>
 #endif
 #include <time.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "fb.h"
@@ -1539,6 +1545,7 @@ struct xinfo *xi;
 }
 
 static
+int
 xsetup(ifp, width, height)
 FBIO	*ifp;
 int	width, height;
@@ -1550,6 +1557,7 @@ int	width, height;
 	XWMHints	xwmh;		/* size guidelines for window mngr */
 	XSetWindowAttributes xswa;
 	XRectangle rect;
+	char		*xname;
 
 #if X_DBG
 printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
@@ -1561,9 +1569,12 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 	xi->xi_xheight = height;
 
 	/* Open the display - use the env variable DISPLAY */
-	if ((xi->xi_dpy = XOpenDisplay(NULL)) == NULL) {
-		fb_log("if_X: Can't open X display \"%s\"\n",
-			XDisplayName(NULL));
+	xname = XDisplayName(NULL);
+	/* Attempt one level of fallback, esp. for fbserv daemon */
+	if( !xname || *xname == '\0' )  xname = ":0";
+
+	if ((xi->xi_dpy = XOpenDisplay(xname)) == NULL) {
+		fb_log("if_X: Can't open X display \"%s\"\n", xname);
 		return	-1;
 	}
 
@@ -2318,7 +2329,7 @@ Display *dpy;
 
 		visual = vp[i].visual;
 
-		printf("---- Visual 0x%lx (%d)----\n", visual, i);
+		printf("---- Visual 0x%lx (%d)----\n", (unsigned long int)visual, i);
 
 		printf("screen: %d\n", vp[i].screen);
 		printf("depth : %d\n", vp[i].depth);
