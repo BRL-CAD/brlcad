@@ -117,7 +117,7 @@ struct application	*ap;
 		rt_bomb("outfp is NULL\n");
 
 	/*
-	 *  For now, RTHIDE does not operate in parallel, while ray-tracing.
+	 *  For now, RTRANGE does not operate in parallel, while ray-tracing.
 	 *  However, not dropping out of parallel mode until here permits
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
@@ -132,7 +132,7 @@ struct application	*ap;
 	 * Rather than using malloc(), though, rt_malloc() is used.  This
 	 * has the advantage of inbuild error-checking and automatic aborting
 	 * if there is no memory.  Also, rt_malloc() takes a string as its
-	 * final parameter: this tells the usr exactly where memory ran out.
+	 * final parameter: this tells the user exactly where memory ran out.
 	 */
 
 
