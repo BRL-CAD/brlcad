@@ -227,7 +227,7 @@ esac
 # If this system has good vendor-provided libtcl and libtk, use them.
 # Needs to be coordinated with setting of LIBTCL in Cakefile.defs
 case "${MACHINE}" in
-	li)
+	li|fbsd)
 		BDIRS=`echo ${BDIRS} | sed -e  's/libtcl//' -e 's/libtk//' `
 		;;
 esac
