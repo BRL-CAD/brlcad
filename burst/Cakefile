@@ -9,7 +9,10 @@
 	$Header$ (BRL)
 
  */
-#define CONFIGDEFS	LGT_CONFIG -I. /*-DDEBUG*/
+/* Remove the following line if you have BRLCAD 4.0 or later. */
+/* #define LIBFB_LIBES	/**/
+
+#define CONFIGDEFS	LGT_CONFIG -I. -U_POSIX_SOURCE /*-DDEBUG*/
 
 #define SRCDIR	burst
 #define PRODUCTS	burst
@@ -22,21 +25,21 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
-PRODUCTS:	OBJ
-	CC LDFLAGS -o burst OBJ LIB_PRE''LIBRT RT_LIBES LIB_PRE''LIBFB LIBFB_LIBES LIBTERMLIB LIBES -lm
+PRODUCTS:	OBJ LIBRT_DEP LIBFB_DEP
+	CC LDFLAGS -o burst OBJ LIBRT RT_LIBES LIBFB LIBFB_LIBES LIBTERMLIB LIBES -lm
 
 all&: PRODUCTS
 
-test&:	all tfiles/ktank.g
-	./burst -b < tfiles/ktank.in
+test&:	../.burst.MTYPE/burst tfiles/ktank.g
+	../.burst.MTYPE/burst -b < tfiles/ktank.in
 	@if test $? -ne 0 \
 	then	echo "Test failed."; exit 1 \
 	fi
-	diff tfiles/ktank.burst tfiles/ktank.burst.bak
+	diff tfiles/ktank.burst tfiles/ktank.burst.bak4.0
 	@if test $? -ne 0 \
 	then	echo "Test failed."; exit 1 \
 	fi
-	diff tfiles/ktank.shotlines tfiles/ktank.shotlines.bak
+	diff tfiles/ktank.shotlines tfiles/ktank.shotlines.bak4.0
 	@if test $? -ne 0 \
 	then	echo "Test failed."; exit 1 \
 	fi
@@ -47,6 +50,6 @@ untest&:
 		tfiles/ktank.pix tfiles/ktank.g tfiles/ktank.log
 
 tfiles/ktank.g:
-	asc2g < tfiles/ktank.asc > tfiles/ktank.g
+	asc2g < ../burst/tfiles/ktank.asc > tfiles/ktank.g
 
 #include "../Cakefile.rules"

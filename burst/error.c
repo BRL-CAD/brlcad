@@ -21,11 +21,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 
 #include <stdio.h>
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "./Sc.h"
 #include "./extern.h"
 
@@ -51,20 +46,17 @@ char *str;
  */
 /* VARARGS */
 void
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 rt_log( char *fmt, ... )
+	{
+	va_list	ap;
+	va_start( ap, fmt );
 #else
 rt_log( va_alist )
 va_dcl
-#endif
 	{
-#if ! __STDC__
 	register char *fmt; /* picked up by va_arg() */
-#endif
 	va_list	ap;
-#if __STDC__
-	va_start( ap, fmt );
-#else
 	va_start( ap );
 	fmt  = va_arg( ap, char * );
 #endif

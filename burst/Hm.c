@@ -152,10 +152,10 @@ register HmItem	*itemp;
 		{
 		(void) ErLog( "\t\t\ttext=\"%s\"\n", itemp->text );
 		(void) ErLog( "\t\t\thelp=\"%s\"\n", itemp->help == (char *) NULL ? "(null)" : itemp->help );
-		(void) ErLog( "\t\t\tnext=0x%x\n", (int) itemp->next );
-		(void) ErLog( "\t\t\tdfn=0x%x\n", (int) itemp->dfn );
-		(void) ErLog( "\t\t\tbfn=0x%x\n", (int) itemp->bfn );
-		(void) ErLog( "\t\t\thfn=0x%x\n", (int) itemp->hfn );
+		(void) ErLog( "\t\t\tnext=0x%x\n", itemp->next );
+		(void) ErLog( "\t\t\tdfn=0x%x\n", itemp->dfn );
+		(void) ErLog( "\t\t\tbfn=0x%x\n", itemp->bfn );
+		(void) ErLog( "\t\t\thfn=0x%x\n", itemp->hfn );
 		(void) ErLog( "\t\t\tdata=%d\n", itemp->data );
 		(void) ErLog( "\t\t\t----\n" );
 		}
@@ -397,7 +397,7 @@ int			flag;
  */
 STATIC void
 #if __STDC__
-HmPutBorder( register HmWindow *win, register row, char mark )
+HmPutBorder( register HmWindow *win, register int row, char mark )
 #else
 HmPutBorder( win, row, mark )
 register HmWindow	*win;
@@ -508,7 +508,7 @@ HmWindow	*win;
  */
 STATIC HmWindow	*
 #if __STDC__
-HmInWin( register x, register y, register HmWindow *win )
+HmInWin( register int x, register int y, register HmWindow *win )
 #else
 HmInWin( x, y, win )
 register int		x, y;

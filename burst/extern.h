@@ -7,6 +7,15 @@
 	$Header$ (BRL)
  */
 
+#include "conf.h"
+
+#if defined(HAVE_STDARG_H)
+# include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+
 #include <string.h>
 #include "machine.h"
 #include "fb.h"
@@ -79,14 +88,15 @@ extern void prntIdents();
 extern void prntPhantom();
 extern void prntRayHeader();
 extern void prntRayIntersect();
-extern void prntScr();
 extern void prntTimer();
 extern void prompt();
 extern void readCmdFile();
-#if __STDC__
+#if defined(HAVE_STDARG_H)
+extern void prntScr( char *, ...);
 extern void rt_log( char *, ... );
 #else
 extern void rt_log();
+extern void prntScr();
 #endif
 extern void warning();
 

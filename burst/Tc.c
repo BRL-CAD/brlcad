@@ -19,7 +19,9 @@ static char sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #include <fcntl.h>
 
 #ifdef SYSV
-/**#ifndef	TANDEM	/* USG derivatives */
+
+/**#ifndef	TANDEM	*/
+/* USG derivatives */
 #include <termio.h>
 #include <memory.h>
 #ifndef _NFILE
@@ -33,7 +35,8 @@ static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
 #ifndef _NFILE
 #define _NFILE	32
 #endif /* _NFILE */
-/****#ifdef	TANDEM	/* 7th Edition derivatives */
+/****#ifdef	TANDEM	*/
+/* 7th Edition derivatives */
 #define TCSETA	TIOCSETP
 #define TCGETA	TIOCGETP
 #ifndef	XTABS
