@@ -442,12 +442,15 @@ double mm2local;
 		bu_log( "\tod=%g\n", pipe->pp_od*mm2local );
 }
 
+/*
+ *			R T _ V L S _ P I P E P T
+ */
 void
-vls_pipept( vp, seg_no, ip, mm2local )
-struct bu_vls *vp;
-int seg_no;
-CONST struct rt_db_internal *ip;
-double mm2local;
+rt_vls_pipept(
+	struct bu_vls *vp,
+	int seg_no,
+	const struct rt_db_internal *ip,
+	double mm2local)
 {
 	struct rt_pipe_internal *pint;
 	struct wdb_pipept *pipe;

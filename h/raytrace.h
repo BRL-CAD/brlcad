@@ -2889,6 +2889,11 @@ BU_EXTERN(void rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
 			CONST fastf_t *B, int sides) );
 
 /* g_pipe.c */
+void rt_vls_pipept(
+	struct bu_vls *vp,
+	int seg_no,
+	const struct rt_db_internal *ip,
+	double mm2local);
 int rt_pipe_ck( const struct bu_list *headp );
 
 /* g_rpc.c */
