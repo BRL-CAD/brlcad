@@ -55,6 +55,11 @@ else
 	HOST=`uname -n`
 fi
 
+if test "$USER" = ""
+then
+	USER="$LOGNAME"
+fi
+
 rm -f vers.c
 cat << EOF > vers.c
 char ${VARIABLE}[] = "\\
