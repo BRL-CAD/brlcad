@@ -757,8 +757,10 @@ struct hitmiss *myhit;
 	struct vertexuse *vu;
 	struct faceuse *fu;
 	point_t	South_Pole, North_Pole;
-	struct faceuse *North_fu, *South_fu;
-	struct vertexuse *North_vu, *South_vu;
+	struct faceuse *North_fu = (struct faceuse *)NULL;
+	struct faceuse *South_fu = (struct faceuse *)NULL;
+	struct vertexuse *North_vu = (struct vertexuse *)NULL;
+	struct vertexuse *South_vu = (struct vertexuse *)NULL;
 	point_t North_pl_pt, South_pl_pt;
 	point_t North_pca, South_pca;
 	double North_dist, South_dist;
@@ -1237,10 +1239,10 @@ struct hitmiss *myhit;
 	double outb_cos_angle = -1.0;
 	struct shell *s;
 	struct faceuse *fu;
-	struct faceuse *inb_fu;
-	struct faceuse *outb_fu;
-	struct edgeuse *inb_eu;
-	struct edgeuse *outb_eu;
+	struct faceuse *inb_fu = (struct faceuse *)NULL;
+	struct faceuse *outb_fu = (struct faceuse *)NULL;
+	struct edgeuse *inb_eu = (struct edgeuse *)NULL;
+	struct edgeuse *outb_eu = (struct edgeuse *)NULL;
 	struct edgeuse *eu_p;
 	struct edgeuse *fu_eu;
 	vect_t edge_left;
@@ -2682,6 +2684,7 @@ int in_or_out_only;
 	NMG_CK_RD(rd);
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		bu_log("plus guessing\n");
+
 	for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 
 #ifndef FAST_NMG
@@ -2750,6 +2753,7 @@ int in_or_out_only;
 			break;
 		default:
 			rt_bomb("guess_class_from_hitlist_max() no-class hitpoint\n");
+			pt_class = 0; /* shuts up compiler warning */
 			break;
 		}
 	} else {
@@ -2850,6 +2854,7 @@ int in_or_out_only;
 			break;
 		default:
 			rt_bomb("guess_class_from_hitlist_min() no-class hitpoint\n");
+			pt_class = 0; /* shuts up compiler warning */
 			break;
 		}
 	} else {
