@@ -54,13 +54,19 @@ static void
 pr_mater( mp )
 register struct mater *mp;
 {
-	char buf[128];
+  char buf[128];
+  struct bu_vls vls;
 
-	(void)sprintf( buf, "%5d..%d", mp->mt_low, mp->mt_high );
-	col_item( buf );
-	(void)sprintf( buf, "%3d,%3d,%3d", mp->mt_r, mp->mt_g, mp->mt_b);
-	col_item( buf );
-	col_eol();
+  bu_vls_init(&vls);
+
+  (void)sprintf(buf, "%5d..%d", mp->mt_low, mp->mt_high );
+  vls_col_item(&vls, buf);
+  (void)sprintf( buf, "%3d,%3d,%3d", mp->mt_r, mp->mt_g, mp->mt_b);
+  vls_col_item(&vls, buf);
+  vls_col_eol(&vls);
+
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
 }
 
 /*
@@ -204,7 +210,7 @@ char	**argv;
 		zot = rt_material_head;
 		rt_material_head = rt_material_head->mt_forw;
 		color_zaprec( zot );
-		bu_free( (char *)zot, "mater rec" );
+		bu_free( (genptr_t)zot, "mater rec" );
 	}
 
 	while( fgets(line, sizeof (line), fp) != NULL )  {
