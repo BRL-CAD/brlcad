@@ -686,7 +686,6 @@ void
 mged_setup()
 {
 	struct bu_vls str;
-	struct bu_vls str2;
 	char *filename;
 
 	/* The following is for GUI output hooks: contains name of function to
@@ -856,18 +855,18 @@ mged_setup()
 	filename = "/usr/brlcad/tclscripts";
 #endif
 	bu_vls_init(&str);
-	bu_vls_init(&str2);
-	bu_vls_printf(&str2, "%s/mged", filename);
-	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s %s]",
-		      bu_vls_addr(&str2), filename);
+	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s/mged %s]",
+		      filename, filename);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
-	bu_vls_free(&str);
-	bu_vls_free(&str2);
 
-	Tcl_SetVar(interp, "mged_display(state)", state_str[state],
+	/* Tcl needs to write nulls onto subscripted variable names */
+	bu_vls_strcpy( &str, "mged_display(state)" );
+	Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state],
 		   TCL_GLOBAL_ONLY);
 
 	Tcl_ResetResult(interp);
+
+	bu_vls_free(&str);
 }
 
 /* 			C M D _ S E T U P
