@@ -13,6 +13,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <fcntl.h>
 
+#ifndef _NFILE
+#define _NFILE	64
+#endif
+
 #ifdef SYSV
 /**#ifndef	TANDEM	/* USG derivatives */
 #include <termio.h>
@@ -29,10 +33,6 @@ static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
 #ifndef	XTABS
 #define	XTABS	(TAB1 | TAB2)
 #endif XTABS
-
-#ifndef _NFILE
-#define _NFILE	32
-#endif _NFILE
 
 static struct sgttyb	save_tio[_NFILE], curr_tio[_NFILE];
 #endif BSD
