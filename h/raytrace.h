@@ -1036,7 +1036,7 @@ extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 
 struct structparse {
 	char		sp_fmt[4];		/* "i" or "%f", etc */
-	int		sp_count;		/* number of elements */
+	long		sp_count;		/* number of elements */
 	char		*sp_name;		/* Element's symbolic name */
 	int		sp_offset;		/* Byte offset in struct */
 	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
