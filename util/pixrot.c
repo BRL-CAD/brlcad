@@ -44,6 +44,7 @@ unsigned char *obuf;
 unsigned char *obp;
 
 int	xin, yin, xout, yout, nxin, nyin;
+int	plus90, minus90, reverse, invert;
 int	pixbytes = 3;
 
 static	char *Usage = "usage: pixrot [-f -b -r -i -#bytes] nx ny < file.pix > file.pix\n";
@@ -55,7 +56,6 @@ int argc; char **argv;
 {
 	int	x, y, j;
 	int	outbyte, outplace;
-	int	plus90, minus90, reverse, invert;
 
 	/* Check for flags */
 	while( argc > 1 && argv[1][0] == '-' )  {
