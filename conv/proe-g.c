@@ -71,19 +71,23 @@ static int polysolid=1;		/* Flag for polysolid output rather than NMG's */
 static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
+static int const_id=-1;		/* Constant ident number (assigned to all regions if non-negative) */
+static int mat_code=1;		/* default material code */
 static int air_no=1;		/* Air numbers */
 static int debug=0;		/* Debug flag */
 static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
 static int do_simplify=0;	/* flag to try to simplify solids */
 static regex_t reg_cmp;		/* compiled regular expression */
-static char *proe_usage="%s [-psdarS] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
+static char *proe_usage="%s [-psdarS] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -n option is to NMG solids rather than polysolids.\n\
 	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -i option sets the initial region ident number (default is 1000).\n\
+	The -I option sets the non-negative ident number that will be assigned to all regions (conflicts with -i).\n\
+	The -m option sets the integer material code for all the parts. (default is 1)\n\
 	The -u option indicates that portions of object names that match the regular expression\n\
 		'reg_exp' should be ignored.\n\
 	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
@@ -94,7 +98,7 @@ static char *proe_usage="%s [-psdarS] [-u reg_exp] [-x rt_debug_flag] [-X nmg_de
 	The -S option indicates that the input file is raw STL (STereoLithography) format.\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n\
 	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
-static char *stl_usage="%s [-psda] [-c units_str] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] input.stl output.g\n\
+static char *stl_usage="%s [-psda] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\",... default is \"mm\"\n\
@@ -103,6 +107,8 @@ static char *stl_usage="%s [-psda] [-c units_str] [-u reg_exp] [-x rt_debug_flag
 	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -i option sets the initial region ident number (default is 1000).\n\
+	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n\
+	The -m option sets the integer material code for all the parts (default is 1).\n\
 	The -u option indicates that portions of object names that match the regular expression\n\
 		'reg_exp' should be ignored.\n\
 	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
@@ -934,8 +940,8 @@ char line[MAX_LINE_LEN];
 		len = strlen( tmp_str );
 		if( len > 4 )
 		{
-			if( !strncmp( &tmp_str[len-5], ".stl", 4 ) )
-				tmp_str[len-5] = '\0';
+			if( !strncmp( &tmp_str[len-4], ".stl", 4 ) )
+				tmp_str[len-4] = '\0';
 		}
 
 		/* skip over all characters prior to the last '/' */
@@ -1205,7 +1211,7 @@ char line[MAX_LINE_LEN];
 			bu_log( "\t%d faces were too small\n", small_count );
 	}
 
-	if( !polysolid || (do_simplify && face_count < 175) )
+	if( !polysolid || ( do_simplify && face_count < 13 ) )
 	{
 		/* fuse vertices that are within tolerance of each other */
 		bu_log( "\tFusing vertices for part\n" );
@@ -1286,7 +1292,7 @@ char line[MAX_LINE_LEN];
 
 		nmg_rebound( m , &tol );
 
-	if( do_simplify && face_count < 165 )
+	if( do_simplify && face_count < 13 )
 	{
 		struct rt_arb_internal arb_int;
 		struct rt_tgc_internal tgc_int;
@@ -1348,18 +1354,28 @@ char line[MAX_LINE_LEN];
 		bu_log( "\tMaking air region (%s)\n" , brlcad_name );
 
 		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
-		color, 0, air_no, 1, 100, 0 );
+		color, 0, air_no, 0, 100, 0 );
 		air_no++;
 	}
 	else
 	{
 		bu_log( "\tMaking region (%s)\n" , brlcad_name );
 
-		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
-		color, id_no, 0, 1, 100, 0 );
-		if( stl_format && face_count )
-			(void)mk_addmember( brlcad_name, &all_head, WMOP_UNION );
-		id_no++;
+		if( const_id >= 0 )
+		{
+			mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
+			color, const_id, 0, mat_code, 100, 0 );
+			if( stl_format && face_count )
+				(void)mk_addmember( brlcad_name, &all_head, WMOP_UNION );
+		}
+		else
+		{
+			mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
+			color, id_no, 0, mat_code, 100, 0 );
+			if( stl_format && face_count )
+				(void)mk_addmember( brlcad_name, &all_head, WMOP_UNION );
+			id_no++;
+		}
 	}
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
@@ -1605,7 +1621,7 @@ char	*argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "Si:rsdax:X:nu:N:c:")) != EOF) {
+	while ((c = getopt(argc, argv, "Si:I:m:rsdax:X:nu:N:c:")) != EOF) {
 		switch (c) {
 		case 'c':	/* convert from units */
 			conv_factor = bu_units_conversion( optarg );
@@ -1629,6 +1645,18 @@ char	*argv[];
 			break;
 		case 'i':
 			id_no = atoi( optarg );
+			break;
+		case  'I':
+			const_id = atoi( optarg );
+			if( const_id < 0 )
+			{
+				bu_log( "Illegal value for '-I' option, must be zero or greater!!!\n" );
+				bu_log( usage, argv[0] );
+				bu_bomb( "Illegal value for option '-I'\n" );
+			}
+			break;
+		case 'm':
+			mat_code = atoi( optarg );
 			break;
 		case 'd':
 			debug = 1;
