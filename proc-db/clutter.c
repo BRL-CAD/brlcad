@@ -50,6 +50,7 @@ int	nmtab = sizeof(mtab)/sizeof(struct mtab);
 #define PICK_MAT	((rand() % nmtab) )
 
 double	ball_stack(), prim_stack(), crystal_stack(), crystal_layer();
+void	do_plate(), do_rings();
 
 main(argc, argv)
 char	**argv;
@@ -289,6 +290,7 @@ int	nsolids;	/* number of solids for this layer */
 	return(height);
 }
 
+void
 do_plate( name, xc, yc, size )
 char	*name;
 double	xc, yc;		/* center coordinates, z=0+ */
@@ -428,6 +430,7 @@ double	size;
 	return(vpos);
 }
 
+void
 do_rings( ringname, center, r1, r2, incr, n )
 char	*ringname;
 double	r1;

@@ -55,6 +55,8 @@ int	nmtab = sizeof(mtab)/sizeof(struct mtab);
 
 #define PICK_MAT	((rand() % nmtab) )
 
+void	make_room(), make_walls(), make_pillar(), make_carpet();
+
 main(argc, argv)
 char	**argv;
 {
@@ -138,6 +140,7 @@ char	**argv;
 	mk_lfcomb( stdout, "room", 0, &head );
 }
 
+void
 make_room( rname, imin, imax, thickness, headp )
 char	*rname;
 vect_t	imin;		/* Interior RPP min point */
@@ -167,6 +170,7 @@ struct wmember *headp;
 	(void)mk_addmember( rname, headp );
 }
 
+void
 make_walls( rname, imin, imax, thickness, bits, headp )
 char	*rname;
 vect_t	imin;		/* Interior RPP min point */
@@ -238,6 +242,7 @@ struct wmember *headp;
 	(void)mk_addmember( rname, headp );
 }
 
+void
 make_pillar( prefix, ix, iy, center, lwh, headp )
 char	*prefix;
 int	ix;
@@ -281,6 +286,7 @@ struct wmember *headp;
 	(void)mk_addmember( pilname, headp );
 }
 
+void
 make_carpet( rname, min, max, file, headp )
 char	*rname;
 vect_t	min, max;

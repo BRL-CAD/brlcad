@@ -42,6 +42,8 @@ struct val {
 	int	v_n;
 } val[20][20];
 
+void	do_cell(), draw_rect(), pnorms(), do_light();
+
 main(argc, argv)
 char	**argv;
 {
@@ -109,6 +111,7 @@ char	**argv;
 #endif
 }
 
+void
 do_cell( vp, xc, yc )
 struct val	*vp;
 double	xc, yc;		/* center coordinates, z=0+ */
@@ -149,6 +152,7 @@ double	xc, yc;		/* center coordinates, z=0+ */
 	}
 }
 
+void
 draw_rect( a, b, c, d )
 struct val *a, *b, *c, *d;
 {
@@ -267,16 +271,16 @@ struct val *a, *b, *c, *d;
  *  Find the single outward pointing normal for a facet.
  *  Assumes all points are coplanar (they better be!).
  */
+void
 pnorms( norms, verts, out, npts )
 fastf_t	norms[5][3];
 fastf_t	verts[5][3];
-vect_t	out;
+vect_t	out;		/* hopefully points outwards */
 int	npts;
 {
 	register int i;
 	vect_t	ab, ac;
 	vect_t	n;
-	vect_t	out;		/* hopefully points outwards */
 
 	VSUB2( ab, verts[1], verts[0] );
 	VSUB2( ac, verts[2], verts[0] );
@@ -294,6 +298,7 @@ int	npts;
 	}
 }
 
+void
 do_light( name, pos, dir_at, da_flag, r, rgb )
 char	*name;
 point_t	pos;

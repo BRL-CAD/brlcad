@@ -26,6 +26,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "vmath.h"
 
+void	do_leaf(), do_pleaf(), pnorms(), do_tree();
+void	rt_log();
+
 double sin60;
 
 main(argc, argv)
@@ -48,6 +51,7 @@ char	**argv;
 }
 
 /* Make a leaf node out of an ARB4 */
+void
 do_leaf(name)
 char	*name;
 {
@@ -62,6 +66,7 @@ char	*name;
 }
 
 /* Make a leaf node out of 4 polygons */
+void
 do_pleaf(name)
 char	*name;
 {
@@ -113,6 +118,7 @@ char	*name;
  *  Find the single outward pointing normal for a facet.
  *  Assumes all points are coplanar (they better be!).
  */
+void
 pnorms( norms, verts, centroid, npts )
 fastf_t	norms[5][3];
 fastf_t	verts[5][3];
@@ -141,6 +147,7 @@ int	npts;
 	}
 }
 
+void
 do_tree(name, lname, level)
 char	*name;
 char	*lname;
@@ -188,5 +195,3 @@ int	level;
 		do_tree( nm, lname, level-1 );
 	}
 }
-
-rt_log(str) {fprintf(stderr,"rt_log: %s\n", str);}

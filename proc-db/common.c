@@ -57,6 +57,7 @@ struct colors {
 int	ncolors = sizeof(colortab)/sizeof(struct colors);
 int	curcolor = 0;
 
+void
 get_rgb( rgb )
 register char	*rgb;
 {
@@ -68,6 +69,7 @@ register char	*rgb;
 	rgb[2] = cp->c_pixel[2];
 }
 
+void
 do_light( name, pos, dir_at, da_flag, r, rgb, headp )
 char	*name;
 point_t	pos;
@@ -112,5 +114,3 @@ struct wmember	*headp;
 	mk_memb( stdout, nbuf, both, UNION );
 	(void)mk_addmember( name, headp );
 }
-
-rt_log(str) {fprintf(stderr,"rt_log: %s\n", str);}

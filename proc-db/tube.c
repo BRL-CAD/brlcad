@@ -37,6 +37,8 @@ mat_t	identity;
 double	degtorad = 0.0174532925199433;
 double	inches2mm = 25.4;
 
+void	build_spline(), read_pos(), build_cyl(), xfinddir();
+
 #define N_CIRCLE_KNOTS	12
 fastf_t	circle_knots[N_CIRCLE_KNOTS] = {
 	0,	0,	0,
@@ -221,6 +223,7 @@ char	**argv;
 }
 #undef build_spline
 
+void
 build_spline( name, npts, radius )
 char	*name;
 int	npts;
@@ -312,6 +315,7 @@ double	radius;
 }
 
 /* Returns -1 if done, 0 if something to draw */
+int
 read_frame(fp)
 FILE	*fp;
 {
@@ -418,6 +422,7 @@ FILE	*fp;
 	return(0);			/* OK */
 }
 
+void
 read_pos(fp)
 FILE	*fp;
 {
@@ -438,6 +443,7 @@ FILE	*fp;
 	projectile_pos = pos * inches2mm;
 }
 
+void
 build_cyl( cname, npts, radius )
 char	*cname;
 int	npts;
@@ -470,6 +476,7 @@ double	radius;
  * Find which section a given X value is in, and indicate what
  * direction the tube is headed in then.
  */
+void
 xfinddir( dir, x, loc)
 vect_t	dir;
 double	x;

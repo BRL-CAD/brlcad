@@ -40,6 +40,8 @@ struct atoms atom_list[50];
 char * matname = "plastic";
 char * matparm = "shine=100.0 diffuse=.8 specular=.2";
 
+void	read_data(), process_sphere();
+
 main(argc, argv)
 int argc;
 char ** argv;
@@ -61,7 +63,7 @@ char ** argv;
  * ATOM_TYPE = integer
  * ATOM_NAME = Character pointer to name value.
  */
-
+void
 read_data( )
 {
 
@@ -113,7 +115,7 @@ read_data( )
 	}
 }
 
-
+void
 process_sphere(id, center, rad, sph_type)
 int	id;
 point_t	center;
@@ -199,5 +201,3 @@ int sp1, sp2;
 	mk_memb( stdout, s2->s_name, m, SUBTRACT);
 
 }
-
-rt_log(str) {fprintf(stderr,"rt_log: %s\n", str);}
