@@ -114,17 +114,21 @@ configbody Command::cmd_prefix {
 	return
     }
 
-    set bad [catch {eval $itk_option(-cmd_prefix) info function} _cmdlist]
-    if {$bad} {
-	error "Bad command prefix: no related functions"
+    # if getUserCmds doesn't exist, use all recognized functions
+    if {[catch {eval $itk_option(-cmd_prefix) info function getUserCmds}]} {
+	if {[catch {eval $itk_option(-cmd_prefix) info function} _cmdlist]} {
+	    error "Bad command prefix: no related functions"
+	}
+
+	# strip off namespace
+	set cmdlist ""
+	foreach cmd $_cmdlist {
+	    lappend cmdlist [namespace tail $cmd]
+	}
+    } else {
+	set cmdlist [$itk_option(-cmd_prefix) getUserCmds]
     }
 
-    set bad [catch {eval $itk_option(-cmd_prefix) info class} class]
-    if {$bad} {
-	error "Bad command prefix: no class"
-    }
-    # strip off class
-    set cmdlist [string map "$class\:: \"\"" $_cmdlist]
 }
 
 configbody Command::selection_color {
