@@ -109,6 +109,9 @@ static struct edgeuse	*es_eu;	/* Currently selected NMG edgeuse */
 #define ECMD_NMG_EPICK		19	/* edge pick */
 #define ECMD_NMG_EMOVE		20	/* edge move */
 #define ECMD_NMG_EDEBUG		21	/* edge debug */
+#define ECMD_NMG_FORW		22	/* next eu */
+#define ECMD_NMG_BACK		23	/* prev eu */
+#define ECMD_NMG_RADIAL		24	/* radial+mate eu */
 
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
@@ -291,6 +294,9 @@ struct menu_item  nmg_menu[] = {
 	{ "pick edge", nmg_ed, ECMD_NMG_EPICK },
 	{ "move edge", nmg_ed, ECMD_NMG_EMOVE },
 	{ "debug edge", nmg_ed, ECMD_NMG_EDEBUG },
+	{ "next eu", nmg_ed, ECMD_NMG_FORW },
+	{ "prev eu", nmg_ed, ECMD_NMG_BACK },
+	{ "radial eu", nmg_ed, ECMD_NMG_RADIAL },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -837,6 +843,37 @@ int arg;
 		}
 		/* no change of state or es_edflag */
 		return;
+	case ECMD_NMG_FORW:
+		if( !es_eu )  {
+			(void)printf("nmg_ed: no edge selected yet\n");
+			return;
+		}
+		NMG_CK_EDGEUSE(es_eu);
+		es_eu = RT_LIST_PNEXT_CIRC(edgeuse, es_eu);
+		(void)printf("edgeuse selected=x%x\n", es_eu);
+		sedraw = 1;
+		return;
+	case ECMD_NMG_BACK:
+		if( !es_eu )  {
+			(void)printf("nmg_ed: no edge selected yet\n");
+			return;
+		}
+		NMG_CK_EDGEUSE(es_eu);
+		es_eu = RT_LIST_PPREV_CIRC(edgeuse, es_eu);
+		(void)printf("edgeuse selected=x%x\n", es_eu);
+		sedraw = 1;
+		return;
+	case ECMD_NMG_RADIAL:
+		if( !es_eu )  {
+			(void)printf("nmg_ed: no edge selected yet\n");
+			return;
+		}
+		NMG_CK_EDGEUSE(es_eu);
+		es_eu = es_eu->eumate_p->radial_p;
+		(void)printf("edgeuse selected=x%x\n", es_eu);
+		sedraw = 1;
+		return;
+
 	}
 	/* For example, this will set es_edflag = ECMD_NMG_EPICK */
 	es_edflag = arg;
