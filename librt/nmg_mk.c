@@ -2230,12 +2230,14 @@ int n;
 		lu = NMG_LIST_FIRST( loopuse, &fulist[i]->lu_hd );
 		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
 			for( f_no = i+1; f_no < n; f_no++ )  {
+				struct loopuse		*lu2;
 				register struct edgeuse	*eu2;
 
 				if( eu->radial_p != eu->eumate_p )  break;
 
-				lu = NMG_LIST_FIRST(loopuse, &fulist[f_no]->lu_hd);
-				for( NMG_LIST( eu2, edgeuse, &lu->down_hd ) )  {
+				lu2 = NMG_LIST_FIRST(loopuse,
+					&fulist[f_no]->lu_hd);
+				for( NMG_LIST( eu2, edgeuse, &lu2->down_hd ) )  {
 					if (EDGESADJ(eu, eu2))
 					    	nmg_moveeu(eu, eu2);
 				}
