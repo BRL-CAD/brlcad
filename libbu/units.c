@@ -176,5 +176,5 @@ CONST char				*value;	/* string containing value */
 	register double *p = (double *)(base+sdp->sp_offset);
 
 	/* reconvert with optional units */
-	*p = rt_mm_value(value);
+	*p = bu_mm_value(value);
 }
