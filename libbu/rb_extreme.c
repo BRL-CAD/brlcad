@@ -41,6 +41,9 @@ struct rb_node	*empty_node;
     struct rb_node	*child;
     rb_tree		*tree;
 
+    if (root == empty_node)
+	return (root);
+
     while (1)
     {
 	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
