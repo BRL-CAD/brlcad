@@ -42,6 +42,7 @@ int		hex_out = 0;		/* Binary or Hex .pix output file */
 double		AmbientIntensity = 0.4;	/* Ambient light intensity */
 double		azimuth, elevation;
 int		lightmodel = 0;		/* Select lighting model */
+int		rpt_overlap = 0;	/* report overlapping region names */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
@@ -98,7 +99,7 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"E:SJ:H:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:g:G:"
+	"E:SJ:H:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:g:G:r"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -259,6 +260,10 @@ register char **argv;
 					aspect = 1;
 				}
 			}
+			break;
+		case 'r':
+			/* report overlapping region names */
+			rpt_overlap = 1;
 			break;
 		default:		/* '?' */
 			fprintf(stderr,"unknown option %c\n", c);
