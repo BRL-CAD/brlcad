@@ -615,7 +615,7 @@ CONST struct db_i		*dbip;
 	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != ID_BSOLID ) 
 	{
-		bu_log("rt_spl_import: defective header record");
+		bu_log("rt_nurb_import: defective header record");
 		return (-1);
 	}
 
