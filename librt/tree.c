@@ -846,7 +846,7 @@ again:
 		db_ck_tree(regp->reg_treetop);
 	}
 
-	if( i < 0 )  return(-1);
+	if( i < 0 )  return(i);
 
 	if( rtip->nsolids <= prev_sol_count )
 		bu_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
@@ -870,6 +870,7 @@ again:
  *  Returns -
  *  	0	Ordinarily
  *	-1	On major error
+ *      -2      If there were unresolved names
  */
 int
 rt_gettrees_and_attrs( rtip, attrs, argc, argv, ncpus )
@@ -892,13 +893,26 @@ int		ncpus;
  *  Returns -
  *  	0	Ordinarily
  *	-1	On major error
+ *      
+ *  Note: -2 returns from rt_gettrees_and_attrs are filtered.
  */
 int
 rt_gettree( rtip, node )
 struct rt_i	*rtip;
 const char	*node;
 {
-	return( rt_gettrees_and_attrs( rtip, NULL, 1, &node, 1 ) );
+  int rv;
+  
+  rv =  rt_gettrees_and_attrs( rtip, NULL, 1, &node, 1 );
+
+  if (rv == 0 || rv == -2) 
+    {
+      return 0;
+    }
+  else
+    {
+      return -1;
+    }
 }
 
 int
@@ -908,7 +922,17 @@ int		argc;
 const char	**argv;
 int		ncpus;
 {
-	return( rt_gettrees_and_attrs( rtip, NULL, argc, argv, ncpus ) );
+  int rv;
+  rv = rt_gettrees_and_attrs( rtip, NULL, argc, argv, ncpus );
+
+  if (rv == 0 || rv == -2) 
+    {
+      return 0;
+    }
+  else
+    {
+      return -1;
+    }
 }
 
 /*

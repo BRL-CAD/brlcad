@@ -2191,6 +2191,7 @@ genptr_t	client_data;
 	union tree		*whole_tree = TREE_NULL;
 	int			new_reg_count;
 	int			i;
+	int                     something_not_found = 0;
 	union tree		**reg_trees;	/* (*reg_trees)[] */
 	struct db_walk_parallel_state	wps;
 	struct resource		*resp;
@@ -2222,9 +2223,14 @@ genptr_t	client_data;
 		db_full_path_init( &path );
 
 		/* First, establish context from given path */
-		if( db_follow_path_for_state( &ts, &path, argv[i], LOOKUP_NOISY ) < 0 )
-			continue;	/* ERROR */
-
+		if( db_follow_path_for_state( &ts, &path, argv[i], 
+					      LOOKUP_NOISY ) < 0 ) 
+		  {
+		    bu_log ("db_walk_tree: warning - %s not found.\n",
+			    argv[i]);
+		    ++ something_not_found;
+		    continue;	/* ERROR */
+		  }
 		if( path.fp_len <= 0 )  {
 			continue;	/* e.g., null combination */
 		}
@@ -2364,7 +2370,17 @@ genptr_t	client_data;
 	}
 	bu_free( (char *)reg_trees, "*reg_trees[]" );
 
-	return(0);	/* OK */
+	if (something_not_found)
+	  {
+	    bu_log ("db_walk_tree: %d %s not found.\n", 
+		    something_not_found, 
+		    (something_not_found > 1) ? "items" : "item" ) ;
+	    return -2;
+	  }
+	else
+	  {
+	    return 0;	/* OK */
+	  }
 }
 
 /*
