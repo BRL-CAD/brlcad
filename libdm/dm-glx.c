@@ -112,8 +112,10 @@ static int	glx_drawString2D(), glx_drawLine2D();
 static int      glx_drawVertex2D();
 static int	glx_drawVList();
 static int      glx_setColor(), glx_setLineAttr();
-static unsigned glx_cvtvecs(), glx_load();
 static int	glx_setWinBounds(), glx_debug();
+static int      glx_beginDList(), glx_endDList();
+static int      glx_drawDList();
+static int      glx_freeDLists();
 
 static GLXconfig glx_config_wish_list [] = {
   { GLX_NORMAL, GLX_WINDOW, GLX_NONE },
@@ -142,12 +144,15 @@ struct dm dm_glx = {
   glx_drawVList,
   glx_setColor,
   glx_setLineAttr,
-  glx_cvtvecs,
-  glx_load,
   glx_setWinBounds,
   glx_debug,
   Nu_int0,
-  0,			/* no "displaylist", per. se. */
+  glx_beginDList,
+  glx_endDList,
+  glx_drawDList,
+  glx_freeDLists,
+  1,			/* has displaylist */
+  0,                    /* no stereo by default */
   IRBOUND,
   "glx",
   "SGI - mixed mode", 
@@ -158,7 +163,6 @@ struct dm dm_glx = {
   0,
   0,
   1.0, /* aspect ratio */
-  0,
   0,
   0,
   0,
@@ -824,10 +828,9 @@ static float material_objdef[] = {
  *
  */
 static int
-glx_drawVList( dmp, vp, m )
+glx_drawVList( dmp, vp )
 struct dm *dmp;
 register struct rt_vlist *vp;
-fastf_t *m;
 {
   register struct rt_vlist	*tvp;
   register int nvec;
@@ -1040,31 +1043,6 @@ int style;
 
   return TCL_OK;
 }
-
-
-/*
- *			I R _ C V T V E C S
- *
- */
-static unsigned
-glx_cvtvecs( dmp, sp )
-struct dm *dmp;
-register struct solid *sp;
-{
-  return( 0 );	/* No "displaylist" consumed */
-}
-
-/*
- * Loads displaylist from storage[]
- */
-static unsigned
-glx_load( dmp, addr, count )
-struct dm *dmp;
-unsigned addr, count;
-{
-  return( 0 );		/* FLAG:  error */
-}
-
 
 static int
 glx_debug(dmp, lvl)
@@ -1698,4 +1676,47 @@ GLXconfig *conf;
   for (i = 0; conf[i].buffer; i++)
     if (conf[i].buffer == buffer && conf[i].mode == GLX_WINDOW)
       conf[i].arg = _win;
+}
+
+int
+glx_beginDList(dmp, list)
+struct dm *dmp;
+unsigned int list;
+{
+  GLXwinset(((struct glx_vars *)dmp->dm_vars)->dpy,
+	    ((struct glx_vars *)dmp->dm_vars)->win);
+  makeobj((Object)list);
+
+  return TCL_OK;
+}
+
+int
+glx_endDList(dmp)
+struct dm *dmp;
+{
+  closeobj();
+  return TCL_OK;
+}
+
+int
+glx_drawDList(dmp, list)
+struct dm *dmp;
+unsigned int list;
+{
+  callobj((Object)list);
+  return TCL_OK;
+}
+
+int
+glx_freeDLists(dmp, list, range)
+struct dm *dmp;
+unsigned int list;
+int range;
+{
+  int i;
+
+  for(i = 0; i < range; ++i)
+    delobj((Object)(list + i));
+
+  return TCL_OK;
 }

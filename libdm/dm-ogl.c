@@ -94,8 +94,10 @@ static int	ogl_drawString2D(), ogl_drawLine2D();
 static int      ogl_drawVertex2D();
 static int	ogl_drawVList();
 static int      ogl_setColor(), ogl_setLineAttr();
-static unsigned ogl_cvtvecs(), ogl_load();
 static int	ogl_setWinBounds(), ogl_debug();
+static int      ogl_beginDList(), ogl_endDList();
+static int      ogl_drawDList();
+static int      ogl_freeDLists();
 
 struct dm dm_ogl = {
   ogl_close,
@@ -109,12 +111,15 @@ struct dm dm_ogl = {
   ogl_drawVList,
   ogl_setColor,
   ogl_setLineAttr,
-  ogl_cvtvecs,
-  ogl_load,
   ogl_setWinBounds,
   ogl_debug,
   Nu_int0,
-  0,				/* no displaylist */
+  ogl_beginDList,
+  ogl_endDList,
+  ogl_drawDList,
+  ogl_freeDLists,
+  1,				/* has displaylist */
+  0,                            /* no stereo by default */
   IRBOUND,
   "ogl",
   "X Windows with OpenGL graphics",
@@ -125,7 +130,6 @@ struct dm dm_ogl = {
   0,
   0,
   1.0, /* aspect ratio */
-  0,
   0,
   0,
   0,
@@ -478,6 +482,9 @@ Done:
     return DM_NULL;
   }
 
+  /* This is the applications display list offset */
+  dmp->dm_displaylist = ((struct ogl_vars *)dmp->dm_vars)->fontOffset + 127;
+
   glDrawBuffer(GL_FRONT_AND_BACK);
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -487,7 +494,7 @@ Done:
   else
     glDrawBuffer(GL_FRONT);
 
-  /* do viewport, ortho commands and initialize font*/
+  /* do viewport, ortho commands and initialize font */
   ogl_configure_window_shape(dmp);
 
   /* Lines will be solid when stippling disabled, dashed when enabled*/
@@ -657,6 +664,11 @@ struct dm *dmp;
     bu_vls_free(&tmp_vls);
   }
 
+/*XXX Keep this off unless testing */
+#if 0
+  glFinish();
+#endif
+
   return TCL_OK;
 }
 
@@ -701,7 +713,7 @@ int which_eye;
     /* R eye */
     glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1); 
     glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
-    ogl_drawString2D( "R", 2020, 0, 0, DM_RED );
+    ogl_drawString2D( dmp, "R", 2020, 0, 0, DM_RED );
     break;
   case 2:
     /* L eye */
@@ -780,33 +792,16 @@ int which_eye;
 
 /* ARGSUSED */
 static int
-ogl_drawVList( dmp, vp, m )
+ogl_drawVList( dmp, vp )
 struct dm *dmp;
 register struct rt_vlist *vp;
-fastf_t *m;
 {
-  register struct rt_vlist	*tvp;
-  register float	*gtvec;
-  char	gtbuf[16+3*sizeof(double)];
+  register struct rt_vlist *tvp;
   int first;
   int i,j;
 
   if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
     Tcl_AppendResult(interp, "ogl_drawVList()\n", (char *)NULL);
-
-  /*
-   *  It is claimed that the "dancing vector disease" of the
-   *  4D GT processors is due to the array being passed to v3f()
-   *  not being quad-word aligned (16-byte boundary).
-   *  This hack ensures that the buffer has this alignment.
-   *  Note that this requires gtbuf to be 16 bytes longer than needed.
-   */
-  gtvec = (float *)((((long)gtbuf)+15) & (~0xF));
-
-#if 0
-  if (illum && ((struct ogl_vars *)dmp->dm_vars)->mvars.cueing_on)
-    glDisable(GL_FOG);	
-#endif
 
   /* Viewing region is from -1.0 to +1.0 */
   first = 1;
@@ -825,25 +820,17 @@ fastf_t *m;
 	glBegin(GL_LINE_STRIP);
 	glVertex3dv( *pt );
 	break;
-      case RT_VLIST_LINE_DRAW:
-	/* Draw line */
-	glVertex3dv( *pt );
-	break;
       case RT_VLIST_POLY_START:
 	/* Start poly marker & normal */
 	if( first == 0 )
 	  glEnd();
 	glBegin(GL_POLYGON);
 	/* Set surface normal (vl_pnt points outward) */
-	VMOVE( gtvec, *pt );
-	glNormal3fv(gtvec);
+	glNormal3dv( *pt );
 	break;
+      case RT_VLIST_LINE_DRAW:
       case RT_VLIST_POLY_MOVE:
-	/* Polygon Move */
-	glVertex3dv( *pt );
-	break;
       case RT_VLIST_POLY_DRAW:
-	/* Polygon Draw */
 	glVertex3dv( *pt );
 	break;
       case RT_VLIST_POLY_END:
@@ -854,20 +841,13 @@ fastf_t *m;
 	break;
       case RT_VLIST_POLY_VERTNORM:
 	/* Set per-vertex normal.  Given before vert. */
-	VMOVE( gtvec, *pt );
-	glNormal3fv(gtvec);
+	glNormal3dv( *pt );
 	break;
       }
     }
   }
   if( first == 0 )
     glEnd();
-
-#if 0
-  if (illum && ((struct ogl_vars *)dmp->dm_vars)->mvars.cueing_on){
-    glEnable(GL_FOG);
-  }
-#endif
 
   return TCL_OK;
 }
@@ -1047,33 +1027,6 @@ int style;
   return TCL_OK;
 }
 
-
-/* ARGSUSED */
-static unsigned
-ogl_cvtvecs( dmp, sp )
-struct dm *dmp;
-struct solid *sp;
-{
-	return( 0 );
-}
-
-/*
- * Loads displaylist
- */
-static unsigned
-ogl_load( dmp, addr, count )
-struct dm *dmp;
-unsigned addr, count;
-{
-  struct bu_vls tmp_vls;
-
-  bu_vls_init(&tmp_vls);
-  bu_vls_printf(&tmp_vls, "ogl_load(x%x, %d.)\n", addr, count );
-  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-  bu_vls_free(&tmp_vls);
-  return( 0 );
-}
-
 /* ARGSUSED */
 static int
 ogl_debug(dmp, lvl)
@@ -1093,7 +1046,7 @@ register int w[];
   return TCL_OK;
 }
 
-#define OGL_DO_STEREO 0
+#define OGL_DO_STEREO 1
 /* currently, get a double buffered rgba visual that works with Tk and
  * OpenGL
  */
@@ -1117,7 +1070,7 @@ Tk_Window tkwin;
    */
 
   /*XXX Need to do something with this */
-  if( mged_variables.eye_sep_dist )  {
+  if( dmp->dm_stereo )  {
     m_stereo = 1;
   } else {
     m_stereo = 0;
@@ -1203,9 +1156,6 @@ Tk_Window tkwin;
 		       &((struct ogl_vars *)dmp->dm_vars)->mvars.depth);
 	  if (((struct ogl_vars *)dmp->dm_vars)->mvars.depth > 0)
 	    ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuf = 1;
-#if OGL_DO_STEREO
-	  ((struct ogl_vars *)dmp->dm_vars)->stereo_is_on = m_stereo;
-#endif
 #if 0
 	  XFree((void *)vibase);
 #endif
@@ -1259,8 +1209,10 @@ struct dm *dmp;
 	
   glViewport(0,  0, (dmp->dm_width),
 	     (dmp->dm_height));
+#if 0
   glScissor(0,  0, (dmp->dm_width)+1,
 	    (dmp->dm_height)+1);
+#endif
 
   if( ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuffer_on )
     ogl_establish_zbuffer(dmp);
@@ -1421,6 +1373,7 @@ struct dm *dmp;
   }
 
   if (((struct ogl_vars *)dmp->dm_vars)->mvars.zbuffer_on)  {
+    glDepthFunc(GL_LEQUAL);
     glEnable(GL_DEPTH_TEST);
   } else {
     glDisable(GL_DEPTH_TEST);
@@ -1474,4 +1427,48 @@ struct dm *dmp;
      allows us to toggle through more than two values.
    */
   ((struct ogl_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
+}
+
+int
+ogl_beginDList(dmp, list)
+struct dm *dmp;
+GLuint list;
+{
+  if (!glXMakeCurrent(((struct ogl_vars *)dmp->dm_vars)->dpy,
+		      ((struct ogl_vars *)dmp->dm_vars)->win,
+		      ((struct ogl_vars *)dmp->dm_vars)->glxc)){
+    Tcl_AppendResult(interp,
+ 		     "ogl_beginDList: Couldn't make context current\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  glNewList(list, GL_COMPILE);
+  return TCL_OK;
+}
+
+int
+ogl_endDList(dmp)
+struct dm *dmp;
+{
+  glEndList();
+  return TCL_OK;
+}
+
+int
+ogl_drawDList(dmp, list)
+struct dm *dmp;
+GLuint list;
+{
+  glCallList(list);
+  return TCL_OK;
+}
+
+int
+ogl_freeDLists(dmp, list, range)
+struct dm *dmp;
+GLuint list;
+GLsizei range;
+{
+  glDeleteLists(list, range);
+  return TCL_OK;
 }
