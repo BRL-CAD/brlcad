@@ -112,7 +112,6 @@ static int hits_lit;
 /* Local communication with render_Scan(). */
 static int curr_scan;	  /* current scan line number */
 static int last_scan;	  /* last scan */
-static int nworkers;	  /* number of workers now running */
 static int a_gridsz;	  /* grid size taking anti-aliasing into account */
 static fastf_t a_cellsz;  /* cell size taking anti-aliasing into account */
 static fastf_t grid_dh[3], grid_dv[3];
@@ -379,7 +378,7 @@ int frame;
 		/*
 		 * SERIAL case -- one CPU does all the work.
 		 */
-		render_Scan();
+		render_Scan(0, NULL);
 		view_end();
 		(void) signal( SIGINT, norml_sig );
 		return;
@@ -387,36 +386,24 @@ int frame;
 	/*
 	 *  Parallel case.
 	 */
-	nworkers = 0;
-	rt_parallel( render_Scan, npsw );
-
-	/* ensure that all the workers are REALLY dead */
-	for( x = 0; nworkers > 0; x++ )
-		;
-	if( x > 0 )
-		rt_log( "render_Model: termination took %d extra loops\n",
-			x );	
-
+	bu_parallel( render_Scan, npsw, NULL );
 	view_end();
 	(void) signal( SIGINT, norml_sig );
 	return;
 	}
 
 void
-render_Scan()
+render_Scan(cpu, arg)
+int cpu;
+genptr_t arg;
 	{	fastf_t grid_y_inc[3], grid_x_inc[3];
 		RGBpixel scanbuf[MAX_SCANSIZE];	/* private to CPU */
 		vect_t aliasbuf[MAX_SCANSIZE];	/* private to CPU */
 		register int com;
-		int cpu;		/* local CPU number */
 		
 	/* Must have local copy of application structure for parallel
 		threads of execution, so make copy. */
 		struct application a;
-
-	bu_semaphore_acquire( RT_SEM_WORKER );
-	cpu = nworkers++;
-	bu_semaphore_release( RT_SEM_WORKER );
 
 	resource[cpu].re_cpu = cpu;
 #ifdef RESOURCE_MAGIC
@@ -519,9 +506,6 @@ render_Scan()
 				}
 			}
 		}
-	bu_semaphore_acquire( RT_SEM_WORKER );
-	nworkers--;
-	bu_semaphore_release( RT_SEM_WORKER );
 	return;
 	}
 
