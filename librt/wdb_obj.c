@@ -2308,7 +2308,7 @@ wdb_dir_check(input_dbip, name, laddr, len, flags, ptr)
 
 /*
  * Usage:
- *        procname dup file.g prefix
+ *        procname dup file.g [prefix]
  */
 static int
 wdb_dup_tcl(clientData, interp, argc, argv)
@@ -2324,7 +2324,7 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 	struct bu_vls vls;
 	struct dir_check_stuff	dcs;
 
-	if (argc != 4) {
+	if (argc < 3 || argc > 4) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -2333,8 +2333,10 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
-
-	(void)strcpy(wdbp->wdb_prestr, argv[3]);
+	if( argc == 4 )
+		(void)strcpy(wdbp->wdb_prestr, argv[3]);
+	else
+		wdbp->wdb_prestr[0] = '\0';
 	wdbp->wdb_num_dups = 0;
 	if ((wdbp->wdb_ncharadd = strlen(wdbp->wdb_prestr)) > 12) {
 		wdbp->wdb_ncharadd = 12;
