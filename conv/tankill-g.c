@@ -48,6 +48,11 @@ struct comp_idents
 	struct comp_idents *next;
 } *id_root;
 
+#define V3RPP1_IN_RPP2( _lo1 , _hi1 , _lo2 , _hi2 )	( \
+	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
+	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
+	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
+
 
 /*	Adds another solid to the list of solids for each component code number.
  *	Returns the number of solids in this component (including the one just added)
@@ -324,6 +329,68 @@ main( int argc , char *argv[] )
 		/* fix the normals */
 		s = RT_LIST_FIRST( shell , &r->s_hd );
 		nmg_fix_normals( s );
+
+		if( nmg_decompose_shell( s ) > 1 )
+		{
+			struct shell *outer_shell=NULL;
+			long *flags;
+
+			flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "tankill-g: flags" );
+
+			for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+			{
+				struct shell *s2;
+				int is_outer=1;
+
+				if( !s->sa_p )
+					nmg_shell_a( s , &tol );
+
+				/* Check if this shells contains all the others */
+				for( RT_LIST_FOR( s2 , shell , &r->s_hd ) )
+				{
+					if( !s2->sa_p )
+						nmg_shell_a( s2 , &tol );
+
+					if( !V3RPP1_IN_RPP2( s2->sa_p->min_pt , s2->sa_p->max_pt ,
+							    s->sa_p->min_pt , s->sa_p->max_pt ) )
+					{
+						is_outer = 0;
+						break;
+					}
+				}
+				if( is_outer )
+				{
+					outer_shell = s;
+					break;
+				}
+			}
+			if( !outer_shell )
+			{
+				rt_log( "tankill-g: Could not find outer shell for component code %d\n" , comp_code );
+				outer_shell = RT_LIST_FIRST( shell , &r->s_hd );
+			}
+
+			s = RT_LIST_FIRST( shell , &r->s_hd );
+			while( RT_LIST_NOT_HEAD( s , &r->s_hd ) )
+			{
+				struct faceuse *fu;
+				struct shell *next_s;
+
+				if( s == outer_shell )
+				{
+					s = RT_LIST_PNEXT( shell , s );
+					continue;
+				}
+
+				next_s = RT_LIST_PNEXT( shell , s );
+				fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
+				nmg_reverse_face( fu );
+				nmg_propagate_normals( fu , flags );
+				nmg_merge_shells( outer_shell , s );
+				s = next_s;
+			}
+		}
+		s = RT_LIST_FIRST( shell , &r->s_hd );
 
 		/* make a name for this solid */
 		sprintf( name , "s.%d.%d" , comp_code , Add_solid( comp_code ) );
