@@ -169,12 +169,29 @@ getsolid()
 	 */
 	sol_work++;
 
+	/* Reduce solid type to lower case */
+	{
+		register char	*cp;
+		register char	c;
+
+		cp = solid_type;
+		while( (c = *cp) != '\0' )  {
+			if( !isascii(c) )  {
+				*cp++ = '?';
+			} else if( isupper(c) )  {
+				*cp++ = tolower(c);
+			} else {
+				*cp++;
+			}
+		}
+	}
+
 	if( (cur_type = lookup(solid_type)) <= 0 )  {
 		printf("getsolid: bad type\n");
 		return -1;
 	}
 
-	if( cur_type == ARS){
+	if( strcmp( solid_type, "ars" ) == 0 )  {
 		static int j,n,jj,m,mx;
 		static float *fp;
 		int cd,cds,M,N,Nb_strcx,Nb_strsl,nst,structn,rmcx,cdcx;
@@ -423,20 +440,17 @@ char	*solid_type;
 #define D(_i)	(&(dd[_i*3]))
 #define T(_i)	(&(tmp[_i*3]))
 
-	switch( cur_type )  {
+	if( strcmp( solid_type, "rpp" ) == 0 )  {
+		double	min[3], max[3];
 
-	case RPP:
 		if( getsoldata( dd, 2*3, sol_num ) < 0 )
 			return(-1);
-		{
-			double	min[3], max[3];
+		VSET( min, dd[0], dd[2], dd[4] );
+		VSET( max, dd[1], dd[3], dd[5] );
+		return( mk_rpp( outfp, name, min, max ) );
+	}
 
-			VSET( min, dd[0], dd[2], dd[4] );
-			VSET( max, dd[1], dd[3], dd[5] );
-			return( mk_rpp( outfp, name, min, max ) );
-		}
-
-	case BOX:
+	if( strcmp( solid_type, "box" ) == 0 )  {
 		if( getsoldata( dd, 4*3, sol_num ) < 0 )
 			return(-1);
 		VMOVE( T(0), D(0) );
@@ -449,8 +463,9 @@ char	*solid_type;
 		VADD4( T(6), D(0), D(3), D(2), D(1) );
 		VADD3( T(7), D(0), D(3), D(1) );
 		return( mk_arb8( outfp, name, tmp ) );
+	}
 
-	case RAW:
+	if( strcmp( solid_type, "raw" ) == 0 )  {
 		if( getsoldata( dd, 4*3, sol_num ) < 0 )
 			return(-1);
 		VMOVE( T(0), D(0) );
@@ -463,19 +478,22 @@ char	*solid_type;
 		VMOVE( T(6), T(5) );
 		VADD3( T(7), D(0), D(3), D(1) );
 		return( mk_arb8( outfp, name, tmp ) );
+	}
 
-	case ARB8:
+	if( strcmp( solid_type, "arb8" ) == 0 )  {
 		if( getsoldata( dd, 8*3, sol_num ) < 0 )
 			return(-1);
 		return( mk_arb8( outfp, name, dd ) );
+	}
 
-	case ARB7:
+	if( strcmp( solid_type, "arb7" ) == 0 )  {
 		if( getsoldata( dd, 7*3, sol_num ) < 0 )
 			return(-1);
 		VMOVE( D(7), D(4) );
 		return( mk_arb8( outfp, name, dd ) );
+	}
 
-	case ARB6:
+	if( strcmp( solid_type, "arb6" ) == 0 )  {
 		if( getsoldata( dd, 6*3, sol_num ) < 0 )
 			return(-1);
 		/* Note that the ordering is important, as data is in D(4), D(5) */
@@ -483,40 +501,46 @@ char	*solid_type;
 		VMOVE( D(6), D(5) );
 		VMOVE( D(5), D(4) );
 		return( mk_arb8( outfp, name, dd ) );
+	}
 
-	case ARB5:
+	if( strcmp( solid_type, "arb5" ) == 0 )  {
 		if( getsoldata( dd, 5*3, sol_num ) < 0 )
 			return(-1);
 		VMOVE( D(5), D(4) );
 		VMOVE( D(6), D(4) );
 		VMOVE( D(7), D(4) );
 		return( mk_arb8( outfp, name, dd ) );
+	}
 
-	case ARB4:
+	if( strcmp( solid_type, "arb4" ) == 0 )  {
 		if( getsoldata( dd, 4*3, sol_num ) < 0 )
 			return(-1);
 		return( mk_arb4( outfp, name, dd ) );
+	}
 
-	case RCC:
+	if( strcmp( solid_type, "rcc" ) == 0 )  {
 		/* V, H, r */
 		if( getsoldata( dd, 2*3+1, sol_num ) < 0 )
 			return(-1);
 		return( mk_rcc( outfp, name, D(0), D(1), dd[6] ) );
+	}
 
-	case REC:
+	if( strcmp( solid_type, "rec" ) == 0 )  {
 		/* V, H, A, B */
 		if( getsoldata( dd, 4*3, sol_num ) < 0 )
 			return(-1);
 		return( mk_tgc( outfp, name, D(0), D(1),
 			D(2), D(3), D(2), D(3) ) );
+	}
 
-	case TRC:
+	if( strcmp( solid_type, "trc" ) == 0 )  {
 		/* V, H, r1, r2 */
 		if( getsoldata( dd, 2*3+2, sol_num ) < 0 )
 			return(-1);
 		return( mk_trc( outfp, name, D(0), D(1), dd[6], dd[7] ) );
+	}
 
-	case TEC:
+	if( strcmp( solid_type, "tec" ) == 0 )  {
 		/* V, H, A, B, p */
 		if( getsoldata( dd, 4*3+1, sol_num ) < 0 )
 			return(-1);
@@ -525,8 +549,9 @@ char	*solid_type;
 		VSCALE( D(5), D(3), r1 );
 		return( mk_tgc( outfp, name, D(0), D(1),
 			D(2), D(3), D(4), D(5) ) );
+	}
 
-	case TGC:
+	if( strcmp( solid_type, "tgc" ) == 0 )  {
 		/* V, H, A, B, r1, r2 */
 		if( getsoldata( dd, 4*3+2, sol_num ) < 0 )
 			return(-1);
@@ -536,14 +561,16 @@ char	*solid_type;
 		VSCALE( D(5), D(3), r2 );
 		return( mk_tgc( outfp, name, D(0), D(1),
 			D(2), D(3), D(4), D(5) ) );
+	}
 
-	case SPH:
+	if( strcmp( solid_type, "sph" ) == 0 )  {
 		/* V, radius */
 		if( getsoldata( dd, 1*3+2, sol_num ) < 0 )
 			return(-1);
 		return( mk_sph( outfp, name, D(0), dd[3] ) );
+	}
 
-	case ELL:
+	if( strcmp( solid_type, "ell" ) == 0 )  {
 		if( version == 4 )  {
 			vect_t	v;
 
@@ -566,14 +593,16 @@ char	*solid_type;
 				(m1 * 0.5)*(m1 * 0.5) );	/* r */
 			VMOVE( D(0), v );
 			goto ellcom;
-		} else {
-			/* NO ELL's in gift5  -  fall through to ELL1 */
 		}
-		/* Fall through */
+		/* NO ELL's in gift5  -  handle as ELL1? */
+		printf("No ELL in version 5??\n");
+		return(-1);
+	}
 
-	case ELL1:		/* GIFT4 name */
-	case GENELL:		/* GIFT5 name */
+	if( strcmp( solid_type, "ell1" ) == 0 ||
+	    strcmp( solid_type, "ellg" ) == 0 )  {
 		/* V, A, r */
+	    	/* GIFT4 name is "ell1", GIFT5 name is "ellg" */
 		if( getsoldata( dd, 2*3+1, sol_num ) < 0 )
 			return(-1);
 
@@ -593,8 +622,9 @@ ellcom:
 
 		/* Now we have V, A, B, C */
 		return( mk_ell( outfp, name, D(0), D(1), D(2), D(3) ) );
+	}
 
-	case TOR:
+	if( strcmp( solid_type, "tor" ) == 0 )  {
 		/* V, N, r1, r2 */
 		if( getsoldata( dd, 2*3+2, sol_num ) < 0 )
 			return(-1);
@@ -602,8 +632,9 @@ ellcom:
 	}
 
 	/*
-	 * We should never reach here
+	 *  The solid type string is defective,
+	 *  or that solid is not currently supported.
 	 */
-	printf("convert:  no support for solid %d\n", cur_type );
+	printf("convert:  no support for solid type '%s'\n", solid_type );
 	return(-1);
 }
