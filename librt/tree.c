@@ -25,7 +25,6 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #include "../h/vmath.h"
 #include "../h/db.h"
 #include "../h/raytrace.h"
-#include "rtdir.h"
 #include "debug.h"
 
 struct rt_g rt_g;
@@ -42,7 +41,7 @@ extern int tor_prep(),	tor_print(), tor_norm(), tor_uv();
 extern int tgc_prep(),	tgc_print(), tgc_norm(), tgc_uv();
 extern int ell_prep(),	ell_print(), ell_norm(), ell_uv();
 extern int arb_prep(),	arb_print(), arb_norm(), arb_uv();
-extern int haf_prep(),	haf_print(), haf_norm(), haf_uv();
+extern int half_prep(),	half_print(),half_norm(),half_uv();
 extern int ars_prep(),  ars_print(), ars_norm(), ars_uv();
 extern int rec_prep(),	rec_print(), rec_norm(), rec_uv();
 extern int pg_prep(),	pg_print(),  pg_norm(),  pg_uv();
@@ -54,7 +53,7 @@ extern struct seg *tgc_shot();
 extern struct seg *ell_shot();
 extern struct seg *arb_shot();
 extern struct seg *ars_shot();
-extern struct seg *haf_shot();
+extern struct seg *half_shot();
 extern struct seg *rec_shot();
 extern struct seg *pg_shot();
 extern struct seg *spl_shot();
@@ -66,7 +65,7 @@ struct rt_functab rt_functab[] = {
 	ell_prep, ell_shot, ell_print, ell_norm, ell_uv, "ID_ELL",
 	arb_prep, arb_shot, arb_print, arb_norm, arb_uv, "ID_ARB8",
 	ars_prep, ars_shot, ars_print, ars_norm, ars_uv, "ID_ARS",
-	haf_prep, haf_shot, haf_print, haf_norm, haf_uv, "ID_HALF",
+	half_prep,half_shot,half_print,half_norm,half_uv,"ID_HALF",
 	rec_prep, rec_shot, rec_print, rec_norm, rec_uv, "ID_REC",
 	pg_prep,  pg_shot,  pg_print,  pg_norm,  pg_uv,  "ID_POLY",
 	spl_prep, spl_shot, spl_print, spl_norm, spl_uv, "ID_BSPLINE",
@@ -79,9 +78,6 @@ struct rt_functab rt_functab[] = {
 #define DEF(func)	func() { rt_log("func unimplemented\n"); return(0); }
 
 DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm); DEF(nul_uv);
-
-/* To be replaced with code someday */
-DEF(haf_prep); struct seg * DEF(haf_shot); DEF(haf_print); DEF(haf_norm); DEF(haf_uv);
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
@@ -108,6 +104,8 @@ static char idmap[] = {
 	ID_ARB8,	/* GENARB8 20:  V, and 7 other vectors */
 	ID_NULL,	/* ARS 21: arbitrary triangular-surfaced polyhedron */
 	ID_NULL,	/* ARSCONT 22: extension record type for ARS solid */
+	ID_NULL,	/* ELLG 23:  gift-only */
+	ID_HALF,	/* HALFSPACE 24:  halfspace */
 	ID_NULL		/* n+1 */
 };
 
@@ -125,7 +123,8 @@ static struct mater_info rt_no_mater;
  *	-1	On major error
  */
 int
-rt_gettree(node)
+rt_gettree( rtip, node)
+struct rt_i *rtip;
 char *node;
 {
 	register union tree *curtree;
@@ -271,8 +270,16 @@ next_one: ;
 #define TREE_MM(v)	TREE_MINMAX( rt_i.mdl_min[X], rt_i.mdl_max[X], v[X] ); \
 		TREE_MINMAX( rt_i.mdl_min[Y], rt_i.mdl_max[Y], v[Y] ); \
 		TREE_MINMAX( rt_i.mdl_min[Z], rt_i.mdl_max[Z], v[Z] )
-	TREE_MM( stp->st_min );
-	TREE_MM( stp->st_max );
+	/*
+	 *  Don't update min & max for halfspaces;  instead, add them
+	 *  to the list of infinite solids, for special handling.
+	 */
+	if( stp->st_max[X] >= INFINITY )  {
+		rt_cut_extend( &rt_i.rti_inf_box, stp );
+	}  else  {
+		TREE_MM( stp->st_min );
+		TREE_MM( stp->st_max );
+	}
 
 	stp->st_bit = rt_i.nsolids++;
 	if(rt_g.debug&DEBUG_SOLIDS)  {
@@ -929,7 +936,8 @@ register int regbit;
  *  Right now, it should only be called ONCE per execution.
  */
 void
-rt_prep()
+rt_prep(rtip)
+struct rt_i *rtip;
 {
 	register struct region *regp;
 	register struct soltab *stp;
