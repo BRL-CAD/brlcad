@@ -158,12 +158,13 @@ BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
 dnl search several additional locations if configure happens to fail
 dnl to find a required component
 BC_RETRY_DIRECTORY([/usr/freeware], [freeware])
+BC_RETRY_DIRECTORY([/usr/X11R6], [X11])
 BC_RETRY_DIRECTORY([/usr/local])
 BC_RETRY_DIRECTORY([/opt])
 BC_RETRY_DIRECTORY([/sw], [fink])
+BC_RETRY_CONFIGURE
 
 AC_DEFINE(DM_X,1,[Display for X])
-AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
 AC_DEFINE(DM_OGL,1,[yeah, GL])
 GL_CFLAGS="-I/usr/X11R6/include"
 AC_SUBST(GL_CFLAGS)
@@ -773,6 +774,8 @@ AC_PATH_X
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
+	GL/gl.h \
+	GL/glx.h \
 	X11/Xlib.h \
 	arpa/inet.h \
 	curses.h \
@@ -780,6 +783,7 @@ AC_CHECK_HEADERS( \
 	fcntl.h \
 	float.h \
 	getopt.h \
+	gl/device.h \
 	langinfo.h \
 	limits.h \
 	locale.h \
