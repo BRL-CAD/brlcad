@@ -1,7 +1,7 @@
 .TH RTRAY 1 BRL/CAD
 .UC 4
 .SH NAME
-rtray \- raytrace an \fBmged\fP model, writing a VLD rayfile
+rtray \(em raytrace an \fBmged\fP model, writing a VLD rayfile
 .SH SYNOPSIS
 .B rtray
 [ options ... ]
@@ -33,7 +33,7 @@ option, a transformation matrix may be provided on standard input
 which maps model-space to view-space.
 In this case, the grid ranges from -1.0 <= X,Y <= +1.0 in view space,
 with the size of the grid (number of rays fired) specified with
-.B \-f
+.B \-s
 This option is most useful when
 .B rtray
 is being invoked from a shell script created by an
@@ -42,9 +42,9 @@ is being invoked from a shell script created by an
 .LP
 The following options are recognized.
 .TP
-.B \-f#
+.B \-s#
 Number of rays to fire in X and Y directions (square grid).
-Default is 512 (512x512), maximum is 1024 (1024x1024).
+Default is 512 (512x512).
 .TP
 .B \-a#
 Select azimuth in degrees.  Used with
@@ -65,8 +65,29 @@ Conflicts with
 and
 .B \-e
 .TP
+.B \-U #
+sets the Boolean variable
+.I use_air
+to the given value.
+The default for
+.IR rtray (1)
+is on, ie
+.BR \-U1 ,
+but the effect of air solids may be disabled with
+.BR \-U0 .
+.TP
+By default, the rays images are written to stdout.
+The
+.B \-o
+.B output.ray
+option specifies a named ray file for output.
+Note that the VLD standary ray file format
+.IR ray (5V)
+is a machine-specific binary format, which means ray files should
+be moved between machines with care.
+.TP
 .B \-x#
-Set debug flags to (hexadecimal) number.  Not generally useful.
+Set librt debug flags to (hexadecimal) number.
 .LP
 The
 .B rtray
@@ -77,10 +98,11 @@ which is most useful when used with
 and the VLD ray filters.
 In order to convert a ray file into a minimal monochrome
 UNIX-plot image for viewing, run
+.sp .5
   /vld/bin/rayvect -mMM < file.ray > file.vect
   /vld/bin/vectplot -mMM < file.vect > file.plot
   tplot -Tmeg file.plot		# or equivalent UNIX-plot filter
-
+.sp .5
 .SH "SEE ALSO"
 gift(1V), mged(1), rt(1), rayplot(1), rayvect(1), rtray(1), rtpp(1),
 librt(3), ray(5V).
@@ -99,8 +121,6 @@ Aberdeen Proving Ground, Maryland  21005
 This software is Copyright (C) 1985 by the United States Army.
 All rights reserved.
 .SH BUGS
-The upper limit of 1024x1024 is pointless, and should be removed.
-.LP
 Most deficiencies observed while using the
 .B rtray
 program are usually with the
