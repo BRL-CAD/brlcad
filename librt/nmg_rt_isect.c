@@ -237,13 +237,11 @@ struct hitmiss *a_hit;
 	VPRINT("\n\tin_normal", a_hit->inbound_norm);
 	VPRINT("\tout_normal", a_hit->outbound_norm);
 }
-static void print_hitlist(hl)
+void
+nmg_rt_print_hitlist(hl)
 struct hitmiss *hl;
 {
 	struct hitmiss *a_hit;
-
-	if (!(rt_g.NMG_debug & DEBUG_RT_ISECT))
-		return;
 
 	rt_log("nmg/ray hit list:\n");
 
@@ -295,7 +293,8 @@ struct hitmiss *newhit;
 
 	RT_LIST_INSERT(&a_hit->l, &newhit->l);
 
-	print_hitlist((struct hitmiss *)&rd->rd_hit);
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		nmg_rt_print_hitlist((struct hitmiss *)&rd->rd_hit);
 
 }
 
@@ -1118,7 +1117,8 @@ struct vertexuse *vu_p;
 			myhit->hit.hit_private,
 			vu_p->v_p->magic);
 
-		print_hitlist(rd->hitmiss[NMG_HIT_LIST]);
+		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			nmg_rt_print_hitlist(rd->hitmiss[NMG_HIT_LIST]);
 	}
 
 	return 1;
@@ -1719,9 +1719,10 @@ struct loopuse *lu_p;
 
 
 static void
-eu_touch_func(eu, fpi)
+eu_touch_func(eu, pt, priv)
 struct edgeuse *eu;
-struct fu_pt_info *fpi;
+point_t pt;
+char *priv;
 {
 	struct edgeuse *eu_next;
 	struct ray_data *rd;
@@ -1746,20 +1747,21 @@ struct fu_pt_info *fpi;
 			eu_next->vu_p->v_p->vg_p->coord[1],
 			eu_next->vu_p->v_p->vg_p->coord[2]);
 
-	rd = (struct ray_data *)fpi->priv;
+	rd = (struct ray_data *)priv;
 	rd->face_subhit = 1;
 
 	NMG_CK_HITMISS_LISTS(myhit, rd);
-	ray_hit_edge(rd, eu, rd->ray_dist_to_plane, fpi->pt);
+	ray_hit_edge(rd, eu, rd->ray_dist_to_plane, pt);
 	NMG_CK_HITMISS_LISTS(myhit, rd);
 
 }
 
 
 static void
-vu_touch_func(vu, fpi)
+vu_touch_func(vu, pt, priv)
 struct vertexuse *vu;
-struct fu_pt_info *fpi;
+point_t pt;
+char *priv;
 {
 	struct ray_data *rd;
 
@@ -1769,7 +1771,7 @@ struct fu_pt_info *fpi;
 			vu->v_p->vg_p->coord[1],
 			vu->v_p->vg_p->coord[2]);
 
-	rd = (struct ray_data *)fpi->priv;
+	rd = (struct ray_data *)priv;
 
 	rd->face_subhit = 1;
 	ray_hit_vertex(rd, vu, NMG_VERT_UNKNOWN);
@@ -1897,9 +1899,9 @@ struct face_g_plane *fg_p;
 	int			code;
 	fastf_t			dist;
 	struct hitmiss		*myhit;
-	struct fu_pt_info	*fpi;
 	point_t			plane_pt;
 	struct loopuse		*lu_p;
+	int			pt_class;
 
 	/* perform the geometric intersection of the ray with the plane 
 	 * of the face.
@@ -1973,7 +1975,7 @@ struct face_g_plane *fg_p;
 	 */
 	rd->face_subhit = 0;
 	rd->ray_dist_to_plane = dist;
-	fpi = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
+	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
 		eu_touch_func, vu_touch_func, (char *)rd, NMG_FPI_PERGEOM,
 		rd->tol);
 
@@ -1985,7 +1987,7 @@ struct face_g_plane *fg_p;
 
 
 
-	switch (fpi->pt_class) {
+	switch (pt_class) {
 	case NMG_CLASS_Unknown	:
 		rt_log("%s[line:%d] ray/plane intercept point cannot be classified wrt face\n",
 			__FILE__, __LINE__);
@@ -2028,15 +2030,17 @@ struct face_g_plane *fg_p;
 		rt_bomb("bombing");
 	}
 
-
-
-
 	/* intersect the ray with the edges/verticies of the face */
 	for ( RT_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd) )
 		isect_ray_loopuse(rd, lu_p);
 
-	NMG_FPI_FREE( fpi );
 }
+
+
+
+
+
+
 /*	I S E C T _ R A Y _ F A C E U S E
  *
  *	check to see if ray hits face.
@@ -2048,6 +2052,8 @@ struct faceuse *fu_p;
 {
 
 	struct hitmiss		*myhit;
+
+	if (fu_p->orientation == OT_OPPOSITE) return;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		rt_log("isect_ray_faceuse(0x%08x, faceuse:0x%08x/face:0x%08x)\n",
@@ -2212,7 +2218,8 @@ struct ray_data *rd;
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				rt_log("ray missed NMG\n");
 		} else {
-			print_hitlist((struct hitmiss*)&rd->rd_hit);
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				nmg_rt_print_hitlist((struct hitmiss*)&rd->rd_hit);
 		}
 	}
 }
@@ -2452,7 +2459,7 @@ int *hari_kari;
  *
  */
 int
-nmg_ray_vs_shell(rp, s, tol)
+nmg_class_ray_vs_shell(rp, s, tol)
 struct xray *rp;
 struct shell *s;
 struct rt_tol *tol;
@@ -2566,13 +2573,19 @@ struct rt_tol *tol;
 	if (hari_kari_minus) {
 		if(hari_kari_plus)
 			rt_bomb("double hari kari");
-		if (plus_class == NMG_CLASS_Unknown)
+		if (plus_class == NMG_CLASS_Unknown) {
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				nmg_rt_print_hitlist(&rd.rd_hit);
 			rt_bomb("minus hari kari & plus unknown");
+		}
 		minus_class = plus_class;
 
 	} else if (minus_class == NMG_CLASS_Unknown) {
-		if (plus_class == NMG_CLASS_Unknown)
+		if (plus_class == NMG_CLASS_Unknown) {
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				nmg_rt_print_hitlist(&rd.rd_hit);
 			rt_bomb("minus hari kari & plus unknown");
+		}
 		minus_class = plus_class;
 	} else if (plus_class == NMG_CLASS_Unknown || hari_kari_plus) {
 		plus_class = minus_class;
@@ -2584,6 +2597,9 @@ struct rt_tol *tol;
 			__FILE__, __LINE__,
 			nmg_class_name(plus_class),
 			nmg_class_name(minus_class) );
+
+		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			nmg_rt_print_hitlist(&rd.rd_hit);
 		rt_bomb("");
 	}
 

@@ -61,7 +61,15 @@ struct structparse rt_hit_parsetab[] = {
 
 #define CK_SEGP(_p) if ( !(_p) || !(*(_p)) ) {\
 	rt_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
-	rt_bomb("Goodbye"); }
+	nmg_rt_segs_exit("Goodbye"); }
+#define DO_LONGJMP
+#ifdef DO_LONGJMP
+jmp_buf env;
+#define nmg_rt_segs_exit(_s) {rt_log("%s\n",_s);longjmp(env, -1);}
+#else
+#define nmg_rt_segs_exit(_s) rt_bomb(_s)
+#endif
+
 
 
 static
@@ -154,7 +162,7 @@ struct application	*ap;
 	if ( !seg_p ) {
 		rt_log("%s[line:%d]: Null pointer to segment pointer\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye");
+		nmg_rt_segs_exit("Goodbye");
 	}
 		
 	/* if we don't have a seg struct yet, get one */
@@ -189,12 +197,12 @@ struct hitmiss	*a_hit;		/* The input hit point */
 	if ( !seg_p ) {
 		rt_log("%s[line:%d]: Null pointer to segment pointer\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye");
+		nmg_rt_segs_exit("Goodbye");
 	}
 		
 	/* if we don't have a seg struct yet, get one */
 	if ( *seg_p == (struct seg *)NULL )
-		rt_bomb("bad seg pointer\n");
+		nmg_rt_segs_exit("bad seg pointer\n");
 
 	/* copy the "out" hit */
 	bcopy(&a_hit->hit, &(*seg_p)->seg_out, sizeof(struct hit));
@@ -269,7 +277,7 @@ struct rt_tol	*tol;
 	default:
 		rt_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye\n");
+		nmg_rt_segs_exit("Goodbye\n");
 		break;
 	}
 
@@ -313,7 +321,7 @@ struct rt_tol	*tol;
 	default:
 		rt_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye\n");
+		nmg_rt_segs_exit("Goodbye\n");
 		break;
 	}
 
@@ -407,7 +415,7 @@ struct rt_tol	*tol;
 	default:
 		rt_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye\n");
+		nmg_rt_segs_exit("Goodbye\n");
 		break;
 	}
 
@@ -509,7 +517,7 @@ struct rt_tol	*tol;
 	default:
 		rt_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye\n");
+		nmg_rt_segs_exit("Goodbye\n");
 		break;
 	}
 
@@ -595,7 +603,7 @@ struct rt_tol	*tol;
 	default:
 		rt_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye\n");
+		nmg_rt_segs_exit("Goodbye\n");
 		break;
 	}
 
@@ -687,7 +695,7 @@ struct rt_tol	*tol;
 	default:
 		rt_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye\n");
+		nmg_rt_segs_exit("Goodbye\n");
 		break;
 	}
 
@@ -779,7 +787,7 @@ struct rt_tol	*tol;
 	default:
 		rt_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye\n");
+		nmg_rt_segs_exit("Goodbye\n");
 		break;
 	}
 
@@ -830,7 +838,9 @@ struct soltab		*stp;
 			}
 
 			/* Now bomb off */
-			rt_bomb("Goodbye\n");
+		    	rt_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
+		    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
+			nmg_rt_segs_exit("Goodbye\n");
 		}
 
 		ray_state = new_state;
@@ -842,7 +852,11 @@ struct soltab		*stp;
 	if (ray_state == 1) {
 		rt_log("%s[line:%d]: Input ended at non-terminal FSM state\n",
 			__FILE__, __LINE__);
-		rt_bomb("Goodbye");
+
+	    	rt_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
+	    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
+		
+		nmg_rt_segs_exit("Goodbye");
 	}
 
 	/* Insert the last segment if appropriate */
@@ -901,6 +915,11 @@ struct nmg_ptbl *tbl;
 	struct vertexuse *vu_p;
 	int radial_not_mate=0;
 
+	if (!l_p) {
+		rt_log("%s:%d NULL l_p\n", __FILE__, __LINE__);
+		nmg_rt_segs_exit("");
+	}
+
 	switch (*l_p) {
 	case NMG_FACEUSE_MAGIC:
 		htab = nmg_visit_handlers_null;
@@ -956,14 +975,14 @@ struct nmg_ptbl *tbl;
 			default:
 				rt_log("%s[%d]: Bogus vertexuse parent magic:%s.",
 					rt_identify_magic( *vu->up.magic_p ));
-				rt_bomb("goodbye");
+				nmg_rt_segs_exit("goodbye");
 			}
 		}
 		break;
 	default:
 		rt_log("%s[%d]: Bogus magic number pointer:%s",
 			rt_identify_magic( *l_p ) );
-		rt_bomb("goodbye");
+		nmg_rt_segs_exit("goodbye");
 	}
 }
 
@@ -1006,9 +1025,10 @@ struct hitmiss *hd;
 }
 
 
-static void
-check_hitstate(hd)
+static int
+check_hitstate(hd, rd)
 struct hitmiss *hd;
+struct ray_data	*rd;
 {
 	struct hitmiss *a_hit;
 	struct hitmiss *next_hit;
@@ -1019,17 +1039,36 @@ struct hitmiss *hd;
 	struct nmg_ptbl *tbl_p = (struct nmg_ptbl *)NULL;
 	long *long_ptr;
 
+	RT_CK_LIST_HEAD(&hd->l);
+
+	NMG_CK_HITMISS_LISTS(a_hit, rd);
+
 	/* find that first "OUTSIDE" point */
 	a_hit = RT_LIST_FIRST(hitmiss, &hd->l);
+	NMG_CK_HITMISS(a_hit);
+	if (((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE ||
+	    rt_g.NMG_debug & DEBUG_RT_SEGS) {
+		rt_log("check_hitstate()\n");
+	     	nmg_rt_print_hitlist(hd);
 
-	while( a_hit != hd && 
-	     ((a_hit->in_out & 0x0f0)>>4) != NMG_RAY_STATE_OUTSIDE) {
+	    	rt_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
+	    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
+	}
+
+	while( a_hit != hd &&
+		((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE) {
+		
+
+		NMG_CK_HITMISS(a_hit);
 		/* this better be a 2-manifold face */
 		rt_log("%s[%d]: This better be a 2-manifold face\n",
 			__FILE__, __LINE__);
 		a_hit = RT_LIST_PNEXT(hitmiss, a_hit);
+		if (a_hit != hd) {
+			NMG_CK_HITMISS(a_hit);
+		}
 	}
-
+	if (a_hit == hd) return 1;
 
 	a_tbl = (struct nmg_ptbl *)
 		rt_calloc(1, sizeof(struct nmg_ptbl), "a_tbl");
@@ -1042,6 +1081,7 @@ struct hitmiss *hd;
 
 	/* check the state transition on the rest of the hit points */
 	while ((next_hit = RT_LIST_PNEXT(hitmiss, &a_hit->l)) != hd) {
+		NMG_CK_HITMISS(next_hit);
 		ibs = HMG_INBOUND_STATE(next_hit);
 		obs = HMG_OUTBOUND_STATE(a_hit);
 		if (ibs != obs) {
@@ -1053,9 +1093,12 @@ struct hitmiss *hd;
 			 */
 
 			nmg_tbl(a_tbl, TBL_RST, (long *)NULL);
+
+			NMG_CK_HITMISS(a_hit);
 			build_topo_list(a_hit->outbound_use, a_tbl);
 
 			nmg_tbl(next_tbl, TBL_RST, (long *)NULL);
+			NMG_CK_HITMISS(next_hit);
 			build_topo_list(next_hit->outbound_use, next_tbl);
 
 
@@ -1093,6 +1136,8 @@ struct hitmiss *hd;
 	nmg_tbl(a_tbl, TBL_FREE, (long *)NULL);
 	(void)rt_free( (char *)a_tbl, "a_tbl");
 	(void)rt_free( (char *)next_tbl, "next_tbl");
+
+	return 0;
 }
 
 
@@ -1100,6 +1145,9 @@ struct hitmiss *hd;
  *
  *	Obtain the list of ray segments which intersect with the nmg.
  *	This routine does all of the "work" for rt_nmg_shot()
+ *
+ *	Return:
+ *		# of segments added to list.
  */
 int
 nmg_ray_segs(rd)
@@ -1108,6 +1156,12 @@ struct ray_data	*rd;
 	struct hitmiss *a_hit;
 	int seg_count=0;
 	static int last_miss=0;
+
+#ifdef DO_LONGJMP
+	if (setjmp(env) != 0) {
+		return 0;
+	}
+#endif
 
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
@@ -1133,7 +1187,11 @@ struct ray_data	*rd;
 
 	last_miss = 0;
 
-	check_hitstate((struct hitmiss *)&rd->rd_hit);
+	if (check_hitstate((struct hitmiss *)&rd->rd_hit, rd)) {
+		NMG_FREE_HITLIST( &rd->rd_hit );
+		NMG_FREE_HITLIST( &rd->rd_miss );
+		return 0;
+	}
 
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 		rt_log("----------morphed nmg/ray hit list---------\n");
@@ -1145,7 +1203,6 @@ struct ray_data	*rd;
 
 
 	NMG_FREE_HITLIST( &rd->rd_hit );
-
 	NMG_FREE_HITLIST( &rd->rd_miss );
 
 
