@@ -2448,5 +2448,6 @@ char **argv;
     }
     while (db_lookup(dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
     Tcl_AppendResult(interp, bu_vls_addr(&obj_name), (char *) NULL);
+    bu_vls_free(&obj_name);
     return TCL_OK;
 }
