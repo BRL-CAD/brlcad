@@ -100,3 +100,11 @@ proc end_edit_callback {} {
     }
 }
 
+##- output_callback
+#
+# This is called when things need to be printed to the command window(s)
+#
+proc output_callback { str } {
+    distribute_text {} {} $str
+    mged_update 1
+}
