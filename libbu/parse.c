@@ -1515,10 +1515,7 @@ struct bu_vls *vls;
 				bu_vls_putc( vls, ' ' );
 
 				if( !*iptr )
-				{
-					bu_log( "Error: no '=' found for keyword in '%s'\n", in );
-					return( 1 );
-				}
+					break;
 
 				/* skip over '=' in input */
 				iptr++;
@@ -1830,6 +1827,13 @@ char *params;
 	int j;
 
 	len = bu_tcl_list_length( params );
+
+	if( len == 1 )
+	{
+		bu_vls_putc( vls, ' ' );
+		bu_vls_strcat( vls, params );
+		return( 0 );
+	}
 
 	if( len%2 )
 	{
