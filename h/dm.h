@@ -164,6 +164,7 @@ struct dm {
   vect_t dm_clipmin;		/* minimum clipping vector */
   vect_t dm_clipmax;		/* maximum clipping vector */
   int dm_debugLevel;		/* !0 means debugging */
+  int dm_perspective;		/* !0 means perspective on */
   int dm_zclip;			/* !0 means zclipping */
 };
 
@@ -177,7 +178,7 @@ struct dm {
      _dmp->dm_drawString2D(_dmp,_str,_x,_y,_size,_use_aspect)
 #define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2) _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
 #define DM_DRAW_POINT_2D(_dmp,_x,_y) _dmp->dm_drawPoint2D(_dmp,_x,_y)
-#define DM_DRAW_VLIST(_dmp,_vlist,_persp) _dmp->dm_drawVList(_dmp,_vlist,_persp)
+#define DM_DRAW_VLIST(_dmp,_vlist) _dmp->dm_drawVList(_dmp,_vlist)
 #define DM_SET_FGCOLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setFGColor(_dmp,_r,_g,_b,_strict)
 #define DM_SET_BGCOLOR(_dmp,_r,_g,_b) _dmp->dm_setBGColor(_dmp,_r,_g,_b)
 #define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
