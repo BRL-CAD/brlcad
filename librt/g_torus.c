@@ -260,13 +260,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_aradius = stp->st_bradius = tor->tor_r1 + r2;
 
 	/* Compute bounding RPP */
-#define TOR_MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
-			if( (ftemp = (c)) < (a) )  a = ftemp;\
-			if( ftemp > (b) )  b = ftemp; }
-
-#define TOR_MM(v)	TOR_MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
-		TOR_MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
-		TOR_MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
+#define TOR_MM(v)	VMINMAX( stp->st_min, stp->st_max, v );
 
 	/* Exterior radius is r1+r2;  rescale A and B here */
 	f = tor->tor_r1+r2;

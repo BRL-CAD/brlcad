@@ -358,15 +358,17 @@ register struct xray *rp;
  *  			S P L _ U V
  *  
  */
-spl_uv( stp, hitp, uvp )
+spl_uv( ap, stp, hitp, uvp )
+struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
-register fastf_t *uvp;
+register struct uvcoord *uvp;
 {
 	register struct surf *ell =
 		(struct surf *)stp->st_specific;
-	uvp[0] = .2;
-	uvp[1] = .2;
+	uvp->uv_u = .2;
+	uvp->uv_v = .2;
+	uvp->uv_du = uvp->uv_dv = 0;
 }
 /*** bsurf3 ***/
 

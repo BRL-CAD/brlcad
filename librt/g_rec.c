@@ -520,10 +520,11 @@ register struct xray *rp;
  */
 extern double rt_inv2pi;
 
-rec_uv( stp, hitp, uvp )
+rec_uv( ap, stp, hitp, uvp )
+struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
-register fastf_t *uvp;
+register struct uvcoord *uvp;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -540,23 +541,26 @@ register fastf_t *uvp;
 	switch( (int)hitp->hit_private )  {
 	case 0:
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
-		uvp[0] = acos(pprime[Y]) * rt_inv2pi;
-		uvp[1] = pprime[Z];		/* height */
+		uvp->uv_u = acos(pprime[Y]) * rt_inv2pi;
+		uvp->uv_v = pprime[Z];		/* height */
 		break;
 	case 1:
 		/* top plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp[0] = acos(pprime[Y]/len) * rt_inv2pi;
-		uvp[1] = len;		/* rim v = 1 */
+		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
+		uvp->uv_v = len;		/* rim v = 1 */
 		break;
 	case 2:
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp[0] = acos(pprime[Y]/len) * rt_inv2pi;
-		uvp[1] = 1 - len;	/* rim v = 0 */
+		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
+		uvp->uv_v = 1 - len;	/* rim v = 0 */
 		break;
 	}
 	/* Handle other half of acos() domain */
 	if( pprime[X] < 0 )
-		uvp[0] = 1.0 - uvp[0];
+		uvp->uv_u = 1.0 - uvp->uv_u;
+
+	/* uv_du should be relative to rotation, uv_dv relative to height */
+	uvp->uv_du = uvp->uv_dv = 0;
 }

@@ -237,13 +237,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_aradius = stp->st_bradius = sqrt(f);
 
 	/* Compute bounding RPP */
-#define ELL_MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
-			if( (ftemp = (c)) < (a) )  a = ftemp;\
-			if( ftemp > (b) )  b = ftemp; }
-
-#define ELL_MM(v)	ELL_MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
-		ELL_MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
-		ELL_MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
+#define ELL_MM(v)	VMINMAX( stp->st_min, stp->st_max, v );
 
 	/* There are 8 corners to the enclosing RPP;  find max and min */
 	VADD3( vbc, ell->ell_V, B, C );
@@ -361,15 +355,17 @@ register struct xray *rp;
 double rt_inv2pi =  0.15915494309189533619;		/* 1/(pi*2) */
 double rt_invpi = 0.31830988618379067153;	/* 1/pi */
 
-ell_uv( stp, hitp, uvp )
+ell_uv( ap, stp, hitp, uvp )
+struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
-register fastf_t *uvp;
+register struct uvcoord *uvp;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
 	LOCAL vect_t work;
 	LOCAL vect_t pprime;
+	LOCAL fastf_t r;
 
 	/* hit_point is on surface;  project back to unit sphere,
 	 * creating a vector from vertex to hit point which always
@@ -379,6 +375,11 @@ register fastf_t *uvp;
 	MAT4X3VEC( pprime, ell->ell_SoR, work );
 	/* Assert that pprime has unit length */
 
-	uvp[0] = atan2( pprime[Y], pprime[X] ) * rt_inv2pi + 0.5;
-	uvp[1] = asin( pprime[Z] ) * rt_invpi + 0.5;
+	uvp->uv_u = atan2( pprime[Y], pprime[X] ) * rt_inv2pi + 0.5;
+	uvp->uv_v = asin( pprime[Z] ) * rt_invpi + 0.5;
+
+	/* approximation: r / (circumference, 2 * pi * aradius) */
+	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+	uvp->uv_du = uvp->uv_dv =
+		rt_inv2pi * r / stp->st_aradius;
 }

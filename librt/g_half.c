@@ -63,7 +63,7 @@ vect_t new, old;
 	i = X;
 	if( fabs(old[Y])<fabs(old[i]) )  i=Y;
 	if( fabs(old[Z])<fabs(old[i]) )  i=Z;
-	VSET( another, 0, 0, 0 );
+	VSETALL( another, 0 );
 	another[i] = 1.0;
 	if( old[X] == 0 && old[Y] == 0 && old[Z] == 0 )  {
 		VMOVE( new, another );
@@ -111,8 +111,8 @@ matp_t mat;
 	VUNITIZE( halfp->half_Ybase );
 
 	/* No bounding sphere or bounding RPP is possible */
-	VSET( stp->st_min, -INFINITY,-INFINITY,-INFINITY);
-	VSET( stp->st_max,  INFINITY, INFINITY, INFINITY);
+	VSETALL( stp->st_min, -INFINITY);
+	VSETALL( stp->st_max,  INFINITY);
 
 	stp->st_aradius = INFINITY;
 	stp->st_bradius = INFINITY;
@@ -246,10 +246,11 @@ double x,y;
  *  Note that a "toroidal" map is established, varying each from
  *  0 up to 1 and then back down to 0 again.
  */
-hlf_uv( stp, hitp, uvp )
+hlf_uv( ap, stp, hitp, uvp )
+struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
-register fastf_t *uvp;
+register struct uvcoord *uvp;
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)hitp->hit_private;
@@ -262,23 +263,30 @@ register fastf_t *uvp;
 	if( f < 0 )  f = -f;
 	f = ffmod( f, 1.0 );
 	if( f < 0.5 )
-		uvp[0] = 2 * f;		/* 0..1 */
+		uvp->uv_u = 2 * f;		/* 0..1 */
 	else
-		uvp[0] = 2 * (1 - f);	/* 1..0 */
+		uvp->uv_u = 2 * (1 - f);	/* 1..0 */
 
 	f = VDOT( P_A, halfp->half_Ybase )/10000;
 	if( f < 0 )  f = -f;
 	f = ffmod( f, 1.0 );
 	if( f < 0.5 )
-		uvp[1] = 2 * f;		/* 0..1 */
+		uvp->uv_v = 2 * f;		/* 0..1 */
 	else
-		uvp[1] = 2 * (1 - f);	/* 1..0 */
+		uvp->uv_v = 2 * (1 - f);	/* 1..0 */
 
-	if( uvp[0] < 0 || uvp[1] < 0 )  {
+	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
 		if( rt_g.debug )
-			rt_log("half_uv: bad uv=%f,%f\n", uvp[0], uvp[1]);
+			rt_log("half_uv: bad uv=%f,%f\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
-		if( uvp[0] < 0 )  uvp[0] = (-uvp[0]);
-		if( uvp[1] < 0 )  uvp[1] = (-uvp[1]);
+		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
+		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
+	}
+	
+	uvp->uv_du = uvp->uv_dv =
+		(ap->a_rbeam + ap->a_diverge * hitp->hit_dist) / (10000/2);
+	if( uvp->uv_du < 0 || uvp->uv_dv < 0 )  {
+		rt_pr_hit( "hlf_uv", hitp );
+		uvp->uv_du = uvp->uv_dv = 0;
 	}
 }

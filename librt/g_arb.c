@@ -99,7 +99,7 @@ matp_t mat;
 	 * Convert from vector to point notation IN PLACE
 	 * by rotating vectors and adding base vector.
 	 */
-	VSET( sum, 0, 0, 0 );
+	VSETALL( sum, 0 );
 	op = &vec[1*ELEMENTS_PER_VECT];
 	for( i=1; i<8; i++ )  {
 		VADD2( work, &vec[0], op );
@@ -446,24 +446,29 @@ register struct xray *rp;
  *  u extends along the Xbasis direction defined by B-A,
  *  v extends along the "Ybasis" direction defined by (B-A)xN.
  */
-arb_uv( stp, hitp, uvp )
+arb_uv( ap, stp, hitp, uvp )
+struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
-register fastf_t *uvp;
+register struct uvcoord *uvp;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)hitp->hit_private;
 	LOCAL vect_t P_A;
+	LOCAL fastf_t r;
 
 	VSUB2( P_A, hitp->hit_point, arbp->arb_A );
 	/* Flipping v is an artifact of how the faces are built */
-	uvp[0] = VDOT( P_A, arbp->arb_Xbasis ) * arbp->arb_XXlen;
-	uvp[1] = 1.0 - ( VDOT( P_A, arbp->arb_Ybasis ) * arbp->arb_YYlen );
-	if( uvp[0] < 0 || uvp[1] < 0 )  {
+	uvp->uv_u = VDOT( P_A, arbp->arb_Xbasis ) * arbp->arb_XXlen;
+	uvp->uv_v = 1.0 - ( VDOT( P_A, arbp->arb_Ybasis ) * arbp->arb_YYlen );
+	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
 		if( rt_g.debug )
-			rt_log("arb_uv: bad uv=%f,%f\n", uvp[0], uvp[1]);
+			rt_log("arb_uv: bad uv=%f,%f\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
-		if( uvp[0] < 0 )  uvp[0] = (-uvp[0]);
-		if( uvp[1] < 0 )  uvp[1] = (-uvp[1]);
+		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
+		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
 	}
+	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+	uvp->uv_du = r * arbp->arb_XXlen;
+	uvp->uv_dv = r * arbp->arb_YYlen;
 }

@@ -38,7 +38,6 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 
 static void	tgc_rotate(), tgc_shear(), tgc_sort();
 static void	tgc_scale();
-static void	tgc_minmax();
 
 struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
@@ -249,28 +248,29 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		/* This may not be minimal, but does fully contain the TGC */
 		VADD2( temp, tgc->tgc_V, A );
 		VADD2( work, temp, B );
-		tgc_minmax( stp, work );	/* V + A + B */
+#define TGC_MM(v)	VMINMAX( stp->st_min, stp->st_max, v );
+		TGC_MM( work );	/* V + A + B */
 		VSUB2( work, temp, B );
-		tgc_minmax( stp, work );	/* V + A - B */
+		TGC_MM( work );	/* V + A - B */
 
 		VSUB2( temp, tgc->tgc_V, A );
 		VADD2( work, temp, B );
-		tgc_minmax( stp, work );	/* V - A + B */
+		TGC_MM( work );	/* V - A + B */
 		VSUB2( work, temp, B );
-		tgc_minmax( stp, work );	/* V - A - B */
+		TGC_MM( work );	/* V - A - B */
 
 		VADD3( temp, tgc->tgc_V, Hv, C );
 		VADD2( work, temp, D );
-		tgc_minmax( stp, work );	/* V + H + C + D */
+		TGC_MM( work );	/* V + H + C + D */
 		VSUB2( work, temp, D );
-		tgc_minmax( stp, work );	/* V + H + C - D */
+		TGC_MM( work );	/* V + H + C - D */
 
 		VADD2( temp, tgc->tgc_V, Hv );
 		VSUB2( temp, temp, C );
 		VADD2( work, temp, D );
-		tgc_minmax( stp, work );	/* V + H - C + D */
+		TGC_MM( work );	/* V + H - C + D */
 		VSUB2( work, temp, D );
-		tgc_minmax( stp, work );	/* V + H - C - D */
+		TGC_MM( work );	/* V + H - C - D */
 
 		VSET( stp->st_center,
 			(stp->st_max[X] + stp->st_min[X])/2,
@@ -890,21 +890,6 @@ register struct xray *rp;
 			(hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q*Q) );
 	MAT4X3VEC( hitp->hit_normal, tgc->tgc_invRtShSc, stdnorm );
 	VUNITIZE( hitp->hit_normal );
-}
-
-#define TGC_MINMAX(a,b,c)	{if( (ftemp = (c)) < (a) )  a = ftemp;\
-			if( ftemp > (b) )  b = ftemp; }
-
-static void
-tgc_minmax(stp, v)
-register struct soltab *stp;
-vectp_t v;
-{
-	FAST fastf_t ftemp;
-
-	TGC_MINMAX( stp->st_min[X], stp->st_max[X], v[X] );
-	TGC_MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] );
-	TGC_MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] );
 }
 
 tgc_uv()

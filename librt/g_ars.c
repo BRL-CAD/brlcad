@@ -31,10 +31,6 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 
 /* Describe algorithm here */
 
-#define ARSMINMAX(a,b,c)	{ FAST fastf_t ftemp;\
-			if( (ftemp = (c)) < (a) )  a = ftemp;\
-			if( ftemp > (b) )  b = ftemp; }
-
 extern fastf_t *rd_curve();
 
 /*
@@ -109,18 +105,16 @@ struct solidrec *sp;
 	 * Compute bounding sphere.
 	 * Find min and max of the point co-ordinates.
 	 */
-	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
-	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
+	VSETALL( stp->st_max, -INFINITY );
+	VSETALL( stp->st_min,  INFINITY );
 
 	for( i = 0; i < ncurves; i++ )  {
 		register fastf_t *v;
 
 		v = curves[i];
 		for( j = 0; j < pts_per_curve; j++ )  {
-			ARSMINMAX( stp->st_min[X], stp->st_max[X], *v++ );
-			ARSMINMAX( stp->st_min[Y], stp->st_max[Y], *v++ );
-			ARSMINMAX( stp->st_min[Z], stp->st_max[Z], *v++ );
-			v++;		/* depends on ELEMENTS_PER_VECT */
+			VMINMAX( stp->st_min, stp->st_max, v );
+			v += ELEMENTS_PER_VECT;
 		}
 	}
 	VSET( stp->st_center,
