@@ -62,6 +62,7 @@ extern void init_qray();			/* in qray.c */
 extern int gui_setup();				/* in attach.c */
 extern int get_edit_solid_menus();		/* in edsol.c */
 extern int mged_default_dlist;			/* in attach.c */
+extern int classic_mged;			/* in ged.c */
 
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
@@ -707,16 +708,17 @@ cmd_setup()
 		(void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), ctp->ct_func,
 					(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
 	}
-	bu_vls_free(&temp);
 
 	(void)Tcl_CreateCommand(interp, "get_dbip", cmd_get_ptr,
 				(ClientData)&dbip, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "get_edit_solid_menus", get_edit_solid_menus,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-	Tcl_LinkVar(interp, "glob_compat_mode", (char *)&glob_compat_mode,
+	bu_vls_strcpy(&temp, "glob_compat_mode");
+	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&glob_compat_mode,
 		    TCL_LINK_BOOLEAN);
-	Tcl_LinkVar(interp, "output_as_return", (char *)&output_as_return,
+	bu_vls_strcpy(&temp, "output_as_return");
+	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&output_as_return,
 		    TCL_LINK_BOOLEAN);
 
 	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
@@ -725,6 +727,8 @@ cmd_setup()
 	rt_tcl_setup( interp );
 
 	tkwin = NULL;
+
+	bu_vls_free(&temp);
 }
 
 
@@ -1387,11 +1391,11 @@ f_comm(clientData, interp, argc, argv)
 	register int pid, rpid;
 	int retcode;
 
-	if(argc < 0 || MAXARGS < argc){
+	if(argc != 1 || !classic_mged || curr_cmd_list != &head_cmd_list){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help ?");
+		bu_vls_printf(&vls, "help %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -2037,11 +2041,17 @@ void
 mged_global_variable_setup(interp)
 Tcl_Interp *interp;
 {
-	Tcl_LinkVar(interp, "mged_default(dlist)", (char *)&mged_default_dlist, TCL_LINK_INT);
+	struct bu_vls vls;
 
-	Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
-	Tcl_LinkVar(interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
-	Tcl_LinkVar(interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "mged_default(dlist)");
+	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&mged_default_dlist, TCL_LINK_INT);
+	bu_vls_strcpy(&vls, "edit_class");
+	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&es_edclass, TCL_LINK_INT);
+	bu_vls_strcpy(&vls, "edit_solid_flag");
+	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&es_edflag, TCL_LINK_INT);
+	bu_vls_strcpy(&vls, "edit_object_flag");
+	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&edobj, TCL_LINK_INT);
 
 	bu_vls_init(&edit_info_vls);
 	bu_vls_strcpy(&edit_info_vls, "edit_info");
