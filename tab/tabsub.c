@@ -293,6 +293,25 @@ int	nwords;
 		out_mat( mat, stdout );
 		return(0);
 	}
+	if( strcmp( words[0], "ae" ) == 0 )  {
+		mat_t	mat;
+		fastf_t	az, el, twist;
+
+		if( nwords < 3 )  return(-1);
+		/* Expects azimuth, elev, optional twist */
+		az = atof(words[1]);
+		el = atof(words[2]);
+		if( nwords == 3 )
+			twist = 0.0;
+		else
+			twist = atof(words[3]);
+fprintf(stderr,"az=%g, el=%g, twist=%g\n", az, el, twist);
+		mat_idn( mat );
+		/* XXX does not take twist, for now XXX */
+		mat_ae( mat, az, el );
+		out_mat( mat, stdout );
+		return(0);
+	}
 	return(-2);		/* Unknown keyword */
 }
 
