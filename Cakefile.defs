@@ -1071,8 +1071,9 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 #	if 1
 /*		Cray ANSI Standard C */
-#		define	CC	/bin/scc
-#		define	CC_DEFS	-hvreport
+#		define	CC	/bin/cc
+#		define	CC_OPTS	-h limitlm
+#		define	OPTIMIZER -O 3
 #	else
 #		if 1
 /*			Plain old /bin/cc */
@@ -1088,7 +1089,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBRT_LIBES	-lmt
 #	define	LGT_CONFIG	-Dcray
-#	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
+#	define	LIBPKG_LIBES	-lnet
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
 
@@ -1096,10 +1097,10 @@ set -S2 "/bin/sh"
 
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	LIBFB_LIBES	LIBPKG -lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11 -lnet
+#	define	MGED_LIBES	-lX11 -lnet
 #endif
 
 #if defined(__CAKE__c1)
