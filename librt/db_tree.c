@@ -271,6 +271,9 @@ CONST struct member	*mp;
 	for( anp = mdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
 		register int i = anp->an_path.fp_len-1;
 		register int j = pathp->fp_len-1;
+		register int anim_flag;
+		
+		anim_flag = 1;
 
 		if (rt_g.debug & DEBUG_ANIM) {
 			char	*str;
@@ -286,12 +289,13 @@ CONST struct member	*mp;
 					     anp->an_path.fp_names[i]->d_namep,
 					     pathp->fp_names[j]->d_namep);
 				}
-				goto next_one;
+				anim_flag = 0;
+				break;
 			}
 		}
 		/* Perhaps tsp->ts_mater should be just tsp someday? */
-		db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
-next_one:	;
+		if (anim_flag)
+			db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
 	}
 
 	mat_mul(tsp->ts_mat, old_xlate, xmat);
