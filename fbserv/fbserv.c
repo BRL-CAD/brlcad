@@ -24,7 +24,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
-#include <varargs.h>
+#if __STDC__
+# include <stdarg.h>
+#else
+# include <varargs.h>
+#endif
 
 #ifdef BSD
 # ifndef CRAY2
@@ -47,10 +51,6 @@ extern	char	*malloc();
 extern	int	_disk_enable;
 
 static	void	comm_error();
-void		fb_log();
-#ifdef CRAY
-void		rfbd_log();
-#endif
 
 static	struct	pkg_conn *rem_pcp;
 static	FBIO	*fbp;
@@ -159,13 +159,8 @@ pkgfoo(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-#ifdef CRAY
-	rfbd_log( "rfbd: unable to handle message type %d\n",
-		pcp->pkc_type );
-#else
 	fb_log( "rfbd: unable to handle message type %d\n",
 		pcp->pkc_type );
-#endif
 	(void)free(buf);
 }
 
@@ -191,11 +186,7 @@ char *buf;
 #if 0
 	{	char s[81];
 sprintf( s, "Device: \"%s\"", &buf[8] );
-#ifdef CRAY
-rfbd_log(s);
-#else
 fb_log(s);
-#endif
 	}
 #endif
 	if( fbp == FBIO_NULL )  {
@@ -270,11 +261,7 @@ char *buf;
 		if( buflen < 1024*sizeof(RGBpixel) )
 			buflen = 1024*sizeof(RGBpixel);
 		if( (scanbuf = malloc( buflen )) == NULL ) {
-#ifdef CRAY
-			rfbd_log("fb_read: malloc failed!");
-#else
 			fb_log("fb_read: malloc failed!");
-#endif
 			if( buf ) (void)free(buf);
 			buflen = 0;
 			return;
@@ -339,11 +326,7 @@ char *buf;
 		if( buflen < 1024*sizeof(RGBpixel) )
 			buflen = 1024*sizeof(RGBpixel);
 		if( (scanbuf = malloc( buflen )) == NULL ) {
-#ifdef CRAY
-			rfbd_log("fb_read: malloc failed!");
-#else
 			fb_log("fb_read: malloc failed!");
-#endif
 			if( buf ) (void)free(buf);
 			buflen = 0;
 			return;
@@ -525,14 +508,28 @@ char *buf;
  *  it serves to highlight the the grossness of the varargs package
  *  requiring the size of a parameter to be known at compile time.
  */
+#if __STDC__
+void
+fb_log( char *fmt, ... )
+{
+	va_list ap;
+	char	outbuf[4096];			/* final output string */
+	int	want, got;
+
+	va_start( ap, fmt );
+	(void)vsprintf( outbuf, fmt, ap );
+	va_end(ap);
+
+	want = strlen(outbuf)+1;
+	if( (got = pkg_send( MSG_ERROR, outbuf, want, rem_pcp )) != want )  {
+		comm_error("pkg_send error in fb_log, message was:\n");
+		comm_error(outbuf);
+	}
+}
+#else
 /* VARARGS */
 void
-#ifdef CRAY
-/* Segldr can't handle the multiple defines of fb_log here & in libfb */
-rfbd_log( va_alist )
-#else
 fb_log( va_alist )
-#endif
 va_dcl
 {
 	va_list ap;
@@ -635,3 +632,4 @@ va_dcl
 	}
 	return;
 }
+#endif /* !__STDC__ */
