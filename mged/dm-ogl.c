@@ -247,6 +247,12 @@ XEvent *eventPtr;
 
     dirty = 1;
     goto end;
+  } else if( eventPtr->type == MapNotify ){
+    mapped = 1;
+    goto end;
+  } else if( eventPtr->type == UnmapNotify ){
+    mapped = 0;
+    goto end;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;
 
