@@ -227,7 +227,7 @@ struct application	*ap;
 			pp->pt_outseg = segp;
 			pp->pt_outhit = &segp->seg_out;
 			APPEND_PT( pp, PartHdp );
-			if(rt_g.debug&DEBUG_PARTITION) rt_log("First partition\n");
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("No partitions yet, segment forms first partition\n");
 			goto done_weave;
 		}
 
@@ -244,7 +244,7 @@ struct application	*ap;
 			 * or beyond last partitions end.  Make new partition.
 			 */
 			if(rt_g.debug&DEBUG_PARTITION)  {
-				rt_log("seg starts beyond last part end. (%g,%g) Appending new part.\n",
+				rt_log("seg starts beyond last partition end. (%g,%g) Appending new partition\n",
 					PartHdp->pt_back->pt_inhit->hit_dist,
 					PartHdp->pt_back->pt_outhit->hit_dist);
 			}
@@ -272,7 +272,7 @@ struct application	*ap;
 				 * Advance to next partition.
 				 */
 				if(rt_g.debug&DEBUG_PARTITION)  {
-					rt_log("seg start beyond part end, skipping.  (%g,%g)\n",
+					rt_log("seg start beyond partition end, skipping.  (%g,%g)\n",
 						pp->pt_inhit->hit_dist,
 						pp->pt_outhit->hit_dist);
 				}
@@ -315,7 +315,7 @@ struct application	*ap;
 				 */
 				GET_PT( rtip, newpp, res );
 				COPY_PT( rtip, newpp, pp );
-				/* new part. is the span before seg joins partition */
+				/* new partition is the span before seg joins partition */
 				pp->pt_inseg = segp;
 				pp->pt_inhit = &segp->seg_in;
 				pp->pt_inflip = 0;
@@ -373,7 +373,7 @@ equal_start:
 					lasthit = pp->pt_outhit;
 					lastseg = pp->pt_outseg;
 					lastflip = 1;
-					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg spans p and beyond\n");
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg spans partition and extends beyond it\n");
 					continue;
 				}
 				if( diff > -(tol_dist) )  {
@@ -408,7 +408,7 @@ equal_start:
 					pp->pt_inhit = &segp->seg_out;
 					pp->pt_inflip = 1;
 					INSERT_PT( newpp, pp );
-					if(rt_g.debug&DEBUG_PARTITION) rt_log("start together, seg shorter\n");
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("start together, seg shorter than partition\n");
 					goto done_weave;
 				}
 				/* NOTREACHED */
@@ -465,7 +465,7 @@ equal_start:
 					VMOVE(newpp->pt_outhit->hit_point, pp->pt_inhit->hit_point);
 					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
-					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg ends at p start, fuse\n");
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg ends at partition start, fuse\n");
 					goto done_weave;
 				}
 				/*
@@ -483,7 +483,7 @@ equal_start:
 				lasthit = pp->pt_inhit;
 				lastflip = newpp->pt_outflip;
 				INSERT_PT( newpp, pp );
-				if(rt_g.debug&DEBUG_PARTITION) rt_log("insert seg before p start, ends after p ends\n");
+				if(rt_g.debug&DEBUG_PARTITION) rt_log("insert seg before p start, ends after p ends.  Making new partition for initial portion.\n");
 				goto equal_start;
 			}
 			/* NOTREACHED */
@@ -495,7 +495,7 @@ equal_start:
 		 *  	PPPPP
 		 *  	     SSSSS
 		 */
-		if(rt_g.debug&DEBUG_PARTITION) rt_log("seg extends beyond p end\n");
+		if(rt_g.debug&DEBUG_PARTITION) rt_log("seg extends beyond partition end\n");
 		GET_PT_INIT( rtip, newpp, res );
 		BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 		newpp->pt_inseg = lastseg;
@@ -732,7 +732,7 @@ struct application *ap;
 		    pp->pt_outhit->hit_dist <= 0.001 /* milimeters */ )  {
 			register struct partition *zap_pp;
 			if(rt_g.debug&DEBUG_PARTITION)rt_log(
-				"discarding early part x%x, out dist=%g\n",
+				"discarding early partition x%x, out dist=%g\n",
 				pp, pp->pt_outhit->hit_dist);
 			zap_pp = pp;
 			pp = pp->pt_forw;
