@@ -6,6 +6,12 @@ history or BRL-CAD prior to release 5.0 is covered in doc/history.txt,
 see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
+----------------------------------------------------------------------
+--- 2005-02-XX  Release 7.X.X                                      ---
+----------------------------------------------------------------------
+
+* update to zlib 1.2.2 - Sean Morrison
+
 
 ----------------------------------------------------------------------
 --- 2005-01-25  Release 7.0.4                                      ---
