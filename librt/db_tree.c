@@ -2042,6 +2042,9 @@ genptr_t	arg;
  *			For example:  rt_initial_tree_state,
  *			and mged_initial_tree_state.
  *
+ * These parameters are pointers to callback routines.
+ * If NULL, they won't be called.
+ *
  *	reg_start_func	Called at beginning of each region, before visiting
  *			any nodes within the region.
  *			Return 0 if region should be skipped without recursing,
