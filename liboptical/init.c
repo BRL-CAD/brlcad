@@ -72,7 +72,7 @@ struct mfuncs	**headp;
 	MFUNCS( fire_mfuncs );
 	MFUNCS( brdf_mfuncs );
 	MFUNCS( gauss_mfuncs );
-	MFUNCS( gravel_mfuncs );
+	MFUNCS( noise_mfuncs );
 	MFUNCS( prj_mfuncs );
 	MFUNCS( grass_mfuncs );
 }

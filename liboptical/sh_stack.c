@@ -147,10 +147,10 @@ struct mfuncs	**headp;
 				return( 0 );
 			}
 			/* add one */
-			if( stk_dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
-				rtip, headp) == 0 )  {
-				inputs |= sp->mfuncs[i]->mf_inputs;
-				i++;
+			if( stk_dosetup(start, rp, &sp->udata[i],
+				&sp->mfuncs[i], rtip, headp) == 0 )  {
+					inputs |= sp->mfuncs[i]->mf_inputs;
+					i++;
 			} else {
 				/* XXX else clear entry? */
 				rt_log("stk_setup problem\n");
@@ -309,7 +309,10 @@ found:
 	*mpp = (char *)mfp;
 	*dpp = (char *)0;
 	RT_VLS_INIT( &arg );
-	rt_vls_strcat( &arg, ++cp );
+	if (*cp != '\0' )
+		rt_vls_strcat( &arg, ++cp );
+	if( rdebug&RDEBUG_SHADE)
+		bu_log("calling %s with %s\n", mfp->mf_name, bu_vls_addr(&arg));
 	if( mfp->mf_setup( rp, &arg, dpp, mfp, rtip, headp ) < 0 )  {
 		/* What to do if setup fails? */
 		return(-1);		/* BAD */
