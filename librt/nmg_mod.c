@@ -349,7 +349,7 @@ CONST struct rt_tol *tol;
 	/* There really shouldn't be a lone vertex by now */
 	if( s->vu_p )  rt_log("nmg_rm_redundancies() lone vertex?\n");
 
-	/* get rid of redundant loops in same fu OT_SAME within an OT_SAME, etc. */
+	/* get rid of redundant loops in same fu (OT_SAME within an OT_SAME), etc. */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 		NMG_CK_FACEUSE( fu );
@@ -395,7 +395,7 @@ CONST struct rt_tol *tol;
 
 				/* lu1 is within lu and has same orientation.
 				 * Check if there is a loop with opposite
-				 * orientation beyween them.
+				 * orientation between them.
 				 */
 				found = 0;
 				for( RT_LIST_FOR( lu2, loopuse, &fu->lu_hd ) )
@@ -425,6 +425,47 @@ CONST struct rt_tol *tol;
 					/* lu1 is a redundant loop */
 					(void) nmg_klu( lu1 );
 				}
+				lu1 = next_lu;
+			}
+		}
+	}
+
+	/* get rid of redundant loops in same fu where there are two identical
+	 * loops, but with opposite orientation
+	 */
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct loopuse *lu1;
+
+			if( lu->orientation != OT_SAME )
+				continue;
+
+			lu1 = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+			while( RT_LIST_NOT_HEAD( &lu1->l, &fu->lu_hd ) )
+			{
+				int class;
+				struct loopuse *next_lu;
+
+				next_lu = RT_LIST_PNEXT( loopuse, &lu1->l );
+
+				if( lu1 == lu || lu1->orientation != OT_OPPOSITE )
+				{
+					lu1 = next_lu;
+					continue;
+				}
+
+				class = nmg_classify_lu_lu( lu, lu1, tol );
+
+				if( class == NMG_CLASS_AonBshared )
+				{
+					nmg_klu( lu1 ); /* lu1 is redudndant */
+				}
+
 				lu1 = next_lu;
 			}
 		}
@@ -3781,10 +3822,12 @@ CONST struct rt_tol	*tol;
 	}
 
 	nmg_loop_plane_newell( lu, lu_pl );
+#if 0
 	if( lu_pl[X] == 0.0 && lu_pl[Y] == 0.0 && lu_pl[Z] == 0.0 )
 	{
 		rt_log( "Loop is a crack\n" );
 	}
+#endif
 	if( VDOT( lu_pl, norm ) < 0.0 )
 		geom_orient = OT_OPPOSITE;
 	else
