@@ -30,8 +30,16 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
+#include "conf.h"
+
+#include <stdio.h>
 #include <string.h>
-#include "./comb_bool.h"
+
+#include "../mged/comb_bool.h"
+
+/* The following is needed to get "gettxt()" correctly on IRIX platforms */
+#undef _POSIX_SOURCE 
+
 %}
 
 /*	Token representations
@@ -109,9 +117,10 @@ tree		: TKN_OBJECT
 
 extern char	*bool_op_lexeme[];
 
-#include "comb_bool.c"
+/* ??? #include "../mged/comb_bool.c" */
 
-void yyerror (char *s)
+void yyerror (s)
+char *s;
 {
-    (void) fprintf(stderr, "Error: %s at literal '%s'\n", s, yytext);
+    (void) fprintf(stderr, "Error: %s\n", s);
 }
