@@ -342,6 +342,12 @@ register struct partition *PartHeadp;
 	 */
 
 	posp->c_id = pp->pt_regionp->reg_regionid;
+
+	/* make sure that if there is a hit, the region_id is not the
+	 * same as the background.  If it is, set to 1.
+	 */
+	if(posp->c_id == 0)
+		posp->c_id = 1;
 	posp->c_dist = pp->pt_inhit->hit_dist;
 	VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
 	VMOVE(posp->c_normal, pp->pt_inhit->hit_normal);
