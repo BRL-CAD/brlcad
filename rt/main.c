@@ -28,6 +28,10 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./mathtab.h"
 
+#ifdef PARALLEL
+# include "fb.h"
+#endif
+
 #ifdef HEP
 # include <synch.h>
 # undef stderr
@@ -124,7 +128,7 @@ char **argv;
 	}
 
 	argc--; argv++;
-	while( argv[0][0] == '-' )  {
+	while( argc > 0 && argv[0][0] == '-' )  {
 		switch( argv[0][1] )  {
 		case 'S':
 			stereo = 1;
@@ -273,7 +277,10 @@ char **argv;
 		rt_get_seg();
 		rt_get_bitv();
 	}
+#ifdef HEP
+	/* This isn't useful with the Caltech malloc() in most systems */
 	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
+#endif
 
 	fprintf(stderr,"PARALLEL: %d workers\n", npsw );
 	for( x=0; x<npsw; x++ )  {
@@ -285,7 +292,7 @@ char **argv;
 		taskcontrol[x].tsk_value = x;
 #endif
 	}
-	fprintf(stderr,"creates done, DMend=%d.\n",sbrk(0) );
+	fprintf(stderr,"initial memory use=%d.\n",sbrk(0) );
 #endif
 
 do_more:
@@ -321,16 +328,16 @@ do_more:
 		char number[128];
 
 		/* Visible part is from -1 to +1 in view space */
-		if( scanf( "%s", number ) != 1 )  goto out;
+		if( fscanf( stdin, "%s", number ) != 1 )  goto out;
 		viewsize = atof(number);
-		if( scanf( "%s", number ) != 1 )  goto out;
+		if( fscanf( stdin, "%s", number ) != 1 )  goto out;
 		eye_model[X] = atof(number);
-		if( scanf( "%s", number ) != 1 )  goto out;
+		if( fscanf( stdin, "%s", number ) != 1 )  goto out;
 		eye_model[Y] = atof(number);
-		if( scanf( "%s", number ) != 1 )  goto out;
+		if( fscanf( stdin, "%s", number ) != 1 )  goto out;
 		eye_model[Z] = atof(number);
 		for( i=0; i < 16; i++ )  {
-			if( scanf( "%s", number ) != 1 )
+			if( fscanf( stdin, "%s", number ) != 1 )
 				goto out;
 			Viewrotscale[i] = atof(number);
 		}
@@ -414,9 +421,15 @@ do_more:
 		framenumber-1,
 		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
 #ifdef PARALLEL
-	if( write( fileno(outfp), scanbuf, npts*npts*3 ) != npts*npts*3 )  {
+	{
+		extern FBIO *fbp;
+	if( outfp != NULL &&
+	    write( fileno(outfp), scanbuf, npts*npts*3 ) != npts*npts*3 )  {
 		perror("pixel output write");
 		goto out;
+	}
+	if( fbp )
+		fb_write( fbp, 0, 0, scanbuf, npts*npts*3 );
 	}
 #endif
 
@@ -460,16 +473,16 @@ double a,b;
 }
 #endif
 
-#ifdef PARALLEL
 #ifdef alliant
-
 RES_ACQUIRE(p)
 register int *p;
 {
+#ifdef PARALLEL
 	asm("loop:");
 	while( *p )  ;
 	asm("	tas	a5@");
 	asm("	bne	loop");
+#endif
 }
 #ifdef never
 MAT4X3PNT( o, m, i )
@@ -564,5 +577,4 @@ register fastf_t *i;
 #endif
 }
 #endif never
-#endif
-#endif
+#endif alliant
