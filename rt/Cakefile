@@ -24,7 +24,7 @@
 	material refract sh_stack \
 	sh_plastic sh_cook wray sh_spm sh_light \
 	turb sh_marble sh_wood sh_stxt sh_points sh_toyota \
-	sh_Nfbm sh_camo sh_cloud3d sh_air sh_rtrans
+	sh_Nfbm sh_camo sh_scloud sh_air sh_rtrans sh_fire sh_cs
 
 /*  The "top-half" (user interface) for the RT family of programs */
 #define RTUIF	main.o opt.o do.o worker.o mathtab.o
@@ -35,7 +35,8 @@
 		shade.o sh_text.o sh_cloud.o sh_stack.o sh_plastic.o \
 		sh_cook.o sh_spm.o sh_light.o turb.o sh_marble.o sh_wood.o \
 		sh_stxt.o sh_points.o sh_toyota.o \
-		sh_Nfbm.o sh_camo.o sh_cloud3d.o sh_air.o sh_rtrans.o
+		sh_Nfbm.o sh_camo.o sh_scloud.o sh_air.o sh_rtrans.o \
+		sh_fire.o sh_cs.o
 
 rt:	RT_OBJ LIBRT_DEP LIBFB_DEP
 	sh ../newvers.sh version "Ray-Tracer"
@@ -141,5 +142,16 @@ rtregis:	rtregis.o read-rtlog.o LIBRT_DEP
 
 rtscale:	rtscale.o read-rtlog.o LIBRT_DEP LIBPLOT_DEP
 	CC LDFLAGS rtscale.o read-rtlog.o LIBRT LIBRT_LIBES LIBWDB LIBPLOT LIBES -o rtscale
+
+#define RTTHERM_OBJ	RTUIF viewtherm.o wray.o spectrum.o
+
+rttherm:	RTTHERM_OBJ LIBRT_DEP LIBFB_DEP
+	sh ../newvers.sh version "Thermal RT"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTTHERM_OBJ vers.o LIBRT LIBFB LIBFB_LIBES LIBRT_LIBES LIBES -o rttherm
+
+/* Temp hack -Mike */
+disp:	disp.o LIBRT_DEP LIBFB_DEP spectrum.o
+	CC LDFLAGS disp.o spectrum.o LIBRT LIBRT_LIBES LIBWDB LIBPLOT LIBFB LIBFB_LIBES LIBES -o disp
 
 #include "../Cakefile.rules"
