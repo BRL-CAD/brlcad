@@ -450,8 +450,10 @@ XEvent *eventPtr;
 
     if (eventPtr->type == Expose || eventPtr->type == ConfigureNotify) {
 	if (eventPtr->xexpose.count == 0) {
-	    height = Tk_Height(xtkwin);
-	    width = Tk_Width(xtkwin);
+            XWindowAttributes xwa;
+            XGetWindowAttributes( dpy, win, &xwa );
+            height = xwa.height;
+            width = xwa.width;
 	    rt_vls_printf( &dm_values.dv_string, "refresh\n" );
 	}
     } else if( eventPtr->type == MotionNotify ) {
@@ -588,6 +590,10 @@ F	Toggle faceplate\n\
 	    }
 	}
     } else {
+	XWindowAttributes xwa;
+	XGetWindowAttributes( dpy, win, &xwa );
+	height = xwa.height;
+	width = xwa.width;
 	return 1;
     }
 
