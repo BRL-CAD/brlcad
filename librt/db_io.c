@@ -376,7 +376,7 @@ register struct rt_external	*ep;
 {
 	RT_CK_EXTERNAL(ep);
 	if( ep->ext_buf )  {
-		rt_free( ep->ext_buf, "db_external buf" );
+		rt_free( ep->ext_buf, "db_get_ext ext_buf" );
 		ep->ext_buf = GENPTR_NULL;
 	}
 }
