@@ -74,6 +74,7 @@ tp_setup()
  */
 void
 tp_2symbol( fp, string, x, y, scale, theta )
+FILE	*fp;
 char	*string;		/* string of chars to be plotted */
 double	x, y;			/* x,y of lower left corner of 1st char */
 double	scale;			/* scale factor to change 1x1 char sz */
@@ -89,8 +90,9 @@ double	theta;			/* degrees ccw from X-axis */
 
 void
 tp_3symbol( fp, string, origin, rot, scale )
+FILE	*fp;
 char	*string;		/* string of chars to be plotted */
-vect_t	origin;			/* lower left corner of 1st char */
+point_t	origin;			/* lower left corner of 1st char */
 mat_t	rot;			/* Transform matrix (WARNING: may xlate) */
 double	scale;			/* scale factor to change 1x1 char sz */
 {
