@@ -50,6 +50,32 @@ char	*title;
 }
 
 /*
+ *			M K _ R P P
+ *
+ *  Make a right parallelpiped.  Specified by minXYZ, maxXYZ.
+ */
+mk_rpp( fp, name, min, max )
+FILE	*fp;
+char	*name;
+point_t	min, max;
+{
+	register int i;
+	point_t	pt8[8];
+
+	VSET( pt8[0], min[X], min[Y], min[Z] );
+	VSET( pt8[1], max[X], min[Y], min[Z] );
+	VSET( pt8[2], max[X], max[Y], min[Z] );
+	VSET( pt8[3], min[X], max[Y], min[Z] );
+
+	VSET( pt8[4], min[X], min[Y], max[Z] );
+	VSET( pt8[5], max[X], min[Y], max[Z] );
+	VSET( pt8[6], max[X], max[Y], max[Z] );
+	VSET( pt8[7], min[X], max[Y], max[Z] );
+
+	mk_arb8( fp, name, pt8 );
+}
+
+/*
  *			M K _ A R B 4
  */
 mk_arb4( fp, name, pts )
@@ -279,4 +305,55 @@ mat_t	mat;
 	for( i=0; i<16; i++ )
 		rec.M.m_mat[i] = mat[i];
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+}
+
+/*
+ *			M K _ P O L Y S O L I D
+ *
+ *  Make the header record for a polygon solid.
+ *  Must be followed by 1 or more mk_facet() calls before
+ *  any other mk_* routines
+ */
+mk_polysolid( fp, name )
+FILE	*fp;
+char	*name;
+{
+	static union record rec;
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.p.p_id = ID_P_HEAD;
+	NAMEMOVE( name, rec.p.p_name );
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+}
+
+/*
+ *			M K _ F A C E T
+ *
+ *  Must follow a call to mk_polysolid() or mk_facet()
+ */
+mk_facet( fp, npts, vert, norm )
+FILE	*fp;
+int	npts;
+fastf_t	vert[][3];
+fastf_t	norm[][3];
+{
+	static union record rec;
+	register int i,j;
+
+	if( npts < 3 || npts > 5 )  {
+		fprintf(stderr,"mk_facet:  npts=%d is bad\n", npts);
+		return(-1);
+	}
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.q.q_id = ID_P_DATA;
+	rec.q.q_count = npts;
+	for( i=0; i<npts; i++ )  {
+		for( j=0; j<3; j++ )  {
+			rec.q.q_verts[i][j] = vert[i][j];
+			rec.q.q_norms[i][j] = norm[i][j];
+		}
+	}
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
 }
