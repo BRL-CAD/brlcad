@@ -2248,7 +2248,13 @@ char	**argv;
 	return TCL_OK;
 }
 
-/* allow precise changes to object translation */
+/*
+ *			F _ T R _ O B J
+ *
+ *  Bound to command "translate"
+ *
+ *  Allow precise changes to object translation
+ */
 int
 f_tr_obj(clientData, interp, argc, argv)
 ClientData clientData;
@@ -2273,8 +2279,19 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
+	if( state == ST_S_EDIT )  {
+		/* In solid edit mode,
+		 * perform the equivalent of "press sxy" and "p xyz"
+		 */
+		if( be_s_trans(clientData, interp, argc, argv) == TCL_ERROR )
+			return TCL_ERROR;
+		return f_param(clientData, interp, argc, argv);
+	}
+
 	if( not_state( ST_O_EDIT, "Object Translation") )
 	  return TCL_ERROR;
+
+	/* Remainder of code concerns object edit case */
 
 	update_views = 1;
 
