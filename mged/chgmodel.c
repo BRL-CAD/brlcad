@@ -431,8 +431,6 @@ char	**argv;
 a4toa6:
 		ext4to6(pt[0], pt[1], pt[2], &lsolid);
 		es_rec.s.s_cgtype = ARB6;
-		es_edflag = IDLE;
-		es_menu = 0;
 		sedit_menu();
 	break;
 

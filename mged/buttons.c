@@ -598,7 +598,6 @@ static void be_s_edit()  {
 	if( edsol )
 		dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_EDIT );
-	es_edflag = MENU;
 	sedit_menu();		/* Install appropriate menu */
 	dmaflag++;
 }
