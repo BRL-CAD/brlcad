@@ -232,6 +232,7 @@ static int wdb_summary_tcl();
 static int wdb_pathlist_tcl();
 static int wdb_lt_tcl();
 static int wdb_version_tcl();
+static int wdb_binary_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -257,6 +258,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"adjust",	wdb_adjust_tcl},
 	{"attr",	wdb_attr_tcl},
 	{"attr_rm",	wdb_attr_rm_tcl},
+	{"binary",	wdb_binary_tcl},
 	{"c",		wdb_comb_std_tcl},
 	{"cat",		wdb_cat_tcl},
 	{"close",	wdb_close_tcl},
@@ -7409,6 +7411,217 @@ wdb_pathlist_tcl(ClientData	clientData,
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
 	return wdb_pathlist_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_binary_cmd(struct rt_wdb	*wdbp,
+	       Tcl_Interp	*interp,
+	       int		argc,
+	       char 		**argv)
+{
+	int c;
+	struct bu_vls	vls;
+	unsigned int major_type=0;
+	unsigned int minor_type=0;
+	char *obj_name;
+	char *file_name;
+	int input_mode=0;
+	int output_mode=0;
+	struct rt_binunif_internal *bip;
+	struct rt_db_internal intern;
+	struct directory *dp;
+	char *cname;
+
+	bu_optind = 1;		/* re-init bu_getopt() */
+	bu_opterr = 0;          /* suppress bu_getopt()'s error message */
+	while ((c=bu_getopt(argc, argv, "iou:")) != EOF) {
+		switch (c) {
+			case 'i':
+				input_mode = 1;
+				break;
+			case 'o':
+				output_mode = 1;
+				break;
+			case 'u':
+				major_type=DB5_MAJORTYPE_BINARY_UNIF;
+				switch( *bu_optarg ) {
+				case 'f':
+					minor_type = DB5_MINORTYPE_BINU_FLOAT;
+					break;
+				case 'd':
+					minor_type = DB5_MINORTYPE_BINU_DOUBLE;
+					break;
+				case 'c':
+					minor_type = DB5_MINORTYPE_BINU_8BITINT;
+					break;
+				case 's':
+					minor_type = DB5_MINORTYPE_BINU_16BITINT;
+					break;
+				case 'i':
+					minor_type = DB5_MINORTYPE_BINU_32BITINT;
+					break;
+				case 'l':
+					minor_type = DB5_MINORTYPE_BINU_64BITINT;
+					break;
+				case 'C':
+					minor_type = DB5_MINORTYPE_BINU_8BITINT_U;
+					break;
+				case 'S':
+					minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
+					break;
+				case 'I':
+					minor_type = DB5_MINORTYPE_BINU_32BITINT_U;
+					break;
+				case 'L':
+					minor_type = DB5_MINORTYPE_BINU_64BITINT_U;
+					break;
+				default:
+					bu_vls_init( &vls );
+					bu_vls_printf(&vls, "Unrecognized argument for '-u' option: %s",
+						      bu_optarg);
+					Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+					bu_vls_free(&vls);
+					return TCL_ERROR;
+				}
+				break;
+			default:
+				bu_vls_init( &vls );
+				bu_vls_printf(&vls, "Unrecognized option - %c", c);
+				Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+				bu_vls_free(&vls);
+				return TCL_ERROR;
+				
+		}
+	}
+
+	cname = argv[0];
+
+	if( input_mode + output_mode != 1 ) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	argc -= bu_optind;
+	argv += bu_optind;
+
+	if( argc < 2 ) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if( input_mode ) {
+		if( minor_type == 0 ) {
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
+			return TCL_ERROR;
+		}
+
+		obj_name = *argv;
+		if( db_lookup( wdbp->dbip, obj_name, LOOKUP_QUIET ) != DIR_NULL ) {
+			bu_vls_init( &vls );
+			bu_vls_printf( &vls, "Object %s already exists", obj_name );
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free( &vls );
+			return TCL_ERROR;
+		}
+
+		argc--;
+		argv++;
+
+		file_name = *argv;
+
+		if( mk_binunif( wdbp, obj_name, file_name, minor_type ) ) {
+			Tcl_AppendResult(interp, "Error creating ", obj_name,
+					 (char *)NULL );
+			return TCL_ERROR;
+		}
+
+		return TCL_OK;
+
+	} else if( output_mode ) {
+		FILE *fd;
+		int id;
+
+		file_name = *argv;
+
+		argc--;
+		argv++;
+
+		obj_name = *argv;
+
+		if( (dp=db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY )) == DIR_NULL ) { 
+			return TCL_ERROR;
+		}
+		
+		if( (fd=fopen( file_name, "w+")) == NULL ) {
+			Tcl_AppendResult(interp, "Error: cannot open file ", file_name,
+					 " for writing", (char *)NULL );
+			return TCL_ERROR;
+		}
+
+		if( (id=rt_db_get_internal( &intern, dp, wdbp->dbip, NULL,
+					 &rt_uniresource )) < 0 ) {
+			Tcl_AppendResult(interp, "Error reading ", dp->d_namep,
+					 " from database", (char *)NULL );
+			fclose( fd );
+			return TCL_ERROR;
+		}
+
+		RT_CK_DB_INTERNAL( &intern );
+
+		bip = (struct rt_binunif_internal *)intern.idb_ptr;
+		if( bip->count < 1 ) {
+			Tcl_AppendResult(interp, obj_name, " has no contents", (char *)NULL );
+			fclose( fd );
+			rt_db_free_internal( &intern, &rt_uniresource );
+			return TCL_ERROR;
+		}
+
+		if( fwrite( bip->u.int8, bip->count * db5_type_sizeof_h_binu( bip->type ),
+			    1, fd) != 1 ) {
+			Tcl_AppendResult(interp, "Error writing contents to file",
+					 (char *)NULL );
+			fclose( fd );
+			rt_db_free_internal( &intern, &rt_uniresource );
+			return TCL_ERROR;
+		}
+
+		fclose( fd );
+		rt_db_free_internal( &intern, &rt_uniresource );
+		return TCL_OK;
+	} else {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* should never get here */
+	/* return TCL_ERROR; */
+}
+
+/*
+ * Usage:
+ *        procname binary args
+ */
+static int
+wdb_binary_tcl(ClientData	clientData,
+	       Tcl_Interp	*interp,
+	       int		argc,
+	       char		**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_binary_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 #if 0
