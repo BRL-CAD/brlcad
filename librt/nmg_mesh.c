@@ -110,11 +110,7 @@ CONST vect_t		zvec;
 	NMG_CK_FACE_G(fu->f_p->fg_p);
 
 	/* get Normal vectors for edgeuse faceUSEs */
-	if (fu->orientation == OT_SAME) {
-		VMOVE(Norm, fu->f_p->fg_p->N);
-	} else if (fu->orientation == OT_OPPOSITE){
-		VREVERSE(Norm, fu->f_p->fg_p->N);
-	} else rt_bomb("bad fu orientation\n");
+	NMG_GET_FU_NORMAL( Norm, fu );
 
 	VSUB2( edgevect, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
 	VUNITIZE( edgevect );

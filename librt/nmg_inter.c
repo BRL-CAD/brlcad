@@ -290,10 +290,12 @@ CONST struct faceuse	*fu;	/* for plane equation */
 		rt_log("nmg_get_2d_vertex ERROR #%d (%g %g %g) becomes (%g,%g) %g != zero!\n",
 			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
 		if( !NEAR_ZERO( pt[2], 10*is->tol.dist ) )  {
+			plane_t	n;
 			rt_log("nmg_get_2d_vertex(,fu=%x) f=x%x, is->face=%x\n",
 				fu, fu->f_p, is->face);
 			PLPRINT("is->face N", is->face->fg_p->N);
-			PLPRINT("fu->f_p N", fu->f_p->fg_p->N);
+			NMG_GET_FU_PLANE( n, fu );
+			PLPRINT("fu->f_p N", n);
 			rt_bomb("3D->2D point projection error\n");
 		}
 	}
@@ -329,6 +331,7 @@ struct face		*f1;
 	vect_t		to;
 	point_t		centroid;
 	point_t		centroid_proj;
+	plane_t		n;
 	register int	i;
 
 	NMG_CK_INTER_STRUCT(is);
@@ -338,9 +341,15 @@ struct face		*f1;
 	fg = f1->fg_p;
 	NMG_CK_FACE_G(fg);
 	is->face = f1;
+	if( f1->flip )  {
+		VREVERSE( n, fg->N );
+		n[3] = -fg->N[3];
+	} else {
+		HMOVE( n, fg->N );
+	}
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("nmg_isect2d_prep(f=x%x)\n", f1);
-		PLPRINT("N", fg->N);
+		rt_log("nmg_isect2d_prep(f=x%x) flip=%d\n", f1, f1->flip);
+		PLPRINT("N", n);
 	}
 
 	m = nmg_find_model( &f1->l.magic );
@@ -358,10 +367,10 @@ struct face		*f1;
 	 *  by centering calculations around it.
 	 */
 	VSET( to, 0, 0, 1 );
-	mat_fromto( is->proj, fg->N, to );
+	mat_fromto( is->proj, n, to );
 	VADD2SCALE( centroid, fg->max_pt, fg->min_pt, 0.5 );
 	MAT4X3PNT( centroid_proj, is->proj, centroid );
-	centroid_proj[Z] = fg->N[3];	/* pull dist from origin off newZ */
+	centroid_proj[Z] = n[3];	/* pull dist from origin off newZ */
 	MAT_DELTAS_VEC_NEG( is->proj, centroid_proj );
 
 	/* Clear out the 2D vertex array, setting flag in [2] to -1 */
@@ -570,6 +579,7 @@ struct faceuse *fu;
 	struct vertexuse *vup;
 	pointp_t pt;
 	fastf_t dist;
+	plane_t	n;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEXUSE(vu);
@@ -592,7 +602,8 @@ struct faceuse *fu;
 	 * the geometry
 	 */
 	pt = vu->v_p->vg_p->coord;
-	dist = DIST_PT_PLANE(pt, fu->f_p->fg_p->N);
+	NMG_GET_FU_PLANE( n, fu );
+	dist = DIST_PT_PLANE(pt, n);
 
 	if ( !NEAR_ZERO(dist, is->tol.dist) )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\tvu not on face (geometry)\n");
@@ -1433,6 +1444,7 @@ struct faceuse		*fu2;
 	struct edgeuse	*eunext;
 	struct edgeuse	*eulast;
 	struct faceuse	*fu1;		/* fu that contains eu1 */
+	plane_t		n2;
 	int		ret = 0;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -1472,8 +1484,9 @@ struct faceuse		*fu2;
 			V3ARGS(edge_vect) );
 	}
 
+	NMG_GET_FU_PLANE( n2, fu2 );
 	status = rt_isect_line3_plane(&dist, start_pt, edge_vect,
-		fu2->f_p->fg_p->N, &is->tol);
+		n2, &is->tol);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	    if (status >= 0)
@@ -1559,7 +1572,7 @@ struct faceuse		*fu2;
 		/*  Ray does not strike plane.
 		 *  See if start point lies on plane.
 		 */
-		dist = VDOT( start_pt, fu2->f_p->fg_p->N ) - fu2->f_p->fg_p->N[3];
+		dist = VDOT( start_pt, n2 ) - n2[3];
 		if( !NEAR_ZERO( dist, is->tol.dist ) )
 			goto out;		/* No geometric intersection */
 
@@ -1763,10 +1776,12 @@ struct faceuse *fu;
 	struct edgeuse	*eu;
 	long		magic1;
 	int		discards = 0;
+	plane_t		n;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("nmg_isect_loop3p_face3p(, lu=x%x, fu=x%x) START\n", lu, fu);
-		HPRINT("  fg N", fu->f_p->fg_p->N);
+		NMG_GET_FU_PLANE( n, fu );
+		HPRINT("  fg N", n);
 	}
 
 	NMG_CK_INTER_STRUCT(bs);
@@ -2783,7 +2798,7 @@ CONST struct rt_tol	*tol;
 {
 	struct nmg_inter_struct	bs;
 	int		i;
-	fastf_t		*pl1, *pl2;
+	plane_t		pl1, pl2;
 	struct face	*f1;
 	struct face	*f2;
 	point_t		min_pt;
@@ -2804,10 +2819,11 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACE(f2);
 	NMG_CK_FACE_G(f2->fg_p);
 
+	NMG_GET_FU_PLANE( pl1, fu1 );
+	NMG_GET_FU_PLANE( pl2, fu2 );
+
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("\nnmg_isect_two_generic_faces(fu1=x%x, fu2=x%x)\n", fu1, fu2);
-		pl1 = f1->fg_p->N;
-		pl2 = f2->fg_p->N;
 
 		rt_log("Planes\t%gx + %gy + %gz = %g\n\t%gx + %gy + %gz = %g\n",
 			pl1[0], pl1[1], pl1[2], pl1[3],
@@ -2845,7 +2861,7 @@ nmg_fu_touchingloops(fu2);
 	 */
 	VMOVE(min_pt, f1->fg_p->min_pt);
 	VMIN(min_pt, f2->fg_p->min_pt);
-	status = rt_isect_2planes( bs.pt, bs.dir, f1->fg_p->N, f2->fg_p->N,
+	status = rt_isect_2planes( bs.pt, bs.dir, pl1, pl2,
 		min_pt, tol );
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
@@ -2860,6 +2876,9 @@ nmg_fu_touchingloops(fu2);
 
 	switch( status )  {
 	case 0:
+		if( fu1->f_p->fg_p == fu2->f_p->fg_p )  {
+			rt_bomb("nmg_isect_two_generic_faces: co-planar faces not detected\n");
+		}
 		/* All is well */
 		bs.coplanar = 0;
 #if NEWLINE

@@ -187,7 +187,7 @@ struct hitmiss *myhit;
 	struct faceuse *fu;
 	double NdotR;
 	point_t q;
-	vectp_t N;
+	vect_t		n;
 	struct nmg_ptbl ftbl;
 
 
@@ -219,11 +219,11 @@ struct hitmiss *myhit;
 			/* check this face */
 			NMG_CK_FACE(fu->f_p);
 			NMG_CK_FACE_G(fu->f_p->fg_p);
-			N = fu->f_p->fg_p->N;
+		    	NMG_GET_FU_NORMAL( n, fu );
 
-			NdotR = VDOT(N, rd->rp->r_dir);
+			NdotR = VDOT(n, rd->rp->r_dir);
 			VADD2(q, vu_p->v_p->vg_p->coord, rd->rp->r_dir);
-			VJOIN1(q, q, NdotR, N);
+			VJOIN1(q, q, NdotR, n);
 
 			/* pt "q" should be on plane of the face.
 			 * determine if it is in/on/out of the face boundary
@@ -843,11 +843,15 @@ struct edgeuse *eu;
 	struct hitmiss *myhit;
 	int mate_rad = 0;
 	vect_t eu_v, left, pt_v;
+    	plane_t		norm;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		rt_log("face_closest_is_eu()\n");
 
 	NMG_CK_EDGEUSE(eu);
+	NMG_CK_FACEUSE( fu_p );
+
+    	NMG_GET_FU_PLANE( norm, fu_p );
 
 	/* if there is a hit on the edge which is "closest" to the plane
 	 * intercept point, then we do not add a hit point for the face
@@ -945,7 +949,7 @@ struct edgeuse *eu;
 			if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
 			    (nmg_find_fu_of_vu(vu))->f_p == fu_p->f_p) {
 
-				VCROSS(fv, fu_p->f_p->fg_p->N, vu->up.eu_p->e_p->eg_p->e_dir)
+				VCROSS(fv, norm, vu->up.eu_p->e_p->eg_p->e_dir)
 				/* since eg_p->dir is not unit length, we must
 				 * unitize the result
 				 */
@@ -988,10 +992,10 @@ struct edgeuse *eu;
 		VPRINT("\teu", eu_p->vu_p->v_p->vg_p->coord);
 		VPRINT("\teumate", eu_p->eumate_p->vu_p->v_p->vg_p->coord);
 		VPRINT("\tpt", rd->plane_pt);
-		HPRINT("\tN", fu_p->f_p->fg_p->N);
+		HPRINT("\tN", norm);
 		VPRINT("\teu_v", eu_v);
 	}
-	VCROSS(left, fu_p->f_p->fg_p->N, eu_v);
+	VCROSS(left, norm, eu_v);
 	VSUB2(pt_v, rd->plane_pt, eu_p->vu_p->v_p->vg_p->coord);
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
@@ -1102,6 +1106,7 @@ struct faceuse *fu_p;
 	point_t plane_pt;
 	struct hitmiss *myhit;
 	int code;
+	plane_t		norm;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		rt_log("isect_ray_faceuse(0x%08x, face:0x%08x)", rd, fu_p->f_p);
@@ -1143,8 +1148,10 @@ struct faceuse *fu_p;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) rt_log(" hit bounding box \n");
 
+	NMG_GET_FU_PLANE( norm, fu_p );
+
 	code = rt_isect_line3_plane(&dist, rd->rp->r_pt, rd->rp->r_dir,
-			fu_p->f_p->fg_p->N, rd->tol);
+			norm, rd->tol);
 
 	if (code < 0) {
 		/* ray is parallel to halfspace and (-1)inside or (-2)outside

@@ -184,6 +184,7 @@ vect_t left_vect;
 	 */
 	tmp.eu = e_p->eu_p;
 	do {
+	    plane_t	plane;
 	    /* we only care about the 3-manifold edge uses */
 		
 	    if (NMG_MANIFOLDS(tbl, tmp.eu) & NMG_3MANIFOLD) {
@@ -194,9 +195,11 @@ vect_t left_vect;
 		 NMG_CK_FACE_G(tmp.eu->up.lu_p->up.fu_p->f_p->fg_p);
 
 		fg_p = tmp.eu->up.lu_p->up.fu_p->f_p->fg_p;
+	    	NMG_GET_FU_PLANE( plane, tmp.eu->up.lu_p->up.fu_p );
+
 		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 		    	rt_log("\n");
-			HPRINT("face_normal", fg_p->N);
+			HPRINT("plane_eqn", plane);
 		}
 	    	
 	    	if (tmp.eu->up.lu_p->up.fu_p->orientation == OT_SAME)
@@ -208,9 +211,9 @@ vect_t left_vect;
 	    		teu->eumate_p->vu_p->v_p->vg_p->coord);
 
 	    	if (VDOT(e_p->eg_p->e_dir, eu_vect) < 0) {
-			VCROSS(face_vect, edge_opp_vect, fg_p->N);
+			VCROSS(face_vect, edge_opp_vect, plane);
 	    	} else {
-			VCROSS(face_vect, edge_vect, fg_p->N);
+			VCROSS(face_vect, edge_vect, plane);
 	    	}
 		VUNITIZE(face_vect);
 
@@ -220,7 +223,7 @@ vect_t left_vect;
 		/* figure out if this is one of the prime edgeuses */
 		tmp.fdotr = VDOT(face_vect, rp->r_dir);
 		tmp.fdotl = VDOT(face_vect, left_vect);
-		tmp.ndotr = VDOT(fg_p->N,   rp->r_dir);
+		tmp.ndotr = VDOT(plane,     rp->r_dir);
 
 #define SAVE(a) prime_uses[a].fdotl = tmp.fdotl;	\
 		prime_uses[a].fdotr = tmp.fdotr;	\
@@ -314,6 +317,7 @@ int		filled;
 	fastf_t BestRdotN = 5.0;
 	fastf_t RdotN;
 	struct face_g *fg;
+	vect_t	normal;
 
 	if (manifolds & NMG_3MANIFOLD) {
 
@@ -328,6 +332,7 @@ int		filled;
 					   NMG_CK_FACE(vu_p->up.eu_p->up.lu_p->up.fu_p->f_p);
 					 NMG_CK_FACE_G(vu_p->up.eu_p->up.lu_p->up.fu_p->f_p->fg_p);
 					fg = vu_p->up.eu_p->up.lu_p->up.fu_p->f_p->fg_p;
+					NMG_GET_FU_NORMAL( normal, vu_p->up.eu_p->up.lu_p->up.fu_p );
 
 					break;
 				case NMG_LOOPUSE_MAGIC:
@@ -335,20 +340,21 @@ int		filled;
 					NMG_CK_FACE(vu_p->up.eu_p->up.lu_p->up.fu_p->f_p);
 					NMG_CK_FACE_G(vu_p->up.eu_p->up.lu_p->up.fu_p->f_p->fg_p);
 					fg = vu_p->up.eu_p->up.lu_p->up.fu_p->f_p->fg_p;
+					NMG_GET_FU_NORMAL( normal, vu_p->up.eu_p->up.lu_p->up.fu_p );
 					break;
 				}
 
-				if ((RdotN = VDOT(rp->r_dir, fg->N)) < 0) {
+				if ((RdotN = VDOT(rp->r_dir, normal)) < 0) {
 			    		entries++;
 					if (-1.0 * RdotN < BestRdotN) {
 						BestRdotN = fabs(RdotN);
-						VMOVE(saved_normal, fg->N);
+						VMOVE(saved_normal, normal);
 					}
 				} else {
 					exits++;
 					if (RdotN < BestRdotN) {
 						BestRdotN = fabs(RdotN);
-						VMOVE(saved_normal, fg->N);
+						VMOVE(saved_normal, normal);
 					}
 				}
 			}
@@ -408,17 +414,14 @@ int		filled;
 	    			rt_bomb("vertex_hit: bad vu->up\n");
 	    			/* NOTREACHED */
 	    		}
+	    		NMG_GET_FU_NORMAL( normal, fu_p );
 
-		    	if (VDOT(fu_p->f_p->fg_p->N, rp->r_dir) > 0.0) {
-				VREVERSE(seg_p->seg_in.hit_normal,
-					fu_p->f_p->fg_p->N);
-				VMOVE(seg_p->seg_out.hit_normal,
-					fu_p->f_p->fg_p->N);
+		    	if (VDOT(normal, rp->r_dir) > 0.0) {
+				VREVERSE(seg_p->seg_in.hit_normal, normal);
+				VMOVE(seg_p->seg_out.hit_normal, normal);
 		    	} else {
-				VMOVE(seg_p->seg_in.hit_normal,
-					fu_p->f_p->fg_p->N);
-				VREVERSE(seg_p->seg_out.hit_normal,
-					fu_p->f_p->fg_p->N);
+				VMOVE(seg_p->seg_in.hit_normal, normal);
+				VREVERSE(seg_p->seg_out.hit_normal, normal);
 		    	}
 
 		} else {
@@ -507,18 +510,17 @@ struct ef_data i_u[8];	/* "important" uses of edge */
 int in, out;
 char *s;
 {
-
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 		rt_log("edge_ray_graze(%s)\n", s);
 
 	bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
 	bcopy(&a_hit->hit, &seg_p->seg_out, sizeof(struct hit));
 				
-	VMOVE(seg_p->seg_in.hit_normal,
-		i_u[in].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+	NMG_GET_FU_NORMAL( seg_p->seg_in.hit_normal,
+		i_u[in].eu->up.lu_p->up.fu_p );
 	    			
-	VMOVE(seg_p->seg_out.hit_normal,
-		i_u[out].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+	NMG_GET_FU_NORMAL( seg_p->seg_out.hit_normal,
+		i_u[out].eu->up.lu_p->up.fu_p );
 
 	RT_LIST_DEQUEUE(&a_hit->l);
 	rt_free((char *)a_hit, "freeing hitpoint");
@@ -568,11 +570,11 @@ struct ef_data *i_u;	/* "important" uses of edge */
 	bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
 
 	if (i_u[LEFT_MIN_ENTER].ndotr < i_u[RIGHT_MIN_ENTER].ndotr) {
-		VMOVE(seg_p->seg_in.hit_normal,
-		    i_u[LEFT_MIN_ENTER].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+		NMG_GET_FU_NORMAL( seg_p->seg_in.hit_normal,
+			i_u[LEFT_MIN_ENTER].eu->up.lu_p->up.fu_p );
 	} else {
-		VMOVE(seg_p->seg_in.hit_normal,
-		    i_u[RIGHT_MIN_ENTER].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+		NMG_GET_FU_NORMAL( seg_p->seg_in.hit_normal,
+			i_u[RIGHT_MIN_ENTER].eu->up.lu_p->up.fu_p );
 	}
 
 	RT_LIST_DEQUEUE(&a_hit->l);
@@ -610,20 +612,20 @@ struct ef_data *i_u;	/* "important" uses of edge */
 
     	/* choose an entry hit normal */
 	if (i_u[LEFT_MIN_ENTER].ndotr < i_u[RIGHT_MIN_ENTER].ndotr) {
-		VMOVE(seg_p->seg_in.hit_normal,
-		    i_u[LEFT_MIN_ENTER].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+		NMG_GET_FU_NORMAL( seg_p->seg_in.hit_normal,
+			i_u[LEFT_MIN_ENTER].eu->up.lu_p->up.fu_p );
 	} else {
-		VMOVE(seg_p->seg_in.hit_normal,
-		    i_u[RIGHT_MIN_ENTER].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+		NMG_GET_FU_NORMAL( seg_p->seg_in.hit_normal,
+			i_u[RIGHT_MIN_ENTER].eu->up.lu_p->up.fu_p );
 	}
 
     	/* choose an exit hit normal */
 	if (i_u[LEFT_MIN_EXIT].ndotr > i_u[RIGHT_MIN_EXIT].ndotr) {
-		VMOVE(seg_p->seg_out.hit_normal,
-		    i_u[LEFT_MIN_EXIT].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+		NMG_GET_FU_NORMAL( seg_p->seg_out.hit_normal,
+			i_u[LEFT_MIN_EXIT].eu->up.lu_p->up.fu_p );
 	} else {
-		VMOVE(seg_p->seg_out.hit_normal,
-		    i_u[RIGHT_MIN_EXIT].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+		NMG_GET_FU_NORMAL( seg_p->seg_out.hit_normal,
+			i_u[RIGHT_MIN_EXIT].eu->up.lu_p->up.fu_p );
 	}
 	RT_LIST_DEQUEUE(&a_hit->l);
 	rt_free((char *)a_hit, "freeing hitpoint");
@@ -658,12 +660,12 @@ struct ef_data *i_u;	/* "important" uses of edge */
 
 	/* pick an exit normal */
 	if (i_u[LEFT_MIN_EXIT].ndotr > i_u[RIGHT_MIN_EXIT].ndotr) {
-		VMOVE(seg_p->seg_out.hit_normal,
-			i_u[LEFT_MIN_EXIT].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+		NMG_GET_FU_NORMAL( seg_p->seg_out.hit_normal,
+			i_u[LEFT_MIN_EXIT].eu->up.lu_p->up.fu_p);
 
 	} else {
-		VMOVE(seg_p->seg_out.hit_normal,
-			i_u[RIGHT_MIN_EXIT].eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+		NMG_GET_FU_NORMAL( seg_p->seg_out.hit_normal,
+			i_u[RIGHT_MIN_EXIT].eu->up.lu_p->up.fu_p);
 	}
 
 	RT_LIST_DEQUEUE(&a_hit->l);
@@ -933,8 +935,8 @@ int		filled;
 			eu_p = eu_p->radial_p->eumate_p;
 
 	    	if (NMG_MANIFOLDS(tbl, eu_p) & NMG_2MANIFOLD ) {
-	    		fastf_t *normal =
-	    			&eu_p->up.lu_p->up.fu_p->f_p->fg_p->N[0];
+	    		vect_t	normal;
+	    		NMG_GET_FU_NORMAL( normal, eu_p->up.lu_p->up.fu_p );
 
 		    	if (VDOT(normal, rp->r_dir) > 0.0) {
 		    		VMOVE(seg_p->seg_out.hit_normal, normal);
@@ -977,19 +979,26 @@ int		filled;
 {
 
 	char manifolds = NMG_MANIFOLDS(tbl, f_p);
+	vect_t	normal;
 
 	RT_CK_SEG(seg_p);
+
+	if( f_p->flip ) {
+		VREVERSE( normal, f_p->fg_p->N );
+	} else {
+		VMOVE( normal, f_p->fg_p->N );
+	}
 
 	if (manifolds & NMG_3MANIFOLD) {
 		if (filled == 0) {
 			/* entering solid */
 			bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
-			VMOVE(seg_p->seg_in.hit_normal, f_p->fg_p->N);
+			VMOVE(seg_p->seg_in.hit_normal, normal);
 			filled = 1;
 		} else {
 			/* leaving solid */
 			bcopy(&a_hit->hit, &seg_p->seg_out, sizeof(struct hit));
-			VMOVE(seg_p->seg_out.hit_normal, f_p->fg_p->N);
+			VMOVE(seg_p->seg_out.hit_normal, normal);
 			filled = 2;
 		}
 
@@ -1003,13 +1012,13 @@ int		filled;
 
 		bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
 		bcopy(&a_hit->hit, &seg_p->seg_out, sizeof(struct hit));
-		if (VDOT(f_p->fg_p->N, rp->r_dir) <= 0.0) {
+		if (VDOT(normal, rp->r_dir) <= 0.0) {
 			/* face normal points back along ray */
-			VMOVE(seg_p->seg_in.hit_normal, f_p->fg_p->N);
-			VMOVE(seg_p->seg_out.hit_normal, f_p->fg_p->N);
+			VMOVE(seg_p->seg_in.hit_normal, normal);
+			VMOVE(seg_p->seg_out.hit_normal, normal);
 		} else {
-			VREVERSE(seg_p->seg_in.hit_normal, f_p->fg_p->N);
-			VREVERSE(seg_p->seg_out.hit_normal, f_p->fg_p->N);
+			VREVERSE(seg_p->seg_in.hit_normal, normal);
+			VREVERSE(seg_p->seg_out.hit_normal, normal);
 		}
 
 		filled = 2;

@@ -199,7 +199,7 @@ CONST point_t		pt;
 CONST struct edgeuse	*eu;
 CONST struct rt_tol	*tol;
 {
-	vect_t	N,	/* plane normal */
+	vect_t	norm,	/* plane normal */
 		euvect,	/* vector of edgeuse */
 		ptvec;	/* vector from lseg to pt */
 	vect_t	left;	/* vector left of edge -- into inside of loop */
@@ -296,10 +296,10 @@ CONST struct rt_tol	*tol;
 
 	/* The point did not lie exactly ON the edge */
 	/* calculate in/out */
-	VMOVE(N, eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+	NMG_GET_FU_NORMAL(norm, eu->up.lu_p->up.fu_p);
     	if (eu->up.lu_p->up.fu_p->orientation != OT_SAME) {
     		if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("\t\tReversing normal\n");
-		VREVERSE(N,N);
+		VREVERSE(norm,norm);
     	}
 
 	VSUB2(euvect, matept, eupt);
@@ -309,7 +309,7 @@ CONST struct rt_tol	*tol;
     	/* Get vector which lies on the plane, and points
     	 * left, towards the interior of the CCW loop.
     	 */
-    	VCROSS( left, N, euvect );	/* left vector */
+    	VCROSS( left, norm, euvect );	/* left vector */
 	if(eu->up.lu_p->orientation != OT_SAME )  {
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("\t\tReversing left vec\n");
 		VREVERSE(left, left);
@@ -470,6 +470,7 @@ CONST struct rt_tol	*tol;
 	struct loopuse *lu;
 	struct neighbor closest;
 	fastf_t		dist;
+	plane_t		n;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		VPRINT("nmg_class_pt_f\tPt:", pt);
@@ -480,7 +481,8 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 	/* Validate distance from point to plane */
-	if( (dist=fabs(DIST_PT_PLANE( pt, fu->f_p->fg_p->N ))) > tol->dist )  {
+	NMG_GET_FU_PLANE( n, fu );
+	if( (dist=fabs(DIST_PT_PLANE( pt, n ))) > tol->dist )  {
 		rt_log("nmg_class_pt_f() ERROR, point (%g,%g,%g) not on face, dist=%g\n",
 			V3ARGS(pt), dist );
 	}
@@ -589,6 +591,8 @@ retry:
 	 *  First pass:  Try hard to see if point is ON a face.
 	 */
 	for( RT_LIST_FOR(fu, faceuse, &s->fu_hd) )  {
+		plane_t	n;
+
 		/* If this face processed before, skip on */
 		if( NMG_INDEX_TEST( faces_seen, fu->f_p ) )  continue;
 
@@ -599,7 +603,8 @@ retry:
 		if( fu->orientation != OT_SAME )  continue;
 
 		/* See if this point lies on this face */
-		if( (dist = fabs(DIST_PT_PLANE(pt, fu->f_p->fg_p->N))) < tol->dist)  {
+		NMG_GET_FU_PLANE( n, fu );
+		if( (dist = fabs(DIST_PT_PLANE(pt, n))) < tol->dist)  {
 			/* Point lies on this plane, it may be possible to
 			 * short circuit everything.
 			 */
@@ -635,6 +640,8 @@ retry:
 	 *  Fire a ray in "projection_dir", and count face crossings.
 	 */
 	for( RT_LIST_FOR(fu, faceuse, &s->fu_hd) )  {
+		plane_t	n;
+
 		/* If this face processed before, skip on */
 		if( NMG_INDEX_TEST( faces_seen, fu->f_p ) )  continue;
 
@@ -646,12 +653,13 @@ retry:
 		if( fu->orientation != OT_SAME )  continue;
 
 		/* Find point where ray hits the plane. */
+		NMG_GET_FU_PLANE( n, fu );
 		stat = rt_isect_line3_plane(&dist, pt, projection_dir,
-			fu->f_p->fg_p->N, tol);
+			n, tol);
 
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 			rt_log("\tray/plane: stat:%d dist:%g\n", stat, dist);
-			PLPRINT("\tplane", fu->f_p->fg_p->N);
+			PLPRINT("\tplane", n);
 		}
 
 		if( stat < 0 )  continue;	/* Ray missed */
@@ -1167,14 +1175,16 @@ retry:
 			}
 
 			if (!RT_LIST_NOT_HEAD(p, &lu->down_hd)) {
+				vect_t	n, qn;
 
 				/* the two loops are "on" each other.  All
 				 * that remains is to determine
 				 * shared/anti-shared status.
 				 */
 				NMG_CK_FACE_G(q_lu->up.fu_p->f_p->fg_p);
-				if (VDOT(q_lu->up.fu_p->f_p->fg_p->N,
-				    lu->up.fu_p->f_p->fg_p->N) >= 0) {
+				NMG_GET_FU_NORMAL( qn, q_lu->up.fu_p );
+				NMG_GET_FU_NORMAL( n, lu->up.fu_p );
+				if (VDOT(qn, n) >= 0) {
 				    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 				    		lu->l_p );
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -1254,12 +1264,15 @@ long			*classlist[4];
 CONST struct rt_tol	*tol;
 {
 	struct loopuse *lu;
+	plane_t		n;
 	
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_SHELL(s);
 
+	NMG_GET_FU_PLANE( n, fu );
+
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-        	PLPRINT("\nclass_fu_vs_s plane equation:", fu->f_p->fg_p->N);
+        	PLPRINT("\nclass_fu_vs_s plane equation:", n);
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
 		(void)class_lu_vs_s(lu, s, classlist, tol);

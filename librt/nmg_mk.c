@@ -1730,6 +1730,7 @@ CONST plane_t p;
 	} else {
 		m = nmg_find_model( &fu->l.magic );
 		GET_FACE_G(f->fg_p, m);
+		f->flip = 0;
 		fg = f->fg_p;
 		fg->magic = NMG_FACE_G_MAGIC;
 		RT_LIST_INIT(&fg->f_hd);
@@ -2226,6 +2227,9 @@ register struct vertex	*v2;
  *
  *  Join two faces, so that they share one underlying face geometry.
  *  The loops of the two faces remains unchanged.
+ *
+ *  If one of the faces does not have any geometry, then it
+ *  is made to share the geometry of the other.
  */
 void
 nmg_jfg( f1, f2 )
@@ -2240,6 +2244,23 @@ struct face	*f2;
 	NMG_CK_FACE(f2);
 	fg1 = f1->fg_p;
 	fg2 = f2->fg_p;
+	if( fg2 && !fg1 )  {
+		/* Make f1 share existing geometry of f2 */
+		NMG_CK_FACE_G(fg1);
+		f1->fg_p = fg2;
+		f1->flip = f2->flip;
+		RT_LIST_INSERT( &fg2->f_hd, &f1->l );
+		return;
+	}
+	if( fg1 && !fg2 )  {
+		/* Make f2 share existing geometry of f1 */
+		NMG_CK_FACE_G(fg1);
+		f2->fg_p = fg1;
+		f2->flip = f1->flip;
+		RT_LIST_INSERT( &fg1->f_hd, &f2->l );
+		return;
+	}
+
 	NMG_CK_FACE_G(fg1);
 	NMG_CK_FACE_G(fg2);
 
@@ -2251,6 +2272,7 @@ struct face	*f2;
 		RT_LIST_DEQUEUE( &f->l );
 		NMG_CK_FACE(f);
 		f->fg_p = fg1;
+		/* flip flag is left unchanged here, on purpose */
 		RT_LIST_INSERT( &fg1->f_hd, &f->l );
 	}
 

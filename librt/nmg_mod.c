@@ -72,11 +72,17 @@ CONST int		simplify;
 
 	/* Visit each face in the shell */
 	for( RT_LIST_FOR( fu1, faceuse, &s->fu_hd ) )  {
+		plane_t		n1;
+
 		if( RT_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd) )  break;
 		f1 = fu1->f_p;
 		NMG_CK_FACE(f1);
 		if( NMG_INDEX_TEST(flags1, f1) )  continue;
 		NMG_INDEX_SET(flags1, f1);
+
+		fg1 = f1->fg_p;
+		NMG_CK_FACE_G(fg1);
+		NMG_GET_FU_PLANE( n1, fu1 );
 
 		/* For this face, visit all remaining faces in the shell. */
 		/* Don't revisit any faces already considered. */
@@ -86,32 +92,37 @@ CONST int		simplify;
 		     fu2 = RT_LIST_NEXT(faceuse,&fu2->l)
 		)  {
 			register fastf_t	dist;
+			plane_t			n2;
 
 			f2 = fu2->f_p;
 			NMG_CK_FACE(f2);
 			if( NMG_INDEX_TEST(flags2, f2) )  continue;
 			NMG_INDEX_SET(flags2, f2);
 
-			/* If plane equations are different, done */
-			fg1 = f1->fg_p;
 			fg2 = f2->fg_p;
-			NMG_CK_FACE_G(fg1);
 			NMG_CK_FACE_G(fg2);
 
-			/* Compare distances from origin */
-			dist = fg1->N[3] - fg2->N[3];
-			if( !NEAR_ZERO(dist, tol->dist) )  continue;
+			/* See if face geometry is shared & same direction */
+			if( fg1 != fg2 || f1->flip != f2->flip )  {
+				/* If plane equations are different, done */
+				NMG_GET_FU_PLANE( n2, fu2 );
+
+				/* Compare distances from origin */
+				dist = n1[3] - n2[3];
+				if( !NEAR_ZERO(dist, tol->dist) )  continue;
+
+				/*
+				 *  Compare angle between normals.
+				 *  Can't just use RT_VECT_ARE_PARALLEL here,
+				 *  because they must point in the same direction.
+				 */
+				dist = VDOT( n1, n2 );
+				if( !(dist >= tol->para) )  continue;
+			}
 
 			/*
-			 *  Compare angle between normals.
-			 *  Can't just use RT_VECT_ARE_PARALLEL here,
-			 *  because they must point in the same direction.
-			 */
-			dist = VDOT( fg1->N, fg2->N );
-			if( !(dist >= tol->para) )  continue;
-
-			/*
-			 * Plane equations are the same, within tolerance.
+			 * Plane equations are the same, within tolerance,
+			 * or by shared fg topology.
 			 * Move everything into fu1, and
 			 * kill now empty faceuse, fumate, and face
 			 */
@@ -972,9 +983,7 @@ register struct faceuse	*fu;
 	NMG_CK_FACE_G(fu->f_p->fg_p);
 
 	/* reverse face normal vector */
-	v = fu->f_p->fg_p->N;
-	VREVERSE(v, v);
-	v[H] *= -1.0;
+	fu->f_p->flip = !fu->f_p->flip;
 
 	/* switch which face is "outside" face */
 	if (fu->orientation == OT_SAME)  {
@@ -1109,6 +1118,7 @@ register struct faceuse	*src_fu;
 		nmg_move_fu_fu(dest_fu, src_fu);
 		nmg_move_fu_fu(dest_fu->fumate_p, src_fu->fumate_p);
 	} else {
+		/* XXX call nmg_reverse_face_and_radials() here? */
 		nmg_move_fu_fu(dest_fu, src_fu->fumate_p);
 		nmg_move_fu_fu(dest_fu->fumate_p, src_fu);
 	}
@@ -1157,7 +1167,13 @@ struct shell *s;
 	}
 
 	if (fu->f_p->fg_p) {
-		nmg_face_g(new_fu, fu->f_p->fg_p->N);
+		plane_t		n;
+		if( fu->orientation == OT_SAME )  {
+			NMG_GET_FU_PLANE( n, fu );
+		} else {
+			NMG_GET_FU_PLANE( n, fu->fumate_p );
+		}
+		nmg_face_g(new_fu, n);
 	}
 	new_fu->orientation = fu->orientation;
 	new_fu->fumate_p->orientation = fu->fumate_p->orientation;

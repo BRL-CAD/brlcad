@@ -43,6 +43,7 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 	struct loopuse	*lu, *lu2;
 	struct shell	*s;
 	struct vertex	*v, *vertlist[4], **verts, **verts2;
+	plane_t		n;
 
 #define MIKE_TOL 0.0001
 
@@ -52,7 +53,8 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 	fu2 = nmg_dup_face(fu, fu->s_p);
 
 	/* Figure out which face to flip. */
-	cosang = VDOT(Vec, fu->f_p->fg_p->N);
+	NMG_GET_FU_PLANE( n, fu );
+	cosang = VDOT(Vec, n);
 	front = fu;
 	back = fu2;
 	if (NEAR_ZERO(cosang, MIKE_TOL)) {

@@ -321,14 +321,17 @@ int			poly_markers;
 
 	/* faces */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		vect_t		n;
+
 		/* Consider this face */
 		NMG_CK_FACEUSE(fu);
 		NMG_CK_FACE(fu->f_p);
 		fg = fu->f_p->fg_p;
 		NMG_CK_FACE_G(fg);
 		if (fu->orientation != OT_SAME)  continue;
+		NMG_GET_FU_NORMAL( n, fu );
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-		   	nmg_lu_to_vlist( vhead, lu, poly_markers, fg->N );
+		   	nmg_lu_to_vlist( vhead, lu, poly_markers, n );
 		}
 	}
 
@@ -594,11 +597,7 @@ point_t base, tip60;
 	    	vect_t		face_normal;
 
 	    	fu = eu->up.lu_p->up.fu_p;
-		if (fu->orientation == OT_OPPOSITE) {
-			VREVERSE( face_normal, fu->f_p->fg_p->N );
-		} else {
-		    	VMOVE( face_normal, fu->f_p->fg_p->N );
-		}
+	    	NMG_GET_FU_NORMAL( face_normal, fu );
 #if 0
 		nmg_offset_eu_coord(base, tip, eu, face_normal);
 #else
@@ -1720,6 +1719,7 @@ CONST struct loopuse *lu;
 {
 	register struct edgeuse *eu;
 	struct rt_list	*vh;
+	vect_t		n;
 
 	NMG_CK_LOOPUSE(lu);
 
@@ -1742,12 +1742,14 @@ CONST struct loopuse *lu;
 	vh = rt_vlblock_find( vbp, 
 		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
 
+	NMG_GET_FU_NORMAL( n, lu->up.fu_p );
+
 	if ((rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_PL_LOOP) ) {
 		/* If only DEBUG_PL_LOOP set, just draw lu as wires */
-		nmg_lu_to_vlist( vh, lu, 0, lu->up.fu_p->f_p->fg_p->N );
+		nmg_lu_to_vlist( vh, lu, 0, n );
 	} else if ((rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_GRAPHCL|DEBUG_PL_LOOP) ) {
 		/* Draw as polygons if both set */
-		nmg_lu_to_vlist( vh, lu, 1, lu->up.fu_p->f_p->fg_p->N );
+		nmg_lu_to_vlist( vh, lu, 1, n );
 	} else {
 		/* If only DEBUG_GRAPHCL set, don't draw lu's at all */
 	}

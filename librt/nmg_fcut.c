@@ -1622,20 +1622,24 @@ struct faceuse	*fu;
  *  Mike's notes "The 'Left' Vector Choice" dated 27-Aug-93, page 1.
  */
 void
-nmg_face_rs_init( rs, b, fu1, fu2, pt, dir )
+nmg_face_rs_init( rs, b, fu1, fu2, pt, dir, tol )
 struct nmg_ray_state	*rs;
 struct nmg_ptbl	*b;		/* table of vertexuses in fu1 on intercept line */
 struct faceuse	*fu1;		/* face being worked */
 struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
+CONST struct rt_tol	*tol;
 {
-	RT_CK_TOL(rs->tol);
+	plane_t	n1;
+
+	RT_CK_TOL(tol);
 	NMG_CK_PTBL(b);
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
 
 	bzero( (char *)rs, sizeof(*rs) );
+	rs->tol = tol;
 	rs->vu = (struct vertexuse **)b->buffer;
 	rs->nvu = b->end;
 	rs->eg_p = (struct edge_g *)NULL;
@@ -1645,7 +1649,8 @@ vect_t		dir;
 	rs->fu2 = fu2;
 	VMOVE( rs->pt, pt );
 	VMOVE( rs->dir, dir );
-	VCROSS( rs->left, fu1->f_p->fg_p->N, dir );
+	NMG_GET_FU_PLANE( n1, fu1 );
+	VCROSS( rs->left, n1, dir );
 	VUNITIZE( rs->left );
 	switch( fu1->orientation )  {
 	case OT_SAME:
@@ -1663,7 +1668,7 @@ vect_t		dir;
 		int i;
 
 		rt_log("\tfu->orientation=%s\n", nmg_orientation(fu1->orientation) );
-		HPRINT("\tfg N", fu1->f_p->fg_p->N);
+		HPRINT("\tfg N", n1);
 		VPRINT("\t  pt", pt);
 		VPRINT("\t dir", dir);
 		VPRINT("\tleft", rs->left);
@@ -1734,6 +1739,8 @@ int		other_rs_state;
 	int	k;
 	int	m;
 	struct vertex	*v;
+
+	RT_CK_TOL(rs->tol);
 
 	if( cur == rs->nvu-1 || mag[cur+1] != mag[cur] )  {
 		/* Single vertexuse at this dist */
@@ -1813,6 +1820,9 @@ fastf_t			*mag2;
 {
 	register int	cur1, cur2;
 	register int	nxt1, nxt2;
+
+	RT_CK_TOL(rs1->tol);
+	RT_CK_TOL(rs2->tol);
 
 #if PLOT_BOTH_FACES
 	nmg_2face_plot( rs1->fu1, rs1->fu2 );
@@ -2028,9 +2038,8 @@ CONST struct rt_tol	*tol;
 			rt_log( "nmg_face_cutjoin: intersection list for face 2 doesn't contain vertexuses from face 2!!!\n" );
 	}
 #endif
-	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir );
-	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir );
-	rs1.tol = rs2.tol = tol;
+	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir, tol );
+	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir, tol );
 
 	nmg_face_combineX( &rs1, mag1, &rs2, mag2 );
 
@@ -2357,6 +2366,7 @@ int			other_rs_state;
 
 	vu = rs->vu[pos];
 	NMG_CK_VERTEXUSE(vu);
+	RT_CK_TOL(rs->tol);
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d) START\n",
@@ -2645,10 +2655,12 @@ rt_log("force next eu to ray\n");
 			nmg_loop_g( prev_lu->l_p, rs->tol );
 			if(is_crack)  {
 				struct face_g	*fg;
+				plane_t		n;
 				fg = fu->f_p->fg_p;
 				NMG_CK_FACE_G(fg);
-				nmg_lu_reorient( lu, fg->N, rs->tol );
-				nmg_lu_reorient( prev_lu, fg->N, rs->tol );
+				NMG_GET_FU_PLANE( n, fu );
+				nmg_lu_reorient( lu, n, rs->tol );
+				nmg_lu_reorient( prev_lu, n, rs->tol );
 			}
 			if(rt_g.NMG_debug&DEBUG_FCUT)  {
 				rt_log("After CUT, the final loop:\n");

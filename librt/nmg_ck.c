@@ -1422,6 +1422,7 @@ CONST struct rt_tol *tol;
 	struct vertexuse *vu;
 	fastf_t dist1,dist2;
 	int found1=0,found2=0;
+	plane_t	n1, n2;
 
 	NMG_CK_VERTEX( vp );
 	NMG_CK_FACEUSE( fu1 );
@@ -1452,8 +1453,10 @@ CONST struct rt_tol *tol;
 	}
 
 	/* geometry check */
-	dist1 = DIST_PT_PLANE( vp->vg_p->coord , fu1->f_p->fg_p->N );
-	dist2 = DIST_PT_PLANE( vp->vg_p->coord , fu2->f_p->fg_p->N );
+	NMG_GET_FU_PLANE(n1, fu1);
+	NMG_GET_FU_PLANE(n2, fu2);
+	dist1 = DIST_PT_PLANE( vp->vg_p->coord , n1 );
+	dist2 = DIST_PT_PLANE( vp->vg_p->coord , n2 );
 
 	if( !NEAR_ZERO( dist1 , tol->dist ) || !NEAR_ZERO( dist2 , tol->dist ) )
 	{
@@ -1505,10 +1508,13 @@ int			first;
 			fu = nmg_find_fu_of_vu( vu );
 			if( fu )
 			{
+				plane_t		n;
+
 				NMG_CK_FACEUSE( fu );
 				if( fu->orientation != OT_SAME )
 					continue;
-				dist = DIST_PT_PLANE( v->vg_p->coord , fu->f_p->fg_p->N );
+				NMG_GET_FU_PLANE( n, fu );
+				dist = DIST_PT_PLANE( v->vg_p->coord , n );
 				if( !NEAR_ZERO( dist , sp->tol->dist ) )
 				{
 					rt_log( "ERROR - nmg_ck_vs_in_region: vertex x%x ( %g %g %g ) is %g from faceuse x%x\n" , 

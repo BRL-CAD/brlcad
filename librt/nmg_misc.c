@@ -727,6 +727,8 @@ struct rt_tol *tol;
 			start_index = 0;
 			while( !found_face )
 			{
+				vect_t	norm;
+
 				/* refresh the vertex list */
 				(void)nmg_tbl( &vert_tbl , TBL_RST , NULL );
 
@@ -765,7 +767,8 @@ struct rt_tol *tol;
 				found_face = 1;
 				VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord , eu2->vu_p->v_p->vg_p->coord );
 				fu = nmg_find_fu_of_eu( eu1 );
-				VCROSS( inside , fu->f_p->fg_p->N , v1 );
+				NMG_GET_FU_NORMAL( norm, fu );
+				VCROSS( inside , norm , v1 );
 				if( VDOT( inside , v2 ) > 0.0 )
 				{
 					/* this face normal would be in the wrong direction */
@@ -1035,7 +1038,17 @@ long ***trans_tbl;
 			}
 			if (fu->f_p->fg_p)
 			{
-				nmg_face_g(new_fu, fu->f_p->fg_p->N);
+#if 1
+				/* Do it this way if you expect to change the normals */
+				plane_t	n;
+				NMG_GET_FU_PLANE( n, fu );
+				nmg_face_g(new_fu, n);
+#else
+				/* Do it this way to share fu's geometry struct */
+				nmg_jfg( fu, new_fu );
+#endif
+
+				/* XXX Perhaps this should be new_fu->f_p->fg_p ? */
 				NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p->fg_p , (long *)new_fu->f_p->fg_p );
 			}
 			new_fu->orientation = fu->orientation;
@@ -1361,10 +1374,8 @@ long *flags;
 				/* make a vector in the direction of "eu1" */
 				VSUB2( edge_dir , eu1->vu_p->v_p->vg_p->coord , eu1->eumate_p->vu_p->v_p->vg_p->coord );
 
-				/* make a normal for this faceuse */
-				VMOVE( normal , fu->f_p->fg_p->N );
-				if( fu->orientation == OT_OPPOSITE )
-					VREVERSE( normal , normal );
+				/* find the normal for this faceuse */
+				NMG_GET_FU_NORMAL( normal, fu );
 
 				/* edge direction cross normal gives vetor in face */
 				VCROSS( left , edge_dir , normal );
@@ -1551,13 +1562,19 @@ struct shell *s;
 	/* loop to catch disjoint shells */
 	while( missed_faces )
 	{
+		FAST fastf_t	z;
+
 		/* find the top face */
 		f_top = nmg_find_top_face( s , flags );	
 		NMG_CK_FACE( f_top );
+		if( f_top->flip )
+			z = - f_top->fg_p->N[Z];
+		else
+			z =   f_top->fg_p->N[Z];
 
 		/* f_top is the topmost face (in the +z direction), so its OT_SAME use should have a
 		 * normal with a positive z component */
-		if( f_top->fg_p->N[Z] < 0.0 )
+		if( z < 0.0 )
 			nmg_reverse_face_and_radials( f_top->fu_p );
 
 		/* get OT_SAME use of top face */

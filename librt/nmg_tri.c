@@ -427,7 +427,7 @@ mat_t		TformMat;
 	struct vertexuse *vu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	plane_t Normal;
+	vect_t Normal;
 
 	NMG_CK_FACEUSE(fu);
 
@@ -1093,7 +1093,7 @@ CONST struct rt_tol *tol;
 	for (RT_LIST_FOR(vu, vertexuse, &vu1->v_p->vu_hd)) {
 		NMG_CK_VERTEXUSE(vu);
 		NMG_CK_VERTEX(vu->v_p);
-		NMG_CK_VERTEX_g(vu->v_p->vg_p);
+		NMG_CK_VERTEX_G(vu->v_p->vg_p);
 
 		if (nmg_find_fu_of_vu(vu) != fu1 ||
 		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC) continue;
@@ -1188,8 +1188,7 @@ CONST struct rt_tol *tol;
 	VMOVE(pt,  vu1->v_p->vg_p->coord);
 	VSUB2(dir, vu2->v_p->vg_p->coord, pt);
 	VUNITIZE(dir);
-	nmg_face_rs_init(&rs, &b, fu1, fu1->fumate_p, pt, dir);
-	rs.tol = tol;
+	nmg_face_rs_init(&rs, &b, fu1, fu1->fumate_p, pt, dir, tol);
 
 	if (mid == 0 && end == 1) {
 		if (tri_debug) rt_log("\tNo sorting necessary\n");
