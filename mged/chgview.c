@@ -621,7 +621,7 @@ edit_com(
 }
 
 int
-f_autosize(clientData, interp, argc, argv)
+f_autoview(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int	argc;
