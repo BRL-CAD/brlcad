@@ -412,7 +412,7 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 	map = (int *)rt_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
 
 	/* Built list of vertex structs */
-	nmg_region_vertex_list( &vtab, r );
+	nmg_vertex_tabulate( &vtab, &r->l.magic );
 
 	/* XXX What to do if 0 vertices?  */
 
