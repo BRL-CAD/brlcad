@@ -9,7 +9,9 @@
 #include "nmg.h"
 #include "raytrace.h"
 
-
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 /* macros for comparing 2D points in scanline order */
 #define P_GT_V(_p, _v) \
