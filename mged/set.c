@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 
 extern void	predictor_hook();		/* in ged.c */
+extern void	reattach();			/* in attach.c */
 
 struct mged_variables mged_variables = {
 /* autosize */		1,
@@ -34,7 +35,8 @@ struct mged_variables mged_variables = {
 /* predictor_advance */	1.0,
 /* predictor_length */	2.0,
 /* perspective */	-1,
-/* nmg_eu_dist */	0.05
+/* nmg_eu_dist */	0.05,
+/* eye_sep_dist */	0.0
 };
 
 /*
@@ -65,6 +67,7 @@ struct structparse mged_vparse[] = {
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
 	{"%f",	1, "perspective",	MV_O(perspective),	refresh_hook },
 	{"%f",  1, "nmg_eu_dist",	MV_O(nmg_eu_dist),	nmg_eu_dist_set },
+	{"%f",  1, "eye_sep_dist",	MV_O(eye_sep_dist),	reattach },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 

@@ -401,13 +401,15 @@ Ir_open()
 	winconstraints();	/* remove constraints on the window size */
 
 	ir_oldmonitor = getmonitor();
-#if 0
-	/* XXX also need to test some flag variable */
-	if( sgi_has_stereo() )  {
-		setmonitor(STR_RECT);
-		stereo_is_on = 1;
+	if( mged_variables.eye_sep_dist )  {
+		if( sgi_has_stereo() )  {
+			setmonitor(STR_RECT);
+			stereo_is_on = 1;
+		} else {
+			printf("NOTICE: This SGI does not have stereo display capability\n");
+			stereo_is_on = 0;
+		}
 	}
-#endif
 
 	/*
 	 *  If monitor is in special mode, close window and re-open.
@@ -573,7 +575,8 @@ Ir_close()
 	ir_clear_to_black();
 	frontbuffer(0);
 
-	setmonitor(ir_oldmonitor);
+	if( getmonitor() != ir_oldmonitor )
+		setmonitor(ir_oldmonitor);
 
 	winclose(gr_id);
 	return;

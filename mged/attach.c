@@ -265,3 +265,10 @@ get_attached()
 	/* Valid choice made, attach to it */
 	attach( (*dp)->dmr_name );
 }
+
+void
+reattach()
+{
+	attach( dmp->dmr_name );		/* reattach */
+	dmaflag = 1;
+}

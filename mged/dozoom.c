@@ -97,6 +97,7 @@ int	which_eye;
 	mat_t		tmat, tvmat;
 	mat_t		new;
 	matp_t		mat;
+	fastf_t		eye_delta;
 
 	ndrawn = 0;
 	inv_viewsize = 1 / VIEWSIZE;
@@ -113,16 +114,19 @@ int	which_eye;
 			break;
 		case 1:
 			/* R */
-#define EYE_DELTA	0.01	/* XXX hack hack hack */
+			/* XXX more logic needed */
+			eye_delta = mged_variables.eye_sep_dist*0.5;
 			mat_idn(tmat);
-			MAT_DELTAS(tmat, EYE_DELTA, 0, 0);	/* view delta */
+			MAT_DELTAS(tmat, eye_delta, 0, 0);	/* view delta */
 			mat_mul(tvmat, tmat, model2view);
 			mat = tvmat;
 			break;
 		case 2:
 			/* L */
 			mat_idn(tmat);
-			MAT_DELTAS(tmat, -EYE_DELTA, 0, 0);	/* view delta */
+			/* XXX more logic needed */
+			eye_delta = mged_variables.eye_sep_dist*0.5;
+			MAT_DELTAS(tmat, -eye_delta, 0, 0);	/* view delta */
 			mat_mul(tvmat, tmat, model2view);
 			mat = tvmat;
 			break;

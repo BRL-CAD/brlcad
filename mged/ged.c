@@ -589,12 +589,14 @@ refresh()
 		 *  by applying zoom, rotation, & translation.
 		 *  Calls dmp->dmr_newrot() and dmp->dmr_object().
 		 */
-#if 1
-		dozoom(0);
-#else
-		dozoom(1);
-		dozoom(2);
-#endif
+		if( mged_variables.eye_sep_dist <= 0 )  {
+			/* Normal viewing */
+			dozoom(0);
+		} else {
+			/* Stereo viewing */
+			dozoom(1);
+			dozoom(2);
+		}
 
 		/* Restore to non-rotated, full brightness */
 		dmp->dmr_normal();

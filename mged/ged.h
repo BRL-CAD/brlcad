@@ -320,8 +320,9 @@ struct mged_variables {
 	int	predictor;
 	double	predictor_advance;
 	double	predictor_length;
-	double	perspective;
+	double	perspective;	/* >0 implies perspective viewing is on. */
 	double	nmg_eu_dist;
+	double	eye_sep_dist;	/* >0 implies stereo.  units = "room" mm */
 };
 
 extern struct mged_variables mged_variables;
