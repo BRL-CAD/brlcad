@@ -325,6 +325,51 @@ fprintf(stderr,"az=%g, el=%g, twist=%g\n", az, el, twist);
 		out_mat( mat, stdout);
 		return 0;
 	}
+	if( strcmp( words[0], "fromto" ) == 0 )  {
+		mat_t	mat;
+		point_t	cur;
+		point_t	next;
+		vect_t	from;
+		vect_t	to;
+
+		/* Usage: fromto +Z cur_xyz next_xyz */
+		if( nwords < 8 )  return -1;
+		if( strcmp( words[1], "+X" ) == 0 )  {
+			VSET( from, 1, 0, 0 );
+		} else if( strcmp( words[1], "-X" ) == 0 )  {
+			VSET( from, -1, 0, 0 );
+		} else if( strcmp( words[1], "+Y" ) == 0 )  {
+			VSET( from, 0, 1, 0 );
+		} else if( strcmp( words[1], "-Y" ) == 0 )  {
+			VSET( from, 0, -1, 0 );
+		} else if( strcmp( words[1], "+Z" ) == 0 )  {
+			VSET( from, 0, 0, 1 );
+		} else if( strcmp( words[1], "-Z" ) == 0 )  {
+			VSET( from, 0, 0, -1 );
+		} else {
+			fprintf(stderr,"fromto '%s' is not +/-XYZ\n", words[1]);
+			return -1;
+		}
+		VSET( cur, atof(words[2]), atof(words[3]), atof(words[4]) );
+		VSET( next, atof(words[5]), atof(words[6]), atof(words[7]) );
+		VSUB2( to, next, cur );
+		VUNITIZE(to);
+		mat_fromto( mat, from, to );
+		/* Check to see if it worked. */
+		{
+			vect_t	got;
+
+			MAT4X3VEC( got, mat, from );
+			if( VDOT( got, to ) < 0.9 )  {
+				rt_log("\ntabsub ERROR: At t=%s, mat_fromto failed!\n", chanwords[0] );
+				VPRINT("\tfrom", from);
+				VPRINT("\tto", to);
+				VPRINT("\tgot", got);
+			}
+		}
+		out_mat( mat, stdout );
+		return 0;
+	}
 	return(-2);		/* Unknown keyword */
 }
 
