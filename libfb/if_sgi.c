@@ -136,6 +136,8 @@ FBIO sgi_interface =
 		fb_null,		/* cscreen_addr */
 		fb_sim_readrect,
 		fb_sim_writerect,
+		fb_null,		/* flush */
+		sgi_dclose,		/* free */
 		sgi_help,
 		"Silicon Graphics IRIS",
 		1024,			/* max width */
