@@ -72,7 +72,7 @@ various raytrace applications, and geometry manipulators.
 
 One of the firm designs of the architecture is to be as cross-platform
 as is realistically possible.  As such, BRL-CAD maintains support for
-many very old systems and devices for as long as it reasonably
+many very old systems and devices for as long as it is reasonably
 possible (and as long as there are resources to maintain such
 support).
 
@@ -82,7 +82,7 @@ package, in particular in the raytrace library.  BRL-CAD includes
 scripts that will compare a given compilation against the performance
 of one of the very first systems to support BRL-CAD: a VAX 11/780
 running BSD.  As the benchmark is a metric of the raytrace application
-itself, the performance results are a very good metric for weighting
+itself, the performance results are a very good metric for weighing
 the relative computational strength of a given platform.  The
 mathematically intensive computations exercise the CPU, system memory,
 various levels of data and instruction cache, the operating system,
@@ -137,13 +137,13 @@ bands of energy is added.  By providing a defined spectrum of energy,
 the raytrace library will produce different signal analyses of a given
 set of geometry.
 
-liboptical: The optical library is the bases for BRL-CAD's shaders.
-This includes shaders such as the Phong and Cook-Torrence lightening
+liboptical: The optical library is the basis for BRL-CAD's shaders.
+This includes shaders such as the Phong and Cook-Torrence lighting
 models, as well as various visual effects such as texturing, marble,
 wood graining, air, gravel, grass, clouds, fire, and more.
 
 liborle: The "old" run-length encoding library that will decode and
-encode University of Utah Alpha_1 format Run-Length Encoded data.
+encode University of Utah Raster Toolkit format Run-Length Encoded data.
 
 libpkg: The "Package" library is a network communications library that
 supports multiplexing and demultiplexing syncronous and asynchronous
@@ -192,7 +192,7 @@ system declarations and preprocessor defines.
 FILESYSTEM ORGANIZATION
 -----------------------
 
-Here is an incomprehensive sample of how some of the sources are
+Here is an (not comprehensive) sample of how some of the sources are
 organized in the source distribution:
 
 bench/
@@ -399,11 +399,11 @@ int everything() { return 42; };
 TESTING
 -------
 
-The need for a more formal testing plan has become more and more of a
-pressing issue and the size of BRL-CAD continues to grow.  As such,
+The need for a more formal testing plan has become more of a
+pressing issue as the size of BRL-CAD continues to grow.  As such,
 more importance on various forms of testing is becoming necessary.
 
-While specific plans for unit and black box testing is not yet
+While specific plans for unit and black box testing ar not yet
 finalized, the Corredor Automation Test Suite will be used to assist
 in performing cross-platform build tests, regression tests, and
 various integration and operability tests.
@@ -469,10 +469,10 @@ COMMIT ACCESS
 Details on the particulars of how to interact with CVS are described
 in the doc/cvspolicy.txt document.  In brief, BRL-CAD has a STABLE
 branch in CVS that should always compile and run with expected
-behavior.  On the contrary, while the CVS HEAD is generally always
-expected to compile, more flexibility is allowed for resolution of
-cross-platform build issues.  Read the CVS policy document for more
-details.
+behavior on all supported platforms.  On the contrary, while the CVS 
+HEAD is generally always expected to compile, more flexibility is
+allowed for resolution of cross-platform build issues.  Read the CVS
+policy document for more details.
 
 CVS commit access is evaluated on a person-to-person basis at the
 discretion of the existing developers.  If you'd like to have commit
