@@ -2926,6 +2926,7 @@ int cnt;
 					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
 					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
 					(void)mk_addmember( scratch_name3, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
 				}
 				else
 				{
@@ -2942,6 +2943,7 @@ int cnt;
 					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
 					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
 					(void)mk_addmember( scratch_name4, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
 				}
 				else
 				{
