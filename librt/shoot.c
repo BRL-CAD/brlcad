@@ -930,6 +930,9 @@ start_cell:
 					BU_BITV_ZEROALL(psp->shot);
 					psp->ray_seqno = resp->re_nshootray;
 					psp->oddhit.hit_dist = INFINITY;
+				} else if( psp->oddhit.hit_dist < INFINITY )  {
+					/* Adjust to local distance for this cell */
+					psp->oddhit.hit_dist -= ss.dist_corr;
 				}
 
 				/* Allow solid to shoot all pieces at once */
@@ -940,11 +943,8 @@ start_cell:
 				    &ss.newray, ap, &new_segs, resp ) <= 0 )  {
 				    	/* No hits at all */
 					resp->re_piece_shot_miss++;
-					continue;	/* MISS */
-				}
-
-				/* Add seg chain to list awaiting rt_boolweave() */
-				{
+				} else {
+					/* Add seg chain to list awaiting rt_boolweave() */
 					register struct seg *s2;
 					while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
 						BU_LIST_DEQUEUE( &(s2->l) );
@@ -954,9 +954,13 @@ start_cell:
 						s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
 						BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
 					}
+					resp->re_piece_shot_hit++;
 				}
 				/* There may still be an odd hit left over */
-				resp->re_piece_shot_hit++;
+				if( psp->oddhit.hit_dist < INFINITY )  {
+					/* Restore to proper (absolute) distance */
+					psp->oddhit.hit_dist += ss.dist_corr;
+				}
 			}
 		}
 
