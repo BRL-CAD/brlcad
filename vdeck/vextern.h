@@ -96,9 +96,6 @@ extern int	debug;
 extern char	*usage[], *cmd[];
 extern mat_t	xform, notrans, identity;
 
-typedef union record Record;
-extern Record record;
-
 extern void		abort_sig(), quit();
 extern void		toc(), list_toc();
 extern void		prompt();
