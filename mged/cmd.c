@@ -237,6 +237,8 @@ static struct funtab funtab[] = {
 "button", "number", "simulates a button press, not intended for the user",
 	f_button, 2, 2, FALSE,
 #endif
+"c", "[-gr] comb_name [boolean_expr]", "create or extend a combination using standard notation",
+	f_comb_std,3,MAXARGS,FALSE,
 "cat", "<objects>", "list attributes (brief)",
 	f_cat,2,MAXARGS,FALSE,
 "center", "x y z", "set view center",
