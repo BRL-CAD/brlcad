@@ -31,6 +31,7 @@ struct ogl_vars {
   int fontOffset;
   int ovec;		/* Old color map entry number */
   char is_direct;
+  GLclampf r, g, b;
   struct modifiable_ogl_vars mvars;
 };
 
