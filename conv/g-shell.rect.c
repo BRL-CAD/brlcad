@@ -87,7 +87,8 @@ static struct xray *xz_rays;
 static struct xray *yz_rays;
 static struct rt_i *rtip;
 static struct bn_tol tol;
-static char *usage="Usage:\n%s [-d debug_level] [-r] [-R refinement_tolerance] [-c] [-v] [-g cell_size] [-o brlcad_output_file] [-d debug_level] database.g object1 object2...\n";
+static char *usage="Usage:\n\
+	%s [-d debug_level] [-n] [-c] [-v] [-i initial_ray_dir] [-g cell_size] [-d debug_level] -o brlcad_output_file database.g object1 object2...\n";
 static char *_inside="inside";
 static char *_outside="outside";
 static char dir_ch[3]={ 'X', 'Y', 'Z' };
@@ -96,14 +97,13 @@ static struct local_part *xy_parts=(struct local_part *)NULL;
 static struct local_part *xz_parts=(struct local_part *)NULL;
 static struct local_part *yz_parts=(struct local_part *)NULL;
 
-static int	verbose=0;
-static int	do_extra_rays=0;
+static int	initial_ray_dir=-1;
+static int	do_extra_rays=1;
 static long	face_count=0;
 static fastf_t	cell_size=50.0;
 static fastf_t	edge_tol=0.0;
 static FILE	*fd_sgp=NULL, *fd_out=NULL, *fd_plot=NULL;
 static char	*output_file=(char *)NULL;
-static char	*sgp_file=(char *)NULL;
 static char	*plotfile;
 static long	rpp_count=0;
 static short	vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
@@ -113,6 +113,8 @@ static int	debug=0;
 static char	*token_seps=" \t,;\n";
 static int	cur_dir=0;
 static int	cell_count[3];
+static fastf_t	decimation_tol=0.0;
+static fastf_t	min_angle=0.0;
 
 #define	XY_CELL( _i, _j )	((_i)*cell_count[Y] + (_j))
 #define	XZ_CELL( _i, _j )	((_i)*cell_count[Z] + (_j))
@@ -1982,7 +1984,13 @@ Make_shell()
 		refine_edges( s );
 	}
 
-	if( do_extra_rays || edge_tol > 0.0 )
+	if( decimation_tol > 0.0 )
+	{
+		bu_log( "%d edges eliminated by decimation to tolerance of %gmm\n",
+			nmg_edge_collapse( m, &tol, decimation_tol, min_angle ), decimation_tol );
+	}
+
+	if( do_extra_rays || edge_tol > 0.0 || decimation_tol > 0.0 )
 		nmg_rebound( m, &tol );
 
 	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
@@ -2006,9 +2014,14 @@ struct partition *PartHeadp;
 	register struct partition *first_pp;
 	register struct partition *last_pp;
 	struct local_part *lpart;
+	fastf_t part_len;
 
 	first_pp = PartHeadp->pt_forw;
 	last_pp = PartHeadp->pt_back;
+
+	part_len = last_pp->pt_outhit->hit_dist - first_pp->pt_inhit->hit_dist;
+	if( NEAR_ZERO( part_len, tol.dist ) )
+		return( 0 );
 
 	lpart = GET_PART;
 	lpart->in = GET_END;
@@ -2095,10 +2108,30 @@ char *argv[];
 	BU_LIST_INIT( &subtract_rpp_head );
 
 	/* Get command line arguments. */
-	while( (c=getopt( argc, argv, "a:s:rR:vg:o:d:p:X:")) != EOF)
+	while( (c=getopt( argc, argv, "i:a:s:nR:g:o:d:p:X:")) != EOF)
 	{
 		switch( c )
 		{
+			case 'i':	/* set initial ray direction */
+					switch( *optarg )
+					{
+						case 'x':
+						case 'X':
+							initial_ray_dir = X;
+							break;
+						case 'y':
+						case 'Y':
+							initial_ray_dir = Y;
+							break;
+						case 'z':
+						case 'Z':
+							initial_ray_dir = Z;
+							break;
+						default:
+							bu_log( "Illegal ray direction (%c), must be X, Y, or Z!!!\n", *optarg );
+							exit( 1 );
+					}
+					break;
 			case 'a':	/* add an rpp for refining */
 				{
 					char *ptr;
@@ -2163,8 +2196,8 @@ char *argv[];
 					BU_LIST_APPEND( &add_rpp_head, &rpp->h );
 				}
 				break;
-			case 'r':	/* do extra raytracing to refine shape */
-				do_extra_rays = 1;
+			case 'n':	/* don't do extra raytracing to refine shape */
+				do_extra_rays = 0;
 				break;
 			case 'R':	/* do edge breaking */
 				edge_tol = atof( optarg );
@@ -2174,9 +2207,6 @@ char *argv[];
 				break;
 			case 'd':	/* debug level */
 				debug = atoi( optarg );
-				break;
-			case 'v':	/* verbose */
-				verbose = 1;
 				break;
 			case 'g':	/* cell size */
 				cell_size = atof( optarg );
@@ -2197,12 +2227,6 @@ char *argv[];
 		exit( 1 );
 	}
 
-	if( output_file && sgp_file )
-	{
-		bu_log( usage, argv[0] );
-		exit( 1 );
-	}
-
 	if( output_file )
 	{
 		if( (fd_out=fopen( output_file, "w")) == NULL )
@@ -2213,17 +2237,8 @@ char *argv[];
 		}
 		mk_id( fd_out, "test g-sgp" );
 	}
-
-	if( sgp_file )
-	{
-		if( (fd_sgp=fopen( sgp_file, "w")) == NULL )
-		{
-			bu_log( "Cannot open output file (%s)\n", sgp_file );
-			perror( argv[0] );
-			exit( 1 );
-		}
-		fprintf( fd_sgp, "object\n" );
-	}
+	else
+		bu_bomb( "Output file must be specified!!!\n" );
 
 	if( plotfile )
 	{
@@ -2259,20 +2274,25 @@ char *argv[];
 
 	rt_prep( rtip );
 
-	bb_area[X] = (rtip->mdl_max[Y] - rtip->mdl_min[Y]) *
-		     (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
+	if( initial_ray_dir == -1 )
+	{
+		bb_area[X] = (rtip->mdl_max[Y] - rtip->mdl_min[Y]) *
+			     (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
 
-	bb_area[Y] = (rtip->mdl_max[X] - rtip->mdl_min[X]) *
-		     (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
+		bb_area[Y] = (rtip->mdl_max[X] - rtip->mdl_min[X]) *
+			     (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
 
-	bb_area[Z] = (rtip->mdl_max[Y] - rtip->mdl_min[Y]) *
-		     (rtip->mdl_max[X] - rtip->mdl_min[X]);
+		bb_area[Z] = (rtip->mdl_max[Y] - rtip->mdl_min[Y]) *
+			     (rtip->mdl_max[X] - rtip->mdl_min[X]);
 
-	cur_dir = X;
-	if( bb_area[Y] > bb_area[cur_dir] )
-		cur_dir = Y;
-	if( bb_area[Z] > bb_area[cur_dir] )
-		cur_dir = Z;
+		cur_dir = X;
+		if( bb_area[Y] > bb_area[cur_dir] )
+			cur_dir = Y;
+		if( bb_area[Z] > bb_area[cur_dir] )
+			cur_dir = Z;
+	}
+	else
+		cur_dir = initial_ray_dir;
 
 	cell_count[X] = (int)((rtip->mdl_max[X] - rtip->mdl_min[X])/cell_size) + 3;
 	cell_count[Y] = (int)((rtip->mdl_max[Y] - rtip->mdl_min[Y])/cell_size) + 3;
