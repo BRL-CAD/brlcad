@@ -186,49 +186,7 @@ for file in COPYING INSTALL ; do
 done
 
 # automatically enable and load our configure cache file if available
-AC_MSG_CHECKING([whether a configure cache exists])
-if test "x$cache_file" = "x/dev/null" ; then
-	brlcad_cache="config.cache.${host_os}.${ac_hostname}"
-	CONFIG_CACHE=""
-	if test -f "$brlcad_cache"; then
-		# if the configure script has been modified since
-		# the last caching, assume it to be invalid.
-		last_modified="`ls -Lt $brlcad_cache configure`"
-		case "x$last_modified" in
-			xconfigure*)
-				AC_MSG_RESULT([found but out of date])
-				rm -f $brlcad_cache
-				;;
-			*)
-				AC_MSG_RESULT([found $brlcad_cache])
-
-				dnl go ahead and load our cache
-				case $brlcad_cache in
-					[\\/]* | ?:[\\/]* )
-						. $brlcad_cache
-						;;
-					*)
-						. ./$brlcad_cache
-						;;
-				esac
-		esac
-	else
-		AC_MSG_RESULT([not found])
-	fi
-
-	dnl if we are on sgi, bash may choke on sed syntax in the cache
-	if test "x$host_os" != "xirix6.5" ; then
-		AC_MSG_NOTICE([*** Automatically caching to $brlcad_cache ***])
-		>$brlcad_cache
-		cache_file="$brlcad_cache"
-		CONFIG_CACHE="$cache_file"
-	else
-		AC_MSG_NOTICE([Automatic caching is unavailable on IRIX])
-	fi
-	AC_SUBST(CONFIG_CACHE)
-else
-	AC_MSG_RESULT($cache_file)
-fi
+BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
 
 # define a function that can restart configure with a given set of flags
 # BC_RESTART_CONFIGURE(CONFIGURE, FLAGS)
