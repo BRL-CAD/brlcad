@@ -2495,6 +2495,23 @@ CONST struct rt_tol	*tol;
 		}
 	}
 
+	/* Note, calculating the bounding box for face_g_snurbs
+	 * from the extents of the the loop does not work
+	 * since the loops are most likely in parametric space
+ 	 * thus we need to calcualte the bounding box for the
+	 * face_g_snurb here instead.  There may be a more efficient
+	 * way, and one may need some time to take a good look at
+	 * this
+	 */
+
+	if( *fu->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+	{
+		rt_nurb_s_bound( fu->f_p->g.snurb_p, fu->f_p->g.snurb_p->min_pt,
+			fu->f_p->g.snurb_p->max_pt);
+		VMIN(f->min_pt, fu->f_p->g.snurb_p->min_pt );
+		VMIN(f->max_pt, fu->f_p->g.snurb_p->max_pt );
+	}
+
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_face_bb(f=x%x, tol=x%x)\n", f , tol);
 	}
