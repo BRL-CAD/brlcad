@@ -153,12 +153,13 @@ struct rt_list *tbl2d;
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_TRAP(tp);
 
-	rt_log("trap top pt2d: 0x%08x %g %g vu:0x%08x\n",
+	rt_log("trap 0x%08x top pt2d: 0x%08x %g %g vu:0x%08x\n",
+			tp,
 			&tp->top, tp->top->coord[X], tp->top->coord[Y],
 			tp->top->vu_p);
 
 	if (tp->bot)
-		rt_log("     bot pt2d: 0x%08x %g %g vu:0x%08x\n",
+		rt_log("\t\tbot pt2d: 0x%08x %g %g vu:0x%08x\n",
 			&tp->bot, tp->bot->coord[X], tp->bot->coord[Y],
 			tp->bot->vu_p);
 	else {
@@ -166,10 +167,10 @@ struct rt_list *tbl2d;
 	}
 			
 	if (tp->e_left)
-		print_2d_eu("       e_left", tp->e_left, tbl2d);
+		print_2d_eu("\t\t  e_left", tp->e_left, tbl2d);
 
 	if (tp->e_right)
-		print_2d_eu("      e_right", tp->e_right, tbl2d);
+		print_2d_eu("\t\t e_right", tp->e_right, tbl2d);
 }
 static void
 print_tlist(tbl2d, tlist)
@@ -2093,6 +2094,7 @@ CONST struct rt_tol	*tol;
 					tp->bot, cut_color, tol, 1);
 			}
 
+#if 0
 			/* if the bottom vertexuse is on a rising edge and
 			 * is a top vertex of another trapezoid then
 			 * 	replace the occurrance of the old bottom
@@ -2122,7 +2124,7 @@ CONST struct rt_tol	*tol;
 				 */
 				tp->top = PT2D_PREV( tbl2d, tp->bot );
 			}
-
+#endif
 		} else {
 
 			/* points are in different loops, join the
