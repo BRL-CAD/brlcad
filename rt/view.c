@@ -54,7 +54,7 @@ Options:\n\
  -p[#]		Perspective viewing, focal length scaling\n\
 ";
 
-int fbfd = -1;			/* framebuffer file descriptor */
+FBIO	*fbp = FBIO_NULL;	/* Framebuffer handle */
 
 extern int lightmodel;		/* lighting model # to use */
 extern mat_t view2model;
@@ -193,12 +193,12 @@ register struct application *ap;
 		b = 0x80;
 	}
 
-	if( fbfd > 0 )  {
+	if( fbp != FBIO_NULL )  {
 		Pixel p;
 		p.red = r;
 		p.green = g;
 		p.blue = b;
-		fbwrite( ap->a_x, ap->a_y, &p, 1 );
+		fb_write( fbp, ap->a_x, ap->a_y, &p, 1 );
 	}
 	if( pixfp != NULL )  {
 		if( hex_out )  {
@@ -340,8 +340,8 @@ view_eol()
  */
 view_end()
 {
-	if( fbfd > 0 )
-		fbclose(fbfd);
+	if( fbp != FBIO_NULL )
+		fb_close(fbp);
 }
 
 /*
@@ -364,19 +364,22 @@ char *file, *obj;
 		/* Output interactively to framebuffer */
 		if( npts <= 512 )
 			width = 512;
-		else
-			width = 1024;
+		else {
+			if( npts <= 1024 )
+				width = 1024;
+			else
+				width = npts;
+		}
 
-		fbsetsize( width );
-		if( (fbfd = fbopen( NULL, APPEND )) < 0 )  {
+		if( (fbp = fb_open( NULL, width, width )) == FBIO_NULL )  {
 			rt_log("view:  can't open frame buffer\n");
 			exit(12);
 		}
-		fbclear();
-		fb_wmap( NULL );
+		fb_clear( fbp, PIXEL_NULL );
+		fb_wmap( fbp, COLORMAP_NULL );
 		/* KLUDGE ALERT:  The library want zoom before window! */
-		fbzoom( width/npts, width/npts );
-		fbwindow( npts/2, npts/2 );
+		fb_zoom( fbp, width/npts, width/npts );
+		fb_window( fbp, npts/2, npts/2 );
 	}
 }
 
