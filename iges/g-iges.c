@@ -24,6 +24,7 @@
 
 #ifndef lint
 static char RCSid[] = "$Header$";
+static char RCSrev[] = "$Revision$";
 #endif
 
 extern char	version[];
@@ -264,7 +265,7 @@ char	*argv[];
 	iges_init( &tol , &ttol , verbose , dbip );
 
 	/* Write start and global sections of the IGES file */
-	w_start_global( fp_dir , fp_param , argv[0] , prog_name , output_file , RCSid , version );
+	w_start_global( fp_dir , fp_param , argv[0] , prog_name , output_file , RCSid , RCSrev );
 
 	/* Count object references */
 /*	for( i=1 ; i<argc ; i++ )
