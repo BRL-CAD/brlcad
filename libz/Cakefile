@@ -9,13 +9,15 @@
 
 #if !defined(BUILD_LIBRARY)
 #define PRODUCTS	libz.a
-#define CONFIG_OPTS	--prefix=BASEDIR
+#define CONFIG_OPTS	-p BASEDIR
 #define	AFTER_MAKE	/**/
+#define	FIX_FILE	afile
 #else
 #define PRODUCTS	libz.so
 #define SHARED_PRODUCT	libz.so''[[LIBVERS]]
-#define CONFIG_OPTS	--shared --prefix=BASEDIR
+#define CONFIG_OPTS	-s -p BASEDIR
 #define	AFTER_MAKE	mv libz.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
+#define	FIX_FILE	sfile
 #endif
 
 PRODUCTS: Makefile.MTYPE
@@ -32,7 +34,7 @@ Makefile.MTYPE:	Makefile.in	if not exist Makefile.MTYPE
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
 		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
 		../SRCDIR/configure CONFIG_OPTS; \
-		../SRCDIR/fix_makefile.sh >  Makefile.MTYPE)
+		../SRCDIR/fix_makefile.sh FIX_FILE  >  Makefile.MTYPE)
 
 
 clean&:
@@ -48,12 +50,12 @@ clobber&: Makefile.MTYPE
 install&: Makefile.MTYPE
 	cp ../SRCDIR/zlib.h .
 	cp ../SRCDIR/zconf.h .
-	make -f Makefile.MTYPE install
+	make -f Makefile.MTYPE install prefix=BASEDIR
 
 install-nobak&: Makefile.MTYPE
 	cp ../SRCDIR/zlib.h .
 	cp ../SRCDIR/zconf.h .
-	make -f Makefile.MTYPE install
+	make -f Makefile.MTYPE install prefix=BASEDIR
 
 test&: Makefile.MTYPE
 	make -f Makefile.MTYPE test

@@ -66,11 +66,9 @@ libz.a: $(OBJS)
 	$(AR) $@ $(OBJS)
 	-@ ($(RANLIB) $@ || true) >/dev/null 2>&1
 
-$(SHAREDLIB): $(OBJS)
+libz.so: $(OBJS)
 	$(LDSHARED) -o $@ $(OBJS)
 	rm -f $(SHAREDLIB).11.1 $(SHAREDLIB).1
-	ln -s $@ $(SHAREDLIB).11.1
-	ln -s $@ $(SHAREDLIB).1
 
 example: example.o $(LIBS)
 	$(CC) $(CFLAGS) -o $@ example.o $(LDFLAGS)
@@ -86,10 +84,10 @@ install: $(LIBS)
 	cp $(LIBS) $(exec_prefix)/lib
 	cd $(exec_prefix)/lib; chmod 755 $(LIBS)
 	-@(cd $(exec_prefix)/lib; $(RANLIB) libz.a || true) >/dev/null 2>&1
-	cd $(exec_prefix)/lib; if test -f $(SHAREDLIB).$(VER); then \
-	  rm -f $(SHAREDLIB) $(SHAREDLIB).1; \
-	  ln -s $(SHAREDLIB).$(VER) $(SHAREDLIB); \
-	  ln -s $(SHAREDLIB).$(VER) $(SHAREDLIB).1; \
+	cd $(exec_prefix)/lib; if test -f $(SHAREDLIB); then \
+	  rm -f $(SHAREDLIB).11.1 $(SHAREDLIB).1; \
+	  ln -s $(SHAREDLIB) $(SHAREDLIB).11.1; \
+	  ln -s $(SHAREDLIB) $(SHAREDLIB).1; \
 	  (ldconfig || true)  >/dev/null 2>&1; \
 	fi
 # The ranlib in install is needed on NeXTSTEP which checks file times

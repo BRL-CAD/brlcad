@@ -1,6 +1,6 @@
 #!/bin/sh
 
-sed -f ../libz/sfile Makefile
+sed -f ../libz/$1 Makefile
 
 for FILE in  ../libz/*.c
 do
