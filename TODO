@@ -11,11 +11,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * write up the history of brlcad
 
-* revise cvs policy document to reflect desired and practical public
-  use
-
-* ensure successful build on solaris with gcc and sunwpro compiler
-
 * update the Utah Raster Toolkit
 
 
