@@ -205,7 +205,7 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
 
-#if defined(i386) && defined(__bsdi__)
+#if defined(__CAKE__bsdi)
 /*	IBM PC or clone running BSDI Unix */
 #undef	bsdi
 #	define	MTYPE	bsdi
@@ -228,7 +228,7 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
 
-#if defined(i386) && !defined(__bsdi__) && !defined(__NetBSD__) && !defined(__386BSD__) && !defined(__FreeBSD__)
+#if defined(__CAKE__at)
 /*	IBM PC or clone, running SysV R3 */
 #	define	MTYPE	at
 #	define	HAS_TCP	1
@@ -245,7 +245,7 @@ set -S2 "/bin/sh"
 #	define	STANDARD_LIBES	-lm
 #endif
 
-#if defined(__unix__) && defined(__i386__) && defined(__386BSD__)
+#if defined(__CAKE__386)
 /* IBM PC with 386BSD from William Jolitz */
 #	define	MTYPE	386
 #	define	UNIXTYPE BSD
@@ -255,7 +255,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
-#if defined(__NetBSD__)
+#if defined(__CAKE__nb) || defined(__CAKE__nb68)
 /* system running NetBSD 1.0 from Chris Demetriou <cgd@sun-lamp.cs.berkeley.edu> */
 #	if defined(i386)
 #		define	MTYPE 		nb86
@@ -371,7 +371,7 @@ set -S2 "/bin/sh"
 #	define	LIBFB_LIBES	LIBPKG
 #endif
 
-#if !defined(alliant) && defined(i860) && defined(unix) && __STDC__ == 0
+#if defined(__CAKE__stad)
 /*	Stardent VISTRA i860 machine.  No vendor symbols found in cpp */
 #	undef	stad
 #	define	MTYPE	stad
@@ -580,7 +580,7 @@ set -S2 "/bin/sh"
 #	endif
 #endif
 
-#if defined(sun) && !defined(sparc)
+#if defined(__CAKE__sun3)
 /*	Sun-3 hardware, SunOS 3.4, SunOS 4.0 */
 #	undef	sun
 #	undef	sun3
@@ -695,7 +695,7 @@ set -S2 "/bin/sh"
 #	endif
 #endif
 
-#if defined(sparc) && !defined(__CAKE__SunOS5)
+#if defined(__CAKE__sun4)
 /*	Sun-4 "SparcStation" hardware, running SunOS 4 */
 #	undef	sun
 #	undef	sun4
@@ -977,7 +977,7 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-L''XLIBDIR -lX11 -lnet
 #endif
 
-#if defined(convex) || defined(__convex__)
+#if defined(__CAKE__c1)
 #	undef	convex
 #	undef	c1
 #	define	MTYPE	c1
@@ -1007,7 +1007,7 @@ set -S2 "/bin/sh"
 #	endif
 #endif
 
-#ifdef ardent
+#if defined(__CAKE_ard)
 /* Ardent/Stardent.  "Titan 1" from Kubota Pacific */
 /* This configuration information is based on a preliminary test */
 #	undef	ard
