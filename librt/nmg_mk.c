@@ -29,9 +29,13 @@
  *	edges of loops of the same face must not overlap
  *	the "magic" member of each struct is the first item.
  *
+ *	All routines which create and destroy the NMG data structures
+ *	are contained in this module.
  *
- *  Author -
+ *
+ *  Authors -
  *	Lee A. Butler
+ *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -1678,4 +1682,170 @@ struct edgeuse *eu;
 
 	nmg_keu(eu);
 	return(0);
+}
+
+/*
+ *			N M G _ M O V E E U
+ *
+ *	Move a pair of edgeuses onto a new edge (glue edgeuse).
+ *	the edgeuse eusrc and its mate are moved to the edge
+ *	used by eudst.  eusrc is made to be immediately radial to eudst.
+ *	if eusrc does not share the same vertices as eudst, we bomb.
+ */
+void
+nmg_moveeu(eudst, eusrc)
+struct edgeuse *eudst, *eusrc;
+{
+	struct edgeuse	*eudst_mate;
+	struct edgeuse	*eusrc_mate;
+	struct edge	*e;
+
+	NMG_CK_EDGEUSE(eudst);
+	NMG_CK_EDGEUSE(eusrc);
+	eudst_mate = eudst->eumate_p;
+	eusrc_mate = eusrc->eumate_p;
+	NMG_CK_EDGEUSE(eudst_mate);
+	NMG_CK_EDGEUSE(eusrc_mate);
+
+	/* protect the morons from themselves.  Don't let them
+	 * move an edgeuse to itself or it's mate
+	 */
+	if (eusrc == eudst || eusrc_mate == eudst)  {
+		rt_log("nmg_moveeu() moving edgeuse to itself\n");
+		return;
+	}
+
+	if (eusrc->e_p == eudst->e_p &&
+	    (eusrc->radial_p == eudst || eudst->radial_p == eusrc))  {
+	    	rt_log("nmg_moveeu() edgeuses already share edge\n");
+		return;
+	}
+
+	/* make sure vertices are shared */
+	if ( ! ( (eudst_mate->vu_p->v_p == eusrc->vu_p->v_p &&
+	    eudst->vu_p->v_p == eusrc_mate->vu_p->v_p) ||
+	    (eudst->vu_p->v_p == eusrc->vu_p->v_p &&
+	    eudst_mate->vu_p->v_p == eusrc_mate->vu_p->v_p) ) ) {
+		/* edgeuses do NOT share verticies. */
+	    	VPRINT("eusrc", eusrc->vu_p->v_p->vg_p->coord);
+	    	VPRINT("eusrc_mate", eusrc_mate->vu_p->v_p->vg_p->coord);
+	    	VPRINT("eudst", eudst->vu_p->v_p->vg_p->coord);
+	    	VPRINT("eudst_mate", eudst_mate->vu_p->v_p->vg_p->coord);
+	    	rt_bomb("nmg_moveeu() edgeuses do not share vertices, cannot share edge\n");
+	}
+
+	e = eusrc->e_p;
+	eusrc_mate->e_p = eusrc->e_p = eudst->e_p;
+
+	/* if we're not deleting the edge, make sure it will be able
+	 * to reference the remaining uses, otherwise, take care of disposing
+	 * of the (now unused) edge
+	 */
+	if (eusrc->radial_p != eusrc_mate) {
+		/* this is NOT the only use of the eusrc edge! */
+		if (e->eu_p == eusrc || e->eu_p == eusrc_mate)
+			e->eu_p = eusrc->radial_p;
+
+		/* disconnect from the list of uses of this edge */
+		eusrc->radial_p->radial_p = eusrc_mate->radial_p;
+		eusrc_mate->radial_p->radial_p = eusrc->radial_p;
+	} else {
+		/* this is the only use of the eusrc edge.  Kill edge. */
+		if (e->eg_p) FREE_EDGE_G(e->eg_p);
+		FREE_EDGE(e);
+	}
+
+	eusrc->radial_p = eudst;
+	eusrc_mate->radial_p = eudst->radial_p;
+
+	eudst->radial_p->radial_p = eusrc_mate;
+	eudst->radial_p = eusrc;
+}
+
+/*			N M G _ U N G L U E E D G E
+ *
+ *	If edgeuse is part of a shared edge (more than one pair of edgeuses
+ *	on the edge), it and its mate are "unglued" from the edge, and 
+ *	associated with a new edge structure.
+ *
+ *	Primarily a support routine for nmg_eusplit()
+ */
+void
+nmg_unglueedge(eu)
+struct edgeuse *eu;
+{
+	struct edge	*old_e;
+	struct edge	*new_e;
+	struct model	*m;
+
+	NMG_CK_EDGEUSE(eu);
+	old_e = eu->e_p;
+	NMG_CK_EDGE(old_e);
+
+	/* if we're already a single edge, just return */
+	if (eu->radial_p == eu->eumate_p)
+		return;
+
+	m = nmg_find_model( &eu->l.magic );
+	GET_EDGE(new_e, m);		/* create new edge */
+
+	new_e->magic = NMG_EDGE_MAGIC;
+	/* XXX If old_e had edge_g, should duplicate reference here */
+	new_e->eg_p = (struct edge_g *)NULL;
+	new_e->eu_p = eu;
+
+	/* make sure the edge isn't pointing at this edgeuse */
+	if (old_e->eu_p == eu || old_e->eu_p == eu->eumate_p ) {
+		old_e->eu_p = old_e->eu_p->radial_p;
+	}
+
+	/* unlink edgeuses from old edge */
+	eu->radial_p->radial_p = eu->eumate_p->radial_p;
+	eu->eumate_p->radial_p->radial_p = eu->radial_p;
+	eu->eumate_p->radial_p = eu;
+	eu->radial_p = eu->eumate_p;
+
+	/* Associate edgeuse and mate with new edge */
+	eu->eumate_p->e_p = eu->e_p = new_e;
+}
+
+/*
+ *			N M G _ J V
+ *
+ *	Join two vertexes into one.
+ *	v1 inherits all the vertexuses presently pointing to v2,
+ *	and v2 is then destroyed.
+ */
+void
+nmg_jv(v1, v2)
+register struct vertex	*v1;
+register struct vertex	*v2;
+{
+	register struct vertexuse	*vu;
+
+	NMG_CK_VERTEX(v1);
+	NMG_CK_VERTEX(v2);
+
+	if (v1 == v2) return;
+
+	/*
+	 *  Walk the v2 list, unlinking vertexuse structs,
+	 *  and adding them to the *end* of the v1 list
+	 *  (which preserves relative ordering).
+	 */
+	vu = RT_LIST_FIRST(vertexuse, &v2->vu_hd );
+	while( RT_LIST_NOT_HEAD( vu, &v2->vu_hd ) )  {
+		register struct vertexuse	*vunext;
+
+		NMG_CK_VERTEXUSE(vu);
+		vunext = RT_LIST_PNEXT(vertexuse, vu);
+		RT_LIST_DEQUEUE( &vu->l );
+		RT_LIST_INSERT( &v1->vu_hd, &vu->l );
+		vu->v_p = v1;		/* "up" to new vertex */
+		vu = vunext;
+	}
+
+	/* Kill vertex v2 */
+	if (v2->vg_p) FREE_VERTEX_G(v2->vg_p);
+	FREE_VERTEX(v2);
 }
