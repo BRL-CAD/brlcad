@@ -80,6 +80,9 @@ static int feat_id_len=0;		/* number of available slots in the above array */
 static int feat_id_count=0;		/* number of hole features actually in the above list */
 #define FEAT_ID_BLOCK	64		/* number of slots to allocate in above list */
 
+static struct bu_hash_tbl *name_hash;
+#define NUM_HASH_TABLE_BINS	4096	/* number of bins for part number to part name hash table */
+
 static int reg_id = 1000;	/* region ident number (incremented with each part) */
 
 static struct vert_root *vert_tree_root;	/* structure for storing and searching on vertices */
@@ -130,6 +133,7 @@ static double drill_angle=0.0;		/* drill tip angle */
 static Pro3dPnt end1, end2;		/* axis endpoints for holes */
 static bu_rb_tree *done_list_part=NULL;	/* list of parts already done */
 static bu_rb_tree *done_list_asm=NULL;	/* list of assemblies already done */
+static bu_rb_tree *brlcad_names=NULL;	/* list of BRL-CAD names in use */
 
 /* declaration of functions passed to the feature visit routine */
 static ProError assembly_comp( ProFeature *feat, ProError status, ProAppData app_data );
@@ -180,6 +184,8 @@ char *obj_type[NUM_OBJ_TYPES];
 #define FEAT_TYPE_OFFSET 910
 int feat_type_count[NUM_FEAT_TYPES];
 char *feat_type[NUM_FEAT_TYPES];
+
+#define MAX_LINE_LEN		256	/* maximum allowed line length for part number to name map file */
 
 void
 do_initialize()
@@ -503,6 +509,114 @@ static char *feat_status[]={
 	"PRO_FEAT_SUPPRESSED",
 	"PRO_FEAT_UNREGENERATED"
 };
+
+void
+lower_case( char *name )
+{
+	unsigned char *c;
+
+	c = (unsigned char *)name;
+	while( *c ) {
+		(*c) = tolower( *c );
+		c++;
+	}
+}
+
+void
+make_legal( char *name )
+{
+	unsigned char *c;
+
+	c = (unsigned char *)name;
+	while( *c ) {
+		if( *c < '0' ) {
+			*c = '_';
+		} else if( *c > '~' ) {
+			*c = '_';
+		} else if( *c == '/' ) {
+			*c = '_';	
+		}
+		c++;
+	}
+}
+
+/* create a unique BRL-CAD object name from a possibly illegal name */
+char *
+create_unique_name( char *name )
+{
+	struct bu_vls tmp_name;
+	int initial_length=0;
+	int count=0;
+
+	if( logger ) {
+		fprintf( logger, "create_unique_name( %s )\n", name );
+	}
+
+	/* if we do not already have a brlcad name tree, create one here */
+	if( !brlcad_names ) {
+		if( logger ) {
+			fprintf( logger, "\tCreating rb tree for brlcad names\n" );
+		}
+		brlcad_names = bu_rb_create1( "brl-cad names", strcmp );
+		bu_rb_uniq_all_on( brlcad_names );
+	}
+
+	/* create a unique name */
+	bu_vls_init( &tmp_name );
+	bu_vls_strcpy( &tmp_name, name );
+	lower_case( bu_vls_addr( &tmp_name ) );
+	make_legal( bu_vls_addr( &tmp_name ) );
+	initial_length = bu_vls_strlen( &tmp_name );
+	while( bu_rb_insert( brlcad_names, bu_vls_addr( &tmp_name ) ) < 0 ) {
+		bu_vls_trunc( &tmp_name, initial_length );
+		count++;
+		bu_vls_printf( &tmp_name, "_%d", count );
+	}
+
+	if( logger ) {
+		fprintf( logger, "\tnew name for %s is %s\n", name, bu_vls_addr( &tmp_name ) );
+	}
+	return( bu_vls_strgrab( &tmp_name ) );
+}
+
+char *
+get_brlcad_name( char *part_name )
+{
+	char *brlcad_name=NULL;
+	struct bu_hash_entry *entry=NULL, *prev=NULL;
+	int new_entry=0;
+	unsigned long index=0;
+	char *name_copy;
+
+	name_copy = bu_strdup( part_name );
+	lower_case( name_copy );
+
+	if( logger ) {
+		fprintf( logger, "get_brlcad_name( %s )\n", name_copy );
+	}
+
+	/* find name for this part in hash table */
+	entry = bu_find_hash_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
+
+	if( entry ) {
+		if( logger ) {
+			fprintf( logger, "\treturning %s\n", (char *)bu_get_hash_value( entry ) );
+		}
+		bu_free( name_copy, "name_copy" );
+		return( (char *)bu_get_hash_value( entry ) );
+	} else {
+
+		/* must create a new name */
+		brlcad_name = create_unique_name( name_copy );
+		entry = bu_hash_add_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
+		bu_set_hash_value( entry, (unsigned char *)brlcad_name );
+		if( logger ) {
+			fprintf( logger, "\tCreating new brlcad name (%s) for part (%s)\n", brlcad_name, name_copy );
+		}
+		bu_free( name_copy, "name_copy" );
+		return( brlcad_name );
+	}
+}
 
 void
 model_units( ProMdl model )
@@ -1644,6 +1758,12 @@ kill_error_dialog( char *dialog, char *component, ProAppData appdata )
 	(void)ProUIDialogDestroy( "proe_brl_error" );
 }
 
+void
+kill_gen_error_dialog( char *dialog, char *component, ProAppData appdata )
+{
+	(void)ProUIDialogDestroy( "proe_brl_gen_error" );
+}
+
 /* routine to output a part as a BRL-CAD region with one BOT solid
  * The region will have the name from Pro/E.
  * The solid will have the same name with "s." prefix.
@@ -1686,10 +1806,10 @@ output_part( ProMdl model )
 		obj_type_count[type]++;
 	}
 	/* let user know we are doing something */
-#if 1
+
 	status = ProUILabelTextSet( "proe_brl", "curr_proc", part_name );
 	if( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to update dialog label for currently oricessed part\n" );
+		fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
 		return( 1 );
 	}
 	status = ProUIDialogActivate( "proe_brl", &ret_status );
@@ -1698,12 +1818,6 @@ output_part( ProMdl model )
 			 status );
 		fprintf( stderr, "\t dialog returned %d\n", ret_status );
 	}
-#else
-	sprintf( astr, "Processing Part: %s", curr_part_name );
-	(void)ProMessageDisplay( MSGFIL, "USER_INFO", astr );
-	ProMessageClear();
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-#endif
 
 	if( !do_facets_only || do_elims ) {
 		free_csg_ops();
@@ -1844,7 +1958,7 @@ output_part( ProMdl model )
 		ProMessageClear();
 		fprintf( stderr, "%s\n", astr );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-		add_to_empty_list( curr_part_name );
+		add_to_empty_list( get_brlcad_name( curr_part_name ) );
 		ret = 2;
 	} else {
 		/* output the triangles */
@@ -1866,7 +1980,7 @@ output_part( ProMdl model )
 			ProMessageClear();
 			fprintf( stderr, "%s\n", astr );
 			(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-			add_to_empty_list( curr_part_name );
+			add_to_empty_list( get_brlcad_name( curr_part_name ) );
 			ret = 2;
 		} else {
 			int i;
@@ -1929,10 +2043,10 @@ output_part( ProMdl model )
 
 			/* actually output the part */
 			/* first the BOT solid with a made-up name */
-			sprintf( sol_name, "s.%s", curr_part_name );
+			sprintf( sol_name, "s.%s", get_brlcad_name( curr_part_name ) );
 			if( logger ) {
 				fprintf( logger, "Creating bot primitive (%s) for part %s\n",
-					 sol_name, curr_part_name );
+					 sol_name, get_brlcad_name( curr_part_name ) );
 			}
 			fprintf( outfp, "put %s bot mode volume orient no V { ", sol_name );
 			for( i=0 ; i<vert_tree_root->curr_vert ; i++ ) {
@@ -1982,12 +2096,12 @@ output_part( ProMdl model )
 				/* no surface properties */
 				fprintf( outfp,
 				   "put %s comb region yes id %d los 100 GIFTmater 1 tree %s\n",
-					 curr_part_name, reg_id, bu_vls_addr( &tree) );
+					 get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree) );
 			} else if( stat == PRODEV_SURF_PROPS_SET ) {
 				/* use the colors, ... that was set in Pro/E */
 				fprintf( outfp,
 				    "put %s comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
-					 curr_part_name,
+					 get_brlcad_name( curr_part_name ),
 					 reg_id,
 					 (int)(props.color_rgb[0]*255.0),
 					 (int)(props.color_rgb[1]*255.0),
@@ -2011,7 +2125,7 @@ output_part( ProMdl model )
 				fprintf( stderr, "Error getting surface properties for %s\n",
 					 curr_part_name );
 				fprintf( outfp, "put %s comb region yes id %d los 100 GIFTmater 1 tree %s\n",
-					 curr_part_name, reg_id, bu_vls_addr( &tree ) );
+					 get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree ) );
 			}
 
 			/* if the part has a material, add it as an attribute */
@@ -2019,7 +2133,7 @@ output_part( ProMdl model )
 			status = ProPartMaterialNameGet( ProMdlToPart(model), material );
 			if( status == PRO_TK_NO_ERROR ) {
 				fprintf( outfp, "attr set %s material_name {%s}\n",
-					 curr_part_name,
+					 get_brlcad_name( curr_part_name ),
 					 ProWstringToString( str, material ) ); 
 
 				/* get the density for this material */
@@ -2027,7 +2141,7 @@ output_part( ProMdl model )
 				if( status == PRO_TK_NO_ERROR ) {
 					got_density = 1;
 					fprintf( outfp, "attr set %s density %g\n",
-						 curr_part_name,
+						 get_brlcad_name( curr_part_name ),
 						 material_props.mass_density );
 				}
 			}
@@ -2038,18 +2152,18 @@ output_part( ProMdl model )
 				if( !got_density ) {
 					if( mass_prop.density > 0.0 ) {
 						fprintf( outfp, "attr set %s density %g\n",
-							 curr_part_name,
+							 get_brlcad_name( curr_part_name ),
 							 mass_prop.density );
 					}
 				}
 				if( mass_prop.mass > 0.0 ) {
 					fprintf( outfp, "attr set %s mass %g\n",
-						 curr_part_name,
+						 get_brlcad_name( curr_part_name ),
 						 mass_prop.mass );
 				}
 				if( mass_prop.volume > 0.0 ) {
 					fprintf( outfp, "attr set %s volume %g\n",
-						 curr_part_name,
+						 get_brlcad_name( curr_part_name ),
 						 mass_prop.volume );
 				}
 			}
@@ -2176,7 +2290,7 @@ output_assembly( ProMdl model )
 	}
 
 	/* let the user know we are doing something */
-#if 1
+
 	status = ProUILabelTextSet( "proe_brl", "curr_proc", asm_name );
 	if( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to update dialog label for currently processed assembly\n" );
@@ -2188,12 +2302,6 @@ output_assembly( ProMdl model )
 			 status );
 		fprintf( stderr, "\t dialog returned %d\n", ret_status );
 	}
-#else
-	sprintf( astr, "Processing Assembly: %s", curr_part_name );
-	(void)ProMessageDisplay( MSGFIL, "USER_INFO", astr );
-	ProMessageClear();
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-#endif
 
 	/* everything starts out in "curr_part_name", copy name to "curr_asm_name" */
 	strcpy( curr_asm_name, curr_part_name );
@@ -2212,7 +2320,7 @@ output_assembly( ProMdl model )
 				    (ProAppData)&curr_assem );
 
 	/* output the accumulated assembly info */
-	fprintf( outfp, "put %s.c comb region no tree ", curr_assem.name );
+	fprintf( outfp, "put %s.c comb region no tree ", get_brlcad_name( curr_assem.name ) );
 
 	/* count number of members */
 	member = curr_assem.members;
@@ -2235,9 +2343,9 @@ output_assembly( ProMdl model )
 	while( member ) {
 		/* output the member name */
 		if( member->type == PRO_MDL_ASSEMBLY ) {
-			fprintf( outfp, "{l %s.c", member->name );
+			fprintf( outfp, "{l %s.c", get_brlcad_name( member->name ) );
 		} else {
-			fprintf( outfp, "{l %s", member->name );
+			fprintf( outfp, "{l %s", get_brlcad_name( member->name ) );
 		}
 
 		/* if there is an xform matrix, put it here */
@@ -2275,21 +2383,21 @@ output_assembly( ProMdl model )
 	if( status == PRO_TK_NO_ERROR ) {
 		if( mass_prop.density > 0.0 ) {
 			fprintf( outfp, "attr set %s.c density %g\n",
-				 curr_asm_name,
+				 get_brlcad_name( curr_asm_name ),
 				 mass_prop.density );
 		}
 		if( mass_prop.mass > 0.0 ) {
 			fprintf( outfp, "attr set %s.c mass %g\n",
-				 curr_asm_name,
+				 get_brlcad_name( curr_asm_name ),
 				 mass_prop.mass );
 		}
 		if( mass_prop.volume > 0.0 ) {
 			fprintf( outfp, "attr set %s.c volume %g\n",
-				 curr_asm_name,
+				 get_brlcad_name( curr_asm_name ),
 				 mass_prop.volume );
 		}
 	}
-	/* add this assembly to th elist of already output objects */
+	/* add this assembly to the list of already output objects */
 	add_to_done_asm( asm_name );
 
 	/* free the memory associated with this assembly */
@@ -2312,7 +2420,6 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	struct asm_member *member, *prev=NULL;
 	int i, j;
 
-#if 1
 	status = ProAsmcompMdlNameGet( feat, &type, name );
 	if( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "ProAsmcompMdlNameGet() failed\n" );
@@ -2322,34 +2429,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	if( logger ) {
 		fprintf( logger, "Processing assembly member %s\n", curr_part_name );
 	}
-#else
-	/* get the model associated with this member */
-	status = ProAsmcompMdlGet( feat, &model );
-	if( status != PRO_TK_NO_ERROR ) {
-		sprintf( astr, "Failed to get model for component of %s id = %d, error = %d",
-			 curr_part_name, feat->id, status );
-		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
-		ProMessageClear();
-		fprintf( stderr, "%s\n", astr );
-		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-		return( PRO_TK_NO_ERROR );
-	}
 
-	/* and get its name */
-	if( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
-		/* this should never happen, everything must have a name */
-		(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
-					"Could not get name for part!!" );
-		ProMessageClear();
-		fprintf( stderr, "Could not get name for part" );
-		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-		strcpy( curr_part_name, "noname" );
-	} else {
-		(void)ProWstringToString( curr_part_name, name );
-	}
-#endif
-
-	/*	status = ProAsmcompIsBulkitem( */
 	/* the next two Pro/Toolkit calls are the only way I could find to get
 	 * the transformation matrix to apply to this member.
 	 * this call is creating a path from the assembly to this particular member
@@ -2407,11 +2487,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	member->next = NULL;
 
 	/* capture its name */
-#if 1
 	(void)ProWstringToString( member->name, name );
-#else
-	strcpy( member->name, curr_part_name );
-#endif
 
 	/* copy xform matrix */
 	for( i=0 ; i<4 ; i++ ) {
@@ -2597,11 +2673,11 @@ output_top_level_object( ProMdl model, ProMdlType type )
 	if( type == PRO_MDL_ASSEMBLY ) {
 		fprintf( outfp,
 			 "\tput top comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}\n",
-			 top_level );
+			 get_brlcad_name( top_level ) );
 	} else {
 		fprintf( outfp,
 			 "\tput top comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}\n",
-			 top_level );
+			 get_brlcad_name( top_level ) );
 	}
 	fprintf( outfp, "}\n" );
 }
@@ -2667,6 +2743,126 @@ create_temp_directory()
 }
 
 void
+free_hash_values( struct bu_hash_tbl *htbl )
+{
+	struct bu_hash_entry *entry;
+	struct bu_hash_record rec;
+
+	entry = bu_hash_tbl_first( htbl, &rec );
+
+	while( entry ) {
+		bu_free( bu_get_hash_value( entry ), "hash entry" );
+		entry = bu_hash_tbl_next( &rec );
+	}
+}
+
+struct bu_hash_tbl *
+create_name_hash( FILE *name_fd )
+{
+	struct bu_hash_tbl *htbl;
+	char line[MAX_LINE_LEN];
+	struct bu_hash_entry *entry=NULL;
+	int new_entry=0;
+	long line_no=0;
+	struct bu_vls error_msg;
+	wchar_t w_error_msg[2048];
+	int dialog_return=0;
+	ProError status;
+
+	htbl = bu_create_hash_tbl( NUM_HASH_TABLE_BINS );
+
+	if( logger ) {
+		fprintf( logger, "name hash created, now filling it:\n" );
+	}
+	while( fgets( line, MAX_LINE_LEN, name_fd ) ) {
+		char *part_no, *part_name, *ptr;
+
+		line_no++;
+
+		if( logger ) {
+			fprintf( logger, "line %ld: %s", line_no, line );
+		}
+
+		ptr = strtok( line, " \t\n" );
+		if( !ptr ) {
+			free_hash_values( htbl );
+			bu_log( "*****Error processing part name file at line #%d:\n", line_no );
+			bu_log( "\t%s\n", line );
+			status = ProUIDialogCreate( "proe_brl_gen_error", "proe_brl_gen_error" );
+			if( status != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to create error dialog (%d)\n", status );
+			}
+			(void)ProUIPushbuttonActivateActionSet( "proe_brl_gen_error",
+								"ok_button",
+								kill_gen_error_dialog, NULL );
+			bu_vls_init( &error_msg );
+			bu_vls_printf( &error_msg,
+				       "\nError while processing part name file (line #%d):\n\n",
+				       line_no );
+			bu_vls_strcat( &error_msg, line );
+			ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
+			(void)ProUITextareaValueSet( "proe_brl_gen_error", "error_message", w_error_msg );
+			(void)ProUIDialogActivate( "proe_brl_gen_error", &dialog_return );
+			bu_vls_free( &error_msg );
+			bu_hash_tbl_free( htbl );
+			return( (struct bu_hash_tbl *)NULL );
+		}
+		part_no = bu_strdup( ptr );
+		lower_case( part_no );
+		ptr = strtok( (char *)NULL, " \t\n" );
+		if( !ptr ) {
+			free_hash_values( htbl );
+			bu_log( "******Error processing part name file at line #%d:\n", line_no );
+			bu_log( "\t%s\n", line );
+			status = ProUIDialogCreate( "proe_brl_gen_error", "proe_brl_gen_error" );
+			if( status != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to create error dialog (%d)\n", status );
+			}
+			status = ProUIPushbuttonActivateActionSet( "proe_brl_gen_error",
+								"ok_button",
+								kill_gen_error_dialog, NULL );
+			if( status != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to set button action for error dialog (%d)\n", status );
+			}
+			bu_vls_init( &error_msg );
+			bu_vls_printf( &error_msg,
+				       "\nError while processing part name file (line #%d):\n\n",
+				       line_no );
+			bu_vls_strcat( &error_msg, line );
+			ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
+			(void)ProUITextareaValueSet( "proe_brl_gen_error", "error_message", w_error_msg );
+			(void)ProUIDialogActivate( "proe_brl_gen_error", &dialog_return );
+			bu_vls_free( &error_msg );
+			bu_hash_tbl_free( htbl );
+			return( (struct bu_hash_tbl *)NULL );
+		}
+		lower_case( ptr );
+		part_name = create_unique_name( ptr );
+
+		if( logger ) {
+			fprintf( logger, "\t\tpart_no = %s, part name = %s\n", part_no, part_name );
+		}
+
+		entry = bu_hash_add_entry( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
+
+		if( new_entry ) {
+			if( logger ) {
+				fprintf( logger, "\t\t\tCreating new hash tabel entry for above names\n" );
+			}
+			bu_set_hash_value( entry, (unsigned char *)part_name );
+		} else {
+			if( logger ) {
+				fprintf( logger, "\t\t\tHash table entry already exists for above part\n" );
+			}
+			bu_free( part_no, "part_no" );
+			bu_free( part_name, "part_name" );
+		}
+	}
+
+	return( htbl );
+}
+
+void
 doit( char *dialog, char *compnent, ProAppData appdata )
 {
 	ProError status;
@@ -2677,8 +2873,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	wchar_t unit_name[PRO_NAME_SIZE];
 	double proe_conv;
 	wchar_t *w_output_file;
+	wchar_t *w_name_file;
 	wchar_t *tmp_str;
 	char output_file[128];
+	char name_file[128];
 	char log_file[128];
 
 	/* get the name of the log file */
@@ -2700,6 +2898,16 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 	ProWstringToString( output_file, w_output_file );
 	ProWstringFree( w_output_file );
+
+	/* get the name of the part number to part name mapping file */
+	status = ProUIInputpanelValueGet( "proe_brl", "name_file", &w_name_file );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to get name of part number to part name mapping file\n" );
+		ProUIDialogDestroy( "proe_brl" );
+		return;
+	}
+	ProWstringToString( name_file, w_name_file );
+	ProWstringFree( w_name_file );
 
 	/* get starting ident */
 	status = ProUIInputpanelValueGet( "proe_brl", "starting_ident", &tmp_str );
@@ -2837,6 +3045,67 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		logger = (FILE *)NULL;
 	}
 
+	/* open part name mapper file, if a name was provided */
+	if( strlen( name_file ) > 0 ) {
+		FILE *name_fd;
+
+		if( logger ) {
+			fprintf( logger, "Opening part name map file (%s)\n", name_file );
+		}
+
+		if( (name_fd=fopen( name_file, "r" ) ) == NULL ) {
+			struct bu_vls error_msg;
+			int dialog_return=0;
+			wchar_t w_error_msg[512];
+
+			if( logger ) {
+				fprintf( logger, "Failed to open part name map file (%s)\n", name_file );
+				fprintf( logger, "%s\n", strerror( errno ) );
+			}
+
+			bu_vls_init( &error_msg );
+			(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open part name file" );
+			ProMessageClear();
+			fprintf( stderr, "Cannot open part name file\n" );
+			perror( name_file );
+			status = ProUIDialogCreate( "proe_brl_gen_error", "proe_brl_gen_error" );
+			if( status != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to create error dialog (%d)\n", status );
+			}
+			(void)ProUIPushbuttonActivateActionSet( "proe_brl_gen_error",
+								"ok_button",
+								kill_gen_error_dialog, NULL );
+			bu_vls_printf( &error_msg, "\n\tCannot open part name file (%s)\n\t",
+				       name_file );
+			bu_vls_strcat( &error_msg, strerror( errno ) );
+			ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
+			status = ProUITextareaValueSet( "proe_brl_gen_error", "error_message", w_error_msg );
+			if( status != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to set message for error dialog (%d)\n", status );
+			}
+			bu_vls_free( &error_msg );
+			status = ProUIDialogActivate( "proe_brl_gen_error", &dialog_return );
+			if( status != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to activate error dialog (%d)\n", status );
+			}
+			ProUIDialogDestroy( "proe_brl" );
+			return;
+		}
+
+		/* create a hash table of part numbers to part names */
+		if( logger ) {
+			fprintf( logger, "Creating name hash\n" );
+		}
+		name_hash = create_name_hash( name_fd );
+		fclose( name_fd );
+		
+	} else {
+		if( logger ) {
+			fprintf( logger, "No name hash used\n" );
+		}
+		name_hash = (struct bu_hash_tbl *)NULL;
+	}
+
 	/* get the curently displayed model in Pro/E */
 	status = ProMdlCurrentGet( &model );
 	if( status == PRO_TK_BAD_CONTEXT ) {
@@ -2845,6 +3114,11 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		fprintf( stderr, "No model is displayed!!\n" );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 		ProUIDialogDestroy( "proe_brl" );
+		if( name_hash ) {
+			free_hash_values( name_hash );
+			bu_hash_tbl_free( name_hash );
+			name_hash = (struct bu_hash_tbl *)NULL;
+		}
 		return;
 	}
 
@@ -2856,6 +3130,11 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		fprintf( stderr, "Cannot get type of current model\n" );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 		ProUIDialogDestroy( "proe_brl" );
+		if( name_hash ) {
+			free_hash_values( name_hash );
+			bu_hash_tbl_free( name_hash );
+			name_hash = (struct bu_hash_tbl *)NULL;
+		}
 		return;
 	}
 
@@ -2866,10 +3145,15 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		fprintf( stderr, "Current model is not a solid object\n" );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 		ProUIDialogDestroy( "proe_brl" );
+		if( name_hash ) {
+			free_hash_values( name_hash );
+			bu_hash_tbl_free( name_hash );
+			name_hash = (struct bu_hash_tbl *)NULL;
+		}
 		return;
 	}
 #if 0
-	/* skeleton models have no solid parts */
+	/* skeleton models have no solid parts, but Pro/E will not let you recognize skeletons unless you buy the module */
 	status = ProMdlIsSkeleton( model, &is_skeleton );
 	if( status != PRO_TK_NO_ERROR ) {
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Failed to determine if model is a skeleton" );
@@ -2955,6 +3239,17 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	if( logger ) {
 		fclose( logger );
+	}
+
+	if( name_hash ) {
+		free_hash_values( name_hash );
+		bu_hash_tbl_free( name_hash );
+		name_hash = (struct bu_hash_tbl *)NULL;
+	}
+
+	if( brlcad_names ) {
+		bu_rb_free( brlcad_names, free_rb_data );
+		brlcad_names = (bu_rb_tree *)NULL;
 	}
 
 	return;
