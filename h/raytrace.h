@@ -171,15 +171,15 @@ struct rt_tess_tol  {
 
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
 #if __STDC__ && !alliant && !apollo
-# define GETSTRUCT(p,str) \
-	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
-# define GETUNION(p,unn) \
-	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct " #unn)
+# define GETSTRUCT(_p,_str) \
+	_p = (struct _str *)rt_calloc(1,sizeof(struct _str), "getstruct " #_str)
+# define GETUNION(_p,_unn) \
+	_p = (union _unn *)rt_calloc(1,sizeof(union _unn), "getstruct " #_unn)
 #else
-# define GETSTRUCT(p,str) \
-	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
-# define GETUNION(p,unn) \
-	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct unn")
+# define GETSTRUCT(_p,_str) \
+	_p = (struct _str *)rt_calloc(1,sizeof(struct _str), "getstruct _str")
+# define GETUNION(_p,_unn) \
+	_p = (union _unn *)rt_calloc(1,sizeof(union _unn), "getstruct _unn")
 #endif
 
 /*
@@ -286,14 +286,14 @@ struct curvature {
  *  Use this macro after having computed the normal, to
  *  compute the curvature at a hit point.
  */
-#define RT_CURVE( curvp, hitp, stp )  { \
-	register int id = (stp)->st_id; \
-	RT_CHECK_SOLTAB(stp); \
-	if( id <= 0 || id > ID_MAXIMUM )  { \
-		rt_log("stp=x%x, id=%d.\n", stp, id); \
+#define RT_CURVE( _curvp, _hitp, _stp )  { \
+	register int _id = (_stp)->st_id; \
+	RT_CHECK_SOLTAB(_stp); \
+	if( _id <= 0 || _id > ID_MAXIMUM )  { \
+		rt_log("stp=x%x, id=%d.\n", _stp, _id); \
 		rt_bomb("RT_CURVE:  bad st_id"); \
 	} \
-	rt_functab[id].ft_curve( curvp, hitp, stp ); }
+	rt_functab[_id].ft_curve( _curvp, _hitp, _stp ); }
 
 /*
  *			U V C O O R D
@@ -306,14 +306,14 @@ struct uvcoord {
 	fastf_t		uv_du;		/* delta in u */
 	fastf_t		uv_dv;		/* delta in v */
 };
-#define RT_HIT_UVCOORD( ap, stp, hitp, uvp )  { \
-	register int id = (stp)->st_id; \
-	RT_CHECK_SOLTAB(stp); \
-	if( id <= 0 || id > ID_MAXIMUM )  { \
-		rt_log("stp=x%x, id=%d.\n", stp, id); \
+#define RT_HIT_UVCOORD( ap, _stp, _hitp, uvp )  { \
+	register int _id = (_stp)->st_id; \
+	RT_CHECK_SOLTAB(_stp); \
+	if( _id <= 0 || _id > ID_MAXIMUM )  { \
+		rt_log("stp=x%x, id=%d.\n", _stp, _id); \
 		rt_bomb("RT_UVCOORD:  bad st_id"); \
 	} \
-	rt_functab[id].ft_uv( ap, stp, hitp, uvp ); }
+	rt_functab[_id].ft_uv( ap, _stp, _hitp, uvp ); }
 
 
 /*
@@ -488,14 +488,14 @@ struct region  {
  *  due to the effect of animations, so partition structures can be expected
  *  to change length over the course of a single application program.
  */
-#define RT_HIT_NORM( hitp, stp, rayp )  { \
-	register int id = (stp)->st_id; \
-	RT_CHECK_SOLTAB(stp); \
-	if( id <= 0 || id > ID_MAXIMUM ) { \
-		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", stp, id, hitp, rayp); \
+#define RT_HIT_NORM( _hitp, _stp, rayp )  { \
+	register int _id = (_stp)->st_id; \
+	RT_CHECK_SOLTAB(_stp); \
+	if( _id <= 0 || _id > ID_MAXIMUM ) { \
+		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, rayp); \
 		rt_bomb("RT_HIT_NORM:  bad st_id");\
 	} \
-	rt_functab[id].ft_norm(hitp, stp, rayp); }
+	rt_functab[_id].ft_norm(_hitp, _stp, rayp); }
 
 struct partition {
 	long		pt_magic;		/* sanity check */
