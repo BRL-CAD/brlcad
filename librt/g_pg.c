@@ -393,9 +393,22 @@ struct seg		*seghead;
 		{
 			hits[nhits] = hits[nhits-1];	/* struct copy */
 			VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
-			bu_log( "\t\tadding fictitious hit at %f\n", hits[nhits].hit_dist );
+			bu_log( "\t\tadding fictitious hit at %f (%s)\n", hits[nhits].hit_dist, stp->st_name );
 			nhits++;
 		}
+	}
+
+	if( nhits&1 )
+	{
+		if( nhits < MAXHITS )
+		{
+			hits[nhits] = hits[nhits-1];	/* struct copy */
+			VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
+			bu_log( "\t\tadding fictitious hit at %f (%s)\n", hits[nhits].hit_dist, stp->st_name );
+			nhits++;
+		}
+		else
+			nhits--;
 	}
 
 	/* nhits is even, build segments */
