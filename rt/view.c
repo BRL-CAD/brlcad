@@ -296,7 +296,7 @@ struct partition *PartHeadp;
 	hitp = pp->pt_inhit;
 
 	if(rdebug&RDEBUG_HITS)  {
-		rt_pr_pt(pp);
+		rt_pr_pt( ap->a_rt_i, pp );
 	}
 	if( hitp->hit_dist >= INFINITY )  {
 		rt_log("colorview:  entry beyond infinity\n");
