@@ -949,6 +949,11 @@ struct rt_tree_array
 
 #define TREE_LIST_NULL	((struct tree_list *)0)
 
+/* Some dubious defines, to support the wdb_obj.c evolution */
+#define RT_MAXARGS		9000
+#define RT_MAXLINE		10240
+#define RT_NAMESIZE		16
+
 /*
  *			R T _ W D B
  *
@@ -958,10 +963,22 @@ struct rt_tree_array
  */
  
 struct rt_wdb  {
-	long		magic;
+	struct bu_list	l;
 	int		type;
 	FILE		*fp;
 	struct db_i	*dbip;
+	struct bu_vls	wdb_name;	/* database object name */
+
+	/* variables for name prefixing */
+	char		wdb_prestr[RT_NAMESIZE];
+	int		wdb_ncharadd;
+	int		wdb_num_dups;
+
+	/* default region ident codes for this particular database. */
+	int		wdb_item_default;/* GIFT region ID */
+	int		wdb_air_default;
+	int		wdb_mat_default;/* GIFT material code */
+	int		wdb_los_default;/* Line-of-sight estimate */
 };
 
 #define	RT_WDB_MAGIC			0x5f576462
@@ -976,36 +993,7 @@ struct rt_wdb  {
 #define RT_WDB_TYPE_DB_INMEM			4
 #define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	5
 
-/* Some dubious defines, to support the wdb_obj.c evolution */
-#define RT_MAXARGS		9000
-#define RT_MAXLINE		10240
-#define RT_NAMESIZE		16
-
-/*
- *			W D B _ O B J
- *
- * A database object is used to interact with a Brl-Cad database.
- * This will eventually all migrate into the rt_wdb structure.
- * One application may have many of these open at one time.
- */
-struct wdb_obj {
-  struct bu_list	l;
-  struct bu_vls		wdb_name;	/* database object name */
-  struct rt_wdb		*wdb_wp;
-
-  /* variables for name prefixing */
-  char			wdb_prestr[RT_NAMESIZE];
-  int			wdb_ncharadd;
-  int			wdb_num_dups;
-
-  /* default region ident codes for this particular database. */
-  int			wdb_item_default;/* GIFT region ID */
-  int			wdb_air_default;
-  int			wdb_mat_default;/* GIFT material code */
-  int			wdb_los_default;/* Line-of-sight estimate */
-};
-extern struct wdb_obj HeadWDBObj;		/* head of BRLCAD database object list */
-#define RT_WDBO_NULL		((struct wdb_obj *)NULL)
+extern struct rt_wdb HeadWDB;		/* head of BRLCAD database object list */
 
 /*
  * Carl's vdraw stuff.
@@ -1034,7 +1022,7 @@ struct vd_curve {
 struct dg_obj {
 	struct bu_list	l;
 	struct bu_vls		dgo_name;	/* drawable geometry object name */
-	struct wdb_obj		*dgo_wdbop;	/* associated database */
+	struct rt_wdb		*dgo_wdbp;	/* associated database */
 	struct solid		dgo_headSolid;	/* head of solid list */
 	struct bu_list		dgo_headVDraw;	/* head of vdraw list */
 	struct vd_curve		*dgo_currVHead;	/* current vdraw head */
