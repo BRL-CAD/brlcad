@@ -147,7 +147,7 @@ struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-
+	struct rt_hf_internal *hip;
 	register struct hf_specific	*hf;
 	CONST struct bn_tol		*tol = &rtip->rti_tol;
 	double	dot;
