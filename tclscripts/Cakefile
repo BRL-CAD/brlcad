@@ -1,0 +1,26 @@
+/*
+ *			tclscripts/Cakefile
+ */
+#include "../Cakefile.defs"
+
+#define PRODUCTS	*.tcl
+#define STATIC_PRODUCTS	*.tcl
+#define SRCDIR	tclscripts
+#undef BINDIR
+#define BINDIR	TCLSCRIPTSDIR
+
+#define FILES	/**/
+#define	SRCSUFF	/**/
+
+#define MANSECTION	3
+
+/*
+ *  There is nothing to compile.
+ *  The "install-prod" rule should install PRODUCTS,
+ *  and "inst-dist" rule shoudl take care of copying to distribution dir.
+ *  Nothing else to do.
+ */
+all&:
+	@echo "SRCDIR:  all done"
+
+#include "../Cakefile.rules"
