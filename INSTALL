@@ -250,3 +250,5 @@ For IRIX 23bit build:
 	export SGI_ABI=-n32
 	./configure CC=cc 
 
+---
+$Revision$
