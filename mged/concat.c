@@ -37,7 +37,6 @@ static char RCSconcat[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
