@@ -92,10 +92,10 @@ double	scale;			/* scale factor to change 1x1 char sz */
 		MAT4X3PNT( loc, mat, temp );
 		pdv_3move( fp, loc );
 
-		for( p = tp_cindex[*cp]; ((stroke= *p)&0xFF) != LAST; p++ )  {
+		for( p = tp_cindex[*cp]; (stroke= *p) != LAST; p++ )  {
 			int	draw;
 
-			if( (stroke&0xFF)==NEGY )  {
+			if( stroke==NEGY )  {
 				ysign = (-1);
 				stroke = *++p;
 			} else
