@@ -83,6 +83,7 @@ if ![info exists mged_default_comb] {
 set do_tearoffs 0
 
 proc gui_create_default { args } {
+    global moveView
     global player_screen
     global mged_default_id
     global mged_default_dt
@@ -97,7 +98,6 @@ proc gui_create_default { args } {
     global mged_collaborators
     global mged_display
     global mged_use_air
-    global mged_query_ray_cmd_echo
     global mged_listen
     global mged_fb
     global mged_fb_all
@@ -106,7 +106,7 @@ proc gui_create_default { args } {
     global mged_grid_draw
     global mged_grid_snap
     global mged_mouse_behavior
-    global mged_query_ray_behavior
+    global mged_qray_effects
     global mged_coords
     global mged_rotate_about
     global mged_transform
@@ -392,36 +392,36 @@ menu .$id.m.edit.m.cm_add -tearoff $do_tearoffs
 menubutton .$id.m.view -text "View" -underline 0 -menu .$id.m.view.m
 menu .$id.m.view.m -tearoff $do_tearoffs
 .$id.m.view.m add command -label "Top" -underline 0\
-	-command "doit $id \"press top\""
+	-command "mged_apply $id \"press top\""
 .$id.m.view.m add command -label "Bottom" -underline 5\
-	-command "doit $id \"press bottom\""
+	-command "mged_apply $id \"press bottom\""
 .$id.m.view.m add command -label "Right" -underline 0\
-	-command "doit $id \"press right\""
+	-command "mged_apply $id \"press right\""
 .$id.m.view.m add command -label "Left" -underline 0\
-	-command "doit $id \"press left\""
+	-command "mged_apply $id \"press left\""
 .$id.m.view.m add command -label "Front" -underline 0\
-	-command "doit $id \"press front\""
+	-command "mged_apply $id \"press front\""
 .$id.m.view.m add command -label "Back" -underline 0\
-	-command "doit $id \"press rear\""
+	-command "mged_apply $id \"press rear\""
 .$id.m.view.m add command -label "az35,el25" -underline 2\
-	-command "doit $id \"press 35,25\""
+	-command "mged_apply $id \"press 35,25\""
 .$id.m.view.m add command -label "az45,el45" -underline 2\
-	-command "doit $id \"press 45,45\""
+	-command "mged_apply $id \"press 45,45\""
 .$id.m.view.m add separator
 .$id.m.view.m add command -label "Zoom In" -underline 5\
-	-command "doit $id \"zoom 2\""
+	-command "mged_apply $id \"zoom 2\""
 .$id.m.view.m add command -label "Zoom Out" -underline 5\
-	-command "doit $id \"zoom 0.5\""
+	-command "mged_apply $id \"zoom 0.5\""
 .$id.m.view.m add separator
 .$id.m.view.m add command -label "Save" -underline 0\
-	-command "doit $id \"press save\""
+	-command "mged_apply $id \"press save\""
 .$id.m.view.m add command -label "Restore" -underline 1\
-	-command "doit $id \"press restore\""
+	-command "mged_apply $id \"press restore\""
 .$id.m.view.m add separator
 .$id.m.view.m add command -label "Reset Viewsize"\
-	-underline 6 -command "doit $id \"press reset\""
+	-underline 6 -command "mged_apply $id \"press reset\""
 .$id.m.view.m add command -label "Zero" -underline 0\
-	-command "doit $id \"knob zero\""
+	-command "mged_apply $id \"knob zero\""
 
 menubutton .$id.m.viewring -text "ViewRing" -underline 4 -menu .$id.m.viewring.m
 menu .$id.m.viewring.m -tearoff $do_tearoffs
@@ -444,17 +444,13 @@ do_view_ring_entries $id d
 menubutton .$id.m.modes -text "Modes" -underline 0 -menu .$id.m.modes.m
 menu .$id.m.modes.m -tearoff $do_tearoffs
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_rateknobs($id)\
-	-label "Rateknobs" -underline 0 -command "doit $id \"set rateknobs \$mged_rateknobs($id)\""
-#.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_use_air($id)\
-#	-label "Use Air" -underline 0 -command "doit $id \"set use_air \$mged_use_air($id)\""
-#.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_query_ray_cmd_echo($id)\
-#	-label "Echo Query Ray Command" -underline 0 -command "doit $id \"set query_ray_cmd_echo \$mged_query_ray_cmd_echo($id)\""
+	-label "Rateknobs" -underline 0 -command "mged_apply $id \"set rateknobs \$mged_rateknobs($id)\""
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
-	-label "Draw Rubber Band" -underline 7 -command "doit $id \"set rubber_band \$mged_rubber_band($id)\""
+	-label "Draw Rubber Band" -underline 7 -command "mged_apply $id \"set rubber_band \$mged_rubber_band($id)\""
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
-	-label "Draw Grid" -command "doit $id \"set grid_draw \$mged_grid_draw($id)\""
+	-label "Draw Grid" -command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
-	-label "Snap To Grid" -command "doit $id \"set grid_snap \$mged_grid_snap($id)\""
+	-label "Snap To Grid" -command "mged_apply $id \"set grid_snap \$mged_grid_snap($id)\""
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable multi_view($id)\
 	-label "Multi Pane" -underline 0 -command "setmv $id"
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
@@ -486,23 +482,23 @@ menu .$id.m.settings.m.cm_applyTo -tearoff $do_tearoffs
 
 menu .$id.m.settings.m.cm_mb -tearoff $do_tearoffs
 .$id.m.settings.m.cm_mb add radiobutton -value p -variable mged_mouse_behavior($id)\
-	-label "Paint Rectangle Area" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-label "Paint Rectangle Area" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 .$id.m.settings.m.cm_mb add radiobutton -value r -variable mged_mouse_behavior($id)\
-	-label "Raytrace Rectangle Area" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-label "Raytrace Rectangle Area" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 .$id.m.settings.m.cm_mb add radiobutton -value z -variable mged_mouse_behavior($id)\
-	-label "Zoom Rectangle Area" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-label "Zoom Rectangle Area" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 .$id.m.settings.m.cm_mb add radiobutton -value q -variable mged_mouse_behavior($id)\
-	-label "Query Ray" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-label "Query Ray" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 .$id.m.settings.m.cm_mb add radiobutton -value d -variable mged_mouse_behavior($id)\
-	-label "Default" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-label "Default" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 
 menu .$id.m.settings.m.cm_qray -tearoff $do_tearoffs
-.$id.m.settings.m.cm_qray add radiobutton -value t -variable mged_query_ray_behavior($id)\
-	-label "Text" -command "doit $id \"set query_ray_behavior \$mged_query_ray_behavior($id)\""
-.$id.m.settings.m.cm_qray add radiobutton -value g -variable mged_query_ray_behavior($id)\
-	-label "Graphics" -command "doit $id \"set query_ray_behavior \$mged_query_ray_behavior($id)\""
-.$id.m.settings.m.cm_qray add radiobutton -value b -variable mged_query_ray_behavior($id)\
-	-label "both" -command "doit $id \"set query_ray_behavior \$mged_query_ray_behavior($id)\""
+.$id.m.settings.m.cm_qray add radiobutton -value t -variable mged_qray_effects($id)\
+	-label "Text" -command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
+.$id.m.settings.m.cm_qray add radiobutton -value g -variable mged_qray_effects($id)\
+	-label "Graphics" -command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
+.$id.m.settings.m.cm_qray add radiobutton -value b -variable mged_qray_effects($id)\
+	-label "both" -command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
 
 menu .$id.m.settings.m.cm_mpane -tearoff $do_tearoffs
 .$id.m.settings.m.cm_mpane add radiobutton -value ul -variable mged_dm_loc($id)\
@@ -539,14 +535,14 @@ menu .$id.m.settings.m.cm_units -tearoff $do_tearoffs
 
 menu .$id.m.settings.m.cm_fb -tearoff $do_tearoffs
 .$id.m.settings.m.cm_fb add radiobutton -value 1 -variable mged_fb_all($id)\
-	-label "All" -command "doit $id \"set fb_all \$mged_fb_all($id)\""
+	-label "All" -command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
 .$id.m.settings.m.cm_fb add radiobutton -value 0 -variable mged_fb_all($id)\
-	-label "Rectangle Area" -command "doit $id \"set fb_all \$mged_fb_all($id)\""
+	-label "Rectangle Area" -command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
 .$id.m.settings.m.cm_fb add separator
 .$id.m.settings.m.cm_fb add radiobutton -value 1 -variable mged_fb_overlay($id)\
-	-label "Overlay" -command "doit $id \"set fb_overlay \$mged_fb_overlay($id)\""
+	-label "Overlay" -command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
 .$id.m.settings.m.cm_fb add radiobutton -value 0 -variable mged_fb_overlay($id)\
-	-label "Underlay" -command "doit $id \"set fb_overlay \$mged_fb_overlay($id)\""
+	-label "Underlay" -command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
 .$id.m.settings.m.cm_fb add separator
 .$id.m.settings.m.cm_fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
 	-label "Listen For Clients" -underline 0 -command "set_listen $id" -state disabled
@@ -573,21 +569,21 @@ menu .$id.m.settings.m.cm_grid.cm_adv -tearoff $do_tearoffs
 
 menu .$id.m.settings.m.cm_coord -tearoff $do_tearoffs
 .$id.m.settings.m.cm_coord add radiobutton -value m -variable mged_coords($id)\
-	-label "Model" -command "doit $id \"set coords \$mged_coords($id)\""
+	-label "Model" -command "mged_apply $id \"set coords \$mged_coords($id)\""
 .$id.m.settings.m.cm_coord add radiobutton -value v -variable mged_coords($id)\
-	-label "View" -command "doit $id \"set coords \$mged_coords($id)\""
+	-label "View" -command "mged_apply $id \"set coords \$mged_coords($id)\""
 .$id.m.settings.m.cm_coord add radiobutton -value o -variable mged_coords($id)\
-	-label "Object" -command "doit $id \"set coords \$mged_coords($id)\"" -state disabled
+	-label "Object" -command "mged_apply $id \"set coords \$mged_coords($id)\"" -state disabled
 
 menu .$id.m.settings.m.cm_origin -tearoff $do_tearoffs
 .$id.m.settings.m.cm_origin add radiobutton -value v -variable mged_rotate_about($id)\
-	-label "View Center" -command "doit $id \"set rotate_about \$mged_rotate_about($id)\""
+	-label "View Center" -command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\""
 .$id.m.settings.m.cm_origin add radiobutton -value e -variable mged_rotate_about($id)\
-	-label "Eye" -command "doit $id \"set rotate_about \$mged_rotate_about($id)\""
+	-label "Eye" -command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\""
 .$id.m.settings.m.cm_origin add radiobutton -value m -variable mged_rotate_about($id)\
-	-label "Model Origin" -command "doit $id \"set rotate_about \$mged_rotate_about($id)\""
+	-label "Model Origin" -command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\""
 .$id.m.settings.m.cm_origin add radiobutton -value k -variable mged_rotate_about($id)\
-	-label "Key Point" -command "doit $id \"set rotate_about \$mged_rotate_about($id)\"" -state disabled
+	-label "Key Point" -command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\"" -state disabled
 
 menu .$id.m.settings.m.cm_transform -tearoff $do_tearoffs
 .$id.m.settings.m.cm_transform add radiobutton -value v -variable mged_transform($id)\
@@ -599,20 +595,20 @@ menu .$id.m.settings.m.cm_transform -tearoff $do_tearoffs
 
 menu .$id.m.settings.m.cm_vap -tearoff $do_tearoffs
 .$id.m.settings.m.cm_vap add radiobutton -value 0 -variable mged_v_axes_pos($id)\
-	-label "Center" -command "doit $id \"set v_axes_pos {0 0}\""
+	-label "Center" -command "mged_apply $id \"set v_axes_pos {0 0}\""
 .$id.m.settings.m.cm_vap add radiobutton -value 1 -variable mged_v_axes_pos($id)\
-	-label "Lower Left" -command "doit $id \"set v_axes_pos {-1750 -1750}\""
+	-label "Lower Left" -command "mged_apply $id \"set v_axes_pos {-1750 -1750}\""
 .$id.m.settings.m.cm_vap add radiobutton -value 2 -variable mged_v_axes_pos($id)\
-	-label "Upper Left" -command "doit $id \"set v_axes_pos {-1750 1750}\""
+	-label "Upper Left" -command "mged_apply $id \"set v_axes_pos {-1750 1750}\""
 .$id.m.settings.m.cm_vap add radiobutton -value 3 -variable mged_v_axes_pos($id)\
-	-label "Upper Right" -command "doit $id \"set v_axes_pos {1750 1750}\""
+	-label "Upper Right" -command "mged_apply $id \"set v_axes_pos {1750 1750}\""
 .$id.m.settings.m.cm_vap add radiobutton -value 4 -variable mged_v_axes_pos($id)\
-	-label "Lower Right" -command "doit $id \"set v_axes_pos {1750 -1750}\""
+	-label "Lower Right" -command "mged_apply $id \"set v_axes_pos {1750 -1750}\""
 
 menubutton .$id.m.tools -text "Tools" -menu .$id.m.tools.m
 menu .$id.m.tools.m -tearoff $do_tearoffs
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
-	-label "Angle/Dist Cursor" -underline 0 -command "doit $id \"adc draw \$mged_adc_draw($id)\""
+	-label "Angle/Dist Cursor" -underline 0 -command "mged_apply $id \"adc draw \$mged_adc_draw($id)\""
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable edit_info_on($id)\
 	-label "Edit Info" -underline 0 -command "toggle_edit_info $id"
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
@@ -629,16 +625,18 @@ if {$comb} {
 	-label "ADC Control Panel" -command "init_adc_control $id"
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_control($id)\
 	-label "Grid Control Panel" -command "init_grid_control $id"
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_qray_control($id)\
+	-label "Query Ray Control Panel" -command "init_qray_control $id"
 .$id.m.tools.m add separator
 .$id.m.tools.m add cascade -label "Axes" -menu .$id.m.tools.m.cm_axes
 
 menu .$id.m.tools.m.cm_axes -tearoff $do_tearoffs
 .$id.m.tools.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_v_axes($id) -label "View" -command "doit $id \"set v_axes \$mged_v_axes($id)\""
+	-variable mged_v_axes($id) -label "View" -command "mged_apply $id \"set v_axes \$mged_v_axes($id)\""
 .$id.m.tools.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_m_axes($id) -label "Model" -command "doit $id \"set m_axes \$mged_m_axes($id)\""
+	-variable mged_m_axes($id) -label "Model" -command "mged_apply $id \"set m_axes \$mged_m_axes($id)\""
 .$id.m.tools.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_e_axes($id) -label "Edit" -command "doit $id \"set e_axes \$mged_e_axes($id)\""
+	-variable mged_e_axes($id) -label "Edit" -command "mged_apply $id \"set e_axes \$mged_e_axes($id)\""
 
 menubutton .$id.m.help -text "Help" -menu .$id.m.help.m
 menu .$id.m.help.m -tearoff $do_tearoffs
@@ -697,9 +695,48 @@ if {$comb} {
 scrollbar .$id.s -relief flat -command ".$id.t yview"
 do_text_highlight .$id.t
 
+set moveView(.$id.t) 0
+
 bind .$id.t <Enter> "focus .$id.t"
 
-bind .$id.t <ButtonPress-1> {
+bind .$id.t <1> {
+    do_B1 %W %x %y
+    break
+}
+
+bind .$id.t <B1-Motion> {
+    do_B1_Motion %W %x %y
+    break
+}
+
+bind .$id.t <Double-1> {
+    do_Double1 %W %x %y
+    break
+}
+
+bind .$id.t <Triple-1> {
+    do_Triple1 %W %x %y
+    break
+}
+
+bind .$id.t <Shift-1> {
+    do_Shift1 %W %x %y
+    break
+}
+
+bind .$id.t <Double-Shift-1> {
+    break
+}
+
+bind .$id.t <Triple-Shift-1> {
+    break
+}
+
+bind .$id.t <B1-Leave> {
+    break
+}
+
+bind .$id.t <B1-Enter> {
     break
 }
 
@@ -707,27 +744,22 @@ bind .$id.t <ButtonRelease-1> {
     break
 }
 
-bind .$id.t <Button1-Motion> {
-    break
-}
-
-bind .$id.t <ButtonPress-2> {
+bind .$id.t <Control-1> {
     break
 }
 
 bind .$id.t <ButtonRelease-2> {
+    do_ButtonRelease2 %W
     break
 }
 
-bind .$id.t <Button2-Motion> {
+bind .$id.t <2> {
+    do_B2 %W %x %y
     break
 }
 
-bind .$id.t <ButtonPress-3> {
-    break
-}
-
-bind .$id.t <ButtonRelease-3> {
+bind .$id.t <B2-Motion> {
+    do_B2_Motion %W %x %y
     break
 }
 
@@ -822,13 +854,14 @@ bind .$id.t <BackSpace> {
 
 set ia_cmd_prefix($id) ""
 set ia_more_default($id) ""
-ia_print_prompt .$id.t "mged> "
+mged_print_prompt .$id.t "mged> "
 .$id.t insert insert " "
 do_ctrl_a .$id.t
 
-.$id.t tag configure bold -font -*-Courier-Bold-R-Normal-*-120-*-*-*-*-*-*
-set ia_font -*-Courier-Medium-R-Normal-*-120-*-*-*-*-*-*
-.$id.t configure -font $ia_font
+.$id.t tag configure sel -background #fefe8e
+.$id.t tag configure result -foreground darkBlue
+.$id.t tag configure oldcmd -foreground darkRed
+.$id.t tag configure prompt -foreground red3
 
 #==============================================================================
 # Pack windows
@@ -879,6 +912,7 @@ if { $join_c } {
 
 trace variable mged_display($mged_active_dm($id),fps) w "ia_changestate $id"
 update_mged_vars $id
+set mged_qray_effects($id) [qray effects]
 
 # reset current_cmd_list so that its cur_hist gets updated
 cmd_set $save_id
@@ -980,8 +1014,6 @@ proc update_mged_vars { id } {
     global mged_e_axes
     global use_air
     global mged_use_air
-    global query_ray_cmd_echo
-    global mged_query_ray_cmd_echo
     global listen
     global mged_listen
     global fb
@@ -994,8 +1026,6 @@ proc update_mged_vars { id } {
     global mged_rubber_band
     global mouse_behavior
     global mged_mouse_behavior
-    global query_ray_behavior
-    global mged_query_ray_behavior
     global coords
     global mged_coords
     global rotate_about
@@ -1015,13 +1045,11 @@ proc update_mged_vars { id } {
     set mged_v_axes_pos($id) $v_axes_pos
     set mged_e_axes($id) $e_axes
     set mged_use_air($id) $use_air
-    set mged_query_ray_cmd_echo($id) $query_ray_cmd_echo
     set mged_fb($id) $fb
     set mged_fb_all($id) $fb_all
     set mged_fb_overlay($id) $fb_overlay
     set mged_rubber_band($id) $rubber_band
     set mged_mouse_behavior($id) $mouse_behavior
-    set mged_query_ray_behavior($id) $query_ray_behavior
     set mged_coords($id) $coords
     set mged_rotate_about($id) $rotate_about
     set mged_transform($id) $transform
@@ -1533,17 +1561,17 @@ proc adc { args } {
     return $result
 }
 
-proc doit { id cmd } {
+proc mged_apply { id cmd } {
     global mged_active_dm
     global mged_dm_loc
     global mged_apply_to
 
     if {$mged_apply_to($id) == 1} {
-	doit_local $id $cmd
+	mged_apply_local $id $cmd
     } elseif {$mged_apply_to($id) == 2} {
-	doit_using_list $id $cmd
+	mged_apply_using_list $id $cmd
     } elseif {$mged_apply_to($id) == 3} {
-	doit_all $cmd
+	mged_apply_all $cmd
     } else {
 	if {$mged_dm_loc($id) != "lv"} {
 	    winset $mged_active_dm($id)
@@ -1553,7 +1581,7 @@ proc doit { id cmd } {
     }
 }
 
-proc doit_local { id cmd } {
+proc mged_apply_local { id cmd } {
     global mged_top
     global mged_active_dm
 
@@ -1574,7 +1602,7 @@ proc doit_local { id cmd } {
     return $msg
 }
 
-proc doit_using_list { id cmd } {
+proc mged_apply_using_list { id cmd } {
     global mged_apply_list
 
     foreach dm $mged_apply_list($id) {
@@ -1585,7 +1613,7 @@ proc doit_using_list { id cmd } {
     return $msg
 }
 
-proc doit_all { cmd } {
+proc mged_apply_all { cmd } {
     foreach dm [get_dm_list] {
 	winset $dm
 	catch [list uplevel #0 $cmd] msg
@@ -1598,7 +1626,7 @@ proc set_listen { id } {
     global listen
     global mged_listen
 
-    doit $id "set listen \$mged_listen($id)"
+    mged_apply $id "set listen \$mged_listen($id)"
 
 # In case things didn't work.
     set mged_listen($id) $listen
@@ -1610,12 +1638,12 @@ proc set_fb { id } {
     global listen
     global mged_listen
 
-    doit $id "set fb \$mged_fb($id)"
+    mged_apply $id "set fb \$mged_fb($id)"
 
     if {$mged_fb($id)} {
 	.$id.m.settings.m.cm_fb entryconfigure 6 -state normal
 	set mged_listen($id) 1
-	doit $id "set listen \$mged_listen($id)"
+	mged_apply $id "set listen \$mged_listen($id)"
     } else {
 	.$id.m.settings.m.cm_fb entryconfigure 6 -state disabled
 	set mged_listen($id) 0
