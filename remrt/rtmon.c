@@ -167,6 +167,8 @@ int	fd;
 			send_status(fd);
 			continue;
 		}
+		if( strncmp( bu_vls_addr(&str), "quit", 4 ) == 0 )
+			exit(0);
 		fprintf( ofp, "ERROR Unknown command: %s\n", bu_vls_addr(&str) );
 	}
 
