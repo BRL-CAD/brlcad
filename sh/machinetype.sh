@@ -17,6 +17,7 @@
 #
 # Command args:
 #	[none]	Print only machine type
+#	-d	Print C compiler -D type defines.
 #	-m	Print only machine type
 #	-s	Print only system type, BRL style: (BSD, SYSV)
 #	-a	Print only system type, ATT style: (BSD, ATT)
@@ -363,6 +364,15 @@ x-a)
 	exit 0;;
 x-v|x-b)
 	echo "MACHINE=${MACHINE}; UNIXTYPE=${UNIXTYPE}; HAS_TCP=${HAS_TCP}; HAS_SYMLINKS=${HAS_SYMLINKS}"
+	exit 0;;
+x-d)
+	# This option is used primarily when building CAKE.
+	# This depends on `machinetype.sh -d` discarding the newline.
+	if test ${UNIXTYPE} = BSD
+	then	echo "-D__BSD -DBSD"
+	else	echo "-D__SYSV -DATT -DSYSV"
+	fi
+	echo "-D__MACHINETYPE__${MACHINE}"
 	exit 0;;
 *)
 	echo "$0:  Unknown argument $1" 1>&2; break;;
