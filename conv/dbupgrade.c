@@ -161,7 +161,7 @@ char	**argv;
 	db_dirbuild( dbip );
 
         if( (strcmp( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )==0) && (dbip->dbi_version == 4) ) {
-          dbip->dbi_title="Untitled BRL-CAD Database";
+		dbip->dbi_title=bu_strdup( "Untitled BRL-CAD Database" );
         }
 	db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );
 
@@ -249,60 +249,3 @@ char	**argv;
 	fprintf(stderr, "%ld objects failed to convert\n", errors);
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
