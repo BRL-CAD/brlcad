@@ -1,14 +1,14 @@
 /*
- *		P I X R O T . C
+ *			P I X R O T . C
  *
- * Rotate, Invert, and/or Reverse the pixels in a RGB (.pix) file.
+ *  Rotate, Invert, and/or Reverse the pixels in a RGB (.pix) file.
  *
- * The rotation logic was worked out for data ordered with
+ *  The rotation logic was worked out for data ordered with
  *  "upper left" first.  It is being used on files in first
  *  quadrant order (lower left first).  Thus the "forward",
  *  "backward" flags are reversed.
  *
- * This is a generalization of bwrot and can in fact handle
+ *  This is a generalization of bwrot and can in fact handle
  *  "pixels" of any size.  Thus this routine could be used
  *  to say, rotate a matix of floating point values, etc.
  *
@@ -31,7 +31,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-unsigned char *malloc();
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+extern unsigned char *malloc();
 
 #define	MAXBUFBYTES	(1024*1024)
 
@@ -43,28 +46,28 @@ unsigned char *bp;
 unsigned char *obuf;
 unsigned char *obp;
 
-int	xin, yin, xout, yout, nxin, nyin;
+int	nxin = 512;
+int	nyin = 512;
+int	yin, xout, yout;
 int	plus90, minus90, reverse, invert;
 int	pixbytes = 3;
 
+static	char usage[] = "\
+Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
+	[-w width] [-n height] [file.pix] > file.pix\n";
+
 void	fill_buffer(), reverse_buffer();
 
-static	char *Usage = "usage: pixrot [-f -b -r -i -#bytes] nx ny < file.pix > file.pix\n";
-
+static char	*file_name;
 FILE	*ifp, *ofp;
 
-main( argc, argv )
-int argc; char **argv;
+get_args( argc, argv )
+register char **argv;
 {
-	int	x, y, j;
-	int	outbyte, outplace;
+	register int c;
 
-	/* Check for flags */
-	while( argc > 1 && argv[1][0] == '-' )  {
-		switch( argv[1][1] )  {
-		case '#':
-			pixbytes = atoi( &argv[1][2] );
-			break;
+	while ( (c = getopt( argc, argv, "fbrih#:s:w:n:S:W:N:" )) != EOF )  {
+		switch( c )  {
 		case 'f':
 			minus90++;
 			break;
@@ -77,35 +80,84 @@ int argc; char **argv;
 		case 'i':
 			invert++;
 			break;
-		default:
-			fprintf( stderr, "pixrot: unrecognized flag '%s'\n", argv[1] );
-			fprintf( stderr, Usage );
-			exit( 1 );
+		case '#':
+			pixbytes = atoi(optarg);
+			break;
+		case 'h':
+			/* high-res */
+			nxin = nyin = 1024;
+			break;
+		case 'S':
+		case 's':
+			/* square size */
+			nxin = nyin = atoi(optarg);
+			break;
+		case 'W':
+		case 'w':
+			nxin = atoi(optarg);
+			break;
+		case 'N':
+		case 'n':
+			nyin = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
 		}
-		argc--;
-		argv++;
 	}
 
-	if( argc != 3 ) {
-		fprintf( stderr, Usage );
-		exit( 2 );
+	/* XXX - backward compatability hack */
+	if( optind+2 == argc ) {
+		nxin = atoi(argv[optind++]);
+		nyin = atoi(argv[optind++]);
+	}
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+		file_name = "-";
+		ifp = stdin;
+	} else {
+		file_name = argv[optind];
+		if( (ifp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"pixrot: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
 	}
 
-	nxin = atoi( argv[1] );
-	nyin = atoi( argv[2] );
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "pixrot: excess argument(s) ignored\n" );
 
-	ifp = stdin;
+	return(1);		/* OK */
+}
+
+main( argc, argv )
+int argc; char **argv;
+{
+	int	x, y, j;
+	long	outbyte, outplace;
+
+	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
+	}
+
 	ofp = stdout;
 
 	scanbytes = nxin * pixbytes;
 	buflines = MAXBUFBYTES / scanbytes;
 	if( buflines <= 0 ) {
 		fprintf( stderr, "pixrot: I'm not compiled to do a scanline that long!\n" );
-		exit( 1 );
+		exit( 2 );
 	}
 	if( buflines > nyin ) buflines = nyin;
 	buffer = malloc( buflines * scanbytes );
-	obuf = malloc( nyin * pixbytes );
+	obuf = (nyin > nxin) ? malloc( nyin * pixbytes ) : malloc( nxin * pixbytes );
+	if( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
+		fprintf( stderr, "pixrot: malloc failed\n" );
+		exit( 3 );
+	}
 
 	/*
 	 * Clear our "file pointer."  We need to maintain this
@@ -133,7 +185,7 @@ int argc; char **argv;
 				xout = (nyin - 1) - lasty;
 				outbyte = ((yout * nyin) + xout) * pixbytes;
 				if( outplace != outbyte ) {
-					if( fseek( ofp, outbyte, 0L ) < 0 ) {
+					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "pixrot: Can't seek on output, yet I need to!\n" );
 						exit( 3 );
 					}
@@ -155,7 +207,7 @@ int argc; char **argv;
 				xout = yin;
 				outbyte = ((yout * nyin) + xout) * pixbytes;
 				if( outplace != outbyte ) {
-					if( fseek( ofp, outbyte, 0L ) < 0 ) {
+					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "pixrot: Can't seek on output, yet I need to!\n" );
 						exit( 3 );
 					}
@@ -169,7 +221,7 @@ int argc; char **argv;
 				yout = (nyin - 1) - y;
 				outbyte = yout * scanbytes; 
 				if( outplace != outbyte ) {
-					if( fseek( ofp, outbyte, 0L ) < 0 ) {
+					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "pixrot: Can't seek on output, yet I need to!\n" );
 						exit( 3 );
 					}
@@ -192,10 +244,10 @@ int argc; char **argv;
 void
 fill_buffer()
 {
+	buflines = fread( buffer, scanbytes, buflines, ifp );
+
 	firsty = lasty + 1;
 	lasty = firsty + (buflines - 1);
-
-	fread( buffer, 1, scanbytes * buflines, ifp );
 }
 
 void
