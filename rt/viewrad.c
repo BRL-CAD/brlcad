@@ -29,16 +29,15 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./material.h"
 #include "./rdebug.h"
 #include "./rad.h"
 
-#define	MAXREFLECT	8	/* XXX - should become command line arg */
+#define	MAXREFLECT	16
+#define	DEFAULTREFLECT	8
 
 int		use_air = 0;		/* Handling of air in librt */
-
 int		using_mlib = 0;		/* Material routines NOT used */
-int		max_bounces;		/* stub for "set" cmd */
-int		max_ireflect;		/* stub for "set" cmd */
 
 extern	FILE	*outfp;
 extern	point_t	viewbase_model;		/* lower_left of viewing plane */
@@ -47,6 +46,14 @@ extern	fastf_t	viewsize;
 
 extern	int	width;
 extern	int	height;
+
+int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
+
+/* Viewing module specific "set" variables */
+struct matparse view_parse[] = {
+	"maxreflect",	(mp_off_ty)&numreflect,			"%d",
+	(char *)0,	(mp_off_ty)0,				(char *)0
+};
 
 void		dumpray();
 void		dumpall();
@@ -111,6 +118,12 @@ struct application *ap;
 	vect_t temp, aimpt;
 	union radrec r;
 
+	if( numreflect > MAXREFLECT ) {
+		rt_log("Warning: maxreflect too large (%d), using %d\n",
+			numreflect, MAXREFLECT );
+		numreflect = MAXREFLECT;
+	}
+
 	rt_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
 
 	/* Header Record */
@@ -135,7 +148,7 @@ struct application *ap;
 	r.h.horz = viewsize;
 	r.h.nvert = height;
 	r.h.nhorz = width;
-	r.h.maxrfl = MAXREFLECT;
+	r.h.maxrfl = numreflect;
 
 	writerec( &r, outfp );
 
@@ -243,7 +256,7 @@ struct partition *PartHeadp;
 	/*
 	 * Shoot another ray in the specular direction.
 	 */
-	if( ap->a_level < MAXREFLECT-1 ) {
+	if( ap->a_level < numreflect-1 ) {
 		sub_ap = *ap;	/* struct copy */
 		sub_ap.a_level = ap->a_level+1;
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
@@ -378,7 +391,7 @@ int depth;
 	int	i;
 	union radrec r;
 
-	if( depth > MAXREFLECT ) {
+	if( depth > numreflect ) {
 		rt_log( "dumpall: %d reflections!\n", depth );
 	}
 
@@ -396,7 +409,7 @@ int depth;
 	 * the physical record.
 	 */
 	i = 1 + depth;
-	if( depth < MAXREFLECT )
+	if( depth < numreflect )
 		i++;	/* escape */
 	if( precindex + i > 256 )
 		writephysrec( outfp );
@@ -415,7 +428,7 @@ int depth;
 		dumpray( &rayinfo[i] );
 	}
 
-	if( depth == MAXREFLECT )
+	if( depth == numreflect )
 		return;			/* no escape */
 
 	/* Escape record */
