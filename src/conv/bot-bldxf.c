@@ -525,9 +525,10 @@ int main(int ac, char *av[])
 
     /* process command line objects */
     if (arg_count < ac) {
+        struct directory *dirp;
+
 	for ( ; arg_count < ac ; arg_count++ ) {
 	    printf("current: %s\n",av[arg_count]);
-	    struct directory *dirp;
 
 	    if (!rt_db_lookup_internal(rtip->rti_dbip, av[arg_count], 
 				       &dirp,
