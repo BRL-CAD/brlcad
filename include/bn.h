@@ -69,7 +69,8 @@
 extern "C" {
 #endif
 
-#if defined(WIN32) && !defined(__CYGWIN__)
+#ifndef BN_EXPORT
+#if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #ifdef BN_EXPORT_DLL
 #define BN_EXPORT __declspec(dllexport)
 #else
@@ -77,6 +78,7 @@ extern "C" {
 #endif
 #else
 #define BN_EXPORT
+#endif
 #endif
 
 #define BN_H_VERSION	"@(#)$Header$ (BRL)"
@@ -279,8 +281,13 @@ BN_EXPORT BU_EXTERN(void bn_encode_hvect,
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 BN_EXPORT BU_EXTERN(void bn_tcl_setup,
 		    ());
+#ifdef BRLCAD_DEBUG
+BN_EXPORT BU_EXTERN(int Bn_d_Init,
+		    ());
+#else
 BN_EXPORT BU_EXTERN(int Bn_Init,
 		    ());
+#endif
 BN_EXPORT BU_EXTERN(void bn_tcl_mat_print,
 		    ());
 
