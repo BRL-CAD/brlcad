@@ -86,12 +86,7 @@ mat_t 	model2view;
 	seen_eye_pos = FALSE;
 	seen_size = FALSE;
 
-/* fprintf(stderr, "set flags: view=%d, orient.=%d, eye_pos=%d, size=%d\n",
- *	seen_view, seen_orientation, seen_eye_pos, seen_size);
- */
-
 	/* feof returns 1 on failure */
-
 	while( feof(infp) == 0 )  {
 
 		/* clear the buffer */	
@@ -143,9 +138,6 @@ mat_t 	model2view;
 				 * address of the colon, and break: no need to
 				 * look for more colons on this line.
 				 */
-
-/* fprintf(stderr, "found colon\n");
- */
 				string[i] = '\0';
 				arg_ptr = &string[++i];		/* increment before using */
 				break;
@@ -233,13 +225,14 @@ mat_t 	model2view;
 		return(-1);
 	}
 
+#if 0
 	/* For now, just print the stuff */
-
 	fprintf(stderr, "logfile: %s\n", name);
 	fprintf(stderr, "view= %g azimuth, %g elevation\n", azimuth, elevation);
 	fprintf(stderr, "orientation= %g, %g, %g, %g\n", V4ARGS(orientation) );
 	fprintf(stderr, "eye_pos= %g, %g, %g\n", V3ARGS(eye_pos) );
 	fprintf(stderr, "size= %gmm\n", m_size);
+#endif
 
 	/* Build the view2model matrix. */
 
@@ -248,8 +241,6 @@ mat_t 	model2view;
 	mat_idn( xlate );
 	MAT_DELTAS( xlate, -eye_pos[0], -eye_pos[1], -eye_pos[2] );
 	mat_mul( model2view, rotate, xlate );
-
- mat_print("model2view", model2view);
 
 	fclose(fp);		/* clean up */
 	return(0);
