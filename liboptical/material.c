@@ -87,10 +87,10 @@ try_load(const char *path, const char *material, const char *shader_name)
 
 
 	if ( ! (handle = dlopen(path, RTLD_NOW)) ) {
-		if (rdebug&RDEBUG_MATERIAL) 
+		if (R_DEBUG&RDEBUG_MATERIAL) 
 			bu_log("dlopen failed on \"%s\"\n", path);
 		return (struct mfuncs *)NULL;
-	} else if (rdebug&RDEBUG_MATERIAL) {
+	} else if (R_DEBUG&RDEBUG_MATERIAL) {
 		bu_log("%s open... ", path);
 	}
 
@@ -106,13 +106,13 @@ try_load(const char *path, const char *material, const char *shader_name)
 	shader_mfuncs = dlsym(handle, "shader_mfuncs");
 	if ( (dl_error_str=dlerror()) != (char *)NULL) {
 		/* didn't find anything appropriate, give up */
-		if (rdebug&RDEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
+		if (R_DEBUG&RDEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
 		dlclose(handle);
 		return (struct mfuncs *)NULL;
 	}
 
 found:
-	if (rdebug&RDEBUG_MATERIAL)
+	if (R_DEBUG&RDEBUG_MATERIAL)
 		bu_log("%s_mfuncs table found\n", shader_name);
 
 	/* make sure the shader we were looking for is in the mfuncs table */
@@ -123,7 +123,7 @@ found:
 			return shader_mfuncs; /* found ! */
 	}
 
-	if (rdebug&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
+	if (R_DEBUG&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
 
 	/* found the library, but not the shader */
 	dlclose(handle);
@@ -144,7 +144,7 @@ load_dynamic_shader(const char *material,
 	struct mfuncs *shader_mfuncs = (struct mfuncs *)NULL;
 	char libname[MAXPATHLEN];
 	char *cwd = (char *)NULL;
-	int old_rdebug = rdebug;
+	int old_rdebug = R_DEBUG;
 	char sh_name[128]; /* XXX constants are bogus */
 
 	if (mlen < sizeof(sh_name)) {
@@ -157,7 +157,7 @@ load_dynamic_shader(const char *material,
 	}
 	/* rdebug |= RDEBUG_MATERIAL; */
 
-	if (rdebug&RDEBUG_MATERIAL)
+	if (R_DEBUG&RDEBUG_MATERIAL)
 		bu_log("load_dynamic_shader( \"%s\", %d )\n", sh_name, mlen);
 
 	cwd = getcwd((char *)NULL, (size_t)MAXPATHLEN);
@@ -302,7 +302,7 @@ found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
 
-	if(rdebug&RDEBUG_MATERIAL)
+	if(R_DEBUG&RDEBUG_MATERIAL)
 		bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
 	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip, headp )) < 0 )  {
 		bu_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
@@ -346,37 +346,3 @@ mlib_free( register struct region *rp )
 	rp->reg_udata = (char *)0;
 }
 
-/*
- *			M L I B _ Z E R O
- *
- *  Regardless of arguments, always return zero.
- *  Useful mostly as a stub print, and/or free routine.
- */
-/* VARARGS */
-int
-mlib_zero()
-{
-	return(0);
-}
-
-/*
- *			M L I B _ O N E
- *
- *  Regardless of arguments, always return one.
- *  Useful mostly as a stub setup routine.
- */
-/* VARARGS */
-int
-mlib_one()
-{
-	return(1);
-}
-
-/*
- *			M L I B _ V O I D
- */
-/* VARARGS */
-void
-mlib_void()
-{
-}

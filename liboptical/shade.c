@@ -21,7 +21,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static const char RCSview[] = "@(#)$Header$ (BRL)";
+static const char RCSview[] = "@(#)$Header";
 #endif
 
 #include "conf.h"
@@ -34,10 +34,69 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "./ext.h"
 #include "rtprivate.h"
 #include "light.h"
 #include "plot3.h"
+
+
+/*
+ *			P R _ S H A D E W O R K
+ *
+ *  Pretty print a shadework structure.
+ */
+void
+pr_shadework( str, swp )
+const char *str;
+register const struct shadework *swp;
+{
+	int	i;
+
+	bu_log( "Shadework %s: 0x%x\n", str, swp );
+	bu_printb( " sw_inputs", swp->sw_inputs, MFI_FORMAT );
+	if (swp->sw_inputs && MFI_HIT)
+		bu_log( " sw_hit.dist:%g  sw_hit.point(%g %g %g)\n",
+			swp->sw_hit.hit_dist, 
+			V3ARGS(swp->sw_hit.hit_point));
+	else
+		bu_log( " sw_hit.dist:%g\n", swp->sw_hit.hit_dist);
+
+	if (swp->sw_inputs && MFI_NORMAL) 
+		bu_log(" sw_hit.normal(%g %g %g)\n",
+			V3ARGS(swp->sw_hit.hit_normal));
+
+
+	bu_log( " sw_transmit %f\n", swp->sw_transmit );
+	bu_log( " sw_reflect %f\n", swp->sw_reflect );
+	bu_log( " sw_refract_index %f\n", swp->sw_refrac_index );
+	bu_log( " sw_extinction %f\n", swp->sw_extinction );
+#if RT_MULTISPECTRAL
+	bn_pr_tabdata( "msw_color", swp->msw_color );
+	bn_pr_tabdata( "msw_basecolor", swp->msw_basecolor );
+#else
+	VPRINT( " sw_color", swp->sw_color );
+	VPRINT( " sw_basecolor", swp->sw_basecolor );
+#endif
+	bu_log( " sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v );
+	bu_log( " sw_dudv  %f %f\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
+	bu_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
+	bu_log( "\n");
+	if( swp->sw_inputs & MFI_LIGHT ) for( i=0; i < SW_NLIGHTS; i++ )  {
+		if( swp->sw_visible[i] == (char *)0 )  continue;
+		RT_CK_LIGHT( swp->sw_visible[i] );
+#if RT_MULTISPECTRAL
+		bu_log("   light %d visible, dir=(%g,%g,%g)\n",
+			i,
+			V3ARGS(&swp->sw_tolight[i*3]) );
+		BN_CK_TABDATA(swp->msw_intensity[i]);
+		bn_pr_tabdata("light intensity", swp->msw_intensity[i] );
+#else
+		bu_log("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
+			i,
+			swp->sw_intensity[i],
+			V3ARGS(&swp->sw_tolight[i*3]) );
+#endif
+	}
+}
 
 
 
@@ -109,13 +168,13 @@ register int	want;
                                          pp->pt_inseg->seg_stp->st_id
 				       ].ft_name,
 				       swp->sw_hit.hit_surfno, f);
-				if( rdebug&RDEBUG_SHADE ) {
+				if( R_DEBUG&RDEBUG_SHADE ) {
 					VPRINT("Dir ", ap->a_ray.r_dir);
 					VPRINT("Norm", swp->sw_hit.hit_normal);
 				}
 			}
 		}
-		if( rdebug&(RDEBUG_RAYPLOT|RDEBUG_SHADE) )  {
+		if( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_SHADE) )  {
 			point_t		endpt;
 			fastf_t		f;
 			/* Plot the surface normal -- green/blue */
@@ -123,7 +182,7 @@ register int	want;
 			f = ap->a_rt_i->rti_radius * 0.02;
 			VJOIN1( endpt, swp->sw_hit.hit_point,
 				f, swp->sw_hit.hit_normal );
-			if(rdebug&RDEBUG_RAYPLOT)  {
+			if(R_DEBUG&RDEBUG_RAYPLOT)  {
 				bu_semaphore_acquire( BU_SEM_SYSCALL );
 				pl_color( stdout, 0, 255, 255 );
 				pdv_3line( stdout, swp->sw_hit.hit_point, endpt );
@@ -218,7 +277,7 @@ register struct shadework *swp;
 
 	want = mfp->mf_inputs;
 
-	if( rdebug&RDEBUG_SHADE ) {
+	if( R_DEBUG&RDEBUG_SHADE ) {
 		bu_log("viewshade(%s)\n Using \"%s\" shader, ",
 			rp->reg_name, mfp->mf_name);
 		bu_printb( "mfp_inputs", want, MFI_FORMAT );
@@ -283,7 +342,7 @@ register struct shadework *swp;
 		}
 	}
 
-	if( rdebug&RDEBUG_SHADE ) {
+	if( R_DEBUG&RDEBUG_SHADE ) {
 		pr_shadework( "before mf_render", swp );
 	}
 
@@ -291,73 +350,10 @@ register struct shadework *swp;
 	/* Invoke the actual shader (may be a tree of them) */
 	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
 
-	if( rdebug&RDEBUG_SHADE ) {
+	if( R_DEBUG&RDEBUG_SHADE ) {
 		pr_shadework( "after mf_render", swp );
 		bu_log("\n");
 	}
 
 	return(1);
-}
-
-
-
-
-
-/*
- *			P R _ S H A D E W O R K
- *
- *  Pretty print a shadework structure.
- */
-void
-pr_shadework( str, swp )
-const char *str;
-register const struct shadework *swp;
-{
-	int	i;
-
-	bu_log( "Shadework %s: 0x%x\n", str, swp );
-	bu_printb( " sw_inputs", swp->sw_inputs, MFI_FORMAT );
-	if (swp->sw_inputs && MFI_HIT)
-		bu_log( " sw_hit.dist:%g  sw_hit.point(%g %g %g)\n",
-			swp->sw_hit.hit_dist, 
-			V3ARGS(swp->sw_hit.hit_point));
-	else
-		bu_log( " sw_hit.dist:%g\n", swp->sw_hit.hit_dist);
-
-	if (swp->sw_inputs && MFI_NORMAL) 
-		bu_log(" sw_hit.normal(%g %g %g)\n",
-			V3ARGS(swp->sw_hit.hit_normal));
-
-
-	bu_log( " sw_transmit %f\n", swp->sw_transmit );
-	bu_log( " sw_reflect %f\n", swp->sw_reflect );
-	bu_log( " sw_refract_index %f\n", swp->sw_refrac_index );
-	bu_log( " sw_extinction %f\n", swp->sw_extinction );
-#if RT_MULTISPECTRAL
-	bn_pr_tabdata( "msw_color", swp->msw_color );
-	bn_pr_tabdata( "msw_basecolor", swp->msw_basecolor );
-#else
-	VPRINT( " sw_color", swp->sw_color );
-	VPRINT( " sw_basecolor", swp->sw_basecolor );
-#endif
-	bu_log( " sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v );
-	bu_log( " sw_dudv  %f %f\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
-	bu_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
-	bu_log( "\n");
-	if( swp->sw_inputs & MFI_LIGHT ) for( i=0; i < SW_NLIGHTS; i++ )  {
-		if( swp->sw_visible[i] == (char *)0 )  continue;
-		RT_CK_LIGHT( swp->sw_visible[i] );
-#if RT_MULTISPECTRAL
-		bu_log("   light %d visible, dir=(%g,%g,%g)\n",
-			i,
-			V3ARGS(&swp->sw_tolight[i*3]) );
-		BN_CK_TABDATA(swp->msw_intensity[i]);
-		bn_pr_tabdata("light intensity", swp->msw_intensity[i] );
-#else
-		bu_log("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
-			i,
-			swp->sw_intensity[i],
-			V3ARGS(&swp->sw_tolight[i*3]) );
-#endif
-	}
 }
