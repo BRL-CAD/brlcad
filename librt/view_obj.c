@@ -641,7 +641,7 @@ vo_perspective_tcl(clientData, interp, argc, argv)
 
 	/* Compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_pmat");
+	bu_vls_printf(&vls, "helplib vo_perspective");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 

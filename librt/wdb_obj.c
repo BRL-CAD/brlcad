@@ -1906,7 +1906,7 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_move_all");
+		bu_vls_printf(&vls, "helplib wdb_moveall");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
