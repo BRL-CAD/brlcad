@@ -3,7 +3,7 @@ dnl *** BRL-CAD configure.ac ***
 dnl ****************************
 dnl $Id$
 dnl
-dnl Herein lies the venerable GNU Autotools configure script for BRL-CAD.
+dnl Herein lies the venerable GNU Autotools configure template for BRL-CAD.
 dnl As best is reasonably possible, proper ordering and separation of tests
 dnl and settings should be maintained per the recommended standard layout.
 dnl The tests should be added to the rather clearly labeled sections below so
