@@ -754,7 +754,11 @@ out:
 }
 #else /* __STDC__ */
 
-#if defined(BSD) || defined(mips) || defined(CRAY2)
+#if defined(sgi) && !defined(mips)
+# define _sgi3d	1
+#endif
+
+#if (defined(BSD) && !defined(_sgi3d)) || defined(mips) || defined(CRAY2)
 /*
  *  			R T _ L O G
  *  
