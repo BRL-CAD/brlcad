@@ -24,8 +24,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
+#include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 #include "fb.h"
 #include "./fblocal.h"
+
+static	int	linger();
 
 _LOCAL_ int	X_dopen(),
 		X_dclose(),
@@ -81,14 +84,15 @@ FBIO X_interface =  {
  * Per window state information.
  */
 struct	xinfo {
-	Display	*dpy;
-	Window	win;
+	Display	*dpy;			/* Display and Screen(s) info */
+	Window	win;			/* Window ID */
+	int	screen;			/* Our screen selection */
+	Visual	*visual;		/* Our visual selection */
+	GC	gc;			/* current graphics context */
+	XStandardColormap cmap;		/* 8bit colormap */
 	XImage	*image;
-	GC	gc;
-/*
-	int	screen;
-	Visual	*visual;
-*/
+
+	int	depth;			/* 1, 8, or 24bit */
 	int	mode;			/* 0,1,2 */
 	int	x_zoom, y_zoom;
 	int	x_window, y_window;	/**/
@@ -128,31 +132,13 @@ int	width, height;
 		return(-1);
 	}
 
-	/* an image data buffer */
-	if( (bytebuf = (unsigned char *)calloc( 1, width*height )) == NULL ) {
-		fb_log("X_dopen: bytebuf malloc failed\n");
-		return(-1);
-	}
-	if( (bitbuf = (char *)calloc( 1, (width*height)/8 )) == NULL ) {
-		fb_log("X_dopen: bitbuf malloc failed\n");
-		return(-1);
-	}
-
 	if( file[strlen("/dev/X")] != NULL )
 		XI(ifp)->mode = 1;
 
-#ifdef never
-	if ((dpy = XOpenDisplay(display_name)) == NULL)
-		fb_log("X_dopen: Can't open display '%s'", XDisplayName(display_name));
-	screen = XDefaultScreen(dpy);
-	root_win = XDefaultRootWindow(dpy, screen);
-	visual = XDefaultVisual(dpy, screen);
-	blackpixel = XBlackPixel(dpy, screen);
-	whitepixel = XWhitePixel(dpy, screen);
-	if( XDisplayPlanes(dpy, screen) == 1 )
-		mono_flag = True;
-#endif
-	xsetup( ifp, width, height );
+	/* set up an X window, graphics context, etc. */
+	if( xsetup( ifp, width, height ) < 0 ) {
+		return(-1);
+	}
 
 #ifdef notes
 	/* monochrome */
@@ -173,10 +159,35 @@ int	width, height;
 		image->width, image->height);
 #endif
 
-	XI(ifp)->image = XCreateImage( XI(ifp)->dpy,
-		XDefaultVisual(XI(ifp)->dpy,XDefaultScreen(XI(ifp)->dpy)),
-		1, XYBitmap, 0,
-		(char *)bitbuf, width, height, 8, 0);
+	/* an image data buffer */
+	if( (bytebuf = (unsigned char *)calloc( 1, width*height )) == NULL ) {
+		fb_log("X_dopen: bytebuf malloc failed\n");
+		return(-1);
+	}
+	if( (bitbuf = (char *)calloc( 1, (width*height)/8 )) == NULL ) {
+		fb_log("X_dopen: bitbuf malloc failed\n");
+		return(-1);
+	}
+
+	/*
+	 *  Create an Image structure.
+	 *  The image is our client resident copy which we
+	 *  can get/put from/to a server resident Pixmap or
+	 *  Window (i.e. a "Drawable").
+	 */
+	if( XI(ifp)->depth == 1 ) {
+		XI(ifp)->image = XCreateImage( XI(ifp)->dpy,
+			XI(ifp)->visual, 1, XYBitmap, 0,
+			(char *)bitbuf, width, height, 8, 0);
+	} else if( XI(ifp)->depth == 8 ) {
+		XI(ifp)->image = XCreateImage( XI(ifp)->dpy,
+			XI(ifp)->visual, 8, ZPixmap, 0,
+			(char *)bytebuf, width, height, 8, 0);
+	} else {
+		fprintf( stderr, "if_X: can't handle a depth of %d\n",
+			XI(ifp)->depth );
+		return(-1);
+	}
 
 	return(0);
 }
@@ -337,6 +348,17 @@ int	count;
 	/* 1st -> 4th quadrant */
 	y = ifp->if_height - 1 - y;
 
+	if( XI(ifp)->depth == 8 ) {
+		/* assuming SGI 4Ds strange form of pseudocolor XXX */
+		cp = &bytebuf[y*ifp->if_width + x];
+		for( i = 0; i < count; i++ ) {
+			cp[i] = (int)(pixelp[i][RED]/52)
+				+ 25*(int)(pixelp[i][GRN]/28.45)
+				+ 5*(int)(pixelp[i][BLU]/52) + 31;
+		}
+		goto done;
+	}
+
 	/* save the 8bit black and white version of it */
 	cp = &bytebuf[y*ifp->if_width + x];
 	for( i = 0; i < count; i++ ) {
@@ -386,6 +408,7 @@ int	count;
 	}
     }
 
+done:
 	XPutImage(XI(ifp)->dpy, XI(ifp)->win, XI(ifp)->gc, XI(ifp)->image,
 		x, y, x, y,
 		count, 1 );
@@ -473,26 +496,63 @@ int	width, height;
 	XSizeHints xsh;
 	XEvent	event;
 	XGCValues gcv;
-	Display	*dpy;
-	Window	win;
-	GC	gc;
+	Display	*dpy;			/* local copy */
+	Window	win;			/* local copy */
+	int	screen;			/* local copy */
+	Visual	*visual;		/* local copy */
+	GC	gc;			/* local copy */
 	XSetWindowAttributes	xswa;
 
 	width = height = 512;
 
-	/* Open the display - XXX use the env var DISPLAY */
+	/* Open the display - use the env variable DISPLAY */
 	if( (dpy = XOpenDisplay(NULL)) == NULL ) {
-		fb_log( "if_X: Can't open X display\n" );
-		exit( 2 );
+		fb_log( "if_X: Can't open X display \"%s\"\n",
+			XDisplayName(NULL) );
+		return	-1;
 	}
+	screen = DefaultScreen(dpy);
+	visual = DefaultVisual(dpy,screen);
 XI(ifp)->dpy = dpy;
+XI(ifp)->screen = screen;
+XI(ifp)->visual = visual;
+XI(ifp)->depth = DisplayPlanes(dpy,screen);
 
-	/* Select border, background, foreground colors,
+#ifdef DEBUGX
+printf("%d DisplayPlanes\n", DisplayPlanes(dpy,screen) );
+switch(DefaultVisual(dpy,screen)->class) {
+case DirectColor:
+	printf("DirectColor: Full Color changeable map\n");
+	break;
+case TrueColor:
+	printf("TrueColor: Full Color, no map\n");
+	break;
+case PseudoColor:
+	printf("PseudoColor: Some Color, changeable map\n");
+	break;
+case StaticColor:
+	printf("StaticColor: Some Color, fixed map\n");
+	break;
+case GrayScale:
+	printf("GrayScale: gray scale, changeable map\n");
+	break;
+case StaticGray:
+	printf("StaticGray: gray scale, fixed map\n");
+	break;
+default:
+	printf("Unknown visual class %d\n",
+		DefaultVisual(dpy,screen)->class);
+	break;
+}
+#endif
+
+	/*
+	 * Select border, background, foreground colors,
 	 * and border width.
 	 */
-	bd = WhitePixel( dpy, DefaultScreen(dpy) );
-	bg = BlackPixel( dpy, DefaultScreen(dpy) );
-	fg = WhitePixel( dpy, DefaultScreen(dpy) );
+	bd = WhitePixel( dpy, screen );
+	bg = BlackPixel( dpy, screen );
+	fg = WhitePixel( dpy, screen );
 	bw = 1;
 
 	/*
@@ -505,46 +565,86 @@ XI(ifp)->dpy = dpy;
 	xsh.x = xsh.y = 0;
 
 	/*
-	 * Fill in XSetWindowAttributes struct for CreateWindow
+	 * Fill in XSetWindowAttributes struct for XCreateWindow.
 	 */
 	xswa.event_mask = ExposureMask;
 		/* |ButtonPressMask |LeaveWindowMask | EnterWindowMask; */
 		/* |ColormapChangeMask */
 	/*xswa.colormap = colormap;*/
-	xswa.background_pixel = BlackPixel(dpy, DefaultScreen(dpy));
-	xswa.border_pixel = WhitePixel(dpy, DefaultScreen(dpy));
+	xswa.background_pixel = BlackPixel(dpy, screen);
+	xswa.border_pixel = WhitePixel(dpy, screen);
+#ifdef CURSOR
 	xswa.cursor = XCreateFontCursor(dpy, XC_gumby);
-
-	win = XCreateWindow( dpy, DefaultRootWindow(dpy),
-		0, 0, xsh.width, xsh.height,
-		3, XDefaultDepth(dpy,XDefaultScreen(dpy)),
-		InputOutput, XDefaultVisual(dpy, DefaultScreen(dpy)),
-		CWBackPixel |CWEventMask |CWCursor |CWBorderPixel,
-		/* |CWColormap */
-		&xswa);
+#endif
 
 #ifdef OLD
 	win = XCreateSimpleWindow( dpy, DefaultRootWindow(dpy),
 		xsh.x, xsh.y, xsh.width, xsh.height,
 		bw, bd, bg );
 #endif OLD
+
+	/*
+	 *  Note: all Windows, Colormaps and XImages have
+	 *  a Visual attribute which determines how pixel
+	 *  values are mapped to displayed colors.
+	 */
+#ifdef DEBUGX
+printf("Creating window\n");
+#endif
+	win = XCreateWindow( dpy, DefaultRootWindow(dpy),
+		0, 0, xsh.width, xsh.height,
+		3, XDefaultDepth(dpy, screen),
+		InputOutput, visual,
+/*CURSOR	CWBackPixel |CWEventMask |CWCursor |CWBorderPixel,*/
+		CWBackPixel |CWEventMask |CWBorderPixel,
+		/* |CWColormap */
+		&xswa );
+
 XI(ifp)->win = win;
 	if( win == 0 ) {
 		fb_log( "if_X: Can't create window\n" );
-		exit( 3 );
+		return	-1;
 	}
 
 	/* Set standard properties for Window Managers */
+#ifdef DEBUGX
+printf("Setting properties\n");
+#endif
 	XSetStandardProperties( dpy, win, "Frame buffer", "Frame buffer",
 		None, NULL, 0, &xsh );
+#ifdef DEBUGX
+printf("Setting Hints\n");
+#endif
 	XSetWMHints( dpy, win, &xwmh );
 
 	/* Create a Graphics Context for drawing */
 	/*gcv.font = NULL;*/
 	gcv.foreground = fg;
 	gcv.background = bg;
+#ifdef DEBUGX
+printf("Making graphics context\n");
+#endif
 	gc = XCreateGC( dpy, win, (GCForeground|GCBackground), &gcv );
 XI(ifp)->gc = gc;
+
+	if( XI(ifp)->depth == 8 ) {
+		int	ret;
+		ret = XGetStandardColormap( dpy, RootWindow(dpy,screen),
+			&(XI(ifp)->cmap), XA_RGB_BEST_MAP );
+		if( !ret ) {
+			fb_log("if_X: can't get colormap\n");
+		} else {
+#ifdef DEBUGX
+printf("R G B Max: %d %d %d\n",
+XI(ifp)->cmap.red_max, XI(ifp)->cmap.green_max, XI(ifp)->cmap.blue_max);
+printf("R G B Mult: %d %d %d\n",
+XI(ifp)->cmap.red_mult, XI(ifp)->cmap.green_mult, XI(ifp)->cmap.blue_mult);
+printf("Base: %d\n",
+XI(ifp)->cmap.base_pixel);
+#endif
+			;
+		}
+	}
 
 	XSelectInput( dpy, win, ExposureMask );
 	XMapWindow( dpy, win );
@@ -566,9 +666,11 @@ XI(ifp)->gc = gc;
 			break;
 		}
 	}
-/*printf("%d XDisplayPlanes\n", XDisplayPlanes(dpy,DefaultScreen(dpy)) );*/
+
+	return	0;
 }
 
+static int
 linger( ifp )
 FBIO	*ifp;
 {
