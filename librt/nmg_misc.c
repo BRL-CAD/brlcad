@@ -278,17 +278,18 @@ CONST struct rt_tol	*tol;
 
 			fu2lg = fu2lu->l_p->lg_p;
 			NMG_CK_LOOP_G(fu2lg);
+
+			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+				rt_log("\tfu2lu BBox: (%g %g %g)  (%g %g %g) %s\n",
+					V3ARGS(fu2lg->min_pt), V3ARGS(fu2lg->max_pt),
+					nmg_orientation(fu2lu->orientation) );
+			}
+
 			if (V3RPP_OVERLAP_TOL(fu2lg->min_pt, fu2lg->max_pt,
 			    lg->min_pt, lg->max_pt, tol)) {
 				overlap = 1;
 				break;
 			}
-		}
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			rt_log("%s\tfu2lu BBox: (%g %g %g)  (%g %g %g) %s\n",
-				overlap ? "keep" : "KILL",
-				V3ARGS(fu2lg->min_pt), V3ARGS(fu2lg->max_pt),
-				nmg_orientation(fu2lu->orientation) );
 		}
 		if (!overlap) {
 			/* why is this vertexuse in the list? */
@@ -1926,7 +1927,7 @@ struct edgeuse	*eu1_first;
 	struct edge	*e1;
 	struct edge_g	*eg;
 	struct vertexuse *vu;
-	struct vertex	*vb;
+	struct vertex	*vb = 0;
 	struct vertex	*vc;
 	struct shell	*s1;
 	int		ret = 0;
@@ -1999,7 +2000,7 @@ struct edgeuse	*eu1_first;
 		if( eu1 == eu1_first )  break;
 	}
 out:
-rt_log("nmg_unbreak_edge(eu=x%x) ret = %d\n", eu1_first, ret);
+rt_log("nmg_unbreak_edge(eu=x%x, vb=x%x) ret = %d\n", eu1_first, vb, ret);
 	if( *eu1->up.magic_p == NMG_LOOPUSE_MAGIC )
 		nmg_veu( &eu1->up.lu_p->down_hd, &eu1->up.lu_p->l.magic );
 	return ret;
