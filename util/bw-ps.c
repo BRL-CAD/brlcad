@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>	/* for atof() */
+#include <time.h>	/* for ctime() */
 
 #define	DEFAULT_SIZE	6.75		/* default output size in inches */
 #define	MAX_BYTES	(64*128)	/* max bytes per image chunk */
@@ -29,6 +30,7 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
+static int	encapsulated = 0;	/* encapsulated postscript */
 static int	inverse = 0;	/* inverse video (RFU) */
 static int	center = 0;	/* center output on 8.5 x 11 page */
 
@@ -43,7 +45,7 @@ static char	*file_name;
 static FILE	*infp;
 
 static char usage[] = "\
-Usage: bw-ps [-c] [-h] [-s squareinsize] [-w in_width] [-n in_height]\n\
+Usage: bw-ps [-e] [-c] [-h] [-s squareinsize] [-w in_width] [-n in_height]\n\
         [-S inches_square] [-W width_inches] [-N height_inches] [file.bw]\n";
 
 get_args( argc, argv )
@@ -51,8 +53,12 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hics:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "ehics:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
+		case 'e':
+			/* Encapsulated PostScript */
+			encapsulated++;
+			break;
 		case 'h':
 			/* high-res */
 			height = width = 1024;
@@ -126,15 +132,20 @@ char	**argv;
 		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
-	xpoints = outwidth * 72 + 0.5;
-	ypoints = outheight * 72 + 0.5;
+
+	if( encapsulated ) {
+		xpoints = width;
+		ypoints = height;
+	} else {
+		xpoints = outwidth * 72 + 0.5;
+		ypoints = outheight * 72 + 0.5;
+	}
+	prolog(ofp, file_name, xpoints, ypoints);
 
 	scans_per_patch = MAX_BYTES / width;
 	if( scans_per_patch > height )
 		scans_per_patch = height;
 	bytes_per_patch = scans_per_patch * width;
-
-	prolog(ofp, file_name, xpoints, ypoints);
 
 	for( y = 0; y < height; y += scans_per_patch ) {
 		/* start a patch */
@@ -165,11 +176,24 @@ FILE	*fp;
 char	*name;
 int	width, height;		/* in points */
 {
-	fputs( "%!PS-Adobe-1.0\n", fp );
-	fputs( "%begin(plot)\n", fp );
-	/*fputs( "%%DocumentFonts:  Courier\n", fp );*/
-	fprintf(fp, "%%%%Title: %s\n", name );
-	fputs( "%%Creator: bw-ps.c\n", fp );
+	long	ltime;
+
+	ltime = time(0);
+
+	if( encapsulated ) {
+		fputs( "%!PS-Adobe-2.0 EPSF-1.2\n", fp );
+		fputs( "%%Creator: bw-ps\n", fp );
+		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
+		fprintf(fp, "%%%%Title: %s\n", name );
+		fputs( "%%Pages: 0\n", fp );
+	} else {
+		fputs( "%!PS-Adobe-1.0\n", fp );
+		fputs( "%begin(plot)\n", fp );
+		/*fputs( "%%DocumentFonts:  Courier\n", fp );*/
+		fprintf(fp, "%%%%Title: %s\n", name );
+		fputs( "%%Creator: bw-ps\n", fp );
+		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
+	}
 	fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", width, height );
 	fputs( "%%EndComments\n\n", fp );
 
@@ -185,7 +209,8 @@ int	width, height;		/* in points */
 postlog( fp )
 FILE	*fp;
 {
-	fputs( "%end(plot)\n", fp );
+	if( !encapsulated )
+		fputs( "%end(plot)\n", fp );
 	if( center )
 		fputs( "\nshowpage\n", fp );	/*XXX*/
 }
