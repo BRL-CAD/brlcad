@@ -1,13 +1,13 @@
 /*
-	SCCS id:	@(#) fbcmap.c	1.5
-	Last edit: 	3/14/85 at 17:57:45	G S M
-	Retrieved: 	8/13/86 at 03:13:05
+	SCCS id:	@(#) fbcmap.c	1.6
+	Last edit: 	3/28/85 at 15:44:52	G S M
+	Retrieved: 	8/13/86 at 03:13:13
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbcmap.c
 
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbcmap.c	1.5	last edit 3/14/85 at 17:57:45";
+char	sccsTag[] = "@(#) fbcmap.c	1.6	last edit 3/28/85 at 15:44:52";
 #endif
 /*
 	F B C M A P
@@ -21,7 +21,7 @@ char	sccsTag[] = "@(#) fbcmap.c	1.5	last edit 3/14/85 at 17:57:45";
 
 	Compile:	make fbcmap
 
-	Usage:	fbcmap [flavor]
+	Usage:	fbcmap [-h] [flavor]
 
 	When invoked with no arguments, or with a flavor of 0,
 	the standard ramp color-map is written.
@@ -41,7 +41,7 @@ char *argv[];
 
 	if( ! pars_Argv( argc, argv ) )
 		{
-		(void) fprintf( stderr, "Usage : fbcmap	[-h]\n" );
+		(void) fprintf( stderr, "Usage : fbcmap	[-h] [(1-4)]\n" );
 		return	1;
 		}
 	if( fbopen( NULL, APPEND ) == -1 )
