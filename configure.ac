@@ -161,17 +161,17 @@ AC_ARG_ENABLE(doxygen,
 )
 AC_MSG_RESULT($use_doxygen)
 
-# optimizations
+# optimized
 AC_MSG_CHECKING(whether to enable optimized compilation)
-use_optimizations=no
-AC_ARG_ENABLE(debug,
-	AC_HELP_STRING(--enable-debug,
+use_optimized=no
+AC_ARG_ENABLE(optimized,
+	AC_HELP_STRING(--enable-optimized,
 		[enable optimized compilation (default=no)]),
-	[if ! test "x$enable_optimizations" = "xno" ; then
-		use_optimizations=yes
+	[if ! test "x$enable_optimized" = "xno" ; then
+		use_optimized=yes
 	fi]
 )
-AC_MSG_RESULT($use_optimizations)
+AC_MSG_RESULT($use_optimized)
 
 # warnings
 AC_MSG_CHECKING(whether to enable verbose compilation warnings)
@@ -486,7 +486,7 @@ dnl ******************************************
 # XXX these flags are presently GCC-specific
 CFLAGS="$CFLAGS -I$(top_srcdir)/h -fno-strict-aliasing"
 
-if ! test "x$use_optimizations" = "xno" ; then
+if ! test "x$use_optimized" = "xno" ; then
 	CFLAGS="$CFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
 	LDFLAGS="$LDFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
 fi
