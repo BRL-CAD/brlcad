@@ -687,7 +687,7 @@ int rt_isect_pt_lseg(dist, a, b, p, tolsq)
 fastf_t *dist;	/* distance along line from A to P */
 point_t a, b, p; /* points for line and intersect */
 fastf_t tolsq;	/* distance tolerance (squared) for point being */
-{		/ * on line or other-point */
+{		/* on line or other-point */
 
 	vect_t	AtoP,
 		BtoP,
@@ -699,7 +699,7 @@ fastf_t tolsq;	/* distance tolerance (squared) for point being */
 				 */
 	fastf_t distsq;		/* distance^2 from parametric line to pt */
 
-	VSUB2(AtoP p, a);
+	VSUB2(AtoP, p, a);
 	if (MAGSQ(AtoP) < tolsq)
 		return(1);	/* P at A */
 
@@ -722,6 +722,9 @@ fastf_t tolsq;	/* distance tolerance (squared) for point being */
 
 	/* because of pythgorean theorem ... */
 	distsq = MAGSQ(AtoP) - APprABunit * APprABunit;
+
+	if (distsq < 0)
+		distsq = 0.0;
 
 	if (distsq > tolsq)
 		return(-1);	/* dist pt to line too large */
@@ -762,7 +765,7 @@ point_t pca, a, b, p;
 		/* pt is along edge of lseg */
 		VSCALE(pca, AtoB, dist);
 		VUNITIZE(AtoB);
-		return(rt_dist_pt_line(a, AtoB, p));
+		return(rt_dist_line_point(a, AtoB, p));
 	}
 
 	/* pt is closer to an endpoint than to the line segment */
