@@ -52,7 +52,7 @@ reg	int	iserror;
 		set_node(node, nf_ERR);
 
 	sprintf(buf, "%scake: %s\n", node->n_msg, msg);
-	if (strlen(buf) >= MAXSIZE)
+	if (strlen(buf) >= (unsigned)MAXSIZE)
 	{
 		fprintf(stderr, "cake internal error: buffer overflow in add_error\n");
 		exit_cake(FALSE);
@@ -90,7 +90,7 @@ reg	char	*name;
 				strcat(buf, goal_stack[i]);
 			}
 
-			if (strlen(buf) >= MAXSIZE)
+			if (strlen(buf) >= (unsigned)MAXSIZE)
 			{
 				fprintf(stderr, "cake internal error: buffer overflow in find_circle\n");
 				exit_cake(FALSE);
@@ -124,7 +124,7 @@ reg	List	*list;		/* of Node	*/
 		sep = " ";
 	}
 
-	if (strlen(buf) >= MAXSIZE)
+	if (strlen(buf) >= (unsigned)MAXSIZE)
 	{
 		fprintf(stderr, "cake internal error: buffer overflow in list_names\n");
 		exit_cake(FALSE);
