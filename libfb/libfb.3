@@ -372,11 +372,17 @@ for the bit definitions.
 .I filename
 Disk file interface
 .TP
-.BI /dev/ik [num]
+.BI /dev/ik [num] [opt]
 Adage RDS-3000 ("Ikonas")
 .br
 .I Num
 indicates the device number.
+.br
+.I Opt
+is a single character which indicates optional mode modification.
+The letter ``v'' is to select NTSC video with external sync.
+The letter ``n'' is to select no frame-buffer controller (FBC) re-init
+upon open;  the default is to reprogram the FBC on each open.
 .TP
 .BI /dev/sgi [num]
 Silicon Graphics IRIS Workstation
