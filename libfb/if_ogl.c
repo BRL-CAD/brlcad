@@ -49,7 +49,9 @@
 #include <ctype.h>
 #include <get.h>
 #include <device.h>
+#if 0
 #include <sys/invent.h>
+#endif
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <signal.h>
@@ -95,7 +97,14 @@ static struct ogl_cursor nil_data = {	/* default blank cursor */
 };
 static Cursor nil_cursor;
 
-extern inventory_t	*getinvent();
+char *visual_class[] = {
+	"StaticGray",
+	"GrayScale",
+	"StaticColor",
+	"PseudoColor",
+	"TrueColor",
+	"DirectColor"
+};
 
 /* Internal callbacks etc.*/
 static void input(Widget, XtPointer, XtPointer); 
@@ -105,11 +114,12 @@ static void CloseCB(Widget, XtPointer, XtPointer);
 static void PostIt(Widget, XtPointer, XButtonEvent *);
 
 /* Other Internal routines */
-_LOCAL_ void	backbuffer_to_screen();
-_LOCAL_ void	ogl_cminit();
-_LOCAL_ void	reorder_cursor();
-_LOCAL_ Pixmap  make_bitmap();
-static int	is_linear_cmap();
+_LOCAL_ void		backbuffer_to_screen();
+_LOCAL_ void		ogl_cminit();
+_LOCAL_ void		reorder_cursor();
+_LOCAL_ Pixmap  	make_bitmap();
+_LOCAL_ XVisualInfo *	ogl_choose_visual();
+static int		is_linear_cmap();
 
 static Widget popup;
 static int	ogl_nwindows = 0;
@@ -243,6 +253,7 @@ struct oglinfo {
 	short 		close_me; 	/* flag set by popup close button */
 	short		front_flag;	/* front buffer being used (b-mode) */
 	short		copy_flag;	/* pan and zoom copied from backbuffer */
+	short		soft_cmap_flag;	/* use software colormapping */
 	int		cmap_size;	/* hardware colormap size */
 	int		vp_width;	/* actual viewport width */
 	int		vp_height;	/* actual viewport height */
@@ -560,8 +571,7 @@ int		npix;
 #endif
 	clp = &(OGL(ifp)->clip);
 
-	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP  &&
-	    SGI(ifp)->mi_cmap_flag )  {
+	if( OGL(ifp)->soft_cmap_flag  && SGI(ifp)->mi_cmap_flag )  {
 	    	sw_cmap = 1;
 	} else {
 		sw_cmap = 0;
@@ -700,25 +710,27 @@ int	width, height;
 	int		f;
 	int		status;
 	static char	title[128];
-	int		mode;
-	inventory_t	*inv;
+	int		mode, i;
 	int 		xpos, ypos, win_width, win_height;
 
 	Pixmap		src_bitmap, nil_bitmap;
 	Arg args[20];    
 	int 		n;
 	int 		fake_argc = 0;
-/*	Widget 		glw;*/
 	FBIO 		*client_data1;
 	GLXContext 	client_data2;
 	XEvent 		event;
+	XColor		cells[256];
+	int fargc = 0;
+	/* superceded by new visual selection procedure */
+#if 0
 	static String 	fallback_resources[] = {    
 		"*glwidget*doublebuffer: TRUE",    /* this must be the first resource */
 		"*glwidget*rgba: TRUE",    
 		"*glwidget*allocateBackground: TRUE",    
 		NULL    };
 	static String 	single_buf_resource = "*glwidget*doublebuffer: FALSE";
-
+#endif
 	FB_CK_FBIO(ifp);
 
 	/*
@@ -869,10 +881,12 @@ int	width, height;
 		SGI(ifp)->mi_curs_on = 0;
 	}
 
+#if 0
 	/* specify single buffering if set by the mode */
 	if( (ifp->if_mode & MODE_9MASK) == MODE_9SINGLEBUF )  {
 		fallback_resources[0] = single_buf_resource;
 	} 
+#endif
 	
 
 	/* Build a descriptive window title bar */
@@ -885,6 +899,62 @@ int	width, height;
 			"Shared Mem" );
 
 
+	/* initialize window state variables before calling ogl_getmem */
+	ifp->if_zoomflag = 0;
+	ifp->if_xzoom = 1;	/* for zoom fakeout */
+	ifp->if_yzoom = 1;	/* for zoom fakeout */
+	ifp->if_xcenter = width/2;
+	ifp->if_ycenter = height/2;
+	SGI(ifp)->mi_pid = getpid();
+
+
+	/* Attach to shared memory, potentially with a screen repaint */
+	if( ogl_getmem(ifp) < 0 )
+		return(-1);
+
+
+
+
+	XtToolkitInitialize();
+	OGL(ifp)->appc = XtCreateApplicationContext();
+	OGL(ifp)->dispp = XtOpenDisplay(OGL(ifp)->appc, NULL, NULL, NULL,
+				NULL, 0, &fargc, NULL);
+
+	/* Choose an appropriate visual */
+	if ((OGL(ifp)->vip = ogl_choose_visual(ifp))==NULL){
+		fb_log("ogl_open: Couldn't find an appropriate visual. Exiting.\n");
+		exit(-1);
+	}
+
+	/* Create a colormap for this visual */
+	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
+	if (OGL(ifp)->soft_cmap_flag) {
+		OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
+					RootWindow(OGL(ifp)->dispp,
+						OGL(ifp)->vip->screen),
+					OGL(ifp)->vip->visual,
+					AllocAll);
+		/* initialize virtual colormap - it will be loaded into
+		 * the hardware. This code has not yet been tested.
+		 */
+		if(CJDEBUG) printf("Attempting colormap change\n");
+	    	for (i = 0; i < 256; i++) {
+	    		cells[i].pixel = i;
+	    		cells[i].red = CMR(ifp)[i];
+	    		cells[i].green = CMG(ifp)[i];
+	    		cells[i].blue = CMB(ifp)[i];
+	    		cells[i].flags = DoRed | DoGreen | DoBlue;
+	    	}
+    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, cells, 256);
+	} else { /* read only colormap */
+		OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
+					RootWindow(OGL(ifp)->dispp,
+						OGL(ifp)->vip->screen),
+					OGL(ifp)->vip->visual,
+					AllocNone);
+	}
+
+
 	/* 
 	 * Create Application context and widgets
 	 */
@@ -892,15 +962,19 @@ int	width, height;
 	XtSetArg(args[n], XmNtitle, title); n++;	
 	XtSetArg(args[n], XmNx, xpos); n++;
 	XtSetArg(args[n], XmNy, ypos); n++;
+	OGL(ifp)->toplevel = XtAppCreateShell(NULL,NULL,
+			applicationShellWidgetClass, OGL(ifp)->dispp, args, n);
+#if 0
 	OGL(ifp)->toplevel = XtAppInitialize(&(OGL(ifp)->appc), "Top",    
-		(XrmOptionDescList) NULL , 0,&fake_argc, (String *) NULL, fallback_resources, args, n);    
-
+		(XrmOptionDescList) NULL , 0,&fake_argc, (String *) NULL, NULL, args, n);    
+#endif
 	n = 0;
 	XtSetArg(args[n], XmNnoResize, True); n++;
 	OGL(ifp)->form = XmCreateForm(OGL(ifp)->toplevel, "form", args, n);
 	XtManageChild(OGL(ifp)->form);     
 
-	n = 0;    
+	n = 0;
+	XtSetArg(args[n], GLwNvisualInfo, OGL(ifp)->vip); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;    
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;    
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;    
@@ -923,25 +997,14 @@ int	width, height;
 	ogl_nwindows++;		/* track # of simultaneous windows */
 
 
-	/* initialize window state variables before calling ogl_getmem */
-	ifp->if_zoomflag = 0;
-	ifp->if_xzoom = 1;	/* for zoom fakeout */
-	ifp->if_yzoom = 1;	/* for zoom fakeout */
-	ifp->if_xcenter = width/2;
-	ifp->if_ycenter = height/2;
-	SGI(ifp)->mi_pid = getpid();
-
-
-	/* Attach to shared memory, potentially with a screen repaint */
-	if( ogl_getmem(ifp) < 0 )
-		return(-1);
-
 
 	/* realize window on the screen */
 	XtRealizeWidget(OGL(ifp)->toplevel);
 
 	/* store information about the window used */
+#if 0
 	OGL(ifp)->dispp = XtDisplay(OGL(ifp)->glw);
+#endif
 	OGL(ifp)->wind = XtWindow(OGL(ifp)->glw);
 
 	/* 
@@ -978,6 +1041,7 @@ int	width, height;
 
 	/* Must call "is_linear_cmap" AFTER "ogl_getmem" which allocates
 		space for the color map.				*/
+#if 0
 
 	/* note: By this point software colormapping has been enabled by
 	 * init_window() if hardware mapping is not possible.
@@ -985,8 +1049,7 @@ int	width, height;
 	 * and we think we need to (mi_cmap_flag)
 	 */          
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-	if( ((ifp->if_mode & MODE_7MASK) != MODE_7SWCMAP)  &&
-	    SGI(ifp)->mi_cmap_flag )  {
+	if( (!(OGL(ifp)->soft_cmap_flag)) && SGI(ifp)->mi_cmap_flag )  {
 	    	XColor cells[256];
 	    	int i;
 
@@ -1002,7 +1065,7 @@ int	width, height;
 	    	}
     		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, cells, 256);
 	}
-
+#endif
 	/* Loop through events until first exposure event is processed */
 	OGL(ifp)->firstTime = 1;
 	while(OGL(ifp)->firstTime){
@@ -1027,6 +1090,7 @@ FBIO	*ifp;
 	XtUnmapWidget(OGL(ifp)->toplevel);
 	XtDestroyWidget(OGL(ifp)->toplevel);
 	XFreeCursor(OGL(ifp)->dispp,OGL(ifp)->cursor);
+	XFreeColormap(OGL(ifp)->dispp,OGL(ifp)->xcmap);
 	if (ogl_nwindows < 2){
 		XFreeCursor(OGL(ifp)->dispp,nil_cursor);
 	}
@@ -1717,7 +1781,7 @@ register CONST ColorMap	*cmp;
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
 
 
-	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP )  {
+	if( OGL(ifp)->soft_cmap_flag )  {
 		/* if current and previous maps are linear, return */
 		if( SGI(ifp)->mi_cmap_flag == 0 && prev == 0 )  return(0);
 
@@ -1997,11 +2061,13 @@ init_window(Widget w, XtPointer client_data, XtPointer call)
 	if(CJDEBUG) printf("entering init_window\n");
 
 	ifp = (FBIO *) client_data;
-
+#if 0
         XtSetArg(args[0], GLwNvisualInfo, &vi);
         XtGetValues(w, args, 1); 
 	OGL(ifp)->vip = vi;
         OGL(ifp)->glxc = glXCreateContext(XtDisplay(w), vi, 0, GL_FALSE);
+#endif
+	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,OGL(ifp)->vip, 0, GL_FALSE);
 	
 	if(CJDEBUG) {
 
@@ -2021,6 +2087,7 @@ init_window(Widget w, XtPointer client_data, XtPointer call)
 		printf("GL %d rgba %d %d/%d/%d/%d dbfr %d stereo %d\n",use,rgba,red,green,blue,alpha,dbfr,stereo);
 		printf("CLass is %d\n",vi->class);
 	}
+#if 0
 	/* Determine whether the selected visual supports hardware cmapping.
 	 * This may never happen. In future, choose our own visual to find one
 	 * which does support hardware mapping
@@ -2035,6 +2102,7 @@ init_window(Widget w, XtPointer client_data, XtPointer call)
 		OGL(ifp)->cmap_size = 0;
 		ifp->if_mode |= MODE_7MASK; /* enables software flag */
 	}
+#endif
 
 }
   
@@ -2056,10 +2124,17 @@ static void expose_callback (Widget w, XtPointer client_data, XtPointer call)
 
 	if (OGL(ifp)->firstTime){
 		OGL(ifp)->firstTime = 0;
-
+		
+		/* just incase the configuration is double buffered but
+		 * we want to pretend it's not
+		 */
+		if ( !SGI(ifp)->mi_doublebuffer ){
+			glDrawBuffer(GL_FRONT);
+		}
+#if 0
 		/* determine whether or not double buffering succeeded. */
 		glGetIntegerv(GL_DOUBLEBUFFER,&(SGI(ifp)->mi_doublebuffer));
-
+#endif
 		if ((ifp->if_mode & MODE_4MASK)==MODE_4NODITH){
 			glDisable(GL_DITHER);
 		}
@@ -2075,6 +2150,8 @@ static void expose_callback (Widget w, XtPointer client_data, XtPointer call)
 			SGI(ifp)->mi_doublebuffer = 0;
 			OGL(ifp)->front_flag = 1;
 			glDrawBuffer(GL_FRONT);
+		} else {
+			OGL(ifp)->copy_flag = 0;
 		}
 
 		/* clear entire window */
@@ -2348,5 +2425,119 @@ int		one_y;
 	}
 }
 
+/* 		O G L _ C H O O S E _ V I S U A L
+ *
+ * Select an appropriate visual, and set flags.
+ * 
+ *
+ * The user requires support for:
+ *    	-OpenGL rendering in RGBA mode
+ * 	
+ * The user may desire support for:
+ *	-a single-buffered OpenGL context
+ *	-a double-buffered OpenGL context
+ *	-hardware colormapping (DirectColor)
+ *	
+ * We first try to satisfy all requirements and desires. If that fails,
+ * we remove the desires one at a time until we succeed or until only
+ * requirements are left. If at any stage more than one visual meets the
+ * current criteria, the visual with the greatest depth is chosen.
+ * 
+ * The following flags are set:
+ * 	SGI(ifp)->mi_doublebuffer
+ *	OGL(ifp)->soft_cmap_flag
+ *
+ * Return NULL on failure.
+ */
+_LOCAL_ XVisualInfo *
+ogl_choose_visual(ifp)
+FBIO *ifp;
+{
 
+	XVisualInfo *vip, *vibase, *maxvip, template;
+	int good[40];
+	int num, i, j;
+	int m_hard_cmap, m_sing_buf, m_doub_buf;
+	int use, rgba, dbfr;
+	
+	m_hard_cmap = ((ifp->if_mode & MODE_7MASK)==MODE_7NORMAL);
+	m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
+	m_doub_buf =  !m_sing_buf;
+	
+	/* get a list of all visuals on this display */	
+	vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &template, &num);
+	while (1) {
+
+		/* search for all visuals matching current criteria */
+		for (i=0, j=0, vip=vibase; i<num; i++, vip++){
+			/* requirements */
+			glXGetConfig(OGL(ifp)->dispp,vip,GLX_USE_GL,&use);
+			if( !use)
+				continue;
+			glXGetConfig(OGL(ifp)->dispp,vip,GLX_RGBA,&rgba);
+			if (!rgba)
+				continue;
+			/* desires */
+			if ( (m_hard_cmap) && (vip->class!=DirectColor))
+				continue;
+			if ( (m_hard_cmap) && (vip->colormap_size<256))
+				continue;
+			glXGetConfig(OGL(ifp)->dispp,vip,GLX_DOUBLEBUFFER,&dbfr);
+			if ( (m_doub_buf) && (!dbfr) )
+				continue;
+			if ( (m_sing_buf) && (dbfr) )
+				continue;
+
+			/* this visual meets criteria */
+			good[j++] = i;
+		}
 		
+		/* from list of acceptable visuals,
+		 * choose the visual with the greatest depth */
+		if (j>=1){
+			maxvip = vibase + good[0];
+			for (i=1; i<j; i++) {
+				vip = vibase + good[i];
+				if (vip->depth > maxvip->depth) {
+					maxvip = vip;
+				}
+			}
+			OGL(ifp)->soft_cmap_flag = !m_hard_cmap;
+			SGI(ifp)->mi_doublebuffer = m_doub_buf;
+			if (CJDEBUG) {
+				printf("Selected visual: %s depth=%d colormap=%d\n",visual_class[maxvip->class],maxvip->depth,maxvip->colormap_size);
+			}
+			return (maxvip);
+		}
+
+		/* if no success at this point,
+		 * relax one of the criteria and try again.
+		 */
+		if (m_hard_cmap) {
+			/* relax hardware colormap requirement
+			 * and turn on software colormapping
+			 */
+			m_hard_cmap = 0;
+			fb_log("ogl_open: hardware colormapping not available. Using software colormap.\n");
+		} else if (m_sing_buf) {
+			/* relax single buffering requirement.
+			 * no need for any warning - we'll just use 
+			 * the front buffer 
+			 */
+			m_sing_buf = 0;
+		} else if (m_doub_buf) {
+			/* relax double buffering requirement.
+			 * We must turn off double buffered mode 
+			 * and copy mode.
+			 */
+			m_doub_buf = 0;
+			fb_log("ogl_open: double buffering not available. Using single buffer.\n");
+		} else {
+			/* we're as relaxed as we can get already */
+			return(NULL);
+		}
+
+	}
+		
+}
+
