@@ -550,7 +550,7 @@ int *inside;
 	point_t in, out;
 
 	RES_ACQUIRE( &rt_g.res_model);
-	sprintf(buf, "dsp%d_1.pl", plot_file_num++);
+	sprintf(buf, "dsp%d.pl", plot_file_num++);
 	RES_RELEASE( &rt_g.res_model);
 	bu_log("error plot %s\n", buf);
 
@@ -646,10 +646,12 @@ int line;
 }
 
 static void
-plot_cell_ray(isect, cell, A, B, C, D, curr_pt, next_pt, hit1, dist1, hit2, dist2, inside)
+plot_cell_ray(isect, cell,
+	curr_pt, next_pt, hit1, dist1, hit2, dist2, inside)
+
 struct isect_stuff *isect;
 int cell[3];
-vect_t A, B, C, D, curr_pt, next_pt;
+vect_t curr_pt, next_pt;
 int hit1;
 double dist1;
 int hit2;
@@ -663,9 +665,16 @@ int inside;
 	vect_t A_C;
 	short min_val;
 	short max_val;
+	int outside;
+	vect_t A, B, C, D;
+
+	VSET(A, cell[X],   cell[Y],   DSP(isect->dsp, cell[X],   cell[Y])  );
+	VSET(B, cell[X]+1, cell[Y],   DSP(isect->dsp, cell[X]+1, cell[Y])  );
+	VSET(C, cell[X],   cell[Y]+1, DSP(isect->dsp, cell[X],   cell[Y]+1));
+	VSET(D, cell[X]+1, cell[Y]+1, DSP(isect->dsp, cell[X]+1, cell[Y]+1));
 
 	RES_ACQUIRE( &rt_g.res_model);
-	sprintf(buf, "dsp%d_1.pl", plot_file_num++);
+	sprintf(buf, "dsp%d.pl", plot_file_num++);
 	RES_RELEASE( &rt_g.res_model);
 	bu_log("%s\n", buf);
 
@@ -704,10 +713,72 @@ int inside;
 		pdv_3cont(fd, D);
 
 
-
 		/* plot the ray */
-		pl_color(fd, 255, 40, 40);
-		pdv_3line(fd, curr_pt, next_pt);
+		outside = !inside;
+
+		if (outside)
+			pl_color(fd, 255, 40, 40);
+		else
+			pl_color(fd, 255, 255, 100);
+
+		pdv_3move(fd, curr_pt);
+
+		if (hit1 && hit2) {
+			if (dist1 < dist2) {
+				VJOIN1(tmp, isect->r.r_pt, dist1, isect->r.r_dir);
+				pdv_3cont(fd, tmp);
+				if (outside)
+					pl_color(fd, 255, 255, 100);
+				else
+					pl_color(fd, 255, 40, 40);
+				pdv_3move(fd, tmp);
+				outside = !outside;
+				VJOIN1(tmp, isect->r.r_pt, dist2, isect->r.r_dir);
+				pdv_3cont(fd, tmp);
+				if (outside)
+					pl_color(fd, 255, 255, 100);
+				else
+					pl_color(fd, 255, 40, 40);
+				pdv_3move(fd, tmp);
+				outside = !outside;
+			} else {
+				VJOIN1(tmp, isect->r.r_pt, dist2, isect->r.r_dir);
+				pdv_3cont(fd, tmp);
+				if (outside)
+					pl_color(fd, 255, 255, 100);
+				else
+					pl_color(fd, 255, 40, 40);
+				pdv_3move(fd, tmp);
+				outside = !outside;
+				VJOIN1(tmp, isect->r.r_pt, dist1, isect->r.r_dir);
+				pdv_3cont(fd, tmp);
+				if (outside)
+					pl_color(fd, 255, 255, 100);
+				else
+					pl_color(fd, 255, 40, 40);
+				pdv_3move(fd, tmp);
+				outside = !outside;
+			}
+		} else if (hit1) {
+			VJOIN1(tmp, isect->r.r_pt, dist1, isect->r.r_dir);
+			pdv_3cont(fd, tmp);
+			if (outside)
+				pl_color(fd, 255, 255, 100);
+			else
+				pl_color(fd, 255, 40, 40);
+			pdv_3move(fd, tmp);
+
+		} else if (hit2) {
+			VJOIN1(tmp, isect->r.r_pt, dist2, isect->r.r_dir);
+			pdv_3cont(fd, tmp);
+			if (outside)
+				pl_color(fd, 255, 255, 100);
+			else
+				pl_color(fd, 255, 40, 40);
+			pdv_3move(fd, tmp);
+		}
+
+		pdv_3cont(fd, next_pt);
 
 
 		fclose(fd);
@@ -769,6 +840,7 @@ int *inside;
 	VSET(D, cell[X]+1, cell[Y]+1, DSP(isect->dsp, cell[X]+1, cell[Y]+1));
 
 	if (rt_g.debug & DEBUG_HF) {
+		bu_log("isect_ray_triangles(inside=%d)\n", *inside);
 		VPRINT("A", A);
 		VPRINT("B", B);
 		VPRINT("C", C);
@@ -862,7 +934,7 @@ tri2:
 done:
 	/* plot some diagnostic overlays */
 	if (rt_g.debug & DEBUG_HF && plot_em)
-		plot_cell_ray(isect, cell, A, B, C, D, curr_pt, next_pt, hit1, dist1, hit2, dist2, *inside);
+		plot_cell_ray(isect, cell, curr_pt, next_pt, hit1, dist1, hit2, dist2, *inside);
 
 
 
@@ -874,6 +946,8 @@ done:
 
 		/* hit both */
 		if (dist1 < dist2) {
+			if (rt_g.debug & DEBUG_HF)
+				bu_log("hit triangles: dist1:%g dist2:%g \n", dist1, dist2);
 			first_tri = TRI1;
 			firstND = NdotD1;
 			first = dist1;
@@ -881,6 +955,8 @@ done:
 			secondND = NdotD2;
 			second = dist2;
 		} else {
+			if (rt_g.debug & DEBUG_HF)
+				bu_log("hit triangles: dist2:%g dist1:%g \n", dist2, dist1);
 			first_tri = TRI2;
 			firstND = NdotD2;
 			first = dist2;
@@ -904,6 +980,7 @@ done:
 				bu_bomb("");
 			}
 			OUTHIT(isect, second, second_tri, cell);
+			HIT_COMMIT(isect);
 
 		} else {
 			/* leaving */
@@ -929,6 +1006,9 @@ done:
 
 		if (NdotD1 < 0) {
 			/* entering */
+			if (rt_g.debug & DEBUG_HF)
+				bu_log("hit triangle 1 entering dist:%g\n", dist1);
+
 			if (*inside) {
 				bu_log("%s:%d ray entering while inside dsp",
 					__FILE__, __LINE__);
@@ -939,6 +1019,9 @@ done:
 			*inside = 1;
 		} else {
 			/* leaving */
+			if (rt_g.debug & DEBUG_HF)
+				bu_log("hit triangle 1 leaving dist:%g\n", dist1);
+
 			if (! *inside) {
 				bu_log("%s:%d ray leaving while outside dsp",
 					__FILE__, __LINE__);
@@ -950,8 +1033,12 @@ done:
 		}
 	} else if (hit2) {
 		/* only hit 2 */
+
 		if (NdotD2 < 0) {
 			/* entering */
+
+			if (rt_g.debug & DEBUG_HF)
+				bu_log("hit triangle 2 entering dist:%g\n", dist2);
 			if (*inside) {
 				bu_log("%s:%d ray entering while inside dsp",
 					__FILE__, __LINE__);
@@ -962,6 +1049,9 @@ done:
 			*inside = 1;
 		} else {
 			/* leaving */
+
+			if (rt_g.debug & DEBUG_HF)
+				bu_log("hit triangle 2 leaving dist:%g\n", dist2);
 			if (! *inside) {
 				bu_log("%s:%d ray leaving while outside dsp",
 					__FILE__, __LINE__);
@@ -1271,6 +1361,11 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 			    	}
 			    	OUTHIT(isect, (bbin_dist+tX), outsurfX, grid_cell);
 
+			    	if (rt_g.debug & DEBUG_HF)
+				    	plot_cell_ray(isect, grid_cell, 
+				    		curr_pt, next_pt, 0, 0.0, 0, 0.0, inside);
+
+
 			} else if (
 			    ( rising && curr_pt[Z] > cell_max) ||
 			    (!rising && next_pt[Z] > cell_max) ) {
@@ -1280,6 +1375,10 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 			    		HIT_COMMIT(isect);
 			    		inside = 0;
 			    	}
+			    	if (rt_g.debug & DEBUG_HF)
+				    	plot_cell_ray(isect, grid_cell, 
+				    		curr_pt, next_pt, 0, 0.0, 0, 0.0, inside);
+
 
 			} else {
 				/* intersect */
@@ -1398,6 +1497,10 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 			    		inside = 1;
 			    	}
 			    	OUTHIT(isect, (bbin_dist+tY), outsurfY, grid_cell);
+			    	if (rt_g.debug & DEBUG_HF)
+				    	plot_cell_ray(isect, grid_cell, 
+				    		curr_pt, next_pt, 0, 0.0, 0, 0.0, inside);
+
 			} else if (
 			    ( rising && curr_pt[Z] > cell_max) ||
 			    (!rising && next_pt[Z] > cell_max) ) {
@@ -1407,6 +1510,10 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 			    		HIT_COMMIT(isect);
 			    		inside = 0;
 			    	}
+			    	if (rt_g.debug & DEBUG_HF)
+				    	plot_cell_ray(isect, grid_cell, 
+				    		curr_pt, next_pt, 0, 0.0, 0, 0.0, inside);
+
 			} else {
 				/* intersect */
 				if (rt_g.debug & DEBUG_HF)
