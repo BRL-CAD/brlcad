@@ -14,7 +14,7 @@
 patch-g:	patch-g.o
 	CC LDFLAGS  patch-g.o LIBWDB LIBRT RT_CONFIG LIBRT_LIBES LIBES -o patch-g
 
-rpatch:		../SRCDIR/rpatch.f
-	FC FFLAGS ../SRCDIR/rpatch.f -o rpatch
+rpatch:		rpatch.o
+	CC LDFLAGS  rpatch.o -o rpatch
 
 #include "../Cakefile.rules"
