@@ -86,8 +86,9 @@ int ncards[] =  {
 	2,	/* ELLG, 19 */
 };
 
-int outfd;		/* Output only fd */
-int updfd;		/* Update fd */
+extern FILE	*infp;
+extern FILE	*outfp;		/* Output only fd */
+extern int updfd;		/* Update fd */
 
 trim_trail_spaces( cp )
 register char	*cp;
@@ -103,6 +104,11 @@ register char	*cp;
 
 /*
  *			G E T S O L I D
+ *
+ *  Returns -
+ *	0	done, or EOF
+ *	1	non-ARS done
+ *	2	ARS done
  */
 getsolid( solidp )
 register struct solids *solidp;
@@ -119,13 +125,16 @@ register struct solids *solidp;
 	union record *b;
 	char	cur_solid_num[16];
 	char	solid_type[16];
+	int	cur_type;
 
 
 	if( sol_work == sol_total )	/* processed all solids */
 		return( 0 );
 
-	if( (i = getline( &scard )) == EOF )
-		return( 0 );	/* end of file */
+	if( (i = getline( &scard )) == EOF )  {
+		printf("getsolid: unexpected EOF\n");
+		return( 0 );
+	}
 
 	if( version == 5 )  {
 		strncpy( cur_solid_num, ((char *)&scard)+0, 5 );
@@ -141,7 +150,6 @@ register struct solids *solidp;
 	/* Trim trailing spaces */
 	trim_trail_spaces( cur_solid_num );
 	trim_trail_spaces( solid_type );
-printf("cur_solid_num='%s', solid_type='%s'\n", cur_solid_num, solid_type );
 
 	/* another solid - increment solid counter
 	 * rather than using number from the card, which may go into
@@ -149,15 +157,20 @@ printf("cur_solid_num='%s', solid_type='%s'\n", cur_solid_num, solid_type );
 	 */
 	sol_work++;
 
-	/*
-	 * PROCESS ARS SOLID
-	 */
-	if( lookup(solid_type) == ARS){
+	if( (cur_type = lookup(solid_type)) <= 0 )  {
+		printf("getsolid: bad type\n");
+		return -1;
+	}
+
+	if( cur_type == ARS){
+		/*
+		 * PROCESS ARS SOLID
+		 */
 		arsap = (struct ars_rec *) solidp;
 		arsap->a_id = ARS_A;
 		arsap -> a_type = ARS;
 		namecvt( sol_work, arsap -> a_name, 's');
-		printf("%s \t",arsap->a_name);
+		col_pr( arsap->a_name );
 
 		/*  init  max and min values */
 		xmax = ymax = zmax = -10000.0;
@@ -329,8 +342,8 @@ printf("cur_solid_num='%s', solid_type='%s'\n", cur_solid_num, solid_type );
 		b[0].b.b_values[2] = jbuf[2];
 
 		/*  write out A and B type records  */
-		write( outfd, arsap, sizeof record);
-		write(outfd, &b[0], (Nb_strsl * sizeof (record)));
+		fwrite( arsap, sizeof(union record), 1, outfp );
+		fwrite( &b[0], sizeof(union record), Nb_strsl, outfp );
 
 		/* free dynamic storage alloated for ARS */
 		free (b);
@@ -339,21 +352,22 @@ printf("cur_solid_num='%s', solid_type='%s'\n", cur_solid_num, solid_type );
 	}  else   {
 		/* solid type other than ARS */
 
-
 		solidp->s_id = SOLID;
-		solidp->s_type = lookup( solid_type );
+		solidp->s_type = cur_type;
 		solidp->s_num = sol_work;
 
 		namecvt( solidp->s_num, solidp->s_name, 's' );
 
+		for(i=0; i<24; i++)
+			record.s.s_values[i] = 0.0;
+
 		for( cd=1; cd <= ncards[solidp->s_type]; cd++ )  {
 			if( cd != 1 )  {
-				if( getline( &scard ) == EOF )
-					{
+				if( getline( &scard ) == EOF )  {
 					printf("too few cards for solid %d\n",
 						solidp->s_num);
 					return	0;
-					}
+				}
 				/* continuation card
 				 * solid type should be blank 
 				 */
@@ -371,42 +385,45 @@ printf("cur_solid_num='%s', solid_type='%s'\n", cur_solid_num, solid_type );
 				*fp-- = atof( scard.sc_fields[i] );
 			}
 		}
+		convert( solidp );
 		return(1);		/* input is valid */
 	}
 }
 
-int noreadflag = DOWN;
-
 /*
  *			G E T R E G I O N
  */
-getregion( rp )
-register union record *rp;
+getregion()
 {
+	union record	rec;
+	register union record *rp;
 	static union record mem[9*NCARDS];	/* Holds WHOLE Combination */
 	register struct members *mp;		/* Pointer to current member */
 	int i, j;
 	int card;
 	int count;
 	int n;
-	int reg_reg_flag = 0;
+	int reg_reg_flag;
 	char *cp;
 
+	rp = &rec;
+
+top:
+	reg_reg_flag = 0;
 	rp->c.c_id = COMB;
 	count = 0;		/* count of # of solids in region */
 
-	if( noreadflag == DOWN )  {
-		if( getline( &rcard ) == EOF ) 
-			return( 0 );		/* EOF */
+	if( getline( &rcard ) == EOF )  {
+		printf("getregion: premature EOF\n");
+		return( -1 );
 	}
-	noreadflag = DOWN;
 
 	rcard.rc_null = 0;
 	rp->c.c_num = atoi( rcard.rc_num );
 
 	/* -1 region number terminates table */
 	if( rp->c.c_num < 0 ) 
-		return( 0 );
+		return( 0 );		/* Done */
 
 	/* Build name from region number, set region flag */
 	namecvt( rp->c.c_num, rp->c.c_name, 'r' );
@@ -414,21 +431,16 @@ register union record *rp;
 	rp->c.c_material = 0;
 	rp->c.c_los = 100;
 
-/*
-	rcard.rc_fields[0].rcf_or = 'R';
-*/
-
 	for( card=0; card<NCARDS; card++ )  {
 		if( card != 0 )  {
 			if( getline( &rcard ) == EOF )
 				{
-				printf("read of card failed\n");
+				printf("getregion: read of continuation card failed\n");
 				return(0);
 				}
 			rcard.rc_null = 0;
 			if( atoi( rcard.rc_num ) != 0 )  {
 				/* finished with this region */
-				noreadflag = UP;
 				break;
 			}
 		}
@@ -507,25 +519,16 @@ register union record *rp;
 		}
 	}
 
-	if(card == NCARDS) {
-		/* check if NCARDS is large enough */
-		if(getline(&rcard) == EOF )
-			return(0);
-		rcard.rc_null = 0;
-		if(atoi(rcard.rc_num) == 0) {
-			printf("STOP: too many lines for region %d\n",rp->c.c_num);
-			printf("must change code (read.c)  NCARDS = %d\n",NCARDS);
-			exit(10);
-		}
-		noreadflag = UP;
-	}
-
 	rp->c.c_length = count;
 
-	write( outfd, rp, sizeof record );
-	write( outfd, mem, count * sizeof record );
+	fwrite( rp, sizeof(union record), 1, outfp );
+	fwrite( mem, sizeof(union record), count, outfp );
 
-	return( 1 );		/* success */
+	col_pr( rp->c.c_name );
+
+	/* Region was just created;  add it to appropriate group too */
+
+	goto top;
 }
 
 /*
@@ -540,8 +543,8 @@ register union record *rp;
 	int reg;
 	int id;
 	int air;
-	int mat;
-	int los;
+	int mat= -1;
+	int los= -2;
 	char buff[11];
 	int	buflen;
 
@@ -549,11 +552,12 @@ register union record *rp;
 	    ((char *) &idcard)[0] == '\n' )
 		return( 0 );
 
+	/* XXX needs to handle blanked out fields */
 	if( version == 5 )  {
-		sscanf( idcard, "%5d%5d%5d%5d%5d",
+		sscanf( &idcard, "%5d%5d%5d%5d%5d",
 			&reg, &id, &air, &mat, &los );
 	} else {
-		sscanf( idcard, "%10d%10d%10d%*44s%3d%3d",
+		sscanf( &idcard, "%10d%10d%10d%*44s%3d%3d",
 			&reg, &id, &air, &mat, &los );
 	}
 printf("reg=%d,id=%d,air=%d,mat=%d,los=%d\n", reg,id,air,mat,los);
@@ -721,7 +725,7 @@ register char *cp;
 	register int	c;
 	register int	count = 80;
 
-	while( (c = getchar()) == '\n' ) /* Skip blank lines.		*/
+	while( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
 		;
 	while( c != EOF && c != '\n' )  {
 		*cp++ = c;
@@ -730,7 +734,7 @@ register char *cp;
 			printf("input buffer (80) overflow\n");
 			break;
 		}
-		c = getchar();
+		c = fgetc(infp);
 	}
 	if( c == EOF )
 		return	EOF;
@@ -744,17 +748,11 @@ register char *cp;
 namecvt( n, cp, c )
 register char *cp;
 register int n;
-{ static char str[16], s[16];
-  extern char name_it[16];		/* argv[3] */
-#if 0
-	str[0] = c;			/* record type letter.*/
-	str[1] = '\0';			/* terminate string.*/
-	f2a( (float)n, s, 12, 0 );	/* get string for 'n'.*/
-	strcat( str, s );		/* append 'n'string.*/
-	strcat( str, name_it );	/* append argv[3].*/
-#else
+{
+	static char str[16];
+	extern char name_it[16];		/* argv[3] */
+
 	sprintf( str, "%c%d%s", c, n, name_it );
-#endif
 	strncpy( cp, str, 16 );		/* truncate str to 16 chars.*/
 }
 
@@ -773,8 +771,9 @@ get_title()
 		exit(10);
 	}
 	/* First 2 chars are units */
-	printf("Units  Title: %s\n",ctitle);
-	return;
+	printf("Units: %2.2s  Title: %s\n",ctitle, ctitle+2);
+
+	mk_id( outfp, ctitle+2 );
 }
 
 

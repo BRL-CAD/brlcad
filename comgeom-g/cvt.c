@@ -29,8 +29,10 @@ char name_it[16];	/* stores argv if it exists and appends it
 long tell();
 
 #define NUMPERCOL 8
+int	nclm = 0;
 
-int outfd;		/* Output file descriptor */
+FILE	*infp;
+FILE	*outfp;		/* Output file descriptor */
 int updfd;		/* Update file descriptor */
 
 int sol_total, sol_work;	/* total num solids, num solids processed */
@@ -45,7 +47,6 @@ char **argv;
 {
 	register int i;
 	register float *op;
-	int nclm = 0;
 
 	if( ! (argc == 3 || argc == 4) )
 	{
@@ -59,9 +60,8 @@ char **argv;
 	if( argc == 4 )		strncpy( name_it, argv[3], 16 );
 	else			strncpy( name_it, "", 16 );
 	
-	close( 0 );		/* Want input as std in */
-	if( open( argv[1], 0 ) != 0 )
-	{
+
+	if( (infp = fopen( argv[1], "r" )) == NULL )  {
 		perror( argv[1] );
 		exit(10);
 	}
@@ -69,9 +69,9 @@ char **argv;
 	 * file descriptors with independent file pointers.
 	 * This will be very important when the summary combinations
 	 * are to be produced.  updfd will be used to read the
-	 * processed file, and outfd will be used to append to it.
+	 * processed file, and outfp will be used to append to it.
 	 */
-	if( (outfd = creat( argv[2], 0644 )) < 0 )  {
+	if( (outfp = fopen( argv[2], "w" )) == NULL )  {
 		perror( argv[2] );
 		exit( 10 );
 	}
@@ -105,53 +105,25 @@ char **argv;
 	sol_work = 0;
 	/* SOLID TABLE */
 	while(1) {
-		for(i=0; i<24; i++)
-			record.s.s_values[i] = 0.0;
-
 		if( (i = getsolid(&record.s)) == 0 ) {
 			printf("\nprocessed %d of %d solids\n\n",sol_work,sol_total);
 			break;		/* done */
 		}
-
-		if( i == 1 ) {
-			/* solid type other than ARS */
-			convert( &record.s );
-			write(outfd, &record.s, sizeof record);
-			printf("%s \t",record.s.s_name);
-			if( ++nclm  >= NUMPERCOL ) {
-				printf("\n");
-				nclm = 0;
-			}
-		}
-		if( i == 2 ) {
-			/* ARS solid */
-			if( ++nclm >= NUMPERCOL ) {
-				printf("\n");
-				nclm = 0;
-			}
-		}
-
-
 	}
 
 	/* Record the region position */
-	regionpos = tell( outfd );
+	fflush(outfp);
+	regionpos = tell( fileno(outfp) );
 
 	/* REGION TABLE */
 
 	printf("processing region table\n");
 	nclm = 0;
-	while(1) {
-		if( getregion( &record.c ) == 0 )
-			break;
-		printf("%s \t",record.c.c_name);
-		if( ++nclm  >= NUMPERCOL ) {
-			printf("\n");
-			nclm = 0;
-		}
-	}
+	if( getregion() < 0 )  exit(10);
+
 
 	/* REGION IDENT TABLE */
+	fflush( outfp );
 	lseek( updfd, regionpos, 0 );
 
 	if( version == 4 )  {
@@ -166,10 +138,11 @@ char **argv;
 			break;
 	}
 
-	endpos = tell(outfd);
+	fflush(outfp);
+	endpos = tell(fileno(outfp));
 
 	/* Grouping time
-	 * outfd is extended sequentially past endpos,
+	 * outfp is extended sequentially past endpos,
 	 * while updfd is used to scan region combinations,
 	 * and update group headers.
 join( &record, "g00", 0, 0 );	join( &record, "g0", 1, 99 );
@@ -196,18 +169,14 @@ printf("producing groups\n");
 
 		n = 100;
 		for( i=1, k=100; i <= 9; ++i, k += n)
-		{	str[1] = '\0';
-			f2a( (float)i, st, 12, 0 );
-			strcat( str, st );
-			strcat( str, name_it );
+		{
+			sprintf( str, "g%d%s", i, name_it );
 			join( &record, str, k, (k + n -1) );
 		}
 		n = 1000;
 		for( ; i <= 18; ++i, k += n)
-		{	str[1] = '\0';
-			f2a( (float)i, st, 12, 0 );
-			strcat( str, st );
-			strcat( str, name_it );
+		{
+			sprintf( str, "g%d%s", i, name_it );
 			join( &record, str, k, (k + n -1) );
 		}
 
@@ -215,6 +184,16 @@ printf("producing groups\n");
 		strcat( str, name_it );
 		join( &record, str, 10000, 32767 );
 
+	}
+}
+
+col_pr( str )
+char	*str;
+{
+	printf("%s \t", str);
+	if( ++nclm  >= NUMPERCOL ) {
+		printf("\n");
+		nclm = 0;
 	}
 }
 
@@ -226,7 +205,8 @@ join( rp, name, low, high )register union record *rp;
 
   	printf("group(%s)  items(%d -> %d)\n",name,low,high);
 
-	joinpos = tell( outfd );
+	fflush( outfp );
+	joinpos = tell( fileno(outfp) );
 	lseek( updfd, regionpos, 0 );
 	movename( name, header.c_name );
 	header.c_id = COMB;	header.c_flags = 0;
@@ -248,9 +228,11 @@ join( rp, name, low, high )register union record *rp;
 			M.m_brname[0] = 0;
 
 			/* If this is first entry, write header */
-			if( count++ == 0 )
-				write( outfd, &header, sizeof record );
-			write( outfd, &M, sizeof record );
+			if( count++ == 0 )  {
+				fwrite( &header, sizeof record, 1, outfp );
+			}
+			fwrite( &M, sizeof record, 1, outfp );
+
 			printf("%s\t", M.m_instname );
 			if( ++numb >= NUMPERCOL ) {
 				printf("\n");
@@ -258,8 +240,8 @@ join( rp, name, low, high )register union record *rp;
 			}
 		}
 
-			/* Seek over the member elements of this
-						(input) combination */
+		/* Seek over the member elements of this
+					(input) combination */
 		lseek(	updfd,
 			rp->c.c_length * ((long) sizeof record),
 			1 );

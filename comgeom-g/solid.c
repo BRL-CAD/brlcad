@@ -24,6 +24,7 @@
 #include "./ged_types.h"
 #include "./3d.h"
 
+extern FILE	*outfp;
 extern int	version;
 
 #define PI	3.14159265358979323846264	/* Approx */
@@ -68,6 +69,11 @@ extern int	version;
 #define O15	ov+(15-1)*3
 #define O16	ov+(16-1)*3
 
+/*
+ *			C O N V E R T
+ *
+ *  This routine is expected to write the records out itself.
+ */
 convert( in )
 struct solids *in;
 {
@@ -123,7 +129,7 @@ struct solids *in;
 			VSUB2( Fi, Oi, O1 );
 		}
 		in->s_type = GENARB8;
-		return;
+		break;
 
 	case ARB8:
 	arb8common:
@@ -131,7 +137,7 @@ struct solids *in;
 			VSUB2( Fi, Fi, F1 );
 		}
 		in->s_type = GENARB8;
-		return;
+		break;
 
 	case ARB7:
 		VMOVE( F8, F5 );
@@ -172,7 +178,7 @@ struct solids *in;
 		VMOVE( F5, F3 );
 		VMOVE( F6, F4 );
 		in->s_type = GENTGC;
-		return;
+		break;
 
 		/*
 		 * For the TRC, if the V vector (F1) is of zero length,
@@ -201,14 +207,14 @@ struct solids *in;
 		VSCALE( F5, F3, r2/r1 );
 		VSCALE( F6, F4, r2/r1 );
 		in->s_type = GENTGC;
-		return;
+		break;
 
 	case TEC:
 		r1 = iv[12];	/* P */
 		VSCALE( F5, F3, (1.0/r1) );
 		VSCALE( F6, F4, (1.0/r1) );
 		in->s_type = GENTGC;
-		return;
+		break;
 
 	case TGC:
 		r1 = iv[12] / MAGNITUDE( F3 );	/* A/|A| * C */
@@ -216,7 +222,7 @@ struct solids *in;
 		VSCALE( F5, F3, r1 );
 		VSCALE( F6, F4, r2 );
 		in->s_type = GENTGC;
-		return;
+		break;
 
 	case SPH:
 		r1 = iv[3];		/* R */
@@ -224,7 +230,7 @@ struct solids *in;
 		VSET( F3, 0, r1, 0 );
 		VSET( F4, 0, 0, r1 );
 		in->s_type = GENELL;
-		return;
+		break;
 
 	case ELL:
 		if( version == 4 )  {
@@ -267,7 +273,7 @@ struct solids *in;
 		m2 = MAGNITUDE( F4 );
 		VSCALE( F4, F4, r1/m2 );
 		in->s_type = GENELL;
-		return;
+		break;
 
 	case TOR:
 		r1=iv[6];	/* Dist from end of V to center of (solid portion) of TORUS */
@@ -308,14 +314,19 @@ struct solids *in;
 		VSCALE( F8, F4, r4/m6 );
  
 		in->s_type=TOR;
-		return;
+		break;
 
 	default:
-		break;
+		/*
+		 * We should never reach here
+		 */
+		printf("convert:  no support for type %d\n", in->s_type );
+		return;
 	}
 
-	/*
-	 * We should never reach here
-	 */
-	printf("convert:  no support for type %d\n", in->s_type );
+	/* Common code to write out the record */
+	/* XXX error checking? */
+	fwrite( (char *)in, sizeof(union record), 1, outfp );
+
+	col_pr( in->s_name );
 }
