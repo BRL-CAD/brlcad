@@ -301,39 +301,46 @@ XEvent *eventPtr;
 	    dm_unlimit(dv_1adc) + M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd, "knob ang1 %d\n",
-		      setting );
+	bu_vls_printf( &cmd, "knob ang1 %d\n", setting );
       }
       break;
     case DIAL1:
       if(mged_variables.rateknobs){
+	if(EDIT_SCALE && mged_variables.edit)
+	  f = edit_rate_scale;
+	else
+	  f = rate_zoom;
+
 	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !rate_zoom )
+	   !f )
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
 	else
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	    dm_unlimit((int)(512.5 * rate_zoom)) + M->axis_data[0] -
-	    knob_values[M->first_axis];
+	    dm_unlimit((int)(512.5 * f)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd , "knob S %f\n",
-		       setting / 512.0 );
+	bu_vls_printf( &cmd, "knob S %f\n", setting / 512.0 );
       }else{
+	if(EDIT_SCALE && mged_variables.edit)
+	  f = edit_absolute_scale;
+	else
+	  f = absolute_zoom;
+
 	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !absolute_zoom )
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	    knob_values[M->first_axis];
+	   !f )
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
 	else
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	    dm_unlimit((int)(512.5 * absolute_zoom)) + M->axis_data[0] -
-	    knob_values[M->first_axis];
+	    dm_unlimit((int)(512.5 * f)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd , "knob aS %f\n",
-		       setting / 512.0 );
+	bu_vls_printf( &cmd, "knob aS %f\n", setting / 512.0 );
       }
       break;
     case DIAL2:
@@ -341,43 +348,51 @@ XEvent *eventPtr;
 	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !dv_2adc )
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	    knob_values[M->first_axis];
-	else
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_2adc) +
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_2adc) + M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd , "knob ang2 %d\n",
-		      setting );
+	bu_vls_printf( &cmd, "knob ang2 %d\n", setting );
       }else {
 	if(mged_variables.rateknobs){
+	  if(EDIT_ROTATE && mged_variables.edit)
+	    f = edit_rate_rotate[Z];
+	  else
+	    f = rate_rotate[Z];
+
 	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_rotate[Z] )
-	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	      knob_values[M->first_axis];
+	     !f )
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * rate_rotate[Z])) +
+	      dm_unlimit((int)(512.5 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob z %f\n",
-			 setting / 512.0 );
+	  bu_vls_printf( &cmd, "knob z %f\n", setting / 512.0 );
 	}else{
+	  if(EDIT_ROTATE && mged_variables.edit)
+	    f = edit_absolute_rotate[Z];
+	  else
+	    f = absolute_rotate[Z];
+
 	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_rotate[Z] )
-	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	      knob_values[M->first_axis];
+	     !f )
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(2.85 * absolute_rotate[Z])) +
+	      dm_unlimit((int)(2.85 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  f = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
-	  bu_vls_printf( &cmd , "knob az %f\n", dm_wrap(f) * 180.0);
+	  bu_vls_printf( &cmd, "knob az %f\n", dm_wrap(f) * 180.0);
 	}
       }
       break;
@@ -386,43 +401,51 @@ XEvent *eventPtr;
 	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !dv_distadc)
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	    knob_values[M->first_axis];
-	else
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_distadc) +
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_distadc) + M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd , "knob distadc %d\n",
-		       setting );
+	bu_vls_printf( &cmd, "knob distadc %d\n", setting );
       }else {
 	if(mged_variables.rateknobs){
+	  if(EDIT_TRAN && mged_variables.edit)
+	    f = edit_rate_tran[Z];
+	  else
+	    f = rate_slew[Z];
+
 	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_slew[Z] )
+	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * rate_slew[Z])) +
+	      dm_unlimit((int)(512.5 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob Z %f\n",
-			 setting / 512.0 );
+	  bu_vls_printf( &cmd, "knob Z %f\n", setting / 512.0 );
 	}else{
+	  if(EDIT_TRAN && mged_variables.edit)
+	    f = edit_absolute_tran[Z];
+	  else
+	    f = absolute_slew[Z];
+
 	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_slew[Z] )
-	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	     !f )
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * absolute_slew[Z])) +
+	      dm_unlimit((int)(512.5 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob aZ %f\n",
-			 setting / 512.0 );
+	  bu_vls_printf( &cmd, "knob aZ %f\n", setting / 512.0 );
 	}
       }
       break;
@@ -431,75 +454,92 @@ XEvent *eventPtr;
 	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !dv_yadc)
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	    knob_values[M->first_axis];
-	else
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_yadc) +
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_yadc) + M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd , "knob yadc %d\n",
-		      setting );
+	bu_vls_printf( &cmd, "knob yadc %d\n", setting );
       }else{
 	if(mged_variables.rateknobs){
+	  if(EDIT_ROTATE && mged_variables.edit)
+	    f = edit_rate_rotate[Y];
+	  else
+	    f = rate_rotate[Y];
+
 	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_rotate[Y] )
+	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * rate_rotate[Y])) +
+	      dm_unlimit((int)(512.5 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob y %f\n",
-			 setting / 512.0 );
+	  bu_vls_printf( &cmd, "knob y %f\n", setting / 512.0 );
 	}else{
+	  if(EDIT_ROTATE && mged_variables.edit)
+	    f = edit_absolute_rotate[Y];
+	  else
+	    f = absolute_rotate[Y];
+
 	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_rotate[Y] )
-	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	      knob_values[M->first_axis];
+	     !f )
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(2.85 * absolute_rotate[Y])) +
+	      dm_unlimit((int)(2.85 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  f = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
-	  bu_vls_printf( &cmd , "knob ay %f\n", dm_wrap(f) * 180.0);
+	  bu_vls_printf( &cmd, "knob ay %f\n", dm_wrap(f) * 180.0);
 	}
       }
       break;
     case DIAL5:
       if(mged_variables.rateknobs){
+	  if(EDIT_TRAN && mged_variables.edit)
+	    f = edit_rate_tran[Y];
+	  else
+	    f = rate_slew[Y];
+
 	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_slew[Y] )
-	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	      knob_values[M->first_axis];
-	  else
-	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * rate_slew[Y])) +
+	     !f )
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
-	  
-	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob Y %f\n",
-			 setting / 512.0 );
-      }else{
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_slew[Y] )
-	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	      knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * absolute_slew[Y])) +
+	      dm_unlimit((int)(512.5 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob aY %f\n",
-			 setting / 512.0 );
+	bu_vls_printf( &cmd, "knob Y %f\n", setting / 512.0 );
+      }else{
+	  if(EDIT_TRAN && mged_variables.edit)
+	    f = edit_absolute_tran[Y];
+	  else
+	    f = absolute_slew[Y];
+
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	     !f )
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] -
+	      knob_values[M->first_axis];
+	  else
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob aY %f\n", setting / 512.0 );
       }
       break;
     case DIAL6:
@@ -507,75 +547,91 @@ XEvent *eventPtr;
 	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !dv_xadc)
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	    knob_values[M->first_axis];
-	else
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_xadc) +
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_xadc) + M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd , "knob xadc %d\n",
-		       setting );
+	bu_vls_printf( &cmd, "knob xadc %d\n", setting );
       }else{
 	if(mged_variables.rateknobs){
+	  if(EDIT_ROTATE && mged_variables.edit)
+	    f = edit_rate_rotate[X];
+	  else
+	    f = rate_rotate[X];
+
 	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_rotate[X] )
-	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	      knob_values[M->first_axis];
+	     !f )
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * rate_rotate[X])) +
+	      dm_unlimit((int)(512.5 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob x %f\n",
-			 setting / 512.0 );
+	  bu_vls_printf( &cmd, "knob x %f\n", setting / 512.0);
 	}else{
+	  if(EDIT_ROTATE && mged_variables.edit)
+	    f = edit_absolute_rotate[X];
+	  else
+	    f = absolute_rotate[X];
+
 	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_rotate[X] )
-	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	      knob_values[M->first_axis];
+	     !f )
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(2.85 * absolute_rotate[X])) + M->axis_data[0] -
-	      knob_values[M->first_axis];
+	      dm_unlimit((int)(2.85 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  f = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
-	  bu_vls_printf( &cmd , "knob ax %f\n", dm_wrap(f) * 180.0);
+	  bu_vls_printf( &cmd, "knob ax %f\n", dm_wrap(f) * 180.0);
 	}
       }
       break;
     case DIAL7:
       if(mged_variables.rateknobs){
+	if(EDIT_TRAN && mged_variables.edit)
+	  f = edit_rate_tran[X];
+	else
+	  f = rate_slew[X];
+
 	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !rate_slew[X] )
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	    knob_values[M->first_axis];
+	   !f )
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
 	else
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	    dm_unlimit((int)(512.5 * rate_slew[X])) +
+	    dm_unlimit((int)(512.5 * f)) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd , "knob X %f\n",
-		       setting / 512.0 );
+	bu_vls_printf( &cmd, "knob X %f\n", setting / 512.0 );
       }else{
+	if(EDIT_TRAN && mged_variables.edit)
+	  f = edit_absolute_tran[X];
+	else
+	  f = absolute_slew[X];
+
 	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !absolute_slew[X] )
-	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
-	    knob_values[M->first_axis];
+	   !f )
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
 	else
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	    dm_unlimit((int)(512.5 * absolute_slew[X])) +
+	    dm_unlimit((int)(512.5 * f)) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd , "knob aX %f\n",
-		       setting / 512.0 );
+	bu_vls_printf( &cmd, "knob aX %f\n", setting / 512.0 );
       }
       break;
     default:
