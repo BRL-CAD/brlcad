@@ -251,7 +251,7 @@ char **argv;
 	    Tcl_AppendResult(interp, "Fixed point is vertex five.\n");
 	  }
 	  /* total # of args under this option */
-	  else if( argc < 8 && (argc >= 5 ? argv[5][0] != 'v' : 1)) { 
+	  else if( argc < 8 && (argc > 5 ? argv[5][0] != 'v' : 1)) { 
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, p_rotfb[argc-3], (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
