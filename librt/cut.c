@@ -725,9 +725,7 @@ int			ncpu;
 		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
 	}
 
-	/* Copy solids into a list for rt_nugrid_cut, and throw infinite
-	   solids into a special box. */
-
+	/* Make a list of all solids into one special boxnode, then refine. */
 	BU_GETUNION( finp, cutter );
 	finp->cut_type = CUT_BOXNODE;
 	VMOVE( finp->bn.bn_min, rtip->mdl_min );
