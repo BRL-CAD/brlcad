@@ -15,7 +15,7 @@
 			 --with-tcl=[[pwd]]/LIBTCL_DIR \
 			 --with-tk=[[pwd]]/LIBTK_DIR
 #define PRODUCTS	libitcl3.0.a& itclsh& libitk3.0.a& itkwish&
-#define	AFTER_MAKE	/**/
+#define	AFTER_MAKE	rm -f libitcl.a ; ln -s libitcl3.0.a libitcl.a
 #else
 /* Shared library case */
 #define ITCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/ --enable-shared --quiet \
@@ -28,7 +28,10 @@
 #define	AFTER_MAKE	/* mv -f libitcl3.0.so libitcl3.0.so''[[LIBVERS]] ; \
 			mv -f libitk3.0.so libitk3.0.so''[[LIBVERS]] ; \
 			sharedliblink.sh libitcl3.0.so''[[LIBVERS]] ; \
-			sharedliblink.sh libitk3.0.so''[[LIBVERS]] */
+			sharedliblink.sh libitk3.0.so''[[LIBVERS]] ; */ \
+			rm -f libitcl.so libitk.so ; \
+			ln -s libitk3.0.so libitk.so ; \
+			ln -s libitcl3.0.so libitcl.so
 #endif
 
 /* Rule to see if cake is running with -s flag */
