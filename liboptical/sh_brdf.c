@@ -100,7 +100,7 @@ struct mfuncs brdf_mfuncs[] = {
  *			B R D F _ S E T U P
  */
 HIDDEN int
-brdf_setup( rp, matparm, dpp, mpf, rtip )
+brdf_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
