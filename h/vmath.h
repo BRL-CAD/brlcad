@@ -483,6 +483,12 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /* Compute dot product of vectors at `a' and `b' */
 #define VDOT(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] + (a)[Z]*(b)[Z] )
 
+/* Subtract two points to make a vector, dot with another vector */
+#define VSUB2DOT(_pt2, _pt, _vec)	( \
+	((_pt2)[X] - (_pt)[X]) * (_vec)[X] + \
+	((_pt2)[Y] - (_pt)[Y]) * (_vec)[Y] + \
+	((_pt2)[Z] - (_pt)[Z]) * (_vec)[Z] )
+
 /* Turn a vector into comma-separated list of elements, for subroutine args */
 #define V3ARGS(a)	(a)[X], (a)[Y], (a)[Z]
 #define V4ARGS(a)	(a)[X], (a)[Y], (a)[Z], (a)[W]
