@@ -101,6 +101,9 @@ Rect            sun_win_rect;
 int             sun_win_fd;
 int             sun_debug = 0;
 
+extern short icon_image[];		/* it's really static, but... */
+DEFINE_ICON_FROM_IMAGE(icon, icon_image);
+
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
@@ -154,6 +157,7 @@ SunPw_open()
 
 	/* Make a frame and a canvas to go in it */
 	frame = window_create(NULL, FRAME,
+			      FRAME_ICON, &icon,
 			      FRAME_LABEL, "MGED Display", 0);
 	/* XXX - "command line" args? pg.51 */
 	canvas = window_create(frame, CANVAS,
@@ -245,11 +249,14 @@ int	color;
 		 * "white" means "foreground" which is the hightest entry.
 		 * Which one is actually black or white depends on whether
 		 * you are in "inverse video" or not.
+		 *
+		 * Note: foreground would have been index CMS_MGEDSIZE-2,
+		 *  but this is the monochrome case so that does't work.
 		 */
 		if( color == DM_BLACK )
-			sun_cmap_color = 0;		 /* background */
+			sun_cmap_color = 0;	/* background */
 		else
-			sun_cmap_color = CMS_MGEDSIZE-2; /* foreground */
+			sun_cmap_color = 1;	/* foreground */
 		return;
 	}
 	switch (color) {
@@ -294,7 +301,7 @@ SunPw_prolog()
 	/* Put the center point up, in foreground */
 	sun_color(DM_WHITE);
 	pw_put(sun_pw, GED_TO_SUNPWx(0), GED_TO_SUNPWy(0),
-		PIX_COLOR(sun_cmap_color));
+		sun_cmap_color);
 }
 
 /*
@@ -485,9 +492,16 @@ int	dashed;
  * use a flag peripheral_input, for input_eater() to tell this module
  * when there had been window input to return.
  *
- * I have the feeling that very short select timeouts for notify_dispatch()
- * polling is more reliable than the notify_do_dispatch()/stop_notify() pair.
- * But this is the way we *should* do it, right? (See pg 266)
+ * I used to use a long select timeout (60 sec) after a notify_do_dispatch()
+ * call (to dispatch events inside of the select) and counted on a
+ * notify_stop() in the input_eater() routine to wake the select up.
+ * [This is the way we *should* do it, right? (See pg 266)]
+ * It appears though that some input events get lost this way.  Perhaps
+ * notify_stop() may be intended more as an abort and thus isn't careful.
+ * The final straw was SIGINT on command input was causing window fd
+ * input that notify_dispatch was never dispatching!  So, I finally
+ * went back to a short timeout select loop and avoided the do_dispatch
+ * and stop business.  It works better this way.
  *
  * Returns:
  *	0 if no command waiting to be read,
@@ -499,7 +513,6 @@ int	noblock;	/* !0 => poll */
 {
 	long            readfds;
 	struct timeval  timeout;
-	int             numfds;
 
 	/*
 	 * Set device interface structure for GED to "rest" state.
@@ -525,15 +538,15 @@ int	noblock;	/* !0 => poll */
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 0;
 	} else {
-		timeout.tv_sec = 60;
-		timeout.tv_usec = 0;
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 200000;
 	}
 	for( ;; ) {
 		readfds = (1 << cmd_fd) | (1 << sun_win_fd);
-		notify_do_dispatch();
-		numfds = select(32, &readfds, (long *)0, (long *)0, &timeout);
-		/*printf("num = %d, val = %d (cmd %d, win %d)\n",
-			numfds, readfds, 1<<cmd_fd, 1<<sun_win_fd );*/
+		/*notify_do_dispatch(); Unsafe!*/
+		readfds = bsdselect(readfds, timeout.tv_sec, timeout.tv_usec);
+		/*printf("readfds = %d (cmd %d, win %d)\n",
+			readfds, 1<<cmd_fd, 1<<sun_win_fd );*/
 		(void) notify_dispatch();
 		if( readfds & (1 << cmd_fd) ) {
 			/*printf("Returning command\n");*/
@@ -702,7 +715,12 @@ caddr_t	*arg;
 	}
 
 	peripheral_input++;
-	notify_stop();		/* wake our select up */
+	/*
+	 * Used to do a notify_stop() here to wake up the
+	 * bsdselect() if blocked, but this seems to be unsafe
+	 * (some input events were lost).  So, we just use a
+	 * short select timeout now and wait for it.
+	 */
 }
 
 sun_key(eventP, button)
@@ -934,3 +952,40 @@ int	dashed;
 	else
 		return ((Pr_texture *) 0);
 }
+
+static short icon_image[] = {
+/* Format_version=1, Width=64, Height=64, Depth=1, Valid_bits_per_item=16
+ */
+	0xFFFF,0xFFFF,0xFFFF,0xFFFF,0x8002,0x0000,0x0000,0x0001,
+	0x8002,0x0000,0x0000,0x0001,0x8002,0x0000,0x0000,0x0001,
+	0x8002,0x000C,0x0000,0x0001,0xFFFE,0x0032,0x0000,0x0001,
+	0x8000,0x006E,0x0000,0x0001,0x8000,0x00BF,0x0000,0x0001,
+	0x8000,0x01E5,0x0000,0x0001,0x8000,0x03C5,0x0000,0x0001,
+	0x8000,0x03C5,0x8000,0x0001,0x8000,0x02C7,0x8000,0x0001,
+	0x8000,0x0385,0x0000,0x0001,0x8000,0x0385,0x0000,0x0001,
+	0x8000,0x078F,0x8000,0x0001,0x8000,0x078E,0xE000,0x0001,
+	0x8000,0x078A,0xC000,0x0001,0x8000,0x039D,0xA0C0,0x0001,
+	0x8000,0x02BE,0x23B8,0x0001,0x8000,0x03FF,0x2C86,0x0001,
+	0x8000,0x02FF,0xEB8E,0x0001,0x8000,0x03E1,0xFCF2,0x0001,
+	0x8000,0x0F8C,0x1FA2,0x0001,0x8000,0x17CC,0x0BFA,0x0001,
+	0x8000,0x7B4C,0x08FF,0x0001,0x8000,0xA520,0x093F,0xE001,
+	0x8003,0x4520,0x0E26,0xFC01,0x8005,0x8520,0x0F2C,0x1F81,
+	0x801A,0x07E0,0x00F0,0x03E1,0x806C,0x08B0,0x0000,0x00E1,
+	0x8090,0x0890,0x0000,0x01C1,0x8360,0x0FE0,0x0000,0x0701,
+	0x8680,0x0000,0x0000,0x1E01,0x87C0,0x0000,0x0000,0x2801,
+	0x8638,0x0000,0x0000,0xF001,0x81C7,0x0000,0x0001,0x4001,
+	0x8038,0xE000,0x0006,0x8001,0x8007,0x1E00,0x000B,0x0001,
+	0x8000,0xE1C0,0x0034,0x0001,0x8000,0x1E38,0x00D8,0x0001,
+	0x8000,0x01C7,0x0120,0x0001,0x8000,0x0038,0xE6C0,0x0001,
+	0x8000,0x0007,0x1900,0x0001,0x8000,0x0000,0xEE00,0x0001,
+	0x8000,0x0000,0x1800,0x0001,0x8000,0x0000,0x0000,0x0001,
+	0x8000,0x0000,0x0000,0x0001,0x8000,0x0000,0x0000,0x0001,
+	0x8000,0x0000,0x0000,0x0001,0x8000,0x0000,0x0000,0x0001,
+	0x8000,0x0000,0x0000,0x0001,0x8000,0x0000,0x0000,0x0001,
+	0x8000,0x0000,0x0000,0x0001,0x8000,0x0000,0x0000,0x0001,
+	0x8000,0x0000,0x0000,0x0001,0x8000,0x0000,0x0000,0x0001,
+	0x8000,0x0000,0x0000,0x0001,0x8000,0x0000,0x0000,0x0001,
+	0x8000,0x0000,0x0000,0x0001,0x8000,0x0000,0x0000,0x0001,
+	0xFFFF,0xFFFF,0xFFFF,0xFFFF,0x8000,0x0000,0x0000,0x0001,
+	0x8000,0x0000,0x0000,0x0001,0xFFFF,0xFFFF,0xFFFF,0xFFFF
+};
