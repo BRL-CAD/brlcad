@@ -7,7 +7,7 @@
 #define CONFIGDEFS	RFBD_CONFIG
 
 #define SRCDIR	remrt
-#define PRODUCTS	remrt rtsrv rtsync rtnode rtmon
+#define PRODUCTS	remrt rtsrv
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -57,17 +57,5 @@ sh_tcl.o:	../rt/sh_tcl.c
 
 rtsrv:	rtsrv.o view.o LIBOPTICAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBFB_DEP OBJS
 	CC LDFLAGS -o rtsrv rtsrv.o view.o OBJS RTSRV_PIECES
-
-/* Real-time ray-tracer */
-
-rtsync:  rtsync.o ihost.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBFB_DEP
-	CC LDFLAGS -o rtsync rtsync.o ihost.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBTK LIBTCL LIBFB LIBFB_LIBES LIBES
-
-/* Uses standard view.o */
-rtnode:  rtnode.o sh_tcl.o RTDIR/view.o LIBOPTICAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBFB_DEP
-	CC LDFLAGS -o rtnode rtnode.o sh_tcl.o RTDIR/view.o RTSRV_PIECES LIBFB LIBFB_LIBES
-
-rtmon:  rtmon.o ihost.o LIBBU_DEP
-	CC LDFLAGS -o rtmon rtmon.o ihost.o LIBBU LIBBU_LIBES LIBES
 
 #include "../Cakefile.rules"
