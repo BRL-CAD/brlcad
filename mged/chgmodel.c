@@ -135,7 +135,7 @@ f_mater()
 	}
 
 	/* Material */
-	(void)printf("Material = %s\nMaterial?  (CR to skip) ", record.c.c_matname);
+	(void)printf("Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
 	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	nlp = strchr( line, '\n' );
@@ -148,7 +148,7 @@ f_mater()
 	}
 
 	/* Parameters */
-	(void)printf("Param = %s\nParameter string? (CR to skip) ", record.c.c_matparm);
+	(void)printf("Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
 	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	nlp = strchr( line, '\n' );
