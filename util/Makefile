@@ -1,9 +1,9 @@
 
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	85/06/06	Gary S. Moss
+#	last edit:	86/02/12	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.15
+#	SCCS ID:	@(#)Makefile	1.16
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -17,7 +17,7 @@ LIBDIR	= /vld/lib
 INCDIR	= /vld/include
 MANDIR	= /usr/5lib/man/local/man1
 MANUALS	= pp-fb.1 fbclear.1 fbgrid.1 rle-fb.1 fb-rle.1 fbcmap.1 fbzoom.1
-BINPERM	= 755
+BINPERM	= 775
 MANPERM	= 664
 CFLAGS	= -I${INCDIR} -O
 LDFLAGS = -n
@@ -64,13 +64,21 @@ compare:	all
 	done
 
 install:	all
-	${INS} ${PRODUCTS} fbzoom ${BINDIR}
 	for i in ${PRODUCTS} fbzoom ; \
-	do	chmod ${BINPERM} ${BINDIR}/$$i ; \
+	do	@if cmp -s ${BINDIR}/$$i $$i; \
+		then	echo $$i unchanged; \
+		else	${INS} $$i ${BINDIR}; \
+			-chmod ${BINPERM} ${BINDIR}/$$i ; \
+			echo $$i installed; \
+		fi
 	done
 	for i in ${MANUALS} ; \
-	do	${INS} $$i ${MANDIR}/$$i ; \
-		chmod ${MANPERM} ${MANDIR}/$$i ; \
+	do	@if cmp -s ${MANDIR}/$$i $$i; \
+		then	echo $$i unchanged; \
+		else	${INS} $$i ${MANDIR}; \
+			-chmod ${MANPERM} ${MANDIR}/$$i ; \
+			echo $$i installed; \
+		fi
 	done
 
 clean:
