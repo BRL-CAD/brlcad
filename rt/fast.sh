@@ -29,7 +29,6 @@ cake \
  sh_stack.o \
  sh_stxt.o \
  sh_gauss.o \
- sh_paint.o \
  sh_noise.o \
  sh_text.o &
 
