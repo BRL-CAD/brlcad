@@ -47,7 +47,7 @@ extern int		ndrawn;
 
 #define GET_SOLID(p)    {  \
 	if( ((p)=FreeSolid) == SOLID_NULL )  { \
-		p = (struct solid *)rt_calloc(1,sizeof(struct solid),"struct solid"); \
+		p = (struct solid *)bu_calloc(1,sizeof(struct solid),"struct solid"); \
 	} else { \
 		FreeSolid = (p)->s_forw; \
 	} \
