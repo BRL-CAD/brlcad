@@ -4,6 +4,13 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  86/09/23  22:26:37  mike
+ * Externs now declared properly.
+ * I/O fixes for SysV
+ * 
+ * Revision 2.0  84/12/26  16:46:34  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  *
  * Revision 1.3  84/03/20  22:29:18  dpk
  * Improved file handling, fixed "Free line in list" loop
@@ -41,6 +48,27 @@ int	nlines = 0;
 char	iobuff[LBSIZE],
 	*nextip;
 int	ninbuf;
+
+/**** Shared with jove_screen.c ****/
+char	ibuff1[BSIZ],	/* Holds block `iblock1' of the tmp file */
+	ibuff2[BSIZ],	/*   "     "   `iblock2' of the tmp file */
+	obuff[BSIZ];	/* Holds the last block of the tmp file */
+int	ichng1,		/* ibuff1 should be written to its
+			 * blocks when it is used to read
+			 * another block.
+			 */
+	ichng2,		/* "" */
+	iblock1,	/* Block number of ibuff1 */
+	iblock2,	/*		   ibuff2 */
+	oblock,		/* 		   obuff  */
+	nleft,		/* Number of good characters left in current block */
+	hitin2,		/* Last read was in ibuff2 */
+	tmpfd;
+disk_line	tline;		/* Pointer to end of tmp file */
+
+char	*tfname;
+
+/***********************************/
 
 IOclose()
 {
@@ -445,8 +473,9 @@ BUFFER	*bp;
 	bp->b_dot->l_dline = putline("") | DIRTY;
 	bp->b_char = 0;
 	AllMarkSet(bp, bp->b_dot, 0);
-	if (bp == curbuf)
+	if (bp == curbuf)  {
 		getDOT();
+	}
 	initwinds(bp);
 }
 
@@ -661,7 +690,7 @@ int	(*iofcn)();
 		error("IO error");
 }
 
-#ifndef VMUNIX
+#ifdef SYS5
 /* block copy from from to to, count bytes */
 bcopy(from, to, count)
 	register char *from, *to;
@@ -670,7 +699,7 @@ bcopy(from, to, count)
 	while ((--count) >= 0)
 		*to++ = *from++;
 }
-#endif VMUNIX
+#endif
 
 /*
  * Save the current contents of linebuf, if it has changed.

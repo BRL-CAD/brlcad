@@ -4,6 +4,13 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.7  86/09/23  22:26:46  mike
+ * Externs now declared properly.
+ * I/O fixes for SysV
+ * 
+ * Revision 2.6  86/04/11  09:09:51  gwyn
+ * last mod was incomplete
+ * 
  * Revision 2.5  86/04/06  06:28:48  gwyn
  * Fixed endless loop on joverc under System V.
  * 
@@ -48,6 +55,7 @@ static char RCSid[] = "@(#)$Header$";
 #include <sgtty.h>
 #else
 #include <termio.h>
+#include <fcntl.h>
 #endif SYS5
 #include <errno.h>
 
@@ -59,7 +67,7 @@ extern int	errno;
 extern char	*sprint();
 
 #ifndef	BRLUNIX			/* this is not found on a BRL pdp-11.	*/
-#include <sys/ioctl.h>
+/***** #include <sys/ioctl.h> *****/
 #endif BRLUNIX
 
 #ifdef TIOCSLTC
@@ -75,6 +83,43 @@ int	errormsg;
 int	iniargc;
 char	**iniargv;
 char	*StdShell;
+
+/***** Global storage declarations *****/
+int	BufSize;
+int	origflags[NFLAGS],
+	globflags[NFLAGS];
+char	genbuf[LBSIZE];		/* Scatch pad */
+int	peekc,
+	io,		/* File descriptor for reading and writing files */
+	exp,
+	exp_p,
+	this_cmd,
+	last_cmd,
+	RecDepth;
+jmp_buf	mainjmp;
+WINDOW	*fwind,		/* First window in list */
+	*curwind;	/* Current window */
+BUFFER	*world,			/* First buffer */
+	*curbuf;		/* Pointer into world for current buffer */
+int
+	Crashing;		/* We are in the middle of crashing */
+
+int
+	Input,		/* What the current input is */
+	InputPending,
+ 	killptr,	/* Index into killbuf */
+	CanScroll,	/* Can this terminal scroll? */
+	Asking;		/* Are we on read a string from the terminal? */
+char	**argvp;
+char	linebuf[LBSIZE];
+LINE	*killbuf[NUMKILLS];	/* Array of pointers to killed stuff */
+int	(*Getchar)();
+struct function	*mainmap[0200],
+		*pref1map[0200],
+		*pref2map[0200],
+		*LastFunc;
+int	LastKeyStruck;
+/***************************************/
 
 finish(code)
 {
@@ -133,6 +178,7 @@ register int	c;
 
 getchar()
 {
+	char buf[128];
 	if (nchars <= 0) {
 #ifdef JOBCONTROL
 		nchars = read(Input, smbuf, sizeof smbuf);
@@ -143,6 +189,10 @@ getchar()
 		 */
 		do {
 			nchars = read(Input, smbuf, sizeof smbuf);
+#ifdef never
+sprintf(buf,"getchar() nchars=%d\n", nchars);
+write(2,buf,strlen(buf));
+#endif
 #ifdef SYS5
 		} while ((nchars == 0 && Input == 0)	/* DAG -- added Input test */
 			 || (nchars < 0 && errno == EINTR));
@@ -186,11 +236,18 @@ charp()
 			c = 0;
 #else
 #ifdef SYS5
-		int c;
+		int c, flags;
 
+		/* Since VMIN=1, we need to be able to poll for input
+		 * here.  Yes, the 4-syscalls to do it are costly,
+		 * but not as costly as the infinite loop when VMIN=0!
+		 */
+		flags = fcntl( Input, F_GETFL, 0);
+		(void)fcntl( Input, F_SETFL, flags|O_NDELAY );
 		c = read(Input, smbuf, sizeof smbuf);
 		if (c > 0)
 			nchars = c;
+		(void)fcntl( Input, F_SETFL, flags );
 #else SYS5
 		int c;
 
@@ -325,7 +382,8 @@ ttsetup() {
 	newtty.c_iflag &= ~(INLCR|ICRNL);
 	newtty.c_lflag &= ~(ISIG|ICANON|ECHO);
 	newtty.c_oflag &= ~(OLCUC|ONLCR|OCRNL|ONOCR|ONLRET|OFILL);	/* DAG -- bug fix (was missing) */
-	newtty.c_cc[VMIN] = 0;
+	/* VMIN = 0 causes us to loop in getchar() */
+	newtty.c_cc[VMIN] = 1;
 	newtty.c_cc[VTIME] = 0;
 #endif SYS5
 #else
@@ -460,11 +518,13 @@ emalloc(size)
 {
 	register char	*ptr;
 
-	if (ptr = malloc((unsigned) size))
+	if (ptr = malloc((unsigned) size))  {
 		return ptr;
+	}
 	GCchunks();
-	if (ptr = malloc((unsigned) size))
+	if (ptr = malloc((unsigned) size))  {
 		return ptr;
+	}
 	error("out of memory");
 	/* NOTREACHED */
 }
@@ -485,8 +545,6 @@ register int	c;
 	ExecFunc(fp, 0);
 }
 
-int	LastKeyStruck;
-
 getch()
 {
 	register int	c;
@@ -495,8 +553,9 @@ getch()
 		c = MacGetc();
 	else {
 		redisplay();
-		if ((c = getchar()) == EOF)
+		if ((c = getchar()) == EOF)  {
 			finish(SIGHUP);
+		}
 		c &= 0177;
 		if (KeyMacro.Flags & DEFINE)
 			MacPutc(c);
@@ -642,7 +701,7 @@ DoKeys(first)
 
 	bcopy((char *) mainjmp, (char *) savejmp, sizeof savejmp);
 
-	switch (setjmp(mainjmp)) {
+	switch( setjmp(mainjmp) ) {
 	case 0:
 		if (first)
 			parse(iniargc, iniargv);
@@ -686,7 +745,6 @@ cont:
 	}
 }
 
-int	Crashing = 0;
 
 main(argc, argv)
 char	*argv[];
@@ -709,7 +767,7 @@ char	*argv[];
 	RecDepth = 0;		/* Top level */
 	Getchar = getch;
 
-	if (setjmp(mainjmp)) {
+	if( setjmp(mainjmp) )  {
 		printf("Pre-error: \"%s\"; tell system support\n", mesgbuf);
 		finish(0);
 	}

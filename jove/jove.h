@@ -4,6 +4,13 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  86/09/23  22:26:10  mike
+ * Externs now declared properly.
+ * I/O fixes for SysV
+ * 
+ * Revision 2.0  84/12/26  16:49:52  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:10:14  dpk
  * Added distinctive RCS header
  * 
@@ -82,7 +89,7 @@ typedef	short	disk_line;
 
 #define DoTimes(f, n)	exp_p = 1, exp = n, f()
 
-int	BufSize;
+extern int	BufSize;
 extern int	CheckTime,
 		errormsg;
 
@@ -130,7 +137,7 @@ extern int	CheckTime,
 #define AUTOIND		6	/* Indent same as previous line after return */
 #define NFLAGS		7	/* DON'T FORGET THIS! */
 
-int	origflags[NFLAGS],
+extern int	origflags[NFLAGS],
 	globflags[NFLAGS];
 
 #define FIRSTCALL	0
@@ -141,8 +148,8 @@ int	origflags[NFLAGS],
 extern	char	*Mainbuf;
 extern	int	RingBell;
 
-char	genbuf[LBSIZE];		/* Scatch pad */
-int	peekc,
+extern char	genbuf[LBSIZE];		/* Scatch pad */
+extern int	peekc,
 	io,		/* File descriptor for reading and writing files */
 	exp,
 	exp_p,
@@ -153,7 +160,7 @@ int	peekc,
 #define	READ	0
 #define	WRITE	1
 
-jmp_buf	mainjmp;
+extern jmp_buf	mainjmp;
 
 typedef struct window	WINDOW;
 typedef struct position	BUFLOC;
@@ -195,7 +202,7 @@ struct window {
 		w_flags;
 };
 
-WINDOW	*fwind,		/* First window in list */
+extern WINDOW	*fwind,		/* First window in list */
 	*curwind;	/* Current window */
 
 struct position {
@@ -233,7 +240,7 @@ struct buffer {
 	BUFFER	*b_next;		/* Next buffer in chain */
 };
 
-BUFFER	*world,			/* First buffer */
+extern BUFFER	*world,			/* First buffer */
 	*curbuf;		/* Pointer into world for current buffer */
 
 #define NUMKILLS	10	/* Number of kills saved in the kill ring */
@@ -269,21 +276,21 @@ extern int
 	FastPrompt,		/* Have C-X and M- prompt immediatly */
 	EndWNewline;		/* End files with a blank line */
 
-int	InputPending,	/* Non-zero if there is input waiting to
+extern int	InputPending,	/* Non-zero if there is input waiting to
 			   be processed. */
 	Input,		/* What the current input is */
  	killptr,	/* Index into killbuf */
 	CanScroll,	/* Can this terminal scroll? */
 	Asking;		/* Are we on read a string from the terminal? */
 
-char	**argvp;
+extern char	**argvp;
 
 #define curline		curbuf->b_dot
 #define curchar		curbuf->b_char
 #define curmark		curbuf->b_markring[curbuf->b_themark]
 
-char	linebuf[LBSIZE];
-LINE	*killbuf[NUMKILLS];	/* Array of pointers to killed stuff */
+extern char	linebuf[LBSIZE];
+extern LINE	*killbuf[NUMKILLS];	/* Array of pointers to killed stuff */
 
 extern char	mesgbuf[];
 
@@ -312,9 +319,9 @@ struct function {
 	char	f_type;
 };
 
-int	(*Getchar)();
+extern int	(*Getchar)();
 
-struct function	*mainmap[0200],
+extern struct function	*mainmap[0200],
 		*pref1map[0200],
 		*pref2map[0200],
 		*LastFunc;

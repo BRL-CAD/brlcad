@@ -4,6 +4,13 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  86/09/23  22:26:34  mike
+ * Externs now declared properly.
+ * I/O fixes for SysV
+ * 
+ * Revision 2.0  84/12/26  16:50:00  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:10:22  dpk
  * Added distinctive RCS header
  * 
@@ -45,10 +52,10 @@
 #endif VMUNIX
 
 
-char	ibuff1[BSIZ],	/* Holds block `iblock1' of the tmp file */
+extern char	ibuff1[BSIZ],	/* Holds block `iblock1' of the tmp file */
 	ibuff2[BSIZ],	/*   "     "   `iblock2' of the tmp file */
 	obuff[BSIZ];	/* Holds the last block of the tmp file */
-int	ichng1,		/* ibuff1 should be written to its
+extern int	ichng1,		/* ibuff1 should be written to its
 			 * blocks when it is used to read
 			 * another block.
 			 */
@@ -59,7 +66,7 @@ int	ichng1,		/* ibuff1 should be written to its
 	nleft,		/* Number of good characters left in current block */
 	hitin2,		/* Last read was in ibuff2 */
 	tmpfd;
-disk_line	tline;		/* Pointer to end of tmp file */
+extern disk_line	tline;		/* Pointer to end of tmp file */
 
-char	*tfname;
+extern char	*tfname;
 
