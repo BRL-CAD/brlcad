@@ -25,8 +25,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"
 #include "nmg.h"
+#include "raytrace.h"
+#include "plot3.h"
 
 /* Move to vmath.h */
 #define VJOIN3(a,b,c,d,e,f,g,h)	\
