@@ -361,6 +361,35 @@ CONST struct rt_tabdata	*in2;
 }
 
 /*
+ *			R T _ T A B D A T A _ M U L _ A R E A 2
+ *
+ *  Following interpretation #2,
+ *  return the area under the whole curve.
+ *  The curve value is found by multiplying corresponding entries from
+ *  in1 and in2.
+ */
+double
+rt_tabdata_mul_area2( in1, in2 )
+CONST struct rt_tabdata	*in1;
+CONST struct rt_tabdata	*in2;
+{
+	CONST struct rt_table	*tabp;
+	FAST fastf_t		area;
+	fastf_t			width;
+	register int		j;
+
+	RT_CK_TABDATA(in1);
+	RT_CK_TABDATA(in2);
+
+	area = 0;
+	for( j = in1->ny-1; j >= 0; j-- )  {
+		width = tabp->x[j+1] - tabp->x[j];
+		area += in1->y[j] * in2->y[j] * width;
+	}
+	return area;
+}
+
+/*
  *			R T _ T A B L E _ L I N _ I N T E R P
  *
  *  Return the value of the curve at independent parameter value 'wl'.

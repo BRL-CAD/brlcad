@@ -123,6 +123,8 @@ RT_EXTERN( double		rt_tabdata_area1, (CONST struct rt_tabdata *in));
 RT_EXTERN( double		rt_tabdata_area2, (CONST struct rt_tabdata *in));
 RT_EXTERN( double		rt_tabdata_mul_area1, (CONST struct rt_tabdata *in1,
 					CONST struct rt_tabdata	*in2));
+RT_EXTERN( double		rt_tabdata_mul_area2, (CONST struct rt_tabdata *in1,
+					CONST struct rt_tabdata	*in2));
 RT_EXTERN( fastf_t		rt_table_lin_interp, (CONST struct rt_tabdata *samp,
 					double wl));
 RT_EXTERN( struct rt_tabdata	*rt_tabdata_resample, (
