@@ -880,7 +880,6 @@ vo_lookat_tcl(clientData, interp, argc, argv)
 	point_t new_center;
 	vect_t dir;
 	fastf_t new_az, new_el;
-	int status;
 	struct bu_vls vls;
 
 	if (argc != 3) {
@@ -914,7 +913,7 @@ vo_lookat_tcl(clientData, interp, argc, argv)
 
 	vo_update(vop);
 
-	return status;
+	return TCL_OK;
 }
 
 /*

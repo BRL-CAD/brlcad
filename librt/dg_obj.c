@@ -371,7 +371,6 @@ dgo_draw(dgop, interp, argc, argv, kind)
 
 	dgo_drawtrees(argc, argv, kind);
 	dgo_color_soltab(&dgop->dgo_headSolid);
-
 }
 
 /*
@@ -904,6 +903,8 @@ dgo_blast_tcl(clientData, interp, argc, argv)
 
 	/* Now, draw the new object(s). */
 	dgo_draw(dgop, interp, argc, argv, 1);
+
+	return TCL_OK;
 }
 
 /*
