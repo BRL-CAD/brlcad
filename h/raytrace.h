@@ -1820,38 +1820,44 @@ RT_EXTERN(void rt_vlist_import, (struct rt_list *hp, struct rt_vls *namevls,
 #if defined(NMG_H)
 
 /* From file nmg_mk.c */
-RT_EXTERN(struct model		*nmg_find_model, (CONST long *magic_p) );
+/*	MAKE routines */
 RT_EXTERN(struct model		*nmg_mm, () );
 RT_EXTERN(struct model		*nmg_mmr, () );
 RT_EXTERN(struct nmgregion	*nmg_mrsv, (struct model *m) );
-RT_EXTERN(struct shell 	*nmg_msv, (struct nmgregion *r_p) );
+RT_EXTERN(struct shell 		*nmg_msv, (struct nmgregion *r_p) );
+RT_EXTERN(struct faceuse	*nmg_mf, (struct loopuse *lu1) );
+RT_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, int orientation) );
 RT_EXTERN(struct vertexuse	*nmg_mvu, (struct vertex *v, long *upptr) );
 RT_EXTERN(struct vertexuse	*nmg_mvvu, (long *upptr) );
 RT_EXTERN(struct edgeuse	*nmg_me, (struct vertex *v1, struct vertex *v2, struct shell *s) );
 RT_EXTERN(struct edgeuse	*nmg_meonvu, (struct vertexuse *vu) );
 RT_EXTERN(struct loopuse	*nmg_ml, (struct shell *s) );
-RT_EXTERN(void			nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
+/*	KILL routines */
 RT_EXTERN(void			nmg_kvu, (struct vertexuse *vu) );
-RT_EXTERN(void			nmg_kfu, (struct faceuse *fu1) );
-RT_EXTERN(void			nmg_klu, (struct loopuse *lu1) );
-RT_EXTERN(struct faceuse	*nmg_mf, (struct loopuse *lu1) );
+RT_EXTERN(int			nmg_kfu, (struct faceuse *fu1) );
+RT_EXTERN(int			nmg_klu, (struct loopuse *lu1) );
 RT_EXTERN(int			nmg_keu, (struct edgeuse *eu) );
-RT_EXTERN(void			nmg_ks, (struct shell *s) );
-RT_EXTERN(void			nmg_kr, (struct nmgregion *r) );
+RT_EXTERN(int			nmg_ks, (struct shell *s) );
+RT_EXTERN(int			nmg_kr, (struct nmgregion *r) );
 RT_EXTERN(void			nmg_km, (struct model *m) );
-RT_EXTERN(void			nmg_vertex_gv, (struct vertex *v, pointp_t pt) );
+/*	Geometry and Attribute routines */
+RT_EXTERN(void			nmg_vertex_gv, (struct vertex *v, CONST point_t pt) );
 RT_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
+RT_EXTERN(void			nmg_edge_g, (struct edge *e) );
+RT_EXTERN(void			nmg_use_edge_g, (struct edge *e, struct edge_g *eg) );
 RT_EXTERN(void			nmg_loop_g, (struct loop *l) );
 RT_EXTERN(void			nmg_face_g, (struct faceuse *fu, plane_t p) );
 RT_EXTERN(void			nmg_face_bb, (struct face *f) );
 RT_EXTERN(void			nmg_shell_a, (struct shell *s) );
 RT_EXTERN(void			nmg_region_a, (struct nmgregion *r) );
-RT_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, int orientation) );
+/*	DEMOTE routines */
 RT_EXTERN(int			nmg_demote_lu, (struct loopuse *lu) );
+RT_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
+/*	MODIFY routines */
+RT_EXTERN(void			nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
+RT_EXTERN(void			nmg_moveeu, (struct edgeuse *eudst, struct edgeuse *eusrc) );
 RT_EXTERN(void			nmg_ensure_vertex, (struct vertex *v,
 				struct shell *s) );
-RT_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
-RT_EXTERN(void			nmg_moveeu, (struct edgeuse *eudst, struct edgeuse *eusrc) );
 RT_EXTERN(void			nmg_unglueedge, (struct edgeuse *eu) );
 RT_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
 
@@ -1904,6 +1910,7 @@ RT_EXTERN(void			nmg_mv_vu_between_shells, (struct shell *dest,
 				struct shell *src, struct vertexuse *vu) );
 
 /* From nmg_info.c */
+RT_EXTERN(struct model		*nmg_find_model, (CONST long *magic_p) );
 RT_EXTERN(struct edgeuse	*nmg_findeu, (struct vertex *v1, struct vertex *v2,
 				struct shell *s, struct edgeuse *eup,
 				int dangling_only) );
