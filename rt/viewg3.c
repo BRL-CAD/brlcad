@@ -327,7 +327,7 @@ register struct partition *PartHeadp;
 	}
 
 	/* This code is for diagnostics.
-	 * fprintf(stderr, "dcorrection=%g\n", dcorrection);
+	 * rt_log("dcorrection=%g\n", dcorrection);
 	 */
 
 	/* dfirst and dlast have been made negative to account for GIFT looking
@@ -400,7 +400,7 @@ register struct partition *PartHeadp;
 		register struct partition	*nextpp = pp->pt_forw;
 
 		if( (region_id = pp->pt_regionp->reg_regionid) <= 0 )  {
-			rt_log("air region found when solid region expected, using id=111\n");
+			rt_log("air region '%s' found when solid region expected, using id=111\n", pp->pt_regionp->reg_name);
 			region_id = 111;
 		}
 		comp_thickness = pp->pt_outhit->hit_dist -
@@ -481,6 +481,9 @@ register struct partition *PartHeadp;
 			rt_log("dot=%g, acos(dot)=%g\n",
 				VDOT( ap->a_ray.r_dir, normal ),
 				acos( VDOT( ap->a_ray.r_dir, normal ) ) );
+			/* Print the defective one */
+			rt_pr_pt( ap->a_rt_i, pp );
+			/* Print the whole ray's partition list */
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
 
@@ -614,7 +617,8 @@ void view_setup() {}
 void view_cleanup() {}
 
 
-/*		P A R T _ C O M P A C T E R
+/*
+ *			P A R T _ C O M P A C T
  *
  * This routine takes at partition-head pointer, an application
  * structure pointer,  and a tolerance.  It goes through the partition
@@ -650,29 +654,34 @@ top:		nextpp = pp->pt_forw;
 		gap = nextpp->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
 
 		/* The following line is a diagnostic that is worth reusing:
-		 * fprintf(stderr, "gap=%g \n", gap);
+		 * rt_log("gap=%e\n", gap);
 		 */
 
 		if(gap > tolerance)  {
 			continue;
 		}
-		if(pp->pt_regionp->reg_regionid == nextpp->pt_regionp->reg_regionid)  {
-			/* librt problem */
-			rt_log("WARNING: part_comp: region_id's are identical %d\n",
-				pp->pt_regionp->reg_regionid);
+		if(pp->pt_regionp == nextpp->pt_regionp)  {
+			/* If same region, then is a librt problem */
+			rt_log("WARNING: part_comp: region_id's are identical %d\n last=%s\n next=%s\n",
+				pp->pt_regionp->reg_regionid,
+				pp->pt_regionp->reg_name,
+				nextpp->pt_regionp->reg_name );
 		}
 
 		/* Eliminate the gap by collapsing the two partitions
 		 * into one.
 		 */
-		fprintf(stderr, "part_comp: collapsing gap of %gmm between id=%d and id=%d\n",
+		rt_log("part_comp: collapsing gap of %e mm between id=%d and id=%d\n",
 			gap, pp->pt_regionp->reg_regionid, 
 			nextpp->pt_regionp->reg_regionid);
-		pp->pt_outhit->hit_dist = nextpp->pt_outhit->hit_dist;
+		pp->pt_outseg = nextpp->pt_outseg;
+		pp->pt_outhit = nextpp->pt_outhit;
 		pp->pt_outflip = nextpp->pt_outflip;
-		
 
-		/* Now dequeue and free the nextpp */
+		/*
+		 *  Dequeue and free the unwanted partition structure.
+		 *  Referenced segments, etc, will be freed by rt_shootray().
+		 */
 		DEQUEUE_PT(nextpp);
 		FREE_PT(nextpp, ap->a_resource);
 
