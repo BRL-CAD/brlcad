@@ -154,7 +154,7 @@ matp_t mat;
 		rt_db_free_internal( &intern );
 		return( eptr );
 	}
-
+#if 0
 	if( id == ID_BOT )
 	{
 		struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
@@ -171,7 +171,7 @@ matp_t mat;
 			bot->mode = RT_BOT_SOLID;
 		}
 	}
-
+#endif
 	if( id == ID_HALF )
 	{
 		eptr->l.m = NULL;
