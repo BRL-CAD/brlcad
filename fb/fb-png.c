@@ -3,8 +3,9 @@
  *  
  *  Program to take a frame buffer image and write a PNG (Portable Network Graphics) format file.
  *  
- *  Author -
+ *  Authors -
  *	John R. Anderson
+ *	Michael John Muuss
  *  
  *  Source -
  *	The U. S. Army Research Laboratory
@@ -43,6 +44,7 @@ FILE	*outfp;
 
 static int	crunch = 0;		/* Color map crunch? */
 static int	inverse = 0;		/* Draw upside-down */
+static int	pixbytes = 3;		/* Default is 3 bytes/pixel */
 int	screen_height;			/* input height */
 int	screen_width;			/* input width */
 
@@ -51,7 +53,7 @@ double	out_gamma = 1.0;		/* Gamma the image was created at */
 extern void	cmap_crunch();
 
 char usage[] = "\
-Usage: fb-png [-h -i -c] [-F framebuffer] [-g gamma]\n\
+Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 	[-s squaresize] [-w width] [-n height] [file.png]\n";
 
 get_args( argc, argv )
@@ -59,7 +61,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "chiF:s:w:n:g:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "chiF:s:w:n:g:#:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			crunch = 1;
@@ -86,6 +88,11 @@ register char **argv;
 			break;
 		case 'g':
 			out_gamma = atof(optarg);
+			break;
+		case '#':
+			pixbytes = atoi(optarg);
+			if( pixbytes != 1 && pixbytes != 3 )
+				bu_bomb("fb-png: Only able to handle 1 and 3 byte pixels\n");
 			break;
 
 		default:		/* '?' */
@@ -165,9 +172,12 @@ char **argv;
 	png_init_io( png_p, outfp );
 	png_set_filter( png_p, 0, PNG_FILTER_NONE );
 	png_set_compression_level( png_p, Z_BEST_COMPRESSION );
-	png_set_IHDR( png_p, info_p, screen_width, screen_height, 8,
-		PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-		PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
+	png_set_IHDR( png_p, info_p,
+		screen_width, screen_height, 8,
+		pixbytes == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_GRAY,
+		PNG_INTERLACE_NONE,
+		PNG_COMPRESSION_TYPE_DEFAULT,
+		PNG_FILTER_TYPE_DEFAULT );
 
 	png_set_gAMA( png_p, info_p, out_gamma );
 
@@ -175,10 +185,17 @@ char **argv;
 
 	if( inverse )
 	{
-		/*  Regular -- read bottom to top */
+		/*  Read bottom to top */
 		for( y=0; y < screen_height; y++ )
 		{
-			got = fb_read( fbp, 0, y, scanline, screen_width );
+			if( pixbytes == 3 )
+				got = fb_read( fbp, 0, y,
+					scanline, screen_width );
+			else
+				got = fb_bwreadrect( fbp, 0, y,
+					screen_width, 1,
+					scanline );
+
 			if( got != screen_width )  {
 				fprintf(stderr,"fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
 					y, got, screen_width);
@@ -191,10 +208,17 @@ char **argv;
 	}
 	else
 	{
-		/*  Inverse -- read top to bottom */
+		/*  Read top to bottom */
 		for( y = screen_height-1; y >= 0; y-- )
 		{
-			got = fb_read( fbp, 0, y, scanline, screen_width );
+			if( pixbytes == 3 )
+				got = fb_read( fbp, 0, y,
+					scanline, screen_width );
+			else
+				got = fb_bwreadrect( fbp, 0, y,
+					screen_width, 1,
+					scanline );
+
 			if( got != screen_width )  {
 				fprintf(stderr,"fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
 					y, got, screen_width);
