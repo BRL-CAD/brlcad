@@ -79,6 +79,8 @@ char	*dp;
 		(struct light_specific *)dp;
 	register fastf_t f;
 
+	RT_CK_LIGHT(lp);
+
 	/* Provide cosine/2 shading, to make light look round */
 	if( (f = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )*0.5) < 0 )
 		f = 0;
@@ -230,7 +232,7 @@ char *cp;
 	register struct light_specific *light =
 		(struct light_specific *)cp;
 
-	if( RT_LIST_MAGIC_WRONG( &(light->l), LIGHT_MAGIC ) )  rt_bomb("light_free magic");
+	RT_CK_LIGHT(light);
 	RT_LIST_DEQUEUE( &(light->l) );
 	if( light->lt_name )  {
 		rt_free( light->lt_name, "light name" );
@@ -466,7 +468,7 @@ struct partition *PartHeadp;
 
 	/* Check to see if we hit the light source */
 	lp = (struct light_specific *)(ap->a_user);
-	if( RT_LIST_MAGIC_WRONG( &(lp->l), LIGHT_MAGIC ) )  rt_bomb("light_hit magic");
+	RT_CK_LIGHT(lp);
 	if( lp->lt_rp == regp )  {
 		VSETALL( ap->a_color, 1 );
 		light_visible = 1;
@@ -555,7 +557,7 @@ struct partition *PartHeadp;
 {
 	struct light_specific *lp = (struct light_specific *)(ap->a_user);
 
-	if( RT_LIST_MAGIC_WRONG( &(lp->l), LIGHT_MAGIC ) )  rt_bomb("light_miss magic");
+	RT_CK_LIGHT(lp);
 	if( lp->lt_invisible || lp->lt_infinite ) {
 		VSETALL( ap->a_color, 1 );
 		return(1);		/* light_visible = 1 */
@@ -584,6 +586,7 @@ light_cleanup()
 		return;
 	}
 	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		RT_CK_LIGHT(lp);
 		if( lp->lt_rp != REGION_NULL && lp->lt_invisible == 0 )  {
 			/* Will be cleaned up by mlib_free() */
 			continue;
