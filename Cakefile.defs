@@ -163,10 +163,16 @@ set -S2 "/bin/sh"
 /*		Standard Alliant C Compiler */
 #		define	CC_OPTS	-ce
 #	else
-/*		FX/C, -l option puts listing on stdout. */
-#		define	CC	/usr/local/fxc2.0.16/fxc
-#		define	CC_OPTS	-ce -DVECTORIZE
-#		define	OPTIMIZER -Ogiv
+#		if 1
+/*			FX/C, -l option puts listing on stdout. */
+#			define	CC	/usr/local/fxc2.0.16/fxc
+#			define	CC_OPTS	-ce -DVECTORIZE
+#			define	OPTIMIZER -Ogiv
+#		else
+/*			GNU C */
+#			define	CC	gcc
+#			define	CC_OPTS	-traditional
+#		endif
 #	endif
 #	define	LD_OPTS	CC_OPTS
 #	define	FC	/usr/alliant/fortran
@@ -182,17 +188,28 @@ set -S2 "/bin/sh"
 #	define	MTYPE	sel
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	define	LD_OPTS	-m 8
 #	if 1
+/*		Normal configuration, with optimization */
+#		define	LD_OPTS	-m 8
+#	else
+/*		DBX configuration, -g, no optimization */
+#		define  OPTIMIZER /**/
+#		define	CC_OPTS	-g
+#		define	LD_OPTS	-m 8 -g
+#	endif
+#	if 0
 /*		Normal Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
 #		define	LIBFB_OBJS	if_remote pkg if_ptty
 #	else
 /*		X-Windows Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_X -I/d/phil/X11
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_X -I/m/X11/core
 #		define	LIBFB_OBJS	if_remote pkg if_ptty if_X
 #		define	LIBFB_SETUP	(rm -f PRODUCTS; \
 			cp /usr/local/lib/libX11.a PRODUCTS )
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I/m/X11/core
+#		define	MGED_LIBES	/usr/local/lib/libX11.a
 #	endif
 #	define	LIBRT_TIMER	timer42
 #endif
@@ -263,25 +280,55 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-G 16
 #	define	MTYPE	4d
 #	define  CC_OPTS		GFLAG
+#	if 1
+/*		By default, use this for shared libraries */
+#		define	SHARED	_s
+#	else
+/*		To use PIXIE, you have to use the non-shared libraries */
+#		define	SHARED	/**/
+#	endif
+#	define	STANDARD_LIBES	-lm -lc''SHARED
 #	define	RT_LIBES	-lmpc
-#	define	MGED_LIBES	-lbsd -lgl
+#	define	MGED_LIBES	-lbsd -lgl''SHARED
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
 #	define	LIBFB_OBJS	if_remote pkg if_4d
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
+#	if 1
+/*		Permit shared binaries, but no PostScript startoff
+ *		when not logged in */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D -DSGI4D_Rel2
+#	else
+/*		Non-shared binaries, automatic PostScript startoff for rfbd */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
+#	endif
+#	if 1
+/*	Use /usr/tmp */
+#	define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
+			mkdir /usr/tmp/libfb; \
+			cp *.o /usr/tmp/libfb; \
+			( cd /usr/tmp/libfb; \
+			AR x /usr/lib/libgl''SHARED.a; \
+			mv in_addr.o sgi_addr.o; \
+			rm -f select.o *EBEB*; \
+			AR x /usr/lib/libbsd.a; \
+			AR u libfb.a * ); \
+			mv /usr/tmp/libfb/libfb.a . ; \
+			rm -fr /usr/tmp/libfb );
+#	else
 #	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
 			rm -f libfb.a; cd tmp; \
-			AR x /usr/lib/libgl.a; \
+			AR x /usr/lib/libgl''SHARED.a; \
 			mv in_addr.o sgi_addr.o;\
 			rm -f select.o *EBEB*; \
 			AR x /usr/lib/libbsd.a; \
 			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
+#	endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	LD_OPTS		GFLAG
 #	define	OPTIMIZER	-O2
-#	define	RANLIB	ar ts
+#	define	RANLIB	ranlib5.sh
 #	define	GETHOST	hostname
 #	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
@@ -297,17 +344,28 @@ set -S2 "/bin/sh"
 #	define	MTYPE	sun3
 #	define	BSD	42
 #	define	HAS_TCP	1
-/*	If using GNU GCC, also add -traditional flag */
 /*	Select correct floating point flag, -fswitch if unsure */
-#	if 0
-/*		Normal Sun configuration */
-#		define	CC_OPTS	-fswitch
+#	if 1
+/*		Using the Sun Compiler (the default) */
+#		if 0
+/*			Generic unoptimized Sun configuration */
+#			define	CC_OPTS	-fswitch
+#		else
+/*			Model-specific floating point options */
+/*#			define	CC_OPTS	-ffpa */
+/*#			define	CC_OPTS	-f68881 -g*/
+#			define	CC_OPTS	-f68881
+#		endif
 #	else
-/*		Model-specific floating point options */
-/*#		define	CC_OPTS	-ffpa */
-/*#		define	CC_OPTS	-f68881 -pg*/
-#		define	CC_OPTS	-f68881 -g
-/*#		define	CC	gcc -traditional*/
+/*		Using the Gun C Compiler */
+#		define	CC	gcc
+#		if 0
+/*			Use this one to generate code */
+#			define	CC_OPTS	-traditional -g
+#		else
+/*			Use this one as an "ansi lint" -- don't use the code! */
+#			define	CC_OPTS	-ansi -g -pedantic -Wall
+#		endif
 #	endif
 #	define	FC_OPTS	CC_OPTS
 #	define	LD_OPTS	CC_OPTS
@@ -402,22 +460,24 @@ set -S2 "/bin/sh"
 /*		Cray C 4.0 (experimental) */
 #		define	CC_DEFS -hvector,olevel_3,vmesg_2
 #		define	CC	/bin/ncc
-#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
-#	define	RFBD_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
-#	define	LIBRT_TIMER	timercray
+#	define	LIBPKG_CONFIG	-DBSD=42
+#	define	RFBD_CONFIG	-DBSD=42
+#	endif
+#	define	LIBMALLOC	/* use vendor library */
 #	define	RFBD_LIBES	-lbsd
 #	define	LIBRT_TIMER	timerunix
 #	define	RT_LIBES	-L/lib/multi -lu
 #	define	LGT_CONFIG	-Dcray
+#	define	LIBTERMLIB	-lcurses
+#	if 1
+/*		On XMP UNICOS 4.0, archives finally end in .a */
+#		define	LIBPKG_CONFIG	-DBSD=42 -DOLDTCP
 /*		On XMP UNICOS 3.0, archives still end in .o */
 #		define	ARCH_SUF	o
-#		define	FC	/bin/cft77
-#	else
-/*		On XMP UNICOS 4.0, archives finally end in .a */
-#		define	ARCH_SUF	a
-#		define	FC	/bin/cft77
+#		define	FC	/bin/cc
 #			define	RFBD_CONFIG	-DBSD=42 -DOLDTCP
 #	define	AR	../cray-ar.sh
+#		endif
 #	endif
 #	define	RANLIB	echo
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
@@ -431,14 +491,25 @@ set -S2 "/bin/sh"
 #	define	MTYPE	cr2
 #		define	CC_DEFS -hvector,olevel_3
 #		define	CC	/bin/scc
-/*		Cray C 4.0 (experimental) */
-#		define	CC_DEFS -hvector,olevel_3,vmesg_2 -DVECTORIZE
-#		define	CC	/bin/ncc
+#		if 0
+#			define	CC_DEFS -hvector,olevel_3
+#			define	CC_DEFS -hvector,olevel_3,vmesg_2 -DVECTORIZE
+/*			Cray C 4.0 (experimental) */
+#		else
+/*			Cray ANSI Standard C */
+#			define	CC	/bin/scc
+#			define	CC_DEFS	-hvreport
+#			define	CC_DEFS -hvector,olevel_3,vmesg_2
 #			define	CC	/bin/ncc
+#		endif
 #	endif
+#	define	LIB_PRE	-L
+#	define	FC	/bin/cf77
+#	define	RANLIB	echo
+#	define	LIBSYSV_SETUP	( \
 		AR x /usr/lib/libnet.a select.o socket.o; \
-#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
-#	define	RFBD_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
+#	define	LIBPKG_CONFIG	-DBSD=42
+#	define	RFBD_CONFIG	-DBSD=42
 #		define	RFBD_CONFIG	-DBSD=43
 #	endif
 #	define	LIBRT_TIMER	timerunix
@@ -449,17 +520,21 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote pkg if_X
 #	define	LIBFB_SETUP	(rm -fr tmp; mkdir tmp; \
 		cp /usr/lib/libX11.a PRODUCTS; \
+		cd tmp; \
 		AR x /usr/lib/libnet.a; \
 		rm -f select.o; \
 		AR u ../PRODUCTS *; \
 		cd ..; rm -fr tmp)
-#	define	MGED_LIBES	/usr/lib/libX11.a /usr/lib/libnet.a
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X
+/*	MGED_LIBES should read /usr/lib/libX11.a /usr/lib/libnet.a,
+ *	but we have to use LIBFB instead, to avoid a duplicate select.o
+ *	module (libnet.a, LIBSYSV).  SEGLDR is a bitter pill.
  */
 #	define	MGED_LIBES	LIBFB
 #endif
 
 #ifdef convex
-/*	libplot3/htond.c depends on running the Convex in native mode (-fn) */
 #	undef	convex
 #	undef	c1
 #	define	MTYPE	c1
@@ -467,15 +542,21 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
 #	define	LIBFB_OBJS	if_remote pkg if_ptty
+#	define	LIBRT_TIMER	timer42
 #	define	FC	/usr/convex/fc
 /*	Optional vectorizing C compiler */
 #	if 0
 /*		Optional vectorizing C compiler */
-#		define	CC_OPTS	-DVECTORIZE -fn
+#		define	OPTIMIZER	-O2
+#		define	CC	/usr/convex/vc
+#		if 1
+#			define	CC_OPTS	-fn
+#		else
 #			define	CC_OPTS	-DVECTORIZE -fn
 #endif
 #	endif
 #endif
+
 #ifdef ardent
 /* This configuration information is based on a preliminary test */
 #	undef	ard
@@ -494,6 +575,7 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	-DDM_X
 #	define	MGED_LIBES	/usr/lib/libX11.a
 #endif
+
 #ifdef stellar
 /* This configuration information is based on a preliminary test */
 #	undef	stl
@@ -509,6 +591,7 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	-DDM_X
 #	define	MGED_LIBES	/usr/lib/libX11.a
 #endif
+
 #ifdef eta10
 /* This configuration information is based on a preliminary test */
 #	undef	eta
@@ -612,6 +695,10 @@ set -S2 "/bin/sh"
 #	define	RFBD_CONFIG	/**/
 #endif
 
+#ifndef RFBD_LIBES
+#	define	RFBD_LIBES	/**/
+#endif
+
 #ifndef LIBPKG_CONFIG
 #	define	LIBPKG_CONFIG	/**/
 #endif
@@ -649,7 +736,8 @@ set -S2 "/bin/sh"
 
 #if	!defined(RANLIB)
 #	ifdef BSD
-#		define	RANLIB	echo
+#		define	RANLIB	ranlib
+#	else
 /*		Can be defined in specific config as "echo" to no-op */
 #		define	RANLIB	ranlib5.sh
 #	endif
@@ -674,26 +762,34 @@ set -S2 "/bin/sh"
 #	define	ARCH_SUF	a
 #endif
 
+#if	!defined(LIB_PRE)
+/*	Prefix for archives;  usually null, "-L" on Cray-2 */
+#	define	LIB_PRE	/**/
+#endif
+
 /*
  *  Places to find the working copies of the libraries
  *  If the binaries are to be separated from the sources,
  *  as is needed in a multi-machine NFS environment,
+ *  then a second directory is made for every source directory,
+ *  with the machine name appended to the source directory name.
+ *
  *  For the purposes of Cray-2 LIB_PRE, there can only be ONE tab
  *  character between the symbol name and the definition.
  */
 /**GAK, no string compares in #if */
 
-#	define	LIBFB		../libfb/libfb.ARCH_SUF
-#	define	LIBRT		../librt/librt.ARCH_SUF
-#	define	LIBPLOT		../libplot3/libplot3.ARCH_SUF
-#	define	LIBORLE		../liborle/liborle.ARCH_SUF
-#	define	LIBRLE		../librle/librle.ARCH_SUF
-#	define	LIBWDB		../libwdb/libwdb.ARCH_SUF
-#	define	LIBSPL		../libspl/libspl.ARCH_SUF
+#if !defined(NFS)
+/*	Local style, binaries in source directories */
+#	define	LIBFB	../libfb/libfb.ARCH_SUF
+#	define	LIBRT	../librt/librt.ARCH_SUF
+#	define	LIBPLOT	../libplot3/libplot3.ARCH_SUF
+#	define	LIBORLE	../liborle/liborle.ARCH_SUF
+#	define	LIBRLE	../librle/librle.ARCH_SUF
 #	define	LIBWDB	../libwdb/libwdb.ARCH_SUF
 #	define	LIBSPL	../libspl/libspl.ARCH_SUF
-#	define	LIBFONT		../libfont/libfont.ARCH_SUF
-#	define	LIBSYSV		../libsysv/libsysv.ARCH_SUF
+#	define	LIBTERMIO	../libtermio/libtermio.ARCH_SUF
+#	define	LIBCURSOR	../libcursor/libcursor.ARCH_SUF
 #	define	LIBFONT	../libfont/libfont.ARCH_SUF
 #	define	LIBSYSV	../libsysv/libsysv.ARCH_SUF
 #	ifndef	LIBMALLOC
@@ -705,17 +801,17 @@ set -S2 "/bin/sh"
 #		define	LIBPKG	/**/
 #	endif
 
-#	define	LIBFB		../.libfb.MTYPE/libfb.ARCH_SUF
-#	define	LIBRT		../.librt.MTYPE/librt.ARCH_SUF
-#	define	LIBPLOT		../.libplot3.MTYPE/libplot3.ARCH_SUF
-#	define	LIBORLE		../.liborle.MTYPE/liborle.ARCH_SUF
-#	define	LIBRLE		../.librle.MTYPE/librle.ARCH_SUF
-#	define	LIBWDB		../.libwdb.MTYPE/libwdb.ARCH_SUF
-#	define	LIBSPL		../.libspl.MTYPE/libspl.ARCH_SUF
+#else
+/*	NFS style, append machine name */
+#	define	LIBFB	../.libfb.MTYPE/libfb.ARCH_SUF
+#	define	LIBRT	../.librt.MTYPE/librt.ARCH_SUF
+#	define	LIBPLOT	../.libplot3.MTYPE/libplot3.ARCH_SUF
+#	define	LIBORLE	../.liborle.MTYPE/liborle.ARCH_SUF
+#	define	LIBRLE	../.librle.MTYPE/librle.ARCH_SUF
 #	define	LIBWDB	../.libwdb.MTYPE/libwdb.ARCH_SUF
 #	define	LIBSPL	../.libspl.MTYPE/libspl.ARCH_SUF
-#	define	LIBFONT		../.libfont.MTYPE/libfont.ARCH_SUF
-#	define	LIBSYSV		../.libsysv.MTYPE/libsysv.ARCH_SUF
+#	define	LIBTERMIO	../.libtermio.MTYPE/libtermio.ARCH_SUF
+#	define	LIBCURSOR	../.libcursor.MTYPE/libcursor.ARCH_SUF
 #	define	LIBFONT	../.libfont.MTYPE/libfont.ARCH_SUF
 #	define	LIBSYSV	../.libsysv.MTYPE/libsysv.ARCH_SUF
 #	ifndef	LIBMALLOC
@@ -780,9 +876,16 @@ set -S2 "/bin/sh"
 /* Archiver */
 #if !defined(AR)
 #	define	AR	ar
-/* CC and LINT libraries.  Everybody gets math library by default */
-#define LIBES	LIBSYSV -lm
-#define LLIBES	-lm
+#endif
+
+/*
+ * CC and LINT libraries.  Everybody gets math library by default.
+ * It is assumed that the loader searches -lc by default.
+ * Switching to shared libraries can be used by re-defining STANDARD_LIBES.
+ */
+#if !defined(STANDARD_LIBES)
+#	define	STANDARD_LIBES	-lm
+#endif
 #define LIBES	LIB_PRE''LIBSYSV STANDARD_LIBES
 #define LLIBES	STANDARD_LIBES
 
