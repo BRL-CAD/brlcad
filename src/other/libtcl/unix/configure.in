@@ -221,7 +221,7 @@ int main()
 }], , tcl_ok=0, tcl_ok=0)
 if test "$tcl_ok" = 0; then
     test -n "$verbose" && echo "	Adding strtoul.o."
-    AC_LIBOBJ[(strtoul)]
+    AC_LIBOBJ([strtoul])
 fi
 
 #--------------------------------------------------------------------

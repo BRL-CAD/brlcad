@@ -8115,7 +8115,7 @@ rm -f core core.* *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext 
 fi
 if test "$tcl_ok" = 0; then
     test -n "$verbose" && echo "	Adding strtoul.o."
-    LIBOBJS="$LIBOBJS .$ac_objext"(strtoul)
+    LIBOBJS="$LIBOBJS strtoul.$ac_objext"
 fi
 
 #--------------------------------------------------------------------
