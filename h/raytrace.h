@@ -1347,7 +1347,7 @@ extern struct rt_g rt_g;
  *
  * res_syscall is now	BU_SEM_SYSCALL
  */
-#define RT_SEM_TREE0	(BU_SEM_LAST+1)
+#define RT_SEM_TREE0	(BU_SEM_LAST)
 #define RT_SEM_TREE1	(RT_SEM_TREE0+1)
 #define RT_SEM_TREE2	(RT_SEM_TREE1+1)
 #define RT_SEM_TREE3	(RT_SEM_TREE2+1)
