@@ -73,7 +73,7 @@ _LOCAL_ int	rem_open(register FBIO *ifp, register char *file, int width, int hei
 		rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, int num),
 		rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int num),
 		rem_rmap(register FBIO *ifp, register ColorMap *cmap),
-		rem_wmap(register FBIO *ifp, register ColorMap *cmap),
+		rem_wmap(register FBIO *ifp, const ColorMap *cmap),
 		rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
 		rem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
 		rem_cursor(FBIO *ifp, int mode, int x, int y),
@@ -729,7 +729,7 @@ rem_rmap(register FBIO *ifp, register ColorMap *cmap)
 }
 
 _LOCAL_ int
-rem_wmap(register FBIO *ifp, register ColorMap *cmap)
+rem_wmap(register FBIO *ifp, const ColorMap *cmap)
 {
 	register int	i;
 	char	buf[NET_LONG_LEN+1];

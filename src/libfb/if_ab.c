@@ -72,7 +72,7 @@ _LOCAL_ int	ab_open(register FBIO *ifp, register char *file, int width, int heig
 		ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int count),
 		ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
 		ab_rmap(register FBIO *ifp, register ColorMap *cmap),
-		ab_wmap(register FBIO *ifp, register ColorMap *cmap),
+		ab_wmap(register FBIO *ifp, const ColorMap *cmap),
 		ab_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
 		ab_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
 		ab_cursor(FBIO *ifp, int mode, int x, int y),
@@ -630,7 +630,7 @@ ab_rmap(register FBIO *ifp, register ColorMap *cmap)
 }
 
 _LOCAL_ int
-ab_wmap(register FBIO *ifp, register ColorMap *cmap)
+ab_wmap(register FBIO *ifp, const ColorMap *cmap)
 {
 	/* Just pretend it worked OK */
 	return(0);
