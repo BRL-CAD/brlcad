@@ -49,7 +49,7 @@ extern int ikhires;		/* defined in iklib.o */
 extern int outfd;		/* defined in rt.c */
 extern FILE *outfp;		/* defined in rt.c */
 extern int lightmodel;		/* lighting model # to use */
-extern int view_only;
+extern int one_hit_flag;
 
 #define MAX_LINE	1024	/* Max pixels/line */
 static long scanline[MAX_LINE];	/* 1 scanline pixel buffer */
@@ -224,7 +224,7 @@ struct partition *PartHeadp;
 
 	if(debug&DEBUG_HITS)  {
 		hit_print( " In", hitp );
-		printf("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
+		fprintf(stderr,"cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
 		VPRINT("RGB", work0);
 	}
 
@@ -282,7 +282,7 @@ hit_print( str, hitp )
 char *str;
 register struct hit *hitp;
 {
-	printf("** %s HIT, dist=%f\n", str, hitp->hit_dist );
+	fprintf(stderr,"** %s HIT, dist=%f\n", str, hitp->hit_dist );
 	VPRINT("** Point ", hitp->hit_point );
 	VPRINT("** Normal", hitp->hit_normal );
 }
@@ -293,35 +293,35 @@ register struct hit *hitp;
  *  Prepare the Ikonas display for operation with
  *  npts x npts of useful pixels.
  */
-dev_setup(npts)
-int npts;
+dev_setup(n)
+int n;
 {
-	if( npts > MAX_LINE )  {
-		printf("view:  %d pixels/line is too many\n", npts);
+	if( n > MAX_LINE )  {
+		fprintf(stderr,"view:  %d pixels/line is too many\n", n);
 		exit(12);
 	}
 	if( outfd > 0 )  {
 		/* Output is destined for a pixel file */
 		pixelp = &scanline[0];
-		if( npts > 512 )
+		if( n > 512 )
 			scanbytes = MAX_LINE * sizeof(long);
 		else
 			scanbytes = 512 * sizeof(long);
 	}  else  {
 		/* Output directly to Ikonas */
-		if( npts > 512 )
+		if( n > 512 )
 			ikhires = 1;
 
 		ikopen();
 		load_map(1);		/* Standard map: linear */
 		ikclear();
-		if( npts <= 64 )  {
+		if( n <= 64 )  {
 			ikzoom( 7, 7 );		/* 1 pixel gives 8 */
 			ikwindow( (0)*4, 4063+29 );
-		} else if( npts <= 128 )  {
+		} else if( n <= 128 )  {
 			ikzoom( 3, 3 );		/* 1 pixel gives 4 */
 			ikwindow( (0)*4, 4063+25 );
-		} else if ( npts <= 256 )  {
+		} else if ( n <= 256 )  {
 			ikzoom( 1, 1 );		/* 1 pixel gives 2 */
 			ikwindow( (0)*4, 4063+17 );
 		}
@@ -372,7 +372,7 @@ int arg;
 	register long i = arg;
 
 	do {
-		pchar( '@'+(i & 037) );
+		pchar( (int)('@'+(i & 037)) );
 		i >>= 5;
 	} while( i > 0 );
 }
@@ -394,7 +394,7 @@ register struct application *ap;
 		ap->a_hit = viewit;
 		ap->a_miss = wbackground;
 		ap->a_eol = dev_eol;
-		view_only = 1;
+		one_hit_flag = 1;
 		break;
 	case 3:
 		ap->a_hit = l3hit;
@@ -402,7 +402,7 @@ register struct application *ap;
 		ap->a_init = l3init;
 		ap->a_end = l3end;
 		ap->a_eol = l3eol;
-		view_only = 1;
+		one_hit_flag = 1;
 		break;
 	case 4:
 		ap->a_hit = l4hit;
@@ -410,12 +410,12 @@ register struct application *ap;
 		ap->a_eol = nullf;
 		break;
 	default:
-		bomb("bad lighting model #");
+		rtbomb("bad lighting model #");
 	}
 
 	if( lightmodel == 3 || lightmodel == 4 )
 		if( outfd > 0 )
 			outfp = fdopen( outfd, "w" );
 		else
-			bomb("No output file specified");
+			rtbomb("No output file specified");
 }

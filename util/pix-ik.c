@@ -10,6 +10,8 @@
  *
  *  $Revision$
  */
+#include <stdio.h>
+
 extern int ikfd;
 extern int ikhires;
 
@@ -28,14 +30,14 @@ char **argv;
 	static int nlines;
 
 	if( argc < 2 || argc > 3 )  {
-		printf("%s", usage);
+		fprintf(stderr,"%s", usage);
 		exit(1);
 	}
 
 	nlines = 512;
 	if( argc == 3 )  {
 		if( strcmp( argv[1], "-h" ) != 0 )  {
-			printf("%s", usage);
+			fprintf(stderr,"%s", usage);
 			exit(2);
 		}
 		ikhires = 1;

@@ -20,13 +20,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "debug.h"
 
-extern long nsolids;		/* total # of solids participating */
-extern long nregions;		/* total # of regions participating */
-extern long nshots;		/* # of ray-meets-solid "shots" */
-extern long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
-
-extern struct soltab *HeadSolid;
-extern struct functab functab[];
+int debug = DEBUG_OFF;	/* non-zero for debugging, see debug.h */
+long nsolids;		/* total # of solids participating */
+long nregions;		/* total # of regions participating */
+long nshots;		/* # of ray-meets-solid "shots" */
+long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
+struct soltab *HeadSolid = SOLTAB_NULL;
+struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
 
 extern struct partition *bool_regions();
 
@@ -41,6 +41,7 @@ extern struct partition *bool_regions();
  *
  *  This code is executed more often than any other part, generally.
  */
+void
 shootray( ap )
 register struct application *ap;
 {
@@ -52,7 +53,7 @@ register struct application *ap;
 	if(debug&DEBUG_ALLRAYS) {
 		VPRINT("\nRay Start", ap->a_ray.r_pt);
 		VPRINT("Ray Direction", ap->a_ray.r_dir);
-		fflush(stdout);		/* In case of instant death */
+		fflush(stderr);		/* In case of instant death */
 	}
 
 	HeadSeg = SEG_NULL;
@@ -81,7 +82,7 @@ register struct application *ap;
 		/* First, some checking */
 		if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
 			static struct hit temp;		/* XXX */
-			printf("ERROR %s %s: in/out reversal (%f,%f)\n",
+			fprintf(stderr,"ERROR %s %s: in/out reversal (%f,%f)\n",
 				functab[stp->st_id].ft_name,
 				newseg->seg_stp->st_name,
 				newseg->seg_in.hit_dist,
@@ -141,5 +142,5 @@ register struct application *ap;
 			HeadSeg = hsp;
 		}
 	}
-	if( debug )  fflush(stdout);
+	if( debug )  fflush(stderr);
 }

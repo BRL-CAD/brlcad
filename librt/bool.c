@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define FALSE	0
 #define TRUE	1
 
-extern int view_only;	/* non-zero if computation is for viewing only */
+int one_hit_flag;	/* non-zero if computation is for viewing only */
 
 struct partition *FreePart = PT_NULL;		 /* Head of freelist */
 
@@ -73,7 +73,7 @@ struct seg *segp_in;
 		stp = segp->seg_stp;
 		if( stp->st_bin == 0 )  {
 			if( (stp->st_bin = curbin++) >= NBINS )
-				bomb("bool_regions:  need > NBINS bins");
+				rtbomb("bool_regions:  need > NBINS bins");
 			regp = stp->st_regionp;
 			if( (regp != REGION_NULL) &&
 			   (regp->reg_active == REGION_NULL) )  {
@@ -223,7 +223,7 @@ equal_start:			/*
 			INSERT_PT( newpp, pp );
 			goto equal_start;
 		}
-		printf("bool_regions:  fell out of seg_weave loop\n");
+		fprintf(stderr,"bool_regions:  fell out of seg_weave loop\n");
 		/* Sorry about the goto's, but they give added protection */
 done_weave:	;
 		if(debug&DEBUG_PARTITION)
@@ -250,19 +250,19 @@ done_weave:	;
 
 		hitcnt = 0;
 		if(debug&DEBUG_PARTITION)
-			printf("considering partition %.8x\n", pp );
+			fprintf(stderr,"considering partition %.8x\n", pp );
 
 		regp = ActRegHd.reg_active;
 		for( ; regp != &ActRegHd; regp = regp->reg_active )  {
 			if(debug&DEBUG_PARTITION)  {
-				printf("%.8x: %s\n", regp, regp->reg_name );
+				fprintf(stderr,"%.8x: %s\n", regp, regp->reg_name );
 				pr_tree( regp->reg_treetop, 0 );
 			}
 			if( bool_eval( regp->reg_treetop, pp ) == FALSE )
 				continue;
 			/* region claims partition */
 			if( ++hitcnt > 1 ) {
-				printf("OVERLAP: %s %s (%f,%f)\n",
+				fprintf(stderr,"OVERLAP: %s %s (%f,%f)\n",
 					regp->reg_name,
 					lastregion->reg_name,
 					pp->pt_indist,
@@ -286,7 +286,7 @@ done_weave:	;
 			newpp->pt_regionp = lastregion;
 			APPEND_PT( newpp, FinalHd.pt_back );
 			/* Shameless efficiency hack */
-			if( !debug && view_only )  break;
+			if( !debug && one_hit_flag )  break;
 		}
 	}
 	if( debug&DEBUG_PARTITION )
@@ -323,6 +323,7 @@ done_weave:	;
  *  Function -
  *  	Given a tree node, evaluate it, possibly recursing.
  */
+int
 bool_eval( treep, partp )
 register union tree *treep;
 register struct partition *partp;
@@ -359,7 +360,7 @@ register struct partition *partp;
 		break;
 
 	default:
-		printf("bool_eval: bad op=x%x", treep->tr_op );
+		fprintf(stderr,"bool_eval: bad op=x%x", treep->tr_op );
 		ret = TRUE;		/* screw up output, get it fixed! */
 		break;
 	}
@@ -375,15 +376,15 @@ char *title;
 	register struct partition *pp;
 	register int i;
 
-	printf("----Partitions: %s\n", title);
-	printf("%.8x: forw=%.8x back=%.8x (HEAD)\n",
+	fprintf(stderr,"----Partitions: %s\n", title);
+	fprintf(stderr,"%.8x: forw=%.8x back=%.8x (HEAD)\n",
 		phead, phead->pt_forw, phead->pt_back );
 	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
-		printf("%.8x: forw=%.8x back=%.8x (%f,%f)\n",
+		fprintf(stderr,"%.8x: forw=%.8x back=%.8x (%f,%f)\n",
 			pp, pp->pt_forw, pp->pt_back,
 			pp->pt_indist, pp->pt_outdist );
 #ifdef never
-		printf("\t Nin=[%f,%f,%f] Nout=[%f,%f,%f]\n",
+		fprintf(stderr,"\t Nin=[%f,%f,%f] Nout=[%f,%f,%f]\n",
 			pp->pt_inhit->hit_normal[0],
 			pp->pt_inhit->hit_normal[1],
 			pp->pt_inhit->hit_normal[2],
@@ -391,13 +392,13 @@ char *title;
 			pp->pt_outhit->hit_normal[1],
 			pp->pt_outhit->hit_normal[2] );
 #endif
-		printf("Bins: ");
+		fprintf(stderr,"Bins: ");
 		for( i=0; i<NBINS; i++ )
 			if( pp->pt_solhit[i] )
-				printf("%d, ", i );
+				fprintf(stderr,"%d, ", i );
 		putchar('\n');
 	}
-	printf("----\n");
+	fprintf(stderr,"----\n");
 }
 
 static
@@ -406,9 +407,9 @@ register struct region *headp;
 {
 	register struct region *regp;
 
-	printf("Active Regions:\n");
+	fprintf(stderr,"Active Regions:\n");
 	for( regp=headp->reg_active; regp != headp; regp=regp->reg_active )  {
-		printf("%.8x %s\n", regp, regp->reg_name );
+		fprintf(stderr,"%.8x %s\n", regp, regp->reg_name );
 	}
 }
 
@@ -464,26 +465,28 @@ double	a, b;
 	return( d == 0.0 ? 0.0 : Abs( a - b ) / d );
 }
 
+void
 pr_bins()
 {
 	register struct soltab *stp;
 	extern struct soltab *HeadSolid;
 
-	printf("Bins:\n");
+	fprintf(stderr,"Bins:\n");
 	for( stp=HeadSolid; stp != 0; stp=stp->st_forw ) {
 		if( stp->st_bin == 0 )
 			continue;
-		printf("%d: %s\n", stp->st_bin, stp->st_name );
+		fprintf(stderr,"%d: %s\n", stp->st_bin, stp->st_name );
 	}
 }
 
 /*
  *			P R _ S E G
  */
+void
 pr_seg(segp)
 register struct seg *segp;
 {
-	printf("%.8x: SEG %s (%f,%f) bin=%d\n",
+	fprintf(stderr,"%.8x: SEG %s (%f,%f) bin=%d\n",
 		segp,
 		segp->seg_stp->st_name,
 		segp->seg_in.hit_dist,

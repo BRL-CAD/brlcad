@@ -1,5 +1,5 @@
 /*
- *			R T . H
+ *			R A Y T R A C E . H
  *
  * All the structures necessary for dealing with the RT ray tracer routines.
  *
@@ -108,6 +108,7 @@ struct functab {
 	int		(*ft_print)();
 	char		*ft_name;
 };
+extern struct functab functab[];
 
 #define EPSILON		0.0001
 #define NEAR_ZERO(f)	( ((f) < 0) ? ((f) > -EPSILON) : ((f) < EPSILON) )
@@ -236,3 +237,55 @@ struct application  {
 	int	(*a_eol)();	/* routine for end of scan-line */
 	int	(*a_end)();	/* routine to end application */
 };
+
+/*
+ *  Global variables used by the RT library.
+ */
+extern int ged_fd;		/* fd of object file */
+extern int one_hit_flag;	/* non-zero to return first hit only */
+extern int debug;		/* non-zero for debugging, see debug.h */
+extern long nsolids;		/* total # of solids participating */
+extern long nregions;		/* total # of regions participating */
+extern long nshots;		/* # of ray-meets-solid "shots" */
+extern long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
+extern struct soltab *HeadSolid;/* pointer to list of solids in model */
+
+/*
+ *  Global routines to interface with the RT library.
+ */
+extern void get_tree();			/* Get expr tree for object */
+extern void shootray();			/* Shoot a ray */
+extern void rtbomb();			/* Exit with error message */
+extern void timer_prep();		/* Start the timer */
+extern double timer_print();		/* Stop timer, print, return time */
+extern void dir_build();		/* Read named GED db, build toc */
+extern void pr_seg();				/* Print seg struct */
+
+/* The matrix math routines */
+extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
+extern void mat_inv(), mat_trn(), mat_ae(), mat_angles();
+extern void vtoh_move(), htov_move(), mat_print();
+
+/*
+ *  Internal routines in RT library.
+ *  Not for general use.
+ */
+extern struct directory *dir_lookup();	/* Look up name in toc */
+extern struct directory *dir_add();	/* Add name to toc */
+extern char *strdup();				/* Duplicate str w/malloc */
+extern struct partition *bool_regions();	/* Eval booleans */
+extern int bool_eval();				/* Eval bool tree node */
+extern int fdiff();				/* Approx Floating compare */
+extern double reldiff();			/* Relative Difference */
+extern void pr_bins();				/* Print bins */
+extern void pr_region();			/* Print a region */
+extern void pr_tree();				/* Print an expr tree */
+extern void fastf_float();			/* convert float->fastf_t */
+
+/*
+ *  Library routines used by the RT library.
+ */
+extern long	lseek();
+extern int	read(), write();
+extern char	*malloc();
+extern void	free();

@@ -22,15 +22,44 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtdir.h"
 #include "debug.h"
 
-extern struct soltab *HeadSolid;
-extern struct functab functab[];
-extern long nsolids;		/* total # of solids participating */
-extern long nregions;		/* total # of regions participating */
-
 struct region *HeadRegion;
+static union tree *drawHobj();
 
-void pr_region();
-void pr_tree();
+extern int nul_prep(),	nul_print();
+extern int tor_prep(),	tor_print();
+extern int tgc_prep(),	tgc_print();
+extern int ell_prep(),	ell_print();
+extern int arb_prep(),	arb_print();
+extern int haf_prep(),	haf_print();
+extern int ars_prep();
+extern int rec_print();
+
+extern struct seg *nul_shot();
+extern struct seg *tor_shot();
+extern struct seg *tgc_shot();
+extern struct seg *ell_shot();
+extern struct seg *arb_shot();
+extern struct seg *haf_shot();
+extern struct seg *rec_shot();
+
+struct functab functab[] = {
+	nul_prep,	nul_shot,	nul_print,	"ID_NULL",
+	tor_prep,	tor_shot,	tor_print,	"ID_TOR",
+	tgc_prep,	tgc_shot,	tgc_print,	"ID_TGC",
+	ell_prep,	ell_shot,	ell_print,	"ID_ELL",
+	arb_prep,	arb_shot,	arb_print,	"ID_ARB8",
+	ars_prep,	arb_shot,	arb_print,	"ID_ARS",
+	haf_prep,	haf_shot,	haf_print,	"ID_HALF",
+	nul_prep,	nul_shot,	nul_print,	">ID_NULL"
+};
+
+/*
+ *  Hooks for unimplemented routines
+ */
+#define DEF(func)	func() { printf("func unimplemented\n"); }
+
+DEF(haf_prep); struct seg * DEF(haf_shot); DEF(haf_print);
+DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print);
 
 static char idmap[] = {
 	ID_NULL,	/* undefined, 0 */
@@ -59,9 +88,9 @@ static char idmap[] = {
 	ID_NULL		/* n+1 */
 };
 
-union tree *drawHobj();
 static char *path_str();
 
+void
 get_tree(node)
 char *node;
 {
@@ -84,10 +113,10 @@ char *node;
 		register struct region *regionp;	/* XXX */
 		GETSTRUCT( regionp, region );
 		regionp->reg_active = REGION_NULL;
-		printf("Warning:  Top level solid, region %s created\n",
+		fprintf(stderr,"Warning:  Top level solid, region %s created\n",
 			path_str(0) );
 		if( curtree->tr_op != OP_SOLID )
-			bomb("root subtree not Solid");
+			rtbomb("root subtree not Solid");
 		curtree->tr_stp->st_regionp = regionp;
 		regionp->reg_treetop = curtree;
 		regionp->reg_name = strdup(path_str(0));
@@ -99,7 +128,7 @@ char *node;
 	if( debug & DEBUG_REGIONS )  {
 		register struct region *rp = HeadRegion;	/* XXX */
 
-		printf("printing regions\n");
+		fprintf(stderr,"printing regions\n");
 		while( rp != REGION_NULL )  {
 			pr_region( rp );
 			rp = rp->reg_forw;
@@ -107,7 +136,7 @@ char *node;
 	}
 }
 
-/*static */
+static
 struct soltab *
 add_solid( rec, name, mat, regp )
 union record *rec;
@@ -122,7 +151,7 @@ struct region *regp;
 	/* Eliminate any [15] scaling */
 	f = mat[15];
 	if( NEAR_ZERO(f) )  {
-		printf("solid %s:  ", name );
+		fprintf(stderr,"solid %s:  ", name );
 		mat_print("defective matrix", mat);
 	} else if( f != 1.0 )  {
 		f = 1.0 / f;
@@ -150,13 +179,13 @@ struct region *regp;
 	HeadSolid = stp;
 
 	if(debug&DEBUG_SOLIDS)  {
-		printf("-------------- %s -------------\n", stp->st_name);
+		fprintf(stderr,"-------------- %s -------------\n", stp->st_name);
 		VPRINT("Bound Sph CENTER", stp->st_center);
-		printf("Bound Sph Rad**2 = %f\n", stp->st_radsq);
+		fprintf(stderr,"Bound Sph Rad**2 = %f\n", stp->st_radsq);
 		VPRINT("Bound RPP min", stp->st_min);
 		VPRINT("Bound RPP max", stp->st_max);
 		if( regp != REGION_NULL )
-			printf("Member of region %s\n", regp->reg_name );
+			fprintf(stderr,"Member of region %s\n", regp->reg_name );
 		functab[stp->st_id].ft_print( stp );
 	}
 	nsolids++;
@@ -164,7 +193,7 @@ struct region *regp;
 }
 
 #define	MAXLEVELS	8
-struct directory	*path[MAXLEVELS];	/* Record of current path */
+static struct directory	*path[MAXLEVELS];	/* Record of current path */
 
 static mat_t xmat;				/* temporary fastf_t matrix */
 
@@ -175,7 +204,7 @@ static mat_t xmat;				/* temporary fastf_t matrix */
  * The actual processing of solids is performed by add_solid(),
  * but all transformations and region building is done here.
  */
-/*static*/
+static
 union tree *
 drawHobj( dp, argregion, pathpos, old_xlate )
 struct directory *dp;
@@ -212,7 +241,7 @@ matp_t old_xlate;
 		register struct soltab *stp;		/* XXX */
 
 		/* Draw a solid */
-		stp = add_solid( &rec.s, strdup(path_str(pathpos)), old_xlate, argregion );
+		stp = add_solid( &rec, strdup(path_str(pathpos)), old_xlate, argregion );
 		(void)lseek( ged_fd, savepos, 0);	/* restore pos */
 		if( stp == SOLTAB_NULL )
 			return( TREE_NULL );
@@ -220,7 +249,7 @@ matp_t old_xlate;
 		/**GETSTRUCT( curtree, union tree ); **/
 		curtree = (union tree *)malloc(sizeof(union tree));
 		if( curtree == TREE_NULL )
-			bomb("drawHobj: curtree malloc failed\n");
+			rtbomb("drawHobj: curtree malloc failed\n");
 		bzero( (char *)curtree, sizeof(union tree) );
 		curtree->tr_op = OP_SOLID;
 		curtree->tr_stp = stp;
@@ -236,7 +265,7 @@ matp_t old_xlate;
 	regionp = argregion;
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			printf("Warning:  region %s within region %s (ignored)\n",
+			fprintf(stderr,"Warning:  region %s within region %s (ignored)\n",
 				path_str(pathpos), argregion->reg_name );
 		} else {
 			/* Start a new region here */
@@ -265,9 +294,9 @@ matp_t old_xlate;
 				nextdp=dir_add(rec.M.m_brname,nextdp->d_addr);
 		}
 		{
-			register int i;
-			for( i=0; i<4*4; i++ )
-				xmat[i] = rec.M.m_mat[i];/* cvt to fastf_t */
+			register int j;
+			for( j=0; j<4*4; j++ )
+				xmat[j] = rec.M.m_mat[j];/* cvt to fastf_t */
 		}
 		mat_mul(new_xlate, old_xlate, xmat);
 
@@ -283,10 +312,10 @@ matp_t old_xlate;
 			 */
 			GETSTRUCT( regionp, region );
 			regionp->reg_forw = regionp->reg_active = REGION_NULL;
-			printf("Warning:  Forced to create region %s\n",
+			fprintf(stderr,"Warning:  Forced to create region %s\n",
 				path_str(pathpos) );
 			if(subtree->tr_op != OP_SOLID )
-				bomb("subtree not Solid");
+				rtbomb("subtree not Solid");
 			subtree->tr_stp->st_regionp = regionp;
 		}
 
@@ -297,13 +326,13 @@ matp_t old_xlate;
 			/** GETSTRUCT( xtp, union tree ); **/
 			xtp=(union tree *)malloc(sizeof(union tree));
 			if( xtp == TREE_NULL )
-				bomb("drawHobj: xtp malloc failed\n");
+				rtbomb("drawHobj: xtp malloc failed\n");
 			bzero( (char *)xtp, sizeof(union tree) );
 			xtp->tr_left = curtree;
 			xtp->tr_right = subtree;
 			switch( rec.M.m_relation )  {
 			default:
-				printf("(%s) bad m_relation '%c'\n",
+				fprintf(stderr,"(%s) bad m_relation '%c'\n",
 					path_str(pathpos), rec.M.m_relation );
 				/* FALL THROUGH */
 			case UNION:
@@ -318,7 +347,7 @@ matp_t old_xlate;
 	}
 	if( curtree != TREE_NULL )  {
 		if( regionp == REGION_NULL )  {
-			printf("drawHobj: (%s) null regionp, non-null curtree\n", path_str(pathpos) );
+			fprintf(stderr,"drawHobj: (%s) null regionp, non-null curtree\n", path_str(pathpos) );
 		} else if( argregion == REGION_NULL )  {
 			/* Region began at this level */
 			regionp->reg_treetop = curtree;
@@ -327,7 +356,7 @@ matp_t old_xlate;
 			HeadRegion = regionp;
 			nregions++;
 			if( debug & DEBUG_REGIONS )
-				printf("Add Region %s\n", regionp->reg_name);
+				fprintf(stderr,"Add Region %s\n", regionp->reg_name);
 			curtree = TREE_NULL;
 		}
 	} else {
@@ -362,12 +391,12 @@ void
 pr_region( rp )
 register struct region *rp;
 {
-	printf("REGION %s:\n", rp->reg_name );
-	printf("id=%d, air=%d, material=%d, los=%d\n",
+	fprintf(stderr,"REGION %s:\n", rp->reg_name );
+	fprintf(stderr,"id=%d, air=%d, material=%d, los=%d\n",
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_material, rp->reg_los );
 	pr_tree( rp->reg_treetop, 0 );
-	printf("\n");
+	fprintf(stderr,"\n");
 }
 
 void
@@ -377,35 +406,35 @@ int lvl;			/* recursion level */
 {
 	register int i;
 
-	printf("%.8x ", tp);
+	fprintf(stderr,"%.8x ", tp);
 	for( i=3*lvl; i>0; i-- )
 		putchar(' ');	/* indent */
 
 	if( tp == TREE_NULL )  {
-		printf("Null???\n");
+		fprintf(stderr,"Null???\n");
 		return;
 	}
 
 	switch( tp->tr_op )  {
 
 	case OP_SOLID:
-		printf("SOLID %s (bin %d)\n",
+		fprintf(stderr,"SOLID %s (bin %d)\n",
 			tp->tr_stp->st_name,
 			tp->tr_stp->st_bin );
 		return;
 
 	default:
-		printf("Unknown op=x%x\n", tp->tr_op );
+		fprintf(stderr,"Unknown op=x%x\n", tp->tr_op );
 		return;
 
 	case OP_UNION:
-		printf("UNION\n");
+		fprintf(stderr,"UNION\n");
 		break;
 	case OP_INTERSECT:
-		printf("INTERSECT\n");
+		fprintf(stderr,"INTERSECT\n");
 		break;
 	case OP_SUBTRACT:
-		printf("MINUS\n");
+		fprintf(stderr,"MINUS\n");
 		break;
 	}
 	/* BINARY TYPE */
@@ -414,6 +443,7 @@ int lvl;			/* recursion level */
 }
 
 /* Convert TO 4xfastf_t FROM 3xfloats (for database)  */
+void
 fastf_float( ff, fp, n )
 register fastf_t *ff;
 register float *fp;
@@ -424,4 +454,18 @@ register int n;
 		fp += 3;
 		ff += ELEMENTS_PER_VECT;
 	}
+}
+
+/*
+ *  		R T B O M B
+ *  
+ *  Abort the RT library
+ */
+void
+rtbomb(str)
+char *str;
+{
+	fprintf(stderr,"\nrt FATAL ERROR %s.\n", str);
+	fflush(stderr);
+	exit(12);
 }

@@ -33,10 +33,11 @@
  * $Revision$
  */
 
+#include	<stdio.h>
 #include	<math.h>
 #include	"vmath.h"
 
-extern int	printf();
+extern int	fprintf();
 extern double	sin(), cos();
 
 static double degtorad = 0.0174532925;
@@ -308,9 +309,9 @@ mat_t m;
 {
 	register int i;
 
-	printf("MATRIX %s:\n  ", title);
+	fprintf(stderr,"MATRIX %s:\n  ", title);
 	for(i=0; i<16; i++)  {
-		printf(" %8.3f", m[i]);
+		fprintf(stderr," %8.3f", m[i]);
 		if( (i&3) == 3 ) printf("\n  ");
 	}
 }

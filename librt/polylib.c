@@ -1,8 +1,12 @@
+/*
+ *  		P O L Y L I B . C
+ */
+#include	<stdio.h>
+#include	<math.h>
 #include	"./polyno.h"
 #include	"./complex.h"
-#include	<math.h>
 
-poly	Zpoly = { 0, 0.0 };
+static poly	Zpoly = { 0, 0.0 };
 
 /*
  *	polyMul -- multiply two polynomials
@@ -335,17 +339,17 @@ register complex	root[];
 
 
 /*
- *			P R N T P O L Y
+ *			P R _ P O L Y
  */
 void
-prntpoly(eqn)
+pr_poly(eqn)
 register poly	*eqn;
 {
 	register int	n;
 
-	printf("\nDegree of polynomial = %d\n",eqn->dgr);
+	fprintf(stderr,"\nDegree of polynomial = %d\n",eqn->dgr);
 	for ( n=0; n<=eqn->dgr; ++n){
-		printf(" %g ",eqn->cf[n]);
+		fprintf(stderr," %g ",eqn->cf[n]);
 	}
-	printf("\n");
+	fprintf(stderr,"\n");
 }

@@ -178,7 +178,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	magsq_b = MAGSQ( B );
 	magsq_h = MAGSQ( Hv );
 	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_h) ) {
-		printf("tor(%s):  zero length A, B, or H vector\n",
+		fprintf(stderr,"tor(%s):  zero length A, B, or H vector\n",
 			stp->st_name );
 		return(1);		/* BAD */
 	}
@@ -186,24 +186,24 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/* Validate that |A| == |B| (for now) */
 	f = magsq_a - magsq_b;
 	if( ! NEAR_ZERO(f) )  {
-		printf("tor(%s):  |A| != |B|\n", stp->st_name);
+		fprintf(stderr,"tor(%s):  |A| != |B|\n", stp->st_name);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
 	f = VDOT( A, B );
 	if( ! NEAR_ZERO(f) )  {
-		printf("tor(%s):  A not perpendicular to B\n",stp->st_name);
+		fprintf(stderr,"tor(%s):  A not perpendicular to B\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = VDOT( B, Hv );
 	if( ! NEAR_ZERO(f) )  {
-		printf("tor(%s):  B not perpendicular to H\n",stp->st_name);
+		fprintf(stderr,"tor(%s):  B not perpendicular to H\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = VDOT( A, Hv );
 	if( ! NEAR_ZERO(f) )  {
-		printf("tor(%s):  A not perpendicular to H\n",stp->st_name);
+		fprintf(stderr,"tor(%s):  A not perpendicular to H\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -211,8 +211,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	r1 = sqrt(magsq_a);
 	r2 = sqrt(magsq_h);
 	if( 0.0 >= r2  || r2 > r1 )  {
-		printf("r1 = %f, r2 = %f\n", r1, r2 );
-		printf("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
+		fprintf(stderr,"r1 = %f, r2 = %f\n", r1, r2 );
+		fprintf(stderr,"tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -297,7 +297,7 @@ register struct soltab *stp;
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 
-	printf("r2/r1 (alpha) = %f\n", tor->tor_alpha);
+	fprintf(stderr,"r2/r1 (alpha) = %f\n", tor->tor_alpha);
 	VPRINT("V", tor->tor_V);
 	mat_print("S o R", tor->tor_SoR );
 	mat_print("invR", tor->tor_invR );
@@ -359,7 +359,7 @@ register struct xray *rp;
 		return(SEG_NULL);		/* No hit */
 
 	if( npts != 2 && npts != 4 )  {
-		printf("tor(%s):  %d intersects != {2,4}\n", stp->st_name, npts );
+		fprintf(stderr,"tor(%s):  %d intersects != {2,4}\n", stp->st_name, npts );
 		return(SEG_NULL);		/* No hit */
 	}
 
@@ -518,7 +518,7 @@ double	alpha, t[];
 	 *  be a problem somewhere, so return an error value.
 	 */
 	if ( (npts = polyRoots( &C, val )) != 4 ){
-		printf("stdTorus:  polyRoots() returned %d?\n", npts);
+		fprintf(stderr,"stdTorus:  polyRoots() returned %d?\n", npts);
 		return(-1);
 	}
 

@@ -154,7 +154,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	magsq_b = MAGSQ( B );
 	magsq_c = MAGSQ( C );
 	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_c) ) {
-		printf("ell(%s):  zero length A, B, or C vector\n",
+		fprintf(stderr,"ell(%s):  zero length A, B, or C vector\n",
 			stp->st_name );
 		return(1);		/* BAD */
 	}
@@ -162,17 +162,17 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 */
 	f = VDOT( A, B );
 	if( ! NEAR_ZERO(f) )  {
-		printf("ell(%s):  A not perpendicular to B\n",stp->st_name);
+		fprintf(stderr,"ell(%s):  A not perpendicular to B\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = VDOT( B, C );
 	if( ! NEAR_ZERO(f) )  {
-		printf("ell(%s):  B not perpendicular to C\n",stp->st_name);
+		fprintf(stderr,"ell(%s):  B not perpendicular to C\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = VDOT( A, C );
 	if( ! NEAR_ZERO(f) )  {
-		printf("ell(%s):  A not perpendicular to C\n",stp->st_name);
+		fprintf(stderr,"ell(%s):  A not perpendicular to C\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 

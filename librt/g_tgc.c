@@ -88,7 +88,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	mag_c = sqrt( magsq_c = MAGSQ( C ) );
 	mag_d = sqrt( magsq_d = MAGSQ( D ) );
 	if( NEAR_ZERO( magsq_h ) ) {
-		printf("tgc(%s):  zero length H vector\n", stp->st_name );
+		fprintf(stderr,"tgc(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
 	}
 
@@ -96,41 +96,41 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	VCROSS( work, A, B );
 	f = VDOT( Hv, work )/ ( mag_a*mag_b*mag_h );
 	if ( NEAR_ZERO(f) ) {
-		printf("tgc(%s):  H lies in A-B plane\n",stp->st_name);
+		fprintf(stderr,"tgc(%s):  H lies in A-B plane\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that figure is not two-dimensional			*/
 	if ( NEAR_ZERO( magsq_a ) && NEAR_ZERO( magsq_c ) ) {
-		printf("tgc(%s):  vectors A, C zero length\n", stp->st_name );
+		fprintf(stderr,"tgc(%s):  vectors A, C zero length\n", stp->st_name );
 		return (1);
 	}
 	if ( NEAR_ZERO( magsq_b ) && NEAR_ZERO( magsq_d ) ) {
-		printf("tgc(%s):  vectors B, D zero length\n", stp->st_name );
+		fprintf(stderr,"tgc(%s):  vectors B, D zero length\n", stp->st_name );
 		return (1);
 	}
 
 	/* Validate that A.B == 0, C.D == 0				*/
 	f = VDOT( A, B ) / (mag_a * mag_b);
 	if( ! NEAR_ZERO(f) ) {
-		printf("tgc(%s):  A not perpendicular to B\n",stp->st_name);
+		fprintf(stderr,"tgc(%s):  A not perpendicular to B\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = VDOT( C, D ) / (mag_c * mag_d);
 	if( ! NEAR_ZERO(f) ) {
-		printf("tgc(%s):  C not perpendicular to D\n",stp->st_name);
+		fprintf(stderr,"tgc(%s):  C not perpendicular to D\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that  A || C  and  B || D, for parallel planes	*/
 	f = 1.0 - VDOT( A, C ) / (mag_a * mag_c);
 	if( ! NEAR_ZERO(f) ) {
-		printf("tgc(%s):  A not parallel to C\n",stp->st_name);
+		fprintf(stderr,"tgc(%s):  A not parallel to C\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = 1.0 - VDOT( B, D ) / (mag_b * mag_d);
 	if( ! NEAR_ZERO(f) ) {
-		printf("tgc(%s):  B not parallel to D\n",stp->st_name);
+		fprintf(stderr,"tgc(%s):  B not parallel to D\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -307,11 +307,11 @@ register struct soltab	*stp;
 		(struct tgc_specific *)stp->st_specific;
 
 	VPRINT( "V", tgc->tgc_V );
-	printf( "mag sheared H = %f\n", tgc->tgc_sH );
-	printf( "mag A = %f\n", tgc->tgc_A );
-	printf( "mag B = %f\n", tgc->tgc_B );
-	printf( "mag C = %f\n", tgc->tgc_C );
-	printf( "mag D = %f\n", tgc->tgc_D );
+	fprintf(stderr, "mag sheared H = %f\n", tgc->tgc_sH );
+	fprintf(stderr, "mag A = %f\n", tgc->tgc_A );
+	fprintf(stderr, "mag B = %f\n", tgc->tgc_B );
+	fprintf(stderr, "mag C = %f\n", tgc->tgc_C );
+	fprintf(stderr, "mag D = %f\n", tgc->tgc_D );
 	VPRINT( "Top normal", tgc->tgc_norm );
 	mat_print( "Sh o R", tgc->tgc_ShoR );
 	mat_print( "invR o trnSh", tgc->tgc_invRoSh );
@@ -368,7 +368,7 @@ register struct xray	*rp;
 	npts = stdCone( pprime, dprime, tgc, k );
 
 	if ( npts != 0 && npts != 2 && npts != 4 ){
-		printf("tgc(%s):  %d intersects != {0,2,4}\n",
+		fprintf(stderr,"tgc(%s):  %d intersects != {0,2,4}\n",
 			stp->st_name, npts );
 		return( SEG_NULL );			/* No hit	*/
 	}
@@ -455,7 +455,7 @@ register struct xray	*rp;
 			VMOVE( norm, tgc->tgc_norm );
 		} else {
 			/* intersection apparently invalid  */
-			printf("tgc(%s):  only 1 intersect\n", stp->st_name);
+			fprintf(stderr,"tgc(%s):  only 1 intersect\n", stp->st_name);
 			return( SEG_NULL );
 		}
 
@@ -633,7 +633,7 @@ double		t[];
 	 */
 	npts = polyRoots( &C , val );
 	if ( npts != 0 && npts != 2 && npts != 4 ){
-		printf("stdCone:  polyRoots() returned %d?\n", npts);
+		fprintf(stderr,"stdCone:  polyRoots() returned %d?\n", npts);
 		return (-1);
 	}
 

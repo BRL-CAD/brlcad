@@ -15,16 +15,16 @@
 static char RCSid[] = "@(#)$Header$";
 #endif
 
+#include <stdio.h>
 #include "vmath.h"
 #include "db.h"
 #include "rtdir.h"
 #include "debug.h"
 
-extern char	*malloc();
-
 static struct directory *DirHead = DIR_NULL;
 
-int	ged_fd;		/* FD of object file */
+int	ged_fd = -1;		/* FD of object file */
+extern char *malloc();
 
 /*
  *			D I R _ B U I L D
@@ -42,12 +42,12 @@ char *filename;
 
 	if( (ged_fd = open(filename, 0)) < 0 )  {
 		perror(filename);
-		bomb("Unable to continue");
+		rtbomb("Unable to continue");
 	}
 
 	while(1)  {
 		addr = lseek( ged_fd, 0L, 1 );
-		if( (unsigned)read( ged_fd, (char *)&record, sizeof record )
+		if( read( ged_fd, (char *)&record, sizeof record )
 				!= sizeof record )
 			break;
 
@@ -149,7 +149,7 @@ register char *cp;
 	register char	*current;
 
 	if( (base = malloc( strlen(cp)+1 )) == (char *)0 )
-		bomb("strdup:  unable to allocate memory");
+		rtbomb("strdup:  unable to allocate memory");
 
 	current = base;
 	do  {

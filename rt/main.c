@@ -1,4 +1,3 @@
-#define static /**/
 /*
  *			R T
  *
@@ -21,62 +20,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "debug.h"
 
-extern int nul_prep(),	nul_print();
-extern int tor_prep(),	tor_print();
-extern int tgc_prep(),	tgc_print();
-extern int ell_prep(),	ell_print();
-extern int arb_prep(),	arb_print();
-extern int haf_prep(),	haf_print();
-extern int ars_prep();
-extern int rec_print();
-
-extern struct seg *nul_shot();
-extern struct seg *tor_shot();
-extern struct seg *tgc_shot();
-extern struct seg *ell_shot();
-extern struct seg *arb_shot();
-extern struct seg *haf_shot();
-extern struct seg *rec_shot();
-
-struct functab functab[] = {
-	nul_prep,	nul_shot,	nul_print,	"ID_NULL",
-	tor_prep,	tor_shot,	tor_print,	"ID_TOR",
-	tgc_prep,	tgc_shot,	tgc_print,	"ID_TGC",
-	ell_prep,	ell_shot,	ell_print,	"ID_ELL",
-	arb_prep,	arb_shot,	arb_print,	"ID_ARB8",
-	ars_prep,	arb_shot,	arb_print,	"ID_ARS",
-	haf_prep,	haf_shot,	haf_print,	"ID_HALF",
-	nul_prep,	nul_shot,	nul_print,	">ID_NULL"
-};
-
-/*
- *  Hooks for unimplemented routines
- */
-#define DEF(func)	func() { printf("func unimplemented\n"); }
-
-DEF(haf_prep); struct seg * DEF(haf_shot); DEF(haf_print);
-DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print);
-
-double timer_print();
-
-int debug = DEBUG_OFF;
-int view_only;		/* non-zero if computation is for viewing only */
-int lightmodel;		/* Select lighting model */
-
-long nsolids;		/* total # of solids participating */
-long nregions;		/* total # of regions participating */
-long nshots;		/* # of ray-meets-solid "shots" */
-long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
-int outfd;		/* fd of optional pixel output file */
-FILE *outfp;		/* used to write .PP files */
-
-struct soltab *HeadSolid = SOLTAB_NULL;
-
-struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
-
-extern int viewit(), wbackground();
-
-char usage[] = "\
+static char usage[] = "\
 Usage:  rt [options] model.vg object [objects]\n\
 Options:  -f[#] -x# -aAz -eElev -A%Ambient -l# [-o model.pix]\n";
 
@@ -85,15 +29,17 @@ static fastf_t xbase, ybase, zbase;
 static fastf_t deltas;
 extern double atof();
 
-double AmbientIntensity = 0.1;		/* Ambient light intensity */
-vect_t l0vec;		/* 0th light vector */
-vect_t l1vec;		/* 1st light vector */
-vect_t l2vec;		/* 2st light vector */
-
+/***** Variables shared with viewing model *** */
+double AmbientIntensity = 0.1;	/* Ambient light intensity */
+vect_t l0vec;			/* 0th light vector */
+vect_t l1vec;			/* 1st light vector */
+vect_t l2vec;			/* 2st light vector */
 double azimuth, elevation;
-int npts;			/* # of points to shoot: x,y */
-
-static char ttyObuf[4096];
+int outfd;		/* fd of optional pixel output file */
+FILE *outfp;		/* used to write .PP files */
+int lightmodel;		/* Select lighting model */
+int npts;		/* # of points to shoot: x,y */
+/***** end of sharing with viewing model *****/
 
 /*
  *			M A I N
@@ -113,7 +59,7 @@ char **argv;
 	elevation = -25.0;
 
 	if( argc < 1 )  {
-		printf(usage);
+		fprintf(stderr, usage);
 		exit(1);
 	}
 
@@ -128,7 +74,7 @@ char **argv;
 			break;
 		case 'x':
 			sscanf( &argv[0][2], "%x", &debug );
-			printf("debug=x%x\n", debug);
+			fprintf(stderr,"debug=x%x\n", debug);
 			break;
 		case 'f':
 			/* "Fast" -- just a few pixels.  Or, arg's worth */
@@ -160,25 +106,21 @@ char **argv;
 			argc--; argv++;
 			break;
 		default:
-			printf("rt:  Option '%c' unknown\n", argv[0][1]);
-			printf(usage);
+			fprintf(stderr,"rt:  Option '%c' unknown\n", argv[0][1]);
+			fprintf(stderr, usage);
 			break;
 		}
 		argc--; argv++;
 	}
 
 	if( argc < 2 )  {
-		printf(usage);
+		fprintf(stderr, usage);
 		exit(2);
 	}
 
 	/* initialize application based upon lightmodel # */
 	view_init( &ap );
 	ap.a_init( &ap, argv[0], argv[1] );
-
-	/* 4.2 BSD stdio debugging assist */
-	if( debug )
-		setbuffer( stdout, ttyObuf, sizeof(ttyObuf) );
 
 	timer_prep();		/* Start timing preparations */
 
@@ -193,12 +135,14 @@ char **argv;
 	}
 	(void)timer_print("PREP");
 
-	if( HeadSolid == 0 )  bomb("No solids");
+	if( HeadSolid == SOLTAB_NULL )  {
+		fprintf(stderr, "No solids remain after prep, exiting.\n");
+		exit(11);
+	}
 
 	/* Set up the online display and/or the display file */
-	if( !(debug&DEBUG_QUICKIE) )  {
+	if( !(debug&DEBUG_QUICKIE) )
 		dev_setup(npts);
-	}
 
 	timer_prep();	/* start timing actual run */
 
@@ -211,7 +155,7 @@ char **argv;
 		 */
 		mat_idn( model2view );
 		mat_angles( model2view, 270.0-elevation, 0.0, 270.0+azimuth );
-		printf("Viewing %f azimuth, %f elevation off of front view\n",
+		fprintf(stderr,"Viewing %f azimuth, %f elevation off of front view\n",
 			azimuth, elevation);
 		mat_inv( view2model, model2view );
 
@@ -243,7 +187,7 @@ char **argv;
 	VSET( tempdir, 	xbase, ybase, zbase );
 	MAT4X3PNT( ap.a_ray.r_pt, view2model, tempdir );
 
-	printf("Ambient light at %f%%\n", AmbientIntensity * 100.0 );
+	fprintf(stderr,"Ambient light at %f%%\n", AmbientIntensity * 100.0 );
 
 	/* Determine the Light location(s) in model space, xlate to view */
 	/* 0:  Blue, at left edge, 1/2 high */
@@ -267,11 +211,10 @@ char **argv;
 	MAT4X3VEC( l2vec, view2model, tempdir );
 	VUNITIZE(l2vec);
 
-	fflush(stdout);
+	fflush(stderr);
 
 	for( ap.a_y = npts-1; ap.a_y >= 0; ap.a_y--)  {
 		for( ap.a_x = 0; ap.a_x < npts; ap.a_x++)  {
-if(debug&DEBUG_ALLRAYS)printf("x,y=%d,%d\n", ap.a_x, ap.a_y);
 			VSET( tempdir,
 				xbase + ap.a_x * deltas,
 				ybase + (npts-ap.a_y-1) * deltas,
@@ -290,14 +233,15 @@ if(debug&DEBUG_ALLRAYS)printf("x,y=%d,%d\n", ap.a_x, ap.a_y);
 	{
 		FAST double utime;
 		utime = timer_print("SHOT");
-		printf("%d solids, %d regions\n",
+		fprintf(stderr,"%d solids, %d regions\n",
 			nsolids, nregions );
-		printf("%d output rays in %f sec = %f rays/sec\n",
+		fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
 			npts*npts, utime, (double)(npts*npts/utime) );
-		printf("%d solids shot at, %d shots pruned\n",
-			nshots, nmiss );
-		printf("%d total shots in %f sec = %f shots/sec\n",
-			nshots+nmiss, utime, (double)((nshots+nmiss)/utime) );
+		fprintf(stderr,"%d solids shot at, %ld shots pruned\n",
+			nshots, (long)nmiss );
+		fprintf(stderr,"%ld total shots in %f sec = %f shots/sec\n",
+			(long)nshots+nmiss,
+			utime, (double)((nshots+nmiss)/utime) );
 	}
 	return(0);
 }
@@ -305,9 +249,9 @@ if(debug&DEBUG_ALLRAYS)printf("x,y=%d,%d\n", ap.a_x, ap.a_y);
 /*
  *			A U T O S I Z E
  */
-autosize( rot, npts )
+autosize( rot, n )
 matp_t rot;
-int npts;
+int n;
 {
 	register struct soltab *stp;
 	static fastf_t xmin, xmax;
@@ -349,17 +293,9 @@ int npts;
 	ybase = ymin;
 	zbase = zmin;
 
-	deltas = (xmax-xmin)/npts;
-	MAX( deltas, (ymax-ymin)/npts );
-	printf("X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+	deltas = (xmax-xmin)/n;
+	MAX( deltas, (ymax-ymin)/n );
+	fprintf(stderr,"X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
 		xmin, xmax, ymin, ymax, zmin, zmax );
-	printf("Deltas=%f (units between rays)\n", deltas );
-}
-
-bomb(str)
-char *str;
-{
-	fflush(stdout);
-	fprintf(stderr,"\nrt: %s.  FATAL ERROR.\n", str);
-	exit(12);
+	fprintf(stderr,"Deltas=%f (units between rays)\n", deltas );
 }

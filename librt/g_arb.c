@@ -100,7 +100,7 @@ matp_t mat;
 #undef P
 
 	if( faces < 4  || faces > 6 )  {
-		printf("arb(%s):  only %d faces present\n",
+		fprintf(stderr,"arb(%s):  only %d faces present\n",
 			stp->st_name, faces);
 		/* Should free storage for good faces */
 		return(1);			/* Error */
@@ -264,7 +264,7 @@ int noise;			/* non-0: check 4,> pts for being planar */
 		if( ! NEAR_ZERO(f) )  {
 			/* Non-planar face */
 			if( noise )  {
-				printf("ERROR: arb(%s) face %s non-planar\n",
+				fprintf(stderr,"ERROR: arb(%s) face %s non-planar\n",
 				stp->st_name, plp->pl_code );
 			}
 #ifdef CONSERVATIVE
@@ -288,22 +288,22 @@ register struct soltab *stp;
 	register int i;
 
 	if( plp == (struct plane_specific *)0 )  {
-		printf("arb(%s):  no faces\n", stp->st_name);
+		fprintf(stderr,"arb(%s):  no faces\n", stp->st_name);
 		return;
 	}
 	do {
-		printf( "......Face %s\n", plp->pl_code );
-		printf( "%d vertices:\n", plp->pl_npts );
+		fprintf(stderr, "......Face %s\n", plp->pl_code );
+		fprintf(stderr, "%d vertices:\n", plp->pl_npts );
 		for( i=0; i < plp->pl_npts; i++ )  {
 			VPRINT( "", plp->pl_points[i] );
 		}
 		VPRINT( "Xbasis", plp->pl_Xbasis );
 		VPRINT( "Ybasis", plp->pl_Ybasis );
 		VPRINT( "Normal", plp->pl_N );
-		printf( "N.A = %f\n", plp->pl_NdotA );
-		printf( "2-d projection of vertices:\n");
+		fprintf(stderr, "N.A = %f\n", plp->pl_NdotA );
+		fprintf(stderr, "2-d projection of vertices:\n");
 		for( i=0; i < plp->pl_npts; i++ )  {
-			printf( "(%f,%f), ",
+			fprintf(stderr, "(%f,%f), ",
 				plp->pl_2d_x[i],
 				plp->pl_2d_y[i] );
 		}
@@ -347,7 +347,7 @@ register struct xray *rp;
 		 */
 		dn = VDOT( plp->pl_N, rp->r_dir );
 		if( debug & DEBUG_ARB8 )
-			printf("Shooting at face %s.  N.Dir=%f\n", plp->pl_code, dn );
+			fprintf(stderr,"Shooting at face %s.  N.Dir=%f\n", plp->pl_code, dn );
 		/*
 		 *  If ray lies directly along the face, drop this face.
 		 */
@@ -379,7 +379,7 @@ register struct xray *rp;
 		VMOVE( hp->hit_normal, plp->pl_N );
 		if(debug&DEBUG_ARB8) printf("arb: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
 		if( nhits++ >= MAXHITS )  {
-			printf("arb(%s): too many hits\n", stp->st_name);
+			fprintf(stderr,"arb(%s): too many hits\n", stp->st_name);
 			break;
 		}
 		hp++;
@@ -401,7 +401,7 @@ register struct xray *rp;
 		 */
 		hits[nhits] = hits[nhits-1];	/* struct copy */
 		VREVERSE( hp->hit_normal, hits[nhits-1].hit_normal );
-		printf("ERROR: arb(%s): %d hits, false exit\n",
+		fprintf(stderr,"ERROR: arb(%s): %d hits, false exit\n",
 			stp->st_name, nhits);
 		nhits++;
 	}
