@@ -27,8 +27,6 @@ static const char RCSid[] = "";
 
 #include "common.h"
 
-
-
 #include <math.h>
 #include <stdio.h>
 
@@ -36,8 +34,10 @@ static const char RCSid[] = "";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 #include "./ged.h"
 #include "./mged_dm.h"
+
 
 extern void mged_vls_struct_parse(struct bu_vls *vls, char *title, struct bu_structparse *how_to_parse, char *structp, int argc, char **argv); /* defined in vparse.c */
 extern point_t e_axes_pos;  /* from edsol.c */
@@ -48,6 +48,7 @@ void snap_to_grid(fastf_t *mx, fastf_t *my);
 static void grid_set_dirty_flag(void);
 static void set_grid_draw(void);
 static void set_grid_res(void);
+
 
 struct _grid_state default_grid_state = {
 /* gr_rc */		1,
@@ -72,6 +73,7 @@ struct bu_structparse grid_vparse[] = {
 	{"%d",  1, "mrv",		GRID_O(gr_res_major_v),	set_grid_res },
 	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 static void
 grid_set_dirty_flag(void)
