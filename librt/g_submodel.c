@@ -193,6 +193,11 @@ struct rt_i		*rtip;
 	/* Stay on 1 CPU because we're already multi-threaded at this point. */
 	rt_prep_parallel(sub_rtip, 1);
 
+	/* Ensure bu_ptbl rti_resources is full size.  Ptrs will be null */
+	if( BU_PTBL_LEN(&sub_rtip->rti_resources) < sub_rtip->rti_resources.blen )  {
+		BU_PTBL_LEN(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
+	}
+
 #if !HONEST_WAY
 	/*
 	 *  Record the "up" pointer from the sub model.
@@ -461,8 +466,10 @@ struct seg		*seghead;
 	struct application	sub_ap;
 	struct submodel_gobetween	gb;
 	vect_t			vdiff;
-	struct resource		res;
 	int			code;
+	struct bu_ptbl		*restbl;
+	struct resource		*resp;
+	int			cpu;
 
 	RT_CK_SOLTAB(stp);
 	RT_CK_RTI(ap->a_rt_i);
@@ -479,12 +486,26 @@ struct seg		*seghead;
 	sub_ap.a_uptr = (genptr_t)&gb;
 	sub_ap.a_purpose = "rt_submodel_shot";
 
-	/* Special handling for the resources structure */
-	/* One is needed per CPU per rtip */
-	/* For starters, allocate and free per ray */
-	bzero( (char *)&res, sizeof(res) );
-	rt_init_resource( &res, ap->a_resource->re_cpu );
-	sub_ap.a_resource = &res;
+	/*
+	 * Obtain the resource structure for this CPU.
+	 * No need to semaphore because there is one pointer per cpu already.
+	 */
+	restbl = &submodel->rtip->rti_resources;	/* a ptbl */
+	cpu = ap->a_resource->re_cpu;
+	if( !( cpu < BU_PTBL_END(restbl) ) )  {
+		bu_log("ptbl_end=%d, ptbl_blen=%d, cpu=%d\n",
+			BU_PTBL_END(restbl), restbl->blen, cpu );
+	}
+	BU_ASSERT( cpu < BU_PTBL_END(restbl) );
+	if( (resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL )  {
+		/* First ray for this cpu for this submodel, alloc up */
+		BU_GETSTRUCT( resp, resource );
+		/* XXX Should be a BU_PTBL_SET() */
+		BU_PTBL_GET(restbl, cpu) = (long *)resp;
+		rt_init_resource( resp, cpu );
+	}
+	RT_CK_RESOURCE(resp);
+	sub_ap.a_resource = resp;
 
 	/* shootray already computed a_ray.r_min & r_max for us */
 	/* Construct the ray in submodel coords. */
@@ -503,8 +524,6 @@ struct seg		*seghead;
 	submodel->rtip->rti_nobool = 1;
 
 	code = rt_shootray( &sub_ap );
-
-	rt_clean_resource( submodel->rtip, &res );
 
 	if( code <= 0 )  return 0;	/* MISS */
 

@@ -750,6 +750,10 @@ register struct rt_i *rtip;
 		struct resource	**rpp;
 		BU_CK_PTBL( &rtip->rti_resources );
 		for( BU_PTBL_FOR( rpp, (struct resource **), &rtip->rti_resources ) )  {
+			/* After using a submodel, some entries may be NULL
+			 * while others are not NULL
+			 */
+			if( *rpp == NULL )  continue;
 			RT_CK_RESOURCE(*rpp);
 			/* Clean but do not free the resource struct */
 			rt_clean_resource(rtip, *rpp);
