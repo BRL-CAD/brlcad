@@ -41,4 +41,4 @@ extern void	free();
 #define	strrchr	rindex
 #endif
 
-#endif INCL_FBLOCAL
+#endif /* INCL_FBLOCAL */

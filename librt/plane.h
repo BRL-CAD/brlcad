@@ -51,4 +51,4 @@ struct tri_specific  {
 	struct tri_specific *tri_forw;	/* Next facet */
 };
 
-#endif PLANE_H
+#endif /* PLANE_H */

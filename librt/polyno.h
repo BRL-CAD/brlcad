@@ -40,4 +40,4 @@ extern poly	*polyAdd(), *polySub(), *polyMul(), *polyScal();
 extern void	quadratic(), synDiv(), prntpoly(), pr_poly();
 extern int	quartic(), cubic();
 
-#endif POLYNO_H
+#endif /* POLYNO_H */
