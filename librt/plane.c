@@ -34,9 +34,12 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
  *
  *  XXX The tolerance here should be relative to the model diameter, not abs.
  *
- *  Returns -
+ *  Explicit Return -
  *	 0	OK
  *	-1	Failure.  At least two of the points were not distinct.
+ *
+ *  Implicit Return -
+ *	plane	The plane equation is stored here.
  */
 int
 rt_mk_plane_3pts( plane, a, b, c )
@@ -74,9 +77,12 @@ point_t	a, b, c;
  *  Given the description of three planes, compute the point of intersection,
  *  if any.
  *
- *  Returns -
+ *  Explitic Return -
  *	 0	OK
  *	-1	Failure.  Intersection is a line or plane.
+ *
+ *  Implicit Return -
+ *	pt	The point of intersection is stored here.
  */
 int
 rt_mkpoint_3planes( pt, a, b, c )
@@ -93,10 +99,9 @@ plane_t	a, b, c;
 	VCROSS( v2, a, c );
 	VCROSS( v3, a, b );
 
-	pt[X] = a[3]*v1[X] - b[3]*v2[X] + c[3]*v3[X];
-	pt[Y] = a[3]*v1[Y] - b[3]*v2[Y] + c[3]*v3[Y];
-	pt[Z] = a[3]*v1[Z] - b[3]*v2[Z] + c[3]*v3[Z];
-	VSCALE( pt, pt, d );
+	pt[X] = d*(a[3]*v1[X] - b[3]*v2[X] + c[3]*v3[X]);
+	pt[Y] = d*(a[3]*v1[Y] - b[3]*v2[Y] + c[3]*v3[Y]);
+	pt[Z] = d*(a[3]*v1[Z] - b[3]*v2[Z] + c[3]*v3[Z]);
 	return(0);
 }
 
@@ -143,4 +148,97 @@ plane_t	plane;
 	if( norm_dist < 0.0 )
 		return(-2);	/* missed, outside */
 	return(-1);		/* missed, inside */
+}
+
+static plane_t	xpl = { 1, 0, 0, 0 };
+static plane_t	ypl = { 0, 1, 0, 0 };
+static plane_t	zpl = { 0, 0, 1, 0 };
+
+/*
+ *			R T _ I S E C T _ 2 P L A N E S
+ *
+ *  Given two planes, find the line of intersection between them,
+ *  if one exists.
+ *  The line of intersection is returned in parametric line
+ *  (point & direction vector) form.
+ *
+ *  In order that all the geometry under consideration be in "front"
+ *  of the ray, it is necessary to pass the minimum point of the model
+ *  RPP.  If this is unnecessary, just pass (0,0,0).
+ *
+ *  Explicit Return -
+ *	 0	OK, line of intersection stored in `pt' and `dir'.
+ *	-1	FAIL
+ *
+ *  Implicit Returns -
+ *	pt	Starting point of line of intersection
+ *	dir	Direction vector of line of intersection (unit length)
+ */
+int
+rt_isect_2planes( pt, dir, a, b, rpp_min )
+point_t	pt;
+vect_t	dir;
+plane_t	a;
+plane_t	b;
+vect_t	rpp_min;
+{
+	register fastf_t	d;
+	LOCAL vect_t		abs_dir;
+	LOCAL plane_t		pl;
+
+	/* Check to see if the planes are parallel */
+	d = VDOT( a, b );
+	if( !NEAR_ZERO( d, 0.999999 ) )
+		return(-1);		/* FAIL -- parallel */
+
+	/* Direction vector for ray is perpendicular to both plane normals */
+	VCROSS( dir, a, b );
+	VUNITIZE( dir );		/* safety? */
+
+	/*
+	 *  Select an axis-aligned plane which has it's normal pointing
+	 *  along the same axis as the largest magnitude component of
+	 *  the direction vector.
+	 *  If the largest magnitude component is negative, reverse the
+	 *  direction vector, so that model is "in front" of start point.
+	 */
+	abs_dir[X] = (dir[X] >= 0) ? dir[X] : (-dir[X]);
+	abs_dir[Y] = (dir[Y] >= 0) ? dir[Y] : (-dir[Y]);
+	abs_dir[Z] = (dir[Z] >= 0) ? dir[Z] : (-dir[Z]);
+
+	if( abs_dir[X] >= abs_dir[Y] )  {
+		if( abs_dir[X] >= abs_dir[Z] )  {
+			VMOVE( pl, xpl);
+			pl[3] = rpp_min[X];
+			if( dir[X] < 0 )  {
+				VREVERSE( dir, dir );
+			}
+		} else {
+			VMOVE( pl, zpl);
+			pl[3] = rpp_min[Z];
+			if( dir[Z] < 0 )  {
+				VREVERSE( dir, dir );
+			}
+		}
+	} else {
+		if( abs_dir[Y] >= abs_dir[Z] )  {
+			VMOVE( pl, ypl);
+			pl[3] = rpp_min[Y];
+			if( dir[Y] < 0 )  {
+				VREVERSE( dir, dir );
+			}
+		} else {
+			VMOVE( pl, zpl);
+			pl[3] = rpp_min[Y];
+			if( dir[Z] < 0 )  {
+				VREVERSE( dir, dir );
+			}
+		}
+	}
+
+	/* Intersection of the 3 planes defines ray start point */
+	if( rt_mkpoint_3planes( pt, pl, a, b ) < 0 )
+		return(-1);	/* FAIL -- no intersection */
+
+	return(0);		/* OK */
 }
