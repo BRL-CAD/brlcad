@@ -40,7 +40,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSxxx[] = "@(#)$Header$ (BRL)";
+static char RCSbot[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -712,11 +712,19 @@ register struct soltab *stp;
 {
 	register struct bot_specific *bot =
 		(struct bot_specific *)stp->st_specific;
+	register struct tri_specific *tri, *ptr;
 
 	if( bot->bot_thickness )
 		bu_free( (char *)bot->bot_thickness, "bot_thickness" );
 	if( bot->bot_facemode )
 		bu_free( (char *)bot->bot_facemode, "bot_facemode" );
+	ptr = bot->bot_facelist;
+	while( ptr )
+	{
+		tri = ptr->tri_forw;
+		bu_free( (char *)tri, "bot tri_specific" );
+		ptr = tri;
+	}
 	bu_free( (char *)bot, "bot_specific" );
 }
 
