@@ -286,11 +286,49 @@ char **argv;
 	return TCL_OK;
 }
 
+/*
+ *			R T _ T C L _ R T _ O N E H I T
+ *  Usage -
+ *	widgetname onehit
+ *	widgetname onehit #
+ */
+int
+rt_tcl_rt_onehit( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct application	*ap = (struct application *)clientData;
+	struct rt_i		*rtip;
+	char			buf[64];
+
+	if( argc < 2 || argc > 3 )  {
+		Tcl_AppendResult( interp,
+				"wrong # args: should be \"",
+				argv[0], " ", argv[1], " [#]\"",
+				(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* Could core dump */
+	RT_AP_CHECK(ap);
+	rtip = ap->a_rt_i;
+	RT_CK_RTI_TCL(rtip);
+
+	if( argc == 3 )  {
+		ap->a_onehit = atoi(argv[2]);
+	}
+	sprintf(buf, "%d", ap->a_onehit );
+	Tcl_AppendResult( interp, buf, (char *)NULL );
+	return TCL_OK;
+}
+
 static struct dbcmdstruct rt_tcl_rt_cmds[] = {
 	"shootray",	rt_tcl_rt_shootray,
+	"onehit",	rt_tcl_rt_onehit,
 #if 0
 	"prep",		rt_tcl_rt_prep,		/* haste | efficient, useair, elaborate_instances */
-	"onehit",	rt_tcl_onehit,
 #endif
 	(char *)0,	(int (*)())0
 };
