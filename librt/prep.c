@@ -101,6 +101,8 @@ struct db_i	*dbip;
 	rtip->rti_ttol.rel = 0.01;
 	rtip->rti_ttol.norm = 0;
 
+	rtip->rti_max_beam_radius = 175.0/2;	/* Largest Army bullet */
+
 	rtip->rti_space_partition = RT_PART_NUBSPT;
 	rtip->rti_nugrid_dimlimit = 0;
 	rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
