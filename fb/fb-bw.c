@@ -23,6 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
 #include "fb.h"
 
 extern int	getopt();
@@ -31,8 +32,8 @@ extern int	optind;
 
 FBIO	*fbp;
 
-RGBpixel	inbuf[2048];
-unsigned char	obuf[2048];
+static RGBpixel		inbuf[2048];
+static unsigned char	obuf[2048];
 
 int	height;
 int	width;
