@@ -6,7 +6,15 @@ SHELL=/bin/sh
 # -DATT for SystemV, -DBSD for Berkeley, done by machinetype.sh
 #
 # For Apollo, may need to add -Tbsd4.3
+#
+# For gnu compiler use the following two lines:
+# CC = gcc
+# COPTS = -DCAKEDEBUG=1 `machinetype.sh -d` -fwritable-strings
+#
 COPTS = -DCAKEDEBUG `machinetype.sh -d`
+
+# for gnu or Linux use "flex" instead of "lex"
+LEX = lex
 
 # Some systems (such as NetBSD 0.9a), need to add -l to get yylineno.
 LEXOPTS=
@@ -58,7 +66,7 @@ cake_g.c:	cake_g.y
 		mv -f y.output cake_g.t
 
 cake_s.c:	cake_s.l
-		lex $(LEXOPTS) cake_s.l
+		$(LEX) $(LEXOPTS) cake_s.l
 		mv -f lex.yy.c cake_s.c
 
 var:		$(SRC) $(GSRC)
