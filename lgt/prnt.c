@@ -22,7 +22,7 @@ static char	*usage[] =
 "",
 "Usage:",
 "",
-"lgt [-IOTovw file][-AGKacefginps n][-b \"R G B\"][-dtD \"x y\"][-xy \"a b\"] file.g object...",
+"lgt [-IOTovw file][-AGKXacefgiknps n][-b \"R G B\"][-dtD \"x y\"][-xy \"a b\"] file.g object...",
 "",
 "The options may appear in any order; however, their parameters must",
 "be present, are positional, and if there is more than one parameter",
@@ -53,10 +53,11 @@ static char	*lgt_menu[] =
 "J                    make a movie (prompts for parameters)",
 "j [file]             input key-frame from file (as output by mged(1B))",
 "K bounces            maximum level of recursion in raytracing",
-"L id                 modify light source entry for id (0 to 10)",
-"l id                 print light source entry for id (0 to 10)",
-"M id                 modify material data base entry for id (0 to 99)",
-"m id                 print material data base entry for id (0 to 99)",
+"k [flag]             enable or disable hidden line drawing",
+"L id                 modify light source entry id (0 to 10)",
+"l [id]               print light source entry id (0 to 10) or all",
+"M id                 modify material data base entry id (0 to 99)",
+"m [id]               print material data base entry id (0 to 99) or all",
 "n [processors]       number of processors to use (parallel environment)",
 "O [file]             re-direct errors to specified output file",
 "o [file]             image (output file for picture)",
@@ -72,6 +73,7 @@ static char	*lgt_menu[] =
 "v [file]             read light source data base",
 "W [file]             write material attribute data base",
 "w [file]             read material attribute data base",
+"X [flag]             enable or disable reporting of overlaps",
 "x start [finish]     set left and right border of current rectangle",
 "y start [finish]     set top and bottom border of current rectangle",
 "z ulen vlen [width]  size of texture map (plus width of padded lines)",
@@ -151,7 +153,7 @@ prnt_Lgt_Status()
 	MODEL_RA_MOVE();
 	(void) printf( "%11.4f", modl_radius );
 	F_TEXTURE_MOVE();
-	(void) printf( "%-32s", texture_file );
+	(void) printf( "%-32s", txtr_file );
 	BACKGROU_MOVE();
 	(void) printf( "%3d %3d %3d", background[0], background[1], background[2] );
 	BUFFERED_MOVE();
@@ -235,7 +237,7 @@ prnt_IR_Status()
 	IR_AUTO_MAP_MOVE();
 	(void) printf( "%4s", 	ir_offset == 1 ? "ON" : "OFF" );
 	IR_PAINT_MOVE();
-	if( ir_paint_flag )
+	if( ir_doing_paint )
 		(void) printf( "%4d", ir_paint );
 	else
 		(void) printf( "none" );
@@ -403,6 +405,49 @@ prnt_Usage()
 	}
 
 #include <varargs.h>
+#ifdef cray
+/* VARARGS */
+void
+prnt_Scroll(fmt, a,b,c,d,e,f,g,h,i)
+char *fmt;
+{
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	if( tty )
+		{ /* Only move cursor and scroll if newline is output.	*/
+			static int	newline = 1;
+		if( CS != NULL )
+			{
+			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+			if( newline )
+				{
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+			(void) ResetScrlReg();
+			}
+		else
+		if( DL != NULL )
+			{
+			if( newline )
+				{
+				SCROLL_DL_MOVE();
+				(void) DeleteLn();
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+			}
+		else
+			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+		/* End of line detected by existance of a newline.	*/
+		newline = fmt[strlen( fmt )-1] == '\n';
+		}
+	else
+		(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+}
+#else
 /*	p r n t _ S c r o l l ( )					*/
 /* VARARGS */
 void
@@ -411,7 +456,7 @@ char	*fmt;
 va_dcl
 	{	va_list		ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	va_start( ap );
 	if( tty )
 		{ /* Only move cursor and scroll if newline is output.	*/
@@ -447,6 +492,7 @@ va_dcl
 	else
 		(void) _doprnt( fmt, ap, stderr );
 	va_end( ap );
-	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
+#endif

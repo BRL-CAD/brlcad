@@ -28,9 +28,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./lgt.h"
 #include "./screen.h"
 #include "./extern.h"
+#ifdef cray
+#include <sys/category.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
+#define NICENESS	12
+#endif
 int	ready_Output_Device();
 void	close_Output_Device();
-#if defined( BSD ) || defined( sgi )
+#if defined( BSD ) || defined( SYSV )
 _LOCAL_ int	intr_sig();
 int		(*norml_sig)(), (*abort_sig)();
 extern int	stop_sig();
@@ -48,9 +55,19 @@ char	*argv[];
 {	register int	i;
 
 	beginptr = sbrk(0);
-	RES_INIT( &rt_g.res_malloc );
+	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
+#if cray
+	nicem( C_PROC, 0, NICENESS );
+	rt_log( "Program niced to %d.\n", NICENESS );
+	limit( C_PROC, 0, L_CPU, MAX_CPU_TICKS );
+	rt_log(	"CPU limit set to %d ticks (at %d/sec that's %d seconds).\n",
+		MAX_CPU_TICKS,
+		HZ,
+		MAX_CPU_TICKS/HZ
+		);
+#endif
 	
 #if ! defined( BSD ) && ! defined( sgi )
 	(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
@@ -68,7 +85,6 @@ char	*argv[];
 	if( ismex() & tty )
 		sgi_Init_Popup_Menu();
 #endif
-
 	for( i = 0; i < NSIG; i++ )
 		switch( i )
 			{
@@ -93,7 +109,7 @@ char	*argv[];
 			break;
 		case SIGQUIT :
 			break;
-#if ! defined( sgi )
+#if ! defined( SYSV )
 #if ! defined( SIGTSTP )
 #define SIGTSTP	18
 #endif
@@ -105,6 +121,7 @@ char	*argv[];
 	/* Main loop.							*/
 	user_Interaction();
 	exit_Neatly( 0 );
+	/*NOTREACHED*/
 	}
 
 /*	i n t e r p o l a t e _ F r a m e ( )				*/
@@ -121,7 +138,7 @@ int	frame;
 	x_fb_origin = (frame % frames_across) * movie.m_frame_sz;
 	y_fb_origin = (frame / frames_across) * movie.m_frame_sz;
 	rt_log( "Frame %d:\n", frame );
-	if( movie.m_keys_flg )
+	if( movie.m_keys_bool )
 		return	key_Frame() == -1 ? 0 : 1;
 	lgts[0].azim = movie.m_azim_beg +
 				rel_frame * (movie.m_azim_end - movie.m_azim_beg);
@@ -129,7 +146,7 @@ int	frame;
 				rel_frame * (movie.m_elev_end - movie.m_elev_beg);
 	grid_roll = movie.m_roll_beg +
 				rel_frame * (movie.m_roll_end - movie.m_roll_beg);
-	if( movie.m_over_flg )
+	if( movie.m_over_bool )
 		{
 		lgts[0].over = TRUE;
 		lgts[0].dist = movie.m_dist_beg +
@@ -147,7 +164,7 @@ int	frame;
 	rt_log( "\tview azimuth\t%g\n", lgts[0].azim*DEGRAD );
 	rt_log( "\tview elevation\t%g\n", lgts[0].elev*DEGRAD );
 	rt_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
-	if( movie.m_over_flg )
+	if( movie.m_over_bool )
 		{
 		rt_log( "\teye distance\t%g\n", lgts[0].dist );
 		rt_log( "\tgrid distance\t%g\n", grid_dist );
@@ -189,7 +206,7 @@ close_Output_Device()
 	return;
 	}
 
-#if defined( BSD ) || defined( sgi )
+#if defined( BSD ) || defined( SYSV )
 _LOCAL_ int
 #else
 /*ARGSUSED*/
@@ -199,9 +216,6 @@ intr_sig( sig )
 int	sig;
 	{	char	buf[10];
 	(void) signal( SIGINT, intr_sig );
-	(void) get_Input( buf, sizeof(buf), "Really quit ? " );
-	if( buf[0] != 'n' )
-		user_interrupt = 1;
 #if defined( BSD )
 	return	sig;
 #else

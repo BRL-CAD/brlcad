@@ -95,7 +95,8 @@ register int	xpos, ypos;
 		int		left = dir[c].left / aperture_sz;
 		static char	bitbuf[BUFFSIZ][BUFFSIZ];
 		static RGBpixel	pixel;
-		register int    h, i, j, k, x;
+		register int    h, i, j;
+		int		k, x;
 	for( k = 0; k < height; k++ )
 		{
 		/* Read row, rounding width up to nearest byte value. */

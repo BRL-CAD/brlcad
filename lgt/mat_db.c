@@ -20,7 +20,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./vecmath.h"
 #include "./mat_db.h"
 #include "./screen.h"
-static FILE		*mat_db_fp;
+#include "./extern.h"
+static FILE		*matdb_fp;
 static Mat_Db_Entry	mat_db_table[MAX_MAT_DB];
 static int		mat_db_size = 0;
 Mat_Db_Entry		mat_dfl_entry =
@@ -59,12 +60,12 @@ FILE *
 mat_Open_Db( mat_db_file )
 char	*mat_db_file;
 	{	register	Mat_Db_Entry	*entry;
-	if( (mat_db_fp = fopen( mat_db_file, "r+" )) == NULL )
-		return	mat_db_fp; /* NULL */
+	if( (matdb_fp = fopen( mat_db_file, "r+" )) == (FILE *) NULL )
+		return	matdb_fp; /* NULL */
 	/* Mark all entries as NULL.					*/
 	for( entry = mat_db_table; entry < &mat_db_table[MAX_MAT_DB]; entry++ )
 		entry->mode_flag = MF_NULL;
-	return	mat_db_fp;
+	return	matdb_fp;
 	}
 
 /*	m a t _ C l o s e _ D b ( )
@@ -72,7 +73,7 @@ char	*mat_db_file;
  */
 mat_Close_Db()
 	{
-	return	fclose( mat_db_fp );
+	return	fclose( matdb_fp );
 	}
 
 /*	m a t _ P r i n t _ D b ( )
@@ -115,25 +116,25 @@ int		material_id;
 				);
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tshininess\t\t(%d)\n", entry->shine );
+		prnt_Scroll( "        shininess\t\t(%d)\n", entry->shine );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tspecular weight\t\t(%g)\n", entry->wgt_specular );
+		prnt_Scroll( "        specular weight\t\t(%g)\n", entry->wgt_specular );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tdiffuse weight\t\t(%g)\n", entry->wgt_diffuse );
+		prnt_Scroll( "        diffuse weight\t\t(%g)\n", entry->wgt_diffuse );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\ttransparency\t\t(%g)\n", entry->transparency );
+		prnt_Scroll( "        transparency\t\t(%g)\n", entry->transparency );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\treflectivity\t\t(%g)\n", entry->reflectivity );
+		prnt_Scroll( "        reflectivity\t\t(%g)\n", entry->reflectivity );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\trefractive index\t(%g)\n", entry->refrac_index );
+		prnt_Scroll( "        refractive index\t(%g)\n", entry->refrac_index );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tdiffuse color\t\t(%d %d %d)\n",
+		prnt_Scroll( "        diffuse color\t\t(%d %d %d)\n",
 				entry->df_rgb[0],
 				entry->df_rgb[1],
 				entry->df_rgb[2]
@@ -142,10 +143,10 @@ int		material_id;
 	return	1;
 	}
 
-/*	m a t _ A s c _ R e a d _ D b ( )
+/*	m a t _ R d _ D b ( )
 	Read ASCII material database into table, return number of entries.
  */
-mat_Asc_Read_Db()
+mat_Rd_Db()
 	{	Mat_Db_Entry	*entry;
 	mat_db_size = 0;
 	for(	entry = mat_db_table;
@@ -157,27 +158,13 @@ mat_Asc_Read_Db()
 	return	mat_db_size;
 	}
 
-/*	m a t _ B i n _ R e a d _ D b ( )
-	Read binary material database into table, return number of entries.
- */
-mat_Bin_Read_Db()
-	{	Mat_Db_Entry	*entry;
-	mat_db_size = 0;
-	for(	entry = mat_db_table;
-		entry < &mat_db_table[MAX_MAT_DB]
-	     && fread( (char *) entry, sizeof(Mat_Db_Entry), 1, mat_db_fp ) == 1;
-		++entry
-		)
-		mat_db_size++;
-	return	mat_db_size;
-	}
 
-/*	m a t _ A s c _ S a v e _ D b ( )
+/*	m a t _ S a v e _ D b ( )
 	Write ASCII material database from table.  If 'file' is NULL,
 	overwrite input file, otherwise open or create 'file'.  Return success
 	or failure.
  */
-mat_Asc_Save_Db( file )
+mat_Save_Db( file )
 char	*file;
 	{	register Mat_Db_Entry	*entry;
 	if( ! mat_W_Open( file ) )
@@ -190,31 +177,10 @@ char	*file;
 		;
 	if( entry != &mat_db_table[mat_db_size] )
 		return	0;
-	(void) fflush( mat_db_fp );
+	(void) fflush( matdb_fp );
 	return	1;
 	}
 
-/*	m a t _ B i n _ S a v e _ D b ( )
-	Write binary material database from table.  If 'file' is NULL,
-	overwrite input file, otherwise open or create 'file'.  Return success
-	or failure.
- */
-mat_Bin_Save_Db( file )
-char	*file;
-	{	register Mat_Db_Entry	*entry;
-	if( ! mat_W_Open( file ) )
-		return	0;
-	for(	entry = mat_db_table;
-		entry < &mat_db_table[mat_db_size]
-	     && fwrite( (char *) entry, sizeof(Mat_Db_Entry), 1, mat_db_fp ) == 1;
-		++entry
-		)
-		;
-	if( entry != &mat_db_table[mat_db_size] )
-		return	0;
-	(void) fflush( mat_db_fp );
-	return	1;
-	}
 
 /*	m a t _ P u t _ D b _ E n t r y ( )
 	Create or overwrite entry in material table.
@@ -322,21 +288,21 @@ register Mat_Db_Entry	*entry;
 	{	register char	*ptr;
 		int		items;
 		int		red, grn, blu, mode;
-	if( fgets( entry->name, MAX_MAT_NM, mat_db_fp ) == NULL )
+	if( fgets( entry->name, MAX_MAT_NM, matdb_fp ) == NULL )
 		return	0;
 	ptr = &entry->name[strlen(entry->name) - 1];
 	if( *ptr == '\n' )
 		/* Read entire line.					*/
 		*ptr = '\0';
 	else	/* Skip rest of line.					*/
-		while( getc( mat_db_fp ) != '\n' )
+		while( getc( matdb_fp ) != '\n' )
 			;
-	if( (items = fscanf( mat_db_fp, "%d %d", &entry->id, &entry->shine )) != 2 )
+	if( (items = fscanf( matdb_fp, "%d %d", &entry->id, &entry->shine )) != 2 )
 		{
 		(void) fprintf( stderr, "Could not read integers (%d read)!\n", items );
 		return	0;
 		}
-	if(	fscanf(	mat_db_fp,
+	if(	fscanf(	matdb_fp,
 #ifdef sgi
 			"%f %f %f %f %f",
 #else
@@ -353,7 +319,7 @@ register Mat_Db_Entry	*entry;
 		(void) fprintf( stderr, "Could not read floats!\n" );
 		return	0;
 		}
-	if( fscanf( mat_db_fp, "%d %d %d", &red, &grn, &blu ) != 3 )
+	if( fscanf( matdb_fp, "%d %d %d", &red, &grn, &blu ) != 3 )
 		{
 		(void) fprintf( stderr, "Could not read chars!\n" );
 		return	0;
@@ -361,7 +327,7 @@ register Mat_Db_Entry	*entry;
 	entry->df_rgb[0] = red;
 	entry->df_rgb[1] = grn;
 	entry->df_rgb[2] = blu;
-	if( fscanf( mat_db_fp, "%d", &mode ) != 1 )
+	if( fscanf( matdb_fp, "%d", &mode ) != 1 )
 		{
 		(void) fprintf( stderr,
 				"get_Entry(): Could not read mode_flag!\n"
@@ -369,7 +335,7 @@ register Mat_Db_Entry	*entry;
 		return	0;
 		}
 	entry->mode_flag = mode;
-	while( getc( mat_db_fp ) != '\n' )
+	while( getc( matdb_fp ) != '\n' )
 		; /* Gobble rest of line.				*/
 	return	1;
 	}
@@ -380,9 +346,9 @@ register Mat_Db_Entry	*entry;
 	{
 	if( entry->mode_flag == MF_NULL )
 		entry = &mat_nul_entry;
-	(void) fprintf( mat_db_fp, "%s\n", entry->name );
-	(void) fprintf( mat_db_fp, "%d\n%d\n", entry->id, entry->shine );
-	(void) fprintf(	mat_db_fp,
+	(void) fprintf( matdb_fp, "%s\n", entry->name );
+	(void) fprintf( matdb_fp, "%d\n%d\n", entry->id, entry->shine );
+	(void) fprintf(	matdb_fp,
 			"%f\n%f\n%f\n%f\n%f\n",
 			entry->wgt_specular,
 			entry->wgt_diffuse,
@@ -390,13 +356,13 @@ register Mat_Db_Entry	*entry;
 			entry->reflectivity,
 			entry->refrac_index
 			);
-	(void) fprintf(	mat_db_fp,
+	(void) fprintf(	matdb_fp,
 			"%u %u %u\n",
 			(unsigned) entry->df_rgb[0],
 			(unsigned) entry->df_rgb[1],
 			(unsigned) entry->df_rgb[2]
 			);
-	(void) fprintf( mat_db_fp, "%u\n", (unsigned) entry->mode_flag );
+	(void) fprintf( matdb_fp, "%u\n", (unsigned) entry->mode_flag );
 	return	1;
 	}
 
@@ -410,12 +376,12 @@ char	*file;
 			return	0;
 		else
 			{
-			mat_db_fp = fp;
-			setbuf( mat_db_fp, malloc( BUFSIZ ) );
+			matdb_fp = fp;
+			setbuf( matdb_fp, malloc( BUFSIZ ) );
 			}
 		}
 	/* else default to last database accessed.			*/
-	if( mat_db_fp == NULL )
+	if( matdb_fp == NULL )
 		return	0;
-	return	fseek( mat_db_fp, 0L, 0 ) == 0;
+	return	fseek( matdb_fp, 0L, 0 ) == 0;
 	}

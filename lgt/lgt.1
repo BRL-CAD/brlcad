@@ -30,7 +30,7 @@ Set the tracking-cursor flag to
 .IR n\^ .
 When set to non-zero, this causes an
 arrow cursor to point at the current scan line being ray traced, assuming that
-a graphics device is being used.  The default is to enable the tracking-cursor.
+a graphics device is being used.  The default is to disable the tracking-cursor.
 .TP
 .BI \-e n\^
 Set the debug flag to
@@ -59,6 +59,13 @@ such as grid distance, viewing distance or, in general, perspective.
 .BI \-i n\^
 Set noise threshold for the Infrared (IR) Module to
 .IR n\^ .
+.TP
+.BI \-k n\^
+Set hidden-line flag to
+.IR n\^ .
+When set to non-zero, this causes a hidden-line drawing to be produced rather
+than the usual shaded color image.
+The default is to disable this feature.
 .TP
 .BI \-n n\^
 Set number of processors to use for ray tracing to
@@ -187,6 +194,15 @@ Set the starting and ending scan line to
 and
 .I b\^
 in the sub-grid.
+.TP
+.BI \-X n\^
+Set the overlap reporting flag to
+.IR n\^ .
+When set to non-zero, this causes overlaps to be reported to the log file
+or terminal (see the
+.B \-O
+option).
+The default is to report overlaps.
 .TP
 .BI \-b "``R G B''"\^
 Set the background color to
@@ -331,6 +347,7 @@ the program's (in-core) copy of the data base is modified until another command
 Print light source data base entry
 .IR id\^ .
 Display the current copy of the specified entry on the terminal's screen.
+If no entry is specified, all entries will be displayed.
 .TP
 .BR M "\ id"
 Modify the material data base entry
@@ -349,6 +366,7 @@ The
 should match the material id in the
 .IR mged (1)
 data base.
+If no entry is specified, all entries will be displayed.
 .TP
 \fBq \fIor \fB^D
 Quit. Normal exit from the program.
@@ -459,8 +477,9 @@ before the command is
 given to generate an image, it will generate one automatically.
 .SH EXAMPLES
 The following command will start up an interactive session which will
-use the Silicon Graphics IRIS on a host address 
-.I brl-viva\^
+use the Silicon Graphics IRIS's default frame buffer device (/dev/sgi)
+on a host address 
+.I viva.brl.mil\^
 to display the
 .I hull\^
 and 
@@ -468,7 +487,17 @@ and
 of the target description in file
 .IR tank.g\^ .
 .RS
-$ \|\fIlgt \|\-o \|brl-viva:/dev/sgi \|tank.g \|hull \|turret\fR
+$ \|\fIlgt \|\-o \|viva.brl.mil: \|tank.g \|hull \|turret\fR
+.RE
+.sp
+This command will start up an interactive session on an alternate device
+on a remote host and will begin at the 251st scan line and complete a
+512x512 image (handy in the event that the computer goes down in the
+middle of ray tracing an image).  Note that since the
+.I -y\^
+option takes 2 arguments, they must appear in double-quotes.
+.RS
+$ \|\fIlgt \|\-G512 \|\-o \|vgr.brl.mil:/dev/ik1l \|\-y \|``250 511'' \|tank.g \|hull \|turret\fR
 .RE
 .sp
 This will run the program as a detached process by executing a saved script called

@@ -28,13 +28,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define BITS_WIDE	48
 #define FB_MAP		"map.fb"
 	
-FBIO	*texture_ifp = FBIO_NULL;
+FBIO	*txtr_ifp = FBIO_NULL;
+
+#ifndef cray
 short	texture[BITS_WIDE][BITS_WIDE/(sizeof(short)*BITS_PER_BYTE)] =
 		{
 #include "./texture.h"
 		};
+#endif
 
-texture_Val( uvp )
+#ifndef cray
+txtr_Val( uvp )
 register struct uvcoord	*uvp;
 	{	register int	ui = uvp->uv_u * BITS_WIDE;
 		register int	vi = uvp->uv_v * BITS_WIDE;
@@ -46,19 +50,20 @@ register struct uvcoord	*uvp;
 	rt_log( "word >> ui = 0x%x\n", (int) word >> ui );*/
 	return	(int) word & (1 << ui) ? 1 : 0;
 	}
+#endif
 
 init_Fb_Val( fbfile )
 char	*fbfile;
-	{	register int	x, y;
+	{
 	if( fbfile == NULL )
 		fbfile = FB_MAP;
-	if( texture_ifp != FBIO_NULL )
-		(void) fb_close( texture_ifp );
-	if( (texture_ifp = fb_open( fbfile, fb_width, fb_width ))
+	if( txtr_ifp != FBIO_NULL )
+		(void) fb_close( txtr_ifp );
+	if( (txtr_ifp = fb_open( fbfile, fb_width, fb_width ))
 		== FBIO_NULL
 		) 
 		return	0;
-	(void) fb_ioinit( texture_ifp );
+	(void) fb_ioinit( txtr_ifp );
 	return	1;
 	}
 
@@ -81,8 +86,8 @@ register struct uvcoord	*uvp;
 				MF_USED,	/* Mode flag.		*/
 				"fb mapping"	/* Material name.	*/
 				};
-	if(	fb_seek( texture_ifp, ui, (fb_vlen-1)-vi ) == -1
-	    ||	fb_rpixel( texture_ifp, pixel ) == -1
+	if(	fb_seek( txtr_ifp, ui, (fb_vlen-1)-vi ) == -1
+	    ||	fb_rpixel( txtr_ifp, pixel ) == -1
 		)
 		return	MAT_DB_NULL;
 	/*rt_log( "uv_u=%g uv_v=%g ui=%d vi=%d\n", uvp->uv_u, uvp->uv_v, ui, vi );

@@ -68,9 +68,9 @@ typedef struct
 	{
 	int	m_noframes;
 	int	m_frame_sz;
-	int	m_lgts_flg;
-	int	m_over_flg;
-	int	m_keys_flg;
+	int	m_lgts_bool;
+	int	m_over_bool;
+	int	m_keys_bool;
 	FILE	*m_keys_fp;
 	fastf_t	m_azim_beg;
 	fastf_t m_azim_end;

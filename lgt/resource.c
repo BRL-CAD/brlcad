@@ -12,10 +12,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-
+#include "./extern.h"
 #ifdef PARALLEL
-extern int	npsw;
-struct resource	resource[MAX_PSW];	/* memory resources */
 static int	lock_tab[12];		/* Lock usage counters */
 static char	*all_title[12] = {
 	"malloc",
@@ -64,7 +62,7 @@ res_pr()
 RES_INIT(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_malloc);
+	register int i = p - (&rt_g.res_syscall);
 /*	if(rdebug&RDEBUG_PARALLEL) 
 		(void) fprintf( stderr, "RES_INIT 0%o, i=%d, rt_g=0%o\n", p, i, &rt_g);*/
 	LOCKASGN(p);
@@ -74,7 +72,7 @@ register int *p;
 RES_ACQUIRE(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_malloc);
+	register int i = p - (&rt_g.res_syscall);
 	if( i < 0 || i > 12 )  {
 		(void) fprintf( stderr, "RES_ACQUIRE(0%o)? %d?\n", p, i);
 		abort();
@@ -87,7 +85,7 @@ register int *p;
 RES_RELEASE(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_malloc);
+	register int i = p - (&rt_g.res_syscall);
 /*	if(rdebug&RDEBUG_PARALLEL) fputc( 'a'+i, stderr );*/
 	LOCKOFF(p);
 /*	if(rdebug&RDEBUG_PARALLEL) fputc( '\n', stderr);*/
@@ -114,7 +112,7 @@ RES_ACQUIRE(p)
 register int *p;		/* known to be a5 */
 {
 	register int i;
-	i = p - (&rt_g.res_malloc);
+	i = p - (&rt_g.res_syscall);
 #ifdef PARALLEL
 	asm("loop:");
 	do  {

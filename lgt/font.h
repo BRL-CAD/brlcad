@@ -16,7 +16,7 @@
 */
 /*	font.h - Header file for putting fonts up.			*/
 #define INCL_FONT
-#if defined(sel) || defined(gould)
+#if defined(sel) || defined(gould) || defined(alliant)
 #define BIGENDIAN
 #endif
 #if defined(BIGENDIAN)

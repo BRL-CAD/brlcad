@@ -26,7 +26,7 @@
 #if defined( BSD )
 extern char		*tmpnam(), *gets(), *strtok();
 #endif
-#if defined( BSD ) || defined( sgi )
+#if defined( BSD ) || defined( SYSV )
 extern int		(*norml_sig)(), (*abort_sig)();
 extern int		abort_RT();
 #else
@@ -37,14 +37,15 @@ extern char		*getenv();
 extern char		*malloc();
 extern char		*sbrk();
 extern char		*strncpy();
+extern char		*get_Input();
 
 extern fastf_t		pow_Of_2();
 
-extern int		do_IR_Model(), do_IR_Backgr();
+extern int		f_IR_Model(), f_IR_Backgr();
 extern int		pars_Argv();
 extern int		get_Answer();
 extern int		fb_Setup();
-extern int		texture_Val();
+extern int		txtr_Val();
 
 extern void		append_Octp();
 extern void		close_Output_Device();
@@ -95,7 +96,7 @@ extern char		ir_db_file[];
 extern char		lgt_db_file[];
 extern char		mat_db_file[];
 extern char		script_file[];
-extern char		texture_file[];
+extern char		txtr_file[];
 extern char		title[];
 extern char		timer[];
 extern char		version[];
@@ -127,16 +128,17 @@ extern int		fatal_error;
 extern int		fb_mapping;
 extern int		fb_width;
 extern int		fb_ulen, fb_vlen;
-extern int		grid_dist_flag;
 extern int		grid_sz;
+extern int		grid_position;
 extern int		grid_x_org, grid_y_org;
 extern int		grid_x_fin, grid_y_fin;
 extern int		grid_x_cur, grid_y_cur;
+extern int		hiddenln_draw;
 extern int		icon_mapping;
 extern int		ir_offset;
 extern int		ir_min, ir_max;
 extern int		ir_paint;
-extern int		ir_paint_flag;
+extern int		ir_doing_paint;
 extern int		ir_mapx, ir_mapy;
 extern int		ir_noise;
 extern int		ir_mapping;
@@ -148,6 +150,7 @@ extern int		nprocessors;
 extern int		npsw;
 #endif
 extern int		pix_buffered;
+extern int		report_overlaps;
 extern int		save_view_flag;
 extern int		tracking_cursor;
 extern int		tty;

@@ -401,16 +401,16 @@ fastf_t			*inv_dir;
 int			level;
 	{
 	for( ; op != OCTREE_NULL; op = op->o_sibling )
-		{	fastf_t	octant_min[3], octant_max[3];
+		{	fastf_t	octnt_min[3], octnt_max[3];
 			fastf_t	delta = modl_radius / pow_Of_2( level );
 		/* See if ray hits the octant RPP.			*/
-		octant_min[X] = op->o_points->c_point[X] - delta;
-		octant_min[Y] = op->o_points->c_point[Y] - delta;
-		octant_min[Z] = op->o_points->c_point[Z] - delta;
-		octant_max[X] = op->o_points->c_point[X] + delta;
-		octant_max[Y] = op->o_points->c_point[Y] + delta;
-		octant_max[Z] = op->o_points->c_point[Z] + delta;
-		if( rt_in_rpp( &ap->a_ray, inv_dir, octant_min, octant_max ) )
+		octnt_min[X] = op->o_points->c_point[X] - delta;
+		octnt_min[Y] = op->o_points->c_point[Y] - delta;
+		octnt_min[Z] = op->o_points->c_point[Z] - delta;
+		octnt_max[X] = op->o_points->c_point[X] + delta;
+		octnt_max[Y] = op->o_points->c_point[Y] + delta;
+		octnt_max[Z] = op->o_points->c_point[Z] + delta;
+		if( rt_in_rpp( &ap->a_ray, inv_dir, octnt_min, octnt_max ) )
 			{ /* Hit octant.				*/
 			if( op->o_child == OCTREE_NULL )
 				{ /* We are at a leaf node.		*/

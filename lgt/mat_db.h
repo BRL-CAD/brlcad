@@ -19,6 +19,7 @@
 #define MAX_MAT_DB	100
 #define MAX_MAT_NM	81
 #define MF_USED		1
+#undef	MF_NULL
 #define MF_NULL		0
 typedef struct
 	{

@@ -34,7 +34,9 @@ long		buffering_menu;
 long		cursorect_menu;
 long		debugging_menu;
 long		grid_size_menu;
-long		lgt_index_menu;
+long		lgts_edit_menu;
+long		lgts_prnt_menu;
+long		mat_index_menu;
 long		movie_fps_menu;
 long		two_digit_menu;
 static long	popup_gid = -1;
@@ -143,7 +145,8 @@ sgi_Init_Popup_Menu()
 	grid_size_menu = defpup( "resolution %t|16-by-16 %x16|32-by-32 %x32|64-by-64 %x64|128-by-128 %x128|256-by-256 %x256|512-by-512 %x512|1024-by-1024 %x1024" );
 	file_name_menu = defpup( "files %t|frame buffer %x111|error/debug log %x79|write script %x83|save image %x72|read image %x104|texture map %x84" );
 	light_src_menu = defpup( "light sources %t|print entry %x108|modify entry %x76|read database %x118|write database %x86" );
-	lgt_index_menu = defpup( "light index %t|eye (ambient) %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9" );
+	lgts_edit_menu = defpup( "light index %t|eye (ambient) %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9" );
+	lgts_prnt_menu = defpup( "light index %t|all %x-1|eye (ambient) %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9" );
 	one_digit_menu = defpup( "0..9 %t|0 %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9" );
 	tens_menu =      defpup( "10..19 %t|10 %x10|11 %x11|12 %x12|13 %x13|14 %x14|15 %x15|16 %x16|17 %x17|18 %x18|19 %x19" );
 	twenties_menu =  defpup( "20..29 %t|20 %x20|21 %x21|22 %x22|23 %x23|24 %x24|25 %x25|26 %x26|27 %x27|28 %x28|29 %x29" );
@@ -156,6 +159,18 @@ sgi_Init_Popup_Menu()
 	eighties_menu =  defpup( "80..89 %t|80 %x80|81 %x81|82 %x82|83 %x83|84 %x84|85 %x85|86 %x86|87 %x87|88 %x88|89 %x89" );
 	nineties_menu =  defpup( "90..99 %t|90 %x90|91 %x91|92 %x92|93 %x93|94 %x94|95 %x95|96 %x96|97 %x97|98 %x98|99 %x99" );
 	two_digit_menu = defpup( "0..99 %t|0..9 %m %x-1|10..19 %m %x-1|20..29 %m %x-1|30..39 %m %x-1|40..49 %m %x-1|50..59 %m %x-1|60..69 %m %x-1|70..79 %m %x-1|80..89 %m %x-1|90..99 %m %x-1",
+				one_digit_menu,
+				tens_menu,
+				twenties_menu,
+				thirties_menu,
+				forties_menu,
+				fifties_menu,
+				sixties_menu,
+				seventies_menu,
+				eighties_menu,
+				nineties_menu
+				);
+	mat_index_menu = defpup( "0..99 %t|all %x-2|0..9 %m %x-1|10..19 %m %x-1|20..29 %m %x-1|30..39 %m %x-1|40..49 %m %x-1|50..59 %m %x-1|60..69 %m %x-1|70..79 %m %x-1|80..89 %m %x-1|90..99 %m %x-1",
 				one_digit_menu,
 				tens_menu,
 				twenties_menu,
@@ -370,8 +385,8 @@ int	origin, x, y, x0, y0, out_flag;
 			    ||	qread( &val ) != MENUBUTTON;
 				)
 				;
-#define Pixel2Grid(x_) (x_/((double)fbiop->if_width/grid_sz))
-#define Grid2Model(x_) (x_*cell_sz)
+#define Pixel2Grid(x_) ((x_)/((double)fbiop->if_width/grid_sz))
+#define Grid2Model(x_) ((x_)*cell_sz)
 			scale = Pixel2Grid( dw*2.0 )/ (double)(grid_sz);
 			if( out_flag )
 				scale = 1.0 / scale;

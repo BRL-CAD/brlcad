@@ -55,6 +55,49 @@ char *str;
 	exit(12);
 	}
 
+#ifdef cray
+/* VARARGS */
+void
+rt_log(fmt, a,b,c,d,e,f,g,h,i)
+char *fmt;
+{
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
+		{ /* Only move cursor and scroll if newline is output.	*/
+			static int	newline = 1;
+		if( CS != NULL )
+			{
+			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+			if( newline )
+				{
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+			(void) ResetScrlReg();
+			}
+		else
+		if( DL != NULL )
+			{
+			if( newline )
+				{
+				SCROLL_DL_MOVE();
+				(void) DeleteLn();
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+			}
+		else
+			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+		/* End of line detected by existance of a newline.	*/
+		newline = fmt[strlen( fmt )-1] == '\n';
+		}
+	else
+		(void) fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+}
+#else
 /*
  *  		R T _  L O G
  *  
@@ -67,7 +110,7 @@ char	*fmt;
 va_dcl
 	{	va_list		ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	va_start( ap );
 	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
 		{ /* Only move cursor and scroll if newline is output.	*/
@@ -103,10 +146,22 @@ va_dcl
 	else
 		(void) _doprnt( fmt, ap, stderr );
 	va_end( ap );
-	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
+#endif
 
+#ifdef cray
+/* VARARGS */
+void
+fb_log(fmt, a,b,c,d,e,f,g,h,i)
+char *fmt;
+{
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	fprintf(stderr, fmt, a,b,c,d,e,f,g,h,i );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+}
+#else
 /*
  *		F B _ L O G
  *  
@@ -119,7 +174,7 @@ char	*fmt;
 va_dcl
 	{	va_list		ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	va_start( ap );
 	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
 		{ /* Only move cursor and scroll if newline is output.	*/
@@ -155,6 +210,8 @@ va_dcl
 	else
 		(void) _doprnt( fmt, ap, stderr );
 	va_end( ap );
-	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
+#endif
+

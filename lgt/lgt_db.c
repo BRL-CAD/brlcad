@@ -55,39 +55,39 @@ int		id;
 		prnt_Scroll( "LIGHT SOURCE [%d] %s\n", id, entry->name );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tmanual overide\t(%s)\n", entry->over ? "ON" : "OFF" );
+		prnt_Scroll( "       manual overide\t(%s)\n", entry->over ? "ON" : "OFF" );
 		if( entry->stp == SOLTAB_NULL || entry->over )
 			{
 			if( --lines <= 0 && ! do_More( &lines ) )
 				break;
-			prnt_Scroll( "\tazimuth\t\t(%g)\n", entry->azim*DEGRAD );
+			prnt_Scroll( "       azimuth\t\t(%g)\n", entry->azim*DEGRAD );
 			if( --lines <= 0 && ! do_More( &lines ) )
 				break;
-			prnt_Scroll( "\televation\t(%g)\n", entry->elev*DEGRAD );
+			prnt_Scroll( "       elevation\t(%g)\n", entry->elev*DEGRAD );
 			}
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tdistance\t(%g)\n", entry->dist );
+		prnt_Scroll( "       distance\t\t(%g)\n", entry->dist );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tlocation\t<%g,%g,%g>\n",
+		prnt_Scroll( "       location\t\t<%g,%g,%g>\n",
 				entry->loc[X], entry->loc[Y], entry->loc[Z]
 				);
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tgaussian beam\t(%s)\n", entry->beam ? "ON" : "OFF" );
+		prnt_Scroll( "       gaussian beam\t(%s)\n", entry->beam ? "ON" : "OFF" );
 		if( entry->beam )
 			{
 			if( --lines <= 0 && ! do_More( &lines ) )
 				break;
-			prnt_Scroll( "\tbeam radius\t(%g)\n", entry->radius );
+			prnt_Scroll( "       beam radius\t(%g)\n", entry->radius );
 			}
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tintensity\t(%g)\n", entry->energy );
+		prnt_Scroll( "       intensity\t(%g)\n", entry->energy );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "\tcolor\t\t(%d %d %d)\n",
+		prnt_Scroll( "       color\t\t(%d %d %d)\n",
 				entry->rgb[0], entry->rgb[1], entry->rgb[2]
 				);
 		}
@@ -99,7 +99,7 @@ int		id;
 	Open light source database and read entries into table,
 	return number of entries successfully read.
  */
-lgt_Read_Db( file )
+lgt_Rd_Db( file )
 char	*file;
 	{	register Lgt_Source	*entry;
 		register FILE		*fp;

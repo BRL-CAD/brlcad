@@ -52,7 +52,7 @@ char	err_file[MAX_LN] = { 0 };    /* Error log (redirected stderr).	*/
 char	mat_db_file[MAX_LN] = { 0 }; /* Material database file.		*/
 char	lgt_db_file[MAX_LN] = { 0 }; /* Light source database file.	*/
 char	ir_db_file[MAX_LN] = { 0 };  /* IR database file.		*/
-char	texture_file[MAX_LN] = { 0 };/* Texture map file.		*/
+char	txtr_file[MAX_LN] = { 0 };/* Texture map file.		*/
 char	fb_file[MAX_LN] = { 0 };     /* Raster image output.		*/
 char	ir_file[MAX_LN] = { 0 };     /* IR input data.			*/
 
@@ -103,18 +103,18 @@ int	anti_aliasing = FALSE;	/* Anti-aliasing thru over-sampling.	*/
 int	aperture_sz = 1;	/* Size of window for over-sampling.	*/
 int	background[3];		/* Background as RGB values.		*/
 int	co;			/* Number of columns on screen/layer.	*/
-int	dispatch_fd;		/* File to dispatch scans in parallel.	*/
-int	tracking_cursor = TRUE;	/* Cursor is on by default.		*/
+int	tracking_cursor=FALSE;	/* Cursor is on by default.		*/
 int	fb_width = 512;		/* Width of input scans in fb map.	*/
 int	fb_ulen = 512;		/* Width in pixels of fb map.		*/
 int	fb_vlen = 512;		/* Height in pixels of fb map.		*/
-int	grid_dist_flag = FALSE;	/* Did user set distance yet.		*/
+int	grid_position = FALSE;	/* Did user set distance yet.		*/
 int	save_view_flag = FALSE;	/* View specified in "model2view".	*/
+int	hiddenln_draw = FALSE;	/* Generate hidden-line drawing.	*/
 int	ir_noise = 2;		/* Threshold for subdivision of octree.	*/
 int	ir_min = ABSOLUTE_ZERO;	/* IR input temperature ranges.		*/
 int	ir_max = ABSOLUTE_ZERO;
 int	ir_paint;		/* For temperature-to-location mapping.	*/
-int	ir_paint_flag = FALSE;	/* Is user doing above mapping.		*/
+int	ir_doing_paint = FALSE;	/* Is user doing above mapping.		*/
 int	ir_offset = FALSE;	/* Has user specified auto mapping.	*/
 int	ir_mapx, ir_mapy;	/* Auto mapping offsets for above.	*/
 int	ir_mapping = IR_OFF;	/* IR mapping.				*/
@@ -134,6 +134,7 @@ int	grid_x_cur = 0; /* Grid x current position.			*/
 int	grid_y_cur = 0; /* Grid y current position.			*/
 int	grid_y_org = 0;	/* Grid y position to begin ray-tracing.	*/
 int	grid_y_fin = 32;/* Grid y position to end ray-tracing.		*/
+int	report_overlaps = TRUE;	/* If (false) shut-up about overlaps.	*/
 int	x_fb_origin = 0;/* Display origin left-most pixel to display.	*/
 int	y_fb_origin = 0;/* Display origin top-most pixel to display.	*/
 int	li;		/* Number of lines in window.			*/
