@@ -161,6 +161,11 @@ struct application	*ap;
 			 * Segment starts exactly at last partition's end,
 			 * or beyond last partitions end.  Make new partition.
 			 */
+			if(rt_g.debug&DEBUG_PARTITION)  {
+				rt_log("seg starts beyond last part end. (%g,%g) Appending new part.\n",
+					PartHdp->pt_back->pt_inhit->hit_dist,
+					PartHdp->pt_back->pt_outhit->hit_dist);
+			}
 			GET_PT_INIT( rtip, pp, res );
 			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 			pp->pt_inseg = segp;
@@ -168,7 +173,6 @@ struct application	*ap;
 			pp->pt_outseg = segp;
 			pp->pt_outhit = &segp->seg_out;
 			APPEND_PT( pp, PartHdp->pt_back );
-			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts beyond part end\n");
 			goto done_weave;
 		}
 
@@ -185,7 +189,11 @@ struct application	*ap;
 				 *	        SSSS
 				 * Advance to next partition.
 				 */
-				if(rt_g.debug&DEBUG_PARTITION)  rt_log("seg start beyond end, skipping\n");
+				if(rt_g.debug&DEBUG_PARTITION)  {
+					rt_log("seg start beyond part end, skipping.  (%g,%g)\n",
+						pp->pt_inhit->hit_dist,
+						pp->pt_outhit->hit_dist);
+				}
 				continue;
 			}
 			if( diff > -(ap->a_rt_i->rti_tol.dist) )  {
@@ -214,6 +222,7 @@ struct application	*ap;
 			if( diff > ap->a_rt_i->rti_tol.dist )  {
 				/*
 				 * lasthit->hit_dist > pp->pt_inhit->hit_dist
+				 * pp->pt_inhit->hit_dist < lasthit->hit_dist
 				 *
 				 *  Segment starts after partition starts,
 				 *  but before the end of the partition.
@@ -236,6 +245,28 @@ struct application	*ap;
 				goto equal_start;
 			}
 			if( diff > -(ap->a_rt_i->rti_tol.dist) )  {
+				/*
+				 * Make a subtle but important distinction here.
+				 * Even though the two distances are "equal"
+				 * within tolerance, they are not exactly
+				 * the same.  If the new segment is slightly
+				 * closer to the ray origin, then use it's
+				 * IN point.
+				 * This is an attempt to reduce the deflected
+				 * normals sometimes seen along the edges of
+				 * e.g. a cylinder unioned with an ARB8,
+				 * where the ray hits the top of the cylinder
+				 * and the *side* face of the ARB8 rather
+				 * than the top face of the ARB8.
+				 */
+				diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
+				if( NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist) &&
+				    diff < 0 )  {
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("changing partition start point to segment start point\n");
+					pp->pt_inseg = segp;
+					pp->pt_inhit = &segp->seg_in;
+					pp->pt_inflip = 0;
+				}
 equal_start:
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("equal_start\n");
 				/*
@@ -594,6 +625,8 @@ struct application *ap;
 				pp->pt_forw->pt_inhit->hit_dist = pp->pt_outhit->hit_dist;
 			} else if( diff > 0 )  {
 				rt_log("rt_boolfinal:  sorting defect %e > %e! x%d y%d lvl%d\n",
+					pp->pt_outhit->hit_dist,
+					pp->pt_forw->pt_inhit->hit_dist,
 					ap->a_x, ap->a_y, ap->a_level );
 				if( !(rt_g.debug & DEBUG_PARTITION) )
 					rt_pr_partitions( ap->a_rt_i, InputHdp, "With DEFECT" );
