@@ -162,7 +162,6 @@ static struct cmdtab cmdtab[] = {
 	{"attach", f_attach},
 #endif
 	{"attr",	cmd_attr},
-	{"attr_rm",	cmd_attr_rm},
 	{"autoview", cmd_autoview},
 	{"B", cmd_blast},
 	{"bev", f_bev},
@@ -2280,17 +2279,6 @@ cmd_attr(ClientData	clientData,
 	CHECK_DBI_NULL;
 
 	return wdb_attr_cmd(wdbp, interp, argc, argv);
-}
-
-int
-cmd_attr_rm(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
-{
-	CHECK_DBI_NULL;
-
-	return wdb_attr_rm_cmd(wdbp, interp, argc, argv);
 }
 
 int
