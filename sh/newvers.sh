@@ -1,7 +1,9 @@
 #!/bin/sh
-#			newvers.sh
+#			mged/newvers.sh
 #
-# This version for 4.2BSD
+# Update the "version" file, and create a new "vers.c" from it.
+#
+#	@(#)$Header$ (BRL)
 
 if test ! -r version ; then echo 0 > version; fi
 DIR=`pwd`
@@ -10,4 +12,9 @@ touch version
 awk '	{	version = $1 + 1; }\
 END	{	printf "char version[] = \"@(#) BRL Graphics Editor (MGED) Version 2.%d", version > "vers.c";\
 		printf "%d\n", version > "version"; }' < version
-/bin/echo '\n    '`date`'\n    '$USER'@'`hostname`':'$DIR'\n";' >> vers.c
+if test x`machinetype.sh -s` = BSD
+then
+	/bin/echo '\n    '`date`'\n    '$USER'@'`hostname`':'$DIR'\n";' >> vers.c
+else
+	echo '\\n    '`date`'\\n    '$USER'@'`uname -n`':'$DIR'\\n";' >> vers.c
+fi
