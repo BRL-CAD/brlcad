@@ -1183,9 +1183,9 @@ char	*framename;
 	ap->a_cumlen = 0.0;
 	ap->a_miss = hit_nothing;
 	if (rpt_overlap)
-		ap->a_overlap = RT_AFN_NULL;
+		ap->a_logoverlap = ((void (*)())0);
 	else
-		ap->a_overlap = rt_overlap_quietly;
+		ap->a_logoverlap = rt_silent_logoverlap;
 	ap->a_onehit = -1;		/* Require at least one non-air hit */
 	if (rpt_dist)
 		pwidth = 3+8;
