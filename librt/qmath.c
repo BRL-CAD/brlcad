@@ -65,11 +65,12 @@ register mat_t	mat;
 {
 	fastf_t		tr;
 	FAST fastf_t	s;
-	int		i,j,k;
 
 #define XX	0
 #define YY	5
 #define ZZ	10
+#define M(a,b)		mat[4*(a)+(b)]
+
 	tr = mat[XX] + mat[YY] + mat[ZZ];
 	if( tr > 0.0 )  {
 		s = sqrt( tr + 1.0 );
@@ -84,25 +85,37 @@ register mat_t	mat;
 	/* Find dominant element of primary diagonal */
 	if( mat[YY] > mat[XX] )  {
 		if( mat[ZZ] > mat[YY] )  {
-			i = Z; j = X; k = Y;
+			s = sqrt( M(Z,Z) - (M(X,X)+M(Y,Y)) + 1.0 );
+			quat[Z] = s * 0.5;
+			s = 0.5 / s;
+			quat[W] = (M(X,Y) - M(Y,X)) * s;
+			quat[X] = (M(Z,X) + M(X,Z)) * s;
+			quat[Y] = (M(Z,Y) + M(Y,Z)) * s;
 		} else {
-			i = Y; j = Z; k = X;
+			s = sqrt( M(Y,Y) - (M(Z,Z)+M(X,X)) + 1.0 );
+			quat[Y] = s * 0.5;
+			s = 0.5 / s;
+			quat[W] = (M(Z,X) - M(X,Z)) * s;
+			quat[Z] = (M(Y,Z) + M(Z,Y)) * s;
+			quat[X] = (M(Y,X) + M(X,Y)) * s;
 		}
 	} else {
 		if( mat[ZZ] > mat[XX] )  {
-			i = Z; j = X; k = Y;
+			s = sqrt( M(Z,Z) - (M(X,X)+M(Y,Y)) + 1.0 );
+			quat[Z] = s * 0.5;
+			s = 0.5 / s;
+			quat[W] = (M(X,Y) - M(Y,X)) * s;
+			quat[X] = (M(Z,X) + M(X,Z)) * s;
+			quat[Y] = (M(Z,Y) + M(Y,Z)) * s;
 		} else {
-			i = X; j = Y; k = Z;
+			s = sqrt( M(X,X) - (M(Y,Y)+M(Z,Z)) + 1.0 );
+			quat[X] = s * 0.5;
+			s = 0.5 / s;
+			quat[W] = (M(Y,Z) - M(Z,Y)) * s;
+			quat[Y] = (M(X,Y) + M(Y,X)) * s;
+			quat[Z] = (M(X,Z) + M(Z,X)) * s;
 		}
 	}
-
-#define M(a,b)		mat[4*(a)+(b)]
-	s = sqrt( M(i,i) - (M(j,j)+M(k,k)) + 1.0 );
-	quat[i] = s * 0.5;
-	s = 0.5 / s;
-	quat[W] = (M(j,k) - M(k,j)) * s;
-	quat[j] = (M(i,j) + M(j,i)) * s;
-	quat[k] = (M(i,k) + M(k,i)) * s;
 #undef M
 }
 
