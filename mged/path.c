@@ -196,13 +196,20 @@ matp_t matp;
 		parentp = sp->s_path[i];
 		kidp = sp->s_path[i+1];
 		for( j=1; j < parentp->d_len; j++ )  {
+			register int k;
+			static mat_t xmat;	/* temporary fastf_t matrix */
+
 			/* Examine Member records */
 			db_getrec( parentp, &rec, j );
-			if( strcmp( kidp->d_namep, rec.M.m_instname ) == 0 ) {
-				    mat_mul( tmat, matp, rec.M.m_mat );
-				    mat_copy( matp, tmat );
-				    goto next_level;
-			}
+			if( strcmp( kidp->d_namep, rec.M.m_instname ) != 0 )
+				continue;
+
+			/* convert matrix to fastf_t from disk format */
+			for( k=0; k<4*4; k++ )
+				xmat[k] = rec.M.m_mat[k];
+			mat_mul( tmat, matp, xmat );
+			mat_copy( matp, tmat );
+			goto next_level;
 		}
 		(void)printf("pathHmat: unable to follow %s/%s path\n",
 			parentp->d_namep, kidp->d_namep );
