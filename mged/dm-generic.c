@@ -133,8 +133,8 @@ char **argv;
 
     fx = dm_Xx2Normal(dmp, atoi(argv[1]));
     fy = dm_Xy2Normal(dmp, atoi(argv[2]), 0);
-    x = fx * 2047.0;
-    y = fy * 2047.0;
+    x = fx * GED_MAX;
+    y = fy * GED_MAX;
 
     if(mged_variables->faceplate &&
        mged_variables->orig_gui){
@@ -153,7 +153,7 @@ char **argv;
 
     mged_variables->orig_gui = 0;
     fy = dm_Xy2Normal(dmp, atoi(argv[2]), 1);
-    y = fy * 2047.0;
+    y = fy * GED_MAX;
 
 end:
     bu_vls_init(&vls);
@@ -190,24 +190,24 @@ end:
     }else if(mged_variables->mouse_behavior == 's' && !stolen){
       if(mged_variables->grid_snap){
 	snap_to_grid(&fx, &fy);
-	x = fx * 2047.0;
-	y = fy * 2047.0;
+	x = fx * GED_MAX;
+	y = fy * GED_MAX;
       }
       
       bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
     }else if(mged_variables->mouse_behavior == 'o' && !stolen){
       if(mged_variables->grid_snap){
 	snap_to_grid(&fx, &fy);
-	x = fx * 2047.0;
-	y = fy * 2047.0;
+	x = fx * GED_MAX;
+	y = fy * GED_MAX;
       }
       
       bu_vls_printf(&vls, "mouse_object_edit_select %d %d", x, y);
     }else if(mged_variables->mouse_behavior == 'c' && !stolen){
       if(mged_variables->grid_snap){
 	snap_to_grid(&fx, &fy);
-	x = fx * 2047.0;
-	y = fy * 2047.0;
+	x = fx * GED_MAX;
+	y = fy * GED_MAX;
       }
       
       bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
@@ -358,8 +358,8 @@ end:
 
     switch(*argv[1]){
     case '1':
-      fx = dm_Xx2Normal(dmp, dml_omx) * 2047.0 - dv_xadc;
-      fy = dm_Xy2Normal(dmp, dml_omy, 1) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - dv_xadc;
+      fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - dv_yadc;
 
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
@@ -369,8 +369,8 @@ end:
       am_mode = AMM_ADC_ANG1;
       break;
     case '2':
-      fx = dm_Xx2Normal(dmp, dml_omx) * 2047.0 - dv_xadc;
-      fy = dm_Xy2Normal(dmp, dml_omy, 1) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - dv_xadc;
+      fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - dv_yadc;
 
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
@@ -403,10 +403,10 @@ end:
 
       break;
     case 'd':
-      fx = (dm_Xx2Normal(dmp, dml_omx) * 2047.0 -
-	    dv_xadc) * Viewscale * base2local / 2047.0;
-      fy = (dm_Xy2Normal(dmp, dml_omy, 1) * 2047.0 -
-	    dv_yadc) * Viewscale * base2local / 2047.0;
+      fx = (dm_Xx2Normal(dmp, dml_omx) * GED_MAX -
+	    dv_xadc) * Viewscale * base2local * INV_GED;
+      fy = (dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX -
+	    dv_yadc) * Viewscale * base2local * INV_GED;
 
       td = sqrt(fx * fx + fy * fy);
       bu_vls_init(&vls);

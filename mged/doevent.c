@@ -206,8 +206,8 @@ XMotionEvent *xmotion;
   case AMM_IDLE:
     if(scroll_active)
       bu_vls_printf( &cmd, "M 1 %d %d\n",
-		     (int)(dm_Xx2Normal(dmp, mx) * 2047.0),
-		     (int)(dm_Xy2Normal(dmp, my, 0) * 2047.0) );
+		     (int)(dm_Xx2Normal(dmp, mx) * GED_MAX),
+		     (int)(dm_Xy2Normal(dmp, my, 0) * GED_MAX) );
     else if(rubber_band_active){
       fastf_t x = dm_Xx2Normal(dmp, mx);
       fastf_t y = dm_Xy2Normal(dmp, my, 1);
@@ -224,8 +224,8 @@ XMotionEvent *xmotion;
       /* do the regular thing */
       /* Constant tracking (e.g. illuminate mode) bound to M mouse */
       bu_vls_printf( &cmd, "M 0 %d %d\n",
-		     (int)(dm_Xx2Normal(dmp, mx) * 2047.0),
-		     (int)(dm_Xy2Normal(dmp, my, 1) * 2047.0) );
+		     (int)(dm_Xx2Normal(dmp, mx) * GED_MAX),
+		     (int)(dm_Xy2Normal(dmp, my, 1) * GED_MAX) );
     else /* not doing motion */
       goto handled;
 
@@ -366,14 +366,14 @@ XMotionEvent *xmotion;
 
     break;
   case AMM_ADC_ANG1:
-    fx = dm_Xx2Normal(dmp, mx) * 2047.0 - dv_xadc;
-    fy = dm_Xy2Normal(dmp, my, 1) * 2047.0 - dv_yadc;
+    fx = dm_Xx2Normal(dmp, mx) * GED_MAX - dv_xadc;
+    fy = dm_Xy2Normal(dmp, my, 1) * GED_MAX - dv_yadc;
     bu_vls_printf(&cmd, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 
     break;
   case AMM_ADC_ANG2:
-    fx = dm_Xx2Normal(dmp, mx) * 2047.0 - dv_xadc;
-    fy = dm_Xy2Normal(dmp, my, 1) * 2047.0 - dv_yadc;
+    fx = dm_Xx2Normal(dmp, mx) * GED_MAX - dv_xadc;
+    fy = dm_Xy2Normal(dmp, my, 1) * GED_MAX - dv_yadc;
     bu_vls_printf(&cmd, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 
     break;
@@ -394,8 +394,8 @@ XMotionEvent *xmotion;
 
     break;
   case AMM_ADC_DIST:
-    fx = (dm_Xx2Normal(dmp, mx) * 2047.0 - dv_xadc) * Viewscale * base2local / 2047.0;
-    fy = (dm_Xy2Normal(dmp, my, 1) * 2047.0 - dv_yadc) * Viewscale * base2local / 2047.0;
+    fx = (dm_Xx2Normal(dmp, mx) * GED_MAX - dv_xadc) * Viewscale * base2local * INV_GED;
+    fy = (dm_Xy2Normal(dmp, my, 1) * GED_MAX - dv_yadc) * Viewscale * base2local * INV_GED;
     td = sqrt(fx * fx + fy * fy);
     bu_vls_printf(&cmd, "adc dst %lf\n", td);
 
@@ -714,7 +714,7 @@ XDeviceMotionEvent *dmep;
 
       setting = dm_limit(dml_knobs[dmep->first_axis]);
       bu_vls_printf( &cmd, "knob ang1 %f\n",
-		     45.0 - 45.0*((double)setting)/2047.0);
+		     45.0 - 45.0*((double)setting) * INV_GED);
     }else{
       if(mged_variables->rateknobs){
 	f = rate_model_rotate[Z];
@@ -796,7 +796,7 @@ XDeviceMotionEvent *dmep;
 
       setting = dm_limit(dml_knobs[dmep->first_axis]);
       bu_vls_printf( &cmd, "knob ang2 %f\n",
-		     45.0 - 45.0*((double)setting)/2047.0);
+		     45.0 - 45.0*((double)setting) * INV_GED);
     }else {
       if(mged_variables->rateknobs){
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
