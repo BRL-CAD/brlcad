@@ -22,7 +22,9 @@ extern int optind, opterr, getopt();
 char *progname = "(noname)";
 #define DEBUG_NAMES 1
 #define DEBUG_STATS 2
+#define DEBUG_ONLY_TRI 4
 #define DEBUG_QUAD 8
+#define DEBUG_BOTS 0x10
 long debug = 0;
 int verbose = 0;
 
@@ -102,6 +104,9 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
     fastf_t *v = bot->vertices;
     int i, tmp;
 
+    RT_BOT_CK_MAGIC(bot);
+
+    if (debug&DEBUG_ONLY_TRI) return 0;
 
     if (faceidx >= bot->num_faces-1) return 0;
 
@@ -109,7 +114,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 	fprintf(stderr, "tris_are_planar_quad()\n");
 	for (i=0 ; i < 6 ;i++) {
 	    fprintf(stderr, "%d: %d   %7g %7g %7g\n", i, vnum[i], 
-		    V3ARGS(&v[3*vnum[i]]));
+		    V3ARGS(&v[3* vnum[i]]));
 	}
     }
     /* compare the surface normals */
@@ -118,8 +123,8 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
      * this is probably a bogus face, and something bad has happened
      */
     if (vnum[0] > bot->num_vertices-1) {
-	fprintf(stderr, "Bounds error\n");
-	abort();
+	fprintf(stderr, "Bounds error %d > %d\n",
+		vnum[0], bot->num_vertices-1);	abort();
     }
 
 
@@ -369,6 +374,123 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fclose(FH);
 }
 
+int r_start (
+		struct db_tree_state * tsp,
+		struct db_full_path * pathp,
+		const struct rt_comb_internal * combp,
+		genptr_t client_data )
+{
+    int i;
+    if (debug&DEBUG_NAMES) {
+	bu_log("r_start %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
+	for (i=0 ; i < pathp->fp_len ; i++) {
+	    if (pathp->fp_len - (i+1)) {
+		bu_log("%s/", pathp->fp_names[i]->d_namep);
+	    } else {
+		bu_log("%s\n", pathp->fp_names[i]->d_namep);
+	    }
+	}
+    }
+    return 0;
+}
+
+union tree *r_end (
+		struct db_tree_state * tsp,
+		struct db_full_path * pathp,
+		union tree * curtree,
+		genptr_t client_data )
+{
+    int i;
+    if (debug&DEBUG_NAMES) {
+	bu_log("r_end %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
+	for (i=0 ; i < pathp->fp_len ; i++) {
+	    if (pathp->fp_len - (i+1)) {
+		bu_log("%s/", pathp->fp_names[i]->d_namep);
+	    } else {
+		bu_log("%s\n", pathp->fp_names[i]->d_namep);
+	    }
+	}
+    }
+
+    return curtree;
+}
+
+void add_bots(struct rt_bot_internal *bot_dest, 
+	      struct rt_bot_internal *bot_src) 
+{
+    int i = bot_dest->num_vertices + bot_src->num_vertices;
+    int sz = sizeof(fastf_t) * 3;
+    int *ptr;
+
+    if (debug&DEBUG_BOTS)
+    bu_log("adding bots v:%d f:%d  v:%d f:%d\n",
+	   bot_dest->num_vertices, bot_dest->num_faces,
+	   bot_src->num_vertices, bot_src->num_faces);
+
+    /* allocate space for extra vertices */
+    bot_dest->vertices = 
+	bu_realloc(bot_dest->vertices, i * sz, "new vertices");
+
+    /* copy new vertices */
+    memcpy(&bot_dest->vertices[bot_dest->num_vertices],
+	   bot_src->vertices, 
+	   bot_src->num_vertices * sz);
+
+    /* allocate space for new faces */
+    i = bot_dest->num_faces + bot_src->num_faces;
+    sz = sizeof(int) * 3;
+    bot_dest->faces = bu_realloc(bot_dest->faces, i * sz, "new faces");
+    
+    /* copy new faces, making sure that we update the vertex indices to
+     * point to their new locations
+     */
+    ptr = &bot_src->faces[bot_src->num_faces*3];
+    int limit = bot_src->num_faces * 3;
+    for (i=0 ; i < limit ; i++)
+	ptr[i] = bot_src->faces[i] + bot_dest->num_vertices;
+
+    bot_dest->num_vertices += bot_src->num_vertices;
+    bot_dest->num_faces += bot_src->num_faces;
+
+    if (debug&DEBUG_BOTS)
+    bu_log("...new bot v:%d f:%d\n",
+	   bot_dest->num_vertices, bot_dest->num_faces);
+}
+
+union tree * l_func (
+		struct db_tree_state * tsp,
+		struct db_full_path * pathp,
+		struct rt_db_internal * ip,
+		genptr_t client_data )
+{
+    int i;
+    struct rt_bot_internal *bot;
+
+    if (debug&DEBUG_NAMES) {
+	for (i=0 ; i < pathp->fp_len ; i++) {
+	    if (pathp->fp_len - (i+1)) {
+		bu_log("%s/", pathp->fp_names[i]->d_namep);
+	    } else {
+		bu_log("%s", pathp->fp_names[i]->d_namep);
+	    }
+	}
+    }
+
+
+    if (ip->idb_minor_type != ID_BOT) {
+	if (debug&DEBUG_NAMES)
+	    bu_log(" is not a bot\n");
+	return (union tree *)NULL;
+    }
+    if (debug&DEBUG_NAMES)
+	bu_log("\n");
+
+    bot = ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+	
+    add_bots((struct rt_bot_internal *)client_data, bot);
+    return (union tree *)NULL;
+}
 
 /*
  *	M A I N
@@ -416,16 +538,34 @@ int main(int ac, char *av[])
 		continue;
 	    }
 
-	    if (intern.idb_minor_type != ID_BOT) {
-		if (debug&DEBUG_NAMES)
-		    fprintf(stderr, "%s is not a BOT\n", av[arg_count]);
+	    if (intern.idb_minor_type == ID_BOT) {
+		/* write a single file */
+		bot = (struct rt_bot_internal *)intern.idb_ptr;
+		write_dxf(bot, av[arg_count]);
+	    } else {
+		/* user has asked for a tree.  Write 1 DXF file for 
+		 * all the bots in that tree.
+		 */
+		char **sub_av;
+		struct db_tree_state init_state = rt_initial_tree_state;
+		struct rt_bot_internal my_bot;
+
+		my_bot.vertices = (fastf_t *)NULL;
+		my_bot.faces = (int *)NULL;
+		my_bot.num_vertices = 0;
+		my_bot.num_faces = 0;
+		my_bot.magic = RT_BOT_INTERNAL_MAGIC;
+		RT_BOT_CK_MAGIC(&my_bot);
+
+		sub_av = &dirp->d_namep;
+
+		db_walk_tree(rtip->rti_dbip, 1, (const char **)sub_av, 1,
+			     &init_state, r_start, r_end, l_func, &my_bot);
+
+		RT_BOT_CK_MAGIC(&my_bot);
+		write_dxf(&my_bot, av[arg_count]);
 		continue;
 	    }
-
-	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-
-	    write_dxf(bot, av[arg_count]);
-
 	}
     } else {
 	mat_t mat;
@@ -434,12 +574,11 @@ int main(int ac, char *av[])
 	mat_idn(mat);
 
 	/* dump all the bots */
-FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
+	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 
         /* we only dump BOT primitives, so skip some obvious exceptions */
-	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
-	    dp->d_flags & DIR_COMB)
-	    continue;
+        if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	if (dp->d_flags & DIR_COMB) continue;
 
 	if (debug&DEBUG_NAMES)
 	    fprintf(stderr, "%s\n", dp->d_namep);
