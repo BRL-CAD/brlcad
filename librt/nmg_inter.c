@@ -1,4 +1,5 @@
-#define NEWLINE 1
+#define NO_SEARCH	0	/* Don't search for a vert for nmg_ebreak() */
+#define NEWLINE 1	/* "New" algorithm:  isect line with 2 faces in 2d */
 
 /*
  *			N M G _ I N T E R . C
@@ -679,7 +680,11 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 	 * Otherwise, re-use the existing one.
 	 * Can't just search other face, might miss relevant vert.
 	 */
+#if NO_SEARCH
+	v2 = (struct vertex *)NULL;
+#else
 	v2 = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
+#endif
 	if (v2) {
 		/* the other face has a convenient vertex for us */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -1326,7 +1331,11 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 			struct vertex		*new_v2;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
+#if NO_SEARCH
+			new_v2 = (struct vertex *)NULL;
+#else
 			new_v2 = nmg_find_pt_in_model(m, hit_pt, &(is->tol) );
+#endif
 			new_vu2 = nmg_ebreak( new_v2, eu2 )->vu_p;
 			if( !new_v2 )  {
 				/* A new vertex was created, assign geom */
@@ -2147,10 +2156,12 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 		VPRINT("->dir", is->dir);
 	}
 
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu2);
 if(fu1)nmg_fu_touchingloops(fu1);
 nmg_region_v_unique( is->s2->r_p, &is->tol );
 nmg_region_v_unique( is->s1->r_p, &is->tol );
+	}
 	/* Run through the list until no more edges are split in either face */
 	total_splits = 0;
 	do  {
@@ -2177,10 +2188,12 @@ nmg_region_v_unique( is->s1->r_p, &is->tol );
 					another_pass++;	/* edge was split */
 					total_splits++;
 				}
+				if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu2);
 if(fu1)nmg_fu_touchingloops(fu1);
 nmg_region_v_unique( is->s2->r_p, &is->tol );
 nmg_region_v_unique( is->s1->r_p, &is->tol );
+				}
 			}
 		}
 		if (rt_g.NMG_debug & DEBUG_POLYSECT && another_pass > 0 )
@@ -2278,10 +2291,12 @@ struct faceuse		*fu1, *fu2;
 
 	/* For every edge in f1, intersect with f2, incl. cutjoin */
 f1_again:
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
+	}
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
@@ -2304,10 +2319,12 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 
 	/* For every edge in f2, intersect with f1, incl. cutjoin */
 f2_again:
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
+	}
 	for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
@@ -2324,10 +2341,12 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 			}
 		}
 	}
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
+	}
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_two_face2p(fu1=x%x, fu2=x%x) END\n", fu1, fu2);
 }
@@ -2626,7 +2645,11 @@ struct faceuse		*fu2;
 		 * Otherwise, re-use the existing one.
 		 * Can't just search other face, might miss relevant vert.
 		 */
+#if NO_SEARCH
+		new_v = (struct vertex *)NULL;
+#else
 		new_v = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
+#endif
 		vu1_final = nmg_ebreak(new_v, eu1)->vu_p;
 		ret = 1;
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1_final->l.magic);
@@ -2740,8 +2763,10 @@ struct faceuse		*fu2;
 	MAT4X3VEC( is->dir2d, is->proj, is->dir );
 
 nmg_ck_face_worthless_edges( fu1 );
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+	}
 	/* Split all edges that cross the line of intersection */
 	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
 		struct edgeuse	*eu1;
@@ -2758,13 +2783,17 @@ nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
 			/* intersect line with eu1 */
 			nbreak += nmg_isect_line2_edge2p( is, list, eu1, fu1, fu2 );
+			if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+			}
 		}
 	}
 
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+	}
 
 do_ret:
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
