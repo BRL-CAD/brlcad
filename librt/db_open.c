@@ -147,6 +147,11 @@ char	*mode;
 			if( read( dbip->dbi_fd, dbip->dbi_inmem,
 			    sb.st_size ) != sb.st_size )
 				goto fail;
+
+			/* Lseek required by Linux to get "fd" and "fp"
+			   in agreement at start of file */
+			if( lseek( dbip->dbi_fd, 0, SEEK_SET ) == (-1) )
+				goto fail;
 			if(rt_g.debug&DEBUG_DB)
 				rt_log("db_open: in-memory file\n");
 		}
