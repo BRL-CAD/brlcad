@@ -1581,8 +1581,14 @@ struct application  {
 	/* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
 	struct resource	*a_resource;	/* dynamic memory resources */
 	int		(*a_overlap)();	/* DEPRECATED */
-	void		(*a_multioverlap)BU_ARGS( (struct application *, struct partition *, struct bu_ptbl *, struct partition *) );	/* called to resolve overlaps */
-	void		(*a_logoverlap)BU_ARGS( (struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *) );	/* called to log overlaps */
+	void		(*a_multioverlap)BU_ARGS( (struct application *,	/* called to resolve overlaps */
+						   struct partition *,
+						   struct bu_ptbl *,
+						   struct partition *) );
+	void		(*a_logoverlap)BU_ARGS( (struct application *,	/* called to log overlaps */
+						 const struct partition *,
+						 const struct bu_ptbl *,
+						 const struct partition *) );
 	int		a_level;	/* recursion level (for printing) */
 	int		a_x;		/* Screen X of ray, if applicable */
 	int		a_y;		/* Screen Y of ray, if applicable */
@@ -3095,6 +3101,9 @@ int rt_pg_plot_poly(struct bu_list		*vhead,
 
 /* g_hf.c */
 int rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp);
+
+/* g_dsp.c */
+BU_EXTERN(int dsp_pos, (point_t out, struct soltab *stp, point_t p));
 
 /* pr.c */
 BU_EXTERN(void rt_pr_soltab, (const struct soltab *stp));
