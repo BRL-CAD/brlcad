@@ -58,6 +58,7 @@ extern void	worker();
 /***** variables shared with worker() ******/
 extern struct application ap;
 extern int	hypersample;		/* number of extra rays to fire */
+extern fastf_t	aspect;			/* view aspect ratio X/Y */
 extern point_t	eye_model;		/* model-space location of eye */
 extern fastf_t  eye_backoff;		/* dist of eye from center */
 extern int	width;			/* # of pixels in X */
@@ -260,14 +261,14 @@ char	**argv;
 	register struct rt_i *rtip = ap.a_rt_i;
 	int i;
 	static int a[] = {
-		-35,   0,
+		 35,   0,
 		  0,  90, 135, 180, 225, 270, 315,
 		  0,  90, 135, 180, 225, 270, 315
 	};
 	static int e[] = {
-		-25, -90,
-		-30, -30, -30, -30, -30, -30, -30,
-		-60, -60, -60, -60, -60, -60, -60
+		25, 90,
+		30, 30, 30, 30, 30, 30, 30,
+		60, 60, 60, 60, 60, 60, 60
 	};
 
 	if( rtip->HeadRegion == REGION_NULL )  {
@@ -651,17 +652,14 @@ int framenumber;
 /*
  *			D O _ A E
  *
- *  Compute the rotation specified by the azimuth and
- *  elevation parameters.  First, note that these are
- *  specified relative to the GIFT "front view", ie,
- *  model (X,Y,Z) is view (Z,X,Y):  looking down X axis.
- *  Then, a positive azimuth represents rotating the *model*
- *  around the Y axis, or, rotating the *eye* in -Y.
- *  A positive elevation represents rotating the *model*
- *  around the X axis, or, rotating the *eye* in -X.
- *  This is the "Gwyn compatable" azim/elev interpretation.
- *  Note that GIFT azim/elev values are the negatives of
- *  this interpretation.
+ *  Compute the rotation specified by the azimuth and elevation
+ *  parameters.  First, note that these are specified relative
+ *  to the GIFT "front view", ie, model (X,Y,Z) is view (Z,X,Y):
+ *  looking down X axis, Y right, Z up.
+ *  A positive azimuth represents rotating the *eye* around the
+ *  Y axis, or, rotating the *model* in -Y.
+ *  A positive elevation represents rotating the *eye* around the
+ *  X axis, or, rotating the *model* in -X.
  */
 void
 do_ae( azim, elev )
@@ -691,7 +689,7 @@ double azim, elev;
 	rtip->mdl_max[Z] = ceil( rtip->mdl_max[Z] );
 
 	mat_idn( Viewrotscale );
-	mat_angles( Viewrotscale, 270.0-elev, 0.0, 270.0+azim );
+	mat_angles( Viewrotscale, 270.0+elev, 0.0, 270.0-azim );
 	fprintf(stderr,
 		"Viewing %g azimuth, %g elevation off of front view\n",
 		azim, elev);
@@ -706,8 +704,13 @@ double azim, elev;
 	 * unless viewsize command used to override.
 	 */
 	VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
-	if( viewsize <= 0 )
+	if( viewsize <= 0 ) {
 		viewsize = MAGNITUDE( diag );
+		if( aspect > 1 ) {
+			/* don't clip any of the image when autoscaling */
+			viewsize *= aspect;
+		}
+	}
 	fprintf(stderr,"view size = %g\n", viewsize);
 
 	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
