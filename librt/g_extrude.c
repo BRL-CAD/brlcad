@@ -2498,6 +2498,7 @@ rt_extrude_xform(
 		RT_INIT_DB_INTERNAL( op );
 		eop = (struct rt_extrude_internal *)bu_malloc( sizeof( struct rt_extrude_internal ), "eop" );
 		eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+		eop->sketch_name = bu_strdup( eip->sketch_name );
 		op->idb_ptr = (genptr_t)eop;
 		op->idb_meth = &rt_functab[ID_EXTRUDE];
 		op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2519,7 +2520,6 @@ rt_extrude_xform(
 	MAT4X3VEC( tmp_vec, mat, eip->v_vec );
 	VMOVE( eop->v_vec, tmp_vec );
 	eop->keypoint = eip->keypoint;
-	eop->sketch_name = bu_strdup( eip->sketch_name );
 
 	if( free && ip != op )
 	{
