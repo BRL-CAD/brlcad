@@ -142,27 +142,46 @@ BU_EXTERN(int	edit_com, (int argc, char **argv, int kind, int catch_sigint));
 /* Delete an object or several objects from the display */
 /* Format: d object1 object2 .... objectn */
 int
-f_delobj(clientData, interp, argc, argv)
+f_erase(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
-int	argc;
-char	**argv;
+int     argc;
+char    **argv;
 {
-	register struct directory *dp;
-	register int i;
+  register struct directory *dp;
+  register int i;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	for( i = 1; i < argc; i++ )  {
-		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
-			eraseobj( dp );
-	}
-	no_memory = 0;
+  for( i = 1; i < argc; i++ )  {
+    if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
+      eraseobj(dp);
+  }
 
-	update_views = 1;
+  no_memory = 0;
+  return TCL_OK;
+}
 
-	return TCL_OK;
+f_erase_all(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  register struct directory *dp;
+  register int i;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  for( i = 1; i < argc; i++ )  {
+    if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
+      eraseobjall(dp);
+  }
+
+  no_memory = 0;
+  return TCL_OK;
 }
 
 /* DEBUG -- force view center */
@@ -1028,47 +1047,86 @@ char	**argv;
 
 
 /*
- *			E R A S E O B J
+ *			E R A S E O B J A L L
  *
  * This routine goes through the solid table and deletes all displays
  * which contain the specified object in their 'path'
  */
 void
+eraseobjall( dp )
+register struct directory *dp;
+{
+  register struct solid *sp;
+  static struct solid *nsp;
+  register int i;
+
+  update_views = 1;
+
+  RT_CK_DIR(dp);
+  sp = BU_LIST_NEXT(solid, &HeadSolid.l);
+  while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
+    nsp = BU_LIST_PNEXT(solid, sp);
+    for( i=0; i<=sp->s_last; i++ )  {
+      if( sp->s_path[i] != dp )  continue;
+
+      if( state != ST_VIEW && illump == sp )
+	button( BE_REJECT );
+      rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
+      BU_LIST_DEQUEUE(&sp->l);
+      FREE_SOLID(sp, &FreeSolid.l);
+
+      break;
+    }
+    sp = nsp;
+  }
+
+  if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
+    if( db_dirdelete( dbip, dp ) < 0 )  {
+      Tcl_AppendResult(interp, "eraseobjall: db_dirdelete failed\n", (char *)NULL);
+    }
+  }
+}
+
+
+/*
+ *			E R A S E O B J
+ *
+ * This routine removes only the specified object from the solid list
+ */
+void
 eraseobj( dp )
 register struct directory *dp;
 {
-	register struct solid *sp;
-	static struct solid *nsp;
-	register int i;
+  register struct solid *sp;
+  register struct solid *nsp;
 
-	update_views = 1;
+  update_views = 1;
+  RT_CK_DIR(dp);
 
-	RT_CK_DIR(dp);
-	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
-	while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
-		nsp = BU_LIST_PNEXT(solid, sp);
-		for( i=0; i<=sp->s_last; i++ )  {
-			if( sp->s_path[i] != dp )  continue;
+  sp = BU_LIST_FIRST(solid, &HeadSolid.l);
+  while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
+    nsp = BU_LIST_PNEXT(solid, sp);
+    if(*sp->s_path != dp){
+      sp = nsp;
+      continue;
+    }
 
-			if( state != ST_VIEW && illump == sp )
-				button( BE_REJECT );
-#if 0
-			dmp->dm_viewchange( dmp, DM_CHGV_DEL, sp );
-#endif
-			rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
-			BU_LIST_DEQUEUE(&sp->l);
-			FREE_SOLID(sp, &FreeSolid.l);
+    if(state != ST_VIEW && illump == sp)
+      button( BE_REJECT );
 
-			break;
-		}
-		sp = nsp;
-	}
-	if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
-		if( db_dirdelete( dbip, dp ) < 0 )  {
-		  Tcl_AppendResult(interp, "eraseobj: db_dirdelete failed\n", (char *)NULL);
-		}
-	}
+    rt_memfree(&(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr);
+    BU_LIST_DEQUEUE(&sp->l);
+    FREE_SOLID(sp, &FreeSolid.l);
+    sp = nsp;
+  }
+
+  if( dp->d_addr == RT_DIR_PHONY_ADDR ){
+    if( db_dirdelete( dbip, dp ) < 0 ){
+      Tcl_AppendResult(interp, "eraseobj: db_dirdelete failed\n", (char *)NULL);
+    }
+  }
 }
+
 
 /*
  *			P R _ S C H A I N
