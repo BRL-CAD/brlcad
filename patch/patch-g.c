@@ -1422,6 +1422,77 @@ nmg_face_g( fu , pl1 );
 }
 
 /*
+ *     This subroutine takes previously generated solid names and combines them
+ *	into a common region identity.  Format of the make_region command call
+ *	requires in order: output file name, input region name, link file of solids,
+ *	region/group flag, material name, material parameters, RGB color assignment, region id #,
+ *	aircode, material code, LOS, and inheritance flag.  The region is then 
+ *	added to a hold file for combination into groups in another process.        
+ */
+void
+proc_region(name1)
+char *name1;
+
+{
+	char tmpname[24];
+	int chkroot;
+	int i;
+	int cc;
+	static int reg_count=0;
+	static int mir_count=0;
+	static int last_cc=0;
+
+
+	if( RT_LIST_IS_EMPTY( &head.l ) )
+		return;
+
+	strcpy( tmpname , name1 );
+
+	chkroot = 0;
+	while( tmpname[chkroot++] != '.' );
+
+	cc = atoi( &tmpname[chkroot] );
+
+	i = strlen( tmpname );
+	while( tmpname[--i] != '.' );
+	tmpname[i] = '\0';
+
+	if( in[0].cc != last_cc )
+	{
+		reg_count = 0;
+		mir_count = 0;
+	}
+
+	if( cc != in[0].cc )
+	{
+		mir_count++;
+		sprintf(cname,"%s.r%.2d",tmpname,mir_count);
+	}
+	else
+	{
+		reg_count++;
+		sprintf(cname,"%s.r%.2d",tmpname,reg_count);
+	}
+
+
+	if( nm[cc].matcode != 0 ) {
+		mk_lrcomb(stdout, cname, &head, 1, 0, 0, 0, cc, 0, nm[cc].matcode, nm[cc].eqlos, 0);
+	}
+	else {
+		mk_lrcomb(stdout, cname, &head, 1, 0, 0, 0, cc, 0, 2, 100, 0);
+	}
+
+	if ( cc == in[0].cc){
+		(void) mk_addmember(cname,&heada,WMOP_UNION);
+	}
+	else{
+		(void) mk_addmember(cname,&headb,WMOP_UNION);
+	}
+
+	last_cc = in[0].cc;
+}
+
+/*
  *	 Process Volume Mode triangular facetted solids  
  */
 proc_triangle(cnt)
@@ -2721,77 +2792,6 @@ int	npts;
 	for( i=0; i<npts; i++ )  {
 		VMOVE( norms[i], n );
 	}
-}
-
-/*
- *     This subroutine takes previously generated solid names and combines them
- *	into a common region identity.  Format of the make_region command call
- *	requires in order: output file name, input region name, link file of solids,
- *	region/group flag, material name, material parameters, RGB color assignment, region id #,
- *	aircode, material code, LOS, and inheritance flag.  The region is then 
- *	added to a hold file for combination into groups in another process.        
- */
-void
-proc_region(name1)
-char *name1;
-
-{
-	char tmpname[24];
-	int chkroot;
-	int i;
-	int cc;
-	static int reg_count=0;
-	static int mir_count=0;
-	static int last_cc=0;
-
-
-	if( RT_LIST_IS_EMPTY( &head.l ) )
-		return;
-
-	strcpy( tmpname , name1 );
-
-	chkroot = 0;
-	while( tmpname[chkroot++] != '.' );
-
-	cc = atoi( &tmpname[chkroot] );
-
-	i = strlen( tmpname );
-	while( tmpname[--i] != '.' );
-	tmpname[i] = '\0';
-
-	if( in[0].cc != last_cc )
-	{
-		reg_count = 0;
-		mir_count = 0;
-	}
-
-	if( cc != in[0].cc )
-	{
-		mir_count++;
-		sprintf(cname,"%s.r%.2d",tmpname,mir_count);
-	}
-	else
-	{
-		reg_count++;
-		sprintf(cname,"%s.r%.2d",tmpname,reg_count);
-	}
-
-
-	if( nm[cc].matcode != 0 ) {
-		mk_lrcomb(stdout, cname, &head, 1, 0, 0, 0, cc, 0, nm[cc].matcode, nm[cc].eqlos, 0);
-	}
-	else {
-		mk_lrcomb(stdout, cname, &head, 1, 0, 0, 0, cc, 0, 2, 100, 0);
-	}
-
-	if ( cc == in[0].cc){
-		(void) mk_addmember(cname,&heada,WMOP_UNION);
-	}
-	else{
-		(void) mk_addmember(cname,&headb,WMOP_UNION);
-	}
-
-	last_cc = in[0].cc;
 }
 
 /*
