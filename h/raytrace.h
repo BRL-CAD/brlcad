@@ -25,6 +25,7 @@ extern int	res_pt;			/* lock on free partition structs */
 extern int	res_seg;		/* lock on free seg structs */
 extern int	res_malloc;		/* lock on memory allocation */
 extern int	res_printf;		/* lock on printing */
+extern int	res_bitv;		/* lock on bitvectors */
 #ifdef HEP
 /* full means resource free, empty means resource busy */
 #define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
