@@ -68,11 +68,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/invent.h>
 
 #include "machine.h"
+#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "externs.h"
-#include "_dm.h"
+#include "dm.h"
 #include "dm-glx.h"
 
 /*XXX This is just temporary!!! */
@@ -84,6 +84,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern Tk_Window tkwin;
 extern inventory_t	*getinvent();
+extern char ogl_ogl_used;
+extern char ogl_sgi_used;
 
 /* Display Manager package interface */
 
@@ -249,21 +251,19 @@ static int
 Glx_open(dmp)
 struct dm *dmp;
 {
-#if 0
 #ifdef DM_OGL
   /* This is a hack to handle the fact that the sgi attach crashes
    * if a direct OpenGL context has been previously opened in the 
    * current mged session. This stops the attach before it crashes.
    */
-  if (Glx_Glx_used){
+  if (ogl_ogl_used){
     Tcl_AppendResult(interp, "Can't attach sgi, because a direct OpenGL context has\n",
 		     "previously been opened in this session. To use sgi,\n",
 		     "quit this session and reopen it.\n", (char *)NULL);
     return TCL_ERROR;
   }
-  Glx_sgi_used = 1;
+  ogl_sgi_used = 1;
 #endif /* DM_OGL */
-#endif
 
   return Glx_setup(dmp);
 }
@@ -539,11 +539,6 @@ static void
 Glx_close(dmp)
 struct dm *dmp;
 {
-#if 0
-  if(Glx_Glx_used)
-    return;
-#endif
-
   if(((struct glx_vars *)dmp->dmr_vars)->xtkwin != NULL){
     if(((struct glx_vars *)dmp->dmr_vars)->mvars.cueing_on)
       depthcue(0);
