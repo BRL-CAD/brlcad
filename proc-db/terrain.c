@@ -28,6 +28,8 @@
 #include "raytrace.h"
 #include "../librt/debug.h"	/* rt_g.debug flag settings */
 
+fastf_t grid[10][10][3];
+
 char *Usage = "This program ordinarily generates a database on stdout.\n\
 	Your terminal probably wouldn't like it.";
 
@@ -37,9 +39,9 @@ int argc; char * argv[];
 
 	char * id_name = "terrain database";
 	char * nurb_name = "terrain";
-	int 	pt_type;
-	fastf_t * pt1, *pt2;
-	struct snurb * top, bot;
+	int	i,j;
+	fastf_t 	hscale;
+	fastf_t	v;
 
 	if (isatty(fileno(stdout))) {
 		(void)fprintf(stderr, "%s: %s\n", *argv, Usage);
@@ -63,47 +65,42 @@ int argc; char * argv[];
 	 * (so that it will be closed).
  	 */
 
-#ifdef never
 	mk_id( stdout, id_name);
-	mk_bsolid( stdout, nurb_name, 2, 1.0);
-#endif
-		
-	pt_type = MAKE_PT_TYPE(3,PT_XYZ,NONRAT);
-
-	
-	top = (struct snurb *) 
-		rt_nurb_new_snurb( 4, 4, 13, 13, 10, 10, pt_type);
-
-	bot = (struct snurb *) 
-		rt_nurb_new_snurb( 4, 4, 13, 13, 10, 10, pt_type);
-
-
-	/* Now fill in the data */
-
-	pt1 = (fastf_t * ) top->mesh->ctl_points;
-
-	pt2 = (fastf_t * ) bot->mesh->ctl_points;
-
-	stride = STRIDE(top->mesh->pt_type);
-
-
-
-	srandom(1000100);
+	mk_bsolid( stdout, nurb_name, 1, 1.0);
+	hscale = 2.5;
 
 	for( i = 0; i < 10; i++)
-	for( j = 0; j < 10; j++)
-	{
-		long r;
-		VMOVE(pt1, i * 10; j * 10, 0.0);
-		VMOVE(pt2, i * 10; j * 10, 0.0);
-		if( i == 0)
-			continue;
-		if( j == 0 || j = 9)
-			continue;
+		for( j = 0; j < 10; j++)
+		{
+			v = hscale * drand48() + 10.0;
+			grid[i][j][0] = i;
+			grid[i][j][1] = j;
+			grid[i][j][2] = v;
 
-		r = random() % 100;
-		pt1[2] = (fastf_t) r;
-	}
-	
-	rt_nurb_print_snurb(top);
+		}
+
+	interpolate_data();
+		
+
+}
+/* Interpoate the data using b-splines */
+
+interpolate_data()
+{
+	struct snurb srf;
+	struct snurb *srf2, *srf3;
+	struct knot_vector new_kv;
+	fastf_t * data;
+	fastf_t rt_nurb_par_edge();
+	fastf_t step;
+	fastf_t tess;
+
+	data = &grid[0][0][0];
+
+	rt_nurb_sinterp( &srf, 4, data, 10, 10 );
+	rt_nurb_kvnorm( &srf.u_knots );
+	rt_nurb_kvnorm( &srf.v_knots );
+
+	mk_bsurf(stdout, &srf);
+
 }
