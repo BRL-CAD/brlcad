@@ -92,6 +92,14 @@ fastf_t	fovy, aspect, near, far, backoff;
  *
  *  This corresponds to the SGI "window()" routine, but taking into account
  *  skew due to the eyepoint being offset parallel to the image plane.
+ *
+ *  The gist of the algorithm is to translate the display plate to the
+ *  view center, shear the eye point to (0,0,1), translate back,
+ *  then apply an off-axis perspective projection.
+ *
+ *  Another (partial) reference is "A comparison of stereoscopic cursors
+ *  for the interactive manipulation of B-splines" by Barham & McAllister,
+ *  SPIE Vol 1457 Stereoscopic Display & Applications, 1991, pg 19.
  */
 static void
 deering_persp_mat( m, l, h, eye )
@@ -116,15 +124,18 @@ CONST point_t	eye;	/* eye location.  Traditionally at (0,0,1) */
 	m[6] = ( sum[Y] - 2 * eye[Y] ) / diff[Y];
 	m[7] = -eye[Z] * sum[Y] / diff[Y];
 
+	/* Multiplied by -1, to do right-handed Z coords */
 	m[8] = 0;
 	m[9] = 0;
-	m[10] = ( sum[Z] - 2 * eye[Z] ) / diff[Z];
-	m[11] = -eye[Z] + 2 * h[Z] * eye[Z] / diff[Z];
+	m[10] = -( sum[Z] - 2 * eye[Z] ) / diff[Z];
+	m[11] = -(-eye[Z] + 2 * h[Z] * eye[Z]) / diff[Z];
 
 	m[12] = 0;
 	m[13] = 0;
 	m[14] = -1;
 	m[15] = eye[Z];
+
+/* XXX May need to flip Z ? (lefthand to righthand?) */
 }
 
 /*
@@ -153,7 +164,7 @@ int	which_eye;
 	/*
 	 * Draw all solids not involved in an edit.
 	 */
-	if( mged_variables.perspective <= 0 )  {
+	if( mged_variables.perspective <= 0 && eye_pos_scr[Z] == 1.0 )  {
 		mat = model2view;
 	} else {
 		/*
@@ -175,7 +186,7 @@ int	which_eye;
 
 		eye_delta_scr = mged_variables.eye_sep_dist * 0.5 / SCR_WIDTH_PHYS;
 
-		VSET( l, -1, -1, 0.01 );
+		VSET( l, -1, -1, -1 );
 		VSET( h, 1, 1, 200.0 );
 if(which_eye) {
 printf("d=%gscr, d=%gmm, delta=%gscr\n", to_eye_scr, to_eye_scr * SCR_WIDTH_PHYS, eye_delta_scr);
