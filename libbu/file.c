@@ -55,7 +55,7 @@ BU_FILE	bu_iob[1] = {
 	{
 	    BU_VLS_MAGIC, (char *) 0, 0, 0, 0
 	},
-	&dmy_eos, 0, '#', -1
+	&dmy_eos, 1, 0, '#', -1
     }
 };
 
@@ -82,6 +82,7 @@ register char	*type;
     bfp -> file_name = fname;
     bu_vls_init(&(bfp -> file_buf));
     bfp -> file_bp = bu_vls_addr(&(bfp -> file_buf));
+    bfp -> file_needline = 1;
     bfp -> file_linenm = 0;
     bfp -> file_comment = '#';
     bfp -> file_buflen = -1;
@@ -112,7 +113,7 @@ register BU_FILE	*bfp;
 	bfp -> file_name = (char *) 0;
 	bfp -> file_bp = (char *) 0;
 	bu_vls_free(&(bfp -> file_buf));
-	bu_free(bfp, "bu_file struct");
+	bu_free((genptr_t) bfp, "bu_file struct");
     }
     return (close_status);
 }
@@ -127,35 +128,50 @@ register BU_FILE	*bfp;
 
 {
     char	*cp;
-    char	result;
+    int		comment_char;	/* The comment character */
+    int		strip_comments;	/* Should I strip comments? */
 
     BU_CK_FILE(bfp);
+
+    strip_comments = isprint(comment_char = bfp -> file_comment);
+
+    /*
+     *	If buffer is empty, note that it's time for a new line of input
+     */
+    if ((*(bfp -> file_bp) == '\0') && ! (bfp -> file_needline))
+    {
+	bfp -> file_needline = 1;
+	return ('\n');
+    }
 
     /*
      *    If it's time to grab a line of input from the file, do so.
      */
-    while (*(bfp -> file_bp) == '\0')
+    if (bfp -> file_needline)
     {
 	bu_vls_trunc(&(bfp -> file_buf), 0);
 	if (bu_vls_gets(&(bfp -> file_buf), bfp -> file_ptr) == -1)
 	    return (EOF);
 	bfp -> file_bp = bu_vls_addr(&(bfp -> file_buf));
-	/*
-	 *	Strip out comments
-	 */
-	bfp -> file_buflen = -1;
-	for (cp = bfp -> file_bp; *cp != '\0'; ++cp)
-	    if (*cp == bfp -> file_comment)
-	    {
-		bfp -> file_buflen = (bfp -> file_buf).vls_len;
-		bu_vls_trunc(&(bfp -> file_buf), cp - bfp -> file_bp);
-		break;
-	    }
 	++(bfp -> file_linenm);
+
+	if (strip_comments)
+	{
+	    bfp -> file_buflen = -1;
+	    for (cp = bfp -> file_bp; *cp != '\0'; ++cp)
+		if (*cp == comment_char)
+		{
+		    bfp -> file_buflen = (bfp -> file_buf).vls_len;
+		    bu_vls_trunc(&(bfp -> file_buf), cp - bfp -> file_bp);
+		    if (cp == bfp -> file_bp)
+			return ('\n');
+		    break;
+		}
+	}
+	bfp -> file_needline = 0;
     }
     
-    result = *(bfp -> file_bp)++;
-    return ((result == '\0') ? '\n' : result);
+    return (*(bfp -> file_bp)++);
 }
 
 /*
@@ -174,9 +190,11 @@ register BU_FILE	*bfp;
     bu_log("  ptr      %x\n", bfp -> file_ptr);
     bu_log("  buf      '%s'\n", bu_vls_addr(&(bfp -> file_buf)));
     bu_log("  bp       %d", bfp -> file_bp - bu_vls_addr(&(bfp -> file_buf)));
-    bu_log(": '%c' (%o)\n", *(bfp -> file_bp), *(bfp -> file_bp));
+    bu_log(": '%c' (%03o)\n", *(bfp -> file_bp), *(bfp -> file_bp));
+    bu_log("  needline %d\n", bfp -> file_needline);
     bu_log("  linenm   %d\n", bfp -> file_linenm);
-    bu_log("  comment  %c\n", bfp -> file_comment);
+    bu_log("  comment  '%c' (%d)\n",
+	bfp -> file_comment, bfp -> file_comment);
     bu_log("  buflen   %d\n", bfp -> file_buflen);
 }
 
@@ -185,25 +203,60 @@ register BU_FILE	*bfp;
  *
  *	Print out a syntax error message about a BU_FILE
  */
-void bu_file_err (bfp, text, cursor_pos)
+void bu_file_err (bfp, text1, text2, cursor_pos)
 
 register BU_FILE	*bfp;
-register char		*text;
+register char		*text1, *text2;
 register int		cursor_pos;
 
 {
-    int		buflen;
+    char		*cp;
+    int			buflen;
+    int			i;
+    int			stripped_length;
 
     BU_CK_FILE(bfp);
 
-    if ((buflen = bfp -> file_buflen) > 0)
+    /*
+     *	Show any trailing comments
+     */
+    if ((buflen = bfp -> file_buflen) > -1)
     {
-	*(bu_vls_addr(&(bfp -> file_buf)) + (bfp -> file_buf).vls_len) =
-	bfp -> file_comment;
+	stripped_length = (bfp -> file_buf).vls_len;
+	*(bu_vls_addr(&(bfp -> file_buf)) + stripped_length) =
+	    bfp -> file_comment;
 	(bfp -> file_buf).vls_len = buflen;
     }
+    else
+	stripped_length = -1;
 
-    bu_log("File %s: line %d: %s\n",
-	bfp -> file_name, bfp -> file_linenm, text);
-    bu_log("'%s'\n", bu_vls_addr(&(bfp -> file_buf)));
+    /*
+     *	Print out the first line of the error message
+     */
+    if (text1 && (*text1 != '\0'))
+	bu_log("%s: ", text1);
+    bu_log("Error: file %s, line %d: %s\n",
+	bfp -> file_name, bfp -> file_linenm, text2);
+    bu_log("%s\n", bu_vls_addr(&(bfp -> file_buf)));
+
+    /*
+     *	Print out position-indicating arrow, if requested
+     */
+    if ((cursor_pos >= 0)
+     && (cursor_pos < bu_vls_strlen(&(bfp -> file_buf))))
+    {
+	cp = bu_vls_addr(&(bfp -> file_buf));
+	for (i = 0; i < cursor_pos; ++i)
+	    if (*cp++ == '\t')
+		bu_log("\t");
+	    else
+		bu_log("-");
+	bu_log("^\n");
+    }
+
+    /*
+     *	Hide the comments again
+     */
+    if (stripped_length > -1)
+	bu_vls_trunc(&(bfp -> file_buf), stripped_length);
 }
