@@ -490,8 +490,6 @@ char **argv;
     rtip -> useair = use_of_air;
     rtip -> rti_save_overlaps = (overlap_claims > 0);
 
-    if (silent_flag != SILENT_YES)
-	printf("\nPrepping the geometry...");
     ++optind;
     do_rt_gettrees (rtip, argv + optind, argc - optind);
 
@@ -615,6 +613,12 @@ int		nm_objects;
 	prev_names = object_name;
 	prev_nm = nm_objects;
     }
+
+    if (silent_flag != SILENT_YES) {
+	    printf("\nGet trees...");
+	    fflush(stdout);
+    }
+
     if (rt_gettrees_and_attrs(rtip, (const char **)a_tab.attrib, nm_objects, (const char **) object_name, 1))
     {
 	fflush(stdout);
@@ -623,6 +627,10 @@ int		nm_objects;
     }
 
     if( need_prep ) {
+	    if (silent_flag != SILENT_YES) {
+		    printf("\nPrepping the geometry...");
+		    fflush(stdout);
+	    }
 	    rt_prep( rtip );
 	    need_prep = 0;
     }
