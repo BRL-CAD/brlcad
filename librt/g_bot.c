@@ -2022,7 +2022,6 @@ char			**argv;
 		{
 			if( argv[0][2] == '\0' )
 			{
-				bu_log( "fm=%s\n", argv[1] );
 				if( bot->face_mode )
 					bu_free( (char *)bot->face_mode, "bot->face_mode" );
 				bot->face_mode = bu_hex_to_bitv( argv[1] );
