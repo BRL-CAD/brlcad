@@ -38,7 +38,11 @@ extern unsigned alarm();
 #endif
 
 #ifndef _POSIX_SOURCE
+#if __STDC__
 extern FILE    *fdopen(int, const char *);
+#else
+extern FILE    *fdopen();
+#endif
 #endif
 
 #define HmDEBUG		false
