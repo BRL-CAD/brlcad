@@ -81,7 +81,6 @@ struct nugridnode *nuginfop;
 	register struct soltab *stp;
 	union cutter	*box;
 	int	cur;
-	int	ret;
 	int	slice;
 
 	BU_CK_PTBL(boxes);
@@ -243,7 +242,8 @@ int				 just_collect_info, depth;
 	int	nu_sol_per_cell;	/* avg # solids per cell */
 	int	nu_max_ncells;		/* hard limit on nu_ncells */
 	int	pseudo_depth;		/* "fake" depth to tell rt_ct_optim */
-	register int	i, j, xp, yp, zp;
+	register int	i;
+	int	xp, yp, zp;
 	vect_t	xmin, xmax, ymin, ymax, zmin, zmax;
 	struct boxnode nu_xbox, nu_ybox, nu_zbox;
 

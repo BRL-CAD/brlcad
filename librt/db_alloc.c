@@ -244,7 +244,6 @@ struct db_i		*dbip;
 register struct directory *dp;
 int			recnum;
 {
-	register int	i;
 	union record	*rp;
 	register union record *in, *out;
 

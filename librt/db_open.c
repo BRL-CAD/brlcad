@@ -315,7 +315,7 @@ struct rt_wdb	*wdbp;		/* output */
 struct db_i	*dbip;		/* input */
 {
 	register int		i;
-	register struct directory *dp, *nextdp;
+	register struct directory *dp;
 	struct bu_external	ext;
 
 	RT_CK_DBI(dbip);
