@@ -3,7 +3,7 @@
 g-iges \- IGES Translator (BRL-CAD to IGES)
 .SH SYNOPSIS
 .B iges-g
-[-f|c|t] [-v] [-s] [-x flag1] [-X flag2] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o file.iges] database.g object(s)
+[-f|t] [-v] [-s] [-x flag1] [-X flag2] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o file.iges] database.g object(s)
 .SH DESCRIPTION
 .I g-iges\^
 converts the specified objects of the BRLCAD database,
@@ -23,14 +23,6 @@ tessellation may be controlled through the use of the
 .B \-a, -r, and -n
 options to specify tolerances.
 The
-.B \-c
-option selects a preference for a CSG IGES file. Under this option,
-all regions will be written to the IGES file as Boolean trees with
-all possible solids represented by their IGES CSG equivalent. In cases
-where there is no IGES CSG equivalent, the BRLCAD solid is tesellated
-(using the provided tolerances), and a BREP object is written for that
-solid.
-The
 .B \-t
 option indicates that an IGES file consisting of only trimmed NURBS
 should be created. The trimmed NURBS will all be planar NURBS, and they
@@ -43,10 +35,22 @@ The
 .B \-s
 option may be used in conjunction with the
 .B \-f
+option or without the
+.B \-f
 or
-.B \-c
+.B \-t
 options to indicate that all facets in BREP objects should be output
 in the form of planar NURBS (Intergraph likes their IGES files this way).
+If neither the
+.B \-f
+nor the
+.B \-t
+options are selected, the defalt is a CSG IGES file. In this situation,
+all regions will be written to the IGES file as Boolean trees with
+all possible solids represented by their IGES CSG equivalent. In cases
+where there is no IGES CSG equivalent, the BRLCAD solid is tesellated
+(using the provided tolerances), and a BREP object is written for that
+solid.
 The
 .B \-x
 option allows the user to set a hex librt debug flag (see librt/debug.h for values).
