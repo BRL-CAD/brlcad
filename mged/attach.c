@@ -58,9 +58,14 @@ extern struct dm dm_Tek;
 extern struct dm dm_T49;	/* Tek 4109 */
 extern struct dm dm_Plot;
 
-#ifdef BSD
-/* We only supply kernel drivers for Berkeley systems for these */
-extern struct dm dm_Mg, dm_Vg;
+#ifdef DM_MG
+/* We only supply a kernel driver for Berkeley VAX systems for the MG */
+extern struct dm dm_Mg;
+#endif
+
+#ifdef DM_VG
+/* We only supply a kernel driver for Berkeley VAX systems for the VG */
+extern struct dm dm_Vg;
 #endif
 
 #ifdef DM_RAT
@@ -97,8 +102,10 @@ static struct dm *which_dm[] = {
 #ifdef DM_SUNPW
 	&dm_SunPw,
 #endif
-#ifdef BSD
+#ifdef DM_MG
 	&dm_Mg,
+#endif
+#ifdef DM_VG
 	&dm_Vg,
 #endif
 #ifdef DM_RAT
