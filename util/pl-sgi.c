@@ -26,11 +26,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef sgi
 # include "gl.h"
 # include "device.h"
-#  ifdef mips
-#   include "gl/addrs.h"
-#   include "gl/cg2vme.h"
-#   include "gl/get.h"
-#  endif
+#   ifdef mips
+	/* sgi 4-D */
+#	include "gl/addrs.h"
+#	include "gl/cg2vme.h"
+#	include "gl/get.h"
+#   else
+	/* sgi 3-D */
+#	include <get.h>
+#	define XMAX170	645
+#	define YMAX170	484
+#   endif
 
 #define	HUGE	1.0e10	/* for near/far clipping */
 
