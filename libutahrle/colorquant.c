@@ -28,6 +28,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 11.1  1995/01/04 10:04:57  mike
+ * Release_4.4
+ *
  * Revision 10.3  94/12/30  00:37:27  mike
  * DEC Alpha
  * 
@@ -331,7 +334,7 @@ Box *box;
 /*
  * Interatively cut the boxes.
  */
-static
+static int
 CutBoxes(boxes, colors) 
 Box	*boxes;
 int	colors;
@@ -358,7 +361,7 @@ int	colors;
  * Return the number of the box in 'boxes' with the greatest variance.
  * Restrict the search to those boxes with indices between 0 and n-1.
  */
-static
+static int
 GreatestVariance(boxes, n)
 Box *boxes;
 int n;
@@ -411,7 +414,7 @@ register Box *box;
 /*
  * Cut the given box.  Returns TRUE if the box could be cut, FALSE otherwise.
  */
-static
+static int
 CutBox(box, newbox)
 Box *box, *newbox;
 {
@@ -464,7 +467,7 @@ Box *box, *newbox;
  * indcated by 'color'.  Store the boxes which result from the cut
  * in newbox1 and newbox2.
  */
-static
+static int
 FindCutpoint(box, color, newbox1, newbox2)
 Box *box, *newbox1, *newbox2;
 int color;

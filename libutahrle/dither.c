@@ -39,10 +39,10 @@ void	make_square();
 #endif
 
 static int magic4x4[4][4] =  {
- 	 0, 14,  3, 13,
-	11,  5,  8,  6,
-	12,  2, 15,  1,
-	 7,  9,  4, 10
+ 	{ 0, 14,  3, 13},
+	{11,  5,  8,  6},
+	{12,  2, 15,  1},
+	{ 7,  9,  4, 10}
 };
 
 /* basic dithering macro */
@@ -242,6 +242,7 @@ int magic[16][16] ;
  * Algorithm:
  * 	see "Note:" in dithermap comment.
  */
+int
 dithergb( x, y, r, g, b, levels, divN, modN, magic )
 int divN[256];
 int modN[256];
@@ -272,6 +273,7 @@ int magic[16][16];
  * Algorithm:
  * 	see "Note:" in bwdithermap comment.
  */
+int
 ditherbw( x, y, val, divN, modN, magic )
 int divN[256];
 int modN[256];
