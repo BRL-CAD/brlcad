@@ -59,9 +59,9 @@ matp_t old_xlate;
 	bu_vls_init(&vls);
 
 	if( pathpos >= MAX_PATH )  {
-	  bu_vls_printf("nesting exceeds %d levels\n", MAX_PATH );
+	  bu_vls_printf(&vls, "nesting exceeds %d levels\n", MAX_PATH );
 	  for(i=0; i<MAX_PATH; i++)
-	    bu_vls_printf("/%s", cur_path[i]->d_namep );
+	    bu_vls_printf(&vls, "/%s", cur_path[i]->d_namep );
 	  bu_vls_strcat(&vls, "\n");
 
 	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -103,7 +103,7 @@ matp_t old_xlate;
 			   dp->d_namep, "\".\n", (char *)NULL);
 	  goto out;			/* non-fatal ERROR */
 	}
-	if( rp[0].c.c_flags == 'R' )  {
+	if( rp[0].c.c_flags != DBV4_NON_REGION )  {
 	  if( regionid != 0 ){
 	    bu_vls_printf(&vls, "regionid %d overriden by %d\n",
 			  regionid, rp[0].c.c_regionid );
@@ -116,7 +116,7 @@ matp_t old_xlate;
 	 *  This node is a combination (eg, a directory).
 	 *  Process all the arcs (eg, directory members).
 	 */
-	if( drawreg && rp[0].c.c_flags == 'R' && dp->d_len > 1 ) {
+	if( drawreg && rp[0].c.c_flags != DBV4_NON_REGION && dp->d_len > 1 ) {
 	  if( regmemb >= 0  ) {
 	    Tcl_AppendResult(interp, "ERROR: region (", dp->d_namep,
 			     ") is member of region (", cur_path[reg_pathpos]->d_namep,
