@@ -2324,10 +2324,6 @@ struct rt_tol		*tol;
 	/* Top cap surface */
 	nmg_tgc_disk( top_fu, top_mat, 0.0, 0 );
 
-rt_log("after top cap surf\n");
-nmg_region_a( *r,tol);
-nmg_vmodel( m );
-
 	/* Create transformation matrix  for the bottom cap surface*/
 
 	mat_idn( omat );
@@ -2375,11 +2371,6 @@ nmg_vmodel( m );
 
 	nmg_tgc_disk( bot_fu, bot_mat, 0.0, 1 );
 
-rt_log("disk\n");
-nmg_region_a( *r,tol);
-nmg_vmodel( m );
-rt_log("after disk\n");
-
 	/* Create topology for cylinder surface  */
 
 	vertp[0] = &verts[0];
@@ -2389,11 +2380,6 @@ rt_log("after disk\n");
 	cyl_fu = nmg_cmface(s, vertp, 4);
 
 	nmg_tgc_nurb_cyl( cyl_fu, top_mat, bot_mat);
-
-rt_log("before fuse\n");
-nmg_region_a( *r,tol);
-nmg_vmodel( m );
-rt_log("after fuse\n");
 
 	/* fuse top cylinder edge to matching edge on body of cylinder */
 	lu = RT_LIST_FIRST( loopuse, &cyl_fu->lu_hd);
@@ -2406,11 +2392,8 @@ rt_log("after fuse\n");
 	eu= RT_LIST_LAST( edgeuse, &eu->l);
 
 	nmg_je( bot_eu, eu );
-
 	nmg_region_a( *r,tol);
 
-rt_log("end fuse\n");
-nmg_vmodel( m );
 }
 
 
@@ -2601,12 +2584,12 @@ mat_t	bot_mat;
 	struct face_g_snurb 	* fg;
 	struct loopuse		* lu;
 	struct edgeuse		* eu;
-	struct edge_g_cnurb	* eg;
 	fastf_t		* mptr;
 	int		i;
 	hvect_t		vect;
 	point_t		uvw;
 	point_t		point;
+	hvect_t		hvect;
 
 	nmg_face_g_snurb( fu, 
 		3, 2,
@@ -2664,30 +2647,37 @@ mat_t	bot_mat;
 	NMG_CK_LOOPUSE(lu);
 	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
-
+	
 	/* March around the fu's loop assigning uv parameter values */
-	HDIVIDE( point, fg->ctl_points );
+
+	rt_nurb_s_eval( fg, 0.0, 0.0, hvect);
+	HDIVIDE( point, hvect );
 	nmg_vertex_gv( eu->vu_p->v_p, point );	/* 0,0 vertex */
 
-	VSET( uvw, 0,0,0);
+	VSET( uvw, 0, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
 	VSET( uvw, 1, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
+	VSET( uvw, 1, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
 	VSET( uvw, 1, 1, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
-	HDIVIDE( point, &fg->ctl_points[(2*9-1)*4] );
-	nmg_vertex_gv( eu->vu_p->v_p, point );		/* 4,1 vertex */
-
+	VSET( uvw, 1, 1, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
 	VSET( uvw, 0, 1, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+
+	rt_nurb_s_eval( fg, 1., 1., hvect);
+	HDIVIDE( point, hvect);
+	nmg_vertex_gv( eu->vu_p->v_p, point );		/* 4,1 vertex */
+
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
+	VSET( uvw, 0, 1, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
 	VSET( uvw, 0, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
@@ -2700,11 +2690,9 @@ mat_t	bot_mat;
 	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
-
 	for( i = 0; i < 4; i++)
 	{
 		nmg_edge_g_cnurb_plinear(eu);
 		eu = RT_LIST_NEXT(edgeuse, &eu->l);
 	}
 }
-
