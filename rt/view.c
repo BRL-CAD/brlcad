@@ -209,9 +209,6 @@ register struct application *ap;
 			p[0] = r;
 			p[1] = g;
 			p[2] = b;
-#ifdef cray
-rt_log("fwrite( 0%o, 3, 1, 0%o )\n", p, outfp);
-#endif
 			if( fwrite( (char *)p, 3, 1, outfp ) != 1 )
 				rt_bomb("pixel fwrite error");
 		}
