@@ -441,7 +441,7 @@ char **argv;
                 	break;
                 case 'm':
                 	switch (*optarg) {
-                	case 'l':
+                	case 'p':
                 		strncpy(link_cmd,argv[optind], 10);
                 		break;
                 	case 'w':
