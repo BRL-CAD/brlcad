@@ -80,11 +80,13 @@
  *  where in this case f(z) linearly interpolates the radius of the
  *  cylinder from vrad (r1) to hrad (r2) as z ranges from 0 to 1, i.e.:
  *
- *	f(z) = (r2-r1) * z + r1
+ *	f(z) = (r2-r1)/1 * z + r1
  *
- *  let m = r2-r1, and substitute:
+ *  let m = (r2-r1)/1, and substitute:
  *
  *	x**2 + y**2 - (m*z+r1)**2 = 0 .
+ *
+ *  For the cylinder case, r1 == r2, so m == 0, and everything simplifies.
  *
  *  The parametric formulation for line L' is P' + t * D', or
  *
@@ -378,6 +380,7 @@ struct seg		*seghead;
 	LOCAL fastf_t	f;
 	LOCAL struct hit hits[3];	/* 4 potential hit points */
 	register struct hit *hitp = &hits[0];
+	int		check_v, check_h;
 
 	if( part->part_int.part_type == RT_PARTICLE_TYPE_SPHERE )  {
 		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
@@ -424,12 +427,29 @@ struct seg		*seghead;
 	VSUB2( xlated, rp->r_pt, part->part_int.part_V );
 	MAT4X3VEC( pprime, part->part_SoR, xlated );
 
-	if( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )
+	if( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )  {
+		check_v = check_h = 1;
 		goto check_hemispheres;
+	}
+	check_v = check_h = 0;
 
 	/* Find roots of the equation, using forumla for quadratic */
 	/* Note that vrad' = 1 and hrad' = hrad/vrad */
-	{
+	if( part->part_int.part_type == RT_PARTICLE_TYPE_CYLINDER )  {
+		/* Cylinder case, hrad == vrad, m = 0 */
+		FAST fastf_t	a, b, c;
+		FAST fastf_t	root;		/* root of radical */
+
+		a = dprime[X]*dprime[X] + dprime[Y]*dprime[Y];
+		b = dprime[X]*pprime[X] + dprime[Y]*pprime[Y];
+		c = pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1;
+		if( (root = b*b - a * c) <= 0 )
+			goto check_hemispheres;
+		root = sqrt(root);
+		t1 = (root-b) / a;
+		t2 = -(root+b) / a;
+	} else {
+		/* Cone case */
 		FAST fastf_t	a, b, c;
 		FAST fastf_t	root;		/* root of radical */
 		FAST fastf_t	m, msq;
@@ -463,32 +483,41 @@ struct seg		*seghead;
 	 *  t1 and t2 are potential solutions to intersection with side.
 	 *  Find hit' point, see if Z values fall in range.
 	 */
-	if( (f = pprime[Z] + t1 * dprime[Z]) >= 0.0 && f <= 1.0 )  {
-		/** VJOIN1( hitp->hit_vpriv, pprime, t1, dprime ); **/
-		hitp->hit_vpriv[X] = pprime[X] + t1 * dprime[X];
-		hitp->hit_vpriv[Y] = pprime[Y] + t1 * dprime[Y];
-		hitp->hit_vpriv[Z] = f;
-		hitp->hit_dist = t1;
-		hitp->hit_surfno = RT_PARTICLE_SURF_BODY;
-		hitp++;
+	if( (f = pprime[Z] + t1 * dprime[Z]) >= 0.0 )  {
+		check_h = 1;		/* may also hit off end */
+		if( f <= 1.0 )  {
+			/** VJOIN1( hitp->hit_vpriv, pprime, t1, dprime ); **/
+			hitp->hit_vpriv[X] = pprime[X] + t1 * dprime[X];
+			hitp->hit_vpriv[Y] = pprime[Y] + t1 * dprime[Y];
+			hitp->hit_vpriv[Z] = f;
+			hitp->hit_dist = t1;
+			hitp->hit_surfno = RT_PARTICLE_SURF_BODY;
+			hitp++;
+		}
+	} else {
+		check_v = 1;
 	}
 
-	if( (f = pprime[Z] + t2 * dprime[Z]) >= 0.0 && f <= 1.0 )  {
-		/** VJOIN1( hitp->hit_vpriv, pprime, t2, dprime ); **/
-		hitp->hit_vpriv[X] = pprime[X] + t2 * dprime[X];
-		hitp->hit_vpriv[Y] = pprime[Y] + t2 * dprime[Y];
-		hitp->hit_vpriv[Z] = f;
-		hitp->hit_dist = t2;
-		hitp->hit_surfno = RT_PARTICLE_SURF_BODY;
-		hitp++;
+	if( (f = pprime[Z] + t2 * dprime[Z]) >= 0.0 )  {
+		check_h = 1;		/* may also hit off end */
+		if( f <= 1.0 )  {
+			/** VJOIN1( hitp->hit_vpriv, pprime, t2, dprime ); **/
+			hitp->hit_vpriv[X] = pprime[X] + t2 * dprime[X];
+			hitp->hit_vpriv[Y] = pprime[Y] + t2 * dprime[Y];
+			hitp->hit_vpriv[Z] = f;
+			hitp->hit_dist = t2;
+			hitp->hit_surfno = RT_PARTICLE_SURF_BODY;
+			hitp++;
+		}
+	} else {
+		check_v = 1;
 	}
 
 	/*
-	 *  Check for hitting the end hemispheres, if there
-	 *  have been fewer than 2 hits so far.
+	 *  Check for hitting the end hemispheres.
 	 */
 check_hemispheres:
-	if( hitp < &hits[2] )  {
+	if( check_v )  {
 		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
 		FAST fastf_t	rad_sq;
 		FAST fastf_t	magsq_ov;	/* length squared of ov */
@@ -506,12 +535,12 @@ check_hemispheres:
 			/* ray origin is outside of sphere */
 			if( b < 0 ) {
 				/* ray direction is away from sphere */
-				goto check_h;
+				goto do_check_h;
 			}
 			root = b*b - magsq_ov + rad_sq;
 			if( root <= 0 ) {
 				/* no real roots */
-				goto check_h;
+				goto do_check_h;
 			}
 		} else {
 			root = b*b - magsq_ov + rad_sq;
@@ -532,8 +561,8 @@ check_hemispheres:
 		}
 	}
 
-check_h:
-	if( hitp < &hits[2] )  {
+do_check_h:
+	if( check_h )  {
 		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
 		FAST fastf_t	rad_sq;
 		FAST fastf_t	magsq_ov;	/* length squared of ov */
@@ -577,6 +606,11 @@ check_h:
 		}
 	}
 out:
+	if( (hitp - &hits[0]) & 1 )  {
+		rt_log("rt_part_shot(%s): %d hits? surf0=%d\n",
+			stp->st_name, hitp - &hits[0],
+			hits[0].hit_surfno );
+	}
 	if( hitp != &hits[2] )
 		return(0);	/* MISS */
 
@@ -653,12 +687,20 @@ register struct xray	*rp;
 			MAT4X3VEC( hitp->hit_normal, part->part_invRoS,
 				hitp->hit_vpriv );
 			VUNITIZE( hitp->hit_normal );
-			break;
+		} else {
+			/* The cone case */
+			FAST fastf_t	s, m;
+			/* Rescale X' and Y' into unit circle */
+			s = 1 / ( VRAD_PRIME + (m = HRAD_PRIME-VRAD_PRIME) *
+				hitp->hit_vpriv[Z] );
+			hitp->hit_vpriv[X] *= s;
+			hitp->hit_vpriv[Y] *= s;
+			/* Z' is constant, from slope of cylinder wall*/
+			hitp->hit_vpriv[Z] = -m / sqrt(m*m+1);
+			MAT4X3VEC( hitp->hit_normal, part->part_invRoS,
+				hitp->hit_vpriv );
+			VUNITIZE( hitp->hit_normal );
 		}
-		/* The cone case */
-		MAT4X3VEC( hitp->hit_normal, part->part_invRoS,
-			hitp->hit_vpriv );
-		VUNITIZE( hitp->hit_normal );
 		break;
 	}
 }
