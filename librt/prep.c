@@ -31,7 +31,9 @@ static char RCSprep[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "raytrace.h"
 #include "./debug.h"
@@ -308,7 +310,7 @@ struct soltab		*stp;
 	}
 
 	if( !(mat = stp->st_matp) )
-		mat = (matp_t)rt_identity;
+		mat = (matp_t)bn_mat_identity;
     	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
 		bu_log("rt_plot_solid(%s):  solid import failure\n",
