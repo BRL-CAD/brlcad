@@ -258,7 +258,6 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 	struct faceuse		*dualfu = (struct faceuse *)NULL; /* faceuse of vu's dual */
 	struct shell		*duals = (struct shell *)NULL;	/* shell of vu's dual */
 	struct faceuse		*fuv;		/* faceuse of vu */
-	int			old_mag_len;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEXUSE(vu);
@@ -286,7 +285,6 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 		bu_ptbl_ins_unique( is->l1, (long *)&vu->l.magic );
 		if( is->mag_len <= BU_PTBL_END( is->l1 ) )
 		{
-			old_mag_len = is->mag_len;
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
@@ -317,7 +315,6 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 		bu_ptbl_ins_unique( is->l2, (long *)&vu->l.magic );
 		if( is->mag_len <= BU_PTBL_END( is->l2 ) )
 		{
-			old_mag_len = is->mag_len;
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
@@ -398,7 +395,6 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 		bu_ptbl_ins_unique( is->l2, (long *)&dualvu->l.magic );
 		if( is->mag_len <= BU_PTBL_END( is->l2 ) )
 		{
-			old_mag_len = is->mag_len;
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
@@ -421,7 +417,6 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 		bu_ptbl_ins_unique( is->l1, (long *)&dualvu->l.magic );
 		if( is->mag_len <= BU_PTBL_END( is->l1 ) )
 		{
-			old_mag_len = is->mag_len;
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
@@ -2407,11 +2402,6 @@ CONST struct vertexuse	*vu;
 fastf_t			dist;			/* distance along intersect ray for this vu */
 {
 	struct shell		*sv;		/* shell of vu */
-	struct loopuse		*lu;		/* lu of new self-loop */
-	struct faceuse		*dualfu = (struct faceuse *)NULL; /* faceuse of vu's dual */
-	struct shell		*duals = (struct shell *)NULL;	/* shell of vu's dual */
-	struct faceuse		*fuv;		/* faceuse of vu */
-	int			old_mag_len;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEXUSE(vu);
@@ -2420,14 +2410,12 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 		bu_log( "Array for distances to vertexuses is too small (%d)\n" , is->mag_len );
 
 	sv = nmg_find_s_of_vu( vu );
-	fuv = nmg_find_fu_of_vu( vu );
 
 	/* First step:  add vu to corresponding list */
 	if( sv == is->s1 )  {
 		bu_ptbl_ins_unique( is->l1, (long *)&vu->l.magic );
 		if( is->mag_len <= BU_PTBL_END( is->l1 ) )
 		{
-			old_mag_len = is->mag_len;
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
@@ -2450,7 +2438,6 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 		bu_ptbl_ins_unique( is->l2, (long *)&vu->l.magic );
 		if( is->mag_len <= BU_PTBL_END( is->l2 ) )
 		{
-			old_mag_len = is->mag_len;
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
@@ -2596,8 +2583,6 @@ struct faceuse		*fu1, *fu2;
 	for( i=0 ; i<BU_PTBL_END( &eu1_list ) ; i++ )
 	{
 		struct edgeuse *eu1;
-		point_t pt1a,pt1b;	/* 2D */
-		vect_t vt1;		/* 2D */
 		struct vertex_g *vg1a,*vg1b;
 		vect_t vt1_3d;
 
@@ -2620,8 +2605,6 @@ struct faceuse		*fu1, *fu2;
 			struct edgeuse *eu2;
 			struct vertex_g *vg2a, *vg2b;
 			int code;
-			point_t pt2a,pt2b;	/* 2D */
-			vect_t vt2;		/* 2D */
 			vect_t vt2_3d;
 			fastf_t dist[2];
 			point_t hit_pt;
@@ -3916,7 +3899,6 @@ struct edgeuse		*eu;
 	point_t hit_pt;
 	vect_t edir;
 	vect_t dir;
-	int intersections=0;
 	struct bu_ptbl inters;
 	fastf_t *inter_dist;
 	int i;
@@ -4119,7 +4101,6 @@ struct edgeuse		*eu;
 
 		if( class == NMG_CLASS_AinB )
 		{
-			struct loopuse *lu;
 			struct edgeuse *new_eu;
 
 			/* may need to split eu */
@@ -4258,7 +4239,6 @@ struct bu_ptbl		*eu2_list;
 	struct model *m;
 	struct bu_ptbl verts1,verts2;
 	struct loopuse *lu;
-	plane_t pl1,pl2;
 	int i;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -4272,9 +4252,6 @@ struct bu_ptbl		*eu2_list;
 
 	m = nmg_find_model( &fu1->l.magic );
 	NMG_CK_MODEL( m );
-
-	NMG_GET_FU_PLANE( pl2, fu2 );
-	NMG_GET_FU_PLANE( pl1, fu1 );
 
 	nmg_vertex_tabulate( &verts2, &fu2->l.magic );
 
@@ -4491,7 +4468,6 @@ colinear:
 			}
 			continue;
 #else
-			int code;
 			fastf_t  dist;
 			point_t pca;
 			struct edgeuse *eu_end;
@@ -4514,7 +4490,7 @@ colinear:
 
 				vg = eu1->vu_p->v_p->vg_p;
 				NMG_CK_VERTEX_G( vg );
-				code = rt_dist_pt3_line3( &dist, pca, is->pt, is->dir, vg->coord, &(is->tol) );
+				(void)rt_dist_pt3_line3( &dist, pca, is->pt, is->dir, vg->coord, &(is->tol) );
 				if( dist <= is->tol.dist )
 				{
 					/* vertex is on intersection line */
@@ -5391,10 +5367,6 @@ struct faceuse		*fu1, *fu2;
 	struct bu_ptbl		eu2_list;	/* all eu's in fu2 */
 	fastf_t			*mag1=(fastf_t *)NULL;
 	fastf_t			*mag2=(fastf_t *)NULL;
-	plane_t			n1, n2;
-    	fastf_t			dot;
-	fastf_t			ang;
-    	vect_t			unit_e_dir;
 	int			i;
 
 	NMG_CK_INTER_STRUCT(is);
@@ -5643,11 +5615,10 @@ struct nmg_inter_struct *is;
 {
 	struct model *m;
 	struct edgeuse *eu;
-	struct edgeuse *eu_next;
-	struct vertex_g *vg1,*vg2;
+	struct vertex_g *vg2;
 	struct vertex *vcut1,*vcut2;
 	struct  bu_ptbl cut_list;
-	fastf_t dist,dist1,dist2;
+	fastf_t dist,dist2;
 	int class1,class2;
 	int in=0;
 	int on=0;
@@ -5691,7 +5662,6 @@ struct nmg_inter_struct *is;
 	vcut1 = (struct vertex *)NULL;
 	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
-		vg1 = vg2;
 		class1 = class2;
 
 		vg2 = eu->eumate_p->vu_p->v_p->vg_p;
@@ -5817,7 +5787,6 @@ struct nmg_inter_struct *is;
 		for( i=0 ; i<BU_PTBL_END( &cut_list ) ; i++ )
 		{
 			int j;
-			struct loopuse *new_lu;
 
 			vcut1 = (struct vertex *)BU_PTBL_GET( &cut_list, i );
 
@@ -6146,7 +6115,6 @@ struct bu_ptbl *eu2_list;
 	for( i=0 ; i<BU_PTBL_END( eu1_list ) ; i++ )
 	{
 		struct edgeuse *eu1;
-		point_t pt1a,pt1b;
 		double len_vt1;
 		vect_t vt1;
 		struct vertex_g *vg1a,*vg1b;
@@ -6188,7 +6156,6 @@ struct bu_ptbl *eu2_list;
 			struct edgeuse *eu2;
 			struct vertex_g *vg2a,*vg2b;
 			int code;
-			point_t pt2a,pt2b;
 			vect_t vt2;
 			double len_vt2;
 			fastf_t dist[2];
@@ -7460,8 +7427,6 @@ struct faceuse		*fu1, *fu2;
 CONST struct bn_tol	*tol;
 {
 	struct nmg_inter_struct	bs;
-	struct loopuse	*lu;
-	struct edgeuse	*eu;
 	plane_t		pl1, pl2;
 	struct face	*f1;
 	struct face	*f2;
