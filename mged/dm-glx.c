@@ -72,14 +72,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "dm-glx.h"
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
+#include "dm-glx.h"
 
 extern void mged_print_result();
-int Glx_dm_init();
+struct dm *Glx_dm_init();
 
 static int      Glx_doevent();
 static int      Glx_dm();
@@ -154,15 +154,49 @@ static char	*kn2_knobs[] = {
 
 static int GlxdoMotion = 0;
 
-int
-Glx_dm_init()
+struct dm *
+Glx_dm_init(argc, argv)
+int argc;
+char *argv[];
 {
+  int i;
+#if 0
+  char **av;
+
+  struct dm *glxdmp;
+
   /* register application provided routines */
-  dmp->dm_eventHandler = Glx_doevent;
   cmd_hook = Glx_dm;
   state_hook = Glx_statechange;
 
-  return TCL_OK;
+  av = (char **)bu_malloc(sizeof(char *) * (argc + 3), "Glx_dm_init: av");
+  for(i = 0; i < argc; ++i)
+    av[i] = argv[i];
+  av[i + 1] = "-i";
+  av[i + 2] = "mged_bind_dm";
+  av[i + 3] = (char *)NULL;
+  glxdmp = Glx_open(Glx_doevent, argc + 2, av);
+  bu_free((genptr_t)av, "Glx_dm_init: av");
+
+  return glxdmp;
+#else
+  /* register application provided routines */
+  cmd_hook = Glx_dm;
+  state_hook = Glx_statechange;
+
+  for(i = 2; i < argc; ++i)
+    argv[i-2] = argv[i-1];
+
+  argv[i-2] = "-i";
+  argv[i-1] = "mged_bind_dm";
+
+#if 0
+  return Glx_open(Glx_doevent, argc, argv);
+#else
+  dmp->dm_eventHandler = Glx_doevent;
+  return Glx_open(dmp, argc, argv);
+#endif
+#endif
 }
 
 /*

@@ -33,15 +33,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "dm-ps.h"
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "./mged_solid.h"
+#include "dm-ps.h"
 
-int PS_dm_init();
+struct dm *PS_dm_init();
 
-int
-PS_dm_init()
+struct dm *
+PS_dm_init(argc, argv)
+int argc;
+char *argv[];
 {
-  return TCL_OK;
+  return PS_open((int (*)())NULL, argc, argv);
 }

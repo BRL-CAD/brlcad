@@ -35,15 +35,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "dm-plot.h"
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "./mged_solid.h"
+#include "dm-plot.h"
 
-int Plot_dm_init();
+struct dm *Plot_dm_init();
 
-int
-Plot_dm_init()
+struct dm *
+Plot_dm_init(argc, argv)
+int argc;
+char *argv[];
 {
-  return TCL_OK;
+  return Plot_open((int (*)())NULL, argc, argv);
 }

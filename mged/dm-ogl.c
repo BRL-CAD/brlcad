@@ -56,14 +56,14 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "dm-ogl.h"
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
+#include "dm-ogl.h"
 
 extern void mged_print_result();
-int      Ogl_dm_init();
+struct dm       *Ogl_dm_init();
 static void     set_knob_offset();
 static void     Ogl_statechange();
 static int	Ogl_dm();
@@ -138,15 +138,48 @@ static char	*kn2_knobs[] = {
 
 static int OgldoMotion = 0;
 
-int
-Ogl_dm_init()
+struct dm *
+Ogl_dm_init(argc, argv)
+int argc;
+char *argv[];
 {
+  int i;
+#if 0
+  char **av;
+  struct dm *ogldmp;
+
   /* register application provided routines */
-  dmp->dm_eventHandler = Ogl_doevent;
   cmd_hook = Ogl_dm;
   state_hook = Ogl_statechange;
 
-  return TCL_OK;
+  av = (char **)bu_malloc(sizeof(char *) * (argc + 3), "Ogl_dm_init: av");
+  for(i = 0; i < argc; ++i)
+    av[i] = argv[i];
+  av[i + 1] = "-i";
+  av[i + 2] = "mged_bind_dm";
+  av[i + 3] = (char *)NULL;
+  ogldmp = Ogl_open(Ogl_doevent, argc + 2, av);
+  bu_free((genptr_t)av, "Ogl_dm_init: av");
+
+  return ogldmp;
+#else
+  /* register application provided routines */
+  cmd_hook = Ogl_dm;
+  state_hook = Ogl_statechange;
+
+  for(i = 2; i < argc; ++i)
+    argv[i-2] = argv[i-1];
+
+  argv[i-2] = "-i";
+  argv[i-1] = "mged_bind_dm";
+
+#if 0
+  return Ogl_open(Ogl_doevent, argc, argv);
+#else
+   dmp->dm_eventHandler = Ogl_doevent;
+  return Ogl_open(dmp, argc, argv);
+#endif
+#endif
 }
 
 static int

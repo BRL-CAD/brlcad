@@ -51,16 +51,16 @@ extern void color_soltab();
 /* All systems can compile these! */
 extern struct dm dm_Null;
 
-extern int Plot_dm_init();
+extern struct dm *Plot_dm_init();
 extern struct dm dm_Plot;	/* Unix Plot */
 #define IS_DM_PLOT(dp) ((dp) == &dm_Plot)
 
-extern int PS_dm_init();
+extern struct dm *PS_dm_init();
 extern struct dm dm_PS;		/* PostScript */
 #define IS_DM_PS(dp) ((dp) == &dm_PS)
 
 #ifdef DM_X
-extern int X_dm_init();
+extern struct dm *X_dm_init();
 extern struct dm dm_X;
 #define IS_DM_X(dp) ((dp) == &dm_X)
 #else
@@ -68,7 +68,7 @@ extern struct dm dm_X;
 #endif
 
 #ifdef DM_OGL
-extern int Ogl_dm_init();
+extern struct dm *Ogl_dm_init();
 extern struct dm dm_ogl;
 #define IS_DM_OGL(dp) ((dp) == &dm_ogl)
 #else
@@ -76,7 +76,7 @@ extern struct dm dm_ogl;
 #endif
 
 #ifdef DM_GLX
-extern int Glx_dm_init();
+extern struct dm *Glx_dm_init();
 extern struct dm dm_glx;
 #define IS_DM_GLX(dp) ((dp) == &dm_glx)
 #else
@@ -84,7 +84,7 @@ extern struct dm dm_glx;
 #endif
 
 #ifdef DM_PEX
-extern int Pex_dm_init();
+extern struct dm *Pex_dm_init();
 extern struct dm dm_pex;
 #define IS_DM_PEX(dp) ((dp) == &dm_pex)
 #else
@@ -113,7 +113,7 @@ static char *default_view_strings[] = {
 
 struct w_dm {
   struct dm *dp;
-  int (*init)();
+  struct dm *(*init)();
 };
 
 static struct w_dm which_dm[] = {
@@ -131,7 +131,7 @@ static struct w_dm which_dm[] = {
 #ifdef DM_GLX
   { &dm_glx, Glx_dm_init },
 #endif
-  { (struct dm *)0, (int (*)())0}
+  { (struct dm *)0, (struct dm *(*)())0}
 };
 
 
@@ -148,6 +148,7 @@ int need_close;
   if(name != NULL){
     if(!strcmp("nu", name))
       return TCL_OK;  /* Ignore */
+
     for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
       if(strcmp(name, bu_vls_addr(&p->_dmp->dm_pathName)))
 	continue;
@@ -166,24 +167,12 @@ int need_close;
       return TCL_ERROR;
     }
   }else{
-    if(!strcmp("nu", bu_vls_addr(&pathName)))
+    if(dmp && !strcmp("nu", bu_vls_addr(&pathName)))
       return TCL_OK;  /* Ignore */
     else
       p = curr_dm_list;
   }
 
-  if(need_close){
-    /* Delete all references to display processor memory */
-    FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-      rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
-      sp->s_bytes = 0;
-      sp->s_addr = 0;
-    }
-    rt_mempurge( &(dmp->dm_map) );
-    
-    dmp->dm_close(dmp);
-  }
-	
   if(!--p->s_info->_rc){
     if(rate_tran_vls[X].vls_magic == BU_VLS_MAGIC){
       mged_slider_unlink_vars(p);
@@ -202,10 +191,25 @@ int need_close;
   if(p_cmd->aim == p)
     p_cmd->aim = (struct dm_list *)NULL;
 
-  bu_vls_free(&pathName);
-  bu_vls_free(&dmp->dm_initWinProc);
+  if(need_close){
+    /* Delete all references to display processor memory */
+    FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+      rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
+      sp->s_bytes = 0;
+      sp->s_addr = 0;
+    }
+    rt_mempurge( &(dmp->dm_map) );
+    
+    dmp->dm_close(dmp);
+  }
+	
   BU_LIST_DEQUEUE( &p->l );
+#if 0
+  bu_vls_free(&pathName);
+  bu_vls_free(&dname);
+  bu_vls_free(&dmp->dm_initWinProc);
   bu_free( (genptr_t)p->_dmp, "release: curr_dm_list->_dmp" );
+#endif
   bu_free( (genptr_t)p, "release: curr_dm_list" );
 
   if(save_dm_list != DM_LIST_NULL)
@@ -227,24 +231,39 @@ char	**argv;
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  if(argc == 2)
-    return release(argv[1], 1);
+  if(argc == 2){
+    int status;
+    struct bu_vls vls1;
 
-  return release(NULL, 1);
+    bu_vls_init(&vls1);
+
+    if(*argv[1] != '.')
+      bu_vls_printf(&vls1, ".%s", argv[1]);
+    else
+      bu_vls_strcpy(&vls1, argv[1]);
+
+    status = release(bu_vls_addr(&vls1), 1);
+
+    bu_vls_free(&vls1);
+    return status;
+  }else
+    return release(NULL, 1);
 }
 
 
 int
 reattach()
 {
-  char *av[4];
+  char *av[6];
 
   av[0] = "attach";
-  av[1] = dmp->dm_name;
-  av[2] = dname;
-  av[3] = NULL;
+  av[1] = "-d";
+  av[2] = bu_vls_addr(&dname);
+  av[3] = "-n";
+  av[4] = dmp->dm_name;
+  av[5] = NULL;
 
-  return f_attach((ClientData)NULL, interp, 3, av);
+  return f_attach((ClientData)NULL, interp, 5, av);
 }
 
 
@@ -285,64 +304,69 @@ char    **argv;
 {
   register struct w_dm *wp;
   register struct solid *sp;
-  register struct dm_list *dmlp;
   register struct dm_list *o_dm_list;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  if(argc == 1){
-    wp = &which_dm[2];  /* not advertising dm_Plot or dm_PS */
-    Tcl_AppendResult(interp, MORE_ARGS_STR,
-		     "attach (", (wp++)->dp->dm_name, (char *)NULL);
-    for( ; wp->dp != (struct dm *)0; wp++ )
-      Tcl_AppendResult(interp, "|", wp->dp->dm_name, (char *)NULL);
-    Tcl_AppendResult(interp, ")? ",  (char *)NULL);
-    
-    return TCL_ERROR;
-  }
-
   for( wp = &which_dm[0]; wp->dp != (struct dm *)0; wp++ )
-    if( strcmp(argv[1], wp->dp->dm_name ) == 0 )
+    if( strcmp(argv[argc - 1], wp->dp->dm_name ) == 0 )
       break;
 
   if(wp->dp == (struct dm *)0){
-    Tcl_AppendResult(interp, "attach(", argv[1], "): BAD\n", (char *)NULL);
+    Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
+    Tcl_AppendResult(interp, "\tPlease attach to either X, ogl, or glx.\n", (char *)NULL);
     return TCL_ERROR;
   }
-  
-  if(argc == 2 && NEED_GUI(wp->dp)){
-    return do_2nd_attach_prompt();
-  }else{
-    BU_GETSTRUCT(dmlp, dm_list);
-    BU_LIST_APPEND(&head_dm_list.l, &dmlp->l);
-    o_dm_list = curr_dm_list;
-    curr_dm_list = dmlp;
-    BU_GETSTRUCT(dmp, dm);
-    *dmp = *wp->dp;
-    bu_vls_init(&pathName);
-    curr_dm_list->dm_init = wp->init;
-    dm_var_init(o_dm_list, argv[2]);
+
+  o_dm_list = curr_dm_list;
+  BU_GETSTRUCT(curr_dm_list, dm_list);
+  BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
+#if 1
+  /* Only need to do this once */
+  if(tkwin == NULL && NEED_GUI(wp->dp)){
+    if(gui_setup() == TCL_ERROR)
+      goto Bad;
   }
+
+#if 0
+  if((dmp = wp->init(argc, argv)) == DM_NULL)
+    goto Bad;
+#else
+  BU_GETSTRUCT(dmp, dm);
+  *dmp = *wp->dp;
+  dm_var_init(o_dm_list);
+  no_memory = 0;
+  if(wp->init(argc, argv) == DM_NULL)
+    goto Bad;
+#endif
+
+#else
+  BU_GETSTRUCT(dmp, dm);
+  *dmp = *wp->dp;
+  curr_dm_list->dm_init = wp->init;
+  dm_var_init(o_dm_list);
 
   no_memory = 0;
 
   curr_dm_list->dm_init();
   bu_vls_init(&dmp->dm_initWinProc);
-  bu_vls_strcpy(&dmp->dm_initWinProc, "mged_bind_dm_win");
+  bu_vls_strcpy(&dmp->dm_initWinProc, "mged_bind_dm");
 
   /* Only need to do this once */
   if(tkwin == NULL && NEED_GUI(wp->dp)){
-    if(gui_setup(argv[2]) == TCL_ERROR)
+    if(gui_setup() == TCL_ERROR)
       goto Bad;
   }
 
-  if(dmp->dm_open(dmp, argc - 2, argv + 2))
+  if(dmp->dm_open(dmp, argc - 1, argv + 1))
     goto Bad;
+#endif
 
   mged_slider_link_vars(curr_dm_list);
   (void)f_load_dv((ClientData)NULL, interp, 0, NULL);
 
+  Tcl_ResetResult(interp);
   Tcl_AppendResult(interp, "ATTACHING ", dmp->dm_name, " (", dmp->dm_lname,
 		   ")\n", (char *)NULL);
 
@@ -363,9 +387,9 @@ char    **argv;
   return TCL_OK;
 
 Bad:
-  Tcl_AppendResult(interp, "attach(", argv[1], "): BAD\n", (char *)NULL);
+  Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
-  if(dmp->dm_vars != (genptr_t)0)
+  if(dmp != (genptr_t)0)
     release((char *)NULL, 1);  /* relesae() will call dm_close */
   else
     release((char *)NULL, 0);  /* release() will not call dm_close */
@@ -375,8 +399,7 @@ Bad:
 
 
 int
-gui_setup(screen)
-char *screen;
+gui_setup()
 {
   char *filename;
   int status;
@@ -459,18 +482,30 @@ char    **argv;
   struct shared_info *sip;
   struct dm_list *save_cdlp;
   struct cmd_list *save_cclp;
+  struct bu_vls vls1;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
         return TCL_ERROR;
 
+  bu_vls_init(&vls1);
+
+  if(*argv[1] != '.')
+    bu_vls_printf(&vls1, ".%s", argv[1]);
+  else
+    bu_vls_strcpy(&vls1, argv[1]);
+
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) )
-    if(!strcmp(argv[1], bu_vls_addr(&p->_dmp->dm_pathName)))
+    if(!strcmp(bu_vls_addr(&vls1), bu_vls_addr(&p->_dmp->dm_pathName)))
       break;
 
   if(p == &head_dm_list){
-    Tcl_AppendResult(interp, "untie: bad pathname - %s\n", argv[1], (char *)NULL);
+    Tcl_AppendResult(interp, "untie: bad pathname - %s\n",
+		     bu_vls_addr(&vls1), (char *)NULL);
+    bu_vls_free(&vls1);
     return TCL_ERROR;
   }
+
+  bu_vls_free(&vls1);
 
   if(p->_owner){
     if(p->s_info->_rc > 1){  /* sharing s_info with another display manager */
@@ -519,24 +554,46 @@ char    **argv;
   struct dm_list *p1 = (struct dm_list *)NULL;
   struct dm_list *p2 = (struct dm_list *)NULL;
   struct cmd_list *save_cclp;  /* save current cmd_list pointer */
+  struct bu_vls vls1, vls2;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
+  bu_vls_init(&vls1);
+  bu_vls_init(&vls2);
+
+  if(*argv[1] != '.')
+    bu_vls_printf(&vls1, ".%s", argv[1]);
+  else
+    bu_vls_strcpy(&vls1, argv[1]);
+
+  if(*argv[2] != '.')
+    bu_vls_printf(&vls2, ".%s", argv[2]);
+  else
+    bu_vls_strcpy(&vls2, argv[2]);
+
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-    if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], bu_vls_addr(&p->_dmp->dm_pathName)))
+    if(p1 == (struct dm_list *)NULL && !strcmp(bu_vls_addr(&vls1),
+					       bu_vls_addr(&p->_dmp->dm_pathName)))
       p1 = p;
-    else if(p2 == (struct dm_list *)NULL && !strcmp(argv[2], bu_vls_addr(&p->_dmp->dm_pathName)))
+    else if(p2 == (struct dm_list *)NULL && !strcmp(bu_vls_addr(&vls2),
+						    bu_vls_addr(&p->_dmp->dm_pathName)))
       p2 = p;
     else if(p1 != (struct dm_list *)NULL && p2 != (struct dm_list *)NULL)
       break;
   }
 
   if(p1 == (struct dm_list *)NULL || p2 == (struct dm_list *)NULL){
-    Tcl_AppendResult(interp, "f_tie: bad pathname(s)\n\tpathName1 - ", argv[1],
-		     "\t\tpathName2 - ", argv[2], "\n", (char *)NULL);
+    Tcl_AppendResult(interp, "f_tie: bad pathname(s)\n\tpathName1 - ",
+		     bu_vls_addr(&vls1), "\t\tpathName2 - ",
+		     bu_vls_addr(&vls2), "\n", (char *)NULL);
+    bu_vls_free(&vls1);
+    bu_vls_free(&vls2);
     return TCL_ERROR;
   }
+
+  bu_vls_free(&vls1);
+  bu_vls_free(&vls2);
 
   /* free p1's s_info struct if not being used */
   if(!--p1->s_info->_rc){
@@ -610,17 +667,24 @@ struct dm_list *op;
 
 
 static void
+#if 0
 dm_var_init(initial_dm_list, name)
 struct dm_list *initial_dm_list;
 char *name;
+#else
+dm_var_init(initial_dm_list)
+struct dm_list *initial_dm_list;
+#endif
 {
   int i;
 
   BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
   mged_variables = default_mged_variables;
 
+#if 0
   if(name)
-    strcpy(dname, name);
+    bu_vls_strcpy(&dname, name);
+#endif
   bn_mat_copy(Viewrot, bn_mat_identity);
   size_reset();
   MAT_DELTAS_GET(orig_pos, toViewcenter);

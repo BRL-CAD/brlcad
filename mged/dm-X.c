@@ -44,15 +44,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
+#include "./ged.h"
+#include "./mged_solid.h"
+#include "./mged_dm.h"
+#include "./sedit.h"
 #include "dm-X.h"
 
-#include "./ged.h"
-#include "./mged_dm.h"
-#include "./mged_solid.h"
-#include "./sedit.h"
 
 extern void mged_print_result();
-int     X_dm_init();
+struct dm     *X_dm_init();
 
 static void	X_statechange();
 static int     X_dm();
@@ -77,15 +77,48 @@ struct bu_structparse X_vparse[] = {
 
 static int XdoMotion = 0;
 
-int
-X_dm_init()
+struct dm *
+X_dm_init(argc, argv)
+int argc;
+char *argv[];
 {
+  int i;
+#if 0
+  char **av;
+  struct dm *xdmp;
+
   /* register application provided routines */
-  dmp->dm_eventHandler = X_doevent;
   cmd_hook = X_dm;
   state_hook = X_statechange;
 
-  return TCL_OK;
+  av = (char **)bu_malloc(sizeof(char *) * (argc + 3), "X_dm_init: av");
+  for(i = 0; i < argc; ++i)
+    av[i] = argv[i];
+  av[i + 1] = "-i";
+  av[i + 2] = "mged_bind_dm";
+  av[i + 3] = (char *)NULL;
+  xdmp =  X_open(X_doevent, argc + 2, av);
+  bu_free((genptr_t)av, "X_dm_init: av");
+
+  return xdmp;
+#else
+  /* register application provided routines */
+  cmd_hook = X_dm;
+  state_hook = X_statechange;
+
+  for(i = 2; i < argc; ++i)
+    argv[i-2] = argv[i-1];
+
+  argv[i-2] = "-i";
+  argv[i-1] = "mged_bind_dm";
+
+#if 0
+  return X_open(X_doevent, argc, argv);
+#else
+  dmp->dm_eventHandler = X_doevent;
+  return X_open(dmp, argc, argv);
+#endif
+#endif
 }
 
 static int
