@@ -71,28 +71,22 @@ static char	RCSid[] =		/* for "what" utility */
 #else
 #include	<string.h>
 #endif
+#include "machine.h"
+#include "externs.h"
+
 #if __STDC__
-#include	<stdarg.h>
-#include	<stdlib.h>
-#if __STDC__ == 1	/* workaround for Cray nonsense */
-extern int	getopt( int, char const * const *, char const * );
-#endif
-#define	RBMODE	"rb"			/* "b" not really necessary for POSIX */
+# define	RBMODE	"rb"			/* "b" not really necessary for POSIX */
+# include	<stdarg.h>
 #else
-#ifdef NO_STRRCHR
-#define	strrchr( s, c )		rindex( s, c )
+# ifdef NO_MEMCPY
+#  define	memcpy( s1, s2, n )	bcopy( s2, s1, n )
+# else
+#  include	<memory.h>
+# endif
+# include	<varargs.h>
+# define	RBMODE	"r"
 #endif
-#ifdef NO_MEMCPY
-#define	memcpy( s1, s2, n )	bcopy( s2, s1, n )
-#else
-#include	<memory.h>
-#endif
-#include	<varargs.h>
-#define	RBMODE	"r"
-extern void	exit();
-extern char	*malloc();
-extern int	getopt();
-#endif
+
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
 #endif
