@@ -599,7 +599,26 @@ typedef long	bitv_t;		/* largest integer type */
 
 #endif
 
-#if defined (linux) && !defined(__ia64__)
+#if defined(linux) && defined(__x86_64__)
+/********************************
+ *                              *
+ *      AMD Opteron Linux       *
+ *                              *
+ ********************************/
+#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
+typedef double  fastf_t;        /* double|float, "Fastest" float type */
+#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
+#define FAST    register        /* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
+#define DEFAULT_PSW	bu_avail_cpus()
+#define MAX_PSW		256
+#define	PARALLEL	1
+#define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
+
+#endif
+
+#if defined (linux) && !defined(__ia64__) && !defined(__x86_64__)
 /********************************
  *                              *
  *        Linux on IA32         *
