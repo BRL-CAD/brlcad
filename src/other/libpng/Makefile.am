@@ -31,7 +31,7 @@ ansi2knr_SOURCES = ansi2knr.c
 pngtest_SOURCES = pngtest.c
 
 pngtest_LDADD = \
-	${LIBPNG} \
+	${lib_LTLIBRARIES} \
 	${LIBZ} \
 	${LIBM}
 
