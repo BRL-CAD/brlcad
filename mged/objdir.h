@@ -8,6 +8,7 @@ struct directory  {
 	long		d_addr;		/* disk address in obj file */
 	short		d_flags;	/* flags */
 	short		d_len;		/* # of db granules used by obj */
+	short		d_nref;		/* # times referenced by COMBs */
 	struct directory *d_forw;	/* forward link */
 };
 #define DIR_NULL	((struct directory *) NULL)
