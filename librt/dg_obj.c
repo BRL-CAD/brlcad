@@ -30,6 +30,7 @@
 
 #include <fcntl.h>
 #include <math.h>
+#include <signal.h>
 #include "conf.h"
 #ifdef USE_STRING_H
 #include <string.h>
@@ -77,6 +78,7 @@ static int dgo_erase_tcl();
 static int dgo_erase_all_tcl();
 static int dgo_who_tcl();
 static int dgo_rt_tcl();
+static int dgo_rtabort_tcl();
 static int dgo_vdraw_tcl();
 static int dgo_overlay_tcl();
 static int dgo_get_autoview_tcl();
@@ -131,6 +133,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 	"overlay",		dgo_overlay_tcl,
 	"report",		dgo_report_tcl,
 	"rt",			dgo_rt_tcl,
+	"rtabort",		dgo_rtabort_tcl,
 	"rtcheck",		dgo_rtcheck_tcl,
 #if 0
 	"tol",			dgo_tol_tcl,
@@ -184,6 +187,13 @@ dgo_deleteProc(clientData)
 
 	/* free observers */
 	bu_observer_free(&dgop->dgo_observers);
+
+	/*
+	 * XXX Do something for the case where the drawable geometry
+	 * XXX object is deleted and the object has forked rt processes.
+	 * XXX This will create a memory leak.
+	 */
+
 
 	bu_vls_free(&dgop->dgo_name);
 
@@ -281,6 +291,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	BU_LIST_INIT(&dgop->dgo_headSolid);
 	BU_LIST_INIT(&dgop->dgo_headVDraw);
 	BU_LIST_INIT(&dgop->dgo_observers.l);
+	BU_LIST_INIT(&dgop->dgo_headRunRt.l);
 
 #if 0
 	/* initilize tolerance structures */
@@ -2794,25 +2805,61 @@ dgo_rt_write(dgop, vop, fp, eye_model)
 	(void)fprintf(fp, "end;\n");
 }
 
+static int
+dgo_rtabort_tcl(ClientData clientData,
+		 Tcl_Interp *interp,
+		 int argc,
+		 char **argv)
+{
+	struct dg_obj	*dgop = (struct dg_obj *)clientData;
+	struct run_rt	*rrp;
+
+	for (BU_LIST_FOR(rrp, run_rt, &dgop->dgo_headRunRt.l)) {
+		kill(rrp->pid, SIGKILL);
+		rrp->aborted = 1;
+	}
+
+	return TCL_OK;
+}
+
 static void
 dgo_rt_output_handler(clientData, mask)
      ClientData clientData;
      int mask;
 {
-	int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
+	struct run_rt *run_rtp = (struct run_rt *)clientData;
 	int count;
 #if 0
-	char line[10240];
-#else
-	char line[5120];
-#endif
+	char line[10240+1];
 
 	/* Get data from rt */
-	/* if ((count = read((int)fd, line, 10240)) == 0) { */
-	if ((count = read((int)fd, line, 5120)) == 0) {
-		Tcl_DeleteFileHandler(fd);
-		close(fd);
+	if ((count = read((int)run_rtp->fd, line, 10240)) == 0) {
+#else
+	char line[5120+1];
 
+	/* Get data from rt */
+	if ((count = read((int)run_rtp->fd, line, 5120)) == 0) {
+#endif
+		int retcode;
+		int rpid;
+		int aborted;
+
+		Tcl_DeleteFileHandler(run_rtp->fd);
+		close(run_rtp->fd);
+
+		/* wait for the forked process */
+		while ((rpid = wait(&retcode)) != run_rtp->pid && rpid != -1);
+
+		aborted = run_rtp->aborted;
+
+		/* free run_rtp */
+ 		BU_LIST_DEQUEUE(&run_rtp->l);
+		bu_free((genptr_t)run_rtp, "dgo_rt_output_handler: run_rtp");
+
+		if (aborted)
+			bu_log("Raytrace aborted.\n");
+		else
+			bu_log("Raytrace complete.\n");
 		return;
 	}
 
@@ -2895,16 +2942,18 @@ dgo_run_rt(dgop, vop)
      struct dg_obj *dgop;
      struct view_obj *vop; 
 {
-	register int i;
-	FILE *fp_in;
-	int pipe_in[2];
-	int pipe_err[2];
-	vect_t eye_model;
+	register int	i;
+	FILE		*fp_in;
+	int		pipe_in[2];
+	int		pipe_err[2];
+	vect_t		eye_model;
+	int		pid; 	 
+	struct run_rt	*run_rtp;
 
 	(void)pipe(pipe_in);
 	(void)pipe(pipe_err);
 
-	if ((fork()) == 0) {
+	if ((pid = fork()) == 0) {
 		/* make this a process group leader */
 		setpgid(0, 0);
 
@@ -2938,8 +2987,13 @@ dgo_run_rt(dgop, vop)
 	dgo_rt_write(dgop, vop, fp_in, eye_model);
 	(void)fclose(fp_in);
 
-	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
-			      dgo_rt_output_handler, (ClientData)pipe_err[0]);
+	BU_GETSTRUCT(run_rtp, run_rt);
+	BU_LIST_APPEND(&dgop->dgo_headRunRt.l, &run_rtp->l);
+	run_rtp->fd = pipe_err[0];
+	run_rtp->pid = pid;
+
+	Tcl_CreateFileHandler(run_rtp->fd, TCL_READABLE,
+			      dgo_rt_output_handler, (ClientData)run_rtp);
 
 	return 0;
 }
