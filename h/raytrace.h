@@ -1833,6 +1833,8 @@ RT_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
 /* From nmg_mod.c */
 RT_EXTERN(int			nmg_fu_planeeqn, (struct faceuse *fu, CONST struct rt_tol *tol) );
 RT_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
+RT_EXTERN(struct faceuse	*nmg_add_loop_to_face, (struct shell *s, struct faceuse *fu, struct vertex **verts, int n, int dir) );
+
 RT_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], int n) );
 RT_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu) );
 RT_EXTERN(void			nmg_moveeu, (struct edgeuse *eudst, struct edgeuse *eusrc) );
