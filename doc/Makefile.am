@@ -2,9 +2,6 @@
 
 data_DATA = \
 	4.4-bugs.doc \
-	agreement \
-	agreement_R6.0.pdf \
-	agreement_R6.0.rtf \
 	anim.doc \
 	benchmark.doc \
 	blurb100.doc \

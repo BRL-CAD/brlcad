@@ -11,5 +11,3 @@ network-distributed image-processing capability, image-handling, and
 data-compression utilities. New in Release 4.0 is an implementation of
 Weiler's n-Manifold Geometry (NMG) data structures for surface-based
 solid models.
-
-Available free of charge by signing a limited distribution agreement.
