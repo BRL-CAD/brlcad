@@ -31,7 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include <brlcad/fb.h>
+#include "fb.h"
 
 #define	LSB	0	/* Least Signifigent Byte */
 #define MSB	1	/* Most Signifigent Byte */
