@@ -1,6 +1,7 @@
 #include "conf.h"
 #include "tcl.h"
 
+#define PLOTBOUND       1000.0  /* Max magnification in Rot matrix */
 #include <stdio.h>
 #include <sys/time.h>
 #include "machine.h"
@@ -32,7 +33,7 @@ struct dm dm_Null = {
   Nu_int0,
   Nu_int0,
   0,			/* no displaylist */
-  0.0,
+  PLOTBOUND,
   "nu", "Null Display",
   0,
   0,
