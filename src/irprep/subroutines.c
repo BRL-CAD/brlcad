@@ -24,13 +24,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"
 
 #if !defined(PI)
 #define PI 3.14159265358979323846264		/*  Pi.  */
