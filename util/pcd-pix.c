@@ -1,22 +1,28 @@
-#define OWN_WRITE	1
 /*
  *			P C D - P I X . C
  *
  *  Authors -
  *	Hadmut Danisch (original program pcdtoppm)
  *	Michael John Muuss (this adaptation)
+ *  
+ *  Distribution Status -
+ *	Original work Copyright (c) 1992 by Hadmut Danisch.
+ *	The modifications by Mike Muuss are Public Domain, Distribution Unlimited.
+ *
+ *  Based upon -
+ *	hpcdtoppm (Hadmut's pcdtoppm) v0.3
+ *
+ *  Copyright (c) 1992 by Hadmut Danisch (danisch@ira.uka.de).
+ *  Permission to use and distribute this software and its
+ *  documentation for noncommercial use and without fee is hereby granted,
+ *  provided that the above copyright notice appear in all copies and that
+ *  both that copyright notice and this permission notice appear in
+ *  supporting documentation. It is not allowed to sell this software in 
+ *  any way. This software is not public domain.
  */
-
-
-/* hpcdtoppm (Hadmut's pcdtoppm) v0.3
-*  Copyright (c) 1992 by Hadmut Danisch (danisch@ira.uka.de).
-*  Permission to use and distribute this software and its
-*  documentation for noncommercial use and without fee is hereby granted,
-*  provided that the above copyright notice appear in all copies and that
-*  both that copyright notice and this permission notice appear in
-*  supporting documentation. It is not allowed to sell this software in 
-*  any way. This software is not public domain.
-*/
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 /* define DEBUG for some debugging informations, just remove the x from xDEBUG */
 #define xDEBUG
@@ -27,10 +33,7 @@
 
 #include <stdio.h>
 
-/* If the own routines are used, this is the size of the buffer in bytes.
-   You can shrink if needed. */
-#define own_BUsize 50000
-/* (3*24*1024) */
+#define own_BUsize (3*24*1024)
 
 
 /*
@@ -881,11 +884,11 @@ static void druckeid()
 	    dr(d->id4,"Id4")
 	    dr(d->id5,"Id5")
 
-	    /*
-db(d->ww1)
-db(d->ww3)
-db(d->idx)
-*/
+	/*
+		db(d->ww1)
+		db(d->ww3)
+		db(d->idx)
+	*/
 
 #undef dr 
 #undef db
@@ -1017,11 +1020,12 @@ implane *f,*f1,*f2;
 int autosync;
 {
 	int i,htlen,sum;
-	unsigned long sreg,maxwidth;
+	unsigned long maxwidth;
+	register unsigned long sreg;
 	unsigned int inh,n,zeile,segment,ident;
 	struct myhqt *htptr,*hp;
 
-	uBYTE *nptr;
+	register uBYTE *nptr;
 	uBYTE *lptr;
 
 	melde("decode\n");
