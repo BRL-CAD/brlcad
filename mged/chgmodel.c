@@ -118,20 +118,7 @@ char	**argv;
 	register struct directory *dp;
 	union record record;
 	int r=0, g=0, b=0;
-	int num_params = 0;
-	static int mark = 0;
-	static int skip1 = 0;
-	static int skip2 = 0;
-	static int skip3 = 0;
-	static struct cmd_list *clp = (struct cmd_list *)NULL;
 	char inherit;
-
-	if(clp == (struct cmd_list *)NULL)
-	  clp = curr_cmd_list;
-	else if(curr_cmd_list != clp){
-	  rt_log("f_mater: Currently being used by %s.\n", clp->name);
-	  return CMD_OK;
-	}
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return CMD_BAD;
@@ -146,9 +133,6 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-	if(skip1)
-	  goto Mark1;
-
 	if( argc >= 3 )  {
 	  if( strncmp( argv[2], "del", 3 ) != 0 )  {
 	    /* Material */
@@ -161,55 +145,44 @@ char	**argv;
 	    goto out;
 	  }
 	}else{
-	  if(mark){
-	    skip1 = 1;
-	    goto Mark1;
-	  }
-
-	  mark = 1;
-
 	  /* Material */
 	  (void)rt_log( "Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
+
+	  if(record.c.c_matname[0] == '\0')
+	    rt_vls_printf(&curr_cmd_list->more_default, "del");
+	  else
+	    rt_vls_printf(&curr_cmd_list->more_default, "%s", record.c.c_matname);
+
 	  return CMD_MORE;
 	}
 
-Mark1:
-	if(skip2)
-	  goto Mark2;
-
-	if(argc >= 4 - skip1){
-	  if( strncmp(argv[3 - skip1],  "del", 3) == 0  )
+	if(argc >= 4){
+	  if( strncmp(argv[3],  "del", 3) == 0  )
 	    record.c.c_matparm[0] = '\0';
 	  else
-	    strcpy( record.c.c_matparm, argv[3 - skip1]);
+	    strcpy( record.c.c_matparm, argv[3]);
 	}else{
-	  if(mark == 2){
-	    skip2 = 1;
-	    goto Mark2;
-	  }
-
-	  mark = 2;
-
 	  /* Parameters */
 	  (void)rt_log( "Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
+
+	  if(record.c.c_matparm[0] == '\0')
+	    rt_vls_printf(&curr_cmd_list->more_default, "del");
+	  else
+	    rt_vls_printf(&curr_cmd_list->more_default, "%s", record.c.c_matparm);
+
 	  return CMD_MORE;
 	}
 
-Mark2:
-	if(skip3 == 3)
-	  goto Mark3;
-
-	if(argc >= 5 - skip2 - skip1){
-	  if( strncmp(argv[4 - skip2 - skip1], "del", 3) == 0 ){
+	if(argc >= 5){
+	  if( strncmp(argv[4], "del", 3) == 0 ){
 	    /* leave color as is */
 	    record.c.c_override = 0;
-	    skip3 = 2;
-	  }else if(argc < 7 - skip2 - skip1){	/* prompt for color */
+	  }else if(argc < 7){	/* prompt for color */
 	    goto color_prompt;
 	  }else{	/* change color */
-	    sscanf(argv[4 - skip2 - skip1], "%d", &r);
-	    sscanf(argv[5 - skip2 - skip1], "%d", &g);
-	    sscanf(argv[6 - skip2 - skip1], "%d", &b);
+	    sscanf(argv[4], "%d", &r);
+	    sscanf(argv[5], "%d", &g);
+	    sscanf(argv[6], "%d", &b);
 	    record.c.c_rgb[0] = r;
 	    record.c.c_rgb[1] = g;
 	    record.c.c_rgb[2] = b;
@@ -218,25 +191,22 @@ Mark2:
 	}else{
 	/* Color */
 color_prompt:
-	  if(mark == 3 && argc == 5 - skip2 - skip1 - 1){
-	    skip3 = 3;
-	    goto Mark3;
-	  }
-
-	  mark = 3;
-	  if( record.c.c_override )
+	  if( record.c.c_override ){
 	    (void)rt_log( "Color = %d %d %d\n", 
 			  record.c.c_rgb[0],
 			  record.c.c_rgb[1],
 			  record.c.c_rgb[2] );
-	  else
+	    rt_vls_printf(&curr_cmd_list->more_default, "%d %d %d",
+			  record.c.c_rgb[0],
+			  record.c.c_rgb[1],
+			  record.c.c_rgb[2] );
+	  }else
 	    (void)rt_log( "Color = (No color specified)\n");
 
 	  (void)rt_log( "Color R G B (0..255)? ('del' to delete, CR to skip) ");
 	  return CMD_MORE;
 	}
 
-Mark3:
 	/* Inherit */
 	switch( record.c.c_inherit )  {
 	default:
@@ -251,20 +221,23 @@ Mark3:
 		break;
 	}
 
-	if(argc >= 8 - skip3 - skip2 - skip1){
-		sscanf(argv[8 - skip3 - skip2 - skip1 - 1], "%c", &record.c.c_inherit);
-		inherit = *argv[8 - skip3 - skip2 - skip1 - 1];
+	if(argc >= 8){
+	  record.c.c_inherit = inherit = *argv[7];
 	}else{
-	  if(mark == 4){
-	    inherit = '\0';
-	    goto Mark4;
+	  (void)rt_log( "Inheritance (0|1)? (CR to skip) ");
+	  switch( record.c.c_inherit ) {
+	  case DB_INH_HIGHER:
+	    rt_vls_printf(&curr_cmd_list->more_default, "1");
+	    break;
+	  case DB_INH_LOWER:
+	  default:
+	    rt_vls_printf(&curr_cmd_list->more_default, "0");
+	    break;
 	  }
 
-	  mark = 4;
-	  (void)rt_log( "Inheritance (0|1)? (CR to skip) ");
 	  return CMD_MORE;
 	}
-Mark4:
+
 	switch( inherit )  {
 	case '1':
 		record.c.c_inherit = DB_INH_HIGHER;
@@ -285,9 +258,6 @@ out:
 		return CMD_BAD;
 	}
 
-	mark = 0;
-	skip1 = skip2 = skip3 = 0;
-	clp = (struct cmd_list *)NULL;
 	return CMD_OK;
 }
 
