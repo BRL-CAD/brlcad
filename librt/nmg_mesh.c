@@ -182,11 +182,15 @@ struct edgeuse *eu1, *eu2;
 	return(cosangle);
 }
 
-/*			J O I N _ E U
+/*
+ *			N M G _ J O I N _ E U
  *
- *	Join edgeuses to same edge
+ *	Join two edgeuses that share the same vertices to same edge,
+ *	taking care to organize them into the proper angular orientation,
+ *	so that the attached faces are correctly arranged radially
+ *	around the edge.
  */
-static void join_eu(eu1, eu2)
+static void nmg_join_eu(eu1, eu2)
 struct edgeuse *eu1, *eu2;
 {
 	struct edgeuse *nexteu;
@@ -200,11 +204,17 @@ struct edgeuse *eu1, *eu2;
 	NMG_CK_EDGEUSE(eu2->radial_p);
 	NMG_CK_EDGEUSE(eu2->eumate_p);
 
+	if( eu1->e_p == eu2->e_p )  return;
+	if( (eu1->vu_p->v_p != eu2->vu_p->v_p && eu1->vu_p->v_p != eu2->eumate_p->vu_p->v_p) ||
+	    (eu1->eumate_p->vu_p->v_p != eu2->vu_p->v_p && eu1->eumate_p->vu_p->v_p != eu2->eumate_p->vu_p->v_p) )
+		rt_bomb("nmg_join_eu(): edgeuses don't share both vertices\n");
+
 	if (rt_g.NMG_debug & DEBUG_MESH_EU) {
 		EUPRINT("\tJoining", eu1);
 		EUPRINT("\t     to", eu2);
 	}
 	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
+		struct edgeuse	*first_eu1 = eu1;
 
 		/* because faces are always created with counter-clockwise
 		 * exterior loops and clockwise interior loops, radial
@@ -220,11 +230,21 @@ struct edgeuse *eu1, *eu2;
 		angle2 = get_angle(eu1, eu1->radial_p);
 
 		for ( iteration2=0; (angle1 > angle2) && iteration2 < 10000; iteration2++ ) {
+			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH;
+			/* If eu1 is only one pair of edgeuses, done */
+			if( eu1 == eu1->radial_p->eumate_p )  break;
 			eu1 = eu1->radial_p->eumate_p;
+			if( eu1 == first_eu1 )  {
+				rt_log("XXX nmg_join_eu():  went full circle, no luck.  Guessing at face insertion point.\n");
+				break;
+			}
 			angle1 = get_angle(eu1, eu2);
 			angle2 = get_angle(eu1, eu1->radial_p);
 		}
-		if(iteration2 >= 10000) rt_bomb("join_eu: infinite loop (2)\n");
+		if(iteration2 >= 10000)  {
+			rt_log("angle1=%e, angle2=%e\n", angle1, angle2);
+			rt_bomb("nmg_join_eu: infinite loop (2)\n");
+		}
 
 		/* find the next use of the edge eu2 is on.  If eu2 and it's
 		 * mate are the last uses of the edge, there will be no next
@@ -245,7 +265,7 @@ struct edgeuse *eu1, *eu2;
 		/* get ready to move the next edgeuse */
 		eu2 = nexteu;
 	}
-	if( iteration1 >= 10000 )  rt_bomb("join_eu:  infinite loop (1)\n");
+	if( iteration1 >= 10000 )  rt_bomb("nmg_join_eu:  infinite loop (1)\n");
 }
 
 /*
@@ -289,7 +309,7 @@ struct rt_list *hd;
 		    eu->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p ||
 		    eu->eumate_p->vu_p->v_p == eu1->vu_p->v_p &&
 		    eu->vu_p->v_p == eu1->eumate_p->vu_p->v_p))
-			join_eu(eu1, eu);
+			nmg_join_eu(eu1, eu);
 	}
 
 }
