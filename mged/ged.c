@@ -1560,8 +1560,9 @@ do_rc()
 	    bu_log("If you are setting variables in your %s, you will ", RCFILE);
 	    bu_log("need to change those\ncommands.\n\n");
 	}
-	if (Tcl_EvalFile( interp, bu_vls_addr(&str) ) == TCL_ERROR) {
-	    bu_log("Error reading %s: %s\n", RCFILE, interp->result);
+	if (Tcl_EvalFile( interp, bu_vls_addr(&str) ) != TCL_OK) {
+	    bu_log("Error reading %s:\n%s\n", RCFILE,
+		Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
 	}
 
 	return 0;

@@ -412,10 +412,12 @@ gui_setup()
   (void)Tcl_Eval( interp, "wm withdraw .");
 
   /* Check to see if user specified MGED_GUIRC */
-  if((filename = getenv("MGED_GUIRC")) == (char *)NULL )
-    return TCL_OK;
-
-  (void)Tcl_EvalFile( interp, filename );
+  if((filename = getenv("MGED_GUIRC")) != (char *)NULL )  {
+	if( Tcl_EvalFile( interp, filename ) != TCL_OK )  {
+		bu_log("Error reading %s:\n%s\n", filename,
+			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+	}
+  }
 
   return TCL_OK;
 }
