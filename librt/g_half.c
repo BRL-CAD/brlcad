@@ -49,80 +49,6 @@ struct half_specific  {
 #define HALF_NULL	((struct half_specific *)0)
 
 /*
- *			R T _ M A K E _ P E R P
- *
- *  Given a vector, create another vector which is perpendicular to it,
- *  but may not have unit length.
- */
-void
-rt_make_perp( new, old )
-vect_t new, old;
-{
-	register int i;
-	LOCAL vect_t another;	/* Another vector, different */
-
-	i = X;
-	if( fabs(old[Y])<fabs(old[i]) )  i=Y;
-	if( fabs(old[Z])<fabs(old[i]) )  i=Z;
-	VSETALL( another, 0 );
-	another[i] = 1.0;
-	if( old[X] == 0 && old[Y] == 0 && old[Z] == 0 )  {
-		VMOVE( new, another );
-	} else {
-		VCROSS( new, another, old );
-	}
-}
-
-/*
- *			R T _ O R T H O V E C
- *
- *  Given a vector, create another vector which is perpendicular to it,
- *  and with unit length.  This algorithm taken from Gift's arvec.f;
- *  a faster algorithm may be possible.
- */
-rt_orthovec( out, in )
-register fastf_t *out, *in;
-{
-	register int j, k;
-	FAST fastf_t	f;
-	register int i;
-
-	if( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
-	    NEAR_ZERO(in[Z], 0.0001) )  {
-		VSETALL( out, 0 );
-		VPRINT("rt_orthovec: zero-length input", in);
-		return;
-	}
-
-	/* Find component closest to zero */
-	f = fabs(in[X]);
-	i = X;
-	j = Y;
-	k = Z;
-	if( fabs(in[Y]) < f )  {
-		f = fabs(in[Y]);
-		i = Y;
-		j = Z;
-		k = X;
-	}
-	if( fabs(in[Z]) < f )  {
-		i = Z;
-		j = X;
-		k = Y;
-	}
-	f = hypot( in[j], in[k] );
-	if( NEAR_ZERO( f, SMALL ) ) {
-		VPRINT("rt_orthovec: zero hypot on", in);
-		VSETALL( out, 0 );
-		return;
-	}
-	f = 1.0/f;
-	out[i] = 0.0;
-	out[j] = -in[k]*f;
-	out[k] =  in[j]*f;
-}
-
-/*
  *  			H L F _ P R E P
  */
 hlf_prep( vec, stp, mat, rtip )
@@ -156,7 +82,7 @@ struct rt_i	*rtip;
 	VSCALE( stp->st_center, halfp->half_N, halfp->half_d );
 
 	/* X and Y basis for uv map */
-	rt_make_perp( halfp->half_Xbase, stp->st_center );
+	vec_perp( halfp->half_Xbase, stp->st_center );
 	VCROSS( halfp->half_Ybase, halfp->half_Xbase, halfp->half_N );
 	VUNITIZE( halfp->half_Xbase );
 	VUNITIZE( halfp->half_Ybase );
@@ -295,7 +221,7 @@ struct soltab *stp;
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 
-	rt_orthovec( cvp->crv_pdir, halfp->half_N );
+	vec_ortho( cvp->crv_pdir, halfp->half_N );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
