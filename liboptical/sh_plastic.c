@@ -332,7 +332,6 @@ char	*dp;
 #if RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_matcolor = BN_TABDATA_NULL;
 #else
-	vect_t	cprod;			/* color product */
 	point_t	matcolor;		/* Material color */
 #endif
 	struct phong_specific *ps =

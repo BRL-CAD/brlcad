@@ -60,7 +60,6 @@ register CONST char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
 CONST char				*value;	/* string containing value */
 {
-	double v;
 	double *p = (double *)(base+sdp->sp_offset);
 
 	/* reconvert with optional units */
