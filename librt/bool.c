@@ -532,14 +532,63 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
  *	 0	to eliminate partition with overlap entirely
  *	 1	to retain partition in output list, claimed by reg1
  *	 2	to retain partition in output list, claimed by reg2
+ *
+ *  This is now simply a one-line wrapper that calls _rt_defoverlap(),
+ *  requesting verbosity.
  */
 int
-rt_defoverlap( ap, pp, reg1, reg2, pheadp )
+rt_defoverlap (ap, pp, reg1, reg2, pheadp)
+
 register struct application	*ap;
 register struct partition	*pp;
 struct region			*reg1;
 struct region			*reg2;
 struct partition		*pheadp;
+
+{
+    return (_rt_defoverlap(ap, pp, reg1, reg2, pheadp, 1));
+}
+
+/*
+ *			R T _ O V E R L A P _ Q U I E T L Y
+ *
+ *  Silent version of rt_defoverlap().
+ *  Returns -
+ *	 0	to eliminate partition with overlap entirely
+ *	 1	to retain partition in output list, claimed by reg1
+ *	 2	to retain partition in output list, claimed by reg2
+ *
+ */
+int
+rt_overlap_quietly (ap, pp, reg1, reg2, pheadp)
+
+register struct application	*ap;
+register struct partition	*pp;
+struct region			*reg1;
+struct region			*reg2;
+struct partition		*pheadp;
+
+{
+    return (_rt_defoverlap(ap, pp, reg1, reg2, pheadp, 0));
+}
+
+/*
+ *			_ R T _ D E F O V E R L A P
+ *
+ *  The guts of the default overlap callback.
+ *  Returns -
+ *	 0	to eliminate partition with overlap entirely
+ *	 1	to retain partition in output list, claimed by reg1
+ *	 2	to retain partition in output list, claimed by reg2
+ */
+HIDDEN int
+_rt_defoverlap( ap, pp, reg1, reg2, pheadp, verbose )
+register struct application	*ap;
+register struct partition	*pp;
+struct region			*reg1;
+struct region			*reg2;
+struct partition		*pheadp;
+register int			verbose;
 {
 	point_t	pt;
 	static long count = 0;		/* Not PARALLEL, shouldn't hurt */
@@ -547,6 +596,8 @@ struct partition		*pheadp;
 
 	RT_CHECK_PT(pp);
 
+	if (!verbose)	goto choose;
+	    
 	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	if( depth <= 0 )  goto choose;	/* Retain 0-thickness partition */
 
