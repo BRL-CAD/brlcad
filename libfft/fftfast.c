@@ -29,6 +29,7 @@ typedef struct {
 /*
  * Forward Complex Fourier Transform
  */
+void
 cfft( dat, num )
 COMPLEX dat[]; int num;
 {
@@ -47,6 +48,7 @@ COMPLEX dat[]; int num;
 /*
  * Inverse Complex Fourier Transform
  */
+void
 icfft(dat, num)
 COMPLEX dat[]; int num;
 {
