@@ -644,7 +644,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_ehy_uv,	rt_ehy_curve,	rt_ehy_class,	rt_ehy_free,
 		rt_ehy_plot,	rt_ehy_vshot,	rt_ehy_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_ehy_import5, rt_ehy_export5,
 		rt_ehy_import,	rt_ehy_export,	rt_ehy_ifree,
 		rt_ehy_describe,rt_ehy_xform,	rt_ehy_parse,
 		sizeof(struct rt_ehy_internal), RT_EHY_INTERNAL_MAGIC,
