@@ -26,6 +26,13 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+/* XXX move to vmath.h */
+#define VSUB2_2D(a,b,c)	{ \
+			(a)[X] = (b)[X] - (c)[X];\
+			(a)[Y] = (b)[Y] - (c)[Y];}
+#define MAGSQ_2D(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] )
+#define VDOT_2D(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] )
+
 #define PI      3.14159265358979323
 
 /*
@@ -1312,6 +1319,128 @@ CONST struct rt_tol *tol;
 	if( rt_g.debug & DEBUG_MATH )  rt_log("  right of B\n");
 	VMOVE(pca, b);
 	*dist = sqrt(P_B_sq);
+	return 4;
+}
+
+/*
+ *			R T _ D I S T _ P T 2 _ L S E G 2
+ *
+ *  Find the distance from a point P to a line segment described
+ *  by the two endpoints A and B, and the point of closest approach (PCA).
+ *
+ *			P
+ *		       *
+ *		      /.
+ *		     / .
+ *		    /  .
+ *		   /   . (dist)
+ *		  /    .
+ *		 /     .
+ *		*------*--------*
+ *		A      PCA	B
+ *
+ *  There are six distinct cases, with these return codes -
+ *	0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
+ *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
+ *	1	P is within tolerance of point A.  *dist = 0, pca=A.
+ *	2	P is within tolerance of point B.  *dist = 0, pca=B.
+ *	3	P is to the "left" of point A.  *dist=|P-A|**2, pca=A.
+ *	4	P is to the "right" of point B.  *dist=|P-B|**2, pca=B.
+ *	5	P is "above/below" lseg AB.  *dist=|PCA-P|**2, pca=computed.
+ *
+ *
+ *  Patterned after rt_dist_pt3_lseg3().
+ */
+int
+rt_dist_pt2_lseg2( dist_sq, pca, a, b, p, tol )
+fastf_t		*dist_sq;
+point_t		pca;
+CONST point_t	a, b, p;
+CONST struct rt_tol *tol;
+{
+	vect_t	PtoA;		/* P-A */
+	vect_t	PtoB;		/* P-B */
+	vect_t	AtoB;		/* B-A */
+	fastf_t	P_A_sq;		/* |P-A|**2 */
+	fastf_t	P_B_sq;		/* |P-B|**2 */
+	fastf_t	B_A;		/* |B-A| */
+	fastf_t	B_A_sq;
+	fastf_t	t;		/* distance along ray of projection of P */
+
+	RT_CK_TOL(tol);
+
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_dist_pt3_lseg3() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
+			V3ARGS(a),
+			V3ARGS(b),
+			V3ARGS(p),
+			tol->dist, tol->dist_sq );
+	}
+
+
+	/* Check proximity to endpoint A */
+	VSUB2_2D(PtoA, p, a);
+	if( (P_A_sq = MAGSQ_2D(PtoA)) < tol->dist_sq )  {
+		/* P is within the tol->dist radius circle around A */
+		VMOVE( pca, a );
+		if( rt_g.debug & DEBUG_MATH )  rt_log("  at A\n");
+		*dist_sq = 0.0;
+		return 1;
+	}
+
+	/* Check proximity to endpoint B */
+	VSUB2_2D(PtoB, p, b);
+	if( (P_B_sq = MAGSQ_2D(PtoB)) < tol->dist_sq )  {
+		/* P is within the tol->dist radius circle around B */
+		VMOVE( pca, b );
+		if( rt_g.debug & DEBUG_MATH )  rt_log("  at B\n");
+		*dist_sq = 0.0;
+		return 2;
+	}
+
+	VSUB2_2D(AtoB, b, a);
+	B_A = sqrt( B_A_sq = MAGSQ_2D(AtoB) );
+
+	/* compute distance (in actual units) along line to PROJECTION of
+	 * point p onto the line: point pca
+	 */
+	t = VDOT_2D(PtoA, AtoB) / B_A;
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_dist_pt3_lseg3() B_A=%g, t=%g\n",
+			B_A, t );
+	}
+
+	if( t <= 0 )  {
+		/* P is "left" of A */
+		if( rt_g.debug & DEBUG_MATH )  rt_log("  left of A\n");
+		VMOVE( pca, a );
+		*dist_sq = P_A_sq;
+		return 3;
+	}
+	if( t < B_A )  {
+		/* PCA falls between A and B */
+		register fastf_t	dsq;
+		fastf_t			param_dist;	/* parametric dist */
+
+		/* Find PCA */
+		param_dist = t / B_A;		/* Range 0..1 */
+		VJOIN1(pca, a, param_dist, AtoB);
+
+		/* Find distance from PCA to line segment (Pythagorus) */
+		if( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
+			if( rt_g.debug & DEBUG_MATH )  rt_log("  ON lseg\n");
+			/* Distance from PCA to lseg is zero, give param instead */
+			*dist_sq = param_dist;	/* special! Not squared. */
+			return 0;
+		}
+		if( rt_g.debug & DEBUG_MATH )  rt_log("  closest to lseg\n");
+		*dist_sq = dsq;
+		return 5;
+	}
+	/* P is "right" of B */
+	if( rt_g.debug & DEBUG_MATH )  rt_log("  right of B\n");
+	VMOVE(pca, b);
+	*dist_sq = P_B_sq;
 	return 4;
 }
 
