@@ -74,6 +74,8 @@ typedef float dbfloat_t;
 
 #define DB_MINREC	128
 
+#if !defined(RECORD_DEFINED) || !defined(__STDC__)
+#define RECORD_DEFINED
 union record  {
 
 	char	u_id;		/* To differentiate record types */
@@ -318,6 +320,7 @@ union record  {
 		char	p_hrad[8];		/* radius at end of height */
 	}  part;
 };
+#endif /* !RECORD_DEFINED || !__STDC__ */
 #define DB_RECORD_NULL	((union record *)0)
 
 /*
