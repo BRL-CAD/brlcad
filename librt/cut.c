@@ -882,7 +882,7 @@ double			where;
 	lhs->bn.bn_maxlen = cutp->bn.bn_len;
 	lhs->bn.bn_list = (struct soltab **) rt_malloc(
 		sizeof(struct soltab *) * lhs->bn.bn_maxlen,
-		"rt_ct_box: left list" );
+		"rt_ct_box (left list)" );
 	for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
 		if( !rt_ck_overlap(lhs->bn.bn_min, lhs->bn.bn_max,
 		    cutp->bn.bn_list[i]))
@@ -900,7 +900,7 @@ double			where;
 	rhs->bn.bn_maxlen = cutp->bn.bn_len;
 	rhs->bn.bn_list = (struct soltab **) rt_malloc(
 		sizeof(struct soltab *) * rhs->bn.bn_maxlen,
-		"rt_ct_box: right list" );
+		"rt_ct_box (right list)" );
 	for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
 		if( !rt_ck_overlap(rhs->bn.bn_min, rhs->bn.bn_max,
 		    cutp->bn.bn_list[i]))
@@ -925,7 +925,7 @@ double			where;
 	}
 
 	/* Success, convert callers box node into a cut node */
-	rt_free( (char *)cutp->bn.bn_list, "rt_ct_box:  old list" );
+	rt_free( (char *)cutp->bn.bn_list, "rt_ct_box (old list)" );
 	cutp->bn.bn_list = (struct soltab **)0;
 
 	cutp->cut_type = CUT_CUTNODE;
