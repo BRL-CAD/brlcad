@@ -370,8 +370,10 @@ register struct rt_i *rtip;
 		rt_free( (char *)rtip->rti_sol_by_type[i], "sol_by_type" );
 		rtip->rti_sol_by_type[i] = (struct soltab **)0;
 	}
-	rt_free( (char *)rtip->rti_Solids, "rtip->rti_Solids[]" );
-	rtip->rti_Solids = (struct soltab **)0;
+	if( rtip->rti_Solids )  {
+		rt_free( (char *)rtip->rti_Solids, "rtip->rti_Solids[]" );
+		rtip->rti_Solids = (struct soltab **)0;
+	}
 
 	/*
 	 *  Re-initialize everything important.
