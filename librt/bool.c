@@ -596,6 +596,8 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 		if(rt_g.debug&DEBUG_PARTITION)
 			rt_pr_partitions( rtip, PartHdp, "After weave" );
 	}
+	if(rt_g.debug&DEBUG_PARTITION)
+		bu_log( "--------------------Leaving Booleweave\n" );
 }
 
 
@@ -748,7 +750,10 @@ CONST struct partition *pp;
 {
 	struct bu_ptbl	sl1, sl2;
 	CONST struct seg *s1, *s2;
+	fastf_t s1_in_dist;
+	fastf_t s2_in_dist;
 	fastf_t depth;
+	struct seg **segpp;
 
 	RT_CK_REGION(*fr1);
 	RT_CK_REGION(*fr2);
@@ -758,23 +763,25 @@ CONST struct partition *pp;
 	rt_get_region_seglist_for_partition( &sl1, pp, *fr1 );
 	rt_get_region_seglist_for_partition( &sl2, pp, *fr2 );
 
-	if( BU_PTBL_LEN(&sl1) > 1 )  {
-		struct seg **segpp;
-		bu_log("rt_fastgen_vol_vol_overlap(), tricked by %s having more than one segment\n", (*fr1)->reg_name );
-		for( BU_PTBL_FOR( segpp, (struct seg **), &sl1 ) )
-			rt_pr_seg(*segpp);
-bu_bomb("vol_vol s1");
+	s1_in_dist = MAX_FASTF;
+	s2_in_dist = MAX_FASTF;
+	for( BU_PTBL_FOR( segpp, (struct seg **), &sl1 ) )
+	{
+		if( (*segpp)->seg_in.hit_dist < s1_in_dist )
+		{
+			s1 = (*segpp);
+			s1_in_dist = s1->seg_in.hit_dist;
+		}
 	}
-	if( BU_PTBL_LEN(&sl2) > 1 )  {
-		struct seg **segpp;
-		bu_log("rt_fastgen_vol_vol_overlap(), tricked by %s having more than one segment\n", (*fr2)->reg_name );
-		for( BU_PTBL_FOR( segpp, (struct seg **), &sl2 ) )
-			rt_pr_seg(*segpp);
-bu_bomb("vol_vol s2");
+	for( BU_PTBL_FOR( segpp, (struct seg **), &sl2 ) )
+	{
+		if( (*segpp)->seg_in.hit_dist < s2_in_dist )
+		{
+			s2 = (*segpp);
+			s2_in_dist = s2->seg_in.hit_dist;
+		}
 	}
 
-	s1 = (CONST struct seg *)BU_PTBL_GET(&sl1, 0);
-	s2 = (CONST struct seg *)BU_PTBL_GET(&sl2, 0);
 	RT_CK_SEG(s1);
 	RT_CK_SEG(s2);
 
@@ -1216,7 +1223,11 @@ rt_overlap_tables_equal( struct region *const*a, struct region *const*b )
 	register struct region *const*app;
 	register struct region *const*bpp;
 
-	if( a == NULL || b == NULL )  bu_bomb("rt_overlap_tables_equal() NULL pointer\n");
+	if( a == NULL && b == NULL )
+		return 1;
+
+	if( a == NULL || b == NULL )
+		return 0;
 
 	/* First step, compare lengths */
 	for( app = a; *app != NULL; app++ )  alen++;
