@@ -187,26 +187,26 @@ do_run( a, b )
 		/*
 		 * SERIAL case -- one CPU does all the work.
 		 */
+		npsw = 1;
 		worker();
 	} else {
 		/*
 		 *  Parallel case.
 		 */
 		rt_parallel( worker, npsw );
-
-		/*
-		 *  Ensure that all the workers are REALLY finished.
-		 *  On some systems, if threads core dump, the rest of
-		 *  the gang keeps going, so this can actually happen (sigh).
-		 */
-		if( nworkers_finished != npsw )  {
-			rt_log("\n***ERROR: %d workers did not finish!\n\n",
-				npsw - nworkers_finished);
-		}
-		if( nworkers_started != npsw )  {
-			rt_log("\nNOTICE:  only %d workers started, expected %d\n",
-				nworkers_started, npsw );
-		}
+	}
+	/*
+	 *  Ensure that all the workers are REALLY finished.
+	 *  On some systems, if threads core dump, the rest of
+	 *  the gang keeps going, so this can actually happen (sigh).
+	 */
+	if( nworkers_finished != npsw )  {
+		rt_log("\n***ERROR: %d workers did not finish!\n\n",
+			npsw - nworkers_finished);
+	}
+	if( nworkers_started != npsw )  {
+		rt_log("\nNOTICE:  only %d workers started, expected %d\n",
+			nworkers_started, npsw );
 	}
 
 	/* Tally up the statistics */
