@@ -186,6 +186,9 @@ solbld()
 			rad2 = MAGNITUDE(n);
 			VUNITIZE(n);
 
+			/* Prevent illegal torii from floating point fuzz */
+			if( rad2 > rad1 )  rad2 = rad1;
+
 			mk_tor(stdout, name, center, n, rad1, rad2);
 			break;
 
