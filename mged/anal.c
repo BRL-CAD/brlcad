@@ -36,6 +36,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
+extern struct rt_db_internal	es_int;	/* from edsol.c */
+
 static void	do_anal();
 static void	arb_anal();
 static double	anal_face();
@@ -83,8 +85,10 @@ char	*argv[];
 		}
 		switch( state ) {
 		case ST_S_EDIT:
-			mat_idn( modelchanges ); /* just to make sure */
-			break;
+			/* Use already modified version. "new way" */
+			do_anal(&v, &es_int);
+			fputs( rt_vls_addr(&v), stdout );
+			return CMD_OK;
 
 		case ST_O_EDIT:
 			/* use solid at bottom of path */
@@ -104,7 +108,7 @@ char	*argv[];
 		do_anal(&v, &intern);
 		fputs( rt_vls_addr(&v), stdout );
 		rt_db_free_internal( &intern );
-		return CMD_BAD;
+		return CMD_OK;
 	}
 
 	/* use the names that were input */
@@ -132,7 +136,7 @@ char	*argv[];
 static void
 do_anal(vp, ip)
 struct rt_vls		*vp;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 {
 	/* XXX Could give solid name, and current units, here */
 
@@ -190,7 +194,7 @@ static CONST int nedge[5][24] = {
 static void
 arb_anal(vp, ip)
 struct rt_vls	*vp;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 {
 	struct rt_arb_internal	*arb = (struct rt_arb_internal *)ip->idb_ptr;
 	register int	i;
@@ -342,9 +346,9 @@ anal_face( vp, face, center_pt, arb, type, tol )
 struct rt_vls	*vp;
 int		face;
 point_t		center_pt;		/* reference center point */
-struct rt_arb_internal	*arb;
+CONST struct rt_arb_internal	*arb;
 int		type;
-struct rt_tol	*tol;
+CONST struct rt_tol	*tol;
 {
 	register int i, j, k;
 	int a, b, c, d;		/* 4 points of face to look at */
@@ -426,7 +430,7 @@ static void
 anal_edge( vp, edge, arb, type )
 struct rt_vls		*vp;
 int			edge;
-struct rt_arb_internal	*arb;
+CONST struct rt_arb_internal	*arb;
 int			type;
 {
 	register int a, b;
@@ -505,7 +509,7 @@ static double pi = 3.1415926535898;
 static void
 tor_anal(vp, ip)
 struct rt_vls	*vp;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 {
 	struct rt_tor_internal	*tor = (struct rt_tor_internal *)ip->idb_ptr;
 	fastf_t r1, r2, vol, sur_area;
@@ -533,7 +537,7 @@ struct rt_db_internal	*ip;
 static void
 ell_anal(vp, ip)
 struct rt_vls	*vp;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 {
 	struct rt_ell_internal	*ell = (struct rt_ell_internal *)ip->idb_ptr;
 	fastf_t ma, mb, mc;
@@ -641,7 +645,7 @@ struct rt_db_internal	*ip;
 static void
 tgc_anal(vp, ip)
 struct rt_vls	*vp;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 {
 	struct rt_tgc_internal	*tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 	fastf_t maxb, ma, mb, mc, md, mh;
@@ -730,7 +734,7 @@ struct rt_db_internal	*ip;
 static void
 ars_anal(vp, ip)
 struct rt_vls	*vp;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 {
 	rt_vls_printf(vp,"ARS analyze not implemented\n");
 }
@@ -739,7 +743,7 @@ struct rt_db_internal	*ip;
 static void
 spline_anal(vp, ip)
 struct rt_vls	*vp;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 {
 	rt_vls_printf(vp,"SPLINE analyze not implemented\n");
 }
@@ -750,7 +754,7 @@ struct rt_db_internal	*ip;
 static void
 rpc_anal(vp, ip)
 struct rt_vls	*vp;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 {
 	fastf_t	area_parab, area_body, area_rect, b, h, r, vol_parab;
 	struct rt_rpc_internal	*rpc = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -785,7 +789,7 @@ struct rt_db_internal	*ip;
 static void
 rhc_anal(vp, ip)
 struct rt_vls	*vp;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 {
 	fastf_t	area_hyperb, area_body, area_rect, b, c, h, k, r, vol_hyperb,
 		work1, work2, work3, work4;
