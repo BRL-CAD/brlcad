@@ -47,10 +47,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h */
-RT_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
-				struct edgeuse *eu, CONST struct rt_tol *tol));
-
 /* States of the state machine */
 #define NMG_STATE_ERROR		0
 #define NMG_STATE_OUT		1

@@ -1163,10 +1163,6 @@ out:
 	return(status);
 }
 
-/* XXX move to raytrace.h, in section for nmg_info.c */
-RT_EXTERN(int		nmg_2lu_identical, (CONST struct edgeuse *eu1,
-			CONST struct edgeuse *eu2));
-
 /* XXX move to nmg_info.c */
 /*
  *			N M G _ 2 L U _ I D E N T I C A L

@@ -1,11 +1,3 @@
-/* XXX Move to raytrace.h */
-#define RT_CK_LIST(_hd)	RT_CKMAG(_hd, RT_LIST_HEAD_MAGIC, "struct rt_list");
-/* Near definition of RT_GET_VLIST(), note: */
-/*
- *  Applications that are going to use RT_ADD_VLIST are required to
- *  first execute this macro:	RT_LIST_INIT( &rt_g.rtg_vlfree );
- */
-
 /*
  *			N M G _ P L O T . C
  *
@@ -163,7 +155,7 @@ CONST vectp_t		normal;
 	point_t		centroid;
 	int		npoints;
 
-	RT_CK_LIST(vhead);
+	RT_CK_LIST_HEAD(vhead);
 
 	NMG_CK_LOOPUSE(lu);
 	if( RT_LIST_FIRST_MAGIC(&lu->down_hd)==NMG_VERTEXUSE_MAGIC )  {
@@ -265,7 +257,7 @@ int			poly_markers;
 {
 	struct face_g_snurb	*fg;
 
-	RT_CK_LIST(vhead);
+	RT_CK_LIST_HEAD(vhead);
 
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
@@ -2469,7 +2461,7 @@ int				n_interior;	/* typ. 10 */
 	struct snurb 	*r, *c;
 	int 		coords;
 
-	RT_CK_LIST( vhead );
+	RT_CK_LIST_HEAD( vhead );
 	NMG_CK_FACE_G_SNURB(fg);
 
 	rt_nurb_kvgen( &tkv1,
