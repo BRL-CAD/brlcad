@@ -61,16 +61,15 @@ proc init_comb { id } {
     set comb_control($id,shader_frame) $top.shaderF
 
     label $top.nameL -text "Name" -anchor w
-    hoc_register_data $top.nameL "Combination Name"\
-	    { { summary "The combination name is the name of a
+    set hoc_data { { summary "The combination name is the name of a
 region or a group. The region flag must be set
 in order for the combination to be a region.
 Note that a region defines a space containing
 homogeneous material. In contrast, a group can
 contain many different materials." } }
+    hoc_register_data $top.nameL "Combination Name" $hoc_data
     entry $top.nameE -relief flat -width 12 -textvar comb_control($id,name)
-    hoc_register_data $top.nameE "Combination Name"\
-	    { { summary "Enter a combination name." } }
+    hoc_register_data $top.nameE "Combination Name" $hoc_data
     menubutton $top.nameMB -relief raised -bd 2\
 	    -menu $top.nameMB.m -indicatoron 1
     hoc_register_data $top.nameMB "Combination Selection"\
@@ -118,53 +117,50 @@ released. To select a combination, double click with
 the left mouse button." } }
 
     label $top.idL -text "Region Id" -anchor w
-    hoc_register_data $top.idL "Region Id"\
-	    { { summary "The region id (i.e. item code) is a number
+    set hoc_data { { summary "The region id (i.e. item code) is a number
 that is typically used for grouping regions
 belonging to a particular component. If the
 region id is non-zero it is considered to be
 a model component. Otherwise, it is considered
 to be air. The air code is then used to designate
 the kind of air." } }
+    hoc_register_data $top.idL "Region Id" $hoc_data
     entry $top.idE -relief flat -width 12 -textvar comb_control($id,id)
-    hoc_register_data $top.idE "Region Id"\
-	    { { summary "Enter region id." } }
+    hoc_register_data $top.idE "Region Id" $hoc_data
 
     label $top.airL -text "Air Code" -anchor w
-    hoc_register_data $top.airL "Air Code"\
-	    { { summary "The air code is a number that is typically
+    set hoc_data { { summary "The air code is a number that is typically
 used to designate the kind of air a region
 represents. An air code of \"1\" signifies
 universal air. An air code that is greater
 than \"1\" signifies some other kind of air.
 While an air code of \"0\" means that the
 region represents a component." } }
+    hoc_register_data $top.airL "Air Code" $hoc_data
     entry $top.airE -relief flat -width 12 -textvar comb_control($id,air)
-    hoc_register_data $top.airE "Air Code"\
-	    { { summary "Enter air code." } }
+    hoc_register_data $top.airE "Air Code" $hoc_data
 
     label $top.materialL -text "Material Id" -anchor w
-    hoc_register_data $top.materialL "Material Id"\
-	    { { summary "The material id represents a particular
-material type as identified by a material database.
-In the past, the gift material database was used to
-identify the material type." } }
+    set hoc_data { { summary "The material id represents a particular
+material type as identified by a material
+database. In the past, the gift material
+database was used to identify the material
+type." } }
+    hoc_register_data $top.materialL "Material Id" $hoc_data
     entry $top.materialE -relief flat -width 12 -textvar comb_control($id,material)
-    hoc_register_data $top.materialE "Material Id"\
-	    { { summary "Enter material id." } }
+    hoc_register_data $top.materialE "Material Id" $hoc_data
 
     label $top.losL -text "LOS" -anchor w
-    hoc_register_data $top.losL "LOS"\
-	    { { summary "LOS is a number that represents the
+    set hoc_data { { summary "LOS is a number that represents the
 percentage of material a component region
 is composed of. For example, if some component
 region is defined to be made of \"mild steel\", as
 designated by its material id, with an LOS of 20
 then the region is considered to be composed of
 20% \"mild steel\"."  } }
+    hoc_register_data $top.losL "LOS" $hoc_data
     entry $top.losE -relief flat -width 12 -textvar comb_control($id,los)
-    hoc_register_data $top.losE "LOS"\
-	    { { summary "Enter los." } }
+    hoc_register_data $top.losE "LOS" $hoc_data
 
     label $top.colorL -text "Color" -anchor w
     hoc_register_data $top.colorL "Color"\
@@ -180,16 +176,13 @@ drawing an object" } }
 	    12 $comb_control($id,color)
 
     label $top.shaderL -text "Shader" -anchor w
-    hoc_register_data $top.shaderL "Shader"\
-	    { { summary "The shader is used by the raytracer
-when rendering. The shader specification
-greatly influences the resulting image." } }
-    entry $top.shaderE -relief flat -width 12 -textvar comb_control($id,shader)
-    hoc_register_data $top.shaderE "Shader"\
-	    { { summary "Use this to manually enter the shader
+    set hoc_data { { summary "Use this to manually enter the shader
 parameters. Note - when entering the
-shader parameters directly, pressing \"Enter\"
-will update the rest of the shader GUI." } }
+shader parameters directly, the shader
+GUI will automatically be updated." } }
+    hoc_register_data $top.shaderL "Shader" $hoc_data
+    entry $top.shaderE -relief flat -width 12 -textvar comb_control($id,shader)
+    hoc_register_data $top.shaderE "Shader" $hoc_data
 
     bind $top.shaderE <KeyRelease> "set_shader_params comb_control($id,shader) $id"
 
@@ -252,23 +245,22 @@ the form of the selected shader type." } }
 	{ { summary "Apply an environment map using this region." } }
 
     label $top.combL -text "Boolean Expression:" -anchor w
-    hoc_register_data $top.combL "Boolean Expression"\
-	    { { summary "A boolean expression is used to combine
+    set hoc_data { { summary "A boolean expression is used to combine
 objects to form a region or group. This expression
 can consist of three kinds of operators. The 'u'
-operator represents union. The union of two objects
+operator indicates union. The union of two objects
 is defined as the volume in both objects. The '-'
-operator represents difference. The difference of two
+operator indicates difference. The difference of two
 objects is defined as the volume of the first object
 minus the volume of the second object. Lastly, the
-'+' operator represents intersection. The intersection
+'+' operator indicates intersection. The intersection
 of two objects is defined as the volume common to
 both objects. Note - an object can be a solid, region
 or group." } }
+    hoc_register_data $top.combL "Boolean Expression" $hoc_data
     text $top.combT -relief sunken -bd 2 -width 40 -height 10\
 	    -yscrollcommand "$top.gridF3.s set" -setgrid true
-    hoc_register_data $top.combT "Edit Boolean Expression"\
-	    { { summary "Edit the boolean expression." } }
+    hoc_register_data $top.combT "Edit Boolean Expression" $hoc_data
     scrollbar $top.gridF3.s -relief flat -command "$top.combT yview"
 
     checkbutton $top.isRegionCB -relief raised -text "Is Region"\
@@ -298,6 +290,10 @@ region)." } }
 
     button $top.okB -relief raised -text "Ok"\
 	    -command "comb_ok $id $top"
+    hoc_register_data $top.okB "Ok"\
+	    { { summary "Apply the data in the \"Combination Editor\"
+to the combination then close the
+\"Combination Editor\"." } }
     button $top.applyB -relief raised -text "Apply"\
 	    -command "comb_apply $id"
     hoc_register_data $top.applyB "Apply"\
