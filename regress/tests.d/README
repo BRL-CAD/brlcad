@@ -7,24 +7,25 @@
 # The scripts in this directory are intended to be used in conjunction with 
 # the regression suite.  More specifically, these scripts are normally
 # invoked by a 'regression' tool in the '..' directory.  These tests may,
-# however, be run by themselves with a little massaging.
+# however, be run by themselves as well (perhaps with a little massaging).
 #
-# For most tests, running './test start' should be enough to get the test
+# For most tests, running './TESTNAME start' should be enough to get the test
 # to begin working.  Some tests, however, are dependant upon others or may
-# rely on certain variables to be set prior to running.
+# rely on certain variables to be settable prior to running.
 #
 # If a test is waiting for some other test to complete, create the
-# appropriate semaphore file and it should continue normally.  If the test
-# is dependant upon variables being set, it should complain and/or give
-# an error message.
+# appropriate semaphore file that it is waiting for and it should continue
+# normally.  If the test is dependant upon variables being set, it should 
+# complain and/or give an error message -- see the file for details on what
+# and appropriate value will be.
 #
 ###
 # Creating new tests
 #
 # All new tests must implement at least one principal function, namely the
-# start ( ) function.  In addition to the start function, there is a stop
-# and status function that may be defined to complement or override the
-# default behaviour.
+# start ( ) function.  More correctly, every test must run when it's first
+# argument is "start".  In addition to start, there is a stop and status
+# function that may be defined to complement or override the default behaviour.
 #
 # By default status returns only whether a script has 1) started,
 # 2) completed and failed, or 3) completed and succeeded.  No return message
@@ -58,3 +59,4 @@
 # '$TEST.' (e.g. geometry.output.log from the geometry test) where $TEST is
 # the name of the test being run.
 # 
+###
