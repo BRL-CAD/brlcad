@@ -21,7 +21,7 @@ static char	rcs_ident[] = "$Header$";
 #endif
 
 #include <math.h>
-#include "/m/cad/h/nurb.h"
+#include "nurb.h"
 
 struct _interior_line {
 	int axis;
