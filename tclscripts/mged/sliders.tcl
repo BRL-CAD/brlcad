@@ -1,3 +1,9 @@
+#
+# Modifications -
+#        (Bob Parker):
+#             Generalized to accommodate multiple instances of the
+#             user interface.
+#
 #=============================================================================
 # When the sliders exist, pressing the "sliders" button makes them go away.
 # When they don't exist, pressing the "sliders" button makes them appear.
@@ -9,88 +15,149 @@
 #=============================================================================
 
 # size of dead spot on sliders
-set sliders(NOISE) 128
+set sliders(NOISE) 64
+set sliders(scale) 2048.0;
+set sliders(max) [expr $sliders(scale) + $sliders(NOISE)];
+set sliders(min) [expr $sliders(max) * -1];
+set sliders(range) [expr $sliders(max) * 2];
 
 proc sliders args {
     global sliders
+    global player_screen
+    global rateknobs
+    global adcflag
     
     set result [eval _mged_sliders $args]
 
-    if { [llength $args]>0 && [_mged_sliders] && ![winfo exists .sliders] } then {
-	toplevel .sliders -class Dialog
+    # get a list of the id's associated with the current command window
+    set id_list [cmd_get]
 
-	frame .sliders.f -borderwidth 3
-	label .sliders.f.ratelabel -text "Rate Based Sliders" -anchor c
-	scale .sliders.f.kX -label "X Translate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal \
-		-length 400 -command "sliders_change X"
-	scale .sliders.f.kY -label "Y Translate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal \
-		-length 400 -command "sliders_change Y"
-	scale .sliders.f.kZ -label "Z Translate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal \
-		-length 400 -command "sliders_change Z"
-	scale .sliders.f.kS -label "Zoom" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal -length 400 \
-		-command "sliders_change S"
-	scale .sliders.f.kx -label "X Rotate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal -length 400 \
-		-command "sliders_change x"
-	scale .sliders.f.ky -label "Y Rotate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal -length 400 \
-		-command "sliders_change y"
-	scale .sliders.f.kz -label "Z Rotate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal -length 400 \
-		-command "sliders_change z"
-		
-	label .sliders.f.abslabel -text "Absolute Sliders" -anchor c
-	scale .sliders.f.kaX -label "X Translate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal \
-		-length 400 -command "sliders_change aX"
-	scale .sliders.f.kaY -label "Y Translate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal \
-		-length 400 -command "sliders_change aY"
-	scale .sliders.f.kaZ -label "Z Translate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal \
-		-length 400 -command "sliders_change aZ"
-	scale .sliders.f.kaS -label "Zoom" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal -length 400 \
-		-command "sliders_change aS"
-	scale .sliders.f.kax -label "X Rotate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal -length 400 \
-		-command "sliders_change ax"
-	scale .sliders.f.kay -label "Y Rotate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal -length 400 \
-		-command "sliders_change ay"
-	scale .sliders.f.kaz -label "Z Rotate" -showvalue no \
-		-from -2048 -to 2047 -orient horizontal -length 400 \
-		-command "sliders_change az"
-	scale .sliders.f.fov -label "Field of view" -showvalue yes \
-		-from -1 -to 120 -orient horizontal -length 400 \
-		-variable perspective
-
-	pack .sliders.f -padx 1m -pady 1m
-	pack .sliders.f.ratelabel -pady 4
-	pack .sliders.f.kX .sliders.f.kY .sliders.f.kZ .sliders.f.kS \
-		.sliders.f.kx .sliders.f.ky .sliders.f.kz
-	pack .sliders.f.abslabel -pady 4
-	pack .sliders.f.kaX .sliders.f.kaY .sliders.f.kaZ \
-		.sliders.f.kaS .sliders.f.kax .sliders.f.kay \
-		.sliders.f.kaz .sliders.f.fov
-
-	foreach knob { X Y Z S x y z aX aY aZ aS ax ay az } {
-	    .sliders.f.k$knob set [expr round(2048.0*[getknob $knob])]
+    foreach id $id_list {
+        if { [string compare $id "mged"]==0 } {
+	    continue
 	}
 
-	global perspective
-	.sliders.f.fov set $perspective
-    } elseif { [llength $args]>0 && ![_mged_sliders] && [winfo exists .sliders] } {
-	destroy .sliders
+        set w .sliders$id
+	if { [llength $args]>0 && [_mged_sliders] } then {
+
+	    if [winfo exists $w] {
+		destroy $w
+	    }
+
+	    toplevel $w -class Dialog -screen $player_screen($id)
+	    
+	    frame $w.f -borderwidth 3
+
+	    if { $rateknobs } {
+		label $w.f.ratelabel -text "Rate Based Sliders" -anchor c
+		scale $w.f.kX -label "X Translate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal \
+			-length 400 -command "sliders_change $id X" -variable sliders($id,X)
+		scale $w.f.kY -label "Y Translate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal \
+			-length 400 -command "sliders_change $id Y" -variable sliders($id,Y)
+		scale $w.f.kZ -label "Z Translate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal \
+			-length 400 -command "sliders_change $id Z" -variable sliders($id,Z)
+		scale $w.f.kS -label "Zoom" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id S" -variable sliders($id,S)
+		scale $w.f.kx -label "X Rotate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id x" -variable sliders($id,x)
+		scale $w.f.ky -label "Y Rotate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id y" -variable sliders($id,y)
+		scale $w.f.kz -label "Z Rotate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id z" -variable sliders($id,z)
+
+		foreach knob { X Y Z S x y z } {
+		    set sliders($id,$knob) [sliders_add_tol [expr [getknob $knob] * $sliders(scale)]]
+		}
+
+		pack $w.f.ratelabel -pady 4
+		pack $w.f.kX $w.f.kY $w.f.kZ $w.f.kS \
+			$w.f.kx $w.f.ky $w.f.kz
+
+	    } else {
+		label $w.f.abslabel -text "Absolute Sliders" -anchor c
+		scale $w.f.kaX -label "X Translate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal \
+			-length 400 -command "sliders_change $id aX" -variable sliders($id,aX)
+		scale $w.f.kaY -label "Y Translate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal \
+			-length 400 -command "sliders_change $id aY" -variable sliders($id,aY)
+		scale $w.f.kaZ -label "Z Translate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal \
+			-length 400 -command "sliders_change $id aZ" -variable sliders($id,aZ)
+		scale $w.f.kaS -label "Zoom" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id aS" -variable sliders($id,aS)
+		scale $w.f.kax -label "X Rotate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id ax" -variable sliders($id,ax)
+		scale $w.f.kay -label "Y Rotate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id ay" -variable sliders($id,ay)
+		scale $w.f.kaz -label "Z Rotate" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id az" -variable sliders($id,az)
+
+		foreach knob { aX aY aZ aS ax ay az } {
+		    set sliders($id,$knob) [sliders_add_tol [expr [getknob $knob] * $sliders(scale)]]
+		}
+
+		pack $w.f.abslabel -pady 4
+		pack $w.f.kaX $w.f.kaY $w.f.kaZ \
+			$w.f.kaS $w.f.kax $w.f.kay \
+			$w.f.kaz
+	    }
+
+	    scale $w.f.fov -label "Field of view" -showvalue yes \
+		    -from -1 -to 120 -orient horizontal -length 400 \
+		    -variable perspective
+
+	    global perspective
+	    $w.f.fov set $perspective
+	    pack $w.f.fov
+
+	    if { $adcflag } {
+		label $w.f.adclabel -text "Adc Sliders" -anchor c
+		scale $w.f.kxadc -label "X adc" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal \
+			-length 400 -command "sliders_change $id xadc" -variable sliders($id,xadc)
+		scale $w.f.kyadc -label "Y adc" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal \
+			-length 400 -command "sliders_change $id yadc" -variable sliders($id,yadc)
+		scale $w.f.kang1 -label "Angle 1" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id ang1" -variable sliders($id,ang1)
+		scale $w.f.kang2 -label "Angle 2" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id ang2" -variable sliders($id,ang2)
+		scale $w.f.kdistadc -label "Adc distance" -showvalue no \
+			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
+			-command "sliders_change $id distadc" -variable sliders($id,distadc)
+
+		foreach knob { xadc yadc ang1 ang2 distadc } {
+		    set sliders($id,$knob) [sliders_add_tol [getknob $knob]]
+		}
+		
+		pack $w.f.adclabel -pady 4
+		pack $w.f.kxadc $w.f.kyadc $w.f.kang1 \
+			$w.f.kang2 $w.f.kdistadc
+	    }
+
+	    pack $w.f -padx 1m -pady 1m
+
+	} elseif { [llength $args]>0 && ![_mged_sliders] && [winfo exists $w] } {
+	    destroy $w
+	}
     }
 
     return $result
 }
-
 
 ## sliders_irlimit
 ##   Because the sliders may seem too sensitive, setting them exactly to zero
@@ -101,34 +168,83 @@ proc sliders_irlimit { val } {
     global sliders
 
     if { [expr $val > $sliders(NOISE)] } then {
-	return [expr ($val-$sliders(NOISE))*2048/(2048-$sliders(NOISE))]
+	return [expr $val - $sliders(NOISE)]
     }
 
     if { [expr $val < -$sliders(NOISE)] } then {
-	return [expr ($val+$sliders(NOISE))*2048/(2048-$sliders(NOISE))]
+	return [expr $val + $sliders(NOISE)]
     }
     
     return 0
 }
 
 
-## sliders_change
+## sliders_add_tol
+##   This is used when creating the sliders to properly set their values
+##   by adding in a tolerance.
+
+proc sliders_add_tol { val } {
+    global sliders
+
+    if { [expr $val > 0] } then {
+	return [expr $val + $sliders(NOISE)]
+    }
+
+    if { [expr $val < 0] } then {
+	return [expr $val - $sliders(NOISE)]
+    }
+    
+    return 0
+}
+
+## sliders_change $id
 ##   Generic slider-changing callback.
 
-proc sliders_change { which val } {
-    _mged_knob $which [expr [sliders_irlimit $val] / 2048.0]
+proc sliders_change { id knob val } {
+    global sliders
+
+    cmd_set $id
+    set id_list [cmd_get]
+
+    if { [string length $knob] <= 2 } {
+	_mged_knob $knob [expr [sliders_irlimit $val] / $sliders(scale)]
+    } else {
+	_mged_knob $knob [sliders_irlimit $val]
+    }
+
+    foreach s_id $id_list {
+	if [winfo exists .sliders$s_id] {
+	    set sliders($s_id,$knob) $val
+
+#This stops the result of the above set from being printed to the screen
+	    set junk ""
+	}
+    }
 }
 
 ## sliders_zero
 ##   Zeroes the sliders.
 
-proc sliders_zero { } {
+proc sliders_zero { id w } {
     global sliders
+    global rateknobs
+    global adcflag
 
-    if [winfo exists .sliders] then {
-	foreach knob { X Y Z S x y z aX aY aZ aS ax ay az } {
-	    _mged_knob $knob 0
-	    .sliders.f.k$knob set 0
+    _mged_knob zero
+
+    if { $rateknobs } {
+	foreach knob { X Y Z S x y z } {
+	    set sliders($id,$knob) 0
+	}
+    } else {
+	foreach knob { aX aY aZ aS ax ay az } {
+	    set sliders($id,$knob) 0
+	}
+    }
+
+    if { $adcflag } {
+	foreach knob { xadc yadc ang1 ang2 distadc } {
+	    set sliders($id,$knob) 0
 	}
     }
 }
@@ -138,11 +254,85 @@ proc sliders_zero { } {
 
 proc knob args {
     global sliders
-    
+    global rateknobs
+    global adcflag
+
     eval _mged_knob $args
-    if { [llength $args]==1 && [string compare [lindex $args 0] zero]==0 } {
-	sliders_zero
-    } elseif [winfo exists .sliders] {
-	.sliders.f.k[lindex $args 0] set [expr 2048.0*[lindex $args 1]]
+    set id_list [cmd_get]
+
+    if { $rateknobs } {
+	foreach id $id_list {
+	    foreach knob { X Y Z S x y z } {
+		set sliders($id,$knob) [sliders_add_tol \
+			[expr [getknob $knob] * $sliders(scale)]]
+	    }
+
+	    if { $adcflag } {
+		foreach knob { xadc yadc ang1 ang2 distadc } {
+		    set sliders($id,$knob) [sliders_add_tol [getknob $knob]]
+		}
+	    }
+	}
+    } else {
+	foreach id $id_list {
+	    foreach knob { aX aY aZ aS ax ay az } {
+		set sliders($id,$knob) [sliders_add_tol \
+			[expr [getknob $knob] * $sliders(scale)]]
+	    }
+
+	    if { $adcflag } {
+		foreach knob { xadc yadc ang1 ang2 distadc } {
+		    set sliders($id,$knob) [sliders_add_tol [getknob $knob]]
+		}
+	    }
+	}
     }
+
+#    return
 }
+
+
+## iknob
+##   To replace the regular iknob function.
+
+proc iknob args {
+    global sliders
+    global rateknobs
+    global adcflag
+
+    eval _mged_iknob $args
+    set id_list [cmd_get]
+
+    if { $rateknobs } {
+	foreach id $id_list {
+	    foreach knob { X Y Z S x y z } {
+		set sliders($id,$knob) [sliders_add_tol \
+			[expr [getknob $knob] * $sliders(scale)]]
+	    }
+
+	    if { $adcflag } {
+		foreach knob { xadc yadc ang1 ang2 distadc } {
+		    set sliders($id,$knob) [sliders_add_tol [getknob $knob]]
+		}
+	    }
+	}
+    } else {
+	foreach id $id_list {
+	    foreach knob { aX aY aZ aS ax ay az } {
+		set sliders($id,$knob) [sliders_add_tol \
+			[expr [getknob $knob] * $sliders(scale)]]
+	    }
+
+	    if { $adcflag } {
+		foreach knob { xadc yadc ang1 ang2 distadc } {
+		    set sliders($id,$knob) [sliders_add_tol [getknob $knob]]
+		}
+	    }
+	}
+    }
+
+#    return
+}
+
+
+

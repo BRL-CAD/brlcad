@@ -19,6 +19,12 @@
 # Description -
 #       Program to allow automated generation and interactive placement of new
 #       solids with user-selectable default values.
+#
+# Modifications -
+#        (Bob Parker):
+#             Generalized the code to accommodate multiple instances of the
+#             user interface.
+#
 
 #=============================================================================
 # PHASE 0: variable defaults
@@ -87,9 +93,10 @@ set solc(default_operation) "incr index"
 # the user to create new solids.
 #=============================================================================
 
-proc solcreate args {
+proc solcreate { id args } {
     global solc
     global $solc(default_indexvar)
+    global player_screen
 
     set w .solc$solc(winnum)
     incr solc(winnum)
@@ -101,7 +108,7 @@ proc solcreate args {
     }
 
     catch { destroy $w }
-    toplevel $w
+    toplevel $w -screen $player_screen($id)
     wm title $w "Solid Creation"
 
     # Make three frames: top one for entry fields and labels, middle one for
@@ -137,7 +144,7 @@ proc solcreate args {
 
     # For the "Solid type" label, allow left-clicking to get a list of solids
 
-    bind $w.t.l.type <1> "solc_list $w"
+    bind $w.t.l.type <1> "solc_list $w $id"
 
     # Set up some reasonable defaults for the entry fields
     # If the default index variable does not exist, set it equal to 1
@@ -181,12 +188,13 @@ proc solcreate args {
 # solc_list
 # Pops up a list of supported solid types.
 
-proc solc_list { w } {
+proc solc_list { w id } {
     global solc
     global $solc($w,indexvar)
+    global player_screen
     
     catch { destroy $w.slist }
-    toplevel $w.slist
+    toplevel $w.slist -screen $player_screen($id)
     wm title $w.slist "Solid type list"
 
     set solc($w,descr) ""
