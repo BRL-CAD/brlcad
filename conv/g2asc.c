@@ -214,8 +214,8 @@ char **argv;
 	}
 
 	/* Read database file */
-	do {
 top:
+	do {
 		/* Check record type and skip deleted records */
 	    	switch( record.u_id )  {
 	    	case ID_FREE:
