@@ -103,6 +103,18 @@ struct bn_tol {
 
 #define BN_APPROXEQUAL(_a, _b, _tol) (fabs( (_a) - (_b) ) <= _tol->dist)
 
+/* asize.c */
+BU_EXTERN(int			bn_common_file_size, (int *width,
+						      int *height,
+						      char *filename,
+						      int pixel_size));
+BU_EXTERN(int			bn_common_name_size, (int *width,
+						      int *height,
+						      char *name));
+BU_EXTERN(int			bn_common_image_zie, (int *width,
+						      int *height,
+						      int num_pixels));
+
 /*----------------------------------------------------------------------*/
 /* complex.c */
 /*
