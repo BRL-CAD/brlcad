@@ -112,7 +112,6 @@ extern void set_localunit_TclVar();
 extern struct dm dm_Null;
 extern struct _mged_variables default_mged_variables;
 
-int dm_pipe[2];
 int pipe_out[2];
 int pipe_err[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
@@ -163,14 +162,10 @@ void pr_prompt(), pr_beep();
 #ifdef USE_PROTOTYPES
 Tcl_FileProc stdin_input;
 Tcl_FileProc std_out_or_err;
-Tcl_FileProc dm_pipe_input;
 #else
 void stdin_input();
 void std_out_or_err();
-void dm_pipe_input();
 #endif
-
-struct dm_char_queue head_dm_char_queue;
 
 /* 
  *			M A I N
@@ -187,15 +182,6 @@ char **argv;
 	int	rateflag = 0;
 	int	c;
 	int	read_only_flag=0;
-
-#if 0
-	/* Check for proper invocation */
-	if( argc < 1 )  {
-		fprintf(stdout, "Usage:  %s [-n] [-r] [database [command]]\n", argv[0]);
-		fflush(stdout);
-		return(1);		/* NOT finish() */
-	}
-#endif
 
 	while ((c = bu_getopt(argc, argv, "d:hicnrx:X:")) != EOF)
 	{
@@ -290,9 +276,6 @@ char **argv;
 	BU_LIST_INIT(&HeadSolid.l);
 	BU_LIST_INIT(&FreeSolid.l);
 	BU_LIST_INIT( &rt_g.rtg_vlfree );
-
-	bzero((void *)&head_dm_char_queue, sizeof(struct dm_char_queue));
-	BU_LIST_INIT(&head_dm_char_queue.l);
 
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
 	BU_LIST_INIT(&head_cmd_list.l);
@@ -484,10 +467,6 @@ char **argv;
 	}
 
 	refresh();			/* Put up faceplate */
-
-	(void)pipe(dm_pipe);
-	Tcl_CreateFileHandler(dm_pipe[0], TCL_READABLE,
-			      dm_pipe_input, (ClientData)dm_pipe[0]);
 
 	if(classic_mged){
 	  Tcl_CreateFileHandler(STDIN_FILENO, TCL_READABLE,
@@ -1158,60 +1137,6 @@ int mask;
   bu_vls_printf(&vls, "distribute_text {} {} {%s}", line);
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
-}
-
-void
-dm_pipe_input(clientData, mask)
-ClientData clientData;
-int mask;
-{
-  int fd = (int)clientData;
-  int count;
-  struct bu_vls vls;
-  char line[2];
-  struct dm_char_queue *dcqp;
-  struct dm_list *dlp;
-  struct dm_list *save_curr_dlp;
-
-  /* Get data from dm_pipe */
-  if((count = read((int)fd, line, 1)) == 0)
-     return;
-
-  line[count] = '\0';
-
-  BU_LIST_POP(dm_char_queue, &head_dm_char_queue.l, dcqp);
-  if(dcqp == (struct dm_char_queue *)0)
-    return;
-
-  /* search for dcqp->dlp in list of valid displays */
-  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-    if(dlp == dcqp->dlp)
-      break;
-
-  /* dcqp->dlp is no longer valid */
-  if(BU_LIST_IS_HEAD(dlp, &head_dm_list.l)){
-    bu_free((genptr_t)dcqp, "dm_pipe_input: dcqp");
-    return;
-  }
-
-  /* save curr_dm_list */
-  save_curr_dlp = curr_dm_list;
-  curr_dm_list = dlp;
-
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "insert_char {%s}", line);
-  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-  bu_free((genptr_t)dcqp, "dm_pipe_input: dcqp");
-
-  /* restore */
-  curr_dm_list = save_curr_dlp;
-
-  if(classic_mged){
-    /* not claimed by insert_char */
-    if(!strcmp(interp->result, "mged"))
-	mged_process_char(line[0]);
-  }
 }
 
 /*
@@ -2124,6 +2049,10 @@ char	**argv;
   Tcl_ResetResult( interp );
 
   bu_vls_init(&vls);
+
+  /* Perhaps do something special with the GUI */
+  bu_vls_printf(&vls, "new_db_callback %s", dbip->dbi_filename);
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
 
   bu_vls_strcpy(&vls, "local2base");
   Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&local2base,
