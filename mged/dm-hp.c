@@ -13,12 +13,12 @@
  */
 
 #include <stdio.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
+#include "mater.h"
 #include "./ged.h"
 #include "./dm.h"
 #include "./solid.h"
-#include "./mater.h"
 
 typedef unsigned char u_char;
 
@@ -54,6 +54,7 @@ struct dm dm_Hp = {
 	HP_colorchange,
 	HP_window, HP_debug,
 	0,				/* no displaylist */
+	0,				/* No frame buffer */
 	HPBOUND,
 	"HP", "Hewlett Packard 2397a"
 };
@@ -172,8 +173,8 @@ mat_t mat;
 double ratio;
 {
 	static vect_t last;
-	register struct veclist *vp;
-	int nvec,color;
+	register struct vlist *vp;
+	int color;
 	int useful = 0;
 
 	if(  sp->s_soldash )
@@ -181,16 +182,12 @@ double ratio;
 	else	
 		printf("%c*m1b",ESC);	/* Solid Line */
 
-	if (sp->s_materp != NULL)
-	    color = ((struct mater *)sp->s_materp)->mt_dm_int;
-        else
-	    color = 6;                          /* cyan */
+	color = sp->s_dmindex;
 	printf("%c*m%1dx",ESC,color);
 	
-	nvec = sp->s_vlen;
-	for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		/* Viewing region is from -1.0 to +1.0 */
-		if( vp->vl_pen == PEN_UP )  {
+		if( vp->vl_draw == 0 )  {
 			/* Move, not draw */
 			MAT4X3PNT( last, mat, vp->vl_pnt );
 		}  else  {
