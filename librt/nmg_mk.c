@@ -1840,9 +1840,11 @@ char orientation;
 		if (v) vu1 = nmg_mvu(v, &lu1->l.magic);
 		else vu1 = nmg_mvvu(&lu1->l.magic);
 		NMG_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
+		/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
 		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
-		NMG_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu2);
+		NMG_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
+		/* vu2->up.lu_p = lu2; done by nmg_mvu() */
 
 		lu1->up.fu_p = p.fu;
 		lu2->up.fu_p = p.fu->fumate_p;
