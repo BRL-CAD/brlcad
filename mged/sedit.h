@@ -6,7 +6,7 @@
  *  Storage is actually allocated in edsol.c
  *  
  *  Author -
- *	Kieth A Applin
+ *	Keith A Applin
  *	Michael John Muuss
  *  
  *  Source -
