@@ -11,6 +11,16 @@
  *  Depends on having machine.h, vmath.h, and rtlist.h included first.
  *  RT_xxx_CK_MAGIC() can only be used if raytrace.h is included too.
  *
+ *  The proper order for including them all is:
+ *	#include <stdio.h>
+ *	#include <math.h>
+ *	#include "machine.h"
+ *	#include "vmath.h"
+ *	#include "nmg.h"
+ *	#include "raytrace.h"
+ *	#include "nurb.h"
+ *	#include "rtgeom.h"
+ *
  *  Author -
  *	Michael John Muuss
  *  
@@ -128,6 +138,16 @@ struct rt_pg_internal {
 #define RT_PG_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PG_INTERNAL_MAGIC,"rt_pg_internal")
 
 /* ID_BSPLINE */
+#ifdef NURB_H				/* Only if we have seen struct snurb */
+struct rt_nurb_internal {
+	long		magic;
+	int	 	nsrf;		/* number of surfaces */
+	struct snurb	**srfs;		/* The surfaces themselves */
+};
+
+#define RT_NURB_INTERNAL_MAGIC	0x002b2bdd
+#define RT_NURB_CK_MAGIC( _p) RT_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");
+#endif
 
 /* ID_NMG */
 
