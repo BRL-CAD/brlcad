@@ -8,7 +8,8 @@
 #define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g \
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
-			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave
+			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave \
+			nmg-polysolid
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -18,6 +19,9 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
+
+nmg-polysolid: nmg-polysolid.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
+	CC LDFLAGS nmg-polysolid.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o nmg-polysolid
 
 g-sgp: g-sgp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 	CC LDFLAGS g-sgp.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o g-sgp
@@ -34,8 +38,8 @@ g-acad: g-acad.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 g-wave: g-wave.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 	CC LDFLAGS g-wave.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o g-wave
 
-test: test.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
-	CC LDFLAGS test.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o test
+g-shell.rect: g-shell.rect.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
+	CC LDFLAGS g-shell.rect.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o g-shell.rect
 
 proe-g: proe-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 	CC LDFLAGS proe-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -lgen -o proe-g
