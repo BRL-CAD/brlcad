@@ -1,7 +1,7 @@
 /*
- *	SCCS id:	@(#) vdeck.c	2.1
- *	Last edit: 	6/1/84 at 14:04:56
- *	Retrieved: 	8/13/86 at 08:09:17
+ *	SCCS id:	@(#) vdeck.c	2.2
+ *	Last edit: 	6/20/84 at 12:22:26
+ *	Retrieved: 	8/13/86 at 08:09:39
  *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
  *	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.1	last edit 6/1/84 at 14:04:56";
+char	sccsTag[] = "@(#) vdeck.c	2.2	last edit 6/20/84 at 12:22:26";
 
 /*
  *	Derived from KARDS, written by Keith Applin.
@@ -35,13 +35,14 @@ char	sccsTag[] = "@(#) vdeck.c	2.1	last edit 6/1/84 at 14:04:56";
  * ----|---------------------------------------------------------------------|
  *  1  |Title   : target_units, title               : a2,3x,a60              |
  *     |Control : #_of_solids, #_of_regions         : i5,i5                  |
- *     |Solid   : sol_#,sol_type,params.,comment    : a5,a3,a2,6f10.0,a10    |
- *     | cont'  : sol_#,parameters,comment          : a5,5x,   6f10.0,a10    |
+ *     |Solid   : sol_#,sol_type,params.,comment    : i5,a5,6f10.0,a10       |
+ *     | cont'  : sol_#,parameters,comment          : i5,5x,6f10.0,a10       |
  * ----|---------------------------------------------------------------------|
- *  2  |Region  : reg_#,(op,reg_#),comment          : i5,1x,9(a2,i5),1x,a10  |
- *     | cont'  : reg_#,(op,reg_#),comment          : i5,1x,9(a2,i5),1x,a10  |
+ *  2  |Region  : reg_#,(op,[sol/reg]_#)*,comment   : i5,1x,9(a2,i5),1x,a10  |
+ *     | cont'  : reg_#,(op,[sol/reg]_#)*,comment   : i5,1x,9(a2,i5),1x,a10  |
  * ----|---------------------------------------------------------------------|
- *  3  |Idents  : number,item,space,mat,            : 5i5,5x,a40             |
+ *  3  |Flag    : a -1 marks end of region table    : i5                     |
+ *     |Idents  : reg_#,ident,space,mat,%,descriptn : 5i5,5x,a40             |
  * --------------------------------------------------------------------------|
  *
  *	To compile,
@@ -576,11 +577,15 @@ notnew:	/* sent here if solid already in solid table
 		sprintf( regBufPtr, rec.s.s_name );
 		regBufPtr += strlen( rec.s.s_name );
 		itoa( nnr+delreg, buf, 5 );
-		itoa( item, &buf[5], 5 );
-		itoa( space, &buf[10], 5 );
-		itoa( 1, &buf[15], 5 );
-		itoa( 100, &buf[20], 5 );
-		write( ridfd, buf, 25 );
+		write( ridfd, buf, 5 );
+
+		/* Values for item, space, material and percentage are
+		 * meaningless at this point.
+		 */
+		(void) write( ridfd, "    0", 5 );
+		(void) write( ridfd, "    0", 5 );
+		(void) write( ridfd, "    0", 5 );
+		(void) write( ridfd, "    0", 5 );
 		blank_fill( ridfd, 5 );
 		printf( "\nREGION %4d    ", nnr+delreg );
 		bp = buf;
