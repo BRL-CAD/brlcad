@@ -6,7 +6,7 @@
 .SUFFIXES: .g .asc
 
 PRODUCTS	= bldg391.asc crod.asc demo.asc ktank.asc moss.asc prim.asc \
-		  star.asc truck.asc world.asc cube.asc axis.asc
+		  star.asc truck.asc world.asc cube.asc axis.asc sphflake.asc
 
 SHELL		= /bin/sh
 
@@ -42,6 +42,8 @@ world.asc:	world.g
 cube.asc:	cube.g
 	-mv -f $*.asc $*.asc.bak; $(G2A) < $? > $*.asc ; chmod 444 $*.asc
 axis.asc:	axis.g
+	-mv -f $*.asc $*.asc.bak; $(G2A) < $? > $*.asc ; chmod 444 $*.asc
+sphflake.asc:
 	-mv -f $*.asc $*.asc.bak; $(G2A) < $? > $*.asc ; chmod 444 $*.asc
 
 depend:
