@@ -52,6 +52,7 @@
 #define HAVE_STDLIB_H	1
 #define HAVE_STDARG_H	1
 #define HAVE_STRING_H	1
+#define HAVE_GL_GL_H	1
 #define HAS_OPENGL	1
 #define HAVE_DRAND48	1
 #define HAVE_FLOAT_H	1
