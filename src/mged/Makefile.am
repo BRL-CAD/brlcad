@@ -1,5 +1,41 @@
 # $Id$
-bin_PROGRAMS = mged cad_boundp cad_parea
+
+SUBDIRS = dm_old
+
+bin_PROGRAMS = \
+	cad_boundp \
+	cad_parea \
+	mged
+
+noinst_HEADERS = \
+	cmd.h \
+	comb_bool.h \
+	editobjGui.h \
+	fbserv.h \
+	ged.h \
+	htmlLibraryUi.h \
+	icreateGui.h \
+	joints.h \
+	menu.h \
+	mgdev.h \
+	mged_dm.h \
+	mged_solid.h \
+	mgedtcl.h \
+	objdir.h \
+	qray.h \
+	scroll.h \
+	sedit.h \
+	sunicon.h \
+	titles.h \
+	vgdev.h \
+	vld_std.h \
+	vmathUi.h
+
+man_MANS = \
+	cad_boundp.1 \
+	cad_parea.1 \
+	mged.1
+
 
 mged_SOURCES = \
 	adc.c \
@@ -64,44 +100,17 @@ mged_SOURCES = \
 	vers.c \
 	vparse.c \
 	vrlink.c
+mged_LDADD = @DM@ @FB@ @ITCL_LIBS@ @ITK_LIBS@ @SYSV@ @TERMIO@ @TK_LIBS@ @WDB@ @GL_LIBS@ @PNG_LIBS@
 
 cad_boundp_SOURCES = cad_boundp.c
-cad_parea_SOURCES = cad_parea.c
+cad_boundp_LDADD = @BU@
 
-noinst_HEADERS = \
-	cmd.h \
-	comb_bool.h \
-	editobjGui.h \
-	fbserv.h \
-	ged.h \
-	htmlLibraryUi.h \
-	icreateGui.h \
-	joints.h \
-	menu.h \
-	mgdev.h \
-	mged_dm.h \
-	mged_solid.h \
-	mgedtcl.h \
-	objdir.h \
-	qray.h \
-	scroll.h \
-	sedit.h \
-	sunicon.h \
-	titles.h \
-	vgdev.h \
-	vld_std.h \
-	vmathUi.h
+cad_parea_SOURCES = cad_parea.c
+cad_parea_LDADD = @BU@
+
 
 INCLUDES = @GL_CFLAGS@ @X_CFLAGS@ -I$(top_srcdir)/h
 
-mged_LDADD = @DM@ @FB@ @ITCL_LIBS@ @ITK_LIBS@ @SYSV@ @TERMIO@ @TK_LIBS@ @WDB@ @GL_LIBS@ @PNG_LIBS@
-
-cad_parea_LDADD = @BU@
-cad_boundp_LDADD = @BU@
-
-man_MANS = cad_boundp.1 cad_parea.1 mged.1
-EXTRA_DIST = $(man_MANS)
-
 BUILT_SOURCES = vers.c
 vers.c:
-	sh $(top_srcdir)/sh/vers.sh > $@
+	sh $(top_srcdir)/sh/vers.sh version "Geometry Editor (MGED)"> $@
