@@ -154,11 +154,7 @@ struct seg		*seghead;
 	register struct cline_specific *cline =
 		(struct cline_specific *)stp->st_specific;
 	struct seg		ref_seghead;
-	register struct seg	*segp, *new_seg;
-	int			ref_ret, hit_count=0;
-	fastf_t			cos_in, cos_out;
-	fastf_t			dist1;
-	vect_t			norm_in, norm_out;
+	register struct seg	*segp;
 	fastf_t reff;
 	fastf_t dist[3];
 	fastf_t cosa, sina;
@@ -214,8 +210,6 @@ struct seg		*seghead;
 		}
 		else
 		{
-			fastf_t dot;
-
 			/* plate mode */
 
 			RT_GET_SEG( segp, ap->a_resource);
@@ -345,8 +339,6 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct cline_specific *cline =
-		(struct cline_specific *)stp->st_specific;
 	vect_t tmp;
 	fastf_t dot;
 

@@ -950,7 +950,6 @@ extrdump()
 	char				*myname;
 	struct bu_external		ext;
 	struct rt_db_internal		intern;
-	int				i;
 
 	myname = record.extr.ex_name;
 	ngranules = bu_glong( record.extr.ex_count) + 1;

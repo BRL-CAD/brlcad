@@ -254,8 +254,6 @@ void
 sktbld()
 {
 	register char *cp, *ptr;
-	int skt_id;
-	int ret;
 	int i;
 	int vert_count, curve_count;
 	float fV[3], fu[3], fv[3];
@@ -270,10 +268,10 @@ sktbld()
 
 	cp = buf;
 
-	skt_id = *cp++;
+	cp++;
 	cp++;
 
-	ret = sscanf( cp, "%s %f %f %f %f %f %f %f %f %f %d %d",
+	(void)sscanf( cp, "%s %f %f %f %f %f %f %f %f %f %d %d",
 		name, &fV[0], &fV[1], &fV[2], &fu[0], &fu[1], &fu[2], &fv[0], &fv[1], &fv[2], &vert_count, &curve_count );
 
 	VMOVE( V, fV );
@@ -454,7 +452,6 @@ void
 extrbld()
 {
 	register char *cp;
-	int extr_id;
 	char name[NAMESIZE+1];
 	char sketch_name[NAMESIZE+1];
 	char curve_name[NAMESIZE+1];
@@ -464,14 +461,13 @@ extrbld()
 	float fu_vec[3], fv_vec[3];
 	point_t V;
 	vect_t h, u_vec, v_vec;
-	int ret;
 
 	cp = buf;
 
-	extr_id = *cp++;
+	cp++;
 
 	cp++;
-	ret = sscanf( cp, "%s %s %s %d %f %f %f  %f %f %f %f %f %f %f %f %f",
+	(void)sscanf( cp, "%s %s %s %d %f %f %f  %f %f %f %f %f %f %f %f %f",
 		name, sketch_name, curve_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
 		&fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2] );
 
