@@ -106,7 +106,7 @@ set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of obje
 set mged_help_data(listeval)	{{}	{lists 'evaluated' path solids}}
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(lookat)	{{x y z}	{adjust view to look at given coordinates}}
-set mged_help_data(ls)		{{[-a -c -g -r -s]}	{table of contents}}
+set mged_help_data(ls)		{{[-a -c -r -s]}	{table of contents}}
 set mged_help_data(M)		{{1|0 xpos ypos}	{invoke a traditional MGED mouse event}}
 set mged_help_data(make)	{{-t | name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg|pipe>}	{create a primitive}}
 set mged_help_data(make_bb)	{{new_rpp_name obj1_or_path1 [list of objects or paths ...]}	{make a bounding box solid enclosing specified objects/paths}}
@@ -187,7 +187,7 @@ set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|
 set mged_help_data(summary)	{{[s r g]}	{count/list solid/reg/groups}}
 set mged_help_data(sv)		{{x y [z]}	{move view center to (x, y, z)}}
 set mged_help_data(sync)	{{}	{forces UNIX sync}}
-set mged_help_data(t)		{{[-a -c -g -r -s]}	{table of contents}}
+set mged_help_data(t)		{{[-a -c -r -s]}	{table of contents}}
 set mged_help_data(ted)		{{}	{text edit a solid's parameters}}
 set mged_help_data(title)	{{[string]}	{print or change the title}}
 set mged_help_data(tol)		{{[abs #] [rel #] [norm #] [dist #] [perp #]}	{show/set tessellation and calculation tolerances}}
