@@ -649,7 +649,7 @@ vol_class()
 /*
  *			V O L _ P L O T
  */
-void
+int
 vol_plot( rp, matp, vhead, dp )
 union record	*rp;
 mat_t		matp;
@@ -662,7 +662,7 @@ struct directory *dp;
 	point_t		a,b,c,d;
 
 	if( (volp = vol_import( rp )) == VOL_NULL )
-		return;
+		return(-1);
 
 	/*
 	 *  Scan across in Z & X.  For each X position, scan down Y,
@@ -742,6 +742,7 @@ struct directory *dp;
 			}
 		}
 	}
+	return(0);
 }
 
 vol_plate( a,b,c,d, mat, vhead, volp )

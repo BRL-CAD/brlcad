@@ -798,7 +798,7 @@ ebm_class()
 /*
  *			E B M _ P L O T
  */
-void
+int
 ebm_plot( rp, matp, vhead, dp )
 union record	*rp;
 matp_t		matp;
@@ -811,7 +811,7 @@ struct directory *dp;
 	register int	base;
 
 	if( (ebmp = ebm_import( rp )) == EBM_NULL )
-		return;
+		return(-1);
 
 	/* Find vertical lines */
 	base = 0;	/* lint */
@@ -853,6 +853,7 @@ struct directory *dp;
 	}
 	rt_free( (char *)ebmp->ebm_map, "ebm_map" );
 	rt_free( (char *)ebmp, "ebm_specific" );
+	return(0);
 }
 
 /* either x1==x2, or y1==y2 */

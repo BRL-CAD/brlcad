@@ -189,9 +189,10 @@ epa_class()
 	return(0);
 }
 
-void
+int
 epa_plot()
 {
+	return(-1);
 }
 
 int
