@@ -20,11 +20,13 @@
  *	Return
  *	1	face has dangling edge
  *	0	face does not have a dangling edge
+ *
+ *  Implicit Input -
+ *	The "manifolds" array in the "model" structure.
  */
 int 
 nmg_dangling_face(fu)
-struct faceuse *fu;
-/**char *tblXXX;**/
+CONST struct faceuse	*fu;
 {
 	struct loopuse *lu;
 	struct edgeuse *eu, *eur;
@@ -41,7 +43,7 @@ struct faceuse *fu;
 	        /* go looking around each edge for a face of the same
 	         * shell which isn't us and isn't our mate.  If we
 	         * find us or our mate before another face of this
-	         * shell, we are non-manifold.
+	         * shell, we are non-3-manifold.
 	         *
 	         */
 

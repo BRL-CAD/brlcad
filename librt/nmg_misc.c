@@ -1181,17 +1181,17 @@ struct edgeuse *eu;
  *	Looking radially around an edge, find another edge in the same
  *	face as the current edge. (this could be the mate to the current edge)
  */
-struct edgeuse *
+CONST struct edgeuse *
 nmg_faceradial(eu)
-struct edgeuse *eu;
+CONST struct edgeuse *eu;
 {
-	struct faceuse *fu;
-	struct edgeuse *eur;
+	CONST struct faceuse *fu;
+	CONST struct edgeuse *eur;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_LOOPUSE(eu->up.lu_p);
-	NMG_CK_FACEUSE(eu->up.lu_p->up.fu_p);
 	fu = eu->up.lu_p->up.fu_p;
+	NMG_CK_FACEUSE(fu);
 
 	eur = eu->radial_p;
 
@@ -1242,10 +1242,11 @@ struct edgeuse *eu;
  */
 void 
 nmg_euprint(str, eu)
-char *str;
-struct edgeuse *eu;
+CONST char		*str;
+CONST struct edgeuse	*eu;
 {
-	pointp_t eup, matep;
+	CONST fastf_t	*eup;
+	CONST fastf_t	*matep;
 	
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
