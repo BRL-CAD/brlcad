@@ -259,6 +259,7 @@ static struct cmdtab cmdtab[] = {
 	"mvall", f_mvall,
 	"next_view", f_next_view,
 	"nirt", f_nirt,
+	"nmg_collapse", f_edge_collapse,
 	"nmg_simplify", f_nmg_simplify,
 	"oed", cmd_oed,
 	"opendb", f_opendb,

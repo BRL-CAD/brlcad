@@ -95,6 +95,7 @@ MGED_EXTERN(int f_mvall, (ClientData clientData, Tcl_Interp *interp, int argc, c
 MGED_EXTERN(int f_name, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_next_view, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_nirt, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_edge_collapse, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_nmg_simplify, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_opendb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_orientation, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

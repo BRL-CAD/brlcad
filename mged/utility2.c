@@ -2221,3 +2221,107 @@ char **argv;
 		return TCL_OK;
 	}
 }
+
+int
+f_edge_collapse( clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	char *new_name;
+	struct model *m;
+	struct rt_db_internal intern;
+	struct directory *dp;
+	long count;
+	char count_str[32];
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
+	CHECK_READ_ONLY;
+
+	if(argc < 3 || MAXARGS < argc){
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help nmg_collapse");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+	}
+
+	if( strchr( argv[1], '/' ) )
+	{
+	  Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[1], "\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	new_name = argv[1];
+	
+	if( db_lookup( dbip, new_name, LOOKUP_QUIET ) != DIR_NULL )
+	{
+	  Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	if( (dp=db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+		return TCL_ERROR;
+
+	if( dp->d_flags & DIR_COMB )
+	{
+		Tcl_AppendResult(interp, argv[2], " is a combination, only NMG solids are allowed here\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) < 0 )
+	{
+		Tcl_AppendResult(interp, "Failed to get internal form of ", argv[2], "!!!!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if( intern.idb_type != ID_NMG )
+	{
+		Tcl_AppendResult(interp, argv[2], " is not an NMG solid!!!!\n", (char *)NULL );
+		rt_db_free_internal( &intern );
+		return TCL_ERROR;
+	}
+
+	m = (struct model *)intern.idb_ptr;
+	NMG_CK_MODEL( m );
+
+	/* triangulate model */
+	nmg_triangulate_model( m, &mged_tol );
+
+	count = nmg_edge_collapse( m, &mged_tol );
+
+	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	{
+		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
+		rt_db_free_internal( &intern );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	{
+		rt_db_free_internal( &intern );
+		TCL_WRITE_ERR_return;
+	}
+
+	rt_db_free_internal( &intern );
+
+	sprintf( count_str, "%d", count );
+	Tcl_AppendResult(interp, count_str, " edges collapsed\n", (char *)NULL );
+
+	/* use "e" command to get new solid displayed */
+	{
+	  char *av[3];
+
+	  av[0] = "e";
+	  av[1] = new_name;
+	  av[2] = NULL;
+
+	  return f_edit( clientData, interp, 2, av );
+	}
+
+}
