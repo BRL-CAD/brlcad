@@ -1981,13 +1981,9 @@ CONST struct rt_tol	*tol;
 	rt_free((char *)mag1, "vector magnitudes");
 	rt_free((char *)mag2, "vector magnitudes");
 
-	/* Eliminate any OT_BOOLPLACE self-loops now. */
-	nmg_sanitize_fu( fu1 );
-	nmg_sanitize_fu( fu2 );
-
-	/* Eliminate stray vertices that were added along edges in this step */
-	(void)nmg_unbreak_region_edges( &fu1->l.magic );
-	(void)nmg_unbreak_region_edges( &fu2->l.magic );
+	/* Can't do simplifications here,
+	 * because the caller's linked lists & pointers might get disrupted.
+	 */
 }
 
 /*

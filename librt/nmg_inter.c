@@ -2851,6 +2851,14 @@ rt_log("co-planar faces.\n");
 
 	if(bs.vert2d)  rt_free( (char *)bs.vert2d, "vert2d" );
 
+	/* Eliminate any OT_BOOLPLACE self-loops now. */
+	nmg_sanitize_fu( fu1 );
+	nmg_sanitize_fu( fu2 );
+
+	/* Eliminate stray vertices that were added along edges in this step */
+	(void)nmg_unbreak_region_edges( &fu1->l.magic );
+	(void)nmg_unbreak_region_edges( &fu2->l.magic );
+
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_region_v_unique( fu1->s_p->r_p, &bs.tol );
 nmg_region_v_unique( fu2->s_p->r_p, &bs.tol );
