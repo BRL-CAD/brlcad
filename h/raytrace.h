@@ -843,7 +843,7 @@ struct command_tab {
 
 #if __STDC__
 extern void rt_bomb(char *str);		/* Fatal error */
-extern void rt_log();			/* Log message */
+extern void rt_log(char *, ... );	/* Log message */
 					/* Read named MGED db, build toc */
 extern struct rt_i *rt_dirbuild(char *filename, char *buf, int len);
 					/* Prepare for raytracing */
@@ -1091,7 +1091,6 @@ extern int rt_do_anim();
 extern void rt_fr_anim();
 
 /* The database library */
-#ifndef mips
 extern struct db_i *db_open();		/* open an existing model database */
 extern struct db_i *db_create();	/* create a new model database */
 extern void db_close();			/* close a model database */
@@ -1108,35 +1107,6 @@ extern int db_trunc();			/* truncate by "count" */
 extern int db_delrec();			/* delete "recnum" from entry */
 extern int db_delete();			/* delete all granules assigned dp */
 extern int db_zapper();			/* write FREE records from 'start' */
-#else
-extern struct db_i *db_open( char *, char * );
-extern struct db_i *db_create( char * );
-extern void db_close( struct db_i * );
-extern union record *db_getmrec( struct db_i *, struct directory * );
-extern int db_get( struct db_i *, struct directory *, union record *,
-	int , int  );
-extern int db_put( struct db_i *, struct directory *, union record *,
-	int , int  );
-extern int db_scan( struct db_i *, int (*)() );
-extern struct directory *db_lookup( struct db_i *, char *, int );
-extern struct directory *db_diradd( struct db_i *, char *, long ,
-	int , int  );
-extern int db_dirdelete( struct db_i *, struct directory * );
-extern int db_alloc( struct db_i *, struct directory *, int  );
-extern int db_grow( struct db_i *, struct directory *, int );
-extern int db_trunc( struct db_i *, struct directory *, int );
-extern int db_delrec( struct db_i *, struct directory *, int );
-extern int db_delete( struct db_i *, struct directory * );
-extern int db_zapper( struct db_i *, struct directory *, int );
-
-/* machine.c */
-extern void rt_pri_set();		/* change to new "nice" value */
-extern int rt_cpuget();			/* get CPU time limit */
-extern void rt_cpuset();		/* set CPU time limit */
-extern int rt_avail_cpus();		/* find # of CPUs available */
-extern void rt_parallel();		/* run func in parallel */
-
-#endif
 
 /* memalloc.c */
 extern unsigned long memalloc();
