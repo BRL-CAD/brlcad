@@ -28,6 +28,9 @@ static char RCShalf[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "./debug.h"
 
+#if defined(alliant) && !defined(__STDC__)
+extern double   modf();
+#endif
 
 /*
  *			Ray/HALF Intersection

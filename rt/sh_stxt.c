@@ -28,6 +28,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+#if defined(alliant) && !defined(__STDC__)
+extern double	modf();
+#endif
+
 struct	stxt_specific  {
 	unsigned char stx_transp[8];	/* RGB for transparency */
 	char	stx_file[128];	/* Filename */
