@@ -42,10 +42,12 @@
 
     destructor {}
 
-    public method ? {}
-    public method apropos {key}
-    public method help {args}
-    public method getUserCmds {}
+    public {
+	method ? {}
+	method apropos {key}
+	method help {args}
+	method getUserCmds {}
+    }
 }
 
 ::itcl::body Database::? {} {
