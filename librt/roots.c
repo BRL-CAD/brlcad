@@ -47,7 +47,7 @@ int	rt_poly_findroot(), rt_poly_checkroots();
 int
 rt_poly_roots( eqn, roots )
 register poly		*eqn;		/* equation to be solved	*/
-register complex	roots[];	/* space to put roots found	*/
+register bn_complex_t	roots[];	/* space to put roots found	*/
 {
 	register int	n;		/* number of roots found	*/
 	LOCAL fastf_t	factor;		/* scaling factor for copy	*/
@@ -67,7 +67,7 @@ register complex	roots[];	/* space to put roots found	*/
 	 * for ease of handling.
 	 */
 	factor = 1.0 / eqn->cf[0];
-	(void) rt_poly_scale( eqn, factor );
+	(void) bn_poly_scale( eqn, factor );
 	n = 0;		/* Number of roots found */
 
 	/* A trailing coefficient of zero indicates that zero
@@ -98,7 +98,7 @@ register complex	roots[];	/* space to put roots found	*/
 		 *  Set initial guess for root to almost zero.
 		 *  This method requires a small nudge off the real axis.
 		 */
-		CxCons( &roots[n], 0.0, SMALL );
+		bn_cx_cons( &roots[n], 0.0, SMALL );
 		if ( (rt_poly_findroot( eqn, &roots[n] )) < 0 )
 			return(n);	/* return those we found, anyways */
 
@@ -109,7 +109,7 @@ register complex	roots[];	/* space to put roots found	*/
 			 */
 			++n;
 			roots[n] = roots[n-1];
-			CxConj(&roots[n]);
+			bn_cx_conj(&roots[n]);
 		} else {
 			/* Change 'practically real' to real		*/
 			roots[n].im = 0.0;
@@ -156,10 +156,10 @@ register complex	roots[];	/* space to put roots found	*/
 int
 rt_poly_findroot( eqn, nxZ )
 register poly		*eqn;	/* polynomial			*/
-register complex	*nxZ;	/* initial guess for root	*/
+register bn_complex_t	*nxZ;	/* initial guess for root	*/
 {
 	LOCAL complex  p0, p1, p2;	/* evaluated polynomial+derivatives */
-	LOCAL complex	p1_H;		/* p1 - H, temporary */
+	LOCAL bn_complex_t	p1_H;		/* p1 - H, temporary */
 	LOCAL complex  cZ, cH;		/* 'Z' and H(Z) in comment	*/
 	LOCAL complex  T;		/* temporary for making H */
 	FAST fastf_t	diff;		/* test values for convergence	*/
@@ -173,34 +173,34 @@ register complex	*nxZ;	/* initial guess for root	*/
 
 		/* Compute H for Laguerre's method. */
 		n = eqn->dgr-1;
-		CxMul2( &cH, &p1, &p1 );
-		CxScal( &cH, (double)(n*n) );
-		CxMul2( &T, &p2, &p0 );
-		CxScal( &T, (double)(eqn->dgr*n) );
-		CxSub( &cH, &T );
+		bn_cx_mul2( &cH, &p1, &p1 );
+		bn_cx_scal( &cH, (double)(n*n) );
+		bn_cx_mul2( &T, &p2, &p0 );
+		bn_cx_scal( &T, (double)(eqn->dgr*n) );
+		bn_cx_sub( &cH, &T );
 
 		/* Calculate the next iteration for Laguerre's method.
 		 * Test to see whether addition or subtraction gives the
 		 * larger denominator for the next 'Z' , and use the
 		 * appropriate value in the formula.
 		 */
-		CxSqrt( &cH );
+		bn_cx_sqrt( &cH, &cH );
 		p1_H = p1;
-		CxSub( &p1_H, &cH );
-		CxAdd( &p1, &cH );		/* p1 <== p1+H */
-		CxScal( &p0, (double)(eqn->dgr) );
-		if ( CxAmplSq( &p1_H ) > CxAmplSq( &p1 ) ){
-			CxDiv( &p0, &p1_H);
-			CxSub( nxZ, &p0 );
+		bn_cx_sub( &p1_H, &cH );
+		bn_cx_add( &p1, &cH );		/* p1 <== p1+H */
+		bn_cx_scal( &p0, (double)(eqn->dgr) );
+		if ( bn_cx_amplSq( &p1_H ) > bn_cx_amplSq( &p1 ) ){
+			bn_cx_div( &p0, &p1_H);
+			bn_cx_sub( nxZ, &p0 );
 		} else {
-			CxDiv( &p0, &p1 );
-			CxSub( nxZ, &p0 );
+			bn_cx_div( &p0, &p1 );
+			bn_cx_sub( nxZ, &p0 );
 		}
 
 		/* Use proportional convergence test to allow very small
 		 * roots and avoid wasting time on large roots.
-		 * The original version used CxAmpl(), which requires
-		 * a square root.  Using CxAmplSq() saves lots of cycles,
+		 * The original version used bn_cx_ampl(), which requires
+		 * a square root.  Using bn_cx_amplSq() saves lots of cycles,
 		 * but changes loop termination conditions somewhat.
 		 *
 		 * diff is |p0|**2.  nxZ = Z - p0.
@@ -208,8 +208,8 @@ register complex	*nxZ;	/* initial guess for root	*/
 		 * SGI XNS IRIS 3.5 compiler fails if following 2 assignments
 		 * are imbedded in the IF statement, as before.
 		 */
-		b = CxAmplSq( nxZ );
-		diff = CxAmplSq( &p0 );
+		b = bn_cx_amplSq( nxZ );
+		diff = bn_cx_amplSq( &p0 );
 		if( b < diff )
 			continue;
 		if( (b-diff) == b )
@@ -220,9 +220,9 @@ register complex	*nxZ;	/* initial guess for root	*/
 	}
 
 	/* If the thing hasn't converged yet, it probably won't. */
-	rt_log("rt_poly_findroot:  didn't converge in %d iterations, b=%g, diff=%g\n",
+	bu_log("rt_poly_findroot:  didn't converge in %d iterations, b=%g, diff=%g\n",
 		i, b, diff);
-	rt_log("nxZ=%gR+%gI, p0=%gR+%gI\n", nxZ->re, nxZ->im, p0.re, p0.im);
+	bu_log("nxZ=%gR+%gI, p0=%gR+%gI\n", nxZ->re, nxZ->im, p0.re, p0.im);
 	return(-1);		/* ERROR */
 }
 
@@ -249,27 +249,27 @@ register complex	*nxZ;	/* initial guess for root	*/
  */
 void
 rt_poly_eval_w_2derivatives( cZ, eqn, b, c, d )
-register complex	*cZ;		/* input */
+register bn_complex_t	*cZ;		/* input */
 register poly		*eqn;		/* input */
-register complex	*b, *c, *d;	/* outputs */
+register bn_complex_t	*b, *c, *d;	/* outputs */
 {
 	register int	n;
 	register int	m;
 
-	CxCons(b,eqn->cf[0],0.0);
+	bn_cx_cons(b,eqn->cf[0],0.0);
 	*c = *b;
 	*d = *c;
 
 	for ( n=1; ( m = eqn->dgr - n ) >= 0; ++n){
-		CxMul( b, cZ );
+		bn_cx_mul( b, cZ );
 		b->re += eqn->cf[n];
 		if ( m > 0 ){
-			CxMul( c, cZ );
-			CxAdd( c, b );
+			bn_cx_mul( c, cZ );
+			bn_cx_add( c, b );
 		}
 		if ( m > 1 ){
-			CxMul( d, cZ );
-			CxAdd( d, c );
+			bn_cx_mul( d, cZ );
+			bn_cx_add( d, c );
 		}
 	}
 }
@@ -300,7 +300,7 @@ register complex	*b, *c, *d;	/* outputs */
 int
 rt_poly_checkroots( eqn, roots, nroots )
 register poly		*eqn;
-complex			roots[];
+bn_complex_t			roots[];
 register int		nroots;
 {
 	register fastf_t	er, ei;		/* "epoly" */
@@ -310,8 +310,8 @@ register int		nroots;
 
 	for ( m=0; m < nroots; ++m ){
 		/* Select value of Z to evaluate at */
-		zr = CxReal( &roots[m] );
-		zi = CxImag( &roots[m] );
+		zr = bn_cx_real( &roots[m] );
+		zi = bn_cx_imag( &roots[m] );
 
 		/* Initialize */
 		er = eqn->cf[0];
@@ -346,7 +346,7 @@ register int		nroots;
 void
 rt_poly_deflate( oldP, root )
 register poly		*oldP;
-register complex	*root;
+register bn_complex_t	*root;
 {
 	LOCAL poly	div, rem;
 
@@ -360,11 +360,11 @@ register complex	*root;
 		div.cf[0] = 1;
 		div.cf[1] = - root->re;
 	} else {
-		/*  root is complex		*/
+		/*  root is bn_complex_t		*/
 		div.dgr = 2;
 		div.cf[0] = 1;
 		div.cf[1] = -2 * root->re;
-		div.cf[2] = CxAmplSq( root );
+		div.cf[2] = bn_cx_amplSq( root );
 	}
 
 	/* Use synthetic division to find the quotient (new polynomial)
