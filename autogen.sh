@@ -40,6 +40,11 @@ case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
   *c*,*  ) ECHO_N=-n ECHO_C= ECHO_T= ;;
   *)       ECHO_N= ECHO_C='\c' ECHO_T= ;;
 esac
+echo "test" | tail -n 1 2>/dev/null 1>&2
+TAIL_N=""
+if [ $? = 0 ] ; then
+    TAIL_N="-n "
+fi
 
 
 ##########################
@@ -59,7 +64,7 @@ if [ ! "x$_autofound" = "xyes" ] ; then
   echo "ERROR:  Unable to locate GNU Autoconf."
   _report_error=yes
 else
-  _version_line="`$AUTOCONF --version | head -n 1`"
+  _version_line="`$AUTOCONF --version | head -${TAIL_N}1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
     _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\..*/\1/'`"
     _min_version="`echo $_version_line | sed 's/.*\.\([0-9][0-9]\).*/\1/'`"
@@ -196,7 +201,7 @@ if test -f configure.ac ; then
 elif test -f configure.in ; then
   _configure_file=configure.in
 fi
-_aux_dir="`cat $_configure_file | grep AC_CONFIG_AUX_DIR | tail -n 1 | sed 's/^[ ]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/'`"
+_aux_dir="`cat $_configure_file | grep AC_CONFIG_AUX_DIR | tail -${TAIL_N}1 | sed 's/^[ ]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/'`"
 if test ! -d "$_aux_dir" ; then
   _aux_dir=.
 fi
