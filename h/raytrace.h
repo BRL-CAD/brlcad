@@ -1859,9 +1859,9 @@ RT_EXTERN(void db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
 				point_t p_max) );
 /* db_open.c */
 					/* open an existing model database */
-RT_EXTERN(struct db_i *db_open, ( char *name, char *mode ) );
+RT_EXTERN(struct db_i *db_open, ( CONST char *name, CONST char *mode ) );
 					/* create a new model database */
-RT_EXTERN(struct db_i *db_create, ( char *name ) );
+RT_EXTERN(struct db_i *db_create, ( CONST char *name ) );
 					/* close a model database */
 RT_EXTERN(void db_close, ( struct db_i *dbip ) );
 /* db_io.c */
