@@ -511,7 +511,7 @@ char	**argv;
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rt";
-	*vp++ = "-s50";
+	*vp++ = "-s512";
 	*vp++ = "-M";
 	*vp++ = "-v60";		/* Reduced RT logging when run interactively */
 	if( mged_variables->mv_perspective > 0 )  {
