@@ -13,7 +13,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+
+#if IRIX >= 5
+#include <sys/file.h>
+#else
 #include <fcntl.h>
+#endif
 
 #if defined(__NetBSD__)
 #	include <sys/ioctl_compat.h>
