@@ -1,5 +1,9 @@
+#define DEBUG_TABDATA	0x08000000	/* 28 tabdata library */
+
 /*
  *			T A B D A T A . C
+ *
+ * XXX Probably belongs in LIBBN.
  *
  *  Routines for processing tables (curves) of data with one independent
  *  parameter which is common to many sets of dependent data values.
@@ -46,6 +50,7 @@ void
 rt_table_free( tabp )
 struct rt_table	*tabp;
 {
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_free(x%x)\n", tabp);
 	RT_CK_TABLE(tabp);
 
 	tabp->nx = 0;			/* sanity */
@@ -59,6 +64,8 @@ void
 rt_tabdata_free( data )
 struct rt_tabdata *data;
 {
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_free(x%x)\n", data);
+
 	RT_CK_TABDATA(data);
 	RT_CK_TABLE(data->table);
 
@@ -75,6 +82,8 @@ rt_ck_table( tabp )
 CONST struct rt_table	*tabp;
 {
 	register int	i;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_ck_table(x%x)\n", tabp);
 
 	RT_CK_TABLE(tabp);
 
@@ -102,6 +111,8 @@ double	last;
 	fastf_t			*fp;
 	fastf_t			delta;
 	int			j;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_make_uniform( num=%d, %g, %g )\n", num, first, last );
 
 	if( first >= last )  rt_bomb("rt_table_make_uniform() first >= last\n");
 
@@ -133,6 +144,8 @@ CONST struct rt_tabdata	*in2;
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_add(x%x, x%x, x%x)\n", out, in1, in2);
 
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 );
@@ -166,6 +179,8 @@ CONST struct rt_tabdata	*in2;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_mul(x%x, x%x, x%x)\n", out, in1, in2);
+
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 );
 	RT_CK_TABDATA( in2 );
@@ -198,6 +213,8 @@ register double			scale;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_scale(x%x, x%x, %g)\n", out, in1, scale);
+
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 );
 
@@ -226,6 +243,8 @@ register double		scale;
 	register int		j;
 	register fastf_t	*op, *i1;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_scale(x%x, %g)\n", tabp, scale );
+
 	RT_CK_TABLE( tabp );
 
 	op = tabp->x;
@@ -251,6 +270,8 @@ CONST struct rt_tabdata		*in2;
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_join1(x%x, x%x, %g, x%x)\n", out, in1, scale, in2 );
 
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 )
@@ -292,6 +313,8 @@ CONST struct rt_tabdata		*in3;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2, *i3;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_join2(x%x, x%x, %g, x%x, %g, x%x)\n", out, in1, scale2, in2, scale3, in3 );
+
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 )
 	RT_CK_TABDATA( in2 );
@@ -330,6 +353,8 @@ CONST struct rt_tabdata		*in3;
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2, *i3;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_blend3(x%x, %g, x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2, scale3, in3 );
 
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 )
@@ -376,6 +401,8 @@ CONST struct rt_tabdata	*in;
 	for( j = in->ny; j > 0; j-- )
 		area += *ip++;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_area(x%x) = %g\n", in, area);
+
 	return area;
 }
 
@@ -406,6 +433,7 @@ CONST struct rt_tabdata	*in;
 		area += in->y[j] * width;
 	}
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_area2(x%x) = %g\n", in, area);
 	return area;
 }
 
@@ -436,6 +464,7 @@ CONST struct rt_tabdata	*in2;
 	for( j = in1->ny; j > 0; j-- )
 		area += *i1++ * *i2++;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_mul_area1(x%x, x%x) = %g\n", in1, in2, area);
 	return area;
 }
 
@@ -467,6 +496,8 @@ CONST struct rt_tabdata	*in2;
 		width = tabp->x[j+1] - tabp->x[j];
 		area += in1->y[j] * in2->y[j] * width;
 	}
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_mul_area2(x%x, x%x) = %g\n", in1, in2, area);
 	return area;
 }
 
@@ -488,6 +519,7 @@ double			xval;
 {
 	register int	i;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_find_x(x%x, %g)\n", tabp, xval );
 	RT_CK_TABLE(tabp);
 
 	if( xval >= tabp->x[tabp->nx-1] )  return -2;
@@ -516,6 +548,8 @@ register double			wl;
 	register int		i;
 	register fastf_t	fract;
 	register fastf_t	ret;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_lin_interp(x%x, %g)\n", samp, wl);
 
 	RT_CK_TABDATA(samp);
 	tabp = samp->table;
@@ -566,6 +600,8 @@ CONST struct rt_tabdata	*olddata;
 	struct rt_tabdata	*newsamp;
 	int			i;
 	int			j, k;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_resample_max(x%x, x%x)\n", newtable, olddata);
 
 	RT_CK_TABLE(newtable);
 	RT_CK_TABDATA(olddata);
@@ -647,6 +683,8 @@ CONST struct rt_tabdata	*olddata;
 	struct rt_tabdata	*newsamp;
 	int			i;
 	int			j, k;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_resample_avg(x%x, x%x)\n", newtable, olddata);
 
 	RT_CK_TABLE(newtable);
 	RT_CK_TABDATA(olddata);
@@ -730,6 +768,8 @@ CONST struct rt_table	*tabp;
 	FILE	*fp;
 	int	j;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_write(%s, x%x)\n", filename, tabp);
+
 	RT_CK_TABLE(tabp);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -768,6 +808,8 @@ CONST char	*filename;
 	FILE	*fp;
 	int	nw;
 	int	j;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_read(%s)\n", filename);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
@@ -857,6 +899,8 @@ CONST struct rt_tabdata	*data;
 	CONST struct rt_table	*tabp;
 	int	j;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_pr_table_and_tabdata(%s, x%x)\n", filename, data);
+
 	RT_CK_TABDATA(data);
 	tabp = data->table;
 	RT_CK_TABLE(tabp);
@@ -902,6 +946,8 @@ CONST char	*filename;
 	char	buf[128];
 	int	count = 0;
 	int	i;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_read_table_and_tabdata(%s)\n", filename);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
@@ -964,6 +1010,8 @@ CONST struct rt_table	*tabp;
 	int	got;
 	int	fd;
 	int	i;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_binary_read(%s, num=%d, x%x)\n", filename, num, tabp);
 
 	RT_CK_TABLE(tabp);
 
@@ -1033,6 +1081,8 @@ int	num;
 	int	nw;
 	int	nbytes;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_malloc_array(x%x, num=%d)\n", tabp, num);
+
 	RT_CK_TABLE(tabp);
 	nw = tabp->nx;
 	nbytes = RT_SIZEOF_TABDATA(tabp);
@@ -1058,9 +1108,11 @@ int	num;
  */
 void
 rt_tabdata_copy( out, in )
-struct rt_tabdata		*out;
+struct rt_tabdata	*out;
 CONST struct rt_tabdata	*in;
 {
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_copy(x%x, x%x)\n", out, in);
+
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in );
 
@@ -1069,7 +1121,7 @@ CONST struct rt_tabdata	*in;
 	if( in->ny != out->ny )
 		rt_bomb("rt_tabdata_copy(): different tabdata lengths?\n");
 
-	bcopy( (char *)in->y, (char *)out->y, RT_SIZEOF_TABDATA(in->table) );
+	bcopy( (CONST char *)in->y, (char *)out->y, RT_SIZEOF_TABDATA_Y(in) );
 }
 
 /*
@@ -1084,7 +1136,9 @@ CONST struct rt_tabdata	*in;
 	RT_CK_TABDATA( in );
 	RT_GET_TABDATA( data, in->table );
 
-	bcopy( (char *)in->y, (char *)data->y, RT_SIZEOF_TABDATA(in->table) );
+	bcopy( (CONST char *)in->y, (char *)data->y, RT_SIZEOF_TABDATA_Y(in) );
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_dup(x%x) = x%x\n", in, data);
 	return data;
 }
 
@@ -1110,6 +1164,8 @@ CONST struct rt_table	*tabp;
 	for( todo = data->ny-1; todo >= 0; todo-- )
 		*op++ = val;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_get_constval(val=%g, x%x)=x%x\n", val, tabp, data);
+
 	return data;
 }
 
@@ -1125,6 +1181,8 @@ double			val;
 {
 	int			todo;
 	register fastf_t	*op;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_constval(x%x, val=%g)\n", data, val);
 
 	RT_CK_TABDATA(data);
 
@@ -1148,6 +1206,8 @@ CONST struct rt_tabdata	*data;
 	CONST struct rt_table	*tabp;
 	register int i;
 	FAST fastf_t	minval = INFINITY, maxval = -INFINITY;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_to_tcl(x%x, x%x)\n", vp, data);
 
 	BU_CK_VLS(vp);
 	RT_CK_TABDATA(data);
@@ -1204,6 +1264,8 @@ CONST double *array;
 	for( i = 0; i < len-1; i++ )  {
 		data->y[i] = array[(i<<1)+1];
 	}
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_from_array(x%x) = x%x\n", array, data);
 	return data;
 }
 
@@ -1221,6 +1283,8 @@ double				offset;
 {
 	CONST struct rt_table	*tabp;
 	register int 		i;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_freq_shift(x%x, x%x, offset=%g)\n", out, in, offset);
 
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in );
@@ -1255,6 +1319,8 @@ double	hi;
 	for( i=0; i < tabp->nx-1; i++ )  {
 		if( tabp->x[i] >= low && tabp->x[i] <= hi )  count++;
 	}
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_interval_num_samples(x%x, low=%g, hi=%g) = %d\n", tabp, low, hi, count);
 	return count;
 }
 
@@ -1263,6 +1329,7 @@ double	hi;
  *
  *  Remove all sampling points between subscripts i and j, inclusive.
  *  Don't bother freeing the tiny bit of storage at the end of the array.
+ *  Returns number of points removed.
  */
 int
 rt_table_delete_sample_pts( tabp, i, j )
@@ -1272,6 +1339,8 @@ int	j;
 {
 	int	tokill;
 	int	k;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_delete_samples(x%x, %d, %d)\n", tabp, i, j);
 
 	RT_CK_TABLE(tabp);
 
@@ -1337,5 +1406,6 @@ CONST struct rt_table	*b;
 	if( k > new->nx )  bu_bomb("rt_table_merge2() assertion failed, k>nx?\n");
 	new->nx = k-1;
 
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_merge2(x%x, x%x) = x%x\n", a, b, new);
 	return new;
 }
