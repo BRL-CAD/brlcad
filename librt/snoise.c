@@ -1211,22 +1211,22 @@ double		RTable[MAXSIZE];
 #define MAGIC_TAB1	   9823
 #define MAGIC_TAB2	 784642
 #define CK_HT() { \
-	RT_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht"); \
-	RT_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht"); \
+	RT_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht 1"); \
+	RT_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht 2"); \
 	RT_CKMAG(ht.hashTableMagic1, MAGIC_TAB1, "hashTable Magic 1"); \
-	RT_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 1"); \
-	if (ht.hashTable != (ht.hashTableMagic1 + 1)) \
+	RT_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 2"); \
+	if (ht.hashTable != (short *)&ht.hashTableMagic1[1] ) \
 		rt_bomb("ht.hashTable changed rel ht.hashTableMagic1"); \
-	if (ht.hashTable != (ht.hashTableMagic2 - 4096)) \
+	if (ht.hashTableMagic2 != (long *)&ht.hashTable[4096] ) \
 		rt_bomb("ht.hashTable changed rel ht.hashTableMagic2"); \
 }
 
 struct str_ht {
 	long	magic;	
 	char	hashTableValid;
-	short	*hashTableMagic1;
+	long	*hashTableMagic1;
 	short	*hashTable;
-	short	*hashTableMagic2;
+	long	*hashTableMagic2;
 	long	magic_end;	
 };
 
@@ -1318,14 +1318,16 @@ noise_init()
 		return;
 	}
 
-	ht.hashTableValid = 1;
-
 	RT_RANDSEED(rndtabi, (RT_RAND_TABSIZE-1) );
-	ht.hashTableMagic1 = (short *) rt_malloc(
+	ht.hashTableMagic1 = (long *) rt_malloc(
 		2*sizeof(long) + 4096*sizeof(short int),
 		"noise hashTable");
-	ht.hashTable = &ht.hashTableMagic1[1];
-	ht.hashTableMagic2 = &ht.hashTableMagic1[4097];
+	ht.hashTable = (short *)&ht.hashTableMagic1[1];
+	ht.hashTableMagic2 = (long *)&ht.hashTable[4096];
+
+	*ht.hashTableMagic1 = MAGIC_TAB1;
+	*ht.hashTableMagic2 = MAGIC_TAB2;
+
 	ht.magic_end = MAGIC_STRHT2;
 	ht.magic = MAGIC_STRHT1;
 
@@ -1346,7 +1348,11 @@ noise_init()
 		RTable[i] = Randomizer(rp) * REALSCALE - 1.0;
 	}
 
+	ht.hashTableValid = 1;
+
 	RES_RELEASE(&rt_g.res_model);
+
+	CK_HT();
 }
 
 
