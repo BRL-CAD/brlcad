@@ -1158,7 +1158,7 @@ char *av[];
 				scr_width= scr_height= scr_xoff= scr_yoff= 0;
 				break;
 		case 'A'	: conv = IPU_AUTOSCALE;
-				  bzero(&param, sizeof(union ipu_prsc_param));
+				  bzero( (char *)&param, sizeof(union ipu_prsc_param));
 				  break;
 		case 'M'	: conv = IPU_MAG_FACTOR;
 				  if ((c=atoi(optarg)) < 100 || c > 2000)
