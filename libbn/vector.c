@@ -23,7 +23,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
-#include "raytrace.h"
+#include "bu.h"
+#include "bn.h"
 
 /*
  *			T P _ 3 V E C T O R
