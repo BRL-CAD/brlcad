@@ -116,6 +116,7 @@ char	*mode;
 	dbip->dbi_local2base = 1.0;
 	dbip->dbi_base2local = 1.0;
 	dbip->dbi_title = (char *)0;
+	dbip->dbi_uses = 1;
 
 #ifdef HAVE_UNIX_IO
 	if( stat( name, &sb ) < 0 )
@@ -246,6 +247,7 @@ char *name;
  *			D B _ C L O S E
  *
  *  Close a database, releasing dynamic memory
+ *  Wait until last user is done, though.
  */
 void
 db_close( dbip )
@@ -254,9 +256,11 @@ register struct db_i	*dbip;
 	register int		i;
 	register struct directory *dp, *nextdp;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_close:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB) bu_log("db_close(%s) x%x\n",
-		dbip->dbi_filename, dbip );
+	RT_CK_DBI(dbip);
+	if(rt_g.debug&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
+		dbip->dbi_filename, dbip, dbip->dbi_uses );
+
+	if( (--dbip->dbi_uses) > 0 )  return;
 
 #ifdef HAVE_UNIX_IO
 	(void)close( dbip->dbi_fd );
