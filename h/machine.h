@@ -388,7 +388,7 @@ typedef long	bitv_t;		/* largest integer type */
 #if defined(__sgi)
         extern double hypot(double, double);
 #else
-#define hypot(x,y)      (double) sqrt( x*x, y*y)
+#	define hypot(x,y)      sqrt( (x)*(x)+(y)*(y) )
 #endif
 #endif
 
