@@ -6,7 +6,7 @@
  *  Functions -
  *	rt_dirbuild	Read GED database, build directory
  *	rt_dir_lookup	Look up name in directory
- *	rt_dir_add		Add entry to directory
+ *	rt_dir_add	Add entry to directory
  *
  *  Author -
  *	Michael John Muuss
@@ -38,6 +38,13 @@ static char RCSdir[] = "@(#)$Header$";
  * builds a directory of the object names, to allow rapid
  * named access to objects.
  *
+ *  Note that some multi-record database items include length fields.
+ *  These length fields are not used here.
+ *  Instead, the sizes of multi-record items are determined by
+ *  reading ahead and computing the actual size.
+ *  This prevents difficulties arising from external "adjustment" of
+ *  the number of records without corresponding adjustment of the length fields.
+ *
  * Returns -
  *	(struct rt_i *)	Success
  *	RTI_NULL	Fatal Error
@@ -49,8 +56,12 @@ char *buf;
 int len;
 {
 	register struct rt_i	*rtip;
-	static union record	record;
-	register long	addr;
+	static union record	record;		/* Initial record, holds name */
+	static union record	rec2;		/* additional record(s) */
+	register long	addr;			/* start of current rec */
+	register int	nrec;			/* # total records */
+	register long	here;			/* intermediate positions */
+	register int	j;
 
 	/*
 	 *  Allocate and initialize information for this
@@ -77,12 +88,12 @@ int len;
 	rewind( rtip->fp );
 	if( fread( (char *)&record, sizeof record, 1, rtip->fp ) != 1  ||
 	    record.u_id != ID_IDENT )  {
-		rt_log("WARNING:  File is lacking a proper MGED database header\n");
-		rt_log("This database should be converted before further use.\n");
+		rt_log("\nWARNING:  File is lacking a proper MGED database header\n");
+		rt_log("This database should be converted before further use.\n\n");
 	}
 	rewind( rtip->fp );
 
-	addr = -1;
+	here = addr = -1;
 	while(1)  {
 #ifdef DB_MEM
 		addr++;		/* really, nrec;  ranges 0..n */
@@ -109,57 +120,99 @@ int len;
 		case ID_FREE:
 			continue;
 		case ID_ARS_A:
-			rt_dir_add( rtip, record.a.a_name, addr );
+			nrec = 1;
+			while(1) {
+				here = ftell( rtip->fp );
+				if( fread( (char *)&rec2, sizeof(rec2),
+				    1, rtip->fp ) != 1 )
+					break;
+				if( rec2.u_id != ID_ARS_B )  {
+					fseek( rtip->fp, here, 0 );
+					break;
+				}
+				nrec++;
+			}
+			rt_dir_add( rtip, record.a.a_name, addr, nrec,
+				DIR_SOLID );
 			continue;
 		case ID_ARS_B:
+			rt_log("ERROR: Unattached ARS 'B' record\n");
 			continue;
 		case ID_SOLID:
-			rt_dir_add( rtip, record.s.s_name, addr );
+			rt_dir_add( rtip, record.s.s_name, addr, 1,
+				DIR_SOLID );
 			continue;
 		case ID_MATERIAL:
 			rt_color_addrec( &record, addr );
 			continue;
 		case ID_P_HEAD:
-			{
-				union record rec;
-				register int nrec;
-
-				nrec = 1;
-				while(1) {
-					register int here;
-					here = ftell( rtip->fp );
-					if( fread( (char *)&rec, sizeof(rec), 1,
-					    rtip->fp ) != 1 )
-						break;
-					if( rec.u_id != ID_P_DATA )  {
-						fseek( rtip->fp, here, 0 );
-						break;
-					}
-					nrec++;
+			nrec = 1;
+			while(1) {
+				here = ftell( rtip->fp );
+				if( fread( (char *)&rec2, sizeof(rec2),
+				    1, rtip->fp ) != 1 )
+					break;
+				if( rec2.u_id != ID_P_DATA )  {
+					fseek( rtip->fp, here, 0 );
+					break;
 				}
-				rt_dir_add( rtip, record.p.p_name, addr );
-				continue;
+				nrec++;
 			}
-		case ID_BSOLID:
-			rt_dir_add( rtip, record.B.B_name, addr );
+			rt_dir_add( rtip, record.p.p_name, addr, nrec,
+				DIR_SOLID );
 			continue;
-		case ID_BSURF:
-			{
-				union record rec;
-				register int j;
-
-				rt_dir_add( rtip, record.p.p_name, addr );
+		case ID_P_DATA:
+			rt_log("ERROR: Unattached P_DATA record\n");
+			continue;
+		case ID_BSOLID:
+			nrec = 1;
+			while(1) {
+				/* Find and skip subsequent BSURFs */
+				here = ftell( rtip->fp );
+				if( fread( (char *)&rec2, sizeof(rec2),
+				    1, rtip->fp ) != 1 )
+					break;
+				if( rec2.u_id != ID_BSURF )  {
+					fseek( rtip->fp, here, 0 );
+					break;
+				}
 
 				/* Just skip over knots and control mesh */
 				j = (record.d.d_nknots + record.d.d_nctls);
 				while( j-- > 0 )
-					fread( (char *)&rec, sizeof(rec), 1, rtip->fp );
-				continue;
+					fread( (char *)&rec2, sizeof(rec2), 1, rtip->fp );
+				nrec += j+1;
 			}
+			rt_dir_add( rtip, record.B.B_name, addr, nrec,
+				DIR_SOLID );
+			continue;
+		case ID_BSURF:
+			rt_log("ERROR: Unattached B-spline surface record\n");
+
+			/* Just skip over knots and control mesh */
+			j = (record.d.d_nknots + record.d.d_nctls);
+			while( j-- > 0 )
+				fread( (char *)&rec2, sizeof(rec2), 1, rtip->fp );
+			continue;
 		case ID_MEMB:
+			rt_log("ERROR: Unattached combination MEMBER record\n");
 			continue;
 		case ID_COMB:
-			rt_dir_add( rtip, record.c.c_name, addr );
+			nrec = 1;
+			while(1) {
+				here = ftell( rtip->fp );
+				if( fread( (char *)&rec2, sizeof(rec2),
+				    1, rtip->fp ) != 1 )
+					break;
+				if( rec2.u_id != ID_MEMB )  {
+					fseek( rtip->fp, here, 0 );
+					break;
+				}
+				nrec++;
+			}
+			rt_dir_add( rtip, record.c.c_name, addr, nrec,
+				record.c.c_flags == 'R' ?
+					DIR_COMB|DIR_REGION : DIR_COMB );
 			continue;
 		default:
 			rt_log("rt_dirbuild:  unknown record %c (0%o), addr=x%x\n",
@@ -234,10 +287,12 @@ register char	*str;
  * Add an entry to the directory
  */
 struct directory *
-rt_dir_add( rtip, name, laddr )
+rt_dir_add( rtip, name, laddr, len, flags )
 struct rt_i	*rtip;
 register char	*name;
 long		laddr;
+int		len;
+int		flags;
 {
 	register struct directory *dp;
 	char local[NAMESIZE+2];
@@ -246,11 +301,13 @@ long		laddr;
 	local[NAMESIZE] = '\0';			/* Ensure null termination */
 
 	if(rt_g.debug&DEBUG_DB)
-		rt_log("rt_dir_add(x%x,%s,x%x)\n", rtip, local, laddr);
+		rt_log("rt_dir_add(x%x,%s,x%x,%d.,x%x)\n", rtip, local, laddr, len, flags);
 
 	GETSTRUCT( dp, directory );
 	dp->d_namep = rt_strdup( local );
 	dp->d_addr = laddr;
+	dp->d_flags = flags;
+	dp->d_len = len;
 	dp->d_forw = rtip->rti_DirHead;
 	rtip->rti_DirHead = dp;
 	return( dp );
