@@ -9,9 +9,6 @@
 #define	otherwise	break;default
 #define	loop		for(;;)
 #define	until(expr)	while(!(expr))
-#ifndef	reg
-#define	reg		register
-#endif
 #ifndef	bool
 #define	bool		char
 #endif

@@ -16,10 +16,10 @@ char	**argv;
 {
 	extern	bool	match();
 	extern	char	*ground();
-	reg	char	*old, *new;
-	reg	bool	ignore;
-	reg	int	unmatched, i;
-	reg	char	*sep;
+	register	char	*old, *new;
+	register	bool	ignore;
+	register	int	unmatched, i;
+	register	char	*sep;
 
 	ignore = FALSE;
 	unmatched = 0;
@@ -107,12 +107,12 @@ Env	env[MAXVAR];
 
 bool
 match(str, pat)
-reg	char	*str;
-reg	char	*pat;
+register	char	*str;
+register	char	*pat;
 {
 	extern	bool	domatch();
-	reg	int	i;
-	reg	char	*s, *p;
+	register	int	i;
+	register	char	*s, *p;
 
 	p = pat+strlen(pat)-1;
 	if (*p != var_char && !isdigit(*p))	/* not part of a var */
@@ -137,16 +137,16 @@ reg	char	*pat;
 
 bool
 domatch(str, patstr)
-reg	char	*str;
-reg	char	*patstr;
+register	char	*str;
+register	char	*patstr;
 {
 	extern	char	*new_name();
 	char		buf[MAXSIZE];
-	reg	char	*follow;
-	reg	char	*s, *t;
-	reg	int	varno;
-	reg	int	i;
-	reg	bool	more;
+	register	char	*follow;
+	register	char	*s, *t;
+	register	int	varno;
+	register	int	i;
+	register	bool	more;
 
 	if (patstr[0] == var_char)
 	{
@@ -223,11 +223,11 @@ reg	char	*patstr;
 
 char *
 ground(str)
-reg	char	*str;
+register	char	*str;
 {
 	extern	char	*new_name();
-	reg	char	*s, *t;
-	reg	int	i, var;
+	register	char	*s, *t;
+	register	int	i, var;
 	char		buf[MAXSIZE];
 
 	i = 0;
@@ -270,10 +270,10 @@ reg	char	*str;
 
 char *
 new_name(str)
-reg	char	*str;
+register	char	*str;
 {
 	extern	char	*malloc();
-	reg	char	*copy;
+	register	char	*copy;
 
 	copy = malloc(strlen(str) + 1);
 	strcpy(copy, str);
