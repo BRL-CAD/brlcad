@@ -122,6 +122,7 @@ char **argv;
 	/* Before option processing, get default number of processors */
 	npsw = rt_avail_cpus();		/* Use all that are present */
 	if( npsw > DEFAULT_PSW )  npsw = DEFAULT_PSW;
+	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 
 	/* Before option processing, do application-specific initialization */
 	application_init();
@@ -176,25 +177,9 @@ char **argv;
 	RES_INIT( &rt_g.res_results );
 	RES_INIT( &rt_g.res_model );
 
-	/* initialize per process resources */
-	for( i=0 ; i<npsw ; i++ )
-	{
-		resource[i].re_magic = RESOURCE_MAGIC;
-		rt_init_resource( &resource[i] );
-	}
-
 	/*
 	 *  Do not use rt_log() or rt_malloc() before this point!
 	 */
-
-	/* Compat */
-	if( rt_g.debug || rdebug )  bu_debug |= BU_DEBUG_COREDUMP;
-	if( rt_g.debug & DEBUG_MEM_FULL )  bu_debug |= BU_DEBUG_MEM_CHECK;
-	if( rt_g.debug & DEBUG_MEM )  bu_debug |= BU_DEBUG_MEM_LOG;
-	if( rt_g.debug & DEBUG_PARALLEL )  bu_debug |= BU_DEBUG_PARALLEL;
-	if( rt_g.debug & DEBUG_MATH )  bu_debug |= BU_DEBUG_MATH;
-
-	if( rdebug & RDEBUG_RTMEM_END )  bu_debug |= BU_DEBUG_MEM_CHECK;
 
 	if( bu_debug )  {
 		bu_printb( "libbu bu_debug", bu_debug, BU_DEBUG_FORMAT );

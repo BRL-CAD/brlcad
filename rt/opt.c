@@ -356,5 +356,17 @@ register char **argv;
 			return(0);	/* BAD */
 		}
 	}
+
+	/* Compat */
+	if( rt_g.debug || rdebug || rt_g.NMG_debug )
+		bu_debug |= BU_DEBUG_COREDUMP;
+
+	if( rt_g.debug & DEBUG_MEM_FULL )  bu_debug |= BU_DEBUG_MEM_CHECK;
+	if( rt_g.debug & DEBUG_MEM )  bu_debug |= BU_DEBUG_MEM_LOG;
+	if( rt_g.debug & DEBUG_PARALLEL )  bu_debug |= BU_DEBUG_PARALLEL;
+	if( rt_g.debug & DEBUG_MATH )  bu_debug |= BU_DEBUG_MATH;
+
+	if( rdebug & RDEBUG_RTMEM_END )  bu_debug |= BU_DEBUG_MEM_CHECK;
+
 	return(1);			/* OK */
 }

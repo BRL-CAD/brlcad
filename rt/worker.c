@@ -269,9 +269,7 @@ worker()
 	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
 
 	if( cpu >= MAX_PSW )  rt_bomb("rt/worker() cpu > MAXPSW, array overrun\n");
-	resource[cpu].re_cpu = cpu;
-	resource[cpu].re_magic = RESOURCE_MAGIC;
-	rand_init( resource[cpu].re_randptr, cpu );
+	rt_init_resource( &resource[cpu], cpu );
 
 	while(1)  {
 		RES_ACQUIRE( &rt_g.res_worker );
