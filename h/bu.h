@@ -817,7 +817,7 @@ extern BU_FILE			bu_iob[1];
 
 /*----------------------------------------------------------------------*/
 /* Miscellaneous macros */
-#define made_it()		bu_log("Made it to %s:%d\n",	\
+#define bu_made_it()		bu_log("Made it to %s:%d\n",	\
 					__FILE__, __LINE__)
 /*----------------------------------------------------------------------*/
 /*
