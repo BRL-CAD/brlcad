@@ -5,11 +5,15 @@
 # the top-level interface is 'do_shader'
 
 # To implement a new shader gui:
-#	1. add the new shader to the switch command in 'stack_add', 'stack_insert', and 'env_select', if this shader is
+#	1. add the new shader to the switch command in 'stack_add',
+#		'stack_insert', and 'env_select', if this shader is
 #		appropriate for being in a stack or environment map
-#	2. add the new shader to the menus in 'do_stack' and 'do_envmap' (again, if appropriate)
-#	3. add a menu item for the new shader in 'init_comb' (comb.tcl) (required)
-#	4. add the following routines: (all are required, replace 'newshader' with your shader name
+#	2. add the new shader to the menus in 'do_stack' and 'do_envmap'
+#		(again, if appropriate)
+#	3. add a menu item for the new shader in 'init_comb' (comb.tcl) 
+#		(required)
+#	4. add the following routines: (all are required, replace 'newshader'
+#		 with your shader name
 
 # proc do_newshader { shade_var id } - Creates the frame to hold the shader widgets and
 #	creates the labels, entries, buttons... Also registers 'help-on-context' data.
