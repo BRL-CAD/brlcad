@@ -63,6 +63,9 @@ int	cppargc = 0;
 
 extern	int	yydebug;
 
+extern	void	statistics();
+
+
 /*
 **	Tell the unfortunate user how to use cake.
 */
@@ -258,7 +261,7 @@ reg	char	*flag;
 	{
 		strcat(cakeflagbuf, " ");
 		strcat(cakeflagbuf, flag);
-		if (strlen(cakeflagbuf) >= MAXSIZE)
+		if (strlen(cakeflagbuf) >= (unsigned)MAXSIZE)
 		{
 			fprintf(stderr, "cake: CAKEFLAGS too long\n");
 			exit(1);
@@ -414,7 +417,7 @@ char	**argv;
 		char	*newbase;
 		char	cmd[256];
 
-		newbase = tempnam(NULL, "cakef");
+		newbase = tempnam((char *)NULL, "cakef");
 		if( newbase == NULL )  exit(17);
 		newcakefile = malloc(strlen(newbase)+3);	/* room for .c */
 		if( newcakefile == NULL )  exit(18);
@@ -525,6 +528,7 @@ typedef	struct	tms	Tms;
 typedef	struct	rusage	Rusage;
 #endif
 
+void
 statistics()
 {
 	extern	char	*getlogin();
