@@ -305,6 +305,69 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
+#if defined(__CAKE__irix7)
+/*	Silicon Graphics 4D, running IRIX64 6.0 (on a MIPS4 machine) */
+#	undef	sgi
+#	define	MTYPE	8d
+#	if 0	/* PRODUCTION=1 */
+/*		This version for production: optimization & shared libraries */
+/*		Warning 1174 is "variable declared but never referenced". */
+/*		Warning 1032 is "expression must have arithmetic type". */
+/*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
+/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
+/*		Warning 1110 is "statement is unreachable" */
+#		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
+					-OPT:const_copy_limit=16000 \
+					-use_readonly_const \
+					-woff 1203,1048,1110 -Wl,-w
+/*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
+#	else
+/*		This version for debugging with DBX */
+/*		-fullwarn is pretty verbose */
+#		define	OPTIMIZER	-g -use_readonly_const
+#	endif
+#	define	GFLAG		-mips4 -KPIC -G 7
+#	define  XINCDIR /usr/include/X11
+#	define	XLIBDIR /usr/lib64
+#	if 0	/* PRODUCTION=1 */
+/*		Shared library version support */
+#		define	ARCH_SUF	so
+#		define	LIBVERS ../sh/sharedlibvers.sh
+#		define	BUILD_LIBRARY	ld -mips4 -shared -o
+#		define	RANLIB	true
+#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath /usr/lib64:LIBDIR
+/*		When debugging libraries, -m and -v are helpful LD_OPTS */
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
+#	else
+/*		Static linked executables */
+#		define	RANLIB	ranlib5.sh
+#		define	STANDARD_LIBES	-lm -lmalloc -lc
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
+#	endif
+#	define	TCL_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
+#	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
+/* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
+#	define  CC_OPTS		GFLAG -ansiposix -DIRIX=6
+#	define	IRIX	6
+#	define	LGT_CONFIG	GFLAG
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL -DFB_USING_TCL_TK
+#       define  LIBFB_LIBES     LIBPKG LIBTK LIBTCL -L''XLIBDIR -lX11 -lGL
+#	define	LIBDM_OBJS	dm-X dm-ogl
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
+#	define	LIBDM_LIBES	LIBTK LIBTCL
+#	define	MGED_OBJS	dm-X dm-ogl
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lGL
+#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	HAS_TCP	1
+#	define	CC	cc
+#	define	GETHOST	hostname
+#	define	LIBPKG_CONFIG	-DBSD=43
+#	define	RFBD_CONFIG	-DBSD=43
+#	define	LIBRT_TIMER	timer42
+#endif
+
 #if defined(__CAKE__sun4)
 /*	Sun-4 "SparcStation" hardware, running SunOS 4 */
 #	undef	sun
@@ -425,7 +488,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 
 /*	Shared library support */
-#	if 1	/* shared libraries */
+#	if 0 /* PRODUCTION=1 */
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
