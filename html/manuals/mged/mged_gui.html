@@ -23,7 +23,7 @@
 <LI><A HREF="mged_gui.html#Grid Control Panel">Grid Control Panel</A>
 <LI><A HREF="mged_gui.html#Query Ray Control Panel">Query Ray Control Panel</A>
 <LI><A HREF="mged_gui.html#Raytrace Control Panel">Raytrace Control Panel</A>
-<LI><A HREF="mged_gui.html#Animmate Control Panel">Animmate Control Panel</A>
+<LI><A HREF="mged_gui.html#AnimMate Control Panel">AnimMate Control Panel</A>
 <LI><A HREF="mged_gui.html#Solid Editor">Solid Editor</A>
 <LI><A HREF="mged_gui.html#Solid Editor (Internal)">Solid Editor (Internal)
 <LI><A HREF="mged_gui.html#Tools Combination Editor">Combination Editor</A>
@@ -257,6 +257,8 @@ nmg, pipe
 <LI><A HREF="mged_gui.html#Solid Editor">Solid Editor</A>
 <LI><A HREF="mged_gui.html#Combination Editor">Combination Editor</A>
 <LI><A HREF="mged_gui.html#Color Editor">Color Editor</A>
+<LI><A HREF="mged_gui.html#Raise Command Window">Command Window</A>
+<LI><A HREF="mged_gui.html#Raise Geometry Window">Geometry Window</A>
 </UL>
 <LI><A HREF="mged_gui.html#Help">Help</A>
 <UL>
@@ -587,17 +589,48 @@ be popped up by typing ''r''
 
 <A NAME="Control Panels">
 <CENTER><H3>Control Panels</H3></CENTER>
-<UL>
-<A NAME="ADC Control Panel"><LI><B>ADC Control Panel</B>
-<A NAME="Grid Control Panel"><LI><B>Grid Control Panel</B>
-<A NAME="Query Ray Control Panel"><LI><B>Query Ray Control Panel</B>
-<A NAME="Raytrace Control Panel"><LI><B>Raytrace Control Panel</B>
-<A NAME="Animmate Control Panel"><LI><B>Animmate Control Panel</B>
-<A NAME="Solid Editor"><LI><B>Solid Editor</B>
-<A NAME="Solid Editor (Internal)"><LI><B>Solid Editor (Internal)</B>
-<A NAME="Combination Editor"><LI><B>Combination Editor</B>
-<A NAME="Color Editor"><LI><B>Color Editor</B>
-</UL>
+<A NAME="ADC Control Panel"><DT><B>ADC Control Panel</B></DT>
+<DD>
+     The <I>ADC Control Panel</I> is a tool for setting ADC parameters.
+     </DD>
+<A NAME="Grid Control Panel"><DT><B>Grid Control Panel</B></DT>
+<DD>
+     The <I>Grid Control Panel</I> is a tool for setting grid parameters.
+     </DD>
+<A NAME="Query Ray Control Panel"><DT><B>Query Ray Control Panel</B></DT>
+<DD>
+     The <I>Query Ray Control Panel</I> is a tool for setting query
+     ray parameters.
+     </DD>
+<A NAME="Raytrace Control Panel"><DT><B>Raytrace Control Panel</B></DT>
+<DD>
+The <I>Raytrace Control Panel</I> is a tool for setting raytrace parameters.
+     </DD>
+<A NAME="AnimMate Control Panel"><DT><B>AnimMate Control Panel</B></DT>
+<DD>
+     The <I>Animmate Control Panel</I> is a tool for building animation
+     scripts. The <A HREF="animmate/anim_tut.html">AnimMate</A>
+     tutorial is a good place to learn about this
+     control panel.
+     </DD>
+<A NAME="Solid Editor"><DT><B>Solid Editor</B></DT>
+<DD>
+     The <I>Solid Editor</I> is a tool for editing solids.
+     </DD>
+<A NAME="Solid Editor (Internal)"><DT><B>Solid Editor (Internal)</B></DT>
+<DD>
+     The <I>Solid Editor</I> is a tool for editing MGED's internal solid
+     (i.e. held in es_int while in solid edit state). The internal solid
+     is the in-memory copy of a solid that is being edited.
+     </DD>
+<A NAME="Combination Editor"><DT><B>Combination Editor</B></DT>
+<DD>
+     </DD>
+<A NAME="Color Editor"><DT><B>Color Editor</B></DT>
+<DD>
+     The <I>Color Editor</I> is a tool for specifying colors
+     in either RGB or HSV.
+     </DD>
 
 <BR>
 <HR>
@@ -980,14 +1013,15 @@ the left mouse button.
 	set the center of rotation to be about the key point.
 </UL>
 <A NAME="Active Pane"><LI><B>Active Pane</B> - a menu for selecting
-	the active pane. The active pane is the pane (display manager)
-	that is the target for actions that affect panes. In other words,
-	if the user types the command, ''ae 35 25'' in the command window,
-	and the active pane is the upper left pane, then its'
-	view orientation will become azimuth=35 and elevation=25.
-	Similarly, if the user selects Settings/Grid/Draw_Grid from
-	the pulldown menus the drawing of the grid will be toggled
-	in the active pane.
+     the active pane. The active pane is the pane (display manager)
+     that is tied to the GUI, effectively becoming the target of
+     GUI interactions that affect panes. In other words,
+     if the user types the command, ''ae 35 25'' in the command window,
+     and the active pane is the upper left pane, then its'
+     view orientation will become azimuth=35 and elevation=25.
+     Similarly, if the user selects Settings/Grid/Draw_Grid from
+     the pulldown menus the drawing of the grid will be toggled
+     in the active pane.
 
 <UL>
 <A NAME="Upper Left"><LI><B>Upper Left</B> - set the active pane
@@ -1308,6 +1342,10 @@ the left mouse button.
      tool for creating and editing combinations.
 <LI><A HREF="mged_gui.html#Color Editor">Color Editor</A> - pops up a
      tool for defining a color
+<A NAME="Raise Command Window"><LI><B>Command Window</B> - this is
+     a convenience button that raises the command window.
+<A NAME="Raise Geometry Window"><LI><B>Geometry Window</B> - this is
+     a convenience button that raises the geometry window.
 </UL>
 <A NAME="Help"><LI><B>Help</B>
 <UL>
