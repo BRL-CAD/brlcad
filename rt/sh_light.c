@@ -582,6 +582,7 @@ struct partition *PartHeadp;
 	 *  All we really need here is the opacity information;
 	 *  full shading is not required.
 	 */
+	sw.sw_inputs = 0;
 	sw.sw_transmit = sw.sw_reflect = 0.0;
 	sw.sw_refrac_index = 1.0;
 	sw.sw_xmitonly = 1;		/* only want sw_transmit */
