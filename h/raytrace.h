@@ -1038,7 +1038,7 @@ struct structparse {
 	char		sp_fmt[4];		/* "i" or "%f", etc */
 	long		sp_count;		/* number of elements */
 	char		*sp_name;		/* Element's symbolic name */
-	int		sp_offset;		/* Byte offset in struct */
+	long		sp_offset;		/* Byte offset in struct */
 	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
 };
 #define FUNC_NULL	((void (*)())0)
