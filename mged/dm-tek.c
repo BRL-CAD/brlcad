@@ -84,6 +84,7 @@ static vect_t clipmin, clipmax;		/* for vector clipping */
 static int second_fd;		/* fd of Tektronix if not /dev/tty */
 static FILE *outfp;		/* Tektronix device to output on */
 static char ttybuf[BUFSIZ];
+static int blit_emulator=0;	/* boolean: tek emulation on blit */
 
 static void	tekmove(), tekcont(), get_cursor(), tekerase();
 static void	teklabel(), teklinemod(), tekpoint();
@@ -105,11 +106,22 @@ static void	teklabel(), teklinemod(), tekpoint();
 Tek_open()
 {
 	char line[64], line2[64];
+	int i;
 
 	(void)printf("Output tty [stdout]? ");
-	(void)gets( line );		/* Null terminated */
+	(void)fgets( line, sizeof(line), stdin );	/* \n, Null terminated */
+	line[strlen(line)-1] = '\0';			/* remove newline */
 	if( feof(stdin) )  quit();
 	if( line[0] != '\0' )  {
+		char *p, *strchr();
+
+		/* check for blit emualtor flag */
+		if (p=strchr(line, ' ')) {
+			*p++ = '\0';
+			while (*p && *p != '-') ++p;
+			if (*p && p[1] == 'b') blit_emulator = 1;
+		}
+
 		if( (outfp = fopen(line,"r+w")) == NULL )  {
 			(void)sprintf( line2, "/dev/tty%s%c", line, '\0' );
 			if( (outfp = fopen(line2,"r+w")) == NULL )  {
@@ -338,12 +350,14 @@ get_cursor()
 	if( i < 6 )  {
 		(void)printf("short read of %d\n", i);
 		return;		/* Fails if he hits RETURN */
+
 	}
 	cp = &ibuf[i-6];
 	if( cp[5] != '\n' )  {
 		(void)printf("cursor synch?\n");
-		(void)printf("saw:%c%c%c%c%c%c\n",
-			cp[0], cp[1], cp[2], cp[3], cp[4], cp[5] );
+		(void)printf("saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
+			cp[0], cp[0], cp[1], cp[1], cp[2], cp[2],
+			cp[3], cp[3], cp[4], cp[4], cp[5], cp[5] );
 		return;
 	}
 
