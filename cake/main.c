@@ -24,7 +24,7 @@ typedef	struct	stat	Stat;
 extern	Pwent	*getpwuid();
 #endif
 
-#if __STDC__
+#if __STDC__ && !defined(CRAY2)
 extern char	*tempnam(const char *, const char *);
 #else
 extern char	*tempnam();

@@ -209,8 +209,10 @@ extern int	brk();
  * But we need them, and all UNIX systems provide them.
  */
 #if __STDC__
+#ifndef CRAY2
 extern FILE	*fdopen( int filedes, const char *type );
 extern FILE	*popen( const char *command, const char *type );
+#endif /* CRAY2 */
 extern char	*strdup(const char *s);
 #endif
 
