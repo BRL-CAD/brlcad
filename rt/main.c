@@ -98,7 +98,7 @@ char **argv;
 	(void)fprintf(stderr, "%s\n", version+5);	/* skip @(#) */
 
 #ifdef HAVE_SBRK
-	beginptr = sbrk(0);
+	beginptr = (char *) sbrk(0);
 #endif
 	azimuth = 35.0;			/* GIFT defaults */
 	elevation = 25.0;
@@ -240,7 +240,7 @@ char **argv;
 	}
 #ifdef HAVE_SBRK
 	fprintf(stderr,"initial dynamic memory use=%d.\n", (char *)sbrk(0)-beginptr );
-	beginptr = sbrk(0);
+	beginptr = (char *) sbrk(0);
 #endif
 
 	if( !matflag )  {
