@@ -137,11 +137,15 @@ extern int	menuflag;	/* flag indicating if a menu item is selected */
 /* defined in chgview.c */
 extern int	rateflag_slew;
 extern vect_t	rate_slew;
+extern vect_t	absolute_slew;
+
 extern int	rateflag_rotate;
 extern vect_t	rate_rotate;
 extern vect_t	absolute_rotate;
+
 extern int	rateflag_zoom;
 extern fastf_t	rate_zoom;
+extern fastf_t	absolute_zoom;
 
 /*
  * These variables are global for the benefit of
