@@ -29,8 +29,8 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=3.9;	RCS_REVISION=9;		REL_DATE=Today
-RELEASE=3.8;	RCS_REVISION=9;		REL_DATE=3-Jan-91	# internal
+RELEASE=3.9;	RCS_REVISION=9;		REL_DATE=Today
+#RELEASE=3.8;	RCS_REVISION=9;		REL_DATE=3-Jan-91	# internal
 #RELEASE=3.7;	RCS_REVISION=9;		REL_DATE=19-June-89
 #RELEASE=3.6;	RCS_REVISION=9;		REL_DATE=25-May-89	# internal
 #RELEASE=3.5;	RCS_REVISION=9;		REL_DATE=23-May-89	# internal
