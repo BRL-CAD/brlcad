@@ -36,8 +36,9 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "./complex.h"
 #include "./polyno.h"
 
-static void	tgc_rotate(), tgc_shear(), tgc_sort();
+static void	tgc_rotate(), tgc_shear();
 static void	tgc_scale();
+void rt_pt_sort();
 
 struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
@@ -621,7 +622,7 @@ register struct xray	*rp;
 	}
 
 	/* Most distant to least distant	*/
-	tgc_sort( k, npts );
+	rt_pt_sort( k, npts );
 
 	/* Now, k[0] > k[npts-1] */
 
@@ -788,35 +789,24 @@ register struct xray	*rp;
 
 
 /*
- *			T G C _ S O R T
+ *			R T _ P T _ S O R T
  *
- *  Sorts the values of 't' in descending order.  The sort is
- *  simplified to deal with only 2 or 4 values.  Returns the
- *  address of the first 't' in the array.
+ *  Sorts the values in t[] in descending order.
  */
-static void
-tgc_sort( t, npts )
+void
+rt_pt_sort( t, npts )
 register fastf_t t[];
 {
 	FAST fastf_t	u;
-	register int	n;
+	register short	lim, n;
 
-#define TGC_XCH(a,b)	{ u=a; a=b; b=u; }
-	if ( npts == 2 ){
-		if ( t[0] < t[1] ){
-			TGC_XCH( t[0], t[1] );
-		}
-		return;
-	}
-
-	for ( n=0; n < 2; ++n ){
-		if ( t[n] < t[n+2] ){
-			TGC_XCH( t[n], t[n+2] );
-		}
-	}
-	for ( n=0; n < 3; ++n ){
-		if ( t[n] < t[n+1] ){
-			TGC_XCH( t[n], t[n+1] );
+	for( lim = npts-1; lim > 0; lim-- )  {
+		for( n = 0; n < lim; n++ )  {
+			if( (u=t[n]) < t[n+1] )  {
+				/* bubble larger towards [0] */
+				t[n] = t[n+1];
+				t[n+1] = u;
+			}
 		}
 	}
 }
