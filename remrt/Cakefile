@@ -23,16 +23,9 @@
 #	define	RTDIR	../rt
 #endif
 
-#ifdef CRAY1
-#define REMRT_PIECES	\
-		RTDIR/opt.o \
-		-lbsd \
-		LIBFB LIBFB_LIBES LIBRT LIBRT_LIBES LIBES
-#else
 #define REMRT_PIECES	\
 		RTDIR/opt.o \
 		LIBFB LIBFB_LIBES LIBRT LIBRT_LIBES LIBES
-#endif
 
 #define	RTSRV_PIECES	\
 		RTDIR/opt.o \
