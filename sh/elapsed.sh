@@ -29,6 +29,7 @@ if test ! "x$4" = "x" ; then
 	CONFIG_TIME="`echo $* | awk '{print $4}' | tr : ' '`"
 fi
 
+# parse the start time and convert to a seconds count
 time_elapsed=""
 pre_hour="`echo $CONFIG_TIME | awk '{print $1}'`"
 pre_min="`echo $CONFIG_TIME | awk '{print $2}'`"
@@ -37,6 +38,7 @@ hour_seconds_before="`expr $pre_hour \* 60 \* 60`"
 min_seconds_before="`expr $pre_min \* 60`"
 total_pre="`expr $hour_seconds_before + $min_seconds_before + $pre_sec`"
 
+# parse the end time and convert to a seconds count
 post_conf_time="`date '+%H %M %S'`"
 post_hour="`echo $post_conf_time | awk '{print $1}'`"
 post_min="`echo $post_conf_time | awk '{print $2}'`"
@@ -45,6 +47,13 @@ hour_seconds_after="`expr $post_hour \* 60 \* 60`"
 min_seconds_after="`expr $post_min \* 60`"
 total_post="`expr $hour_seconds_after + $min_seconds_after + $post_sec`"
 
+# if the end time is smaller than the start time, we have gone back in
+# time so assume that the clock turned over a day.
+if test $total_post -le $total_pre ; then
+	total_post="`expr $total_post + 86400`"
+fi
+
+# break out the elapsed time into seconds, minutes, and hours
 sec_elapsed="`expr $total_post - $total_pre`"
 min_elapsed="0"
 if test ! "x$sec_elapsed" = "x0" ; then
@@ -59,6 +68,7 @@ if test ! "x$min_elapsed" = "x0" ; then
 	min_elapsed="`expr $min_elapsed - $min_elapsed2`"
 fi
 
+# generate a human-readable elapsed time message
 if test ! "x$hour_elapsed" = "x0" ; then
 	if test "x$hour_elapsed" = "x1" ; then
 		time_elapsed="$hour_elapsed hour"
