@@ -22,10 +22,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#ifdef SYSV
+#include <fcntl.h>
+#include <termio.h>
+#else
 #include <sgtty.h>
+#endif
 
 #define RW 2
-struct sgttyb user, vtty;
+#ifdef SYSV
+struct termio vtty;
+#else
+struct sgttyb vtty;
+#endif
 
 #include "./vas4.h"
 
@@ -53,11 +62,47 @@ vas_open()
 	}
 
 	/* Setup VAS line */
+#ifdef BSD
 	vtty.sg_ispeed = BAUD;
 	vtty.sg_ospeed = BAUD;
 	vtty.sg_flags = RAW|EVENP|ODDP;
 	ioctl(vas_fd,TIOCSETP,&vtty);
 	ioctl(vas_fd,TIOCEXCL,&vtty);	/* exclusive use */
+#endif
+#ifdef SYSV
+	ioctl( vas_fd, TCGETA, &vtty );
+	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
+	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
+	vtty.c_cflag |= CREAD;           /* Enable the reader */
+	vtty.c_cflag &= ~PARENB;         /* Parity disable */
+	vtty.c_cflag &= ~HUPCL;          /* No hangup on close */
+	vtty.c_cflag |= CLOCAL;          /* Line has no modem control */
+ 
+	vtty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
+	vtty.c_iflag |= IGNBRK|IGNPAR;
+	vtty.c_iflag |= ISTRIP;
+ 
+	/*vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processin!
+	vtty.c_oflag = 0;
+	vtty.c_cc[VMIN] = 1;
+	vtty.c_cc[VTIME] = 0;
+
+	vtty.c_lflag &= ~ICANON;         /* Raw mode */
+	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
+	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
+	vtty.c_lflag = NOFLSH;              /* no processing */
+
+	if( ioctl(vas_fd, TCSETA, &vtty) < 0 ) { 
+		perror(VAS_PORT);
+		exit(1);
+	}
+
+	/* Be certain the FNDELAY is off */
+	if( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
+		perror(VAS_PORT);
+		exit(2);
+	}
+#endif
 }
 
 /*
