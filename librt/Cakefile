@@ -35,12 +35,11 @@
 	units magic msr vert nmg_extrude nmg_tri nmg_fuse nmg_pt_fu
 
 #define NURB_OBJ	\
-	nurb_basis.o nurb_bound.o nurb_diff.o nurb_knot.o \
-        nurb_eval.o nurb_flat.o nurb_poly.o nurb_xsplit.o \
-        nurb_split.o nurb_util.o nurb_refine.o nurb_solve.o nurb_bezier.o \
-	nurb_ray.o nurb_norm.o nurb_copy.o nurb_plot.o \
-	nurb_c2.o nurb_trim.o \
-        oslo_calc.o oslo_map.o 
+        nurb_basis.o nurb_bound.o nurb_diff.o nurb_eval.o nurb_flat.o \
+        nurb_knot.o nurb_norm.o nurb_poly.o nurb_ray.o nurb_refine.o \
+        nurb_solve.o nurb_split.o nurb_util.o nurb_xsplit.o nurb_copy.o \
+        nurb_c2.o oslo_calc.o oslo_map.o nurb_plot.o nurb_bezier.o nurb_trim.o \
+	nurb_interp.o nurb_reverse.o
 
 
 #define PLOT_OBJ	plot3.o htond.o
