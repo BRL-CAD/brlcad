@@ -550,6 +550,11 @@ static CONST char *nmg_wedgeclass_string[] = {
  *  Determine if the given wedge is entirely to the left or right of
  *  the ray, or if it crosses.
  *
+ *  "halfway X" (ha, hb) have these properties:
+ *	< 0	( ==> X < 180 ) RIGHT
+ *	> 0	( ==> X > 180 )	LEFT
+ *	==0	( ==> X == 180 ) ON_FORW
+ *
  *  Returns -
  *	-1	LEFT
  *	 0	Crossing or both ON
@@ -561,24 +566,52 @@ double	a;
 double	b;
 {
 	double	ha, hb;
+	register int	ret;
 
 	ha = a - 180;
 	hb = b - 180;
 
 	if( NEAR_ZERO( ha, .01 ) )  {
 		/* A is on the ray */
-		if( NEAR_ZERO( hb, .01 ) )  return WEDGE_CROSS;
-		if( hb < 0 )  return WEDGE_RIGHT;
-		return WEDGE_LEFT;
+		if( NEAR_ZERO( hb, .01 ) )  {
+			ret = WEDGE_CROSS;
+			goto out;
+		}
+		if( hb < 0 )  {
+			ret = WEDGE_RIGHT;
+			goto out;
+		}
+		ret = WEDGE_LEFT;
+		goto out;
 	}
 	if( ha < 0 )  {
 		/* A is to the right */
-		if( hb <= 0 )  return WEDGE_RIGHT;
-		return WEDGE_CROSS;
+		if( hb <= 0 )  {
+			ret = WEDGE_RIGHT;
+			goto out;
+		}
+		ret = WEDGE_CROSS;
+		goto out;
 	}
-	/* hb > 0, A is to the left */
-	if( hb >= 0 )  return WEDGE_LEFT;
-	return WEDGE_CROSS;
+	/* ha is > 0, A is to the left */
+	if( NEAR_ZERO( hb, .01 ) )  {
+		/* A is left, B is ON_FORW (180) */
+		ret = WEDGE_LEFT;
+		goto out;
+	}
+	if( hb >= 0 )  {
+		/* A is left, B is LEFT */
+		ret = WEDGE_LEFT;
+		goto out;
+	}
+	/* A is left, B is RIGHT */
+	ret = WEDGE_CROSS;
+out:
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
+		rt_log("nmg_wedge_class(%g,%g) = %s\n",
+			a, b, WEDGECLASS2STR(ret) );
+	}
+	return ret;
 }
 
 static CONST char *nmg_wedge2_string[] = {
@@ -614,6 +647,16 @@ double	a,b,c,d;
 	int	c_in_ab = 0;
 	int	d_in_ab = 0;
 	int	ret;
+
+#define	ANG_SMASH(_a)	{\
+	if( _a <= .01 )  _a = 0; \
+	else if( NEAR_ZERO( _a - 180, .01 ) )  _a = 180; \
+	else if( _a >= 360 - .01 )  _a = 360; }
+
+	ANG_SMASH(a);
+	ANG_SMASH(b);
+	ANG_SMASH(c);
+	ANG_SMASH(d);
 
 	/* Ensure A < B */
 	if( a > b )  {
@@ -661,9 +704,12 @@ double	a,b,c,d;
 	}
 	ret = WEDGE2_OVERLAP;			/* ERROR */
 out:
-	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
+		rt_log(" a_in_cd=%d, b_in_cd=%d, c_in_ab=%d, d_in_ab=%d\n",
+			a_in_cd, b_in_cd, c_in_ab, d_in_ab );
 		rt_log("nmg_compare_2_wedges(%g,%g, %g,%g) = %d %s\n",
 			a, b, c, d, ret, nmg_wedge2_string[ret+2] );
+	}
 	if(ret <= -2 )  rt_log("nmg_compare_2_wedges(%g,%g, %g,%g) ERROR!\n", a, b, c, d);
 	return ret;
 }
