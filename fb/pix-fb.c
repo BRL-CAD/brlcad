@@ -20,13 +20,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
-static RGBpixel *scanline;		/* 1 scanline pixel buffer */
+static unsigned char *scanline;		/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
 static int	scanpix;		/* # of pixels of scanline */
 
@@ -212,7 +210,7 @@ char **argv;
 	}
 
 	scanbytes = scanpix * sizeof(RGBpixel);
-	if( (scanline = (RGBpixel *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
+	if( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
 		fprintf(stderr,
 			"pix-fb:  malloc(%d) failure for scanline buffer\n",
 			scanbytes);
@@ -238,7 +236,7 @@ char **argv;
 		}
 	}
 
-	if( file_yoff != 0 ) skipbytes( infd, file_yoff*file_width*sizeof(RGBpixel) );
+	if( file_yoff != 0 ) skipbytes( infd, (off_t)file_yoff*(off_t)file_width*sizeof(RGBpixel) );
 
 	if( multiple_lines )  {
 		/* Bottom to top with multi-line reads & writes */
@@ -269,7 +267,7 @@ char **argv;
 		/* Normal way -- bottom to top */
 		for( y = scr_yoff; y < scr_yoff + yout; y++ )  {
 			if( file_xoff != 0 )
-				skipbytes( infd, file_xoff*sizeof(RGBpixel) );
+				skipbytes( infd, (off_t)file_xoff*sizeof(RGBpixel) );
 			n = mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
 			m = fb_write( fbp, scr_xoff, y, scanline, xout );
@@ -281,13 +279,13 @@ char **argv;
 			}
 			/* slop at the end of the line? */
 			if( xout < file_width-file_xoff )
-				skipbytes( infd, (file_width-file_xoff-xout)*sizeof(RGBpixel) );
+				skipbytes( infd, (off_t)(file_width-file_xoff-xout)*sizeof(RGBpixel) );
 		}
 	}  else  {
 		/* Inverse -- top to bottom */
 		for( y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y-- )  {
 			if( file_xoff != 0 )
-				skipbytes( infd, file_xoff*sizeof(RGBpixel) );
+				skipbytes( infd, (off_t)file_xoff*sizeof(RGBpixel) );
 			n = mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
 			m = fb_write( fbp, scr_xoff, y, scanline, xout );
@@ -299,7 +297,7 @@ char **argv;
 			}
 			/* slop at the end of the line? */
 			if( xout < file_width-file_xoff )
-				skipbytes( infd, (file_width-file_xoff-xout)*sizeof(RGBpixel) );
+				skipbytes( infd, (off_t)(file_width-file_xoff-xout)*sizeof(RGBpixel) );
 		}
 	}
 	if( fb_close( fbp ) < 0 )  {
@@ -313,12 +311,12 @@ char **argv;
  */
 skipbytes( fd, num )
 int	fd;
-long	num;
+off_t	num;
 {
 	int	n, try;
 
 	if( fileinput ) {
-		(void)lseek( fd, num, 1 );
+		(void)lseek( fd, (off_t)num, 1 );
 		return 0;
 	}
 	
