@@ -22,7 +22,7 @@
 	view viewpp viewray viewrad viewcheck viewg3 \
 	shade mathtab \
 	material refract \
-	wray turb
+	wray
 
 /*  The "top-half" (user interface) for the RT family of programs */
 #define RTUIF	main.o opt.o do.o worker.o mathtab.o
@@ -30,8 +30,8 @@
 /* Explicit composition of each product */
 
 #define	RT_OBJ	RTUIF view.o wray.o material.o refract.o \
-		shade.o \
-		turb.o
+		shade.o
+
 
 rt:	RT_OBJ LIBOPTICAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	newvers.sh version "The BRL-CAD Ray-Tracer RT"
