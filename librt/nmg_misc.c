@@ -1641,8 +1641,9 @@ nmg_merge_shells( struct shell *dst , struct shell *src )
  *  that the caller will modify the geometry, e.g. as in an extrude operation.
  *
  *  NOTE: This routine creates a translation table that gives the
- *  correspondence between old and new vertices, the caller is responsible
- *  for freeing this memory.
+ *  correspondence between old and new structures, the caller is responsible
+ *  for freeing this memory. Warning - NOT EVERY structure is assigned a
+ *  correspondence.
  */
 struct shell *
 nmg_dup_shell( struct shell *s , long ***trans_tbl )
@@ -1666,6 +1667,7 @@ nmg_dup_shell( struct shell *s , long ***trans_tbl )
 	nmg_tbl( &faces , TBL_INIT , NULL );
 
 	new_s = nmg_msv( s->r_p );
+	NMG_INDEX_ASSIGN( (*trans_tbl) , s , (long *)new_s );
 
 	/* copy face uses */
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
@@ -1678,15 +1680,24 @@ nmg_dup_shell( struct shell *s , long ***trans_tbl )
 			{
 				NMG_CK_LOOPUSE( lu );
 				if( new_fu )
+				{
 					new_lu = nmg_dup_loop( lu , &new_fu->l.magic , (*trans_tbl) );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
+				}
 				else
 				{
 					new_lu = nmg_dup_loop( lu , &new_s->l.magic , (*trans_tbl) );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
 					new_fu = nmg_mf( new_lu );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , fu , (long *)new_fu );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p , (long *)new_fu->f_p );
 				}
 			}
 			if (fu->f_p->fg_p)
+			{
 				nmg_face_g(new_fu, fu->f_p->fg_p->N);
+				NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p->fg_p , (long *)new_fu->f_p->fg_p );
+			}
 			new_fu->orientation = fu->orientation;
 			new_fu->fumate_p->orientation = fu->fumate_p->orientation;
 			nmg_tbl( &faces , TBL_INS , (long *)new_fu );
@@ -1702,6 +1713,7 @@ nmg_dup_shell( struct shell *s , long ***trans_tbl )
 	{
 		NMG_CK_LOOPUSE( lu );
 		new_lu = nmg_dup_loop( lu , &new_s->l.magic , (*trans_tbl) );
+		NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
 	}
 
 	/* copy wire edges */
@@ -1724,16 +1736,23 @@ nmg_dup_shell( struct shell *s , long ***trans_tbl )
 
 		/* make the wire edge */
 		new_eu = nmg_me( new_v1 , new_v2 , new_s );
+		NMG_INDEX_ASSIGN( (*trans_tbl) , eu , (long *)new_eu );
 
 		new_v1 = new_eu->vu_p->v_p;
 		NMG_INDEX_ASSIGN( (*trans_tbl) , old_v1 , (long *)new_v1 );
 		if( !new_v1->vg_p )
+		{
 			nmg_vertex_gv( new_v1 , old_v1->vg_p->coord );
+			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v1->vg_p , (long *)new_v1->vg_p );
+		}
 
 		new_v2 = new_eu->eumate_p->vu_p->v_p;
 		NMG_INDEX_ASSIGN( (*trans_tbl) , old_v2 , (long *)new_v2 );
 		if( !new_v2->vg_p )
+		{
 			nmg_vertex_gv( new_v2 , old_v2->vg_p->coord );
+			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v2->vg_p , (long *)new_v2->vg_p );
+		}
 
 	}
 
@@ -1767,6 +1786,7 @@ nmg_dup_shell( struct shell *s , long ***trans_tbl )
 
 			/* assign the same geometry as the old copy */
 			nmg_vertex_gv( new_v , old_v->vg_p->coord );
+			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v->vg_p , (long *)new_v->vg_p );
 		}
 	}
 #endif
