@@ -353,29 +353,23 @@ CONST struct vertexuse *vu;
 	return vu->up.eu_p->up.lu_p;
 }
 
-
-/*				N M G _ L U _ O F _ V U 
- *
- *	Given a vertexuse, return the loopuse somewhere above
- * XXX Shouldn't all uses of this be replaced by nmg_find_lu_of_vu()?
- */
-struct loopuse *
-nmg_lu_of_vu(vu)
-CONST struct vertexuse *vu;
-{
-	NMG_CK_VERTEXUSE(vu);
-	
-	if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
-		*vu->up.eu_p->up.magic_p == NMG_LOOPUSE_MAGIC)
-			return(vu->up.eu_p->up.lu_p);
-	else if (*vu->up.magic_p != NMG_LOOPUSE_MAGIC)
-		rt_bomb("NMG vertexuse has no loopuse ancestor\n");
-
-	return(vu->up.lu_p);		
-}
-
 /*
  *			N M G _ L O O P _ I S _ A _ C R A C K
+ *
+ *  A "crack" is defined as a loop which has no area.
+ *
+ *  Example of a non-trivial "crack" loop:
+ *
+ *	                 <---- eu4 -----
+ *	               C ############### D
+ *	             | # ^ ---- eu3 --->
+ *	             | # |
+ *	           eu5 # eu2
+ *	             | # |
+ *	  <--- eu6 --V # |
+ *	A ############ B 
+ *	  --- eu1 ---->
+ *
  *
  *  Returns -
  *	 0	Loop is not a "crack"
@@ -403,6 +397,10 @@ CONST struct loopuse	*lu;
 
 	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
 
+	/*
+	 *  For every edgeuse, see if there is another edgeuse from 'lu',
+	 *  radial around this edge, which is not this edgeuse's mate.
+	 */
 	for( RT_LIST_FOR( cur_eu, edgeuse, &lu->down_hd ) )  {
 		NMG_CK_EDGEUSE(cur_eu);
 		cur_eumate = cur_eu->eumate_p;
@@ -442,6 +440,12 @@ match:		;
 /*
  *			N M G _ L O O P _ I S _ C C W
  *
+ *  Determine if loop proceeds counterclockwise (CCW) around the
+ *  provided normal vector (which may be either the face normal,
+ *  or the anti-normal).
+ *
+ *  XXX Consider using John's loop area calculator instead.
+ *
  *  Compute the "winding number" for the loop, by calculating all the angles.
  *  A simple square will have a total of +/- 2*pi.
  *  However, each "jaunt" into the interior will increase this total
@@ -479,6 +483,11 @@ CONST struct rt_tol	*tol;
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
 	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
+
+	if( nmg_loop_is_a_crack(lu) )  {
+		ret = 0;
+		goto out;
+	}
 
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 		next_eu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
@@ -646,6 +655,10 @@ CONST struct loopuse	*lu;
 			CONST struct loopuse		*newlu;
 
 			if( tvu == vu )  continue;
+			/*
+			 *  Inline expansion of:
+			 *	if(nmg_find_lu_of_vu(tvu) != lu) continue;
+			 */
 			if( *tvu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
 			teu = tvu->up.eu_p;
 			NMG_CK_EDGEUSE(teu);
@@ -673,6 +686,7 @@ CONST struct loopuse	*lu;
  *
  *  If shell s2 has an edge that connects the same vertices as eu1 connects,
  *  return the matching edgeuse in s2.
+ *  This routine works properly regardless of whether eu1 is in s2 or not.
  *  A convenient wrapper for nmg_findeu().
  */
 struct edgeuse *
@@ -691,15 +705,14 @@ CONST struct shell	*s2;
 	vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
 	NMG_CK_VERTEXUSE(vu1a);
 	NMG_CK_VERTEXUSE(vu1b);
-	if( (vu2a = nmg_find_v_in_shell( vu1a->v_p, s2, 0 )) == (struct vertexuse *)NULL )
+	if( (vu2a = nmg_find_v_in_shell( vu1a->v_p, s2, 1 )) == (struct vertexuse *)NULL )
 		return (struct edgeuse *)NULL;
-	if( (vu2b = nmg_find_v_in_shell( vu1b->v_p, s2, 0 )) == (struct vertexuse *)NULL )
+	if( (vu2b = nmg_find_v_in_shell( vu1b->v_p, s2, 1 )) == (struct vertexuse *)NULL )
 		return (struct edgeuse *)NULL;
 
 	/* Both vertices have vu's of eu's in s2 */
 
-	eu2 = nmg_findeu( vu1a->v_p, vu1b->v_p, s2,
-	    (CONST struct edgeuse *)NULL, 0 );
+	eu2 = nmg_findeu( vu1a->v_p, vu1b->v_p, s2, eu1, 0 );
 	return eu2;		/* May be NULL if no edgeuse found */
 }
 
@@ -739,13 +752,14 @@ int		dangling_only;
 	if(s) NMG_CK_SHELL(s);
 
 	if(eup)  {
+		struct faceuse	*fu;
 		NMG_CK_EDGEUSE(eup);
 		eup_mate = eup->eumate_p;
 		NMG_CK_EDGEUSE(eup_mate);
-		if (*eup->up.magic_p != NMG_LOOPUSE_MAGIC ||
-		    *eup->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
-			rt_bomb("nmg_findeu(): eup not part of a face\n");
-		eup_orientation = eup->up.lu_p->up.fu_p->orientation;
+		if( (fu = nmg_find_fu_of_eu(eup)) )
+			eup_orientation = fu->orientation;
+		else
+			eup_orientation = OT_SAME;
 	} else {
 		eup_mate = eup;			/* NULL */
 		eup_orientation = OT_SAME;
@@ -782,34 +796,10 @@ int		dangling_only;
 		}
 
 		/* See if this edgeuse is in the proper shell */
-		if( s )  {
-			struct loopuse	*lu;
-			if( *eu->up.magic_p == NMG_SHELL_MAGIC &&
-			    eu->up.s_p != s )  {
-			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-			    		rt_log("\tIgnoring -- wire eu in wrong shell s=%x\n", eu->up.s_p);
-				continue;
-			}
-			if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
-				rt_bomb("nmg_findeu() eu has bad up\n");
-			lu = eu->up.lu_p;
-			NMG_CK_LOOPUSE(lu);
-			if( *lu->up.magic_p == NMG_SHELL_MAGIC )  {
-				if( lu->up.s_p != s )  {
-				    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-				    		rt_log("\tIgnoring -- eu of wire loop in wrong shell s=%x\n", lu->up.s_p);
-					continue;
-				}
-			} else if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
-				/* Edgeuse in loop in face, normal case */
-				if( lu->up.fu_p->s_p != s )  {
-				    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-				    		rt_log("\tIgnoring -- eu of lu+fu in wrong shell s=%x\n", lu->up.fu_p->s_p);
-					continue;
-				}
-			} else {
-				rt_bomb("nmg_findeu() lu->up is bad\n");
-			}
+		if( s && nmg_find_s_of_eu(eu) != s )  {
+		    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		    		rt_log("\tIgnoring x%x -- eu in wrong shell s=%x\n", eu, eu->up.s_p);
+			continue;
 		}
 
 		/* If it's not a dangling edge, skip on */
@@ -842,7 +832,7 @@ out:
 /*
  *			N M G _ F I N D _ E U _ I N _ F A C E
  *
- *  A parallel to nmg_findeu(), only restricted to a faceuse,
+ *  An analog to nmg_findeu(), only restricted to searching a faceuse,
  *  rather than to a whole shell.
  */
 struct edgeuse *
@@ -863,13 +853,14 @@ int		dangling_only;
 	if(fu) NMG_CK_FACEUSE(fu);
 
 	if(eup)  {
+		struct faceuse	*fu;
 		NMG_CK_EDGEUSE(eup);
 		eup_mate = eup->eumate_p;
 		NMG_CK_EDGEUSE(eup_mate);
-		if (*eup->up.magic_p != NMG_LOOPUSE_MAGIC ||
-		    *eup->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
-			rt_bomb("nmg_find_eu_in_face(): eup not part of a face\n");
-		eup_orientation = eup->up.lu_p->up.fu_p->orientation;
+		if( (fu = nmg_find_fu_of_eu(eup)) )
+			eup_orientation = fu->orientation;
+		else
+			eup_orientation = OT_SAME;
 	} else {
 		eup_mate = eup;			/* NULL */
 		eup_orientation = OT_SAME;
@@ -906,31 +897,10 @@ int		dangling_only;
 		}
 
 		/* See if this edgeuse is in the proper faceuse */
-		if( fu )  {
-			struct loopuse	*lu;
-			if( *eu->up.magic_p == NMG_SHELL_MAGIC )  {
-			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-			    		rt_log("\tIgnoring -- wire eu not in faceuse\n");
-				continue;
-			}
-			if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
-				rt_bomb("nmg_find_eu_in_face() eu has bad up\n");
-			lu = eu->up.lu_p;
-			NMG_CK_LOOPUSE(lu);
-			if( *lu->up.magic_p == NMG_SHELL_MAGIC )  {
-			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-			    		rt_log("\tIgnoring -- eu of wire loop not in fu\n");
-				continue;
-			} else if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
-				/* Edgeuse in loop in face, normal case */
-				if( lu->up.fu_p != fu )  {
-				    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-				    		rt_log("\tIgnoring -- eu of lu+fu in wrong faceuse (%x)\n", lu->up.fu_p);
-					continue;
-				}
-			} else {
-				rt_bomb("nmg_find_eu_in_face() lu->up is bad\n");
-			}
+		if( fu && nmg_find_fu_of_eu(eu) != fu )  {
+		    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		    		rt_log("\tIgnoring x%x -- eu not in faceuse\n", eu);
+			continue;
 		}
 
 		/* If it's not a dangling edge, skip on */
@@ -961,9 +931,28 @@ out:
 }
 
 /*
+ *			N M G _ F I N D _ E U _ O F _ V U
+ *
+ *  Return a pointer to the edgeuse which is the parent of this vertexuse.
+ *
+ *  A simple helper routine, which replaces the amazingly bad sequence of:
+ * 	nmg_find_eu_with_vu_in_lu( nmg_find_lu_of_vu(vu), vu )
+ *  that was being used in several places.
+ */
+struct edgeuse *
+nmg_find_eu_of_vu(vu)
+CONST struct vertexuse	*vu;
+{
+	NMG_CK_VERTEXUSE(vu);
+	if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+		return (struct edgeuse *)NULL;
+	return vu->up.eu_p;
+}
+
+/*
  *			N M G _ F I N D _ E U _ W I T H _ V U _ I N _ L U
  *
- *  Find an edgeuse starting at a given vertexuse within a loop(use).
+ *  Find an edgeuse starting at a given vertexuse within a loopuse.
  */
 struct edgeuse *
 nmg_find_eu_with_vu_in_lu( lu, vu )
