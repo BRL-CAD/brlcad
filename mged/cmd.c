@@ -2230,7 +2230,7 @@ char    **argv;
 
   /* print pathname of drawing window with primary focus */
   if( argc == 1 ){
-    rt_log( "%s", &pathName );
+    rt_log( "%s\n", &pathName );
     return CMD_OK;
   }
 

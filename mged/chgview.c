@@ -1152,10 +1152,12 @@ char	**argv;
   else
     iknob = 0;
 
+#ifndef MULTI_ATTACH
   if( !aslewflag ) {
     VSETALL( absolute_slew, 0.0 );
     aslewflag = 1;
   }
+#endif
 
   if(argc == 2)  {
     i = 0;

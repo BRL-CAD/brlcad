@@ -47,17 +47,7 @@ fastf_t	curs_y;		/* cursor Y position */
 fastf_t	c_tdist;		/* Cursor tick distance */
 fastf_t	angle1;		/* Angle to solid wiper */
 fastf_t	angle2;		/* Angle to dashed wiper */
-#endif
 
-#ifdef XMGED
-extern void (*adc_hook)();
-
-int      dv_xadc;                /* A/D cursor -2048 <= adc <= +2047 */
-int      dv_yadc;
-int      dv_1adc;                /* angle 1 for A/D cursor */
-int      dv_2adc;                /* angle 2 for A/D cursor */
-int      dv_distadc;             /* Tick distance */
-#else
 static int	dv_xadc;		/* A/D cursor -2048 <= adc <= +2047 */
 static int	dv_yadc;
 static int	dv_1adc;		/* angle 1 for A/D cursor */
