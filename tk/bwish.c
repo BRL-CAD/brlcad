@@ -1,15 +1,26 @@
 /*
  * bwish.c --
  *
- *      BRL-CAD version of the wish program.
+ *      BRL-CAD version of the WISH program.
+ *	Useful for testing and prototyping Tcl code, with access to
+ *	the various BRL-CAD libraries.
  *
- * Army copyright foo
+ *  Authors -
+ *	John Anderson
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
  *
- * 
- * 
- * 
- * 
- * 
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1998 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  * 
  * Based on--
  * 
@@ -24,6 +35,9 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #ifndef lint
 static char sccsid[] = "@(#) tkAppInit.c 1.15 95/06/28 13:14:28";
@@ -96,6 +110,7 @@ Tcl_AppInit(interp)
 	return TCL_ERROR;
     }
     if (Tk_Init(interp) == TCL_ERROR) {
+	Tcl_AppendResult(interp, "Tk_Init() failure\n", NULL);
 	return TCL_ERROR;
     }
 
@@ -109,13 +124,11 @@ Tcl_AppInit(interp)
      *
      * where "Mod" is the name of the module.
      */
-	if( bu_tcl_setup(interp) == TCL_ERROR )  return TCL_ERROR;
-	if( bn_tcl_setup(interp) == TCL_ERROR )  return TCL_ERROR;
-	if( rt_tcl_setup(interp) == TCL_ERROR )  return TCL_ERROR;
-
-    if (tclcad_tk_setup(interp) == TCL_ERROR) {
-	return TCL_ERROR;
-    }
+	/* These are all void functions */
+	bu_tcl_setup(interp);
+	bn_tcl_setup(interp);
+	rt_tcl_setup(interp);
+	tclcad_tk_setup(interp);
 
     /*
      * Call Tcl_CreateCommand for application-specific commands, if
