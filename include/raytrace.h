@@ -80,7 +80,7 @@ extern "C" {
 #endif
 
 #ifndef RT_EXPORT
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #ifdef RT_EXPORT_DLL
 #define RT_EXPORT __declspec(dllexport)
 #else
@@ -4892,8 +4892,17 @@ RT_EXPORT BU_EXTERN(void rt_tcl_pr_hit,
 		     int flipflag));
 RT_EXPORT BU_EXTERN(void rt_tcl_setup,
 		    (Tcl_Interp *interp));
+#ifdef BRLCAD_DEBUG
+RT_EXPORT BU_EXTERN(int Sysv_d_Init,
+		    (Tcl_Interp *interp));
+RT_EXPORT BU_EXTERN(int Rt_d_Init,
+		    (Tcl_Interp *interp));
+#else
+RT_EXPORT BU_EXTERN(int Sysv_Init,
+		    (Tcl_Interp *interp));
 RT_EXPORT BU_EXTERN(int Rt_Init,
 		    (Tcl_Interp *interp));
+#endif
 RT_EXPORT BU_EXTERN(void db_full_path_appendresult,
 		    (Tcl_Interp *interp,
 		     const struct db_full_path *pp));
@@ -6043,14 +6052,24 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 #endif
 
 /* defined in wdb_obj.c */
+RT_EXPORT BU_EXTERN(void wdb_deleteProc,
+		    (ClientData clientData));
 RT_EXPORT BU_EXTERN(int	wdb_get_tcl,
 		    (ClientData clientData,
 		     Tcl_Interp *interp,
 		     int argc, char **argv));
+RT_EXPORT BU_EXTERN(int dgo_cmd,
+		    (ClientData clientData,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
 RT_EXPORT BU_EXTERN(int	wdb_init_obj,
 		    (Tcl_Interp *interp,
 		     struct rt_wdb *wdbp,
 		     const char *oname));
+RT_EXPORT BU_EXTERN(struct db_i	*wdb_prep_dbip,
+		    (Tcl_Interp *interp,
+		     const char *filename));
 RT_EXPORT BU_EXTERN(int	wdb_bot_face_sort_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -6360,8 +6379,27 @@ RT_EXPORT BU_EXTERN(int	wdb_smooth_bot_cmd,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char **argv));
+#ifdef IMPORT_FASTGEN4_SECTION
+RT_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
+		    (struct rt_wdb *wdbp,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
+#endif
 
 /* defined in dg_obj.c */
+RT_EXPORT BU_EXTERN(int dgo_set_transparency_cmd,
+		    (struct dg_obj	*dgop,
+		     Tcl_Interp		*interp,
+		     int		argc,
+		     char 		**argv));
+RT_EXPORT BU_EXTERN(int	dgo_observer_cmd,
+		    (struct dg_obj *dgop,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
+RT_EXPORT BU_EXTERN(void dgo_deleteProc,
+		    (ClientData clientData));
 RT_EXPORT BU_EXTERN(void dgo_autoview,
 		    (struct dg_obj *dgop,
 		     struct view_obj *vop,
@@ -6397,6 +6435,11 @@ RT_EXPORT BU_EXTERN(int	dgo_erase_all_cmd,
 		     int argc,
 		     char **argv));
 RT_EXPORT BU_EXTERN(int	dgo_get_autoview_cmd,
+		    (struct dg_obj *dgop,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
+RT_EXPORT BU_EXTERN(int	dgo_how_cmd,
 		    (struct dg_obj *dgop,
 		     Tcl_Interp *interp,
 		     int argc,
