@@ -385,7 +385,7 @@ typedef long	bitv_t;		/* largest integer type */
 /* POSIX (or at least the SGI versions does not define hypot) */
 #if defined(_POSIX_SOURCE)
 	/* But the sgi -lm does have a hypot routine so lets use it */
-#if defined(__sgi)
+#if defined(__sgi) || defined(__convexc__)
         extern double hypot(double, double);
 #else
 #	define hypot(x,y)      sqrt( (x)*(x)+(y)*(y) )
