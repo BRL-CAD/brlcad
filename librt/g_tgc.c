@@ -1142,7 +1142,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 #if 0
 			rt_log("tgc: dprime[Z] = 0!\n" );
 #endif
-			SEG_MISS(segp[ix]);
+			RT_TGC_SEG_MISS(segp[ix]);
 			continue;
 		}
 		b = ( -pprime[Z] )/dprime[Z];
@@ -1169,7 +1169,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 #if 0
 			rt_log("tgc(%s):  only 1 intersect\n", stp[ix]->st_name);
 #endif
-			SEG_MISS(segp[ix]);
+			RT_TGC_SEG_MISS(segp[ix]);
 			continue;
 		}
 
@@ -1202,13 +1202,13 @@ struct resource         *resp; /* pointer to a list of free segs */
 	 *  either of them.
 	 */
 	if( dprime[Z] == 0.0 ) {
-		SEG_MISS(segp[ix]);
+		RT_TGC_SEG_MISS(segp[ix]);
 		continue;
 	}
 
 	dir = VDOT( tgc->tgc_N, rp[ix]->r_dir );	/* direc */
 	if ( NEAR_ZERO( dir, RT_DOT_TOL ) ) {
-		SEG_MISS(segp[ix]);
+		RT_TGC_SEG_MISS(segp[ix]);
 		continue;
 	}
 
@@ -1230,7 +1230,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 	 *  but I wouldn't take any chances.
 	 */
 	if ( alf1 > 1.0 || alf2 > 1.0 ) {
-		SEG_MISS(segp[ix]);
+		RT_TGC_SEG_MISS(segp[ix]);
 		continue;
 	}
 
