@@ -109,6 +109,39 @@ char		*argv[];
 	return TCL_OK;
 }
 
+/*
+ *  TCL interface to LIBFB.
+ *  Points at lower left corner of selected pixel.
+ */
+int
+tcl_fb_cursor( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	FBIO	*ifp;
+	int	mode, x, y;
+
+	if( argc != 5 )  {
+		interp->result = "Usage: fb_cursor fbp mode x y";
+		return TCL_ERROR;
+	}
+	ifp = (FBIO *)atoi(argv[1]);
+	mode = atoi(argv[2]);
+	x = atoi(argv[3]);
+	y = atoi(argv[4]);
+
+	ifp = fbp;	/* XXX hack, ignore tcl arg. */
+
+	FB_CK_FBIO(ifp);
+	if( fb_cursor( ifp, mode, x, y ) < 0 )  {
+		interp->result = "fb_cursor got error from library";
+		return TCL_ERROR;
+	}
+	return TCL_OK;
+}
+
 int
 tcl_appinit(inter)
 Tcl_Interp	*inter;
@@ -120,6 +153,8 @@ Tcl_Interp	*inter;
 
 	/* Run tk.tcl script */
 	if( Tk_Init(interp) == TCL_ERROR )  return TCL_ERROR;
+
+	Tcl_CreateCommand(interp, "fb_cursor", tcl_fb_cursor, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_CreateCommand(interp, "doit", doit, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateCommand(interp, "doit1", doit1, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
@@ -280,9 +315,6 @@ int	wav;
 	pp = pixels;
 
 	scale = 255 / (maxval - minval);
-#if 1
-	rt_log(" scale = %g, 255 =? %g\n", scale, maxval * scale);
-#endif
 
 	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
 		struct rt_spect_sample	*sp;
