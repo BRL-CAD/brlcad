@@ -327,7 +327,8 @@ CONST struct rt_tol	*tol;
 
 	nmg_tbl( &t1, TBL_FREE, 0 );
 
-if(total)rt_log("nmg_model_vertex_fuse() %d\n", total);
+	if( rt_g.NMG_debug & DEBUG_BASIC && total > 0 )
+		rt_log("nmg_model_vertex_fuse() %d\n", total);
 	return total;
 }
 
@@ -397,7 +398,8 @@ again:
 			 }
 		}
 	}
-if(total>0)rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
+	if( rt_g.NMG_debug & DEBUG_BASIC && total > 0 )
+		rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
 	nmg_tbl( &eutab, TBL_FREE, 0 );
 	return total;
 }
@@ -534,7 +536,8 @@ CONST struct rt_tol	*tol;
 		}
 	}
 	nmg_tbl( &etab, TBL_FREE, (long *)0 );
-if(total>0)rt_log("nmg_model_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
+	if( rt_g.NMG_debug & DEBUG_BASIC && total > 0 )
+		rt_log("nmg_model_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
 	return total;
 }
 
@@ -868,7 +871,8 @@ CONST struct rt_tol	*tol;
 		}
 	}
 	nmg_tbl( &ftab, TBL_FREE, 0 );
-if(total>0)rt_log("nmg_model_face_fuse: %d faces fused\n", total);
+	if( rt_g.NMG_debug & DEBUG_BASIC && total > 0 )
+		rt_log("nmg_model_face_fuse: %d faces fused\n", total);
 	return total;
 }
 
@@ -914,6 +918,7 @@ CONST struct rt_tol	*tol;
 	/* Step 4 -- edge geometry */
 	total += nmg_model_edge_g_fuse( m, tol );
 
-if(total>0)rt_log("nmg_model_fuse(): %d entities fused\n", total);
+	if( rt_g.NMG_debug & DEBUG_BASIC && total > 0 )
+		rt_log("nmg_model_fuse(): %d entities fused\n", total);
 	return total;
 }
