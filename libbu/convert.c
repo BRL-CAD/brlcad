@@ -39,46 +39,6 @@ static const char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bu.h"
 
-/*
- * Forward declarations.
- */
-int bu_cv_w_cookie(genptr_t, int, int, genptr_t, int, int);
-int bu_cv_ntohss(SIGNED short *, int, genptr_t, int);
-int bu_cv_ntohus(unsigned short *, int, genptr_t, int);
-int bu_cv_ntohsl(SIGNED long int *, int, genptr_t, int);
-int bu_cv_ntohul(unsigned long int *, int, genptr_t, int);
-int bu_cv_htonss(genptr_t, int, SIGNED short *, int);
-int bu_cv_htonus(genptr_t, int, unsigned short *, int);
-int bu_cv_htonsl(genptr_t, int, long *, int);
-int bu_cv_htonul(genptr_t, int, unsigned long *, int);
-
-/*
- * Theses should be moved to a header file soon.
- */
-#define CV_CHANNEL_MASK	0x00ff
-#define CV_HOST_MASK	0x0100
-#define CV_SIGNED_MASK	0x0200
-#define CV_TYPE_MASK	0x1c00  /* 0001 1100 0000 0000 */
-#define CV_CONVERT_MASK 0x6000  /* 0110 0000 0000 0000 */
-
-#define CV_TYPE_SHIFT	10
-#define CV_CONVERT_SHIFT 13
-
-#define CV_8	0x0400
-#define	CV_16	0x0800
-#define CV_32	0x0c00
-#define CV_64	0x1000
-#define CV_D	0x1400
-
-#define CV_CLIP		0x0000
-#define CV_NORMAL	0x2000
-#define CV_LIT		0x4000
-
-#define	IND_NOTSET	0
-#define IND_BIG		1
-#define IND_LITTLE	2
-#define IND_ILL		3		/* PDP-11 */
-#define IND_CRAY	4
 
 /* bu_cv_cookie	Set's a bit vector after parsing an input string.
  *
@@ -100,8 +60,7 @@ int bu_cv_htonul(genptr_t, int, unsigned long *, int);
  * Normalize | Clip | low-order
  */
 int
-bu_cv_cookie(in)
-char *in;			/* input format */
+bu_cv_cookie(char *in)			/* input format */
 {
 	char *p;
 	int collector;
