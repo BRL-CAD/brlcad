@@ -1,7 +1,8 @@
 /*
  *			V M A T H . H
  *
- *  This header file defines many commonly used 3D vector math macros.
+ *  This header file defines many commonly used 3D vector math macros,
+ *  and operates on vect_t, point_t, mat_t, and quat_t objects.
  *
  *  Note that while many people in the computer graphics field use
  *  post-multiplication with row vectors (ie, vector * matrix * matrix ...)
@@ -43,12 +44,20 @@
  *	Michael John Muuss
  *
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
+ *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Distribution Status -
  *	This file is public domain, distribution unlimited.
+ *
+ *  Include Sequencing -
+ *	#include <stdio.h>
+ *	#include <math.h>
+ *	#include "machine.h"	/* For fastf_t definition on this machine *_/
+ *	#include "vmath.h"
+ *
+ *  Libraries Used -
+ *	-lm -lc
  *
  *  $Header$
  */

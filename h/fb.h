@@ -11,6 +11,13 @@
  *  Status -
  *	Public Domain, Distribution Unlimited
  *
+ *  Include Sequencing -
+ *	#include <stdio.h>
+ *	#include "fb.h"
+ *
+ *  Libraries Used -
+ *	LIBFB LIBFB_LIBES -lc
+ *
  *  $Header$
  */
 
