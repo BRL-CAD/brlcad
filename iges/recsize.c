@@ -28,6 +28,8 @@
 	yet) */
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #define	NRECS	20	/* Maximum number of records to sample */

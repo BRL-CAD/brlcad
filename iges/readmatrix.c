@@ -19,6 +19,8 @@
 	rot is where the matrix is to be placed. */
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include <math.h>
 #include "./iges_struct.h"
 #include "./iges_extern.h"

@@ -22,6 +22,8 @@
 	"fseek" and "ftell" operating with offsets given in bytes.	*/
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

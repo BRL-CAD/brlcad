@@ -18,6 +18,8 @@
 	and sets colors according to the directory entry field #13 */
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

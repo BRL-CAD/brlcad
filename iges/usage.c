@@ -15,11 +15,11 @@
  */
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 
 usage()
 {
-	fprintf( stderr , "Usage:\n" );
-	fprintf( stderr , "\tconv-igs2g iges_file brlcad_file\n" );
+	fprintf( stderr , "Usage:  iges-g file.iges file.g\n" );
 	exit( 1 );
 }
-

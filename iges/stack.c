@@ -15,6 +15,8 @@
  */
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include "./iges_struct.h"
 
 #define	STKBLK	100	/* Allocation block size */

@@ -17,6 +17,8 @@
 /*		Read and construct a boolean tree		*/
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include "./iges_struct.h"
 
 struct node *Readtree()

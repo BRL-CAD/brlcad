@@ -21,6 +21,8 @@
 #include "machine.h"
 #include "vmath.h"
 
+#undef W		/* from vmath.h */
+
 static float maxknot,*knots=NULL;
 static int numknots=0;
 

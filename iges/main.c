@@ -1,4 +1,6 @@
 /*
+ *			I G E S - G / M A I N . C
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
@@ -13,10 +15,15 @@
  *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #define	IGS_VERSION	"4.0"
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_types.h"
 

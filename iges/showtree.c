@@ -17,6 +17,8 @@
 /*		Display a boolean tree		*/
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include <strings.h>
 #include "./iges_struct.h"
 #include "./iges_extern.h"

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "machine.h"
+#include "vmath.h"
 #include "./b_spline.h"
 
 struct b_spline *

@@ -21,6 +21,8 @@
 	line D'2n+1' of the iges file.	*/
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include <math.h>
 #include "./iges_struct.h"
 #include "./iges_extern.h"

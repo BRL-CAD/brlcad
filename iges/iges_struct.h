@@ -1,7 +1,4 @@
 
-#include <brlcad/machine.h>
-#include <brlcad/vmath.h>
-
 extern fastf_t brlabs();
 
 #define	NAMELEN	16	/* from "brlcad/db.h" */

@@ -18,6 +18,9 @@
 	to BRLCAD objects	*/
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
+#include "rtlist.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #include "wdb.h"
@@ -63,9 +66,7 @@ Convtree()
 		{
 			struct wmember head;
 
-			head.wm_forw = &head;
-			head.wm_back = &head;
-
+			RT_LIST_INIT( &head.l );
 
 			/* make member records */
 			Makemembers( ptr , &head );

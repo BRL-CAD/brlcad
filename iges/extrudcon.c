@@ -16,6 +16,8 @@
 
 /*	Create a TGC from a ellipse extrusion */
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include <math.h>
 #include "./iges_struct.h"
 #include "./iges_extern.h"

@@ -18,6 +18,9 @@
 	all unreferenced entities	*/
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
+#include "rtlist.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #include "wdb.h"
@@ -29,8 +32,7 @@ Makegroup()
 	struct wmember head,*wmem;
 	fastf_t *flt;
 
-	head.wm_forw = &head;
-	head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	/* loop through all entities */
 	for( i=0 ; i<totentities ; i++ )

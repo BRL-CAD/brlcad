@@ -19,6 +19,8 @@
 	to BRLCAD groups	*/
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #include "wdb.h"
@@ -45,8 +47,7 @@ Convassem()
 
 	ptr = NULL;
 	root = NULL;
-	head.wm_forw = &head;
-	head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	for( i=0 ; i<totentities ; i++ ) /* loop through all entities */
 	{

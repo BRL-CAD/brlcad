@@ -24,6 +24,8 @@
 	if no change was made to the tree, 0 otherwise.	*/
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include "./iges_struct.h"
 
 Bubbleup( root )

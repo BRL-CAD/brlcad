@@ -13,12 +13,12 @@
  *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
-#include "./iges_struct.h"
+#include "machine.h"
 
 fastf_t brlabs( a )
-fastf_t a;
+register CONST fastf_t a;
 {
-	fastf_t b;
+	register fastf_t b;
 
 	if( a > 0 )
 		b = a;
