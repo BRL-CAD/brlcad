@@ -53,12 +53,11 @@ Usage: fbzoom [-h] [-F framebuffer]\n\
 
 main(argc, argv )
 char **argv;
-	{
-	if( ! pars_Argv( argc, argv ) )
-		{
+{
+	if( ! pars_Argv( argc, argv ) ) {
 		(void)fputs(usage, stderr);
 		return	1;
-		}
+	}
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		return	1;
 	zoom = 1;
@@ -73,6 +72,7 @@ char **argv;
 	PanFactor = fb_getwidth(fbp)/16;
 	if( PanFactor < 2 )  PanFactor = 2;
 
+	fb_zoom( fbp, zoom, zoom );
 	do  {
 		fb_window( fbp, xPan, yPan );
 		(void) fprintf( stdout,
@@ -88,7 +88,7 @@ char **argv;
 	(void) fb_close( fbp );
 	(void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
 	return	0;
-	}
+}
 
 char help[] = "\r\n\
 Both VI and EMACS motions work.\r\n\
@@ -112,7 +112,7 @@ RETURN	Exit\r\n";
 #define ctl(x)	(x&037)
 
 doKeyPad()
-	{ 
+{ 
 	register int ch;
 
 	if( (ch = getchar()) == EOF )
@@ -207,7 +207,7 @@ doKeyPad()
 		break;
 		}
 	return	1;		/* keep going */
-	}
+}
 
 /*	p a r s _ A r g v ( )
  */
