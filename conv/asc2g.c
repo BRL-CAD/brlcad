@@ -863,12 +863,12 @@ combbld()
 		membbld( &head );
 	}
 
-	/* Spit them out, all at once */
+	/* Spit them out, all at once.  Use GIFT semantics. */
 	if( mk_comb(ofp, name, &head, is_reg,
 		temp_nflag ? matname : (char *)0,
 		temp_pflag ? matparm : (char *)0,
 		override ? (unsigned char *)rgb : (unsigned char *)0,
-		regionid, aircode, material, los, inherit, 0, 0) < 0 )  {
+		regionid, aircode, material, los, inherit, 0, 1) < 0 )  {
 			fprintf(stderr,"asc2g: mk_lrcomb fail\n");
 			abort();
 	}
