@@ -97,6 +97,11 @@ extern struct floatpixel	*curr_float_frame;	/* buffer of full frame */
 extern struct floatpixel	*prev_float_frame;
 /***** end variables shared with worker() *****/
 
+/***** Photon Mapping Variables *****/
+extern	double		pmargs[9];
+extern	char		pmfile[255];
+/***** ************************ *****/
+
 /***** variables shared with do.c *****/
 extern int		pix_start;		/* pixel to start at */
 extern int		pix_end;		/* pixel to end at */
