@@ -1881,9 +1881,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #endif
 
 /* Permissions for "installed" files of various types */
-#define	BINPERM	775
-#define	LIBPERM	664
-#define	MANPERM	664
+#define	BINPERM	555
+#define	LIBPERM	444
+#define	MANPERM	444
 #define	DIRPERM	775
 
 #if	!defined(ARCH_SUF)
