@@ -128,6 +128,24 @@ struct oslo_mat {
 #define MAX(i,j)    ( (i) > (j) ? (i) : (j) )
 #define MIN(i,j)    ( (i) < (j) ? (i) : (j) )
 #define SPL_INFINIT	(1.0e20)
+/* These  are used for homogeneous coordinates */
+
+#define HVMOVE( a, b)       \
+	(a)[0] = (b)[0];\
+	(a)[1] = (b)[1];\
+	(a)[2] = (b)[2];\
+	(a)[3] = (b)[3];
+
+#define HVJOIN1( a, b, c, d) \
+	(a)[0] = (b)[0] + (c) * (d)[0]; \
+	(a)[1] = (b)[1] + (c) * (d)[1]; \
+	(a)[2] = (b)[2] + (c) * (d)[2]; \
+	(a)[3] = (b)[3] + (c) * (d)[3];
+
+#define HVSCALE( a, b, c )    (a)[0] = (b)[0] * (c);\
+	(a)[1] = (b)[1] * (c);\
+	(a)[2] = (b)[2] * (c);\
+	(a)[3] = (b)[3] * (c);
 
 /* nurb_basis.c */
 RT_EXTERN(fastf_t rt_nurb_basis_eval, (struct knot_vector *knts, int interval,
