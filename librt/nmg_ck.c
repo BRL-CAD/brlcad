@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 /* THis duplicates the extern from nmg_mesh.c */
-RT_EXTERN(double nmg_measure_2fu_angle, (CONST struct edgeuse *eu1, CONST struct edgeuse *eu2));
 RT_EXTERN(double nmg_measure_fu_angle, (CONST struct edgeuse *eu, CONST vect_t xvec, CONST vect_t yvec, CONST vect_t zvec));
 
 
@@ -1081,15 +1080,20 @@ CONST vect_t		zvec;
 	NMG_CK_EDGEUSE(eu);
 	rt_log("nmg_pr_fu_around_eu_vecs(x%x)\n", eu);
 
+	/* To go correct way around, start with arg's mate,
+	 * so that arg, then radial, will follow.
+	 */
+	eu = eu->eumate_p;
+
 	eu1 = eu;
 	do {
-		/* First, the edgeuse */
+		/* First, the edgeuse mate */
 		NMG_CK_EDGEUSE(eu1);
 		lu = eu1->up.lu_p;
 		NMG_CK_LOOPUSE(lu);
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
-		rt_log("EU=%8.8x, e=%8.8x, %s fu=%8.8x, f=%8.8x %s, s=%8.8x %g deg\n",
+		rt_log(" %8.8x, e=%8.8x, %s fu=%8.8x, f=%8.8x %s, s=%8.8x %g deg\n",
 			eu1, eu1->e_p,
 			lu->orientation == OT_SAME ? "S" : "O",
 			fu, fu->f_p,
@@ -1097,14 +1101,14 @@ CONST vect_t		zvec;
 			fu->s_p,
 			nmg_measure_fu_angle(eu1, xvec, yvec, zvec) * rt_radtodeg );
 
-		/* Second, the edgeuse mate */
+		/* Second, the edgeuse itself (mate's mate) */
 		eu1 = eu1->eumate_p;
 		NMG_CK_EDGEUSE(eu1);
 		lu = eu1->up.lu_p;
 		NMG_CK_LOOPUSE(lu);
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
-		rt_log("MU=%8.8x, e=%8.8x, %s fu=%8.8x, f=%8.8x %s, s=%8.8x %g deg\n",
+		rt_log(" %8.8x, e=%8.8x, %s fu=%8.8x, f=%8.8x %s, s=%8.8x %g deg\n",
 			eu1, eu1->e_p,
 			lu->orientation == OT_SAME ? "S" : "O",
 			fu, fu->f_p,
