@@ -60,19 +60,36 @@ proc init_psTool { id } {
     frame $top.buttonF
     frame $top.buttonF2
 
+    set tmp_hoc_data {{summary "Enter a filename specifying where
+to put the generated postscript
+description of the current view."} {see_also "ps"}}
     label $top.fileL -text "File Name" -anchor w
+    hoc_register_data $top.fileL "File Name" $tmp_hoc_data
     entry $top.fileE -relief flat -width 10 -textvar ps_control($id,file)
+    hoc_register_data $top.fileE "File Name" $tmp_hoc_data
 
+    set tmp_hoc_data {{summary "Enter a title for the postscript file."} {see_also "ps"}}
     label $top.titleL -text "Title" -anchor w
+    hoc_register_data $top.titleL "Title" $tmp_hoc_data
     entry $top.titleE -relief flat -width 10 -textvar ps_control($id,title)
+    hoc_register_data $top.titleE "Title" $tmp_hoc_data
 
+    set tmp_hoc_data {{summary "Enter the creator of the postscript file."} {see_also "ps"}}
     label $top.creatorL -text "Creator" -anchor w
+    hoc_register_data $top.creatorL "Creator" $tmp_hoc_data
     entry $top.creatorE -relief flat -width 10 -textvar ps_control($id,creator)
+    hoc_register_data $top.creatorE "Creator" $tmp_hoc_data
 
+    set tmp_hoc_data {{summary "Enter the desired text font."} {see_also "ps"}}
     label $top.fontL -text "Font" -anchor w
+    hoc_register_data $top.fontL "Font" $tmp_hoc_data
     entry $top.fontE -relief flat -width 17 -textvar ps_control($id,font)
+    hoc_register_data $top.fontE "Font" $tmp_hoc_data
     menubutton $top.fontMB -relief raised -bd 2\
 	    -menu $top.fontMB.fontM -indicatoron 1
+    hoc_register_data $top.fontMB "Font"\
+	    {{summary "Pops up a menu of known
+postscript fonts."}}
     menu $top.fontMB.fontM -tearoff 0
     $top.fontMB.fontM add cascade -label "Courier"\
 	    -menu $top.fontMB.fontM.courierM
@@ -111,19 +128,33 @@ proc init_psTool { id } {
     $top.fontMB.fontM.timesM add command -label "BoldItalic"\
 	    -command "set ps_control($id,font) Times-BoldItalic"
 
+    set tmp_hoc_data {{summary "Enter the image size."} {see_also "ps"}}
     label $top.sizeL -text "Size" -anchor w
+    hoc_register_data $top.sizeL "Size" $tmp_hoc_data
     entry $top.sizeE -relief flat -width 10 -textvar ps_control($id,size)
+    hoc_register_data $top.sizeE "Size" $tmp_hoc_data
 
+    set tmp_hoc_data {{summary "Enter the line width used when
+drawing lines."} {see_also "ps"}}
     label $top.linewidthL -text "Line Width" -anchor w
+    hoc_register_data $top.linewidthL "Line Width" $tmp_hoc_data
     entry $top.linewidthE -relief flat -width 10 -textvar ps_control($id,linewidth)
+    hoc_register_data $top.linewidthE "Line Width" $tmp_hoc_data
 
     checkbutton $top.zclipCB -relief raised -text "Z Clipping"\
 	    -variable ps_control($id,zclip)
+    hoc_register_data $top.zclipCB "Z Clipping"\
+	    {{summary "If checked, clip to the viewing cube."}
+            {see_also "ps"}}
 
     button $top.createB -relief raised -text "Create"\
 	    -command "do_ps $id"
+    hoc_register_data $top.createB "Create"\
+	    {{summary "Create the postscript file."} {see_also "ps"}}
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
+    hoc_register_data $top.dismissB "Dismiss"\
+	    {{summary "Dismiss the postscript tool."} {see_also "ps"}}
 
     grid $top.fileE -sticky "ew" -in $top.fileF
     grid $top.fileF  $top.fileL -sticky "ew" -in $top.elF -pady 4

@@ -53,43 +53,112 @@ proc color_scheme_init {} {
 #	    "" "" "" "" "" ""\
 #	    "" "" "" "" "" "" }
 
-    set mged_color_scheme(primary_map) {\
-	    { bg "Background" } \
-	    { adc_line "ADC Lines" } \
-	    { adc_tick "ADC Tick" } \
-	    { geo_def "Geometry Default" } \
-	    { geo_hl "Geometry Highlight" } \
-	    { geo_label "Geometry Label" } \
-	    { model_axes "Model Axes" } \
-	    { model_axes_label "Model Axes Label" } \
-	    { view_axes "View Axes" } \
-	    { view_axes_label "View Axes Label" } \
-	    { edit_axes1 "Edit Axes (Primary)" } \
-	    { edit_axes_label1 "Edit Axes Label (Primary)" } \
-	    { edit_axes2 "Edit Axes (Secondary)" } \
-	    { edit_axes_label2 "Edit Axes Label (Secondary)" } \
-	    { rubber_band "Rubber Band" } \
-	    { grid "Grid" } \
-	    { predictor "Predictor" } \
-	}
+    set mged_color_scheme(primary_map) {
+	{ bg "Background" 
+          {{summary "Specify the background color for both
+the active and inactive panes."} {see_also rset}}}
+	{ adc_line "ADC Lines" 
+          {{summary "Specify the ADC line color for both
+the active and inactive panes."} {see_also rset}}}
+	{ adc_tick "ADC Tick" 
+          {{summary "Specify the ADC tick color for both
+the active and inactive panes."} {see_also rset}}}
+	{ geo_def "Geometry Default" 
+          {{summary "Specify the default color used to draw geometry.
+This color is used as a last resort. The color
+actually used has the following priority:
+    1) user specified color (i.e. with e command)
+    2) region id based color
+    3) combination record color
+    4) default geometry color"} {see_also rset}}}
+	{ geo_hl "Geometry Highlight"
+          {{summary "Specify the color to use for highlighting
+geometry (i.e. when in solid illumination mode)."} {see_also rset}}}
+	{ geo_label "Geometry Label" 
+          {{summary "Specify the color to use for labeling
+geometry."} {see_also rset}}}
+	{ model_axes "Model Axes" 
+          {{summary "Specify the color to use for drawing
+the model axes."} {see_also rset}}}
+	{ model_axes_label "Model Axes Label" 
+          {{summary "Specify the color to use for labeling
+the model axes."} {see_also rset}}}
+	{ view_axes "View Axes" 
+          {{summary "Specify the color to use for drawing
+the view axes."} {see_also rset}}}
+	{ view_axes_label "View Axes Label" 
+          {{summary "Specify the color to use for labeling
+the view axes."} {see_also rset}}}
+	{ edit_axes1 "Edit Axes (Primary)" 
+          {{summary "Specify the color to use for drawing
+the primary edit axes."} {see_also rset}}}
+	{ edit_axes_label1 "Edit Axes Label (Primary)" 
+          {{summary "Specify the color to use for labeling
+the primary edit axes."} {see_also rset}}}
+	{ edit_axes2 "Edit Axes (Secondary)" 
+          {{summary "Specify the color to use for drawing
+the secondary edit axes."} {see_also rset}}}
+	{ edit_axes_label2 "Edit Axes Label (Secondary)" 
+          {{summary "Specify the color to use for labeling
+the secondary edit axes."} {see_also rset}}}
+	{ rubber_band "Rubber Band" 
+          {{summary "Specify the color to use for drawing
+the rubber band rectangle."} {see_also rset}}}
+	{ grid "Grid" 
+          {{summary "Specify the color to use for drawing
+the grid array."} {see_also rset}}}
+	{ predictor "Predictor" 
+          {{summary "Specify the color to use for drawing
+the predictor."} {see_also rset}}}
+    }
 
-    set mged_color_scheme(secondary_map) {\
-	    { menu_line "Menu Lines" } \
-	    { menu_title "Menu Title" } \
-	    { menu_text2 "Menu Text" } \
-	    { menu_text1 "Menu Text (Highlight)" } \
-	    { state_text1 "Menu State Text 1" } \
-	    { state_text2 "Menu State Text 2" } \
-	    { menu_arrow "Menu Arrow" } \
-	    { slider_line "Slider Lines" } \
-	    { slider_text1 "Slider Text 1" } \
-	    { slider_text2 "Slider Text 2" } \
-	    { status_text1 "Status Text 1" } \
-	    { status_text2 "Status Text 2" } \
-	    { edit_info "Edit Info" } \
-	    { center_dot "Center Dot" } \
-	    { other_line "Other Lines" } \
-	}
+    set mged_color_scheme(secondary_map) {
+	{ menu_line "Menu Lines" 
+          {{summary "Specify the color to use for drawing
+lines that make up the faceplate menu."} {see_also rset}}}
+	{ menu_title "Menu Title" 
+          {{summary "Specify the color to use for drawing
+the faceplate menu title."} {see_also rset}}}
+	{ menu_text2 "Menu Text" 
+          {{summary "Specify the color to use for drawing
+faceplate menu text."} {see_also rset}}}
+	{ menu_text1 "Menu Text (Highlight)" 
+          {{summary "Specify the color to use for drawing
+faceplate menu highlight text."} {see_also rset}}}
+	{ state_text1 "Menu State Text 1" 
+          {{summary "Specify the color to use for drawing
+faceplate menu state text."} {see_also rset}}}
+	{ state_text2 "Menu State Text 2" 
+          {{summary "Specify the color to use for drawing
+faceplate menu state text."} {see_also rset}}}
+	{ menu_arrow "Menu Arrow" 
+          {{summary "Specify the color to use for drawing
+the faceplate menu arrow."} {see_also rset}}}
+	{ slider_line "Slider Lines" 
+          {{summary "Specify the color to use for drawing
+the faceplate slider lines."} {see_also rset}}}
+	{ slider_text1 "Slider Text 1" 
+          {{summary "Specify the color to use for drawing
+the faceplate slider text."} {see_also rset}}}
+	{ slider_text2 "Slider Text 2" 
+          {{summary "Specify the color to use for drawing
+the faceplate slider text."} {see_also rset}}}
+	{ status_text1 "Status Text 1" 
+          {{summary "Specify the color to use for drawing
+the faceplate text for status line 1."} {see_also rset}}}
+	{ status_text2 "Status Text 2" 
+          {{summary "Specify the color to use for drawing
+the faceplate text for status line 2."} {see_also rset}}}
+	{ edit_info "Edit Info" 
+          {{summary "Specify the color to use for drawing
+the edit information."} {see_also rset}}}
+	{ center_dot "Center Dot" 
+          {{summary "Specify the color to use for drawing
+the faceplate center dot."} {see_also rset}}}
+	{ other_line "Other Lines" 
+          {{summary "Specify the color to use for drawing
+other faceplate lines."} {see_also rset}}}
+    }
 }
 
 ##
@@ -124,7 +193,13 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
     set ce_row 0
     frame $top.csF$row
     label $top.activeL -text "Active Pane"
+    hoc_register_data $top.activeL "Active Pane"\
+	    {{summary "The active pane is the pane (display manager) that is
+tied to the GUI, effectively becoming the target of
+GUI interactions that affect panes."}}
     label $top.inactiveL -text "Inactive Pane"
+    hoc_register_data $top.inactiveL "Inactive Pane"\
+	    {{summary "Any pane that is not the active pane."}}
     grid x $top.activeL $top.inactiveL -row $ce_row -sticky "nsew" -in $top.csF$row
 
     # build primary entries
@@ -155,19 +230,31 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
 	    -offvalue 0 -onvalue 1 -variable mged_color_scheme($id,smflag)\
 	    -command "color_scheme_toggle_secondary $id $top $top.csF$save_row\
 	    $ce_secondary_row $entry_width"
+    hoc_register_data $top.smflagCB $secondary_title\
+	    {{summary "If checked, show faceplate colors."}}
     grid $top.smflagCB -row $row -padx 8 -pady 8
 
     incr row
     frame $top.csF$row
     button $top.okB -relief raised -text "Ok"\
 	    -command "color_scheme_ok $id $top"
+    hoc_register_data $top.okB "Ok"\
+	    {{summary "Apply the colors and dismiss the
+\"Color Schemes\" control panel."}}
     button $top.applyB -relief raised -text "Apply"\
 	    -command "color_scheme_apply $id"
+    hoc_register_data $top.applyB "Apply"\
+	    {{summary "Apply the colors."}}
     button $top.resetB -relief raised -text "Reset"\
 	    -command "color_scheme_reset $id $top"
+    hoc_register_data $top.resetB "Reset"\
+	    {{summary "Reset control panel color values to
+the actual values."}}
 
     menubutton $top.cannedMB -relief raised -text "Canned" -bd 2\
 	    -menu $top.cannedMB.m -indicatoron 1
+    hoc_register_data $top.cannedMB "Canned"\
+	    {{summary "Pops up a menu of canned color schemes."}}
     menu $top.cannedMB.m -tearoff 0
     $top.cannedMB.m add command -label Blues\
 	    -command "color_scheme_load_canned $id $top $mged_color_scheme(blues)"
@@ -186,6 +273,8 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
 
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
+    hoc_register_data $top.dismissB "Dismiss"\
+	    {{summary "Dismiss the \"Color Scheme\" control panel."}}
 
     grid $top.okB $top.applyB x $top.resetB $top.cannedMB x $top.dismissB\
 	    -sticky "nsew" -in $top.csF$row
@@ -214,6 +303,7 @@ proc color_scheme_build_entries { id top container map row entry_width } {
     foreach key_name_pair $map {
 	set key [lindex $key_name_pair 0]
 	set name [lindex $key_name_pair 1]
+	set hoc [lindex $key_name_pair 2]
 	set key_a $key\_a
 	set key_ia $key\_ia
 	set colorvar_a mged_color_scheme($id,$key_a)
@@ -221,6 +311,7 @@ proc color_scheme_build_entries { id top container map row entry_width } {
 
 	incr ce_row
 	label $top.$key\L -text $name
+	hoc_register_data $top.$key\L $name $hoc
 	set ce_a [color_entry_build $top $key_a $colorvar_a\
 		"color_entry_chooser $id $top $key_a \"Active $name Color\" \
 		mged_color_scheme $id,$key_a"\

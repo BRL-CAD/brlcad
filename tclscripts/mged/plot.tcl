@@ -60,33 +60,57 @@ proc init_plotTool { id } {
 
     entry $top.fileE -width 12 -textvar pl_control($id,file)\
 	    -state $file_state
+    hoc_register_data $top.fileE "File Name"\
+	    {{summary "Enter a filename specifying where
+to put the UNIX-plot of the displayed
+geometry."} {see_also pl}}
     radiobutton $top.fileRB -text "File Name" -anchor w\
 	    -value file -variable pl_control($id,file_or_filter)\
 	    -command "pl_set_file_state $id"
+    hoc_register_data $top.fileRB "File"\
+	    {{summary "Activate the filename entry."}}
 
     entry $top.filterE -width 12 -textvar pl_control($id,filter)\
 	    -state $filter_state
+    hoc_register_data $top.filterE "Filter"\
+	    {{summary "If a filter is specified, the
+output is sent there."} {see_also pl}}
     radiobutton $top.filterRB -text "Filter" -anchor w\
 	    -value filter -variable pl_control($id,file_or_filter)\
 	    -command "pl_set_filter_state $id"
+    hoc_register_data $top.filterRB "Filter"\
+	    {{summary "Activate the filter entry."}}
 
-    checkbutton $top.zclip -relief raised -text "Z Clipping"\
+    checkbutton $top.zclipCB -relief raised -text "Z Clipping"\
 	    -variable pl_control($id,zclip)
+    hoc_register_data $top.zclipCB "Z Clipping"\
+	    {{summary "If checked, the plot will be
+clipped to the viewing cube."} {see_also pl}}
     checkbutton $top.twoDCB -relief raised -text "2D"\
 	    -variable pl_control($id,2d)
+    hoc_register_data $top.twoDCB "2D"\
+	    {{summary "If checked, the plot will be
+two-dimensional instead of three-dimensional."} {see_also pl}}
     checkbutton $top.floatCB -relief raised -text "Float"\
 	    -variable pl_control($id,float)
+    hoc_register_data $top.floatCB "Float"\
+	    {{summary "If checked, the plot file will use floating
+point numbers instead of integers."}}
 
     button $top.createB -relief raised -text "Create"\
 	    -command "do_plot $id"
+    hoc_register_data $top.createB "Create"\
+	    {{summary "Create a plot file of the current view."} {see_also pl}}
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
+    hoc_register_data $top.dismissB "Dismiss"\
+	    {{summary "Dismiss the plot tool."}}
 
     grid $top.fileE $top.fileRB -sticky "ew" -in $top.gridF -pady 4
     grid $top.filterE $top.filterRB -sticky "ew" -in $top.gridF -pady 4
     grid columnconfigure $top.gridF 0 -weight 1
 
-    grid $top.zclip x $top.twoDCB x $top.floatCB -sticky "ew"\
+    grid $top.zclipCB x $top.twoDCB x $top.floatCB -sticky "ew"\
 	    -in $top.gridF2 -padx 4 -pady 4
     grid columnconfigure $top.gridF2 1 -weight 1
     grid columnconfigure $top.gridF2 3 -weight 1

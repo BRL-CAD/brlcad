@@ -37,16 +37,30 @@ proc init_extractTool { id } {
     frame $top.gridF
     frame $top.gridF2
 
+    set tmp_hoc_data {{summary "Enter a filename specifying where to put
+the extracted objects."} {see_also keep}}
     label $top.fileL -text "File Name" -anchor w
+    hoc_register_data $top.fileL "File Name" $tmp_hoc_data
     entry $top.fileE -width 24 -textvar ex_control($id,file)
+    hoc_register_data $top.fileE "File Name" $tmp_hoc_data
 
+    set tmp_hoc_data {{summary "Enter the objects to extract."}
+	    {see_also keep}}
     label $top.objectsL -text "Objects" -anchor w
+    hoc_register_data $top.objectsL "Objects" $tmp_hoc_data
     entry $top.objectsE -width 24 -textvar ex_control($id,objects)
+    hoc_register_data $top.objectsE "Objects" $tmp_hoc_data
 
     button $top.extractB -relief raised -text "Extract"\
 	    -command "do_extract $id"
+    hoc_register_data $top.extractB "Extract" {{summary "
+Extract the listed objects from the current database
+and put them into the specified file. Note - these
+objects are not removed from the current database."} {see_also keep}}
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
+    hoc_register_data $top.dismissB "Dismiss" {{summary "Dismiss the entry dialog without
+extracting database objects."}}
 
     grid $top.fileE $top.fileL -sticky "ew" -in $top.gridF -pady 4
     grid $top.objectsE $top.objectsL -sticky "ew" -in $top.gridF -pady 4
@@ -59,7 +73,7 @@ proc init_extractTool { id } {
 	    -padx 8 -pady 8
 
     place_near_mouse $top
-    wm title $top "Extract Objects..."
+    wm title $top "Extract Objects"
 }
 
 proc do_extract { id } {
