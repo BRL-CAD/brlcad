@@ -2912,20 +2912,27 @@ CONST struct rt_tol *tol;
 	/* loop to catch disjoint shells */
 	while( missed_faces )
 	{
-		FAST fastf_t	z;
+		vect_t normal;
 
 		/* find the top face */
 		f_top = nmg_find_top_face( s , flags );	
 		NMG_CK_FACE( f_top );
-		if( f_top->flip )
-			z = - f_top->g.plane_p->N[Z];
-		else
-			z =   f_top->g.plane_p->N[Z];
+		fu = f_top->fu_p;
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+		if( fu->orientation != OT_SAME )
+		{
+			rt_log( "nmg_fix_normals: no OT_SAME use of top face\n" );
+			rt_free( (char *)flags , "nmg_fix_normals: flags" );
+			return;
+		}
+		NMG_GET_FU_NORMAL( normal , fu );
 
 		/* f_top is the topmost face (in the +z direction), so its OT_SAME use should have a
 		 * normal with a positive z component */
-		if( z < 0.0 )
-			nmg_reverse_face_and_radials( f_top->fu_p , tol );
+		if( normal[Z] < 0.0 )
+			nmg_reverse_face_and_radials( fu , tol );
 
 		/* get OT_SAME use of top face */
 		fu = f_top->fu_p;
@@ -6526,21 +6533,24 @@ CONST struct rt_tol *tol;
 	NMG_CK_VERTEX( v2 );
 
 	/* get edge direction */
-	eg = mv_eu->g.lseg_p;
-	if( eg )
+	if( v1 != v2 )
 	{
-		NMG_CK_EDGE_G_LSEG(eg);
-		VMOVE( e_dir , eg->e_dir );
-		if( mv_eu->orientation == OT_OPPOSITE )
+		eg = mv_eu->g.lseg_p;
+		if( eg )
 		{
-			VREVERSE( e_dir , e_dir );
+			NMG_CK_EDGE_G_LSEG(eg);
+			VMOVE( e_dir , eg->e_dir );
+			if( mv_eu->orientation == OT_OPPOSITE )
+			{
+				VREVERSE( e_dir , e_dir );
+			}
 		}
+		else
+		{
+			VSUB2( e_dir , v2->vg_p->coord , v1->vg_p->coord );
+		}
+		VUNITIZE( e_dir );
 	}
-	else
-	{
-		VSUB2( e_dir , v2->vg_p->coord , v1->vg_p->coord );
-	}
-	VUNITIZE( e_dir );
 
 	eu = mv_eu;
 	fu1 = nmg_find_fu_of_eu( eu );
@@ -6563,8 +6573,11 @@ CONST struct rt_tol *tol;
 		VADD2( new_loc , v1->vg_p->coord , move_v );
 		nmg_vertex_gv( v1 , new_loc );
 
-		VADD2( new_loc , v2->vg_p->coord , move_v );
-		nmg_vertex_gv( v2 , new_loc );
+		if( v2 != v1 )
+		{
+			VADD2( new_loc , v2->vg_p->coord , move_v );
+			nmg_vertex_gv( v2 , new_loc );
+		}
 		return( 0 );
 	}
 
