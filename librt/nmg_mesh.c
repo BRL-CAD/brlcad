@@ -2,6 +2,9 @@
  *			N M G _ M E S H . C
  *
  *	Meshing routines for n-Manifold Geometry
+ *  This stuff is destined to be absorbed into nmg_fuse.c.
+ *  "meshing" here refers to the sorting of faceuses around an edge
+ *  as two edges sharing the same end points (vertex structs) are fused.
  *
  *  Authors -
  *	Lee A. Butler
@@ -29,6 +32,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+
+
+/* XXX move to nmg_info.c */
 /*
  *			N M G _ E U _ 2 V E C S _ P E R P
  *
@@ -72,6 +78,53 @@ CONST struct rt_tol	*tol;
 	VCROSS( yvec, zvec, xvec );
 }
 
+/* XXX move to nmg_info.c */
+/*
+ *			N M G _ F I N D _ E U _ L E F T V E C
+ *
+ *  Given an edgeuse, if it is part of a faceuse, return the inward pointing
+ *  "left" vector which points into the interior of this loop, and
+ *  lies in the plane of the face.
+ *
+ *  This routine depends on the vertex ordering in an OT_SAME loopuse being
+ *  properly CCW for exterior loops, and CW for interior (hole) loops.
+ *
+ *  Returns -
+ *	-1	if edgeuse is not part of a faceuse.
+ *	 0	if left vector successfully computed into caller's array.
+ */
+int
+nmg_find_eu_leftvec( left, eu )
+vect_t			left;
+CONST struct edgeuse	*eu;
+{
+	CONST struct loopuse	*lu;
+	CONST struct faceuse	*fu;
+	vect_t			Norm;
+	vect_t			edgevect;
+
+	NMG_CK_EDGEUSE(eu);
+	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -1;
+	lu = eu->up.lu_p;
+	NMG_CK_LOOPUSE(lu);
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return -1;
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACE(fu->f_p);
+	NMG_CK_FACE_G(fu->f_p->fg_p);
+
+	/* Get unit length Normal vector for edgeuse's faceuse */
+	NMG_GET_FU_NORMAL( Norm, fu );
+
+	VSUB2( edgevect, eu->eumate_p->vu_p->v_p->vg_p->coord,
+		eu->vu_p->v_p->vg_p->coord );
+	VUNITIZE( edgevect );
+
+	VCROSS( left, Norm, edgevect );
+	return 0;
+}
+
+/* XXX move to nmg_info.c */
 /*
  *			N M G _ M E A S U R E _ F U _ A N G L E
  *
@@ -94,35 +147,13 @@ CONST vect_t		xvec;
 CONST vect_t		yvec;
 CONST vect_t		zvec;
 {
-	CONST struct loopuse	*lu;
-	CONST struct faceuse	*fu;
-	vect_t			Norm;
-	vect_t			edgevect;
 	vect_t			left;
 	double			ret;
 
 	NMG_CK_EDGEUSE(eu);
 	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -rt_pi;
-	lu = eu->up.lu_p;
-	NMG_CK_LOOPUSE(lu);
-	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return -rt_pi;
-	fu = lu->up.fu_p;
-	NMG_CK_FACEUSE(fu);
-	NMG_CK_FACE(fu->f_p);
-	NMG_CK_FACE_G(fu->f_p->fg_p);
 
-	/* get Normal vectors for edgeuse faceUSEs */
-	NMG_GET_FU_NORMAL( Norm, fu );
-
-	VSUB2( edgevect, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
-	VUNITIZE( edgevect );
-
-	/* Make sure the edge is aligned with +Z or -Z */
-	ret = fabs(VDOT(edgevect, zvec)) - 1;
-	if( !NEAR_ZERO(ret, 1.0e-6) )
-		rt_log("nmg_measure_fu_angle() WARNING: bad edge/zvec dot=%g\n", ret);
-
-	VCROSS( left, Norm, edgevect );
+	if( nmg_find_eu_leftvec( left, eu ) < 0 )  return -rt_pi;
 
 	ret = rt_angle_measure( left, xvec, yvec );
 
@@ -439,8 +470,11 @@ insert:
 	if( iteration1 >= 10000 )  rt_bomb("nmg_radial_join_eu:  infinite loop (1)\n");
 
 	/* This should catch errors, anyway */
-	if( nmg_check_radial(original_eu1, tol) )
+	NMG_CK_EDGEUSE(original_eu1);
+	if( nmg_check_radial(original_eu1, tol) )  {
+		nmg_plot_lu_around_eu( "around", original_eu1, tol );
 		rt_bomb("nmg_radial_join_eu(): radial orientation ERROR\n");
+	}
 
 	if (rt_g.NMG_debug & DEBUG_MESH_EU)  rt_log("nmg_radial_join_eu: END\n");
 }
