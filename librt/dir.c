@@ -73,18 +73,22 @@ int len;
 	rt_i.rti_inf_box.bn.bn_type = CUT_BOXNODE;
 
 	buf[0] = '\0';
-	addr = ftell(rt_i.fp);
 	(void)fread( (char *)&record, sizeof record, 1, rt_i.fp );
 	if( record.u_id != ID_IDENT )  {
 		rt_log("WARNING:  File is not a proper GED database\n");
 		rt_log("This database should be converted before further use.\n");
 	}
-	(void)fseek( rt_i.fp, addr, 0 );
+	if(rewind( rt_i.fp )==EOF)
+		rt_log("rt_dirbuild: rewind() failure\n");
 	while(1)  {
-		addr = ftell(rt_i.fp);
+		if( (addr = ftell(rt_i.fp)) == EOF )
+			rt_log("rt_dirbuild:  ftell() failure\n");
 		if( fread( (char *)&record, sizeof record, 1, rt_i.fp ) != 1
 		    || feof(rt_i.fp) )
 			break;
+
+		if(rt_g.debug&DEBUG_DB)rt_log("db x%x %c (0%o)\n",
+			addr, record.u_id, record.u_id );
 
 		switch( record.u_id )  {
 		case ID_IDENT:
@@ -155,6 +159,8 @@ int len;
 			continue;
 		}
 	}
+	if(rewind( rt_i.fp )==EOF)
+		rt_log("rt_dirbuild: rewind() failure\n");
 	/* Eventually, we will malloc() this on a per-db basis */
 	return( &rt_i );	/* OK */
 }
