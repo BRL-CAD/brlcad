@@ -41,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int	printf();
 
-static void	arb_ed(), ars_ed(), ell_ed(), tgc_ed(), tor_ed();
+static void	arb_ed(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
 
 void pscale();
 
@@ -96,6 +96,12 @@ struct menu_item  ars_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
+struct menu_item  spline_menu[] = {
+	{ "SPLINE MENU", (void (*)())NULL, 0 },
+	{ "not implemented", spline_ed, 1 },
+	{ "", (void (*)())NULL, 0 }
+};
+
 
 static void
 arb_ed( arg )
@@ -141,6 +147,14 @@ int arg;
 /*ARGSUSED*/
 static void
 ars_ed( arg )
+int arg;
+{
+	(void)printf("NOT IMPLEMENTED YET\n");
+}
+
+/*ARGSUSED*/
+static void
+spline_ed( arg )
 int arg;
 {
 	(void)printf("NOT IMPLEMENTED YET\n");
@@ -238,6 +252,9 @@ init_sedit()
 		break;
 	case ARS:
 		MENU_INSTALL( ars_menu );
+		break;
+	case SPLINE:
+		MENU_INSTALL( spline_menu );
 		break;
 	}
 
@@ -779,12 +796,13 @@ torcom:
 void
 init_objedit()
 {
-	int i;
+	register int i;
 
 	/*
 	 * Check for a processed region 
 	 */
 	if( illump->s_Eflag )  {
+
 		/* Have a processed (E'd) region - NO key solid.
 		 * 	Use the 'center' as the key
 		 */
@@ -806,6 +824,14 @@ init_objedit()
 
 	/* Not an evaluated region - just a regular path ending in a solid */
 	db_getrec( illump->s_path[illump->s_last], &es_rec, 0 );
+
+	if( es_rec.u_id == ID_ARS_A || es_rec.u_id == ID_B_SPL_HEAD )  {
+		(void)printf("ARS or SPLINE may not work well\n");
+		mat_idn(es_mat);
+		es_menu = 0;
+		es_edflag = -1;
+		return;
+	}
 
 	if( es_rec.u_id != ID_SOLID )  {
 		(void)printf(

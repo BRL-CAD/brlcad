@@ -130,11 +130,12 @@ f_modify()
 void
 f_mirror()
 {
+	register struct directory *proto;
 	register struct directory *dp;
+	register int i, j, k;
 	union record record;
-	struct directory *proto;
-	int i, j, k, ngran, nmemb;
-	mat_t mirmat, temp;
+	mat_t mirmat;
+	mat_t temp;
 
 	if( (proto = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -156,7 +157,10 @@ f_mirror()
 	}
 
 	db_getrec( proto, &record, 0 );
-	if( record.u_id == ID_SOLID || record.u_id == ID_ARS_A )  {
+	if( record.u_id == ID_SOLID ||
+		record.u_id == ID_ARS_A ||
+		record.u_id == ID_B_SPL_HEAD
+	)  {
 		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
 			return;
 		db_alloc( dp, proto->d_len );
@@ -164,48 +168,54 @@ f_mirror()
 		/* create mirror image */
 		if( record.u_id == ID_ARS_A )  {
 			NAMEMOVE( cmd_args[2], record.a.a_name );
-			ngran = record.a.a_totlen;
 			db_putrec( dp, &record, 0 );
-			for( i = 0; i < ngran; i++ )  {
-				db_getrec( proto, &record, i+1 );
+			for( i = 1; i < proto->d_len; i++ )  {
+				db_getrec( proto, &record, i );
 				for( j = k; j < 24; j += 3 )
 					record.b.b_values[j] *= -1.0;
-				db_putrec( dp, &record, i+1 );
+				db_putrec( dp, &record, i );
 			}
-
+		} else if( record.u_id == ID_B_SPL_HEAD )  {
+			NAMEMOVE( cmd_args[2], record.d.d_name );
+			db_putrec( dp, &record, 0 );
+			for( i = 1; i < proto->d_len; i++ ) {
+				db_getrec( proto, &record, i );
+				if( record.u_id != ID_B_SPL_CTL )
+					continue;
+				for( j = k; j < 24; j += 3)
+					record.l.l_pts[j] *= -1.0;
+				db_putrec( dp, &record, i );
+			}
 		} else  {
 			for( i = k; i < 24; i += 3 )
 				record.s.s_values[i] *= -1.0;
 			NAMEMOVE( cmd_args[2], record.s.s_name );
 			db_putrec( dp, &record, 0 );
 		}
-	}
-	else
-	if( record.u_id == ID_COMB ) {
-		nmemb = record.c.c_length;
-		if( (dp = dir_add(cmd_args[2],
-				-1,
-				record.c.c_flags == 'R' ? DIR_COMB|DIR_REGION : DIR_COMB,
-				proto->d_len)) == DIR_NULL )
+	} else if( record.u_id == ID_COMB ) {
+		if( (dp = dir_add(
+			cmd_args[2], -1, record.c.c_flags == 'R' ?
+				DIR_COMB|DIR_REGION :
+				DIR_COMB,
+			proto->d_len)
+		) == DIR_NULL )
 			return;
 		db_alloc( dp, proto->d_len );
 		NAMEMOVE(cmd_args[2], record.c.c_name);
 		db_putrec(dp, &record, 0);
 		mat_idn( mirmat );
 		mirmat[k*5] = -1.0;
-		for(i=0; i<nmemb; i++) {
-			db_getrec(proto, &record, i+1);
+		for( i=1; i < proto->d_len; i++) {
+			db_getrec(proto, &record, i);
 			if(record.u_id != ID_MEMB) {
-				(void)printf("copied only %d of %d members\n",i+1,nmemb);
-				(void)putchar( 7 );
+				(void)printf("f_mirror: bad db record\n");
 				return;
 			}
 			mat_mul(temp, mirmat, record.M.m_mat);
 			mat_copy(record.M.m_mat, temp);
-			db_putrec(dp, &record, i+1);
+			db_putrec(dp, &record, i);
 		}
-	}
-	else {
+	} else {
 		(void)printf("%s: Cannot mirror\n",cmd_args[2]);
 		return;
 	}

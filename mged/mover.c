@@ -2,7 +2,7 @@
  *			M O V E R . C
  *
  * Functions -
- *	moveobj		used to update position of an object in objects file
+ *	moveHobj	used to update position of an object in objects file
  *	moveinstance	Given a COMB and an object, modify all the regerences
  *	combadd		Add an instance of an object to a combination
  *
@@ -44,8 +44,6 @@ moveHobj( dp, xlate )
 register struct directory *dp;
 matp_t xlate;
 {
-	static int Nb_strsl;
-	static int n;
 	vect_t	work;			/* Working vector */
 	register int i;
 	register float *p;		/* -> to vector to be worked on */
@@ -54,10 +52,10 @@ matp_t xlate;
 
 	db_getrec( dp, &record, 0 );
 
-	if( record.u_id == ID_ARS_A )  {
-		Nb_strsl = record.a.a_totlen;
+	switch( record.u_id )  {
 
-		/* 1st b type record  */
+	case ID_ARS_A:
+		/* 1st B type record is special:  Vertex point */
 		db_getrec( dp, &record, 1 );
 
 		/* displace the base vector */
@@ -72,22 +70,34 @@ matp_t xlate;
 		}
 		db_putrec( dp, &record, 1 );
 
-		/* process next (Nb_strcx * NX)-1  records  */
-		for(n=2; n<=Nb_strsl; n++)  {
-			db_getrec( dp, &record, n );
+		/* Process all the remaining B records */
+		for( i = 2; i < dp->d_len; i++ )  {
+			db_getrec( dp, &record, i );
 			/* Transform remaining vectors */
 			for( p = &record.b.b_values[0*3];
-					p < &record.b.b_values[8*3]; p += 3) {
+			     p < &record.b.b_values[8*3]; p += 3) {
 				MAT4X3VEC( work, xlate, p );
 				VMOVE( p, work );
 			}
-			db_putrec( dp, &record, n );
+			db_putrec( dp, &record, i );
 		}
-		return;
-	}
+		break;
 
-	if( record.u_id == ID_SOLID )  {
+	case ID_B_SPL_HEAD:
+		for( i = 1; i < dp->d_len; i++) {
+			db_getrec( dp, &record, i);
+			if( record.u_id != ID_B_SPL_CTL )
+				continue;
+			for( p = &record.l.l_pts[0*3];
+			     p < &record.l.l_pts[8*3]; p += 3) {
+				MAT4X3VEC( work, xlate, p );
+				VMOVE( p, work );
+			}
+			db_putrec( dp, &record, i);
+		}
+		break;
 
+	case ID_SOLID:
 		/* Displace the vertex (V) */
 		MAT4X3PNT( work, xlate, &record.s.s_values[0] );
 		VMOVE( &record.s.s_values[0], work );
@@ -115,37 +125,38 @@ matp_t xlate;
 		common:
 			/* Transform all the vectors */
 			for( p = &record.s.s_values[1*3]; p < area_end;
-								p += 3) {
+			     p += 3) {
 				MAT4X3VEC( work, xlate, p );
 				VMOVE( p, work );
 			}
 			break;
 
 		default:
-			(void)printf("moveobj:  cant move obj type %d\n",
-					record.s.s_type );
+			(void)printf("moveobj:  can't move obj type %d\n",
+				record.s.s_type );
 			return;		/* ERROR */
 		}
 		db_putrec( dp, &record, 0 );
-		return;
-	}
+		break;
 
-	if( record.u_id != ID_COMB )  {
+	default:
 		(void)printf("MoveHobj -- bad disk record\n");
 		return;			/* ERROR */
-	}
 
-	/*
-	 * Move all the references within a combination
-	 */
-	for( i=1; i < dp->d_len; i++ )  {
-		static mat_t temp;
+	case ID_COMB:
+		/*
+		 * Move all the references within a combination
+		 */
+		for( i=1; i < dp->d_len; i++ )  {
+			static mat_t temp;
 
-		db_getrec( dp, &record, i );
-		mat_mul( temp, xlate, record.M.m_mat );
-		mat_copy( record.M.m_mat, temp );
-		db_putrec( dp, &record, i );
+			db_getrec( dp, &record, i );
+			mat_mul( temp, xlate, record.M.m_mat );
+			mat_copy( record.M.m_mat, temp );
+			db_putrec( dp, &record, i );
+		}
 	}
+	return;
 }
 
 /*

@@ -279,13 +279,22 @@ f_list()
 			record.b.b_values[2]*base2local );
 		return;
 	}
+	if( record.u_id == ID_B_SPL_HEAD ) {
+		(void)printf("%s:  SPLINE\n", dp->d_namep );
+		db_getrec( dp, &record, 0 );
+		(void)printf(" order %d %d\n", record.d.d_order[0],
+			record.d.d_order[1]);
+		(void)printf(" num Control points %d %d\n",
+			record.d.d_ctl_size[0], record.d.d_ctl_size[1]);
+		return;
+	}
 	if( record.u_id == ID_P_HEAD )  {
 		(void)printf("%s:  %d granules of polygon data\n",
 			dp->d_namep, dp->d_len-1 );
 		return;
 	}
 	if( record.u_id != ID_COMB )  {
-		(void)printf("%s: garbage!\n", dp->d_namep );
+		(void)printf("%s: unknown record type!\n", dp->d_namep );
 		return;
 	}
 

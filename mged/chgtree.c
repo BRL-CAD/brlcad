@@ -78,7 +78,7 @@ f_copy()
 	register struct directory *proto;
 	register struct directory *dp;
 	union record record;
-	int i, ngran, nmemb;
+	register int i;
 
 	if( (proto = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -91,9 +91,6 @@ f_copy()
 	db_getrec( proto, &record, 0 );
 
 	if(record.u_id == ID_SOLID) {
-		/*
-		 * Update the in-core directory
-		 */
 		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
 			return;
 		db_alloc( dp, proto->d_len );
@@ -103,34 +100,29 @@ f_copy()
 		 */
 		NAMEMOVE( cmd_args[2], record.s.s_name );
 		db_putrec( dp, &record, 0 );
-	}
-	else
-	if(record.u_id == ID_ARS_A)  {
-		/*
-		 * Update the in-core directory
-		 */
+	} else if(record.u_id == ID_ARS_A)  {
 		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
 			return;
 		db_alloc( dp, proto->d_len );
-
-		/*
-		 * Update the disk record
-		 */
 		NAMEMOVE( cmd_args[2], record.a.a_name );
-		ngran = record.a.a_totlen;
 		db_putrec( dp, &record, 0 );
 
 		/* Process the rest of the ARS (b records)  */
-		for( i = 0; i < ngran; i++ )  {
-			db_getrec( proto, &record, i+1 );
-			db_putrec( dp, &record, i+1 );
+		for( i = 1; i < proto->d_len; i++ )  {
+			db_getrec( proto, &record, i );
+			db_putrec( dp, &record, i );
 		}
-	}
-	else
-	if(record.u_id == ID_COMB) {
-		/*
-		 * Update the in-core directory
-		 */
+	} else if( record.u_id == ID_B_SPL_HEAD ) {
+		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+			return;
+		db_alloc( dp, proto->d_len );
+		NAMEMOVE( cmd_args[2], record.d.d_name );
+		db_putrec( dp, &record, 0 );
+		for( i = 1; i < proto->d_len; i++ ) {
+			db_getrec( proto, &record, i );
+			db_putrec( dp, &record, i );
+		}
+	} else if(record.u_id == ID_COMB) {
 		if( (dp = dir_add(
 			cmd_args[2],
 			-1,
@@ -139,23 +131,16 @@ f_copy()
 			return;
 		db_alloc( dp, proto->d_len );
 
-		/*
-		 * Update the disk record
-		 */
 		NAMEMOVE( cmd_args[2], record.c.c_name );
-		nmemb = record.c.c_length;
 		db_putrec( dp, &record, 0 );
 
 		/* Process member records  */
-		for( i = 0; i < nmemb; i++ )  {
-			db_getrec( proto, &record, i+1 );
-			db_putrec( dp, &record, i+1 );
+		for( i = 1; i < proto->d_len; i++ )  {
+			db_getrec( proto, &record, i );
+			db_putrec( dp, &record, i );
 		}
-	}
-	else {
+	} else {
 		(void)printf("%s: cannot copy\n",cmd_args[2]);
-		(void)putchar( 7 );
-		return;
 	}
 }
 

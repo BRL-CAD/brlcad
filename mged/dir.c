@@ -114,6 +114,7 @@ char *name;
  */
 void
 dir_build()  {
+	register FILE *fp;
 	static long	addr;
 
 	(void)lseek( objfd, 0L, 0 );
@@ -140,8 +141,10 @@ dir_build()  {
 		(void)strcat(cur_title, record.i.i_title);
 	}
 
-	(void)lseek( objfd, 0L, 0 );
-
+	if( (fp = fopen( filename, "r" )) == NULL )  {
+		(void)printf("dir_build: fopen failed\n");
+		return;
+	}
 
 	while(1)  {
 		addr = lseek( objfd, 0L, 1 );
@@ -156,7 +159,7 @@ dir_build()  {
 			continue;
 		}
 		if( record.u_id == ID_FREE )  {
-			/* Ought to inform db manager of avail. space */
+			/* Inform db manager of avail. space */
 			memfree( &dbfreep, 1, addr/sizeof(union record) );
 			continue;
 		}
@@ -170,7 +173,15 @@ dir_build()  {
 				1 );
 			continue;
 		}
-
+		if( record.u_id == ID_B_SPL_HEAD ) {
+			dir_add( record.d.d_name, addr, DIR_SOLID, record.d.d_totlen+1 );
+			/* Skip remaining B-spline records.    */
+			(void)lseek( objfd,
+				(long)(record.d.d_totlen+1) *
+				(long)(sizeof( record )),
+				1 );
+			continue;
+		}
 		if( record.u_id == ID_SOLID )  {
 			(void)dir_add( record.s.s_name, addr, DIR_SOLID, 1 );
 			continue;
@@ -259,7 +270,10 @@ register char *str;
 	register struct directory *dp;
 
 	for( dp = DirHead; dp != DIR_NULL; dp=dp->d_forw )  {
-		if ( strcmp( str, dp->d_namep ) == 0 )
+		if(
+			str[0] == dp->d_namep[0]  &&	/* speed */
+			strcmp( str, dp->d_namep ) == 0
+		)
 			return(dp);
 	}
 
@@ -712,7 +726,7 @@ dir_nref( )
 
 	/* Read through the whole database, looking only at MEMBER records */
 	if( (fp = fopen( filename, "r" )) == NULL )  {
-		(void)printf("dir_nref: fdopen failed\n");
+		(void)printf("dir_nref: fopen failed\n");
 		return;
 	}
 	while(fread( (char *)&rec, sizeof(rec), 1, fp ) == 1 && !feof(fp))  {

@@ -144,6 +144,10 @@ union record *recordp;
 			draw_ars( &recordp->a, path[pathpos], xform );
 			break;
 
+		case ID_B_SPL_HEAD:
+			draw_spline( &recordp->a, path[pathpos], xform );
+			break;
+
 		case ID_P_HEAD:
 			draw_poly( path[pathpos], xform );
 			break;
