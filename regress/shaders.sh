@@ -224419,10 +224419,11 @@ echo 'rendering shaders...'
 if [ ! -f shaders.pix ] ; then
 	echo shaders raytrace failed
 else
-	if [ ! -f $TOP_SRCDIR/regress/ref/shaders.pix ] ; then
+	if [ ! -f $TOP_SRCDIR/regress/shaderspix.asc ] ; then
 		echo No reference file for $TOP_SRCDIR/regress/ref/shaders.pix
 	else
-		$PREFIX/bin/pixdiff shaders.pix /vld/regress/brlcad_scripts/ref/shaders.pix \
+		$PREFIX/bin/asc2pix < $TOP_SRCDIR/regress/shaderspix.asc > shaders_ref.pix
+		$PREFIX/bin/pixdiff shaders.pix shaders_ref.pix \
 		> shaders.pix.diff \
 		2>> shaders.log
 
