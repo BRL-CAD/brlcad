@@ -176,13 +176,13 @@ char **argv;
 	} else {
 		sscanf( ctitle, "%20d%10d", &sol_total, &reg_total );
 	}
-	printf("Expecting %d solids, %d regions\n", sol_total, reg_total);
+	if(verbose) printf("Expecting %d solids, %d regions\n", sol_total, reg_total);
 
 
 	/*
 	 *  SOLID TABLE
 	 */
-	printf("processing solid table\n");
+	if(verbose) printf("Solid table\n");
 	sol_work = 0;
 	while( sol_work < sol_total ) {
 		i = getsolid();
@@ -203,7 +203,7 @@ char **argv;
 
 	/* REGION TABLE */
 
-	printf("\nProcessing region table\n");
+	if(verbose)printf("\nRegion table\n");
 
 	i = sizeof(struct wmember) * (reg_total+2);
 	if( (wmp = (struct wmember *)malloc(i)) == (struct wmember *)0 )  {
@@ -223,13 +223,15 @@ char **argv;
 		getline( dummy, sizeof(dummy), "blank card" );
 	}
 
-	printf("\nProcessing region ident table\n");
+	if(verbose) printf("\nRegion ident table\n");
 	getid();
 
-	printf("\nProducing groups\n");
+	if(verbose) printf("\nGroups\n");
 	cur_col = 0;
 	group_write();
-	printf("\n");
+	if(verbose) printf("\n");
+
+	exit(0);
 }
 
 /*
