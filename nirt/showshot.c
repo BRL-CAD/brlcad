@@ -14,6 +14,9 @@
  *			from the command line.  The database name
  *			wasn't used anyway!
  */
+#ifndef lint
+static char RCSid[] = "$Header$";
+#endif
 
 #include <stdio.h>
 #include <strings.h>
