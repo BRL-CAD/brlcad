@@ -167,6 +167,19 @@ static int XdoMotion = 0;
  * Fire up the display manager, and the display processor.
  *
  */
+#if 1
+X_open(name)
+char *name;
+{
+  x_var_init();
+  rt_vls_init(&pathName);
+
+  if( xsetup(name) )
+    return(1);		/* BAD */
+
+  return(0);			/* OK */
+}
+#else
 X_open()
 {
   char	line[82];
@@ -200,7 +213,7 @@ X_open()
 
   return(0);			/* OK */
 }
-
+#endif
 /*
  *  			X _ C L O S E
  *  
