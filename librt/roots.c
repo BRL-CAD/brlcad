@@ -28,8 +28,8 @@ static char RCSroots[] = "@(#)$Header$ (BRL)";
 #include "./complex.h"
 
 int		polyRoots();
-HIDDEN void	synthetic(), deflate();
-HIDDEN int	findRoot(), evalpoly();
+void	rt_poly_eval_w_2derivatives(), rt_poly_deflate();
+int	rt_poly_findroot(), rt_poly_checkroots();
 
 /*	>>>  p o l y R o o t s ( )  <<<
  *	
@@ -49,20 +49,10 @@ register complex	roots[];	/* space to put roots found	*/
 	register int	n;		/* number of roots found	*/
 	LOCAL fastf_t	factor;		/* scaling factor for copy	*/
 
-	/* Allocate space for the roots and set the first guess to
-	 * (almost) zero.
-	 *
-	 * This method seems to require a small nudge off the real axis
-	 * despite documentation to the contrary.
-	 */
-	for ( n=0; n < MAXP; n++ ){
-		CxCons( &roots[n], 0.0, SMALL );
-	}
-
 	/* Remove leading coefficients which are too close to zero,
 	 * to prevent the polynomial factoring from blowing up, below.
 	 */
-	while( eqn->cf[0] > -SMALL && eqn->cf[0] < SMALL )  {
+	while( NEAR_ZERO( eqn->cf[0], SMALL ) )  {
 		for ( n=0; n <= eqn->dgr; n++ ){
 			eqn->cf[n] = eqn->cf[n+1];
 		}
@@ -80,29 +70,33 @@ register complex	roots[];	/* space to put roots found	*/
 	/* A trailing coefficient of zero indicates that zero
 	 * is a root of the equation.
 	 */
-	while ( eqn->cf[eqn->dgr] == 0.0 ){
+	while( NEAR_ZERO( eqn->cf[eqn->dgr], SMALL ) )  {
 		roots[n].re = roots[n].im = 0.0;
 		--eqn->dgr;
 		++n;
 	}
 
 	while ( eqn->dgr > 2 ){
-
 		if ( eqn->dgr == 4 )  {
-			if( quartic( eqn, &roots[n] ) )
-				return( n+4 );
-			if( evalpoly( eqn, &roots[n], 4 ) == 0 )
-				return ( n+4 );
+			if( quartic( eqn, &roots[n] ) )  {
+				if( rt_poly_checkroots( eqn, &roots[n], 4 ) == 0 )  {
+					return( n+4 );
+				}
+			}
+		} else if ( eqn->dgr == 3 )  {
+			if( cubic( eqn, &roots[n] ) )  {
+				if ( rt_poly_checkroots( eqn, &roots[n], 3 ) == 0 )  {
+					return ( n+3 );
+				}
+			}
 		}
 
-		if ( eqn->dgr == 3 )  {
-			if( cubic( eqn, &roots[n] ) )
-				return( n+3 );
-			if ( evalpoly( eqn, &roots[n], 3 ) == 0 )
-				return ( n+3 );
-		}
-
-		if ( (findRoot( eqn, &roots[n] )) < 0 )
+		/*
+		 *  Set initial guess for root to almost zero.
+		 *  This method requires a small nudge off the real axis.
+		 */
+		CxCons( &roots[n], 0.0, SMALL );
+		if ( (rt_poly_findroot( eqn, &roots[n] )) < 0 )
 			return(n);	/* return those we found, anyways */
 
 		if ( Abs(roots[n].im) > 1.0e-5* Abs(roots[n].re) ){
@@ -118,7 +112,7 @@ register complex	roots[];	/* space to put roots found	*/
 			roots[n].im = 0.0;
 		}
 
-		deflate( eqn, &roots[n] );
+		rt_poly_deflate( eqn, &roots[n] );
 		++n;
 	}
 
@@ -136,7 +130,8 @@ register complex	roots[];	/* space to put roots found	*/
 	return n;
 }
 
-/*	>>>  f i n d R o o t ( )  <<<
+/*
+ *			R T _ P O L Y _ F I N D R O O T
  *
  *	Calculates one root of a polynomial ( p(Z) ) using Laguerre's
  *	method.  This is an iterative technique which has very good
@@ -155,8 +150,8 @@ register complex	roots[];	/* space to put roots found	*/
  *	possible.
  *
  */
-HIDDEN int
-findRoot( eqn, nxZ )
+int
+rt_poly_findroot( eqn, nxZ )
 register poly		*eqn;	/* polynomial			*/
 register complex	*nxZ;	/* initial guess for root	*/
 {
@@ -171,7 +166,7 @@ register complex	*nxZ;	/* initial guess for root	*/
 
 	for( i=0; i < 20; i++ ) {
 		cZ = *nxZ;
-		synthetic( &cZ, eqn, &p0, &p1, &p2 );
+		rt_poly_eval_w_2derivatives( &cZ, eqn, &p0, &p1, &p2 );
 
 		/* Compute H for Laguerre's method. */
 		n = eqn->dgr-1;
@@ -224,14 +219,15 @@ register complex	*nxZ;	/* initial guess for root	*/
 	}
 
 	/* If the thing hasn't converged yet, it probably won't. */
-	rt_log("findRoot:  didn't converge in %d iterations, b=%g, diff=%g\n",
+	rt_log("rt_poly_findroot:  didn't converge in %d iterations, b=%g, diff=%g\n",
 		i, b, diff);
 	rt_log("nxZ=%gR+%gI, p0=%gR+%gI\n", nxZ->re, nxZ->im, p0.re, p0.im);
 	return(-1);		/* ERROR */
 }
 
 
-/*	>>>  s y n t h e t i c ( )  <<<
+/*
+ *			R T _ P O L Y _ E V A L _ W _ 2 D E R I V A T I V E S
  *
  *	Evaluates p(Z), p'(Z), and p''(Z) for any Z (real or complex).
  *	Given an equation of the form
@@ -250,8 +246,8 @@ register complex	*nxZ;	/* initial guess for root	*/
  *		d0 = c0,	di = d(i-1)*Z + ci,	i = 1,2,...n-2
  *
  */
-HIDDEN void
-synthetic( cZ, eqn, b, c, d )
+void
+rt_poly_eval_w_2derivatives( cZ, eqn, b, c, d )
 register complex	*cZ;		/* input */
 register poly		*eqn;		/* input */
 register complex	*b, *c, *d;	/* outputs */
@@ -278,9 +274,17 @@ register complex	*b, *c, *d;	/* outputs */
 }
 
 
-/*	>>>  e v a l p o l y ( )  <<<
+/*
+ *			R T _ P O L Y _ C H E C K R O O T S
  *
  *	Evaluates p(Z) for any Z (real or complex).
+ *	In this case, test all "nroots" entries of roots[] to ensure
+ *	that they are roots (zeros) of this polynomial.
+ *
+ * Returns -
+ *	0	all roots are true zeros
+ *	1	at least one "root[]" entry is not a true zero
+ *
  *	Given an equation of the form
  *
  *		p(Z) = a0*Z^n + a1*Z^(n-1) +... an != 0,
@@ -292,8 +296,8 @@ register complex	*b, *c, *d;	/* outputs */
  *		b0 = a0,	bi = b(i-1)*Z + ai,	i = 1,2,...n
  *
  */
-HIDDEN int
-evalpoly( eqn, roots, nroots )
+int
+rt_poly_checkroots( eqn, roots, nroots )
 register poly		*eqn;
 register complex	roots[];
 register int		nroots;
@@ -304,25 +308,28 @@ register int		nroots;
 	for ( m=0; m < nroots; ++m ){
 		CxCons( &epoly, eqn->cf[0], 0.0 );
 
-		for ( n=1; n <= eqn->dgr; ++n){
+		for ( n=1; n <= eqn->dgr; ++n)  {
 			CxMul( &epoly, &roots[m] );
 			epoly.re += eqn->cf[n];
-			}
+		}
 		if ( Abs( epoly.re ) > 1.0e-5 || Abs( epoly.im ) > 1.0e-5 )
-			return 1;
+			return 1;	/* FAIL */
 	}
-	return 0;
+	/* Both real & imaginary are "zero" */
+	return 0;			/* OK */
 }
 
 
-/*	>>>  d e f l a t e ( )  <<<
+/*
+ *			R T _ P O L Y _ D E F L A T E
+ *
  *
  *	Deflates a polynomial by a given root.
  */
-HIDDEN void
-deflate( oldP, root )
+void
+rt_poly_deflate( oldP, root )
 register poly		*oldP;
-register complex		*root;
+register complex	*root;
 {
 	LOCAL poly	div, rem;
 
@@ -330,7 +337,7 @@ register complex		*root;
 	 * root, Quadratic for a complex root (since they come in con-
 	 * jugate pairs).
 	 */
-	if ( root->im == 0 ) {
+	if ( NEAR_ZERO( root->im, SMALL) ) {
 		/*  root is real		*/
 		div.dgr = 1;
 		div.cf[0] = 1;
