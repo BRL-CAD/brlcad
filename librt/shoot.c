@@ -947,6 +947,7 @@ register struct application *ap;
 					/* Restore to original distance */
 					s2->seg_in.hit_dist += ss.dist_corr;
 					s2->seg_out.hit_dist += ss.dist_corr;
+					s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
 					BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
 				}
 			}
