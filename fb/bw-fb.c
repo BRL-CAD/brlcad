@@ -24,12 +24,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
-#include "fb.h"
+#include "conf.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For getopt() and friends */
+
+#include "fb.h"
 
 #define	MAX_LINE	(16*1024)	/* Largest output scan line length */
 
