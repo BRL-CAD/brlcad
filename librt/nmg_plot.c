@@ -2535,7 +2535,7 @@ int				cmd;		/* BN_VLIST_LINE_DRAW, etc */
 	CONST struct edge_g_cnurb	*eg;
 	CONST struct faceuse	*fu;
 	register int		i;
-	register fastf_t	*vp;
+	register fastf_t	*vp = (fastf_t	*)NULL;
 	struct edge_g_cnurb	n;
 	CONST struct edge_g_cnurb	*c;
 	int 			coords;

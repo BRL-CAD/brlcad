@@ -525,7 +525,7 @@ static int
 isect_ray_bbox(isect)
 register struct isect_stuff *isect;
 {
-	register double NdotD;
+	register double NdotD = -42.0;
 	register double NdotPt;
 	double dist;
 	register int plane;

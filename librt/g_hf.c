@@ -1672,7 +1672,7 @@ CONST struct rt_tess_tol *ttol;
 CONST struct bn_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
-	register unsigned short		*sp;
+	register unsigned short		*sp = (unsigned short *)NULL;
 	register double *dp;
 	vect_t		xbasis;
 	vect_t		ybasis;
