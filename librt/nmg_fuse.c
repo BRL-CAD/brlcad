@@ -1357,7 +1357,7 @@ rmax->ang * rt_radtodeg, rmax->eu );
 			rmin->ang * rt_radtodeg, rmin->eu,
 			rmax->ang * rt_radtodeg, rmax->eu );
 		nmg_pr_radial_list( hd, tol );
-		nmg_pr_fu_around_eu_vecs( rmin->eu, xvec, yvec, zvec, tol );
+		nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
 		rt_bomb("nmg_radial_build_list() min and max angle not adjacent in list (or list not monotone increasing)\n");
 	}
 }
@@ -1864,13 +1864,12 @@ CONST struct rt_tol	*tol;
 			eu1, eu2,
 			eu1->e_p, eu2->e_p);
 		nmg_euprint("\tJoining", eu1);
-		nmg_euprint("\t     to", eu2);
 		rt_log( "Faces around eu1:\n" );
-		nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
+		nmg_pr_fu_around_eu_vecs( eu1ref, xvec, yvec, zvec, tol );
 		nmg_pr_radial_list( &list1, tol );
 
 		rt_log( "Faces around eu2:\n" );
-		nmg_pr_fu_around_eu_vecs( eu2, xvec, yvec, zvec, tol );
+		nmg_pr_fu_around_eu_vecs( eu2ref, xvec, yvec, zvec, tol );
 		nmg_pr_radial_list( &list2, tol );
 		nmg_pr_ptbl( "Participating shells", &shell_tbl, 1 );
 	}
@@ -2058,10 +2057,13 @@ CONST struct rt_tol	*tol;
 	vect_t		xvec, yvec, zvec;
 	struct nmg_radial	*rad;
 	int	nflip;
+	struct faceuse	*fu;
 
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
 
+	fu = nmg_find_fu_of_eu(eu);
+	if( fu && fu->orientation != OT_SAME )  eu = eu->eumate_p;
 	nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, tol );
 
 	RT_LIST_INIT( &list );
@@ -2124,4 +2126,26 @@ CONST struct rt_tol	*tol;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log("nmg_s_radial_check( s=x%x ) END\n", s);
+}
+
+/*
+ *			N M G _ R _ R A D I A L _ C H E C K
+ */
+void
+nmg_r_radial_check( r, tol )
+CONST struct nmgregion	*r;
+CONST struct rt_tol	*tol;
+{
+	struct shell	*s;
+
+	NMG_CK_REGION(r);
+	RT_CK_TOL(tol);
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log("nmg_r_radial_check( r=x%x )\n", r);
+
+	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
+		NMG_CK_SHELL(s);
+		nmg_s_radial_check( s, tol );
+	}
 }
