@@ -59,7 +59,6 @@ cake \
  nmg_visit.o \
  nmg_info.o \
  nmg_pr.o \
- hist.o \
  global.o \
  mater.o \
  memalloc.o \
