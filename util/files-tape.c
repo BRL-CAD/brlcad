@@ -58,6 +58,8 @@ long	byteswritten = 0;	/* Number of bytes written */
 int	bufsize = 24*1024;	/* Default buffer size */
 char	*buf;
 
+void	fileout();
+
 static char usage[] = "\
 Usage: files-tape [-b bytes] [-k Kbytes] [files]\n";
 
@@ -135,6 +137,7 @@ char	**argv;
 /*
  *			F I L E O U T
  */
+void
 fileout( fd, name )
 register int	fd;
 char		*name;
