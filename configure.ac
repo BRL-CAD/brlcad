@@ -53,9 +53,10 @@ MAJOR_VERSION=7
 MINOR_VERSION=0
 PATCH_VERSION=0
 CONFIG_DATE=`date +%Y%m%d`
+CONFIG_TIME="`date '+%H %M %S'`"
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 echo "Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
-
+echo "=================================================="
 # necessary for proper file creation on nfs volumes
 umask 022
 
@@ -861,7 +862,7 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included portable network graphics library)
 if test "x$build_brlcad_png" = "xyes" ; then
-	PNG_LIBS='${abs_top_builddir}/src/other/libpng/libpng.la -lz'
+	PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la -lz'
 	AC_MSG_RESULT(yes)
 else
 	AC_MSG_RESULT(no)
@@ -908,7 +909,7 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included regular expression library)
 if test "x$build_brlcad_regex" = "xyes" ; then
-	REGEX_LIBS='${abs_top_builddir}/src/other/libregex/libregex.la'
+	REGEX_LIBS='${top_builddir}/src/other/libregex/libregex.la'
 	AC_MSG_RESULT(yes)
 else
 	AC_MSG_RESULT(no)
@@ -952,7 +953,7 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included zlib compression library)
 if test "x$build_brlcad_zlib" = "xyes" ; then
-	ZLIB_LIBS='${abs_top_builddir}/src/other/libz/libz.la'
+	ZLIB_LIBS='${top_builddir}/src/other/libz/libz.la'
 	AC_MSG_RESULT(yes)
 else
 	AC_MSG_RESULT(no)
@@ -1186,6 +1187,69 @@ sysconfdir=`eval "echo $sysconfdir"`
 mandir=`eval "echo $mandir"`
 mandir=`eval "echo $mandir"`
 
+dnl
+dnl Compute configuration time elapsed
+dnl
+time_elapsed=""
+pre_hour="`echo $CONFIG_TIME | awk '{print $1}'`"
+pre_min="`echo $CONFIG_TIME | awk '{print $2}'`"
+pre_sec="`echo $CONFIG_TIME | awk '{print $3}'`"
+hour_seconds_before="`expr $pre_hour \* 60 \* 60`"
+min_seconds_before="`expr $pre_min \* 60`"
+total_pre="`expr $hour_seconds_before + $min_seconds_before + $pre_sec`"
+
+post_conf_time="`date '+%H %M %S'`"
+post_hour="`echo $post_conf_time | awk '{print $1}'`"
+post_min="`echo $post_conf_time | awk '{print $2}'`"
+post_sec="`echo $post_conf_time | awk '{print $3}'`"
+hour_seconds_after="`expr $post_hour \* 60 \* 60`"
+min_seconds_after="`expr $post_min \* 60`"
+total_post="`expr $hour_seconds_after + $min_seconds_after + $post_sec`"
+
+sec_elapsed="`expr $total_post - $total_pre`"
+min_elapsed="0"
+if ! test "x$sec_elapsed" = "x0" ; then
+	min_elapsed="`expr $sec_elapsed / 60`"
+	sec_elapsed2="`expr $min_elapsed \* 60`"
+	sec_elapsed="`expr $sec_elapsed - $sec_elapsed2`"
+fi
+hour_elapsed="0"
+if ! test "x$min_elapsed" = "x0" ; then
+	hour_elapsed="`expr $min_elapsed / 60`"
+	min_elapsed2="`expr $hour_elapsed \* 60`"
+	min_elapsed="`expr $min_elapsed - $min_elapsed2`"
+fi
+
+if ! test "x$hour_elapsed" = "x0" ; then
+	if test "x$hour_elapsed" = "x1" ; then
+		time_elapsed="$hour_elapsed hour"
+	else
+		time_elapsed="$hour_elapsed hours"
+	fi
+fi
+if ! test "x$min_elapsed" = "x0" ; then
+	if ! test "x$time_elapsed" = "x" ; then
+		time_elapsed="${time_elapsed}, "
+	fi
+	time_elapsed="${time_elapsed}${min_elapsed}"
+	if test "x$min_elapsed" = "x1" ; then
+		time_elapsed="${time_elapsed} minute"
+	else
+		time_elapsed="${time_elapsed} minutes"
+	fi
+fi
+if ! test "x$sec_elapsed" = "x0" ; then
+	if ! test "x$time_elapsed" = "x" ; then
+		time_elapsed="${time_elapsed}, "
+	fi
+	time_elapsed="${time_elapsed}${sec_elapsed}"
+	if test "x$sec_elapsed" = "x1" ; then
+		time_elapsed="${time_elapsed} second"
+	else
+		time_elapsed="${time_elapsed} seconds"
+	fi
+fi
+
 
 dnl **********************
 dnl *** Report Summary ***
@@ -1230,7 +1294,7 @@ echo Only build benchmark suite ...........: $only_benchmark
 echo Only build librtserver ...............: $only_rts
 echo Generate doxygen documentation .......: $use_doxygen
 echo
+echo Elapsed configuration time ...........: $time_elapsed
 echo ---
 echo "$0 complete, type 'make' to begin building"
 echo
-
