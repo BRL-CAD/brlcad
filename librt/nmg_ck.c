@@ -1838,13 +1838,19 @@ int			first;
 				NMG_CK_FACEUSE( fu );
 				if( fu->orientation != OT_SAME )
 					continue;
-				NMG_GET_FU_PLANE( n, fu );
-				dist = DIST_PT_PLANE( v->vg_p->coord , n );
-				if( !NEAR_ZERO( dist , sp->tol->dist ) )
+				if( !fu->f_p->g.magic_p )
+					bu_log( "ERROR - nmg_ck_vs_in_region: fu (x%x) has no geometry\n", fu );
+				else if( *fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
 				{
-					bu_log( "ERROR - nmg_ck_vs_in_region: vertex x%x ( %g %g %g ) is %g from faceuse x%x\n" , 
-						v , V3ARGS( v->vg_p->coord ) , dist , fu );
+					NMG_GET_FU_PLANE( n, fu );
+					dist = DIST_PT_PLANE( v->vg_p->coord , n );
+					if( !NEAR_ZERO( dist , sp->tol->dist ) )
+					{
+						bu_log( "ERROR - nmg_ck_vs_in_region: vertex x%x ( %g %g %g ) is %g from faceuse x%x\n" , 
+							v , V3ARGS( v->vg_p->coord ) , dist , fu );
+					}
 				}
+				/* else if( *fu->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC ) XXXX */
 			}
 		}
 	}
