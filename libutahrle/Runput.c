@@ -90,28 +90,20 @@
  * 		    follow the last byte in the run.
  */
 
-#include	<stdio.h>
-#include	"rle_put.h"
-#include	"rle.h"
-#include	"rle_code.h"
-#ifdef USE_STDLIB_H
-#include	<stdlib.h>
-#else
+#include "conf.h"
 
+#include <stdio.h>
 #ifdef USE_STRING_H
-#include	<string.h>
+#include <string.h>
 #else
-#include	<strings.h>
-#endif /* USE_STRING_H */
+#include <strings.h>
+#endif
 
-#ifndef VOID_STAR
-extern char * malloc();
-#else
-extern void *malloc();
-#endif /* VOID_STAR */
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"
+#include "rle_put.h"
+#include "rle.h"
+#include "rle_code.h"
 
 #define UPPER 255			/* anything bigger ain't a byte */
 
