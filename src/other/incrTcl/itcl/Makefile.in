@@ -108,7 +108,7 @@ ITCL_WIN_DIR_NATIVE	= @ITCL_WIN_DIR_NATIVE@
 # library that we are building.
 #========================================================================
 
-lib_BINARIES	= $($(PACKAGE)_LIB_FILE) $($(PACKAGE)stub_LIB_FILE)
+lib_BINARIES	= $(@PACKAGE@_LIB_FILE) $(@PACKAGE@stub_LIB_FILE)
 BINARIES	= $(lib_BINARIES)
 
 SHELL		= @SHELL@
@@ -126,7 +126,7 @@ includedir	= @includedir@
 
 DESTDIR		=
 
-PKG_DIR		= $(PACKAGE)$(VERSION)
+PKG_DIR		= @PACKAGE@$(VERSION)
 pkgdatadir	= $(datadir)/$(PKG_DIR)
 pkglibdir	= $(libdir)/$(PKG_DIR)
 pkgincludedir	= $(includedir)/$(PKG_DIR)
@@ -290,15 +290,15 @@ depend:
 # name from "exampleA" to your package's name.
 #========================================================================
 
-$($(PACKAGE)_LIB_FILE): $($(PACKAGE)_OBJECTS)
-	-rm -f $($(PACKAGE)_LIB_FILE)
+$(@PACKAGE@_LIB_FILE): $(@PACKAGE@_OBJECTS)
+	-rm -f $(@PACKAGE@_LIB_FILE)
 	${MAKE_LIB}
-	$(RANLIB) $($(PACKAGE)_LIB_FILE)
+	$(RANLIB) $(@PACKAGE@_LIB_FILE)
 
-$($(PACKAGE)stub_LIB_FILE): $($(PACKAGE)stub_OBJECTS)
-	-rm -f $($(PACKAGE)stub_LIB_FILE)
+$(@PACKAGE@stub_LIB_FILE): $(@PACKAGE@stub_OBJECTS)
+	-rm -f $(@PACKAGE@stub_LIB_FILE)
 	${MAKE_STUB_LIB}
-	$(RANLIB) $($(PACKAGE)stub_LIB_FILE)
+	$(RANLIB) $(@PACKAGE@stub_LIB_FILE)
 
 #========================================================================
 # We need to enumerate the list of .c to .o lines here.
