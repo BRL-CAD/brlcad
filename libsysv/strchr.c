@@ -19,8 +19,8 @@ register char	*sp;
 register char	c;
 {
 	do {
-		if(*sp == c)
-			return(sp);
-	} while(*sp++);
-	return(NULL);
+		if( *sp == c )
+			return( sp );
+	}  while( *sp++ );
+	return( (char *)0 );
 }
