@@ -619,6 +619,7 @@ va_list ap;
     char fbuf[64], buf[1024];			/* % format buffer */
 
     BU_CK_VLS(vls);
+    bu_vls_extend(vls, 96);
 
     sp = fmt;
     while( *sp ) {
