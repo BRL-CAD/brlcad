@@ -6,7 +6,7 @@
 
 #define PRODUCTS	libpkg.ARCH_SUF
 #define SRCDIR	libpkg
-#define FILES	pkg
+#define FILES	pkg tcl
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
