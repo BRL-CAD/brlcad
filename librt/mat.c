@@ -19,6 +19,7 @@
  *	mat_eigen2x2()			Eigen values and vectors
  *	mat_lookat			Make rot mat:  xform from D to -Z
  *	mat_fromto			Make rot mat:  xform from A to B
+ *	rt_mat_is_equal()		Is mat a equal to mat b?
  *
  *
  * Matrix array elements have the following positions in the matrix:
@@ -53,6 +54,7 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 
 CONST double	mat_degtorad = 0.0174532925199433;
 CONST double	mat_radtodeg = 57.29577951308230698802;
@@ -973,4 +975,51 @@ CONST point_t	pt;
 
 	MAT_DELTAS_VEC( xlate, pt );
 	mat_mul( mat, xlate, tmp );
+}
+
+int
+rt_mat_is_equal(a,b,tol)
+CONST mat_t	a;
+CONST mat_t	b;
+CONST struct rt_tol	*tol;
+{
+	register int i;
+	register double f;
+	register double tdist, tperp;
+
+	RT_CK_TOL(tol);
+
+	tdist = tol->dist;
+	tperp = tol->perp;
+
+/*
+ * Check that the rotation part of the matrix (cosines) are within
+ * the perpendicular tolarance.
+ */
+
+	for (i = 0; i < 16; i+=4) {
+		f = a[i] - b[i];
+		if ( !NEAR_ZERO(f, tperp)) return 0;
+		f = a[i+1] - b[i+1];
+		if ( !NEAR_ZERO(f, tperp)) return 0;
+		f = a[i+2] - b[i+2];
+		if ( !NEAR_ZERO(f, tperp)) return 0;
+	}
+/*
+ * Check that the scale part of the matrix (ratio) is within the
+ * perpendicular tolarance.  There is no ratio tolarance so we use
+ * the tighter of dist or perp.
+ */
+	f = a[15] - a[15];
+	if ( !NEAR_ZERO(f, tperp)) return 0;
+
+/*
+ * Last, check that the translation part of the matrix (dist) are within
+ * the distance tolarance.
+ */
+	for (i=3; i<12; i+=4) {
+		f = a[i] - b[i];
+		if ( !NEAR_ZERO(f, tdist)) return 0;
+	}
+	return 1;
 }
