@@ -26,6 +26,7 @@
 #include "raytrace.h"
 #include "./ged.h"
 #include "./sedit.h"
+#include "../librt/debug.h"	/* XXX */
 
 extern int	args;		/* total number of args available */
 extern int	argcnt;		/* holder for number of args added later */
@@ -452,283 +453,299 @@ register matp_t m;
 }
 
 
-
-
-/* structure to distinguish "pushed" solids */
-struct idpush {
-	char	i_name[NAMESIZE];
-	mat_t	i_mat;
+/* structure to hold all solids that have been pushed. */
+struct push_id {
+	long	magic;
+	struct push_id *forw, *back;
+	struct directory *pi_dir;
+	mat_t	pi_mat;
 };
-static struct idpush idpush, idbuf;
+#define MAGIC_PUSH_ID	0x50495323
+struct push_id	pi_head;
+#define FOR_ALL_PUSH_SOLIDS(p) \
+	for( p=pi_head.forw; p!=&pi_head; p=p->forw)
 
-#define MAXSOL 2000
-extern int discr[], idfd, rd_idfd;	/* from utility1 */
-static int push_count;		/* count of solids to be pushed */
-static int abort_flag;
-
-/*
- *		F _ P U S H ( )
- *
- *	control routine for "pushing" transformations to bottom of paths
- *
- */
-void
-f_push( )
-{
-
-	struct directory *dp, *tdp;
-	int i, j, k, ii, ngran;
-	int	kk = 0;
-	vect_t	vec;
-
-	(void)signal( SIGINT, sig2 );		/* interupts */
-
-	/* open temp file */
-	if( (idfd = creat("/tmp/mged_push", 0666)) < 0 ) {
-		perror( "/tmp/mged_push" );
-		return;
-	}
-	rd_idfd = open( "/tmp/mged_push", 2 );
-
-	for(i=1; i<numargs; i++) {
-		if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY)) == DIR_NULL ) {
-			(void)printf("Skip this object\n");
-			continue;
-		}
-		push_count = 0;		/* NO solids yet */
-		abort_flag = 0;
-		mat_idn( identity );
-		push(dp, 0, identity);
-		if( abort_flag ) {
-			/* Cannot push transformations for this object */
-			(void)printf("%s: push failed\n",cmd_args[i]);
-			continue;
-		}
-		/* It's okay to "push" this object */
-		(void)signal( SIGINT, SIG_IGN );	/* no interupts */
-		(void)lseek(rd_idfd, 0L, 0);
-		for(j=0; j<push_count; j++) {
-			(void)read(rd_idfd, &idpush, sizeof idpush);
-
-			/* apply transformation to this solid */
-			if( (tdp = db_lookup( dbip, idpush.i_name, LOOKUP_QUIET)) == DIR_NULL ) {
-				(void)printf("push: cannot find solid (%s)\n",
-						idpush.i_name);
-				continue;
-			}
-			if( db_get( dbip, tdp, &record, 0, 1) < 0 )  READ_ERR_return;
-			switch( record.u_id ) {
-
-			case ID_SOLID:
-				MAT4X3PNT(	vec,
-						idpush.i_mat,
-						&record.s.s_values[0]	);
-				VMOVE( &record.s.s_values[0], vec );
-				for(k=3; k<=21; k+=3) {
-					MAT4X3VEC(	vec,
-							idpush.i_mat,
-							&record.s.s_values[k]	);
-					VMOVE( &record.s.s_values[k], vec );
-				}
-				if( db_put( dbip, tdp, &record, 0, 1 ) < 0 )
-					WRITE_ERR_return;
-			break;
-
-			case ID_ARS_A:
-				/* apply transformation to the b-records */
-				ngran = record.a.a_totlen;
-				for(ii=1; ii<=ngran; ii++) {
-					if( db_get( dbip, tdp, &record, ii, 1) < 0 )
-						READ_ERR_return;
-					if(ii == 1) {
-						/* vertex */
-						MAT4X3PNT(	vec,
-								idpush.i_mat,
-								&record.b.b_values[0] );
-						VMOVE( &record.b.b_values[0], vec );
-						kk = 1;
-					}
-
-					/* rest of the vectors */
-					for(k=kk; k<8; k++) {
-						MAT4X3VEC(	vec,
-								idpush.i_mat,
-								&record.b.b_values[k*3] );
-						VMOVE( &record.b.b_values[k*3], vec );
-					}
-					kk = 0;
-
-					/* write this b-record */
-					if( db_put( dbip, tdp, &record, ii, 1 ) < 0 )
-						WRITE_ERR_return;
-				}
-			break;
-
-			/*
-			 * NOTE:  these cases are checked in "push" so won't reach here.
-			 *	When splines and polygons are implemented, must update
-			 *	this section.
-			 */
-			case ID_BSOLID:
-				(void)printf("WARNING: (%s) SPLINE not pushed with other elements\n",
-						record.B.B_name);
-			break;
-
-			case ID_P_HEAD:
-				(void)printf("WARNING: (%s) POLYGON not pushed with other elements\n",
-						record.p.p_name);
-			break;
-
-			default:
-				(void)printf("push: unknown solid type (%c) \n",
-						record.u_id);
-			}	/* end of switch */
-
-		}
-
-		/*
-		 *	Finished all the paths for this object
-		 *
-		 *	Identitize all member matrices for this object
-		 */
-		identitize( dp );
-		(void)printf("%s: transformations pushed\n",cmd_args[i]);
-		(void)signal( SIGINT, sig2 );		/* interupts */
-	}
-
-	(void)close( idfd );
-	(void)close( rd_idfd );
-	(void)unlink( "/tmp/mged_push\0" );
-}
-
-
+static int push_error;
 
 /*
- *				P U S H ( )
+ *		P U S H _ L E A F
  *
- *	Given an object, traverses each path to bottom solid.
- *	This solid is checked against previous solids.
- * 	If this name appeared previously, then the matrices are checked.
- *	If matrices are different, then will not be able to "push" this object.
+ * This routine must be prepared to run in parallel.
  *
+ * This routine is called once for eas leaf (solid) that is to
+ * be pushed.  All it does is build at push_id linked list.  The 
+ * linked list could be handled by rt_list macros but it is simple
+ * enough to do hear with out them.
  */
-void
-push( dp, pathpos, old_xlate )
-struct directory *dp;
-int pathpos;
-mat_t	old_xlate;
+HIDDEN union tree *push_leaf( tsp, pathp, ep, id)
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+struct rt_external	*ep;
+int			id;
 {
-	struct directory *nextdp;
-	mat_t new_xlate;
-	int nparts, i, k, j;
-	int dchar = 0;
+	struct rt_db_internal intern;
+	union tree	*curtree;
+	struct directory *dp;
+	register struct push_id *pip;
 
-	if( abort_flag == 99 )	/* go no further */
-		return;
+	RT_CK_TESS_TOL(tsp->ts_ttol);
+	RT_CK_TOL(tsp->ts_tol);
 
-	if( pathpos >= MAX_LEVELS ) {
-		(void)printf("nesting exceeds %d levels\n",MAX_LEVELS);
-		for(i=0; i<MAX_LEVELS; i++)
-			(void)printf("/%s", path[i]->d_namep);
-		(void)printf("\n");
-		abort_flag = 1;
-		return;
+	dp = pathp->fp_names[pathp->fp_len-1];
+
+	if (rt_g.debug&DEBUG_TREEWALK) {
+		char *sofar = db_path_to_string(pathp);
+		rt_log("push_leaf(%s) path='%s'\n",
+		    rt_functab[id].ft_name, sofar);
+		rt_free(sofar, "path string");
 	}
-
-	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
-	if( record.u_id == ID_COMB ) {
-		nparts = dp->d_len-1;
-		for(i=1; i<=nparts; i++) {
-			mat_t	xmat;
-
-			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
-			path[pathpos] = dp;
-			if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
-				continue;
-
-			rt_mat_dbmat( xmat, record.M.m_mat );
-			mat_mul(new_xlate, old_xlate, xmat);
-
-			/* Recursive call */
-			push(nextdp, pathpos+1, new_xlate);
-		}
-		return;
-	}
-
-	/* not a combination  -  should have a solid */
-	if(record.u_id == ID_BSOLID) {
-		(void)printf("push: (%s) SPLINE not implemented yet - abort\n",
-				record.B.B_name);
-		abort_flag = 1;
-		return;
-	}
-	if(record.u_id == ID_P_HEAD) {
-		(void)printf("push: (%s) POLYGON not implemented yet - abort\n",
-				record.p.p_name);
-		abort_flag = 1;
-		return;
-	}
-	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A) {
-		(void)printf("bad record type '%c' should be 'S' or 'A'\n",record.u_id);
-		abort_flag = 1;
-		return;
-	}
-
-	/* last (bottom) position */
-	path[pathpos] = dp;
-
-	/* check if this is a new or old solid */
-	if(record.u_id == ID_SOLID) {
-		(void)strncpy(idpush.i_name, record.s.s_name, NAMESIZE);
-	}
-	else {
-		(void)strncpy(idpush.i_name, record.a.a_name, NAMESIZE);
-	}
-	mat_copy(idpush.i_mat, old_xlate);
-
-	dchar = 0;
-	for(i=0; i<NAMESIZE; i++) {
-		if(idpush.i_name[i] == 0) 
-			break;
-		dchar += (idpush.i_name[i] << (i&7));
-	}
-
-	for(i=0; i<push_count; i++) {
-		if(dchar == discr[i]) {
-			/* possible match --- check closer */
-			(void)lseek(rd_idfd, i*(long)sizeof idpush, 0);
-			(void)read(rd_idfd, &idbuf, sizeof idpush);
-			if( strcmp( idpush.i_name, idbuf.i_name ) == 0 ) {
-				/* names are the same ... check matrices */
-				if( check_mat(idpush.i_mat, idbuf.i_mat) == 1 ) {
-					/* matrices are also equal---same solid */
-					return;
-				}
-				/* BAD ... matrices are diff but names the same */
-				(void)printf("Cannot push: solid (%s) has conflicts\n",
-						idpush.i_name);
-				abort_flag = 1;
-				return;
+/*
+ * XXX - This will work but is not the best method.  dp->d_uses tells us
+ * if this solid (leaf) has been seen before.  If it hasn't just add
+ * it to the list.  If it has, search the list to see if the matricies
+ * match and do the "right" thing.
+ *
+ * (There is a question as to whether dp->d_uses is reset to zero
+ *  for each tree walk.  If it is not, then d_uses is NOT a safe
+ *  way to check and this method will always work.)
+ */
+	RES_ACQUIRE(&rt_g.res_worker);
+	FOR_ALL_PUSH_SOLIDS(pip) {
+		if (pip->pi_dir == dp ) {
+			if (!rt_mat_is_equal(pip->pi_mat,
+			    tsp->ts_mat, tsp->ts_tol)) {
+			    	char *sofar = db_path_to_string(pathp);
+				rt_log("push_leaf: matrix mismatch between '%s' and prior reference.\n",
+				    sofar, dp->d_namep);
+				rt_free(sofar, "path string");
+				push_error = 1;
 			}
+			RES_RELEASE(&rt_g.res_worker);
+			GETUNION(curtree, tree);
+			curtree->tr_op = OP_NOP;
+			return curtree;
+		}
+	}
+/*
+ * This is the first time we have seen this solid.
+ */
+	pip = (struct push_id *) rt_malloc(sizeof(struct push_id),
+	    "Push ident");
+	pip->magic = MAGIC_PUSH_ID;
+	pip->pi_dir = dp;
+	mat_copy(pip->pi_mat, tsp->ts_mat);
+	pip->back = pi_head.back;
+	pi_head.back = pip;
+	pip->forw = &pi_head;
+	pip->back->forw = pip;
+	RES_RELEASE(&rt_g.res_worker);
+	GETUNION(curtree, tree);
+	curtree->tr_op = OP_NOP;
+	return curtree;
+}
+/*
+ * A null routine that does nothing.
+ */
+HIDDEN union tree *push_region_end( tsp, pathp, curtree)
+register struct db_tree_state *tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+	return curtree;
+}
+/*
+ * The tree walker neds to have an initial state.  We could
+ * steal it from doview.c but there is no real reason.
+ */
+
+static struct db_tree_state push_initial_tree_state = {
+	0,			/* ts_dbip */
+	0,			/* ts_sofar */
+	0,0,0,			/* region, air, gmater */
+	100,			/* GIFT los */
+#if __STDC__
+	{
+#endif
+		/* struct mater_info ts_mater */
+		1.0, 0.0, 0.0,	/* color, RGB */
+		0,		/* override */
+		DB_INH_LOWER,	/* color inherit */
+		DB_INH_LOWER,	/* mater inherit */
+		"",		/* material name */
+		""		/* material params */
+#if __STDC__
+	}
+#endif
+	,
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0,
+};
+
+/*			F _ P U S H
+ *
+ * The push command is used to move matricies from combinations 
+ * down to the solids. At some point, it is worth while thinking
+ * about adding a limit to have the push go only N levels down.
+ *
+ * the -d flag turns on the treewalker debugging output.
+ * the -P flag allows for multi-processor tree walking (not useful)
+ * the -l flag is there to select levels even if it does not currently work.
+ */
+int
+f_push(argc, argv)
+int argc;
+char **argv;
+{
+	int	ncpu;
+	int	c;
+	int	old_debug;
+	int	levels;
+	extern 	int optind;
+	extern	char *optarg;
+	extern	struct rt_tol	mged_tol;	/* from ged.c */
+	extern	struct rt_tess_tol mged_ttol;
+	int	i;
+	int	id;
+	struct push_id *pip;
+	struct rt_external	es_ext;
+	struct rt_db_internal	es_int;
+
+	RT_CHECK_DBI(dbip);
+
+	if ( argc <= 0) return -1;	/* FAIL */
+
+	old_debug = rt_g.debug;
+	pi_head.magic = MAGIC_PUSH_ID;
+	pi_head.forw = pi_head.back = &pi_head;
+	pi_head.pi_dir = (struct directory *) 0;
+
+	/* Initial values for options, must be reset each time */
+	ncpu = 1;
+
+	/* Parse options */
+	optind = 1;	/* re-init getopt() */
+	while ( (c=getopt(argc, argv, "l:P:d")) != EOF) {
+		switch(c) {
+		case 'l':
+			levels=atoi(optarg);
+			break;
+		case 'P':
+			ncpu = atoi(optarg);
+			if (ncpu<1) ncpu = 1;
+			break;
+		case 'd':
+			rt_g.debug |= DEBUG_TREEWALK;
+			break;
+		case '?':
+		default:
+			printf("push: usage push [-l levels] [-P processors] [-d] root [root2 ...]\n");
+			break;
 		}
 	}
 
-	/* Have a NEW solid */
-	discr[push_count++] = dchar;
-	if(push_count > MAXSOL) {
-		(void)printf("push: number of solids > max (%d)\n",MAXSOL);
-		abort_flag = 99;
-		return;
+	argc -= optind;
+	argv += optind;
+
+	push_error = 0;
+
+	push_initial_tree_state.ts_ttol = &mged_ttol;
+	push_initial_tree_state.ts_tol  = &mged_tol;
+	mged_ttol.magic = RT_TESS_TOL_MAGIC;
+	mged_ttol.abs = mged_abs_tol;
+	mged_ttol.rel = mged_rel_tol;
+	mged_ttol.norm = mged_nrm_tol;
+
+	/*
+	 * build a linked list of solids with the correct
+	 * matrix to apply to each solid.  This will also
+	 * check to make sure that a solid is not pushed in two
+	 * different directions at the same time.
+	 */
+	i = db_walk_tree( dbip, argc, (CONST char **)argv,
+	    ncpu,
+	    &push_initial_tree_state,
+	    0,				/* take all regions */
+	    push_region_end,
+	    push_leaf);
+
+	/*
+	 * If there was any error, then just free up the solid
+	 * list we just built.
+	 */
+	if ( i < 0 || push_error ) {
+		while (pi_head.forw != &pi_head) {
+			pip = pi_head.forw;
+			pip->forw->back = pip->back;
+			pip->back->forw = pip->forw;
+			rt_free((char *)pip, "Push ident");
+		}
+		rt_g.debug = old_debug;
+		rt_log("push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions\n");
+		return -1;
 	}
-	(void)lseek(idfd, 0L, 2);
-	(void)write(idfd, &idpush, sizeof idpush);
+/*
+ * We've built the push solid list, now all we need to do is apply
+ * the matrix we've stored for each solid.
+ */
+	FOR_ALL_PUSH_SOLIDS(pip) {
+		RT_INIT_EXTERNAL(&es_ext);
+		RT_INIT_DB_INTERNAL(&es_int);
+		if (db_get_external( &es_ext, pip->pi_dir, dbip) < 0) {
+			rt_log("f_push: Read error fetching '%s'\n",
+			    pip->pi_dir->d_namep);
+			push_error = -1;
+			continue;
+		}
+		id = rt_id_solid( &es_ext);
+		if (rt_functab[id].ft_import(&es_int, &es_ext, pip->pi_mat) < 0 ) {
+			rt_log("push(%s): solid import failure\n",
+			    pip->pi_dir->d_namep);
+			if (es_int.idb_ptr) rt_functab[id].ft_ifree( &es_int);
+			db_free_external( &es_ext);
+			continue;
+		}
+		RT_CK_DB_INTERNAL( &es_int);
+		if ( rt_functab[id].ft_export( &es_ext, &es_int, 1.0) < 0 ) {
+			rt_log("push(%s): solid export failure\n", pip->pi_dir->d_namep);
+		} else {
+			db_put_external(&es_ext, pip->pi_dir, dbip);
+		}
+		if (es_int.idb_ptr) rt_functab[id].ft_ifree(&es_int);
+		db_free_external(&es_ext);
+	}
 
-	return;
+	/*
+	 * Now use the identitize() tree walker to turn all the
+	 * matricies in a combination to the identity matrix.
+	 * It would be nice to use db_tree_walker() but the tree
+	 * walker does not give us all combinations, just regions.
+	 * This would work if we just processed all matricies backwards
+	 * from the leaf (solid) towards the root, but all in all it
+	 * seems that this is a better method.
+	 */
 
+	while (argc > 0) {
+		struct directory *db;
+		db = db_lookup(dbip, *argv++, 0);
+		if (db) identitize(db);
+		--argc;
+	}
+
+	/*
+	 * Free up the solid table we built.
+	 */
+	while (pi_head.forw != &pi_head) {
+		pip = pi_head.forw;
+		pip->forw->back = pip->back;
+		pip->back->forw = pip->forw;
+		rt_free((char *)pip, "Push ident");
+	}
+
+	rt_g.debug = old_debug;
+	return push_error;
 }
-
-
-
 
 /*
  *			I D E N T I T I Z E ( ) 
@@ -764,26 +781,4 @@ struct directory *dp;
 	}
 	/* bottom position */
 	return;
-}
-
-
-
-
-
-/*	C H E C K _ M A T ( )	 -  compares 4x4 matrices
- *		returns 1 if same.....0 otherwise
- */
-
-check_mat( mat1, mat2 )
-mat_t mat1, mat2;
-{
-	register int i;
-
-	for(i=0; i<16; i++) {
-		if( mat1[i] != mat2[i] )
-			return( 0 );	/* different */
-	}
-
-	return( 1 );	/* same */
-
 }
