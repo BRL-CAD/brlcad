@@ -1163,7 +1163,8 @@ struct rt_pm_res {
 struct rt_piecestate  {
 	long		magic;
 	struct soltab	*stp;
-	struct bu_bitv	shot;
+	struct bu_bitv	*shot;
+	/* Marked as unused with oddhit.hit_dist >= INFINITY */
 	struct hit	oddhit;
 };
 #define RT_PIECESTATE_MAGIC	0x70637374	/* pcst */
