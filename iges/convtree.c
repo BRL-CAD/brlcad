@@ -17,6 +17,8 @@
 /*	This routine controls the conversion of IGES boolean trees
 	to BRLCAD objects	*/
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"

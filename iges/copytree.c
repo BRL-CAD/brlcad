@@ -18,6 +18,8 @@
 	the "parent" field of the root of the new tree is filed by
 	the "parent" argument	*/
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
