@@ -806,7 +806,7 @@ retry:
 
 
 	/* get the ray-tracer to tell us if we're inside or outside */
-	class = nmg_ray_vs_shell(&rp, s, tol);
+	class = nmg_class_ray_vs_shell(&rp, s, tol);
 
 out:
 	rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
