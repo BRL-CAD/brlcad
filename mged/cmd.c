@@ -1480,6 +1480,16 @@ static struct math_func_link {
     0, 0
 };
 
+int
+cmd_nop(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+    return TCL_OK;
+}
+
 
 /* 			C M D _ S E T U P
  *
@@ -1561,7 +1571,7 @@ int interactive;
 				(ClientData)mp->func,
 				(Tcl_CmdDeleteProc *)NULL);
     }
-    
+
     rt_vls_free(&temp);
     tkwin = NULL;
 
