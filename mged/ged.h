@@ -247,3 +247,6 @@ extern char *state_str[];		/* identifying strings */
 	if( p == (struct str *)0 ) \
 		(void)printf("getstruct( p, str ): malloc failed\n");/* cpp magic */
 #endif
+
+#define	MAXLINE		1024     /* Maximum number of chars per line */
+#define	MAXARGS		200	/* Maximum number of args per line */
