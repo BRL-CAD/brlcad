@@ -1,8 +1,8 @@
 if BUILD_REGEX
-noinst_LIBRARIES = libregex.a
+lib_LTLIBRARIES = libregex.la
 endif
 
-libregex_a_SOURCES  =	\
+libregex_la_SOURCES  =	\
 	regcomp.c	\
 	regerror.c	\
 	regexec.c	\
