@@ -28,7 +28,7 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 
 int	max_ireflect = 5;	/* Maximum internal reflection level */
-int	max_bounces = 3;	/* Maximum recursion level */
+int	max_bounces = 5;	/* Maximum recursion level */
 
 #define MSG_PROLOGUE	20		/* # initial messages to see */
 #define MSG_INTERVAL	4000		/* message interval thereafter */
@@ -69,7 +69,7 @@ char		*dp;
 	if( reflect <= 0 && transmit <= 0 )
 		goto out;
 
-	if( ap->a_level >= max_bounces )  {
+	if( ap->a_level > max_bounces )  {
 		/* Nothing more to do for this ray */
 		static long count = 0;		/* Not PARALLEL, should be OK */
 
@@ -77,7 +77,7 @@ char		*dp;
 			count++ < MSG_PROLOGUE ||
 			(count%MSG_INTERVAL) == 3
 		) )  {
-			rt_log("rr_render: %d,%d Max bounces=%d: %s\n",
+			rt_log("rr_render: %d,%d MAX BOUNCES=%d: %s\n",
 				ap->a_x, ap->a_y,
 				ap->a_level,
 				pp->pt_regionp->reg_name );
@@ -125,42 +125,24 @@ char		*dp;
 		goto out;
 	}
 	if(rdebug&RDEBUG_REFRACT) {
-		rt_log("rr_render: lvl=%d shader=%g, reflect=%g, transmit=%g %s\n",
+		rt_log("rr_render: lvl=%d start shader=%g, reflect=%g, transmit=%g %s\n",
 			ap->a_level,
 			shader_fract, reflect, transmit,
 			pp->pt_regionp->reg_name );
 	}
 	VSCALE( shader_color, swp->sw_color, shader_fract );
 
-	if( reflect > 0 )  {
-		LOCAL vect_t		to_eye;
-		register fastf_t	f;
-
-		/* Mirror reflection */
-		sub_ap = *ap;		/* struct copy */
-		sub_ap.a_level = ap->a_level+1;
-		sub_ap.a_onehit = 1;
-		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
-		VREVERSE( to_eye, ap->a_ray.r_dir );
-		f = 2 * VDOT( to_eye, swp->sw_hit.hit_normal );
-		VSCALE( work, swp->sw_hit.hit_normal, f );
-		/* I have been told this has unit length */
-		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
-		sub_ap.a_purpose = "reflected ray";
-		(void)rt_shootray( &sub_ap );
-
-		/* a_user has hit/miss flag! */
-		if( sub_ap.a_user == 0 )  {
-			/* MISS */
-			VMOVE( reflect_color, background );
-		} else {
-			ap->a_cumlen += sub_ap.a_cumlen;
-			VMOVE( reflect_color, sub_ap.a_color );
-		}
-	} else {
-		VSETALL( reflect_color, 0 );
-	}
+	/*
+	 *  Compute transmission through an object.
+	 *  There may be a mirror reflection, which will be handled
+	 *  by the reflection code later
+	 */
 	if( transmit > 0 )  {
+		if(rdebug&RDEBUG_REFRACT) {
+			rt_log("rr_render: lvl=%d begin xmit through %s\n",
+				ap->a_level,
+				pp->pt_regionp->reg_name );
+		}
 		/*
 		 *  Calculate refraction at entrance.
 		 */
@@ -182,9 +164,20 @@ char		*dp;
 			swp->sw_refrac_index,		/* next RI */
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
-			/* Reflected back outside solid */
-			VSETALL( filter_color, 1 );
-			goto do_exit;
+			/*
+			 *  Ray was mirror reflected back outside solid.
+			 *  Just add contribution to reflection,
+			 *  and quit.
+			 */
+			reflect += transmit;
+			transmit = 0;
+			VSETALL( transmit_color, 0 );
+			if(rdebug&RDEBUG_REFRACT) {
+				rt_log("rr_render: lvl=%d change xmit into reflection %s\n",
+					ap->a_level,
+					pp->pt_regionp->reg_name );
+			}
+			goto do_reflection;
 		}
 
 		/*
@@ -305,16 +298,60 @@ do_exit:
 		}
 		transmit *= attenuation;
 		VELMUL( transmit_color, filter_color, transmit_color );
+		if(rdebug&RDEBUG_REFRACT) {
+			rt_log("rr_render: lvl=%d end of xmit through %s\n",
+				ap->a_level,
+				pp->pt_regionp->reg_name );
+		}
 	} else {
 		VSETALL( transmit_color, 0 );
 	}
+
+	/*
+	 *  Handle any reflection, including mirror reflections
+	 *  detected by the transmission code, above.
+	 */
+do_reflection:
+	if( reflect > 0 )  {
+		LOCAL vect_t		to_eye;
+		register fastf_t	f;
+
+		/* Mirror reflection */
+		sub_ap = *ap;		/* struct copy */
+		sub_ap.a_level = ap->a_level+1;
+		sub_ap.a_onehit = 1;
+		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
+		VREVERSE( to_eye, ap->a_ray.r_dir );
+		f = 2 * VDOT( to_eye, swp->sw_hit.hit_normal );
+		VSCALE( work, swp->sw_hit.hit_normal, f );
+		/* I have been told this has unit length */
+		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
+		sub_ap.a_purpose = "reflected ray";
+		(void)rt_shootray( &sub_ap );
+
+		/* a_user has hit/miss flag! */
+		if( sub_ap.a_user == 0 )  {
+			/* MISS */
+			VMOVE( reflect_color, background );
+		} else {
+			ap->a_cumlen += sub_ap.a_cumlen;
+			VMOVE( reflect_color, sub_ap.a_color );
+		}
+	} else {
+		VSETALL( reflect_color, 0 );
+	}
+
+	/*
+	 *  Collect the contributions to the final color
+	 */
 	VJOIN2( swp->sw_color, shader_color,
 		reflect, reflect_color,
 		transmit, transmit_color );
 	if(rdebug&RDEBUG_REFRACT)  {
-		rt_log("rr_render: lvl=%d shader=%g reflect=%g, transmit=%g, (final)\n",
+		rt_log("rr_render: lvl=%d end shader=%g reflect=%g, transmit=%g %s\n",
 			ap->a_level,
-			shader_fract, reflect, transmit );
+			shader_fract, reflect, transmit,
+			pp->pt_regionp->reg_name );
 		VPRINT("shader  ", shader_color);
 		VPRINT("reflect ", reflect_color);
 		VPRINT("transmit", transmit_color);
@@ -443,7 +480,8 @@ struct partition *PartHeadp;
 			break;
 		if( pp->pt_forw->pt_regionp != pp->pt_regionp )
 			break;
-		rt_log("rr_hit: %d,%d fusing small crack in glass %s\n",
+		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) rt_log(
+			"rr_hit: %d,%d fusing small crack in glass %s\n",
 			ap->a_x, ap->a_y,
 			pp->pt_regionp->reg_name );
 		pp = pp->pt_forw;
@@ -555,6 +593,8 @@ register vect_t	v_2;
 		/*  Past critical angle, total reflection.
 		 *  Calculate reflected (bounced) incident ray.
 		 */
+		if(rdebug&RDEBUG_REFRACT) rt_log("rr_refract: reflected.  ri1=%g ri2=%g beta=%g\n",
+			ri_1, ri_2, beta);
 		VREVERSE( u, v_1 );
 		beta = 2 * VDOT( u, norml );
 		VSCALE( w, norml, beta );
@@ -566,9 +606,11 @@ register vect_t	v_2;
 		 *	    = cos( theta_2 )^^2.
 		 *     beta = -1.0 * cos( theta_2 ) - Dot( w, norml ).
 		 */
+		if(rdebug&RDEBUG_REFRACT) rt_log("rr_refract: refracted.  ri1=%g ri2=%g beta=%g\n",
+			ri_1, ri_2, beta);
 		beta = -sqrt( 1.0 - beta) - VDOT( w, norml );
 		VSCALE( u, norml, beta );
-		VADD2( v_2, w, u );
+		VADD2( v_2, w, u );		
 		return(1);		/* refracted */
 	}
 	/* NOTREACHED */
