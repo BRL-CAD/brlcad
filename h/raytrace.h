@@ -1109,7 +1109,7 @@ struct rt_wdb  {
 	struct resource		*wdb_resp;
 
 	/* variables for name prefixing */
-	char		wdb_prestr[RT_NAMESIZE];
+	struct bu_vls	wdb_prestr;
 	int		wdb_ncharadd;
 	int		wdb_num_dups;
 
@@ -2696,6 +2696,9 @@ int db_v4_get_units_code( const char *str );
 extern int db_dirbuild( struct db_i *dbip );
 extern struct directory *db5_diradd( struct db_i *dbip, const struct db5_raw_internal *rip, long laddr, genptr_t client_data );
 extern int db_get_version( struct db_i *dbip );
+extern int db5_scan( struct db_i *dbip, void (*handler)(struct db_i *,
+				const struct db5_raw_internal *,
+				long addr, genptr_t client_data ), genptr_t client_data );
 
 /* db5_comb.c */
 extern int rt_comb_import5( struct rt_db_internal   *ip,
