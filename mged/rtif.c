@@ -875,7 +875,8 @@ static int	rtif_currentframe;
  *  It isn't clear how to handle this.
  */
 static void
-rtif_sigint()
+rtif_sigint( num )
+int	num;
 {
 	write( 2, "rtif_sigint\n", 12);
 
