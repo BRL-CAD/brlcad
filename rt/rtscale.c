@@ -45,6 +45,11 @@ static const char RCSscale[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "bu.h"
@@ -87,7 +92,7 @@ int		SEEN_DESCRIPT=0;	/* flag for descriptive string */
  *  Main exists to coordinate the actions of the three parts of this program.
  *  It also processes its own arguments (argc and argv).
  */
-
+int
 main(argc, argv)
 int	argc;
 char	**argv;
