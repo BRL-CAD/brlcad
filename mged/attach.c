@@ -959,16 +959,28 @@ struct dm_list *p;
   bu_vls_init(&p->s_info->_rate_tran_vls[X]);
   bu_vls_init(&p->s_info->_rate_tran_vls[Y]);
   bu_vls_init(&p->s_info->_rate_tran_vls[Z]);
+  bu_vls_init(&p->s_info->_rate_model_tran_vls[X]);
+  bu_vls_init(&p->s_info->_rate_model_tran_vls[Y]);
+  bu_vls_init(&p->s_info->_rate_model_tran_vls[Z]);
   bu_vls_init(&p->s_info->_rate_rotate_vls[X]);
   bu_vls_init(&p->s_info->_rate_rotate_vls[Y]);
   bu_vls_init(&p->s_info->_rate_rotate_vls[Z]);
+  bu_vls_init(&p->s_info->_rate_model_rotate_vls[X]);
+  bu_vls_init(&p->s_info->_rate_model_rotate_vls[Y]);
+  bu_vls_init(&p->s_info->_rate_model_rotate_vls[Z]);
   bu_vls_init(&p->s_info->_rate_scale_vls);
   bu_vls_init(&p->s_info->_absolute_tran_vls[X]);
   bu_vls_init(&p->s_info->_absolute_tran_vls[Y]);
   bu_vls_init(&p->s_info->_absolute_tran_vls[Z]);
+  bu_vls_init(&p->s_info->_absolute_model_tran_vls[X]);
+  bu_vls_init(&p->s_info->_absolute_model_tran_vls[Y]);
+  bu_vls_init(&p->s_info->_absolute_model_tran_vls[Z]);
   bu_vls_init(&p->s_info->_absolute_rotate_vls[X]);
   bu_vls_init(&p->s_info->_absolute_rotate_vls[Y]);
   bu_vls_init(&p->s_info->_absolute_rotate_vls[Z]);
+  bu_vls_init(&p->s_info->_absolute_model_rotate_vls[X]);
+  bu_vls_init(&p->s_info->_absolute_model_rotate_vls[Y]);
+  bu_vls_init(&p->s_info->_absolute_model_rotate_vls[Z]);
   bu_vls_init(&p->s_info->_absolute_scale_vls);
   bu_vls_init(&p->s_info->_xadc_vls);
   bu_vls_init(&p->s_info->_yadc_vls);
@@ -990,16 +1002,28 @@ struct dm_list *p;
   bu_vls_free(&p->s_info->_rate_tran_vls[X]);
   bu_vls_free(&p->s_info->_rate_tran_vls[Y]);
   bu_vls_free(&p->s_info->_rate_tran_vls[Z]);
+  bu_vls_free(&p->s_info->_rate_model_tran_vls[X]);
+  bu_vls_free(&p->s_info->_rate_model_tran_vls[Y]);
+  bu_vls_free(&p->s_info->_rate_model_tran_vls[Z]);
   bu_vls_free(&p->s_info->_rate_rotate_vls[X]);
   bu_vls_free(&p->s_info->_rate_rotate_vls[Y]);
   bu_vls_free(&p->s_info->_rate_rotate_vls[Z]);
+  bu_vls_free(&p->s_info->_rate_model_rotate_vls[X]);
+  bu_vls_free(&p->s_info->_rate_model_rotate_vls[Y]);
+  bu_vls_free(&p->s_info->_rate_model_rotate_vls[Z]);
   bu_vls_free(&p->s_info->_rate_scale_vls);
   bu_vls_free(&p->s_info->_absolute_tran_vls[X]);
   bu_vls_free(&p->s_info->_absolute_tran_vls[Y]);
   bu_vls_free(&p->s_info->_absolute_tran_vls[Z]);
+  bu_vls_free(&p->s_info->_absolute_model_tran_vls[X]);
+  bu_vls_free(&p->s_info->_absolute_model_tran_vls[Y]);
+  bu_vls_free(&p->s_info->_absolute_model_tran_vls[Z]);
   bu_vls_free(&p->s_info->_absolute_rotate_vls[X]);
   bu_vls_free(&p->s_info->_absolute_rotate_vls[Y]);
   bu_vls_free(&p->s_info->_absolute_rotate_vls[Z]);
+  bu_vls_free(&p->s_info->_absolute_model_rotate_vls[X]);
+  bu_vls_free(&p->s_info->_absolute_model_rotate_vls[Y]);
+  bu_vls_free(&p->s_info->_absolute_model_rotate_vls[Z]);
   bu_vls_free(&p->s_info->_absolute_scale_vls);
   bu_vls_free(&p->s_info->_xadc_vls);
   bu_vls_free(&p->s_info->_yadc_vls);
@@ -1031,11 +1055,23 @@ struct dm_list *p;
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[Z], "rate_tran(%S,Z)",
 		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_rate_model_tran_vls[X], "rate_model_tran(%S,X)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_rate_model_tran_vls[Y], "rate_model_tran(%S,Y)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_rate_model_tran_vls[Z], "rate_model_tran(%S,Z)",
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_rotate_vls[X], "rate_rotate(%S,X)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_rotate_vls[Y], "rate_rotate(%S,Y)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_rotate_vls[Z], "rate_rotate(%S,Z)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_rate_model_rotate_vls[X], "rate_model_rotate(%S,X)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_rate_model_rotate_vls[Y], "rate_model_rotate(%S,Y)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_rate_model_rotate_vls[Z], "rate_model_rotate(%S,Z)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_scale_vls, "rate_scale(%S)",
 		&p->_dmp->dm_pathName);
@@ -1045,11 +1081,23 @@ struct dm_list *p;
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_tran_vls[Z], "abs_tran(%S,Z)",
 		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_absolute_model_tran_vls[X], "abs_model_tran(%S,X)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_absolute_model_tran_vls[Y], "abs_model_tran(%S,Y)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_absolute_model_tran_vls[Z], "abs_model_tran(%S,Z)",
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[X], "abs_rotate(%S,X)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[Y], "abs_rotate(%S,Y)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[Z], "abs_rotate(%S,Z)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_absolute_model_rotate_vls[X], "abs_model_rotate(%S,X)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_absolute_model_rotate_vls[Y], "abs_model_rotate(%S,Y)",
+		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_absolute_model_rotate_vls[Z], "abs_model_rotate(%S,Z)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_scale_vls, "abs_scale(%S)",
 		&p->_dmp->dm_pathName);
@@ -1072,12 +1120,24 @@ struct dm_list *p;
 	      (char *)&p->s_info->_rate_tran[Y], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[Z]),
 	      (char *)&p->s_info->_rate_tran[Z], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_tran_vls[X]),
+	      (char *)&p->s_info->_rate_model_tran[X], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_tran_vls[Y]),
+	      (char *)&p->s_info->_rate_model_tran[Y], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_tran_vls[Z]),
+	      (char *)&p->s_info->_rate_model_tran[Z], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_rotate_vls[X]),
 	      (char *)&p->s_info->_rate_rotate[X], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_rotate_vls[Y]),
 	      (char *)&p->s_info->_rate_rotate[Y], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_rotate_vls[Z]),
 	      (char *)&p->s_info->_rate_rotate[Z], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_rotate_vls[X]),
+	      (char *)&p->s_info->_rate_model_rotate[X], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_rotate_vls[Y]),
+	      (char *)&p->s_info->_rate_model_rotate[Y], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_rotate_vls[Z]),
+	      (char *)&p->s_info->_rate_model_rotate[Z], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_scale_vls),
 	      (char *)&p->s_info->_rate_scale, TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[X]),
@@ -1086,12 +1146,24 @@ struct dm_list *p;
 	      (char *)&p->s_info->_absolute_tran[Y], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[Z]),
 	      (char *)&p->s_info->_absolute_tran[Z], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_tran_vls[X]),
+	      (char *)&p->s_info->_absolute_model_tran[X], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_tran_vls[Y]),
+	      (char *)&p->s_info->_absolute_model_tran[Y], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_tran_vls[Z]),
+	      (char *)&p->s_info->_absolute_model_tran[Z], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_rotate_vls[X]),
 	      (char *)&p->s_info->_absolute_rotate[X], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_rotate_vls[Y]),
 	      (char *)&p->s_info->_absolute_rotate[Y], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_rotate_vls[Z]),
 	      (char *)&p->s_info->_absolute_rotate[Z], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_rotate_vls[X]),
+	      (char *)&p->s_info->_absolute_model_rotate[X], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_rotate_vls[Y]),
+	      (char *)&p->s_info->_absolute_model_rotate[Y], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_rotate_vls[Z]),
+	      (char *)&p->s_info->_absolute_model_rotate[Z], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_scale_vls),
 	      (char *)&p->s_info->_absolute_scale, TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_xadc_vls),
@@ -1116,16 +1188,28 @@ struct dm_list *p;
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[X]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[Y]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[Z]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_tran_vls[X]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_tran_vls[Y]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_tran_vls[Z]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_rotate_vls[X]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_rotate_vls[Y]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_rotate_vls[Z]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_rotate_vls[X]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_rotate_vls[Y]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_model_rotate_vls[Z]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_scale_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[X]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[Y]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[Z]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_tran_vls[X]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_tran_vls[Y]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_tran_vls[Z]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_rotate_vls[X]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_rotate_vls[Y]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_rotate_vls[Z]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_rotate_vls[X]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_rotate_vls[Y]));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_model_rotate_vls[Z]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_scale_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_xadc_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_yadc_vls));
