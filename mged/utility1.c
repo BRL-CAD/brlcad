@@ -7,7 +7,7 @@
  *	f_edcodes()	control routine for editing region ident codes
  *	edcodes()	allows for easy editing of region ident codes
  *	f_dup()		checks for dup names before cat'ing of two files
- *	f_cat()		routine to cat another GED file onto end of current file
+ *	f_concat()	routine to cat another GED file onto end of current file
  *	f_which_id()	lists all regions with given ident number
  *
  */
@@ -415,12 +415,12 @@ f_dup( )
 
 /*
  *
- *		F _ C A T	cats another GED file onto end of current file
+ *		F _ C O N C A T
  *
- *
+ *	concatenates another GED file onto end of current file
  */
 void
-f_cat( )
+f_concat( )
 {
 	FILE *catfp;
 	int nskipped, i, length;
