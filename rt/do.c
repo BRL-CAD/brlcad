@@ -115,7 +115,26 @@ int
 old_way( fp )
 FILE *fp;
 {
+	int	c;
+
 	viewsize = -42.0;
+
+	/* Sneek a peek at the first character, and then put it back */
+	if( (c = fgetc( fp )) == EOF )  {
+		/* Claim old way, all (ie, nothing) done */
+		return(1);
+	}
+	if( ungetc( c, fp ) != c )
+		rt_bomb("do.c:old_way() ungetc failure\n");
+
+	/*
+	 * Old format files start immediately with a %.9e format,
+	 * so the very first character should be a digit or '-'.
+	 */
+	if( (c < '0' || c > '9') && c != '-' )  {
+		return( 0 );		/* Not old way */
+	}
+
 	if( old_frame( fp ) < 0 || viewsize <= 0.0 )  {
 		rewind( fp );
 		return(0);		/* Not old way */
