@@ -15,7 +15,7 @@ extern char	*Qdatadir;	/* queue file directory name */
 static int  lpoptions = 0;	/* line-printer style options */
 static char *progname = "(noname)";
 
-static char ipu_prog[64] = "/usr/brlcad/bin/ipx-ipu";
+static char ipu_prog[64] = "/usr/brlcad/bin/pix-ipu";
 
 int
 print(file, copies)
@@ -51,6 +51,14 @@ int copies;
 		/* create argv for exec() */
 		argc = 1;
 		p = linebuf;
+
+		if (strncmp(p, "CLC500", 6)) {
+			fprintf(stderr, "Bad Magic number in image request\n");
+			retmsg( RP_FATAL, "Bad Magic number in image request\n");
+			exit( 10 );
+		}
+		p += 6;
+
 		while (*p && argc < MAXARGS-1) {
 			/* skip initial white space */
 			while (*p && isascii(*p) && isspace(*p))
