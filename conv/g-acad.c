@@ -285,16 +285,6 @@ int material_id;
 
 	region_name = db_path_to_string( pathp );
 
-	printf("Attempting to process region %s\n",region_name);
-	fflush(stdout);
-/* XXX */
-	if(regions_tried>0){
-		npercent = (float)(regions_converted * 100) / regions_tried;
-		tpercent = (float)(regions_written * 100) / regions_tried;
-		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
-		regions_tried, regions_converted, regions_written, npercent,tpercent);
-	}
-/* XXX */
 	m = r->m_p;
 	NMG_CK_MODEL( m );
 
@@ -550,12 +540,21 @@ union tree		*curtree;
 			goto out;
 		}
 	}
+	printf("Attempting to process region %s\n",db_path_to_string( pathp ));
+	fflush(stdout);
 	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol );	/* librt/nmg_bool.c */
 
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
 	else
+	{
+		printf( "\tNothing left of this region after Boolean evaluation!!!\n" );
+		fprintf( fpe, "WARNING: Nothing left after Boolean evaluation: %s\n",
+			db_path_to_string( pathp ));
+		fflush(fpe);
+		regions_written++; /* don't count as a failure */
 		r = (struct nmgregion *)NULL;
+	}
 /*	regions_done++;  XXX */
 	
 	RT_UNSETJUMP;		/* Relinquish the protection */
@@ -649,6 +648,14 @@ out:
 	 */
 
 
+	if(regions_tried>0){
+		float npercent, tpercent;
+
+		npercent = (float)(regions_converted * 100) / regions_tried;
+		tpercent = (float)(regions_written * 100) / regions_tried;
+		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
+		regions_tried, regions_converted, regions_written, npercent,tpercent);
+	}
 
 	db_free_tree(curtree);		/* Does an nmg_kr() */
 
