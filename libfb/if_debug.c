@@ -26,6 +26,8 @@ _LOCAL_ int	deb_dopen(),
 		deb_curs_set(),
 		deb_cmemory_addr(),
 		deb_cscreen_addr(),
+		deb_readrect(),
+		deb_writerect(),
 		deb_help();
 
 /* This is the ONLY thing that we "export" */
@@ -45,6 +47,8 @@ FBIO debug_interface =
 		deb_curs_set,
 		deb_cmemory_addr,
 		deb_cscreen_addr,
+		deb_readrect,
+		deb_writerect,
 		deb_help,
 		"Debugging Interface",
 		8*1024,			/* max width */
@@ -271,6 +275,32 @@ int	x, y;
 	fb_log( "fb_scursor( 0x%lx, %d,%4d,%4d )\n",
 		(unsigned long)ifp, mode, x, y );
 	return	0;
+}
+
+_LOCAL_ int
+deb_readrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	fb_log( "fb_readrect( 0x%lx, (%4d,%4d), %4d,%4d, 0x%lx )\n",
+		(unsigned long)ifp, xmin, ymin, width, height,
+		(unsigned long)pp );
+	return( width*height );
+}
+
+_LOCAL_ int
+deb_writerect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	fb_log( "fb_writerect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
+		(unsigned long)ifp, xmin, ymin, width, height,
+		(unsigned long)pp );
+	return( width*height );
 }
 
 /*ARGSUSED*/

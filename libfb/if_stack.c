@@ -37,6 +37,8 @@ _LOCAL_ int	stk_dopen(),
 		stk_curs_set(),
 		stk_cmemory_addr(),
 		stk_cscreen_addr(),
+		stk_readrect(),
+		stk_writerect(),
 		stk_help();
 
 /* This is the ONLY thing that we normally "export" */
@@ -55,6 +57,8 @@ FBIO stk_interface =  {
 	stk_curs_set,		/* curs_set		*/
 	stk_cmemory_addr,	/* cursor_move_memory_addr */
 	stk_cscreen_addr,	/* cursor_move_screen_addr */
+	stk_readrect,		/* readrect		*/
+	stk_writerect,		/* writerect		*/
 	stk_help,		/* help function	*/
 	"Multiple Device Stacker", /* device description */
 	1024*32,		/* max width		*/
@@ -228,6 +232,42 @@ int	count;
 	}
 
 	return(count);
+}
+
+/*
+ *			S T K _ R E A D R E C T
+ */
+_LOCAL_ int
+stk_readrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	register FBIO **ip = SI(ifp)->if_list;
+
+	if( *ip != (FBIO *)NULL ) {
+		(void)fb_readrect( (*ip), xmin, ymin, width, height, pp );
+	}
+
+	return( width*height );
+}
+
+_LOCAL_ int
+stk_writerect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	register FBIO **ip = SI(ifp)->if_list;
+
+	while( *ip != (FBIO *)NULL ) {
+		(void)fb_writerect( (*ip), xmin, ymin, width, height, pp );
+		ip++;
+	}
+
+	return( width*height );
 }
 
 _LOCAL_ int

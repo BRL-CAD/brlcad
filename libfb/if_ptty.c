@@ -23,6 +23,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dmdfb.h"
 #include "./fblocal.h"
 
+extern int	fb_sim_readrect(), fb_sim_writerect();
+
 #define MAX_DIMENSION	256
 #define CVT2DMD( _i )		((_i)/(ifp->if_width/MAX_DIMENSION)*3)
 #define INTENSITY_FACTOR	(1.0/26.0)
@@ -60,6 +62,8 @@ FBIO ptty_interface =
 		fb_null,			/* curs_set */
 		ptty_cmemory_addr,
 		fb_null,			/* screen addr cursor move */
+		fb_sim_readrect,
+		fb_sim_writerect,
 		ptty_help,
 		"Unix pseudo-tty Interface",
 		800,

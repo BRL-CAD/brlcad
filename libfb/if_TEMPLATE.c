@@ -18,6 +18,8 @@
 #include "fb.h"
 #include "./fblocal.h"
 
+extern int	fb_sim_readrect(), fb_sim_writerect();
+
 _LOCAL_ int	DEVNAME_dopen(),
 		DEVNAME_dclose(),
 		DEVNAME_dreset(),
@@ -50,6 +52,8 @@ FBIO DEVNAME_interface =  {
 	DEVNAME_curs_set,		/* curs_set		*/
 	DEVNAME_cmemory_addr,		/* cursor_move_memory_addr */
 	DEVNAME_cscreen_addr,		/* cursor_move_screen_addr */
+	fb_sim_readrect,		/* rectangle read */
+	fb_sim_writerect,		/* rectangle write */
 	DEVNAME_help,			/* help message		*/
 	"Device description",		/* device description	*/
 	0,				/* max width		*/

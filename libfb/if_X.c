@@ -28,6 +28,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+extern int	fb_sim_readrect(), fb_sim_writerect();
+
 static	int	linger();
 
 _LOCAL_ int	X_dopen(),
@@ -62,6 +64,8 @@ FBIO X_interface =  {
 	X_curs_set,		/* curs_set		*/
 	X_cmemory_addr,		/* cursor_move_memory_addr */
 	X_cscreen_addr,		/* cursor_move_screen_addr */
+	fb_sim_readrect,
+	fb_sim_writerect,
 	X_help,			/* help message		*/
 	"X Window System (X11)",/* device description	*/
 	1024,			/* max width		*/

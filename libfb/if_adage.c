@@ -56,6 +56,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <ctype.h>
 
+extern int	fb_sim_readrect(), fb_sim_writerect();
+
 _LOCAL_ int	adage_device_open(),
 		adage_device_close(),
 		adage_device_clear(),
@@ -86,6 +88,8 @@ FBIO adage_interface =
 		adage_curs_set,
 		adage_cmemory_addr,
 		adage_cscreen_addr,
+		fb_sim_readrect,
+		fb_sim_writerect,
 		adage_help,
 		"Adage RDS3000",
 		1024,

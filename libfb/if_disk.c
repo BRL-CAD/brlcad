@@ -26,6 +26,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+extern int	fb_sim_readrect(), fb_sim_writerect();
+
 #define FILE_CMAP_ADDR	((long) ifp->if_width*ifp->if_height\
 			*sizeof(RGBpixel))
 
@@ -58,6 +60,8 @@ FBIO disk_interface =
 		fb_null,		/* curs_set */
 		fb_null,		/* cmemory_addr */
 		fb_null,		/* cscreen_addr */
+		fb_sim_readrect,
+		fb_sim_writerect,
 		dsk_help,
 		"Disk File Interface",
 		16*1024,		/* the sky's really the limit here */

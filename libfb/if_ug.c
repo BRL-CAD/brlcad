@@ -27,6 +27,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 #include <ultra/ugraf.h>
 
+extern int	fb_sim_readrect(), fb_sim_writerect();
+
 #define	FBSAVE	"/usr/tmp/ultrafb"
 
 static struct UG_PARAM	ug_param;
@@ -67,6 +69,9 @@ FBIO ug_interface =  {
 	ug_curs_set,		/* curs_set		*/
 	ug_cmemory_addr,		/* cursor_move_memory_addr */
 	ug_cscreen_addr,		/* cursor_move_screen_addr */
+	fb_sim_readrect,
+	fb_sim_writerect,
+/* XXX add help here */
 	"Ultra Graphics",		/* device description	*/
 	1280,				/* max width		*/
 	1024,				/* max height		*/

@@ -68,6 +68,8 @@ extern int	errno;
 extern char	*shmat();
 static int	linger();
 
+extern int	fb_sim_readrect(), fb_sim_writerect();
+
 /* CONFIGURATION NOTES:
 
 	If you have 4 Megabytes of memory, best limit the window sizes
@@ -126,6 +128,8 @@ FBIO            sun_interface = {
 				 sun_curs_set,
 				 sun_cmemory_addr,
 				 sun_cscreen_addr,
+				fb_sim_readrect,
+				fb_sim_writerect,
 				 sun_help,
 				 "SUN SunView or raw Pixwin",
 				 XMAXWINDOW,	/* max width */

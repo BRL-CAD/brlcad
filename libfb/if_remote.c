@@ -71,6 +71,8 @@ _LOCAL_ int	rem_dopen(),
 		rem_window_set(),
 		rem_zoom_set(),
 		rem_cmemory_addr(),
+		rem_readrect(),
+		rem_writerect(),
 		rem_help();
 
 FBIO remote_interface =
@@ -89,6 +91,8 @@ FBIO remote_interface =
 		fb_null,			/* curs_set		*/
 		rem_cmemory_addr,
 		fb_null,			/* cursor_move_screen_addr */
+		rem_readrect,
+		rem_writerect,
 		rem_help,
 		"Remote Device Interface",	/* should be filled in	*/
 		1024,				/* " */
@@ -262,12 +266,73 @@ int		num;
 		(char *)pixelp, num*sizeof(RGBpixel),
 		PCP(ifp) );
 
-#ifdef NEVER
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
-	ret = fbgetlong( buf );
-	return(ret);
-#endif
 	return	num;	/* No error return, sacrificed for speed. */
+}
+
+/*
+ *			R E M _ R E A D R E C T
+ */
+_LOCAL_ int
+rem_readrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	int	num;
+	int	ret;
+	char	buf[4*NET_LONG_LEN+1];
+
+	num = width*height;
+	if( num <= 0 )
+		return(0);
+	/* Send Read Command */
+	(void)fbputlong( xmin, &buf[0*NET_LONG_LEN] );
+	(void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
+	(void)fbputlong( width, &buf[2*NET_LONG_LEN] );
+	(void)fbputlong( height, &buf[3*NET_LONG_LEN] );
+	pkg_send( MSG_FBREADRECT, buf, 4*NET_LONG_LEN, PCP(ifp) );
+
+	/* Get response;  0 len means failure */
+	pkg_waitfor( MSG_RETURN, (char *)pp,
+			num*sizeof(RGBpixel), PCP(ifp) );
+	if( (ret=PCP(ifp)->pkc_len) == 0 )  {
+		fb_log( "rem_rectread: read %d at <%d,%d> failed.\n",
+			num, xmin, ymin );
+		return(-1);
+	}
+	return( ret/sizeof(RGBpixel) );
+}
+
+/*
+ *			R E M _ W R I T E R E C T
+ */
+_LOCAL_ int
+rem_writerect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	int	num;
+	int	ret;
+	char	buf[4*NET_LONG_LEN+1];
+
+	num = width*height;
+	if( num <= 0 )
+		return(0);
+
+	/* Send Write Command */
+	(void)fbputlong( xmin, &buf[0*NET_LONG_LEN] );
+	(void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
+	(void)fbputlong( width, &buf[2*NET_LONG_LEN] );
+	(void)fbputlong( height, &buf[3*NET_LONG_LEN] );
+	pkg_2send( MSG_FBWRITERECT+MSG_NORETURN,
+		buf, 4*NET_LONG_LEN,
+		(char *)pp, num*sizeof(RGBpixel),
+		PCP(ifp) );
+
+	return(num);	/* No error return, sacrificed for speed. */
 }
 
 /*
@@ -369,7 +434,9 @@ ColorMap	*cmap;
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
-
+/*
+ *			R E M _ H E L P
+ */
 _LOCAL_ int
 rem_help( ifp )
 FBIO	*ifp;
@@ -386,6 +453,8 @@ FBIO	*ifp;
 }
 
 /*
+ *			P K G E R R O R
+ *
  *  This is where we come on asynchronous error or log messages.
  *  We are counting on the remote machine now to prefix his own
  *  name to messages, so we don't touch them ourselves.

@@ -23,6 +23,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+extern int	fb_sim_readrect(), fb_sim_writerect();
+
 /* typedef unsigned char	u_char;	*/
 int	_fbfd;
 int	_fbsize = 512;
@@ -83,6 +85,8 @@ FBIO rat_interface =  {
 	rat_curs_set,			/* curs_set		*/
 	rat_cmemory_addr,		/* cursor_move_memory_addr */
 	rat_cscreen_addr,		/* cursor_move_screen_addr */
+	fb_sim_readrect,
+	fb_sim_writerect,
 	rat_help,			/* help function	*/
 	"Raster Technology One/80",	/* device description	*/
 	1024,				/* max width		*/
