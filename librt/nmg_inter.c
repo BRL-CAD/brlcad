@@ -451,7 +451,7 @@ struct faceuse *fu;
 			NMG_CK_VERTEX(euforw->vu_p->v_p);
 			NMG_CK_VERTEX(euforw->eumate_p->vu_p->v_p);
 
-			nmg_ck_lueu(eu->up.lu_p);
+			nmg_ck_lueu(eu->up.lu_p, "isect_edge_face" );
 
 			/* check to make sure we know the right place to
 			 * stick the geometry
