@@ -30,6 +30,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Readname( ptr , id )
 char *id,**ptr;
 {

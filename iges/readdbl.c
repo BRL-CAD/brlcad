@@ -30,6 +30,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Readdbl( inum , id )
 char *id;
 double *inum;

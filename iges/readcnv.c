@@ -32,6 +32,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Readcnv( inum , id )
 char *id;
 fastf_t *inum;

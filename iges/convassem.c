@@ -37,6 +37,7 @@ struct solid_list
 	struct solid_list *next;
 };
 
+void
 Convassem()
 {
 	int			i,j,k,comblen,conv=0,totass=0;

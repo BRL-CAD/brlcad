@@ -25,6 +25,7 @@
 #include "./iges_extern.h"
 #include "wdb.h"
 
+void
 Makemembers( root , head )
 struct node *root;
 struct wmember *head;
