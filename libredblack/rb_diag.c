@@ -2,6 +2,8 @@
  *
  *	Diagnostic routines for red-black tree maintenance
  *
+ *	Author:	Paul Tanenbaum
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#) $Header$";

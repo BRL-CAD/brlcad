@@ -3,6 +3,8 @@
  *	Routines to extract mins, maxes, and adjacent nodes
  *			from a red-black tree
  *
+ *	Author:	Paul Tanenbaum
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#) $Header$";

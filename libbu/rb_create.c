@@ -2,6 +2,8 @@
  *
  *		Routines to create a red-black tree
  *
+ *	Author:	Paul Tanenbaum
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#) $Header$";

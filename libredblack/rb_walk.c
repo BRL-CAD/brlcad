@@ -18,6 +18,9 @@
  *	the root of the tree to traverse, the order on which to do the
  *	walking, the function to apply at each visit, and the current
  *	depth in the tree.
+ *
+ *	Author:	Paul Tanenbaum
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#) $Header$";

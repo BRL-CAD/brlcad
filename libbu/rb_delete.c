@@ -2,6 +2,8 @@
  *
  *	    Routines to delete a node from a red-black tree
  *
+ *	Author:	Paul Tanenbaum
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#) $Header$";
