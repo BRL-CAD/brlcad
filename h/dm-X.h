@@ -19,6 +19,8 @@
 #define X_MV_O(_m) offsetof(struct modifiable_x_vars, _m)
 
 struct modifiable_x_vars {
+  int linewidth;
+  int linestyle;
   int perspective_mode;
   int dummy_perspective;
   int debug;
