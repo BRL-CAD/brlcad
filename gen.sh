@@ -37,7 +37,7 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=5.2;	RCS_REVISION=13;	REL_DATE=21-Aug-00	# 5.2
+RELEASE=5.2;	RCS_REVISION=13;	REL_DATE=7-Oct-00	# 5.2
 #RELEASE=5.0;	RCS_REVISION=12;	REL_DATE=15-Sept-99	# 5.0 production
 #RELEASE=4.6;	RCS_REVISION=11;	REL_DATE=7-Jul-99	# 5.0beta
 #RELEASE=4.5;	RCS_REVISION=11;	REL_DATE=14-Feb-98	# 4.5 production
@@ -407,7 +407,8 @@ perms)
 	#
 	#########################################
 
-	chown -R bin.bin /usr/brlcad
+	chown -R bin /usr/brlcad
+	chgrp -R bin /usr/brlcad
 
 	for dir in /usr/brlcad/etc /usr/brlcad/html /usr/brlcad/include \
 		/usr/brlcad/man /usr/brlcad/sample_applications \
