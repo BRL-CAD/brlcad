@@ -1,6 +1,6 @@
 .TH LIBRLE 3V VMB
 '\"	last edit:	85/05/22	D A Gwyn
-'\"	SCCS ID:	@(#)librle.3	1.5
+'\"	SCCS ID:	@(#)librle.3	1.6
 .SH NAME
 librle \- run-length encoded image library
 .SH SYNOPSIS
@@ -88,7 +88,7 @@ in
 and
 .IR ypos\^ .
 .I Flags\^
-is a flag word using bit flags
+is a flag word using a combination of single-bit flags
 .BR \s-1NO_BOX_SAVE\s0 ,
 .BR \s-1NO_COLORMAP\s0 ,
 and
@@ -138,12 +138,16 @@ The
 parameter specifies the number of color channels.
 Normally, this should
 be set to
-.B 3
+.B \s-1\&3\s0
 (for red, green, and blue channels).
 If
 .I ncolors\^
-equals 1, a monochrome (black and white) image is assumed, and if
-it is 0, only the color map will be saved.
+equals
+.BR \s-1\&1\s0 ,
+a monochrome (black and white) image is assumed, and if
+it is
+.BR \s-1\&0\s0 ,
+only the color map will be saved.
 .I Bgflag\^
 specifies whether or not the image is saved with the background.
 If
@@ -249,7 +253,7 @@ $ \|\fIcc \|\-I/vld/include \|program.c \|\/vld/lib/librle.a\fP
 .SH "SEE ALSO"
 libfb(3V).
 .SH DIAGNOSTICS
-All functions print a message and return a -1 upon error.
+Upon error, all functions print a message and return \-1.
 .SH AUTHOR
 Gary S. Moss, BRL/VLD-VMB
 .br
