@@ -5,8 +5,9 @@
 #define SRCDIR	anim
 #define PRODUCTS	anim_cascade anim_fly anim_hardtrack anim_keyread \
 			anim_lookat anim_offset anim_orient anim_script \
-			anim_sort anim_track anim_turn chan_add chan_mult \
-			chan_permute
+			anim_sort anim_time anim_track anim_turn chan_add \
+			chan_mult chan_permute \
+			
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -16,7 +17,8 @@
 
 #define FILES	anim anim_cascade anim_fly anim_hardtrack anim_keyread \
 		anim_lookat anim_offset anim_orient anim_script anim_sort \
-		anim_track anim_turn cattrack chan_add chan_mult chan_permute
+		anim-time anim_track anim_turn cattrack chan_add chan_mult \
+		chan_permute
 
 /* Explicit composition of each product */
 anim_cascade: anim_cascade.o anim.o
@@ -38,13 +40,16 @@ anim_offset: anim_offset.o anim.o
 	CC LDFLAGS anim_offset.o anim.o LIBES -o anim_offset
 
 anim_orient: anim_orient.o anim.o
-	CC LDFLAGS anim_orient.o anim.o LIBES -o anim_orient
+	CC LDFLAGS anim_orient.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_orient
 
 anim_script: anim_script.o anim.o
 	CC LDFLAGS anim_script.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_script
 
 anim_sort: anim_sort.o
 	CC LDFLAGS anim_sort.o LIBES -o anim_sort
+
+anim_time: anim_time.o 
+	CC LDFLAGS anim_time.o LIBES -o anim_time
 
 anim_track: anim_track.o cattrack.o anim.o
 	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_track
