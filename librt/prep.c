@@ -441,9 +441,7 @@ register struct rt_i *rtip;
 		rt_fr_cut( &(rtip->rti_inf_box) );
 		bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
 	}
-	/* rt_g.rtg_CutFree list could be freed, but is bulk allocated, XXX
-	 * so cutter structures will hang around.  XXX
-	 */
+	rt_cut_clean();
 	/* XXX struct seg is also bulk allocated, can't be freed. XXX */
 
 	/* Release partition structs.  XXX How to find them?  resource structs? */

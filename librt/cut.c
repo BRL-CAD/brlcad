@@ -1409,3 +1409,17 @@ int			depth;
 	RT_HISTOGRAM_TALLY( &rtip->rti_hist_cutdepth, depth ); 
 
 }
+
+/*
+ *			R T _ C U T _ C L E A N
+ *
+ * rt_g.rtg_CutFree list could be freed, but is bulk allocated, XXX
+ * so cutter structures will hang around.  XXX
+ *
+ */
+void
+rt_cut_clean()
+{
+	nmg_tbl( &rt_waiting_nodes, TBL_FREE, 0 );
+}
+
