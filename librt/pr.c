@@ -119,7 +119,9 @@ register CONST struct partition *pp;
 	rt_log("%s%s\n",
 		pp->pt_inflip ? " Iflip" : "",
 		pp->pt_outflip ?" Oflip" : "" );
-	rt_pr_bitv( "Solids", pp->pt_solhit, rtip->nsolids );
+	rt_pr_hit( " In hit", pp->pt_inhit );
+	rt_pr_hit( "Out hit", pp->pt_outhit );
+	rt_pr_bitv( "Solids present", pp->pt_solhit, rtip->nsolids );
 }
 
 /*
@@ -165,9 +167,14 @@ void
 char *str;
 register struct hit *hitp;
 register CONST struct hit	*hitp;
-	rt_log("HIT %s dist=%g\n", str, hitp->hit_dist );
-	VPRINT("HIT Point ", hitp->hit_point );
-	VPRINT("HIT Normal", hitp->hit_normal );
+	rt_log("HIT %s dist=%g (surf %d)\n",
+		str, hitp->hit_dist, hitp->hit_surfno );
+	if( !VNEAR_ZERO( hitp->hit_point, SQRT_SMALL_FASTF ) )  {
+		VPRINT("HIT Point ", hitp->hit_point );
+	}
+	if( !VNEAR_ZERO( hitp->hit_normal, SQRT_SMALL_FASTF ) )  {
+		VPRINT("HIT Normal", hitp->hit_normal );
+	}
 		hitp->hit_dist, hitp->hit_surfno );
 }
 
