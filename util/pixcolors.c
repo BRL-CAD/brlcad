@@ -11,6 +11,7 @@
  *	v	list colors
  */
 #include <stdio.h>
+#include "externs.h"
 
 /* declarations to support use of getopt() system call */
 char *options = "v";
@@ -22,76 +23,83 @@ char *progname = "(noname)";
 #define PIXELS 1024
 unsigned char pixbuf[BUFSIZ*3];
 
-/* This grotesque array provides 1 bit for every possible pixel value.
- * the "NOBASE" comment below allows compilation on the Gould 9000 series
+/* This grotesque array provides 1 bit for each of the 2^24 possible pixel
+ * values.
+ * The "NOBASE" comment below allows compilation on the Gould 9000 series
  * of computers.
  */
 /*NOBASE*/
-unsigned char vals[2097152L];
-
-#define TEST(p)    (vals[(p)/8] & 1 << (p)%8)
+unsigned char vals[1L << (24-3)];
 
 /*
- *    D O I T --- Main function of program
+ *	D O I T --- Main function of program
  */
 void doit()
 {
-    unsigned long bytes, i, pixel, count;
-    
-    count = 0;
-    while ((bytes=fread(pixbuf, 3, PIXELS, stdin)) > 0) {
-	for (i = 0 ; i < bytes ; ++i) {
-	    pixel = pixbuf[i*3] + (pixbuf[i*3+1] << 8) + (pixbuf[i*3+2] << 16);
-	    if ( ! TEST(pixel) ) {
-		vals[pixel/8] = vals[pixel/8] | 1 << pixel%8;
-		++count;
-	    }
+	unsigned long pixel, count;
+	int bytes;
+	register int mask, i;
+	register unsigned long k;
+
+
+	count = 0;
+	while ((bytes=fread(pixbuf, 3, PIXELS, stdin)) > 0) {
+		for (i=(bytes-1)*3 ; i >= 0 ; i -= 3) {
+			pixel = pixbuf[i] + 
+				(pixbuf[i+1] << 8) +
+				(pixbuf[i+2] << 16);
+
+			if ( ! ( vals[k=(pixel >> 3)] &
+			    (mask=(1 << (pixel & 0x07))) ) ) {
+				vals[k] |= (unsigned char)mask;
+				++count;
+			}
+		}
 	}
-    }
-    (void) printf("%u\n", count);
-    if (verbose)
+	(void) printf("%u\n", count);
+	if (verbose)
 	for (i=0 ; i < sizeof(vals) ; ++i)
-	    if (TEST(i))
+		if (vals[i >> 3] & (1 << (i & 0x07)) )
 		(void) printf("%3d %3d %3d\n", i & 0x0ff,
-		    (i >> 8) & 0x0ff,
-		    (i >> 16) & 0x0ff);
+			(i >> 8) & 0x0ff, (i >> 16) & 0x0ff);
 }
 
 void usage()
 {
-    (void) fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname, options);
-    exit(1);
+	(void) fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
+	exit(1);
 }
 
 /*
- *    M A I N
+ *	M A I N
  *
- *    Perform miscelaneous tasks such as argument parsing and
- *    I/O setup and then call "doit" to perform the task at hand
+ *	Perform miscelaneous tasks such as argument parsing and
+ *	I/O setup and then call "doit" to perform the task at hand
  */
-main(ac,av)
+int main(ac,av)
 int ac;
 char *av[];
 {
-    int  c;
+	int  c, isatty();
 
-    progname = *av;
-    if (isatty(fileno(stdin))) usage();
-    
-    /* Get # of options & turn all the option flags off
-     */
+	progname = *av;
+	if (isatty(fileno(stdin))) usage();
+	
+	/* Get # of options & turn all the option flags off
+	 */
 
-    /* Turn off getopt's error messages */
-    opterr = 0;
+	/* Turn off getopt's error messages */
+	opterr = 0;
 
-    /* get all the option flags from the command line
-     */
-    while ((c=getopt(ac,av,options)) != EOF) {
-	if ( c == 'v' ) verbose = ! verbose;
-	else usage();
-    }
+	/* get all the option flags from the command line
+	 */
+	while ((c=getopt(ac,av,options)) != EOF) {
+		if ( c == 'v' ) verbose = ! verbose;
+		else usage();
+	}
 
-    if (optind < ac) usage();
+	if (optind < ac) usage();
 
-    doit();
+	doit();
+	return(0);
 }
