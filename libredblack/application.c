@@ -71,6 +71,13 @@ void describe_president (void *v)
     fflush(stderr);
 }
 
+void print_last_name (void *v)
+{
+    record	*p = v;
+
+    fprintf(stderr, "%-16s\n", p -> last);
+}
+
 /* 
  *	The main driver
  */
@@ -107,9 +114,6 @@ main ()
 			};
 
     nm_presidents = sizeof(pres) / sizeof(record);
-    for (i = 0; i < nm_presidents; ++i)
-	fprintf(stderr, "%d  <%x>  %s\n",
-		i, pres + i, pres[i].last);
 
     comp_func[0] = last_name_sort;
     if ((tree = rb_create("First test", 3, comp_func)) == RB_TREE_NULL)
@@ -117,83 +121,37 @@ main ()
 	fputs("rb_create() bombed\n", stderr);
 	exit (1);
     }
-    rb_install_print(tree, describe_president);
+    rb_install_print(tree, print_last_name);
 
-    printf("There are %d presidents\n", nm_presidents);
-    for (i = 0; i < nm_presidents; ++i)
+    for (i = 0; i < nm_presidents - 1; ++i)
 	rb_insert(tree, (void *) &(pres[i]));
-
-    printf("\n\n a summary...\n");
-    rb_summarize_tree(tree);fflush(stdout);
-
-    for (i = 0; i < 3; ++i)
-    {
-	r = (record *) rb_min(tree, i);
-	printf("Smallest %s is for %s %s\n",
-	    order_string[i], r -> first, r -> last);
-	r = (record *) rb_max(tree, i);
-	printf("Largest %s is for %s %s\n",
-	    order_string[i], r -> first, r -> last);
-    }
-
-    printf("\n\n\nBy last name...\n");fflush(stdout);
-	rb_walk(tree, ORDER_LASTNAME, describe_president);fflush(stdout);
-    printf("\n\n\nBy first name...\n");fflush(stdout);
-	rb_walk(tree, ORDER_FIRSTNAME, describe_president);
-    printf("\n\n\nBy party...\n");
-	rb_walk(tree, ORDER_PARTY, describe_president);
-
-    p.magic = RECORD_MAGIC;
-    strcpy(p.first, "Lyndon");
-    strcpy(p.last, "Johnson");
-    p.party = DEMOCRAT;
-    r = (record *) rb_search(tree, ORDER_FIRSTNAME, (void *) (&p));
-    if (r == 0)
-    {
-	printf("It ain't there\n");
-    }
-    else
-    {
-	printf("I found it...\n");
-	describe_president((void *) r);
-    }
-
-    fprintf(stderr, "Last names as we begin...\n");
+    
+    fprintf(stderr, "Before we begin...\n");
     rb_diagnose_tree(tree, ORDER_LASTNAME);
-    fprintf(stderr, "First names as we begin...\n");
     rb_diagnose_tree(tree, ORDER_FIRSTNAME);
-    fprintf(stderr, "parties as we begin...\n");
     rb_diagnose_tree(tree, ORDER_PARTY);
+    /*
+     *	Delete Reagan, Nixon, and Roosevelt
+     */
+    r = (record *) rb_search(tree, ORDER_LASTNAME, (void *) (pres + 8));
+    if (r != NULL)
+	rb_delete(tree, ORDER_LASTNAME);
+    r = (record *) rb_search(tree, ORDER_LASTNAME, (void *) (pres + 5));
+    if (r != NULL)
+	rb_delete(tree, ORDER_LASTNAME);
+    r = (record *) rb_search(tree, ORDER_LASTNAME, (void *) (pres + 0));
+    if (r != NULL)
+	rb_delete(tree, ORDER_LASTNAME);
 
-    fprintf(stderr, "Deleting Johnson by last name\n");
-    rb_delete(tree, ORDER_LASTNAME);
-
-    fprintf(stderr, "Last names afterwards...\n");
+    fprintf(stderr, "After deleting Reagan, Nixon, and Roosevelt...\n");
     rb_diagnose_tree(tree, ORDER_LASTNAME);
-    fprintf(stderr, "First names afterwards...\n");
     rb_diagnose_tree(tree, ORDER_FIRSTNAME);
+    rb_diagnose_tree(tree, ORDER_PARTY);
+    
+    rb_insert(tree, (void *) &(pres[nm_presidents - 1]));
 
-    printf("\nStepping through by last names\n");
-    for (r = (record *) rb_min(tree, ORDER_LASTNAME);
-	 r != 0;
-	 r = (record *) rb_succ(tree, ORDER_LASTNAME))
-    {
-	describe_president((void *) r);
-    }
-
-    printf("\nStepping through by first names\n");
-    for (r = (record *) rb_min(tree, ORDER_FIRSTNAME);
-	 r != 0;
-	 r = (record *) rb_succ(tree, ORDER_FIRSTNAME))
-    {
-	describe_president((void *) r);
-    }
-
-    printf("\nStepping through by parties\n");
-    for (r = (record *) rb_min(tree, ORDER_PARTY);
-	 r != 0;
-	 r = (record *) rb_succ(tree, ORDER_PARTY))
-    {
-	describe_president((void *) r);
-    }
+    fprintf(stderr, "After inserting Clinton...\n");
+    rb_diagnose_tree(tree, ORDER_LASTNAME);
+    rb_diagnose_tree(tree, ORDER_FIRSTNAME);
+    rb_diagnose_tree(tree, ORDER_PARTY);
 }
