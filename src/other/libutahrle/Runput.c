@@ -104,7 +104,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "rle_put.h"
 #include "rle.h"
 #include "rle_code.h"

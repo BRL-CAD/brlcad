@@ -59,7 +59,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 
 typedef char bool;
 /* 

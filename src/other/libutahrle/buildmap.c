@@ -35,7 +35,6 @@
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 

@@ -28,6 +28,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.1  2004/05/20 14:54:04  morrison
+ * Sources that are external to BRL-CAD are moved from the top level to src/other/.
+ *
  * Revision 11.7  2004/05/10 15:30:47  erikg
  * change conf.h to a wrapped config.h
  *
@@ -126,7 +129,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 /* Ansi uses HUGE_VAL. */

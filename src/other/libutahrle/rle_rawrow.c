@@ -17,7 +17,6 @@
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 
 #ifdef USE_STRING_H
 #include <string.h>
