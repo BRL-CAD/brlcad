@@ -920,7 +920,7 @@ schedule()
 	static int	scheduler_going = 0;	/* recursion protection */
 
 	if( scheduler_going )  {
-		printf("note: recurion prevented in schedule()\n");
+		/* recursion protection */
 		return;
 	}
 	scheduler_going = 1;
@@ -1223,6 +1223,21 @@ char *buf;
 fprintf(stderr,"PIXELS fr=%d, pix=%d..%d, rays=%d, cpu=%g, el=%g\n",
 info.li_frame, info.li_startpix, info.li_endpix,
 info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
+
+	/* Don't be so trusting... */
+	if( info.li_frame != fr->fr_number )  {
+		printf("frame number mismatch, claimed=%d, actual=%d\n",
+			info.li_frame, fr->fr_number );
+bad:
+		dropclient( pc );
+		if(buf) (void)free(buf);
+		return;
+	}
+	if( info.li_startpix < 0 ||
+	    info.li_endpix >= fr->fr_width*fr->fr_height )  {
+		printf("pixel numbers out of range\n");
+		goto bad;
+	}
 
 	/* Stash pixels in memory in bottom-to-top .pix order */
 	if( fr->fr_picture == (char *)0 )  {
