@@ -254,7 +254,7 @@ int	count;
 
 		count -= scan_count;
 		xpos = 0;
-		ypos--;		/* LEFTOVER from 1st quadrant days */
+		ypos++;		/* Advance upwards */
 	}
 	return(ret);
 }
