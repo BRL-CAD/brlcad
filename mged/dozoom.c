@@ -417,13 +417,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }else{
-	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK){
+	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK){
 	      sp->s_flag = UP;
 	      ndrawn++;
 	    }
 	  }
 #else
-	  if(DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK) {
+	  if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK) {
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -436,7 +436,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 			 color_scheme->cs_predictor[0],
 			 color_scheme->cs_predictor[1],
 			 color_scheme->cs_predictor[2], 1);
-	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->dml_p_vlist, mged_variables->mv_perspective);
+	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->dml_p_vlist);
 	}
 
 	/*
@@ -487,13 +487,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 	    ndrawn++;
 	  }else{
 	    /* draw in immediate mode */
-	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective) == TCL_OK){
+	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK){
 	      sp->s_flag = UP;
 	      ndrawn++;
 	    }
 	  }
 #else
-	  if( DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK){
+	  if( DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK){
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -510,7 +510,7 @@ createDList(sp)
 struct solid *sp;
 {
   DM_BEGINDLIST(dmp, sp->s_dlist);
-  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective);
+  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist);
   DM_ENDDLIST(dmp);
 }
 
