@@ -734,14 +734,14 @@ out:
  *	and "this", the current one being considered.
  */
 static int
-nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass, skip_index )
+nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass, skip_array )
 struct nmg_vu_stuff	*vs;
 int	start;		/* vu index of coincident range */
 int	end;
 double	lo_ang;
 double	hi_ang;
 int	wclass;
-int	skip_index;
+int	skip_array[];
 {
 	register int	i;
 	double	cand_lo;
@@ -762,7 +762,7 @@ int	skip_index;
 		int	this_wrt_cand;
 
 		NMG_CK_VERTEXUSE( vs[i].vu );
-		if( i == skip_index )  {
+		if( skip_array[i] )  {
 rt_log("Skipping index %d\n", i);
 			continue;
 		}
@@ -1047,11 +1047,18 @@ int	wclass;
 	int	inner_wedge;
 	struct loopuse	*outer_lu;
 	struct loopuse	*inner_lu;
+	int		not_these[128];
+
+	if( end-start >= 128 )  rt_bomb("nmg_special_wedge_processing: array overflow\n");
+	bzero( (char *)not_these, sizeof(not_these) );
 
 again:
 	/* There may be many wedges to iterate over */
-	outer_wedge = nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass, -1 );
+	outer_wedge = nmg_find_vu_in_wedge( vs, start, end,
+		lo_ang, hi_ang, wclass, not_these );
 	if( outer_wedge <= -1 )  return 0;	/* No wedges to process */
+
+	not_these[outer_wedge] = 1;	/* Don't return this wedge again */
 
 	/* There is at least one wedge on this side of the line */
 	outer_lu = nmg_lu_of_vu( vs[outer_wedge].vu );
@@ -1059,13 +1066,13 @@ again:
 
 	inner_wedge = nmg_find_vu_in_wedge( vs, start, end,
 		vs[outer_wedge].lo_ang, vs[outer_wedge].hi_ang,
-		wclass, outer_wedge );
+		wclass, not_these );
 	if( inner_wedge <= -1 )  {
 		/*
 		 *  See if there is another outer wedge that starts where
 		 *  outer_wedge left off.
+		 *  not_these[outer_wedge] is already set.
 		 */
-		lo_ang = vs[outer_wedge].hi_ang;
 		goto again;
 	}
 	if( inner_wedge == outer_wedge )  rt_bomb("nmg_special_wedge_processing() identical vu selections?\n");
