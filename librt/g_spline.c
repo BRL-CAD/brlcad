@@ -181,7 +181,6 @@ struct rt_i	*rtip;
 struct directory *dp;
 {
 	struct b_head  *nlist = (struct b_head *) 0;
-	register int    i;
 	int		n_srfs;
 	int		currec;
 
@@ -307,7 +306,6 @@ struct directory *dp;
 	register int	i;
 	register int	j;
 	register fastf_t *vp;
-	register fastf_t *mesh;
 	int		cur_gran;
 	int		n_srfs;
 
@@ -338,8 +336,6 @@ struct directory *dp;
 			vp = new->ctl_mesh->mesh;
 			i = new->ctl_mesh->mesh_size[0] * new->ctl_mesh->mesh_size[1];
 			for( ; i>0; i--, vp += new->ctl_mesh->pt_type )  {
-				static hvect_t	homog;
-
 				HDIVIDE( vp, vp );
 				/* Leaves us with [x,y,z,1] */
 			}
@@ -433,7 +429,6 @@ struct soltab *stp;
 	} else if (s_ptr->root->ctl_mesh->pt_type == P4) {
 		vect_t          ue, ve;
 		vect_t          u2e, v2e, uve;
-		vect_t		u_norm;
 
 
 		ue[0] =
@@ -895,6 +890,7 @@ void
 shot_poly( rp, tree, level )
 struct xray *rp;
 struct b_tree * tree;
+int level;
 {
 	struct  spl_poly * poly, *p, *tmp;
 	struct  local_hit * h0, * ray_poly();
@@ -1021,7 +1017,6 @@ struct spl_poly * p1;
 	register struct local_hit * h0;
 	point_t pt1, pt2, pt3;
 	point_t Q, B, norm;
-	fastf_t uv[2];
 	fastf_t d, offset, t;
 	unsigned int i0, i1, i2;
 	fastf_t NX, NY, NZ;
@@ -1135,5 +1130,3 @@ struct spl_poly * p1;
 	
 	return h0;
 }
-
-
