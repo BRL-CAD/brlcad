@@ -39,7 +39,7 @@ extern void set_port();
 static void set_dirty_flag();
 static void nmg_eu_dist_set();
 static void set_dlist();
-static void set_perspective();
+void set_perspective();
 static void establish_perspective();
 static void toggle_perspective();
 static void set_coords();
@@ -421,7 +421,7 @@ set_dlist()
   curr_dm_list = save_dlp;
 }
 
-static void
+void
 set_perspective()
 {
 	/* if perspective is set to something greater than 0, turn perspective mode on */
