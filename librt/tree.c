@@ -168,18 +168,6 @@ union tree			*curtree;
 }
 
 /*
- *  XXX Something should be done to account for tolerances from rtip,
- *  but this at least allows varying deltas for the angle and distance
- *  parts of the matrix.
- */
-static CONST mat_t	rt_equal_matrix = {
-	0.00001,	0.00001,	0.00001,	0.01,
-	0.00001,	0.00001,	0.00001,	0.01,
-	0.00001,	0.00001,	0.00001,	0.01,
-	0,		0,		0,		0.00001
-};
-
-/*
  *			R T _ F I N D _ I D E N T I C A L _ S O L I D
  *
  *  See if solid "dp" as transformed by "mat" already exists in the
@@ -266,16 +254,10 @@ struct rt_i			*rtip;
 		if( stp->st_matp == (matp_t)0 )  continue;
 
 #		include "noalias.h"
-		for( i=0; i<16; i++ )  {
-			register fastf_t	f;
-			f = mat[i] - stp->st_matp[i];
-			if( !NEAR_ZERO(f, 0.0001) )
-				goto next_one;
+		if (rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol)) {
+			have_match = 1;
+			break;
 		}
-		/* Success, we have a match! */
-		have_match = 1;
-		break;
-next_one: ;
 	}
 
 	if( have_match )  {
@@ -350,13 +332,8 @@ int				id;
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	/* Determine if this matrix is an identity matrix */
-	/* XXX Should build custom matrix based upon rtip tolerances */
-	for( i=0; i<16; i++ )  {
-		f = tsp->ts_mat[i] - rt_identity[i];
-		if( !NEAR_ZERO(f, rt_equal_matrix[i]) )
-			break;
-	}
-	if( i < 16 )  {
+
+	if( !rt_mat_is_equal(tsp->ts_mat, rt_identity, &rt_tree_rtip->rti_tol)) {
 		/* Not identity matrix */
 		mat = (matp_t)tsp->ts_mat;
 	} else {
