@@ -349,3 +349,14 @@ bsurfdump()	/* Print d-spline surface description record information */
 	/* Free the control mesh memory */
 	(void)free( (char *)fp );
 }
+
+#ifndef BSD42
+
+bzero( str, n )
+register char *str;
+register int n;
+{
+	while( n-- > 0 )
+		*str++ = '\0';
+}
+#endif
