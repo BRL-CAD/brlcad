@@ -36,9 +36,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef BSD
 #  define __BSDbackup BSD
 #  undef BSD
-#  include <netdb.h>
-#  undef BSD
+#endif
+#include <netdb.h>
+#ifdef __BSDbackup
 #  define BSD __BSDbackup
+#  undef __BSDbackup
 #endif
 
 #ifdef SYSV
@@ -507,7 +509,7 @@ main(int argc, char **argv)
 			sinhim.sin_addr.s_addr = inet_addr(host);
 #endif
 		} else {
-			if ((addr=gethostbyname(host)) == NULL)
+			if ((addr=(struct hostent *)gethostbyname(host)) == NULL)
 				err("bad hostname");
 			sinhim.sin_family = addr->h_addrtype;
 			bcopy(addr->h_addr,(char*)&addr_tmp, addr->h_length);
