@@ -415,8 +415,8 @@ struct application *ap;
 	if( buf_mode == BUFMODE_FULLFLOAT )  {
 		if( prev_float_frame )  {
 			bu_free( (genptr_t)prev_float_frame, "floatpixel frame");
-			prev_float_frame = curr_float_frame;
 		}
+		prev_float_frame = curr_float_frame;
 		curr_float_frame = (struct floatpixel *)bu_malloc(
 			width * height * sizeof(struct floatpixel),
 			"floatpixel frame");
