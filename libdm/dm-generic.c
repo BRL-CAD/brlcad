@@ -59,3 +59,23 @@ char *argv[];
     break;
   }
 }
+
+fastf_t
+dm_X2Normal(dmp, x, use_aspect)
+struct dm *dmp;
+register int x;
+int use_aspect;
+{
+  if(use_aspect)
+    return ((x / (fastf_t)dmp->dm_width - 0.5) / dmp->dm_aspect * 2.0);
+  else
+    return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
+}
+
+fastf_t
+dm_Y2Normal(dmp, y)
+struct dm *dmp;
+register int y;
+{
+  return ((0.5 - y / (fastf_t)dmp->dm_height) * 2.0);
+}
