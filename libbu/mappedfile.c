@@ -127,7 +127,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 #endif /* HAVE_UNIX_IO */
 
 	/* Optimisticly assume that things will proceed OK */
-	GETSTRUCT( mp, bu_mapped_file );
+	BU_GETSTRUCT( mp, bu_mapped_file );
 	mp->name = bu_strdup( name );
 	if( appl ) mp->appl = bu_strdup( appl );
 
