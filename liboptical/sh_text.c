@@ -526,7 +526,12 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 		rp->reg_transmit = 1;
 
 	if (tp->tx_file[0] == '\0' )  return -1;	/* FAIL, no file */
-	if (!(tp->mp = bu_open_mapped_file( tp->tx_file, NULL )) )
+
+	tp->mp = bu_open_mapped_file_with_path(
+		(char *const *)tp->tx_file, NULL, 
+		(const char *)rtip->rti_dbip->dbi_filepath);
+
+	if (!(tp->mp) )
 		return -1;				/* FAIL */
 
 	/* Ensure file is large enough */
