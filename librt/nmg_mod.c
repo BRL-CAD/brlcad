@@ -855,12 +855,14 @@ int		n;
 		}
 	}
 
-	if (eur = nmg_findeu(*verts[0], *verts[1], s, euold, 1))  {
-		nmg_je(eur, euold);
-	} else  {
-	    if (rt_g.NMG_debug & DEBUG_CMFACE)
-		rt_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
-			0, *verts[0], 1, *verts[1]);
+	if( n > 1 )  {
+		if (eur = nmg_findeu(*verts[0], *verts[1], s, euold, 1))  {
+			nmg_je(eur, euold);
+		} else  {
+		    if (rt_g.NMG_debug & DEBUG_CMFACE)
+			rt_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
+				0, *verts[0], 1, *verts[1]);
+		}
 	}
 
 	if(rt_g.NMG_debug & DEBUG_BASIC)  {
