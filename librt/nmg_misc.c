@@ -633,9 +633,10 @@ plane_t pl;
  */
 
 int
-nmg_calc_face_g( fu )
-struct faceuse *fu;
+nmg_calc_face_g( fu_in )
+struct faceuse *fu_in;
 {
+	struct faceuse *fu;
 	struct nmg_ptbl verts;
 	plane_t pl,old_pl;
 	struct face *f;
@@ -651,6 +652,7 @@ struct faceuse *fu;
 
 	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 
+	fu = fu_in;
 	NMG_CK_FACEUSE( fu );
 	f = fu->f_p;
 	NMG_CK_FACE( f );
@@ -6345,10 +6347,17 @@ CONST struct rt_tol *tol;
 	{
 		struct edgeuse *eu_next;
 		plane_t plane;
+		int cross_direction;
+		vect_t norm;
 		int done;
 
 		NMG_CK_EDGEUSE( eu );
 		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation == OT_SAME )
+			NMG_GET_FU_NORMAL( norm , fu )
+		else
+			NMG_GET_FU_NORMAL( norm , fu->fumate_p )
 
 		/* find an anchor point for face to rotate about
 		 * go forward in loop until we find a vertex that is
@@ -6359,7 +6368,9 @@ CONST struct rt_tol *tol;
 		done = 0;
 		while( !done )
 		{
+			vect_t to_anchor;
 			vect_t next_dir;
+			vect_t cross;
 			struct vertex *anchor_v;
 			fastf_t mag;
 
@@ -6376,9 +6387,24 @@ CONST struct rt_tol *tol;
 			/* anchor point is endpoint of this edgeuse */
 			anchor_v = eu_next->eumate_p->vu_p->v_p;
 
+			VSUB2( next_dir , anchor_v->vg_p->coord , eu_next->vu_p->v_p->vg_p->coord );
+			VCROSS( cross , e_dir , next_dir );
+			if( VDOT( cross , norm ) < 0.0 )
+				cross_direction = 1;
+			else
+				cross_direction = 0;
+
 			/* calculate new plane */
-			VSUB2( next_dir , anchor_v->vg_p->coord , pt );
-			VCROSS( plane , e_dir , next_dir );
+			VSUB2( to_anchor , anchor_v->vg_p->coord , pt );
+			if( cross_direction )
+			{
+				VCROSS( plane , to_anchor , e_dir );
+			}
+			else
+			{
+				VCROSS( plane , e_dir , to_anchor );
+			}
+
 			mag = MAGNITUDE( plane );
 			if( mag > SQRT_SMALL_FASTF )
 			{
@@ -6386,6 +6412,8 @@ CONST struct rt_tol *tol;
 				mag = 1.0/mag;
 				VSCALE( plane , plane , mag );
 				plane[3] = VDOT( plane , pt );
+
+				/* assign this plane to the face */
 				if( fu->orientation == OT_SAME )
 					nmg_face_g( fu , plane );
 				else
