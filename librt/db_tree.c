@@ -969,12 +969,20 @@ union tree	*tp;
 	case OP_NMG_TESS:
 		{
 			struct nmgregion *r = tp->tr_d.td_r;
+			if( r == (struct nmgregion *)NULL )  {
+				rt_log("db_free_tree: OP_NMG_TESS, r=NULL\n");
+				break;
+			}
 			/* Disposing of the nmg model structue is
 			 * left to someone else.
 			 * It would be rude to zap all the other regions here.
 			 */
 			if( r->l.magic == (-1L) )  {
 				rt_log("db_free_tree: OP_NMG_TESS, r = -1, skipping\n");
+			} else if( r->l.magic != NMG_REGION_MAGIC )  {
+				/* It may have been freed, and the memory re-used */
+				rt_log("db_free_tree: OP_NMG_TESS, bad magic x%x (s/b x%x), skipping\n",
+					r->l.magic, NMG_REGION_MAGIC );
 			} else {
 				NMG_CK_REGION(r);
 				nmg_kr(r);
