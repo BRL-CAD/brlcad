@@ -238,7 +238,7 @@ esac
 # Needs to be coordinated with setting of LIBTCL in Cakefile.defs
 case "${MACHINE}" in
 	li|fbsd)
-		tclsh << EOF
+		tclsh8.0 << EOF
 exit
 EOF
 		if test $? -eq 0
