@@ -49,7 +49,7 @@ extern	int	height;
 char usage[] = "\
 Usage:  rtrad [options] model.g objects... >file.rad\n\
 Options:\n\
- -f #		Grid size in pixels, default 512\n\
+ -s #		Grid size in pixels, default 512\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
@@ -75,9 +75,6 @@ static char	physrec[256*sizeof(union radrec)];
 static int	precindex = 0;
 static int	precnum = 0;	/* number of physical records written */
 static int	recnum = 0;	/* number of (useful) records written */
-
-/* Null function -- handle a miss */
-raymiss() { ; }
 
 view_pixel() {}
 
@@ -110,7 +107,7 @@ struct partition *PartHeadp;
 		return(1);
 	}
 	/* Check to see if eye is "inside" the solid */
-	if( hitp->hit_dist < -1.0e-10 )  {
+	if( hitp->hit_dist < 0 )  {
 		/* XXX */
 		rt_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
 		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
@@ -275,7 +272,7 @@ struct partition *PartHeadp;
 	LOCAL vect_t work;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 1.0e-10 )  break;
+		if( pp->pt_outhit->hit_dist > 0 )  break;
 	if( pp == PartHeadp )  {
 		rt_log("hiteye:  no hit out front?\n");
 		return(1);
@@ -285,15 +282,23 @@ struct partition *PartHeadp;
 		rt_log("hiteye:  entry beyond infinity\n");
 		return(1);
 	}
-	/* Check to see if eye is "inside" the solid */
+	/* The current ray segment exits "in front" of me,
+	 * find out where it went in.
+	 * Check to see if eye is "inside" of the solid.
+	 */
 	if( hitp->hit_dist < -1.0e-10 )  {
-		/* XXX */
-		rt_log("hiteye:  GAK2, eye inside solid (%g)\n", hitp->hit_dist );
-		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-			rt_pr_pt( ap->a_rt_i, pp );
+		/*
+		 * If we are under 1.0 units inside of a solid, we pushed
+		 * into it ourselves in trying to get away from the surface.
+		 * Otherwise, its hard to tell how we got in here!
+		 */
+		if( hitp->hit_dist < -1.001 ) {
+			rt_log("hiteye: *** GAK2, eye inside solid (%g) ***\n", hitp->hit_dist );
+			for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+				rt_pr_pt( ap->a_rt_i, pp );
+		}
 		return(0);
 	}
-	/*RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );*/
 
 	VSUB2( work, firstray.r_pt, ap->a_ray.r_pt );
 	if( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
@@ -330,15 +335,26 @@ struct application *ap;
 struct hit *hitp;
 {
 	struct application sub_ap;
+	vect_t	rdir;
+
+	/* compute the ray direction */
+	VSUB2( rdir, firstray.r_pt, hitp->hit_point );
+	VUNITIZE( rdir );
+	if( VDOT(rdir, hitp->hit_normal) < 0 )
+		return( 0 );	/* backfacing */
 
 	sub_ap = *ap;	/* struct copy */
 	sub_ap.a_level = ap->a_level+1;
 	sub_ap.a_onehit = 1;
 	sub_ap.a_hit = hiteye;
 	sub_ap.a_miss = hittrue;
-	VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
-	VSUB2( sub_ap.a_ray.r_dir, firstray.r_pt, hitp->hit_point );
-	VUNITIZE( sub_ap.a_ray.r_dir );
+	/*
+	 * New origin is one unit in the ray direction in
+	 * order to get away from the surface we intersected.
+	 */
+	VADD2( sub_ap.a_ray.r_pt, hitp->hit_point, rdir );
+	VMOVE( sub_ap.a_ray.r_dir, rdir );
+
 	return( rt_shootray( &sub_ap ) );
 }
 
@@ -504,7 +520,7 @@ buf++;
 	precnum++;
 
 totbuf += buf;
-fprintf( stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf );
+/*fprintf( stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf );*/
 
 	return( 1 );
 }
