@@ -560,7 +560,7 @@ int framenumber;
 
 	rt_log("Tree: %d solids in %d regions\n",
 		rtip->nsolids, rtip->nregions );
-	if( RT_LIST_IS_EMPTY( &rtip->rti_headsolid ) )  {
+	if( rtip->nsolids <= 0 )  {
 		rt_log("rt ERROR: No solids\n");
 		exit(3);
 	}
