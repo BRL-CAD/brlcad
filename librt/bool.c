@@ -79,7 +79,8 @@ struct partition *PartHdp;
 		 *  trouble below.
 		 */
 		if( rt_fdiff(segp->seg_in.hit_dist,segp->seg_out.hit_dist)==0 ) {
-			rt_log("rt_bool_weave:  Thin seg discarded: %s (%f,%f)\n",
+			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
+				"rt_bool_weave:  Thin seg discarded: %s (%f,%f)\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist );
