@@ -8,6 +8,9 @@
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
+#define VERSION_VARIABLE	libcursor_version
+#define LIBRARY_TITLE		"BRL-CAD libcursor"
+
 #include "../Cakefile.defs"
 
 #include "../Cakefile.lib"
