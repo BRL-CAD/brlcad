@@ -603,10 +603,12 @@ relevant and significant items added since the previous release.
 2) All existing manpages are updated with the latest changes.
 
 3) Version numbers (minimally in configure.ac, NEWS, and README) are
-set appropriately (see VERSION NUMBERS & COMPATIBILITY section).
+updated appropriately (see VERSION NUMBERS & COMPATIBILITY section).
 
-4) Update the ChangeLog with entries since the last release
-(e.g. rcs2log -h users.sourceforge.net -r "-d>YYYY-MM-DD" > ChangeLog)
+4) Update the ChangeLog with entries since the last release; commit
+the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
+
+    rcs2log -h users.sourceforge.net -r "-d>YYYY-MM-DD" > ChangeLog
 
 5) A "./configure && make" completes successfully on all platforms.
 
@@ -618,18 +620,18 @@ System tools (autoconf, automake, etc).
 7) Tag the release using the format "rel-MAJOR-MINOR-PATCH".  See the
 doc/cvspolicy.txt document for details.  e.g. cvs tag rel-7-2-4
 
-8) Export the tagged release "cvs export -r rel-MAJOR-MINOR-PATCH" or
-alternatively "cvs update -r rel-MAJOR-MINOR-PATCH" to obtain exactly
-the tagged version of the sources;
+8) Export a tagged version of the sources (required so that RCS ids
+are correct):  cvs export -r rel-MAJOR-MINOR-PATCH brlcad
 
-9) Perform a "make dist" on the exported/updated sources to generate
-the distributable compressed source tarballs.
+9) Perform another "make distcheck" on the exported/updated sources
+(preferably on Mac OS X) to generate the distributable compressed
+source tarballs.
 
 10) Verify that the source distribution tarballs may be expanded; and
 that they build, run, and that the file permissions are correct.
 
 11) Use one of the source distribution tarballs to generate
-platform-specific builds.  Test the build.
+platform-specific builds.  Test the build:  make test && make bench
 
 12) Post the source and platform-specific binary distributions to
 SourceForge (i.e. upload them via ftp to upload.sf.net's incoming
@@ -642,25 +644,24 @@ version (odd minor or patch version number, e.g. 7.4.1).
 14) If appropriate, notify and/or update the following information
 outlets with the details of the new release:
 
-      BRL-CAD News mailing list
-      brlcad-news@lists.sourceforge.net
-
-      BRL-CAD Users mailing list
-      brlcad-users@lists.sourceforge.net
-
       News on the BRL-CAD website
       http://brlcad.org/
 
       SourceForge Project News
       http://sf.net/projects/brlcad/
 
+      BRL-CAD News & Users mailing lists
+      brlcad-news@lists.sourceforge.net
+      brlcad-users@lists.sourceforge.net
+
       Freshmeat
       http://freshmeat.net/projects/brl-cad/
 
       CAD on Linux mailing list
       cad-linux@freelists.org
+      cad-linux-dev@freelists.org
 
-      Slashdot
+      Slashdot (if major)
       http://slashdot.org
 
 15) Sit back and enjoy a beverage for a job well done.
