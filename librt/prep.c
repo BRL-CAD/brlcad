@@ -449,7 +449,7 @@ struct soltab		*stp;
 
 	BU_LIST_INIT( &vhead );
 
-	if( rt_vlist_solid( vhead, rtip, stp ) < 0 )  {
+	if( rt_vlist_solid( &vhead, rtip, stp ) < 0 )  {
 		bu_log("rt_plot_solid(%s): rt_vlist_solid() failed\n",
 			stp->st_name);
 		return(-1);			/* FAIL */
