@@ -165,7 +165,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 5.0 */
 #	undef	sgi
 #	define	MTYPE	6d
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
 #		define	OPTIMIZER	-O2 -Olimit 1500 -woff 658 -Wl,-w1
@@ -173,7 +173,7 @@ set -S2 "/bin/sh"
 /*		This version for debugging with DBX */
 #		define	OPTIMIZER	-g
 #	endif
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	GFLAG		-KPIC
 #		define	ARCH_SUF	so
@@ -230,7 +230,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 6.0 (on a MIPS-3 32-bit machine) */
 #	undef	sgi
 #	define	MTYPE	7d
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -252,7 +252,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG	-n32 -mips3 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib32
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -328,7 +328,7 @@ set -S2 "/bin/sh"
 #		define	XLIBDIR /usr/lib64
 #endif
 #	define  XINCDIR /usr/include/X11
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -367,7 +367,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS4 machine) */
 #	undef	sgi
 #	define	MTYPE	m4i62
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -394,7 +394,7 @@ set -S2 "/bin/sh"
 #endif
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -433,7 +433,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.4 (on a MIPS4 machine) */
 #	undef	sgi
 #	define	MTYPE	m4i64
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
@@ -456,7 +456,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-64 -mips4 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -495,7 +495,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.5 (on a MIPS4 machine) */
 #	undef	sgi
 #	define	MTYPE	m4i65
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -519,7 +519,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-64 -mips4 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -564,7 +564,7 @@ set -S2 "/bin/sh"
 #	define	MTYPE	sun4
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
@@ -586,7 +586,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LIBRT_TIMER	timer42
 
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		Sun with X11 (aka "openwin") Default for SunOS 41.1 */
 #		define	XINCDIR		/usr/openwin/include
 #		define	XLIBDIR		/usr/openwin/lib
@@ -663,7 +663,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #		define	CC		/opt/SUNWspro/bin/cc
-#		if 0	/* PRODUCTION=1 */
+#		if 1	/* PRODUCTION=1 */
 #			define	OPTIMIZER	-dalign -xcg92 -xO4
 #		else
 #			define	OPTIMIZER	-g
@@ -674,7 +674,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 
 /*	Shared library support */
-#	if 0 /* PRODUCTION=1 */
+#	if 1 /* PRODUCTION=1 */
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
@@ -996,7 +996,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
 #	define	MTYPE	5d
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -1024,7 +1024,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		X11 for MGED */
 #		define	MGED_OBJS	dm-4d dm-X dm-ogl dm-generic
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
