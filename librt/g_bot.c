@@ -471,7 +471,7 @@ rt_bot_plate_segs(struct hit		*hits,
 				/* set out hit */
 	    segp->seg_out.hit_surfno = surfno;
 	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
-	    segp->seg_out.hit_vpriv[X] = hits[i].hit_vpriv[X];
+	    VMOVE( segp->seg_out.hit_vpriv, hits[i].hit_vpriv );
 	    RT_BOT_UNORIENTED_NORM( &segp->seg_out, -1 );
 	    segp->seg_out.hit_private = segp->seg_in.hit_private;
 	    segp->seg_out.hit_rayp = &ap->a_ray;
@@ -484,7 +484,7 @@ rt_bot_plate_segs(struct hit		*hits,
 
 				/* set in hit */
 	    segp->seg_in.hit_surfno = surfno;
-	    segp->seg_in.hit_vpriv[X] = hits[i].hit_vpriv[X];
+	    VMOVE( segp->seg_in.hit_vpriv, hits[i].hit_vpriv );
 	    RT_BOT_UNORIENTED_NORM( &segp->seg_in, 1 );
 	    segp->seg_in.hit_private = hits[i].hit_private;
 	    segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5 );
@@ -493,7 +493,7 @@ rt_bot_plate_segs(struct hit		*hits,
 				/* set out hit */
 	    segp->seg_out.hit_surfno = surfno;
 	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
-	    segp->seg_out.hit_vpriv[X] = hits[i].hit_vpriv[X];
+	    VMOVE( segp->seg_out.hit_vpriv, hits[i].hit_vpriv );
 	    RT_BOT_UNORIENTED_NORM( &segp->seg_out, -1 );
 	    segp->seg_out.hit_private = hits[i].hit_private;
 	    segp->seg_out.hit_rayp = &ap->a_ray;
@@ -1311,8 +1311,10 @@ register struct xray	*rp;
 {
 	struct tri_specific *trip=(struct tri_specific *)hitp->hit_private;
 	struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
+	vect_t old_norm;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	VMOVE( old_norm, hitp->hit_normal );
 
 	if( (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && trip->tri_normals ) {
 		fastf_t old_ray_dot_norm, new_ray_dot_norm;
@@ -1331,10 +1333,15 @@ register struct xray	*rp;
 
 		u = 1.0 - v - w;
 		if( u < 0.0 ) u = 0.0;
-
 		VSETALL( hitp->hit_normal, 0.0 );
 		for( i=X ; i<=Z ; i++ ) {
 			hitp->hit_normal[i] = u*trip->tri_normals[i] + v*trip->tri_normals[i+3] + w*trip->tri_normals[i+6];
+		}
+
+		if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS ) {
+			if( VDOT( old_norm, hitp->hit_normal ) < 0.0 ) {
+				VREVERSE( hitp->hit_normal, hitp->hit_normal );
+			}
 		}
 
 		new_ray_dot_norm = VDOT( hitp->hit_normal, rp->r_dir );
@@ -1890,6 +1897,7 @@ const struct db_i               *dbip;
 			cp += SIZEOF_NETWORK_DOUBLE;
 		}
 		bip->face_mode = bu_hex_to_bitv( (const char *)cp );
+		while( *(cp++) != '\0' );
 	}
 	else
 	{
@@ -2030,6 +2038,7 @@ const struct db_i               *dbip;
 		strcpy( (char *)cp, bu_vls_addr( &vls ) );
 		cp += bu_vls_strlen( &vls );
 		*cp = '\0';
+		cp++;
 		bu_vls_free( &vls );
 	}
 
@@ -4535,8 +4544,12 @@ rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, f
 		return( -2 );
 	}
 
-	normal_dot_tol = cos( norm_tol_angle );
+	if( (bot->orientation == RT_BOT_UNORIENTED) && (bot->mode != RT_BOT_SOLID) ) {
+		bu_log( "Cannot smooth unoriented BOT primitives unless they are solid objects\n" );
+		return( -3 );
+	}
 
+	normal_dot_tol = cos( norm_tol_angle );
 
 	if( bot->normals ) {
 		bu_free( (char *)bot->normals, "bot->normals" );
@@ -4637,10 +4650,10 @@ rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, f
 	}
 
 	bot->num_normals = bot->num_faces * 3;
-	bot->num_face_normals = bot->num_normals;
+	bot->num_face_normals = bot->num_faces;
 
 	bot->normals = (fastf_t *)bu_calloc( bot->num_normals * 3, sizeof( fastf_t ), "bot->normals" );
-	bot->face_normals = (int *)bu_calloc( bot->num_face_normals, sizeof( int ), "bot->face_normals" );
+	bot->face_normals = (int *)bu_calloc( bot->num_face_normals * 3, sizeof( int ), "bot->face_normals" );
 
 	/* process each face */
 	for( i=0 ; i<bot->num_faces ; i++ ) {
