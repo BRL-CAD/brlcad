@@ -58,9 +58,8 @@ AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
 	]	
 )
 
-if test "$GCC" = "yes" || test "$GCC" = "egcs" ; then
-	CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
-fi
+# XXX these flags are GCC-specific -- perhaps should set after the compiler check
+CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
 
 # XXX pthread lib stuff should go away (and be made proper lib check)
 case "$target" in
