@@ -3,8 +3,8 @@
  */
 #include "../../Cakefile.defs"
 
-#define PRODUCTS	*.tcl *.tk *.sh tclIndex
-#define STATIC_PRODUCTS	*.tcl *.tk *.sh tclIndex
+#define PRODUCTS	*.sh
+#define STATIC_PRODUCTS	*.sh
 #define SRCDIR	nirt
 #undef BINDIR
 #define BINDIR	TCLSCRIPTSDIR/nirt
@@ -23,7 +23,7 @@
 all&:
 	@echo "SRCDIR:  all done"
 
-ami&:
+tclIndex:
 	../ami.tcl ../../tclscripts/nirt
 
 #include "../../Cakefile.rules"
