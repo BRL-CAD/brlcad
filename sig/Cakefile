@@ -77,10 +77,10 @@ dauto: dauto.o
 dmod: dmod.o
 	CC LDFLAGS -o dmod dmod.o LIBES
 
-dfft: dfft.o interp.o butter.o LIBFFT
+dfft: dfft.o interp.o butter.o
 	CC LDFLAGS -o dfft dfft.o interp.o butter.o LIBFFT LIBES
 
-dconv: dconv.o LIBFFT
+dconv: dconv.o
 	CC LDFLAGS -o dconv dconv.o LIBFFT LIBES
 
 
