@@ -1,7 +1,8 @@
 # $Id$
 
 brlcad_m4 = \
-	cache.m4
+	cache.m4 \
+	restore.m4
 
 EXTRA_DIST = \
 	$(brlcad_m4) \
