@@ -909,13 +909,10 @@ register struct frame *fr;
  */
 schedule()
 {
-	register struct list *lp;
 	register struct servers *sp;
 	register struct frame *fr;
-	int a,b;
 	int		servers_going;		/* # servers still going */
 	register struct frame *fr2;
-	int		len;
 	int		another_pass;
 	static int	scheduler_going = 0;	/* recursion protection */
 
@@ -931,7 +928,7 @@ schedule()
 	/* Look for finished frames */
 	fr = FrameHead.fr_forw;
 	while( fr != &FrameHead )  {
-		if( (lp = fr->fr_todo.li_forw) != &(fr->fr_todo) )
+		if( fr->fr_todo.li_forw != &(fr->fr_todo) )
 			goto next_frame;	/* unassigned work remains */
 
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
@@ -965,87 +962,102 @@ next_frame: ;
 		goto out;
 	}
 
-	/* Find first piece of work */
+	/* Keep assigning work until all servers are sated */
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
-		if( fr->fr_todo.li_forw == &(fr->fr_todo) )
-			continue;	/* none waiting here */
+		do {
+			another_pass = 0;
+			if( fr->fr_todo.li_forw == &(fr->fr_todo) )
+				break;	/* none waiting here */
 
-		/*
-		 *  Look for a server with fewer than N_SERVER_ASSIGNMENTS
-		 *  outstanding assignments.   Dispatch 1 unit of work to it.
-		 */
-		another_pass = 0;
-		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-			if( sp->sr_pc == PKC_NULL )  continue;
-			if( sp->sr_started == SRST_NEW )  {
-				/*  advance to state 1 (loading) */
-				send_start(sp);
-				continue;
+			for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+				if( sp->sr_pc == PKC_NULL )  continue;
+
+				another_pass += task_server( fr, sp );
 			}
-			if( sp->sr_started != SRST_READY )
-				continue;	/* not running yet */
-			len = server_q_len( sp );
-#define N_SERVER_ASSIGNMENTS	3
-			if( len >= N_SERVER_ASSIGNMENTS )
-				continue;	/* plenty busy */
-
-			/* See if server will need more than 1 assignment */
-			if( len < N_SERVER_ASSIGNMENTS-1 )
-				another_pass = 1;
-
-			if( fr->fr_servinit[sp->sr_index] == 0 )  {
-				send_matrix( sp, fr );
-				fr->fr_servinit[sp->sr_index] = 1;
-				sp->sr_curframe = fr;
-			}
-
-#define MAX_LUMP		(8*1024)
-#define ASSIGNMENT_TIME		5	/* desired seconds between results */
-			sp->sr_lump = ASSIGNMENT_TIME / sp->sr_w_elapsed;
-			if( sp->sr_lump < 32 )  sp->sr_lump = 32;
-			if( sp->sr_lump > MAX_LUMP )  sp->sr_lump = MAX_LUMP;
-
-			if( (lp = fr->fr_todo.li_forw) == &(fr->fr_todo) )  {
-				/*  No more work to assign in this frame,
-				 *  on next pass, will advance to next frame.
-				 */
-				another_pass = 1;
-				break;
-			}
-
-			a = lp->li_start;
-			b = a+sp->sr_lump-1;	/* work increment */
-			if( b >= lp->li_stop )  {
-				b = lp->li_stop;
-				DEQUEUE_LIST( lp );
-				FREE_LIST( lp );
-				lp = LIST_NULL;
-			} else
-				lp->li_start = b+1;
-
-			printf("fr%d %d..%d -> %s\n", fr->fr_number,
-				a, b, sp->sr_host->ht_name);
-
-			/* Record newly allocated pixel range */
-			GET_LIST(lp);
-			lp->li_frame = fr;
-			lp->li_start = a;
-			lp->li_stop = b;
-			APPEND_LIST( lp, &(sp->sr_work) );
-			if( fr->fr_start.tv_sec == 0 )  {
-				(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
-			}
-			send_do_lines( sp, a, b, fr->fr_number );
-		}
-		if( another_pass == 0 )  {
-			/* all servers have full assignments */
-			goto out;
-		}
+		} while( another_pass > 0 );
 	}
 	/* No work remains to be assigned */
 out:
 	scheduler_going = 0;
 	return;
+}
+
+/*
+ *			T A S K _ S E R V E R
+ *
+ *  If this server is ready, and has fewer than N_SERVER_ASSIGNMENTS,
+ *  dispatch one unit of work to it.
+ *  The return code indicates if the server is sated or not.
+ *
+ *  Returns -
+ *	0	when this server winds up with a full workload
+ *	1	when this server needs additional work
+ */
+task_server( fr, sp )
+register struct servers	*sp;
+register struct frame	*fr;
+{
+	register struct list	*lp;
+	int			a, b;
+
+	if( sp->sr_started == SRST_NEW )  {
+		/*  advance this server to state 1 (loading) */
+		send_start(sp);
+		return(0);
+	}
+
+	if( sp->sr_started != SRST_READY )
+		return(0);	/* not running yet */
+
+#define N_SERVER_ASSIGNMENTS	3
+	if( server_q_len(sp) >= N_SERVER_ASSIGNMENTS )
+		return(0);	/* plenty busy */
+
+	if( (lp = fr->fr_todo.li_forw) == &(fr->fr_todo) )  {
+		/*  No more work to assign in this frame,
+		 *  on next pass, caller should advance to next frame.
+		 */
+		return(1);
+	}
+
+	/* Provide info about this frame, if this is first assignment in it */
+	if( fr->fr_servinit[sp->sr_index] == 0 )  {
+		send_matrix( sp, fr );
+		fr->fr_servinit[sp->sr_index] = 1;
+		sp->sr_curframe = fr;
+	}
+
+#define MAX_LUMP		(8*1024)
+#define ASSIGNMENT_TIME		5	/* desired seconds between results */
+	sp->sr_lump = ASSIGNMENT_TIME / sp->sr_w_elapsed;
+	if( sp->sr_lump < 32 )  sp->sr_lump = 32;
+	if( sp->sr_lump > MAX_LUMP )  sp->sr_lump = MAX_LUMP;
+
+	a = lp->li_start;
+	b = a+sp->sr_lump-1;	/* work increment */
+	if( b >= lp->li_stop )  {
+		b = lp->li_stop;
+		DEQUEUE_LIST( lp );
+		FREE_LIST( lp );
+		lp = LIST_NULL;
+	} else
+		lp->li_start = b+1;
+
+	/* Record newly allocated pixel range */
+	GET_LIST(lp);
+	lp->li_frame = fr;
+	lp->li_start = a;
+	lp->li_stop = b;
+	APPEND_LIST( lp, &(sp->sr_work) );
+	if( fr->fr_start.tv_sec == 0 )  {
+		(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
+	}
+	send_do_lines( sp, a, b, fr->fr_number );
+
+	/* See if server will need more assignments */
+	if( server_q_len(sp) < N_SERVER_ASSIGNMENTS )
+		return(1);
+	return(0);
 }
 
 /*
@@ -1197,15 +1209,16 @@ char *buf;
 
 	sp = &servers[pc->pkc_fd];
 	fr = sp->sr_curframe;
+	sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime );
 
 	i = struct_import( (stroff_t)&info, desc_line_info, buf );
 	if( i < 0 || i != info.li_len )  {
 		fprintf(stderr,"struct_inport error, %d, %d\n", i, info.li_len);
 		return;
 	}
-fprintf(stderr,"PIXELS fr=%d, pix=%d..%d, rays=%d, cpu=%g\n",
+fprintf(stderr,"PIXELS fr=%d, pix=%d..%d, rays=%d, cpu=%g, el=%g\n",
 info.li_frame, info.li_startpix, info.li_endpix,
-info.li_nrays, info.li_cpusec );
+info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
 
 	/* Stash pixels in memory in bottom-to-top .pix order */
 	if( fr->fr_picture == (char *)0 )  {
@@ -1240,7 +1253,6 @@ info.li_nrays, info.li_cpusec );
 	/* Stash the statistics that came back */
 	fr->fr_nrays += info.li_nrays;
 	fr->fr_cpu += info.li_cpusec;
-	sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime );
 	sp->sr_l_el_rate = sp->sr_l_elapsed / npix;
 	sp->sr_w_elapsed = 0.9 * sp->sr_w_elapsed + 0.1 * sp->sr_l_el_rate;
 	sp->sr_sendtime = tvnow;		/* struct copy */
