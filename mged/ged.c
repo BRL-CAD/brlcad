@@ -1169,6 +1169,7 @@ int mask;
   int count;
   struct bu_vls vls;
   char line[MAXLINE];
+  Tcl_Obj *save_result;
 
   /* Get data from stdout or stderr */
 #if 1
@@ -1180,10 +1181,16 @@ int mask;
 
   line[count] = '\0';
 
+  save_result = Tcl_GetObjResult(interp);
+  Tcl_IncrRefCount(save_result);
+
   bu_vls_init(&vls);
   bu_vls_printf(&vls, "output_callback {%s}", line);
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
+
+  Tcl_SetObjResult(interp, save_result);
+  Tcl_DecrRefCount(save_result);
 }
 
 /*
