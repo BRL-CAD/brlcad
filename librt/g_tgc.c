@@ -49,14 +49,12 @@ struct  tgc_specific {
 	fastf_t	tgc_B;		/*  magnitude of B vector		*/
 	fastf_t	tgc_C;		/*  magnitude of C vector		*/
 	fastf_t	tgc_D;		/*  magnitude of D vector		*/
-	fastf_t	tgc_ABsq;	/*  (A/B)**2 or (C/D)**2  */
 	fastf_t	tgc_CA_H;	/*  (C-A)/H  X_of_Z */
 	fastf_t tgc_DB_H;	/*  (D-B)/H  Y_of_Z */
 	fastf_t	tgc_AAdCC;	/*  (|A|**2)/(|C|**2) */
 	fastf_t	tgc_BBdDD;	/*  (|B|**2)/(|D|**2) */
 	vect_t	tgc_N;		/*  normal at 'top' of cone		*/
 	mat_t	tgc_ScShR;	/*  Scale( Shear( Rot( vect )))		*/
-	mat_t	tgc_inv_ScShR;	/*  invRot( invShear( invScale( vect )))*/
 	mat_t	tgc_invRtShSc;	/*  invRot( trnShear( Scale( vect )))	*/
 	char	tgc_AD_CB;	/*  boolean:  A*D == C*B  */
 };
@@ -200,20 +198,6 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	 */
 	f = reldiff( (tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B) );
 	tgc->tgc_AD_CB = (f < EPSILON);		/* A*D == C*B */
-	if ( tgc->tgc_AD_CB )  {
-		if ( !NEAR_ZERO( tgc->tgc_B ) )  {
-			tgc->tgc_ABsq = tgc->tgc_A/tgc->tgc_B;
-			tgc->tgc_ABsq *= tgc->tgc_ABsq;		/* (A/B)**2 */
-		} else if( !NEAR_ZERO( tgc->tgc_D ) )  {
-			tgc->tgc_ABsq = tgc->tgc_C/tgc->tgc_D;
-			tgc->tgc_ABsq *= tgc->tgc_ABsq;		/* (A/B)**2 */
-		} else {
-			rtlog("tgc: (A/B)**2 is enormous\n");
-			tgc->tgc_ABsq = VLARGE;
-		}
-	} else
-		tgc->tgc_ABsq = 0;			/* safety */
-
 	tgc_rotate( A, B, Hv, Rot, iRot, tgc );
 	MAT4X3VEC( nH, Rot, Hv );
 	tgc->tgc_sH = nH[Z];
@@ -227,9 +211,6 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/*
 	 *	Added iShr parameter to tgc_shear().
-	 *	Added a matrix to tgc_specific for inverse transformation
-	 *		of std. solid intersection points (tgc_inv_ScShR)
-	 *		which includes a the inverse of a scaling transform.
 	 *	Changed inverse transformation of normal vectors of std.
 	 *		solid intersection to include shear inverse
 	 *		(tgc_invRtShSc).
@@ -243,9 +224,6 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	mat_mul( tmp, tShr, Scl );
 	mat_mul( tgc->tgc_invRtShSc, iRot, tmp );
-
-	mat_mul( tmp, iShr, iScl );
-	mat_mul( tgc->tgc_inv_ScShR, iRot, tmp );
 
 	/* Compute bounding sphere and RPP */
 	{
@@ -436,7 +414,6 @@ register struct soltab	*stp;
 
 	if( tgc->tgc_AD_CB )  {
 		rtlog( "A*D == C*B.  Equal eccentricities gives quadratic equation.\n");
-		rtlog( "(A/B)**2 = %f\n", tgc->tgc_ABsq );
 	} else {
 		rtlog( "A*D != C*B.  Quartic equation.\n");
 	}
@@ -557,7 +534,6 @@ register struct xray	*rp;
 				pt[OUT] = k[i];
 		}
 	}
-
 	if ( intersect == 2 ){
 		/*  If two between-plane intersections exist, they are
 		 *  the hit points for the ray.
@@ -756,7 +732,7 @@ fastf_t		t[];
 	 */
 	if ( tgc->tgc_AD_CB ){
 		FAST fastf_t roots;
-		(void) polyScal( &Ysqr, tgc->tgc_ABsq );
+
 		(void) polyAdd( &Xsqr, &Ysqr, &sum );
 		(void) polySub( &sum, &Rsqr, &C );
 		/* Find the real roots the easy way.  C.dgr==2 */
