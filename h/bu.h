@@ -724,6 +724,9 @@ struct bu_structparse {
 };
 #define BU_STRUCTPARSE_FUNC_NULL	((void (*)())0)
 
+
+
+
 /*----------------------------------------------------------------------*/
 /*
  *  An "opaque" handle for holding onto objects,
@@ -882,7 +885,11 @@ BU_EXTERN(int			bu_vls_struct_item_named, (struct bu_vls *vp,
 				CONST char *name,
 				CONST char *base,
 				int sep_char));
-
+BU_EXTERN(void			bu_parse_mm, (CONST struct bu_structparse *sdp,
+				CONST char *name,
+				char *base,
+				CONST char *value));
+				
 
 
 
