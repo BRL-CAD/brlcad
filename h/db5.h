@@ -67,18 +67,6 @@ struct db5_ondisk_header {
 #define DB5HDR_BFLAGS_WIDTH_MASK			0xc0
 #define DB5HDR_BFLAGS_WIDTH_SHIFT			6
 
-/* Kinds of compression */
-#define DB5HDR_ZZZ_UNCOMPRESSED				0
-#define DB5HDR_ZZZ_GNU_GZIP				1
-#define DB5HDR_ZZZ_BURROUGHS_WHEELER			2
-
-
-/* major_type */
-#define DB5HDR_MAJORTYPE_RESERVED			0
-#define DB5HDR_MAJORTYPE_BRLCAD				1
-#define DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY			2
-#define DB5HDR_MAJORTYPE_OPAQUE_BINARY			8
-
 /*************************************************************************
  *
  *	What follows is the C programming API for the routines
@@ -86,6 +74,71 @@ struct db5_ondisk_header {
  *	It may want to live in a different header file.
  *
  ************************************************************************/
+
+/* Kinds of compression */
+#define DB5_ZZZ_UNCOMPRESSED			0
+#define DB5_ZZZ_GNU_GZIP			1
+#define DB5_ZZZ_BURROUGHS_WHEELER		2
+
+
+/* major_type */
+#define DB5_MAJORTYPE_RESERVED			 0
+#define DB5_MAJORTYPE_BRLCAD			 1
+#define DB5_MAJORTYPE_ATTRIBUTE_ONLY		 2
+#define DB5_MAJORTYPE_BINARY_MASK		 0x18
+#define DB5_MAJORTYPE_BINARY_EXPM		 8
+#define DB5_MAJORTYPE_BINARY_UNIF		 9
+#define DB5_MAJORTYPE_BINARY_MIME		10
+
+/*
+ *	Minor types
+ */
+/* BRL-CAD */
+#define DB5_MINORTYPE_BRLCAD_TOR		 1
+#define DB5_MINORTYPE_BRLCAD_TGC		 2
+#define DB5_MINORTYPE_BRLCAD_ELL		 3
+#define DB5_MINORTYPE_BRLCAD_ARB8		 4
+#define DB5_MINORTYPE_BRLCAD_ARS		 5
+#define DB5_MINORTYPE_BRLCAD_HALF		 6
+#define DB5_MINORTYPE_BRLCAD_REC		 7
+#define DB5_MINORTYPE_BRLCAD_POLY		 8
+#define DB5_MINORTYPE_BRLCAD_BSPLINE		 9
+#define DB5_MINORTYPE_BRLCAD_SPH		10
+#define	DB5_MINORTYPE_BRLCAD_NMG		11
+#define DB5_MINORTYPE_BRLCAD_EBM		12
+#define DB5_MINORTYPE_BRLCAD_VOL		13
+#define DB5_MINORTYPE_BRLCAD_ARBN		14
+#define DB5_MINORTYPE_BRLCAD_PIPE		15
+#define DB5_MINORTYPE_BRLCAD_PARTICLE		16
+#define DB5_MINORTYPE_BRLCAD_RPC		17
+#define DB5_MINORTYPE_BRLCAD_RHC		18
+#define DB5_MINORTYPE_BRLCAD_EPA		19
+#define DB5_MINORTYPE_BRLCAD_EHY		20
+#define DB5_MINORTYPE_BRLCAD_ETO		21
+#define DB5_MINORTYPE_BRLCAD_GRIP		22
+#define DB5_MINORTYPE_BRLCAD_JOINT		23
+#define DB5_MINORTYPE_BRLCAD_HF			24
+#define DB5_MINORTYPE_BRLCAD_DSP		25
+#define	DB5_MINORTYPE_BRLCAD_SKETCH		26
+#define	DB5_MINORTYPE_BRLCAD_EXTRUDE		27
+#define DB5_MINORTYPE_BRLCAD_SUBMODEL		28
+#define	DB5_MINORTYPE_BRLCAD_CLINE		29
+#define	DB5_MINORTYPE_BRLCAD_BOT		30
+#define DB5_MINORTYPE_BRLCAD_COMBINATION	31
+/* Uniform-array binary */
+#define DB5_MINORTYPE_BINU_WID_MASK		0x30
+#define DB5_MINORTYPE_BINU_SGN_MASK		0x08
+#define DB5_MINORTYPE_BINU_ATM_MASK		0x07
+#define DB5_MINORTYPE_BINU_FLOAT		0x02
+#define DB5_MINORTYPE_BINU_DOUBLE		0x03
+#define DB5_MINORTYPE_BINU_8BITINT_U		0x04
+#define DB5_MINORTYPE_BINU_16BITINT_U		0x05
+#define DB5_MINORTYPE_BINU_32BITINT_U		0x06
+#define DB5_MINORTYPE_BINU_64BITINT_U		0x07
+#define DB5_MINORTYPE_BINU_8BITINT		0x0c
+#define DB5_MINORTYPE_BINU_16BITINT		0x0d
+#define DB5_MINORTYPE_BINU_32BITINT		0x0e
+#define DB5_MINORTYPE_BINU_64BITINT		0x0f
 
 /*
  *  The "raw internal" form of one database object.
