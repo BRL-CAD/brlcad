@@ -56,10 +56,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xutil.h>
 #include <sys/invent.h>
 
+#include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-glx.h"
@@ -695,9 +698,9 @@ int which_eye;
   if( ! ((struct glx_vars *)dmp->dm_vars)->mvars.zclipping_on ) {
     mat_t	nozclip;
 
-    mat_idn( nozclip );
+    bn_mat_idn( nozclip );
     nozclip[10] = 1.0e-20;
-    mat_mul( newm, nozclip, mat );
+    bn_mat_mul( newm, nozclip, mat );
     mptr = newm;
   } else {
     mptr = mat;
@@ -734,6 +737,7 @@ int which_eye;
   gtmat[3][2] = -gtmat[3][2];
 
   loadmatrix( gtmat );
+  return TCL_OK;
 }
 
 static float material_objdef[] = {
@@ -752,9 +756,6 @@ static float material_objdef[] = {
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.  Mat is model2view.
  *
- *  Returns -
- *	 0 if object could be drawn
- *	!0 if object was omitted.
  */
 static int
 Glx_drawVList( dmp, vp, m )
@@ -838,7 +839,7 @@ fastf_t *m;
   if( first == 0 )
     endline();
 
-  return(1);	/* OK */
+  return TCL_OK;
 }
 
 
@@ -860,6 +861,8 @@ int size;
 
   cmov2( GED2IRIS(x), GED2IRIS(y));
   charstr( str );
+
+  return TCL_OK;
 }
 
 /*
@@ -879,6 +882,8 @@ int x2, y2;
 
   move2( GED2IRIS(x1), GED2IRIS(y1));
   draw2( GED2IRIS(x2), GED2IRIS(y2));
+
+  return TCL_OK;
 }
 
 static int
