@@ -1,5 +1,5 @@
 /*
- *			P O L A R - F B
+ *			P O L A R - F B . C
  *
  *	This routine plots normalized polar functions on a frame buffer.
  *
@@ -24,11 +24,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* Program constants */
 #define		High_Size	1024
-#define		Low_Size	 512
 #define		GRID_RHO_EPS	0.005
 #define		GRID_THETA_EPS	0.2
 #ifndef M_PI
 #define		M_PI		3.14159265358979323846
+#define		M_PI_2		1.57079632679489661923
 #endif
 
 /* Color[] indices */
@@ -71,25 +71,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* Global variables */
 char		*ProgName;	/* To save argv[0] */
 char		*ExplainOpts[] = {
-    "-a u v    plots only the part of function between u and v (degrees)\n", 
-    "-b r g b  sets background color (0 .. 255)\n", 
-    "-c        clears FB to background color\n", 
-    "-e        plots no function interior (useful with -p)\n", 
-    "-f fbfile specifies frame-buffer file\n", 
-    "-g        plots no polar grid\n", 
-    "-h        high-resolution mode\n", 
-    "-i r g b  plots function with constant interior color (0 .. 255)\n", 
-    "-l r g b  plots function with a linear ramp (0 .. 255)\n", 
-    "-m        merges plot with current contents of FB\n", 
-    "-n        no-warning mode.  Aborts if any irregular input\n", 
-    "-o x y    translates plot (FB coordinates)\n", 
-    "-p r g b  plots function perimeter (0 .. 255)\n", 
-    "-q q      sets angular quantum (degrees)\n", 
-    "-r        input in radians (default is degrees)\n", 
-    "-s s      scales plot (FB coordinates)\n", 
-    "-t t      rotates function (degrees)\n", 
-    "-w        plots function with angular wedges\n", 
-    "-z side   plots only one half of function ('l' or 'r')\n",
+    " -F fbfile specifies frame-buffer file\n", 
+    " -N h      specifies FB height (pixels)\n",
+    " -S s      specifies FB height and width (pixels)\n",
+    " -W w      specifies FB width (pixels)\n",
+    " -a u v    plots only the part of function between u and v (degrees)\n", 
+    " -b r g b  sets background color (0 .. 255)\n", 
+    " -c        clears FB to background color\n", 
+    " -e        plots no function interior (useful with -p)\n", 
+    " -g        plots no polar grid\n", 
+    " -h        specifies high-resolution mode (same as -S 1024)\n", 
+    " -i r g b  plots function with constant interior color (0 .. 255)\n", 
+    " -l r g b  plots function with a linear ramp (0 .. 255)\n", 
+    " -m        merges plot with current contents of FB\n", 
+    " -n        no-warning mode.  Aborts if any irregular input\n", 
+    " -o x y    translates plot (pixels)\n", 
+    " -p r g b  plots function perimeter (0 .. 255)\n", 
+    " -q q      sets angular quantum (degrees)\n", 
+    " -r        specifies radian input (default is degrees)\n", 
+    " -s s      scales plot (pixels)\n", 
+    " -t t      rotates function (degrees)\n", 
+    " -w        plots function with angular wedges\n", 
+    " -z side   plots only one half of function ('l' or 'r')\n",
     ""
 };
 double		Deg2Rad;	/* Factor to convert degrees to radians */
@@ -137,13 +140,14 @@ char	*argv[];
     int		Interior;	/* Manner of filling graph */
     int		LineLength;	/* Width of the plot (in pixels) */
     int		Quantum = 1;	/* Angular resolution of npf_tbl */
-    int		Size;		/* Length of an edge of the FB (in pixels) */
+    int		fb_width = 0;	/* Width (in pixels) */
+    int		fb_height = 0;	/* Height (in pixels) */
     int		theta_index;	/* Theta's index into npf_tbl */
     int		unit_r = -1;	/* Radius of unit circle (in pixels) */
     int		x, y;		/* Cartesian coordinates of current pixel */
     int		X, Y;		/* Translated pixel */
     FBIO	*fbPtr;		/* Pointer to the frame-buffer file */
-    RGBpixel	fbb[High_Size];	/* Buffer for current line of frame buffer */
+    RGBpixel	*fbb;		/* Buffer for current line of frame buffer */
     RGBpixel	*fbbPtr;	/* Pointer to within fbb */
 
     int		(*Fill_Func)();
@@ -185,6 +189,55 @@ char	*argv[];
 		    }
 		    argv += 2;
 		    argc -= 2;
+		    break;
+		case 'W':		/* Scale the plot */
+		    if (argc < 2)
+		    {
+			(void) fputs("Illegal -W option\n", stderr);
+			goto error;
+		    }
+		    if ((sscanf(argv[1], "%d", &fb_width) != 1)
+			|| (fb_width < 0))
+		    {
+			(void) fprintf(stderr, "Illegal -W value: %s\n",
+			    argv[1]);
+			goto error;
+		    }
+		    argv++;
+		    argc--;
+		    break;
+		case 'N':		/* Scale the plot */
+		    if (argc < 2)
+		    {
+			(void) fputs("Illegal -N option\n", stderr);
+			goto error;
+		    }
+		    if ((sscanf(argv[1], "%d", &fb_height) != 1)
+			|| (fb_height < 0))
+		    {
+			(void) fprintf(stderr, "Illegal -N value: %s\n",
+			    argv[1]);
+			goto error;
+		    }
+		    argv++;
+		    argc--;
+		    break;
+		case 'S':		/* Scale the plot */
+		    if (argc < 2)
+		    {
+			(void) fputs("Illegal -S option\n", stderr);
+			goto error;
+		    }
+		    if ((sscanf(argv[1], "%d", &fb_height) != 1)
+			|| (fb_height < 0))
+		    {
+			(void) fprintf(stderr, "Illegal -S value: %s\n",
+			    argv[1]);
+			goto error;
+		    }
+		    fb_width = fb_height;
+		    argv++;
+		    argc--;
 		    break;
 		case 's':		/* Scale the plot */
 		    if (argc < 2)
@@ -418,10 +471,10 @@ char	*argv[];
 		    argv += 3;
 		    argc -= 3;
 		    break;
-		case 'f':		/* Name of frame-buffer file */
+		case 'F':		/* Name of frame-buffer file */
 		    if (argc < 2)
 		    {
-			(void) fputs("Illegal -f option\n", stderr);
+			(void) fputs("Illegal -F option\n", stderr);
 			goto error;
 		    }
 		    FB_Name = argv[1];
@@ -439,7 +492,7 @@ char	*argv[];
 		    draw_grid = FALSE;
 		    break;
 		case 'h':		/* High-res mode */
-		    hi_res = TRUE;
+		    fb_width = fb_height = High_Size;
 		    break;
 		case 'r':		/* Input in radians, not degrees */
 		    angle_cvt = 1.0;
@@ -454,7 +507,7 @@ char	*argv[];
 		case '?':
 		error:
 		default:
-		    PrintUsage(*Opt == '?');
+		    PrintUsage(1);
 		    (void) exit (*Opt != '?');
 	    }
 
@@ -468,41 +521,43 @@ char	*argv[];
 	    FileName=argv[0];
 	    break;
 	default:
-	    PrintUsage(0);
+	    PrintUsage(1);
 	    (void) exit(1);
-    }
-
-    /* Determine both size of FB, and, where necessary, position and
-     * scale of plot.
-     */
-    Size = hi_res ? High_Size : Low_Size;
-    if (ctr_x == -1)
-	ctr_x = Size / 2;
-    if (ctr_y == -1)
-	ctr_y = Size / 2;
-    if (unit_r == -1)
-	unit_r = Size / 2;
-
-    /* Ensure that location and size of the plot and size of
-     * the FB are mutually compatible
-     */
-    if ((ctr_x + unit_r > Size) || (ctr_x < unit_r) ||
-	(ctr_y + unit_r > Size) || (ctr_y < unit_r))
-    {
-	(void) fputs("Plot not entirely within frame buffer\n", stderr);
-	(void) exit (1);
     }
 
     /* Fill npf_tbl from the input stream */
     if (LoadNPF (FileName, npf_tbl, Quantum, angle_cvt, arc_min, arc_max)
 	&& NoWarnings)
 	(void) exit(1);
-    arc_min = (360.0 - arc_min) * Deg2Rad;
-    arc_max = (360.0 - arc_max) * Deg2Rad;
+    arc_min *= Deg2Rad;
+    arc_max *= Deg2Rad;
 
     /* Prep the frame buffer */
-    if ((fbPtr = fb_open(FB_Name, Size, Size)) == FBIO_NULL)
+    if ((fbPtr = fb_open(FB_Name, fb_width, fb_height)) == FBIO_NULL)
 	(void) exit (1);
+    fb_width = fb_getwidth(fbPtr);
+    fb_height = fb_getheight(fbPtr);
+
+    /* Determine both size of FB, and, where necessary, position and
+     * scale of plot.
+     */
+    if (ctr_x == -1)
+	ctr_x = fb_width / 2;
+    if (ctr_y == -1)
+	ctr_y = fb_height / 2;
+    if (unit_r == -1)
+	unit_r = (ctr_x < ctr_y) ? ctr_x : ctr_y;
+
+    /* Ensure that location and size of the plot and size of
+     * the FB are mutually compatible
+     */
+    if ((ctr_x + unit_r > fb_width) || (ctr_x < unit_r) ||
+	(ctr_y + unit_r > fb_height) || (ctr_y < unit_r))
+    {
+	(void) fputs("Plot not entirely within frame buffer\n", stderr);
+	(void) exit (1);
+    }
+
     if (clr_fb)
 	fb_clear(fbPtr, Color[C_BKGRND]);
 
@@ -547,6 +602,12 @@ char	*argv[];
 	    break;
     }
 
+    if ((fbb = (RGBpixel *) malloc(fb_width * sizeof(RGBpixel))) == NULL)
+    {
+	(void) fputs("Ran out of memory\n", stderr);
+	(void) exit (1);
+    }
+
     /* Fill fbb */
     for (y = 0; y < 2 * unit_r; y++)
     {
@@ -570,21 +631,21 @@ char	*argv[];
 	    if (X == 0)
 		theta = (Y > 0) ? M_PI : 0.0;
 	    else
-		theta = atan2((double) X, (double) Y) + M_PI;
+		theta = atan2((double) Y, (double) X) + M_PI_2;
 
 	    /* If this point is in the wrong half of the plot, skip it */
- 	    if (Half && (Half * (M_PI - theta) < 0))
+ 	    if (Half && (Half * X > 0))
  		continue;
 
 	    /* Rotate the point for display */
-	    theta -= twist;
+	    theta += twist;
 	    while (theta < 0)
 		theta += M_PI * 2;
 	    while (theta > M_PI * 2)
 		theta -= M_PI * 2;
 
 	    /* If this point is outside the arc of interest, skip it */
-	    if ((theta > arc_min) || (theta < arc_max))
+	    if ((theta < arc_min) || (theta > arc_max))
 	    {
 		if (! merge)
 		    COPYRGB(*fbbPtr, Color[C_BKGRND])
@@ -632,10 +693,13 @@ bool	ShoOpts;
 
     (void) fprintf(stderr, "Usage: '%s [options] [file]'\n", ProgName);
     if (ShoOpts)
+    {
+	(void) fputs("Options:\n", stderr);
 	for (oPtr = ExplainOpts; **oPtr != '\0'; oPtr++)
 	    (void) fputs(*oPtr, stderr);
+    }
     else
-	(void) fputs("-? option for help\n", stderr);
+	(void) fputs(" -? option for help\n", stderr);
 }
 
 LoadNPF (FileName, Table, Quantum, convert, arc_min, arc_max)
