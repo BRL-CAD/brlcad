@@ -1325,13 +1325,14 @@ CONST struct rt_tol	*tol;		/* for printing */
 	int			edge_count;
 	struct nmg_radial	*rmin = (struct nmg_radial *)NULL;
 	struct nmg_radial	*rmax = (struct nmg_radial *)NULL;
+	struct nmg_radial	*first;
 
 	RT_CK_LIST_HEAD(hd);
 	if(shell_tbl) NMG_CK_PTBL(shell_tbl);
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
 
-	if( rt_g.NMG_debug & DEBUG_BASIC )
+	if( rt_g.NMG_debug & DEBUG_BASIC || rt_g.NMG_debug & DEBUG_MESH_EU )
 		rt_log("nmg_radial_build_list( existing=%d, eu=x%x )\n", existing, eu );
 
 	amin = 64;
@@ -1366,6 +1367,9 @@ CONST struct rt_tol	*tol;		/* for printing */
 		rad->is_crack = 0;	/* not yet determined */
 		rad->is_outie = 0;	/* not yet determined */
 
+		if( rt_g.NMG_debug & DEBUG_MESH_EU )
+			rt_log( "\trad->eu = %x, rad->ang = %g\n", rad->eu, rad->ang );
+
 		/* Just append.  Should already be properly sorted. */
 		RT_LIST_INSERT( hd, &(rad->l) );
 
@@ -1392,23 +1396,23 @@ CONST struct rt_tol	*tol;		/* for printing */
 		return;
 	}
 
-#if 0
-rt_log("amin=%g min_eu=x%x, amax=%g max_eu=x%x\n",
-rmin->ang * rt_radtodeg, rmin->eu,
-rmax->ang * rt_radtodeg, rmax->eu );
-{
-	struct nmg_radial *next;
+	if( rt_g.NMG_debug & DEBUG_MESH_EU )
+	{
+		struct nmg_radial *next;
 
-	for( RT_LIST_FOR( next, nmg_radial, hd ) )
-		rt_log( "%x: eu=%x, fu=%x, ang=%g\n" , next, next->eu, next->fu, next->ang );
-}
-#endif
+		rt_log("amin=%g min_eu=x%x, amax=%g max_eu=x%x\n",
+		rmin->ang * rt_radtodeg, rmin->eu,
+		rmax->ang * rt_radtodeg, rmax->eu );
+
+		for( RT_LIST_FOR( next, nmg_radial, hd ) )
+			rt_log( "%x: eu=%x, fu=%x, ang=%g\n" , next, next->eu, next->fu, next->ang );
+	}
+
 	/* Skip to extremal repeated max&min.  Ignore wires */
+	first = rmax;
 	for(;;)  {
 		struct nmg_radial	*next;
-		struct nmg_radial	*first;
 		next = rmax;
-		first = rmax;
 		do {
 			next = RT_LIST_PNEXT_CIRC(nmg_radial, next);
 		} while( next->fu == (struct faceuse *)NULL );
@@ -1422,11 +1426,10 @@ rmax->ang * rt_radtodeg, rmax->eu );
 			break;
 	}
 	/* wires before min establish new rmin */
+	first = rmin;
 	for(;;)  {
 		struct nmg_radial	*next;
-		struct nmg_radial	*first;
 
-		first = rmin;
 		while( (next = RT_LIST_PPREV_CIRC(nmg_radial, rmin))->fu == (struct faceuse *)NULL )
 			rmin = next;
 		next = RT_LIST_PPREV_CIRC(nmg_radial, rmin);
