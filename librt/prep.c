@@ -474,10 +474,8 @@ register struct rt_i *rtip;
 		db_free_tree( regp->reg_treetop );
 		bu_free( (genptr_t)regp->reg_name, "region name str");
 		regp->reg_name = (char *)0;
-		if( regp->reg_mater.ma_matname )
-			bu_free( (genptr_t)regp->reg_mater.ma_matname, "ma_matname" );
-		if( regp->reg_mater.ma_matparm )
-			bu_free( (genptr_t)regp->reg_mater.ma_matparm, "ma_matparm" );
+		if( regp->reg_mater.ma_shader )
+			bu_free( (genptr_t)regp->reg_mater.ma_shader, "ma_shader" );
 
 		bu_free( (genptr_t)regp, "struct region");
 		regp = nextregp;

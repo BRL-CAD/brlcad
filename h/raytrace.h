@@ -433,8 +433,7 @@ struct mater_info {
 	char	ma_override;		/* non-0 ==> ma_color is valid */
 	char	ma_cinherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
 	char	ma_minherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
-	char	*ma_matname;		/* Material name */
-	char	*ma_matparm;		/* String Material parms */
+	char	*ma_shader;		/* shader name & parms */
 };
 
 /*
@@ -688,8 +687,7 @@ struct rt_comb_internal  {
 	/* End GIFT compatability */
 	char		rgb_valid;	/* !0 ==> rgb[] has valid color */
 	unsigned char	rgb[3];
-	struct rt_vls	shader_name;
-	struct rt_vls	shader_param;
+	struct rt_vls	shader;
 	struct rt_vls	material;
 	char		inherit;
 };
@@ -843,15 +841,14 @@ struct anim_mat {
 #define ANM_RBOTH	5			/* Replace stack, arc=Idn */
 
 struct rt_anim_property {
-	/* XXX magic */
-	int		anp_op;			/* RT_ANP_RBOTH, etc */
-	struct bu_vls	anp_matname;		/* Changes for material name */
-	struct bu_vls	anp_matparam;		/* Changes for mat. params */
+	long		magic;
+	int		anp_op;			/* RT_ANP_REPLACE, etc */
+	struct bu_vls	anp_shader;		/* Update string */
 };
-#define RT_ANP_RBOTH	1			/* Replace both material & params */
-#define RT_ANP_RMATERIAL 2			/* Replace just material */
-#define RT_ANP_RPARAM	3			/* Replace just params */
-#define RT_ANP_APPEND	4			/* Append to params */
+#define RT_ANP_REPLACE	1			/* Replace shader string */
+#define RT_ANP_APPEND	2			/* Append to shader string */
+#define RT_ANP_MAGIC	0x41507270		/* 'APrp' */
+#define RT_CK_ANP(_p)	BU_CKMAG((_p), RT_ANP_MAGIC, "rt_anim_property")
 
 struct rt_anim_color {
 	int		anc_rgb[3];		/* New color */

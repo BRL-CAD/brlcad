@@ -185,9 +185,8 @@ char *argv[];
 				comb->region_id, comb->aircode, comb->GIFTmater, comb->los );
 		}
 		rt_log( "\trgb_valid = %d, color = %d/%d/%d\n" , comb->rgb_valid , V3ARGS( comb->rgb ) );
-		rt_log( "\tmaterial name = %s, parameters = %s, (%s)\n" ,
-				rt_vls_addr( &comb->shader_name ),
-				rt_vls_addr( &comb->shader_param ),
+		rt_log( "\tshader = %s (%s)\n" ,
+				rt_vls_addr( &comb->shader ),
 				rt_vls_addr( &comb->material )
 		);
 

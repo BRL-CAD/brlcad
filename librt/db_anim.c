@@ -153,26 +153,21 @@ struct mater_info	*materp;
 		 * mater pointer is given.
 		 */
 		if (!materp) break;
-		if ((anp->an_u.anu_p.anp_op == RT_ANP_RBOTH) ||
-		    (anp->an_u.anu_p.anp_op == RT_ANP_RMATERIAL)) {
-		    	if( materp->ma_matname ) bu_free( (genptr_t)materp->ma_matname, "ma_matname" );
-			materp->ma_matname = bu_vls_strdup(&anp->an_u.anu_p.anp_matname);
-		}
-		if ((anp->an_u.anu_p.anp_op == RT_ANP_RBOTH) ||
-		    (anp->an_u.anu_p.anp_op == RT_ANP_RPARAM)) {
-		    	if( materp->ma_matparm )  bu_free( (genptr_t)materp->ma_matparm, "ma_matparm" );
-		    	materp->ma_matparm = bu_vls_strdup(&anp->an_u.anu_p.anp_matparam);
-		}
-		if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
+		if (anp->an_u.anu_p.anp_op == RT_ANP_REPLACE) {
+		    	if( materp->ma_shader ) bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
+			materp->ma_shader = bu_vls_strdup(&anp->an_u.anu_p.anp_shader);
+		} else if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
 			struct bu_vls	str;
 
 			bu_vls_init(&str);
-			bu_vls_strcpy( &str, materp->ma_matparm );
-			bu_vls_vlscat( &str, &anp->an_u.anu_p.anp_matparam );
-		    	if( materp->ma_matparm )  bu_free( (genptr_t)materp->ma_matparm, "ma_matparm" );
-			materp->ma_matparm = bu_vls_strgrab( &str );
+			bu_vls_strcpy( &str, materp->ma_shader );
+			bu_vls_putc( &str, ' ' );
+			bu_vls_vlscat( &str, &anp->an_u.anu_p.anp_shader );
+		    	if( materp->ma_shader )  bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
+			materp->ma_shader = bu_vls_strgrab( &str );
 			/* bu_vls_free( &str ) is done by bu_vls_strgrab() */
-		}
+		} else
+			bu_log("Unknown anp_op=%d\n", anp->an_u.anu_p.anp_op);
 		break;
 	case RT_AN_COLOR:
 		if( rt_g.debug&DEBUG_ANIM )
@@ -212,8 +207,7 @@ struct animate		*anp;
 
 	switch( anp->an_type )  {
 	case RT_AN_MATERIAL:
-		bu_vls_free( &anp->an_u.anu_p.anp_matname );
-		bu_vls_free( &anp->an_u.anu_p.anp_matparam );
+		bu_vls_free( &anp->an_u.anu_p.anp_shader );
 		break;
 	}
 
@@ -340,22 +334,14 @@ CONST char	**argv;
 		}
 	} else if( strcmp( argv[2], "material" ) == 0 )  {
 		anp->an_type = RT_AN_MATERIAL;
-		bu_vls_init( &anp->an_u.anu_p.anp_matname );
-		bu_vls_init( &anp->an_u.anu_p.anp_matparam );
-		if( strcmp( argv[3], "rboth" ) == 0 )  {
-			bu_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
-			bu_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
-				argc-5, (char **)&argv[5] );
-			anp->an_u.anu_p.anp_op = RT_ANP_RBOTH;
-		} else if( strcmp( argv[3], "rmaterial" ) == 0 )  {
-			bu_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
-			anp->an_u.anu_p.anp_op = RT_ANP_RMATERIAL;
-		} else if( strcmp( argv[3], "rparam" ) == 0 )  {
-			bu_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
+		bu_vls_init( &anp->an_u.anu_p.anp_shader );
+		if( (strcmp( argv[3], "replace" ) == 0) ||
+		    (strcmp( argv[3], "rboth" ) == 0) )  {
+			bu_vls_from_argv( &anp->an_u.anu_p.anp_shader,
 				argc-4, (char **)&argv[4] );
-			anp->an_u.anu_p.anp_op = RT_ANP_RPARAM;
+			anp->an_u.anu_p.anp_op = RT_ANP_REPLACE;
 		} else if( strcmp( argv[3], "append" ) == 0 )  {
-			bu_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
+			bu_vls_from_argv( &anp->an_u.anu_p.anp_shader,
 				argc-4, (char **)&argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_APPEND;
 		} else {
@@ -461,14 +447,8 @@ struct animate *anp;
 	case RT_AN_MATERIAL:
 		fputs("material ",fop);
 		switch (anp->an_u.anu_p.anp_op) {
-		case RT_ANP_RBOTH:
-			fputs("rboth ", fop);
-			break;
-		case RT_ANP_RMATERIAL:
-			fputs("rmaterial ", fop);
-			break;
-		case RT_ANP_RPARAM:
-			fputs("rparam ", fop);
+		case RT_ANP_REPLACE:
+			fputs("replace ", fop);
 			break;
 		case RT_ANP_APPEND:
 			fputs("append ", fop);

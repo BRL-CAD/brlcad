@@ -243,8 +243,7 @@ CONST matp_t			matrix;		/* NULL if identity */
 	comb = (struct rt_comb_internal *)bu_malloc( sizeof( struct rt_comb_internal ) , "rt_comb_v4_import: rt_comb_internal" );
 	ip->idb_ptr = (genptr_t)comb;
 	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init( &comb->shader_name );
-	bu_vls_init( &comb->shader_param );
+	bu_vls_init( &comb->shader );
 	bu_vls_init( &comb->material );
 	comb->tree = tree;
 	comb->region_flag = (rp[0].c.c_flags == 'R');
@@ -261,8 +260,11 @@ CONST matp_t			matrix;		/* NULL if identity */
 		comb->rgb[1] = rp[0].c.c_rgb[1];
 		comb->rgb[2] = rp[0].c.c_rgb[2];
 	}
-	bu_vls_strncpy( &comb->shader_name , rp[0].c.c_matname, 32 );
-	bu_vls_strncpy( &comb->shader_param , rp[0].c.c_matparm, 60 );
+	bu_vls_strncpy( &comb->shader , rp[0].c.c_matname, 32 );
+	if( rp[0].c.c_matparm[0] != '\0' )  {
+		bu_vls_putc( &comb->shader, ' ' );
+		bu_vls_strncat( &comb->shader , rp[0].c.c_matparm, 60 );
+	}
 	/* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
 	/* XXX cf: ma_cinherit, ma_minherit */
 	comb->inherit = rp[0].c.c_inherit;
@@ -290,6 +292,7 @@ double				local2mm;
 	union tree		*tp;
 	union record		*rp;
 	int			j;
+	char			*endp;
 
 	RT_CK_DB_INTERNAL( ip );
 	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_v4_export() type not ID_COMBINATION");
@@ -370,8 +373,17 @@ double				local2mm;
 		rp[0].c.c_rgb[1] = comb->rgb[1];
 		rp[0].c.c_rgb[2] = comb->rgb[2];
 	}
-	strncpy( rp[0].c.c_matname, bu_vls_addr(&comb->shader_name), 32 );
-	strncpy( rp[0].c.c_matparm, bu_vls_addr(&comb->shader_param), 60 );
+	endp = strchr( bu_vls_addr(&comb->shader), ' ' );
+	if( endp )  {
+		int	len;
+		len = endp - bu_vls_addr(&comb->shader);
+		if( len > 32 ) len = 32;
+		strncpy( rp[0].c.c_matname, bu_vls_addr(&comb->shader), len );
+		strncpy( rp[0].c.c_matparm, endp+1, 60 );
+	} else {
+		strncpy( rp[0].c.c_matname, bu_vls_addr(&comb->shader), 32 );
+		rp[0].c.c_matparm[0] = '\0';
+	}
 	rp[0].c.c_inherit = comb->inherit;
 
 	return 0;		/* OK */
@@ -396,8 +408,7 @@ struct rt_db_internal	*ip;
 	if(comb->tree) db_free_tree( comb->tree );
 	comb->tree = NULL;
 
-	bu_vls_free( &comb->shader_name );
-	bu_vls_free( &comb->shader_param );
+	bu_vls_free( &comb->shader );
 	bu_vls_free( &comb->material );
 
 	comb->magic = 0;			/* sanity */
