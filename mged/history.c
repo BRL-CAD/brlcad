@@ -131,7 +131,7 @@ struct mged_hist *hptr;
     
     if (hptr->status == CMD_BAD)
 	fprintf(journalfp, "# ");
-    fprintf(journalfp, "%s", hptr->command);
+    fprintf(journalfp, "%s", bu_vls_addr(&hptr->command));
 }
 
 /*
