@@ -588,7 +588,7 @@ vdraw_params_tcl(clientData, interp, argc, argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct vd_curve *rcp;
-	long rgb;
+	unsigned long rgb;
 
 	if (!dgop->dgo_currVHead) {
 		Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
