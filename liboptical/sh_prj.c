@@ -33,8 +33,13 @@
 struct img_specific {
 	struct bu_list	l;
 	unsigned long	junk;
-	struct bu_vls	i_file;
-	struct bu_mapped_file *i_data;
+  struct bu_vls i_name; /* name of object or file (depending on i_datasrc flag) */
+#define IMG_SRC_FILE 'f'
+#define IMG_SRC_OBJECT  'o'
+#define IMG_SRC_AUTO 0
+  char i_datasrc; /* is the datasource a file/object or automatic */
+  struct bu_mapped_file *i_data; /* mapped file when IMG_SRC_FILE */
+  struct rt_binunif_internal *i_binunifp;  /* db internal object when IMG_SRC_OBJECT */
 	unsigned char 	*i_img;
 	int		i_width;
 	int		i_height;
@@ -67,7 +72,7 @@ struct prj_specific {
  *  Bounds checking on perspective angle
  *
  */
-static void 
+HIDDEN void 
 persp_hook( sdp, name, base, value )
 register const struct bu_structparse	*sdp;	/* structure description */
 register const char			*name;	/* struct member name */
@@ -95,7 +100,7 @@ const char				*value;	/* string containing value */
  * Check for value < 0.0
  *
  */
-static void 
+HIDDEN void 
 dimen_hook( sdp, name, base, value )
 register const struct bu_structparse	*sdp;	/* structure description */
 register const char			*name;	/* struct member name */
@@ -123,7 +128,7 @@ const char				*value;	/* string containing value */
 
 
 #if 0
-static void 
+HIDDEN void 
 noop_hook( sdp, name, base, value )
 register const struct bu_structparse	*sdp;	/* structure description */
 register const char			*name;	/* struct member name */
@@ -136,7 +141,7 @@ const char				*value;	/* string containing value */
 
 	bu_log("%s \"%s\"\n", sdp->sp_name, value);
 
-	BU_CK_VLS(&img_sp->i_file);
+	BU_CK_VLS(&img_sp->i_name);
 }
 #endif
 /* 
@@ -146,7 +151,7 @@ const char				*value;	/* string containing value */
  *
  * XXX "orient" MUST ALWAYS BE THE LAST PARAMETER SPECIFIED FOR EACH IMAGE.
  */
-static void 
+HIDDEN int
 orient_hook( sdp, name, base, value )
 register const struct bu_structparse	*sdp;	/* structure description */
 register const char			*name;	/* struct member name */
@@ -169,11 +174,11 @@ const char				*value;	/* string containing value */
 	 */
 	BU_GETSTRUCT(img_new, img_specific);
 	memcpy(img_new, img_sp, sizeof(struct img_specific));
-	BU_CK_VLS(&img_sp->i_file);
+	BU_CK_VLS(&img_sp->i_name);
 
 
 	/* zero the filename for the next iteration */
-	bu_vls_init(&img_sp->i_file);
+	bu_vls_init(&img_sp->i_name);
 
 	/* Generate matrix from the quaternion */
 	quat_quat2mat(img_new->i_mat, img_new->i_orient);
@@ -249,10 +254,12 @@ const char				*value;	/* string containing value */
 	}
 
 	/* read in the pixel data */
-	img_new->i_data = bu_open_mapped_file(bu_vls_addr(&img_new->i_file),
+	img_new->i_data = bu_open_mapped_file(bu_vls_addr(&img_new->i_name),
 				(char *)NULL);
-	if ( ! img_new->i_data)
-		bu_bomb("shader prj: orient_hook() can't get pixel data... bombing\n");
+	if ( ! img_new->i_data) {
+	  return -1;
+	  bu_log("WARNING: sh_prj.c: orient_hook() can't get pixel data...skipping\n");
+	}
 
 	img_new->i_img = (unsigned char *)img_new->i_data->buf;
 
@@ -269,7 +276,7 @@ const char				*value;	/* string containing value */
  * structure above
  */
 struct bu_structparse img_parse_tab[] = {
-	{"%S",	1, "image",		IMG_O(i_file),		BU_STRUCTPARSE_FUNC_NULL},
+	{"%S",	1, "image",		IMG_O(i_name),		BU_STRUCTPARSE_FUNC_NULL},
 	{"%d",	1, "w",			IMG_O(i_width),		dimen_hook},
 	{"%d",	1, "n",			IMG_O(i_height),	dimen_hook},
 	{"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook},
@@ -361,13 +368,15 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	while (isspace(*fname)) fname++; /* XXX Hack till stack shader fixed */
 
 #endif
-	if (! *fname)
-		bu_bomb("Null prj shaderfile?\n");
+	if (! *fname) {
+	  bu_log("ERROR: Null projection shader file?\n");
+	  return -1;
+	}
 
 	parameter_file = bu_open_mapped_file( fname, (char *)NULL );
 	if (! parameter_file) {
-		bu_log( "prj_setup can't get shaderfile (%s)\n", fname );
-		bu_bomb("prj_setup can't get shaderfile... bombing\n");
+		bu_log( "ERROR: Projection shader can't find shaderfile (%s)\n", fname );
+		return -1;
 	}
 
 	bu_vls_init(&parameter_data);
@@ -460,7 +469,7 @@ char *cp;
 
 		img_sp->i_img = (unsigned char *)0;
 		bu_close_mapped_file( img_sp->i_data );
-		bu_vls_vlsfree(&img_sp->i_file);
+		bu_vls_vlsfree(&img_sp->i_name);
 
 		BU_LIST_DEQUEUE( &img_sp->l );
 		bu_free( (char *)img_sp, "img_specific");
@@ -474,11 +483,11 @@ char *cp;
 
 	bu_free( cp, "prj_specific" );
 }
-static const double	cs = (1.0/255.0);
-static const point_t delta = {0.5, 0.5, 0.0};
+HIDDEN const double	cs = (1.0/255.0);
+HIDDEN const point_t delta = {0.5, 0.5, 0.0};
 
 #if 0
-static int
+HIDDEN int
 project_antialiased(sh_color, img_sp, prj_sp, ap, r_pe, r_N, r_pt)
 point_t sh_color;
 const struct img_specific *img_sp;
@@ -512,7 +521,7 @@ const point_t r_pt;
 	return 0;
 }
 #endif
-static int
+HIDDEN int
 project_point(sh_color, img_sp, prj_sp, r_pt)
 point_t sh_color;
 struct img_specific *img_sp;
