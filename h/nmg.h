@@ -100,7 +100,10 @@ struct nmg_ptbl {
 	long  **buffer;	/* data storage area */
 };
 
-
+/* For those routines that have to "peek" a little */
+#define NMG_TBL_BASEADDR(p)	((p)->buffer)
+#define NMG_TBL_END(p)		((p)->end)
+#define NMG_TBL_GET(p,i)	((p)->buffer[(i)])
 
 /*
  *  Magic Numbers.
