@@ -37,7 +37,14 @@ noinst_HEADERS = \
 	tree.h \
 	vecmath.h
 
-lgt_LDADD = ${LIBRT} ${FB} ${TERMIO} ${CURSOR} ${LIBGL}
+lgt_LDADD = \
+	${LIBRT} \
+	${FB} \
+	${TERMIO} \
+	${CURSOR} \
+	${LIBGL} \
+	${LIBSGIGL}
+
 lgt_CFLAGS = -DBEHIND_ME_TOL=0.05
 
 dist_man_MANS = lgt.1
