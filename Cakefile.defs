@@ -282,11 +282,15 @@ set -S2 "/bin/sh"
 #else
 /* 	Carl's test version */
 #	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX
+#if 1
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DMULTI_ATTACH
+#else
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DMULTI_ATTACH
+#endif
 #	define	MGED_LIBES	LIBTKGLX -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
 #       define  XMGED_ALLOCA    alloca
 #	define	XMGED_OBJS	dm-4d dm-X Xmgl dm-ogl
-#	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -DXMGED -I/usr/include/X11 -DDM_OGL
+#	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -DXMGED -I/usr/include/X11 -DDM_OGLm
 #	define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lGL -lXm \
 				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
 				-lxmalloc -ll
