@@ -393,7 +393,8 @@ union tree		*curtree;
 		db_free_tree(curtree);		/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
-		nmg_km(the_model);
+		if( the_model->magic != -1L )
+			nmg_km(the_model);
 	
 		/* Now, make a new, clean model structure for next pass. */
 		the_model = nmg_mm();
