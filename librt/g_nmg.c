@@ -1470,7 +1470,7 @@ register mat_t		mat;
 	rt_log("import maxindex=%d\n", maxindex);
 
 	/* Collect overall new subscripts, and structure-specific indices */
-	ecnt = (struct nmg_exp_counts *)rt_calloc( maxindex+1,
+	ecnt = (struct nmg_exp_counts *)rt_calloc( maxindex+3,
 		sizeof(struct nmg_exp_counts), "ecnt[]" );
 	real_ptrs = (long **)rt_calloc( maxindex+3,
 		sizeof(long *), "ptrs[]" );
@@ -1748,7 +1748,7 @@ double			local2mm;
 	for( i = 0; i < NMG_N_KINDS; i++ )
 		kind_counts[i] = 0;
 	subscript = 1;
-	for( i = m->maxindex-1; i >= 0; i-- )  {
+	for( i=0; i < m->maxindex; i++ )  {
 		if( ptrs[i] == (long *)0 )  continue;
 		kind = rt_nmg_magic_to_kind( *(ptrs[i]) );
 		ecnt[i].per_struct_index = kind_counts[kind]++;
