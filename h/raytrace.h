@@ -1536,6 +1536,9 @@ RT_EXTERN(int rt_structparse, (CONST struct rt_vls *vls,
 RT_EXTERN(void rt_vls_item_print, (struct rt_vls *vp,
 	CONST struct structparse *sp, CONST char *base ) );
           /* Print single element from data structure */
+RT_EXTERN(void rt_vls_item_print_nc, (struct rt_vls *vp,
+	CONST struct structparse *sp, CONST char *base ) );
+          /* Print single element from data structure, without commas */
 RT_EXTERN(void rt_vls_name_print, (struct rt_vls *vp,
 	CONST struct structparse *parsetab, CONST char *name,
 				    CONST char *base ) );
