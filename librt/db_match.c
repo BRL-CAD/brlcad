@@ -188,18 +188,21 @@ struct db_i    *dbip;
 			dp->d_nref = 0;
 
 	/* Examine all COMB nodes */
-	for( i = 0; i < RT_DBNHASH; i++ )
+	for( i = 0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 			if( rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0 )
 				continue;
-			if( intern.idb_type != ID_COMBINATION )
+			if( intern.idb_type != ID_COMBINATION )  {
+				rt_db_free_internal( &intern );
 				continue;
+			}
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 			db_tree_funcleaf( dbip, comb, comb->tree,
 					  db_count_refs, (genptr_t)NULL,
 					  (genptr_t)NULL, (genptr_t)NULL );
-			intern.idb_meth->ft_ifree( &intern );
+			rt_db_free_internal( &intern );
 		}
+	}
 }

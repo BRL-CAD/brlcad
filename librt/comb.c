@@ -90,7 +90,7 @@ char *argv[];
 	}
 
 	/* Scan the database */
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_dirbuild( dbip );
 
 	for( i=2 ; i<argc ; i++ )
 	{
@@ -99,12 +99,7 @@ char *argv[];
 		printf( "%s\n" , argv[i] );
 
 		dp = db_lookup( dbip , argv[i] , 1 );
-		if( db_get_external( &ep , dp , dbip ) )
-		{
-			bu_log( "db_get_external failed for %s\n" , argv[i] );
-			continue;
-		}
-		if( rt_comb_v4_import( &ip , &ep , NULL ) < 0 )  {
+		if( rt_db_get_internal( &ip, dp, dbip, NULL ) < 0 )  {
 			bu_log("import of %s failed\n", dp->d_namep);
 			continue;
 		}
@@ -115,6 +110,7 @@ char *argv[];
 		if( ip.idb_type != ID_COMBINATION )
 		{
 			bu_log( "idb_type = %d\n" , ip.idb_type );
+			rt_db_free_internal( &ip );
 			continue;
 		}
 
@@ -174,7 +170,7 @@ char *argv[];
 		bu_vls_free( &file );
 
 		/* Test the lumberjacks */
-		ip.idb_meth->ft_ifree( &ip );
+		rt_db_free_internal( &ip );
 
 	}
 }
