@@ -121,7 +121,7 @@ char **argv;
 
 	while (nframes>0) {
 
-		while (!ready(20)) {
+		if (!ready(20)) {
 			fprintf(stderr,"dunnsnap: camera not ready at frame start\n");
 			goto bad;
 		}
