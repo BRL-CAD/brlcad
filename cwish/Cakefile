@@ -1,0 +1,32 @@
+/*
+ *			cwish/Cakefile
+ *
+ */
+
+#define SRCDIR	cwish
+#define PRODUCTS	cwish
+#if 0
+#define STATIC_PRODUCTS cwish.tcl
+#endif
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define FILES	cwish input tcl cmd
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+#if HAS_TCP
+#    define COMPLETE_LIBES	\
+	LIBFB LIBPKG LIBWDB LIBTERMIO MGED_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
+#else
+#    define COMPLETE_LIBES	\
+	LIBFB LIBWDB LIBTERMIO MGED_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
+#endif
+
+cwish:	OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBTCL_DEP LIBTK_DEP LIBDM_DEP LIBFB_DEP
+	sh ../sh/newvers.sh version "Cad Wish (CWISH)"
+	CC CFLAGS -c vers.c
+	CC -o cwish LDFLAGS OBJ COMPLETE_LIBES vers.o
+
+#include "../Cakefile.rules"
