@@ -201,6 +201,16 @@ struct seg {
 			(p)->seg_magic = 0; \
 			res->re_segfree++; }
 
+#define RT_FREE_SEG_LIST( _head, _res )	{ \
+		register struct seg *_seg; \
+		while( (_head) != SEG_NULL )  { \
+			_seg = (_head)->seg_next; \
+			FREE_SEG( (_head), _res ); \
+			(_head) = _seg; \
+		} \
+		(_head) = SEG_NULL; \
+	}
+
 
 /*
  *			S O L T A B
@@ -419,6 +429,16 @@ struct partition {
 			(p)->pt_magic = 0; /* sanity */ \
 			APPEND_PT( (p), &(res->re_parthead) ); \
 			res->re_partfree++; }
+
+#define RT_FREE_PT_LIST( _headp, _res )		{ \
+		register struct partition *_pp, *_zap; \
+		for( _pp = (_headp)->pt_forw; _pp != (_headp);  )  { \
+			_zap = _pp; \
+			_pp = _pp->pt_forw; \
+			FREE_PT(_zap, ap->a_resource); \
+		} \
+		(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
+	}
 
 /* Insert "new" partition in front of "old" partition */
 #define INSERT_PT(new,old)	{ \
