@@ -196,11 +196,11 @@ register struct application *ap;
 		}
 
 		/* Don't depend on interlocked hardware byte-splice */
-		RES_ACQUIRE( &rt_g.res_worker );	/* XXX need extra semaphore */
+		RES_ACQUIRE( &rt_g.res_results );
 		*pixelp++ = r ;
 		*pixelp++ = g ;
 		*pixelp++ = b ;
-		RES_RELEASE( &rt_g.res_worker );
+		RES_RELEASE( &rt_g.res_results );
 	}
 }
 
