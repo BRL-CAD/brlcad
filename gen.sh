@@ -224,6 +224,7 @@ BDIRS="bench \
 	burst \
 	gtools \
 	bwish \
+	btclsh \
 "			# This ends the list.
 
 TSDIRS=". mged nirt pl-dm lib util"
