@@ -1,0 +1,157 @@
+.\" Set the interparagraph spacing to 1 (default is 0.4)
+.PD 1v
+.\"
+.\" The man page begins...
+.\"
+.TH LIBREDBLACK 3 BRL/CAD
+.\"
+.SH NAME
+libredblack \- red-black tree subroutines
+.\"
+.SH SYNOPSIS
+\fB#include "redblack.h"
+.\"
+.PP
+.B rb_tree *rb_create (description, nm_orders, order_funcs)
+.br
+.B char *description;
+.br
+.B int nm_orders;
+.br
+.B int (**order_funcs)();
+.\"
+.PP
+.B void rb_extreme (tree, order, sense)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.br
+.B int sense;
+.\"
+.PP
+.B int rb_insert (tree, data)
+.br
+.B rb_tree *tree;
+.br
+.B void *data;
+.\"
+.PP
+.B void *rb_search (tree, order, data)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.br
+.B void *data;
+.\"
+.PP
+.B void rb_walk (tree, order, visit)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.br
+.B void (*visit)();
+.\"
+.\"
+.SH DESCRIPTION
+These subroutines implement red-black trees,
+a form of balanced binary trees.
+They allow storage of arbitrary data structures
+at tree nodes
+and also support multiple simultaneous orders (trees)
+on the same nodes.
+The trees are based on comparison functions
+like those used by
+.I qsort(3).
+.PP
+.I rb_create
+allocates storage for
+and initializes
+the tree header.
+.I Description
+is an explanatory comment that
+.I libredblack
+prints in its diagnostics,
+.I nm_orders
+is the number of simultaneous orders,
+and
+.I order_funcs
+points to the table of comparison functions
+(one for each order).
+These are called with two arguments
+that point to the elements being compared.
+Each function must return an integer
+less than, equal to, or greater than zero
+according as the first argument is to be considered
+less than, equal to, or greater than the second.
+On success,
+.I rb_create
+returns a pointer to
+an
+.I rb_tree.
+Otherwise, it returns
+.I RB_TREE_NULL.
+This pointer must be saved,
+as it is a required argument to all the other subroutines.
+.PP
+.I rb_insert
+creates a new node containing
+.I data
+and adds it to
+.I tree.
+The node is inserted in the appropriate place
+in each order,
+as determined by the comparison functions.
+.I rb_insert
+returns 1 on success
+and 0 on failure.
+.PP
+.I rb_extreme
+searches through
+.I tree
+to find a minimum or maximum node in one of the orders
+as determined by the corresponding comparison function.
+.I Sense
+is either
+.I SENSE_MIN
+or
+.I SENSE_MAX,
+and
+.I order
+specifies which order to search.
+.I rb_extreme
+returns a pointer to the extreme data.
+.PP
+.I rb_search
+traverses
+.I tree
+searching for a node of which the contents equals
+.I data
+according to the comparison function
+specified by
+.I order.
+On success,
+.I rb_search
+returns a pointer to the data in the
+matching node.
+Otherwise, it returns
+.I NULL.
+.PP
+.I rb_walk
+traverses
+.I tree
+according to the comparison function specified by
+.I order
+and applies a specified funtion.
+.I Visit
+is called for each node in turn,
+with one argument that points
+to the data at that node.
+.\"
+.SH SEE ALSO
+qsort(3)
+.\"
+.SH AUTHOR
+Paul Tanenbaum
