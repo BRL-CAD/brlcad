@@ -684,7 +684,7 @@ free_scanlines()
 
 	for( y=0; y<height; y++ )  {
 		if( scanline[y].sl_buf )  {
-			rt_free( scanline[y].sl_buf );
+			rt_free( scanline[y].sl_buf, "scanline buf" );
 			scanline[y].sl_buf = (char *)0;
 		}
 	}
