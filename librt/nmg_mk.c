@@ -3103,7 +3103,6 @@ struct edge_g_lseg	*src_eg;
 	vect_t				dir_src;
 	vect_t				dir_dest;
 	fastf_t				deg;
-	double				cos_ang;
 
 	NMG_CK_EDGE_G_LSEG(src_eg);
 	NMG_CK_EDGE_G_LSEG(dest_eg);
@@ -3112,6 +3111,7 @@ struct edge_g_lseg	*src_eg;
 			src_eg, dest_eg );
 	}
 
+#if 0
 	/* Sanity check */
 	VMOVE( dir_src, src_eg->e_dir );
 	VUNITIZE( dir_src );
@@ -3127,7 +3127,7 @@ struct edge_g_lseg	*src_eg;
 		bu_log("Angle between lines is %g degrees\n", deg );
 		/* This can happen while fixing mistakes, don't bomb. */
 	}
-
+#endif
 	while( BU_LIST_NON_EMPTY( &src_eg->eu_hd2 ) )  {
 		struct bu_list	*midway;	/* &eu->l2, midway into edgeuse */
 
