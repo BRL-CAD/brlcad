@@ -686,7 +686,7 @@ register struct xray	*rp;
 		segp->seg_in.hit_private = (char *)2;	/* reverse normal */
 
 		segp->seg_out.hit_dist = t * t_scale;
-		segp->seg_in.hit_private = (char *)1;	/* normal */
+		segp->seg_out.hit_private = (char *)1;	/* normal */
 	} else {
 		segp->seg_in.hit_dist = t * t_scale;
 		segp->seg_in.hit_private = (char *)1;	/* normal */
