@@ -730,8 +730,6 @@ struct ell_state {
 	struct ell_internal	ei;
 	mat_t		invRinvS;
 	mat_t		invRoS;
-	fastf_t		hunt_tol;
-	fastf_t		hunt_tol_sq;
 	fastf_t		theta_tol;
 };
 
@@ -833,10 +831,6 @@ double			norm_tol;
 	VSCALE( Bu, state.ei.b, invBlen );
 	invClen = 1.0/(Clen = sqrt(magsq_c));
 	VSCALE( Cu, state.ei.c, invClen );
-rt_log("ell radii A=%g, B=%g, C=%g\n", Alen, Blen, Clen);
-VPRINT("Au", Au);
-VPRINT("Bu", Bu);
-VPRINT("Cu", Cu);
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
@@ -859,7 +853,6 @@ VPRINT("Cu", Cu);
 		vect_t	axb;
 		VCROSS( axb, Au, Bu );
 		f = VDOT( axb, Cu );
-rt_log("AxB dot C = %g\n", f);
 		if( f < 0 )  {
 			VREVERSE( Cu, Cu );
 			VREVERSE( state.ei.c, state.ei.c );
@@ -883,13 +876,6 @@ rt_log("AxB dot C = %g\n", f);
 
 	/* invRinvS, for converting points from unit sphere to model */
 	mat_mul( state.invRinvS, invR, invS );
-#if 0
-mat_print("R", R);
-mat_print("invR", invR);
-mat_print("S", S);
-mat_print("invS", invS);
-mat_print("invRinvS", state.invRinvS);
-#endif
 
 	/* invRoS, for converting normals from unit sphere to model */
 	mat_mul( state.invRoS, invR, S );
@@ -923,24 +909,18 @@ mat_print("invRinvS", state.invRinvS);
 		if( rel_tol > 0.0 && rel_tol < abs_tol )
 			abs_tol = rel_tol;
 	}
+
 	/*
 	 *  Converte distance tolerance into a maximum permissible
 	 *  angle tolerance.  'radius' is largest radius.
 	 */
-	
 	state.theta_tol = 2 * acos( 1.0 - abs_tol / radius );
-rt_log("ell abs_tol=%g, state.theta_tol=%g\n", abs_tol, state.theta_tol);
 
 	/* To ensure normal tolerance, remain below this angle */
 	if( norm_tol > 0.0 && norm_tol < state.theta_tol )  {
 		state.theta_tol = norm_tol;
 		abs_tol = radius * ( 1 - cos( state.theta_tol * 0.5 ) );
-rt_log("norm_tol abs_tol=%g, state.theta_tol=%g\n", abs_tol, state.theta_tol);
 	}
-
-	state.hunt_tol = abs_tol * 0.01;
-	state.hunt_tol_sq = state.hunt_tol * state.hunt_tol;
-rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	state.s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
