@@ -3431,10 +3431,13 @@ colinear:
 
 		/* Consistency check between geometry, and hit_vu. */
 		if( hit_vu && !rt_pt3_pt3_equal( hit3d, hit_vu->v_p->vg_p->coord, &(is->tol) ) )  {
-			rt_log("ERROR? hit_vu and hit3d don't agree!\n");
-			VPRINT("hit3d ", hit3d);
-			VPRINT("hit_vu", hit_vu->v_p->vg_p->coord);
-			/* XXX Now what? */
+			rt_log("NOTICE: hit_vu and hit3d don't agree, using hit_vu.\n");
+			VPRINT("\thit3d ", hit3d);
+			VPRINT("\thit_vu", hit_vu->v_p->vg_p->coord);
+
+			/* Just in case, make things consistent */
+			VMOVE(hit3d, hit_vu->v_p->vg_p->coord);
+			nmg_get_2d_vertex( hit2d, hit_vu->v_p, is, fu1 );
 		}
 
 		if( hit_vu )  hit_v = hit_vu->v_p;
@@ -3478,10 +3481,12 @@ hit_b:
 			 */
 			if( rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord ) <= is->tol.dist_sq  )  {
 				/* XXX What if hit_v already set, differently? */
+				if( hit_v && hit_v != vu1a->v_p ) rt_bomb("nmg_isect_line2_face2pNEW() hitv != vu1a\n");
 				hit_v = vu1a->v_p;
 				goto hit_a;
 			}
 			if( rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord ) <= is->tol.dist_sq )  {
+				if( hit_v && hit_v != vu1b->v_p ) rt_bomb("nmg_isect_line2_face2pNEW() hitv != vu1b\n");
 				hit_v = vu1b->v_p;
 				goto hit_b;
 			}
