@@ -116,7 +116,7 @@ int argc; char **argv;
 	scan[width+1][BLU] = scan[width][BLU];
 
 	/* figure out where to put it on the screen */
-	if( overlay == 0 && fboutp == fbp && yline < 256 ) {
+	if( overlay == 0 && fboutp == fbp && yline < fb_getheight(fbp)/2 ) {
 		yoffset = fb_getheight(fbp) - 256;
 		if( yoffset <= yline )
 			yoffset = 0;
