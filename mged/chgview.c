@@ -2261,7 +2261,20 @@ char	**argv;
   button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
 
   argv[0] = "ill";
-  return f_ill(clientData, interp, argc, argv);	/* Illuminate named solid --> ST_S_EDIT */
+
+  /* Illuminate named solid --> ST_S_EDIT */
+  if (f_ill(clientData, interp, argc, argv) == TCL_ERROR) {
+	  Tcl_Obj *save_result;
+
+	  save_result = Tcl_GetObjResult(interp);
+	  Tcl_IncrRefCount(save_result);
+	  be_reject(clientData, interp, 0, argv);
+	  Tcl_SetObjResult(interp, save_result);
+	  Tcl_DecrRefCount(save_result);
+	  return TCL_ERROR;
+  }
+
+  return TCL_OK;
 }
 
 void
