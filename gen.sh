@@ -160,6 +160,7 @@ BDIRS="bench \
 	libtcl \
 	libtk \
 	libdm \
+	libz \
 	fbserv \
 	librt \
 	libredblack \
