@@ -26,7 +26,7 @@
 static char RCSid[] = "$Header$";
 #endif
 
-static char *version="1.00";
+extern char	version[];
 
 #include <stdio.h>
 #include <math.h>
@@ -38,7 +38,7 @@ static char *version="1.00";
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "iges.h"
+#include "../iges-g/iges.h"
 #include "../librt/debug.h"
 
 #define	CP_BUF_SIZE	1024	/* size of buffer for file copy */
@@ -155,6 +155,10 @@ char	*argv[];
 			perror("setlinebuf(stderr)");
 #	endif
 #endif
+
+	printf( "%s", version+5);
+	printf( "Please direct bug reports to <jra@brl.mil>\n\n" );
+
 	mat_idn( identity_mat );
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
