@@ -1897,7 +1897,7 @@ char	**argv;
   if(dbip == DBI_NULL)
     return 0;
 
-  if( db_parse_anim( dbip, argc, argv ) < 0 )  {
+  if( db_parse_anim( dbip, argc, (const char **)argv ) < 0 )  {
     Tcl_AppendResult(interp, "cm_anim:  ", argv[1], " ", argv[2], " failed\n", (char *)NULL);
     return(-1);		/* BAD */
   }
