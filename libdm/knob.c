@@ -15,13 +15,15 @@
  * Distribution Status -
  *      Public Domain, Distribution Unlimitied.
  */
-#if IR_KNOBS
+
 #include "conf.h"
 #include "tcl.h"
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
+
+#if IR_KNOBS
 
 int dm_limit();  /* provides knob dead spot */
 int dm_unlimit();  /* */

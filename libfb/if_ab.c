@@ -886,7 +886,7 @@ int	to_network;
 		*cp++ = '\0';
 		/* buffer will contain old permission, size, old name */
 		src_size = 0;
-		if( sscanf( xmit_buf, "C%o %d", &perm, &src_size ) != 2 )  {
+		if( sscanf( xmit_buf, "C%o %d", (unsigned int *)&perm, &src_size ) != 2 )  {
 			fb_log("sscanf error\n");
 			goto err;
 		}
