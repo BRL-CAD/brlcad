@@ -246,6 +246,7 @@ int main(int argc, char **argv)
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
+	(void)rt_get_timer( &times, NULL );
 	if (rt_verbosity & VERBOSE_MODELTITLE)
 		bu_log("db title:  %s\n", idbuf);
 	if (rt_verbosity & VERBOSE_STATS)
