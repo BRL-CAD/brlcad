@@ -1127,9 +1127,15 @@ register float *angles, *unitv;
 	angles[4] = asin(unitv[Z]);
 
 	/* rotation angle */
-	if((f = cos(angles[4])) > 1.0e-20 || f < -1.0e-20 )
-		angles[3] = radtodeg * acos( unitv[X]/f );
-	else
+	if((f = cos(angles[4])) > 1.0e-20 || f < -1.0e-20 )  {
+		f = unitv[X]/f;
+		if( f <= -1.0 )
+			angles[3] = -90;
+		else if( f >= 1.0 )
+			angles[3] = 90;
+		else
+			angles[3] = radtodeg * acos( f );
+	}  else
 		angles[3] = 0.0;
 	if( unitv[1] < 0 )
 		angles[3] = 360.0 - angles[3];
