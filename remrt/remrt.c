@@ -1169,6 +1169,7 @@ struct timeval	*nowp;
 	register struct frame *fr2;
 	int		another_pass;
 	static int	scheduler_going = 0;	/* recursion protection */
+	int		ret;
 
 	if( scheduler_going )  {
 		/* recursion protection */
@@ -1217,20 +1218,28 @@ next_frame: ;
 	}
 
 	/* Keep assigning work until all servers are fully loaded */
+top:
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
-		if( fr == FRAME_NULL )  {
-			rt_log("fr=NULL, aborting\n");
-			abort();
-		}
 		do {
 			another_pass = 0;
 			if( fr->fr_todo.li_forw == &(fr->fr_todo) )
 				break;	/* none waiting here */
 
+			/*
+			 *  This loop attempts to make one assignment to
+			 *  each of the workers, before looping back to
+			 *  make additional assignments.
+			 *  This should keep all workers evenly "stoked".
+			 */
 			for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 				if( sp->sr_pc == PKC_NULL )  continue;
 
-				another_pass += task_server( fr, sp, nowp );
+				if( (ret = task_server(fr,sp,nowp)) < 0 )  {
+					/* fr is no longer valid */
+					goto top;
+				} else if( ret > 0 )  {
+					another_pass++;
+				}
 			}
 		} while( another_pass > 0 );
 	}
@@ -1253,6 +1262,7 @@ out:
  *  The return code indicates if the server is sated or not.
  *
  *  Returns -
+ *	-1	when 'fr' is no longer valid
  *	0	when this server winds up with a full workload
  *	1	when this server needs additional work
  */
@@ -1312,8 +1322,8 @@ struct timeval		*nowp;
 	if( fr->fr_start.tv_sec == 0 )  {
 		if( frame_start( fr ) < 0 )  {
 			/* Skip this frame after all */
-			frame_is_done( fr );	/* will dequeue */
-			return(1);		/* need more work */
+			destroy_frame( fr );	/* will dequeue */
+			return(-1);		/* restart scan */
 		}
 	}
 
