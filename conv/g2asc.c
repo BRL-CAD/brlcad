@@ -376,9 +376,9 @@ cline_dump()
 
 	(void)fprintf(ofp, "%c ", DBID_CLINE );	/* c */
 	(void)fprintf(ofp, "%.16s ", name );	/* unique name */
-	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( cli->v ) );
-	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( cli->h ) );
-	(void)fprintf(ofp, "%.12e %.12e", cli->radius, cli->thickness );
+	(void)fprintf(ofp, "%26.20e %26.20e %26.20e ", V3ARGS( cli->v ) );
+	(void)fprintf(ofp, "%26.20e %26.20e %26.20e ", V3ARGS( cli->h ) );
+	(void)fprintf(ofp, "%26.20e %26.20e", cli->radius, cli->thickness );
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
 	rt_cline_ifree( &intern );
