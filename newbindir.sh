@@ -4,18 +4,21 @@
 #  Script to permanantly modify your copy of the BRL-CAD distribution to
 #  place the installed programs in some place other than BRL's usual place.
 #
+#  Changed from Release 4.0
+#  Formerly, this script dumped everything into one place.  Messy.
+#  Now, the whole "/usr/brlcad/" tree can be re-vectored anywhere you want,
+#  while preserving the tree structure below there.
+#
 #  $Header$
 
 eval `grep "^BINDIR=" setup.sh`		# sets BINDIR
-LIBDIR=`echo $BINDIR | sed -e 's/bin$/lib/'`
-ETCDIR=`echo $BINDIR | sed -e 's/bin$/etc/'`
-INCLUDE_DIR=/usr/brlcad/include
+BASEDIR=`echo $BINDIR | sed -e 's/.bin$//'`
 
-echo "Current BINDIR is $BINDIR"
+echo "Current BASEDIR is $BASEDIR"
 echo
 
 if test x$1 = x
-then	echo "Usage: $0 new_BINDIR"
+then	echo "Usage: $0 new_BASEDIR"
 	exit 1
 fi
 
@@ -26,18 +29,11 @@ then	echo "Ahem, $NEW is not an existing directory"
 	exit 1
 fi
 
-echo "(For non-production installation, all dirs forced to new BINDIR)"
 echo
-echo "BINDIR was $BINDIR, will be $NEW"
-echo "LIBDIR was $LIBDIR, will be $NEW"
-echo "ETCDIR was $ETCDIR, will be $NEW"
-echo "MANDIR and INCLUDE_DIR will be $NEW"
+echo "BASEDIR was $BASEDIR, will be $NEW"
 echo
 
-#  The first set of substitutions replace one path with another.
-#  This works well on Makefiles and shell scripts.
-#  The second set of substitutions modify #define entries
-#  (typically in Cakefile.defs) that might be system-specific.
+#  Replace one path with another.
 
 for i in \
 	Cakefile.defs setup.sh cray.sh \
@@ -47,13 +43,7 @@ do
 	chmod 775 $i
 	ed - $i << EOF
 f
-g,$BINDIR,s,,$NEW,p
-g,$LIBDIR,s,,$NEW,p
-g,$ETCDIR,s,,$NEW,p
-g,$MANDIR,s,,$NEW,p
-g,$INCLUDE_DIR,s,,$NEW,p
-g,INCLUDE_DIR	.*,s,,INCLUDE_DIR	$NEW,p
-g,MANDIR	.*,s,,MANDIR	$NEW,p
+g,$BASEDIR,s,,$NEW,p
 w
 q
 EOF
