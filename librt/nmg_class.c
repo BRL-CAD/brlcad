@@ -1287,7 +1287,7 @@ long			*classlist[4];
 CONST struct rt_tol	*tol;
 {
 	int class;
-	unsigned in, out, on;
+	unsigned int	in, outside, on;
 	struct edgeuse *eu, *p, *q;
 	struct loopuse *q_lu;
 	struct vertexuse *vu;
@@ -1347,14 +1347,14 @@ CONST struct rt_tol	*tol;
 
 	/* loop is collection of edgeuses */
 retry:
-	in = out = on = 0;
+	in = outside = on = 0;
 	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		/* Classify each edgeuse */
 		class = class_eu_vs_s(eu, s, classlist, tol);
 		switch (class) {
 		case INSIDE	: ++in; 
 				break;
-		case OUTSIDE	: ++out;
+		case OUTSIDE	: ++outside;
 				break;
 		case ON_SURF	: ++on;
 				break;
@@ -1363,11 +1363,11 @@ retry:
 	}
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("class_lu_vs_s: Loopuse edges in:%d on:%d out:%d\n", in, on, out);
+		rt_log("class_lu_vs_s: Loopuse edges in:%d on:%d out:%d\n", in, on, outside);
 
-	if (in > 0 && out > 0) {
+	if (in > 0 && outside > 0) {
 		FILE *fp;
-		rt_log("Loopuse edges in:%d on:%d out:%d, turning on DEBUG_CLASSIFY\n", in, on, out);
+		rt_log("Loopuse edges in:%d on:%d out:%d, turning on DEBUG_CLASSIFY\n", in, on, outside);
 		if( rt_g.NMG_debug & DEBUG_CLASSIFY )  {
 			char		buf[128];
 			static int	num;
@@ -1405,7 +1405,7 @@ retry:
 		seen_error = 1;
 		goto retry;
 	}
-	if (out > 0) {
+	if (outside > 0) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], lu->l_p);
 		reason = "edgeuses were OUT and ON";
 		status = OUTSIDE;
