@@ -17,12 +17,14 @@
 #	in all countries except the USA.  All rights reserved.
 #
 # Description -
-#	"cad_dialog" and "cad_input_dialog" are based off of the "tk_dialog" that
-#	comes with Tk 4.0.
+#	"cad_dialog" and "cad_input_dialog" are based off of the
+#	"tk_dialog" that comes with Tk 4.0.
 #
 # Modifications -
 #        (Bob Parker):
-#		*- mods to popup the dialog box near the pointer
+#		*- mods to pop up the dialog box near the pointer.
+#		*- mods to cad_dialog (i.e. use text widget with
+#		   scrollbar if string length becomes too large).
 #
 #==============================================================================
 
@@ -47,8 +49,25 @@ proc cad_dialog { w screen title text bitmap default args } {
     frame $w.bot -relief raised -bd 1
     pack $w.bot -side bottom -fill both
 
-    message $w.top.msg -text $text -width 12i
-    pack $w.top.msg -side right -expand yes -fill both -padx 2m -pady 2m
+    # Use a text widget with scrollbar if string is too large
+    if {[string length $text] > 1000} {
+	frame $w.top.msgF
+	text $w.top.msgT -yscrollcommand "$w.top.msgS set"
+	$w.top.msgT insert 1.0 $text
+	$w.top.msgT configure -state disabled
+	scrollbar $w.top.msgS -command "$w.top.msgT yview"
+	grid $w.top.msgT $w.top.msgS -sticky nsew -in $w.top.msgF
+	grid columnconfigure $w.top.msgF 0 -weight 1
+	grid rowconfigure $w.top.msgF 0 -weight 1
+
+	# since pack is being used elsewhere,
+	# we'll begin using it now.
+	pack $w.top.msgF -side right -expand yes -fill both -padx 2m -pady 2m
+    } else {
+	message $w.top.msg -text $text -width 12i
+	pack $w.top.msg -side right -expand yes -fill both -padx 2m -pady 2m
+    }
+
     if { $bitmap != "" } {
 	label $w.top.bitmap -bitmap $bitmap
 	pack $w.top.bitmap -side left -padx 2m -pady 2m
