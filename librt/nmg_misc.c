@@ -1229,3 +1229,47 @@ struct model	*m;
 	rt_free( (char *)flags, "rebound flags[]" );
 }
 
+void
+nmg_count_shell_kids(m, total_faces, total_wires, total_points)
+struct model *m;
+unsigned long *total_wires;
+unsigned long *total_faces;
+unsigned long *total_points;
+{
+	short *tbl;
+
+	struct nmgregion *r;
+	struct shell *s;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+
+	NMG_CK_MODEL(m);
+
+	tbl = (short *)rt_calloc(m->maxindex+1, sizeof(char),
+		"face/wire/point counted table");
+
+	*total_faces = *total_wires = *total_points = 0;
+	for (RT_LIST_FOR(r, nmgregion, &m->r_hd)) {
+		for (RT_LIST_FOR(s, shell, &r->s_hd)) {
+			if (s->vu_p) {
+				total_points++;
+				continue;
+			}
+			for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+				if (NMG_INDEX_TEST_AND_SET(tbl, fu->f_p))
+					(*total_faces)++;
+			}
+			for (RT_LIST_FOR(lu, loopuse, &s->lu_hd)) {
+				if (NMG_INDEX_TEST_AND_SET(tbl, lu->l_p))
+					(*total_wires)++;
+			}
+			for (RT_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
+				if (NMG_INDEX_TEST_AND_SET(tbl, eu->e_p))
+					(*total_wires)++;
+			}
+		}
+	}
+
+	rt_free((char *)tbl, "face/wire/point counted table");
+}
