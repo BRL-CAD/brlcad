@@ -197,6 +197,10 @@ static int map_size;			/* # of color map slots available */
 #define MODE_5NORMAL	(0<<4)
 #define MODE_5GENLOCK	(1<<4)
 
+#define MODE_6MASK	(1<<5)
+#define MODE_6NORMAL	(0<<5)
+#define MODE_6EXTSYNC	(1<<5)
+
 static RGBpixel	rgb_table[4096];
 
 static int fb_parent;
@@ -564,7 +568,9 @@ int	width, height;
 	 *  is used as the operating mode.
 	 *  The default mode is set here, and it isn't mode 0, but mode 1.
 	 */
-	mode =  MODE_5NORMAL |		/* 0 */
+	mode =  
+		MODE_6NORMAL |		/* 0 */
+		MODE_5NORMAL |		/* 0 */
 		MODE_4HZDEF |		/* 0 */
 		MODE_3WINDOW |		/* 0 */
 		MODE_2TRANSIENT |	/* 0 */
@@ -579,6 +585,7 @@ int	width, height;
 		if( *cp && isdigit(*cp) )
 			(void)sscanf( cp, "%d", &mode );
 
+		/* This needs to become a bit! */
 		if( mode >= 99 )  {
 			/* Only task: Attempt to release shared memory segment */
 			mips_zapmem();
@@ -586,7 +593,8 @@ int	width, height;
 		}
 
 		/* Pick off just the mode bits of interest here */
-		mode &= (MODE_1MASK | MODE_2MASK | MODE_3MASK | MODE_4MASK | MODE_5MASK);
+		mode &= (MODE_1MASK | MODE_2MASK | MODE_3MASK | MODE_4MASK | 
+			MODE_5MASK | MODE_6MASK);
 	}
 	ifp->if_mode = mode;
 
@@ -681,19 +689,49 @@ int	width, height;
 		if( getvideo(CG_MODE) != -1 )  {
 		    	/*
 			 *  Optional CG2 GENLOCK boark is installed.
-		    	 *  Locked to incoming NTSC composite video picture
-		    	 *  for sync and chroma (on "REM IN" connector),
-		    	 *  generating composite NTSC output (on "VID OUT"
-			 *  connector).
+			 *
+			 *  Mode 2:  Internal sync generator is used.
+			 *
+			 *  Note that the stability of the sync generator
+			 *  on the GENLOCK board is *worse* than the sync
+			 *  generator on the regular DE3 board.  The GENLOCK
+			 *  version "twitches" every second or so.
+			 *
+			 *  Mode 3:  Output is locked to incoming
+			 *  NTSC composite video picture
+		    	 *  for sync and chroma (on "REM IN" connector).
 		    	 *  Color subcarrier is phase and amplitude locked to
 		    	 *  incomming color burst.
 		    	 *  The blue LSB has no effect on video overlay.
-			 *  (To use internal sync generator,
-			 *  change to CG2_M_MODE2).
+			 *
+			 *  Note that the generated composite NTSC output
+			 *  (on "VID OUT" connector) is often a problem,
+			 *  since it has a DC offset of +0.3V to the base
+			 *  of the sync pulse, while other studio eqiupment
+			 *  often expects the blanking level to be at
+			 *  exactly 0.0V, with sync at -0.3V.
+			 *  In this case, the black leves are ruined.
+			 *  Also, the inboard encoder chip isn't very good.
+			 *  Therefore, it is necessary to use an outboard
+			 *  RS-170 to NTSC encoder to get useful results.
 		    	 */
-			/* CG2_M_HIGHOUT for 1.4V p-p, else 1.0V */
-		    	setvideo(CG_MODE, CG2_M_MODE3);
-		    	setvideo(DE_R1, DER1_G_170 );
+			if( (ifp->if_mode & MODE_6MASK) == MODE_6EXTSYNC )  {
+				/* external sync via GENLOCK board REM IN */
+			    	setvideo(CG_MODE, CG2_M_MODE3);
+			    	setvideo(DE_R1, DER1_G_170 );
+			} else {
+				/* internal sync */
+#ifdef GENLOCK_SYNC
+				/* GENLOCK sync, found to be highly unstable */
+			    	setvideo(CG_MODE, CG2_M_MODE2);
+			    	setvideo(DE_R1, DER1_G_170 );
+#else
+				/* Just use DE3 sync generator.
+				 * For this case, GENLOCK board does nothing!
+				 */
+				setmonitor(NTSC);
+#endif
+			}
 		} else {
 			/*
 			 *  No genlock board is installed, produce RS-170
