@@ -1,8 +1,7 @@
 # $Id$
 
+brlcadscriptdir = @TCL_LIBRARY@/dde
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
+brlcadscript_SCRIPTS = pkgIndex.tcl
 
-
-
+EXTRA_DIST = $(brlcadscript_SCRIPTS)
