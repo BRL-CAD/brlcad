@@ -436,7 +436,6 @@ int axes;
   struct solid sp;
   struct rt_vlist vlist;
   int i, j;
-  int color = 0;
   double ox, oy;
   point_t a1, a2;
   point_t m1, m2;
@@ -454,8 +453,25 @@ int axes;
 
   if(axes_color_hook)
     (*axes_color_hook)(axes, sp.s_color);
-  else{/* use highlight color */
-    color = 1;
+  else{/* use default color */
+    switch(axes){
+    case E_AXES:
+      sp.s_color[0] = 230;
+      sp.s_color[1] = 50;
+      sp.s_color[2] = 50;
+      break;
+    case W_AXES:
+      sp.s_color[0] = 150;
+      sp.s_color[1] = 230;
+      sp.s_color[2] = 150;
+      break;
+    case V_AXES:
+    default:
+      sp.s_color[0] = 150;
+      sp.s_color[1] = 150;
+      sp.s_color[2] = 230;
+      break;
+    }
   }
 
   vlist.nused = 6;
@@ -570,5 +586,5 @@ int axes;
   dmp->dmr_newrot(model2view, 0);
 
   /* draw axes */
-  dmp->dmr_object( &sp, model2view, (double)1.0, color );
+  dmp->dmr_object( &sp, model2view, (double)1.0, 0 );
 }
