@@ -1109,6 +1109,58 @@ char *s;
 	}
 }
 
+/* 
+ *			N M G _ P R _ O N E _ E U _ V E C S
+ *
+ *  Common formatting code for edgeuses and edgeuse mates.
+ *  Does not mind wire edges.
+ */
+nmg_pr_one_eu_vecs( eu, xvec, yvec, zvec, tol )
+CONST struct edgeuse	*eu;
+CONST vect_t		xvec;
+CONST vect_t		yvec;
+CONST vect_t		zvec;
+CONST struct rt_tol	*tol;
+{
+	CONST struct loopuse	*lu;
+	CONST struct faceuse	*fu;
+	CONST struct face	*f;
+	CONST struct shell	*s;
+	char			*lu_orient;
+	char			*fu_orient;
+
+	NMG_CK_EDGEUSE(eu);
+	lu = (struct loopuse *)NULL;
+	lu_orient = "X";
+	fu = (struct faceuse *)NULL;
+	fu_orient = "X";
+	f = (struct face *)NULL;
+	if( *eu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+		lu = eu->up.lu_p;
+		NMG_CK_LOOPUSE(lu);
+		lu_orient = lu->orientation == OT_SAME ? "S" : "O";
+		if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
+			fu = lu->up.fu_p;
+			NMG_CK_FACEUSE(fu);
+			fu_orient = fu->orientation == OT_SAME ? "S" : "O";
+			f = fu->f_p;
+			s = fu->s_p;
+		} else {
+			s = lu->up.s_p;
+		}
+	} else {
+		s = eu->up.s_p;
+	}
+	NMG_CK_SHELL(s);
+	rt_log(" %8.8x, lu=%8.8x=%s, f=%8.8x, fu=%8.8x=%s, s=%8.8x %g deg\n",
+		eu,
+		lu, lu_orient,
+		f,
+		fu, fu_orient,
+		s,
+		nmg_measure_fu_angle(eu, xvec, yvec, zvec) * rt_radtodeg );
+}
+
 /*
  *			N M G _ P R _ F U _ A R O U N D _ E U _ V E C S
  */
@@ -1123,6 +1175,9 @@ CONST struct rt_tol	*tol;
 	CONST struct edgeuse	*eu1;
 	CONST struct loopuse	*lu;
 	CONST struct faceuse	*fu;
+	CONST struct face	*f;
+	int			lu_orient;
+	int			fu_orient;
 
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
@@ -1136,33 +1191,11 @@ CONST struct rt_tol	*tol;
 	eu1 = eu;
 	do {
 		/* First, the edgeuse mate */
-		NMG_CK_EDGEUSE(eu1);
-		lu = eu1->up.lu_p;
-		NMG_CK_LOOPUSE(lu);
-		fu = lu->up.fu_p;
-		NMG_CK_FACEUSE(fu);
-		rt_log(" %8.8x, lu=%8.8x=%s, f=%8.8x, fu=%8.8x=%s, s=%8.8x %g deg\n",
-			eu1,
-			lu, lu->orientation == OT_SAME ? "S" : "O",
-			fu->f_p,
-			fu, fu->orientation == OT_SAME ? "SAME" : "OPP.",
-			fu->s_p,
-			nmg_measure_fu_angle(eu1, xvec, yvec, zvec) * rt_radtodeg );
+		nmg_pr_one_eu_vecs( eu1, xvec, yvec, zvec, tol );
 
 		/* Second, the edgeuse itself (mate's mate) */
 		eu1 = eu1->eumate_p;
-		NMG_CK_EDGEUSE(eu1);
-		lu = eu1->up.lu_p;
-		NMG_CK_LOOPUSE(lu);
-		fu = lu->up.fu_p;
-		NMG_CK_FACEUSE(fu);
-		rt_log(" %8.8x, lu=%8.8x=%s, f=%8.8x, fu=%8.8x=%s, s=%8.8x %g deg\n",
-			eu1,
-			lu, lu->orientation == OT_SAME ? "S" : "O",
-			fu->f_p,
-			fu, fu->orientation == OT_SAME ? "SAME" : "OPP.",
-			fu->s_p,
-			nmg_measure_fu_angle(eu1, xvec, yvec, zvec) * rt_radtodeg );
+		nmg_pr_one_eu_vecs( eu1, xvec, yvec, zvec, tol );
 
 		/* Now back around to the radial edgeuse */
 		eu1 = eu1->radial_p;
