@@ -3305,7 +3305,7 @@ sedit_reject()
 
 /* Input parameter editing changes from keyboard */
 /* Format: p dx [dy dz]		*/
-void
+int
 f_param( argc, argv )
 int	argc;
 char	**argv;
@@ -3314,13 +3314,13 @@ char	**argv;
 
 	if( es_edflag <= 0 )  {
 		(void)printf("A solid editor option not selected\n");
-		return;
+		return CMD_BAD;
 	}
 	if( es_edflag == ECMD_TGC_ROT_H
 		|| es_edflag == ECMD_TGC_ROT_AB
 		|| es_edflag == ECMD_ETO_ROT_C ) {
 		(void)printf("\"p\" command not defined for this option\n");
-		return;
+		return CMD_BAD;
 	}
 
 	inpara = 0;
@@ -3334,7 +3334,7 @@ char	**argv;
 			(void)printf("ERROR: SCALE FACTOR <= 0\n");
 			inpara = 0;
 			sedraw = 0;
-			return;
+			return CMD_BAD;
 		}
 	}
 
@@ -3355,13 +3355,15 @@ char	**argv;
 			es_para[2] *= local2base;
 
 		default:
-			return;
+			return CMD_OK;
 	}
 
 	/* XXX I would prefer to see an explicit call to the guts of sedit()
 	 * XXX here, rather than littering the place with global variables
 	 * XXX for later interpretation.
 	 */
+
+	return CMD_OK;
 }
 
 /*
