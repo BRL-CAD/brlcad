@@ -405,6 +405,14 @@ char line[MAX_LINE_LEN];
 		}
 	}
 
+	/* Check if this part has any solid parts */
+	if( NMG_TBL_END( &faces ) == 0 )
+	{
+		rt_log( "\t%s has no solid parts, ignoring\n" , name );
+		nmg_km( m );
+		return;
+	}
+
 	/* fuse vertices that are within tolerance of each other */
 	rt_log( "\tFusing vertices for part\n" );
 	(void)nmg_model_vertex_fuse( m , &tol );
