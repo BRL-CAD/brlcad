@@ -23,6 +23,14 @@
 #       view commands to window events to automatically update the
 #       Dm window when the view changes.
 #
+
+#
+# Usual options.
+#
+itk::usual Display {
+    keep -rscale -sscale -type
+}
+
 class Display {
     inherit Dm View
 
@@ -91,10 +99,10 @@ class Display {
 ########################### Public/Interface Methods ###########################
 
 body Display::constructor {{type X} args} {
-    eval itk_initialize $args
     attach_view
     doBindings
     handle_configure
+    eval itk_initialize $args
 }
 
 body Display::update {obj} {
