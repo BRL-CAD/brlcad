@@ -52,14 +52,18 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 
 #define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,DBI_MAGIC,"struct db_i")
-#define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p, RTI_MAGIC, "struct rt_i")
-#define RT_CK_WDB_TCL(_p)	BU_CKMAG_TCL(interp,_p,WDB_MAGIC, "struct rt_wdb")
+#define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p,RTI_MAGIC,"struct rt_i")
+#define RT_CK_WDB_TCL(_p)	BU_CKMAG_TCL(interp,_p,WDB_MAGIC,"struct rt_wdb")
 
 #if defined(USE_PROTOTYPES)
 Tcl_CmdProc rt_db;
 #else
 int rt_db();
 #endif
+
+BU_EXTERN(void	bu_badmagic_tcl, (Tcl_Interp *interp, CONST long *ptr,
+				long magic, CONST char *str,
+				CONST char *file, int line));
 
 /*
  *			B U _ B A D M A G I C _ T C L
@@ -155,7 +159,7 @@ Usage: wdb_open widget_command file filename\n\
 
 		dbip = (struct db_i *)atoi(argv[3]);
 		/* This can still dump core if it's an unmapped address */
-		RT_CK_DBI_TCL(dbip)
+		RT_CK_DBI_TCL(dbip);
 
 		if( strcmp( argv[2], "disk" ) == 0 )  {
 			wdb = wdb_dbopen( dbip, WDB_TYPE_DB_DISK );
