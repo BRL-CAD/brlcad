@@ -42,7 +42,7 @@ void	f_edit(), f_evedit(), f_delobj();
 void	f_debug(), f_regdebug(), f_name(), f_copy(), f_instance();
 void	f_region(), f_itemair(), f_modify(), f_kill(), f_list();
 void	f_zap(), f_group(), f_param(), f_mirror(), f_extrude();
-void	f_delmem(), f_arbdef(), f_return(), f_comm(), f_quit();
+void	f_delmem(), f_arbdef(), f_comm(), f_quit();
 void	f_edcomb(), f_status(), f_vrot();
 void	f_refresh(), f_fix(), f_rt();
 void	f_make(), f_attach(), f_release();
@@ -54,62 +54,113 @@ void	f_ill(), f_knob(), f_tops(), f_summary();
 
 static struct funtab {
 	char *ft_name;
+	char *ft_parms;
+	char *ft_comment;
 	void (*ft_func)();
 	int ft_min;
 	int ft_max;
-	char *ft_messages;
 } funtab[] = {
-	{"?",f_help,0,100,"? (help message)"},
-	{"B",f_blast,2,20,"B <objects> (blast screen, edit objects)"},
-	"e",f_edit,2,20,"e <objects> (edit named objects)",
-	"E",f_evedit,2,20,"E <objects> (evaluated edit of objects)",
-	"d",f_delobj,2,20,"d <objects> (delete list of objects)",
-	"t",dir_print,1,1,"t (table of contents)",
-	"mv",f_name,3,3,"mv oldname newname (rename object)",
-	"cp",f_copy,3,3,"cp oldname newname (copy [duplicate] object)",
-	"i",f_instance,4,5,"i object combname instname [operation] (create instance)",
-	"r",f_region,4,20,"r regionname <operation solidname> (create region)",
-	"item",f_itemair,3,4,"item region item [air] (change item # or air code)",
-	"mater",f_modify,4,4,"mater region mat los (modify material or los)",
-	"kill",f_kill,2,20,"kill <objects> (delete objects from file)",
-	"l",f_list,2,2,"l object (list object attributes)",
-	"Z",f_zap,1,1,"Z (zap all objects off screen)",
-	"g",f_group,3,20,"g groupname <objects> (group objects)",
-	"p",f_param,2,4,"p dx [dy dz] (set parameters)",
-	"mirror",f_mirror,4,4,"mirror oldsolid newsolid axis",
-	"mirface",f_mirface,3,3,"mirface #### axis (mirror an ARB face)",
-	"extrude",f_extrude,3,3,"extrude #### distance (extrude dist from face)",
-	"rm",f_delmem,3,20,"rm comb <members> (remove members from comb)",
-	"arb",f_arbdef,4,4,"arb name rot fb (make arb8, rotation + fallback)",
-	"units",f_units,2,2,"units <mm|cm|m|in|ft> (change units)",
-	"title",f_title,2,20,"title newtitle (change the title)",
-	"rotobj",f_rot_obj,4,4,"rotobj xang yang zang (rotate object about x, y, z)",
-	"vrot",f_vrot,4,4,"vrot xdeg ydeg zdeg (rotate view)",
-	"translate",f_tr_obj,4,4,"translate x y z (trans object to x,y,z)",
-	"scale",f_sc_obj,2,2,"scale factor (scale object by factor)",
-	"analyze",f_analyze,1,2,"analyze [arbname] (list much info about arb)",
-	"ill",f_ill,2,2,"ill name (illuminate object)",
-	"\n",f_return,1,1,"NOP",
-	"%",f_comm,1,1,"% (escape to interactive shell)",
-	"q",f_quit,1,1,"q (quit)",
-	"center",f_center,4,4,"center x y z (debug, set view center)",
-	"press",f_press,2,20,"press button (emulate button press)",
-	"knob",f_knob,3,3,"knob id val (emulate knob twist)",
-	"size",f_view,2,2,"size size (debug, set view size)",
-	"x",f_debug,1,1,"x (debug, list drawn objects)",
-	"regdump",f_regdebug,1,1,"regdump (debug, toggle register print)",
-	"edcomb",f_edcomb,7,7,"edcomb combname flag item air mat los (edit combination record info)",
-	"status",f_status,1,1,"status (debug, get view status)",
-	"fix",f_fix,1,1,"fix (restart display processor after hardware error)",
-	"refresh",f_refresh,1,1,"refresh (debug, send new control list)",
-	"rt",f_rt,1,20,"rt [options] (do raytrace of view)",
-	"attach",f_attach,2,2,"attach <mg|vg> (attach to display processor)",
-	"release",f_release,1,1,"release (release current display processor)",
-	"ted",f_tedit,1,1,"ted (text edit a solid's parameters)",
-	"make",f_make,3,3,"make name <arb8|ellg|tor|tgc> (create a primitive)",
-	"tops",f_tops,1,1,"tops (find all top level objects)",
-	"summary",f_summary,1,2,"summary [s r g] (count/list solids/regions/groups)\n",
-	"memprint",f_memprint,1,1,"memprint (print memory maps)"
+
+"?", "", "help message",
+	f_help,0,MAXARGS,
+"e", "<objects>", "edit objects",
+	f_edit,2,MAXARGS,
+"B", "<objects>", "clear screen, edit objects",
+	f_blast,2,MAXARGS,
+"E", "<objects>", "evaluated edit of objects",
+	f_evedit,2,MAXARGS,
+"d", "<objects>", "delete list of objects",
+	f_delobj,2,MAXARGS,
+"t", "", "table of contents",
+	dir_print,1,1,
+"mv", "old new", "rename object",
+	f_name,3,3,
+"cp", "from to", "copy [duplicate] object",
+	f_copy,3,3,
+"i", "object comb inst [operation]", "create instance",
+	f_instance,4,5,
+"r", "region <operation solid>", "create region",
+	f_region,4,MAXARGS,
+"item", "region item [air]", "change item # or air code",
+	f_itemair,3,4,
+"mater", "region mat los", "modify material or los",
+	f_modify,4,4,
+"kill", "<objects>", "delete objects from file",
+	f_kill,2,MAXARGS,
+"l", "object", "list object attributes",
+	f_list,2,2,
+"Z", "", "zap all objects off screen",
+	f_zap,1,1,
+"g", "groupname <objects>", "group objects",
+	f_group,3,MAXARGS,
+"p", "dx [dy dz]", "set parameters",
+	f_param,2,4,
+"mirror", "old new axis", "Arb mirror ??",
+	f_mirror,4,4,
+"mirface", "#### axis", "mirror an ARB face",
+	f_mirface,3,3,
+"extrude", "#### distance", "extrude dist from face",
+	f_extrude,3,3,
+"rm", "comb <members>", "remove members from comb",
+	f_delmem,3,MAXARGS,
+"arb", "name rot fb", "make arb8, rotation + fallback",
+	f_arbdef,4,4,
+"units", "<mm|cm|m|in|ft>", "change units",
+	f_units,2,2,
+"title", "string", "change the title",
+	f_title,2,MAXARGS,
+"rotobj", "xdeg ydeg zdeg", "rotate object being edited",
+	f_rot_obj, 4, 4,
+"vrot", "xdeg ydeg zdeg", "rotate viewpoint",
+	f_vrot,4,4,
+"translate", "x y z", "trans object to x,y, z",
+	f_tr_obj,4,4,
+"scale", "factor", "scale object by factor",
+	f_sc_obj,2,2,
+"analyze", "[arbname]", "analyze faces of ARB",
+	f_analyze,1,2,
+"ill", "name", "illuminate object",
+	f_ill,2,2,
+"%", "", "escape to interactive shell",
+	f_comm,1,1,
+"q", "", "quit",
+	f_quit,1,1,
+"center", "x y z", "set view center",
+	f_center, 4,4,
+"press", "button_label", "emulate button press",
+	f_press,2,MAXARGS,
+"knob", "id val", "emulate knob twist",
+	f_knob,3,3,
+"size", "size", "set view size",
+	f_view, 2,2,
+"x", "", "list drawn objects",
+	f_debug, 1,1,
+"regdump", "", "toggle register print",
+	f_regdebug, 1,1,
+"edcomb", "combname flag item air mat los", "edit combination record info",
+	f_edcomb,7,7,
+"status", "", "get view status",
+	f_status, 1,1,
+"fix", "", "fix display after hardware error",
+	f_fix,1,1,
+"refresh", "", "send new control list",
+	f_refresh, 1,1,
+"rt", "[options]", "do raytrace of view",
+	f_rt,1,MAXARGS,
+"attach", "<device>", "attach to a display processor, or NU",
+	f_attach,2,2,
+"release", "", "release current display processor [attach NU]",
+	f_release,1,1,
+"ted", "", "text edit a solid's parameters",
+	f_tedit,1,1,
+"make", "name <arb8|sph|ellg|tor|tgc>", "create a primitive",
+	f_make,3,3,
+"tops", "", "find all top level objects",
+	f_tops,1,1,
+"summary", "[s r g]", "count/list solid/reg/groups\n",
+	f_summary,1,2,
+"memprint", "", "print memory maps",
+	f_memprint,1,1
 };
 #define NFUNC	( (sizeof(funtab)) / (sizeof(struct funtab)) )
 
@@ -131,8 +182,12 @@ cmdline()
 	(void)do_cmd();
 }
 
-/* Parse commandline into argument vector */
-/* Returns nonzero value if shell command */
+/*
+ *			P A R S E _ L I N E
+ *
+ * Parse commandline into argument vector
+ * Returns nonzero value if input is to be ignored
+ */
 int
 parse_line()
 {
@@ -151,18 +206,14 @@ parse_line()
 	/* Check for Control-D (EOF) */
 	if( feof( stdin ) )  {
 		/* Control-D typed, let's hit the road */
-		quit();
+		f_quit();
 		/* NOTREACHED */
 	}
 
 	cmd_args[numargs] = &line[0];
 
-	/* Handle single "newline" so that paged Table-of-Contents works */
-	if( *lp == '\n' )  {
-		numargs++;
-		cmd_args[numargs] = (char *)0;
-		return(0);
-	}
+	if( *lp == '\n' )
+		return(1);		/* NOP */
 
 	/* Handle "!" shell escape char so the shell can parse the line */
 	if( *lp == '!' )  {
@@ -182,7 +233,7 @@ parse_line()
 			if( (*lp1 != ' ') && (*lp1 != '\t') &&
 			    (*lp1 != '\n') && (*lp1 != '\0') )  {
 				if( numargs >= MAXARGS )  {
-					printf("too many arguments, excess flushed\n");
+					printf("More than %d arguments, excess flushed\n", MAXARGS);
 					cmd_args[MAXARGS] = (char *)0;
 					return(0);
 				}
@@ -208,28 +259,29 @@ do_cmd()
 {
 	extern char *cmd_args[];
 	extern int numargs;
-	register int i;
+	register struct funtab *ftp;
 
 	if( numargs == 0 )  {
 		printf("no command entered, type ? for help\n");
 		return;
 	}
 
-	for( i = 0; i < NFUNC ; i++ )  {
-		if( strcmp( funtab[i].ft_name, cmd_args[0] ) == 0 )  {
-			/* We have a match */
-			if( (funtab[i].ft_min <= numargs) &&
-			    (numargs <= funtab[i].ft_max) )  {
-				/* We have the right number of args */
-				funtab[i].ft_func(numargs);	/* finally! */
-				return;
-			}
-			printf("error in number of args\n");
-			printf("%s\n", funtab[i].ft_messages );
+	for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
+		if( strcmp( ftp->ft_name, cmd_args[0] ) != 0 )
+			continue;
+		/* We have a match */
+		if( (ftp->ft_min <= numargs) &&
+		    (numargs <= ftp->ft_max) )  {
+			/* We have the right number of args */
+			ftp->ft_func(numargs);	/* finally! */
 			return;
 		}
+		(void)printf("%s: error in number of args\n", ftp->ft_name);
+		(void)printf("%s: %s\n", ftp->ft_name, ftp->ft_parms);
+		(void)printf("\t(%s)\n", ftp->ft_comment);
+		return;
 	}
-	printf("%s: no such command, type ? for help\n", cmd_args[0] );
+	(void)printf("%s: no such command, type ? for help\n", cmd_args[0] );
 }
 
 /* Input parameter editing changes from keyboard */
@@ -283,23 +335,15 @@ f_comm()
 	int retcode;
 
 	(void)signal( SIGINT, SIG_IGN );
-	(void)signal( SIGQUIT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
-#ifdef	pdp11
-		/* The PDP-11 VG device driver nices up the process. */
-		(void)nice( 10 );
-#endif
 		(void)signal( SIGINT, SIG_DFL );
-		(void)signal( SIGQUIT, SIG_DFL );
 		(void)execl("/bin/sh","-",(char *)NULL);
 		perror("/bin/sh");
 		finish( 11 );
 	}
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;
-	(void)signal(SIGINT, quit);
-	(void)signal(SIGQUIT, sig3);
-
+	(void)signal(SIGINT, cur_sigint);
 	(void)printf("!\n");
 }
 
@@ -318,21 +362,16 @@ f_quit()
 static void
 f_help()
 {
-	int i;
+	register struct funtab *ftp;
 	
 	(void)printf("?\n");
 	(void)printf("The following commands are available:\n");
-	for( i = 0; i < NFUNC; i++ )  {
-		(void)printf("%s\n", funtab[i].ft_messages );
+	for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
+		col_item(ftp->ft_name);
+		col_item(ftp->ft_parms);
+		col_item(ftp->ft_comment);
+		col_eol();
 	}
-	(void)printf("\n");
-}
-
-/* Carriage return hook */
-static void
-f_return()
-{
-	/* presently unused */
 }
 
 /* Hook for displays with no buttons */
