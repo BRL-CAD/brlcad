@@ -334,7 +334,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #if defined(BSD) && !defined(SYSV) && BSD < 43
 #	define strrchr(a, b)		rindex(a, b)
-#	define strchr(a, b)		rindex(a, b)
+#	define strchr(a, b)		index(a, b)
 #endif
 
 
