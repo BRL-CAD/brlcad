@@ -12,6 +12,7 @@
 	bwmod bwrect bwrot bwscale bwshrink \
 	bwstat bwthresh \
 	cv dpix-pix dunncolor dunnsnap \
+	pixelswap decimate \
 	files-tape gencolor hd loop mac-pix \
 	op-bw orle-pix \
 	pix-alias pix-bw pix-bw3 pix-orle \
@@ -307,5 +308,11 @@ pl-X10:	pl-X10.o
 
 pl-starbase:	pl-starbase.o
 	CC LDFLAGS -o pl-starbase pl-starbase.o LIBES
+
+pixelswap : pixelswap.o
+	CC LDFLAGS -o pixelswap pixelswap.o
+
+decimate : decimate.o
+	CC LDFLAGS -o decimate decimate.o
 
 #include "../Cakefile.rules"
