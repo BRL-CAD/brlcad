@@ -23,7 +23,7 @@
 			solids_on_ray history \
 			TCP_FILES attach dm-plot dm-ps doevent muves \
 			MGED_OBJS vdraw fbserv rect grid axes qray \
-			color_scheme vparse share bodyio
+			color_scheme vparse share bodyio update
 
 /*#define USING_NEW_SO*/
 #include "../Cakefile.defs"
