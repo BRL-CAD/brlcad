@@ -146,8 +146,8 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_ell_prep,	rt_ell_shot,	rt_ell_print,	rt_ell_norm,
 		rt_ell_uv,	rt_ell_curve,	rt_ell_class,	rt_ell_free,
 		rt_ell_plot,	rt_ell_vshot,	rt_ell_tess,
-		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
-		rt_nul_describe,
+		rt_ell_import,	rt_ell_export,	rt_ell_ifree,
+		rt_ell_describe,
 
 	"ID_ARB8",	0,
 		rt_arb_prep,	rt_arb_shot,	rt_arb_print,	rt_arb_norm,
