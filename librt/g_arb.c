@@ -348,10 +348,10 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-arb_shot( stp, rp, res )
+arb_shot( stp, rp, ap )
 struct soltab *stp;
 register struct xray *rp;
-struct resource *res;
+struct application	*ap;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
@@ -404,7 +404,7 @@ struct resource *res;
 	{
 		register struct seg *segp;
 
-		GET_SEG( segp, res );
+		GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = in;
 		segp->seg_in.hit_private = (char *)iplane;

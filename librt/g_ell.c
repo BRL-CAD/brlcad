@@ -290,10 +290,10 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-ell_shot( stp, rp, res )
+ell_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
-struct resource		*res;
+struct application	*ap;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -317,7 +317,7 @@ struct resource		*res;
 		return(SEG_NULL);		/* No hit */
 	root = sqrt(root);
 
-	GET_SEG(segp, res);
+	GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
 		/* k1 is entry, k2 is exit */

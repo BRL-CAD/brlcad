@@ -296,10 +296,10 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-ars_shot( stp, rp, res )
+ars_shot( stp, rp, ap )
 struct soltab *stp;
 register struct xray *rp;
-struct resource *res;
+struct application	*ap;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -406,7 +406,7 @@ struct resource *res;
 		while( nhits > 0 )  {
 			register struct seg *newseg;
 
-			GET_SEG(newseg, res);
+			GET_SEG(newseg, ap->a_resource);
 			newseg->seg_next = segp;
 			segp = newseg;
 			segp->seg_stp = stp;

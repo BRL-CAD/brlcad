@@ -336,10 +336,10 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-tor_shot( stp, rp, res )
+tor_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
-struct resource		*res;
+struct application	*ap;
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
@@ -452,7 +452,7 @@ struct resource		*res;
 		return(SEG_NULL);		/* No hit out front. */
 
 	/* k[1] is entry point, and k[0] is farthest exit point */
-	GET_SEG(segp, res);
+	GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k[1]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[0]*tor->tor_r1;
@@ -468,7 +468,7 @@ struct resource		*res;
 	{
 		register struct seg *seg2p;		/* XXX */
 		/* Attach last hit (above) to segment chain */
-		GET_SEG(seg2p, res);
+		GET_SEG(seg2p, ap->a_resource);
 		seg2p->seg_next = segp;
 		segp = seg2p;
 	}

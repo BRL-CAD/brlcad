@@ -197,10 +197,10 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-hlf_shot( stp, rp, res )
+hlf_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
-struct resource		*res;
+struct application	*ap;
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -233,7 +233,7 @@ struct resource		*res;
 	{
 		register struct seg *segp;
 
-		GET_SEG( segp, res );
+		GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = in;
 		segp->seg_out.hit_dist = out;

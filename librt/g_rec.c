@@ -359,10 +359,10 @@ static char rec_compute[4];
  *  	segp	HIT
  */
 struct seg *
-rec_shot( stp, rp, res )
+rec_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
-struct resource		*res;
+struct application	*ap;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -453,7 +453,7 @@ check_plates:
 		/* entry is [0], exit is [1] */
 		register struct seg *segp;
 
-		GET_SEG(segp, res);
+		GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 		segp->seg_in = hits[0];		/* struct copy */
 		segp->seg_out = hits[1];	/* struct copy */
@@ -462,7 +462,7 @@ check_plates:
 		/* entry is [1], exit is [0] */
 		register struct seg *segp;
 
-		GET_SEG(segp, res);
+		GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 		segp->seg_in = hits[1];		/* struct copy */
 		segp->seg_out = hits[0];	/* struct copy */
