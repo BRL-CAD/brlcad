@@ -93,8 +93,13 @@ struct mater_info	*materp;
 		rt_log("rt_do_anim(x%x) ", anp);
 	switch( anp->an_type )  {
 	case AN_MATRIX:
-		if( rt_g.debug&DEBUG_ANIM )
+		if( rt_g.debug&DEBUG_ANIM )  {
 			rt_log("matrix, op=%d\n", anp->an_u.anu_m.anm_op);
+#if 0
+			mat_print("on original arc", arc);
+			mat_print("on original stack", stack);
+#endif
+		}
 		switch( anp->an_u.anu_m.anm_op )  {
 		case ANM_RSTACK:
 			mat_copy( stack, anp->an_u.anu_m.anm_mat );
@@ -119,6 +124,12 @@ struct mater_info	*materp;
 		default:
 			return(-1);		/* BAD */
 		}
+#if 0
+		if( rt_g.debug&DEBUG_ANIM )  {
+			mat_print("arc result", arc);
+			mat_print("stack result", stack);
+		}
+#endif
 		break;
 	case AN_PROPERTY:
 		if( rt_g.debug&DEBUG_ANIM )
