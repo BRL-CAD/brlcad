@@ -1916,8 +1916,8 @@ RT_EXTERN(void			nmg_mv_vu_between_shells, (struct shell *dest,
 
 /* From nmg_info.c */
 RT_EXTERN(struct model		*nmg_find_model, (CONST long *magic_p) );
-RT_EXTERN(struct edgeuse	*nmg_findeu, (struct vertex *v1, struct vertex *v2,
-				struct shell *s, struct edgeuse *eup,
+RT_EXTERN(struct edgeuse	*nmg_findeu, (CONST struct vertex *v1, CONST struct vertex *v2,
+				CONST struct shell *s, CONST struct edgeuse *eup,
 				int dangling_only) );
 RT_EXTERN(struct vertexuse	*nmg_find_v_in_face, (CONST struct vertex *,
 				CONST struct faceuse *) );
