@@ -1177,7 +1177,6 @@ bu_log("mallocing curr_float_frame\n");
 			     fp >= curr_float_frame; fp--
 			) {
 				fp->ff_frame = -1;
-fp->ff_color[0] = fp->ff_color[1] = 50; fp->ff_color[2] = 0;	/* orange -- sanity */
 			}
 		}
 
