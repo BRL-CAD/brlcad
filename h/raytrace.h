@@ -1145,6 +1145,7 @@ struct rt_i {
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ & MODIFY */
 	int		useair;		/* "air" regions are used */
 	int		rti_nlights;	/* number of light sources */
+	char		*rti_region_fix_file; /* rt_regionfix() file or NULL */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
 	vect_t		mdl_max;	/* max corner of model bounding RPP */
