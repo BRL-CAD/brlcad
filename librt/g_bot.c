@@ -202,6 +202,8 @@ CONST struct bn_tol	*tol;
 	 */
 	VMOVE( trip->tri_N, trip->tri_wn );
 	VUNITIZE( trip->tri_N );
+	if( bot->bot_mode == RT_BOT_CW )
+		VREVERSE( trip->tri_N, trip->tri_N )
 
 	/* Add this face onto the linked list for this solid */
 	trip->tri_forw = bot->bot_facelist;
@@ -230,7 +232,7 @@ register CONST struct soltab *stp;
  *	Notes for rt_bot_norm():
  *		hit_private contains pointer to the tri_specific structure
  *		hit_vpriv[X] contains dot product of ray direction and unit normal from tri_specific
- *		hit_vpriv[Y] contains the BOT solid mode
+ *		hit_vpriv[Y] contains the BOT solid orientation
  *		hit_vpriv[Z] contains the +1 if the hit is a entrance, or -1 for an exit
  *  
  *  Returns -
@@ -299,7 +301,7 @@ struct seg		*seghead;
 		hp->hit_dist = k;
 		hp->hit_private = (genptr_t)trip;
 		hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
-		hp->hit_vpriv[Y] = bot->bot_mode;
+		hp->hit_vpriv[Y] = bot->bot_orientation;
 		hp->hit_surfno = trip->tri_surfno;
 		if( ++nhits >= MAXHITS )  {
 			bu_log("rt_bot_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
@@ -356,6 +358,7 @@ struct seg		*seghead;
 				segp->seg_out.hit_surfno = surfno;
 				segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
 				segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
+				segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
 				segp->seg_out.hit_vpriv[Z] = -1; /* a clue for rt_bot_norm that this is an exit */
 				segp->seg_out.hit_private = segp->seg_in.hit_private;
 
@@ -369,7 +372,8 @@ struct seg		*seghead;
 
 				/* set in hit */
 				segp->seg_in.hit_surfno = surfno;
-				segp->seg_out.hit_vpriv[X] = hits[i].hit_vpriv[X]; /* ray dir dot normal */
+				segp->seg_in.hit_vpriv[X] = hits[i].hit_vpriv[X]; /* ray dir dot normal */
+				segp->seg_in.hit_vpriv[Y] = bot->bot_orientation;
 				segp->seg_in.hit_vpriv[Z] = 1;
 				segp->seg_in.hit_private = hits[i].hit_private;
 				segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5 );
@@ -378,6 +382,7 @@ struct seg		*seghead;
 				segp->seg_out.hit_surfno = surfno;
 				segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
 				segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
+				segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
 				segp->seg_out.hit_vpriv[Z] = -1;
 				segp->seg_out.hit_private = hits[i].hit_private;
 
@@ -399,12 +404,10 @@ struct seg		*seghead;
 
 			/* set in hit */
 			segp->seg_in = hits[i];
-			segp->seg_in.hit_vpriv[Y] = bot->bot_mode;
 			segp->seg_in.hit_vpriv[Z] = 1;
 
 			/* set out hit */
 			segp->seg_out = hits[i];
-			segp->seg_out.hit_vpriv[Y] = bot->bot_mode;
 			segp->seg_out.hit_vpriv[Z] = -1;
 			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		}
@@ -425,12 +428,10 @@ struct seg		*seghead;
 
 				/* set in hit */
 				segp->seg_in = hits[0];
-				segp->seg_in.hit_vpriv[Y] = bot->bot_mode;
 				segp->seg_in.hit_vpriv[Z] = 1;
 
 				/* set out hit */
 				segp->seg_out = hits[0];
-				segp->seg_out.hit_vpriv[Y] = bot->bot_mode;
 				segp->seg_out.hit_vpriv[Z] = -1;
 
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
@@ -451,12 +452,10 @@ struct seg		*seghead;
 
 				/* set in hit */
 				segp->seg_in = hits[i];
-				segp->seg_in.hit_vpriv[Y] = bot->bot_mode;
 				segp->seg_in.hit_vpriv[Z] = 1;
 
 				/* set out hit */
 				segp->seg_out = hits[i+1];
-				segp->seg_out.hit_vpriv[Y] = bot->bot_mode;
 				segp->seg_out.hit_vpriv[Z] = -1;
 
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
@@ -592,10 +591,8 @@ struct seg		*seghead;
 				RT_GET_SEG(segp, ap->a_resource);
 				segp->seg_stp = stp;
 				segp->seg_in = hits[i];		/* struct copy */
-				segp->seg_in.hit_vpriv[Y] = bot->bot_mode;
 				segp->seg_in.hit_vpriv[Z] = 1;
 				segp->seg_out = hits[i+1];	/* struct copy */
-				segp->seg_out.hit_vpriv[Y] = bot->bot_mode;
 				segp->seg_out.hit_vpriv[Z] = -1;
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
@@ -638,20 +635,25 @@ register struct xray	*rp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
-	if( hitp->hit_vpriv[Z] < 0 ) /* this is an out hit */
+	if( hitp->hit_vpriv[Y] == RT_BOT_UNORIENTED )
 	{
-		if( dn < 0.0 )
-			VREVERSE( hitp->hit_normal, trip->tri_N )
+		if( hitp->hit_vpriv[Z] < 0 ) /* this is an out hit */
+		{
+			if( dn < 0.0 )
+				VREVERSE( hitp->hit_normal, trip->tri_N )
+			else
+				VMOVE( hitp->hit_normal, trip->tri_N )
+		}
 		else
-			VMOVE( hitp->hit_normal, trip->tri_N )
+		{
+			if( dn > 0.0 )
+				VREVERSE( hitp->hit_normal, trip->tri_N )
+			else
+				VMOVE( hitp->hit_normal, trip->tri_N )
+		}
 	}
 	else
-	{
-		if( dn > 0.0 )
-			VREVERSE( hitp->hit_normal, trip->tri_N )
-		else
-			VMOVE( hitp->hit_normal, trip->tri_N )
-	}
+		VMOVE( hitp->hit_normal, trip->tri_N )
 }
 
 /*
