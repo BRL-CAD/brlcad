@@ -702,8 +702,9 @@ combdump()	/* Print out Combination record information */
 	case DBV4_REGION:
 		(void)fprintf(ofp, "Y ");			/* Y if `R' */
 		break;
+	case DBV4_NON_REGION_NULL:
 	case DBV4_NON_REGION:
-		(void)fprintf(ofp, "N ");			/* N if ` ' */
+		(void)fprintf(ofp, "N ");			/* N if ` ' or '\0' */
 		break;
 	case DBV4_REGION_FASTGEN_PLATE:
 		(void)fprintf(ofp, "P ");
