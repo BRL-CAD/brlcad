@@ -4,14 +4,6 @@
 #include "dm_color.h"
 #define CMAP_BASE 40
 
-/*
- * Display coordinate conversion:
- *  GED is using -2048..+2048,
- *  X is 0..width,0..height
- */
-#define	GED_TO_Xx(x)	(((x)/4096.0+0.5)*((struct ogl_vars *)dm_vars)->width)
-#define	GED_TO_Xy(x)	((0.5-(x)/4096.0)*((struct ogl_vars *)dm_vars)->height)
-
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
@@ -38,9 +30,8 @@ struct ogl_vars {
   struct bu_list l;
   Display *dpy;
   Window win;
+  Tk_Window top;
   Tk_Window xtkwin;
-  int width;
-  int height;
   int omx, omy;
   unsigned int mb_mask;
   int perspective_angle;
@@ -53,7 +44,6 @@ struct ogl_vars {
   int devbuttonrelease;
   int knobs[8];
   int stereo_is_on;
-  fastf_t aspect;
   GLXContext glxc;
   int fontOffset;
   int ovec;		/* Old color map entry number */
@@ -61,6 +51,7 @@ struct ogl_vars {
   struct modifiable_ogl_vars mvars;
 };
 
+extern struct dm *Ogl_open();
 extern void Ogl_configure_window_shape();
 extern void Ogl_establish_zbuffer();
 extern void Ogl_establish_lighting();
