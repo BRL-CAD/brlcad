@@ -772,6 +772,60 @@ int pos;
 }
 
 /*
+ *			R T _ P L O O K U P
+ * 
+ *  Look up a path where the elements are separates by slashes,
+ *  filling in the path[] array along the way.  Leading slashes
+ *  have no significance.  If the whole path is valid, malloc space
+ *  and duplicate the used portion of the path[] array, and set the
+ *  callers pointer to point there.  The return is the number of
+ *  elements in the path, or 0 or -1 on error.
+ */
+int
+rt_plookup( rtip, dirp, cp, noisy )
+struct rt_i	*rtip;
+struct directory ***dirp;
+register char	*cp;
+int		noisy;
+{
+	int	depth;
+	char	oldc;
+	register char *ep;
+	struct directory *dp;
+	struct directory **newpath;
+
+	depth = 0;
+	if( *cp == '\0' )  return(-1);
+
+	/* First, look up the names of the individual path elements */
+	do {
+		while( *cp && *cp == '/' )
+			cp++;		/* skip leading slashes */
+		ep = cp;
+		while( *ep != '\0' && *ep != '/' )
+			ep++;		/* walk over element name */
+		oldc = *ep;
+		*ep = '\0';
+		if( (dp = rt_dir_lookup( cp, noisy )) == DIR_NULL )
+			return(-1);
+		path[depth++] = dp;
+		cp = ep+1;
+	} while( oldc != '\0' );
+
+	/* Here, it might make sense to see if path[n+1] is
+	 * actually mentioned in path[n], but save that for later...
+	 */
+
+	/* Successful conversion of path, duplicate and return */
+	newpath = (struct directory **) rt_malloc(
+		 depth*sizeof(struct directory *), "rt_plookup newpath");
+	bcopy( (char *)path, (char *)newpath,
+		depth*sizeof(struct directory *) );
+	*dirp = newpath;
+	return( depth );
+}
+
+/*
  *			R T _ P R _ R E G I O N
  */
 void
