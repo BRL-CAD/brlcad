@@ -21,7 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./lgt.h"
 #include "./screen.h"
 #include "./extern.h"
-#if 0
+#if defined( CRAY )
 #include <sys/category.h>
 #include <sys/resource.h>
 #include <sys/types.h>
@@ -29,8 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #undef MAXINT
 #include <sys/param.h>
 #endif
-#define MAX_CPU_TICKS	(100000*HZ) /* Max ticks = seconds * ticks/sec.	*/
-#define NICENESS	12
+#define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
+#define NICENESS	10
 #endif
 int	ready_Output_Device();
 void	close_Output_Device();
@@ -75,7 +75,7 @@ char	*argv[];
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
 
-#if 0
+#if defined( CRAY )
 	nicem( C_PROC, 0, NICENESS );
 	rt_log( "Program niced to %d.\n", NICENESS );
 	limit( C_PROC, 0, L_CPU, MAX_CPU_TICKS );
