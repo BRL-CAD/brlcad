@@ -1,27 +1,31 @@
 /*
-	SCCS id:	@(#) fbgrid.c	1.7
-	Last edit: 	4/3/85 at 09:24:36	G S M
-	Retrieved: 	8/13/86 at 03:14:22
-	SCCS archive:	/m/cad/fb_utils/RCS/s.fbgrid.c
-
-*/
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) fbgrid.c	1.7	last edit 4/3/85 at 09:24:36";
-#endif
-/*
-			F B G R I D
-
-	This program computes an image for the frame buffer.
-	Mike Muuss, 7/19/82
-
-	Conversion to generic frame buffer utility using libfb(3).
-	In the process, the name has been changed to fbgrid from ikgrid.
-	Gary S. Moss, BRL. 03/12/85
+ *			F B G R I D
+ *
+ *  This program displays a grid pattern on a framebuffer.
+ *  Useful for convergance alignment, etc.
+ *
+ *  Authors -
+ *	Michael John Muuss
+ *	Gary S. Moss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include "fb.h"
+
+FBIO	*fbp;
+int	fbsize = 512;
 
 main( argc, argv )
 int	argc;
@@ -38,31 +42,31 @@ char	**argv;
 		(void) fprintf( stderr, "Usage : fbgrid	[-h]\n" );
 		return	1;
 		}
-	if( fbopen( NULL, APPEND ) == -1 )
+	if( (fbp = fb_open( NULL, fbsize, fbsize )) == NULL )
 		{
 		return	1;
 		}
-	fb_sz = fbgetsize();
+	fb_sz = fb_getwidth(fbp);
 	white.red = white.green = white.blue = 255;
 	black.red = black.green = black.blue = 0;
 	red.red = 255;
 	middle = fb_sz/2;
-	fbioinit();
+	fb_ioinit();
 	if( fb_sz == 512 )
 	for( y = 0; y < fb_sz; y++ )
 		{
 		for( x = 0; x < fb_sz; x++ )
 			{
 			if( x == y || x == fb_sz - y )
-				(void) fbwpixel( &white );
+				(void) fb_wpixel( fbp, &white );
 			else
 			if( x == middle || y == middle )
-				(void) fbwpixel( &red );
+				(void) fb_wpixel( fbp, &red );
 			else
 			if( (x & 0x7) && (y & 0x7) )
-				(void) fbwpixel( &black );
+				(void) fb_wpixel( fbp, &black );
 			else
-				(void) fbwpixel( &white );
+				(void) fb_wpixel( fbp, &white );
 			}
 		}
 	else
@@ -71,17 +75,18 @@ char	**argv;
 		for( x = 0; x < fb_sz; x++ )
 			{
 			if( x == y || x == fb_sz - y )
-				(void) fbwpixel( &white );
+				(void) fb_wpixel( fbp, &white );
 			else
 			if( x == middle || y == middle )
-				(void) fbwpixel( &red );
+				(void) fb_wpixel( fbp, &red );
 			else
 			if( (x & 0xf) && (y & 0xf) )
-				(void) fbwpixel( &black );
+				(void) fb_wpixel( fbp, &black );
 			else
-				(void) fbwpixel( &white );
+				(void) fb_wpixel( fbp, &white );
 			}
 		}
+	fb_close( fbp );
 	return	0;
 	}
 
@@ -99,7 +104,7 @@ register char	**argv;
 		switch( c )
 			{
 			case 'h' : /* High resolution frame buffer.	*/
-				fbsetsize( 1024 );
+				fbsize = 1024;
 				break;
 			case '?' :
 				return	0;

@@ -107,12 +107,12 @@ int argc; char **argv;
 	}
 
 	/* Open Display Device */
-	if ((fbp = fbopen( 0, default_size, default_size )) == NULL ) {
-		perror (framebuffer == NULL ? "$FB_FILE" : framebuffer);
+	if ((fbp = fb_open( NULL, default_size, default_size )) == NULL ) {
+		fprintf( stderr, "fb_open failed\n");
 		exit( 3 );
 	}
 
-	if( clear ) fbclear();
+	if( clear ) fb_clear(fbp, PIXEL_NULL);
 
 	if( offy != 0 ) fseek( stdin, offy*size, 1 );
 	for( y = inity; y > (inity-outsize); y-- ) {
