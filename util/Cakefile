@@ -3,7 +3,7 @@
  */
 
 #define SRCDIR	util
-#define PRODUCTS	fbanim loop pix-fb fb-pix \
+#define PRODUCTS	fbanim loop pix-fb fb-pix fb-fb \
 		pixbustup pixdiff pixinterp2x pixtile pixuntile \
 		pixflip-fb pixfade pixfields \
 		pp-fb fbclear fbgrid \
@@ -25,7 +25,9 @@
 		spm-fb pix-spm \
 		fbfree fbhelp gif2fb pix3filter \
 		fbfade fbstretch gif-fb \
-		pix-sun pix-alias alias-pix pixcolors hd sgi-pix
+		pix-sun pix-alias alias-pix pixcolors hd sgi-pix \
+		pixsaturate query pixshrink bwshrink pixhalve \
+		pix-ps plstat pl-asc xyz-pl
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -70,6 +72,9 @@ pix-fb:		pix-fb.o LIBFB
 
 fb-pix:		fb-pix.o linear-cmap.o cmap-crunch.o LIBFB
 	CC LDFLAGS -o fb-pix fb-pix.o linear-cmap.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
+
+fb-fb:		fb-fb.o LIBFB
+	CC LDFLAGS -o fb-fb fb-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pixbustup:	pixbustup.o
 	CC LDFLAGS -o pixbustup pixbustup.o LIBES
@@ -340,5 +345,32 @@ hd:	hd.o
 
 sgi-pix:	sgi-pix.o
 	CC LDFLAGS -o sgi-pix sgi-pix.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
+
+pixsaturate:	pixsaturate.o
+	CC LDFLAGS -o pixsaturate pixsaturate.o LIBES
+
+query:	query.o
+	CC LDFLAGS -o query query.o LIBES
+
+pixshrink: pixshrink.o
+	CC LDFLAGS -o pixshrink pixshrink.o LIBES
+
+bwshrink: bwshrink.o
+	CC LDFLAGS -o bwshrink bwshrink.o LIBES
+
+pixhalve: pixhalve.o
+	CC LDFLAGS -o pixhalve pixhalve.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
+
+pix-ps: pix-ps.o
+	CC LDFLAGS -o pix-ps pix-ps.o LIBES
+
+plstat: plstat.o
+	CC LDFLAGS -o plstat plstat.o LIB_PRE''LIBPLOT LIBES
+
+pl-asc: pl-asc.o
+	CC LDFLAGS -o pl-asc pl-asc.o LIB_PRE''LIBPLOT LIBES
+
+xyz-pl: xyz-pl.o
+	CC LDFLAGS -o xyz-pl xyz-pl.o LIB_PRE''LIBPLOT LIBES
 
 #include "../Cakefile.rules"
