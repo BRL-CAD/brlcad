@@ -1626,6 +1626,13 @@ struct bu_vls *vls;
 			next = iptr;
 			continue;
 		}
+		else if( !strncmp( shader, "envmap", 6 ) )
+		{
+			bu_vls_strcpy( vls, "envmap {" );
+			is_stack = 1;
+			next = iptr;
+			continue;
+		}
 
 		if( is_stack )
 			bu_vls_strcat( vls, " {" );
@@ -1889,14 +1896,14 @@ struct bu_vls *vls;
 
 	if( len != 2 )
 	{
-		bu_log( "bu_shader_to_key_eq: Error: shader must have two elements!!\n\t%s\n", in );
+		bu_log( "bu_shader_to_key_eq: Error: shader must have two elements (not %d)!!\n\t%s\n", len, in );
 		return 1;
 	}
 
 	shader = bu_list_elem( in, 0 );
 	params = bu_list_elem( in, 1 );
 
-	if( strcmp( shader, "stack" ) )
+	if( strcmp( shader, "stack" ) && strcmp( shader, "envmap" ) )
 	{
 		bu_vls_strcpy( vls, shader );
 		if( bu_key_val_to_vls( vls, params ) )
@@ -1908,7 +1915,8 @@ struct bu_vls *vls;
 
 		int i,j;
 
-		bu_vls_strcpy( vls, "stack " );
+		bu_vls_strcpy( vls, shader );
+		bu_vls_putc( vls, ' ' );
 
 		bu_free( shader, "bu_shader_to_key_eq:shader" );
 
@@ -1941,7 +1949,7 @@ struct bu_vls *vls;
 			}
 			else if( len1 != 2 )
 			{
-				bu_log( "bu_shader_to_key_eq: Error: shader must have two elements!!\n\t%s\n", in );
+				bu_log( "bu_shader_to_key_eq: Error: shader must have two elements!! (not %d)\n\t%s\n", len1, in );
 				return 1;
 			}
 
