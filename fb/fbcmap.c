@@ -32,6 +32,7 @@ char	sccsTag[] = "@(#) fbcmap.c	1.9	last edit 7/26/86 at 21:33:10";
 #include "fb.h"
 
 typedef unsigned char	u_char;
+int hires = 0;
 static ColorMap cmap;
 static int	flavor = 0;
 static u_char	utah_cmap[256] =
@@ -60,13 +61,14 @@ char *argv[];
 	register int		i;
 	register int		fudge;
 	register ColorMap	*cp = &cmap;
+	FBIO *fbp;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
 		usage();
 		return	1;
 		}
-	if( fbopen( NULL, APPEND ) == -1 )
+	if( (fbp = fb_open( 0, 512, 512 )) == NULL )
 		return	1;
 
 	switch( flavor )  {
@@ -86,7 +88,7 @@ char *argv[];
 			{
 			cp->cm_red[255-i] =
 			cp->cm_green[255-i] =
-			cp->cm_blue[255-i] = i;
+			cp->cm_blue[255-i] = i << 8;
 			}
 		break;
 
@@ -100,15 +102,15 @@ char *argv[];
 	((int)((bias)+((float)(point)/256.*(255-(bias)))))
 		for( i = 1; i < 256; i++ )  {
 			fudge = BOOST(i, 70);
-			cp->cm_red[i] = fudge;		/* B */
+			cp->cm_red[i] = fudge << 8;		/* B */
 		}
 		for( i = 1; i < 256; i++ )  {
 			fudge = i;
-			cp->cm_green[i] = fudge;	/* G */
+			cp->cm_green[i] = fudge << 8;	/* G */
 		}
 		for( i = 1; i < 256; i++ )  {
 			fudge = BOOST( i, 30 );
-			cp->cm_blue[i] = fudge;	/* R */
+			cp->cm_blue[i] = fudge << 8;	/* R */
 		}
 		break;
 
@@ -119,7 +121,7 @@ char *argv[];
 		for( i = 100; i < 256; i++ )  {
 			cp->cm_red[i] =
 			cp->cm_green[i] =
-			cp->cm_blue[i] = i;
+			cp->cm_blue[i] = i << 8;
 		}
 		break;
 
@@ -133,12 +135,12 @@ char *argv[];
 			register int j = i + UPSHIFT;
 			cp->cm_red[i] =
 			cp->cm_green[i] =
-			cp->cm_blue[i] = j;
+			cp->cm_blue[i] = j << 8;
 		}
 		for( i = 256-UPSHIFT; i < 256; i++ )  {
 			cp->cm_red[i] =
 			cp->cm_green[i] =
-			cp->cm_blue[i] = 255;	/* Full Scale */
+			cp->cm_blue[i] = 255 << 8;	/* Full Scale */
 		}
 		break;
 
@@ -149,7 +151,7 @@ char *argv[];
 		for( i = 0; i < 256; i++ )
 			cp->cm_red[i] =
 			cp->cm_green[i] =
-			cp->cm_blue[i] = utah_cmap[i];
+			cp->cm_blue[i] = utah_cmap[i] << 8;
 		break;
 
 	case 10:	/* Black */
@@ -166,7 +168,7 @@ char *argv[];
 		for( i = 0; i < 256; i++ )  {
 			cp->cm_red[i] =
 			cp->cm_green[i] =
-			cp->cm_blue[i] = 255;
+			cp->cm_blue[i] = 255 << 8;
 		}
 		break;
 
@@ -175,7 +177,7 @@ char *argv[];
 		for( i = 0; i < 256; i++ )  {
 			cp->cm_red[i] =
 			cp->cm_green[i] =
-			cp->cm_blue[i] = 46;
+			cp->cm_blue[i] = 46 << 8;
 		}
 		break;
 
@@ -187,7 +189,8 @@ char *argv[];
 		usage();
 		return	1;
 	}
-	return fb_wmap( cp ) == -1;
+	fb_wmap( fbp, cp );
+	return fb_close( fbp );
 }
 
 /*	p a r s _ A r g v ( )
@@ -204,7 +207,7 @@ register char	**argv;
 		switch( c )
 			{
 			case 'h' : /* High resolution frame buffer.	*/
-				fbsetsize( 1024 );
+				hires++;
 				break;
 			case '?' :
 				return	0;
