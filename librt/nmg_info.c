@@ -382,14 +382,14 @@ CONST struct rt_tol	*tol;
  */
 struct edgeuse *
 nmg_findeu(v1, v2, s, eup, dangling_only)
-struct vertex	*v1, *v2;
-struct shell	*s;
-struct edgeuse	*eup;
+CONST struct vertex	*v1, *v2;
+CONST struct shell	*s;
+CONST struct edgeuse	*eup;
 int		dangling_only;
 {
-	register struct vertexuse	*vu;
-	register struct edgeuse		*eu;
-	struct edgeuse			*eup_mate;
+	register CONST struct vertexuse	*vu;
+	register CONST struct edgeuse	*eu;
+	CONST struct edgeuse		*eup_mate;
 	int				eup_orientation;
 
 	NMG_CK_VERTEX(v1);

@@ -275,7 +275,7 @@ long	*up_magic_p;
 					break;
 		}
 
-		nmg_vvu(eu->vu_p, eu);
+		nmg_vvu(eu->vu_p, &eu->l.magic);
 	}
 }
 
@@ -392,9 +392,9 @@ long		*up;
 		if (lu->lua_p) nmg_vlua(lu->lua_p);
 
 		if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
-			nmg_veu( &lu->down_hd, lu);
+			nmg_veu( &lu->down_hd, &lu->l.magic);
 		else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC)
-			nmg_vvu(RT_LIST_FIRST(vertexuse,&lu->down_hd), lu);
+			nmg_vvu(RT_LIST_FIRST(vertexuse,&lu->down_hd), &lu->l.magic);
 		else
 			rt_bomb("nmg_vlu() bad down_hd magic\n");
 	}
@@ -581,8 +581,8 @@ struct nmgregion *r;
 		}
 
 		nmg_vfu( &s->fu_hd, s);
-		nmg_vlu( &s->lu_hd, s);
-		nmg_veu( &s->eu_hd, s);
+		nmg_vlu( &s->lu_hd, &s->l.magic);
+		nmg_veu( &s->eu_hd, &s->l.magic);
 	}
 }
 
@@ -1109,11 +1109,13 @@ CONST struct edgeuse *eu;
  */
 int
 nmg_check_radial(eu)
-struct edgeuse *eu;
+CONST struct edgeuse *eu;
 {
 	char curr_orient;
-	struct edgeuse *eur, *eu1, *eurstart;
-	struct shell *s;
+	CONST struct edgeuse	*eur;
+	CONST struct edgeuse	*eu1;
+	CONST struct edgeuse	*eurstart;
+	CONST struct shell	*s;
 	pointp_t p, q;
 
 	NMG_CK_EDGEUSE(eu);
@@ -1221,7 +1223,7 @@ struct edgeuse *eu;
  */
 int
 nmg_ck_closed_surf(s)
-struct shell *s;
+CONST struct shell *s;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -1267,9 +1269,9 @@ struct shell *s;
  */
 int
 nmg_ck_closed_region(r)
-struct nmgregion	*r;
+CONST struct nmgregion	*r;
 {
-	struct shell	*s;
+	CONST struct shell	*s;
 	int		ret;
 
 	NMG_CK_REGION(r);
