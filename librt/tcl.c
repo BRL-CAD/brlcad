@@ -50,17 +50,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 
 #define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,DBI_MAGIC,"struct db_i")
-
-
-/*
- *  Macros to check and validate a structure pointer, given that
- *  the first entry in the structure is a magic number.
- */
-#define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
-	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
-		bu_badmagic_tcl( (_interp), (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
-		return TCL_ERROR; \
-	}
+#define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p, RTI_MAGIC, "struct rt_i")
 
 /*
  *			B U _ B A D M A G I C _ T C L
@@ -113,7 +103,7 @@ CONST char		*name;
 	struct db_i		*dbip;
 	struct rt_comb_internal	*comb;
 
-	sscanf( dbi_str, "%d", &dbip );
+	dbip = (struct db_i *)atoi(dbi_str);
 	/* This can still dump core if it's an unmapped address */
 	/* RT_CK_DBI_TCL(dbip) */
 	if( !dbip || *((long *)dbip) != DBI_MAGIC )  {
@@ -146,38 +136,6 @@ CONST char		*name;
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
 	RT_CK_COMB(comb);
 	return comb;
-}
-
-/*
- *			R T _ D I R E C T C H A N G E _ R G B
- *
- *  Go poke the rgb values of a region, on the fly.
- *  This does not update the inmemory database, and will vanish on next re-prep.
- */
-rt_directchange_rgb( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	if( argc != 6 )  {
-		Tcl_AppendResult(interp, "Usage: rt_directchange_rgb $rtip comb r g b\n", NULL);
-		return TCL_ERROR;
-	}
-
-	/* Validate rtip */
-	/* Ensure rti has been prepped */
-	/* Find all region names which match /comb/ pattern */
-	/* Modify their color */
-
-#if 0
-	/* Make mods to comb here */
-	comb->rgb[0] = atoi(argv[3+0]);
-	comb->rgb[1] = atoi(argv[3+1]);
-	comb->rgb[2] = atoi(argv[3+2]);
-#endif
-
-	return TCL_OK;
 }
 
 /*
@@ -260,8 +218,6 @@ void
 rt_tcl_setup(interp)
 Tcl_Interp *interp;
 {
-	(void)Tcl_CreateCommand(interp, "rt_directchange_rgb", rt_directchange_rgb,
-		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "rt_wdb_inmem_rgb", rt_wdb_inmem_rgb,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "rt_wdb_inmem_shader", rt_wdb_inmem_shader,
