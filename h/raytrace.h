@@ -921,6 +921,9 @@ struct animate {
  *  structures (which are variable length) will require there to be
  *  ncpus * nmodels resource structures, the selection of which will
  *  be the responsibility of the application.
+ *
+ *  Per-processor statistics are initially collected in here,
+ *  and then posted to rt_i by rt_add_res_stats().
  */
 struct resource {
 	long		re_magic;	/* Magic number */
@@ -940,7 +943,17 @@ struct resource {
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	int		re_cpu;		/* processor number, for ID */
 	float		*re_randptr;	/* ptr into random number table */
+	/* Statistics.  Only for examination by rt_add_res_stats() */
+	long		re_nshootray;	/* Calls to rt_shootray() */
+	long		re_nmiss_model;	/* Rays pruned by model RPP */
+	/* Solid nshots = shot_hit + shot_miss */
+	long		re_shots;	/* # calls to ft_shot() */
+	long		re_shot_hit;	/* ft_shot() returned a miss */
+	long		re_shot_miss;	/* ft_shot() returned a hit */
+	/* Optimizations.  Rays not shot at solids */
+	long		re_prune_solrpp;/* shot missed solid RPP, ft_shot skipped */
 };
+extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RESOURCE_MAGIC	0x83651835
 #define RT_RESOURCE_CHECK(_p)	RT_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
@@ -1136,18 +1149,19 @@ struct rt_i {
 	double		rti_radius;	/* radius of model bounding sphere */
 	struct db_i	*rti_dbip;	/* prt to Database instance struct */
 	/* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
+	int		needprep;	/* needs rt_prep */
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
 	struct region	*HeadRegion;	/* ptr of list of regions in model */
+	/* Ray-tracing statistics */
 	long		nregions;	/* total # of regions participating */
 	long		nsolids;	/* total # of solids participating */
-	long		nshots;		/* # of calls to ft_shot() */
+	long		rti_nrays;	/* # calls to rt_shootray() */
 	long		nmiss_model;	/* rays missed model RPP */
-	long		nmiss_tree;	/* rays missed sub-tree RPP */
-	long		nmiss_solid;	/* rays missed solid RPP */
+	long		nshots;		/* # of calls to ft_shot() */
 	long		nmiss;		/* solid ft_shot() returned a miss */
 	long		nhits;		/* solid ft_shot() returned a hit */
-	int		needprep;	/* needs rt_prep */
-	int		rti_nrays;	/* # calls to rt_shootray() */
+	long		nmiss_tree;	/* shots missed sub-tree RPP */
+	long		nmiss_solid;	/* shots missed solid RPP */
 	union cutter	rti_CutHead;	/* Head of cut tree */
 	union cutter	rti_inf_box;	/* List of infinite solids */
 	int		rti_pt_bytes;	/* length of partition struct */
@@ -1414,6 +1428,8 @@ RT_EXTERN(int rt_struct_export, (struct rt_external *ext, genptr_t base, struct 
 RT_EXTERN(int rt_struct_import, (genptr_t base, struct rt_imexport *imp, struct rt_external *ext) );
 RT_EXTERN(int rt_struct_put, (FILE *fp, struct rt_external *ext) );
 RT_EXTERN(int rt_struct_get, (struct rt_external *ext, FILE *fp) );
+RT_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
+					/* Tally stats into struct rt_i */
 
 /* The matrix math routines */
 RT_EXTERN(double mat_atan2, (double y, double x) );
