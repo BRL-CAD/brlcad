@@ -101,76 +101,85 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	struct db_i		*newdbp;
-	struct directory	**dirp0;
-	int status = TCL_OK;
+  struct db_i		*newdbp = DBI_NULL;
+  struct directory	**dirp0 = (struct directory **)NULL;
+  int status = TCL_OK;
+  struct bu_vls tmp_vls;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);	/* allow interupts */
-	else
-	  return TCL_OK;
+  bu_vls_init(&tmp_vls);
 
-	/* get any prefix */
-	if( argc < 3 ) {
-		prestr[0] = '\0';
-	} else {
-		(void)strcpy(prestr, argv[2]);
-	}
-	num_dups = 0;
-	if( (ncharadd = strlen( prestr )) > 12 )  {
-		ncharadd = 12;
-		prestr[12] = '\0';
-	}
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3);	/* allow interupts */
+  else{
+    bu_vls_free(&tmp_vls);
 
-	/* open the input file */
-	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
-	  perror( argv[1] );
-	  Tcl_AppendResult(interp, "dup: Can't open ", argv[1], "\n", (char *)NULL);
-	  status = TCL_ERROR;
-	  goto end;
-	}
+    if(dirp0)
+      bu_free( (genptr_t)dirp0, "dir_getspace array" );
 
-	Tcl_AppendResult(interp, "\n*** Comparing ", dbip->dbi_filename,
-			 "  with ", argv[1], " for duplicate names\n", (char *)NULL);
-	if( ncharadd ) {
-	  Tcl_AppendResult(interp, "  For comparison, all names in ",
-			   argv[1], " prefixed with:  ", prestr, "\n", (char *)NULL);
-	}
+    if(newdbp && newdbp->dbi_magic == DBI_MAGIC)
+      db_close( newdbp );
 
-	/* Get array to hold names of duplicates */
-	if( (dup_dirp = dir_getspace(0)) == (struct directory **) 0) {
-	  Tcl_AppendResult(interp, "f_dup: unable to get memory\n", (char *)NULL);
-	  status = TCL_ERROR;
-	  goto end;
-	}
-	dirp0 = dup_dirp;
+    return TCL_OK;
+  }
 
-	/* Scan new database for overlaps */
-	if( db_scan( newdbp, mged_dir_check, 0 ) < 0 )  {
-	  Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
-	  status = TCL_ERROR;
-	  goto end;
-	}
+  /* get any prefix */
+  if( argc < 3 ) {
+    prestr[0] = '\0';
+  } else {
+    (void)strcpy(prestr, argv[2]);
+  }
+  num_dups = 0;
+  if( (ncharadd = strlen( prestr )) > 12 )  {
+    ncharadd = 12;
+    prestr[12] = '\0';
+  }
 
-	col_pr4v( dirp0, (int)(dup_dirp - dirp0));
-	bu_free( (char *)dirp0, "dir_getspace array" );
-	
-	{
-	  struct bu_vls tmp_vls;
+  /* open the input file */
+  if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
+    perror( argv[1] );
+    Tcl_AppendResult(interp, "dup: Can't open ", argv[1], "\n", (char *)NULL);
+    status = TCL_ERROR;
+    goto end;
+  }
 
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "\n -----  %d duplicate names found  -----\n",num_dups);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	}
+  Tcl_AppendResult(interp, "\n*** Comparing ", dbip->dbi_filename,
+		   "  with ", argv[1], " for duplicate names\n", (char *)NULL);
+  if( ncharadd ) {
+    Tcl_AppendResult(interp, "  For comparison, all names in ",
+		     argv[1], " prefixed with:  ", prestr, "\n", (char *)NULL);
+  }
 
-	db_close( newdbp );
+  /* Get array to hold names of duplicates */
+  if( (dup_dirp = dir_getspace(0)) == (struct directory **) 0) {
+    Tcl_AppendResult(interp, "f_dup: unable to get memory\n", (char *)NULL);
+    status = TCL_ERROR;
+    db_close( newdbp );
+    goto end;
+  }
+  dirp0 = dup_dirp;
+
+  /* Scan new database for overlaps */
+  if( db_scan( newdbp, mged_dir_check, 0 ) < 0 )  {
+    Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
+    status = TCL_ERROR;
+    bu_free( (genptr_t)dirp0, "dir_getspace array" );
+    db_close( newdbp );
+    goto end;
+  }
+
+  col_pr4v( dirp0, (int)(dup_dirp - dirp0));
+  bu_vls_printf(&tmp_vls, "\n -----  %d duplicate names found  -----\n",num_dups);
+  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+  bu_free( (genptr_t)dirp0, "dir_getspace array" );
+  db_close( newdbp );
+
 end:
-	(void)signal( SIGINT, SIG_IGN );
-	return status;
+  bu_vls_free(&tmp_vls);
+  (void)signal( SIGINT, SIG_IGN );
+  return status;
 }
 
 
