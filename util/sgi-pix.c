@@ -149,7 +149,7 @@ int	xorg,yorg,xsize,ysize;
 
 	screenspace();
 
-#ifndef(mips)
+#if !defined(mips)
 	/* 3D only */
 	viewport(0,1023,0,767);
 	ortho2(-0.5,1023.5,-0.5,767.5);
