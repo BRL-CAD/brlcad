@@ -51,6 +51,8 @@ int print_int = 1;
 fastf_t magic_factor = 1.0;
 fastf_t desired_step = 0.1;
 
+int get_args();
+
 #define PREP	-1
 #define START	0
 #define MIDDLE	1
@@ -58,6 +60,7 @@ fastf_t desired_step = 0.1;
 #define	END	3
 #define STOP	4
 
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -167,6 +170,7 @@ char **argv;
 			printf("%.10g\n", 1000.0 * max_bank/max_cross);
 		}
 	}
+	return( 0 );
 }
 
 void

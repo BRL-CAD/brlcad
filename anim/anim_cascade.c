@@ -43,6 +43,8 @@
 
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
+#include "bn.h"
 #include "anim.h"
 
 
@@ -58,6 +60,12 @@
 #define CASCADE_R	1
 #define CASCADE_F	2
 
+int get_args();
+
+extern void	anim_dy_p_r2mat();
+extern void	anim_tran();
+extern int	anim_mat2ypr();
+
 extern int bu_optind;
 extern char *bu_optarg;
 
@@ -65,6 +73,7 @@ vect_t fcenter, fypr, rcenter, rypr, acenter, aypr;
 int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
 int output_mode, read_time, print_time;
 
+int
 main (argc,argv)
 int argc;
 char **argv;
@@ -192,7 +201,7 @@ char **argv;
 		
 		if (one_time) break;
 	}
-
+	return( 0 );
 }
 
 #define OPT_STR "so:f:r:a:"
