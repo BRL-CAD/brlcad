@@ -11,20 +11,6 @@ echo "================================="
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 path_to_run_sh=`dirname $0`
 
-# sets MACHINE, UNIXTYPE, HAS_TCP
-eval `machinetype.sh -b 2> /dev/null`	
-
-if test "x$MACHINE" = "x" ; then
-  echo Looking for machinetype.sh...
-  eval `$path_to_run_sh/../sh/machinetype.sh -b 2> /dev/null`
-  if test "x$MACHINE" = "x" ; then
-    echo WARNING: could not find machinetype.sh
-    # try _something_, linux is pretty popular
-    MACHINE="li"
-  else
-    echo ...found local machinetype.sh
-  fi
-fi
 
 echo Looking for RT...
 # find the raytracer
@@ -83,14 +69,6 @@ if test "x${CMP}" = "x" ; then
   fi
 else
   echo ...using $CMP from CMP environment variable setting
-fi
-
-# Alliant NFS hack
-if test "x${MACHINE}" = "xfx" ; then
-  cp ${RT} /tmp/rt
-  cp ${CMP} /tmp/pixcmp
-  RT=/tmp/rt
-  CMP=/tmp/pixcmp
 fi
 
 # print results or choke
