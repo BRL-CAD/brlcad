@@ -450,7 +450,6 @@ struct application *ap;
 	LOCAL struct region *TrueRg[2];
 	register struct partition *pp;
 	register int	claiming_regions;
-	register int	i;
 	int		hits_avail = 0;
 
 #define HITS_TODO	(ap->a_onehit - hits_avail)

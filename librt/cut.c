@@ -300,9 +300,7 @@ register int	axis;
 double		*where_p;
 double		*offcenter_p;
 {
-	register struct boxnode *bp;
 	register int	i;
-	register double	dist;
 	register double	val;
 	register double	where;
 	register double	offcenter;	/* Closest distance from midpoint */
@@ -482,7 +480,7 @@ double			where;
  *	!0	if object overlaps box.
  *	0	if no overlap.
  */
-int
+HIDDEN int
 rt_ck_overlap( min, max, stp )
 register vect_t min, max;
 register struct soltab *stp;
@@ -724,9 +722,9 @@ int			lvl;
 }
 
 /*
- *			R T _ V C L I P
+ *			R T _ I S E C T _ L S E G _ R P P
  *
- *  Clip a ray against a rectangular parallelpiped (RPP)
+ *  Intersect a line segment with a rectangular parallelpiped (RPP)
  *  that has faces parallel to the coordinate planes (a clipping RPP).
  *  The RPP is defined by a minimum point and a maximum point.
  *  This is a very close relative to rt_in_rpp() from librt/shoot.c
@@ -738,12 +736,13 @@ int			lvl;
  *  Implicit Return -
  *	if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
-static int
-rt_vclip( a, b, min, max )
-vect_t a, b;
+int
+rt_isect_lseg_rpp( a, b, min, max )
+point_t		a;
+point_t		b;
 register fastf_t *min, *max;
 {
-	static vect_t diff;
+	auto vect_t	diff;
 	register fastf_t *pt = &a[0];
 	register fastf_t *dir = &diff[0];
 	register int i;

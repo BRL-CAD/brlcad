@@ -170,8 +170,6 @@ db_create( name )
 char *name;
 {
 	union record new;
-	int	fd;
-	FILE	*fp;
 
 	if(rt_g.debug&DEBUG_DB) rt_log("db_create(%s, %s)\n", name );
 
@@ -183,15 +181,21 @@ char *name;
 	strcpy( new.i.i_title, "Untitled MGED Database" );
 
 #	if unix
+	{
+		int	fd;
 		if( (fd = creat(name, 0644)) < 0 ||
 		    write( fd, (char *)&new, sizeof(new) ) != sizeof(new) )
 			return(DBI_NULL);
 		(void)close(fd);
+	}
 #	else
+	{
+		FILE	*fp;
 		if( (fp = fopen( name, "w" )) == NULL )
 			return(DBI_NULL);
 		(void)fwrite( (char *)&new, 1, sizeof(new), fp );
 		(void)fclose(fp);
+	}
 #	endif
 
 	return( db_open( name, "r+w" ) );
