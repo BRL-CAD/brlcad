@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <time.h>
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -43,6 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+static void	ab_log();
 static int	ab_get_reply();
 static int	ab_mread();
 
@@ -119,6 +121,10 @@ FBIO abekas_interface = {
 #define MODE_2READFIRST	(0<<1)
 #define MODE_2OUTONLY	(1<<1)
 
+#define MODE_3MASK	(1<<2)
+#define MODE_3QUIET	(0<<2)
+#define MODE_3VERBOSE	(1<<2)
+
 #define STATE_FRAME_WAS_READ	(1<<8)
 #define STATE_USER_HAS_READ	(1<<9)
 #define STATE_USER_HAS_WRITTEN	(1<<10)
@@ -133,6 +139,8 @@ struct modeflags {
 		"Lower left;  default=center" },
 	{ 'o',	MODE_2MASK, MODE_2OUTONLY,
 		"Output only (in before out); default=always read first" },
+	{ 'v',	MODE_3MASK, MODE_3VERBOSE,
+		"Verbose logging; default=quiet" },
 	{ '\0', 0, 0, "" }
 };
 
@@ -256,7 +264,30 @@ int		width, height;
 		if( ab_readframe(ifp) < 0 )  return(-1);
 	}
 
+	ab_log(ifp, "ab_open");
+
 	return( 0 );			/* OK */
+}
+
+/*
+ *			A B _ L O G
+ *
+ *  If verbose mode is enabled, print the time and a message
+ */
+static void ab_log(ifp, str)
+FBIO	*ifp;
+char	*str;
+{
+	long		now;
+	struct tm	*tmp;
+
+	if( (ifp->if_mode & MODE_3MASK) != MODE_3VERBOSE )  return;
+
+	(void)time( &now );
+	tmp = localtime( &now );
+	fb_log("%2.2d:%2.2d:%2.2d %s frame %d: %s\n",
+		tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
+		ifp->if_host, ifp->if_frame, str );
 }
 
 /*
@@ -268,6 +299,7 @@ FBIO	*ifp;
 {
 	register int	y;
 
+	ab_log(ifp, "Reading frame");
 	if( ab_yuvio( 0, ifp->if_host, ifp->if_yuv,
 	    720*486*2, ifp->if_frame ) != 720*486*2 )  {
 		fb_log("ab_readframe(%d): unable to get frame from %s!\n",
@@ -276,14 +308,14 @@ FBIO	*ifp;
 	}
 
 	/* convert YUV to RGB */
-fb_log("Converting YUV to RGB\n");
+	ab_log(ifp, "Converting YUV to RGB");
 	for( y=0; y < 486; y++ )  {
 		ab_yuv_to_rgb(
 		    &ifp->if_rgb[(486-1-y)*720*3],
 		    &ifp->if_yuv[y*720*2],
 		    720 );
 	}
-fb_log("Conversion done\n");
+	ab_log(ifp, "Conversion done");
 
 	ifp->if_mode |= STATE_FRAME_WAS_READ;
 	return(0);			/* OK */
@@ -302,20 +334,21 @@ FBIO	*ifp;
 		register int y;		/* in Abekas coordinates */
 
 		/* Convert RGB to YUV */
-fb_log("Converting RGB to YUV\n");
+		ab_log(ifp, "Converting RGB to YUV");
 		for( y=0; y < 486; y++ )  {
 			ab_rgb_to_yuv(
 			    &ifp->if_yuv[y*720*2],
 			    &ifp->if_rgb[(486-1-y)*720*3],
 			    720 );
 		}
-fb_log("Conversion done\n");
+		ab_log(ifp, "Writing frame");
 
 		if( ab_yuvio( 1, ifp->if_host, ifp->if_yuv,
 		    720*486*2, ifp->if_frame ) != 720*486*2 )  {
 			fb_log("ab_dclose: unable to send frame to A60!\n");
 		    	ret = -1;
 		}
+		ab_log(ifp, "Transmission done");
 	}
 
 	/* Free dynamic memory */
@@ -324,6 +357,7 @@ fb_log("Conversion done\n");
 	free( ifp->if_rgb );
 	ifp->if_rgb = NULL;
 
+	ab_log(ifp, "ab_dclose");
 	return(ret);
 }
 
