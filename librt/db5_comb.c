@@ -363,45 +363,65 @@ rt_comb_export5(
 		bu_avs_add_vls( avsp, "region", &value );
 	} else
 		bu_avs_remove( avsp, "region" );
+
 	if( comb->inherit )
 		bu_avs_add( avsp, "inherit", "1" );
+	else
+		bu_avs_remove( avsp, "inherit" );
+
 	if( comb->rgb_valid )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d/%d/%d", V3ARGS(comb->rgb) );
 		bu_avs_add_vls( avsp, "rgb", &value );
 	} else
 		bu_avs_remove( avsp, "rgb" );
+
 	/* optical shader string goes out in Tcl format */
 	if( bu_vls_strlen( &comb->shader ) > 0 )
 		bu_avs_add_vls( avsp, "oshader", &comb->shader );
+	else
+		bu_avs_remove( avsp, "oshader" );
+
 	if( bu_vls_strlen( &comb->material ) > 0 )
 		bu_avs_add_vls( avsp, "material", &comb->material );
+	else
+		bu_avs_remove( avsp, "material" );
+
 	if( comb->temperature > 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%f", comb->temperature );
 		bu_avs_add_vls( avsp, "temp", &value );
-	}
+	} else
+		bu_avs_remove( avsp, "temp" );
+
 	/* GIFT compatability */
 	if( comb->region_id != 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d", comb->region_id );
 		bu_avs_add_vls( avsp, "region_id", &value );
-	}
+	} else
+		bu_avs_remove( avsp, "region_id" );
+
 	if( comb->aircode != 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d", comb->aircode );
 		bu_avs_add_vls( avsp, "aircode", &value );
-	}
+	} else
+		bu_avs_remove( avsp, "aircode" );
+
 	if( comb->GIFTmater != 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d", comb->GIFTmater );
 		bu_avs_add_vls( avsp, "giftmater", &value );
-	}
+	} else
+		bu_avs_remove( avsp, "giftmater" );
+
 	if( comb->los != 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d", comb->los );
 		bu_avs_add_vls( avsp, "los", &value );
-	}
+	} else
+		bu_avs_remove( avsp, "los" );
 
 	bu_vls_free( &value );
 	return 0;	/* OK */
