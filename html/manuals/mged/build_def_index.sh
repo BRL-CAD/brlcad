@@ -87,7 +87,7 @@ do
 	    sed 's/{{[^{}][^{}]*}{\([^{}][^{}]*\)}}/\1/g
 		s/,/_/g'`
 
-	DEFS_AND_ANCHORS=`sed -n 's/<DT>[\t ]*<a[\t ][\t ]*NAME="\([a-zA-Z0-9_?%][a-zA-Z0-9_?%]*\)"[\t ]*>[\t ]*<B>[\t ]*\([a-zA-Z0-9_?%][a-zA-Z0-9_?%]*\)[\t ]*<\/B>.*/{{\2}{\1}}/p' $DEF_FILE`
+	DEFS_AND_ANCHORS=`sed -n 's/<DT>[ ]*<a[ ][ ]*NAME="\([a-zA-Z0-9_?%][a-zA-Z0-9_?%]*\)"[ ]*>[ ]*<B>[ ]*\([a-zA-Z0-9_?%][a-zA-Z0-9_?%]*\)[ ]*<\/B>.*/{{\2}{\1}}/p' $DEF_FILE`
 
 	echo "<a NAME=\"$ANCHOR_NAME\">" >> $TARGET_FILE
 	echo "$DEF_INDEX_INDEX" >> $TARGET_FILE
