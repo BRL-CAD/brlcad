@@ -49,6 +49,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "./light.h"
 
 int		use_air = 0;		/* Handling of air in librt */
+int		using_mlib = 1;		/* Material routines used */
 
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
