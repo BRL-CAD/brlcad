@@ -74,12 +74,13 @@ int	pixout = 1;		/* 0 = bw(5) output, 1 = pix(5) output */
 int	hflag;
 int	inverted;
 int	pure;			/* No Sun header */
+int	verbose;
 
 static char	*file_name;
 static FILE	*fp = stdin;
 
 char	usage[] = "\
-Usage: sun-pix [-b -h -i -P] [sun.bitmap]\n";
+Usage: sun-pix [-b -h -i -P -v] [sun.bitmap]\n";
 
 
 #define NET_LONG_LEN	4	/* # bytes to network long */
@@ -102,7 +103,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "bhiP" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "bhiPv" )) != EOF )  {
 		switch( c )  {
 		case 'b':
 			pixout = 0;	/* bw(5) */
@@ -115,6 +116,9 @@ register char **argv;
 			break;
 		case 'P':
 			pure = 1;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 
 		default:		/* '?' */
@@ -173,10 +177,17 @@ char **argv;
 			exit(1);
 		}
 
-#ifdef debug
-		fprintf( stderr, "ras_width = %d, ras_height = %d, ras_depth = %d, ras_length = %d\n",
-			header.ras_width, header.ras_height, header.ras_depth, header.ras_length );
-#endif
+		if(verbose)  {
+			fprintf( stderr, 
+				"ras_width = %d, ras_height = %d\nras_depth = %d, ras_length = %d\n",
+				header.ras_width, header.ras_height,
+				header.ras_depth, header.ras_length );
+			fprintf( stderr,
+				"ras_type = %d, ras_maptype = %d, ras_maplength = %d\n",
+				header.ras_type,
+				header.ras_maptype,
+				header.ras_maplength );
+		}
 		if( hflag ) {
 			printf( "-w%d -n%d\n", header.ras_width, header.ras_height );
 			exit( 0 );
@@ -185,6 +196,16 @@ char **argv;
 		/* "pure" bitmap */
 		header.ras_type = RT_STANDARD;
 		header.ras_depth = 1;
+	}
+
+	switch( header.ras_type )  {
+	case RT_OLD:		/* ??? */
+	case RT_STANDARD:
+		break;
+	default:
+		fprintf(stderr,"sun-pix:  Unable to process type %d images\n",
+			header.ras_type );
+		exit(1);
 	}
 
 	/*  Gobble colormap -- ought to know what to do with it */
