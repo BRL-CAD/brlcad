@@ -79,6 +79,7 @@ com_table	ComTab[] =
 		};
 int		do_backout = 0;			/* Backout before shooting? */
 int		silent_flag = SILENT_UNSET;	/* Refrain from babbling? */
+int		nirt_debug = 0;			/* Control of diagnostics */
 
 /* Parallel structures needed for operation w/ and w/o air */
 struct rt_i		*rti_tab[2];
@@ -93,6 +94,7 @@ int argc;
 char **argv;
 {
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
+    char		sfile_name[1024];
     extern char		*local_unit[];
     extern char		local_u_name[];
     extern double	base2local;
@@ -131,12 +133,20 @@ char **argv;
     void		   print_item();
     void		   shoot();
 
+    *sfile_name = '\0';
+
     /* Handle command-line options */
     while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
         switch (Ch)
         {
 	    case 'b':
 		do_backout = 1;
+		break;
+	    case 'f':
+		if (strlen(optarg) < 1024)
+		    sscanf( optarg, "%s", sfile_name );
+		else
+		    bu_log("Name of script file '%s' too long!\n", optarg);
 		break;
 	    case 'M':
 		mat_flag = 1;
@@ -149,6 +159,9 @@ char **argv;
 		break;
             case 'x':
 		sscanf( optarg, "%x", &rt_g.debug );
+		break;
+            case 'X':
+		sscanf( optarg, "%x", &nirt_debug );
 		break;
             case 'u':
                 if (sscanf(optarg, "%d", &use_of_air) != 1)
@@ -247,13 +260,6 @@ char **argv;
     base2local = rtip -> rti_dbip -> dbi_base2local;
     local2base = rtip -> rti_dbip -> dbi_local2base;
 
-    /* Run the run-time configuration file, if it exists */
-    if ((fPtr = fopenrc()) != NULL)
-    {
-	interact(fPtr);
-	fclose(fPtr);
-    }
-
     if (silent_flag != SILENT_YES)
     {
 	printf("Database title: '%s'\n", db_title);
@@ -266,6 +272,23 @@ char **argv;
 	    rtip -> mdl_max[Y] * base2local,
 	    rtip -> mdl_max[Z] * base2local);
     }
+
+    /* Run the run-time configuration file, if it exists */
+    if ((fPtr = fopenrc()) != NULL)
+    {
+	interact(fPtr);
+	fclose(fPtr);
+    }
+
+    /*	Run any script file specified on the command line */
+    if (*sfile_name != '\0')
+	if ((fPtr = fopen(sfile_name, "r")) == NULL)
+	    bu_log("Cannot open script file '%s'\n", sfile_name);
+	else
+	{
+	    interact(fPtr);
+	    fclose(fPtr);
+	}
 
     /* Perform the user interface */
     if (mat_flag)
@@ -280,12 +303,14 @@ char **argv;
 char	usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\
- -b      back out of geometry before first shot\n\
- -M      read matrix, cmds on stdin\n\
- -s      run in short (non-verbose) mode\n\
- -u n    set use_air=n (default 0)\n\
- -v      run in verbose mode\n\
- -x v    set librt(3) diagnostic flag=v\n\
+ -b       back out of geometry before first shot\n\
+ -f sfile run script sfile before interacting\n\
+ -M       read matrix, cmds on stdin\n\
+ -s       run in short (non-verbose) mode\n\
+ -u n     set use_air=n (default 0)\n\
+ -v       run in verbose mode\n\
+ -x v     set librt(3) diagnostic flag=v\n\
+ -X v     set nirt diagnostic flag=v\n\
 ";
 
 void printusage() 

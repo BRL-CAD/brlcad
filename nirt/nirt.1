@@ -7,7 +7,9 @@
 .SH NAME
 nirt \- interactively ray trace an MGED model
 .SH SYNOPSIS
-.BR "nirt  [ -M ] [-sv] [-b] [ -u " n " ] [ -x " v " ] " "model.g objects ..."
+.BR "nirt  [ -M ] [-sv] [-b] [-f sfile] [ -u " n " ]
+.br
+.BR "      [ -x " v " ] [ -X " v " ] " "model.g objects ..."
 .SH DESCRIPTION
 .I Nirt
 operates on the specified
@@ -56,6 +58,13 @@ command (see the description of these two commands below).
 This is probably only useful with the
 .B -M
 option.
+If the
+.BI -f " sfile"
+option is specified,
+.I nirt
+runs the script
+.I sfile
+before reading the standard input.
 Given the
 .B -s
 option,
@@ -88,6 +97,11 @@ debug flags to the hexadecimal bit vector \fIv\fR.
 See the discussion of the
 .I libdebug
 command below.
+The
+.BI -X " v"
+option sets the
+.IR nirt "'s"
+own debug flags to the hexadecimal bit vector \fIv\fR.
 
 If there is a file called .nirtrc in the current directory,
 otherwise in the user's home directory,
