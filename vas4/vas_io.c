@@ -1,7 +1,25 @@
 /*
- * vas_io.c - I/O routines to talk to the VAS IV
+ *			V A S _ I O . C
+ *
+ *  I/O routines to talk to a Lyon-Lamb VAS IV video animation controller.
+ *
+ *
+ *  Authors -
+ *	Steve Satterfield, USNA
+ *	Joe Johnson, USNA
+ *	Michael John Muuss, BRL
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
-
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include <sgtty.h>
@@ -15,7 +33,7 @@ struct sgttyb user, vtty;
 #define BAUD		B300
 
 int vas_fd;
-int debug = TRUE;
+extern int debug;
 
 /*
  * vas_open - attach to the VAS serial line
@@ -77,27 +95,35 @@ char c;
 {
 	int	got;
 	int	reply;
+	int	count;
 
-retry:
-	got = write(vas_fd, &c, 1);
-	if (got != 1)  {
-		perror("VAS Write");
-		return(got);
-		/* Error recovery?? */
-	}
-	if(debug) fprintf(stderr,"vas_putc 0%o '%c'\n",c,c);
+	for( count=0; count<20; count++ )  {
+		got = write(vas_fd, &c, 1);
+		if (got < 1)  {
+			perror("VAS Write");
+			return(got);
+			/* Error recovery?? */
+		}
+		if(debug) fprintf(stderr,"vas_putc 0%o '%c'\n",c,c);
 
-	reply=vas_getc();
-	if( reply == 006 )
-		return(got);
-	if( reply >= 0x60 && reply <= 0x78 )  {
+reread:
+		reply=vas_getc();
+		if( reply == 006 )
+			return(got);		/* ACK */
+		if( reply >= 0x60 && reply <= 0x78 )  {
+			vas_response(reply);
+			return(got);
+		}
+		if( reply == 007 )  {
+			if(count>4) fprintf(stderr, "retry\n");
+			sleep(1);
+			continue;		/* NACK, please repeat */
+		}
+		fprintf(stderr,"vas4:  non-ACK rcvd for cmd %c\n",c);
 		vas_response(reply);
-		return(got);
+		goto reread;		/* See if ACK is buffered up */
 	}
-	fprintf(stderr,"VAS -- no ACK rcvd!!\n");
-	vas_response(reply);
-	sleep(1);
-	goto retry;
+	fprintf(stderr,"vas4:  unable to perform cmd %c after retries\n", c);
 }
 
 /*
@@ -128,8 +154,11 @@ int	n;
 }
 
 
-/* Read a single character from the VAS, return EOF on error */
-
+/*
+ *			V A S _ G E T C
+ *
+ * Read a single character from the VAS, return EOF on error
+ */
 vas_getc()
 {
 	char c;
@@ -141,41 +170,13 @@ vas_getc()
 		return(EOF);
 }
 
-
+/*
+ *			V A S _ C L O S E
+ */
 vas_close()
 {
 	close(vas_fd);
 	vas_fd = -1;
-}
-
-
-/*
-   vas_putc_wait - Like putc, but also wait for a specified response
-
-   send		- the character to send to VAS
-   expect 	- is the character expected
- *
- *  This routine has the dubious property that it will continue to
- *  reissue the command character until it hears the response
- *  character.  Considering the large number of "asynchronous"
- *  replies of an advisory nature, this seems unwise.
- */
-vas_putc_wait(send, expect)
-char send, expect;
-{
-	char c;
-
-	vas_putc(send);
-
-	while (1) {
-		if (debug) {
-			fprintf(stderr,"Sent '%c', Expect '%c'\n",send,expect);
-		}
-		c = vas_getc();
-		if (debug)  vas_response(c);
-		if (c == expect)
-			break;
-	}
 }
 
 /*
@@ -200,6 +201,7 @@ int	sec;
 		reply = vas_getc();
 		if(debug) vas_response(reply);
 		if( reply == c )  return(0);	/* OK */
+		if(!debug) vas_response(reply);
 	}
 	return(-1);			/* BAD:  too many bad chars */
 }
