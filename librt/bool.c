@@ -145,6 +145,7 @@ struct application	*ap;
 				 *	        SSSS
 				 * Advance to next partition.
 				 */
+				if(rt_g.debug&DEBUG_PARTITION)  rt_log("seg start beyond end, skipping\n");
 				continue;
 			}
 			if( i == 0 )  {
@@ -158,8 +159,11 @@ struct application	*ap;
 				 */
 				lasthit->hit_dist = pp->pt_outhit->hit_dist;
 				VMOVE(lasthit->hit_point, pp->pt_outhit->hit_point);
+				if(rt_g.debug&DEBUG_PARTITION)  rt_log("seg start fused to partition end\n");
 				continue;
 			}
+			if(rt_g.debug&DEBUG_PARTITION)  rt_pr_pt(ap->a_rt_i, pp);
+
 			/*
 			 * i < 0,  Seg starts before current partition ends
 			 *	PPPPPPPPPPP
@@ -168,6 +172,7 @@ struct application	*ap;
 
 			if( (i=rt_fdiff(lasthit->hit_dist, pp->pt_inhit->hit_dist)) == 0){
 equal_start:
+				if(rt_g.debug&DEBUG_PARTITION) rt_log("equal_start\n");
 				/*
 				 * Segment and partition start at
 				 * (roughly) the same point.
@@ -184,7 +189,7 @@ equal_start:
 					 *	SSSS
 					 */
 					BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
-			if(rt_g.debug&DEBUG_PARTITION) rt_log("same start\n");
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("same start&end\n");
 					goto done_weave;
 				}
 				if( i > 0 )  {
@@ -200,6 +205,7 @@ equal_start:
 					lasthit = pp->pt_outhit;
 					lastseg = pp->pt_outseg;
 					lastflip = 1;
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg spans p and beyond\n");
 					continue;
 				}
 				/*
@@ -220,7 +226,7 @@ equal_start:
 				pp->pt_inhit = &segp->seg_out;
 				pp->pt_inflip = 1;
 				INSERT_PT( newpp, pp );
-			if(rt_g.debug&DEBUG_PARTITION) rt_log("start together, seg shorter\n");
+				if(rt_g.debug&DEBUG_PARTITION) rt_log("start together, seg shorter\n");
 				goto done_weave;
 			}
 			if( i < 0 )  {
@@ -249,7 +255,7 @@ equal_start:
 					newpp->pt_outhit = &segp->seg_out;
 					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
-			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg between 2 partitions\n");
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg between 2 partitions\n");
 					goto done_weave;
 				}
 				if( i==0 )  {
@@ -269,7 +275,7 @@ equal_start:
 					VMOVE(newpp->pt_outhit->hit_point, pp->pt_inhit->hit_point);
 					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
-			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg ends at part start, fuse\n");
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg ends at p start, fuse\n");
 					goto done_weave;
 				}
 				/*
@@ -287,6 +293,7 @@ equal_start:
 				lasthit = pp->pt_inhit;
 				lastflip = newpp->pt_outflip;
 				INSERT_PT( newpp, pp );
+				if(rt_g.debug&DEBUG_PARTITION) rt_log("insert seg before p start, ends after p ends\n");
 				goto equal_start;
 			}
 			/*
@@ -311,6 +318,7 @@ equal_start:
 			newpp->pt_outhit = &segp->seg_in;
 			newpp->pt_outflip = 1;
 			INSERT_PT( newpp, pp );
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts after p starts, ends after p ends\n");
 			goto equal_start;
 		}
 
@@ -320,7 +328,7 @@ equal_start:
 		 *  	PPPPP
 		 *  	     SSSSS
 		 */
-		if(rt_g.debug&DEBUG_PARTITION) rt_log("seg extends beyond end\n");
+		if(rt_g.debug&DEBUG_PARTITION) rt_log("seg extends beyond p end\n");
 		GET_PT_INIT( ap->a_rt_i, newpp, res );
 		BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 		newpp->pt_inseg = lastseg;
@@ -763,6 +771,7 @@ double a, b;
 {
 	FAST double diff;
 	FAST double d;
+	register int ret;
 
 	/* d = Max(Abs(a),Abs(b)) */
 	d = (a >= 0.0) ? a : -a;
@@ -771,20 +780,39 @@ double a, b;
 	} else {
 		if( (-b) > d )  d = (-b);
 	}
-	if( d <= 0.0001 )
-		return(0);	/* both nearly zero */
-	if( d >= INFINITY )  {
-		if( a == b )  return(0);
-		if( a < b )  return(-1);
-		return(1);
+	if( d <= 0.0001 )  {
+		ret = 0;	/* both nearly zero */
+		goto out;
 	}
-	diff = a - b;
-	if( diff < 0.0 )  diff = -diff;
-	if( diff < 0.000001 * d )
-		return( 0 );	/* relative difference is small */
-	if( a < b )
-		return(-1);
-	return(1);
+	if( d >= INFINITY )  {
+		if( a == b )  {
+			ret = 0;
+			goto out;
+		}
+		if( a < b )  {
+			ret = -1;
+			goto out;
+		}
+		ret = 1;
+		goto out;
+	}
+	if( (diff = a - b) < 0.0 )  diff = -diff;
+	if( diff <= 0.0001 )  {
+		ret = 0;	/* absolute difference is small */
+		goto out;
+	}
+	if( diff < 0.000001 * d )  {
+		ret = 0;	/* relative difference is small, < 1ppm */
+		goto out;
+	}
+	if( a < b )  {
+		ret = -1;
+		goto out;
+	}
+	ret = 1;
+out:
+	if(rt_g.debug&DEBUG_FDIFF) rt_log("rt_fdiff(%g,%g)=%d\n", a, b, ret);
+	return(ret);
 }
 
 /*
