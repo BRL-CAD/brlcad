@@ -1737,6 +1737,12 @@ double			mm2local;
 	    tip->v[Z] * mm2local );
 	bu_vls_strcat( str, buf );
 
+	sprintf(buf, "\tTop (%g, %g, %g)\n",
+	    (tip->v[X] + tip->h[X]) * mm2local,
+	    (tip->v[Y] + tip->h[Y]) * mm2local,
+	    (tip->v[Z] + tip->h[Z]) * mm2local );
+	bu_vls_strcat( str, buf );
+
 	Hmag = MAGNITUDE(tip->h);
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
 	    tip->h[X] * mm2local,
