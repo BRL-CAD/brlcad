@@ -282,13 +282,12 @@ fastf_t param1, param2;
 	int	i;
 	struct snurb *region;
 	struct knot_vector new_knots;
+	fastf_t knot_vec[20];
 
 	if ( dir == RT_NURB_SPLIT_ROW) {
 
 		new_knots.k_size = srf->order[0] * 2;
-		new_knots.knots = (fastf_t * ) rt_malloc( sizeof (fastf_t)
-		    *srf->order[0] * 2, 
-		    "rt_nurb__region_from_srf: newknot values");
+		new_knots.knots = & knot_vec[0];
 
 		for ( i = 0; i < srf->order[0]; i++) {
 			new_knots.knots[i] = param1;
@@ -309,8 +308,6 @@ fastf_t param1, param2;
 	}
 
 	region = rt_nurb_s_refine( srf, dir, &new_knots);
-
-	rt_free( (char *)new_knots.knots, "rt_nurb_region_from_srf:knotvalues");
 
 	return region;
 }
