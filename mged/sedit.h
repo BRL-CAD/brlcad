@@ -105,12 +105,24 @@
 		     es_edflag == ECMD_ARB_MOVE_FACE || \
 		     es_edflag == ECMD_VTRANS || \
 		     es_edflag == ECMD_NMG_EMOVE || \
-		     es_edflag == ECMD_PIPE_PT_MOVE))
+		     es_edflag == ECMD_PIPE_PT_MOVE) || \
+		     es_edflag == ECMD_ARS_MOVE_PT || \
+		     es_edflag == ECMD_ARS_MOVE_CRV || \
+		     es_edflag == ECMD_ARS_MOVE_COL)
 #define OEDIT_TRAN (state == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
 		     edobj == BE_O_XY))
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
+
+#define SEDIT_PICK (state == ST_S_EDIT && \
+		    (es_edflag == ECMD_NMG_EPICK || \
+		     es_edflag == ECMD_NMG_ESPLIT || \
+		     es_edflag == ECMD_PIPE_PICK || \
+		     es_edflag == ECMD_PIPE_SPLIT || \
+		     es_edflag == ECMD_PIPE_PT_ADD || \
+		     es_edflag == ECMD_PIPE_PT_INS || \
+		     es_edflag == ECMD_ARS_PICK))
 
 extern vect_t edit_absolute_rotate;
 extern vect_t edit_rate_rotate;
