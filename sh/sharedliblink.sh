@@ -10,7 +10,7 @@
 #
 #  $Header$
 
-if test $# != 1
+if test $# != 1 -o ! -f "$1"
 then
 	echo "Usage: sharedliblink.sh libraryname.so.##" 1>&2
 	echo "e.g.	../.librt.sun4/librt.so.10" 1>&2
@@ -20,7 +20,7 @@ fi
 cd `dirname $1`
 
 NONUM=`basename $1 | sed -e 's/\\.so\\..*/.so/`
-TWONUM=$NONUM.1			# Minor version 1
+TWONUM=`basename $1`.1			# Minor version 1
 
 # If the shared library has a version number, link numbered to unnumbered.
 # If no version number, don't do anything.
