@@ -35,6 +35,9 @@ extern void	predictor_hook();		/* in ged.c */
 
 #ifdef USE_FRAMEBUFFER
 extern void set_port();
+extern void mged_fb_open();
+extern void mged_fb_close();
+static void set_fb();
 #endif
 
 struct _mged_variables default_mged_variables = {
@@ -56,7 +59,6 @@ struct _mged_variables default_mged_variables = {
 /* hot_key */                   0,
 /* context */                   1,
 /* dlist */                     1,
-/* nirt_behavior */             0,
 /* use_air */			0,
 /* echo_nirt_cmd */		0,
 #ifdef USE_FRAMEBUFFER
@@ -69,11 +71,10 @@ struct _mged_variables default_mged_variables = {
 #ifdef DO_RUBBER_BAND
 /* rubber_band */		0,
 #endif
-/* mouse_behavior */            'm',
+/* mouse_behavior */            'd',
+/* nirt_behavior */             't',
 /* coords */                    'v',
-/* ecoords */                   'o',
 /* rotate_about */              'v',
-/* erotate_about */             'k',
 /* transform */                 'v',
 /* predictor */			0,
 /* predictor_advance */		1.0,
@@ -136,9 +137,9 @@ nmg_eu_dist_set()
 #define MV_O(_m)	offsetof(struct _mged_variables, _m)
 struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "rateknobs",		MV_O(rateknobs),	set_scroll },
-	{"%d",	1, "adcflag",		MV_O(adcflag),          set_scroll },
-	{"%d",	1, "slidersflag",	MV_O(slidersflag),      set_scroll },
+	{"%d",	1, "rateknobs",		MV_O(rateknobs),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "adcflag",		MV_O(adcflag),          set_dirty_flag },
+	{"%d",	1, "slidersflag",	MV_O(slidersflag),      set_dirty_flag },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "faceplate",		MV_O(faceplate),	set_dirty_flag },
@@ -153,13 +154,12 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "context",           MV_O(context),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "dlist",             MV_O(dlist),            set_dlist },
-	{"%d",  1, "nirt_behavior",     MV_O(nirt_behavior),    BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "use_air",		MV_O(use_air),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "echo_nirt_cmd",	MV_O(echo_nirt_cmd),	BU_STRUCTPARSE_FUNC_NULL },
 #ifdef USE_FRAMEBUFFER
 	{"%d",  1, "listen",		MV_O(listen),		set_port },
 	{"%d",  1, "port",		MV_O(port),		set_port },
-	{"%d",  1, "fb",		MV_O(fb),		set_dirty_flag },
+	{"%d",  1, "fb",		MV_O(fb),		set_fb },
 	{"%d",  1, "fb_all",		MV_O(fb_all),		set_dirty_flag },
 	{"%d",  1, "fb_overlay",	MV_O(fb_overlay),	set_dirty_flag },
 #endif
@@ -167,10 +167,9 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "rubber_band",	MV_O(rubber_band),	set_dirty_flag },
 #endif
 	{"%c",  1, "mouse_behavior",	MV_O(mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%c",  1, "nirt_behavior",     MV_O(nirt_behavior),    BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "coords",            MV_O(coords),           BU_STRUCTPARSE_FUNC_NULL },
-	{"%c",  1, "ecoords",           MV_O(ecoords),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "rotate_about",      MV_O(rotate_about),     BU_STRUCTPARSE_FUNC_NULL },
-	{"%c",  1, "erotate_about",     MV_O(erotate_about),    BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "transform",         MV_O(transform),        BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
@@ -507,3 +506,18 @@ toggle_perspective()
 
   set_dirty_flag();
 }
+
+#ifdef USE_FRAMEBUFFER
+static void
+set_fb()
+{
+  if(mged_variables->fb && !fbp){
+    mged_fb_open();
+    if(!fbp)
+      mged_variables->fb = 0;
+  }else if(!mged_variables->fb && fbp){
+    set_port();
+    mged_fb_close();
+  }
+}
+#endif
