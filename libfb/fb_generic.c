@@ -196,6 +196,7 @@ int
 fb_close( ifp )
 FBIO	*ifp;
 {
+	fb_flush( ifp );
 	if( (*ifp->if_dclose)( ifp ) == -1 )  {
 		fb_log(	"Can not close device \"%s\".\n", ifp->if_name );
 		return	-1;
