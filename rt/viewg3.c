@@ -236,7 +236,8 @@ register struct partition *PartHeadp;
 				pp->pt_outhit->hit_dist;
 			if( !NEAR_ZERO( air_thickness, 0.1 ) )  {
 				air_id = 1;	/* air gap */
-				rt_log("air gap added\n");
+				if( rdebug & RDEBUG_HITS )
+					rt_log("air gap added\n");
 			} else {
 				air_thickness = 0.0;
 			}
