@@ -485,6 +485,7 @@ gui_output(clientData, str)
 	genptr_t str;
 {
 	Tcl_DString tclcommand;
+	Tcl_Obj *save_result;
 	static int level = 0;
 
 	if (level > 50) {
@@ -498,9 +499,13 @@ gui_output(clientData, str)
 	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(&tcl_output_hook));
 	(void)Tcl_DStringAppendElement(&tclcommand, str);
 
+	save_result = Tcl_GetObjResult(interp);
+	Tcl_IncrRefCount(save_result);
 	++level;
 	Tcl_Eval((Tcl_Interp *)clientData, Tcl_DStringValue(&tclcommand));
 	--level;
+	Tcl_SetObjResult(interp, save_result);
+	Tcl_DecrRefCount(save_result);
 
 	Tcl_DStringFree(&tclcommand);
 	return strlen(str);
