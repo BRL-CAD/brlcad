@@ -15,9 +15,6 @@
 #define DONT_INSTALL	1
 
 #ifdef NFS
-/* Say this before #include Cakefile.prog */
-all&:	PRODUCTS STATIC_PRODUCTS
-
 /* Pick up any shell scripts needed */
 %.sh:					if exist ../SRCDIR/%.sh
 	rm -f %.sh
