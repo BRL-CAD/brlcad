@@ -102,6 +102,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #define SHMEM_KEY	42
 
+int X24_open_existing();
+static int _X24_open_existing();
+
 static int	X24_open(),
 		X24_close(),
 		X24_clear(),
@@ -526,6 +529,150 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 	return(0);
 }
 
+int
+X24_open_existing(ifp, argc, argv)
+FBIO *ifp;
+int argc;
+char **argv;
+{
+  Display *dpy;
+  Window win;
+  Colormap cmap;
+  XVisualInfo *vip;
+  int width;
+  int height;
+  GC gc;
+
+  if(argc != 8)
+    return -1;
+
+  if(sscanf(argv[1], "%lu", (unsigned long *)&dpy) != 1)
+     return -1;
+
+  if(sscanf(argv[2], "%lu", (unsigned long *)&win) != 1)
+    return -1;
+
+  if(sscanf(argv[3], "%lu", (unsigned long *)&cmap) != 1)
+    return -1;
+
+  if(sscanf(argv[4], "%lu", (unsigned long *)&vip) != 1)
+    return -1;
+
+  if(sscanf(argv[5], "%d", &width) != 1)
+    return -1;
+
+  if(sscanf(argv[6], "%d", &height) != 1)
+    return -1;
+
+  if(sscanf(argv[7], "%lu", (unsigned long *)&gc) != 1)
+    return -1;
+
+  return _X24_open_existing(ifp, dpy, win, cmap, vip, width, height, gc);
+}
+
+static int
+_X24_open_existing(ifp, dpy, win, cmap, vip, width, height, gc)
+FBIO *ifp;
+Display *dpy;
+Window win;
+Colormap cmap;
+XVisualInfo *vip;
+int width;
+int height;
+GC gc;
+{
+  struct xinfo *xi;
+  int getmem_stat;
+  XRectangle rect;
+
+  ifp->if_width = width;
+  ifp->if_height = height;
+
+  ifp->if_xzoom = 1;
+  ifp->if_yzoom = 1;
+
+  ifp->if_xcenter = width/2;
+  ifp->if_ycenter = height/2;
+
+  /* create a struct of state information */
+  if ((xi = (struct xinfo *) calloc(1, sizeof(struct xinfo))) == NULL) {
+    fb_log("X24_open: xinfo malloc failed\n");
+    return -1;
+  }
+  XI_SET(ifp, xi);
+
+  /*XXX For now assume 24-bit TrueColor */
+  xi->xi_mode = FLG_VT24 << 1;
+  xi->xi_iwidth = width;
+  xi->xi_iheight = height;
+
+  /* Allocate backing store (shared memory or local) */
+  if ((getmem_stat = X24_getmem(ifp)) == -1) {
+    free((char *)xi);
+    return -1;
+  }
+
+  /* X setup */
+  xi->xi_xwidth = width;
+  xi->xi_xheight = height;
+  xi->xi_dpy = dpy;
+  xi->xi_screen = DefaultScreen(xi->xi_dpy);
+
+  xi->xi_flags = FLG_VT24 | FLG_XCMAP;
+  xi->xi_visual = vip->visual;
+  xi->xi_depth = vip->depth;
+  xi->xi_cmap = cmap;
+  xi->xi_wp = 0xFFFFFF;
+  xi->xi_bp = 0x000000;
+  xi->xi_win = win;
+
+  /*XXX For now use same GC for both */
+  xi->xi_gc = gc;
+  xi->xi_cgc = gc;
+
+  /* Initialize the valid region */
+  xi->xi_reg = XCreateRegion();
+  rect.x = 0;
+  rect.y = 0;
+  rect.width = xi->xi_xwidth;
+  rect.height = xi->xi_xheight;
+  XUnionRectWithRegion(&rect, xi->xi_reg, xi->xi_reg);
+
+  /* Allocate image buffer, and make our X11 Image */
+  if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned int),
+					     width*height)) == NULL) {
+    fb_log("X24_open: pix32 malloc failed\n");
+    return -1;
+  }
+
+  xi->xi_image = XCreateImage(xi->xi_dpy,
+			      xi->xi_visual, xi->xi_depth, ZPixmap, 0,
+			      (char *) xi->xi_pix, width, height,
+			      sizeof(unsigned int) * 8, 0);
+
+  /* Update state for blits */
+  X24_updstate(ifp);
+
+  /* Make the Display connection available for selecting on */
+  ifp->if_selfd = ConnectionNumber(xi->xi_dpy);
+
+#if 0
+  /* If we already have data, display it */
+  if (getmem_stat == 0) {
+    X24_wmap(ifp, xi->xi_rgb_cmap);
+    X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight, BLIT_DISP);
+  } else {
+    /* Set up default linear colormap */
+    X24_wmap(ifp, NULL);
+  }
+#endif
+
+  /* Mark display ready */
+  xi->xi_flags |= FLG_INIT;
+
+  return 0;
+}
+
 static int
 X24_close(ifp)
 FBIO	*ifp;
@@ -541,6 +688,21 @@ FBIO	*ifp;
 	X24_destroy(xi);
 
 	return (0);
+}
+
+int
+X24_close_existing(ifp)
+FBIO    *ifp;
+{
+  struct xinfo *xi = XI(ifp);
+
+  if (xi->xi_image)
+    XDestroyImage(xi->xi_image);
+
+  if (xi->xi_reg)
+    XDestroyRegion(xi->xi_reg);
+
+  free((char *)xi);
 }
 
 static void
@@ -904,88 +1066,63 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
-	struct xinfo *xi = XI(ifp);
+  struct xinfo *xi = XI(ifp);
 
 #if X_DBG
-printf("X24_cursor(ifp:0x%x, mode:%d, x:%d, y:%d) entered.\n",
-	ifp, mode, x, y);
+  printf("X24_cursor(ifp:0x%x, mode:%d, x:%d, y:%d) entered.\n",
+	 ifp, mode, x, y);
 #endif
 
-	if (mode) {
-		int xdel, ydel;
-		int xx, xy;
+  if (mode) {
+    register int xx, xy;
+    register int delta;
 
-		/* If we don't have a cursor, create it */
+    /* If we don't have a cursor, create it */
+    if (!xi->xi_curswin) {
+      XSetWindowAttributes xswa;
 
-		if (!xi->xi_curswin) {
-			XSetWindowAttributes xswa;
+      xswa.background_pixel = xi->xi_bp;
+      xswa.border_pixel = xi->xi_wp;
+      xswa.colormap = xi->xi_cmap;
+      xswa.save_under = True;
 
-			xswa.background_pixel = xi->xi_bp;
-			xswa.border_pixel = xi->xi_wp;
-			xswa.colormap = xi->xi_cmap;
-			xswa.save_under = True;
+      xi->xi_curswin = XCreateWindow(xi->xi_dpy, xi->xi_win,
+				     0, 0, 4, 4, 2, xi->xi_depth, InputOutput,
+				     xi->xi_visual, CWBackPixel | CWBorderPixel |
+				     CWSaveUnder | CWColormap, &xswa);
+    }
 
-			xi->xi_curswin = XCreateWindow(xi->xi_dpy, xi->xi_win,
-				0, 0, 4, 4, 2, xi->xi_depth, InputOutput,
-				xi->xi_visual, CWBackPixel | CWBorderPixel |
-					CWSaveUnder | CWColormap, &xswa);
-		}
+    delta = ifp->if_width/ifp->if_xzoom/2;
+    xx = x - (ifp->if_xcenter - delta);
+    xx *= ifp->if_xzoom;
+    xx += ifp->if_xzoom/2;  /* center cursor */
 
-		/* Don't try to move cursor outside displayed pixels */
+    delta = ifp->if_height/ifp->if_yzoom/2;
+    xy = y - (ifp->if_ycenter - delta);
+    xy *= ifp->if_yzoom;
+    xy += ifp->if_yzoom/2;  /* center cursor */
+    xy = xi->xi_xheight - xy;
 
-		if (x < xi->xi_ilf)
-			x = xi->xi_ilf;
-		if (x > xi->xi_irt)
-			x = xi->xi_irt;
-		if (y < xi->xi_ibt)
-			y = xi->xi_ibt;
-		if (y > xi->xi_itp)
-			y = xi->xi_itp;
+    /* Move cursor into place; make it visible if it isn't */
+    XMoveWindow(xi->xi_dpy, xi->xi_curswin, xx - 4, xy - 4);
 
-		/* Compute xx: x coordinate of middle of selected pixel */
+    if (!ifp->if_cursmode)
+      XMapRaised(xi->xi_dpy, xi->xi_curswin);
+  } else {
+    /* If we have a cursor and it's visible, hide it */
+    if (xi->xi_curswin && ifp->if_cursmode)
+      XUnmapWindow(xi->xi_dpy, xi->xi_curswin);
+  }
 
-		xdel = x - xi->xi_ilf;
-		if (xdel)
-			xx = xi->xi_xlf + xi->xi_ilf_w +
-				((xdel - 1) * ifp->if_xzoom) +
-				ifp->if_xzoom / 2 - 1;
-		else
-			xx = xi->xi_xlf + xi->xi_ilf_w - ifp->if_xzoom / 2 - 1;
+  /* Without this flush, cursor movement is sluggish */
+  XFlush(xi->xi_dpy);
 
-		/* Compute xy: y coordinate of middle of selected pixel */
+  /* Update position of cursor */
+  ifp->if_cursmode = mode;
+  ifp->if_xcurs = x;
+  ifp->if_ycurs = y;
 
-		ydel = y - xi->xi_ibt;
-		if (ydel)
-			xy = xi->xi_xbt - (xi->xi_ibt_h +
-				((ydel - 1) * ifp->if_yzoom)) -
-				(ifp->if_yzoom / 2) - 1;
-		else
-			xy = xi->xi_xbt - xi->xi_ibt_h + ifp->if_yzoom / 2 - 1;
-
-		/* Move cursor into place; make it visible if it isn't */
-
-		XMoveWindow(xi->xi_dpy, xi->xi_curswin, xx - 4, xy - 4);
-
-		if (!ifp->if_cursmode)
-			XMapRaised(xi->xi_dpy, xi->xi_curswin);
-	} else {
-		/* If we have a cursor and it's visible, hide it */
-
-		if (xi->xi_curswin && ifp->if_cursmode)
-			XUnmapWindow(xi->xi_dpy, xi->xi_curswin);
-	}
-
-	/* Without this flush, cursor movement is sluggish */
-
-	XFlush(xi->xi_dpy);
-
-	/* Update position of cursor */
-
-	ifp->if_cursmode = mode;
-	ifp->if_xcurs = x;
-	ifp->if_ycurs = y;
-
-	return(0);
+  return(0);
 }
 
 static int
