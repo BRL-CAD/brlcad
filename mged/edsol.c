@@ -1864,6 +1864,8 @@ sedit()
  *			S E D I T _ M O U S E
  *
  *  Mouse (pen) press in graphics area while doing Solid Edit.
+ *  mousevec [X] and [Y] are in the range -1.0...+1.0, corresponding
+ *  to viewspace.
  *
  *  In order to allow the "p" command to do the same things that
  *  a mouse event can, the preferred strategy is to store the value
@@ -2022,7 +2024,8 @@ CONST vect_t	mousevec;
 				(struct model *)es_int.idb_ptr;
 			struct edge	*e;
 			NMG_CK_MODEL(m);
-			if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec, model2view, &mged_tol )) == (struct edge *)NULL )  {
+			if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec,
+			    model2view, &mged_tol )) == (struct edge *)NULL )  {
 				(void)printf("ECMD_NMG_EPICK: unable to find an edge\n");
 				return;
 			}
@@ -2033,9 +2036,7 @@ CONST vect_t	mousevec;
 		}
 		break;
 
-#if 1
 	/* XXX Should just leave desired location in es_mparam for sedit() */
-	/* JRA -- look here! */
 	case ECMD_NMG_EMOVE:
 		/* move edge, through indicated point */
 		MAT4X3PNT( temp, view2model, mousevec );
@@ -2046,7 +2047,6 @@ CONST vect_t	mousevec;
 		}
 		sedraw = 1;
 		return;
-#endif
 
 	default:
 		(void)printf("mouse press undefined in this solid edit mode\n");
