@@ -74,28 +74,35 @@ struct wdb_pipeseg  {
 /*
  *  Solid conversion routines
  */
-WDB_EXTERN(int mk_id, (FILE *fp, char *title) );
-WDB_EXTERN(int mk_half, (FILE *fp, char *name, vect_t norm, double d) );
-WDB_EXTERN(int mk_rpp, (FILE *fp, char *name, point_t min, point_t max) );
-WDB_EXTERN(int mk_arb4, (FILE *fp, char *name, point_t pts[]) );
-WDB_EXTERN(int mk_arb8, (FILE *fp, char *name, point_t pts[]) );
-WDB_EXTERN(int mk_sph, (FILE *fp, char *name, point_t center, fastf_t radius) );
-WDB_EXTERN(int mk_ell, (FILE *fp, char *name, point_t center,
-			vect_t a, vect_t b, vect_t c) );
-WDB_EXTERN(int mk_tor, (FILE *fp, char *name, point_t center, vect_t inorm,
-			double r1, double r2) );
-WDB_EXTERN(int mk_rcc, (FILE *fp, char *name, point_t base, vect_t height,
+WDB_EXTERN(int mk_id, (FILE *fp, CONST char *title) );
+WDB_EXTERN(int mk_id_units, (FILE *fp, CONST char *title, CONST char *units) );
+WDB_EXTERN(int mk_half, (FILE *fp, char *name, CONST vect_t norm, double d) );
+WDB_EXTERN(int mk_rpp, (FILE *fp, char *name, CONST point_t min,
+			CONST point_t max) );
+WDB_EXTERN(int mk_wedge, (FILE *fp, char *name, CONST point_t vert,
+			CONST vect_t xdirv, CONST vect_t zdirv,
+			fastf_t xlen, fastf_t ylen, fastf_t zlen,
+			fastf_t x_top_len) );
+WDB_EXTERN(int mk_arb4, (FILE *fp, char *name, CONST point_t pts[4]) );
+WDB_EXTERN(int mk_arb8, (FILE *fp, char *name, CONST point_t pts[8]) );
+WDB_EXTERN(int mk_sph, (FILE *fp, char *name, CONST point_t center,
 			fastf_t radius) );
-WDB_EXTERN(int mk_tgc, (FILE *fp, char *name, point_t base, vect_t height,
-			vect_t a, vect_t b, vect_t c, vect_t d) );
-WDB_EXTERN(int mk_trc, (FILE *fp, char *name, point_t ibase, vect_t iheight,
-			fastf_t radbase, fastf_t radtop) );
-WDB_EXTERN(int mk_trc_top, (FILE *fp, char *name, point_t ibase, point_t itop,
-			fastf_t radbase, fastf_t radtop) );
-WDB_EXTERN(int mk_polysolid, (FILE *fp, char *name) );
-WDB_EXTERN(int mk_poly, (FILE *fp, int npts,
-			fastf_t verts[][3], fastf_t norms[][3]) );
-WDB_EXTERN(int mk_fpoly, (FILE *fp, int npts, fastf_t verts[][3]) );
+WDB_EXTERN(int mk_ell, (FILE *fp, char *name, CONST point_t center,
+			CONST vect_t a, CONST vect_t b, CONST vect_t c) );
+WDB_EXTERN(int mk_tor, (FILE *fp, char *name, CONST point_t center,
+			CONST vect_t inorm, double r1, double r2) );
+WDB_EXTERN(int mk_rcc, (FILE *fp, char *name, CONST point_t base,
+			CONST vect_t height, fastf_t radius) );
+WDB_EXTERN(int mk_tgc, (FILE *fp, char *name, CONST point_t base,
+			CONST vect_t height, CONST vect_t a, CONST vect_t b,
+			CONST vect_t c, CONST vect_t d) );
+WDB_EXTERN(int mk_cone, (FILE *fp, char *name, CONST point_t base,
+			CONST vect_t dirv, fastf_t height, fastf_t rad1,
+			fastf_t rad2) );
+WDB_EXTERN(int mk_trc, (FILE *fp, char *name, CONST point_t base,
+			CONST vect_t height, fastf_t radbase, fastf_t radtop) );
+WDB_EXTERN(int mk_trc_top, (FILE *fp, char *name, CONST point_t ibase,
+			CONST point_t itop, fastf_t radbase, fastf_t radtop) );
 
 WDB_EXTERN(int mk_arbn, (FILE *fp, char *name, int neqn, plane_t eqn[]) );
 WDB_EXTERN(int mk_ars, (FILE *fp, char *name, int ncurves, int pts_per_curve,
@@ -111,8 +118,13 @@ WDB_EXTERN(int mk_particle, (FILE *fp, char *name, point_t vertex,
 WDB_EXTERN(int mk_pipe, (FILE *fp, char *name, struct wdb_pipeseg *headp) );
 
 /*
- *  Combination conversion routines
+ *  These routines will be replaced in the next release.
+ *  Try not to use them.
  */
+WDB_EXTERN(int mk_polysolid, (FILE *fp, char *name) );
+WDB_EXTERN(int mk_poly, (FILE *fp, int npts,
+			fastf_t verts[][3], fastf_t norms[][3]) );
+WDB_EXTERN(int mk_fpoly, (FILE *fp, int npts, fastf_t verts[][3]) );
 WDB_EXTERN(int mk_comb, (FILE *fp, char *name, int len, int region_flag,
 			char *matname, char *matparm, char *rgb,
 			int inherit_flag) );
@@ -122,6 +134,10 @@ WDB_EXTERN(int mk_rcomb, (FILE *fp, char *name, int len, int region_flag,
 			int inherit_flag) );
 WDB_EXTERN(int mk_fcomb, (FILE *fp, char *name, int len, int region_flag) );
 WDB_EXTERN(int mk_memb, (FILE *fp, char *name, mat_t mat, int bool_op) );
+
+/*
+   *  Combination conversion routines
+ */
 WDB_EXTERN(struct wmember *mk_addmember, (char *name, struct wmember *headp, int op) );
 WDB_EXTERN(int mk_lcomb, (FILE *fp, char *name, struct wmember *headp,
 			int region_flag,
