@@ -428,7 +428,7 @@ char *p_eto[] = {
 	"Enter Y: ",
 	"Enter Z: ",
 	"Enter radius of revolution, r: ",
-	"Enter elliptical semi-minor axis, d: "
+	"Enter magnitude of elliptical semi-minor axis, d: "
 };
 
 /*	F _ I N ( ) :  	decides which solid reader to call
