@@ -263,7 +263,7 @@ char	*argv[];
 #if 0
     int				status;
 #endif
-    char			tmp[1028];
+    char			*tmp;
 
     CHECK_DBI_NULL;
 
@@ -314,8 +314,8 @@ char	*argv[];
 	mged_print_result( TCL_ERROR );
 	return TCL_ERROR;
     }
-    if (db5_type_descrip_from_codes(tmp, raw.major_type, raw.minor_type))
-	tmp[0] = '\0';
+    if (db5_type_descrip_from_codes(&tmp, raw.major_type, raw.minor_type))
+	tmp = 0;
     bu_log("cmd_export_body() sees type (%d, %d)='%s'\n",
 	raw.major_type, raw.minor_type, tmp);
     switch (raw.major_type) {
