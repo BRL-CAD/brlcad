@@ -192,9 +192,9 @@ union tree			*curtree;
  *  enrolled in the list before exiting the critical section.
  */
 HIDDEN struct soltab *rt_find_identical_solid( mat, dp, rtip )
-register CONST matp_t	mat;
-CONST struct directory	*dp;
-struct rt_i		*rtip;
+register CONST matp_t		mat;
+register CONST struct directory	*dp;
+struct rt_i			*rtip;
 {
 	register struct soltab	*stp;
 	register int		i;
@@ -205,7 +205,7 @@ struct rt_i		*rtip;
 	have_match = 0;
 	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
 
-	for( RT_LIST( stp, soltab, &(rt_tree_rtip->rti_headsolid) ) )  {
+	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
 		RT_CK_SOLTAB(stp);		/* sanity */
 
 		/* Leaf solids must be the same before comparing matrices */
@@ -251,7 +251,7 @@ next_one: ;
 		GETSTRUCT(stp, soltab);
 		stp->l.magic = RT_SOLTAB_MAGIC;
 		stp->st_dp = dp;
-		stp->st_bit = rt_tree_rtip->nsolids++;
+		stp->st_bit = rtip->nsolids++;
 
 		if( mat )  {
 			stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
@@ -260,7 +260,7 @@ next_one: ;
 			stp->st_matp = (matp_t)0;
 		}
 
-		RT_LIST_INSERT( &(rt_tree_rtip->rti_headsolid), &(stp->l) );
+		RT_LIST_INSERT( &(rtip->rti_headsolid), &(stp->l) );
 	}
 
 	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
@@ -288,6 +288,7 @@ int				id;
 	register matp_t		mat;
 
 	RT_CK_EXTERNAL(ep);
+	RT_CK_RTI(rt_tree_rtip);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	/* Determine if this matrix is an identity matrix */
