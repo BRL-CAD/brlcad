@@ -249,7 +249,7 @@ struct wmember *wm_hd;
 	sprintf(sol_name, "s.%s.%d", name, sol_num++);
 
 	fix_units(pts);
-	mk_arb8(fd, sol_name, pts);
+	mk_arb8(fd, sol_name, (CONST point_t *)pts);
 
 
 	wm = mk_addmember(sol_name, wm_hd, WMOP_UNION);
@@ -528,7 +528,7 @@ FILE *fd;
 
 	sprintf(sol_name, "s.%s.sr1", name);
 	fix_units(pts);
-	mk_arb8(fd, sol_name, pts);
+	mk_arb8(fd, sol_name, (CONST point_t *)pts);
 	wm = mk_addmember(sol_name, &wm_hd, WMOP_UNION);
 
 
@@ -543,7 +543,7 @@ FILE *fd;
 
 	sprintf(sol_name, "s.%s.sr2", name);
 	fix_units(pts);
-	mk_arb8(fd, sol_name, pts);
+	mk_arb8(fd, sol_name, (CONST point_t *)pts);
 	wm = mk_addmember(sol_name, &wm_hd2, WMOP_UNION);
 
 
@@ -559,7 +559,7 @@ FILE *fd;
 
 		sprintf(sol_name, "s.%s.o.%d", name, i++);
 		fix_units(pts);
-		mk_arb8(fd, sol_name, pts);
+		mk_arb8(fd, sol_name, (CONST point_t *)pts);
 		wm = mk_addmember(sol_name, &wm_hd, WMOP_SUBTRACT);
 		wm = mk_addmember(sol_name, &wm_hd2, WMOP_SUBTRACT);
 	}
