@@ -79,7 +79,7 @@ char *p_half[] = {
 };
 
 char *p_hf[] = {
-	"Enter name of control file (or '""' for none): ",
+	"Enter name of control file (or \"\" for none): ",
 	"Enter name of data file (containing heights): ",
 	"Enter 'cv' style format of data [h|n][s|u]c|s|i|l|d|8|16|32|64: ",
 	"Enter number of values in 'x' direction: ",
