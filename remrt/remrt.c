@@ -464,14 +464,16 @@ int	state;
 	static char	buf[128];
 
 	switch( state )  {
+	case SRST_UNUSED:
+		return "[unused]";
 	case SRST_NEW:
 		return("..New..");
 	case SRST_VERSOK:
 		return("Vers_OK");
 	case SRST_DOING_DIRBUILD:
-		return("DirBuild");
+		return("DoDirbld");
 	case SRST_NEED_TREE:
-		return("WaitTree");
+		return("NeedTree");
 	case SRST_READY:
 		return(" Ready");
 	case SRST_RESTART:
@@ -483,6 +485,24 @@ int	state;
 	}
 	sprintf(buf, "UNKNOWN_x%x", state);
 	return(buf);
+}
+
+/*
+ *			S T A T E C H A N G E
+ */
+void
+statechange( sp, newstate )
+register struct servers *sp;
+int	newstate;
+{
+	if( rem_debug )  {
+		bu_log("%s %s %s --> %s\n",
+			stamp(),
+			sp->sr_host->ht_name,
+			state_to_string(sp->sr_state),
+			state_to_string(newstate) );
+	}
+	sp->sr_state = newstate;
 }
 
 /*
@@ -822,10 +842,10 @@ struct pkg_conn *pc;
 	bzero( (char *)sp, sizeof(*sp) );
 	sp->sr_pc = pc;
 	BU_LIST_INIT( &sp->sr_work );
-	sp->sr_state = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_lump = 32;
 	sp->sr_host = ihp;
+	statechange(sp, SRST_NEW);
 
 	/* Clear any frame state that may remain from an earlier server */
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
@@ -855,7 +875,7 @@ char	*why;
 		return;
 	}
 	oldstate = sp->sr_state;
-	sp->sr_state = SRST_CLOSING;
+	statechange(sp, SRST_CLOSING);
 	sp->sr_curframe = FRAME_NULL;
 
 	/* Only remark on servers that got out of "NEW" state.
@@ -1728,7 +1748,7 @@ struct timeval	*nowp;
 			pkg_close(sp->sr_pc);
 
 			sp->sr_pc = PKC_NULL;
-			sp->sr_state = SRST_UNUSED;
+			statechange(sp, SRST_UNUSED);
 			sp->sr_host = IHOST_NULL;
 
 			break;
@@ -2143,7 +2163,7 @@ char *buf;
 		drop_server( sp, "wrong state" );
 		return;
 	}
-	sp->sr_state = SRST_NEED_TREE;
+	statechange(sp, SRST_NEED_TREE);
 }
 
 /*
@@ -2176,7 +2196,7 @@ char *buf;
 		drop_server( sp, "wrong state" );
 		return;
 	}
-	sp->sr_state = SRST_READY;
+	statechange(sp, SRST_READY);
 }
 
 /*
@@ -2220,7 +2240,7 @@ char	*buf;
 			bu_log("NOTE %s:  VERSION message unexpected\n",
 				sp->sr_host->ht_name);
 		}
-		sp->sr_state = SRST_VERSOK;
+		statechange(sp, SRST_VERSOK);
 	}
 	if(buf) (void)free(buf);
 }
@@ -2689,6 +2709,7 @@ register struct servers *sp;
 	ihp = sp->sr_host;
 	switch( ihp->ht_where )  {
 	case HT_CD:
+		if( rem_debug > 1 )  bu_log("%s MSG_CD %s\n", stamp(), ihp->ht_path);
 		if( pkg_send( MSG_CD, ihp->ht_path, strlen(ihp->ht_path)+1, sp->sr_pc ) < 0 )
 			drop_server(sp, "MSG_CD send error");
 		break;
@@ -2701,13 +2722,14 @@ register struct servers *sp;
 		return;
 	}
 
+	if( rem_debug > 1 )  bu_log("%s MSG_DIRBUILD %s\n", stamp(), file_basename);
 	if( pkg_send( MSG_DIRBUILD, file_basename, strlen(file_basename)+1,
 	    sp->sr_pc ) < 0
 	)  {
 		drop_server(sp, "MSG_DIRBUILD pkg_send error");
 		return;
 	}
-	sp->sr_state = SRST_DOING_DIRBUILD;
+	statechange(sp, SRST_DOING_DIRBUILD);
 }
 
 /*
@@ -2721,7 +2743,7 @@ register struct servers *sp;
 
 	if( pkg_send( MSG_RESTART, "", 0, sp->sr_pc ) < 0 )
 		drop_server(sp, "MSG_RESTART pkg_send error");
-	sp->sr_state = SRST_RESTART;
+	statechange(sp, SRST_RESTART);
 }
 
 /*
@@ -2773,7 +2795,7 @@ register struct frame	*fr;
 		drop_server(sp, "MSG_GETTREES pkg_send error");
 		return;
 	}
-	sp->sr_state = SRST_DOING_GETTREES;
+	statechange(sp, SRST_DOING_GETTREES);
 }
 
 /*
