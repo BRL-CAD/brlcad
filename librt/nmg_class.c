@@ -1107,6 +1107,26 @@ CONST struct rt_tol	*tol;
 				fclose(fp);
 				rt_log("wrote shell2.pl\n");
 			}
+#if 0
+			/* Another bug hunt helper -- re-run face/face isect */
+			rt_g.NMG_debug |= DEBUG_POLYSECT;
+			rt_g.NMG_debug |= DEBUG_PLOTEM;
+			rt_g.NMG_debug |= DEBUG_BASIC;
+			rt_log("class_eu_vs_s:  classifier found edge midpoint ON, edge topology should have been shared\n\n################ re-run face/face isect ############\n\n");
+		{
+			struct faceuse	*fu1 = eu->up.lu_p->up.fu_p;
+			struct faceuse	*fu2;
+
+			NMG_CK_FACEUSE(fu1);
+			for( RT_LIST_FOR( fu2, faceuse, &s->fu_hd ) )  {
+				NMG_CK_FACEUSE(fu2);
+				if( fu2->orientation != OT_SAME )  continue;
+				nmg_isect_two_generic_faces( fu1, fu2, tol );
+			}
+			eup = nmg_findeu( eu->vu_p->v_p, eu->eumate_p->vu_p->v_p, s, eu, 0 );
+			if(!eup) rt_log("Unable to find it\n");
+		}
+#endif
 			rt_bomb("class_eu_vs_s:  classifier found edge midpoint ON, edge topology should have been shared\n");
 		}  else  {
 			rt_log("class=%s\n", nmg_class_name(class) );
