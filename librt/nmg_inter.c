@@ -568,20 +568,23 @@ struct faceuse *fu;
 			eu = eu->last;
 		} while (eu != eu_start);
 	} else {
-		rt_bomb("Unknown type of NMG loopuse\n");
+		rt_bomb("isect_loop_face() Unknown type of NMG loopuse\n");
 	}
 }
-/*	I S E C T _ L O O P S
+
+/*
+ *			N M G _ I S E C T _ 2 F A C E _ L O O P S
  *
- *	intersect loops of face 1 with face 2
+ *	Intersect loops of face 1 with the entirety of face 2
  */
-static void isect_loops(bs, fu1, fu)
+static void nmg_isect_2face_loops(bs, fu1, fu2)
 struct nmg_boolstruct *bs;
-struct faceuse *fu1, *fu;
+struct faceuse	*fu1;
+struct faceuse	*fu2;
 {
 	struct loopuse *lu_start, *lu;
 
-	NMG_CK_FACE_G(fu->f_p->fg_p);
+	NMG_CK_FACE_G(fu2->f_p->fg_p);
 	NMG_CK_FACE_G(fu1->f_p->fg_p);
 
 	/* process each loop in face 1 */
@@ -592,16 +595,18 @@ struct faceuse *fu1, *fu;
 			rt_log("\nLoop %8x\n", lu);
 
 		if (lu->up.fu_p != fu1) {
-			rt_bomb("Child loop doesn't share parent!\n");
+			rt_bomb("nmg_isect_2face_loops() Child loop doesn't share parent!\n");
 		}
 
-		isect_loop_face(bs, lu, fu);
+		isect_loop_face(bs, lu, fu2);
 
 		lu = lu->next;
 	} while (lu != lu_start);
 }
 
 /*
+ *			N M G _ P L _ 2 F U
+ *
  *  Note that 'str' is expected to contain a %d to place the frame number.
  */
 void
@@ -715,7 +720,7 @@ fastf_t tol;
     	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu1, fu2, 0 );
     	}
 
-	isect_loops(&bs, fu1, fu2);
+	nmg_isect_2face_loops(&bs, fu1, fu2);
 
     	if (rt_g.NMG_debug & DEBUG_COMBINE) {
 	    	p.magic_p = vert_list1.buffer;
@@ -736,7 +741,7 @@ fastf_t tol;
 
     	bs.l2 = &vert_list1;
     	bs.l1 = &vert_list2;
-	isect_loops(&bs, fu2, fu1);
+	nmg_isect_2face_loops(&bs, fu2, fu1);
 
     	if (vert_list1.end == 0) {
     		/* there were no intersections */
