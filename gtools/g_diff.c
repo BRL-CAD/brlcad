@@ -777,6 +777,10 @@ struct rt_wdb *wdb1, *wdb2;
 	{
 		for( dp2 = dbip2->dbi_Head[i]; dp2 != DIR_NULL; dp2 = dp2->d_forw )
 		{
+			/* skip the _GLOBAL object */
+			if( dp2->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
+				continue;
+
 			/* check if this object exists in the other database */
 			if( (dp1 = db_lookup( dbip1, dp2->d_namep, 0 )) == DIR_NULL )
 			{
