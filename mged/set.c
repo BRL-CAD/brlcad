@@ -44,6 +44,7 @@ struct mged_variables mged_variables = {
 /* sgi_win_size */		0,
 /* sgi_win_origin */		{ 0, 0 },
 /* faceplate */			1,
+/* show_menu */                 1,
 /* w_axis */    	        0,
 /* v_axis */    	        0,
 /* e_axis */            	0,
@@ -86,6 +87,7 @@ nmg_eu_dist_set()
 
 	rt_log( "New nmg_eue_dist = %g\n", nmg_eue_dist);
 }
+
 #ifdef MULTI_ATTACH
 #define MV_O(_m)	offsetof(struct _mged_variables, _m)
 #else
@@ -97,6 +99,7 @@ struct structparse mged_vparse[] = {
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),FUNC_NULL },
 	{"%d",	1, "faceplate",		MV_O(faceplate),	refresh_hook },
+	{"%d",	1, "show_menu",		MV_O(show_menu),	refresh_hook },
 	{"%d",  1, "w_axis",            MV_O(w_axis),           refresh_hook },
 	{"%d",  1, "v_axis",            MV_O(v_axis),           refresh_hook },
 	{"%d",  1, "e_axis",            MV_O(e_axis),           refresh_hook },
