@@ -124,12 +124,14 @@ char **argv;
 		}
 		else			/* eliminate the temporary combination */
 		{
-			char linebuf[NAMESIZE + 7];
+			struct rt_vls	v;
 
-			strcpy( linebuf , "kill " );
-			strcat( linebuf , red_tmpcomb );
-			strcat( linebuf , "\n" );
-			cmdline( linebuf );
+			rt_vls_init( &v );
+			rt_vls_strcat( &v, "kill " );
+			rt_vls_strcat( &v , red_tmpcomb );
+			rt_vls_strcat( &v , "\n" );
+			cmdline( &v );
+			rt_vls_free( &v );
 		}
 	}
 
@@ -495,25 +497,27 @@ restore_comb( dp )
 struct directory *dp;
 {
 /* restore a combination that was saved in "red_tmpcomb" */
-
-	char linebuf[2*NAMESIZE + 8];
+	struct rt_vls	v;
 	char name[NAMESIZE];
 
 	/* Save name of original combo */
 	strcpy( name , dp->d_namep );
 
 	/* Kill original combination */
-	strcpy( linebuf , "kill " );
-	strcat( linebuf , dp->d_namep );
-	strcat( linebuf , "\n" );
-	cmdline( linebuf );
+	rt_vls_init(&v);
+	rt_vls_strcat( &v , "kill " );
+	rt_vls_strcat( &v , dp->d_namep );
+	rt_vls_strcat( &v , "\n" );
+	cmdline( &v );
+	rt_vls_free( &v );
 
 	/* Move temp to original */
-	strcpy( linebuf , "mv " );
-	strcat( linebuf , red_tmpcomb );
-	strcat( linebuf , " " );
-	strcat( linebuf , name );
-	strcat( linebuf , "\n" );
+	rt_vls_strcat( &v , "mv " );
+	rt_vls_strcat( &v , red_tmpcomb );
+	rt_vls_strcat( &v , " " );
+	rt_vls_strcat( &v , name );
+	rt_vls_strcat( &v , "\n" );
 
-	cmdline( linebuf );
+	cmdline( &v );
+	rt_vls_free( &v );
 }
