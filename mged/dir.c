@@ -117,20 +117,57 @@ extern char *cmd_args[];		/* defined in cmd.c */
 
 /*
  *  			D B _ O P E N
+ *
+ *  Returns:
+ *	-1	error
+ *	+1	success
  */
-void
+int
 db_open( name )
 char *name;
 {
 	if( (objfd = open( name, O_RDWR )) < 0 )  {
 		if( (objfd = open( name, O_RDONLY )) < 0 )  {
 			perror( name );
-			exit(2);		/* NOT finish */
+			return(-1);
+		}  else  {
+			(void)printf("%s: READ ONLY\n", name);
+			read_only = 1;
 		}
-		(void)printf("%s: READ ONLY\n", name);
-		read_only = 1;
 	}
 	filename = name;
+	return(1);
+}
+
+/*
+ *			D B _ C R E A T E
+ *
+ *  Create a new database containing just an IDENT record
+ *  Returns:
+ *	-1 on error,
+ *	+1 on success.
+ */
+int
+db_create( name )
+char *name;
+{
+	union record new;
+
+	if( (objfd = creat(name, 0644)) < 0 )  {
+		perror(name);
+		return(-1);
+	}
+	bzero( (char *)&new, sizeof(new) );
+	new.i.i_id = ID_IDENT;
+	new.i.i_units = ID_MM_UNIT;
+	strncpy( new.i.i_version, ID_VERSION, sizeof(new.i.i_version) );
+	strcpy( new.i.i_title, "Untitled MGED Database" );
+	(void)write( objfd, (char *)&new, sizeof(new) );
+	(void)close(objfd);
+
+	if( db_open( name ) < 0 )
+		return(-1);
+	return(1);
 }
 
 /*

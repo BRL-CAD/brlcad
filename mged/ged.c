@@ -108,7 +108,18 @@ char **argv;
 	(void)printf("%s\n", version);
 
 	/* Get input file */
-	db_open( argv[1] );
+	if( db_open( argv[1] ) < 0 )  {
+		char line[128];
+		if( !isatty(0) )
+			exit(2);		/* NOT finish */
+		(void)printf("Create new database (y|n)[n]? ");
+		fflush(stdout);
+		(void)gets( line );
+		if( line[0] != 'y' && line[0] != 'Y' )
+			exit(0);		/* NOT finish */
+		if( db_create( argv[1] ) < 0 )
+			exit(2);		/* NOT finish */
+	}
 
 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
