@@ -20,10 +20,10 @@
 everything&::	PRODUCTS
 
 tclsh:  tclAppInit.o LIBTCL_DEP
-	CC LDFLAGS -o tclsh tclAppInit.o LIBTCL LIBES
+	CC LDFLAGS -o tclsh tclAppInit.o LIBTCL LIBTCL_LIBES LIBES
 
 tcltest: tclTest.o LIBTCL_DEP
-	CC LDFLAGS -o tcltest tclTest.o LIBTCL LIBES
+	CC LDFLAGS -o tcltest tclTest.o LIBTCL LIBTCL_LIBES LIBES
 
 tclAppInit.o: ../SRCDIR/tclAppInit.c
 	CC CFLAGS -c ../SRCDIR/tclAppInit.c
