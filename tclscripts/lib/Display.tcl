@@ -43,10 +43,10 @@ class Display {
     } {}
     destructor {}
 
-    public method update {obj}
-    public method refresh {}
+    public method mouse_nirt {_x _y {gi 0}}
     public method nirt {args}
     public method qray {args}
+    public method refresh {}
     public method rt {args}
     public method rtabort {{gi 0}}
     public method rtcheck {args}
@@ -56,6 +56,7 @@ class Display {
     public method attach_drawable {dg}
     public method detach_view {}
     public method detach_drawable {dg}
+    public method update {obj}
 
     # methods for maintaining the list of geometry objects
     public method add {glist}
@@ -136,6 +137,25 @@ body Display::refresh {} {
 	Dm::refreshfb
     }
     Dm::drawEnd
+}
+
+body Display::mouse_nirt {_x _y {gi 0}} {
+    set geo [lindex $geolist $gi]
+
+    if {$geo == ""} {
+	return "mouse_nirt: bad geometry index - $gi"
+    }
+
+    # transform X screen coordinates into normalized view coordinates
+    set nvx [expr ($_x * $invWidth - 0.5) * 2.0]
+    set nvy [expr (0.5 - $_y * $invHeight) * 2.0 * $invAspect]
+
+    # transform normalized view coordinates into model coordinates
+    set mc [mat4x3pnt [view2model] "$nvx $nvy 0"]
+
+    # finally, call nirt (backing out of geometry)
+    set v_obj [View::get_viewname]
+    eval $geo nirt $v_obj -b $mc
 }
 
 body Display::nirt {args} {

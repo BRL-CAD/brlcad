@@ -85,6 +85,7 @@ class QuadDisplay {
     public method linestyle {args}
     public method linewidth {args}
     public method listen {args}
+    public method mouse_nirt {x y}
     public method perspective {args}
     public method perspective_angle {args}
     public method nirt {args}
@@ -541,6 +542,10 @@ body QuadDisplay::fb_active {args} {
 
 body QuadDisplay::fb_observe {args} {
     eval $itk_component($itk_option(-pane)) fb_observe $args
+}
+
+body QuadDisplay::mouse_nirt {x y} {
+    eval $itk_component($itk_option(-pane)) mouse_nirt $x $y
 }
 
 body QuadDisplay::nirt {args} {
