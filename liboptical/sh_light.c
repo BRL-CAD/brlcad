@@ -320,7 +320,6 @@ light_init()
 
 	if( RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
 		RT_LIST_INIT( &(LightHead.l) );
-		return;
 	}
 	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		nlights++;
