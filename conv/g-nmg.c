@@ -150,7 +150,6 @@ union tree		*curtree;
 		*tsp->ts_m = nmg_mm();
 		goto out;
 	}
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 
 	RT_UNSETJUMP;		/* Relinquish the protection */
@@ -458,7 +457,7 @@ char	*argv[];
 			ttol.rel = 0.0;
 			break;
 		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(optarg);
+			ttol.norm = atof(optarg)*bn_pi/180.0;
 			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name */
