@@ -231,7 +231,7 @@ char ** argv;
 	bg_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * screen_width );
 
 	/* Fill in background buffer */
-	for( i=0; i<screen_xlen*3; i+=3 )  {
+	for( i=0; i<screen_xlen; i++ )  {
 		bg_buf[i][0] = sv_globals.sv_bg_color[0];
 		bg_buf[i][1] = sv_globals.sv_bg_color[1];
 		bg_buf[i][2] = sv_globals.sv_bg_color[2];
