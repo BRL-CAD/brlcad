@@ -32,12 +32,153 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
+#include <fcntl.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
+
+#ifdef HAVE_UNIX_IO
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
+
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "./debug.h"
+
+/* ====================================================================== */
+/* XXX Move this to some other file */
+struct rt_list		rt_mapped_file_head;
+struct rt_mapped_file {
+	struct rt_list	l;
+	char		name[512];	/* Copy of file name */
+	genptr_t	buf;		/* In-memory copy of file (may be mmapped) */
+	int		buflen;		/* # bytes in 'buf' */
+	int		is_mapped;	/* 1=mmap() used, 0=rt_malloc/fread */
+	char		appl[32];	/* Tag for application using 'apbuf' */
+	genptr_t	apbuf;		/* opt: application-specific buffer */
+	char		apbuflen;	/* opt: application-specific buflen */
+	int		uses;		/* # ptrs to this struct handed out */
+};
+#define RT_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
+#define RT_CK_MAPPED_FILE(_p)	RT_CKMAG(_p, RT_MAPPED_FILE_MAGIC, "rt_mapped_file")
+
+/*
+ *			R T _ O P E N _ M A P P E D _ F I L E
+ *
+ *  If the file can not be opened, as descriptive an error message as
+ *  possible will be printed, to simplify code handling in the caller.
+ */
+struct rt_mapped_file *
+rt_open_mapped_file( name, appl )
+CONST char	*name;		/* file name */
+CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
+{
+	struct rt_mapped_file	*mp;
+#ifdef HAVE_UNIX_IO
+	struct stat		sb;
+#endif
+	int			fd;	/* unix file descriptor */
+	FILE			*fp;	/* stdio file pointer */
+
+	if( RT_LIST_UNINITIALIZED( &rt_mapped_file_head ) )  {
+		RT_LIST_INIT( &rt_mapped_file_head );
+	}
+	for( RT_LIST_FOR( mp, rt_mapped_file, &rt_mapped_file_head ) )  {
+		RT_CK_MAPPED_FILE(mp);
+		if( strncmp( name, mp->name, sizeof(mp->name) ) )  continue;
+		if( appl && strncmp( appl, mp->appl, sizeof(mp->appl) ) )
+			continue;
+		/* File is already mapped */
+		return mp;
+	}
+	/* File is not yet mapped, open file read only. */
+#ifdef HAVE_UNIX_IO
+	if( stat( name, &sb ) < 0 )  {
+		perror(name);
+		goto fail;
+	}
+	if( sb.st_size == 0 )  {
+		rt_log("rt_open_mapped_file(%s) 0-length file\n", name);
+		goto fail;
+	}
+	if( (fd = open( name, O_RDONLY )) < 0 )  {
+		perror(name);
+		goto fail;
+	}
+#endif /* HAVE_UNIX_IO */
+
+	/* Optimisticly assume that things will proceed OK */
+	GETSTRUCT( mp, rt_mapped_file );
+	strncpy( mp->name, name, sizeof(mp->name) );
+	if( appl ) strncpy( mp->appl, appl, sizeof(mp->appl) );
+
+#ifdef HAVE_UNIX_IO
+#  ifdef HAVE_SYS_MMAN_H
+	/* Attempt to access as memory-mapped file */
+	if( (mp->buf = mmap(
+	    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
+	    fd, (off_t)0 )) != (caddr_t)-1 )  {
+	    	/* OK, it's memory mapped in! */
+	    	mp->is_mapped = 1;
+	    	/* It's safe to close the fd now, the manuals say */
+	} else
+#  endif /* HAVE_SYS_MMAN_H */
+	{
+		/* Allocate a local buffer, and slurp it in */
+		mp->buf = rt_malloc( sb.st_size, mp->name );
+		if( read( fd, mp->buf, sb.st_size ) != sb.st_size )  {
+			perror("read");
+			rt_free( (char *)mp->buf, mp->name );
+			goto fail;
+		}
+	}
+	close(fd);
+#else /* !HAVE_UNIX_IO */
+	/* Read it in with stdio, with no clue how big it is */
+	if( (fp = fopen( name, "r")) == NULL )  {
+		perror(name);
+		goto fail;
+	}
+	/* Read it once to see how large it is */
+	/* Malloc the necessary buffer */
+	/* Read it again into the buffer */
+	XXX_no_UNIX_io;
+	fclose(fp);
+#endif
+
+
+
+
+	mp->uses = 1;
+	mp->l.magic = RT_MAPPED_FILE_MAGIC;
+	return mp;
+
+fail:
+	if( mp )  rt_free( (char *)mp, "rt_open_mapped_file failed");
+	rt_log("rt_open_mapped_file(%s) can't open file\n", name);
+	return (struct rt_mapped_file *)NULL;
+}
+/*
+ *			R T _ C L O S E _ M A P P E D _ F I L E
+ */
+void
+rt_close_mapped_file( mp )
+struct rt_mapped_file	*mp;
+{
+	RT_CK_MAPPED_FILE(mp);
+}
+/* ====================================================================== */
 
 struct rt_hf_internal {
 	long	magic;
@@ -299,6 +440,9 @@ register CONST mat_t		mat;
 	LOCAL struct rt_hf_internal	*xip;
 	union record			*rp;
 	struct rt_vls			str;
+	vect_t				tmp;
+	int				fmt;	/* format cookie */
+	int				in_len;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -372,10 +516,31 @@ err1:
 		rt_log("rt_hf_import() w=%d, n=%d too small\n");
 		goto err1;
 	}
+	if( xip->xlen <= 0 || xip->ylen <= 0 )  {
+		rt_log("rt_hf_import() xlen=%g, ylen=%g too small\n", xip->xlen, xip->ylen);
+		goto err1;
+	}
 
 	/* Apply modeling transformations */
+	MAT4X3PNT( tmp, mat, xip->v );
+	VMOVE( xip->v, tmp );
+	MAT4X3VEC( tmp, mat, xip->x );
+	VMOVE( xip->x, tmp );
+	MAT4X3VEC( tmp, mat, xip->y );
+	VMOVE( xip->y, tmp );
+	xip->file2mm /= mat[15];
+
+	/* Prepare for cracking input file format */
+	if( (fmt = cv_cookie( xip->fmt )) == 0 )  {
+		rt_log("rt_hf_import() fmt='%s' unknown\n", xip->fmt);
+		goto err1;
+	}
+	in_len = cv_itemlen( fmt );
 
 	/* Load data file, and transform to internal format */
+	if( !(mf = rt_open_mapped_file( xif->dfile, NULL )) )  {
+		/* fail */
+	}
 
 	return(0);			/* OK */
 }
