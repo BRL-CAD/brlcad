@@ -213,7 +213,8 @@ register CONST mat_t	b;
  *
  *  o = i * o
  *
- *  A convenience wrapper for bn_mat_mul().
+ *  A convenience wrapper for bn_mat_mul() to update a matrix in place.
+ *  The arugment ordering is confusing either way.
  */
 void
 bn_mat_mul2( i, o )
@@ -224,6 +225,48 @@ register mat_t		o;
 
 	bn_mat_mul( temp, i, o );
 	bn_mat_copy( o, temp );
+}
+
+/*
+ *			B N _ M A T _ M U L 3
+ *
+ *  o = a * b * c
+ *
+ *  The output matrix may be the same as 'b' or 'c', but may not be 'a'.
+ */
+void
+bn_mat_mul3( o, a, b, c )
+mat_t		o;
+CONST mat_t	a;
+CONST mat_t	b;
+CONST mat_t	c;
+{
+	mat_t	t;
+
+	mat_mul( t, b, c );
+	mat_mul( o, a, t );
+}
+
+/*
+ *			B N _ M A T _ M U L 4
+ *
+ *  o = a * b * c * d
+ *
+ *  The output matrix may be the same as any input matrix.
+ */
+void
+bn_mat_mul4( o, a, b, c, d )
+mat_t		o;
+CONST mat_t	a;
+CONST mat_t	b;
+CONST mat_t	c;
+CONST mat_t	d;
+{
+	mat_t	t, u;
+
+	mat_mul( u, c, d );
+	mat_mul( t, a, b );
+	mat_mul( o, t, u );
 }
 
 /*
