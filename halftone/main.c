@@ -3,6 +3,7 @@ static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
 #include <ctype.h>
+#include "msr.h"
 /*	halftone	given a bw file, generate a ht file.
  *
  * Usage:
@@ -11,6 +12,7 @@ static char rcsid[] = "$Header$";
  *		-n	number of lines
  *		-w	width
  *		-h	same as -s 1024
+ *		-a	Automatic bw file sizing.
  *		-B	Beta for sharpining
  *		-I	number of intensity levels
  *		-M	method
@@ -47,6 +49,9 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.1  90/04/13  01:22:48  cjohnson
+ * First Relese.
+ * 
  * Revision 1.6  90/04/13  00:29:10  cjohnson
  * Add sharpening.
  * Clean up comments.
@@ -82,10 +87,10 @@ int Method=M_FLOYD;	/* Method of halftoning */
 int Surpent=0;		/* use serpentine scan lines */
 int Levels=1;		/* Number of levels-1 */
 int Debug=0;
-int RandomFlag=0;	/* Use random numbers ? */
+struct msr_unif *RandomFlag=0;	/* Use random numbers ? */
 
 static char usage[] = "\
-Usage: halftone [ -h -R -S ] [-D Debug Level]\n\
+Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-B contrast] [-I intensity_levels] [-T x y ... tone_curve]\n\
 	[-M Method] [file.bw]\n\
@@ -128,8 +133,9 @@ char **argv;
 	int i,j;
 	int *Xlist, *Ylist;
 	double atof();
+	int	autosize = 0;
 
-	while ((c = getopt(argc, argv, "D:hs:n:w:B:M:RSI:T:")) != EOF) {
+	while ((c = getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != EOF) {
 		switch(c) {
 		case 's':
 			width = height = atoi(optarg);
@@ -143,6 +149,9 @@ char **argv;
 		case 'h':
 			width = height = 1024;
 		break;
+		case 'a':
+			autosize = 1;
+		break;
 		case 'B':
 			Beta = atof(optarg);
 		break;
@@ -150,7 +159,7 @@ char **argv;
 			Method = atoi(optarg);
 		break;
 		case 'R':
-			RandomFlag = 1;
+			RandomFlag = msr_unif_init(1,0);
 		break;
 		case 'S':
 			Surpent = 1;
@@ -214,12 +223,22 @@ char **argv;
 			(void) fprintf(stderr,usage);
 			exit(1);
 		}
+		if (autosize) {
+			(void) fprintf(stderr, usage);
+			(void) fprintf(stderr, "Automatic sizing can not be used with pipes.\n");
+			exit(1);
+		}
 	} else {
 		if (freopen(argv[optind],"r",stdin) == NULL ) {
 			(void) fprintf( stderr,
 			    "halftone: cannot open \"%s\" for reading.\n",
 			    argv[optind]);
 			exit(1);
+		}
+		if (autosize) {
+			if ( !fb_common_file_size(&width, &height, argv[optind], 1)) {
+				(void) fprintf(stderr,"halftone: unable to autosize.\n");
+			}
 		}
 	}
 
