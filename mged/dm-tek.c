@@ -31,8 +31,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./solid.h"
 
-typedef unsigned char u_char;
-
 /* Display Manager package interface */
 
 #define TEKBOUND	1000.0	/* Max magnification in Rot matrix */
@@ -307,7 +305,7 @@ Tek_update()
 /* ARGSUSED */
 void
 Tek_puts( str, x, y, size, color )
-register u_char *str;
+register char *str;
 {
 	tekmove(x,y);
 	teklabel(str);
