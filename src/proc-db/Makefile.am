@@ -1,7 +1,8 @@
 # $Id$
 
+# apply-mdb was removed due to compile issues... should be readded once those are resolved...
+# nmgexplode was removed because nmgexplode.c doesn't seem to exist
 bin_PROGRAMS = \
-	apply-mdb \
 	bottest \
 	brickwall \
 	clutter \
@@ -10,7 +11,6 @@ bin_PROGRAMS = \
 	globe \
 	kurt \
 	molecule \
-	nmgexplode \
 	nmgmodel \
 	picket_fence \
 	pipe \
@@ -33,7 +33,7 @@ bin_PROGRAMS = \
 
 noinst_HEADERS = \
 	ducks.h \
-	fench.h \
+	fence.h \
 	patches.h \
 	tea.h \
 	vegitation.h
@@ -41,8 +41,8 @@ noinst_HEADERS = \
 man_MANS = picket_fence.1
 
 
-apply_mdb_SOURCES = apply-mdb.c 
-apply_mdb_LDADD = ${WDB}
+#apply_mdb_SOURCES = apply-mdb.c 
+#apply_mdb_LDADD = ${WDB}
 
 bottest_SOURCES = bottest.c 
 bottest_LDADD = ${WDB}
@@ -71,8 +71,8 @@ molecule_LDADD = ${WDB}
 nmgmodel_SOURCES = nmgmodel.c 
 nmgmodel_LDADD = ${WDB}
 
-nmgexplode_SOURCES = nmgexplode.c 
-nmgexplode_LDADD = ${WDB}
+#nmgexplode_SOURCES = nmgexplode.c 
+#nmgexplode_LDADD = ${WDB}
 
 picket_fence_SOURCES = picket_fence.c 
 picket_fence_LDADD = ${WDB}
