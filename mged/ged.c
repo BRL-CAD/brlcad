@@ -61,7 +61,6 @@ in all countries except the USA.  All rights reserved.";
 #endif
 #include <fcntl.h>
 #include <signal.h>
-#include <setjmp.h>
 #include <time.h>
 #ifdef NONBLOCK
 #	include <termio.h>
