@@ -74,8 +74,7 @@ char	**argv;
 #define MAX_VERTS	1024
 	vect_t	verts[MAX_VERTS];
 	int	need_normal = 0;
-	int	olen;
-	char	*obuf;
+	struct	rt_external	obuf;
 
 	if( (fp = fopen( argv[1], "w" )) == NULL )  {
 		perror(argv[1]);
@@ -132,31 +131,27 @@ char	**argv;
 					VSUB2( e2, verts[0], verts[2] );
 					VCROSS( ph.normal, e1, e2 );
 				}
-				obuf = rt_struct_export( &olen,
-					(genptr_t)&ph, polygon_desc );
-				if( obuf == (char *)0 )  {
+				if( rt_struct_export( &obuf, (genptr_t)&ph, polygon_desc ) < 0 )  {
 					printf("header export error\n");
 					break;
 				}
-				if( fwrite( obuf, 1, olen, fp ) != olen )  {
-					perror("fwrite");
+				if (rt_struct_put(fp, &obuf) != obuf.ext_nbytes) {
+					perror("rt_struct_put");
 					break;
 				}
-				rt_free( obuf, "polygon header" );
+				db_free_external( &obuf );
 
 				/* Now export the vertices */
 				vertex_desc[0].im_count = ph.npts * 3;
-				obuf = rt_struct_export( &olen,
-					(genptr_t)verts, vertex_desc );
-				if( obuf == (char *)0 )  {
+				if( rt_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
 					printf("vertex export error\n");
 					break;
 				}
-				if( fwrite( obuf, 1, olen, fp ) != olen )  {
-					perror("fwrite");
+				if( rt_struct_put( fp, &obuf ) != obuf.ext_nbytes )  {
+					perror("rt_struct_buf");
 					break;
 				}
-				rt_free( obuf, "vertex buffer" );
+				db_free_external( &obuf );
 				ph.npts = 0;		/* sanity */
 				break;
 			}
