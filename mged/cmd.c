@@ -59,7 +59,7 @@ void	f_region(), f_itemair(), f_mater(), f_kill(), f_list(), f_cat();
 void	f_zap(), f_group(), f_mirror(), f_extrude();
 void	f_rm(), f_arbdef(), f_quit();
 void	f_edcomb(), f_status(), f_vrot();
-void	f_refresh(), f_fix(), f_rt(), f_rrt();
+void	f_refresh(), f_fix(), f_rt(), f_rrt(), f_nirt();
 void	f_saveview(), f_savekey();
 void	f_make(), f_attach(), f_release();
 void	f_tedit(), f_memprint();
@@ -96,8 +96,9 @@ static struct funtab {
 	f_comm,1,1,
 "3ptarb", "", "makes arb given 3 pts, 2 coord of 4th pt, and thickness",
 	f_3ptarb, 1, 27,
-"adc", "[<reset|<a1|a2|x|y|dst> num>]", "control the angle/distance cursor",
-        f_adc, 1, 3,
+"adc", "[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> value(s)]",
+	"control the angle/distance cursor",
+        f_adc, 1, 5,
 "ae", "azim elev", "set view using az and elev angles",
 	f_aeview, 3, 3,
 "analyze", "[arbname]", "analyze faces of ARB",
@@ -214,6 +215,8 @@ static struct funtab {
 	f_name,3,3,
 "mvall", "oldname newname", "rename object everywhere",
 	f_mvall, 3, 3,
+"nirt", "", "trace a single ray from current view",
+	f_nirt,1,MAXARGS,
 "overlay", "file.plot [name]", "Read UNIX-Plot as named overlay",
 	f_overlay, 2, 3,
 "p", "dx [dy dz]", "set parameters",
