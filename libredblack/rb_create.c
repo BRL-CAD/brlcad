@@ -22,11 +22,14 @@
  *	success, rb_create() returns a pointer to the red-black tree
  *	header record created.  Otherwise, it returns RB_TREE_NULL.
  */
-rb_tree *rb_create (char *description, int nm_orders, int (**order)())
+rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
 {
+    int		order;
     rb_tree	*tree;
 
-    if ((tree = (rb_tree *) malloc(sizeof(rb_tree))) == NULL)
+    if (((tree = (rb_tree *) malloc(sizeof(rb_tree))) == RB_TREE_NULL)	||
+	((tree -> rbt_root = (struct rb_node **)
+		    malloc(nm_orders * sizeof(struct rb_node))) == 0))
     {
 	fputs("rb_create(): Ran out of memory\n", stderr);
 	return (RB_TREE_NULL);
@@ -34,8 +37,9 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order)())
     tree -> rbt_magic = RB_TREE_MAGIC;
     tree -> rbt_description = description;
     tree -> rbt_nm_orders = nm_orders;
-    tree -> rbt_order = order;
-    tree -> rbt_root = RB_NODE_NULL;
+    tree -> rbt_order = order_funcs;
+    for (order = 0; order < nm_orders; ++order)
+	rb_root(tree, order) = RB_NODE_NULL;
     return (tree);
 }
 
@@ -81,15 +85,18 @@ int rb_insert (rb_tree *tree, void *data)
     node -> rbn_magic = RB_NODE_MAGIC;
     node -> rbn_tree = tree;
     node -> rbn_data = data;
-    /*	If the tree was empty, install this node as the root	*/
-    if (tree -> rbt_root == RB_NODE_NULL)
-    {
-	tree -> rbt_root = node;
+    /*
+     *	If the tree was empty, install this node as the root
+     *	and give it a null parent and null children
+     */
+    if (rb_root(tree, 0) == RB_NODE_NULL)
 	for (order = 0; order < nm_orders; ++order)
+	{
+	    rb_root(tree, order) = node;
 	    rb_parent(node, order) =
 	    rb_left_child(node, order) =
 	    rb_right_child(node, order) = RB_NODE_NULL;
-    }
+	}
     /*	Otherwise, insert the node into the tree */
     else
 	for (order = 0; order < nm_orders; ++order)
@@ -129,7 +136,7 @@ int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
     rb_right_child(new_node, order) = RB_NODE_NULL;
 
     parent = RB_NODE_NULL;
-    node = tree -> rbt_root;
+    node = rb_root(tree, order);
     compare = rb_order_func(tree, order);
     while (node != RB_NODE_NULL)
     {
@@ -141,7 +148,7 @@ int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
     }
     rb_parent(new_node, order) = parent;
     if (parent == RB_NODE_NULL)
-	tree -> rbt_root = new_node;
+	rb_root(tree, order) = new_node;
     else if ((*compare)(new_node -> rbn_data, parent -> rbn_data) < 0)
 	rb_left_child(parent, order) = new_node;
     else
@@ -169,10 +176,14 @@ void rb_describe (rb_tree *tree)
 	fputs("No orders\n", stderr);
     else
 	for (i = 0; i < tree -> rbt_nm_orders; ++i)
+	{
 	    fprintf(stderr,
-		    "Order[%d]:   <%x>\n", i, (tree -> rbt_order)[i]);
-    fprintf(stderr, "Root:        <%d>\n", tree -> rbt_root);
-    if (tree -> rbt_root != RB_NODE_NULL)
-	fprintf(stderr, "Data:        <%d>\n", tree -> rbt_root -> rbn_data);
+		    "Order[%d]:   <%x>\n", i, rb_order_func(tree, i));
+	    fprintf(stderr,
+		    "Root[%d]:    <%x>\n", i, rb_root(tree, i));
+	    if (rb_root(tree, 0) != RB_NODE_NULL)
+		fprintf(stderr,
+		    "Data[%d]:    <%x>\n", i, rb_root(tree, i) -> rbn_data);
+	}
     fprintf(stderr, "-----------------------------------------\n");
 }
