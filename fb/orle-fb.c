@@ -23,7 +23,6 @@ static char RCSid[] = "@(#)$Id$ (BRL)";
 #include "fb.h"
 #include "orle.h"
 
-typedef unsigned char	u_char;
 static char	*usage[] =
 	{
 "Usage: orle-fb [-Otdv] [-b (rgbwBG)] [-F Frame_buffer] [-p X Y] [file.rle]",

@@ -21,7 +21,6 @@ static char RCSid[] = "@(#)$Id$ (BRL)";
 #include "fb.h"		/* For Pixel typedef */
 #include "orle.h"
 
-typedef unsigned char	u_char;
 static char	*usage[] =
 	{
 "Usage: rle-pix [-dv] [-b (rgbBG)] [file.rle]",
