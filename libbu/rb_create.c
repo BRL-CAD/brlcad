@@ -40,9 +40,12 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
 			"red-black roots");
     tree -> rbt_empty_node = (struct rb_node *)
 		    rt_malloc(sizeof(struct rb_node), "red-black empty node");
-    tree -> rbt_empty_node  -> rbn_parent = (struct rb_node **)
+    rb_null(tree) -> rbn_parent = (struct rb_node **)
 		rt_malloc(nm_orders * sizeof(struct rb_node *),
 			    "red-black parents");
+    rb_null(tree) -> rbn_color = (char *)
+		rt_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+			    "red-black colors");
     /*
      *	Fill in the tree
      */
@@ -58,12 +61,15 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
     /*
      *	Initialize the nil sentinel
      */
-    tree -> rbt_empty_node -> rbn_magic = RB_NODE_MAGIC;
-    tree -> rbt_empty_node -> rbn_tree = tree;
+    rb_null(tree) -> rbn_magic = RB_NODE_MAGIC;
+    rb_null(tree) -> rbn_tree = tree;
     for (order = 0; order < nm_orders; ++order)
-	(tree -> rbt_empty_node -> rbn_parent)[order] = RB_NODE_NULL;
-    tree -> rbt_empty_node -> rbn_left = 0;
-    tree -> rbt_empty_node -> rbn_right = 0;
+    {
+	rb_parent(rb_null(tree), order) = RB_NODE_NULL;
+	rb_set_color(rb_null(tree), order, RB_BLACK);
+    }
+    rb_null(tree) -> rbn_left = 0;
+    rb_null(tree) -> rbn_right = 0;
 
     return (tree);
 }
