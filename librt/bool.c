@@ -75,7 +75,7 @@ struct partition *PartHdp;
 		if(debug&DEBUG_PARTITION) pr_seg(segp);
 
 		/* Totally ignore things behind the start position */
-		if( segp->seg_out.hit_dist <= 0 )
+		if( segp->seg_out.hit_dist < -EPSILON )
 			continue;
 
 		/*  Eliminate very thin segments, or they will cause
@@ -330,7 +330,7 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 bool_final( InputHdp, FinalHdp, startdist, enddist, regionbits, ap )
 struct partition *InputHdp;
 struct partition *FinalHdp;
-double startdist, enddist;
+fastf_t startdist, enddist;
 bitv_t *regionbits;
 struct application *ap;
 {
@@ -370,7 +370,7 @@ struct application *ap;
 		 * if partition ends before current box starts,
 		 * discard it, as we should never need to look back.
 		 */
-		if( pp->pt_outhit->hit_dist <= 0.0
+		if( pp->pt_outhit->hit_dist < -EPSILON
 		    || pp->pt_outhit->hit_dist < startdist
 		)  {
 			register struct partition *zappp;
@@ -405,15 +405,36 @@ struct application *ap;
 			} else {
 				if(debug&DEBUG_PARTITION) rtlog("TRUE\n");
 			}
-			/* region claims partition */
-			if( ++hitcnt > 1 ) {
+			/* This region claims partition */
+			if( ++hitcnt <= 1 )  {
+				lastregion = regp;
+				continue;
+			}
+#define OVERLAP_TOL	0.5	/* 1/2 of a milimeter */
+			/* Two regions claim this partition */
+			if((	(	regp->reg_aircode == 0
+				    &&	lastregion->reg_aircode == 0 
+				) /* Neither are air */
+			     ||	(	regp->reg_aircode != 0
+				   &&	lastregion->reg_aircode != 0
+				   &&	regp->reg_aircode != lastregion->reg_aircode
+				) /* Both are air, but different types */
+			   ) &&
+			   (	pp->pt_outhit->hit_dist -
+				pp->pt_inhit->hit_dist
+				> OVERLAP_TOL /* Permissable overlap */
+			   ) )  {
 				rtlog("OVERLAP: %s %s (x%d y%d lvl%d)\n",
 					regp->reg_name,
 					lastregion->reg_name,
 					ap->a_x, ap->a_y, ap->a_level );
 				pr_pt( pp );
 			} else {
-				lastregion = regp;
+				/* One region is air, or overlap is
+				 * within tolerance.  */
+				if( lastregion->reg_aircode == 0 )
+					lastregion = regp;
+				hitcnt--;
 			}
 		}
 		if( hitcnt == 0 )  {
@@ -451,7 +472,20 @@ struct application *ap;
 			pp=pp->pt_forw;
 			DEQUEUE_PT( newpp );
 			newpp->pt_regionp = lastregion;
-			APPEND_PT( newpp, FinalHdp->pt_back );
+			if(	lastregion == FinalHdp->pt_back->pt_regionp
+			    &&	fdiff(	newpp->pt_inhit->hit_dist,
+					FinalHdp->pt_back->pt_outhit->hit_dist
+					) == 0
+			)  {
+				/* Adjacent partitions, same region, so join */
+				FinalHdp->pt_back->pt_outhit = newpp->pt_outhit;
+				FinalHdp->pt_back->pt_outflip = newpp->pt_outflip;
+				FinalHdp->pt_back->pt_outseg = newpp->pt_outseg;
+				FREE_PT( newpp );
+				newpp = FinalHdp->pt_back;
+			}  else  {
+				APPEND_PT( newpp, FinalHdp->pt_back );
+			}
 
 			/* Shameless efficiency hack:
 			 * If the application is for viewing only,
@@ -460,6 +494,7 @@ struct application *ap;
 			 */
 			if( ap->a_onehit && newpp->pt_inhit->hit_dist > 0.0 )
 				break;
+
 		}
 	}
 	if( debug&DEBUG_PARTITION )
@@ -693,7 +728,9 @@ double a, b;
 	/* d = Max(Abs(a),Abs(b)) */
 	d = (a >= 0.0) ? a : -a;
 	if( b >= 0.0 )
+		{
 		if( b > d )  d = b;
+		}
 	else
 		if( (-b) > d )  d = (-b);
 	if( d <= EPSILON )
