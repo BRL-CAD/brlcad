@@ -429,7 +429,7 @@ struct nmg_ptbl class_table[];
 	/* Remove loops/edges/vertices that appear more than once in result */
 	nmg_rm_redundancies( sA );
 
-#if 1
+#if 0
 	bzero( (char *)&counter, sizeof(counter) );
 	nmg_m_count( &counter, sA->r_p->m_p );
 	nmg_pr_count( &counter, "after nmg_rm_redundancies()" );
@@ -697,8 +697,7 @@ struct nmg_bool_state *bs;
  *
  *  Given a pointer to some NMG data structure,
  *  search the 4 classification lists to determine it's classification.
- *  (XXX In the future, this should be done with 1 tagged list
- *   XXX which is sorted, for binary search).
+ *  (XXX In the future, this should be done with one big array).
  *  Then, return the action code for an item of that classification.
  */
 int
@@ -1347,6 +1346,8 @@ struct model	*m;
 			}
 		}
 	}
+#if 0
 rt_log("nmg_m_reindex() oldmax=%d, newmax=%d\n", m->maxindex, newindex );
+#endif
 	m->maxindex = newindex;
 }
