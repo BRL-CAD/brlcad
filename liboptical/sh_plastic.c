@@ -30,7 +30,6 @@ static char RCSplastic[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./rdebug.h"
 #include "./material.h"
-#include "./mathtab.h"
 #include "./light.h"
 
 /* from view.c */
