@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 
 /* Usage:  overlay file.plot [name] */
-void
+int
 f_overlay( argc, argv )
 int	argc;
 char	**argv;
@@ -53,7 +53,7 @@ char	**argv;
 
 	if( (fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
-		return;
+		return CMD_BAD;
 	}
 
 	vbp = rt_vlblock_init();
@@ -61,17 +61,18 @@ char	**argv;
 	fclose(fp);
 	if( ret < 0 )  {
 		rt_vlblock_free(vbp);
-		return;
+		return CMD_BAD;
 	}
 
 	cvt_vlblock_to_solids( vbp, name, 0 );
 
 	rt_vlblock_free(vbp);
 	dmaflag = 1;
+	return CMD_OK;
 }
 
 /* Usage:  labelvert solid(s) */
-void
+int
 f_labelvert( argc, argv )
 int	argc;
 char	**argv;
@@ -107,4 +108,5 @@ char	**argv;
 
 	rt_vlblock_free(vbp);
 	dmaflag = 1;
+	return CMD_OK;
 }
