@@ -1030,6 +1030,8 @@ char prefix;
   for( i=1; i < dp->d_len; i++ )  {
     if( (nextdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY ))
 	== DIR_NULL )
+  	/* XXX It's legit to refer to a leaf which hasn't been defined yet. */
+  	/* XXX Just print the name here without grumbling.  Maybe note it with a special suffix.  -Mike */
       continue;
 
     prefix = rp[i].M.m_relation;
