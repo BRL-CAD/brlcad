@@ -203,12 +203,33 @@ struct edgeuse *eup;
 		NMG_CK_VERTEX(eu->vu_p->v_p);
 		if (eu->vu_p->v_p == eup->vu_p->v_p) {
 			if (eu->eumate_p->vu_p->v_p != eup->eumate_p->vu_p->v_p)
+			{
+				rt_log("nmg_vedge() edgeuse mate does not have correct vertex\n");
+				rt_log( "(eu=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x)\n",
+					eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
+				rt_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
+					eup, eup->vu_p->v_p, eup->eumate_p->vu_p->v_p);
 				rt_bomb("nmg_vedge() edgeuse mate does not have correct vertex\n");
+			}
 		} else if (eu->vu_p->v_p == eup->eumate_p->vu_p->v_p) {
 			if (eu->eumate_p->vu_p->v_p != eup->vu_p->v_p)
+			{
+				rt_log("nmg_vedge() edgeuse does not have correct vertex\n" );
+				rt_log( "(eu=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x)\n",
+					eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
+				rt_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
+					eup, eup->vu_p->v_p, eup->eumate_p->vu_p->v_p);
 				rt_bomb("nmg_vedge() edgeuse does not have correct vertex\n");
+			}
 		} else
+		{
+			rt_log("nmg_vedge() edgeuse does not share vertex endpoint\n" );
+			rt_log( "(eu=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x)\n",
+				eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
+			rt_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
+				eup, eup->vu_p->v_p, eup->eumate_p->vu_p->v_p);
 			rt_bomb("nmg_vedge() edgeuse does not share vertex endpoint\n");
+		}
 
 		eu = eu->eumate_p->radial_p;
 	} while (eu != eup);
