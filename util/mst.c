@@ -722,7 +722,7 @@ char	*argv[];
 	if (debug)
 	{
 	    bu_log("Looking for uncivilized neighbors of...\n");
-	    print_vertex(vup);
+	    print_vertex((void *) vup, 0);
 	}
 	while (BU_LIST_WHILE(np, neighbor, &(vup -> v_neighbors)))
 	{
@@ -745,7 +745,7 @@ char	*argv[];
 		    }
 		    up -> v_bridge -> b_vert_civ = vup;
 		    up -> v_bridge -> b_weight = np -> n_weight;
-		    add_to_prioq(up);
+		    add_to_prioq((void *) up, 0);
 		    if (debug)
 		    {
 			bu_log("Reduced bridge <x%x> weight to %g\n",
