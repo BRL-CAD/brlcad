@@ -3,7 +3,7 @@
 # restart with wish \
 exec wish "$0" "$@"
 
-wm title . "Nirt"
+wm title . "NIRT"
 
 # wm geometry . {+1-20}
 # wm positionfrom . program
@@ -82,18 +82,58 @@ proc shoot_a_ray {} {
     
 }
 
-proc do_caliper_leg {leg} {
-    global landmarkmode
-    global cal_leg_loc
+proc select_an_mged {mgeds} {
 
-    if {$landmarkmode == {View center}} {
-	set cal_leg_loc($leg) [_mged_viewget center]
-    } elseif {$landmarkmode == {Model origin}} {
-	set cal_leg_loc($leg) {0 0 0}
-    } else {
-	set cal_leg_loc($leg) {1 2 3}
+    global mged_answer
+
+    set mged_answer ""
+    toplevel .mgeds
+    wm title .mgeds "NIRT MGED selector"
+    #
+    listbox .mgeds.list
+    foreach app $mgeds { .mgeds.list insert end $app }
+    #
+    button .mgeds.cancel -text "Cancel" -command {destroy .mgeds}
+    pack .mgeds.list .mgeds.cancel -in .mgeds
+    bind .mgeds.list <Double-Button-1> {
+	set mged_answer [selection get]
+	destroy .mgeds
     }
-    calculate_distance
+}
+
+proc link_to_mged {} {
+
+    global mged_answer
+
+    set this_nirt [winfo name .]
+    printf "We are $this_nirt\n"
+
+    #
+    #	See how many MGEDs there are
+    #
+    set mgeds []
+    foreach app [winfo interps] {
+	if {[regexp {mged.*} $app]} {
+	    lappend mgeds $app
+	}
+    }
+    if {[llength $mgeds] == 0} {
+	printf "There are no mgeds\n"
+	return ""
+    } elseif {[llength $mgeds] == 1} {
+	set mged_answer [lindex $mgeds 0]
+    } else {
+	select_an_mged $mgeds
+	tkwait window .mgeds
+	if {$mged_answer == ""} {
+	    return ""
+	}
+    }
+
+    send $mged_answer {puts "Hello from NIRT!\n"}
+    send $mged_answer "send $this_nirt \{puts \"Hello from us\\n\"\}"
+
+    return $mged_answer
 }
 
 proc x_coord {string} {
@@ -170,6 +210,9 @@ frame .mbar -relief raised -bd 2
 		    .options.menu.units add radiobutton -label "miles" \
 			-variable units
 	    .options.menu add checkbutton -label "Use air" -variable "use_air"
+	    .options.menu add command -label "Link to MGED..." \
+		-command link_to_mged
+	    #.options.menu entryconfigure "Link to MGED..." -state disabled
 	    .options.menu add command -label "Debug flags..." \
 		-command {printf "twiddle bits\n"}
     menubutton .formats -text Formats -menu .formats.menu
