@@ -23,7 +23,7 @@
 	asize \
 	anim \
 	tabdata \
-	plot3 fortran \
+	plot3 fortran font \
 	axis list marker number \
 	scale vectfont symbol vector \
 	tplot
