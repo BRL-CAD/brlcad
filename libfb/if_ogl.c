@@ -1136,8 +1136,10 @@ FBIO	*ifp;
     printf("ogl_final_close: All done...goodbye!\n");
   }
 
+  if(OGL(ifp)->cursor)
+    XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
+
   XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->wind);
-  XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
   XFreeColormap(OGL(ifp)->dispp, OGL(ifp)->xcmap);
 
   if( SGIL(ifp) != NULL ) {
@@ -1229,6 +1231,9 @@ int
 ogl_close_existing(ifp)
 FBIO *ifp;
 {
+  if(OGL(ifp)->cursor)
+    XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
+
   if( SGIL(ifp) != NULL ) {
     /* free up memory associated with image */
     if( SGI(ifp)->mi_shmid != -1 ) {
@@ -1248,7 +1253,6 @@ FBIO *ifp;
   }
 
   if( OGLL(ifp) != NULL) {
-    XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
     (void) free( (char *)OGLL(ifp) );
     OGLL(ifp) = NULL;
   }
