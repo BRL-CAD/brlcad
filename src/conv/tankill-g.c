@@ -28,8 +28,7 @@ static const char RCSid[] = "$Header$";
 # include "config.h"
 #endif
 
-
-
+/* system headers */
 #include <stdio.h>
 #include <math.h>
 #ifdef USE_STRING_H
@@ -38,14 +37,25 @@ static const char RCSid[] = "$Header$";
 #include <strings.h>
 #endif
 #include <errno.h>
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
 
+/* interface headers */
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+
+/* local headers */
 #include "../librt/debug.h"
+
 
 static int keep_1001=0;		/* flag to indicate that components with id 1001 should not be ignored */
 static int verbose=0;		/* verbosity flag */

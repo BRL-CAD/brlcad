@@ -28,8 +28,7 @@
 # include "config.h"
 #endif
 
-
-
+/* system headers */
 #include <stdio.h>
 #include <math.h>
 #ifdef USE_STRING_H
@@ -38,14 +37,25 @@
 #include <strings.h>
 #endif
 #include <errno.h>
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
 
+/* interface headers */
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+
+/* local headers */
 #include "../librt/debug.h"
+
 
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64

@@ -22,8 +22,7 @@ static const char RCSid[] = "$Header$";
 # include "config.h"
 #endif
 
-
-
+/* system headers */
 #include <stdio.h>
 #include <math.h>
 #ifdef USE_STRING_H
@@ -31,7 +30,15 @@ static const char RCSid[] = "$Header$";
 #else
 #include <strings.h>
 #endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
 
+/* interface headers */
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -39,7 +46,10 @@ static const char RCSid[] = "$Header$";
 #include "rtgeom.h"
 #include "rtlist.h"
 #include "wdb.h"
+
+/* local headers */
 #include "../librt/debug.h"
+
 
 #define BRLCAD_TITLE_LENGTH	72
 #define MAX_FACES_PER_REGION	8192

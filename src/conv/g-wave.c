@@ -30,8 +30,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
+/* system headers */
 #include <stdio.h>
 #include <math.h>
 #ifdef USE_STRING_H
@@ -39,18 +38,29 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
+#ifdef WIN32
+#include <fcntl.h>
+#endif
+
+/* interface headers */
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+
+/* local headers */
 #include "../librt/debug.h"
+
+
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
-
-#ifdef WIN32
-#include <fcntl.h>
-#endif
-
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 

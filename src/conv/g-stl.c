@@ -30,8 +30,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
+/* system headers */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -43,12 +42,25 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
+
+/* interface headers */
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+
+/* local headers */
 #include "../librt/debug.h"
+
+
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 #define VSETIN( a, b )	{\
     (a)[X] = (b)[X]/25.4; \

@@ -23,8 +23,7 @@ static const char RCSid[] = "$Header$";
 # include "config.h"
 #endif
 
-
-
+/* system headers */
 #include <stdio.h>
 #include <math.h>
 #ifdef USE_STRING_H
@@ -32,13 +31,24 @@ static const char RCSid[] = "$Header$";
 #else
 #include <strings.h>
 #endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
 
+/* interface headers */
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+
+/* local headers */
 #include "../librt/debug.h"
+
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 

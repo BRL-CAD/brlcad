@@ -2,7 +2,7 @@
 # include "config.h"
 #endif
 
-
+/* system headers */
 #include <stdio.h>
 #include <math.h>
 #ifdef USE_STRING_H
@@ -10,6 +10,16 @@
 #else
 #  include <strings.h>
 #endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
+#include <ctype.h>
+
+/* interface headers */
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -17,7 +27,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include <ctype.h>
 
 struct insert_data {
 	fastf_t scale[3];

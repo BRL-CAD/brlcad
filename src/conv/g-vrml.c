@@ -27,6 +27,42 @@
 static const char RCSid[] = "$Header$";
 #endif
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+/* system headers */
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <math.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
+
+/* interface headers */
+#include "machine.h"
+#include "vmath.h"
+#include "nmg.h"
+#include "rtgeom.h"
+#include "bu.h"
+#include "raytrace.h"
+#include "wdb.h"
+
+/* local headers */
+#include "../librt/debug.h"
+
+
 /* #define MEMORY_LEAK_CHECKING 1 */
 
 #ifdef MEMORY_LEAK_CHECKING
@@ -39,31 +75,6 @@ static const char RCSid[] = "$Header$";
 #define BARRIER_CHECK /* */
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-
-
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <math.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
-#include "nmg.h"
-#include "rtgeom.h"
-#include "bu.h"
-#include "raytrace.h"
-#include "wdb.h"
-#include "../librt/debug.h"
 
 #define TXT_BUF_LEN	512
 #define TXT_NAME_LEN	128

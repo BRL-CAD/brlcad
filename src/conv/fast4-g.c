@@ -28,8 +28,7 @@ static const char RCSid[] = "$Header$";
 # include "config.h"
 #endif
 
-
-
+/* system headers */
 #include <stdio.h>
 #include <math.h>
 #ifdef USE_STRING_H
@@ -39,7 +38,15 @@ static const char RCSid[] = "$Header$";
 #endif
 #include <ctype.h>
 #include <errno.h>
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
 
+/* interface headers */
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
@@ -48,7 +55,10 @@ static const char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
+
+/* local headers */
 #include "../librt/debug.h"
+
 
 #define		LINELEN		128	/* Length of char array for input line */
 
