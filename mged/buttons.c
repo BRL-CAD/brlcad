@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 
 extern void set_e_axes_pos();
+extern int mged_zoom();
 
 /* This flag indicates that SOLID editing is in effect.
  * edobj may not be set at the same time.
@@ -319,16 +320,16 @@ int bnum;
 	return("");
 }
 
-static void bv_zoomin()
+static void
+bv_zoomin()
 {
-	Viewscale *= 0.5;
-	new_mats();
+  (void)mged_zoom(0.5);
 }
 
-static void bv_zoomout()
+static void
+bv_zoomout()
 {
-	Viewscale *= 2;
-	new_mats();
+  (void)mged_zoom(2.0);
 }
 
 void
