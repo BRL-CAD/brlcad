@@ -652,10 +652,8 @@ char **argv;
 			interpolate(&Chroma1);
 			interpolate(&Chroma2);
 
-			sprintf(nbuf,"overview%04d",bildnr+1);
-			if (!(fout=fopen(nbuf,"w"))) error(E_WRITE);
+			/* Write this image to 'fout' */
 			ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
-			fclose(fout);
 		}
 		break;
 
