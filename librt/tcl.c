@@ -29,7 +29,6 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-
 #include "conf.h"
 
 #include <stdio.h>
@@ -97,22 +96,120 @@ int		line;
 	Tcl_AppendResult(interp, "bu_badmagic_tcl() mysterious error condition, ", str, " pointer, ", file, "\n", NULL);
 }
 
-/* XXX swiped from wdb.c */
-struct rt_wdb  {
-	long		magic;
-	int		type;
-	FILE		*fp;
-	struct db_i	*dbip;
-};
-#define	WDB_MAGIC	0x5f576462
-#define WDB_NULL	((struct rt_wdb *)NULL)
-#define WDB_TYPE_FILE			1
-#define WDB_TYPE_DB_DISK		2
-#define WDB_TYPE_DB_INMEM		3
-#define WDB_TYPE_DB_INMEM_APPEND_ONLY	4
+int num_dbih = 0, max_num_dbih;
+struct db_i **dbip_list = 0;
 
-extern struct rt_wdb *wdb_dbopen();
-extern struct rt_wdb *wdb_fopen();
+/*
+ *			D B _ T C L _ R E G I S T E R
+ *
+ *  Registers a DB_I pointer with the Tcl interface subsystem.
+ *  Returns a handle that can be used by Tcl scripts to refer to this
+ *  pointer.
+ */
+
+int
+db_tcl_register( dbip )
+struct db_i *dbip;
+{
+	int dbih = num_dbih;
+
+	if( num_dbih == 0 ) {
+		max_num_dbih = 8;
+		dbip_list = (struct db_i **)bu_calloc( max_num_dbih,
+						    sizeof(struct db_i *),
+						    "first dbi pointer list" );
+	} else if( num_dbih == max_num_dbih ) {
+		struct db_i **old_dbip_list = dbip_list;
+		dbip_list = (struct db_i **)bu_calloc( max_num_dbih*2,
+						      sizeof(struct db_i *),
+						      "new dbi pointer list" );
+		bcopy( (char *)old_dbip_list, (char *)dbip_list,
+		       max_num_dbih*sizeof(struct db_i *) );
+		bu_free( old_dbip_list, "old dbi pointer list" );
+		max_num_dbih *= 2;
+	}
+
+	++num_dbih;
+	dbip_list[dbih] = dbip;
+
+	return dbih + 1000;
+}
+
+
+/*
+ *		D B _ T C L _ U N R E G I S T E R
+ *
+ *  Notifies the Tcl interface subsystem that the given dbi handle is
+ *  no longer valid.
+ */
+
+void
+db_tcl_unregister( dbih )
+int	dbih;
+{
+	dbih -= 1000;
+
+	if( dbih<0 || dbih>=num_dbih )
+		rt_bomb( "db_tcl_unregister: handle out of range" );
+	if( dbip_list[dbih] == 0 )
+		rt_bomb( "db_tcl_unregister: handle unregistered twice" );
+	dbip_list[dbih] = 0;
+}
+
+
+/*
+ *		D B _ T C L _ C H A N G E _ R E G I S T E R E D
+ *
+ *  Changes the database instance to which the given handle points.
+ */
+
+void
+db_tcl_change_registered( dbih, dbip )
+int		dbih;
+struct db_i    *dbip;
+{
+	dbih -= 1000;
+
+	if( dbih<0 || dbih>=num_dbih )
+		rt_bomb( "db_tcl_change_registered: handle out of range" );
+	dbip_list[dbih] = dbip;
+}
+ 
+
+/*
+ 		D B _ T C L _ G E T _ R E G I S T E R E D
+ *
+ *  Looks for the dbip associated with a given handle and implicitly
+ *  returns it. 
+ *  If none exists, puts an appropriate error message in interp->result.
+ *  For the exclusive use of the routines in this file.
+ */
+
+int
+db_tcl_get_registered( interp, dbih, dbip_return )
+Tcl_Interp	*interp;
+int		 dbih;
+struct db_i    **dbip_return;
+{
+	register int i;
+	
+	dbih -= 1000;
+	
+	if( dbih<0 || dbih>=num_dbih ) {
+		Tcl_AppendResult( interp, "db handle out of range",
+				  TCL_STATIC );
+		return TCL_ERROR;
+	}
+	if( dbip_list[dbih] == 0 ) {
+		Tcl_AppendResult( interp, "db handle no longer valid",
+				  TCL_STATIC );
+		return TCL_ERROR;
+	}
+	
+	if( dbip_return ) *dbip_return = dbip_list[dbih];
+	return TCL_OK;
+}	
+
 
 /*
  *			W D B _ O P E N
@@ -157,8 +254,11 @@ Usage: wdb_open widget_command file filename\n\
 	} else {
 		struct db_i	*dbip;
 
-		dbip = (struct db_i *)atoi(argv[3]);
-		/* This can still dump core if it's an unmapped address */
+		if( db_tcl_get_registered( interp,
+					   atoi(argv[3]), &dbip ) != TCL_OK )
+			return TCL_ERROR;
+
+		/* This should always succeed */
 		RT_CK_DBI_TCL(dbip);
 
 		if( strcmp( argv[2], "disk" ) == 0 )  {
@@ -187,11 +287,16 @@ Usage: wdb_open widget_command file filename\n\
 	/* XXX should we see if it exists first? default=overwrite */
 	/* XXX Should provide delete proc to free up wdb */
 	/* Beware, returns a "token", not TCL_OK. */
-	(void)Tcl_CreateCommand(interp, argv[1], rt_db,
-	    (ClientData)wdb, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand( interp, argv[1], rt_db,
+				 (ClientData)wdb, (Tcl_CmdDeleteProc *)NULL );
 
+#ifndef WHY_WOULD_YOU_WANT_TO_DO_THIS_QUESTION_MARK
 	sprintf(buf, "%d", wdb);
 	Tcl_AppendResult(interp, buf, NULL);
+#else
+	Tcl_AppendResult( interp, argv[1], (char *)NULL );
+#endif	
+	
 	return TCL_OK;
 }
 
@@ -329,15 +434,15 @@ int rt_db_match(), rt_db_get(), rt_db_put(), rt_db_adjust(), rt_db_form();
 #endif
 
 struct dbcmdstruct {
-    char *cmdname;
-    int (*cmdfunc)();
+	char *cmdname;
+	int (*cmdfunc)();
 } rt_db_cmds[] = {
-    "match", rt_db_match,
-    "get", rt_db_get,
-    "put", rt_db_put,
-    "adjust", rt_db_adjust,
-    "form", rt_db_form,
-    (char *)0, (int (*)())0
+	"match",	rt_db_match,
+	"get",		rt_db_get,
+	"put",		rt_db_put,
+	"adjust",	rt_db_adjust,
+	"form",		rt_db_form,
+	(char *)0,	(int (*)())0
 };
 
 /*
@@ -356,30 +461,35 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-    struct dbcmdstruct *dbcmd;
-    struct rt_wdb	*wdb = (struct rt_wdb *)clientData;
+	struct dbcmdstruct	*dbcmd;
+	struct rt_wdb		*wdb = (struct rt_wdb *)clientData;
 
-    if( argc < 2 ) {
-	Tcl_AppendResult( interp,
-		      "wrong # args: should be \"db command [args...]\"",
-		      (char *)NULL );
-	return TCL_ERROR;
-    }
+	if( argc < 2 ) {
+		Tcl_AppendResult( interp,
+				  "wrong # args: should be \"", argv[0],
+				  " command [args...]\"",
+				  (char *)NULL );
+		return TCL_ERROR;
+	}
 
+	/* Could core dump */
 	RT_CK_WDB_TCL(wdb);
 
-    Tcl_AppendResult( interp, "unknown database command; must be one of:",
-		   (char *)NULL );
-    for( dbcmd = rt_db_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
-	if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
-	    Tcl_ResetResult( interp );	/* hack: dispose of error msg if OK */
-	    return (*dbcmd->cmdfunc)( clientData, interp, argc-1, argv+1 );
+	Tcl_AppendResult( interp, "unknown database command; must be one of:",
+			  (char *)NULL );
+	for( dbcmd = rt_db_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
+		if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
+			/* hack: dispose of error msg if OK */
+			Tcl_ResetResult( interp );
+			return (*dbcmd->cmdfunc)( clientData, interp,
+						  argc-1, argv+1 );
+		}
+		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
 	}
-	Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
-    }
 
-    return TCL_ERROR;
+	return TCL_ERROR;
 }
+
 
 
 /*
@@ -392,243 +502,120 @@ char **argv;
  */
 
 int
-rt_db_match(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+rt_db_match( clientData, interp, argc, argv )
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
 {
-    struct bu_vls matches;
-    int nummatch;
+	struct rt_wdb  *wdb = (struct rt_wdb *)clientData;
+	struct bu_vls	matches;
 
-	/* XXX Verify that this wdb supports lookup operations (non-null dbip) */
-
-#if 1
-	/* regexp_match_all() needs to take a dbip arg, be moved into LIBRT, new name, for this to work. */
-	Tcl_AppendResult(interp,"rt_db_match needs to be reimplemented.\n", NULL);
-	return TCL_ERROR;
-#else
-    bu_vls_init( &matches );
-    ++argv;
-    nummatch = 0;
-    while( nummatch == 0 && *argv != NULL )
-	nummatch = regexp_match_all( &matches, *argv++ );
-    Tcl_AppendResult( interp, bu_vls_addr(&matches), (char *)NULL );
-    bu_vls_trunc( &matches, 0 );
-    while( *argv != NULL ) {
-	nummatch = regexp_match_all( &matches, *argv++ );
-	if( nummatch > 0 ) {
-	    Tcl_AppendResult( interp, " ", bu_vls_addr(&matches),
-			      (char *)NULL );
-	    bu_vls_trunc( &matches, 0 );
+	RT_CK_WDB_TCL(wdb);
+	
+	/* Verify that this wdb supports lookup operations
+	   (non-null dbip) */
+	if( wdb->dbip == 0 ) {
+		Tcl_AppendResult( interp, "this database does not support lookup operations" );
+		return TCL_ERROR;
 	}
-    }
 
-    bu_vls_free( &matches );
-    return TCL_OK;
-#endif
+	bu_vls_init( &matches );
+	for( ++argv; *argv != NULL; ++argv ) {
+		if( db_regexp_match_all( &matches, wdb->dbip, *argv ) > 0 )
+			bu_vls_strcat( &matches, " " );
+	}
+	bu_vls_trimspace( &matches );
+	Tcl_AppendResult( interp, bu_vls_addr(&matches), (char *)NULL );
+	bu_vls_free( &matches );
+	return TCL_OK;
 }
 
-struct bu_structparse rt_tor_parse[] = {
-    { "%f", 3, "V",   offsetof(struct rt_tor_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",   offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_a", offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_h", offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-
-struct bu_structparse rt_tgc_parse[] = {
-    { "%f", 3, "V", offsetof(struct rt_tgc_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H", offsetof(struct rt_tgc_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A", offsetof(struct rt_tgc_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", offsetof(struct rt_tgc_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "C", offsetof(struct rt_tgc_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "D", offsetof(struct rt_tgc_internal, d[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { 0 } };
-
-struct bu_structparse rt_ell_parse[] = {
-    { "%f", 3, "V", offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A", offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "C", offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-
-struct bu_structparse rt_arb8_parse[] = {
-    { "%f", 3, "V1", offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V2", offsetof(struct rt_arb_internal, pt[1][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V3", offsetof(struct rt_arb_internal, pt[2][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V4", offsetof(struct rt_arb_internal, pt[3][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V5", offsetof(struct rt_arb_internal, pt[4][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V6", offsetof(struct rt_arb_internal, pt[5][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V7", offsetof(struct rt_arb_internal, pt[6][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V8", offsetof(struct rt_arb_internal, pt[7][X]), BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-
-struct bu_structparse rt_half_parse[] = {
-    { "%f", 3, "N", offsetof(struct rt_half_internal, eqn[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "d", offsetof(struct rt_half_internal, eqn[3]), BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-
-struct bu_structparse rt_part_parse[] = {
-    { "%f", 3, "V",  offsetof(struct rt_part_internal, part_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",  offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_v",offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_h",offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-	    
-struct bu_structparse rt_rpc_parse[] = {
-    { "%f", 3, "V", offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H", offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", offsetof(struct rt_rpc_internal, rpc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r", offsetof(struct rt_rpc_internal, rpc_r),    BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-	    
-struct bu_structparse rt_rhc_parse[] = {
-    { "%f", 3, "V", offsetof(struct rt_rhc_internal, rhc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H", offsetof(struct rt_rhc_internal, rhc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", offsetof(struct rt_rhc_internal, rhc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r", offsetof(struct rt_rhc_internal, rhc_r),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "c", offsetof(struct rt_rhc_internal, rhc_c),    BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-	    
-struct bu_structparse rt_epa_parse[] = {
-    { "%f", 3, "V",   offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",   offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A",   offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_1", offsetof(struct rt_epa_internal, epa_r1),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_2", offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-
-struct bu_structparse rt_ehy_parse[] = {
-    { "%f", 3, "V",   offsetof(struct rt_ehy_internal, ehy_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",   offsetof(struct rt_ehy_internal, ehy_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A",   offsetof(struct rt_ehy_internal, ehy_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_1", offsetof(struct rt_ehy_internal, ehy_r1),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_2", offsetof(struct rt_ehy_internal, ehy_r2),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "c",   offsetof(struct rt_ehy_internal, ehy_c),     BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-
-struct bu_structparse rt_eto_parse[] = {
-    { "%f", 3, "V",   offsetof(struct rt_eto_internal, eto_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "N",   offsetof(struct rt_eto_internal, eto_N[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "C",   offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r",   offsetof(struct rt_eto_internal, eto_r),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_d", offsetof(struct rt_eto_internal, eto_rd),   BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
-
+extern struct bu_structparse rt_tor_parse[];
+extern struct bu_structparse rt_tgc_parse[];
+extern struct bu_structparse rt_ell_parse[];
+extern struct bu_structparse rt_arb8_parse[];
+/* ARS -- not supported yet */
+extern struct bu_structparse rt_half_parse[];
+/* REC -- subsumed by TGC */
+/* POLY -- not supported yet */
+/* BSPLINE -- not supported yet */
+/* SPH -- not supported yet */
+/* NMG -- not supported yet */
 extern struct bu_structparse rt_ebm_parse[];
-extern struct bu_structparse rt_dsp_parse[];
-extern struct bu_structparse rt_hf_parse[];
 extern struct bu_structparse rt_vol_parse[];
+/* ARBN -- not supported yet */
+/* PIPE -- not supported yet */
+extern struct bu_structparse rt_part_parse[];
+extern struct bu_structparse rt_rpc_parse[];
+extern struct bu_structparse rt_rhc_parse[];
+extern struct bu_structparse rt_epa_parse[];
+extern struct bu_structparse rt_ehy_parse[];
+extern struct bu_structparse rt_eto_parse[];
+/* GRIP -- not supported yet */
+/* JOINT -- not supported yet */
+extern struct bu_structparse rt_hf_parse[];
+extern struct bu_structparse rt_dsp_parse[];
+/* COMB -- supported below */
 
 struct rt_solid_type_lookup {
-    char id;
-    size_t db_internal_size;
-    long magic;
-    char *label;
-    struct bu_structparse *parsetab;
+	char			id;
+	size_t			db_internal_size;
+	long			magic;
+	char		       *label;
+	struct bu_structparse  *parsetab;
 } rt_solid_type_lookup[] = {
-    { ID_TOR,     sizeof(struct rt_tor_internal), (long)RT_TOR_INTERNAL_MAGIC, "tor", rt_tor_parse },
-    { ID_TGC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "tgc", rt_tgc_parse },
-    { ID_REC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "rec", rt_tgc_parse },
-    { ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "ell", rt_ell_parse },
-    { ID_SPH,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "sph", rt_ell_parse },
-    { ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8", rt_arb8_parse },
-    { ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half", rt_half_parse },
-    { ID_PARTICLE,sizeof(struct rt_part_internal),(long)RT_PART_INTERNAL_MAGIC,"part", rt_part_parse },
-    { ID_RPC,     sizeof(struct rt_rpc_internal), (long)RT_RPC_INTERNAL_MAGIC, "rpc", rt_rpc_parse },
-    { ID_RHC,     sizeof(struct rt_rhc_internal), (long)RT_RHC_INTERNAL_MAGIC, "rhc", rt_rhc_parse },
-    { ID_EPA,     sizeof(struct rt_epa_internal), (long)RT_EPA_INTERNAL_MAGIC, "epa", rt_epa_parse },
-    { ID_EHY,     sizeof(struct rt_ehy_internal), (long)RT_EHY_INTERNAL_MAGIC, "ehy", rt_ehy_parse },
-    { ID_ETO,     sizeof(struct rt_eto_internal), (long)RT_ETO_INTERNAL_MAGIC, "eto", rt_eto_parse },
-    { 0, 0, 0, 0 }
+	{ ID_TOR,     sizeof(struct rt_tor_internal), (long)RT_TOR_INTERNAL_MAGIC, "tor", rt_tor_parse },
+	{ ID_TGC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "tgc", rt_tgc_parse },
+	{ ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "ell", rt_ell_parse },
+	{ ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8",rt_arb8_parse },
+	{ ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half",rt_half_parse },
+	{ ID_REC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "rec", rt_tgc_parse },
+	{ ID_SPH,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "sph", rt_ell_parse },
+	{ ID_EBM,     sizeof(struct rt_ebm_internal), (long)RT_EBM_INTERNAL_MAGIC, "ebm", rt_ebm_parse },
+	{ ID_VOL,     sizeof(struct rt_vol_internal), (long)RT_VOL_INTERNAL_MAGIC, "vol", rt_vol_parse },
+	{ ID_PARTICLE,sizeof(struct rt_part_internal),(long)RT_PART_INTERNAL_MAGIC,"part",rt_part_parse },
+	{ ID_RPC,     sizeof(struct rt_rpc_internal), (long)RT_RPC_INTERNAL_MAGIC, "rpc", rt_rpc_parse },
+	{ ID_RHC,     sizeof(struct rt_rhc_internal), (long)RT_RHC_INTERNAL_MAGIC, "rhc", rt_rhc_parse },
+	{ ID_EPA,     sizeof(struct rt_epa_internal), (long)RT_EPA_INTERNAL_MAGIC, "epa", rt_epa_parse },
+	{ ID_EHY,     sizeof(struct rt_ehy_internal), (long)RT_EHY_INTERNAL_MAGIC, "ehy", rt_ehy_parse },
+	{ ID_ETO,     sizeof(struct rt_eto_internal), (long)RT_ETO_INTERNAL_MAGIC, "eto", rt_eto_parse },
+	{ ID_HF,      sizeof(struct rt_hf_internal),  (long)RT_HF_INTERNAL_MAGIC,  "hf",  rt_hf_parse },
+	{ ID_DSP,     sizeof(struct rt_dsp_internal), (long)RT_DSP_INTERNAL_MAGIC, "dsp", rt_dsp_parse },
+	{ 0, 0, 0, 0 }
 };
 
 struct rt_solid_type_lookup *
-rt_get_parsetab_by_id(s_id)
+rt_get_parsetab_by_id( s_id )
 int s_id;
 {
-    register struct rt_solid_type_lookup *stlp;
-    static struct rt_solid_type_lookup solid_type;
+	register struct rt_solid_type_lookup   *stlp;
+	static struct rt_solid_type_lookup	solid_type;
 
-    if (s_id == ID_EBM) {
-	solid_type.id = ID_EBM;
-	solid_type.db_internal_size = sizeof(struct rt_ebm_internal);
-	solid_type.magic = RT_EBM_INTERNAL_MAGIC;
-	solid_type.label = "ebm";
-	solid_type.parsetab = rt_ebm_parse;
-	return &solid_type;
-    } else if (s_id == ID_DSP) {
-	solid_type.id = ID_DSP;
-	solid_type.db_internal_size = sizeof(struct rt_dsp_internal);
-	solid_type.magic = RT_DSP_INTERNAL_MAGIC;
-	solid_type.label = "dsp";
-	solid_type.parsetab = rt_dsp_parse;
-	return &solid_type;
-    } else if (s_id == ID_VOL) {
-	solid_type.id = ID_VOL;
-	solid_type.db_internal_size = sizeof(struct rt_vol_internal);
-	solid_type.magic = RT_VOL_INTERNAL_MAGIC;
-	solid_type.label = "vol";
-	solid_type.parsetab = rt_vol_parse;
-	return &solid_type;
-    } else if (s_id == ID_HF) {
-	solid_type.id = ID_HF;
-	solid_type.db_internal_size = sizeof(struct rt_hf_internal);
-	solid_type.magic = RT_HF_INTERNAL_MAGIC;
-	solid_type.label = "hf";
-	solid_type.parsetab = rt_hf_parse;
-	return &solid_type;
-    }
+	for( stlp = rt_solid_type_lookup; stlp->id != 0; stlp++ )
+		if( stlp->id == s_id )
+			return stlp;
 
-    for (stlp = rt_solid_type_lookup; stlp->id != 0; stlp++)
-	if (stlp->id == s_id)
-	    break;
-
-    if (stlp->id == 0)
 	return NULL;
-    
-    return stlp;
 }
 
-/*
- */
 struct rt_solid_type_lookup *
-rt_get_parsetab_by_name(s_type)
+rt_get_parsetab_by_name( s_type )
 char *s_type;
 {
-    register int i;
-    register struct rt_solid_type_lookup *stlp;
-    char *type;
+	register int				i;
+	register struct rt_solid_type_lookup   *stlp;
+	char				       type[16];
 
-    type = (char *)bu_malloc(strlen(s_type)+1, "lowercase solid type");
-    for (i = 0; s_type[i] != 0; i++)
-	type[i] = isupper(s_type[i]) ? tolower(s_type[i]) : s_type[i];
+	for( i = 0; s_type[i] != 0 && i < 16; i++ )
+		type[i] = isupper(s_type[i]) ? tolower(s_type[i]) : s_type[i];
+	type[i] = 0;
 
-    type[i] = 0;
+	for( stlp = rt_solid_type_lookup; stlp->id != 0; stlp++ )
+		if( strcmp(type, stlp->label) == 0 )
+			return stlp;
 
-    if (strcmp(type, "ebm") == 0) {
-	bu_free((genptr_t)type, "lowercase solid type");
-	return rt_get_parsetab_by_id(ID_EBM);
-    } else if (strcmp(type, "dsp") == 0) {
-	bu_free((genptr_t)type, "lowercase solid type");
-	return rt_get_parsetab_by_id(ID_DSP);
-    } else if (strcmp(type, "vol") == 0) {
-	bu_free((genptr_t)type, "lowercase solid type");
-	return rt_get_parsetab_by_id(ID_VOL);
-    } else if (strcmp(type, "hf") == 0) {
-	bu_free((genptr_t)type, "lowercase solid type");
-	return rt_get_parsetab_by_id(ID_HF);
-    }
-
-    for (stlp = rt_solid_type_lookup; stlp->id != 0; stlp++)
-	if (strcmp(type, stlp->label) == 0)
-	    break;
-
-    bu_free((genptr_t)type, "lowercase solid type");
-    if (stlp->id == 0)
 	return NULL;
-    
-    return stlp;
 }
 
 /*
@@ -645,90 +632,104 @@ char *s_type;
 
 int
 rt_db_get( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
 {
-    register struct directory *dp;
-    register struct bu_structparse *sp = NULL;
-    register struct rt_solid_type_lookup *stlp;
-    int id, status;
-    struct rt_db_internal intern;
-    struct bu_vls str;
-    mat_t idn;
-    char objecttype;
-    char *objname;
-    struct rt_wdb	*wdb = (struct rt_wdb *)clientData;
+	register struct directory	       *dp;
+	register struct bu_structparse	       *sp = NULL;
+	register struct rt_solid_type_lookup   *stlp;
+	int			id, status;
+	struct rt_db_internal	intern;
+	struct bu_vls		str;
+	mat_t			idn;
+	char			objecttype;
+	char		       *objname;
+	struct rt_wdb	       *wdb = (struct rt_wdb *)clientData;
 
-    if( argc < 2 || argc > 3) {
-	Tcl_AppendResult(interp,
-		      "wrong # args: should be \"db get objName ?attr?\"",
-		      (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    bu_vls_init(&str);
-
-	/* XXX Verify that this wdb supports lookup operations (non-null dbip) */
-
-    dp = db_lookup(wdb->dbip, argv[1], LOOKUP_QUIET);
-    if (dp == NULL) {
-	Tcl_AppendResult(interp, argv[1], ": not found\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    status = rt_db_get_internal(&intern, dp, wdb->dbip, (matp_t)NULL);
-    if (status < 0) {
-	Tcl_AppendResult(interp, "rt_db_get_internal failure: ", argv[1], (char *)NULL);
-	return TCL_ERROR;
-    }
-    RT_CK_DB_INTERNAL(&intern);
-
-    /* Find out what type of object we are dealing with and report on it. */
-	id = intern.idb_type;
-	stlp = rt_get_parsetab_by_id(id);
-	if (stlp != NULL) {
-	    bu_vls_strcat(&str, stlp->label);
-	    sp = stlp->parsetab;
-	    if (argc == 2) {
-		while (sp->sp_name != NULL) {
-		    bu_vls_printf(&str, " %s ", sp->sp_name);
-		    if (sp->sp_count > 1) {
-			bu_vls_putc(&str, '{');
-			bu_vls_struct_item(&str,sp,(char *)intern.idb_ptr,' ');
-			bu_vls_putc(&str, '}');
-		    }
-		    else
-			bu_vls_struct_item(&str,sp,(char *)intern.idb_ptr,' ');
-		    ++sp;
-		}
-	    } else {
-		bu_vls_trunc(&str, 0);
-		if (bu_vls_struct_item_named(&str, sp, argv[2],
-					 (char *)intern.idb_ptr, ' ') < 0) {
-		    Tcl_AppendResult(interp, "no such attribute", (char *)NULL);
-		    rt_functab[id].ft_ifree(&intern);
-		    goto error;
-		}
-	    }
+	if( argc < 2 || argc > 3) {
+		Tcl_AppendResult( interp,
+				  "wrong # args: should be \"", argv[0],
+				  " objName ?attr?\"", (char *)NULL );
+		return TCL_ERROR;
 	}
 
-    rt_functab[id].ft_ifree(&intern);
+	bu_vls_init( &str );
 
-    if( bu_vls_strlen(&str)==0 ) {
-	Tcl_AppendResult(interp, "an output routine for this data type has not \
-yet been implemented", (char *)NULL);
-	goto error;
-    }
+	/* XXX Verify that this wdb supports lookup operations
+	       (non-null dbip) */
 
-    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-    bu_vls_free(&str);
-    return TCL_OK;
+	dp = db_lookup( wdb->dbip, argv[1], LOOKUP_QUIET );
+	if( dp == NULL ) {
+		Tcl_AppendResult( interp, argv[1], ": not found\n",
+				  (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	status = rt_db_get_internal( &intern, dp, wdb->dbip, (matp_t)NULL );
+	if( status < 0 ) {
+		Tcl_AppendResult( interp, "rt_db_get_internal failure: ",
+				  argv[1], (char *)NULL );
+		return TCL_ERROR;
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
+       /* Find out what type of object we are dealing with and report on it. */
+	id = intern.idb_type;
+	stlp = rt_get_parsetab_by_id( id );
+	if( stlp != NULL ) {
+		bu_vls_strcat( &str, stlp->label );
+		sp = stlp->parsetab;
+		if( argc == 2 ) while( sp->sp_name != NULL ) {
+			bu_vls_printf( &str, " %s ", sp->sp_name );
+			if( sp->sp_count > 1 ) {
+				bu_vls_putc( &str, '{' );
+				bu_vls_struct_item( &str, sp,
+						 (char *)intern.idb_ptr, ' ' );
+				bu_vls_putc( &str, '}' );
+			} else {
+				bu_vls_struct_item( &str, sp,
+						 (char *)intern.idb_ptr, ' ' );
+			}
+			++sp;
+		} else {
+			bu_vls_trunc( &str, 0 );
+			if( bu_vls_struct_item_named( &str, sp, argv[2],
+					 (char *)intern.idb_ptr, ' ') < 0 ) {
+				Tcl_AppendResult( interp, "no such attribute",
+						  (char *)NULL );
+				rt_functab[id].ft_ifree( &intern );
+				goto error;
+			}
+		}
+	} else {
+		if( id == ID_COMBINATION ) {
+			bu_vls_free( &str );
+			(void)db_tcl_comb_describe( interp,
+		          (struct rt_comb_internal *)intern.idb_ptr, argv[2] );
+			rt_functab[id].ft_ifree( &intern );
+			return TCL_OK;
+		}
+	}
+
+	rt_functab[id].ft_ifree( &intern );
+
+	if( bu_vls_strlen(&str)==0 ) {
+		Tcl_AppendResult( interp,
+	 "an output routine for this data type has not yet been implemented",
+				  (char *)NULL );
+		goto error;
+	}
+
+
+	Tcl_AppendResult( interp, bu_vls_addr(&str), (char *)NULL );
+	bu_vls_free( &str );
+	return TCL_OK;
 
  error:
-    bu_vls_free(&str);
-    return TCL_ERROR;
+	bu_vls_free( &str );
+	return TCL_ERROR;
 }
 
 /*
@@ -743,276 +744,325 @@ yet been implemented", (char *)NULL);
 
 int
 bu_structparse_argv( interp, argc, argv, desc, base )
-Tcl_Interp *interp;
-int argc;
-char **argv;
+Tcl_Interp			*interp;
+int				 argc;
+char			       **argv;
 CONST struct bu_structparse	*desc;		/* structure description */
 char				*base;		/* base addr of users struct */
 {
-    register char *cp, *loc;
-    register CONST struct bu_structparse *sdp;
-    register int i, j;
-    struct bu_vls str;
+	register char				*cp, *loc;
+	register CONST struct bu_structparse	*sdp;
+	register int				 i, j;
+	struct bu_vls				 str;
 
-    if (desc == (struct bu_structparse *)NULL) {
-	bu_log("bu_structparse_argv: NULL desc pointer\n");
-	Tcl_AppendResult(interp, "NULL desc pointer", (char *)NULL);
-	return TCL_ERROR;
-    }
+	if( desc == (struct bu_structparse *)NULL ) {
+		bu_log( "bu_structparse_argv: NULL desc pointer\n" );
+		Tcl_AppendResult( interp, "NULL desc pointer", (char *)NULL );
+		return TCL_ERROR;
+	}
 
-    /* Run through each of the attributes and their arguments. */
+	/* Run through each of the attributes and their arguments. */
 
-    bu_vls_init(&str);
-    while (argc > 0) {
-	/* Find the attribute which matches this argument. */
-	for (sdp = desc; sdp->sp_name != NULL; sdp++) {
-	    if (strcmp(sdp->sp_name, *argv) != 0)
-		continue;
+	bu_vls_init( &str );
+	while( argc > 0 ) {
+		/* Find the attribute which matches this argument. */
+		for( sdp = desc; sdp->sp_name != NULL; sdp++ ) {
+			if( strcmp(sdp->sp_name, *argv) != 0 )
+				continue;
 
-	    /* if we get this far, we've got a name match
-	     * with a name in the structure description
-	     */
+			/* if we get this far, we've got a name match
+			 * with a name in the structure description
+			 */
 
 #if CRAY && !__STDC__
-	    loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
+			loc = (char *)(base+((int)sdp->sp_offset*sizeof(int)));
 #else
-	    loc = (char *)(base + ((int)sdp->sp_offset));
+			loc = (char *)(base+((int)sdp->sp_offset));
 #endif
-	    if (sdp->sp_fmt[0] != '%') {
-		bu_log("bu_structparse_argv: unknown format\n");
-		bu_vls_free(&str);
-		Tcl_AppendResult(interp, "unknown format", (char *)NULL);
-		return TCL_ERROR;
-	    }
-
-	    --argc;
-	    ++argv;
-
-	    switch( sdp->sp_fmt[1] )  {
-	    case 'c':
-	    case 's':
-		/* copy the string, converting escaped
-		 * double quotes to just double quotes
-		 */
-		if (argc < 1) {
-		    bu_vls_trunc(&str, 0);
-		    bu_vls_printf(&str,
-		  "not enough values for \"%s\" argument: should be %d",
-				  sdp->sp_name, sdp->sp_count);
-		    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-		    bu_vls_free(&str);
-		    return TCL_ERROR;
-		}
-		for (i = j = 0;
-		     j < sdp->sp_count && argv[0][i] != '\0' ;
-		     loc[j++] = argv[0][i++])
-		    ;
-		if (sdp->sp_count > 1) {
-		    loc[sdp->sp_count-1] = '\0';
-		    Tcl_AppendResult(interp, sdp->sp_name, " ", loc, " ",
-				     (char *)NULL);
-		} else {
-		    bu_vls_trunc(&str, 0);
-		    bu_vls_printf(&str, "%s %c ", sdp->sp_name, *loc);
-		    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-		}
-		--argc;
-		++argv;
-		break;
-	    case 'i':
-		bu_log("Error: %%i not implemented. Contact developers.\n");
-		Tcl_AppendResult(interp, "%%i not implemented yet", (char *)NULL);
-		bu_vls_free(&str);
-		return TCL_ERROR;
-	    case 'd': {
-		register int *ip = (int *)loc;
-		register int tmpi;
-		register char CONST *cp;
-
-		if (argc < 1) {
-		    bu_vls_trunc(&str, 0);
-		    bu_vls_printf(&str,
-		      "not enough values for \"%s\" argument: should have %d, \
-only %d given",
-				      sdp->sp_name, sdp->sp_count, i);
-		    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-		    bu_vls_free(&str);
-		    return TCL_ERROR;
-		}
-
-		Tcl_AppendResult(interp, sdp->sp_name, " ", (char *)NULL);
-
-		/* Special case:  '=!' toggles a boolean */
-		if( argv[0][0] == '!' )  {
-		    *ip = *ip ? 0 : 1;
-		    bu_vls_trunc(&str, 0);
-		    bu_vls_printf(&str, "%d ", *ip);
-		    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-		    ++argv;
-		    --argc;
-		    break;
-		}
-		/* Normal case: an integer */
-		cp = *argv;
-		for (i = 0; i < sdp->sp_count; ++i) {
-		    if (*cp == '\0') {
-			bu_vls_trunc(&str, 0);
-			bu_vls_printf(&str,
-		      "not enough values for \"%s\" argument: should have %d",
-				      sdp->sp_name, sdp->sp_count);
-			Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-			bu_vls_free(&str);
-			return TCL_ERROR;
-		    }
-
-		    while ((*cp == ' ' || *cp == '\n' || *cp == '\t') && *cp)
-			++cp;
-			
-		    tmpi = atoi(cp);
-		    if (*cp && (*cp == '+' || *cp == '-'))
-			cp++;
-		    while (*cp && isdigit(*cp) )
-			cp++; 
-		    /* make sure we actually had an
-		     * integer out there
-		     */
-
-		    if (cp == *argv ||
-			(cp == *argv+1 &&
-			 (argv[0][0] == '+' || argv[0][0] == '-'))) {
-			bu_vls_trunc(&str, 0);
-			bu_vls_printf(&str, 
-	                        "value \"%s\" to argument %s isn't an integer",
-				      argv, sdp->sp_name);
-			Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-			bu_vls_free(&str);
-			return TCL_ERROR;
-		    } else {
-			*(ip++) = tmpi;
-		    }
-		    /* Skip the separator(s) */
-		    while ((*cp == ' ' || *cp == '\n' || *cp == '\t') && *cp) 
-			++cp;
-		}
-		Tcl_AppendResult(interp, sdp->sp_count > 1 ? "{" : "",
-				 argv[0], sdp->sp_count > 1 ? "}" : "",
-				 " ", (char *)NULL);
-		--argc;
-		++argv;
-		break; }
-	    case 'f': {
-		int	dot_seen;
-		double	tmp_double;
-		register double *dp;
-		char *numstart;
-
-		dp = (double *)loc;
-
-		if (argc < 1) {
-		    bu_vls_trunc(&str, 0);
-		    bu_vls_printf(&str,
-		  "not enough values for \"%s\" argument: should be %d, only \
-%d given",
-				  sdp->sp_name, sdp->sp_count, argc);
-		    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-		    bu_vls_free(&str);
-		    return TCL_ERROR;
-		}
-
-		Tcl_AppendResult(interp, sdp->sp_name, " ", (char *)NULL);
-
-		cp = *argv;
-		for (i = 0; i < sdp->sp_count; i++) {
-		    if (*cp == '\0') {
-			bu_vls_trunc(&str, 0);
-			bu_vls_printf(&str,
-		      "not enough values for \"%s\" argument: should have %d, \
-only %d given",
-				      sdp->sp_name, sdp->sp_count, i);
-			Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-			bu_vls_free(&str);
-			return TCL_ERROR;
-		    }
-
-		    while ((*cp == ' ' || *cp == '\n' || *cp == '\t') && *cp)
-			++cp;
-
-		    numstart = cp;
-		    if (*cp == '-' || *cp == '+') cp++;
-
-		    /* skip matissa */
-		    dot_seen = 0;
-		    for (; *cp ; cp++ ) {
-			if (*cp == '.' && !dot_seen) {
-			    dot_seen = 1;
-			    continue;
+			if( sdp->sp_fmt[0] != '%' ) {
+				bu_log( "bu_structparse_argv: unknown format\n" );
+				bu_vls_free( &str );
+				Tcl_AppendResult( interp, "unknown format",
+						  (char *)NULL );
+				return TCL_ERROR;
 			}
-			if (!isdigit(*cp))
-			    break;			    
-		    }
 
-		    /* If no mantissa seen, then there is no float here */
-		    if (cp == (numstart + dot_seen)) {
-			bu_vls_trunc(&str, 0);
-			bu_vls_printf(&str, 
+			--argc;
+			++argv;
+
+			switch( sdp->sp_fmt[1] )  {
+			case 'c':
+			case 's':
+				/* copy the string, converting escaped
+				 * double quotes to just double quotes
+				 */
+				if( argc < 1 ) {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+			 "not enough values for \"%s\" argument: should be %d",
+						       sdp->sp_name,
+						       sdp->sp_count );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+				for( i = j = 0;
+				     j < sdp->sp_count && argv[0][i] != '\0';
+				     loc[j++] = argv[0][i++] )
+					;
+				if( sdp->sp_count > 1 ) {
+					loc[sdp->sp_count-1] = '\0';
+					Tcl_AppendResult( interp,
+							  sdp->sp_name, " ",
+							  loc, " ",
+							  (char *)NULL );
+				} else {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str, "%s %c ",
+						       sdp->sp_name, *loc );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+				}
+				--argc;
+				++argv;
+				break;
+			case 'i':
+				bu_log(
+			 "Error: %%i not implemented. Contact developers.\n" );
+				Tcl_AppendResult( interp,
+						  "%%i not implemented yet",
+						  (char *)NULL );
+				bu_vls_free( &str );
+				return TCL_ERROR;
+			case 'd': {
+				register int *ip = (int *)loc;
+				register int tmpi;
+				register char CONST *cp;
+
+				if( argc < 1 ) {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+      "not enough values for \"%s\" argument: should have %d, only %d given",
+						       sdp->sp_name,
+						       sdp->sp_count, i );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+
+				Tcl_AppendResult( interp, sdp->sp_name, " ",
+						  (char *)NULL );
+
+				/* Special case:  '=!' toggles a boolean */
+				if( argv[0][0] == '!' ) {
+					*ip = *ip ? 0 : 1;
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str, "%d ", *ip );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					++argv;
+					--argc;
+					break;
+				}
+				/* Normal case: an integer */
+				cp = *argv;
+				for( i = 0; i < sdp->sp_count; ++i ) {
+					if( *cp == '\0' ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str,
+		      "not enough values for \"%s\" argument: should have %d",
+							       sdp->sp_name,
+							       sdp->sp_count );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp )
+						++cp;
+			
+					tmpi = atoi( cp );
+					if( *cp && (*cp == '+' || *cp == '-') )
+						cp++;
+					while( *cp && isdigit(*cp) )
+						cp++; 
+					/* make sure we actually had an
+					 * integer out there
+					 */
+
+					if( cp == *argv ||
+					    (cp == *argv+1 &&
+					     (argv[0][0] == '+' ||
+					      argv[0][0] == '-')) ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
+			       "value \"%s\" to argument %s isn't an integer",
+							       argv,
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					} else {
+						*(ip++) = tmpi;
+					}
+					/* Skip the separator(s) */
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp ) 
+						++cp;
+				}
+				Tcl_AppendResult( interp,
+						  sdp->sp_count > 1 ? "{" : "",
+						  argv[0],
+						  sdp->sp_count > 1 ? "}" : "",
+						  " ", (char *)NULL);
+				--argc;
+				++argv;
+				break; }
+			case 'f': {
+				int		dot_seen;
+				double		tmp_double;
+				register double *dp;
+				char		*numstart;
+
+				dp = (double *)loc;
+
+				if( argc < 1 ) {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+       "not enough values for \"%s\" argument: should have %d, only %d given",
+						       sdp->sp_name,
+						       sdp->sp_count, argc );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+
+				Tcl_AppendResult( interp, sdp->sp_name, " ",
+						  (char *)NULL );
+
+				cp = *argv;
+				for( i = 0; i < sdp->sp_count; i++ ) {
+					if( *cp == '\0' ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str,
+       "not enough values for \"%s\" argument: should have %d, only %d given",
+							       sdp->sp_name,
+							       sdp->sp_count,
+							       i );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+					
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp )
+						++cp;
+
+					numstart = cp;
+					if( *cp == '-' || *cp == '+' ) cp++;
+
+					/* skip matissa */
+					dot_seen = 0;
+					for( ; *cp ; cp++ ) {
+						if( *cp == '.' && !dot_seen ) {
+							dot_seen = 1;
+							continue;
+						}
+						if( !isdigit(*cp) )
+							break;
+					}
+
+					/* If no mantissa seen,
+					   then there is no float here */
+					if( cp == (numstart + dot_seen) ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
 	                           "value \"%s\" to argument %s isn't a float",
-				      argv[0], sdp->sp_name);
-			Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-			bu_vls_free(&str);
-			return TCL_ERROR;
-		    }
+							       argv[0],
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
 
-		    /* there was a mantissa, so we may have an exponent */
-		    if (*cp == 'E' || *cp == 'e') {
-			cp++;
+					/* there was a mantissa,
+					   so we may have an exponent */
+					if( *cp == 'E' || *cp == 'e' ) {
+						cp++;
 
-			/* skip exponent sign */
-		    	if (*cp == '+' || *cp == '-')
-			    cp++;
-			while (isdigit(*cp))
-			    cp++;
-		    }
+						/* skip exponent sign */
+						if (*cp == '+' || *cp == '-')
+							cp++;
+						while( isdigit(*cp) )
+							cp++;
+					}
 
-		    bu_vls_trunc(&str, 0);
-		    bu_vls_strcpy(&str, numstart);
-		    bu_vls_trunc(&str, cp-numstart);
-		    if (sscanf(bu_vls_addr(&str), "%lf", &tmp_double) != 1 ) {
-			bu_vls_trunc(&str, 0);
-			bu_vls_printf(&str, 
-	                           "value \"%s\" to argument %s isn't a float",
-				      numstart, sdp->sp_name);
-			Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-			bu_vls_free(&str);
-			return TCL_ERROR;
-		    }
+					bu_vls_trunc( &str, 0 );
+					bu_vls_strcpy( &str, numstart );
+					bu_vls_trunc( &str, cp-numstart );
+					if( sscanf(bu_vls_addr(&str),
+						   "%lf", &tmp_double) != 1 ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
+				  "value \"%s\" to argument %s isn't a float",
+							       numstart,
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+					
+					*dp++ = tmp_double;
 
-		    *dp++ = tmp_double;
-
-		    while ((*cp == ' ' || *cp == '\n' || *cp == '\t') && *cp)
-			++cp;
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp )
+						++cp;
+				}
+				Tcl_AppendResult( interp,
+						  sdp->sp_count > 1 ? "{" : "",
+						  argv[0],
+						  sdp->sp_count > 1 ? "}" : "",
+						  " ", (char *)NULL );
+				--argc;
+				++argv;
+				break; }
+			default:
+				Tcl_AppendResult( interp, "unknown format",
+						  (char *)NULL );
+				return TCL_ERROR;
+			}
+			break;
 		}
-		Tcl_AppendResult(interp, sdp->sp_count > 1 ? "{" : "",
-				 argv[0], sdp->sp_count > 1 ? "}" : "",
-				 " ", (char *)NULL);
-		--argc;
-		++argv;
-		break; }
-	    default:
-		Tcl_AppendResult(interp, "unknown format", (char *)NULL);
-		return TCL_ERROR;
-	    }
-	    break;
+		
+		if( sdp->sp_name == NULL ) {
+			bu_vls_trunc( &str, 0 );
+			bu_vls_printf( &str, "invalid attribute %s", argv[0] );
+			Tcl_AppendResult( interp, bu_vls_addr(&str),
+					  (char *)NULL );
+			bu_vls_free( &str );
+			return TCL_ERROR;
+		}
 	}
-
-	if (sdp->sp_name == NULL) {
-	    bu_vls_trunc(&str, 0);
-	    bu_vls_printf(&str, "invalid attribute %s", argv[0]);
-	    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-	    bu_vls_free(&str);
-	    return TCL_ERROR;
-	}
-    }
-    return TCL_OK;
+	return TCL_OK;
 }
 
 /*
