@@ -117,7 +117,7 @@ int	width, height;
 		 *  If it does not, then this can be stacked with /dev/mem,
 		 *  i.e.	/dev/mem -
 		 */
-		ifp->if_fd = 1;		/* fileno(stdin) */
+		ifp->if_fd = 1;		/* fileno(stdout) */
 		ifp->if_width = width;
 		ifp->if_height = height;
 		ifp->if_seekpos = 0L;
@@ -188,28 +188,37 @@ int	count;
 	register long todo;
 	long		got;
 	long		dest;
+	long		bytes_read = 0;
+	int		fd = ifp->if_fd;
+
+	/* Reads on stdout make no sense.  Take reads from stdin. */
+	if( fd == 1 )  fd = 0;
 
 	dest = (((long) y * (long) ifp->if_width) + (long) x)
 	     * (long) sizeof(RGBpixel);
-	if( lseek(ifp->if_fd, (off_t)dest, 0) == -1L ) {
+	if( lseek(fd, (off_t)dest, 0) == -1L ) {
 		fb_log( "disk_buffer_read : seek to %ld failed.\n", dest );
 		return	-1;
 	}
 	ifp->if_seekpos = dest;
 	while( bytes > 0 ) {
 		todo = bytes;
-		if( (got = read( ifp->if_fd, (char *) pixelp, todo )) != todo )  {
-			if( got != 0 )  {
-				fb_log("disk_buffer_read: read failed\n");
-				return	-1;
+		if( (got = read( fd, (char *) pixelp, todo )) != todo )  {
+			if( got == 0 )  {
+				if( bytes_read <= 0 )
+					return -1;	/* error */
+				/* early EOF -- indicate what we got */
+				return bytes_read/sizeof(RGBpixel);
 			}
-			return  0;
+			fb_log("disk_buffer_read(fd=%d): y=%d read of %d got %d bytes\n",
+				fd, y, todo, got);
 		}
-		bytes -= todo;
-		pixelp += todo / sizeof(RGBpixel);
-		ifp->if_seekpos += todo;
+		bytes -= got;
+		pixelp += got;
+		ifp->if_seekpos += got;
+		bytes_read += got;
 	}
-	return	count;
+	return	bytes_read/sizeof(RGBpixel);
 }
 
 _LOCAL_ int
