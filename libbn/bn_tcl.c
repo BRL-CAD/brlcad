@@ -53,6 +53,7 @@ char *str;
 		bn_mat_idn( m );
 		return 16;
 	}
+	if( *str == '{' )  str++;
 
 	return sscanf(str,
 	    "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
@@ -65,6 +66,7 @@ bn_decode_quat(q, str)
 quat_t q;
 char *str;
 {
+	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
 }
 
@@ -73,6 +75,7 @@ bn_decode_vect(v, str)
 vect_t v;
 char *str;
 {
+	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
 }
 
