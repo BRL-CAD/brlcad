@@ -837,7 +837,7 @@ set -S2 "/bin/sh"
 #			define	OPTIMIZER	-O -g
 #			define  PROFILER	-pg
 #		endif
-#		define	CC_DEFS		-Wall -pedantic -D_REENTRANT -DSUNOS=55
+#		define	CC_DEFS		-Wall -pedantic -D_REENTRANT -DSUNOS=58
 #		define	CC_OPTS		-I''XINCDIR
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
@@ -849,14 +849,15 @@ set -S2 "/bin/sh"
 #		endif
 #		define	CC_OPTS		-Xc -K PIC -I''XINCDIR
 /*		SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
-#		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=55
+#		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=58
 #	endif
 
 /*	Shared library support */
 #	if BUILD_SHARED /* PRODUCTION=1 */
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	ld -Bdynamic -G -o
+#		define	LDSHARED	ld -Bdynamic -G
+#		define	BUILD_LIBRARY	LDSHARED -o
 #		define	RANLIB		true
 #		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R LIBDIR:XLIBDIR:/usr/lib
 #	else
@@ -867,7 +868,8 @@ set -S2 "/bin/sh"
 #	endif
 
 #	define	LIBBU_LIBES	-lthread LIBTCL LIBTCL_LIBES
-#	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
+/* libpkg_config -D_KERNEL option is not needed for sunos > 55 */
+#	define	LIBPKG_CONFIG	-DBSD=43
 #	define	LIBPKG_LIBES	-lnsl -lsocket
 
 #	define	LIBRT_TIMER	timerunix
@@ -888,18 +890,34 @@ set -S2 "/bin/sh"
 #else
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -lnsl -lsocket
 #endif
-#		define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#		define	BWISH_CONFIG	-I''XINCDIR -DBWISH
-#		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #	else
 /*		Compiling XGL requires SDK (Solaris Developer's Kit) */
-#		define	XGLHOME		/opt/SUNWits/Graphics-sw/xgl-3.0
+/* for pre 5.8
+ *#		define	XGLHOME		/opt/SUNWits/Graphics-sw/xgl-3.0*/
+#		define	XGLHOME		/opt/SUNWits/Graphics-sw/xil
+#		define	LIBDM_OBJS	color query dm-X
+#		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #		define	MGED_OBJS	doevent update dm-X dm-xgl dm-generic
 #		define	MGED_CONFIG	-DDM_X -DDM_XGL -I''XINCDIR -I''XGLHOME/include
+/*		-lxgl does not appear available after 5.5 any more -- name changed to -lxil */
+#if 1
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -lnsl -lsocket
+#else
 #		define	MGED_LIBES	-L''XLIBDIR -L''XGLHOME/lib -R''XLIBDIR \
 					-R''XGLHOME/lib \
-					-lX11 -lxgl -lnsl -lsocket -lXi
+					-lX11 -lxil -lnsl -lsocket -lXi
+#endif
 #	endif
+#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
+#	define	LIBZ_DIR	_use_system_z_
+#	define	LIBZ		-lz
+#	define	LIBZ_DEP	/**/
+#	define	LIBPNG_DIR	_use_system_png_
+#	define	LIBPNG		-lpng
+#	define	LIBPNG_DEP	/**/
 #endif
 
 #if defined(CRAY1)
