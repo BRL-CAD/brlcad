@@ -24,9 +24,15 @@ static char RCScmd[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 /*
  *			R T _ R E A D _ C M D
  *
