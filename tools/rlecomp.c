@@ -186,11 +186,11 @@ char	*argv[];
 
 	if (rle_row_alloc( &out_hdr, &Ascanline ))
 	    MALLOC_ERR;
-	bzero( Ascanline[RLE_ALPHA], out_hdr.xmax + 1 );
+	bzero( (char *)Ascanline[RLE_ALPHA], out_hdr.xmax + 1 );
 
 	if (rle_row_alloc( &out_hdr, &Bscanline ))
 	    MALLOC_ERR;
-	bzero( Bscanline[RLE_ALPHA], out_hdr.xmax + 1 );
+	bzero( (char *)Bscanline[RLE_ALPHA], out_hdr.xmax + 1 );
 
 	if (rle_row_alloc( &out_hdr, &scanout ))
 	    MALLOC_ERR;
@@ -417,7 +417,7 @@ int * tmp_nraw;			/* copy_scanline. */
     if (*num_skip > 0)		/* Generate a blank (skipped) scanline */
     {
 	for( i = RLE_ALPHA; i < the_hdr->ncolors; i++ )
-	    bzero( scanline[i], the_hdr->xmax );
+	    bzero( (char *)scanline[i], the_hdr->xmax );
 	(*num_skip)--;
 	if (*num_skip == 0)
 	    *num_skip = -1;	/* Flag raw data available */
@@ -524,7 +524,7 @@ int blank_output;		/* if non-zero, just eat input & blank output */
 	    /*
 	     * Create a "bytemask" of the non-zero pixels.
 	     */
-	    bzero( non_zero_pixels, xlen );
+	    bzero( (char *)non_zero_pixels, xlen );
 	    for (chan = 0; chan < in_hdr->ncolors; chan++ )
 		for (i = 0; i < out_nraw[chan]; i++)
 		    if (out_raw[chan][i].opcode == RByteDataOp ||

@@ -810,7 +810,7 @@ void
 clear_raster(ras_ptr)
 rle_pixel *ras_ptr[];
 {
-    bzero( ras_ptr[cur_chan], array_width * array_lines );
+    bzero( (char *)ras_ptr[cur_chan], array_width * array_lines );
 }
 
 /*

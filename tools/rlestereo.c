@@ -184,10 +184,10 @@ char **argv;
 	     */
 	    if (GreenFlag) {
 		RightIndex = 1;
-		bzero(outline[2], Xres * sizeof(rle_pixel));
+		bzero( (char *)outline[2], Xres * sizeof(rle_pixel));
 	    } else {
 		RightIndex = 2;
-		bzero(outline[1], Xres * sizeof(rle_pixel));
+		bzero( (char *)outline[1], Xres * sizeof(rle_pixel));
 	    }
 
 	    /*

@@ -395,7 +395,7 @@ sum_hist ()
     /* Get a color box. */
     cb = (color_box_t *) malloc( sizeof( color_box_t ) );
     CHECK_MALLOC( cb );
-    bzero( cb, sizeof( color_box_t ) );
+    bzero( (char *)cb, sizeof( color_box_t ) );
 
     /* Compact histogram. */
     for ( oldh = newh = 0; oldh < 32768; oldh++ )
@@ -516,7 +516,7 @@ color_box_t *box;
      */
     newbox = (color_box_t *) malloc( sizeof(color_box_t) );
     CHECK_MALLOC( newbox );
-    bzero( newbox, sizeof( color_box_t ) );
+    bzero( (char *)newbox, sizeof( color_box_t ) );
 
     newbox->hist = &box->hist[i];
     newbox->hsize = box->hsize - i;

@@ -123,7 +123,7 @@ char	*argv[];
 		 */
 		if ((chan == RLE_ALPHA) && (!in_hdr.alpha))
 		{
-		    bzero(alphptr, new_xlen);
+		    bzero((char *)alphptr, new_xlen);
 		}
 		else for( i = 0; i < new_xlen; i++)
 		{

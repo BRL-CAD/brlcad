@@ -58,7 +58,7 @@ char ** argv;
 #else
     /* use the standard Unix rand function if nothing better */
     {
-	long seed;
+	time_t seed;
 	(void)time( &seed );
 	srand( *(int *)&seed );
     }
