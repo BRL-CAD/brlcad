@@ -51,9 +51,11 @@ extern double	degtorad, radtodeg;	/* Defined in usepen.c */
  * All GED files are stored in a fixed base unit (MM).
  * These factors convert database unit to local (or working) units.
  */
-extern double	base2local, local2base;	/* Defined in dir.c */
-extern int 	localunit;		/* the current local unit (index) */
-extern char	cur_title[];		/* current model title */
+extern struct db_i	*dbip;			/* defined in ged.c */
+#define	base2local	(dbip->dbi_base2local)
+#define local2base	(dbip->dbi_local2base)
+#define localunit	(dbip->dbi_localunit)	/* current local unit (index) */
+#define	cur_title	(dbip->dbi_title)	/* current model title */
 
 extern int	dmaflag;		/* Set !0 to force a new screen DMA */
 
@@ -92,18 +94,16 @@ extern int	los_default;
  *
  *  These are allocated storage in dozoom.c
  */
-extern fastf_t	Viewscale;
+extern fastf_t	Viewscale;		/* dist from center to edge of RPP */
 extern mat_t	Viewrot;
 extern mat_t	toViewcenter;
 extern mat_t	model2view, view2model;
 extern mat_t	model2objview, objview2model;
 extern mat_t	modelchanges;		/* full changes this edit */
 extern mat_t	incr_change;		/* change(s) from last cycle */
-
-#define VIEWSIZE	(2*Viewscale)
+				
+#define VIEWSIZE	(2*Viewscale)	/* Width of viewing cube */
 #define VIEWFACTOR	(1/Viewscale)	/* 2.0 / VIEWSIZE */
-
-extern fastf_t	maxview;
 
 /*
  * Identity matrix.  Handy to have around. - initialized in e1.c
@@ -148,8 +148,7 @@ extern FILE *outfile;
  */
 extern void		dir_build(), buildHrot(), button(), dozoom(),
 			pr_schain();
-extern void		db_getrec(), db_putrec(), db_delete(), db_alloc(),
-			drawHobj(), eraseobj(), finish(), slewview(),
+extern void		drawHobj(), eraseobj(), finish(), slewview(),
 			htov_move(), mat_copy(), mat_idn(),
 			mat_inv(), mat_mul(), mat_zero(), matXvec(),
 			mmenu_init(), moveHinstance(), moveHobj(), pr_solid(),
@@ -168,7 +167,6 @@ extern struct directory	*combadd(), *dir_add(), *lookup(), **dir_getspace();
 extern struct solid *redraw();
 extern void		ellipse(), memfree(), mempurge();
 extern unsigned long	memalloc(), memget();
-extern union record	*db_getmrec();
 
 #ifndef	NULL
 #define	NULL		0
@@ -242,8 +240,10 @@ extern char *state_str[];		/* identifying strings */
 #define MIN(a,b)	if( (b) < (a) )  a = b
 #define MAX(a,b)	if( (b) > (a) )  a = b
 
+#ifndef GETSTRUCT
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
 #define GETSTRUCT(p,str) \
 	p = (struct str *)malloc((unsigned)sizeof(struct str)); \
 	if( p == (struct str *)0 ) \
 		(void)printf("getstruct( p, str ): malloc failed\n");/* cpp magic */
+#endif
