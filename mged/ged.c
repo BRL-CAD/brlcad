@@ -69,6 +69,7 @@ in all countries except the USA.  All rights reserved.";
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "mater.h"
 #include "libtermio.h"
 #include "./ged.h"
 #include "./titles.h"
@@ -1725,6 +1726,7 @@ int	exitcode;
 	}
 
 	/* Be certain to close the database cleanly before exiting */
+	Tcl_Eval(interp, "db close; .inmem close");
 	if( wdbp )  wdb_close(wdbp);
 	if( dbip )  db_close(dbip);
 
@@ -1969,6 +1971,7 @@ f_opendb(
 	char	**argv)
 {
 	struct db_i *save_dbip;
+	struct mater *save_materp;
 	struct bu_vls vls;
 	struct bu_vls msg;	/* use this to hold returned message */
 
@@ -2009,6 +2012,8 @@ f_opendb(
 
 	save_dbip = dbip;
 	dbip = DBI_NULL;
+	save_materp = rt_material_head;
+	rt_material_head = MATER_NULL;
 
 	/* Get input file */
 	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
@@ -2063,6 +2068,7 @@ f_opendb(
 				if(argc == 2){
 					/* need to reset this before returning */
 					dbip = save_dbip;
+					rt_material_head = save_materp;
 					Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
 					    (char *)NULL);
 					bu_vls_printf(&curr_cmd_list->cl_more_default, "n");
@@ -2073,6 +2079,7 @@ f_opendb(
 
 				if( *argv[2] != 'y' && *argv[2] != 'Y' ){
 					dbip = save_dbip; /* restore previous database */
+					rt_material_head = save_materp;
 					bu_vls_free(&vls);
 					bu_vls_free(&msg);
 					return TCL_OK;
@@ -2083,6 +2090,7 @@ f_opendb(
 	    	/* File does not exist, and should be created */
 		if( (dbip = db_create( argv[1], 5 )) == DBI_NULL )  {
 			dbip = save_dbip; /* restore previous database */
+			rt_material_head = save_materp;
 			bu_vls_free(&vls);
 			bu_vls_free(&msg);
 
@@ -2113,18 +2121,28 @@ f_opendb(
 
 	if( save_dbip )  {
 		char *av[2];
+		struct db_i *new_dbip;
+		struct mater *new_materp;
 
 		av[0] = "zap";
 		av[1] = NULL;
+
+		new_dbip = dbip;
+		dbip = save_dbip;
+		new_materp = rt_material_head;
+		rt_material_head = save_materp;
 
 		/* Clear out anything in the display */
 		f_zap(clientData, interp, 1, av);
 
 		/* Close the Tcl database objects */
 		Tcl_Eval(interp, "db close; .inmem close");
+		wdb_close(wdbp);
 
 		/* Close current database.  Releases MaterHead, etc. too. */
-		db_close(save_dbip);
+		db_close(dbip);
+		dbip = new_dbip;
+		rt_material_head = new_materp;
 
 		log_event( "CEASE", "(close)" );
 	}
@@ -2135,17 +2153,11 @@ f_opendb(
 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
 
-	/* Close previous databases, if any.  Ignore errors. */
-	bu_vls_strcpy(&vls, "db close; .inmem close");
-	(void)Tcl_Eval( interp, bu_vls_addr(&vls) );
-
 	/* Provide LIBWDB C access to the on-disk database */
-	if( wdbp )  wdb_close(wdbp);
 	if( (wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL )  {
 		Tcl_AppendResult(interp, "wdb_dbopen() failed?\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-
 	/* Establish LIBWDB TCL access to both disk and in-memory databases */
 	/* This creates "db" and ".inmem" Tcl objects */
 	bu_vls_strcpy(&vls, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]");
