@@ -160,8 +160,12 @@ int	spacing;
 	for( y = 0; y < fbheight; y += spacing )
 		fb_write( fbp, 0, y, line, fbwidth );
 	for( x = 0; x < fbwidth; x += spacing ) {
+#if 0
 		for( y = 0; y < fbheight; y++ )
 			fb_write( fbp, x, y, line[0], 1 );
+#else
+		fb_writerect( fbp, x, 0, x, fbheight-1, line );
+#endif
 	}
 }
 
