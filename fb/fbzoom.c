@@ -30,17 +30,19 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
-/* Zoom rate and limits.	*/
+/* Zoom rate and limits */
 #define MinZoom		(1)
 
-/* Pan limits.	*/
+/* Pan limits */
 #define MaxXPan		(fb_getwidth(fbp)-1)
 #define MaxYPan		(fb_getheight(fbp)-1)
 #define MinPan		(0)
 
 static int PanFactor;			/* Speed with whitch to pan.	*/
-static int zoom;			/* Zoom Factor.			*/
 static int xPan, yPan;			/* Pan Location.		*/
+static int xZoom, yZoom;		/* Zoom Factor.			*/
+static int new_xPan, new_yPan;
+static int new_xZoom, new_yZoom;
 
 static int	scr_width = 0;		/* screen size */
 static int	scr_height = 0;
@@ -52,17 +54,32 @@ Usage: fbzoom [-h] [-F framebuffer]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n";
 
 main(argc, argv )
+int argc;
 char **argv;
 {
 	if( ! pars_Argv( argc, argv ) ) {
 		(void)fputs(usage, stderr);
-		return	1;
+		exit(1);
 	}
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
-		return	1;
-	zoom = 1;
+		exit(1);
+
+	if( optind+4 == argc ) {
+		xPan = atoi( argv[optind+0] );
+		yPan = atoi( argv[optind+1] );
+		xZoom = atoi( argv[optind+2] );
+		yZoom = atoi( argv[optind+3] );
+		fb_view(fbp, xPan, yPan, xZoom, yZoom);
+	}
+
+#if 0
+	xZoom = 1;
+	yZoom = 1;
 	xPan = fb_getwidth(fbp)/2;
 	yPan = fb_getheight(fbp)/2;
+#else
+	fb_getview(fbp, &xPan, &yPan, &xZoom, &yZoom);
+#endif
 
 	/* Set RAW mode */
 	save_Tty( 0 );
@@ -72,19 +89,51 @@ char **argv;
 	PanFactor = fb_getwidth(fbp)/16;
 	if( PanFactor < 2 )  PanFactor = 2;
 
-	fb_zoom( fbp, zoom, zoom );
+	new_xPan = xPan;
+	new_yPan = yPan;
+	new_xZoom = xZoom;
+	new_yZoom = yZoom;
 	do  {
-		fb_window( fbp, xPan, yPan );
+		/* Clip values against Min/Max */
+		if (new_xPan > MaxXPan) new_xPan = MaxXPan;
+		if (new_xPan < MinPan) new_xPan = MinPan;
+		if (new_yPan > MaxYPan) new_yPan = MaxYPan;
+		if (new_yPan < MinPan) new_yPan = MinPan;
+		if (xZoom < MinZoom) xZoom = MinZoom;
+		if (yZoom < MinZoom) yZoom = MinZoom;
+
+		if( new_xPan != xPan || new_yPan != yPan
+		  || new_xZoom != xZoom || new_yZoom != yZoom ) {
+		  	/* values have changed, write them */
+			if( fb_view(fbp, new_xPan, new_yPan,
+			    new_xZoom, new_yZoom) >= 0 ) {
+				/* good values, save them */
+				xPan = new_xPan;
+				yPan = new_yPan;
+				xZoom = new_xZoom;
+				yZoom = new_yZoom;
+			} else {
+				/* bad values, reset to old ones */
+				new_xPan = xPan;
+				new_yPan = yPan;
+				new_xZoom = xZoom;
+				new_yZoom = yZoom;
+			}
+		}
+#if 0
 		(void) fprintf( stdout,
-				"zoom=%3d, Center Pixel is %4d,%4d            \r",
-				zoom, xPan, yPan
-				);
+				"Zoom: %2d %2d  Center Pixel: %4d %4d            \r",
+				xZoom, yZoom, xPan, yPan );
+#else
+		(void) fprintf( stdout,
+				"Center Pixel: %4d %4d   Zoom: %2d %2d            \r",
+				xPan, yPan, xZoom, yZoom );
+#endif
 		(void) fflush( stdout );
 	}  while( doKeyPad() );
 
 	reset_Tty( 0 );
-	(void) fb_zoom( fbp, zoom, zoom );
-	(void) fb_window( fbp, xPan, yPan );
+	(void) fb_view( fbp, xPan, yPan, xZoom, yZoom );
 	(void) fb_close( fbp );
 	(void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
 	return	0;
@@ -105,6 +154,7 @@ J ^P	move Up (many)\r\n\
 K ^N	move Down (many)\r\n\
 L ^F	move Left (many)\r\n\
 c	goto Center\r\n\
+z	zoom 1 1\r\n\
 r	Reset to normal\r\n\
 q	Exit\r\n\
 RETURN	Exit\r\n";
@@ -118,94 +168,116 @@ doKeyPad()
 	if( (ch = getchar()) == EOF )
 		return	0;		/* done */
 	ch &= ~0x80;			/* strip off parity bit */
-	switch( ch )
-		{
+	switch( ch ) {
 	default :
 		(void) fprintf( stdout,
 				"\r\n'%c' bad -- Type ? for help\r\n",
-				ch
-				);
+				ch );
 	case '?' :
 		(void) fprintf( stdout, "\r\n%s", help );
 		break;
-	case '\r' :    
-	case '\n' :				/* Done, return to normal */
+
+	case '\r' :				/* Done, leave "as is" */
+	case '\n' :
 	case 'q' :
+	case 'Q' :				
 		return	0;
-	case 'Q' :				/* Done, leave "as is" */
-		return	0;
-	case 'c' :	
-	case 'C' :				/* Center */
-		xPan = fb_getwidth(fbp)/2;
-		yPan = fb_getheight(fbp)/2;
+
+	case 'c' :				/* Reset Pan (Center) */
+	case 'C' :
+		new_xPan = fb_getwidth(fbp)/2;
+		new_yPan = fb_getheight(fbp)/2;
 		break;
-	case 'r' :	
-	case 'R' :				/* Reset */
-		(void)fb_zoom( fbp, 1, 1 );
-		zoom = 1;
-		xPan = fb_getwidth(fbp)/2;
-		yPan = fb_getheight(fbp)/2;
+	case 'z' :				/* Reset Zoom */
+	case 'Z' :
+		new_xZoom = 1;
+		new_yZoom = 1;
 		break;
+	case 'r' :				/* Reset Pan and Zoom */
+	case 'R' :
+		new_xZoom = 1;
+		new_yZoom = 1;
+		new_xPan = fb_getwidth(fbp)/2;
+		new_yPan = fb_getheight(fbp)/2;
+		break;
+
 	case ctl('v') :
 	case 'b' :				/* zoom BIG binary */
-		if( fb_zoom(fbp, zoom*2, zoom*2 ) >= 0 )
-			zoom *= 2;
+		new_xZoom *= 2;
+		new_yZoom *= 2;
 		break;
 	case '+' :				/* zoom BIG incr */
-		if( fb_zoom(fbp, zoom+1, zoom+1 ) >= 0 )
-			++zoom;
+		new_xZoom++;
+		new_yZoom++;
 		break;
 	case 's' :				/* zoom small binary */
-		if(  (zoom /= 2) < MinZoom )
-			zoom = MinZoom;
-		(void)fb_zoom(fbp, zoom, zoom );
+		new_xZoom /= 2;
+		new_yZoom /= 2;
 		break;
 	case '-' :				/* zoom small incr */
-		if(  --zoom < MinZoom )
-			zoom = MinZoom;
-		(void)fb_zoom(fbp, zoom, zoom );
+		--new_xZoom;
+		--new_yZoom;
 		break;
+
+	case '>' :				/* X Zoom */
+		new_xZoom *= 2;
+		break;
+	case '.' :
+		++new_xZoom;
+		break;
+	case '<' :
+		new_xZoom /= 2;
+		break;
+	case ',' :
+		--new_xZoom;
+		break;
+
+	case ')' :				/* Y Zoom */
+		new_yZoom *= 2;
+		break;
+	case '0' :
+		++new_yZoom;
+		break;
+	case '(' :
+		new_yZoom /= 2;
+		break;
+	case '9' :
+		--new_yZoom;
+		break;
+
 	case 'F' :
 	case 'l' :				/* move LEFT.	*/
-		if( ++xPan > MaxXPan )
-			xPan = MaxXPan;
+		++new_xPan;
 		break;
 	case ctl('f') :
 	case 'L' :
-		if( (xPan += PanFactor) > MaxXPan )
-			xPan = MaxXPan;
+		new_xPan += PanFactor;
 		break;
 	case 'N' :
 	case 'k' :				/* move DOWN.	*/
-		if( --yPan < MinPan )
-			yPan = MinPan;
+		--new_yPan;
 		break;
 	case ctl('n') :
 	case 'K' :
-		if( (yPan -= PanFactor) < MinPan )
-			yPan = MinPan;
+		new_yPan -= PanFactor;
 		break;
 	case 'P' :
 	case 'j' :				/* move UP.	*/
-		if( ++yPan > MaxYPan )
-			yPan = MaxYPan;
+		++new_yPan;
 		break;
 	case ctl('p') :
 	case 'J' :
-		if( (yPan += PanFactor) > MaxYPan )
-			yPan = MaxYPan;
+		new_yPan += PanFactor;
 		break;
 	case 'B' :
 	case 'h' :				/* move RIGHT.	*/
-		if( --xPan < MinPan )
-			xPan = MinPan;
+		--new_xPan;
 		break;
 	case ctl('b') :
 	case 'H' :
-		if( (xPan -= PanFactor) < MinPan )
-			xPan = MinPan;
+		new_xPan -= PanFactor;
 		break;
-		}
+	}
 	return	1;		/* keep going */
 }
 
@@ -245,4 +317,3 @@ register char	**argv;
 	}
 	return	1;
 }
-
