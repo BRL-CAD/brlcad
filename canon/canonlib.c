@@ -1041,7 +1041,7 @@ char *s;
 	[-N outputheight] [-W outputwidth] [-S outputsquaresize]\n\
 	[-X PageXOffset] [-Y PageYOffset]\n\
 	[-a(utosize_input)] [-g(amma) { s | r | c }]\n\
-	[-z(oom)] [-C(opies) {1-99}] [-m(osaic)]\n\
+	[-z(oom)] [-t { u | l | m }] [-C(opies) {1-99}] [-m(osaic)]\n\
 	[ -A(utoscale_output) | -M xmag:ymag | -R dpi ]\n\
 	[-u(nits) { i|m } ] [-D divisor]\n\
 	[-c(lear)] [-d SCSI_device] [-v(erbose)] [-V(erboser)]\n\
