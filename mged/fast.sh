@@ -23,7 +23,7 @@ cake \
 
 cake \
  dir.o \
- dm-4d.o \
+ dm-X.o \
  dm-plot.o \
  dm-ps.o \
  dm-tek.o \
