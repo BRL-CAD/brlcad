@@ -1,4 +1,5 @@
-/*		R T A S S O C . C
+/*
+ *			A S S O C I A T I O N . C
  *
  *  Author -
  *	Paul Tanenbaum
@@ -26,12 +27,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include "machine.h"
 #include "externs.h"
-#include "vmath.h"
-#include "rtstring.h"
-#include "raytrace.h"
+#include "bu.h"
 
 /*
- *			 R T _ A S S O C ( )
+ *			 B U _ A S S O C I A T I O N
  *
  *	    Look up the association for a specified value
  *
@@ -42,10 +41,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *
  *	and returns the rest of the line beyond the field separator.
  */
-struct bu_vls *rt_assoc (fname, value, field_sep)
+struct bu_vls *bu_association (fname, value, field_sep)
 
-char	*fname;
-char	*value;
+CONST char	*fname;
+CONST char	*value;
 int	field_sep;
 
 {
@@ -66,7 +65,7 @@ int	field_sep;
 	 *	between ERROR_PERFORMING_THE_LOOKUP
 	 *	and VALUE_NOT_FOUND.
 	 */
-	bu_log("rt_assoc:  Cannot open association file '%s'\n", fname);
+	bu_log("bu_association:  Cannot open association file '%s'\n", fname);
 	exit (1);
     }
 
@@ -84,11 +83,12 @@ int	field_sep;
 	  || (strncmp(cp, value, len) != 0));
 
     vp = (struct bu_vls *)
-	    bu_malloc(sizeof(struct bu_vls), "value of rt_assoc");
+	    bu_malloc(sizeof(struct bu_vls), "value of bu_association");
     bu_vls_init(vp);
     bu_vls_strcpy(vp, cp + len + 1);
 
 wrap_up:
     bu_vls_trunc(&buffer, 0);
+    fclose(fp);
     return (vp);
 }
