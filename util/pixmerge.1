@@ -57,13 +57,20 @@ If no formula is specified, the default is to take all foreground
 pixels greater than black (all bytes zero), which can be specified
 as:
 .br
-.I
-pixmerge -g -c 0/0/0 fg.pix bg.pix
-.R
+.ft I
+   pixmerge -g -c 0/0/0 fg.pix bg.pix
+.ft R
 .SH EXAMPLES
-.I
-gencolor 200 0 200 | pixmerge -g -c 20/20/20 fb.pix - > out.pix
-.R
+.ft I
+   gencolor 200 0 200 | 
+      pixmerge -g -c 20/20/20 fg.pix - > out.pix
+.sp .5
+   pixbackgnd -t0 160 200 |
+      pixmerge -n -c 63/0/127 fg.pix - | pix-fb
+.ft R
+The second example is used to composite an
+.IR rt (1)
+generated image on top of a shaded background.
 .SH "SEE ALSO"
 brlcad(1), gencolor(1), pixbackgnd(1), pix(5), bw(5)
 .SH AUTHOR
