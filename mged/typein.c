@@ -808,7 +808,12 @@ char **argv;
 
 	if (fn_in(argv, &internal, name) != 0)  {
 	  Tcl_AppendResult(interp, "ERROR, ", argv[2], " not made!\n", (char *)NULL);
-	  rt_db_free_internal( &internal, &rt_uniresource );
+	  if( internal.idb_ptr ) {
+		  /* a few input functions do not use the internal pointer
+		   * only free it, if it has been used
+		   */
+		  rt_db_free_internal( &internal, &rt_uniresource );
+	  }
 	  return TCL_ERROR;
 	}
 
@@ -855,6 +860,8 @@ const char		*name;
 
 	CHECK_DBI_NULL;
 
+	intern->idb_ptr = NULL;
+
 	if( strlen( cmd_argvs[3] ) != 1 ) {
 		bu_log( "Unrecognized minor type (%s)\n", cmd_argvs[3] );
 		return 1;
@@ -900,8 +907,6 @@ const char		*name;
 			name, cmd_argvs[4] );
 		return 1;
 	}
-
-	intern->idb_ptr = NULL;
 
 	return 0;
 }
@@ -1641,6 +1646,8 @@ const char		*name;
 
 	CHECK_DBI_NULL;
 
+	intern->idb_ptr = NULL;
+
 	norm[X] = atof(cmd_argvs[3+0]);
 	norm[Y] = atof(cmd_argvs[3+1]);
 	norm[Z] = atof(cmd_argvs[3+2]);
@@ -1720,6 +1727,8 @@ const char		*name;
 	int			i;
 
 	CHECK_DBI_NULL;
+
+	intern->idb_ptr = NULL;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
 		center[i] = atof(cmd_argvs[3+i]) * local2base;
@@ -2174,6 +2183,8 @@ const char		*name;
 
 	CHECK_DBI_NULL;
 
+	intern->idb_ptr = NULL;
+
 	min[X] = atof(cmd_argvs[3+0]) * local2base;
 	max[X] = atof(cmd_argvs[3+1]) * local2base;
 	min[Y] = atof(cmd_argvs[3+2]) * local2base;
@@ -2215,6 +2226,8 @@ const char		*name;
 	point_t		min, max;
 
 	CHECK_DBI_NULL;
+
+	intern->idb_ptr = NULL;
 
 	VSETALL( min, 0 );
 	max[X] = atof(cmd_argvs[3+0]) * local2base;
