@@ -73,6 +73,9 @@ char *argv[];
   if((dmp = dm_open(DM_TYPE_X, argc-1, argv)) == DM_NULL)
     return TCL_ERROR;
 
+  /* keep display manager in sync */
+  dmp->dm_perspective = mged_variables->mv_perspective_mode;
+
   eventHandler = X_doevent;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
   dm_configureWindowShape(dmp);

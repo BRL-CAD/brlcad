@@ -97,7 +97,7 @@ char *argv[];
 
   /*XXXX this eventually needs to move into Ogl's private structure */
   dmp->dm_vp = &view_state->vs_Viewscale;
-  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->perspective_mode = &mged_variables->mv_perspective_mode;
+  dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
   eventHandler = Ogl_doevent;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
