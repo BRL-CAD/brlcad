@@ -49,7 +49,10 @@
 #define MEDIUM_SKY	1
 #define OVERCAST_SKY	2
 
+/* Sometimes found in <math.h> */
+#if !defined(PI)
 #define PI    3.14159265358979323846264338327950288419716939937511
+#endif
 #define MIKE_TOL	.000001
 
 /* Local information */
