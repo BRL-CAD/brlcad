@@ -17,11 +17,13 @@
 *  The program conisists of three parts:
 *	1) take view, orientation, eye_position, and size from two rt log 
 *          files, and use this information to build up the registration matrix;
-*	2) possibley use plrot to rotate/transform the UNIX_Plot file
-*	   or do this here
+*	2) puts out a registration matrix and a new space command to be
+*	   used by plrot in lieu of -a#, -e#, -g to rotate/transform the 
+*	   UNIX_Plot file
 *			and
 *	3) involve pix-fb -o to do the overlaying of the actual files.
-*
+*	4) Note: two pixel files (one lo-res, one hi-res) will be registered
+*	   later in a slightly different way.
 *
 *  Authors -
 *	Susanne L. Muuss, J.D.
@@ -56,7 +58,7 @@ Usage:  regis plot.log pix.log\n";
 
 int	mat_build();
 int	read_rt_file();
-
+void	print_info();
 
 static FILE	*fp;
 
@@ -140,7 +142,7 @@ mat_print("mod2view2-pix.log", mod2view2);
 		fprintf(stderr, "regis: can't build registration matrix!\n");
 		exit(-1);
 	}
-	
+	print_info(regismat);	
 	exit(0);
 
 }
@@ -176,7 +178,8 @@ mat_t	regismat;
 	VSET(bdelta, mat2[MDX], mat2[MDY], mat2[MDZ]);
 
 	/* Take the difference between the deltas. Also scale the size
-	 * of the model (scale).
+	 * of the model (scale).  These will be used to register two
+	 * pixel files later on.
 	 */
 
 	VSUB2(delta, adelta, bdelta);
@@ -193,13 +196,13 @@ mat_t	regismat;
 	 * alternate space command in that program. Therefore the below
 	 * applies.
 	 * What if the first log corresponds to a hi-res pixel file to be
-	 * registered with a lo-res pixel file?  Is the treated the same as
-	 * as two plot files (i.e. two plot files are cat'ed together;
-	 * two plot files may be pixmatte'ed...
+	 * registered with a lo-res pixel file?  Then the above calculated
+	 * deltas are used.   This will be implemented later.
 	 */
 
 	mat_copy( regismat, mat2);
 	mat_print("regismat", regismat);
+	return(1);				/* OK */
 }
 
 
@@ -414,4 +417,24 @@ mat_t 	model2view;
 }
 
 
-	
+/*		P R I N T _ I N F O
+ *
+ *  This routine takes as its input parameter a registration matrix.  Its
+ *  sole task is to print this matrix out in a form usable by plrot.  It
+ *  also prints out the parameters for the new space command for plrot.
+ */
+
+void
+print_info(mat)
+mat_t	mat;
+{
+
+	int	i;
+
+	fprintf(stdout, "-m\"");
+	for( i = 0; i < 15; i++ )  {
+		fprintf(stdout, "%g ", mat[i]);
+	}
+	fprintf(stdout, "%g\" -S\"-1 -1 -1 1 1 1\"\n", mat[15]);
+	return(0);
+}
