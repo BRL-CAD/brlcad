@@ -54,7 +54,7 @@ struct memdebug {
 };
 static struct memdebug	*bu_memdebug;
 static struct memdebug	*bu_memdebug_lowat;
-static int		bu_memdebug_len = 0;
+static size_t		bu_memdebug_len = 0;
 #define MEMDEBUG_NULL	((struct memdebug *)0)
 
 /*
@@ -105,7 +105,7 @@ again:
 		bu_memdebug = (struct memdebug *)calloc(
 			bu_memdebug_len, sizeof(struct memdebug) );
 	} else {
-		int	old_len = bu_memdebug_len;
+		size_t	old_len = bu_memdebug_len;
 		bu_memdebug_len *= 16;
 		bu_memdebug = (struct memdebug *)realloc(
 			(char *)bu_memdebug,
