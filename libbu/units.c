@@ -27,11 +27,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"	/* needed for things like strtod() */
 #include "bu.h"
-/* 
-#include "vmath.h"
-
-#include "raytrace.h"
-*/
 
 static CONST struct cvt_tab {
 	double	val;
