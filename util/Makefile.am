@@ -33,19 +33,19 @@ wavelet_SOURCES = wavelet.c
 wavelet_LDADD = @BN@ @FB@
 
 png_info_SOURCES = png_info.c
-png_info_LDADD = @BN@ @PNG@
+png_info_LDADD = @BN@ @PNG_LIBS@
 
 pix_png_SOURCES = pix-png.c
-pix_png_LDADD = @BN@ @PNG@
+pix_png_LDADD = @BN@ @PNG_LIBS@
 
 png_pix_SOURCES = png-pix.c
-png_pix_LDADD = @BN@ @PNG@
+png_pix_LDADD = @BN@ @PNG_LIBS@
 
 bw_png_SOURCES = bw-png.c
-bw_png_LDADD = @BN@ @PNG@
+bw_png_LDADD = @BN@ @PNG_LIBS@
 
 png_bw_SOURCES = png-bw.c
-png_bw_LDADD = @BN@ @PNG@
+png_bw_LDADD = @BN@ @PNG_LIBS@
 
 dunncolor_SOURCES = dunncolor.c dunncomm.c
 
