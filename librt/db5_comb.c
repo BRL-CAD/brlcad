@@ -489,7 +489,7 @@ rt_comb_import5(
 
 			if( mi < 0 )  {
 				/* Signal identity matrix */
-				if( bn_mat_is_identity( mat ) ) {
+				if( !mat || bn_mat_is_identity( mat ) ) {
 					tp->tr_l.tl_mat = (matp_t)NULL;
 				} else
 					tp->tr_l.tl_mat = bn_mat_dup( mat );
@@ -556,7 +556,7 @@ rt_comb_import5(
 
 			if( mi < 0 )  {
 				/* Signal identity matrix */
-				if( bn_mat_is_identity( mat ) ) {
+				if( !mat || bn_mat_is_identity( mat ) ) {
 					tp->tr_l.tl_mat = (matp_t)NULL;
 				} else
 					tp->tr_l.tl_mat = bn_mat_dup( mat );
