@@ -21,14 +21,8 @@
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
-#ifdef HEP
-/* full means resource free, empty means resource busy */
-#define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
-#define RES_RELEASE(ptr)	(void)Daset(ptr,3)	/* set full */
-#else
-#define RES_ACQUIRE(ptr)	;
-#define RES_RELEASE(ptr)	;
-#endif
+#define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
+#define INFINITY	(1.0e20)
 
 /*
  * Handy memory allocator
@@ -141,6 +135,12 @@ struct soltab {
 #define ID_POLY		8	/* Polygonal facted object */
 #define ID_BSPLINE	9	/* B-spline object */
 
+/*
+ *			F U N C T A B
+ *
+ *  Object-oriented interface to geometry modules.
+ *  Table is indexed by ID_xxx value of particular solid.
+ */
 struct rt_functab {
 	int		(*ft_prep)();
 	struct seg 	*((*ft_shot)());
@@ -150,9 +150,6 @@ struct rt_functab {
 	char		*ft_name;
 };
 extern struct rt_functab rt_functab[];
-
-#define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
-#define INFINITY	(1.0e20)
 
 
 /*
@@ -313,7 +310,50 @@ union bitv_elem {
 #define BITZERO(lp,nbits) bzero((char *)lp, BITS2BYTES(nbits))
 
 /*
- *		A P P L I C A T I O N
+ *			C U T
+ *
+ *  Structure for space subdivision.
+ */
+union cutter  {
+#define CUT_CUTNODE	1
+#define CUT_BOXNODE	2
+	char	cut_type;
+	union cutter *cut_forw;		/* Freelist forward link */
+	struct cutnode  {
+		char	cn_type;
+		char	cn_axis;	/* 0,1,2 = cut along X,Y,Z */
+		fastf_t	cn_point;	/* cut through axis==point */
+		union cutter *cn_l;	/* val < point */
+		union cutter *cn_r;	/* val >= point */
+	} cn;
+	struct boxnode  {
+		char	bn_type;
+		fastf_t	bn_min[3];
+		fastf_t	bn_max[3];
+		struct soltab **bn_list;
+		short	bn_len;		/* # of solids in list */
+		short	bn_maxlen;	/* # of ptrs allocated to list */
+	} bn;
+};
+#define CUTTER_NULL	((union cutter *)0)
+
+/*
+ *			D I R E C T O R Y
+ */
+struct directory  {
+	char		*d_namep;		/* pointer to name string */
+	long		d_addr;			/* disk address in obj file */
+	struct directory *d_forw;		/* link to next dir entry */
+};
+#define DIR_NULL	((struct directory *)0)
+
+/* Args to rt_dir_lookup() */
+#define LOOKUP_NOISY	1
+#define LOOKUP_QUIET	0
+
+
+/*
+ *			A P P L I C A T I O N
  *
  * Note:  When calling rt_shootray(), these fields are mandatory:
  *	a_ray.r_pt	Starting point of ray to be fired
@@ -340,6 +380,8 @@ struct application  {
 };
 
 /*
+ *			R T _ G
+ *
  *  Definitions for librt.a which are global to the library
  *  regardless of how many different models are being worked on
  */
@@ -347,6 +389,7 @@ struct rt_g {
 	int		debug;		/* non-zero for debug, see debug.h */
 	struct seg 	*FreeSeg;	/* Head of segment freelist */
 	struct partition *FreePart;	/* Head of freelist */
+	union cutter	*rtg_CutFree;	/* cut Freelist */
 	/*  Definitions necessary to interlock in a parallel environment */
 	int		res_pt;		/* lock on free partition structs */
 	int		res_seg;	/* lock on free seg structs */
@@ -357,6 +400,8 @@ struct rt_g {
 extern struct rt_g rt_g;
 
 /*
+ *			R T _ I
+ *
  *  Definitions for librt.a which are specific to the
  *  particular model being processed;  ultimately,
  *  there could be several instances of this structure.
@@ -366,8 +411,12 @@ struct rt_i {
 	struct soltab	*HeadSolid;	/* ptr to list of solids in model */
 	struct region	*HeadRegion;	/* ptr of list of regions in model */
 	union tree	*RootTree;	/* ptr to total tree (non-region) */
+	char		*file;		/* name of file */
+	FILE		*fp;		/* file handle of database */
+	vect_t		mdl_min;	/* min corner of model bounding RPP */
+	vect_t		mdl_max;	/* max corner of model bounding RPP */
+	union bitv_elem *FreeBitv;	/* head of freelist */
 	long		nregions;	/* total # of regions participating */
-	int		fd;		/* fd of database */
 	long		nsolids;	/* total # of solids participating */
 	long		nshots;		/* # of calls to ft_shot() */
 	long		nmiss_model;	/* rays missed model RPP */
@@ -375,46 +424,55 @@ struct rt_i {
 	long		nmiss_solid;	/* rays missed solid RPP */
 	long		nmiss;		/* solid ft_shot() returned a miss */
 	long		nhits;		/* solid ft_shot() returned a hit */
-	vect_t		mdl_min;	/* min corner of model bounding RPP */
-	vect_t		mdl_max;	/* max corner of model bounding RPP */
-	union bitv_elem *FreeBitv;	/* head of freelist */
 	int		needprep;	/* needs rt_prep */
-	char		*file;		/* name of file */
 	int		useair;		/* "air" regions are used */
+	int		rti_nrays;	/* # calls to rt_shootray() */
+	union cutter	rti_CutHead;	/* Head of cut tree */
+	union cutter	rti_inf_box;	/* List of infinite solids */
+	struct directory *rti_DirHead;	/* directory for this DB */
 };
+#define RTI_NULL	((struct rt_i *)0)
+
 extern struct rt_i rt_i;	/* Eventually, will be a return value */
 
-/*
- *  Global routines to interface with the RT library.
- */
+/*****************************************************************
+ *                                                               *
+ *          Applications interface to the RT library             *
+ *                                                               *
+ *****************************************************************/
+
 extern void rt_bomb();			/* Fatal error */
 extern void rt_log();			/* Log message */
 
-extern int rt_gettree();		/* Get expr tree for object */
+extern struct rt_i *rt_dirbuild();	/* Read named GED db, build toc */
 extern void rt_prep();			/* Prepare for raytracing */
 extern int rt_shootray();		/* Shoot a ray */
-extern void rt_prep_timer();		/* Start the timer */
-extern double rt_read_timer();		/* Read timer, return time + str */
-extern int rt_dirbuild();		/* Read named GED db, build toc */
-extern void rt_pr_seg();			/* Print seg struct */
+
+extern int rt_gettree();		/* Get expr tree for object */
+extern void rt_pr_seg();		/* Print seg struct */
 extern void rt_pr_partitions();		/* Print the partitions */
 extern void rt_viewbounds();		/* Find bounding view-space RPP */
 extern struct soltab *rt_find_solid();	/* Find solid by leaf name */
 
-/* RT Storage allocators */
-extern char *rt_malloc();			/* visible malloc() */
-extern void rt_free();			/* visible free() */
-extern char *rt_strdup();			/* Duplicate str w/malloc */
+extern void rt_prep_timer();		/* Start the timer */
+extern double rt_read_timer();		/* Read timer, return time + str */
 
 /* The matrix math routines */
 extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
 extern void mat_inv(), mat_trn(), mat_ae(), mat_angles();
 extern void vtoh_move(), htov_move(), mat_print();
 
-/*
- *  Internal routines in RT library.
- *  Not intended for general use.
- */
+
+/*****************************************************************
+ *                                                               *
+ *  Internal routines in the RT library.  Not for Applications   *
+ *                                                               *
+ *****************************************************************/
+
+extern char *rt_malloc();		/* visible malloc() */
+extern void rt_free();			/* visible free() */
+extern char *rt_strdup();		/* Duplicate str w/malloc */
+
 extern struct directory *rt_dir_lookup();/* Look up name in toc */
 extern struct directory *rt_dir_add();	/* Add name to toc */
 extern void rt_boolweave();		/* Weave segs into partitions */
@@ -438,6 +496,7 @@ extern void rt_pr_cut();		/* print cut node */
 extern void rt_draw_box();		/* unix-plot an RPP */
 extern void rt_region_color_map();	/* regionid-driven color override */
 extern void rt_color_addrec();		/* process ID_MATERIAL record */
+extern void rt_cut_extend();		/* extend a cut box */
 
 /* CxDiv, CxSqrt */
 extern void rt_pr_roots();		/* print complex roots */
@@ -445,14 +504,12 @@ extern void rt_pr_roots();		/* print complex roots */
 /*
  *  Variables and constants used by the RT library, not for external use.
  */
-double rt_invpi, rt_inv2pi;
+extern double rt_invpi, rt_inv2pi;
 
 /*
  *  System library routines used by the RT library.
  */
-extern long	lseek();
-extern int	read(), write();
 extern char	*malloc();
-extern void	free();
+/**extern void	free(); **/
 
 #endif RAYTRACE_H
