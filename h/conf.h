@@ -156,7 +156,8 @@
 #	define HAVE_GETOPT	1
 #endif
 
-#if defined(__NetBSD__) || defined(CRAY1) || defined(__bsdi__)
+#if defined(__NetBSD__) || defined(CRAY1) || defined(__bsdi__) \
+		defined(_HPUX_SOURCE)
 #	define HAVE_GETOPT_DECL	1
 #endif
 
@@ -279,7 +280,8 @@
         (defined(sgi) && defined(mips)) || \
         (defined(__sgi) && defined(__mips)) || \
         defined(pyr) || defined(apollo) || defined(aux) || \
-        defined(_AIX) || defined(NeXT) || defined(hpux)
+        defined(_AIX) || defined(NeXT) || defined(convex) || \
+	defined(hpux) || defined(__hppa)
 
         /*  These systems already operate in
          *  IEEE format internally, using big-endian order.
