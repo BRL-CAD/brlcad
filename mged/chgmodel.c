@@ -105,14 +105,15 @@ f_modify()
 }
 
 /* Mirror image */
-/* Format: m oldsolid newsolid axis	*/
+/* Format: m oldobject newobject axis	*/
 void
 f_mirror()
 {
 	register struct directory *dp;
 	union record record;
 	struct directory *proto;
-	int i, j, k, ngran;
+	int i, j, k, ngran, nmemb;
+	mat_t mirmat, temp;
 
 	if( (proto = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -134,32 +135,60 @@ f_mirror()
 	}
 
 	db_getrec( proto, &record, 0 );
-	if( record.u_id != ID_SOLID && record.u_id != ID_ARS_A )  {
-		(void)printf("%s: not a solid\n", proto->d_namep );
-		return;
-	}
-	if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, 0 )) == DIR_NULL )
-		return;
-	db_alloc( dp, proto->d_len );
+	if( record.u_id == ID_SOLID || record.u_id == ID_ARS_A )  {
+		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+			return;
+		db_alloc( dp, proto->d_len );
 
-	/* create mirror image */
-	if( record.u_id == ID_ARS_A )  {
-		NAMEMOVE( cmd_args[2], record.a.a_name );
-		ngran = record.a.a_totlen;
-		db_putrec( dp, &record, 0 );
-		for( i = 0; i < ngran; i++ )  {
-			db_getrec( proto, &record, i+1 );
-			for( j = k; j < 24; j += 3 )
-				record.b.b_values[j] *= -1.0;
-			db_putrec( dp, &record, i+1 );
+		/* create mirror image */
+		if( record.u_id == ID_ARS_A )  {
+			NAMEMOVE( cmd_args[2], record.a.a_name );
+			ngran = record.a.a_totlen;
+			db_putrec( dp, &record, 0 );
+			for( i = 0; i < ngran; i++ )  {
+				db_getrec( proto, &record, i+1 );
+				for( j = k; j < 24; j += 3 )
+					record.b.b_values[j] *= -1.0;
+				db_putrec( dp, &record, i+1 );
+			}
+
+		} else  {
+			for( i = k; i < 24; i += 3 )
+				record.s.s_values[i] *= -1.0;
+			NAMEMOVE( cmd_args[2], record.s.s_name );
+			db_putrec( dp, &record, 0 );
 		}
-
-	} else  {
-		for( i = k; i < 24; i += 3 )
-			record.s.s_values[i] *= -1.0;
-		NAMEMOVE( cmd_args[2], record.s.s_name );
-		db_putrec( dp, &record, 0 );
 	}
+	else
+	if( record.u_id == ID_COMB ) {
+		nmemb = record.c.c_length;
+		if( (dp = dir_add(cmd_args[2],
+				-1,
+				record.c.c_flags == 'R' ? DIR_COMB|DIR_REGION : DIR_COMB,
+				proto->d_len)) == DIR_NULL )
+			return;
+		db_alloc( dp, proto->d_len );
+		NAMEMOVE(cmd_args[2], record.c.c_name);
+		db_putrec(dp, &record, 0);
+		mat_idn( mirmat );
+		mirmat[k*5] = -1.0;
+		for(i=0; i<nmemb; i++) {
+			db_getrec(proto, &record, i+1);
+			if(record.u_id != ID_MEMB) {
+				(void)printf("copied only %d of %d members\n",i+1,nmemb);
+				(void)putchar( 7 );
+				return;
+			}
+			mat_mul(temp, mirmat, record.M.m_mat);
+			mat_copy(record.M.m_mat, temp);
+			db_putrec(dp, &record, i+1);
+		}
+	}
+	else {
+		(void)printf("%s: Cannot mirror\n",cmd_args[2]);
+		return;
+	}
+
 	if( no_memory )  {
 		(void)printf(
 		"Mirror image (%s) created but NO memory left to draw it\n",
@@ -719,37 +748,148 @@ f_make()  {
 	record.s.s_values[2] = -toViewcenter[MDZ];
 	record.s.s_id = ID_SOLID;
 
-	/* make name <arb8|ellg|tor|tgc> */
+	/* make name <arb8|arb7|arb6|arb5|arb4|ellg|ell|sph|tor|tgc|rec|trc|rcc> */
 	if( strcmp( cmd_args[2], "arb8" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB8;
 		VSET( &record.s.s_values[0*3],
-			-toViewcenter[MDX] +1,
-			-toViewcenter[MDX] -1,
-			-toViewcenter[MDX] -1 );
-		VSET( &record.s.s_values[1*3],  0, 2, 0 );
-		VSET( &record.s.s_values[2*3],  0, 2, 2 );
-		VSET( &record.s.s_values[3*3],  0, 0, 2 );
-		VSET( &record.s.s_values[4*3],  -2, 0, 0 );
-		VSET( &record.s.s_values[5*3],  -2, 2, 0 );
-		VSET( &record.s.s_values[6*3],  -2, 2, 2 );
-		VSET( &record.s.s_values[7*3],  -2, 0, 2  );
+			-toViewcenter[MDX] +254,
+			-toViewcenter[MDX] -254,
+			-toViewcenter[MDX] -254 );
+		VSET( &record.s.s_values[1*3],  0, 508, 0 );
+		VSET( &record.s.s_values[2*3],  0, 508, 508 );
+		VSET( &record.s.s_values[3*3],  0, 0, 508 );
+		VSET( &record.s.s_values[4*3],  -508, 0, 0 );
+		VSET( &record.s.s_values[5*3],  -508, 508, 0 );
+		VSET( &record.s.s_values[6*3],  -508, 508, 508 );
+		VSET( &record.s.s_values[7*3],  -508, 0, 508  );
+	} else if( strcmp( cmd_args[2], "arb7" ) == 0 )  {
+		record.s.s_type = GENARB8;
+		record.s.s_cgtype = ARB7;
+		VSET( &record.s.s_values[0*3],
+			-toViewcenter[MDX] +254,
+			-toViewcenter[MDX] -254,
+			-toViewcenter[MDX] -127 );
+		VSET( &record.s.s_values[1*3],  0, 508, 0 );
+		VSET( &record.s.s_values[2*3],  0, 508, 508 );
+		VSET( &record.s.s_values[3*3],  0, 0, 254 );
+		VSET( &record.s.s_values[4*3],  -508, 0, 0 );
+		VSET( &record.s.s_values[5*3],  -508, 508, 0 );
+		VSET( &record.s.s_values[6*3],  -508, 508, 254 );
+		VSET( &record.s.s_values[7*3],  -508, 0, 0  );
+	} else if( strcmp( cmd_args[2], "arb6" ) == 0 )  {
+		record.s.s_type = GENARB8;
+		record.s.s_cgtype = ARB6;
+		VSET( &record.s.s_values[0*3],
+			-toViewcenter[MDX] +254,
+			-toViewcenter[MDX] -254,
+			-toViewcenter[MDX] -254 );
+		VSET( &record.s.s_values[1*3],  0, 508, 0 );
+		VSET( &record.s.s_values[2*3],  0, 508, 508 );
+		VSET( &record.s.s_values[3*3],  0, 0, 508 );
+		VSET( &record.s.s_values[4*3],  -508, 254, 0 );
+		VSET( &record.s.s_values[5*3],  -508, 254, 0 );
+		VSET( &record.s.s_values[6*3],  -508, 254, 508 );
+		VSET( &record.s.s_values[7*3],  -508, 254, 508  );
+	} else if( strcmp( cmd_args[2], "arb5" ) == 0 )  {
+		record.s.s_type = GENARB8;
+		record.s.s_cgtype = ARB5;
+		VSET( &record.s.s_values[0*3],
+			-toViewcenter[MDX] +254,
+			-toViewcenter[MDX] -254,
+			-toViewcenter[MDX] -254 );
+		VSET( &record.s.s_values[1*3],  0, 508, 0 );
+		VSET( &record.s.s_values[2*3],  0, 508, 508 );
+		VSET( &record.s.s_values[3*3],  0, 0, 508 );
+		VSET( &record.s.s_values[4*3],  -508, 254, 254 );
+		VSET( &record.s.s_values[5*3],  -508, 254, 254 );
+		VSET( &record.s.s_values[6*3],  -508, 254, 254 );
+		VSET( &record.s.s_values[7*3],  -508, 254, 254  );
+	} else if( strcmp( cmd_args[2], "arb4" ) == 0 )  {
+		record.s.s_type = GENARB8;
+		record.s.s_cgtype = ARB4;
+		VSET( &record.s.s_values[0*3],
+			-toViewcenter[MDX] +254,
+			-toViewcenter[MDX] -254,
+			-toViewcenter[MDX] -254 );
+		VSET( &record.s.s_values[1*3],  0, 508, 0 );
+		VSET( &record.s.s_values[2*3],  0, 508, 508 );
+		VSET( &record.s.s_values[3*3],  0, 508, 508 );
+		VSET( &record.s.s_values[4*3],  -508, 508, 0 );
+		VSET( &record.s.s_values[5*3],  -508, 508, 0 );
+		VSET( &record.s.s_values[6*3],  -508, 508, 0 );
+		VSET( &record.s.s_values[7*3],  -508, 508, 0  );
 	} else if( strcmp( cmd_args[2], "sph" ) == 0 )  {
 		record.s.s_type = GENELL;
 		record.s.s_cgtype = SPH;
-		VSET( &record.s.s_values[1*3], 1, 0, 0 );	/* A */
-		VSET( &record.s.s_values[2*3], 0, 1, 0 );	/* B */
-		VSET( &record.s.s_values[3*3], 0, 0, 1 );	/* C */
+		VSET( &record.s.s_values[1*3], 127, 0, 0 );	/* A */
+		VSET( &record.s.s_values[2*3], 0, 127, 0 );	/* B */
+		VSET( &record.s.s_values[3*3], 0, 0, 127 );	/* C */
+	} else if( strcmp( cmd_args[2], "ell" ) == 0 )  {
+		record.s.s_type = GENELL;
+		record.s.s_cgtype = ELL;
+		VSET( &record.s.s_values[1*3], 127, 0, 0 );	/* A */
+		VSET( &record.s.s_values[2*3], 0, 63.5, 0 );	/* B */
+		VSET( &record.s.s_values[3*3], 0, 0, 63.5 );	/* C */
 	} else if( strcmp( cmd_args[2], "ellg" ) == 0 )  {
 		record.s.s_type = GENELL;
 		record.s.s_cgtype = ELL;
-		printf("unimplemented\n"); return;
+		VSET( &record.s.s_values[1*3], 254, 0, 0 );	/* A */
+		VSET( &record.s.s_values[2*3], 0, 127, 0 );	/* B */
+		VSET( &record.s.s_values[3*3], 0, 0, 63.5 );	/* C */
 	} else if( strcmp( cmd_args[2], "tor" ) == 0 )  {
 		record.s.s_type = TOR;
-		printf("unimplemented\n"); return;
+		record.s.s_cgtype = TOR;
+		VSET( &record.s.s_values[1*3], 127, 0, 0 );	/* N with mag = r2 */
+		VSET( &record.s.s_values[2*3], 0, 254, 0 );	/* A == r1 */
+		VSET( &record.s.s_values[3*3], 0, 0, 254 );	/* B == r1 */
+		VSET( &record.s.s_values[4*3], 0, 127, 0 );	/* A == r1-r2 */
+		VSET( &record.s.s_values[5*3], 0, 0, 127 );	/* B == r1-r2 */
+		VSET( &record.s.s_values[6*3], 0, 381, 0 );	/* A == r1+r2 */
+		VSET( &record.s.s_values[7*3], 0, 0, 381 );	/* B == r1+r2 */
 	} else if( strcmp( cmd_args[2], "tgc" ) == 0 )  {
 		record.s.s_type = GENTGC;
-		printf("unimplemented\n"); return;
+		record.s.s_cgtype = TGC;
+		VSET( &record.s.s_values[1*3],  0, 0, 508 );
+		VSET( &record.s.s_values[2*3],  127, 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, 63.5, 0 );
+		VSET( &record.s.s_values[4*3],  63.5, 0, 0 );
+		VSET( &record.s.s_values[5*3],  0, 127, 0 );
+	} else if( strcmp( cmd_args[2], "tec" ) == 0 )  {
+		record.s.s_type = GENTGC;
+		record.s.s_cgtype = TEC;
+		VSET( &record.s.s_values[1*3],  0, 0, 508 );
+		VSET( &record.s.s_values[2*3],  127, 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, 63.5, 0 );
+		VSET( &record.s.s_values[4*3],  63.5, 0, 0 );
+		VSET( &record.s.s_values[5*3],  0, 31.75, 0 );
+	} else if( strcmp( cmd_args[2], "rec" ) == 0 )  {
+		record.s.s_type = GENTGC;
+		record.s.s_cgtype = REC;
+		VSET( &record.s.s_values[1*3],  0, 0, 508 );
+		VSET( &record.s.s_values[2*3],  127, 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, 63.5, 0 );
+		VSET( &record.s.s_values[4*3],  127, 0, 0 );
+		VSET( &record.s.s_values[5*3],  0, 63.5, 0 );
+	} else if( strcmp( cmd_args[2], "trc" ) == 0 )  {
+		record.s.s_type = GENTGC;
+		record.s.s_cgtype = TRC;
+		VSET( &record.s.s_values[1*3],  0, 0, 508 );
+		VSET( &record.s.s_values[2*3],  127, 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, 127, 0 );
+		VSET( &record.s.s_values[4*3],  63.5, 0, 0 );
+		VSET( &record.s.s_values[5*3],  0, 63.5, 0 );
+	} else if( strcmp( cmd_args[2], "rcc" ) == 0 )  {
+		record.s.s_type = GENTGC;
+		record.s.s_cgtype = RCC;
+		VSET( &record.s.s_values[1*3],  0, 0, 508 );
+		VSET( &record.s.s_values[2*3],  127, 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, 127, 0 );
+		VSET( &record.s.s_values[4*3],  127, 0, 0 );
+		VSET( &record.s.s_values[5*3],  0, 127, 0 );
+	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
+		(void)printf("make ars not implimented yet\n");
+		return;
 	} else {
 		printf("make:  %s is not a known primitive\n", cmd_args[2]);
 		return;
@@ -762,6 +902,9 @@ f_make()  {
 
 	NAMEMOVE( cmd_args[1], record.s.s_name );
 	db_putrec( dp, &record, 0 );
+	/* draw the "made" solid */
+	drawHobj(dp, ROOT, 0, identity);
+	dmaflag = 1;
 	(void)printf("done\n");
 }
 

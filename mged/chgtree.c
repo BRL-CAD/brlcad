@@ -64,7 +64,7 @@ f_copy()
 	register struct directory *proto;
 	register struct directory *dp;
 	union record record;
-	int i, ngran;
+	int i, ngran, nmemb;
 
 	if( (proto = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -76,22 +76,32 @@ f_copy()
 
 	db_getrec( proto, &record, 0 );
 
-	if( record.u_id != ID_SOLID && record.u_id != ID_ARS_A ) {
-		(void)printf("%s: not a solid\n", proto->d_namep );
-		return;
+	if(record.u_id == ID_SOLID) {
+		/*
+		 * Update the in-core directory
+		 */
+		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+			return;
+		db_alloc( dp, proto->d_len );
+
+		/*
+		 * Update the disk record
+		 */
+		NAMEMOVE( cmd_args[2], record.s.s_name );
+		db_putrec( dp, &record, 0 );
 	}
-
-	/*
-	 * Update the in-core directory
-	 */
-	if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, 0 )) == DIR_NULL )
-		return;
-	db_alloc( dp, proto->d_len );
-
-	/*
-	 * Update the disk record
-	 */
+	else
 	if(record.u_id == ID_ARS_A)  {
+		/*
+		 * Update the in-core directory
+		 */
+		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+			return;
+		db_alloc( dp, proto->d_len );
+
+		/*
+		 * Update the disk record
+		 */
 		NAMEMOVE( cmd_args[2], record.a.a_name );
 		ngran = record.a.a_totlen;
 		db_putrec( dp, &record, 0 );
@@ -99,19 +109,39 @@ f_copy()
 		/* Process the rest of the ARS (b records)  */
 		for( i = 0; i < ngran; i++ )  {
 			db_getrec( proto, &record, i+1 );
-			if( i == 0 )  {
-				record.b.b_values[0] = -toViewcenter[MDX];
-				record.b.b_values[1] = -toViewcenter[MDY];
-				record.b.b_values[2] = -toViewcenter[MDZ];
-			}
 			db_putrec( dp, &record, i+1 );
 		}
-	}  else  {
-		NAMEMOVE( cmd_args[2], record.s.s_name );
-		record.s.s_values[0] = -toViewcenter[MDX];
-		record.s.s_values[1] = -toViewcenter[MDY];
-		record.s.s_values[2] = -toViewcenter[MDZ];
+	}
+	else
+	if(record.u_id == ID_COMB) {
+		/*
+		 * Update the in-core directory
+		 */
+		if( (dp = dir_add(
+			cmd_args[2],
+			-1,
+			record.c.c_flags == 'R' ? DIR_COMB|DIR_REGION : DIR_COMB,
+			proto->d_len )) == DIR_NULL )
+			return;
+		db_alloc( dp, proto->d_len );
+
+		/*
+		 * Update the disk record
+		 */
+		NAMEMOVE( cmd_args[2], record.c.c_name );
+		nmemb = record.c.c_length;
 		db_putrec( dp, &record, 0 );
+
+		/* Process member records  */
+		for( i = 0; i < nmemb; i++ )  {
+			db_getrec( proto, &record, i+1 );
+			db_putrec( dp, &record, i+1 );
+		}
+	}
+	else {
+		(void)printf("%s: cannot copy\n",cmd_args[2]);
+		(void)putchar( 7 );
+		return;
 	}
 	(void)printf("done\n");
 }
