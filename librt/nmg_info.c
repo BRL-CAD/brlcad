@@ -262,6 +262,8 @@ match:		;
  *	+1	Loop is CCW, should be exterior loop.
  *	-1	Loop is CW, should be interior loop.
  *	 0	Unable to tell, error.
+ *
+ * XXX Should the return really be a boolean?
  */
 int
 nmg_loop_is_ccw( lu, norm, tol )
@@ -277,6 +279,7 @@ CONST struct rt_tol	*tol;
 	fastf_t		theta = 0;
 	fastf_t		x,y;
 	fastf_t		rad;
+	int		n_angles=0;	/* number of edge/edge angles measured */
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
@@ -317,12 +320,18 @@ CONST struct rt_tol	*tol;
 		rt_log("atan2(%g,%g) = %g\n", y, x, rad);
 #endif
 		theta += rad;
+		n_angles++;
 	}
 #if 0
-	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
+	rt_log(" theta = %g (%g) n_angles=%d\n", theta, theta / rt_twopi, n_angles );
 	nmg_face_lu_plot( lu, this_vu, this_vu );
 	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
 #endif
+
+	if( n_angles < 3 )  {
+		rt_log("nmg_loop_is_ccw():  only %d angles, can't tell\n", n_angles);
+		return 0;
+	}
 
 	rad = theta * rt_inv2pi;
 	x = rad-1;
