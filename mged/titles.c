@@ -278,11 +278,11 @@ struct bu_vls *overlay_vls;
 	sprintf(cent_z, "%.3f", -view_state->vs_toViewcenter[MDZ]*base2local);
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "cent=(%s %s %s)", cent_x, cent_y, cent_z);
-	Tcl_SetVar(interp, bu_vls_addr(&view_state->vs_center_name),
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_center_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
 	sprintf(size, "sz=%.3f", VIEWSIZE*base2local);
-	Tcl_SetVar(interp, bu_vls_addr(&view_state->vs_size_name),
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_size_name),
 		    size, TCL_GLOBAL_ONLY);
 
 	bu_vls_trunc(&vls, 0);
@@ -295,7 +295,7 @@ struct bu_vls *overlay_vls;
 		      view_state->vs_azimuth,
 		      view_state->vs_elevation,
 		      view_state->vs_twist);
-	Tcl_SetVar(interp, bu_vls_addr(&view_state->vs_aet_name),
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_aet_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
 	sprintf(ang_x, "%.2f", view_state->vs_rate_rotate[X]);
@@ -304,7 +304,7 @@ struct bu_vls *overlay_vls;
 
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "ang=(%s %s %s)", ang_x, ang_y, ang_z);
-	Tcl_SetVar(interp, bu_vls_addr(&view_state->vs_ang_name),
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_ang_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
 	DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
@@ -512,11 +512,11 @@ if(mged_variables->mv_faceplate){
 		  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 				     GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 		}
-		Tcl_SetVar(interp, bu_vls_addr(&view_state->vs_adc_name),
+		Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_adc_name),
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 		ss_line_not_drawn = 0;
 	}else{
-	  Tcl_SetVar(interp, bu_vls_addr(&view_state->vs_adc_name), "", TCL_GLOBAL_ONLY);
+	  Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_adc_name), "", TCL_GLOBAL_ONLY);
 	}
 
 	if( state == ST_S_EDIT || state == ST_O_EDIT )  {
@@ -584,7 +584,7 @@ if(mged_variables->mv_faceplate){
 	  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 			     GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 	}
-	Tcl_SetVar(interp, bu_vls_addr(&fps_name),
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_fps_name),
 		    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
 	bu_vls_free(&vls);
