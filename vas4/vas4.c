@@ -306,30 +306,6 @@ int number_of_frames;
 	char str[100],c,send;
 	int retry;
 
-#ifdef never
-	/* This code does not work */
-	/* If it has dropped out of E/E, need to get it back into it */
-	for(;;)  {
-		get_vtr_status();
-		c = get_vas_status();
-		switch(c)  {
-		case '`':			/* After init */
-		case 'x':			/* positioned on title after timeout */
-			fprintf(stderr,"pressing EE---------\n");
-			vas_putc(C_EE);	
-			vas_response(vas_getc());	/* should get R_RECORD */
-			continue;
-		default:
-			sleep(1);
-			continue;
-		case 'a':	/* BRL version of u-code only?? */
-			/* Ready to roll */
-			break;
-		}
-		break;
-	}
-#endif
-
 	vas_putc(C_FRAME_CHANGE);
 	vas_putnum(number_of_frames);
 	vas_putc(C_ENTER);
