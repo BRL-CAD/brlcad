@@ -9,6 +9,7 @@ libz_la_SOURCES = \
 	deflate.c \
 	example.c \
 	gzio.c \
+	infback.c \
 	inffast.c \
 	inflate.c \
 	inftrees.c \
@@ -19,9 +20,11 @@ libz_la_SOURCES = \
 libz_la_LDFLAGS = -version-info 2:4:1
 
 include_HEADERS = \
+	crc32.h \
 	deflate.h \
 	inffast.h \
 	inffixed.h \
+	inflate.h \
 	inftrees.h \
 	trees.h \
 	zconf.h \
