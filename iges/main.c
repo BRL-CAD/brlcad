@@ -57,7 +57,7 @@ extern char	version[];
 static int do_splines=0;
 static int do_drawings=0;
 static int trimmed_surf=0;
-int do_polysolids=0;
+int do_polysolids=1;
 
 static char *iges_file;
 
@@ -157,7 +157,7 @@ char *argv[];
 				trimmed_surf = 1;
 				break;
 			case 'p':
-				do_polysolids = 1;
+				do_polysolids = 0;
 				break;
 			case 'N':
 				solid_name = optarg;

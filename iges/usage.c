@@ -27,7 +27,7 @@ char *message="Usage:  iges-g [-N solid_name] [-X nmg_debug_flag] [-x rt_debug_f
 	-3 - Convert IGES drawings to NMG objects, but don't project to 2D (and ignore solid objects)\n\
 	-t - Convert all trimmed surfaces to a single NMG trimmed NURBS solid\n\
 	-o - Specify BRLCAD output file\n\
-	-p - Write BREP objects as polysolids rather than NMG's\n\
+	-p - Write BREP objects as NMG's rather than BOT's\n\
 	-X - Set debug flag for NMG routines\n\
 	-x - Set debug flag for librt\n\
 	-N - Specify name of solid to be created\n\
