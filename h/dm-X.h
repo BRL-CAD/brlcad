@@ -45,6 +45,10 @@ struct x_vars {
   unsigned long bd, bg, fg;   /* color of border, background, foreground */
   Colormap cmap;
   unsigned long pixels[NUM_PIXELS];
+  int devmotionnotify;
+  int devbuttonpress;
+  int devbuttonrelease;
+  int knobs[8];
   struct modifiable_x_vars mvars;
 };
 
