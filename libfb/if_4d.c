@@ -1,12 +1,11 @@
-#undef _LOCAL_
-#define _LOCAL_ /**/
 /*
+ *			I F _ 4 D . C
  *			I F _ G T . C
  *
- *  BRL Frame Buffer Library interface for SGI Iris-4D with Graphics Turbo.
+ *  BRL Frame Buffer Library interface for SGI Iris-4D, and
+ *  SGI Iris-4D with Graphics Turbo.
  *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
- *  Support for the 4D's  without the Graphics turbos is in if_4d.c
- *  However, all are called /dev/sgi
+ *  However, both are called /dev/sgi
  *
  *  In order to use a large chunck of memory with the shared memory 
  *  system it is necessary to increase the shmmax and shmall paramaters
@@ -18,13 +17,14 @@
  *
  *  refer to the Users Manuals to reconfigure your kernel..
  *
- *  There are different Frame Buffer types supported on the 4D/60T or 4D/70
- *  set your environment FB_FILE to the appropriate Frame buffer type.
- *  See the "fbhelp" table, at the end of this module.
+ *  There are several different Frame Buffer modes supported.
+ *  Set your environment FB_FILE to the appropriate type.
+ *  (see the modeflag definitions below).
+ *	/dev/sgi[options]
  *
  *  Authors -
- *	Paul R. Stay
  *	Michael John Muuss
+ *	Paul R. Stay
  *	Gary S. Moss
  *
  *  Source -
@@ -44,66 +44,76 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <gl.h>
+#include <get.h>
 #include <device.h>
-#include <gl/addrs.h>
-#include <gl/cg2vme.h>
+#include <psio.h>
 #include <sys/types.h>
+#include <sys/invent.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <signal.h>
-#include <psio.h>
 #undef RED
+#include <gl/addrs.h>
+#include <gl/cg2vme.h>
+
 #include "fb.h"
 #include "./fblocal.h"
 
-#define BZERO(p,cnt)	memset(p,'\0',cnt)
+extern char	*sbrk();
+extern char	*malloc();
+extern int	errno;
+extern char	*shmat();
+extern int	brk();
 
-extern char *sbrk();
-extern char *malloc();
-extern int errno;
-extern char *shmat();
-extern int brk();
+extern inventory_t	*getinvent();
 
 static Cursor	nilcursor;	/* to make it go away -- all bits off */
-static Cursor	cursor =
-	{
+static Cursor	cursor =  {
 #include "./sgicursor.h"
-	};
+ };
 
-_LOCAL_ int	gt_dopen(),
-		gt_dclose(),
-		gt_dclear(),
-		gt_bread(),
-		gt_bwrite(),
-		gt_cmread(),
-		gt_cmwrite(),
-		gt_viewport_set(),
-		gt_window_set(),
-		gt_zoom_set(),
-		gt_curs_set(),
-		gt_cmemory_addr(),
-		gt_cscreen_addr(),
-		gt_help();
+/* Internal routines */
+_LOCAL_ void	sgi_cminit();
+
+/* Exported routines */
+_LOCAL_ int	sgi_dopen(),
+		sgi_dclose(),
+		sgi_dclear(),
+		sgi_bread(),
+		sgi_bwrite(),
+		sgi_cmread(),
+		sgi_cmwrite(),
+		sgi_viewport_set(),
+		sgi_window_set(),
+		sgi_zoom_set(),
+		sgi_curs_set(),
+		sgi_cmemory_addr(),
+		sgi_help();
 
 /* This is the ONLY thing that we "export" */
+#if 1
+#define sgi_interface	gt_interface
 FBIO gt_interface =
+#else
+FBIO sgi_interface =
+#endif
 		{
-		gt_dopen,
-		gt_dclose,
+		sgi_dopen,
+		sgi_dclose,
 		fb_null,		/* reset? */
-		gt_dclear,
-		gt_bread,
-		gt_bwrite,
-		gt_cmread,
-		gt_cmwrite,
-		gt_viewport_set,
-		gt_window_set,
-		gt_zoom_set,
-		gt_curs_set,
-		gt_cmemory_addr,
+		sgi_dclear,
+		sgi_bread,
+		sgi_bwrite,
+		sgi_cmread,
+		sgi_cmwrite,
+		sgi_viewport_set,
+		sgi_window_set,
+		sgi_zoom_set,
+		sgi_curs_set,
+		sgi_cmemory_addr,
 		fb_null,		/* cscreen_addr */
-		gt_help,
-		"SGI 4D/GT",
+		sgi_help,
+		"Silicon Graphics Iris '4D'",
 		XMAXSCREEN+1,		/* max width */
 		YMAXSCREEN+1,		/* max height */
 		"/dev/sgi",
@@ -122,22 +132,25 @@ FBIO gt_interface =
 
 
 _LOCAL_ Colorindex get_Color_Index();
-_LOCAL_ void	mpw_inqueue();
+_LOCAL_ void	sgi_inqueue();
 static int	is_linear_cmap();
 
-struct gt_cmap {
-	unsigned char	cmr[256];
-	unsigned char	cmg[256];
-	unsigned char	cmb[256];
+/*
+ *  Structure of color map in shared memory region.
+ *  Has exactly the same format as the SGI hardware "gammaramp" map
+ *  Note that only the lower 8 bits are significant.
+ */
+struct sgi_cmap {
+	unsigned short	cmr[256];
+	unsigned short	cmg[256];
+	unsigned short	cmb[256];
 };
 
-
 /*
- *  Per MIPS (window or device) state information
+ *  Per window state information, overflow area.
  *  Too much for just the if_u[1-6] area now.
  */
-
-struct gtinfo {
+struct sgiinfo {
 	short	mi_curs_on;
 	short	mi_xzoom;
 	short	mi_yzoom;
@@ -150,14 +163,15 @@ struct gtinfo {
 	long	mi_der1;		/* Saved DE_R1 */
 	short	mi_xoff;		/* X viewport offset, rel. window */
 	short	mi_yoff;		/* Y viewport offset, rel. window */
+	short	mi_is_gt;		/* !0 when using GT hardware */
 };
-#define	GT(ptr)	((struct gtinfo *)((ptr)->u1.p))
-#define	GTL(ptr)	((ptr)->u1.p)		/* left hand side version */
+#define	SGI(ptr)	((struct sgiinfo *)((ptr)->u1.p))
+#define	SGIL(ptr)	((ptr)->u1.p)		/* left hand side version */
 #define if_mem		u2.p			/* shared memory pointer */
 #define if_cmap		u3.p			/* color map in shared memory */
-#define CMR(x)		((struct gt_cmap *)((x)->if_cmap))->cmr
-#define CMG(x)		((struct gt_cmap *)((x)->if_cmap))->cmg
-#define CMB(x)		((struct gt_cmap *)((x)->if_cmap))->cmb
+#define CMR(x)		((struct sgi_cmap *)((x)->if_cmap))->cmr
+#define CMG(x)		((struct sgi_cmap *)((x)->if_cmap))->cmg
+#define CMB(x)		((struct sgi_cmap *)((x)->if_cmap))->cmb
 #define if_zoomflag	u4.l			/* zoom > 1 */
 #define if_mode		u5.l			/* see MODE_* defines */
 
@@ -168,13 +182,11 @@ struct gtinfo {
 #define WIN_B	MARGIN
 #define WIN_T	(ifp->if_height - 1 + MARGIN)
 
-static int map_size;			/* # of color map slots available */
-
 /*
  *  The mode has several independent bits:
  *	SHARED -vs- MALLOC'ed memory for the image
  *	TRANSIENT -vs- LINGERING windows
- *	Windowed vs FullScreen
+ *	Windowed -vs- Centered Full screen
  *	Default Hz -vs- 30hz monitor mode
  *	Genlock NTSC -vs- normal monitor mode
  */
@@ -202,6 +214,14 @@ static int map_size;			/* # of color map slots available */
 #define MODE_6NORMAL	(0<<5)
 #define MODE_6EXTSYNC	(1<<5)
 
+#define MODE_7MASK	(1<<6)
+#define MODE_7NORMAL	(0<<6)
+#define MODE_7SWCMAP	(1<<6)
+
+#define MODE_8MASK	(1<<7)
+#define MODE_8NORMAL	(0<<7)
+#define MODE_8NOGT	(1<<7)
+
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)
@@ -216,7 +236,7 @@ struct modeflags {
 		"Private memory - else shared" },
 	{ 'l',	MODE_2MASK, MODE_2LINGERING,
 		"Lingering window - else transient" },
-	{ 'f',	MODE_3MASK, MODE_3FULLSCR, 
+	{ 'f',	MODE_3MASK, MODE_3FULLSCR,
 		"Full centered screen - else windowed" },
 	{ 't',	MODE_4MASK, MODE_4HZ30,
 		"Thirty Hz (e.g. Dunn) - else 60 Hz" },
@@ -224,26 +244,52 @@ struct modeflags {
 		"NTSC+GENLOCK - else normal video" },
 	{ 'e',	MODE_6MASK, MODE_6EXTSYNC,
 		"External sync - else internal" },
+	{ 'c',	MODE_7MASK, MODE_7SWCMAP,
+		"Perform software colormap - else use hardware colormap on whole screen" },
+	{ 'G',	MODE_8MASK, MODE_8NOGT,
+		"Don't use GT & Z-buffer hardware, if present (debug)" },
 	{ 'z',	MODE_15MASK, MODE_15ZAP,
 		"Zap (free) shared memory" },
 	{ '\0', 0, 0, "" }
 };
 
-static RGBpixel	rgb_table[4096];
+static int fb_parent;
 
-struct gt_pix {
+/*
+ *  This is the format of the buffer for lrectwrite(),
+ *  and thus defines the format of the in-memory framebuffer copy.
+ */
+struct sgi_pixel {
 	unsigned char alpha;	/* this will always be zero */
 	unsigned char blue;
 	unsigned char green;
 	unsigned char red;
 };
 
-struct gt_pix gt_scan[1280];	/* Maximum length of a scan line */
+static struct sgi_pixel	one_scan[XMAXSCREEN+1];	/* one scanline */
 
-static int fb_parent;
+/* Clipping structure, for zoom/pan operations on non-GT systems */
+struct sgi_clip {
+	int	xmin;
+	int	xmax;
+	int	ymin;
+	int	ymax;
+	int	xscroff;
+	int	yscroff;
+	int	xscrpad;
+	int	yscrpad;
+};
+
+/************************************************************************/
+/************************************************************************/
+/************************************************************************/
+/******************* Shared Memory Support ******************************/
+/************************************************************************/
+/************************************************************************/
+/************************************************************************/
 
 /*
- *			M I P S _ G E T M E M
+ *			S G I _ G E T M E M
  *
  *  Because there is no hardware zoom or pan, we need to repaint the
  *  screen (with big pixels) to implement these operations.
@@ -270,7 +316,7 @@ static int fb_parent;
  *  might need to be increased.
  */
 _LOCAL_ int
-gt_getmem( ifp )
+sgi_getmem( ifp )
 FBIO	*ifp;
 {
 #define SHMEM_KEY	42
@@ -282,43 +328,39 @@ FBIO	*ifp;
 	char	*sp;
 	int	new = 0;
 
-
-
 	errno = 0;
 
 	if( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
 		/*
 		 *  In this mode, only malloc as much memory as is needed.
 		 */
-		GT(ifp)->mi_memwidth = ifp->if_width;
-		pixsize = ifp->if_height * ifp->if_width * sizeof(RGBpixel);
-		size = pixsize + sizeof(struct gt_cmap);
+		SGI(ifp)->mi_memwidth = ifp->if_width;
+		pixsize = ifp->if_height * ifp->if_width * sizeof(struct sgi_pixel);
+		size = pixsize + sizeof(struct sgi_cmap);
 
 		sp = malloc( size );
 		if( sp == 0 )  {
-			fb_log("gt_getmem: frame buffer memory malloc failed\n");
+			fb_log("sgi_getmem: frame buffer memory malloc failed\n");
 			goto fail;
 		}
-
-		ifp->if_mem = sp;
-		ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
-
-		gt_cmwrite( ifp, COLORMAP_NULL );
-		return(0);
+		new = 1;
+		goto success;
 	}
 
 	/* The shared memory section never changes size */
-	GT(ifp)->mi_memwidth = ifp->if_max_width;
-	pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
-	size = pixsize + sizeof(struct gt_cmap);
+	SGI(ifp)->mi_memwidth = ifp->if_max_width;
+	pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(struct sgi_pixel);
+/*** XXX hack hack hack */
+pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
+	size = pixsize + sizeof(struct sgi_cmap);
 	size = (size + 4096-1) & ~(4096-1);
 
 	/* First try to attach to an existing one */
-	if( (GT(ifp)->mi_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
+	if( (SGI(ifp)->mi_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
 		/* No existing one, create a new one */
-		if( (GT(ifp)->mi_shmid = shmget(
+		if( (SGI(ifp)->mi_shmid = shmget(
 		    SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
-			fb_log("gt_getmem: shmget failed, errno=%d\n", errno);
+			fb_log("sgi_getmem: shmget failed, errno=%d\n", errno);
 			goto fail;
 		}
 		new = 1;
@@ -331,19 +373,19 @@ FBIO	*ifp;
 		new_brk = old_brk + (XMAXSCREEN+1) * 1024;
 	new_brk = (char *)((((int)new_brk) + 4096-1) & ~(4096-1));
 	if( brk( new_brk ) < 0 )  {
-		fb_log("gt_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
+		fb_log("sgi_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
 		goto fail;
 	}
 
 	/* Open the segment Read/Write, near the current break */
-	if( (sp = shmat( GT(ifp)->mi_shmid, 0, 0 )) == (char *)(-1) )  {
-		fb_log("gt_getmem: shmat returned x%x, errno=%d\n", sp, errno );
+	if( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1) )  {
+		fb_log("sgi_getmem: shmat returned x%x, errno=%d\n", sp, errno );
 		goto fail;
 	}
 
 	/* Restore the old break */
 	if( brk( old_brk ) < 0 )  {
-		fb_log("gt_getmem: restore brk(x%x) failure, errno=%d\n", old_brk, errno);
+		fb_log("sgi_getmem: restore brk(x%x) failure, errno=%d\n", old_brk, errno);
 		/* Take the memory and run */
 	}
 
@@ -353,12 +395,12 @@ success:
 
 	/* Provide non-black colormap on creation of new shared mem */
 	if(new)
-		gt_cmwrite( ifp, COLORMAP_NULL );
+		sgi_cminit( ifp );
 	return(0);
 fail:
-	fb_log("gt_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_gt.c for details\n");
+	fb_log("sgi_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_4d.c for details\n");
 	if( (sp = malloc( size )) == NULL )  {
-		fb_log("gt_getmem:  malloc failure\n");
+		fb_log("sgi_getmem:  malloc failure\n");
 		return(-1);
 	}
 	new = 1;
@@ -366,98 +408,364 @@ fail:
 }
 
 /*
- *			M I P S _ Z A P M E M
+ *			S G I _ Z A P M E M
  */
 void
-gt_zapmem()
+sgi_zapmem()
 {
 	int shmid;
 	int i;
 
 	if( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 )  {
-		fb_log("gt_zapmem shmget failed, errno=%d\n", errno);
+		fb_log("sgi_zapmem shmget failed, errno=%d\n", errno);
 		return;
 	}
 
 	i = shmctl( shmid, IPC_RMID, 0 );
 	if( i < 0 )  {
-		fb_log("gt_zapmem shmctl failed, errno=%d\n", errno);
+		fb_log("sgi_zapmem shmctl failed, errno=%d\n", errno);
 		return;
 	}
-	fb_log("if_mips: shared memory released\n");
+	fb_log("if_sgi: shared memory released\n");
 }
 
+/************************************************************************/
+
 /*
- *			M I P S _ R E P A I N T
+ *			S G I _ X M I T _ S C A N L I N E S
  *
  *  Given the current window center, and the current zoom,
- *  repaint the screen from the shared memory buffer,
- *  which stores RGB pixels.
+ *  transmit scanlines from the shared memory buffer.
+ *
+ *  On a non-GT, this routine copies scanlines from shared memory
+ *  directly to the screen (window).  Zooming is done here.
+ *
+ *  On a GT machine, this routine copies scanlines from shared memory
+ *  into the Z-buffer.
+ *  The full image is stored in the Z-buffer.
+ *  A separate routine is used to update some portion of the
+ *  window from the Z-buffer copy, permitting high-speed pan and zoom.
+ *
+ *  Note that lrectwrite() addresses are relative to the pixel coordinates of
+ *  the window, not the current viewport, as you might expect!
  */
 _LOCAL_ int
-gt_repaint( ifp )
+sgi_xmit_scanlines( ifp, ybase, nlines )
+register FBIO	*ifp;
+int		ybase;
+int		nlines;
+{
+	register int	y;
+	register int	n;
+	struct sgi_clip	clip;
+	int		sw_cmap;	/* !0 => needs software color map */
+	int		sw_zoom;	/* !0 => needs software zoom/pan */
+
+	if( SGI(ifp)->mi_is_gt )  {
+		/* Enable writing pixels into the Z buffer */
+		/* Always send full unzoomed image into Z buffer */
+		rectzoom( 1.0, 1.0 );
+		zbuffer(FALSE);
+		zdraw(TRUE);
+		backbuffer(FALSE);
+		frontbuffer(FALSE);
+
+		clip.xmin = clip.ymin = 0;
+		clip.xscroff = clip.yscroff = 0;
+		clip.xmax = ifp->if_width-1;
+		clip.ymax = ifp->if_height-1;
+
+		sw_zoom = 0;
+	} else {
+		/* Single buffered, direct to screen */
+		if( ifp->if_zoomflag )  {
+			rectzoom( (double) SGI(ifp)->mi_xzoom, 
+				  (double) SGI(ifp)->mi_yzoom);
+			sw_zoom = 1;
+		} else {
+			rectzoom( 1.0, 1.0 );
+			sw_zoom = 0;
+		}
+		if( SGI(ifp)->mi_xcenter != ifp->if_width/2 ||
+		    SGI(ifp)->mi_ycenter != ifp->if_height/2 )  {
+		    	sw_zoom = 1;
+		}
+		sgi_clipper( ifp, &clip );
+	}
+
+	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP  &&
+	    SGI(ifp)->mi_cmap_flag )  {
+	    	sw_cmap = 1;
+	}
+
+	/* Simplest case, nothing fancy */
+	y = ybase;
+	if( !sw_zoom && !sw_cmap )  {
+		if( ifp->if_width == SGI(ifp)->mi_memwidth )  {
+			lrectwrite(
+				SGI(ifp)->mi_xoff+0,
+				SGI(ifp)->mi_yoff+y,
+				SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+				SGI(ifp)->mi_yoff+y+nlines-1,
+				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
+				    sizeof(struct sgi_pixel)] );
+			return;
+		}
+		for( n=nlines; n>0; n--, y++ )  {
+			lrectwrite(
+				SGI(ifp)->mi_xoff+0,
+				SGI(ifp)->mi_yoff+y,
+				SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+				SGI(ifp)->mi_yoff+y,
+				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
+				    sizeof(struct sgi_pixel)] );
+		}
+		return;
+	}
+
+	if( !sw_zoom && sw_cmap )  {
+		register int	x;
+		register struct sgi_pixel	*sgip;
+
+		/* Perform software color mapping into temp scanline */
+		for( n=nlines; n>0; n--, y++ )  {
+			sgip = (struct sgi_pixel *)&ifp->if_mem[
+				(y*SGI(ifp)->mi_memwidth)*
+				sizeof(struct sgi_pixel) ];
+			for( x=ifp->if_width-1; x>=0; x-- )  {
+				one_scan[x].red   = CMR(ifp)[sgip[x].red];
+				one_scan[x].green = CMG(ifp)[sgip[x].green];
+				one_scan[x].blue  = CMB(ifp)[sgip[x].blue];
+			}
+			lrectwrite(
+				SGI(ifp)->mi_xoff+0,
+				SGI(ifp)->mi_yoff+y,
+				SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+				SGI(ifp)->mi_yoff+y,
+				one_scan );
+		}
+		return;
+	}
+
+	if( !sw_zoom )  {
+		fb_log("sgi_xmit_scanlines:  unexpected !sw_zoom\n");
+	}
+
+	/* Blank out area left of image */
+	RGBcolor( 0, 0, 0 );
+	if( clip.xscroff > 0 )  rectfs(
+		0,
+		0,
+		(Scoord) clip.xscroff-1,
+		(Scoord) ifp->if_height-1 );
+
+	/* Blank out area below image */
+	if( clip.yscroff > 0 )  rectfs(
+		0,
+		0,
+		(Scoord) ifp->if_width-1,
+		(Scoord) clip.yscroff-1 );
+
+	/* Blank out area right of image */
+	if( clip.xscrpad > 0 )  rectfs(
+		(Scoord) ifp->if_width-clip.xscrpad-1,
+		0,
+		(Scoord) ifp->if_width-1,
+		(Scoord) ifp->if_height-1 );
+
+	/* Blank out area above image */
+	if( clip.yscrpad > 0 )  rectfs(
+		0,
+		(Scoord) ifp->if_height-clip.yscrpad-1,
+		(Scoord) ifp->if_width-1,
+		(Scoord) ifp->if_height-1 );
+
+	/* Output pixels */
+	if( sw_zoom && !sw_cmap )  {
+		register int	yrep;
+		register int	yscr;
+
+		yscr = y + clip.yscroff;
+		for( n=nlines; n>0; n--, y++ )  {
+			if( y < clip.ymin )  continue;
+			if( y > clip.ymax )  break;
+			/* X direction replication is handled by HW */
+			for( yrep=0; yrep < SGI(ifp)->mi_yzoom; yrep++, yscr++ )  {
+				lrectwrite(
+				SGI(ifp)->mi_xoff+0+clip.xscroff,
+				SGI(ifp)->mi_yoff+yscr,
+				SGI(ifp)->mi_xoff+0+ifp->if_width-1-clip.xscrpad,
+				SGI(ifp)->mi_yoff+yscr,
+				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+clip.xmin)*
+				    sizeof(struct sgi_pixel)] );
+			}
+		}
+		return;
+	}
+	if( sw_zoom && sw_cmap )  {
+		/* Hardest case */
+		fb_log("too hard to zoom and cmap at the same time\n");
+		return;
+	}
+	fb_log("sgi_xmit_scanlines:  unexpected case\n");
+}
+
+#if 0
+_LOCAL_ int
+OLDsgi_xmit_scanlines( ifp )
 register FBIO	*ifp;
 {
-	register short xmin, xmax;
-	register short ymin, ymax;
 	register short i;
-	short xscroff, yscroff;
 	register unsigned char *ip;
 	short y;
 	short xwidth;
+	static RGBpixel black = { 0, 0, 0 };
+	struct sgi_clip	clip;
+	im_setup;			/* declares GE & Windowstate vars */
 
+	xwidth = ifp->if_width/SGI(ifp)->mi_xzoom;
+	sgi_clipper( ifp, &clip );
 
-	readsource(SRC_ZBUFFER);	/* source for rectcopy() */
-	backbuffer(TRUE);		/* dest for rectcopy() */
-	frontbuffer(FALSE);
+	RGBcolor( 0, 0, 0 );
+	/* Blank out area left of image.			*/
+	if( clip.xscroff > 0 )
+		rectfs(
+				0, 0,
+				(Scoord) clip.xscroff-1, (Scoord) ifp->if_height-1,
+				(RGBpixel *) black
+				);
+	/* Blank out area below image.			*/
+	if( clip.yscroff > 0 )
+		rectfs(
+				0, 0,
+				(Scoord) ifp->if_width-1, (Scoord) clip.yscroff-1,
+				(RGBpixel *) black
+				);
+	/* Blank out area right of image.			*/
+	if( clip.xscrpad > 0 )
+		rectfs(
+				(Scoord) ifp->if_width-clip.xscrpad,
+				0,
+				(Scoord) ifp->if_width-1,
+				(Scoord) ifp->if_height-1,
+				(RGBpixel *) black
+				);
+	/* Blank out area above image.			*/
+	if( clip.yscrpad > 0 )
+		rectfs(
+				0,
+				(Scoord) ifp->if_height-clip.yscrpad,
+				(Scoord) ifp->if_width-1,
+				(Scoord) ifp->if_height-1,
+				(RGBpixel *) black
+				);
 
-	xscroff = yscroff = 0;
-
-	i = (ifp->if_width/2)/GT(ifp)->mi_yzoom;
-
-	xmin = GT(ifp)->mi_xcenter - i;
-	xmax = GT(ifp)->mi_xcenter + i - 1;
-
-	i = (ifp->if_height/2)/GT(ifp)->mi_yzoom;
-
-	ymin = GT(ifp)->mi_ycenter - i;
-	ymax = GT(ifp)->mi_ycenter + i - 1;
-
-	if( xmin < 0 )  {
-		xscroff = -xmin * GT(ifp)->mi_xzoom;
-		xmin = 0;
-	}
-	if( ymin < 0 )  {
-		yscroff = -ymin * GT(ifp)->mi_yzoom;
-		ymin = 0;
-	}
-
-	if( xmax > ifp->if_width-1 )  {
-		xmax = ifp->if_width-1;
-	}
-
-	if( ymax > ifp->if_height-1 )  {
-		ymax = ifp->if_height-1;
-	}
-
+	/*
+	 *  First, the Zoomed case
+	 */
 	if( ifp->if_zoomflag )  {
-		rectzoom( (double) GT(ifp)->mi_xzoom, 
-			  (double) GT(ifp)->mi_yzoom);
-	} 
+		register Scoord l, b, r, t;
 
-	cpack(0x00000000);	/* clear to black first */
-	clear();
+		for( y = clip.ymin; y <= clip.ymax; y++ )  {
+			ip = (unsigned char *)
+				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+clip.xmin)*sizeof(RGBpixel)];
 
-	/* All coordinates are window-relative, not viewport-relative */
-	rectcopy( xmin+GT(ifp)->mi_xoff, ymin+GT(ifp)->mi_yoff,
-		xmax+GT(ifp)->mi_xoff, ymax+GT(ifp)->mi_yoff,
-		xscroff+GT(ifp)->mi_xoff, yscroff+GT(ifp)->mi_yoff );
+			l = clip.xscroff;
+			b = clip.yscroff + (y-clip.ymin)*SGI(ifp)->mi_yzoom;
+			t = b + SGI(ifp)->mi_yzoom - 1;
+			if ( SGI(ifp)->mi_cmap_flag == FALSE )  {
+				for( i=xwidth; i > 0; i--)  
+				{
+					/* XXX could this be im_RGBcolor? */
+ 					RGBcolor( ip[RED], ip[GRN], ip[BLU]);
+					r = l + SGI(ifp)->mi_xzoom - 1;
+					im_rectfs( l, b, r, t );
+					l = r + 1;
+					ip += sizeof(RGBpixel);
+				}
+			} else {
+				for( i=xwidth; i > 0; i--)  
+				{
+				    	RGBcolor( CMR(ifp)[ip[RED]], 
+						CMG(ifp)[ip[GRN]], 
+						CMB(ifp)[ip[BLU]] );
 
- 	swapbuffers();	 
+					r = l + SGI(ifp)->mi_xzoom - 1;
+					im_rectfs( l, b, r, t );
+					l = r + 1;
+					ip += sizeof(RGBpixel);
+				}
+			}
+			continue;
+		}
+		goto out;
+	}
 
-	if( ifp->if_zoomflag ) 	/* Must set this back to 1.0 for zbuffer */
-		rectzoom(1.0, 1.0);
+	/*
+	 *  The non-zoomed case
+	 */
+	for( y = clip.ymin; y <= clip.ymax; y++ )  {
+		register long amount, n;
+
+		ip = (unsigned char *)
+			&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+clip.xmin)*sizeof(RGBpixel)];
+
+		im_cmov2s(clip.xscroff, clip.yscroff +( y - clip.ymin) );
+
+		if ( SGI(ifp)->mi_cmap_flag == FALSE )  {
+			n = xwidth;
+
+			while( n > 0 )  {
+				amount = n > 30 ? 30 : n;
+
+				im_passthru( amount + amount + amount + 2);
+				im_outshort( FBCRGBdrawpixels);
+				im_outshort( amount );
+				
+				n -= amount;
+				while( --amount != -1 )  {
+					im_outshort( *ip++ );
+					im_outshort( *ip++ );
+					im_outshort( *ip++ );
+				}
+				amount = amount;
+			}
+			GEWAIT;
+		} else {
+			n = xwidth;
+
+			while( n > 0 )  {
+				amount = n > 30 ? 30 : n;
+
+				im_passthru( amount + amount + amount + 2);
+				im_outshort( FBCRGBdrawpixels);
+				im_outshort( amount );
+				
+				n -= amount;
+				while( --amount != -1 )  {
+					im_outshort( CMR(ifp)[*ip++] );
+					im_outshort( CMG(ifp)[*ip++] );
+					im_outshort( CMB(ifp)[*ip++] );
+				}
+				amount = amount;
+			}
+			GEWAIT;
+		}
+	}
+	/*
+	 *  Releasing the pipe has been moved outside the main scanline
+	 *  loop, to prevent the kernel from switching windows
+	 *  from scanline to scanline as several windows repaint.
+	 *  Kernel pre-emption still happens, but much less often.
+	 */
+	im_freepipe;
+	GEWAIT;
+
+	/* The common final section */
+out:
+	;
 }
+#endif
 
 /*
  *			S I G K I D
@@ -468,21 +776,22 @@ static int sigkid()
 }
 
 /*
- *			M I P S _ D O P E N
+ *			S G I _ D O P E N
  */
 _LOCAL_ int
-gt_dopen( ifp, file, width, height )
+sgi_dopen( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
 {
 	int x_pos, y_pos;	/* Lower corner of viewport */
 	register int i;
-	int f;
+	int	f;
 	int	status;
 	int 	g_status;
 	static char	title[128];
 	int	mode;
+	inventory_t	*inv;
 
 	/*
 	 *  First, attempt to determine operating mode for this open,
@@ -490,17 +799,15 @@ int	width, height;
 	 *  file = "/dev/sgi###"
 	 *  The default mode is zero.
 	 */
-
 	mode = 0;
 
 	if( file != NULL )  {
 		register char *cp;
-		char modebuf[80];
-		char *mp;
-		int alpha;
-		struct modeflags *mfp;
+		char	modebuf[80];
+		char	*mp;
+		int	alpha;
+		struct	modeflags *mfp;
 
-		
 		if( strncmp(file, "/dev/sgi", 8) ) {
 			/* How did this happen?? */
 			mode = 0;
@@ -523,7 +830,7 @@ int	width, height;
 					}
 				}
 				if( mfp->c == '\0' && *cp != '-' ) {
-					fb_log( "if_gt: unknown option '%c' ignored\n", *cp );
+					fb_log( "if_4d: unknown option '%c' ignored\n", *cp );
 				}
 				cp++;
 			}
@@ -534,16 +841,13 @@ int	width, height;
 
 		if( (mode & MODE_15MASK) == MODE_15ZAP ) {
 			/* Only task: Attempt to release shared memory segment */
-			gt_zapmem();
+			sgi_zapmem();
 			return(-1);
 		}
-
-		/* Pick off just the mode bits of interest here */
-		mode &= (MODE_1MASK | MODE_2MASK | MODE_3MASK | MODE_4MASK | 
-			MODE_5MASK | MODE_6MASK);
 	}
 	ifp->if_mode = mode;
 
+#ifndef SGI4D_Rel2
 	/*
 	 *  Now that the mode has been determined,
 	 *  ensure that the graphics system is running.
@@ -570,6 +874,7 @@ int	width, height;
 			sleep(1);
 		}
 	}
+#endif
 
 	/* the Silicon Graphics Library Window management routines
 	 * use shared memory. This causes lots of problems when you
@@ -581,9 +886,7 @@ int	width, height;
 	 * as well as allow the frame buffer window to remain around
 	 * until killed by the menu subsystem.
     	 */
-
 	if( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
-
 		fb_parent = getpid();		/* save parent pid */
 
 		signal( SIGUSR1, sigkid);
@@ -606,10 +909,27 @@ int	width, height;
 		}
 	}
 
-	if( (GTL(ifp) = (char *)calloc( 1, sizeof(struct gtinfo) )) == NULL )  {
-		fb_log("gt_dopen:  gtinfo malloc failed\n");
+	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
+		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
 		return(-1);
 	}
+
+	/*
+	 *  Take inventory of the hardware
+	 */
+	while( (inv = getinvent()) != (inventory_t *)0 )  {
+		if( inv->class != INV_GRAPHICS )  continue;
+		switch( inv->type )  {
+		case INV_GMDEV:
+			SGI(ifp)->mi_is_gt = 1;
+			break;
+		}
+	}
+	endinvent();		/* frees internal inventory memory */
+	if( (ifp->if_mode & MODE_8MASK) == MODE_8NOGT )  {
+		SGI(ifp)->mi_is_gt = 0;
+	}
+if( SGI(ifp)->mi_is_gt ) fb_log("Using GT hardware\n");
 
 	if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
 		/* NTSC, see below */
@@ -630,20 +950,20 @@ int	width, height;
 	ifp->if_height = height;
 
 	blanktime(0);
+	foreground();		/* Direct focus here, don't detach */
 
 	if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
 		prefposition( 0, XMAX170, 0, YMAX170 );
-		GT(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
+		SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
 	} else if( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
-		GT(ifp)->mi_curs_on = 1;	/* Mex usually has it on */
+		SGI(ifp)->mi_curs_on = 1;	/* Mex usually has it on */
 	}  else  {
 		/* MODE_3MASK == MODE_3FULLSCR */
 		prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
-		GT(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
+		SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
 	}
 
-	foreground();		/* Direct focus here, don't detach */
 	if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
 	{
 		fb_log( "No more graphics ports available.\n" );
@@ -658,11 +978,11 @@ int	width, height;
 	 *  for downstream equipment;  user should run "Set60" when done.
 	 */
 	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )  {
-		GT(ifp)->mi_der1 = getvideo(DE_R1);
+		SGI(ifp)->mi_der1 = getvideo(DE_R1);
 		setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK);	/* 4-wire RS-343 */
 	} else if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
-		GT(ifp)->mi_der1 = getvideo(DE_R1);
-		if( (GT(ifp)->mi_der1 & DER1_VMASK) == DER1_170 )  {
+		SGI(ifp)->mi_der1 = getvideo(DE_R1);
+		if( (SGI(ifp)->mi_der1 & DER1_VMASK) == DER1_170 )  {
 			/* 
 			 *  Current mode is DE3 board internal NTSC sync.
 			 *  Doing a setmonitor(NTSC) again will cause the
@@ -671,7 +991,7 @@ int	width, height;
 			 */
 		} else if( getvideo(CG_MODE) != -1 )  {
 		    	/*
-			 *  Optional CG2 GENLOCK boark is installed.
+			 *  Optional CG2 GENLOCK board is installed.
 			 *
 			 *  Mode 2:  Internal sync generator is used.
 			 *
@@ -739,38 +1059,45 @@ int	width, height;
 		((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
 			"Private Mem" :
 			"Shared Mem" );
-
 	wintitle( title );
 	
 	/* Free window of position constraint.		*/
 	prefsize( (long)ifp->if_width, (long)ifp->if_height );
 	winconstraints();
 
+	if( SGI(ifp)->mi_is_gt )  {
+		doublebuffer();
+	} else {
+		singlebuffer();
+	}
 	RGBmode();
-	doublebuffer();
-	gconfig();	/* Must be called after doublebuffer().	*/
+	gconfig();	/* Must be called after singlebuffer().	*/
 
 	/* Need to clean out images from windows below */
 	RGBcolor( (short)0, (short)0, (short)0 );
 	clear();
-	swapbuffers();
-	clear();
+	if( SGI(ifp)->mi_is_gt )  {
+		swapbuffers();
+		clear();
+	}
 
-	/* Must initialize these window state variables BEFORE calling
-		"gt_getmem", because this function can indirectly trigger
-		a call to "gt_repaint" (when initializing shared memory
-		after a reboot).					*/
+	/*
+	 *  Must initialize these window state variables BEFORE calling
+	 *  "sgi_getmem", because this function can indirectly trigger
+	 *  a call to "gt_zbuf_to_screen" (when initializing shared memory
+	 *  after a reboot).
+	 */
 	ifp->if_zoomflag = 0;
-	GT(ifp)->mi_xzoom = 1;	/* for zoom fakeout */
-	GT(ifp)->mi_yzoom = 1;	/* for zoom fakeout */
-	GT(ifp)->mi_xcenter = width/2;
-	GT(ifp)->mi_ycenter = height/2;
-	GT(ifp)->mi_xoff = 0;
-	GT(ifp)->mi_yoff = 0;
+	SGI(ifp)->mi_xzoom = 1;	/* for zoom fakeout */
+	SGI(ifp)->mi_yzoom = 1;	/* for zoom fakeout */
+	SGI(ifp)->mi_xcenter = width/2;
+	SGI(ifp)->mi_ycenter = height/2;
+	SGI(ifp)->mi_xoff = 0;
+	SGI(ifp)->mi_yoff = 0;
 
 	/*
 	 *  In full screen mode, center the image on the screen.
-	 *  For the GT machines, this is done via mi_xoff, rather
+	 *  For the SGI machines, this is done via mi_xoff, rather
 	 *  than with viewport/ortho2 calls, because lrectwrite()
 	 *  uses window-relative, NOT viewport-relative addresses.
 	 */
@@ -785,20 +1112,25 @@ int	width, height;
 		ortho2( (Coord)0, (Coord)ifp->if_width,
 			(Coord)0, (Coord)ifp->if_height );
 		/* The real secret:  used to modify args to lrectwrite() */
-		GT(ifp)->mi_xoff = xleft;
-		GT(ifp)->mi_yoff = ybot;
+		SGI(ifp)->mi_xoff = xleft;
+		SGI(ifp)->mi_yoff = ybot;
 		/* set input focus to current window, so that
 		 * we can manipulate the cursor icon */
 		winattach();
 	}
 
 	/* Attach to shared memory, potentially with a screen repaint */
-	if( gt_getmem(ifp) < 0 )
+	if( sgi_getmem(ifp) < 0 )
 		return(-1);
 
-	/* Must call "is_linear_cmap" AFTER "gt_getmem" which allocates
+	/* Must call "is_linear_cmap" AFTER "sgi_getmem" which allocates
 		space for the color map.				*/
-	GT(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
+	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
+	if( (ifp->if_mode & MODE_7MASK) != MODE_7SWCMAP  &&
+	    SGI(ifp)->mi_cmap_flag )  {
+		/* Send color map to hardware -- affects whole screen */
+		gammaramp( CMR(ifp), CMG(ifp), CMB(ifp) );
+	}
 
 	/* Setup default cursor.					*/
 	defcursor( 1, cursor );
@@ -809,32 +1141,27 @@ int	width, height;
 	drawmode( NORMALDRAW );
 	setcursor(1, 1, 0);
 
-	if( GT(ifp)->mi_curs_on == 0 )  {
+	if( SGI(ifp)->mi_curs_on == 0 )  {
 		setcursor( 2, 1, 0 );		/* nilcursor */
 		cursoff();
 	}
 
-	/* The screen has no useful state.  Restore it as it was before */
-	/* Smarter deferral logic needed */
-	if( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED )
-	{
-		gt_zbuffer(ifp);	/* Write into the z buffer first */
-		gt_repaint( ifp );	/* repaint the screen */
+	if( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED )  {
+		/* Display the existing contents of shared memory */
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+		if( SGI(ifp)->mi_is_gt )  {
+			gt_zbuf_to_screen( ifp );
+		}
 	}
-
-	readsource(SRC_ZBUFFER);
-	backbuffer(TRUE);
-	frontbuffer(FALSE);
-
 	return	0;
 }
 
 /*
- *			M I P S _ D C L O S E
+ *			S G I _ D C L O S E
  *
  */
 _LOCAL_ int
-gt_dclose( ifp )
+sgi_dclose( ifp )
 FBIO	*ifp;
 {
 	int menu, menuval, val, dev, f;
@@ -864,10 +1191,17 @@ FBIO	*ifp;
 	 *  of calls from rfbd, in normal (non -d) mode, it gets the
 	 *  network connection on stdin/stdout, so this is adequate.
 	 */
-
 	fclose( stdin );
 	fclose( stdout );
 	fclose( stderr );
+
+	/* Ignore likely signals, perhaps in the background,
+	 * from other typing at the keyboard
+	 */
+	(void)signal( SIGHUP, SIG_IGN );
+	(void)signal( SIGINT, SIG_IGN );
+	(void)signal( SIGQUIT, SIG_IGN );
+	(void)signal( SIGALRM, SIG_IGN );
 
 	/* Line up at the "complaints window", just in case... */
 	fp = fopen("/dev/console", "w");
@@ -891,8 +1225,10 @@ FBIO	*ifp;
 
 		case REDRAW:
 			reshapeviewport();
-			gt_zbuffer(ifp);
-			gt_repaint(ifp);
+			sgi_xmit_scanlines(ifp, 0, ifp->if_height);
+			if( SGI(ifp)->mi_is_gt )  {
+				gt_zbuf_to_screen(ifp);
+			}
 			break;
 
 		case INPUTCHANGE:
@@ -903,7 +1239,7 @@ FBIO	*ifp;
 
 		case QREADERROR:
 			/* These are fatal errors, bail out */
-			if( fp ) fprintf(fp,"libfb/gt_dclose: qreaderror, aborting\n");
+			if( fp ) fprintf(fp,"libfb/sgi_dclose: qreaderror, aborting\n");
 			goto out;
 
 		default:
@@ -914,7 +1250,7 @@ FBIO	*ifp;
 			 *  unexpected things.  But, lots show up.
 			 *  At least this gives visibility.
 			 */
-			if( fp ) fprintf(fp,"libfb/gt_dclose: qread %d, val %d\r\n", dev, val );
+			if( fp ) fprintf(fp,"libfb/sgi_dclose: qread %d, val %d\r\n", dev, val );
 			break;
 		}
 	}
@@ -939,10 +1275,18 @@ out:
 
 	/* Restore initial operation mode, if this was 30Hz */
 	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )
-		setvideo( DE_R1, GT(ifp)->mi_der1 );
+		setvideo( DE_R1, SGI(ifp)->mi_der1 );
+
+	/*
+	 *  Note that for the MODE_5GENLOCK mode, the monitor will
+	 *  be left in NTSC mode until the user issues a "Set60"
+	 *  command.  This is vitally necessary because the Lyon-
+	 *  Lamb and VTR equipment need a stedy source of NTSC sync
+	 *  pulses while in the process of laying down frames.
+	 */
 
 	/* Always leave cursor on when done */
-	if( GT(ifp)->mi_curs_on == 0 )  {
+	if( SGI(ifp)->mi_curs_on == 0 )  {
 		setcursor( 0, 1, 0 );		/* system default cursor */
 		curson();
 	}
@@ -950,309 +1294,306 @@ out:
 	gexit();			/* mandatory finish */
 	if( fp )  fclose(fp);
 
-	if( GTL(ifp) != NULL )
-		(void)free( (char *)GT(ifp) );
+	if( SGIL(ifp) != NULL )
+		(void)free( (char *)SGI(ifp) );
 	return(0);
 }
 
 /*
- *			M I P S _ D C L E A R
+ *			S G I _ D C L E A R
  */
 _LOCAL_ int
-gt_dclear( ifp, pp )
+sgi_dclear( ifp, pp )
 FBIO	*ifp;
 register RGBpixel	*pp;
 {
+	struct sgi_pixel	bg;
+	register struct sgi_pixel	*sgip;
+	register int		cnt;
 
 	if( qtest() )
-		mpw_inqueue(ifp);
+		sgi_inqueue(ifp);
 
 	if ( pp != RGBPIXEL_NULL)  {
-		register char *op = ifp->if_mem;
-		register int cnt;
-
-		/* Slightly simplistic -- runover to right border */
-		for( cnt=GT(ifp)->mi_memwidth*ifp->if_height-1; cnt > 0; cnt-- )  {
-			*op++ = (*pp)[RED];
-			*op++ = (*pp)[GRN];
-			*op++ = (*pp)[BLU];
-		}
-
+		bg.alpha = 0;
+		bg.red   = (*pp)[RED];
+		bg.green = (*pp)[GRN];
+		bg.blue  = (*pp)[BLU];
 		RGBcolor((short)((*pp)[RED]), (short)((*pp)[GRN]), (short)((*pp)[BLU]));
 	} else {
+		bg.alpha = 0;
+		bg.red   = 0;
+		bg.green = 0;
+		bg.blue  = 0;
 		RGBcolor( (short) 0, (short) 0, (short) 0);
-		BZERO( ifp->if_mem, GT(ifp)->mi_memwidth*ifp->if_height*sizeof(RGBpixel) );
 	}
-	gt_zbuffer(ifp);
-	gt_repaint(ifp);
-	clear();
+
+	/* Slightly simplistic -- runover to right border */
+	sgip = (struct sgi_pixel *)ifp->if_mem;
+	for( cnt=SGI(ifp)->mi_memwidth*ifp->if_height-1; cnt > 0; cnt-- )  {
+		*sgip++ = bg;	/* struct copy */
+	}
+
+	if( SGI(ifp)->mi_is_gt )  {
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+		gt_zbuf_to_screen(ifp);
+	} else {
+		clear();
+	}
 	return(0);
 }
 
 /*
- *			M I P S _ W I N D O W _ S E T
+ *			S G I _ W I N D O W _ S E T
  */
 _LOCAL_ int
-gt_window_set( ifp, x, y )
+sgi_window_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
 	if( qtest() )
-		mpw_inqueue(ifp);
+		sgi_inqueue(ifp);
 
-	if( GT(ifp)->mi_xcenter == x && GT(ifp)->mi_ycenter == y )
+	if( SGI(ifp)->mi_xcenter == x && SGI(ifp)->mi_ycenter == y )
 		return(0);
 	if( x < 0 || x >= ifp->if_width )
 		return(-1);
 	if( y < 0 || y >= ifp->if_height )
 		return(-1);
-	GT(ifp)->mi_xcenter = x;
-	GT(ifp)->mi_ycenter = y;
-	gt_repaint( ifp );
+	SGI(ifp)->mi_xcenter = x;
+	SGI(ifp)->mi_ycenter = y;
+	if( SGI(ifp)->mi_is_gt )  {
+		/* Transmitting the Zbuffer is all that is needed */
+		gt_zbuf_to_screen( ifp );
+	} else {
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+	}
 	return(0);
 }
 
 /*
- *			M I P S _ Z O O M _ S E T
+ *			S G I _ Z O O M _ S E T
  */
 _LOCAL_ int
-gt_zoom_set( ifp, x, y )
+sgi_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
 	if( qtest() )
-		mpw_inqueue(ifp);
+		sgi_inqueue(ifp);
 
 	if( x < 1 ) x = 1;
 	if( y < 1 ) y = 1;
-	if( GT(ifp)->mi_xzoom == x && GT(ifp)->mi_yzoom == y )
+	if( SGI(ifp)->mi_xzoom == x && SGI(ifp)->mi_yzoom == y )
 		return(0);
 	if( x >= ifp->if_width || y >= ifp->if_height )
 		return(-1);
 
-	GT(ifp)->mi_xzoom = x;
-	GT(ifp)->mi_yzoom = y;
+	SGI(ifp)->mi_xzoom = x;
+	SGI(ifp)->mi_yzoom = y;
 
-	if( GT(ifp)->mi_xzoom > 1 || GT(ifp)->mi_yzoom > 1 )
+	if( SGI(ifp)->mi_xzoom > 1 || SGI(ifp)->mi_yzoom > 1 )
 		ifp->if_zoomflag = 1;
 	else	ifp->if_zoomflag = 0;
 
-	gt_repaint( ifp );
+	if( SGI(ifp)->mi_is_gt ) {
+		/* Transmitting the Zbuffer is all that is needed */
+		gt_zbuf_to_screen( ifp );
+	} else {
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+	}
 	return(0);
 }
 
 /*
- *			M I P S _ B R E A D
+ *			S G I _ B R E A D
  */
 _LOCAL_ int
-gt_bread( ifp, x, y, pixelp, count )
+sgi_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-register RGBpixel	*pixelp;
+RGBpixel	*pixelp;
 int	count;
 {
-	register short scan_count;
-	short xpos, ypos;
-	register char *ip;
-	int ret;
+	register short		scan_count;	/* # pix on this scanline */
+	register unsigned char	*cp;
+	int			ret;
+	int			ybase;
+	register unsigned int	n;
+	register struct sgi_pixel	*sgip;
 
+	ybase = y;
+
+	/* Handle events promptly */
 	if( qtest() )
-		mpw_inqueue(ifp);
+		sgi_inqueue(ifp);
 
 	if( x < 0 || x > ifp->if_width ||
-	    y < 0 || y > ifp->if_height )
-		return(-1);
-	ret = 0;
-	xpos = x;
-	ypos = y;
-
-	while( count > 0 )  {
-		ip = &ifp->if_mem[(ypos*GT(ifp)->mi_memwidth+xpos)*sizeof(RGBpixel)];
-
-		if ( count >= ifp->if_width-xpos )  {
-			scan_count = ifp->if_width-xpos;
-		} else	{
-			scan_count = count;
-		}
-		memcpy( *pixelp, ip, scan_count*sizeof(RGBpixel) );
-
-		pixelp += scan_count;
-		count -= scan_count;
-		ret += scan_count;
-		xpos = 0;
-		/* Advance upwards */
-		if( ++ypos >= ifp->if_height )
-			break;
-	}
-	return(ret);
-}
-
-/*
- *			M I P S _ B W R I T E
- */
-_LOCAL_ int
-gt_bwrite( ifp, xmem, ymem, pixelp, count )
-register FBIO	*ifp;
-register int	xmem, ymem;
-RGBpixel *pixelp;
-register int	count;
-{
-	register short scan_count;	/* # pixels on this scanline */
-	register unsigned char *cp;
-	int xscr, yscr;
-	int ret;
-
-	if( qtest() )
-		mpw_inqueue(ifp);
-
-	if( xmem < 0 || xmem > ifp->if_width ||
-	    ymem < 0 || ymem > ifp->if_height)
+	    y < 0 || y > ifp->if_height)
 		return(-1);
 
 	ret = 0;
-
 	cp = (unsigned char *)(pixelp);
 
-	zdraw(TRUE);
-	if ( !ifp->if_zoomflag )
-	{
-		backbuffer(TRUE);
-		frontbuffer(TRUE);/* ??? could this be a performance problem??? */
-		/* This seems to force lrectwrite to send 3 copies */
-	} else {
-		backbuffer(FALSE);
-		frontbuffer(FALSE);
-	}
-
-	while( count )  
-	{
-		register unsigned int n;
-
-		if( ymem >= ifp->if_height )
+	while( count )  {
+		if( y >= ifp->if_height )
 			break;
 
-		if ( count >= ifp->if_width-xmem )
-			scan_count = ifp->if_width-xmem;
+		if ( count >= ifp->if_width-x )
+			scan_count = ifp->if_width-x;
 		else
 			scan_count = count;
 
-		/* Move original pixels to shared memory buffer */
-		memcpy( (char *)&ifp->if_mem[
-		    (ymem*GT(ifp)->mi_memwidth+xmem)*sizeof(RGBpixel)],
-		    cp, scan_count*sizeof(RGBpixel) );
+		sgip = (struct sgi_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct sgi_pixel) ];
 
-		if ( GT(ifp)->mi_cmap_flag == FALSE )  {
-			register struct gt_pix * ip = &gt_scan[0];
-
-			n = scan_count;
-			if( (n & 3) != 0 )  {
-				/* This code uses 60% of all CPU time */
-				while( n )  {
-					/* alpha channel is always zero */
-					ip->red   = cp[RED];
-					ip->green = cp[GRN];
-					ip->blue  = cp[BLU];
-					ip++;
-					cp += 3;
-					n--;
-				}
-			} else {
-				while( n )  {
-					/* alpha channel is always zero */
-					ip[0].red   = cp[RED+0*3];
-					ip[0].green = cp[GRN+0*3];
-					ip[0].blue  = cp[BLU+0*3];
-					ip[1].red   = cp[RED+1*3];
-					ip[1].green = cp[GRN+1*3];
-					ip[1].blue  = cp[BLU+1*3];
-					ip[2].red   = cp[RED+2*3];
-					ip[2].green = cp[GRN+2*3];
-					ip[2].blue  = cp[BLU+2*3];
-					ip[3].red   = cp[RED+3*3];
-					ip[3].green = cp[GRN+3*3];
-					ip[3].blue  = cp[BLU+3*3];
-					ip += 4;
-					cp += 3*4;
-					n -= 4;
-				}
-			}
-		} else {
-			register struct gt_pix * ip = &gt_scan[0];
-
-			n = scan_count;
-			while( n )  {
-				/* alpha channel is always zero */
-				ip->red = CMR(ifp)[cp[0]];
-				ip->green = CMG(ifp)[cp[1]];
-				ip->blue = CMB(ifp)[cp[2]];
-				cp += 3;
-				ip++;
-				n--;
-			}
+		n = scan_count;
+		while( n )  {
+			cp[RED] = sgip->red;
+			cp[GRN] = sgip->green;
+			cp[BLU] = sgip->blue;
+			sgip++;
+			cp += 3;
+			n--;
 		}
-
-		/* Addresses are relative to window, not current viewport! */
-		lrectwrite( xmem+GT(ifp)->mi_xoff, ymem+GT(ifp)->mi_yoff,
-			xmem+GT(ifp)->mi_xoff+scan_count, ymem+GT(ifp)->mi_yoff,
-			gt_scan);
 		ret += scan_count;
 		count -= scan_count;
-		xmem = 0;
-		ymem++;
+		x = 0;
+		/* Advance upwards */
+		if( ++y >= ifp->if_height )
+			break;
 	}
-
-	zdraw(FALSE);
-	frontbuffer(FALSE);
-	backbuffer(TRUE);
-
-	if ( ifp->if_zoomflag )
-	{
-		/* When zoomed, this causes the whole screen to repaint */
-		gt_repaint( ifp );
-	}
-
 	return(ret);
 }
 
 /*
- *			M I P S _ V I E W P O R T _ S E T
+ *			S G I _ B W R I T E
+ *
+ *  The task of this routine is to reformat the pixels into
+ *  SGI internal form, and then arrange to have them sent to
+ *  the screen separately.
  */
 _LOCAL_ int
-gt_viewport_set( ifp, left, top, right, bottom )
+sgi_bwrite( ifp, x, y, pixelp, count )
+register FBIO	*ifp;
+register int	x, y;
+RGBpixel	*pixelp;
+register int	count;
+{
+	register short		scan_count;	/* # pix on this scanline */
+	register unsigned char	*cp;
+	int			ret;
+	int			ybase;
+
+	ybase = y;
+
+	if( x < 0 || x > ifp->if_width ||
+	    y < 0 || y > ifp->if_height)
+		return(-1);
+
+	ret = 0;
+	cp = (unsigned char *)(pixelp);
+
+	while( count )  {
+		register unsigned int n;
+		register struct sgi_pixel	*sgip;
+
+		if( y >= ifp->if_height )
+			break;
+
+		if ( count >= ifp->if_width-x )
+			scan_count = ifp->if_width-x;
+		else
+			scan_count = count;
+
+		sgip = (struct sgi_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct sgi_pixel) ];
+
+		n = scan_count;
+		if( (n & 3) != 0 )  {
+			/* This code uses 60% of all CPU time */
+			while( n )  {
+				/* alpha channel is always zero */
+				sgip->red   = cp[RED];
+				sgip->green = cp[GRN];
+				sgip->blue  = cp[BLU];
+				sgip++;
+				cp += 3;
+				n--;
+			}
+		} else {
+			while( n )  {
+				/* alpha channel is always zero */
+				sgip[0].red   = cp[RED+0*3];
+				sgip[0].green = cp[GRN+0*3];
+				sgip[0].blue  = cp[BLU+0*3];
+				sgip[1].red   = cp[RED+1*3];
+				sgip[1].green = cp[GRN+1*3];
+				sgip[1].blue  = cp[BLU+1*3];
+				sgip[2].red   = cp[RED+2*3];
+				sgip[2].green = cp[GRN+2*3];
+				sgip[2].blue  = cp[BLU+2*3];
+				sgip[3].red   = cp[RED+3*3];
+				sgip[3].green = cp[GRN+3*3];
+				sgip[3].blue  = cp[BLU+3*3];
+				sgip += 4;
+				cp += 3*4;
+				n -= 4;
+			}
+		}
+		ret += scan_count;
+		count -= scan_count;
+		x = 0;
+		if( ++y >= ifp->if_height )
+			break;
+	}
+
+	/*
+	 * Handle events after updating the memory, and
+	 * before updating the screen
+	 */
+	if( qtest() )
+		sgi_inqueue(ifp);
+
+	sgi_xmit_scanlines( ifp, ybase, y-ybase );
+	if( SGI(ifp)->mi_is_gt )  {
+		/* repaint screen from Z buffer */
+		gt_zbuf_to_screen( ifp );
+	}
+	return(ret);
+}
+
+/*
+ *			S G I _ V I E W P O R T _ S E T
+ */
+_LOCAL_ int
+sgi_viewport_set( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
 	if( qtest() )
-		mpw_inqueue(ifp);
-#if 0
-	viewport(	(Screencoord) left,
-			(Screencoord) right,
-			(Screencoord) top,
-			(Screencoord) (bottom * fb2iris_scale)
-			);
-#endif
+		sgi_inqueue(ifp);
 	return(0);
 }
 
 /*
- *			M I P S _ C M R E A D
+ *			S G I _ C M R E A D
  */
 _LOCAL_ int
-gt_cmread( ifp, cmp )
+sgi_cmread( ifp, cmp )
 register FBIO	*ifp;
 register ColorMap	*cmp;
 {
 	register int i;
 
 	if( qtest() )
-		mpw_inqueue(ifp);
+		sgi_inqueue(ifp);
 
 	/* Just parrot back the stored colormap */
-	for( i = 0; i < 256; i++)
-	{
-		cmp->cm_red[i] = CMR(ifp)[i]<<8;
+	for( i = 0; i < 256; i++)  {
+		cmp->cm_red[i]   = CMR(ifp)[i]<<8;
 		cmp->cm_green[i] = CMG(ifp)[i]<<8;
-		cmp->cm_blue[i] = CMB(ifp)[i]<<8;
+		cmp->cm_blue[i]  = CMB(ifp)[i]<<8;
 	}
 	return(0);
 }
@@ -1279,52 +1620,66 @@ register FBIO	*ifp;
 }
 
 /*
- *			 M I P S _ C M W R I T E
+ *			S G I _ C M I N I T
+ */
+_LOCAL_ void
+sgi_cminit( ifp )
+register FBIO	*ifp;
+{
+	register int	i;
+
+	for( i = 0; i < 256; i++)  {
+		CMR(ifp)[i] = i;
+		CMG(ifp)[i] = i;
+		CMB(ifp)[i] = i;
+	}
+}
+
+/*
+ *			 S G I _ C M W R I T E
  */
 _LOCAL_ int
-gt_cmwrite( ifp, cmp )
+sgi_cmwrite( ifp, cmp )
 register FBIO	*ifp;
 register ColorMap	*cmp;
 {
-	register int i;
+	register int	i;
+	int		prev;	/* !0 = previous cmap was non-linear */
 
 	if( qtest() )
-		mpw_inqueue(ifp);
+		sgi_inqueue(ifp);
 
+	prev = SGI(ifp)->mi_cmap_flag;
 	if ( cmp == COLORMAP_NULL)  {
-		for( i = 0; i < 256; i++)  {
-			CMR(ifp)[i] = i;
-			CMG(ifp)[i] = i;
-			CMB(ifp)[i] = i;
+		sgi_cminit( ifp );
+	} else {
+		for(i = 0; i < 256; i++)  {
+			CMR(ifp)[i] = cmp-> cm_red[i]>>8;
+			CMG(ifp)[i] = cmp-> cm_green[i]>>8; 
+			CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
 		}
-		if( GT(ifp)->mi_cmap_flag ) {
-			GT(ifp)->mi_cmap_flag = FALSE;
-			gt_repaint( ifp );
+	}
+	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
+	if( SGI(ifp)->mi_cmap_flag == 0 && prev == 0 )  return(0);
+
+	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP )  {
+		/* Software color mapping, trigger a repaint */
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+		if( SGI(ifp)->mi_is_gt )  {
+			gt_zbuf_to_screen( ifp );
 		}
-		GT(ifp)->mi_cmap_flag = FALSE;
-		return(0);
+	} else {
+		/* Send color map to hardware -- affects whole screen */
+		gammaramp( CMR(ifp), CMG(ifp), CMB(ifp) );
 	}
-	
-	for(i = 0; i < 256; i++)  {
-		CMR(ifp)[i] = cmp-> cm_red[i]>>8;
-		CMG(ifp)[i] = cmp-> cm_green[i]>>8; 
-		CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
-
-	}
-	GT(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-
-	gt_zbuffer(ifp);
-
-	gt_repaint( ifp );
-
 	return(0);
 }
 
 /*
- *			M I P S _ C U R S _ S E T
+ *			S G I _ C U R S _ S E T
  */
 _LOCAL_ int
-gt_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+sgi_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char	*bits;
 int		xbits, ybits;
@@ -1335,7 +1690,7 @@ int		xorig, yorig;
 	Cursor		newcursor;
 
 	if( qtest() )
-		mpw_inqueue(ifp);
+		sgi_inqueue(ifp);
 
 	/* Check size of cursor.					*/
 	if( xbits < 0 )
@@ -1360,10 +1715,10 @@ int		xorig, yorig;
 }
 
 /*
- *			M I P S _ C M E M O R Y _ A D D R
+ *			S G I _ C M E M O R Y _ A D D R
  */
 _LOCAL_ int
-gt_cmemory_addr( ifp, mode, x, y )
+sgi_cmemory_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -1374,23 +1729,23 @@ int	x, y;
 	long left, bottom, x_size, y_size;
 
 	if( qtest() )
-		mpw_inqueue(ifp);
+		sgi_inqueue(ifp);
 
-	GT(ifp)->mi_curs_on = mode;
+	SGI(ifp)->mi_curs_on = mode;
 	if( ! mode )  {
 		setcursor( 2, 1, 0 );		/* nilcursor */
 		cursoff();
 		return	0;
 	}
-	xwidth = ifp->if_width/GT(ifp)->mi_xzoom;
+	xwidth = ifp->if_width/SGI(ifp)->mi_xzoom;
 	i = xwidth/2;
-	xmin = GT(ifp)->mi_xcenter - i;
-	i = (ifp->if_height/2)/GT(ifp)->mi_yzoom;
-	ymin = GT(ifp)->mi_ycenter - i;
+	xmin = SGI(ifp)->mi_xcenter - i;
+	i = (ifp->if_height/2)/SGI(ifp)->mi_yzoom;
+	ymin = SGI(ifp)->mi_ycenter - i;
 	x -= xmin;
 	y -= ymin;
-	x *= GT(ifp)->mi_xzoom;
-	y *= GT(ifp)->mi_yzoom;
+	x *= SGI(ifp)->mi_xzoom;
+	y *= SGI(ifp)->mi_yzoom;
 	setcursor( 1, 1, 0 );			/* our cursor */
 	curson();
 	getsize(&x_size, &y_size);
@@ -1405,13 +1760,13 @@ int	x, y;
 
 
 /*
- *			M P W _ I N Q U E U E
+ *			S G I _ I N Q U E U E
  *
  *  Called when a qtest() indicates that there is a window event.
- *  Process all events, so that we don't loop on recursion to gt_bwrite.
+ *  Process all events, so that we don't loop on recursion to sgw_bwrite.
  */
 _LOCAL_ void
-mpw_inqueue(ifp)
+sgi_inqueue(ifp)
 register FBIO *ifp;
 {
 	short val;
@@ -1428,95 +1783,144 @@ register FBIO *ifp;
 		case MODECHANGE:
 			/* This could be bad news.  Should we re-write
 			 * the color map? */
-			fb_log("mpw_inqueue:  modechange?\n");
+			fb_log("sgi_inqueue:  modechange?\n");
 			break;
 		case MOUSEX :
 		case MOUSEY :
 		case KEYBD :
 			break;
 		default:
-			fb_log("mpw_inqueue:  event %d unknown\n", ev);
+			fb_log("sgi_inqueue:  event %d unknown\n", ev);
 			break;
 		}
 	}
-
 	/*
 	 * Now that all the events have been removed from the input
 	 * queue, handle any actions that need to be done.
 	 */
 	if( redraw )  {
 		reshapeviewport();
-		gt_zbuffer(ifp);
-		gt_repaint( ifp );
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+		if( SGI(ifp)->mi_is_gt )  {
+			gt_zbuf_to_screen( ifp );
+		}
 		redraw = 0;
 	}
 }
 
-gt_zbuffer(ifp)		/* update the Z_buffer from memory */
-FBIO * ifp;
-{
-	register unsigned char * op;
-	register struct gt_pix * mp;
-	register int i,j;
-	register unsigned int s_offset;
-
-	s_offset = GT(ifp)->mi_memwidth * sizeof( RGBpixel );
-
-	zbuffer(TRUE);
-	zclear();
-	zbuffer(FALSE);
-	
-	zdraw(TRUE);
-	backbuffer(FALSE);
-
-	for( i = 0; i < ifp->if_height; i++)
-	{
-		op = (unsigned char *) &ifp->if_mem[ i * s_offset];
-
-		mp = &gt_scan[0];
-
-		for( j = 0; j < ifp->if_width; j++)
-		{
-			if( GT(ifp)->mi_cmap_flag == FALSE)
-			{
-				mp->red =  *op++;
-				mp->green = *op++;
-				mp->blue = *op++;
-				mp++;
-			} else
-			{
-				mp->red =  CMR(ifp)[*op++];
-				mp->green = CMG(ifp)[*op++];
-				mp->blue = CMB(ifp)[*op++];
-				mp++;
-			}
-		}
-		/* Addresses are relative to window, not current viewport! */
-		lrectwrite( GT(ifp)->mi_xoff+0, i+GT(ifp)->mi_yoff,
-			GT(ifp)->mi_xoff+ifp->if_width-1, i+GT(ifp)->mi_yoff,
-			gt_scan);
-	}
-	zdraw(FALSE);
-}
-
+/*
+ *			S G I _ H E L P
+ */
 _LOCAL_ int
-gt_help( ifp )
+sgi_help( ifp )
 FBIO	*ifp;
 {
 	struct	modeflags *mfp;
 
-	fb_log( "Description: %s\n", gt_interface.if_type );
+	fb_log( "Description: %s\n", sgi_interface.if_type );
 	fb_log( "Device: %s\n", ifp->if_name );
-	fb_log( "Maximum width height: %d %d\n",
-		ifp->if_max_width,
-		ifp->if_max_height );
+	fb_log( "Max width height: %d %d\n",
+		sgi_interface.if_max_width,
+		sgi_interface.if_max_height );
 	fb_log( "Default width height: %d %d\n",
-		ifp->if_width,
-		ifp->if_height );
+		sgi_interface.if_width,
+		sgi_interface.if_height );
 	fb_log( "Usage: /dev/sgi[options]\n" );
 	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
 		fb_log( "   %c   %s\n", mfp->c, mfp->help );
 	}
 
 	return(0);
+}
+
+
+/***************************************************************************/
+/***************************************************************************/
+/***************************************************************************/
+/***************** Special Support for the GT ******************************/
+/***************************************************************************/
+/***************************************************************************/
+/***************************************************************************/
+
+/*
+ *			G T _ Z B U F
+ *
+ */
+_LOCAL_ int
+gt_zbuf_to_screen( ifp )
+register FBIO	*ifp;
+{
+	register short xmin, xmax;
+	register short ymin, ymax;
+	register short	i;
+	short		xscroff, yscroff;
+	register unsigned char *ip;
+	short		y;
+	short		xwidth;
+	struct sgi_clip	clip;
+
+	zbuffer(FALSE);
+	readsource(SRC_ZBUFFER);	/* source for rectcopy() */
+	zdraw(FALSE);
+	backbuffer(TRUE);		/* dest for rectcopy() */
+	frontbuffer(FALSE);
+
+	sgi_clipper( ifp, &clip );
+
+	rectzoom( (double) SGI(ifp)->mi_xzoom, (double) SGI(ifp)->mi_yzoom);
+
+	cpack(0x00000000);	/* clear to black first */
+	/* XXX why is this done -- could be performance problem */
+	clear();
+
+	/* All coordinates are window-relative, not viewport-relative */
+	rectcopy(
+		clip.xmin+SGI(ifp)->mi_xoff,
+		clip.ymin+SGI(ifp)->mi_yoff,
+		clip.xmax+SGI(ifp)->mi_xoff,
+		clip.ymax+SGI(ifp)->mi_yoff,
+		clip.xscroff+SGI(ifp)->mi_xoff,
+		clip.yscroff+SGI(ifp)->mi_yoff );
+
+ 	swapbuffers();	 
+}
+
+/*
+ *			S G I _ C L I P P E R
+ */
+sgi_clipper( ifp, clp )
+register FBIO	*ifp;
+register struct sgi_clip	*clp;
+{
+	register int	i;
+
+	clp->xscroff = clp->yscroff = 0;
+	clp->xscrpad = clp->yscrpad = 0;
+
+	i = (ifp->if_width/2)/SGI(ifp)->mi_xzoom;
+	clp->xmin = SGI(ifp)->mi_xcenter - i;
+	clp->xmax = SGI(ifp)->mi_xcenter + i - 1;
+
+	i = (ifp->if_height/2)/SGI(ifp)->mi_yzoom;
+	clp->ymin = SGI(ifp)->mi_ycenter - i;
+	clp->ymax = SGI(ifp)->mi_ycenter + i - 1;
+
+	if( clp->xmin < 0 )  {
+		clp->xscroff = -(clp->xmin * SGI(ifp)->mi_xzoom);
+		clp->xmin = 0;
+	}
+	if( clp->ymin < 0 )  {
+		clp->yscroff = -(clp->ymin * SGI(ifp)->mi_yzoom);
+		clp->ymin = 0;
+	}
+
+	if( clp->xmax > ifp->if_width-1 )  {
+		clp->xscrpad = (clp->xmax - (ifp->if_width-1)) * SGI(ifp)->mi_xzoom;
+		clp->xmax = ifp->if_width-1;
+	}
+
+	if( clp->ymax > ifp->if_height-1 )  {
+		clp->yscrpad = (clp->ymax - (ifp->if_height-1)) * SGI(ifp)->mi_yzoom;
+		clp->ymax = ifp->if_height-1;
+	}
 }
