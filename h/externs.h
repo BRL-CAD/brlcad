@@ -163,28 +163,35 @@ extern double   modf();
  */
 #if USE_PROTOTYPES
 extern void	port_setlinebuf( FILE *fp );
-# if !defined(HAVE_GETOPT_DECL)
-#  if defined(linux)
-#	include <getopt.h>
-#  else
+
+#	if defined(HAVE_GETOPT_H)
+#		include <getopt.h>
+#	else
+#		if !defined(HAVE_GETOPT_DECL)
 extern int	getopt( int argc, char **argv, char *optstr );
-#  endif
-# endif
-#if !defined(HAVE_REGEX_DECL)
+#		endif
+#	endif
+
+#	if !defined(HAVE_REGEX_DECL)
 extern char	*re_comp( char *s );
 extern int	re_exec( char *s );
-#endif
+#	endif
 
-#else
+#else	/* USE_PROTOTYPES */
+
 extern void	port_setlinebuf();
-#if !defined(HAVE_GETOPT_DECL)
+#	if defined(HAVE_GETOPT_H)
+#		include <getopt.h>
+#	else
+#		if !defined(HAVE_GETOPT_DECL)
 extern int	getopt();
-#endif
-#if !defined(HAVE_REGEX_DECL)
+#		endif
+#	endif
+#	if !defined(HAVE_REGEX_DECL)
 extern char	*re_comp();
 extern int	re_exec();
-#endif
-#endif
+#	endif
+#endif	/* USE_PROTOTYPES */
 
 #if !defined(HAVE_GETOPT_DECL)
 /* getopt munchies */
