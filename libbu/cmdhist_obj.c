@@ -78,7 +78,7 @@ int
 Cho_Init(Tcl_Interp *interp)
 {
 	BU_LIST_INIT(&HeadCmdHistObj.l);
-	(void)Tcl_CreateCommand(interp, "ch_open", cho_open_tcl,
+	(void)Tcl_CreateCommand(interp, "ch_open", (Tcl_CmdProc *)cho_open_tcl,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	return TCL_OK;
