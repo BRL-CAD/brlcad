@@ -249,8 +249,11 @@ body GeometryBrowser::constructor {} {
 			-label "Dark Red" -background [ $this rgbToHex "79 47 47" ] \
 			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "79 47 47" ]
 	$_itemMenu.colorMenu add command \
-			-label "Green" -background [ $this rgbToHex "50 145 20" ] \
+			-label "Forest Green" -background [ $this rgbToHex "50 145 20" ] \
 			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 145 20" ]
+	$_itemMenu.colorMenu add command \
+			-label "Green" -background [ $this rgbToHex "0 255 0" ] \
+			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 0" ]
 	$_itemMenu.colorMenu add command \
 			-label "Grey" -background [ $this rgbToHex "80 80 80" ] \
 			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "80 80 80" ]
