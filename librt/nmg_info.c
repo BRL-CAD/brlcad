@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -586,11 +587,14 @@ CONST struct rt_tol	*tol;
 		x = VDOT( edge2, edge1 );
 		rad = atan2( y, x );
 #if 0
+		nmg_pr_eu_briefly(eu,NULL);
 		VPRINT("vu1", this_vu->v_p->vg_p->coord);
 		VPRINT("vu2", next_vu->v_p->vg_p->coord);
 		VPRINT("edge1", edge1);
 		VPRINT("edge2", edge2);
 		VPRINT("left", left);
+		rt_log(" e1=%g, e2=%g, n=%g, l=%g\n", MAGNITUDE(edge1),
+			MAGNITUDE(edge2), MAGNITUDE(norm), MAGNITUDE(left));
 		rt_log("atan2(%g,%g) = %g\n", y, x, rad);
 #endif
 		theta += rad;
@@ -603,7 +607,7 @@ CONST struct rt_tol	*tol;
 
 	rad = theta * rt_inv2pi;
 	x = rad-1;
-	/* Value is in radians, tolerance here is 1% */
+	/* "rad" value is normalized -1..+1, tolerance here is 1% */
 	if( NEAR_ZERO( x, 0.05 ) )  {
 		/* theta = two pi, loop is CCW */
 		return 1;
@@ -615,6 +619,11 @@ CONST struct rt_tol	*tol;
 	}
 	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g (%g)\n",
 		theta, rad );
+	nmg_pr_lu_briefly(lu, NULL);
+	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
+	nmg_face_lu_plot( lu, this_vu, this_vu );
+	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
+	rt_bomb("nmg_loop_is_ccw()\n");
 	return 0;
 }
 
