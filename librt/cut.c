@@ -20,8 +20,9 @@ static char RCScut[] = "@(#)$Header$ (BRL)";
 int rt_cutLen;			/* normal limit on number objs per box node */
 int rt_cutDepth;		/* normal limit on depth of cut tree */
 
-HIDDEN int rt_ck_overlap(), rt_ct_box();
-HIDDEN void rt_ct_add(), rt_ct_optim(), rt_ct_free();
+HIDDEN int	rt_ck_overlap(), rt_ct_box();
+HIDDEN void	rt_ct_add(), rt_ct_optim(), rt_ct_free();
+HIDDEN void	rt_ct_measure();
 HIDDEN union cutter *rt_ct_get();
 
 #define AXIS(depth)	((depth)%3)	/* cuts: X, Y, Z, repeat */
@@ -71,6 +72,16 @@ register struct rt_i *rtip;
 	if( rt_cutDepth > 24 )  rt_cutDepth = 24;		/* !! */
 	if(rt_g.debug&DEBUG_CUT) rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 	rt_ct_optim( &rtip->rti_CutHead, 0 );
+
+	/* Measure the depth of tree, find max # of RPPs in a cut node */
+	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
+	rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
+	if(rt_g.debug&DEBUG_CUT) rt_log(
+		"Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
+		rtip->rti_cut_maxdepth,
+		rtip->rti_cut_nbins,
+		rtip->rti_cut_maxlen,
+		((double)rtip->rti_cut_totobj)/rtip->rti_cut_nbins );
 
 	if(rt_g.debug&DEBUG_CUT) rt_pr_cut( &rtip->rti_CutHead, 0 );
 
@@ -373,7 +384,7 @@ int depth;
 		return;
 	}
 	if( cutp->cut_type != CUT_BOXNODE )  {
-		rt_log("rt_ct_optim: bad node\n");
+		rt_log("rt_ct_optim: bad node x%x\n", cutp->cut_type);
 		return;
 	}
 	/*
@@ -382,8 +393,8 @@ int depth;
 	if( cutp->bn.bn_len <= 1 )  return;	/* optimal */
 	if( depth > rt_cutDepth )  return;		/* too deep */
 	/* Attempt to subdivide finer than rt_cutLen near treetop */
-/**** THIS STATEMENT MUST GO ****/
-	if( depth >= 12 && cutp->bn.bn_len <= rt_cutLen )
+	/**** XXX This test can be improved ****/
+	if( depth >= 6 && cutp->bn.bn_len <= rt_cutLen )
 		return;				/* Fine enough */
 	/*
 	 *  In general, keep subdividing until things don't get any better.
@@ -653,4 +664,37 @@ register fastf_t *min, *max;
 	VJOIN1( b, a, maxdist, diff );		/* b must go first */
 	VJOIN1( a, a, mindist, diff );
 	return(1);		/* HIT */
+}
+
+/*
+ *			R T _ C T _ M E A S U R E
+ *
+ *  Find the maximum number of solids in a leaf node,
+ *  and other interesting statistics.
+ */
+HIDDEN void
+rt_ct_measure( rtip, cutp, depth )
+register struct rt_i	*rtip;
+register union cutter	*cutp;
+int			depth;
+{
+
+	if( cutp->cut_type == CUT_CUTNODE )  {
+		rt_ct_measure( rtip, cutp->cn.cn_l, depth+1 );
+		rt_ct_measure( rtip, cutp->cn.cn_r, depth+1 );
+		return;
+	}
+	if( cutp->cut_type != CUT_BOXNODE )  {
+		rt_log("rt_ct_measure: bad node x%x\n", cutp->cut_type);
+		return;
+	}
+	/*
+	 * BOXNODE
+	 */
+	rtip->rti_cut_nbins++;
+	rtip->rti_cut_totobj += cutp->bn.bn_len;
+	if( rtip->rti_cut_maxlen < cutp->bn.bn_len )
+		rtip->rti_cut_maxlen = cutp->bn.bn_len;
+	if( rtip->rti_cut_maxdepth < depth )
+		rtip->rti_cut_maxdepth = depth;
 }
