@@ -1589,21 +1589,21 @@ const char			*attr;
 		if( bot->bot_flags & RT_BOT_USE_FLOATS ) {
 			bu_vls_printf( &vls, " use_floats" );
 		}
-		bu_vls_printf( &vls, " } V {" );
+		bu_vls_printf( &vls, "} V {" );
 		for( i=0 ; i<bot->num_vertices ; i++ )
 			bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
 				V3ARGS( &bot->vertices[i*3] ) );
-		bu_vls_strcat( &vls, " } F {" );
+		bu_vls_strcat( &vls, "} F {" );
 		for( i=0 ; i<bot->num_faces ; i++ )
 			bu_vls_printf( &vls, " { %d %d %d }",
 				V3ARGS( &bot->faces[i*3] ) );
-		bu_vls_strcat( &vls, " }" );
+		bu_vls_strcat( &vls, "}" );
 		if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
 		{
 			bu_vls_strcat( &vls, " T {" );
 			for( i=0 ; i<bot->num_faces ; i++ )
 				bu_vls_printf( &vls, " %.25G", bot->thickness[i] );
-			bu_vls_strcat( &vls, " } fm " );
+			bu_vls_strcat( &vls, "} fm " );
 			bu_bitv_to_hex( &vls, bot->face_mode );
 		}
 		if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
@@ -1611,11 +1611,11 @@ const char			*attr;
 			for( i=0 ; i<bot->num_normals ; i++ ) {
 				bu_vls_printf( &vls, " { %.25G %.25G %.25G }", V3ARGS( &bot->normals[i*3] ) );
 			}
-			bu_vls_printf( &vls, " } fn {" );
+			bu_vls_printf( &vls, "} fn {" );
 			for( i=0 ; i<bot->num_faces ; i++ ) {
 				bu_vls_printf( &vls, " { %d %d %d }", V3ARGS( &bot->face_normals[i*3] ) );
 			}
-			bu_vls_printf( &vls, " }" );
+			bu_vls_printf( &vls, "}" );
 		}
 		status = TCL_OK;
 	}
@@ -1773,7 +1773,7 @@ const char			*attr;
 			if( bot->bot_flags & RT_BOT_USE_FLOATS ) {
 				bu_vls_printf( &vls, " use_floats" );
 			}
-			bu_vls_printf( &vls, " }" );
+			bu_vls_printf( &vls, "}" );
 			status = TCL_OK;
 		}
 		else if( attr[0] == 'f' )
