@@ -4,13 +4,13 @@
 #  @(#)$Header$ (BRL)
 
 # Ensure /bin/sh
-export PATH || (echo "This isn't sh.  Feeding myself to sh."; sh $0 $*; kill $$)
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
-MTYPE=`machinetype.sh`
-if test -f ../.rt.$MTYPE/rt
+eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, HAS_TCP
+if test -f ../.rt.$MACHINE/rt
 then
-	RT=../.rt.$MTYPE/rt
-	DB=../.db.$MTYPE
+	RT=../.rt.$MACHINE/rt
+	DB=../.db.$MACHINE
 else
 	if test -f ../rt/rt
 	then
@@ -22,8 +22,24 @@ else
 	fi
 fi
 
+CMP=./pixcmp
+if test ! -f $CMP
+then
+	cake pixcmp
+fi
+
+# Alliant NFS hack
+if test x${MACHINE} = xfx
+then
+	cp ${RT} /tmp/rt
+	cp ${CMP} /tmp/pixcmp
+	RT=/tmp/rt
+	CMP=/tmp/pixcmp
+fi
+
 # Run the tests
-set -x
+
+echo +++++ moss
 
 time $RT -B -M -s512 $* \
 	$DB/moss.g all.g \
@@ -39,13 +55,14 @@ start 0;
 end;
 EOF
 
+echo +++++ world
 
 time $RT -B -M -s512 $* \
 	$DB/world.g all.g \
 	<< EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
-viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 
+viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
 0.000000000e+00 -3.461886346e-01 -2.424038798e-01 9.063078165e-01 
 0.000000000e+00 7.424039245e-01 5.198368430e-01 4.226182699e-01 
 0.000000000e+00 0.000000000e+00 0.000000000e+00 0.000000000e+00 
@@ -53,6 +70,8 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
 start 0;
 end;
 EOF
+
+echo +++++ star
 
 time $RT -B -M -s512 $* \
 	$DB/star.g all \
@@ -67,6 +86,8 @@ start 0;
 end;
 EOF
 
+echo +++++ bldg391
+
 time $RT -B -M -s512 $* \
 	$DB/bldg391.g all.g \
 	<<EOF
@@ -80,6 +101,8 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
 start 0;
 end;
 EOF
+
+echo +++++ m35
 
 time $RT -B -M -s512 $* \
 	$DB/m35.g all.g \
