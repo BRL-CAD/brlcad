@@ -209,9 +209,12 @@ fastf_t		dist_tol;
 
 			NMG_CK_VERTEXUSE(vu[i]);
 			dist = rt_dist_line_point( pt, dir, vu[i]->v_p->vg_p->coord );
-			if( dist > 1 )  {
-				rt_log("ptbl_vsort() vu=x%x point off line by %g\n", dist);
-				rt_log("ptbl_vsort()\n");
+			if( dist > 100*dist_tol )  {
+				rt_log("ERROR ptbl_vsort() vu=x%x point off line by %g > 100*dist_tol\n", dist);
+				rt_bomb("ptbl_vsort()\n");
+			}
+			if( dist > dist_tol )  {
+				rt_log("WARNING ptbl_vsort() vu=x%x point off line by %e, tol=%e\n", dist, dist_tol);
 			}
 		}
 	}
@@ -443,8 +446,6 @@ int			pos;
 	int			ret;
 	register int		i;
 
-	
-
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
 	othereu = eu;
@@ -487,6 +488,7 @@ int			pos;
 			VSUB2( heading, v->vg_p->coord, otherv->vg_p->coord );
 		}
 		if( MAGSQ(heading) < SMALL_FASTF )  rt_bomb("nmg_assess_eu() null heading\n");
+		if( MAGSQ(heading) < rs->tol->dist_sq )  rt_bomb("nmg_assess_eu() edge len < dist tol\n");
 		if( VDOT( heading, rs->dir ) < 0 )  {
 			ret = NMG_E_ASSESSMENT_ON_REV;
 		} else {
@@ -562,6 +564,16 @@ int			pos;
 			rt_log("nmg_assess_vu() %s, prev_v=x%x, next_v=x%x\n",
 				nmg_v_assessment_names[ass],
 				prev->vu_p->v_p, next->vu_p->v_p );
+			rt_log("nmg_assess_vu() ON/ON edgeuse ends on different vertices.\n");
+			VPRINT("vu  ", this_eu->vu_p->v_p->vg_p->coord);
+			VPRINT("prev", prev->vu_p->v_p->vg_p->coord);
+			VPRINT("next", next->vu_p->v_p->vg_p->coord);
+rt_log("vu dist=%e, next dist=%e, tol=%e\n",
+rt_dist_line_point( rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord ),
+rt_dist_line_point( rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord ),
+rs->tol->dist );
+			if( nmg_break_long_edges( nmg_eups(this_eu), rs->tol ) > 0 )
+				rt_log("\tnmg_break_long_edges succeeded\n");
 			rt_bomb("nmg_assess_vu() ON/ON edgeuse ends on different vertices.\n");
 		}
 	}
@@ -2203,6 +2215,17 @@ int			other_rs_state;
 	int			action;
 	int			e_pos;
 
+	vu = rs->vu[pos];
+	NMG_CK_VERTEXUSE(vu);
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)  {
+		rt_log("nmg_face_state_transition(vu x%x, pos=%d) START\n",
+			vu, pos);
+		rt_log("Plotting this loopuse, before action:\n");
+		nmg_pr_lu_briefly(nmg_lu_of_vu(vu), (char *)0);
+		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs->vu[0], rs->vu[rs->nvu-1] );
+	}
+
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
 		nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
@@ -2210,8 +2233,6 @@ nmg_fu_touchingloops(rs->fu1);
 nmg_fu_touchingloops(rs->fu2);
 	}
 
-	vu = rs->vu[pos];
-	NMG_CK_VERTEXUSE(vu);
 	assessment = nmg_assess_vu( rs, pos );
 	old_state = rs->state;
 	switch( old_state )  {
@@ -2266,9 +2287,6 @@ nmg_fu_touchingloops(rs->fu2);
 			vu, pos,
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			nmg_state_names[new_state], action_names[action] );
-		rt_log("Plotting this loopuse, before action:\n");
-		nmg_pr_lu_briefly(nmg_lu_of_vu(vu), (char *)0);
-		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs->vu[0], rs->vu[rs->nvu-1] );
 	}
 
 	/*
@@ -2597,13 +2615,13 @@ nmg_fu_touchingloops(rs->fu2);
  *			N M G _ S T A S H _ M O D E L _ T O _ F I L E
  *
  *  Store an NMG model as a separate .g file, for later examination.
- * XXX this belongs elsewhere.
+ * XXX Move this to nmg_misc.c
  */
 void
 nmg_stash_model_to_file( filename, m, title )
-char		*filename;
-struct model	*m;
-CONST char	*title;
+CONST char		*filename;
+CONST struct model	*m;
+CONST char		*title;
 {
 	FILE	*fp;
 	struct rt_external	ext;
@@ -2641,6 +2659,6 @@ CONST char	*title;
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 	fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
 	fclose(fp);
-	rt_log("nmg_stash_model_to_file(): wrote '%s'\n", filename);
+	rt_log("nmg_stash_model_to_file(): wrote '%s' in %d bytes\n", filename, ext.ext_nbytes);
 }
                                                                                                                                       
