@@ -381,9 +381,9 @@ CONST char		*cp;
 	switch( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-		if( strcmp( cp, tp->tr_l.tl_name ) != 0 )
-			return tp;
-		return TREE_NULL;
+		if( strcmp( cp, tp->tr_l.tl_name )  )
+			return TREE_NULL;
+		return tp;
 
 	case OP_UNION:
 	case OP_INTERSECT:
