@@ -129,3 +129,30 @@ register CONST double	mm;
 	}
 	return (char *)0;
 }
+
+/* Given a string of the form "25cm" or "5.2ft" returns the 
+ * corresponding distance in mm
+ */
+double
+rt_mm_value(s)
+const char *s;
+{
+	double v;
+	register char *ptr;	
+	register const struct cvt_tab	*tp;
+
+	v = strtod(s, &ptr);
+
+	if (ptr == s) return 0.0;
+	if ( ! *ptr) return v;
+
+	for (tp=rt_units_tab; tp->name[0]; tp++ )  {
+		if( *ptr != tp->name[0] )  continue;
+		if( strcmp( ptr, tp->name ) == 0 ) {
+			v *= tp->val;
+			break;
+		}
+	}
+
+	return v;
+}
