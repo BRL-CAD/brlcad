@@ -393,6 +393,8 @@ char *argv[];
 			}
 		}
 	(void) f_Quit( (char *) NULL );
+	/*NOTREACHED*/
+	return 0; /* shut up stupid compilers */
 	}
 
 STATIC bool
@@ -639,6 +641,7 @@ char *buf;
 	if( sscanf( tol_str, "%d", &tolerance ) != 1 )
 		tolerance = 0;
 	fb_log( "Tolerance set to %d.\n", tolerance );
+	return 1;
 	}
 
 STATIC int
@@ -654,7 +657,7 @@ char *buf;
 	/* Grab pixel color under cursor. */
 	if( fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y,
 			(RGBpixel *) currentpix, 1 ) == -1 )
-		return false; /* read error */
+		return 0; /* read error */
 	pushPoint( &cursor_pos, &regionsp );
 	if( ! paintSolidRegion( currentpix, &cursor_pos ) )
 		return 0;
