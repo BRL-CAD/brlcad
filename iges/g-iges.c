@@ -23,8 +23,8 @@
  */
 
 #ifndef lint
-static char RCSid[] = "$Header$";
-static char RCSrev[] = "$Revision$";
+static const char RCSid[] = "$Header$";
+static const char RCSrev[] = "$Revision$";
 #endif
 
 #include "conf.h"

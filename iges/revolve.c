@@ -404,19 +404,19 @@ int entityno;
 		/* Union together all the TRC's that are not subtracts */
 		if( trcptr->op != 1 )
 		{
-			(void)mk_addmember( trcptr->name , &head, operator[Union] );
+			(void)mk_addmember( trcptr->name , &head.l, operator[Union] );
 
 			if( fract < 1.0 )
 			{
 				/* include cutting solid */
-				(void)mk_addmember( cutname , &head, operator[cutop] );
+				(void)mk_addmember( cutname , &head.l, operator[cutop] );
 			}
 
 			subp = trcptr->subtr;
 			/* Subtract the inside TRC's */
 			while( subp != NULL )
 			{
-				(void)mk_addmember( subp->name , &head, operator[Subtract] );
+				(void)mk_addmember( subp->name , &head.l, operator[Subtract] );
 				subp = subp->next;
 			}
 		}
