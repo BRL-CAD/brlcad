@@ -295,7 +295,6 @@ register struct partition *cpp;		/* component partition */
 int space;
 	{	fastf_t icosobliquity;	/* cosine of obliquity at entry */
 		fastf_t ocosobliquity;	/* cosine of obliquity at exit */
-		fastf_t	cosrotation;	/* cosine of rotation angle */
 		fastf_t	entryangle;	/* obliquity angle at entry */
 		fastf_t exitangle;	/* obliquity angle at exit */
 		fastf_t los;		/* line-of-sight thickness */
@@ -365,10 +364,12 @@ fixed_exit_normal:
 		ScaleVec( ohitp->hit_normal, -1.0 );
 		goto fixed_exit_normal;
 		}
-	cosrotation = Dot( ohitp->hit_normal, xaxis );
+	rotangle = atan2( ohitp->hit_normal[Y], ohitp->hit_normal[X] );
+	rotangle *= DEGRAD; /* convert to degrees */
+	if( rotangle < 0.0 )
+		rotangle += 360.0;
 	sinfbangle = Dot( ohitp->hit_normal, zaxis );
-	rotangle = AproxEq( cosrotation, 1.0, COS_TOL ) ?
-			0.0 : acos( cosrotation ) * DEGRAD;
+
 	los = (cpp->pt_outhit->hit_dist-ihitp->hit_dist)*unitconv;
 #ifdef DEBUG
 	rt_log( "prntSeg: los=%g dout=%g din=%g\n",
@@ -377,7 +378,7 @@ fixed_exit_normal:
 
 	if(	outfile[0] != NUL
 	    &&	fprintf( outfp,
-			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.3f % 7.3f\n",
+			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.2f % 7.3f\n",
 			PB_RAY_INTERSECT,
 			(standoff-ihitp->hit_dist)*unitconv,
 					/* X'-coordinate of intersection */
@@ -416,7 +417,7 @@ fixed_exit_normal:
 	exitangle = AproxEq( ocosobliquity, 1.0, COS_TOL ) ?
 			0.0 : acos( ocosobliquity ) * DEGRAD;
 	if( fprintf( shotlnfp,
-	       "%c % 8.2f % 7.3f % 7.3f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
+	       "%c % 8.2f % 7.3f % 7.2f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
 			PS_SHOT_INTERSECT,
 			(standoff-ihitp->hit_dist)*unitconv,
 					/* X'-coordinate of intersection */
