@@ -1492,6 +1492,8 @@ CONST struct rt_tol	*tol;
 	unsigned int	in, outside, on;
 	struct edgeuse *eu, *p;
 	struct loopuse *q_lu;
+	struct loopuse *match_lu[2];
+	int matches=0;
 	struct vertexuse *vu;
 	struct faceuse *fu_eu;
 	vect_t norm1, norm2;
@@ -1735,7 +1737,7 @@ retry:
 		struct faceuse *fu_qlu;
 		struct edgeuse *eu1;
 		struct edgeuse *eu2;
-		int match;
+		int found_match;
 
 		/* if the radial edge is a part of a loop which is part of
 		 * a face, then it's one that we might be "on"
@@ -1750,94 +1752,86 @@ retry:
 		if( q_lu->up.fu_p->s_p != s )  continue;
 
 		fu_qlu = q_lu->up.fu_p;
-		NMG_GET_FU_NORMAL( norm2, fu_qlu );
+
+		/* Compare OT_SAME faceuses */
+		if( fu_qlu->orientation != OT_SAME )
+		{
+			fu_qlu = fu_qlu->fumate_p;
+			q_lu = q_lu->lumate_p;
+		}
 
 		/* now check if eu's match in both LU's */
 		eu1 = RT_LIST_FIRST(edgeuse, &lu->down_hd);
 		eu2 = eu;
 
-		match = 1;
+		found_match = 1;
 		do
 		{
 			if( eu1->vu_p->v_p != eu2->vu_p->v_p )
 			{
-				match = 0;
+				found_match = 0;
 				break;
 			}
 			eu1 = RT_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
 			eu2 = RT_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
 		} while( eu1 != RT_LIST_FIRST(edgeuse, &lu->down_hd));
 
-		if( !match )
+		if( found_match )
 		{
-			/* check for match with q_lu->lumate_p */
-			eu1 = RT_LIST_FIRST(edgeuse, &lu->down_hd);
-			eu2 = eu;
-
-			match = 2;
-			do
+			if( matches == 2 )
 			{
-				if( eu1->vu_p->v_p != eu2->eumate_p->vu_p->v_p )
-				{
-					match = 0;
-					break;
-				}
-				eu1 = RT_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
-				eu2 = RT_LIST_PPREV_CIRC( edgeuse, &eu2->l );
-			} while( eu1 != RT_LIST_FIRST(edgeuse, &lu->down_hd));
+				rt_log( "class_lu_vs_s: Too many matching loops\n" );
+				rt_bomb( "class_lu_vs_s: Too many matching loops" );
+			}
+			match_lu[matches] = q_lu;
+			matches++;
 		}
 
-		if( match )
+	}
+
+	if( matches )
+	{
+		struct faceuse *fu_qlu;
+		fastf_t dot;
+		int class[2];
+		int final_class;
+		int i;
+
+		for( i=0 ; i<matches ; i++ )
 		{
-			fastf_t dot;
+			fu_qlu = match_lu[i]->up.fu_p;
+			NMG_GET_FU_NORMAL( norm2, fu_qlu );
 
 			dot = VDOT( norm1, norm2 );
 
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-				rt_log( "match = %d, dot=%f\n", match, dot );
+				rt_log( "match = %d, dot=%f\n", i, dot );
 
-			if( dot > 0.0 && fu_eu->orientation == fu_qlu->orientation ||
-			    dot < 0.0 && fu_eu->orientation != fu_qlu->orientation )
-			{
-		    		/* ON-shared */
-		    		if( lu->orientation == OT_OPPOSITE )  {
-				    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
-				    		lu->l_p );
-					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-						rt_log("Loop is on-antishared (lu orient is OT_OPPOSITE)\n");
-					nmg_reclassify_lu_eu( lu, classlist, NMG_CLASS_AonBanti );
-		    		}  else {
-				    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
-				    		lu->l_p );
-					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-						rt_log("Loop is on-shared\n");
-		    			/* no need to reclassify, edges were previously marked as AonBshared */
-		    		}
-				reason = "edges identical with radial face, normals colinear";
-		    		status = ON_SURF;
-		    		goto out;
-			}
+			if( match_lu[i]->orientation == lu->orientation && dot > 0.0 )
+				class[i] = NMG_CLASS_AonBshared;
+			else if( match_lu[i]->orientation != lu->orientation && dot < 0.0 )
+				class[i] = NMG_CLASS_AonBshared;
 			else
+				class[i] = NMG_CLASS_AonBanti;
+		}
+
+		final_class = NMG_CLASS_AonBanti;
+		for( i=0 ; i<matches ; i++ )
+		{
+			if( class[i] == NMG_CLASS_AonBshared )
 			{
-		    		/* ON-antishared */
-		    		if( lu->orientation == OT_OPPOSITE )  {
-					NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
-						lu->l_p );
-					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-						rt_log("Loop is on-shared (lu orient is OT_OPPOSITE)\n");
-		    			/* no need to reclassify, edges were previously marked as AonBshared */
-		    		}  else  {
-					NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
-						lu->l_p );
-					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-						rt_log("Loop is on-antishared\n");
-					nmg_reclassify_lu_eu( lu, classlist, NMG_CLASS_AonBanti );
-		    		}
-				reason = "edges identical with radial face, normals opposite";
-				status = ON_SURF;
-				goto out;
+				final_class = NMG_CLASS_AonBshared;
+				break;
 			}
 		}
+
+		NMG_INDEX_SET( classlist[final_class],lu->l_p );
+		if( final_class == NMG_CLASS_AonBanti )
+			nmg_reclassify_lu_eu( lu, classlist, NMG_CLASS_AonBanti );
+
+		reason = "edges identical with radial face";
+		status = ON_SURF;
+		goto out;
 	}
 #endif
 
