@@ -42,8 +42,9 @@ int w, n;
 int im_line;
 int fps;			/* frames/sec */
 int passes = 100;		/* limit on number of passes */
+int inverse;			/* for old 4th quadrant sequences */
 
-char Usage[] = "Usage: fbanim [-h] [-v] [-r] [-p#pass] width nframes [fps]\n";
+char Usage[] = "Usage: fbanim [-h] [-i] [-r] [-p#pass] width nframes [fps]\n";
 
 main(argc, argv )
 char **argv;
@@ -64,6 +65,9 @@ char **argv;
 		case 'p':
 			passes = atoi(&argv[1][2]);
 			if(passes<1)  passes=1;
+			break;
+		case 'i':
+			inverse = 1;
 			break;
 		case 'r':
 			rocking = 1;
@@ -108,9 +112,7 @@ char **argv;
 	im_line = pix_line/w;	/* number of images across line */
 	xPan = yPan = 0;
 
-	fb_zoom( fbp,
-		pix_line==w? 0 : pix_line/w,
-		pix_line==w? 0 : pix_line/w );
+	fb_zoom( fbp, pix_line/w, pix_line/w );
 
 	while(passes-- > 0)  {
 		if( !rocking )  {
@@ -133,6 +135,8 @@ register int i;
 {
 	xPan = (i%im_line)*w+w/2;
 	yPan = (i/im_line)*w+w/2;
+	if( inverse )
+		yPan = pix_line - yPan;
 	if( verbose )  {
 		printf("%3d: %3d %3d\n", i, xPan, yPan);
 		fflush( stdout );
