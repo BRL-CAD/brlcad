@@ -3419,6 +3419,10 @@ struct edgeuse *oldeu;
 	oldeumate->e_p = eu1->e_p;
 	eu2->e_p = oldeu->e_p;
 
+	/* Ensure that edge points up to one of the proper edgeuses. */
+	oldeumate->e_p->eu_p = oldeumate;
+	eu2->e_p->eu_p = eu2;
+
 out:
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_eusplit(v=x%x, eu=x%x) new_eu=x%x, mate=x%x\n",
