@@ -35,6 +35,7 @@ HIDDEN int	bmp_setup(), bmp_render();
 HIDDEN void	txt_print(), txt_free();
 HIDDEN void	ckr_print(), ckr_free();
 HIDDEN void	bmp_print(), bmp_free();
+HIDDEN void	txt_transp_hook();
 HIDDEN int tstm_render();
 HIDDEN int star_render();
 HIDDEN int envmap_setup();
@@ -71,6 +72,7 @@ struct txt_specific {
 	int	tx_fw;		/* File width of texture in pixels */
 	int	tx_n;		/* Number of scanlines */
 	char	*tx_pixels;	/* Pixel holding area */
+	int	trans_valid;	/* boolean: is tx_transp valid ? */
 };
 #define TX_NULL	((struct txt_specific *)0)
 #define TX_O(m)	offsetof(struct txt_specific, m)
@@ -78,18 +80,43 @@ struct txt_specific {
 struct structparse txt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
-	"%C",	"transp",	0,			FUNC_NULL,
+	"%C",	"transp",	0,			txt_transp_hook,
 	"%s",	"file",		1,			FUNC_NULL,
 #else
-	"%C",	"transp",	offsetofarray(struct txt_specific, tx_transp),	FUNC_NULL,
+	"%C",	"transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook,
 	"%s",	"file",		offsetofarray(struct txt_specific, tx_file),		FUNC_NULL,
 #endif
 	"%d",	"w",		TX_O(tx_w),		FUNC_NULL,
 	"%d",	"n",		TX_O(tx_n),		FUNC_NULL,
-	"%d",	"l",		TX_O(tx_n),		FUNC_NULL,	/*compat*/
+	"%d",	"l",		TX_O(tx_n),		FUNC_NULL, /*compat*/
 	"%d",	"fw",		TX_O(tx_fw),		FUNC_NULL,
+	"%d",	"trans_valid",	TX_O(trans_valid),	FUNC_NULL,
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
+
+/*
+ *			T X T _ T R A N S P _ H O O K
+ *
+ *  Hooked function, called by rt_structparse
+ */
+HIDDEN void
+txt_transp_hook( ptab, name, cp, value )
+struct structparse *ptab;
+char	*name;
+char	*cp;
+char	*value;
+{
+	register struct txt_specific *tp =
+		(struct txt_specific *)cp;
+
+	if (!strcmp(name, txt_parse[0].sp_name) && ptab == txt_parse) {
+		tp->trans_valid = 1;
+	} else {
+		rt_log("file:%s, line:%d txt_transp_hook name:(%s) instead of (%s)\n",
+			__FILE__, __LINE__, name, txt_parse[0].sp_name);
+	}
+}
+
 
 /*
  *			T X T _ R E A D
@@ -254,8 +281,10 @@ char	**dpp;
 	if( tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
 	tp->tx_pixels = (char *)0;
-	if( tp->tx_transp[3] != 0 )
+
+	if( tp->trans_valid )
 		rp->reg_transmit = 1;
+
 	if( txt_read(tp) == 0 )
 		return(-1);
 	else
