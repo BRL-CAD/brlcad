@@ -33,6 +33,7 @@ static const char RCSphotonmap[] = "";
 int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs);
 void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int map, double max_rad, int centog, int min_np);
 void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi);
+void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root);
 
 
 int			PM_Activated;
@@ -946,7 +947,7 @@ void WritePhotons(struct PNode *Root, FILE *FH) {
 
 void WriteFile(char *pmfile) {
   FILE		*FH;
-  int		I1,i;
+  int		I1;
   short		S1;
   char		C1;
 
@@ -1208,8 +1209,6 @@ void HeapDown(struct PhotonSearch *S, int ind) {
 
 
 void Push(struct PhotonSearch *S, struct PSN P) {
-  int i;
-
   S -> List[S -> Found]= P;
   HeapUp(S,S -> Found++);
 /*
@@ -1220,8 +1219,6 @@ void Push(struct PhotonSearch *S, struct PSN P) {
 
 
 void Pop(struct PhotonSearch *S) {
-  int	i;
-
   S -> Found--;
   S -> List[0]= S -> List[S -> Found];
   HeapDown(S,0);
@@ -1233,7 +1230,6 @@ void Pop(struct PhotonSearch *S) {
 
 
 void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
-  struct	PSN	Node;
   fastf_t		Dist,TDist,angle,MDist;
   int			i,MaxInd,Axis;
 
@@ -1318,10 +1314,11 @@ fastf_t ConeFilter(fastf_t dist, fastf_t rad) {
 void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np) {
   struct	PhotonSearch	Search;
   int				i,index;
-  fastf_t			tmp,dist,Filter,TotDist;
+  fastf_t			dist,TotDist;
   vect_t			t,cirrad;
 
 
+  index= 0;
   if (GPM_IH) {
     index= ap -> a_x + ap -> a_y*GPM_WIDTH;
     /* See if there is a cached irradiance calculation for this point */
