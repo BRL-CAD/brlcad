@@ -48,27 +48,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrach.h for nmg_info.c */
-RT_EXTERN(struct vertex	*	nmg_find_pt_in_model, (CONST struct model *m,
-				CONST point_t pt, CONST struct rt_tol *tol));
-RT_EXTERN(struct edgeuse *	nmg_find_eu_in_face, (CONST struct vertex *v1,
-				CONST struct vertex *v2, CONST struct faceuse *fu,
-				CONST struct edgeuse *eup, int dangling_only));
-
-RT_EXTERN(double		rt_dist_line2_point2, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a));
-RT_EXTERN(double		rt_distsq_line2_point2, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a));
-
-RT_EXTERN(struct edgeuse	*nmg_find_matching_eu_in_s, (
-				CONST struct edgeuse *eu1, CONST struct shell *s2));
-
-#define DIST_PT_PT(a,b)		sqrt( \
-	((a)[X]-(b)[X])*((a)[X]-(b)[X]) + \
-	((a)[Y]-(b)[Y])*((a)[Y]-(b)[Y]) + \
-	((a)[Z]-(b)[Z])*((a)[Z]-(b)[Z]) )
-
-
 struct nmg_inter_struct {
 	long		magic;
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
@@ -1012,8 +991,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	    (vu1a->v_p == vu2b->v_p && vu1b->v_p == vu2a->v_p) )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("nmg_isect_edge2p_edge2p: shared edge topology, both ends\n");
-	    	if( !wire && eu1->e_p != eu2->e_p )
-	    		nmg_radial_join_eu(eu1, eu2, &is->tol );
+    		nmg_radial_join_eu(eu1, eu2, &is->tol );
 	    	ret = ISECT_SHARED_V;
 		goto topo;
 	}
@@ -2002,7 +1980,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	if( fu2_eu != (struct edgeuse *)NULL )  {
 		/* There is an edge in other face that joins these 2 verts. */
 		NMG_CK_EDGEUSE(fu2_eu);
-		if( fu1 && fu2_eu->e_p != eu1->e_p )  {
+		if( fu2_eu->e_p != eu1->e_p )  {
 			/* Not the same edge, fuse! */
 			rt_log("nmg_isect_edge2p_face2p() fusing unshared shared edge\n");
 			nmg_radial_join_eu( eu1, fu2_eu, &is->tol );
@@ -3043,10 +3021,7 @@ struct edgeuse		*eu2;
 	    (vu1a->v_p == vu2b->v_p && vu1b->v_p == vu2a->v_p) )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("nmg_isect_edge3p_edge3p: shared edge topology, both ends\n");
-	    	/* Don't mesh wire edges, nmg_radial_join_eu() can't do it. */
-	    	if( eu1->e_p != eu2->e_p &&
-		    *eu1->up.magic_p == NMG_LOOPUSE_MAGIC &&
-		    *eu2->up.magic_p == NMG_LOOPUSE_MAGIC )
+	    	if( eu1->e_p != eu2->e_p )
 	    		nmg_radial_join_eu(eu1, eu2, &is->tol );
 	    	return;
 	}
@@ -3238,85 +3213,6 @@ out:
 			eu1, s2 );
 	}
 	return;
-}
-
-/*
- * XXX move to nmg_info.c
- *			N M G _ F I N D _ V _ I N _ S H E L L
- *
- *  Search shell "s" for a vertexuse that refers to vertex "v".
- *  For efficiency, the search is done on the uses of "v".
- *
- *  If "edges_only" is set, only a vertexuse from an edgeuse will
- *  be returned, otherwise, vu's from self-loops and lone-shell-vu's
- *  are also candidates.
- */
-struct vertexuse *
-nmg_find_v_in_shell( v, s, edges_only )
-CONST struct vertex	*v;
-CONST struct shell	*s;
-int			edges_only;
-{
-	struct vertexuse	*vu;
-
-	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
-		NMG_CK_VERTEXUSE(vu);
-
-		if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
-			if( edges_only )  continue;
-			if( nmg_find_s_of_lu( vu->up.lu_p ) == s )
-				return vu;
-			continue;
-		}
-		if( *vu->up.magic_p == NMG_SHELL_MAGIC )  {
-			if( edges_only )  continue;
-			if( vu->up.s_p == s )
-				return vu;
-			continue;
-		}
-		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
-			rt_bomb("nmg_find_v_in_shell(): bad vu up ptr\n");
-
-		/* vu is being used by an edgeuse */
-		if( nmg_find_s_of_eu( vu->up.eu_p ) == s )
-			return vu;
-	}
-	return (struct vertexuse *)NULL;
-}
-
-/* XXX move to nmg_info.c */
-/*
- *			N M G _ F I N D _ M A T C H I N G _ E U _ I N _ S
- *
- *  If shell s2 has an edge that connects the same vertices as eu1 connects,
- *  return the matching edgeuse in s2.
- */
-struct edgeuse *
-nmg_find_matching_eu_in_s( eu1, s2 )
-CONST struct edgeuse	*eu1;
-CONST struct shell	*s2;
-{
-	CONST struct vertexuse	*vu1a, *vu1b;
-	struct vertexuse	*vu2a, *vu2b;
-	struct edgeuse		*eu2;
-
-	NMG_CK_EDGEUSE(eu1);
-	NMG_CK_SHELL(s2);
-
-	vu1a = eu1->vu_p;
-	vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
-	NMG_CK_VERTEXUSE(vu1a);
-	NMG_CK_VERTEXUSE(vu1b);
-	if( (vu2a = nmg_find_v_in_shell( vu1a->v_p, s2, 0 )) == (struct vertexuse *)NULL )
-		return (struct edgeuse *)NULL;
-	if( (vu2b = nmg_find_v_in_shell( vu1b->v_p, s2, 0 )) == (struct vertexuse *)NULL )
-		return (struct edgeuse *)NULL;
-
-	/* Both vertices have vu's of eu's in s2 */
-
-	eu2 = nmg_findeu( vu1a->v_p, vu1b->v_p, s2,
-	    (CONST struct edgeuse *)NULL, 0 );
-	return eu2;		/* May be NULL if no edgeuse found */
 }
 
 /*
