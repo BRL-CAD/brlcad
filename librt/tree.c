@@ -726,6 +726,9 @@ int		ncpus;
 				  rt_gettree_region_start,
 				  rt_gettree_region_end,
 				  rt_gettree_leaf, (genptr_t)NULL );
+
+		if( attrs )
+			bu_avs_free( &tree_state.ts_attrs );
 	}
 
 	/* DEBUG:  Ensure that all region trees are valid */
