@@ -46,9 +46,11 @@ static int	screen_height = 0;
 
 static int	crunch;
 static int	r_debug;
+static int	hflag;			/* print header only */
 
 static char	usage[] = "\
-Usage: rle-pix [-c -d -h] [-C r/g/b]\n\
+Usage: rle-pix [-c -d -h -H] [-C r/g/b]\n\
+	[-s|S squareoutsize] [-w|W out_width] [-n|N out_height]\n\
 	[file.rle [file.pix]]\n\
 ";
 
@@ -61,13 +63,16 @@ register char	**argv;
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "cdhs:S:w:W:n:N:C:" )) != EOF )  {
+	while( (c = getopt( argc, argv, "cdhHs:S:w:W:n:N:C:" )) != EOF )  {
 		switch( c )  {
 		case 'd':
 			r_debug = 1;
 			break;
 		case 'c':
 			crunch = 1;
+			break;
+		case 'H':
+			hflag = 1;
 			break;
 		case 'h':
 			/* high-res */
@@ -128,9 +133,11 @@ register char	**argv;
 	if( argc > ++optind )
 		(void) fprintf( stderr, "rle-pix:  excess arguments ignored\n" );
 
-	if( isatty(fileno(infp)) || isatty(fileno(outfp)) )
-		return 0;
-	return	1;
+	if( isatty(fileno(infp)) )
+		return(0);
+	if( !hflag && isatty(fileno(outfp)) )
+		return(0);
+	return(1);				/* OK */
 }
 
 /*
@@ -196,6 +203,13 @@ char ** argv;
 	}
 	if( screen_height == 0 )  {
 	    	screen_height = sv_globals.sv_ymax + 1;
+	}
+
+	/* Report screen (output) size given image size & other options */
+	if( hflag )  {
+		printf("-w%d -n%d\n",
+			screen_width, screen_height );
+		exit(0);
 	}
 
 	/* Discard any scanlines which exceed screen height */
