@@ -168,8 +168,8 @@ cm_start( argc, argv )
 int	argc;
 char	**argv;
 {
-	char ibuf[512];
-	int frame;
+	char	*buf;
+	int	frame;
 
 	frame = atoi(argv[1]);
 	if( frame >= desiredframe )  {
@@ -178,15 +178,16 @@ char	**argv;
 	}
 
 	/* Skip over unwanted frames -- find next frame start */
-	while( read_cmd( stdin, ibuf, sizeof(ibuf) ) >= 0 )  {
+	while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
 		register char *cp;
 
-		cp = ibuf;
+		cp = buf;
 		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
 		if( strncmp( cp, "start", 5 ) != 0 )  continue;
 		while( *cp && !isspace(*cp) )  cp++;	/* skip keyword */
 		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
 		frame = atoi(cp);
+		rt_free( buf, "cmd buf (skiping frames)" );
 		if( frame >= desiredframe )  {
 			curframe = frame;
 			return(0);
