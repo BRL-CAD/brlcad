@@ -26,6 +26,7 @@ class View {
     public variable scale ""
     public variable center ""
     public variable aet ""
+    public variable perspective_angle 90
 
     constructor {args} {
 	# first create view object
@@ -39,38 +40,51 @@ class View {
 	set scale [$view scale]
 	set center [$view center]
 	set aet [$view aet]
+	$view perspective $perspective_angle
     }
 
     destructor {
 	$view close
     }
 
+    public method get_name {}
+
     public method observer {args}
     public method aet {args}
     public method center {args}
     public method rot {args}
-    public method slew {args}
+    public method slew {x y}
     public method tra {args}
     public method size {args}
     public method scale {args}
     public method zoom {sf}
     public method model2view {}
+    public method pmodel2view {}
+    public method perspective {args}
 }
 
 configbody View::size {
-    size $size
+    View::size $size
 }
 
 configbody View::scale {
-    scale $scale
+    View::scale $scale
 }
 
 configbody View::center {
-    center $center
+    View::center $center
 }
 
 configbody View::aet {
-    aet $aet
+    View::aet $aet
+}
+
+configbody View::perspective_angle {
+    View::perspective $perspective_angle
+}
+
+body View::get_name {} {
+    return $view
 }
 
 body View::observer {args} {
@@ -106,9 +120,9 @@ body View::rot {args} {
     set aet [$view aet]
 }
 
-body View::slew {args} {
+body View::slew {x y} {
     # slew the view
-    $view slew $args
+    $view slew [list $x $y]
 
     set center [$view center]
 }
@@ -155,4 +169,18 @@ body View::zoom {sf} {
 
 body View::model2view {} {
     $view model2view
+}
+
+body View::pmodel2view {} {
+    $view pmodel2view
+}
+
+body View::perspective {args} {
+    # get perspective angle
+    if {$args == ""} {
+	return $perspective_angle
+    }
+
+    $view perspective $args
+    set perspective_angle $args
 }
