@@ -33,8 +33,8 @@ struct wmember  {
 #define WMEMBER_MAGIC	0x43128912
 
 /* Convienient definitions */
-#define mk_lfcomb(fp,name,region,headp)		mk_lcomb( fp, name, region, \
-	(char *)0, (char *)0, 0, (char *)0, headp );
+#define mk_lfcomb(fp,name,headp,region)		mk_lcomb( fp, name, headp, \
+	region, (char *)0, (char *)0, (char *)0, 0 );
 
 extern struct wmember *mk_addmember();
 
