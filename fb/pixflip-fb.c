@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <sys/time.h>		/* For struct timeval */
 
 #include "machine.h"
 #include "externs.h"		/* For getopt and malloc */
@@ -129,7 +130,11 @@ char **argv;
 	int	islist = 0;		/* set if a list, zero if basename */
 	char	name[256];
 	int	fd;
-	int	sec, usec;
+	struct timeval tv;
+	fd_set readfds;
+
+	FD_ZERO(&readfds);
+	FD_SET(fileno(stdin), &readfds);
 
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -166,11 +171,11 @@ char **argv;
 	}
 
 	if( fps <= 1 )  {
-		sec = fps ? 1 : 4;
-		usec = 0;
+		tv.tv_sec = fps ? 1L : 4L;
+		tv.tv_usec = 0L;
 	} else {
-		sec = 0;
-		usec = 1000000/fps;
+		tv.tv_sec = 0L;
+		tv.tv_usec = (long) (1000000/fps);
 	}
 
 	scanbytes = file_width * file_height * sizeof(RGBpixel);
@@ -218,17 +223,20 @@ done:
 			/* Play from start to finish, over and over */
 			for( i=0; i<maxframe; i++ )  {
 				showframe(i);
-				bsdselect( 0, sec, usec );
+				select( fileno(stdin)+1, &readfds, 
+					(fd_set *)0, (fd_set *)0, &tv );
 			}
 		} else {
 			/* Play from start to finish and back */
 			for( i=0; i<maxframe; i++ )  {
 				showframe(i);
-				bsdselect( 0, sec, usec );
+				select( fileno(stdin)+1, &readfds, 
+					(fd_set *)0, (fd_set *)0, &tv );
 			}
 			while(i-->0)  {
 				showframe(i);
-				bsdselect( 0, sec, usec );
+				select( fileno(stdin)+1, &readfds, 
+					(fd_set *)0, (fd_set *)0, &tv );
 			}
 		}
 	}

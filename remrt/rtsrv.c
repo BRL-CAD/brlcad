@@ -30,9 +30,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <varargs.h>
 #endif
 
+#include <sys/time.h>
+
 #ifndef SYSV
 # include <sys/ioctl.h>
-# include <sys/time.h>
 # include <sys/resource.h>
 #endif
 
@@ -316,6 +317,8 @@ char **argv;
 
 	for(;;)  {
 		register struct list	*lp;
+		fd_set ifds;
+		struct timeval tv;
 
 		/* First, process any packages in library buffers */
 		if( pkg_process( pcsrv ) < 0 )  {
@@ -324,12 +327,13 @@ char **argv;
 		}
 
 		/* Second, see if any input to read */
-		ibits = 1 << pcsrv->pkc_fd;
-		/* Use library routine from libsysv */
-		ibits = bsdselect( ibits, 
-			WorkHead.li_forw != &WorkHead ? 0 : 9999,
-			0 );
-		if( ibits )  {
+		FD_ZERO(&ifds);
+		FD_SET(pcsrv->pkc_fd, &ifds);
+		tv.tv_sec = WorkHead.li_forw != &WorkHead ? 0L : 9999L;
+		tv.tv_usec = 0L;
+
+		if( select(pcsrv->pkc_fd+1, &ifds, (fd_set *)0, (fd_set *)0,
+			&tv ) != 0 )  {
 			n = pkg_suckin(pcsrv);
 			if( n < 0 )  {
 				rt_log("pkg_suckin error\n");

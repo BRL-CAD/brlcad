@@ -25,6 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <sys/time.h>		/* For struct timeval */
 
 #include "machine.h"
 #include "externs.h"		/* For getopt() */
@@ -172,6 +173,8 @@ newframe(i)
 register int i;
 {
 	register int	xPan, yPan;		/* Pan Location */
+	struct timeval tv;
+	fd_set fds;
 
 	xPan = (i%im_line)*subimage_width+subimage_width/2;
 	yPan = (i/im_line)*subimage_height+subimage_height/2;
@@ -182,5 +185,12 @@ register int i;
 		fflush( stdout );
 	}
 	fb_window( fbp, xPan, yPan );
-	bsdselect( 0, sec, usec );
+
+	FD_ZERO(&fds);
+	FD_SET(fileno(stdin), &fds);	
+
+	tv.tv_sec = sec;
+	tv.tv_usec = usec;
+
+	select(fileno(stdin)+1, &fds, (fd_set *)0, (fd_set *)0, &tv);
 }

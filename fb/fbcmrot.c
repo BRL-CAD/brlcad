@@ -24,6 +24,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>	
 #include <math.h>
+#include <sys/time.h>		/* For struct timeval */
+
 #include "machine.h"
 #include "externs.h"
 #include "fb.h"
@@ -81,7 +83,7 @@ main(argc, argv )
 char **argv;
 {
 	register int i;
-	int sec, usec;
+	struct timeval tv;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -89,8 +91,8 @@ char **argv;
 	}
 
 	if( fps > 0.0 ) {
-		sec = 1.0 / fps;
-		usec = ((1.0 / fps) - sec) * 1000000;
+		tv.tv_sec = (long) (1.0 / fps);
+		tv.tv_usec = (long) (((1.0 / fps) - tv.tv_sec) * 1000000);
 	}
 
 	if( (fbp = fb_open( NULL, size, size)) == FBIO_NULL )  {
@@ -123,8 +125,11 @@ char **argv;
 		inp = tp;
 
 		if( fps > 0.0 )  {
-			/* From libsysv */
-			bsdselect( 0L, sec, usec );
+			fd_set readfds;
+
+			FD_ZERO(&readfds);
+			FD_SET(fileno(stdin), &readfds);
+			select(fileno(stdin)+1, &readfds, (fd_set *)0, (fd_set *)0, &tv);
 		}
 		if( onestep )
 			break;

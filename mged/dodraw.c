@@ -153,10 +153,19 @@ long	us;		/* microseconds of extra delay */
 	/* Use /dev/tty to select on, because stdin may be a file */
 	if(us)  {
 		int	fd;
+
 		if( (fd = open("/dev/tty", 2)) < 0 )  {
 			perror("/dev/tty");
 		} else {
-			(void)bsdselect( 1<<fd, 0, us );
+			struct timeval tv;
+			fd_set readfds;
+
+			FD_ZERO(&readfds);
+			FD_SET(fd, &readfds);
+			tv.tv_sec = 0L;
+			tv.tv_usec = us;
+
+			select( fd+1, &readfds, (fd_set *)0, (fd_set *)0, &tv );
 			close(fd);
 		}
 	}
@@ -195,7 +204,15 @@ int		copy;
 		if( (fd = open("/dev/tty", 2)) < 0 )  {
 			perror("/dev/tty");
 		} else {
-			(void)bsdselect( 1<<fd, 0, us );
+			struct timeval tv;
+			fd_set readfds;
+
+			FD_ZERO(&readfds);
+			FD_SET(fd, &readfds);
+			tv.tv_sec = 0L;
+			tv.tv_usec = us;
+
+			select( fd+1, &readfds, (fd_set *)0, (fd_set *)0, &tv );
 			close(fd);
 		}
 	}
