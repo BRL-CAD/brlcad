@@ -407,7 +407,8 @@ union tree		*curtree;
 	nnr++;			/* Start new region */
 
 	/* Print an indicator of our progress */
-	(void) printf( "%4d:%s\n", nnr+delreg, fullname );
+	if( debug )
+		(void) printf( "%4d:%s\n", nnr+delreg, fullname );
 
 	/*
 	 *  Write the boolean formula into the region table.
@@ -621,8 +622,8 @@ next_one:
 		/* XXX */
 	default:
 		(void) fprintf( stderr,
-		    "vdeck: '%s' Solid type has no corresponding COMGEOM soild, skipping\n",
-		    rt_functab[id].ft_name );
+		    "vdeck: '%s' Solid type %s has no corresponding COMGEOM solid, skipping\n",
+		    dp->d_namep, rt_functab[id].ft_name );
 		vls_itoa( &sol, stp->st_bit+delsol, 5 );
 		rt_vls_strcat( &sol, rt_functab[id].ft_name );
 		vls_blanks( &sol, 5*10 );
@@ -1340,9 +1341,6 @@ toc()
 	register struct directory *dp;
 	register int		i;
 	register int		count;
-
-	(void) printf( "Making the Table of Contents.\n" );
-	(void) fflush( stdout );
 
 	/* Determine necessary table size */
 	count = 0;
