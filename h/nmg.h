@@ -364,7 +364,6 @@ struct shell_a {
  *  Note: there will always be exactly two faceuse's using a face.
  *  To find them, go up fu_p for one, then across fumate_p to other.
  */
-#define edge_g			edge_g_lseg	/* compat */
 struct face {
 	struct rt_list		l;	/* faces in face_g's f_hd list */
 	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
@@ -522,6 +521,7 @@ struct edge {
 	long			index;	/* struct # in this model */
 };
 
+#define edge_g			BOGUS_edge_g_lseg;
 struct edge_g_lseg {
 	long			magic;
 	struct rt_list		eu_hd2;	/* heads l2 list of edgeuses on this line */
