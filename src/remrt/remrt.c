@@ -47,6 +47,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#ifndef FD_MOVE
+#define FD_MOVE(a, b) { register int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \
+	        if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
+#endif
 
 /*
  *  The situation with sys/time.h and time.h is crazy.
