@@ -715,7 +715,8 @@ register struct xray	*rp;
 /*
  *			R T _ P A R T _ C U R V E
  *
- *  Return the curvature of the part.
+ *  Return the curvature of the particle.
+ *  There are two cases:  hitting a hemisphere, and hitting the cylinder.
  */
 void
 rt_part_curve( cvp, hitp, stp )
@@ -723,10 +724,34 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+	register struct part_specific *part =
+		(struct part_specific *)stp->st_specific;
+	point_t	hit_local;	/* hit_point, with V as origin */
+	point_t	hit_unit;	/* hit_poit in unit coords, +Z along H */
 
-	/* any tangent direction */
- 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	switch( hitp->hit_surfno )  {
+	case RT_PARTICLE_SURF_VSPHERE:
+	 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	 	cvp->crv_c1 = cvp->crv_c2 = -part->part_int.part_vrad;
+		break;
+	case RT_PARTICLE_SURF_HSPHERE:
+	 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	 	cvp->crv_c1 = cvp->crv_c2 = -part->part_int.part_hrad;
+		break;
+	case RT_PARTICLE_SURF_BODY:
+		/* Curvature in only one direction, around H */
+		VCROSS( cvp->crv_pdir, hitp->hit_normal, part->part_int.part_H );
+		VUNITIZE( cvp->crv_pdir );
+		/* Interpolate radius between vrad and hrad */
+		VSUB2( hit_local, hitp->hit_point, part->part_int.part_V );
+		MAT4X3VEC( hit_unit, part->part_SoR, hit_local );
+		/* hit_unit[Z] ranges from 0 at V to 1 at H, interpolate */
+	 	cvp->crv_c1 = -(
+			part->part_int.part_vrad * hit_unit[Z] +
+			part->part_int.part_hrad * (1 - hit_unit[Z]) );
+		cvp->crv_c2 = 0;
+		break;
+	}
 }
 
 /*
