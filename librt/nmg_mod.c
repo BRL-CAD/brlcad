@@ -26,6 +26,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrace.h */
+RT_EXTERN( struct vertex *nmg_e2break, (struct edge *e1, struct edge *e2) );
+
 /*
  *			N M G _ F U _ P L A N E E Q N
  *
@@ -796,14 +799,52 @@ struct shell *s;
 /*
  *			N M G _ E S P L I T
  *
- *	Split an edge.
+ *	Split an edge by inserting a vertex into middle of *all* of the
+ *	uses of this edge, and combine the new edgeuses together onto the
+ *	new edge.
+ *	A more powerful version of nmg_eusplit(), which does only one use.
  *
- *	Actually, we split each edgeuse pair of the given edge, and combine
- *	the new edgeuses together onto new edges.  
+ *	Makes a new edge, and a vertex.  If v is non-null it is taken as a
+ *	pointer to an existing vertex to use as the start of the new edge.
+ *	If v is null, then a new vertex is created for the begining of the
+ *	new edge.
  *
+ *	In either case, the new edge will exist as the "next" edge after
+ *	the edge passed as a parameter.
  *	Explicit return:
  *		pointer to the new edge which took the place of the parameter
  *	edge.
+ * XXX I don't understand what the return is, by reading this comment.
+ * XXX something more useful might be along these lines:
+ *	The explicit return (ret_e) referrs to the new edge.
+ *	Vertex A is e->eu_p->v_p,
+ *	Vertex B is e->eu_p->eumate_p->v_p,
+ *	and vertex V (either made new or as an argument) will lie inbetween.
+ *	On return, e->eu_p will run from A to V, and
+ *	(ret_e)->eu_p will run from V to B.
+ *	Note that only edgeuses are oriented, not edges, so it's
+ *	not possible to say whether ret_e "starts" or "ends" at V.
+ * XXX The question is, is this what really happens?
+ *
+ *  Edge on entry -
+ *
+ *		       oldeu
+ *		  .------------->
+ *		 /
+ *		A =============== B (edge)
+ *				 /
+ *		  <-------------.
+ *		      oldeumate
+ *
+ *  Edge on return -
+ *
+ *		     oldeu(cw)    eu1
+ *		    .------->   .----->
+ *		   /           /
+ *	   (edge) A ========= V ~~~~~~~ B (new edge)
+ *			     /         /
+ *		    <-------.   <-----.
+ *		       mate	 mate
  */
 struct edge *
 nmg_esplit(v, e)
@@ -885,8 +926,7 @@ struct edge *e;
 		eu = eu->radial_p->eumate_p;
 	} while (eu != neu2);
 
-
-	return(eu->e_p);
+	return(neu2->e_p);
 }
 
 /*
@@ -896,23 +936,51 @@ struct edge *e;
  *
  *	This splits an edge into two parts.  The two resultant parts share
  *	the same edge geometry.
+ *
+ *  The return is the return of nmg_esplit().
  */
+struct edge *
 nmg_ebreak(v, e)
 struct vertex *v;
 struct edge *e;
 {
-	struct edge *e_p;
-	
-	e_p = nmg_esplit(v, e);
+	struct edge *new_e;
 
-	/* now that the edge has been split, let's make sure the two edges
-	 * share the same geometry.  This gives me the heebie-geebies. XXX
-	 */
+	new_e = nmg_esplit(v, e);
 
-	if (!e->eg_p) return;
+	/* Make sure the two edges share same geometry, if there was any. */
+	if (!e->eg_p) return new_e;
+	if (new_e->eg_p)  rt_bomb("nmg_ebreak() new edge developed geometry?\n");
 
-	e_p->eg_p = e->eg_p;
-	e_p->eg_p->usage++;
+	new_e->eg_p = e->eg_p;
+	new_e->eg_p->usage++;
+	return new_e;
+}
+
+/*
+ *			N M G _ E 2 B R E A K
+ *
+ *  Given two edges that are known to intersect someplace other than
+ *  at any of their endpoints, break both of them and
+ *  insert a shared vertex.
+ *  Return a pointer to the new vertex.
+ */
+struct vertex *
+nmg_e2break( e1, e2 )
+struct edge	*e1;
+struct edge	*e2;
+{
+	struct vertex	*v;
+	struct vertexuse	*vu;
+
+	vu = nmg_mvvu( &e1->magic );	/* Really only want v, not vu */
+	NMG_CK_VERTEXUSE(vu);
+	v = vu->v_p;
+	NMG_CK_VERTEX(v);
+	(void)nmg_ebreak( v, e1 );
+	(void)nmg_ebreak( v, e2 );
+	nmg_kvu( vu );			/* Kill initial (temporary) use */
+	return v;
 }
 
 /*
