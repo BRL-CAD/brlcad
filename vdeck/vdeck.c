@@ -152,22 +152,38 @@ struct soltab	sol_hd;
 
 struct db_i	*dbip;		/* Database instance ptr */
 
-/*	s o r t F u n c ( )
-	Comparison function for qsort().
+
+/*
+ *			P R O M P T
+ *
+ *  Print a non-newline-terminate string, and flush stdout
+ */
+void
+prompt( fmt )
+char	*fmt;
+{
+	fputs( fmt, stdout );
+	fflush(stdout);
+}
+
+/*
+ *			S O R T F U N C
+ *
+ *	Comparison function for qsort().
  */
 static int
 sortFunc( a, b )
 char	**a, **b;
-	{
+{
 	return( strcmp( *a, *b ) );
-	}
+}
 
 /*
  *			M A I N
  */
 main( argc, argv )
 char	*argv[];
-	{
+{
 	setbuf( stdout, rt_malloc( BUFSIZ, "stdout buffer" ) );
 	RT_LIST_INIT( &(sol_hd.l) );
 
@@ -287,7 +303,9 @@ char	*argv[];
 	}
 
 /*
- *  XXX This is clearly not right, but should do simple test cases.
+ *			F L A T T E N _ T R E E
+ *
+ *  This routine turns a union tree into a flat string.
  */
 flatten_tree( vls, tp, op, neg )
 struct rt_vls	*vls;
@@ -579,7 +597,7 @@ next_one: ;
 			dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_ARS:
-		addars( &sol, (struct rt_tgc_internal *)intern.idb_ptr,
+		addars( &sol, (struct rt_ars_internal *)intern.idb_ptr,
 			dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_HALF:
@@ -603,8 +621,6 @@ next_one: ;
 	}
 
 	ewrite( solfd, rt_vls_addr(&sol), rt_vls_strlen(&sol) );
-
-	/* ---------------- */
 
 	/* Free storage for internal form */
     	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
@@ -798,8 +814,10 @@ int			num;
 #define	ELL1	2
 #define SPH	3
 
-/*	a d d e l l ( )
-	Process the general ellipsoid.
+/*
+ *			A D D E L L 
+ *
+ *	Process the general ellipsoid.
  */
 addell( v, gp, name, num )
 struct rt_vls		*v;
@@ -891,8 +909,10 @@ int			num;
 #define REC	4
 #define RCC	5
 
-/*	a d d t g c ( )
-	Process generalized truncated cone.
+/*
+ *			A D D T G C
+ *
+ *	Process generalized truncated cone.
  */
 addtgc( v, gp, name, num )
 struct rt_vls		*v;
@@ -1061,137 +1081,71 @@ int			num;
 	}
 }
 
-/*	a d d a r s ( )
-	Process triangular surfaced polyhedron - ars.
+/*
+ *			A R S _ C U R V E _ O U T
+ */
+void
+ars_curve_out( v, fp, todo, curveno, num )
+struct rt_vls		*v;
+fastf_t			*fp;
+int			todo;
+int			curveno;
+int			num;
+{
+	register int	i;
+
+	while( todo > 0 )  {
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+
+		/* First point */
+		vls_ftoa_vec_cvt( v, fp, 10, 4 );
+		fp += 3;
+		todo--;
+
+		/* Second point */
+		if( todo >= 1 )  {
+			vls_ftoa_vec_cvt( v, fp, 10, 4 );
+			fp += 3;
+			todo--;
+		} else {
+			vls_blanks( v, 3*10 );
+		}
+
+		rt_vls_strcat( v, "curve " );
+		vls_itoa( v, curveno, 3 );
+		rt_vls_strcat( v, "\n" );
+	}
+}
+
+/*
+ *			A D D A R S
+ *
+ *	Process triangular surfaced polyhedron - ars.
  */
 addars( v, gp, name, num )
 struct rt_vls		*v;
-struct rt_tgc_internal	*gp;
+struct rt_ars_internal	*gp;
 char			*name;
 int			num;
 {
-#if 0
-	char	buf[10];
-	register int	i, vec;
-	int	npt, npts, ncurves, ngrans, granule, totlen;
-	float	work[3], vertex[3];
-	hvect_t	v_work, v_workk;
+	register int	i;
 
-	ngrans = rec->a.a_curlen;
-	totlen = rec->a.a_totlen;
-	npts = rec->a.a_n;
-	ncurves = rec->a.a_m;
+	RT_ARS_CK_MAGIC(gp);
 
-	/* Write ars header line in solid table.			*/
-	ewrite( solfd, "ars  ", 5 );
-	itoa( ncurves, buf, 10 );
-	ewrite( solfd, buf, 10 );
-	itoa( npts, buf, 10 );
-	ewrite( solfd, buf, 10 );
-	blank_fill( solfd, 40 );
-	ewrite( solfd, rec->a.a_name, (unsigned) strlen( rec->a.a_name ) );
-	ewrite( solfd, LF, 1 );
+	vls_itoa( v, num, 5 );
+	rt_vls_strcat( v, "ars  " );		/* 5 */
+	vls_itoa( v, gp->ncurves, 10 );
+	vls_itoa( v, gp->pts_per_curve, 10 );
+	vls_blanks( v, 4*10 );
+	rt_vls_strcat( v, name );
+	rt_vls_strcat( v, "\n" );
 
-	/* Process the data one granule at a time.			*/
-	for( granule = 1; granule <= totlen; granule++ )
-		{
-		/* Read a granule (ars extension record 'B').		*/
-		eread( objfd, (char *) rec, sizeof record );
-		/* Find number of points in this granule.		*/
-		if( rec->b.b_ngranule == ngrans && (npt = npts % 8) != 0 )
-			;
-		else
-			npt = 8;
-		/* Operate on vertex.					*/
-		if( granule == 1 )
-			{
-			vtoh_move( v_workk, &(rec->b.b_values[0]) );
-			matXvec( v_work, xform, v_workk );
-			htov_move( &(rec->b.b_values[0]), v_work );
-			VMOVE( vertex, &(rec->b.b_values[0]) );
-			vec = 1;
-			}
-		else
-			vec = 0;
-
-		/* Rest of vectors.					*/
-		for( i = vec; i < npt; i++, vec++ )
-			{
-			vtoh_move( v_workk, &(rec->b.b_values[vec*3]) );
-			matXvec( v_work, notrans, v_workk );
-			htov_move( work, v_work );
-			VADD2( &(rec->b.b_values[vec*3]), vertex, work );
-			}
-
-		/* Print the solid parameters.				*/
-		parsp( npt, rec );
-		}
-	return;
-#endif
+	for( i=0; i < gp->ncurves; i++ )  {
+		/* Output the points on this curve */
+		ars_curve_out( v, gp->curves[i], gp->pts_per_curve, i, num );
+	}
 }
-
-#if 0
-/*	p a r s p ( )
-	Print npts points of an ars.
- */
-parsp( npts, rec )
-register int	npts;
-register Record	*rec;
-	{ 	register int	i, j, k, jk;
-		char		bufout[80];
-
-	j = jk = 0;
-
-	itoa( nns+delsol, &bufout[0], 5 );
-	for( i = 5; i < 10; i++ )
-		bufout[i] = ' ';
-	(void) strncpy( &bufout[70], "curve ", 6 );
-	itoa( rec->b.b_n, &bufout[76], 3 );
-	bufout[79] = '\n';
-
-	for( i = 0; i < npts*3; i += 3 )
-		{ /* Write 3 points.  */
-		for( k = i; k <= i+2; k++ )
-			{
-			++jk;
-			rec->b.b_values[k] *= unit_conversion;
-			ftoascii(	rec->b.b_values[k],
-					&bufout[jk*10],
-					10,
-					4
-					);
-			}
-		if( (++j & 01) == 0 )
-			{ /* End of line. */
-			bufout[70] = 'c';
-			ewrite( solfd, bufout, 80 );
-			jk = 0;
-			}
-		}
-	if( (j & 01) == 1 )
-		{ /* Finish off line. */
-		for( k = 40; k < 70; k++ )
-			bufout[k] = ' ';
-		ewrite( solfd, bufout, 80 );
-		}
-	return;
-	}
-#endif
-
-#include <varargs.h>
-/*	p r o m p t ( )							*/
-/*VARARGS*/
-void
-prompt( fmt, va_alist )
-char	*fmt;
-va_dcl
-	{	va_list		ap;
-	va_start( ap );
-	(void) _doprnt( fmt, ap, stdout );
-	(void) fflush( stdout );
-	va_end( ap );
-	return;
-	}
 
 /*	e r e a d ( )
 	Read with error checking.
