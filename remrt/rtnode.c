@@ -99,20 +99,21 @@ vect_t		left_eye_delta;
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
-char		*beginptr;		/* sbrk() at start of program */
+char		*beginptr = NULL;	/* sbrk() at start of program */
 /***** end variables shared with do.c *****/
 
 /* Variables shared within mainline pieces */
 extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
-int		rdebug;			/* RT program debugging (not library) */
+int		rdebug = 0;		/* RT program debugging (not library) */
 
 /* State flags */
-static int	seen_dirbuild;
-static int	seen_gettrees;
-static int	seen_matrix;
+static int	seen_dirbuild = 0;
+static int	seen_gettrees = 0;
+static int	seen_matrix = 0;
 
-static char *title_file, *title_obj;	/* name of file and first object */
+static char	*title_file = NULL;	/* name of file and first object */
+static char	*title_obj = NULL;
 
 #define MAX_WIDTH	(16*1024)
 
@@ -122,8 +123,8 @@ static unsigned char	*grn_line;
 static unsigned char	*blu_line;
 extern int	curframe;		/* shared with do.c */
 
-static int	avail_cpus;		/* # of cpus avail on this system */
-static int	max_cpus;		/* max # cpus for use, <= avail_cpus */
+static int	avail_cpus = 0;		/* # of cpus avail on this system */
+static int	max_cpus = 0;		/* max # cpus for use, <= avail_cpus */
 
 Tcl_Interp	*interp = NULL;
 
@@ -163,16 +164,16 @@ static struct pkg_switch rtsync_pkgswitch[] = {
 	{ 0,			0,		(char *)0 }
 };
 
-struct pkg_conn *pcsrv;		/* PKG connection to server */
-char		*control_host;	/* name of host running controller */
-char		*tcp_port;	/* TCP port on control_host */
+struct pkg_conn *pcsrv = (struct pkg_conn *)NULL; /* PKG connection to server */
+char		*control_host = NULL;		/* name of host running controller */
+char		*tcp_port = NULL;		/* TCP port on control_host */
 
-int debug = 0;		/* 0=off, 1=debug, 2=verbose */
+int	debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
-int test_fb_speed = 0;
-char	*framebuffer_name;
+int	test_fb_speed = 0;
+char	*framebuffer_name = NULL;
 
-char srv_usage[] = "Usage: rtnode [-d] control-host tcp-port [cmd]\n";
+CONST char srv_usage[] = "Usage: rtnode [-d] control-host tcp-port [cmd]\n";
 
 /*
  *			C M D _ G E T _ P T R
@@ -206,6 +207,9 @@ char **argv;
 	register int	n;
 	double		load = 0;
 
+fprintf(stderr,
+"main: pcsrv=x%lx, control_host=x%lx, tcp_port=x%lx\n",
+pcsrv, control_host, tcp_port);
 	use_air = 1;	/* air & clouds are generally desired */
 	if( argc < 2 )  {
 		fprintf(stderr, srv_usage);
