@@ -420,36 +420,43 @@ The tick spacing will be a power of 10 in local units." } }
 
     grid x $top.tickSpacingL x $top.majorSpacingL -in $top.gridFF1 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
-    grid $top.hE $top.hMB -sticky ew -in $top.hF
+    grid $top.hE $top.hMB -sticky nsew -in $top.hF
     grid columnconfigure $top.hF 0 -weight 1
-    grid $top.maj_hE -sticky ew -in $top.maj_hF
+    grid rowconfigure $top.hF 0 -weight 1
+    grid $top.maj_hE -sticky nsew -in $top.maj_hF
     grid columnconfigure $top.maj_hF 0 -weight 1
-    grid $top.hL $top.hF x $top.maj_hF -sticky "ew" -in $top.gridFF1 \
+    grid rowconfigure $top.maj_hF 0 -weight 1
+    grid $top.hL $top.hF x $top.maj_hF -sticky nsew -in $top.gridFF1 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
-    grid $top.vE $top.vMB -sticky ew -in $top.vF
+    grid $top.vE $top.vMB -sticky nsew -in $top.vF
     grid columnconfigure $top.vF 0 -weight 1
-    grid $top.maj_vE -sticky ew -in $top.maj_vF
+    grid rowconfigure $top.vF 0 -weight 1
+    grid $top.maj_vE -sticky nsew -in $top.maj_vF
     grid columnconfigure $top.maj_vF 0 -weight 1
-    grid $top.vL $top.vF x $top.maj_vF -sticky "ew" -in $top.gridFF1 \
+    grid rowconfigure $top.maj_vF 0 -weight 1
+    grid $top.vL $top.vF x $top.maj_vF -sticky nsew -in $top.gridFF1 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid $top.squareGridCB - - - -in $top.gridFF1 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid columnconfigure $top.gridFF1 1 -weight 1
     grid columnconfigure $top.gridFF1 3 -weight 1
-    grid $top.gridFF1 -sticky "ew" -in $top.gridF1 \
+    grid rowconfigure $top.gridFF1 1 -weight 1
+    grid rowconfigure $top.gridFF1 2 -weight 1
+    grid $top.gridFF1 -sticky nsew -in $top.gridF1 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid columnconfigure $top.gridF1 0 -weight 1
-    grid $top.gridF1 -sticky "ew" \
-	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
+    grid rowconfigure $top.gridF1 0 -weight 1
     
-    grid $top.anchorL $top.anchorE -sticky "ew" -in $top.anchorF
+    grid $top.anchorL $top.anchorE -sticky nsew -in $top.anchorF
     grid columnconfigure $top.anchorF 1 -weight 1
-    grid $top.anchorF -sticky "ew" -in $top.gridFF2 \
+    grid rowconfigure $top.anchorF 0 -weight 1
+    grid $top.anchorF -sticky nsew -in $top.gridFF2 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid columnconfigure $top.gridFF2 0 -weight 1
-    grid $top.gridFF2 -sticky "ew" -in $top.gridF2 -padx $grid_control($id,padx)
+    grid rowconfigure $top.gridFF2 0 -weight 1
+    grid $top.gridFF2 -sticky nsew -in $top.gridF2 -padx $grid_control($id,padx)
     grid columnconfigure $top.gridF2 0 -weight 1
-    grid $top.gridF2 -sticky "ew" -padx $grid_control($id,padx) -pady $grid_control($id,pady)
+    grid rowconfigure $top.gridF2 0 -weight 1
 
     grid $top.gridEffectsL x $top.drawCB x $top.snapCB x -sticky "ew" -in $top.gridFF3\
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
@@ -460,16 +467,22 @@ The tick spacing will be a power of 10 in local units." } }
     grid $top.gridFF3 -sticky "ew" -in $top.gridF3 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid columnconfigure $top.gridF3 0 -weight 1
-    grid $top.gridF3 -sticky "ew" \
-	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
 
     grid $top.okB $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF4
     grid columnconfigure $top.gridF4 2 -weight 1
     grid columnconfigure $top.gridF4 5 -weight 1
+
+    grid $top.gridF1 -sticky nsew \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
+    grid $top.gridF2 -sticky nsew \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
+    grid $top.gridF3 -sticky "ew" \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid $top.gridF4 -sticky "ew" \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
-
     grid columnconfigure $top 0 -weight 1
+    grid rowconfigure $top 0 -weight 2
+    grid rowconfigure $top 1 -weight 1
 
     grid_control_reset $id
     set grid_control($id,square) 1

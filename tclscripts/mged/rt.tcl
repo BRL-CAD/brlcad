@@ -56,7 +56,6 @@ proc init_Raytrace { id } {
 
     toplevel $top -screen $player_screen($id) -menu $top.menubar
 
-    frame $top.gridF1
     frame $top.gridF2 -relief groove -bd 2
     frame $top.gridF3 -relief groove -bd 2
     frame $top.gridF4
@@ -218,26 +217,39 @@ is enabled, it will be cleared." } }
 
     grid $top.framebufferL $top.framebufferRB -sticky "ew"\
 	    -in $top.gridF2 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.filenameE -sticky "ew" -in $top.filenameF
-    grid $top.filenameF $top.filenameRB -sticky "ew"\
-	    -in $top.gridF2 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
+    grid $top.filenameE -sticky "nsew" -in $top.filenameF
     grid columnconfigure $top.filenameF 0 -weight 1
+    grid rowconfigure $top.filenameF 0 -weight 1
+    grid $top.filenameF $top.filenameRB -sticky "nsew"\
+	    -in $top.gridF2 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
     grid columnconfigure $top.gridF2 0 -weight 1
+    grid rowconfigure $top.gridF2 1 -weight 1
 
-    grid $top.sizeE $top.sizeMB -sticky "ew" -in $top.sizeF
-    grid $top.sizeF $top.sizeL -sticky "ew" -in $top.gridF3 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.colorF $top.colorL -sticky "ew" -in $top.gridF3 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.advancedB - -in $top.gridF3 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-
+    grid $top.sizeE $top.sizeMB -sticky "nsew" -in $top.sizeF
     grid columnconfigure $top.sizeF 0 -weight 1
+    grid rowconfigure $top.sizeF 0 -weight 1
+    grid $top.sizeF $top.sizeL -sticky "nsew" -in $top.gridF3 \
+	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
+    grid $top.colorF $top.colorL -sticky "nsew" -in $top.gridF3 \
+	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
+    grid $top.advancedB - -in $top.gridF3 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
     grid columnconfigure $top.gridF3 0 -weight 1
+    grid rowconfigure $top.gridF3 0 -weight 1
+    grid rowconfigure $top.gridF3 1 -weight 1
 
     grid $top.okB $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF4
     grid columnconfigure $top.gridF4 2 -weight 1 -minsize 8
     grid columnconfigure $top.gridF4 4 -weight 1 -minsize 8
 
-    pack $top.gridF2 $top.gridF3 $top.gridF4 -side top -expand 1 -fill both\
+    grid $top.gridF2 -sticky "nsew" \
 	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
+    grid $top.gridF3 -sticky "nsew" \
+	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
+    grid $top.gridF4 -sticky "nsew" \
+	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
+    grid columnconfigure $top 0 -weight 1
+    grid rowconfigure $top 0 -weight 1
+    grid rowconfigure $top 1 -weight 2
 
     color_entry_update $top color $rt_control($id,color)
     update_Raytrace $id
