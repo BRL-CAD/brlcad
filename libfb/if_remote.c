@@ -4,7 +4,7 @@
  *  Remote libfb interface.
  *
  *  Duplicates the functions in libfb via communication
- *  with a remote server (rfbd).
+ *  with a remote server (fbserv).
  *
  *  Authors -
  *	Phillip Dykstra
@@ -308,7 +308,7 @@ int	width, height;
 
 	(void)fbputlong( width, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( height, &buf[1*NET_LONG_LEN] );
-	(void) strcpy( &buf[8], device );
+	(void) strcpy( &buf[2*NET_LONG_LEN], device );
 	pkg_send( MSG_FBOPEN, buf, strlen(device)+2*NET_LONG_LEN, pc );
 
 	/* return code, max_width, max_height, width, height as longs */
@@ -501,8 +501,6 @@ int	mode;
 int	x, y;
 {
 	char	buf[3*NET_LONG_LEN+1];
-	
-	fb_sim_cursor(ifp, mode, x, y);	/*XXX*/
 
 	/* Send Command */
 	(void)fbputlong( mode, &buf[0*NET_LONG_LEN] );
@@ -521,8 +519,19 @@ FBIO	*ifp;
 int	*mode;
 int	*x, *y;
 {
-	/* XXX */
-	return	fb_sim_getcursor(ifp, mode, x, y);
+	char	buf[4*NET_LONG_LEN+1];
+
+	/* Send Command */
+	pkg_send( MSG_FBGETCURSOR, (char *)0, 0, PCP(ifp) );
+
+	/* return code, xcenter, ycenter, xzoom, yzoom as longs */
+	pkg_waitfor( MSG_RETURN, buf, sizeof(buf), PCP(ifp) );
+	*mode = fbgetlong( &buf[1*NET_LONG_LEN] );
+	*x = fbgetlong( &buf[2*NET_LONG_LEN] );
+	*y = fbgetlong( &buf[3*NET_LONG_LEN] );
+	if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
+		return(-1);		/* fail */
+	return( 0 );			/* OK */
 }
 
 /*
@@ -533,10 +542,16 @@ FBIO	*ifp;
 int	xcenter, ycenter;
 int	xzoom, yzoom;
 {
-	/* XXX */
-	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
-	rem_window(ifp, xcenter, ycenter);
-	rem_zoom(ifp, xzoom, yzoom);
+	char	buf[4*NET_LONG_LEN+1];
+
+	/* Send Command */
+	(void)fbputlong( xcenter, &buf[0*NET_LONG_LEN] );
+	(void)fbputlong( ycenter, &buf[1*NET_LONG_LEN] );
+	(void)fbputlong( xzoom, &buf[2*NET_LONG_LEN] );
+	(void)fbputlong( yzoom, &buf[3*NET_LONG_LEN] );
+	pkg_send( MSG_FBVIEW, buf, 4*NET_LONG_LEN, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	return( fbgetlong( buf ) );
 }
 
 /*
@@ -547,12 +562,24 @@ FBIO	*ifp;
 int	*xcenter, *ycenter;
 int	*xzoom, *yzoom;
 {
-	/* XXX */
-	return fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
+	char	buf[5*NET_LONG_LEN+1];
+
+	/* Send Command */
+	pkg_send( MSG_FBGETVIEW, (char *)0, 0, PCP(ifp) );
+
+	/* return code, xcenter, ycenter, xzoom, yzoom as longs */
+	pkg_waitfor( MSG_RETURN, buf, sizeof(buf), PCP(ifp) );
+	*xcenter = fbgetlong( &buf[1*NET_LONG_LEN] );
+	*ycenter = fbgetlong( &buf[2*NET_LONG_LEN] );
+	*xzoom = fbgetlong( &buf[3*NET_LONG_LEN] );
+	*yzoom = fbgetlong( &buf[4*NET_LONG_LEN] );
+	if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
+		return(-1);		/* fail */
+	return( 0 );			/* OK */
 }
 
 /*
- *	x,y
+ *  OLD XXX
  */
 _LOCAL_ int
 rem_window( ifp, x, y )
@@ -570,7 +597,7 @@ int	x, y;
 }
 
 /*
- *	x,y
+ *  OLD XXX
  */
 _LOCAL_ int
 rem_zoom( ifp, x, y )
@@ -632,11 +659,19 @@ register ColorMap	*cmap;
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
+/*
+ *  Poll tells the remote end to handle input events.
+ *  There is no need to wait for a reply (FLUSH can be
+ *  used for synchronization.
+ *  In fact, we may not want to send polls at all....
+ */
 _LOCAL_ int
 rem_poll( ifp )
 FBIO	*ifp;
 {
-	/* XXX */
+	/* send a poll package to remote */
+	pkg_send( MSG_FBPOLL, (char *)0, 0, PCP(ifp) );
+	return( 0 );
 }
 
 _LOCAL_ int
