@@ -41,6 +41,7 @@ bu_hist_free( histp )
 struct bu_hist	*histp;
 {
 	if( histp && histp->magic == 0 )  return;
+	if( histp->magic == -1 ) return;
 	BU_CK_HIST(histp);
 	if( histp->hg_bins )
 		bu_free( (char *)histp->hg_bins, "old bu_hist bins");
