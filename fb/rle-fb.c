@@ -177,8 +177,8 @@ char ** argv;
 
 	if( sv_globals.sv_xmax > screen_width ||
 	    sv_globals.sv_ymax > screen_height )  {
-	    	screen_width = sv_globals.sv_xmax;
-	    	screen_height = sv_globals.sv_ymax;
+	    	screen_width = sv_globals.sv_xmax + 1;
+	    	screen_height = sv_globals.sv_ymax + 1;
 	}
 
 	x_len = sv_globals.sv_xmax - sv_globals.sv_xmin + 1;
@@ -201,13 +201,32 @@ char ** argv;
 	for( ; i < 3; i++ )
 		rows[i] = rows[0];	/* handle monochrome images */
 
-	/* colormap.  ignore, send to libfb, "crunch" ? */
+	/*
+	 *  Import Utah color map, converting to libfb format.
+	 *  Check for old format color maps, where high 8 bits
+	 *  were zero, and correct them.
+	 */
 	if( sv_globals.sv_ncmap > 0 )  {
 		register int maplen = (1 << sv_globals.sv_cmaplen);
+		register int all = 0;
 		for( i=0; i<256; i++ )  {
 			cmap.cm_red[i] = sv_globals.sv_cmap[i];
 			cmap.cm_green[i] = sv_globals.sv_cmap[i+maplen];
 			cmap.cm_blue[i] = sv_globals.sv_cmap[i+2*maplen];
+			all |= cmap.cm_red[i] | cmap.cm_green[i] |
+				cmap.cm_blue[i];
+		}
+		if( (all & 0xFF00) == 0 && (all & 0x00FF) != 0 )  {
+			/*  This is an old (Edition 2) color map.
+			 *  Correct by shifting it left 8 bits.
+			 */
+			for( i=0; i<256; i++ )  {
+				cmap.cm_red[i] <<= 8;
+				cmap.cm_green[i] <<= 8;
+				cmap.cm_blue[i] <<= 8;
+			}
+			fprintf(stderr,
+				"rle-fb: correcting for old style colormap\n");
 		}
 	}
 	if( sv_globals.sv_ncmap > 0 && !crunch )
