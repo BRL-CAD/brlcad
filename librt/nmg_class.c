@@ -29,6 +29,27 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "raytrace.h"
 
+NMG_EXTERN(void		joint_hitmiss2, (struct edgeuse	*eu, point_t pt,
+			struct neighbor *closest, long *novote) );
+NMG_EXTERN(void		pt_hitmis_e, (point_t pt, struct edgeuse *eu,
+			struct neighbor	*closest, CONST struct rt_tol *tol,
+			long *novote) );
+NMG_EXTERN(void		pt_hitmis_l, (point_t pt, struct loopuse *lu,
+			struct neighbor	*closest, CONST struct rt_tol *tol,
+			long *novote) );
+NMG_EXTERN(int		nmg_pt_hitmis_f, (point_t pt, struct faceuse *fu,
+			CONST struct rt_tol *tol, long *novote) );
+NMG_EXTERN(int		pt_inout_s, (point_t pt, struct shell *s,
+			CONST struct rt_tol *tol) );
+NMG_EXTERN(int		class_vu_vs_s, (struct vertexuse *vu, struct shell *sB,
+			long *classlist[4], CONST struct rt_tol	*tol) );
+NMG_EXTERN(int		class_eu_vs_s, (struct edgeuse *eu, struct shell *s,
+			long *classlist[4], CONST struct rt_tol	*tol) );
+NMG_EXTERN(int		class_lu_vs_s, (struct loopuse *lu, struct shell *s,
+			long *classlist[4], CONST struct rt_tol	*tol) );
+NMG_EXTERN(void		class_fu_vs_s, (struct faceuse *fu, struct shell *s,
+			long *classlist[4], CONST struct rt_tol	*tol) );
+
 #define INSIDE	32
 #define ON_SURF	64
 #define OUTSIDE	128
@@ -94,7 +115,8 @@ long		*novote;
 	return;
 }
 
-/*	P T _ H I T M I S _ E
+/*
+ *			P T _ H I T M I S _ E
  *
  *	Given a point and an edgeuse, determine if the point is
  *	closer to this edgeuse than anything it's been compared with
@@ -221,7 +243,8 @@ long		*novote;
 }
 
 
-/*	P T _ H I T M I S _ L
+/*
+ *			P T _ H I T M I S _ L
  *
  *	Given a point on the plane of the loopuse, determine if the point
  *	is in, or out of the area of the loop
@@ -289,7 +312,8 @@ long		*novote;
 	}
 }
 
-/*	P T _ H I T M I S _ F
+/*
+ *			P T _ H I T M I S _ F
  *
  *	Given a face and a point on the plane of the face, determine if
  *	the point is in or out of the area bounded by the face.
@@ -330,7 +354,8 @@ long		*novote;
 }
 
 
-/*	P T _ H I T M I S _ S
+/*
+ *			P T _ H I T M I S _ S
  *
  *	returns status (inside/outside/on_surface) of pt WRT shell.
  */
@@ -347,9 +372,10 @@ CONST struct rt_tol	*tol;
 	struct model	*m;
 	long		*novote; /* faces that can't vote in a hit list */
 
+	RT_CK_TOL(tol);
+
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		VPRINT("pt_inout_s: ", pt);
-
 
 	if (! NMG_EXTENT_OVERLAP(s->sa_p->min_pt,s->sa_p->max_pt,pt,pt) )  {
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -456,13 +482,16 @@ CONST struct rt_tol	*tol;
 }
 
 
-/*	C L A S S _ V U _ V S _ S
+/*
+ *			C L A S S _ V U _ V S _ S
+ *
  *	Classify a loopuse/vertexuse from shell A WRT shell B.
  */
-static int class_vu_vs_s(vu, sB, classlist)
+static int class_vu_vs_s(vu, sB, classlist, tol)
 struct vertexuse	*vu;
 struct shell		*sB;
 long			*classlist[4];
+CONST struct rt_tol	*tol;
 {
 	struct vertexuse *vup;
 	pointp_t pt;
@@ -470,6 +499,7 @@ long			*classlist[4];
 
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_SHELL(sB);
+	RT_CK_TOL(tol);
 
 	pt = vu->v_p->vg_p->coord;
 
@@ -526,7 +556,7 @@ long			*classlist[4];
 	 * topology if that had been the case.
 	 */
 
-	status = pt_inout_s(pt, sB, 0.005);
+	status = pt_inout_s(pt, sB, tol);
 	
 	if (status == OUTSIDE)  {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
@@ -548,12 +578,14 @@ long			*classlist[4];
 	return(status);
 }
 
-/*	C L A S S _ E U _ V S _ S
+/*
+ *			C L A S S _ E U _ V S _ S
  */
-static int class_eu_vs_s(eu, s, classlist)
+static int class_eu_vs_s(eu, s, classlist, tol)
 struct edgeuse	*eu;
 struct shell	*s;
 long		*classlist[4];
+CONST struct rt_tol	*tol;
 {
 	int euv_cl, matev_cl, status;
 	struct edgeuse *eup;
@@ -576,8 +608,8 @@ long		*classlist[4];
 	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p) )
 		return(OUTSIDE);
 
-	euv_cl = class_vu_vs_s(eu->vu_p, s, classlist);
-	matev_cl = class_vu_vs_s(eu->eumate_p->vu_p, s, classlist);
+	euv_cl = class_vu_vs_s(eu->vu_p, s, classlist, tol);
+	matev_cl = class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
 	
 	/* sanity check */
 	if ((euv_cl == INSIDE && matev_cl == OUTSIDE) ||
@@ -616,7 +648,7 @@ long		*classlist[4];
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 			VPRINT("Classifying midpoint of edge", pt);
 
-		status = pt_inout_s(pt, s, 0.005);
+		status = pt_inout_s(pt, s, tol);
 	
 		if (status == OUTSIDE)  {
 			NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
@@ -630,7 +662,6 @@ long		*classlist[4];
 		return(status);
 	}
 
-	
 	if (euv_cl == OUTSIDE || matev_cl == OUTSIDE) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
 		return(OUTSIDE);
@@ -642,10 +673,11 @@ long		*classlist[4];
 /*
  *			C L A S S _ L U _ V S _ S
  */
-static int class_lu_vs_s(lu, s, classlist)
-struct loopuse	*lu;
-struct shell	*s;
-long		*classlist[4];
+static int class_lu_vs_s(lu, s, classlist, tol)
+struct loopuse		*lu;
+struct shell		*s;
+long			*classlist[4];
+CONST struct rt_tol	*tol;
 {
 	int class;
 	unsigned in, out, on;
@@ -671,7 +703,7 @@ long		*classlist[4];
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
 		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
-		class = class_vu_vs_s(vu, s, classlist);
+		class = class_vu_vs_s(vu, s, classlist, tol);
 		switch (class) {
 		case INSIDE:
 			NMG_INDEX_SET(classlist[NMG_CLASS_AinB], lu->l_p);
@@ -694,7 +726,7 @@ long		*classlist[4];
 	in = out = on = 0;
 	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 
-		class = class_eu_vs_s(eu, s, classlist);
+		class = class_eu_vs_s(eu, s, classlist, tol);
 		switch (class) {
 		case INSIDE	: ++in; 
 				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -875,10 +907,11 @@ long		*classlist[4];
 /*
  *			C L A S S _ F U _ V S _ S
  */
-static void class_fu_vs_s(fu, s, classlist)
-struct faceuse	*fu;
-struct shell	*s;
-long		*classlist[4];
+static void class_fu_vs_s(fu, s, classlist, tol)
+struct faceuse		*fu;
+struct shell		*s;
+long			*classlist[4];
+CONST struct rt_tol	*tol;
 {
 	struct loopuse *lu;
 	
@@ -889,7 +922,7 @@ long		*classlist[4];
         	PLPRINT("\nclass_fu_vs_s plane equation:", fu->f_p->fg_p->N);
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
-		(void)class_lu_vs_s(lu, s, classlist);
+		(void)class_lu_vs_s(lu, s, classlist, tol);
 
 }
 
@@ -898,14 +931,17 @@ long		*classlist[4];
  *
  *	Classify one shell WRT the other shell
  */
-void nmg_class_shells(sA, sB, classlist)
+void nmg_class_shells(sA, sB, classlist, tol)
 struct shell	*sA;
 struct shell	*sB;
 long		*classlist[4];
+CONST struct rt_tol	*tol;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
+
+	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
 	    RT_LIST_NON_EMPTY(&sA->fu_hd))
@@ -914,7 +950,7 @@ long		*classlist[4];
 	fu = RT_LIST_FIRST(faceuse, &sA->fu_hd);
 	while (RT_LIST_NOT_HEAD(fu, &sA->fu_hd)) {
 
-		class_fu_vs_s(fu, sB, classlist);
+		class_fu_vs_s(fu, sB, classlist, tol);
 
 		if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
 			fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
@@ -929,7 +965,7 @@ long		*classlist[4];
 	lu = RT_LIST_FIRST(loopuse, &sA->lu_hd);
 	while (RT_LIST_NOT_HEAD(lu, &sA->lu_hd)) {
 
-		(void)class_lu_vs_s(lu, sB, classlist);
+		(void)class_lu_vs_s(lu, sB, classlist, tol);
 
 		if (RT_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
 			lu = RT_LIST_PNEXT_PNEXT(loopuse, lu);
@@ -944,7 +980,7 @@ long		*classlist[4];
 	eu = RT_LIST_FIRST(edgeuse, &sA->eu_hd);
 	while (RT_LIST_NOT_HEAD(eu, &sA->eu_hd)) {
 
-		(void)class_eu_vs_s(eu, sB, classlist);
+		(void)class_eu_vs_s(eu, sB, classlist, tol);
 
 		if (RT_LIST_PNEXT(edgeuse, eu) == eu->eumate_p)
 			eu = RT_LIST_PNEXT_PNEXT(edgeuse, eu);
@@ -955,6 +991,6 @@ long		*classlist[4];
 	if (sA->vu_p) {
 		if (rt_g.NMG_debug)
 			rt_log("class_shells - doing vertex\n");
-		(void)class_vu_vs_s(sA->vu_p, sB, classlist);
+		(void)class_vu_vs_s(sA->vu_p, sB, classlist, tol);
 	}
 }
