@@ -1836,6 +1836,8 @@ sedit()
 		break;
 
 	case ECMD_NMG_EPICK:
+	case ECMD_NMG_EMOVE:
+		/* XXX Nothing to do here (yet), all done in mouse routine. */
 		break;
 
 	default:
@@ -2031,7 +2033,7 @@ CONST vect_t	mousevec;
 		}
 		break;
 
-#if 0
+#if 1
 	/* XXX Should just leave desired location in es_mparam for sedit() */
 	/* JRA -- look here! */
 	case ECMD_NMG_EMOVE:
@@ -2039,7 +2041,7 @@ CONST vect_t	mousevec;
 		MAT4X3PNT( temp, view2model, mousevec );
 		/* apply inverse of es_mat */
 		MAT4X3PNT( pos_model, es_invmat, temp );
-		if( nmg_move_edge_thru_pt( es_eu, pos_model, mged_tol ) < 0 ) {
+		if( nmg_move_edge_thru_pt( es_eu, pos_model, &mged_tol ) < 0 ) {
 			VPRINT("Unable to hit", pos_model);
 		}
 		sedraw = 1;
