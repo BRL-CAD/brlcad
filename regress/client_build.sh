@@ -60,13 +60,13 @@ if [ -f ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG ] ; then mv ${REGRESS_DIR}/.reg
 
 cd ${REGRESS_DIR}/brlcad
 
-echo "client_build.sh" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
-echo "===============" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
-echo "$0: starting on $HOSTNAME" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
-echo ""				  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
-echo "PATH = $PATH"		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
-echo "HOME = $HOME"		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
-echo ""		  		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+#echo "client_build.sh" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+#echo "===============" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+#echo "$0: starting on $HOSTNAME" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+#echo ""				  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+#echo "PATH = $PATH"		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+#echo "HOME = $HOME"		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+#echo ""		  		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 
 
 echo ./setup.sh -s		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
@@ -77,12 +77,12 @@ EOF
 echo ./gen.sh -s all		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 ./gen.sh -s all			  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG 2>&1
 
-echo "$HOSTNAME compilation complete" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+echo "Compilation complete" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 
 echo ./gen.sh -s install	  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 ./gen.sh -s install		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG 2>&1
 
-echo "$HOSTNAME .regress.${ARCH} installation complete" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+echo "Installation complete" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 
 #echo "RUN ${REGRESS_DIR}/brlcad/regress/client_test.sh"
 
