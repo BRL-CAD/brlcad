@@ -251,7 +251,7 @@ CONST point_t	eye;	/* eye location.  Traditionally at (0,0,1) */
  *			D O Z O O M
  *
  *	This routine reviews all of the solids in the solids table,
- * to see if they  visible within the current viewing
+ * to see if they are visible within the current viewing
  * window.  If they are, the routine computes the scale and appropriate
  * screen position for the object.
  */
@@ -365,14 +365,16 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  if( sp->s_iflag == UP )
 	    continue;
 
-	  ratio = sp->s_size * inv_viewsize;
+	  if (dmp->dm_boundFlag) {
+	    ratio = sp->s_size * inv_viewsize;
 
-	  /*
-	   * Check for this object being bigger than 
-	   * dmp->dm_bound * the window size, or smaller than a speck.
-	   */
-	  if( ratio >= dmp->dm_bound || ratio < 0.001 )
-	    continue;
+	    /*
+	     * Check for this object being bigger than 
+	     * dmp->dm_bound * the window size, or smaller than a speck.
+	     */
+	    if (ratio >= dmp->dm_bound || ratio < 0.001)
+	      continue;
+	  }
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
@@ -462,14 +464,16 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  if( sp->s_iflag != UP )
 	    continue;
 
-	  ratio = sp->s_size * inv_viewsize;
+	  if (dmp->dm_boundFlag) {
+	    ratio = sp->s_size * inv_viewsize;
 
-	  /*
-	   * Check for this object being bigger than 
-	   * dmp->dm_bound * the window size, or smaller than a speck.
-	   */
-	  if( ratio >= dmp->dm_bound || ratio < 0.001 )
-	    continue;
+	    /*
+	     * Check for this object being bigger than 
+	     * dmp->dm_bound * the window size, or smaller than a speck.
+	     */
+	    if( ratio >= dmp->dm_bound || ratio < 0.001 )
+	      continue;
+	  }
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
