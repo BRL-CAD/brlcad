@@ -12,11 +12,13 @@
 #define STUB_EXISTS	{{ls ../SRCDIR|grep -s .MANSECTION.stub'$'}}
 #define ARG_EXISTS	{{ARGS="%"; test '%' != "$ARGS" -o -f %}}
 
-/* Format sources for printing on stdout */
-print&:	Cakefile.print \
+/* Format sources for printing on stdout.  Use macro to bypass ANSI cpp "bug" */
+#define PRINT_STUFF	[[SUB X X.print ../SRCDIR/Cakefile ]] \
 	[[SUB X X.print ../SRCDIR/''*.[h''MANSECTION] ]] \
 	[[SUB X X.nroff ../SRCDIR/''*.MANSECTION ]] \
 	[[SUB X ../SRCDIR/X''SRCSUFF.print FILES]]
+
+print&:	PRINT_SUFF
 
 %.print&:  do-%.print			if ARG_EXISTS
 %.print&:				if not ARG_EXISTS
