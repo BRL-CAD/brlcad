@@ -111,6 +111,9 @@ register char **argv;
 			mat_copy( m, rmat );
 			mat_mul( rmat, tmp, m );
 			break;
+		case 'm':
+			fprintf(stderr, "Planning to load input into rmat\n");
+			break;
 		case 'X':
 			mat_idn( tmp );
 			tmp[MDX] = atof(optarg);
@@ -407,7 +410,7 @@ double	minx, miny, minz, maxx, maxy, maxz;
 		fprintf(stderr, "space (%g, %g, %g) (%g, %g, %g)\n",
 			minx, miny, minz,
 			maxx, maxy, maxz);
-		fprintf(stderr, "  center=(%g, %g, %g, size=%g\n",
+		fprintf(stderr, "  center=(%g, %g, %g, size=%g)\n",
 			centx, centy, centz, viewsize);
 	}
 
