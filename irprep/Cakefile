@@ -1,0 +1,27 @@
+/*
+ *			I R P R E P
+ */
+#define CONFIGDEFS	RT_CONFIG
+
+#define SRCDIR	irprep
+#define PRODUCTS	firpass secpass shapefact
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+#define FILES	firpass secpass shapefact subroutines
+
+/* Explicit composition of each product */
+
+firpass:	firpass.o subroutines.o LIBRT
+	CC LDFLAGS firpass.o subroutines.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o firpass
+
+secpass:        secpass.o subroutines.o LIBRT
+        CC LDFLAGS -g secpass.o subroutines.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o secpass
+
+shapefact:  shapefact.o LIBRT
+        CC LDFLAGS -g shapefact.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o shapefact
+
+#include "../Cakefile.rules"
