@@ -1463,7 +1463,7 @@ wdb_kill_tcl(clientData, interp, argc, argv)
 				continue;
 
 			/* notify drawable geometry objects associated with this database object */
-			dgo_eraseobjall_callback(interp, wdbop->wdb_wp->dbip, dp);
+			dgo_eraseobjall_callback(wdbop->wdb_wp->dbip, interp, dp);
 
 			if (db_delete(wdbop->wdb_wp->dbip, dp) < 0 ||
 			    db_dirdelete(wdbop->wdb_wp->dbip, dp) < 0) {
