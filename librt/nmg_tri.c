@@ -1786,8 +1786,11 @@ CONST struct rt_tol	*tol;
 	NMG_CK_VERTEXUSE(vu2);
 
 	if (p1 == p2) {
-		rt_log("%s %d: Attempting to join loop to itself?\n",
-			__FILE__, __LINE__);
+		rt_log("%s %d: Attempting to join loop to itself at (%g %g %g)?\n",
+			__FILE__, __LINE__,
+			p1->vu_p->v_p->vg_p->coord[0],
+			p1->vu_p->v_p->vg_p->coord[1],
+			p1->vu_p->v_p->vg_p->coord[2]);
 		rt_bomb("bombing\n");
 	} else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 		rt_log("parent loops are the same %s %d\n", __FILE__, __LINE__);
@@ -1797,8 +1800,11 @@ CONST struct rt_tol	*tol;
 	pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
 
 	if (p1 == p2) {
-		rt_log("%s: %d I'm a fool trying to join a vertexuse to itself\n",
-			__FILE__, __LINE__);
+		rt_log("%s: %d I'm a fool...\n\ttrying to join a vertexuse (%g %g %g) to itself\n",
+			__FILE__, __LINE__,
+			p1->vu_p->v_p->vg_p->coord[0],
+			p1->vu_p->v_p->vg_p->coord[1],
+			p1->vu_p->v_p->vg_p->coord[2]);
 	} else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 		rt_log("parent loops are the same %s %d\n",
 			__FILE__, __LINE__);
