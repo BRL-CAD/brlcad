@@ -2017,12 +2017,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #    if !defined(LIBTCL)
 #	define	LIBTCL_DIR	../libtcl
 #	define	LIBTCL		-L''LIBTCL_DIR -ltcl''TCLTK_VERS
-#	define	LIBTCL_DEP	[[LIBVERS ../libtcl/libtcl''TCLTK_VERS.ARCH_SUF]]
+#	define	LIBTCL_DEP	[[LIBVERS ../libtcl/libtcl''TCLTK_VERS.''ARCH_SUF]]
 #    endif
 #    if !defined(LIBTK)
 #	define	LIBTK_DIR	../libtk
 #	define	LIBTK		-L''LIBTK_DIR -ltk''TCLTK_VERS
-#	define	LIBTK_DEP	[[LIBVERS ../libtk/libtk''TCLTK_VERS.ARCH_SUF]]
+#	define	LIBTK_DEP	[[LIBVERS ../libtk/libtk''TCLTK_VERS.''ARCH_SUF]]
 #    endif
 #	define  LIBTCLCAD_DIR	../libtclcad
 #	define  LIBTCLCAD	-L''LIBTCLCAD_DIR -ltclcad
@@ -2111,12 +2111,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #    if !defined(LIBTCL)
 #	define	LIBTCL_DIR	../.libtcl.MTYPE
 #	define	LIBTCL		-L''LIBTCL_DIR -ltcl''TCLTK_VERS
-#	define	LIBTCL_DEP	[[LIBVERS ../.libtcl.MTYPE/libtcl''TCLTK_VERS.ARCH_SUF]]
+#	define	LIBTCL_DEP	[[LIBVERS ../.libtcl.MTYPE/libtcl''TCLTK_VERS.''ARCH_SUF]]
 #    endif
 #    if !defined(LIBTK)
 #	define	LIBTK_DIR	../.libtk.MTYPE
 #	define	LIBTK		-L''LIBTK_DIR -ltk''TCLTK_VERS
-#	define	LIBTK_DEP	[[LIBVERS ../.libtk.MTYPE/libtk''TCLTK_VERS.ARCH_SUF]]
+#	define	LIBTK_DEP	[[LIBVERS ../.libtk.MTYPE/libtk''TCLTK_VERS.''ARCH_SUF]]
 #    endif
 #	define	LIBTCLCAD_DIR	../.libtclcad.MTYPE
 #	define	LIBTCLCAD	-L''LIBTCLCAD_DIR -ltclcad
