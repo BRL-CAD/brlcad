@@ -191,12 +191,6 @@ if [info exists env(MGED_HTML_DIR)] {
     set mged_html_dir [lindex $auto_path 0]/../../html/mged
 }
 
-while { [file exists $mged_html_dir/index.html]==0 } {
-    mged_input_dialog .mgeddir $env(DISPLAY) "MGED_HTML_DIR environment variable not set" \
-	    "Please enter the full path to the MGED HTML files:" \
-	    mged_html_dir $mged_html_dir 0 OK
-}
-
 catch { source [lindex $auto_path 0]/sliders.tcl }
 
 proc ia_help { parent screen cmds } {
