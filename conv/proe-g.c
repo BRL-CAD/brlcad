@@ -402,8 +402,10 @@ char line[MAX_LINE_LEN];
 	}
 
 	/* fuse vertices that are within tolerance of each other */
+	rt_log( "\tFusing vertices for part\n" );
 	(void)nmg_model_vertex_fuse( m , &tol );
 
+	rt_log( "\tGlueing faces together\n" );
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
@@ -422,9 +424,13 @@ char line[MAX_LINE_LEN];
 	solid_count++;
 
 	if( polysolid )
+	{
+		rt_log( "\tWriting polysolid\n" );
 		write_shell_as_polysolid( stdout , solid_name , s );
+	}
 	else
 	{
+		rt_log( "Writing NMG\n" );
 		nmg_shell_coplanar_face_merge( s , &tol , 1 );
 		mk_nmg( stdout , solid_name , m );
 	}
