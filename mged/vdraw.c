@@ -601,3 +601,257 @@ char **argv;
 	return TCL_OK;
 
 }
+
+int 
+cmd_vget(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	char result_string[90];
+	point_t pos, temp;
+	quat_t quat;
+	mat_t mymat;
+	char c;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	/* center, size, eye, ypr */
+	c = argv[1][0];
+	switch(	c ) {
+	case 'c': 	/*center*/
+		MAT_DELTAS_GET_NEG(pos, toViewcenter);
+		sprintf(result_string,"%.12e %.12e %.12e", pos[0], pos[1], pos[2]);
+		Tcl_AppendResult(interp, result_string, (char *)NULL);
+		return TCL_OK;
+	case 's':	/*size*/
+		/* don't use base2local, because rt doesn't */
+		sprintf(result_string,"%.12e", Viewscale * 2.0);
+		Tcl_AppendResult(interp, result_string, (char *)NULL);
+		return TCL_OK;
+	case 'e':	/*eye*/
+		VSET(temp, 0, 0, 1);
+		MAT4X3PNT(pos, view2model, temp);
+		sprintf(result_string,"%.12e %.12e %.12e",pos[0],pos[1],pos[2]);
+		Tcl_AppendResult(interp, result_string, (char *)NULL);
+		return TCL_OK;
+	case 'y':	/*ypr*/
+		mat_trn( mymat, Viewrot);
+		anim_v_unpermute(mymat);
+		c = anim_mat2ypr(temp, mymat);
+		if (c==2) { 
+			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
+			return TCL_ERROR;
+		}
+		VSCALE(temp, temp, 180.0/M_PI);	
+		sprintf(result_string,"%.12e %.12e %.12e",temp[0],temp[1],temp[2]);
+		Tcl_AppendResult(interp, result_string, (char *)NULL);
+		return TCL_OK;
+	case 'a': 	/* aet*/
+		mat_trn(mymat,Viewrot);
+		anim_v_unpermute(mymat);
+		c = anim_mat2ypr(temp, mymat);
+		if (c==2) { 
+			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
+			return TCL_ERROR;
+		}
+		VSCALE(temp, temp, 180.0/M_PI);	
+		if (temp[0] >= 180.0 ) temp[0] -= 180;
+		if (temp[0] < 180.0 ) temp[0] += 180;
+		temp[1] = -temp[1];
+		temp[2] = -temp[2];
+		sprintf(result_string,"%.12e %.12e %.12e",temp[0],temp[1],temp[2]);
+		Tcl_AppendResult(interp, result_string, (char *)NULL);
+		return TCL_OK;
+	case 'q':	/*quat*/
+		quat_mat2quat(quat,Viewrot);
+		sprintf(result_string,"%.12e %.12e %.12e %.12e", quat[0],quat[1],quat[2],quat[3]);
+		Tcl_AppendResult(interp, result_string, (char *)NULL);
+		return TCL_OK;
+	default:				
+		Tcl_AppendResult(interp, 
+			"cmd_vget: invalid argument. Must be one of center,size,eye,ypr.",
+			(char *)NULL);
+		return TCL_ERROR;
+			
+	}
+}
+
+int 
+cmd_viewset(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	char result_string[90];
+	quat_t quat;
+	point_t center, eye;
+	vect_t ypr, aet;
+	fastf_t size;
+	int in_quat, in_center, in_eye, in_ypr, in_aet, in_size;
+	int i, res;
+	vect_t dir, dirz, temp;
+	mat_t mymat;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	in_quat = in_center = in_eye = in_ypr = in_aet = in_size = 0.0;
+	i = 1;
+	while(i < argc) {
+		switch( argv[i][0] ) {
+		case 'q':	/* quaternion */
+			if (i+4 >= argc) {
+				Tcl_AppendResult(interp, "viewset: quat options requires four parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			res = sscanf(argv[i+1],"%lf",quat);
+			res += sscanf(argv[i+2],"%lf",quat+1);
+			res += sscanf(argv[i+3],"%lf",quat+2);
+			res += sscanf(argv[i+4],"%lf",quat+3);
+			if (res < 4) {
+				Tcl_AppendResult(interp, "viewset: quat option requires four parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			in_quat = 1;
+			i += 5;
+			break;
+		case 'y':	/* yaw,pitch,roll */
+			if (i+3 >= argc) {
+				Tcl_AppendResult(interp, "viewset: ypr option requires three parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			res = sscanf(argv[i+1],"%lf",ypr);
+			res += sscanf(argv[i+2],"%lf",ypr+1);
+			res += sscanf(argv[i+3],"%lf",ypr+2);
+			if (res < 3) {
+				Tcl_AppendResult(interp, "viewset: ypr option requires three parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			in_ypr = 1;
+			i += 4;
+			break;
+		case 'a':	/* azimuth,elevation,twist */
+			if (i+3 >= argc) {
+				Tcl_AppendResult(interp, "viewset: aet option requires three parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			res = sscanf(argv[i+1],"%lf",aet);
+			res += sscanf(argv[i+2],"%lf",aet+1);
+			res += sscanf(argv[i+3],"%lf",aet+2);
+			if (res < 3) {
+				Tcl_AppendResult(interp, "viewset: aet option requires three parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			in_aet = 1;
+			i += 4;
+			break;
+		case 'c':	/* center point */
+			if (i+3 >= argc) {
+				Tcl_AppendResult(interp, "viewset: center option requires three parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			res = sscanf(argv[i+1],"%lf",center);
+			res += sscanf(argv[i+2],"%lf",center+1);
+			res += sscanf(argv[i+3],"%lf",center+2);
+			if (res < 3) {
+				Tcl_AppendResult(interp, "viewset: center option requires three parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			in_center = 1;
+			i += 4;
+			break;
+		case 'e':	/* eye_point */
+			if (i+3 >= argc) {
+				Tcl_AppendResult(interp, "viewset: eye option requires three parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			res = sscanf(argv[i+1],"%lf",eye);
+			res += sscanf(argv[i+2],"%lf",eye+1);
+			res += sscanf(argv[i+3],"%lf",eye+2);
+			if (res < 3) {
+				Tcl_AppendResult(interp, "viewset: eye option requires three parameters", (char *)NULL);
+				return TCL_ERROR;
+			}
+			in_eye = 1;
+			i += 4;
+			break;
+		case 's': 	/* view size */
+			if (i+1 >= argc) {
+				Tcl_AppendResult(interp, "viewset: size option requires a parameter", (char *)NULL);
+				return TCL_ERROR;
+			}
+			res = sscanf(argv[i+1],"%lf",&size);
+			if (res<1) {
+				Tcl_AppendResult(interp, "viewset: size option requires a parameter", (char *)NULL);
+				return TCL_ERROR;
+			}
+			in_size = 1;
+			i += 2;
+			break;
+		default:
+			sprintf(result_string,"viewset: Unknown option %s.", argv[i]);
+			Tcl_AppendResult(interp, result_string, (char *)NULL);
+			return TCL_ERROR;
+		}
+	}
+
+	/* do size set - don't use units (local2base) because rt doesn't */
+	if (in_size) {
+		if (size < 0.0001) size = 0.0001;
+		Viewscale = size * 0.5;
+	}
+
+
+	/* overrides */
+	if (in_center&&in_eye) {
+		in_ypr = in_aet = in_quat = 0;
+	}
+
+	if (in_quat) {
+		quat_quat2mat( Viewrot, quat);
+	} else if (in_ypr) {
+		anim_dy_p_r2mat(mymat, ypr[0], ypr[1], ypr[2]);
+		anim_v_permute(mymat);
+		mat_trn(Viewrot, mymat);
+	} else if (in_aet) {
+		anim_dy_p_r2mat(mymat, aet[0]+180.0, -aet[1], -aet[2]);
+		anim_v_permute(mymat);
+		mat_trn(Viewrot, mymat);
+	} else if (in_center && in_eye) {
+		VSUB2( dir, center, eye);
+		Viewscale = MAGNITUDE(dir);
+		if (Viewscale < 0.00005) Viewscale = 0.00005;
+		/* use current vehicle z-dir as backup */
+		VSET(temp, 0.0, 1.0, 0.0);
+		mat_trn( mymat, Viewrot);
+		MAT4X3PNT( dirz, mymat, temp);
+		if ((fabs(dirz[0]) < VDIVIDE_TOL)&&(fabs(dirz[1])<VDIVIDE_TOL)){
+			/* or use vehicle -x as backup */
+			if ( dir[2] >= 0.0) {
+				VSET(temp, 0.0, 0.0, 1.0);
+			} else {
+				VSET(temp, 0.0, 0.0, -1.0);
+			}
+			MAT4X3PNT( dirz, mymat, temp);
+		}
+		anim_dirz2mat(mymat, dir, dirz);
+		anim_v_permute(mymat);
+		mat_trn(Viewrot, mymat);
+	}
+
+	if (in_center) {
+		MAT_DELTAS_VEC_NEG( toViewcenter, center);
+	} else if (in_eye) {
+		VSET(temp, 0.0, 0.0, Viewscale);
+		mat_trn(mymat, Viewrot);
+		MAT4X3PNT( dir, mymat, temp);
+		VSUB2(temp, dir, eye);
+		MAT_DELTAS_VEC( toViewcenter, temp);
+	}
+
+	new_mats();
+}
