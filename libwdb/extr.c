@@ -20,7 +20,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char extr_RCSid[] = "@(#)$Header$ (BRL)";
+static const char extr_RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
