@@ -2877,7 +2877,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
 
-	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+	if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))  {
 		rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) START\n", lu);
 	}
 
@@ -2886,6 +2886,18 @@ CONST struct rt_tol	*tol;
 
 top:
 	jaunt_count = nmg_get_touching_jaunts( lu, &jaunt_tbl, &need_init );
+	if( rt_g.NMG_debug & DEBUG_CUTLOOP )
+	{
+		rt_log( "nmg_loop_split_at_touching_jaunt: found %d touching jaunts in lu x%x\n", jaunt_count, lu );
+		if( jaunt_count )
+		{
+			for( i=0 ; i<NMG_TBL_END( &jaunt_tbl ) ; i++ )
+			{
+				eu = (struct edgeuse *)NMG_TBL_GET( &jaunt_tbl, i );
+				rt_log( "\tx%x\n" , eu );
+			}
+		}
+	}
 
 	if( jaunt_count < 0 )
 	{
@@ -2902,7 +2914,7 @@ top:
 		if( !need_init )
 			nmg_tbl( &jaunt_tbl, TBL_FREE, (long *)NULL );
 
-		if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))  {
 			rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) END count=%d\n",
 				lu, count);
 		}
@@ -2930,7 +2942,7 @@ top:
 		if( jaunt_status )
 			rt_free( (char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n" );
 
-		if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))  {
 			rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) END count=%d\n",
 				lu, count);
 		}
@@ -2982,6 +2994,12 @@ top:
 		/* get new loop starting edgeuse */
 		start_eu1 = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
+		if( rt_g.NMG_debug & DEBUG_CUTLOOP )
+		{
+			rt_log( "\tConsider splitting lu x%x at vu=x%x\n", lu, start_eu1->vu_p );
+			rt_log( "\t\t(jaunt number %d\n" , jaunt_no );	
+		}
+
 		/* determine status of jaunts in the proposed new loop */
 		nmg_check_proposed_loop( start_eu1, &start_eu2, visit_count,
 			jaunt_status, &jaunt_tbl, jaunt_no, 0 );
@@ -2989,6 +3007,35 @@ top:
 		/* Still need to check the loop that will be left if we do a split here */
 		nmg_check_proposed_loop( start_eu2, &start_eu1, visit_count,
 			jaunt_status, &jaunt_tbl, jaunt_no, 1 );
+
+		if( rt_g.NMG_debug & DEBUG_CUTLOOP )
+		{
+			for( i=0 ; i<NMG_TBL_END( &jaunt_tbl ) ; i++ )
+			{
+				struct edgeuse *tmp_eu;
+
+				tmp_eu = (struct edgeuse *)NMG_TBL_GET( &jaunt_tbl, i );
+				rt_log( "\t\tpredicted status of jaunt at eu x%x is ", tmp_eu );
+				switch( jaunt_status[i] )
+				{
+					case JS_UNKNOWN:
+						rt_log( "unknown\n" );
+						break;
+					case JS_SPLIT:
+						rt_log( "split\n" );
+						break;
+					case JS_JAUNT:
+						rt_log( "a jaunt\n" );
+						break;
+					case JS_TOUCHING_JAUNT:
+						rt_log( "still a touching jaunt\n" );
+						break;
+					default:
+						rt_log( "unrecognized status\n" );
+						break;
+				}
+			}
+		}
 
 		/* check predicted status of all the touching jaunts,
 		 * every one must be either split or still a touching jaunt.
@@ -3005,11 +3052,25 @@ top:
 
 		/* if splitting lu at this touching jaunt is not desirable, check the next one */
 		if( !do_split )
+		{
+			if( rt_g.NMG_debug & DEBUG_CUTLOOP )
+			{
+				rt_log( "\t\tCannot split lu x%x at proposed vu\n" );
+			}
 			continue;
+		}
 
 		/* This touching jaunt passed all the tests, its reward is to be split */
 		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+
 		new_lu = nmg_split_lu_at_vu( lu, eu2->vu_p );
+
+		if( rt_g.NMG_debug & DEBUG_CUTLOOP )
+		{
+			rt_log( "\tnmg_loop_split_at_touching_jaunt: splitting lu x%x at vu x%x\n", lu, eu2->vu_p );
+			rt_log( "\t\tnew_lu is x%x\n" , new_lu );
+		}
+
 		count++;
 		NMG_CK_LOOPUSE(new_lu);
 		NMG_CK_LOOP(new_lu->l_p);
