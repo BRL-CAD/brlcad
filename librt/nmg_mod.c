@@ -654,67 +654,36 @@ struct edgeuse *eudst, *eusrc;
  *	If edgeuse is part of a shared edge (more than one pair of edgeuses
  *	on the edge), it and its mate are "unglued" from the edge, and 
  *	associated with a new edge structure.
+ *
+ *	Primarily a support routine for nmg_eusplit()
  */
 void
 nmg_unglueedge(eu)
 struct edgeuse *eu;
 {
-#if UNGLUE_MAKES_VERTICES
-	struct vertex *v1, *v2;
-	struct vertex_g *vg1, *vg2;
-#endif
-	struct edge	*e;
+	struct edge	*old_e;
+	struct edge	*new_e;
 	struct model	*m;
 
 	NMG_CK_EDGEUSE(eu);
+	old_e = eu->e_p;
+	NMG_CK_EDGE(old_e);
 
 	/* if we're already a single edge, just return */
 	if (eu->radial_p == eu->eumate_p)
 		return;
 
 	m = nmg_find_model( &eu->l.magic );
-	GET_EDGE(e, m);
+	GET_EDGE(new_e, m);
 
-	e->magic = NMG_EDGE_MAGIC;
-	e->eg_p = (struct edge_g *)NULL;
-	e->eu_p = eu;
-#if UNGLUE_MAKES_VERTICES
-	GET_VERTEX(v1, m);
-	GET_VERTEX(v2, m);
-	GET_VERTEX_G(vg1, m);
-	GET_VERTEX_G(vg2, m);
-
-	/* we want a pair of new vertices that are identical to the old
-	 * ones for the newly separated edge.
-	 */
-	v1->vu_p = v2->vu_p = (struct vertexuse *)NULL;
-	v1->magic = v2->magic = NMG_VERTEX_MAGIC;
-
-	/* if there was vertex geometry, copy it */
-	if (eu->vu_p->v_p->vg_p) {
-		*vg1 = *(eu->vu_p->v_p->vg_p);	/* struct copy */
-		v1->vg_p = vg1;
-	} else {
-		v1->vg_p = (struct vertex_g *)NULL;
-		FREE_VERTEX_G(vg1);
-	}
-
-	if (eu->eumate_p->vu_p->v_p->vg_p) {
-		*vg2 = *(eu->eumate_p->vu_p->v_p->vg_p);	/* struct copy */
-		v2->vg_p = vg2;
-	} else {
-		v2->vg_p = (struct vertex_g *)NULL;
-		FREE_VERTEX_G(vg2);
-	}
-
-	/* now move the vertexuses to the new (but identical) verteces. */
-	nmg_movevu(eu->vu_p, v1);
-	nmg_movevu(eu->eumate_p->vu_p, v1);
-#endif
+	new_e->magic = NMG_EDGE_MAGIC;
+	/* XXX If old_e had edge_g, should duplicate reference here */
+	new_e->eg_p = (struct edge_g *)NULL;
+	new_e->eu_p = eu;
 
 	/* make sure the edge isn't pointing at this edgeuse */
-	if (eu->e_p->eu_p == eu || eu->e_p->eu_p == eu->eumate_p ) {
-		eu->e_p->eu_p = eu->e_p->eu_p->radial_p;
+	if (old_e->eu_p == eu || old_e->eu_p == eu->eumate_p ) {
+		old_e->eu_p = old_e->eu_p->radial_p;
 	}
 
 	/* unlink edgeuses from old edge */
@@ -723,8 +692,8 @@ struct edgeuse *eu;
 	eu->eumate_p->radial_p = eu;
 	eu->radial_p = eu->eumate_p;
 
-	eu->eumate_p->e_p = eu->e_p = e;
-
+	/* Associate edgeuse and mate with new edge */
+	eu->eumate_p->e_p = eu->e_p = new_e;
 }
 
 /*
