@@ -69,12 +69,12 @@ static void     establish_zbuffer();
 static void     establish_lighting();
 static void     establish_perspective();
 static void     set_perspective();
-static void     refresh_hook();
+static void     dirty_hook();
 static void     set_knob_offset();
 
 struct bu_structparse Glx_vparse[] = {
 	{"%d",	1, "depthcue",		Glx_MV_O(cueing_on),	Glx_colorchange },
-	{"%d",  1, "zclip",		Glx_MV_O(zclipping_on),	refresh_hook },
+	{"%d",  1, "zclip",		Glx_MV_O(zclipping_on),	dirty_hook },
 	{"%d",  1, "zbuffer",		Glx_MV_O(zbuffer_on),	establish_zbuffer },
 	{"%d",  1, "lighting",		Glx_MV_O(lighting_on),	establish_lighting },
 	{"%d",  1, "perspective",       Glx_MV_O(perspective_mode), establish_perspective },
@@ -1959,9 +1959,9 @@ set_perspective()
 }
 
 static void
-refresh_hook()
+dirty_hook()
 {
-  dmaflag = 1;
+  dirty = 1;
 }
 
 static void
