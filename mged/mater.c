@@ -92,8 +92,18 @@ f_color( argc, argv )
 int	argc;
 char	**argv;
 {
-	register struct mater *newp;
+	register struct mater *newp,*next_mater;
 
+	/* Delete all color records from the database */
+	newp = MaterHead;
+	while( newp != MATER_NULL )
+	{
+		next_mater = newp->mt_forw;
+		color_zaprec( newp );
+		newp = next_mater;
+	}
+
+	/* construct the new color record */
 	GETSTRUCT( newp, mater );
 	newp->mt_low = atoi( argv[1] );
 	newp->mt_high = atoi( argv[2] );
@@ -101,8 +111,19 @@ char	**argv;
 	newp->mt_g = atoi( argv[4] );
 	newp->mt_b = atoi( argv[5] );
 	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
+
+	/* Insert new color record in the in-memory list */
 	rt_insert_color( newp );
-	color_putrec( newp );			/* write to database */
+
+	/* Write new color records for all colors in the list */
+	newp = MaterHead;
+	while( newp != MATER_NULL )
+	{
+		next_mater = newp->mt_forw;
+		color_putrec( newp );
+		newp = next_mater;
+	}
+
 	dmp->dmr_colorchange();
 
 	return CMD_OK;
