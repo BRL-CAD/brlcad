@@ -84,7 +84,6 @@ void
 rt_grp_print( stp )
 register CONST struct soltab *stp;
 {
-	register CONST struct rt_grip_internal *gip;
 	register CONST struct grip_specific *gripp =
 		(struct grip_specific *)stp->st_specific;
 
@@ -281,8 +280,6 @@ CONST mat_t			mat;
 	struct rt_grip_internal	*gip;
 	union record	*rp;
 
-	point_t		orig_pt;
-	point_t		pt;
 	fastf_t		orig_eqn[3*3];
 	register double	f,t;
 

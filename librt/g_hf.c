@@ -128,6 +128,8 @@ struct rt_i		*rtip;
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_hf_internal *)ip->idb_ptr;
 	RT_HF_CK_MAGIC(xip);
+
+	return -1;	/* FAIL */
 }
 
 /*
@@ -163,6 +165,9 @@ struct seg		*seghead;
 		(struct hf_specific *)stp->st_specific;
 	register struct seg *segp;
 	CONST struct rt_tol	*tol = &ap->a_rt_i->rti_tol;
+
+	RT_CK_RTI(ap->a_rt_i);
+	RT_CK_TOL(tol);
 
 	return(0);			/* MISS */
 }
