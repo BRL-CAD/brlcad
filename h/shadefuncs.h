@@ -1,10 +1,9 @@
 /*
- *			M A T E R I A L . H
+ *			S H A D E F U N C S . H
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *  $Header$
  */
@@ -42,29 +41,9 @@ struct mfuncs {
 /* mf_flags lists important details about individual shaders */
 #define MFF_PROC	0x01		/* shader is procedural, computes tr/re/hits */
 
-#define SW_NLIGHTS	16		/* Max # of light sources */
-
-/*
- *			S H A D E W O R K
- */
-struct shadework {
-	fastf_t		sw_transmit;	/* 0.0 -> 1.0 */
-	fastf_t		sw_reflect;	/* 0.0 -> 1.0 */
-	fastf_t		sw_refrac_index;
-	fastf_t		sw_extinction;	/* extinction coeff, mm^-1 */
-	fastf_t		sw_color[3];	/* shaded color */
-	fastf_t		sw_basecolor[3]; /* base color */
-	struct hit	sw_hit;		/* ray hit (dist,point,normal) */
-	struct uvcoord	sw_uv;
-	fastf_t		sw_intensity[3*SW_NLIGHTS]; /* light intensities */
-	fastf_t		sw_tolight[3*SW_NLIGHTS];   /* light directions */
-	char		*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
-	int		sw_xmitonly;	/* flag: need sw_transmit only */
-	int		sw_inputs;	/* fields from mf_inputs actually filled */
-	int		sw_frame;	/* # of current frame */
-	fastf_t		sw_frametime;	/* frame time delta off 1st frame */
-	fastf_t		sw_pixeltime;	/* pixel time delta off 1st pixel of 1st frame */
-	struct seg	*sw_segs;	/* segs which made partition */
-};
-
-extern void pr_shadework();
+BU_EXTERN(void		mlib_add_shader, (struct mfuncs **headp,
+				struct mfuncs *mfp1));
+BU_EXTERN(int		mlib_setup, (struct mfuncs **headp,
+				struct region *rp,
+				struct rt_i *rtip));
+BU_EXTERN(void		mlib_free, (struct region *rp));
