@@ -6,7 +6,7 @@
  *	parse_line	Parse command line into argument vector
  *	f_press		hook for displays with no buttons
  *	f_summary	do directory summary
- *	do_cmd		Check arg counts, run a command
+ *	mged_cmd		Check arg counts, run a command
  *
  *  Authors -
  *	Michael John Muuss
@@ -32,8 +32,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "./sedit.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./solid.h"
 #include "./dm.h"
 
@@ -51,10 +51,11 @@ char *cmd_args[MAXARGS + 1];	/* array of pointers to args */
 extern int	cmd_glob();
 
 static void	f_help(), f_fhelp(), f_param(), f_comm();
-void	do_cmd();
+void	mged_cmd();
 void	f_center(), f_press(), f_view(), f_blast();
 void	f_edit(), f_evedit(), f_delobj();
-void	f_debug(), f_regdebug(), f_name(), f_copy(), f_instance();
+void	f_debug(), f_regdebug(), f_debuglib();
+void	f_name(), f_copy(), f_instance();
 void	f_copy_inv(), f_killall(), f_killtree();
 void	f_region(), f_itemair(), f_mater(), f_kill(), f_list();
 void	f_zap(), f_group(), f_mirror(), f_extrude();
@@ -74,6 +75,7 @@ void	f_regdef(), f_aeview(), f_in(), f_tables(), f_edcodes(), f_dup(), f_cat();
 void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack();
 void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
 void	f_overlay(), f_rtcheck(), f_comb();
+void	f_preview();
 
 static struct funtab {
 	char *ft_name;
@@ -120,6 +122,8 @@ static struct funtab {
 	f_copy_inv,3,3,
 "d", "<objects>", "delete list of objects",
 	f_delobj,2,MAXARGS,
+"debuglib", "[hex_code]", "Show/set debugging bit vector for librt",
+	f_debuglib,1,2,
 "dup", "file [prefix]", "check for dup names in 'file'",
 	f_dup, 1, 27,
 "E", "<objects>", "evaluated edit of objects",
@@ -202,6 +206,8 @@ static struct funtab {
 	f_prcolor, 1, 1,
 "prefix", "new_prefix object(s)", "prefix each occurrence of object name(s)",
 	f_prefix, 3, MAXARGS,
+"preview", "preview rt_script", "preview new style RT animation script",
+	f_preview, 2, 2,
 "press", "button_label", "emulate button press",
 	f_press,2,MAXARGS,
 "push", "object[s]", "pushes object's path transformations to solids",
@@ -298,7 +304,7 @@ cmdline()
 
 	i = parse_line();
 	if( i == 0 ) {
-		do_cmd();
+		mged_cmd();
 		return 1;
 	}
 	if( i < 0 )
@@ -386,13 +392,15 @@ parse_line()
 }
 
 /*
+ *			M G E D _ C M D
+ *
  *  Check a table for the command, check for the correct
  *  minimum and maximum number of arguments, and pass control
  *  to the proper function.  If the number of arguments is
  *  incorrect, print out a short help message.
  */
 void
-do_cmd()
+mged_cmd()
 {
 	extern char *cmd_args[];
 	extern int numargs;
