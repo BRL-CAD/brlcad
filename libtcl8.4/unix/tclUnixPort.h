@@ -98,6 +98,7 @@ EXTERN Tcl_WideUInt	strtoull _ANSI_ARGS_((CONST char *string,
 
 #include <sys/file.h>
 #ifdef HAVE_SYS_SELECT_H
+#   undef __APPLE_API_PRIVATE
 #   include <sys/select.h>
 #endif
 #include <sys/stat.h>
