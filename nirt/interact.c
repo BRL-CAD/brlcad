@@ -35,16 +35,27 @@ char	*string;
     if (nirt_debug & DEBUG_INTERACT)
 	bu_log("sgetc(%s) '%s' '%s'... ", string, prev_string, sp);
 
-    if (string == 0)
-	return (EOF);
-    if (string != prev_string)
+    if ((string == 0) || (string != prev_string))
+    {
 	sp = prev_string = string;
+	reported_EOS = 0;
+	if (nirt_debug & DEBUG_INTERACT)
+	    bu_log("initializing\n");
+	if (string == 0)
+	    return (EOF);
+    }
     if (*sp == '\0')
 	if (reported_EOS)
+	{
+	    if (nirt_debug & DEBUG_INTERACT)
+		bu_log("returning EOF\n");
 	    return (EOF);
+	}
 	else
 	{
 	    reported_EOS = 1;
+	    if (nirt_debug & DEBUG_INTERACT)
+		bu_log("returning EOS\n");
 	    return ('\0');
 	}
     else
@@ -76,16 +87,24 @@ void	*sPtr;
     int		in_cmt;		/* are we now within a comment? */
     int		more_on_line = 0;/* are we withing a multi-command line? */
 
-#define	next_char(s)	(input_source == READING_FILE) ? fgetc(s) :       \
-			(input_source == READING_STRING) ? sgetc(s) :     \
-			(bu_log("next_char() error.  Shouldn't happen\n"), \
-			EOF)
+#define	next_char(s)	(input_source == READING_FILE)		?	\
+			    fgetc((FILE *) s)			:       \
+			(input_source == READING_STRING)	?	\
+			    sgetc((char *) s)			:	\
+			(bu_log("next_char(%d) error.  Shouldn't happen\n", \
+			    input_source), EOF)
 
     if (nirt_debug & DEBUG_INTERACT)
 	bu_log("interact(%s, %x)...\n",
 	    (input_source == READING_FILE) ? "READING_FILE" :
 	    (input_source == READING_STRING) ? "READING_STRING" : "???",
 	    sPtr);
+
+    /*
+     *	Prime the pump when reading from a string
+     */
+    if (input_source == READING_STRING)
+	sgetc(0);
 
     for (;;)
     {
@@ -120,10 +139,7 @@ void	*sPtr;
 		break;
 	    }
 	    else if (Ch == '\n')
-	    {
-		made_it();
 		break;
-	    }
 	    if ((input_source == READING_STRING) && (Ch == '\0'))
 		break;
 	    if (Ch == EOF)
