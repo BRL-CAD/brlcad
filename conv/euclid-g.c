@@ -30,6 +30,7 @@ static char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "rtlist.h"
+#include "wdb.h"
 #include "../librt/debug.h"
 
 #define MAX_FACES_PER_REGION 8192
@@ -38,14 +39,16 @@ static char RCSid[] = "$Header$";
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
+RT_EXTERN( struct faceuse *nmg_add_loop_to_face , (struct shell *s, struct faceuse *fu, struct vertex *verts[], int n, int dir ) );
 
-extern struct faceuse *nmg_add_loop_to_face();
 extern int errno;
 
 struct vlist {
 	fastf_t		pt[3*MAX_PTS_PER_FACE];
 	struct vertex	*vt[MAX_PTS_PER_FACE];
 };
+
+struct nmg_ptbl groups[11];
 
 static int polysolids;
 static char	usage[] = "Usage: %s [-i euclid_db] [-o brlcad_db] [-p]\n\t\t(-p indicates write as polysolids)\n ";
@@ -57,6 +60,7 @@ char	*argv[];
 	char		*bfile, *efile;
 	FILE		*fpin, *fpout;
 	register int	c;
+	int i;
 
 	fpin = stdin;
 	fpout = stdout;
@@ -102,10 +106,133 @@ char	*argv[];
 	else
 		mk_id(fpout, efile);
 
+	for( i=0 ; i<11 ; i++ )
+		nmg_tbl( &groups[i] , TBL_INIT , (long *)NULL );
+
 	euclid_to_brlcad(fpin, fpout);
 
 	fclose(fpin);
 	fclose(fpout);
+}
+
+/*
+ *	A d d _ N M G _ t o _ D b
+ *
+ *	Write the nmg to a brl-cad style data base.
+ */
+static void
+add_nmg_to_db(fpout, m, reg_id)
+FILE		*fpout;
+struct model	*m;
+int		reg_id;
+{
+	char	id[80], *rname, *sname;
+	int gift_ident;
+	int group_id;
+	struct nmgregion *r;
+	struct shell *s;
+	struct rt_tol  tol;
+	struct wmember *wmem;
+	struct wmember head;
+
+	RT_LIST_INIT( &head.l );
+
+        /* XXX These need to be improved */
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.005;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
+
+	r = RT_LIST_FIRST( nmgregion , &m->r_hd );
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+
+	sprintf(id, "%d", reg_id);
+	rname = malloc(sizeof(id) + 3);	/* Region name. */
+	sname = malloc(sizeof(id) + 3);	/* Solid name. */
+
+	sprintf(sname, "%s.s", id);
+	if( polysolids )
+		write_shell_as_polysolid( fpout , sname , s );
+	else
+		mk_nmg(fpout, sname,  m);		/* Make nmg object. */
+
+	gift_ident = reg_id % 100000;
+	group_id = gift_ident/1000;
+	if( group_id > 10 )
+		group_id = 10;
+
+	sprintf(rname, "%s.r", id);
+
+	if( mk_addmember( sname, &head, WMOP_UNION ) == WMEMBER_NULL )
+	{
+		rt_log( "add_nmg_to_db: mk_addmember failed for solid %s\n" , sname );
+		rt_bomb( "add_nmg_to_db: FAILED\n" );
+	}
+
+	if( mk_lrcomb( fpout, rname, &head, 1, (char *)NULL, (char *)NULL, (char *)NULL, gift_ident, 0, 0, 100, 0 ) )
+	{
+		rt_log( "add_nmg_to_db: mk_rlcomb failed for region %s\n" , rname );
+		rt_bomb( "add_nmg_to_db: FAILED\n" );
+	}
+
+	nmg_tbl( &groups[group_id] , TBL_INS , (long *)rname );
+
+	rt_free( (char *)sname , "euclid-g: solid name" );
+}
+
+static void
+build_groups( fpout )
+FILE *fpout;
+{
+	int i,j;
+	struct wmember head;
+	struct wmember head_all;
+	char group_name[18];
+
+	RT_LIST_INIT( &head.l );
+	RT_LIST_INIT( &head_all.l );
+
+	for( i=0 ; i<11 ; i++ )
+	{
+
+		if( NMG_TBL_END( &groups[i] ) < 1 )
+			continue;
+
+		for( j=0 ; j<NMG_TBL_END( &groups[i] ) ; j++ )
+		{
+			char *region_name;
+
+			region_name = (char *)NMG_TBL_GET( &groups[i] , j );
+			if( mk_addmember( region_name , &head , WMOP_UNION ) == WMEMBER_NULL )
+			{
+				rt_log( "build_groups: mk_addmember failed for region %s\n" , region_name );
+				rt_bomb( "build_groups: FAILED\n" );
+			}
+		}
+
+		if( i < 10 )
+			sprintf( group_name , "%dxxx_series" , i );
+		else
+			sprintf( group_name , "ids_over_9999" );
+
+		j = mk_lfcomb( fpout , group_name , &head , 0 )
+		if( j )
+		{
+			rt_log( "build_groups: mk_lcomb failed for group %s\n" , group_name );
+			rt_bomb( "build_groups: mk_lcomb FAILED\n" );
+		}
+
+		if( mk_addmember( group_name , &head_all , WMOP_UNION ) == WMEMBER_NULL )
+		{
+			rt_log( "build_groups: mk_addmember failed for group %s\n" , group_name );
+			rt_bomb( "build_groups: FAILED\n" );
+		}
+	}
+
+	j = mk_lfcomb( fpout , "all" , &head_all , 0 )
+	if( j )
+		rt_bomb( "build_groups: mk_lcomb failed for group 'all'\n" );
 }
 
 /*
@@ -161,6 +288,9 @@ FILE	*fpin, *fpout;
 		fprintf( stderr , "Converting region %d...\n", reg_id);
 		reg_id = cvt_euclid_region(fpin, fpout, reg_id);
 	} while (reg_id != -1);
+
+	/* Build groups based on idents */
+	build_groups( fpout );
 }
 
 /*
@@ -412,47 +542,4 @@ fastf_t	x, y, z;
 	}
 
 	return(*nv - 1);
-}
-
-/*
- *	A d d _ N M G _ t o _ D b
- *
- *	Write the nmg to a brl-cad style data base.
- */
-int
-add_nmg_to_db(fpout, m, reg_id)
-FILE		*fpout;
-struct model	*m;
-int		reg_id;
-{
-	char	id[80], *rname, *sname;
-	struct nmgregion *r;
-	struct shell *s;
-	struct rt_tol  tol;
-
-        /* XXX These need to be improved */
-        tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.005;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
-
-	r = RT_LIST_FIRST( nmgregion , &m->r_hd );
-	s = RT_LIST_FIRST( shell , &r->s_hd );
-
-	sprintf(id, "%d", reg_id);
-	rname = malloc(sizeof(id) + 3);	/* Region name. */
-	sname = malloc(sizeof(id) + 3);	/* Solid name. */
-
-	sprintf(sname, "%s.s", id);
-	if( polysolids )
-		write_shell_as_polysolid( fpout , sname , s );
-	else
-		mk_nmg(fpout, sname,  m);		/* Make nmg object. */
-
-	sprintf(rname, "%s.r", id);
-	mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
-	
-	rt_free( (char *)rname , "euclid-g: region name" );
-	rt_free( (char *)sname , "euclid-g: solid name" );
 }
