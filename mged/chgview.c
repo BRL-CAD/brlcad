@@ -129,14 +129,27 @@ f_blast()
 	eedit();
 }
 
+int	use_nmg_flag = 0;	/* XXX temporary.  Used by dodraw.c */
 /* Edit something (add to visible display) */
 /* Format: e object	*/
 void
 f_edit()
 {
+	use_nmg_flag = 0;	/* XXX */
 	drawreg = 0;
 	regmemb = -1;
 	eedit();
+}
+
+/* Format: enmg objects	*/
+void
+f_enmg()
+{
+	use_nmg_flag = 1;
+	drawreg = 0;
+	regmemb = -1;
+	eedit();
+	use_nmg_flag = 0;
 }
 
 /*
@@ -149,6 +162,7 @@ f_edit()
 void
 f_evedit()
 {
+	use_nmg_flag = 0;
 	drawreg = 1;
 	regmemb = -1;
 	eedit();
