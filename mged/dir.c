@@ -553,6 +553,7 @@ db_alloc( dp, count )
 register struct directory *dp;
 int count;
 {
+	register int i;
 	unsigned long addr;
 	union record rec;
 
@@ -583,6 +584,11 @@ top:
 			addr, rec.u_id );
 		goto top;
 	}
+
+	/* Clear out the granules, for safety */
+	zapper.u_id = ID_FREE;	/* The rest will be zeros */
+	for( i=0; i < dp->d_len; i++ )
+		db_putrec( dp, &zapper, i );
 }
 
 /*
@@ -598,6 +604,7 @@ int count;
 	register int i;
 	union record rec;
 	struct directory olddir;
+	int extra_start;
 
 	if( read_only )  {
 		(void)printf("db_grow on READ-ONLY file\n");
@@ -605,9 +612,15 @@ int count;
 	}
 
 	/* Easy case -- see if at end-of-file */
-	if( dp->d_addr + dp->d_len * sizeof(union record) == eof_addr )  {
+	extra_start = dp->d_addr + dp->d_len * sizeof(union record);
+	if( extra_start == eof_addr )  {
 		eof_addr += count * sizeof(union record);
 		dp->d_len += count;
+clean:
+		(void)lseek( objfd, extra_start, 0 );
+		zapper.u_id = ID_FREE;	/* The rest will be zeros */
+		for( i = 0; i < count; i++ )
+			(void)write( objfd, (char *)&zapper, sizeof(zapper) );
 		return;
 	}
 
@@ -627,7 +640,7 @@ int count;
 		}
 	}
 	dp->d_len += count;
-	return;
+	goto clean;
 hard:
 	/* Sigh, got to duplicate it in some new space */
 	olddir = *dp;				/* struct copy */
