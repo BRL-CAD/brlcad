@@ -2289,8 +2289,11 @@ struct rt_tol *tol;
 				/* make face */
 				fu = nmg_cface( s , (struct vertex **)NMG_TBL_BASEADDR(&vert_tbl) , loop_size );
 
-				/* already have face geometry, so don't need to call nmg_fu_planeeqn */
-				nmg_face_g( fu , pl1 );
+				/* face geometry */
+				if( nmg_loop_plane_area( RT_LIST_FIRST( loopuse , &fu->lu_hd ) , pl2 ) < 0.0 )
+					rt_log( "Failed planeeq\n" );
+				else
+					nmg_face_g( fu , pl2 );
 
 				/* Calculate face bounding box */
 				nmg_face_bb( fu->f_p , tol );
