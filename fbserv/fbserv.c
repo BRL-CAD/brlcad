@@ -156,7 +156,7 @@ va_dcl
 	va_end( ap );
 	
 	(void) sprintf( errbuf, fmt, a,b,c,d,e,f,g,h,i );
-	pkg_send( MSG_ERROR, errbuf, strlen(errbuf), pcp );
+	pkg_send( MSG_ERROR, errbuf, strlen(errbuf)+1, pcp );
 	return;
 }
 
@@ -168,7 +168,7 @@ pkgfoo(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	fb_log( "rlibfb: unable to handle message type %d\n",
+	fb_log( "rfbd: unable to handle message type %d\n",
 		pcp->pkc_type );
 	(void)free(buf);
 }
@@ -181,6 +181,7 @@ char *buf;
 {
 	int	height, width;
 	long	ret;
+	long	rbuf[5];
 
 	width = ntohl( *(long *)(&buf[0]) );
 	height = ntohl( *(long *)(&buf[4]) );
@@ -197,8 +198,12 @@ fb_log(s);
 	}
 #endif
 	ret = fbp == FBIO_NULL ? -1 : 0;
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
+	rbuf[0] = htonl( ret );
+	rbuf[1] = htonl( fbp->if_max_width );
+	rbuf[2] = htonl( fbp->if_max_height );
+	rbuf[3] = htonl( fbp->if_width );
+	rbuf[4] = htonl( fbp->if_height );
+	pkg_send( MSG_RETURN, &rbuf[0], 20, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -219,9 +224,14 @@ rfbclear(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
+	Pixel	bg;
 	long	ret;
 
-	ret = fb_clear( fbp, PIXEL_NULL );
+	bg.red = buf[0];
+	bg.green = buf[1];
+	bg.blue = buf[2];
+	bg.spare = 0;
+	ret = fb_clear( fbp, &bg );
 	ret = htonl( ret );
 	pkg_send( MSG_RETURN, &ret, 4, pcp );
 	if( buf ) (void)free(buf);
@@ -271,17 +281,19 @@ char *buf;
 	int	x, y, num;
 	long	ret;
 	char	*datap;
+	int	type;
 
 	x =  ntohl( *(long *)(&buf[0]) );
 	y =  ntohl( *(long *)(&buf[4]) );
 	num =  ntohl( *(long *)(&buf[8]) );
+	type = pcp->pkc_type;
 
 	/* Get space, fetch data into it, do write, free space. */
 	datap = malloc( num*4 );
 	pkg_waitfor( MSG_DATA, datap, num*4, pcp );
 	ret = fb_write( fbp, x, y, datap, num );
 
-	if( pcp->pkc_type < MSG_NORETURN ) {
+	if( type < MSG_NORETURN ) {
 		ret = htonl( ret );
 		pkg_send( MSG_RETURN, &ret, 4, pcp );
 	}
