@@ -65,6 +65,7 @@ struct dm {
 	unsigned (*dmr_load)();		/* DMA the subr to device */
 	void	(*dmr_statechange)();	/* called on editor state change */
 	void	(*dmr_viewchange)();	/* add/drop solids from view */
+	void	(*dmr_colorchange)();	/* called when color table changes */
 	int	dmr_displaylist;	/* !0 means device has displaylist */
 	float	dmr_bound;		/* zoom-in limit */
 	char	*dmr_name;		/* short name of device */
@@ -140,10 +141,6 @@ extern struct veclist *vlend;	/* pointer to first invalid veclist element */
 
 #define DM_BLACK	0
 #define DM_RED		1
-#define DM_GREEN	2
-#define DM_BLUE		3
-#define DM_YELLOW	4
-#define DM_MAGENTA	5
-#define DM_CYAN		6
-#define DM_GRAY		14
-#define DM_WHITE	15
+#define DM_BLUE		2
+#define DM_YELLOW	3
+#define DM_WHITE	4
