@@ -7773,7 +7773,13 @@ vect_t argvect;
   }
 
   if( es_edflag == PSCALE || es_edflag == SSCALE )  {
-    if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || MENU_PIPE_SCALE_ID )
+    if (inpara != 1) {
+	    Tcl_AppendResult(interp, "ERROR: only one argument needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+    }
+
+    if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID )
       {
 	if( es_para[0] < 0.0 )
 	  {
@@ -7790,6 +7796,12 @@ vect_t argvect;
 	  return TCL_ERROR;
 	}
       }
+  } else {
+    if (inpara != 3) {
+	    Tcl_AppendResult(interp, "ERROR: three arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+    }
   }
 
   /* check if need to convert input values to the base unit */
