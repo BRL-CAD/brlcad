@@ -45,10 +45,10 @@
 
 fastf_t
 rt_nurb_par_edge(srf, epsilon)
-CONST struct snurb * srf;
+CONST struct face_g_snurb * srf;
 fastf_t epsilon;
 {
-	struct snurb * us, *vs, * uus, * vvs, *uvs;
+	struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
 	fastf_t d1,d2,d3;
 	int i,j;
 	fastf_t *pt;

@@ -29,7 +29,7 @@
 
 int
 rt_nurb_s_flat( srf, epsilon )
-struct snurb *srf;
+struct face_g_snurb *srf;
 fastf_t epsilon;		/* Epsilon value for flatness testing */
 {
 	register fastf_t 	max_row_dist;

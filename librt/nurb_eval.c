@@ -35,7 +35,7 @@
 
 void
 rt_nurb_s_eval( srf, u, v, final_value )
-CONST struct snurb *srf;
+CONST struct face_g_snurb *srf;
 fastf_t	u;
 fastf_t v;
 fastf_t * final_value;
@@ -64,7 +64,7 @@ fastf_t * final_value;
 
 	c_ptr = diff_curve;
 
-	k_index = rt_nurb_knot_index( &srf->u_knots, u, srf->order[RT_NURB_SPLIT_ROW] );
+	k_index = rt_nurb_knot_index( &srf->u, u, srf->order[RT_NURB_SPLIT_ROW] );
 	if( k_index < 0 )
 	{
 		rt_log( "rt_nurb_s_eval: u value outside parameter range\n");
@@ -87,7 +87,7 @@ fastf_t * final_value;
 		}
 
 		rtr_pt =  (fastf_t * ) rt_nurb_eval_crv( curves, srf->order[RT_NURB_SPLIT_ROW], u, 
-		    &srf->u_knots, k_index, coords );
+		    &srf->u, k_index, coords );
 
 		for (k = 0; k < coords; k++)
 			c_ptr[k] = rtr_pt[k];
@@ -96,17 +96,10 @@ fastf_t * final_value;
 
 	rt_free( (char *)curves, "rt_nurb_s_eval: curves" );
 
-	k_index = rt_nurb_knot_index( &srf->v_knots, v, srf->order[RT_NURB_SPLIT_COL] );
-	if( k_index < 0 )
-	{
-		rt_log( "rt_nurb_s_eval: v value outside parameter range\n");
-		rt_log( "\tUV = (%g %g )\n", u,v );
-		rt_nurb_s_print( "", srf );
-		rt_bomb( "rt_nurb_s_eval: v value outside parameter range\n");
-	}
+	k_index = rt_nurb_knot_index( &srf->v, v, srf->order[RT_NURB_SPLIT_COL] );
 
 	ev_pt = (fastf_t * ) rt_nurb_eval_crv( diff_curve, srf->order[RT_NURB_SPLIT_COL], 
-		v, &srf->v_knots, k_index, coords);
+		v, &srf->v, k_index, coords);
 
 	for ( k = 0; k < coords; k++)
 		final_value[k] = ev_pt[k];
@@ -117,7 +110,7 @@ fastf_t * final_value;
 
 void
 rt_nurb_c_eval( crv, param, final_value)
-CONST struct cnurb *crv;
+CONST struct edge_g_cnurb *crv;
 fastf_t param;
 fastf_t * final_value;
 {
@@ -130,7 +123,7 @@ fastf_t * final_value;
 
 	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type);
 
-	k_index = rt_nurb_knot_index( &crv->knot, param, crv->order);
+	k_index = rt_nurb_knot_index( &crv->k, param, crv->order);
 
 	pnts = (fastf_t * ) rt_malloc( coords * sizeof( fastf_t) * 
 	    crv->c_size, "diff: rt_nurb_c_eval");
@@ -139,7 +132,7 @@ fastf_t * final_value;
 		pnts[i] = crv->ctl_points[i];
 
 	ev_pt = (fastf_t * ) rt_nurb_eval_crv(
-	    pnts, crv->order, param, &crv->knot, k_index, coords);
+	    pnts, crv->order, param, &crv->k, k_index, coords);
 
 	for ( i = 0; i < coords; i++)
 		final_value[i] = ev_pt[i];

@@ -40,7 +40,7 @@ static char	rcs_ident[] = "$Header$";
 
 int
 rt_nurb_crv_in_range( crv, u_min, u_max, v_min, v_max)
-struct cnurb * crv;
+struct edge_g_cnurb * crv;
 fastf_t u_min, u_max;
 fastf_t v_min, v_max;
 {

@@ -44,9 +44,9 @@
 int
 rt_nurb_bezier( bezier_hd, orig_surf )
 struct rt_list		*bezier_hd;
-CONST struct snurb	*orig_surf;
+CONST struct face_g_snurb	*orig_surf;
 {
-	struct snurb	*s;
+	struct face_g_snurb	*s;
 	int		dir;
 	struct rt_list	todo;
 
@@ -61,7 +61,7 @@ CONST struct snurb	*orig_surf;
 	RT_LIST_INIT( &todo );
 	rt_nurb_s_split( &todo, orig_surf, dir );
 
-	while( RT_LIST_WHILE( s, snurb, &todo ) )  {
+	while( RT_LIST_WHILE( s, face_g_snurb, &todo ) )  {
 		if( (dir = rt_bez_check(s)) == -1)  {
 			/* This snurb is now a Bezier */
 			RT_LIST_DEQUEUE( &s->l );
@@ -78,13 +78,13 @@ CONST struct snurb	*orig_surf;
 
 int
 rt_bez_check( srf )
-CONST struct snurb * srf;
+CONST struct face_g_snurb * srf;
 {
 	NMG_CK_SNURB(srf);
 
-	if( srf->u_knots.k_size > (2.0 * srf->order[0]))
+	if( srf->u.k_size > (2.0 * srf->order[0]))
 		return 0;
-	if( srf->v_knots.k_size > (2.0 * srf->order[1]))
+	if( srf->v.k_size > (2.0 * srf->order[1]))
 		return 1;
 
 	return -1;

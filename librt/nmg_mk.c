@@ -1986,7 +1986,7 @@ fastf_t		*points;
 	eu->g.cnurb_p = eg;
 	eu->eumate_p->g.cnurb_p = eg;
 
-	eg->magic = NMG_EDGE_G_CNURB_MAGIC;
+	eg->l.magic = NMG_EDGE_G_CNURB_MAGIC;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_edge_g_cnurb(eu=x%x, order=%d, n_knots=%d, kv=x%x, n_pts=%d, pt_type=x%x, points=x%x) eg=x%x\n",
@@ -2067,7 +2067,7 @@ struct edgeuse	*eu;
 	eu->g.cnurb_p = eg;
 	eu->eumate_p->g.cnurb_p = eg;
 
-	eg->magic = NMG_EDGE_G_CNURB_MAGIC;
+	eg->l.magic = NMG_EDGE_G_CNURB_MAGIC;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_edge_g_cnurb_plinear(eu=x%x) order=0, eg=x%x\n",
@@ -2384,7 +2384,7 @@ fastf_t		*mesh;
 	f->flip = 0;
 	RT_LIST_INIT(&fg->f_hd);
 	RT_LIST_APPEND( &fg->f_hd, &f->l );
-	fg->magic = NMG_FACE_G_SNURB_MAGIC;
+	fg->l.magic = NMG_FACE_G_SNURB_MAGIC;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_face_g_snurb(fu=x%x, u_order=%d, v_order=%d, n_u_knots=%d, n_v_knots=%d, ukv=x%x, vkv=x%x, n_rows=%d, n_cols=%d, pt_type=x%x, mesh=x%x) fg=x%x\n",

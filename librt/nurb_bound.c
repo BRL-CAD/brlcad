@@ -46,7 +46,7 @@
 
 int
 rt_nurb_s_bound( srf, bmin, bmax )
-struct snurb *srf;
+struct face_g_snurb *srf;
 point_t bmin, bmax;
 {
 	register fastf_t *p_ptr;	/* Mesh pointr */
@@ -58,7 +58,7 @@ point_t bmin, bmax;
 	bmin[0] = bmin[1] = bmin[2] = INFINITY;
 	bmax[0] = bmax[1] = bmax[2] = -INFINITY;
 
-	if ( srf == (struct snurb *)0 )  {
+	if ( srf == (struct face_g_snurb *)0 )  {
 		rt_log("nurb_s_bound:  NULL surface\n");
 		return(-1);		/* BAD */
 	}
@@ -89,7 +89,7 @@ point_t bmin, bmax;
 
 int
 rt_nurb_c_bound( crv, bmin, bmax )
-struct cnurb *crv;
+struct edge_g_cnurb *crv;
 point_t bmin, bmax;
 {
 	register fastf_t *p_ptr;	/* Mesh pointr */
@@ -101,7 +101,7 @@ point_t bmin, bmax;
 	bmin[0] = bmin[1] = bmin[2] = INFINITY;
 	bmax[0] = bmax[1] = bmax[2] = -INFINITY;
 
-	if ( crv == (struct cnurb *)0 )  {
+	if ( crv == (struct edge_g_cnurb *)0 )  {
 		rt_log("nurb_c_bound:  NULL surface\n");
 		return(-1);		/* BAD */
 	}
@@ -137,7 +137,7 @@ point_t bmin, bmax;
 
 int
 rt_nurb_s_check( srf )
-register struct snurb *srf;
+register struct face_g_snurb *srf;
 {
 	register fastf_t *mp;	/* Mesh pointr */
 	register int	i;
@@ -166,7 +166,7 @@ register struct snurb *srf;
 
 int
 rt_nurb_c_check( crv )
-register struct cnurb *crv;
+register struct edge_g_cnurb *crv;
 {
 	register fastf_t *mp;	/* Mesh pointr */
 	register int	i;

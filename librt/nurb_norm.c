@@ -31,11 +31,11 @@
 
 void
 rt_nurb_s_norm(srf, u, v, norm)
-struct snurb * srf;
+struct face_g_snurb * srf;
 fastf_t u, v;
 fastf_t * norm;
 {
-	struct snurb *usrf, *vsrf;
+	struct face_g_snurb *usrf, *vsrf;
 	point_t uvec, vvec;
 	fastf_t p;
 	fastf_t se[4], ue[4], ve[4];
@@ -48,33 +48,33 @@ fastf_t * norm;
 		rt_nurb_s_eval( srf, u, v, se);
 		
 		p = 0.0;
-		for( i = 0; i < srf->u_knots.k_size -1; i++)
+		for( i = 0; i < srf->u.k_size -1; i++)
 		{
-			if ( srf->u_knots.knots[i] <= u 
-				&& u < srf->u_knots.knots[i+1] )
+			if ( srf->u.knots[i] <= u 
+				&& u < srf->u.knots[i+1] )
 			{
-				p = srf->u_knots.knots[i];
+				p = srf->u.knots[i];
 
 				if (u == p)
-					p = srf->u_knots.knots[i+1];
+					p = srf->u.knots[i+1];
 				if ( u == p && i > 1)
-					p = srf->u_knots.knots[i-1];
+					p = srf->u.knots[i-1];
 			}
 		}
 
 		rt_nurb_s_eval( srf, p, v, ue);
 
 		p = 0.0;
-		for( i = 0; i < srf->v_knots.k_size -1; i++)
+		for( i = 0; i < srf->v.k_size -1; i++)
 		{
-			if ( srf->v_knots.knots[i] < v 
-				&& srf->v_knots.knots[i+1] )
+			if ( srf->v.knots[i] < v 
+				&& srf->v.knots[i+1] )
 			{
-				p = srf->v_knots.knots[i];
+				p = srf->v.knots[i];
 				if (v == p)
-					p = srf->v_knots.knots[i+1];
+					p = srf->v.knots[i+1];
 				if ( v == p && i > 1)
-					p = srf->v_knots.knots[i-1];
+					p = srf->v.knots[i-1];
 			}
 		}
 
@@ -111,23 +111,23 @@ fastf_t * norm;
 		rt_nurb_s_eval( srf, u, v, se);
 		
 		p = 0.0;
-		for( i = 0; i < srf->u_knots.k_size -1; i++)
+		for( i = 0; i < srf->u.k_size -1; i++)
 		{
-			if ( srf->u_knots.knots[i] <= u 
-				&& u < srf->u_knots.knots[i+1] )
+			if ( srf->u.knots[i] <= u 
+				&& u < srf->u.knots[i+1] )
 			{
-				p = srf->u_knots.knots[i];
+				p = srf->u.knots[i];
 
 				if (u == p)
-					p = srf->u_knots.knots[i+1];
+					p = srf->u.knots[i+1];
 				if ( u == p && i > 1)
-					p = srf->u_knots.knots[i-1];
+					p = srf->u.knots[i-1];
 			}
 		}
 
 		rt_nurb_s_eval( srf, p, v, ue);
 		
-		vsrf = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+		vsrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
 
 		rt_nurb_s_eval(vsrf, u, v, ve);
 
@@ -169,23 +169,23 @@ fastf_t * norm;
 		rt_nurb_s_eval( srf, u, v, se);
 		
 		p = 0.0;
-		for( i = 0; i < srf->v_knots.k_size -1; i++)
+		for( i = 0; i < srf->v.k_size -1; i++)
 		{
-			if ( srf->v_knots.knots[i] <= v 
-				&& v < srf->v_knots.knots[i+1] )
+			if ( srf->v.knots[i] <= v 
+				&& v < srf->v.knots[i+1] )
 			{
-				p = srf->v_knots.knots[i];
+				p = srf->v.knots[i];
 
 				if (v == p)
-					p = srf->u_knots.knots[i+1];
+					p = srf->u.knots[i+1];
 				if ( v == p && i > 1)
-					p = srf->v_knots.knots[i-1];
+					p = srf->v.knots[i-1];
 			}
 		}
 
 		rt_nurb_s_eval( srf, u, p, ve);
 
-		usrf = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+		usrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
 		
 		rt_nurb_s_eval(usrf, u, v, ue);
 
@@ -227,8 +227,8 @@ fastf_t * norm;
 	if( !RT_NURB_IS_PT_RATIONAL(srf->pt_type))
 	{
 
-		usrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
-		vsrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
+		usrf = (struct face_g_snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
+		vsrf = (struct face_g_snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
 
 		rt_nurb_s_eval(usrf, u,v, ue);
 		rt_nurb_s_eval(vsrf, u,v, ve);
@@ -251,8 +251,8 @@ fastf_t * norm;
 
 		rt_nurb_s_eval(srf, u, v, se);
 
-		usrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
-		vsrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
+		usrf = (struct face_g_snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
+		vsrf = (struct face_g_snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
 
 		rt_nurb_s_eval(usrf, u,v, ue);
 

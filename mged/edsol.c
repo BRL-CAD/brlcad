@@ -1504,8 +1504,8 @@ mat_t		mat;
 		{
 			register struct rt_nurb_internal *sip =
 				(struct rt_nurb_internal *) es_int.idb_ptr;
-			register struct snurb	*surf;
-			register fastf_t	*fp;
+			register struct face_g_snurb	*surf;
+			register fastf_t		*fp;
 
 			RT_NURB_CK_MAGIC(sip);
 			surf = sip->srfs[spl_surfno];
@@ -1821,7 +1821,7 @@ init_sedit()
 	{
 		register struct rt_nurb_internal *sip =
 			(struct rt_nurb_internal *) es_int.idb_ptr;
-		register struct snurb	*surf;
+		register struct face_g_snurb	*surf;
 		RT_NURB_CK_MAGIC(sip);
 		spl_surfno = sip->nsrf/2;
 		surf = sip->srfs[spl_surfno];
@@ -2294,7 +2294,7 @@ sedit()
 			 * XXX for now, splines only here */
 			register struct rt_nurb_internal *sip =
 				(struct rt_nurb_internal *) es_int.idb_ptr;
-			register struct snurb	*surf;
+			register struct face_g_snurb	*surf;
 			register fastf_t	*fp;
 
 			RT_NURB_CK_MAGIC(sip);
@@ -4764,7 +4764,7 @@ struct rt_db_internal	*ip;
 		{
 			register struct rt_nurb_internal *sip =
 				(struct rt_nurb_internal *) es_int.idb_ptr;
-			register struct snurb	*surf;
+			register struct face_g_snurb	*surf;
 			register fastf_t	*fp;
 
 			RT_NURB_CK_MAGIC(sip);
@@ -5007,7 +5007,7 @@ int				*vval;
 CONST struct rt_nurb_internal	*spl;
 CONST point_t			ref_pt;
 {
-	struct snurb	*srf;
+	struct face_g_snurb	*srf;
 	fastf_t		*mesh;
 	fastf_t		d;
 	fastf_t		c_dist;		/* closest dist so far */
@@ -5069,7 +5069,7 @@ CONST struct rt_nurb_internal	*spl;
 CONST point_t			ref_pt;
 CONST mat_t			mat;
 {
-	struct snurb	*srf;
+	struct face_g_snurb	*srf;
 	point_t		ref_2d;
 	fastf_t		*mesh;
 	fastf_t		d;

@@ -35,7 +35,7 @@
 
 struct rt_nurb_poly *
 rt_nurb_to_poly( srf )
-struct snurb *srf;
+struct face_g_snurb *srf;
 {
 	int	coords = srf->pt_type;
 	fastf_t 	 * p1, *p2, *p3, *p4;
@@ -71,17 +71,17 @@ struct snurb *srf;
 		p4[0] = p4[0] / p1[w_index];
 	}
 
-	uv1[0] = srf->u_knots.knots[0];
-	uv1[1] = srf->v_knots.knots[0];
+	uv1[0] = srf->u.knots[0];
+	uv1[1] = srf->v.knots[0];
 
-	uv2[0] = srf->u_knots.knots[srf->u_knots.k_size -1];
-	uv2[1] = srf->v_knots.knots[0];
+	uv2[0] = srf->u.knots[srf->u.k_size -1];
+	uv2[1] = srf->v.knots[0];
 
-	uv3[0] = srf->u_knots.knots[srf->u_knots.k_size -1];
-	uv3[1] = srf->v_knots.knots[srf->v_knots.k_size -1];
+	uv3[0] = srf->u.knots[srf->u.k_size -1];
+	uv3[1] = srf->v.knots[srf->v.k_size -1];
 
-	uv4[0] = srf->u_knots.knots[0];
-	uv4[1] = srf->v_knots.knots[srf->v_knots.k_size -1];
+	uv4[0] = srf->u.knots[0];
+	uv4[1] = srf->v.knots[srf->v.k_size -1];
 
 	p = rt_nurb_mk_poly(p1, p2, p3, uv1, uv2, uv3 ); 
 	p_head = p;

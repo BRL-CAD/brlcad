@@ -71,7 +71,7 @@ int quad_table[16]  = {		/* A = 0, B = 2, C = 3 */
  */
 
 rt_uv_in_trim(trim, u,v)
-struct cnurb * trim;
+struct edge_g_cnurb * trim;
 fastf_t u, v;
 {
 
@@ -99,7 +99,7 @@ fastf_t u, v;
 
 int 
 rt_trim_case( trim, u, v)
-struct cnurb * trim;
+struct edge_g_cnurb * trim;
 fastf_t u,v;
 {
 	int quadrant;
@@ -153,7 +153,7 @@ fastf_t u,v;
  */
 
 rt_process_caseb(trim, u, v)
-struct cnurb * trim;
+struct edge_g_cnurb * trim;
 fastf_t u, v;
 {
 	int q1, q2;
@@ -210,11 +210,11 @@ fastf_t u, v;
 
 int
 rt_process_casec(trim, u, v)
-struct cnurb * trim;
+struct edge_g_cnurb * trim;
 fastf_t u, v;
 {
 
-	struct cnurb * clip;
+	struct edge_g_cnurb * clip;
 	int jordan_hit;
 	struct rt_list	plist;
 	int trim_flag = 0;
@@ -230,7 +230,7 @@ fastf_t u, v;
 
 	rt_clip_cnurb(&plist, trim, u, v);
 
-	while( RT_LIST_WHILE( clip, cnurb, &plist ) )
+	while( RT_LIST_WHILE( clip, edge_g_cnurb, &plist ) )
 	{
 		RT_LIST_DEQUEUE( &clip->l );
 		
@@ -249,7 +249,7 @@ fastf_t u, v;
 		if( trim_flag == TRIM_ON) break;
 	}
 
-	while( RT_LIST_WHILE( clip, cnurb, &plist) )
+	while( RT_LIST_WHILE( clip, edge_g_cnurb, &plist) )
 	{
 		RT_LIST_DEQUEUE( &clip->l );
 		rt_nurb_free_cnurb( clip );
@@ -312,7 +312,7 @@ int pt_type;
 void
 rt_clip_cnurb( plist, crv, u, v )
 struct rt_list *plist;
-struct cnurb * crv;
+struct edge_g_cnurb * crv;
 fastf_t u,v;
 {
 	fastf_t ds1, dt1;
@@ -320,7 +320,7 @@ fastf_t u,v;
 	int axis, i;
 	fastf_t umin, umax;
 	int coords;
-	struct cnurb * c1, *c2, *tmp;
+	struct edge_g_cnurb * c1, *c2, *tmp;
 	fastf_t m1, m2;
 	int zero_changed;
 	fastf_t *ptr;
@@ -412,17 +412,17 @@ fastf_t u,v;
 
 	/* Translate the 0.0-->1.09 clipping against the real knots */
 
-        m1 = (crv->knot.knots[0] * (1 - umin)) +
-                crv->knot.knots[crv->knot.k_size -1] *  umin;
+        m1 = (crv->k.knots[0] * (1 - umin)) +
+                crv->k.knots[crv->k.k_size -1] *  umin;
 
-        m2 = (crv->knot.knots[0] * (1-umax)) +
-                crv->knot.knots[crv->knot.k_size -1] * umax;
+        m2 = (crv->k.knots[0] * (1-umax)) +
+                crv->k.knots[crv->k.k_size -1] * umax;
 
 	/* subdivide the curve */
-	c1 = (struct cnurb *) rt_nurb_c_xsplit(crv, m1);
-	c2 = rt_nurb_c_xsplit((struct cnurb *) c1->l.forw, m2);
+	c1 = (struct edge_g_cnurb *) rt_nurb_c_xsplit(crv, m1);
+	c2 = rt_nurb_c_xsplit((struct edge_g_cnurb *) c1->l.forw, m2);
 
-	tmp = (struct cnurb *) c1->l.forw;
+	tmp = (struct edge_g_cnurb *) c1->l.forw;
 	RT_LIST_DEQUEUE( &tmp->l);
 	rt_nurb_free_cnurb( tmp );
 	
@@ -446,7 +446,7 @@ fastf_t f;
 
 int
 rt_nurb_uv_dist(trim, u, v)
-struct cnurb * trim;
+struct edge_g_cnurb * trim;
 fastf_t u, v;
 {
 

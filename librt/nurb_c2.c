@@ -30,11 +30,11 @@
 void
 rt_nurb_curvature(cvp, srf, u, v)
 struct curvature *cvp;
-CONST struct snurb * srf;
+CONST struct face_g_snurb * srf;
 fastf_t	u;
 fastf_t v;
 {
-	struct snurb * us, *vs, * uus, * vvs, *uvs;
+	struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
 	fastf_t ue[4], ve[4], uue[4], vve[4], uve[4], se[4];
         fastf_t         E, F, G;                /* First Fundamental Form */
         fastf_t         L, M, N;                /* Second Fundamental form */

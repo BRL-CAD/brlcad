@@ -27,13 +27,13 @@
 #include "nurb.h"
 #include "../librt/debug.h"
 
-struct snurb *
+struct face_g_snurb *
 rt_nurb_project_srf( srf, plane1, plane2)
-CONST struct snurb *srf;
+CONST struct face_g_snurb *srf;
 plane_t plane1, plane2;
 {
 
-	register struct snurb *psrf;
+	register struct face_g_snurb *psrf;
 	register fastf_t *mp1, *mp2;
 	int	n_pt_type;
 	int	rational;
@@ -43,18 +43,18 @@ plane_t plane1, plane2;
 
 	n_pt_type = RT_NURB_MAKE_PT_TYPE( 2, RT_NURB_PT_PROJ, 0);
 
-	psrf = (struct snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
-	    srf->u_knots.k_size, srf->v_knots.k_size,
+	psrf = (struct face_g_snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
+	    srf->u.k_size, srf->v.k_size,
 	    srf->s_size[0], srf->s_size[1], n_pt_type);
 
 	psrf->dir = RT_NURB_SPLIT_COL;
 
-	for ( i = 0; i < srf->u_knots.k_size; i++) {
-		psrf->u_knots.knots[i] = srf->u_knots.knots[i];
+	for ( i = 0; i < srf->u.k_size; i++) {
+		psrf->u.knots[i] = srf->u.knots[i];
 	}
 
-	for ( i = 0; i < srf->v_knots.k_size; i++) {
-		psrf->v_knots.knots[i] = srf->v_knots.knots[i];
+	for ( i = 0; i < srf->v.k_size; i++) {
+		psrf->v.knots[i] = srf->v.knots[i];
 	}
 
 	mp1 = srf->ctl_points;
@@ -83,7 +83,7 @@ plane_t plane1, plane2;
 		mp2 += RT_NURB_EXTRACT_COORDS(psrf->pt_type);
 	}
 
-	return (struct snurb *) psrf;
+	return (struct face_g_snurb *) psrf;
 }
 
 
@@ -107,7 +107,7 @@ struct internal_convex_hull {
 
 void
 rt_nurb_clip_srf( srf, dir, min, max)
-CONST struct snurb *srf;
+CONST struct face_g_snurb *srf;
 int	dir;
 fastf_t *min, *max;
 {
@@ -274,14 +274,14 @@ fastf_t *min, *max;
 /*
  *			R T _ N U R B _ R E G I O N _ F R O M _ S R F
  */
-struct snurb *
+struct face_g_snurb *
 rt_nurb_region_from_srf( srf, dir, param1, param2)
-CONST struct snurb *srf;
+CONST struct face_g_snurb *srf;
 int	dir;
 fastf_t param1, param2;
 {
 	register int	i;
-	struct snurb *region;
+	struct face_g_snurb *region;
 	struct knot_vector new_knots;
 	fastf_t knot_vec[40];
 
@@ -318,13 +318,13 @@ fastf_t param1, param2;
  */
 struct rt_nurb_uv_hit *
 rt_nurb_intersect( srf, plane1, plane2, uv_tol )
-CONST struct snurb * srf;
+CONST struct face_g_snurb * srf;
 plane_t plane1;
 plane_t plane2;
 double	uv_tol;
 {
 	struct rt_nurb_uv_hit * h;
-	struct snurb 	* psrf,
+	struct face_g_snurb 	* psrf,
 			* osrf;
 	int 		dir,
 			sub;
@@ -353,7 +353,7 @@ double	uv_tol;
 	 * but more may be added on as work progresses.
 	 */
 top:
-	while( RT_LIST_WHILE( psrf, snurb, &plist ) )  {
+	while( RT_LIST_WHILE( psrf, face_g_snurb, &plist ) )  {
 		int flat;
 		
 		RT_LIST_DEQUEUE( &psrf->l );
@@ -400,34 +400,34 @@ top:
 			}
 			if ( dir == RT_NURB_SPLIT_ROW)
 			{
-		                smin = (1.0 - smin) * psrf->u_knots.knots[0] +
-                		        smin * psrf->u_knots.knots[
-		                        psrf->u_knots.k_size -1];
-		                smax = (1.0 - smax) * psrf->u_knots.knots[0] +
-		                        smax * psrf->u_knots.knots[
-                		        psrf->u_knots.k_size -1];
+		                smin = (1.0 - smin) * psrf->u.knots[0] +
+                		        smin * psrf->u.knots[
+		                        psrf->u.k_size -1];
+		                smax = (1.0 - smax) * psrf->u.knots[0] +
+		                        smax * psrf->u.knots[
+                		        psrf->u.k_size -1];
 			} else
 			{
-	                        smin = (1.0 - smin) * psrf->v_knots.knots[0] +
-        	                        smin * psrf->v_knots.knots[
-                	                psrf->v_knots.k_size -1];
-                        	smax = (1.0 - smax) * psrf->v_knots.knots[0] +
-                                	smax * psrf->v_knots.knots[
-	                                psrf->v_knots.k_size -1];
+	                        smin = (1.0 - smin) * psrf->v.knots[0] +
+        	                        smin * psrf->v.knots[
+                	                psrf->v.k_size -1];
+                        	smax = (1.0 - smax) * psrf->v.knots[0] +
+                                	smax * psrf->v.knots[
+	                                psrf->v.k_size -1];
 			}
 
 			osrf = psrf;
-			psrf = (struct snurb *)	rt_nurb_region_from_srf(
+			psrf = (struct face_g_snurb *)	rt_nurb_region_from_srf(
 				osrf, dir, smin, smax);
 
 			psrf->dir = dir;
 			rt_nurb_free_snurb(osrf);
 
-			u[0] = psrf->u_knots.knots[0];
-			u[1] = psrf->u_knots.knots[psrf->u_knots.k_size -1];
+			u[0] = psrf->u.knots[0];
+			u[1] = psrf->u.knots[psrf->u.k_size -1];
 
-			v[0] = psrf->v_knots.knots[0];
-			v[1] = psrf->v_knots.knots[psrf->v_knots.k_size -1];
+			v[0] = psrf->v.knots[0];
+			v[1] = psrf->v.knots[psrf->v.k_size -1];
 			
                         if( (u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol)
                         {
@@ -460,7 +460,7 @@ top:
 }
 
 rt_nurb_pbound( srf, vmin, vmax)
-struct snurb * srf;
+struct face_g_snurb * srf;
 point_t vmin, vmax;
 {
 	register fastf_t * ptr;

@@ -71,8 +71,8 @@ main()
 
 interpolate_data()
 {
-	struct snurb srf;
-	struct snurb *srf2, *srf3;
+	struct face_g_snurb srf;
+	struct face_g_snurb *srf2, *srf3;
 	struct knot_vector new_kv;
 
 	rt_nurb_sinterp( &srf, 4, grid, 10, 10 );
@@ -85,14 +85,14 @@ interpolate_data()
 
 #if 0
 	rt_nurb_reverse_srf( &srf );
-	rt_nurb_kvnorm( &srf.u_knots );
-	rt_nurb_kvnorm( &srf.v_knots );
+	rt_nurb_kvnorm( &srf.u );
+	rt_nurb_kvnorm( &srf.v );
 #endif
 
 	/* lets take a look at it.  Refine to 100 points in both directions. */
 	rt_nurb_kvknot( &new_kv, srf.order[0], 0.0, 1.0, 100);
-	srf2 = (struct snurb *) rt_nurb_s_refine( &srf, 0, &new_kv);
-	srf3 = (struct snurb *) rt_nurb_s_refine( srf2, 1, &new_kv);
+	srf2 = (struct face_g_snurb *) rt_nurb_s_refine( &srf, 0, &new_kv);
+	srf3 = (struct face_g_snurb *) rt_nurb_s_refine( srf2, 1, &new_kv);
 
 	/* Draw refined mesh in yellow */
 	pl_color( stdout, 200, 200, 50 );

@@ -27,7 +27,7 @@
 #include "nurb.h"
 
 rt_nurb_reverse_srf( srf )
-struct snurb * srf;
+struct face_g_snurb * srf;
 {
 
 	int i,j,k;
@@ -61,13 +61,13 @@ struct snurb * srf;
 	srf->s_size[0] = col;
 	srf->s_size[1] = row;
 
-	i = srf->u_knots.k_size;
-	srf->u_knots.k_size = srf->v_knots.k_size;
-	srf->v_knots.k_size = i;
+	i = srf->u.k_size;
+	srf->u.k_size = srf->v.k_size;
+	srf->v.k_size = i;
 
-	p_ptr = srf->u_knots.knots;
-	srf->u_knots.knots = srf->v_knots.knots;
-	srf->v_knots.knots = p_ptr;
+	p_ptr = srf->u.knots;
+	srf->u.knots = srf->v.knots;
+	srf->v.knots = p_ptr;
 
 	rt_free((char *) tmp, "temporary storage for transpose");
 }
