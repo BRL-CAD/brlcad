@@ -132,6 +132,7 @@ g/offsetofarray/s//bu_offsetofarray/g
 g/ FUNC_NULL/s// BU_STRUCTPARSE_FUNC_NULL/g
 g/rt_external/s//bu_external/g
 g/RT_EXTERNAL_MAGIC/s//BU_EXTERNAL_MAGIC/g
+g/RT_EXTERN/s//BU_EXTERN/g
 g/RT_INIT_EXTERNAL/s//BU_INIT_EXTERNAL/g
 g/RT_CK_EXTERNAL/s//BU_CK_EXTERNAL/g
 g/rt_dist_pt3_lseg3/s//bn_dist_pt3_lseg3/g
