@@ -554,12 +554,14 @@ struct partition {
  *
  *  Structure for space subdivision.
  *
- *  cn_type is an integer for efficiency of access in rt_shootray()
+ *  cut_type is an integer for efficiency of access in rt_shootray()
  *  on non-word addressing machines.
  */
 union cutter  {
 #define CUT_CUTNODE	1
 #define CUT_BOXNODE	2
+#define CUT_NUBSPTNODE	3
+#define CUT_NUGRIDNODE	4
 	int	cut_type;
 	union cutter *cut_forw;		/* Freelist forward link */
 	struct cutnode  {
@@ -577,7 +579,25 @@ union cutter  {
 		int	bn_len;		/* # of solids in list */
 		int	bn_maxlen;	/* # of ptrs allocated to list */
 	} bn;
+	struct nubsptnode {
+		int	nu_type;
+		fastf_t	nu_min[3];
+		fastf_t	nu_max[3];
+		struct cutnode *first_cut;
+	} nubn;
+	struct nugridnode {
+		int	nu_type;
+		struct nu_axis {
+			fastf_t nu_spos;	/* cell start position */
+			fastf_t	nu_epos;	/* cell end position */
+			fastf_t	nu_width;	/* voxel size (end - start) */
+		} *nu_axis[3];
+		int	 nu_cells_per_axis[3]; /* number of slabs */
+		int	 nu_stepsize[3];       /* number of cells to jump for one step in each axis */
+		union cutter	*nu_grid;	 /* 3-D array of boxnodes */
+	} nugn;
 };
+
 #define CUTTER_NULL	((union cutter *)0)
 
 /*
@@ -1138,24 +1158,17 @@ struct rt_i {
 	struct bn_tol	rti_tol;	/* Tolerances for this model */
 	struct bu_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
 	struct bu_ptbl	rti_resources;	/* list of 'struct resource'es encountered */
-	struct nu_axis	*rti_nu_axis[3];           /* arrays of slabs slicing space into cells */
-	int		 rti_nu_cells_per_axis[3]; /* number of slabs */
-	int		 rti_nu_stepsize[3];       /* number of cells to jump for one step in each axis */
-	union cutter	*rti_nu_grid;	 /* array of boxnodes */
 	double		 rti_nu_gfactor; /* constant in numcells computation */
 };
+
+#define RT_NU_GFACTOR_DEFAULT	1.5	 /* see rt_cut_it() for a description
+					    of this */
 	
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/* magic # for integrity check */
 
 #define RT_CHECK_RTI(_p)	BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
 #define RT_CK_RTI(_p)		BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
-
-struct nu_axis {
-	fastf_t		nu_spos;	/* cell start position */
-	fastf_t		nu_epos;	/* cell end position */
-	fastf_t		nu_width;	/* voxel size (end - start) */
-};
 
 #define RT_PART_NUGRID	0
 #define	RT_PART_NUBSPT	1
@@ -1385,6 +1398,11 @@ struct rt_functab {
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
+
+#define RT_CLASSIFY_UNIMPLEMENTED	0
+#define RT_CLASSIFY_INSIDE		1
+#define RT_CLASSIFY_OVERLAPPING		2
+#define RT_CLASSIFY_OUTSIDE		3
 
 /*********************************************************************************
  *	The following section is an exact copy of what was previously "nmg_rt.h" *
