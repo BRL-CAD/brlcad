@@ -777,6 +777,7 @@ char			*buf;
 	double	rt_elapsed_time;
 	double	fb_elapsed_time;
 	double	ck_elapsed_time;
+	int	reproj_percent = 0;
 
 	RT_CK_RTI(rtip);
 
@@ -854,7 +855,9 @@ char			*buf;
 	view_2init( &ap );
 	print_on = saved_print_on;	/* re-enable bu_log */
 
-bu_log("Reprojected %d of %d pixels from previous frame\n", reproj_cur, reproj_max);
+	if( reproj_cur > 0 && reproj_max > 0 )
+		reproj_percent = (int)(((double)reproj_cur)/reproj_max*100);
+bu_log("reproj_percent %d%%\n", reproj_percent);
 
 	rtip->nshots = 0;
 	rtip->nmiss_model = 0;
@@ -944,11 +947,12 @@ fp->ff_dist, V3ARGS(fp->ff_hitpt) );
 	if(debug) bu_log("done!\n");
 
 	/* Build up reply message */
-	sprintf(obuf, "%d %g %g %g",
+	sprintf(obuf, "%d %g %g %g %d",
 		npsw,
 		rt_elapsed_time * 1000,
 		fb_elapsed_time * 1000,
-		ck_elapsed_time * 1000 );
+		ck_elapsed_time * 1000,
+		reproj_percent );
 	if( pkg_send( RTSYNCMSG_DONE, obuf, strlen(obuf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send RTSYNCMSG_DONE failed\n");
 		exit(12);
