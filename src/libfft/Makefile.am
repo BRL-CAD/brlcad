@@ -84,7 +84,7 @@ irfft512.c:	ifftc
 
 
 vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh fft_version "BRL-CAD FFT Library" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh fft_version "BRL-CAD FFT Library" > $@
 
 clean-local:
-	${RM} ${BUILT_SOURCES}
+	@RM@ ${BUILT_SOURCES}
