@@ -5,29 +5,22 @@
  *	Dynamicly modify Ikonas Zoom and Window parameters,
  *	using VI and/or EMACS-like keystrokes on a regular terminal.
  *
- * Original Version -
- *	Bob Suckling, BRL
+ *  Authors -
+ *	Bob Suckling
+ *	Michael John Muuss
+ *	Gary S. Moss
  *
- * Enhancements -
- *	Ported to VAX, simplified internals somewhat.
- *	Mike Muuss, BRL.  03/22/84.
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-/*
-	Conversion to generic frame buffer routine using 'libfb'.
-	In the process, the name was changed to fbzoom from ikzoom.
-	Gary S. Moss, BRL. 03/13/85.
-
-	SCCS id:	@(#) fbzoom.c	1.8
-	Last edit: 	9/10/85 at 09:58:34
-	Retrieved: 	8/13/86 at 03:15:21
-	SCCS archive:	/m/cad/fb_utils/RCS/s.fbzoom.c
-*/
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) fbzoom.c	1.8	last edit 9/10/85 at 09:58:34";
 #endif
 
 #include <stdio.h>	
@@ -38,12 +31,15 @@ char	sccsTag[] = "@(#) fbzoom.c	1.8	last edit 9/10/85 at 09:58:34";
 #define MinZoom		(1)
 
 /* Pan limits.	*/
-#define MaxPan		_fbsize
+#define MaxPan		fb_getwidth(fbp)
 #define MinPan		(0)
 
 static int PanFactor;			/* Speed with whitch to pan.	*/
 static int zoom;			/* Zoom Factor.			*/
 static int xPan, yPan;			/* Pan Location.		*/
+
+static int fbsize = 512;
+FBIO *fbp;
 
 main(argc, argv )
 char **argv;
@@ -53,11 +49,11 @@ char **argv;
 		(void) fprintf( stderr, "Usage : fbzoom	[-h]\n" );
 		return	1;
 		}
-	if( fbopen( NULL, APPEND ) == -1 )
+	if( (fbp = fb_open( NULL, fbsize, fbsize )) == NULL )
 		return	1;
 	zoom = 1;
-	xPan = _fbsize/2;
-	yPan = _fbsize/2 - 1;
+	xPan = fb_getwidth(fbp)/2;
+	yPan = fb_getheight(fbp)/2 - 1;
 
 	/* Set RAW mode */
 	save_Tty( 0 );
@@ -67,8 +63,8 @@ char **argv;
 	do
 		{
 		PanFactor = 40 / zoom;
-		(void) fbzoom( zoom, zoom );
-		fbwindow( xPan, yPan );
+		(void) fb_zoom( fbp, zoom, zoom );
+		fb_window( fbp, xPan, yPan );
 		(void) fprintf( stdout,
 				"zoom=%d, Center Pixel is %d,%d            \r",
 				zoom, xPan, yPan
@@ -79,8 +75,9 @@ char **argv;
 
 	reset_Tty( 0 );
 	(void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
-	(void) fbzoom( zoom, zoom );
-	(void) fbwindow( xPan, yPan );
+	(void) fb_zoom( fbp, zoom, zoom );
+	(void) fb_window( fbp, xPan, yPan );
+	(void) fb_close( fbp );
 	return	0;
 	}
 
@@ -130,8 +127,8 @@ doKeyPad()
 	case 'r' :	
 	case 'R' :				/* Reset */
 		zoom = 1;
-		xPan = _fbsize/2;
-		yPan = _fbsize/2 - 1;
+		xPan = fb_getwidth(fbp)/2;
+		yPan = fb_getheight(fbp)/2 - 1;
 		break;
 	case ctl(v) :
 	case 'b' :				/* zoom BIG.	*/
@@ -198,7 +195,7 @@ register char	**argv;
 		switch( c )
 			{
 			case 'h' : /* High resolution frame buffer.	*/
-				fbsetsize( 1024 );
+				fbsize = 1024;
 				break;
 			case '?' :
 				return	0;
