@@ -308,6 +308,7 @@ dpix_pix_SOURCES = dpix-pix.c
 #pix_ci_LDADD = @X_LIBS@
 
 pl_X_SOURCES = pl-X.c
+pl_X_CFLAGS = @X_CFLAGS@
 pl_X_LDADD = @X_LIBS@ $(BU)
 
 #pl_X10_SOURCES = pl-X10.c

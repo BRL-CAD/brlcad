@@ -48,7 +48,7 @@ dnl 	*)
 dnl 		TCL_LIBS="-ltcl8.4"
 dnl 		;;
 dnl esac
-TCL_LIBS='${top_builddir}'"/libtcl8.4/libtcl.la -ldl -lm"
+TCL_LIBS='${top_builddir}'"/libtcl8.4/libtcl.la @DL@ -lm"
 TCL=libtcl8.4
 AC_SUBST(TCL)
 AC_SUBST(TCL_LIBS)
@@ -64,7 +64,7 @@ fi
 echo "TCL_BUILD_CFLAGS = $TCL_BUILD_CFLAGS"
 AC_SUBST(TCL_BUILD_CFLAGS)
 
-ITCL_LIBS="${prefix}/libitcl3.2/itcl/libitcl.la"
+ITCL_LIBS='${top_builddir}'"/libitcl3.2/itcl/libitcl.la"
 ITCL_VERSION="3.2"
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
@@ -77,16 +77,38 @@ AC_SUBST(TK)
 AC_SUBST(TK_LIBS)
 AC_SUBST(TK_LIBRARY)
 
-ITK_LIBS="${prefix}/libitcl3.2/itk/libitk.la"
+ITK_LIBS='${top_builddir}'"/libitcl3.2/itk/libitk.la"
 AC_SUBST(ITK_LIBS)
 
-PNG_LIBS="-lpng -lz"
+PNG_LIBS='${top_builddir}'"/libpng/libpng.la "'${top_builddir}'"/libz/libz.la"
 AC_SUBST(PNG_LIBS)
 
 dnl headers
 AC_HEADER_STDC
 AC_CHECK_HEADERS(config.hfloat.h getopt.h limits.h memory.h stdarg.h stdlib.h string.h sys/ioctl_compat.h sys/machd.h sys/mman.h sys/select.h sys/socket.h sys/time.h termcap.h termios.h time.h unistd.h varargs.h xosdefs.h limits.h)
 AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h)
+AC_STRUCT_ST_BLKSIZE
+
+dnl ============================================================
+dnl union wait testing from tcl8.4's configure.in, should be revamped?
+AC_MSG_CHECKING([union wait])
+AC_CACHE_VAL(tcl_cv_union_wait,
+    AC_TRY_LINK([#include <sys/types.h>
+#include <sys/wait.h>], [
+union wait x;
+WIFEXITED(x);           /* Generates compiler error if WIFEXITED
+                         * uses an int. */
+    ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
+AC_MSG_RESULT($tcl_cv_union_wait)
+if test $tcl_cv_union_wait = no; then
+    AC_DEFINE(NO_UNION_WAIT,,Lacking a "union wait")
+fi
+dnl ============================================================
+
+AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld",AC_ERROR(No dynamic loader found)))])
+echo "DL is: $DL"
+AC_SUBST(DL)
+
 
 X_CFLAGS="-I/usr/X11R6/include"
 AC_SUBST(X_CFLAGS)
@@ -145,36 +167,37 @@ dnl REGEX
 dnl BSDGETTIMEOFDAY
 
 AC_OUTPUT([
+	Makefile
 	anim/Makefile
 	brlman/Makefile
 	burst/Makefile
 	bwish/Makefile
 	conv/Makefile
 	doc/Makefile
-	fbed/Makefile
 	fb/Makefile
+	fbed/Makefile
 	fbserv/Makefile
 	gtools/Makefile
 	h/Makefile
 	html/Makefile
-	html/manuals/Anim_Tutorial/Makefile
-	html/manuals/cadwidgets/Makefile
-	html/manuals/libbu/Makefile
-	html/manuals/libdm/Makefile
-	html/manuals/librt/Makefile
-	html/manuals/Makefile
-	html/manuals/mged/animmate/Makefile
-	html/manuals/mged/Makefile
-	html/manuals/ReleaseNotes/Makefile
-	html/manuals/shaders/Makefile
 	html/ReleaseNotes/Makefile
 	html/ReleaseNotes/Rel5.0/Makefile
 	html/ReleaseNotes/Rel5.0/Summary/Makefile
 	html/ReleaseNotes/Rel6.0/Makefile
+	html/manuals/Anim_Tutorial/Makefile
+	html/manuals/Makefile
+	html/manuals/ReleaseNotes/Makefile
+	html/manuals/cadwidgets/Makefile
+	html/manuals/libbu/Makefile
+	html/manuals/libdm/Makefile
+	html/manuals/librt/Makefile
+	html/manuals/mged/Makefile
+	html/manuals/mged/animmate/Makefile
+	html/manuals/shaders/Makefile
 	irprep/Makefile
+	iwidgets4.0.1/Makefile
 	iwidgets4.0.1/generic/Makefile
 	iwidgets4.0.1/iwidgets.tcl
-	iwidgets4.0.1/Makefile
 	iwidgets4.0.1/pkgIndex.tcl
 	libbn/Makefile
 	libbu/Makefile
@@ -182,57 +205,58 @@ AC_OUTPUT([
 	libdm/Makefile
 	libfb/Makefile
 	libfft/Makefile
+	libitcl3.2/Makefile
+	libitcl3.2/itcl/Makefile
 	libitcl3.2/itcl/doc/Makefile
 	libitcl3.2/itcl/generic/Makefile
 	libitcl3.2/itcl/library/Makefile
-	libitcl3.2/itcl/Makefile
 	libitcl3.2/itcl/unix/Makefile
+	libitcl3.2/itk/Makefile
 	libitcl3.2/itk/doc/Makefile
 	libitcl3.2/itk/generic/Makefile
 	libitcl3.2/itk/library/Makefile
-	libitcl3.2/itk/Makefile
 	libitcl3.2/itk/unix/Makefile
-	libitcl3.2/Makefile
 	liboptical/Makefile
 	liborle/Makefile
 	libpkg/Makefile
+	libpng/Makefile
 	librt/Makefile
 	libsysv/Makefile
+	libtcl8.4/Makefile
 	libtcl8.4/doc/Makefile
 	libtcl8.4/generic/Makefile
+	libtcl8.4/library/Makefile
 	libtcl8.4/library/dde/Makefile
 	libtcl8.4/library/encoding/Makefile
-	libtcl8.4/library/http1.0/Makefile
 	libtcl8.4/library/http/Makefile
-	libtcl8.4/library/Makefile
+	libtcl8.4/library/http1.0/Makefile
 	libtcl8.4/library/msgcat/Makefile
 	libtcl8.4/library/opt/Makefile
 	libtcl8.4/library/reg/Makefile
 	libtcl8.4/library/tcltest/Makefile
-	libtcl8.4/Makefile
 	libtcl8.4/unix/Makefile
 	libtermio/Makefile
+	libtk8.4/Makefile
 	libtk8.4/doc/Makefile
 	libtk8.4/generic/Makefile
-	libtk8.4/Makefile
-	libtk8.4/unix/Makefile
 	libtk8.4/library/Makefile
 	libtk8.4/library/demos/Makefile
 	libtk8.4/library/msgs/Makefile
+	libtk8.4/unix/Makefile
 	libutahrle/Makefile
 	libwdb/Makefile
 	libz/Makefile
-	Makefile
 	mged/Makefile
 	rt/Makefile
 	sh/Makefile
 	sig/Makefile
+	tclscripts/Makefile
 	tclscripts/geometree/Makefile
 	tclscripts/lib/Makefile
-	tclscripts/Makefile
 	tclscripts/mged/Makefile
 	tclscripts/nirt/Makefile
 	tclscripts/pl-dm/Makefile
+	tclscripts/rtwizard/Makefile
 	tclscripts/rtwizard/examples/Makefile
 	tclscripts/rtwizard/examples/PictureTypeA/Makefile
 	tclscripts/rtwizard/examples/PictureTypeB/Makefile
@@ -241,7 +265,6 @@ AC_OUTPUT([
 	tclscripts/rtwizard/examples/PictureTypeE/Makefile
 	tclscripts/rtwizard/examples/PictureTypeF/Makefile
 	tclscripts/rtwizard/lib/Makefile
-	tclscripts/rtwizard/Makefile
 	tclscripts/util/Makefile
 	tools/Makefile
 	util/Makefile

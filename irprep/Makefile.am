@@ -24,12 +24,14 @@ firpass_SOURCES = firpass.c subroutines.c
 
 irdisp_LDADD = ${FB}
 irdisp_SOURCES = irdisp.c
+irdisp_CFLAGS = @X_CFLAGS@
 
 ir_sgi_LDADD = ${FB}
 ir_sgi_SOURCES = ir-sgi.c
 
 ir_X_LDADD = @X_LIBS@
 ir_X_SOURCES = ir-X.c
+ir_X_CFLAGS = @X_CFLAGS@
 
 secpass_LDADD = ${RT} ${BN} ${BU}
 secpass_SOURCES = secpass.c subroutines.c

@@ -7,6 +7,7 @@ SUBDIRS=\
 	libitcl3.2\
 	iwidgets4.0.1\
 	libz\
+	libpng\
 	libbn\
 	libbu\
 	libcursor\

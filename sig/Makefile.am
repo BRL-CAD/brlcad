@@ -22,6 +22,7 @@ f_d_SOURCES = f-d.c
 f_i_SOURCES = f-i.c
 i_f_SOURCES = i-f.c
 c_d_SOURCES = c-d.c
+c_d_LDADD = -lm
 i_a_SOURCES = i-a.c
 u_a_SOURCES = u-a.c
 u_d_SOURCES = u-d.c
@@ -56,6 +57,7 @@ umod_LDADD = -lm
 #  Misc
 
 dstat_SOURCES = dstat.c
+dstat_LDADD = -lm
 dsel_SOURCES = dsel.c
 istat_SOURCES = istat.c
 istat_LDADD = -lm

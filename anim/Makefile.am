@@ -3,7 +3,7 @@
 bin_PROGRAMS = anim_cascade anim_fly anim_hardtrack anim_keyread anim_lookat anim_offset anim_orient anim_script anim_sort anim_time anim_track anim_turn chan_add chan_mult chan_permute
 
 BN=$(top_builddir)/libbn/libbn.la $(BU)
-BU=$(top_builddir)/libbu/libbu.la @TCL_LIBS@ @PTHREAD_LIBS@ -lm 
+BU=$(top_builddir)/libbu/libbu.la @TCL_LIBS@ @PTHREAD_LIBS@ -lm @DL@
 
 anim_cascade_SOURCES = anim_cascade.c 
 anim_cascade_LDADD = $(BN) $(BU)
