@@ -7,6 +7,7 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
 	Cakefile.defs \
 	Description.txt \
+	batch-indent-region.el \
 	enigma
 
 SUBDIRS = \
@@ -16,8 +17,15 @@ SUBDIRS = \
 
 DISTCLEANFILES = \
 	COPYING.backup \
+	compile \
+	config.guess \
 	config.guess.backup \
+	config.sub \
 	config.sub.backup \
-	ltmain.sh.backup	
+	install-sh \
+	ltmain.sh \
+	ltmain.sh.backup \
+	missing \
+	mkinstalldirs
 
 MAINTAINERCLEANFILES = Makefile.in
