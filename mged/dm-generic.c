@@ -35,6 +35,7 @@
 #include "./mged_dm.h"
 
 extern point_t e_axes_pos;
+extern point_t curr_e_axes_pos;
 extern int scroll_select();		/* defined in scroll.c */
 extern int menu_select();		/* defined in menu.c */
 extern void rect_view2image();		/* defined in rect.c */
@@ -246,7 +247,7 @@ end:
 	  edobj = BE_O_XY;
 	}
 
-	MAT4X3PNT(view_pt, view_state->vs_model2view, e_axes_pos);
+	MAT4X3PNT(view_pt, view_state->vs_model2view, curr_e_axes_pos);
 	view_pt[X] = fx;
 	view_pt[Y] = fy;
 	MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
