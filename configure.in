@@ -314,7 +314,9 @@ AC_OUTPUT([
 	off/Makefile
 	patch/Makefile
 	pro-engineer/Makefile
+	pro-engineer/resource/Makefile
 	pro-engineer/sgi_mips4/Makefile
+	pro-engineer/sgi_mips4/mk
 	pro-engineer/text/Makefile
 	remrt/Makefile
 	rt/Makefile

@@ -1,6 +1,6 @@
 # $Id$
 
-SUBDIRS = sgi_mips4 text
+SUBDIRS = sgi_mips4 text resource
 
 stuffdir = $(prefix)/pro-engineer
 stuff_DATA = install.doc protk.dat
