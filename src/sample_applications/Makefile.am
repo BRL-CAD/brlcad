@@ -1,13 +1,15 @@
 # $Id$
 
-stuffdir = $(prefix)/sample_applications
+#
+# DO NOT EDIT -- THIS DIRECTORY IS GOING AWAY
+# put/leave your example code with related code (e.g. rtexample in src/rt)
+#
+
+stuffdir = $(SAMPLE_APPLICATIONS_DIR)
  
 stuff_DATA = \
 	debug.h \
-	$(top_srcdir)/src/conv/g-xxx.c \
-	$(top_srcdir)/src/conv/g-xxx_facets.c \
-	pl-dm.c \
-	rtexample.c
+	pl-dm.c
 
 EXTRA_DIST = \
 	$(stuff_DATA) \
