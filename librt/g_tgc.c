@@ -1574,7 +1574,6 @@ union record	*rp;
 register mat_t	mat;
 struct directory *dp;
 {
-#if 0
 	register int		i;
 	LOCAL fastf_t		top[16*3];
 	struct vertex		*vtop[16+1];
@@ -1583,6 +1582,11 @@ struct directory *dp;
 	LOCAL vect_t		work;		/* Vec addition work area */
 	LOCAL fastf_t		points[3*8];
 	LOCAL struct tgc_internal	ti;
+	struct faceuse		*outfaceuses[2*16+2];
+	struct vertex		*vertlist[4];
+	struct edgeuse		*eu, *eu2;
+	int			face;
+	plane_t			plane;
 
 	if( tgc_import( &ti, rp, mat ) < 0 )  return;
 
@@ -1595,64 +1599,67 @@ struct directory *dp;
 		vbottom[i] = (struct vertex *)0;
 	}
 
-	/* Create the top face topology */
-	if( nmg_mkface1(s) )  goto fail;
-	vtop[0] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
+	/* Create the top face topology.  Verts must go clockwise */
+	outfaceuses[0] = nmg_cface(s, (struct vertex **)NULL, 16);
+	for (eu = outfaceuses[0]->lu_p->down.eu_p->next, i = 0 ;
+	    i < 16 ; ++i, eu = eu->next)
+		vtop[i] = eu->vu_p->v_p;
 
-	for( i=1; i<16; i++ )  {
-		if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
-		vtop[i] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
-	}
+	/* Create the bottom face topology.  Verts must go ccw */
+	outfaceuses[1] = nmg_cface(s, (struct vertex **)NULL, 16);
+	for (eu = outfaceuses[1]->lu_p->down.eu_p->next, i = 16-1 ;
+	    i >= 0 ; --i, eu = eu->next)
+		vbottom[i] = eu->vu_p->v_p;
 
-	/* Duplicate [0] as [16] */
+	/* Duplicate [0] as [16] to handle end condition, below */
 	vtop[16] = vtop[0];
-	/* Build topology for 16 side faces hanging down from the top one */
+	vbottom[16] = vbottom[0];
+
+	/* Build topology for all the triangular side faces (2*16 of them)
+	 * hanging down from the top face to the bottom face
+	 * XXX which way around?
+	 */
 	for( i=0; i<16; i++ )  {
-		if( nmg_mkfaceN(s, vtop[i] ) )  goto fail;
+		vertlist[0] = vtop[i];
+		vertlist[1] = vbottom[i];
+		vertlist[2] = vbottom[i+1];
+		outfaceuses[2+2*i] = nmg_cface(s, vertlist, 3);
 
-		/* Move down */
-		if( vbottom[i] )  {
-			if( nmg_insfacev( vbottom[i], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
-		} else {
-			if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
-			vbottom[i] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
-		}
-		if( i==0 )  vbottom[16] = vbottom[0];
-
-		/* Move left */
-		if( vbottom[i+1] )  {
-			if( nmg_insfacev( vbottom[i+1], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
-		} else {
-			if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
-			vbottom[i+1] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
-		}
-
-		/* Return to the top */
-		if( nmg_insfacev( vtop[i+1], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
+		vertlist[0] = vtop[i];
+		vertlist[1] = vbottom[i+1];
+		vertlist[2] = vtop[i+1];
+		outfaceuses[2+2*i+1] = nmg_cface(s, vertlist, 3);
 	}
 
-	/* Build topology for bottom plate.  Go in reverse direction */
-	if( nmg_mkfaceN(s, vbottom[15]) )  goto fail;
-	for( i=15-1; i>=0; i-- )  {
-		if( nmg_insfacev( vbottom[i], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
-	}
-
-	/* Supply the top geometry */
+	/* Associate the vertex geometry */
 	for( i=0; i<16; i++ )  {
 		NMG_CK_VERTEX(vtop[i]);
-		if( nmg_vertex_gv( vtop[i], &top[3*i] ) )  goto fail;
+		nmg_vertex_gv( vtop[i], &top[3*i] );
 	}
-
-	/* Supply the bottom geometry */
 	for( i=0; i<16; i++ )  {
 		NMG_CK_VERTEX(vbottom[i]);
-		if( nmg_vertex_gv( vbottom[i], &bottom[3*i] ) )  goto fail;
+		nmg_vertex_gv( vbottom[i], &bottom[3*i] );
 	}
 
+	/* Associate the face geometry */
+	for (i=0 ; i < 2*16+2 ; ++i) {
+		eu = outfaceuses[i]->lu_p->down.eu_p;
+		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
+					eu->next->vu_p->v_p->vg_p->coord,
+					eu->last->vu_p->v_p->vg_p->coord)) {
+			rt_log("At %d in %s\n", __LINE__, __FILE__);
+			rt_bomb("cannot make plane equation\n");
+		}
+		else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
+			rt_log("Bad plane equation from rt_mk_plane_3pts at %d in %s\n",
+					__LINE__, __FILE__);
+			rt_bomb("BAD Plane Equation");
+		}
+		else nmg_face_g(outfaceuses[i], plane);
+	}
+
+	/* Glue the edges of different outward pointing face uses together */
+	nmg_gluefaces( outfaceuses, 2*16+2 );
+
 	return;
-fail:
-	rt_log("tgc_tess: failure\n");
-#else
-	nul_tess( s, rp, mat, dp );
-#endif
 }

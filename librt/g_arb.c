@@ -849,11 +849,14 @@ register union record	*rp;
 register mat_t		mat;
 struct directory	*dp;
 {
-#if 0
 	struct arb_internal	ai;
-	struct edgeuse		*eu;
-	struct vertex		*verts[8];
 	register int		i;
+	struct faceuse		*outfaceuses[6];
+	struct vertex		*verts[8];
+	struct vertex		*vertlist[4];
+	struct edgeuse		*eu, *eu2;
+	int			face;
+	plane_t			plane;
 
 	if( arb_import( &ai, rp, mat ) < 0 )  {
 		rt_log("arb_tess(%s): import failure\n", dp->d_namep);
@@ -863,82 +866,71 @@ struct directory	*dp;
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
 	/* Build all 6 faces of the ARB */
-	if(
-	    arb_t2( s, verts, 0, 1, 2, 3 ) < 0 ||
-	    arb_t2( s, verts, 3, 7, 4, 0 ) < 0 ||
-	    arb_t2( s, verts, 4, 7, 6, 5 ) < 0 ||
-	    arb_t2( s, verts, 1, 5, 6, 2 ) < 0 ||
-	    arb_t2( s, verts, 0, 1, 5, 4 ) < 0 ||
-	    arb_t2( s, verts, 2, 3, 7, 6 ) < 0
 
-	)  {
-	    	rt_log("arb_tess(%s): NMG failure\n", dp->d_namep);
-	    	return;
+	/* make top */
+	outfaceuses[0] = nmg_cface(s, (struct vertex **)NULL, 4);
+	for (eu = outfaceuses[0]->lu_p->down.eu_p->next, i = 0 ;
+	    i < 4 ; ++i, eu = eu->next)
+		verts[i] = eu->vu_p->v_p;
+
+	/* make bottom */
+	outfaceuses[1] = nmg_cface(s, (struct vertex **)NULL, 4);
+	for (eu = outfaceuses[1]->lu_p->down.eu_p->next, i = 7 ;
+	    i > 3 ; --i, eu = eu->next)
+		verts[i] = eu->vu_p->v_p;
+
+	/* make sure that vertices are listed in clockwise fashion when
+	 * viewed from the outside of the face.  In this way the face
+	 * geometry will be properly computed.
+	 * ????? XXX
+	 */
+	vertlist[0] = verts[0];
+	vertlist[1] = verts[1];
+	vertlist[2] = verts[5];
+	vertlist[3] = verts[4];
+	outfaceuses[2] = nmg_cface(s, vertlist, 4);
+
+	vertlist[0] = verts[0];
+	vertlist[1] = verts[4];
+	vertlist[2] = verts[7];
+	vertlist[3] = verts[3];
+	outfaceuses[3] = nmg_cface(s, vertlist, 4);
+
+	vertlist[0] = verts[2];
+	vertlist[1] = verts[6];
+	vertlist[2] = verts[5];
+	vertlist[3] = verts[1];
+	outfaceuses[4] = nmg_cface(s, vertlist, 4);
+
+	vertlist[0] = verts[2];
+	vertlist[1] = verts[3];
+	vertlist[2] = verts[7];
+	vertlist[3] = verts[6];
+	outfaceuses[5] = nmg_cface(s, vertlist, 4);
+
+	/* Associate vertex geometry */
+	for( i=0; i<8; i++ )
+		nmg_vertex_gv(verts[i], &ai.arbi_pt[3*i]);
+
+	/* Associate face geometry */
+	for (i=0 ; i < 6 ; ++i) {
+		eu = outfaceuses[i]->lu_p->down.eu_p;
+		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
+					eu->next->vu_p->v_p->vg_p->coord,
+					eu->last->vu_p->v_p->vg_p->coord)) {
+			rt_log("At %d in %s\n", __LINE__, __FILE__);
+			rt_bomb("cannot make plane equation\n");
+		}
+		else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
+			rt_log("Bad plane equation from rt_mk_plane_3pts at %d in %s\n",
+					__LINE__, __FILE__);
+			rt_bomb("BAD Plane Equation");
+		}
+		else nmg_face_g(outfaceuses[i], plane);
 	}
 
-	/* Now, associate some geometry with the vertices */
-	for( i=0; i < 8; i++ )  {
-		if( !verts[i] )  continue;
-		if( verts[i]->magic != NMG_VERTEX_MAGIC )  {
-			rt_log("arb_tess: bad verts magic\n");
-			continue;
-		}
-		if( nmg_vertex_gv( verts[i], &ai.arbi_pt[3*i] ) ) {
-			rt_log("arb_tess: nmg_vertex_gv fail\n");
-			return;
-		}
-	}
+	/* Glue the edges of different outward pointing face uses together */
+	nmg_gluefaces( outfaceuses, 6 );
+
 	return;
-#else
-	nul_tess( s, rp, mat, dp );
-#endif
 }
-
-#if 0
-/*
- *			A R B _ T 2
- *
- *  XXX need to see if an edge already exists between two vertices.
- */
-HIDDEN int
-arb_t2( s, verts, a, b, c, d )
-struct shell	*s;
-struct vertex	*verts[];
-int		a, b, c, d;
-{
-
-	nmg_mf( nmg_mlv(s) );
-	if( verts[a] == 0 )  {
-		/* First vertex better exist on all but 1st call! */
-		if( nmg_mkface1(s) ) goto fail;
-		verts[a] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
-	} else {
-		if( nmg_mkfaceN(s, verts[a]) ) goto fail;
-		/* reused verts[a] */
-	}
-
-	if( verts[b] )  {
-		if( nmg_insfacev( verts[b], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
-	} else {
-		if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
-		verts[b] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
-	}
-
-	if( verts[c] )  {
-		if( nmg_insfacev( verts[c], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
-	} else {
-		if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
-		verts[c] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
-	}
-
-	if( verts[d] )  {
-		if( nmg_insfacev( verts[d], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
-	} else {
-		if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
-		verts[d] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
-	}
-	return(0);			/* OK */
-fail:
-	return(-1);
-}
-#endif
