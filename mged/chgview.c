@@ -230,6 +230,11 @@ f_list()
 
 		for( i=0; i < es_nlines; i++ )
 			(void)printf("%s\n",&es_display[ES_LINELEN*i]);
+
+		/* If in solid edit, re-compute solid params */
+		if(state == ST_S_EDIT)
+			pr_solid(&es_rec.s);
+
 		return;
 	}
 
