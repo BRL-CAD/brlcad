@@ -49,6 +49,10 @@ is being invoked from a shell script created by an
 .IR mged (1)
 \fIsaveview\fR command.
 .LP
+A color vector display of ray-model intersections can be written to
+.I rtg3.pl
+and displayed with \fIpl_fb\fR or \fIpl_sgi\fR.
+.LP
 The following options are recognized.
 .TP
 .B \-s#
@@ -73,6 +77,13 @@ Conflicts with
 .B \-a
 and
 .B \-e
+.TP
+.B \-g#
+Select grid cell width.
+.TP
+.B \-G#
+Select grid cell height.  If \fInot\fR specified, cell height equals
+cell width.
 .TP
 .B \-U #
 sets the Boolean variable
