@@ -333,7 +333,7 @@ double				val;
   }
 
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*2047.0);
+  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*GED_MAX);
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 }
@@ -379,9 +379,14 @@ int y_top;
 
       switch(mptr->scroll_val){
       case 0:
-	if(second_menu)
-	  f = (double)dv_xadc / 2047.0;
-	else {
+	if (second_menu) {
+	  f = (double)dv_xadc * INV_GED;
+
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->fp_slider_text2[0],
+			 color_scheme->fp_slider_text2[1],
+			 color_scheme->fp_slider_text2[2], 1);
+	} else {
 	  if(EDIT_TRAN && mged_variables->transform == 'e'){
 	    switch(mged_variables->coords){
 	    case 'm':
@@ -400,7 +405,10 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text1[0],
+			   color_scheme->fp_slider_text1[1],
+			   color_scheme->fp_slider_text1[2], 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -414,14 +422,22 @@ int y_top;
 		f = absolute_tran[X];
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text2[0],
+			   color_scheme->fp_slider_text2[1],
+			   color_scheme->fp_slider_text2[2], 1);
 	  }
 	}
 	break;
       case 1:
-	if(second_menu)
-	  f = (double)dv_yadc / 2047.0;
-	else {
+	if (second_menu) {
+	  f = (double)dv_yadc * INV_GED;
+
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->fp_slider_text2[0],
+			 color_scheme->fp_slider_text2[1],
+			 color_scheme->fp_slider_text2[2], 1);
+	} else {
 	  if(EDIT_TRAN && mged_variables->transform == 'e'){
 	    switch(mged_variables->coords){
 	    case 'm':
@@ -439,7 +455,10 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text1[0],
+			   color_scheme->fp_slider_text1[1],
+			   color_scheme->fp_slider_text1[2], 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -453,14 +472,22 @@ int y_top;
 		f = absolute_tran[Y];
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text2[0],
+			   color_scheme->fp_slider_text2[1],
+			   color_scheme->fp_slider_text2[2], 1);
 	  }
 	}
 	break;
       case 2:
-	if(second_menu)
-	  f = (double)dv_1adc / 2047.0;
-	else {
+	if (second_menu) {
+	  f = (double)dv_1adc * INV_GED;
+
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->fp_slider_text2[0],
+			 color_scheme->fp_slider_text2[1],
+			 color_scheme->fp_slider_text2[2], 1);
+	} else {
 	  if(EDIT_TRAN && mged_variables->transform == 'e'){
 	    switch(mged_variables->coords){
 	    case 'm':
@@ -478,7 +505,10 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text1[0],
+			   color_scheme->fp_slider_text1[1],
+			   color_scheme->fp_slider_text1[2], 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -492,35 +522,54 @@ int y_top;
 		f = absolute_tran[Z];
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text2[0],
+			   color_scheme->fp_slider_text2[1],
+			   color_scheme->fp_slider_text2[2], 1);
 	  }
 	}
 	break;
       case 3:
-	if(second_menu)
-	  f = (double)dv_2adc / 2047.0;
-	else {
+	if (second_menu) {
+	  f = (double)dv_2adc * INV_GED;
+
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->fp_slider_text2[0],
+			 color_scheme->fp_slider_text2[1],
+			 color_scheme->fp_slider_text2[2], 1);
+	} else {
 	  if(EDIT_SCALE && mged_variables->transform == 'e'){
 	    if(mged_variables->rateknobs)
 	      f = edit_rate_scale;
 	    else
 	      f = edit_absolute_scale;
 
-	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text1[0],
+			   color_scheme->fp_slider_text1[1],
+			   color_scheme->fp_slider_text1[2], 1);
 	  }else{
 	    if(mged_variables->rateknobs)
 	      f = rate_scale;
 	    else
 	      f = absolute_scale;
 
-	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text2[0],
+			   color_scheme->fp_slider_text2[1],
+			   color_scheme->fp_slider_text2[2], 1);
 	  }
 	}
 	break;
       case 4:
-	if(second_menu)
-	  f = (double)dv_distadc / 2047.0;
-	else {
+	if (second_menu) {
+	  f = (double)dv_distadc * INV_GED;
+
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->fp_slider_text2[0],
+			 color_scheme->fp_slider_text2[1],
+			 color_scheme->fp_slider_text2[2], 1);
+	} else {
 	  if(EDIT_ROTATE && mged_variables->transform == 'e'){
 	    switch(mged_variables->coords){
 	    case 'm':
@@ -542,7 +591,10 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text1[0],
+			   color_scheme->fp_slider_text1[1],
+			   color_scheme->fp_slider_text1[2], 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -556,7 +608,10 @@ int y_top;
 		f = absolute_rotate[X] / ABS_ROT_FACTOR;
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text2[0],
+			   color_scheme->fp_slider_text2[1],
+			   color_scheme->fp_slider_text2[2], 1);
 	  }
 	}
 	break;
@@ -588,7 +643,10 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text1[0],
+			   color_scheme->fp_slider_text1[1],
+			   color_scheme->fp_slider_text1[2], 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -602,7 +660,10 @@ int y_top;
 		f = absolute_rotate[Y] / ABS_ROT_FACTOR;
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text2[0],
+			   color_scheme->fp_slider_text2[1],
+			   color_scheme->fp_slider_text2[2], 1);
 	  }
 	}
 	break;
@@ -634,7 +695,10 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text1[0],
+			   color_scheme->fp_slider_text1[1],
+			   color_scheme->fp_slider_text1[2], 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -648,7 +712,10 @@ int y_top;
 		f = absolute_rotate[Z] / ABS_ROT_FACTOR;
 	    }
 
-	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_slider_text2[0],
+			   color_scheme->fp_slider_text2[1],
+			   color_scheme->fp_slider_text2[2], 1);
 	  }
 	}
 	break;
@@ -662,7 +729,7 @@ int y_top;
       }
 
       if(f > 0)
-	xpos = (f + SL_TOL) * 2047.0;
+	xpos = (f + SL_TOL) * GED_MAX;
       else if(f < 0)
 	xpos = (f - SL_TOL) * -MENUXLIM;
       else
@@ -670,7 +737,10 @@ int y_top;
 
       DM_DRAW_STRING_2D( dmp, mptr->scroll_string,
 			 GED2PM1(xpos), GED2PM1(y-SCROLL_DY/2), 0, 0 );
-      DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+      DM_SET_FGCOLOR(dmp,
+		     color_scheme->fp_slider_line[0],
+		     color_scheme->fp_slider_line[1],
+		     color_scheme->fp_slider_line[2], 1);
       DM_DRAW_LINE_2D(dmp,
 		      GED2PM1(XMAX), GED2PM1(y),
 		      GED2PM1(MENUXLIM), GED2PM1(y));
@@ -679,7 +749,10 @@ int y_top;
 
   if( y != y_top )  {
     /* Sliders were drawn, so make left vert edge */
-    DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+    DM_SET_FGCOLOR(dmp,
+		   color_scheme->fp_slider_line[0],
+		   color_scheme->fp_slider_line[1],
+		   color_scheme->fp_slider_line[2], 1);
     DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(MENUXLIM), GED2PM1(scroll_top-1),
 		    GED2PM1(MENUXLIM), GED2PM1(y));
@@ -730,7 +803,7 @@ int do_func;
 			 *  menu text area on the left.
 			 */
 			if( pen_x >= 0 )  {
-				val = pen_x/2047.0;
+				val = pen_x * INV_GED;
 			} else {
 				val = pen_x/(double)(-MENUXLIM);
 			}
