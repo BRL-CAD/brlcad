@@ -160,6 +160,7 @@
 #	define HAVE_STDLIB_H	1
 #	define HAVE_UNISTD_H	1
 #	define HAVE_FLOAT_H	1
+#	define HAVE_SBRK_DECL	1
 #	define TK_READ_DATA_PENDING(f)	((f)->_flags & __SRD)
 #endif
 
