@@ -114,10 +114,10 @@ int id;
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
-select_region( tsp, pathp, curtree, client_data )
+select_region( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-union tree		*curtree;
+CONST struct rt_comb_internal *combp;
 genptr_t		client_data;
 {
 	if( tsp->ts_regionid == curr_id )
@@ -128,10 +128,10 @@ genptr_t		client_data;
 
 /* routine used in tree walker to collect region ident numbers */
 static int
-get_reg_id( tsp, pathp, curtree, client_data )
+get_reg_id( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-union tree		*curtree;
+CONST struct rt_comb_internal *combp;
 genptr_t		client_data;
 {
 	insert_id( tsp->ts_regionid );

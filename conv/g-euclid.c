@@ -139,10 +139,10 @@ int id;
 }
 
 static int
-select_region( tsp, pathp, curtree, client_data )
+select_region( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-union tree		*curtree;
+CONST struct rt_comb_internal *combp;
 genptr_t		client_data;
 {
 	if(verbose )
@@ -155,10 +155,11 @@ genptr_t		client_data;
 }
 
 static int
-get_reg_id( tsp, pathp, curtree )
+get_reg_id( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-union tree		*curtree;
+CONST struct rt_comb_internal *combp;
+genptr_t client_data;
 {
 	if( verbose )
 		bu_log( "get_reg_id: Adding id %d to list\n" , tsp->ts_regionid );
