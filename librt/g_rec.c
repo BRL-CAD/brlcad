@@ -351,9 +351,10 @@ static char rec_compute[4];
  *  	segp	HIT
  */
 struct seg *
-rec_shot( stp, rp )
-struct soltab *stp;
-register struct xray *rp;
+rec_shot( stp, rp, res )
+struct soltab		*stp;
+register struct xray	*rp;
+struct resource		*res;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -365,7 +366,6 @@ register struct xray *rp;
 	register struct hit *hitp;	/* pointer to hit point */
 
 	hitp = &hits[0];
-	/* ASSERT that MAGNITUDE(rp->r_dir) == 1 */
 
 	/* out, Mat, vect */
 	MAT4X3VEC( dprime, rec->rec_SoR, rp->r_dir );
@@ -445,7 +445,7 @@ check_plates:
 		/* entry is [0], exit is [1] */
 		register struct seg *segp;
 
-		GET_SEG(segp);
+		GET_SEG(segp, res);
 		segp->seg_stp = stp;
 		segp->seg_in = hits[0];		/* struct copy */
 		segp->seg_out = hits[1];	/* struct copy */
@@ -454,7 +454,7 @@ check_plates:
 		/* entry is [1], exit is [0] */
 		register struct seg *segp;
 
-		GET_SEG(segp);
+		GET_SEG(segp, res);
 		segp->seg_stp = stp;
 		segp->seg_in = hits[1];		/* struct copy */
 		segp->seg_out = hits[0];	/* struct copy */

@@ -27,6 +27,14 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 #include "raytrace.h"
 #include "./debug.h"
 
+struct resource rt_uniresource;		/* Resources for uniprocessor */
+
+#ifdef cray
+#define AUTO register
+#else
+#define AUTO auto
+#endif
+
 /*
  *			R T _ S H O O T R A Y
  *  
@@ -71,29 +79,34 @@ int
 rt_shootray( ap )
 register struct application *ap;
 {
-	auto struct seg *HeadSeg;
-	auto int ret;
-	auto vect_t inv_dir;		/* inverses of ap->a_ray.r_dir */
-	auto fastf_t	box_start, box_end, model_end;
-	auto fastf_t	last_bool_start;
-	auto union bitv_elem *solidbits;/* bits for all solids shot so far */
-	auto bitv_t *regionbits;	/* bits for all involved regions */
-	auto int trybool;
-	auto char *status;
-	auto union cutter *lastcut;
-	auto struct partition InitialPart; /* Head of Initial Partitions */
-	auto struct partition FinalPart;	/* Head of Final Partitions */
-	auto struct seg *waitsegs;	/* segs awaiting rt_boolweave() */
-	auto struct soltab **stpp;
-	auto struct xray newray;	/* closer ray start */
-	auto fastf_t dist_corr;		/* correction distance */
-	register union cutter *cutp;
-	fastf_t odist_corr, obox_start, obox_end;	/* temp */
-	int push_flag = 0;
+	AUTO struct seg		*HeadSeg;
+	AUTO int		ret;
+	auto vect_t		inv_dir;	/* inverses of ap->a_ray.r_dir */
+	AUTO fastf_t		box_start, box_end, model_end;
+	AUTO fastf_t		last_bool_start;
+	AUTO union bitv_elem	*solidbits;	/* bits for all solids shot so far */
+	AUTO bitv_t		*regionbits;	/* bits for all involved regions */
+	AUTO int		trybool;
+	AUTO char		*status;
+	AUTO union cutter	*lastcut;
+	auto struct partition	InitialPart;	/* Head of Initial Partitions */
+	auto struct partition	FinalPart;	/* Head of Final Partitions */
+	AUTO struct seg		*waitsegs;	/* segs awaiting rt_boolweave() */
+	AUTO struct soltab	**stpp;
+	auto struct xray	newray;		/* closer ray start */
+	AUTO fastf_t		dist_corr;	/* correction distance */
+	register union cutter	*cutp;
+	AUTO fastf_t		odist_corr, obox_start, obox_end;	/* temp */
+	AUTO int		push_flag = 0;
+
+	if( ap->a_resource == RESOURCE_NULL )
+		ap->a_resource = &rt_uniresource;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
-		rt_log("**********shootray  %d,%d lvl=%d\n",
-			ap->a_x, ap->a_y, ap->a_level );
+		rt_log("**********shootray cpu=%d  %d,%d lvl=%d\n",
+			ap->a_resource->re_cpu,
+			ap->a_x, ap->a_y,
+			ap->a_level );
 		VPRINT("Pnt", ap->a_ray.r_pt);
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
@@ -107,7 +120,7 @@ register struct application *ap;
 
 	HeadSeg = SEG_NULL;
 	waitsegs = SEG_NULL;
-	GET_BITV( solidbits );	/* see rt_get_bitv() for details */
+	GET_BITV( solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
 	regionbits = &solidbits->be_v[2+(BITS2BYTES(ap->a_rt_i->nsolids)/sizeof(bitv_t))];
 	BITZERO(solidbits->be_v,ap->a_rt_i->nsolids);
 	BITZERO(regionbits,ap->a_rt_i->nregions);
@@ -353,7 +366,7 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 
 			ap->a_rt_i->nshots++;
 			if( (newseg = rt_functab[stp->st_id].ft_shot( 
-				stp, &newray )
+				stp, &newray, ap->a_resource )
 			     ) == SEG_NULL )  {
 				ap->a_rt_i->nmiss++;
 				continue;	/* MISS */
@@ -388,7 +401,7 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 		/* Only run this every three hits, to balance cost/benefit */
 		if( trybool>=3 && ap->a_onehit && waitsegs != SEG_NULL )  {
 			/* Weave these segments into partition list */
-			rt_boolweave( waitsegs, &InitialPart );
+			rt_boolweave( waitsegs, &InitialPart, ap->a_resource );
 
 			/* Add segment chain to list of used segments */
 			{
@@ -423,7 +436,7 @@ weave:
 	if( waitsegs != SEG_NULL )  {
 		register struct seg *seg2 = waitsegs;
 
-		rt_boolweave( waitsegs, &InitialPart );
+		rt_boolweave( waitsegs, &InitialPart, ap->a_resource );
 
 		/* Add segment chain to list of used segments */
 		while( seg2->seg_next != SEG_NULL )
@@ -484,14 +497,14 @@ freeup:
 			register struct partition *newpp;
 			newpp = pp;
 			pp = pp->pt_forw;
-			FREE_PT(newpp);
+			FREE_PT(newpp, ap->a_resource);
 		}
 		/* Free up final partition list */
 		for( pp = FinalPart.pt_forw; pp != &FinalPart;  )  {
 			register struct partition *newpp;
 			newpp = pp;
 			pp = pp->pt_forw;
-			FREE_PT(newpp);
+			FREE_PT(newpp, ap->a_resource);
 		}
 	}
 	{
@@ -499,13 +512,13 @@ freeup:
 
 		while( HeadSeg != SEG_NULL )  {
 			segp = HeadSeg->seg_next;
-			FREE_SEG( HeadSeg );
+			FREE_SEG( HeadSeg, ap->a_resource );
 			HeadSeg = segp;
 		}
 	}
 out:
 	if( solidbits != BITV_NULL)  {
-		FREE_BITV( solidbits );
+		FREE_BITV( solidbits, ap->a_resource );
 	}
 	if(rt_g.debug&(DEBUG_SHOOT|DEBUG_ALLRAYS))
 		rt_log( "%s, ret%d\n", status, ret);
@@ -655,7 +668,9 @@ int nbits;
  *  the *real* size of be_v[] array is determined at runtime, here.
  */
 void
-rt_get_bitv()  {
+rt_get_bitv(res)
+register struct resource *res;
+{
 	register char *cp;
 	register int bytes;
 	register int size;		/* size of structure to really get */
@@ -668,8 +683,9 @@ rt_get_bitv()  {
 		exit(17);
 	}
 	while( bytes >= size )  {
-		((union bitv_elem *)cp)->be_next = rt_i.FreeBitv;
-		rt_i.FreeBitv = (union bitv_elem *)cp;
+		((union bitv_elem *)cp)->be_next = res->re_bitv;
+		res->re_bitv = (union bitv_elem *)cp;
+		res->re_bitvlen++;
 		cp += size;
 		bytes -= size;
 	}

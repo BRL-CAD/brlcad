@@ -97,20 +97,22 @@ register char *cp;
  *  malloc() locking is done in rt_malloc.
  */
 void
-rt_get_seg()  {
+rt_get_seg(res)
+register struct resource *res;
+{
 	register char *cp;
 	register struct seg *sp;
 	register int bytes;
 
 	bytes = rt_byte_roundup(64*sizeof(struct seg));
 	if( (cp = rt_malloc(bytes, "rt_get_seg")) == (char *)0 )  {
-		rt_log("rt_get_seg: malloc failure\n");
-		exit(17);
+		rt_bomb("rt_get_seg: malloc failure\n");
 	}
 	sp = (struct seg *)cp;
 	while( bytes >= sizeof(struct seg) )  {
-		sp->seg_next = rt_g.FreeSeg;
-		rt_g.FreeSeg = sp++;
+		sp->seg_next = res->re_seg;
+		res->re_seg = sp++;
+		res->re_seglen++;
 		bytes -= sizeof(struct seg);
 	}
 }
@@ -128,7 +130,9 @@ rt_get_seg()  {
  *  the *real* size of pt_solhit[] array is determined at runtime, here.
  */
 void
-rt_get_pt()  {
+rt_get_pt(res)
+register struct resource *res;
+{
 	register char *cp;
 	register int bytes;
 	register int size;		/* size of structure to really get */
@@ -141,8 +145,9 @@ rt_get_pt()  {
 		exit(17);
 	}
 	while( bytes >= size )  {
-		((struct partition *)cp)->pt_forw = rt_g.FreePart;
-		rt_g.FreePart = (struct partition *)cp;
+		((struct partition *)cp)->pt_forw = res->re_part;
+		res->re_part = (struct partition *)cp;
+		res->re_partlen++;
 		cp += size;
 		bytes -= size;
 	}

@@ -55,9 +55,10 @@ static char RCSbool[] = "@(#)$Header$ (BRL)";
  *  than a pointer, but that's more cycles than the neatness is worth.
  */
 void
-rt_boolweave( segp_in, PartHdp )
-struct seg *segp_in;
-struct partition *PartHdp;
+rt_boolweave( segp_in, PartHdp, res )
+struct seg		*segp_in;
+struct partition	*PartHdp;
+struct resource		*res;
 {
 	register struct seg *segp;
 	register struct partition *pp;
@@ -102,7 +103,7 @@ struct partition *PartHdp;
 		 */
 		if( PartHdp->pt_forw == PartHdp )  {
 			/* No partitions yet, simple! */
-			GET_PT_INIT( pp );
+			GET_PT_INIT( pp, res );
 			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
@@ -117,7 +118,7 @@ struct partition *PartHdp;
 			 * Segment starts exactly at last partition's end,
 			 * or beyond last partitions end.  Make new partition.
 			 */
-			GET_PT_INIT( pp );
+			GET_PT_INIT( pp, res );
 			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
@@ -205,7 +206,7 @@ equal_start:
 				 *	SSSSSS
 				 *	newpp| pp
 				 */
-				GET_PT( newpp );
+				GET_PT( newpp, res );
 				COPY_PT(newpp,pp);
 				/* new partition contains segment */
 				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
@@ -227,7 +228,7 @@ equal_start:
 				 *	     PPPPP...
 				 *	newpp|pp
 				 */
-				GET_PT_INIT( newpp );
+				GET_PT_INIT( newpp, res );
 				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 				newpp->pt_inseg = lastseg;
 				newpp->pt_inhit = lasthit;
@@ -297,7 +298,7 @@ equal_start:
 			 *	     SSSS...
 			 *	newpp|pp
 			 */
-			GET_PT( newpp );
+			GET_PT( newpp, res );
 			COPY_PT( newpp, pp );
 			/* new part. is the span before seg joins partition */
 			pp->pt_inseg = segp;
@@ -317,7 +318,7 @@ equal_start:
 		 *  	     SSSSS
 		 */
 		if(rt_g.debug&DEBUG_PARTITION) rt_log("seg extends beyond end\n");
-		GET_PT_INIT( newpp );
+		GET_PT_INIT( newpp, res );
 		BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 		newpp->pt_inseg = lastseg;
 		newpp->pt_inhit = lasthit;
@@ -393,7 +394,7 @@ struct application *ap;
 			zappp = pp;
 			pp = pp->pt_forw;
 			DEQUEUE_PT(zappp);
-			FREE_PT(zappp);
+			FREE_PT(zappp, ap->a_resource);
 			continue;
 		}
 
@@ -495,7 +496,7 @@ struct application *ap;
 				FinalHdp->pt_back->pt_outhit = newpp->pt_outhit;
 				FinalHdp->pt_back->pt_outflip = newpp->pt_outflip;
 				FinalHdp->pt_back->pt_outseg = newpp->pt_outseg;
-				FREE_PT( newpp );
+				FREE_PT( newpp, ap->a_resource );
 				newpp = FinalHdp->pt_back;
 			}  else  {
 				APPEND_PT( newpp, FinalHdp->pt_back );

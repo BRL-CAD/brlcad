@@ -203,9 +203,10 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-pg_shot( stp, rp )
-struct soltab *stp;
-register struct xray *rp;
+pg_shot( stp, rp, res )
+struct soltab		*stp;
+register struct xray	*rp;
+struct resource		*res;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -310,7 +311,7 @@ register struct xray *rp;
 		segp = SEG_NULL;
 		while( nhits > 0 )  {
 			register struct seg *newseg;		/* XXX */
-			GET_SEG(newseg);
+			GET_SEG(newseg, res);
 			newseg->seg_next = segp;
 			segp = newseg;
 			segp->seg_stp = stp;

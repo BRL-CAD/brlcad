@@ -467,9 +467,10 @@ static char tgc_compute[4];
  *  the points of intersection in the original coordinate system.
  */
 struct seg *
-tgc_shot( stp, rp )
+tgc_shot( stp, rp, res )
 struct soltab		*stp;
 register struct xray	*rp;
+struct resource		*res;
 {
 	register struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
@@ -655,7 +656,7 @@ register struct xray	*rp;
 		/*  If two between-plane intersections exist, they are
 		 *  the hit points for the ray.
 		 */
-		GET_SEG( segp );
+		GET_SEG( segp, res );
 		segp->seg_stp = stp;
 
 		segp->seg_in.hit_dist = pt[IN] * t_scale;
@@ -709,7 +710,7 @@ register struct xray	*rp;
 			return( SEG_NULL );
 		}
 
-		GET_SEG( segp );
+		GET_SEG( segp, res );
 		segp->seg_stp = stp;
 		/* pt[OUT] on skin, pt[IN] on end */
 		if ( pt[OUT] >= pt[IN] )  {
@@ -767,7 +768,7 @@ register struct xray	*rp;
 	if ( alf1 > 1.0 || alf2 > 1.0 )
 		return( SEG_NULL );
 
-	GET_SEG( segp );
+	GET_SEG( segp, res );
 	segp->seg_stp = stp;
 
 	/*  Use the dot product (found earlier) of the plane

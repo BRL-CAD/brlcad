@@ -240,9 +240,10 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-spl_shot( stp, rp )
+spl_shot( stp, rp, res )
 struct soltab *stp;
 register struct xray *rp;
+struct resource		*res;
 {
 	register struct surf *spl =
 		(struct surf *)stp->st_specific;
@@ -316,7 +317,7 @@ printf("%d: low u,w=%f,%f\n", spl->spl_lvl, spl->spl_ulow[spl->spl_lvl], spl->sp
 	}
 
 	/* We have a hit */
-	GET_SEG(segp);
+	GET_SEG(segp, res);
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k1;
 	VJOIN1( segp->seg_in.hit_point, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir );
