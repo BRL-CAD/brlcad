@@ -60,6 +60,9 @@ static const char RCSextrude[] = "@(#)$Header$ (BRL)";
 #include "nurb.h"
 #include "./debug.h"
 
+extern int seg_to_vlist( struct bu_list *vhead, const struct rt_tess_tol *ttol, point_t	V,
+			 vect_t	u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg);
+
 struct extrude_specific {
 	mat_t rot, irot;	/* rotation and translation to get extrsuion vector in +z direction with V at origin */
 	vect_t unit_h;		/* unit vector in direction of extrusion vector */
@@ -1582,6 +1585,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 				break;
 			case CURVE_CARC_MAGIC:
 				csg = (struct carc_seg *)lng;
+				radius = csg->radius;
 				if( csg->radius <= 0.0 ) {
 					point2d_t ra, rb;
 
@@ -1612,6 +1616,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					}
 					
 				} else {
+					point2d_t ra, rb;
 					vect_t s2m, tmp_dir;
 					point2d_t start2d, end2d, mid_pt, center2d;
 					fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
@@ -1647,7 +1652,11 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 					if( !(cross_z > 0.0 && csg->center_is_left) )
 						V2JOIN1( center2d, mid_pt, -tmp_len, tmp_dir );
 
-					code = isect_line_earc( dist, pta, dir, center2d, csg->radius, csg->radius,
+					ra[X] = radius;
+					ra[Y] = 0.0;
+					rb[X] = 0.0;
+					rb[Y] = radius;
+					code = isect_line_earc( dist, pta, dir, center2d, ra, rb,
 								norm, ip->verts[csg->start], ip->verts[csg->end],
 								csg->orientation );
 					if( code <= 0 )
@@ -1772,11 +1781,7 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
 	point2d_t dir;
 	struct curve *crv;
 	genptr_t seg;
-	long *lng;
-	int i;
 	fastf_t inv_len;
-	fastf_t dist[2];
-	int code;
 	int loopa_count=0, loopb_count=0;
 	int ret=UNKNOWN;
 
@@ -1867,7 +1872,7 @@ const struct bn_tol	*tol;
 	struct rt_extrude_internal	*extrude_ip;
 	struct rt_sketch_internal	*sketch_ip;
 	struct curve			*crv=(struct curve *)NULL;
-	struct bu_ptbl			*aloop, loops, **containing_loops, *outer_loop;
+	struct bu_ptbl			*aloop=NULL, loops, **containing_loops, *outer_loop;
 	int				i, j, k;
 	int				*used_seg;
 	struct bn_vlist			*vlp;
