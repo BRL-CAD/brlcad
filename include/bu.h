@@ -28,7 +28,7 @@
  *	Public Domain, Distribution Unlimited.
  *
  *  Include Sequencing -
- *	#include "conf.h"
+ *	#include "config.h"
  *	#include <stdio.h>
  *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
  *	#include "rtlist.h"	/_* OPTIONAL, auto-included by bu.h *_/

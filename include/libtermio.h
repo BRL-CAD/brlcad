@@ -14,7 +14,7 @@
  *	Public Domain, Distribution Unlimited.
  *
  *  Include Sequencing -
- *	#include "conf.h"
+ *	#include "config.h"
  *	#include <stdio.h>
  *	#include "termio.h"
  *
