@@ -80,8 +80,6 @@ struct rt_i	*rtip;
 		psp->shot = bu_bitv_new(stp->st_npieces);
 		psp->oddhit.hit_dist = INFINITY;	/* mark unused */
 	} RT_VISIT_ALL_SOLTABS_END
-
-	bu_ptbl_init( &resp->re_pieces_pending, 100, "re_pieces_pending" );
 }
 
 /*
@@ -110,6 +108,8 @@ struct rt_i	*rtip;
 	}
 	bu_free( (char *)resp->re_pieces, "re_pieces[]" );
 	resp->re_pieces = NULL;
+
+	bu_ptbl_free( &resp->re_pieces_pending );
 }
 
 /*
@@ -680,6 +680,7 @@ register struct application *ap;
 	struct rt_i		*rtip;
 	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
 	fastf_t			pending_hit = 0; /* dist of closest odd hit pending */
+	int			odd_hits_pending = 0;	/* boolean.  are odd hits pending? */
 
 	RT_AP_CHECK(ap);
 	if( ap->a_magic )  {
@@ -779,6 +780,9 @@ register struct application *ap;
 		/* Initialize this processors 'solid pieces' state */
 		rt_res_pieces_init( resp, rtip );
 	}
+	if( BU_LIST_MAGIC_WRONG( &resp->re_pieces_pending.l, BU_PTBL_MAGIC ) )
+		bu_ptbl_init( &resp->re_pieces_pending, 100, "re_pieces_pending" );
+	bu_ptbl_reset( &resp->re_pieces_pending );
 
 	/* Verify that direction vector has unit length */
 	if(rt_g.debug) {
@@ -929,6 +933,7 @@ register struct application *ap;
 	while( (cutp = rt_advance_to_next_cell( &ss )) != CUTTER_NULL )  {
 start_cell:
 		if(debug_shoot) {
+			bu_log("\tBOX interval is %g..%g\n", ss.box_start, ss.box_end);
 			rt_pr_cut( cutp, 0 );
 		}
 
@@ -943,12 +948,14 @@ start_cell:
 		pending_hit = INFINITY;
 		if( cutp->bn.bn_piecelen > 0 )  {
 			register struct rt_piecelist *plp;
+
 			plp = &(cutp->bn.bn_piecelist[cutp->bn.bn_piecelen-1]);
 			for( ; plp >= cutp->bn.bn_piecelist; plp-- )  {
 				struct rt_piecestate *psp;
 				struct soltab	*stp;
 				int piecenum;
 				int ret;
+				int started_with_oddhit;
 
 				RT_CK_PIECELIST(plp);
 
@@ -963,9 +970,11 @@ start_cell:
 					BU_BITV_ZEROALL(psp->shot);
 					psp->ray_seqno = resp->re_nshootray;
 					psp->oddhit.hit_dist = INFINITY;
+					started_with_oddhit = 0;
 				} else if( psp->oddhit.hit_dist < INFINITY )  {
 					/* Adjust to local distance for this cell */
 					psp->oddhit.hit_dist -= ss.dist_corr;
+					started_with_oddhit = 1;
 				}
 
 				/* Allow solid to shoot all pieces at once */
@@ -995,9 +1004,32 @@ start_cell:
 				if( psp->oddhit.hit_dist < INFINITY )  {
 					/* Restore to proper (absolute) distance */
 					psp->oddhit.hit_dist += ss.dist_corr;
-					if( psp->oddhit.hit_dist < pending_hit )
-						pending_hit = psp->oddhit.hit_dist;
+					if(debug_shoot)bu_log("oddhit cached: %s piece %d, dist=%g\n",
+						stp->st_name,
+						psp->oddhit.hit_surfno,
+						psp->oddhit.hit_dist);
+					if( started_with_oddhit == 0 )  {
+						bu_ptbl_ins_unique( &resp->re_pieces_pending, (long *)psp );
+					} else {
+						/* Even if the oddhit changed, the psp is still listed */
+					}
+				} else {
+					/* No hit cached any more */
+					if( started_with_oddhit )  {
+						bu_ptbl_rm( &resp->re_pieces_pending, (long *)psp );
+					}
 				}
+			}
+			if( BU_PTBL_LEN( &resp->re_pieces_pending ) > 0 )  {
+				/* Find the lowest pending hit, that's as far as boolfinal can progress to */
+				struct rt_piecestate **psp;
+				for( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
+					FAST fastf_t dist = (*psp)->oddhit.hit_dist;
+					BU_ASSERT_DOUBLE( dist, <, INFINITY );
+					if( dist < pending_hit )
+						pending_hit = dist;
+				}
+				if(debug_shoot) bu_log("pending_hit set to %g\n", pending_hit);
 			}
 		}
 
