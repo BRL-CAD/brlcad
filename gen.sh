@@ -544,6 +544,8 @@ checkin)
 # Steps in creating a distribution:
 #	Make sure the CVS repository is up-to-date and in the state for distribution
 #	"cvs rtag REL_TAG brlcad" to mark the CVS archives with the release version
+#
+#	Start in a blank directory with only gen.sh.
 #	"gen.sh dist" to create the distribution in "dist" and the TAR archive in "arch"
 #	Note that "gen.sh dist -r REL_TAG" may be used later to recreate the same distribution
 #	Any additional arguments to "gen.sh" after the "dist" will be passed to "cvs"
