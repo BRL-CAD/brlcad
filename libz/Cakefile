@@ -9,12 +9,12 @@
 
 #if !defined(BUILD_LIBRARY)
 #define PRODUCTS	libz.a
-#define CONFIG_OPTS	--prefix=BINDIR
+#define CONFIG_OPTS	--prefix=BASEDIR
 #define	AFTER_MAKE	/**/
 #else
 #define PRODUCTS	libz.so
 #define SHARED_PRODUCT	libz.so''[[LIBVERS]]
-#define CONFIG_OPTS	--shared --prefix=BINDIR
+#define CONFIG_OPTS	--shared --prefix=BASEDIR
 #define	AFTER_MAKE	mv libz.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
 #endif
 
