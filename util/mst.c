@@ -1,6 +1,14 @@
 /*
  *			M S T . C
  *
+ *	Construct a minimum spanning tree using Prim's Algorithm
+ *
+ *	After reading in a graph, the program builds and maintains
+ *	a priority queue of "bridges" between the gradually expanding
+ *	MST and each of the vertices not yet in the MST.  In this
+ *	context, vertices are classified as "civilized" (i.e. in the
+ *	MST) and "uncivilized" (not yet in the MST).
+ *
  *  Author -
  *	Paul J. Tanenbaum
  *  
@@ -68,6 +76,8 @@ struct neighbor
 #define	NEIGHBOR_NULL	((struct neighbor *) 0)
 #define	NEIGHBOR_MAGIC	0x6d73746e
 
+static int		debug = 0;
+
 /************************************************************************
  *									*
  *	  Helper routines for manipulating the data structures		*
@@ -75,7 +85,7 @@ struct neighbor
  ************************************************************************/
 
 /*
- *			  M K _ B R I D G E ( )
+ *			     M K _ B R I D G E ( )
  *
  */
 struct bridge *mk_bridge (vcp, vup, weight)
@@ -94,8 +104,7 @@ double		weight;
      */
 
     BU_CKMAG(vup, VERTEX_MAGIC, "vertex");
-    bu_log("mk_bridge(<x%x>, <x%x>, %g) assigning index %d\n",
-	vcp, vup, weight, next_index + 1);
+
     bp = (struct bridge *) bu_malloc(sizeof(struct bridge), "bridge");
 
     bp -> b_magic = BRIDGE_MAGIC;
@@ -111,7 +120,7 @@ double		weight;
 #define	is_infinite_bridge(bp)	((bp) -> b_vert_civ == VERTEX_NULL)
 
 /*
- *		   F R E E _ B R I D G E ( )
+ *			   F R E E _ B R I D G E ( )
  *
  *	N.B. - It is up to the calling routine to free
  *		the b_vert_civ and b_vert_unciv members of bp.
@@ -126,7 +135,7 @@ struct bridge	*bp;
 }
 
 /*
- *		     P R I N T _ B R I D G E ( )
+ *			  P R I N T _ B R I D G E ( )
  *
  */
 void print_bridge (bp)
@@ -142,7 +151,7 @@ struct bridge	*bp;
 }
 
 /*
- *		    P R I N T _ P R I O Q ( )
+ *			   P R I N T _ P R I O Q ( )
  */
 #define	print_prioq()						\
 {								\
@@ -152,7 +161,7 @@ struct bridge	*bp;
 }
 
 /*
- *			M K _ V E R T E X ( )
+ *			     M K _ V E R T E X ( )
  *
  */
 struct vertex *mk_vertex (index)
@@ -174,7 +183,7 @@ long	index;
 }
 
 /*
- *		     P R I N T _ V E R T E X ( )
+ *			  P R I N T _ V E R T E X ( )
  *
  */
 void print_vertex (v, depth)
@@ -202,7 +211,7 @@ int	depth;
 }
 
 /*
- *		   F R E E _ V E R T E X ( )
+ *			   F R E E _ V E R T E X ( )
  *
  *	N.B. - This routine frees the v_bridge member of vp.
  */
@@ -217,7 +226,7 @@ struct vertex	*vp;
 }
 
 /*
- *			  M K _ N E I G H B O R ( )
+ *			   M K _ N E I G H B O R ( )
  *
  */
 struct neighbor *mk_neighbor (vp, weight)
@@ -244,7 +253,7 @@ double		weight;
  ************************************************************************/
 
 /*
- *		C O M P A R E _ V E R T I C E S ( )
+ *		      C O M P A R E _ V E R T I C E S ( )
  */
 int compare_vertices (v1, v2)
 
@@ -262,7 +271,7 @@ void	*v2;
 }
 
 /*
- *	    C O M P A R E _ B R I D G E _ W E I G H T S ( )
+ *		C O M P A R E _ B R I D G E _ W E I G H T S ( )
  */
 int compare_bridge_weights (v1, v2)
 
@@ -279,36 +288,20 @@ void	*v2;
 
     if (is_infinite_bridge(b1))
 	if (is_infinite_bridge(b2))
-	{
-	    bu_log("compare_bridge_weights: <x%x> %d == <x%x> %d\n",
-		b1, b1 -> b_index, b2, b2 -> b_index);
 	    return 0;
-	}
 	else
-	{
-	    bu_log("compare_bridge_weights: <x%x> %d > <x%x> %d\n",
-		b1, b1 -> b_index, b2, b2 -> b_index);
 	    return 1;
-	}
     else if (is_infinite_bridge(b2))
-    {
-	bu_log("compare_bridge_weights: <x%x> %d < <x%x> %d\n",
-		b1, b1 -> b_index, b2, b2 -> b_index);
 	return -1;
-    }
 
     delta = b1 -> b_weight  -  b2 -> b_weight;
-    bu_log("compare_bridge_weights: <x%x> %d %s <x%x> %d\n",
-	b1, b1 -> b_index,
-	((delta < 0.0) ? "<" : (delta == 0.0) ? "==" : ">"),
-	b2, b2 -> b_index);
     return ((delta <  0.0) ? -1 :
 	    (delta == 0.0) ?  0 :
 			      1);
 }
 
 /*
- *	    C O M P A R E _ B R I D G E _ I N D I C E S ( )
+ *		C O M P A R E _ B R I D G E _ I N D I C E S ( )
  */
 int compare_bridge_indices (v1, v2)
 
@@ -330,26 +323,31 @@ void	*v2;
 	return 1;
 }
 
-int compare_weights (w1, w2)
+/************************************************************************
+ *									*
+ *	    A similar comparison function				*
+ *									*
+ ************************************************************************/
 
-double	w1;
-double	w2;
-
-{
-    double	delta;
-
-    if (w1 <= 0.0)
-	if (w2 <= 0.0)
-	    return 0;
-	else
-	    return 1;
-    else if (w2 <= 0.0)
-	return -1;
-    
-    delta = w1 - w2;
-    return ((delta <  0.0) ? -1 :
-	    (delta == 0.0) ?  0 :
-			      1);
+/*
+ *		       C O M P A R E _ W E I G H T S ( )
+ */
+#define	compare_weights(w1, w2)					\
+{								\
+    double	delta;						\
+								\
+    if ((w1) <= 0.0)						\
+	if ((w2) <= 0.0)					\
+	    return 0;						\
+	else							\
+	    return 1;						\
+    else if ((w2) <= 0.0)					\
+	return -1;						\
+    								\
+    delta = (w1) - (w2);					\
+    return ((delta <  0.0) ? -1 :				\
+	    (delta == 0.0) ?  0 :				\
+			      1);				\
 }
 
 /************************************************************************
@@ -359,7 +357,7 @@ double	w2;
  ************************************************************************/
 
 /*
- *			L O O K U P _ V E R T E X ( )
+ *			 L O O K U P _ V E R T E X ( )
  */
 struct vertex *lookup_vertex(dict, index)
 
@@ -400,7 +398,7 @@ long	index;
 }
 
 /*
- *		     A D D _ T O _ P R I O Q ( )
+ *			  A D D _ T O _ P R I O Q ( )
  *
  */
 void add_to_prioq (v, depth)
@@ -418,7 +416,7 @@ int	depth;
 }
 
 /*
- *		     D E L _ F R O M _ P R I O Q ( )
+ *			D E L _ F R O M _ P R I O Q ( )
  *
  */
 void del_from_prioq (vp)
@@ -429,8 +427,9 @@ struct vertex	*vp;
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
     BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
 
-    bu_log("del_from_prioq(<x%x>... bridge <x%x> %d)\n",
-	vp, vp -> v_bridge, vp -> v_bridge -> b_index);
+    if (debug)
+	bu_log("del_from_prioq(<x%x>... bridge <x%x> %d)\n",
+	    vp, vp -> v_bridge, vp -> v_bridge -> b_index);
     if (rb_search(prioq, PRIOQ_INDEX, (void *) (vp -> v_bridge)) == NULL)
     {
 	bu_log("del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
@@ -441,7 +440,7 @@ struct vertex	*vp;
 }
 
 /*
- *		     E X T R A C T _ M I N ( )
+ *			   E X T R A C T _ M I N ( )
  *
  */
 struct bridge *extract_min ()
@@ -464,7 +463,7 @@ struct bridge *extract_min ()
  ************************************************************************/
 
 /*
- *			G E T _ E D G E ( )
+ *			      G E T _ E D G E ( )
  */
 int get_edge (fp, index, w)
 
@@ -524,6 +523,10 @@ char	*argv[];
      */
     dictionary = rb_create1("Dictionary of vertices", compare_vertices);
     rb_uniq_on1(dictionary);
+    po[PRIOQ_INDEX] = compare_bridge_indices;
+    po[PRIOQ_WEIGHT] = compare_bridge_weights;
+    prioq = rb_create("Priority queue of bridges", 2, po);
+    rb_walk1(dictionary, add_to_prioq, INORDER);
 
     /*
      *	Read in the graph
@@ -539,26 +542,34 @@ char	*argv[];
 	neighbor[0] -> n_vertex = vertex[1];
 	neighbor[1] -> n_vertex = vertex[0];
     }
-    /*
-     *	Initialize the priority queue
-     */
-    po[PRIOQ_INDEX] = compare_bridge_indices;
-    po[PRIOQ_WEIGHT] = compare_bridge_weights;
-    prioq = rb_create("Priority queue of bridges", 2, po);
-    rb_walk1(dictionary, add_to_prioq, INORDER);
 
-    print_prioq();
-    rb_walk1(dictionary, print_vertex, INORDER);
+    if (debug)
+    {
+	print_prioq();
+	rb_walk1(dictionary, print_vertex, INORDER);
+    }
     
     /*
-     *	Grow a minimum spanning tree,
-     *	using Prim's algorithm
+     *	Grow a minimum spanning tree, using Prim's algorithm...
+     *
+     *	While there exists a min-weight bridge (to a vertex v) in the queue
+     *	    Dequeue the bridge
+     *	    If the weight is finite
+     *	        Output the bridge
+     *	    Mark v as civilized
+     *	    For every uncivilized neighbor u of v
+     *	        if uv is cheaper than u's current bridge
+     *		    dequeue u's current bridge
+     *		    enqueue bridge(uv)
      */
     weight = 0.0;
     while ((bp = extract_min()) != BRIDGE_NULL)
     {
-	bu_log("We've extracted bridge <x%x>, which leaves...\n", bp);
-	print_prioq();
+	if (debug)
+	{
+	    bu_log("extracted min-weight bridge <x%x>, leaving...\n", bp);
+	    print_prioq();
+	}
 
 	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
 	vcp = bp -> b_vert_civ;
@@ -567,20 +578,21 @@ char	*argv[];
 
 	if (is_finite_bridge(bp))
 	{
-	    print_bridge(bp);
 	    BU_CKMAG(vcp, VERTEX_MAGIC, "vertex");
-	    bu_log(" ...edge %d %d of weight %g\n",
+	    (void) printf("%d %d %g\n",
 		vcp -> v_index, vup -> v_index, bp -> b_weight);
 	    weight += bp -> b_weight;
 	}
 	free_bridge(bp);
 	vup -> v_civilized = 1;
 
-	bu_log("Looking for uncivilized neighbors of...\n");
-	print_vertex(vup);
+	if (debug)
+	{
+	    bu_log("Looking for uncivilized neighbors of...\n");
+	    print_vertex(vup);
+	}
 	while (BU_LIST_WHILE(np, neighbor, &(vup -> v_neighbors)))
 	{
-	    bu_log("np = <x%x>\n", np);
 	    BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
 	    up = np -> n_vertex;
 	    BU_CKMAG(up, VERTEX_MAGIC, "vertex");
@@ -592,50 +604,31 @@ char	*argv[];
 				    up -> v_bridge -> b_weight) < 0)
 		{
 		    del_from_prioq(up);
-		    bu_log("After the deletion of bridge <x%x>...\n",
-			up -> v_bridge);
-		    print_prioq();
+		    if (debug)
+		    {
+			bu_log("After the deletion of bridge <x%x>...\n",
+			    up -> v_bridge);
+			print_prioq();
+		    }
 		    up -> v_bridge -> b_vert_civ = vup;
 		    up -> v_bridge -> b_weight = np -> n_weight;
 		    add_to_prioq(up);
-		    bu_log("Reduced bridge <x%x> weight to %g\n",
-			up -> v_bridge,
-			up -> v_bridge -> b_weight);
-		    print_prioq();
+		    if (debug)
+		    {
+			bu_log("Reduced bridge <x%x> weight to %g\n",
+			    up -> v_bridge,
+			    up -> v_bridge -> b_weight);
+			print_prioq();
+		    }
 		}
-		else
+		else if (debug)
 		    bu_log("bridge <x%x>'s weight of %g stands up\n",
 			    up -> v_bridge, up -> v_bridge -> b_weight);
 	    }
-	    else
+	    else if (debug)
 		bu_log("Skipping civilized neighbor <x%x>\n", up);
 	    BU_LIST_DEQUEUE(&(np -> l));
 	}
     }
-    bu_log(" ...overall weight: %g\n", weight);
+    bu_log("MST weight: %g\n", weight);
 }
-
-/*
- *	For each edge in the input stream
- *	    For each vertex of the edge
- *		Get its vertex structure
- *		    If vertex is not in the dictionary
- *			Create the vertex struc
- *			Record the vertex struc in the dictionary
- *		    Return the vertex struc
- *		Create a neighbor structure and install it
- *	    Record each vertex as the other's neighbor
- *
- *	For every vertex v
- *	    Enqueue an infinite-weight bridge to v
- *
- *	While there exists a min-weight bridge (to a vertex v) in the queue
- *	    Dequeue the bridge
- *	    If the weight is finite
- *	        Output the bridge
- *	    Mark v as civilized
- *	    For every uncivilized neighbor u of v
- *	        if uv is cheaper than u's current bridge
- *		    dequeue u's current bridge
- *		    enqueue bridge(uv)
- */
