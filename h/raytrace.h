@@ -834,6 +834,7 @@ struct db_tree_state {
 	struct mater_info ts_mater;	/* material properties */
 
 	mat_t		ts_mat;		/* transform matrix */
+	int		ts_is_fastgen;	/* REGION_NON_FASTGEN/_PLATE/_VOLUME */
 
 	int		ts_stop_at_regions;	/* else stop at solids */
 	int		(*ts_region_start_func) BU_ARGS((
@@ -863,7 +864,6 @@ struct db_tree_state {
 	genptr_t		*ts_m;		/* ptr to genptr */
 #endif
 	struct rt_i		*ts_rtip;	/* Helper for rt_gettrees() */
-	int		ts_is_fastgen;	/* REGION_NON_FASTGEN/_PLATE/_VOLUME */
 };
 #define TS_SOFAR_MINUS	1		/* Subtraction encountered above */
 #define TS_SOFAR_INTER	2		/* Intersection encountered above */
