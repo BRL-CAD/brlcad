@@ -811,6 +811,13 @@ struct directory  {
 #define LOOKUP_NOISY	1
 #define LOOKUP_QUIET	0
 
+#define FOR_ALL_DIRECTORY_START(_dp,_dbip)	{ int _i; \
+	for( _i = RT_DBNHASH-1; _i >= 0; _i-- )  { \
+		for( (_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw )  {
+
+#define FOR_ALL_DIRECTORY_END	}}}
+	
+
 /*
  *			R T _ C O M B _ I N T E R N A L
  *
@@ -1031,13 +1038,11 @@ struct rt_tree_array
 struct rt_wdb  {
 	struct bu_list	l;
 	int		type;
-	FILE		*fp;
 	struct db_i	*dbip;
 	struct bu_vls	wdb_name;	/* database object name */
 	struct db_tree_state	wdb_initial_tree_state;
 	struct rt_tess_tol	wdb_ttol;
 	struct bn_tol		wdb_tol;
-	int		wdb_version;	/* 4 or 5 */
 
 	/* variables for name prefixing */
 	char		wdb_prestr[RT_NAMESIZE];
@@ -1058,7 +1063,6 @@ struct rt_wdb  {
 #define RT_CK_WDB(_p)			RT_CHECK_WDB(_p)
 #define RT_CK_WDB_TCL(_interp,_p)	RT_CHECK_WDB_TCL(_interp,_p)
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
-#define RT_WDB_TYPE_FILE			1
 #define RT_WDB_TYPE_DB_DISK			2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY		3
 #define RT_WDB_TYPE_DB_INMEM			4
@@ -2303,8 +2307,30 @@ BU_EXTERN(CONST union cutter *rt_cell_n_on_ray, (struct application *ap, int n))
 /* The database library */
 
 /* wdb.c */
-BU_EXTERN(struct rt_wdb *wdb_dbopen, (struct db_i *dbip, int mode));
-BU_EXTERN(struct rt_wdb *wdb_fopen, (CONST char *filename));
+struct rt_wdb *wdb_fopen( const char *filename );
+struct rt_wdb *wdb_dbopen( struct db_i *dbip, int mode );
+int wdb_import(
+	struct rt_wdb *wdbp,
+	struct rt_db_internal *internp,
+	const char *name,
+	const mat_t mat );
+int wdb_export_external(
+	struct rt_wdb *wdbp,
+	struct bu_external *ep,
+	const char *name,
+	int flags );
+int wdb_put_internal(
+	struct rt_wdb *wdbp,
+	const char *name,
+	struct rt_db_internal *ip,
+	double local2mm );
+int wdb_export(
+	struct rt_wdb *wdbp,
+	const char *name,
+	genptr_t gp,
+	int id,
+	double local2mm );
+void wdb_close( struct rt_wdb *wdbp );
 
 /* db_anim.c */
 BU_EXTERN(int db_add_anim, (struct db_i *dbip, struct animate *anp, int root) );
@@ -2387,6 +2413,9 @@ BU_EXTERN(int db_scan, ( struct db_i *,
 	int do_old_matter, genptr_t client_data ) );
 					/* update db unit conversions */
 BU_EXTERN(void db_conversions, ( struct db_i *, int units ) );
+
+/* db5_scan.c */
+int db_dirbuild( struct db_i *dbip );
 
 /* db_lookup.c */
 BU_EXTERN(int db_dirhash, (CONST char *str) );
@@ -2547,6 +2576,12 @@ BU_EXTERN(struct bu_list *rt_vlblock_find, (struct bn_vlblock *vbp,
 
 /* g_ars.c */
 BU_EXTERN(void rt_hitsort, (struct hit h[], int nh));
+
+/* g_pg.c */
+int rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol );
+
+/* g_hf.c */
+int rt_hf_to_dsp(struct rt_db_internal *db_intern);
 
 /* pr.c */
 BU_EXTERN(void rt_pr_soltab, (CONST struct soltab *stp));
