@@ -30,6 +30,10 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 #include <sys/times.h>
 #include <sys/param.h>
 
+#ifdef CRAY1
+# include <sys/machd.h>		/* XMP only, for HZ */
+#endif
+
 #ifndef HZ
 	/* It's not always in sys/param.h;  if not, guess */
 #	define	HZ		60
@@ -68,8 +72,11 @@ char *str;
 	struct tms tmsnow;
 	char line[256];
 
+	/* Real time */
 	(void)time(&now);
 	realt = now-time0;
+
+	/* CPU time */
 	(void)times(&tmsnow);
 	usert = (tmsnow.tms_utime + tmsnow.tms_cutime) - 
 		(tms0.tms_utime + tms0.tms_cutime );
@@ -77,7 +84,7 @@ char *str;
 	syst = (tmsnow.tms_stime + tmsnow.tms_cstime) - 
 		(tms0.tms_stime + tms0.tms_cstime );
 	syst /= HZ;
-	if( usert < 0.00001 )  usert = 0.01;
+	if( usert < 0.00001 )  usert = 0.00001;
 	if( realt < 0.00001 )  realt = usert;
 	percent = usert/realt*100.0;
 #ifdef DEFAULT_HZ
