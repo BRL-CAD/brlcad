@@ -53,6 +53,8 @@ Usage:  rtshot [options] model.g objects...\n\
  -d # # #	Set direction vector\n\
  -p # # #	Set starting point\n\
  -a # # #	Set shoot-at point\n\
+ -t #		Set number of triangles per piece for BOT's (default is 4)\n\
+ -b #		Set threshold number of triangles to use pieces (default is 32)\n\
  -O #		Set overlap-claimant handling\n\
  -o #		Set onehit flag\n\
  -r #		Set ray length\n\
@@ -73,6 +75,8 @@ int		overlap_claimant_handling = 0;
 int		use_air = 0;		/* Handling of air */
 
 extern int hit(), miss();
+extern int rt_bot_tri_per_piece;
+extern int rt_bot_minpieces;
 
 /*
  *			M A I N
@@ -126,6 +130,16 @@ char **argv;
 			ptr = strtok( (char *)NULL, "\t " );
 			i++;
 		}
+		argc -= 2;
+		argv += 2;
+		break;
+	case 't':
+		rt_bot_tri_per_piece = atoi( argv[1] );
+		argc -= 2;
+		argv += 2;
+		break;
+	case 'b':
+		rt_bot_minpieces = atoi( argv[1] );
 		argc -= 2;
 		argv += 2;
 		break;
@@ -257,9 +271,12 @@ err:
 	rtip->useair = use_air;
 
 	/* Walk trees */
-	if( rt_gettrees_muves( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) )
-	fprintf(stderr,"rt_gettrees FAILED\n");
+	if( rt_gettrees_muves( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {
+		fprintf(stderr,"rt_gettrees FAILED\n");
+		exit( 1 );
+	}
 	ap.attrs = attrs;
+
 	rt_prep(rtip);
 
 	if( rdebug&RDEBUG_RAYPLOT )  {
