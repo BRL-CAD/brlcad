@@ -387,6 +387,13 @@ com:
 	}
 	if( tol.dist <= 0.0 )  tol.dist = 0.1;		/* mm */
 
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist /= 128;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
 	/* input r1 and r2 are destroyed, output is new r1 */
 	r = nmg_do_bool( l, r, op, &tol );
 
