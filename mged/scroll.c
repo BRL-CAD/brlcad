@@ -42,6 +42,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./sedit.h"
 
+extern void set_scroll();   /* defined in set.c */
+
 /************************************************************************
  *									*
  *	First part:  scroll bar definitions				*
@@ -109,10 +111,8 @@ sl_halt_scroll()
 void
 sl_toggle_scroll()
 {
-  if( mged_variables.scroll_enabled == 0 )
-    Tcl_Eval(interp, "sliders on");
-  else
-    Tcl_Eval(interp, "sliders off");
+  mged_variables.scroll_enabled = mged_variables.scroll_enabled ? 0 : 1;
+  set_scroll();
 }
 
 /*
@@ -133,32 +133,33 @@ char **argv;
 {
   struct dm_list *p;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-      return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-    if (argc == 1) {
-	Tcl_AppendResult(interp, mged_variables.scroll_enabled ? "1" : "0", (char *)NULL);
-	return TCL_OK;
-    }
-
-    if (Tcl_GetBoolean(interp, argv[1], &mged_variables.scroll_enabled) == TCL_ERROR)
-	return TCL_ERROR;
-
-    if (mged_variables.scroll_enabled) {
-      if(mged_variables.rateknobs)
-	scroll_array[0] = sl_menu;
-      else
-	scroll_array[0] = sl_abs_menu;
-    } else {
-	scroll_array[0] = SCROLL_NULL;	
-	scroll_array[1] = SCROLL_NULL;	
-    }
-
-    if(mged_variables.show_menu)
-      dmaflag++;
-
+  if (argc == 1) {
+    Tcl_AppendResult(interp, mged_variables.scroll_enabled ? "1" : "0", (char *)NULL);
     return TCL_OK;
+  }
+
+  if (Tcl_GetBoolean(interp, argv[1], &mged_variables.scroll_enabled) == TCL_ERROR)
+    return TCL_ERROR;
+
+  if (mged_variables.scroll_enabled) {
+    if(mged_variables.rateknobs)
+      scroll_array[0] = sl_menu;
+    else
+      scroll_array[0] = sl_abs_menu;
+  } else {
+    scroll_array[0] = SCROLL_NULL;	
+    scroll_array[1] = SCROLL_NULL;	
+  }
+
+  if(mged_variables.show_menu)
+    dmaflag++;
+
+  return TCL_OK;
 }
+
 
 /************************************************************************
  *									*
