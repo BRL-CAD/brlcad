@@ -358,6 +358,8 @@ char		*argv[];
   }
 
   while(fgets( line , LINELEN, fp ) != NULL){
+	  int changed;
+
     if(sscanf(line, "%d%d%d%d%s", &item, &air, &mat, &los, name) != 5)
       continue; /* not useful */
 
@@ -391,19 +393,34 @@ char		*argv[];
   	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
   	/* make the changes */
-  	comb->region_id = item;
-  	comb->aircode = air;
-  	comb->GIFTmater = mat;
-  	comb->los = los;
+	changed = 0;
+	if( comb->region_id != item ) {
+		comb->region_id = item;
+		changed = 1;
+	}
+	if( comb->aircode != air ) {
+		comb->aircode = air;
+		changed = 1;
+	}
+	if( comb->GIFTmater != mat ) {
+		comb->GIFTmater = mat;
+		changed = 1;
+	}
+	if( comb->los != los ) {
+		comb->los = los;
+		changed = 1;
+	}
 
-  	/* write out all changes */
-  	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) )
-  	{
-  		Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL );
-  		TCL_ERROR_RECOVERY_SUGGESTION;
-  		rt_db_free_internal( &intern, &rt_uniresource );
-  		return TCL_ERROR;
-  	}
+	if( changed ) {
+		/* write out all changes */
+		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) ) {
+			Tcl_AppendResult(interp, "Database write error, aborting.\n",
+					 (char *)NULL );
+			TCL_ERROR_RECOVERY_SUGGESTION;
+			rt_db_free_internal( &intern, &rt_uniresource );
+			return TCL_ERROR;
+		}
+	}
 
   }
 
