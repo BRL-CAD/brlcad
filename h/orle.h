@@ -22,6 +22,17 @@
  * Copyright (c) 1982 Spencer W. Thomas
  */
 
+/********* Be certain to update this!! **********/
+#if defined( gould ) || defined( sel ) || defined(sun) || defined(sgi)
+#define BIGENDIAN
+#endif
+
+#ifdef BIGENDIAN
+#define SWAB(shrt)  (shrt = ((shrt >> 8) & 0xff) | ((shrt << 8) & 0xff00))
+#else
+#define	SWAB(shrt)
+#endif
+
 /* Opcode definitions.							*/
 #define	RSkipLinesOp	1
 #define	RSetColorOp	2
@@ -78,15 +89,6 @@ typedef struct /* Old RLE format instruction.				*/
 #define OPCODE(inst) (inst.opcode & ~LONG)
 #define LONGP(inst) (inst.opcode & LONG)
 #define DATUM(inst) (0x00ff & inst.datum)
-
-#if defined( gould ) || defined( sel )
-#define BIGENDIAN
-#endif
-#ifdef BIGENDIAN
-#define SWAB(shrt)  (shrt = ((shrt >> 8) & 0xff) | ((shrt << 8) & 0xff00))
-#else
-#define	SWAB(shrt)
-#endif
 
 /* Old RLE format magic numbers.					*/
 #define	    RMAGIC	('R' << 8)	/* Top half of magic number.	*/
