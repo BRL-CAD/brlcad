@@ -567,7 +567,7 @@ register unsigned long l;
  *  to bu_struct_import().
  */
 void
-bu_struct_buf( ext, buf )
+bu_struct_wrap_buf( ext, buf )
 struct bu_external *ext;
 genptr_t buf;
 {
