@@ -86,18 +86,23 @@ Note - this pertains only to MGED's framebuffers." } }
 	    -label "one" -underline 0\
 	    -command "rt_set_mouse_behavior $id"
     hoc_register_menu_data "Objects" "one" "Objects - one"\
-	    { { summary "Raytrace only the selected object." } }
+	    { { summary "Raytrace only the selected object. Note - this will
+change the mouse behavior of the source window to
+\"o\" (i.e. raytrace object)." } }
     $top.menubar.obj add radiobutton -value several -variable rt_control($id,omode)\
 	    -label "several" -underline 0\
 	    -command "rt_set_mouse_behavior $id"
     hoc_register_menu_data "Objects" "several" "Objects - several"\
-	    { { summary "Add the selected object to the list
-of objects to be raytraced." } }
+	    { { summary "Add the selected object to the list of objects to be
+raytraced. Note - this will change the mouse behavior
+of the source window to \"o\" (i.e. pick raytrace objects)." } }
     $top.menubar.obj add radiobutton -value all -variable rt_control($id,omode)\
 	    -label "all" -underline 0\
 	    -command "rt_set_mouse_behavior $id"
     hoc_register_menu_data "Objects" "all" "Objects - all"\
-	    { { summary "Raytrace all displayed objects." } }
+	    { { summary "Raytrace all displayed objects. Note - this will
+change the mouse behavior of the source window to
+\"d\" (i.e. the default mouse behavior)." } }
     $top.menubar.obj add separator
     $top.menubar.obj add command -label "edit list"\
 	    -command "rt_olist_edit $id"
@@ -107,12 +112,10 @@ of objects to be raytraced." } }
     $top.menubar.obj add command -label "clear list"\
 	    -command "rt_olist_clear $id"
     hoc_register_menu_data "Objects" "clear list" "Clear List"\
-	    { { summary "Clear the list of objects to be raytraced." } }
+	    { { summary "Clear the object list and the contents
+of the object list editor if it exists." } }
 
-    label $top.srcL -text "Source" -anchor e
-    entry $top.srcE -relief flat -width 12 -textvar rt_control($id,raw_src)
-    hoc_register_data $top.srcE "Source"\
-	    { { summary "
+    set hoc_data { { summary "
 Enter the desired source. The source is used to obtain
 the view information (i.e. size, position and orientation)
 that is passed to the raytracer and must be one of the internal
@@ -121,6 +124,10 @@ using the pathname of any pane. The panes associated with this
 instance of the GUI may also be specified with keywords. For
 example, ul, \"upper left\" and \"Upper Left\" all specify the
 upper left pane." } }
+    label $top.srcL -text "Source" -anchor e
+    hoc_register_data $top.srcL "Source" $hoc_data
+    entry $top.srcE -relief flat -width 12 -textvar rt_control($id,raw_src)
+    hoc_register_data $top.srcE "Source" $hoc_data
     bind $top.srcE <KeyRelease> "rt_force_cook_src $id \$rt_control($id,raw_src)"
     menubutton $top.srcMB -relief raised -bd 2\
 	    -menu $top.srcMB.menu -indicatoron 1
@@ -155,10 +162,8 @@ to the GUI." } }
 	    -variable rt_control($id,fixedSrc)\
 	    -label "Fixed"
 
-    label $top.destL -text "Destination" -anchor e
-    entry $top.destE -relief flat -width 12 -textvar rt_control($id,raw_dest)
-    hoc_register_data $top.destE "Destination"\
-	    { { summary "
+    
+    set hoc_data { { summary "
 Enter the desired destination. This is the place where
 the pixels will be sent and can be the pathname of any internal
 pane (display manager window). The panes associated with this
@@ -168,6 +173,10 @@ upper left pane. The destination can also be a file or an external
 framebuffer. To specify an external framebuffer the user might
 enter fbhost:0 to send the output to the framebuffer running on
 the machine fbhost and listening on port 0." } }
+    label $top.destL -text "Destination" -anchor e
+    hoc_register_data $top.destL "Destination" $hoc_data
+    entry $top.destE -relief flat -width 12 -textvar rt_control($id,raw_dest)
+    hoc_register_data $top.destE "Destination" $hoc_data
     bind $top.destE <KeyRelease> "rt_force_cook_dest $id \$rt_control($id,raw_dest)"
     menubutton $top.destMB -relief raised -bd 2\
 	    -menu $top.destMB.menu -indicatoron 1
@@ -219,7 +228,7 @@ tied to the GUI." } }
 
     label $top.sizeL -text "Size" -anchor e
     hoc_register_data $top.sizeL "Size"\
-	    { { summary "Indicates the size of the framebuffer.
+	    { { summary "Indicates the size of the image.
 This defaults to the size of the active pane." } }
     entry $top.sizeE -relief flat -width 12 -textvar rt_control($id,size)
     hoc_register_data $top.sizeE "Size"\
@@ -278,22 +287,22 @@ that is used when clearing the framebuffer." } }
 	    { { summary "Pop up another GUI for advanced settings." } }
     button $top.okB -relief raised -text "Ok"\
 	    -command "rt_ok $id $top"
-    hoc_register_data $top.raytraceB "Raytrace"\
-	    { { summary "Begin raytracing the view of
-the source pane. The results of the raytrace
-will go the place specified by the destination.
-Afterwards dismiss the raytrace control panel." } }
+    hoc_register_data $top.okB "Raytrace"\
+	    { { summary "Begin raytracing the view of the source pane.
+The results of the raytrace will go to the place
+specified by the destination. Afterwards, dismiss
+the raytrace control panel." } }
     button $top.raytraceB -relief raised -text "Raytrace" \
 	    -command "do_Raytrace $id"
     hoc_register_data $top.raytraceB "Raytrace"\
-	    { { summary "Begin raytracing the view of
-the source pane. The results of the raytrace
-will go the place specified by the destination." } }
+	    { { summary "Begin raytracing the view of the source pane.
+The results of the raytrace will go to the place
+specified by the destination." } }
     button $top.clearB -relief raised -text "fbclear" \
 	    -command "do_fbclear $id"
     hoc_register_data $top.clearB "Clear the Framebuffer"\
 	    { { summary "Clear the framebuffer specified by the
-destination." } }
+destination to the background color." } }
     button $top.dismissB -relief raised -text "Dismiss" \
 	    -command "rt_dismiss $id"
     hoc_register_data $top.dismissB "Dismiss"\
@@ -777,6 +786,13 @@ proc rt_olist_edit { id } {
     frame $top.olistF
     text $top.olistT -relief sunken -bd 2 -width 40 -height 10\
 	    -yscrollcommand "$top.olistS set" -setgrid true
+    hoc_register_data $top.olistT "Object List"\
+	    { { summary "This shows the objects that will be raytraced when the
+raytrace button is pressed. The contents herein may
+be edited directly by the user when in \"several\"
+mode (look in the \"Objects\" menu). If there are no
+objects herein, then all objects being displayed will
+be raytraced." } }
     scrollbar $top.olistS -relief flat -command "$top.olistT yview"
     grid $top.olistT $top.olistS -sticky nsew -in $top.olistF
     grid columnconfigure $top.olistF 0 -weight 1
@@ -785,8 +801,14 @@ proc rt_olist_edit { id } {
     frame $top.buttonF
     button $top.clearB -relief raised -text "Clear"\
 	    -command "rt_olist_clear $id"
+    hoc_register_data $top.clearB "Clear Object List."\
+	    { { summary "Clear the object list and the contents
+of the object list editor." } }
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "rt_olist_dismiss $id"
+    hoc_register_data $top.dismissB "Dismiss"\
+	    { { summary "Dismiss the object list editor. Note - this does
+not destroy the object list." } }
     grid x $top.clearB x $top.dismissB x\
 	    -sticky nsew -in $top.buttonF
     grid columnconfigure $top.buttonF 0 -weight 1
