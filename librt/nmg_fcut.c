@@ -2471,6 +2471,71 @@ struct nmg_ray_state *rs;
 				bu_log( "\tfind_loop_to_cut: selecting VU2 x%x\n", vu2 );
 		}
 
+		/* Check for duplicate cuts (cutting two different loops across same two vertices) */
+		if( BU_PTBL_END( cuts ) > 1 )
+		{
+			for( i=0 ; i<BU_PTBL_END( cuts ) ; i++ )
+			{
+				struct loop_cuts *lcut1, *lcut2;
+				int class1, class2;
+
+				lcut1 = (struct loop_cuts *)BU_PTBL_GET( cuts, i );
+				for( j=i+1 ; j<BU_PTBL_END( cuts ) ; j++ )
+				{
+					lcut2 = (struct loop_cuts *)BU_PTBL_GET( cuts, j );
+
+					if( lcut1->vu1->v_p != lcut2->vu1->v_p ||
+					    lcut1->vu2->v_p != lcut2->vu2->v_p )
+						continue;
+
+					/* lcut1 and lcut2 are the same cut, choose one loop to cut */
+					if( lcut1->lu->orientation == OT_OPPOSITE &&
+						lcut2->lu->orientation == OT_OPPOSITE )
+					{
+						bu_log( "find_loop_to_cut: Two OT_OPPOSITE loops to be cut?? x%x and x%x\n",
+							lcut1->lu, lcut2->lu );
+						bu_bomb( "find_loop_to_cut: Two OT_OPPOSITE loops to be cut??\n" );
+					}
+					if( lcut1->lu->orientation == OT_OPPOSITE )
+					{
+						/* don't cut an OT_OPPOSITE loop */
+						bu_ptbl_rm( cuts, (long *)lcut1 );
+						break;
+					}
+					if( lcut2->lu->orientation == OT_OPPOSITE )
+					{
+						/* don't cut an OT_OPPOSITE loop */
+						bu_ptbl_rm( cuts, (long *)lcut2 );
+						break;
+					}
+					class1 = nmg_class_pt_lu_except( mid_pt, lcut1->lu,
+						(struct edge *)NULL, rs->tol );
+					class2 = nmg_class_pt_lu_except( mid_pt, lcut2->lu,
+						(struct edge *)NULL, rs->tol );
+
+					if( class1 == NMG_CLASS_AoutB && class2 == NMG_CLASS_AoutB )
+					{
+						bu_log( "find_loop_to_cut: mid point is outside both loops??? x%x and x%x pt=(%g %g %g)\n",
+							lcut1->lu, lcut2->lu, V3ARGS( mid_pt ) );
+						bu_bomb( "find_loop_to_cut: mid point is outside both loops???\n" );
+					}
+
+					if( class1 == NMG_CLASS_AoutB )
+					{
+						/* Don't cut this loop (cut is outside loop) */
+						bu_ptbl_rm( cuts, (long *)lcut1 );
+						break;
+					}
+					if( class2 == NMG_CLASS_AoutB )
+					{
+						/* Don't cut this loop (cut is outside loop) */
+						bu_ptbl_rm( cuts, (long *)lcut2 );
+						break;
+					}
+				}
+			}
+		}
+
 		/* Check if there is more than one VU from lu1 */
 		count = 0;
 		for( i=prior_start ; i<prior_end ; i++ )
