@@ -7,8 +7,6 @@
 #define Glx_MV_O(_m) offsetof(struct modifiable_glx_vars, _m)
 
 struct modifiable_glx_vars {
-  int linewidth;
-  int linestyle;
   int cueing_on;
   int zclipping_on;
   int zbuffer_on;

@@ -251,7 +251,6 @@ char *argv[];
   ((struct ogl_vars *)dmp->dm_vars)->mvars.doublebuffer = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.zclipping_on = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuffer_on = 1;
-  ((struct ogl_vars *)dmp->dm_vars)->mvars.linewidth = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.fastfog = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.fogdensity = 1.0;

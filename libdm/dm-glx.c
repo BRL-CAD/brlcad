@@ -255,7 +255,6 @@ char *argv[];
   /* initialize modifiable variables */
   ((struct glx_vars *)dmp->dm_vars)->mvars.zclipping_on = 1;       /* Z Clipping flag */
   ((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
-  ((struct glx_vars *)dmp->dm_vars)->mvars.linewidth = 1;      /* Line drawing width */
   ((struct glx_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
 
   BU_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)dmp->dm_vars)->l);
@@ -642,10 +641,6 @@ struct dm *dmp;
 
   if( !((struct glx_vars *)dmp->dm_vars)->mvars.doublebuffer )
     glx_clear_to_black(dmp);
-
-#if 0
-  linewidth(((struct glx_vars *)dmp->dm_vars)->mvars.linewidth);
-#endif
 
   return TCL_OK;
 }
