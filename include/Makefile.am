@@ -30,7 +30,6 @@ brlcadinclude_wanted = \
 	dm.h \
 	dm_color.h \
 	dm_xvars.h \
-	externs.h \
 	fb.h \
 	fbserv_obj.h \
 	forms.h \
