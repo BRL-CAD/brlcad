@@ -67,7 +67,7 @@ char	*name;
 	VSET( pt[2], 50, 100*sin60, 0);
 	VSET( pt[3], 50, 100*sin60/3, 100*sin60 );
 
-	mk_arb4( stdout, name, pt );
+	mk_arb4( stdout, name, &pt[0][X] );
 }
 
 /* Make a leaf node out of 4 polygons */

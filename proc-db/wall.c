@@ -478,7 +478,7 @@ struct wmember *wm_hd;
 	struct wmember *wm;
 	(void)sprintf(sol_name, "s.%s.%d", obj_name, sol_num++);
 
-	mk_arb8(fd, sol_name, pts);
+	mk_arb8(fd, sol_name, &pts[0][X]);
 	wm = mk_addmember(sol_name, wm_hd, WMOP_UNION);
 
 	if (trans_matrix)
@@ -895,7 +895,7 @@ FILE *fd;
 	VSET(pts[7], WALL_WIDTH, 0.0, WALL_HEIGHT);
 
 	(void)sprintf(sol_name, "s.%s.sr1", obj_name);
-	mk_arb8(fd, sol_name, pts);
+	mk_arb8(fd, sol_name, &pts[0][X]);
 	(void)mk_addmember(sol_name, &wm_hd, WMOP_UNION);
 
 	for (RT_LIST_FOR(op, opening, &ol_hd.l)) {
@@ -909,7 +909,7 @@ FILE *fd;
 		VSET(pts[7], op->ex, -0.01,		op->ez);
 
 		(void)sprintf(sol_name, "s.%s.o.%d", obj_name, i++);
-		mk_arb8(fd, sol_name, pts);
+		mk_arb8(fd, sol_name, &pts[0][X]);
 		(void)mk_addmember(sol_name, &wm_hd, WMOP_SUBTRACT);
 	}
 
@@ -963,7 +963,7 @@ FILE *fd;
 	VSET(pts[7], brick_width, 0.0,		mortar_height+brick_height);
 
 	(void)sprintf(sol_name, "s.%s.b", obj_name);
-	mk_arb8(fd, sol_name, pts);
+	mk_arb8(fd, sol_name, &pts[0][X]);
 
 	(void)mk_addmember(sol_name, &wm_hd, WMOP_UNION);
 	*sol_name = 'r';
@@ -988,7 +988,7 @@ FILE *fd;
 	VSET(pts[7], brick_width, 0.0,		mortar_height);
 		
 	(void)sprintf(sol_name, "s.%s.vm", obj_name);
-	mk_arb8(fd, sol_name, pts);
+	mk_arb8(fd, sol_name, &pts[0][X]);
 
 	(void)mk_addmember(sol_name, &wm_hd, WMOP_UNION);
 	*sol_name = 'r';
@@ -1010,7 +1010,7 @@ FILE *fd;
 	VSET(pts[7], -mortar_width, 0.0,	 mortar_height+brick_height);
 
 	(void)sprintf(sol_name, "s.%s.vm", obj_name);
-	mk_arb8(fd, sol_name, pts);
+	mk_arb8(fd, sol_name, &pts[0][X]);
 
 	(void)mk_addmember(sol_name, &wm_hd, WMOP_UNION);
 	*sol_name = 'r';
@@ -1061,7 +1061,7 @@ FILE *fd;
 	VSET(pts[7], brick_width, 0.0,		mortar_height+brick_height);
 
 	(void)sprintf(proto_brick, "s.%s.b", obj_name);
-	mk_arb8(fd, proto_brick, pts);
+	mk_arb8(fd, proto_brick, &pts[0][X]);
 	(void)mk_addmember(proto_brick, &wm_hd, WMOP_UNION);
 	*proto_brick = 'r';
 

@@ -541,7 +541,7 @@ Elbows()	/* make a tubing elbow and fluid elbow */
 			VJOIN1( pts[6] , pts[4] , -len , ptr->nmitre );
 			VJOIN1( pts[7] , pts[4] , len , RN2 );
 		
-			mk_arb8( fdout , ptr->cut , pts );
+			mk_arb8( fdout , ptr->cut , &pts[0][X] );
 		}
 
 		if( torus )
