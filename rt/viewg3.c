@@ -198,8 +198,8 @@ view_pixel()
  *  each object hit.
  *
  *  Note that the GIFT-3 format uses a different convention for the "zero"
- *  distance along the ray.  RT has zero at the ray origin (emanation plane),
- *  while GIFT has zero at the screen plane translated so that it contains
+ *  distance along the ray.  RT has zero at the ray origin (emanation plain),
+ *  while GIFT has zero at the screen plain translated so that it contains
  *  the model origin.  This difference is compensated for by adding the
  *  'dcorrection' distance correction factor.
  *
@@ -237,7 +237,7 @@ register struct partition *PartHeadp;
 
 	/*
 	 *  GIFT format wants grid coordinates, which are the
-	 *  h,v coordinates of the screen plane projected into model space.
+	 *  h,v coordinates of the screen plain projected into model space.
 	 */
 	hcen = (ap->a_x + 0.5) * MAGNITUDE(dx_model);
 	vcen = (ap->a_y + 0.5) * MAGNITUDE(dy_model);
@@ -259,14 +259,18 @@ register struct partition *PartHeadp;
 		v = ap->a_y * MAGNITUDE(dy_model);
 	}
 
-	/* Single-thread through the printf()s */
+	/* Single-thread through the printf()s.
+	 * COVART will accept non-sequential ray data provided the
+	 * ray header and its associated data are not separated.  CAVEAT:
+	 * COVART will not accept headers out of sequence.
+	 */
 	RES_ACQUIRE( &rt_g.res_syscall );
 
 	/*
-	 *  In RT, rays are launched from the plane of the screen,
+	 *  In RT, rays are launched from the plain of the screen,
 	 *  and ray distances are relative to the start point.
 	 *  In GIFT-3 output files, ray distances are relative to
-	 *  the screen plane translated so that it contains the origin.
+	 *  the screen plain translated so that it contains the origin.
 	 *  A distance correction is required to convert between the two.
 	 *  Since this really should be computed only once, not every time,
 	 *  the trip_count flag was added.
