@@ -38,16 +38,20 @@
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -1211,7 +1215,6 @@ struct faceuse *fu1;
 	struct faceuse *fu2;
 	struct face	*f1;
 	struct face	*f2;
-	struct face_g_plane	*fg;
 	struct shell	*s;
 	int		ret;
 
@@ -2267,7 +2270,6 @@ int		n_cols;
 int		pt_type;
 fastf_t		*mesh;
 {
-	int i;
 	struct face_g_snurb	*fg;
 	struct face	*f;
 	struct model	*m;
@@ -2955,7 +2957,6 @@ struct edge_g_lseg	*dest_eg;
 struct edge_g_lseg	*src_eg;
 {
 	register struct edgeuse		*eu;
-	register struct edge		*e;
 
 	NMG_CK_EDGE_G_LSEG(src_eg);
 	NMG_CK_EDGE_G_LSEG(dest_eg);

@@ -274,7 +274,6 @@ struct rt_list	*hp;
 struct rt_vls	*namevls;
 CONST unsigned char	*buf;
 {
-	register struct rt_vlist	*vp;
 	CONST register unsigned char	*bp;
 	CONST unsigned char		*pp;		/* point pointer */
 	int		nelem;
@@ -637,7 +636,6 @@ double			sz;
 	struct rt_vlist	*vp;
 	struct rt_list	*vhead;
 	char		label[256];
-	fastf_t		scale;
 
 	vhead = rt_vlblock_find( vbp, 255, 255, 255 );	/* white */
 
