@@ -217,12 +217,19 @@ char **argv;
 		fb_clear( fbp, PIXEL_NULL );
 	}
 	if( zoom ) {
-		/* Zoom in, and center the display */
-		fb_zoom( fbp, scr_width/xout, scr_height/yout );
-		if( inverse )
-			fb_window( fbp, scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2) );
-		else
-			fb_window( fbp, scr_xoff+xout/2, scr_yoff+yout/2 );
+		/* Zoom in, and center the display.  Use square zoom. */
+		int	zoom;
+		zoom = scr_width/xout;
+		if( scr_height/yout < zoom )  zoom = scr_height/yout;
+		if( inverse )  {
+			fb_view( fbp,
+				scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),
+				zoom, zoom );
+		} else {
+			fb_view( fbp,
+				scr_xoff+xout/2, scr_yoff+yout/2,
+				zoom, zoom );
+		}
 	}
 
 	if( file_yoff != 0 ) skipbytes( infd, file_yoff*file_width*sizeof(RGBpixel) );
