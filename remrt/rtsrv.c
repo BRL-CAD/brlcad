@@ -770,14 +770,14 @@ char *buf;
 }
 
 /*
- *			R T L O G
+ *			B U _ L O G
  *
  *  Log an error.
  *  This version buffers a full line, to save network traffic.
  */
 #if (__STDC__ && !apollo)
 void
-rt_log( char *fmt, ... )
+bu_log( char *fmt, ... )
 {
 	va_list ap;
 	static char buf[512];		/* a generous output line */
@@ -819,7 +819,7 @@ out:
  */
 /* VARARGS */
 void
-rt_log(va_alist)
+bu_log(va_alist)
 va_dcl
 {
 	va_list		ap;
@@ -868,7 +868,7 @@ out:
 #else
 /* VARARGS */
 void
-rt_log( str, a, b, c, d, e, f, g, h )
+bu_log( str, a, b, c, d, e, f, g, h )
 char	*str;
 int	a, b, c, d, e, f, g, h;
 {
@@ -899,13 +899,13 @@ out:
 
 
 /*
- *			R T _ B O M B
+ *			B U _ B O M B
  *  
- *  Abort the RT library
+ *  Replacement for the LIBBU routine of the same name.
  */
 void
-rt_bomb(str)
-char *str;
+bu_bomb(str)
+CONST char *str;
 {
 	char	*bomb = "RTSRV terminated by rt_bomb()\n";
 
@@ -918,7 +918,7 @@ char *str;
 
 	if(debug)  fprintf(stderr,"\n%s\n", str);
 	fflush(stderr);
-	if( rt_g.debug || rt_g.NMG_debug || debug )
+	if( rt_g.debug || rt_g.NMG_debug || bu_debug || debug )
 		abort();	/* should dump */
 	exit(12);
 }
