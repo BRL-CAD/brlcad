@@ -95,6 +95,7 @@ set helplib_data(dgo_blast)		{{object(s)} {erase all currently displayed geometr
 set helplib_data(dgo_rtcheck)		{{view_obj [args]} {}}
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
+set helplib_data(dgo_report)		{{[lvl]} {print solid table & vector list}}
 set helplib_data(cho_close)		{{} {close/destroy this command history object}}
 set helplib_data(cho_open)		{{name} {open/create a new command history object}}
 
