@@ -5,7 +5,7 @@
  *  This program fires parallel rays.
  *
  *  Author -
- *	S.Coates - 8 July 1991
+ *	S.Coates - 27 February 1992
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -17,8 +17,35 @@
  *	All rights reserved.
  */
 
-/*	23 May 1991 - Take out lvpt that wasn't necessary.  */
+/*	23 May 1991       - Take out lvpt that wasn't necessary.  */
 /*		Put in optional dump.  Sum shape factors.  */
+/*	30 August 1991    - Put in option to create a generic  */
+/*		shape factor file.  */
+/*	30 October 1991   - Read region number & name file to get  */
+/*		get region number that matches region number from  */
+/*		firpass & secpass.  Print out engine area in  */
+/*		shapefactor file.  */
+/*	 4 November 1991  - Fire reversed ray in order to have  */
+/*		reciprocity.  (i.e. sf[ij] * A[i] = sf[ji] * A[j])  */
+/*	 8 November 1991  - Fix number of rays to divide by when finding  */
+/*		engine area.  */
+/*	13 November 1991  - Put check in for rays leaving i & entering j  */
+/*		not equal to number of rays leaving j & entering i.  */
+/*	15 November 1991  - Change a print statement.  */
+/*	22 November 1991  - Change the number of maximum regions to 200.  */
+/*	25 November 1991  - Put in print statements for error checking.  */
+/*	27 November 1991  - If only air is hit it hit function return 1  */
+/*		indicating miss.  */
+/*	 3 December 1991  - Add some comments.  */
+/*	27 February 1992  - Remove backward firing ray & replace with  */
+/*		simpilar solution.  If the ray goes from region i to  */
+/*		region j through engine air N(i) & N(i,j) are incremented.  */
+/*		Simply increment N(j) & N(j,i) also.  EASY.  Add loop  */
+/*		to check reciprocity.  Fix problem with number of rays  */
+/*		leaving a region.  To compute engine area the total number  */
+/*		of rays leaving a region and entering engine air must be  */
+/*		used.  Not the total that leave throught engine air and  */
+/*		hit another region.  */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -33,19 +60,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 /*  Need the following for rt_shootray.  */
-#include "machine.h"
-#include "externs.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "msr.h"
-
-
+#include "/n/walrus/usr/brlcad/include/machine.h"
+#include "/n/walrus/usr/brlcad/include/externs.h"
+#include "/n/walrus/usr/brlcad/include/vmath.h"
+#include "/n/walrus/usr/brlcad/include/raytrace.h"
+#include "/n/walrus/usr/brlcad/include/msr.h"
 
 
 #define PI 3.14159265358979323846262	/*  Pi.  */
 #define ADJTOL 1.e-1	/*  Tolerance for adjacent regions.  */
 #define ZEROTOL 1.e-20	/*  Zero tolerance.  */
-#define MAXREG 70	/*  Maximum number of regions.  */
+#define MAXREG 200	/*  Maximum number of regions.  */
 
 struct application ap;	/*  Structure passed between functions.  */
 
@@ -56,11 +81,17 @@ extern int overlap();	/*  User supplied overlap function.  */
 /*  Define structure to hold all information needed.  */
 struct table
 {
-   CONST char *name;		/*  Region name.  */
+   CONST char *name;	/*  Region name.  */
+   int regnum;		/*  Region number that matches firpass &  */
+			/*  secpass.  */
+   int numchar;		/*  Number of char each region name has.  */
    double lvrays;	/*  Number of rays that leave the region through  */
-			/*  air.  */
+			/*  air and hit another region.  */
    double intrays[MAXREG];	/*  Number of rays that leave region  */
 			/*  through air and are intercepted.  */
+   double allvrays;	/*  All rays that leave a region through engine  */
+			/*  air.  */
+   double engarea;	/*  Engine area for each region.  */
 };
 struct table info[MAXREG];
 double nummiss;		/*  Number of misses.  */
@@ -77,12 +108,13 @@ char **argv;
    char idbuf[32];	/*  Contains database name.  */
    struct region *pr;	/*  Used in finding region names.  */
    double rho,phi,theta;/*  Spherical coordinates for starting point.  */
+   double areabs;	/*  Area of bounding sphere (mm**2).  */
    int ians;		/*  Answer of question.  */
    double strtpt[3];	/*  Starting point of ray.  */
    double strtdir[3];	/*  Starting direction.  */
    double loops;	/*  Number of rays fired.  */
    double r;		/*  Variable in loops.  */
-   int i,j;		/*  Variable in loops.  */
+   int i,j,k;		/*  Variable in loops.  */
    long seed;		/*  Initial seed for random number generator.  */
    double denom;	/*  Denominator.  */
    double elev;		/*  Elevation, used to find point on yz-plane.  */
@@ -98,8 +130,31 @@ char **argv;
 
    FILE *fp;		/*  Used to open files.  */
    char outfile[16];	/*  Output file.  */
+   FILE *fp1;		/*  Used to read region # & name file.  */
+   char rnnfile[16];	/*  Region # & name file.  */
+   FILE *fp2;		/*  Used to write the error file.  */
+   char errfile[16];	/*  Error file.  */
    double totalsf;	/*  Sum of shape factors.  */
    double totalnh;	/*  Sum of number of hits.  */
+   int itype;		/*  Type of file to be created, 0=>regular,  */
+			/*  1=>generic.  */
+   char line[500];	/*  Buffer to read a line of data into.  */
+   int flag;		/*  Flag for reading geometric file, it counts  */
+			/*  commas.  */
+   int c;		/*  Reads one character of information.  */
+   int icnt;		/*  Counter for shape factor.  */
+   char tmpname[150];	/*  Temporary name.  */
+   int tmpreg;		/*  Temporary region number.  */
+   char rnnname[800][150];  /*  Region name from region # & name file.  */
+   int rnnnum;		/*  Number of regions in region # & name file.  */
+   int rnnchar[800];	/*  Number of characters in name.  */
+   int rnnreg[800];	/*  Region number from region # & name file.  */
+   int jcnt;		/*  Counter.  */
+   int equal;		/*  0=>equal, 1=>not equal.  */
+   double stemp;	/*  Temporary variables.  */
+   double rcpi,rcpj;	/*  Used to check reciprocity.  */
+   double rcp_diff;	/*  Difference in reciprocity.  */
+   double rcp_pdiff;	/*  Percent difference in reciprocity.  */
 
    struct msr_unif *msr;
 
@@ -111,14 +166,35 @@ char **argv;
    else
    {						/*  START # 1  */
 
+	/*  Ask what type of file is to be created - regualar  */
+	/*  or generic.  */
+	(void)printf("Enter type of file to be written (0=>regular or ");
+	(void)printf("1=>generic).  ");
+	(void)fflush(stdout);
+	(void)scanf("%d",&itype);
+	if(itype != 1) itype = 0;
+
 	/*  Enter names of files to be used.  */
-	(void)fprintf(stderr,"Enter name of output file (15 char max).  ");
+	(void)fprintf(stderr,"Enter name of output file (15 char max).\n\t");
 	(void)fflush(stderr);
 	(void)scanf("%s",outfile);
 
+	/*  Read name of the error file to be written.  */
+	(void)printf("Enter the name of the error file (15 char max).\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%s",errfile);
+
+	/*  Enter name of region # & name file to be read.  */
+	{
+	 (void)printf("Enter region # & name file to be read ");
+	 (void)printf("(15 char max).\n\t");
+	 (void)fflush(stdout);
+	 (void)scanf("%s",rnnfile);
+	}
+
 	/*  Check if dump is to occur.  */
 	idump = 0;
-	(void)printf("Do you want to dump interm shape factors to ");
+	(void)printf("Do you want to dump intermediate shape factors to ");
 	(void)printf("screen (0-no, 1-yes)?  ");
 	(void)fflush(stdout);
 	(void)scanf("%d",&idump);
@@ -130,7 +206,7 @@ char **argv;
 
 	/*  Set seed for random number generator.  */
 	seed = 1;
-	(void)fprintf(stderr,"Do you wish to enter your own seed (0) or\n");
+	(void)fprintf(stderr,"Do you wish to enter your own seed (0) or ");
 	(void)fprintf(stderr,"use the default of 1 (1)?  ");
 	(void)fflush(stderr);
 	(void)scanf("%d",&ians);
@@ -146,6 +222,60 @@ char **argv;
 	(void) srand48(seed);
 #endif
    	rt_log("seed initialized\n");
+
+	/*  Read region # & name file.  */
+	 rnnnum = 0;
+	 fp1 = fopen(rnnfile,"r");
+/*
+ *	 (void)printf("Region # & name file opened.\n");
+ *	 (void)fflush(stdout);
+ */
+	 c = getc(fp1);
+	 while(c != EOF)
+	 {
+		(void)ungetc(c,fp1);
+		(void)fgets(line,200,fp1);
+		(void)sscanf(line,"%d%s",&tmpreg,tmpname);
+		for(i=0; i<150; i++)
+		{
+		   rnnname[rnnnum][i] = tmpname[i];
+		}
+		rnnreg[rnnnum] = tmpreg;
+		rnnnum++;
+		c = getc(fp1);
+	 }
+	 (void)fclose(fp1);
+/*
+ *	 (void)printf("Region # & name file closed.\n");
+ *	 (void)fflush(stdout);
+ */
+
+	 (void)printf("Number of regions read from region # & name file:  %d\n",		rnnnum);
+	 (void)fflush(stdout);
+
+	 /*  Find number of characters in each region name.  */
+	 for(i=0; i<rnnnum; i++)
+	 {
+	   jcnt = 0;
+	   while(rnnname[i][jcnt] != '\0')
+	   {
+		jcnt++;
+	   }
+	   rnnchar[i] = jcnt;
+/*
+ *	   (void)printf("number of char, i= %d:  %d\n",i,rnnchar[i]);
+ *	   (void)fflush(stdout);
+ */
+	 }
+
+	 /*  Check to see that region # & name file read correctly.  */
+/*
+ *	 for(i=0; i<rnnnum; i++)
+ *	 {
+ *	   (void)printf("%d\t%d\t-%s-\n",i,rnnchar[i],rnnname[i]);
+ *	   (void)fflush(stdout);
+ *	 }
+ */
 
 	/*  Build directory.  */
 	index = 1;	/*  Set index for rt_dirbuild.  */
@@ -174,7 +304,10 @@ char **argv;
 	for(i=0; i<numreg; i++)
 	{
 		info[i].name = "\0";
+		info[i].regnum = (-1);
+		info[i].numchar = 0;
 		info[i].lvrays = 0.;
+		info[i].engarea = 0.;
 		for(j=0; j<numreg; j++)
 		{
 			info[i].intrays[j] = 0.;
@@ -226,6 +359,10 @@ char **argv;
 
 	for(r=0; r<loops; r++)	/*  Number of rays fired.  */
 	{					/*  START # 2  */
+/*
+ *	   (void)fprintf(stderr,"loop # %f\n",r);
+ */
+
 	   /*  Find length of 'diagonal' (rho).  (In reality rho is  */
 	   /*  the radius of bounding sphere).  */
 	   rho = (rtip->mdl_max[X] - rtip->mdl_min[X])
@@ -235,6 +372,9 @@ char **argv;
 	   	+(rtip->mdl_max[Z] - rtip->mdl_min[Z])
 	   	   * (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
 	   rho = sqrt(rho) / 2. + .5;
+
+	   /*  find surface area of bounding sphere.  */
+	   areabs = 4. * PI * rho * rho;
 
 	   /*  Second way to find starting point and direction.  */
 	   /*  This approach finds the starting point and direction  */
@@ -376,7 +516,7 @@ char **argv;
  *	   (void)fflush(stdout);
  */
 
-	   /*  Call rt_shootray.  */
+	   /*  Call rt_shootray for "forward ray".  */
 	   (void)rt_shootray(&ap);
 
 /*
@@ -391,7 +531,8 @@ char **argv;
 
 	   if( r == (dump - 1.) )
 	   {
-	     (void)printf("%f rays have been fired.\n",(r+1));
+	     (void)printf("%f rays have been fired in forward direction.\n",
+		(r+1));
 	     (void)fflush(stdout);
 	     if(idump == 1)
 	     {						/*  START # 3  */
@@ -417,21 +558,123 @@ char **argv;
 		dump = dump + 1000000.;
 	   }
 
-
 	}					/*  END # 2  */
 
-	/*  Print out shape factor to output file.  */
-	fp = fopen(outfile,"w");
-	(void)fprintf(fp,"Number of rays fired:  %f\n",loops);
-	(void)fprintf(fp,"Number of misses:  %f\n\n",nummiss);
-	(void)fflush(fp);
-
-	/*  Print out structure.  */
+	/*  Find area bounded by engine air using Monte Carlo method.  */
 	for(i=0; i<numreg; i++)
 	{
-	   (void)fprintf(fp,"\n%d\t%s\n",i,info[i].name);
-	   (void)fprintf(fp,"  total number of rays:  %f\n",
-		info[i].lvrays);
+	  /*  Old way, only incrementing info[i].allvrays for forward  */
+	  /*  ray therefore do not divide by 2.  Division by 2 is to  */
+	  /*  include the backwards ray also.  */
+/*
+ *	  info[i].engarea = info[i].allvrays * areabs / loops / 2.;
+ */
+	  info[i].engarea = info[i].allvrays * areabs / loops;
+
+	  /*  Put area into square meters.  */
+	  info[i].engarea *= 1.e-6;
+	}
+
+	   /*  Find number of characters in each region name.  */
+	   for(i=0; i<numreg; i++)
+	   {
+		jcnt = 0;
+		while(info[i].name[jcnt] != '\0')
+		{
+		   jcnt++;
+		}
+		info[i].numchar = jcnt;
+	   }
+	   /*  Print out number of char & region name.  */
+/*
+ *	   for(i=0; i<numreg; i++)
+ *	   {
+ *		(void)printf("%d\t-%s-\n",info[i].numchar,info[i].name);
+ *		(void)fflush(stdout);
+ *	   }
+ */
+
+	   /*  Find correct region number.  */
+	   (void)printf("Finding correct region numbers.\n");
+	   (void)fflush(stdout);
+	   for(i=0; i<numreg; i++)
+	   {
+		for(j=0; j<rnnnum; j++)
+		{
+		   equal = 0;	/*  1=>not equal.  */
+		   jcnt = rnnchar[j];
+		   for(k=info[i].numchar; k>=0; k--)
+		   {
+/*
+ *			(void)printf("i=%d, j=%d, k=%d, jcnt=%d, -%c-, -%c-\n",
+ *			   i,j,k,jcnt,info[i].name[k],rnnname[j][jcnt]);
+ *			(void)fflush(stdout);
+ */
+			if(jcnt<0) equal = 1;
+			else if(info[i].name[k] != rnnname[j][jcnt])
+				equal = 1;
+			jcnt--;
+		   }
+		   if(equal == 0) info[i].regnum = rnnreg[j];
+		}
+	   }
+	   (void)printf("Finished finding correct region numbers.\n");
+	   (void)fflush(stdout);
+
+	/******************************************************************/
+
+	/*  Check for reciprocity.  */
+	/*  Open error file.  */
+	fp2 = fopen(errfile,"w");
+	(void)fprintf(fp2,"\nError file for shapefact.\n");
+	(void)fprintf(fp2,"Shape factor file created:  %s\n\n",outfile);
+	(void)fprintf(fp2,"Regions with reciprocity errors greater ");
+	(void)fprintf(fp2,"than 10%.\n\n");
+	(void)fflush(fp2);
+
+	for(i=0; i<numreg; i++)
+	{
+	   for(j=0; j<numreg; j++)
+	   {
+		rcpi = 0.;
+		rcpj = 0.;
+		if( (info[i].lvrays < -ZEROTOL) || (ZEROTOL < info[i].lvrays) )
+		   rcpi = info[i].intrays[j] * info[i].engarea /info[i].lvrays;
+		if( (info[j].lvrays < -ZEROTOL) || (ZEROTOL < info[j].lvrays) )
+		   rcpj = info[j].intrays[i] * info[j].engarea /info[j].lvrays;
+		rcp_diff = rcpi - rcpj;
+		if(rcp_diff < 0.) rcp_diff = (-rcp_diff);
+		if( (rcpi < -ZEROTOL) || (ZEROTOL < rcpi) )
+			rcp_pdiff = rcp_diff / rcpi;
+		else rcp_pdiff = 0.;	/*  Don't divide by 0.  */
+		/*  Print reciprocity errors greater than 10%.  */
+		if(rcp_pdiff > 0.1)
+		{
+		   (void)fprintf(fp2,"%d   %d   %f   %f   %f   %f\n",
+			info[i].regnum,info[j].regnum,rcpi,rcpj,rcp_diff,
+			(rcp_pdiff * 100.));
+		   (void)fflush(fp2);
+		}
+	   }
+	}
+	/*  Close error file.  */
+	(void)fclose(fp2);
+
+	/******************************************************************/
+
+	/*  Print out shape factor to regular output file.  */
+	if(itype == 0)
+	{
+	 fp = fopen(outfile,"w");
+	 (void)fprintf(fp,"Number of forward rays fired:  %f\n\n",loops);
+	 (void)fflush(fp);
+
+	 /*  Print out structure.  */
+	 for(i=0; i<numreg; i++)
+	 {
+	   /*  Print region number, region name, & engine area.  */
+	   (void)fprintf(fp,"%d\t%s\t%e\n",
+		info[i].regnum,info[i].name,info[i].engarea);
 	   (void)fflush(fp);
 
 	   /*  Zero sums for shape factors & rays hit.  */
@@ -445,10 +688,25 @@ char **argv;
 		   info[i].lvrays) )
 		   sf = info[i].intrays[j] / info[i].lvrays;
 
-		(void)fprintf(fp,"    region %d, number of hits:  %f",
-			j,info[i].intrays[j]);
-		(void)fprintf(fp,", shape factor:  %f\n",sf);
+		/*  Print region number & shape factor.  */
+		(void)fprintf(fp,"   %d\t%e\n",
+			info[j].regnum,sf);
 		(void)fflush(fp);
+
+		/*  Print if number of rays leaving i & entering j is  */
+		/*  not the same as the number of rays leaving j &   */
+		/*  entering i.  */
+/*
+ *		if( info[i].intrays[j] != info[j].intrays[i] )
+ *		{
+ *		   stemp = info[i].intrays[j] - info[j].intrays[i];
+ *		   if(stemp < 0) stemp = (-stemp);
+ *		   (void)fprintf(fp,"     %e (%e) - %e (%e) - %e\n",
+ *			info[i].intrays[j],(stemp/info[i].intrays[j]),
+ *			info[j].intrays[i],(stemp/info[j].intrays[i]),stemp);
+ *		   (void)fflush(fp);
+ *		}
+ */
 
 		/*  Add to sum of shape factors & number of hits.  */
 		totalsf += sf;
@@ -456,11 +714,46 @@ char **argv;
 
 	   }
 
+	   /*  Print sum of hits & sum of shape factors.  */
 	   (void)fprintf(fp,"  sum of hits:  %f\n",totalnh);
-	   (void)fprintf(fp,"  sum of shape factors:  %f\n",totalsf);
+	   (void)fprintf(fp,"  sum of shape factors:  %f\n\n",totalsf);
 	   (void)fflush(fp);
+	 }
+	 (void)fclose(fp);
 	}
-	(void)fclose(fp);
+
+	/******************************************************************/
+
+	/*  Create and write to generic shape factor file.  */
+	if(itype == 1)
+	{
+	   fp = fopen(outfile,"w");
+	   for(i=0; i<numreg; i++)
+	   {
+		/*  Count the number of shape factors.  */
+		icnt = 0;
+		for(j=0; j<numreg; j++)
+		{
+		   if(info[i].intrays[j] > ZEROTOL) icnt++;
+		}
+		/*  Print the # 5, region number (matches firpass &  */
+		/*  secpass), engine area, & number of shape factors.  */
+		(void)fprintf(fp," 5  %d  %e  %d\n",
+		   info[i].regnum,info[i].engarea,icnt);
+		(void)fflush(fp);
+		for(j=0; j<numreg; j++)
+		{
+		   if(info[i].intrays[j] > ZEROTOL)
+		   {
+			sf = info[i].intrays[j] / info[i].lvrays;
+			/*  Print each region # & shape factor.  */
+			(void)fprintf(fp,"    %d  %e\n",info[j].regnum,sf);
+			(void)fflush(fp);
+		   }
+		}
+	   }
+	   (void)fclose(fp);
+	}
 
    }						/*  END # 1  */
    return(0);
@@ -485,7 +778,9 @@ struct partition *PartHeadp;
    int iprev;			/*  Previous region hit.  */
    int iair;			/*  Type of air or region came from,  */
 				/*  0=>region, 1=>exterior air, 2=>crew  */
-				/*  air, 5=>engine air.  */
+				/*  air, 5=>engine air, 6=>closed  */
+				/*  compartment air, 7=>exhaust air,  */
+				/*  8=>generic air 1, 9=>generic air 2.  */
 
 /*
  * (void)printf("In hit function.\n");
@@ -575,9 +870,19 @@ struct partition *PartHeadp;
 		/*  Add one to number of rays leaving previous region.  */
 		info[iprev].lvrays++;
 
+		/*  Add one to the number of rays leaving current region  */
+		/*  for the backward ray.  */
+		info[icur].lvrays++;
+
 		/*  Add one to number of rays leaving previous region and  */
 		/*  intercepted by current region.  */
 		info[iprev].intrays[icur]++;
+
+		/*  Add one to the number of rays leaving the current  */
+		/*  region and intersecting the previous region for the  */
+		/*  backward ray.  */
+		info[icur].intrays[iprev]++;
+
 		}
 
 		/*  Find leave point.  */
@@ -629,6 +934,11 @@ struct partition *PartHeadp;
 
 	   else	/*  Hit air.  */
 	   {					/*  START # 9H  */
+		/*  Increment allvrays if the ray is leaving through  */
+		/*  engine air.  Make sure this is only done once.  */
+		if( (iair != 5) && (pp->pt_regionp->reg_aircode == 5) )
+			info[icur].allvrays++;
+
 		if(iair != 5) iair = pp->pt_regionp->reg_aircode;
 	   }					/*  END # 9H  */
 	}					/*  END # 7H  */
@@ -666,14 +976,21 @@ struct partition *PartHeadp;
 	}					/*  END # 10H  */
    }						/*  END # 1H  */
 
-   return(0);
+   if(iprev == (-1) )		/*  Went through air only.  */
+   {
+	return(1);		/*  Indicates miss.  */
+   }
+
+   else
+   {
+	return(0);
+   }
 }						/*  END # 0H  */
 
 
 miss()
 /*  User supplied miss function.  */
 {
-
 /*
  * (void)printf("In miss function.\n");
  * (void)fflush(stdout);
@@ -688,11 +1005,10 @@ miss()
 overlap()
 /*  User supplied overlap function.  */
 {
-
 /*
  * (void)printf("In overlap function.\n");
  * (void)fflush(stdout);
  */
 
-   return(1);
+   return(2);
 }
