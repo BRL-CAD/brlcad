@@ -149,8 +149,10 @@ struct seg		*seghead;	/* intersection w/ ray */
 	struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
 
-	if(rt_g.NMG_debug & DEBUG_NMGRT)
-		rt_log("rt_nmg_shot\n");
+	if(rt_g.NMG_debug & DEBUG_NMGRT) {
+		rt_log("rt_nmg_shot()\n\t");
+		rt_pr_tol(&ap->a_rt_i->rti_tol);
+	}
 
 	/* check validity of nmg specific structure */
  	if (nmg->nmg_smagic != NMG_SPEC_START_MAGIC)
