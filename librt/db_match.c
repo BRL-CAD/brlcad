@@ -38,6 +38,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 
 #include "./debug.h"
 
@@ -190,6 +191,41 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
+
+			/* handle non-combination objects that reference other objects */
+			if( dp->d_major_type == DB5_MAJORTYPE_BRLCAD ) {
+				struct directory *dp2;
+
+				if( dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE ) {
+					struct rt_extrude_internal *extr;
+
+					if( rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, resp) < 0 )
+						continue;
+					extr = (struct rt_extrude_internal *)intern.idb_ptr;
+					RT_EXTRUDE_CK_MAGIC( extr );
+					if( extr->sketch_name ) {
+						dp2 = db_lookup( dbip, extr->sketch_name, LOOKUP_QUIET );
+						if( dp2 != DIR_NULL ) {
+							dp2->d_nref++;
+						}
+					}
+					rt_db_free_internal( &intern, resp );
+				} else if( dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP ) {
+					struct rt_dsp_internal *dsp;
+
+					if( rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, resp) < 0 )
+						continue;
+					dsp = (struct rt_dsp_internal *)intern.idb_ptr;
+					RT_DSP_CK_MAGIC( dsp );
+					if( dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen( &dsp->dsp_name) > 0 ) {
+						dp2 = db_lookup( dbip, bu_vls_addr( &dsp->dsp_name ), LOOKUP_QUIET );
+						if( dp2 != DIR_NULL ) {
+							dp2->d_nref++;
+						}
+					}
+					rt_db_free_internal( &intern, resp );
+				}
+			}
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 			if( rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, resp) < 0 )
