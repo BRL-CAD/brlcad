@@ -96,6 +96,7 @@ static int dgo_build_tops();
 static void dgo_rt_write();
 static void dgo_rt_set_eye_model();
 
+/*XXXXXXXXXXXXX possibly need to get rid of these globals */
 static int dgo_draw_nmg_only;
 static int dgo_nmg_triangulate;
 static int dgo_draw_wireframes;
@@ -123,6 +124,7 @@ static struct solid FreeSolid;		/* head of free solid list */
 static struct bu_cmdtab dgo_cmds[] = {
 	"blast",		dgo_blast_tcl,
 	"clear",		dgo_zap_tcl,
+	"close",		dgo_close_tcl,
 	"draw",			dgo_draw_tcl,
 	"ev",			dgo_draw_tcl,
 	"erase",		dgo_erase_tcl,
@@ -136,7 +138,6 @@ static struct bu_cmdtab dgo_cmds[] = {
 	"vdraw",		dgo_vdraw_tcl,
 	"who",			dgo_who_tcl,
 	"zap",			dgo_zap_tcl,
-	"close",		dgo_close_tcl,
 	(char *)0,		(int (*)())0
 };
 
