@@ -2574,7 +2574,7 @@ dgo_callback(dgop, interp)
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "dgo_callback %s", bu_vls_addr(&dgop->dgo_name));
+	bu_vls_printf(&vls, "catch {dgo_callback %s}", bu_vls_addr(&dgop->dgo_name));
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	Tcl_ResetResult(interp);
