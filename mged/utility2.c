@@ -268,7 +268,7 @@ f_copyeval( )
 	if(saverec.u_id == ID_ARS_A) {
 		NAMEMOVE(cmd_args[args], saverec.a.a_name);
 		ngran = saverec.a.a_totlen;
-		if( (dp = db_diradd( dbip, saverec.a.a_name, -1, DIR_SOLID, ngran+1)) == DIR_NULL )
+		if( (dp = db_diradd( dbip, saverec.a.a_name, -1, ngran+1, DIR_SOLID)) == DIR_NULL )
 			return;
 		db_alloc( dbip, dp, ngran+1 );
 		db_put( dbip, dp, &saverec, 0, 1 );
@@ -311,7 +311,7 @@ f_copyeval( )
 
 	if(saverec.u_id == ID_SOLID) {
 		NAMEMOVE(cmd_args[args], saverec.s.s_name);
-		if( (dp = db_diradd( dbip, saverec.s.s_name, -1, DIR_SOLID, 1)) == DIR_NULL )
+		if( (dp = db_diradd( dbip, saverec.s.s_name, -1, 1, DIR_SOLID)) == DIR_NULL )
 			return;
 		MAT4X3PNT( vec, xform, &saverec.s.s_values[0] );
 		VMOVE(&saverec.s.s_values[0], vec);

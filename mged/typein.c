@@ -414,7 +414,7 @@ f_in()
 	(void)signal( SIGINT, SIG_IGN);
  
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  record.s.s_name, -1, DIR_SOLID, 0 )) == DIR_NULL )  {
+	if( (dp = db_diradd( dbip,  record.s.s_name, -1, 0, DIR_SOLID )) == DIR_NULL )  {
 		(void)printf("ERROR, dir_add failure, database not updated!\n");
 		return;		/* failure */
 	}

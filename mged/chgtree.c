@@ -96,7 +96,7 @@ f_copy()
 	db_get( dbip,  proto, &record, 0 , 1);
 
 	if(record.u_id == ID_SOLID) {
-		if( (dp = db_diradd( dbip,  cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+		if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
 			return;
 		db_alloc( dbip, dp, proto->d_len );
 
@@ -113,7 +113,7 @@ f_copy()
 		/* color the solid */
 		dmp->dmr_colorchange();
 	} else if(record.u_id == ID_ARS_A)  {
-		if( (dp = db_diradd( dbip,  cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+		if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
 			return;
 		db_alloc( dbip, dp, proto->d_len );
 		NAMEMOVE( cmd_args[2], record.a.a_name );
@@ -125,7 +125,7 @@ f_copy()
 			db_put( dbip, dp, &record, i, 1 );
 		}
 	} else if( record.u_id == ID_BSOLID ) {
-		if( (dp = db_diradd( dbip,  cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+		if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
 			return;
 		db_alloc( dbip, dp, proto->d_len );
 		NAMEMOVE( cmd_args[2], record.B.B_name );
@@ -136,10 +136,9 @@ f_copy()
 		}
 	} else if(record.u_id == ID_COMB) {
 		if( (dp = db_diradd( dbip, 
-			cmd_args[2],
-			-1,
-			record.c.c_flags == 'R' ? DIR_COMB|DIR_REGION : DIR_COMB,
-			proto->d_len )) == DIR_NULL )
+			cmd_args[2], -1, proto->d_len,
+			record.c.c_flags == 'R' ?
+			DIR_COMB|DIR_REGION : DIR_COMB)) == DIR_NULL )
 			return;
 		db_alloc( dbip, dp, proto->d_len );
 
@@ -403,7 +402,7 @@ f_copy_inv()
 		return;
 	}
 
-	if( (dp = db_diradd( dbip,  cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+	if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
 		return;
 	db_alloc( dbip, dp, proto->d_len );
 

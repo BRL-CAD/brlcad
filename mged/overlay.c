@@ -181,7 +181,7 @@ struct vlhead	*vhead;
 		eraseobj(dp);
 	} else {
 		/* Need to enter phony name in directory structure */
-		dp = db_diradd( dbip,  name, PHONY_ADDR, DIR_SOLID, 0 );
+		dp = db_diradd( dbip,  name, PHONY_ADDR, 0, DIR_SOLID );
 	}
 
 	/* Obtain a fresh solid structure, and fill it in */

@@ -229,7 +229,7 @@ int air;				/* Air code */
 	if( (dp = db_lookup( dbip,  combname, LOOKUP_QUIET )) == DIR_NULL )  {
 
 		/* Update the in-core directory */
-		dp = db_diradd( dbip, combname, -1, DIR_COMB, 2 );
+		dp = db_diradd( dbip, combname, -1, 2, DIR_COMB );
 		if( dp == DIR_NULL )
 			return DIR_NULL;
 		db_alloc( dbip, dp, 2 );

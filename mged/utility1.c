@@ -500,7 +500,8 @@ f_cat( )
 					break;
 				}
 				/* add to the directory */
-				if( (dp = db_diradd( dbip, record.s.s_name, -1, DIR_SOLID, 1)) == DIR_NULL )
+printf("adding solid \"%s\"\n", record.s.s_name);
+				if( (dp = db_diradd( dbip, record.s.s_name, -1, 1, DIR_SOLID)) == DIR_NULL )
 					return;
 				/* add the record to the data base file */
 				db_alloc( dbip, dp, 1 );
@@ -520,7 +521,7 @@ f_cat( )
 				}
 				/* add to the directory */
 				length = record.a.a_totlen;
-				if( (dp = db_diradd( dbip, record.a.a_name, -1, DIR_SOLID, length+1)) == DIR_NULL )
+				if( (dp = db_diradd( dbip, record.a.a_name, -1, length+1, DIR_SOLID)) == DIR_NULL )
 					return;
 				/* add the record to the data base file */
 				db_alloc( dbip, dp, length+1 );
@@ -545,10 +546,12 @@ f_cat( )
 				}
 				/* add to the directory */
 				length = record.c.c_length;
+printf("adding comb \"%s\"\n", record.c.c_name);
 				if( (dp = db_diradd( dbip,  record.c.c_name, -1,
+						length+1,
 						record.c.c_flags == 'R' ?
-						DIR_COMB|DIR_REGION : DIR_COMB,
-						length+1) ) == DIR_NULL )
+						DIR_COMB|DIR_REGION : DIR_COMB
+						) ) == DIR_NULL )
 					return;
 				/* add the record to the data base file */
 				db_alloc( dbip, dp, length+1 );

@@ -294,7 +294,7 @@ thickagain:
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, record.s.s_name, -1, DIR_SOLID, 0)) == DIR_NULL )
+	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL )
 		return;
 	db_alloc( dbip, dp, 1 );
 	db_put( dbip,  dp, &record, 0, 1 );
@@ -532,7 +532,7 @@ thckagain:
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, record.s.s_name, -1, DIR_SOLID, 0)) == DIR_NULL )
+	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL )
 		return;
 	db_alloc( dbip, dp, 1 );
 	db_put( dbip,  dp, &record, 0, 1 );

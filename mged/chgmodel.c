@@ -252,7 +252,7 @@ f_mirror()
 	if( record.u_id == ID_SOLID ||
 		record.u_id == ID_ARS_A
 	)  {
-		if( (dp = db_diradd( dbip,  cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+		if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
 			return;
 		db_alloc( dbip, dp, proto->d_len );
 
@@ -274,10 +274,10 @@ f_mirror()
 		}
 	} else if( record.u_id == ID_COMB ) {
 		if( (dp = db_diradd( dbip, 
-			cmd_args[2], -1, record.c.c_flags == 'R' ?
+			cmd_args[2], -1, proto->d_len,
+				record.c.c_flags == 'R' ?
 				DIR_COMB|DIR_REGION :
-				DIR_COMB,
-			proto->d_len)
+				DIR_COMB)
 		) == DIR_NULL )
 			return;
 		db_alloc( dbip, dp, proto->d_len );
@@ -572,7 +572,7 @@ f_arbdef()
 	/* get fallback angle */
 	fb = atof( cmd_args[3] ) * degtorad;
 
-	if( (dp = db_diradd( dbip,  cmd_args[1], -1, DIR_SOLID, 1 )) == DIR_NULL )
+	if( (dp = db_diradd( dbip,  cmd_args[1], -1, 1, DIR_SOLID )) == DIR_NULL )
 		return;
 	db_alloc( dbip, dp, 1 );
 	NAMEMOVE( cmd_args[1], record.s.s_name );
@@ -1125,7 +1125,7 @@ f_make()  {
 	}
 
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  cmd_args[1], -1, DIR_SOLID, 0 )) == DIR_NULL )
+	if( (dp = db_diradd( dbip,  cmd_args[1], -1, 0, DIR_SOLID )) == DIR_NULL )
 		return;
 	db_alloc( dbip, dp, 1 );
 
