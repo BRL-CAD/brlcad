@@ -23,6 +23,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
@@ -77,20 +78,21 @@ point_t		eye_model;	/* model-space location of eye */
 point_t		viewbase_model;	/* model-space location of viewplane corner */
 int		npts;		/* # of points to shoot: x,y */
 mat_t		Viewrotscale;
-fastf_t		viewsize;
+fastf_t		viewsize=0;
 fastf_t		zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 
 #ifdef PARALLEL
 char		*scanbuf;	/*** Output buffering, for parallelism */
 #endif
 
-int		npsw = 1;		/* number of worker PSWs to run */
+int		npsw = MAX_PSW;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() */
 
 static char	*beginptr;		/* sbrk() at start of program */
 static int	matflag = 0;		/* read matrix from stdin */
 static int	desiredframe = 0;
+static int	curframe = 0;
 static char	*outputfile = (char *)0;/* name of base of output file */
 static char	*framebuffer = NULL;	/* Name of framebuffer */
 
@@ -237,13 +239,11 @@ char **argv;
 {
 	static struct rt_i *rtip;
 	static vect_t temp;
-	static double utime;
 	char *title_file, *title_obj;	/* name of file and first object */
 	register int x,y;
-	char framename[128];		/* File name to hold current frame */
 	char outbuf[132];
 	char idbuf[132];		/* First ID record info */
-	int framenumber = 0;
+	char cbuf[512];			/* Input command buffer */
 	static struct region *regp;
 
 	beginptr = sbrk(0);
@@ -284,6 +284,25 @@ char **argv;
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"DB TOC: %s\n", outbuf);
 	rt_prep_timer();
+
+#ifdef never
+/** experimental animation code ***/
+{
+	static struct directory *dir[4];
+	static struct animate a;
+	int k;
+	dir[0] = rt_dir_lookup("tor.r", LOOKUP_NOISY);
+	a.an_path = dir;
+	a.an_pathlen = 1;
+	a.an_type = AN_MATRIX;
+	a.an_u.anu_m.anm_op = ANM_RMUL;
+	mat_idn( a.an_u.anu_m.anm_mat );
+	MAT_DELTAS( a.an_u.anu_m.anm_mat, 0, 60, 0 );
+	k = rt_add_anim( rtip, &a );
+	rt_log("return=%d\n", k);
+	rt_pr_dir(rtip);
+}
+#endif
 
 	/* Load the desired portion of the model */
 	for( ; optind < argc; optind++ )  {
@@ -367,91 +386,228 @@ char **argv;
 #endif PARALLEL
 	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
 
-do_more:
 	if( !matflag )  {
-		vect_t	diag;
-		mat_t	toEye;
-
+		do_ae( azimuth, elevation );
+		(void)do_frame( curframe );
+	} else if( old_way( stdin ) )  {
+		; /* All is done */
+	} else {
 		/*
-		 *  Compute the rotation specified by the azimuth and
-		 *  elevation parameters.  First, note that these are
-		 *  specified relative to the GIFT "front view", ie,
-		 *  model (X,Y,Z) is view (Z,X,Y):  looking down X axis.
-		 *  Then, a positive azimuth represents rotating the *model*
-		 *  around the Y axis, or, rotating the *eye* in -Y.
-		 *  A positive elevation represents rotating the *model*
-		 *  around the X axis, or, rotating the *eye* in -X.
-		 *  This is the "Gwyn compatable" azim/elev interpretation.
-		 *  Note that GIFT azim/elev values are the negatives of
-		 *  this interpretation.
+		 * New way - command driven.
+		 * Process sequence of input commands.
+		 * All the work happens in the functions
+		 * called by do_cmd().
 		 */
-		mat_idn( Viewrotscale );
-		mat_angles( Viewrotscale, 270.0-elevation, 0.0, 270.0+azimuth );
-		fprintf(stderr,"Viewing %g azimuth, %g elevation off of front view\n",
-			azimuth, elevation);
-
-		/* Look at the center of the model */
-		mat_idn( toEye );
-		toEye[MDX] = -(rtip->mdl_max[X]+rtip->mdl_min[X])/2;
-		toEye[MDY] = -(rtip->mdl_max[Y]+rtip->mdl_min[Y])/2;
-		toEye[MDZ] = -(rtip->mdl_max[Z]+rtip->mdl_min[Z])/2;
-
-		/* Fit a sphere to the model RPP, diameter is viewsize */
-		VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
-		viewsize = MAGNITUDE( diag );
-		fprintf(stderr,"view size = %g\n", viewsize);
-
-		Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-		mat_mul( model2view, Viewrotscale, toEye );
-		mat_inv( view2model, model2view );
-		VSET( temp, 0, 0, 1.414 );
-		MAT4X3PNT( eye_model, view2model, temp );
-	}  else  {
-		register int i;
-		char number[128];
-
-		/* Visible part is from -1 to +1 in view space */
-		if( fscanf( stdin, "%s", number ) != 1 )  goto out;
-		viewsize = atof(number);
-		if( fscanf( stdin, "%s", number ) != 1 )  goto out;
-		eye_model[X] = atof(number);
-		if( fscanf( stdin, "%s", number ) != 1 )  goto out;
-		eye_model[Y] = atof(number);
-		if( fscanf( stdin, "%s", number ) != 1 )  goto out;
-		eye_model[Z] = atof(number);
-		for( i=0; i < 16; i++ )  {
-			if( fscanf( stdin, "%s", number ) != 1 )
-				goto out;
-			Viewrotscale[i] = atof(number);
+		while( read_cmd( stdin, cbuf, sizeof(cbuf) ) >= 0 )  {
+			if( do_cmd( cbuf ) < 0 )  break;
+		}
+		if( curframe < desiredframe )  {
+			fprintf(stderr,
+				"rt:  Desired frame %d not reached, last was %d\n",
+				desiredframe, curframe);
 		}
 	}
-	if( framenumber++ < desiredframe )  goto do_more;
+#ifdef HEP
+	fprintf(stderr,"rt: killing workers\n");
+	for( x=0; x<npsw; x++ )
+		Diawrite( &work_word, -1 );
+	fprintf(stderr,"rt: exit\n");
+#endif
+	return(0);
+}
+
+/*
+ *			O L D _ W A Y
+ * 
+ *  Determine if input file is old or new format, and if
+ *  old format, handle processing of it.
+ *  Returns 0 if new way, 1 if old way (and all done).
+ *  Note that the rewind() will fail on ttys, pipes, and sockets (sigh).
+ */
+int
+old_way( fp )
+FILE *fp;
+{
+	viewsize = -42.0;
+	if( old_frame( fp ) < 0 || viewsize <= 0.0 )  {
+		rewind( fp );
+		return(0);		/* Not old way */
+	}
+	rt_log("Interpreting command stream in old format\n");
+	curframe = 0;
+	do {
+		do_frame( curframe++ );
+	}  while( old_frame( fp ) >= 0 && viewsize > 0.0 );
+	return(1);			/* old way, all done */
+}
+
+/*
+ *			O L D _ F R A M E
+ *
+ *  Acquire particulars about a frame, in the old format.
+ *  Returns -1 if unable to acquire info, 0 if successful.
+ */
+int
+old_frame( fp )
+FILE *fp;
+{
+	register int i;
+	char number[128];
+
+	/* Visible part is from -1 to +1 in view space */
+	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	viewsize = atof(number);
+	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	eye_model[X] = atof(number);
+	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	eye_model[Y] = atof(number);
+	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	eye_model[Z] = atof(number);
+	for( i=0; i < 16; i++ )  {
+		if( fscanf( fp, "%s", number ) != 1 )
+			return(-1);
+		Viewrotscale[i] = atof(number);
+	}
+	return(0);		/* OK */
+}
+
+/*
+ *			C M _ S T A R T
+ *
+ *  Process "start" command in new format input stream
+ */
+cm_start( cmd, arg )
+char *cmd, *arg;
+{
+	char ibuf[512];
+	int frame;
+
+	frame = atoi(arg);
+	if( frame >= desiredframe )  {
+		curframe = frame;
+		return(0);
+	}
+
+	/* Skip over unwanted frames -- find next frame start */
+	while( read_cmd( stdin, ibuf, sizeof(ibuf) ) >= 0 )  {
+		register char *cp;
+
+		cp = ibuf;
+		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
+		if( strncmp( cp, "start", 5 ) != 0 )  continue;
+		while( *cp && !isspace(*cp) )  cp++;	/* skip keyword */
+		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
+		frame = atoi(cp);
+		if( frame >= desiredframe )  {
+			curframe = frame;
+			return(0);
+		}
+	}
+	return(-1);		/* EOF */
+}
+
+static
+fget( fp, cp, cnt )
+register fastf_t *fp;
+register char *cp;
+register int cnt;
+{
+	while( cnt-- > 0 )  {
+		while( *cp && isspace(*cp) )  cp++;
+		*fp++ = atof(cp);
+		while( *cp && !isspace(*cp) ) cp++;
+	}
+}
+
+cm_vsize( cmd, arg )
+char *cmd, *arg;
+{
+	fget( &viewsize, arg, 1 );
+	return(0);
+}
+
+cm_eyept( cmd, arg )
+char *cmd, *arg;
+{
+	fget( eye_model, arg, 3 );
+	return(0);
+}
+
+cm_vrot( cmd, arg )
+char *cmd, *arg;
+{
+	fget( Viewrotscale, arg, 16 );
+	return(0);
+}
+
+cm_end( cmd, arg )
+char *cmd, *arg;
+{
+	if( do_frame( curframe ) < 0 )  return(-1);
+	return(0);
+}
+
+cm_multiview( cmd, arg )
+char *cmd, *arg;
+{
+	static int a[] = {
+		-35,
+		  0,  90, 135, 180, 225, 270, 315,
+		  0,  90, 135, 180, 225, 270, 315
+	};
+	static int e[] = {
+		-25,
+		-30, -30, -30, -30, -30, -30, -30,
+		  0,   0,   0,   0,   0,   0,   0
+	};
+
+	for( curframe=0; curframe<(sizeof(a)/sizeof(a[0])); curframe++ )  {
+		do_ae( (double)a[curframe], (double)e[curframe] );
+		(void)do_frame( curframe );
+	}
+	return(-1);	/* end RT by returning an error */
+}
+
+/*
+ *			D O _ F R A M E
+ *
+ *  Do all the actual work to run a frame.
+ *
+ *  Returns -1 on error, 0 if OK.
+ */
+do_frame( framenumber )
+int framenumber;
+{
+	char framename[128];		/* File name to hold current frame */
+	struct rt_i *rtip = ap.a_rt_i;
+	char outbuf[132];
+	static double utime;
 
 	if( outputfile != (char *)0 )  {
 #ifdef CRAY_COS
 		/* Dots in COS file names make them permanant files. */
-		sprintf( framename, "F%d", framenumber-1 );
+		sprintf( framename, "F%d", framenumber );
 		if( (outfp = fopen( framename, "w" )) == NULL )  {
 			perror( framename );
-			if( matflag )  goto do_more;
-			exit(22);
+			if( matflag )  return(0);
+			return(-1);
 		}
 		/* Dispose to shell script starts with "!" */
-		if( framenumber-1 <= 0 || outputfile[0] == '!' )  {
+		if( framenumber <= 0 || outputfile[0] == '!' )  {
 			sprintf( framename, outputfile );
 		}  else  {
-			sprintf( framename, "%s.%d", outputfile, framenumber-1 );
+			sprintf( framename, "%s.%d", outputfile, framenumber );
 		}
 #else
-		if( framenumber-1 <= 0 )  {
+		if( framenumber <= 0 )  {
 			sprintf( framename, outputfile );
 		}  else  {
-			sprintf( framename, "%s.%d", outputfile, framenumber-1 );
+			sprintf( framename, "%s.%d", outputfile, framenumber );
 		}
 		if( (outfp = fopen( framename, "w" )) == NULL )  {
 			perror( framename );
-			if( matflag )  goto do_more;
-			exit(22);
+			if( matflag )  return(0);	/* OK */
+			return(-1);			/* Bad */
 		}
 		chmod( framename, 0444 );
 #endif CRAY_COS
@@ -501,7 +657,7 @@ do_more:
 	fprintf(stderr,"%d pixels in %.2f sec = %.2f pixels/sec\n",
 		npts*npts, utime, (double)(npts*npts)/utime );
 	fprintf(stderr,"Frame %d: %d rays in %.2f sec = %.2f rays/sec\n",
-		framenumber-1,
+		framenumber,
 		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
 
 	if( outfp != NULL )  {
@@ -514,8 +670,8 @@ do_more:
 #endif CRAY_COS
 #ifdef PARALLEL
 		if( fwrite( scanbuf, sizeof(char), npts*npts*3, outfp ) != npts*npts*3 )  {
-			fprintf(stderr,"fwrite failure\n");
-			goto out;
+			fprintf(stderr,"%s: fwrite failure\n", framename);
+			return(-1);		/* BAD */
 		}
 #endif PARALLEL
 		(void)fclose(outfp);
@@ -551,22 +707,59 @@ do_more:
 #ifdef STAT_PARALLEL
 	lock_pr();
 	res_pr();
-#endif PARALLEL
+#endif STAT_PARALLEL
 
-	if( matflag )  goto do_more;
-out:
-	if( framenumber < desiredframe )  {
-		fprintf(stderr,
-			"rt:  Desired frame %d not reached, last was %d\n",
-			desiredframe, framenumber);
-	}
-#ifdef HEP
-	fprintf(stderr,"rt: killing workers\n");
-	for( x=0; x<npsw; x++ )
-		Diawrite( &work_word, -1 );
-	fprintf(stderr,"rt: exit\n");
-#endif
-	return(0);
+	fprintf(stderr,"\n");
+	return(0);		/* OK */
+}
+
+/*
+ *			D O _ A E
+ *
+ *  Compute the rotation specified by the azimuth and
+ *  elevation parameters.  First, note that these are
+ *  specified relative to the GIFT "front view", ie,
+ *  model (X,Y,Z) is view (Z,X,Y):  looking down X axis.
+ *  Then, a positive azimuth represents rotating the *model*
+ *  around the Y axis, or, rotating the *eye* in -Y.
+ *  A positive elevation represents rotating the *model*
+ *  around the X axis, or, rotating the *eye* in -X.
+ *  This is the "Gwyn compatable" azim/elev interpretation.
+ *  Note that GIFT azim/elev values are the negatives of
+ *  this interpretation.
+ */
+do_ae( azim, elev )
+double azim, elev;
+{
+	vect_t	temp;
+	vect_t	diag;
+	mat_t	toEye;
+	struct rt_i *rtip = ap.a_rt_i;
+
+	mat_idn( Viewrotscale );
+	mat_angles( Viewrotscale, 270.0-elev, 0.0, 270.0+azim );
+	fprintf(stderr,"Viewing %g azimuth, %g elevation off of front view\n",
+		azim, elev);
+
+	/* Look at the center of the model */
+	mat_idn( toEye );
+	toEye[MDX] = -(rtip->mdl_max[X]+rtip->mdl_min[X])/2;
+	toEye[MDY] = -(rtip->mdl_max[Y]+rtip->mdl_min[Y])/2;
+	toEye[MDZ] = -(rtip->mdl_max[Z]+rtip->mdl_min[Z])/2;
+
+	/* Fit a sphere to the model RPP, diameter is viewsize,
+	 * unless viewsize command used to override.
+	 */
+	VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
+	if( viewsize <= 0 )
+		viewsize = MAGNITUDE( diag );
+	fprintf(stderr,"view size = %g\n", viewsize);
+
+	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
+	mat_mul( model2view, Viewrotscale, toEye );
+	mat_inv( view2model, model2view );
+	VSET( temp, 0, 0, 1.414 );
+	MAT4X3PNT( eye_model, view2model, temp );
 }
 
 #ifdef cray

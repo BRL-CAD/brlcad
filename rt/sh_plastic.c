@@ -31,14 +31,14 @@ static char RCSplastic[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "./material.h"
 #include "./mathtab.h"
+#include "./light.h"
 
 extern int colorview();		/* from view.c */
 
-/* HACKS from view.c */
+extern struct light_specific *LightHeadp;
+
+/* from view.c */
 extern int lightmodel;		/* lighting model # to use */
-extern struct soltab *l0stp;
-extern vect_t l0color;
-extern vect_t l0pos;
 extern double AmbientIntensity;
 #define MAX_IREFLECT	9	/* Maximum internal reflection level */
 #define MAX_BOUNCE	4	/* Maximum recursion level */
@@ -230,17 +230,17 @@ register struct application *ap;
 register struct partition *pp;
 {
 	register struct hit *hitp= pp->pt_inhit;
+	register struct light_specific *lp;
 	auto struct application sub_ap;
 	auto int light_visible;
-	auto fastf_t	Rd1;
 	auto fastf_t	d_a;		/* ambient diffuse */
-	auto double	cosI1, cosI2;
+	auto fastf_t	cosAmb;
 	auto fastf_t	f;
 	auto vect_t	work;
 	auto vect_t	reflected;
 	auto vect_t	to_eye;
 	auto vect_t	to_light;
-	auto point_t	mcolor;		/* Material color */
+	auto point_t	matcolor;		/* Material color */
 	struct phong_specific *ps =
 		(struct phong_specific *)pp->pt_regionp->reg_udata;
 
@@ -254,13 +254,13 @@ register struct partition *pp;
 			goto finish;
 		}
 		if( rp->reg_mater.ma_override )  {
-			VSET( mcolor,
+			VSET( matcolor,
 				rp->reg_mater.ma_rgb[0]/255.,
 				rp->reg_mater.ma_rgb[1]/255.,
 				rp->reg_mater.ma_rgb[2]/255. );
 		} else {
 			/* Default color is white (uncolored) */
-			VSETALL( mcolor, 1.0 );
+			VSETALL( matcolor, 1.0 );
 		}
 	}
 
@@ -287,79 +287,81 @@ register struct partition *pp;
 	 */
 /**	dist_gradient = kCons / (hitp->hit_dist + cCons);  */
 
-	/* Diffuse reflectance from primary light source. */
-	VSUB2( to_light, l0pos, hitp->hit_point );
-	VUNITIZE( to_light );
-	Rd1 = 0;
-	if( (cosI1 = VDOT( hitp->hit_normal, to_light )) > 0.0 )  {
-		if( cosI1 > 1 )  {
-			rt_log("cosI1=%g (x%d,y%d,lvl%d)\n", cosI1,
-				ap->a_x, ap->a_y, ap->a_level);
-			cosI1 = 1;
-		}
-		Rd1 = cosI1 * (1 - AmbientIntensity);
-	}
-
-	/* Diffuse reflectance from secondary light source (at eye) */
+	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	d_a = 0;
-	if( (cosI2 = VDOT( hitp->hit_normal, to_eye )) > 0.0 )  {
-		if( cosI2 > 1.00001 )  {
-			rt_log("cosI2=%g (x%d,y%d,lvl%d)\n", cosI2,
+	if( (cosAmb = VDOT( hitp->hit_normal, to_eye )) > 0.0 )  {
+		if( cosAmb > 1.00001 )  {
+			rt_log("cosAmb=%g (x%d,y%d,lvl%d)\n", cosAmb,
 				ap->a_x, ap->a_y, ap->a_level);
-			cosI2 = 1;
+			cosAmb = 1;
 		}
-		d_a = cosI2 * AmbientIntensity;
+		d_a = cosAmb * AmbientIntensity;
 	}
+	VSCALE( ap->a_color, matcolor, d_a );
 
-	/* Apply secondary (ambient) (white) lighting. */
-	VSCALE( ap->a_color, mcolor, d_a );
-	if( l0stp )  {
-		/* An actual light solid exists */
+	/* Consider effects of each light source */
+	for( lp=LightHeadp; lp; lp = lp->lt_forw )  {
 		FAST fastf_t f;
 
-		/* Fire ray at light source to check for shadowing */
-		/* This SHOULD actually return an energy value */
-		sub_ap = *ap;		/* struct copy */
-		sub_ap.a_hit = light_hit;
-		sub_ap.a_miss = light_miss;
-		sub_ap.a_level++;
-		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
-
-		/* Dither light pos for penumbra by +/- 0.5 light radius */
-		f = l0stp->st_aradius * 0.9;
-		sub_ap.a_ray.r_dir[X] =  l0pos[X] + rand_half()*f - hitp->hit_point[X];
-		sub_ap.a_ray.r_dir[Y] =  l0pos[Y] + rand_half()*f - hitp->hit_point[Y];
-		sub_ap.a_ray.r_dir[Z] =  l0pos[Z] + rand_half()*f - hitp->hit_point[Z];
-		VUNITIZE( sub_ap.a_ray.r_dir );
-		light_visible = rt_shootray( &sub_ap );
-	} else {
-		light_visible = 1;
-	}
+		if( lp->lt_explicit )  {
+			/* Fire ray at light source to check for shadowing */
+			/* This SHOULD actually return an energy value */
+			sub_ap = *ap;		/* struct copy */
+			sub_ap.a_hit = light_hit;
+			sub_ap.a_miss = light_miss;
+			sub_ap.a_level++;
+			VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
+			
+			/* Dither light pos for penumbra by +/- 0.5 light radius */
+			f = lp->lt_radius * 0.9;
+			sub_ap.a_ray.r_dir[X] =  lp->lt_pos[X] + rand_half()*f - hitp->hit_point[X];
+			sub_ap.a_ray.r_dir[Y] =  lp->lt_pos[Y] + rand_half()*f - hitp->hit_point[Y];
+			sub_ap.a_ray.r_dir[Z] =  lp->lt_pos[Z] + rand_half()*f - hitp->hit_point[Z];
+			VUNITIZE( sub_ap.a_ray.r_dir );
+			light_visible = rt_shootray( &sub_ap );
+		} else {
+			light_visible = 1;
+		}
 	
-	/* If not shadowed add primary lighting. */
-	if( light_visible )  {
-		auto fastf_t specular;
-		auto fastf_t cosS;
+		/* If not shadowed add this light contribution */
+		if( light_visible )  {
+			auto fastf_t cosI;
+			auto fastf_t cosS;
 
-		/* Diffuse */
-		VJOIN1( ap->a_color, ap->a_color, Rd1, mcolor );
-
-		/* Calculate specular reflectance.
-		 *	Reflected ray = (2 * cos(i) * Normal) - Incident ray.
-		 * 	Cos(s) = Reflected ray DOT Incident ray.
-		 */
-		cosI1 *= 2;
-		VSCALE( work, hitp->hit_normal, cosI1 );
-		VSUB2( reflected, work, to_light );
-		if( (cosS = VDOT( reflected, to_eye )) > 0 )  {
-			if( cosS > 1 )  {
-				rt_log("cosS=%g (x%d,y%d,lvl%d)\n", cosS,
-					ap->a_x, ap->a_y, ap->a_level);
-				cosS = 1;
+			/* Diffuse reflectance from this light source. */
+			VSUB2( to_light, lp->lt_pos, hitp->hit_point );
+			VUNITIZE( to_light );
+			if( (cosI = VDOT( hitp->hit_normal, to_light )) > 0.0 )  {
+				fastf_t	Rd;
+				vect_t	cprod;	/* color product */
+				if( cosI > 1 )  {
+					rt_log("cosI=%g (x%d,y%d,lvl%d)\n", cosI,
+						ap->a_x, ap->a_y, ap->a_level);
+					cosI = 1;
+				}
+				Rd = cosI * lp->lt_fraction * ps->wgt_diffuse;
+				VELMUL( cprod, matcolor, lp->lt_color );
+				VJOIN1( ap->a_color, ap->a_color, Rd, cprod );
 			}
-			specular = ps->wgt_specular *
-				ipow(cosS, ps->shine);
-			VJOIN1( ap->a_color, ap->a_color, specular, l0color );
+
+			/* Calculate specular reflectance.
+			 *	Reflected ray = (2 * cos(i) * Normal) - Incident ray.
+			 * 	Cos(s) = Reflected ray DOT Incident ray.
+			 */
+			cosI *= 2;
+			VSCALE( work, hitp->hit_normal, cosI );
+			VSUB2( reflected, work, to_light );
+			if( (cosS = VDOT( reflected, to_eye )) > 0 )  {
+				fastf_t Rs;
+				if( cosS > 1 )  {
+					rt_log("cosS=%g (x%d,y%d,lvl%d)\n", cosS,
+						ap->a_x, ap->a_y, ap->a_level);
+					cosS = 1;
+				}
+				Rs = ps->wgt_specular * lp->lt_fraction *
+					ipow(cosS, ps->shine);
+				VJOIN1( ap->a_color, ap->a_color, Rs, lp->lt_color );
+			}
 		}
 	}
 
@@ -677,6 +679,7 @@ struct application *ap;
 struct partition *PartHeadp;
 {
 	register struct partition *pp;
+	extern int light_render();
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -685,8 +688,8 @@ struct partition *PartHeadp;
 		return(0);
 	}
 
-	/* Check to see if we hit the light source */
-	if( pp->pt_inseg->seg_stp == l0stp )
+	/* Check to see if we hit a light source */
+	if( pp->pt_regionp->reg_ufunc == light_render )
 		return(1);		/* light_visible = 1 */
 	return(0);			/* light_visible = 0 */
 }

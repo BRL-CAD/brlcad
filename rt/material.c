@@ -36,6 +36,7 @@ extern int glass_setup();
 extern int ckr_setup();
 extern int star_setup();
 extern int sph_setup();
+extern int light_setup();
 
 struct matlib {
 	char	*ml_name;
@@ -50,6 +51,7 @@ struct matlib {
 	"checker",	ckr_setup,
 	"fakestar",	star_setup,
 	"sph",		sph_setup,
+	"light",	light_setup,
 	(char *)0,	0			/* END */
 };
 

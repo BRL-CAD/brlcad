@@ -49,14 +49,6 @@ extern fastf_t	zoomout;
 extern int	npsw;
 extern struct resource resource[];
 
-#ifdef RTSRV
-extern char scanbuf[];
-#else
-#ifdef PARALLEL
-extern char *scanbuf;		/*** Output buffering, for parallelism */
-#endif
-#endif
-
 /* Local communication with worker() */
 HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
 HIDDEN int last_pixel;		/* last pixel number */
@@ -282,44 +274,9 @@ int cpu;
 			f = 1.0 / (hypersample+1);
 			VSCALE( a.a_color, colorsum, f );
 		}
-#if !defined(PARALLEL) && !defined(RTSRV)
 		view_pixel( &a );
 		if( a.a_x == npts-1 )
 			view_eol( &a );		/* End of scan line */
-#endif
-#if defined(PARALLEL) || defined(RTSRV)
-		{
-			register char *pixelp;
-			register int r,g,b;
-
-			/* .pix files go bottom to top */
-#ifdef RTSRV
-			/* Here, the buffer is only one line long */
-			pixelp = scanbuf+a.a_x*3;
-#else
-			pixelp = scanbuf+((a.a_y*npts)+a.a_x)*3;
-#endif
-			r = a.a_color[0]*255.+rand_half();
-			g = a.a_color[1]*255.+rand_half();
-			b = a.a_color[2]*255.+rand_half();
-			/* Truncate glints, etc */
-			if( r > 255 )  r=255;
-			if( g > 255 )  g=255;
-			if( b > 255 )  b=255;
-			if( r<0 || g<0 || b<0 )  {
-				rt_log("Negative RGB %d,%d,%d\n", r, g, b );
-				r = 0x80;
-				g = 0xFF;
-				b = 0x80;
-			}
-			/* Don't depend on interlocked hardware byte-splice */
-			RES_ACQUIRE( &rt_g.res_worker );
-			*pixelp++ = r ;
-			*pixelp++ = g ;
-			*pixelp++ = b ;
-			RES_RELEASE( &rt_g.res_worker );
-		}
-#endif
 	}
 	RES_ACQUIRE( &rt_g.res_worker );
 	nworkers--;

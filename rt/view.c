@@ -45,6 +45,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./rdebug.h"
 #include "./mathtab.h"
+#include "./light.h"
 
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
@@ -68,15 +69,16 @@ extern mat_t model2view;
 
 extern int hex_out;		/* Output format, 0=binary, !0=hex */
 
-struct soltab *l0stp = SOLTAB_NULL;	/* ptr to light solid tab entry */
-vect_t l0color = {  1,  1,  1 };		/* White */
-vect_t l1color = {  1, .1, .1 };
-vect_t l2color = { .1, .1,  1 };		/* R, G, B */
+#ifdef RTSRV
+extern char scanbuf[];
+#else
+#ifdef PARALLEL
+extern char *scanbuf;		/*** Output buffering, for parallelism */
+#endif
+#endif
+
+extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
-vect_t l0vec;			/* 0th light vector */
-vect_t l1vec;			/* 1st light vector */
-vect_t l2vec;			/* 2st light vector */
-vect_t l0pos;			/* pos of light0 (overrides l0vec) */
 extern double AmbientIntensity;
 
 #define MAX_IREFLECT	9	/* Maximum internal reflection level */
@@ -119,7 +121,7 @@ struct partition *PartHeadp;
 		diffuse0 = 0;
 		if( (cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir)) >= 0.0 )
 			diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
-		VSCALE( work0, l0color, diffuse0 );
+		VSCALE( work0, LightHeadp->lt_color, diffuse0 );
 
 		/* Add in contribution from ambient light */
 		VSCALE( work1, ambient_color, AmbientIntensity );
@@ -127,33 +129,28 @@ struct partition *PartHeadp;
 		break;
 	case 3:
 		/* Simple attempt at a 3-light model. */
-		diffuse0 = 0;
-		if( (cosI0 = VDOT(hitp->hit_normal, l0vec)) >= 0.0 )
-			diffuse0 = cosI0 * 0.5;		/* % from this src */
-		diffuse1 = 0;
-		if( (cosI1 = VDOT(hitp->hit_normal, l1vec)) >= 0.0 )
-			diffuse1 = cosI1 * 0.5;		/* % from this src */
-		diffuse2 = 0;
-		if( (cosI2 = VDOT(hitp->hit_normal, l2vec)) >= 0.0 )
-			diffuse2 = cosI2 * 0.2;		/* % from this src */
+		{
+			struct light_specific *l0, *l1, *l2;
+			l0 = LightHeadp;
+			l1 = l0->lt_forw;
+			l2 = l1->lt_forw;
 
-#ifdef notyet
-		/* Specular reflectance from first light source */
-		/* reflection = (2 * cos(i) * NormalVec) - IncidentVec */
-		/* cos(s) = -VDOT(reflection, r_dir) = cosI0 */
-		f = 2 * cosI1;
-		VSCALE( work, hitp->hit_normal, f );
-		VSUB2( reflection, work, l1vec );
-		if( not_shadowed && cosI0 > cosAcceptAngle )
-			/* Do specular return */;
-#endif notyet
+			diffuse0 = 0;
+			if( (cosI0 = VDOT(hitp->hit_normal, l0->lt_vec)) >= 0.0 )
+				diffuse0 = cosI0 * l0->lt_fraction;
+			diffuse1 = 0;
+			if( (cosI1 = VDOT(hitp->hit_normal, l1->lt_vec)) >= 0.0 )
+				diffuse1 = cosI1 * l1->lt_fraction;
+			diffuse2 = 0;
+			if( (cosI2 = VDOT(hitp->hit_normal, l2->lt_vec)) >= 0.0 )
+				diffuse2 = cosI2 * l2->lt_fraction;
 
-		VSCALE( work0, l0color, diffuse0 );
-		VSCALE( work1, l1color, diffuse1 );
-		VADD2( work0, work0, work1 );
-		VSCALE( work1, l2color, diffuse2 );
-		VADD2( work0, work0, work1 );
-
+			VSCALE( work0, l0->lt_color, diffuse0 );
+			VSCALE( work1, l1->lt_color, diffuse1 );
+			VADD2( work0, work0, work1 );
+			VSCALE( work1, l2->lt_color, diffuse2 );
+			VADD2( work0, work0, work1 );
+		}
 		/* Add in contribution from ambient light */
 		VSCALE( work1, ambient_color, AmbientIntensity );
 		VADD2( ap->a_color, work0, work1 );
@@ -234,6 +231,7 @@ register struct application *ap;
 		b = 0x80;
 	}
 
+#if !defined(PARALLEL) && !defined(RTSRV)
 	if( fbp != FBIO_NULL )  {
 		RGBpixel p;
 		p[RED] = r;
@@ -253,6 +251,25 @@ register struct application *ap;
 				rt_bomb("pixel fwrite error");
 		}
 	}
+#else PARALLEL or RTSRV
+	{
+		register char *pixelp;
+
+		/* .pix files go bottom to top */
+#ifdef RTSRV
+		/* Here, the buffer is only one line long */
+		pixelp = scanbuf+a.a_x*3;
+#else RTSRV
+		pixelp = scanbuf+((a.a_y*npts)+a.a_x)*3;
+#endif RTSRV
+		/* Don't depend on interlocked hardware byte-splice */
+		RES_ACQUIRE( &rt_g.res_worker );	/* XXX need extra semaphore */
+		*pixelp++ = r ;
+		*pixelp++ = g ;
+		*pixelp++ = b ;
+		RES_RELEASE( &rt_g.res_worker );
+	}
+#endif PARALLEL or RTSRV
 	if(rdebug&RDEBUG_HITS) rt_log("rgb=%3d,%3d,%3d\n", r,g,b);
 }
 
@@ -323,16 +340,6 @@ struct partition *PartHeadp;
 		}
 	}
 
-	/* XXX Hack to see if we hit the light */
-	{
-		register struct soltab *stp;
-		stp = pp->pt_inseg->seg_stp;
-		if( stp == l0stp )  {
-			VMOVE( ap->a_color, l0color );
-			return(1);
-		}
-	}
-
 	/*
 	 *  Call the material-handling function.
 	 *  Note that only hit_dist is valid in pp_inhit.
@@ -394,7 +401,6 @@ view_2init( ap )
 register struct application *ap;
 {
 	extern int hit_nothing();
-	vect_t temp;
 
 	ap->a_miss = hit_nothing;
 	ap->a_onehit = 1;
@@ -403,38 +409,21 @@ register struct application *ap;
 	case 0:
 		ap->a_hit = colorview;
 		/* If present, use user-specified light solid */
-		if( (l0stp=rt_find_solid(ap->a_rt_i,"LIGHT")) != SOLTAB_NULL )  {
-			VMOVE( l0pos, l0stp->st_center );
-			VPRINT("LIGHT0 at", l0pos);
-			break;
+		if( LightHeadp == LIGHT_NULL )  {
+			if(rdebug&RDEBUG_SHOWERR)rt_log("No explicit light\n");
+			light_maker(1, view2model);
 		}
-		if(rdebug&RDEBUG_SHOWERR)rt_log("No explicit light\n");
-		goto debug_lighting;
+		break;
 	case 1:
 	case 2:
 	case 3:
 	case 4:
 	case 5:
 		ap->a_hit = viewit;
-debug_lighting:
-		/* Determine the Light location(s) in view space */
-		/* 0:  At left edge, 1/2 high */
-		VSET( temp, -1, 0, 1 );
-		MAT4X3VEC( l0pos, view2model, temp );
-		VMOVE( l0vec, l0pos );
-		VUNITIZE(l0vec);
-
-		/* 1: At right edge, 1/2 high */
-		VSET( temp, 1, 0, 1 );
-		MAT4X3VEC( l1vec, view2model, temp );
-		VUNITIZE(l1vec);
-
-		/* 2:  Behind, and overhead */
-		VSET( temp, 0, 1, -0.5 );
-		MAT4X3VEC( l2vec, view2model, temp );
-		VUNITIZE(l2vec);
+		light_maker(3, view2model);
 		break;
 	default:
 		rt_bomb("bad lighting model #");
 	}
+	light_init();
 }
