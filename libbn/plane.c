@@ -257,15 +257,11 @@ CONST struct rt_tol	*tol;
 	register fastf_t	d;
 	LOCAL vect_t		abs_dir;
 	LOCAL plane_t		pl;
+	int			i;
 
-	/* Check to see if the planes are parallel */
-	d = VDOT( a, b );
-	if( RT_VECT_ARE_PARALLEL(d, tol) )  {
-		/* See if the planes are identical */
-		d = a[3] - b[3];
-		if( NEAR_ZERO( d, tol->dist ) )  {
-			return(-1);	/* FAIL -- planes are identical */
-		}
+	if( (i = rt_coplanar( a, b, tol )) != 0 )  {
+		if( i > 0 )
+			return(-1);	/* FAIL -- coplanar */
 		return(-2);		/* FAIL -- parallel & distinct */
 	}
 
@@ -898,4 +894,51 @@ CONST plane_t	iplane;
 	 *  The new distance is found from the transformed point on the plane.
 	 */
 	oplane[3] = VDOT( new_pt, oplane );
+}
+
+/*
+ *			R T _ C O P L A N A R
+ *
+ *  Test if two planes are identical.  If so, their dot products will be
+ *  either +1 or -1, with the distance from the origin equal in magnitude.
+ *
+ *  Returns -
+ *	-1	not coplanar, parallel but distinct
+ *	 0	not coplanar, not parallel.  Planes intersect.
+ *	+1	coplanar, same normal direction
+ *	+2	coplanar, opposite normal direction
+ */
+int
+rt_coplanar( a, b, tol )
+CONST plane_t		a;
+CONST plane_t		b;
+CONST struct rt_tol	*tol;
+{
+	register fastf_t	f;
+	register fastf_t	dot;
+
+	/* Check to see if the planes are parallel */
+	dot = VDOT( a, b );
+	if( dot >= 0 )  {
+		/* Normals head in generally the same directions */
+		if( dot < tol->para )
+			return(0);	/* Planes intersect */
+
+		/* Planes have "exactly" the same normal vector */
+		f = a[3] - b[3];
+		if( NEAR_ZERO( f, tol->dist ) )  {
+			return(1);	/* Coplanar, same direction */
+		}
+		return(-1);		/* Parallel but distinct */
+	}
+	/* Normals head in generally opposite directions */
+	if( -dot < tol->para )
+		return(0);		/* Planes intersect */
+
+	/* Planes have "exactly" opposite normal vectors */
+	f = a[3] + b[3];
+	if( NEAR_ZERO( f, tol->dist ) )  {
+		return(2);		/* Coplanar, opposite directions */
+	}
+	return(-1);			/* Parallel but distinct */
 }
