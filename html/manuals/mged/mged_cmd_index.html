@@ -958,7 +958,7 @@
 <DD>provided that the above shapes already exist in the database.</DD>
 <DT><HR ALIGN="RIGHT"></DT>
 <B><DT>c</B> [<I>-c|r</I>] <I>combination_name</I> [<I>Boolean_expression</I>]</DT>
-<DD>The &quot;c&quot; command creates a <I>BRL-CAD</I> <A HREF="#COMBINATION">combination</A> with the name <I>combination_name</I>.  The <I>-r</I> option indicates that the combination is a <I>BRL-CAD</I> region.  The <I>-c</I> option is the default and indicates that the combination is not a region.  The <I>Boolean_expression</I> allows parentheses.  Where no order is specified, intersections are performed before subtractions or unions; then subtractions and unions are performed, left to right.  Where there is no <I>Boolean_expression</I> and <I>combination_name</I>, a new empty combination will be created.  If no <I>Boolean_expression</I> is provided, and <I>combination_name</I> does already exist and one of <I>-c</I> or <I>-r</I> is specified, then <I>combination_name</I> is flagged to agree with the indicated option.  If a new <I>region</I> is created or an existing combination is flagged as a region with this command, its region-specific attributes will be set according to the current defaults (see <A HREF="#regdef">regdef</A>).  The <A HREF="#comb">comb</A> and <A HREF="#r">r</A> commands may also be used to create combinations.</DD>
+<DD>The &quot;c&quot; command creates a <I>BRL-CAD</I> combination with the name <I>combination_name</I>.  The <I>-r</I> option indicates that the combination is a <I>BRL-CAD</I> region.  The <I>-c</I> option is the default and indicates that the combination is not a region.  The <I>Boolean_expression</I> allows parentheses.  Where no order is specified, intersections are performed before subtractions or unions; then subtractions and unions are performed, left to right.  Where there is no <I>Boolean_expression</I> and <I>combination_name</I>, a new empty combination will be created.  If no <I>Boolean_expression</I> is provided, and <I>combination_name</I> does already exist and one of <I>-c</I> or <I>-r</I> is specified, then <I>combination_name</I> is flagged to agree with the indicated option.  If a new <I>region</I> is created or an existing combination is flagged as a region with this command, its region-specific attributes will be set according to the current defaults (see <A HREF="#regdef">regdef</A>).  The <A HREF="#comb">comb</A> and <A HREF="#r">r</A> commands may also be used to create combinations.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>c -c abc (a u b) - (a + d)</DD>
 </DL>
@@ -1020,7 +1020,7 @@
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="comb"></A>comb</B> <I>combination_name &lt;operation object</I>&gt;</DT>
-<DD>The &quot;comb&quot; command creates a new <A HREF="#COMBINATION">combination</A> or extends an existing one. If <I>combination_name</I> does not already exist, then it will be created using the indicated list of <I>operations</I> and <I>objects</I>.  If it does exist, the list of <I>operations</I> and <I>objects</I> will be appended to the end of the existing combination.  The <I>&lt;operation object</I>&gt; list is expected to be in the same form as used in the <A HREF="#r">r</A> command.  The <A HREF="#c">c</A> command may also be used to create a <I>combination</I>.</DD>
+<DD>The &quot;comb&quot; command creates a new combination or extends an existing one. If <I>combination_name</I> does not already exist, then it will be created using the indicated list of <I>operations</I> and <I>objects</I>.  If it does exist, the list of <I>operations</I> and <I>objects</I> will be appended to the end of the existing combination.  The <I>&lt;operation object</I>&gt; list is expected to be in the same form as used in the <A HREF="#r">r</A> command.  The <A HREF="#c">c</A> command may also be used to create a <I>combination</I>.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>comb abc u a - b + c</DD>
 </DL>
@@ -1168,27 +1168,41 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 -- Returns a command string to list objects r230 through r239. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="dbconcat"></A>dbconcat</B> <I>database_file</I> [<I>prefix</I>]</DT>
-<DD>The &quot;dbconcat&quot; command concatenates an existing <I>BRL-CAD</I> database to the database currently being edited.  If a <I>prefix</I> is supplied, then all objects from the <I>database_file</I> will have <I>prefix</I> added to the beginning of their names.  Note that each <I>BRL-CAD</I> object must have a unique name, so care must be taken not to &quot;dbconcat&quot; a database that has objects with names the same as objects in the current database.  The <A HREF="#dup">dup</A> command may be used to check for duplicate names.  If the <I>dup</I> command finds duplicate names, use the <I>prefix</I> option to both the <I>dup</I> and <I>dbconcat</I> commands to find a <I>prefix</I> that produces no duplicates.  If duplicate names are encountered during the &quot;dbconcat&quot; process, computer-generated prefixes will be added to the object names coming from the <I>database_file</I> (but member names appearing in combinations will not be modified, so this is a dangerous practice and should be avoided).</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>dbconcat model_two.g two_</DD>
-</DL><DIR>
+</FONT>
+<B>
+<DL>
+  <DT><A NAME="dbconcat"></A>dbconcat</B> <I>database_file</I> [<I>prefix</I>]</DT>
+  <DT><A NAME="dbconcat"></A><B>dbconcat</B> <I>-s/p database_file</I></DT>
+  <DD><p>The &quot;dbconcat&quot; command concatenates an existing <I>BRL-CAD</I> database to the database currently being edited.  If a <I>prefix</I> is supplied, then all objects from the <I>database_file</I> will have <I>prefix</I> added to the beginning of their names.  Note that each <I>BRL-CAD</I> object must have a unique name, so care must be taken not to &quot;dbconcat&quot; a database that has objects with names the same as objects in the current database.  The <A HREF="#dup">dup</A> command may be used to check for duplicate names.  If the <I>dup</I> command finds duplicate names, use the <I>prefix</I> option to both the <I>dup</I> and <I>dbconcat</I> commands to find a <I>prefix</I> that produces no duplicates.  If duplicate names are encountered during the &quot;dbconcat&quot; process, computer-generated prefixes will be added to the object names coming from the <I>database_file</I> (but member names appearing in combinations will not be modified, so this is a dangerous practice and should be avoided).</p></DD>
 
-</B><FONT SIZE=2><P>-- Copy all the objects in <I>model_two.g</I> to the current database, but prefix the name of every object copied with the string <I>two_</I>. </P></DIR>
+  <DD><p>The second form also concatenates an existing <I>BRL-CAD</I> database to the database currently being edited; however, no prefix is required.  If the <I>-s</I> option is specified,then a computer-generated suffix is added wherever required to ensure unique object names.  Similarly, the <I>-p</I> option will create computer-generated prefixes where needed.  If a name in the existing database does not conflict with names in the database currently being edited, that name will not be changed.  Member names appearing in combinations in the existing database will be modified if needed.</p></DD>
+
+  <FONT SIZE=4><DT>Examples:</DT></font>
+
+  <dd><TT>mged&gt;</TT> <B>dbconcat model_two.g two_</b></DD>
+
+  <FONT SIZE=2><P>-- Copy all the objects in <I>model_two.g</I> to the current database, but prefix the name of every object copied with the string <I>two_</I>. </P></FONT>
+
+  <DD><tt>mged&gt;</TT> <B>dbconcat -s model_two.g</b></DD>
+  <FONT SIZE=2><P>-- Copy all the objects in <I>model_two.g</I> to the current database, adding computer-generated suffixes as required. </P></FONT>
+</DL>
 
 <P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
+
+<B><DL>
 <DT><A NAME="debugbu"></A>debugbu</B> [<I>hex_code</I>]</DT>
 <DD>The &quot;debugbu&quot; command allows the user to set or check the debug flags used by <I>libbu</I>.  With no arguments, the <I>debugbu</I> command displays all the possible settings for the <I>bu_debug</I> flag and the current value.  When a <I>hex_code</I> is supplied, that value is used as the new value for <I>bu_debug</I>.  Similar debug commands for other <I>BRL-CAD</I> libraries are <A HREF="#debuglib">debuglib</A> for <I>librt</I> and <A HREF="#debugnmg">debugnmg</A> for the <A HREF="#NMG">NMG</A> portion of <I>librt</I>.  Other debugging commands include <A HREF="#debugmem">debugmem</A> and <A HREF="#debugdir">debugdir</A>.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>debugbu</DD>
+</FONT>
+<DD><tt>mged&gt;</TT> <B>debugbu</DD>
+</B><FONT SIZE=2><P>-- Get a list of available <I>bu_debug</I> values and the current value. </P>
 </DL>
-</B><FONT SIZE=2><P>-- Get a list of available <I>bu_debug</I> values and the current value. </P><DIR>
 
-<P><BR>
-</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>debugbu 2</B> <BR>
--- Set <I>bu_debug</I> to &lt;MEM_CHECK&gt;. </P>
+<DIR>
+
+<BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>debugbu 2</B> 
+<p>-- Set <I>bu_debug</I> to &lt;MEM_CHECK&gt;. </P>
 <P>&nbsp;</P></DIR>
 
 </FONT><DL>
@@ -1398,7 +1412,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="edcomb"></A>edcomb</B> <I>combname R|G regionid air_code los</I> [<I>material_code</I>]</DT>
-<DD>The &quot;edcomb&quot; command allows the user to modify the attributes of a <A HREF="#COMBINATION">combination</A>.  The <I>combname</I> is the name of the combination to be modified.  An <I>R</I> flag indicates that the <A HREF="#REGION">region</A> flag should be set; otherwise, the region flag is unset.  If the region flag is not being set, then the remainder of the attributes are ignored.  If the region flag is being set, then the <A HREF="#IDENT">region_id</A>, <A HREF="#SPACE">aircode</A>, <A HREF="#LOS">los</A>, and <A HREF="#GIFTMAT">material_code</A> are set according to the arguments supplied.</DD>
+<DD>The &quot;edcomb&quot; command allows the user to modify the attributes of a combination.  The <I>combname</I> is the name of the combination to be modified.  An <I>R</I> flag indicates that the <A HREF="#REGION">region</A> flag should be set; otherwise, the region flag is unset.  If the region flag is not being set, then the remainder of the attributes are ignored.  If the region flag is being set, then the <A HREF="#IDENT">region_id</A>, <A HREF="#SPACE">aircode</A>, <A HREF="#LOS">los</A>, and <A HREF="#GIFTMAT">material_code</A> are set according to the arguments supplied.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>edcomb comb1 R 1001 0 50 8</DD>
 </DL><DIR>
@@ -1614,7 +1628,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="g"></A>g</B> <I>groupname</I> &lt;<I>objects</I>&gt;</DT>
-<DD>The &quot;g&quot; command creates a special type of <A HREF="#COMBINATION">combination</A> often referred to as a <A HREF="#GROUP">group</A>. This builds a <I>combination</I> by unioning together all the listed <I>objects</I>.  If <I>groupname</I> already exists, then the list of <I>objects</I> will be unioned to the end of it.  (Note that an existing <I>groupname</I> is not restricted to being a <I>group</I>; any <I>combination</I> is legal.) Other commands to build <I>combinations</I> are <A HREF="#c">c</A>, <A HREF="#r">r</A>, or <A HREF="#comb">comb</A>.</DD>
+<DD>The &quot;g&quot; command creates a special type of combination often referred to as a <A HREF="#GROUP">group</A>. This builds a <I>combination</I> by unioning together all the listed <I>objects</I>.  If <I>groupname</I> already exists, then the list of <I>objects</I> will be unioned to the end of it.  (Note that an existing <I>groupname</I> is not restricted to being a <I>group</I>; any <I>combination</I> is legal.) Other commands to build <I>combinations</I> are <A HREF="#c">c</A>, <A HREF="#r">r</A>, or <A HREF="#comb">comb</A>.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>g shape1.nmg f</DD>
 </DL>
@@ -1866,7 +1880,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="kill"></A>kill</B> [<I>-f</I>] &lt;<I>objects</I>&gt;</DT>
-<DD>The &quot;kill&quot; command deletes the specified <I>objects</I> from the current database.  This command affects only the <I>objects</I> actually listed on the command line.  If a <A HREF="#COMBINATION">combination</A> is killed, its members are not affected.  If the <I>-f</I> option is specified, then kill will not complain if some, or all, of the <I>objects</I> specified do not actually exist in the database.  Note that the <I>objects</I> are killed immediately.  There is no need for a &quot;write file&quot; command in MGED, and there is no &quot;undo&quot; command.  Use this command with caution.  Other commands that remove objects from the database are <A HREF="#killall">killall</A> and <A HREF="#killtree">killtree</A>.</DD>
+<DD>The &quot;kill&quot; command deletes the specified <I>objects</I> from the current database.  This command affects only the <I>objects</I> actually listed on the command line.  If a combination is killed, its members are not affected.  If the <I>-f</I> option is specified, then kill will not complain if some, or all, of the <I>objects</I> specified do not actually exist in the database.  Note that the <I>objects</I> are killed immediately.  There is no need for a &quot;write file&quot; command in MGED, and there is no &quot;undo&quot; command.  Use this command with caution.  Other commands that remove objects from the database are <A HREF="#killall">killall</A> and <A HREF="#killtree">killtree</A>.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>kill group1 region2 shapeb</DD>
 </DL>
@@ -1885,7 +1899,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="killtree"></A>killtree</B> &lt;<I>objects</I>&gt;</DT>
-<DD>The &quot;killtree&quot; command deletes the specified <I>objects</I> from the current database and recursively deletes all objects referenced by any of those objects.  If one of the <I>objects</I> listed is a <A HREF="#COMBINATION">combination</A>, then that <I>combination</I> as well as any objects that are members of that <I>combination</I> will be deleted.  If a member of that <I>combination</I> is itself a <I>combination</I>, then all of its members will also be destroyed.  This continues recursively until the <A HREF="#SOLID">primitive shapes</A> are reached and destroyed.  Note that the <I>objects</I> are killed immediately.  There is no need for a &quot;write file&quot; command in MGED, and there is no &quot;undo&quot; command.  Use this command with extreme caution.  Other commands that remove objects from the database are <A HREF="#kill">kill</A> and <A HREF="#killall">killall</A>.</DD>
+<DD>The &quot;killtree&quot; command deletes the specified <I>objects</I> from the current database and recursively deletes all objects referenced by any of those objects.  If one of the <I>objects</I> listed is a combination, then that <I>combination</I> as well as any objects that are members of that <I>combination</I> will be deleted.  If a member of that <I>combination</I> is itself a <I>combination</I>, then all of its members will also be destroyed.  This continues recursively until the <A HREF="#SOLID">primitive shapes</A> are reached and destroyed.  Note that the <I>objects</I> are killed immediately.  There is no need for a &quot;write file&quot; command in MGED, and there is no &quot;undo&quot; command.  Use this command with extreme caution.  Other commands that remove objects from the database are <A HREF="#kill">kill</A> and <A HREF="#killall">killall</A>.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>killtree group1 region2 shapeb</DD>
 </DL><DIR>
@@ -1929,7 +1943,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </FONT><B><DL>
 <DT><A NAME="l"></A></DT>
 <DT>l</B> [-<I>r</I>] &lt;<I>objects</I>&gt;</DT>
-<DD>The &quot;l&quot; command displays a verbose description about the specified list of <A HREF="#OBJECT">objects</A>.  If a specified <I>object</I> is a <A HREF="#PATH">path</A>, then any transformation matrices along that <I>path</I> are applied.  If the final <I>path</I> component is a <A HREF="#COMBINATION">combination</A>, the command will list the <A HREF="#BOOLEAN">Boolean</A> formula for the <I>combination</I> and will indicate any accumulated transformations (including any in that <I>combination</I>).  If a <A HREF="#SHADER">shader</A> and/or color has been assigned to the <I>combination</I>, the details will be listed.  For a <A HREF="#REGION">region</A>, its <A HREF="#IDENT">ident</A>, <A HREF="#SPACE">air code</A>, <A HREF="#GIFTMAT">material code</A>, and <A HREF="#LOS">LOS</A> will also be listed.  For <A HREF="#SOLID">primitive shapes</A>, detailed <I>shape</I> parameters will be displayed with the accumulated transformation applied.  If the <I>-r</I> (recursive) option is used, then each <I>object</I> on the command line will be treated as a <I>path</I>.  If the <I>path</I> does not end at a primitive <I>shape</I>, then all possible <I>paths</I> from that point down to individual <I>shapes</I> will be considered.  The <I>shape</I> at the end of each possible <I>path</I> will be listed with its parameters adjusted by the accumulated transformation.</DD>
+<DD>The &quot;l&quot; command displays a verbose description about the specified list of <A HREF="#OBJECT">objects</A>.  If a specified <I>object</I> is a <A HREF="#PATH">path</A>, then any transformation matrices along that <I>path</I> are applied.  If the final <I>path</I> component is a combination, the command will list the <A HREF="#BOOLEAN">Boolean</A> formula for the <I>combination</I> and will indicate any accumulated transformations (including any in that <I>combination</I>).  If a <A HREF="#SHADER">shader</A> and/or color has been assigned to the <I>combination</I>, the details will be listed.  For a <A HREF="#REGION">region</A>, its <A HREF="#IDENT">ident</A>, <A HREF="#SPACE">air code</A>, <A HREF="#GIFTMAT">material code</A>, and <A HREF="#LOS">LOS</A> will also be listed.  For <A HREF="#SOLID">primitive shapes</A>, detailed <I>shape</I> parameters will be displayed with the accumulated transformation applied.  If the <I>-r</I> (recursive) option is used, then each <I>object</I> on the command line will be treated as a <I>path</I>.  If the <I>path</I> does not end at a primitive <I>shape</I>, then all possible <I>paths</I> from that point down to individual <I>shapes</I> will be considered.  The <I>shape</I> at the end of each possible <I>path</I> will be listed with its parameters adjusted by the accumulated transformation.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>l region1</DD>
 </DL>
@@ -2103,7 +2117,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="mater"></A>mater</B> <I>combination</I> [<I>shader_parameters</I>[<I>RGB</I> [<I>inheritance</I>]]]</DT>
-<DD>The &quot;mater&quot; command assigns <A HREF="#SHADER">shader</A> parameters, <A HREF="#RGB">RGB</A> color, and <A HREF="#INHERITANCE">inheritance</A> to an existing <A HREF="#COMBINATION">combination</A>.  The information may be included on the command line; otherwise the user will be prompted for it.  Some available shaders are:</DD>
+<DD>The &quot;mater&quot; command assigns <A HREF="#SHADER">shader</A> parameters, <A HREF="#RGB">RGB</A> color, and <A HREF="#INHERITANCE">inheritance</A> to an existing combination.  The information may be included on the command line; otherwise the user will be prompted for it.  Some available shaders are:</DD>
 </DL>
 
 <UL>
@@ -2169,7 +2183,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="mirror"></A>mirror</B> <I>old_object new_object x</I>|<I>y</I>|<I>z</DT>
-</I><DD>The &quot;mirror&quot; command creates <I>new_object</I> by duplicating <I>old_object</I> and reflecting it along the indicated axis.  If <I>old_object</I> is a <A HREF="#SOLID">primitive shape</A>, then a new shape is created, with parameters adjusted to accomplish the <I>mirror</I> operation.  If <I>old_object</I> is a <A HREF="#COMBINATION">combination</A>, then <I>new_object</I> will simply be a copy of <I>old_object</I> with all of its members’ matrices set to perform the appropriate reflection.</DD>
+</I><DD>The &quot;mirror&quot; command creates <I>new_object</I> by duplicating <I>old_object</I> and reflecting it along the indicated axis.  If <I>old_object</I> is a <A HREF="#SOLID">primitive shape</A>, then a new shape is created, with parameters adjusted to accomplish the <I>mirror</I> operation.  If <I>old_object</I> is a combination, then <I>new_object</I> will simply be a copy of <I>old_object</I> with all of its members’ matrices set to perform the appropriate reflection.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>mirror shape1 shape1_mirror x</DD>
 </DL><DIR>
@@ -2231,7 +2245,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="oed"></A>oed</B> <I>path_lhs path_rhs</DT>
-</I><DD>The &quot;oed&quot; command places MGED directly into the matrix edit mode.  The <I>path_rhs</I> must be a path to a <A HREF="#SOLID">primitive shape</A>, and <I>path_lhs</I> must be a path to a <A HREF="#COMBINATION">combination</A> that includes the first component of <I>path_rhs</I> as one of its members.  The edited matrix will be the matrix in the final component of <I>path_lhs</I> that corresponds to the first component of <I>path_rhs</I>.  The last component in <I>path_rhs</I> is used as the reference shape during object editing.</DD>
+</I><DD>The &quot;oed&quot; command places MGED directly into the matrix edit mode.  The <I>path_rhs</I> must be a path to a <A HREF="#SOLID">primitive shape</A>, and <I>path_lhs</I> must be a path to a combination that includes the first component of <I>path_rhs</I> as one of its members.  The edited matrix will be the matrix in the final component of <I>path_lhs</I> that corresponds to the first component of <I>path_rhs</I>.  The last component in <I>path_rhs</I> is used as the reference shape during object editing.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>oed group1/group2 region1/shapea</DD>
 </DL><DIR>
@@ -2458,7 +2472,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="putmat"></A>putmat</B> <I>comb_name/member_name</I> {<I>I</I> | <I>m0 m1 m2 m3 ... m16</I>}</DT>
-<DD>The &quot;putmat&quot; command replaces the existing transformation matrix in the <A HREF="#COMBINATION">combination</A> specified that corresponds to the <A HREF="#MEMBER">member</A> specified.  The transformation matrix may be specified with an &quot;I&quot; to indicate the identity matrix, or it may be specified as 16 elements listed row-by-row.  The <A HREF="#copymat">copymat</A> command allows the user to copy an existing transformation matrix.</DD>
+<DD>The &quot;putmat&quot; command replaces the existing transformation matrix in the combination specified that corresponds to the <A HREF="#MEMBER">member</A> specified.  The transformation matrix may be specified with an &quot;I&quot; to indicate the identity matrix, or it may be specified as 16 elements listed row-by-row.  The <A HREF="#copymat">copymat</A> command allows the user to copy an existing transformation matrix.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>putmat group1/regiona I</DD>
 </DL>
@@ -2549,7 +2563,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="r"></A>r</B> <I>region_name</I> &lt;<I>operation object</I>&gt;</DT>
-<DD>The &quot;r&quot; command creates a <A HREF="#REGION">region</A> with the specified <I>region_name</I>.  The <I>region</I> is constructed using the list of <A HREF="#BOOLEAN">Boolean operations</A> and <I>object</I> pairs.  The operators are represented by the single characters &quot;+,&quot; &quot;-,&quot; and &quot;u&quot; for intersection, subtraction, and union, respectively.  The <I>object</I> associated with each operator may be a <A HREF="#COMBINATION">combination</A> or a <A HREF="#SOLID">primitive shape</A>.  No parentheses or any grouping indication is allowed in the <I>r</I> command.  The operator hierarchy for the <I>r</I> command has been established through the ancestry of <I>BRL-CAD</I> and does not conform to accepted standards (see the <A HREF="#c">c</A> command for a more standard implementation).  Intersection and subtraction operations are performed first, proceeding left to right; then union operations are performed.  <I>BRL-CAD</I> regions are special cases of <I>BRL-CAD</I> <I>combinations</I> and include special attributes.  Default values for these attributes may be set using the <A HREF="#regdef">regdef</A> command.  As new <I>regions</I> are built, the default <A HREF="#IDENT">ident</A> number gets incremented.  If <I>region_name</I> already exists, then the <I>operation</I>/<I>object</I> pairs get appended to its end.</DD>
+<DD>The &quot;r&quot; command creates a <A HREF="#REGION">region</A> with the specified <I>region_name</I>.  The <I>region</I> is constructed using the list of <A HREF="#BOOLEAN">Boolean operations</A> and <I>object</I> pairs.  The operators are represented by the single characters &quot;+,&quot; &quot;-,&quot; and &quot;u&quot; for intersection, subtraction, and union, respectively.  The <I>object</I> associated with each operator may be a combination or a <A HREF="#SOLID">primitive shape</A>.  No parentheses or any grouping indication is allowed in the <I>r</I> command.  The operator hierarchy for the <I>r</I> command has been established through the ancestry of <I>BRL-CAD</I> and does not conform to accepted standards (see the <A HREF="#c">c</A> command for a more standard implementation).  Intersection and subtraction operations are performed first, proceeding left to right; then union operations are performed.  <I>BRL-CAD</I> regions are special cases of <I>BRL-CAD</I> <I>combinations</I> and include special attributes.  Default values for these attributes may be set using the <A HREF="#regdef">regdef</A> command.  As new <I>regions</I> are built, the default <A HREF="#IDENT">ident</A> number gets incremented.  If <I>region_name</I> already exists, then the <I>operation</I>/<I>object</I> pairs get appended to its end.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>r new_region u shape1 - shape2 u shape3 + group4</DD>
 </DL><DIR>
@@ -2623,7 +2637,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="red"></A>red</B> <I>combination</DT>
-</I><DD>The &quot;red&quot; command creates a file describing the specified <A HREF="#COMBINATION">combination</A> and starts an editor for the user to modify the combination.  The environment <I>EDITOR</I> variable will be used to select the editor.  If <I>EDITOR</I> is not set, then <I>/bin/ed</I> will be used.  All the attributes of <I>BRL-CAD </I><A HREF="#REGION">regions</A> and <I>combinations</I> may be edited in this way.  The <I>region</I> specific attributes will be ignored if the <I>combination</I> is not a <I>region</I> and is not set to be a <I>region</I> during editing.  It is not necessary to be in an editing mode to run this command.  The <A HREF="#rm">rm</A>, <A HREF="#r">r</A>, <A HREF="#comb">comb</A>, <A HREF="#c">c</A>, and <A HREF="#g">g</A> commands provide some basic <I>combination</I> editing capabilities.</DD>
+</I><DD>The &quot;red&quot; command creates a file describing the specified combination and starts an editor for the user to modify the combination.  The environment <I>EDITOR</I> variable will be used to select the editor.  If <I>EDITOR</I> is not set, then <I>/bin/ed</I> will be used.  All the attributes of <I>BRL-CAD </I><A HREF="#REGION">regions</A> and <I>combinations</I> may be edited in this way.  The <I>region</I> specific attributes will be ignored if the <I>combination</I> is not a <I>region</I> and is not set to be a <I>region</I> during editing.  It is not necessary to be in an editing mode to run this command.  The <A HREF="#rm">rm</A>, <A HREF="#r">r</A>, <A HREF="#comb">comb</A>, <A HREF="#c">c</A>, and <A HREF="#g">g</A> commands provide some basic <I>combination</I> editing capabilities.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>red group2</DD>
 </DL><DIR>
@@ -2697,7 +2711,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </FONT><B><DL>
 <DT><A NAME="rm"></A></DT>
 <DT>rm</B> <I>combination</I> &lt;<I>members</I>&gt;</DT>
-<DD>The &quot;rm&quot; command deletes all occurences of the listed <A HREF="#MEMBER">members</A> from the specified <A HREF="#COMBINATION">combination</A>. The <A HREF="#red">red</A>, <A HREF="#r">r</A>, <A HREF="#comb">comb</A>, <A HREF="#c">c</A>, and <A HREF="#g">g</A> commands provide other <I>combination</I> editing capabilities.</DD>
+<DD>The &quot;rm&quot; command deletes all occurences of the listed <A HREF="#MEMBER">members</A> from the specified combination. The <A HREF="#red">red</A>, <A HREF="#r">r</A>, <A HREF="#comb">comb</A>, <A HREF="#c">c</A>, and <A HREF="#g">g</A> commands provide other <I>combination</I> editing capabilities.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>rm group1 regiona</DD>
 </DL>
@@ -2705,7 +2719,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="rmater"></A>rmater</B> <I>file</DT>
-</I><DD>The &quot;rmater&quot; command reads the specified <I>file</I> and sets the <A HREF="#COMBINATION">combination</A><A HREF="#SHADER">shader</A>, <A HREF="#RGB">color</A>, and <A HREF="#INHERITANCE">inheritance</A> values according to those listed in the <I>file</I>.  The format of the <I>file</I> is expected to be as produced by the <A HREF="#wmater">wmater</A> command.</DD>
+</I><DD>The &quot;rmater&quot; command reads the specified <I>file</I> and sets the combination<A HREF="#SHADER">shader</A>, <A HREF="#RGB">color</A>, and <A HREF="#INHERITANCE">inheritance</A> values according to those listed in the <I>file</I>.  The format of the <I>file</I> is expected to be as produced by the <A HREF="#wmater">wmater</A> command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>rmater mater_file</DD>
 </DL><DIR>
@@ -2888,7 +2902,7 @@ EOF</PRE>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="shader"></A>shader</B> <I>combination shader_name</I> [<I>"{shader_args}"</I>]</DT>
-<DD>The &quot;shader&quot; command assigns <A HREF="#SHADER">shader</A> parameters to the specified <A HREF="#COMBINATION">combination</A>.  The <I>shader_name</I> indicates which <I>shader</I> should be assigned.  If <I>shader_args</I> are supplied, they will be assigned to parameters of the indicated shader.  This performs a similar function as the <A HREF="#mater">mater</A> command.</DD>
+<DD>The &quot;shader&quot; command assigns <A HREF="#SHADER">shader</A> parameters to the specified combination.  The <I>shader_name</I> indicates which <I>shader</I> should be assigned.  If <I>shader_args</I> are supplied, they will be assigned to parameters of the indicated shader.  This performs a similar function as the <A HREF="#mater">mater</A> command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>shader group1 checker "{a 0,255,0 b 0,0,255}"</DD>
 </DL><DIR>
@@ -2906,7 +2920,7 @@ EOF</PRE>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="showmats"></A>showmats</B> <I>path</DT>
-</I><DD>The &quot;showmats&quot; command lists the transformation matrices encountered along the specified <A HREF="#PATH">path</A> and also lists the accumulated matrix at the end of the <I>path</I>.  If any <A HREF="#MEMBER">member</A> occurs more than once in a <A HREF="#COMBINATION">combination</A> along the path, then a matrix will be listed for each occurrence of that <I>member</I>, and the accumulated matrix will only use the first occurrence.  Related commands are <A HREF="#putmat">putmat</A>, <A HREF="#copymat">copymat</A>, and <A HREF="#listeval">listeval</A>.</DD>
+</I><DD>The &quot;showmats&quot; command lists the transformation matrices encountered along the specified <A HREF="#PATH">path</A> and also lists the accumulated matrix at the end of the <I>path</I>.  If any <A HREF="#MEMBER">member</A> occurs more than once in a combination along the path, then a matrix will be listed for each occurrence of that <I>member</I>, and the accumulated matrix will only use the first occurrence.  Related commands are <A HREF="#putmat">putmat</A>, <A HREF="#copymat">copymat</A>, and <A HREF="#listeval">listeval</A>.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>showmats head/skull/jaw</DD>
 </DL><DIR>
@@ -3092,8 +3106,8 @@ The calculational tolerances are used in evaluating the </FONT><A HREF="#BOOLEAN
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="tops"></A>tops</DT>
-</B><DD>The &quot;tops&quot; command displays a list of all the <I>top-level</I> objects in the current database.  The top-level objects are all those objects that are not referenced by some other <A HREF="#COMBINATION">combination</A>.  The hierarchical structure of <I>BRL-CAD</I> databases usually means that there will be a top-level object that includes all (or at least most) of the objects in the database.</DD>
+<DT><A NAME="tops"></A>tops</B> [<I>-g -n -u</I>]</DT>
+<DD>The &quot;tops&quot; command displays a list of all the <I>top-level</I> objects in the current database.  The top-level objects are all those objects that are not referenced by some other combination.  The hierarchical structure of <I>BRL-CAD</I> databases usually means that there will be a top-level object that includes all (or at least most) of the objects in the database.  The <i>-g</i> option shows only geometry objects.  The <i>-n</i> option specifies that no &quot;decoration&quot; (e.g., &quot;/&quot; and &quot;/R&quot;) be shown at the end of each object name.  The <i>-u</i> option will not show hidden objects.  See also the <A HREF="#HIDE">hide command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>tops</DD>
 </DL>
@@ -3118,7 +3132,7 @@ The calculational tolerances are used in evaluating the </FONT><A HREF="#BOOLEAN
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="track"></A>track</B> [<I>parameters</I>]</DT>
-<DD>The &quot;track&quot; command builds a simple representation of the linked track of a vehicle such as a tank.  With no command line arguments, the <I>track</I> command will prompt for all the required input.  The vehicle is assumed to be axis-aligned with the front in the +<I>x</I> direction.  A <A HREF="#COMBINATION">combination</A> name for the track is built by appending a unique number to the string &quot;track.&quot;  The information about the track may be included on the command line, and is order-dependent.  The parameters are (in order):</DD>
+<DD>The &quot;track&quot; command builds a simple representation of the linked track of a vehicle such as a tank.  With no command line arguments, the <I>track</I> command will prompt for all the required input.  The vehicle is assumed to be axis-aligned with the front in the +<I>x</I> direction.  A combination name for the track is built by appending a unique number to the string &quot;track.&quot;  The information about the track may be included on the command line, and is order-dependent.  The parameters are (in order):</DD>
 </DL>
 
 <UL>
@@ -4129,3 +4143,4 @@ mged <B>view_ring delete 1</B> <BR>
 <TABLE CELLSPACING=8><TR><TD><a href="mged_cmd_index.html#MGED_User_Commands">MGED User Commands</a></TD><TD><a href="mged_cmd_index.html#MGED_Developer_Commands">MGED Developer Commands</a></TD></TR></TABLE>
 </BODY>
 </HTML>
+
