@@ -1140,7 +1140,76 @@ struct ray_data	*rd;
 	return 0;
 }
 
+static void
+pl_ray(rd)
+struct ray_data	*rd;
+{
+	FILE *fd;
+	char name[80];
+	static int plot_file_number=0;
+	struct hitmiss *a_hit;
+	int old_state = NMG_RAY_STATE_OUTSIDE;
+	int in_state;
+	int out_state;
+	point_t old_point;
+	point_t end_point;
+	int old_cond = 0;
 
+	sprintf(name, "nmg_ray%02d.pl", plot_file_number++);
+	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+		perror(name);
+		abort();
+	} else
+		rt_log("overlay %s\n", name);
+
+	VMOVE(old_point, rd->rp->r_pt);
+
+	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
+		NMG_CK_HITMISS(a_hit);
+
+		in_state = HMG_INBOUND_STATE(a_hit);
+		out_state = HMG_OUTBOUND_STATE(a_hit);
+
+		if (in_state == old_state) {
+			switch(in_state) {
+			case NMG_RAY_STATE_INSIDE:
+				pl_color(fd, 55, 255, 55);
+				pdv_3line(fd, old_point, a_hit->hit.hit_point);
+				break;
+			case NMG_RAY_STATE_ON:
+				pl_color(fd, 155, 155, 255);
+				pdv_3line(fd, old_point, a_hit->hit.hit_point);
+				break;
+			case NMG_RAY_STATE_OUTSIDE:
+				pl_color(fd, 255, 255, 255);
+				pdv_3line(fd, old_point, a_hit->hit.hit_point);
+				break;
+			}
+			old_cond = 0;
+		} else {
+			if (old_cond) {
+				pl_color(fd, 255, 155, 255);
+				old_cond = 0;
+			} else {
+				pl_color(fd, 255, 55, 255);
+				old_cond = 1;
+			}
+			pdv_3line(fd, old_point, a_hit->hit.hit_point);
+		}
+		VMOVE(old_point, a_hit->hit.hit_point);
+		old_state = out_state;
+	}
+
+	if (old_state == NMG_RAY_STATE_OUTSIDE)
+		pl_color(fd, 255, 255, 255);
+	else
+		pl_color(fd, 255, 55, 255);
+
+	VADD2(end_point, old_point, rd->rp->r_dir);
+	pdv_3line(fd, old_point, end_point);
+
+	fclose(fd);
+}
 /*	N M G _ R A Y _ S E G S
  *
  *	Obtain the list of ray segments which intersect with the nmg.
@@ -1197,6 +1266,8 @@ struct ray_data	*rd;
 		rt_log("----------morphed nmg/ray hit list---------\n");
 		for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
 			nmg_rt_print_hitmiss(a_hit);
+
+		pl_ray(rd);
 	}
 
 	seg_count = nmg_bsegs(rd, rd->ap, rd->seghead, rd->stp);

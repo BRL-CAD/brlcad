@@ -1902,6 +1902,7 @@ struct face_g_plane *fg_p;
 	point_t			plane_pt;
 	struct loopuse		*lu_p;
 	int			pt_class;
+	plane_t			tol_norm;
 
 	/* perform the geometric intersection of the ray with the plane 
 	 * of the face.
@@ -1952,17 +1953,38 @@ struct face_g_plane *fg_p;
 
 	VJOIN1(plane_pt, rd->rp->r_pt, dist, rd->rp->r_dir);
 
+	if (DIST_PT_PLANE(plane_pt, norm) > rd->tol->dist) {
+		rt_log("%s:%d plane_pt (%g %g %g) @ dist (%g)out of tolerance\n",
+			__FILE__, __LINE__, V3ARGS(plane_pt), dist);
+		rt_bomb("");
+	}
+
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-		rt_log("\tray (%g %g %g) (-> %g %g %g)\n",
+		double new_dist;
+		rt_log("\tray (%16.10e %16.10e %16.10e) (-> %16.10e %16.10e %16.10e)\n",
 			rd->rp->r_pt[0],
 			rd->rp->r_pt[1],
 			rd->rp->r_pt[2],
 			rd->rp->r_dir[0],
 			rd->rp->r_dir[1],
 			rd->rp->r_dir[2]);
+		rt_log("\tplane/ray intersection point (%16.10e %16.10e %16.10e)\n",
+			V3ARGS(plane_pt));
+		rt_log("\tdistance along ray to intersection point %16.10e\n", dist);
 
-		VPRINT("\tplane/ray intersection point", plane_pt);
-		rt_log("\tdistance along ray to intersection point %g\n", dist);
+		new_dist=DIST_PT_PLANE(plane_pt, norm);
+
+		rt_log("\tDIST_PT_PLANE(%16.10e) 0x%08lx 0x%08lx\n", new_dist,
+			new_dist);
+			
+		rt_isect_line3_plane(&new_dist, plane_pt, rd->rp->r_dir,
+			norm, rd->tol);
+
+		rt_log("Normal %16.10e %16.10e %16.10e %16.10e)\n",
+			V4ARGS(norm));
+		rt_log("recalculated plane/pt dist as %16.10e 0x%08lx 0x%08lx\n",
+			new_dist, new_dist);
+		rt_log("distance tol = %16.10e\n", rd->tol->dist);
 	}
 
 
@@ -2557,15 +2579,6 @@ struct rt_tol *tol;
 		rt_log("plus_class = (%s)\n", nmg_class_name(plus_class));
 	}
 
-	while (RT_LIST_WHILE(a_hit, hitmiss, &rd.rd_hit)) {
-		RT_LIST_DEQUEUE( &a_hit->l );
-		rt_free( (char *)a_hit, "hit list hitmiss struct" );
-	}
-
-	/* free the hitmiss table */
-	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
-
-
 
 	/* XXX This should be fixed in the guess_* routines
 	 * instead of being fudged here.
@@ -2598,14 +2611,24 @@ struct rt_tol *tol;
 			nmg_class_name(plus_class),
 			nmg_class_name(minus_class) );
 
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-			nmg_rt_print_hitlist(&rd.rd_hit);
+		nmg_rt_print_hitlist(&rd.rd_hit);
 		rt_bomb("");
 	}
+
+	while (RT_LIST_WHILE(a_hit, hitmiss, &rd.rd_hit)) {
+		RT_LIST_DEQUEUE( &a_hit->l );
+		rt_free( (char *)a_hit, "hit list hitmiss struct" );
+	}
+
+	/* free the hitmiss table */
+	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
+
 
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		rt_log("nmg_ray_vs_shell() returns %s(%d)\n",
 			nmg_class_name(plus_class), plus_class);
+
+
 	return plus_class;
 }
 
