@@ -74,6 +74,12 @@ int	width, height;
 		fb_log( "fb_open( 0x%lx, \"%s\", %d, %d )\n",
 			(unsigned long)ifp, file, width, height );
 
+	/* check for default size */
+	if( width == 0 )
+		width = ifp->if_width;
+	if( height == 0 )
+		height = ifp->if_height;
+
 	/* set debug bit vector */
 	if( file != NULL ) {
 		char *cp;
