@@ -4,14 +4,14 @@ pldebug \- output a UnixPlot stream in ascii
 .SH SYNOPSIS
 .B pldebug
 .RB [ \-v ]
-< unix_plot
+[unix_plot]
 .SH DESCRIPTION
 Outputs a UnixPlot (see
 .IR plot (5))
 stream in ascii for debugging.  If the
 .B \-v
 option is given, a summary of plot command usage is given at the
-end of the file.
+end of the file.  Standard input is read if a file name is not supplied.
 .SH "SEE ALSO"
 pl-pl(1), plrot(1), pl-fb(1), libplot3(3), plot(5)
 .SH AUTHORS
