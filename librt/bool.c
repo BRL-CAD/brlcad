@@ -470,7 +470,8 @@ struct application *ap;
 			regp = ap->a_rt_i->Regions[i];
 			if(rt_g.debug&DEBUG_PARTITION)
 				rt_log("%.8x=bit%d, %s: ", regp, i, regp->reg_name );
-			if( rt_booleval( regp->reg_treetop, pp, TrueRg ) == FALSE )  {
+			if( rt_booleval( regp->reg_treetop, pp, TrueRg,
+			    ap->a_resource ) == FALSE )  {
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("FALSE\n");
 				continue;
 			} else {
@@ -578,24 +579,26 @@ struct application *ap;
  *	-1	tree is in error (GUARD)
  */
 int
-rt_booleval( treep, partp, trueregp )
+rt_booleval( treep, partp, trueregp, resp )
 register union tree *treep;	/* Tree to evaluate */
 struct partition *partp;	/* Partition to evaluate */
-struct region **trueregp;	/* XOR true (and overlap) return */
+struct region	**trueregp;	/* XOR true (and overlap) return */
+struct resource	*resp;		/* resource pointer for this CPU */
 {
-#define STACKDEPTH	128
-	LOCAL union tree *stackpile[STACKDEPTH];
 	static union tree tree_not;		/* for OP_NOT nodes */
 	static union tree tree_guard;		/* for OP_GUARD nodes */
 	static union tree tree_xnop;		/* for OP_XNOP nodes */
 	register union tree **sp;
 	register int ret;
+	register union tree **stackend;
 
 	if( treep->tr_op != OP_XOR )
 		trueregp[0] = treep->tr_regionp;
 	else
 		trueregp[0] = trueregp[1] = REGION_NULL;
-	sp = stackpile;
+	while( (sp = resp->re_boolstack) == (union tree **)0 )
+		(void)rt_grow_boolstack( resp );
+	stackend = &(resp->re_boolstack[resp->re_boolslen]);
 	*sp++ = TREE_NULL;
 stack:
 	switch( treep->tr_op )  {
@@ -608,9 +611,11 @@ stack:
 	case OP_SUBTRACT:
 	case OP_XOR:
 		*sp++ = treep;
-		if( sp >= &stackpile[STACKDEPTH] )  {
-			rt_log("rt_booleval: stack overflow!\n");
-			return(TRUE);	/* screw up output */
+		if( sp >= stackend )  {
+			register int off = sp - resp->re_boolstack;
+			rt_grow_boolstack( resp );
+			sp = &(resp->re_boolstack[off]);
+			stackend = &(resp->re_boolstack[resp->re_boolslen]);
 		}
 		treep = treep->tr_b.tb_left;
 		goto stack;
@@ -897,4 +902,29 @@ register struct hit *hitp;
 	rt_log("HIT %s dist=%g\n", str, hitp->hit_dist );
 	VPRINT("HIT Point ", hitp->hit_point );
 	VPRINT("HIT Normal", hitp->hit_normal );
+}
+
+/*
+ *			R T _ G R O W _ B O O L S T A C K
+ *
+ *  Increase the size of re_boolstack to double the previous size.
+ *  Depend on rt_realloc() to copy the previous data to the new area
+ *  when the size is increased.
+ *  Return the new pointer for what was previously the last element.
+ */
+rt_grow_boolstack( resp )
+register struct resource	*resp;
+{
+	if( resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0 )  {
+		resp->re_boolslen = 128;	/* default len */
+		resp->re_boolstack = (union tree **)rt_malloc(
+			sizeof(union tree *) * resp->re_boolslen,
+			"initial boolstack");
+	} else {
+		resp->re_boolslen <<= 1;
+		resp->re_boolstack = (union tree **)rt_realloc(
+			(char *)resp->re_boolstack,
+			sizeof(union tree *) * resp->re_boolslen,
+			"extend boolstack" );
+	}
 }

@@ -31,6 +31,8 @@ struct rt_g rt_g;
 
 int rt_pure_boolean_expressions = 0;
 
+extern struct resource	rt_uniresource;		/* from shoot.c */
+
 HIDDEN union tree *rt_drawobj();
 HIDDEN void rt_add_regtree();
 HIDDEN union tree *rt_mkbool_tree();
@@ -1331,15 +1333,17 @@ zot:
  *			R T _ O P T I M _ T R E E
  */
 HIDDEN void
-rt_optim_tree( tp )
-register union tree *tp;
+rt_optim_tree( tp, resp )
+register union tree	*tp;
+struct resource		*resp;
 {
-#define STACKDEPTH	10000
-	LOCAL union tree *stackpile[STACKDEPTH];
-	register union tree **sp;
-	register union tree *low;
+	register union tree	**sp;
+	register union tree	*low;
+	register union tree	**stackend;
 
-	sp = stackpile;
+	while( (sp = resp->re_boolstack) == (union tree **)0 )
+		rt_grow_boolstack( resp );
+	stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 	*sp++ = TREE_NULL;
 	*sp++ = tp;
 	while( (tp = *--sp) != TREE_NULL ) {
@@ -1358,9 +1362,11 @@ register union tree *tp;
 			/* push both nodes - search left first */
 			*sp++ = tp->tr_b.tb_right;
 			*sp++ = tp->tr_b.tb_left;
-			if( sp >= &stackpile[STACKDEPTH-1] )  {
-				rt_log("rt_optim_tree: stack overflow!\n");
-				return;
+			if( sp >= stackend )  {
+				register int off = sp - resp->re_boolstack;
+				rt_grow_boolstack( resp );
+				sp = &(resp->re_boolstack[off]);
+				stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 			}
 			break;
 		case OP_UNION:
@@ -1370,9 +1376,11 @@ register union tree *tp;
 			/* push both nodes - search left first */
 			*sp++ = tp->tr_b.tb_right;
 			*sp++ = tp->tr_b.tb_left;
-			if( sp >= &stackpile[STACKDEPTH-1] )  {
-				rt_log("rt_optim_tree: stack overflow!\n");
-				return;
+			if( sp >= stackend )  {
+				register int off = sp - resp->re_boolstack;
+				rt_grow_boolstack( resp );
+				sp = &(resp->re_boolstack[off]);
+				stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 			}
 			break;
 		default:
@@ -1384,6 +1392,9 @@ register union tree *tp;
 
 /*
  *			R T _ F R  _ T R E E
+ *
+ *  Free a boolean operation tree.
+ *  XXX should iterate, rather than recurse.
  */
 HIDDEN void
 rt_fr_tree( tp )
@@ -1417,16 +1428,18 @@ register union tree *tp;
  *  have been assigned.
  */
 HIDDEN void
-rt_solid_bitfinder( treep, regbit )
-register union tree *treep;
-register int regbit;
+rt_solid_bitfinder( treep, regbit, resp )
+register union tree	*treep;
+register int		regbit;
+struct resource		*resp;
 {
-#define STACKDEPTH	10000
-	LOCAL union tree *stackpile[STACKDEPTH];
-	register union tree **sp;
-	register struct soltab *stp;
+	register union tree	**sp;
+	register struct soltab	*stp;
+	register union tree	**stackend;
 
-	sp = stackpile;
+	while( (sp = resp->re_boolstack) == (union tree **)0 )
+		rt_grow_boolstack( resp );
+	stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 	*sp++ = TREE_NULL;
 	*sp++ = treep;
 	while( (treep = *--sp) != TREE_NULL ) {
@@ -1449,9 +1462,11 @@ register int regbit;
 			/* push both nodes - search left first */
 			*sp++ = treep->tr_b.tb_right;
 			*sp++ = treep->tr_b.tb_left;
-			if( sp >= &stackpile[STACKDEPTH-1] )  {
-				rt_log("rt_optim_tree: stack overflow!\n");
-				return;
+			if( sp >= stackend )  {
+				register int off = sp - resp->re_boolstack;
+				rt_grow_boolstack( resp );
+				sp = &(resp->re_boolstack[off]);
+				stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 			}
 			break;
 		default:
@@ -1535,8 +1550,9 @@ register struct rt_i *rtip;
 		"rtip->Regions[]" );
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
 		rtip->Regions[regp->reg_bit] = regp;
-		rt_optim_tree( regp->reg_treetop );
-		rt_solid_bitfinder( regp->reg_treetop, regp->reg_bit );
+		rt_optim_tree( regp->reg_treetop, &rt_uniresource );
+		rt_solid_bitfinder( regp->reg_treetop, regp->reg_bit,
+			&rt_uniresource );
 		if(rt_g.debug&DEBUG_REGIONS)  {
 			rt_pr_region( regp );
 		}
