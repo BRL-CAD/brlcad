@@ -29,9 +29,6 @@ static char RCSnmg_index[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-
-extern void	nmg_m_reindex();
-
 #define NMG_HIGH_BIT	0x80000000
 
 #define NMG_MARK_INDEX(_p)	((_p)->index |= NMG_HIGH_BIT)
@@ -396,47 +393,13 @@ rt_log("nmg_m_reindex() oldmax=%d, newmax=%d\n", m->maxindex, newindex );
 	m->maxindex = newindex;
 }
 
-/*****/
-
-struct nmg_counter {
-	/* Actual structure counts */
-	long	model;
-	long	model_a;
-	long	region;
-	long	region_a;
-	long	shell;
-	long	shell_a;
-	long	face;
-	long	face_g;
-	long	faceuse;
-	long	faceuse_a;
-	long	loopuse;
-	long	loopuse_a;
-	long	loop;
-	long	loop_g;
-	long	edgeuse;
-	long	edgeuse_a;
-	long	edge;
-	long	edge_g;
-	long	vertexuse;
-	long	vertexuse_a;
-	long	vertex;
-	long	vertex_g;
-	/* Abstractions */
-	long	max_structs;
-	long	face_loops;
-	long	face_edges;
-	long	face_lone_verts;
-	long	wire_loops;
-	long	wire_loop_edges;
-	long	wire_edges;
-	long	wire_lone_verts;
-	long	shells_of_lone_vert;
-};
-
-nmg_pr_count( ctr, str )
-struct nmg_counter	*ctr;
-char			*str;
+/*
+ *			N M G _ P R _ S T R U C T _ C O U N T S
+ */
+void
+nmg_pr_struct_counts( ctr, str )
+struct nmg_struct_counts	*ctr;
+char				*str;
 {
 	rt_log("nmg_pr_count(%s)\n", str);
 	rt_log(" Actual structure counts:\n");
@@ -474,9 +437,13 @@ char			*str;
 	rt_log("\t%6d shells_of_lone_vert\n", ctr->shells_of_lone_vert);
 }
 
-nmg_m_count( ctr, m )
-struct model		*m;
-struct nmg_counter	*ctr;
+/*
+ *			N M G _ M _ S T R U C T _ C O U N T
+ */
+void
+nmg_m_struct_count( ctr, m )
+struct nmg_struct_counts	*ctr;
+struct model			*m;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
