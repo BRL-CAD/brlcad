@@ -169,7 +169,6 @@ struct application	*ap;
 	 * of this is WHAT?
 	 */
 
-	rt_log("view_init2: %d width\n", width);
 
 	botp = (struct cell *)rt_malloc(sizeof(struct cell) * (width + 2),
 		"bottom cell buffer" );
