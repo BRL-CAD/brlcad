@@ -1,8 +1,22 @@
-
-/*  File:  firpass.c  */
-/*  S.Coates - 13 March 1991  */
-/*  This version ONLY shoots down the x-axis.  */
-/*  This version rotates the starting point and directions.  */
+/*
+ *			F I R P A S S . C
+ *
+ *  Author -
+ *	S.Coates - 13 March 1991
+ *  
+ *  Source -
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
+ *
+ *  Notes -
+ *
+ *  This version ONLY shoots down the x-axis.
+ *  This version rotates the starting point and directions.
+ */
 
 /*	CHANGES		*/
 /*	10 December 1990 - 'Dimension' arrays using malloc.  */
@@ -10,6 +24,10 @@
 /*	19 February 1991 - No defaults for material properties.  */
 /*	 5 March 1991    - Creates PRISM, generic, or geometric file.  */
 /*	13 March 1991    - Corrects problem writing out material.  */
+
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include <math.h>

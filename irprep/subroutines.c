@@ -1,6 +1,21 @@
-
-/*  file:  subroutines.c  */
-/*  S.Coates - 18 December 1990  */
+/*
+ *			S U B R O U T I N E S . C
+ *
+ *  Author -
+ *	S.Coates - 18 December 1990
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

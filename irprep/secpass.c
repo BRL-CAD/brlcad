@@ -1,6 +1,20 @@
-/*  File:  secpass.c  */
-/*  S.Coates - 13 May 1991  */
-/*  This version ONLY shoots down x-axis.  */
+/*
+ *			S E C P A S S . C
+ *
+ *  Author -
+ *	S.Coates - 13 May 1991
+ *  
+ *  Source -
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
+ *
+ *  Notes -
+ *	This version ONLY shoots down x-axis.
+ */
 
 /*	CHANGES		*/
 /*	11 December 1990 - 'Dimension' arrays using malloc.  */
@@ -11,6 +25,10 @@
 /*			   computes entire matrix).  */
 /*	14 March 1991    - Creates a generic file if needed.  */
 /*	13 May 1991      - Remove some write statements.  */
+
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

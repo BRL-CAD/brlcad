@@ -1,11 +1,28 @@
-/*  File:  rand.ray.c  */
-/*  S.Coates - 23 May 1991  */
-/*  Program to find shape factors for the engine by  */
-/*  firing random rays.  This program fires parallel  */
-/*  rays.  */
+/*
+ *			S H A P E F A C T . C
+ *
+ *  Program to find shape factors for the engine by firing random rays.
+ *  This program fires parallel rays.
+ *
+ *  Author -
+ *	S.Coates - 23 May 1991
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
+ */
 
 /*	23 May 1991 - Take out lvpt that wasn't necessary.  */
 /*		Put in optional dump.  Sum shape factors.  */
+
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>	/*  Need for mallocing arrays.  */
