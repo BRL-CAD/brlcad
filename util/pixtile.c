@@ -45,6 +45,42 @@ Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]\n\
 	[-S squareoutsize] [-W out_width] [-N out_height]\n\
 	[-o startframe] basename [file2 ... fileN] >file.pix\n";
 
+/*
+ *			M R E A D
+ *
+ * This function performs the function of a read(II) but will
+ * call read(II) multiple times in order to get the requested
+ * number of characters.  This can be necessary because pipes
+ * and network connections don't deliver data with the same
+ * grouping as it is written with.  Written by Robert S. Miles, BRL.
+ */
+int
+mread(fd, bufp, n)
+int	fd;
+register char	*bufp;
+int	n;
+{
+	register int	count = 0;
+	register int	nread;
+
+	do {
+		nread = read(fd, bufp, (unsigned)n-count);
+		if(nread < 0)  {
+			perror("buffer: mread");
+			return(-1);
+		}
+		if(nread == 0)
+			return((int)count);
+		count += (unsigned)nread;
+		bufp += nread;
+	 } while(count < n);
+
+	return((int)count);
+}
+
+/*
+ *			G E T _ A R G S
+ */
 get_args( argc, argv )
 register char **argv;
 {
@@ -108,6 +144,7 @@ char **argv;
 	int rel = 0;		/* Relative image # within swath */
 	int maximage;		/* Maximum # of images that will fit */
 	int islist = 0;		/* set if a list, zero if basename */
+	int is_stream = 0;	/* set if input is stream on stdin */
 	char name[256];
 
 	if( !get_args( argc, argv ) )  {
@@ -118,6 +155,8 @@ char **argv;
 	if( optind+1 == argc )  {
 		basename = argv[optind];
 		islist = 0;
+		if( basename[0] == '-' && basename[1] == '\0' )
+			is_stream = 1;
 	} else {
 		islist = 1;
 	}
@@ -161,17 +200,21 @@ char **argv;
 				exit(0);
 			}
 			fprintf(stderr,"%d ", framenumber);  fflush(stdout);
-			if( islist )  {
-				/*See if we read all the files */
-				if( optind >= argc )
-					goto done;
-				strcpy(name, argv[optind++]);
+			if( is_stream )  {
+				fd = 0;		/* stdin */
 			} else {
-				sprintf(name,"%s.%d", basename, framenumber);
-			}
-			if( (fd=open(name,0))<0 )  {
-				perror(name);
-				goto done;
+				if( islist )  {
+					/* See if we read all the files */
+					if( optind >= argc )
+						goto done;
+					strcpy(name, argv[optind++]);
+				} else {
+					sprintf(name,"%s.%d", basename, framenumber);
+				}
+				if( (fd=open(name,0))<0 )  {
+					perror(name);
+					goto done;
+				}
 			}
 			/* Read in .pix file.  Bottom to top */
 			for( i=0; i<file_height; i++ )  {
@@ -183,10 +226,10 @@ char **argv;
 				/* select proper scanline within image */
 				j += i*scr_width;
 
-				if( read( fd, &obuf[j*3], scanbytes ) != scanbytes )
+				if( mread( fd, &obuf[j*3], scanbytes ) != scanbytes )
 					break;
 			}
-			close(fd);
+			if( fd > 0 )  close(fd);
 		}
 		(void)write( 1, obuf, swathbytes );
 		rel = 0;	/* in case we fall through */
@@ -198,3 +241,4 @@ done:
 	fprintf(stderr,"\n");
 	exit(0);
 }
+
