@@ -77,44 +77,11 @@ usepen()
 {
 	static float scale;
 	register struct solid *sp;
-	static int j;
 	static vect_t pos_view;	 	/* Unrotated view space pos */
 	static vect_t pos_model;	/* Rotated screen space pos */
 	static vect_t tr_temp;		/* temp translation vector */
 	static vect_t tabvec;		/* tablet vector */
 	static vect_t temp;
-
-	/* TODO:  switch(dm_values.dv_penpress) { switch(state) {stuff} } */
-	switch( dm_values.dv_penpress )  {
-	case DV_INZOOM:
-		Viewscale *= 0.5;
-		new_mats();
-		return;
-
-	case DV_OUTZOOM:
-		Viewscale *= 2.0;
-		new_mats();
-		return;
-
-	case DV_SLEW:
-		/* Move view center to here */
-		tabvec[X] =  dm_values.dv_xpen / 2047.0;
-		tabvec[Y] =  dm_values.dv_ypen / 2047.0;
-		tabvec[Z] = 0;
-
-		slewview( tabvec );
-		return;
-
-	case DV_PICK:
-	case 0:
-		break;
-	default:
-		(void)printf("usepen(%d,%d,x%x) -- bad dm press code\n",
-			dm_values.dv_xpen,
-			dm_values.dv_ypen,
-			dm_values.dv_penpress);
-		return;
-	}
 
 	/*
 	 * Keep the pen input from doing other things to
@@ -127,89 +94,30 @@ usepen()
 		menu_list != (struct menu_item *) NULL  &&
 		menu_select( dm_values.dv_xpen, dm_values.dv_ypen, dm_values.dv_penpress )
 	) return;
-	if( state == ST_VIEW )  {
-		if( dm_values.dv_penpress == 0 )
-			return;
 
-		/*
-		 * Use the DT for moving view center.
-		 * Make indicated point be new view center (NEW).
-		 */
-		tabvec[X] =  dm_values.dv_xpen / 2047.0;
-		tabvec[Y] =  dm_values.dv_ypen / 2047.0;
-		tabvec[Z] = 0;
+	/*
+	 *  In the best of all possible worlds, nothing should happen
+	 *  when the pen is not pressed;  this would relax the requirement
+	 *  for the host being informed when the pen changes position.
+	 *  However, for now, illuminate mode makes this impossible.
+	 */
+	if( dm_values.dv_penpress == 0 )  switch( state )  {
 
-		slewview( tabvec );
-		return;
-	}
+	case ST_VIEW:
+	case ST_S_EDIT:
+	case ST_O_EDIT:
+	default:
+		return;		/* Take no action in these states */
 
-	if( state == ST_O_PICK || state == ST_S_PICK )  {
-		/*
-		 * We are in "illuminate" mode, with no object selected.
-		 */
-		if( dm_values.dv_penpress )  {
-			/* Currently illuminated object is selected */
-			if( state == ST_O_PICK )  {
-				ipathpos = 0;
-				(void)chg_state( ST_O_PICK, ST_O_PATH, "Pen press");
-			} else {
-				/* Check details, Init menu, set state */
-				init_sedit();
-			}
-			dmaflag = 1;
-			return;
-		}
-
+	case ST_O_PICK:
+	case ST_S_PICK:
 		/*
 		 * Use the tablet for illuminating a solid
 		 */
 		illuminate( dm_values.dv_ypen );
-
-		/*
-		 * People seem to find the cross-hair distracting in
-		 * illuminate mode, so force it to the center.
-		 */
-		xcross = ycross = 0;
 		return;
-	}
 
-	if( state == ST_O_PATH )  {
-		/* Select path element for Object Edit */
-		/* If pressed, use selected path element */
-		if( dm_values.dv_penpress )  {
-			/*
-			 * Set combination "illuminate" mode.  This code
-			 * assumes that the user has already illuminated
-			 * a single solid, and wishes to move a collection of
-			 * objects of which the illuminated solid is a part.
-			 * The whole combination will not illuminate (to save
-			 * vector drawing time), but all the objects should
-			 * move/scale in unison.
-			 */
-			dmp->dmr_light( LIGHT_ON, BE_ACCEPT );
-			dmp->dmr_light( LIGHT_ON, BE_REJECT );
-			dmp->dmr_light( LIGHT_OFF, BE_O_ILLUMINATE );
-
-			/* Include all solids with same tree top */
-			FOR_ALL_SOLIDS( sp )  {
-				for( j = 0; j <= ipathpos; j++ )  {
-					if( sp->s_path[j] !=
-							illump->s_path[j] )
-						break;
-				}
-				/* Only accept if top of tree is identical */
-				if( j == ipathpos+1 )
-					sp->s_iflag = UP;
-			}
-			(void)chg_state( ST_O_PATH, ST_O_EDIT, "Pen press" );
-
-			/* begin object editing - initialize */
-			init_objedit();
-
-			dmaflag++;
-			return;
-		}
-
+	case ST_O_PATH:
 		/*
 		 * Convert DT position to path element select
 		 *
@@ -220,125 +128,192 @@ usepen()
 		ipathpos = illump->s_last - ipathpos;
 		dmaflag++;
 		return;
-	}
 
-	if( !dm_values.dv_penpress )
+	} else switch( state )  {
+
+	case ST_VIEW:
+		/*
+		 * Use the DT for moving view center.
+		 * Make indicated point be new view center (NEW).
+		 */
+		tabvec[X] =  dm_values.dv_xpen / 2047.0;
+		tabvec[Y] =  dm_values.dv_ypen / 2047.0;
+		tabvec[Z] = 0;
+
+		slewview( tabvec );
 		return;
-	/*
-	 * When pressed, use the DT for object transformations
-	 */
-	if( state == ST_S_EDIT && es_edflag > 0 )  switch( es_edflag )  {
+
+	case ST_O_PICK:
+		ipathpos = 0;
+		(void)chg_state( ST_O_PICK, ST_O_PATH, "Pen press");
+		dmaflag = 1;
+		return;
+
+	case ST_S_PICK:
+		/* Check details, Init menu, set state */
+		init_sedit();		/* does chg_state */
+		dmaflag = 1;
+		return;
+
+	case ST_S_EDIT:
 		/*
 		 *  Solid Edit
 		 */
-	case SSCALE:
-	case PSCALE:
-		/* use pen to get a scale factor */
-		es_scale = 1.0 + 0.25 *
-				((float)(dm_values.dv_ypen > 0 ? dm_values.dv_ypen : -dm_values.dv_ypen) / 2047);
-		if ( dm_values.dv_ypen <= 0 )
-			es_scale = 1.0 / es_scale;
+		if( es_edflag <= 0 )  return;
+		switch( es_edflag )  {
 
-		/* accumulate scale factor */
-		acc_sc_sol *= es_scale;
+		case SSCALE:
+		case PSCALE:
+			/* use pen to get a scale factor */
+			es_scale = 1.0 + 0.25 * ((float)
+				(dm_values.dv_ypen > 0 ?
+					dm_values.dv_ypen :
+					-dm_values.dv_ypen) / 2047);
+			if ( dm_values.dv_ypen <= 0 )
+				es_scale = 1.0 / es_scale;
 
-		sedraw = 1;
+			/* accumulate scale factor */
+			acc_sc_sol *= es_scale;
+
+			sedraw = 1;
+			return;
+		case STRANS:
+			/* 
+			 * Use pen to change solid's location.
+			 * Project solid's V point into view space,
+			 * replace X,Y (but NOT Z) components, and
+			 * project result back to model space.
+			 */
+			MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
+			MAT4X3PNT( pos_view, model2view, temp );
+			pos_view[X] = dm_values.dv_xpen / 2047.0;
+			pos_view[Y] = dm_values.dv_ypen / 2047.0;
+			MAT4X3PNT( temp, view2model, pos_view );
+			MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
+			sedraw = 1;
+			return;
+		case MOVEH:
+			/* Use pen to change location of point V+H */
+			VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
+			MAT4X3PNT(pos_model, es_mat, temp);
+			MAT4X3PNT( pos_view, model2view, pos_model );
+			pos_view[X] = dm_values.dv_xpen / 2047.0;
+			pos_view[Y] = dm_values.dv_ypen / 2047.0;
+			/* Do NOT change pos_view[Z] ! */
+			MAT4X3PNT( temp, view2model, pos_view );
+			MAT4X3PNT( tr_temp, es_invmat, temp );
+			VSUB2( &es_rec.s.s_tgc_H, tr_temp, &es_rec.s.s_tgc_V );
+			sedraw = 1;
+			return;
+		case EARB:
+			/* move arb edge, through indicated point */
+			tabvec[X] = dm_values.dv_xpen / 2047.0;
+			tabvec[Y] = dm_values.dv_ypen / 2047.0;
+			tabvec[Z] = 0;
+			MAT4X3PNT( temp, view2model, tabvec );
+			/* apply inverse of es_mat */
+			MAT4X3PNT( pos_model, es_invmat, temp );
+			editarb( pos_model );
+			sedraw = 1;
+			return;
+		default:
+			(void)printf("Pen press undefined in this solid edit mode\n");
+			break;
+		}
 		return;
-	case STRANS:
-		/* 
-		 * Use pen to change solid's location.
-		 * Project solid's V point into view space,
-		 * replace X,Y (but NOT Z) components, and
-		 * project result back to model space.
+
+	case ST_O_PATH:
+		/*
+		 * Set combination "illuminate" mode.  This code
+		 * assumes that the user has already illuminated
+		 * a single solid, and wishes to move a collection of
+		 * objects of which the illuminated solid is a part.
+		 * The whole combination will not illuminate (to save
+		 * vector drawing time), but all the objects should
+		 * move/scale in unison.
 		 */
-		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
-		MAT4X3PNT( pos_view, model2view, temp );
-		pos_view[X] = dm_values.dv_xpen / 2047.0;
-		pos_view[Y] = dm_values.dv_ypen / 2047.0;
-		MAT4X3PNT( temp, view2model, pos_view );
-		MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
-		sedraw = 1;
-		return;
-	case MOVEH:
-		/* Use pen to change location of point V+H */
-		VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
-		MAT4X3PNT(pos_model, es_mat, temp);
-		MAT4X3PNT( pos_view, model2view, pos_model );
-		pos_view[X] = dm_values.dv_xpen / 2047.0;
-		pos_view[Y] = dm_values.dv_ypen / 2047.0;
-		/* Do NOT change pos_view[Z] ! */
-		MAT4X3PNT( temp, view2model, pos_view );
-		MAT4X3PNT( tr_temp, es_invmat, temp );
-		VSUB2( &es_rec.s.s_tgc_H, tr_temp, &es_rec.s.s_tgc_V );
-		sedraw = 1;
-		return;
-	case EARB:
-		/* move arb edge, through indicated point */
-		tabvec[X] = dm_values.dv_xpen / 2047.0;
-		tabvec[Y] = dm_values.dv_ypen / 2047.0;
-		tabvec[Z] = 0;
-		MAT4X3PNT( temp, view2model, tabvec );
-		/* apply inverse of es_mat */
-		MAT4X3PNT( pos_model, es_invmat, temp );
-		editarb( pos_model );
-		sedraw = 1;
-		return;
-	default:
-		(void)printf("Pen press undefined in this solid edit mode\n");
-		return;
-	}
+		dmp->dmr_light( LIGHT_ON, BE_ACCEPT );
+		dmp->dmr_light( LIGHT_ON, BE_REJECT );
+		dmp->dmr_light( LIGHT_OFF, BE_O_ILLUMINATE );
 
-	if( not_state( ST_O_EDIT, "Pen Press" ) )
+		/* Include all solids with same tree top */
+		FOR_ALL_SOLIDS( sp )  {
+			register int j;
+
+			for( j = 0; j <= ipathpos; j++ )  {
+				if( sp->s_path[j] != illump->s_path[j] )
+					break;
+			}
+			/* Only accept if top of tree is identical */
+			if( j == ipathpos+1 )
+				sp->s_iflag = UP;
+		}
+		(void)chg_state( ST_O_PATH, ST_O_EDIT, "Pen press" );
+
+		/* begin object editing - initialize */
+		init_objedit();
+
+		dmaflag++;
 		return;
 
-	/*
-	 *  Object Edit
-	 */
-	mat_idn( incr_change );
-	scale = 1;
-	if( movedir & SARROW )  {
-		scale = 1.0 + (float)(dm_values.dv_ypen > 0 ? dm_values.dv_ypen : -dm_values.dv_ypen) / (2047);
-		if ( dm_values.dv_ypen <= 0 )
-			scale = 1.0 / scale;
-
-		/*  For this to take effect relative to the view center,
-		 *	p' = ( (p - center) * scale ) + center
+	case ST_O_EDIT:
+		/*
+		 *  Object Edit
 		 */
-		incr_change[15] = 1.0 / scale;
+		mat_idn( incr_change );
+		scale = 1;
+		if( movedir & SARROW )  {
+			scale = 1.0 + (float)(dm_values.dv_ypen > 0 ?
+				dm_values.dv_ypen :
+				-dm_values.dv_ypen) / (2047);
+			if ( dm_values.dv_ypen <= 0 )
+				scale = 1.0 / scale;
+
+			/*  To take effect relative to the view center,
+			 *	p' = ( (p - center) * scale ) + center
+			 */
+			incr_change[15] = 1.0 / scale;
 /*
-		wrt_view( modelchanges, incr_change, modelchanges );
+			wrt_view( modelchanges, incr_change, modelchanges );
 */
 
-		/* Have scaling take place with respect to a point, NOT
-		 *	the view center
-		 */
-		MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
-		MAT4X3PNT(pos_model, modelchanges, temp);
-		wrt_point(modelchanges, incr_change, modelchanges, pos_model);
-	}  else if( movedir & (RARROW|UARROW) )  {
-		static mat_t oldchanges;	/* temporary matrix */
+			/* Have scaling take place with respect to a point,
+			 * NOT the view center.
+			 */
+			MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
+			MAT4X3PNT(pos_model, modelchanges, temp);
+			wrt_point(modelchanges, incr_change, modelchanges, pos_model);
+		}  else if( movedir & (RARROW|UARROW) )  {
+			static mat_t oldchanges;	/* temporary matrix */
 
-		/* Vector from object center to cursor */
-		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
-		MAT4X3PNT( pos_view, model2objview, temp );
-		if( movedir & RARROW )
-			pos_view[X] = dm_values.dv_xpen / 2047.0;
-		if( movedir & UARROW )
-			pos_view[Y] = dm_values.dv_ypen / 2047.0;
+			/* Vector from object center to cursor */
+			MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
+			MAT4X3PNT( pos_view, model2objview, temp );
+			if( movedir & RARROW )
+				pos_view[X] = dm_values.dv_xpen / 2047.0;
+			if( movedir & UARROW )
+				pos_view[Y] = dm_values.dv_ypen / 2047.0;
 
-		MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
-		MAT4X3PNT( tr_temp, modelchanges, temp );
-		VSUB2( tr_temp, pos_model, tr_temp );
-		MAT_DELTAS(incr_change,
-			tr_temp[X], tr_temp[Y], tr_temp[Z]);
-		mat_copy( oldchanges, modelchanges );
-		mat_mul( modelchanges, incr_change, oldchanges );
-	}  else  {
-		(void)printf("No object edit mode selected;  pen press ignored\n");
+			MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
+			MAT4X3PNT( tr_temp, modelchanges, temp );
+			VSUB2( tr_temp, pos_model, tr_temp );
+			MAT_DELTAS(incr_change,
+				tr_temp[X], tr_temp[Y], tr_temp[Z]);
+			mat_copy( oldchanges, modelchanges );
+			mat_mul( modelchanges, incr_change, oldchanges );
+		}  else  {
+			(void)printf("No object edit mode selected;  pen press ignored\n");
+			return;
+		}
+		mat_idn( incr_change );
+		new_mats();
+		return;
+
+	default:
+		state_err( "Pen press" );
 		return;
 	}
-	mat_idn( incr_change );
-	new_mats();
+	/* NOTREACHED */
 }
 
 /*
