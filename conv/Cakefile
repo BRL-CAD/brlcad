@@ -11,6 +11,8 @@
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
+#define STATIC_PRODUCTS ../SRCDIR/pro_engineer
+
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
