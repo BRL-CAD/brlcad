@@ -760,10 +760,7 @@ mged_setup()
 #endif
 
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 \
-                             %stclscripts/mged %stclscripts \
-                             %stclscripts/lib %stclscripts/util]",
-		      filename, filename, filename, filename);
+	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %stclscripts/mged %stclscripts %stclscripts/lib %stclscripts/util %stclscripts/geometree]", filename, filename, filename, filename, filename);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 
 	/* Tcl needs to write nulls onto subscripted variable names */
