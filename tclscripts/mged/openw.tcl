@@ -32,10 +32,6 @@ if ![info exists bob_testing] {
     set bob_testing 0
 }
 
-if ![info exists dm_insert_char_flag] {
-    set dm_insert_char_flag 0
-}
-
 if ![info exists mged_players] {
     set mged_players ""
 }
@@ -163,6 +159,7 @@ proc gui_create_default { args } {
     global vi_search_flag
     global vi_search_char
     global vi_search_dir
+    global dm_insert_char_flag
     global bob_testing
 
 # set defaults
@@ -889,6 +886,7 @@ scrollbar .$id.s -relief flat -command ".$id.t yview"
 bind .$id.t <Enter> "focus .$id.t"
 
 set mged_edit_style($id) $mged_default_edit_style
+set dm_insert_char_flag(.$id.t) 0
 set_text_key_bindings $id
 set_text_button_bindings .$id.t
 
@@ -1668,19 +1666,19 @@ proc set_transform { id } {
 
     winset $mged_top($id).ul
     set transform $mged_transform($id)
-    do_mouse_bindings $mged_top($id).ul
+    default_mouse_bindings $mged_top($id).ul
 
     winset $mged_top($id).ur
     set transform $mged_transform($id)
-    do_mouse_bindings $mged_top($id).ur
+    default_mouse_bindings $mged_top($id).ur
 
     winset $mged_top($id).ll
     set transform $mged_transform($id)
-    do_mouse_bindings $mged_top($id).ll
+    default_mouse_bindings $mged_top($id).ll
 
     winset $mged_top($id).lr
     set transform $mged_transform($id)
-    do_mouse_bindings $mged_top($id).lr
+    default_mouse_bindings $mged_top($id).lr
 
     winset $mged_active_dm($id)
 }
@@ -1718,7 +1716,7 @@ proc adc { args } {
 	}
 
 	if {$transform == "a"} {
-	    do_mouse_bindings [winset]
+	    default_mouse_bindings [winset]
 	}
     }
 
