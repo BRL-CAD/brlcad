@@ -1,8 +1,8 @@
 /*LINTLIBRARY*/
 /*
-	SCCS id:	@(#) termio.c	1.3
-	Last edit: 	3/14/85 at 17:58:14
-	Retrieved: 	8/13/86 at 03:18:00
+	SCCS id:	@(#) termio.c	1.4
+	Last edit: 	6/16/86 at 16:53:08
+	Retrieved: 	8/13/86 at 03:18:05
 	SCCS archive:	/m/cad/fb_utils/RCS/s.termio.c
 
 	Author:		Gary S. Moss
@@ -12,14 +12,49 @@
 			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) termio.c	1.3	last edit 3/14/85 at 17:58:14";
+char	sccsTag[] = "@(#) termio.c	1.4	last edit 6/16/86 at 16:53:08";
 #include <stdio.h>
-#include <sys/ioctl.h>
 #include <fcntl.h>
-#include <termio.h>
-#include <memory.h>
+#include <sgtty.h>
+#ifndef	TANDEM	/* USG derivatives */
+/* Dammit. */
+#undef	NL1
+#undef	CR1
+#undef	CR2
+#undef	CR3
+#undef	TAB1
+#undef	BS1
+#undef	FF1
+#undef	B50
+#undef	B75
+#undef	B110
+#undef	B134
+#undef	B150
+#undef	B200
+#undef	B300
+#undef	B600
+#undef	B1200
+#undef	B1800
+#undef	B2400
+#undef	B4800
+#undef	B9600
+#undef	EXTA
+#undef	EXTB
+#undef	HUPCL
+#undef	ECHO
+#include	<termio.h>
+#endif
 
+#ifdef	TANDEM	/* 7th Edition derivatives */
+#define TCSETA	TIOCSETP
+#define TCGETA	TIOCGETP
+#ifndef	XTABS
+#define	XTABS	(TAB1 | TAB2)
+#endif
+static struct sgttyb	save_tio[_NFILE], curr_tio[_NFILE];
+#else		/* USG derivatives */
 static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
+#endif
 static int		fileStatus[_NFILE];
 int			reset_Fil_Stat(), read_Key_Brd();
 void			save_Tty(), reset_Tty();
@@ -36,7 +71,11 @@ void
 clr_Raw( fd )
 int	fd;
 	{
+#ifdef TANDEM
+	curr_tio[fd].sg_flags |= RAW;		/* Raw mode OFF.	*/
+#else
 	curr_tio[fd].c_lflag |= ICANON;		/* Raw mode OFF.	*/
+#endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
 	}
@@ -48,7 +87,11 @@ void
 set_Raw( fd )
 int	fd;
 	{
+#ifdef TANDEM
+	curr_tio[fd].sg_flags &= ~RAW;		/* Raw mode ON.		*/
+#else
 	curr_tio[fd].c_lflag &= ~ICANON;	/* Raw mode ON.		*/
+#endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
 	}
@@ -60,7 +103,11 @@ void
 set_Echo( fd )
 int	fd;
 	{
+#ifdef TANDEM
+	curr_tio[fd].sg_flags |= ECHO;		/* Echo mode ON.	*/
+#else
 	curr_tio[fd].c_lflag |= ECHO;		/* Echo mode ON.	*/
+#endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
 	}
@@ -72,7 +119,11 @@ void
 clr_Echo( fd )
 int	fd;
 	{
+#ifdef TANDEM
+	curr_tio[fd].sg_flags &= ~ECHO;		/* Echo mode OFF.	*/
+#else
 	curr_tio[fd].c_lflag &= ~ECHO;		/* Echo mode OFF.	*/
+#endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
 	}
@@ -84,7 +135,11 @@ void
 set_Tabs( fd )
 int	fd;
 	{
+#ifdef TANDEM
+	curr_tio[fd].sg_flags |= XTABS;		/* Tab expansion ON.	*/
+#else
 	curr_tio[fd].c_oflag |= TAB3;		/* Tab expansion ON.	*/
+#endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
 	}
@@ -96,7 +151,11 @@ void
 clr_Tabs( fd )
 int	fd;
 	{
+#ifdef TANDEM
+	curr_tio[fd].sg_flags &= ~XTABS;	/* Tab expans. OFF.	*/
+#else
 	curr_tio[fd].c_oflag &= ~TAB3;		/* Tab expans. OFF.	*/
+#endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
 	}
@@ -107,7 +166,11 @@ int	fd;
 unsigned short
 get_O_Speed( fd )
 	{
+#ifdef TANDEM
+	return	(unsigned short) save_tio[fd].sg_ospeed;
+#else
 	return	save_tio[fd].c_cflag & CBAUD;
+#endif
 	}
 
 /*	s a v e _ T t y ( )
@@ -162,8 +225,7 @@ int	fd;
 	return	fcntl( fd, F_SETFL, O_NDELAY );
 	}
 
-/*	r e a d _ K e y _ B r d ( )
- */
+/*	r e a d _ K e y _ B r d ( )					*/
 read_Key_Brd()
 	{
 	int	c;
@@ -171,26 +233,43 @@ read_Key_Brd()
 	return	read( 0, (char *) &c, 1 ) == 0 ? 0 : c;
 	}
 
-/*	c o p y _ T i o ( )
- */
+/*	c o p y _ T i o ( )						*/
 static void
 copy_Tio( to, from )
+#ifdef TANDEM
+struct sgttyb	*to, *from;
+#else
 struct termio	*to, *from;
+#endif
 	{
+#ifdef TANDEM
+	(void) strncpy( (char *) to, (char *) from, sizeof(struct sgttyb) );
+#else
+#include <memory.h>
 	(void) memcpy( (char *) to, (char *) from, sizeof(struct termio) );
+#endif
 	return;
 	}
 
-/*	p r n t _ T i o ( )
- */
+/*	p r n t _ T i o ( )						*/
 void
 prnt_Tio( msg, tio_ptr )
 char		*msg;
+#ifdef TANDEM
+struct sgttyb	*tio_ptr;
+#else
 struct termio	*tio_ptr;
-	{
-	register int	i;
-
+#endif
+	{	register int	i;
 	(void) fprintf( stderr, "%s :\n\r", msg );
+#ifdef TANDEM
+	(void) fprintf( stderr, "\tsg_ispeed=%d\n\r", (int) tio_ptr->sg_ispeed );
+	(void) fprintf( stderr, "\tsg_ospeed=%d\n\r", (int) tio_ptr->sg_ospeed );
+	(void) fprintf( stderr, "\tsg_erase='%c'\n\r", tio_ptr->sg_erase );
+	(void) fprintf( stderr, "\tsg_kill='%c'\n\r", tio_ptr->sg_kill );
+	(void) fprintf( stderr, "\tsg_flags=0x%x\n\r", tio_ptr->sg_flags );
+#else
+
 	(void) fprintf( stderr, "\tc_iflag=0x%x\n\r", tio_ptr->c_iflag );
 	(void) fprintf( stderr, "\tc_oflag=0x%x\n\r", tio_ptr->c_oflag );
 	(void) fprintf( stderr, "\tc_cflag=0x%x\n\r", tio_ptr->c_cflag );
@@ -204,4 +283,6 @@ struct termio	*tio_ptr;
 				tio_ptr->c_cc[i]
 				);
 		}
+#endif
+	return;
 	}
