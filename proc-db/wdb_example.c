@@ -36,7 +36,7 @@ main(int ac, char *av[])
 	fastf_t radius;
 	int is_region;
 	unsigned char rgb[3];
-	struct wmember wm_hd, *wm; /* defined in wdb.h */
+	struct wmember wm_hd; /* defined in wdb.h */
 
 	progname = *av;
 
@@ -79,7 +79,7 @@ main(int ac, char *av[])
 	 * in the combination.  The return from mk_addmember is a pointer
 	 * to the wmember structure 
 	 */
-	wm = mk_addmember( "box.s", &wm_hd, WMOP_UNION );
+	(void)mk_addmember( "box.s", &wm_hd, WMOP_UNION );
 
 	/* If we wanted a transformation matrix for this arc, we would
 	 * add the following code:
@@ -98,7 +98,7 @@ main(int ac, char *av[])
 	 * can be a problem.
 	 */
 
-	wm = mk_addmember( "ball.s", &wm_hd, WMOP_UNION );
+	(void)mk_addmember( "ball.s", &wm_hd, WMOP_UNION );
 
 	/* Create the combination
 	 * In this case we are going to make it a region (hence the
