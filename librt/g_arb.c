@@ -44,9 +44,9 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"
 #include "nmg.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./debug.h"
 
 /* The internal (in memory) form of an ARB8 -- 8 points in space */
