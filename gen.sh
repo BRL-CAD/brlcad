@@ -851,7 +851,7 @@ Group: Applications/Graphics
 Source:  http://ftp.arl.mil:/brl-cad/Downloads/Rel${RELEASE}/
 URL:  http://ftp.arl.mil/brlcad/
 Vendor: The U. S. Army Research Laboratory, Aberdeen Proving Ground, MD  USA  21005-5068
-Packager: Mike Muuss <Mike@arl.mil>
+Packager: John Anderson <jra@arl.army.mil>
 %description
 The BRL-CAD(tm) Package is a powerful Constructive Solid Geometry (CSG)
 solid modeling system.  BRL-CAD includes an interactive geometry
@@ -860,7 +860,7 @@ a generic framebuffer library, a network-distributed image-processing
 and signal-processing capability, and a large collection of related
 tools and utilities.
 
-This version was compiled on RedHat Linux 6.2
+This version was compiled on RedHat Linux 7.1
 
 %prep
         exit 0
