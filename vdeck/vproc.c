@@ -1,6 +1,6 @@
 /*
- *	@(#) vproc.c			retrieved: 8/13/86 at 08:24:02,
- *	@(#) version 1.7		last edit: 10/11/83 at 10:57:48.
+ *	@(#) vproc.c			retrieved: 8/13/86 at 08:24:17,
+ *	@(#) version 1.8		last edit: 10/28/83 at 17:36:30.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -646,15 +646,14 @@ int   n,    w;
 	do	s[i++] = n % 10 + '0';	while( (n /= 10) > 0 );
 	if( sign < 0 )	s[i++] = '-';
 
-	/* blank fill array
-	 */
+	/* Blank fill array.					*/
 	for( j = i; j < w; j++ )	s[j] = ' ';
-	if( i > w )
-		fprintf( stderr, "Itoa: field length too small.\n" );
+	if( i > w ) {
+		s[w-1] = (s[w]-1-'0')*10 + (s[w-1]-'0')  + 'A';
+	}
 	s[w] = '\0';
 
-	/* reverse the array
-	 */
+	/* Reverse the array.					*/
 	for( i = 0, j = w - 1; i < j; i++, j-- ) {
 		c    = s[i];
 		s[i] = s[j];
