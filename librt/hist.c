@@ -133,7 +133,7 @@ char			*title;
 		if(histp->hg_bins[nbins] > 0)  break;
 
 	/* 12345678 12345678 123 .... */
-	rt_log("\nHistogram of %s\nmin=%d, max=%d, nbins=%d, clumpsize=%d\n%d samples collected, highest count was %d\n\n Value     Count   %%  |  Bar Graph\n",
+	rt_log("\nHistogram of %s\nmin=%d, max=%d, nbins=%d, clumpsize=%d\n%d samples collected, highest count was %d\n\n Value      Count Rel%%|  Bar Graph\n",
 		title,
 		histp->hg_min, histp->hg_max,
 		histp->hg_nbins, histp->hg_clumpsize,
