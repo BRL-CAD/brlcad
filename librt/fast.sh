@@ -6,7 +6,6 @@
 #  $Header$
 
 cake  \
- bomb.o \
  nmg_misc.o \
  g_nurb.o \
  g_nmg.o \
@@ -68,11 +67,8 @@ cake \
  hist.o \
  htond.o \
  global.o \
- log.o \
- machine.o \
  mat.o \
  mater.o \
- magic.o \
  memalloc.o \
  units.o \
  &
@@ -119,7 +115,6 @@ cake \
  storage.o \
  table.o \
  timer42.o \
- rtstring.o \
  vlist.o \
  regionfix.o \
  tree.o &
