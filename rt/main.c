@@ -188,7 +188,6 @@ char **argv;
 	rtip->useair = use_air;
 
 	/* before view_init */
-	if( outfp == NULL )  outfp = stdout;
 	if( outputfile && strcmp( outputfile, "-") == 0 )
 		outputfile = (char *)0;
 
@@ -212,7 +211,7 @@ char **argv;
 		fb_window( fbp, width/2, height/2 );
 	} else if( outputfile == (char *)0 )  {
 		/* output_is_binary is changed by view_init, as appropriate */
-		if( output_is_binary && isatty(fileno(outfp)) )  {
+		if( output_is_binary && outfp && isatty(fileno(outfp)) )  {
 			fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
 			exit(14);
 		}
