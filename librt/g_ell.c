@@ -7,6 +7,8 @@
  *  Authors -
  *	Edwin O. Davisson	(Analysis)
  *	Michael John Muuss	(Programming)
+ *	Peter F. Stiller	(Curvature Analysis)
+ *	Phillip Dykstra		(RPPs, Curvature)
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -255,7 +257,7 @@ struct rt_i		*rtip;
 
 	/* X */
 	VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
-	MAT3XVEC( w2, R, P );		/* map plane to local coord syst */
+	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
 	VELMUL( w2, w2, w2 );		/* square each term */
 	f = VDOT( w1, w2 );
 	f = f / sqrt(f);
@@ -264,7 +266,7 @@ struct rt_i		*rtip;
 
 	/* Y */
 	VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
-	MAT3XVEC( w2, R, P );		/* map plane to local coord syst */
+	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
 	VELMUL( w2, w2, w2 );		/* square each term */
 	f = VDOT( w1, w2 );
 	f = f / sqrt(f);
@@ -273,7 +275,7 @@ struct rt_i		*rtip;
 
 	/* Z */
 	VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
-	MAT3XVEC( w2, R, P );		/* map plane to local coord syst */
+	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
 	VELMUL( w2, w2, w2 );		/* square each term */
 	f = VDOT( w1, w2 );
 	f = f / sqrt(f);
@@ -290,10 +292,6 @@ register struct soltab *stp;
 		(struct ell_specific *)stp->st_specific;
 
 	VPRINT("V", ell->ell_V);
-	VPRINT("Au", ell->ell_Au);
-	VPRINT("Bu", ell->ell_Bu);
-	VPRINT("Cu", ell->ell_Cu);
-	VPRINT("invsq", ell->ell_invsq);
 	mat_print("S o R", ell->ell_SoR );
 	mat_print("invRSSR", ell->ell_invRSSR );
 }
@@ -364,11 +362,16 @@ register struct xray *rp;
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
 	LOCAL vect_t xlated;
+	LOCAL fastf_t scale;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	VSUB2( xlated, hitp->hit_point, ell->ell_V );
 	MAT4X3VEC( hitp->hit_normal, ell->ell_invRSSR, xlated );
-	VUNITIZE( hitp->hit_normal );
+	scale = 1.0 / MAGNITUDE( hitp->hit_normal );
+	VSCALE( hitp->hit_normal, hitp->hit_normal, scale );
+
+	/* tuck away this scale for the curvature routine */
+	hitp->hit_vpriv[X] = scale;
 }
 
 /*
@@ -383,125 +386,30 @@ struct soltab *stp;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
-	vect_t	w4;		/* vector from V to hit point */
-	fastf_t *aup, *bup, *cup;	/* ptr to Aunit, Bunit, Cunit used */
-	fastf_t	fx, fy;
-	fastf_t	fxx, fyy, fxy;
-	fastf_t	e, f, g;
-	fastf_t	t1, t2;
-	fastf_t	t5, t6;
-	fastf_t	a1, b1, c1;
-	fastf_t	aa1, bb1, dd1, aa2, bb2, dd2;
-	fastf_t	rc1sav, rc2sav;
+	vect_t	u, v;			/* basis vectors (with normal) */
+	vect_t	vec1, vec2;		/* eigen vectors */
+	vect_t	x, tmp;
+	fastf_t	a, b, c, scale;
 
-	VSUB2( w4, hitp->hit_point, ell->ell_V );
-	aup = ell->ell_Au;
-	bup = ell->ell_Bu;
-	cup = ell->ell_Cu;
-	{
-		fastf_t	*tup;
-		fastf_t	*iap, *ibp, *icp, *itp;
-		fastf_t	x0, y0, z0;
-		FAST fastf_t	c4, a2, b2, c2;
+	/*
+	 * choose a tangent plane coordinate system
+	 *  (u, v, normal) form a right-handed triple
+	 */
+	rt_orthovec( u, hitp->hit_normal );
+	VCROSS( v, hitp->hit_normal, u );
 
-		iap = &ell->ell_invsq[X];
-		ibp = &ell->ell_invsq[Y];
-		icp = &ell->ell_invsq[Z];
-		/* find a coordinate system with non-zero z */
-		while(1)  {
-			x0 = VDOT( w4, aup );
-			y0 = VDOT( w4, bup );
-			z0 = VDOT( w4, cup );
-			if( !NEAR_ZERO( z0, 0.001 ) )
-				break;
-			tup = aup;
-			aup = bup;
-			bup = cup;
-			cup = tup;
-			itp = iap;
-			iap = ibp;
-			ibp = icp;
-			icp = itp;
-		}
-		a2 = 1.0 / (*iap);
-		b2 = 1.0 / (*ibp);
-		c2 = 1.0 / (*icp);
-		c4 = c2 * c2;
-		t2 = 1.0 / (a2*b2*z0*z0*z0);
-		/* 1st and 2nd partials */
-		fx = -(c2*x0) / (a2*z0);
-		fy = -(c2*y0) / (b2*z0);
-		fxx = -(c4*(b2 - y0*y0))*t2;
-		fyy = -(c4*(a2 - x0*x0))*t2;
-		fxy = -(c4*x0*y0)*t2;
-	}
-	e = 1.0 + fx*fx;
-	f = fx*fy;
-	g = 1.0 + fy*fy;
-	t1 = e + fy*fy;
-	t2 = 2.0*t1*sqrt(t1);
-/*
-	t5 = sqrt( (g*fxx - e*fyy)*(g*fxx - e*fyy) +
-		4.0 * (g*fxy - f*fyy)*(e*fxy - f*fxx) );
-*/
-	/* XXX - t5 goes negative when we are nearly spherical */
-	t5 = (g*fxx - e*fyy)*(g*fxx - e*fyy) +
-		4.0 * (g*fxy - f*fyy)*(e*fxy - f*fxx);
-	if( t5 < 0 ) {
-		fprintf( stderr, "t5 Negative\n" );
-		VPRINT( "w4", w4 );
-		fprintf( stderr, "fx,fy,fxx,fyy,fxy = %e %e %e %e %e\n", fx, fy, fxx, fyy, fxy );
-		fprintf( stderr, "e,f,g = %e %e %e\n", e, f, g );
-		fprintf( stderr, "t3 = %e\n",  (g*fxx - e*fyy)*(g*fxx - e*fyy) );
-		fprintf( stderr, "t4 = %e\n",  4.0*(g*fxy - f*fyy)*(e*fxy - f*fxx) );
-		t5 = 0;
-	}
-	t5 = sqrt(t5);
-	t6 = g*fxx + e*fyy - 2.0*f*fxy;
+	/* get the saved away scale factor */
+	scale = - hitp->hit_vpriv[X];
 
-	rc1sav = (t6 - t5)/t2;
-	rc2sav = (t6 + t5)/t2;
-	if( (cvp->crv_c1 = -rc1sav) > 0 )
-		cvp->crv_c1 = -cvp->crv_c1;
-	if( (cvp->crv_c2 = -rc2sav) > 0 )
-		cvp->crv_c2 = -cvp->crv_c2;
+	/* find the second fundamental form */
+	MAT4X3VEC( tmp, ell->ell_invRSSR, u );
+	a = VDOT(u, tmp) * scale;
+	b = VDOT(v, tmp) * scale;
+	MAT4X3VEC( tmp, ell->ell_invRSSR, v );
+	c = VDOT(v, tmp) * scale;
 
-	/* smaller magnitude curvature first */
-	if( cvp->crv_c1 < cvp->crv_c2 ) {
-		FAST fastf_t f;
-		f = cvp->crv_c2;
-		cvp->crv_c2 = cvp->crv_c1;
-		cvp->crv_c1 = f;
-		f = rc2sav;
-		rc2sav = rc1sav;
-		rc1sav = f;
-	}
-
-	/* construct 1st possible eigenvector */
-	aa1 = g*fxy - f*fyy;
-	bb1 = f*fxy - g*fxx + rc1sav*t2/2.0;
-	dd1 = aa1*aa1 + bb1*bb1;
-	/* construct 2nd possible eigenvector */
-	aa2 = f*fxy - e*fyy + rc1sav*t2/2.0;
-	bb2 = e*fxy - f*fxx;
-	dd2 = aa2*aa2 + bb2*bb2;
-	if( (dd1 >= dd2) && (dd1 > 0) ) {
-		a1 = aa1;
-		b1 = bb1;
-		c1 = aa1*fx + bb1*fy;
-	} else if( dd2 > 0 ) {
-		a1 = aa2;
-		b1 = bb2;
-		c1 = aa2*fx + bb2*fy;
-	} else {
-		/* point is umbilic, any tangent vector is OK */
-		a1 = 1.0;
-		b1 = 0.0;
-		c1 = fx;
-	}
-
-	/* transform coords back to usual system */
-	VCOMB3( cvp->crv_pdir, a1, aup, b1, bup, c1, cup );
+	eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
+	VCOMB2( cvp->crv_pdir, vec1[X], u, vec1[Y], v );
 	VUNITIZE( cvp->crv_pdir );
 }
 
@@ -513,7 +421,7 @@ struct soltab *stp;
  *  u = azimuth
  *  v = elevation
  */
-double rt_inv2pi =  0.15915494309189533619;		/* 1/(pi*2) */
+double rt_inv2pi =  0.15915494309189533619;	/* 1/(pi*2) */
 double rt_invpi = 0.31830988618379067153;	/* 1/pi */
 
 ell_uv( ap, stp, hitp, uvp )
