@@ -28,6 +28,8 @@ set mged_help_data(attach)	{{[-d display_string] [-i init_script] [-n name]
 	      [-S square_size] win_type}	{attach to a display manager}}
 set mged_help_data(B)		{{-C#/#/# <objects>}	{clear screen, edit objects}}
 set mged_help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{boolean evaluation of objects via NMG's}}
+set mged_help_data(bodyread)	{{object file type}	{read an object's body from a file}}
+set mged_help_data(bodywrite)	{{file object}	{write an object's body to a file}}
 set mged_help_data(bot_condense) {{new_bot_solid old_bot_solid} {remove unreferenced vertices in a BOT solid}}
 set mged_help_data(bot_face_fuse) {{new_bot_solid old_bot_solid} {eliminate duplicate faces in a BOT solid}}
 set mged_help_data(bot_vertex_fuse) {{new_bot_solid old_bot_solid} {fuse duplicate vertices in a BOT solid}}
