@@ -89,6 +89,7 @@
 #define	rb_other_child(n, o, d)	(((d) == RB_LEFT)		?	\
 				    rb_right_child((n), (o))	:	\
 				    rb_left_child((n), (o)))
+#define	rb_size(n, o)		(((n) -> rbn_size)[o])
 #define	rb_get_color(n, o)						\
 (									\
     (((n) -> rbn_color)[(o)/8] & (0x1 << ((o) % 8))) ? 1 : 0		\
