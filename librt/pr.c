@@ -131,6 +131,7 @@ CONST struct rt_i		*rtip;
 register CONST struct partition *pp;
 {
 	register CONST struct soltab	*stp;
+	register struct soltab		**spp;
 
 	RT_CHECK_RTI(rtip);
 	RT_CHECK_PT(pp);
@@ -161,7 +162,12 @@ register CONST struct partition *pp;
 	rt_pr_hit_vls( v, " Out", pp->pt_outhit );
 	bu_log_indent_vls( v );
 	bu_vls_strcat( v, "  Solids: " );
-	rt_pr_bitv_vls( v, pp->pt_solhit, rtip->nsolids );
+	for( BU_PTBL_FOR( spp, (struct soltab **), &pp->pt_solids_hit ) )  {
+		stp = *spp;
+		RT_CK_SOLTAB(stp);
+		bu_vls_strcat( v, stp->st_dp->d_namep );
+		bu_vls_strcat( v, ", " );
+	}
 	bu_vls_strcat( v, "\n" );
 	}
 }
@@ -184,56 +190,6 @@ register CONST struct partition *pp;
 	bu_vls_free( &v );
 }
 
- *			R T _ P R _ B I T V _ V L S
- *
- *  Print the bits set in a bit vector.
- */
-void
-rt_pr_bitv_vls( v, bv, len )
-struct bu_vls		*v;
-register CONST bitv_t	*bv;
-register int		len;
-{
-	register int	i;
-	char		buf[128];
-	int		seen = 0;
-
-	BU_CK_VLS( v );
-
-	bu_vls_strcat( v, "(" );
-	for( i=0; i<len; i++ )  {
-		if( BITTEST(bv,i) )  {
-			if( seen )  bu_vls_strcat( v, ", " );
-			bu_vls_printf( v, "%d", i );
-			seen = 1;
-		}
-	}
-	bu_vls_strcat( v, ") " );
-}
-
-/*
- *			R T _ P R _ B I T V
- *
- *  Print the bits set in a bit vector.
- *  Use bu_vls stuff, to make only a single call to bu_log().
- */
-void
-rt_pr_bitv( str, bv, len )
-CONST char		*str;
-register CONST bitv_t	*bv;
-register int		len;
-{
-	struct bu_vls	v;
-
-	bu_vls_init( &v );
-	bu_vls_strcat( &v, str );
-	bu_vls_strcat( &v, ": " );
-	rt_pr_bitv_vls( &v, bv, len );
-	bu_log("%s", bu_vls_addr( &v ) );
-	bu_vls_free( &v );
-}
-
-/*
 /*
  *			R T _ P R _ S E G
  */
@@ -511,13 +467,10 @@ int			lvl;		/* Recursion level */
 
 	case OP_SOLID:
 		switch( pr_name )  {
-			{
-				register int	i;
-
-				i = tp->tr_a.tu_stp->st_bit;
-				i = BITTEST( partp->pt_solhit, i );
-				bu_log("%d", i);
-			}
+		case 0:
+			if( bu_ptbl_locate( &partp->pt_solids_hit, (long *)(tp->tr_a.tu_stp) ) ==  -1 )
+				bu_log("0");
+			else
 				bu_log("1");
 			break;
 		case 1:
