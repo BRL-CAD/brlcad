@@ -128,7 +128,7 @@ struct isect_stuff {
 	int sp_is_valid;
 };
 
-#define INHIT(isp, dist, surf, cell) {\
+#define INHIT(isp, dist, surf, cell, norm) {\
 	if (isp->sp_is_valid) {\
 		bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, \
 			isp->ap->a_x, isp->ap->a_y); \
@@ -141,6 +141,7 @@ struct isect_stuff {
 	isp->sp->seg_in.hit_surfno = surf; \
 	isp->sp->seg_in.hit_vpriv[X] = cell[X]; \
 	isp->sp->seg_in.hit_vpriv[Y] = cell[Y]; \
+	VMOVE(isp->sp->seg_in.hit_normal, norm); \
 	isp->sp_is_valid = 1; \
 	if (rt_g.debug & DEBUG_HF) { \
 		point_t in, t; \
@@ -148,10 +149,11 @@ struct isect_stuff {
 		MAT4X3PNT(in, isp->dsp->dsp_i.dsp_stom, t); \
 		bu_log("line %d New in pt(%g %g %g) ss_dist %g surf: %d\n", \
 			__LINE__, V3ARGS(in), dist, surf); \
+		bu_log("\tNormal: %g %g %g\n", V3ARGS(norm)); \
 	} \
 }
 
-#define OUTHIT(isp, dist, surf, cell) {\
+#define OUTHIT(isp, dist, surf, cell, norm) {\
 	if (! isp->sp_is_valid) {\
 		bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, \
 			isp->ap->a_x, isp->ap->a_y); \
@@ -161,12 +163,14 @@ struct isect_stuff {
 	isp->sp->seg_out.hit_surfno = surf; \
 	isp->sp->seg_out.hit_vpriv[X] = cell[X]; \
 	isp->sp->seg_out.hit_vpriv[Y] = cell[Y]; \
+	VMOVE(isp->sp->seg_out.hit_normal, norm); \
 	if (rt_g.debug & DEBUG_HF) { \
 		point_t out, t; \
 		VJOIN1(t, isp->r.r_pt, dist, isp->r.r_dir); \
 		MAT4X3PNT(out, isp->dsp->dsp_i.dsp_stom, t); \
 		bu_log("line %d New out pt(%g %g %g) ss_dist %g surf:%d\n", \
 			__LINE__, V3ARGS(out), dist, surf); \
+		bu_log("\tNormal: %g %g %g\n", V3ARGS(norm)); \
 	} \
 }
 
@@ -1059,7 +1063,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			INHIT(isect, first, first_tri, cell);
+			INHIT(isect, first, first_tri, cell, firstN);
 
 			if (secondND < 0) {
 				bu_log("%s:%d ray entering while inside dsp pixel(%d,%d)",
@@ -1067,7 +1071,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			OUTHIT(isect, second, second_tri, cell);
+			OUTHIT(isect, second, second_tri, cell, secondN);
 			HIT_COMMIT(isect);
 
 		} else {
@@ -1078,7 +1082,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			OUTHIT(isect, first, first_tri, cell);
+			OUTHIT(isect, first, first_tri, cell, firstN);
 			HIT_COMMIT(isect);
 			*inside = 0;
 
@@ -1088,7 +1092,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			INHIT(isect, second, second_tri, cell);
+			INHIT(isect, second, second_tri, cell, secondN);
 			*inside = 1;
 		}
 	} else if (hit1) {
@@ -1106,7 +1110,7 @@ done:
 				bu_bomb("");
 			}
 
-			INHIT(isect, dist1, tria1, cell);
+			INHIT(isect, dist1, tria1, cell, N1);
 			*inside = 1;
 		} else {
 			/* leaving */
@@ -1119,7 +1123,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			OUTHIT(isect, dist1, tria1, cell);
+			OUTHIT(isect, dist1, tria1, cell, N1);
 			HIT_COMMIT(isect);
 			*inside = 0;
 		}
@@ -1138,7 +1142,7 @@ done:
 				bu_bomb("");
 			}
 
-			INHIT(isect, dist2, tria2, cell);
+			INHIT(isect, dist2, tria2, cell, N2);
 			*inside = 1;
 		} else {
 			/* leaving */
@@ -1151,7 +1155,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			OUTHIT(isect, dist2, tria2, cell);
+			OUTHIT(isect, dist2, tria2, cell, N2);
 			HIT_COMMIT(isect);
 			*inside = 0;
 		}
@@ -1317,12 +1321,18 @@ int (*isect_wall)();
 	if (( rising && next_pt[Z] < cell_min) ||
 	    (!rising && cs->curr_pt[Z] < cell_min) ) {
 		/* in base */
-		if (rt_g.debug & DEBUG_HF) bu_log("\tin base\n");
+		if (rt_g.debug & DEBUG_HF) bu_log("\tin base surf:%d next_surf:%d\n", *cs->curr_surf, next_surf);
 	    	if (!*inside) {
-	    		INHIT(isect, *cs->curr_dist, *cs->curr_surf, cs->grid_cell);
+	    		INHIT(isect,
+	    		*cs->curr_dist,
+	    		*cs->curr_surf,
+	    		cs->grid_cell, 
+	    		dsp_pl[BBSURF(*cs->curr_surf)]);
 	    		*inside = 1;
 	    	}
-	    	OUTHIT(isect, (cs->bbin_dist+dt), next_surf, cs->grid_cell);
+
+	    	OUTHIT(isect, (cs->bbin_dist+dt), next_surf, cs->grid_cell,
+	    		dsp_pl[BBSURF(next_surf)]);
 
 	    	if (rt_g.debug & DEBUG_HF)
 		    	plot_cell_ray(isect, cs->grid_cell, 
@@ -1394,7 +1404,8 @@ int (*isect_wall)();
 
 		if (hit && !*inside) {
 			INHIT(isect, *cs->curr_dist,
-				*cs->curr_surf, cs->grid_cell);
+				*cs->curr_surf, cs->grid_cell,
+				dsp_pl[BBSURF(*cs->curr_surf)]);
 			*inside = 1;
 		}
 
@@ -1413,7 +1424,9 @@ int (*isect_wall)();
 			}
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("\thit X out-wall\n");
-			OUTHIT(isect, (cs->bbin_dist+dt), next_surf, cs->grid_cell);
+			OUTHIT(isect, (cs->bbin_dist+dt), next_surf,
+				cs->grid_cell,
+				dsp_pl[BBSURF(*cs->curr_surf)]);
 			*inside = 1;
 		} else {
 			if (rt_g.debug & DEBUG_HF)
@@ -1772,10 +1785,12 @@ struct seg		*seghead;
 		 */
 
 		INHIT( (&isect), isect.minbox.in_dist,
-			BBSURF(isect.minbox.in_surf), junk);
+			BBSURF(isect.minbox.in_surf), junk, 
+			dsp_pl[isect.minbox.in_surf]);
 
 		OUTHIT( (&isect), isect.minbox.out_dist,
-			BBSURF(isect.minbox.out_surf), junk);
+			BBSURF(isect.minbox.out_surf), junk,
+			dsp_pl[isect.minbox.out_surf]);
 
 		HIT_COMMIT( (&isect) );
 
@@ -1815,6 +1830,13 @@ struct seg		*seghead;
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist);
 		}
+
+		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, segp->seg_in.hit_normal);
+		VMOVE(segp->seg_in.hit_normal, v);
+
+		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, segp->seg_out.hit_normal);
+		VMOVE(segp->seg_out.hit_normal, v);
+
 
 		if (rt_g.debug & DEBUG_HF) {
 			bu_log("model in:%6g out:%6g\n",
@@ -1936,7 +1958,7 @@ int x, y;
 		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
 			pl_color(fd, 255, 255, 0);
 			VJOIN1(tmp, B, 1.0, N);
-			pdv_3line(fd, B, tmp);
+ 			pdv_3line(fd, B, tmp);
 
 			pl_color(fd, 255, 140, 0);
 			VUNITIZE(Vac);
@@ -1970,6 +1992,13 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
+#if 1
+ 	if (rt_g.debug & DEBUG_HF)
+		bu_log("rt_dsp_norm()\n");
+
+	VUNITIZE(hitp->hit_normal);
+
+#else
 	register struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
 	vect_t N, tmp, A, B, C, D, AB, AC, AD;
@@ -1978,6 +2007,7 @@ register struct xray	*rp;
 
  	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_norm()\n");
+
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	if (hitp->hit_surfno < 0) {
@@ -2201,6 +2231,7 @@ register struct xray	*rp;
 		}
 		bu_semaphore_release( BU_SEM_SYSCALL);
 	}
+#endif
 }
 
 /*
