@@ -17,44 +17,81 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 */
 
 #include <stdio.h>
-#include <std.h>
-#include <machine.h>
-#include <vmath.h>
-#include <raytrace.h>
-#include <vecmath.h>
-#include <lgt.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./vecmath.h"
+#include "./lgt.h"
+#include "./screen.h"
 #include "./extern.h"
 _LOCAL_ int	get_Lgt_Entry(), put_Lgt_Entry();
 
 /*	l g t _ P r i n t _ D b ( )
 	Print light source database entry.
-	'prnt_func' must be a varargs function.
  */
-lgt_Print_Db( id, prnt_func )
+lgt_Print_Db( id )
 int		id;
-void		(*prnt_func)();
 	{	register Lgt_Source	*entry;
-	if( id < 0 || id >= lgt_db_size )
+		register int		stop;
+		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
+	if( id >= lgt_db_size )
 		return	-1;
-	entry = &lgts[id];
-	(*prnt_func)( "\n" );
-	(*prnt_func)( "LIGHT SOURCE [%d] %s\n", id, entry->name );
-	(*prnt_func)( "\tmanual overide\t(%s)\n", entry->over ? "ON" : "OFF" );
-	if( entry->stp == SOLTAB_NULL || entry->over )
+	else
+	if( id < 0 )
 		{
-		(*prnt_func)( "\tazimuth\t\t(%g)\n", entry->azim*DEGRAD );
-		(*prnt_func)( "\televation\t(%g)\n", entry->elev*DEGRAD );
-		
+		stop = lgt_db_size - 1;
+		id = 0;
 		}
-	(*prnt_func)( "\tdistance\t(%g)\n", entry->dist );
-	V_Print( "\tlocation", entry->loc, prnt_Scroll );
-	(*prnt_func)( "\tgaussian beam\t(%s)\n", entry->beam ? "ON" : "OFF" );
-	if( entry->beam )
-		(*prnt_func)( "\tbeam radius\t(%g)\n", entry->radius );
-	(*prnt_func)( "\tintensity\t(%g)\n", entry->energy );
-	(*prnt_func)( "\tcolor\t\t(%d %d %d)\n",
-			entry->rgb[0], entry->rgb[1], entry->rgb[2]
-			);
+	else
+		stop = id;
+	for( ; id <= stop; id++, lines-- ) 
+		{
+		entry = &lgts[id];
+		if( lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\n" );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "LIGHT SOURCE [%d] %s\n", id, entry->name );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tmanual overide\t(%s)\n", entry->over ? "ON" : "OFF" );
+		if( entry->stp == SOLTAB_NULL || entry->over )
+			{
+			if( --lines <= 0 && ! do_More( &lines ) )
+				break;
+			prnt_Scroll( "\tazimuth\t\t(%g)\n", entry->azim*DEGRAD );
+			if( --lines <= 0 && ! do_More( &lines ) )
+				break;
+			prnt_Scroll( "\televation\t(%g)\n", entry->elev*DEGRAD );
+			}
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tdistance\t(%g)\n", entry->dist );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tlocation\t<%g,%g,%g>\n",
+				entry->loc[X], entry->loc[Y], entry->loc[Z]
+				);
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tgaussian beam\t(%s)\n", entry->beam ? "ON" : "OFF" );
+		if( entry->beam )
+			{
+			if( --lines <= 0 && ! do_More( &lines ) )
+				break;
+			prnt_Scroll( "\tbeam radius\t(%g)\n", entry->radius );
+			}
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tintensity\t(%g)\n", entry->energy );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tcolor\t\t(%d %d %d)\n",
+				entry->rgb[0], entry->rgb[1], entry->rgb[2]
+				);
+		}
+	(void) fflush( stdout );
 	return	1;
 	}
 

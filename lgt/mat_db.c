@@ -17,8 +17,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 */
 
 #include <stdio.h>
-#include <std.h>
+#include "./vecmath.h"
 #include "./mat_db.h"
+#include "./screen.h"
 static FILE		*mat_db_fp;
 static Mat_Db_Entry	mat_db_table[MAX_MAT_DB];
 static int		mat_db_size = 0;
@@ -27,7 +28,7 @@ Mat_Db_Entry		mat_dfl_entry =
 				0,		/* Material id.		*/
 				4,		/* Shininess.		*/
 				0.6,		/* Specular weight.	*/
-				0.3,		/* Diffuse weight.	*/
+				0.4,		/* Diffuse weight.	*/
 				0.0,		/* Reflectivity.	*/
 				0.0,		/* Transmission.	*/
 				1.0,		/* Refractive index.	*/
@@ -48,8 +49,8 @@ Mat_Db_Entry		mat_nul_entry =
 				MF_NULL,	/* Mode flag.		*/
 				"(null)"	/* Material name.	*/
 				};
-LOCAL int	get_Entry(), put_Entry();
-LOCAL int	mat_W_Open();
+_LOCAL_ int	get_Entry(), put_Entry();
+_LOCAL_ int	mat_W_Open();
 
 /*	m a t _ O p e n _ D b ( )
 	Open file, return file pointer or NULL.
@@ -76,37 +77,68 @@ mat_Close_Db()
 
 /*	m a t _ P r i n t _ D b ( )
 	Print material database entry.
-	'prnt_func' must be a varargs function.
  */
-mat_Print_Db( material_id, prnt_func )
+mat_Print_Db( material_id )
 int		material_id;
-void		(*prnt_func)();
 	{	register Mat_Db_Entry	*entry;
-		
+		register int		stop;
+		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
+	if( material_id >= MAX_MAT_DB )
+		{
+		rt_log( "Material data base only has %d entries.\n",
+			MAX_MAT_DB
+			);
+		rt_log( "If this is not enough, notify the support staff.\n" );
+		return	-1;
+		}
+	else
 	if( material_id < 0 )
-		return	-1;
-	if( material_id < MAX_MAT_DB )
+		{
+		stop = MAX_MAT_DB - 1;
+		material_id = 0;
+		}
+	else
+		stop = material_id;
+	for( ; material_id <= stop; material_id++, lines-- )
+		{
 		entry = &mat_db_table[material_id];
-	else 
-		return	-1;
-	if( entry->mode_flag == MF_NULL )
-		entry = &mat_nul_entry;
-	(*prnt_func)( "\n" );
-	(*prnt_func)( "MATERIAL [%d] %s\n",
-			material_id,
-			entry->name[0] == '\0' ? "(untitled)" : entry->name
-			);
-	(*prnt_func)( "\tshininess\t\t(%d)\n", entry->shine );
-	(*prnt_func)( "\tspecular weight\t\t(%g)\n", entry->wgt_specular );
-	(*prnt_func)( "\tdiffuse weight\t\t(%g)\n", entry->wgt_diffuse );
-	(*prnt_func)( "\ttransparency\t\t(%g)\n", entry->transparency );
-	(*prnt_func)( "\treflectivity\t\t(%g)\n", entry->reflectivity );
-	(*prnt_func)( "\trefractive index\t(%g)\n", entry->refrac_index );
-	(*prnt_func)( "\tdiffuse color\t\t(%d %d %d)\n",
-			entry->df_rgb[0],
-			entry->df_rgb[1],
-			entry->df_rgb[2]
-			);
+		if( entry->mode_flag == MF_NULL )
+			continue;
+		if( lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\n" );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "MATERIAL [%d] %s\n",
+				material_id,
+				entry->name[0] == '\0' ? "(untitled)" : entry->name
+				);
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tshininess\t\t(%d)\n", entry->shine );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tspecular weight\t\t(%g)\n", entry->wgt_specular );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tdiffuse weight\t\t(%g)\n", entry->wgt_diffuse );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\ttransparency\t\t(%g)\n", entry->transparency );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\treflectivity\t\t(%g)\n", entry->reflectivity );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\trefractive index\t(%g)\n", entry->refrac_index );
+		if( --lines <= 0 && ! do_More( &lines ) )
+			break;
+		prnt_Scroll( "\tdiffuse color\t\t(%d %d %d)\n",
+				entry->df_rgb[0],
+				entry->df_rgb[1],
+				entry->df_rgb[2]
+				);
+		}
 	return	1;
 	}
 
@@ -284,7 +316,7 @@ int	material_id;
 		return	MAT_DB_NULL;
 	}
 
-LOCAL
+_LOCAL_
 get_Entry( entry )
 register Mat_Db_Entry	*entry;
 	{	register char	*ptr;
@@ -342,7 +374,7 @@ register Mat_Db_Entry	*entry;
 	return	1;
 	}
 
-LOCAL
+_LOCAL_
 put_Entry( entry )
 register Mat_Db_Entry	*entry;
 	{
@@ -368,7 +400,7 @@ register Mat_Db_Entry	*entry;
 	return	1;
 	}
 
-LOCAL
+_LOCAL_
 mat_W_Open( file )
 char	*file;
 	{
