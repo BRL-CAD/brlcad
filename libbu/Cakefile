@@ -1,6 +1,8 @@
 /*
  *			libbu/Cakefile
  */
+#define       CONFIGDEFS	LIBBU_CONFIG
+
 #define SRCDIR	libbu
 #define PRODUCTS	libbu.ARCH_SUF
 #define	SRCSUFF	.c
