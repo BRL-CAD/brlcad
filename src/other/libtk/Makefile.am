@@ -22,7 +22,7 @@ EXTRA_DIST = \
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
-lib_LTLIBRARIES = libtk@TK_VERSION@.la
+lib_LTLIBRARIES = libtk@TK_VERSION@.la libtk.la
 
 libtk@TK_VERSION@_la_SOURCES =
 
@@ -32,12 +32,18 @@ libtk@TK_VERSION@_la_LIBADD = \
 	generic/libtkgeneric.la \
 	unix/libtkunix.la
 
+libtk_la_SOURCES =
+
+libtk_la_LDFLAGS = -version-info 19:1
+
+libtk_la_LIBADD = \
+	generic/libtkgeneric.la \
+	unix/libtkunix.la
+
 bin_PROGRAMS = wish #wish.static
 
 wish_SOURCES = unix/tkAppInit.c
-wish_LDADD = $(lib_LTLIBRARIES) @TCL@
-AM_CFLAGS = @X_CFLAGS@
 
-#wish_static_SOURCES = unix/tkAppInit.c
-#wish_static_LDADD = $(lib_LTLIBRARIES) $(top_builddir)/src/other/libtcl/.libs/libtcl8.4.a $(top_builddir)/src/other/libtk/.libs/libtk8.4.a @DL@ @X_LIBS@ @LIBM@
+wish_LDADD = $(lib_LTLIBRARIES) ${TCL}
 
+AM_CFLAGS = ${X_CFLAGS}
