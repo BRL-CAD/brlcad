@@ -188,10 +188,12 @@ struct rt_list *tbl2d;
 	long *b;
 	struct loopuse *lu;
 	struct edgeuse *eu;
+	struct vertexuse *vu;
 	struct pt2d *p;
 	
+	NMG_CK_FACEUSE(fu);
 	
-	sprintf(name, "tri%d.pl", fileno++);
+	sprintf(name, "tri%02d.pl", fileno++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
 		abort();
@@ -214,23 +216,25 @@ struct rt_list *tbl2d;
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC){
-			if (p=find_pt2d(tbl2d,RT_LIST_FIRST(vertexuse, &lu->down_hd))) {
-				pd_move(fd, p->coord[0], p->coord[1]);
+			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+			pdv_3move(fd, vu->v_p->vg_p->coord);
+			if (p=find_pt2d(tbl2d, vu)) {
 				sprintf(buf, "%g, %g",
 					p->coord[0], p->coord[1]);
 				pl_label(fd, buf);
 			} else
-				pl_label(fd, "X, Y");
+				pl_label(fd, "X, Y (no 2D coords)");
 
 		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC){
 			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				if (p=find_pt2d(tbl2d,eu->vu_p)) {
-					pd_move(fd, p->coord[0], p->coord[1]);
+					pdv_3move(fd, eu->vu_p->v_p->vg_p->coord);
+
 					sprintf(buf, "%g, %g",
 						p->coord[0], p->coord[1]);
 					pl_label(fd, buf);
 				} else
-					pl_label(fd, "X, Y");
+					pl_label(fd, "X, Y (no 2D coords)");
 			}
 		} else {
 			rt_bomb("bogus loopuse child\n");
@@ -464,6 +468,33 @@ mat_t		TformMat;
 
 
 
+static int
+is_convex(a, b, c)
+struct pt2d *a, *b, *c;
+{
+	vect_t ab, bc, pv, N;
+	double angle;
+	
+	NMG_CK_PT2D(a);
+	NMG_CK_PT2D(b);
+	NMG_CK_PT2D(c);
+
+	VSET(N, 0.0, 0.0, 1.0);
+
+	VSUB2(ab, b->coord, a->coord);
+	VCROSS(pv, N, ab);
+
+	VSUB2(bc, c->coord, b->coord);
+
+	angle = rt_angle_measure( bc, ab, pv );
+
+	if (tri_debug)
+		rt_log("\tangle == %g\n", angle);
+
+	/* XXX this should be a toleranced comparison */
+	return (angle > SQRT_SMALL_FASTF && angle <= M_PI);
+}
+
 #define POLY_SIDE 1
 #define HOLE_START 2
 #define POLY_START 3
@@ -471,6 +502,9 @@ mat_t		TformMat;
 #define POLY_END 5
 #define HOLE_POINT 6
 #define POLY_POINT 7
+
+
+
 /*
  *
  *	characterize the edges which meet at this vertex.
@@ -483,6 +517,8 @@ mat_t		TformMat;
  *     \-- --/	  -/   \-     /---\	-------	
  *      \- -/	
  *
+ *    Poly Side		    Poly Start 		   Poly End
+ *	         Hole Start    		Hole end   
  */
 static int
 vtype2d(v, tbl2d)
@@ -492,6 +528,8 @@ struct rt_list *tbl2d;
 	struct pt2d *p, *n;	/* previous/this edge endpoints */
 	struct edgeuse *eu;
 	struct loopuse *lu;
+
+	NMG_CK_PT2D(v);
 
 	/* get the next/previous points relative to v */
 	p = PT2D_PREV(tbl2d, v);
@@ -508,21 +546,46 @@ struct rt_list *tbl2d;
 	lu = nmg_find_lu_of_vu( v->vu_p );
 
 	if (P_GT_V(n, v) && P_GT_V(p, v)) {
-		if (lu->orientation == OT_OPPOSITE)
-			return(HOLE_END);
-		else if (lu->orientation == OT_SAME)
-			return(POLY_END);
+		/* 
+		 *   \   /
+		 *    \ /
+		 *     .
+		 *
+		 * if this is a convex point, this is a polygon end
+		 * if it is a concave point, this is a hole end
+		 */
+
+		if (is_convex(p, v, n)) return(POLY_END);
+		else return(HOLE_END);
+		
 	}
 
 	if (P_LT_V(n, v) && P_LT_V(p, v)) {
-		if (lu->orientation == OT_OPPOSITE)
-			return(HOLE_START);
-		else if (lu->orientation == OT_SAME)
+		/*      .
+		 *     / \
+		 *    /   \
+		 *
+		 * if this is a convex point, this is a polygon start
+		 * if this is a concave point, this is a hole start
+		 */
+		if (is_convex(p, v, n))
 			return(POLY_START);
+		else
+			return(HOLE_START);
 	}
-	if ( (P_GT_V(n, v) && P_LT_V(p, v)) || (P_LT_V(n, v) && P_GT_V(p, v)) )
+	if ( (P_GT_V(n, v) && P_LT_V(p, v)) ||
+	    (P_LT_V(n, v) && P_GT_V(p, v)) ) {
+	    	/*
+	    	 *  |
+	    	 *  |
+	    	 *  .
+	    	 *   \
+	    	 *    \
+	    	 *
+	    	 * This is the "side" of a polygon.
+	    	 */
 		return(POLY_SIDE);
-
+	}
 	rt_log(
 		"%s %d HELP! special case:\n(%g %g)->(%g %g)\n(%g %g)->(%g %g)\n",
 		__FILE__, __LINE__,
@@ -550,6 +613,7 @@ struct rt_list *tbl2d, *tlist;
 	struct trap *new_trap;
 	struct edgeuse *eu;
 
+	NMG_CK_PT2D(pt);
 	if (tri_debug)
 		rt_log( "%g %g is polygon start vertex\n",
 				pt->coord[X], pt->coord[Y]);
@@ -586,6 +650,7 @@ struct rt_list *tlist;
 	struct edgeuse *upper_edge, *lower_edge;
 	struct pt2d *pnext, *plast;
 
+	NMG_CK_PT2D(pt);
 	pnext = PT2D_NEXT(tbl2d, pt);
 	plast = PT2D_PREV(tbl2d, pt);
 	if (tri_debug) {
@@ -670,6 +735,7 @@ struct rt_list *tbl2d, *tlist;
 	struct edgeuse *e_left, *e_right;
 	struct pt2d *pprev;
 
+	NMG_CK_PT2D(pt);
 	if (tri_debug)
 		rt_log( "%g %g is polygon end vertex\n",
 			pt->coord[X], pt->coord[Y]);
@@ -731,6 +797,7 @@ struct rt_list *tlist, *tbl2d;
 	vect_t pv, ev, n;
 	struct pt2d *e_pt, *next_pt;
 
+	NMG_CK_PT2D(pt);
 	if (tri_debug)
 		rt_log( "%g %g is hole start vertex\n", 
 			pt->coord[X], pt->coord[Y]);
@@ -765,7 +832,8 @@ struct rt_list *tlist, *tbl2d;
 		VSUB2(ev, next_pt->coord, e_pt->coord);
 		VCROSS(n, ev, pv);
 		if (n[2] <= 0.0) {
-			rt_log("Continue #1\n");
+			if (tri_debug)
+				rt_log("Continue #1\n");
 			continue;
 		}
 
@@ -776,7 +844,8 @@ struct rt_list *tlist, *tbl2d;
 		VSUB2(ev, next_pt->coord, e_pt->coord);
 		VCROSS(n, ev, pv);
 		if (n[2] <= 0.0) {
-			rt_log("Continue #2\n");
+			if (tri_debug)
+				rt_log("Continue #2\n");
 			continue;
 		}
 
@@ -828,6 +897,7 @@ struct rt_list *tlist, *tbl2d;
 	struct edgeuse *eunext, *euprev;
 	struct trap *tp, *tpnext, *tpprev;
 
+	NMG_CK_PT2D(pt);
 	if (tri_debug)
 		rt_log( "%g %g is hole end vertex\n",
 			pt->coord[X], pt->coord[Y]);
@@ -837,27 +907,35 @@ struct rt_list *tlist, *tbl2d;
 	euprev = RT_LIST_PLAST_CIRC(edgeuse, eunext);
 	tpnext = tpprev = (struct trap *)NULL;
 
-	print_2d_eu("eunext", eunext, tbl2d);
-	print_2d_eu("euprev", euprev, tbl2d);
-	
+	if (tri_debug) {
+		print_2d_eu("eunext", eunext, tbl2d);
+		print_2d_eu("euprev", euprev, tbl2d);
+	}
+
 	for (RT_LIST_FOR(tp, trap, tlist)) {
 		NMG_CK_TRAP(tp);
 		/* obviously, if the trapezoid has been completed, it's not
 		 * the one we want.
 		 */
 		NMG_CK_TRAP(tp);
-		print_trap(tp, tbl2d);
+		if (tri_debug)
+			print_trap(tp, tbl2d);
+
 		if (tp->bot) {
-			rt_log("Completed... Skipping\n");
+			if (tri_debug)
+				rt_log("Completed... Skipping\n");
 			continue;
 		}
 
 		if (tp->e_left == eunext || tp->e_right == eunext) {
-			rt_log("Found tpnext\n");
+			if (tri_debug)
+				rt_log("Found tpnext\n");
 			tpnext = tp;
 		}
+
 		if (tp->e_right == euprev || tp->e_left == euprev) {
-			rt_log("Found tpprev\n");
+			if (tri_debug)
+				rt_log("Found tpprev\n");
 			tpprev = tp;
 		}
 		if (tpnext && tpprev)
@@ -923,8 +1001,9 @@ struct rt_list *tbl2d, *tlist;
 			poly_end_vertex(pt, tbl2d, tlist);
 			break;
 		default:
-			rt_log( "%g %g is UNKNOWN type vertex\n",
-				pt->coord[X], pt->coord[Y]);
+			rt_log( "%g %g is UNKNOWN type vertex %s %d\n",
+				pt->coord[X], pt->coord[Y],
+				__FILE__, __LINE__);
 			break;
 		}
 	}
@@ -944,7 +1023,8 @@ struct vertexuse *vu_p;
 
 	/* if it's already mapped we're outta here! */
 	if (p = find_pt2d(tbl2d, vu_p)) {
-		rt_log("%s %d map_new_vertexuse() vertexuse already mapped!\n",
+		if (tri_debug)
+		    rt_log("%s %d map_new_vertexuse() vertexuse already mapped!\n",
 			__FILE__, __LINE__);
 		return;
 	}
@@ -974,7 +1054,7 @@ static void
 collect_and_sort_vu(tbl2d, p1, p2, tol)
 struct rt_list *tbl2d;
 struct pt2d **p1, **p2;
-struct rt_tol *tol;
+CONST struct rt_tol *tol;
 {
 	struct nmg_ray_state rs;
 	struct nmg_ptbl b;
@@ -988,14 +1068,17 @@ struct rt_tol *tol;
 
 	/* build the nmg_ptbl that nmg_face_rs_init() needs */
 
+	RT_CK_TOL(tol);
 	NMG_CK_PT2D(*p1);
 	NMG_CK_PT2D(*p2);
+	
 	pt1 = *p1;
 	pt2 = *p2;
 	NMG_CK_VERTEXUSE(pt1->vu_p);
 	NMG_CK_VERTEXUSE(pt2->vu_p);
 
-	rt_log("collect_and_sort_vu(tbl2d,\n\t0x%08x (%g %g),\n\t0x%08x (%g %g))\n",
+	if (tri_debug)
+	    rt_log("collect_and_sort_vu(tbl2d,\n\t0x%08x (%g %g),\n\t0x%08x (%g %g))\n",
 		pt1->vu_p, pt1->coord[0], pt1->coord[1],
 		pt2->vu_p, pt2->coord[0], pt2->coord[1]);
 
@@ -1028,7 +1111,7 @@ struct rt_tol *tol;
 		if (nmg_find_fu_of_vu(vu) == fu2)
 			end = nmg_tbl(&b, TBL_INS, (long *)vu);
 	}
-
+ 
 
 	VMOVE(pt,  vu1->v_p->vg_p->coord);
 	VSUB2(dir, vu2->v_p->vg_p->coord, pt);
@@ -1037,48 +1120,70 @@ struct rt_tol *tol;
 	rs.tol = tol;
 
 	if (mid == 0 && end == 1) {
-		rt_log("\tNo sorting necessary\n");
+		if (tri_debug) rt_log("\tNo sorting necessary\n");
 		return;
 	}
 
+	if (tri_debug) {
+		rt_log("\tunsorted vertexuse lists\n\t--list1--\n");
+		for (k = 0 ; k <= mid ; k++) {
+			vu = (struct vertexuse *)b.buffer[k];
+			NMG_CK_VERTEXUSE( vu );
+			pt1 = find_pt2d(tbl2d, vu);
+			pt2 = PT2D_NEXT(tbl2d, pt1);
 
-	rt_log("\tun-sorted vertexuses:\n");
-
-	for (k=0 ; k <= end ; k++) {
-		vu = (struct vertexuse *)b.buffer[k];
-		NMG_CK_VERTEXUSE( vu );
-		pt1 = find_pt2d(tbl2d, vu);
-		pt2 = PT2D_NEXT(tbl2d, pt1);
-
-		rt_log("\t0x%08x %g %g -> 0x%08x %g %g\n",
-			pt1->vu_p, pt1->coord[0], pt1->coord[1], 
-			pt2->vu_p, pt2->coord[0], pt2->coord[1]);
+			rt_log("\t0x%08x %g %g -> 0x%08x %g %g\n",
+				pt1->vu_p, pt1->coord[0], pt1->coord[1], 
+				pt2->vu_p, pt2->coord[0], pt2->coord[1]);
+		}
 	}
-
 	if (mid > 0)
 		nmg_face_coincident_vu_sort(&rs, 0, mid+1);
+	else if (tri_debug)
+		rt_log("\tlist of length 1 is sorted\n");
+
+
+	if (tri_debug) {
+		rt_log("\t--list2--\n");
+		for (k = mid+1 ; k <= end ; k++) {
+			vu = (struct vertexuse *)b.buffer[k];
+			NMG_CK_VERTEXUSE( vu );
+			pt1 = find_pt2d(tbl2d, vu);
+			pt2 = PT2D_NEXT(tbl2d, pt1);
+
+			rt_log("\t0x%08x %g %g -> 0x%08x %g %g\n",
+				pt1->vu_p, pt1->coord[0], pt1->coord[1], 
+				pt2->vu_p, pt2->coord[0], pt2->coord[1]);
+		}
+	}
 	if (end-mid > 1)
 		nmg_face_coincident_vu_sort(&rs, mid+1, end+1);
+	else if (tri_debug)
+		rt_log("\tlist of length 1 is sorted\n");
 
-	rt_log("\tsorted vertexuses:\n");
 
-	for (k=0 ; k <= end ; k++) {
-		vu = (struct vertexuse *)b.buffer[k];
-		NMG_CK_VERTEXUSE( vu );
-		pt1 = find_pt2d(tbl2d, vu);
-		pt2 = PT2D_NEXT(tbl2d, pt1);
+	if (tri_debug) {
+		rt_log("\tsorted vertexuses:\n\t--list1--\n");
 
-		if (k == mid) *p1 = pt1;
-		else if (k== mid+1) *p2 = pt1;
+		for (k=0 ; k <= end ; k++) {
+			vu = (struct vertexuse *)b.buffer[k];
+			NMG_CK_VERTEXUSE( vu );
+			pt1 = find_pt2d(tbl2d, vu);
+			pt2 = PT2D_NEXT(tbl2d, pt1);
 
-		rt_log("\t0x%08x %g %g -> 0x%08x %g %g\n",
-			pt1->vu_p, pt1->coord[0], pt1->coord[1], 
-			pt2->vu_p, pt2->coord[0], pt2->coord[1]);
-	}
+			if (k == mid) *p1 = pt1;
+			else if (k== mid+1) *p2 = pt1;
 
-	rt_log("\tpicking 0x%08x %g %g -> 0x%08x %g %g\n",
+			rt_log("\t0x%08x %g %g -> 0x%08x %g %g\n",
+				pt1->vu_p, pt1->coord[0], pt1->coord[1], 
+				pt2->vu_p, pt2->coord[0], pt2->coord[1]);
+
+			if (k== mid) rt_log("\t--list2--\n");
+		}
+	    rt_log("\tpicking 0x%08x %g %g -> 0x%08x %g %g\n",
 		(*p1)->vu_p, (*p1)->coord[0], (*p1)->coord[1], 
 		(*p2)->vu_p, (*p2)->coord[0], (*p2)->coord[1]);
+	}
 }
 
 
@@ -1100,7 +1205,7 @@ cut_mapped_loop(tbl2d, p1, p2, color, tol, void_ok)
 struct rt_list *tbl2d;
 struct pt2d *p1, *p2;
 int color[3];
-struct rt_tol	*tol;
+CONST struct rt_tol	*tol;
 int void_ok;
 {
 	struct loopuse *new_lu;
@@ -1109,6 +1214,7 @@ int void_ok;
 	struct vertex *v;
 	struct pt2d *new_pt2d, *p;
 
+	RT_CK_TOL(tol);
 	NMG_CK_PT2D(p1);
 	NMG_CK_PT2D(p2);
 	NMG_CK_VERTEXUSE(p1->vu_p);
@@ -1162,12 +1268,16 @@ join_mapped_loops(tbl2d, p1, p2, color, tol)
 struct rt_list *tbl2d;
 struct pt2d *p1, *p2;
 int color[3];
-struct rt_tol	*tol;
+CONST struct rt_tol	*tol;
 {
 	struct vertexuse *vu1, *vu2;
 	struct vertexuse *vu;
 	struct edgeuse *eu;
 	struct loopuse *lu;
+
+	NMG_CK_PT2D(p1);
+	NMG_CK_PT2D(p2);
+	RT_CK_TOL(tol);
 
 	vu1 = p1->vu_p;
 	vu2 = p2->vu_p;
@@ -1233,7 +1343,7 @@ struct rt_tol	*tol;
 static void
 cut_diagonals(tbl2d, tlist, tol)
 struct rt_list *tbl2d, *tlist;
-struct rt_tol	*tol;
+CONST struct rt_tol	*tol;
 {
 	struct trap *tp;
 	struct pt2d *top_next, *bot_next;
@@ -1244,6 +1354,8 @@ struct rt_tol	*tol;
 
 	extern struct loopuse *nmg_find_lu_of_vu();
 	struct loopuse *toplu, *botlu;
+
+	RT_CK_TOL(tol);
 
 	/* Convert trap list to unimonotone polygons */
 	for (RT_LIST_FOR(tp, trap, tlist)) {
@@ -1267,12 +1379,17 @@ struct rt_tol	*tol;
 			continue;
 		}
 
-		rt_log("trying to cut ...\n");
-		print_trap(tp, tbl2d);
+		if (tri_debug) {
+			rt_log("trying to cut ...\n");
+			print_trap(tp, tbl2d);
 
-		rt_log("postulating....\n");
+			rt_log("postulating....\n");
+		}
+
 		collect_and_sort_vu(tbl2d, &top, &bot, tol);
-		rt_log("....postulated\n");
+
+		if (tri_debug)
+			rt_log("....postulated\n");
 
 		/* top/bottom points are not on same side of trapezoid. */
 
@@ -1342,43 +1459,22 @@ struct rt_tol	*tol;
 			NMG_CK_LOOPUSE(toplu);
 		}
 
-		
-		plfu( nmg_find_fu_of_vu(tp->top->vu_p),  tbl2d );
+		if (tri_debug)		
+			plfu( nmg_find_fu_of_vu(tp->top->vu_p),  tbl2d );
 	}
 
 }
 
-static int
-is_convex(a, b, c)
-struct pt2d *a, *b, *c;
-{
-	vect_t ab, bc, pv, N;
-	double angle;
-	
-	VSET(N, 0.0, 0.0, 1.0);
-
-	VSUB2(ab, b->coord, a->coord);
-	VCROSS(pv, N, ab);
-
-	VSUB2(bc, c->coord, b->coord);
-
-	angle = rt_angle_measure( bc, ab, pv );
-
-	if (tri_debug)
-		rt_log("\tangle == %g\n", angle);
-
-	/* XXX this should be a toleranced comparison */
-	return (angle > SQRT_SMALL_FASTF && angle <= M_PI);
-}
 
 /*	C U T _ U N I M O N O T O N E
  *
  *	Given a unimonotone loopuse, triangulate it into multiple loopuses
  */
 static void
-cut_unimonotone( tbl2d, tlist, lu )
+cut_unimonotone( tbl2d, tlist, lu, tol )
 struct rt_list *tbl2d, *tlist;
 struct loopuse *lu;
+CONST struct rt_tol *tol;
 {
 	struct pt2d *min, *max, *new, *first, *prev, *next, *current, *save;
 	struct edgeuse *eu;
@@ -1386,6 +1482,7 @@ struct loopuse *lu;
 	int cut_color[3] = { 90, 255, 90};
 	int join_color[3] = { 190, 255, 190};
 
+	RT_CK_TOL(tol);
 	NMG_CK_LOOPUSE(lu);
 
 	if (tri_debug)
@@ -1446,20 +1543,25 @@ struct loopuse *lu;
 			 * create a new loop.
 			 */
 			NMG_CK_LOOPUSE(lu);
-			current = cut_mapped_loop(tbl2d, next, prev, cut_color, 0);
+			current = cut_mapped_loop(tbl2d, next, prev, cut_color, tol, 0);
 			verts--;
 			NMG_CK_LOOPUSE(lu);
 
-			plfu( lu->up.fu_p, tbl2d );
+			if (tri_debug)
+				plfu( lu->up.fu_p, tbl2d );
 
 			if (current->vu_p->v_p == first->vu_p->v_p) { 
 				t = PT2D_NEXT(tbl2d, first);
-				rt_log("\tfirst(0x%08x -> %g %g\n", first, t->coord[X], t->coord[Y]);
+				if (tri_debug)
+					rt_log("\tfirst(0x%08x -> %g %g\n", first, t->coord[X], t->coord[Y]);
 				t = PT2D_NEXT(tbl2d, current);
-				rt_log("\tcurrent(0x%08x) -> %g %g\n", current, t->coord[X], t->coord[Y]);
+
+				if (tri_debug)
+					rt_log("\tcurrent(0x%08x) -> %g %g\n", current, t->coord[X], t->coord[Y]);
 
 				current = PT2D_NEXT(tbl2d, current);
-				rt_log("\tcurrent(0x%08x) -> %g %g\n", current, t->coord[X], t->coord[Y]);
+				if (tri_debug)
+					rt_log("\tcurrent(0x%08x) -> %g %g\n", current, t->coord[X], t->coord[Y]);
 			}
 		} else {
 			if (tri_debug)
@@ -1482,6 +1584,7 @@ struct rt_list *tbl2d;
 	vect_t pt;
 	struct pt2d *p, *pn;
 
+	NMG_CK_FACEUSE(fu);
 
 	if (!plot_fd && (plot_fd = popen("pl-fb", "w")) == (FILE *)NULL) {
 		rt_log( "cannot open pipe\n");
@@ -1555,7 +1658,7 @@ struct rt_list *tbl2d;
 void
 nmg_triangulate_fu(fu, tol)
 struct faceuse *fu;
-struct rt_tol	*tol;
+CONST struct rt_tol	*tol;
 {
 	mat_t TformMat;
 	struct rt_list *tbl2d;
@@ -1566,6 +1669,8 @@ struct rt_tol	*tol;
 	struct pt2d *pt;
 	int vert_count;
 
+	RT_CK_TOL(tol);
+	NMG_CK_FACEUSE(fu);
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		nmg_split_touchingloops(lu);
 	}
@@ -1591,11 +1696,14 @@ struct rt_tol	*tol;
 	RT_LIST_INIT(&tlist);
 	nmg_trap_face(tbl2d, &tlist);
 
-	print_tlist(tbl2d, &tlist);
+	if (tri_debug){
+		print_tlist(tbl2d, &tlist);
 
-	rt_log("Cutting diagonals ----------\n");
+		rt_log("Cutting diagonals ----------\n");
+	}
 	cut_diagonals(tbl2d, &tlist,tol);
-	rt_log("Diagonals are cut ----------\n");
+	if (tri_debug)
+		rt_log("Diagonals are cut ----------\n");
 
 
 	/* now we're left with a face that has some triangle loops and some
@@ -1609,7 +1717,7 @@ struct rt_tol	*tol;
 			vert_count = 0;
 			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd )) {
 				if (++vert_count > 3) {
-					cut_unimonotone(tbl2d, &tlist, lu);
+					cut_unimonotone(tbl2d, &tlist, lu, tol);
 					break;
 				}
 			}
@@ -1617,7 +1725,8 @@ struct rt_tol	*tol;
 	}
 
 
-	plfu( fu, tbl2d );
+	if (tri_debug)
+		plfu( fu, tbl2d );
 
 	while (RT_LIST_WHILE(tp, trap, &tlist)) {
 		RT_LIST_DEQUEUE(&tp->l);
@@ -1636,12 +1745,13 @@ struct rt_tol	*tol;
 void
 nmg_triangulate_model(m, tol)
 struct model *m;
-struct rt_tol   *tol;
+CONST struct rt_tol   *tol;
 {
 	struct nmgregion *r;
 	struct shell *s;
 	struct faceuse *fu;
 	
+	RT_CK_TOL(tol);
 	NMG_CK_MODEL(m);
 
 	for (RT_LIST_FOR(r, nmgregion, &m->r_hd)) {
