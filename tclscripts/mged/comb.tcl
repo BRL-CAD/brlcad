@@ -451,7 +451,7 @@ proc comb_shader_gui { id shader_type } {
 	set comb_control($id,shader) $shader_type
     }
 
-    set comb_control($id,shader_gui) [do_shader comb_control($id,shader)]
+    set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id]
 }
 
 #proc comb_select_gift { id } {
