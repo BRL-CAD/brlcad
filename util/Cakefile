@@ -1,5 +1,7 @@
 /*
-  *			util/Cakefile
+ *			util/Cakefile
+ *
+ *  $Header$
  */
 
 #define SRCDIR	util
@@ -12,17 +14,21 @@
 	dpix-pix dunncolor dunnsnap \
 	files-tape gencolor hd loop mac-pix \
 	op-bw orle-pix \
-	pix-alias pix-bw pix-bw3 pix-ci pix-orle \
+	pix-alias pix-bw pix-bw3 pix-orle \
 	pix-ps pix-rle pix-spm pix-sun \
 	pix3filter pixbackgnd pixbustup pixcolors pixdiff \
 	pixfade pixfields pixfilter pixhalve pixhist \
 	pixhist3d-pl pixhist3d pixinterp2x pixmatte pixmerge \
 	pixrect pixrot pixsaturate pixscale pixshrink pixstat \
 	pixtile pixuntile \
-	pl-X pl-X10 pl-asc pl-hpgl \
-	pl-pl pl-ps pl-sgi pl-starbase \
+	pl-asc pl-hpgl \
+	pl-pl pl-ps pl-sgi \
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl
+
+/* SGI specific goodies: pix-ci */
+/* X11 specific program:  pl-X */
+/* Untested programs:  pl-X10 pl-starbase */
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -273,5 +279,20 @@ azel:	azel.o
 
 bwthresh: bwthresh.o
 	CC LDFLAGS -o bwthresh bwthresh.o LIBES
+
+dpix-pix: dpix-pix.o
+	CC LDFLAGS -o dpix-pix dpix-pix.o LIBES
+
+pix-ci:	pix-ci.o
+	CC LDFLAGS -o pix-ci pix-ci.o LIBES
+
+pl-X:	../SRCDIR/pl-X.c
+	CC CFLAGS -I/usr/X11/include -o pl-X ../SRCDIR/pl-X.c LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBPLOT LIBES
+
+pl-X10:	pl-X10.o
+	CC LDFLAGS -o pl-X10 pl-X10.o LIBES
+
+pl-starbase:	pl-starbase.o
+	CC LDFLAGS -o pl-starbase pl-starbase.o LIBES
 
 #include "../Cakefile.rules"
