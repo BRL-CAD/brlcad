@@ -48,11 +48,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 #include <stdio.h>
 #include <signal.h>
+#include "externs.h"
 #include "./vextern.h"
 
 extern Directory	*diradd();
-extern double		fabs();
-extern long		lseek();
 extern void		blank_fill(), menu();
 extern void		quit();
 char			regBuffer[BUFSIZ], *regBufPtr;
