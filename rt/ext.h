@@ -68,6 +68,7 @@ extern char		**objtab;		/* array of treetop strings */
 extern int		matflag;		/* read matrix from stdin */
 extern int		desiredframe;		/* frame to start at */
 extern int		curframe;		/* current frame number */
+extern fastf_t		frame_delta_t;		/* 1.0 / frames_per_second_playback */
 extern char		*outputfile;		/* name of base of output file */
 extern int		interactive;		/* human is watching results */
 extern int		benchmark;		/* No random numbers:  benchmark */
