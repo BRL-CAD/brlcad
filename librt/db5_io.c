@@ -531,6 +531,7 @@ int				zzz;		/* compression, someday */
 	cp = db5_encode_length( cp, togo>>3, h_width );
 
 	out->ext_nbytes = togo;
+	BU_ASSERT_LONG( out->ext_nbytes, >=, 8 );
 }
 
 /*
@@ -740,13 +741,13 @@ CONST struct bu_attribute_value_pair	*attr;
 	major = DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY;
 	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
+	BU_INIT_EXTERNAL( &ext );
 	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		name, attr, &body,
 		major, minor,
 		DB5HDR_ZZZ_UNCOMPRESSED);
 	db_free_external( &body );
 
-	BU_INIT_EXTERNAL( &ext );
 	if( bu_fwrite_external( fp, &ext ) < 0 )  {
 		bu_log("rt_fwrite_internal5(%s): bu_fwrite_external() error\n",
 			name );
