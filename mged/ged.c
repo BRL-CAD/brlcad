@@ -2179,6 +2179,7 @@ f_opendb(
 	}
 	/* Establish LIBWDB TCL access to both disk and in-memory databases */
 	/* This creates "db" and ".inmem" Tcl objects */
+	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls,
 		      "set wdbp [wdb_open %s disk [get_dbip]]; wdb_open %s inmem [get_dbip]",
 		      MGED_DB_NAME, MGED_INMEM_NAME);
