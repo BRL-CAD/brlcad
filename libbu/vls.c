@@ -905,3 +905,39 @@ int			cnt;
 	memset( vp->vls_str + vp->vls_offset + vp->vls_len, ' ', cnt );
 	vp->vls_len += cnt;
 }
+
+/*
+ *			B U _ V L S _ P R I N T _ P O S I T I O N S _ U S E D
+ *
+ *  Returns number of printed spaces used on final output line of a
+ *  potentially multi-line vls.  Useful for making decisions on when
+ *  to line-wrap.
+ *  Accounts for normal UNIX tab-expansion:
+ *	         1         2         3         4
+ *	1234567890123456789012345678901234567890
+ *	        x       x       x       x
+ *
+ *	0-7 --> 8, 8-15 --> 16, 16-23 --> 24, etc.
+ */
+int
+bu_vls_print_positions_used( vp )
+CONST struct bu_vls	*vp;
+{
+	char	*start;
+	int	used;
+
+	BU_CK_VLS(vp);
+
+	if( (start = strrchr( bu_vls_addr(vp), '\n' )) == NULL )
+		start = bu_vls_addr(vp);
+	used = 0;
+	while( *start != '\0' )  {
+		if( *start == '\t' )  {
+			used += 8 - (used % 8);
+		} else {
+			used++;
+		}
+		start++;
+	}
+	return used;
+}
