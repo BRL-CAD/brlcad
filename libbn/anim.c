@@ -39,7 +39,7 @@
  * situations where the virtual camera is involved.
  */
 void v_permute(m)
-fastf_t *m;
+mat_t m;
 {
 	int i;
 	fastf_t store;
@@ -55,7 +55,7 @@ fastf_t *m;
 /* UN_V_PERMUTE - Undo the mapping done by v_permute().
  */
 void un_v_permute(m)
-fastf_t *m;
+mat_t m;
 {
 	int i;
 	fastf_t store;
@@ -71,7 +71,7 @@ fastf_t *m;
 /* TRANSPOSE - Tranpose a 4x4 matrix
  */
 void transpose(m)
-fastf_t *m;
+mat_t m;
 {
 	fastf_t store;
 
@@ -108,8 +108,8 @@ fastf_t *m;
  * necessary. ERROR2 means that the conversion failed.
  */
 int mat2zyx(angle,viewrot)
-fastf_t *viewrot;
-fastf_t *angle;
+mat_t viewrot;
+vect_t angle;
 {
         int i, return_value;
         fastf_t sinx, sinz, cosx, cosz;
@@ -165,8 +165,8 @@ fastf_t *angle;
  * ERROR2 means that the conversion failed.
  */
 int mat2ypr(angle,viewrot)
-fastf_t *viewrot;
-fastf_t angle[3];
+mat_t viewrot;
+vect_t angle;
 {
         int i, return_value;
         fastf_t sin_y, sin_r, cos_y, cos_r;
@@ -221,7 +221,8 @@ fastf_t angle[3];
  * Curves, 1985 SIGGraph Conference Proceeding, p.245.
  */
 int mat2quat(quat,viewrot)
-fastf_t *quat, *viewrot;
+quat_t quat;
+mat_t viewrot;
 {
 	int i;	
 	fastf_t qdiff[4], square, mag1, mag2;
@@ -282,8 +283,8 @@ fastf_t *quat, *viewrot;
  * which is stored in radians in the vector a.
  */
 void ypr2mat(m,a)
-fastf_t m[11];
-fastf_t a[3];
+mat_t m;
+vect_t a;
 {
 	fastf_t cos_y,cos_p,cos_r,sin_y,sin_p,sin_r;
 
@@ -323,8 +324,8 @@ fastf_t a[3];
  *	transpose(matrix;
  */
 void ypr2vmat(m,a)
-fastf_t m[11];
-fastf_t a[3];
+mat_t m;
+vect_t a;
 {
 	fastf_t cos_y,cos_p,cos_r,sin_y,sin_p,sin_r;
 
@@ -356,15 +357,16 @@ fastf_t a[3];
 /* Y_P_R2MAT - Make matrix to rotate an object to the given yaw,
  * pitch, and roll. (Specified in radians.)
  */
-void y_p_r2mat(m,a,e,t) /*make object rotation matrix from radian ypr*/
-double m[], a, e, t;
+void y_p_r2mat(m,y,p,r) /*make object rotation matrix from radian ypr*/
+mat_t m;
+fastf_t y, p, r;
 {
-        double cos_y = cos(a);
-        double sin_y = sin(a);
-        double cos_p = cos(e);
-        double sin_p = sin(e);
-        double cos_r = cos(t);
-        double sin_r = sin(t);
+        fastf_t cos_y = cos(y);
+        fastf_t sin_y = sin(y);
+        fastf_t cos_p = cos(p);
+        fastf_t sin_p = sin(p);
+        fastf_t cos_r = cos(r);
+        fastf_t sin_r = sin(r);
 
         m[0] = cos_y*cos_p;
         m[1] = -cos_y*sin_p*sin_r-sin_y*cos_r;
@@ -385,19 +387,20 @@ double m[], a, e, t;
 /* DY_P_R2MAT - Make matrix to rotate an object to the given yaw,
  * pitch, and roll. (Specified in degrees.)
  */
-void dy_p_r2mat(m,a,e,t) /*make object rotation matrix from ypr*/
-double m[], a, e, t;
+void dy_p_r2mat(m,y,p,r) /*make object rotation matrix from ypr*/
+mat_t m;
+fastf_t y, p, r;
 {
-        double radian_yaw = a*(M_PI*0.0055555555556);
-        double radian_pitch = e*(M_PI*0.0055555555556);
-        double radian_roll = t*(M_PI*0.0055555555556);
+        fastf_t radian_yaw = y*(M_PI*0.0055555555556);
+        fastf_t radian_pitch = p*(M_PI*0.0055555555556);
+        fastf_t radian_roll = r*(M_PI*0.0055555555556);
 
-        double cos_y = cos(radian_yaw);
-        double sin_y = sin(radian_yaw);
-        double cos_p = cos(radian_pitch);
-        double sin_p = sin(radian_pitch);
-        double cos_r = cos(radian_roll);
-        double sin_r = sin(radian_roll);
+        fastf_t cos_y = cos(radian_yaw);
+        fastf_t sin_y = sin(radian_yaw);
+        fastf_t cos_p = cos(radian_pitch);
+        fastf_t sin_p = sin(radian_pitch);
+        fastf_t cos_r = cos(radian_roll);
+        fastf_t sin_r = sin(radian_roll);
 
         m[0] = cos_y*cos_p;
         m[1] = -cos_y*sin_p*sin_r-sin_y*cos_r;
@@ -417,20 +420,21 @@ double m[], a, e, t;
  * and roll. (Note that the matrix is a permutation of the object rotation
  * matrix).
  */
-void dy_p_r2vmat(m,az,el,tw) /*make view rotation matrix from ypr*/
-float m[], az, el, tw;
+void dy_p_r2vmat(m,yaw,pch,rll) /*make view rotation matrix from ypr*/
+mat_t m;
+fastf_t yaw, pch, rll;
 {
 
-	float raz = az*(M_PI*0.0055555555556);
-	float rel = el*(M_PI*0.0055555555556);
-	float rtw = tw*(M_PI*0.0055555555556);
+	float ryaw = yaw*(M_PI*0.0055555555556);
+	float rpch = pch*(M_PI*0.0055555555556);
+	float rrll = rll*(M_PI*0.0055555555556);
 	
-	float cos_y = cos(raz);
-	float sin_y = sin(raz);
-	float cos_p = cos(rel);
-	float sin_p = sin(rel);
-	float cos_r = cos(rtw);
-	float sin_r = sin(rtw);
+	float cos_y = cos(ryaw);
+	float sin_y = sin(ryaw);
+	float cos_p = cos(rpch);
+	float sin_p = sin(rpch);
+	float cos_r = cos(rrll);
+	float sin_r = sin(rrll);
 	
 	m[0] = -cos_y*sin_p*sin_r-sin_y*cos_r;
 	m[1] = -sin_y*sin_p*sin_r+cos_y*cos_r;
@@ -452,14 +456,15 @@ float m[], az, el, tw;
  * then "z" radians about the z-axis.
  */
 void x_y_z2mat(m, x, y, z)
-double m[], x, y, z;
+mat_t m;
+fastf_t x, y, z;
 {
-        double cosx = cos(x);
-        double sinx = sin(x);
-        double cosy = cos(y);
-        double siny = sin(y);
-        double cosz = cos(z);
-        double sinz = sin(z);
+        fastf_t cosx = cos(x);
+        fastf_t sinx = sin(x);
+        fastf_t cosy = cos(y);
+        fastf_t siny = sin(y);
+        fastf_t cosz = cos(z);
+        fastf_t sinz = sin(z);
 
         m[0] = cosz*cosy;
         m[1] = cosz*siny*sinx-sinz*cosx;
@@ -481,9 +486,10 @@ double m[], x, y, z;
  * then "z" degrees about the z-axis.
  */
 void dx_y_z2mat(m, x, y, z)
-double m[], x, y, z;
+mat_t m;
+fastf_t x, y, z;
 {
-	double cosx,cosy,cosz,sinx,siny,sinz;
+	fastf_t cosx,cosy,cosz,sinx,siny,sinz;
 
 	x *= (M_PI*0.0055555555556);
 	y *= (M_PI*0.0055555555556);
@@ -514,7 +520,8 @@ double m[], x, y, z;
  * then "x" radians about the x-axis. 
  */
 void zyx2mat(m,a)
-fastf_t *m, *a;
+mat_t m;
+vect_t a;
 {
 	fastf_t cosX,cosY,cosZ,sinX,sinY,sinZ;
 
@@ -549,14 +556,15 @@ fastf_t *m, *a;
  * then "x" radians about the x-axis.
  */
 void z_y_x2mat(m,x,y,z)
-double m[], x, y, z;
+mat_t m;
+fastf_t x, y, z;
 {
-        double cosx = cos(x);
-        double sinx = sin(x);
-        double cosy = cos(y);
-        double siny = sin(y);
-        double cosz = cos(z);
-        double sinz = sin(z);
+        fastf_t cosx = cos(x);
+        fastf_t sinx = sin(x);
+        fastf_t cosy = cos(y);
+        fastf_t siny = sin(y);
+        fastf_t cosz = cos(z);
+        fastf_t sinz = sin(z);
 
 	m[0] =  cosy*cosz;
 	m[1] = -cosy*sinz;
@@ -577,9 +585,10 @@ double m[], x, y, z;
  * then "x" degrees about the x-axis.
  */
 void dz_y_x2mat(m,x,y,z)
-double m[], x, y, z;
+mat_t m;
+fastf_t x, y, z;
 {
-	double cosx,cosy,cosz,sinx,siny,sinz;
+	fastf_t cosx,cosy,cosz,sinx,siny,sinz;
 
 	x *= (M_PI*0.0055555555556);
 	y *= (M_PI*0.0055555555556);
@@ -610,7 +619,8 @@ double m[], x, y, z;
  */
 
 void quat2mat(m, q)
-fastf_t *m, *q;
+mat_t m;
+quat_t q;
 {
 	fastf_t two_q[4];
 
@@ -645,9 +655,10 @@ fastf_t *m, *q;
  * is vertical.
  */
 void dir2mat(m,d,d2)
-double m[], d[], d2[];
+mat_t m;
+vect_t d, d2;
 {
-        double hypotenuse, sign;
+        fastf_t hypotenuse, sign;
         sign = 1.0;
         hypotenuse = sqrt(d[0]*d[0]+d[1]*d[1]);
         if (hypotenuse < VDIVIDE_TOL){ /* vertical direction - use d2 to
@@ -684,9 +695,12 @@ double m[], d[], d2[];
 }
 
 /* ADD_TRANS - Add pre- and post- translation to a rotation matrix.
+ * The resulting matrix has the effect of performing the first
+ * translation, followed by the rotation, followed by the second translation.
  */
 void add_trans(m,post,pre)
-double m[], post[], pre[];
+mat_t m; 
+vect_t post, pre;
 {
         int i;
         for (i=0; i<3; i++)
@@ -696,11 +710,12 @@ double m[], post[], pre[];
 /* ROTATEZ - Rotate the vector "d" through "a" radians about the z-axis.
  */
 void rotatez(a,d)
-double a, d[];
+fastf_t a;
+vect_t d;
 {
-        double temp[3];
-        double cos_y = cos(a);
-        double sin_y = sin(a);
+        fastf_t temp[3];
+        fastf_t cos_y = cos(a);
+        fastf_t sin_y = sin(a);
         temp[0] = d[0]*cos_y - d[1]*sin_y;
         temp[1] = d[0]*sin_y + d[1]*cos_y;
         d[0]=temp[0];
@@ -710,7 +725,7 @@ double a, d[];
 /* AN_MAT_PRINT - print out 4X4 matrix, with optional colon
  */
 void an_mat_print(m,s_colon)
-double m[];
+mat_t m;
 int s_colon;
 {
         printf("%f %f %f %f\n", m[0], m[1], m[2], m[3]);
@@ -726,7 +741,7 @@ int s_colon;
  * right-side up
  */
 void view_rev(m) /* reverses view matrix, but keeps it 'right-side-up'*/
-double m[];
+mat_t m;
 {
         m[0] = -m[0];
         m[1] = -m[1];
