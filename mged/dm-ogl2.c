@@ -42,10 +42,14 @@
 
 #include "tcl.h"
 #include "tk.h"
+#include <X11/extensions/XI.h>
+#include <X11/extensions/XInput.h>
 #include "./oglinit.h"
 
 #include <GL/glx.h>
 #include <GL/gl.h>
+/*XXXX*/
+#include <gl/device.h>
 
 #include "machine.h"
 #include "externs.h"
@@ -69,12 +73,25 @@ extern int dm_pipe[];
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
+extern void sl_toggle_scroll();		/* from scroll.c */
+
+static void     establish_perspective();
+static void     set_perspective();
+static void	establish_lighting();
+static void	establish_zbuffer();
 static int	Ogl2_setup();
+static void     set_knob_offset();
 static void	Ogl2_configure_window_shape();
 static int	Ogl2_doevent();
 static void	Ogl2_gen_color();
+static void     Ogl2_colorit();
 static int      Ogl2_load_startup();
-static struct dm_list *get_dm_list()
+static void     Ogl_var_init();
+static XVisualInfo *Ogl2_set_visual();
+static void     print_cmap();
+static struct dm_list *get_dm_list();
+static int irisX2ged();
+static int irisY2ged();
 
 /* Flags indicating whether the gl and sgi display managers have been
  * attached. 
@@ -103,7 +120,7 @@ unsigned Ogl2_cvtvecs(), Ogl2_load();
 void	Ogl2_statechange(), Ogl2_viewchange(), Ogl2_colorchange();
 void	Ogl2_window(), Ogl2_debug(), Ogl2_selectargs();
 
-struct dm dm_ogl = {
+struct dm dm_ogl2 = {
 	Ogl2_open, Ogl2_close,
 	Ogl2_input,
 	Ogl2_prolog, Ogl2_epilog,
@@ -119,7 +136,7 @@ struct dm dm_ogl = {
 	0,				/* no displaylist */
 	0,				/* multi-window */
 	IRBOUND,
-	"gl", "X Windows with OpenGL graphics",
+	"ogl", "X Windows with OpenGL graphics",
 	0,				/* mem map */
 	Ogl2_dm
 };
@@ -129,16 +146,12 @@ struct dm dm_ogl = {
 static int ogl2_index_size;
 static Colormap cmap;
 
-static XVisualInfo *Ogl2_set_visual();
-
 static GLdouble faceplate_mat[16];
 static int ogl2_face_flag;		/* 1: faceplate matrix on stack */
 
 #define dpy (((struct ogl_vars *)dm_vars)->_dpy)
 #define win (((struct ogl_vars *)dm_vars)->_win)
 #define xtkwin (((struct ogl_vars *)dm_vars)->_xtkwin)
-#define width (((struct ogl_vars *)dm_vars)->_width)
-#define height (((struct ogl_vars *)dm_vars)->_height)
 #ifdef VIRTUAL_TRACKBALL
 #define omx (((struct ogl_vars *)dm_vars)->_omx)
 #define omy (((struct ogl_vars *)dm_vars)->_omy)
@@ -150,10 +163,9 @@ static int ogl2_face_flag;		/* 1: faceplate matrix on stack */
 #define knobs (((struct ogl_vars *)dm_vars)->_knobs)
 #define stereo_is_on (((struct ogl_vars *)dm_vars)->_stereo_is_on)
 #define aspect (((struct ogl_vars *)dm_vars)->_aspect)
-#define _fontstruct (((struct ogl_vars *)dm_vars)->_fontstruct)
 #define glxc (((struct ogl_vars *)dm_vars)->_glxc)
+#define fontstruct (((struct ogl_vars *)dm_vars)->_fontstruct)
 #define fontOffset (((struct ogl_vars *)dm_vars)->_fontOffset)
-#define mvars (((struct ogl_vars *)dm_vars)->_mvars)
 
 struct modifiable_ogl_vars {
   int cueing_on;
@@ -165,6 +177,7 @@ struct modifiable_ogl_vars {
   int zbuf;
   int rgb;
   int doublebuffer;
+  int depth;
   int debug;
   int linewidth;
   int fastfog;
@@ -190,22 +203,56 @@ struct ogl_vars {
   int _knobs[8];
   int _stereo_is_on;
   fastf_t _aspect;
-  XFontStruct *_fontstruct;
   GLXContext _glxc;
+  XFontStruct *_fontstruct;
   int _fontOffset;
-  struct modifiable_ogl_vars _mvars;
-}
+  struct modifiable_ogl_vars mvars;
+};
 
-static int	ogl2_fd;			/* GL file descriptor to select() on */
-static CONST char ogl2_title[] = "BRL MGED";
+#ifdef IR_BUTTONS
+/*
+ * Map SGI Button numbers to MGED button functions.
+ * The layout of this table is suggestive of the actual button box layout.
+ */
+#define SW_HELP_KEY	SW0
+#define SW_ZERO_KEY	SW3
+#define HELP_KEY	0
+#define ZERO_KNOBS	0
+static unsigned char bmap[IR_BUTTONS] = {
+	HELP_KEY,    BV_ADCURSOR, BV_RESET,    ZERO_KNOBS,
+	BE_O_SCALE,  BE_O_XSCALE, BE_O_YSCALE, BE_O_ZSCALE, 0,           BV_VSAVE,
+	BE_O_X,      BE_O_Y,      BE_O_XY,     BE_O_ROTATE, 0,           BV_VRESTORE,
+	BE_S_TRANS,  BE_S_ROTATE, BE_S_SCALE,  BE_MENU,     BE_O_ILLUMINATE, BE_S_ILLUMINATE,
+	BE_REJECT,   BV_BOTTOM,   BV_TOP,      BV_REAR,     BV_45_45,    BE_ACCEPT,
+	BV_RIGHT,    BV_FRONT,    BV_LEFT,     BV_35_25
+};
+#endif
+
+#ifdef IR_KNOBS
+static int irlimit();			/* provides knob dead spot */
+#define NOISE 32		/* Size of dead spot on knob */
+/*
+ *  Labels for knobs in help mode.
+ */
+static char	*kn1_knobs[] = {
+	/* 0 */ "adc <1",	/* 1 */ "zoom", 
+	/* 2 */ "adc <2",	/* 3 */ "adc dist",
+	/* 4 */ "adc y",	/* 5 */ "y slew",
+	/* 6 */ "adc x",	/* 7 */	"x slew"
+};
+static char	*kn2_knobs[] = {
+	/* 0 */ "unused",	/* 1 */	"zoom",
+	/* 2 */ "z rot",	/* 3 */ "z slew",
+	/* 4 */ "y rot",	/* 5 */ "y slew",
+	/* 6 */ "x rot",	/* 7 */	"x slew"
+};
+#endif
+
 static int perspective_table[] = {
 	30, 45, 60, 90 };
 static int ovec = -1;		/* Old color map entry number */
-static int kblights();
 static double	xlim_view = 1.0;	/* args for glOrtho*/
 static double	ylim_view = 1.0;
-
-void		ogl2_colorit();
 
 /*
  * SGI Color Map table
@@ -221,11 +268,6 @@ static struct rgbtab {
 
 extern struct device_values dm_values;	/* values read from devices */
 
-extern void sl_toggle_scroll();		/* from scroll.c */
-
-static void	establish_lighting();
-static void	establish_zbuffer();
-
 /* lighting parameters */
 static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
 
@@ -240,9 +282,6 @@ static float light2_diffuse[] = {0.10, 0.30, 0.10, 1.0}; /* green */
 static float light3_diffuse[] = {0.10, 0.10, 0.30, 1.0}; /* blue */
 
 /* functions */
-void print_cmap();
-
-
 static void
 refresh_hook()
 {
@@ -252,7 +291,7 @@ refresh_hook()
 static void
 do_linewidth()
 {
-	glLineWidth((GLfloat) ogl2_linewidth);
+	glLineWidth((GLfloat) ((struct ogl_vars *)dm_vars)->mvars.linewidth);
 	dmaflag = 1;
 }
 
@@ -260,25 +299,26 @@ do_linewidth()
 static void
 do_fog()
 {
-	glHint(GL_FOG_HINT, mvars.fastfog ? GL_FASTEST : GL_NICEST);
+	glHint(GL_FOG_HINT, ((struct ogl_vars *)dm_vars)->mvars.fastfog ? GL_FASTEST : GL_NICEST);
 	dmaflag = 1;
 }
 
 #define OGL2_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
-structparse ogl2_vparse[] = {
+struct structparse Ogl2_vparse[] = {
 	{"%d",	1, "depthcue",		OGL2_MV_O(cueing_on),	Ogl2_colorchange },
 	{"%d",  1, "zclip",		OGL2_MV_O(zclipping_on),	refresh_hook },
 	{"%d",  1, "zbuffer",		OGL2_MV_O(zbuffer_on),	establish_zbuffer },
 	{"%d",  1, "lighting",		OGL2_MV_O(lighting_on),	establish_lighting },
 	{"%d",  1, "perspective",       OGL2_MV_O(perspective_mode), establish_perspective },
-	{"%d",  1, "set_perspective",OGL2_MV_O(dummy_perspective),  set_perspective },
-	{"%d",  1, "has_zbuf",		OGL2_MV_O(zbuf),	establish_zbuffer },
+	{"%d",  1, "set_perspective",   OGL2_MV_O(dummy_perspective),  set_perspective },
+	{"%d",  1, "has_zbuf",		OGL2_MV_O(zbuf),	refresh_hook },
 	{"%d",  1, "has_rgb",		OGL2_MV_O(rgb),	Ogl2_colorchange },
 	{"%d",  1, "has_doublebuffer",	OGL2_MV_O(doublebuffer), refresh_hook },
+	{"%d",  1, "depth",		OGL2_MV_O(depth),	FUNC_NULL },
 	{"%d",  1, "debug",		OGL2_MV_O(debug),	FUNC_NULL },
 	{"%d",  1, "linewidth",		OGL2_MV_O(linewidth),	do_linewidth },
 	{"%d",  1, "fastfog",		OGL2_MV_O(fastfog),	do_fog },
-	{"%d",  1, "density",		OGL2_MV_O(fogdensity),	refresh_hook },
+	{"%f",  1, "density",		OGL2_MV_O(fogdensity),	refresh_hook },
 #ifdef VIRTUAL_TRACKBALL
 	{"%d",  1, "virtual_trackball",	OGL2_MV_O(virtual_trackball),FUNC_NULL },
 #endif
@@ -295,11 +335,11 @@ static int OgldoMotion = 0;
  *  GED is using -2048..+2048,
  *  X is 0..width,0..height
  */
-#define	GED_TO_Xx(x)	(((x)/4096.0+0.5)*width)
-#define	GED_TO_Xy(x)	((0.5-(x)/4096.0)*height)
+#define	GED_TO_Xx(x)	(((x)/4096.0+0.5)*((struct ogl_vars *)dm_vars)->width)
+#define	GED_TO_Xy(x)	((0.5-(x)/4096.0)*((struct ogl_vars *)dm_vars)->height)
 
 /* get rid of when no longer needed */
-#define USE_RAMP	(mvars.cueing_on || mvars.lighting_on)
+#define USE_RAMP	(((struct ogl_vars *)dm_vars)->mvars.cueing_on || ((struct ogl_vars *)dm_vars)->mvars.lighting_on)
 #define CMAP_BASE	32
 #define CMAP_RAMP_WIDTH	16
 #define MAP_ENTRY(x)	( USE_RAMP ? \
@@ -308,6 +348,24 @@ static int OgldoMotion = 0;
 
 /********************************************************************/
 
+/*
+ *  Mouse coordinates are in absolute screen space, not relative to
+ *  the window they came from.  Convert to window-relative,
+ *  then to MGED-style +/-2048 range.
+ */
+static int
+irisX2ged(x)
+register int x;
+{
+  return ((x/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 4095);
+}
+
+static int
+irisY2ged(y)
+register int y;
+{
+  return ((0.5 - y/(double)((struct ogl_vars *)dm_vars)->height) * 4095);
+}
 
 
 /*
@@ -323,7 +381,7 @@ Ogl2_open()
   char	display[82];
   char	*envp;
 
-  Ogl2_var_init();
+  Ogl_var_init();
 
   /* get or create the default display */
   if( (envp = getenv("DISPLAY")) == NULL ) {
@@ -443,8 +501,10 @@ Ogl2_close()
 
 	glXDestroyContext(dpy, glxc);
 
-	Tk_DeleteGenericHandler(Ogldoevent, (ClientData)NULL);
+	Tk_DeleteGenericHandler(Ogl2_doevent, (ClientData)NULL);
 	Tk_DestroyWindow(xtkwin);
+	rt_free(dm_vars, "Ogl2_close: dm_vars");
+	rt_vls_free(&pathName);
 }
 
 /*
@@ -455,45 +515,45 @@ Ogl2_close()
 void
 Ogl2_prolog()
 {
-	GLint mm; 
-	char i;
-	char *str = "a";
-	GLfloat fogdepth;
+  GLint mm; 
+  char i;
+  char *str = "a";
+  GLfloat fogdepth;
 
-	if (mvars.debug)
-		rt_log( "Ogl2_prolog\n");
+  if (((struct ogl_vars *)dm_vars)->mvars.debug)
+    rt_log( "Ogl2_prolog\n");
 
-	if (dmaflag) {
-		if (!mvars.doublebuffer){
-			glClearColor(0.0, 0.0, 0.0, 0.0);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-/*			return;*/
-		}
+  if (!glXMakeCurrent(dpy, win, glxc)){
+    rt_log("Ogl2_open: Couldn't make context current\n");
+    return;
+  }
 
-		if (ogl2_face_flag){
-			glMatrixMode(GL_PROJECTION);
-			glPopMatrix();
-			glMatrixMode(GL_MODELVIEW);
-			glPopMatrix();
-			ogl2_face_flag = 0;
-			if (mvars.cueing_on){
-				glEnable(GL_FOG);
-				fogdepth = 2.2 * Viewscale; /* 2.2 is heuristic */
-				glFogf(GL_FOG_END, fogdepth);
-				fogdepth = (GLfloat) (0.5*mvars.fogdensity/Viewscale);
-				glFogf(GL_FOG_DENSITY, fogdepth);
-				glFogi(GL_FOG_MODE, mvars.perspective_mode ? GL_EXP : GL_LINEAR);
-			}
-			if (mvars.lighting_on){
-				glEnable(GL_LIGHTING);
-			}
-		}
+  if (!((struct ogl_vars *)dm_vars)->mvars.doublebuffer){
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    /*			return;*/
+  }
+
+  if (ogl2_face_flag){
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    ogl2_face_flag = 0;
+    if (((struct ogl_vars *)dm_vars)->mvars.cueing_on){
+      glEnable(GL_FOG);
+      fogdepth = 2.2 * Viewscale; /* 2.2 is heuristic */
+      glFogf(GL_FOG_END, fogdepth);
+      fogdepth = (GLfloat) (0.5*((struct ogl_vars *)dm_vars)->mvars.fogdensity/Viewscale);
+      glFogf(GL_FOG_DENSITY, fogdepth);
+      glFogi(GL_FOG_MODE, ((struct ogl_vars *)dm_vars)->mvars.perspective_mode ? GL_EXP : GL_LINEAR);
+    }
+    if (((struct ogl_vars *)dm_vars)->mvars.lighting_on){
+      glEnable(GL_LIGHTING);
+    }
+  }
 	
-		glLineWidth((GLfloat) ogl2_linewidth);
-
-	}
-
-
+  glLineWidth((GLfloat) ((struct ogl_vars *)dm_vars)->mvars.linewidth);
 }
 
 /*
@@ -502,43 +562,40 @@ Ogl2_prolog()
 void
 Ogl2_epilog()
 {
-	if (mvars.debug)
-		rt_log( "Ogl2_epilog\n");
-	/*
-	 * A Point, in the Center of the Screen.
-	 * This is drawn last, to always come out on top.
-	 */
+  if (((struct ogl_vars *)dm_vars)->mvars.debug)
+    rt_log( "Ogl2_epilog\n");
+  /*
+   * A Point, in the Center of the Screen.
+   * This is drawn last, to always come out on top.
+   */
 
-	glColor3ub( (short)ogl2_rgbtab[4].r, (short)ogl2_rgbtab[4].g, (short)ogl2_rgbtab[4].b );
-	glBegin(GL_POINTS);
-	 glVertex2i(0,0);
-	glEnd();
-	/* end of faceplate */
+  glColor3ub( (short)ogl2_rgbtab[4].r, (short)ogl2_rgbtab[4].g, (short)ogl2_rgbtab[4].b );
+  glBegin(GL_POINTS);
+  glVertex2i(0,0);
+  glEnd();
+  /* end of faceplate */
 
-	if(mvars.doublebuffer )
-	{
-		glXSwapBuffers(dpy, win);
-		/* give Graphics pipe time to work */
-		glClearColor(0.0, 0.0, 0.0, 0.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	}
+  if(((struct ogl_vars *)dm_vars)->mvars.doublebuffer ){
+    glXSwapBuffers(dpy, win);
+    /* give Graphics pipe time to work */
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
 
 
-	/* Prevent lag between events and updates */
-	XSync(dpy, 0);
+  /* Prevent lag between events and updates */
+  XSync(dpy, 0);
 
-	if(CJDEBUG){
-		int error;
+  if(CJDEBUG){
+    int error;
 
-		rt_log("ANY ERRORS?\n");
-		while(	(error = glGetError())!=0){
-			rt_log("Error: %x\n", error);
-		}
-	}
+    rt_log("ANY ERRORS?\n");
+    while(	(error = glGetError())!=0){
+      rt_log("Error: %x\n", error);
+    }
+  }
 
-
-	return;
+  return;
 }
 
 /*
@@ -567,7 +624,7 @@ int which_eye;
 	}
 
 
-	if (mvars.debug)
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
 		rt_log( "Ogl2_newrot()\n");
 	switch(which_eye)  {
 	case 0:
@@ -628,7 +685,7 @@ int which_eye;
 	 * P must be stored in the GL_PROJECTION matrix and T*M must
 	 * be stored the the GL_MODELVIEW matrix.
 	 */
-	if ( mvars.perspective_mode){
+	if ( ((struct ogl_vars *)dm_vars)->mvars.perspective_mode){
 		float inv_view[16];
 
 		/* disassemble supplied matrix */
@@ -695,7 +752,7 @@ int which_eye;
 
 
 	/* Make sure that new matrix is applied to the lights */
-	if (mvars.lighting_on ){
+	if (((struct ogl_vars *)dm_vars)->mvars.lighting_on ){
 		glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 		glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
 		glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
@@ -747,7 +804,7 @@ int white_flag;
 	int first;
 	int i,j;
 
-	if (mvars.debug)
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
 		rt_log( "ogl2_Object()\n");
 
 
@@ -763,10 +820,10 @@ int white_flag;
 	if (sp->s_soldash)
 		glEnable(GL_LINE_STIPPLE);		/* set dot-dash */
 
-	if (white_flag && mvars.cueing_on)
+	if (white_flag && ((struct ogl_vars *)dm_vars)->mvars.cueing_on)
 		glDisable(GL_FOG);	
 
-	if( mvars.rgb )  {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		register short	r, g, b;
 		if( white_flag )  {
 			r = g = b = 230;
@@ -776,7 +833,7 @@ int white_flag;
 			b = (short)sp->s_color[2];
 		}
 
-		if(mvars.lighting_on)
+		if(((struct ogl_vars *)dm_vars)->mvars.lighting_on)
 		{
 
 			/* Ambient = .2, Diffuse = .6, Specular = .2 */
@@ -805,7 +862,7 @@ int white_flag;
 			ovec = nvec;
 		}
 
-		if (mvars.lighting_on){
+		if (((struct ogl_vars *)dm_vars)->mvars.lighting_on){
 			material[0] = ovec - CMAP_RAMP_WIDTH + 2;
 			material[1] = ovec - CMAP_RAMP_WIDTH/2;
 			material[2] = ovec - 1;
@@ -871,7 +928,7 @@ int white_flag;
 	if (sp->s_soldash)
 		glDisable(GL_LINE_STIPPLE);	/* restore solid lines */
 
-	if (white_flag && mvars.cueing_on){
+	if (white_flag && ((struct ogl_vars *)dm_vars)->mvars.cueing_on){
 		glEnable(GL_FOG);
 	}
 
@@ -891,10 +948,10 @@ Ogl2_normal()
 {
 	GLint mm; 
 
-	if (mvars.debug)
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
 		rt_log( "Ogl2_normal\n");
 
-	if( mvars.rgb )  {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		glColor3ub( 0,  0,  0 );
 	} else {
 		ovec = MAP_ENTRY(DM_BLACK);
@@ -909,9 +966,9 @@ Ogl2_normal()
 		glPushMatrix();
 		glLoadIdentity();
 		ogl2_face_flag = 1;
-		if(mvars.cueing_on)
+		if(((struct ogl_vars *)dm_vars)->mvars.cueing_on)
 			glDisable(GL_FOG);
-		if (mvars.lighting_on)
+		if (((struct ogl_vars *)dm_vars)->mvars.lighting_on)
 			glDisable(GL_LIGHTING);
 
 	}
@@ -927,7 +984,7 @@ Ogl2_normal()
 void
 Ogl2_update()
 {
-	if (mvars.debug)
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
 		rt_log( "Ogl2_update()\n");
 
     XFlush(dpy);
@@ -945,12 +1002,12 @@ Ogl2_puts( str, x, y, size, colour )
 register char *str;
 int x,y,size, colour;
 {
-	if (mvars.debug)
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
 		rt_log( "Ogl2_puts()\n");
 
 	
 /*	glRasterPos2f( GED2IRIS(x),  GED2IRIS(y));*/
-	if( mvars.rgb )  {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		glColor3ub( (short)ogl2_rgbtab[colour].r,  (short)ogl2_rgbtab[colour].g,  (short)ogl2_rgbtab[colour].b );
 	} else {
 		ovec = MAP_ENTRY(colour);
@@ -976,10 +1033,10 @@ int dashed;
 {
 	register int nvec;
 
-	if (mvars.debug)
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
 		rt_log( "Ogl2_2d_line()\n");
 
-	if( mvars.rgb )  {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		/* Yellow */
 
 		glColor3ub( (short)255,  (short)255,  (short) 0 );
@@ -1031,293 +1088,212 @@ int dashed;
 #define Ogl2_YROT	5
 #define Ogl2_ZROT	6
 
-int
-Ogldoevent(clientData, eventPtr)
+static int
+Ogl2_doevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
-    KeySym key;
-    char keybuf[4];
-    int cnt;
-	float inc;
-    XComposeStatus compose_stat;
-	static int ogl2_which_slid = Ogl2_XSLEW;
+  static int button0  = 0;   /*  State of button 0 */
+  static int knobs_during_help[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  register struct dm_list *save_dm_list;
+  register struct dm_list *p;
+  struct rt_vls cmd;
 
-    if (eventPtr->xany.window != win)
-	return 0;
+  rt_vls_init(&cmd);
+  save_dm_list = curr_dm_list;
 
-    if (eventPtr->type == Expose ) {
-	if (eventPtr->xexpose.count == 0) {
-		glClearColor(0.0, 0.0, 0.0, 0.0);
-		if (mvars.zbuffer_on)
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		else
-			glClear(GL_COLOR_BUFFER_BIT);
-	    rt_vls_printf( &dm_values.dv_string, "refresh\n" );
-		dmaflag = 1;
-	}
-    } else if( eventPtr->type == ConfigureNotify) {
-    	Ogl2_configure_window_shape();
-    } else if( eventPtr->type == MotionNotify ) {
+  curr_dm_list = get_dm_list(eventPtr->xany.window);
+
+  if(curr_dm_list == DM_LIST_NULL)
+    goto end;
+
+#ifdef SEND_KEY_DOWN_PIPE
+  if(mged_variables.send_key && eventPtr->type == KeyPress){
+    char buffer[1];
+
+    XLookupString(&(eventPtr->xkey), buffer, 1,
+		  (KeySym *)NULL, (XComposeStatus *)NULL);
+
+    write(dm_pipe[1], buffer, 1);
+    rt_vls_free(&cmd);
+    curr_dm_list = save_dm_list;
+
+    /* Use this so that these events won't propagate */
+    return TCL_RETURN;
+  }
+#endif
+
+  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+#if 0
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    if (((struct ogl_vars *)dm_vars)->mvars.zbuffer_on)
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    else
+      glClear(GL_COLOR_BUFFER_BIT);
+    rt_vls_printf( &dm_values.dv_string, "refresh\n" );
+    dmaflag = 1;
+#else
+    Ogl2_configure_window_shape();
+    dmaflag = 1;
+    refresh();
+    goto end;
+#endif
+  } else if( eventPtr->type == ConfigureNotify) {
+    Ogl2_configure_window_shape();
+    dmaflag = 1;
+    refresh();
+    goto end;
+  } else if( eventPtr->type == MotionNotify ) {
+#ifdef VIRTUAL_TRACKBALL
+    int mx, my;
+
+    if( !OgldoMotion &&
+	(VIRTUAL_TRACKBALL_NOT_ACTIVE(struct ogl_vars *, mvars.virtual_trackball)) )
+      goto end;
+
+    mx = eventPtr->xmotion.x;
+    my = eventPtr->xmotion.y;
+
+    switch(((struct ogl_vars *)dm_vars)->mvars.virtual_trackball){
+    case VIRTUAL_TRACKBALL_OFF:
+    case VIRTUAL_TRACKBALL_ON:
+      /* do the regular thing */
+      mx = (mx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 4095;
+      my = (0.5 - my/(double)((struct ogl_vars *)dm_vars)->height) * 4095;
+
+      /* Constant tracking (e.g. illuminate mode) bound to M mouse */
+      rt_vls_printf( &cmd, "M 0 %d %d\n", mx, my );
+      break;
+    case VIRTUAL_TRACKBALL_ROTATE:
+      rt_vls_printf( &cmd, "irot %f %f 0\n", (my - omy)/2.0,
+		     (mx - omx)/2.0);
+      break;
+    case VIRTUAL_TRACKBALL_TRANSLATE:
+      rt_vls_printf( &cmd, "tran %f %f %f\n",
+		     (mx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 2,
+		     (0.5 - my/(double)((struct ogl_vars *)dm_vars)->height) * 2, tran_z);
+      break;
+    case VIRTUAL_TRACKBALL_ZOOM:
+      rt_vls_printf( &cmd, "zoom %lf\n",
+		     (omy - my)/(double)((struct ogl_vars *)dm_vars)->height + 1.0);
+      break;
+    }
+
+    omx = mx;
+    omy = my;
+#else
 	int	x, y;
 	if ( !OgldoMotion )
 	    return 1;
-	x = (eventPtr->xmotion.x/(double)width - 0.5) * 4095;
-	y = (0.5 - eventPtr->xmotion.y/(double)height) * 4095;
+	x = (eventPtr->xmotion.x/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 4095;
+	y = (0.5 - eventPtr->xmotion.y/(double)((struct ogl_vars *)dm_vars)->height) * 4095;
 	rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
-    } else if( eventPtr->type == ButtonPress ) {
-	/* There may also be ButtonRelease events */
-	int	x, y;
-	/* In MGED this is a "penpress" */
-	x = (eventPtr->xbutton.x/(double)width - 0.5) * 4095;
-	y = (0.5 - eventPtr->xbutton.y/(double)height) * 4095;
-	switch( eventPtr->xbutton.button ) {
-	case Button1:
-	    /* Left mouse: Zoom out */
-	    rt_vls_printf( &dm_values.dv_string, "L 1 %d %d\n", x, y);
-	    break;
-	case Button2:
-	    /* Middle mouse, up to down transition */
-	    rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", x, y);
-	    break;
-	case Button3:
-	    /* Right mouse: Zoom in */
-	    rt_vls_printf( &dm_values.dv_string, "R 1 %d %d\n", x, y);
-	    break;
-	}
-    } else if( eventPtr->type == ButtonRelease ) {
-	int	x, y;
-	x = (eventPtr->xbutton.x/(double)width - 0.5) * 4095;
-	y = (0.5 - eventPtr->xbutton.y/(double)height) * 4095;
-	switch( eventPtr->xbutton.button ) {
-	case Button1:
-	    rt_vls_printf( &dm_values.dv_string, "L 0 %d %d\n", x, y);
-	    break;
-	case Button2:
-	    /* Middle mouse, down to up transition */
-	    rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y);
-	    break;
-	case Button3:
-	    rt_vls_printf( &dm_values.dv_string, "R 0 %d %d\n", x, y);
-	    break;
-	}
-    } else if( eventPtr->type == KeyPress ) {
-	register int i;
-	/* Turn these into MGED "buttonpress" or knob functions */
-	
-	cnt = XLookupString(&eventPtr->xkey, keybuf, sizeof(keybuf),
-			    &key, &compose_stat);
+#endif
+  }else if( eventPtr->type == devmotionnotify ){
+    XDeviceMotionEvent *M;
+    int setting;
 
-    	/* CJXX I think the following line is bad in X.c*/
-/*	for(i=0 ; i < cnt ; i++){*/
+    M = (XDeviceMotionEvent * ) eventPtr;
 
-	inc = 0.1;		
-	switch( key ) {
-	case '?':
-		rt_log( "\n\t\tKey Help Menu:\n\
-\n\tView Control Functions\n\
-0, <F12>	Zero sliders (knobs)\n\
-s		Toggle sliders\n\
-x		Enable xrot slider\n\
-y		Enable yrot slider\n\
-z		Enable zrot slider\n\
-X		Enable Xslew slider\n\
-Y		Enable Yslew slider\n\
-Z		Enable Zslew slider\n\
-S		Enable Zoom (Scale) slider\n\
-<Up Arrow>	Enable slider above the current slider\n\
-<Down Arrow>	Enable slider below the current slider\n\
-<Left Arrow>	Move enabled slider to the left (decrement)\n\
-<Right Arrow>	Move enabled slider to the right (increment)\n\
-f		Front view\n\
-t		Top view\n\
-b		Bottom view\n\
-l		Left view\n\
-r		Right view\n\
-R		Rear view\n\
-3		35,25 view\n\
-4		45,45 view\n\
-\n\tToggle Functions\n\
-<F1>		Toggle depthcueing\n\
-<F2>		Toggle zclipping\n\
-<F3>		Toggle perspective\n\
-<F4>		Toggle zbuffer status\n\
-<F5>		Toggle smooth-shading\n\
-<F6>		Change perspective angle\n\
-<F7>,F		Toggle faceplate\n\
-" );
-		break;
-	case 'w':
-		print_cmap();
-		break;
-	case '0':
-		rt_vls_printf( &dm_values.dv_string, "knob zero\n" );
-		break;
-	case 's':
-		sl_toggle_scroll(); /* calls rt_vls_printf() */
-		break;
-	case 'S':
-		ogl2_which_slid = Ogl2_ZOOM;
-		break;
-	case 'x':
-		/* 6 degrees per unit */
-		ogl2_which_slid = Ogl2_XROT;
-		break;
-	case 'y':
-		ogl2_which_slid = Ogl2_YROT;
-		break;
-	case 'z':
-		ogl2_which_slid = Ogl2_ZROT;
-		break;
-	case 'X':
-		ogl2_which_slid = Ogl2_XSLEW;
-		break;
-	case 'Y':
-		ogl2_which_slid = Ogl2_YSLEW;
-		break;
-	case 'Z':
-		ogl2_which_slid = Ogl2_ZSLEW;
-		break;
-	case 'f':
-		rt_vls_strcat( &dm_values.dv_string, "press front\n");
-		break;
-	case 't':
-		rt_vls_strcat( &dm_values.dv_string, "press top\n");
-		break;
-	case 'b':
-		rt_vls_strcat( &dm_values.dv_string, "press bottom\n");
-		break;
-	case 'l':
-		rt_vls_strcat( &dm_values.dv_string, "press left\n");
-		break;
-	case 'r':
-		rt_vls_strcat( &dm_values.dv_string, "press right\n");
-		break;
-	case 'R':
-		rt_vls_strcat( &dm_values.dv_string, "press rear\n");
-		break;
-	case '3':
-		rt_vls_strcat( &dm_values.dv_string, "press 35,25\n");
-		break;
-	case '4':
-		rt_vls_strcat( &dm_values.dv_string, "press 45,45\n");
-		break;
-	case 'F':
-		no_faceplate = !no_faceplate;
-		rt_vls_strcat( &dm_values.dv_string,
-			      no_faceplate ?
-			      "set faceplate 0\n" :
-			      "set faceplate 1\n" );
-		break;
-	case XK_F1:			/* F1 key */
-	    	rt_log("F1 botton!\n");
-		rt_vls_printf( &dm_values.dv_string,
-				"dm set depthcue !\n");
-		break;
-	case XK_F2:			/* F2 key */
-		rt_vls_printf(&dm_values.dv_string,
-				"dm set zclip !\n");
-		break;
-	case XK_F3:			/* F3 key */
-		mvars.perspective_mode = 1-mvars.perspective_mode;
-		rt_vls_printf( &dm_values.dv_string,
-			    "set perspective %d\n",
-			    mvars.perspective_mode ?
-			    perspective_table[perspective_angle] :
-			    -1 );
-		dmaflag = 1;
-		break;
-	case XK_F4:			/* F4 key */
-		/* toggle zbuffer status */
-		rt_vls_printf(&dm_values.dv_string,
-				"dm set zbuffer !\n");
-		break;
-	case XK_F5:			/* F5 key */
-		/* toggle status */
-		rt_vls_printf(&dm_values.dv_string,
-		    "dm set lighting !\n");
-	    	break;
-	case XK_F6:			/* F6 key */
-		/* toggle perspective matrix */
-		if (--perspective_angle < 0) perspective_angle = 3;
-		if(mvars.perspective_mode) rt_vls_printf( &dm_values.dv_string,
-			    "set perspective %d\n",
-			    perspective_table[perspective_angle] );
-		dmaflag = 1;
-		break;
-	case XK_F7:			/* F7 key */
-		/* Toggle faceplate on/off */
-		no_faceplate = !no_faceplate;
-		rt_vls_strcat( &dm_values.dv_string,
-				    no_faceplate ?
-				    "set faceplate 0\n" :
-				    "set faceplate 1\n" );
-		Ogl2_configure_window_shape();
-		dmaflag = 1;
-		break;
-	case XK_F12:			/* F12 key */
-		rt_vls_printf( &dm_values.dv_string, "knob zero\n" );
-		break;
-	case XK_Up:
-	    	if (ogl2_which_slid-- == 0)
-	    		ogl2_which_slid = ogl2_NUM_SLID - 1;
-		break;
-	case XK_Down:
-	    	if (ogl2_which_slid++ == ogl2_NUM_SLID - 1)
-	    		ogl2_which_slid = 0;
-		break;
-	case XK_Left:
-	    	/* set inc and fall through */
-	    	inc = -0.1;
-	case XK_Right:
-	    	/* keep value of inc set at top of switch */
-	    	switch(ogl2_which_slid){
-	    	case Ogl2_XSLEW:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob X %f\n", rate_slew[X] + inc);
-	    		break;
-	    	case Ogl2_YSLEW:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob Y %f\n", rate_slew[Y] + inc);
-	    		break;
-	    	case Ogl2_ZSLEW:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob Z %f\n", rate_slew[Z] + inc);
-	    		break;
-	    	case Ogl2_ZOOM:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob S %f\n", rate_zoom + inc);
-	    		break;
-	    	case Ogl2_XROT:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob x %f\n", rate_rotate[X] + inc);
-	    		break;
-	    	case Ogl2_YROT:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob y %f\n", rate_rotate[Y] + inc);
-	    		break;
-	    	case Ogl2_ZROT:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob z %f\n", rate_rotate[Z] + inc);
-	    		break;
-	    	default:
-	    		break;
-	    	}
-		break;
-	case XK_Shift_L:
-	case XK_Shift_R:
-		break;
-	default:
-		rt_log("dm-ogl: The key '%c' is not defined. Press '?' for help.\n", key);
-		break;
-	    }
-
-/*	}  for loop */
-    } else {
-	return 1;
+    if(button0){
+      glx_dbtext(
+		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
+      goto end;
     }
 
-    return 1;
+    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+    setting = irlimit(knobs[M->first_axis]);
+    knob_values[M->first_axis] = M->axis_data[0];
+
+    switch(DIAL0 + M->first_axis){
+    case DIAL0:
+      if(adcflag) {
+	rt_vls_printf( &cmd, "knob ang1 %d\n",
+		      setting );
+      }
+      break;
+    case DIAL1:
+      rt_vls_printf( &cmd , "knob S %f\n",
+		    setting / 2048.0 );
+      break;
+    case DIAL2:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob ang2 %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob z %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL3:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob distadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob Z %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL4:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob yadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob y %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL5:
+      rt_vls_printf( &cmd , "knob Y %f\n",
+		    setting / 2048.0 );
+      break;
+    case DIAL6:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob xadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob x %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL7:
+      rt_vls_printf( &cmd , "knob X %f\n",
+		    setting / 2048.0 );
+      break;
+    default:
+      break;
+    }
+
+  }else if( eventPtr->type == devbuttonpress ){
+    XDeviceButtonEvent *B;
+
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+    if(B->button == 1){
+      button0 = 1;
+      goto end;
+    }
+
+    if(button0){
+      glx_dbtext(label_button(bmap[B->button - 1]));
+    }else if(B->button == 4){
+      rt_vls_strcat(&cmd, "knob zero\n");
+      set_knob_offset();
+    }else
+      rt_vls_printf(&cmd, "press %s\n",
+		    label_button(bmap[B->button - 1]));
+  }else if( eventPtr->type == devbuttonrelease ){
+    XDeviceButtonEvent *B;
+
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+    if(B->button == 1)
+      button0 = 0;
+  }
+
+  (void)cmdline(&cmd, FALSE);
+end:
+  rt_vls_free(&cmd);
+  curr_dm_list = save_dm_list;
+
+  return TCL_OK;
 }
 	    
 /*
@@ -1422,7 +1398,7 @@ Ogl2_colorchange()
 	int count = 0;
 	Colormap a_cmap;
 
-	if( mvars.debug )  rt_log("colorchange\n");
+	if( ((struct ogl_vars *)dm_vars)->mvars.debug )  rt_log("colorchange\n");
 
 	/* Program the builtin colors */
 	ogl2_rgbtab[0].r=0; 
@@ -1440,8 +1416,8 @@ Ogl2_colorchange()
 	ogl2_rgbtab[4].r = ogl2_rgbtab[4].g = ogl2_rgbtab[4].b = 255; /* White */
 	slotsused = 5;
 
-	if( mvars.rgb )  {
-		if(mvars.cueing_on) {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
+		if(((struct ogl_vars *)dm_vars)->mvars.cueing_on) {
 			glEnable(GL_FOG);
 		} else {
 			glDisable(GL_FOG);
@@ -1457,8 +1433,8 @@ Ogl2_colorchange()
 
 	if(USE_RAMP && (ogl2_index_size < 7)) {
 		rt_log("Too few bitplanes: depthcueing and lighting disabled\n");
-		mvars.cueing_on = 0;
-		mvars.lighting_on = 0;
+		((struct ogl_vars *)dm_vars)->mvars.cueing_on = 0;
+		((struct ogl_vars *)dm_vars)->mvars.lighting_on = 0;
 	}
 	/* number of slots is 2^indexsize */
 	ogl2_nslots = 1<<ogl2_index_size;
@@ -1476,8 +1452,8 @@ Ogl2_colorchange()
 	color_soltab();
 
 	/* best to do this before the colorit */
-	if (mvars.cueing_on && mvars.lighting_on){
-		mvars.lighting_on = 0;
+	if (((struct ogl_vars *)dm_vars)->mvars.cueing_on && ((struct ogl_vars *)dm_vars)->mvars.lighting_on){
+		((struct ogl_vars *)dm_vars)->mvars.lighting_on = 0;
 		glDisable(GL_LIGHTING);
 	}
 
@@ -1489,7 +1465,7 @@ Ogl2_colorchange()
 	}
 
 	/* best to do this after the colorit */
-	if (mvars.cueing_on){
+	if (((struct ogl_vars *)dm_vars)->mvars.cueing_on){
 		glEnable(GL_FOG);
 	} else {
 		glDisable(GL_FOG);
@@ -1504,7 +1480,7 @@ Ogl2_colorchange()
 void
 Ogl2_debug(lvl)
 {
-	mvars.debug = lvl;
+	((struct ogl_vars *)dm_vars)->mvars.debug = lvl;
 	XFlush(dpy);
 	rt_log("flushed\n");
 }
@@ -1539,6 +1515,7 @@ char	*name;
   int dsize, use, dbfr, rgba, red, blue, green, alpha, index;
   GLfloat backgnd[4];
   long supplied;
+  int j, k;
   int ndevices;
   int nclass = 0;
   XDeviceInfoPtr olist, list;
@@ -1580,10 +1557,8 @@ char	*name;
     return -1;
   }
 
-  ((struct ogl_vars *)dm_vars)->width =
-      DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-  ((struct ogl_vars *)dm_vars)->height =
-      DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+  ((struct ogl_vars *)dm_vars)->width = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+  ((struct ogl_vars *)dm_vars)->height = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
 
   /* Make window square */
   if(((struct ogl_vars *)dm_vars)->height < ((struct ogl_vars *)dm_vars)->width)
@@ -1619,7 +1594,7 @@ char	*name;
     return -1;
   }
 
-  Tk_GeometryRequest(xtkwin, width, height);
+  Tk_GeometryRequest(xtkwin, ((struct ogl_vars *)dm_vars)->width, ((struct ogl_vars *)dm_vars)->height);
   Tk_MoveToplevelWindow(xtkwin, 1276 - 976, 0);
   Tk_MakeWindowExist(xtkwin);
 
@@ -1641,8 +1616,8 @@ char	*name;
    */
   ogl2_is_direct = (char) glXIsDirect(dpy, glxc);
   rt_log("Using %s OpenGL rendering context.\n", ogl2_is_direct ? "a direct" : "an indirect");
-  /* set ogl2_Ogl2_used if the context was ever direct */
-  ogl2_Ogl2_used = (ogl2_is_direct || ogl2_Ogl2_used);
+  /* set ogl2_ogl_used if the context was ever direct */
+  ogl2_ogl_used = (ogl2_is_direct || ogl2_ogl_used);
 
   /*
    * Take a look at the available input devices. We're looking
@@ -1685,10 +1660,11 @@ char	*name;
       }
     }
   }
+Done:
   XFreeDeviceList(olist);
 
   /* Register the file descriptor with the Tk event handler */
-  Tk_CreateGenericHandler(Ogldoevent, (ClientData)NULL);
+  Tk_CreateGenericHandler(Ogl2_doevent, (ClientData)NULL);
 
 #if 0
   Tk_SetWindowBackground(xtkwin, bg);
@@ -1718,7 +1694,7 @@ char	*name;
   glFogi(GL_FOG_MODE, GL_LINEAR);
   glFogf(GL_FOG_START, 0.0);
   glFogf(GL_FOG_END, 2.0);
-  if (mvars.rgb)
+  if (((struct ogl_vars *)dm_vars)->mvars.rgb)
     glFogfv(GL_FOG_COLOR, backgnd);
   else
     glFogi(GL_FOG_INDEX, CMAP_RAMP_WIDTH - 1);
@@ -1829,11 +1805,11 @@ Tk_Window tkwin;
 						maxvip->visual, AllocNone);
 
 				if (Tk_SetWindowVisual(tkwin, maxvip->visual, maxvip->depth, cmap)){
-					mvars.doublebuffer = m_double;
-					glXGetConfig(dpy, maxvip, GLX_DEPTH_SIZE, &ogl2_depth_size);
-					if (ogl2_depth_size > 0)
-						ogl2_has_zbuf = 1;
-					mvars.rgb = m_rgba;
+					((struct ogl_vars *)dm_vars)->mvars.doublebuffer = m_double;
+					glXGetConfig(dpy, maxvip, GLX_DEPTH_SIZE, &((struct ogl_vars *)dm_vars)->mvars.depth);
+					if (((struct ogl_vars *)dm_vars)->mvars.depth > 0)
+						((struct ogl_vars *)dm_vars)->mvars.zbuf = 1;
+					((struct ogl_vars *)dm_vars)->mvars.rgb = m_rgba;
 					if (!m_rgba){
 						glXGetConfig(dpy, maxvip, GLX_BUFFER_SIZE, &ogl2_index_size);
 					}
@@ -1884,13 +1860,13 @@ Ogl2_configure_window_shape()
 	XFontStruct	*newfontstruct;
 
 	XGetWindowAttributes( dpy, win, &xwa );
-	height = xwa.height;
-	width = xwa.width;
+	((struct ogl_vars *)dm_vars)->height = xwa.height;
+	((struct ogl_vars *)dm_vars)->width = xwa.width;
 	
-	glViewport(0,  0, (width), (height));
-	glScissor(0,  0, (width)+1, (height)+1);
+	glViewport(0,  0, (((struct ogl_vars *)dm_vars)->width), (((struct ogl_vars *)dm_vars)->height));
+	glScissor(0,  0, (((struct ogl_vars *)dm_vars)->width)+1, (((struct ogl_vars *)dm_vars)->height)+1);
 
-	if( mvars.zbuffer_on )
+	if( ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on )
 	  establish_zbuffer();
 
 	establish_lighting();
@@ -1899,12 +1875,12 @@ Ogl2_configure_window_shape()
 	glDrawBuffer(GL_FRONT_AND_BACK);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
-	if (mvars.zbuffer_on)
+	if (((struct ogl_vars *)dm_vars)->mvars.zbuffer_on)
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	else
 		glClear( GL_COLOR_BUFFER_BIT);
 
-	if (mvars.doublebuffer)
+	if (((struct ogl_vars *)dm_vars)->mvars.doublebuffer)
 		glDrawBuffer(GL_BACK);
 	else
 		glDrawBuffer(GL_FRONT);
@@ -1936,7 +1912,7 @@ Ogl2_configure_window_shape()
 	/* Always try to choose a the font that best fits the window size.
 	 */
 
-	if (width < 582) {
+	if (((struct ogl_vars *)dm_vars)->width < 582) {
 		if (fontstruct->per_char->width != 5) {
 			if ((newfontstruct = XLoadQueryFont(dpy, FONT5)) != NULL ) {
 				XFreeFont(dpy,fontstruct);
@@ -1944,7 +1920,7 @@ Ogl2_configure_window_shape()
 				glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
 			}
 		}
-	} else if (width < 679) {
+	} else if (((struct ogl_vars *)dm_vars)->width < 679) {
 		if (fontstruct->per_char->width != 6){
 			if ((newfontstruct = XLoadQueryFont(dpy, FONT6)) != NULL ) {
 				XFreeFont(dpy,fontstruct);
@@ -1952,7 +1928,7 @@ Ogl2_configure_window_shape()
 				glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
 			}
 		}
-	} else if (width < 776) {
+	} else if (((struct ogl_vars *)dm_vars)->width < 776) {
 		if (fontstruct->per_char->width != 7){
 			if ((newfontstruct = XLoadQueryFont(dpy, FONT7)) != NULL ) {
 				XFreeFont(dpy,fontstruct);
@@ -1960,7 +1936,7 @@ Ogl2_configure_window_shape()
 				glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
 			}
 		}
-	} else if (width < 873) {
+	} else if (((struct ogl_vars *)dm_vars)->width < 873) {
 		if (fontstruct->per_char->width != 8){
 			if ((newfontstruct = XLoadQueryFont(dpy, FONT8)) != NULL ) {
 				XFreeFont(dpy,fontstruct);
@@ -1991,32 +1967,108 @@ Ogl2_dm(argc, argv)
 int	argc;
 char	**argv;
 {
-	struct rt_vls	vls;
+  struct rt_vls	vls;
 
-	if( argc < 1 )  return -1;
+  if( !strcmp( argv[0], "set" ) )  {
+    rt_vls_init(&vls);
+    if( argc < 2 )  {
+      /* Bare set command, print out current settings */
+      rt_structprint("dm_ogl internal variables", Ogl2_vparse, (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
+      rt_log("%s", rt_vls_addr(&vls) );
+    } else if( argc == 2 ) {
+      rt_vls_name_print( &vls, Ogl2_vparse, argv[1], (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
+      rt_log( "%s\n", rt_vls_addr(&vls) );
+    } else {
+      rt_vls_printf( &vls, "%s=\"", argv[1] );
+      rt_vls_from_argv( &vls, argc-2, argv+2 );
+      rt_vls_putc( &vls, '\"' );
+      rt_structparse( &vls, Ogl2_vparse, (char *)&((struct ogl_vars *)dm_vars)->mvars );
+    }
+    rt_vls_free(&vls);
+    return CMD_OK;
+  }
 
-	/* For now, only "set" command is implemented */
-	if( strcmp( argv[0], "set" ) != 0 )  {
-		rt_log("dm: command is not 'set'\n");
-		return CMD_BAD;
+  if( !strcmp( argv[0], "mouse" )){
+    {
+      int buttonpress;
+      int xpos;
+      int ypos;
+
+      if( argc < 4){
+	rt_log("dm: need more parameters\n");
+	rt_log("mouse 1|0 xpos ypos\n");
+	return CMD_BAD;
+      }
+
+      buttonpress = atoi(argv[1]);
+      xpos = atoi(argv[2]);
+      ypos = atoi(argv[3]);
+
+      rt_vls_init(&vls);
+      rt_vls_printf(&vls, "M %d %d %d\n",
+		    buttonpress, irisX2ged(xpos), irisY2ged(ypos));
+      (void)cmdline(&vls, FALSE);
+      rt_vls_free(&vls);
+    }
+
+    return CMD_OK;
+  }
+
+#ifdef VIRTUAL_TRACKBALL  
+  if(((struct ogl_vars *)dm_vars)->mvars.virtual_trackball){
+  if( !strcmp( argv[0], "vtb" )){
+    int buttonpress;
+
+    if( argc < 5){
+      rt_log("dm: need more parameters\n");
+      rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
+      return CMD_BAD;
+    }
+
+    buttonpress = atoi(argv[2]);
+    omx = atoi(argv[3]);
+    omy = atoi(argv[4]);
+
+    if(buttonpress){
+      switch(*argv[1]){
+      case 'r':
+	((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
+	break;
+      case 't':
+	{
+	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
+	  rt_vls_init(&vls);
+	  rt_vls_printf( &vls, "tran %f %f %f\n",
+			 (omx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 2,
+			 (0.5 - omy/(double)((struct ogl_vars *)dm_vars)->height) * 2,
+			 tran_z);
+
+	  (void)cmdline(&vls, FALSE);
+	  rt_vls_free(&vls);
 	}
+	break;
+      case 'z':
+	((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
+	break;
+      default:
+	rt_log("dm: need more parameters\n");
+	rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
+	return CMD_BAD;
+      }
 
-	rt_vls_init(&vls);
-	if( argc < 2 )  {
-		/* Bare set command, print out current settings */
-		rt_structprint("dm_ogl internal variables", ogl2_vparse, (char *)0 );
-		rt_log("%s", rt_vls_addr(&vls) );
-	} else if( argc == 2 ) {
-	        rt_vls_name_print( &vls, ogl2_vparse, argv[1], (char *)0 );
-		rt_log( "%s\n", rt_vls_addr(&vls) );
-  	} else {
-	        rt_vls_printf( &vls, "%s=\"", argv[1] );
-	        rt_vls_from_argv( &vls, argc-2, argv+2 );
-		rt_vls_putc( &vls, '\"' );
-		rt_structparse( &vls, ogl2_vparse, (char *)0 );
-	}
-	rt_vls_free(&vls);
-	return CMD_OK;
+    }else{
+      ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
+    }
+
+    return CMD_OK;
+  }
+  }else{
+    return CMD_OK;
+  }
+#endif
+
+  rt_log("dm: bad command - %s\n", argv[0]);
+  return CMD_BAD;
 }
 
 void	
@@ -2024,17 +2076,17 @@ establish_lighting()
 {
 
 
-	if (!mvars.lighting_on) {
+	if (!((struct ogl_vars *)dm_vars)->mvars.lighting_on) {
 		/* Turn it off */
 		glDisable(GL_LIGHTING);
-		if (!mvars.rgb)
+		if (!((struct ogl_vars *)dm_vars)->mvars.rgb)
 			Ogl2_colorchange();
 	} else {
 		/* Turn it on */
 
-		if (!mvars.rgb){
-			if (mvars.cueing_on){
-				mvars.cueing_on = 0;
+		if (!((struct ogl_vars *)dm_vars)->mvars.rgb){
+			if (((struct ogl_vars *)dm_vars)->mvars.cueing_on){
+				((struct ogl_vars *)dm_vars)->mvars.cueing_on = 0;
 				glDisable(GL_FOG);
 			} 
 			Ogl2_colorchange();
@@ -2064,15 +2116,15 @@ establish_lighting()
 }	
 
 
-void	
+static void	
 establish_zbuffer()
 {
-	if( ogl2_has_zbuf == 0 ) {
+	if( ((struct ogl_vars *)dm_vars)->mvars.zbuf == 0 ) {
 		rt_log("dm-ogl: This machine has no Zbuffer to enable\n");
-		mvars.zbuffer_on = 0;
+		((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 0;
 	}
 
-	if (mvars.zbuffer_on)  {
+	if (((struct ogl_vars *)dm_vars)->mvars.zbuffer_on)  {
 		glEnable(GL_DEPTH_TEST);
 	} else {
 		glDisable(GL_DEPTH_TEST);
@@ -2082,8 +2134,56 @@ establish_zbuffer()
 	return;
 }
 
+static void
+establish_perspective()
+{
+  rt_vls_printf( &dm_values.dv_string,
+		 "set perspective %d\n",
+		 ((struct ogl_vars *)dm_vars)->mvars.perspective_mode ?
+		 perspective_table[perspective_angle] :
+		 -1 );
+  dmaflag = 1;
+}
 
-void
+/*
+  This routine will toggle the perspective_angle if the
+  dummy_perspective value is 0 or less. Otherwise, the
+  perspective_angle is set to the value of (dummy_perspective - 1).
+*/
+static void
+set_perspective()
+{
+  /* set perspective matrix */
+  if(((struct ogl_vars *)dm_vars)->mvars.dummy_perspective > 0)
+    perspective_angle = ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective <= 4 ? ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective - 1: 3;
+  else if (--perspective_angle < 0) /* toggle perspective matrix */
+    perspective_angle = 3;
+
+  if(((struct ogl_vars *)dm_vars)->mvars.perspective_mode)
+    rt_vls_printf( &dm_values.dv_string,
+		  "set perspective %d\n",
+		  perspective_table[perspective_angle] );
+
+  /*
+     Just in case the "!" is used with the set command. This
+     allows us to toggle through more than two values.
+   */
+  ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective = 1;
+
+  dmaflag = 1;
+}
+
+
+#ifdef VIRTUAL_TRACKBALL
+static void
+establish_vtb()
+{
+  return;
+}
+#endif
+
+
+static void
 Ogl2_colorit()
 {
 	register struct solid	*sp;
@@ -2091,7 +2191,7 @@ Ogl2_colorit()
 	register int i;
 	register int r,g,b;
 
-	if( mvars.rgb )  return;
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  return;
 
 	FOR_ALL_SOLIDS( sp )  {
 		r = sp->s_color[0];
@@ -2128,6 +2228,26 @@ next:
 }
 
 
+#if IR_KNOBS
+/*
+ *			I R L I M I T
+ *
+ * Because the dials are so sensitive, setting them exactly to
+ * zero is very difficult.  This function can be used to extend the
+ * location of "zero" into "the dead zone".
+ */
+static 
+int irlimit(i)
+int i;
+{
+	if( i > NOISE )
+		return( i-NOISE );
+	if( i < -NOISE )
+		return( i+NOISE );
+	return(0);
+}
+#endif
+
 /*			G E N _ C O L O R
  *
  *	maps a given color into the appropriate colormap entry
@@ -2136,7 +2256,7 @@ next:
  *	mode, DM_BLACK uses map entry 0, and does not generate a ramp for it.
  *	Non depthcued mode skips the first CMAP_BASE colormap entries.
  *
- *	This routine is not called at all if mvars.rgb is set.
+ *	This routine is not called at all if ((struct ogl_vars *)dm_vars)->mvars.rgb is set.
  */
 void
 Ogl2_gen_color(c)
@@ -2165,7 +2285,7 @@ int c;
 #endif
 			
 
-			if (mvars.cueing_on){
+			if (((struct ogl_vars *)dm_vars)->mvars.cueing_on){
 				for(i = 0, j = MAP_ENTRY(c) + CMAP_RAMP_WIDTH - 1; 
 					i < CMAP_RAMP_WIDTH;
 				    i++, j--, red += r_inc, green += g_inc, blue += b_inc){
@@ -2175,7 +2295,7 @@ int c;
 				    	cells[i].blue = (short)blue;
 				    	cells[i].flags = DoRed|DoGreen|DoBlue;
 				}
-			} else { /* mvars.lighting_on */ 
+			} else { /* ((struct ogl_vars *)dm_vars)->mvars.lighting_on */ 
 				for(i = 0, j = MAP_ENTRY(c) - CMAP_RAMP_WIDTH + 1; 
 					i < CMAP_RAMP_WIDTH;
 				    i++, j++, red += r_inc, green += g_inc, blue += b_inc){
@@ -2201,7 +2321,7 @@ int c;
 	}
 }
 
-void
+static void
 print_cmap()
 {
 	int i;
@@ -2215,22 +2335,53 @@ print_cmap()
 }
 
 static void
+set_knob_offset()
+{
+  int i;
+
+  for(i = 0; i < 8; ++i){
+#if 0
+    knobs_offset[i] = knobs[i];
+#else
+    knobs[i] = 0;
+#endif
+  }
+}
+
+static void
 Ogl_var_init()
 {
-  dm_vars = (char *)rt_malloc(sizeof(struct ogl_vars), Ogl_var_init: "ogl_vars");
+  dm_vars = (char *)rt_malloc(sizeof(struct ogl_vars), "Ogl_var_init: ogl_vars");
   bzero((void *)dm_vars, sizeof(struct ogl_vars));
   devmotionnotify = LASTEvent;
   devbuttonpress = LASTEvent;
   devbuttonrelease = LASTEvent;
 
   /* initialize the modifiable variables */
-  mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
-  mvars.zclipping_on = 1;       /* Z Clipping flag */
-  mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
-  mvars.linewidth = 1;      /* Line drawing width */
-  mvars.dummy_perspective = 1;
+  ((struct ogl_vars *)dm_vars)->mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
+  ((struct ogl_vars *)dm_vars)->mvars.zclipping_on = 1;       /* Z Clipping flag */
+  ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
+  ((struct ogl_vars *)dm_vars)->mvars.linewidth = 1;      /* Line drawing width */
+  ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective = 1;
 }
 
+static void
+ogl_var_init()
+{
+  dm_vars = (char *)rt_malloc(sizeof(struct ogl_vars),
+					    "ogl_var_init: glx_vars");
+  bzero((void *)dm_vars, sizeof(struct ogl_vars));
+  devmotionnotify = LASTEvent;
+  devbuttonpress = LASTEvent;
+  devbuttonrelease = LASTEvent;
+
+  /* initialize the modifiable variables */
+  ((struct ogl_vars *)dm_vars)->mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
+  ((struct ogl_vars *)dm_vars)->mvars.zclipping_on = 1;       /* Z Clipping flag */
+  ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
+  ((struct ogl_vars *)dm_vars)->mvars.linewidth = 1;      /* Line drawing width */
+  ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective = 1;
+}
 
 static struct dm_list *
 get_dm_list(window)
@@ -2241,6 +2392,13 @@ Window window;
 
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     if(window == ((struct ogl_vars *)p->_dm_vars)->_win)
+      if (!glXMakeCurrent(((struct ogl_vars *)p->_dm_vars)->_dpy,
+			  ((struct ogl_vars *)p->_dm_vars)->_win,
+			  ((struct ogl_vars *)p->_dm_vars)->_glxc)){
+	rt_log("Ogl2_open: Couldn't make context current\n");
+	return DM_LIST_NULL;
+      }
+
       return p;
   }
 

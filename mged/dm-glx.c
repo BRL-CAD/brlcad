@@ -62,6 +62,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/extensions/XInput.h>
 #include <X11/Xutil.h>
 #include "tkGLX.h"
+#include "./glxinit.h"
 
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
@@ -118,6 +119,8 @@ static Tk_GenericProc Glx_doevent;
 #else
 static int Glx_doevent();
 #endif
+static void glx_var_init();
+
 
 #define dpy (((struct glx_vars *)dm_vars)->_dpy)
 #define win (((struct glx_vars *)dm_vars)->_win)
@@ -182,8 +185,6 @@ struct glx_vars {
   fastf_t _aspect;
   struct modifiable_glx_vars _mvars;
 };
-
-void glx_var_init();
 
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
@@ -446,7 +447,6 @@ char *name;
   XDevice *dev;
   XEventClass e_class[15];
   XInputClassInfo *cip;
-  XAnyClassPtr any;
   GLXconfig *glx_config, *p;
   Display *tmp_dpy;
 
@@ -477,15 +477,6 @@ char *name;
   rt_vls_printf(&pathName, ".dm_glx%d", ref_count++);
   ref = strdup(rt_vls_addr(&pathName));
   rt_vls_strcat(&pathName, ".win"); 
-
-  /* initialize the modifiable variables */
-  mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
-  mvars.zclipping_on = 1;       /* Z Clipping flag */
-  mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
-  mvars.lighting_on = 0;        /* Lighting model on */
-  mvars.linewidth = 1;      /* Line drawing width */
-  mvars.dummy_perspective = 1;
-  mvars.perspective_mode = 0;   /* Perspective flag */
 
   if((tmp_dpy = XOpenDisplay(name)) == NULL){
     rt_vls_free(&str);
@@ -731,7 +722,15 @@ Glx_load_startup()
 
   if(!found){
     rt_vls_free(&str);
-    return -1;
+
+    /* Using default */
+    if(Tcl_Eval( interp, glx_init_str ) == TCL_ERROR){
+      rt_log("Glx_load_startup: Error interpreting glx_init_str.\n");
+      rt_log("%s\n", interp->result);
+      return -1;
+    }
+
+    return 0;
   }
 
   fclose( fp );
@@ -767,13 +766,12 @@ Glx_close()
   lmbind(LIGHT4,0);
   lmbind(LIGHT5,0);
 
-
   frontbuffer(1);
   glx_clear_to_black();
   frontbuffer(0);
 
   Tk_DestroyWindow(Tk_Parent(xtkwin));
-  Tk_DeleteGenericHandler(Glx_doevent, (ClientData)curr_dm_list);
+  Tk_DeleteGenericHandler(Glx_doevent, (ClientData)NULL);
   knob_offset_hook = NULL;
   rt_free(dm_vars, "Glx_close: dm_vars");
   rt_vls_free(&pathName);
@@ -844,7 +842,7 @@ Glx_epilog()
   Glx_2d_line( 0, 0, 0, 0, 0 );
   /* End of faceplate */
 
-  if(mvars.doublebuffer ){
+  if(mvars.doublebuffer){
     swapbuffers();
     /* give Graphics pipe time to work */
     glx_clear_to_black();
@@ -1246,7 +1244,6 @@ Glx_doevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
-  XEvent event;
   static int button0  = 0;   /*  State of button 0 */
   static int knobs_during_help[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -1308,6 +1305,7 @@ annoying when running remotely. */
 
     switch(mvars.virtual_trackball){
     case VIRTUAL_TRACKBALL_OFF:
+    case VIRTUAL_TRACKBALL_ON:
       /* do the regular thing */
       mx = (mx/(double)winx_size - 0.5) * 4095;
       my = (0.5 - my/(double)winy_size) * 4095;
@@ -1316,19 +1314,16 @@ annoying when running remotely. */
       rt_vls_printf( &cmd, "M 0 %d %d\n", mx, my );
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
-      rt_vls_printf( &cmd, "irot %f %f 0\n", (double)(my - omy)/2.0,
-		     (double)(mx - omx)/2.0);
+      rt_vls_printf( &cmd, "irot %f %f 0\n", (my - omy)/2.0,
+		     (mx - omx)/2.0);
       break;
     case VIRTUAL_TRACKBALL_TRANSLATE:
-      rt_vls_printf( &cmd, "tran %f %f %f", ((double)mx/winx_size - 0.5) * 2,
-		     (0.5 - (double)my/winy_size) * 2, tran_z);
+      rt_vls_printf( &cmd, "tran %f %f %f\n", (mx/(double)winx_size - 0.5) * 2,
+		     (0.5 - my/(double)winy_size) * 2, tran_z);
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
-      rt_vls_printf( &cmd, "zoom %lf", (double)(omy - my)/winy_size + 1.0);
+      rt_vls_printf( &cmd, "zoom %lf\n", (omy - my)/(double)winy_size + 1.0);
       break;
-    case VIRTUAL_TRACKBALL_IGNORE:
-    default:
-      goto end;
     }
 
     omx = mx;
@@ -1516,24 +1511,28 @@ Glx_statechange( a, b )
    *  including enabling continuous tablet tracking,
    *  object highlighting
    */
-#ifdef VIRTUAL_TRACKBALL
-  if(!mvars.virtual_trackball){
-#endif
  	switch( b )  {
 	case ST_VIEW:
+#ifdef VIRTUAL_TRACKBALL
+	  if(!mvars.virtual_trackball)
+#endif
 	  /* constant tracking OFF */
-	    XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-			 KeyPressMask|StructureNotifyMask);
+	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
+		       KeyPressMask|StructureNotifyMask);
 	  break;
 	case ST_S_PICK:
 	case ST_O_PICK:
 	case ST_O_PATH:
+	case ST_S_VPICK:
 	  /* constant tracking ON */
 	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
 		       KeyPressMask|StructureNotifyMask|PointerMotionMask|ButtonMotionMask);
 	  break;
 	case ST_O_EDIT:
 	case ST_S_EDIT:
+#ifdef VIRTUAL_TRACKBALL
+	  if(!mvars.virtual_trackball)
+#endif
 	  /* constant tracking OFF */
 	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
 		       KeyPressMask|StructureNotifyMask);
@@ -1542,9 +1541,7 @@ Glx_statechange( a, b )
 		rt_log("Glx_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
-#ifdef VIRTUAL_TRACKBALL
-  }
-#endif
+
 	Glx_viewchange( DM_CHGV_REDO, SOLID_NULL );
 }
 
@@ -1849,20 +1846,17 @@ establish_vtb()
 {
   if(mvars.virtual_trackball){
     if(state != ST_S_PICK && state != ST_O_PICK &&
-       state != ST_O_PATH && state != ST_S_VPICK){
-
+       state != ST_O_PATH && state != ST_S_VPICK)
       /* turn constant tracking ON */
       XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
 		   KeyPressMask|StructureNotifyMask|PointerMotionMask|ButtonMotionMask);
-    }
   }else{
     if(state != ST_S_PICK && state != ST_O_PICK &&
-       state != ST_O_PATH && state != ST_S_VPICK){
+       state != ST_O_PATH && state != ST_S_VPICK)
 
       /* turn constant tracking OFF */
       XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
 		   KeyPressMask|StructureNotifyMask);
-    }
   }
 }
 #endif
@@ -2394,8 +2388,12 @@ char	**argv;
       buttonpress = atoi(argv[1]);
       xpos = atoi(argv[2]);
       ypos = atoi(argv[3]);
-      rt_vls_printf(&dm_values.dv_string, "M %d %d %d\n",
+
+      rt_vls_init(&vls);
+      rt_vls_printf(&vls, "M %d %d %d\n",
 		    buttonpress, irisX2ged(xpos), irisY2ged(ypos));
+      (void)cmdline(&vls, FALSE);
+      rt_vls_free(&vls);
     }
 
     return CMD_OK;
@@ -2412,7 +2410,6 @@ char	**argv;
       return CMD_BAD;
     }
 
-
     buttonpress = atoi(argv[2]);
     omx = atoi(argv[3]);
     omy = atoi(argv[4]);
@@ -2424,14 +2421,13 @@ char	**argv;
 	break;
       case 't':
 	{
-	  struct rt_vls cmd;
-	  rt_vls_init(&cmd);
-
 	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-	  rt_vls_printf( &cmd, "tran %f %f %f", ((double)omx/winx_size - 0.5) * 2,
-			 (0.5 - (double)omy/winy_size) * 2, tran_z);
+	  rt_vls_init(&vls);
+	  rt_vls_printf( &vls, "tran %f %f %f\n", (omx/(double)winx_size - 0.5) * 2,
+			 (0.5 - omy/(double)winy_size) * 2, tran_z);
 
-	  (void)cmdline(&cmd, FALSE);
+	  (void)cmdline(&vls, FALSE);
+	  rt_vls_free(&vls);
 	}
 	break;
       case 'z':
@@ -2460,7 +2456,7 @@ char	**argv;
       }
 #endif
     }else{
-      mvars.virtual_trackball = VIRTUAL_TRACKBALL_IGNORE;
+      mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
 
 #if 0
       if(state != ST_S_PICK && state != ST_O_PICK &&
@@ -2484,7 +2480,7 @@ char	**argv;
   return CMD_BAD;
 }
 
-void
+static void
 set_knob_offset()
 {
   int i;
@@ -2498,7 +2494,7 @@ set_knob_offset()
   }
 }
 
-void
+static void
 glx_var_init()
 {
   dm_vars = (char *)rt_malloc(sizeof(struct glx_vars),
@@ -2507,10 +2503,17 @@ glx_var_init()
   devmotionnotify = LASTEvent;
   devbuttonpress = LASTEvent;
   devbuttonrelease = LASTEvent;
+
+  /* initialize the modifiable variables */
+  mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
+  mvars.zclipping_on = 1;       /* Z Clipping flag */
+  mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
+  mvars.linewidth = 1;      /* Line drawing width */
+  mvars.dummy_perspective = 1;
 }
 
 
-struct dm_list *
+static struct dm_list *
 get_dm_list(window)
 Window window;
 {
@@ -2598,7 +2601,6 @@ extern int dm_pipe[];
 
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
-extern inventory_t	*getinvent();
 extern void (*knob_offset_hook)();
 
 /* Display Manager package interface */
