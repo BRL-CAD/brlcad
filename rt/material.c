@@ -22,12 +22,16 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <sys/param.h>
 #include <ctype.h>
 #include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
+#endif
+#ifdef HAVE_DLOPEN
+#include <dlfcn.h>
 #endif
 
 #include "machine.h"
@@ -61,6 +65,87 @@ struct mfuncs *mfp1;
 	}
 }
 
+#ifdef HAVE_DLOPEN
+/*
+ *
+ *
+ *
+ *
+ */
+static struct mfuncs *
+try_load(const char *path, const char *material)
+{
+	void *handle;
+	struct mfuncs *shader_mfuncs;
+	struct mfuncs *mfp;
+	char *dl_error_str;
+
+	if ( ! (handle = dlopen(path, RTLD_NOW)) )
+		return (struct mfuncs *)NULL;
+
+	/* check for the appropriate symbol in the library */
+	shader_mfuncs = dlsym(handle, "shader_mfuncs");
+	if ( (dl_error_str=dlerror()) != (char *)NULL) {
+		dlclose(handle);
+		return (struct mfuncs *)NULL;
+	}
+
+	/* make sure the shader we were looking for is in the mfuncs table */
+	for (mfp = shader_mfuncs ; mfp->mf_name != (char *)NULL; mfp++) {
+		RT_CK_MF(mfp);
+		if ( ! strcmp(mfp->mf_name, material)) 
+			return shader_mfuncs; /* found ! */
+	}
+
+	/* found the library, but not the shader */
+	dlclose(handle);
+	return (struct mfuncs *)NULL;
+}
+
+
+/*
+ *
+ *
+ *
+ *
+ */
+static struct mfuncs *
+load_dynamic_shader(const char *material,
+		    const int mlen)
+{
+	void *handle;
+	struct mfuncs *shader_mfuncs;
+	char libname[MAXPATHLEN];
+	char cwd[MAXPATHLEN];
+	char sym[MAXPATHLEN];
+	getcwd(cwd);
+
+	/* Look in the current working directory for lib{material}.so.1 */
+	sprintf(libname, "%s/lib%s.so.1", cwd, material);
+	if ( shader_mfuncs = try_load(libname, material) )
+		 return shader_mfuncs;
+
+	/* Look in the current working directory for libshaders.so.1 */
+	sprintf(libname, "%s/libshaders.so.1", cwd, material);
+	if ( shader_mfuncs = try_load(libname, material) )
+		return shader_mfuncs;
+
+	/* Look in the location indicated by $LD_LIBRARY_PATH */
+	sprintf(libname, "lib%s.so.1", material);
+	if ( shader_mfuncs = try_load(libname, material) )
+		return shader_mfuncs;
+
+	/* Look in $BRLCAD_ROOT/lib/ */
+	strcpy(libname, bu_brlcad_path(""));
+	sprintf( &libname[strlen(libname)], "/lib/lib%s.so.1", material);
+	if ( shader_mfuncs = try_load(libname, material) ) 
+		return shader_mfuncs;
+
+	return (struct mfuncs *)NULL;
+
+}
+#endif
+
 /*
  *			M L I B _ S E T U P
  *
@@ -76,6 +161,7 @@ register struct region	*rp;
 struct rt_i		*rtip;
 {
 	register CONST struct mfuncs *mfp;
+	register struct mfuncs *mfp_new;
 	int		ret;
 	struct bu_vls	param;
 	CONST char	*material;
@@ -110,6 +196,27 @@ retry:
 			continue;
 		goto found;
 	}
+
+#ifdef HAVE_DLOPEN
+	/* If we get here, then the shader wasn't found in the list of 
+	 * compiled-in (or previously loaded) shaders.  See if we can
+	 * dynamically load it.
+	 */
+
+	if (mfp_new = load_dynamic_shader(material, mlen)) {
+		mlib_add_shader(headp, mfp_new);
+		goto retry;
+	}
+
+#endif
+
+
+	/* If we get here, then the shader was not found at all (either in
+	 * the compiled-in or dynamically loaded shader sets).  We set the
+	 * shader name to "default" (which should match an entry in the 
+	 * table) and search again.
+	 */
+
 	bu_log("\n*ERROR mlib_setup('%s'):  material not known, default assumed %s\n",
 		material, rp->reg_name );
 	if( material != mdefault )  {
