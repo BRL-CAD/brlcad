@@ -1,6 +1,4 @@
-.TH PP-FB 1V VMB
-'\"	last edit:	85/04/22	G. S. Moss
-'\"	SCCS ID:	@(#)pp-fb.1	1.2
+.TH PP-FB 1 BRL/CAD
 .SH NAME
 pp-fb \- display a GIFT pretty-picture file on a frame buffer
 .SH SYNOPSIS
@@ -14,32 +12,36 @@ determines the size,
 and displays a color shaded image represented therein
 on a frame buffer.
 The
-.SM
-.B PP
-files are the output from using the pretty-picture option of the
+.I .pp
+files are the output of the pretty-picture option of the
 .IR gift\^ (1V)
 ray-tracing program.
 Some information pertaining to the color assignment of region identification
 numbers and the background color is prompted for on the standard input.
-By default, the frame buffer device
-.B /dev/ik0l
-is assumed.
-This may be changed by setting the environment
+The environment
 variable
 .B
 .SM FB_FILE
-to the name of another device or file name
-and exporting it before execution of 
-.IR pp-fb\^ .
+is used to select the display device (see
+.IR brlcad (1)).
+If this variable is not set, the default device for your system will
+be used.
 Commands for manipulating the display are documented on-line.
-.SH FILE
-/vld/lib/libfb.a
+The file format is not documented anywhere.
 .SH "SEE ALSO"
-gift(1V).
+gift(1V), brlcad(1).
 .SH AUTHORS
-.PP 
-Gary Kuehl, BRL-VLD/ATB
+Gary Kuehl
 .br
-Michael John Muuss, BRL-SECAD
+Michael John Muuss
 .br
-Gary S. Moss, BRL-VLD/VMB
+Gary S. Moss
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
