@@ -202,7 +202,12 @@ int y_top;
 	for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
 		for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
 		     	y += SCROLL_DY;		/* y is now bottom line pos */
-		     	xpos = *(mptr->scroll_val) * 2047;
+			if( *(mptr->scroll_val) >= 0 )  {
+			     	xpos = *(mptr->scroll_val) * 2047;
+			} else {
+				/* The menu gets in the way */
+			     	xpos = *(mptr->scroll_val) * -MENUXLIM;
+			}
 			dmp->dmr_puts( mptr->scroll_string,
 				xpos, y-SCROLL_DY/2, 0, DM_RED );
 			dmp->dmr_2d_line(XMAX, y, MENUXLIM, y, 0);
@@ -250,8 +255,17 @@ register int	pen_y;
 			if( pen_y < yy )
 				continue;	/* pen below this item */
 
-			/* Record the location of scroll marker */
-			*(mptr->scroll_val) = pen_x/2047.0;
+			/*
+			 *  Record the location of scroll marker.
+			 *  Note that the left side has less width than
+			 *  the right side, due to the presence of the
+			 *  menu text area on the left.
+			 */
+			if( pen_x >= 0 )  {
+				*(mptr->scroll_val) = pen_x/2047.0;
+			} else {
+				*(mptr->scroll_val) = pen_x/(double)(-MENUXLIM);
+			}
 
 			/* See if hooked function has been specified */
 			if( mptr->scroll_func == ((void (*)())0) )  continue;
