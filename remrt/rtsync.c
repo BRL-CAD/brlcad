@@ -184,6 +184,8 @@ static	int	height = 0;
 CONST char	*database;
 struct rt_vls	treetops;
 
+struct timeval	time_start;
+
 void	new_rtnode();
 void	drop_rtnode();
 void	setup_socket();
@@ -430,6 +432,9 @@ dispatcher()
 	}
 	rt_log("%s dispatcher() has %d cpus\n", stamp(), ncpu);
 	if( ncpu <= 0 )  return 0;
+
+	/* Record starting time for this frame */
+	(void)gettimeofday( &time_start, (struct timezone *)NULL );
 
 	/* Have some CPUS! Parcel up 'height' scanlines. */
 	start_line = 0;
@@ -817,6 +822,19 @@ char			*buf;
 }
 
 /*
+ *			T V D I F F
+ *
+ *  Return t1 - t0, as a floating-point number of seconds.
+ */
+double
+tvdiff(t1, t0)
+struct timeval	*t1, *t0;
+{
+	return( (t1->tv_sec - t0->tv_sec) +
+		(t1->tv_usec - t0->tv_usec) / 1000000. );
+}
+
+/*
  *			R T S Y N C _ P H _ D O N E
  */
 void
@@ -825,6 +843,8 @@ register struct pkg_conn *pc;
 char			*buf;
 {
 	register int	i;
+	struct timeval	time_end;
+	double		interval;
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].pkg != pc )  continue;
@@ -846,6 +866,14 @@ check_others:
 	}
 	/* This frame is now done, flush to screen */
 	fb_flush(fbp);
+
+	/* Compute total time for this frame */
+	(void)gettimeofday( &time_end, (struct timezone *)NULL );
+	interval = tvdiff( &time_end, &time_start );
+	if( interval <= 0 )  interval = 999;
+	rt_log("%s Frame complete in %g seconds (%g fps)\n",
+		stamp(),
+		interval, 1.0/interval );
 }
 
 /*
