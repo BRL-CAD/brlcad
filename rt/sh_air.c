@@ -234,6 +234,9 @@ char	*dp;
 	VMOVE(swp->sw_basecolor, air_sp->color);
 #endif
 
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
+
 	if( rdebug&RDEBUG_SHADE)
 		rt_log("air o dist:%gmm tau:%g transmit:%g color(%g %g %g)\n",
 			dist, tau, swp->sw_transmit, V3ARGS(swp->sw_color) );
