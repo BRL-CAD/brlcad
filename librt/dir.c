@@ -57,7 +57,6 @@ int	len;
 	    	return( RTI_NULL );		/* FAIL */
 
 	GETSTRUCT( rtip, rt_i );
-	bzero( (char *)rtip, sizeof(struct rt_i) );
 	rtip->rti_magic = RTI_MAGIC;
 	rtip->rti_dbip = dbip;
 	rtip->needprep = 1;
