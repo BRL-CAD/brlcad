@@ -120,27 +120,12 @@ static struct scanline {
 
 static int	pwidth;			/* Width of each pixel (in bytes) */
 
-#if CRAY
-#	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
-#else
-#  if IRIX > 5
-#	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
-#  else
-#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
-	/* "Lazy" way.  Works on reasonable machines with byte addressing */
-#	define byteoffset(_i)	((int)((char *)&(_i)))
-#    else
-	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
-#    endif
-#  endif
-#endif
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 #if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
-	{"%d",	1, "bounces",	byteoffset(max_bounces),		FUNC_NULL },
-	{"%d",	1, "ireflect",	byteoffset(max_ireflect),		FUNC_NULL },
-	{"%f", ELEMENTS_PER_VECT, "background",byteoffset(background[0]),	FUNC_NULL },
+	{"%d",	1, "bounces",	bu_byteoffset(max_bounces),		FUNC_NULL },
+	{"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		FUNC_NULL },
+	{"%f", ELEMENTS_PER_VECT, "background",bu_byteoffset(background[0]),	FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				FUNC_NULL }
 };
