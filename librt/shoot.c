@@ -689,14 +689,7 @@ rt_find_backing_dist( struct rt_shootray_status *ss, struct bu_bitv *backbits ) 
 	rtip = ss->ap->a_rt_i;
 
 	/* get a bit vector of our own to avoid duplicate bounding box intersection calculations */
-	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
-		solidbits = bu_bitv_new( rtip->nsolids );
-	} else {
-		solidbits = BU_LIST_FIRST( bu_bitv, &resp->re_solid_bitv );
-		BU_LIST_DEQUEUE( &solidbits->l );
-		BU_CK_BITV(solidbits);
-		BU_BITV_NBITS_CHECK( solidbits, rtip->nsolids );
-	}
+	solidbits = get_solidbitv( rtip->nsolids, resp );
 	bu_bitv_clear(solidbits);
 
 	ray = ss->ap->a_ray;	/* struct copy, don't mess with the original */
@@ -895,14 +888,7 @@ register struct application *ap;
 	if( resp != &rt_uniresource )
 		BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL );
 
-	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
-		solidbits = bu_bitv_new( rtip->nsolids );
-	} else {
-		solidbits = BU_LIST_FIRST( bu_bitv, &resp->re_solid_bitv );
-		BU_LIST_DEQUEUE( &solidbits->l );
-		BU_CK_BITV(solidbits);
-		BU_BITV_NBITS_CHECK( solidbits, rtip->nsolids );
-	}
+	solidbits = get_solidbitv( rtip->nsolids, resp );
 	bu_bitv_clear(solidbits);
 
 	if( BU_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {
@@ -1064,15 +1050,7 @@ register struct application *ap;
 			 * behind the ray start point (those having bounding boxes extending behind the
 			 * ray start point and using pieces)
 			 */
-			if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
-				backbits = bu_bitv_new( rtip->nsolids );
-				BU_CK_BITV(backbits);
-			} else {
-				backbits = BU_LIST_FIRST( bu_bitv, &resp->re_solid_bitv );
-				BU_LIST_DEQUEUE( &backbits->l );
-				BU_CK_BITV(backbits);
-				BU_BITV_NBITS_CHECK( backbits, rtip->nsolids );
-			}
+			backbits = get_solidbitv( rtip->nsolids, resp );
 			bu_bitv_clear(backbits);
 
 			/* call "rt_find_backing_dist()" to calculate the required
@@ -1971,6 +1949,29 @@ rt_pr_library_version()
 	bu_log("%s", rt_version);
 }
 
+void
+rt_zero_res_stats( struct resource *resp )
+{
+	RT_CK_RESOURCE( resp );
+
+	resp->re_nshootray = 0;
+	resp->re_nmiss_model = 0;
+
+	resp->re_shots = 0;
+	resp->re_shot_hit = 0;
+	resp->re_shot_miss = 0;
+
+	resp->re_prune_solrpp = 0;
+
+	resp->re_ndup = 0;
+	resp->re_nempty_cells = 0;
+
+	resp->re_piece_shots = 0;
+	resp->re_piece_shot_hit = 0;
+	resp->re_piece_shot_miss = 0;
+	resp->re_piece_ndup = 0;
+}
+
 /*
  *			R T _ A D D _ R E S _ S T A T S
  *
@@ -2004,22 +2005,7 @@ register struct resource	*resp;
 	rtip->nempty_cells += resp->re_nempty_cells;
 
 	/* Zero out resource totals, so repeated calls are not harmful */
-	resp->re_nshootray = 0;
-	resp->re_nmiss_model = 0;
-
-	resp->re_shots = 0;
-	resp->re_shot_hit = 0;
-	resp->re_shot_miss = 0;
-
-	resp->re_prune_solrpp = 0;
-
-	resp->re_ndup = 0;
-	resp->re_nempty_cells = 0;
-
-	resp->re_piece_shots = 0;
-	resp->re_piece_shot_hit = 0;
-	resp->re_piece_shot_miss = 0;
-	resp->re_piece_ndup = 0;
+	rt_zero_res_stats( resp );
 }
 
 /*
