@@ -1,3 +1,11 @@
+*** NOTICE ***
+
+The regression scripts are currently undergoing an overhaul.  The regression
+scripts, source files, and architecture is expected to change drastically
+and should not be relied upon.  You have been warned.
+
+---
+
 This directory contains scripts to perform the regression testing of the
 BRL-CAD package.
 
