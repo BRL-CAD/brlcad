@@ -985,14 +985,17 @@ f_knob()
 	case 'z':
 		dm_values.dv_zjoy = f;
 		break;
-	case 'Z':
-		dm_values.dv_zoom = f;
-		break;
 	case 'X':
 		dm_values.dv_xslew = f;
 		break;
 	case 'Y':
 		dm_values.dv_yslew = f;
+		break;
+	case 'Z':
+		dm_values.dv_zslew = f;
+		break;
+	case 'S':
+		dm_values.dv_zoom = f;
 		break;
 	default:
 		(void)printf("x,y,z for joystick, Z for zoom, X,Y for slew\n");
