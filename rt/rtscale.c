@@ -169,8 +169,8 @@ fastf_t	m_len;
 	int		tickno;		/* counter of tickmarks to be done */
 	int		ret;		/* return code from functions */
 	int		nchar;		/* number of characters in the label */
-	int		m_char_width;	/* char. width in model space */
-	int		v_char_width;	/* char. width in view space */
+	double		v_char_width;	/* char. width in view space */
+	double		m_char_width;	/* char. width in model space */
 	mat_t		v2symbol;	/* view to symbol sapce matrix */
 	float		v_len;		/* scale length in view space */
 	float		v_tick_hgt;	/* total height of tick marks, view space */
@@ -241,6 +241,8 @@ fastf_t	m_len;
 	nchar = strlen(label);
 	m_free_space = m_len - (m_len * 0.2);
 	v_free_space = m_free_space / m2view[15];
+	v_char_width = v_free_space/nchar;
+	m_char_width = v_char_width / v2mod[15];
 
 	v_x_offset = 0.1 * v_len;
 	v_y_offset = -(2 * v_tick_hgt + v_char_width);
@@ -292,9 +294,10 @@ fastf_t	m_len;
 
 	}
 
-fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %g, %g, %g, m_char_width=%d\n",
+fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %g, %g, %g, m_char_width=%g\n",
         label, V3ARGS(m_label_st), m_char_width);
 mat_print("v2symbol", v2symbol);
+
 
 	/* Now put the label on the plot. */
 	tp_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
