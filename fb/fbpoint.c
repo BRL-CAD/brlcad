@@ -141,6 +141,7 @@ char **argv;
 
 	/* save : old pixel.	*/
 	fb_read( fbp, oldX, oldY, savePix, 1 );
+	fb_cursor( fbp, 1, curX, curY );
 	PrtLast;
 
 	while( Run )  {
