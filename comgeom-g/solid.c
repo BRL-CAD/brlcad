@@ -97,6 +97,13 @@ getsolid()
 	 * pseudo-hex format in version 4 models (due to 3 column limit).
 	 */
 	sol_work++;
+	if( version == 5 )  {
+		if( (i = getint( scard, 0, 5 )) != sol_work )  {
+			printf("expected solid card %d, got %d, abort\n",
+				sol_work, i );
+			return(1);
+		}
+	}
 
 	/* Reduce solid type to lower case */
 	{
@@ -361,12 +368,39 @@ ell1:
 		return( mk_half( outfp, name, D(0), dd[3] ) );
 	}
 
+	if( strcmp( solid_type, "arbn" ) == 0 )  {
+		int	a,b,c,d;
+		/* 4 counts: a, b, c, d */
+		a = getint( scard, 10+0*10, 10 );
+		b = getint( scard, 10+1*10, 10 );
+		c = getint( scard, 10+2*10, 10 );
+		d = getint( scard, 10+3*10, 10 );
+
+		/* I'm not sure what these cards are for yet */
+		if(a>0) eat( (a+1)/2 );		/* vertex points */
+		if(b>0) eat( (b+5)/6 );		/* vertex pt index numbers */
+		if(c>0) eat( c );		/* plane eqns? */
+		if(d>0) eat( (d+1)/2 );		/* 2 nums & vertex index? */
+
+		return(-1);
+	}
+
 	/*
 	 *  The solid type string is defective,
 	 *  or that solid is not currently supported.
 	 */
 	printf("getsolid:  no support for solid type '%s'\n", solid_type );
 	return(-1);
+}
+
+eat( count )
+int	count;
+{
+	int	i;
+
+	for( i=0; i<count; i++ )  {
+		getline( scard, sizeof(scard), "eaten card" );
+	}
 }
 
 /*
