@@ -651,6 +651,8 @@ struct bu_vls  {
 };
 #define BU_VLS_MAGIC		0x89333bbb
 #define BU_CK_VLS(_vp)		BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
+#define BU_VLS_IS_INITIALIZED(_vp)	\
+	((_vp) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
 /*
  *  Section for manifest constants for bu_semaphore_acquire()
