@@ -106,10 +106,10 @@ proc do_checker { shade_var id } {
 
 	label $shader_params($id,window).fr.color1 -text "First Color"
 	entry $shader_params($id,window).fr.color1_e -width 15 -textvariable shader_params($id,ckr_a)
-	bind $shader_params($id,window).fr.color1_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.color1_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.color2 -text "Second Color"
 	entry $shader_params($id,window).fr.color2_e -width 15 -textvariable shader_params($id,ckr_b)
-	bind $shader_params($id,window).fr.color2_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.color2_e <KeyRelease> "do_shader_apply $shade_var $id"
 
 	hoc_register_data $shader_params($id,window).fr.color1_e "First Color" {
 		{summary "Enter one of the colors to use in the checkerboard pattern"}
@@ -201,25 +201,25 @@ proc do_phong { shade_var id } {
 
 	label $shader_params($id,window).fr.trans -text Transparency
 	entry $shader_params($id,window).fr.trans_e -width 5 -textvariable shader_params($id,trans)
-	bind $shader_params($id,window).fr.trans_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.trans_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.refl -text "mirror reflectance"
 	entry $shader_params($id,window).fr.refl_e -width 5 -textvariable shader_params($id,refl)
-	bind $shader_params($id,window).fr.refl_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.refl_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.spec -text "Specular reflectivity"
 	entry $shader_params($id,window).fr.spec_e -width 5 -textvariable shader_params($id,spec)
-	bind $shader_params($id,window).fr.spec_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.spec_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.diff -text "Diffuse reflectivity"
 	entry $shader_params($id,window).fr.diff_e -width 5 -textvariable shader_params($id,diff)
-	bind $shader_params($id,window).fr.diff_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.diff_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.ri -text "Refractive index"
 	entry $shader_params($id,window).fr.ri_e -width 5 -textvariable shader_params($id,ri)
-	bind $shader_params($id,window).fr.ri_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.ri_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.shine -text Shininess
 	entry $shader_params($id,window).fr.shine_e -width 5 -textvariable shader_params($id,shine)
-	bind $shader_params($id,window).fr.shine_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.shine_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.ext -text Extinction
 	entry $shader_params($id,window).fr.ext_e -width 5 -textvariable shader_params($id,ext)
-	bind $shader_params($id,window).fr.ext_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.ext_e <KeyRelease> "do_shader_apply $shade_var $id"
 
 	hoc_register_data $shader_params($id,window).fr.trans Transparency {
 		{summary "The observer can see diffuse and specular reflections from\n\
@@ -703,18 +703,20 @@ proc do_texture { shade_var id } {
 
 	label $shader_params($id,window).fr.file -text "Texture File Name"
 	entry $shader_params($id,window).fr.file_e -width 40 -textvariable shader_params($id,file)
-	bind $shader_params($id,window).fr.file_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.file_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.width -text "File Width (pixels)"
 	entry $shader_params($id,window).fr.width_e -width 5 -textvariable shader_params($id,width)
-	bind $shader_params($id,window).fr.width_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.width_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.height -text "File height (pixels)"
 	entry $shader_params($id,window).fr.height_e -width 5 -textvariable shader_params($id,height)
-	bind $shader_params($id,window).fr.height_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.height_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.trans -text "Transparency (RGB)"
 	entry $shader_params($id,window).fr.trans_e -width 15 -textvariable shader_params($id,transp)
-	bind $shader_params($id,window).fr.trans_e <Return> "do_shader_apply $shade_var $id"
+	bind $shader_params($id,window).fr.trans_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.valid -text "Use transparency"
-	checkbutton $shader_params($id,window).fr.valid_e -variable shader_params($id,trans_valid)
+	checkbutton $shader_params($id,window).fr.valid_e \
+		-variable shader_params($id,trans_valid) \
+		-command  "do_shader_apply $shade_var $id"
 
 	hoc_register_data $shader_params($id,window).fr.file_e File {
 		{ summary "Enter the name of the file containing the texture to be mapped to this\n\
