@@ -148,8 +148,6 @@ struct rec_specific {
 #define REC_C	&vec[4*ELEMENTS_PER_VECT]
 #define REC_D	&vec[5*ELEMENTS_PER_VECT]
 
-static void	rec_minmax();
-
 /*
  *  			R E C _ P R E P
  *  
@@ -282,28 +280,28 @@ matp_t mat;
 		/* This may not be minimal, but does fully contain the rec */
 		VADD2( temp, rec->rec_V, A );
 		VADD2( work, temp, B );
-		rec_minmax( stp, work );	/* V + A + B */
+		VMINMAX( stp->st_min, stp->st_max, work );	/* V + A + B */
 		VSUB2( work, temp, B );
-		rec_minmax( stp, work );	/* V + A - B */
+		VMINMAX( stp->st_min, stp->st_max, work );	/* V + A - B */
 
 		VSUB2( temp, rec->rec_V, A );
 		VADD2( work, temp, B );
-		rec_minmax( stp, work );	/* V - A + B */
+		VMINMAX( stp->st_min, stp->st_max, work );	/* V - A + B */
 		VSUB2( work, temp, B );
-		rec_minmax( stp, work );	/* V - A - B */
+		VMINMAX( stp->st_min, stp->st_max, work );	/* V - A - B */
 
 		VADD3( temp, rec->rec_V, Hv, C );
 		VADD2( work, temp, D );
-		rec_minmax( stp, work );	/* V + H + C + D */
+		VMINMAX( stp->st_min, stp->st_max, work );	/* V + H + C + D */
 		VSUB2( work, temp, D );
-		rec_minmax( stp, work );	/* V + H + C - D */
+		VMINMAX( stp->st_min, stp->st_max, work );	/* V + H + C - D */
 
 		VADD2( temp, rec->rec_V, Hv );
 		VSUB2( temp, temp, C );
 		VADD2( work, temp, D );
-		rec_minmax( stp, work );	/* V + H - C + D */
+		VMINMAX( stp->st_min, stp->st_max, work );	/* V + H - C + D */
 		VSUB2( work, temp, D );
-		rec_minmax( stp, work );	/* V + H - C - D */
+		VMINMAX( stp->st_min, stp->st_max, work );	/* V + H - C - D */
 
 		VSET( stp->st_center,
 			(stp->st_max[X] + stp->st_min[X])/2,
@@ -401,14 +399,14 @@ register struct xray *rp;
 	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 		hitp->hit_dist = k1;
-		hitp->hit_private = (char *)0;	/* compute */
+		hitp->hit_private = (char *)3;	/* compute */
 		hitp++;
 	}
 
 	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 		hitp->hit_dist = k2;
-		hitp->hit_private = (char *)0;		/* compute */
+		hitp->hit_private = (char *)3;		/* compute */
 		hitp++;
 	}
 
@@ -462,22 +460,6 @@ check_plates:
 	/* NOTREACHED */
 }
 
-#define REC_MINMAX(a,b,c)	{if( (ftemp = (c)) < (a) )  a = ftemp;\
-			if( ftemp > (b) )  b = ftemp; }
-
-static void
-rec_minmax(stp, v)
-register struct soltab *stp;
-register vectp_t v;
-{
-	FAST fastf_t ftemp;
-
-	REC_MINMAX( stp->st_min[X], stp->st_max[X], v[X] );
-	REC_MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] );
-	REC_MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] );
-}
-
-
 /*
  *  			R E C _ N O R M
  *
@@ -494,7 +476,7 @@ register struct xray *rp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	switch( (int)hitp->hit_private )  {
-	case 0:
+	case 3:
 		/* compute it */
 		MAT4X3VEC( hitp->hit_normal, rec->rec_invRoS,
 			hitp->hit_vpriv );
@@ -505,6 +487,9 @@ register struct xray *rp;
 		break;
 	case 2:
 		VREVERSE( hitp->hit_normal, rec->rec_Hunit );
+		break;
+	default:
+		rt_log("rec_norm: bad flag %d\n", (int)hitp->hit_private);
 		break;
 	}
 }
