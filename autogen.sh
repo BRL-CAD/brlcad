@@ -17,12 +17,12 @@ PATH_TO_AUTOGEN="`dirname $0`"
 SUITE="BRL-CAD"
 
 AUTOCONF_MAJOR_VERSION=2
-AUTOCONF_MINOR_VERSION=50
+AUTOCONF_MINOR_VERSION=57
 AUTOCONF_PATCH_VERSION=0
 
 # unused for now but informative
 AUTOMAKE_MAJOR_VERSION=1
-AUTOMAKE_MINOR_VERSION=4
+AUTOMAKE_MINOR_VERSION=6
 AUTOMAKE_PATCH_VERSION=0
 
 
@@ -68,6 +68,7 @@ else
   if [ "x$HAVE_SED" = "xyes" ] ; then
     _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\..*/\1/'`"
     _min_version="`echo $_version_line | sed 's/.*\.\([0-9][0-9]\).*/\1/'`"
+
     if [ $? = 0 ] ; then
       if [ $_maj_version -lt $AUTOCONF_MAJOR_VERSION ] ; then
 	_report_error=yes
