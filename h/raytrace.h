@@ -914,7 +914,7 @@ struct rt_comb_internal  {
  */
 struct rt_binunif_internal {
 	long		magic;
-	char		type;
+	int		type;
 	long		count;
 	union		{
 			    float		*flt;
@@ -2539,7 +2539,8 @@ extern int rt_db_cvt_to_external5(struct bu_external *ext,
 				  const struct rt_db_internal *ip,
 				  double conv2mm,
 				  struct db_i *dbip,
-				struct resource *resp);
+				  struct resource *resp,
+				  CONST int major);
 
 extern int db_wrap_v5_external( struct bu_external *ep, const char *name );
 
@@ -2547,11 +2548,12 @@ extern int rt_db_get_internal5(struct rt_db_internal	*ip,
 			       const struct directory	*dp,
 			       const struct db_i	*dbip,
 			       const mat_t		mat,
-				struct resource		*resp);
+			       struct resource		*resp);
 extern int rt_db_put_internal5(struct directory	*dp,
 			       struct db_i		*dbip,
 			       struct rt_db_internal	*ip,
-				struct resource		*resp);
+			       struct resource		*resp,
+			       CONST int		major);
 
 extern void db5_make_free_object_hdr( struct bu_external *ep, long length );
 extern void db5_make_free_object( struct bu_external *ep, long length );
@@ -4551,37 +4553,37 @@ BU_EXTERN(void			nmg_visit,
 /* db5_types.c */
 BU_EXTERN(int			db5_type_tag_from_major,
 				(char				**tag,
-				CONST unsigned char		major));
+				CONST int			major));
 
 BU_EXTERN(int			db5_type_descrip_from_major,
 				(char				**descrip,
-				CONST unsigned char		major));
+				CONST int			major));
 
 BU_EXTERN(int			db5_type_tag_from_codes,
 				(char				**tag,
-				CONST unsigned char		major,
-				CONST unsigned char		minor));
+				CONST int			major,
+				CONST int			minor));
 
 BU_EXTERN(int			db5_type_descrip_from_codes,
 				(char				**descrip,
-				CONST unsigned char		major,
-				CONST unsigned char		minor));
+				CONST int			major,
+				CONST int			minor));
 
 BU_EXTERN(int			db5_type_codes_from_tag,
-				(unsigned char			*major,
-				unsigned char			*minor,
+				(int				*major,
+				int				*minor,
 				CONST char			*tag));
 
 BU_EXTERN(int			db5_type_codes_from_descrip,
-				(unsigned char			*major,
-				unsigned char			*minor,
+				(int				*major,
+				int				*minor,
 				CONST char			*descrip));
 
 BU_EXTERN(size_t		db5_type_sizeof_h_binu,
-				(CONST unsigned char		minor));
+				(CONST int			minor));
 
 BU_EXTERN(size_t		db5_type_sizeof_n_binu,
-				(CONST unsigned char		minor));
+				(CONST int			minor));
 
 #endif
 
