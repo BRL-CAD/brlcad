@@ -433,7 +433,7 @@ struct bu_structparse set_parse[] = {
 	{"%d",	1, "save_overlaps", byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "perspective", byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "angle",	byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  1, "rt_bot_minpieces", byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "rt_bot_minpieces", byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },
 	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
