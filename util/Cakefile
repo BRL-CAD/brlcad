@@ -18,6 +18,7 @@
 	pix-alias pix-bw pix-bw3 pix-orle \
 	pix-ps pix-rle bw-rle pix-spm pix-sun \
 	pix-ppm pcd-pix \
+	pix-yuv yuv-pix \
 	pix3filter pixbackgnd pixbgstrip pixbustup pixcolors pixdiff \
 	pixfade pixfields pixfieldsep pixfilter pixhalve pixhist \
 	pixhist3d-pl pixhist3d pixinterp2x pixmatte pixmerge \
@@ -295,6 +296,12 @@ pix-ppm: pix-ppm.o
 
 pcd-pix: pcd-pix.o
 	CC LDFLAGS -o pcd-pix pcd-pix.o LIBES
+
+pix-yuv: pix-yuv.o
+	CC LDFLAGS -o pix-yuv pix-yuv.o LIBES
+
+yuv-pix: yuv-pix.o
+	CC LDFLAGS -o yuv-pix yuv-pix.o LIBES
 
 plstat: plstat.o
 	CC LDFLAGS -o plstat plstat.o LIBPLOT LIBES
