@@ -765,6 +765,9 @@ struct model *m2;
 	 */
 	nmg_m_reindex(m1, 0);
 
+	if( m1 == m2 ) /* nothing to do */
+		return;
+
 	/* now re-order the second model starting with an index number
 	 * of m1->maxindex.
 	 *
