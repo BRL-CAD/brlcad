@@ -411,7 +411,7 @@ menu .$id.menubar.file -tearoff $do_tearoffs
 .$id.menubar.file add cascade -label "Preferences" -underline 0 -menu .$id.menubar.file.pref
 .$id.menubar.file add separator
 .$id.menubar.file add command -label "Close" -underline 0 -command "gui_destroy_default $id"
-.$id.menubar.file add command -label "Exit" -underline 0 -command quit
+.$id.menubar.file add command -label "Exit" -underline 0 -command _mged_quit
 
 menu .$id.menubar.file.saveview -tearoff $do_tearoffs
 .$id.menubar.file.saveview add command -label "RT script..." -underline 0\
@@ -577,7 +577,7 @@ menu .$id.menubar.settings -tearoff $do_tearoffs
 	-menu .$id.menubar.settings.grid_spacing
 .$id.menubar.settings add cascade -label "Framebuffer" -underline 0\
 	-menu .$id.menubar.settings.fb
-.$id.menubar.settings add cascade -label "Pane Background Color" -underline 0\
+.$id.menubar.settings add cascade -label "Pane Background Color" -underline 5\
 	-menu .$id.menubar.settings.bgColor
 
 menu .$id.menubar.settings.applyTo -tearoff $do_tearoffs
@@ -664,24 +664,24 @@ menu .$id.menubar.settings.fb -tearoff $do_tearoffs
 	-command "set_listen $id" -state disabled
 
 menu .$id.menubar.settings.bgColor -tearoff $do_tearoffs
-.$id.menubar.settings.bgColor add command -label black\
+.$id.menubar.settings.bgColor add command -label black -underline 0\
 	-command "mged_apply $id \"dm bg 0 0 0\""
-.$id.menubar.settings.bgColor add command -label white\
+.$id.menubar.settings.bgColor add command -label white -underline 0\
 	-command "mged_apply $id \"dm bg 255 255 255\""
-.$id.menubar.settings.bgColor add command -label red\
+.$id.menubar.settings.bgColor add command -label red -underline 0\
 	-command "mged_apply $id \"dm bg 255 0 0\""
-.$id.menubar.settings.bgColor add command -label green\
+.$id.menubar.settings.bgColor add command -label green -underline 0\
 	-command "mged_apply $id \"dm bg 0 255 0\""
-.$id.menubar.settings.bgColor add command -label blue\
+.$id.menubar.settings.bgColor add command -label blue -underline 0\
 	-command "mged_apply $id \"dm bg 0 0 255\""
-.$id.menubar.settings.bgColor add command -label yellow\
+.$id.menubar.settings.bgColor add command -label yellow -underline 0\
 	-command "mged_apply $id \"dm bg 255 255 0\""
-.$id.menubar.settings.bgColor add command -label cyan\
+.$id.menubar.settings.bgColor add command -label cyan -underline 0\
 	-command "mged_apply $id \"dm bg 0 255 255\""
-.$id.menubar.settings.bgColor add command -label magenta\
+.$id.menubar.settings.bgColor add command -label magenta -underline 0\
 	-command "mged_apply $id \"dm bg 255 0 255\""
 .$id.menubar.settings.bgColor add separator
-.$id.menubar.settings.bgColor add command -label "Color Tool..."\
+.$id.menubar.settings.bgColor add command -label "Color Tool..." -underline 6\
 	-command "choosePaneColor $id"
 
 menu .$id.menubar.settings.grid -tearoff $do_tearoffs
@@ -1097,7 +1097,6 @@ wm geometry $mged_top($id) -0+0
 #set height [winfo screenheight $mged_top($id)]
 #wm geometry $mged_top($id) $width\x$height+8+40
 
-
 if { $comb } {
     if { !$mged_show_dm($id) } {
 	update
@@ -1111,6 +1110,17 @@ if { $comb } {
     # Prevent command window from resizing itself as labels change
     set geometry [wm geometry .$id]
     wm geometry .$id $geometry
+}
+
+set num_players [llength $mged_players]
+switch $num_players {
+    1 {
+	.$id.menubar.file entryconfigure 11 -state disabled
+    }
+    2 {
+	set id [lindex $mged_players 0]
+	.$id.menubar.file entryconfigure 11 -state normal
+    }
 }
 }
 
@@ -1157,6 +1167,11 @@ proc gui_destroy_default args {
     catch { destroy .sliders$id }
     catch { destroy $mged_top($id) }
     catch { destroy .$id }
+
+    if { [llength $mged_players] == 1 } {
+	set id [lindex $mged_players 0]
+	.$id.menubar.file entryconfigure 11 -state disabled
+    }
 }
 
 proc reconfig_gui_default { id } {
