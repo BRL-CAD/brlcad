@@ -20,7 +20,7 @@
  *		the faces that were in sA outside of sB
  *		the faces that were in sB inside of sA (normals flipped)
  */
-static void subtraction(sA, AinB, AonB, AoutB, sB, BinA, BonA, BoutA)
+void subtraction(sA, AinB, AonB, AoutB, sB, BinA, BonA, BoutA)
 struct shell *sA, *sB;
 struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 {
@@ -150,7 +150,7 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
  *	add (union) two shells together
  *
  */
-static void addition(sA, AinB, AonB, AoutB, sB, BinA, BonA, BoutA)
+void addition(sA, AinB, AonB, AoutB, sB, BinA, BonA, BoutA)
 struct shell *sA, *sB;
 struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 {
@@ -231,7 +231,7 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
  *
  *	resulting shell is all faces of sA in sB and all faces of sB in sA
  */
-static void intersection(sA, AinB, AonB, AoutB, sB, BinA, BonA, BoutA)
+void intersection(sA, AinB, AonB, AoutB, sB, BinA, BonA, BoutA)
 struct shell *sA, *sB;
 struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 {
