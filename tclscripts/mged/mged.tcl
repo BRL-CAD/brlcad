@@ -91,7 +91,7 @@ proc mged_input_dialog { w title text entryvar defaultentry default args } {
     global button$w entry$w
     upvar $entryvar entrylocal
 
-    set entry $defaultentry
+    set entry$w $defaultentry
     
     toplevel $w
     wm title $w $title
