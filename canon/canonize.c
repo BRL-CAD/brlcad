@@ -38,6 +38,9 @@ FILE *fd;
 			fprintf(pfd, " -w %d -n %d", width, height);
 		} if (!strcmp(arg_v[args], "-d")) {
 			args += 2;	/* skip device specification */
+		} if (!strcmp(arg_v[args], "-v") ||
+		      !strcmp(arg_v[args], "-V")) {
+			continue;	/* skip verbose specification */
 		} else {
 			fprintf(pfd, " %s", arg_v[args]);
 		}
