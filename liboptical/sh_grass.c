@@ -110,7 +110,7 @@ struct grass_specific grass_defaults = {
 	0,
 	{300.0, 300.0},			/* cell */
 	2.0,				/* plants_per_cell */
-	1.0,				/* deviation of plants_per_cell */
+	4.0,				/* deviation of plants_per_cell */
 	300.0,				/* "t" mean length of leaf */
 	3.0,				/* max width (mm) of blade segment */
 	3,				/* # segs per blade */
@@ -255,7 +255,7 @@ vect_t wind;
 		o->leaf[seg].magic = i->leaf[seg].magic;
 #define WIND 1
 #if WIND
-		if (seg > 0) {
+		if (seg == BLADE_LAST) {
 			MAT4X3VEC(v, m, i->leaf[seg].blade);
 			VADD2(v, v, wind);
 			VUNITIZE(v);
@@ -304,20 +304,30 @@ double w;	/* 0..1, */
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("plant_scale(%g)\n", w);
 
+#if 0
 	d = 1.0 - w;
 
 	/* decide the number of blades */
-	if (d < .8) {
-		pl->blades -= d * pl->blades * .5;
+	if (d < .95) {
+		pl->blades--;
+		pl->blades -= d * pl->blades * .75;
 		pl->blades = CLAMP(pl->blades, 1, BLADE_LAST);
-	} 
+	}
+#else
+	if (d < .9) {
+		pl->blades--;
+		pl->blades -= d * pl->blades * .75;
+		pl->blades = CLAMP(pl->blades, 1, BLADE_LAST);
+	}
+	d = 1.0 - w;
+#endif
 
 	for (blade=0 ; blade < pl->blades ; blade++) {
 		pl->b[blade].tot_len = 0.0;
 		if (blade != BLADE_LAST)
 			pl->b[blade].width *= d;
 		else
-			d *= d;
+			d = d * d * d * d;
 
 		for (seg=0; seg < pl->b[blade].segs ; seg++) {
 			pl->b[blade].leaf[seg].len *= d;
@@ -376,7 +386,7 @@ struct grass_specific *grass_sp;
 
     /* pick a start angle for the first segment */
     start_angle = 55.0 + 30.0 * (1.0-val);
-    seg_len = grass_sp->t / grass_sp->proto.b[blade].segs;
+    seg_len = 1.25 * grass_sp->t / grass_sp->proto.b[blade].segs;
 
     for (seg=0 ; seg < grass_sp->proto.b[blade].segs; seg++) {
         grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
@@ -423,7 +433,7 @@ struct grass_specific *grass_sp;
   grass_sp->proto.b[blade].width = grass_sp->blade_width * 0.5;
 
 
-  seg_len = 1.5 * grass_sp->t / grass_sp->proto.b[blade].segs;
+  seg_len = 2.5 * grass_sp->t / grass_sp->proto.b[blade].segs;
   val = .9;
   for (seg=0 ; seg < grass_sp->proto.b[blade].segs ; seg++) {
     tmp = (double)seg / (double)BLADE_SEGS_MAX;
@@ -573,8 +583,10 @@ vect_t wind;		/* wind direction vector */
 	BN_RANDSEED(idx, idx);
 	pl->root[X] += BN_RANDOM(idx) * grass_sp->cell[X];
 
+#if 0
 	idx *= (int)(c[X] + c[Y]);
 	BN_RANDSEED(idx, idx);
+#endif
 	pl->root[Y] += BN_RANDOM(idx) * grass_sp->cell[Y];
 
 
@@ -873,26 +885,29 @@ double radius;	/* radius of ray */
 	r->hit.hit_dist = dist_to_cell;
 	VJOIN1(r->hit.hit_point, r->r.r_pt, dist_to_cell, r->r.r_dir);
 
-	/* compute color at this point */
-	h = r->hit.hit_point[Z] / 400.0;
-
-	VSCALE(color, swp->sw_basecolor, 1.0 - h);
-	VJOIN1(color, color, h, grass_sp->brown);
-	
-	if (VEQUAL(swp->sw_color, swp->sw_basecolor)) {
-		VSCALE(swp->sw_color, color, ratio);
-		swp->sw_transmit -= ratio;
-	} else {
-		VJOIN1(swp->sw_color, swp->sw_color, ratio, grass_sp->brown);
-		swp->sw_transmit -= ratio;
-	}
+	swp->sw_transmit = 0.0;
 
 #if 0
 	bn_noise_vec(cell_pos, r->hit.hit_normal);
 	r->hit.hit_normal[Z] += 1.0;
 #else
-	VADD2(tmp, r->hit.hit_point, grass_sp->delta);
+	VSCALE(tmp, r->hit.hit_point, grass_sp->size);
+	tmp[Z] = 0.0;
+	VADD2(tmp, tmp, grass_sp->delta);
 	bn_noise_vec(tmp, r->hit.hit_normal);
+
+
+	/* compute color at this point */
+	h = r->hit.hit_point[Z] / 400.0;
+	h = CLAMP(tmp[Z], 0.0, 1.0);
+#if 0
+	VSCALE(color, swp->sw_basecolor, 1.0 - h);
+	VJOIN1(swp->sw_color, color, h, grass_sp->brown);
+#else
+	VSCALE(swp->sw_color, grass_sp->brown, 1.5);
+#endif
+
+
 	if (r->hit.hit_normal[Z] < 0.0) r->hit.hit_normal[Z] *= -1.0;
 #endif
 	VUNITIZE(r->hit.hit_normal);
@@ -900,9 +915,14 @@ double radius;	/* radius of ray */
 		VREVERSE(r->hit.hit_normal, r->hit.hit_normal);
 	}
 
-	if (swp->sw_transmit < .05)
+	if (rdebug&RDEBUG_SHADE) {
+		bu_log("Normal %g %g %g\n", V3ARGS(r->hit.hit_normal));
+		bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
+	}
+	if (swp->sw_transmit < .05) {
+		swp->sw_transmit = 0.0;
 		return SHADE_ABORT_GRASS;
-	else
+	} else
 		return SHADE_CONT;
 }
 
@@ -971,9 +991,9 @@ struct grass_specific	*grass_sp;
 	vect_t wind_vec;
 	VSET(wind_vec, 0.70710678, 0.70710678, 0.0);
 	VSCALE(c, cell, grass_sp->size);
-	VJOIN1(c, c, swp->sw_frametime, wind_vec);
+	VJOIN1(c, c, swp->sw_frametime*.5, wind_vec);
 	bn_noise_vec(c, wind);
-	VSCALE(wind, wind, .05);
+	VSCALE(wind, wind, .25);
 }
 #else
 	VSET(wind, 0.0, 0.0, 0.0);
