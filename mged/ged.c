@@ -1571,7 +1571,8 @@ refresh()
 
 	/* do framebuffer overlay */
 	if(mged_variables->mv_fb && mged_variables->mv_fb_overlay){
-	  if(mged_variables->mv_fb_all)	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+	  if(mged_variables->mv_fb_all)
+	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
 	  else if(mged_variables->mv_mouse_behavior != 'z')
 	    paint_rect_area();
 	}
