@@ -372,7 +372,7 @@ pcsrv, control_host, tcp_port);
 	 *  Initialize all the per-CPU memory resources.
 	 *  Go for the max, as TCL interface may change npsw as we run.
 	 */
-	for( n=0; n < avail_cpus; n++ )  {
+	for( n=0; n < MAX_PSW; n++ )  {
 		rt_init_resource( &resource[n], n );
 		rand_init( resource[n].re_randptr, n );
 	}
