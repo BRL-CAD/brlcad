@@ -328,6 +328,7 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
+	(void)nmg_model_fuse( *tsp->ts_m, tsp->ts_tol );
 	curtree = nmg_booltree_evaluate( curtree, tsp->ts_tol );
 	if( !curtree )  return (union tree *)NULL;
 	if( curtree->tr_op != OP_NMG_TESS )  rt_bomb("mged_nmg_region_end() bad tr_op\n");
@@ -1118,6 +1119,7 @@ char	**argv;
 	/* Now, evaluate the boolean tree into ONE region */
 	rt_log("facetize:  evaluating boolean expressions\n");
 
+	(void)nmg_model_fuse( mged_nmg_model, &mged_tol );
 	mged_facetize_tree = nmg_booltree_evaluate( mged_facetize_tree, &mged_tol );
 	if( mged_facetize_tree == 0 || mged_facetize_tree->tr_op != OP_NMG_TESS ||
 	    mged_facetize_tree->tr_d.td_r == 0 )  {
@@ -1340,6 +1342,7 @@ char	**argv;
 	/* Now, evaluate the boolean tree into ONE region */
 	rt_log("bev:  evaluating boolean expressions\n");
 
+	(void)nmg_model_fuse( mged_nmg_model, &mged_tol );
 	tmp_tree = nmg_booltree_evaluate( tmp_tree, &mged_tol );
 	if( tmp_tree == 0 || tmp_tree->tr_op != OP_NMG_TESS ||
 	    tmp_tree->tr_d.td_r == 0 )  {

@@ -438,6 +438,7 @@ union tree		*curtree;
 	}
 	if( verbose )
 		rt_log( "\ndoing boolean tree evaluate...\n" );
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 	if( verbose )
 		rt_log( "\nfinished boolean tree evaluate...\n" );

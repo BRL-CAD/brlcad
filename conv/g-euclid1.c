@@ -656,6 +656,7 @@ union tree		*curtree;
 
 	(void)alarm( alarm_secs );
 
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 
 	if( ret_tree )
