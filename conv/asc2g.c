@@ -738,7 +738,7 @@ register int n;
 }
 #endif
 
-#ifdef cray
+#ifdef CRAY_COS
 /******* Needed only on broken versions of COS ********/
 /*
  *	ascii to floating (atof)
@@ -944,4 +944,4 @@ register char *p;
 	}
 	return (neg_val ? -fl_val : fl_val); /* apply sign */
 }
-#endif cray
+#endif CRAY_COS
