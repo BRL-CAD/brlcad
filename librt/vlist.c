@@ -627,11 +627,12 @@ double			char_size;
  *  Used by MGED's "labelvert" command.
  */
 void
-rt_label_vlist_verts( vbp, src, mat, sz )
+rt_label_vlist_verts( vbp, src, mat, sz, mm2local )
 struct rt_vlblock	*vbp;
 struct rt_list		*src;
 mat_t			mat;
 double			sz;
+double			mm2local;
 {
 	struct rt_vlist	*vp;
 	struct rt_list	*vhead;
@@ -647,7 +648,7 @@ double			sz;
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			/* XXX Skip polygon markers? */
 			sprintf( label, " %g, %g, %g",
-				V3ARGS(*pt) );
+				(*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local );
 			rt_vlist_3string( vhead, label, pt, mat, sz );
 		}
 	}
