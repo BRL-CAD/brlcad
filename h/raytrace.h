@@ -246,6 +246,8 @@ union tree {
 struct mater_info {
 	float	ma_color[3];		/* explicit color:  0..1  */
 	char	ma_override;		/* non-0 ==> ma_color is valid */
+	char	ma_cinherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
+	char	ma_minherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
 	char	ma_matname[32];		/* Material name */
 	char	ma_matparm[60];		/* String Material parms */
 };
