@@ -57,6 +57,7 @@ struct application	*ap;
 
 	tol_dist = rtip->rti_tol.dist;
 
+	RT_CK_PT_HD(PartHdp);
 	RT_CHECK_RTI(ap->a_rt_i);
 	RT_CK_RESOURCE(res);
 	RT_CK_RTI(rtip);
@@ -165,6 +166,8 @@ struct application	*ap;
 	struct rt_i		*rtip = ap->a_rt_i;
 	FAST fastf_t		diff;
 	FAST fastf_t	tol_dist;
+
+	RT_CK_PT_HD(PartHdp);
 
 	tol_dist = rtip->rti_tol.dist;
 
@@ -652,6 +655,8 @@ struct application *ap;
 
 #define HITS_TODO	(ap->a_onehit - hits_avail)
 
+	RT_CK_PT_HD(InputHdp);
+	RT_CK_PT_HD(FinalHdp);
 	RT_CHECK_RTI(ap->a_rt_i);
 
 	if( enddist <= 0 )
