@@ -1,10 +1,26 @@
-/*	P I X S H R I N K . C
+/*
+ *			P I X S H R I N K . C
  *
  *	scale down a picture by a uniform factor.
  *
  *	Options
  *	h	help
+ *
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #ifdef BSD
@@ -13,12 +29,11 @@
 #ifdef SYSV
 #include <string.h>
 #endif
+#include "machine.h"
 #include "externs.h"
 
 /* declarations to support use of getopt() system call */
 char *options = "uhs:w:n:f:";
-extern char *optarg;
-extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 char *filename = "(stdin)";
@@ -103,9 +118,7 @@ void parse_args(ac, av)
 int ac;
 char *av[];
 {
-	char *strrchr();
 	int  c;
-
 	
 	if (!(progname = strrchr(*av, '/')))
 		progname = *av;
