@@ -1175,7 +1175,7 @@ CONST struct bn_tol    *tol;
  *  Import an ARB8 from the database format to the internal format.
  *  There are two parts to this:  First, the database is presently
  *  single precision binary floating point.
- *  Secondly, the ARB in the database is represented as a vector
+ *  Second, the ARB in the database is represented as a vector
  *  from the origin to the first point, and 7 vectors
  *  from the first point to the remaining points.  In 1979 it seemed
  *  like a good idea...
