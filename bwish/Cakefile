@@ -12,7 +12,7 @@
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
-#define FILES	bwish input tcl cmd
+#define FILES	main input tcl cmd
 
 #include "../Cakefile.defs"
 
