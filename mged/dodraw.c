@@ -417,6 +417,11 @@ int	kind;
 			break;
 		default:
 			printf("option '%c' unknown\n", c);
+			printf("Usage: ev [-uwTnq] object(s)\n\
+	-w draw wireframes (rather than polygons)\n\
+	-n draw surface normals as little 'hairs'\n\
+	-u debug: draw edgeuses\n\
+	-T debug: disable triangulator\n");
 			break;
 		}
 	}
