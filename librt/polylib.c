@@ -298,7 +298,9 @@ register complex	root[];
 	/* abort_buf is NOT parallel! */
 	if( first_time )  {
 		first_time = 0;
+#ifndef cray
 		(void)signal(SIGFPE, catch_FPE);
+#endif cray
 	}
 	expecting_fpe = 1;
 	if( setjmp( abort_buf ) )  {
