@@ -69,20 +69,6 @@ Options:\n\
 ";
 
 extern FBIO	*fbp;			/* Framebuffer handle */
-extern FILE	*outfp;			/* optional output file */
-
-extern int	width;
-extern int	height;
-
-extern int	lightmodel;		/* lighting model # to use */
-extern mat_t	view2model;
-extern mat_t	model2view;
-extern int	hex_out;		/* Output format, 0=binary, !0=hex */
-extern char	*scanbuf;		/* Optional output buffer */
-extern int	incr_mode;		/* !0 for incremental resolution */
-extern int	incr_level;		/* current incremental level */
-extern int	incr_nlevel;		/* number of levels */
-extern int	pix_start;		/* pixel to start at */
 
 extern int	max_bounces;		/* from refract.c */
 extern int	max_ireflect;		/* from refract.c */
@@ -92,7 +78,6 @@ extern struct region	env_region;	/* from text.c */
 extern int light_hit(), light_miss();	/* in light.c */
 extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
-extern double AmbientIntensity;
 
 vect_t	background = { 0.25, 0, 0.5 };	/* Dark Blue Background */
 int	ibackground[3];			/* integer 0..255 version */
