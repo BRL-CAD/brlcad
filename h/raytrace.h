@@ -252,7 +252,6 @@ struct soltab {
 	fastf_t		st_bradius;	/* Radius of BOUNDING sphere */
 	genptr_t	st_specific;	/* -> ID-specific (private) struct */
 	struct directory *st_dp;	/* Directory entry of solid */
-	char		*st_name;	/* Leaf name of solid */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
 	int		st_bit;		/* solids bit vector index (const) */
