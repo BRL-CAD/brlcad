@@ -1497,6 +1497,8 @@ char			**argv;
  *			R T _ P A R S E T A B _ T C L F O R M
  *
  *  Invoked via rt_functab[].ft_tclform()
+ *  on solid types which are fully described by their bu_structparse table
+ *  in ft_parsetab.
  */
 int
 rt_parsetab_tclform( ftp, interp)
