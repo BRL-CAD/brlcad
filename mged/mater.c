@@ -381,12 +381,10 @@ color_soltab()
 		/* use wireframe_default_color */
 		if (sp->s_dflag)
 		  sp->s_cflag = 1;
-		else {
-		  /* Using a combination-record based color */
-		  sp->s_color[0] = sp->s_basecolor[0];
-		  sp->s_color[1] = sp->s_basecolor[1];
-		  sp->s_color[2] = sp->s_basecolor[2];
-		}
+		/* Be conservative and copy color anyway, to avoid black */
+		sp->s_color[0] = sp->s_basecolor[0];
+		sp->s_color[1] = sp->s_basecolor[1];
+		sp->s_color[2] = sp->s_basecolor[2];
 done: ;
 	}
 	update_views = 1;		/* re-write control list with new colors */
