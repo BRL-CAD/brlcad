@@ -159,7 +159,7 @@ char **argv;
 {
 	register int y;
 	register FBIO *fbp;
-	int	xout, yout, n, m;
+	int	xout, yout, n, m, xstart, xskip;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -191,12 +191,27 @@ char **argv;
 	scr_height = fb_getheight(fbp);
 
 	/* compute number of pixels to be output to screen */
-	xout = scr_width - scr_xoff;
+	if( scr_xoff < 0 )
+	{
+		xout = scr_width + scr_xoff;
+		xskip = (-scr_xoff);
+		xstart = 0;
+	}
+	else
+	{
+		xout = scr_width - scr_xoff;
+		xskip = 0;
+		xstart = scr_xoff;
+	}
+
 	if( xout < 0 )
 		exit(0);			/* off screen */
 	if( xout > (file_width-file_xoff) )
 		xout = (file_width-file_xoff);
 	scanpix = xout;				/* # pixels on scanline */
+
+	if( inverse )
+		scr_yoff = (-scr_yoff);
 
 	yout = scr_height - scr_yoff;
 	if( yout < 0 )
@@ -268,11 +283,16 @@ char **argv;
 	} else if( !inverse )  {
 		/* Normal way -- bottom to top */
 		for( y = scr_yoff; y < scr_yoff + yout; y++ )  {
-			if( file_xoff != 0 )
-				skipbytes( infd, (off_t)file_xoff*sizeof(RGBpixel) );
+			if( y < 0 || y > scr_height )
+			{
+				skipbytes( infd , (off_t)file_width*sizeof(RGBpixel) );
+				continue;
+			}
+			if( file_xoff+xskip != 0 )
+				skipbytes( infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel) );
 			n = mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
-			m = fb_write( fbp, scr_xoff, y, scanline, xout );
+			m = fb_write( fbp, xstart, y, scanline, xout );
 			if( m != xout )  {
 				fprintf(stderr,
 					"pix-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
@@ -280,17 +300,22 @@ char **argv;
 					m, xout );
 			}
 			/* slop at the end of the line? */
-			if( xout < file_width-file_xoff )
-				skipbytes( infd, (off_t)(file_width-file_xoff-xout)*sizeof(RGBpixel) );
+			if( file_xoff+xskip+scanpix < file_width )
+				skipbytes( infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel) );
 		}
 	}  else  {
 		/* Inverse -- top to bottom */
 		for( y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y-- )  {
-			if( file_xoff != 0 )
-				skipbytes( infd, (off_t)file_xoff*sizeof(RGBpixel) );
+			if( y < 0 || y >= scr_height )
+			{
+				skipbytes( infd , (off_t)file_width*sizeof(RGBpixel) );
+				continue;
+			}
+			if( file_xoff+xskip != 0 )
+				skipbytes( infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel) );
 			n = mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
-			m = fb_write( fbp, scr_xoff, y, scanline, xout );
+			m = fb_write( fbp, xstart, y, scanline, xout );
 			if( m != xout )  {
 				fprintf(stderr,
 					"pix-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
@@ -298,8 +323,8 @@ char **argv;
 					m, xout );
 			}
 			/* slop at the end of the line? */
-			if( xout < file_width-file_xoff )
-				skipbytes( infd, (off_t)(file_width-file_xoff-xout)*sizeof(RGBpixel) );
+			if( file_xoff+xskip+scanpix < file_width )
+				skipbytes( infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel) );
 		}
 	}
 	if( fb_close( fbp ) < 0 )  {

@@ -169,6 +169,7 @@ int argc; char **argv;
 {
 	register int	x, y, n;
 	int	xout, yout;		/* number of sceen output lines */
+	int	xstart, xskip;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -207,9 +208,24 @@ int argc; char **argv;
 	scr_height = fb_getheight(fbp);
 
 	/* compute pixels output to screen */
-	xout = scr_width - scr_xoff;
+	if( scr_xoff < 0 )
+	{
+		xout = scr_width + scr_xoff;
+		xskip = (-scr_xoff);
+		xstart = 0;
+	}
+	else
+	{
+		xout = scr_width - scr_xoff;
+		xskip = 0;
+		xstart = scr_xoff;
+	}
 	if( xout < 0 ) xout = 0;
 	if( xout > (file_width-file_xoff) ) xout = (file_width-file_xoff);
+
+	if( inverse )
+		scr_yoff = (-scr_yoff);
+
 	yout = scr_height - scr_yoff;
 	if( yout < 0 ) yout = 0;
 	if( yout > (file_height-file_yoff) ) yout = (file_height-file_yoff);
@@ -233,8 +249,13 @@ int argc; char **argv;
 	if( file_yoff != 0 ) skipbytes( infd, file_yoff*file_width );
 
 	for( y = scr_yoff; y < scr_yoff + yout; y++ ) {
-		if( file_xoff != 0 )
-			skipbytes( infd, file_xoff );
+		if( y < 0 || y >= scr_height )
+		{
+			skipbytes( infd , file_width );
+			continue;
+		}
+		if( file_xoff+xskip != 0 )
+			skipbytes( infd, file_xoff+xskip );
 		n = mread( infd, &ibuf[0], xout );
 		if( n <= 0 ) break;
 		/*
@@ -258,13 +279,13 @@ int argc; char **argv;
 				obuf[x][BLU] = ibuf[x];
 		}
 		if( inverse )
-			fb_write( fbp, scr_xoff, scr_height-1-y, (unsigned char *)obuf, xout );
+			fb_write( fbp, xstart, scr_height-1-y, (unsigned char *)obuf, xout );
 		else
-			fb_write( fbp, scr_xoff, y, (unsigned char *)obuf, xout );
+			fb_write( fbp, xstart, y, (unsigned char *)obuf, xout );
 
 		/* slop at the end of the line? */
-		if( xout < file_width-file_xoff )
-			skipbytes( infd, file_width-file_xoff-xout );
+		if( file_xoff+xskip+xout < file_width )
+			skipbytes( infd, file_width-file_xoff-xskip-xout );
 	}
 
 	fb_close( fbp );
