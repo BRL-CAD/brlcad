@@ -1896,20 +1896,20 @@ struct hitmiss {
 	case NMG_MISS_LIST: \
 		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
 			__FILE__, __LINE__); \
-		rt_bomb("going down in flames\n"); \
+		rt_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	case NMG_HIT_LIST: \
 		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
 			__FILE__, __LINE__); \
-		rt_bomb("going down in flames\n"); \
+		rt_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	default: \
 		bu_log("%s[%d]: bad struct hitmiss magic: %d:(0x%08x)\n", \
 			__FILE__, __LINE__, hm->l.magic, hm->l.magic); \
-		rt_bomb("going down in flames\n"); \
+		rt_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	}\
 	if (!hm->hit.hit_private) { \
 		bu_log("%s[%d]: NULL hit_private in hitmiss struct\n", \
 			__FILE__, __LINE__); \
-		rt_bomb("going down in flames\n"); \
+		rt_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	} \
 }
 
@@ -2192,6 +2192,9 @@ BU_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp,
 					/* find RPP of one region */
 BU_EXTERN(int rt_rpp_region, (struct rt_i *rtip, CONST char *reg_name,
 	fastf_t *min_rpp, fastf_t *max_rpp) );
+BU_EXTERN(void rt_bomb, (CONST char *s));
+BU_EXTERN(int rt_in_rpp, (struct xray *rp, CONST fastf_t *invdir,
+		CONST fastf_t *min, CONST fastf_t *max));
 
 /* The database library */
 

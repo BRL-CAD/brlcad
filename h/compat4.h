@@ -40,10 +40,6 @@ extern "C" {
 /* badmagic.c */
 #define rt_badmagic	bu_badmagic
 
-/* bomb.c */
-#define rt_bomb(_s)	{ if(rt_g.debug || rt_g.NMG_debug) \
-				bu_debug |= BU_DEBUG_COREDUMP; \
-			bu_bomb(_s);}
 #define RT_SETJUMP	BU_SETJUMP
 #define RT_UNSETJUMP	BU_UNSETJUMP
 
