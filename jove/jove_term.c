@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.5  84/11/07  20:57:18  dpk
+ * Changed  code that handles initializing of scrolling regions.
+ * The implied default of newline for  scroll up is not supported.
+ * 
  * Revision 1.4  84/10/03  21:51:40  dpk
  * Added code to disable use of scrolling regions if you dont have
  * both SR and SF (and CS for that matter).
