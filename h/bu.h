@@ -1581,9 +1581,13 @@ BU_EXTERN(unsigned char *	bu_plong, (register unsigned char *msgp,
 /* association.c */
 BU_EXTERN(struct bu_vls *bu_association, (CONST char *fname, CONST char *value, int field_sep));
 
-/* These things live in libbu/observer.c */
+/* These things that live in libbu/observer.c */
 extern void bu_observer_notify();
 extern struct bu_cmdtab bu_observer_cmds[];
+extern void bu_observer_free(struct bu_observer *);
+
+/* bu_tcl.c */
+extern void bu_badmagic_tcl();
 
 #ifdef __cplusplus
 }

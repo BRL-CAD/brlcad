@@ -236,4 +236,9 @@ extern Tcl_Interp *interp;   /* This must be defined by the application */
 
 /* vers.c (created by libdm/Cakefile) */
 extern char dm_version[];
+
+/* clip.c */
+extern int clip(vect_t, vect_t, vect_t, vect_t);
+extern int vclip(vect_t, vect_t, register fastf_t *, register fastf_t *);
+
 #endif /* SEEN_DM_H */

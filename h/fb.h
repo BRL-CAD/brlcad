@@ -169,6 +169,7 @@ typedef struct FBIO_ {
 
 /* Library entry points which are true functions. */
 #ifdef USE_PROTOTYPES
+extern int 	fb_configureWindow(FBIO *, int, int);
 extern FBIO	*fb_open(char *file, int width, int height);
 extern int	fb_close(FBIO *ifp);
 extern int	fb_genhelp(void);
