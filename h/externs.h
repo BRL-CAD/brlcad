@@ -221,11 +221,13 @@ extern int	brk();
  * But we need them, and all UNIX systems provide them.
  */
 #if __STDC__
-#ifndef CRAY2
+#ifndef HAVE_POPEN_DECL
 extern FILE	*fdopen( int filedes, const char *type );
 extern FILE	*popen( const char *command, const char *type );
-#endif /* CRAY2 */
+#endif
+#ifndef HAVE_STRDUP_DECL
 extern char	*strdup(const char *s);
+#endif
 #endif
 
 #endif /* EXTERNS_H */
