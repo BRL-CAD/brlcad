@@ -185,7 +185,7 @@ register struct application *ap;
 			BITSET( solidbits->be_v, stp->st_bit );
 			ap->a_rt_i->nshots++;
 			if( (newseg = rt_functab[stp->st_id].ft_shot( 
-				stp, &ap->a_ray )
+				stp, &ap->a_ray, ap->a_resource )
 			     ) == SEG_NULL )  {
 				ap->a_rt_i->nmiss++;
 				continue;	/* MISS */
