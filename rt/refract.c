@@ -197,7 +197,7 @@ do_exit:
 		/* This is the only place we might recurse dangerously */
 		sub_ap.a_hit =  ap->a_hit;
 		sub_ap.a_miss = ap->a_miss;
-		sub_ap.a_level++;
+		sub_ap.a_level = ap->a_level+1;
 		sub_ap.a_purpose = "escaping refracted ray";
 		(void) rt_shootray( &sub_ap );
 
