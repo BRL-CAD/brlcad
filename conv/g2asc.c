@@ -350,7 +350,7 @@ combdump()	/* Print out Combination record information */
 	(void)printf("%d ", record.c.c_material );	/* material code */
 	(void)printf("%d ", record.c.c_los );		/* equiv. LOS est. */
 	(void)printf("%d %d %d %d ",
-		record.c.c_override,
+		record.c.c_override ? 1 : 0,
 		record.c.c_rgb[0],
 		record.c.c_rgb[1],
 		record.c.c_rgb[2] );
