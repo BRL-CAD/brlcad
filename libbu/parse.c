@@ -822,8 +822,8 @@ char				*base;		/* base addr of users struct */
 			if( name == cp ) break;
 
 			/* end of string in middle of arg */
-			bu_log("bu_structparse: name '%s' without '='\n",
-				name );
+			bu_log("bu_structparse: input keyword '%s' is not followed by '=' in '%s'\nInput must be in keyword=value format.\n",
+				name, bu_vls_addr(in_vls) );
 			bu_vls_free( &vls );
 			return(-2);
 		}
@@ -842,7 +842,7 @@ char				*base;		/* base addr of users struct */
 					break;
 
 			if (*cp != '"') {
-				bu_log("bu_structparse: name '%s'=\" without closing \"\n",
+				bu_log("bu_structparse: keyword '%s'=\" without closing \"\n",
 					name);
 				bu_vls_free( &vls );
 				return(-3);
@@ -860,7 +860,7 @@ char				*base;		/* base addr of users struct */
 		/* Lookup name in desc table and modify */
 		retval = bu_struct_lookup( desc, name, base, value );
 		if( retval == -1 ) {
-		    bu_log("bu_structparse:  '%s=%s', element name not found in:\n",
+		    bu_log("bu_structparse:  '%s=%s', keyword not found in:\n",
 			   name, value);
 		    bu_struct_print( "troublesome one", desc, base );
 		} else if( retval == -2 ) {
