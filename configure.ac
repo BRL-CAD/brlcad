@@ -47,6 +47,7 @@ dnl
 AC_PREREQ(2.50)
 
 AC_INIT(BRL-CAD, 7.0, [http://brlcad.org], brlcad)
+AC_REVISION($Revision$)
 AC_CONFIG_AUX_DIR(misc)
 
 dnl If any of the version numbers are incremented up to a 2-digit
