@@ -92,6 +92,7 @@
 #define TBL_RST	 4	/* empty a list, but keep storage on hand */
 #define TBL_CAT  5	/* catenate one list onto another */
 #define TBL_RM	 6	/* remove all occurrences of an item from a list */
+#define TBL_INS_UNIQUE	 7	/* insert item into list, if not present */
 
 struct nmg_ptbl {
 	int	end;	/* index into buffer of first available location */
@@ -650,7 +651,7 @@ NMG_EXTERN(struct edgeuse	*nmg_me, (struct vertex *v1, struct vertex *v2, struct
 NMG_EXTERN(struct edgeuse	*nmg_meonvu, (struct vertexuse *vu) );
 NMG_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
 NMG_EXTERN(struct loopuse	*nmg_ml, (struct shell *s) );
-NMG_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, char orientation) );
+NMG_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, int orientation) );
 NMG_EXTERN(struct faceuse	*nmg_mf, (struct loopuse *lu1) );
 NMG_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
 NMG_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], int n) );
@@ -690,15 +691,17 @@ NMG_EXTERN(void		nmg_loop_g, (struct loop *l) );
 NMG_EXTERN(void		nmg_shell_a, (struct shell *s) );
 NMG_EXTERN(void		nmg_jv, (struct vertex *v1, struct vertex *v2) );
 NMG_EXTERN(void		nmg_moveltof, (struct faceuse *fu, struct shell *s) );
-NMG_EXTERN(void		nmg_pl_fu, (FILE *fp, struct faceuse *fu, 
-					struct nmg_ptbl *b, unsigned char R,
-					unsigned char G, unsigned char B) );
+NMG_EXTERN(void		nmg_pl_fu, (FILE *fp, struct faceuse *fu,
+					struct nmg_ptbl *b ) );
 NMG_EXTERN(void		nmg_pl_lu, (FILE *fp, struct loopuse *fu, 
-					struct nmg_ptbl *b, unsigned char R,
-					unsigned char G, unsigned char B) );
-NMG_EXTERN(void		nmg_pl_eu, (FILE *fp, struct edgeuse *eu, 
-					struct nmg_ptbl *b, unsigned char R,
-					unsigned char G, unsigned char B) );
+					struct nmg_ptbl *b, int red,
+					int green, int blue) );
+NMG_EXTERN(void		nmg_pl_eu, (FILE *fp, struct edgeuse *eu,
+					struct nmg_ptbl *b, int red,
+					int green, int blue) );
+NMG_EXTERN(void		nmg_pl_e, (FILE *fp, struct edge *e,
+					struct nmg_ptbl *b, int red,
+					int green, int blue) );
 NMG_EXTERN(void		nmg_pl_s, (FILE *fp, struct shell *s) );
 NMG_EXTERN(void		nmg_pl_r, (FILE *fp, struct nmgregion *r) );
 NMG_EXTERN(void		nmg_pl_m, (FILE *fp, struct model *m) );
@@ -711,7 +714,7 @@ NMG_EXTERN(void		nmg_m_to_g, (FILE *fp, struct model *m) );
 NMG_EXTERN(void		nmg_r_to_g, (FILE *fp, struct nmgregion *r) );
 NMG_EXTERN(void		nmg_s_to_g, (FILE *fp, struct shell *s, unsigned char rgb[]) );
 NMG_EXTERN(struct shell	*polytonmg, (FILE *fd, struct nmgregion *r) );
-NMG_EXTERN(void		nmg_pr_orient, (char o, char *h) );
+NMG_EXTERN(void		nmg_pr_orient, (int orientation, char *h) );
 NMG_EXTERN(int		nmg_manifold_face, (struct faceuse *fu) );
 NMG_EXTERN(int		nmg_demote_eu, (struct edgeuse *eu) );
 NMG_EXTERN(int		nmg_demote_lu, (struct loopuse *lu) );
