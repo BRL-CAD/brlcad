@@ -29,9 +29,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 #include "./mathtab.h"
 
-#define PI	3.1415926535
-#define	TWOPI	(2.0*PI)
-
 char *malloc();
 char *calloc();
 
@@ -70,7 +67,7 @@ int	N;
 
 	total = 0;
 	for( i = 0; i < N/4; i++ ) {
-		nx = ceil( N*cos( i*TWOPI/N ) );
+		nx = ceil( N*cos( i*twopi/N ) );
 		if( nx > N ) nx = N;
 		mapp->nx[ N/4 + i ] = nx;
 		mapp->nx[ N/4 - i -1 ] = nx;
@@ -245,7 +242,7 @@ char	*filename;
  *  Returns -1 on error, else 0.
  */
 int
-sph_pix_load( mapp, filename, nx, ny )
+sph_px_load( mapp, filename, nx, ny )
 sph_map_t *mapp;
 char	*filename;
 int	nx, ny;
@@ -309,7 +306,7 @@ int	nx, ny;
  *  Returns -1 on error, else 0.
  */
 int
-sph_pix_save( mapp, filename, nx, ny )
+sph_px_save( mapp, filename, nx, ny )
 sph_map_t *mapp;
 char	*filename;
 int	nx, ny;
