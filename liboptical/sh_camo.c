@@ -23,31 +23,26 @@ struct camo_specific {
 	double	lacunarity;
 	double	h_val;
 	double	octaves;
-	double	offset;
-	double	gain;
-	double	distortion;
 	double	t1;
 	double	t2;
 	point_t	scale;	/* scale coordinate space */
 	point_t c1;
 	point_t c2;
 	point_t c3;
-	mat_t	model_to_region;
+	vect_t	delta;
 };
 
 static struct camo_specific camo_defaults = {
 	2.1753974,	/* lacunarity */
 	1.0,		/* h_val */
 	4.0,		/* octaves */
-	0.0,		/* offset */
-	0.0,		/* gain */
-	1.0,		/* distortion */
-	-0.5,
-	0.5,
+	-0.5,		/* t1 */
+	0.5,		/* t2 */
 	{ 1.0, 1.0, 1.0 },	/* scale */
 	{ .38, .29, .16 },	/* darker color c1 */
 	{ .125, .35, .04 },	/* basic color c2 */
-	{ .815, .635, .35 }	/* brighter color c3 */
+	{ .815, .635, .35 },	/* brighter color c3 */
+	{ 1000.0, 1000.0, 1000.0 }	/* delta into noise space */
 	};
 
 #define CAMO_NULL	((struct camo_specific *)0)
@@ -58,19 +53,18 @@ struct structparse camo_parse[] = {
 	{"%f",	1, "lacunarity",	CAMO_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		CAMO_O(h_val),		FUNC_NULL },
 	{"%f",	1, "octaves", 		CAMO_O(octaves),		FUNC_NULL },
-	{"%f",	1, "gain",		CAMO_O(gain),		FUNC_NULL },
-	{"%f",	1, "distortion",	CAMO_O(distortion),	FUNC_NULL },
+	{"%f",	1, "t1",		CAMO_O(t1),		FUNC_NULL },
+	{"%f",	1, "t2",		CAMO_O(t2),		FUNC_NULL },
 	{"%f",  3, "scale",		CAMO_AO(scale),		FUNC_NULL },
-	{"%f",  3, "s",			CAMO_AO(scale),		FUNC_NULL },
-	{"%f",	1, "l",			CAMO_O(lacunarity),	FUNC_NULL },
-	{"%d",	1, "o", 		CAMO_O(octaves),		FUNC_NULL },
-	{"%f",	1, "g",			CAMO_O(gain),		FUNC_NULL },
-	{"%f",	1, "d",			CAMO_O(distortion),	FUNC_NULL },
 	{"%f",  3, "c1",		CAMO_AO(c1),		FUNC_NULL },
 	{"%f",  3, "c2",		CAMO_AO(c2),		FUNC_NULL },
 	{"%f",  3, "c3",		CAMO_AO(c3),		FUNC_NULL },
-	{"%f",	1, "t1",		CAMO_O(t1),		FUNC_NULL },
-	{"%f",	1, "t2",		CAMO_O(t2),		FUNC_NULL },
+	{"%f",  3, "delta",		CAMO_AO(delta),		FUNC_NULL },
+	{"%f",	1, "l",			CAMO_O(lacunarity),	FUNC_NULL },
+	{"%d",	1, "o", 		CAMO_O(octaves),		FUNC_NULL },
+	{"%f",  3, "s",			CAMO_AO(scale),		FUNC_NULL },
+	{"%f",  3, "d",			CAMO_AO(delta),		FUNC_NULL },
+
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -169,24 +163,24 @@ char	*dp;
 	if( rdebug&RDEBUG_SHADE)
 		rt_structprint( "foo", camo_parse, (char *)camo_sp );
 #if 1
-	/* get transformation between world coordinates and 
-	 * un-transformed region coordinates 
-	 */
-	/* map point from model (world) space to "region" space */
+
+	/* get transformation between world and "region" coordinates */
 	if (db_string_to_path( &full_path, ap->a_rt_i->rti_dbip, pp->pt_regionp->reg_name) ) {
 		/* bad thing */
 		rt_bomb("db_string_to_path() error");
 	}
-
 	if(! db_path_to_mat(ap->a_rt_i->rti_dbip, &full_path, region_to_model, 0) ) {
 		/* bad thing */
 		rt_bomb("db_path_to_mat() error");
 	}
 
+	/* map point from model (world) space to "region" space */
 	mat_inv(model_to_region, region_to_model);
 
 	/* transform point into "region coordinates" */
 	MAT4X3PNT(pt, model_to_region, swp->sw_hit.hit_point);
+
+	VADD2(pt, pt, camo_sp->delta);
 
 	/* apply noise-field scaling */
 	VELMUL(pt, pt, camo_sp->scale);
@@ -196,6 +190,9 @@ char	*dp;
 	/* apply noise-field scaling */
 	VELMUL(pt, swp->sw_hit.hit_point, camo_sp->scale);
 #endif
+
+
+
 	val = noise_fbm(pt, camo_sp->h_val, camo_sp->lacunarity, camo_sp->octaves );
 
 	if( rdebug&RDEBUG_SHADE)
