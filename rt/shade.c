@@ -89,13 +89,13 @@ register struct shadework *swp;
 	/* XXX where does region get reflectance?  Default temperature? */
 	BN_CK_TABDATA(swp->msw_color);
 	BN_CK_TABDATA(swp->msw_basecolor);
-	if( rp->reg_mater.ma_override )  {
+	if( rp->reg_mater.ma_color_valid )  {
 		rt_spect_reflectance_rgb( swp->msw_color, rp->reg_mater.ma_color );
 	}
 	bn_tabdata_copy(swp->msw_basecolor, swp->msw_color);
 #else
 	/* Default color is white (uncolored) */
-	if( rp->reg_mater.ma_override )  {
+	if( rp->reg_mater.ma_color_valid )  {
 		VMOVE( swp->sw_color, rp->reg_mater.ma_color );
 	}
 	VMOVE( swp->sw_basecolor, swp->sw_color );

@@ -229,7 +229,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 
 #if RT_MULTISPECTRAL
 	BN_GET_TABDATA(lp->lt_spectrum, spectrum);
-	if( rp->reg_mater.ma_override )  {
+	if( rp->reg_mater.ma_color_valid )  {
 		rt_spect_reflectance_rgb( lp->lt_spectrum, rp->reg_mater.ma_color );
 	} else {
 		/* Default: Perfectly even emission across whole spectrum */
@@ -238,7 +238,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	/* XXX Need to convert units of lumens (candela-sr) to ?? mw/sr?  Use any old numbers to get started. */
 	bn_tabdata_scale( lp->lt_spectrum, lp->lt_spectrum, lp->lt_intensity );
 #else
-	if( rp->reg_mater.ma_override )  {
+	if( rp->reg_mater.ma_color_valid )  {
 		VMOVE( lp->lt_color, rp->reg_mater.ma_color );
 	} else {
 		VSETALL( lp->lt_color, 1 );

@@ -321,7 +321,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	 *	Load the default values
 	 */
 
-	if (rp->reg_mater.ma_override) {
+	if (rp->reg_mater.ma_color_valid) {
 		VSCALE (wd->lt_rgb, rp->reg_mater.ma_color, 255);
 		}
 	   else {
