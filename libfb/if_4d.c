@@ -216,7 +216,7 @@ struct sgiinfo {
  *	TRANSIENT -vs- LINGERING windows
  *	Windowed -vs- Centered Full screen
  *	Default Hz -vs- 30hz monitor mode
- *	Genlock NTSC -vs- normal monitor mode
+ *	NTSC -vs- normal monitor mode
  */
 #define MODE_1MASK	(1<<0)
 #define MODE_1SHARED	(0<<0)		/* Use Shared memory */
@@ -236,7 +236,7 @@ struct sgiinfo {
 
 #define MODE_5MASK	(1<<4)
 #define MODE_5NORMAL	(0<<4)
-#define MODE_5GENLOCK	(1<<4)
+#define MODE_5NTSC	(1<<4)
 
 #define MODE_6MASK	(1<<5)
 #define MODE_6NORMAL	(0<<5)
@@ -253,6 +253,10 @@ struct sgiinfo {
 #define MODE_9MASK	(1<<8)
 #define MODE_9NORMAL	(0<<8)
 #define MODE_9SINGLEBUF	(1<<8)
+
+#define MODE_10MASK	(1<<9)
+#define MODE_10NORMAL	(0<<9)
+#define MODE_10SYNC_ON_GREEN	(1<<9)
 
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
@@ -272,10 +276,12 @@ static struct modeflags {
 		"Full centered screen - else windowed" },
 	{ 't',	MODE_4MASK, MODE_4HZ30,
 		"Thirty Hz (e.g. Dunn) - else 60 Hz" },
-	{ 'n',	MODE_5MASK, MODE_5GENLOCK,
-		"NTSC+GENLOCK - else normal video" },
+	{ 'n',	MODE_5MASK, MODE_5NTSC,
+		"NTSC - else normal video.  GENLOCK board activated if present." },
+	{ 'g',	MODE_10MASK, MODE_10SYNC_ON_GREEN,
+		"For NTSC & 30Hz, put sync on Green - else use 4th connector" },
 	{ 'e',	MODE_6MASK, MODE_6EXTSYNC,
-		"External sync - else internal" },
+		"External sync - else internal.  Requires CG2 board." },
 	{ 'c',	MODE_7MASK, MODE_7SWCMAP,
 		"Perform software colormap - else use hardware colormap on whole screen" },
 	{ 'G',	MODE_8MASK, MODE_8NOGT,
@@ -283,7 +289,7 @@ static struct modeflags {
 	{ 's',	MODE_9MASK, MODE_9SINGLEBUF,
 		"On GT, single buffer, don't double buffer" },
 	{ 'z',	MODE_15MASK, MODE_15ZAP,
-		"Zap (free) shared memory" },
+		"Zap (free) shared memory.  Can also be done with fbfree command" },
 	{ '\0', 0, 0, "" }
 };
 
@@ -792,7 +798,7 @@ int	width, height;
 	int	status;
 	int 	g_status;
 	static char	title[128];
-	int	mode;
+	int		mode;
 	inventory_t	*inv;
 
 	FB_CK_FBIO(ifp);
@@ -921,7 +927,7 @@ int	width, height;
 		SGI(ifp)->mi_is_gt = 0;
 	}
 
-	if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
+	if( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
 		/* NTSC, see below */
 		ifp->if_width = ifp->if_max_width = XMAX170+1;	/* 646 */
 		ifp->if_height = ifp->if_max_height = YMAX170+1; /* 485 */
@@ -942,7 +948,7 @@ int	width, height;
 	blanktime(0);
 	foreground();		/* Direct focus here, don't detach */
 
-	if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
+	if( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
 		prefposition( 0, XMAX170, 0, YMAX170 );
 		SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
 	} else if( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
@@ -979,8 +985,16 @@ int	width, height;
 	 */
 	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )  {
 		SGI(ifp)->mi_der1 = getvideo(DE_R1);
-		setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK);	/* 4-wire RS-343 */
-	} else if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
+		if( (ifp->if_mode & MODE_10MASK) == MODE_10SYNC_ON_GREEN )  {
+			/* 3-wire */
+			setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK|DER1_SYNCG );
+		} else {
+			/* 4-wire RS-343 */
+			setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK);
+		}
+	} else if( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
+		int	new_der1;
+
 		SGI(ifp)->mi_der1 = getvideo(DE_R1);
 		if( (SGI(ifp)->mi_der1 & DER1_VMASK) == DER1_170 )  {
 			/* 
@@ -1021,20 +1035,14 @@ int	width, height;
 			if( (ifp->if_mode & MODE_6MASK) == MODE_6EXTSYNC )  {
 				/* external sync via GENLOCK board REM IN */
 			    	setvideo(CG_MODE, CG2_M_MODE3);
-			    	setvideo(DE_R1, DER1_G_170|DER1_UNBLANK );
+				new_der1 = DER1_G_170;
 			} else {
 				/* internal sync */
-#ifdef GENLOCK_SYNC
-				/* GENLOCK sync, found to be highly unstable */
-			    	setvideo(CG_MODE, CG2_M_MODE2);
-			    	setvideo(DE_R1, DER1_G_170|DER1_UNBLANK );
-#else
 				/* Just use DE3 sync generator.
 				 * For this case, GENLOCK board does nothing!
 				 * Equiv to setmonitor(NTSC);
 				 */
-				setvideo(DE_R1, DER1_170|DER1_UNBLANK);
-#endif
+				new_der1 = DER1_170;
 			}
 		} else {
 			/*
@@ -1043,16 +1051,15 @@ int	width, height;
 			 *  and hope that they have an outboard NTSC
 			 *  encoder device.  Equiv to setmonitor(NTSC);
 			 */
-			setvideo(DE_R1, DER1_170|DER1_UNBLANK);
+			new_der1 = DER1_170;
 		}
+		if( (ifp->if_mode & MODE_10MASK) == MODE_10SYNC_ON_GREEN )
+			new_der1 |= DER1_SYNCG;
+		setvideo( DE_R1, new_der1|DER1_UNBLANK );
 	}
 
 	/* Build a descriptive window title bar */
-	(void)sprintf( title, "BRL libfb /dev/sgi%d%s %s, %s",
-		ifp->if_mode,
-		((ifp->if_mode & MODE_4MASK) == MODE_4HZ30) ?
-			" 30Hz" :
-			"",
+	(void)sprintf( title, "BRL libfb /dev/sgi %s, %s",
 		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
 			"Transient Win" :
 			"Lingering Win",
@@ -1203,7 +1210,7 @@ FBIO	*ifp;
 		setvideo( DE_R1, SGI(ifp)->mi_der1 );
 
 	/*
-	 *  Note that for the MODE_5GENLOCK mode, the monitor will
+	 *  Note that for the MODE_5NTSC mode, the monitor will
 	 *  be left in NTSC mode until the user issues a "Set60"
 	 *  command.  This is vitally necessary because the Lyon-
 	 *  Lamb and VTR equipment need a stedy source of NTSC sync
