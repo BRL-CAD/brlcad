@@ -239,19 +239,19 @@ XEvent *eventPtr;
       XLookupString(&(eventPtr->xkey), buffer, 1,
 		    &keysym, (XComposeStatus *)NULL);
 
-      if(*buffer == 'c'){
-	bu_vls_free(&cmd);
+      if(keysym == XK_c){
 	curr_dm_list = save_dm_list;
 
 	return TCL_RETURN;
       }
     }
 
+#if 0
     XGetWindowAttributes( ((struct x_vars *)dmp->dm_vars)->dpy,
 			  ((struct x_vars *)dmp->dm_vars)->win, &xwa);
     dmp->dm_height = xwa.height;
     dmp->dm_width = xwa.width;
-
+#endif
     goto end;
   }
 
