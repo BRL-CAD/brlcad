@@ -73,6 +73,9 @@ extern FBIO X_interface;
 #ifdef IF_PTTY
 extern FBIO ptty_interface;
 #endif
+#ifdef IF_AB
+extern FBIO	abekas_interface;
+#endif
 
 /* Always included */
 extern FBIO debug_interface, disk_interface, stk_interface;
@@ -99,6 +102,9 @@ FBIO *_if_list[] = {
 /* never get the following by default */
 #ifdef IF_X
 	&X_interface,
+#endif
+#ifdef IF_AB
+	&abekas_interface,
 #endif
 #ifdef IF_PTTY
 	&ptty_interface,
