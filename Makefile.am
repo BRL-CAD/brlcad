@@ -104,7 +104,7 @@ $(PACKAGE_NAME)-$(VERSION).pkg:
 $(PACKAGE_NAME)-$(VERSION).dmg: $(PACKAGE_NAME)-$(VERSION).pkg
 	@$(ECHO) "Building a Disk Image for Mac OS X"
 	@$(ECHO)
-	@@SH@ sh/make_dmg.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@@SH@ sh/make_dmg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERISION)" "$(PACKAGE_NAME)-$(MAJOR_VERISON).$(MINOR_VERSION).$(.PATCH_ERSION)"
 
 # using home is probably not a great choice..
 $(PACKAGE)-$(VERSION).rpm: $(PACKAGE)-$(VERSION).tar.gz

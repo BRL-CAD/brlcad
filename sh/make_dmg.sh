@@ -34,6 +34,60 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+#
+# Script for generating a Mac OS X Installer package (.pkg) from a
+# clean package installation.  The package should be compatible with
+# old and new versions of Installer.
+#
+# Author: Christopher Sean Morrison
+#
+######################################################################
+
+NAME="$1"
+MAJOR_VERSION="$2"
+MINOR_VERSION="$3"
+PATCH_VERSION="$4"
+CONTENT="$5"
+
+if [ "x$NAME" = "x" ] ; then
+    echo "Usage: $0 title major_version minor_version patch_version [content]"
+    echo "ERROR: must specify a package name"
+    exit 1
+fi
+if [ "x$MINOR_VERSION" = "x" ] ; then
+    echo "Usage: $0 title major_version minor_version patch_version [content]"
+    echo "ERROR: must specify a major package version"
+    exit 1
+fi
+if [ "x$MINOR_VERSION" = "x" ] ; then
+    echo "ERROR: must specify a minor package version"
+    echo "Usage: $0 title major_version minor_version patch_version [content]"
+    exit 1
+fi
+if [ "x$PATCH_VERSION" = "x" ] ; then
+    echo "Usage: $0 title major_version minor_version patch_version [content]"
+    echo "ERROR: must specify a patch package version"
+    exit 1
+fi
+if [ "x$ARCHIVE" = "x" ] ; then
+    echo "Usage: $0 title major_version minor_version patch_version [content]"
+    echo "ERROR: must specify an archive directory"
+    exit 1
+fi
+if [ ! -r "$CONTENT" ] ; then
+    echo "ERROR: specified content (${CONTENT}) is not readable"
+    exit 1
+fi
+
+if [ "x`id -u`" != "x0" ] ; then
+    echo "This script requires superuser privileges, restarting via sudo"
+    sudo "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+    exit $?
+fi
+
+VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
+DMG_NAME="${NAME}-${VERSION}"
+
 
 # Local Variables:
 # mode: sh
