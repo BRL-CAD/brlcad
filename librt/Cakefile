@@ -24,7 +24,7 @@
 	g_arb g_ars g_ebm g_ell g_half g_pg g_rec g_sph g_nurb \
 	g_tgc g_torus g_vol g_arbn g_part g_pipe g_nmg \
 	g_rpc g_rhc g_epa g_ehy g_eto g_grip g_hf \
-	cmd mat qmath mater polylib roots plane \
+	cmd mat qmath mater roots plane \
 	sphmap rtlex vlist regionfix \
 	nmg_mk nmg_misc nmg_bool nmg_eval nmg_inter nmg_plot nmg_ck \
 	nmg_mesh nmg_fcut nmg_class nmg_mod nmg_index \
