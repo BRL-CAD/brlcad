@@ -210,6 +210,7 @@ register struct directory	*dp;
 			continue;
 		rt_free( dp->d_namep, "dir name" );
 		findp->d_forw = dp->d_forw;
+		bzero( (char *)dp, sizeof(struct directory) );	/* sanity */
 		rt_free( (char *)dp, "struct directory" );
 		return(0);
 	}
