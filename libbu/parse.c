@@ -1949,6 +1949,33 @@ CONST struct bu_external *ep;
 }
 
 /*
+ *			B U _ H E X D U M P _ E X T E R N A L
+ */
+void
+bu_hexdump_external( fp, ep, str )
+FILE			*fp;
+CONST struct bu_external *ep;
+CONST char		*str;
+{
+	unsigned char	*cp;
+	int i, j, k;
+
+	BU_CK_EXTERNAL(ep);
+
+	fprintf(fp, "%s:\n", str);
+	cp = ep->ext_buf;
+	for( i=0; i < ep->ext_nbytes; i += 16 )  {
+		for( j=0; j < 4; j++ )  {
+			for( k=0; k < 4; k++ )  {
+				fprintf(fp, "%2.2x ", *cp++ );
+			}
+			fprintf(fp, " ");
+		}
+		fprintf(fp, "\n");
+	}
+}
+
+/*
  *			B U _ F R E E _ E X T E R N A L
  */
 void
