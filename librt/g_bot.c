@@ -854,7 +854,7 @@ CONST struct bn_tol	*tol;
 
 	bu_free( (char *)verts, "rt_bot_tess *verts[]" );
 
-	nmg_mark_edges_real( &s->l );
+	nmg_mark_edges_real( &s->l.magic );
 
 	nmg_region_a( *r, tol );
 

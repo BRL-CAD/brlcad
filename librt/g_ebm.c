@@ -1479,7 +1479,7 @@ CONST struct bn_tol		*tol;
 
 	nmg_region_a( *r , tol );
 
-	(void)nmg_mark_edges_real( &s->l );
+	(void)nmg_mark_edges_real( &s->l.magic );
 
 	bu_free( (char *)vertp , "rt_ebm_tess: vertp" );
 	bu_free( (char *)loop_verts , "rt_ebm_tess: loop_verts" );

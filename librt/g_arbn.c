@@ -770,7 +770,7 @@ CONST struct bn_tol	*tol;
 
 	nmg_fix_normals( s , tol );
 
-	(void)nmg_mark_edges_real( &s->l );
+	(void)nmg_mark_edges_real( &s->l.magic );
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );

@@ -1071,12 +1071,12 @@ CONST struct bn_tol	*tol;
 	/* Front face topology.  Verts are considered to go CCW */
 	outfaceuses[0] = nmg_cface(s, vfront, n);
 
-	(void)nmg_mark_edges_real( &outfaceuses[0]->l );
+	(void)nmg_mark_edges_real( &outfaceuses[0]->l.magic );
 
 	/* Back face topology.  Verts must go in opposite dir (CW) */
 	outfaceuses[1] = nmg_cface(s, vtemp, n);
 
-	(void)nmg_mark_edges_real( &outfaceuses[1]->l );
+	(void)nmg_mark_edges_real( &outfaceuses[1]->l.magic );
 
 	for( i=0; i<n; i++ )  vback[i] = vtemp[n-1-i];
 
@@ -1096,7 +1096,7 @@ CONST struct bn_tol	*tol;
 		outfaceuses[2+i] = nmg_cface(s, vertlist, 4);
 	}
 
-	(void)nmg_mark_edges_real( &outfaceuses[n+1]->l );
+	(void)nmg_mark_edges_real( &outfaceuses[n+1]->l.magic );
 
 	for( i=0; i<n; i++ )  {
 		NMG_CK_VERTEX(vfront[i]);

@@ -1261,7 +1261,7 @@ CONST struct bn_tol	*tol;
 	}
 
 	/* Mark the edges of this face as real, this is the only real edge */
-	(void)nmg_mark_edges_real( &outfaceuses[0]->l );
+	(void)nmg_mark_edges_real( &outfaceuses[0]->l.magic );
 	
 	/* connect ellipses with triangles */
 	for (i = nell-2; i >= 0; i--) {	/* skip top ellipse */
