@@ -29,33 +29,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "rtstring.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./debug.h"
-
-/*
- *			R T _ L O G I N D E N T _ V L S
- *
- *  For multi-line vls generators, honor rtg_logindent like rt_log() does.
- *  Should be called at the front of each new line.
- */
-void
-rt_logindent_vls( v )
-struct rt_vls	*v;
-{
-	register int	i, todo;
-	static CONST char	spaces[65] = "                                                                ";
-
-	RT_VLS_CHECK( v );
-
-	i = rt_g.rtg_logindent;
-	while( i > 0 )  {
-		todo = i;
-		if( todo > 64 )  todo = 64;
-		rt_vls_strncat( v, spaces, todo );
-		i -= todo;
-	}
-}
 
 /*
  *			R T _ P R _ S O L T A B
@@ -67,15 +43,15 @@ register CONST struct soltab	*stp;
 	register int	id = stp->st_id;
 
 	if( id <= 0 || id > ID_MAXIMUM )  {
-		rt_log("stp=x%x, id=%d.\n", stp, id);
+		bu_log("stp=x%x, id=%d.\n", stp, id);
 		rt_bomb("rt_pr_soltab:  bad st_id");
 	}
-	rt_log("------------ %s (bit %d) %s ------------\n",
+	bu_log("------------ %s (bit %d) %s ------------\n",
 		stp->st_dp->d_namep, stp->st_bit,
 		rt_functab[id].ft_name );
 	VPRINT("Bound Sph CENTER", stp->st_center);
-	rt_log("Approx Sph Radius = %g\n", stp->st_aradius);
-	rt_log("Bounding Sph Radius = %g\n", stp->st_bradius);
+	bu_log("Approx Sph Radius = %g\n", stp->st_aradius);
+	bu_log("Bounding Sph Radius = %g\n", stp->st_bradius);
 	VPRINT("Bound RPP min", stp->st_min);
 	VPRINT("Bound RPP max", stp->st_max);
 	rt_pr_bitv( "Referenced by Regions",
@@ -90,28 +66,28 @@ void
 rt_pr_region( rp )
 register CONST struct region *rp;
 {
-	struct rt_vls	v;
+	struct bu_vls	v;
 
-	rt_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
-	rt_log("instnum=%d, id=%d, air=%d, gift_material=%d, los=%d\n",
+	bu_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
+	bu_log("instnum=%d, id=%d, air=%d, gift_material=%d, los=%d\n",
 		rp->reg_instnum,
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_gmater, rp->reg_los );
 	if( rp->reg_mater.ma_override == 1 )
-		rt_log("Color %d %d %d\n",
+		bu_log("Color %d %d %d\n",
 			(int)rp->reg_mater.ma_color[0]*255.,
 			(int)rp->reg_mater.ma_color[1]*255.,
 			(int)rp->reg_mater.ma_color[2]*255. );
 	if( rp->reg_mater.ma_matname[0] != '\0' )
-		rt_log("Material '%s' '%s'\n",
+		bu_log("Material '%s' '%s'\n",
 			rp->reg_mater.ma_matname,
 			rp->reg_mater.ma_matparm );
 
-	rt_vls_init(&v);
+	bu_vls_init(&v);
 	rt_pr_tree_vls(&v, rp->reg_treetop);
-	rt_log("%s %d %s\n", rp->reg_name,
-		rp->reg_instnum, rt_vls_addr(&v) );
-	rt_vls_free(&v);
+	bu_log("%s %d %s\n", rp->reg_name,
+		rp->reg_instnum, bu_vls_addr(&v) );
+	bu_vls_free(&v);
 }
 
 /*
@@ -125,25 +101,25 @@ register CONST struct partition	*phead;
 CONST char			*title;
 {
 	register CONST struct partition *pp;
-	struct rt_vls		v;
+	struct bu_vls		v;
 
 	RT_CHECK_RTI(rtip);
 
-	rt_vls_init( &v );
-	rt_logindent_vls( &v );
-	rt_vls_strcat( &v, "------" );
-	rt_vls_strcat( &v, title );
-	rt_vls_strcat( &v, "\n" );
+	bu_vls_init( &v );
+	bu_log_indent_vls( &v );
+	bu_vls_strcat( &v, "------" );
+	bu_vls_strcat( &v, title );
+	bu_vls_strcat( &v, "\n" );
 
 	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
 		RT_CHECK_PT(pp);
 		rt_pr_pt_vls( &v, rtip, pp );
 	}
-	rt_logindent_vls( &v );
-	rt_vls_strcat( &v, "------\n");
+	bu_log_indent_vls( &v );
+	bu_vls_strcat( &v, "------\n");
 
-	rt_log("%s", rt_vls_addr( &v ) );
-	rt_vls_free( &v );
+	bu_log("%s", bu_vls_addr( &v ) );
+	bu_vls_free( &v );
 }
 
 /*
@@ -151,48 +127,43 @@ CONST char			*title;
  */
 void
 rt_pr_pt_vls( v, rtip, pp )
-struct rt_vls			*v;
+struct bu_vls			*v;
 CONST struct rt_i		*rtip;
 register CONST struct partition *pp;
 {
 	register CONST struct soltab	*stp;
-	char		buf[128];
 
 	RT_CHECK_RTI(rtip);
 	RT_CHECK_PT(pp);
-	RT_VLS_CHECK(v);
+	BU_CK_VLS(v);
 
-	rt_logindent_vls( v );
-	sprintf(buf, "%.8x: PT ", pp );
-	rt_vls_strcat( v, buf );
+	bu_log_indent_vls( v );
+	bu_vls_printf( v, "%.8x: PT ", pp );
 
 	stp = pp->pt_inseg->seg_stp;
-	sprintf(buf, "%s (%s#%d) ",
+	bu_vls_printf(v, "%s (%s#%d) ",
 		stp->st_dp->d_namep,
 		rt_functab[stp->st_id].ft_name+3,
 		stp->st_bit );
-	rt_vls_strcat( v, buf );
 
 	stp = pp->pt_outseg->seg_stp;
-	sprintf(buf, "%s (%s#%d) ",
+	bu_vls_printf(v, "%s (%s#%d) ",
 		stp->st_dp->d_namep,
 		rt_functab[stp->st_id].ft_name+3,
 		stp->st_bit );
-	rt_vls_strcat( v, buf );
 
-	sprintf(buf, "(%g,%g)",
+	bu_vls_printf(v, "(%g,%g)",
 		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
-	rt_vls_strcat( v, buf );
-	if( pp->pt_inflip )  rt_vls_strcat( v, " Iflip" );
-	if( pp->pt_outflip )  rt_vls_strcat( v, " Oflip" );
-	rt_vls_strcat( v, "\n");
+	if( pp->pt_inflip )  bu_vls_strcat( v, " Iflip" );
+	if( pp->pt_outflip )  bu_vls_strcat( v, " Oflip" );
+	bu_vls_strcat( v, "\n");
 
 	rt_pr_hit_vls( v, "  In", pp->pt_inhit );
 	rt_pr_hit_vls( v, " Out", pp->pt_outhit );
-	rt_logindent_vls( v );
-	rt_vls_strcat( v, "  Solids: " );
+	bu_log_indent_vls( v );
+	bu_vls_strcat( v, "  Solids: " );
 	rt_pr_bitv_vls( v, pp->pt_solhit, rtip->nsolids );
-	rt_vls_strcat( v, "\n" );
+	bu_vls_strcat( v, "\n" );
 	}
 }
 
@@ -203,14 +174,14 @@ void
 rt_pr_pt( rtip, pp )
 CONST struct rt_i		*rtip;
 register CONST struct partition *pp;
-	struct rt_vls	v;
+{
 	struct bu_vls	v;
 
 	RT_CHECK_RTI(rtip);
-	rt_vls_init( &v );
+	RT_CHECK_PT(pp);
 	bu_vls_init( &v );
-	rt_log("%s", rt_vls_addr( &v ) );
-	rt_vls_free( &v );
+	rt_pr_pt_vls( &v, rtip, pp );
+	bu_log("%s", bu_vls_addr( &v ) );
 	bu_vls_free( &v );
 }
 
@@ -220,7 +191,7 @@ register CONST struct partition *pp;
  */
 void
 rt_pr_bitv_vls( v, bv, len )
-struct rt_vls		*v;
+struct bu_vls		*v;
 register CONST bitv_t	*bv;
 register int		len;
 {
@@ -228,25 +199,24 @@ register int		len;
 	char		buf[128];
 	int		seen = 0;
 
-	RT_VLS_CHECK( v );
+	BU_CK_VLS( v );
 
-	rt_vls_strcat( v, "(" );
+	bu_vls_strcat( v, "(" );
 	for( i=0; i<len; i++ )  {
 		if( BITTEST(bv,i) )  {
-			if( seen )  rt_vls_strcat( v, ", " );
-			sprintf( buf, "%d", i );
-			rt_vls_strcat( v, buf );
+			if( seen )  bu_vls_strcat( v, ", " );
+			bu_vls_printf( v, "%d", i );
 			seen = 1;
 		}
 	}
-	rt_vls_strcat( v, ") " );
+	bu_vls_strcat( v, ") " );
 }
 
 /*
  *			R T _ P R _ B I T V
  *
  *  Print the bits set in a bit vector.
- *  Use rt_vls stuff, to make only a single call to rt_log().
+ *  Use bu_vls stuff, to make only a single call to bu_log().
  */
 void
 rt_pr_bitv( str, bv, len )
@@ -254,14 +224,14 @@ CONST char		*str;
 register CONST bitv_t	*bv;
 register int		len;
 {
-	struct rt_vls	v;
+	struct bu_vls	v;
 
-	rt_vls_init( &v );
-	rt_vls_strcat( &v, str );
-	rt_vls_strcat( &v, ": " );
+	bu_vls_init( &v );
+	bu_vls_strcat( &v, str );
+	bu_vls_strcat( &v, ": " );
 	rt_pr_bitv_vls( &v, bv, len );
-	rt_log("%s", rt_vls_addr( &v ) );
-	rt_vls_free( &v );
+	bu_log("%s", bu_vls_addr( &v ) );
+	bu_vls_free( &v );
 }
 
 /*
@@ -272,7 +242,7 @@ void
 rt_pr_seg(segp)
 register CONST struct seg *segp;
 {
-	rt_log("%.8x: SEG %s (%g,%g) bit=%d\n",
+	RT_CHECK_SEG(segp);
 	bu_log("%.8x: SEG %s (%g,%g) bit=%d\n",
 		segp,
 		segp->seg_stp->st_dp->d_namep,
@@ -288,12 +258,12 @@ void
 rt_pr_hit( str, hitp )
 CONST char			*str;
 register CONST struct hit	*hitp;
-	struct rt_vls		v;
+{
 	struct bu_vls		v;
-	rt_vls_init( &v );
+
 	bu_vls_init( &v );
-	rt_log("%s", rt_vls_addr( &v ) );
-	rt_vls_free( &v );
+	rt_pr_hit_vls( &v, str, hitp );
+	bu_log("%s", bu_vls_addr( &v ) );
 	bu_vls_free( &v );
 }
 
@@ -301,20 +271,17 @@ register CONST struct hit	*hitp;
  *			R T _ P R _ H I T _ V L S
  */
 void
-struct rt_vls			*v;
+rt_pr_hit_vls( v, str, hitp )
 struct bu_vls			*v;
 CONST char			*str;
 register CONST struct hit	*hitp;
-	char		buf[128];
+{
 	BU_CK_VLS( v );
-	RT_VLS_CHECK( v );
-	bu_vls_strcat( v, str );
-	rt_logindent_vls( v );
-	rt_vls_strcat( v, str );
 
-	sprintf(buf, "HIT dist=%g (surf %d)\n",
+	bu_log_indent_vls( v );
+	bu_vls_strcat( v, str );
+
 	bu_vls_printf(v, "HIT dist=%g (surf %d)\n",
-	rt_vls_strcat( v, buf );
 		hitp->hit_dist, hitp->hit_surfno );
 }
 
@@ -332,56 +299,56 @@ register CONST union tree *tp;
 int lvl;			/* recursion level */
 {
 	register int i;
-	rt_log("%.8x ", tp);
+
 	bu_log("%.8x ", tp);
-		rt_log("  ");
+	for( i=lvl; i>0; i-- )
 		bu_log("  ");
 
-		rt_log("Null???\n");
+	if( tp == TREE_NULL )  {
 		bu_log("Null???\n");
 		return;
 	}
 
 	switch( tp->tr_op )  {
 
-		rt_log("NOP\n");
+	case OP_NOP:
 		bu_log("NOP\n");
 		return;
 
-		rt_log("SOLID %s (bit %d)\n",
+	case OP_SOLID:
 		bu_log("SOLID %s (bit %d)\n",
 			tp->tr_a.tu_stp->st_dp->d_namep,
 			tp->tr_a.tu_stp->st_bit );
 		return;
 
-		rt_log("REGION ctsp=x%x\n", tp->tr_c.tc_ctsp );
+	case OP_REGION:
 		bu_log("REGION ctsp=x%x\n", tp->tr_c.tc_ctsp );
 		db_pr_combined_tree_state( tp->tr_c.tc_ctsp );
 		return;
 
-		rt_log("DB_LEAF %s%s\n",
+	case OP_DB_LEAF:
 		bu_log("DB_LEAF %s%s\n",
 			tp->tr_l.tl_name,
 			tp->tr_l.tl_mat ? " (matrix)" : "" );
 		return;
 
-		rt_log("Unknown op=x%x\n", tp->tr_op );
+	default:
 		bu_log("Unknown op=x%x\n", tp->tr_op );
 		return;
 
-		rt_log("UNION\n");
+	case OP_UNION:
 		bu_log("UNION\n");
 		break;
-		rt_log("INTERSECT\n");
+	case OP_INTERSECT:
 		bu_log("INTERSECT\n");
 		break;
-		rt_log("MINUS\n");
+	case OP_SUBTRACT:
 		bu_log("MINUS\n");
 		break;
-		rt_log("XOR\n");
+	case OP_XOR:
 		bu_log("XOR\n");
 		break;
-		rt_log("NOT\n");
+	case OP_NOT:
 		bu_log("NOT\n");
 		break;
 	}
@@ -413,89 +380,89 @@ int lvl;			/* recursion level */
  *  Operations are responsible for generating white space.
  */
 void
-struct rt_vls		*vls;
+rt_pr_tree_vls( vls, tp )
 struct bu_vls		*vls;
 register CONST union tree *tp;
 {
 	char		*str;
 
-		rt_vls_strcat( vls, "??NULL_tree??" );
+	if( tp == TREE_NULL )  {
 		bu_vls_strcat( vls, "??NULL_tree??" );
 		return;
 	}
 
 	switch( tp->tr_op )  {
 
-		rt_vls_strcat( vls, "NOP");
+	case OP_NOP:
 		bu_vls_strcat( vls, "NOP");
 		return;
 
-		rt_vls_strcat( vls, tp->tr_a.tu_stp->st_dp->d_namep );
+	case OP_SOLID:
 		bu_vls_strcat( vls, tp->tr_a.tu_stp->st_dp->d_namep );
 		return;
 
 	case OP_REGION:
-		rt_vls_strcat( vls, str );
+		str = db_path_to_string( &(tp->tr_c.tc_ctsp->cts_p) );
 		bu_vls_strcat( vls, str );
 		rt_free( str, "path string" );
 		return;
 
-		rt_vls_strcat( vls, tp->tr_l.tl_name );
+	case OP_DB_LEAF:
 		bu_vls_strcat( vls, tp->tr_l.tl_name );
 		return;
 
-		rt_log("rt_pr_tree_vls() Unknown op=x%x\n", tp->tr_op );
+	default:
 		bu_log("rt_pr_tree_vls() Unknown op=x%x\n", tp->tr_op );
 		return;
 
 	case OP_UNION:
-		rt_vls_strcat( vls, " (" );
+		/* BINARY type */
 		bu_vls_strcat( vls, " (" );
-		rt_vls_strcat( vls, ") u (" );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_left );
 		bu_vls_strcat( vls, ") u (" );
-		rt_vls_strcat( vls, ") " );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_right );
 		bu_vls_strcat( vls, ") " );
 		break;
 	case OP_INTERSECT:
-		rt_vls_strcat( vls, " (" );
+		/* BINARY type */
 		bu_vls_strcat( vls, " (" );
-		rt_vls_strcat( vls, ") + (" );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_left );
 		bu_vls_strcat( vls, ") + (" );
-		rt_vls_strcat( vls, ") " );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_right );
 		bu_vls_strcat( vls, ") " );
 		break;
 	case OP_SUBTRACT:
-		rt_vls_strcat( vls, " (" );
+		/* BINARY type */
 		bu_vls_strcat( vls, " (" );
-		rt_vls_strcat( vls, ") - (" );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_left );
 		bu_vls_strcat( vls, ") - (" );
-		rt_vls_strcat( vls, ") " );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_right );
 		bu_vls_strcat( vls, ") " );
 		break;
 	case OP_XOR:
-		rt_vls_strcat( vls, " (" );
+		/* BINARY type */
 		bu_vls_strcat( vls, " (" );
-		rt_vls_strcat( vls, ") ^ (" );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_left );
 		bu_vls_strcat( vls, ") ^ (" );
-		rt_vls_strcat( vls, ") " );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_right );
 		bu_vls_strcat( vls, ") " );
 		break;
 	case OP_NOT:
-		rt_vls_strcat( vls, " !(" );
+		/* UNARY tree */
 		bu_vls_strcat( vls, " !(" );
-		rt_vls_strcat( vls, ") " );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_left );
 		bu_vls_strcat( vls, ") " );
 		break;
 	case OP_GUARD:
-		rt_vls_strcat( vls, " guard(" );
+		/* UNARY tree */
 		bu_vls_strcat( vls, " guard(" );
-		rt_vls_strcat( vls, ") " );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_left );
 		bu_vls_strcat( vls, ") " );
 		break;
 	case OP_XNOP:
-		rt_vls_strcat( vls, " xnop(" );
+		/* UNARY tree */
 		bu_vls_strcat( vls, " xnop(" );
-		rt_vls_strcat( vls, ") " );
+		rt_pr_tree_vls( vls, tp->tr_b.tb_left );
 		bu_vls_strcat( vls, ") " );
 		break;
 	return (char *)NULL;
@@ -521,25 +488,25 @@ int			lvl;		/* Recursion level */
 
 	if( lvl == 0 )  {
 		switch( pr_name )  {
-			rt_log("tree val: ");
+		default:
 			bu_log("tree val: ");
 			break;
-			rt_log("tree solids: ");
+		case 1:
 			bu_log("tree solids: ");
 			break;
-			rt_log("tree solid bits: ");
+		case 2:
 			bu_log("tree solid bits: ");
 			break;
 		}
 	}
 
-		rt_log("Null???\n");
+	if( tp == TREE_NULL )  {
 		bu_log("Null???\n");
 		return;
 	}
 
 	switch( tp->tr_op )  {
-		rt_log("Unknown_op=x%x", tp->tr_op );
+	default:
 		bu_log("Unknown_op=x%x", tp->tr_op );
 		break;
 
@@ -550,119 +517,77 @@ int			lvl;		/* Recursion level */
 
 				i = tp->tr_a.tu_stp->st_bit;
 				i = BITTEST( partp->pt_solhit, i );
-				rt_log("%d", i);
+				bu_log("%d", i);
 			}
 				bu_log("1");
 			break;
-			rt_log("%s", tp->tr_a.tu_stp->st_dp->d_namep );
+		case 1:
 			bu_log("%s", tp->tr_a.tu_stp->st_dp->d_namep );
 			break;
-			rt_log("%d", tp->tr_a.tu_stp->st_bit );
+		case 2:
 			bu_log("%d", tp->tr_a.tu_stp->st_bit );
 			break;
 		}
 		break;
 
 
-		rt_log("(");
+	case OP_UNION:
 		bu_log("(");
-		rt_log(" u ");
+		rt_pr_tree_val( tp->tr_b.tb_left,  partp, pr_name, lvl+1 );
 		bu_log(" u ");
-		rt_log(")");
+		rt_pr_tree_val( tp->tr_b.tb_right, partp, pr_name, lvl+1 );
 		bu_log(")");
 		break;
-		rt_log("(");
+	case OP_INTERSECT:
 		bu_log("(");
-		rt_log(" + ");
+		rt_pr_tree_val( tp->tr_b.tb_left,  partp, pr_name, lvl+1 );
 		bu_log(" + ");
-		rt_log(")");
+		rt_pr_tree_val( tp->tr_b.tb_right, partp, pr_name, lvl+1 );
 		bu_log(")");
 		break;
-		rt_log("(");
+	case OP_SUBTRACT:
 		bu_log("(");
-		rt_log(" - ");
+		rt_pr_tree_val( tp->tr_b.tb_left,  partp, pr_name, lvl+1 );
 		bu_log(" - ");
-		rt_log(")");
+		rt_pr_tree_val( tp->tr_b.tb_right, partp, pr_name, lvl+1 );
 		bu_log(")");
 		break;
-		rt_log("(");
+	case OP_XOR:
 		bu_log("(");
-		rt_log(" XOR ");
+		rt_pr_tree_val( tp->tr_b.tb_left,  partp, pr_name, lvl+1 );
 		bu_log(" XOR ");
-		rt_log(")");
+		rt_pr_tree_val( tp->tr_b.tb_right, partp, pr_name, lvl+1 );
 		bu_log(")");
 		break;
 
-		rt_log(" !");
+	case OP_NOT:
 		bu_log(" !");
 		rt_pr_tree_val( tp->tr_b.tb_left, partp, pr_name, lvl+1 );
 		break;
-		rt_log(" GUARD ");
+	case OP_GUARD:
 		bu_log(" GUARD ");
 		rt_pr_tree_val( tp->tr_b.tb_left, partp, pr_name, lvl+1 );
 		break;
 	}
-	if( lvl == 0 )  rt_log("\n");
+
 	if( lvl == 0 )  bu_log("\n");
 }
 
- *			R T _ P R I N T B
- *
- *  Print a value a la the %b format of the kernel's printf
- *
- *    s		title string
- *    v		the integer with the bits in it
- *    bits	a string which starts with the desired base, then followed by
- *		words preceeded with embedded low-value bytes indicating
- *		bit number plus one,
- *		in little-endian order, eg:
- *		"\010\2Bit_one\1BIT_zero"
- */
-void
-rt_printb(s, v, bits)
-CONST char		*s;
-register unsigned long	v;
-register CONST char	*bits;
-{
-	register int i, any = 0;
-	register char c;
-
-	if (*bits++ == 8)
-		rt_log("%s=0%o <", s, v);
-	else
-		rt_log("%s=x%x <", s, v);
-	while (i = *bits++) {
-		if (v & (1L << (i-1))) {
-			if (any)
-				rt_log(",");
-			any = 1;
-			for (; (c = *bits) > 32; bits++)
-				rt_log("%c", c);
-		} else
-			for (; *bits > 32; bits++)
-				;
-	}
-	rt_log(">");
-}
-
-/*
 /*
  *			R T _ P R _ F A L L B A C K _ A N G L E
  */
 void
-struct rt_vls	*str;
+rt_pr_fallback_angle( str, prefix, angles )
 struct bu_vls	*str;
 CONST char	*prefix;
 CONST double	angles[5];
-	char		buf[256];
+{
 	BU_CK_VLS(str);
-	sprintf(buf, "%s direction cosines=(%.1f, %1.f, %1.f)\n",
+
 	bu_vls_printf(str, "%s direction cosines=(%.1f, %1.f, %1.f)\n",
-	rt_vls_strcat( str, buf );
 		prefix, angles[0], angles[1], angles[2] );
-	sprintf(buf, "%s rotation angle=%1.f, fallback angle=%1.f\n",
+
 	bu_vls_printf(str, "%s rotation angle=%1.f, fallback angle=%1.f\n",
-	rt_vls_strcat( str, buf );
 		prefix, angles[3], angles[4] );
 }
 
@@ -748,7 +673,7 @@ CONST struct rt_tol	*tol;
 CONST struct bn_tol	*tol;
 	RT_CK_TOL(tol);
 	BN_CK_TOL(tol);
-	rt_log("%8.8x TOL %e (sq=%e) perp=%e, para=%e\n",
+
 	bu_log("%8.8x TOL %e (sq=%e) perp=%e, para=%e\n",
 		tol, tol->dist, tol->dist_sq,
 		tol->perp, tol->para );
