@@ -57,6 +57,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./menu.h"
 
+#if 1
+#define TRY_EDIT_NEW_WAY
+#endif
+
 extern void bv_edit_toggle();
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
@@ -2729,14 +2733,6 @@ sedit()
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 			if(inpara) {
-				/* Keyboard parameter.
-				 * Apply inverse of es_mat to these
-				 * model coordinates first, because sedit_mouse()
-				 * has already applied es_mat to them.
-				 * XXX this does not make sense.
-				 */
-				MAT4X3PNT( work, es_invmat, es_para );
-
 				/* Need vector from current vertex/keypoint
 				 * to desired new location.
 				 */
@@ -2891,7 +2887,12 @@ sedit()
 			}
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
+#if 0
+			MAT4X3VEC(work, es_invmat, es_keypoint);
+			mat_xform_about_pt( mat, incr_change, work );
+#else
 			mat_xform_about_pt( mat, incr_change, es_keypoint );
+#endif
 			transform_editing_solid(&es_int, mat, &es_int, 1);
 
 			mat_idn( incr_change );
@@ -3968,238 +3969,253 @@ void
 sedit_mouse( mousevec )
 CONST vect_t	mousevec;
 {
-	vect_t	pos_view;	 	/* Unrotated view space pos */
-	vect_t	pos_model;		/* Rotated screen space pos */
-	vect_t	tr_temp;		/* temp translation vector */
-	vect_t	temp;
+  vect_t pos_view;	 	/* Unrotated view space pos */
+  vect_t pos_model;		/* Rotated screen space pos */
+  vect_t tr_temp;		/* temp translation vector */
+  vect_t temp;
+  vect_t raw_kp;                /* es_keypoint with es_invmat applied */
+  vect_t raw_mp;                /* raw model position */
 
 
-	if( es_edflag <= 0 )  return;
-	switch( es_edflag )  {
+  if( es_edflag <= 0 )
+    return;
 
-	case SSCALE:
-	case PSCALE:
-	case ECMD_VOL_CSIZE:
-	case ECMD_VOL_THRESH_LO:
-	case ECMD_VOL_THRESH_HI:
-		/* use mouse to get a scale factor */
-		es_scale = 1.0 + 0.25 * ((fastf_t)
-			(mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
-		if ( mousevec[Y] <= 0 )
-			es_scale = 1.0 / es_scale;
+  switch( es_edflag )  {
+  case SSCALE:
+  case PSCALE:
+  case ECMD_VOL_CSIZE:
+  case ECMD_VOL_THRESH_LO:
+  case ECMD_VOL_THRESH_HI:
+    /* use mouse to get a scale factor */
+    es_scale = 1.0 + 0.25 * ((fastf_t)
+			     (mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
+    if ( mousevec[Y] <= 0 )
+      es_scale = 1.0 / es_scale;
 
-		/* accumulate scale factor */
-		acc_sc_sol *= es_scale;
+    /* accumulate scale factor */
+    acc_sc_sol *= es_scale;
 
-		edit_absolute_scale = acc_sc_sol - 1.0;
-		if(edit_absolute_scale > 0)
-		  edit_absolute_scale /= 3.0;
+    edit_absolute_scale = acc_sc_sol - 1.0;
+    if(edit_absolute_scale > 0)
+      edit_absolute_scale /= 3.0;
 
-		sedraw = 1;
-		return;
-	case STRANS:
-		/* 
-		 * Use mouse to change solid's location.
-		 * Project solid's keypoint into view space,
-		 * replace X,Y (but NOT Z) components, and
-		 * project result back to model space.
-		 * Then move keypoint there.
-		 */
-		{
-			point_t	pt;
-			vect_t	delta;
-			mat_t	xlatemat;
+    break;
+  case STRANS:
+    /* 
+     * Use mouse to change solid's location.
+     * Project solid's keypoint into view space,
+     * replace X,Y (but NOT Z) components, and
+     * project result back to model space.
+     * Then move keypoint there.
+     */
+    {
+      point_t	pt;
+      vect_t	delta;
+      mat_t	xlatemat;
 
-			MAT4X3PNT( temp, es_mat, es_keypoint );
-			MAT4X3PNT( pos_view, model2view, temp );
-			pos_view[X] = mousevec[X];
-			pos_view[Y] = mousevec[Y];
-			MAT4X3PNT( temp, view2model, pos_view );
-			MAT4X3PNT( pt, es_invmat, temp );
+#ifdef TRY_EDIT_NEW_WAY
+      MAT4X3PNT( pos_view, model2view, es_keypoint );
+      pos_view[X] = mousevec[X];
+      pos_view[Y] = mousevec[Y];
+      MAT4X3PNT( pt, view2model, pos_view );
 
-			/* Need vector from current vertex/keypoint
-			 * to desired new location.
-			 */
-			VSUB2( delta, es_keypoint, pt );
-			mat_idn( xlatemat );
-			MAT_DELTAS_VEC_NEG( xlatemat, delta );
-			transform_editing_solid(&es_int, xlatemat, &es_int, 1);
-		}
-
-	        update_edit_absolute_tran(pos_view);
-		sedraw = 1;
-		return;
-	case ECMD_VTRANS:
-		/* 
-		 * Use mouse to change a vertex location.
-		 * Project vertex (in solid keypoint) into view space,
-		 * replace X,Y (but NOT Z) components, and
-		 * project result back to model space.
-		 * Leave desired location in es_mparam.
-		 */
-
-		MAT4X3PNT( temp, es_mat, es_keypoint );
-		MAT4X3PNT( pos_view, model2view, temp );
-		pos_view[X] = mousevec[X];
-		pos_view[Y] = mousevec[Y];
-		MAT4X3PNT( temp, view2model, pos_view );
-		MAT4X3PNT( es_mparam, es_invmat, temp );
-		es_mvalid = 1;	/* es_mparam is valid */
-		/* Leave the rest to code in sedit() */
-
-		update_edit_absolute_tran(pos_view);
-		sedraw = 1;
-		return;
-	case ECMD_TGC_MV_H:
-	case ECMD_TGC_MV_HH:
-		/* Use mouse to change location of point V+H */
-		{
-			struct rt_tgc_internal	*tgc = 
-				(struct rt_tgc_internal *)es_int.idb_ptr;
-			RT_TGC_CK_MAGIC(tgc);
-
-			VADD2( temp, tgc->v, tgc->h );
-			MAT4X3PNT(pos_model, es_mat, temp);
-			MAT4X3PNT( pos_view, model2view, pos_model );
-			pos_view[X] = mousevec[X];
-			pos_view[Y] = mousevec[Y];
-			/* Do NOT change pos_view[Z] ! */
-			MAT4X3PNT( temp, view2model, pos_view );
-			MAT4X3PNT( tr_temp, es_invmat, temp );
-			VSUB2( tgc->h, tr_temp, tgc->v );
-		}
-
-	        update_edit_absolute_tran(pos_view);
-		sedraw = 1;
-		return;
-	case PTARB:
-		/* move an arb point to indicated point */
-		/* point is located at es_values[es_menu*3] */
-		{
-			struct rt_arb_internal *arb=
-				(struct rt_arb_internal *)es_int.idb_ptr;
-			RT_ARB_CK_MAGIC( arb );
-
-			VMOVE( temp , arb->pt[es_menu] );
-		}
-
-		MAT4X3PNT(pos_model, es_mat, temp);
-		MAT4X3PNT(pos_view, model2view, pos_model);
-		pos_view[X] = mousevec[X];
-		pos_view[Y] = mousevec[Y];
-		MAT4X3PNT(temp, view2model, pos_view);
-		MAT4X3PNT(pos_model, es_invmat, temp);
-		editarb( pos_model );
-
-		update_edit_absolute_tran(pos_view);
-		sedraw = 1;
-		return;
-	case EARB:
-#if 0
-	  
+      /* Need vector from current vertex/keypoint
+       * to desired new location.
+       */
+      MAT4X3PNT( raw_mp, es_invmat, pt );
+      MAT4X3PNT( raw_kp, es_invmat, es_keypoint );
+      VSUB2( delta, raw_kp, raw_mp );
+      mat_idn( xlatemat );
+      MAT_DELTAS_VEC_NEG( xlatemat, delta );
 #else
-		/* move arb edge, through indicated point */
-		MAT4X3PNT( temp, view2model, mousevec );
-		/* apply inverse of es_mat */
-		MAT4X3PNT( pos_model, es_invmat, temp );
+      MAT4X3PNT( temp, es_mat, es_keypoint );
+      MAT4X3PNT( pos_view, model2view, temp );
+      pos_view[X] = mousevec[X];
+      pos_view[Y] = mousevec[Y];
+      MAT4X3PNT( temp, view2model, pos_view );
+      MAT4X3PNT( pt, es_invmat, temp );
+
+      /* Need vector from current vertex/keypoint
+       * to desired new location.
+       */
+
+      VSUB2( delta, es_keypoint, pt );
+      mat_idn( xlatemat );
+      MAT_DELTAS_VEC_NEG( xlatemat, delta );
 #endif
-		editarb( pos_model );
+      transform_editing_solid(&es_int, xlatemat, &es_int, 1);
+    }
 
-		update_edit_absolute_tran(mousevec);
-		sedraw = 1;
-		return;
-	case ECMD_ARB_MOVE_FACE:
-		/* move arb face, through  indicated  point */
-		MAT4X3PNT( temp, view2model, mousevec );
-		/* apply inverse of es_mat */
-		MAT4X3PNT( pos_model, es_invmat, temp );
-		/* change D of planar equation */
-		es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
-		/* calculate new vertices, put in record as vectors */
-		{
-			struct rt_arb_internal *arb=
-				(struct rt_arb_internal *)es_int.idb_ptr;
+    update_edit_absolute_tran(pos_view);
+    break;
+  case ECMD_VTRANS:
+    /* 
+     * Use mouse to change a vertex location.
+     * Project vertex (in solid keypoint) into view space,
+     * replace X,Y (but NOT Z) components, and
+     * project result back to model space.
+     * Leave desired location in es_mparam.
+     */
 
-			RT_ARB_CK_MAGIC( arb );
-			(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
-		}
+#ifdef TRY_EDIT_NEW_WAY
+    MAT4X3PNT( pos_view, model2view, es_keypoint );
+    pos_view[X] = mousevec[X];
+    pos_view[Y] = mousevec[Y];
+    MAT4X3PNT( temp, view2model, pos_view );
+    MAT4X3PNT( es_mparam, es_invmat, temp );
+    es_mvalid = 1;	/* es_mparam is valid */
+#else
+    MAT4X3PNT( temp, es_mat, es_keypoint );
+    MAT4X3PNT( pos_view, model2view, temp );
+    pos_view[X] = mousevec[X];
+    pos_view[Y] = mousevec[Y];
+    MAT4X3PNT( temp, view2model, pos_view );
+    MAT4X3PNT( es_mparam, es_invmat, temp );
+    es_mvalid = 1;	/* es_mparam is valid */
+#endif
+    /* Leave the rest to code in sedit() */
 
-		update_edit_absolute_tran(mousevec);
-		sedraw = 1;
-		return;
-	case ECMD_NMG_EPICK:
-		/* XXX Should just leave desired location in es_mparam for sedit() */
-		{
-			struct model	*m = 
-				(struct model *)es_int.idb_ptr;
-			struct edge	*e;
-			struct rt_tol	tmp_tol;
-			NMG_CK_MODEL(m);
+    update_edit_absolute_tran(pos_view);
+    break;
+  case ECMD_TGC_MV_H:
+  case ECMD_TGC_MV_HH:
+    /* Use mouse to change location of point V+H */
+    {
+      struct rt_tgc_internal	*tgc = 
+	(struct rt_tgc_internal *)es_int.idb_ptr;
+      RT_TGC_CK_MAGIC(tgc);
 
-			/* Picking an edge should not depend on tolerances! */
-			tmp_tol.magic = RT_TOL_MAGIC;
-			tmp_tol.dist = 0.0;
-			tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
-			tmp_tol.perp = 0.0;
-			tmp_tol.para = 1 - tmp_tol.perp;
+      VADD2( temp, tgc->v, tgc->h );
+      MAT4X3PNT(pos_model, es_mat, temp);
+      MAT4X3PNT( pos_view, model2view, pos_model );
+      pos_view[X] = mousevec[X];
+      pos_view[Y] = mousevec[Y];
+      /* Do NOT change pos_view[Z] ! */
+      MAT4X3PNT( temp, view2model, pos_view );
+      MAT4X3PNT( tr_temp, es_invmat, temp );
+      VSUB2( tgc->h, tr_temp, tgc->v );
+    }
 
-			if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec,
-			    model2view, &tmp_tol )) == (struct edge *)NULL )  {
-			  Tcl_AppendResult(interp, "ECMD_NMG_EPICK: unable to find an edge\n", (char *)NULL);
-			  mged_print_result( TCL_ERROR );
-			  return;
-			}
-			es_eu = e->eu_p;
-			NMG_CK_EDGEUSE(es_eu);
+    update_edit_absolute_tran(pos_view);
+    break;
+  case PTARB:
+    /* move an arb point to indicated point */
+    /* point is located at es_values[es_menu*3] */
+    {
+      struct rt_arb_internal *arb=
+	(struct rt_arb_internal *)es_int.idb_ptr;
+      RT_ARB_CK_MAGIC( arb );
+      
+      VMOVE( temp , arb->pt[es_menu] );
+    }
 
-			{
-			  struct bu_vls tmp_vls;
+    MAT4X3PNT(pos_model, es_mat, temp);
+    MAT4X3PNT(pos_view, model2view, pos_model);
+    pos_view[X] = mousevec[X];
+    pos_view[Y] = mousevec[Y];
+    MAT4X3PNT(temp, view2model, pos_view);
+    MAT4X3PNT(pos_model, es_invmat, temp);
+    editarb( pos_model );
 
-			  bu_vls_init(&tmp_vls);
-			  bu_vls_printf(&tmp_vls,
-					"edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
-					es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
-					V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
-			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-			  mged_print_result( TCL_ERROR );
-			  bu_vls_free(&tmp_vls);
-			}
+    update_edit_absolute_tran(pos_view);
+    break;
+  case EARB:
+    /* move arb edge, through indicated point */
+    MAT4X3PNT( temp, view2model, mousevec );
+    /* apply inverse of es_mat */
+    MAT4X3PNT( pos_model, es_invmat, temp );
+    editarb( pos_model );
 
-			update_edit_absolute_tran(mousevec);
-			sedraw = 1;
-		}
-	        break;
+    update_edit_absolute_tran(mousevec);
+    break;
+  case ECMD_ARB_MOVE_FACE:
+    /* move arb face, through  indicated  point */
+    MAT4X3PNT( temp, view2model, mousevec );
+    /* apply inverse of es_mat */
+    MAT4X3PNT( pos_model, es_invmat, temp );
+    /* change D of planar equation */
+    es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
+    /* calculate new vertices, put in record as vectors */
+    {
+      struct rt_arb_internal *arb=
+	(struct rt_arb_internal *)es_int.idb_ptr;
 
-	case ECMD_NMG_LEXTRU:
-	case ECMD_NMG_EMOVE:
-	case ECMD_NMG_ESPLIT:
-	case ECMD_PIPE_PICK:
-	case ECMD_PIPE_SPLIT:
-	case ECMD_PIPE_PT_MOVE:
-	case ECMD_PIPE_PT_ADD:
-	case ECMD_PIPE_PT_INS:
-	case ECMD_ARS_PICK:
-	case ECMD_ARS_MOVE_PT:
-	case ECMD_ARS_MOVE_CRV:
-	case ECMD_ARS_MOVE_COL:
-		MAT4X3PNT( temp, view2model, mousevec );
-		/* apply inverse of es_mat */
-		MAT4X3PNT( es_mparam, es_invmat, temp );
-		es_mvalid = 1;
+      RT_ARB_CK_MAGIC( arb );
+      (void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
+    }
 
-		update_edit_absolute_tran(mousevec);
-		sedraw = 1;
-		return;
-	default:
-	  Tcl_AppendResult(interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
-	  mged_print_result( TCL_ERROR );
-	  break;
-	}
+    update_edit_absolute_tran(mousevec);
+    break;
+  case ECMD_NMG_EPICK:
+    /* XXX Should just leave desired location in es_mparam for sedit() */
+    {
+      struct model	*m = 
+	(struct model *)es_int.idb_ptr;
+      struct edge	*e;
+      struct rt_tol	tmp_tol;
+      NMG_CK_MODEL(m);
 
-	/* XXX I would prefer to see an explicit call to the guts of sedit()
-	 * XXX here, rather than littering the place with global variables
-	 * XXX for later interpretation.
-	 */
+      /* Picking an edge should not depend on tolerances! */
+      tmp_tol.magic = RT_TOL_MAGIC;
+      tmp_tol.dist = 0.0;
+      tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+      tmp_tol.perp = 0.0;
+      tmp_tol.para = 1 - tmp_tol.perp;
+
+      if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec,
+				       model2view, &tmp_tol )) ==
+	  (struct edge *)NULL )  {
+	Tcl_AppendResult(interp, "ECMD_NMG_EPICK: unable to find an edge\n",
+			 (char *)NULL);
+	mged_print_result( TCL_ERROR );
+	return;
+      }
+      es_eu = e->eu_p;
+      NMG_CK_EDGEUSE(es_eu);
+
+      {
+	struct bu_vls tmp_vls;
+
+	bu_vls_init(&tmp_vls);
+	bu_vls_printf(&tmp_vls,
+		      "edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
+		      es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+		      V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	mged_print_result( TCL_ERROR );
+	bu_vls_free(&tmp_vls);
+      }
+
+      update_edit_absolute_tran(mousevec);
+    }
+
+    break;
+  case ECMD_NMG_LEXTRU:
+  case ECMD_NMG_EMOVE:
+  case ECMD_NMG_ESPLIT:
+  case ECMD_PIPE_PICK:
+  case ECMD_PIPE_SPLIT:
+  case ECMD_PIPE_PT_MOVE:
+  case ECMD_PIPE_PT_ADD:
+  case ECMD_PIPE_PT_INS:
+  case ECMD_ARS_PICK:
+  case ECMD_ARS_MOVE_PT:
+  case ECMD_ARS_MOVE_CRV:
+  case ECMD_ARS_MOVE_COL:
+    MAT4X3PNT( temp, view2model, mousevec );
+    /* apply inverse of es_mat */
+    MAT4X3PNT( es_mparam, es_invmat, temp );
+    es_mvalid = 1;
+
+    update_edit_absolute_tran(mousevec);
+    break;
+  default:
+    Tcl_AppendResult(interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
+    mged_print_result( TCL_ERROR );
+    return;
+  }
+
+  sedit();
 }
 
 void
@@ -4223,6 +4239,7 @@ sedit_trans(tvec)
 vect_t tvec;
 {
   vect_t temp;
+  vect_t raw_kp;
   vect_t pos_model;
 
   if( es_edflag <= 0 )
@@ -4244,11 +4261,12 @@ vect_t tvec;
 
       MAT4X3PNT( temp, view2model, tvec );
       MAT4X3PNT( pt, es_invmat, temp );
+      MAT4X3PNT( raw_kp, es_invmat, es_keypoint );
 
       /* Need vector from current vertex/keypoint
        * to desired new location.
        */
-      VSUB2( delta, es_keypoint, pt );
+      VSUB2( delta, raw_kp, pt );
       mat_idn( xlatemat );
       MAT_DELTAS_VEC_NEG( xlatemat, delta );
       transform_editing_solid(&es_int, xlatemat, &es_int, 1);
@@ -4369,8 +4387,8 @@ vect_t tvec;
 	bu_vls_free(&tmp_vls);
       }
     }
-  break;
 
+    break;
   case ECMD_NMG_LEXTRU:
   case ECMD_NMG_EMOVE:
   case ECMD_NMG_ESPLIT:
@@ -5746,13 +5764,6 @@ vect_t argvect;
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
   case ECMD_VOL_CSIZE:
-#if 0
-    if(SEDIT_TRAN){
-      vect_t temp;
-		    
-      MAT4X3PNT( edit_absolute_tran, model2view, es_para );
-    }
-#endif
     /* must convert to base units */
     es_para[0] *= local2base;
     es_para[1] *= local2base;
@@ -5762,12 +5773,24 @@ vect_t argvect;
     break;
   }
 
-  return TCL_OK;
+#if 1
+  sedit();
 
-  /* XXX I would prefer to see an explicit call to the guts of sedit()
-   * XXX here, rather than littering the place with global variables
-   * XXX for later interpretation.
-   */
+  if(SEDIT_TRAN){
+    vect_t diff;
+    fastf_t inv_Viewscale = 1/Viewscale;
+		    
+    VSUB2(diff, es_para, e_axes_pos);
+    VSCALE(edit_absolute_tran, diff, inv_Viewscale);
+  }else if(SEDIT_ROTATE){
+    VMOVE(edit_absolute_rotate, es_para);
+  }else if(SEDIT_SCALE){
+    edit_absolute_scale = acc_sc_sol - 1.0;
+    if(edit_absolute_scale > 0)
+      edit_absolute_scale /= 3.0;
+  }
+#endif
+  return TCL_OK;
 }
 
 /* Input parameter editing changes from keyboard */
