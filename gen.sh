@@ -215,6 +215,7 @@ BDIRS="bench \
 
 TSDIRS=". mged nirt pl-dm"
 TDIRS="libtk libtkGLX"
+HTML_DIRS="manuals/shaders manuals/Anim_Tutorial manuals/libdm manuals/mged manuals/mged/animmate"
 
 # If there is no TCP networking, eliminate network-only directories.
 if test "${HAS_TCP}" = "0"
@@ -368,6 +369,10 @@ install|install-nobak|uninstall)
 	for dir in ${TSDIRS}; do
 		echo -------------------------------- tclscripts/${dir};
 		( cd tclscripts/${dir} && cake -k ${SILENT} ${TARGET} )
+	done
+	for dir in ${HTML_DIRS}; do
+		echo -------------------------------- html/${dir};
+		( cd html/${dir} && cake -k ${SILENT} ${TARGET} )
 	done;;
 #  These directives operate in the source directory
 #
