@@ -121,6 +121,7 @@ Green, and Blue for each pixel, times the number of pixels desired
 /*	Program constants computed from device parameters:	*/
 
 #define BANDS	(Nscanlines / lines_per_band)		/* # of "bands" */
+#define BANDSLOP	(BANDS+2)		/* # bands in array */
 #define BYTES	(Npixels * sizeof(RGBpixel))	/* max data bytes per scan */
 #define XMAX	(Npixels - 1)
 #define YMAX	(Nscanlines - 1)
@@ -382,7 +383,8 @@ register char **argv;
 			immediate = 1;
 			break;
 		case 'd':
-			debug = 1;
+			/* -d given multiple times increases debug level */
+			debug++;
 			break;
 		case 'O':
 		case 'o':
@@ -492,12 +494,13 @@ char	**argv;
 		fprintf(stderr,"pl-fb:  malloc error\n");
 		exit(1);
 	}
-	band = (struct band *)malloc(BANDS*sizeof(struct band));
+	/* Extra band protects against requeueing off the top */
+	band = (struct band *)malloc((BANDSLOP)*sizeof(struct band));
 	if( band == (struct band *)0 )  {
 		fprintf(stderr,"pl-fb: malloc error2\n");
 		exit(1);
 	}
-	bzero( (char *)band, BANDS*sizeof(struct band) );
+	bzero( (char *)band, (BANDSLOP)*sizeof(struct band) );
 	bandEnd = &band[BANDS];
 	if( single_banded && over ) {
     		/* Read in initial screen */
@@ -549,7 +552,9 @@ DoFile( )	/* returns vpl status code */
 
 		for ( ; ; )		/* read until EOF*/
 		{
-			switch ( c = getc( pfin ) )
+			c = getc( pfin );
+			if( debug > 1 )  fprintf(stderr,"%c\n", c);
+			switch ( c )
 			{	/* record type */
 			case EOF:
 				if( debug ) fprintf( stderr,"EOF\n");
@@ -1089,9 +1094,10 @@ InitDesc()
 {
 	register struct band *bp;	/* *bp -> start of descr list */
 
-	for ( bp = &band[0]; bp < bandEnd; ++bp )
+	for ( bp = &band[0]; bp < &band[BANDSLOP]; ++bp )  {
 		bp->first = NULL;		/* nothing in band yet */
 		bp->last  = NULL;
+	}
 }
 
 
@@ -1321,6 +1327,7 @@ register struct band *np;	/* *np -> next band 1st descr */
 	register short	dy;		/* raster within active band */
 
 	CK_STROKE(vp);
+
 	/*
 	 *  Draw the portion within this band.
 	 */
