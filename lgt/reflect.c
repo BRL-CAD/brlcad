@@ -686,6 +686,8 @@ int *id;
 		char *name;
 		char *value;
 		register char *p;
+	if( !map->ma_shader )
+		return false;
 	if( map->ma_shader && map->ma_shader[0] == '\0' )
 		return	false;
 	/* copy parameter string to scratch buffer and null terminate */
