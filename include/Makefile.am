@@ -17,6 +17,7 @@ brlcadinclude_required = \
 	rtstring.h
 
 headers_libutahrle = \
+	colorquant.h \
 	pyramid.h \
 	rle.h \
 	rle_code.h \
