@@ -745,7 +745,7 @@ const struct bn_tol	*tol;
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
 
-	BU_LIST_INIT( vhead );
+	/*	BU_LIST_INIT( vhead ); */
 
 	state = rt_initial_tree_state;	/* struct copy */
 	state.ts_ttol = ttol;
@@ -960,7 +960,7 @@ const struct db_i		*dbip;
 	MAT_COPY( sip->root2leaf, mat );
 
 	bu_vls_init( &str );
-	bu_vls_strcpy( &str, ep->ext_buf );
+	bu_vls_strncpy( &str, ep->ext_buf, ep->ext_nbytes );
 #if 0
 bu_log("rt_submodel_import: '%s'\n", rp->ss.ss_args);
 #endif
