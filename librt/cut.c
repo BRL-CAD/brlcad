@@ -735,6 +735,9 @@ int			ncpu;
 	finp->bn.bn_list = (struct soltab **)bu_malloc(
 		finp->bn.bn_maxlen * sizeof(struct soltab *),
 		"rt_cut_it: initial list alloc" );
+
+	rtip->rti_inf_box.cut_type = CUT_BOXNODE;
+
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip ) {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
@@ -1414,6 +1417,7 @@ int	depth;
 		if( rt_ct_box( rtip, cutp, AXIS(depth+1), where ) == 0 )
 			return;	/* hopeless */
 	}
+/* XXX This isn't sufficient with solid pieces */
 	if( cutp->cn.cn_l->bn.bn_len >= oldlen &&
 	    cutp->cn.cn_r->bn.bn_len >= oldlen )  return;	/* hopeless */
  }
