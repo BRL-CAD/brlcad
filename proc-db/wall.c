@@ -3,11 +3,13 @@
  *	Currently builds "wood frame" walls for typical building constructs.
  *	
  */
+#include "conf.h"
+
 #include <stdio.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 #include <math.h>
 #include "machine.h"
