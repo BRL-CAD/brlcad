@@ -2729,14 +2729,17 @@ rt_log("force next eu to ray\n");
 		/* First, print this faceuse */
 		lu = nmg_find_lu_of_vu( vu );
 	     	NMG_CK_LOOPUSE(lu);
-		/* Drop a plot file */
-		rt_g.NMG_debug |= DEBUG_FCUT|DEBUG_PLOTEM;
-		nmg_pl_comb_fu( 0, 1, lu->up.fu_p );
 		/* Print the faceuse for later analysis */
 		rt_log("Loop with the offending vertex\n");
 		nmg_pr_lu_briefly(lu, (char *)0);
-		rt_log("The whole face\n");
-		nmg_pr_fu(lu->up.fu_p, (char *)0);
+		if(rt_g.NMG_debug&DEBUG_FCUT)  {
+			rt_log("The whole face\n");
+			nmg_pr_fu(lu->up.fu_p, (char *)0);
+		}
+
+		/* Drop a plot file */
+		rt_g.NMG_debug |= DEBUG_FCUT|DEBUG_PLOTEM;
+		nmg_pl_comb_fu( 0, 1, lu->up.fu_p );
 		nmg_face_lu_plot(lu, rs->vu[0], rs->vu[rs->nvu-1] );
 		{
 			FILE	*fp = fopen("error.pl", "w");
