@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/01/04  20:09:00  stay
+ * Fixed for Irix 5.3 which no longer declares
+ * FNDELAY for POSIX_SOURCE
+ *
  * Revision 11.1  1995/01/04  10:35:17  mike
  * Release_4.4
  *
