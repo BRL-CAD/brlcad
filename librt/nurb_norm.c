@@ -35,17 +35,17 @@ struct snurb * srf;
 fastf_t u, v;
 {
 	struct snurb *usrf, *vsrf;
-	fastf_t * se, * ue, *ve;
 	point_t uvec, vvec;
 	fastf_t * norm = (fastf_t *)NULL;
 	fastf_t p;
+	fastf_t se[4], ue[4], ve[4];
 	int i;
 
 	/* Case (linear, lienar) find the normal from the polygon */
 	if( srf->order[0] == 2 && srf->order[1] == 2 )
 	{
 		/* Find the correct span to get the normal */
-		se = (fastf_t *) rt_nurb_s_eval( srf, u, v);
+		rt_nurb_s_eval( srf, u, v, se);
 		
 		p = 0.0;
 		for( i = 0; i < srf->u_knots.k_size -1; i++)
@@ -62,7 +62,7 @@ fastf_t u, v;
 			}
 		}
 
-		ue = (fastf_t *)rt_nurb_s_eval( srf, p, v);
+		rt_nurb_s_eval( srf, p, v, ue);
 
 		p = 0.0;
 		for( i = 0; i < srf->v_knots.k_size -1; i++)
@@ -78,7 +78,7 @@ fastf_t u, v;
 			}
 		}
 
-		ve = (fastf_t *) rt_nurb_s_eval( srf, u, p);		
+		rt_nurb_s_eval( srf, u, p, ve);		
 	
 		if( RT_NURB_IS_PT_RATIONAL(srf->pt_type))
 		{
@@ -102,10 +102,6 @@ fastf_t u, v;
 		VCROSS( norm, uvec, vvec);
 		VUNITIZE( norm );
 
-		rt_free( (char *) se, "rt_nurb_norm: se");
-		rt_free( (char *) ue, "rt_nurb_norm: ue");
-		rt_free( (char *) ve, "rt_nurb_norm: ve");
-
 		return norm;		
 
 	}
@@ -114,7 +110,7 @@ fastf_t u, v;
 	 */
 	if( srf->order[0] == 2 && srf->order[1] > 2 )
 	{
-		se = (fastf_t *)rt_nurb_s_eval( srf, u, v);
+		rt_nurb_s_eval( srf, u, v, se);
 		
 		norm = (fastf_t *) rt_malloc( 3 * sizeof(fastf_t),"normal");
 		p = 0.0;
@@ -132,11 +128,11 @@ fastf_t u, v;
 			}
 		}
 
-		ue = (fastf_t *) rt_nurb_s_eval( srf, p, v);
+		rt_nurb_s_eval( srf, p, v, ue);
 		
 		vsrf = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
 
-		ve = (fastf_t *) rt_nurb_s_eval(vsrf, u, v);
+		rt_nurb_s_eval(vsrf, u, v, ve);
 
 		if( RT_NURB_IS_PT_RATIONAL(srf->pt_type) )
 		{
@@ -168,15 +164,12 @@ fastf_t u, v;
 		VCROSS(norm, uvec, ve);
 		VUNITIZE(norm);
 
-		rt_free((char *) se, "se");
-		rt_free((char *) ue, "ue");
-		rt_free((char *) ve, "ve");
 		rt_nurb_free_snurb(vsrf);
 		return norm;
 	}
 	if( srf->order[1] == 2 && srf->order[0] > 2 )
 	{
-		se = (fastf_t *) rt_nurb_s_eval( srf, u, v);
+		rt_nurb_s_eval( srf, u, v, se);
 		
 		norm = (fastf_t *) rt_malloc( 3 * sizeof(fastf_t),"normal");
 		p = 0.0;
@@ -194,10 +187,11 @@ fastf_t u, v;
 			}
 		}
 
-		ve = (fastf_t *) rt_nurb_s_eval( srf, p, v);
+		rt_nurb_s_eval( srf, p, v, ve);
 
 		usrf = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-		ue = (fastf_t *) rt_nurb_s_eval(usrf, u, v);
+		
+		rt_nurb_s_eval(usrf, u, v, ue);
 
 		if( RT_NURB_IS_PT_RATIONAL(srf->pt_type) )
 		{
@@ -229,9 +223,6 @@ fastf_t u, v;
 		VCROSS(norm, ue, vvec);
 		VUNITIZE(norm);		
 
-		rt_free((char *) se, "se");
-		rt_free((char *) ve, "ve");
-		rt_free((char *) ue, "ue");
 		rt_nurb_free_snurb(usrf);
 		return norm;
 	}
@@ -246,14 +237,12 @@ fastf_t u, v;
 		usrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
 		vsrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
 
-		ue = (fastf_t *) rt_nurb_s_eval(usrf, u,v);
-		ve = (fastf_t *) rt_nurb_s_eval(vsrf, u,v);
+		rt_nurb_s_eval(usrf, u,v, ue);
+		rt_nurb_s_eval(vsrf, u,v, ve);
 		
 		VCROSS( norm, ue, ve);
 		VUNITIZE( norm);
 
-		rt_free( (char *) ue, "rt_nurb_norm: ue");
-		rt_free( (char *) ve, "rt_nurb_norm: ve");
 		rt_nurb_free_snurb(usrf);
 		rt_nurb_free_snurb(vsrf);
 		
@@ -270,14 +259,14 @@ fastf_t u, v;
 		norm = (fastf_t *) rt_malloc( sizeof( fastf_t) * 3, 
 			"rt_nurb_norm: fastf_t for norm");
 
-		se = (fastf_t *) rt_nurb_s_eval(srf, u, v);
+		rt_nurb_s_eval(srf, u, v, se);
 
 		usrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
 		vsrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
 
-		ue = (fastf_t *) rt_nurb_s_eval(usrf, u,v);
+		rt_nurb_s_eval(usrf, u,v, ue);
 
-		ve = (fastf_t *) rt_nurb_s_eval(vsrf, u,v);
+		rt_nurb_s_eval(vsrf, u,v, ve);
 		
 		w = se[3];
 		inv_w = 1.0 / w;
@@ -293,9 +282,6 @@ fastf_t u, v;
 		VCROSS( norm, unorm, vnorm);
 		VUNITIZE( norm);
 
-		rt_free( (char *) se, "rt_nurb_norm: se");
-		rt_free( (char *) ue, "rt_nurb_norm: ue");
-		rt_free( (char *) ve, "rt_nurb_norm: ve");
 		rt_nurb_free_snurb(usrf);
 		rt_nurb_free_snurb(vsrf);
 		
