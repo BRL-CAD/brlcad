@@ -249,6 +249,22 @@ struct rt_db_internal  {
 #define RT_CK_DB_INTERNAL(_p)	RT_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /*
+ *			D B _ F U L L _ P A T H
+ *
+ *  For collecting paths through the database tree
+ */
+struct db_full_path {
+	long		magic;
+	int		fp_len;
+	int		fp_maxlen;
+	struct directory **fp_names;	/* array of dir pointers */
+};
+#define DB_FULL_PATH_POP(_pp)	{(_pp)->fp_len--;}
+#define DB_FULL_PATH_CUR_DIR(_pp)	((_pp)->fp_names[(_pp)->fp_len-1])
+#define DB_FULL_PATH_MAGIC	0x64626670
+#define RT_CK_FULL_PATH(_p)	RT_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
+
+/*
  *			X R A Y
  *
  * All necessary information about a ray.
@@ -418,6 +434,7 @@ struct soltab {
 	int		st_maxreg;	/* highest bit set in st_regions */
 	bitv_t		*st_regions;	/* bit vect of region #'s (const) */
 	matp_t		st_matp;	/* solid coords to model space, NULL=identity */
+	struct db_full_path st_path;	/* path from region to leaf */
 };
 #define st_name		st_dp->d_namep
 #define RT_SOLTAB_NULL	((struct soltab *)0)
@@ -771,22 +788,6 @@ struct directory  {
 /* Args to db_lookup() */
 #define LOOKUP_NOISY	1
 #define LOOKUP_QUIET	0
-
-/*
- *			D B _ F U L L _ P A T H
- *
- *  For collecting paths through the database tree
- */
-struct db_full_path {
-	long		magic;
-	int		fp_len;
-	int		fp_maxlen;
-	struct directory **fp_names;	/* array of dir pointers */
-};
-#define DB_FULL_PATH_POP(_pp)	{(_pp)->fp_len--;}
-#define DB_FULL_PATH_CUR_DIR(_pp)	((_pp)->fp_names[(_pp)->fp_len-1])
-#define DB_FULL_PATH_MAGIC	0x64626670
-#define RT_CK_FULL_PATH(_p)	RT_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /*
  *			D B _ T R E E _ S T A T E
