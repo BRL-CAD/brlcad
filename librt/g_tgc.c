@@ -27,7 +27,7 @@
 static int	stdCone();
 static void	rotate(), shear(), PtSort(), tgcnormal();
 
-struct  tgc_specific{
+struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
 	fastf_t	tgc_sH;		/*  magnitude of sheared H vector	*/
 	fastf_t	tgc_A;		/*  magnitude of A vector		*/
@@ -61,7 +61,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	static fastf_t	mag_h, mag_a, mag_b, mag_c, mag_d;
 	static mat_t	Rot, Shr;
 	static mat_t	iRot, tShr;
-	static vect_t	H, A, B, C, D;
+	static vect_t	Hv, A, B, C, D;
 	static vect_t	nH;
 	static vect_t	work;
 	FAST fastf_t	f;
@@ -74,14 +74,14 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 #define SP_D	&vec[5*ELEMENTS_PER_VECT]
 
 	/* Apply 3x3 rotation portion of mat to Hv, A,B,C,D		*/
-	MAT3XVEC( H, mat, SP_H );
+	MAT3XVEC( Hv, mat, SP_H );
 	MAT3XVEC( A, mat, SP_A );
 	MAT3XVEC( B, mat, SP_B );
 	MAT3XVEC( C, mat, SP_C );
 	MAT3XVEC( D, mat, SP_D );
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
-	mag_h = sqrt( magsq_h = MAGSQ( H ) );
+	mag_h = sqrt( magsq_h = MAGSQ( Hv ) );
 	mag_a = sqrt( magsq_a = MAGSQ( A ) );
 	mag_b = sqrt( magsq_b = MAGSQ( B ) );
 	mag_c = sqrt( magsq_c = MAGSQ( C ) );
@@ -93,7 +93,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Ascertain whether H lies in A-B plane 			*/
 	VCROSS( work, A, B );
-	f = VDOT( H, work )/ ( mag_a*mag_b*mag_h );
+	f = VDOT( Hv, work )/ ( mag_a*mag_b*mag_h );
 	if ( NEAR_ZERO(f) ) {
 		printf("tgc(%s):  H lies in A-B plane\n",stp->st_name);
 		return(1);		/* BAD */
@@ -133,14 +133,12 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		return(1);		/* BAD */
 	}
 
-	/* solid is OK, compute constant terms, etc.			*/
-	GETSRUCT( tgc, tgc_specific );
+	/* solid is OK, compute constant terms, etc. */
+	GETSTRUCT( tgc, tgc_specific );
 	stp->st_specific = (int *)tgc;
 
-	/* Apply full 4X4mat to V					*/
-	VMOVE( work, SP_V );
-	work[3] = 1;
-	matXvec( tgc->tgc_V, mat, work );
+	/* Apply full 4X4mat to V */
+	MAT4X3PNT( tgc->tgc_V, mat, SP_V );
 
 	/* If the values of the magnitudes are less than SMALL, they
 	 *  may cause glitches in the output (I minimized those as much
@@ -154,14 +152,53 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	tgc->tgc_C = NEAR_ZERO( mag_c ) ? 10*SMALL : mag_c;
 	tgc->tgc_D = NEAR_ZERO( mag_d ) ? 10*SMALL : mag_d;
 
-	rotate( A, B, H, Rot, iRot, tgc );
-	MAT3XVEC( nH, Rot, H );
+	rotate( A, B, Hv, Rot, iRot, tgc );
+	MAT3XVEC( nH, Rot, Hv );
 	tgc->tgc_sH = nH[Z];
 
 	shear( nH, Z, Shr, tShr );
 	mat_mul( tgc->tgc_ShoR, Shr, Rot );
 
 	mat_mul( tgc->tgc_invRoSh, iRot, tShr );
+
+	/* Compute bounding sphere */
+	{
+		static fastf_t xmax, ymax, zmax;/* For bounding sphere */
+		static fastf_t xmin, ymin, zmin;/* For bounding sphere */
+		static fastf_t dx, dy, dz;	/* For bounding sphere */
+		static vect_t temp;
+
+		/* init maxima and minima */
+		xmax = ymax = zmax = -INFINITY;
+		xmin = ymin = zmin =  INFINITY;
+
+#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
+			if( (ftemp = (c)) < (a) )  a = ftemp;\
+			if( ftemp > (b) )  b = ftemp; }
+
+#define MM(v)	MINMAX( xmin, xmax, v[X] ); \
+		MINMAX( ymin, ymax, v[Y] ); \
+		MINMAX( zmin, zmax, v[Z] )
+
+		VADD2( work, tgc->tgc_V, A ); MM( work );
+		VSUB2( work, tgc->tgc_V, A ); MM( work );
+		VADD2( work, tgc->tgc_V, B ); MM( work );
+		VSUB2( work, tgc->tgc_V, B ); MM( work );
+
+		VADD2( temp, tgc->tgc_V, Hv );
+		VADD2( work, temp, C );  MM( work );
+		VSUB2( work, temp, C );  MM( work );
+		VADD2( work, temp, D );  MM( work );
+		VSUB2( work, temp, D );  MM( work );
+
+		VSET( stp->st_center,
+			(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2 );
+
+		dx = (xmax - xmin)/2;
+		dy = (ymax - ymin)/2;
+		dz = (zmax - zmin)/2;
+		stp->st_radsq = dx*dx + dy*dy + dz*dz;
+	}
 	return (0);
 }
 
@@ -187,31 +224,30 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
  *  the normal for the planar sections of the truncated cone.
  */
 static void
-rotate( A, B, H, Rot, Inv, tgc )
-vect_t		A, B, H;
-mat_t		*Rot, *Inv;
+rotate( A, B, Hv, Rot, Inv, tgc )
+vect_t		A, B, Hv;
+mat_t		Rot, Inv;
 struct tgc_specific	*tgc;
-
 {
 	static vect_t	uA, uB, uC;	/*  unit vectors		*/
 	static double	mag_ha,		/*  magnitude of H in the	*/
 			mag_hb;		/*    A and B directions	*/
 
 	/* copy A and B, then 'unitize' the results			*/
-	uA = A;
+	VMOVE( uA, A );
 	VUNITIZE( uA );
-	uB = B;
+	VMOVE( uB, B );
 	VUNITIZE( uB );
 
 	/*  Find component of H in the A direction			*/
-	mag_ha = VDOT( H, uA );
+	mag_ha = VDOT( Hv, uA );
 	/*  Find component of H in the B direction			*/
-	mag_hb = VDOT( H, uB );
+	mag_hb = VDOT( Hv, uB );
 
 	/*  Subtract the A and B components of H to find the component
 	 *  perpendicular to both, then 'unitize' the result.
 	 */
-	VJOIN2( uC, H, -mag_ha, uA, -mag_hb, uB );
+	VJOIN2( uC, Hv, -mag_ha, uA, -mag_hb, uB );
 	VUNITIZE( uC );
 	VMOVE( tgc->tgc_norm, uC );
 
@@ -244,10 +280,9 @@ struct tgc_specific	*tgc;
  */
 static void
 shear( vect, axis, Shr, Trn )
-vect_t	*vect;
+vect_t	vect;
 int	axis;
-mat_t	*Shr, *Trn;
-
+mat_t	Shr, Trn;
 {
 	mat_idn( Shr );
 	mat_idn( Trn );
@@ -278,7 +313,7 @@ register struct soltab	*stp;
 	printf( "mag D = %f\n", tgc->tgc_D );
 	VPRINT( "Top normal", tgc->tgc_norm );
 	mat_print( "Sh o R", tgc->tgc_ShoR );
-	mat_print( "invR o trnSh", tgc->invRoSh );
+	mat_print( "invR o trnSh", tgc->tgc_invRoSh );
 }
 
 /*
@@ -312,6 +347,7 @@ register struct ray	*rp;
 {
 	register struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
+	struct seg		*segp;
 	static vect_t		pprime,
 				dprime,
 				norm,
@@ -451,7 +487,7 @@ register struct ray	*rp;
 		 *  so) to the planes, it (obviously) won't intersect
 		 *  either of them.
 		 */
-		dir = VDOT( tgc->tgc_norm, direc );
+		dir = VDOT( tgc->tgc_norm, rp->r_dir );	/* direc */
 		if ( NEAR_ZERO( dir ) )
 			return( SEG_NULL );
 
