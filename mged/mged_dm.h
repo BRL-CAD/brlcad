@@ -112,16 +112,12 @@ extern struct dm *dmp;			/* ptr to current display mgr */
 #define BE_O_XSCALE	6
 #define BE_O_YSCALE	5
 #define BE_O_ZSCALE	4
+#define BV_ZOOM_IN	3
+#define BV_ZOOM_OUT	2
 #define BV_45_45	1
 #define BV_35_25	0+32
 
-#define BV_SHIFT	1+32
-#define BE_SHIFT	2+32
-#define BV_DCUE		3+32
-#define BV_ZCLIP	4+32
-#define BV_PERSP	5+32
-#define BV_ZBUFF	6+32
-#define BV_LIGHT	7+32
+#define BV_RATE_TOGGLE	1+32
 
 
 #define BV_MAXFUNC	64	/* largest code used */
