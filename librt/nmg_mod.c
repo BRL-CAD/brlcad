@@ -1631,8 +1631,11 @@ struct loopuse *lu;
 /*
  *			N M G _ K I L L _ S N A K E S
  *
+ *  Returns -
+ *	0	If all went well
+ *	1	If the loopuse is now empty and needs to be killed.
  */
-void
+int
 nmg_kill_snakes(lu)
 struct loopuse *lu;
 {
@@ -1677,6 +1680,8 @@ struct loopuse *lu;
 				/* this is the tail of a snake! */
 				nmg_keu(eu_r);
 				nmg_keu(eu);
+				if( RT_LIST_IS_EMPTY( &lu->down_hd ) )
+					return 1;	/* loopuse is empty */
 				eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
 
 			    	if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
@@ -1694,6 +1699,7 @@ struct loopuse *lu;
 		} else
 			eu = RT_LIST_PNEXT(edgeuse, eu);
 	}
+	return 0;	/* All is well, loop still has edges */
 }
 
 
@@ -1702,8 +1708,12 @@ struct loopuse *lu;
  *
  *	combine adjacent loops within a face which serve no apparent purpose
  *	by remaining separate and distinct.  Kill "wire-snakes" in face.
+ *
+ * Returns -
+ *	0	If all was OK
+ *	1	If faceuse is now empty
  */
-void
+int
 nmg_simplify_face(fu)
 struct faceuse *fu;
 {
@@ -1712,45 +1722,20 @@ struct faceuse *fu;
 
 	NMG_CK_FACEUSE(fu);
 
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))  {
 		nmg_simplify_loop(lu);
-
-	
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
-		nmg_kill_snakes(lu);
-
-#if 0
-	/* An exterior loop in face that:
-	 *	1) has an extent which does not overlap the extent of another
-	 *		loop in this face.
-	 *	2) does not share a vertex with another loop of this face.
-	 *
-	 * defines the boundary of a separated "face patch" and should 
-	 * become a separate face.
-	 */
-
-	/* a face of one loop cannot be subdivided */
-	if (RT_LIST_NEXT(loopuse, &fu->lu_hd) ==
-	    RT_LIST_LAST(loopuse, &fu->lu_hd))
-	    	return;
-
-
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		overlap = 0;
-		for (RT_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
-			if (lu == lu2) continue;
-			if (V3RPP_OVERLAP(
-			    lu->lg_p->min_pt, lu->lg_p->max_pt,
-			    lu2->lg_p->min_pt, lu2->lg_p->max_pt) ) {
-				overlap
-			}
-		}
-
-
 	}
-#endif
 
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))  {
+		if( nmg_kill_snakes(lu) )  {
+			struct loopuse	*klu = lu;
+			lu = RT_LIST_PREV( loopuse, &lu->l );
+			nmg_klu(klu);
+		}
+	}
 
+	if( RT_LIST_IS_EMPTY(&fu->lu_hd) )  return 1;
+	return 0;
 }
 
 
@@ -1861,7 +1846,11 @@ struct shell *s;
 	NMG_CK_SHELL(s);
 
 	for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		nmg_simplify_face(fu);
+		if( nmg_simplify_face(fu) )  {
+			struct faceuse	*kfu = fu;
+			fu = RT_LIST_PREV( faceuse, &fu->l );
+			nmg_kfu( kfu );
+		}
 	}
 }
 
