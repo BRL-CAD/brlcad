@@ -204,7 +204,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_ARB8",	0,		/* 4 */
 		rt_arb_prep,	rt_arb_shot,	rt_arb_print,	rt_arb_norm,
 		rt_arb_uv,	rt_arb_curve,	rt_arb_class,	rt_arb_free,
-		rt_arb_plot,	rt_arb_vshot,	rt_arb_tess,	rt_nul_tnurb,
+		rt_arb_plot,	rt_arb_vshot,	rt_arb_tess,	rt_arb_tnurb,
 		rt_arb_import,	rt_arb_export,	rt_arb_ifree,
 		rt_arb_describe,rt_arb_xform,
 
