@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:54:00  mike
+ * Release_4.0
+ * 
  * Revision 2.11  91/08/30  22:56:06  mike
  * __CRAY1 too
  * 
@@ -394,6 +397,7 @@ char	*fname;
 	register int	linked;
 	int		saveit = 0;
 	int		overwrite = 0;
+	int		do_chown = 0;
 
 	if (fname == 0 || *fname == '\0')
 		complain("I need a file name");
@@ -454,9 +458,7 @@ char	*fname;
 			free (savefile);
 		}
 		io = creat(fname, inode.st_mode&07777);
-
-		/*  This will fail on all but USG systems, ignore it  */
-		chown (fname, inode.st_uid, inode.st_gid);
+		do_chown = 1;
 	}
 	if (io == -1)
 		complain(IOerr("create", fname));
@@ -478,6 +480,14 @@ char	*fname;
 	putreg(curbuf->b_zero, 0, curbuf->b_dol, length(curbuf->b_dol));
 	FileMess(fname, nlines, count);
 	IOclose();
+	if( do_chown )  {
+		/*  This will fail on all but USG systems, ignore it.
+		 *  Must be done *after* close, so that on NFS clients,
+		 *  we don't loose write permission on the file before
+		 *  we write any data into it...
+		 */
+		chown (fname, inode.st_uid, inode.st_gid);
+	}
 }
 
 char *
