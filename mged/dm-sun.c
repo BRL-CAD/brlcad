@@ -41,6 +41,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern void     perror();
 
+/*
+ * Max number of color map slots to use (don't consume all 256)
+ */
+#define	CMS_MGED	"mged"
+#define	CMS_MGEDSIZE	128
+
 /* Display Manager package interface */
 
 #define SUNPWBOUND	1000.0	/* Max magnification in Rot matrix */
@@ -87,7 +93,7 @@ Window          frame;
 Canvas		canvas;
 Pixwin		*sun_pw;		/* sub-area of screen being used */
 int		sun_depth;
-int             sun_cmap_color = 7;	/* for default colormap */
+int             sun_cmap_color = DM_WHITE+1;	/* for default colormap */
 struct pixfont *sun_font_ptr;
 Pr_texture     *sun_get_texP();
 Rect            sun_win_rect;
@@ -174,18 +180,8 @@ SunPw_open()
 
 	/* Set up our Colormap */
 	if( sun_depth >= 8 )  {
-		/* set a new cms name; initialize it */
-		pw_setcmsname(sun_pw, "mged");
-		/* default colormap, real one is set by SunPw_colorchange */
-		red[0] =   0; grn[0] =   0; blu[0] =   0;	/* Black */
-		red[1] = 255; grn[1] =   0; blu[1] =   0;	/* Red */
-		red[2] =   0; grn[2] = 255; blu[2] =   0;	/* Green */
-		red[3] = 255; grn[3] = 255; blu[3] =   0;	/* Yellow */
-		red[4] =   0; grn[4] =   0; blu[4] = 255;	/* Blue */
-		red[5] = 255; grn[5] =   0; blu[5] = 255;	/* Magenta */
-		red[6] =   0; grn[6] = 255; blu[6] = 255;	/* Cyan */
-		red[7] = 255; grn[7] = 255; blu[7] = 255;	/* White */
-		pw_putcolormap(sun_pw, 0, 8, red, grn, blu);
+		/* set a colormap segment; initialize it */
+		SunPw_colorchange();
 	} else {
 		pw_blackonwhite( sun_pw, 0, 1 );
 	}
@@ -243,33 +239,33 @@ int	color;
 	if( sun_depth < 8 )  {
 		/*
 		 * Sun Monochrome:  Following normal Sun usage,
-		 * background (DM_BLACK) is white, from Sun color value 0,
-		 * foreground (DM_WHITE) is black, from Sun color value 1.
-		 * HOWEVER, in a graphics window, somehow this seems reversed.
+		 * "black" means "background" which is the lowest entry
+		 * in your colormap segment.
+		 * "white" means "foreground" which is the hightest entry.
+		 * Which one is actually black or white depends on whether
+		 * you are in "inverse video" or not.
 		 */
 		if( color == DM_BLACK )
-			sun_cmap_color = 1;
+			sun_cmap_color = 0;		 /* background */
 		else
-			sun_cmap_color = 0;
-		/* Note that color value of 0 becomes -1 (foreground) (=1),
-		 * according to pg 14 of Pixrect Ref Man (V.A or 17-Feb-86) */
+			sun_cmap_color = CMS_MGEDSIZE-2; /* foreground */
 		return;
 	}
 	switch (color) {
 	case DM_BLACK:
-		sun_cmap_color = 0;
-		break;
-	case DM_RED:
 		sun_cmap_color = 1;
 		break;
-	case DM_BLUE:
-		sun_cmap_color = 4;
+	case DM_RED:
+		sun_cmap_color = 2;
 		break;
-	case DM_YELLOW:
+	case DM_BLUE:
 		sun_cmap_color = 3;
 		break;
+	case DM_YELLOW:
+		sun_cmap_color = 4;
+		break;
 	case DM_WHITE:
-		sun_cmap_color = 7;
+		sun_cmap_color = 5;
 		break;
 	default:
 		printf("sun_color:  mged color %d not known\n", color);
@@ -447,9 +443,15 @@ register u_char *str;
 	}
 
 	sun_color(color);
-	pw_text(sun_pw, GED_TO_SUNPWx(x), GED_TO_SUNPWy(y),
-		(PIX_NOT(PIX_SRC)) | PIX_COLOR(sun_cmap_color),
-		sun_font_ptr, str);
+	if( sun_depth == 1 ) {
+		pw_text(sun_pw, GED_TO_SUNPWx(x), GED_TO_SUNPWy(y),
+			PIX_SRC,
+			sun_font_ptr, str);
+	} else {
+		pw_ttext(sun_pw, GED_TO_SUNPWx(x), GED_TO_SUNPWy(y),
+			PIX_SRC | PIX_COLOR(sun_cmap_color),
+			sun_font_ptr, str);
+	}
 }
 
 /*
@@ -485,7 +487,7 @@ int	dashed;
  * when there had been window input to return.
  *
  * I have the feeling that very short select timeouts for notify_dispatch()
- * polling is more reliable than the notify_do_display()/stop_notify() pair.
+ * polling is more reliable than the notify_do_dispatch()/stop_notify() pair.
  * But this is the way we *should* do it, right? (See pg 266)
  *
  * Returns:
@@ -761,74 +763,98 @@ SunPw_viewchange()
 /*
  * Color Map table
  */
-#define NSLOTS	256
-static int      sun_nslots = 0;	/* how many we have, <= NSLOTS */
-static int      slotsused;	/* how many actually used */
-static struct rgbtab {
+static int sun_nslots = CMS_MGEDSIZE-2;	/* how many we have (static) */
+static int slotsused = 0;		/* how many actually used */
+static struct cmap {
 	unsigned char   r;
 	unsigned char   g;
 	unsigned char   b;
-} sun_rgbtab[NSLOTS];
+} sun_cmap[CMS_MGEDSIZE];
 
 /*
  *  			S U N P W _ C O L O R C H A N G E
  *  
  *  Go through the mater table, and allocate color map slots.
- *	8 bit system gives 4 or 8,
- *	24 bit system gives 12 or 24.
  */
 void
 SunPw_colorchange()
 {
-    register struct mater *mp;
-    register int    i;
-    char unsigned   red[256], grn[256], blu[256];
+	register struct mater *mp;
+	register int    i;
+	char unsigned   red[256], grn[256], blu[256];
 
-    if (!sun_nslots)
-    {
-	sun_nslots = 256;	/* ## hardwire cg2, for now */
-	if (sun_nslots > NSLOTS)
-	    sun_nslots = NSLOTS;
-    }
-    sun_rgbtab[0].r = 0;
-    sun_rgbtab[0].g = 0;
-    sun_rgbtab[0].b = 0;	/* Black */
-    sun_rgbtab[1].r = 255;
-    sun_rgbtab[1].g = 0;
-    sun_rgbtab[1].b = 0;	/* Red */
-    sun_rgbtab[2].r = 0;
-    sun_rgbtab[2].g = 0;
-    sun_rgbtab[2].b = 255;	/* Blue */
-    sun_rgbtab[3].r = 255;
-    sun_rgbtab[3].g = 255;
-    sun_rgbtab[3].b = 0;	/* Yellow */
-    sun_rgbtab[4].r = sun_rgbtab[4].g = sun_rgbtab[4].b = 255;	/* White */
-    sun_rgbtab[5].g = 255;	/* Green */
-    sun_rgbtab[6].r = sun_rgbtab[6].g = sun_rgbtab[6].b = 128;	/* Grey */
-    sun_rgbtab[7].r = sun_rgbtab[7].g = sun_rgbtab[7].b = 255;	/* White TEXT */
+	if( slotsused == 0 ) {
+		/* create a colormap segment */
+		pw_setcmsname(sun_pw, CMS_MGED);
+	}
 
-    slotsused = 8;
-    for (mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw)
-	sun_colorit(mp);
-    if (sun_debug)
-	printf("colorchange, %d slots used\n", slotsused);
+	sun_cmap[0].r = 0;
+	sun_cmap[0].g = 0;
+	sun_cmap[0].b = 0;	/* Suntools Background */
 
-    color_soltab();		/* apply colors to the solid table */
+	sun_cmap[1].r = 0;
+	sun_cmap[1].g = 0;
+	sun_cmap[1].b = 0;	/* DM_BLACK */
+	sun_cmap[2].r = 255;
+	sun_cmap[2].g = 0;
+	sun_cmap[2].b = 0;	/* DM_RED */
+	sun_cmap[3].r = 0;
+	sun_cmap[3].g = 0;
+	sun_cmap[3].b = 255;	/* DM_BLUE */
+	sun_cmap[4].r = 255;
+	sun_cmap[4].g = 255;
+	sun_cmap[4].b = 0;	/* DM_YELLOW */
+	sun_cmap[5].r = 255;
+	sun_cmap[5].g = 255;
+	sun_cmap[5].b = 255;	/* DM_WHITE */
+	sun_cmap[6].r = 0;
+	sun_cmap[6].g = 255;
+	sun_cmap[6].b = 0;	/* Green */
 
-    for (i = 0; i < slotsused; i++)
-    {
-	red[i] = sun_rgbtab[i].r;
-	grn[i] = sun_rgbtab[i].g;
-	blu[i] = sun_rgbtab[i].b;
-    }
-    pw_putcolormap(sun_pw, 0, slotsused, red, grn, blu);
+	slotsused = 7;
+	for (mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw)
+		sun_colorit(mp);
+
+	color_soltab();		/* apply colors to the solid table */
+
+	for( i = 0; i < slotsused; i++ ) {
+		red[i] = sun_cmap[i].r;
+		grn[i] = sun_cmap[i].g;
+		blu[i] = sun_cmap[i].b;
+	}
+	/* fill in remainder with a "distinctive" color */
+	while( i < CMS_MGEDSIZE ) {
+		red[i] = 200;
+		grn[i] = 200;
+		blu[i] = 200;
+		i++;
+	}
+	/*
+	 * Set bottom (background) and top (foreground) equal so
+	 * that suntools will fill in the "correct" values for us.
+	 */
+	red[CMS_MGEDSIZE-1] = red[0];
+	grn[CMS_MGEDSIZE-1] = grn[0];
+	blu[CMS_MGEDSIZE-1] = blu[0];
+	pw_putcolormap(sun_pw, 0, CMS_MGEDSIZE, red, grn, blu);
+	/* read back the corrected colors */
+	pw_getcolormap(sun_pw, 0, CMS_MGEDSIZE, red, grn, blu);
+	/* save returned foreground color at size-2 */
+	red[CMS_MGEDSIZE-2] = red[CMS_MGEDSIZE-1];
+	grn[CMS_MGEDSIZE-2] = grn[CMS_MGEDSIZE-1];
+	blu[CMS_MGEDSIZE-2] = blu[CMS_MGEDSIZE-1];
+	/* Set cursor (forground!) color */
+	red[CMS_MGEDSIZE-1] = 255;
+	grn[CMS_MGEDSIZE-1] =  80;
+	blu[CMS_MGEDSIZE-1] =   0;
+	pw_putcolormap(sun_pw, 0, CMS_MGEDSIZE, red, grn, blu);
 }
 
 int
 sun_colorit(mp)
 struct mater   *mp;
 {
-    register struct rgbtab *rgb;
+    register struct cmap *rgb;
     register int    i;
     register int    r, g, b;
 
@@ -843,7 +869,7 @@ struct mater   *mp;
     }
 
     /* First, see if this matches an existing color map entry */
-    rgb = sun_rgbtab;
+    rgb = sun_cmap;
     for (i = 0; i < slotsused; i++, rgb++)
     {
 	if (rgb->r == r && rgb->g == g && rgb->b == b)
@@ -856,7 +882,7 @@ struct mater   *mp;
     /* If slots left, create a new color map entry, first-come basis */
     if (slotsused < sun_nslots)
     {
-	rgb = &sun_rgbtab[i = (slotsused++)];
+	rgb = &sun_cmap[i = (slotsused++)];
 	rgb->r = r;
 	rgb->g = g;
 	rgb->b = b;
