@@ -483,12 +483,6 @@ sol_com:
 			pr_solid(&es_rec.s);
 
 		goto out;
-	case ID_ELL:
-		dbpr_ell( &rp[0].s, dp );
-		goto sol_com;
-	case ID_TOR:
-		dbpr_torus( &rp[0].s, dp );
-		goto sol_com;
 	default:
 		printf("Unknown solid type, id=%d\n", id);
 		break;
@@ -497,21 +491,22 @@ sol_com:
 		dbpr_spline( dp );
 		break;
 
-	case ID_POLY:
-		(void)printf("%s:  %d granules of polygon data\n",
-			dp->d_namep, dp->d_len-1 );
-		break;
-
 	case ID_EBM:
 	case ID_VOL:
 		(void)printf("%s: %s\n", dp->d_namep, rp->ss.ss_str );
 		break;
+
+	case ID_POLY:
+	case ID_ELL:
+	case ID_SPH:		/* shouldn't occur, special case of ID_ELL */
+	case ID_TOR:
 	case ID_ARS:
 	case ID_HALF:
 	case ID_PARTICLE:
 	case ID_PIPE:
 	case ID_ARBN:
 	case ID_TGC:
+	case ID_REC:		/* shouldn't occur, special case of ID_TGC */
 		{
 			struct rt_external	ext;
 			struct rt_db_internal	intern;
