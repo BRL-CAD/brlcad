@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.6  93/10/26  06:32:59  mike
+ * Changed printf() to jprintf() so that all modules could safely
+ * use stdio.h
+ * 
  * Revision 10.5  93/10/26  06:01:51  mike
  * Changed getchar() to jgetchar() to prevent stdio.h conflict
  * 
@@ -450,7 +454,28 @@ ttsetup() {
 #else
 	newtty.c_iflag &= ~(INLCR|ICRNL);
 	newtty.c_lflag &= ~(ISIG|ICANON|ECHO);
-	newtty.c_oflag &= ~(OLCUC|ONLCR|OCRNL|ONOCR|ONLRET|OFILL);	/* DAG -- bug fix (was missing) */
+
+	/* DAG -- bug fix (was missing) */
+	/* Not all exist in POSIX.  If not there, no need to clear them. */
+#	if defined(OLCUC)
+		newtty.c_oflag &= ~(OLCUC);
+#	endif
+#	if defined(ONLCR)
+		newtty.c_oflag &= ~(ONLCR);
+#	endif
+#	if defined(OCRNL)
+		newtty.c_oflag &= ~(OCRNL);
+#	endif
+#	if defined(ONOCR)
+		newtty.c_oflag &= ~(ONOCR);
+#	endif
+#	if defined(ONLRET)
+		newtty.c_oflag &= ~(ONLRET);
+#	endif
+#	if defined(OFILL)
+		newtty.c_oflag &= ~(OFILL);
+#	endif
+
 	/* VMIN = 0 causes us to loop in jgetchar() */
 	newtty.c_cc[VMIN] = 1;
 	newtty.c_cc[VTIME] = 0;
