@@ -191,8 +191,10 @@ char	**argv;
      * entries) to the array.
      */
     for( i = 0; i < RT_DBNHASH; i++)
-      for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
-	*dirp++ = dp;
+	    for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+		    if( aflag || !(dp->d_flags & DIR_HIDDEN) )
+			    *dirp++ = dp;
+	    }
   }
 
   if (aflag || cflag || rflag || sflag)
