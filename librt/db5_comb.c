@@ -619,6 +619,9 @@ finish:
 			bu_log("unable to parse 'rgb' attribute '%s'\n", ap);
 		}
 	}
+	if( (ap = bu_avs_get( &ip->idb_avs, "inherit" )) != NULL ) {
+		comb->inherit = atoi( ap );
+	}
 	if( (ap = bu_avs_get( &ip->idb_avs, "region" )) != NULL )  {
 		int	ibuf[1];
 		if( sscanf( ap, "%d", ibuf ) == 1 )  {
