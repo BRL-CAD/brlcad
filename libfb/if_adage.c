@@ -347,7 +347,7 @@ int		count;
 		bytes -= todo;
 		pixelp += todo / sizeof(Pixel);
 		}
-	return	0;
+	return	count;
 	}
 
 _LOCAL_ int
@@ -381,7 +381,7 @@ long	count;
 		bytes -= todo;
 		pixelp += todo / sizeof(Pixel);
 		}
-	return	0;
+	return	count;
 	}
 
 /* Write 1 Ikonas pixel using PIO rather than DMA */
