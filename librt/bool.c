@@ -1472,7 +1472,7 @@ register struct resource	*resp;
 {
 	if( resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0 )  {
 		resp->re_boolslen = 128;	/* default len */
-		resp->re_boolstack = (union tree **)rt_malloc(
+		resp->re_boolstack = (union tree **)bu_malloc(
 			sizeof(union tree *) * resp->re_boolslen,
 			"initial boolstack");
 	} else {

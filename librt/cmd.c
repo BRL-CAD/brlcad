@@ -57,7 +57,7 @@ register FILE	*fp;
 
 	curpos = 0;
 	curlen = 400;
-	buf = rt_malloc( curlen, "rt_read_cmd command buffer" );
+	buf = bu_malloc( curlen, "rt_read_cmd command buffer" );
 
 	do  {
 		c = fgetc(fp);
@@ -93,7 +93,7 @@ register FILE	*fp;
 		buf[curpos++] = c;
 	} while( c != '\0' );
 	if( curpos <= 1 )  {
-		rt_free( buf, "rt_read_cmd command buffer (EOF)" );
+		bu_free( buf, "rt_read_cmd command buffer (EOF)" );
 		return( (char *)0 );		/* EOF */
 	}
 	return( buf );				/* OK */
@@ -134,11 +134,11 @@ register struct command_tab	*tp;
 		    (nwords <= tp->ct_max) )  {
 			return( tp->ct_func( nwords, cmd_args ) );
 		}
-		rt_log("rt_do_cmd Usage: %s %s\n\t%s\n",
+		bu_log("rt_do_cmd Usage: %s %s\n\t%s\n",
 			tp->ct_cmd, tp->ct_parms, tp->ct_comment );
 		return(-1);		/* ERROR */
 	}
-	rt_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
+	bu_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
 	return(-1);			/* ERROR */
 }
 
@@ -177,7 +177,7 @@ register char	*lp;
 		ret = system( lp+1 );
 		if( ret != 0 )  {
 			perror("system(3)");
-			rt_log("rt_split_cmd() FAILED: !%s\n", lp);
+			bu_log("rt_split_cmd() FAILED: !%s\n", lp);
 		}
 		return(0);		/* No words */
 	}

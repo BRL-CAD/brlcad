@@ -90,7 +90,7 @@ struct nugridnode *nuginfop;
 	if( min == max )  {
 		/* Down to one cell, generate a boxnode */
 		slice = min;
-		box = (union cutter *)rt_calloc( 1, sizeof(union cutter),
+		box = (union cutter *)bu_calloc( 1, sizeof(union cutter),
 			"union cutter");
 		box->bn.bn_type = CUT_BOXNODE;
 		box->bn.bn_len = 0;
@@ -119,7 +119,7 @@ struct nugridnode *nuginfop;
 
 	cur = (min + max + 1) / 2;
 	/* Recurse on both sides, then build a cutnode */
-	box = (union cutter *)rt_calloc( 1, sizeof(union cutter),
+	box = (union cutter *)bu_calloc( 1, sizeof(union cutter),
 		"union cutter");
 	box->cn.cn_type = CUT_CUTNODE;
 	box->cn.cn_axis = axis;
@@ -803,7 +803,7 @@ int			ncpu;
 			head = rt_cut_one_axis( &rtip->rti_cuts_waiting, rtip,
 			    Y, 0, nuginfo.nu_cells_per_axis[Y]-1, &nuginfo );
 			rtip->rti_CutHead = *head;	/* struct copy */
-			rt_free( (char *)head, "union cutter" );
+			bu_free( (char *)head, "union cutter" );
 			
 			if(rt_g.debug&DEBUG_CUTDETAIL)  {
 				for( i=0; i<3; i++ )  {
@@ -944,7 +944,7 @@ struct soltab *stp;
 			bcopy( cutp->bn.bn_list, newlist,
 				cutp->bn.bn_maxlen * sizeof(struct soltab *));
 			cutp->bn.bn_maxlen *= 2;
-			rt_free( (char *)cutp->bn.bn_list,
+			bu_free( (char *)cutp->bn.bn_list,
 				"rt_cut_extend: list extend (old list)");
 			cutp->bn.bn_list = (struct soltab **)newlist;
 		}
@@ -1147,7 +1147,7 @@ double			where;
 	lhs->bn.bn_max[axis] = where;
 	lhs->bn.bn_len = 0;
 	lhs->bn.bn_maxlen = cutp->bn.bn_len;
-	lhs->bn.bn_list = (struct soltab **) rt_malloc(
+	lhs->bn.bn_list = (struct soltab **) bu_malloc(
 		sizeof(struct soltab *) * lhs->bn.bn_maxlen,
 		"rt_ct_box (left list)" );
 	for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
@@ -1165,7 +1165,7 @@ double			where;
 	rhs->bn.bn_min[axis] = where;
 	rhs->bn.bn_len = 0;
 	rhs->bn.bn_maxlen = cutp->bn.bn_len;
-	rhs->bn.bn_list = (struct soltab **) rt_malloc(
+	rhs->bn.bn_list = (struct soltab **) bu_malloc(
 		sizeof(struct soltab *) * rhs->bn.bn_maxlen,
 		"rt_ct_box (right list)" );
 	for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
@@ -1184,15 +1184,15 @@ double			where;
 			bu_log("rt_ct_box:  no luck, len=%d\n",
 				cutp->bn.bn_len );
 		}
-		rt_free( (char *)rhs->bn.bn_list, "rt_ct_box, rhs list");
-		rt_free( (char *)lhs->bn.bn_list, "rt_ct_box, lhs list");
+		bu_free( (char *)rhs->bn.bn_list, "rt_ct_box, rhs list");
+		bu_free( (char *)lhs->bn.bn_list, "rt_ct_box, lhs list");
 		rt_ct_free( rtip, rhs );
 		rt_ct_free( rtip, lhs );
 		return(0);		/* fail */
 	}
 
 	/* Success, convert callers box node into a cut node */
-	rt_free( (char *)cutp->bn.bn_list, "rt_ct_box (old list)" );
+	bu_free( (char *)cutp->bn.bn_list, "rt_ct_box (old list)" );
 	cutp->bn.bn_list = (struct soltab **)0;
 
 	cutp->cut_type = CUT_CUTNODE;
@@ -1417,7 +1417,7 @@ struct rt_i	*rtip;
 		register int bytes;
 
 		bytes = bu_malloc_len_roundup(64*sizeof(union cutter));
-		cutp = (union cutter *)rt_malloc(bytes," rt_ct_get");
+		cutp = (union cutter *)bu_malloc(bytes," rt_ct_get");
 		/* Remember this allocation for later */
 		bu_ptbl_ins( &rtip->rti_busy_cutter_nodes, (long *)cutp );
 		/* Now, dice it up */

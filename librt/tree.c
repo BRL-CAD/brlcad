@@ -311,7 +311,7 @@ struct rt_i			*rtip;
 			}
 			if( mat == (matp_t)0 )  continue;	/* doesn't match */
 
-			if( !rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol))
+			if( !bn_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol))
 				continue;
 
 more_checks:
@@ -356,8 +356,8 @@ more_checks:
 		/* stp->st_id is intentionally left zero here, as a flag */
 
 		if( mat )  {
-			stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
-			mat_copy( stp->st_matp, mat );
+			stp->st_matp = (matp_t)bu_malloc( sizeof(mat_t), "st_matp" );
+			bn_mat_copy( stp->st_matp, mat );
 		} else {
 			stp->st_matp = (matp_t)0;
 		}
@@ -408,7 +408,7 @@ int				id;
 
 	/* Determine if this matrix is an identity matrix */
 
-	if( !rt_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rtip->rti_tol)) {
+	if( !bn_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rtip->rti_tol)) {
 		/* Not identity matrix */
 		mat = (matp_t)tsp->ts_mat;
 	} else {
@@ -520,7 +520,7 @@ int				id;
 	if(rt_g.debug&DEBUG_TREEWALK && stp->st_path.magic == DB_FULL_PATH_MAGIC)  {
 		char	*sofar = db_path_to_string(&stp->st_path);
 		bu_log("rt_gettree_leaf() st_path=%s\n", sofar );
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 
 #if 0
@@ -552,7 +552,7 @@ found_it:
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("rt_gettree_leaf() %s\n", sofar );
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 
 	return(curtree);
@@ -934,14 +934,14 @@ top:
 		right = tp->tr_b.tb_right;
 		if( rt_tree_elim_nops( left ) < 0 )  {
 			*tp = *right;	/* struct copy */
-			rt_free( (char *)left, "rt_tree_elim_nops union tree");
-			rt_free( (char *)right, "rt_tree_elim_nops union tree");
+			bu_free( (char *)left, "rt_tree_elim_nops union tree");
+			bu_free( (char *)right, "rt_tree_elim_nops union tree");
 			goto top;
 		}
 		if( rt_tree_elim_nops( right ) < 0 )  {
 			*tp = *left;	/* struct copy */
-			rt_free( (char *)left, "rt_tree_elim_nops union tree");
-			rt_free( (char *)right, "rt_tree_elim_nops union tree");
+			bu_free( (char *)left, "rt_tree_elim_nops union tree");
+			bu_free( (char *)right, "rt_tree_elim_nops union tree");
 			goto top;
 		}
 		break;
@@ -971,8 +971,8 @@ top:
 		}
 		if( rt_tree_elim_nops( right ) < 0 )  {
 			*tp = *left;	/* struct copy */
-			rt_free( (char *)left, "rt_tree_elim_nops union tree");
-			rt_free( (char *)right, "rt_tree_elim_nops union tree");
+			bu_free( (char *)left, "rt_tree_elim_nops union tree");
+			bu_free( (char *)right, "rt_tree_elim_nops union tree");
 			goto top;
 		}
 		break;
@@ -982,7 +982,7 @@ top:
 		/* UNARY tree -- for completeness only, should never be seen */
 		left = tp->tr_b.tb_left;
 		if( rt_tree_elim_nops( left ) < 0 )  {
-			rt_free( (char *)left, "rt_tree_elim_nops union tree");
+			bu_free( (char *)left, "rt_tree_elim_nops union tree");
 			tp->tr_op = OP_NOP;
 			return(-1);	/* Kill ref to unary op, too */
 		}
