@@ -59,10 +59,14 @@ static int	one_line_only = 0;	/* insist on 1-line writes */
 static int	verbose = 0;
 static int	header_only = 0;
 
-static double	def_screen_gamma=2.2;
+static double	def_screen_gamma=1.0;	/* Don't add more gamma, by default */
+/* Particularly because on SGI, the system provides gamma correction,
+ * so programs like this one don't have to.
+ */
 
 static char usage[] = "\
 Usage: png-fb [-H -h -i -c -v -z -1] [-m #lines] [-F framebuffer]\n\
+	[-g screen_gamma]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.png]\n";
@@ -72,13 +76,16 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "1m:HhicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case '1':
 			one_line_only = 1;
 			break;
 		case 'm':
 			multiple_lines = atoi(optarg);
+			break;
+		case 'g':
+			def_screen_gamma = atof(optarg);
 			break;
 		case 'H':
 			header_only = 1;
@@ -246,14 +253,12 @@ char **argv;
 	else
 		png_set_background( png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0 );
 
-	if( png_get_gAMA( png_p, info_p, &gamma ) )
-	{
-		if( verbose )
-			bu_log( "gamma: %f\n", gamma );
-		png_set_gamma( png_p, def_screen_gamma, gamma );
-	}
-	else
-		png_set_gamma( png_p, def_screen_gamma, 0.5 );
+	if( !png_get_gAMA( png_p, info_p, &gamma ) )
+		gamma = 0.5;
+	png_set_gamma( png_p, def_screen_gamma, gamma );
+	if( verbose )
+		bu_log( "file gamma: %f, additional screen gamma: %f\n",
+			gamma, def_screen_gamma );
 
 	if( verbose )
 	{
