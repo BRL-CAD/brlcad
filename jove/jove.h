@@ -5,6 +5,7 @@
  *
  */
 /* jove.h header file to be included by EVERYONE */
+#include <stdio.h>
 
 #ifdef SYSV
 # define SYS5	1
@@ -53,8 +54,6 @@ typedef	short	disk_line;
 #define BSIZ	512
 
 #endif
-
-#define EOF	-1
 
 #ifndef NULL
 # define NULL	0
@@ -382,7 +381,6 @@ extern char
 	*FuncName(),
 	*filename(),
 	*getblock(),
-	*sprintf(),
 	*IOerr(),
 	*bufmod(),
 	*index(),
@@ -421,6 +419,8 @@ extern BUFFER
 	*mak_buf(),
 	*buf_exists(),
 	*file_exists();
+
+extern int	jgetchar();
 
 #define	SAVE_NO		0
 #define	SAVE_ASK	1
