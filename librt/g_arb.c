@@ -55,7 +55,6 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #define ARB_MAXPTS	4		/* All we need are 4 points */
 static point_t	arb_points[ARB_MAXPTS];	/* Actual points on plane */
 static int	arb_npts;		/* number of points on plane */
-static char	arb_code[ARB_MAXPTS+1];	/* Face code string.  Decorative. */
 
 /* One of these for each face */
 struct arb_specific  {
@@ -127,17 +126,17 @@ struct rt_i	*rtip;
 
 #define P(x)	(&vec[(x)*ELEMENTS_PER_VECT])
 	faces = 0;
-	if( arb_face( stp, 3, 2, 1, 0, P(3), P(2), P(1), P(0) ) )
+	if( arb_face( stp, P(3), P(2), P(1), P(0), "1234" ) )
 		faces++;					/* 1234 */
-	if( arb_face( stp, 4, 5, 6, 7, P(4), P(5), P(6), P(7) ) )
+	if( arb_face( stp, P(4), P(5), P(6), P(7), "8765" ) )
 		faces++;					/* 8765 */
-	if( arb_face( stp, 4, 7, 3, 0, P(4), P(7), P(3), P(0) ) )
+	if( arb_face( stp, P(4), P(7), P(3), P(0), "1485" ) )
 		faces++;					/* 1485 */
-	if( arb_face( stp, 2, 6, 5, 1, P(2), P(6), P(5), P(1) ) )
+	if( arb_face( stp, P(2), P(6), P(5), P(1), "2673" ) )
 		faces++;					/* 2673 */
-	if( arb_face( stp, 1, 5, 4, 0, P(1), P(5), P(4), P(0) ) )
+	if( arb_face( stp, P(1), P(5), P(4), P(0), "1562" ) )
 		faces++;					/* 1562 */
-	if( arb_face( stp, 7, 6, 2, 3, P(7), P(6), P(2), P(3) ) )
+	if( arb_face( stp, P(7), P(6), P(2), P(3), "4378" ) )
 		faces++;					/* 4378 */
 #undef P
 
@@ -184,10 +183,10 @@ struct rt_i	*rtip;
  *	#pts	(>=3) if a valid plane resulted.  # valid pts is returned.
  */
 HIDDEN int
-arb_face( stp, a, b, c, d, ap, bp, cp, dp )
+arb_face( stp, ap, bp, cp, dp, title )
 struct soltab *stp;
-int a, b, c, d;
 pointp_t ap, bp, cp, dp;
+char	*title;
 {
 	register struct arb_specific *arbp;
 
@@ -206,10 +205,10 @@ pointp_t ap, bp, cp, dp;
 	FreeArb = arbp->arb_forw;
 
 	arb_npts = 0;
-	arb_add_pt( ap, stp, arbp, a );
-	arb_add_pt( bp, stp, arbp, b );
-	arb_add_pt( cp, stp, arbp, c );
-	arb_add_pt( dp, stp, arbp, d );
+	arb_add_pt( ap, stp, arbp, title );
+	arb_add_pt( bp, stp, arbp, title );
+	arb_add_pt( cp, stp, arbp, title );
+	arb_add_pt( dp, stp, arbp, title );
 
 	if( arb_npts < 3 )  {
 		arbp->arb_forw = FreeArb;
@@ -238,11 +237,11 @@ pointp_t ap, bp, cp, dp;
  *  checked for validity.
  */
 HIDDEN int
-arb_add_pt( point, stp, arbp, a )
+arb_add_pt( point, stp, arbp, title )
 register pointp_t point;
 struct soltab *stp;
 register struct arb_specific *arbp;
-int a;
+char	*title;
 {
 	register int i;
 	LOCAL vect_t work;
@@ -257,8 +256,6 @@ int a;
 	}
 	i = arb_npts++;		/* Current point number */
 	VMOVE( arb_points[i], point );
-	arb_code[i] = '0'+a;
-	arb_code[i+1] = '\0';
 
 	/* The first 3 points are treated differently */
 	switch( i )  {
@@ -280,7 +277,6 @@ int a;
 		f = MAGNITUDE( arbp->arb_N );
 		if( NEAR_ZERO(f,0.005) )  {
 			arb_npts--;
-			arb_code[2] = '\0';
 			return(0);			/* BAD */
 		}
 		f = 1/f;
@@ -345,10 +341,9 @@ int a;
 		if( ! NEAR_ZERO(f,0.005) )  {
 			/* Non-planar face */
 			rt_log("arb(%s): face %s non-planar, dot=%g\n",
-				stp->st_name, arb_code, f );
+				stp->st_name, title, f );
 #ifdef CONSERVATIVE
 			arb_npts--;
-			arb_code[i] = '\0';
 			return(0);				/* BAD */
 #endif
 		}
