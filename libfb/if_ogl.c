@@ -31,6 +31,12 @@
  *  Porting done by Carl Nuzman
  */
 
+/* 	$Id$	 */
+
+#ifndef lint
+static char RCSid[] = "@(#)$Id$";
+#endif /* lint */
+
 #include "conf.h"
 #include "tk.h"
 #include <X11/keysym.h> 
