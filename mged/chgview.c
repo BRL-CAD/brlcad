@@ -423,6 +423,64 @@ f_refresh()
 	dmaflag = 1;		/* causes refresh() */
 }
 
+/*
+ *  			R T _ W R I T E
+ *  
+ *  Write out the information that RT's -M option needs to show current view.
+ */
+HIDDEN void
+rt_write(fp)
+FILE *fp;
+{
+	register int i;
+	vect_t temp;
+	vect_t eye_model;
+
+	VSET( temp, 0, 0, 1 );
+	MAT4X3VEC( eye_model, view2model, temp );
+
+	(void)fprintf(fp, "%.9e\n", VIEWSIZE );
+	(void)fprintf(fp, "%.9e %.9e %.9e\n",
+		eye_model[X], eye_model[Y], eye_model[Z] );
+	for( i=0; i < 16; i++ )  {
+		if( (i%4) == 3 )
+			(void)fprintf(fp, "\n");
+		(void)fprintf( fp, "%.9e ", Viewrot[i] );
+	}
+	(void)fprintf(fp, "\n");
+}
+
+/*
+ *  			R T _ R E A D
+ *  
+ *  Read in one view in RT format.
+ */
+HIDDEN int
+rt_read(fp, scale, eye, mat)
+FILE *fp;
+float *scale;
+vect_t eye;
+mat_t mat;
+{
+	register int i;
+	double d;
+
+	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
+	*scale = d;
+	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
+	eye[X] = d;
+	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
+	eye[Y] = d;
+	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
+	eye[Z] = d;
+	for( i=0; i < 16; i++ )  {
+		if( fscanf( fp, "%f", &d ) != 1 )
+			return(-1);
+		mat[i] = d;
+	}
+	return(0);
+}
+
 #define LEN 32
 void
 f_rt()
@@ -491,10 +549,7 @@ f_rt()
 	/* Connect up to pipe */
 	(void)close( o_pipe[0] );
 	fp = fdopen( o_pipe[1], "w" );
-
-	/* Send out model2view matrix */
-	for( i=0; i < 16; i++ )
-		(void)fprintf( fp, "%.9e ", model2view[i] );
+	rt_write(fp);
 	(void)fclose( fp );
 	
 	/* Wait for rt to finish */
@@ -505,6 +560,31 @@ f_rt()
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
 }
+/*
+ *  				B A S E N A M E
+ *  
+ *  Return basename of path, removing leading slashes and trailing suffix.
+ */
+static char *
+basename( p1, suff )
+register char *p1, *suff;
+{
+	register char *p2, *p3;
+	static char buf[128];
+
+	p2 = p1;
+	while (*p1) {
+		if (*p1++ == '/')
+			p2 = p1;
+	}
+	for(p3=suff; *p3; p3++) 
+		;
+	while(p1>p2 && p3>suff)
+		if(*--p3 != *--p1)
+			return(p2);
+	strncpy( buf, p2, p1-p2 );
+	return(buf);
+}
 
 void
 f_saveview()
@@ -512,16 +592,19 @@ f_saveview()
 	register struct solid *sp;
 	register int i;
 	register FILE *fp;
+	char *base;
 
 	if( (fp = fopen( cmd_args[1], "a")) == NULL )  {
 		perror(cmd_args[1]);
 		return;
 	}
+	base = basename( cmd_args[1], ".sh" );
+	(void)chmod( cmd_args[1], 0755 );	/* executable */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
 	for( i=2; i < numargs; i++ )
 		(void)fprintf(fp,"%s ", cmd_args[i]);
-	(void)fprintf(fp,"-o %s.pix ", filename);
-	(void)fprintf(fp,"%s ", filename);
+	(void)fprintf(fp,"\\\n -o %s.pix ", base);
+	(void)fprintf(fp,"%s \\\n", filename);
 
 	/* Find all unique top-level entrys.
 	 *  Mark ones already done with s_iflag == UP
@@ -540,14 +623,9 @@ f_saveview()
 				forw->s_iflag = UP;
 		}
 	}
-	(void)fprintf(fp," 2> %s.log", filename);
-	(void)fprintf(fp," <<EOF");
-
-	/* Send out model2view matrix */
-	for( i=0; i < 16; i++ ) {
-		if( (i%4) == 0 )  (void)fprintf(fp, "\n");
-		(void)fprintf( fp, "%.9e ", model2view[i] );
-	}
+	(void)fprintf(fp,"\\\n 2> %s.log", base);
+	(void)fprintf(fp," <<EOF\n");
+	rt_write(fp);
 	(void)fprintf(fp,"\nEOF\n");
 	(void)fclose( fp );
 	
@@ -750,27 +828,25 @@ f_rmats()
 {
 	register FILE *fp;
 	register int i;
-	double ovscale;		/* old Viewscale */
+	vect_t eye_model;
 
 	if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
 		perror(cmd_args[1]);
 		return;
 	}
-	ovscale = Viewscale;
 	/* If user hits ^C, this will stop, but will leave hanging filedes */
 	(void)signal(SIGINT, cur_sigint);
-	while( !feof( fp ) )  {
-		for( i=0; i < 16; i++ )
-			fscanf(fp, "%f", &model2view[i] );
-		Viewscale = model2view[15];
-		mat_inv( view2model, model2view );
-		if( state != ST_VIEW )  {
-			mat_mul( model2objview, model2view, modelchanges );
-			mat_inv( objview2model, model2objview );
-		}
+	while( !feof( fp ) &&
+	       rt_read( fp, &Viewscale, eye_model, Viewrot ) >= 0 )  {
+		if( numargs > 2 )
+			mat_idn(Viewrot);	/* top view */
+		MAT_DELTAS( toViewcenter,
+			-eye_model[X],
+			-eye_model[Y],
+			-eye_model[Z] );
+		new_mats();
 		dmaflag = 1;
 		refresh();	/* Draw new display */
 	}
 	fclose(fp);
-	Viewscale = ovscale;
 }
