@@ -396,6 +396,7 @@ char **argv;
 	case S_4Base:  
 		w=BaseW*2;
 		h=BaseH*2;
+		break;
 	case S_16Base: 
 		w=BaseW*4;
 		h=BaseH*4;
