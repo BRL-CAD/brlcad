@@ -291,6 +291,7 @@ char **argv;
 
 	BU_GETSTRUCT(curr_dm_list, dm_list);
 	BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
+	netfd = -1;
 
 	/* initialize predictor stuff */
 	BU_LIST_INIT(&curr_dm_list->dml_p_vlist);

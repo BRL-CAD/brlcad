@@ -51,17 +51,23 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 void set_port();
 
-static void new_client();
-static void drop_client();
-static void new_client_handler();
-static void existing_client_handler();
-static void comm_error();
-static void setup_socket();
+#ifdef LOCAL_STATIC
+#undef LOCAL_STATIC
+#endif
+#define LOCAL_STATIC static
+
+LOCAL_STATIC void new_client();
+LOCAL_STATIC void drop_client();
+LOCAL_STATIC void new_client_handler();
+LOCAL_STATIC void existing_client_handler();
+LOCAL_STATIC void comm_error();
+LOCAL_STATIC void setup_socket();
+
 
 /*
  *			N E W _ C L I E N T
  */
-static void
+LOCAL_STATIC void
 new_client(pcp)
 struct pkg_conn	*pcp;
 {
@@ -92,7 +98,7 @@ struct pkg_conn	*pcp;
 /*
  *			D R O P _ C L I E N T
  */
-static void
+LOCAL_STATIC void
 drop_client(sub)
 int sub;
 {
@@ -119,14 +125,14 @@ set_port()
   char portname[32];
 
   /* Check to see if previously active --- if so then deactivate */
-  if(netfd > 0){
+  if(netfd >= 0){
     /* first drop all clients */
     for(i = 0; i < MAX_CLIENTS; ++i)
       drop_client(i);
 
     Tcl_DeleteFileHandler(netfd);
     close(netfd);
-    netfd = 0;
+    netfd = -1;
   }
 
   if(!mged_variables->mv_listen)
@@ -195,7 +201,7 @@ set_port()
 /*
  * Accept any new client connections.
  */
-static void
+LOCAL_STATIC void
 new_client_handler(clientData, mask)
 ClientData clientData;
 int mask;
@@ -224,7 +230,7 @@ found:
 /*
  * Process arrivals from existing clients.
  */
-static void
+LOCAL_STATIC void
 existing_client_handler(clientData, mask)
 ClientData clientData;
 int mask;
@@ -279,7 +285,7 @@ found:
   curr_dm_list = scdlp;
 }
 
-static void
+LOCAL_STATIC void
 setup_socket(fd)
 int	fd;
 {
@@ -318,7 +324,7 @@ int	fd;
  *
  *  Communication error.  An error occured on the PKG link.
  */
-static void
+LOCAL_STATIC void
 comm_error(str)
 char *str;
 {
