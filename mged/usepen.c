@@ -68,6 +68,36 @@ register int x, y;
 	static vect_t pos_model;	/* Rotated screen space pos */
 	static vect_t tr_temp;		/* temp translation vector */
 	static vect_t tabvec;		/* tablet vector */
+	static vect_t temp;
+
+	/* TODO:  switch(press) { switch(state) {stuff} } */
+	switch( press )  {
+	case DV_INZOOM:
+		Viewscale *= 0.5;
+		new_mats();
+		return;
+
+	case DV_OUTZOOM:
+		Viewscale *= 2.0;
+		new_mats();
+		return;
+
+	case DV_SLEW:
+		/* Move view center to here */
+		tabvec[X] =  x / 2047.0;
+		tabvec[Y] =  y / 2047.0;
+		tabvec[Z] = 0;
+
+		slewview( tabvec );
+		return;
+
+	case DV_PICK:
+	case 0:
+		break;
+	default:
+		printf("usepen(%d,%d,x%x) -- bad dm press code\n", x,y,press);
+		return;
+	}
 
 	/*
 	 * Keep the pen input from doing other things to
@@ -80,7 +110,6 @@ register int x, y;
 		menu_list != (struct menu_item *) NULL  &&
 		menu_select( x, y, press )
 	) return;
-
 	if( state == ST_VIEW )  {
 		if( press == 0 )
 			return;
@@ -188,6 +217,10 @@ register int x, y;
 				((float)(y > 0 ? y : -y) / 2047);
 		if ( y <= 0 )
 			es_scale = 1.0 / es_scale;
+
+		/* accumulate scale factor */
+		acc_sc_sol *= es_scale;
+
 		sedraw = 1;
 		return;
 	case STRANS:
@@ -197,20 +230,24 @@ register int x, y;
 		 * replace X,Y (but NOT Z) components, and
 		 * project result back to model space.
 		 */
-		MAT4X3PNT( pos_view, model2view, es_rec.s.s_values );
+		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
+		MAT4X3PNT( pos_view, model2view, temp );
 		pos_view[X] = x / 2047.0;
 		pos_view[Y] = y / 2047.0;
-		MAT4X3PNT( es_rec.s.s_values, view2model, pos_view );
+		MAT4X3PNT( temp, view2model, pos_view );
+		MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
 		sedraw = 1;
 		return;
 	case MOVEH:
 		/* Use pen to change location of point V+H */
-		VADD2( pos_model, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
+		VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
+		MAT4X3PNT(pos_model, es_mat, temp);
 		MAT4X3PNT( pos_view, model2view, pos_model );
 		pos_view[X] = x / 2047.0;
 		pos_view[Y] = y / 2047.0;
 		/* Do NOT change pos_view[Z] ! */
-		MAT4X3PNT( tr_temp, view2model, pos_view );
+		MAT4X3PNT( temp, view2model, pos_view );
+		MAT4X3PNT( tr_temp, es_invmat, temp );
 		VSUB2( &es_rec.s.s_tgc_H, tr_temp, &es_rec.s.s_tgc_V );
 		sedraw = 1;
 		return;
@@ -219,7 +256,9 @@ register int x, y;
 		tabvec[X] = x / 2047.0;
 		tabvec[Y] = y / 2047.0;
 		tabvec[Z] = 0;
-		MAT4X3PNT( pos_model, view2model, tabvec );
+		MAT4X3PNT( temp, view2model, tabvec );
+		/* apply inverse of es_mat */
+		MAT4X3PNT( pos_model, es_invmat, temp );
 		editarb( pos_model );
 		sedraw = 1;
 		return;
