@@ -40,7 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
-extern void color_soltab();
 /*
  *  It is expected that entries on this mater list will be sorted
  *  in strictly ascending order, with no overlaps (ie, monotonicly
@@ -48,6 +47,7 @@ extern void color_soltab();
  */
 extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
 
+void color_soltab();
 void color_putrec(), color_zaprec();
 
 static void
@@ -342,7 +342,6 @@ register struct mater *mp;
  *
  *  Pass through the solid table and set pointer to appropriate
  *  mater structure.
- *  Called by the display manager anytime the color mappings change.
  */
 void
 color_soltab()
@@ -350,7 +349,13 @@ color_soltab()
 	register struct solid *sp;
 	register struct mater *mp;
 
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+	FOR_ALL_SOLIDS( sp, &HeadSolid.l )  {
+		if( sp->s_useBaseColor ) {
+			sp->s_color[0] = sp->s_basecolor[0];
+			sp->s_color[1] = sp->s_basecolor[1];
+			sp->s_color[2] = sp->s_basecolor[2];
+			goto done;
+		}
 		for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 			if( sp->s_regionid <= mp->mt_high &&
 			    sp->s_regionid >= mp->mt_low ) {
