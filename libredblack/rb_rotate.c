@@ -13,6 +13,7 @@ static char RCSid[] = "@(#) $Header$";
 
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
 #include "redblack.h"
 #include "./rb_internals.h"
 
@@ -42,6 +43,9 @@ int		order;
     RB_CKORDER(x -> rbn_tree, order);
 
     y = rb_right_child(x, order);
+
+    if (tree -> rbt_debug & RB_DEBUG_ROTATE)
+	rt_log("_rb_rot_left(<%x>, %d)...\n", x, order);
 
     rb_right_child(x, order) = beta = rb_left_child(y, order);
     if (beta != rb_null(tree))
@@ -83,6 +87,9 @@ int		order;
     RB_CKORDER(y -> rbn_tree, order);
 
     x = rb_left_child(y, order);
+
+    if (tree -> rbt_debug & RB_DEBUG_ROTATE)
+	rt_log("_rb_rot_right(<%x>, %d)...\n", y, order);
 
     rb_left_child(y, order) = beta = rb_right_child(x, order);
     if (beta != rb_null(tree))
