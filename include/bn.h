@@ -33,7 +33,7 @@
  *	Public Domain, Distribution Unlimited.
  *
  *  Include Sequencing -
- *	#include "conf.h"
+ *	#include "config.h"
  *	#include <stdio.h>
  *	#include <math.h>
  *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
