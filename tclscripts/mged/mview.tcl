@@ -66,18 +66,78 @@ proc openmv { id w wc dpy dtype S } {
 	pack $wc.u.l $wc.u.r -side left -anchor w -expand 1 -fill both
 	pack $wc.l.l $wc.l.r -side left -anchor w -expand 1 -fill both
     }
+}
 
-    menu_accelerator_bindings $id $w.ul ul
-    menu_accelerator_bindings $id $w.ur ur
-    menu_accelerator_bindings $id $w.ll ll
-    menu_accelerator_bindings $id $w.lr lr
+proc mview_build_menubar { id } {
+    global mged_top
+    global mged_dmc
+
+    set w $mged_top($id)
+
+    if {$mged_top($id) == $mged_dmc($id)} {
+	.$id.menubar clone $w.menubar menubar
+	$w configure -menu $w.menubar
+
+	menu_accelerator_bindings_for_clone $id $w $w.ul ul
+	menu_accelerator_bindings_for_clone $id $w $w.ur ur
+	menu_accelerator_bindings_for_clone $id $w $w.ll ll
+	menu_accelerator_bindings_for_clone $id $w $w.lr lr
+    } else {
+	menu_accelerator_bindings $id $w.ul ul
+	menu_accelerator_bindings $id $w.ur ur
+	menu_accelerator_bindings $id $w.ll ll
+	menu_accelerator_bindings $id $w.lr lr
+    }
+}
+
+proc menu_accelerator_bindings_for_clone { id parent w pos } {
+    bind $w <Alt-ButtonPress-1> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#settings %X %Y; break"
+    bind $w <Alt-ButtonPress-2> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#modes %X %Y; break"
+    bind $w <Alt-F> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#file %X %Y; break"
+    bind $w <Alt-f> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#file %X %Y; break"
+    bind $w <Alt-E> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#edit %X %Y; break"
+    bind $w <Alt-e> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#edit %X %Y; break"
+    bind $w <Alt-C> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#create %X %Y; break"
+    bind $w <Alt-c> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#create %X %Y; break"
+    bind $w <Alt-V> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#view %X %Y; break"
+    bind $w <Alt-v> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#view %X %Y; break"
+    bind $w <Alt-R> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#viewring %X %Y; break"
+    bind $w <Alt-r> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#viewring %X %Y; break"
+    bind $w <Alt-S> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#settings %X %Y; break"
+    bind $w <Alt-s> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#settings %X %Y; break"
+    bind $w <Alt-M> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#modes %X %Y; break"
+    bind $w <Alt-m> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#modes %X %Y; break"
+    bind $w <Alt-T> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#tools %X %Y; break"
+    bind $w <Alt-t> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#tools %X %Y; break"
+    bind $w <Alt-H> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#help %X %Y; break"
+    bind $w <Alt-h> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#help %X %Y; break"
 }
 
 proc menu_accelerator_bindings { id w pos } {
     bind $w <Alt-ButtonPress-1> "set mged_dm_loc($id) $pos; set_active_dm $id;\
 	    tk_popup .$id.menubar.settings %X %Y; break"
     bind $w <Alt-ButtonPress-2> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.menubar.settings.mouse_behavior %X %Y; break"
+	    tk_popup .$id.menubar.modes %X %Y; break"
     bind $w <Alt-F> "set mged_dm_loc($id) $pos; set_active_dm $id;\
 	    tk_popup .$id.menubar.file %X %Y; break"
     bind $w <Alt-f> "set mged_dm_loc($id) $pos; set_active_dm $id;\
@@ -98,22 +158,18 @@ proc menu_accelerator_bindings { id w pos } {
 	    tk_popup .$id.menubar.viewring %X %Y; break"
     bind $w <Alt-r> "set mged_dm_loc($id) $pos; set_active_dm $id;\
 	    tk_popup .$id.menubar.viewring %X %Y; break"
-    bind $w <Alt-M> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.menubar.modes %X %Y; break"
-    bind $w <Alt-m> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.menubar.modes %X %Y; break"
     bind $w <Alt-S> "set mged_dm_loc($id) $pos; set_active_dm $id;\
 	    tk_popup .$id.menubar.settings %X %Y; break"
     bind $w <Alt-s> "set mged_dm_loc($id) $pos; set_active_dm $id;\
 	    tk_popup .$id.menubar.settings %X %Y; break"
+    bind $w <Alt-M> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup .$id.menubar.modes %X %Y; break"
+    bind $w <Alt-m> "set mged_dm_loc($id) $pos; set_active_dm $id;\
+	    tk_popup .$id.menubar.modes %X %Y; break"
     bind $w <Alt-T> "set mged_dm_loc($id) $pos; set_active_dm $id;\
 	    tk_popup .$id.menubar.tools %X %Y; break"
     bind $w <Alt-t> "set mged_dm_loc($id) $pos; set_active_dm $id;\
 	    tk_popup .$id.menubar.tools %X %Y; break"
-    bind $w <Alt-O> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.menubar.other %X %Y; break"
-    bind $w <Alt-o> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.menubar.other %X %Y; break"
     bind $w <Alt-H> "set mged_dm_loc($id) $pos; set_active_dm $id;\
 	    tk_popup .$id.menubar.help %X %Y; break"
     bind $w <Alt-h> "set mged_dm_loc($id) $pos; set_active_dm $id;\
@@ -167,10 +223,10 @@ proc setupmv { id } {
     set_default_views $id
     mged_apply_local $id "set faceplate 0"
 
-    bind $mged_top($id).ul m "togglemv $id"
-    bind $mged_top($id).ur m "togglemv $id"
-    bind $mged_top($id).ll m "togglemv $id"
-    bind $mged_top($id).lr m "togglemv $id"
+#    bind $mged_top($id).ul m "togglemv $id"
+#    bind $mged_top($id).ur m "togglemv $id"
+#    bind $mged_top($id).ll m "togglemv $id"
+#    bind $mged_top($id).lr m "togglemv $id"
 }
 
 proc set_default_views { id } {
