@@ -67,6 +67,13 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 
 #if defined(sgi) && defined(mips)
 /*	Silicon Graphics 4D, which uses the MIPS chip */
+/*	There are three configurations which are supported:
+ *	1)  [4d] non-GT hw on SGI sw Release 2
+ *	2)  [4d] non-GT hw on SGI sw Release 3.1
+ *	3)  [4gt] 4D-GT hw on SGI sw Release 3.1
+ *	determining the difference is done partly at compile time,
+ *	and partly now.
+ */
 #	undef	sgi
 	MACHINE=4d;
 	UNIXTYPE=SYSV;
@@ -164,6 +171,33 @@ then
 	# which should cause more sensible errors downstream than
 	# having Shell variables competely unset.
 fi
+
+# Special cases for discriminating between different versions of
+# systems from vendors.
+# Try very hard to avoid putting stuff here, because this technique
+# is not available for use in "Cakefile.defs", so special handling
+# will be required.
+case ${MACHINE} in
+
+4d)
+	if test -d /usr/NeWS
+	then
+		# This is definitely an SGI sw Release 3.? system
+		if test ! -x /tmp/gt
+		then
+			echo 'main(){char b[50];gversion(b);exit(strncmp(b+4,"GT",2));}'>/tmp/gt.c
+			cc /tmp/gt.c -lgl -o /tmp/gt
+		fi
+		if /tmp/gt
+		then	MACHINE=4gt;
+		else	MACHINE=4d;
+		fi
+	else
+		# This is an SGI sw Release 2 system
+		MACHINE=4d2
+	fi;;
+
+esac
 
 # Now, look at first arg to determine output behavior
 case x$1 in
