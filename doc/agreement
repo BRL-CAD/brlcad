@@ -12,9 +12,9 @@ The U. S. Army Research Laboratory, hereinafter "ARL", an agency of THE
 GOVERNMENT, is the originator of The BRL-CAD Package.
 
 The BRL-CAD Package is a collection of computer programs, data files,
-and associated documentation, hereinafter "BRL-CAD". BRL-CAD is provided
-in machine-readable form and may be obtained in either "binary
-executable" or "source code" editions.
+and associated documentation, hereinafter "BRL-CAD". BRL-CAD is provided in
+machine-readable form and may be obtained in either "binary executable"
+or "source code" editions.  This license applies to both editions.
 
 BRL-CAD and the "BRL-CAD Eagle" are trademarks of the United States Army.
 
@@ -25,8 +25,8 @@ and information exchange programs on behalf of ARL.
 The corporation or private individual requesting BRL-CAD as identified
 on page two is hereinafter the "RECIPIENT".
 
-Changes to any files provided with BRL-CAD are hereinafter MODIFICATIONS.
-New files which are entirely created by RECIPIENT are hereinafter EXTENSIONS.
+Changes to any files provided with BRL-CAD are hereinafter "MODIFICATIONS".
+New files entirely created by RECIPIENT are hereinafter "EXTENSIONS".
 
 1.  BRL-CAD is an unpublished work that is not generally available to
 the public, except through the terms of this limited distribution. ARL
@@ -213,7 +213,7 @@ BRL-CAD on (check all that are appropriate):
  [ ]	Binary executable edition (includes support for SGI-IRIX,
 	Solaris-SPARC, RedHat Linux-86, and FreeBSD-86 architectures).
 
-12. If you are purchasing physical media from SURVIAC, please specify
+13. If you are purchasing physical media from SURVIAC, please specify
 the format:
 
  [ ]	No media, using free network FTP access
