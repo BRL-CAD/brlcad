@@ -1,6 +1,6 @@
 .TH MAC-PIX 1 BRL/CAD
 .SH NAME
-mac-pix \- convert Apple MacPaint bitmap into pix(5) or bw(5) raster image
+mac\(empix \- convert Apple MacPaint bitmap into pix(5) or bw(5) raster image
 .SH SYNOPSIS
 .B mac-pix
 .RB [ \-clb ]
@@ -14,9 +14,7 @@ mac-pix \- convert Apple MacPaint bitmap into pix(5) or bw(5) raster image
 .RB [ \-S\  squareOutputSize]
 .RB [ \-W\  output_width]
 .RB [ \-N\  output_height]
-.RB [ \-R\  intensity]
-.RB [ \-G\  intensity]
-.RB [ \-B\  intensity]
+.RB [ \-C\  r/g/b]
 [file.mac]
 .SH DESCRIPTION
 .I Mac-pix
@@ -36,14 +34,10 @@ By default, the output
 .IR pix (5)
 file is 1024x1024 pixels, with the input image located in the lower
 left corner of the output (nearest the origin).  The default color for
-an "on" pixel is white (R=G=B=256); alternatively, the 
-.B \-R
-,
-.B \-G
-, and 
-.B \-B
-flags can be used to specify intensities for each of the colors, in 
-the range of [0..256].
+an "on" pixel is white (R=G=B=255); alternatively, the 
+.B \-C r/g/b
+flag can be used to specify intensities for each of the colors, in
+the range of [0..255].
 The
 .B \-b
 flag will output a
@@ -86,4 +80,4 @@ The U. S. Army Ballistic Research Laboratory
 Aberdeen Proving Ground, Maryland  21005
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.ARPA>.
+mail to <CAD@BRL.MIL>.
