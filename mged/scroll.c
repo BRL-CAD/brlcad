@@ -364,7 +364,7 @@ int y_top;
 	  f = (double)dv_xadc / 2047.0;
 	else {
 	  if(EDIT_TRAN && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	    case 'o':
 	      if(mged_variables->rateknobs)
@@ -404,7 +404,7 @@ int y_top;
 	  f = (double)dv_yadc / 2047.0;
 	else {
 	  if(EDIT_TRAN && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	    case 'o':
 	      if(mged_variables->rateknobs)
@@ -443,7 +443,7 @@ int y_top;
 	  f = (double)dv_1adc / 2047.0;
 	else {
 	  if(EDIT_TRAN && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	    case 'o':
 	      if(mged_variables->rateknobs)
@@ -503,7 +503,7 @@ int y_top;
 	  f = (double)dv_distadc / 2047.0;
 	else {
 	  if(EDIT_ROTATE && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      if(mged_variables->rateknobs)
 		f = edit_rate_model_rotate[X] / RATE_ROT_FACTOR;
@@ -547,7 +547,7 @@ int y_top;
 			   (char *)NULL);
 	else {
 	  if(EDIT_ROTATE && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      if(mged_variables->rateknobs)
 		f = edit_rate_model_rotate[Y] / RATE_ROT_FACTOR;
@@ -593,7 +593,7 @@ int y_top;
 			   (char *)NULL);
 	else {
 	  if(EDIT_ROTATE && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      if(mged_variables->rateknobs)
 		f = edit_rate_model_rotate[Z] / RATE_ROT_FACTOR;

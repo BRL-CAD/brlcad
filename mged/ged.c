@@ -1108,11 +1108,11 @@ int	non_blocking;
     save_dm_list = curr_dm_list;
     if( edit_rateflag_model_rotate ) {
       struct bu_vls vls;
-      char save_coords;
+      char save_ecoords;
 
       curr_dm_list = edit_rate_mr_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'm';
+      save_ecoords = mged_variables->ecoords;
+      mged_variables->ecoords = 'm';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1134,7 +1134,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->ecoords = save_ecoords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1143,11 +1143,11 @@ int	non_blocking;
     }
     if( edit_rateflag_object_rotate ) {
       struct bu_vls vls;
-      char save_coords;
+      char save_ecoords;
 
       curr_dm_list = edit_rate_or_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'o';
+      save_ecoords = mged_variables->ecoords;
+      mged_variables->ecoords = 'o';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1169,7 +1169,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->ecoords = save_ecoords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1178,11 +1178,11 @@ int	non_blocking;
     }
     if( edit_rateflag_view_rotate ) {
       struct bu_vls vls;
-      char save_coords;
+      char save_ecoords;
 
       curr_dm_list = edit_rate_vr_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'v';
+      save_ecoords = mged_variables->ecoords;
+      mged_variables->ecoords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1204,7 +1204,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->ecoords = save_ecoords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1212,12 +1212,12 @@ int	non_blocking;
 	edobj = save_edflag;
     }
     if( edit_rateflag_model_tran ) {
-      char save_coords;
+      char save_ecoords;
       struct bu_vls vls;
 
       curr_dm_list = edit_rate_mt_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'm';
+      save_ecoords = mged_variables->ecoords;
+      mged_variables->ecoords = 'm';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1238,7 +1238,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->ecoords = save_ecoords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1246,12 +1246,12 @@ int	non_blocking;
 	edobj = save_edflag;
     }
     if( edit_rateflag_view_tran ) {
-      char save_coords;
+      char save_ecoords;
       struct bu_vls vls;
 
       curr_dm_list = edit_rate_vt_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'v';
+      save_ecoords = mged_variables->ecoords;
+      mged_variables->ecoords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1272,7 +1272,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->ecoords = save_ecoords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;

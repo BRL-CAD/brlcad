@@ -262,10 +262,10 @@ XEvent *eventPtr;
     case AMM_ROT:
       if((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	 mged_variables->transform == 'e'){
-	char save_coords;
+	char save_ecoords;
 
-	save_coords = mged_variables->coords;
-	mged_variables->coords = 'v';
+	save_ecoords = mged_variables->ecoords;
+	mged_variables->ecoords = 'v';
 
 	if(state == ST_S_EDIT){
 	  save_edflag = es_edflag;
@@ -286,7 +286,7 @@ XEvent *eventPtr;
 
 	(void)Tcl_Eval(interp, bu_vls_addr(&cmd));
 
-	mged_variables->coords = save_coords;
+	mged_variables->ecoords = save_ecoords;
 	if(state == ST_S_EDIT)
 	  es_edflag = save_edflag;
 	else
@@ -312,10 +312,10 @@ XEvent *eventPtr;
       
       if((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	 mged_variables->transform == 'e'){
-	char save_coords;
+	char save_ecoords;
 
-	save_coords = mged_variables->coords;
-	mged_variables->coords = 'v';
+	save_ecoords = mged_variables->ecoords;
+	mged_variables->ecoords = 'v';
 
 	if(state == ST_S_EDIT){
 	  save_edflag = es_edflag;
@@ -334,7 +334,7 @@ XEvent *eventPtr;
 
 	(void)Tcl_Eval(interp, bu_vls_addr(&cmd));
 
-	mged_variables->coords = save_coords;
+	mged_variables->ecoords = save_ecoords;
 	if(state == ST_S_EDIT)
 	  es_edflag = save_edflag;
 	else
@@ -821,7 +821,7 @@ XEvent *eventPtr;
 	if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      f = edit_rate_model_rotate[Z];
 	      break;
@@ -861,7 +861,7 @@ XEvent *eventPtr;
 	}else{
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      f = edit_absolute_model_rotate[Z];
 	      break;
@@ -918,7 +918,7 @@ XEvent *eventPtr;
 	if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	    case 'o':
 	      f = edit_rate_model_tran[Z];
@@ -956,7 +956,7 @@ XEvent *eventPtr;
 	}else{
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	    case 'o':
 	      f = edit_absolute_model_tran[Z];
@@ -1011,7 +1011,7 @@ XEvent *eventPtr;
 	if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      f = edit_rate_model_rotate[Y];
 	      break;
@@ -1051,7 +1051,7 @@ XEvent *eventPtr;
 	}else{
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      f = edit_absolute_model_rotate[Y];
 	      break;
@@ -1095,7 +1095,7 @@ XEvent *eventPtr;
       if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	    case 'o':
 	      f = edit_rate_model_tran[Y];
@@ -1133,7 +1133,7 @@ XEvent *eventPtr;
       }else{
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
 	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    f = edit_absolute_model_tran[Y];
@@ -1188,7 +1188,7 @@ XEvent *eventPtr;
 	if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      f = edit_rate_model_rotate[X];
 	      break;
@@ -1228,7 +1228,7 @@ XEvent *eventPtr;
 	}else{
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      f = edit_absolute_model_rotate[X];
 	      break;
@@ -1272,7 +1272,7 @@ XEvent *eventPtr;
       if(mged_variables->rateknobs){
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
 	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    f = edit_rate_model_tran[X];
@@ -1310,7 +1310,7 @@ XEvent *eventPtr;
       }else{
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
 	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    f = edit_absolute_model_tran[X];
@@ -1604,13 +1604,13 @@ end:
     case 't':
       am_mode = AMM_TRAN;
       if(EDIT_TRAN && mged_variables->transform == 'e'){
-	char save_coords;
+	char save_ecoords;
 	point_t mouse_view_pos;
 	point_t ea_view_pos;
 	point_t diff;
 
-	save_coords = mged_variables->coords;
-	mged_variables->coords = 'v';
+	save_ecoords = mged_variables->ecoords;
+	mged_variables->ecoords = 'v';
 
 	MAT4X3PNT(ea_view_pos, model2view, e_axes_pos);
 	mouse_view_pos[X] = dm_X2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1);
@@ -1623,7 +1623,7 @@ end:
 	bu_vls_printf(&vls, "knob aX %lf aY %lf\n", diff[X], diff[Y]);
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	mged_variables->coords = save_coords;
+	mged_variables->ecoords = save_ecoords;
       }
 
       break;
@@ -1910,9 +1910,7 @@ Glx_colorchange()
   } else {
     depthcue(0);
   }
-#if 0
-  dmp->dm_colorchange(dmp);
-#endif
+
   ++dmaflag;
 }
 
