@@ -149,7 +149,7 @@ load_dynamic_shader(const char *material,
 	if (rdebug&RDEBUG_MATERIAL)
 		bu_log("load_dynamic_shader( \"%s\", %d )\n", material, mlen);
 
-	cwd = getcwd((char *)NULL, (size_t)0);
+	cwd = getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
 	if ( cwd ) {
 		/* Look in the current working directory for {material}.so */
