@@ -186,28 +186,31 @@ See
 .IR vdeck (1).
 .PD
 .SH FB_FILE
-Whenever a framebuffer is used, the environment variable
+Whenever a framebuffer is needed, and the
+.B \-F
+option has not been specified, the environment variable
 .B
 .SM FB_FILE
 is checked for the device to use.  The format of this
 variable is either
 .IB [hostname:] /dev/ device_name[num]
-or is the pathname of a disk file to be used as a ``virtual
-framebuffer.''
+or
+.I UNIX_path ,
+the pathname of a disk file to be used as a ``virtual framebuffer.''
 .I Hostname
 is the name of a remote machine if the remote framebuffer interface
-is being used.  This prefix is not used for local display devices.
+is being used.
+When a local display device is being specified, the
+.I hostname
+should not be specified, for performance reasons; just the
+special string
 .I Device_name
-is a special string which is used to select a particular
-type of framebuffer.
+is used to select a particular type of framebuffer.
 .I Num
 is type dependent and can either mean a display number or select
-some options for that type.  One special
-.I device_name
-will always exist called
-.BR debug ,
-which displays the calls made to the framebuffer library on
-your terminal.
+some options for that type.
+Note that for security reasons, it is not permitted to access a
+disk file via the remote interface.
 .PP
 If
 .B
@@ -223,7 +226,7 @@ is simply to distinguish them from filenames.  See the end of the
 manual page for a list of the device names and the meanings of
 any
 .I num
-parameters they may take.
+parameters they may take, and for a more detailed discussion.
 .SH OPTIONS
 A convention exists for the options used on
 most of the utilities provided.
