@@ -29,6 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <errno.h>
 #include <netdb.h>
+#include <math.h>
 
 #include <sys/types.h>
 #include <sys/time.h>		/* for struct timeval */
@@ -50,6 +51,31 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef SYSV
 #define vfork	fork
 #endif SYSV
+
+struct vls  {
+	char	*vls_str;
+	int	vls_cur;
+	int	vls_max;
+};
+
+vls_cat( vp, s )
+struct vls	*vp;
+char		*s;
+{
+	int	len;
+
+	len = strlen(s);
+	if( vp->vls_cur <= 0 )  {
+		vp->vls_str = rt_malloc( vp->vls_max = len*4, "vls initial" );
+		vp->vls_cur = 0;
+	}
+	if( vp->vls_cur + len > vp->vls_max )  {
+		vp->vls_max = (vp->vls_max + len) * 2;
+		vp->vls_str = rt_realloc( vp->vls_str, vp->vls_max, "vls" );
+	}
+	bcopy( s, vp->vls_str + vp->vls_cur, len+1 );
+	vp->vls_cur += len;
+}
 
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
 int cur_fbwidth;		/* current fb width */
@@ -78,10 +104,6 @@ struct pkg_switch pkgswitch[] = {
 int clients;
 int print_on = 1;
 
-#define MAXARGS 48
-char *cmd_args[MAXARGS];
-int numargs;
-
 #define NFD 32
 #define MAXSERVERS	NFD		/* No relay function yet */
 
@@ -105,9 +127,7 @@ struct frame {
 	long		fr_nrays;	/* rays fired so far */
 	double		fr_cpu;		/* CPU seconds used so far */
 	/* Current view */
-	double		fr_viewsize;
-	double		fr_eye_model[3];
-	double		fr_mat[16];
+	struct vls	fr_cmd;		/* RT command string */
 	char		fr_servinit[MAXSERVERS]; /* sent server options & matrix? */
 };
 struct frame FrameHead;
@@ -122,6 +142,7 @@ struct servers {
 #define SRST_NEW	1		/* connected, no model loaded yet */
 #define SRST_LOADING	2		/* loading, awaiting ready response */
 #define SRST_READY	3		/* loaded, ready */
+#define SRST_RESTART	4		/* about to restart */
 	struct frame	*sr_curframe;	/* ptr to current frame */
 	long		sr_addr;	/* NET order inet addr */
 	char		sr_name[64];	/* host name */
@@ -152,8 +173,9 @@ struct rt_g	rt_g;
 
 extern double	atof();
 
-/* START */
-char	start_cmd[256];	/* contains file name & objects */
+extern struct command_tab cmd_tab[];	/* given at end */
+
+char	start_cmd[256];		/* contains file name & objects */
 
 FILE	*helper_fp;		/* pipe to rexec helper process */
 char	ourname[32];
@@ -531,376 +553,7 @@ FILE *fp;
 	/* Feeble allowance for comments */
 	if( buf[0] == '#' )  return;
 
-	if( strncmp( buf, "load ", 5 ) == 0 )  {
-		register struct servers *sp;
-		if( running )  {
-			printf("Can't load while running!!\n");
-			return;
-		}
-		/* Really ought to reset here, too */
-		if(start_cmd[0] != '\0' )  {
-			printf("Was loaded with %s, restarting all\n", start_cmd);
-			strncpy( start_cmd, &buf[5], strlen(&buf[5])-1 );
-			for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-				if( sp->sr_pc == PKC_NULL )  continue;
-				send_restart( sp );
-			}
-			return;
-		}
-		strncpy( start_cmd, &buf[5], strlen(&buf[5])-1 );
-		/* Start any idle servers */
- 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-			if( sp->sr_pc == PKC_NULL )  continue;
-			if( sp->sr_started != SRST_NEW )  continue;
-			send_start(sp);
-		}
-		return;
-	}
-
-	/* Chop up line */
-	if( parse_cmd( buf ) > 0 ) return;	/* was nop */
-
-	if( strcmp( cmd_args[0], "debug" ) == 0 )  {
-		register struct servers *sp;
-		char rbuf[64];
-
-		sprintf(rbuf, "-x%s", cmd_args[1] );
-		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-			if( sp->sr_pc == PKC_NULL )  continue;
-			(void)pkg_send( MSG_OPTIONS, rbuf, strlen(buf)+1, sp->sr_pc);
-		}
-		return;
-	}
-	if( strcmp( cmd_args[0], "f" ) == 0 )  {
-		width = height = atoi( cmd_args[1] );
-		if( width < 4 || width > 16*1024 )
-			width = 64;
-		printf("width=%d, height=%d, takes effect after next MAT\n", width, height);
-		return;
-	}
-	if( strcmp( cmd_args[0], "-H" ) == 0 )  {
-		hypersample = atoi( cmd_args[1] );
-		printf("hypersample=%d, takes effect after next MAT\n", hypersample);
-		return;
-	}
-	if( strcmp( cmd_args[0], "-B" ) == 0 )  {
-		benchmark = 1;
-		printf("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
-		return;
-	}
-	if( strcmp( cmd_args[0], "p" ) == 0 )  {
-		perspective = atof( cmd_args[1] );
-		printf("perspective angle=%g, takes effect after next MAT\n", perspective);
-		return;
-	}
-	if( strcmp( cmd_args[0], "read" ) == 0 )  {
-		register FILE *fp;
-
-		if( numargs < 2 )  return;
-		if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
-			perror(cmd_args[1]);
-			return;
-		}
-		while( !feof(fp) )  {
-			/* do one command from file */
-			interactive_cmd(fp);
-			/* Without delay, see if anything came in */
-			check_input(0);
-		}
-		fclose(fp);
-		printf("read file done\n");
-		return;
-	}
-	if( strcmp( cmd_args[0], "detach" ) == 0 )  {
-		detached = 1;
-		clients &= ~(1<<0);	/* drop stdin */
-		close(0);
-		return;
-	}
-	if( strcmp( cmd_args[0], "file" ) == 0 )  {
-		if( numargs < 2 )  return;
-		strncpy( out_file, cmd_args[1], sizeof(out_file) );
-		printf("frames will be recorded in %s.###\n", out_file);
-		return;
-	}
-	if( strcmp( cmd_args[0], "mat" ) == 0 )  {
-		register FILE *fp;
-		register struct frame *fr;
-
-		GET_FRAME(fr);
-
-		if( numargs >= 3 )  {
-			fr->fr_number = atoi(cmd_args[2]);
-		} else {
-			fr->fr_number = 0;
-		}
-		if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
-			perror(cmd_args[1]);
-			return;
-		}
-		for( i=fr->fr_number; i>=0; i-- )
-			if(read_matrix( fp, fr ) < 0 ) break;
-		fclose(fp);
-
-		prep_frame(fr);
-		APPEND_FRAME( fr, FrameHead.fr_back );
-		return;
-	}
-	if( strcmp( cmd_args[0], "movie" ) == 0 )  {
-		register FILE *fp;
-		register struct frame *fr;
-		struct frame dummy_frame;
-		int a,b;
-
-		/* movie mat a b */
-		if( numargs < 4 )  {
-			printf("usage:  movie matfile startframe endframe\n");
-			return;
-		}
-		if( running )  {
-			printf("already running, please wait\n");
-			return;
-		}
-		if( start_cmd[0] == '\0' )  {
-			printf("need LOAD before MOVIE\n");
-			return;
-		}
-		a = atoi( cmd_args[2] );
-		b = atoi( cmd_args[3] );
-		if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
-			perror(cmd_args[1]);
-			return;
-		}
-		/* Skip over unwanted beginning frames */
-		for( i=0; i<a; i++ )
-			if(read_matrix( fp, &dummy_frame ) < 0 ) break;
-		for( i=a; i<b; i++ )  {
-			GET_FRAME(fr);
-			fr->fr_number = i;
-			if(read_matrix( fp, fr ) < 0 ) break;
-			prep_frame(fr);
-			APPEND_FRAME( fr, FrameHead.fr_back );
-		}
-		fclose(fp);
-		printf("Movie ready\n");
-		return;
-	}
-	if( strcmp( cmd_args[0], "add" ) == 0 )  {
-		for( i=1; i<numargs; i++ )  {
-			fprintf( helper_fp, "%s %d ",
-				cmd_args[i], pkg_permport );
-			fflush( helper_fp );
-			check_input(1);		/* get connections */
-		}
-		return;
-	}
-	if( strcmp( cmd_args[0], "drop" ) == 0 )  {
-		register struct servers *sp;
-		if( numargs <= 1 )  return;
-		sp = get_server_by_name( cmd_args[1] );
-		if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return;
-		dropclient(sp->sr_pc);
-		return;
-	}
-	if( strcmp( cmd_args[0], "restart" ) == 0 )  {
-		register struct servers *sp;
-		if( numargs <= 1 )  {
-			/* Restart all */
-			printf("restarting all\n");
-			for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-				if( sp->sr_pc == PKC_NULL )  continue;
-				send_restart( sp );
-			}
-			return;
-		}
-		sp = get_server_by_name( cmd_args[1] );
-		if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return;
-		send_restart( sp );
-		/* The real action takes place when he closes the conn */
-		return;
-	}
-	if( strcmp( cmd_args[0], "stop" ) == 0 )  {
-		printf("no more scanlines being scheduled, done soon\n");
-		running = 0;
-		return;
-	}
-	if( strcmp( cmd_args[0], "reset" ) == 0 )  {
-		register struct frame *fr;
-		register struct list *lp;
-
-		if( running )  {
-			printf("must STOP before RESET!\n");
-			return;
-		}
-		for( fr = FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw )  {
-			if( fr->fr_picture )  free(fr->fr_picture);
-			fr->fr_picture = (char *)0;
-			/* Need to remove any pending work,
-			 * work already assigned will dribble in.
-			 */
-			while( (lp = fr->fr_todo.li_forw) != &(fr->fr_todo) )  {
-				DEQUEUE_LIST( lp );
-				FREE_LIST(lp);
-			}
-			/* We will leave cleanups to schedule() */
-		}
-		return;
-	}
-	if( strcmp( cmd_args[0], "attach" ) == 0 )  {
-		register struct frame *fr;
-		int maxx;
-
-		if( init_fb(cmd_args[1]) < 0 )  return;
-
-		if( (fr = FrameHead.fr_forw) == &FrameHead )  return;
-
-		/* Draw the accumulated image */
-		if( fr->fr_picture == (char *)0 )  return;
-		size_display(fr);
-		if( fbp == FBIO_NULL ) return;
-		/* Trim to what can be drawn */
-		maxx = fr->fr_width;
-		if( maxx > fb_getwidth(fbp) )
-			maxx = fb_getwidth(fbp);
-		for( i=0; i<fr->fr_height; i++ )  {
-			fb_write( fbp, 0, i%fb_getheight(fbp),
-				fr->fr_picture + i*fr->fr_width*3,
-				maxx );
-		}
-		return;
-	}
-	if( strcmp( cmd_args[0], "release" ) == 0 )  {
-		if(fbp != FBIO_NULL) fb_close(fbp);
-		fbp = FBIO_NULL;
-		return;
-	}
-	if( strcmp( cmd_args[0], "frames" ) == 0 )  {
-		register struct frame *fr;
-
-		/* Sumarize frames waiting */
-		printf("Frames waiting:\n");
-		for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
-			printf("%5d\t", fr->fr_number);
-			printf("width=%d, height=%d, perspective angle=%f, ",
-				fr->fr_width, fr->fr_height, fr->fr_perspective );
-			printf("viewsize = %f\n", fr->fr_viewsize);
-			printf("\thypersample = %d, ", fr->fr_hyper);
-			printf("benchmark = %d, ", fr->fr_benchmark);
-			if( fr->fr_picture )  printf(" (Pic)");
-			printf("\n");
-			printf("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
-			printf("       servinit: ");
-			for( i=0; i<MAXSERVERS; i++ )
-				printf("%d ", fr->fr_servinit[i]);
-			printf("\n");
-			pr_list( &(fr->fr_todo) );
-		}
-		return;
-	}
-	if( strcmp( cmd_args[0], "stat" ) == 0 ||
-	    strcmp( cmd_args[0], "status" ) == 0 )  {
-		register struct servers *sp;
-	    	int	num;
-
-		if( start_cmd[0] == '\0' )
-			printf("No model loaded yet\n");
-		else
-			printf("\n%s %s\n",
-				running ? "RUNNING" : "loaded",
-				start_cmd );
-
-		if( fbp != FBIO_NULL )
-			printf("Framebuffer is %s\n", fbp->if_name);
-		else
-			printf("No framebuffer\n");
-		if( out_file[0] != '\0' )
-			printf("Output file: %s.###\n", out_file );
-		printf("Printing of remote messages is %s\n",
-			print_on?"ON":"Off" );
-	    	printf("Listening at %s, port %d\n", ourname, pkg_permport);
-
-		/* Print work assignments */
-		printf("Servers:\n");
-		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-			if( sp->sr_pc == PKC_NULL )  continue;
-			printf("  %2d  %s ", sp->sr_index, sp->sr_name );
-			switch( sp->sr_started )  {
-			case SRST_NEW:
-				printf("Idle"); break;
-			case SRST_LOADING:
-				printf("(Loading)"); break;
-			case SRST_READY:
-				printf("Ready"); break;
-			default:
-				printf("Unknown"); break;
-			}
-			if( sp->sr_curframe != FRAME_NULL )
-				printf(" frame %d\n", sp->sr_curframe->fr_number);
-			else
-				printf("\n");
-			num = sp->sr_nlines<=0 ? 1 : sp->sr_nlines;
-			printf("\tlast:  elapsed=%g, cpu=%g\n",
-				sp->sr_l_elapsed,
-				sp->sr_l_cpu );
-			printf("\t avg:  elapsed=%g, weighted=%g, cpu=%g clump=%d\n",
-				sp->sr_s_elapsed/num,
-				sp->sr_w_elapsed,
-				sp->sr_s_cpu/num,
-				sp->sr_lump );
-
-			pr_list( &(sp->sr_work) );
-		}
-		return;
-	}
-	if( strcmp( cmd_args[0], "clear" ) == 0 )  {
-		if( fbp == FBIO_NULL )  return;
-		fb_clear( fbp, PIXEL_NULL );
-		cur_fbwidth = 0;
-		return;
-	}
-	if( strcmp( cmd_args[0], "print" ) == 0 )  {
-		register struct servers *sp;
-		if( numargs > 1 )
-			print_on = atoi(cmd_args[1]);
-		else
-			print_on = !print_on;	/* toggle */
-		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-			if( sp->sr_pc == PKC_NULL )  continue;
-			send_loglvl( sp );
-		}
-		printf("Printing of remote messages is %s\n",
-			print_on?"ON":"Off" );
-		return;
-	}
-	if( strcmp( cmd_args[0], "go" ) == 0 )  {
-		do_a_frame();
-		return;
-	}
-	if( strcmp( cmd_args[0], "?" ) == 0 )  {
-		printf("load db.g trees\n");
-		printf("f #		set width&height\n");
-		printf("p #		set perspective angle (0=ortho)\n");
-		printf("-H #		set hypersampling\n");
-		printf("-B		set benchmark flag\n");
-		printf("read script\n");
-		printf("mat file	load matrix from file\n");
-		printf("movie file a b\n");
-		printf("file name	store frames in file\n");
-		printf("add host\n");
-		printf("drop host\n");
-		printf("restart host\n");
-		printf("attach		re-attach to display\n");
-		printf("release		release display (continue running)\n");
-		printf("detach		stop reading stdin\n");
-		printf("stat		show server status\n");
-		printf("frames		show frame status\n");
-		printf("clear		clear screen\n");
-		printf("print [0|1]	enable remote logging\n");
-		printf("go		start processing\n");
-		printf("stop		cease processing\n");
-		printf("reset		zap work queues\n");
-	}
-	printf("%s: Unknown command, ? for help\n", cmd_args[0]);
+	(void)rt_do_cmd( (struct rt_i *)0, buf, cmd_tab );
 }
 
 /*
@@ -960,6 +613,50 @@ do_a_frame()
 }
 
 /*
+ *			F R A M E _ I S _ D O N E
+ */
+frame_is_done(fr)
+register struct frame *fr;
+{
+	char	name[256];
+	double	delta;
+	int	fd;
+	int	cnt;
+
+	(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
+	delta = tvdiff( &fr->fr_end, &fr->fr_start);
+	if( delta < 0.0001 )  delta=0.0001;
+	printf("frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
+		fr->fr_number,
+		delta,
+		fr->fr_nrays,
+		fr->fr_cpu );
+	printf("  RTFM=%g rays/sec (%g rays/cpu sec)\n",
+		fr->fr_nrays/delta,
+		fr->fr_nrays/fr->fr_cpu );
+
+	if( out_file[0] != '\0' )  {
+		sprintf(name, "%s.%d", out_file, fr->fr_number);
+		cnt = fr->fr_width*fr->fr_height*3;
+		if( (fd = creat(name, 0444)) > 0 )  {
+			printf("Writing..."); fflush(stdout);
+			if( write( fd, fr->fr_picture, cnt ) != cnt ) {
+				perror(name);
+				exit(3);
+			} else
+				printf(" %s\n", name);
+			close(fd);
+		} else {
+			perror(name);
+		}
+	}
+	if( fr->fr_picture )  {
+		free(fr->fr_picture);
+		fr->fr_picture = (char *)0;
+	}
+}
+
+/*
  *			S C H E D U L E
  *
  *  If there is work to do, and a free server, send work
@@ -971,18 +668,18 @@ schedule()
 	register struct servers *sp;
 	register struct frame *fr;
 	int a,b;
-	int fd, cnt;
-	char name[256];
 	int going;			/* number of servers still going */
-	double	delta;
+	register struct frame *fr2;
 
 	if( start_cmd[0] == '\0' )  return;
 	going = 0;
 
 	/* Look for finished frames */
-	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw )  {
+	fr = FrameHead.fr_forw;
+	while( fr != &FrameHead )  {
 		if( (lp = fr->fr_todo.li_forw) != &(fr->fr_todo) )
-			continue;	/* still work to be done */
+			goto next_frame;	/* still work to be done */
+
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			if( sp->sr_curframe != fr )  continue;
@@ -991,46 +688,18 @@ schedule()
 				goto next_frame;
 			}
 		}
-		/* Frame has just been completed */
-		(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
-		delta = tvdiff( &fr->fr_end, &fr->fr_start);
-		if( delta < 0.0001 )  delta=0.0001;
-		printf("frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
-			fr->fr_number,
-			delta,
-			fr->fr_nrays,
-			fr->fr_cpu );
-		printf("  RTFM=%g rays/sec (%g rays/cpu sec)\n",
-			fr->fr_nrays/delta,
-			fr->fr_nrays/fr->fr_cpu );
 
-		if( out_file[0] != '\0' )  {
-			sprintf(name, "%s.%d", out_file, fr->fr_number);
-			cnt = fr->fr_width*fr->fr_height*3;
-			if( (fd = creat(name, 0444)) > 0 )  {
-				printf("Writing..."); fflush(stdout);
-				if( write( fd, fr->fr_picture, cnt ) != cnt ) {
-					perror(name);
-					exit(3);
-				} else
-					printf(" %s\n", name);
-				close(fd);
-			} else {
-				perror(name);
-			}
-		}
-		if( fr->fr_picture )  free(fr->fr_picture);
-		fr->fr_picture = (char *)0;
+		/* This server has just completed a frame */
 		sp->sr_curframe = FRAME_NULL;
-		{
-			register struct frame *fr2;
-			fr2 = fr->fr_forw;
-			DEQUEUE_FRAME(fr);
-			FREE_FRAME(fr);
-			fr = fr2->fr_back;
-			continue;
-		}
+		fr2 = fr->fr_forw;
+		DEQUEUE_FRAME(fr);
+		frame_is_done( fr );
+		FREE_FRAME(fr);
+		fr = fr2;
+		continue;
+
 next_frame: ;
+		fr = fr->fr_forw;
 	}
 	if( running == 0 || FrameHead.fr_forw == &FrameHead )  {
 		/* No more work to send out */
@@ -1051,7 +720,8 @@ top:
 			continue;	/* none waiting here */
 
 		/*
-		 * Look for a free server to dispatch work to
+		 *  Look for a server with fewer than XXX outstanding
+		 *  assignments to dispatch work to
 		 */
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
@@ -1109,75 +779,35 @@ register struct frame *fr;
 {
 	register int i;
 	char number[128];
+	char	cmd[128];
 
 	/* Visible part is from -1 to +1 in view space */
 	if( fscanf( fp, "%s", number ) != 1 )  goto out;
-	fr->fr_viewsize = atof(number);
-	if( fscanf( fp, "%s", number ) != 1 )  goto out;
-	fr->fr_eye_model[0] = atof(number);
-	if( fscanf( fp, "%s", number ) != 1 )  goto out;
-	fr->fr_eye_model[1] = atof(number);
-	if( fscanf( fp, "%s", number ) != 1 )  goto out;
-	fr->fr_eye_model[2] = atof(number);
-	for( i=0; i < 16; i++ )  {
-		if( fscanf( fp, "%s", number ) != 1 )
-			goto out;
-		fr->fr_mat[i] = atof(number);
+	sprintf( cmd, "viewsize %s; eye_pt ", number );
+	vls_cat( &(fr->fr_cmd), cmd );
+
+	for( i=0; i<3; i++ )  {
+		if( fscanf( fp, "%s", number ) != 1 )  goto out;
+		sprintf( cmd, "%s ", number );
+		vls_cat( &fr->fr_cmd, cmd );
 	}
+
+	sprintf( cmd, "; viewrot " );
+	vls_cat( &fr->fr_cmd, cmd );
+
+	for( i=0; i < 16; i++ )  {
+		if( fscanf( fp, "%s", number ) != 1 )  goto out;
+		sprintf( cmd, "%s ", number );
+		vls_cat( &fr->fr_cmd, cmd );
+	}
+	vls_cat( &fr->fr_cmd, "; ");
+
 	if( feof(fp) ) {
 out:
 		printf("EOF on frame file.\n");
 		return(-1);
 	}
 	return(0);	/* OK */
-}
-
-/*
- *			P A R S E _ C M D
- */
-parse_cmd( line )
-char *line;
-{
-	register char *lp;
-	register char *lp1;
-
-	numargs = 0;
-	lp = &line[0];
-	cmd_args[0] = &line[0];
-
-	if( *lp=='\0' || *lp == '\n' )
-		return(1);		/* NOP */
-
-	/* Handle "!" shell escape char so the shell can parse the line */
-	if( *lp == '!' )  {
-		(void)system( &line[1] );
-		(void)printf("!\n");
-		return(1);		/* Don't process command line! */
-	}
-
-	/* In case first character is not "white space" */
-	if( (*lp != ' ') && (*lp != '\t') && (*lp != '\0') )
-		numargs++;		/* holds # of args */
-
-	for( lp = &line[0]; *lp != '\0'; lp++ )  {
-		if( (*lp == ' ') || (*lp == '\t') || (*lp == '\n') )  {
-			*lp = '\0';
-			lp1 = lp + 1;
-			if( (*lp1 != ' ') && (*lp1 != '\t') &&
-			    (*lp1 != '\n') && (*lp1 != '\0') )  {
-				if( numargs >= MAXARGS )  {
-					(void)printf("More than %d arguments, excess flushed\n", MAXARGS);
-					cmd_args[MAXARGS] = (char *)0;
-					return(0);
-				}
-				cmd_args[numargs++] = lp1;
-			}
-		}
-		/* Finally, a non-space char */
-	}
-	/* Null terminate pointer array */
-	cmd_args[numargs] = (char *)0;
-	return(0);
 }
 
 /*
@@ -1422,6 +1052,7 @@ register struct servers *sp;
 {
 	if( pkg_send( MSG_RESTART, "", 0, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
+	sp->sr_started = SRST_RESTART;
 }
 
 /*
@@ -1453,29 +1084,7 @@ register struct frame *fr;
 	if( pkg_send( MSG_OPTIONS, buf, strlen(buf)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
 
-	sprintf( buf,
-		"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
-		fr->fr_viewsize,
-		fr->fr_eye_model[0],
-		fr->fr_eye_model[1],
-		fr->fr_eye_model[2],
-		(fr->fr_mat[0]),
-		(fr->fr_mat[1]),
-		(fr->fr_mat[2]),
-		(fr->fr_mat[3]),
-		(fr->fr_mat[4]),
-		(fr->fr_mat[5]),
-		(fr->fr_mat[6]),
-		(fr->fr_mat[7]),
-		(fr->fr_mat[8]),
-		(fr->fr_mat[9]),
-		(fr->fr_mat[10]),
-		(fr->fr_mat[11]),
-		(fr->fr_mat[12]),
-		(fr->fr_mat[13]),
-		(fr->fr_mat[14]),
-		(fr->fr_mat[15]) );
-	if( pkg_send( MSG_MATRIX, buf, strlen(buf)+1, sp->sr_pc ) < 0 )
+	if( pkg_send( MSG_MATRIX, fr->fr_cmd.vls_str, fr->fr_cmd.vls_cur, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
 	printf("sent matrix to %s\n", sp->sr_name);
 }
@@ -1574,3 +1183,511 @@ start_helper()
 	}
 	(void)close(fds[0]);
 }
+
+/*** Commands ***/
+
+cd_load( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct servers *sp;
+	register char	*cp;
+	register int	i;
+	int		len;
+
+	if( running )  {
+		printf("Can't load while running!!\n");
+		return;
+	}
+
+	/* Really ought to reset here, too */
+	if(start_cmd[0] != '\0' )  {
+		printf("Was loaded with %s, restarting all\n", start_cmd);
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+			if( sp->sr_pc == PKC_NULL )  continue;
+			send_restart( sp );
+		}
+	}
+
+	/* Build new start_cmd[] string */
+	cp = start_cmd;
+	for( i=1; i < argc; i++ )  {
+		if( i > 1 )  *cp++ = ' ';
+		len = strlen( argv[i] );
+		bcopy( argv[i], cp, len );
+		cp += len;
+	}
+	*cp++ = '\0';
+
+	/* Start any idle servers */
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+		if( sp->sr_started != SRST_NEW )  continue;
+		send_start(sp);
+	}
+}
+
+cd_debug( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct servers *sp;
+	int	len;
+
+	len = strlen(argv[1])+1;
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+		(void)pkg_send( MSG_OPTIONS, argv[1], len, sp->sr_pc);
+	}
+}
+
+cd_f( argc, argv )
+int	argc;
+char	**argv;
+{
+
+	width = height = atoi( argv[1] );
+	if( width < 4 || width > 16*1024 )
+		width = 64;
+	printf("width=%d, height=%d, takes effect after next MAT\n",
+		width, height);
+}
+
+cd_hyper( argc, argv )
+int	argc;
+char	**argv;
+{
+	hypersample = atoi( argv[1] );
+	printf("hypersample=%d, takes effect after next MAT\n", hypersample);
+}
+
+cd_bench( argc, argv )
+int	argc;
+char	**argv;
+{
+	benchmark = atoi( argv[1] );
+	printf("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
+}
+
+cd_persp( argc, argv )
+int	argc;
+char	**argv;
+{
+	perspective = atof( argv[1] );
+	if( perspective < 0.0 )  perspective = 0.0;
+	printf("perspective angle=%g, takes effect after next MAT\n", perspective);
+}
+
+cd_read( argc, argv )
+int	argc;
+char	**argv;
+{
+	register FILE *fp;
+
+	if( (fp = fopen(argv[1], "r")) == NULL )  {
+		perror(argv[1]);
+		return;
+	}
+	while( !feof(fp) )  {
+		/* do one command from file */
+		interactive_cmd(fp);
+		/* Without delay, see if anything came in */
+		check_input(0);
+	}
+	fclose(fp);
+	printf("read file done\n");
+}
+
+cd_detach( argc, argv )
+int	argc;
+char	**argv;
+{
+	detached = 1;
+	clients &= ~(1<<0);	/* drop stdin */
+	close(0);
+}
+
+cd_file( argc, argv )
+int	argc;
+char	**argv;
+{
+	strncpy( out_file, argv[1], sizeof(out_file) );
+	printf("frames will be recorded in %s.###\n", out_file);
+}
+
+cd_mat( argc, argv )
+int	argc;
+char	**argv;
+{
+	register FILE *fp;
+	register struct frame *fr;
+	int	i;
+
+	GET_FRAME(fr);
+
+	if( argc >= 3 )  {
+		fr->fr_number = atoi(argv[2]);
+	} else {
+		fr->fr_number = 0;
+	}
+	if( (fp = fopen(argv[1], "r")) == NULL )  {
+		perror(argv[1]);
+		return;
+	}
+	for( i=fr->fr_number; i>=0; i-- )
+		if(read_matrix( fp, fr ) < 0 ) break;
+	fclose(fp);
+
+	prep_frame(fr);
+	APPEND_FRAME( fr, FrameHead.fr_back );
+}
+
+cd_movie( argc, argv )
+int	argc;
+char	**argv;
+{
+	register FILE	*fp;
+	register struct frame	*fr;
+	struct frame		dummy_frame;
+	int		a,b;
+	int		i;
+
+	/* movie mat a b */
+	if( running )  {
+		printf("already running, please wait\n");
+		return;
+	}
+	if( start_cmd[0] == '\0' )  {
+		printf("need LOAD before MOVIE\n");
+		return;
+	}
+	a = atoi( argv[2] );
+	b = atoi( argv[3] );
+	if( (fp = fopen(argv[1], "r")) == NULL )  {
+		perror(argv[1]);
+		return;
+	}
+	/* Skip over unwanted beginning frames */
+	for( i=0; i<a; i++ )
+		if(read_matrix( fp, &dummy_frame ) < 0 ) break;
+	for( i=a; i<b; i++ )  {
+		GET_FRAME(fr);
+		fr->fr_number = i;
+		if(read_matrix( fp, fr ) < 0 ) break;
+		prep_frame(fr);
+		APPEND_FRAME( fr, FrameHead.fr_back );
+	}
+	fclose(fp);
+	printf("Movie ready\n");
+}
+
+cd_add( argc, argv )
+int	argc;
+char	**argv;
+{
+	register int i;
+
+	for( i=1; i<argc; i++ )  {
+		fprintf( helper_fp, "%s %d ",
+			argv[i], pkg_permport );
+		fflush( helper_fp );
+		check_input(1);		/* get connections */
+	}
+}
+
+cd_drop( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct servers *sp;
+
+	sp = get_server_by_name( argv[1] );
+	if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return;
+	dropclient(sp->sr_pc);
+}
+
+cd_restart( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct servers *sp;
+
+	if( argc <= 1 )  {
+		/* Restart all */
+		printf("restarting all\n");
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+			if( sp->sr_pc == PKC_NULL )  continue;
+			send_restart( sp );
+		}
+		return;
+	}
+	sp = get_server_by_name( argv[1] );
+	if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return;
+	send_restart( sp );
+	/* The real action takes place when he closes the conn */
+}
+
+cd_stop( argc, argv )
+int	argc;
+char	**argv;
+{
+	printf("no more scanlines being scheduled, done soon\n");
+	running = 0;
+}
+
+cd_reset( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct frame *fr;
+	register struct list *lp;
+
+	if( running )  {
+		printf("must STOP before RESET!\n");
+		return;
+	}
+	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw )  {
+		if( fr->fr_picture )  free(fr->fr_picture);
+		fr->fr_picture = (char *)0;
+		/* Need to remove any pending work,
+		 * work already assigned will dribble in.
+		 */
+		while( (lp = fr->fr_todo.li_forw) != &(fr->fr_todo) )  {
+			DEQUEUE_LIST( lp );
+			FREE_LIST(lp);
+		}
+		/* We will leave cleanups to schedule() */
+	}
+}
+
+cd_attach( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct frame *fr;
+	register int	i;
+	int		maxx;
+	char		*name;
+
+	if( argc <= 1 )  {
+		name = (char *)0;
+	} else {
+		name = argv[1];
+	}
+	if( init_fb(name) < 0 )  return;
+
+	if( (fr = FrameHead.fr_forw) == &FrameHead )  return;
+
+	/* Draw the accumulated image */
+	if( fr->fr_picture == (char *)0 )  return;
+	size_display(fr);
+	if( fbp == FBIO_NULL ) return;
+
+	/* Trim to what can be drawn */
+	maxx = fr->fr_width;
+	if( maxx > fb_getwidth(fbp) )
+		maxx = fb_getwidth(fbp);
+	for( i=0; i<fr->fr_height; i++ )  {
+		fb_write( fbp, 0, i%fb_getheight(fbp),
+			fr->fr_picture + i*fr->fr_width*3,
+			maxx );
+	}
+}
+
+cd_release( argc, argv )
+int	argc;
+char	**argv;
+{
+	if(fbp != FBIO_NULL) fb_close(fbp);
+	fbp = FBIO_NULL;
+}
+
+cd_frames( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct frame *fr;
+	register int	i;
+
+	/* Sumarize frames waiting */
+	printf("Frames waiting:\n");
+	for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
+		printf("%5d\t", fr->fr_number);
+		printf("width=%d, height=%d, perspective angle=%f\n",
+			fr->fr_width, fr->fr_height, fr->fr_perspective );
+		printf("\thypersample = %d, ", fr->fr_hyper);
+		printf("benchmark = %d, ", fr->fr_benchmark);
+		if( fr->fr_picture )  printf(" (Pic)");
+		printf("\n");
+		printf("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
+		printf("       servinit: ");
+		for( i=0; i<MAXSERVERS; i++ )
+			printf("%d ", fr->fr_servinit[i]);
+		printf("\n");
+		pr_list( &(fr->fr_todo) );
+		printf("cmd=%s\n", fr->fr_cmd.vls_str );
+	}
+}
+
+cd_status( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct servers *sp;
+    	int	num;
+
+	if( start_cmd[0] == '\0' )
+		printf("No model loaded yet\n");
+	else
+		printf("\n%s %s\n",
+			running ? "RUNNING" : "loaded",
+			start_cmd );
+
+	if( fbp != FBIO_NULL )
+		printf("Framebuffer is %s\n", fbp->if_name);
+	else
+		printf("No framebuffer\n");
+	if( out_file[0] != '\0' )
+		printf("Output file: %s.###\n", out_file );
+	printf("Printing of remote messages is %s\n",
+		print_on?"ON":"Off" );
+    	printf("Listening at %s, port %d\n", ourname, pkg_permport);
+
+	/* Print work assignments */
+	printf("Servers:\n");
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+		printf("  %2d  %s ", sp->sr_index, sp->sr_name );
+		switch( sp->sr_started )  {
+		case SRST_NEW:
+			printf("Idle"); break;
+		case SRST_LOADING:
+			printf("(Loading)"); break;
+		case SRST_READY:
+			printf("Ready"); break;
+		case SRST_RESTART:
+			printf("--about to restart--"); break;
+		default:
+			printf("Unknown"); break;
+		}
+		if( sp->sr_curframe != FRAME_NULL )
+			printf(" frame %d\n", sp->sr_curframe->fr_number);
+		else
+			printf("\n");
+		num = sp->sr_nlines<=0 ? 1 : sp->sr_nlines;
+		printf("\tlast:  elapsed=%g, cpu=%g\n",
+			sp->sr_l_elapsed,
+			sp->sr_l_cpu );
+		printf("\t avg:  elapsed=%g, weighted=%g, cpu=%g clump=%d\n",
+			sp->sr_s_elapsed/num,
+			sp->sr_w_elapsed,
+			sp->sr_s_cpu/num,
+			sp->sr_lump );
+
+		pr_list( &(sp->sr_work) );
+	}
+}
+
+cd_clear( argc, argv )
+int	argc;
+char	**argv;
+{
+	if( fbp == FBIO_NULL )  return;
+	fb_clear( fbp, PIXEL_NULL );
+	cur_fbwidth = 0;
+}
+
+cd_print( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct servers *sp;
+
+	if( argc > 1 )
+		print_on = atoi(argv[1]);
+	else
+		print_on = !print_on;	/* toggle */
+
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+		send_loglvl( sp );
+	}
+	printf("Printing of remote messages is %s\n",
+		print_on?"ON":"Off" );
+}
+
+cd_go( argc, argv )
+int	argc;
+char	**argv;
+{
+	do_a_frame();
+}
+
+cd_help( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct command_tab	*tp;
+
+	for( tp = cmd_tab; tp->ct_cmd != (char *)0; tp++ )  {
+		printf("%s %s\t\t%s\n",
+			tp->ct_cmd, tp->ct_parms,
+			tp->ct_comment );
+	}
+}
+
+struct command_tab cmd_tab[] = {
+	"load",	"file obj(s)",	"specify database and treetops",
+		cd_load,	3, 99,
+	"read", "file",		"source a command file",
+		cd_read,	2, 2,
+	"file", "name",		"base name for storing frames",
+		cd_file,	2, 2,
+	"mat", "file [frame]",	"read one matrix from file",
+		cd_mat,		2, 3,
+	"movie", "file start_frame end_frame",	"read movie",
+		cd_movie,	4, 4,
+	"add", "host(s)",	"attach to hosts",
+		cd_add,		2, 99,
+	"drop", "host",		"drop first instance of 'host'",
+		cd_drop,	2, 2,
+	"restart", "[host]",	"restart one or all hosts",
+		cd_restart,	1, 2,
+	"go", "",		"start scheduling frames",
+		cd_go,		1, 1,
+	"stop", "",		"stop scheduling work",
+		cd_stop,	1, 1,
+	"reset", "",		"purge frame list of all work",
+		cd_reset,	1, 1,
+	"frames", "",		"summarize waiting frames",
+		cd_frames,	1, 1,
+	"stat", "",		"server status",
+		cd_status,	1, 1,
+	"detach", "",		"detatch from interactive keyboard",
+		cd_detach,	1, 1,
+	/* FRAME BUFFER */
+	"attach", "[fb]",	"attach to frame buffer",
+		cd_attach,	1, 2,
+	"release", "",		"release frame buffer",
+		cd_release,	1, 1,
+	"clear", "",		"clear framebuffer",
+		cd_clear,	1, 1,
+	/* FLAGS */
+	"debug", "options",	"set remote debugging flags",
+		cd_debug,	2, 2,
+	"f", "square_size",	"set square frame size",
+		cd_f,		2, 2,
+	"-H", "hypersample",	"set number of hypersamples/pixel",
+		cd_hyper,	2, 2,
+	"-B", "0|1",		"set benchmark flag",
+		cd_bench,	2, 2,
+	"p", "angle",		"set perspective angle (degrees) 0=ortho",
+		cd_persp,	2, 2,
+	"print", "[0|1]",	"set/toggle remote message printing",
+		cd_print,	1, 2,
+	/* HELP */
+	"?", "",		"help",
+		cd_help,	1, 1,
+	(char *)0, (char *)0, (char *)0,
+		0,		0, 0	/* END */
+};
