@@ -815,7 +815,7 @@ struct directory *dp;
 
 	id = rt_id_solid( &ep );
 
-	if( rt_functab[id].ft_import( &ip , &ep , identity_mat ) )
+	if( rt_functab[id].ft_import( &ip , &ep , identity_mat, dbip ) )
 		rt_log( "Error in import" );
 
 	solid_is_brep = 0;
