@@ -342,9 +342,9 @@ register struct xray	*rp;
 	struct snurb * n  = (struct snurb *) hitp->hit_private;
 	fastf_t u = hitp->hit_vpriv[0];
 	fastf_t v = hitp->hit_vpriv[1];
-	fastf_t * norm;
+	fastf_t norm[4];
 
-	norm = (fastf_t *) rt_nurb_s_norm( n, u, v);
+	rt_nurb_s_norm( n, u, v, norm);
 	
 	VMOVE( hitp->hit_normal, norm);
 	
@@ -352,8 +352,6 @@ register struct xray	*rp;
 	{
 		VREVERSE( hitp->hit_normal, norm );
 	}
-	
-	rt_free((char *) norm, "rt_nurb_norm: norm");
 	
 	return;
 }
@@ -669,7 +667,7 @@ struct xray * r;
 struct rt_nurb_uv_hit * h;
 {
 	struct nurb_hit * hit;
-	fastf_t * pt;
+	fastf_t pt[4];
 	point_t vecsub;
 
 	hit = (struct nurb_hit *) rt_malloc( sizeof (struct nurb_hit),
@@ -678,7 +676,7 @@ struct rt_nurb_uv_hit * h;
 	hit->prev = hit->next = (struct nurb_hit *)0;
 	VSET(hit->hit_normal, 0.0, 0.0, 0.0);
 	
-	pt = (fastf_t *) rt_nurb_s_eval(n->srf, h->u, h->v);
+	rt_nurb_s_eval(n->srf, h->u, h->v, pt);
 
 	if( RT_NURB_IS_PT_RATIONAL(n->srf->pt_type) )
 	{
