@@ -1376,9 +1376,9 @@ fastf_t surfnorm[3];
 		!= COLORS_NULL
 		)
 		{
-		ap->a_color[RED] = colorp->c_rgb[RED]/255.0;
-		ap->a_color[GRN] = colorp->c_rgb[GRN]/255.0;
-		ap->a_color[BLU] = colorp->c_rgb[BLU]/255.0;
+		ap->a_color[RED] = (fastf_t)colorp->c_rgb[RED]/255.0;
+		ap->a_color[GRN] = (fastf_t)colorp->c_rgb[GRN]/255.0;
+		ap->a_color[BLU] = (fastf_t)colorp->c_rgb[BLU]/255.0;
 		}
 	else
 		ap->a_color[RED] =
