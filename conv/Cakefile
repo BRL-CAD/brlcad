@@ -6,7 +6,7 @@
 
 #define SRCDIR	conv
 #define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g \
-			g-euclid euclid_format tankill-g g-tankill \
+			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
 			asc-nmg nmg-rib
 #define	SRCSUFF	.c
@@ -19,19 +19,19 @@
 
 /* Explicit composition of each product */
 
-proe-g: proe-g.o
+proe-g: proe-g.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS proe-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o proe-g
 
-fast4-g: fast4-g.o
+fast4-g: fast4-g.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS fast4-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o fast4-g
 
-asc2g:	asc2g.o
+asc2g:	asc2g.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS asc2g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o asc2g
 
-g2asc:	g2asc.o
+g2asc:	g2asc.o LIBRT_DEP
 	CC LDFLAGS g2asc.o LIBWDB LIBRT LIBRT_LIBES LIBES -o g2asc
 
-conv-vg2g:	conv-vg2g.o
+conv-vg2g:	conv-vg2g.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS conv-vg2g.o -o conv-vg2g
 
 pix2asc:	pix2asc.o
@@ -40,37 +40,40 @@ pix2asc:	pix2asc.o
 asc2pix:	asc2pix.o
 	CC LDFLAGS asc2pix.o -o asc2pix
 
-euclid-g:	euclid-g.o
+euclid-g:	euclid-g.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS euclid-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o euclid-g
 
-g-euclid:	g-euclid.o
+g-euclid:	g-euclid.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS g-euclid.o LIBRT LIBRT_LIBES LIBES -o g-euclid
 
-g-euclid1:	g-euclid1.o
+g-euclid1:	g-euclid1.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS g-euclid1.o LIBRT LIBRT_LIBES LIBES -o g-euclid1
 
-euclid_format:	euclid_format.o
+euclid_format:	euclid_format.o LIBRT_DEP
 	CC LDFLAGS euclid_format.o LIBRT LIBRT_LIBES LIBES -o euclid_format
 
-tankill-g:	tankill-g.o
+euclid_unformat:	euclid_unformat.o
+	CC LDFLAGS euclid_unformat.o -o euclid_unformat
+
+tankill-g:	tankill-g.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS tankill-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o tankill-g
 
-g-tankill:	g-tankill.o
+g-tankill:	g-tankill.o LIBRT_DEP
 	CC LDFLAGS g-tankill.o LIBRT LIBRT_LIBES LIBES -o g-tankill
 
-viewpoint-g:	viewpoint-g.o
+viewpoint-g:	viewpoint-g.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS viewpoint-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o viewpoint-g
 
-dxf-g:	dxf-g.o
+dxf-g:	dxf-g.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS dxf-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o dxf-g
 
-g-nmg:	g-nmg.o
+g-nmg:	g-nmg.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS g-nmg.o LIBWDB LIBRT LIBRT_LIBES LIBES -o g-nmg
 
-asc-nmg: asc-nmg.o
+asc-nmg: asc-nmg.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS asc-nmg.o LIBWDB LIBRT LIBRT_LIBES LIBES -o asc-nmg
 
-nmg-rib: nmg-rib.o
+nmg-rib: nmg-rib.o LIBRT_DEP
 	CC LDFLAGS nmg-rib.o LIBWDB LIBRT LIBRT_LIBES LIBES -o nmg-rib
 
 #include "../Cakefile.rules"
