@@ -250,7 +250,7 @@ readsolid()
 	fp = fopen(tmpfil, "r");
 	if( fp == NULL )  {
 		perror(tmpfil);
-		return;
+		return 1;	/* FAIL */
 	}
 
 	switch( es_int.idb_type )
