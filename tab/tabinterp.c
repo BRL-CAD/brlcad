@@ -394,6 +394,9 @@ again:
 		case INTERP_LINEAR:
 			linear_interpolate( chp );
 			break;
+		case INTERP_STEP:
+			step_interpolate( chp );
+			break;
 		case INTERP_SPLINE:
 			if( spline( chp ) <= 0 )  {
 				fprintf(stderr, "spline failure, switching to linear\n");
@@ -402,6 +405,46 @@ again:
 			}
 			break;
 		}
+	}
+}
+
+/*
+ *			S T E P _ I N T E R P O L A T E
+ *
+ *  Simply select the value at the beinning of the interval.
+ *  This allows parameters to take instantaneous jumps in value
+ *  at specified times.
+ *
+ *  This routine takes advantage of (and depends on) the fact that
+ *  the input and output is sorted in increasing time values.
+ */
+step_interpolate( chp )
+register struct chan	*chp;
+{
+	register int	t;		/* output time index */
+	register int	i;		/* input time index */
+
+	i = 0;
+	for( t=0; t<o_len; t++ )  {
+		/* Check for below initial time */
+		if( o_time[t] < chp->c_itime[0] )  {
+			chp->c_oval[t] = chp->c_ival[0];
+			continue;
+		}
+		/* Check for above final time */
+		if( o_time[t] > chp->c_itime[chp->c_ilen-1] )  {
+			chp->c_oval[t] = chp->c_ival[chp->c_ilen-1];
+			continue;
+		}
+		/* Find time range in input data.  Could range check? */
+		while( i < chp->c_ilen-1 )  {
+			if( o_time[t] >= chp->c_itime[i] && 
+			    o_time[t] <  chp->c_itime[i+1] )
+				break;
+			i++;
+		}
+		/* Select value at beginning of interval */
+		chp->c_oval[t] = chp->c_ival[i];
 	}
 }
 
@@ -432,7 +475,7 @@ register struct chan	*chp;
 		/* Find time range in input data.  Could range check? */
 		while( i < chp->c_ilen-1 )  {
 			if( o_time[t] >= chp->c_itime[i] && 
-			    o_time[t] <= chp->c_itime[i+1] )
+			    o_time[t] <  chp->c_itime[i+1] )
 				break;
 			i++;
 		}
@@ -444,23 +487,13 @@ register struct chan	*chp;
 	}
 }
 
-/* Spline fit technique, derrived from /usr/src/usr.bin/spline.c */
-
-double
-rhs(i, chp)
-register int		i;
-register struct chan	*chp;
-{
-	register int i_;
-	double zz;
-
-	i_ = (i==chp->c_ilen-1) ? 0 : i;
-	zz = (chp->c_ival[i] - chp->c_ival[i-1])/
-		(chp->c_itime[i] - chp->c_itime[i-1]);
-	return( 6 * ((chp->c_ival[i_+1]-chp->c_ival[i_])/
-		(chp->c_itime[i+1]-chp->c_itime[i]) - zz));
-}
-
+/*
+ *			S P L I N E
+ *
+ *  Fit an interpolating spline to the data points given.
+ *  Time in the independent (x) variable, and the single channel
+ *  of data values is the dependent (y) variable.
+ */
 spline( chp )
 register struct chan	*chp;
 {
@@ -535,6 +568,8 @@ register struct chan	*chp;
 	s = chp->c_periodic?-1:0;
 	/* triangularize */
 	for( i=0; ++i < chp->c_ilen - !chp->c_periodic; )  {
+		double rhs;
+
 		hi = chp->c_itime[i]-chp->c_itime[i-1];
 		hi1 = (i==chp->c_ilen-1) ?
 			chp->c_itime[1] - chp->c_itime[0] :
@@ -545,9 +580,22 @@ register struct chan	*chp;
 			    i, chp->c_itime[i]);
 			goto bad;
 		}
-		u = i==1?0.0:u-s*s/d;
-		v = i==1?0.0:v-s*rrr[i-1]/d;
-		rrr[i] = rhs(i,chp)-hi*rrr[i-1]/d;
+		if( i <= 1 )  {
+			u = v = 0.0;		/* First time through */
+		} else {
+			u = u - s * s / d;
+			v = v - s * rrr[i-1] / d;
+		}
+
+		rhs = (i==chp->c_ilen-1) ?
+			chp->c_ival[1] - chp->c_ival[0] :
+			chp->c_ival[i+1] - chp->c_ival[i];
+		rhs = 6 * ( (rhs /
+			(chp->c_itime[i+1]-chp->c_itime[i]) ) -
+			( (chp->c_ival[i] - chp->c_ival[i-1]) /
+			(chp->c_itime[i] - chp->c_itime[i-1]) ) );
+		rrr[i] = rhs - hi * rrr[i-1] / d;
+
 		s = -hi*s/d;
 		a = 2*(hi+hi1);
 		if(i==1) a += konst*hi;
