@@ -66,15 +66,11 @@ extern int Plot_dm_init();
 extern int PS_dm_init();
 #ifdef DM_X
 extern int X_dm_init();
-#ifdef USE_FRAMEBUFFER
 extern void X_fb_open();
-#endif
 #endif
 #ifdef DM_OGL
 extern int Ogl_dm_init();
-#ifdef USE_FRAMEBUFFER
 extern void Ogl_fb_open();
-#endif
 #endif
 #ifdef DM_GLX
 extern int Glx_dm_init();
@@ -177,7 +173,6 @@ int need_close;
   }
 #endif
 
-#ifdef USE_FRAMEBUFFER
   if(fbp){
     if(mged_variables->listen){
       /* drop all clients */
@@ -188,7 +183,6 @@ int need_close;
     /* release framebuffer resources */
     mged_fb_close();
   }
-#endif
 
   if(!--p->s_info->_rc){
     if(rate_tran_vls[X].vls_magic == BU_VLS_MAGIC){
@@ -1256,7 +1250,6 @@ char **argv;
   return TCL_OK;
 }
 
-#ifdef USE_FRAMEBUFFER
 void
 mged_fb_open()
 {
@@ -1279,4 +1272,3 @@ mged_fb_close()
 
   fbp = (FBIO *)0;
 }
-#endif

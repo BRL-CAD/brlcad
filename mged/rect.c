@@ -14,7 +14,6 @@
 static char RCSid[] = "";
 #endif
 
-#ifdef DO_RUBBER_BAND
 #include "conf.h"
 
 #include <math.h>
@@ -27,9 +26,7 @@ static char RCSid[] = "";
 #include "./ged.h"
 #include "./mged_dm.h"
 
-#ifdef USE_FRAMEBUFFER
 extern int fb_refresh();  /* from libfb/tcl.c */
-#endif
 
 extern void mged_center(); /* from chgview.c */
 extern int mged_vscale();
@@ -111,13 +108,8 @@ get_rect(x, y, width, height)
 int *x, *y;
 int *width, *height;
 {
-#ifdef USE_RT_ASPECT
   *x = dm_Normal2Xx(dmp, rect_x);
   *y = dmp->dm_height - dm_Normal2Xy(dmp, rect_y, 1);
-#else
-  *x = dm_Normal2Xx(dmp, rect_x, 1);
-  *y = dmp->dm_height - dm_Normal2Xy(dmp, rect_y);
-#endif
   *width = rect_width * dmp->dm_width * 0.5;
   *height = rect_height * dmp->dm_height * 0.5;
 }
@@ -131,13 +123,8 @@ set_rect(x, y, width, height)
 int x, y;
 int width, height;
 {
-#ifdef USE_RT_ASPECT
   rect_x = dm_Xx2Normal(dmp, x);
   rect_y = dm_Xy2Normal(dmp, dmp->dm_height - y, 1);
-#else
-  rect_x = dm_Xx2Normal(dmp, x, 1);
-  rect_y = dm_Xy2Normal(dmp, dmp->dm_height - y);
-#endif
   rect_width = width * 2.0 / (fastf_t)dmp->dm_width;
   rect_height = height * 2.0 / (fastf_t)dmp->dm_height;
 }
@@ -151,12 +138,10 @@ paint_rect_area()
   if(!fbp)
     return;
 
-#ifdef USE_FRAMEBUFFER
   get_rect(&x, &y, &width, &height);
   height *= dmp->dm_aspect;
 
   (void)fb_refresh(fbp, x, y, width, height);
-#endif
 }
 
 void
@@ -344,4 +329,3 @@ char **argv;
 
   return TCL_OK;
 }
-#endif

@@ -82,19 +82,13 @@ extern void draw_e_axes();
 extern void draw_m_axes();
 extern void draw_v_axes();
 
-#ifdef USE_FRAMEBUFFER
 extern void fb_tclInit();  /* from in libfb/tcl.c */
 extern int fb_refresh();
-#endif
 
-#ifdef DO_SNAP_TO_GRID
 extern void draw_grid();		/* grid.c */
-#endif
 
-#ifdef DO_RUBBER_BAND
 extern void draw_rect();		/* rect.c */
 extern void paint_rect_area();
-#endif
 
 /* defined in predictor.c */
 extern void predictor_init();
@@ -1510,7 +1504,6 @@ refresh()
       DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
       if(dbip != DBI_NULL){
-#ifdef USE_FRAMEBUFFER
 	/* do framebuffer underlay */
 	if(mged_variables->fb && !mged_variables->fb_overlay){
 	  if(mged_variables->fb_all)
@@ -1518,7 +1511,6 @@ refresh()
 	  else if(mged_variables->mouse_behavior != 'z')
 	    paint_rect_area();
 	}
-#endif
 
 	/*  Draw each solid in it's proper place on the screen
 	 *  by applying zoom, rotation, & translation.
@@ -1533,7 +1525,6 @@ refresh()
 	  dozoom(2);
 	}
 
-#ifdef USE_FRAMEBUFFER
 	/* do framebuffer overlay */
 	if(mged_variables->fb && mged_variables->fb_overlay){
 	  if(mged_variables->fb_all)
@@ -1541,20 +1532,15 @@ refresh()
 	  else if(mged_variables->mouse_behavior != 'z')
 	    paint_rect_area();
 	}
-#endif
 
 	/* Restore to non-rotated, full brightness */
 	DM_NORMAL(dmp);
 
-#ifdef DO_RUBBER_BAND
 	if(rubber_band_active || mged_variables->rubber_band)
 	  draw_rect();
-#endif
 
-#ifdef DO_SNAP_TO_GRID
 	if(mged_variables->grid_draw)
 	  draw_grid();
-#endif
 
 	/* Compute and display angle/distance cursor */
 	if (adc_draw)

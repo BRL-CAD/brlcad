@@ -47,9 +47,7 @@ static char RCSid[] = "@(#)$Header";
 
 extern int common_dm();				/* defined in dm-generic.c */
 
-#ifdef USE_FRAMEBUFFER
 extern void ogl_configureWindow();
-#endif
 
 extern void dm_var_init();
 
@@ -125,7 +123,6 @@ char *argv[];
   return TCL_OK;
 }
 
-#ifdef USE_FRAMEBUFFER
 void
 Ogl_fb_open()
 {
@@ -155,7 +152,6 @@ Ogl_fb_open()
 
   bu_vls_free(&vls);
 }
-#endif
 
 /*
    This routine is being called from doEvent().

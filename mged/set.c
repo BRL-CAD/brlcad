@@ -34,12 +34,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern void predictor_hook();		/* in ged.c */
 
-#ifdef USE_FRAMEBUFFER
 extern void set_port();
 extern void mged_fb_open();
 extern void mged_fb_close();
 static void set_fb();
-#endif
 
 struct _mged_variables default_mged_variables = {
 /* autosize */			1,
@@ -78,20 +76,15 @@ struct _mged_variables default_mged_variables = {
 /* context */                   1,
 /* dlist */                     1,
 /* use_air */			0,
-#ifdef USE_FRAMEBUFFER
 /* listen */			0,
 /* port */			0,
 /* fb */			0,
 /* fb_all */			0,
 /* fb_overlay */		0,
-#endif
-#ifdef DO_RUBBER_BAND
 /* rubber_band */		0,
 /* rubber_band_color */		{ 255, 255, 255 },
 /* rubber_band_linewidth */	1,
 /* rubber_band_linestyle */	's',
-#endif
-#ifdef DO_SNAP_TO_GRID
 /* grid_draw */			0,
 /* grid_snap */			0,
 /* grid_color */		{ 255, 255, 255 },
@@ -100,7 +93,6 @@ struct _mged_variables default_mged_variables = {
 /* grid_res_v */		1.0,
 /* grid_res_major_h */		5,
 /* grid_res_major_v */		5,
-#endif
 /* mouse_behavior */            'd',
 /* coords */                    'v',
 /* rotate_about */              'v',
@@ -203,20 +195,15 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "context",           MV_O(context),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "dlist",             MV_O(dlist),            set_dlist },
 	{"%d",  1, "use_air",		MV_O(use_air),		BU_STRUCTPARSE_FUNC_NULL },
-#ifdef USE_FRAMEBUFFER
 	{"%d",  1, "listen",		MV_O(listen),		set_port },
 	{"%d",  1, "port",		MV_O(port),		set_port },
 	{"%d",  1, "fb",		MV_O(fb),		set_fb },
 	{"%d",  1, "fb_all",		MV_O(fb_all),		set_dirty_flag },
 	{"%d",  1, "fb_overlay",	MV_O(fb_overlay),	set_dirty_flag },
-#endif
-#ifdef DO_RUBBER_BAND
 	{"%d",  1, "rubber_band",	MV_O(rubber_band),	set_dirty_flag },
 	{"%d",  3, "rubber_band_color",	MV_O(rubber_band_color),set_dirty_flag },
 	{"%d",  1, "rubber_band_linewidth",	MV_O(rubber_band_linewidth),	set_dirty_flag },
 	{"%c",  1, "rubber_band_linestyle",	MV_O(rubber_band_linestyle),	set_dirty_flag },
-#endif
-#ifdef DO_SNAP_TO_GRID
 	{"%d",  1, "grid_draw",		MV_O(grid_draw),	set_grid_draw },
 	{"%d",  1, "grid_snap",		MV_O(grid_snap),	set_dirty_flag },
 	{"%d",  3, "grid_color",	MV_O(grid_color),	set_dirty_flag },
@@ -225,7 +212,6 @@ struct bu_structparse mged_vparse[] = {
 	{"%f",	1, "grid_res_v",	MV_O(grid_res_v),	set_grid_res },
 	{"%d",  1, "grid_res_major_h",	MV_O(grid_res_major_h),	set_grid_res },
 	{"%d",  1, "grid_res_major_v",	MV_O(grid_res_major_v),	set_grid_res },
-#endif
 	{"%c",  1, "mouse_behavior",	MV_O(mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "coords",            MV_O(coords),           BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "rotate_about",      MV_O(rotate_about),     BU_STRUCTPARSE_FUNC_NULL },
@@ -566,7 +552,6 @@ toggle_perspective()
   set_dirty_flag();
 }
 
-#ifdef USE_FRAMEBUFFER
 static void
 set_fb()
 {
@@ -581,7 +566,6 @@ set_fb()
 
   set_dirty_flag();
 }
-#endif
 
 static void
 set_grid_draw()

@@ -469,20 +469,15 @@ struct _mged_variables {
         int	context;
 	int	dlist;
 	int	use_air;
-#ifdef USE_FRAMEBUFFER
 	int	listen;		/* nonzero to listen on port */
 	int	port;		/* port to listen on */
 	int	fb;		/* toggle image on/off */
 	int	fb_all;		/* 0 - use part of image as defined by the rectangle     1 - use the entire image */
 	int	fb_overlay;	/* 0 - underlay     1 - overlay */
-#endif
-#ifdef DO_RUBBER_BAND
 	int	rubber_band;	/* draw rubber band rectangle */
 	int	rubber_band_color[3];
 	int	rubber_band_linewidth;
 	char	rubber_band_linestyle;
-#endif
-#ifdef DO_SNAP_TO_GRID
 	int	grid_draw;		/* draw grid */
 	int	grid_snap;		/* snap to grid */
 	int	grid_color[3];
@@ -491,7 +486,6 @@ struct _mged_variables {
 	fastf_t grid_res_v;		/* grid resolution in v */
 	int grid_res_major_h;		/* major grid resolution in h */
 	int grid_res_major_v;		/* major grid resolution in v */
-#endif
 	char	mouse_behavior;
 	char	coords;
 	char	rotate_about;

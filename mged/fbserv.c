@@ -28,7 +28,6 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#ifdef USE_FRAMEBUFFER
 #include "conf.h"
 
 #include <stdio.h>
@@ -801,4 +800,3 @@ char *buf;
 	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
-#endif

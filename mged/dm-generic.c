@@ -103,7 +103,6 @@ char **argv;
   if(!strcmp(argv[0], "idle")){
     am_mode = AMM_IDLE;
     scroll_active = 0;
-#ifdef DO_RUBBER_BAND
     if(rubber_band_active){
       rubber_band_active = 0;
       dirty = 1;
@@ -113,7 +112,6 @@ char **argv;
       else if(mged_variables->mouse_behavior == 'z')
 	zoom_rect_area();
     }
-#endif    
 
     return TCL_OK;
   }
@@ -134,13 +132,8 @@ char **argv;
 
       old_orig_gui = mged_variables->orig_gui;
 
-#ifdef USE_RT_ASPECT
       fx = dm_Xx2Normal(dmp, atoi(argv[1]));
       fy = dm_Xy2Normal(dmp, atoi(argv[2]), 0);
-#else
-      fx = dm_Xx2Normal(dmp, atoi(argv[1]), 0);
-      fy = dm_Xy2Normal(dmp, atoi(argv[2]));
-#endif
       x = fx * 2047.0;
       y = fy * 2047.0;
 
@@ -160,13 +153,8 @@ char **argv;
       }
 
       mged_variables->orig_gui = 0;
-#ifdef USE_RT_ASPECT
       fy = dm_Xy2Normal(dmp, atoi(argv[2]), 1);
       y = fy * 2047.0;
-#else
-      fx = dm_Xx2Normal(dmp, atoi(argv[1]), 1);
-      x = fx * 2047.0;
-#endif
 
 end:
       bu_vls_init(&vls);
@@ -183,7 +171,6 @@ end:
 	else
 	  bu_vls_printf(&vls, "nirt -b %lf %lf %lf",
 			model_pt[X], model_pt[Y], model_pt[Z]);
-#ifdef DO_RUBBER_BAND
       }else if((mged_variables->mouse_behavior == 'p' ||
 		mged_variables->mouse_behavior == 'r' ||
 		mged_variables->mouse_behavior == 'z') && !stolen){
@@ -194,8 +181,6 @@ end:
 	rect_height = 0.0;
 
 	dirty = 1;
-#endif
-#ifdef DO_SNAP_TO_GRID
       }else if(mged_variables->grid_snap && !stolen &&
 	       state != ST_S_PICK && state != ST_O_PICK &&
 	       state != ST_O_PATH && !SEDIT_PICK){
@@ -244,7 +229,6 @@ end:
 	  VSCALE(model_pt, model_pt, base2local);
 	  bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	}
-#endif
       }else if(mged_variables->mouse_behavior == 's' && !stolen){
 	bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
       }else if(mged_variables->mouse_behavior == 'o' && !stolen){
@@ -340,13 +324,9 @@ end:
 
     switch(*argv[1]){
     case '1':
-#ifdef USE_RT_ASPECT
       fx = dm_Xx2Normal(dmp, dml_omx) * 2047.0 - dv_xadc;
       fy = dm_Xy2Normal(dmp, dml_omy, 1) * 2047.0 - dv_yadc;
-#else
-      fx = dm_Xx2Normal(dmp, dml_omx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Xy2Normal(dmp, dml_omy) * 2047.0 - dv_yadc;
-#endif
+
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
       Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -355,13 +335,9 @@ end:
       am_mode = AMM_ADC_ANG1;
       break;
     case '2':
-#ifdef USE_RT_ASPECT
       fx = dm_Xx2Normal(dmp, dml_omx) * 2047.0 - dv_xadc;
       fy = dm_Xy2Normal(dmp, dml_omy, 1) * 2047.0 - dv_yadc;
-#else
-      fx = dm_Xx2Normal(dmp, dml_omx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Xy2Normal(dmp, dml_omy) * 2047.0 - dv_yadc;
-#endif
+
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
       Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -389,17 +365,10 @@ end:
 
       break;
     case 'd':
-#ifdef USE_RT_ASPECT
       fx = (dm_Xx2Normal(dmp, dml_omx) * 2047.0 -
 	    dv_xadc) * Viewscale * base2local / 2047.0;
       fy = (dm_Xy2Normal(dmp, dml_omy, 1) * 2047.0 -
 	    dv_yadc) * Viewscale * base2local / 2047.0;
-#else
-      fx = (dm_Xx2Normal(dmp, dml_omx, 1) * 2047.0 -
-	    dv_xadc) * Viewscale * base2local / 2047.0;
-      fy = (dm_Xy2Normal(dmp, dml_omy) * 2047.0 -
-	    dv_yadc) * Viewscale * base2local / 2047.0;
-#endif
 
       td = sqrt(fx * fx + fy * fy);
       bu_vls_init(&vls);

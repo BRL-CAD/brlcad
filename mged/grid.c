@@ -25,7 +25,6 @@
 static char RCSid[] = "";
 #endif
 
-#ifdef DO_SNAP_TO_GRID
 #include "conf.h"
 
 #include <math.h>
@@ -331,4 +330,3 @@ fastf_t sf;
   bu_vls_free(&save_result);
   bu_vls_free(&cmd);
 }
-#endif

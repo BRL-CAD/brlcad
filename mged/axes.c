@@ -80,13 +80,8 @@ int linewidth;
   xly = o_rv2[Y];
 
   /* draw X axis with x/y offsets */
-#ifdef USE_RT_ASPECT
   DM_DRAW_LINE_2D(dmp, rv1[X] + vpos[X], (rv1[Y] + vpos[Y]) * dmp->dm_aspect,
 		  rv2[X] + vpos[X], (rv2[Y] + vpos[Y]) * dmp->dm_aspect);
-#else
-  DM_DRAW_LINE_2D(dmp, rv1[X] + vpos[X], rv1[Y] + vpos[Y],
-		  rv2[X] + vpos[X], rv2[Y] + vpos[Y]);
-#endif
 
   /* build Y axis about view center */
   VSET(v1, 0, -half_size, 0);
@@ -103,13 +98,8 @@ int linewidth;
   yly = o_rv2[Y];
 
   /* draw Y axis with x/y offsets */
-#ifdef USE_RT_ASPECT
   DM_DRAW_LINE_2D(dmp, rv1[X] + vpos[X], (rv1[Y] + vpos[Y]) * dmp->dm_aspect,
 		  rv2[X] + vpos[X], (rv2[Y] + vpos[Y]) * dmp->dm_aspect);
-#else
-  DM_DRAW_LINE_2D(dmp, rv1[X] + vpos[X], rv1[Y] + vpos[Y],
-		  rv2[X] + vpos[X], rv2[Y] + vpos[Y]);
-#endif
 
   /* build Z axis about view center */
   VSET(v1, 0, 0, -half_size);
@@ -126,13 +116,8 @@ int linewidth;
   zly = o_rv2[Y];
 
   /* draw Z axis with x/y offsets */
-#ifdef USE_RT_ASPECT
   DM_DRAW_LINE_2D(dmp, rv1[X] + vpos[X], (rv1[Y] + vpos[Y]) * dmp->dm_aspect,
 		  rv2[X] + vpos[X], (rv2[Y] + vpos[Y]) * dmp->dm_aspect);
-#else
-  DM_DRAW_LINE_2D(dmp, rv1[X] + vpos[X], rv1[Y] + vpos[Y],
-		  rv2[X] + vpos[X], rv2[Y] + vpos[Y]);
-#endif
 
   /* set axes string color */
   DM_SET_COLOR(dmp, label_color[0], label_color[1], label_color[2], 1);
@@ -201,7 +186,11 @@ draw_v_axes()
 
   VSET(v_ap,
        mged_variables->v_axes_pos[X] * INV_GED,
+#if 0
        mged_variables->v_axes_pos[Y] * INV_GED * dmp->dm_aspect,
+#else
+       mged_variables->v_axes_pos[Y] * INV_GED,
+#endif
        0.0);
   draw_axes(v_ap,
 	    Viewrot,

@@ -37,9 +37,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int common_dm();				/* defined in dm-generic.c */
 
-#ifdef USE_FRAMEBUFFER
 extern void X24_configureWindow();
-#endif
 
 extern void dm_var_init();
 
@@ -102,7 +100,6 @@ char *argv[];
   return TCL_OK;
 }
 
-#ifdef USE_FRAMEBUFFER
 void
 X_fb_open()
 {
@@ -130,7 +127,6 @@ X_fb_open()
 
   bu_vls_free(&vls);
 }
-#endif
 
 /*
    This routine is being called from doEvent().
