@@ -3,7 +3,7 @@
  */
 
 #define SRCDIR	anim
-#define PRODUCTS	ascript channel convert fly lookat keyread offset qinterp scriptsort track turn
+#define PRODUCTS	ascript channel convert fly lookat keyread ntrack offset qinterp scriptsort track turn
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -31,6 +31,9 @@ lookat: lookat.o anim.o
 
 keyread: keyread.o anim.o
 	CC LDFLAGS keyread.o anim.o LIBES -o keyread
+
+ntrack: ntrack.o cattrack.o anim.o
+	CC LDFLAGS ntrack.o cattrack.o anim.o LIBRT -lm -lmpc -o ntrack
 
 offset: offset.o anim.o
 	CC LDFLAGS offset.o anim.o -lm -o offset
