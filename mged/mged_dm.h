@@ -393,7 +393,6 @@ struct dm_list {
   int dml_ndrawn;
   int dml_perspective_angle;
   int *dml_zclip_ptr;
-  double dml_frametime;			/* time needed to draw last frame */
   struct bu_vls dml_fps_name;
   struct bu_list dml_p_vlist;		/* predictor vlist */
   struct trail dml_trails[NUM_TRAILS];
@@ -451,7 +450,6 @@ struct dm_char_queue {
 #define ndrawn curr_dm_list->dml_ndrawn
 #define perspective_angle curr_dm_list->dml_perspective_angle
 #define zclip_ptr curr_dm_list->dml_zclip_ptr
-#define frametime curr_dm_list->dml_frametime
 #define fps_name curr_dm_list->dml_fps_name
 
 #define view_state curr_dm_list->dml_view_state
@@ -556,11 +554,12 @@ struct dm_char_queue {
 			(p) = DM_LIST_NULL; \
 	}
 
-extern int doEvent(); /* defined in doevent.c */
-extern int dm_pipe[];  /* defined in ged.c */
-extern int update_views;   /* defined in ged.c */
-extern struct dm_list head_dm_list;  /* list of active display managers */
-extern struct dm_list *curr_dm_list;
+extern double frametime;		/* defined in ged.c */
+extern int doEvent();			/* defined in doevent.c */
+extern int dm_pipe[];			/* defined in ged.c */
+extern int update_views;		/* defined in ged.c */
+extern struct dm_list head_dm_list;	/* defined in attach.c */
+extern struct dm_list *curr_dm_list;	/* defined in attach.c */
 extern struct dm_char_queue head_dm_char_queue;
 
 struct w_dm {
