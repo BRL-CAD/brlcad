@@ -1797,6 +1797,22 @@ match.
 </DD>
 <HR>
 
+<DT><a NAME="export_body"><B>export_body</B> <I>object file</I></DT>
+
+<DD> The ``export_body'' command is used to copy the contents of the specified
+ binary <I>object</I> into the specified <I>file</I>. Currently, only binary objects
+containing a uniform array of simple objects is supported.
+
+<DL>
+<DT><big>Examples:</big></DT>
+<DD>
+<kbd>mged></kbd> <b>export_body bin_chars /home/fred/chars</b><br>
+-- copy the contents of ``bin_chars'' into the file ``/home/fred/chars''<br>
+</DD>
+</DL>
+</DD>
+<HR>
+
 <DT><a NAME="extrude"><B>extrude</B> <I>#### distance</I></DT>
 
 <DD> The ``extrude'' command modifies an <a href="brlcad_solids.html#ARB">ARB</a>
@@ -2094,6 +2110,23 @@ commands provide additional information on available commands.
 	-- display a one-line usage message for the <I>mat_trn</I> command<br>
 	</DD>
 	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="hide"><B>hide</B> &lt;<I>objects</I>&gt</DT>
+
+<DD>The ``hide'' command sets the ``hidden'' flag for the specified objects.
+When this flag is set, the objects do not appear in <a href="#t">t</a>
+or <a href="#ls">ls</a> command outputs. The <I>-a</I> option on the <I>ls</I>
+command will force hidden objects to appear in its output.
+
+<DL>
+<DT><big>Examples:</big></DT>
+<DD>
+<kbd>mged></kbd> <b>hide sol_a</b><br>
+-- mark <I>sol_a</I> as hidden
+</DD>
+</DL>
 </DD>
 <HR>
 
