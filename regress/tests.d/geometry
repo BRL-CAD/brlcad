@@ -173,88 +173,88 @@ for PRIM in $PRIMITIVES ; do
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set part_IN_ARGS ""
+    set part_DB_ARGS ""
 
     #
     # (pg) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set pg_IN_ARGS ""
+    set pg_DB_ARGS ""
 
     #
     # (pipe) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set pipe_IN_ARGS ""
+    set pipe_DB_ARGS ""
 
     #
     # (rec) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set rec_IN_ARGS ""
+    set rec_DB_ARGS ""
 
     #
     # (rhc) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set rhc_IN_ARGS ""
+    set rhc_DB_ARGS ""
 
     #
     # (rpc) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set rpc_IN_ARGS ""
+    set rpc_DB_ARGS ""
 
     #
     # (sketch) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set sketch_IN_ARGS ""
+    set sketch_DB_ARGS ""
 
     #
     # (submodel) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set submodel_IN_ARGS ""
+    set submodel_DB_ARGS ""
 
     #
     # (tgc) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set tgc_IN_ARGS ""
+    set tgc_DB_ARGS ""
 
     #
     # (vol) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set vol_IN_ARGS ""
+    set vol_DB_ARGS ""
 
     #
     # (xxx) Arguments
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set xxx_IN_ARGS ""
+    set xxx_DB_ARGS ""
 
     #
     # Done
