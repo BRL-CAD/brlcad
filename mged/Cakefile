@@ -15,7 +15,7 @@
 			buttons clip menu adc edsol edarb \
 			ars proc_reg hideline \
 			spline mater plot overlay inside \
-			utility1 utility2 track arbs \
+			concat utility1 utility2 track arbs \
 			facedef arb ell half tgc torus \
 			attach dm-tek dm-plot dm-ps \
 			dm-tek4109 MGED_OBJS
