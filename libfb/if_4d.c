@@ -537,7 +537,7 @@ int		npix;
 					    sizeof(struct sgi_pixel)] );
 				return;
 			} else {
-				/* Multiple line case */
+				/* Multiple line case, do full lines */
 				lrectwrite(
 					SGI(ifp)->mi_xoff+0,
 					SGI(ifp)->mi_yoff+y,
@@ -560,7 +560,7 @@ int		npix;
 				SGI(ifp)->mi_yoff+y,
 				SGI(ifp)->mi_xoff+xbase+npix-1,
 				SGI(ifp)->mi_yoff+y,
-				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
+				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
 				    sizeof(struct sgi_pixel)] );
 			xbase = 0;
 			npix = ifp->if_width;
@@ -1103,7 +1103,7 @@ int	width, height;
 	 */
 	sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	if( SGI(ifp)->mi_is_gt )  {
-		gt_zbuf_to_screen( ifp );
+		gt_zbuf_to_screen( ifp, -1 );
 	}
 
 	return	0;
@@ -1185,7 +1185,7 @@ FBIO	*ifp;
 			sgi_xmit_scanlines(ifp, 0, ifp->if_height,
 				0, ifp->if_width);
 			if( SGI(ifp)->mi_is_gt )  {
-				gt_zbuf_to_screen(ifp);
+				gt_zbuf_to_screen(ifp, -1);
 			}
 			break;
 
@@ -1307,7 +1307,7 @@ register RGBpixel	*pp;
 	if( SGI(ifp)->mi_is_gt )  {
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height,
 			0, ifp->if_width );
-		gt_zbuf_to_screen(ifp);
+		gt_zbuf_to_screen(ifp, -1);
 	} else {
 		clear();
 	}
@@ -1339,7 +1339,7 @@ int	x, y;
 	SGI(ifp)->mi_ycenter = y;
 	if( SGI(ifp)->mi_is_gt )  {
 		/* Transmitting the Zbuffer is all that is needed */
-		gt_zbuf_to_screen( ifp );
+		gt_zbuf_to_screen( ifp, -1 );
 	} else {
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	}
@@ -1377,7 +1377,7 @@ int	x, y;
 
 	if( SGI(ifp)->mi_is_gt ) {
 		/* Transmitting the Zbuffer is all that is needed */
-		gt_zbuf_to_screen( ifp );
+		gt_zbuf_to_screen( ifp, -1 );
 	} else {
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	}
@@ -1545,19 +1545,22 @@ int		count;
 	if( xstart + count <= ifp->if_width  )  {
 		/* "Fast path" case for writes of less than one scanline */
 		if( SGI(ifp)->mi_doublebuffer )  {
-			fb_log("switching to single buffer\n");
 			singlebuffer();
 			SGI(ifp)->mi_doublebuffer = 0;
 			gconfig();
 		}
 		sgi_xmit_scanlines( ifp, ybase, 1, xstart, count );
+		if( SGI(ifp)->mi_is_gt )  {
+			/* repaint one scanline from Z buffer */
+			gt_zbuf_to_screen( ifp, ybase );
+		}
 	} else {
 		/* Normal case -- multi-pixel write */
 		sgi_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
-	}
-	if( SGI(ifp)->mi_is_gt )  {
-		/* repaint screen from Z buffer */
-		gt_zbuf_to_screen( ifp );
+		if( SGI(ifp)->mi_is_gt )  {
+			/* repaint whole screen from Z buffer */
+			gt_zbuf_to_screen( ifp, -1 );
+		}
 	}
 	return(ret);
 }
@@ -1614,7 +1617,7 @@ RGBpixel	*pp;
 	sgi_xmit_scanlines( ifp, ymin, height, 0, ifp->if_width );
 	if( SGI(ifp)->mi_is_gt )  {
 		/* repaint screen from Z buffer */
-		gt_zbuf_to_screen( ifp );
+		gt_zbuf_to_screen( ifp, -1 );
 	}
 	return(width*height);
 }
@@ -1722,7 +1725,7 @@ register ColorMap	*cmp;
 		/* Software color mapping, trigger a repaint */
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if( SGI(ifp)->mi_is_gt )  {
-			gt_zbuf_to_screen( ifp );
+			gt_zbuf_to_screen( ifp, -1 );
 		}
 	} else {
 		/* Send color map to hardware -- affects whole screen */
@@ -1867,7 +1870,7 @@ register FBIO *ifp;
 		reshapeviewport();
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if( SGI(ifp)->mi_is_gt )  {
-			gt_zbuf_to_screen( ifp );
+			gt_zbuf_to_screen( ifp, -1 );
 		}
 		redraw = 0;
 	}
@@ -1910,10 +1913,13 @@ FBIO	*ifp;
 /*
  *			G T _ Z B U F _ T O _ S C R E E N
  *
+ *  The parameter "one_y" is set to -1 to repaint the entire screen,
+ *  or to the Y coordinate of the single scanline to be repainted.
  */
 _LOCAL_ int
-gt_zbuf_to_screen( ifp )
+gt_zbuf_to_screen( ifp, one_y )
 register FBIO	*ifp;
+int		one_y;
 {
 	struct sgi_clip	clip;
 
@@ -1932,6 +1938,14 @@ register FBIO	*ifp;
 	}
 
 	sgi_clipper( ifp, &clip );
+	if( SGI(ifp)->mi_doublebuffer == 0 && one_y >= 0 )  {
+		/* Do only one scanline, not entire image */
+		if( one_y < clip.ymin || one_y > clip.ymax )
+			return;
+		/* This scanline is in bounds */
+		clip.yscroff += one_y - clip.ymin;
+		clip.ymin = clip.ymax = one_y;
+	}
 
 	/* rectzoom only works on GT and PI machines */
 	rectzoom( (double) SGI(ifp)->mi_xzoom, (double) SGI(ifp)->mi_yzoom);
@@ -1942,6 +1956,8 @@ register FBIO	*ifp;
 		 *  but it prevents having crud on the borders when
 		 *  panning the image.
 		 *  In singlebuffer mode, don't take the performance hit.
+		 *  (Filling with black & repainting is disturbing)
+		 *  (Should just black out the borders instead).
 		 */
 		cpack(0x00000000);	/* clear to black first */
 		clear();		/* takes ~1 frame time */
