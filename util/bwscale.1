@@ -3,6 +3,7 @@
 bwscale \- change the size of a black and white bw file
 .SH SYNOPSIS
 .B bwscale
+.RB [ \-n ]
 file.bw inx iny outx outy \>\ newfile.bw
 .SH DESCRIPTION
 .I Bwscale
@@ -17,7 +18,8 @@ pixels, and produce a file with
 by
 .I outy
 pixels on it's standard output.
-The algorithm used is bilinear interpolation if scaling up, and
+By default,
+the algorithm used is bilinear interpolation if scaling up, and
 a box filter of arbitrary size if scaling down.  For the box filter a
 "square pixel" assumption is made; that is, all whole and fractional
 input pixels falling into a rectangle the size of an output pixel contribute
@@ -26,6 +28,11 @@ When interpolating, the edge pixels are preserved, i.e. all of the
 interpolated pixels fall inside of the edges.  This can be a bit surprising
 when say doubling the size of a file as only the edge pixels will fall
 at exactly the location of an output pixel.
+.PP
+Specifying the
+.B \-n
+flag changes from bilinear interpolation to
+nearest neighbor interpolation.
 .SH "SEE ALSO"
 brlcad(1), bwcrop(1), bwrect(1), bw(5), pixscale(1)
 .SH BUGS
