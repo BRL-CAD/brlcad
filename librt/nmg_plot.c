@@ -2170,3 +2170,59 @@ CONST struct faceuse *fu;
 	pdv_3line( fd, pt, pp );
 }
 
+/*
+ *			N M G _ P L O T _ L U _ A R O U N D _ E U
+ *
+ *  Draw and label all the loopuses gathered around this edgeuse.
+ *
+ *  Called by nmg_radial_join_eu().
+ */
+void
+nmg_plot_lu_around_eu( prefix, eu, tol )
+CONST char		*prefix;
+CONST struct edgeuse	*eu;
+CONST struct rt_tol	*tol;
+{
+	char			file[256];
+	static int		num=0;
+	struct model		*m;
+	struct rt_vlblock	*vbp;
+	long			*tab;
+	CONST struct edgeuse	*eur;
+	FILE			*fp;
+
+	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(tol);
+
+	sprintf(file, "%s%0d.pl", prefix, num++);
+	rt_log("plotting to %s\n", file);
+	if ((fp = fopen(file, "w")) == (FILE *)NULL) {
+		rt_log("plot_lu_around_eu() cannot open %s", file);
+		return;
+	}
+
+	m = nmg_find_model( (long *)eu );
+	NMG_CK_MODEL(m);
+	tab = (long *)rt_calloc( m->maxindex, sizeof(long), "bit vec");
+
+	vbp = rt_vlblock_init();
+
+	/* Draw all the left vectors, and a fancy edgeuse plot */
+	nmg_vlblock_around_eu(vbp, eu, tab, 3, tol );
+
+	eur = eu;
+	do {
+		NMG_CK_EDGEUSE(eur);
+
+		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+			/* Draw this loop in non-fancy format, for context */
+			nmg_vlblock_lu(vbp, eur->up.lu_p, tab, 80, 100, 170, 0 );
+		}
+		eur = eur->radial_p->eumate_p;
+	} while (eur != eu);
+
+	rt_plot_vlblock( fp, vbp );
+	(void)fclose(fp);
+	rt_vlblock_free(vbp);
+	rt_free((char *)tab, "bit vec");
+}
