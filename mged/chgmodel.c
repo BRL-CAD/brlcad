@@ -227,6 +227,7 @@ f_mirror()
 		return;
 	}
 	drawHobj( dp, ROOT, 0, identity, 0 );
+	dmp->dmr_colorchange();		/* To color new solid */
 	dmaflag = 1;
 }
 
@@ -479,6 +480,7 @@ f_arbdef()
 		return;
 	}
 	drawHobj( dp, ROOT, 0, identity, 0 );
+	dmp->dmr_colorchange();		/* To color new solid */
 	dmaflag = 1;
 }
 
@@ -779,140 +781,140 @@ f_make()  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB8;
 		VSET( &record.s.s_values[0*3],
-			-toViewcenter[MDX] +254,
-			-toViewcenter[MDY] -254,
-			-toViewcenter[MDZ] -254 );
-		VSET( &record.s.s_values[1*3],  0, 508, 0 );
-		VSET( &record.s.s_values[2*3],  0, 508, 508 );
-		VSET( &record.s.s_values[3*3],  0, 0, 508 );
-		VSET( &record.s.s_values[4*3],  -508, 0, 0 );
-		VSET( &record.s.s_values[5*3],  -508, 508, 0 );
-		VSET( &record.s.s_values[6*3],  -508, 508, 508 );
-		VSET( &record.s.s_values[7*3],  -508, 0, 508  );
+			-toViewcenter[MDX] +Viewscale,
+			-toViewcenter[MDY] -Viewscale,
+			-toViewcenter[MDZ] -Viewscale );
+		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
+		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
+		VSET( &record.s.s_values[3*3],  0, 0, (Viewscale*2) );
+		VSET( &record.s.s_values[4*3],  -(Viewscale*2), 0, 0 );
+		VSET( &record.s.s_values[5*3],  -(Viewscale*2), (Viewscale*2), 0 );
+		VSET( &record.s.s_values[6*3],  -(Viewscale*2), (Viewscale*2), (Viewscale*2) );
+		VSET( &record.s.s_values[7*3],  -(Viewscale*2), 0, (Viewscale*2)  );
 	} else if( strcmp( cmd_args[2], "arb7" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB7;
 		VSET( &record.s.s_values[0*3],
-			-toViewcenter[MDX] +254,
-			-toViewcenter[MDY] -254,
-			-toViewcenter[MDZ] -127 );
-		VSET( &record.s.s_values[1*3],  0, 508, 0 );
-		VSET( &record.s.s_values[2*3],  0, 508, 508 );
-		VSET( &record.s.s_values[3*3],  0, 0, 254 );
-		VSET( &record.s.s_values[4*3],  -508, 0, 0 );
-		VSET( &record.s.s_values[5*3],  -508, 508, 0 );
-		VSET( &record.s.s_values[6*3],  -508, 508, 254 );
-		VSET( &record.s.s_values[7*3],  -508, 0, 0  );
+			-toViewcenter[MDX] +Viewscale,
+			-toViewcenter[MDY] -Viewscale,
+			-toViewcenter[MDZ] -(0.5*Viewscale) );
+		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
+		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
+		VSET( &record.s.s_values[3*3],  0, 0, Viewscale );
+		VSET( &record.s.s_values[4*3],  -(Viewscale*2), 0, 0 );
+		VSET( &record.s.s_values[5*3],  -(Viewscale*2), (Viewscale*2), 0 );
+		VSET( &record.s.s_values[6*3],  -(Viewscale*2), (Viewscale*2), Viewscale );
+		VSET( &record.s.s_values[7*3],  -(Viewscale*2), 0, 0  );
 	} else if( strcmp( cmd_args[2], "arb6" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB6;
 		VSET( &record.s.s_values[0*3],
-			-toViewcenter[MDX] +254,
-			-toViewcenter[MDY] -254,
-			-toViewcenter[MDZ] -254 );
-		VSET( &record.s.s_values[1*3],  0, 508, 0 );
-		VSET( &record.s.s_values[2*3],  0, 508, 508 );
-		VSET( &record.s.s_values[3*3],  0, 0, 508 );
-		VSET( &record.s.s_values[4*3],  -508, 254, 0 );
-		VSET( &record.s.s_values[5*3],  -508, 254, 0 );
-		VSET( &record.s.s_values[6*3],  -508, 254, 508 );
-		VSET( &record.s.s_values[7*3],  -508, 254, 508  );
+			-toViewcenter[MDX] +Viewscale,
+			-toViewcenter[MDY] -Viewscale,
+			-toViewcenter[MDZ] -Viewscale );
+		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
+		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
+		VSET( &record.s.s_values[3*3],  0, 0, (Viewscale*2) );
+		VSET( &record.s.s_values[4*3],  -(Viewscale*2), Viewscale, 0 );
+		VSET( &record.s.s_values[5*3],  -(Viewscale*2), Viewscale, 0 );
+		VSET( &record.s.s_values[6*3],  -(Viewscale*2), Viewscale, (Viewscale*2) );
+		VSET( &record.s.s_values[7*3],  -(Viewscale*2), Viewscale, (Viewscale*2)  );
 	} else if( strcmp( cmd_args[2], "arb5" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB5;
 		VSET( &record.s.s_values[0*3],
-			-toViewcenter[MDX] +254,
-			-toViewcenter[MDY] -254,
-			-toViewcenter[MDZ] -254 );
-		VSET( &record.s.s_values[1*3],  0, 508, 0 );
-		VSET( &record.s.s_values[2*3],  0, 508, 508 );
-		VSET( &record.s.s_values[3*3],  0, 0, 508 );
-		VSET( &record.s.s_values[4*3],  -508, 254, 254 );
-		VSET( &record.s.s_values[5*3],  -508, 254, 254 );
-		VSET( &record.s.s_values[6*3],  -508, 254, 254 );
-		VSET( &record.s.s_values[7*3],  -508, 254, 254  );
+			-toViewcenter[MDX] +Viewscale,
+			-toViewcenter[MDY] -Viewscale,
+			-toViewcenter[MDZ] -Viewscale );
+		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
+		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
+		VSET( &record.s.s_values[3*3],  0, 0, (Viewscale*2) );
+		VSET( &record.s.s_values[4*3],  -(Viewscale*2), Viewscale, Viewscale );
+		VSET( &record.s.s_values[5*3],  -(Viewscale*2), Viewscale, Viewscale );
+		VSET( &record.s.s_values[6*3],  -(Viewscale*2), Viewscale, Viewscale );
+		VSET( &record.s.s_values[7*3],  -(Viewscale*2), Viewscale, Viewscale  );
 	} else if( strcmp( cmd_args[2], "arb4" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB4;
 		VSET( &record.s.s_values[0*3],
-			-toViewcenter[MDX] +254,
-			-toViewcenter[MDY] -254,
-			-toViewcenter[MDZ] -254 );
-		VSET( &record.s.s_values[1*3],  0, 508, 0 );
-		VSET( &record.s.s_values[2*3],  0, 508, 508 );
-		VSET( &record.s.s_values[3*3],  0, 508, 508 );
-		VSET( &record.s.s_values[4*3],  -508, 508, 0 );
-		VSET( &record.s.s_values[5*3],  -508, 508, 0 );
-		VSET( &record.s.s_values[6*3],  -508, 508, 0 );
-		VSET( &record.s.s_values[7*3],  -508, 508, 0  );
+			-toViewcenter[MDX] +Viewscale,
+			-toViewcenter[MDY] -Viewscale,
+			-toViewcenter[MDZ] -Viewscale );
+		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
+		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
+		VSET( &record.s.s_values[3*3],  0, (Viewscale*2), (Viewscale*2) );
+		VSET( &record.s.s_values[4*3],  -(Viewscale*2), (Viewscale*2), 0 );
+		VSET( &record.s.s_values[5*3],  -(Viewscale*2), (Viewscale*2), 0 );
+		VSET( &record.s.s_values[6*3],  -(Viewscale*2), (Viewscale*2), 0 );
+		VSET( &record.s.s_values[7*3],  -(Viewscale*2), (Viewscale*2), 0  );
 	} else if( strcmp( cmd_args[2], "sph" ) == 0 )  {
 		record.s.s_type = GENELL;
 		record.s.s_cgtype = SPH;
-		VSET( &record.s.s_values[1*3], 127, 0, 0 );	/* A */
-		VSET( &record.s.s_values[2*3], 0, 127, 0 );	/* B */
-		VSET( &record.s.s_values[3*3], 0, 0, 127 );	/* C */
+		VSET( &record.s.s_values[1*3], (0.5*Viewscale), 0, 0 );	/* A */
+		VSET( &record.s.s_values[2*3], 0, (0.5*Viewscale), 0 );	/* B */
+		VSET( &record.s.s_values[3*3], 0, 0, (0.5*Viewscale) );	/* C */
 	} else if( strcmp( cmd_args[2], "ell" ) == 0 )  {
 		record.s.s_type = GENELL;
 		record.s.s_cgtype = ELL;
-		VSET( &record.s.s_values[1*3], 127, 0, 0 );	/* A */
-		VSET( &record.s.s_values[2*3], 0, 63.5, 0 );	/* B */
-		VSET( &record.s.s_values[3*3], 0, 0, 63.5 );	/* C */
+		VSET( &record.s.s_values[1*3], (0.5*Viewscale), 0, 0 );	/* A */
+		VSET( &record.s.s_values[2*3], 0, (0.25*Viewscale), 0 );	/* B */
+		VSET( &record.s.s_values[3*3], 0, 0, (0.25*Viewscale) );	/* C */
 	} else if( strcmp( cmd_args[2], "ellg" ) == 0 )  {
 		record.s.s_type = GENELL;
 		record.s.s_cgtype = ELL;
-		VSET( &record.s.s_values[1*3], 254, 0, 0 );	/* A */
-		VSET( &record.s.s_values[2*3], 0, 127, 0 );	/* B */
-		VSET( &record.s.s_values[3*3], 0, 0, 63.5 );	/* C */
+		VSET( &record.s.s_values[1*3], Viewscale, 0, 0 );	/* A */
+		VSET( &record.s.s_values[2*3], 0, (0.5*Viewscale), 0 );	/* B */
+		VSET( &record.s.s_values[3*3], 0, 0, (0.25*Viewscale) );	/* C */
 	} else if( strcmp( cmd_args[2], "tor" ) == 0 )  {
 		record.s.s_type = TOR;
 		record.s.s_cgtype = TOR;
-		VSET( &record.s.s_values[1*3], 127, 0, 0 );	/* N with mag = r2 */
-		VSET( &record.s.s_values[2*3], 0, 254, 0 );	/* A == r1 */
-		VSET( &record.s.s_values[3*3], 0, 0, 254 );	/* B == r1 */
-		VSET( &record.s.s_values[4*3], 0, 127, 0 );	/* A == r1-r2 */
-		VSET( &record.s.s_values[5*3], 0, 0, 127 );	/* B == r1-r2 */
-		VSET( &record.s.s_values[6*3], 0, 381, 0 );	/* A == r1+r2 */
-		VSET( &record.s.s_values[7*3], 0, 0, 381 );	/* B == r1+r2 */
+		VSET( &record.s.s_values[1*3], (0.5*Viewscale), 0, 0 );	/* N with mag = r2 */
+		VSET( &record.s.s_values[2*3], 0, Viewscale, 0 );	/* A == r1 */
+		VSET( &record.s.s_values[3*3], 0, 0, Viewscale );	/* B == r1 */
+		VSET( &record.s.s_values[4*3], 0, (0.5*Viewscale), 0 );	/* A == r1-r2 */
+		VSET( &record.s.s_values[5*3], 0, 0, (0.5*Viewscale) );	/* B == r1-r2 */
+		VSET( &record.s.s_values[6*3], 0, (1.5*Viewscale), 0 );	/* A == r1+r2 */
+		VSET( &record.s.s_values[7*3], 0, 0, (1.5*Viewscale) );	/* B == r1+r2 */
 	} else if( strcmp( cmd_args[2], "tgc" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = TGC;
-		VSET( &record.s.s_values[1*3],  0, 0, 508 );
-		VSET( &record.s.s_values[2*3],  127, 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, 63.5, 0 );
-		VSET( &record.s.s_values[4*3],  63.5, 0, 0 );
-		VSET( &record.s.s_values[5*3],  0, 127, 0 );
+		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
+		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, (0.25*Viewscale), 0 );
+		VSET( &record.s.s_values[4*3],  (0.25*Viewscale), 0, 0 );
+		VSET( &record.s.s_values[5*3],  0, (0.5*Viewscale), 0 );
 	} else if( strcmp( cmd_args[2], "tec" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = TEC;
-		VSET( &record.s.s_values[1*3],  0, 0, 508 );
-		VSET( &record.s.s_values[2*3],  127, 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, 63.5, 0 );
-		VSET( &record.s.s_values[4*3],  63.5, 0, 0 );
+		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
+		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, (0.25*Viewscale), 0 );
+		VSET( &record.s.s_values[4*3],  (0.25*Viewscale), 0, 0 );
 		VSET( &record.s.s_values[5*3],  0, 31.75, 0 );
 	} else if( strcmp( cmd_args[2], "rec" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = REC;
-		VSET( &record.s.s_values[1*3],  0, 0, 508 );
-		VSET( &record.s.s_values[2*3],  127, 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, 63.5, 0 );
-		VSET( &record.s.s_values[4*3],  127, 0, 0 );
-		VSET( &record.s.s_values[5*3],  0, 63.5, 0 );
+		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
+		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, (0.25*Viewscale), 0 );
+		VSET( &record.s.s_values[4*3],  (0.5*Viewscale), 0, 0 );
+		VSET( &record.s.s_values[5*3],  0, (0.25*Viewscale), 0 );
 	} else if( strcmp( cmd_args[2], "trc" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = TRC;
-		VSET( &record.s.s_values[1*3],  0, 0, 508 );
-		VSET( &record.s.s_values[2*3],  127, 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, 127, 0 );
-		VSET( &record.s.s_values[4*3],  63.5, 0, 0 );
-		VSET( &record.s.s_values[5*3],  0, 63.5, 0 );
+		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
+		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, (0.5*Viewscale), 0 );
+		VSET( &record.s.s_values[4*3],  (0.25*Viewscale), 0, 0 );
+		VSET( &record.s.s_values[5*3],  0, (0.25*Viewscale), 0 );
 	} else if( strcmp( cmd_args[2], "rcc" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = RCC;
-		VSET( &record.s.s_values[1*3],  0, 0, 508 );
-		VSET( &record.s.s_values[2*3],  127, 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, 127, 0 );
-		VSET( &record.s.s_values[4*3],  127, 0, 0 );
-		VSET( &record.s.s_values[5*3],  0, 127, 0 );
+		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
+		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
+		VSET( &record.s.s_values[3*3],  0, (0.5*Viewscale), 0 );
+		VSET( &record.s.s_values[4*3],  (0.5*Viewscale), 0, 0 );
+		VSET( &record.s.s_values[5*3],  0, (0.5*Viewscale), 0 );
 	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
 		(void)printf("make ars not implimented yet\n");
 		return;
@@ -930,6 +932,7 @@ f_make()  {
 	db_putrec( dp, &record, 0 );
 	/* draw the "made" solid */
 	drawHobj( dp, ROOT, 0, identity, 0 );
+	dmp->dmr_colorchange();		/* To color new solid */
 	dmaflag = 1;
 }
 
