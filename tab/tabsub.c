@@ -76,6 +76,8 @@ char	*file;
 {
 	struct stat	sb;
 	int	fd;
+	char	*proto;
+	register char	*ip, *op;
 
 	if( (fd = open( file, 0 )) < 0 || stat( file, &sb ) < 0 )  {
 		perror(file);
@@ -86,10 +88,26 @@ char	*file;
 		exit(1);
 	}
 	prototype = rt_malloc( sb.st_size, "prototype document");
-	if( read( fd, prototype, sb.st_size ) != sb.st_size )  {
+	proto = rt_malloc( sb.st_size, "temporary prototype document");
+	if( read( fd, proto, sb.st_size ) != sb.st_size )  {
 		perror(file);
 		exit(2);
 	}
+
+	/* Eliminate comments from input */
+	ip = proto;
+	op = prototype;
+	while( *ip )  {
+		if( *ip != '#' )  {
+			*op++ = *ip++;
+			continue;
+		}
+		/* Start of comment seen, gobble until newline or EOF */
+		ip++;
+		while( *ip && *ip != '\n' )
+			ip++;
+	}
+	rt_free( proto, "temporary prototype document" );
 }
 
 #define	NCHANS	1024
@@ -123,7 +141,7 @@ FILE	*fp;
 		    linebuf[0] == '\n' )
 			continue;
 
-		/* Here, there is not way to check for too many words */
+		/* Here, there is no way to check for too many words */
 		nwords = rt_split_cmd( chanwords, NCHANS+1, linebuf );
 
 		for( cp=prototype; *cp != '\0'; )  {
@@ -224,11 +242,8 @@ out_mat( m, fp )
 matp_t	m;
 FILE	*fp;
 {
-	register int	i;
-
-	for( i=0; i < 16; i++ )  {
-		(void)fprintf( fp, "%.9e ", m[i] );
-		if( (i%4) == 3 )
-			(void)fprintf(fp, "\n");
-	}
+	fprintf( fp, "\t%.9e %.9e %.9e %.9e\n", m[0], m[1], m[2], m[3] );
+	fprintf( fp, "\t%.9e %.9e %.9e %.9e\n", m[4], m[5], m[6], m[7] );
+	fprintf( fp, "\t%.9e %.9e %.9e %.9e\n", m[8], m[9], m[10], m[11] );
+	fprintf( fp, "\t%.9e %.9e %.9e %.9e", m[12], m[13], m[14], m[15] );
 }
