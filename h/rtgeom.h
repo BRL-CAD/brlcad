@@ -451,11 +451,18 @@ struct rt_bot_internal
 	long		magic;
 	unsigned char	mode;
 	unsigned char	orientation;
-	unsigned char	error_mode;		/* may be used to indicate error handling */
+	unsigned char	error_mode;		/* may be used to indicate error handling (ignored for now) */
 	int		num_vertices;
 	int		num_faces;
 	int		*faces;			/* array of ints for faces [num_faces*3] */
 	fastf_t		*vertices;		/* array of floats for vertices [num_vertices*3] */
+	fastf_t		*thickness;		/* array of plate mode thicknesses (corresponds to array of faces)
+						 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
+						 */
+	struct bu_bitv	*face_mode;		/* a flag for each face indicating thickness is appended to hit point
+						 * in ray direction (if bit is set), otherwise thickness is centered
+						 * about hit point (NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID).
+						 */
 };
 
 /* orientationss for BOT */
@@ -466,6 +473,10 @@ struct rt_bot_internal
 /* modes for BOT */
 #define RT_BOT_SURFACE			1	/* triangles represent a surface (no volume) */
 #define RT_BOT_SOLID			2	/* triangles respresent the boundary of a solid object */
+#define	RT_BOT_PLATE			3	/* triangles represent plates. Thicknesses are specified in "thickness" array,
+						 * and face mode is specified in "face_mode" bit vector.
+						 * This is the FASTGEN "plate" mode. Orientation is ignored.
+						 */
 
 #define	RT_BOT_INTERNAL_MAGIC		0x626F7472	/* botr */
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p,RT_BOT_INTERNAL_MAGIC,"rt_bot_internal")
