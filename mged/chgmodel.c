@@ -877,15 +877,27 @@ char	**argv;
 }
 
 /*
+ *			F _ U N I T S
+ *
  * Change the local units of the description.
- * Base unit is fixed so just changing the current local unit.
+ * Base unit is fixed in mm, so this just changes the current local unit
+ * that the user works in.
  */
 void
 f_units( argc, argv )
 int	argc;
 char	**argv;
 {
-	int new_unit = 0;
+	double	loc2mm;
+	int	new_unit = 0;
+	CONST char	*str;
+
+	if( argc < 2 )  {
+		str = rt_units_string(dbip->dbi_local2base);
+		(void)printf("You are currently editing in '%s'.  1%s = %gmm \n",
+			str, str, dbip->dbi_local2base );
+		return;
+	}
 
 	if( strcmp(argv[1], "mm") == 0 ) 
 		new_unit = ID_MM_UNIT;
@@ -903,23 +915,34 @@ char	**argv;
 		new_unit = ID_FT_UNIT;
 
 	if( new_unit ) {
+		/* One of the recognized db.h units */
 		/* change to the new local unit */
 		db_conversions( dbip, new_unit );
-		/* XXX - save local units */
-		localunit = dbip->dbi_localunit;
-		local2base = dbip->dbi_local2base;
-		base2local = dbip->dbi_base2local;
+
 		if( db_ident( dbip, dbip->dbi_title, new_unit ) < 0 )
 			printf("Warning: unable to stash working units into database\n");
-		if(state == ST_S_EDIT)
-			pr_solid( &es_rec.s );
 
-		dmaflag = 1;
+	} else if( (loc2mm = rt_units_conversion(argv[1]) ) <= 0 )  {
+		(void)printf("%s: unrecognized unit\n", argv[1]);
+		(void)printf("valid units: <mm|cm|m|in|ft|meters|inches|feet>\n");
 		return;
+	} else {
+		/*
+		 *  Can't stash requested units into the database for next session,
+		 *  but there is no problem with the user editing in these units.
+		 */
+		dbip->dbi_localunit = ID_MM_UNIT;
+		dbip->dbi_local2base = loc2mm;
+		dbip->dbi_base2local = 1.0 / loc2mm;
+		(void)printf("\
+Due to a database restriction in the current format of .g files,\n\
+this choice of units will not be remembered on your next editing session.\n");
 	}
-
-	(void)printf("%s: unrecognized unit\n", argv[1]);
-	(void)printf("valid units: <mm|cm|m|in|ft|meters|inches|feet>\n");
+	(void)printf("New editing units = '%s'\n",
+		rt_units_string(dbip->dbi_local2base) );
+	if(state == ST_S_EDIT)
+		pr_solid( &es_rec.s );
+	dmaflag = 1;
 }
 
 /*
