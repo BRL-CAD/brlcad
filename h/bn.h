@@ -491,7 +491,13 @@ BU_EXTERN(void quat_log, (quat_t out, quat_t in));
 #define BN_RAND_TABSIZE 4096
 #define BN_RAND_TABMASK 0xfff
 #define BN_RANDSEED( _i, _seed )        _i = ((unsigned)_seed) % BN_RAND_TABSIZE
+
+/* BN_RANDOM gives numbers between 0.0 and 1.0 */
 #define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
+
+/* BN_RANDHALF gives numbers between -0.5 and 0.5 */
+#define BN_RANDHALF( _i ) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
+
 extern CONST float bn_rand_table[BN_RAND_TABSIZE];
 
 /*----------------------------------------------------------------------*/
