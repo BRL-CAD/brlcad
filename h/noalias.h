@@ -31,7 +31,7 @@
 #if __STDC__
 #	include "noalias-prag.h"
 #else
-#	ifdef convex
+#	if defined(convex) || defined(__convex__)
 		/*$dir no_recurrence */
 #	endif
 #endif
