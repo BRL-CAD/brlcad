@@ -349,79 +349,77 @@ char	**argv;
 int	kind;
 int	catch_sigint;
 {
-	register struct directory *dp;
-	register int	i;
-	double		elapsed_time;
-	int		initial_blank_screen;
+  register struct directory *dp;
+  register int	i;
+  double		elapsed_time;
+  int		initial_blank_screen;
+  struct bu_vls vls;
 
-	initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
+  bu_vls_init(&vls);
+  initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
 
-	/*  First, delete any mention of these objects.
-	 *  Silently skip any leading options (which start with minus signs).
-	 */
-	for( i = 1; i < argc; i++ )  {
-		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_QUIET )) != DIR_NULL )  {
-			eraseobj( dp );
-			no_memory = 0;
-		}
-	}
+  /*  First, delete any mention of these objects.
+   *  Silently skip any leading options (which start with minus signs).
+   */
+  for( i = 1; i < argc; i++ )  {
+    if( (dp = db_lookup( dbip,  argv[i], LOOKUP_QUIET )) != DIR_NULL )  {
+      eraseobj( dp );
+      no_memory = 0;
+    }
+  }
 
-	if( dmp->dmr_displaylist )  {
-		/* Force displaylist update before starting new drawing */
-	  update_views = 1;
-	  refresh();
-	}
+  if( dmp->dmr_displaylist )  {
+    /* Force displaylist update before starting new drawing */
+    update_views = 1;
+    refresh();
+  }
 
-	
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);	/* allow interupts */
-	else
-	  return TCL_OK;
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3);	/* allow interupts */
+  else {
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
 
-	nvectors = 0;
-	rt_prep_timer();
-	drawtrees( argc, argv, kind );
-	(void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
+  nvectors = 0;
+  rt_prep_timer();
+  drawtrees( argc, argv, kind );
+  (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
 
-	{
-	  struct bu_vls tmp_vls;
+  bu_vls_printf(&vls, "%ld vectors in %g sec\n", nvectors, elapsed_time);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "%ld vectors in %g sec\n", nvectors, elapsed_time);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	}
+  {
+    register struct dm_list *p;
+    struct dm_list *save_dm_list;
 
-	{
-	  register struct dm_list *p;
-	  struct dm_list *save_dm_list;
+    save_dm_list = curr_dm_list;
+    for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+      curr_dm_list = p;
 
-	  save_dm_list = curr_dm_list;
-	  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-	    curr_dm_list = p;
+      /* If we went from blank screen to non-blank, resize */
+      if (mged_variables.autosize  && initial_blank_screen &&
+	  BU_LIST_NON_EMPTY(&HeadSolid.l)) {
+	size_reset();
+	new_mats();
 
-	    /* If we went from blank screen to non-blank, resize */
-	    if (mged_variables.autosize  && initial_blank_screen &&
-		BU_LIST_NON_EMPTY(&HeadSolid.l)) {
-	      size_reset();
-	      new_mats();
+	(void)f_load_dv((ClientData)NULL, interp, 0, NULL);
+	MAT_DELTAS_GET(orig_pos, toViewcenter);
+	absolute_zoom = 0.0;
+	VSETALL( absolute_rotate, 0.0 );
+	VSETALL( absolute_slew, 0.0 );
+      }
 
-	      (void)f_load_dv((ClientData)NULL, interp, 0, NULL);
-	      MAT_DELTAS_GET(orig_pos, toViewcenter);
-	      absolute_zoom = 0.0;
-	      VSETALL( absolute_rotate, 0.0 );
-	      VSETALL( absolute_slew, 0.0 );
-	    }
+      color_soltab();
+      dmp->dmr_colorchange(dmp);
+    }
 
-	    color_soltab();
-	    dmp->dmr_colorchange(dmp);
-	  }
+    curr_dm_list = save_dm_list;
+  }
 
-	  curr_dm_list = save_dm_list;
-	}
-
-	(void)signal( SIGINT, SIG_IGN );
-	return TCL_OK;
+  bu_vls_free(&vls);
+  (void)signal( SIGINT, SIG_IGN );
+  return TCL_OK;
 }
 
 int
@@ -431,27 +429,22 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	int	lvl = 0;
+  int	lvl = 0;
+  struct bu_vls vls;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	if( argc > 1 )  lvl = atoi(argv[1]);
+  if( argc > 1 )  lvl = atoi(argv[1]);
 
-	{
-	  struct bu_vls tmp_vls;
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "ndrawn=%d\n", ndrawn);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
 
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "ndrawn=%d\n", ndrawn);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	}
+  pr_schain( &HeadSolid, lvl );
 
-	(void)signal( SIGINT, sig2 );	/* allow interupts */
-
-	pr_schain( &HeadSolid, lvl );
-
-	return TCL_OK;
+  return TCL_OK;
 }
 
 int
@@ -485,13 +478,13 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  struct bu_vls tmp_vls;
+  struct bu_vls vls;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  bu_vls_init(&tmp_vls);
-  start_catching_output(&tmp_vls);
+  bu_vls_init(&vls);
+  start_catching_output(&vls);
 
   if( argc >= 2 )  {
     sscanf( argv[1], "%x", &rt_g.debug );
@@ -502,9 +495,9 @@ char	**argv;
   bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
   bu_log("\n");
 
-  stop_catching_output(&tmp_vls);
-  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-  bu_vls_free(&tmp_vls);
+  stop_catching_output(&vls);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
 
   return TCL_OK;
 }
@@ -519,9 +512,14 @@ char	**argv;
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  (void)signal( SIGINT, sig2 );	/* allow interupts */
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3 );	/* allow interupts */
+  else
+    return TCL_OK;
 
   bu_prmem("Invoked via MGED command");
+
+  (void)signal(SIGINT, SIG_IGN);
   return TCL_OK;
 }
 
@@ -532,10 +530,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  struct bu_vls tmp_vls;
+  struct bu_vls vls;
 
-  bu_vls_init(&tmp_vls);
-  start_catching_output(&tmp_vls);
+  bu_vls_init(&vls);
+  start_catching_output(&vls);
 
   if( argc >= 2 )  {
     sscanf( argv[1], "%x", &rt_g.NMG_debug );
@@ -546,9 +544,9 @@ char	**argv;
   bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
   bu_log("\n");
 
-  stop_catching_output(&tmp_vls);
-  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-  bu_vls_free(&tmp_vls);
+  stop_catching_output(&vls);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
 
   return TCL_OK;
 }
@@ -724,27 +722,34 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register struct directory *dp;
-	register int arg;
-	struct bu_vls str;
+  register struct directory *dp;
+  register int arg;
+  struct bu_vls str;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	bu_vls_init( &str );
+  bu_vls_init( &str );
 
-	(void)signal( SIGINT, sig2 );	/* allow interupts */
-	for( arg = 1; arg < argc; arg++ )  {
-		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
-			continue;
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3 );	/* allow interupts */
+  else{
+    bu_vls_free( &str );
+    return TCL_OK;
+  }
 
-		do_list( &str, dp, 99 );	/* very verbose */
-	}
+  for( arg = 1; arg < argc; arg++ )  {
+    if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
+      continue;
 
-	Tcl_AppendResult(interp, bu_vls_strdup( &str), (char *)NULL);
+    do_list( &str, dp, 99 );	/* very verbose */
+  }
 
-	bu_vls_free( &str );
-	return TCL_OK;
+  Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+  bu_vls_free( &str );
+
+  (void)signal(SIGINT, SIG_IGN);
+  return TCL_OK;
 }
 
 /* List object information, briefly */
@@ -756,28 +761,35 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register struct directory *dp;
-	register int arg;
-	struct bu_vls str;
+  register struct directory *dp;
+  register int arg;
+  struct bu_vls str;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	bu_vls_init( &str );
-	
-	(void)signal( SIGINT, sig2 );	/* allow interupts */
-	for( arg = 1; arg < argc; arg++ )  {
-		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
-			continue;
+  bu_vls_init( &str );
 
-		bu_vls_trunc( &str, 0 );
-		do_list( &str, dp, 0 );	/* non-verbose */
-		Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-	}
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3 );	/* allow interupts */
+  else{
+    bu_vls_free( &str );
+    return TCL_OK;
+  }
 
-	bu_vls_free( &str );
+  for( arg = 1; arg < argc; arg++ )  {
+    if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
+      continue;
 
-	return TCL_OK;
+    bu_vls_trunc( &str, 0 );
+    do_list( &str, dp, 0 );	/* non-verbose */
+  }
+
+  Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+  bu_vls_free( &str );
+
+  (void)signal(SIGINT, SIG_IGN);
+  return TCL_OK;
 }
 
 /*
@@ -860,13 +872,13 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  struct bu_vls tmp_vls;
+  struct bu_vls vls;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  bu_vls_init(&tmp_vls);
-  start_catching_output(&tmp_vls);
+  bu_vls_init(&vls);
+  start_catching_output(&vls);
 		   
   bu_log("STATE=%s, ", state_str[state] );
   bu_log("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
@@ -880,9 +892,9 @@ char	**argv;
     mat_print("objview2model", objview2model);
   }
 
-  stop_catching_output(&tmp_vls);
-  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-  bu_vls_free(&tmp_vls);
+  stop_catching_output(&vls);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
   return TCL_OK;
 }
 
@@ -1004,84 +1016,79 @@ pr_schain( startp, lvl )
 struct solid *startp;
 int		lvl;			/* debug level */
 {
-	register struct solid	*sp;
-	register int		i;
-	register struct rt_vlist	*vp;
-	int			nvlist;
-	int			npts;
+  register struct solid	*sp;
+  register int		i;
+  register struct rt_vlist	*vp;
+  int			nvlist;
+  int			npts;
+  struct bu_vls vls;
 
-	FOR_ALL_SOLIDS(sp, &startp->l){
-	  Tcl_AppendResult(interp, sp->s_flag == UP ? "VIEW ":"-no- ", (char *)NULL);
-	  for( i=0; i <= sp->s_last; i++ )
-	    Tcl_AppendResult(interp, "/", sp->s_path[i]->d_namep, (char *)NULL);
-	  if( sp->s_iflag == UP )
-	    Tcl_AppendResult(interp, " ILLUM", (char *)NULL);
+  bu_vls_init(&vls);
 
-	  Tcl_AppendResult(interp, "\n", (char *)NULL);
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3);
+  else{
+    bu_vls_free(&vls);
+    return;
+  }
 
-	  if( lvl <= 0 )  continue;
+  FOR_ALL_SOLIDS(sp, &startp->l){
+    bu_vls_printf(&vls, "%s", sp->s_flag == UP ? "VIEW " : "-no- ");
+    for( i=0; i <= sp->s_last; i++ )
+      bu_vls_printf(&vls, "/%s", sp->s_path[i]->d_namep);
+    if( sp->s_iflag == UP )
+      bu_vls_printf(&vls, " ILLUM");
 
-	  /* convert to the local unit for printing */
-	  {
-	    struct bu_vls tmp_vls;
+    bu_vls_printf(&vls, "\n");
 
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
-			  sp->s_center[X]*base2local,
-			  sp->s_center[Y]*base2local, 
-			  sp->s_center[Z]*base2local,
-			  sp->s_size*base2local );
-	    bu_vls_printf(&tmp_vls, "reg=%d\n",sp->s_regionid );
-	    bu_vls_printf(&tmp_vls, "  color=(%d,%d,%d) %d,%d,%d i=%d\n",
-			  sp->s_basecolor[0],
-			  sp->s_basecolor[1],
-			  sp->s_basecolor[2],
-			  sp->s_color[0],
-			  sp->s_color[1],
-			  sp->s_color[2],
-			  sp->s_dmindex );
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
-	  }
+    if( lvl <= 0 )  continue;
 
-		if( lvl <= 1 )  continue;
+    /* convert to the local unit for printing */
+    bu_vls_printf(&vls, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
+		  sp->s_center[X]*base2local,
+		  sp->s_center[Y]*base2local, 
+		  sp->s_center[Z]*base2local,
+		  sp->s_size*base2local );
+    bu_vls_printf(&vls, "reg=%d\n",sp->s_regionid );
+    bu_vls_printf(&vls, "  color=(%d,%d,%d) %d,%d,%d i=%d\n",
+		  sp->s_basecolor[0],
+		  sp->s_basecolor[1],
+		  sp->s_basecolor[2],
+		  sp->s_color[0],
+		  sp->s_color[1],
+		  sp->s_color[2],
+		  sp->s_dmindex );
 
-		/* Print the actual vector list */
-		nvlist = 0;
-		npts = 0;
-		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
-			register int	i;
-			register int	nused = vp->nused;
-			register int	*cmd = vp->cmd;
-			register point_t *pt = vp->pt;
+    if( lvl <= 1 )  continue;
 
-			RT_CK_VLIST( vp );
-			nvlist++;
-			npts += nused;
-			if( lvl <= 2 )  continue;
+    /* Print the actual vector list */
+    nvlist = 0;
+    npts = 0;
+    for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+      register int	i;
+      register int	nused = vp->nused;
+      register int	*cmd = vp->cmd;
+      register point_t *pt = vp->pt;
 
-			for( i = 0; i < nused; i++,cmd++,pt++ )  {
-			  struct bu_vls tmp_vls;
+      RT_CK_VLIST( vp );
+      nvlist++;
+      npts += nused;
+      if( lvl <= 2 )  continue;
 
-			  bu_vls_init(&tmp_vls);
-			  bu_vls_printf(&tmp_vls, "  %s (%g, %g, %g)\n",
-					rt_vlist_cmd_descriptions[*cmd],
-					V3ARGS( *pt ) );
-			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-			  bu_vls_free(&tmp_vls);
-			}
-		}
+      for( i = 0; i < nused; i++,cmd++,pt++ )  {
+	bu_vls_printf(&vls, "  %s (%g, %g, %g)\n",
+		      rt_vlist_cmd_descriptions[*cmd],
+		      V3ARGS( *pt ) );
+      }
+    }
 
-		{
-		  struct bu_vls tmp_vls;
+    bu_vls_printf(&vls, "  %d vlist structures, %d pts\n", nvlist, npts );
+    bu_vls_printf(&vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist( &(sp->s_vlist) ) );
+  }
 
-		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "  %d vlist structures, %d pts\n", nvlist, npts );
-		  bu_vls_printf(&tmp_vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist( &(sp->s_vlist) ) );
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
-		}
-	}
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
+  (void)signal( SIGINT, SIG_IGN );
 }
 
 static char ** path_parse ();
@@ -1654,57 +1661,57 @@ char	**argv;
 	  Tcl_AppendResult(interp, "Current tolerance settings are:\n", (char *)NULL);
 	  Tcl_AppendResult(interp, "Tesselation tolerances:\n", (char *)NULL );
 	  if( mged_abs_tol > 0.0 )  {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls vls;
 
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "\tabs %g %s\n", mged_abs_tol * base2local,
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "\tabs %g %s\n", mged_abs_tol * base2local,
 			  rt_units_string(dbip->dbi_local2base) );
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
 	  } else {
 	    Tcl_AppendResult(interp, "\tabs None\n", (char *)NULL);
 	  }
 	  if( mged_rel_tol > 0.0 )  {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls vls;
 
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "\trel %g (%g%%)\n", mged_rel_tol, mged_rel_tol * 100.0 );
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "\trel %g (%g%%)\n", mged_rel_tol, mged_rel_tol * 100.0 );
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
 	  } else {
 	    Tcl_AppendResult(interp, "\trel None\n", (char *)NULL);
 	  }
 	  if( mged_nrm_tol > 0.0 )  {
 	    int	deg, min;
 	    double	sec;
-	    struct bu_vls tmp_vls;
+	    struct bu_vls vls;
 
-	    bu_vls_init(&tmp_vls);
+	    bu_vls_init(&vls);
 	    sec = mged_nrm_tol * rt_radtodeg;
 	    deg = (int)(sec);
 	    sec = (sec - (double)deg) * 60;
 	    min = (int)(sec);
 	    sec = (sec - (double)min) * 60;
 
-	    bu_vls_printf(&tmp_vls, "\tnorm %g degrees (%d deg %d min %g sec)\n",
+	    bu_vls_printf(&vls, "\tnorm %g degrees (%d deg %d min %g sec)\n",
 			  mged_nrm_tol * rt_radtodeg, deg, min, sec );
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
 	  } else {
 	    Tcl_AppendResult(interp, "\tnorm None\n", (char *)NULL);
 	  }
 
 	  {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls vls;
 
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls,"Calculational tolerances:\n");
-	    bu_vls_printf(&tmp_vls,
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls,"Calculational tolerances:\n");
+	    bu_vls_printf(&vls,
 			  "\tdistance = %g %s\n\tperpendicularity = %g (cosine of %g degrees)\n",
 			   mged_tol.dist*base2local, rt_units_string(local2base), mged_tol.perp,
 			  acos(mged_tol.perp)*rt_radtodeg);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
 	  }
 
 	  return TCL_OK;

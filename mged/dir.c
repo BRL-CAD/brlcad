@@ -112,51 +112,53 @@ Tcl_Interp	*interp;
 int	argc;
 char	**argv;
 {
-	register struct directory *dp;
-	register int i;
-	struct directory **dirp, **dirp0;
-	struct bu_vls	str;
+  register struct directory *dp;
+  register int i;
+  struct directory **dirp;
+  struct directory **dirp0 = (struct directory **)NULL;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);	/* allow interupts */
-	else
-	  return TCL_OK;
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3);	/* allow interupts */
+  else{
+    if(dirp0)
+      bu_free( (genptr_t)dirp0, "dir_getspace dp[]" );
 
-	if( argc > 1) {
-		/* Just list specified names */
-		dirp = dir_getspace( argc-1 );
-		dirp0 = dirp;
-		/*
-		 * Verify the names, and add pointers to them to the array.
-		 */
-		for( i = 1; i < argc; i++ )  {
-			if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) ==
-			  DIR_NULL )
-				continue;
-			*dirp++ = dp;
-		}
-	} else {
-		/* Full table of contents */
-		dirp = dir_getspace(0);		/* Enough for all */
-		dirp0 = dirp;
-		/*
-		 * Walk the directory list adding pointers (to the directory
-		 * entries) to the array.
-		 */
-		for( i = 0; i < RT_DBNHASH; i++)
-			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
-				*dirp++ = dp;
-	}
-	bu_vls_init( &str );
-	vls_col_pr4v( &str, dirp0, (int)(dirp - dirp0));
-	bu_free( (char *)dirp0, "dir_getspace dp[]" );
+    return TCL_OK;
+  }
 
-	Tcl_AppendResult(interp, bu_vls_strgrab(&str), (char *)NULL);
-	(void)signal( SIGINT, SIG_IGN );
-	return TCL_OK;
+  if( argc > 1) {
+    /* Just list specified names */
+    dirp = dir_getspace( argc-1 );
+    dirp0 = dirp;
+    /*
+     * Verify the names, and add pointers to them to the array.
+     */
+    for( i = 1; i < argc; i++ )  {
+      if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) ==
+	  DIR_NULL )
+	continue;
+      *dirp++ = dp;
+    }
+  } else {
+    /* Full table of contents */
+    dirp = dir_getspace(0);		/* Enough for all */
+    dirp0 = dirp;
+    /*
+     * Walk the directory list adding pointers (to the directory
+     * entries) to the array.
+     */
+    for( i = 0; i < RT_DBNHASH; i++)
+      for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	*dirp++ = dp;
+  }
+
+  col_pr4v( dirp0, (int)(dirp - dirp0));
+  bu_free( (genptr_t)dirp0, "dir_getspace dp[]" );
+  (void)signal( SIGINT, SIG_IGN );
+  return TCL_OK;
 }
 
 /*
@@ -340,12 +342,17 @@ dir_summary(flag)
 	register struct directory *dp;
 	register int i;
 	static int sol, comb, reg;
-	struct directory **dirp, **dirp0;
+	struct directory **dirp;
+	struct directory **dirp0 = (struct directory **)NULL;
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);	/* allow interupts */
-	else
+	else{
+	  if(dirp0)
+	    bu_free( (genptr_t)dirp0, "dir_getspace" );
+
 	  return;
+	}	  
 
 	sol = comb = reg = 0;
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -364,8 +371,11 @@ dir_summary(flag)
 	bu_log("  %5d region; %d non-region combinations\n", reg, comb);
 	bu_log("  %5d total objects\n\n", sol+reg+comb );
 
-	if( flag == 0 )
-		return;
+	if( flag == 0 ){
+	  (void)signal( SIGINT, SIG_IGN );
+	  return;
+	}
+
 	/* Print all names matching the flags parameter */
 	/* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
 	
@@ -399,15 +409,20 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int i;
-	struct directory **dirp, **dirp0;
+	struct directory **dirp;
+	struct directory **dirp0 = (struct directory **)NULL;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);	/* allow interupts */
-	else
+	else{
+	  if(dirp0)
+	    bu_free( (char *)dirp0, "dir_getspace" );
+
 	  return TCL_OK;
+	}
 
 	dir_nref();
 	/*
@@ -648,45 +663,50 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register int	i,j,k;
-	register struct directory *dp;
-	register union record	*rp;
+  register int	i,j,k;
+  register struct directory *dp;
+  register union record	*rp = (union record *)NULL;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);	/* allow interupts */
-	else
-	  return TCL_OK;
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3);	/* allow interupts */
+  else{
+    if(rp)
+      bu_free( (char *)rp, "dir_nref recs" );
 
-	/* Examine all COMB nodes */
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( !(dp->d_flags & DIR_COMB) )
-				continue;
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-			  TCL_READ_ERR_return;
-			}
-			/* [0] is COMB, [1..n] are MEMBERs */
-			for( j=1; j < dp->d_len; j++ )  {
-				if( rp[j].M.m_instname[0] == '\0' )
-					continue;
-				for( k=0; k<argc; k++ )  {
-					if( strncmp( rp[j].M.m_instname,
-					    argv[k], NAMESIZE) != 0 )
-						continue;
-					Tcl_AppendResult(interp, rp[j].M.m_instname,
-							 ":  member of ", rp[0].c.c_name,
-							 "\n", (char *)NULL);
-				}
-			}
-			bu_free( (char *)rp, "dir_nref recs" );
-		}
-	}
+    return TCL_OK;
+  }
 
+  /* Examine all COMB nodes */
+  for( i = 0; i < RT_DBNHASH; i++ )  {
+    for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+      if( !(dp->d_flags & DIR_COMB) )
+	continue;
+      if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
 	(void)signal( SIGINT, SIG_IGN );
-	return TCL_OK;
+	TCL_READ_ERR_return;
+      }
+      /* [0] is COMB, [1..n] are MEMBERs */
+      for( j=1; j < dp->d_len; j++ )  {
+	if( rp[j].M.m_instname[0] == '\0' )
+	  continue;
+	for( k=0; k<argc; k++ )  {
+	  if( strncmp( rp[j].M.m_instname,
+		       argv[k], NAMESIZE) != 0 )
+	    continue;
+	  Tcl_AppendResult(interp, rp[j].M.m_instname,
+			   ":  member of ", rp[0].c.c_name,
+			   "\n", (char *)NULL);
+	}
+      }
+      bu_free( (char *)rp, "dir_nref recs" );
+    }
+  }
+
+  (void)signal( SIGINT, SIG_IGN );
+  return TCL_OK;
 }
 
 /*
@@ -885,90 +905,7 @@ char	**argv;
 	return TCL_OK;
 }
 
-#ifdef OLD
-/*
- *			F _ T R E E
- *
- *	Print out a list of all members and submembers of an object.
- */
-void
-f_tree(argc, argv)
-int	argc;
-char	**argv;
-{
-	register struct directory *dp;
-	register int j;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
-
-
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-	else
-	  return TCL_OK;
-
-	for ( j = 1; j < argc; j++) {
-		if( j > 1 )
-			bu_log( "\n" );
-		if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
-			continue;
-		printnode(dp, 0, 0);
-	}
-
-	(void)signal( SIGINT, SIG_IGN );
-}
-
-/*
- *			P R I N T N O D E
- */
-static void
-printnode( dp, pathpos, cont )
-register struct directory *dp;
-int pathpos;
-int cont;		/* non-zero when continuing partly printed line */
-{	
-	union record	*rp;
-	register int	i;
-	register struct directory *nextdp;
-
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-		READ_ERR_return;
-
-	if( !cont ) {
-		for( i=0; i<(pathpos*(NAMESIZE+2)); i++) 
-			bu_putchar(' ');
-		cont = 1;
-	}
-	bu_log("| %s", dp->d_namep);
-	if( !(dp->d_flags & DIR_COMB) )  {
-		bu_log( "\n" );
-		return;
-	}
-
-
-	/*
-	 *  This node is a combination (eg, a directory).
-	 *  Process all the arcs (eg, directory members).
-	 */
-	i = NAMESIZE - strlen(dp->d_namep);
-	while( i-- > 0 )
-		bu_putchar('_');
-
-	if( dp->d_len <= 1 )
-		bu_log("\n");		/* empty combination */
-
-	for( i=1; i < dp->d_len; i++ )  {
-		if( (nextdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY ))
-		    == DIR_NULL )
-			continue;
-
-		printnode ( nextdp, pathpos+1, cont );
-		cont = 0;
-	}
-	bu_free( (char *)rp, "printnode recs");
-}
-#else
 /*
  *			F _ T R E E
  *
@@ -981,25 +918,24 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register struct directory *dp;
-	register int j;
+  register struct directory *dp;
+  register int j;
 
-	
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-	else
-	  return TCL_OK;
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3);  /* allow interupts */
+  else
+    return TCL_OK;
 
-	for ( j = 1; j < argc; j++) {
-		if( j > 1 )
-		  Tcl_AppendResult(interp, "\n", (char *)NULL);
-		if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
-			continue;
-		printnode(dp, 0, 0);
-	}
+  for ( j = 1; j < argc; j++) {
+    if( j > 1 )
+      Tcl_AppendResult(interp, "\n", (char *)NULL);
+    if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
+      continue;
+    printnode(dp, 0, 0);
+  }
 
-	(void)signal( SIGINT, SIG_IGN );
-	return TCL_OK;
+  (void)signal( SIGINT, SIG_IGN );
+  return TCL_OK;
 }
 
 /*
@@ -1011,55 +947,56 @@ register struct directory *dp;
 int pathpos;
 char prefix;
 {	
-	union record	*rp;
-	register int	i;
-	register struct directory *nextdp;
+  union record	*rp;
+  register int	i;
+  register struct directory *nextdp;
 
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ){
-	  TCL_READ_ERR;
-	  return;
-	}
+  if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ){
+    TCL_READ_ERR;
+    return;
+  }
 
-	for( i=0; i<pathpos; i++) 
-	  Tcl_AppendResult(interp, "\t", (char *)NULL);
+  for( i=0; i<pathpos; i++) 
+    Tcl_AppendResult(interp, "\t", (char *)NULL);
 
-	if( prefix ) {
-	  struct bu_vls tmp_vls;
+  if( prefix ) {
+    struct bu_vls tmp_vls;
 
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "%c ", prefix);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	}
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "%c ", prefix);
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
+  }
 
-	Tcl_AppendResult(interp, dp->d_namep, (char *)NULL);
-	/* Output Comb and Region flags (-F?) */
-	if( dp->d_flags & DIR_COMB )
-	  Tcl_AppendResult(interp, "/", (char *)NULL);
-	if( dp->d_flags & DIR_REGION )
-	  Tcl_AppendResult(interp, "R", (char *)NULL);
+  Tcl_AppendResult(interp, dp->d_namep, (char *)NULL);
+  /* Output Comb and Region flags (-F?) */
+  if( dp->d_flags & DIR_COMB )
+    Tcl_AppendResult(interp, "/", (char *)NULL);
+  if( dp->d_flags & DIR_REGION )
+    Tcl_AppendResult(interp, "R", (char *)NULL);
 
-	Tcl_AppendResult(interp, "\n", (char *)NULL);
+  Tcl_AppendResult(interp, "\n", (char *)NULL);
 
-	if( !(dp->d_flags & DIR_COMB) )  {
-		return;
-	}
+  if( !(dp->d_flags & DIR_COMB) )  {
+    bu_free( (char *)rp, "printnode recs");
+    return;
+  }
 
-	/*
-	 *  This node is a combination (eg, a directory).
-	 *  Process all the arcs (eg, directory members).
-	 */
-	for( i=1; i < dp->d_len; i++ )  {
-		if( (nextdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY ))
-		    == DIR_NULL )
-			continue;
+  /*
+   *  This node is a combination (eg, a directory).
+   *  Process all the arcs (eg, directory members).
+   */
+  for( i=1; i < dp->d_len; i++ )  {
+    if( (nextdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY ))
+	== DIR_NULL )
+      continue;
 
-		prefix = rp[i].M.m_relation;
-		printnode ( nextdp, pathpos+1, prefix );
-	}
-	bu_free( (char *)rp, "printnode recs");
+    prefix = rp[i].M.m_relation;
+    printnode ( nextdp, pathpos+1, prefix );
+  }
+  bu_free( (char *)rp, "printnode recs");
 }
-#endif
+
 
 /*	F _ M V A L L
  *
@@ -1159,57 +1096,63 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register int	i,j,k;
-	register union record *rp;
-	register struct directory *dp;
+  register int	i,j,k;
+  register union record *rp = (union record *)NULL;
+  register struct directory *dp;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-	else
-	  return TCL_OK;
+  if( setjmp( jmp_env ) == 0 )
+    (void)signal( SIGINT, sig3);  /* allow interupts */
+  else{
+    if(rp)
+      bu_free( (genptr_t)rp, "dir_nref recs" );
 
-	/* Examine all COMB nodes */
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( !(dp->d_flags & DIR_COMB) )
-				continue;
+    return TCL_OK;
+  }
+
+  /* Examine all COMB nodes */
+  for( i = 0; i < RT_DBNHASH; i++ )  {
+    for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+      if( !(dp->d_flags & DIR_COMB) )
+	continue;
 again:
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-			  (void)signal( SIGINT, SIG_IGN );
-			  TCL_READ_ERR_return;
-			}
-			/* [0] is COMB, [1..n] are MEMBERs */
-			for( j=1; j < dp->d_len; j++ )  {
-				if( rp[j].M.m_instname[0] == '\0' )
-					continue;
-				for( k=1; k<argc; k++ )  {
-					if( strncmp( rp[j].M.m_instname,
-					    argv[k], NAMESIZE) != 0 )
-						continue;
-
-					/* Remove this reference */
-					if( db_delrec( dbip, dp, j ) < 0 )  {
-					  Tcl_AppendResult(interp, "error in killing reference to '", argv[k], "', exit MGED and retry\n", (char *)NULL);
-					  TCL_ERROR_RECOVERY_SUGGESTION;
-					  (void)signal( SIGINT, SIG_IGN );
-					  return TCL_ERROR;
-					}
-					bu_free( (char *)rp, "dir_nref recs" );
-					goto again;
-				}
-			}
-			bu_free( (char *)rp, "dir_nref recs" );
-		}
-	}
-
-	/* ALL references removed...now KILL the object[s] */
-	/* reuse argv[] */
-	argv[0] = "kill";
+      if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
 	(void)signal( SIGINT, SIG_IGN );
-	return f_kill( clientData, interp, argc, argv );
+	TCL_READ_ERR_return;
+      }
+      /* [0] is COMB, [1..n] are MEMBERs */
+      for( j=1; j < dp->d_len; j++ )  {
+	if( rp[j].M.m_instname[0] == '\0' )
+	  continue;
+	for( k=1; k<argc; k++ )  {
+	  if( strncmp( rp[j].M.m_instname,
+		       argv[k], NAMESIZE) != 0 )
+	    continue;
+
+	  /* Remove this reference */
+	  if( db_delrec( dbip, dp, j ) < 0 )  {
+	    Tcl_AppendResult(interp, "error in killing reference to '",
+			     argv[k], "', exit MGED and retry\n", (char *)NULL);
+	    TCL_ERROR_RECOVERY_SUGGESTION;
+	    (void)signal( SIGINT, SIG_IGN );
+	    bu_free( (genptr_t)rp, "dir_nref recs" );
+	    return TCL_ERROR;
+	  }
+	  bu_free( (genptr_t)rp, "dir_nref recs" );
+	  goto again;
+	}
+      }
+      bu_free( (genptr_t)rp, "dir_nref recs" );
+    }
+  }
+
+  /* ALL references removed...now KILL the object[s] */
+  /* reuse argv[] */
+  argv[0] = "kill";
+  (void)signal( SIGINT, SIG_IGN );
+  return f_kill( clientData, interp, argc, argv );
 }
 
 
