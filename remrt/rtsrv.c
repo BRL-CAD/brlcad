@@ -82,7 +82,7 @@ struct taskcontrol {
 char scanbuf[8*1024*3];		/* generous scan line */
 
 /* Variables shared within mainline pieces */
-int npsw;
+int npsw = MAX_PSW;
 static char outbuf[132];
 static char idbuf[132];		/* First ID record info */
 
@@ -309,6 +309,28 @@ char *buf;
 		exit(3);
 	}
 
+#ifdef PARALLEL
+	/* Get enough dynamic memory to keep from making malloc sbrk() */
+	for( x=0; x<npsw; x++ )  {
+		rt_get_pt();
+		rt_get_seg();
+		rt_get_bitv();
+	}
+	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
+
+	fprintf(stderr,"PARALLEL: %d workers\n", npsw );
+	for( x=0; x<npsw; x++ )  {
+#ifdef HEP
+		Dcreate( worker );
+#endif
+#ifdef cray
+		taskcontrol[x].tsk_len = 3;
+		taskcontrol[x].tsk_value = x;
+#endif
+	}
+	fprintf(stderr,"initial memory use=%d.\n",sbrk(0) );
+#endif
+
 	seen_start = 1;
 	(void)free(buf);
 
@@ -386,7 +408,31 @@ char *buf;
 
 		cur_pixel = y*npts + 0;
 		last_pixel = cur_pixel + npts;
-		worker();	/* fills scanbuf */
+#ifdef PARALLEL
+#ifdef cray
+		/* Create any extra worker tasks */
+		for( x=0; x<npsw; x++ ) {
+			TSKSTART( &taskcontrol[x], worker );
+		}
+		/* Wait for them to finish */
+		for( x=0; x<npsw; x++ )  {
+			TSKWAIT( &taskcontrol[x] );
+		}
+#endif
+#ifdef alliant
+		{
+			asm("	cstart	_npsw");
+			asm("super_loop:");
+				asm("	cawait	cs1,#0");
+				asm("	cadvance	cs1");
+				worker();
+			asm("	crepeat	super_loop");
+		}
+#endif
+#else
+		/* Simple serial case */
+		worker();
+#endif
 
 		rbuf[0] = y&0xFF;
 		rbuf[1] = (y>>8);
@@ -522,4 +568,41 @@ char *name;
 fb_close()
 {
 	return(0);
+}
+
+#ifdef cray
+#ifndef PARALLEL
+LOCKASGN(p)
+{
+}
+LOCKON(p)
+{
+}
+LOCKOFF(p)
+{
+}
+#endif
+#endif
+
+#ifdef sgi
+/* Horrible bug in 3.3.1 and 3.4 -- hypot ruins stack! */
+double
+hypot(a,b)
+double a,b;
+{
+	extern double sqrt();
+	return(sqrt(a*a+b*b));
+}
+#endif
+
+#ifdef PARALLEL
+#ifdef alliant
+
+RES_ACQUIRE(p)
+register int *p;
+{
+	asm("loop:");
+	while( *p )  ;
+	asm("	tas	a5@");
+	asm("	bne	loop");
 }
