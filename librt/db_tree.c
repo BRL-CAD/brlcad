@@ -4,6 +4,7 @@
  * Functions -
  *	db_walk_tree		Parallel tree walker
  *	db_path_to_mat		Given a path, return a matrix.
+ *	db_region_mat		Given a name, return a matrix
  *
  *  Authors -
  *	Michael John Muuss
@@ -1845,4 +1846,36 @@ struct mater_info *materp;
 			db_do_anim( anp, stack, arc, materp);
 	}
 	return;
+}
+/*
+ *
+ *  Given the name of a region, return the matrix which maps model coordinates
+ *     into "region" coordinates.
+ */
+
+void
+db_region_mat(m, dbip, name)
+mat_t m;
+CONST struct db_i *dbip;
+CONST char *name;
+{
+	struct db_full_path		full_path;
+	mat_t	region_to_model;
+
+	/* get transformation between world and "region" coordinates */
+	if (db_string_to_path( &full_path, dbip, name) ) {
+		/* bad thing */
+		rt_log("db_string_to_path(%s) error\n", name);
+		rt_bomb("error getting path\n");
+	}
+	if(! db_path_to_mat((struct db_i *)dbip, &full_path, region_to_model, 0)) {
+		/* bad thing */
+		rt_log("db_path_to_mat(%s) error", name);
+		rt_bomb("error getting region coordinate matrix\n");
+	}
+
+	/* get matrix to map points from model (world) space
+	 * to "region" space
+	 */
+	mat_inv(m, region_to_model);
 }
