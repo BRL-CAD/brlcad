@@ -13,7 +13,7 @@
 	getopt hist ispar linebuf list \
 	log magic malloc mappedfile memset \
 	parallel parse printb ptbl semaphore \
-	vfont \
+	vfont brlcad_path \
 	vls htond units bu_tcl file color
 
 #define VERSION_VARIABLE	bu_version
