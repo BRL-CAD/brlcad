@@ -193,7 +193,8 @@ extern struct dm_list *curr_dm_list;
 #define scroll_active curr_dm_list->s_info->_scroll_active
 #define scroll_y curr_dm_list->s_info->_scroll_y
 #define scroll_array curr_dm_list->s_info->_scroll_array
-				
+
+#define MINVIEW		0.001				
 #define VIEWSIZE	(2*Viewscale)	/* Width of viewing cube */
 #define VIEWFACTOR	(1/Viewscale)	/* 2.0 / VIEWSIZE */
 
