@@ -55,6 +55,7 @@ register struct rt_i *rtip;
 {
 	register struct soltab *stp;
 	FILE *plotfp;
+/* Begin NUgrid */
 	struct histogram xhist;
 	struct histogram yhist;
 	struct histogram zhist;
@@ -69,6 +70,15 @@ register struct rt_i *rtip;
 	struct nu_axis	*nu_axis[3];
 	int	nu_cells_per_axis[3];
 	int	nu_max_ncells;		/* hard limit on nu_ncells */
+	union cutter	*nu_grid;
+	struct boxnode	nu_xbox;
+	struct boxnode	nu_ybox;
+	struct boxnode	nu_zbox;
+	vect_t		xmin, xmax;	/* bounds of x slice */
+	vect_t		ymin, ymax;	/* bounds of y slice of x slice */
+	vect_t		zmin, zmax;	/* bounds of z slice of y of x */
+	struct histogram nu_hist_cellsize;
+	int		xp, yp, zp;
 	int	i;
 
 	rtip->rti_CutHead.bn.bn_type = CUT_BOXNODE;
@@ -242,16 +252,13 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		}
 	}
 
-#if 0
-	struct boxnode	*nu_grid;
-	struct boxnode	nu_xbox;
-	struct boxnode	nu_ybox;
-	vect_t		xmin, xmax;	/* bounds of x slice */
-	vect_t		ymin, ymax;	/* bounds of y slice of x slice */
-	/* For the moment, re-use "struct boxnode" */
-	nu_grid = (struct boxnode *)rt_malloc(
+#if 1
+	rt_hist_init( &nu_hist_cellsize, 0, 399, 400 );
+	/* For the moment, re-use "union cutter" */
+	nu_grid = (union cutter *)rt_malloc(
 		nu_cells_per_axis[X] * nu_cells_per_axis[Y] *
-		nu_cells_per_axis[Z], "3-D NUgrid array" );
+		nu_cells_per_axis[Z] * sizeof(union cutter),
+		 "3-D NUgrid union cutter []" );
 	nu_xbox.bn_len = 0;
 	nu_xbox.bn_maxlen = rtip->nsolids;
 	nu_xbox.bn_list = (struct soltab **)rt_malloc(
@@ -262,6 +269,12 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	nu_ybox.bn_list = (struct soltab **)rt_malloc(
 		nu_ybox.bn_maxlen * sizeof(struct soltab *),
 		"ybox boxnode []" );
+	nu_zbox.bn_len = 0;
+	nu_zbox.bn_maxlen = rtip->nsolids;
+	nu_zbox.bn_list = (struct soltab **)rt_malloc(
+		nu_zbox.bn_maxlen * sizeof(struct soltab *),
+		"zbox boxnode []" );
+	/* Build each of the X slices */
 	for( xp = 0; xp < nu_cells_per_axis[X]; xp++ )  {
 		VMOVE( xmin, rtip->mdl_min );
 		VMOVE( xmax, rtip->mdl_max );
@@ -269,17 +282,83 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		xmax[X] = xmin[X] + nu_axis[X][xp].nu_width;
 		VMOVE( nu_xbox.bn_min, xmin );
 		VMOVE( nu_xbox.bn_max, xmax );
+		nu_xbox.bn_len = 0;
 		/* Search all solids for those in this X slice */
 		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
-			if( stp->st_aradius >= INFINITY )  {
-				/* Infinite solid */
-				nu_xbox.bn_list[nu_xbox.bn_len++] = stp;
-			} else {
-				if( !rt_ck_overlap( xmin, xmax, stp ) )
+			RT_CHECK_SOLTAB(stp);
+			if( !rt_ck_overlap( xmin, xmax, stp ) )
+				continue;
+			nu_xbox.bn_list[nu_xbox.bn_len++] = stp;
+		}
+		/* Build each of the Y slices in this X slice */
+		for( yp = 0; yp < nu_cells_per_axis[Y]; yp++ )  {
+			VMOVE( ymin, xmin );
+			VMOVE( ymax, xmax );
+			ymin[Y] = nu_axis[Y][yp].nu_pos;
+			ymax[Y] = ymin[Y] + nu_axis[Y][yp].nu_width;
+			VMOVE( nu_ybox.bn_min, ymin );
+			VMOVE( nu_ybox.bn_max, ymax );
+			nu_ybox.bn_len = 0;
+			/* Search X slice for members of this Y slice */
+			for( i=0; i<nu_xbox.bn_len; i++ )  {
+				if( !rt_ck_overlap( ymin, ymax,
+				    nu_xbox.bn_list[i] ) )
 					continue;
-				nu_xbox.bn_list[nu_xbox.bn_len++] = stp;
+				nu_ybox.bn_list[nu_ybox.bn_len++] =
+					nu_xbox.bn_list[i];
+			}
+			/* Build each of the Z slices in this Y slice. */
+			/* Each of these will be a final cell */
+			for( zp = 0; zp < nu_cells_per_axis[Z]; zp++ )  {
+				register union cutter *cutp = &nu_grid[
+					(((zp*nu_cells_per_axis[Z]) +
+					   yp*nu_cells_per_axis[Y]) +
+					   zp*nu_cells_per_axis[X])];
+				VMOVE( zmin, ymin );
+				VMOVE( zmax, ymax );
+				zmin[Z] = nu_axis[Z][zp].nu_pos;
+				zmax[Z] = zmin[Z] + nu_axis[Z][zp].nu_width;
+				cutp->cut_type = CUT_BOXNODE;
+				VMOVE( cutp->bn.bn_min, zmin );
+				VMOVE( cutp->bn.bn_max, zmax );
+				/* Build up a temporary list in nu_zbox first,
+				 * then copy list over to cutp->bn */
+				nu_zbox.bn_len = 0;
+				/* Search Y slice for members of this Z slice */
+				for( i=0; i<nu_ybox.bn_len; i++ )  {
+					if( !rt_ck_overlap( zmin, zmax,
+					    nu_ybox.bn_list[i] ) )
+						continue;
+					nu_zbox.bn_list[nu_zbox.bn_len++] =
+						nu_ybox.bn_list[i];
+				}
+				/* Record cell size in histogram */
+				RT_HISTOGRAM_TALLY( &nu_hist_cellsize,
+					nu_zbox.bn_len );
+				if( nu_zbox.bn_len <= 0 )  {
+					/* Empty cell */
+					cutp->bn.bn_list = (struct soltab **)0;
+					cutp->bn.bn_len = 0;
+					cutp->bn.bn_maxlen = 0;
+					continue;
+				}
+				/* Allocate just enough space for list,
+				 * and copy it in */
+				cutp->bn.bn_list = (struct soltab **)rt_malloc(
+					nu_zbox.bn_len * sizeof(struct soltab *),
+					"NUgrid cell bn_list[]" );
+				cutp->bn.bn_len = cutp->bn.bn_maxlen =
+					nu_zbox.bn_len;
+				bcopy( (char *)nu_zbox.bn_list,
+					(char *)cutp->bn.bn_list,
+					nu_zbox.bn_len * sizeof(struct soltab *) );
 			}
 		}
+	}
+	if(rt_g.debug&DEBUG_CUT)  {
+		rt_hist_pr( &nu_hist_cellsize, "cut_tree: Number of solids per NUgrid cell");
+		/* Just for inspection, print out the 0,0,0 cell */
+		rt_pr_cut( nu_grid, 0 );
 	}
 #endif
 
@@ -291,6 +370,9 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		rt_hist_free( &start_hist[i] );
 		rt_hist_free( &end_hist[i] );
 	}
+	rt_free( (char *)nu_xbox.bn_list, "nu_xbox bn_list[]" );
+	rt_free( (char *)nu_ybox.bn_list, "nu_ybox bn_list[]" );
+	rt_free( (char *)nu_zbox.bn_list, "nu_zbox bn_list[]" );
 
 	/*  Dynamic decisions on tree limits.
 	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
@@ -305,8 +387,8 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	rt_ct_optim( &rtip->rti_CutHead, 0 );
 
 	/* Measure the depth of tree, find max # of RPPs in a cut node */
-	rt_hist_init( &rtip->rti_hist_cellsize, 0, 99, 100 );
-	rt_hist_init( &rtip->rti_hist_cutdepth, 0, rt_cutDepth+1, 100 );
+	rt_hist_init( &rtip->rti_hist_cellsize, 0, 399, 400 );
+	rt_hist_init( &rtip->rti_hist_cutdepth, 0, rt_cutDepth+1, 400 );
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
 	rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
 	if(rt_g.debug&DEBUG_CUT)  {
@@ -677,12 +759,18 @@ rt_ck_overlap( min, max, stp )
 register vect_t min, max;
 register struct soltab *stp;
 {
+	RT_CHECK_SOLTAB(stp);
 	if( rt_g.debug&DEBUG_BOXING )  {
 		rt_log("rt_ck_overlap(%s)\n",stp->st_name);
 		VPRINT("box min", min);
 		VPRINT("sol min", stp->st_min);
 		VPRINT("box max", max);
 		VPRINT("sol max", stp->st_max);
+	}
+	if( stp->st_aradius >= INFINITY )  {
+		/* Need object classification test here */
+		if( rt_g.debug&DEBUG_BOXING )  rt_log("rt_ck_overlap:  TRUE (inf)\n");
+		return(1);
 	}
 	if( stp->st_min[X] > max[X]  || stp->st_max[X] < min[X] )  goto fail;
 	if( stp->st_min[Y] > max[Y]  || stp->st_max[Y] < min[Y] )  goto fail;
