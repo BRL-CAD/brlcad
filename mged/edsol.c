@@ -2,7 +2,6 @@
  *			E D S O L . C
  *
  * Functions -
- *	redraw		redraw a single solid, given matrix and record.
  *	init_sedit	set up for a Solid Edit
  *	sedit		Apply Solid Edit transformation(s)
  *	findang		Given a normal vector, find rotation & fallback angles
@@ -49,6 +48,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern int	printf();
 extern char    *cmd_args[];
 extern int 	numargs;
+
+extern struct solid	*redraw();
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
@@ -567,47 +568,6 @@ int arg;
 {
 	(void)printf("NOT IMPLEMENTED YET\n");
 }
-
-/*
- *  			R E D R A W
- *  
- *  Probably misnamed.
- */
-struct solid *
-redraw( sp, recp, mat )
-struct solid *sp;
-union record *recp;
-mat_t	mat;
-{
-	int addr, bytes;
-
-	if( sp == SOLID_NULL )
-		return( sp );
-
-	/* Remember displaylist location of previous solid */
-	addr = sp->s_addr;
-	bytes = sp->s_bytes;
-
-	if( drawHsolid(
-		sp,
-		sp->s_soldash,
-		sp->s_last,
-		mat,
-		recp,
-		sp->s_regionid
-	) != 1 )  {
-		(void)printf("redraw():  error in drawHsolid()\n");
-		return(sp);
-	}
-
-	/* Release previous chunk of displaylist, and rewrite control list */
-	memfree( &(dmp->dmr_map), (unsigned)bytes, (unsigned long)addr );
-	dmaflag = 1;
-	return( sp );
-}
-
-
-
 
 /*
  *			I N I T _ S E D I T
