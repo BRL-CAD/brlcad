@@ -4,6 +4,9 @@
  *  Simulate C/A/T phototypesetter on a framebuffer.
  *  Common usage is troff -t files | cat-fb
  *
+ *  Operation is one-pass, top to bottom, so vertical motion is
+ *  limited to NLINES scanlines.
+ *
  *  Authors -
  *	Ronald B. Natalie
  *	Michael John Muuss
@@ -26,35 +29,31 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "vfont-if.h"
 
-#define NFONTS			25
+#define NFONTS			25	/* # of font+psize combos in cache */
 #define SPECIALFONT		3
-#define MAXF			4
+#define MAXF			4	/* Max fonts mounted in C/A/T -- a constant */
 
 #define LOCAL_RAILMAG		".railmag"
 #define GLOBAL_RAILMAG		"/usr/lib/vfont/railmag"
 
+/* The vfonts are scaled for 200 dpi */
 #define CONVERT(n)		(n*(200./432.))
 #define RECONVERT(n)		(n*(432./200.))
 
-#define RASTER_LENGTH		2048
 
-RGBpixel	scanline[RASTER_LENGTH];
+RGBpixel	*scanline;
 FBIO		*fbp;
 
 RGBpixel	writing_color = {255, 255, 255};
 
-char	crud[512];
-
 /* Single-bit wide typesetting buffer */
+#define RASTER_LENGTH		2048
 #define BYTES_PER_LINE		(RASTER_LENGTH/8)
 #define NLINES			110
 #define BUFFER_SIZE		(NLINES*BYTES_PER_LINE)
 
-char	buffer[BUFFER_SIZE];	/* Big line buffers  */
+char	buffer[BUFFER_SIZE];	/* Big bitmap line buffers  */
 char	*buf0p = &buffer[0];	/* Zero origin in circular buffer  */
-
-char	*calloc();
-char	*nalloc();
 
 struct	fontdes {
 	int	fnum;
@@ -338,56 +337,127 @@ char spectab[128] = {
 	'8'	/*section mark*/
 };
 
+extern char	*malloc();
 
-char	*index();
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+
+static char	*framebuffer = NULL;
+
+static int	scr_width = 0;		/* use device default size */
+static int	scr_height = 0;
+static int	clear = 0;		/* clear screen before writing */
+static int	overlay = 0;		/* overlay FROM STDIN rather than fb */
+static int	debug = 0;
+
+static char usage[] = "\
+Usage: cat-fb [-h -c -O] [-F framebuffer] [-C r/g/b]\n\
+	[-S squarescrsize] [-W scr_width] [-N scr_height] [troff_files]\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "dhcOF:S:W:N:C:" )) != EOF )  {
+		switch( c )  {
+		case 'd':
+			debug = 1;
+			break;
+		case 'O':
+			overlay = 1;
+			break;
+		case 'h':
+			/* high-res */
+			scr_height = scr_width = 1024;
+			break;
+		case 'c':
+			clear = 1;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 'S':
+			scr_height = scr_width = atoi(optarg);
+			break;
+		case 'W':
+			scr_width = atoi(optarg);
+			break;
+		case 'N':
+			scr_height = atoi(optarg);
+			break;
+		case 'C':
+			{
+				register char *cp = optarg;
+				register unsigned char *conp = writing_color;
+
+				/* premature null => atoi gives zeros */
+				for( c=0; c < 3; c++ )  {
+					*conp++ = atoi(cp);
+					while( *cp && *cp++ != '/' ) ;
+				}
+			}
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc )  {
+		/* No file name args */
+		if( isatty(fileno(stdin)) )
+			return(0);
+		/* mainline will actually do the processing */
+	}
+	return(1);		/* OK */
+}
+
 main(argc, argv) 
 	int argc;
 	char *argv[];
 {
-	register int wait = 0;
 	char	*cp;
 
-	argc--, argv++;
-	while(argc && argv[0][0] == '-')  {
-		switch(argv[0][1])  {
-		case 'c':
-			cp = &(argv[0][2]);
-			writing_color[RED] = (unsigned char) atoi(cp);
-			cp = index(cp, ',') + 1;
-			writing_color[GRN] = (unsigned char) atoi(cp);
-			cp = index(cp, ',') + 1;
-			writing_color[BLU] = (unsigned char) atoi(cp);
-			break;
-		default:
-		  	fprintf(stderr, 
-			   "Usage:  cat-fb [-cred,green,blue] [files...]\n");
-			exit(1);
-		}
-		argc--;
-		argv++;
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
-	if( (fbp = fb_open( "", 0, 0 )) == FBIO_NULL )
-		exit(1);
 
-	readrm();
-	for (;;) {
-		if (argc > 0) {
-			if (freopen(argv[0], "r", stdin) == NULL) {
-				perror(argv[0]);
-				argc--, argv++;
+	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
+		exit(1);
+	scr_width = fb_getwidth(fbp);
+	scr_height = fb_getheight(fbp);
+	if( (cp = malloc(scr_width*sizeof(RGBpixel))) == (char *)0 )
+		exit(42);
+	scanline = (RGBpixel *)cp;
+
+	cur_fb_line = scr_height-1;	/* start at top of screen */
+
+	readrailmag();
+
+	if( optind >= argc )  {
+		/* Process one TROFF file from stdin */
+		ofile(stdin);
+	} else {
+		for( ; optind < argc; optind++ )  {
+			register FILE *fp;
+			if( (fp = fopen(argv[optind], "r")) == NULL )  {
+				perror(argv[optind]);
 				continue;
 			}
-			argc--, argv++;
+			ofile(fp);
+			fclose(fp);
 		}
-		ofile();
-		if (argc <= 0)
-			break;
 	}
+	slop_lines(NLINES);		/* Flush bitmap buffer */
 	fb_close(fbp);
 	exit(0);
 }
 
-readrm()
+readrailmag()
 {
 	register int i;
 	register char *cp;
@@ -413,14 +483,14 @@ readrm()
 	close(rmfd);
 }
 
-ofile()
+ofile(fp)
+register FILE	*fp;
 {
 	register int c;
 	double scol;
 	static int initialized;
 
-	cur_fb_line = fb_getheight(fbp)-1;	/* start at top of screen */
-	while ((c = getchar()) != EOF) {
+	while ((c = getc(fp)) != EOF) {
 		if (!c)
 			continue;
 		if (c & 0200) {
@@ -442,7 +512,8 @@ ofile()
 			if (initialized)
 				goto out;
 			initialized = 1;
-			row = 25;
+/**			row = 25;**/
+			row = 0;
 			xpos = CONVERT(row);
 			for (c = 0; c < BUFFER_SIZE; c++)
 				buffer[c] = 0;
@@ -536,7 +607,7 @@ normal_char:
 		}
 	}
 out:
-	slop_lines(NLINES);
+	return;
 }
 
 findsize(code)
@@ -661,12 +732,6 @@ relfont()
 	return (newfont);
 }
 
-int	M[] = { 0xffffffff, 0xfefefefe, 0xfcfcfcfc, 0xf8f8f8f8,
-		0xf0f0f0f0, 0xe0e0e0e0, 0xc0c0c0c0, 0x80808080, 0x0 };
-int	N[] = { 0x00000000, 0x01010101, 0x03030303, 0x07070707,
-		0x0f0f0f0f, 0x1f1f1f1f, 0x3f3f3f3f, 0x7f7f7f7f, 0xffffffff };
-int	strim[] = { 0xffffffff, 0xffffff00, 0xffff0000, 0xff000000, 0 };
-
 outc(code)
 	int code;
 {
@@ -754,25 +819,6 @@ slop_lines(nlines)
 	row -= RECONVERT(nlines);
 }
 
-char *
-nalloc(i, j)
-	int i, j;
-{
-	register char *cp;
-
-	cp = calloc(i, j);
-	/* fprintf(stderr, "allocated %d bytes at %x\n", i * j, cp); */
-	return(cp);
-}
-
-nfree(cp)
-	char *cp;
-{
-
-	/* fprintf(stderr, "freeing at %x\n", cp); */
-	free(cp);
-}
-
 /*
  *  Overlay framebuffer with indicated lines of bitmap.
  */
@@ -791,7 +837,15 @@ writelines(nlines, buf)
 			fb_close(fbp);
 			exit(1);
 		}
-		fb_read( fbp, 0, cur_fb_line, scanline, fb_getwidth(fbp) );
+		if( clear )
+			bzero( (char *)scanline, scr_width*3 );
+		else if( overlay )  {
+			if( fread( (char *)scanline, scr_width*3, 1, stdin ) != 1 )  {
+				clear = 1;
+				overlay = 0;
+			}
+		} else
+			fb_read( fbp, 0, cur_fb_line, scanline, scr_width );
 		pp = scanline;
 		for( lpos = 0; lpos < BYTES_PER_LINE; lpos++)  {
 			for(bit = 0x80; bit; bit >>= 1)  {
@@ -802,7 +856,7 @@ writelines(nlines, buf)
 			}
 			buf++;
 		}
-		fb_write( fbp, 0, cur_fb_line, scanline, fb_getwidth(fbp) );
+		fb_write( fbp, 0, cur_fb_line, scanline, scr_width );
 		cur_fb_line--;
 	}
 	return(0);
