@@ -1214,9 +1214,11 @@ double			where;
 /*
  *			R T _ C K _ O V E R L A P
  *
- *  See if any part of the object is contained within the box (RPP).
- *  There should be a routine per solid type to further refine
- *  this if the bounding boxes overlap.  Also need hooks for polygons.
+ *  See if any part of the solid is contained within the bounding box (RPP).
+ *
+ *  If the solid RPP at least partly overlaps the bounding RPP,
+ *  invoke the per-solid "classifier" method to perform a more
+ *  rigorous check.
  *
  *  Returns -
  *	!0	if object overlaps box.
