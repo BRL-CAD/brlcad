@@ -466,7 +466,7 @@ int axis;
   sp.s_vlist.forw = &sp.s_vlist;
   sp.s_vlist.back = &sp.s_vlist;
   RT_LIST_APPEND(&sp.s_vlist, (struct rt_list *)&vlist);
-  sp.s_soldash = NULL;
+  sp.s_soldash = 0;
 
   if(axis_color_hook)
     (*axis_color_hook)(axis, sp.s_color);
