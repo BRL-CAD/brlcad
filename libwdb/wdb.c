@@ -86,7 +86,7 @@ int
 mk_half( fp, name, norm, d )
 FILE	*fp;
 char	*name;
-point_t	norm;
+vect_t	norm;
 double	d;
 {
 	static union record rec;
