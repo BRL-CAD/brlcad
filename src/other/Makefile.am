@@ -49,7 +49,6 @@ SUBDIRS = \
 	iwidgets \
 	${JOVEDIR} \
 	libitcl \
-	liborle \
 	libtcl \
 	libtk \
 	libutahrle
