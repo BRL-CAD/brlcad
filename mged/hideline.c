@@ -39,6 +39,7 @@
 #include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
+#include "./ged.h"
 
 #ifdef gould
 #define MAXOBJECTS	1000
@@ -58,7 +59,6 @@
 
 extern struct db_i *dbip;	/* current database instance */
 
-extern float Viewscale;
 extern mat_t view2model;
 extern mat_t model2view;
 
@@ -156,7 +156,7 @@ char	**argv;
 	if ((plotfp = fopen(argv[1],"w")) == NULL) {
 		(void)printf("f_hideline: unable to open \"%s\" for writing.\n",
 		    argv[1]);
-		return(1);
+		return CMD_BAD;
 	}
 	pl_space(plotfp,-2048,-2048,2048,2048);
 
@@ -179,7 +179,7 @@ char	**argv;
 	if ((rtip = rt_dirbuild(dbip->dbi_filename,title,0)) == RTI_NULL) {
 		printf("f_hideline: unable to open model file \"%s\"\n",
 		    dbip->dbi_filename);
-		return(1);
+		return CMD_BAD;
 	}
 	a.a_hit = hit_headon;
 	a.a_miss = hit_tangent;
@@ -267,5 +267,5 @@ char	**argv;
 		}
 	}
 	fclose(plotfp);
-	return(0);
+	return CMD_OK;
 }
