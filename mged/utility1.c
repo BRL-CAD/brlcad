@@ -34,9 +34,9 @@ extern void f_quit();
 
 extern int	args;		/* total number of args available */
 extern int	argcnt;		/* holder for number of args added later */
-extern int	newargs;	/* number of args from getcmd() */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
+extern char	*local_unit[];
 
 extern void	exit(), perror();
 extern char	 *strcpy(), *strncat();
@@ -54,16 +54,6 @@ struct identt {
 struct identt identt, idbuf;
 
 static union record record;
-
-static char *unit_str[] = {
-	"NONE",
-	"MILLIMETERS",
-	"CENTIMETERS",
-	"METERS",
-	"INCHES",
-	"FEET",
-	"NONE"
-};
 
 #define ABORTED		-99
 #define MAXSOL 		2000
@@ -87,7 +77,9 @@ int flag;	/* which type of table to make */
 FILE *fopen(), *tabptr;
 
 void
-f_tables()
+f_tables( argc, argv )
+int	argc;
+char	**argv;
 {
 
 	register struct directory *dp;
@@ -100,15 +92,15 @@ f_tables()
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 
 	/* find out which ascii table is desired */
-	if( strcmp(cmd_args[0], "solids") == 0 ) {
+	if( strcmp(argv[0], "solids") == 0 ) {
 		/* complete summary - down to solids/paremeters */
 		flag = SOL_TABLE;
 	}
-	else if( strcmp(cmd_args[0], "regions") == 0 ) {
+	else if( strcmp(argv[0], "regions") == 0 ) {
 		/* summary down to solids as members of regions */
 		flag = REG_TABLE;
 	}
-	else if( strcmp(cmd_args[0], "idents") == 0 ) {
+	else if( strcmp(argv[0], "idents") == 0 ) {
 		/* summary down to regions */
 		flag = ID_TABLE;
 	}
@@ -122,8 +114,8 @@ f_tables()
 	tabptr = NULL;
 
 	/* open the file */
-	if( (tabptr=fopen(cmd_args[1], "w+")) == NULL ) {
-		(void)fprintf(stderr,"Can't open %s\n",cmd_args[1]);
+	if( (tabptr=fopen(argv[1], "w+")) == NULL ) {
+		(void)fprintf(stderr,"Can't open %s\n",argv[1]);
 		return;
 	}
 
@@ -139,31 +131,31 @@ f_tables()
 	(void)time( &now );
 	timep = ctime( &now );
 	timep[24] = '\0';
-	(void)fprintf(tabptr,"1 -8    Summary Table {%s}  (written: %s)\n",cmd_args[0],timep);
+	(void)fprintf(tabptr,"1 -8    Summary Table {%s}  (written: %s)\n",argv[0],timep);
 	(void)fprintf(tabptr,"2 -7         file name    : %s\n",dbip->dbi_filename);    
 	(void)fprintf(tabptr,"3 -6         \n");
 	(void)fprintf(tabptr,"4 -5         \n");
 	(void)fprintf(tabptr,"5 -4         user         : %s\n",getpwuid(getuid())->pw_gecos);
 	(void)fprintf(tabptr,"6 -3         target title : %s\n",cur_title);
-	(void)fprintf(tabptr,"7 -2         target units : %s\n",unit_str[localunit]);
+	(void)fprintf(tabptr,"7 -2         target units : %s\n",local_unit[localunit]);
 	(void)fprintf(tabptr,"8 -1         objects      :");
-	for(i=2; i<numargs; i++) {
+	for(i=2; i<argc; i++) {
 		if( (i%8) == 0 )
 			(void)fprintf(tabptr,"\n                           ");
-		(void)fprintf(tabptr," %s",cmd_args[i]);
+		(void)fprintf(tabptr," %s",argv[i]);
 	}
 	(void)fprintf(tabptr,"\n\n");
 
 	/* make table of the objects */
 	mat_idn( identity );
-	for(i=2; i<numargs; i++) {
-		if( (dp = db_lookup( dbip, cmd_args[i],LOOKUP_NOISY)) != DIR_NULL )
+	for(i=2; i<argc; i++) {
+		if( (dp = db_lookup( dbip, argv[i],LOOKUP_NOISY)) != DIR_NULL )
 			tables(dp, 0, identity, flag);
 		else
 			(void)printf(" skip this object\n");
 	}
 
-	(void)printf("Summary written in: %s\n",cmd_args[1]);
+	(void)printf("Summary written in: %s\n",argv[1]);
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
 		/* remove the temp file */
@@ -181,9 +173,9 @@ f_tables()
 		/* make ordered idents */
 		sortcmd[31] = '\0';
 		catcmd[19] = '\0';
-		(void)strcat(sortcmd, cmd_args[1]);
+		(void)strcat(sortcmd, argv[1]);
 		(void)system( sortcmd );
-		(void)strcat(catcmd, cmd_args[1]);
+		(void)strcat(catcmd, argv[1]);
 		(void)system( catcmd );
 		(void)unlink( "/tmp/ord_id\0" );
 	}
@@ -204,7 +196,9 @@ char ctemp[7];
  *
  */
 void
-f_edcodes( )
+f_edcodes( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	register int i;
@@ -223,8 +217,8 @@ f_edcodes( )
 	/* need "nice" way to do this */
 	(void)system( "stty raw -echo" );
 
-	for(i=1; i<numargs; i++) {
-		if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY)) != DIR_NULL )
+	for(i=1; i<argc; i++) {
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL )
 			edcodes(dp, 0);
 		else
 			(void)printf(" skip this object\n");
@@ -248,7 +242,9 @@ char prestr[15];
 int ncharadd;
 
 void
-f_dup( )
+f_dup( argc, argv )
+int	argc;
+char	**argv;
 {
 
 	register FILE *dupfp;
@@ -260,7 +256,7 @@ f_dup( )
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 
 	/* save number of args entered initially */
-	args = numargs;
+	args = argc;
 	argcnt = 0;
 
 	/* get target file name */
@@ -420,7 +416,9 @@ f_dup( )
  *	concatenates another GED file onto end of current file
  */
 void
-f_concat( )
+f_concat( argc, argv )
+int	argc;
+char	**argv;
 {
 	FILE *catfp;
 	int nskipped, i, length;
@@ -429,7 +427,7 @@ f_concat( )
 	(void)signal( SIGINT, sig2 );		/* interrupts */
 
 	/* save number of args entered initially */
-	args = numargs;
+	args = argc;
 	argcnt = 0;
 
 	/* get target file name */
@@ -1292,14 +1290,16 @@ char old_name[NAMESIZE];
  *	F _ W H I C H _ I D ( ) :	finds all regions with given idents
  */
 void
-f_which_id( )
+f_which_id( argc, argv )
+int	argc;
+char	**argv;
 {
 	union record	rec;
 	register int	i,j;
 	register struct directory *dp;
 	int		item;
 
-	args = numargs;
+	args = argc;
 	argcnt = 0;
 
 	/* allow interupts */
