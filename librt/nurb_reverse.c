@@ -35,6 +35,7 @@ struct snurb * srf;
 	int row, col;
 	fastf_t * p_ptr;
 	fastf_t * tmp;
+	fastf_t * ptr2;
 
         p_ptr = srf->ctl_points;
         coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
@@ -45,18 +46,14 @@ struct snurb * srf;
 	tmp = (fastf_t *) rt_malloc(sizeof(fastf_t) * coords * 
 		row * col, "nurb_reverse:temp");
 
+	ptr2 = tmp;
+
 	for(i = 0; i < row; i++)
 	for(j = 0; j < col; j++)
 	{
-		int tmp_index, p_index;
-
-		tmp_index = j * col * coords + i * coords;
-		p_index   = i * row * coords + j * coords;
-
-		for(k= 0; k < coords; k++)
-			tmp[tmp_index +k] = p_ptr[p_index + k];
-
-	}
+                for( k = 0; k < coords; k++)
+ 	               *ptr2++ = srf->ctl_points[ (j * col + i) * coords + k];
+ 	}
 
 	for( i = 0; i < row * col * coords; i++)
 		p_ptr[i] = tmp[i];
