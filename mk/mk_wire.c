@@ -302,7 +302,7 @@ char *argv[];
    /*  Create regions.  */
 
    /*  Initialize list.  */
-   RT_LIST_INIT(&comb.l);
+   BU_LIST_INIT(&comb.l);
 
    /*  Create region for each segment.  */
 
@@ -411,7 +411,7 @@ char *argv[];
    /*  Create group.  */
 
    /*  Initialize list.  */
-   RT_LIST_INIT(&comb1.l);
+   BU_LIST_INIT(&comb1.l);
 
    for(i=0; i<numseg; i++)
    {							/*  START # 50  */

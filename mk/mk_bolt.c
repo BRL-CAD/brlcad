@@ -383,7 +383,7 @@ char *argv[];
 
    /*  Create all regions.  */
    /*  First must initialize list.  */
-   RT_LIST_INIT(&comb.l);
+   BU_LIST_INIT(&comb.l);
 
    /*  Create region for first half of bolt head.  */
    solnam[7] = '1';
@@ -450,7 +450,7 @@ char *argv[];
 
    /*  Create a group containing all bolt regions.  */
    /*  First initialize the list.  */
-   RT_LIST_INIT(&comb1.l);
+   BU_LIST_INIT(&comb1.l);
    /*  Add both bolt head regions to the list.  */
    regnam[7] = '1';
    (void)mk_addmember(regnam,&comb1,WMOP_UNION);

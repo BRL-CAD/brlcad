@@ -260,7 +260,7 @@ char *argv[];
 	/*  Make all regions.  */
 
 	/*  Initialize list.  */
-	RT_LIST_INIT(&comb.l);
+	BU_LIST_INIT(&comb.l);
 
 	solnam[6] = '1';
 	(void)mk_addmember(solnam,&comb,WMOP_INTERSECT);
@@ -313,7 +313,7 @@ char *argv[];
 	/*  Create group.  */
 
 	/*  Initialize list.  */
-	RT_LIST_INIT(&comb1.l);
+	BU_LIST_INIT(&comb1.l);
 
 	regnam[6] = '1';
 	(void)mk_addmember(regnam,&comb1,WMOP_UNION);

@@ -374,7 +374,7 @@ char *argv[];
 	/*  Make all regions.  */
 
 	/*  Initialize list.  */
-	RT_LIST_INIT(&comb.l);
+	BU_LIST_INIT(&comb.l);
 
 	/*  Region 1.  */
 	solnam[5] = 97 + i;
@@ -682,7 +682,7 @@ char *argv[];
 	/*  Create group.  */
 
 	/*  Initialize list.  */
-	RT_LIST_INIT(&comb1.l);
+	BU_LIST_INIT(&comb1.l);
 
 	regnam[6] = '0';
 	regnam[7] = '1';
