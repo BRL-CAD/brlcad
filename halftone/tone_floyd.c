@@ -1,8 +1,24 @@
+/*
+ *			T O N E _ F L O Y D . C
+ *
+ *  Author -
+ *	Christopher T. Johnson	- 90/03/21
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
+ */
 #ifndef lint
-static char rcsid[] = "$Header$";
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
 #include <stdio.h>
 #include "msr.h"
+
 extern int Debug;
 extern int Levels;
 extern int width;
@@ -11,12 +27,12 @@ extern struct msr_unif *RandomFlag;
 /*	tone_floyd	floyd-steinberg dispersed error method.
  *
  * Entry:
- *	Pix	Pixel value	0-255
- *	X	Current column
- *	Y	Current row
- *	NX	Next column
- *	NY	Next row
- *	New	New row flag.
+ *	pix	Pixel value	0-255
+ *	x	Current column
+ *	y	Current row
+ *	nx	Next column
+ *	ny	Next row
+ *	new	New row flag.
  *
  * Exit:
  *	returns	0 - Levels
@@ -30,42 +46,19 @@ extern struct msr_unif *RandomFlag;
  * Calls:
  *	MSR_UNIF_DOUBLE()	Returns a random double between -0.5 and 0.5.
  *
- * Method:
- *	straight-forward.
- *
  * Author:
  *	Christopher T. Johnson	- 90/03/21
- *
- * $Log$
- * Revision 2.2  90/04/13  01:46:20  cjohnson
- * Change include "*.h" to "./*.h"
- * 
- * Revision 2.1  90/04/13  01:23:18  cjohnson
- * First Relese.
- * 
- * Revision 1.4  90/04/13  00:56:25  cjohnson
- * Comment clean up.
- * Change some variables to registers.
- * 
- * Revision 1.3  90/04/12  17:36:57  cjohnson
- * Add Random number processing.
- * 
- * Revision 1.2  90/04/10  16:46:25  cjohnson
- * Fix Intensity methods 
- * 
- * Revision 1.1  90/04/10  05:23:24  cjohnson
- * Initial revision
- * 
  */
-tone_floyd(Pix,X,Y,NX,NY,New)
-int	Pix;
-int	X, Y, NX, NY;
-int	New;
+int
+tone_floyd(pix,x,y,nx,ny,new)
+int	pix;
+int	x, y, nx, ny;
+int	new;
 {
 	static int *error = 0;
 	static int *thisline;
 	register int diff,value;
-	int Dir = NX-X;
+	int Dir = nx-x;
 	register double w1,w3,w5,w7;
 
 	if (RandomFlag) {
@@ -98,26 +91,26 @@ int	New;
 /*
  *	if this is a new line then trade error for thisline.
  */
-	if (New) {
+	if (new) {
 		int *p;
 		p = error;
 		error = thisline;
 		thisline = p;
 	}
 
-	Pix += thisline[X];
-	thisline[X] = 0;
+	pix += thisline[x];
+	thisline[x] = 0;
 
-	value = (Pix*Levels + 127) / 255;
-	diff =  Pix - (value * 255 /Levels);
+	value = (pix*Levels + 127) / 255;
+	diff =  pix - (value * 255 /Levels);
 
-	if (X+Dir < width && X+Dir >= 0) {
-		thisline[X+Dir] += diff*w7;	/* slow */
-		error[X+Dir] += diff*w1;
+	if (x+Dir < width && x+Dir >= 0) {
+		thisline[x+Dir] += diff*w7;	/* slow */
+		error[x+Dir] += diff*w1;
 	}
-	error[X] += diff*w5;			/* slow */
-	if (X-Dir < width && X-Dir >= 0) {
-		error[X-Dir] += diff*w3;
+	error[x] += diff*w5;			/* slow */
+	if (x-Dir < width && x-Dir >= 0) {
+		error[x-Dir] += diff*w3;
 	}
 	return(value);
 }
