@@ -123,11 +123,10 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
     global mged_players
     global mged_top
     global edit_type
-    global transform_what
-    global erotate_about
-    global rotate_about_what
-    global ecoords
-    global coord_type
+    global mged_transform
+    global mged_coords
+    global mged_rotate_about
+    global do_tearoffs
 
     if ![info exists mged_players] {
 	return
@@ -135,29 +134,22 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 
     set edit_type "none of above"
     foreach id $mged_players {
-	.$id.m.options.m.cm_transform entryconfigure 3 -state normal
-	set transform_what($id) "e"
+	.$id.m.settings.m.cm_transform entryconfigure 2 -state normal
+	set mged_transform($id) "e"
 	set_transform $id
 
-	.$id.m.options.m.cm_origin entryconfigure 0 -command "set_erotate_about $id"
-	.$id.m.options.m.cm_origin entryconfigure 1 -command "set_erotate_about $id"
-	.$id.m.options.m.cm_origin entryconfigure 2 -command "set_erotate_about $id"
-	.$id.m.options.m.cm_origin entryconfigure 3 -command "set_erotate_about $id"\
-		-state normal
-	.$id.m.options.m.cm_coord entryconfigure 0 -command "set_ecoords $id"
-	.$id.m.options.m.cm_coord entryconfigure 1 -command "set_ecoords $id"
-	.$id.m.options.m.cm_coord entryconfigure 2 -command "set_ecoords $id"\
-		-state normal
+	.$id.m.settings.m.cm_coord entryconfigure 2 -state normal
+	set mged_coords($id) "o"
+	doit $id "set coords $mged_coords($id)"
 
-	winset $mged_top($id).ul
-	set rotate_about_what($id) $erotate_about
-	set coord_type($id) $ecoords
-	set_erotate_about $id
-	set_ecoords $id
+	.$id.m.settings.m.cm_origin entryconfigure 3 -state normal
+	set mged_rotate_about($id) "k"
+	doit $id "set rotate_about $mged_rotate_about($id)"
 
 	.$id.m.edit.m entryconfigure 0 -state disabled
 	.$id.m.edit.m entryconfigure 1 -state disabled
 	.$id.m.edit.m entryconfigure 2 -state disabled
+	.$id.m.edit.m entryconfigure 3 -state disabled
 
 	.$id.m.edit.m insert 0 cascade -label "move edges" \
 		-menu .$id.m.edit.m.cm_mvedges
@@ -181,7 +173,7 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 		-command "press accept"
 	.$id.m.edit.m insert 11 separator
 
-	menu .$id.m.edit.m.cm_mvedges
+	menu .$id.m.edit.m.cm_mvedges -tearoff $do_tearoffs
 	foreach item $menu1 {
 	    if {$item != "RETURN"} {
 		.$id.m.edit.m.cm_mvedges add radiobutton -variable edit_type -label $item \
@@ -190,7 +182,7 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 	    }
 	}
 
-	menu .$id.m.edit.m.cm_mvfaces
+	menu .$id.m.edit.m.cm_mvfaces -tearoff $do_tearoffs
 	foreach item $menu2 {
 	    if {$item != "RETURN"} {
 		.$id.m.edit.m.cm_mvfaces add radiobutton -variable edit_type -label $item \
@@ -199,7 +191,7 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 	    }
 	}
     
-	menu .$id.m.edit.m.cm_rotfaces
+	menu .$id.m.edit.m.cm_rotfaces -tearoff $do_tearoffs
 	foreach item $menu3 {
 	    if {$item != "RETURN"} {
 		.$id.m.edit.m.cm_rotfaces add radiobutton -variable edit_type -label $item \
@@ -215,11 +207,9 @@ proc do_edit_menu { menu1 } {
     global mged_players
     global mged_top
     global edit_type
-    global transform_what
-    global erotate_about
-    global rotate_about_what
-    global ecoords
-    global coord_type
+    global mged_transform
+    global mged_coords
+    global mged_rotate_about
 
     if ![info exists mged_players] {
 	return
@@ -227,29 +217,22 @@ proc do_edit_menu { menu1 } {
 
     set edit_type "none of above"
     foreach id $mged_players {
-	.$id.m.options.m.cm_transform entryconfigure 3 -state normal
-	set transform_what($id) "e"
+	.$id.m.settings.m.cm_transform entryconfigure 2 -state normal
+	set mged_transform($id) "e"
 	set_transform $id
 
-	.$id.m.options.m.cm_origin entryconfigure 0 -command "set_erotate_about $id"
-	.$id.m.options.m.cm_origin entryconfigure 1 -command "set_erotate_about $id"
-	.$id.m.options.m.cm_origin entryconfigure 2 -command "set_erotate_about $id"
-	.$id.m.options.m.cm_origin entryconfigure 3 -command "set_erotate_about $id"\
-		-state normal
-	.$id.m.options.m.cm_coord entryconfigure 0 -command "set_ecoords $id"
-	.$id.m.options.m.cm_coord entryconfigure 1 -command "set_ecoords $id"
-	.$id.m.options.m.cm_coord entryconfigure 2 -command "set_ecoords $id"\
-		-state normal
+	.$id.m.settings.m.cm_coord entryconfigure 2 -state normal
+	set mged_coords($id) "o"
+	doit $id "set coords $mged_coords($id)"
 
-	winset $mged_top($id).ul
-	set rotate_about_what($id) $erotate_about
-	set coord_type($id) $ecoords
-	set_erotate_about $id
-	set_ecoords $id
+	.$id.m.settings.m.cm_origin entryconfigure 3 -state normal
+	set mged_rotate_about($id) "k"
+	doit $id "set rotate_about $mged_rotate_about($id)"
 
 	.$id.m.edit.m entryconfigure 0 -state disabled
 	.$id.m.edit.m entryconfigure 1 -state disabled
 	.$id.m.edit.m entryconfigure 2 -state disabled
+	.$id.m.edit.m entryconfigure 3 -state disabled
 
 	set i 0
 	foreach item $menu1 {
@@ -327,11 +310,9 @@ proc do_edit_menu { menu1 } {
 proc undo_edit_menu {} {
     global mged_players
     global mged_top
-    global transform_what
-    global rotate_about
-    global rotate_about_what
-    global coords
-    global coord_type
+    global mged_transform
+    global mged_coords
+    global mged_rotate_about
 
     if ![info exists mged_players] {
 	return
@@ -360,27 +341,24 @@ proc undo_edit_menu {} {
 	.$id.m.edit.m entryconfigure 0 -state normal
 	.$id.m.edit.m entryconfigure 1 -state normal
 	.$id.m.edit.m entryconfigure 2 -state normal
+	.$id.m.edit.m entryconfigure 3 -state normal
 
-	.$id.m.options.m.cm_transform entryconfigure 3 -state disabled
-	if {$transform_what($id) == "e"} {
-	    set transform_what($id) "v"
+	.$id.m.settings.m.cm_transform entryconfigure 2 -state disabled
+	if {$mged_transform($id) == "e"} {
+	    set mged_transform($id) "v"
 	    set_transform $id
 	}
 
-	.$id.m.options.m.cm_origin entryconfigure 0 -command "set_rotate_about $id"
-	.$id.m.options.m.cm_origin entryconfigure 1 -command "set_rotate_about $id"
-	.$id.m.options.m.cm_origin entryconfigure 2 -command "set_rotate_about $id"
-	.$id.m.options.m.cm_origin entryconfigure 3 -command "set_rotate_about $id"\
-		-state disabled
-	.$id.m.options.m.cm_coord entryconfigure 0 -command "set_coords $id"
-	.$id.m.options.m.cm_coord entryconfigure 1 -command "set_coords $id"
-	.$id.m.options.m.cm_coord entryconfigure 2 -command "set_coords $id"\
-		-state disabled
+	.$id.m.settings.m.cm_coord entryconfigure 2 -state disabled
+	if {$mged_coords($id) == "o"} {
+	    set mged_coords($id) "v"
+	    doit $id "set coords $mged_coords($id)"
+	}
 
-	winset $mged_top($id).ul
-	set rotate_about_what($id) $rotate_about
-	set coord_type($id) $coords
-	set_rotate_about $id
-	set_coords $id
+	.$id.m.settings.m.cm_origin entryconfigure 3 -state disabled
+	if {$mged_rotate($id) == "k"} {
+	    set mged_rotate($id) "v"
+	    doit $id "set rotate_about $mged_rotate_about($id)"
+	}
     }
 }
