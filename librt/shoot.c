@@ -1105,10 +1105,8 @@ register struct resource *res;
 	if( size < 1 )  rt_bomb("rt_get_bitv");
 	size = (size+sizeof(long)-1) & ~(sizeof(long)-1);
 	bytes = rt_byte_roundup(16*size);
-	if( (cp = rt_malloc(bytes, "rt_get_bitv")) == (char *)0 )  {
-		rt_log("rt_get_bitv: malloc failure\n");
-		exit(17);
-	}
+	cp = rt_malloc(bytes, "rt_get_bitv");
+
 	while( bytes >= size )  {
 		((union bitv_elem *)cp)->be_next = res->re_bitv;
 		res->re_bitv = (union bitv_elem *)cp;
