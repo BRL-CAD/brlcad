@@ -797,7 +797,7 @@ register struct application *ap;
 			/* Add seg chain to list awaiting rt_boolweave() */
 			{
 				register struct seg *s2;
-				while(RT_LIST_LOOP(s2,seg,&(new_segs.l)))  {
+				while(RT_LIST_WHILE(s2,seg,&(new_segs.l)))  {
 					RT_LIST_DEQUEUE( &(s2->l) );
 					/* Restore to original distance */
 					s2->seg_in.hit_dist += ss.dist_corr;

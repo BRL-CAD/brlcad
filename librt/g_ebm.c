@@ -159,7 +159,7 @@ struct application *ap;
 	if(rt_g.debug&DEBUG_EBM)rt_log("kmin=%g, kmax=%g, out_norm_code=%d\n", kmin, kmax, out_norm_code );
 
 	count = 0;
-	while( RT_LIST_LOOP( curr, seg, &(in_hd->l) ) )  {
+	while( RT_LIST_WHILE( curr, seg, &(in_hd->l) ) )  {
 		RT_LIST_DEQUEUE( &(curr->l) );
 		if(rt_g.debug&DEBUG_EBM)rt_log(" rt_seg_planeclip seg( %g, %g )\n", curr->seg_in.hit_dist, curr->seg_out.hit_dist );
 		if( curr->seg_out.hit_dist <= kmin )  {
