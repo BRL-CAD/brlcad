@@ -142,6 +142,8 @@ int     f_aip(), f_ps();
 int     f_bindkey();
 #endif /* XMGED */
 
+extern int f_drawline();
+
 extern void sync();
 int	inpara;			/* parameter input from keyboard */
 
@@ -287,6 +289,8 @@ static struct funtab funtab[] = {
 	f_delay,3,3,FALSE,
 "dm", "set var [val]", "Do display-manager specific command",
 	f_dm, 2, MAXARGS, FALSE,
+"drawline", "x y z color", "Experimental - draw a line (cnuzman)",
+	f_drawline, 3, 4, FALSE,
 "dup", "file [prefix]", "check for dup names in 'file'",
 	f_dup, 2, 3, FALSE,
 "E", "<objects>", "evaluated edit of objects",
