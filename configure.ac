@@ -368,6 +368,7 @@ if test "x$build_vendor" = "xsgi" ; then
    AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
 If we get here, we are using the MIPSPro compiler (and the link should fail).
 #endif
+int main() { return 0; }
    ], [using_mipspro=no], [using_mipspro=yes])
    AC_MSG_RESULT($using_mipspro)
 fi
