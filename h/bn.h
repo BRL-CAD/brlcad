@@ -18,6 +18,7 @@
  *	Michael John Muuss
  *	Lee A Butler
  *	Douglas A Gwyn
+ *	Jeff Hanes
  *  
  *  Source -
  *	The U. S. Army Research Laboratory
@@ -50,6 +51,7 @@ extern "C" {
 #define BN_H_VERSION	"@(#)$Header$ (BRL)"
 
 /*----------------------------------------------------------------------*/
+/* complex.c */
 /*
  *  Complex numbers
  */
@@ -85,6 +87,10 @@ typedef struct bn_complex {
 #define bn_cx_mul2( ap, bp, cp )	{ \
 	(ap)->re = (cp)->re * (bp)->re - (cp)->im * (bp)->im; \
 	(ap)->im = (cp)->re * (bp)->im + (cp)->im * (bp)->re; }
+
+/*----------------------------------------------------------------------*/
+/* poly.c */
+
 
 /*----------------------------------------------------------------------*/
 /*
