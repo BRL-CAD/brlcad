@@ -241,7 +241,35 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	}
 	vg = v->vg_p;
 	NMG_CK_VERTEX_G(vg);
-	if( v->index >= is->maxindex )  rt_bomb("nmg_get_2d_vertex:  array overrun\n");
+	if( v->index >= is->maxindex )  {
+		struct model	*m;
+		int		oldmax;
+		register int	i;
+
+		oldmax = is->maxindex;
+		m = nmg_find_model(&v->magic);
+		NMG_CK_MODEL(m);
+		rt_log("nmg_get_2d_vertex:  v=x%x, v->index=%d, is->maxindex=%d, m->maxindex=%d\n",
+			v, v->index, is->maxindex, m->maxindex );
+		if( v->index >= m->maxindex )  {
+			/* Really off the end */
+			VPRINT("3d vertex", vg->coord);
+			rt_bomb("nmg_get_2d_vertex:  array overrun\n");
+		}
+		/* Need to extend array, it's grown. */
+		is->maxindex = m->maxindex * 4;
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("nmg_get_2d_vertex() extending vert2d array from %d to %d points (m max=%d)\n",
+				oldmax, is->maxindex, m->maxindex);
+		}
+		is->vert2d = (fastf_t *)rt_realloc( (char *)is->vert2d,
+			is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
+
+		/* Clear out the new part of the 2D vertex array, setting flag in [2] to -1 */
+		for( i = (3*is->maxindex)-1-2; i >= oldmax*3; i -= 3 )  {
+			VSET( &is->vert2d[i], 0, 0, -1 );
+		}
+	}
 	pt2d = &is->vert2d[v->index*3];
 	if( pt2d[2] == 0 )  {
 		/* Flag set.  Conversion is done.  Been here before */
@@ -314,7 +342,7 @@ struct face		*f1;
 	m = nmg_find_model( &f1->magic );
 
 	is->maxindex = ( 2 * m->maxindex );
-	is->vert2d = (fastf_t *)rt_malloc( 3 * is->maxindex * sizeof(fastf_t), "vert2d[]");
+	is->vert2d = (fastf_t *)rt_malloc( is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
 
 	/*
 	 *  Rotate so that f1's N vector points up +Z.
