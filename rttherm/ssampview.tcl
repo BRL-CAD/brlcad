@@ -56,12 +56,12 @@ pack .scale.min .scale.max -side top -in .scale
 label .entry_line1.min1 -text "Min:"
 label .entry_line1.min2 -textvariable minval
 label .entry_line1.max1 -text "Max:"
-label .entry_line.max2 -textvariable maxval
-checkbutton .entry_line.cursor_on -text "FB cursor" -variable cursor_on -command {update}
+label .entry_line1.max2 -textvariable maxval
+checkbutton .entry_line1.cursor_on -text "FB cursor" -variable cursor_on -command {update}
 checkbutton .entry_line1.atmosphere_on -text "Atmosphere" -variable use_atmosphere -command {update}
 checkbutton .entry_line1.cie_on -text "CIE" -variable use_cie_xyz -command {update}
-pack .entry_line1.min1 .entry_line1.min2 .entry_line1.max1 .entry_line.max2 \
-	.entry_line.cursor_on .entry_line1.atmosphere_on .entry_line1.cie_on \
+pack .entry_line1.min1 .entry_line1.min2 .entry_line1.max1 .entry_line1.max2 \
+	.entry_line1.cursor_on .entry_line1.atmosphere_on .entry_line1.cie_on \
 	-side left -in .entry_line1
 
 label .entry_line2.wl1 -text "Wavelength of Framebuffer = "
@@ -105,9 +105,10 @@ canvas .plot.spatial.spatial_v.canvas_scanline -width $width -height 280
 scale .plot.spatial.spatial_v.pixel1 -label Pixel \
 	-from 0 -to [expr $width - 1] -showvalue yes \
 	-orient horizontal -variable pixel_num -command {update}
-pack .plot.spatial.spatial_v.scanline4 .plot.spatial_v.scanline5 \
-	.plot.spatial_v.canvas_scanline \
-	.spatial_v.pixel1 -side top -in .plot.spatial.spatial_v
+pack .plot.spatial.spatial_v.scanline4 .plot.spatial.spatial_v.scanline5 \
+	.plot.spatial.spatial_v.canvas_scanline \
+	.plot.spatial.spatial_v.pixel1 \
+	-side top -in .plot.spatial.spatial_v
 
 scale .plot.spatial.scanline3 -label Scanline -from [expr $height - 1] -to 0 \
 	-showvalue yes -length 280 \
@@ -120,8 +121,9 @@ canvas .plot.spectral.canvas_pixel -width $nwave -height 280
 scale .plot.spectral.wl2 -label "Wavelen" \
 	-from 0 -to [expr $nwave - 1] -showvalue yes \
 	-orient horizontal -variable wavel -command {update}
-pack .plot.spectral.spectral1 .plot.spectral.spectral2 .plot.spectral.canvas_pixel \
-	.spectral.wl2 -side top -in .plot.spectral
+pack .plot.spectral.spectral1 .plot.spectral.spectral2 \
+	.plot.spectral.canvas_pixel \
+	.plot.spectral.wl2 -side top -in .plot.spectral
 
 pack .plot.spatial .plot.spectral -side left -in .plot
 
@@ -139,8 +141,8 @@ proc scanline { {foo 0} } {
 
 	set ymax 256
 
-	.canvas_scanline delete T
-	.canvas_scanline create line $pixel_num 0 $pixel_num $ymax -tags T -fill grey
+	.plot.spatial.spatial_v.canvas_scanline delete T
+	.plot.spatial.spatial_v.canvas_scanline create line $pixel_num 0 $pixel_num $ymax -tags T -fill grey
 
 	set y $line_num
 	set x0 0
@@ -158,7 +160,7 @@ proc scanline { {foo 0} } {
 		} elseif {$y1 > 255} {
 			set y1 255
 		}
-		.canvas_scanline create line $x0 $y0 $x1 $y1 -tags T
+		.plot.spatial.spatial_v.canvas_scanline create line $x0 $y0 $x1 $y1 -tags T
 		set x0 $x1
 		set y0 $y1
 ##		puts "$x0 $y0 $x1 $y1"
@@ -185,9 +187,9 @@ proc pixelplot { {foo 0} } {
 
 	set ymax 256
 
-	.canvas_pixel delete T
+	.plot.spectral.canvas_pixel delete T
 	# put a vertical rule at current wavelength.
-	.canvas_pixel create line $wavel 0 $wavel $ymax -tags T -fill grey
+	.plot.spectral.canvas_pixel create line $wavel 0 $wavel $ymax -tags T -fill grey
 
 	set x $pixel_num
 	set y $line_num
@@ -206,7 +208,7 @@ proc pixelplot { {foo 0} } {
 		} elseif {$y1 > 255} {
 			set y1 255
 		}
-		.canvas_pixel create line $x0 $y0 $x1 $y1 -tags T
+		.plot.spectral.canvas_pixel create line $x0 $y0 $x1 $y1 -tags T
 		set x0 $x1
 		set y0 $y1
 ##		puts "$x0 $y0 $x1 $y1"
