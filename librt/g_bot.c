@@ -291,6 +291,7 @@ struct seg		*seghead;
 		VJOIN1( hp->hit_point, rp->r_pt, k, rp->r_dir );
 
 		/* HIT is within planar face */
+		hp->hit_magic = RT_HIT_MAGIC;
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, trip->tri_N );
 		hp->hit_surfno = trip->tri_surfno;
@@ -574,8 +575,8 @@ struct seg		*seghead;
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
 		}
-		return(nhits);			/* HIT */
 	}
+	return(nhits);			/* HIT */
 }
 
 #define RT_BOT_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -830,9 +831,9 @@ CONST struct db_i		*dbip;
 	{
 		int index=chars_used + i * 12;
 
-		bot_ip->faces[i*3] = bu_glong( (CONST char *)&rp->bot.bot_data[index] );
-		bot_ip->faces[i*3 + 1] = bu_glong( (CONST char *)&rp->bot.bot_data[index + 4] );
-		bot_ip->faces[i*3 + 2] = bu_glong( (CONST char *)&rp->bot.bot_data[index + 8] );
+		bot_ip->faces[i*3] = bu_glong( (CONST unsigned char *)&rp->bot.bot_data[index] );
+		bot_ip->faces[i*3 + 1] = bu_glong( (CONST unsigned char *)&rp->bot.bot_data[index + 4] );
+		bot_ip->faces[i*3 + 2] = bu_glong( (CONST unsigned char *)&rp->bot.bot_data[index + 8] );
 	}
 
 	if( bot_ip->mode == RT_BOT_PLATE )
@@ -843,7 +844,7 @@ CONST struct db_i		*dbip;
 		for( i=0 ; i<bot_ip->num_faces ; i++ )
 			ntohd( (unsigned char *)&(bot_ip->thickness[i]),
 				(CONST unsigned char *)(&rp->bot.bot_data[chars_used + i*8]), 1 );
-		bot_ip->face_mode = bu_hex_to_bitv( (&rp->bot.bot_data[chars_used + bot_ip->num_faces * 8]) );
+		bot_ip->face_mode = bu_hex_to_bitv( (CONST char *)(&rp->bot.bot_data[chars_used + bot_ip->num_faces * 8]) );
 	}
 	else
 	{
@@ -945,7 +946,7 @@ CONST struct db_i		*dbip;
 			htond( (unsigned char *)&rec->bot.bot_data[chars_used], (CONST unsigned char *)&bot_ip->thickness[i], 1 );
 			chars_used += 8;
 		}
-		strcpy( (unsigned char *)&rec->bot.bot_data[chars_used], bu_vls_addr( &face_mode ) );
+		strcpy( (char *)&rec->bot.bot_data[chars_used], bu_vls_addr( &face_mode ) );
 		bu_vls_free( &face_mode );
 	}
 
@@ -1092,7 +1093,7 @@ CONST int free;
 {
 	struct rt_bot_internal *botip, *botop;
 	register int		i;
-	register point_t	pt;
+	point_t			pt;
 
 	RT_CK_DB_INTERNAL( ip );
 	botip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -1144,4 +1145,6 @@ CONST int free;
 
 	if( free && op != ip )
 		rt_bot_ifree( ip );
+
+	return( 0 );
 }
