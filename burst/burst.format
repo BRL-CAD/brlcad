@@ -3,7 +3,7 @@ Shotline file output format from burst program:
 record type:	1
 description:	header line for each aspect
 ICD reference:	Line Number 1, Figure 19.
-format:		'1',2(1x,f8.4),5(1x,f7.2),1x,6a
+format:		'1',1x,f9.4,1x,f8.4,5(1x,f7.2),1x,6a
 data:		attack azimuth in degrees
 		attack elevation in degrees
 		shotline separation
@@ -37,7 +37,7 @@ Burst Point Library output format from burst program:
 record type:	1
 description:	header line for each aspect
 ICD reference:	Line Number 1, Figure 20.
-format:		'1',2(1x,f8.4),1x,f5.2,1x,f10.2,1x,6a,1x,f9.6
+format:		'1',1x,f9.4,1x,f8.4,1x,f5.2,1x,f10.2,1x,6a,1x,f9.6
 data:		attack azimuth in degrees
 		attack elevation in degrees
 		burst distance
