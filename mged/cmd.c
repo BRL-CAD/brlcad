@@ -58,26 +58,12 @@ int get_more_default();
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 
-
+extern void set_scroll();  /* defined in set.c */
 extern void sync();
 extern int gui_setup();
-extern int f_decompose();
-extern int f_nmg_simplify();
-extern int f_make_bb();
-extern int f_whatid();
-extern int f_which_air();
-extern int f_eac();
 
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
-
-/* Carl Nuzman experimental */
-#if 1
-extern int cmd_vdraw();
-extern int cmd_viewget();
-extern int cmd_viewset();
-extern int cmd_who();
-#endif
 
 extern Tcl_CmdProc	cmd_fhelp;
 
@@ -852,6 +838,8 @@ mged_setup()
   history_setup();
   mged_variable_setup(interp);
 
+  Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
+
   bu_vls_init(&edit_rate_tran_vls[X]);
   bu_vls_init(&edit_rate_tran_vls[Y]);
   bu_vls_init(&edit_rate_tran_vls[Z]);
@@ -972,6 +960,8 @@ cmd_setup()
 			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "cmd_init", cmd_init, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
+    (void)Tcl_CreateCommand(interp, "cmd_close", cmd_close, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "cmd_set", cmd_set, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "cmd_get", cmd_get, (ClientData)NULL,
@@ -1021,7 +1011,6 @@ char **argv;
     return TCL_ERROR;
   }
 
-#if 1
   /* First, search to see if there exists a command window with the name
      in argv[1] */
   for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
@@ -1047,21 +1036,47 @@ char **argv;
     }
   }
 
-#else
-
-  clp = (struct cmd_list *)bu_malloc(sizeof(struct cmd_list), "cmd_list");
-  bzero((void *)clp, sizeof(struct cmd_list));
-  BU_LIST_APPEND(&head_cmd_list.l, &clp->l);
-  clp->cur_hist = head_cmd_list.cur_hist;
-  bu_vls_init(&clp->more_default);
-  bu_vls_init(&clp->name);
-  bu_vls_strcpy(&clp->name, argv[1]);
-
-#endif
-
   return TCL_OK;
 }
 
+/* close a command window */
+int
+cmd_close(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct cmd_list *clp;
+
+  if(argc != 2){
+    Tcl_AppendResult(interp, "Usage: cmd_init id", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* First, search to see if there exists a command window with the name
+          in argv[1] */
+  for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+    if(!strcmp(argv[1], bu_vls_addr(&clp->name)))
+      break;
+
+  if(clp == &head_cmd_list){
+    Tcl_AppendResult(interp, "cmd_init: did not find ", argv[1], (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(clp == curr_cmd_list)
+    curr_cmd_list = &head_cmd_list;
+
+  BU_LIST_DEQUEUE( &clp->l );
+  if(clp->aim != NULL)
+    clp->aim->aim = CMD_LIST_NULL;
+  bu_vls_free(&clp->more_default);
+  bu_vls_free(&clp->name);
+  bu_free((genptr_t)clp, "cmd_close: clp");
+
+  return TCL_OK;
+}
 
 /* returns a list of ids associated with the current command window */
 int
@@ -1072,20 +1087,17 @@ int argc;
 char **argv;
 {
   struct dm_list *p;
-#if 1
   struct bu_vls vls;
 
-  bu_vls_init(&vls);
-
   if(!curr_cmd_list->aim){
-    bu_vls_printf(&vls, "{%S} {%S}", curr_dm_list->s_info->opp,
-		  &curr_cmd_list->name);
-    Tcl_AppendElement(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
+    Tcl_AppendElement(interp, bu_vls_addr(curr_dm_list->s_info->opp));
+    Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->name));
+
     return TCL_OK;
   }
 
   Tcl_AppendElement(interp, bu_vls_addr(curr_cmd_list->aim->s_info->opp));
+  bu_vls_init(&vls);
 
   /* return all ids associated with the current command window */
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
@@ -1099,24 +1111,6 @@ char **argv;
 
   Tcl_AppendElement(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
-#else
-  /* The current command window is not tied to a display manager so,
-     simply return the id of the current command window */
-  if(!curr_cmd_list->aim){
-    Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->name));
-    return TCL_OK;
-  }
-
-  /* return all ids associated with the current command window */
-  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-    /* The display manager tied to the current command window shares
-       information with display manager p */
-    if(curr_cmd_list->aim->s_info == p->s_info)
-      /* This display manager is tied to a command window */
-      if(p->aim)
-	Tcl_AppendElement(interp, bu_vls_addr(&p->aim->name));
-  }
-#endif
   return TCL_OK;
 }
 
@@ -1389,13 +1383,18 @@ int record;
   case TCL_RETURN:
   case TCL_OK:
     if( setjmp( jmp_env ) == 0 ){
-      (void)signal( SIGINT, sig3);  /* allow interupts */
       len = strlen(interp->result);
 
       /* If the command had something to say, print it out. */	     
-      if (len > 0)
+      if (len > 0){
+	(void)signal( SIGINT, sig3);  /* allow interupts */
+
 	bu_log("%s%s", interp->result,
 	       interp->result[len-1] == '\n' ? "" : "\n");
+
+	(void)signal( SIGINT, SIG_IGN );
+      }
+
 
       /* A user typed this command so let everybody see, then record
 	 it in the history. */
@@ -1406,13 +1405,14 @@ int record;
 	Tcl_SetResult(interp, "", TCL_STATIC);
       }
 
-      (void)signal( SIGINT, SIG_IGN );
-
       if(record)
 	history_record(vp, &start, &finish, CMD_OK);
 
-    }else
+    }else{
+/* XXXXXX */
+      bu_semaphore_release(BU_SEM_SYSCALL);
       bu_log("\n");
+    }
       
     bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
     status = CMD_OK;
@@ -1998,38 +1998,40 @@ Tcl_Interp *interp;
 int argc;
 char *argv[];
 {
-  struct cmd_list *p_cmd;
-  struct dm_list *p_dm;
+  struct cmd_list *clp;
+  struct cmd_list *save_cclp;
+  struct dm_list *dlp;
+  struct dm_list *save_cdlp;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
         return TCL_ERROR;
 
   if(argc == 1){
-    for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
-      if(p_cmd->aim)
-	Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-			 bu_vls_addr(&p_cmd->aim->_dmp->dm_pathName),
+    for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+      if(clp->aim)
+	Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
+			 bu_vls_addr(&clp->aim->_dmp->dm_pathName),
 			 "\n", (char *)NULL);
       else
-	Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
+	Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
 			 "\n", (char *)NULL);
 
-    if(p_cmd->aim)
-      Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-		       bu_vls_addr(&p_cmd->aim->_dmp->dm_pathName),
+    if(clp->aim)
+      Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
+		       bu_vls_addr(&clp->aim->_dmp->dm_pathName),
 		       "\n", (char *)NULL);
     else
-      Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
+      Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
 		       "\n", (char *)NULL);
 
     return TCL_OK;
   }
 
-  for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
-    if(!strcmp(bu_vls_addr(&p_cmd->name), argv[1]))
+  for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+    if(!strcmp(bu_vls_addr(&clp->name), argv[1]))
       break;
 
-  if(p_cmd == &head_cmd_list &&
+  if(clp == &head_cmd_list &&
      (strcmp(bu_vls_addr(&head_cmd_list.name), argv[1]))){
     Tcl_AppendResult(interp, "f_aim: unrecognized command_window - ", argv[1],
 		     "\n", (char *)NULL);
@@ -2038,51 +2040,52 @@ char *argv[];
 
   /* print out the display manager being aimed at */
   if(argc == 2){
-    if(p_cmd->aim)
-      Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-		       bu_vls_addr(&p_cmd->aim->_dmp->dm_pathName),
+    if(clp->aim)
+      Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
+		       bu_vls_addr(&clp->aim->_dmp->dm_pathName),
 		       "\n", (char *)NULL);
     else
-      Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ", "\n", (char *)NULL);
+      Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ", "\n", (char *)NULL);
 
     return TCL_OK;
   }
 
-  for( BU_LIST_FOR(p_dm, dm_list, &head_dm_list.l) )
-    if(!strcmp(argv[2], bu_vls_addr(&p_dm->_dmp->dm_pathName)))
+  for( BU_LIST_FOR(dlp, dm_list, &head_dm_list.l) )
+    if(!strcmp(argv[2], bu_vls_addr(&dlp->_dmp->dm_pathName)))
       break;
 
-#if 1
-  if(p_dm == &head_dm_list){
+  if(dlp == &head_dm_list){
     Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ", argv[2],
 		     "\n", (char *)NULL);
     return TCL_ERROR;
   }
-#else
-  if(p_dm == &head_dm_list &&
-     strcmp(argv[2], bu_vls_addr(&head_dm_list._dmp->dm_pathName))){
-    Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ", argv[2],
-		     "\n", (char *)NULL);
-
-    return TCL_ERROR;
-  }
-#endif
 
   /* already aiming */
-  if(p_cmd->aim)
-    p_cmd->aim->aim = (struct cmd_list *)NULL;
+  if(clp->aim)
+    clp->aim->aim = (struct cmd_list *)NULL;
 
-  p_cmd->aim = p_dm;
+  clp->aim = dlp;
+
+  save_cdlp = curr_dm_list;
+  curr_dm_list = dlp;
+  save_cclp = curr_cmd_list;
 
   /* already being aimed at */
-  if(p_dm->aim)
-    p_dm->aim->aim = (struct dm_list *)NULL;
+  if(dlp->aim)
+    dlp->aim->aim = (struct dm_list *)NULL;
 
-  p_dm->aim = p_cmd;
-  Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-		   bu_vls_addr(&p_cmd->aim->_dmp->dm_pathName),
+  dlp->aim = clp;
+
+  curr_dm_list = dlp;
+  curr_cmd_list = clp;
+  set_scroll();
+  curr_dm_list = save_cdlp;
+  curr_cmd_list = save_cclp;
+
+  Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
+		   bu_vls_addr(&clp->aim->_dmp->dm_pathName),
 		   "\n", (char *)NULL);
-  
+
   return TCL_OK;
 }
 
