@@ -828,7 +828,7 @@ struct partition *PartHeadp;
 		/*  Flip normal if needed.  */
 		if(pp->pt_outflip)
 		{
-			VREVERSE(hitp->hit_normal,hitp->hit_normal)
+			VREVERSE(hitp->hit_normal,hitp->hit_normal);
 			pp->pt_outflip = 0;
 		}
 		iprev = icur;
