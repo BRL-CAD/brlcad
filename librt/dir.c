@@ -44,9 +44,9 @@ static char RCSdir[] = "@(#)$Header$";
  */
 struct rt_i *
 rt_dirbuild(filename, buf, len)
-char	*filename;
-char	*buf;
-int	len;
+CONST char	*filename;
+char		*buf;
+int		len;
 {
 	register struct rt_i	*rtip;
 	register struct db_i	*dbip;		/* Database instance ptr */
