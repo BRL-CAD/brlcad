@@ -251,6 +251,7 @@ STATIC short	debug  = 0;
 STATIC short	over = 0;		/* !0 to overlay on existing image */
 STATIC short	immediate = 0;		/* !0 to plot immediately */
 STATIC short	lines_per_band = 16;	/* scan lines per band */
+STATIC short	line_thickness = 0;
 
 STATIC int	sigs[] =		/* signals to be caught */
 	{
@@ -299,7 +300,7 @@ register long v;
 	return( w | v );
 }
 
-char usage[] = "Usage: pl-fb [-h] [-d] [-o] [-i] [file.plot]\n";
+char usage[] = "Usage: pl-fb [-h] [-d] [-o] [-i] [-t thickness] [file.plot]\n";
 
 /*
  *  M A I N
@@ -322,6 +323,9 @@ char **argv;
 	for(i = 1; i < argc; i++)
 		if( argv[i][0] == '-' )
 			switch( argv[i][1] )  {
+			case 't':
+				line_thickness = atoi(argv[++i]);
+				break;
 				
 			case 'i':
 				immediate = 1;
@@ -1040,64 +1044,87 @@ FreeUp()
 	}
 
 /*
-	BuildStr - set up DDA parameters and queue stroke
-*/
-
-STATIC bool
-BuildStr( pt1, pt2 )			/* returns true unless bug */
-	coords		*pt1, *pt2;	/* endpoints */
-	{
-	register stroke *vp;		/* -> rasterization descr */
-
-	/* arrange for pt1 to have the smaller Y-coordinate: */
-
-	if ( pt1->y > pt2->y )
-		{
-		register coords *temp;	/* temporary for swap */
-
-		temp = pt1;		/* swap pointers */
-		pt1 = pt2;
-		pt2 = temp;
-		}
-
-	if ( (vp = Allocate()) == NULL )	/* alloc a descriptor */
-		return false;		/* "can't happen" */
-
-	/* set up multi-band DDA parameters for stroke */
-
+ *			P R E P _ D D A
+ *
+ *  Set up multi-band DDA parameters for stroke
+ */
+STATIC void
+prep_dda( vp, pt1, pt2 )
+register stroke	*vp;
+register coords	*pt1, *pt2;
+{
 	vp->pixel = *pt1;		/* initial pixel */
 	vp->major = pt2->y - vp->pixel.y;	/* always nonnegative */
 	vp->ysign = vp->major ? 1 : 0;
 	vp->minor = pt2->x - vp->pixel.x;
 	COPYRGB( vp->col, cur_color );
-	if ( (vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0) < 0
-	   )
+	if ( (vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0) < 0 )
 		vp->minor = -vp->minor;
 
 	/* if Y is not really major, correct the assignments */
-
-	if ( !(vp->ymajor = vp->minor <= vp->major) )
-		{
+	if ( !(vp->ymajor = vp->minor <= vp->major) )  {
 		register short	temp;	/* temporary for swap */
 
 		temp = vp->minor;
 		vp->minor = vp->major;
 		vp->major = temp;
-		}
+	}
 
 	vp->e = vp->major / 2 - vp->minor;	/* initial DDA error */
 	vp->de = vp->major - vp->minor;
+}
 
-	/* link descriptor into band corresponding to starting scan */
 
-	if( immediate )  {
-		ystart = 0;
-		Raster( vp, (struct band *)0 );
-	}  else
-		Requeue( &band[vp->pixel.y / lines_per_band], vp );
+/*
+	BuildStr - set up DDA parameters and queue stroke
+*/
 
-	return true;
+STATIC bool
+BuildStr( pt1, pt2 )			/* returns true unless bug */
+coords		*pt1, *pt2;	/* endpoints */
+{
+	register stroke *vp;		/* -> rasterization descr */
+	register int	thick;
+
+	/* arrange for pt1 to have the smaller Y-coordinate: */
+	if ( pt1->y > pt2->y )  {
+		register coords *temp;	/* temporary for swap */
+
+		temp = pt1;		/* swap pointers */
+		pt1 = pt2;
+		pt2 = temp;
 	}
+
+	if ( (vp = Allocate()) == NULL )	/* alloc a descriptor */
+		return false;		/* "can't happen" */
+
+	prep_dda( vp, pt1, pt2 );
+
+	/* Thicken by advancing alternating pixels in minor direction */
+	thick = line_thickness;
+	if( thick >= vp->major )  thick = vp->major-1;
+	for( ; thick >= 0; thick-- )  {
+		register stroke *v2 = Allocate();
+		*v2 = *vp;
+
+		/* Advance minor only */
+		if( vp->ymajor )
+			v2->pixel.x += (vp->xsign!=0 ? vp->xsign : 1) *
+				((thick&1)==0 ? (thick+1)/2 : (thick+1)/-2 );
+		else
+			v2->pixel.y += (vp->ysign!=0 ? vp->ysign : 1) *
+				((thick&1)==0 ? (thick+1)/2 : (thick+1)/-2 );
+
+		if( immediate )  {
+			ystart = 0;
+			Raster( v2, (struct band *)0 );
+		}  else
+			/* link descriptor into band corresponding to starting scan */
+			Requeue( &band[v2->pixel.y / lines_per_band], v2 );
+	}
+	free((char *)vp);
+	return true;
+}
 
 /*
 	Allocate - allocate a descriptor (possibly updating image file)
