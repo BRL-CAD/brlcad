@@ -289,4 +289,7 @@ extern int	fb_sim_getcursor();
 	}
 #define FB_CK_FBIO(_p)	FB_CKMAG(_p, FB_MAGIC, "FBIO" )
 
+/* vers.c (created by libfb/Cakefile) */
+extern char fb_version[];
+
 #endif /* FB_H */

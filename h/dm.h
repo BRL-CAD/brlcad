@@ -233,4 +233,7 @@ extern void dm_configureWindowShape();
 extern void dm_zbuffer();
 extern void dm_lighting();
 extern Tcl_Interp *interp;   /* This must be defined by the application */
+
+/* vers.c (created by libdm/Cakefile) */
+extern char dm_version[];
 #endif /* SEEN_DM_H */
