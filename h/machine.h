@@ -119,7 +119,9 @@ typedef long	bitv_t;		/* largest integer type */
 #define DEFAULT_PSW	1
 #define PARALLEL	1
 
-/**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
+#  if 0
+#	define CRAY_COS	1	/* Running on Cray under COS w/bugs */
+#  endif
 #endif
 
 #if defined(convex) || defined(__convex__)
@@ -321,9 +323,9 @@ typedef long	bitv_t;		/* largest integer type */
 #define SQRT_MAX_FASTF		1.0e36	/* This squared just avoids overflow */
 #define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
 #if defined(aux)
-#define SQRT_SMALL_FASTF	1.0e-40 /* _doprnt error in libc */
+#  define SQRT_SMALL_FASTF	1.0e-40 /* _doprnt error in libc */
 #else
-#define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
+#  define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
 #endif
 #endif
 #define SMALL			SQRT_SMALL_FASTF
