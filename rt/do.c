@@ -410,7 +410,7 @@ extern struct structparse view_parse[];
 #  if IRIX > 5
 #	define byteoffset(_i)	((long)((char *)&(_i)))
 #  else
-#    if sgi || __convexc__ || ultrix
+#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
 	/* "Lazy" way.  Works on reasonable machines with byte addressing */
 #	define byteoffset(_i)	((int)((char *)&(_i)))
 #    else
