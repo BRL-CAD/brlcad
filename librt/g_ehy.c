@@ -933,6 +933,7 @@ struct rt_tol		*tol;
 	struct pt_node	*old, *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
+	struct loopuse	*lu;
 	struct edgeuse	*eu, *eu2;
 	struct vertex	*vertp[3];
 	struct vertex	***vells = (struct vertex ***)NULL;
@@ -1095,17 +1096,10 @@ struct rt_tol		*tol;
 	
 	/* make array of ptrs to ehy ellipses */
 	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
-	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
-	if (!ellipses) {
-		fprintf(stderr, "rt_epa_tess: no mem!\n");
-		goto fail;
-	}
-	
-	/* make array of ptrs to ehy ellipses */
-	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
+
 	/* keep track of whether pts in each ellipse are doubled or not */
 	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
-
+	
 	/* make ellipses at each z level */
 	i = 0;
 	nseg = 0;
@@ -1153,18 +1147,10 @@ struct rt_tol		*tol;
 	/* vertices of ellipses of ehy */
 	vells = (struct vertex ***)
 		rt_malloc(nell*sizeof(struct vertex **), "vertex [][]");
-	if (!vells) {
-		fprintf(stderr, "rt_ehy_tess: no memory!\n");
-		goto fail;
-	}
 	j = nseg;
 	for (i = nell-1; i >= 0; i--) {
 	        vells[i] = (struct vertex **)
 	        	rt_malloc(j*sizeof(struct vertex *), "vertex []");
-		if (!vells[i]) {
-			fprintf(stderr, "rt_ehy_tess: no memory!\n");
-			goto fail;
-		}
 		if (i && pts_dbl[i])
 			j /= 2;
 	}
@@ -1177,6 +1163,25 @@ struct rt_tol		*tol;
 		rt_log("rt_ehy_tess() failure, top face\n");
 		goto fail;
 	}
+
+	/* Mark edges of this face as real, this is the only real edge */
+	for( RT_LIST_FOR( lu , loopuse , &outfaceuses[0]->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu );
+
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		{
+			struct edge *e;
+
+			NMG_CK_EDGEUSE( eu );
+			e = eu->e_p;
+			NMG_CK_EDGE( e );
+			e->is_real = 1;
+		}
+	}
+
 	for (i = 0; i < nseg; i++) {
 		NMG_CK_VERTEX( vells[nell-1][i] );
 		nmg_vertex_gv( vells[nell-1][i], &ellipses[nell-1][3*i] );
@@ -1306,8 +1311,7 @@ struct rt_tol		*tol;
 
 	/* XXX just for testing, to make up for loads of triangles ... */
 	nmg_shell_coplanar_face_merge( s, tol, 1 );
-	
-fail:
+
 	/* free mem */
 	rt_free( (char *)outfaceuses, "faceuse []");
 	for (i = 0; i < nell; i++) {
@@ -1318,6 +1322,18 @@ fail:
 	rt_free( (char *)vells, "vertex [][]");
 
 	return(0);
+
+fail:
+	/* free mem */
+	rt_free( (char *)outfaceuses, "faceuse []");
+	for (i = 0; i < nell; i++) {
+		rt_free( (char *)ellipses[i], "pts ell");
+	        rt_free( (char *)vells[i], "vertex []");
+	}
+	rt_free( (char *)ellipses, "fastf_t ell[]");
+	rt_free( (char *)vells, "vertex [][]");
+
+	return(-1);
 }
 
 /*
