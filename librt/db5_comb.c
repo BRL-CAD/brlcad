@@ -618,6 +618,21 @@ finish:
 			comb->region_flag = 1;
 			/* Value of this parameter is the FASTGEN code */
 			comb->is_fastgen = ibuf[0];
+
+			/* get the other "region" attributes */
+			if( (ap = bu_avs_get( &ip->idb_avs, "region_id" )) != NULL )  {
+				comb->region_id = atoi( ap );
+			}
+			if( (ap = bu_avs_get( &ip->idb_avs, "aircode" )) != NULL )  {
+				comb->aircode = atoi( ap );
+			}
+			if( (ap = bu_avs_get( &ip->idb_avs, "giftmater" )) != NULL )  {
+				comb->GIFTmater = atoi( ap );
+			}
+			if( (ap = bu_avs_get( &ip->idb_avs, "los" )) != NULL )  {
+				comb->los = atoi( ap );
+			}
+			
 		} else {
 			bu_log("unable to parse 'region' attribute '%s'\n", ap);
 		}
