@@ -33,6 +33,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <ctype.h>
 #include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -579,13 +580,13 @@ char **argv;
 }
 
 static struct dbcmdstruct rt_tcl_rt_cmds[] = {
-	"shootray",	rt_tcl_rt_shootray,
-	"onehit",	rt_tcl_rt_onehit,
-	"no_bool",	rt_tcl_rt_no_bool,
-	"check",	rt_tcl_rt_check,
-	"prep",		rt_tcl_rt_prep,
-	"cutter",	rt_tcl_cutter,
-	(char *)0,	(int (*)())0
+	{"shootray",	rt_tcl_rt_shootray},
+	{"onehit",	rt_tcl_rt_onehit},
+	{"no_bool",	rt_tcl_rt_no_bool},
+	{"check",	rt_tcl_rt_check},
+	{"prep",	rt_tcl_rt_prep},
+	{"cutter",	rt_tcl_cutter},
+	{(char *)0,	(int (*)())0}
 };
 
 /*
@@ -791,13 +792,26 @@ Tcl_AppendResult( interp, "\n\n", NULL);
 		tp->tr_l.magic = RT_TREE_MAGIC;
 		tp->tr_op = OP_DB_LEAF;
 		tp->tr_l.tl_name = bu_strdup( argv[1] );
+		/* If matrix not specified, NULL pointer ==> identity matrix */
+		tp->tr_l.tl_mat = NULL;
 		if( argc == 3 )  {
-			tp->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat");
-			if( bn_decode_mat( tp->tr_l.tl_mat, argv[2] ) != 16 )  {
+			mat_t	m;
+			/* decode also recognizes "I" notation for identity */
+			if( bn_decode_mat( m, argv[2] ) != 16 )  {
 				Tcl_AppendResult( interp, "db_tcl_tree_parse: unable to parse matrix '",
-					argv[2], "', using all-zeros", (char *)NULL );
-				bn_mat_zero( tp->tr_l.tl_mat );
+					argv[2], "', using identity", (char *)NULL );
+				break;
 			}
+			if( bn_mat_is_identity(m) )
+				break;
+			if( bn_mat_ck( "db_tcl_tree_parse", m ) )  {
+				Tcl_AppendResult( interp, "db_tcl_tree_parse: matrix '",
+					argv[2],
+					"', does not preserve axis perpendicularity, using identity", (char *)NULL );
+				break;
+			}
+			/* Finall, a good non-identity matrix, dup & save it */
+			tp->tr_l.tl_mat = bn_mat_dup(m);
 		}
 		break;
 
