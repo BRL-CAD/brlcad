@@ -20,11 +20,6 @@
 #
 # FUNCTIONS
 #
-#   initializeVariable
-#       initializes a given variable to a defaultValue if it is not already set
-#   setHostName
-#       sets a var to the HOSTNAME from a variety of potential methods
-#
 #   log
 #       writes output to a given log file
 #   plog
@@ -33,6 +28,15 @@
 #       writes an error message to the log
 #   warn
 #       writes a warning message to the log, optionally bombing
+#
+#   initializeVariable
+#       initializes a given variable to a defaultValue if it is not already set
+#   setHostName
+#       sets a var to the HOSTNAME from a variety of potential methods
+#   hostIsAlive
+#       returns a boolean whether the given host/ip is alive (answers ping)
+#   loadSourceFile
+#       loads the requested file and evaluates the contents as script source
 #
 #   acquireLock
 #       creates a cooperative lock file ("blocks" when one already exists)
@@ -314,7 +318,7 @@ initializeVariable ( ) {
     if [ ! "x$DEBUG" = "x" ] ; then log "initializeVariable( \$1=[$1] \$2=[$2] )" ; fi
 
     if [ "x$1" = "x" ] ; then 
-	bomb "initializeVariable arg1 mismatch"
+	bomb "initializeVariable() arg1 mismatch"
     else 
 	__VAR="$1"
     fi
@@ -366,6 +370,67 @@ setHostName ( ) {
     if [ x`eval $__VARVAL` = x ] ; then initializeVariable $__VAR `uname -n` ; fi
     if [ x`eval $__VARVAL` = x ] ; then initializeVariable $__VAR $__DEFVAL ; fi
 }
+
+#
+# hostIsAlive hostOrIP
+#
+# returns a boolean whether the given host or ip address is "valid" or not.
+# a host is considered valid if it is responding to ping requests
+#
+hostIsAlive ( )  {
+    if [ ! "x$DEBUG" = x ] ; then log "hostIsAlive( \$1=[${1} ) " ; fi
+
+    if [ ! "x$1" = "x" ] ; then
+        __HOST="$1"
+    else 
+        bomb "hostIsAlive() arg1 mismatch -- no host was given"
+    fi
+
+    if ping -c 2 $__HOST > /dev/null 2>&1 ; then
+        return 0
+    # handle cads odd location of ping
+    elif /usr/etc/ping -c 2 $__HOST > /dev/null 2>&1 ; then
+        return 0
+    elif `which ping` -c 2 $__HOST > /dev/null 2>&1 ; then
+        return 0
+    fi
+
+    # fail if we couldn't get a successful ping (after two tries)
+    return 1
+}
+
+
+#
+# loadResourceFile fileName
+#
+loadResourceFile ( ) {
+    if [ ! "x$DEBUG" = x ] ; then log "loadResourceFile( \$1=[${1} ) " ; fi
+
+    if [ ! "x$1" = "x" ] ; then
+        __FILE="$1"
+    else 
+        bomb "loadResourceFile() arg1 mismatch -- no file was given"
+    fi
+
+    if [ ! -f "$__FILE" ] ; then
+        warn "Resource file [$__FILE] does not exist"
+        return 1
+    elif [ ! -r "$__FILE" ] ; then
+        warn "Unable to read resource file [$__FILE]"
+        return 1
+    fi
+    
+    __RCSRC="`cat $__FILE`"
+    eval $__RCSRC
+
+    if [ $? != 0 ] ; then
+        warn "Unable to properly load resource file"
+        return 1
+    fi
+
+    return 0
+}
+
 
 #
 # acquireLock [lockName] [retryCount] [waitLength] [location]
@@ -640,7 +705,7 @@ mail ( ) {
 	if [ ! "x$USER" = x ] ; then
 	    __ADDRESS="$USER"
 	else
-	    bomb "mail: arg1 mismatch -- no e-mail address given, no USER set"
+	    bomb "mail() arg1 mismatch -- no e-mail address given, no USER set"
 	fi
     else
 	__ADDRESS="$1"
@@ -773,8 +838,8 @@ Content-Type: text/plain; charset=US-ASCII; name="e-mail.body"
 Content-Description: ${__SUBJECT}
 Content-Disposition: inline; filename="e-mail.body"
 Content-Transfer-Encoding: 7bit
-
 ${__BODY}
+
 
 ${__ATTACH}
 
@@ -816,7 +881,21 @@ initializeVariable _ACQUIRED_SEMAPHORES
 # GLOBAL STUFF
 # set a hostname and pwd to play with -- exports HOSTNAME and LPWD accordingly
 setHostName
-initializeVariable LPWD `pwd`
+
+case $0 in
+    # hard path to sourcing script
+    /* )
+        initializeVariable LPWD "`dirname $0`" ;;
+    # relative path to sourcing script
+    */* )
+        initializeVariable LPWD "`pwd`/`dirname $0`" ;;
+    # sourcing script is in the path
+    * )
+        initializeVariable LPWD "`pwd`" ;;
+esac
+if [ ! -f "$LPWD/library" ] ; then
+    warn "Unable to properly initialize path to library source varaible [LPWD]"
+fi
 
 # set STYLE value to 'color' to invoke color logging output, set to anything
 # else to get plain text output
