@@ -279,6 +279,9 @@ static jmp_buf abort_buf;
 HIDDEN void catch_FPE()  {
 	if( !expecting_fpe )
 		rt_bomb("unexpected SIGFPE!\n");
+#ifdef SYSV
+	(void)signal(SIGFPE, catch_FPE);	/* Renew handler */
+#endif				
 	longjmp(abort_buf, 1);	/* return error code */
 }
 
@@ -291,7 +294,7 @@ register complex	root[];
 	register int	i;
 	static int	first_time = 1;
 	
-#ifndef HEP
+#ifndef PARALLEL
 	/* abort_buf is NOT parallel! */
 	if( first_time )  {
 		first_time = 0;
