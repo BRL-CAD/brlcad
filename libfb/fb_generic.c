@@ -63,7 +63,7 @@ extern FBIO adage_interface;
 extern FBIO sun_interface;
 #endif
 #ifdef IF_SGI
-extern FBIO sgi_interface, sgiw_interface;
+extern FBIO sgi_interface;
 #endif
 #ifdef IF_RAT
 extern FBIO rat_interface;
@@ -81,7 +81,6 @@ FBIO *_if_list[] = {
 	&sun_interface,
 #endif
 #ifdef IF_SGI
-	&sgiw_interface,
 	&sgi_interface,
 #endif
 #ifdef IF_RAT
