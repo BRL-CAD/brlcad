@@ -122,6 +122,7 @@ struct mfuncs	**headp;
 #endif
 	struct bu_vls	arg;
 	char	matname[32];
+	int	ret;
 	int	i;
 
 	RT_CK_RTI(rtip);
@@ -171,7 +172,8 @@ retry:
 
 	bu_log("stack_setup(%s):  material not known\n",
 		matname );
-	return(-1);
+	ret = -1;
+	goto out;
 
 found:
 	*mpp = (char *)mfp;
@@ -179,14 +181,19 @@ found:
 	bu_vls_init( &arg );
 	if (*cp != '\0' )
 		bu_vls_strcat( &arg, ++cp );
-	if (rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_MATERIAL)
 		bu_log("calling %s with %s\n", mfp->mf_name, bu_vls_addr(&arg));
 	if (mfp->mf_setup( rp, &arg, dpp, mfp, rtip, headp ) < 0 )  {
-		/* What to do if setup fails? */
-		return(-1);		/* BAD */
+		/* Setup has failed */
+		bu_vls_free( &arg );
+		ret = -1;		/* BAD */
 	}
 	bu_vls_free( &arg );
-	return(0);			/* OK */
+	ret = 0;			/* OK */
+out:
+	if (rdebug&RDEBUG_MATERIAL)
+		bu_log( "...finished \"%s\"\n", matname );
+	return ret;
 }
 
 /*
