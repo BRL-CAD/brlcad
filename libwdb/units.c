@@ -49,7 +49,7 @@ char	*str;
 {
 	double	d;
 
-	if( (d = rt_units_conversion(str)) <= 0.0 )  return(-1);
+	if( (d = bu_units_conversion(str)) <= 0.0 )  return(-1);
 	return( mk_set_conversion(d) );
 }
 
