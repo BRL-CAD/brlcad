@@ -23,6 +23,13 @@
  *	in all countries except the USA.  All rights reserved.
  */
 
+#include "conf.h"
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "tk.h"
 
 #include "machine.h"

@@ -23,6 +23,12 @@
 #include "tk.h"
 #include <X11/Xutil.h>
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"

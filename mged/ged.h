@@ -641,6 +641,14 @@ void vls_line_dpp(
 	int cflag,	/* print combinations */
 	int rflag,	/* print regions */
 	int sflag);	/* print solids */
+void vls_long_dpp(
+	struct bu_vls *vls,
+	struct directory **list_of_names,
+	int num_in_list,
+	int aflag,	/* print all objects */
+	int cflag,	/* print combinations */
+	int rflag,	/* print regions */
+	int sflag);	/* print solids */
 
 /* dir.c */
 void dir_summary(int flag);

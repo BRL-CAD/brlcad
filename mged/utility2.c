@@ -636,50 +636,6 @@ genptr_t		client_data;
 {
 	return curtree;
 }
-/*
- * The tree walker neds to have an initial state.  We could
- * steal it from doview.c but there is no real reason.
- */
-
-static struct db_tree_state push_initial_tree_state = {
-	RT_DBTS_MAGIC,		/* magic */
-	0,			/* ts_dbip */
-	0,			/* ts_sofar */
-	0,0,0,			/* region, air, gmater */
-	100,			/* GIFT los */
-#if __STDC__
-	{
-#endif
-		/* struct mater_info ts_mater */
-		{1.0, 0.0, 0.0},	/* color, RGB */
-		-1.0,		/* Temperature */
-		0,		/* override */
-		0,		/* color inherit */
-		0,		/* mater inherit */
-#if 0
-		""		/* shader */
-#else
-		NULL		/* shader */
-#endif
-#if __STDC__
-	}
-#endif
-	,
-	{1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0},
-	REGION_NON_FASTGEN,		/* ts_is_fastgen */
-	0,				/* ts_stop_at_regions */
-	NULL,				/* ts_region_start_func */
-	NULL,				/* ts_region_end_func */
-	NULL,				/* ts_leaf_func */
-	NULL,				/* ts_ttol */
-	NULL,				/* ts_tol */
-	NULL,				/* ts_m */
-	NULL,				/* ts_rtip */
-	NULL				/* ts_resp */
-};
 
 /*			F _ P U S H
  *

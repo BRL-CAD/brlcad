@@ -2958,6 +2958,14 @@ BU_EXTERN(void rt_hitsort, (struct hit h[], int nh));
 
 /* g_pg.c */
 int rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resource *resp );
+int rt_pg_plot(struct bu_list		*vhead,
+	       struct rt_db_internal	*ip,
+	       CONST struct rt_tess_tol *ttol,
+	       CONST struct bn_tol		*tol); 
+int rt_pg_plot_poly(struct bu_list		*vhead,
+		    struct rt_db_internal	*ip,
+		    CONST struct rt_tess_tol *ttol,
+		    CONST struct bn_tol		*tol);
 
 /* g_hf.c */
 int rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp);
@@ -3462,6 +3470,8 @@ BU_EXTERN(void			nmg_pl_lu_around_eu, (CONST struct edgeuse *eu));
 BU_EXTERN(void			nmg_pr_fus_in_fg, (CONST long *fg_magic));
 
 /* From nmg_misc.c */
+extern struct rt_bot_internal *nmg_bot( struct shell *s,
+					CONST struct bn_tol *tol);
 extern int rt_dist_pt3_line3(fastf_t		*dist,
 			     point_t		pca,
 			     const point_t	a,
@@ -3647,6 +3657,14 @@ BU_EXTERN(int			nmg_edge_collapse, (struct model *m,
 
 /* g_bot.c */
 int rt_bot_edge_in_list( const int v1, const int v2, const int edge_list[], const int edge_count );
+int rt_bot_plot( struct bu_list		*vhead,
+		 struct rt_db_internal	*ip,
+		 CONST struct rt_tess_tol *ttol,
+		 CONST struct bn_tol	*tol);
+int rt_bot_plot_poly(struct bu_list		*vhead,
+		     struct rt_db_internal	*ip,
+		     CONST struct rt_tess_tol *ttol,
+		     CONST struct bn_tol	*tol); 
 #ifdef SEEN_RTGEOM_H
 int rt_bot_find_v_nearest_pt2(
 	const struct rt_bot_internal *bot,
