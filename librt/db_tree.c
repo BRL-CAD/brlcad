@@ -2,7 +2,7 @@
  *			D B _ T R E E . C
  *
  * Functions -
- *	db_functree	No-frills tree-walk
+ *	db_walk_tree		Parallel tree walker
  *
  *
  *  Authors -
@@ -764,6 +764,7 @@ region_end:
 	}
 out:
 	if( rp )  rt_free( (char *)rp, dp->d_namep );
+	if( trees )  rt_free( (char *)trees, "tree_list array" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
@@ -771,17 +772,10 @@ out:
 			*region_start_statepp );
 		rt_free(sofar, "path string");
 	}
-	return(curtree);		/* SUCCESS */
+	return(curtree);
 fail:
-	if( rp )  rt_free( (char *)rp, dp->d_namep );
-	if(rt_g.debug&DEBUG_TREEWALK)  {
-		char	*sofar = db_path_to_string(pathp);
-		rt_log("db_recurse() return curtree=NULL, pathp='%s', *statepp=x%x\n",
-			sofar,
-			*region_start_statepp );
-		rt_free(sofar, "path string");
-	}
-	return( (union tree *)0 );	/* FAIL */
+	curtree = TREE_NULL;
+	goto out;
 }
 
 /*
@@ -832,6 +826,53 @@ union tree	*tp;
 		rt_bomb("db_dup_subtree: bad op\n");
 	}
 	return( TREE_NULL );
+}
+
+/*
+ *			D B _ F R E E _ T R E E
+ *
+ *  Release all storage associated with node 'tp', including
+ *  children nodes.
+ */
+void
+db_free_tree( tp )
+union tree	*tp;
+{
+
+	switch( tp->tr_op )  {
+	case OP_NOP:
+		break;
+
+	case OP_SOLID:
+		if( tp->tr_a.tu_stp )
+			rt_free( (char *)tp->tr_a.tu_stp, "(union tree) solid" );
+		break;
+	case OP_REGION:
+		/* REGION leaf, free combined_tree_state & path */
+		if( tp->tr_a.tu_stp )
+			db_free_combined_tree_state(
+				(struct combined_tree_state *)tp->tr_a.tu_stp );
+		break;
+
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		db_free_tree( tp->tr_b.tb_left );
+		break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		/* This node is known to be a binary op */
+		db_free_tree( tp->tr_b.tb_left );
+		db_free_tree( tp->tr_b.tb_right );
+		break;
+
+	default:
+		rt_bomb("db_free_tree: bad op\n");
+	}
+	rt_free( (char *)tp, "union tree" );
 }
 
 /*
@@ -970,11 +1011,15 @@ union tree	*tp;
 union tree	**reg_trees;
 int		cur;
 {
+	union tree	*new;
 
 	switch( tp->tr_op )  {
 	case OP_SOLID:
 	case OP_REGION:
-		reg_trees[cur++] = tp;
+		GETUNION( new, tree );
+		*new = *tp;		/* struct copy */
+		tp->tr_op = OP_NOP;	/* Zap original */
+		reg_trees[cur++] = new;
 		return(cur);
 
 	case OP_UNION:
@@ -990,7 +1035,10 @@ int		cur;
 	case OP_GUARD:
 	case OP_XNOP:
 		/* This is as far down as we go -- this is a region top */
-		reg_trees[cur++] = tp;
+		GETUNION( new, tree );
+		*new = *tp;		/* struct copy */
+		tp->tr_op = OP_NOP;	/* Zap original */
+		reg_trees[cur++] = new;
 		return(cur);
 
 	default:
@@ -1174,6 +1222,14 @@ db_walk_dispatcher()
  *			D B _ W A L K _ T R E E
  *
  *  This is the top interface to the tree walker.
+ *
+ *  If ncpu > 1, the caller is responsible for making sure that
+ *	rt_g.rtg_parallel is non-zero, and that the various
+ *	RES_INIT() functions have been performed, first.
+ *
+ *  Returns -
+ *	-1	Failure to prepare even a single sub-tree
+ *	 0	OK
  */
 int
 db_walk_tree( dbip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func )
@@ -1225,7 +1281,8 @@ union tree *	(*leaf_func)();
 		curtree = db_recurse( &ts, &path, &region_start_statep );
 		if( region_start_statep )
 			db_free_combined_tree_state( region_start_statep );
-		if( curtree == (union tree *)0 )
+		db_free_full_path( &path );
+		if( curtree == TREE_NULL )
 			continue;	/* ERROR */
 
 		if( rt_g.debug&DEBUG_TREEWALK )  {
@@ -1275,7 +1332,12 @@ union tree *	(*leaf_func)();
 		}
 	}
 
-	/* XXX Need to zap from whole_tree to region points */
+	/*  Release storage for tree from whole_tree to leaves.
+	 *  db_tally_subtree_regions() duplicated and OP_NOP'ed the original
+	 *  top of any sub-trees that it wanted to keep, so whole_tree
+	 *  is just the left-over part now.
+	 */
+	db_free_tree( whole_tree );
 
 	/*
 	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
@@ -1290,13 +1352,19 @@ union tree *	(*leaf_func)();
 	if( ncpu <= 1 )  {
 		db_walk_dispatcher();
 	} else {
-		/* XXX Need to ensure that rt_g.rtg_parallel is set! */
-		/* XXX Should actually be done by rt_parallel. */
-		rt_g.rtg_parallel = 1;
-		/* XXX Need to check that RES_INIT()s have been done too! */
+		/* Ensure that rt_g.rtg_parallel is set */
+		/* XXX Should actually be done by rt_parallel(). */
+		if( rt_g.rtg_parallel == 0 )  {
+			rt_log("db_walk_tree() ncpu=%d, rtg_parallel not set!\n", ncpu);
+			rt_g.rtg_parallel = 1;
+		}
 		rt_parallel( db_walk_dispatcher, ncpu );
 	}
 
-	/* XXX Clean any remaining trees still in reg_trees[] */
+	/* Clean up any remaining sub-trees still in reg_trees[] */
+	for( i=0; i < new_reg_count; i++ )
+		db_free_tree( reg_trees[i] );
+	rt_free( (char *)reg_trees, "*reg_trees[]" );
+
 	return(0);	/* OK */
 }
