@@ -214,16 +214,18 @@ struct bn_unif *p;
 
 	return((p->msr_seed - M/2) * 1.0/DM);
 }
+
 /*	bn_unif_free	free random number table
  *
  *
  *
  */
+void
 bn_unif_free(p)
 struct bn_unif *p;
 {
-	bu_free(p->msr_doubles "msr double table");
-	bu_free(p->msr_longs "msr long table");
+	bu_free(p->msr_doubles, "msr double table");
+	bu_free(p->msr_longs, "msr long table");
 	p->magic = 0;
 	bu_free(p, "bn_unif");
 }
@@ -331,9 +333,9 @@ struct bn_gauss *p;
  */
 void
 bn_gauss_free(p)
-struct bn_unif *p;
+struct bn_gauss *p;
 {
-	bu_free(p->msr_gauss_doubles,"msr guass doubles");
+	bu_free(p->msr_gauss_doubles, "msr guass doubles");
 	bu_free(p->msr_gausses,"msr guass table");
 	bu_free(p,"bn_msr_guass");
 }
