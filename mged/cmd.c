@@ -550,7 +550,7 @@ cmd_output_hook(clientData, interp, argc, argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help output_hook");
+		bu_vls_printf(&vls, "helpdevel output_hook");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -740,7 +740,12 @@ cmd_init(clientData, interp, argc, argv)
 	int name_not_used = 1;
 
 	if(argc != 2){
-		Tcl_AppendResult(interp, "Usage: cmd_init name", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helpdevel cmd_init");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -782,7 +787,12 @@ cmd_close(clientData, interp, argc, argv)
 	struct cmd_list *clp;
 
 	if(argc != 2){
-		Tcl_AppendResult(interp, "Usage: cmd_close id", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helpdevel cmd_close");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -823,6 +833,14 @@ cmd_get(clientData, interp, argc, argv)
 {
 	struct dm_list *p;
 	struct bu_vls vls;
+
+	if(argc != 1){
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helpdevel cmd_get");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
 	if(!curr_cmd_list->cl_tie){
 		Tcl_AppendElement(interp, bu_vls_addr(&pathName));
@@ -865,7 +883,12 @@ cmd_set(clientData, interp, argc, argv)
 	char **argv;
 {
 	if(argc != 2){
-		Tcl_AppendResult(interp, "Usage: cmd_set id", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helpdevel cmd_set");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -891,7 +914,12 @@ cmd_get_more_default(clientData, interp, argc, argv)
 	char **argv;
 {
 	if(argc != 1){
-		Tcl_AppendResult(interp, "Usage: get_more_default", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helpdevel get_more_default");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -907,7 +935,12 @@ cmd_set_more_default(clientData, interp, argc, argv)
 	char **argv;
 {
 	if(argc != 2){
-		Tcl_AppendResult(interp, "Usage: set_more_default more_default", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helpdevel set_more_default");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -926,7 +959,12 @@ cmd_mged_glob(clientData, interp, argc, argv)
 	struct bu_vls dest, src;
 
 	if(argc != 2){
-		Tcl_AppendResult(interp, "cmd_mged_glob: There must be only one argument.", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help db_glob");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -1698,7 +1736,7 @@ f_tie(clientData, interp, argc, argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help tie");
+		bu_vls_printf(&vls, "helpdevel tie");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1940,7 +1978,7 @@ f_update(clientData, interp, argc, argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help mged_update");
+		bu_vls_printf(&vls, "helpdevel mged_update");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1964,7 +2002,7 @@ f_winset(clientData, interp, argc, argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help winset");
+		bu_vls_printf(&vls, "helpdevel winset");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1999,7 +2037,7 @@ void
 mged_global_variable_setup(interp)
 Tcl_Interp *interp;
 {
-	Tcl_LinkVar(interp, "mged_default_dlist", (char *)&mged_default_dlist, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "mged_default(dlist)", (char *)&mged_default_dlist, TCL_LINK_INT);
 
 	Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);

@@ -3842,7 +3842,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help svb");
+    bu_vls_printf(&vls, "helpdevel svb");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -4065,7 +4065,7 @@ char	**argv;
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help model2view");
+	  bu_vls_printf(&vls, "helpdevel model2view");
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
@@ -4106,7 +4106,7 @@ char	**argv;
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help view2model");
+	  bu_vls_printf(&vls, "helpdevel view2model");
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
@@ -4144,7 +4144,7 @@ char	**argv;
   bu_vls_init(&vls);
 
   if(argc != 4){
-    bu_vls_printf(&vls, "help model2view_lu");
+    bu_vls_printf(&vls, "helpdevel model2view_lu");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -4185,7 +4185,7 @@ char	**argv;
   bu_vls_init(&vls);
 
   if(argc != 4){
-    bu_vls_printf(&vls, "help view2model_lu");
+    bu_vls_printf(&vls, "helpdevel view2model_lu");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -4228,7 +4228,7 @@ char	**argv;
   bu_vls_init(&vls);
 
   if(argc != 4){
-    bu_vls_printf(&vls, "help model2grid_lu");
+    bu_vls_printf(&vls, "helpdevel model2grid_lu");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -4276,7 +4276,7 @@ char    **argv;
   bu_vls_init(&vls);
 
   if(argc != 3){
-    bu_vls_printf(&vls, "help f_grid2model_lu");
+    bu_vls_printf(&vls, "helpdevel grid2model_lu");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -4325,7 +4325,7 @@ char	**argv;
   bu_vls_init(&vls);
 
   if(argc != 4){
-    bu_vls_printf(&vls, "help f_view2grid_lu");
+    bu_vls_printf(&vls, "helpdevel view2grid_lu");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -4370,7 +4370,7 @@ char    **argv;
   bu_vls_init(&vls);
 
   if(argc != 3){
-    bu_vls_printf(&vls, "help f_grid2view_lu");
+    bu_vls_printf(&vls, "helpdevel grid2view_lu");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -4415,7 +4415,7 @@ char    **argv;
   bu_vls_init(&vls);
 
   if(argc != 4){
-    bu_vls_printf(&vls, "help f_view2model_vec");
+    bu_vls_printf(&vls, "helpdevel view2model_vec");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -4574,7 +4574,7 @@ char    **argv;
 
   if(argc < 2 || 3 < argc){
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help view_ring");
+    bu_vls_printf(&vls, "helpdevel view_ring");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
