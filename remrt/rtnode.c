@@ -103,6 +103,12 @@ static char *title_file, *title_obj;	/* name of file and first object */
 
 #define MAX_WIDTH	(16*1024)
 
+static int	nlines_line;		/* how many scanlines worth in red_line */
+static char	*red_line;
+static char	*grn_line;
+static char	*blu_line;
+static char	framenum;
+
 static int	avail_cpus;		/* # of cpus avail on this system */
 static int	max_cpus;		/* max # cpus for use, <= avail_cpus */
 
@@ -149,6 +155,8 @@ char		*control_host;	/* name of host running controller */
 char		*tcp_port;	/* TCP port on control_host */
 
 int debug = 0;		/* 0=off, 1=debug, 2=verbose */
+
+int test_fb_speed = 0;
 
 char srv_usage[] = "Usage: rtnode [-d] control-host tcp-port [cmd]\n";
 
@@ -491,6 +499,17 @@ char			*buf;
 	if( pkg_send( RTSYNCMSG_OPENFB, NULL, 0,
 	    pcsrv ) < 0 )
 		fprintf(stderr,"RTSYNCMSG_OPENFB reply error\n");
+
+	/* Build test-pattern scanlines, sized to fit */
+	nlines_line = 512;
+	red_line = bu_calloc( nlines_line*(width+1), 3, "red_line" );
+	grn_line = bu_calloc( nlines_line*(width+1), 3, "grn_line" );
+	blu_line = bu_calloc( nlines_line*(width+1), 3, "blu_line" );
+	for( w = width*nlines_line-1; w >= 0; w-- )  {
+		red_line[w*3+0] = 255;
+		grn_line[w*3+1] = 255;
+		blu_line[w*3+2] = 255;
+	}
 }
 
 /*
@@ -544,6 +563,8 @@ char *buf;
 	    		interp->result,
 			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
 	}
+
+	Tcl_LinkVar(interp, "test_fb_speed", (char *)&test_fb_speed, TCL_LINK_INT);
 }
 
 /*
@@ -733,10 +754,34 @@ char			*buf;
 	rtip->nhits = 0;
 	rtip->rti_nrays = 0;
 
+	if( test_fb_speed )  {
+		char	*buf;
+		int	y;
 
-	rt_prep_timer();
-	do_run( start_line*width, end_line*width+width-1 );
-	(void)rt_read_timer( (char *)0, 0 );
+		/* Write out colored lines. */
+		switch( (framenum++)%3 )  {
+		case 0:
+			buf = red_line;
+			break;
+		case 1:
+			buf = grn_line;
+			break;
+		case 2:
+			buf = blu_line;
+			break;
+		}
+		for( y=start_line; y <= end_line; )  {
+			int	todo;
+			todo = end_line - y + 1;
+			if( todo > nlines_line )  todo = nlines_line;
+			fb_writerect( fbp, 0, y, width, todo, buf );
+			y += todo;
+		}
+	} else {
+		rt_prep_timer();
+		do_run( start_line*width, end_line*width+width-1 );
+		(void)rt_read_timer( (char *)0, 0 );
+	}
 
 	/*
 	 *  Ensure all scanlines have made it to display server,
