@@ -36,7 +36,7 @@
 static int cred, cgreen, cblue;
 static int red, green;
 static unsigned char *zrgbp;
-#endif DEBUG
+#endif /*DEBUG */
 static int bcenter, gcenter, rcenter;
 static long gdist, rdist, cdist;
 static long cbinc, cginc, crinc;
@@ -523,7 +523,7 @@ blueloop( restart )
 		 (grgbp - zrgbp) / rstride,
 		 ((grgbp - zrgbp) % rstride) / gstride,
 		 (grgbp - zrgbp) % gstride );
-#endif DEBUG
+#endif /* DEBUG */
 
     /* Basic loop up. */
     /* First loop just finds first applicable cell. */
@@ -562,7 +562,7 @@ blueloop( restart )
 		    fprintf( stderr,
 	     "*** Adjusting here up at %d,%d,%d; dist = %ld != gdist = %ld\n",
 			     red, green, here, dist, gdist );
-#endif DEBUG
+#endif /* DEBUG */
 	    }
 	    detect = 1;
 #ifdef INSTRUMENT_IT
@@ -607,7 +607,7 @@ blueloop( restart )
 	fprintf( stderr,
 		 "*** After up loop at %d,%d,%d; dist = %ld != bdist = %ld\n",
 		 red, green, b, dist, bdist );
-#endif DEBUG
+#endif /* DEBUG */
     
     /* Basic loop down. */
     /* Do initializations here, since the 'find' loop might not get
@@ -659,7 +659,7 @@ blueloop( restart )
 		    fprintf( stderr,
 	     "*** Adjusting here down at %d,%d,%d; dist = %ld != gdist = %ld\n",
 			     red, green, here, dist, gdist );
-#endif DEBUG
+#endif /* DEBUG */
 #ifdef INSTRUMENT_IT
 		outercount--;
 #endif
@@ -703,7 +703,7 @@ blueloop( restart )
 	fprintf( stderr,
 		 "*** After down loop at %d,%d,%d; dist = %ld != bdist = %ld\n",
 		 red, green, b, dist, bdist );
-#endif DEBUG
+#endif /* DEBUG */
 
 	/* If we saw something, update the edge trackers. */
 #ifdef MINMAX_TRACK
