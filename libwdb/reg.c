@@ -36,18 +36,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
+/* so we don't have to include mat.o */
+static fastf_t ident_mat[16] = {
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0
+};
+
 /*
- *			M K _ M C O M B
+ *			M K _ C O M B
  *
- *  Make a combination with material properties info
+ *  Make a combination with material properties info.
+ *  Must be followed by 'len' mk_memb() calls before any other mk_* routines.
  */
 int
-mk_mcomb( fp, name, len, region, matname, matparm, override, rgb )
+mk_comb( fp, name, len, region, matname, matparm, rgb, inherit )
 FILE	*fp;
 char	*name;
 char	*matname;
 char	*matparm;
 char	*rgb;
+int	inherit;
 {
 	static union record rec;
 
@@ -65,25 +75,26 @@ char	*rgb;
 			strncpy( rec.c.c_matparm, matparm,
 				sizeof(rec.c.c_matparm) );
 	}
-	if( override )  {
+	if( rgb )  {
 		rec.c.c_override = 1;
 		rec.c.c_rgb[0] = rgb[0];
 		rec.c.c_rgb[1] = rgb[1];
 		rec.c.c_rgb[2] = rgb[2];
 	}
+	rec.c.c_inherit = inherit;
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 	return(0);
 }
 
 
 /*
- *			M K _ C O M B
+ *			M K _ F C O M B
  *
- *  Make a simple combination header.
- * Must be followed by 'len' mk_memb() calls before any other mk_* routines
+ *  Make a simple combination header ("fast" version).
+ *  Must be followed by 'len' mk_memb() calls before any other mk_* routines.
  */
 int
-mk_comb( fp, name, len, region )
+mk_fcomb( fp, name, len, region )
 FILE	*fp;
 char	*name;
 {
@@ -118,10 +129,18 @@ int	op;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.M.m_id = ID_MEMB;
-	rec.M.m_relation = op;
 	NAMEMOVE( name, rec.M.m_instname );
-	for( i=0; i<16; i++ )
-		rec.M.m_mat[i] = mat[i];
+	if( op )
+		rec.M.m_relation = op;
+	else
+		rec.M.m_relation = UNION;
+	if( mat ) {
+		for( i=0; i<16; i++ )
+			rec.M.m_mat[i] = mat[i];  /* double -> float */
+	} else {
+		for( i=0; i<16; i++ )
+			rec.M.m_mat[i] = ident_mat[i];
+	}
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 	return(0);
 }
@@ -152,7 +171,7 @@ register struct wmember *headp;
 	wp->wm_magic = WMEMBER_MAGIC;
 	strncpy( wp->wm_name, name, sizeof(wp->wm_name) );
 	wp->wm_op = UNION;
-	mat_idn(wp->wm_mat);
+	bcopy( ident_mat, wp->wm_mat, sizeof(mat_t) );
 	/* Append to end of doubly linked list */
 	wp->wm_forw = headp;
 	wp->wm_back = headp->wm_back;
@@ -174,12 +193,13 @@ register struct wmember *headp;
  *  A shorthand version is given in wdb.h as a macro.
  */
 int
-mk_lcomb( fp, name, region, matname, matparm, override, rgb, headp )
+mk_lcomb( fp, name, headp, region, matname, matparm, rgb, inherit )
 FILE	*fp;
 char	*name;
 char	*matname;
 char	*matparm;
 char	*rgb;
+int	inherit;
 register struct wmember *headp;
 {
 	register struct wmember *wp;
@@ -195,7 +215,7 @@ register struct wmember *headp;
 	}
 
 	/* Output combination record and member records */
-	mk_mcomb( fp, name, len, region, matname, matparm, override, rgb );
+	mk_comb( fp, name, len, region, matname, matparm, rgb, inherit );
 	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )
 		mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op );
 
