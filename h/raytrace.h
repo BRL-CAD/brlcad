@@ -2280,11 +2280,15 @@ BU_EXTERN(void rt_pr_cut, (CONST union cutter *cutp, int lvl) );
 					/* free a cut tree */
 BU_EXTERN(void rt_fr_cut, (struct rt_i *rtip, union cutter *cutp) );
 					/* regionid-driven color override */
+
+/* mater.c */
 BU_EXTERN(void rt_region_color_map, (struct region *regp) );
 					/* process ID_MATERIAL record */
-BU_EXTERN(void rt_color_addrec, () );
+void rt_color_addrec( int low, int hi, int r, int g, int b, long addr );
 BU_EXTERN(void rt_color_free, () );
 					/* extend a cut box */
+
+/* cut.c */
 BU_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp,
 	CONST struct rt_i *rtip) );
 					/* find RPP of one region */

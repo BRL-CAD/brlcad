@@ -46,7 +46,10 @@ struct mater *rt_material_head = MATER_NULL;
 
 void	rt_insert_color();
 
-static void
+/*
+ *			R T _ P R _ M A T E R
+ */
+void
 rt_pr_mater( mp )
 register struct mater *mp;
 {
@@ -60,32 +63,29 @@ register struct mater *mp;
  *  Called from db_scan() when initially scanning database.
  */
 void
-rt_color_addrec( recp, addr )
-union record *recp;
-long addr;
+rt_color_addrec( int low, int hi, int r, int g, int b, long addr )
 {
 	register struct mater *mp;
 
 	BU_GETSTRUCT( mp, mater );
-	mp->mt_low = recp->md.md_low;
-	mp->mt_high = recp->md.md_hi;
-	mp->mt_r = recp->md.md_r;
-	mp->mt_g = recp->md.md_g;
-	mp->mt_b = recp->md.md_b;
+	mp->mt_low = low;
+	mp->mt_high = hi;
+	mp->mt_r = r;
+	mp->mt_g = g;
+	mp->mt_b = b;
 /*	mp->mt_handle = bu_strdup( recp->md.md_material ); */
 	mp->mt_daddr = addr;
 	rt_insert_color( mp );
 }
 
 /*
- *  			I N S E R T _ C O L O R
+ *  			R T _ I N S E R T _ C O L O R
  *
  *  While any additional database records are created and written here,
  *  it is the responsibility of the caller to color_putrec(newp) if needed.
  */
 void
-rt_insert_color( newp )
-register struct mater *newp;
+rt_insert_color( struct mater *newp )
 {
 	register struct mater *mp;
 	register struct mater *zot;
