@@ -381,6 +381,14 @@ struct db_i		*dbip;
 
 	BU_CK_EXTERNAL(ep);
 
+	if( dbip->dbi_read_only )  {
+		bu_log("db_put_external(%s):  READ-ONLY file\n",
+			dbip->dbi_filename);
+		return(-1);
+	}
+
+	BU_ASSERT_LONG( dbip->dbi_version, <=, 4 );
+
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if( ngran != dp->d_len )  {
 		if( ngran < dp->d_len )  {
@@ -409,8 +417,9 @@ struct db_i		*dbip;
 		return 0;
 	}
 
-	if( db_put( dbip, dp, (union record *)(ep->ext_buf), 0, ngran ) < 0 )
+	if( db_write( dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr ) < 0 )  {
 		return(-1);
+	}
 	return(0);
 }
 
