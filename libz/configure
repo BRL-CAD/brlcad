@@ -69,6 +69,9 @@ else
 	     LDSHARED=${LDSHARED-"ld -b"}
 	     shared_ext='.sl'
 	     SHAREDLIB='libz.sl';;
+  IRIX\ 5*)  SFLAGS=${CFLAGS-"-ansi -O2 -rpath ."}
+	     CFLAGS=${CFLAGS-"-ansi -O2"}
+	     LDSHARED=${LDSHARED-"ld -shared"};;
   IRIX64*)   SFLAGS=${CFLAGS-"-ansi -O2 -rpath ."}
 	     CFLAGS=${CFLAGS-"-ansi -O2"}
 	     LDSHARED=${LDSHARED-"cc -64 -shared"};;
