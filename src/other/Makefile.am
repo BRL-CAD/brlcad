@@ -10,6 +10,12 @@ if NEED_PNG
 	PNG=libpng
 endif
 
+# this seems to have serious breakage for linux and fbsd
+TKGLX=
+if IRIX
+	TKGLX=libtkGLX
+endif
+
 if ONLY_BENCHMARK
 SUBDIRS = libtcl
 
@@ -28,7 +34,7 @@ SUBDIRS = \
 	${PNG} \
 	libtcl \
 	libtk \
-	libtkGLX \
+	${TKGLX} \
 	libutahrle \
 	${LIBZ}
 

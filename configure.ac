@@ -237,8 +237,12 @@ case "$target" in
 	*-*-*BSD*)
 		PTHREAD_LIBS="-pthread"
 		;;
+	*-*-*irix*)
+		is_irix=yes
+		;;
 esac
 AC_SUBST(PTHREAD_LIBS)
+AM_CONDITIONAL(IRIX, [test "x$is_irix" == yes])
 
 dnl XXX should only add to build paths when something fails that is necessary
 dnl additionally, a compiler might complain if /usr/local or /sw are already
