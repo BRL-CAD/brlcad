@@ -247,8 +247,8 @@ char	*argv[];
 
 	if( regions_tried > 0 ){
 		percent = ((double)regions_written * 100) / regions_tried;
-	printf( "                  %d triangulated successfully. %g%%\n",
-		regions_written, percent );
+		printf( "                  %d triangulated successfully. %g%%\n",
+			regions_written, percent );
 	}
 	fclose(fp);
 
@@ -281,24 +281,17 @@ int material_id;
 	int numtri   = 0;		/* Number of triangles to output */
 	int tricount = 0;		/* Triangle number */
 	int i;
-	float npercent;
-	float tpercent;
 
 	NMG_CK_REGION( r );
 	RT_CK_FULL_PATH(pathp);
 
 	region_name = db_path_to_string( pathp );
 
+#if 0
 	printf("Attempting to process region %s\n",region_name);
 	fflush(stdout);
-/* XXX */
-	if(regions_tried>0){
-		npercent = (float)(regions_converted * 100) / regions_tried;
-		tpercent = (float)(regions_written * 100) / regions_tried;
-		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
-		regions_tried, regions_converted, regions_written, npercent,tpercent);
-	}
-/* XXX */
+#endif
+
 	m = r->m_p;
 	NMG_CK_MODEL( m );
 
@@ -699,6 +692,16 @@ out:
 
 
 	db_free_tree(curtree);		/* Does an nmg_kr() */
+
+	if(regions_tried>0){
+		float npercent;
+		float tpercent;
+
+		npercent = (float)(regions_converted * 100) / regions_tried;
+		tpercent = (float)(regions_written * 100) / regions_tried;
+		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
+		regions_tried, regions_converted, regions_written, npercent,tpercent);
+	}
 
 	GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
