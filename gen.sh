@@ -167,7 +167,6 @@ BDIRS="bench \
 	librt \
 	liboptical \
 	libmultispectral \
-	libredblack \
 	libtermio \
 	libtclcad \
 	conv \
