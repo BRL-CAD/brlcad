@@ -938,7 +938,7 @@ vu, pos,
 nmg_state_names[old], nmg_v_assessment_names[assessment],
 nmg_state_names[stp->new_state], action_names[stp->action] );
 rt_log("This loopuse, before action: ");
-nmg_face_lu_plot(nmg_lu_of_vu(vu));
+nmg_face_lu_plot(nmg_lu_of_vu(vu), rs);
 
 	switch( stp->action )  {
 	default:
@@ -954,7 +954,7 @@ nmg_face_lu_plot(nmg_lu_of_vu(vu));
 		nmg_pr_lu_briefly(lu, (char *)0);
 		rt_log("The whole face\n");
 		nmg_pr_fu(lu->up.fu_p, (char *)0);
-		nmg_face_lu_plot(lu);
+		nmg_face_lu_plot(lu, rs);
 		{
 			FILE	*fp = fopen("error.pl", "w");
 			nmg_pl_m(fp, nmg_find_model((long *)lu));
@@ -1040,7 +1040,7 @@ nmg_face_lu_plot(nmg_lu_of_vu(vu));
 		/* Kill lone vertex loop */
 		nmg_klu(lu);
 rt_log("After LONE_V_ESPLIT, the final loop: ");
-nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
+nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		break;
 	case NMG_ACTION_LONE_V_JAUNT:
 		/*
@@ -1072,7 +1072,7 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
 		/* Because vu changed, update vu table, for next action */
 		rs->vu[pos] = second_new_eu->vu_p;
 rt_log("After LONE_V_JAUNT, the final loop: ");
-nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
+nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		break;
 	case NMG_ACTION_CUTJOIN:
 		/*
@@ -1095,7 +1095,7 @@ rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x)\n", prev_vu, vu);
 			nmg_cut_loop( prev_vu, vu );
 rt_log("After CUT, the final loop: ");
 nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
-nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
+nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 			break;
 		}
 		/* Different loops, join into one. */
@@ -1114,9 +1114,11 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
 		    eu->eumate_p->radial_p->up.lu_p == prev_lu )  {
 rt_log("using nmg_jl( lu=x%x, eu=x%x\n", lu, eu );
 			nmg_jl( lu, eu );
+#if 0
 rt_log("After nmg_jl, before nmg_kill_snakes: ");
-nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
+nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 			/* nmg_kill_snakes( lu ); */
+#endif
 		} else {
 			nmg_join_2loops( prev_vu, vu );
 			/* update vu[pos], as it will have changed. */
@@ -1124,7 +1126,7 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
 				prev_vu->up.eu_p)->vu_p;
 		}
 rt_log("After JOIN, the final loop: ");
-nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
+nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		break;
 	}
 
@@ -1268,8 +1270,9 @@ struct faceuse	*fu;
 
 }
 
-nmg_face_lu_plot( lu )
-struct loopuse	*lu;
+nmg_face_lu_plot( lu, rs )
+struct loopuse		*lu;
+struct nmg_ray_state	*rs;
 {
 	FILE	*fp;
 	struct model	*m;
@@ -1284,6 +1287,10 @@ struct loopuse	*lu;
 	fp = fopen(buf, "w");
 	b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]" );
 	nmg_pl_lu(fp, lu, b, 255, 0, 0);
+	/* A yellow line for the ray */
+	pl_color(fp, 255, 255, 0);
+	pdv_3line(fp, rs->vu[0]->v_p->vg_p->coord,
+		rs->vu[rs->nvu-1]->v_p->vg_p->coord );
 	fclose(fp);
 	rt_log("wrote %s\n", buf);
 	rt_free( (char *)b, "nmg_face_lu_plot flag[]" );
