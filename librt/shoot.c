@@ -101,6 +101,8 @@ register struct application *ap;
 	double			fraction;
 	int			exponent;
 	int			end_free_len;
+	AUTO struct rt_i	*rtip;
+	int			debug_shoot = rt_g.debug & DEBUG_SHOOT;
 
 	RT_AP_CHECK(ap);
 	if( ap->a_resource == RESOURCE_NULL )  {
@@ -109,6 +111,7 @@ register struct application *ap;
 		if(rt_g.debug)rt_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
 	}
 	RT_RESOURCE_CHECK(ap->a_resource);
+	rtip = ap->a_rt_i;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		rt_g.rtg_logindent += 2;
@@ -121,9 +124,9 @@ register struct application *ap;
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
 
-	ap->a_rt_i->rti_nrays++;
-	if( ap->a_rt_i->needprep )
-		rt_prep(ap->a_rt_i);
+	rtip->rti_nrays++;
+	if( rtip->needprep )
+		rt_prep(rtip);
 
 	InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
@@ -131,10 +134,11 @@ register struct application *ap;
 	HeadSeg = SEG_NULL;
 	waitsegs = SEG_NULL;
 
-	GET_BITV( ap->a_rt_i, solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
-	bzero( (char *)solidbits, ap->a_rt_i->rti_bv_bytes );
+	/* see rt_get_bitv() for details on how bitvector len is set. */
+	GET_BITV( rtip, solidbits, ap->a_resource );
+	bzero( (char *)solidbits, rtip->rti_bv_bytes );
 	regionbits = &solidbits->be_v[
-		2+RT_BITV_BITS2WORDS(ap->a_rt_i->nsolids)];
+		2+RT_BITV_BITS2WORDS(rtip->nsolids)];
 
 	/* Verify that direction vector has unit length */
 	if(rt_g.debug) {
@@ -180,29 +184,26 @@ register struct application *ap;
 	 *  before considering the model RPP.
 	 *  This code is a streamlined version of the real version.
 	 */
-	if( ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
+	if( rtip->rti_inf_box.bn.bn_len > 0 )  {
 		/* Consider all objects within the box */
-		cutp = &(ap->a_rt_i->rti_inf_box);
+		cutp = &(rtip->rti_inf_box);
 		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
 			register struct soltab *stp;
 			register struct seg *newseg;
 
 			stp = *stpp;
-			if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
-				rt_bomb("rt_shootray:  bad st_id 1");
-
 			/* Shoot a ray */
-			if(rt_g.debug&DEBUG_SHOOT)rt_log("shooting %s\n", stp->st_name);
+			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
 			BITSET( solidbits->be_v, stp->st_bit );
-			ap->a_rt_i->nshots++;
+			rtip->nshots++;
 			if( (newseg = rt_functab[stp->st_id].ft_shot( 
 				stp, &ap->a_ray, ap )
 			     ) == SEG_NULL )  {
-				ap->a_rt_i->nmiss++;
+				rtip->nmiss++;
 				continue;	/* MISS */
 			}
-			if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
+			if(debug_shoot)  rt_pr_seg(newseg);
 			/* Add seg chain to list awaiting rt_boolweave() */
 			{
 				register struct seg *seg2 = newseg;
@@ -211,7 +212,7 @@ register struct application *ap;
 				seg2->seg_next = waitsegs;
 				waitsegs = newseg;
 			}
-			ap->a_rt_i->nhits++;
+			rtip->nhits++;
 		}
 	}
 
@@ -219,14 +220,14 @@ register struct application *ap;
 	 *  If ray does not enter the model RPP, skip on.
 	 *  If ray ends exactly at the model RPP, trace it.
 	 */
-	if( !rt_in_rpp( &ap->a_ray, inv_dir, ap->a_rt_i->mdl_min, ap->a_rt_i->mdl_max )  ||
+	if( !rt_in_rpp( &ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
 	    	if( waitsegs != SEG_NULL )  {
 	    		/* Go handle the infinite objects we hit */
 	    		model_end = INFINITY;
 	    		goto weave;
 	    	}
-		ap->a_rt_i->nmiss_model++;
+		rtip->nmiss_model++;
 		ret = ap->a_miss( ap );
 		status = "MISS model";
 		goto out;
@@ -289,7 +290,7 @@ register struct application *ap;
 			VPRINT("newray.r_pt", newray.r_pt);
 		}
 
-		cutp = &(ap->a_rt_i->rti_CutHead);
+		cutp = &(rtip->rti_CutHead);
 		while( cutp->cut_type == CUT_CUTNODE )  {
 			if( newray.r_pt[cutp->cn.cn_axis] >=
 			    cutp->cn.cn_point )  {
@@ -303,7 +304,7 @@ register struct application *ap;
 
 		/* Don't get stuck within the same box for long */
 		if( cutp==lastcut )  {
-			if( rt_g.debug&DEBUG_SHOOT )  {
+			if( debug_shoot )  {
 				rt_log("%d,%d box push dist_corr o=%e n=%e model_end=%e\n",
 					ap->a_x, ap->a_y,
 					odist_corr, dist_corr, model_end );
@@ -346,7 +347,7 @@ register struct application *ap;
 rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 				newray.r_min, newray.r_max,
 				box_start, box_end);
-/**		     	if(rt_g.debug&DEBUG_SHOOT)  ***/
+/**		     	if(debug_shoot)  ***/
 			{
 				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
 			     	VPRINT("Point", newray.r_pt);
@@ -381,7 +382,7 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 		box_start = dist_corr + newray.r_min;
 		box_end = dist_corr + newray.r_max;
 
-		if(rt_g.debug&DEBUG_SHOOT) {
+		if(debug_shoot) {
 			rt_log("ray (%g, %g) %g\n", box_start, box_end, model_end);
 			VPRINT("Point", newray.r_pt);
 			rt_pr_cut( cutp, 0 );
@@ -394,12 +395,9 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 			register struct seg *newseg;
 
 			stp = *stpp;
-			if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
-				rt_bomb("rt_shootray:  bad st_id 2");
-
 			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
-				if(rt_g.debug&DEBUG_SHOOT)rt_log("eff skip %s\n", stp->st_name);
-				ap->a_rt_i->nmiss_tree++;
+				if(debug_shoot)rt_log("eff skip %s\n", stp->st_name);
+				rtip->nmiss_tree++;
 				continue;	/* already shot */
 			}
 
@@ -410,23 +408,23 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 			if( rt_functab[stp->st_id].ft_use_rpp )  {
 				if( !rt_in_rpp( &newray, inv_dir,
 				    stp->st_min, stp->st_max ) )  {
-					if(rt_g.debug&DEBUG_SHOOT)rt_log("rpp miss %s\n", stp->st_name);
-					ap->a_rt_i->nmiss_solid++;
+					if(debug_shoot)rt_log("rpp miss %s\n", stp->st_name);
+					rtip->nmiss_solid++;
 					continue;	/* MISS */
 				}
 				if( dist_corr + newray.r_max < BACKING_DIST )  {
-					if(rt_g.debug&DEBUG_SHOOT)rt_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, dist_corr, newray.r_max);
-					ap->a_rt_i->nmiss_solid++;
+					if(debug_shoot)rt_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, dist_corr, newray.r_max);
+					rtip->nmiss_solid++;
 					continue;	/* MISS */
 				}
 			}
 
-			if(rt_g.debug&DEBUG_SHOOT)rt_log("shooting %s\n", stp->st_name);
-			ap->a_rt_i->nshots++;
+			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
+			rtip->nshots++;
 			if( (newseg = rt_functab[stp->st_id].ft_shot( 
 				stp, &newray, ap )
 			     ) == SEG_NULL )  {
-				ap->a_rt_i->nmiss++;
+				rtip->nmiss++;
 				continue;	/* MISS */
 			}
 
@@ -441,11 +439,11 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 						break;
 					seg2 = seg2->seg_next;
 				}
-				if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
+				if(debug_shoot)  rt_pr_seg(newseg);
 				seg2->seg_next = waitsegs;
 				waitsegs = newseg;
 			}
-			ap->a_rt_i->nhits++;
+			rtip->nhits++;
 		}
 
 		/*
@@ -521,13 +519,15 @@ weave:
 	 *  been computed.  Evaluate the boolean trees over each partition.
 	 */
 	(void)rt_boolfinal( &InitialPart, &FinalPart, BACKING_DIST,
-		ap->a_rt_i->rti_inf_box.bn.bn_len > 0 ? INFINITY : model_end,
+		rtip->rti_inf_box.bn.bn_len > 0 ? INFINITY : model_end,
 		regionbits, ap);
 
 	if( FinalPart.pt_forw == &FinalPart )  {
 		ret = ap->a_miss( ap );
 		status = "MISS bool";
-		goto freeup;
+		RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
+		RT_FREE_SEG_LIST( HeadSeg, ap->a_resource );
+		goto out;
 	}
 
 	/*
@@ -543,7 +543,7 @@ weave:
 	 *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	 */
 hitit:
-	if(rt_g.debug&DEBUG_SHOOT)  rt_pr_partitions(ap->a_rt_i,&FinalPart,"a_hit()");
+	if(debug_shoot)  rt_pr_partitions(rtip,&FinalPart,"a_hit()");
 
 	/*
 	 *  Before recursing, release storage for unused Initial partitions
@@ -552,17 +552,15 @@ hitit:
 	 */
 	RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
 	RT_FREE_SEG_LIST( HeadSeg, ap->a_resource );
+
 	ret = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
+
+	RT_FREE_PT_LIST( &FinalPart, ap->a_resource );
 
 	/*
 	 * Processing of this ray is complete.  Free dynamic resources.
 	 */
-freeup:
-	RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
-	RT_FREE_PT_LIST( &FinalPart, ap->a_resource );
-	RT_FREE_SEG_LIST( HeadSeg, ap->a_resource );
-
 out:
 	if( solidbits != BITV_NULL)  {
 		FREE_BITV( solidbits, ap->a_resource );
