@@ -3,15 +3,15 @@ BRL-CAD Distribution
 
 BRL-CAD is open source software controlled and maintained by the
 BRL-CAD developers.  BRL-CAD is made available under the terms of the
-NASA Open Source Agreement (NOSA), provided via doc/legal/nosa.txt in
-the source distribution.  The NOSA should be referred to for exact
-details and clarification of how BRL-CAD may be used, incorporated
-into, or otherwise redistributed.
+BRL-CAD License Agreement, provided via doc/legal/brlcad.txt in the
+source distribution.  The BRL-CAD License Agreement should be referred
+to for exact details and clarification of how BRL-CAD may be used,
+incorporated into, or otherwise redistributed.
 
-You should have received a copy of the NASA Open Source Agreement
-along with this distribution; if not, please write to the Advanced
-Computer Systems Team Leader, U.S. Army Research Laboratory,
-AMSRD-ARL-SL-BE, Bldg 238, APG, MD 21005-5168 USA.
+You should have received a copy of the BRL-CAD License Agreement along
+with this distribution; if not, please write to the Advanced Computer
+Systems Team Leader, U.S. Army Research Laboratory, AMSRD-ARL-SL-BE,
+Bldg 238, APG, MD 21005-5168 USA.
 
 Overview
 --------
@@ -20,13 +20,12 @@ BRL-CAD consists primarily of libraries, applications, documentation,
 and build infrastructure.  The BRL-CAD libraries include the headers
 in the include/ directory as well as all of the directories that begin
 with the prefix "lib" in the src/ directory (e.g. src/librt/).  All of
-BRL-CAD's libraries are covered by the terms of the BRL-CAD NOSA.
+BRL-CAD's libraries are covered by the terms of the BRL-CAD License
+Agreement.
 
 BRL-CAD's documentation consists of manual pages located throughout
 the package, the majority of files in the doc/ directory, and the
 top-level administrative project text files (e.g. README & AUTHORS).
-All of BRL-CAD's documentation is covered by the terms of the GNU Free
-Documentation License.
 
 All of BRL-CAD's build infrastructure (i.e. files required by the GNU
 Autotools), a variety of scripts located in the misc/ and sh/
@@ -36,7 +35,7 @@ public domain.  Refer to each individual file for specific terms.
 
 Unless previously described or otherwise already covered by another
 license, the BRL-CAD package is covered under the terms of the BRL-CAD
-NOSA.
+License Agreement.
 
 3rd Party Components
 --------------------
@@ -70,13 +69,13 @@ agreement allows the BRL-CAD project to continue to grow unhindered by
 requiring all contributions be given back to the BRL-CAD developers.
 As such, a majority of the source code is copyright by the United
 States government in all countries except the United States.  In the
-United States, the terms of the BRL-CAD NOSA do still apply regardless
-of copyright.
+United States, the terms of the BRL-CAD License Agreement do still
+apply regardless of copyright.
 
 Authors and other BRL-CAD contributors must comply with the copyright
 terms for their respective contributions unless otherwise noted or
-arranged.  As stated in the BRL-CAD NOSA, the following notice should
-be prominent in the BRL-CAD sources:
+arranged.  The following notice should be prominent in the BRL-CAD
+sources:
 
   Copyright 2004, United States Government as represented by the
   Director of the U.S. Army Research Laboratory.  No copyright is
