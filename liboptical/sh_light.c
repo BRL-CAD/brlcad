@@ -938,7 +938,7 @@ light_vis(los)
 struct light_obs_stuff *los;
 {
 	struct application sub_ap;
-	double radius, angle, x, y; 
+	double radius, angle, cos_angle, x, y; 
 	point_t shoot_pt;
 	vect_t shoot_dir;
 
@@ -959,13 +959,25 @@ struct light_obs_stuff *los;
 		 */
 		radius = los->lp->lt_radius * 
 		/*			drand48(); */
-			(bn_rand_half(los->ap->a_resource->re_randptr) + 0.5);
+			fabs(bn_rand_half(los->ap->a_resource->re_randptr) 
+			     * 2.0);
 		angle =  M_PI * 2.0 * 
 		/*			drand48(); */
 			(bn_rand_half(los->ap->a_resource->re_randptr) + 0.5);
 
-		x = radius * cos(angle);
-		y = radius * sin(angle);
+		y = radius * bn_tab_sin(angle);
+
+		/* by adding 90 degrees to the angle, the sin of the new
+		 * angle becomes the cosine of the old angle.  Thus we
+		 * can use the sine table to compute the value, and avoid
+		 * the expensive actual computation.  So the next 3 lines
+		 * replace:
+		 *		x = radius * cos(angle);
+		 */
+		cos_angle = M_PI_2 + angle;
+		if (cos_angle > (2.0*M_PI)) cos_angle -= (2.0*M_PI);
+		x = radius * bn_tab_sin(cos_angle);
+
 
 		VJOIN2(shoot_pt, los->lp->lt_pos, 
 		       x, los->light_x,
