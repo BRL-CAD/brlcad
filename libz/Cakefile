@@ -22,9 +22,12 @@ PRODUCTS: Makefile.MTYPE
 	make -f Makefile.MTYPE PRODUCTS
 	AFTER_MAKE
 
-Makefile.MTYPE:		if not exist Makefile.MTYPE
+Makefile.in:	if not exist Makefile.in
+	cp ../SRCDIR/Makefile.in .
+
+Makefile.MTYPE:	Makefile.in	if not exist Makefile.MTYPE
 	( \C\C=\"CC\"; \
-		\C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER\"; \
+		\C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER -I../SRCDIR\"; \
 		\R\A\N\L\I\B=\"RANLIB\"; \
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
 		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
@@ -40,7 +43,7 @@ noprod&:
 
 clobber&: Makefile.MTYPE
 	make -f Makefile.MTYPE clean
-	rm -f *.MTYPE
+	rm -f *.MTYPE Makefile
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
