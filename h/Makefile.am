@@ -2,7 +2,7 @@
 
 brlcadincludedir = $(includedir)/brlcad
 
-brlcadinclude_HEADERS = \
+brlcadinclude_required = \
 	bn.h \
 	bu.h \
 	config.h \
@@ -12,8 +12,7 @@ brlcadinclude_HEADERS = \
 	rtprivate.h \
 	rtstring.h
 
-if !ONLYRTS
-brlcadinclude_HEADERS += \
+brlcadinclude_wanted = \
 	XtndRunsv.h \
 	anim.h \
 	brlregex.h \
@@ -87,4 +86,12 @@ brlcadinclude_HEADERS += \
 	wdb.h \
 	zconf.h \
 	zlib.h
+
+if ONLYRTS
+brlcadinclude_HEADERS = \
+	$(brlcadinclude_required)
+else
+brlcadinclude_HEADERS = \
+	$(brlcadinclude_required) \
+	$(brlcadinclude_wanted)
 endif
