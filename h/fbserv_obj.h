@@ -9,6 +9,7 @@ extern FBIO ogl_interface;
 #define NET_LONG_LEN	4	/* # bytes to network long */
 #define MAX_CLIENTS 32
 #define MAX_PORT_TRIES 100
+#define FBS_CALLBACK_NULL	(void (*)())NULL
 
 struct fbserv_listener {
   int			fbsl_fd;			/* socket to listen for connections */
@@ -27,6 +28,8 @@ struct fbserv_obj {
   FBIO				*fbs_fbp;			/* framebuffer pointer */
   struct fbserv_listener	fbs_listener;			/* data for listening */
   struct fbserv_client		fbs_clients[MAX_CLIENTS];	/* connected clients */
+  void				(*fbs_callback)();		/* callback function */
+  genptr_t			fbs_clientData;
 };
 
 extern int fbs_open();
