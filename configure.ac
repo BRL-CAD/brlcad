@@ -404,6 +404,11 @@ if test "x$found_jni_h" = "xno" ; then
 			fi
 		fi
 	fi
+else
+	# even though --with-jdk was not given, header was found and is needed
+	if ! test "x$only_rts" = "xno" ; then
+		with_java=yes
+	fi
 fi
 if ! test "x$search_for_jni_h_more" = "xno" ; then
 	# darwin systems may have a prior jni.h stashed away elsewhere
