@@ -842,9 +842,16 @@ mged_setup()
   /* register commands */
   cmd_setup();
 
+#if 0
   /* Initialize the menu mechanism to be off, but ready. */
   mmenu_init();
   btn_head_menu(0,0,0);		/* unlabeled menu */
+#else
+  (void)Tcl_CreateCommand(interp, "mmenu_set", cmd_nop, (ClientData)NULL,
+			  (Tcl_CmdDeleteProc *)NULL);
+  (void)Tcl_CreateCommand(interp, "mmenu_get", cmd_mmenu_get,
+			  (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+#endif
 
   history_setup();
 #if !TRY_NEW_MGED_VARS
@@ -1019,13 +1026,12 @@ char **argv;
   struct cmd_list *clp;
   int name_not_used = 1;
 
-  if(argc != 3){
-    Tcl_AppendResult(interp, "Usage: cmd_init name id", (char *)NULL);
+  if(argc != 2){
+    Tcl_AppendResult(interp, "Usage: cmd_init name", (char *)NULL);
     return TCL_ERROR;
   }
 
-  /* First, search to see if there exists a command window with the name
-     in argv[1] */
+  /* Search to see if there exists a command window with this name */
   for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
     if(!strcmp(argv[1], bu_vls_addr(&clp->name))){
       name_not_used = 0;
@@ -1106,6 +1112,7 @@ char **argv;
   struct bu_vls vls;
 
   if(!curr_cmd_list->aim){
+    Tcl_AppendElement(interp, bu_vls_addr(&tkName));
     Tcl_AppendElement(interp, bu_vls_addr(curr_dm_list->s_info->opp));
     if(curr_dm_list->aim)
       Tcl_AppendElement(interp, bu_vls_addr(&curr_dm_list->aim->name));
@@ -1115,6 +1122,7 @@ char **argv;
     return TCL_OK;
   }
 
+  Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->aim->_dmp->dm_tkName));
   Tcl_AppendElement(interp, bu_vls_addr(curr_cmd_list->aim->s_info->opp));
   bu_vls_init(&vls);
 
