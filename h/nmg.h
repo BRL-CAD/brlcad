@@ -387,6 +387,9 @@ struct face_g_snurb {
 	int			s_size[2]; /* mesh size, u,v */
 	int			pt_type; /* surface point type */
 	fastf_t			*ctl_points; /* array [size[0]*size[1]] */
+	/* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
+	int			dir;	/* direction of last refinement */
+	/*   END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
 	long			index;	/* struct # in this model */
 };
 
