@@ -1,6 +1,7 @@
 #!/bin/sh
 # @(#)$Header$ (BRL)
 
+touch version.number
 p=`cat version.number`
 c=`echo 0 1 $p +p | dc`
 
