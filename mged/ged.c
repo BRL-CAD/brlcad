@@ -72,6 +72,12 @@ void		sig2();
 static void	log_event();
 extern char	version[];		/* from vers.c */
 
+void
+pr_prompt()  {
+	(void)printf("mged> ");
+	fflush(stdout);
+}
+
 /* 
  *			M A I N
  */
@@ -152,11 +158,12 @@ char **argv;
 		if( signal( SIGINT, SIG_IGN ) == SIG_IGN )
 			cur_sigint = SIG_IGN;	/* detached? */
 		else
-			cur_sigint = quit;
+			cur_sigint = sig2;	/* back to here w/!0 return */
 	} else {
-		printf("MGED\n");
+		printf("\nAborted.\n");
 	}
 	(void)signal( SIGINT, SIG_IGN );
+	pr_prompt();
 
 	/****************  M A I N   L O O P   *********************/
 	while(1) {
@@ -169,8 +176,10 @@ char **argv;
 		 * keyboard.
 		 */
 		i = dmp->dmr_input( 0, rateflag );	/* fd 0 for cmds */
-		if( i )
+		if( i )  {
 			cmdline();
+			pr_prompt();
+		}
 
 		rateflag = 0;
 
