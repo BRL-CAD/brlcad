@@ -1,10 +1,22 @@
 /*
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-*/
+ *			V D E C K
+ *
+ *  Author -
+ *	Gary S. Moss
+ *	U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground
+ *	Maryland 21005-5066
+ *	(301)278-6647 or AV-298-6647
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
+ */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -66,35 +78,37 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 int	debug = 0;
 
 char	*cmd[] = {
-"",
-"C O M M A N D                  D E S C R I P T I O N",
-"",
-"deck [output file prefix]      Produce COM GEOM card deck.",
-"erase                          Erase current list of objects.",
-"insert [object[s]]             Add an object to current list.",
-"list [object[s]]               Display current list of selected objects.",
-"number [solid] [region]        Specify starting numbers for objects.",
-"quit                           Terminate run.",
-"remove [object[s]]             Remove an object from current list.",
-"sort                           Sort table of contents alphabetically.",
-"toc [object[s]]                Table of contents of solids database.",
-"! [shell command]              Execute a UNIX shell command.",
-"",
-"NOTE:",
-"First letter of command is sufficient, and all arguments are optional.",
-"Objects may be specified with string matching operators (*, [], -, ? or \\)",
-"as in the UNIX shell.",
-0 };
+	"",
+	"C O M M A N D                  D E S C R I P T I O N",
+	"",
+	"deck [output file prefix]      Produce COM GEOM card deck.",
+	"erase                          Erase current list of objects.",
+	"insert [object[s]]             Add an object to current list.",
+	"list [object[s]]               Display current list of selected objects.",
+	"number [solid] [region]        Specify starting numbers for objects.",
+	"quit                           Terminate run.",
+	"remove [object[s]]             Remove an object from current list.",
+	"sort                           Sort table of contents alphabetically.",
+	"toc [object[s]]                Table of contents of solids database.",
+	"! [shell command]              Execute a UNIX shell command.",
+	"",
+	"NOTE:",
+	"First letter of command is sufficient, and all arguments are optional.",
+	"Objects may be specified with string matching operators (*, [], -, ? or \\)",
+	"as in the UNIX shell.",
+	0
+};
 
 char	*usage[] = {
-"",
-"v d e c k ($Revision$)",
-"Make COMGEOM decks of objects from a \"mged\" file suitable as",
-"input to GIFT5 or gift(1V).",
-"",
-"Usage: vdeck file.g",
-"",
-0 };
+	"",
+	"v d e c k ($Revision$)",
+	"Make COMGEOM decks of objects from a \"mged\" file suitable as",
+	"input to GIFT5 or gift(1V).",
+	"",
+	"Usage: vdeck file.g",
+	"",
+	0
+};
 
 /* Units conversion factor from milimeters to whatever is specified in
 	the ident record.  If nothing is specified, unity scaling is used.
@@ -123,9 +137,12 @@ jmp_buf	env;
 
 /* File names and descriptors.						*/
 char	*objfile;
-int	regfd;		char	rt_file[15];
-int	solfd;		char	st_file[73];
-int	ridfd;		char	id_file[73];
+int	regfd;		
+char	rt_file[15];
+int	solfd;		
+char	st_file[73];
+int	ridfd;		
+char	id_file[73];
 
 /* Counters.								*/
 int	nns;		/* Solids.					*/
@@ -188,10 +205,10 @@ char	*argv[];
 	RT_LIST_INIT( &(sol_hd.l) );
 
 	if( ! parsArg( argc, argv ) )
-		{
+	{
 		menu( usage );
 		exit( 1 );
-		}
+	}
 
 	/* Build directory from object file.	 	*/
 	if( db_scan( dbip, (int (*)())db_diradd, 1 ) < 0 )  {
@@ -209,7 +226,7 @@ char	*argv[];
 	(void) setjmp( env );/* Point of re-entry from aborted command.	*/
 	prompt( CMD_PROMPT );
 	while( 1 )
-		{
+	{
 		/* Return to default interrupt handler after every command,
 		 allows exit from program only while command interpreter
 		 is waiting for input from keyboard.
@@ -217,7 +234,7 @@ char	*argv[];
 		(void) signal( SIGINT, quit );
 
 		switch( getcmd( arg_list, 0 ) )
-			{
+		{
 		case DECK :
 			deck( arg_list[1] );
 			break;
@@ -227,24 +244,25 @@ char	*argv[];
 			break;
 		case INSERT :
 			if( arg_list[1] == 0 )
-				{
+			{
 				prompt( "enter object[s] to insert: " );
 				(void) getcmd( arg_list, arg_ct );
-				}
+			}
 			(void) insert( arg_list, arg_ct );
 			break;
 		case LIST :
-			{	register int	i;
-			if( arg_list[1] == 0 )
+			{	
+				register int	i;
+				if( arg_list[1] == 0 )
 				{
-				(void) col_prt( curr_list, curr_ct );
-				break;
+					(void) col_prt( curr_list, curr_ct );
+					break;
 				}
-			for( tmp_ct = 0, i = 0; i < curr_ct; i++ )
-				if( match( arg_list[1], curr_list[i] ) )
-					tmp_list[tmp_ct++] = curr_list[i];
-			(void) col_prt( tmp_list, tmp_ct );
-			break;
+				for( tmp_ct = 0, i = 0; i < curr_ct; i++ )
+					if( match( arg_list[1], curr_list[i] ) )
+						tmp_list[tmp_ct++] = curr_list[i];
+				(void) col_prt( tmp_list, tmp_ct );
+				break;
 			}
 		case MENU :
 			menu( cmd );
@@ -252,12 +270,12 @@ char	*argv[];
 			continue;
 		case NUMBER :
 			if( arg_list[1] == 0 )
-				{
+			{
 				prompt( "enter number of 1st solid: " );
 				(void) getcmd( arg_list, arg_ct );
 				prompt( "enter number of 1st region: " );
 				(void) getcmd( arg_list, arg_ct );
-				}
+			}
 			if( arg_list[1] )
 				delsol = atoi( arg_list[1] ) - 1;
 			if( arg_list[2] )
@@ -265,10 +283,10 @@ char	*argv[];
 			break;
 		case REMOVE :
 			if( arg_list[1] == 0 )
-				{
+			{
 				prompt( "enter object[s] to remove: " );
 				(void) getcmd( arg_list, arg_ct );
-				}
+			}
 			(void) delete( arg_list );
 			break;
 		case RETURN :
@@ -276,15 +294,15 @@ char	*argv[];
 			continue;
 		case SHELL :
 			if( arg_list[1] == 0 )
-				{
+			{
 				prompt( "enter shell command: " );
 				(void) getcmd( arg_list, arg_ct );
-				}
+			}
 			(void) shell( arg_list );
 			break;
 		case SORT_TOC :
 			qsort( (genptr_t)toc_list, (unsigned)ndir,
-				sizeof(char *), sortFunc );
+			    sizeof(char *), sortFunc );
 			break;
 		case TOC :
 			list_toc( arg_list );
@@ -293,14 +311,14 @@ char	*argv[];
 		case QUIT :
 			(void) printf( "quitting...\n" );
 			exit( 0 );
-		UNKNOWN :
+UNKNOWN :
 			(void) printf( "Invalid command\n" );
 			prompt( PROMPT );
 			continue;
-			}
-		prompt( CMD_PROMPT );		
 		}
+		prompt( CMD_PROMPT );
 	}
+}
 
 /*
  *			F L A T T E N _ T R E E
@@ -333,7 +351,7 @@ int		neg;
 
 	case OP_REGION:
 		rt_log("REGION 'stp'=x%x\n",
-			tp->tr_a.tu_stp );
+		    tp->tr_a.tu_stp );
 		return;
 
 	default:
@@ -521,9 +539,9 @@ int			id;
 
 		RT_CHECK_SOLTAB(stp);				/* debug */
 		if(	dp->d_namep[0] != stp->st_name[0]  ||	/* speed */
-			dp->d_namep[1] != stp->st_name[1]  ||	/* speed */
-			strcmp( dp->d_namep, stp->st_name ) != 0
-		)
+		dp->d_namep[1] != stp->st_name[1]  ||	/* speed */
+		strcmp( dp->d_namep, stp->st_name ) != 0
+		    )
 			continue;
 		for( i=0; i<16; i++ )  {
 			f = tsp->ts_mat[i] - stp->st_pathmat[i];
@@ -533,10 +551,11 @@ int			id;
 		/* Success, we have a match! */
 		if( debug )  {
 			rt_log("rt_gettree_leaf:  %s re-referenced\n",
-				dp->d_namep );
+			    dp->d_namep );
 		}
 		goto found_it;
-next_one: ;
+next_one: 
+		;
 	}
 
 	GETSTRUCT(stp, soltab);
@@ -550,10 +569,10 @@ next_one: ;
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-    	RT_INIT_DB_INTERNAL(&intern);
+	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_functab[id].ft_import( &intern, ep, stp->st_pathmat ) < 0 )  {
 		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		rt_free( (char *)stp, "struct soltab");
 		return( TREE_NULL );		/* BAD */
 	}
@@ -565,7 +584,7 @@ next_one: ;
 		/* verbose=1, mm2local=1.0 */
 		if( rt_functab[id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
 			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
-				dp->d_namep );
+			    dp->d_namep );
 		}
 		rt_log( "%s:  %s", dp->d_namep, rt_vls_addr( &str ) );
 		rt_vls_free( &str );
@@ -582,27 +601,27 @@ next_one: ;
 	switch( intern.idb_type )  {
 	case ID_TOR:
 		addtor( &sol, (struct rt_tor_internal *)intern.idb_ptr,
-			dp->d_namep, stp->st_bit+delsol );
+		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_ARB8:
 		addarb( &sol, (struct rt_arb_internal *)intern.idb_ptr,
-			dp->d_namep, stp->st_bit+delsol );
+		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_ELL:
 		addell( &sol, (struct rt_ell_internal *)intern.idb_ptr,
-			dp->d_namep, stp->st_bit+delsol );
+		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_TGC:
 		addtgc( &sol, (struct rt_tgc_internal *)intern.idb_ptr,
-			dp->d_namep, stp->st_bit+delsol );
+		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_ARS:
 		addars( &sol, (struct rt_ars_internal *)intern.idb_ptr,
-			dp->d_namep, stp->st_bit+delsol );
+		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_HALF:
 		addhalf( &sol, (struct rt_half_internal *)intern.idb_ptr,
-			dp->d_namep, stp->st_bit+delsol );
+		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_PIPE:
 		/* XXX */
@@ -610,8 +629,8 @@ next_one: ;
 		/* XXX */
 	default:
 		(void) fprintf( stderr,
-			"vdeck: '%s' Solid type has no corresponding COMGEOM soild, skipping\n",
-			rt_functab[id].ft_name );
+		    "vdeck: '%s' Solid type has no corresponding COMGEOM soild, skipping\n",
+		    rt_functab[id].ft_name );
 		vls_itoa( &sol, stp->st_bit+delsol, 5 );
 		rt_vls_strcat( &sol, rt_functab[id].ft_name );
 		vls_blanks( &sol, 5*10 );
@@ -623,7 +642,7 @@ next_one: ;
 	ewrite( solfd, rt_vls_addr(&sol), rt_vls_strlen(&sol) );
 
 	/* Free storage for internal form */
-    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 
 found_it:
 	GETUNION( curtree, tree );
@@ -665,12 +684,13 @@ vect_t	v1, v2;
 void
 swap_dbl( d1, d2 )
 register double	*d1, *d2;
-	{	double	t;
+{	
+	double	t;
 	t = *d1;
 	*d1 = *d2;
 	*d2 = t;
 	return;
-	}
+}
 
 /*
  *			A D D T O R
@@ -781,7 +801,7 @@ int			num;
 		rt_vls_strcat( v, "\n");
 		return;
 	}
-	
+
 	/* Print the solid parameters.					*/
 	switch( cgtype )  {
 	case 8:
@@ -802,10 +822,10 @@ int			num;
 		vls_solid_pts( v, pts, 4, name, num, "arb4 " );
 		break;
 
-	/* Currently, cgarbs() will not return RAW, BOX, or RPP */
+		/* Currently, cgarbs() will not return RAW, BOX, or RPP */
 	default:
 		(void) fprintf( stderr, "addarb: Unknown arb cgtype=%d.\n",
-			cgtype );
+		    cgtype );
 		exit( 10 );
 	}
 }
@@ -828,7 +848,7 @@ int			num;
 	register int	i;
 	double	ma, mb, mc;
 	int	cgtype;
-	
+
 	/* Check for ell1 or sph.					*/
 	ma = MAGNITUDE( gp->a );
 	mb = MAGNITUDE( gp->b );
@@ -840,17 +860,17 @@ int			num;
 		if( fabs( mb-mc ) < CONV_EPSILON )
 			cgtype = SPH;
 		else	/* switch A and C */
-			{
+		{
 			swap_vec( gp->a, gp->c );
 			swap_dbl( &ma, &mc );
-			}
+		}
 	} else if( fabs( ma-mc ) < CONV_EPSILON ) {
 		/* vector A == vector C */
 		cgtype = ELL1;
 		/* switch vector A and vector B */
 		swap_vec( gp->a, gp->b );
 		swap_dbl( &ma, &mb );
-	} else if( fabs( mb-mc ) < CONV_EPSILON ) 
+	} else if( fabs( mb-mc ) < CONV_EPSILON )
 		cgtype = ELL1;
 	else
 		cgtype = GENELL;
@@ -896,9 +916,9 @@ int			num;
 		break;
 	default:
 		(void) fprintf( stderr,
-				"Error in type of ellipse (%d).\n",
-				cgtype
-				);
+		    "Error in type of ellipse (%d).\n",
+		    cgtype
+		    );
 		exit( 10 );
 	}
 }
@@ -943,19 +963,19 @@ int			num;
 	 */
 	if( mc == 0.0 )  {
 		(void) fprintf( stderr,
-				"Error in TGC, C vector has zero magnitude!\n"
-				);
+		    "Error in TGC, C vector has zero magnitude!\n"
+		    );
 		return;
 	}
 	if( md == 0.0 )  {
 		(void) fprintf( stderr,
-				"Error in TGC, D vector has zero magnitude!\n"
-				);
+		    "Error in TGC, D vector has zero magnitude!\n"
+		    );
 		return;
 	}
 	if(	fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON
 	    &&  fabs( fabs(VDOT(axb,cxd)) - (maxb*mcxd) ) < CONV_EPSILON
-		)
+	    )
 		cgtype = TEC;
 
 	/* Check for right cylinder.					*/
@@ -1074,9 +1094,9 @@ int			num;
 		break;
 	default:
 		(void) fprintf( stderr,
-				"Error in tgc type (%d).\n",
-				cgtype
-				);
+		    "Error in tgc type (%d).\n",
+		    cgtype
+		    );
 		exit( 10 );
 	}
 }
@@ -1155,17 +1175,18 @@ eread( fd, buf, bytes )
 int		fd;
 char		*buf;
 unsigned	bytes;
-	{	int	bytes_read;
+{	
+	int	bytes_read;
 	if(	(bytes_read = read( fd, buf, bytes )) != (int) bytes
 	    &&	bytes_read != 0
-		)
+	    )
 		(void) fprintf( stderr,
-				"ERROR: Read of %d bytes returned %d\n",
-				bytes,
-				bytes_read
-				);
+		    "ERROR: Read of %d bytes returned %d\n",
+		    bytes,
+		    bytes_read
+		    );
 	return;
-	}
+}
 
 /*	e w r i t e
 	Write with error checking.
@@ -1175,22 +1196,23 @@ ewrite( fd, buf, bytes )
 int		fd;
 char		*buf;
 unsigned	bytes;
-	{	int	bytes_written;
+{	
+	int	bytes_written;
 	if( (bytes_written = write( fd, buf, bytes )) != (int) bytes )
 		(void) fprintf( stderr,
-				"ERROR: Write of %d bytes returned %d\n",
-				bytes,
-				bytes_written
-				);
+		    "ERROR: Write of %d bytes returned %d\n",
+		    bytes,
+		    bytes_written
+		    );
 	return;
-	}
+}
 
 pr_dir( dirp )
 struct directory	*dirp;
-	{
+{
 	(void) printf(	"dirp(0x%x)->d_namep=%s d_addr=%ld\n",
-			dirp, dirp->d_namep, dirp->d_addr
-			);
+	    dirp, dirp->d_namep, dirp->d_addr
+	    );
 	(void) fflush( stdout );
 	return	1;
-	}
+}
