@@ -22,11 +22,13 @@ check_externs "vdraw db kill .inmem B mged_update opendb mat_inv mat_mul"
 #		glout - the entire output from g_lint
 #		counter - index into $glout that is he start of the current region pair
 #		length - the length of $glout
-proc get_next_overlap { glout counter length } {
+proc get_next_overlap { id glout counter length } {
+	global over_cont
 
 	set prev_obj1 [lindex $glout [incr counter]]
 	set prev_obj2 [lindex $glout [incr counter]]
 	set prev_depth [lindex $glout [incr counter]]
+	set over_cont($id,max_depth) $prev_depth
 	set counter [expr $counter + 7]
 	while { $counter < $length } {
 		set obj1 [lindex $glout [incr counter]]
@@ -35,9 +37,37 @@ proc get_next_overlap { glout counter length } {
 		if { [string compare $obj1 $prev_obj1] || [string compare $obj2 $prev_obj2] } {
 			return [expr $counter - 13]
 		}
+		if { $depth > $over_cont($id,max_depth) } {
+			set over_cont($id,max_depth) $depth
+		}
 		set counter [expr $counter + 7]
 	}
 	return [expr $counter - 10]
+}
+
+proc count_overlaps { id } {
+	global over_cont
+
+	set index 0
+	if { $over_cont($id,length) < 3 } {
+		set over_cont($id,overlap_count) 0
+		return
+	}
+	set obj1 [lindex $over_cont($id,glint_ret) [incr index]]
+	set obj2 [lindex $over_cont($id,glint_ret) [incr index]]
+	incr index 8
+	set over_cont($id,overlap_count) 1
+	while { $index < $over_cont($id,length) } {
+		set tmp1 [lindex $over_cont($id,glint_ret) [incr index]]
+		set tmp2 [lindex $over_cont($id,glint_ret) [incr index]]
+
+		if { [string compar $tmp1 $obj1] || [string compare $tmp2 $obj2] } {
+			incr over_cont($id,overlap_count)
+			set obj1 $tmp1
+			set obj2 $tmp2
+		}
+		incr index 8
+	}
 }
 
 # plot the current pair of regions and the overlaps in the MGED display
@@ -80,14 +110,15 @@ proc next_overlap { id } {
 		return
 	}
 	set over_cont($id,start) $over_cont($id,cur_ovr_index)
-	set over_cont($id,cur_ovr_index) [get_next_overlap $over_cont($id,glint_ret)\
+	set over_cont($id,cur_ovr_index) [get_next_overlap $id $over_cont($id,glint_ret)\
 		$over_cont($id,cur_ovr_index) $over_cont($id,length)]
 	set obj1 [lindex $over_cont($id,glint_ret) [incr over_cont($id,cur_ovr_index)]]
 	set obj2 [lindex $over_cont($id,glint_ret) [incr over_cont($id,cur_ovr_index)]]
+	$over_cont($id,work_frame).l0 configure -text "Overlap #$over_cont($id,overlap_no) of $over_cont($id,overlap_count)"
 	$over_cont($id,work_frame).l1 configure -text "Object1: $obj1"
 	$over_cont($id,work_frame).l3 configure -text "Object2: $obj2"
-	set overlap_length [expr [lindex $over_cont($id,glint_ret)\
-		[incr over_cont($id,cur_ovr_index)]] / $over_cont($id,local2base)]
+	incr over_cont($id,cur_ovr_index)
+	set overlap_length [expr $over_cont($id,max_depth) / $over_cont($id,local2base)]
 	set overlap_text [format "by as much as %g $over_cont($id,localunit)" $overlap_length]
 	$over_cont($id,work_frame).l4 configure -text $overlap_text
 
@@ -132,11 +163,12 @@ proc next_overlap { id } {
 		$over_cont($id,work_frame).b5 configure -state disabled
 		update
 	}
+	incr over_cont($id,overlap_no)
 	update
 }
 
 proc read_output { id } {
-	global over_cont 
+	global over_cont mged_gui
 
 	set inn [read $over_cont($id,fd)]
 	if { [eof $over_cont($id,fd)] } {
@@ -151,6 +183,11 @@ proc read_output { id } {
 		set over_cont($id,length) [llength $over_cont($id,glint_ret)]
 		set over_cont($id,cur_ovr_index) 0
 		set over_cont($id,start) 0
+		count_overlaps $id
+		if { $over_cont($id,overlap_count) == 0 } {
+			cad_dialog $over_cont($id,dialog_window) $mged_gui($id,screen) "Overlap Tool" "No overlaps found" info 0 OK
+		}
+		set over_cont($id,overlap_no) 1
 		grid $over_cont($id,work_frame) -row 5 -column 0 -columnspan 6 -sticky ew
 		next_overlap $id
 	}
@@ -163,12 +200,13 @@ proc fix_overlaps { id } {
 
 	set over_cont($id,glint_ret) ""
 	set size_in_mm [expr $over_cont($id,local2base) * $over_cont($id,size)]
-	$over_cont($id,top).status configure -text "Shooting rays at $size_in_mm mm ..."
+	$over_cont($id,top).status configure -text "Shooting rays at $size_in_mm mm, this may take some time ..."
 	$over_cont($id,top).go_quit.go configure -state disabled
 	$over_cont($id,work_frame).b5 configure -state normal
 	update
 	set model [opendb]
-	set file_name "| g_lint -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) | sort -b +1 -2 +2 -3 +3n -4 2> /tmp/g_lint_error"
+#	set file_name "| g_lint -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) | sort -b +1 -2 +2 -3 +3n -4 2> /tmp/g_lint_error"
+	set file_name "| g_lint -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) 2> /tmp/g_lint_error"
 	set over_cont($id,fd) [open $file_name]
 	fconfigure $over_cont($id,fd) -blocking false
 	
@@ -320,6 +358,7 @@ proc over_quit { id } {
 		catch [exec kill -9 [lindex $over_cont($id,pid) 0]]
 		catch [close $over_cont($id,fd)]
 	}
+	catch [destroy $over_cont($id,dialog_window)]
 	destroy $over_cont($id,top)
 }
 
@@ -437,10 +476,14 @@ proc overlap_tool { id } {
 	grid $over_cont($id,top).status -row 6 -column 0 -columnspan 6 -sticky ew -padx 3 -pady 3
 	update
 	set over_cont($id,work_frame) [frame $over_cont($id,top).f1]
+	label $over_cont($id,work_frame).l0 -text "Overlap #0 of 0"
 	label $over_cont($id,work_frame).l1 -text "Object1: "
 	label $over_cont($id,work_frame).l2 -text "overlaps"
 	label $over_cont($id,work_frame).l3 -text "Object2: "
 	label $over_cont($id,work_frame).l4 -text "by as much as 0.0 mm"
+	hoc_register_data $over_cont($id,work_frame).l0 "Overlap counter" {
+		{summary "Keeps track of how many overlaps have been examined." }
+	}
 	set reg_data [list [list summary "Object1 and Object2 are regions that appear to\n\
 		occupy some of the same space. The maximum length of the overlap\n\
 		as discovered by 'g_lint' using the ray trace parameters provided is displayed."]]
@@ -448,10 +491,11 @@ proc overlap_tool { id } {
 	hoc_register_data $over_cont($id,work_frame).l2 "overlaps" $reg_data
 	hoc_register_data $over_cont($id,work_frame).l3 "Object2" $reg_data
 	hoc_register_data $over_cont($id,work_frame).l4 "Maximum overlap" $reg_data
-	grid $over_cont($id,work_frame).l1 -row 0 -column 0 -columnspan 5 -sticky ew
-	grid $over_cont($id,work_frame).l2 -row 1 -column 0 -columnspan 5 -sticky ew
-	grid $over_cont($id,work_frame).l3 -row 2 -column 0 -columnspan 5 -sticky ew
-	grid $over_cont($id,work_frame).l4 -row 3 -column 0 -columnspan 5 -sticky ew
+	grid $over_cont($id,work_frame).l0 -row 0 -column 0 -columnspan 5 -sticky ew
+	grid $over_cont($id,work_frame).l1 -row 1 -column 0 -columnspan 5 -sticky ew
+	grid $over_cont($id,work_frame).l2 -row 2 -column 0 -columnspan 5 -sticky ew
+	grid $over_cont($id,work_frame).l3 -row 3 -column 0 -columnspan 5 -sticky ew
+	grid $over_cont($id,work_frame).l4 -row 4 -column 0 -columnspan 5 -sticky ew
 	button $over_cont($id,work_frame).b1 -text "obj1 - obj2" -command "do_subtract $id 12"
 	hoc_register_data $over_cont($id,work_frame).b1 "obj1 - obj2" {
 		{summary "Eliminate this overlap by subtracting Object2 from Object1.\n\
@@ -486,12 +530,12 @@ proc overlap_tool { id } {
 			The overlap rays are drawn in red. Object 1 is drawn in green,\n\
 			and Object 2 is drawn in cyan."}
 	}
-	grid $over_cont($id,work_frame).b1 -row 4 -column 0
-	grid $over_cont($id,work_frame).b2 -row 4 -column 1
-	grid $over_cont($id,work_frame).b3 -row 4 -column 2
-	grid $over_cont($id,work_frame).b4 -row 4 -column 3
-	grid $over_cont($id,work_frame).b6 -row 4 -column 4
-	grid $over_cont($id,work_frame).b5 -row 5 -column 2
+	grid $over_cont($id,work_frame).b1 -row 5 -column 0
+	grid $over_cont($id,work_frame).b2 -row 5 -column 1
+	grid $over_cont($id,work_frame).b3 -row 5 -column 2
+	grid $over_cont($id,work_frame).b4 -row 5 -column 3
+	grid $over_cont($id,work_frame).b6 -row 5 -column 4
+	grid $over_cont($id,work_frame).b5 -row 6 -column 2
 	vdraw open overlaps
 	vdraw params color ff0000
 	
@@ -499,4 +543,7 @@ proc overlap_tool { id } {
 	set over_cont($id,tmp_obj2) [make_name _obj2_]
 	set over_cont($id,fd) -1
 	set over_cont($id,pid) ""
+	set over_cont($id,length) 0
+	set over_cont($id,overlap_count) 0
+	set over_cont($id,dialog_window) .${id}_dialog
 }
