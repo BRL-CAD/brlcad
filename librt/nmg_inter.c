@@ -3682,6 +3682,16 @@ fixup:
 			/* Geometry says lines are parallel, no intersection */
 			if( hit_v )  {
 				rt_log("NOTICE: geom/topo mis-match, enlisting topo vu\n");
+				VPRINT("hit_v", hit_v->vg_p->coord);
+				nmg_pr_eg(*eg1, 0);
+				nmg_pr_eg(is->on_eg, 0);
+				rt_log(" dist to eg1=%g, dist to on_eg=%g\n",
+					rt_dist_line3_pt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
+					rt_dist_line3_pt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord) );
+				VPRINT("is->pt2d ", is->pt2d);
+				VPRINT("is->dir2d", is->dir2d);
+				VPRINT("eg_pt2d  ", eg_pt2d);
+				VPRINT("eg_dir2d ", eg_dir2d);
 				goto force_isect;
 			}
 			continue;
