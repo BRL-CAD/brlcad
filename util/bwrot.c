@@ -42,8 +42,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"		/* For getopt */
 
-int	arbrot();
-
 #define	MAXBUFBYTES	(1280*1024)
 
 int	buflines, scanbytes;
@@ -66,7 +64,7 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
   or   bwrot -a angle [-s squaresize]\n\
 	[-w width] [-n height] [file.bw] > file.bw\n";
 
-void	fill_buffer(), reverse_buffer();
+void	fill_buffer(), reverse_buffer(), arbrot();
 
 static char	*file_name;
 FILE	*ifp, *ofp;
@@ -310,6 +308,7 @@ reverse_buffer()
 #endif
 #define	DtoR(x)	((x)*PI/180.0)
 
+void
 arbrot( a )
 double	a;	/* rotation angle */
 {

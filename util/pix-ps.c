@@ -48,6 +48,8 @@ static int	pageheight = 792;	/* 11 inches */
 static char	*file_name;
 static FILE	*infp;
 
+void prolog(), postlog(), hexout();
+
 static char usage[] = "\
 Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
         [-s input_squaresize] [-w input_width] [-n input_height]\n\
@@ -190,6 +192,7 @@ char	**argv;
 	exit( 0 );
 }
 
+void
 prolog( fp, name, width, height )
 FILE	*fp;
 char	*name;
@@ -232,6 +235,7 @@ int	width, height;		/* in points */
 	fprintf( fp, "%d %d scale\n\n", width, height );
 }
 
+void
 postlog( fp )
 FILE	*fp;
 {
@@ -244,6 +248,7 @@ FILE	*fp;
 /*
  * Print a byte in 2-character hexadecimal.
  */
+void
 hexout(fp,byte)
 FILE *fp;
 int byte;		/* 0 <= byte <= 255 */

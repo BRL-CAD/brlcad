@@ -103,6 +103,7 @@ struct uplot letters[] = {
 /*z*/	{ 0, 0, 0 }
 };
 
+void	getargs(), getstring(), draw(), label(), prolog(), scaleinfo(), postlog();
 double	getieee();
 int	verbose;
 double	cx, cy, cz;		/* current x, y, z, point */
@@ -133,6 +134,7 @@ static char usage[] = "\
 Usage: pl-ps [-e] [-c] [-S inches_square]\n\
         [-W width_inches] [-N height_inches] [file.pl]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -328,6 +330,7 @@ char	**argv;
 	exit(0);
 }
 
+void
 getargs( up )
 struct uplot *up;
 {
@@ -355,6 +358,7 @@ struct uplot *up;
 	}
 }
 
+void
 getstring()
 {
 	int	c;
@@ -391,6 +395,7 @@ getieee()
 	return	d;
 }
 
+void
 draw( x1, y1, z1, x2, y2, z2 )
 double	x1, y1, z1;	/* from point */
 double	x2, y2, z2;	/* to point */
@@ -417,6 +422,7 @@ double	x2, y2, z2;	/* to point */
 	page_dirty = 1;
 }
 
+void
 label( x, y, str )
 double	x, y;
 char	*str;
@@ -466,6 +472,7 @@ NV\n\
 % Begin Plot Data\n\
 ";
 
+void
 prolog( fp, name, width, height )
 FILE	*fp;
 char	*name;
@@ -496,6 +503,7 @@ int	width, height;		/* in points */
 	fputs( boilerplate, fp );
 }
 
+void
 scaleinfo( fp, width, height )
 FILE	*fp;
 int	width, height;		/* in points */
@@ -519,6 +527,7 @@ int	width, height;		/* in points */
 	fprintf( fp, "%f %f scale\n", width/4096.0, height/4096.0 );
 }
 
+void
 postlog( fp )
 FILE	*fp;
 {

@@ -48,6 +48,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define		OPT_STRING	"a:c:e:ipr?"	/* For getopt(3) */
 #define		fpeek(f)	ungetc(fgetc(f), f)
 
+void	PrintUsage();
+void	GetCoord();
+
 main (argc, argv)
 
 int     argc;
@@ -242,11 +245,13 @@ char    **argv;
     exit (0);
 }
 /* ======================================================================== */
+void
 PrintUsage ()
 {
     fputs("Usage:  'azel [-a azim] [-e elev] [-c celsiz] [-{ip}r] [infile [outfile]]'\n", stderr);
 }
 /* ======================================================================== */
+void
 GetCoord (Whence, Coord, Label, LineNm, FileName)
 
 FILE    *Whence;        /* File from which to read */

@@ -141,7 +141,7 @@ double *end_table = &table[10];
 
 /* convert 24 bit pixel into appropriate 8 bit pixel */
 #define DITHERMAP(red, green, blue, i) {\
-	register _r, _g, _b; double dr, dg, db; \
+	register int _r, _g, _b; double dr, dg, db; \
 	dr = NOISE(); DITHER(_r, red, dr, MAG1); _r = (_r+26) / 51; \
 	dg = NOISE(); DITHER(_g, green, dg, MAG1); _g = (_g+26) / 51; \
 	db = NOISE(); DITHER(_b, blue, db, MAG1); _b = (_b+26) / 51; \

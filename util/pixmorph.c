@@ -522,7 +522,7 @@ char **argv;
     lines_headerinfo(linesfile, &a, &b, &p, &numlines);
     lines = (struct lineseg *)malloc(numlines * sizeof(struct lineseg));
     numlines = lines_read(linesfile, numlines, lines,
-			  pa_width, pa_height, warpfrac, p, b);
+			  pa_width, pa_height, warpfrac, p);
     fprintf(stderr, "pixmorph: %d line segments read\n", numlines);
 
     /* Warp the images */

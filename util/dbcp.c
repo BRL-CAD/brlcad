@@ -48,6 +48,8 @@ static char	usage[] = "\
 Usage:  dbcp [-v] blocksize < input > output\n\
 	(blocksize = number of 512 byte 'blocks' per record)\n";
 
+void prs();
+
 /*
  *			M A I N
  */
@@ -201,6 +203,7 @@ childstart:
 	exit(exitval);
 }
 
+void
 prs (fmt, a, b, c)
 char	*fmt, *a, *b, *c;
 {

@@ -43,6 +43,7 @@ char *filename = "(stdin)";
  *
  *	
  */
+void
 shrink_image(w, h, buffer, Factor)
 unsigned char *buffer;
 int Factor, w, h;
@@ -76,6 +77,7 @@ int Factor, w, h;
 /*
  *	Undersample image pixels
  */
+void
 usample_image(w, h, buffer, Factor)
 unsigned char *buffer;
 int Factor, w, h;

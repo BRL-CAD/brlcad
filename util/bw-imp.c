@@ -292,7 +292,7 @@ int y;
 		for ( xx = 0; xx < im_wpatches; ++xx )  {
 			for ( yy = 0; yy < 32; ++yy )  {
 				register long	b = swath[yy][xx];
-				register c;
+				register int c;
 
 				c = (int)(b >> 24) & 0xFF; (void)putchar( c );
 				c = (int)(b >> 16) & 0xFF; (void)putchar( c );

@@ -48,6 +48,8 @@ static char usage[] = "\
 Usage: pixhalve [-h] [-a]\n\
 	[-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
 
+void separate(), combine(), ripple(), filter5(), filter3();
+
 get_args( argc, argv )
 register char **argv;
 {
@@ -227,6 +229,7 @@ char	**argv;
  *
  *  Updated version:  the outputs are Y U V values, not R G B.
  */
+void
 separate( rop, gop, bop, cp, num )
 register int	*rop;			/* Y */
 register int	*gop;			/* U */
@@ -278,6 +281,7 @@ int		num;
  *  Combine three separate arrays of integers into a buffer of
  *  RGB byte tripples
  */
+void
 combine( cp, rip, gip, bip, num )
 register unsigned char	*cp;
 register int		*rip;
@@ -318,6 +322,7 @@ int			num;
  *
  *  Barrel shift all the pointers down, with [0] going back to the top.
  */
+void
 ripple( array, num )
 int	*array[];
 int	num;
@@ -339,6 +344,7 @@ int	num;
  *
  *  Code is arranged so as to vectorize, on machines that can.
  */
+void
 filter5( op, lines, num )
 int	*op;
 int	*lines[];
@@ -396,6 +402,7 @@ int	num;
  *  The filter coefficients are positioned so as to align the center
  *  of the filter with the same center used in filter5().
  */
+void
 filter3( op, lines, num )
 int	*op;
 int	*lines[];

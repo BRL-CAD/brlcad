@@ -53,7 +53,7 @@ Usage: pixrect -w in_width -n in_height -W out_width -N out_height\n\
 
 get_args(argc,argv)
 register char **argv;
-register 	argc;
+register int 	argc;
 {
 	register int c;
 	register int inputmode = INTERACTIVE;
@@ -186,7 +186,7 @@ int	outbytes;
 
 main(argc, argv)
 register char **argv;
-register 	argc;
+register int 	argc;
 {
 	int	row;
 	int	error;

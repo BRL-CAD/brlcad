@@ -41,6 +41,8 @@ char *options = "uhs:w:n:f:";
 char *progname = "(noname)";
 char *filename = "(stdin)";
 
+void shrink_image(), usample_image();
+
 /*	R E A D _ I M A G E
  *
  *	read image into memory
@@ -101,6 +103,7 @@ UCHAR *buffer;
  *
  *	
  */
+void
 shrink_image(scanlen, Width, Height, buffer, Factor)
 UCHAR *buffer;
 int scanlen, Factor, Width, Height;
@@ -142,6 +145,7 @@ int scanlen, Factor, Width, Height;
 /*
  *	Undersample image pixels
  */
+void
 usample_image(scanlen, Width, Height, buffer, Factor)
 UCHAR *buffer;
 int scanlen, Factor, Width, Height;

@@ -48,6 +48,9 @@ static int	pageheight = 792;	/* 11 inches */
 static char	*file_name;
 static FILE	*infp;
 
+void prolog();
+void postlog();
+
 static char usage[] = "\
 Usage: bw-ps [-e] [-c] [-L] [-h]\n\
         [-s input_squaresize] [-w input_width] [-n input_height]\n\
@@ -179,6 +182,7 @@ char	**argv;
 	postlog( ofp );
 }
 
+void
 prolog( fp, name, width, height )
 FILE	*fp;
 char	*name;
@@ -221,6 +225,7 @@ int	width, height;		/* in points */
 	fprintf( fp, "%d %d scale\n\n", width, height );
 }
 
+void
 postlog( fp )
 FILE	*fp;
 {
