@@ -312,7 +312,7 @@ CONST struct db_i		*dbip;
 	int				vert_no;
 	int				seg_no;
 	int				curve_no;
-	char				*ptr;
+	unsigned char			*ptr;
 	genptr_t			*segs;
 
 	RT_CK_EXTERNAL( ep );
@@ -345,7 +345,7 @@ CONST struct db_i		*dbip;
 	sketch_ip->curve_count = bu_glong( rp->skt.skt_curve_count );
 	seg_count = bu_glong( rp->skt.skt_seg_count );
 
-	ptr = (char *)rp;
+	ptr = (unsigned char *)rp;
 	ptr += sizeof( struct sketch_rec );
 	sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->vert" );
 	for( vert_no=0 ; vert_no < sketch_ip->vert_count ; vert_no++ )
@@ -400,7 +400,7 @@ CONST struct db_i		*dbip;
 		int i;
 
 		crv = &sketch_ip->curves[curve_no];
-		NAMEMOVE( ptr, crv->crv_name );
+		NAMEMOVE( (char *)ptr, crv->crv_name );
 		ptr += NAMESIZE;
 		crv->seg_count = bu_glong( ptr );
 		ptr += 4;
@@ -576,7 +576,7 @@ CONST struct db_i		*dbip;
 		crv = &sketch_ip->curves[curve_no];
 
 		/* write curve parameters */
-		NAMEMOVE( crv->crv_name, ptr );
+		NAMEMOVE( crv->crv_name, (char *)ptr );
 		ptr += NAMESIZE;
 		(void)bu_plong( ptr,  crv->seg_count );
 		ptr += 4;
