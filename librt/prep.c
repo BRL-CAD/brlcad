@@ -388,6 +388,9 @@ register struct rt_i *rtip;
 	VSETALL( rtip->mdl_min, -0.1 );
 	VSETALL( rtip->mdl_max,  0.1 );
 
+	rt_hist_free( &rtip->rti_hist_cellsize );
+	rt_hist_free( &rtip->rti_hist_cutdepth );
+
 	rtip->rti_magic = RTI_MAGIC;
 	rtip->needprep = 1;
 }
