@@ -612,7 +612,7 @@ char	*dp;
 	u = swp->sw_uv.uv_u * ckp->ckr_scale;
 	v = swp->sw_uv.uv_v * ckp->ckr_scale;
 
-	if ( (u&1) && (v&1) || !(u&1) && !(v&1) ) {
+	if ( ((u&1) && (v&1)) || (!(u&1) && !(v&1)) ) {
 		cp = ckp->ckr_a;
 	} else {
 		cp = ckp->ckr_b;

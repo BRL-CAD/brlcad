@@ -228,7 +228,6 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	int			node;
 	int			i;
 	int			long_size;
-	int			computed_size;
 	int			file_size_long;
 	int			file_size_int;
 

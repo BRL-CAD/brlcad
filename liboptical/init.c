@@ -46,8 +46,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *			O P T I C A L _ S H A D E R _ I N I T
  */
 void
-optical_shader_init(headp)
-struct mfuncs	**headp;
+optical_shader_init(struct mfuncs	**headp)
 {
 	/*
 	 *  Connect up shader ("material") interfaces

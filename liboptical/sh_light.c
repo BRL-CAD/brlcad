@@ -251,7 +251,7 @@ gen_hit(register struct application *ap,
 	struct light_specific *lsp = (struct light_specific *)ap->a_uptr;
 	struct soltab *stp;
 	struct light_pt *lpt;
-	struct partition *pp;
+	struct partition *pp, *prev, *next;
 
 	if ((pp=PartHeadp->pt_forw) == PartHeadp) return 0;
 
@@ -259,6 +259,26 @@ gen_hit(register struct application *ap,
 
 		if (pp->pt_regionp != lsp->lt_rp) continue;
 
+		prev = pp->pt_back;
+		/* check to make sure the light hit point isn't against some
+		 * other object
+		 */
+		if (prev != PartHeadp) {
+			double delta;
+			delta = prev->pt_outhit->hit_dist - 
+				pp->pt_inhit->hit_dist;
+
+			/* XXX This really should compare to see if adj
+			 * object is air
+			 */
+			if (delta < 5.0 && delta > -5.0) {
+				continue;
+			}
+		}
+
+		/* The inbound point is not against another object, so 
+		 * light will be emitted in this direction
+		 */
 		lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
 
 		stp = pp->pt_inseg->seg_stp;
@@ -269,6 +289,27 @@ gen_hit(register struct application *ap,
 		RT_HIT_NORMAL( lpt->lp_norm, pp->pt_inhit, stp, 
 			       &(ap->a_ray), pp->pt_inflip );
 
+		if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES) return 1;
+
+		/* check to make sure the light out hit point isn't against
+		 * some other object
+		 */
+		next = pp->pt_forw;
+		if (next != PartHeadp) {
+			double delta;
+			delta = next->pt_inhit->hit_dist - 
+				pp->pt_outhit->hit_dist;
+
+			/* XXX This really should compare to see if adj
+			 * object is air
+			 */
+			if (delta < 5.0 && delta > -5.0) {
+				continue;
+			}
+		}
+		/* The out point isn't against another object, so light
+		 * will be emitted in this direction
+		 */
 		lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
 
 		stp = pp->pt_outseg->seg_stp;
@@ -278,6 +319,9 @@ gen_hit(register struct application *ap,
 
 		RT_HIT_NORMAL( lpt->lp_norm, pp->pt_outhit, stp, 
 			       &(ap->a_ray), pp->pt_outflip );
+
+		if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES) return 1;
+ 
 	}
 	return 1;
 }
@@ -292,6 +336,7 @@ gen_miss(register struct application *ap)
 	return 0;
 }
 
+#if 0
 /*
  *
  *  Shoot rays in each of the axis directions looking for hit points
@@ -304,6 +349,7 @@ shoot_grids(struct application *ap,
 	    point_t tree_max)
 {
 	double x, y, z;
+	struct light_specific *lsp = (struct light_specific *)ap->a_uptr;
 
 	if (rdebug & RDEBUG_LIGHT )
 		bu_log("shoot_grids Z, step=(%g, %g, %g)\n", V3ARGS(step) );
@@ -324,6 +370,8 @@ shoot_grids(struct application *ap,
 			     x < tree_max[X] ; x += step[X]) {
 				VSET(ap->a_ray.r_pt, x, y, z);
 				(void)rt_shootray( ap );
+				if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES)
+					return;
 			}
 	}
 
@@ -344,6 +392,8 @@ shoot_grids(struct application *ap,
 			     x < tree_max[X] ; x += step[X]) {
 				VSET(ap->a_ray.r_pt, x, y, z);
 				(void)rt_shootray( ap );
+				if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES)
+					return;
 			}
 	}
 
@@ -361,8 +411,70 @@ shoot_grids(struct application *ap,
 			     y < tree_max[Y] ; y += step[Y]) {
 				VSET(ap->a_ray.r_pt, x, y, z);
 				(void)rt_shootray( ap );
+				if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES)
+					return;
 			}
 	}
+
+}
+#endif
+static void 
+ray_setup(struct application *ap,
+		      point_t tree_min,
+		      point_t tree_max,
+		      point_t span)
+{
+	int face;
+	point_t pt;
+	static int idx = 0;
+
+	/* pick a face of the bounding RPP at which we will start the ray */
+	face = BN_RANDOM(idx) * 2.9999;
+
+	switch (face) {
+	case 0: /* XMIN */
+		VSET(ap->a_ray.r_pt,
+		     tree_min[X] - 10.0, 
+		     tree_min[Y] + BN_RANDOM(idx) * span[Y],
+		     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+		VSET(pt,
+		     tree_max[X], 
+		     tree_min[Y] + BN_RANDOM(idx) * span[Y],
+		     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+		break;
+
+	case 1: /* YMIN */
+		VSET(ap->a_ray.r_pt,
+		     tree_min[X] + BN_RANDOM(idx) * span[X],
+		     tree_min[Y] - 10.0,
+		     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+		VSET(pt,
+		     tree_min[X] + BN_RANDOM(idx) * span[X],
+		     tree_max[Y],
+		     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+		break;
+
+	case 2: /* ZMIN */
+		VSET(ap->a_ray.r_pt,
+		     tree_min[X] + 
+		     BN_RANDOM(idx) * span[X],
+
+		     tree_min[Y] + 
+		     BN_RANDOM(idx) * span[Y],
+
+		     tree_min[Z] - 10.0);
+		VSET(pt,
+		     tree_min[X] + 
+		     BN_RANDOM(idx) * span[X],
+
+		     tree_min[Y] + 
+		     BN_RANDOM(idx) * span[Y],
+
+		     tree_max[Z]);
+		break;
+	}
+	VSUB2(ap->a_ray.r_dir, pt, ap->a_ray.r_pt);
+	VUNITIZE(ap->a_ray.r_dir);
 
 }
 
@@ -373,7 +485,7 @@ shoot_grids(struct application *ap,
  *  normals.
  */
 void
-light_gen_sample_pts(struct rt_i            *rtip,
+light_gen_sample_pts(struct application    *upap,
 		     struct light_specific  *lsp)
 {
 	struct application ap;
@@ -389,7 +501,7 @@ light_gen_sample_pts(struct rt_i            *rtip,
 
 
 	memset(&ap, 0, sizeof(ap));
-	ap.a_rt_i = rtip;
+	ap.a_rt_i = upap->a_rt_i;
 	ap.a_onehit = 0;
 	ap.a_hit = gen_hit;
 	ap.a_miss = gen_miss;
@@ -398,16 +510,37 @@ light_gen_sample_pts(struct rt_i            *rtip,
 	/* get the bounding box of the light source */
 	rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max);
 
-	if (rdebug & RDEBUG_LIGHT )
-		bu_log("light bb (%g %g %g), (%g %g %g)\n", 
-		       V3ARGS(tree_min), V3ARGS(tree_max) );
-
-
 	/* get extent in X, Y, Z */
 	VSUB2(span, tree_max, tree_min);
 
+	if (rdebug & RDEBUG_LIGHT ) {
+		bu_log("light bb (%g %g %g), (%g %g %g)\n", 
+		       V3ARGS(tree_min), V3ARGS(tree_max) );
+		bu_log("span %g %g %g\n", V3ARGS(span));
+	}
+
+
+<<<<<<< sh_light.c
+	/* if there is no space occupied by the light source, then
+	 * just give up
+	 */
+	if (span[X] <= 0.0 && span[Y] <= 0.0 && span[Z] <= 0.0) {
+		bu_log("impossibly small light\n");
+		return;
+	}
+
+=======
+>>>>>>> 11.55
+	/* get extent in X, Y, Z */
+	VSUB2(span, tree_max, tree_min);
+
+<<<<<<< sh_light.c
+	while ( lsp->lt_pt_count < MAX_LIGHT_SAMPLES ) {
+#if 0
+=======
 	/* For benchmarking, leave lt_pt_count = 0 */
 	if( !benchmark )  while ( lsp->lt_pt_count < 5 ) {
+>>>>>>> 11.55
 		VSCALE(step, span, mul);
 
 		/* if there is no space occupied by the light source, then
@@ -417,6 +550,10 @@ light_gen_sample_pts(struct rt_i            *rtip,
 
 		shoot_grids(&ap, step, tree_min, tree_max);
 		mul *= 0.5;
+#else
+		ray_setup(&ap, tree_min, tree_max, span);
+		(void)rt_shootray( &ap );
+#endif
 	}
 
 	if (rdebug & RDEBUG_LIGHT ) {
@@ -428,7 +565,7 @@ light_gen_sample_pts(struct rt_i            *rtip,
 
 		for (l=0 ; l < lsp->lt_pt_count ; l++, lpt++) {
 
-			VJOIN1(p, lpt->lp_pt, 10.0, lpt->lp_norm);
+			VJOIN1(p, lpt->lp_pt, 100.0, lpt->lp_norm);
 
 			bu_log("V %g %g %g  %g %g %g\n",
 			       V3ARGS(lpt->lp_pt), V3ARGS(p));
@@ -737,7 +874,7 @@ light_init(struct application *ap)
 	for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lsp);
 		if (lsp->lt_visible && lsp->lt_pt_count < 1)
-			light_gen_sample_pts(ap->a_rt_i, lsp);
+			light_gen_sample_pts(ap, lsp);
 	}
 
 
