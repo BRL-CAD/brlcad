@@ -79,7 +79,9 @@ char	*argv[];
 #	endif
 #endif
 
-rt_g.debug |= DEBUG_MEM_FULL;
+#if MEMORY_LEAK_CHECKING
+	rt_g.debug |= DEBUG_MEM_FULL;
+#endif
 	jack_tree_state = rt_initial_tree_state;	/* struct copy */
 	jack_tree_state.ts_tol = &tol;
 	jack_tree_state.ts_ttol = &ttol;
@@ -213,7 +215,9 @@ rt_g.debug |= DEBUG_MEM_FULL;
 	rt_vlist_cleanup();
 	db_close(dbip);
 
-rt_prmem("After complete conversion");
+#if MEMORY_LEAK_CHECKING
+	rt_prmem("After complete G-JACK conversion");
+#endif
 
 	return 0;
 }
