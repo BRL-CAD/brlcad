@@ -33,7 +33,7 @@ static char RCSanim[] = "@(#)$Header$ (BRL)";
  *
  *  Add a user-supplied animate structure to the end of the chain of such
  *  structures hanging from the directory structure of the last node of
- *  the path specifier.  A pathlen of 0 indicates that this change is
+ *  the path specifier.  A pathlen of 1 indicates that this change is
  *  to affect the root of the tree itself, rather than an arc, and is
  *  stored differently.
  *
@@ -55,10 +55,16 @@ register struct animate *anp;
 			return(-1);	/* BAD */
 
 	anp->an_forw = ANIM_NULL;
-	if( anp->an_pathlen < 1 )
+	if( anp->an_pathlen <= 1 )  {
+		if( rt_g.debug&DEBUG_ANIM )
+			rt_log("rt_add_anim(x%x) ROOT\n", anp);
 		headp = &(rtip->rti_anroot);
-	else
+	} else {
+		if( rt_g.debug&DEBUG_ANIM )
+			rt_log("rt_add_anim(x%x) leaf %s\n", anp,
+				anp->an_path[anp->an_pathlen-1]->d_namep);
 		headp = &(anp->an_path[anp->an_pathlen-1]->d_animate);
+	}
 
 	/* Append to list */
 	while( *headp != ANIM_NULL )
@@ -82,9 +88,12 @@ struct mater_info	*materp;
 {
 	mat_t	temp;
 
+	if( rt_g.debug&DEBUG_ANIM )
+		rt_log("rt_do_anim(x%x) ", anp);
 	switch( anp->an_type )  {
 	case AN_MATRIX:
-/*rt_log("rt_do_anim(x%x), matrix, op=%d\n", anp, anp->an_u.anu_m.anm_op);*/
+		if( rt_g.debug&DEBUG_ANIM )
+			rt_log("matrix, op=%d\n", anp->an_u.anu_m.anm_op);
 		switch( anp->an_u.anu_m.anm_op )  {
 		case ANM_RSTACK:
 			mat_copy( stack, anp->an_u.anu_m.anm_mat );
@@ -111,8 +120,12 @@ struct mater_info	*materp;
 		}
 		break;
 	case AN_PROPERTY:
+		if( rt_g.debug&DEBUG_ANIM )
+			rt_log("property\n");
 		break;
 	default:
+		if( rt_g.debug&DEBUG_ANIM )
+			rt_log("unknown op\n");
 		/* Print something here? */
 		return(-1);			/* BAD */
 	}
