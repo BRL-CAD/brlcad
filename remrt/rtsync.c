@@ -74,6 +74,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "pkg.h"
 #include "fb.h"
+#include "tcl.h"
 #include "externs.h"
 
 #include "./ihost.h"
@@ -184,6 +185,8 @@ static	int	width = 0;		/* use default size */
 static	int	height = 0;
 int		debug = 0;
 
+Tcl_Interp	*interp = NULL;
+
 CONST char	*database;
 struct bu_vls	treetops;
 
@@ -269,6 +272,14 @@ char	*argv[];
 	bu_log("DB: %s %s\n", database, bu_vls_addr(&treetops) );
 
 	BU_LIST_INIT( &rt_g.rtg_vlfree );
+
+	/* Initialize the Tcl interpreter */
+	interp = Tcl_CreateInterp();
+	/* This runs the init.tcl script */
+	if( Tcl_Init(interp) == TCL_ERROR )
+		bu_log("Tcl_Init error %s\n", interp->result);
+	bn_tcl_setup(interp);
+	rt_tcl_setup(interp);
 
 	/* Connect up with framebuffer, for control & size purposes */
 	if( !framebuffer )  framebuffer = getenv("FB_FILE");
