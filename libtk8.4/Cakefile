@@ -36,6 +36,12 @@
 #endif
 #define EXTRA_PRODUCTS	wish
 
+#if defined(USE_64)
+#define ENABLE_64 --enable-64bit
+#else
+#define ENABLE_64 /**/
+#endif
+
 /* Rule to see if cake is running with -s flag */
 #define MINUS_S	[[echo CAKEFLAGS | tr '\040' '\012' | sed -n -e /-s/p ]]
 
@@ -55,7 +61,7 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 		\B\U\I\L\D\_\L\I\B\R\A\R\Y=\"BUILD_LIBRARY\"; \
 		\C\C=\"CC\"; \
 		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \B\U\I\L\D\_\L\I\B\R\A\R\Y \C\C \A\F\T\E\R\_\M\A\K\E; \
-		 ../SRCDIR/"unix"/configure TK_OPTS; \
+		 ../SRCDIR/"unix"/configure TK_OPTS ENABLE_64; \
 		../SRCDIR/fix_makefile.sh > Makefile.MTYPE)
 
 clean&:	Makefile.MTYPE
@@ -65,7 +71,7 @@ noprod&:
 	rm -f *.ARCH_SUF libtk*.a wish tktest
 
 clobber&:
-	rm -f *.o libtk* wish gmon.out tktest *.MTYPE tkConfig.sh config.log config.status Makefile 
+	rm -f *.o libtk* wish gmon.out tktest *.MTYPE tkConfig.sh config.log config.status Makefile lib.exp
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install

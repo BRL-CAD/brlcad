@@ -3467,7 +3467,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-lieee  $LIBS"
+  LIBS="-lieee  $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 3473 "configure"
 #include "confdefs.h"
@@ -3491,7 +3491,7 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-  MATH_LIBS="-lieee $MATH_LIBS"
+#  MATH_LIBS="-lieee $MATH_LIBS" -- sp3 hack
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -4458,7 +4458,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-lXbsd  $LIBS"
+# LIBS="-lXbsd  $LIBS" -- sp3 hack 
 cat > conftest.$ac_ext <<EOF
 #line 4464 "configure"
 #include "confdefs.h"
@@ -4482,7 +4482,7 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-  LIBS="$LIBS -lXbsd"
+#  LIBS="$LIBS -lXbsd" -- sp3 hack
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -4831,7 +4831,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-lieee  $LIBS"
+# LIBS="-lieee  $LIBS" -- sp3 hack 
 cat > conftest.$ac_ext <<EOF
 #line 4837 "configure"
 #include "confdefs.h"
@@ -4855,7 +4855,7 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-  MATH_LIBS="-lieee $MATH_LIBS"
+#   MATH_LIBS="-lieee $MATH_LIBS" -- sp3 hack 
 else
   echo "$ac_t""no" 1>&6
 fi
