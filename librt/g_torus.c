@@ -1,5 +1,5 @@
 /*
- *			T O R U S . C
+ *			G _ T O R U S . C
  *
  * Purpose -
  *	Intersect a ray with a Torus
@@ -29,6 +29,7 @@ static char RCStorus[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "./debug.h"
 #include "./complex.h"
 #include "./polyno.h"
@@ -148,13 +149,13 @@ struct tor_internal {
 };
 
 /*
- *			T O R _ I M P O R T
+ *			R T _ T O R _ I M P O R T
  *
  *  Import a torus from the database format to the internal format.
  *  Apply modeling transformations at the same time.
  */
 int
-tor_import( tip, rp, mat )
+rt_tor_import( tip, rp, mat )
 struct tor_internal	*tip;
 union record		*rp;
 register mat_t		mat;
@@ -163,7 +164,7 @@ register mat_t		mat;
 
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("tor_import: defective record\n");
+		rt_log("rt_tor_import: defective record\n");
 		return(-1);
 	}
 
@@ -180,7 +181,7 @@ register mat_t		mat;
 }
 
 /*
- *  			T O R _ P R E P
+ *  			R T _ T O R _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid torus, and if so, precompute various
@@ -192,10 +193,10 @@ register mat_t		mat;
  *  
  *  Implicit return -
  *  	A struct tor_specific is created, and it's address is stored in
- *  	stp->st_specific for use by tor_shot().
+ *  	stp->st_specific for use by rt_tor_shot().
  */
 int
-tor_prep( stp, rec, rtip )
+rt_tor_prep( stp, rec, rtip )
 struct soltab		*stp;
 union record		*rec;
 struct rt_i		*rtip;
@@ -209,7 +210,7 @@ struct rt_i		*rtip;
 	LOCAL fastf_t	mag_b;
 	struct tor_internal	ti;
 
-	if( tor_import( &ti, rec, stp->st_pathmat ) < 0 )
+	if( rt_tor_import( &ti, rec, stp->st_pathmat ) < 0 )
 		return(-1);		/* BAD */
 
 	magsq_a = MAGSQ( ti.a );
@@ -331,10 +332,10 @@ struct rt_i		*rtip;
 }
 
 /*
- *			T O R _ P R I N T
+ *			R T _ T O R _ P R I N T
  */
 void
-tor_print( stp )
+rt_tor_print( stp )
 register struct soltab *stp;
 {
 	register struct tor_specific *tor =
@@ -350,10 +351,10 @@ register struct soltab *stp;
 }
 
 /*
- *  			T O R _ S H O T
+ *  			R T _ T O R _ S H O T
  *  
  *  Intersect a ray with an torus, where all constant terms have
- *  been precomputed by tor_prep().  If an intersection occurs,
+ *  been precomputed by rt_tor_prep().  If an intersection occurs,
  *  one or two struct seg(s) will be acquired and filled in.
  *
  *  NOTE:  All lines in this function are represented parametrically
@@ -382,7 +383,7 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-tor_shot( stp, rp, ap )
+rt_tor_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
@@ -485,7 +486,7 @@ struct application	*ap;
 	if( i == 0 )
 		return(SEG_NULL);		/* No hit */
 	if( i != 2 && i != 4 )  {
-		rt_log("tor_shot: reduced 4 to %d roots\n",i);
+		rt_log("rt_tor_shot: reduced 4 to %d roots\n",i);
 		rt_pr_roots( 4, val );
 		return(SEG_NULL);		/* No hit */
 	}
@@ -499,7 +500,7 @@ struct application	*ap;
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k[1]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[0]*tor->tor_r1;
-	/* Set aside vector for tor_norm() later */
+	/* Set aside vector for rt_tor_norm() later */
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[1], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
 
@@ -525,12 +526,12 @@ struct application	*ap;
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
 /*
- *			T O R _ V S H O T
+ *			R T _ T O R _ V S H O T
  *
  *  This is the Becker vector version
  */
 void
-tor_vshot( stp, rp, segp, n, resp)
+rt_tor_vshot( stp, rp, segp, n, resp)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
@@ -698,7 +699,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		}
 		else if( num_zero != 2 && num_zero != 4 ) {
 #if 0
-			rt_log("tor_shot: reduced 4 to %d roots\n",i);
+			rt_log("rt_tor_shot: reduced 4 to %d roots\n",i);
 			rt_pr_roots( 4, val );
 #endif
 			SEG_MISS(segp[i]);		/* MISS */
@@ -720,7 +721,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 			/* C[i].cf[1] is entry point */
 			segp[i].seg_in.hit_dist = C[i].cf[1]*tor->tor_r1;
 			segp[i].seg_out.hit_dist = C[i].cf[0]*tor->tor_r1;
-			/* Set aside vector for tor_norm() later */
+			/* Set aside vector for rt_tor_norm() later */
 			VJOIN1( segp[i].seg_in.hit_vpriv,
 				segp[i].seg_out.hit_normal,
 				C[i].cf[1], segp[i].seg_in.hit_normal );
@@ -731,7 +732,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 			/* C[i].cf[0] is entry point */
 			segp[i].seg_in.hit_dist = C[i].cf[0]*tor->tor_r1;
 			segp[i].seg_out.hit_dist = C[i].cf[1]*tor->tor_r1;
-			/* Set aside vector for tor_norm() later */
+			/* Set aside vector for rt_tor_norm() later */
 			VJOIN1( segp[i].seg_in.hit_vpriv,
 				segp[i].seg_out.hit_normal,
 				C[i].cf[0], segp[i].seg_in.hit_normal );
@@ -762,7 +763,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		/* C[i].cf[1] is entry point */
 		segp[i].seg_in.hit_dist =  C[i].cf[1]*tor->tor_r1;
 		segp[i].seg_out.hit_dist = C[i].cf[0]*tor->tor_r1;
-		/* Set aside vector for tor_norm() later */
+		/* Set aside vector for rt_tor_norm() later */
 		VJOIN1(segp[i].seg_in.hit_vpriv, pprime, C[i].cf[1], dprime );
 		VJOIN1(segp[i].seg_out.hit_vpriv, pprime, C[i].cf[0], dprime);
 
@@ -784,7 +785,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 }
 
 /*
- *			T O R _ N O R M
+ *			R T _ T O R _ N O R M
  *
  *  Compute the normal to the torus,
  *  given a point on the UNIT TORUS centered at the origin on the X-Y plane.
@@ -811,7 +812,7 @@ struct resource         *resp; /* pointer to a list of free segs */
  *  above equations by four here.
  */
 void
-tor_norm( hitp, stp, rp)
+rt_tor_norm( hitp, stp, rp)
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -835,12 +836,12 @@ register struct xray *rp;
 }
 
 /*
- *			T O R _ C U R V E
+ *			R T _ T O R _ C U R V E
  *
  *  Return the curvature of the torus.
  */
 void
-tor_curve( cvp, hitp, stp )
+rt_tor_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -885,10 +886,10 @@ struct soltab *stp;
 }
 
 /*
- *			T O R _ U V
+ *			R T _ T O R _ U V
  */
 void
-tor_uv( ap, stp, hitp, uvp )
+rt_tor_uv( ap, stp, hitp, uvp )
 struct application	*ap;
 struct soltab		*stp;
 register struct hit	*hitp;
@@ -901,10 +902,10 @@ register struct uvcoord	*uvp;
 }
 
 /*
- *			T O R _ F R E E
+ *			R T _ T O R _ F R E E
  */
 void
-tor_free( stp )
+rt_tor_free( stp )
 struct soltab *stp;
 {
 	register struct tor_specific *tor =
@@ -914,13 +915,13 @@ struct soltab *stp;
 }
 
 int
-tor_class()
+rt_tor_class()
 {
 	return(0);
 }
 
 /*
- *			T O R _ P L O T
+ *			R T _ T O R _ P L O T
  *
  * The TORUS has the following input fields:
  *	ti.v	V from origin to center
@@ -929,9 +930,9 @@ tor_class()
  *
  */
 int
-tor_plot( rp, matp, vhead, dp )
+rt_tor_plot( rp, mat, vhead, dp )
 union record	*rp;
-register matp_t matp;
+register mat_t	mat;
 struct vlhead	*vhead;
 struct directory *dp;
 {
@@ -950,20 +951,21 @@ struct directory *dp;
 	vect_t		radius;
 	vect_t		edge;
 
-	if( tor_import( &ti, rp, matp ) < 0 )
+	if( rt_tor_import( &ti, rp, mat ) < 0 )
 		return(-1);		/* BAD */
 
 	dist_to_rim = MAGNITUDE(ti.h)/MAGNITUDE(ti.a);
 
 	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
-		"tor_plot pts[]" );
+		"rt_tor_plot pts[]" );
 
 #define VJOIN4(a,b,c,d,e,f,g,h,i,j)	\
 	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X] + (i)*(j)[X];\
 	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y] + (i)*(j)[Y];\
 	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z] + (i)*(j)[Z]
 
-#define PTA(ww,ll)	(&pts[ (((ww)*nlen) + (ll)) * 3])
+#define PT(www,lll)	((((www)%nw)*nlen)+((lll)%nlen))
+#define PTA(ww,ll)	(&pts[PT(ww,ll)*3])
 
 	for( len = 0; len < nlen; len++ )  {
 		beta = rt_twopi * len / nlen;
@@ -999,20 +1001,103 @@ struct directory *dp;
 		}
 	}
 
-	rt_free( (char *)pts, "tor_plot pts[]" );
+	rt_free( (char *)pts, "rt_tor_plot pts[]" );
 	return(0);
 }
 
 /*
- *			T O R _ T E S S
+ *			R T _ T O R _ T E S S
  */
 int
-tor_tess( r, m, rp, mat, dp )
+rt_tor_tess( r, m, rp, mat, dp )
 struct nmgregion	**r;
 struct model		*m;
 register union record	*rp;
 register mat_t		mat;
 struct directory	*dp;
 {
+	fastf_t		alpha;
+	fastf_t		beta;
+	fastf_t		cos_alpha, sin_alpha;
+	fastf_t		cos_beta, sin_beta;
+	fastf_t		dist_to_rim;
+	struct tor_internal	ti;
+	int		w;
+	int		nw = 16;
+	int		len;
+	int		nlen = 32;
+	fastf_t		*pts;
+	vect_t		G;
+	vect_t		radius;
+	vect_t		edge;
+	struct shell	*s;
+	struct vertex	**verts;
+	struct faceuse	**faces;
+	struct vertex	**vertp[4];
+	int		nfaces;
+	int		i;
 
+	if( rt_tor_import( &ti, rp, mat ) < 0 )
+		return(-1);		/* BAD */
+
+	/* Compute the points on the surface of the torus */
+	dist_to_rim = MAGNITUDE(ti.h)/MAGNITUDE(ti.a);
+	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
+		"rt_tor_tess pts[]" );
+
+	for( len = 0; len < nlen; len++ )  {
+		beta = rt_twopi * len / nlen;
+		cos_beta = cos(beta);
+		sin_beta = sin(beta);
+		/* G always points out to rim, along radius vector */
+		VCOMB2( radius, cos_beta, ti.a, sin_beta, ti.b );
+		/* We assume that |radius| = |A|.  Circular */
+		VSCALE( G, radius, dist_to_rim );
+		for( w = 0; w < nw; w++ )  {
+			alpha = rt_twopi * w / nw;
+			cos_alpha = cos(alpha);
+			sin_alpha = sin(alpha);
+			VCOMB2( edge, cos_alpha, G, sin_alpha, ti.h );
+			VADD3( PTA(w,len), ti.v, edge, radius );
+		}
+	}
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = m->r_p->s_p;
+	verts = (struct vertex **)rt_calloc( nw*nlen, sizeof(struct vertex *),
+		"rt_tor_tess *verts[]" );
+	faces = (struct faceuse **)rt_calloc( nw*nlen, sizeof(struct faceuse *),
+		"rt_tor_tess *faces[]" );
+
+	/* Construct the faces and vertices */
+	/* Increasing indices go ccw */
+	for( w = 0; w < nw; w++ )  {
+		for( len = 0; len < nlen; len++ )  {
+			vertp[0] = &verts[ PT(w+0,len+0) ];
+			vertp[1] = &verts[ PT(w+0,len+1) ];
+			vertp[2] = &verts[ PT(w+1,len+1) ];
+			vertp[3] = &verts[ PT(w+1,len+0) ];
+			faces[nfaces++] = nmg_cmface( s, vertp, 4 );
+		}
+	}
+
+	/* Associate vertex geometry */
+	for( w = 0; w < nw; w++ )  {
+		for( len = 0; len < nlen; len++ )  {
+			nmg_vertex_gv( verts[PT(w,len)], PTA(w,len) );
+		}
+	}
+
+	/* Associate face geometry */
+	for( i=0; i < nfaces; i++ )  {
+		rt_mk_nmg_planeeqn( faces[i] );
+	}
+
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r );
+
+	rt_free( (char *)pts, "rt_tor_tess pts[]" );
+	rt_free( (char *)verts, "rt_tor_tess *verts[]" );
+	rt_free( (char *)faces, "rt_tor_tess *faces[]" );
+	return(0);
 }
