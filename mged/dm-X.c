@@ -25,9 +25,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <sys/time.h>		/* for struct timeval */
 #include <X11/X.h>
+#if 0
 #ifdef HAVE_XOSDEFS_H
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
+#endif
 #endif
 #if defined(linux)
 #	undef   X_NOT_STDC_ENV
@@ -35,10 +37,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #include "tk.h"
+#include <X11/extensions/XI.h>
+#include <X11/extensions/XInput.h>
 #include <X11/Xutil.h>
+#include <X11/keysym.h>
+#if IR_KNOBS
+#include <gl/device.h>
+#endif
+#if 0
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/multibuf.h>
-#include <X11/keysym.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -79,6 +88,47 @@ struct bu_structparse X_vparse[] = {
   {"",    0, (char *)0,           0,                        BU_STRUCTPARSE_FUNC_NULL }
 };
 
+#if IR_KNOBS
+void X_dbtext();
+#endif
+
+#ifdef IR_BUTTONS
+/*
+ * Map SGI Button numbers to MGED button functions.
+ * The layout of this table is suggestive of the actual button box layout.
+ */
+#define SW_HELP_KEY	SW0
+#define SW_ZERO_KEY	SW3
+#define HELP_KEY	0
+#define ZERO_KNOBS	0
+static unsigned char bmap[IR_BUTTONS] = {
+	HELP_KEY,    BV_ADCURSOR, BV_RESET,    ZERO_KNOBS,
+	BE_O_SCALE,  BE_O_XSCALE, BE_O_YSCALE, BE_O_ZSCALE, 0,           BV_VSAVE,
+	BE_O_X,      BE_O_Y,      BE_O_XY,     BE_O_ROTATE, 0,           BV_VRESTORE,
+	BE_S_TRANS,  BE_S_ROTATE, BE_S_SCALE,  BE_MENU,     BE_O_ILLUMINATE, BE_S_ILLUMINATE,
+	BE_REJECT,   BV_BOTTOM,   BV_TOP,      BV_REAR,     BV_45_45,    BE_ACCEPT,
+	BV_RIGHT,    BV_FRONT,    BV_LEFT,     BV_35_25
+};
+#endif
+
+#ifdef IR_KNOBS
+/*
+ *  Labels for knobs in help mode.
+ */
+static char	*kn1_knobs[] = {
+	/* 0 */ "adc <1",	/* 1 */ "zoom", 
+	/* 2 */ "adc <2",	/* 3 */ "adc dist",
+	/* 4 */ "adc y",	/* 5 */ "y slew",
+	/* 6 */ "adc x",	/* 7 */	"x slew"
+};
+static char	*kn2_knobs[] = {
+	/* 0 */ "unused",	/* 1 */	"zoom",
+	/* 2 */ "z rot",	/* 3 */ "z slew",
+	/* 4 */ "y rot",	/* 5 */ "y slew",
+	/* 6 */ "x rot",	/* 7 */	"x slew"
+};
+#endif
+
 static int XdoMotion = 0;
 
 int
@@ -107,48 +157,38 @@ char *argv[];
   av[i+2] = (char *)NULL;
 
   dm_var_init(o_dm_list);
-  Tk_DeleteGenericHandler(X_doevent, (ClientData)DM_TYPE_X);
-  if((dmp = dm_open(DM_TYPE_X, DM_EVENT_HANDLER_NULL, argc+1, av)) == DM_NULL){
+  Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+  if((dmp = dm_open(DM_TYPE_X, argc+1, av)) == DM_NULL){
     bu_free(av, "X_dm_init: av");
     return TCL_ERROR;
   }
 
   bu_free(av, "X_dm_init: av");
-  dmp->dm_eventHandler = X_doevent;
+  eventHandler = X_doevent;
   curr_dm_list->s_info->opp = &pathName;
-  Tk_CreateGenericHandler(X_doevent, (ClientData)DM_TYPE_X);
+  Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
   X_configure_window_shape(dmp);
 
   return TCL_OK;
 }
 
+/*
+   This routine is being called from doEvent().
+   It does not handle mouse button or key events. The key
+   events are being processed via the TCL/TK bind command or are being
+   piped to ged.c/stdin_input(). Eventually, I'd also like to have the
+   dials+buttons bindable. That would leave this routine to handle only
+   events like Expose and ConfigureNotify.
+*/
 static int
 X_doevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
-  KeySym key;
-  char keybuf[4];
-  int cnt;
-  XComposeStatus compose_stat;
-  XWindowAttributes xwa;
+  static int button0  = 0;   /* State of button 0 */
+  static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   struct bu_vls cmd;
-  struct x_vars *p;
-  register struct dm_list *save_dm_list;
-  int status = TCL_OK;
   int save_edflag = -1;
-
-  GET_DM(p, x_vars, eventPtr->xany.window, &head_x_vars.l);
-  if(p == (struct x_vars *)NULL || eventPtr->type == DestroyNotify)
-    return TCL_OK;
-
-  bu_vls_init(&cmd);
-  save_dm_list = curr_dm_list;
-
-  GET_DM_LIST(curr_dm_list, x_vars, eventPtr->xany.window);
-
-  if(curr_dm_list == DM_LIST_NULL)
-    goto end;
 
   if(mged_variables->send_key && eventPtr->type == KeyPress){
     char buffer[2];
@@ -158,31 +198,32 @@ XEvent *eventPtr;
 		  &keysym, (XComposeStatus *)NULL);
 
     if(keysym == mged_variables->hot_key)
-      goto end;
+      return TCL_OK;
 
     write(dm_pipe[1], buffer, 1);
-
-    bu_vls_free(&cmd);
-    curr_dm_list = save_dm_list;
 
     /* Use this so that these events won't propagate */
     return TCL_RETURN;
   }
 
+  bu_vls_init(&cmd);
   if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
     dirty = 1;
-    goto end;
+
+    goto handled;
   }else if(eventPtr->type == ConfigureNotify){
     X_configure_window_shape(dmp);
-
     dirty = 1;
-    goto end;
+
+    goto handled;
   } else if( eventPtr->type == MapNotify ){
     mapped = 1;
-    goto end;
+
+    goto handled;
   } else if( eventPtr->type == UnmapNotify ){
     mapped = 0;
-    goto end;
+
+    goto handled;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;
     int dx, dy;
@@ -208,7 +249,7 @@ XEvent *eventPtr;
 		       (int)(dm_X2Normal(dmp, mx, 1) * 2047.0),
 		       (int)(dm_Y2Normal(dmp, my) * 2047.0) );
       else
-	goto end;
+	goto handled;
 
       break;
     case AMM_ROT:
@@ -246,7 +287,8 @@ XEvent *eventPtr;
 
 	((struct x_vars *)dmp->dm_vars)->omx = mx;
 	((struct x_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+
+	goto handled;
       }
 
       if(mged_variables->rateknobs)
@@ -294,7 +336,8 @@ XEvent *eventPtr;
 
 	((struct x_vars *)dmp->dm_vars)->omx = mx;
 	((struct x_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+
+	goto handled;
       }
 
       /* otherwise, drag to translate the view */
@@ -385,7 +428,8 @@ XEvent *eventPtr;
 
 	((struct x_vars *)dmp->dm_vars)->omx = mx;
 	((struct x_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+
+	goto handled;
       }
 
       break;
@@ -421,7 +465,8 @@ XEvent *eventPtr;
 
 	((struct x_vars *)dmp->dm_vars)->omx = mx;
 	((struct x_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+
+	goto handled;
       }
 
       break;
@@ -457,7 +502,8 @@ XEvent *eventPtr;
 
 	((struct x_vars *)dmp->dm_vars)->omx = mx;
 	((struct x_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+
+	goto handled;
       }
 
       break;
@@ -652,9 +698,694 @@ XEvent *eventPtr;
 
     ((struct x_vars *)dmp->dm_vars)->omx = mx;
     ((struct x_vars *)dmp->dm_vars)->omy = my;
-  } else {
+  }
+#if IR_KNOBS
+  else if( eventPtr->type == ((struct x_vars *)dmp->dm_vars)->devmotionnotify ){
+    XDeviceMotionEvent *M;
+    int setting;
+    fastf_t f;
+
+    M = (XDeviceMotionEvent * ) eventPtr;
+
+    if(button0){
+      X_dbtext(
+		(mged_variables->adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
+      goto handled;
+    }
+
+    switch(DIAL0 + M->first_axis){
+    case DIAL0:
+      if(mged_variables->adcflag) {
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !dv_1adc )
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_1adc) + M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob ang1 %f\n",
+		       45.0 - 45.0*((double)setting)/2047.0);
+      }else{
+	if(mged_variables->rateknobs){
+	  f = rate_model_rotate[Z];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * f)) +
+	       M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	  bu_vls_printf( &cmd, "knob -m z %f\n", setting / 512.0 );
+	}else{
+	  f = absolute_model_rotate[Z];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(2.847 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  f = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd, "knob -m az %f\n", dm_wrap(f) * 180.0);
+	}
+      }
+      break;
+    case DIAL1:
+      if(mged_variables->rateknobs){
+	if(EDIT_SCALE && mged_variables->transform == 'e')
+	  f = edit_rate_scale;
+	else
+	  f = rate_scale;
+
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !f )
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * f)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob S %f\n", setting / 512.0 );
+      }else{
+	if(EDIT_SCALE && mged_variables->transform == 'e')
+	  f = edit_absolute_scale;
+	else
+	  f = absolute_scale;
+
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !f )
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * f)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob aS %f\n", setting / 512.0 );
+      }
+      break;
+    case DIAL2:
+      if(mged_variables->adcflag){
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !dv_2adc )
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_2adc) + M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob ang2 %f\n",
+		       45.0 - 45.0*((double)setting)/2047.0);
+      }else {
+	if(mged_variables->rateknobs){
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
+	    case 'm':
+	      f = edit_rate_model_rotate[Z];
+	      break;
+	    case 'o':
+	      f = edit_rate_object_rotate[Z];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_rotate[Z];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+	    }
+	  }else if(mged_variables->coords == 'm')
+	    f = rate_model_rotate[Z];
+	  else
+	    f = rate_rotate[Z];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	  bu_vls_printf( &cmd, "knob z %f\n", setting / 512.0 );
+	}else{
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
+	    case 'm':
+	      f = edit_absolute_model_rotate[Z];
+	      break;
+	    case 'o':
+	      f = edit_absolute_object_rotate[Z];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_absolute_view_rotate[Z];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+	    }
+	  }else if(mged_variables->coords == 'm')
+	    f = absolute_model_rotate[Z];
+	  else
+	    f = absolute_rotate[Z];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(2.847 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  f = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd, "knob az %f\n", dm_wrap(f) * 180.0);
+	}
+      }
+      break;
+    case DIAL3:
+      if(mged_variables->adcflag){
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !dv_distadc)
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_distadc) + M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob distadc %d\n", setting );
+      }else {
+	if(mged_variables->rateknobs){
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
+	    case 'm':
+	    case 'o':
+	      f = edit_rate_model_tran[Z];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_tran[Z];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_TRAN){
+	      save_edflag = es_edflag;
+	      es_edflag = STRANS;
+	    }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	      save_edflag = edobj;
+	      edobj = BE_O_XY;
+	    }
+	  }else if(mged_variables->coords == 'm')
+	    f = rate_model_tran[Z];
+	  else
+	    f = rate_tran[Z];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	  bu_vls_printf( &cmd, "knob Z %f\n", setting / 512.0 );
+	}else{
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
+	    case 'm':
+	    case 'o':
+	      f = edit_absolute_model_tran[Z];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_absolute_view_tran[Z];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_TRAN){
+	      save_edflag = es_edflag;
+	      es_edflag = STRANS;
+	    }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	      save_edflag = edobj;
+	      edobj = BE_O_XY;
+	    }
+	  }else if(mged_variables->coords == 'm')
+	    f = absolute_model_tran[Z];
+	  else
+	    f = absolute_tran[Z];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	  bu_vls_printf(&cmd, "knob aZ %f\n", setting / 512.0 * Viewscale * base2local);
+	}
+      }
+      break;
+    case DIAL4:
+      if(mged_variables->adcflag){
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !dv_yadc)
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_yadc) + M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob yadc %d\n", setting );
+      }else{
+	if(mged_variables->rateknobs){
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
+	    case 'm':
+	      f = edit_rate_model_rotate[Y];
+	      break;
+	    case 'o':
+	      f = edit_rate_object_rotate[Y];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_rotate[Y];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+	    }
+	  }else if(mged_variables->coords == 'm')
+	    f = rate_model_rotate[Y];
+	  else
+	    f = rate_rotate[Y];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	  bu_vls_printf( &cmd, "knob y %f\n", setting / 512.0 );
+	}else{
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
+	    case 'm':
+	      f = edit_absolute_model_rotate[Y];
+	      break;
+	    case 'o':
+	      f = edit_absolute_object_rotate[Y];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_absolute_view_rotate[Y];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+	    }
+	  }else if(mged_variables->coords == 'm')
+	    f = absolute_model_rotate[Y];
+	  else
+	    f = absolute_rotate[Y];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(2.847 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  f = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd, "knob ay %f\n", dm_wrap(f) * 180.0);
+	}
+      }
+      break;
+    case DIAL5:
+      if(mged_variables->rateknobs){
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
+	    case 'm':
+	    case 'o':
+	      f = edit_rate_model_tran[Y];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_tran[Y];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_TRAN){
+	      save_edflag = es_edflag;
+	      es_edflag = STRANS;
+	    }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	      save_edflag = edobj;
+	      edobj = BE_O_XY;
+	    }
+	  }else if(mged_variables->coords == 'm')
+	    f = rate_model_tran[Y];
+	  else
+	    f = rate_tran[Y];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob Y %f\n", setting / 512.0 );
+      }else{
+	if((state == ST_S_EDIT || state == ST_O_EDIT)
+	   && mged_variables->transform == 'e'){
+	  switch(mged_variables->coords){
+	  case 'm':
+	  case 'o':
+	    f = edit_absolute_model_tran[Y];
+	    break;
+	  case 'v':
+	  default:
+	    f = edit_absolute_view_tran[Y];
+	    break;
+	  }
+
+	  if(state == ST_S_EDIT && !SEDIT_TRAN){
+	    save_edflag = es_edflag;
+	    es_edflag = STRANS;
+	  }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	    save_edflag = edobj;
+	    edobj = BE_O_XY;
+	  }
+	}else if(mged_variables->coords == 'm')
+	  f = absolute_model_tran[Y];
+	else
+	  f = absolute_tran[Y];
+
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !f )
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] -
+	    knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * f)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf(&cmd, "knob aY %f\n", setting / 512.0 * Viewscale * base2local);
+      }
+      break;
+    case DIAL6:
+      if(mged_variables->adcflag){
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !dv_xadc)
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_xadc) + M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob xadc %d\n", setting );
+      }else{
+	if(mged_variables->rateknobs){
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
+	    case 'm':
+	      f = edit_rate_model_rotate[X];
+	      break;
+	    case 'o':
+	      f = edit_rate_object_rotate[X];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_rotate[X];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+	    }
+	  }else if(mged_variables->coords == 'm')
+	    f = rate_model_rotate[X];
+	  else
+	    f = rate_rotate[X];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	  bu_vls_printf( &cmd, "knob x %f\n", setting / 512.0);
+	}else{
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
+	    case 'm':
+	      f = edit_absolute_model_rotate[X];
+	      break;
+	    case 'o':
+	      f = edit_absolute_object_rotate[X];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_absolute_view_rotate[X];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+	    }
+	  }else if(mged_variables->coords == 'm')
+	    f = absolute_model_rotate[X];
+	  else
+	    f = absolute_rotate[X];
+
+	  if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(2.847 * f)) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  f = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd, "knob ax %f\n", dm_wrap(f) * 180.0);
+	}
+      }
+      break;
+    case DIAL7:
+      if(mged_variables->rateknobs){
+	if((state == ST_S_EDIT || state == ST_O_EDIT)
+	   && mged_variables->transform == 'e'){
+	  switch(mged_variables->coords){
+	  case 'm':
+	  case 'o':
+	    f = edit_rate_model_tran[X];
+	    break;
+	  case 'v':
+	  default:
+	    f = edit_rate_view_tran[X];
+	    break;
+	  }
+
+	  if(state == ST_S_EDIT && !SEDIT_TRAN){
+	    save_edflag = es_edflag;
+	    es_edflag = STRANS;
+	  }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	    save_edflag = edobj;
+	    edobj = BE_O_XY;
+	  }
+	}else if(mged_variables->coords == 'm')
+	  f = rate_model_tran[X];
+	else
+	  f = rate_tran[X];
+
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !f )
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * f)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf( &cmd, "knob X %f\n", setting / 512.0 );
+      }else{
+	if((state == ST_S_EDIT || state == ST_O_EDIT)
+	   && mged_variables->transform == 'e'){
+	  switch(mged_variables->coords){
+	  case 'm':
+	  case 'o':
+	    f = edit_absolute_model_tran[X];
+	    break;
+	  case 'v':
+	  default:
+	    f = edit_absolute_view_tran[X];
+	    break;
+	  }
+
+	  if(state == ST_S_EDIT && !SEDIT_TRAN){
+	    save_edflag = es_edflag;
+	    es_edflag = STRANS;
+	  }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	    save_edflag = edobj;
+	    edobj = BE_O_XY;
+	  }
+	}else if(mged_variables->coords == 'm')
+	  f = absolute_model_tran[X];
+	else
+	  f = absolute_tran[X];
+
+	if(-NOISE <= ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !f )
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  ((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * f)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct x_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf(&cmd, "knob aX %f\n", setting / 512.0 * Viewscale * base2local);
+      }
+      break;
+    default:
+      break;
+    }
+
+    /* Keep track of the knob values */
+    knob_values[M->first_axis] = M->axis_data[0];
+  }
+#endif
+#if IR_BUTTONS
+  else if( eventPtr->type == ((struct x_vars *)dmp->dm_vars)->devbuttonpress ){
+    XDeviceButtonEvent *B;
+
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+    if(B->button == 1){
+      button0 = 1;
+      goto handled;
+    }
+
+    if(button0){
+      X_dbtext(label_button(bmap[B->button - 1]));
+    }else if(B->button == 4){
+      bu_vls_strcat(&cmd, "knob zero\n");
+      set_knob_offset();
+    }else
+      bu_vls_printf(&cmd, "press %s\n",
+		    label_button(bmap[B->button - 1]));
+  }else if( eventPtr->type == ((struct x_vars *)dmp->dm_vars)->devbuttonrelease ){
+    XDeviceButtonEvent *B;
+
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+    if(B->button == 1)
+      button0 = 0;
+
+    goto handled;
+  }
+#endif
+  else if(eventPtr->type == KeyPress){
     /*XXX Hack to prevent Tk from choking on certain control sequences */
-    if(eventPtr->type == KeyPress && eventPtr->xkey.state & ControlMask){
+    if(eventPtr->xkey.state & ControlMask){
       char buffer[1];
       KeySym keysym;
 
@@ -662,34 +1393,37 @@ XEvent *eventPtr;
 		    &keysym, (XComposeStatus *)NULL);
 
       if(keysym == XK_c || keysym == XK_t || keysym == XK_v ||
-	 keysym == XK_w || keysym == XK_x || keysym == XK_y){
-	curr_dm_list = save_dm_list;
-
-	return TCL_RETURN;
-      }
+	 keysym == XK_w || keysym == XK_x || keysym == XK_y)
+	goto handled;
     }
 
-#if 0
-    XGetWindowAttributes( ((struct x_vars *)dmp->dm_vars)->dpy,
-			  ((struct x_vars *)dmp->dm_vars)->win, &xwa);
-    dmp->dm_height = xwa.height;
-    dmp->dm_width = xwa.width;
-#endif
-    goto end;
+    /* let other KeyPress events get processed by Tcl/Tk */
+    goto not_handled;
+  }else{
+    /* allow all other events to be handled by Tcl/Tk */
+    goto not_handled;
   }
 
-  status = Tcl_Eval(interp, bu_vls_addr(&cmd));
+  (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
+
   if(save_edflag != -1){
     if(SEDIT_TRAN || SEDIT_ROTATE || SEDIT_SCALE)
       es_edflag = save_edflag;
     else if(OEDIT_TRAN || OEDIT_ROTATE || OEDIT_SCALE)
       edobj = save_edflag;
   }
-end:
-  bu_vls_free(&cmd);
-  curr_dm_list = save_dm_list;
 
-  return status;
+handled:
+  bu_vls_free(&cmd);
+
+  /* event handled here; prevent someone else from handling the event */
+  return TCL_RETURN;
+
+not_handled:
+  bu_vls_free(&cmd);
+
+  /* let someone else handle the event */
+  return TCL_OK;
 }
 	    
 static void
@@ -1145,4 +1879,22 @@ set_perspective()
 {
   X_set_perspective(dmp);
   ++dmaflag;
+}
+
+#if IR_KNOBS
+void
+X_dbtext(str)
+{
+  Tcl_AppendResult(interp, "dm-X: You pressed Help key and '",
+		   str, "'\n", (char *)NULL);
+}
+#endif
+
+static void
+set_knob_offset()
+{
+  int i;
+
+  for(i = 0; i < 8; ++i)
+    ((struct x_vars *)dmp->dm_vars)->knobs[i] = 0;
 }
