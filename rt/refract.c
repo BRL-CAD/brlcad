@@ -297,6 +297,7 @@ struct shadework	*swp;
 		 *  *next* regions along the ray.
 		 */
 		sub_ap.a_purpose = "rr first glass transmission ray";
+		sub_ap.a_flag = 0;
 do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
@@ -374,6 +375,7 @@ vdraw o rr;vdraw p c 00ff00; vdraw w n 0 %g %g %g; vdraw w n 1 %g %g %g; vdraw s
 			/* Reflected internally -- keep going */
 			if( (++sub_ap.a_level) <= max_ireflect )  {
 				sub_ap.a_purpose = "rr reflected internal ray, probing for glass exit point";
+				sub_ap.a_flag = 0;
 				goto do_inside;
 			}
 
@@ -430,8 +432,11 @@ do_exit:
 		sub_ap.a_diverge = 0.0;
 		if( code == 3 )  {
 			sub_ap.a_purpose = "rr recurse on next glass";
+			sub_ap.a_flag = 0;
 		}  else  {
 			sub_ap.a_purpose = "rr recurse on escaping internal ray";
+			sub_ap.a_flag = 1;
+			sub_ap.a_onehit = sub_ap.a_onehit > -3 ? -3 : sub_ap.a_onehit;
 		}
 		/* sub_ap.a_refrac_index was set to RI of next material by rr_hit().
 		 */
@@ -504,6 +509,7 @@ do_reflection:
 		/* I have been told this has unit length */
 		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
 		sub_ap.a_purpose = "rr reflected ray";
+		sub_ap.a_flag = 0;
 
 		if( rdebug&(RDEBUG_RAYPLOT|RDEBUG_REFRACT) )  {
 			point_t		endpt;

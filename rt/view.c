@@ -682,12 +682,30 @@ struct seg *finished_segs;
 	register struct hit *hitp;
 	struct shadework sw;
 
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	pp = PartHeadp->pt_forw;
+	if( ap->a_flag == 1 )
+	{
+		/* This ray is an escaping internal ray after refraction through glass.
+		 * Sometimes, after refraction and starting a new ray at the glass exit,
+		 * the new ray hits a sliver of the same glass, and gets confused. This bit
+		 * of code attempts to spot this behavior and skip over the glass sliver.
+		 * Any sliver less than 0.02mm thick will be skipped (0.02 is a SWAG).
+		 */
+		if( pp->pt_regionp == ap->a_uptr &&
+			pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.02 &&
+			pp->pt_forw != PartHeadp )
+				pp = pp->pt_forw;
+	}
+
+	for( ; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_outhit->hit_dist >= 0.0 ) break;
+
 	if( pp == PartHeadp )  {
 		bu_log("colorview:  no hit out front?\n");
 		return(0);
 	}
+
+
 	RT_CK_PT(pp);
 	hitp = pp->pt_inhit;
 	RT_CK_HIT(hitp);
