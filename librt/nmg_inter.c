@@ -3455,6 +3455,11 @@ hit_b:
 		/* Break all edges from fu1 list */
 		for( eu1_index=0; eu1_index < NMG_TBL_END(eu1_list); eu1_index++ )  {
 			eu1 = (struct edgeuse *)NMG_TBL_GET(eu1_list, eu1_index);
+
+			/* This EU may have been killed by nmg_repair_v_near_v() */
+			if( eu1->l.magic != NMG_EDGEUSE_MAGIC )
+				continue;
+
 			NMG_CK_EDGEUSE(eu1);
 			if( eu1->g.lseg_p != is->on_eg )  continue;
 			/* eu1 is from fu1 and on the intersection line */
@@ -3467,6 +3472,11 @@ hit_b:
 		/* Break all edges from fu2 list */
 		for( eu2_index=0; eu2_index < NMG_TBL_END(eu2_list); eu2_index++ )  {
 			eu2 = (struct edgeuse *)NMG_TBL_GET(eu2_list, eu2_index);
+
+			/* This EU may have been killed by nmg_repair_v_near_v() */
+			if( eu2->l.magic != NMG_EDGEUSE_MAGIC )
+				continue;
+
 			NMG_CK_EDGEUSE(eu2);
 			if( eu2->g.lseg_p != is->on_eg )  continue;
 			/* eu2 is from fu2 and on the intersection line */
