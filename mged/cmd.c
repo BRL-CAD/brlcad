@@ -778,47 +778,53 @@ char **argv;
 
 	cmd = argv[1];
 	switch( cmd[0] ) {
+	case 'a':
+		switch( cmd[1] ) {
+		case 'x':
+			sprintf( interp->result, "%lf", absolute_rotate[X] );
+			return TCL_OK;
+		case 'y':
+			sprintf( interp->result, "%lf", absolute_rotate[Y] );
+			return TCL_OK;
+		case 'z':
+			sprintf( interp->result, "%lf", absolute_rotate[Z] );
+			return TCL_OK;
+		case 'X':
+			sprintf( interp->result, "%lf", absolute_slew[X] );
+			return TCL_OK;
+		case 'Y':
+			sprintf( interp->result, "%lf", absolute_slew[Y] );
+			return TCL_OK;
+		case 'Z':
+			sprintf( interp->result, "%lf", absolute_slew[Z] );
+			return TCL_OK;
+		case 'S':
+			sprintf( interp->result, "%lf", absolute_zoom );
+			return TCL_OK;
+		default:
+			interp->result = "getknob: invalid knob name";
+			return TCL_ERROR;
+		}
 	case 'x':
-		if( mged_variables.rateknobs )
-			sprintf(interp->result, "%lf", rate_rotate[X]);
-		else
-			sprintf(interp->result, "%lf", absolute_rotate[X]);
+		sprintf(interp->result, "%lf", rate_rotate[X]);
 		return TCL_OK;
 	case 'y':
-		if( mged_variables.rateknobs )
-			sprintf(interp->result, "%lf", rate_rotate[Y]);
-		else
-			sprintf(interp->result, "%lf", absolute_rotate[Y]);
+		sprintf(interp->result, "%lf", rate_rotate[Y]);
 		return TCL_OK;
 	case 'z':
-		if( mged_variables.rateknobs )
-			sprintf(interp->result, "%lf", rate_rotate[Z]);
-		else	
-			sprintf(interp->result, "%lf", absolute_rotate[Z]);
+		sprintf(interp->result, "%lf", rate_rotate[Z]);
 		return TCL_OK;
 	case 'X':
-		if( mged_variables.rateknobs )
-			sprintf(interp->result, "%lf", rate_slew[X]);
-		else
-			sprintf(interp->result, "0");
+		sprintf(interp->result, "%lf", rate_slew[X]);
 		return TCL_OK;
 	case 'Y':
-		if( mged_variables.rateknobs )
-			sprintf(interp->result, "%lf", rate_slew[Y]);
-		else
-			sprintf(interp->result, "0");
+		sprintf(interp->result, "%lf", rate_slew[Y]);
 		return TCL_OK;
 	case 'Z':
-		if( mged_variables.rateknobs )
-			sprintf(interp->result, "%lf", rate_slew[Z]);
-		else
-			sprintf(interp->result, "0");
+		sprintf(interp->result, "%lf", rate_slew[Z]);
 		return TCL_OK;
 	case 'S':
-		if( mged_variables.rateknobs )
-			sprintf(interp->result, "%lf", rate_zoom);
-		else
-			sprintf(interp->result, "0");
+		sprintf(interp->result, "%lf", rate_zoom);
 		return TCL_OK;
 	default:
 		interp->result = "getknob: invalid knob name";
@@ -850,9 +856,11 @@ char **argv;
 		rt_vls_init( &tclcmd );
 		if( strcmp(argv[1], "zero") == 0 ) {
 			rt_vls_strcpy( &tclcmd, "sliders_zero" );
+		} else if( strcmp(argv[1], "calibrate") == 0 ) {
+			return result;
 		} else {
 			rt_vls_printf( &tclcmd, 
-    "global sliders; if { $sliders(exist) } then { .sliders.f.k%s set %d }",
+     "global sliders; if { $sliders(exist) } then { .sliders.f.k%s set %d }",
 				argv[1], (int) (2048.0*atof(argv[2])) );
 		}
 
