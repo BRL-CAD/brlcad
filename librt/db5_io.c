@@ -636,7 +636,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 
 	/* Signal region of memory that input comes from */
 	avs->readonly_min = ap->ext_buf;
-	avs->readonly_max = ap->ext_buf + ap->ext_nbytes-1;
+	avs->readonly_max = avs->readonly_min + ap->ext_nbytes-1;
 
 	/* Second pass -- populate attributes.  Peek inside struct. */
 	cp = (const char *)ap->ext_buf;
@@ -776,16 +776,17 @@ double		local2mm;
  *  and write it into the database.
  *  On success only, the internal representation is freed.
  *
+ *  The attributes are taken from ip->idb_avs
+ *
  *  Returns -
  *	<0	error
  *	 0	success
  */
 int
-rt_db_put_internal5( dp, dbip, ip, attr )
+rt_db_put_internal5( dp, dbip, ip )
 struct directory	*dp;
 struct db_i		*dbip;
 struct rt_db_internal	*ip;
-CONST struct bu_attribute_value_pair	*attr;
 {
 	struct bu_external	body;
 	struct bu_external	ext;
@@ -810,7 +811,7 @@ CONST struct bu_attribute_value_pair	*attr;
 	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
 	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		dp->d_namep, attr, &body,
+		dp->d_namep, ip->idb_avs, &body,
 		major, minor,
 		DB5HDR_ZZZ_UNCOMPRESSED);
 	bu_free_external( &body );
@@ -837,12 +838,11 @@ CONST struct bu_attribute_value_pair	*attr;
  *	<0	error
  */
 int
-rt_fwrite_internal5( fp, name, ip, conv2mm, attr )
+rt_fwrite_internal5( fp, name, ip, conv2mm )
 FILE				*fp;
 CONST char			*name;
 CONST struct rt_db_internal	*ip;
 double				conv2mm;
-CONST struct bu_attribute_value_pair	*attr;
 {
 	struct bu_external	body;
 	struct bu_external	ext;
@@ -865,7 +865,7 @@ CONST struct bu_attribute_value_pair	*attr;
 
 	BU_INIT_EXTERNAL( &ext );
 	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		name, attr, &body,
+		name, ip->idb_avs, &body,
 		major, minor,
 		DB5HDR_ZZZ_UNCOMPRESSED);
 	bu_free_external( &body );
