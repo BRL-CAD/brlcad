@@ -347,6 +347,9 @@ char **argv;
 		bu_log("Tcl_Init error %s\n", interp->result);
 	bn_tcl_setup(interp);
 	rt_tcl_setup(interp);
+	sh_tcl_setup(interp);
+	/* Don't allow unknown commands to be fed to the shell */
+	Tcl_SetVar( interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY );
 
 	/* Send our version string */
 #define PROTOCOL_VERSION	"Version1.0"
@@ -531,6 +534,9 @@ char *buf;
 	if( pkg_send( RTSYNCMSG_DIRBUILD,
 	    rtip->rti_dbip->dbi_title, strlen(rtip->rti_dbip->dbi_title)+1, pcsrv ) < 0 )
 		fprintf(stderr,"RTSYNCMSG_DIRBUILD reply error\n");
+
+	Tcl_LinkVar(interp, "dbip", (char *)&ap.a_rt_i->rti_dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
+	Tcl_LinkVar(interp, "rtip", (char *)&ap.a_rt_i, TCL_LINK_INT|TCL_LINK_READ_ONLY);
 }
 
 /*
