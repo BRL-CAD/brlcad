@@ -133,4 +133,4 @@ then	HOST=`hostname`
 else	HOST=`uname -n`
 fi
 
-sh perf.sh "$HOST" "`date`" "$*" >> summary
+sh ../bench/perf.sh "$HOST" "`date`" "$*" >> summary
