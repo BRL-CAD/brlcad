@@ -8,13 +8,13 @@
  *  advantage of centralizing the struct timeval stuff.
  */
 
-#if defined(i386)
+#if defined(i386) && !defined(BSD)
 #	define BSD
 #endif
 #if defined(BSD)
 #	include <sys/types.h>	/* for fd_set macros */
 #endif
-#if defined(BSD) || defined(CRAY)
+#if defined(BSD) || defined(CRAY) || defined(aux)
 #	include <sys/time.h>	/* for struct timeval.  Includes <time.h> */
 #else
 #	include <time.h>
@@ -71,7 +71,7 @@ long readfds;
 bsdselect( readfds, sec, us )
 long readfds;
 {
-#if defined(BSD) || defined(sgi) || defined(stellar) || defined(CRAY) || defined(__sgi)
+#if defined(BSD) || defined(sgi) || defined(stellar) || defined(CRAY) || defined(__sgi) || defined(aux)
 	struct timeval tv;
 	int	ret;
 	long	mask;
