@@ -102,7 +102,6 @@ static Cursor	cursor =
 
 _LOCAL_ int	sgi_dopen(),
 		sgi_dclose(),
-		sgi_dreset(),
 		sgi_dclear(),
 		sgi_bread(),
 		sgi_bwrite(),
@@ -120,18 +119,18 @@ FBIO sgi_interface =
 		{
 		sgi_dopen,
 		sgi_dclose,
-		sgi_dreset,
+		fb_null,		/* reset? */
 		sgi_dclear,
 		sgi_bread,
 		sgi_bwrite,
-		fb_null,
-		fb_null,
+		sgi_cmread,
+		sgi_cmwrite,
 		sgi_viewport_set,
 		sgi_window_set,
 		sgi_zoom_set,
 		sgi_curs_set,
 		sgi_cmemory_addr,
-		fb_null,
+		fb_null,		/* cscreen_addr */
 		"Silicon Graphics IRIS",
 		1024,			/* max width */
 		768,			/* max height */
@@ -152,11 +151,8 @@ FBIO sgi_interface =
 
 /* Interface to the 12-bit window versions of these routines */
 int		sgw_dopen();
-_LOCAL_ int	sgw_dclose(),
-		sgw_dreset(),
-		sgw_dclear(),
+_LOCAL_ int
 		sgw_bwrite(),
-		sgw_viewport_set(),
 		sgw_curs_set(),
 		sgw_cmemory_addr(),
 		sgw_cscreen_addr();
@@ -167,14 +163,14 @@ _LOCAL_ void	sgw_inqueue();
 static FBIO sgiw_interface =
 		{
 		sgw_dopen,
-		sgw_dclose,
-		sgw_dreset,
-		sgw_dclear,
+		sgi_dclose,
+		fb_null,
+		sgi_dclear,
 		sgi_bread,
 		sgw_bwrite,
-		fb_null,
-		fb_null,
-		sgw_viewport_set,
+		sgi_cmread,
+		sgi_cmwrite,
+		sgi_viewport_set,
 		sgi_window_set,
 		sgi_zoom_set,
 		sgi_curs_set,
@@ -520,28 +516,26 @@ sgi_dclose( ifp )
 FBIO	*ifp;
 {
 	blanktime( 67 * 60 * 20L );	/* 20 minute blanking when fb closed */
-#ifdef Ruins_Images
-	tpon();			/* Turn on textport */
-	greset();
-	/* could be ginit(), gconfig() */
-#endif
-	gexit();
+
+	switch( SGI(ifp)->si_mode )  {
+	case MODE_RGB:
+		gexit();
+		break;
+	case MODE_FIT:
+	case MODE_APPROX:
+		if( ismex() )  {
+			/* Leave mex's cursor on */
+			/* winclose( SGI(ifp)->si_fd ); */
+		}  else  {
+			setcursor( 0, 1, 0x2000 );
+			cursoff();
+			greset();
+			gexit();
+		}
+		break;
+	}
 	if( SGIL(ifp) != NULL )
 		(void)free( (char *)SGIL(ifp) );
-	return(0);
-}
-
-_LOCAL_ int
-sgi_dreset( ifp )
-FBIO	*ifp;
-{
-	ginit();
-	RGBmode();
-	gconfig();
-
-	RGBcolor( (short) 0, (short) 0, (short) 0);
-	clear();
-	bzero( ifp->if_mem, 1024*ifp->if_height*sizeof(RGBpixel) );
 	return(0);
 }
 
@@ -550,18 +544,47 @@ sgi_dclear( ifp, pp )
 FBIO	*ifp;
 register RGBpixel	*pp;
 {
+
+	if( qtest() )
+		sgw_inqueue(ifp);
+
 	if ( pp != RGBPIXEL_NULL)  {
 		register char *op = ifp->if_mem;
 		register int cnt;
+
 		/* Slightly simplistic -- runover to right border */
 		for( cnt=1024*ifp->if_height-1; cnt > 0; cnt-- )  {
 			*op++ = (*pp)[RED];
 			*op++ = (*pp)[GRN];
 			*op++ = (*pp)[BLU];
 		}
-		RGBcolor((short)((*pp)[RED]), (short)((*pp)[GRN]), (short)((*pp)[BLU]));
+
+		switch( SGI(ifp)->si_mode )  {
+		case MODE_RGB:
+			RGBcolor((short)((*pp)[RED]), (short)((*pp)[GRN]), (short)((*pp)[BLU]));
+			break;
+		case MODE_FIT:
+			writemask( 0x3FF );
+			color( get_Color_Index( ifp, pp ) );
+			break;
+		case MODE_APPROX:
+			writemask( 0x3FF );
+			color( MAP_RESERVED +
+				((*pp)[RED]/26) +
+				((*pp)[GRN]/26) * 10 +
+				((*pp)[BLU]/26) * 100 );
+			break;
+		}
 	} else {
-		RGBcolor( (short) 0, (short) 0, (short) 0);
+		switch( SGI(ifp)->si_mode )  {
+		case MODE_RGB:
+			RGBcolor( (short) 0, (short) 0, (short) 0);
+			break;
+		case MODE_FIT:
+		case MODE_APPROX:
+			color(BLACK);
+			break;
+		}
 		bzero( ifp->if_mem, 1024*ifp->if_height*sizeof(RGBpixel) );
 	}
 	clear();
@@ -755,9 +778,7 @@ int	count;
 
 		count -= scan_count;
 		xpos = 0;
-		/* Advance upwards */
-		if( ++ypos >= ifp->if_height )
-			break;
+		ypos++;
 	}
 	GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 	if( SGI(ifp)->si_curs_on )
@@ -770,7 +791,15 @@ sgi_viewport_set( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
-/*	viewport( left, right, top, bottom );*/
+	if( qtest() )
+		sgw_inqueue(ifp);
+#if 0
+	viewport(	(Screencoord) left,
+			(Screencoord) right,
+			(Screencoord) top,
+			(Screencoord) (bottom * fb2iris_scale)
+			);
+#endif
 	return(0);
 }
 
@@ -1051,62 +1080,6 @@ int	width, height;
 }
 
 _LOCAL_ int
-sgw_dclose( ifp )
-FBIO	*ifp;
-{
-	setcursor( 0, 1, 0x2000 );
-	if( ismex() )  {
-		/* Leave mex's cursor on */
-		; /* winclose( SGI(ifp)->si_fd ); */
-	}  else  {
-		cursoff();
-		greset();
-		gexit();
-	}
-	if( SGIL(ifp) != NULL )
-		(void)free( (char *)SGIL(ifp) );
-/** 	fb_log( "%d color table entries used.\n", SGI(ifp)->si_rgb_ct );  **/
-	return	0;	
-}
-
-_LOCAL_ int
-sgw_dreset( ifp )
-FBIO	*ifp;
-{
-	ginit();
-	singlebuffer();
-	gconfig();
-
-	if( qtest() )
-		sgw_inqueue(ifp);
-	color(BLACK);
-	clear();
-	return	0;	
-}
-
-_LOCAL_ int
-sgw_dclear( ifp, pp )
-FBIO	*ifp;
-RGBpixel	*pp;
-{
-	Colorindex i;
-	register int cnt;
-
-	if( qtest() )
-		sgw_inqueue(ifp);
-	if ( pp != RGBPIXEL_NULL)
-		i = get_Color_Index( ifp, pp );
-	else
-		i = BLACK;
-
-	color(i);
-
-	writemask( 0x3FF );
-	clear();
-	return	0;	
-}
-
-_LOCAL_ int
 sgw_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
@@ -1195,23 +1168,6 @@ int	count;
 		y++;
 	}
 	return(ret);
-}
-
-_LOCAL_ int
-sgw_viewport_set( ifp, left, top, right, bottom )
-FBIO	*ifp;
-int	left, top, right, bottom;
-{
-	if( qtest() )
-		sgw_inqueue(ifp);
-#if 0
-	viewport(	(Screencoord) left,
-			(Screencoord) right,
-			(Screencoord) top,
-			(Screencoord) (bottom * fb2iris_scale)
-			);
-#endif
-	return	0;
 }
 
 _LOCAL_ int
