@@ -321,7 +321,6 @@ int	argc;
 char	**argv;
 {
 	register struct servers *sp;
-	struct timeval	now;
 
 	/* Random inits */
 	gethostname( ourname, sizeof(ourname) );
@@ -354,15 +353,15 @@ char	**argv;
 		/* Read .remrtrc file to acquire server info */
 		read_rc_file();
 
-		while(clients)  {
-			check_input( 30 );	/* delay up to 30 secs */
-
-			(void)gettimeofday( &now, (struct timezone *)0 );
-			schedule( &now );
+		/* Go until no more clients */
+		while( clients )  {
+			do_work(0);	/* no auto starting of servers */
 		}
-		/* Might want to see if any work remains, and if so,
-		 * record it somewhere */
-		rt_log("REMRT out of clients\n");
+		/*
+		 * Might want to see if any work remains, and if so,
+		 * record it somewhere
+		 */
+		rt_log("remrt out of clients\n");
 	} else {
 		rt_log("Automatic REMRT listening at port %d, reading script on stdin\n",
 			pkg_permport);
@@ -413,17 +412,51 @@ char	**argv;
 
 		/* Compute until no work remains */
 		running = 1;
-		while( FrameHead.fr_forw != &FrameHead )  {
-			(void)gettimeofday( &now, (struct timezone *)0 );
-			start_servers( &now );
-			check_input( 30 );	/* delay up to 30 secs */
-
-			(void)gettimeofday( &now, (struct timezone *)0 );
-			schedule( &now );
-		}
-		rt_log("REMRT:  task accomplished\n");
+		do_work(1);		/* auto start servers */
+		rt_log("remrt:  task accomplished\n");
 	}
 	return(0);			/* exit(0); */
+}
+
+/*
+ *			D O _ W O R K
+ */
+do_work(auto_start)
+int	auto_start;
+{
+	struct timeval	now;
+	int		prev_serv;	/* previous # of connected servers */
+	int		cur_serv;	/* current # of connected servers */
+	register struct servers	*sp;
+
+	/* Compute until no work remains */
+	prev_serv = 0;
+	while( FrameHead.fr_forw != &FrameHead )  {
+		if( auto_start )  {
+			(void)gettimeofday( &now, (struct timezone *)0 );
+			start_servers( &now );
+		} else {
+			if( clients == 0 )  break;
+		}
+
+		check_input( 30 );	/* delay up to 30 secs */
+
+		(void)gettimeofday( &now, (struct timezone *)0 );
+		schedule( &now );
+
+		/* Count servers */
+		cur_serv = 0;
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+			if( sp->sr_pc == PKC_NULL )  continue;
+			cur_serv++;
+		}
+		if( cur_serv == 0 && prev_serv > cur_serv )  {
+			rt_log("remrt:  Notice:  all servers down at %s\n",
+				ctime( &(now.tv_sec) ) );
+			fflush(stdout);
+		}
+		prev_serv = cur_serv;
+	}
 }
 
 /*
@@ -1202,7 +1235,7 @@ next_frame: ;
 	if( !running )  goto out;
 	if( all_done() )  {
 		running = 0;
-		rt_log("REMRT:  All work done!\n");
+		rt_log("remrt:  All work done!\n");
 		if( detached )  exit(0);
 		goto out;
 	}
