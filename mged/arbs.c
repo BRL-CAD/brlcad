@@ -300,9 +300,9 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
 	{
-		rt_db_free_internal( &internal );
+		rt_db_free_internal( &internal, &rt_uniresource );
 		TCL_WRITE_ERR_return;
 	}
 
@@ -568,9 +568,9 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
 	{
-		rt_db_free_internal( &internal );
+		rt_db_free_internal( &internal, &rt_uniresource );
 		TCL_WRITE_ERR_return;
 	}
 

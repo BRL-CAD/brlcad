@@ -131,7 +131,7 @@ matp_t mat;
 	BU_GETUNION( eptr, E_tree );
 	eptr->magic = E_TREE_MAGIC;
 
-	id = rt_db_get_internal( &intern, dp, dbip, mat );
+	id = rt_db_get_internal( &intern, dp, dbip, mat, &rt_uniresource );
 	if( id < 0 )
 	{
 		Tcl_AppendResult(interp, "Failed to get internal form of ",
@@ -151,7 +151,7 @@ matp_t mat;
 		RT_CK_COMB( comb );
 
 		eptr = build_etree( comb->tree );
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		return( eptr );
 	}
 #if 0
@@ -233,7 +233,7 @@ matp_t mat;
 						"'\n", (char *)NULL );
 				}
 
-				rt_db_free_internal( &intern2 );
+				rt_db_free_internal( &intern2, &rt_uniresource );
 			}
 		}
 		else
@@ -248,7 +248,7 @@ matp_t mat;
 	}
 
 	if( id != ID_NMG )
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 
 	/* add this leaf to the leaf list */
 	bu_ptbl_ins( &leaf_list, (long *)eptr );
@@ -1961,7 +1961,7 @@ fix_halfs()
 					"'\n", (char *)NULL );
 			}
 
-			rt_db_free_internal( &intern2 );
+			rt_db_free_internal( &intern2, &rt_uniresource );
 		}
 	}
 }

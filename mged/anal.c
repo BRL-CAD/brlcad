@@ -121,7 +121,7 @@ char	*argv[];
 		}
 		bn_mat_mul(new_mat, modelchanges, es_mat);
 
-		if( rt_db_get_internal( &intern, ndp, dbip, new_mat ) < 0 )  {
+		if( rt_db_get_internal( &intern, ndp, dbip, new_mat, &rt_uniresource ) < 0 )  {
 		  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
@@ -129,7 +129,7 @@ char	*argv[];
 		do_anal(&v, &intern);
 		Tcl_AppendResult(interp, bu_vls_addr(&v), (char *)NULL);
 		bu_vls_free(&v);
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		return TCL_OK;
 	}
 
@@ -138,7 +138,7 @@ char	*argv[];
 		if( (ndp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		if( rt_db_get_internal( &intern, ndp, dbip, bn_mat_identity ) < 0 )  {
+		if( rt_db_get_internal( &intern, ndp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )  {
 		  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
@@ -151,7 +151,7 @@ char	*argv[];
 		do_anal(&v, &intern);
 		Tcl_AppendResult(interp, bu_vls_addr(&v), (char *)NULL);
 		bu_vls_free(&v);
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 	}
 
 	return TCL_OK;

@@ -273,7 +273,7 @@ char		*argv[];
   		continue;
   	}
 
-  	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) != ID_COMBINATION )
+  	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) != ID_COMBINATION )
   	{
   		Tcl_AppendResult(interp, "f_rcodes: Warning ", cp, " not a region\n", (char *)NULL );
   		continue;
@@ -288,11 +288,11 @@ char		*argv[];
   	comb->los = los;
 
   	/* write out all changes */
-  	if( rt_db_put_internal( dp, dbip, &intern ) )
+  	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) )
   	{
   		Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL );
   		TCL_ERROR_RECOVERY_SUGGESTION;
-  		rt_db_free_internal( &intern );
+  		rt_db_free_internal( &intern, &rt_uniresource );
   		return TCL_ERROR;
   	}
 
@@ -348,7 +348,7 @@ int pathpos;
 	if( !(dp->d_flags & DIR_COMB) )
 		return( 0 );
 
-	if( (id=rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) ) < 0 )
+	if( (id=rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) ) < 0 )
 	{
 		Tcl_AppendResult(interp, "printcodes: Cannot get records for ",
 			dp->d_namep, "\n", (char *)NULL );
@@ -371,7 +371,7 @@ int pathpos;
 		for(i=0; i < pathpos; i++)
 			fprintf(fp, "/%s",path[i]->d_namep);
 		fprintf(fp, "/%s\n", dp->d_namep );
-		rt_comb_ifree( &intern );
+		rt_comb_ifree( &intern, &rt_uniresource );
 		return TCL_OK;
 	}
 
@@ -382,7 +382,7 @@ int pathpos;
 			(genptr_t)fp, (genptr_t)&pathpos, (genptr_t)NULL );
 	}
 
-	rt_comb_ifree( &intern );
+	rt_comb_ifree( &intern, &rt_uniresource );
 	return TCL_OK;
 }
 
@@ -532,7 +532,7 @@ char	**argv;
 			if ( !(dp->d_flags & DIR_REGION) )
 				continue;
 
-			if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+			if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 			{
 				(void)signal( SIGINT, SIG_IGN );
 				TCL_READ_ERR_return;
@@ -557,7 +557,7 @@ char	**argv;
 				}
 			}
 
-			rt_comb_ifree( &intern );
+			rt_comb_ifree( &intern, &rt_uniresource );
 		}
 	}
 
@@ -656,7 +656,7 @@ char	**argv;
 				if( !(dp->d_flags & DIR_COMB) )
 					continue;
 
-				if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
+				if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 					(void)signal( SIGINT, SIG_IGN );
 					TCL_READ_ERR_return;
 				}
@@ -670,7 +670,7 @@ char	**argv;
 				else
 				  Tcl_AppendResult(interp, "   ", dp->d_namep,
 						   "\n", (char *)NULL);
-				rt_comb_ifree( &intern );
+				rt_comb_ifree( &intern, &rt_uniresource );
 			}
 		}
 	}
@@ -745,7 +745,7 @@ char	**argv;
 	if( (dp=db_lookup( dbip, nmg_solid_name, LOOKUP_NOISY ) ) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &nmg_intern, dp, dbip, bn_mat_identity ) < 0 )
+	if( rt_db_get_internal( &nmg_intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 		Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 		return TCL_ERROR;
@@ -842,7 +842,7 @@ char	**argv;
 				new_intern.idb_meth = &rt_functab[ID_NMG];
 				new_intern.idb_ptr = (genptr_t)new_m;
 
-				if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )
+				if( rt_db_put_internal( new_dp, dbip, &new_intern, &rt_uniresource ) < 0 )
 				{
 					(void)nmg_km( new_m );
 					Tcl_AppendResult(interp, "rt_db_put_internal() failure\n", (char *)NULL);
@@ -855,7 +855,7 @@ char	**argv;
 		}
 	}
 
-	rt_db_free_internal( &nmg_intern );
+	rt_db_free_internal( &nmg_intern, &rt_uniresource );
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
@@ -920,7 +920,7 @@ int flag;
 	if( dp->d_flags & DIR_SOLID )
 		return;
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		READ_ERR_return;
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -928,11 +928,11 @@ int flag;
 
 	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 	{
-		db_non_union_push( comb->tree );
+		db_non_union_push( comb->tree, &rt_uniresource );
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )
 		{
 			Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL );
-			rt_comb_ifree( &intern );
+			rt_comb_ifree( &intern, &rt_uniresource );
 			return;
 		}
 	}
@@ -940,7 +940,7 @@ int flag;
 	if( !comb->tree )
 	{
 		/* empty combination */
-		rt_comb_ifree( &intern );
+		rt_comb_ifree( &intern, &rt_uniresource );
 		return;
 	}
 
@@ -949,7 +949,8 @@ int flag;
 		sizeof( struct rt_tree_array ), "tree list" );
 
 	/* flatten tree */
-	actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION, 0 ) - tree_list;
+	actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list,
+		comb->tree, OP_UNION, 0, &rt_uniresource ) - tree_list;
 	BU_ASSERT_LONG( actual_count, ==, node_count );
 
 	if( dp->d_flags & DIR_REGION )
@@ -1014,7 +1015,7 @@ int flag;
 					} else {
 						bn_mat_copy( temp_mat, old_mat );
 					}
-					if( rt_db_get_internal( &sol_intern, sol_dp, dbip, temp_mat ) < 0 )
+					if( rt_db_get_internal( &sol_intern, sol_dp, dbip, temp_mat, &rt_uniresource ) < 0 )
 					{
 						bu_log( "Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name );
 						nsoltemp = 0;
@@ -1051,7 +1052,7 @@ int flag;
 				bu_vls_free( &tmp_vls );
 			}
 			if( nsoltemp )
-				rt_db_free_internal( &sol_intern );
+				rt_db_free_internal( &sol_intern, &rt_uniresource );
 		}
 	}
 	else if( dp->d_flags & DIR_COMB )
@@ -1092,7 +1093,7 @@ int flag;
 
 out:
 	bu_free( (char *)tree_list, "new_tables: tree_list" );
-	rt_comb_ifree( &intern );
+	rt_comb_ifree( &intern, &rt_uniresource );
 	return;
 }
 

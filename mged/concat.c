@@ -291,7 +291,7 @@ genptr_t		ptr;
 	if( (dp = db_diradd( dbip, local, -1L, 0, flags, ptr)) == DIR_NULL )
 		return(-1);
 
-	if( rt_db_get_internal( &intern, input_dp, input_dbip, (fastf_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, input_dp, input_dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 	{
 		READ_ERR;
 		if( db_delete( dbip, dp ) < 0 ||
@@ -302,22 +302,17 @@ genptr_t		ptr;
 		return -1;
 	}
 
-	/* Update the name, and any references */
+	/* The name is set, update any references */
 	if( flags & DIR_SOLID )
 	{
 		bu_log("adding solid '%s'\n", local );
 		if ((ncharadd + strlen(name)) > (unsigned)NAMESIZE)
 			bu_log("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
 				prestr,name, local);
-
-		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
-		dp->d_namep = bu_strdup(local);
 	}
 	else
 	{
 		bu_log("adding  comb '%s'\n", local );
-		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
-		dp->d_namep = bu_strdup(local);
 
 		/* Update all the member records */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -328,7 +323,7 @@ genptr_t		ptr;
 		}
 	}
 
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
 		bu_log( "Failed writing %s to database\n", dp->d_namep );
 		return( -1 );

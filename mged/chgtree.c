@@ -94,13 +94,13 @@ f_name(
 	  return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 
 	/*  Change object name in the in-memory directory. */
 	if( db_rename( dbip, dp, argv[2] ) < 0 )  {
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 	  Tcl_AppendResult(interp, "error in db_rename to ", argv[2],
 			   ", aborting\n", (char *)NULL);
 	  TCL_ERROR_RECOVERY_SUGGESTION;
@@ -108,7 +108,7 @@ f_name(
 	}
 
 	/* Re-write to the database.  New name is applied on the way out. */
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;
@@ -578,7 +578,7 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -588,7 +588,7 @@ char	**argv;
 	num_deleted = 0;
 	ret = TCL_OK;
 	for( i = 2; i < argc; i++ )  {
-		if( db_tree_del_dbleaf( &(comb->tree), argv[i] ) < 0 )  {
+		if( db_tree_del_dbleaf( &(comb->tree), argv[i], &rt_uniresource ) < 0 )  {
 			Tcl_AppendResult(interp, "  ERROR_deleting ",
 				dp->d_namep, "/", argv[i],
 				"\n", (char *)NULL);
@@ -601,7 +601,7 @@ char	**argv;
 		}
 	}
 
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
 	return ret;
@@ -647,7 +647,7 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( (id = rt_db_get_internal( &internal, proto, dbip, (fastf_t *)NULL )) < 0 )  {
+	if( (id = rt_db_get_internal( &internal, proto, dbip, (fastf_t *)NULL, &rt_uniresource )) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	/* make sure it is a TGC */
@@ -655,7 +655,7 @@ char	**argv;
 	{
 	  Tcl_AppendResult(interp, "f_copy_inv: ", argv[1],
 			   " is not a cylinder\n", (char *)NULL);
-		rt_db_free_internal( &internal );
+		rt_db_free_internal( &internal, &rt_uniresource );
 		return TCL_ERROR;
 	}
 	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
@@ -669,7 +669,7 @@ char	**argv;
 	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, NULL)) == DIR_NULL )  {
 	    	TCL_ALLOC_ERR_return;
 	}
-	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )  {
+	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
 
@@ -777,7 +777,7 @@ char	**argv;
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 		db_free_1anim( anp );
 		TCL_READ_ERR_return;
 	}
@@ -811,7 +811,7 @@ char	**argv;
 		tp->tr_l.tl_mat = (matp_t)NULL;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR;
 		goto fail;
 	}
@@ -819,7 +819,7 @@ char	**argv;
 	return TCL_OK;
 		
 fail:
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern, &rt_uniresource );
 	db_free_1anim( anp );
 	return TCL_ERROR;
 }
@@ -1237,7 +1237,7 @@ char **argv;
     parent = bu_vls_addr(&pvls);
     sep = strchr(parent, '/') - parent;
     bu_vls_trunc(&pvls, sep);
-    switch (rt_db_lookup_internal(dbip, parent, &dp, &intern, LOOKUP_NOISY))
+    switch (rt_db_lookup_internal(dbip, parent, &dp, &intern, LOOKUP_NOISY, &rt_uniresource))
     {
 	case ID_COMBINATION:
 	    if (dp -> d_flags & DIR_COMB)
@@ -1289,7 +1289,7 @@ char **argv;
 	tp -> tr_l.tl_mat = (matp_t) 0;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern) < 0)
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0)
     {
 	TCL_WRITE_ERR;
 	status = TCL_ERROR;
@@ -1302,6 +1302,6 @@ wrapup:
 
     bu_vls_free(&pvls);
     if (status == TCL_ERROR)
-	rt_db_free_internal(&intern);
+	rt_db_free_internal(&intern, &rt_uniresource);
     return status;
 }

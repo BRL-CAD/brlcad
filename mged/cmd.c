@@ -2152,7 +2152,7 @@ f_bot_face_fuse( clientData, interp, argc, argv)
 	if( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity ) < 0 )
+	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -2175,9 +2175,9 @@ f_bot_face_fuse( clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( new_dp, dbip, &intern ) < 0 )
+	if( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;
@@ -2206,7 +2206,7 @@ f_bot_fuse(clientData, interp, argc, argv)
 	if( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity ) < 0 )
+	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -2231,9 +2231,9 @@ f_bot_fuse(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( new_dp, dbip, &intern ) < 0 )
+	if( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;
@@ -2263,7 +2263,7 @@ f_bot_condense(clientData, interp, argc, argv)
 	if( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity ) < 0 )
+	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -2288,9 +2288,9 @@ f_bot_condense(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( new_dp, dbip, &intern ) < 0 )
+	if( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;

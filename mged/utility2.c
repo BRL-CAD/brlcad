@@ -76,7 +76,7 @@ char **argv;
 	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
 
-	if( rt_db_get_internal( &old_intern, old_dp, dbip, bn_mat_identity ) < 0 )
+	if( rt_db_get_internal( &old_intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -128,7 +128,7 @@ char **argv;
 			new_intern.idb_meth = &rt_functab[ID_NMG];
 			new_intern.idb_ptr = (genptr_t)m_tmp;
 
-			if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )  {
+			if( rt_db_put_internal( new_dp, dbip, &new_intern, &rt_uniresource ) < 0 )  {
 				/* Free memory */
 				nmg_km(m_tmp);
 				Tcl_AppendResult(interp, "rt_db_put_internal() failure\n", (char *)NULL);
@@ -372,7 +372,7 @@ char **argv;
 	}
 
 	RT_INIT_DB_INTERNAL( &internal );
-	if( rt_functab[id].ft_import( &internal, &external, identity, dbip ) < 0 )
+	if( rt_functab[id].ft_import( &internal, &external, identity, dbip, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "solid import failure on ",
 			   argv[argc-1], "\n", (char *)NULL);
@@ -408,7 +408,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( rt_functab[id].ft_export( &new_ext , &new_int , 1.0, dbip ) )
+	if( rt_functab[id].ft_export( &new_ext , &new_int , 1.0, dbip, &rt_uniresource ) )
 	{
 	  db_free_external( &new_ext );
 	  db_free_external( &external );
@@ -513,7 +513,7 @@ int flag;
 
 	if( dp->d_flags & DIR_COMB )
 	{
-		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 			READ_ERR_return;
 
 		path[pathpos] = dp;
@@ -521,7 +521,7 @@ int flag;
 		if( comb->tree )
 			db_tree_funcleaf( dbip, comb, comb->tree, Do_trace,
 				(genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)&flag );
-		rt_comb_ifree( &intern );
+		rt_comb_ifree( &intern, &rt_uniresource );
 		return;
 	}
 
@@ -558,7 +558,7 @@ int flag;
 
 	/* NOTE - only reach here if flag == LISTEVAL */
 	Tcl_AppendResult(interp, "/", (char *)NULL);
-	if( (id=rt_db_get_internal( &intern, dp, dbip, xform )) < 0 )
+	if( (id=rt_db_get_internal( &intern, dp, dbip, xform, &rt_uniresource )) < 0 )
 	{
 		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
                         ") failure", (char *)NULL );
@@ -567,7 +567,7 @@ int flag;
 	bu_vls_printf( &str, "%16s:\n", dp->d_namep );
 	if( rt_functab[id].ft_describe( &str, &intern, 1, base2local ) < 0 )
 		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern, &rt_uniresource );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
 }
@@ -862,7 +862,7 @@ char **argv;
 	 * the matrix we've stored for each solid.
 	 */
 	FOR_ALL_PUSH_SOLIDS(pip) {
-		if (rt_db_get_internal( &intern, pip->pi_dir, dbip, pip->pi_mat ) < 0 )  {
+		if (rt_db_get_internal( &intern, pip->pi_dir, dbip, pip->pi_mat, &rt_uniresource ) < 0 )  {
 		  Tcl_AppendResult(interp, "f_push: Read error fetching '",
 				   pip->pi_dir->d_namep, "'\n", (char *)NULL);
 		  push_error = -1;
@@ -870,11 +870,11 @@ char **argv;
 		}
 		RT_CK_DB_INTERNAL( &intern );
 
-		if (rt_db_put_internal( pip->pi_dir, dbip, &intern ) < 0)  {
+		if (rt_db_put_internal( pip->pi_dir, dbip, &intern, &rt_uniresource ) < 0)  {
 		  Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
 				   "): solid export failure\n", (char *)NULL);
 		}
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 	}
 
 	/*
@@ -950,21 +950,21 @@ struct directory *dp;
 
 	if( dp->d_flags & DIR_SOLID )
 		return;
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		READ_ERR_return;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if( comb->tree )
 	{
 		db_tree_funcleaf( dbip, comb, comb->tree, Do_identitize,
 			(genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL );
-		if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 		{
 			Tcl_AppendResult(interp, "Cannot write modified combination (", dp->d_namep,
 				") to database\n", (char *)NULL );
 			return;
 		}
 	}
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern, &rt_uniresource );
 }
 
 static void
@@ -1202,7 +1202,7 @@ mat_t xform;
 	RT_INIT_DB_INTERNAL( &sol_int );
 
 	id = rt_id_solid( &sol_ext );
-	if( rt_functab[id].ft_import( &sol_int, &sol_ext, xform, dbip ) < 0 )
+	if( rt_functab[id].ft_import( &sol_int, &sol_ext, xform, dbip, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "Cannot import solid ",
 			   dp->d_namep, "\n", (char *)NULL);
@@ -1211,7 +1211,7 @@ mat_t xform;
 
 	RT_CK_DB_INTERNAL( &sol_int );
 
-	if( rt_db_put_internal( found, dbip, &sol_int ) < 0 )
+	if( rt_db_put_internal( found, dbip, &sol_int, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "Cannot write copy solid (", found->d_namep,
 			   ") to database\n", (char *)NULL);
@@ -1296,7 +1296,7 @@ mat_t xform;
 	}
 
 	/* if we can't get records for this combination, just leave it alone */
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		return( dp );
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -1331,11 +1331,11 @@ mat_t xform;
 	  return( DIR_NULL );
 	}
 
-	if( rt_db_put_internal( found, dbip, &intern ) < 0 )
+	if( rt_db_put_internal( found, dbip, &intern, &rt_uniresource ) < 0 )
 	{
 		Tcl_AppendResult(interp, "rt_db_put_internal failed for ", dp->d_namep,
 			"\n", (char *)NULL );
-		rt_comb_ifree( &intern );
+		rt_comb_ifree( &intern, &rt_uniresource );
 		return( DIR_NULL );
 	}
 
@@ -1422,12 +1422,12 @@ char **argv;
 			if( dp->d_flags & DIR_SOLID )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 				TCL_READ_ERR_return;
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 			if( comb->tree )
 				db_tree_funcleaf( dbip, comb, comb->tree, Do_ref_incr, (genptr_t )NULL, (genptr_t )NULL, (genptr_t )NULL );
-			rt_comb_ifree( &intern );
+			rt_comb_ifree( &intern, &rt_uniresource );
 		}
 	}
 
@@ -1564,7 +1564,7 @@ char **argv;
 			break;
 		}
 
-		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 			TCL_READ_ERR_return;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -1574,7 +1574,7 @@ char **argv;
 		if( comb->tree )
 			db_tree_funcleaf( dbip, comb, comb->tree, Do_showmats,
 				(genptr_t)acc_matrix, (genptr_t)&count, (genptr_t)child );
-		rt_comb_ifree( &intern );
+		rt_comb_ifree( &intern, &rt_uniresource );
 		stop_catching_output(&tmp_vls);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -1679,7 +1679,7 @@ char *argv[];
 	  return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &nmg_intern, dp, dbip, bn_mat_identity ) < 0 )
+	if( rt_db_get_internal( &nmg_intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -1688,7 +1688,7 @@ char *argv[];
 	if( nmg_intern.idb_type != ID_NMG )
 	{
 	  Tcl_AppendResult(interp, nmg_name, " is not an NMG solid\n", (char *)NULL);
-	  rt_db_free_internal( &nmg_intern );
+	  rt_db_free_internal( &nmg_intern, &rt_uniresource );
 	  return TCL_ERROR;
 	}
 
@@ -1735,7 +1735,7 @@ char *argv[];
 			}
 			if( !success )
 			{
-				rt_db_free_internal( &nmg_intern );
+				rt_db_free_internal( &nmg_intern, &rt_uniresource );
 				Tcl_AppendResult(interp, "Failed to construct an ARB equivalent to ",
 						 nmg_name, "\n", (char *)NULL);
 				return TCL_OK;
@@ -1756,7 +1756,7 @@ char *argv[];
 		}
 		else if( do_tgc )
 		{
-		  rt_db_free_internal( &nmg_intern );
+		  rt_db_free_internal( &nmg_intern, &rt_uniresource );
 		  Tcl_AppendResult(interp, "Failed to construct a TGC equivalent to ",
 				   nmg_name, "\n", (char *)NULL);
 		  return TCL_OK;
@@ -1785,7 +1785,7 @@ char *argv[];
 			}
 			else if( do_arb )
 			{
-			  rt_db_free_internal( &nmg_intern );
+			  rt_db_free_internal( &nmg_intern, &rt_uniresource );
 			  Tcl_AppendResult(interp, "Failed to construct an ARB equivalent to ",
 					   nmg_name, "\n", (char *)NULL);
 			  return TCL_OK;
@@ -1808,7 +1808,7 @@ char *argv[];
 		}
 		else if( do_poly )
 		{
-		  rt_db_free_internal( &nmg_intern );
+		  rt_db_free_internal( &nmg_intern, &rt_uniresource );
 		  Tcl_AppendResult(interp, nmg_name, " is not a closed surface, cannot make a polysolid\n", (char *)NULL);
 		  return TCL_OK;
 		}
@@ -1831,7 +1831,7 @@ char *argv[];
 		  Tcl_AppendResult(interp, "Single vertexuse in shell of ", nmg_name,
 				   " has been ignored in conversion\n", (char *)NULL);
 
-		rt_db_free_internal( &nmg_intern );
+		rt_db_free_internal( &nmg_intern, &rt_uniresource );
 
 		if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 		{
@@ -1839,9 +1839,9 @@ char *argv[];
 			return TCL_ERROR;
 		}
 
-		if( rt_db_put_internal( dp, dbip, &new_intern ) < 0 )
+		if( rt_db_put_internal( dp, dbip, &new_intern, &rt_uniresource ) < 0 )
 		{
-			rt_db_free_internal( &new_intern );
+			rt_db_free_internal( &new_intern, &rt_uniresource );
 			TCL_WRITE_ERR_return;
 		}
 		return TCL_OK;
@@ -2076,11 +2076,11 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		return TCL_ERROR;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	sprintf( id, "%d\n", comb->region_id );
-	rt_comb_ifree( &intern );
+	rt_comb_ifree( &intern, &rt_uniresource );
 	Tcl_AppendResult(interp, id, (char *)NULL );
 
 	return TCL_OK;
@@ -2140,16 +2140,16 @@ char **argv;
 				if( !(dp->d_flags & DIR_REGION) )
 					continue;
 
-				if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+				if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 					TCL_READ_ERR_return;
 				comb = (struct rt_comb_internal *)intern.idb_ptr;
 				if( comb->region_id != 0 ||
 					comb->aircode != item )
 				{
-					rt_comb_ifree( &intern );
+					rt_comb_ifree( &intern, &rt_uniresource );
 					continue;
 				}
-				rt_comb_ifree( &intern );
+				rt_comb_ifree( &intern, &rt_uniresource );
 
 				bu_vls_strcat( &v, " " );
 				bu_vls_strcat( &v, dp->d_namep );
@@ -2232,7 +2232,7 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) < 0 )
 	{
 		Tcl_AppendResult(interp, "Failed to get internal form of ", argv[1], "!!!!\n", (char *)NULL);
 		return TCL_ERROR;
@@ -2241,7 +2241,7 @@ char **argv;
 	if( intern.idb_type != ID_NMG )
 	{
 		Tcl_AppendResult(interp, argv[1], " is not an NMG solid!!!!\n", (char *)NULL );
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		return TCL_ERROR;
 	}
 
@@ -2275,17 +2275,17 @@ char **argv;
 	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
 	}
 
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern, &rt_uniresource );
 
 	sprintf( count_str, "%ld", count );
 	Tcl_AppendResult(interp, count_str, " edges collapsed\n", (char *)NULL );

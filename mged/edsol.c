@@ -2320,10 +2320,10 @@ init_sedit()
 	}
 
 	/* Read solid description into es_int */
-	if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL ) < 0 )  {
+	if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL, &rt_uniresource ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
-	  rt_db_free_internal( &es_int );
+	  rt_db_free_internal( &es_int, &rt_uniresource );
 	  return;				/* FAIL */
 	}
 	RT_CK_DB_INTERNAL( &es_int );
@@ -2344,7 +2344,7 @@ init_sedit()
 		{
 		  Tcl_AppendResult(interp,"Cannot calculate plane equations for ARB8\n",
 				   (char *)NULL);
-		  rt_db_free_internal( &es_int );
+		  rt_db_free_internal( &es_int, &rt_uniresource );
 		  return;
 		}
 	}
@@ -2459,7 +2459,7 @@ struct rt_db_internal	*is;		/* input solid */
 int			free;
 {
 	RT_CK_DB_INTERNAL( is );
-	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free, dbip ) < 0 )
+	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free, dbip, &rt_uniresource ) < 0 )
 		bu_bomb("transform_editing_solid");
 }
 
@@ -3362,7 +3362,7 @@ sedit()
 			{
 				/* import the new sketch */
 
-			        if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity ) != ID_SKETCH )
+			        if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource ) != ID_SKETCH )
 			        {
 			                bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
 			                        sketch_name );
@@ -6506,7 +6506,7 @@ CONST mat_t			mat;
 			vls_pipept( vp, seg_no, &intern, base2local );
 	}
 
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern, &rt_uniresource );
 }
 
 /*
@@ -7319,10 +7319,10 @@ init_oedit_guts()
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
-	if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL ) < 0 )  {
+	if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL, &rt_uniresource ) < 0 )  {
 		Tcl_AppendResult(interp, "init_oedit(", illump->s_path[illump->s_last]->d_namep,
 				 "):  solid import failure\n", (char *)NULL);
-		rt_db_free_internal( &es_int );
+		rt_db_free_internal( &es_int, &rt_uniresource );
 		button(BE_REJECT);
 		return;				/* FAIL */
 	}
@@ -7487,7 +7487,7 @@ oedit_accept()
 void
 oedit_reject()
 {
-	rt_db_free_internal(&es_int);
+	rt_db_free_internal(&es_int, &rt_uniresource);
 }
 
 /* 			F _ E Q N ( )
@@ -7615,11 +7615,11 @@ sedit_apply(accept_flag)
 	}
 
 	/* Scale change on export is 1.0 -- no change */
-	if( rt_db_put_internal( dp, dbip, &es_int ) < 0 )  {
+	if( rt_db_put_internal( dp, dbip, &es_int, &rt_uniresource ) < 0 )  {
 		Tcl_AppendResult(interp, "sedit_apply(", dp->d_namep,
 				 "):  solid export failure\n", (char *)NULL);
 		if (accept_flag) {
-			rt_db_free_internal(&es_int);
+			rt_db_free_internal(&es_int, &rt_uniresource);
 		}
 		return TCL_ERROR;				/* FAIL */
 	}
@@ -7630,7 +7630,7 @@ sedit_apply(accept_flag)
 		es_edflag = -1;
 		es_edclass = EDIT_CLASS_NULL;
 
-		rt_db_free_internal(&es_int);
+		rt_db_free_internal(&es_int, &rt_uniresource);
 	}
 
 	return TCL_OK;
@@ -7700,7 +7700,7 @@ sedit_reject()
 	es_edflag = -1;
 	es_edclass = EDIT_CLASS_NULL;
 
-	rt_db_free_internal( &es_int );
+	rt_db_free_internal( &es_int, &rt_uniresource );
 }
 
 int
@@ -9020,7 +9020,7 @@ char **argv;
 
   Tcl_SetObjResult(interp, pnto);
 
-  rt_db_free_internal( &ces_int );
+  rt_db_free_internal( &ces_int, &rt_uniresource );
 
   return status;
 }
@@ -9130,10 +9130,10 @@ char **argv;
   }
 
   /* free old copy */
-  rt_db_free_internal( &es_int );
+  rt_db_free_internal( &es_int, &rt_uniresource );
 
   /* read in a fresh copy */
-  if( rt_db_get_internal( &es_int, illump->s_path[(int)(illump->s_last)], dbip, NULL ) < 0 )  {
+  if( rt_db_get_internal( &es_int, illump->s_path[(int)(illump->s_last)], dbip, NULL, &rt_uniresource ) < 0 )  {
     Tcl_AppendResult(interp, "sedit_reset(", illump->s_path[(int)(illump->s_last)]->d_namep,
 		     "):  solid import failure\n", (char *)NULL);
     return TCL_ERROR;				/* FAIL */

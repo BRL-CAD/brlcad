@@ -231,7 +231,7 @@ char **argv;
 	  }
 	  ++arg;
 
-	  if( rt_db_get_internal( &intern, outdp, dbip, bn_mat_identity ) < 0 ) {
+	  if( rt_db_get_internal( &intern, outdp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
 	    (void)signal( SIGINT, SIG_IGN );
 	    TCL_READ_ERR_return;
 	  }
@@ -526,7 +526,7 @@ char **argv;
 	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_ALLOC_ERR_return;
 	}
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 ) {
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 ) {
 	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_WRITE_ERR_return;
 	}
@@ -714,7 +714,7 @@ plane_t	planes[6];
 		if( rt_functab[ip->idb_type].ft_tessellate( &r , m , ip , &ttol , &mged_tol ) )
 		{
 		  Tcl_AppendResult(interp, "Cannot tessellate arb7\n", (char *)NULL);
-		  rt_db_free_internal( ip );
+		  rt_db_free_internal( ip, &rt_uniresource );
 		  return( 1 );
 		}
 
@@ -794,7 +794,7 @@ plane_t	planes[6];
 		nmg_extrude_cleanup( s , 0 , &mged_tol );
 
 		/* free old ip pointer */
-		rt_db_free_internal( ip );
+		rt_db_free_internal( ip, &rt_uniresource );
 
 		/* convert the NMG to a BOT */
 		bot = (struct rt_bot_internal *)nmg_bot( s, &mged_tol );

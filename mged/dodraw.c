@@ -365,7 +365,7 @@ genptr_t client_data;
 			matp = (matp_t)NULL;
 		}
 	}
-	if( rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp) < 0 )
+	if( rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp, &rt_uniresource ) < 0 )
 		return 0;	/* proceed as usual */
 
 	switch( intern.idb_type )  {
@@ -423,7 +423,7 @@ genptr_t client_data;
 	default:
 		break;
 	}
-	rt_db_free_internal(&intern);
+	rt_db_free_internal(&intern, &rt_uniresource);
 	return 0;
 
 out:
@@ -431,7 +431,7 @@ out:
 	db_add_node_to_full_path( pathp, dp );
 	drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
 	DB_FULL_PATH_POP(pathp);
-	rt_db_free_internal(&intern);
+	rt_db_free_internal(&intern, &rt_uniresource);
 	mged_fastpath_count++;
 	return -1;	/* SKIP THIS REGION */
 }
@@ -478,27 +478,27 @@ genptr_t client_data;
 				" failed!!!\n", (char *)NULL );
 			bu_free((genptr_t)sofar, "path string");
 			if( curtree )
-				db_free_tree( curtree );
+				db_free_tree( curtree, &rt_uniresource );
 			return (union tree *)NULL;
 		}
-		failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );
+		failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol, &rt_uniresource );
 		BU_UNSETJUMP;
 		if( failed )  {
-			db_free_tree( curtree );
+			db_free_tree( curtree, &rt_uniresource );
 			return (union tree *)NULL;
 		}
 	}
 	else if( curtree->tr_op != OP_NMG_TESS )
 	{
 	  Tcl_AppendResult(interp, "Cannot use '-d' option when Boolean evaluation is required\n", (char *)NULL);
-	  db_free_tree( curtree );
+	  db_free_tree( curtree, &rt_uniresource );
 	  return (union tree *)NULL;
 	}
 	r = curtree->tr_d.td_r;
 	NMG_CK_REGION(r);
 
 	if( mged_do_not_draw_nmg_solids_during_debugging && r )  {
-		db_free_tree( curtree );
+		db_free_tree( curtree, &rt_uniresource );
 		return (union tree *)NULL;
 	}
 
@@ -513,7 +513,7 @@ genptr_t client_data;
 				" failed!!!\n", (char *)NULL );
 			bu_free((genptr_t)sofar, "path string");
 			if( curtree )
-				db_free_tree( curtree );
+				db_free_tree( curtree, &rt_uniresource );
 			return (union tree *)NULL;
 		}
 		nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
@@ -549,7 +549,7 @@ genptr_t client_data;
 			nmg_vlblock_r(mged_draw_edge_uses_vbp, r, 1);
 		}
 		/* NMG region is no longer necessary, only vlist remains */
-		db_free_tree( curtree );
+		db_free_tree( curtree, &rt_uniresource );
 		return (union tree *)NULL;
 	}
 
@@ -1087,7 +1087,7 @@ pathHmat(
 		  return;		/* ERROR */
 		}
 
-		if( rt_db_get_internal( &intern, parentp, dbip, (fastf_t *)NULL ) < 0 )
+		if( rt_db_get_internal( &intern, parentp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 			READ_ERR_return;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		if( comb->tree )
@@ -1097,7 +1097,7 @@ pathHmat(
 
 			db_tree_funcleaf( dbip, comb, comb->tree, Do_getmat,
 				(genptr_t)xmat, (genptr_t)kidp->d_namep, (genptr_t)&found );
-			rt_db_free_internal( &intern );
+			rt_db_free_internal( &intern, &rt_uniresource );
 
 			if( found )
 			{
@@ -1144,17 +1144,17 @@ replot_original_solid( struct solid *sp )
 	}
 	pathHmat( sp, mat, sp->s_last-1 );
 
-	if( rt_db_get_internal( &intern, dp, dbip, mat ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, mat, &rt_uniresource ) < 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ":  solid import failure\n", (char *)NULL);
 	  return(-1);		/* ERROR */
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
 	if( replot_modified_solid( sp, &intern, bn_mat_identity ) < 0 )  {
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		return(-1);
 	}
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern, &rt_uniresource );
 	return(0);
 }
 
@@ -1204,7 +1204,7 @@ replot_modified_solid(
 			   ": re-plot failure\n", (char *)NULL);
 	  return(-1);
 	}
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern, &rt_uniresource );
 
 	/* Write new displaylist */
 	drawH_part2( sp->s_soldash, &vhead,
@@ -1529,14 +1529,14 @@ char	**argv;
 			BU_UNSETJUMP;
 			Tcl_AppendResult(interp, "WARNING: facetization failed!!!\n", (char *)NULL );
 			if( mged_facetize_tree )
-				db_free_tree( mged_facetize_tree );
+				db_free_tree( mged_facetize_tree, &rt_uniresource );
 			mged_facetize_tree = (union tree *)NULL;
 			nmg_km( mged_nmg_model );
 			mged_nmg_model = (struct model *)NULL;
 			return TCL_ERROR;
 		}
 
-		failed = nmg_boolean( mged_facetize_tree, mged_nmg_model, &mged_tol );
+		failed = nmg_boolean( mged_facetize_tree, mged_nmg_model, &mged_tol, &rt_uniresource );
 		BU_UNSETJUMP;
 	}
 	else
@@ -1545,7 +1545,7 @@ char	**argv;
 	if( failed )  {
 	  Tcl_AppendResult(interp, "facetize:  no resulting region, aborting\n", (char *)NULL);
 	  if( mged_facetize_tree )
-		db_free_tree( mged_facetize_tree );
+		db_free_tree( mged_facetize_tree, &rt_uniresource );
 	  mged_facetize_tree = (union tree *)NULL;
 	  nmg_km( mged_nmg_model );
 	  mged_nmg_model = (struct model *)NULL;
@@ -1565,7 +1565,7 @@ char	**argv;
 			BU_UNSETJUMP;
 			Tcl_AppendResult(interp, "WARNING: triangulation failed!!!\n", (char *)NULL );
 			if( mged_facetize_tree )
-				db_free_tree( mged_facetize_tree );
+				db_free_tree( mged_facetize_tree, &rt_uniresource );
 			mged_facetize_tree = (union tree *)NULL;
 			nmg_km( mged_nmg_model );
 			mged_nmg_model = (struct model *)NULL;
@@ -1590,16 +1590,16 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
 	}
 	
 	mged_facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
 	/* Free boolean tree, and the regions in it */
-	db_free_tree( mged_facetize_tree );
+	db_free_tree( mged_facetize_tree, &rt_uniresource );
     	mged_facetize_tree = (union tree *)NULL;
 
 	return TCL_OK;					/* OK */
@@ -1768,7 +1768,7 @@ char	**argv;
 				    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls),
 						     "Aborting\n", (char *)NULL);
 				    bu_vls_free(&tmp_vls);
-				    db_free_tree( mged_facetize_tree );
+				    db_free_tree( mged_facetize_tree, &rt_uniresource );
 				    nmg_km( mged_nmg_model );
 				    return TCL_ERROR;
 				  }
@@ -1806,14 +1806,14 @@ char	**argv;
 
 			Tcl_AppendResult(interp, "WARNING: Boolean evaluation failed!!!\n", (char *)NULL );
 			if( tmp_tree )
-				db_free_tree( tmp_tree );
+				db_free_tree( tmp_tree, &rt_uniresource );
 			tmp_tree = (union tree *)NULL;
 			nmg_km( mged_nmg_model );
 			mged_nmg_model = (struct model *)NULL;
 			return TCL_ERROR;
 		}
 
-		failed = nmg_boolean( tmp_tree, mged_nmg_model, &mged_tol );
+		failed = nmg_boolean( tmp_tree, mged_nmg_model, &mged_tol, &rt_uniresource );
 		BU_UNSETJUMP;
 	}
 	else
@@ -1822,7 +1822,7 @@ char	**argv;
 	if( failed )  {
 	  Tcl_AppendResult(interp, "bev:  no resulting region, aborting\n", (char *)NULL);
 	  if( tmp_tree )
-		db_free_tree( tmp_tree );
+		db_free_tree( tmp_tree, &rt_uniresource );
 	  tmp_tree = (union tree *)NULL;
 	  nmg_km( mged_nmg_model );
 	  mged_nmg_model = (struct model *)NULL;
@@ -1843,7 +1843,7 @@ char	**argv;
 			BU_UNSETJUMP;
 			Tcl_AppendResult(interp, "WARNING: Triangulation failed!!!\n", (char *)NULL );
 			if( tmp_tree )
-				db_free_tree( tmp_tree );
+				db_free_tree( tmp_tree, &rt_uniresource );
 			tmp_tree = (union tree *)NULL;
 			nmg_km( mged_nmg_model );
 			mged_nmg_model = (struct model *)NULL;
@@ -1868,16 +1868,16 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 	{
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
 	}
 
 	tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
 	/* Free boolean tree, and the regions in it. */
-	db_free_tree( tmp_tree );
+	db_free_tree( tmp_tree, &rt_uniresource );
 
 
 	{

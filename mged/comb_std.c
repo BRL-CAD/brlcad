@@ -71,7 +71,7 @@ struct bu_list *hp;
 		if( tok->type == TOK_TREE )
 		{
 			if( tok->tp )
-				db_free_tree( tok->tp );
+				db_free_tree( tok->tp, &rt_uniresource );
 		}
 	}
 }
@@ -561,7 +561,7 @@ char	**argv;
 			return TCL_ERROR;
 		}
 
-		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 			TCL_READ_ERR_return;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB( comb );
@@ -571,9 +571,9 @@ char	**argv;
 		else
 			comb->region_flag = 0;
 
-		if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 		{
-			rt_comb_ifree( &intern );
+			rt_comb_ifree( &intern, &rt_uniresource );
 			TCL_WRITE_ERR_return;
 		}
 
@@ -633,7 +633,7 @@ char	**argv;
 				{
 					Free_tokens( &tok_hd.l );
 					if( dp != DIR_NULL )
-						rt_comb_ifree( &intern );
+						rt_comb_ifree( &intern, &rt_uniresource );
 					return TCL_ERROR;
 				}
 				ptr++;
@@ -648,7 +648,7 @@ char	**argv;
 				{
 					Free_tokens( &tok_hd.l );
 					if( dp != DIR_NULL )
-						rt_comb_ifree( &intern );
+						rt_comb_ifree( &intern, &rt_uniresource );
 					return TCL_ERROR;
 				}
 				last_tok = TOK_TREE;
@@ -661,7 +661,7 @@ char	**argv;
 				{
 					Free_tokens( &tok_hd.l );
 					if( dp != DIR_NULL )
-						rt_comb_ifree( &intern );
+						rt_comb_ifree( &intern, &rt_uniresource );
 					return TCL_ERROR;
 				}
 				ptr++;
@@ -678,7 +678,7 @@ char	**argv;
 				{
 					Free_tokens( &tok_hd.l );
 					if( dp != DIR_NULL )
-						rt_comb_ifree( &intern );
+						rt_comb_ifree( &intern, &rt_uniresource );
 					return TCL_ERROR;
 				}
 				last_tok = TOK_TREE;
@@ -725,7 +725,7 @@ char	**argv;
 		return TCL_ERROR;
 #if 0
 		if( dp != DIR_NULL )
-			rt_comb_ifree( &intern );
+			rt_comb_ifree( &intern, &rt_uniresource );
 #endif
 	}
 
@@ -748,8 +748,8 @@ char	**argv;
 				case TOK_TREE:
 					if( !strcmp( tok->tp->tr_l.tl_name, comb_name ) )
 					{
-						db_free_tree( tok->tp );
-						if( rt_db_get_internal( &intern1, dp, dbip, (fastf_t *)NULL ) < 0 )
+						db_free_tree( tok->tp, &rt_uniresource );
+						if( rt_db_get_internal( &intern1, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 						{
 							Tcl_AppendResult(interp, "Cannot get records for ", comb_name, "\n" );
 							TCL_READ_ERR_return;
@@ -759,7 +759,7 @@ char	**argv;
 
 						tok->tp = comb1->tree;
 						comb1->tree = (union tree *)NULL;
-						rt_comb_ifree( &intern1 );
+						rt_comb_ifree( &intern1, &rt_uniresource );
 					}
 				break;
 				default:
@@ -826,7 +826,7 @@ char	**argv;
 			return TCL_ERROR;
 		}
 
-		if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 		{
 			Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL );
 			return TCL_ERROR;
@@ -838,10 +838,10 @@ char	**argv;
 
 		dp->d_len = 0;
 		dp->d_un.file_offset = -1;
-		db_free_tree( comb->tree );
+		db_free_tree( comb->tree, &rt_uniresource );
 		comb->tree = final_tree;
 
-		if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 		{
 			Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL );
 			return TCL_ERROR;

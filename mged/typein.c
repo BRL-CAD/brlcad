@@ -544,7 +544,7 @@ char **argv;
 		switch( bot_in(argc, argv, &internal, &p_bot[0]) ) {
 		case CMD_BAD:
 		  Tcl_AppendResult(interp, "ERROR, BOT not made!\n", (char *)NULL);
-		  rt_db_free_internal( &internal );
+		  rt_db_free_internal( &internal, &rt_uniresource );
 		  return TCL_ERROR;
 		case CMD_MORE:
 		  return TCL_ERROR;
@@ -570,7 +570,7 @@ char **argv;
 		switch( pipe_in(argc, argv, &internal, &p_pipe[0]) ) {
 		case CMD_BAD:
 		  Tcl_AppendResult(interp, "ERROR, pipe not made!\n", (char *)NULL);
-		  rt_db_free_internal( &internal );
+		  rt_db_free_internal( &internal, &rt_uniresource );
 		  return TCL_ERROR;
 		case CMD_MORE:
 		  return TCL_ERROR;
@@ -580,7 +580,7 @@ char **argv;
 		switch( ars_in(argc, argv, &internal, &p_ars[0]) ) {
 		case CMD_BAD:
 		  Tcl_AppendResult(interp, "ERROR, ars not made!\n", (char *)NULL);
-		  rt_db_free_internal( &internal );
+		  rt_db_free_internal( &internal, &rt_uniresource );
 		  return TCL_ERROR;
 		case CMD_MORE:
 		  return TCL_ERROR;
@@ -695,7 +695,7 @@ char **argv;
 
 	if (fn_in(argv, &internal, name) != 0)  {
 	  Tcl_AppendResult(interp, "ERROR, ", argv[2], " not made!\n", (char *)NULL);
-	  rt_db_free_internal( &internal );
+	  rt_db_free_internal( &internal, &rt_uniresource );
 	  return TCL_ERROR;
 	}
 
@@ -703,13 +703,13 @@ do_new_update:
 	/* The function may have already written via LIBWDB */
 	if( internal.idb_ptr != NULL )  {
 		if( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )  {
-			rt_db_free_internal( &internal );
+			rt_db_free_internal( &internal, &rt_uniresource );
 			Tcl_AppendResult(interp, "Cannot add '", name, "' to directory\n", (char *)NULL );
 			return TCL_ERROR;
 		}
-		if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+		if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
 		{
-			rt_db_free_internal( &internal );
+			rt_db_free_internal( &internal, &rt_uniresource );
 			TCL_WRITE_ERR_return;
 		}
 	}

@@ -893,7 +893,7 @@ int	verbose;
 	if(dbip == DBI_NULL)
 	  return;
 
-	if( (id = rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL )) < 0 )  {
+	if( (id = rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource )) < 0 )  {
 		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 			") failure\n", (char *)NULL );
 		return;
@@ -904,7 +904,7 @@ int	verbose;
 	if( rt_functab[id].ft_describe( outstrp, &intern,
 	    verbose, base2local ) < 0 )
 	  Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern, &rt_uniresource );
 }
 
 /*
@@ -949,7 +949,7 @@ int recurse;
 
       dp = DB_FULL_PATH_CUR_DIR( &path );
 
-      if (rt_db_get_internal(&intern, dp, dbip, ts.ts_mat) < 0) {
+      if (rt_db_get_internal(&intern, dp, dbip, ts.ts_mat, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 			 ") failure\n", (char *)NULL );
 	continue;
@@ -961,7 +961,7 @@ int recurse;
 
       if (intern.idb_meth->ft_describe(&str, &intern, 99, base2local) < 0)
 	Tcl_AppendResult(interp, dp->d_namep, ": ft_describe error\n", (char *)NULL);
-    	rt_db_free_internal( &intern );
+    	rt_db_free_internal( &intern, &rt_uniresource );
     } else {
       if ((dp = db_lookup(dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
 	continue;

@@ -363,7 +363,7 @@ char	**argv;
 	  return TCL_OK;
 	}
 
-	db_update_nref( dbip );
+	db_update_nref( dbip, &rt_uniresource );
 	/*
 	 * Find number of possible entries and allocate memory
 	 */
@@ -682,7 +682,7 @@ char	**argv;
     (void)signal( SIGINT, sig3);	/* allow interupts */
   else{
     if( comb )
-  	rt_comb_ifree( &intern );
+  	rt_comb_ifree( &intern, &rt_uniresource );
     return TCL_OK;
   }
 
@@ -692,7 +692,7 @@ char	**argv;
       if( !(dp->d_flags & DIR_COMB) )
 	continue;
 
-    	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+    	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 	{
 		(void)signal( SIGINT, SIG_IGN );
 		TCL_READ_ERR_return;
@@ -701,7 +701,7 @@ char	**argv;
 	for( k=0; k<argc; k++ )
 	    	db_tree_funcleaf( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], (genptr_t)dp->d_namep, (genptr_t)sflag );
 
-    	rt_comb_ifree( &intern );
+    	rt_comb_ifree( &intern, &rt_uniresource );
     }
   }
 
@@ -809,14 +809,14 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 				TCL_READ_ERR_return;
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 			for( k=2; k<argc; k++ )
 				db_tree_funcleaf( dbip, comb, comb->tree, Do_prefix,
 					(genptr_t)argv[1], (genptr_t)argv[k], (genptr_t)NULL );
-			if( rt_db_put_internal( dp, dbip, &intern ) )
+			if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) )
 				TCL_WRITE_ERR_return;
 		}
 	}
@@ -1022,7 +1022,7 @@ printnode(dp, pathpos, prefix, cflag)
 	 *  Process all the arcs (eg, directory members).
 	 */
 
-	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0)
+	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 		READ_ERR_return;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -1032,7 +1032,7 @@ printnode(dp, pathpos, prefix, cflag)
 		struct rt_tree_array	*rt_tree_array;
 
 		if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-			db_non_union_push(comb->tree);
+			db_non_union_push( comb->tree, &rt_uniresource );
 			if (db_ck_v4gift_tree(comb->tree) < 0) {
 				Tcl_AppendResult(interp, "Cannot flatten tree for listing\n", (char *)NULL );
 				return;
@@ -1042,7 +1042,9 @@ printnode(dp, pathpos, prefix, cflag)
 		if (node_count > 0) {
 			rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
 									   sizeof( struct rt_tree_array ), "tree list" );
-			actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION, 0 ) - rt_tree_array;
+			actual_count = (struct rt_tree_array *)db_flatten_tree(
+				rt_tree_array, comb->tree, OP_UNION, 0,
+				&rt_uniresource ) - rt_tree_array;
 			if (actual_count > node_count)
 				bu_bomb("rt_comb_v4_export() array overflow!");
 			if (actual_count < node_count)
@@ -1086,7 +1088,7 @@ printnode(dp, pathpos, prefix, cflag)
 		bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
 	}
 
-	rt_comb_ifree( &intern );
+	rt_comb_ifree( &intern, &rt_uniresource );
 }
 
 
@@ -1170,9 +1172,9 @@ char	**argv;
 	}
 
 	/* Change name in the file */
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		TCL_READ_ERR_return;
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 ) {
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 ) {
 		TCL_WRITE_ERR_return;
 	}
 
@@ -1188,7 +1190,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 				continue;
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -1227,15 +1229,15 @@ char	**argv;
 
 			if( changed )
 			{
-				if( rt_db_put_internal( dp, dbip, &intern ) )
+				if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) )
 				{
 					bu_ptbl_free( &stack );
-					rt_comb_ifree( &intern );
+					rt_comb_ifree( &intern, &rt_uniresource );
 					TCL_WRITE_ERR_return;
 				}
 			}
 			else
-				rt_comb_ifree( &intern );
+				rt_comb_ifree( &intern, &rt_uniresource );
 		}
 	}
 	bu_ptbl_free( &stack );
@@ -1290,7 +1292,7 @@ f_killall(
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 				Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 					") failure", (char *)NULL );
 				ret = TCL_ERROR;
@@ -1302,7 +1304,7 @@ f_killall(
 			for( k=1; k<argc; k++ )  {
 				int	code;
 
-				code = db_tree_del_dbleaf( &(comb->tree), argv[k] );
+				code = db_tree_del_dbleaf( &(comb->tree), argv[k], &rt_uniresource );
 				if( code == -1 )  continue;	/* not found */
 				if( code == -2 )  continue;	/* empty tree */
 				if( code < 0 )  {
@@ -1317,7 +1319,7 @@ f_killall(
 				}
 			}
 
-			if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+			if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 				Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
 				ret = TCL_ERROR;
 				continue;

@@ -220,8 +220,8 @@ char	*argv[];
 	    intern.idb_type = ID_BINUNIF;
 	    intern.idb_meth = &rt_functab[ID_BINUNIF];
 	    intern.idb_ptr = (genptr_t)bip;
-	    rt_db_put_internal5( dp, dbip, &intern );
-	    rt_db_free_internal( &intern );
+	    rt_db_put_internal5( dp, dbip, &intern, &rt_uniresource );
+	    rt_db_free_internal( &intern, &rt_uniresource );
 	    break;
 	default:
 	    bu_vls_printf( &vls,

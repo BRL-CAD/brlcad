@@ -2285,7 +2285,7 @@ struct hold_point *hp;
 			return 1;
 		}
 
-		if( rt_db_get_internal( &intern, hp->path.fp_names[hp->path.fp_len-1], dbip, NULL ) < 0 )
+		if( rt_db_get_internal( &intern, hp->path.fp_names[hp->path.fp_len-1], dbip, NULL, &rt_uniresource ) < 0 )
 			return 0;
 
 		RT_CK_DB_INTERNAL(&intern);
@@ -2293,7 +2293,7 @@ struct hold_point *hp;
 		gip = (struct rt_grip_internal *)intern.idb_ptr;
 		VMOVE(hp->point, gip->center);
 		hp->flag |= HOLD_PT_GOOD;
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 
 		db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2);
 		MAT4X3PNT(loc, mat, hp->point);
