@@ -115,7 +115,7 @@ install-nobak&: inst-dist
 #if defined(PRODUCTS)
 install-prod&: [[SUB X X.install-prod PRODUCTS]]
 
-install-prod-nobak&: [[SUB X X.install-prod PRODUCTS]]
+install-prod-nobak&: [[SUB X X.install-prod-nobak PRODUCTS]]
 #else
 install-prod&:
 
