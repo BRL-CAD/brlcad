@@ -278,40 +278,30 @@ Tcl_Interp *interp;
 int argc;
 char *argv[];
 {
-	struct bu_vls vls;
-	int bad = 0;
+  struct bu_vls vls;
 
-	if(argc < 1 || 2 < argc){
-	  struct bu_vls vls;
+  if(argc < 1 || 2 < argc){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help vars");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help vars");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
+    return TCL_ERROR;
+  }
 
-	bu_vls_init(&vls);
+  bu_vls_init(&vls);
+  if (argc == 1) {
+    start_catching_output(&vls);
+    bu_struct_print("mged variables", mged_vparse, (CONST char *)mged_variables);
+    stop_catching_output(&vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  } else if (argc == 2) {
+    bu_vls_strcpy(&vls, argv[1]);
+    bu_struct_parse(&vls, mged_vparse, (char *)mged_variables);
+  }
+  bu_vls_free(&vls);
 
-	if (argc == 1) {
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
-	  start_catching_output(&tmp_vls);
-	  bu_struct_print("mged variables", mged_vparse, (CONST char *)mged_variables);
-	  bu_log("%s", bu_vls_addr(&vls) );
-	  stop_catching_output(&tmp_vls);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	} else if (argc == 2) {
-		bu_vls_strcpy(&vls, argv[1]);
-		bu_struct_parse(&vls, mged_vparse, (char *)mged_variables);
-	}
-
-	bu_vls_free(&vls);
-
-	dmaflag = 1;
-	return bad ? TCL_ERROR : TCL_OK;
+  return TCL_OK;
 }
 
 void
