@@ -207,6 +207,7 @@ install-binaries: $(ITCL_LIB_FILE) itclsh
 	chmod 555 $(LIB_INSTALL_DIR)/$(ITCL_LIB_FILE)
 	@echo "Installing itclsh"
 	$(INSTALL_PROGRAM) itclsh $(BIN_INSTALL_DIR)/itclsh$(VERSION)
+	rm -f $(BIN_INSTALL_DIR)/itclsh
 	ln -s $(BIN_INSTALL_DIR)/itclsh$(VERSION) $(BIN_INSTALL_DIR)/itclsh
 	@echo "Installing itclConfig.sh"
 	@$(INSTALL_DATA) itclConfig.sh $(LIB_INSTALL_DIR)/itclConfig.sh
