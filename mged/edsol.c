@@ -183,6 +183,7 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_PIPE_ADD_SEG	68
 #define MENU_PIPE_INS_SEG	69
 #define MENU_PIPE_DEL_SEG	70
+#define	MENU_PIPE_MOV_SEG	71
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -490,6 +491,7 @@ struct menu_item pipe_menu[] = {
 	{ "next segment", pipe_ed, MENU_PIPE_NEXT_SEG },
 	{ "previous segment", pipe_ed, MENU_PIPE_PREV_SEG },
 	{ "split segment", pipe_ed, MENU_PIPE_SPLIT },
+	{ "move segment", pipe_ed, MENU_PIPE_MOV_SEG },
 	{ "delete segment", pipe_ed, MENU_PIPE_DEL_SEG },
 	{ "append segmemt", pipe_ed, MENU_PIPE_ADD_SEG },
 	{ "prepend segment", pipe_ed, MENU_PIPE_INS_SEG },
@@ -690,6 +692,16 @@ int arg;
 			}
 			es_menu = arg;
 			es_edflag = ECMD_PIPE_SPLIT;
+		break;
+		case MENU_PIPE_MOV_SEG:
+			if( !es_pipeseg )
+			{
+				rt_log( "No Pipe Segment selected\n" );
+				es_edflag = IDLE;
+				return;
+			}
+			es_menu = arg;
+			es_edflag = ECMD_PIPE_SEG_MOVE;
 		break;
 		case MENU_PSEG_OD:
 		case MENU_PSEG_ID:
@@ -2855,7 +2867,7 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				rt_log( "x y z coordinates required for segment selection\n" );
+				rt_log( "x y z coordinates required for segment split\n" );
 				break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -2873,6 +2885,35 @@ sedit()
 			}
 
 			split_pipeseg( &pipe->pipe_segs_head, es_pipeseg, new_pt );
+		}
+		break;
+	case ECMD_PIPE_SEG_MOVE:
+		{
+			struct rt_pipe_internal *pipe=
+				(struct rt_pipe_internal *)es_int.idb_ptr;
+			point_t new_pt;
+
+			RT_PIPE_CK_MAGIC( pipe );
+
+			if( es_mvalid )
+				VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 )
+				VMOVE( new_pt , es_para )
+			else if( inpara && inpara != 3 )
+			{
+				rt_log( "x y z coordinates required for segment movement\n" );
+				break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			if( !es_pipeseg )
+			{
+				rt_log( "No pipe segment selected\n" );
+				break;
+			}
+
+			move_pipeseg( pipe, es_pipeseg, new_pt );
 		}
 		break;
 	case ECMD_PIPE_SEG_ADD:
@@ -3142,6 +3183,7 @@ CONST vect_t	mousevec;
 	case ECMD_NMG_ESPLIT:
 	case ECMD_PIPE_PICK:
 	case ECMD_PIPE_SPLIT:
+	case ECMD_PIPE_SEG_MOVE:
 	case ECMD_PIPE_SEG_ADD:
 	case ECMD_PIPE_SEG_INS:
 		MAT4X3PNT( temp, view2model, mousevec );
@@ -4291,6 +4333,7 @@ char	**argv;
 		case ECMD_NMG_LEXTRU:
 		case ECMD_PIPE_PICK:
 		case ECMD_PIPE_SPLIT:
+		case ECMD_PIPE_SEG_MOVE:
 		case ECMD_PIPE_SEG_ADD:
 		case ECMD_PIPE_SEG_INS:
 			/* must convert to base units */
