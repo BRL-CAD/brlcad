@@ -390,7 +390,7 @@ union tree		*curtree;
 	char			*cp;
 	int			left;
 	int			length;
-	struct directory	*regdp;
+	struct directory	*regdp = DIR_NULL;
 	int			i;
 	int			first;
 
