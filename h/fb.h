@@ -83,7 +83,7 @@ typedef struct  {
 	Pixel	*if_pendp;	/* End of page buffer.			*/
 	int	if_pno;		/* Current "page" in memory.		*/
 	int	if_pref;	/* Page "referenced" flag.		*/
-	long	if_pcurpos;	/* Current pixel number in framebuffer. */
+	long	if_pixcur;	/* Current pixel number in framebuffer. */
 	long	if_pbytes;	/* Sizeof page buffer (bytes).		*/
 	long	if_ppixels;	/* Sizeof page buffer (pixels).		*/
 } FBIO;
