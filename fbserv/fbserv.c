@@ -450,7 +450,6 @@ fb_log(s);
 	}
 #endif
 	if( fbp == FBIO_NULL )  {
-fail:
 		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], -1 );	/* ret */
 		(void)pkg_plong( &rbuf[1*NET_LONG_LEN], 0 );
 		(void)pkg_plong( &rbuf[2*NET_LONG_LEN], 0 );
