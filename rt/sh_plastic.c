@@ -80,16 +80,16 @@ HIDDEN void	phong_print();
 HIDDEN void	phong_free();
 
 struct mfuncs phg_mfuncs[] = {
-	{"default",	0,		0,		MFI_NORMAL,	0,
+	{"default",	MF_MAGIC,	0,		MFI_NORMAL,	0,
 	phong_setup,	phong_render,	phong_print,	phong_free },
 
-	{"plastic",	0,		0,		MFI_NORMAL,	0,
+	{"plastic",	MF_MAGIC,	0,		MFI_NORMAL,	0,
 	phong_setup,	phong_render,	phong_print,	phong_free },
 
-	{"mirror",	0,		0,		MFI_NORMAL,	0,
+	{"mirror",	MF_MAGIC,	0,		MFI_NORMAL,	0,
 	mirror_setup,	phong_render,	phong_print,	phong_free },
 
-	{"glass",	0,		0,		MFI_NORMAL,	0,
+	{"glass",	MF_MAGIC,	0,		MFI_NORMAL,	0,
 	glass_setup,	phong_render,	phong_print,	phong_free },
 
 	{(char *)0,	0,		0,		0,	0,
