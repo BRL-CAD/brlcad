@@ -110,7 +110,7 @@ set -S2 "/bin/sh"
  *	MGED_CONFIG		(default=undefined)		*
  *	MGED_OBJS		(default=undefined)		*
  *	MGED_LIBES		(default=undefined)		*
- *	LIBRT_LIBES						*
+ *	LIBBU_LIBES						*
  *	LGT_CONFIG						*
  *	RFBD_CONFIG						*
  *	CC							*
@@ -128,13 +128,13 @@ set -S2 "/bin/sh"
  *  libraries, they must also link with some related libraries.	*
  *  This relationship is listed in this table:			*
  *								*
- *	LIBRT		LIBRT_LIBES	(formerly RT_LIBES)	*
  *	LIBFB		LIBFB_LIBES				*
+ *	LIBBU		LIBBU_LIBES				*
  *								*
  *  Also note that the symbols 'LIBRT' et.al. are not file	*
  *  _names_, but options to the loader used to include that	*
  *  library.  Thus, they should not occur in dependency		*
- *  lists.							*
+ *  lists.  Add the suffix _DEP for that, e.g. LIBRT_DEP	*
  *								*
  ****************************************************************/
 
@@ -181,7 +181,7 @@ set -S2 "/bin/sh"
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=4
 #	define	IRIX	4
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
-#	define	LIBRT_LIBES	-lmpc
+#	define	LIBBU_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
 #if 1
 #	define	XINCDIR	/usr/X11/include
@@ -574,7 +574,7 @@ set -S2 "/bin/sh"
 #	define	LIBPKG_LIBES	-lnsl -lsocket
 
 #	define	LIBRT_TIMER	timerunix
-#	define	LIBRT_LIBES	-lthread
+#	define	LIBBU_LIBES	-lthread
 
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
@@ -635,7 +635,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	RANLIB	true
 #	define	LIBRT_TIMER	timerunix
-#	define	LIBRT_LIBES	-lu
+#	define	LIBBU_LIBES	-lu
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
 
@@ -675,7 +675,7 @@ set -S2 "/bin/sh"
 #	define	FC	/bin/cf77
 #	define	RANLIB	true
 #	define	LIBRT_TIMER	timerunix
-#	define	LIBRT_LIBES	-lmt
+#	define	LIBBU_LIBES	-lmt
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBPKG_LIBES	-lnet
 #	define	LIBPKG_CONFIG	-DBSD=43
@@ -997,7 +997,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LD_OPTS	CC_OPTS
 #	define	FC	/usr/alliant/fortran
-#	define	LIBRT_LIBES	-lcvec -lcommon
+#	define	LIBBU_LIBES	-lcvec -lcommon
 #	define	LIBRT_TIMER	timer42
 #endif
 
@@ -1025,7 +1025,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	FC	/usr/alliant/fortran
 #	define	LIBRT_TIMER	timer42
-#	define	LIBRT_LIBES	-lcommon
+#	define	LIBBU_LIBES	-lcommon
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
 #	define	LIBFB_OBJS	if_remote if_ab
 #	define	LIBFB_LIBES	LIBPKG
@@ -1306,7 +1306,7 @@ set -S2 "/bin/sh"
 #	else
 /*		Parallel version */
 #		define	LD_OPTS	-m -X -z -AE /usr/lib/taskcrt0.o
-#		define	LIBRT_LIBES	-lpp
+#		define	LIBBU_LIBES	-lpp
 #	endif
 #	define	LDFLAGS	LD_OPTS
 #	define	STANDARD_LIBES	-lm -lc
@@ -1385,10 +1385,10 @@ set -S2 "/bin/sh"
 
 /* (potentially null) loader flags needed with the corresponding libraries */
 
-#ifndef LIBRT_LIBES
-#	define	LIBRT_LIBES	/**/
+#ifndef LIBBU_LIBES
+#	define	LIBBU_LIBES	/**/
 #endif
-#define	RT_LIBES	LIBRT_LIBES	/* compat w/old Cakefiles */
+#define	RT_LIBES	LIBBU_LIBES	/* compat w/old Cakefiles */
 
 #ifndef LIBFB_LIBES
 #	define	LIBFB_LIBES	/**/
@@ -1515,6 +1515,9 @@ set -S2 "/bin/sh"
 #	define	LIBRT_DIR	../librt
 #	define	LIBRT		-L''LIBRT_DIR -lrt
 #	define	LIBRT_DEP	[[LIBVERS ../librt/librt.ARCH_SUF]]
+#	define	LIBBU_DIR	../libbu
+#	define	LIBBU		-L''LIBBU_DIR -lbu
+#	define	LIBBU_DEP	[[LIBVERS ../libbu/libbu.ARCH_SUF]]
 #	define	LIBPLOT_DIR	../libplot3
 #	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
 #	define	LIBPLOT_DEP	[[LIBVERS ../libplot3/libplot3.ARCH_SUF]]
@@ -1579,6 +1582,9 @@ set -S2 "/bin/sh"
 #	define	LIBRT_DIR	../.librt.MTYPE
 #	define	LIBRT		-L''LIBRT_DIR -lrt
 #	define	LIBRT_DEP	[[LIBVERS ../.librt.MTYPE/librt.ARCH_SUF]]
+#	define	LIBBU_DIR	../.libbu.MTYPE
+#	define	LIBBU		-L''LIBBU_DIR -lbu
+#	define	LIBBU_DEP	[[LIBVERS ../.libbu.MTYPE/libbu.ARCH_SUF]]
 #	define	LIBPLOT_DIR	../.libplot3.MTYPE
 #	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
 #	define	LIBPLOT_DEP	[[LIBVERS ../.libplot3.MTYPE/libplot3.ARCH_SUF]]
