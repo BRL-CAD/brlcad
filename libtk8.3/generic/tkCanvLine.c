@@ -84,12 +84,12 @@ static void		ComputeLineBbox _ANSI_ARGS_((Tk_Canvas canvas,
 			    LineItem *linePtr));
 static int		ConfigureLine _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[], int flags));
+			    Tcl_Obj *const argv[], int flags));
 static int		ConfigureArrows _ANSI_ARGS_((Tk_Canvas canvas,
 			    LineItem *linePtr));
 static int		CreateLine _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, struct Tk_Item *itemPtr,
-			    int argc, Tcl_Obj *CONST argv[]));
+			    int argc, Tcl_Obj *const argv[]));
 static void		DeleteLine _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, Display *display));
 static void		DisplayLine _ANSI_ARGS_((Tk_Canvas canvas,
@@ -100,7 +100,7 @@ static int		GetLineIndex _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *obj, int *indexPtr));
 static int		LineCoords _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr,
-			    int argc, Tcl_Obj *CONST argv[]));
+			    int argc, Tcl_Obj *const argv[]));
 static void		LineDeleteCoords _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, int first, int last));
 static void		LineInsert _ANSI_ARGS_((Tk_Canvas canvas,
@@ -113,13 +113,13 @@ static int		LineToPostscript _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int prepass));
 static int		ArrowParseProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, Tk_Window tkwin,
-			    CONST char *value, char *recordPtr, int offset));
+			    const char *value, char *recordPtr, int offset));
 static char *		ArrowPrintProc _ANSI_ARGS_((ClientData clientData,
 			    Tk_Window tkwin, char *recordPtr, int offset,
 			    Tcl_FreeProc **freeProcPtr));
 static int		ParseArrowShape _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, Tk_Window tkwin,
-			    CONST char *value, char *recordPtr, int offset));
+			    const char *value, char *recordPtr, int offset));
 static char *		PrintArrowShape _ANSI_ARGS_((ClientData clientData,
 			    Tk_Window tkwin, char *recordPtr, int offset,
 			    Tcl_FreeProc **freeProcPtr));
@@ -297,7 +297,7 @@ CreateLine(interp, canvas, itemPtr, argc, argv)
     Tk_Item *itemPtr;			/* Record to hold new item;  header
 					 * has been initialized by caller. */
     int argc;				/* Number of arguments in argv. */
-    Tcl_Obj *CONST argv[];		/* Arguments describing line. */
+    Tcl_Obj *const argv[];		/* Arguments describing line. */
 {
     LineItem *linePtr = (LineItem *) itemPtr;
     int i;
@@ -375,7 +375,7 @@ LineCoords(interp, canvas, itemPtr, argc, argv)
 					 * read or modified. */
     int argc;				/* Number of coordinates supplied in
 					 * argv. */
-    Tcl_Obj *CONST argv[];		/* Array of coordinates: x1, y1,
+    Tcl_Obj *const argv[];		/* Array of coordinates: x1, y1,
 					 * x2, y2, ... */
 {
     LineItem *linePtr = (LineItem *) itemPtr;
@@ -486,7 +486,7 @@ ConfigureLine(interp, canvas, itemPtr, argc, argv, flags)
     Tk_Canvas canvas;		/* Canvas containing itemPtr. */
     Tk_Item *itemPtr;		/* Line item to reconfigure. */
     int argc;			/* Number of elements in argv.  */
-    Tcl_Obj *CONST argv[];	/* Arguments describing things to configure. */
+    Tcl_Obj *const argv[];	/* Arguments describing things to configure. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     LineItem *linePtr = (LineItem *) itemPtr;
@@ -1864,7 +1864,7 @@ ParseArrowShape(clientData, interp, tkwin, value, recordPtr, offset)
     ClientData clientData;	/* Not used. */
     Tcl_Interp *interp;		/* Used for error reporting. */
     Tk_Window tkwin;		/* Not used. */
-    CONST char *value;		/* Textual specification of arrow shape. */
+    const char *value;		/* Textual specification of arrow shape. */
     char *recordPtr;		/* Pointer to item record in which to
 				 * store arrow information. */
     int offset;			/* Offset of shape information in widget
@@ -1968,7 +1968,7 @@ ArrowParseProc(clientData, interp, tkwin, value, widgRec, offset)
     ClientData clientData;		/* some flags.*/
     Tcl_Interp *interp;			/* Used for reporting errors. */
     Tk_Window tkwin;			/* Window containing canvas widget. */
-    CONST char *value;			/* Value of option. */
+    const char *value;			/* Value of option. */
     char *widgRec;			/* Pointer to record for item. */
     int offset;				/* Offset into item. */
 {

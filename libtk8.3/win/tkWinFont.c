@@ -192,15 +192,15 @@ static SubFont *	CanUseFallback(HDC hdc, WinFont *fontPtr,
 			    char *fallbackName,	int ch);
 static SubFont *	CanUseFallbackWithAliases(HDC hdc, WinFont *fontPtr, 
 			    char *faceName, int ch, Tcl_DString *nameTriedPtr);
-static int		FamilyExists(HDC hdc, CONST char *faceName);
-static char *		FamilyOrAliasExists(HDC hdc, CONST char *faceName);
+static int		FamilyExists(HDC hdc, const char *faceName);
+static char *		FamilyOrAliasExists(HDC hdc, const char *faceName);
 static SubFont *	FindSubFontForChar(WinFont *fontPtr, int ch);
 static void		FontMapInsert(SubFont *subFontPtr, int ch);
 static void		FontMapLoadPage(SubFont *subFontPtr, int row);
 static int		FontMapLookup(SubFont *subFontPtr, int ch);
 static void		FreeFontFamily(FontFamily *familyPtr);
-static HFONT		GetScreenFont(CONST TkFontAttributes *faPtr,
-			    CONST char *faceName, int pixelSize);
+static HFONT		GetScreenFont(const TkFontAttributes *faPtr,
+			    const char *faceName, int pixelSize);
 static void		InitFont(Tk_Window tkwin, HFONT hFont, 
 			    int overstrike, WinFont *tkFontPtr);
 static void		InitSubFont(HDC hdc, HFONT hFont, int base, 
@@ -209,10 +209,10 @@ static int		LoadFontRanges(HDC hdc, HFONT hFont,
 			    USHORT **startCount, USHORT **endCount,
 			    int *symbolPtr);
 static void		MultiFontTextOut(HDC hdc, WinFont *fontPtr, 
-			    CONST char *source, int numBytes, int x, int y);
+			    const char *source, int numBytes, int x, int y);
 static void		ReleaseFont(WinFont *fontPtr);
 static void		ReleaseSubFont(SubFont *subFontPtr);
-static int		SeenName(CONST char *name, Tcl_DString *dsPtr);
+static int		SeenName(const char *name, Tcl_DString *dsPtr);
 static void		SwapLong(PULONG p);
 static void		SwapShort(USHORT *p);
 static int CALLBACK	WinFontCanUseProc(ENUMLOGFONT *lfPtr, 
@@ -289,7 +289,7 @@ TkpFontPkgInit(
 TkFont *
 TkpGetNativeFont(
     Tk_Window tkwin,		/* For display where font will be used. */
-    CONST char *name)		/* Platform-specific font name. */
+    const char *name)		/* Platform-specific font name. */
 {
     int object;
     WinFont *fontPtr;
@@ -344,7 +344,7 @@ TkpGetFontFromAttributes(
 				 * will be released.  If NULL, a new TkFont
 				 * structure is allocated. */
     Tk_Window tkwin,		/* For display where font will be used. */
-    CONST TkFontAttributes *faPtr)
+    const TkFontAttributes *faPtr)
 				/* Set of attributes to match. */
 {
     int i, j;
@@ -581,7 +581,7 @@ TkpGetSubFonts(
 int
 Tk_MeasureChars(
     Tk_Font tkfont,		/* Font in which characters will be drawn. */
-    CONST char *source,		/* UTF-8 string to be displayed.  Need not be
+    const char *source,		/* UTF-8 string to be displayed.  Need not be
 				 * '\0' terminated. */
     int numBytes,		/* Maximum number of bytes to consider
 				 * from source string. */
@@ -630,7 +630,7 @@ Tk_MeasureChars(
 	FontFamily *familyPtr;
 	Tcl_DString runString;
 	SubFont *thisSubFontPtr;
-	CONST char *p, *end, *next;
+	const char *p, *end, *next;
 
     	/*
     	 * A three step process:
@@ -678,7 +678,7 @@ Tk_MeasureChars(
 	char buf[16];
 	FontFamily *familyPtr;
 	SubFont *thisSubFontPtr;
-	CONST char *term, *end, *p, *next;
+	const char *term, *end, *p, *next;
 	int newX, termX, sawNonSpace, dstWrote;
 
 	/*
@@ -800,7 +800,7 @@ Tk_DrawChars(
     GC gc,			/* Graphics context for drawing characters. */
     Tk_Font tkfont,		/* Font in which characters will be drawn;
 				 * must be the same as font used in GC. */
-    CONST char *source,		/* UTF-8 string to be displayed.  Need not be
+    const char *source,		/* UTF-8 string to be displayed.  Need not be
 				 * '\0' terminated.  All Tk meta-characters
 				 * (tabs, control characters, and newlines)
 				 * should be stripped out of the string that
@@ -926,7 +926,7 @@ MultiFontTextOut(
     HDC hdc,			/* HDC to draw into. */
     WinFont *fontPtr,		/* Contains set of fonts to use when drawing
 				 * following string. */
-    CONST char *source,		/* Potentially multilingual UTF-8 string. */
+    const char *source,		/* Potentially multilingual UTF-8 string. */
     int numBytes,		/* Length of string in bytes. */
     int x, int y)		/* Coordinates at which to place origin *
 				 * of string when drawing. */
@@ -936,7 +936,7 @@ MultiFontTextOut(
     HFONT oldFont;
     FontFamily *familyPtr;
     Tcl_DString runString;
-    CONST char *p, *end, *next;
+    const char *p, *end, *next;
     SubFont *lastSubFontPtr, *thisSubFontPtr;
 
     lastSubFontPtr = &fontPtr->subFontArray[0];
@@ -1797,11 +1797,11 @@ CanUseFallbackWithAliases(
 
 static int
 SeenName(
-    CONST char *name,		/* The name to check. */
+    const char *name,		/* The name to check. */
     Tcl_DString *dsPtr)		/* Contains names that have already been
 				 * seen. */
 {
-    CONST char *seen, *end;
+    const char *seen, *end;
 
     seen = Tcl_DStringValue(dsPtr);
     end = seen + Tcl_DStringLength(dsPtr);
@@ -1920,9 +1920,9 @@ CanUseFallback(
 
 static HFONT 
 GetScreenFont(
-    CONST TkFontAttributes *faPtr,
+    const TkFontAttributes *faPtr,
 				/* Desired font attributes for new HFONT. */
-    CONST char *faceName,	/* Overrides font family specified in font
+    const char *faceName,	/* Overrides font family specified in font
 				 * attributes. */
     int pixelSize)		/* Overrides size specified in font 
 				 * attributes. */
@@ -2000,7 +2000,7 @@ GetScreenFont(
 static int
 FamilyExists(
     HDC hdc,			/* HDC in which font family will be used. */
-    CONST char *faceName)	/* Font family to query. */
+    const char *faceName)	/* Font family to query. */
 {
     int result;
     Tcl_DString faceString;
@@ -2044,7 +2044,7 @@ FamilyExists(
 static char *
 FamilyOrAliasExists(
     HDC hdc, 
-    CONST char *faceName)
+    const char *faceName)
 {
     char **aliases;
     int i;

@@ -81,7 +81,7 @@ typedef struct ArcItem  {
 
 static int	StyleParseProc _ANSI_ARGS_((
 		    ClientData clientData, Tcl_Interp *interp,
-		    Tk_Window tkwin, CONST char *value,
+		    Tk_Window tkwin, const char *value,
 		    char *widgRec, int offset));
 static char *	StylePrintProc _ANSI_ARGS_((
 		    ClientData clientData, Tk_Window tkwin,
@@ -197,10 +197,10 @@ static void		ComputeArcBbox _ANSI_ARGS_((Tk_Canvas canvas,
 			    ArcItem *arcPtr));
 static int		ConfigureArc _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[], int flags));
+			    Tcl_Obj *const argv[], int flags));
 static int		CreateArc _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, struct Tk_Item *itemPtr,
-			    int argc, Tcl_Obj *CONST argv[]));
+			    int argc, Tcl_Obj *const argv[]));
 static void		DeleteArc _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, Display *display));
 static void		DisplayArc _ANSI_ARGS_((Tk_Canvas canvas,
@@ -208,7 +208,7 @@ static void		DisplayArc _ANSI_ARGS_((Tk_Canvas canvas,
 			    int x, int y, int width, int height));
 static int		ArcCoords _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[]));
+			    Tcl_Obj *const argv[]));
 static int		ArcToArea _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, double *rectPtr));
 static double		ArcToPoint _ANSI_ARGS_((Tk_Canvas canvas,
@@ -292,7 +292,7 @@ CreateArc(interp, canvas, itemPtr, argc, argv)
     Tk_Item *itemPtr;			/* Record to hold new item;  header
 					 * has been initialized by caller. */
     int argc;				/* Number of arguments in argv. */
-    Tcl_Obj *CONST argv[];		/* Arguments describing arc. */
+    Tcl_Obj *const argv[];		/* Arguments describing arc. */
 {
     ArcItem *arcPtr = (ArcItem *) itemPtr;
     int i;
@@ -379,7 +379,7 @@ ArcCoords(interp, canvas, itemPtr, argc, argv)
 					 * read or modified. */
     int argc;				/* Number of coordinates supplied in
 					 * argv. */
-    Tcl_Obj *CONST argv[];		/* Array of coordinates: x1, y1,
+    Tcl_Obj *const argv[];		/* Array of coordinates: x1, y1,
 					 * x2, y2, ... */
 {
     ArcItem *arcPtr = (ArcItem *) itemPtr;
@@ -454,7 +454,7 @@ ConfigureArc(interp, canvas, itemPtr, argc, argv, flags)
     Tk_Canvas canvas;		/* Canvas containing itemPtr. */
     Tk_Item *itemPtr;		/* Arc item to reconfigure. */
     int argc;			/* Number of elements in argv.  */
-    Tcl_Obj *CONST argv[];	/* Arguments describing things to configure. */
+    Tcl_Obj *const argv[];	/* Arguments describing things to configure. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     ArcItem *arcPtr = (ArcItem *) itemPtr;
@@ -2066,7 +2066,7 @@ StyleParseProc(clientData, interp, tkwin, value, widgRec, offset)
     ClientData clientData;		/* some flags.*/
     Tcl_Interp *interp;			/* Used for reporting errors. */
     Tk_Window tkwin;			/* Window containing canvas widget. */
-    CONST char *value;			/* Value of option. */
+    const char *value;			/* Value of option. */
     char *widgRec;			/* Pointer to record for item. */
     int offset;				/* Offset into item. */
 {

@@ -76,10 +76,10 @@ static void		ComputeWindowBbox _ANSI_ARGS_((Tk_Canvas canvas,
 			    WindowItem *winItemPtr));
 static int		ConfigureWinItem _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[], int flags));
+			    Tcl_Obj *const argv[], int flags));
 static int		CreateWinItem _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, struct Tk_Item *itemPtr,
-			    int argc, Tcl_Obj *CONST argv[]));
+			    int argc, Tcl_Obj *const argv[]));
 static void		DeleteWinItem _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, Display *display));
 static void		DisplayWinItem _ANSI_ARGS_((Tk_Canvas canvas,
@@ -92,7 +92,7 @@ static void		TranslateWinItem _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, double deltaX, double deltaY));
 static int		WinItemCoords _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[]));
+			    Tcl_Obj *const argv[]));
 static void		WinItemLostSlaveProc _ANSI_ARGS_((
 			    ClientData clientData, Tk_Window tkwin));
 static void		WinItemRequestProc _ANSI_ARGS_((ClientData clientData,
@@ -181,7 +181,7 @@ CreateWinItem(interp, canvas, itemPtr, argc, argv)
     Tk_Item *itemPtr;			/* Record to hold new item;  header
 					 * has been initialized by caller. */
     int argc;				/* Number of arguments in argv. */
-    Tcl_Obj *CONST argv[];		/* Arguments describing window. */
+    Tcl_Obj *const argv[];		/* Arguments describing window. */
 {
     WindowItem *winItemPtr = (WindowItem *) itemPtr;
     int i;
@@ -258,7 +258,7 @@ WinItemCoords(interp, canvas, itemPtr, argc, argv)
 					 * read or modified. */
     int argc;				/* Number of coordinates supplied in
 					 * argv. */
-    Tcl_Obj *CONST argv[];		/* Array of coordinates: x1, y1,
+    Tcl_Obj *const argv[];		/* Array of coordinates: x1, y1,
 					 * x2, y2, ... */
 {
     WindowItem *winItemPtr = (WindowItem *) itemPtr;
@@ -323,7 +323,7 @@ ConfigureWinItem(interp, canvas, itemPtr, argc, argv, flags)
     Tk_Canvas canvas;		/* Canvas containing itemPtr. */
     Tk_Item *itemPtr;		/* Window item to reconfigure. */
     int argc;			/* Number of elements in argv.  */
-    Tcl_Obj *CONST argv[];	/* Arguments describing things to configure. */
+    Tcl_Obj *const argv[];	/* Arguments describing things to configure. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     WindowItem *winItemPtr = (WindowItem *) itemPtr;

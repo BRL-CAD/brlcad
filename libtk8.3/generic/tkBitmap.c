@@ -113,7 +113,7 @@ static void		DupBitmapObjProc _ANSI_ARGS_((Tcl_Obj *srcObjPtr,
 static void		FreeBitmap _ANSI_ARGS_((TkBitmap *bitmapPtr));
 static void		FreeBitmapObjProc _ANSI_ARGS_((Tcl_Obj *objPtr));
 static TkBitmap *	GetBitmap _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tk_Window tkwin, CONST char *name));
+			    Tk_Window tkwin, const char *name));
 static TkBitmap *	GetBitmapFromObj _ANSI_ARGS_((Tk_Window tkwin,
 			    Tcl_Obj *objPtr));
 static void		InitBitmapObj _ANSI_ARGS_((Tcl_Obj *objPtr));
@@ -256,7 +256,7 @@ Tk_GetBitmap(interp, tkwin, string)
     Tcl_Interp *interp;		/* Interpreter to use for error reporting,
 				 * this may be NULL. */
     Tk_Window tkwin;		/* Window in which bitmap will be used. */
-    CONST char *string;		/* Description of bitmap.  See manual entry
+    const char *string;		/* Description of bitmap.  See manual entry
 				 * for details on legal syntax. */
 {
     TkBitmap *bitmapPtr = GetBitmap(interp, tkwin, string);
@@ -298,7 +298,7 @@ GetBitmap(interp, tkwin, string)
     Tcl_Interp *interp;		/* Interpreter to use for error reporting,
 				 * this may be NULL. */
     Tk_Window tkwin;		/* Window in which bitmap will be used. */
-    CONST char *string;		/* Description of bitmap.  See manual entry
+    const char *string;		/* Description of bitmap.  See manual entry
 				 * for details on legal syntax. */
 {
     Tcl_HashEntry *nameHashPtr, *predefHashPtr;
@@ -349,7 +349,7 @@ GetBitmap(interp, tkwin, string)
         }
 
 	/*
-	 * Note that we need to cast away the CONST from the string because
+	 * Note that we need to cast away the const from the string because
 	 * Tcl_TranslateFileName is non const, even though it doesn't modify
 	 * the string.
 	 */
@@ -461,7 +461,7 @@ GetBitmap(interp, tkwin, string)
 int
 Tk_DefineBitmap(interp, name, source, width, height)
     Tcl_Interp *interp;		/* Interpreter to use for error reporting. */
-    CONST char *name;		/* Name to use for bitmap.  Must not already
+    const char *name;		/* Name to use for bitmap.  Must not already
 				 * be defined as a bitmap. */
     char *source;		/* Address of bits for bitmap. */
     int width;			/* Width of bitmap. */
@@ -1083,7 +1083,7 @@ TkReadBitmapFile(display, d, filename, width_return, height_return,
 	bitmap_return, x_hot_return, y_hot_return) 
     Display* display;
     Drawable d;
-    CONST char* filename;
+    const char* filename;
     unsigned int* width_return;
     unsigned int* height_return;
     Pixmap* bitmap_return;

@@ -261,7 +261,7 @@ WIDGOBJS = tkButton.o tkEntry.o tkFrame.o tkListbox.o \
 
 CANVOBJS = tkCanvas.o tkCanvArc.o tkCanvBmap.o tkCanvImg.o \
 	tkCanvLine.o tkCanvPoly.o tkCanvPs.o tkCanvText.o \
-	tkCanvUtil.o tkCanvWind.o tkRectOval.o tkTrig.o
+	tkCanvUtil.o tkCanvWind.o tkRectOval.o tkTrig.o tkCanvBezier.o
 
 IMAGEOBJS = tkImage.o tkImgBmap.o tkImgGIF.o tkImgPPM.o tkImgPhoto.o
 
@@ -312,7 +312,7 @@ SRCS = \
 	$(GENERIC_DIR)/tkCanvBmap.c $(GENERIC_DIR)/tkCanvImg.c \
 	$(GENERIC_DIR)/tkCanvLine.c $(GENERIC_DIR)/tkCanvPoly.c \
 	$(GENERIC_DIR)/tkCanvPs.c $(GENERIC_DIR)/tkCanvText.c \
-	$(GENERIC_DIR)/tkCanvUtil.c \
+	$(GENERIC_DIR)/tkCanvUtil.c $(GENERIC_DIR)/tkCanvBezier.c\
 	$(GENERIC_DIR)/tkCanvWind.c $(GENERIC_DIR)/tkRectOval.c \
 	$(GENERIC_DIR)/tkTrig.c $(GENERIC_DIR)/tkImage.c \
 	$(GENERIC_DIR)/tkImgBmap.c $(GENERIC_DIR)/tkImgGIF.c \
@@ -750,6 +750,9 @@ tkCanvImg.o: $(GENERIC_DIR)/tkCanvImg.c
 
 tkCanvLine.o: $(GENERIC_DIR)/tkCanvLine.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvLine.c
+
+tkCanvBezier.o: $(GENERIC_DIR)/tkCanvBezier.c
+	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvBezier.c
 
 tkCanvPoly.o: $(GENERIC_DIR)/tkCanvPoly.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvPoly.c

@@ -146,7 +146,7 @@ EXTERN void		Tk_ConfigureWindow _ANSI_ARGS_((Tk_Window tkwin,
 				XWindowChanges * valuePtr));
 /* 31 */
 EXTERN Tk_TextLayout	Tk_ComputeTextLayout _ANSI_ARGS_((Tk_Font font, 
-				CONST char * str, int numChars, 
+				const char * str, int numChars, 
 				int wrapLength, Tk_Justify justify, 
 				int flags, int * widthPtr, int * heightPtr));
 /* 32 */
@@ -195,7 +195,7 @@ EXTERN Tk_Window	Tk_CreateWindowFromPath _ANSI_ARGS_((
 				char * pathName, char * screenName));
 /* 44 */
 EXTERN int		Tk_DefineBitmap _ANSI_ARGS_((Tcl_Interp * interp, 
-				CONST char * name, char * source, int width, 
+				const char * name, char * source, int width, 
 				int height));
 /* 45 */
 EXTERN void		Tk_DefineCursor _ANSI_ARGS_((Tk_Window window, 
@@ -247,7 +247,7 @@ EXTERN void		Tk_Draw3DRectangle _ANSI_ARGS_((Tk_Window tkwin,
 /* 59 */
 EXTERN void		Tk_DrawChars _ANSI_ARGS_((Display * display, 
 				Drawable drawable, GC gc, Tk_Font tkfont, 
-				CONST char * source, int numBytes, int x, 
+				const char * source, int numBytes, int x, 
 				int y));
 /* 60 */
 EXTERN void		Tk_DrawFocusHighlight _ANSI_ARGS_((Tk_Window tkwin, 
@@ -328,7 +328,7 @@ EXTERN char *		Tk_GetBinding _ANSI_ARGS_((Tcl_Interp * interp,
 				ClientData object, char * eventStr));
 /* 85 */
 EXTERN Pixmap		Tk_GetBitmap _ANSI_ARGS_((Tcl_Interp * interp, 
-				Tk_Window tkwin, CONST char * str));
+				Tk_Window tkwin, const char * str));
 /* 86 */
 EXTERN Pixmap		Tk_GetBitmapFromData _ANSI_ARGS_((
 				Tcl_Interp * interp, Tk_Window tkwin, 
@@ -356,7 +356,7 @@ EXTERN Tk_Cursor	Tk_GetCursorFromData _ANSI_ARGS_((
 				Tk_Uid bg));
 /* 93 */
 EXTERN Tk_Font		Tk_GetFont _ANSI_ARGS_((Tcl_Interp * interp, 
-				Tk_Window tkwin, CONST char * str));
+				Tk_Window tkwin, const char * str));
 /* 94 */
 EXTERN Tk_Font		Tk_GetFontFromObj _ANSI_ARGS_((Tk_Window tkwin, 
 				Tcl_Obj * objPtr));
@@ -414,7 +414,7 @@ EXTERN int		Tk_GetSelection _ANSI_ARGS_((Tcl_Interp * interp,
 				Tk_Window tkwin, Atom selection, Atom target, 
 				Tk_GetSelProc * proc, ClientData clientData));
 /* 111 */
-EXTERN Tk_Uid		Tk_GetUid _ANSI_ARGS_((CONST char * str));
+EXTERN Tk_Uid		Tk_GetUid _ANSI_ARGS_((const char * str));
 /* 112 */
 EXTERN Visual *		Tk_GetVisual _ANSI_ARGS_((Tcl_Interp * interp, 
 				Tk_Window tkwin, char * str, int * depthPtr, 
@@ -459,7 +459,7 @@ EXTERN void		Tk_ManageGeometry _ANSI_ARGS_((Tk_Window tkwin,
 EXTERN void		Tk_MapWindow _ANSI_ARGS_((Tk_Window tkwin));
 /* 126 */
 EXTERN int		Tk_MeasureChars _ANSI_ARGS_((Tk_Font tkfont, 
-				CONST char * source, int numBytes, 
+				const char * source, int numBytes, 
 				int maxPixels, int flags, int * lengthPtr));
 /* 127 */
 EXTERN void		Tk_MoveResizeWindow _ANSI_ARGS_((Tk_Window tkwin, 
@@ -611,13 +611,13 @@ EXTERN void		Tk_TextLayoutToPostscript _ANSI_ARGS_((
 				Tcl_Interp * interp, Tk_TextLayout layout));
 /* 176 */
 EXTERN int		Tk_TextWidth _ANSI_ARGS_((Tk_Font font, 
-				CONST char * str, int numBytes));
+				const char * str, int numBytes));
 /* 177 */
 EXTERN void		Tk_UndefineCursor _ANSI_ARGS_((Tk_Window window));
 /* 178 */
 EXTERN void		Tk_UnderlineChars _ANSI_ARGS_((Display * display, 
 				Drawable drawable, GC gc, Tk_Font tkfont, 
-				CONST char * source, int x, int y, 
+				const char * source, int x, int y, 
 				int firstByte, int lastByte));
 /* 179 */
 EXTERN void		Tk_UnderlineTextLayout _ANSI_ARGS_((
@@ -658,7 +658,7 @@ EXTERN Tk_Font		Tk_AllocFontFromObj _ANSI_ARGS_((Tcl_Interp * interp,
 /* 190 */
 EXTERN Tk_OptionTable	Tk_CreateOptionTable _ANSI_ARGS_((
 				Tcl_Interp * interp, 
-				CONST Tk_OptionSpec * templatePtr));
+				const Tk_OptionSpec * templatePtr));
 /* 191 */
 EXTERN void		Tk_DeleteOptionTable _ANSI_ARGS_((
 				Tk_OptionTable optionTable));
@@ -723,7 +723,7 @@ EXTERN int		Tk_GetReliefFromObj _ANSI_ARGS_((Tcl_Interp * interp,
 				Tcl_Obj * objPtr, int * resultPtr));
 /* 210 */
 EXTERN int		Tk_GetScrollInfoObj _ANSI_ARGS_((Tcl_Interp * interp, 
-				int objc, Tcl_Obj *CONST objv[], 
+				int objc, Tcl_Obj *const objv[], 
 				double * dblPtr, int * intPtr));
 /* 211 */
 EXTERN int		Tk_InitOptions _ANSI_ARGS_((Tcl_Interp * interp, 
@@ -739,7 +739,7 @@ EXTERN void		Tk_RestoreSavedOptions _ANSI_ARGS_((
 /* 214 */
 EXTERN int		Tk_SetOptions _ANSI_ARGS_((Tcl_Interp * interp, 
 				char * recordPtr, Tk_OptionTable optionTable, 
-				int objc, Tcl_Obj *CONST objv[], 
+				int objc, Tcl_Obj *const objv[], 
 				Tk_Window tkwin, Tk_SavedOptions * savePtr, 
 				int * maskPtr));
 /* 215 */
@@ -756,7 +756,7 @@ EXTERN void		Tk_CreateSmoothMethod _ANSI_ARGS_((
 /* Slot 219 is reserved */
 /* 220 */
 EXTERN int		Tk_GetDash _ANSI_ARGS_((Tcl_Interp * interp, 
-				CONST char * value, Tk_Dash * dash));
+				const char * value, Tk_Dash * dash));
 /* 221 */
 EXTERN void		Tk_CreateOutline _ANSI_ARGS_((Tk_Outline * outline));
 /* 222 */
@@ -863,7 +863,7 @@ typedef struct TkStubs {
     int (*tk_ConfigureValue) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tk_ConfigSpec * specs, char * widgRec, char * argvName, int flags)); /* 28 */
     int (*tk_ConfigureWidget) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tk_ConfigSpec * specs, int argc, char ** argv, char * widgRec, int flags)); /* 29 */
     void (*tk_ConfigureWindow) _ANSI_ARGS_((Tk_Window tkwin, unsigned int valueMask, XWindowChanges * valuePtr)); /* 30 */
-    Tk_TextLayout (*tk_ComputeTextLayout) _ANSI_ARGS_((Tk_Font font, CONST char * str, int numChars, int wrapLength, Tk_Justify justify, int flags, int * widthPtr, int * heightPtr)); /* 31 */
+    Tk_TextLayout (*tk_ComputeTextLayout) _ANSI_ARGS_((Tk_Font font, const char * str, int numChars, int wrapLength, Tk_Justify justify, int flags, int * widthPtr, int * heightPtr)); /* 31 */
     Tk_Window (*tk_CoordsToWindow) _ANSI_ARGS_((int rootX, int rootY, Tk_Window tkwin)); /* 32 */
     unsigned long (*tk_CreateBinding) _ANSI_ARGS_((Tcl_Interp * interp, Tk_BindingTable bindingTable, ClientData object, char * eventStr, char * command, int append)); /* 33 */
     Tk_BindingTable (*tk_CreateBindingTable) _ANSI_ARGS_((Tcl_Interp * interp)); /* 34 */
@@ -876,7 +876,7 @@ typedef struct TkStubs {
     void (*tk_CreateSelHandler) _ANSI_ARGS_((Tk_Window tkwin, Atom selection, Atom target, Tk_SelectionProc * proc, ClientData clientData, Atom format)); /* 41 */
     Tk_Window (*tk_CreateWindow) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window parent, char * name, char * screenName)); /* 42 */
     Tk_Window (*tk_CreateWindowFromPath) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, char * pathName, char * screenName)); /* 43 */
-    int (*tk_DefineBitmap) _ANSI_ARGS_((Tcl_Interp * interp, CONST char * name, char * source, int width, int height)); /* 44 */
+    int (*tk_DefineBitmap) _ANSI_ARGS_((Tcl_Interp * interp, const char * name, char * source, int width, int height)); /* 44 */
     void (*tk_DefineCursor) _ANSI_ARGS_((Tk_Window window, Tk_Cursor cursor)); /* 45 */
     void (*tk_DeleteAllBindings) _ANSI_ARGS_((Tk_BindingTable bindingTable, ClientData object)); /* 46 */
     int (*tk_DeleteBinding) _ANSI_ARGS_((Tcl_Interp * interp, Tk_BindingTable bindingTable, ClientData object, char * eventStr)); /* 47 */
@@ -891,7 +891,7 @@ typedef struct TkStubs {
     int (*tk_DistanceToTextLayout) _ANSI_ARGS_((Tk_TextLayout layout, int x, int y)); /* 56 */
     void (*tk_Draw3DPolygon) _ANSI_ARGS_((Tk_Window tkwin, Drawable drawable, Tk_3DBorder border, XPoint * pointPtr, int numPoints, int borderWidth, int leftRelief)); /* 57 */
     void (*tk_Draw3DRectangle) _ANSI_ARGS_((Tk_Window tkwin, Drawable drawable, Tk_3DBorder border, int x, int y, int width, int height, int borderWidth, int relief)); /* 58 */
-    void (*tk_DrawChars) _ANSI_ARGS_((Display * display, Drawable drawable, GC gc, Tk_Font tkfont, CONST char * source, int numBytes, int x, int y)); /* 59 */
+    void (*tk_DrawChars) _ANSI_ARGS_((Display * display, Drawable drawable, GC gc, Tk_Font tkfont, const char * source, int numBytes, int x, int y)); /* 59 */
     void (*tk_DrawFocusHighlight) _ANSI_ARGS_((Tk_Window tkwin, GC gc, int width, Drawable drawable)); /* 60 */
     void (*tk_DrawTextLayout) _ANSI_ARGS_((Display * display, Drawable drawable, GC gc, Tk_TextLayout layout, int x, int y, int firstChar, int lastChar)); /* 61 */
     void (*tk_Fill3DPolygon) _ANSI_ARGS_((Tk_Window tkwin, Drawable drawable, Tk_3DBorder border, XPoint * pointPtr, int numPoints, int borderWidth, int leftRelief)); /* 62 */
@@ -917,7 +917,7 @@ typedef struct TkStubs {
     int (*tk_GetAnchor) _ANSI_ARGS_((Tcl_Interp * interp, char * str, Tk_Anchor * anchorPtr)); /* 82 */
     char * (*tk_GetAtomName) _ANSI_ARGS_((Tk_Window tkwin, Atom atom)); /* 83 */
     char * (*tk_GetBinding) _ANSI_ARGS_((Tcl_Interp * interp, Tk_BindingTable bindingTable, ClientData object, char * eventStr)); /* 84 */
-    Pixmap (*tk_GetBitmap) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, CONST char * str)); /* 85 */
+    Pixmap (*tk_GetBitmap) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, const char * str)); /* 85 */
     Pixmap (*tk_GetBitmapFromData) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, char * source, int width, int height)); /* 86 */
     int (*tk_GetCapStyle) _ANSI_ARGS_((Tcl_Interp * interp, char * str, int * capPtr)); /* 87 */
     XColor * (*tk_GetColor) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tk_Uid name)); /* 88 */
@@ -925,7 +925,7 @@ typedef struct TkStubs {
     Colormap (*tk_GetColormap) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, char * str)); /* 90 */
     Tk_Cursor (*tk_GetCursor) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tk_Uid str)); /* 91 */
     Tk_Cursor (*tk_GetCursorFromData) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, char * source, char * mask, int width, int height, int xHot, int yHot, Tk_Uid fg, Tk_Uid bg)); /* 92 */
-    Tk_Font (*tk_GetFont) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, CONST char * str)); /* 93 */
+    Tk_Font (*tk_GetFont) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, const char * str)); /* 93 */
     Tk_Font (*tk_GetFontFromObj) _ANSI_ARGS_((Tk_Window tkwin, Tcl_Obj * objPtr)); /* 94 */
     void (*tk_GetFontMetrics) _ANSI_ARGS_((Tk_Font font, Tk_FontMetrics * fmPtr)); /* 95 */
     GC (*tk_GetGC) _ANSI_ARGS_((Tk_Window tkwin, unsigned long valueMask, XGCValues * valuePtr)); /* 96 */
@@ -943,7 +943,7 @@ typedef struct TkStubs {
     int (*tk_GetScrollInfo) _ANSI_ARGS_((Tcl_Interp * interp, int argc, char ** argv, double * dblPtr, int * intPtr)); /* 108 */
     int (*tk_GetScreenMM) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, char * str, double * doublePtr)); /* 109 */
     int (*tk_GetSelection) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Atom selection, Atom target, Tk_GetSelProc * proc, ClientData clientData)); /* 110 */
-    Tk_Uid (*tk_GetUid) _ANSI_ARGS_((CONST char * str)); /* 111 */
+    Tk_Uid (*tk_GetUid) _ANSI_ARGS_((const char * str)); /* 111 */
     Visual * (*tk_GetVisual) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, char * str, int * depthPtr, Colormap * colormapPtr)); /* 112 */
     void (*tk_GetVRootGeometry) _ANSI_ARGS_((Tk_Window tkwin, int * xPtr, int * yPtr, int * widthPtr, int * heightPtr)); /* 113 */
     int (*tk_Grab) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, int grabGlobal)); /* 114 */
@@ -958,7 +958,7 @@ typedef struct TkStubs {
     void (*tk_MakeWindowExist) _ANSI_ARGS_((Tk_Window tkwin)); /* 123 */
     void (*tk_ManageGeometry) _ANSI_ARGS_((Tk_Window tkwin, Tk_GeomMgr * mgrPtr, ClientData clientData)); /* 124 */
     void (*tk_MapWindow) _ANSI_ARGS_((Tk_Window tkwin)); /* 125 */
-    int (*tk_MeasureChars) _ANSI_ARGS_((Tk_Font tkfont, CONST char * source, int numBytes, int maxPixels, int flags, int * lengthPtr)); /* 126 */
+    int (*tk_MeasureChars) _ANSI_ARGS_((Tk_Font tkfont, const char * source, int numBytes, int maxPixels, int flags, int * lengthPtr)); /* 126 */
     void (*tk_MoveResizeWindow) _ANSI_ARGS_((Tk_Window tkwin, int x, int y, int width, int height)); /* 127 */
     void (*tk_MoveWindow) _ANSI_ARGS_((Tk_Window tkwin, int x, int y)); /* 128 */
     void (*tk_MoveToplevelWindow) _ANSI_ARGS_((Tk_Window tkwin, int x, int y)); /* 129 */
@@ -1008,9 +1008,9 @@ typedef struct TkStubs {
     void (*tk_SizeOfImage) _ANSI_ARGS_((Tk_Image image, int * widthPtr, int * heightPtr)); /* 173 */
     int (*tk_StrictMotif) _ANSI_ARGS_((Tk_Window tkwin)); /* 174 */
     void (*tk_TextLayoutToPostscript) _ANSI_ARGS_((Tcl_Interp * interp, Tk_TextLayout layout)); /* 175 */
-    int (*tk_TextWidth) _ANSI_ARGS_((Tk_Font font, CONST char * str, int numBytes)); /* 176 */
+    int (*tk_TextWidth) _ANSI_ARGS_((Tk_Font font, const char * str, int numBytes)); /* 176 */
     void (*tk_UndefineCursor) _ANSI_ARGS_((Tk_Window window)); /* 177 */
-    void (*tk_UnderlineChars) _ANSI_ARGS_((Display * display, Drawable drawable, GC gc, Tk_Font tkfont, CONST char * source, int x, int y, int firstByte, int lastByte)); /* 178 */
+    void (*tk_UnderlineChars) _ANSI_ARGS_((Display * display, Drawable drawable, GC gc, Tk_Font tkfont, const char * source, int x, int y, int firstByte, int lastByte)); /* 178 */
     void (*tk_UnderlineTextLayout) _ANSI_ARGS_((Display * display, Drawable drawable, GC gc, Tk_TextLayout layout, int x, int y, int underline)); /* 179 */
     void (*tk_Ungrab) _ANSI_ARGS_((Tk_Window tkwin)); /* 180 */
     void (*tk_UnmaintainGeometry) _ANSI_ARGS_((Tk_Window slave, Tk_Window master)); /* 181 */
@@ -1022,7 +1022,7 @@ typedef struct TkStubs {
     XColor * (*tk_AllocColorFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tcl_Obj * objPtr)); /* 187 */
     Tk_Cursor (*tk_AllocCursorFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tcl_Obj * objPtr)); /* 188 */
     Tk_Font (*tk_AllocFontFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tcl_Obj * objPtr)); /* 189 */
-    Tk_OptionTable (*tk_CreateOptionTable) _ANSI_ARGS_((Tcl_Interp * interp, CONST Tk_OptionSpec * templatePtr)); /* 190 */
+    Tk_OptionTable (*tk_CreateOptionTable) _ANSI_ARGS_((Tcl_Interp * interp, const Tk_OptionSpec * templatePtr)); /* 190 */
     void (*tk_DeleteOptionTable) _ANSI_ARGS_((Tk_OptionTable optionTable)); /* 191 */
     void (*tk_Free3DBorderFromObj) _ANSI_ARGS_((Tk_Window tkwin, Tcl_Obj * objPtr)); /* 192 */
     void (*tk_FreeBitmapFromObj) _ANSI_ARGS_((Tk_Window tkwin, Tcl_Obj * objPtr)); /* 193 */
@@ -1042,17 +1042,17 @@ typedef struct TkStubs {
     int (*tk_GetMMFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tcl_Obj * objPtr, double * doublePtr)); /* 207 */
     int (*tk_GetPixelsFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tcl_Obj * objPtr, int * intPtr)); /* 208 */
     int (*tk_GetReliefFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Obj * objPtr, int * resultPtr)); /* 209 */
-    int (*tk_GetScrollInfoObj) _ANSI_ARGS_((Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[], double * dblPtr, int * intPtr)); /* 210 */
+    int (*tk_GetScrollInfoObj) _ANSI_ARGS_((Tcl_Interp * interp, int objc, Tcl_Obj *const objv[], double * dblPtr, int * intPtr)); /* 210 */
     int (*tk_InitOptions) _ANSI_ARGS_((Tcl_Interp * interp, char * recordPtr, Tk_OptionTable optionToken, Tk_Window tkwin)); /* 211 */
     void (*tk_MainEx) _ANSI_ARGS_((int argc, char ** argv, Tcl_AppInitProc * appInitProc, Tcl_Interp * interp)); /* 212 */
     void (*tk_RestoreSavedOptions) _ANSI_ARGS_((Tk_SavedOptions * savePtr)); /* 213 */
-    int (*tk_SetOptions) _ANSI_ARGS_((Tcl_Interp * interp, char * recordPtr, Tk_OptionTable optionTable, int objc, Tcl_Obj *CONST objv[], Tk_Window tkwin, Tk_SavedOptions * savePtr, int * maskPtr)); /* 214 */
+    int (*tk_SetOptions) _ANSI_ARGS_((Tcl_Interp * interp, char * recordPtr, Tk_OptionTable optionTable, int objc, Tcl_Obj *const objv[], Tk_Window tkwin, Tk_SavedOptions * savePtr, int * maskPtr)); /* 214 */
     void (*tk_InitConsoleChannels) _ANSI_ARGS_((Tcl_Interp * interp)); /* 215 */
     int (*tk_CreateConsoleWindow) _ANSI_ARGS_((Tcl_Interp * interp)); /* 216 */
     void (*tk_CreateSmoothMethod) _ANSI_ARGS_((Tcl_Interp * interp, Tk_SmoothMethod * method)); /* 217 */
     void *reserved218;
     void *reserved219;
-    int (*tk_GetDash) _ANSI_ARGS_((Tcl_Interp * interp, CONST char * value, Tk_Dash * dash)); /* 220 */
+    int (*tk_GetDash) _ANSI_ARGS_((Tcl_Interp * interp, const char * value, Tk_Dash * dash)); /* 220 */
     void (*tk_CreateOutline) _ANSI_ARGS_((Tk_Outline * outline)); /* 221 */
     void (*tk_DeleteOutline) _ANSI_ARGS_((Display * display, Tk_Outline * outline)); /* 222 */
     int (*tk_ConfigOutlineGC) _ANSI_ARGS_((XGCValues * gcValues, Tk_Canvas canvas, Tk_Item * item, Tk_Outline * outline)); /* 223 */

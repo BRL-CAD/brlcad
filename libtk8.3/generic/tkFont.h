@@ -195,9 +195,9 @@ typedef struct TkXLFDAttributes {
 #define TkInitFontAttributes(fa)   memset((fa), 0, sizeof(TkFontAttributes));
 #define TkInitXLFDAttributes(xa)   memset((xa), 0, sizeof(TkXLFDAttributes));
 
-EXTERN int		TkFontParseXLFD _ANSI_ARGS_((CONST char *string,
+EXTERN int		TkFontParseXLFD _ANSI_ARGS_((const char *string,
 			    TkFontAttributes *faPtr, TkXLFDAttributes *xaPtr));
-EXTERN char **		TkFontGetAliasList _ANSI_ARGS_((CONST char *faceName));
+EXTERN char **		TkFontGetAliasList _ANSI_ARGS_((const char *faceName));
 EXTERN char ***		TkFontGetFallbacks _ANSI_ARGS_((void));
 EXTERN int		TkFontGetPixels _ANSI_ARGS_((Tk_Window tkwin, 
 			    int size));
@@ -214,11 +214,11 @@ EXTERN void		TkpDeleteFont _ANSI_ARGS_((TkFont *tkFontPtr));
 EXTERN void		TkpFontPkgInit _ANSI_ARGS_((TkMainInfo *mainPtr));
 EXTERN TkFont *		TkpGetFontFromAttributes _ANSI_ARGS_((
 			    TkFont *tkFontPtr, Tk_Window tkwin,
-			    CONST TkFontAttributes *faPtr));
+			    const TkFontAttributes *faPtr));
 EXTERN void		TkpGetFontFamilies _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Window tkwin));
 EXTERN TkFont *		TkpGetNativeFont _ANSI_ARGS_((Tk_Window tkwin,
-			    CONST char *name));
+			    const char *name));
 
 # undef TCL_STORAGE_CLASS
 # define TCL_STORAGE_CLASS DLLIMPORT

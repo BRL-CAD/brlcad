@@ -106,12 +106,12 @@ EXTERN void		TkFillPolygon _ANSI_ARGS_((Tk_Canvas canvas,
 				GC outlineGC));
 /* 21 */
 EXTERN int		TkFindStateNum _ANSI_ARGS_((Tcl_Interp * interp, 
-				CONST char * option, 
-				CONST TkStateMap * mapPtr, 
-				CONST char * strKey));
+				const char * option, 
+				const TkStateMap * mapPtr, 
+				const char * strKey));
 /* 22 */
 EXTERN char *		TkFindStateString _ANSI_ARGS_((
-				CONST TkStateMap * mapPtr, int numKey));
+				const TkStateMap * mapPtr, int numKey));
 /* 23 */
 EXTERN void		TkFocusDeadWindow _ANSI_ARGS_((TkWindow * winPtr));
 /* 24 */
@@ -147,7 +147,7 @@ EXTERN char *		TkGetDefaultScreenName _ANSI_ARGS_((
 EXTERN TkDisplay *	TkGetDisplay _ANSI_ARGS_((Display * display));
 /* 35 */
 EXTERN int		TkGetDisplayOf _ANSI_ARGS_((Tcl_Interp * interp, 
-				int objc, Tcl_Obj *CONST objv[], 
+				int objc, Tcl_Obj *const objv[], 
 				Tk_Window * tkwinPtr));
 /* 36 */
 EXTERN TkWindow *	TkGetFocusWin _ANSI_ARGS_((TkWindow * winPtr));
@@ -271,7 +271,7 @@ EXTERN void		TkQueueEventForAllChildren _ANSI_ARGS_((
 				TkWindow * winPtr, XEvent * eventPtr));
 /* 78 */
 EXTERN int		TkReadBitmapFile _ANSI_ARGS_((Display* display, 
-				Drawable d, CONST char* filename, 
+				Drawable d, const char* filename, 
 				unsigned int* width_return, 
 				unsigned int* height_return, 
 				Pixmap* bitmap_return, int* x_hot_return, 
@@ -348,7 +348,7 @@ EXTERN Tcl_Obj *	TkDebugFont _ANSI_ARGS_((Tk_Window tkwin,
 /* 104 */
 EXTERN int		TkFindStateNumObj _ANSI_ARGS_((Tcl_Interp * interp, 
 				Tcl_Obj * optionPtr, 
-				CONST TkStateMap * mapPtr, Tcl_Obj * keyPtr));
+				const TkStateMap * mapPtr, Tcl_Obj * keyPtr));
 /* 105 */
 EXTERN Tcl_HashTable *	TkGetBitmapPredefTable _ANSI_ARGS_((void));
 /* 106 */
@@ -459,7 +459,7 @@ EXTERN unsigned long	TkpGetMS _ANSI_ARGS_((void));
 #ifdef MAC_TCL
 /* 124 */
 EXTERN Pixmap		TkpGetNativeAppBitmap _ANSI_ARGS_((Display * display, 
-				CONST char * name, int * width, int * height));
+				const char * name, int * width, int * height));
 #endif /* MAC_TCL */
 #ifdef MAC_TCL
 /* 125 */
@@ -540,8 +540,8 @@ typedef struct TkIntStubs {
     void (*tkDrawInsetFocusHighlight) _ANSI_ARGS_((Tk_Window tkwin, GC gc, int width, Drawable drawable, int padding)); /* 18 */
     void (*tkEventDeadWindow) _ANSI_ARGS_((TkWindow * winPtr)); /* 19 */
     void (*tkFillPolygon) _ANSI_ARGS_((Tk_Canvas canvas, double * coordPtr, int numPoints, Display * display, Drawable drawable, GC gc, GC outlineGC)); /* 20 */
-    int (*tkFindStateNum) _ANSI_ARGS_((Tcl_Interp * interp, CONST char * option, CONST TkStateMap * mapPtr, CONST char * strKey)); /* 21 */
-    char * (*tkFindStateString) _ANSI_ARGS_((CONST TkStateMap * mapPtr, int numKey)); /* 22 */
+    int (*tkFindStateNum) _ANSI_ARGS_((Tcl_Interp * interp, const char * option, const TkStateMap * mapPtr, const char * strKey)); /* 21 */
+    char * (*tkFindStateString) _ANSI_ARGS_((const TkStateMap * mapPtr, int numKey)); /* 22 */
     void (*tkFocusDeadWindow) _ANSI_ARGS_((TkWindow * winPtr)); /* 23 */
     int (*tkFocusFilterEvent) _ANSI_ARGS_((TkWindow * winPtr, XEvent * eventPtr)); /* 24 */
     TkWindow * (*tkFocusKeyEvent) _ANSI_ARGS_((TkWindow * winPtr, XEvent * eventPtr)); /* 25 */
@@ -554,7 +554,7 @@ typedef struct TkIntStubs {
     TkCursor * (*tkGetCursorByName) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tk_Uid string)); /* 32 */
     char * (*tkGetDefaultScreenName) _ANSI_ARGS_((Tcl_Interp * interp, char * screenName)); /* 33 */
     TkDisplay * (*tkGetDisplay) _ANSI_ARGS_((Display * display)); /* 34 */
-    int (*tkGetDisplayOf) _ANSI_ARGS_((Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[], Tk_Window * tkwinPtr)); /* 35 */
+    int (*tkGetDisplayOf) _ANSI_ARGS_((Tcl_Interp * interp, int objc, Tcl_Obj *const objv[], Tk_Window * tkwinPtr)); /* 35 */
     TkWindow * (*tkGetFocusWin) _ANSI_ARGS_((TkWindow * winPtr)); /* 36 */
     int (*tkGetInterpNames) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin)); /* 37 */
     int (*tkGetMiterPoints) _ANSI_ARGS_((double p1[], double p2[], double p3[], double width, double m1[], double m2[])); /* 38 */
@@ -597,7 +597,7 @@ typedef struct TkIntStubs {
     int (*tkpUseWindow) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, char * string)); /* 75 */
     int (*tkpWindowWasRecentlyDeleted) _ANSI_ARGS_((Window win, TkDisplay * dispPtr)); /* 76 */
     void (*tkQueueEventForAllChildren) _ANSI_ARGS_((TkWindow * winPtr, XEvent * eventPtr)); /* 77 */
-    int (*tkReadBitmapFile) _ANSI_ARGS_((Display* display, Drawable d, CONST char* filename, unsigned int* width_return, unsigned int* height_return, Pixmap* bitmap_return, int* x_hot_return, int* y_hot_return)); /* 78 */
+    int (*tkReadBitmapFile) _ANSI_ARGS_((Display* display, Drawable d, const char* filename, unsigned int* width_return, unsigned int* height_return, Pixmap* bitmap_return, int* x_hot_return, int* y_hot_return)); /* 78 */
     int (*tkScrollWindow) _ANSI_ARGS_((Tk_Window tkwin, GC gc, int x, int y, int width, int height, int dx, int dy, TkRegion damageRgn)); /* 79 */
     void (*tkSelDeadWindow) _ANSI_ARGS_((TkWindow * winPtr)); /* 80 */
     void (*tkSelEventProc) _ANSI_ARGS_((Tk_Window tkwin, XEvent * eventPtr)); /* 81 */
@@ -623,7 +623,7 @@ typedef struct TkIntStubs {
     Tcl_Obj * (*tkDebugColor) _ANSI_ARGS_((Tk_Window tkwin, char * name)); /* 101 */
     Tcl_Obj * (*tkDebugConfig) _ANSI_ARGS_((Tcl_Interp * interp, Tk_OptionTable table)); /* 102 */
     Tcl_Obj * (*tkDebugFont) _ANSI_ARGS_((Tk_Window tkwin, char * name)); /* 103 */
-    int (*tkFindStateNumObj) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Obj * optionPtr, CONST TkStateMap * mapPtr, Tcl_Obj * keyPtr)); /* 104 */
+    int (*tkFindStateNumObj) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Obj * optionPtr, const TkStateMap * mapPtr, Tcl_Obj * keyPtr)); /* 104 */
     Tcl_HashTable * (*tkGetBitmapPredefTable) _ANSI_ARGS_((void)); /* 105 */
     TkDisplay * (*tkGetDisplayList) _ANSI_ARGS_((void)); /* 106 */
     TkMainInfo * (*tkGetMainInfoList) _ANSI_ARGS_((void)); /* 107 */
@@ -738,7 +738,7 @@ typedef struct TkIntStubs {
     void *reserved124;
 #endif /* __WIN32__ */
 #ifdef MAC_TCL
-    Pixmap (*tkpGetNativeAppBitmap) _ANSI_ARGS_((Display * display, CONST char * name, int * width, int * height)); /* 124 */
+    Pixmap (*tkpGetNativeAppBitmap) _ANSI_ARGS_((Display * display, const char * name, int * width, int * height)); /* 124 */
 #endif /* MAC_TCL */
 #if !defined(__WIN32__) && !defined(MAC_TCL) /* UNIX */
     void *reserved125;

@@ -503,7 +503,7 @@ Tk_NameOfJustify(justify)
 
 Tk_Uid
 Tk_GetUid(string)
-    CONST char *string;		/* String to convert. */
+    const char *string;		/* String to convert. */
 {
     int dummy;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
@@ -664,7 +664,7 @@ TkGetDoublePixels(interp, tkwin, string, doublePtr)
     Tk_Window tkwin;		/* Window whose screen determines conversion
 				 * from centimeters and other absolute
 				 * units. */
-    CONST char *string;		/* String describing a number of pixels. */
+    const char *string;		/* String describing a number of pixels. */
     double *doublePtr;		/* Place to store converted result. */
 {
     char *end;

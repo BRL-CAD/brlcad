@@ -167,10 +167,10 @@ static Tk_ConfigSpec configSpecs[] = {
  */
 
 static int		ConfigureFrame _ANSI_ARGS_((Tcl_Interp *interp,
-			    Frame *framePtr, int objc, Tcl_Obj *CONST objv[],
+			    Frame *framePtr, int objc, Tcl_Obj *const objv[],
 			    int flags));
 static int		CreateFrame _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, int objc, Tcl_Obj *CONST argv[],
+			    Tcl_Interp *interp, int objc, Tcl_Obj *const argv[],
 			    int toplevel, char *appName));
 static void		DestroyFrame _ANSI_ARGS_((char *memPtr));
 static void		DisplayFrame _ANSI_ARGS_((ClientData clientData));
@@ -179,7 +179,7 @@ static void		FrameCmdDeletedProc _ANSI_ARGS_((
 static void		FrameEventProc _ANSI_ARGS_((ClientData clientData,
 			    XEvent *eventPtr));
 static int		FrameWidgetObjCmd _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+			    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static void		MapFrame _ANSI_ARGS_((ClientData clientData));
 
 /*
@@ -207,7 +207,7 @@ Tk_FrameObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     return CreateFrame(clientData, interp, objc, objv, 0, (char *) NULL);
 }
@@ -218,7 +218,7 @@ Tk_ToplevelObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     return CreateFrame(clientData, interp, objc, objv, 1, (char *) NULL);
 }
@@ -278,7 +278,7 @@ CreateFrame(clientData, interp, objc, objv, toplevel, appName)
 				 * new application, then this is NULL. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
     int toplevel;		/* Non-zero means create a toplevel window,
 				 * zero means create a frame. */
     char *appName;		/* Should only be non-NULL if clientData is
@@ -506,7 +506,7 @@ FrameWidgetObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Information about frame widget. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     static char *frameOptions[] = {
 	"cget", "configure", (char *) NULL
@@ -649,7 +649,7 @@ ConfigureFrame(interp, framePtr, objc, objv, flags)
     register Frame *framePtr;	/* Information about widget;  may or may
 				 * not already have values for some fields. */
     int objc;			/* Number of valid entries in objv. */
-    Tcl_Obj *CONST objv[];	/* Arguments. */
+    Tcl_Obj *const objv[];	/* Arguments. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     char *oldMenuName;
