@@ -205,6 +205,7 @@ union record  {
 		char	c_id;			/* ID_COMB */
 		char	c_flags;		/* `R' if region, else ` ' */
 #define DBV4_NON_REGION			' '
+#define DBV4_NON_REGION_NULL		'\0'
 #define DBV4_REGION			'R'
 #define DBV4_REGION_FASTGEN_PLATE	'P'
 #define DBV4_REGION_FASTGEN_VOLUME	'V'
