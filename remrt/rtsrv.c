@@ -200,9 +200,9 @@ char **argv;
 		for( n=0; n < 20; n++ )
 			if( n != pcsrv->pkc_fd )
 				(void)close(n);
-		(void)open("/dev/null", 0);
-		(void)dup2(0, 1);
-		(void)dup2(0, 2);
+		(void)open("/dev/null", 0);	/* to fd 0 */
+		(void)dup(0);			/* to fd 1 */
+		(void)dup(0);			/* to fd 2 */
 #ifndef SYSV
 		n = open("/dev/tty", 2);
 		if (n > 0) {
