@@ -118,7 +118,7 @@ typedef long	bitv_t;		/* largest integer type */
 /**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
 #endif
 
-#ifdef convex
+#if defined(convex) || defined(__convex__)
 /********************************
  *				*
  *  Convex C1 & C2		*
