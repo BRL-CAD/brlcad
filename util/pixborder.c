@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "externs.h"		/* For getopt, etc */
 #include "vmath.h"
+#include "bu.h"
 #include "fb.h"
 
 #define	ACHROMATIC	-1.0
@@ -71,9 +72,6 @@ fastf_t			hsv_tol[3];
 
 #define	OPT_STRING	"ab:e:hi:n:s:t:w:x:y:B:E:I:T:X:Y:?"
 
-#define	made_it()	(void) fprintf(stderr, "Made it to %s:%d\n",	\
-				__FILE__, __LINE__);			\
-				fflush(stderr)
 static char usage[] = "\
 Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
                  [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
@@ -81,30 +79,6 @@ Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
 		 [-X right_edge] [-Y top_edge]\n\
                  [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
                  [file.pix]\n";
-
-/*
- *		    R E A D _ R G B ( )
- *
- *	Read in an RGB triple as ints and then (implicitly)
- *	cast them as unsigned chars.
- */
-static int read_rgb (rgbp, buf)
-
-unsigned char	*rgbp;
-char		*buf;
-
-{
-    int		tmp[3];
-    int		i;
-
-    if (sscanf(buf, "%d %d %d", tmp, tmp + 1, tmp + 2) != 3)
-	return (0);
-    for (i = 0; i < 3; ++i)
-	if ((tmp[i] < 0) || (tmp[i] > 255))
-	    return (0);
-    VMOVE(rgbp, tmp);
-    return (1);
-}
 
 /*
  *		    R E A D _ H S V ( )
@@ -432,14 +406,14 @@ register char **argv;
 		autosize = 1;
 		break;
 	    case 'b':
-		if (! read_rgb(border_rgb, optarg))
+		if (! bu_str_to_rgb(optarg, border_rgb))
 		{
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
 		break;
 	    case 'e':
-		if (! read_rgb(exterior_rgb, optarg))
+		if (! bu_str_to_rgb(optarg, exterior_rgb))
 		{
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
@@ -452,7 +426,7 @@ register char **argv;
 		autosize = 0;
 		break;
 	    case 'i':
-		if (! read_rgb(interior_rgb, optarg))
+		if (! bu_str_to_rgb(optarg, interior_rgb))
 		{
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
@@ -469,7 +443,7 @@ register char **argv;
 		autosize = 0;
 		break;
 	    case 't':
-		if (! read_rgb(rgb_tol, optarg))
+		if (! bu_str_to_rgb(optarg, rgb_tol))
 		{
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
