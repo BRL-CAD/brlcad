@@ -107,7 +107,8 @@ register struct application *ap;
 		ap->a_resource = &rt_uniresource;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
-		rt_log("**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
+		rt_g.rtg_logindent += 2;
+		rt_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			ap->a_resource->re_cpu,
 			ap->a_x, ap->a_y,
 			ap->a_level,
@@ -578,6 +579,10 @@ out:
 		FREE_BITV( solidbits, ap->a_resource );
 	}
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION))  {
+		if( rt_g.rtg_logindent > 0 )
+			rt_g.rtg_logindent -= 2;
+		else
+			rt_g.rtg_logindent = 0;
 		rt_log("----------shootray cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
 			ap->a_resource->re_cpu,
 			ap->a_x, ap->a_y,
