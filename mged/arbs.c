@@ -547,7 +547,6 @@ thckagain:
 
 
 static void	move(), points(), vectors();
-static int	comparvec();
 static int	redoarb();
 
 static union record input;		/* Holds an object file record */
@@ -587,7 +586,7 @@ union record *rec;
 
 #define NO	0
 #define YES	1
-
+	
 /*
  * C G A R B S :   determines COMGEOM arb types from GED general arbs
  */
@@ -610,7 +609,17 @@ register int *svec;	/* array of like points */
 		if(done == NO)
 			svec[si] = i;
 		for(j=i+1; j<8; j++) {
-			if(comparvec(&input.s.s_values[i*3], &input.s.s_values[j*3]) == YES) {
+			int tmp;
+			vect_t vtmp;
+
+			VSUB2( vtmp, &input.s.s_values[i*3], &input.s.s_values[j*3] );
+
+			if( fabs(vtmp[0]) > 0.0001) tmp = 0;
+			else 	if( fabs(vtmp[1]) > 0.0001) tmp = 0;
+			else 	if( fabs(vtmp[2]) > 0.0001) tmp = 0;
+			else tmp = 1;
+
+			if( tmp ) {
 				if( done == NO )
 					svec[++si] = j;
 				unique = NO;
@@ -629,6 +638,7 @@ register int *svec;	/* array of like points */
 			}
 		}
 	}
+
 	if( si > 2 && si < 6 ) 
 		svec[0] = si - 1;
 	if( si > 6 )
@@ -893,23 +903,6 @@ int p0, p1, p2, p3, p4, p5, p6, p7;
 		VMOVE(&input.s.s_values[i*3], &copy[j]);
 	}
 }
-
-
-
-static int
-comparvec( x, y )
-register vect_t	x,y;
-{
-	if( fabs( x[0] - y[0] ) > 0.0001 )
-		return(0);   /* different */
-	if( fabs( x[1] - y[1] ) > 0.0001 )
-		return(0);   /* different */
-	if( fabs( x[2] - y[2] ) > 0.0001 )
-		return(0);   /* different */
-
-	return(1);  /* same */
-}
-
 
 static void
 vectors()
