@@ -75,7 +75,8 @@ static char usage[] = "\
 Usage: mac-pix [-c -l -b]\n\
 	[-s squareMacsize] [-w Mac_width] [-n Mac_height]\n\
 	[-x Mac_xoff] [-y Mac_yoff] [-X outp_xoff] [-Y outp_yoff]\n\
-	[-S squareoutpsize] [-W outp_width] [-N outp_height] [file.mac]\n";
+	[-S squareoutpsize] [-W outp_width] [-N outp_height]\n\
+	[-R #] [-G #] [-B #] [file.mac]\n";
 
 get_args( argc, argv )
 register char **argv;
