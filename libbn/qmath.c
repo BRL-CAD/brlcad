@@ -307,6 +307,7 @@ double	f;
  * Note that smallest euclidian distance implies smallest great
  *   circle distance as well (since surface is convex).
  */
+void
 quat_make_nearest( q1, q2 )
 quat_t	q1, q2;
 {
