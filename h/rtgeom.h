@@ -363,7 +363,7 @@ struct rt_dsp_internal{
 	struct bu_vls	dsp_name;		/* name of data file */
 	unsigned int	dsp_xcnt;		/* # samples in row of data */
 	unsigned int	dsp_ycnt;		/* # of columns in data */
-	unsigned char	dsp_smooth;		/* bool: surf normal interp */
+	unsigned short	dsp_smooth;		/* bool: surf normal interp */
 #define DSP_CUT_DIR_ADAPT	'a'
 #define DSP_CUT_DIR_llUR	'l'
 #define DSP_CUT_DIR_ULlr	'L'
