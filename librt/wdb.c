@@ -78,7 +78,8 @@ wdb_dbopen( struct db_i *dbip, int mode )
 
 	RT_CK_DBI(dbip);
 
-	if( mode != RT_WDB_TYPE_DB_DISK && mode != RT_WDB_TYPE_DB_INMEM && mode != RT_WDB_TYPE_DB_DISK )  {
+	if (mode != RT_WDB_TYPE_DB_DISK	 && mode != RT_WDB_TYPE_DB_DISK_APPEND_ONLY &&
+	    mode != RT_WDB_TYPE_DB_INMEM && mode != RT_WDB_TYPE_DB_INMEM_APPEND_ONLY) {
 		bu_log("wdb_dbopen(%s) mode %d unknown\n",
 			dbip->dbi_filename, mode );
 		return RT_WDB_NULL;
