@@ -26,6 +26,7 @@ static char RCSid[] = "$Header$";
 #define			RMAT_SAW_VR	0x02
 
 extern outval			ValTab[];
+extern int			nirt_debug;
 
 /*	               R E A D _ M A T ( )
  *
@@ -64,6 +65,8 @@ void read_mat ()
 		exit (1);
 	    }
 	    quat_quat2mat(m,q);
+	    if (nirt_debug & DEBUG_MAT)
+		bn_mat_print("view matrix", m);
 	    azimuth() = atan2(-m[0],m[1]) / deg2rad;
 	    elevation() = atan2(m[10],m[6]) / deg2rad;
 	    status |= RMAT_SAW_ORI;
@@ -81,6 +84,8 @@ void read_mat ()
 		    stderr);
 		exit (1);
 	    }
+	    if (nirt_debug & DEBUG_MAT)
+		bn_mat_print("view matrix", m);
 	    azimuth() = atan2(-m[0],m[1]) / deg2rad;
 	    elevation() = atan2(m[10],m[6]) / deg2rad;
 	    status |= RMAT_SAW_VR;
@@ -97,7 +102,13 @@ void read_mat ()
 		stderr);
 	exit (1);
     }
+    direct(X) = -m[8];
+    direct(Y) = -m[9];
+    direct(Z) = -m[10];
+    dir2ae();
+#if 0
     ae2dir();
+#endif
     targ2grid();
     shoot("", 0);
 }
