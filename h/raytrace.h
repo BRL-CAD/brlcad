@@ -163,7 +163,7 @@ struct region  {
  *
  *  Partitions of a ray
  */
-#define NBINS	100			/* # bins: # solids hit in ray */
+#define NBINS	200			/* # bins: # solids hit in ray */
 
 struct partition {
 	unsigned char	pt_solhit[NBINS];	/* marks for solids hit */
