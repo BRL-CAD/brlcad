@@ -1294,7 +1294,6 @@ struct application  {
 	fastf_t		a_diverge;	/* slope of beam divergance/mm */
 	int		a_return;	/* Return of a_hit()/a_miss() */
 	int		a_no_booleans;	/* 1= partitions==segs, no booleans */
-	int		a_segs_only;	/* 1= no partitions, only seg list */
 	/* THESE ELEMENTS ARE USED BY THE PROGRAM "rt" AND MAY BE USED BY */
 	/* THE LIBRARY AT SOME FUTURE DATE */
 	/* AT THIS TIME THEY MAY BE LEFT ZERO */
