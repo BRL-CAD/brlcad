@@ -42,10 +42,12 @@
 struct xxx_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
 	double	xxx_val;	/* variables for shader ... */
+	double	xxx_dist;
 	vect_t	xxx_delta;
 	point_t xxx_min;
 	point_t xxx_max;
 	mat_t	xxx_m_to_sh;	/* model to shader space matrix */
+	mat_t	xxx_m_to_r;	/* model to shader space matrix */
 };
 
 /* The default values for the variables in the shader specific structure */
@@ -53,10 +55,15 @@ CONST static
 struct xxx_specific xxx_defaults = {
 	xxx_MAGIC,
 	1.0,				/* xxx_val */
+	0.0,				/* xxx_dist */
 	{ 1.0, 1.0, 1.0 },		/* xxx_delta */
 	{ 0.0, 0.0, 0.0 },		/* xxx_min */
 	{ 0.0, 0.0, 0.0 },		/* xxx_max */
 	{	0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_sh */
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0 }
+	{	0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_r */
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0 }
@@ -73,6 +80,7 @@ struct xxx_specific xxx_defaults = {
  */
 struct bu_structparse xxx_print_tab[] = {
 	{"%f",  1, "val",		SHDR_O(xxx_val),	FUNC_NULL },
+	{"%f",  1, "dist",		SHDR_O(xxx_dist),	FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(xxx_delta),	FUNC_NULL },
 	{"%f",  3, "max",		SHDR_AO(xxx_max),	FUNC_NULL },
 	{"%f",  3, "min",		SHDR_AO(xxx_min),	FUNC_NULL },
@@ -81,9 +89,10 @@ struct bu_structparse xxx_print_tab[] = {
 };
 struct bu_structparse xxx_parse_tab[] = {
 	{"i",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, FUNC_NULL },
-	{"%f",  1, "v",			SHDR_O(xxx_val),	FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(xxx_delta),	FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",  1, "v",		SHDR_O(xxx_val),	FUNC_NULL },
+	{"%f",  1, "dist",	SHDR_O(xxx_dist),	bu_mm_cvt },
+	{"%f",  3, "d",		SHDR_AO(xxx_delta),	FUNC_NULL },
+	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 
 HIDDEN int	xxx_setup(), xxx_render();
@@ -162,7 +171,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * Alternatively, shading may be done in "region coordinates"
 	 * if desired:
 	 *
-*	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);	 
+*	db_region_mat(xxx_sp->xxx_m_to_r, rtip->rti_dbip, rp->reg_name);
 	 *
 	 */
 
@@ -224,8 +233,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.
 	 * See the call to db_region_mat in xxx_setup().
-	 */
 	MAT4X3PNT(pt, xxx_sp->xxx_m_to_sh, swp->sw_hit.hit_point);
+	MAT4X3PNT(pt, xxx_sp->xxx_m_to_r, swp->sw_hit.hit_point);
+	 */
 
 	if( rdebug&RDEBUG_SHADE) {
 		rt_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
