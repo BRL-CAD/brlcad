@@ -34,7 +34,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../rt/rdebug.h"
 
 #include "./list.h"
-#include "./rtsrv.h"
 #include "./inout.h"
 #include "./protocol.h"
 
@@ -324,7 +323,8 @@ char *buf;
 	(void)free(buf);
 
 	/* Acknowledge that we are ready */
-	if( pkg_send( MSG_START, "", 0, pcsrv ) < 0 )
+	if( pkg_send( MSG_START,
+	    PROTOCOL_VERSION, strlen(PROTOCOL_VERSION)+1, pcsrv ) < 0 )
 		fprintf(stderr,"MSG_START error\n");
 }
 
@@ -487,6 +487,7 @@ do_work()
 		info.li_y = y;
 		info.li_nrays = rtip->rti_nrays;
 		info.li_cpusec = rt_read_timer( (char *)0, 0 );
+		info.li_realsec = 0;	/* real time */
 
 		len = 0;
 		cp = struct_export( &len, (stroff_t)&info, desc_line_info );

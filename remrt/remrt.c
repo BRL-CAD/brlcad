@@ -44,7 +44,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "pkg.h"
 
 #include "./list.h"
-#include "./rtsrv.h"
 #include "./remrt.h"
 #include "./inout.h"
 #include "./protocol.h"
@@ -1056,6 +1055,15 @@ char *buf;
 	register struct servers *sp;
 
 	sp = &servers[pc->pkc_fd];
+	if( strcmp( PROTOCOL_VERSION, buf ) != 0 )  {
+		printf("ERROR %s: protocol version mis-match\n",
+			sp->sr_host->ht_name);
+		printf(" local='%s'\n", PROTOCOL_VERSION );
+		printf("remote='%s'\n", buf );
+		dropclient( pc );
+		if(buf) (void)free(buf);
+		return;
+	}
 	if(buf) (void)free(buf);
 	if( sp->sr_pc != pc )  {
 		printf("unexpected MSG_START from fd %d\n", pc->pkc_fd);
