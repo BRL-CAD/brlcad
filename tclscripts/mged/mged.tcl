@@ -172,12 +172,22 @@ proc do_New { id } {
 
     set ret [cad_input_dialog .$id.new $mged_gui($id,screen)\
 	    "New MGED Database" \
-	    "Enter new database filename:" ia_filename ""\
+	    "Enter new database filename:" ia_filename $mged_gui(databaseDir) \
 	    0 {{ summary "Enter a new database name. Note - a database
 must not exist by this name."}}\
 	    OK CANCEL]
 
     if {$ia_filename != "" && $ret == 0} {
+	# save the directory
+	if [file isdirectory $ia_filename] {
+	    set mged_gui(databaseDir) $ia_filename
+	    cad_dialog .$id.uncool $mged_gui($id,screen) "Not a database." \
+		    "$ia_filename is a directory!" info 0 OK
+	    return
+	} else {
+	    set mged_gui(databaseDir) [file dirname $ia_filename]
+	}
+
 	if [file exists $ia_filename] {
 	    cad_dialog .$id.uncool $mged_gui($id,screen) "Existing Database" \
 		    "$ia_filename already exists" info 0 OK
@@ -197,10 +207,15 @@ must not exist by this name."}}\
 proc do_Open { id } {
     global mged_gui
 
-    set file_types {{{MGED Database} {.g}}}
-    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
-	    -title "Open MGED Database" -defaultextension ".g"]
+    set file_types {{{MGED Database} {.g}} {{All Files} {*}}}
+    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types \
+	    -initialdir $mged_gui(databaseDir) \
+	    -title "Open MGED Database"]
+
     if {$ia_filename != ""} {
+	# save the directory
+	set mged_gui(databaseDir) [file dirname $ia_filename]
+
 	set ret [catch {opendb $ia_filename} msg]
 	if {$ret} {
 	    cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
@@ -215,10 +230,15 @@ proc do_Open { id } {
 proc do_Concat { id } {
     global mged_gui
 
-    set file_types {{{MGED Database} {.g}}}
-    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
-	    -title "Insert MGED Database" -defaultextension ".g"]
+    set file_types {{{MGED Database} {.g}} {{All Files} {*}}}
+    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types \
+	    -initialdir $mged_gui(databaseDir) \
+	    -title "Insert MGED Database"]
+
     if {$ia_filename != ""} {
+	# save the directory
+	set mged_gui(databaseDir) [file dirname $ia_filename]
+
 	set ret [cad_input_dialog .$id.prefix $mged_gui($id,screen) "Prefix" \
 		"Enter prefix:" prefix ""\
 		0 {{ summary "
@@ -239,10 +259,15 @@ the database being inserted."} { see_also dbconcat } } OK CANCEL]
 proc do_LoadScript { id } {
     global mged_gui
 
-    set file_types {{{Tcl Scripts} {.tcl}}}
-    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
-	    -title "Load Script" -defaultextension ".tcl"]
+    set file_types {{{Tcl Scripts} {.tcl}} {{All Files} {*}}}
+    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types \
+	    -initialdir $mged_gui(loadScriptDir) \
+	    -title "Load Script"]
+
     if {$ia_filename != ""} {
+	# save the directory
+	set mged_gui(loadScriptDir) [file dirname $ia_filename]
+
 	set ret [catch {source $ia_filename} msg]
 	if {$ret} {
 	    cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
