@@ -561,10 +561,16 @@ float sin_table[SINTABSIZE] = {
 
 /*
  *  The actual table of random numbers, range -0.5 to +0.5
- *  Table is padded with zeros for parallel processing case
- *  which may sometimes index slightly beyond RANDTABSIZE.
+ *
+ *  The table is padded with zeros for the PARALLEL processing case.
+ *  Because access to rand_ptr is not semaphore protected, processors
+ *  may sometimes index slightly beyond RANDTABSIZE.
+ *  The rational for 3*MAX_PSW padding comes from the fact that most
+ *  callers of rand_half() get the random numbers three at a time,
+ *  and optimizing compilers may eximinate the intermediate stores of
+ *  the updated rand_ptr variable...
  */
-float rand_tab[RANDTABSIZE+MAX_PSW+8] = {
+float rand_tab[RANDTABSIZE+(3*MAX_PSW)] = {
 0.468071,	-0.433269,	-0.021719,	0.409534,
 -0.148308,	0.432534,	0.154436,	-0.478930,
 0.012205,	-0.297981,	0.439977,	-0.295918,
@@ -1077,4 +1083,15 @@ float rand_tab[RANDTABSIZE+MAX_PSW+8] = {
 -0.224147,	-0.255786,	0.017735,	-0.435868,
 0.451515,	-0.349258,	0.085542,	0.461822,
 -0.342399,	0.248190,	0.032834,	0.111105
+};
+/*
+ * Immediately after the random number table,
+ * some "poison" floating point numbers,
+ * intended to cause noticable difficulties if these are used.
+ */
+float	rand_poison_[] = {
+	9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20,
+	9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20,
+	9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20,
+	9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20
 };
