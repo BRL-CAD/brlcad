@@ -56,53 +56,26 @@ extern void set_scroll();  /* defined in set.c */
 extern void color_soltab();
 
 /* All systems can compile these! */
-extern struct dm dm_Null;
-
 extern int Plot_dm_init();
-extern struct dm dm_Plot;	/* Unix Plot */
-#define IS_DM_PLOT(dp) ((dp) == &dm_Plot)
-
 extern int PS_dm_init();
-extern struct dm dm_PS;		/* PostScript */
-#define IS_DM_PS(dp) ((dp) == &dm_PS)
-
 #ifdef DM_X
 extern int X_dm_init();
-extern struct dm dm_X;
-#define IS_DM_X(dp) ((dp) == &dm_X)
-#else
-#define IS_DM_X(dp) (0)
 #endif
-
 #ifdef DM_OGL
 extern int Ogl_dm_init();
-extern struct dm dm_ogl;
-#define IS_DM_OGL(dp) ((dp) == &dm_ogl)
-#else
-#define IS_DM_OGL(dp) (0)
 #endif
-
 #ifdef DM_GLX
 extern int Glx_dm_init();
-extern struct dm dm_glx;
-#define IS_DM_GLX(dp) ((dp) == &dm_glx)
-#else
-#define IS_DM_GLX(dp) (0)
 #endif
-
 #ifdef DM_PEX
 extern int Pex_dm_init();
-extern struct dm dm_pex;
-#define IS_DM_PEX(dp) ((dp) == &dm_pex)
-#else
-#define IS_DM_PEX(dp) (0)
 #endif
 
-#define NEED_GUI(dp) ( \
-	IS_DM_OGL(dp) || \
-	IS_DM_GLX(dp) || \
-	IS_DM_PEX(dp) || \
-	IS_DM_X(dp) )
+#define NEED_GUI(_type) ( \
+	IS_DM_TYPE_OGL(_type) || \
+	IS_DM_TYPE_GLX(_type) || \
+	IS_DM_TYPE_PEX(_type) || \
+	IS_DM_TYPE_X(_type) )
 
 extern Tk_Window tkwin;
 extern struct _mged_variables default_mged_variables;
@@ -119,21 +92,21 @@ static char *default_view_strings[] = {
 };
 
 struct w_dm which_dm[] = {
-  { &dm_Plot, Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */
-  { &dm_PS, PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
+  { DM_TYPE_PLOT, "plot", Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */
+  { DM_TYPE_PS, "ps", PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
 #ifdef DM_X
-  { &dm_X, X_dm_init },
-#endif
-#ifdef DM_PEX
-  { &dm_pex, Pex_dm_init },
+  { DM_TYPE_X, "X", X_dm_init },
 #endif
 #ifdef DM_OGL
-  { &dm_ogl, Ogl_dm_init },
+  { DM_TYPE_OGL, "ogl", Ogl_dm_init },
 #endif
 #ifdef DM_GLX
-  { &dm_glx, Glx_dm_init },
+  { DM_TYPE_GLX, "glx", Glx_dm_init },
 #endif
-  { (struct dm *)0, (int (*)())0}
+#ifdef DM_PEX
+  { DM_TYPE_PEX, "pex", Pex_dm_init },
+#endif
+  { -1, (char *)NULL, (int (*)())NULL}
 };
 
 
@@ -325,11 +298,11 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  for( wp = &which_dm[0]; wp->dp != (struct dm *)0; wp++ )
-    if( strcmp(argv[argc - 1], wp->dp->dm_name ) == 0 )
+  for( wp = &which_dm[2]; wp->type != -1; wp++ )
+    if( strcmp(argv[argc - 1], wp->name ) == 0 )
       break;
 
-  if(wp->dp == (struct dm *)0){
+  if(wp->type == -1){
     Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
     print_valid_dm();
     return TCL_ERROR;
@@ -367,7 +340,7 @@ char *argv[];
   BU_GETSTRUCT(curr_dm_list, dm_list);
   BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
   /* Only need to do this once */
-  if(tkwin == NULL && NEED_GUI(wp->dp)){
+  if(tkwin == NULL && NEED_GUI(wp->type)){
     if(gui_setup() == TCL_ERROR){
       BU_LIST_DEQUEUE( &curr_dm_list->l );
       bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
@@ -445,8 +418,8 @@ get_attached()
     bu_log("attach (nu");
     /* skip plot and ps */
     wp = &which_dm[2];
-    for( ; wp->dp != (struct dm *)0; wp++ )
-      bu_log("|%s", wp->dp->dm_name);
+    for( ; wp->type != -1; wp++ )
+      bu_log("|%s", wp->name);
     bu_log(")[nu]? ");
     (void)fgets(line, sizeof(line), stdin); /* \n, Null terminated */
 
@@ -455,11 +428,11 @@ get_attached()
 
     line[strlen(line)-1] = '\0';        /* remove newline */
 
-    for( wp = &which_dm[0]; wp->dp != (struct dm *)0; wp++ )
-      if( strcmp( line, wp->dp->dm_name ) == 0 )
+    for( wp = &which_dm[2]; wp->type != -1; wp++ )
+      if( strcmp( line, wp->name ) == 0 )
 	break;
 
-    if( wp->dp != (struct dm *)0 )
+    if( wp->type != -1 )
       break;
 
     /* Not a valid choice, loop. */
@@ -501,6 +474,7 @@ gui_setup()
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 
+#if 0
   /* Check to see if user specified MGED_GUIRC */
   if((filename = getenv("MGED_GUIRC")) != (char *)NULL )  {
 	if( Tcl_EvalFile( interp, filename ) != TCL_OK )  {
@@ -508,6 +482,7 @@ gui_setup()
 			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
 	}
   }
+#endif
 
   return TCL_OK;
 }
