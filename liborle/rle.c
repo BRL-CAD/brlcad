@@ -542,7 +542,7 @@ RGBpixel	*scan_buf;
 						*pp = *cp++;
 						pp += STRIDE;
 						}
-#ifdef BSD
+#if defined(BSD) && ! defined(sun)
 					fp->_ptr = (char *)cp;
 #else
 					fp->_ptr = cp;
@@ -836,7 +836,7 @@ int		n;
 			*op++ = *cp;
 			cp += STRIDE;
 			}
-#ifdef BSD
+#if defined(BSD) && ! defined(sun)
 		fp->_ptr = (char *)op;
 #else
 		fp->_ptr = op;
