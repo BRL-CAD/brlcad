@@ -128,7 +128,7 @@ struct mged_hist *hptr;
     lasthptr = BU_LIST_PREV(mged_hist, &(hptr->l));
 
     if (journal_delay && timediff(&tvdiff, &(lasthptr->mh_finish), &(hptr->mh_start)) >= 0)
-	fprintf(journalfp, "delay %d %ld\n", tvdiff.tv_sec, (long)tvdiff.tv_usec);
+	fprintf(journalfp, "delay %ld %ld\n", (long)tvdiff.tv_sec, (long)tvdiff.tv_usec);
 
     if (hptr->mh_status == CMD_BAD)
 	fprintf(journalfp, "# ");
