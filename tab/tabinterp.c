@@ -904,12 +904,14 @@ fastf_t			*times;
 		}
 
 		rhs = (i==chp->c_ilen-1) ?
-			chp->c_ival[1] - chp->c_ival[0] :
-			chp->c_ival[i+1] - chp->c_ival[i];
-		rhs = 6 * ( (rhs /
-			(chp->c_itime[i+1]-chp->c_itime[i]) ) -
+			(chp->c_ival[1] - chp->c_ival[0]) /
+			(chp->c_itime[1] - chp->c_itime[0]) :
+			(chp->c_ival[i+1] - chp->c_ival[i]) /
+			(chp->c_itime[i+1] - chp->c_itime[i]);
+		rhs = 6 * ( rhs  -
 			( (chp->c_ival[i] - chp->c_ival[i-1]) /
 			(chp->c_itime[i] - chp->c_itime[i-1]) ) );
+
 		rrr[i] = rhs - hi * rrr[i-1] / d;
 
 		s = -hi*s/d;
