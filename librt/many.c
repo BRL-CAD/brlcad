@@ -139,6 +139,11 @@ genptr_t	arg;
  *  Return codes expected from the callback() -
  *	-1	End processing before all nrays have been fired.
  *	 0	Normal return, proceed with firing the ray.
+ *
+ *  Note that bu_parallel() is not re-entrant, so you can't have an
+ *  a_hit() routine which is already running in parallel call into
+ *  this routine and expect to get even more parallelism.
+ *  This is not a limitation, as you usually can't construct more CPUs.
  */
 void
 rt_shoot_many_rays( proto_ap, callback, ncpus, nrays, resources )
