@@ -218,8 +218,9 @@ char **argv;
 		n = getpid();
 
 		/* SysV uses setpgrp with no args and it can't fail */
-#if defined(SYSV) && !defined(_BSD_COMPAT)
-		setpgrp();
+#if (defined(__STDC__) || defined(SYSV)) && !defined(_BSD_COMPAT)
+		if( setpgid( n, n ) < 0 )
+			perror("setpgid");
 #else
 		if( setpgrp( n, n ) < 0 )
 			perror("setpgrp");
