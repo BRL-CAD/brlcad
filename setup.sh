@@ -105,12 +105,41 @@ fi
 if [ X${SILENT} = X ] ; then
 	echo "OK"
 fi
+
 ############################################################################
 #
 # Ensure that destination directory is clean.  No stale cakes, etc.
 # Then create desired directory structure.
 #
 ############################################################################
+
+# First, make sure our current directory is at the top of the source tree
+# Check for presence of a few representative files.
+for i in Cakefile.defs sh/machinetype.sh librt/prep.c
+do
+	if test ! -f $i
+	then
+		echo "ERROR: Current directory for setup.sh isn't top of source tree."
+		exit 1
+	fi
+done
+
+# Next, make sure they don't have the sources also in BASEDIR.
+set -- `/bin/ls -laid .`
+CWD_INUM=$1
+set -- `/bin/ls -laid ${BASEDIR}`
+BASEDIR_INUM=$1
+if test "${CWD_INUM}" -eq "${BASEDIR_INUM}"
+then
+	echo
+	echo "ERROR: BASEDIR can't point to the directory containing the source code."
+	echo "Please make the executable tree either be a proper subdirectory"
+	echo "of the source tree, such as ${BASEDIR}/exec,"
+	echo "or point it at a completely separate tree."
+	exit 1
+fi
+
+# Now ask for permission to go blasting.
 if [ X${SILENT} = X ] ; then
 	echo
 	echo "Cleaning out ${BASEDIR}."
