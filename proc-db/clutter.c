@@ -26,11 +26,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "db.h"
+#include "bu.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "bn.h"
 #include "wdb.h"
-
-#include "../rt/mathtab.h"
 
 mat_t	identity;
 double degtorad = 0.0174532925199433;
@@ -55,6 +54,8 @@ int	nmtab = sizeof(mtab)/sizeof(struct mtab);
 double	ball_stack(), prim_stack(), crystal_stack(), crystal_layer();
 void	do_plate(), do_rings();
 
+struct bn_unif	*rbuf;
+
 main(argc, argv)
 char	**argv;
 {
@@ -71,7 +72,11 @@ char	**argv;
 	int	n;
 	double	height, maxheight, minheight;
 	struct wmember head;
-	float	*randp = (float *)0;
+
+	bu_debug = BU_DEBUG_COREDUMP;
+	rbuf = bn_unif_init( 0, 0 );
+
+#define rand0to1(p)	(BN_UNIF_DOUBLE(p)+0.5)
 
 	RT_LIST_INIT( &head.l );
 
@@ -133,13 +138,13 @@ char	**argv;
 	white[0] = white[1] = white[2] = 255;
 	base = size*(quant/2+1);
 	VSET( aim, 0, 0, 0 );
-	VSET( pos, base, base, minheight+maxheight*rand0to1(randp) );
+	VSET( pos, base, base, minheight+maxheight*rand0to1(rbuf) );
 	do_light( "l1", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, -base, base, minheight+maxheight*rand0to1(randp) );
+	VSET( pos, -base, base, minheight+maxheight*rand0to1(rbuf) );
 	do_light( "l2", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, -base, -base, minheight+maxheight*rand0to1(randp) );
+	VSET( pos, -base, -base, minheight+maxheight*rand0to1(rbuf) );
 	do_light( "l3", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, base, -base, minheight+maxheight*rand0to1(randp) );
+	VSET( pos, base, -base, minheight+maxheight*rand0to1(rbuf) );
 	do_light( "l4", pos, aim, 1, 100.0, white, &head );
 
 	/* Build the overall combination */
@@ -165,7 +170,6 @@ double	size;
 	char	crystalname[64];
 	vect_t	minpt, maxpt;
 	struct wmember head;
-	float	*randp = (float *)0;
 
 	RT_LIST_INIT( &head.l );
 
@@ -183,8 +187,8 @@ double	size;
 
 		high = crystal_layer( name, center, size/2,
 			maj, min,
-			rand0to1(randp) * 90.0,
-			rand0to1(randp) * 8.0 + 2.0,
+			rand0to1(rbuf) * 90.0,
+			rand0to1(rbuf) * 8.0 + 2.0,
 			nsolids );
 		if( high > height )  height = high;
 	}
@@ -235,12 +239,11 @@ int	nsolids;	/* number of solids for this layer */
 	char	name[32];
 	int	i;
 	struct wmember head;
-	float	*randp = (float *)0;
 
 	RT_LIST_INIT( &head.l );
 
 	for( todo = nsolids-1; todo >= 0; todo-- )  {
-		cos_var = cos( var*rand0to1(randp) );
+		cos_var = cos( var*rand0to1(rbuf) );
 		m_cos_var = 1 - cos_var;
 		/* Blend together two original axes for new orthog. set */
 		if( rand() & 1 )  {
@@ -262,10 +265,10 @@ int	nsolids;	/* number of solids for this layer */
 
 		/* dither center position */
 		VMOVE(loc_cent, center );
-		loc_cent[X] += rand_half(randp) * radius;
-		loc_cent[Y] += rand_half(randp) * radius;
+		loc_cent[X] += BN_UNIF_DOUBLE(rbuf) * radius;
+		loc_cent[Y] += BN_UNIF_DOUBLE(rbuf) * radius;
 
-		length = radius * rand0to1(randp);
+		length = radius * rand0to1(rbuf);
 		width = length / ratio;
 
 		VJOIN1( a, loc_cent, length, long_axis );
