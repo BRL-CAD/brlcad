@@ -7,8 +7,10 @@
 #define SRCDIR	proc-db
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
 			pipetest nmgmodel brickwall wall
-#define STATIC_PRODUCTS	mol-data mol-data1 mol-data2 mol-cube \
-			mol-gfa2 mol-gfa3
+#define STATIC_PRODUCTS		\
+	../SRCDIR/mol-data ../SRCDIR/mol-data1 ../SRCDIR/mol-data2 \
+	../SRCDIR/mol-cube \
+	../SRCDIR/mol-gfa2 ../SRCDIR/mol-gfa3
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
