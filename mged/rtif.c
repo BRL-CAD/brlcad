@@ -43,7 +43,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
-extern double	atof();
 
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
