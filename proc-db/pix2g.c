@@ -47,7 +47,7 @@ struct bu_mapped_file *image;
 
 void usage()
 {
-	fprintf(stderr, "Usage: %s db_file.g imageFile [pixelWidth [pixelHeight [cellSize [objectSize]]]\n", progname);
+	fprintf(stderr, "Usage: %s image_file.pix db_file.g [pixelWidth [pixelHeight [cellSize [objectSize]]]\n", progname);
 	exit(-1);
 }
 
@@ -155,8 +155,8 @@ main(int ac, char *av[])
 
 	if (ac < 3) usage();
 
-	if (ac > 2) sprintf(fileName, "%s", av[2]);
-	if (ac > 3) width=(int)atoi(av[3]);
+	if (ac > 2) width=(int)atoi(av[2]);
+	if (ac > 3) sprintf(fileName, "%s", av[3]);
 	if (ac > 4) height=(int)atoi(av[4]);
 	if (ac > 5) cellSize=(double)atof(av[5]);
 	if (ac > 6) objectSize=(double)atof(av[6]);
