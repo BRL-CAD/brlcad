@@ -11,14 +11,13 @@
 #include "machine.h"		/* BRLCAD specific machine data types */
 #include "db.h"			/* BRLCAD data base format */
 #include "vmath.h"		/* BRLCAD Vector macros */
-#include "../libspl/b_spline.h"		/* BRLCAD Spline data structures */
+#include "nurb.h"		/* BRLCAD Spline data structures */
 #include "raytrace.h"
 #include "../librt/debug.h"	/* rt_g.debug flag settings */
 
 #include "./tea.h"		/* IEEE Data Structures */
 #include "./ducks.h"		/* Teapot Vertex data */
 #include "./patches.h"		/* Teapot Patch data */
-
 
 extern dt ducks[DUCK_COUNT];		/* Vertex data of teapot */
 extern pt patches[PATCH_COUNT];		/* Patch data of teapot */
@@ -32,7 +31,6 @@ int argc; char *argv[];
 	char * id_name = "Spline Example";
 	char * tea_name = "UtahTeapot";
 	int i;
-
 
 	if (isatty(fileno(stdout))) {
 		(void)fprintf(stderr, "%s: %s\n", *argv, Usage);
@@ -49,7 +47,6 @@ int argc; char *argv[];
 			break;
 		}
 	}
-
 
 	/* Setup information 
    	 * Database header record
@@ -81,8 +78,8 @@ int argc; char *argv[];
 dump_patch( patch )
 pt patch;
 {
-	struct b_spline * b_patch;
-	int i,j;
+	struct snurb * b_patch;
+	int i,j, pt_type;
 	fastf_t * mesh_pointer;
 
 	/* U and V parametric Direction Spline parameters
@@ -92,7 +89,9 @@ pt patch;
 	 * point size is 3
 	 */
 
-	b_patch = (struct b_spline *) spl_new( 4, 4, 8, 8, 4, 4, 3);
+	pt_type = MAKE_PT_TYPE(3, 2,0); /* see nurb.h for details */
+
+	b_patch = (struct snurb *) rt_nurb_new_snurb( 4, 4, 8, 8, 4, 4, pt_type);
 	
 	/* Now fill in the pieces */
 
@@ -102,29 +101,30 @@ pt patch;
  	 */
 	
 
-	rt_free((char *)b_patch->u_kv->knots, "dumping u_kv knots I'm about to realloc");
-	rt_free((char *)b_patch->u_kv, "dumping u_kv I'm about to realloc");
-	b_patch->u_kv = 
-	    (struct knot_vec *) spl_kvknot( 4, 0.0, 1.0, 0);
+	rt_free((char *)b_patch->u_knots->knots, "dumping u_knots knots I'm about to realloc");
+	rt_free((char *)b_patch->u_knots, "dumping u_knots I'm about to realloc");
+	b_patch->u_knots = 
+	    (struct knot_vector *) rt_nurb_kvknot( 4, 0.0, 1.0, 0);
 
-	rt_free((char *)b_patch->v_kv->knots, "dumping v_kv knots I'm about to realloc");
-	rt_free((char *)b_patch->v_kv, "dumping v_kv I'm about to realloc");
-	b_patch->v_kv = 
-	    (struct knot_vec *) spl_kvknot( 4, 0.0, 1.0, 0);
+	rt_free((char *)b_patch->v_knots->knots, "dumping v_kv knots I'm about to realloc");
+	rt_free((char *)b_patch->v_knots, "dumping v_kv I'm about to realloc");
+
+	b_patch->v_knots = 
+	    (struct knot_vector *) rt_nurb_kvknot( 4, 0.0, 1.0, 0);
 
 	if (rt_g.debug) {
 		rt_ck_malloc_ptr(b_patch, "b_patch");
-		rt_ck_malloc_ptr(b_patch->u_kv, "b_patch->u_kv");
-		rt_ck_malloc_ptr(b_patch->u_kv->knots,
-			"b_patch->u_kv->knots");
-		rt_ck_malloc_ptr(b_patch->v_kv, "b_patch->v_kv");
-		rt_ck_malloc_ptr(b_patch->v_kv->knots,
-			"b_patch->v_kv->knots");
+		rt_ck_malloc_ptr(b_patch->u_knots, "b_patch->u_knots");
+		rt_ck_malloc_ptr(b_patch->u_knots->knots,
+			"b_patch->u_knots->knots");
+		rt_ck_malloc_ptr(b_patch->v_knots, "b_patch->v_knots");
+		rt_ck_malloc_ptr(b_patch->v_knots->knots,
+			"b_patch->v_knots->knots");
 	}
 
 	/* Copy the control points */
 
-	mesh_pointer = b_patch->ctl_mesh->mesh;
+	mesh_pointer = b_patch->mesh->ctl_points;
 
 	for( i = 0; i< 4; i++)
 	for( j = 0; j < 4; j++)
