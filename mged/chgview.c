@@ -371,7 +371,8 @@ char	**argv;
  *			D O _ L I S T
  */
 void
-do_list( dp, verbose )
+do_list( outfp, dp, verbose )
+FILE	*outfp;
 register struct directory *dp;
 int	verbose;
 {
@@ -383,10 +384,10 @@ int	verbose;
 	mat_t			ident;
 	struct rt_vls		str;
 
-	printf("%s:  ", dp->d_namep);
+	fprintf( outfp, "%s:  ", dp->d_namep);
 	RT_INIT_EXTERNAL(&ext);
 	if( db_get_external( &ext, dp, dbip ) < 0 )  {
-		printf("db_get_external failure\n");
+		printf("db_get_external(%s) failure\n", dp->d_namep);
 		return;
 	}
 	rp = (union record *)ext.ext_buf;
@@ -394,26 +395,26 @@ int	verbose;
 	/* XXX This should be converted to _import and _describe routines! */
 	if( rp[0].u_id == ID_COMB )  {
 		/* Combination */
-		(void)printf("%s (len %d) ", dp->d_namep, dp->d_len-1 );
+		(void)fprintf( outfp, "%s (len %d) ", dp->d_namep, dp->d_len-1 );
 		if( rp[0].c.c_flags == 'R' )
 			(void)printf("REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
 				rp[0].c.c_regionid,
 				rp[0].c.c_aircode,
 				rp[0].c.c_los,
 				rp[0].c.c_material );
-		(void)printf("--\n");
+		(void)fprintf(outfp,"--\n");
 		if( rp[0].c.c_matname[0] )
-			(void)printf("Material '%s' '%s'\n",
+			(void)fprintf(outfp,"Material '%s' '%s'\n",
 				rp[0].c.c_matname,
 				rp[0].c.c_matparm);
 		if( rp[0].c.c_override == 1 )
-			(void)printf("Color %d %d %d\n",
+			(void)fprintf(outfp,"Color %d %d %d\n",
 				rp[0].c.c_rgb[0],
 				rp[0].c.c_rgb[1],
 				rp[0].c.c_rgb[2]);
 		if( rp[0].c.c_matname[0] || rp[0].c.c_override )  {
 			if( rp[0].c.c_inherit == DB_INH_HIGHER )
-				(void)printf("(These material properties override all lower ones in the tree)\n");
+				(void)fprintf(outfp,"(These material properties override all lower ones in the tree)\n");
 		}
 
 		for( i=1; i < dp->d_len; i++ )  {
@@ -445,22 +446,22 @@ int	verbose;
 			if( xmat[15] != 1.0 )  status |= STAT_SCALE;
 
 			if( verbose )  {
-				(void)printf("  %c %s",
+				(void)fprintf(outfp,"  %c %s",
 					rp[i].M.m_relation, rp[i].M.m_instname );
 				if( status & STAT_ROT )  {
 					fastf_t	az, el;
 					ae_vec( &az, &el, xmat );
-					(void)printf(" az=%g, el=%g, ", az, el );
+					(void)fprintf(outfp," az=%g, el=%g, ", az, el );
 				}
 				if( status & STAT_XLATE )
-					(void)printf(" [%g,%g,%g]",
+					(void)fprintf(outfp," [%g,%g,%g]",
 						xmat[MDX]*base2local,
 						xmat[MDY]*base2local,
 						xmat[MDZ]*base2local);
 				if( status & STAT_SCALE )
-					(void)printf(" scale %g", xmat[15] );
+					(void)fprintf(outfp," scale %g", xmat[15] );
 				if( status & STAT_PERSP )
-					(void)printf(" ??Perspective=[%g,%g,%g]??",
+					(void)fprintf(outfp," ??Perspective=[%g,%g,%g]??",
 						xmat[12], xmat[13], xmat[14] );
 				(void)putchar('\n');
 			} else {
@@ -489,15 +490,15 @@ int	verbose;
 	id = rt_id_solid( &ext );
 	mat_idn( ident );
 	if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )  {
-		printf("database import error\n");
+		printf("%s: database import error\n", dp->d_namep);
 		goto out;
 	}
 	rt_vls_init( &str );
 	if( rt_functab[id].ft_describe( &str, &intern,
 	    verbose, base2local ) < 0 )
-		printf("describe error\n");
+		printf("%s: describe error\n", dp->d_namep);
 	rt_functab[id].ft_ifree( &intern );
-	fputs( rt_vls_addr( &str ), stdout );
+	fputs( rt_vls_addr( &str ), outfp );
 	rt_vls_free( &str );
 
 out:
@@ -519,7 +520,7 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		do_list( dp, 1 );	/* verbose */
+		do_list( stdout, dp, 1 );	/* verbose */
 	}
 }
 
@@ -538,7 +539,7 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		do_list( dp, 0 );	/* non-verbose */
+		do_list( stdout, dp, 0 );	/* non-verbose */
 	}
 }
 

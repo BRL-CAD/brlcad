@@ -124,7 +124,7 @@ f_analyze()
 			temp_rec.s.s_cgtype = type;
 		}
 
-		do_list(ndp);
+		do_list( stdout, ndp, 1 );
 		do_anal();
 	}
 }
