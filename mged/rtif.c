@@ -365,13 +365,13 @@ char	**argv;
 {
 	register char **vp;
 	register int i;
-	struct vlhead	vhead;
 	int	pid, rpid;
 	int	retcode;
 	int	o_pipe[2];
 	int	i_pipe[2];
 	FILE	*fp;
 	struct solid *sp;
+	struct vlblock	*vbp;
 
 	if( not_state( ST_VIEW, "Overlap check in current view" ) )
 		return;
@@ -423,8 +423,8 @@ char	**argv;
 	/* Prepare to receive UNIX-plot back from child */
 	(void)close(i_pipe[1]);
 	fp = fdopen(i_pipe[0], "r");
-	vhead.vh_first = vhead.vh_last = VL_NULL;
-	(void)uplot_vlist( &vhead, fp );
+	vbp = rt_vlblock_init();
+	(void)uplot_vlist( vbp, fp );
 	fclose(fp);
 
 	/* Wait for program to finish */
@@ -438,8 +438,9 @@ char	**argv;
 		sp->s_iflag = DOWN;
 
 	/* Add overlay */
-	invent_solid( "OVERLAPS", &vhead );
-	dmaflag++;
+	cvt_vlblock_to_solids( vbp, "OVERLAPS" );
+	rt_vlblock_free(vbp);
+	dmaflag = 1;
 }
 
 /*
@@ -734,7 +735,7 @@ static struct command_tab cmdtab[] = {
  */
 static vect_t	rtif_eye_model;
 static mat_t	rtif_viewrot;
-static struct vlhead rtif_vhead;
+static struct vlblock *rtif_vbp;
 
 void
 f_preview( argc, argv )
@@ -756,16 +757,17 @@ char	**argv;
 	/* If user hits ^C, this will stop, but will leave hanging filedes */
 	(void)signal(SIGINT, cur_sigint);
 
-	rtif_vhead.vh_first = rtif_vhead.vh_last = VL_NULL;
+	rtif_vbp = rt_vlblock_init();
 
 	while( ( cmd = rt_read_cmd( fp )) != NULL )  {
 		if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
 			rt_log("command failed: %s\n", cmd);
 		rt_free( cmd, "preview cmd" );
 	}
-
-	invent_solid( "EYE_PATH", &rtif_vhead );
 	fclose(fp);
+
+	cvt_vlblock_to_solids( "EYE_PATH", rtif_vbp );
+	rt_vlblock_free(rtif_vbp);
 }
 
 cm_start(argc, argv)
@@ -851,10 +853,11 @@ int	argc;
 	vect_t	xv, yv;			/* view x, y */
 	vect_t	xm, ym;			/* model x, y */
 	int	move;
+	struct vlhead	*vhead = &rtif_vbp->cvp[0].head;
 
 	/* Record eye path as a polyline.  Move, then draws */
-	move = rtif_vhead.vh_first != VL_NULL;
-	ADD_VL( &rtif_vhead, rtif_eye_model, move );
+	move = vhead->vh_first != VL_NULL;
+	ADD_VL( vhead, rtif_eye_model, move );
 	
 	/* First step:  put eye at view center (view 0,0,0) */
        	mat_copy( Viewrot, rtif_viewrot );
@@ -872,10 +875,10 @@ int	argc;
 	VSET( yv, 0, 0.05, 0 );
 	MAT4X3PNT( xm, view2model, xv );
 	MAT4X3PNT( ym, view2model, yv );
-	ADD_VL( &rtif_vhead, xm, 1 );
-	ADD_VL( &rtif_vhead, rtif_eye_model, 0 );
-	ADD_VL( &rtif_vhead, ym, 1 );
-	ADD_VL( &rtif_vhead, rtif_eye_model, 0 );
+	ADD_VL( vhead, xm, 1 );
+	ADD_VL( vhead, rtif_eye_model, 0 );
+	ADD_VL( vhead, ym, 1 );
+	ADD_VL( vhead, rtif_eye_model, 0 );
 
 	/*  Second step:  put eye at view 0,0,1.
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
