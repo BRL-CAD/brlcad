@@ -269,6 +269,12 @@ int	which_eye;
 	short g = -1;
 	short b = -1;
 
+	/*
+	 * The vectorThreshold stuff in libdm may turn the
+	 * Tcl-crank causing curr_dm_list to change.
+	 */
+	struct dm_list *save_dm_list = curr_dm_list;
+
 	ndrawn = 0;
 	inv_viewsize = 1 / VIEWSIZE;
 
@@ -364,6 +370,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  if( sp->s_iflag == UP )
 	    continue;
 
+	  /*
+	   * The vectorThreshold stuff in libdm may turn the
+	   * Tcl-crank causing curr_dm_list to change.
+	   */
+	  if (curr_dm_list != save_dm_list)
+		  curr_dm_list = save_dm_list;
+
 	  if (dmp->dm_boundFlag) {
 	    ratio = sp->s_size * inv_viewsize;
 
@@ -429,6 +442,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 #endif
 	}
 
+	/*
+	 * The vectorThreshold stuff in libdm may turn the
+	 * Tcl-crank causing curr_dm_list to change.
+	 */
+	if (curr_dm_list != save_dm_list)
+		curr_dm_list = save_dm_list;
+
 	/* draw predictor vlist */
 	if(mged_variables->mv_predictor){
 	  DM_SET_FGCOLOR(dmp,
@@ -462,6 +482,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  /* Ignore all objects not being edited */
 	  if( sp->s_iflag != UP )
 	    continue;
+
+	  /*
+	   * The vectorThreshold stuff in libdm may turn the
+	   * Tcl-crank causing curr_dm_list to change.
+	   */
+	  if (curr_dm_list != save_dm_list)
+		  curr_dm_list = save_dm_list;
 
 	  if (dmp->dm_boundFlag) {
 	    ratio = sp->s_size * inv_viewsize;
@@ -498,6 +525,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  }
 #endif
 	}
+
+	/*
+	 * The vectorThreshold stuff in libdm may turn the
+	 * Tcl-crank causing curr_dm_list to change.
+	 */
+	if (curr_dm_list != save_dm_list)
+		curr_dm_list = save_dm_list;
 }
 
 #ifdef DO_DISPLAY_LISTS
