@@ -219,8 +219,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	GETSTRUCT( tor, tor_specific );
 	stp->st_specific = (int *)tor;
 
-	MAT4X3VEC( tor->tor_V, mat, SP_V );
-
+	MAT4X3PNT( tor->tor_V, mat, SP_V );
 	tor->tor_alpha = r2/r1;
 
 	/* Compute R and invR matrices */
