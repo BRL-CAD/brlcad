@@ -363,6 +363,14 @@ char	**argv;
 
 	/* Save combination name, for use inside loop */
 	comb_name = argv[1];
+	if( (dp=db_lookup( dbip, comb_name, LOOKUP_QUIET )) != DIR_NULL )
+	{
+		if( !(dp->d_flags & DIR_COMB))
+		{
+			Tcl_AppendResult(interp, "ERROR: ", comb_name, " is not a combination\n", (char *)0 );
+			return TCL_ERROR;
+		}
+	}
 
 	/* Get operation and solid name for each solid */
 	for( i = 2; i < argc; i += 2 )  {
