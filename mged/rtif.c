@@ -54,6 +54,7 @@ static int	tree_walk_needed;
  *  Warning:  This may be somewhat system specific, most especially
  *  on non-UNIX machines.
  */
+void
 pr_wait_status( status )
 int	status;
 {
