@@ -132,6 +132,12 @@ char **argv;
 		struct db_i	*dbip;
 		struct directory *dp;
 
+		if( ifp == stdin || ofp == stdout ) {
+			bu_log( "Cannot use stdin or stdout for Release 6 or later databases\n");
+			bu_log( "Please use the \"g2asc input.g output.g\" form\n" );
+			exit( 1 );
+		}
+
 		bu_log("Exporting Release 6 database\n" );
 		bu_log("  Note that the Release 6 binary format is machine independent.\n");
 		bu_log("  Converting to ASCII to move database to a different\n");
