@@ -70,8 +70,7 @@ Usage: png-fb [-H -h -i -c -v -z -1] [-m #lines] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.png]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -159,9 +158,7 @@ register char **argv;
 }
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	register int y;
 	register FBIO *fbp;

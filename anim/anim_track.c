@@ -121,12 +121,10 @@ int len_mode;		/* mode for track_len */
 int anti_strobe;	/* flag: take measures against strobing effect */
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
-	void anim_y_p_r2mat(), anim_add_trans(), anim_mat_print();
-	int get_args(), get_link(), track_prep(), val, frame, i, count;
+	void anim_y_p_r2mat(fastf_t *, double, double, double), anim_add_trans(fastf_t *, const fastf_t *, const fastf_t *), anim_mat_print(FILE *, const fastf_t *, int);
+	int get_args(int argc, char **argv), get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist), track_prep(void), val, frame, i, count;
 	int go;
 	fastf_t y_rot, distance, yaw, pch, roll;
 	vect_t cent_pos, wheel_now, wheel_prev;
@@ -366,13 +364,11 @@ char **argv;
 
 #define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:a"
 
-int get_args(argc,argv)
-int argc;
-char **argv;
+int get_args(int argc, char **argv)
 {
 	int c, i;
 	fastf_t yaw, pch, rll;
-	void anim_dx_y_z2mat(), anim_dz_y_x2mat();
+	void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);
 	/* defaults*/
 	wheel_nindex = link_nindex = 0;
 	axes = cent = print_wheel = print_link = 0;
@@ -508,14 +504,14 @@ char **argv;
  * return values: 0 = GOOD
  * 		 -1 = BAD. Track too short to fit around wheels
  */
-int track_prep()
+int track_prep(void)
 {
 	int i;
 	fastf_t phi, costheta, arc_angle;
 	fastf_t linearlen, hyperlen;
 	vect_t difference;
-	int getcurve();
-	fastf_t hyper_get_s();
+	int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one, fastf_t r_zero, fastf_t r_one);
+	fastf_t hyper_get_s(fastf_t a, fastf_t c, fastf_t x);
 
 	/* first loop - get inter axle slopes and start/end angles */
 	for (i=0;i<NW;i++){
@@ -617,13 +613,11 @@ int track_prep()
  * distance around the track, measured from the point where the caternary
  * section meets wheel.0.
  */
-int get_link(pos,angle_p,dist)
-fastf_t *angle_p, dist;
-vect_t pos;
+int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 {
 	int i;
 	vect_t temp;
-	fastf_t hyper_get_x(), hyper_get_z(), hyper_get_ang();
+	fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang), hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x), hyper_get_ang(fastf_t a, fastf_t c, fastf_t x);
 
 	while (dist >= tracklen) /*periodicize*/
 		dist -= tracklen;
@@ -652,7 +646,7 @@ vect_t pos;
 
 	/* caternary section */
 	if ( curve_a > VDIVIDE_TOL){
-		pos[X] = hyper_get_x(curve_a, 0.0, s_start+dist);
+		pos[X] = hyper_get_x(curve_a, 0.0, s_start+dist, 0, 0, 0);
 		pos[Y] = x[0].w.pos[Y];
 		pos[Z] = hyper_get_z(curve_a,curve_b,0.0, pos[X]);
 		pos[X] += curve_c;
@@ -669,8 +663,8 @@ vect_t pos;
 	return -1;
 }
 
-void show_info(which)/* for debugging - -1:track 0:both 1:link*/
-int which;
+void show_info(int which)/* for debugging - -1:track 0:both 1:link*/
+          
 {
 	int i;
 	if (which <=0){

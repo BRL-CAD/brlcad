@@ -73,7 +73,7 @@ static struct db_i *dbip1, *dbip2;
 static int version2;
 
 void
-compare_colors()
+compare_colors(void)
 {
 	struct mater *mp1, *mp2;
 	int found1=0, found2=0;
@@ -173,15 +173,13 @@ compare_colors()
 }
 
 void
-Usage( str )
-char *str;
+Usage(char *str)
 {
 	fprintf( stderr, "Usage: %s [-m] file1.g file2.g\n", str );
 }
 
 void
-kill_obj( name )
-char *name;
+kill_obj(char *name)
 {
 	if( mode == HUMAN ) {
 		printf( "%s has been killed\n", name );
@@ -191,8 +189,7 @@ char *name;
 }
 
 void
-compare_external( dp1, dp2 )
-struct directory *dp1, *dp2;
+compare_external(struct directory *dp1, struct directory *dp2)
 {
 	struct bu_external ext1, ext2;
 
@@ -273,11 +270,7 @@ compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
 }
 
 void
-do_compare( type, vls, obj1, obj2, obj_name )
-int type;
-struct bu_vls *vls;
-Tcl_Obj *obj1, *obj2;
-char *obj_name;
+do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj_name)
 {
 	Tcl_Obj *key1, *val1, *key2, *val2;
 	int len1, len2, found, junk;
@@ -514,10 +507,7 @@ char *obj_name;
 }
 
 void
-compare_tcl_solids( str1, obj1, dp1, str2, obj2, dp2 )
-char *str1, *str2;
-Tcl_Obj *obj1, *obj2;
-struct directory *dp1, *dp2;
+compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2, Tcl_Obj *obj2, struct directory *dp2)
 {
 	char *c1, *c2;
 	struct bu_vls adjust;
@@ -558,9 +548,7 @@ struct directory *dp1, *dp2;
 }
 
 void
-compare_tcl_combs( obj1, dp1, obj2, dp2 )
-Tcl_Obj *obj1, *obj2;
-struct directory *dp1, *dp2;
+compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2, struct directory *dp2)
 {
 	int junk;
 	struct bu_vls adjust;
@@ -760,8 +748,7 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 }
 
 void
-diff_objs( wdb1, wdb2 )
-struct rt_wdb *wdb1, *wdb2;
+diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 {
 	int i;
 	struct directory *dp1, *dp2;
@@ -916,9 +903,7 @@ struct rt_wdb *wdb1, *wdb2;
 }
 
 int
-main( argc, argv )
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	char *invoked_as;
 	char *file1, *file2;

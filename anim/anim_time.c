@@ -53,15 +53,10 @@ int maxlines = 	 0;
 int domem = 	 0;
 int debug = 	 0;
 
-int get_args();
+int get_args(int argc, char **argv);
 
 fastf_t
-gettime(dist, a, b, c, init)
-fastf_t dist;
-fastf_t a;
-fastf_t b;
-fastf_t c;
-fastf_t init;
+gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
 {
 
 	fastf_t old,new,temp;
@@ -91,9 +86,7 @@ fastf_t init;
 }
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	fastf_t *l, *x, *y, *z;
 	fastf_t temp0,temp1,temp2,start=0.0,end,v0,v1;
@@ -233,9 +226,7 @@ char **argv;
 
 /* code to read command line arguments*/
 #define OPT_STR "ds:e:i:f:qm:v"
-int get_args(argc,argv)
-int argc;
-char **argv;
+int get_args(int argc, char **argv)
 {
 	int c;
 

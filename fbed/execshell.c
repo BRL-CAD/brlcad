@@ -34,9 +34,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	return an error.
  */
 int
-exec_Shell( args )
-char *args[];
-	{
+exec_Shell(char **args)
+{
 	register int child_pid;
 
 	if( args[0] == NULL )

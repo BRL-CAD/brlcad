@@ -51,18 +51,19 @@ static const char RCSid[] = "$Header$";
 #define	INNER_SHELL	0x00000002
 #define INVERT_SHELL	0x00000004
 
-void euclid_to_brlcad();
-int find_vert();
-int store_vert();
-int read_euclid_face();
-int cvt_euclid_region();
-
-extern int errno;
-
 struct vlist {
 	fastf_t		pt[3*MAX_PTS_PER_FACE];
 	struct vertex	*vt[MAX_PTS_PER_FACE];
 };
+
+void euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout);
+int find_vert(struct vlist *vert, int nv, fastf_t x, fastf_t y, fastf_t z);
+int store_vert(struct vlist *vert, int *nv, fastf_t x, fastf_t y, fastf_t z);
+int read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv);
+int cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id);
+
+extern int errno;
+
 
 struct bu_ptbl groups[11];
 
@@ -72,8 +73,7 @@ static char	usage[] = "Usage: %s [-v] [-i euclid_db] [-o brlcad_db] [-d toleranc
 static struct bn_tol  tol;
 
 void
-Find_loop_crack( s )
-struct shell *s;
+Find_loop_crack(struct shell *s)
 {
 	struct faceuse *fu;
 
@@ -121,9 +121,7 @@ struct shell *s;
 }
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	char		*bfile, *efile;
 	FILE		*fpin;
@@ -227,10 +225,7 @@ char	*argv[];
  *	Write the nmg to a brl-cad style data base.
  */
 static void
-add_nmg_to_db(fpout, m, reg_id)
-struct rt_wdb	*fpout;
-struct model	*m;
-int		reg_id;
+add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 {
 	char	id[80], *rname, *sname;
 	int gift_ident;
@@ -301,8 +296,7 @@ int		reg_id;
 }
 
 static void
-build_groups( fpout )
-struct rt_wdb *fpout;
+build_groups(struct rt_wdb *fpout)
 {
 	int i,j;
 	struct wmember head;
@@ -387,9 +381,7 @@ struct rt_wdb *fpout;
  *		<A B C> is an outward pointing surface normal.
  */
 void
-euclid_to_brlcad(fpin, fpout)
-FILE	*fpin;
-struct rt_wdb *fpout;
+euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 {
 	char	str[80];
 	int	reg_id;
@@ -504,10 +496,7 @@ int reg_id;
  *	This list represents the face under construction.
  */
 int
-cvt_euclid_region(fp, fpdb, reg_id)
-FILE	*fp;
-struct rt_wdb *fpdb;
-int	reg_id;
+cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 {
 	int	cur_id, face, facet_type, i, lst[MAX_PTS_PER_FACE], np, nv;
 	int hole_face = -4200;
@@ -1064,10 +1053,7 @@ int	reg_id;
  *	no errors during reading...
  */
 int
-read_euclid_face(lst, ni, fp, vert, nv)
-FILE	*fp;
-int	*lst, *ni, *nv;
-struct vlist	*vert;
+read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
 {
 	double	num_points, x, y, z, a, b, c, d;
 	int	i, j, k, facet_type;
@@ -1140,10 +1126,7 @@ struct vlist	*vert;
  *	a -1.
  */
 int
-find_vert(vert, nv, x, y, z)
-struct vlist	*vert;
-int		nv;
-fastf_t		x, y, z;
+find_vert(struct vlist *vert, int nv, fastf_t x, fastf_t y, fastf_t z)
 {
 	int	found, i;
 	point_t new_pt;
@@ -1170,10 +1153,7 @@ fastf_t		x, y, z;
  *	Store vertex in an array of vertices.
  */
 int
-store_vert(vert, nv, x, y, z)
-struct vlist	*vert;
-int	*nv;
-fastf_t	x, y, z;
+store_vert(struct vlist *vert, int *nv, fastf_t x, fastf_t y, fastf_t z)
 {
 	vert->pt[*nv*3+0] = x;
 	vert->pt[*nv*3+1] = y;

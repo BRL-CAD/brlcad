@@ -1,27 +1,26 @@
 #define PADCHR		~(1<<15)		/* non data value.*/
 
 char *
-endstr( str ) 
-char *str;
+endstr(char *str)
 {	while( *str != 0 )	*str++;
 	return( str );
 }
 
-strcpy( s, t )	/* === */
-char	*s, *t;
+strcpy(char *s, char *t)	/* === */
+    	       
 {
 	while( (*s++ = *t++) != '\0' );
 	*s = '\0';
 }
-strappend( s, t )	/* === */
-char	*s, *t;
+strappend(char *s, char *t)	/* === */
+    	       
 {	s = endstr( s );
 	while( (*s++ = *t++) != '\0' );
 	*s = '\0';
 }
 
-maxmin( l, n, max, min )	/*  === */
-int    *l, n,*max,*min;
+maxmin(int *l, int n, int *max, int *min)	/*  === */
+                       
 {
 	*max = -PADCHR;
 	*min =  PADCHR;

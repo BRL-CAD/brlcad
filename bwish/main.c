@@ -41,11 +41,11 @@
 #include "dm.h"
 #endif
 
-extern int cmdInit();
-extern void Cad_Main();
+extern int cmdInit(Tcl_Interp *interp);
+extern void Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp);
 extern void Tk_CreateCanvasBezierType();
 
-static int Cad_AppInit();
+static int Cad_AppInit(Tcl_Interp *interp);
 #ifdef BWISH
 Tk_Window tkwin;
 #endif
@@ -53,9 +53,7 @@ Tk_Window tkwin;
 Tcl_Interp *interp;
 
 int
-main(argc, argv)
-     int argc;
-     char **argv;
+main(int argc, char **argv)
 {
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
@@ -65,8 +63,7 @@ main(argc, argv)
 }
 
 static int
-Cad_AppInit(interp)
-     Tcl_Interp *interp;
+Cad_AppInit(Tcl_Interp *interp)
 {
 	struct bu_vls vls;
 	char *pathname;

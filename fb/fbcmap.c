@@ -34,8 +34,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "fb.h"
 
-void		usage();
-int		pars_Argv();
+void		usage(char **argv);
+int		pars_Argv(int argc, register char **argv);
 
 static char	*framebuffer = NULL;
 static int	scr_width = 0;
@@ -65,8 +65,7 @@ static unsigned char	utah_cmap[256] = {
 };
 
 int
-main(argc, argv)
-char *argv[];
+main(int argc, char **argv)
 {
 	register int		i;
 	register int		fudge;
@@ -74,7 +73,7 @@ char *argv[];
 	FBIO *fbp;
 
 	if( ! pars_Argv( argc, argv ) ) {
-		usage();
+		usage( NULL );
 		return	1;
 	}
 
@@ -221,7 +220,7 @@ char *argv[];
 		(void) fprintf(	stderr,
 				"Color map #%d, flavor not implemented!\n",
 				flavor );
-		usage();
+		usage( NULL );
 		return	1;
 	}
 	fb_wmap( fbp, cp );
@@ -231,8 +230,7 @@ char *argv[];
 /*	p a r s _ A r g v ( )
  */
 int
-pars_Argv( argc, argv )
-register char	**argv;
+pars_Argv(int argc, register char **argv)
 {
 	register int	c;
 	extern int	optind;
@@ -268,7 +266,7 @@ register char	**argv;
 }
 
 void
-usage()
+usage(char **argv)
 {
 	(void) fprintf(stderr,"Usage : fbcmap [-h] [-F framebuffer]\n");
 	(void) fprintf(stderr,"	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");

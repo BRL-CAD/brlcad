@@ -105,9 +105,8 @@ drand48()
 #endif
 
 static char *
-Simple( path )
-	char		*path;
-	{
+Simple(char *path)
+{
 	register char	*s;		/* -> past last '/' in path */
 
 	return (s = strrchr( path, '/' )) == NULL || *++s == '\0' ? path : s;
@@ -115,10 +114,8 @@ Simple( path )
 
 
 static void
-VMessage( format, ap )
-	char	*format;
-	va_list	ap;
-	{
+VMessage(char *format, va_list ap)
+{
 	(void)fprintf( stderr, "%s: ", arg0 );
 #ifndef HAVE_VPRINTF
 	(void)fprintf( stderr, format,	/* kludge city */
@@ -190,9 +187,8 @@ Fatal( va_alist )
 
 
 static void
-Sig_Catcher( sig )
-	int	sig;
-	{
+Sig_Catcher(int sig)
+{
 	(void)signal( sig, SIG_DFL );
 
 	/* The following is not guaranteed to work, but it's worth a try. */
@@ -201,10 +197,8 @@ Sig_Catcher( sig )
 
 
 int
-main( argc, argv )
-	int	argc;
-	char	*argv[];
-	{
+main(int argc, char **argv)
+{
 	/* Plant signal catcher. */
 	{
 	static int	getsigs[] =	/* signals to catch */

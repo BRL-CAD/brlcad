@@ -200,11 +200,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 }
 
 static int
-select_lights( tsp, pathp, combp, client_data )
-register struct db_tree_state	*tsp;
-struct db_full_path		*pathp;
-const struct rt_comb_internal	*combp;
-genptr_t			client_data;
+select_lights(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
 	struct directory *dp;
 	struct rt_db_internal intern;
@@ -247,11 +243,7 @@ genptr_t			client_data;
 }
 
 static int
-select_non_lights( tsp, pathp, combp, client_data )
-register struct db_tree_state	*tsp;
-struct db_full_path		*pathp;
-const struct rt_comb_internal	*combp;
-genptr_t			client_data;
+select_non_lights(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
 	int ret;
 
@@ -263,11 +255,7 @@ genptr_t			client_data;
 }
 
 union tree *
-leaf_tess(tsp, pathp, ip, client_data)
-struct db_tree_state    *tsp;
-struct db_full_path     *pathp;
-struct rt_db_internal	*ip;
-genptr_t                client_data;
+leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
 	struct rt_bot_internal *bot;
 	struct plate_mode *pmp = (struct plate_mode *)client_data;
@@ -359,9 +347,7 @@ writeX3dEnd(FILE *fp_out) {
  *			M A I N
  */
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	int		i;
 	register int	c;
@@ -554,11 +540,7 @@ char	*argv[];
 }
 
 void
-nmg_2_vrml( fp, pathp, m, mater )
-FILE *fp;
-struct db_full_path *pathp;
-struct model *m;
-struct mater_info *mater;
+nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_info *mater)
 {
 	struct nmgregion *reg;
 	struct bu_ptbl verts;
@@ -1231,11 +1213,7 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree, client_data)
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-genptr_t		client_data;
+union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
 	struct plate_mode *pmp = (struct plate_mode *)client_data;
 	char *name;
@@ -1270,11 +1248,7 @@ genptr_t		client_data;
 	return( (union tree *)NULL );
 }
 
-union tree *nmg_region_end(tsp, pathp, curtree, client_data)
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-genptr_t		client_data;
+union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
 	struct nmgregion	*r;
 	struct bu_list		vhead;

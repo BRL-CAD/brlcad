@@ -57,10 +57,7 @@ extern struct msr_unif *RandomFlag;
  *	Christopher T. Johnson	- 90/03/21
  */
 int
-tone_floyd(pix,x,y,nx,ny,new)
-int	pix;
-int	x, y, nx, ny;
-int	new;
+tone_floyd(int pix, int x, int y, int nx, int ny, int new)
 {
 	static int *error = 0;
 	static int *thisline;

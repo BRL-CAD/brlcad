@@ -33,12 +33,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 /* defined in read.c */
-extern int getline();
-extern int getint();
-extern void namecvt();
+extern int getline(register char *cp, int buflen, char *title);
+extern int getint(char *cp, int start, int len);
+extern void namecvt(register int n, register char *cp, int c);
 
 /* defined in cvt.c */
-extern void col_pr();
+extern void col_pr(char *str);
 
 extern char	name_it[];
 
@@ -53,11 +53,11 @@ extern int	verbose;
 
 char	rcard[128];
 
-void	region_register();
-void	group_init();
-void	group_register();
-void	group_add();
-void	group_write();
+void	region_register(int reg_num, int id, int air, int mat, int los);
+void	group_init(void);
+void	group_register(char *name, int lo, int hi);
+void	group_add(register int val, char *name);
+void	group_write(void);
 
 /*
  *			G E T R E G I O N
@@ -69,7 +69,7 @@ void	group_write();
  *	 0	done
  */
 int
-getregion()
+getregion(void)
 {
 	int i, j;
 	int card;
@@ -211,7 +211,7 @@ top:
  * Load the region ID information into the structures
  */
 void
-getid()
+getid(void)
 {
 	int reg_num;
 	int id;
@@ -255,7 +255,7 @@ getid()
  *			R E G I O N _ R E G I S T E R
  */
 void
-region_register( reg_num, id, air, mat, los )
+region_register(int reg_num, int id, int air, int mat, int los)
 {
 	register struct wmember	*wp;
 
@@ -287,7 +287,7 @@ struct groups {
 int	ngroups;
 
 void
-group_init()
+group_init(void)
 {
 	group_register( "g00", 0, 0 );
 	group_register( "g0", 1, 99 );
@@ -314,8 +314,7 @@ group_init()
 }
 
 void
-group_register( name, lo, hi )
-char	*name;
+group_register(char *name, int lo, int hi)
 {
 	char	nbuf[32];
 	register struct wmember	*wp;
@@ -337,9 +336,7 @@ char	*name;
 }
 
 void
-group_add( val, name )
-register int	val;
-char		*name;
+group_add(register int val, char *name)
 {
 	register int	i;
 
@@ -356,7 +353,7 @@ add:
 }
 
 void
-group_write()
+group_write(void)
 {
 	register struct wmember	*wp;
 	struct wmember		allhead;

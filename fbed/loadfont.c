@@ -31,9 +31,8 @@ char sccsTag[] = "@(#) loadfont.c 1.14, modified 5/6/86 at 15:33:42, archive /vl
 #include "./try.h"
 #include "./extern.h"
 
-loadfont( ff )
-char *ff;
-	{
+loadfont(char *ff)
+{
 	FILE		*newff;
 	struct header	lochdr;
 

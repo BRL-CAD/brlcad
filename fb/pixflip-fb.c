@@ -45,7 +45,7 @@ char	*basename;		/* basename of input file(s) */
 int	framenumber = 0;	/* starting frame number (default is 0) */
 int	fps = 8;		/* frames/second */
 
-void		showframe();
+void		showframe(register int i);
 
 FBIO	*fbp;
 int	verbose = 0;
@@ -65,8 +65,7 @@ Usage: pixflip-fb [-h]\n\
 	[-o startframe] basename [file2 ... fileN]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -128,8 +127,7 @@ register char **argv;
 }
 
 int
-main( argc, argv )
-char **argv;
+main(int argc, char **argv)
 {
 	register int i;
 	unsigned char	*obuf;
@@ -254,8 +252,7 @@ done:
 }
 
 void
-showframe(i)
-register int i;
+showframe(register int i)
 {
 	if( verbose )  {
 		fprintf(stderr, " %d", i);

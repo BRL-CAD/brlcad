@@ -45,27 +45,27 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 /* defined in read.c */
-extern int getline();
-extern int getint();
-extern void namecvt();
+extern int getline(register char *cp, int buflen, char *title);
+extern int getint(char *cp, int start, int len);
+extern void namecvt(register int n, register char *cp, int c);
 
 /* defined in cvt.c */
-extern void col_pr();
+extern void col_pr(char *str);
 
 /* defined in solid.c */
-extern int read_arbn();
+extern int read_arbn(char *name);
 
 extern struct rt_wdb	*outfp;
 extern int	version;
 extern int	verbose;
 
-extern double	getdouble();
+extern double	getdouble(char *cp, int start, int len);
 extern int	sol_total, sol_work;
 
 char	scard[132];			/* Solid card buffer area */
 
-void	trim_trail_spaces();
-void	eat();
+void	trim_trail_spaces(register char *cp);
+void	eat(int count);
 
 /*
  *			G E T S O L D A T A
@@ -78,10 +78,7 @@ void	eat();
  *	-1	failure
  */
 int
-getsoldata( dp, num, solid_num )
-double	*dp;
-int	num;
-int	solid_num;
+getsoldata(double *dp, int num, int solid_num)
 {
 	int	cd;
 	double	*fp;
@@ -131,10 +128,7 @@ int	solid_num;
  *	-1	failure
  */
 int
-getxsoldata( dp, num, solid_num )
-double	*dp;
-int	num;
-int	solid_num;
+getxsoldata(double *dp, int num, int solid_num)
 {
 	int	cd;
 	double	*fp;
@@ -177,8 +171,7 @@ int	solid_num;
  *			T R I M _ T R A I L _ S P A C E S
  */
 void
-trim_trail_spaces( cp )
-register char	*cp;
+trim_trail_spaces(register char *cp)
 {
 	register char	*ep;
 
@@ -198,7 +191,7 @@ register char	*cp;
  *	 1	EOF
  */
 int
-getsolid()
+getsolid(void)
 {
 	char	given_solid_num[16];
 	char	solid_type[16];
@@ -736,8 +729,7 @@ ell1:
 }
 
 int
-read_arbn( name )
-char	*name;
+read_arbn(char *name)
 {
 	int	npt;			/* # vertex pts to be read in */
 	int	npe;			/* # planes from 3 vertex points */
@@ -1047,8 +1039,7 @@ next_k:				;
  *  Eat the indicated number of input lines
  */
 void
-eat( count )
-int	count;
+eat(int count)
 {
 	char	lbuf[132];
 	int	i;

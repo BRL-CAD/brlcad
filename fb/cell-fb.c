@@ -232,22 +232,18 @@ static const char   *mon_nam[] =
 
 STATIC struct locrec	gp_locs;
 
-STATIC bool	get_OK();
-STATIC bool	pars_Argv();
-STATIC long	read_Cell_Data();
-STATIC void	init_Globs();
-STATIC void	prnt_Usage();
-STATIC void	val_To_RGB();
-STATIC void	log_Run();
-STATIC bool	display_Cells();
-STATIC void	fill_colortbl();
+STATIC bool	get_OK(void);
+STATIC bool	pars_Argv(register int argc, register char **argv);
+STATIC long	read_Cell_Data(void);
+STATIC void	init_Globs(void);
+STATIC void	prnt_Usage(void);
+STATIC void	val_To_RGB(cell_val cv, unsigned char *rgb);
+STATIC void	log_Run(void);
+STATIC bool	display_Cells(long int ncells);
+STATIC void	fill_colortbl(unsigned char *lo_rgb, unsigned char *hi_rgb);
 
 int
-main (argc, argv)
-
-int	argc;
-char	**argv;
-
+main (int argc, char **argv)
 {	
     static long	ncells;
 
@@ -303,7 +299,7 @@ char	**argv;
 #define	STATE_IN_DATA		2
 #define	STATE_BEYOND_DATA	3
 
-STATIC long read_Cell_Data()
+STATIC long read_Cell_Data(void)
 {	
     static char		linebuf[MAX_LINE];
     static char		*lbp = NULL;
@@ -415,7 +411,7 @@ STATIC long read_Cell_Data()
     return (gp - grid);
 }
 
-STATIC bool get_OK()
+STATIC bool get_OK(void)
 {	
     int		c;
     FILE	*infp;
@@ -440,7 +436,7 @@ STATIC bool get_OK()
 	return (false);
     return (true);
 }
-STATIC void init_Globs()
+STATIC void init_Globs(void)
 {
     xmin = POS_INFINITY;
     ymin = POS_INFINITY;
@@ -449,10 +445,7 @@ STATIC void init_Globs()
     return;
 }
 
-STATIC bool display_Cells (ncells)
-
-long	ncells;
-
+STATIC bool display_Cells (long int ncells)
 {	
     register Cell	*gp, *ep = &grid[ncells];
     static int		zoom;
@@ -641,11 +634,7 @@ long	ncells;
     return (true);
 }
 
-STATIC void val_To_RGB (cv, rgb)
-
-cell_val	cv;
-RGBpixel	rgb;
-
+STATIC void val_To_RGB (cell_val cv, unsigned char *rgb)
 {
     double	val;
 
@@ -698,11 +687,7 @@ RGBpixel	rgb;
     return;
 }
 
-STATIC struct locrec *mk_locrec (h, v)
-
-fastf_t	h;
-fastf_t	v;
-
+STATIC struct locrec *mk_locrec (fastf_t h, fastf_t v)
 {
     struct locrec	*lrp;
 
@@ -714,11 +699,7 @@ fastf_t	v;
     return (lrp);
 }
 
-STATIC bool pars_Argv (argc, argv)
-
-register int	argc;
-register char	**argv;
-
+STATIC bool pars_Argv (register int argc, register char **argv)
 {	
     register int	c;
     extern int		optind;
@@ -981,7 +962,7 @@ register char	**argv;
     return (true);
 }
 /*	prnt_Usage() --	Print usage message. */
-STATIC void prnt_Usage()
+STATIC void prnt_Usage(void)
 {	
     register char	**p = usage;
 
@@ -990,7 +971,7 @@ STATIC void prnt_Usage()
     return;
 }
 
-STATIC void log_Run()
+STATIC void log_Run(void)
 {
     time_t              clock;
     mat_t		model2hv;		/* model to h,v matrix */
@@ -1061,11 +1042,7 @@ STATIC void log_Run()
 }
 
 STATIC void
-fill_colortbl (lo_rgb, hi_rgb)
-
-RGBpixel	lo_rgb;
-RGBpixel	hi_rgb;
-
+fill_colortbl (unsigned char *lo_rgb, unsigned char *hi_rgb)
 {
     int		i;
     double	a, b;

@@ -55,9 +55,7 @@ char ihead[] = "-i";
 char ohead[] = "-o";
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int i,j, maxlength,num_done;
 	int icount, ocount;
@@ -140,8 +138,8 @@ char **argv;
 	exit(0);
 }
 
-int max(m,n) /*return greatest of n integers, unless one is greater than n*/
-int m[],n;
+int max(int *m, int n) /*return greatest of n integers, unless one is greater than n*/
+          
 {
 	int i,j;
 	j = 0;

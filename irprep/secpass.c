@@ -67,11 +67,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define GAMMA 35.	/*  Rotation about x-axis.  */
 
 struct application ap;	/*  Structure passed between functions.  */
-extern int hit();	/*  User defined hit function.  */
-extern int miss();	/*  User defined miss function.  */
-extern int ovrlap();	/*  User defined overlap function.  */
-extern void rotate();	/*  Subroutine to rotate a point.  */
-extern double radians();/*  Subroutine to put an angle into radians.  */
+extern int hit(register struct application *ap_p, struct partition *PartHeadp);	/*  User defined hit function.  */
+extern int miss(register struct application *ap_p);	/*  User defined miss function.  */
+extern int ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2);	/*  User defined overlap function.  */
+extern void rotate(double *p, double *a, double *np);	/*  Subroutine to rotate a point.  */
+extern double radians(double a);/*  Subroutine to put an angle into radians.  */
 
 /*  Define structure.  */
 /*  Make arrays into pointers such that malloc may be used  */
@@ -104,11 +104,7 @@ int icur;			/*  current region hit  */
 double enterpt[3];		/*  point where ray enters  */
 double leavept[3];		/*  point where ray leaves  */
 
-int main(argc,argv)
-
-int argc;
-char *argv[];
-
+int main(int argc, char **argv)
 {	/*  START # 1  */
 
    static struct rt_i *rtip;	/*  *rtip pointer to structure of  */
@@ -1157,11 +1153,7 @@ char *argv[];
 
 /*  User supplied hit function.  */
 int
-hit(ap_p,PartHeadp)
-
-register struct application *ap_p;
-struct partition *PartHeadp;
-
+hit(register struct application *ap_p, struct partition *PartHeadp)
 {	/*  START # 1H  */
 
    register struct partition *pp;
@@ -1308,10 +1300,7 @@ struct partition *PartHeadp;
 
 /*  User supplied miss function.  */
 int
-miss(ap_p)
-
-register struct application *ap_p;
-
+miss(register struct application *ap_p)
 {	/*  START # 1M  */
 
 /*
@@ -1324,13 +1313,13 @@ register struct application *ap_p;
 }	/*  END # 1M */
 
 int
-ovrlap(ap_p,PartHeadp,reg1,reg2)
+ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2)
 
 /*  User supplied overlap function that does nothing.  */
 
-register struct application *ap_p;
-struct partition *PartHeadp;
-struct region *reg1,*reg2;
+                                  
+                            
+                          
 {
 	return(1);
 }

@@ -33,9 +33,9 @@
  * x(s) = arcsinh(a*s-sinh(a*c))/a + c
  * Left to calling routine to avoid dividing by zero.
  */
-fastf_t hyper_get_x(a,c, s, d, x, cos_ang)
-fastf_t a, c; 	/* curve parameters */
-fastf_t s;		/* arclength value  */
+fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
+              	/* curve parameters */
+          		/* arclength value  */
 {
 	fastf_t arg, asinh_arg;
 
@@ -50,8 +50,7 @@ fastf_t s;		/* arclength value  */
  * s(x) = (sinh(a(x-c))+sinh(ac))/a 
  * Left to calling routime to avoid dividing by zero.
  */
-fastf_t hyper_get_s(a, c, x)
-fastf_t a, c, x;
+fastf_t hyper_get_s(fastf_t a, fastf_t c, fastf_t x)
 {
 		return((sinh(a*(x-c))+sinh(a*c))/a);
 }
@@ -60,8 +59,7 @@ fastf_t a, c, x;
  * z(x) = cosh(a*(x-c))/a + b
  * Left to calling routine to avoid dividing by zero.
  */
-fastf_t hyper_get_z(a,b,c,x)
-fastf_t a,b,c,x;
+fastf_t hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x)
 {
 	fastf_t z;
 
@@ -77,8 +75,7 @@ fastf_t a,b,c,x;
  * caternary curve.
  * z'(x) = sinh(a*(x-c))
  */
-fastf_t hyper_get_ang(a,c,x)
-fastf_t a,c,x;
+fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x)
 {
 	fastf_t slope;
 
@@ -94,16 +91,16 @@ fastf_t a,c,x;
  * the curve touches each circle. When called successively,
  * It uses the values of a,b, and c from the last call as a start.
  */
-int getcurve(pa,pb,pc,pth0,pth1,delta_s, p_zero, p_one, r_zero, r_one)
-fastf_t	*pa, *pb, *pc;	/* curve parameters */
-fastf_t *pth0, *pth1;	/* angle where curve contacts circle0,circle1 */
-fastf_t delta_s;	/* desired arclength */
-fastf_t r_zero, r_one;  /* radii of circle0 and circle1 */
-vect_t p_zero, p_one;	/* center of circle0 and circle1 */
+int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one, fastf_t r_zero, fastf_t r_one)
+       	              	/* curve parameters */
+                     	/* angle where curve contacts circle0,circle1 */
+                	/* desired arclength */
+                        /* radii of circle0 and circle1 */
+                     	/* center of circle0 and circle1 */
 {
 
 	int status, i, solved;
-	int ingetcurve();
+	int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one);
 	fastf_t theta_one, theta_zero, new_theta_zero, new_theta_one;
 	fastf_t avg_theta_zero, avg_theta_one, arc_dist;
 	fastf_t tang_ang, costheta;
@@ -185,14 +182,11 @@ vect_t p_zero, p_one;	/* center of circle0 and circle1 */
  * passes through (x0,z0) and (x1,z1) and has arclength delta_s
  * Appropriate first guesses for a,b, and c should be given.
  */
-int ingetcurve(pa,pb,pc, delta_s, p_zero, p_one)
-fastf_t	*pa, *pb, *pc;
-fastf_t delta_s;
-vect_t p_zero, p_one;
+int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one)
 {
 	int status, i, j, k;
 	fastf_t adjust;
-	fastf_t eff(),gee();
+	fastf_t eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s),gee(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_z);
 
 	status = MAX_REACHED;
 	i=0;
@@ -230,8 +224,7 @@ vect_t p_zero, p_one;
 }
 
 /* find Newtonian adjustment for 'a', assuming 'c' fixed*/
-fastf_t eff(a,c,x0,x1,delta_s)
-fastf_t a,c,x0,x1,delta_s;
+fastf_t eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s)
 {
 	double f,fprime;
 	double arg0, arg1, sarg0, sarg1;
@@ -256,8 +249,7 @@ fastf_t a,c,x0,x1,delta_s;
 }
 
 /* find Newtonian adjustment for c, assuming 'a' fixed*/
-fastf_t gee(a,c,x0,x1,delta_z)
-fastf_t a,c,x0,x1,delta_z;
+fastf_t gee(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_z)
 {
 	double g, gprime, arg0, arg1;
 

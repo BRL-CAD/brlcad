@@ -15,8 +15,7 @@
 #include "tcl.h"
 
 int
-Pkg_Init(interp)
-     Tcl_Interp *interp;
+Pkg_Init(Tcl_Interp *interp)
 {
 	return TCL_OK;
 }

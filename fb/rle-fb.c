@@ -60,8 +60,7 @@ Usage: rle-fb [-c -d -h -O] [-F framebuffer]  [-C r/g/b]\n\
  *			G E T _ A R G S
  */
 static int
-get_args( argc, argv )
-register char	**argv;
+get_args(int argc, register char **argv)
 {
 	register int	c;
 
@@ -141,9 +140,7 @@ register char	**argv;
  *			M A I N
  */
 int
-main( argc, argv)
-int argc;
-char ** argv;
+main(int argc, char **argv)
 {
 	FBIO	*fbp;
 	register int i;
@@ -259,7 +256,7 @@ char ** argv;
 	scan_buf = (unsigned char *)malloc( sizeof(RGBpixel) * screen_width );
 
 	for( i=0; i < ncolors; i++ )
-		rows[i] = (unsigned char *)malloc(file_width);
+		rows[i] = (unsigned char *)malloc((size_t)file_width);
 	for( ; i < 3; i++ )
 		rows[i] = rows[0];	/* handle monochrome images */
 

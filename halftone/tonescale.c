@@ -15,7 +15,7 @@ typedef struct Cubic {
 	double	x,A,B,C,D;
 } C;
 static struct Cubic	*EqCubics=0;
-int eq_cubic();
+int eq_cubic(int x);
 
 /*	tonescale	Given a raw pixel value, return a scaled value
  *
@@ -49,6 +49,12 @@ int eq_cubic();
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 11.6.2.1  2002/09/19 18:00:59  morrison
+ * Initial ANSIfication
+ *
+ * Revision 11.6  2002/08/20 17:07:31  jra
+ * Restoration of entire source tree to Pre-Hartley state
+ *
  * Revision 11.4  2000/08/24 23:09:00  mike
  *
  * lint
@@ -86,11 +92,7 @@ int eq_cubic();
  * 
  */
 void
-tonescale(map,Slope,B,eqptr)
-unsigned char	*map;
-float		Slope,
-		B;
-int 		(*eqptr)();
+tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
 {
 	int i,result;
 
@@ -162,8 +164,7 @@ int 		(*eqptr)();
  *	Christopher T. Johnson - 90/03/22
  */
 int
-eq_cubic(x)
-int x;
+eq_cubic(int x)
 {
 	int y;
 	struct Cubic *p = EqCubics;
@@ -209,9 +210,7 @@ int x;
  *	
  */
 void
-cubic_init(n,x,y)
-int n;
-int *x,*y;
+cubic_init(int n, int *x, int *y)
 {
 	int i;
 	double *h,*alpha,*mi,*z,*l;

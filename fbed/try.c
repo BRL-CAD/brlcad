@@ -30,11 +30,8 @@ static const char RCSid[] = "@(#) try.c 2.1, modified 12/9/86 at 15:54:34, archi
 			Malloc_Bomb(); \
 			}
 int
-add_Try( ftbl, name, trypp )
-Func_Tab	*ftbl;
-register char *name;
-register Try	**trypp;
-	{	register Try	*curp;
+add_Try(Func_Tab *ftbl, register char *name, register Try **trypp)
+{	register Try	*curp;
 	if( *name == NUL )
 		{ /* We are finished, make leaf node. */
 		NewTry( *trypp );
@@ -63,10 +60,8 @@ register Try	**trypp;
 	}
 
 Func_Tab *
-get_Try( name, tryp )
-register char *name;
-register Try	*tryp;
-	{	register Try *curp = NULL; /* initialize to shutup compiler. */
+get_Try(register char *name, register Try *tryp)
+{	register Try *curp = NULL; /* initialize to shutup compiler. */
 	/* Traverse next links to end of function name. */
 	for( ; tryp != TRY_NULL; tryp = tryp->n.t_next )
 		{

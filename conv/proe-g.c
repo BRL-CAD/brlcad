@@ -174,8 +174,7 @@ struct ptc_surf_list
 #define	CUT_SOLID_TYPE	3
 
 char *
-Build_unique_name( name )
-char *name;
+Build_unique_name(char *name)
 {
 	struct name_conv_list *ptr;
 	int name_len;
@@ -204,10 +203,7 @@ char *name;
 }
 
 static struct name_conv_list *
-Add_new_name( name , obj , type )
-char *name;
-unsigned int obj;
-int type;
+Add_new_name(char *name, unsigned int obj, int type)
 {
 	struct name_conv_list *ptr;
 
@@ -289,10 +285,7 @@ int type;
 }
 
 static char *
-Get_unique_name( name , obj , type )
-char *name;
-unsigned int obj;
-int type;
+Get_unique_name(char *name, unsigned int obj, int type)
 {
 	struct name_conv_list *ptr,*prev;
 
@@ -330,9 +323,7 @@ int type;
 }
 
 static char *
-Get_solid_name( name , obj )
-char *name;
-unsigned int obj;
+Get_solid_name(char *name, unsigned int obj)
 {
 	struct name_conv_list *ptr;
 
@@ -348,8 +339,7 @@ unsigned int obj;
 }
 
 static void
-Convert_assy( line )
-char line[MAX_LINE_LEN];
+Convert_assy(char *line)
 {
 	struct wmember head;
 	struct wmember *wmem = NULL;
@@ -522,12 +512,7 @@ char line[MAX_LINE_LEN];
 }
 
 static void
-do_modifiers( line1, start, head, name, min, max )
-char *line1;
-int *start;
-struct wmember *head;
-char *name;
-point_t min, max;
+do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t *min, fastf_t *max)
 {
 	struct wmember *wmem;
 	int i;
@@ -660,8 +645,7 @@ point_t min, max;
 }
 
 void
-Add_face( face )
-int face[3];
+Add_face(int *face)
 {
 	if( !bot_faces )
 	{
@@ -680,8 +664,7 @@ int face[3];
 }
 
 static void
-Convert_part( line )
-char line[MAX_LINE_LEN];
+Convert_part(char *line)
 {
 	char line1[MAX_LINE_LEN];
 	char name[MAX_LINE_LEN + 1];
@@ -1022,7 +1005,7 @@ char line[MAX_LINE_LEN];
 }
 
 static void
-Convert_input()
+Convert_input(void)
 {
 	char line[ MAX_LINE_LEN ];
 
@@ -1049,7 +1032,7 @@ Convert_input()
 }
 
 static void
-Rm_nulls()
+Rm_nulls(void)
 {
 	struct db_i *dbip;
 	int i;	
@@ -1177,9 +1160,7 @@ Rm_nulls()
  *			M A I N
  */
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	register int c;
 

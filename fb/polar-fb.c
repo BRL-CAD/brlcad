@@ -27,10 +27,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "fb.h"
 
-void PrintUsage();
-void ArgCompat();
-int LoadNPF();
-int OnGrid();
+void PrintUsage(int ShoOpts);
+void ArgCompat(int Interior);
+int LoadNPF(char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max);
+int OnGrid(double theta, double rho);
 
 /* Program constants */
 #define		High_Size	1024
@@ -120,11 +120,7 @@ RGBpixel	Color[] = {
 };
 
 int
-main (argc, argv)
-
-int	argc;
-char	*argv[];
-
+main (int argc, char **argv)
 {
     bool	clr_fb = FALSE;	/* Clear the frame buffer first? */
     bool	draw_grid = TRUE;	/* Plot the plolar axes? */
@@ -161,11 +157,11 @@ char	*argv[];
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 
     void		(*Fill_Func)();
-    void		Fill_Empty();
-    void		Fill_Constant();
-    void		Fill_Ramp();
-    void		Fill_Wedges();
-    void		Fill_Rings();
+    void		Fill_Empty(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
+    void		Fill_Constant(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
+    void		Fill_Ramp(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
+    void		Fill_Wedges(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
+    void		Fill_Rings(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
 
 /* Initialize things */
     ProgName = *argv;
@@ -696,10 +692,7 @@ char	*argv[];
 }
 
 void
-PrintUsage (ShoOpts)
-
-bool	ShoOpts;
-
+PrintUsage (int ShoOpts)
 {
     char	**oPtr;		/* Pointer to option string */
 
@@ -715,14 +708,14 @@ bool	ShoOpts;
 }
 
 bool
-LoadNPF (FileName, Table, Quantum, convert, arc_min, arc_max)
+LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max)
 
-char	*FileName;	/* Name of input file */
-double	*Table;		/* Location for storing function */
-int	Quantum;	/* Angular resolution of Table (in degrees) */
-double	convert;	/* Factor to convert input units to radians */
-double	arc_min;	/* First angle of interest */
-double	arc_max;	/* Last    "    "     "    */
+    	          	/* Name of input file */
+      	       		/* Location for storing function */
+   	        	/* Angular resolution of Table (in degrees) */
+      	        	/* Factor to convert input units to radians */
+      	        	/* First angle of interest */
+      	        	/* Last    "    "     "    */
 
 {
     bool	Warnings = 0;	/* Have any warning messages been printed? */
@@ -822,11 +815,7 @@ double	arc_max;	/* Last    "    "     "    */
 }
 
 int
-OnGrid (theta, rho)
-
-double	theta;
-double	rho;
-
+OnGrid (double theta, double rho)
 {
     int		t;
     double	squeeze;	/* factor to squeeze the radii */
@@ -853,8 +842,7 @@ double	rho;
 }
 
 void
-ArgCompat (Interior)
-
+ArgCompat (int Interior)
 {
     if (Interior != BI_RINGS)
     {
@@ -865,13 +853,13 @@ ArgCompat (Interior)
 }
 
 void
-Fill_Empty (fbbPtr, rho, npf_rho, unit_r, merge)
+Fill_Empty (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-unsigned char	*fbbPtr;	/* Pointer to within fbb */
-double		rho;		/* Radius of current pixel */
-double		npf_rho;	/* Value of function at this theta */
-int		unit_r;		/* Unit radius (in pixels) */
-bool		merge;		/* Overlay onto current FB contents? */
+             	        	/* Pointer to within fbb */
+      		    		/* Radius of current pixel */
+      		        	/* Value of function at this theta */
+   		       		/* Unit radius (in pixels) */
+    		      		/* Overlay onto current FB contents? */
 
 {
     if (! merge)
@@ -879,26 +867,26 @@ bool		merge;		/* Overlay onto current FB contents? */
 }
 
 void
-Fill_Constant (fbbPtr, rho, npf_rho, unit_r, merge)
+Fill_Constant (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-unsigned char	*fbbPtr;	/* Pointer to within fbb */
-double		rho;		/* Radius of current pixel */
-double		npf_rho;	/* Value of function at this theta */
-int		unit_r;		/* Unit radius (in pixels) */
-bool		merge;		/* Overlay onto current FB contents? */
+             	        	/* Pointer to within fbb */
+      		    		/* Radius of current pixel */
+      		        	/* Value of function at this theta */
+   		       		/* Unit radius (in pixels) */
+    		      		/* Overlay onto current FB contents? */
 
 {
     COPYRGB(fbbPtr, Color[C_INTERIOR])
 }
 
 void
-Fill_Ramp (fbbPtr, rho, npf_rho, unit_r, merge)
+Fill_Ramp (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-unsigned char	*fbbPtr;	/* Pointer to within fbb */
-double		rho;		/* Radius of current pixel */
-double		npf_rho;	/* Value of function at this theta */
-int		unit_r;		/* Unit radius (in pixels) */
-bool		merge;		/* Overlay onto current FB contents? */
+             	        	/* Pointer to within fbb */
+      		    		/* Radius of current pixel */
+      		        	/* Value of function at this theta */
+   		       		/* Unit radius (in pixels) */
+    		      		/* Overlay onto current FB contents? */
 
 {
     RGBpixel	ThisPix;	/* Ramped color for current pixel */
@@ -913,13 +901,13 @@ bool		merge;		/* Overlay onto current FB contents? */
 }
 
 void
-Fill_Wedges (fbbPtr, rho, npf_rho, unit_r, merge)
+Fill_Wedges (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-unsigned char	*fbbPtr;	/* Pointer to within fbb */
-double		rho;		/* Radius of current pixel */
-double		npf_rho;	/* Value of function at this theta */
-int		unit_r;		/* Unit radius (in pixels) */
-bool		merge;		/* Overlay onto current FB contents? */
+             	        	/* Pointer to within fbb */
+      		    		/* Radius of current pixel */
+      		        	/* Value of function at this theta */
+   		       		/* Unit radius (in pixels) */
+    		      		/* Overlay onto current FB contents? */
 
 {
     if (npf_rho > .8)
@@ -935,13 +923,13 @@ bool		merge;		/* Overlay onto current FB contents? */
 }
 
 void
-Fill_Rings (fbbPtr, rho, npf_rho, unit_r, merge)
+Fill_Rings (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-unsigned char	*fbbPtr;	/* Pointer to within fbb */
-double		rho;		/* Radius of current pixel */
-double		npf_rho;	/* Value of function at this theta */
-int		unit_r;		/* Unit radius (in pixels) */
-bool		merge;		/* Overlay onto current FB contents? */
+             	        	/* Pointer to within fbb */
+      		    		/* Radius of current pixel */
+      		        	/* Value of function at this theta */
+   		       		/* Unit radius (in pixels) */
+    		      		/* Overlay onto current FB contents? */
 
 {
     if (rho / unit_r > .8)

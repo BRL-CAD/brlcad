@@ -57,12 +57,12 @@
 #define DTOR    M_PI/180.0
 #define RTOD    180.0/M_PI
 
-int		parse_args();
-extern void	anim_y_p_r2mat();
-extern void	anim_tran();
-extern void	anim_v_unpermute();
-extern void	anim_dirn2mat();
-extern void	anim_v_permute();
+int		parse_args(int argc, char **argv);
+extern void	anim_y_p_r2mat(fastf_t *, double, double, double);
+extern void	anim_tran(fastf_t *);
+extern void	anim_v_unpermute(fastf_t *);
+extern void	anim_dirn2mat(fastf_t *, const fastf_t *, const fastf_t *);
+extern void	anim_v_permute(fastf_t *);
 
 extern int optind;
 extern char *optarg;
@@ -72,14 +72,12 @@ int input_mode, output_mode, length, input_units, output_units;
 int input_perm, output_perm, input_inv, output_inv;
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int num_read;
 	fastf_t	temp[3], temp2[3],angle[3],quat[4],matrix[16];
-	void anim_zyx2mat(),anim_ypr2mat(),anim_quat2mat(), anim_mat_print();
-	int anim_mat2ypr(),anim_mat2zyx(),anim_mat2quat();
+	void anim_zyx2mat(fastf_t *, const fastf_t *),anim_ypr2mat(fastf_t *, const fastf_t *),anim_quat2mat(fastf_t *, const fastf_t *), anim_mat_print(FILE *, const fastf_t *, int);
+	int anim_mat2ypr(fastf_t *, fastf_t *),anim_mat2zyx(const fastf_t *, fastf_t *),anim_mat2quat(fastf_t *, const fastf_t *);
 
 	if(!parse_args(argc,argv)) {
 		fprintf(stderr,"Get_args error.\n");
@@ -191,9 +189,7 @@ char **argv;
 	return( 0 );
 }
 
-int parse_args(argc,argv)
-int argc;
-char **argv;
+int parse_args(int argc, char **argv)
 {
 	int c;
 	char *cp;

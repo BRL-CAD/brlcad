@@ -62,9 +62,7 @@ static char *tok_sep=" ";		/* seperator used in input files */
 static char *usage="viewpoint-g [-t tol] -c coord_file_name -e elements_file_name -o output_file_name";
 
 int
-main( argc , argv )
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	register int c;
 	FILE *coords,*elems;		/* input file pointers */

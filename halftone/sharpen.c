@@ -45,6 +45,12 @@ extern double Beta;
  *	Christopher T. Johnson
  *
  * $Log$
+ * Revision 11.5.2.1  2002/09/19 18:00:58  morrison
+ * Initial ANSIfication
+ *
+ * Revision 11.5  2002/08/20 17:07:30  jra
+ * Restoration of entire source tree to Pre-Hartley state
+ *
  * Revision 11.3  2000/08/24 23:09:00  mike
  *
  * lint
@@ -84,12 +90,7 @@ extern double Beta;
  * 
  */
 int
-sharpen(buf,size,num,file,Map)
-unsigned char *buf;
-int  size;
-int  num;
-FILE *file;
-unsigned char *Map;
+sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 {
 	static unsigned char *last,*cur=0,*next;
 	static int linelen;

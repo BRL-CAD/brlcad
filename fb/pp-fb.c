@@ -70,7 +70,7 @@ static unsigned char	pix_buf[FBBUFSIZE]; /* Pixel buffer.			*/
 	fb_p += sizeof(RGBpixel); \
 	}
 char strg[51];
-char g(),gc();
+char g(void),gc(void);
 struct colors {
 	char *name;
 	RGBpixel c_pixel;
@@ -99,21 +99,19 @@ struct colors {
 int ifd,io,grid_w,grid_h,min_w,min_h,max_w,max_h,ni,opq=0;
 int ib=0,ic=0,nc=0,ibc=0,itc=3;
 int itmc[500];
-long itm[500],loci,locd,loct=0,loce,ctoi();
+long itm[500],loci,locd,loct=0,loce,ctoi(void);
 
-void	paint(), prtclr(), prtsmu();
-int	lookup();
+void	paint(void), prtclr(char raw), prtsmu(char raw);
+int	lookup(long int ix, long int *jx, int n);
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int	c;
 	char *cp;
 	char cs[4];
-	int i,j,k,lclr,iquit=0,ichg=0,gclr(),cclr();
-	int il,iu,iclr,iskp,jclr,bsp();
+	int i,j,k,lclr,iquit=0,ichg=0,gclr(void),cclr(char *pc);
+	int il,iu,iclr,iskp,jclr,bsp(void);
 	int scr_w=512,scr_h=512,scr_set=0;
 
 	printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
@@ -432,14 +430,14 @@ again:				printf("      %-7s  %s%c%5ld ",
 }
 
 void
-paint()
+paint(void)
 /* Paint picture */
 {
 	char c;
 	int i,j,iw,ih,iwih,trnf,flop;
 	int	inten = 0;
 	int	inten_high;
-	long li,lj,numb();
+	long li,lj,numb(void);
 	RGBpixel ocl,tcl,pmix,tp,bp;
 	register unsigned char *fb_p;	/* Current position in buffer.	*/
 
@@ -574,7 +572,7 @@ noread:		if(io>31){
 		}
 	}
 }
-long numb()
+long numb(void)
 /*
  *	get number from packed word */
 {
@@ -588,8 +586,8 @@ long numb()
 	}
 	return(n);
 }
-int cclr(pc)
-char *pc;
+int cclr(char *pc)
+         
 /* compare input color to colors available */
 {
 	char *cp;
@@ -601,7 +599,7 @@ char *pc;
 	}
 	return(-1);
 }			
-long ctoi()
+long ctoi(void)
 /*		change char string to integer */
 {
 	long num,neg;
@@ -619,7 +617,7 @@ long ctoi()
 	}
 	return(num*neg);
 }
-char g()
+char g(void)
 /* get char from plot file - check for 75 columns and discard rest */
 {
 	static char c;
@@ -639,7 +637,7 @@ char g()
 		return(' ');
 	}
 }
-int bsp()
+int bsp(void)
 /* back up a line in plot file buff */
 {
 	int kloct,kib;
@@ -660,7 +658,7 @@ int bsp()
 	}
 	return(1);
 }
-char gc()
+char gc(void)
 /* get char from plot file buff */
 {
 	loct++;
@@ -675,7 +673,7 @@ char gc()
 /*	putchar(ibuf[ib]); */
 	return(ibuf[ib]);
 }
-int gclr()
+int gclr(void)
 {
 	char c,cs[3];
 	int i;
@@ -692,9 +690,7 @@ int gclr()
 	}
 	return(cclr(cs));
 }
-int lookup(ix,jx,n)
-int n;
-long ix,*jx;
+int lookup(long int ix, long int *jx, int n)
 {
 	int i,ia,ib;
 	ia= -1;
@@ -709,8 +705,7 @@ long ix,*jx;
 		}
 }
 void
-prtclr(raw)
-char raw;
+prtclr(char raw)
 {
 	int i;
 	printf("Available Colors\n");
@@ -727,8 +722,7 @@ char raw;
 	return;
 }
 void
-prtsmu(raw)
-char raw;
+prtsmu(char raw)
 {
 	if(raw)	printf("\015\n");
 	printf("Menu\n");

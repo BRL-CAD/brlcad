@@ -35,7 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 char *options = "ihoF:";
 /* externs.h includes externs for getopt and associated variables */
 
-void	checkgamma();
+void	checkgamma(double g);
 
 unsigned char rampval[10] = { 255, 128, 64, 32, 16, 8, 4, 2, 1, 0 };
 int x, y, scr_width, scr_height, patch_width, patch_height;
@@ -47,9 +47,7 @@ int image = 0;
 static char usage[] = "\
 Usage: fbgamma [-h -o -i] [-F framebuffer] val [gval bval]\n";
 
-void mk_ramp(fb, r, g, b, n)
-FBIO *fb;
-int r, g, b, n;
+void mk_ramp(FBIO *fb, int r, int g, int b, int n)
 {
 
 	/* grey ramp */
@@ -79,8 +77,7 @@ int r, g, b, n;
 	}
 }
 
-void disp_image(fb)
-FBIO *fb;
+void disp_image(FBIO *fb)
 {
 
 	scr_width = fb_getwidth(fb);
@@ -113,8 +110,7 @@ FBIO *fb;
 
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	i;
 	int	onegamma = 0;
@@ -206,8 +202,7 @@ int argc; char **argv;
 }
 
 void
-checkgamma( g )
-double g;
+checkgamma(double g)
 {
 	if( fabs(g) < 1.0e-10 ) {
 		fprintf( stderr, "fbgamma: gamma too close to zero\n" );

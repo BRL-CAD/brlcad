@@ -27,9 +27,7 @@
 static char *usage="Usage:\n\tcy-g input_laser_scan_file output_brlcad_file.g\n";
 
 int
-main( argc, argv )
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	FILE *infp;
 	struct rt_wdb *outfp;

@@ -64,7 +64,9 @@ RGBpixel	pixcolor = { 255, 255, 255 };
 
 static int	x1, y1, x2, y2;
 
-void		edgelimit(), BuildStr(), Raster();
+void		edgelimit(register struct coords *ppos);
+void		BuildStr(struct coords *pt1, struct coords *pt2);
+void		Raster(register struct stroke *vp);
 
 static char usage[] = "\
 Usage: fbline [-h -c ] [-F framebuffer]\n\
@@ -75,8 +77,7 @@ Usage: fbline [-h -c ] [-F framebuffer]\n\
  *			G E T_ A R G S
  */
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 
 	register int c;
@@ -132,9 +133,7 @@ register char **argv;
  *			M A I N
  */
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	struct coords	start, end;
 
@@ -171,8 +170,7 @@ char **argv;
  *	Really should clip to screen, instead.
  */
 void
-edgelimit( ppos )
-register struct coords *ppos;
+edgelimit(register struct coords *ppos)
 {
 	if( ppos->x >= screen_width )
 		ppos->x = screen_width -1;
@@ -187,8 +185,7 @@ register struct coords *ppos;
  *  set up DDA parameters
  */
 void
-BuildStr( pt1, pt2 )
-struct coords		*pt1, *pt2;
+BuildStr(struct coords *pt1, struct coords *pt2)
 {
 	struct stroke cur_stroke;
 	register struct stroke *vp = &cur_stroke;
@@ -235,8 +232,7 @@ struct coords		*pt1, *pt2;
  *	a zero-length stroke.
  */
 void
-Raster( vp )
-register struct stroke *vp;
+Raster(register struct stroke *vp)
 {
 	register short	dy;		/* raster within active band */
 
