@@ -1809,6 +1809,7 @@ AC_CONFIG_FILES([
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
 	misc/macosx/Resources/Welcome.rtfd/Makefile
 	misc/pro-engineer/Makefile
+	misc/pro-engineer/mk
 	misc/pro-engineer/protk.dat
 	misc/vfont/Makefile
 	pix/Makefile
