@@ -62,13 +62,13 @@ CONST char *str;
 		}
 	}
 
+	/* If in parallel mode, try to signal the leader to die. */
+	bu_kill_parallel();
+
 	if( bu_debug & BU_DEBUG_COREDUMP )  {
 		fprintf(stderr,"bu_bomb causing intentional core dump due to debug flag\n");
 		abort();	/* should dump */
 	}
-
-	/* If in parallel mode, try to signal the leader to die. */
-	bu_kill_parallel();
 
 	exit(12);
 }
