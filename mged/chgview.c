@@ -2024,6 +2024,8 @@ char	**argv;
 	struct solid *lastfound = SOLID_NULL;
 	register int i, j;
 	int nmatch;
+	int	c;
+	int	ri = 0;
 	int	nm_pieces;
 	int	illum_only = 0;
 	char	**path_piece = 0;
@@ -2032,6 +2034,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
+#if 0
 	if(argc < 2 || 3 < argc){
 	  struct bu_vls vls;
 
@@ -2047,6 +2050,50 @@ char	**argv;
 	  --argc;
 	  ++argv;
 	}
+#else
+	if (argc < 2 || 5 < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help ill");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	bu_optind = 1;
+	while ((c = bu_getopt(argc, argv, "i:n")) != EOF) {
+		switch (c) {
+		case 'n':
+			illum_only = 1;
+			break;
+		case 'i':
+			sscanf(bu_optarg, "%d", &ri);
+			if (ri <= 0) {
+				Tcl_AppendResult(interp,
+						 "the reference index must be greater than 0\n",
+						 (char *)NULL);
+				return TCL_ERROR;
+			}
+
+			break;
+		default:
+		case 'h':
+			{
+				struct bu_vls vls;
+
+				bu_vls_init(&vls);
+				bu_vls_printf(&vls, "help ill");
+				Tcl_Eval(interp, bu_vls_addr(&vls));
+				bu_vls_free(&vls);
+				return TCL_ERROR;
+			}
+		}
+	}
+
+	argc -= (bu_optind - 1);
+	argv += (bu_optind - 1);
+#endif
 
 	if(argc != 2){
 	  struct bu_vls vls;
@@ -2086,34 +2133,42 @@ char	**argv;
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l){
 	  int	a_new_match;
 
-	  i = sp -> s_last;
-	  if(sp -> s_path[i] == dp){
-	    a_new_match = 1;
-	    j = nm_pieces - 1;
-	    for(; a_new_match && (i >= 0) && (j >= 0); --i, --j){
-	      sname = sp -> s_path[i] -> d_namep;
-	      if ((*sname != *(path_piece[j]))
-		  || strcmp(sname, path_piece[j]))
-		a_new_match = 0;
-	    }
+	  if (nmatch == 0 || nmatch != ri) {
+		  i = sp -> s_last;
+		  if (sp -> s_path[i] == dp) {
+			  a_new_match = 1;
+			  j = nm_pieces - 1;
+			  for (; a_new_match && (i >= 0) && (j >= 0); --i, --j) {
+				  sname = sp -> s_path[i] -> d_namep;
+				  if ((*sname != *(path_piece[j]))
+				      || strcmp(sname, path_piece[j]))
+					  a_new_match = 0;
+			  }
 
-	    if(a_new_match && ((i >= 0) || (j < 0))){
-	      lastfound = sp;
-	      ++nmatch;
-	    }
+			  if (a_new_match && ((i >= 0) || (j < 0))) {
+				  lastfound = sp;
+				  ++nmatch;
+			  }
+		  }
 	  }
 
 	  sp->s_iflag = DOWN;
 	}
 
-	if( nmatch <= 0 )  {
+	if (nmatch == 0) {
 	  Tcl_AppendResult(interp, argv[1], " not being displayed\n", (char *)NULL);
 	  goto bail_out;
 	}
 
-	if( nmatch > 1 )  {
-	  Tcl_AppendResult(interp, argv[1], " multiply referenced\n", (char *)NULL);
-	  goto bail_out;
+	/* preserve same old behavior */
+	if (nmatch > 1 && ri == 0) {
+		Tcl_AppendResult(interp, argv[1], " multiply referenced\n", (char *)NULL);
+		goto bail_out;
+	} else if (ri != 0 && ri != nmatch) {
+		Tcl_AppendResult(interp,
+				 "the reference index must be less than the number of references\n",
+				 (char *)NULL);
+		goto bail_out;
 	}
 
 	/* Make the specified solid the illuminated solid */
@@ -2173,6 +2228,7 @@ f_sed(
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
+#if 0
   if(argc < 2 || 2 < argc){
     struct bu_vls vls;
 
@@ -2182,6 +2238,17 @@ f_sed(
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
+#else
+  if (argc < 2 || 5 < argc) {
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help sed");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+  }
+#endif
 
   if( not_state( ST_VIEW, "keyboard solid edit start") )
     return TCL_ERROR;
@@ -2195,7 +2262,20 @@ f_sed(
   button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
 
   argv[0] = "ill";
-  return f_ill(clientData, interp, argc, argv);	/* Illuminate named solid --> ST_S_EDIT */
+
+  /* Illuminate named solid --> ST_S_EDIT */
+  if (f_ill(clientData, interp, argc, argv) == TCL_ERROR) {
+	  Tcl_Obj *save_result;
+
+	  save_result = Tcl_GetObjResult(interp);
+	  Tcl_IncrRefCount(save_result);
+	  be_reject(clientData, interp, 0, argv);
+	  Tcl_SetObjResult(interp, save_result);
+	  Tcl_DecrRefCount(save_result);
+	  return TCL_ERROR;
+  }
+
+  return TCL_OK;
 }
 
 void
