@@ -167,9 +167,9 @@ static CONST double rt_NTSC_R[][2] = {
 	{577, 0.6},
 	{580, 0.8},
 	{583, 0.9},
-	{588, 0.95},
+	{587, 0.95},
 	{590, 1.0},
-	{600, 1.0},
+	{598, 1.0},
 	{601, 0.95},
 	{605, 0.9},
 	{610, 0.8},
@@ -221,7 +221,7 @@ static CONST double rt_NTSC_B[][2] = {
 	{450, 1.0},
 	{457, 0.95},
 	{460, 0.9},
-	{467, 0.8},
+	{466, 0.8},
 	{470, 0.6},
 	{479, 0.4},
 	{492, 0.2},
@@ -231,9 +231,9 @@ static CONST double rt_NTSC_B[][2] = {
 	{-1, -1}
 };
 
-static struct rt_tabdata *rt_NTSC_r_tabdata;
-static struct rt_tabdata *rt_NTSC_g_tabdata;
-static struct rt_tabdata *rt_NTSC_b_tabdata;
+struct rt_tabdata *rt_NTSC_r_tabdata;
+struct rt_tabdata *rt_NTSC_g_tabdata;
+struct rt_tabdata *rt_NTSC_b_tabdata;
 
 /* XXX Move to librt/tabdata.c */
 /*
