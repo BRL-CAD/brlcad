@@ -1607,7 +1607,10 @@ char	**argv;
 	while( (c=bu_getopt(argc,argv,"tP:")) != EOF )  {
 		switch(c)  {
 		case 'P':
+#if 0
+			/* not yet supported */
 			ncpu = atoi(bu_optarg);
+#endif
 			break;
 		case 't':
 			triangulate = 1;
