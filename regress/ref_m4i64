@@ -507,7 +507,7 @@ adds = 2250, mults = 1167
 -------------------------------- .burst.m4i64
 -------------------------------- .gtools.m4i64
 -------------------------------- .bwish.m4i64
-vip.arl.army.mil compilation complete
+Compilation Complete
 ./gen.sh -s install
 -------------------------------- h
 ......checking XtndRunsv.h
@@ -3734,7 +3734,7 @@ cake: install is up to date
 -------------------------------- pro-engineer/text/menus
 ......checking intf_exprt.aux
 ++++++INSTALLED /usr/brlcad-regress/pro-engineer/text/menus/intf_exprt.aux
-vip.arl.army.mil installation complete
+Installation Complete
 solids.sh
 NOTICE:  moss.g is BRL-CAD v5 format.
 rendering solids...
@@ -3744,4 +3744,4 @@ moss.pix       0 off by many
 shaders.sh
 rendering shaders...
 shaders.pix       0 off by many
-Regression Testing Completed
+Regression Testing Complete

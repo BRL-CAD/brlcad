@@ -1298,7 +1298,7 @@ adds = 2250, mults = 1167
 -------------------------------- .gtools.li
 -------------------------------- .bwish.li
 -------------------------------- .btclsh.li
-wider.arl.army.mil compilation complete
+Compilation Complete
 ./gen.sh -s install
 -------------------------------- h
 ......checking XtndRunsv.h
@@ -3722,7 +3722,7 @@ cake: install is up to date
 -------------------------------- pro-engineer/text/menus
 ......checking intf_exprt.aux
 ++++++INSTALLED /n/cad/c/regress/brlcad.li/pro-engineer/text/menus/intf_exprt.aux
-wider.arl.army.mil .regress.li installation complete
+Installation Complete
 RUNNING TEST:
 /n/cad/c/regress/brlcad/regress/tests.d/shaders.sh
 rendering shaders...
@@ -3753,4 +3753,4 @@ Creating region id=1000, air=0, GIFTmaterial=1, los=100
 Defaulting item number to 1027
 Creating region id=1026, air=0, GIFTmaterial=1, los=100
 rendering...
-wider.arl.army.mil regression complete at Mon Sep 10 02:57:22 EDT 2001
+Regression Testing Complete

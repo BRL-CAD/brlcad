@@ -1687,7 +1687,7 @@ cake: base file ../.libtk8.3.sun5/libtk8.3.so.15 does not exist
 -------------------------------- .btclsh.sun5
 ../sh/sharedlibvers.sh: ERROR, ../.libtcl8.3.sun5/libtcl8.3.so.15 does not actually exist
 cake: base file ../.libtcl8.3.sun5/libtcl8.3.so.15 does not exist
-widest.arl.army.mil compilation complete
+Compilation Complete
 ./gen.sh -s install
 -------------------------------- h
 ......checking XtndRunsv.h
@@ -4946,4 +4946,4 @@ cake: base file ../.libtcl8.3.sun5/libtcl8.3.so.15 does not exist
 -------------------------------- pro-engineer/text/menus
 ......checking intf_exprt.aux
 ++++++INSTALLED /tmp/brlcad/pro-engineer/text/menus/intf_exprt.aux
-Regression Testing Completed
+Regression Testing Complete

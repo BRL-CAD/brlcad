@@ -1434,7 +1434,7 @@ adds = 2250, mults = 1167
 -------------------------------- .burst.7d
 -------------------------------- .gtools.7d
 -------------------------------- .bwish.7d
-whiz.arl.army.mil compilation complete at Thu Aug 31 07:28:21 EDT 2000
+Compilation Complete
 ./gen.sh -s install
 -------------------------------- h
 ......checking XtndRunsv.h
@@ -4589,7 +4589,7 @@ ld32: INFO 152: Output file removed because of error.
 -------------------------------- pro-engineer/text/menus
 ......checking intf_exprt.aux
 ++++++INSTALLED /usr/brlcad/pro-engineer/text/menus/intf_exprt.aux
-whiz.arl.army.mil installation complete at Thu Aug 31 07:36:49 EDT 2000
+Installation Complete
 solids.sh
 NOTICE:  moss.g is BRL-CAD v5 format.
 rendering solids...
@@ -4599,4 +4599,4 @@ moss.pix       0 off by many
 shaders.sh
 rendering shaders...
 shaders.pix       0 off by many
-Regression Testing completed
+Regression Testing Complete

@@ -170,7 +170,6 @@ adds = 2250, mults = 1167
 -------------------------------- .gtools.fbsd
 -------------------------------- .bwish.fbsd
 -------------------------------- .btclsh.fbsd
-wide.arl.army.mil compilation complete
 ./gen.sh -s install
 -------------------------------- h
 ......checking XtndRunsv.h
@@ -2574,7 +2573,7 @@ cake: install is up to date
 -------------------------------- pro-engineer/text/menus
 ......checking intf_exprt.aux
 ++++++INSTALLED /c/regress/brlcad.fbsd/pro-engineer/text/menus/intf_exprt.aux
-wide.arl.army.mil .regress.fbsd installation complete
+Installation Complete
 RUNNING TEST:
 /c/regress/brlcad/regress/tests.d/shaders.sh
 rendering shaders...
@@ -2606,4 +2605,4 @@ Creating region id=1000, air=0, GIFTmaterial=1, los=100
 Defaulting item number to 1027
 Creating region id=1026, air=0, GIFTmaterial=1, los=100
 rendering...
-Regression Testing Completed
+Regression Testing Complete
