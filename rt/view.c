@@ -184,7 +184,7 @@ register struct application *ap;
 				/* Framebuffer output */
 				RES_ACQUIRE( &rt_g.res_syscall );
 				npix = fb_write( fbp, ap->a_x, ap->a_y,
-					(char *)p, 1 );
+					(RGBpixel *)p, 1 );
 				RES_RELEASE( &rt_g.res_syscall );
 				if( npix < 1 )  rt_bomb("pixel fb_write error");
 			}
@@ -275,7 +275,7 @@ register struct application *ap;
 			for( dy=spread; dy >= 0; dy-- )  {
 				yy = ap->a_y + dy;
 				npix = fb_write( fbp, 0, yy,
-					scanline[yy].sl_buf,
+					(RGBpixel *)scanline[yy].sl_buf,
 					width );
 				if( npix != width )  break;
 			}
@@ -294,7 +294,7 @@ register struct application *ap;
 			int		npix;
 			RES_ACQUIRE( &rt_g.res_syscall );
 			npix = fb_write( fbp, 0, ap->a_y,
-			    scanline[ap->a_y].sl_buf, width );
+			    (RGBpixel *)scanline[ap->a_y].sl_buf, width );
 			RES_RELEASE( &rt_g.res_syscall );
 			if( npix < width )  rt_bomb("scanline fb_write error");
 		}
