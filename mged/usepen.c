@@ -226,8 +226,8 @@ char	**argv;
 	  return TCL_OK;
 
 	case ST_S_EDIT:
-	  if(!SEDIT_ROTATE && es_edflag > IDLE){
-	    mousevec[Z] = absolute_slew[Z];
+	  if(SEDIT_TRAN || SEDIT_SCALE){
+	    mousevec[Z] = edit_absolute_tran[Z];
 	    aslewview( mousevec );
 	  }else
 #if 1
@@ -274,7 +274,7 @@ char	**argv;
 		return TCL_OK;
 
 	case ST_O_EDIT:
-	  if(!OEDIT_ROTATE && edobj)
+	  if(OEDIT_TRAN || OEDIT_SCALE)
 	    aslewview( mousevec );
 	  else
 #if 1

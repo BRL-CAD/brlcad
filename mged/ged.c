@@ -865,13 +865,52 @@ int	non_blocking;
       /*********************************
        *  Handle rate-based processing *
        *********************************/
+      if( edit_rateflag_rotate ) {
+	struct bu_vls vls;
+
+	non_blocking++;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob -i ax %f ay %f az %f\n",
+		      edit_rate_rotate[X] * 6,
+		      edit_rate_rotate[Y] * 6,
+		      edit_rate_rotate[Z] * 6);
+	
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+      }
+
+      if( edit_rateflag_tran ) {
+	struct bu_vls vls;
+
+	non_blocking++;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob -i aX %f aY %f aZ %f\n",
+		      -edit_rate_tran[X] / 10,
+		      -edit_rate_tran[Y] / 10,
+		      -edit_rate_tran[Z] / 10);
+	
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+      }
+
+      if( edit_rateflag_scale ) {
+	struct bu_vls vls;
+
+	non_blocking++;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob -i aS %f\n", edit_rate_scale);
+	
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+      }
+
       if( rateflag_rotate )  {
 #if 1
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i ax %f ay %f az %f\n",
+	bu_vls_printf(&vls, "knob -i -v ax %f ay %f az %f\n",
 		      rate_rotate[X] * 6,
 		      rate_rotate[Y] * 6,
 		      rate_rotate[Z] * 6);
@@ -1127,17 +1166,16 @@ double a1, a2, a3;		/* DOUBLE angles, in degrees */
   point_t new_pos;
 
   if(EDIT_TRAN)
-    MAT4X3PNT(model_pos, view2model, absolute_slew);
+    MAT4X3PNT(model_pos, view2model, edit_absolute_tran);
 
   buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
   new_mats();
 
-  if(EDIT_TRAN){
-    MAT4X3PNT(absolute_slew, model2view, model_pos);
-  }else{
-    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-    MAT4X3PNT(absolute_slew, model2view, new_pos);
-  }
+  if(EDIT_TRAN)
+    MAT4X3PNT(edit_absolute_tran, model2view, model_pos);
+
+  VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+  MAT4X3PNT(absolute_slew, model2view, new_pos);
 
   if(tkwin != NULL)
     Tcl_Eval(interp, "set_sliders");
@@ -1193,59 +1231,21 @@ void
 slewview( view_pos )
 vect_t view_pos;
 {
-#if 1
-#if 1
-  struct bu_vls vls;
+  point_t	old_model_center;
+  point_t	new_model_center;
+  vect_t	diff;
+  mat_t	delta;
 
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "knob -i aX %f aY %f aZ %f",
-		-view_pos[X], -view_pos[Y], -view_pos[Z]);
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-#else
-  char *av[9];
-  struct bu_vls x_vls, y_vls, z_vls;
+  MAT_DELTAS_GET_NEG( old_model_center, toViewcenter );
 
-  bu_vls_init(&x_vls);
-  bu_vls_init(&y_vls);
-  bu_vls_init(&z_vls);
-  bu_vls_printf(&x_vls, "%f", -view_pos[X]);
-  bu_vls_printf(&y_vls, "%f", -view_pos[Y]);
-  bu_vls_printf(&z_vls, "%f", -view_pos[Z]);
+  MAT4X3PNT( new_model_center, view2model, view_pos );
+  MAT_DELTAS_VEC_NEG( toViewcenter, new_model_center );
 
-  av[0] = "knob";
-  av[1] = "-i";
-  av[2] = "aX";
-  av[3] = bu_vls_addr(&x_vls);
-  av[4] = "aY";
-  av[5] = bu_vls_addr(&y_vls);;
-  av[6] = "aZ";
-  av[7] = bu_vls_addr(&z_vls);;
-  av[8] = NULL;
-
-  (void)f_knob((ClientData)NULL, interp, 8, av);
-
-  bu_vls_free(&x_vls);
-  bu_vls_free(&y_vls);
-  bu_vls_free(&z_vls);
-#endif
-#else
-	point_t	old_model_center;
-	point_t	new_model_center;
-	vect_t	diff;
-	mat_t	delta;
-
-	MAT_DELTAS_GET_NEG( old_model_center, toViewcenter );
-
-	MAT4X3PNT( new_model_center, view2model, view_pos );
-	MAT_DELTAS_VEC_NEG( toViewcenter, new_model_center );
-
-	VSUB2( diff, new_model_center, old_model_center );
-	mat_idn( delta );
-	MAT_DELTAS_VEC( delta, diff );
-	mat_mul2( delta, ModelDelta );
-	new_mats();
-#endif
+  VSUB2( diff, new_model_center, old_model_center );
+  mat_idn( delta );
+  MAT_DELTAS_VEC( delta, diff );
+  mat_mul2( delta, ModelDelta );
+  new_mats();
 }
 
 /*

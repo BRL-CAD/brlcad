@@ -61,7 +61,7 @@ int cmd_get();
 int get_more_default();
 int tran(), irot();
 int f_tran();
-void set_tran(), mged_setup(), cmd_setup(), mged_compat();
+void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 
 extern mat_t    ModelDelta;
@@ -2508,7 +2508,7 @@ set_e_axes_pos()
   }
 
   if(EDIT_TRAN) {
-    MAT4X3PNT( absolute_slew, model2view, e_axes_pos );
+    MAT4X3PNT( edit_absolute_tran, model2view, e_axes_pos );
   }else{
     point_t new_pos;
 
@@ -2516,7 +2516,7 @@ set_e_axes_pos()
     MAT4X3PNT(absolute_slew, model2view, new_pos);
 
     if(EDIT_ROTATE)
-      VSETALL( absolute_rotate, 0.0 );
+      VSETALL( edit_absolute_rotate, 0.0 );
   }
 #endif
 }
@@ -2579,35 +2579,6 @@ char    **argv;
 }
 
 
-/*
- *                         S E T _ T R A N
- *
- * Calculate the values for absolute_slew.
- *
- *
- */
-void
-set_tran(x, y, z)
-fastf_t x, y, z;
-{
-  point_t diff;
-  point_t old_pos;
-  point_t new_pos;
-  point_t view_pos;
-
-  diff[X] = x - e_axes_pos[X];
-  diff[Y] = y - e_axes_pos[Y];
-  diff[Z] = z - e_axes_pos[Z];
-  
-  /* If there is more than one active view, then absolute_slew
-     needs to be initialized for each view. */
-  MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
-  VADD2(new_pos, old_pos, diff);
-  MAT4X3PNT(view_pos, model2view, new_pos);
-  VMOVE( absolute_slew, view_pos );
-}
-
-
 int
 tran(view_pos)
 vect_t view_pos;
@@ -2616,11 +2587,11 @@ vect_t view_pos;
   point_t new_pos;
   point_t diff;
 
-  if(state == ST_S_EDIT && !SEDIT_ROTATE && es_edflag > IDLE){
+  if(SEDIT_TRAN){
     tran_set = 1;
     sedit_mouse(view_pos);
     tran_set = 0;
-  }else if(state == ST_O_EDIT && !OEDIT_ROTATE && edobj){
+  }else if(OEDIT_TRAN){
     tran_set = 1;
     objedit_mouse(view_pos);
     tran_set = 0;

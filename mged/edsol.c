@@ -58,8 +58,6 @@ extern struct rt_tol		mged_tol;	/* from ged.c */
 
 extern void set_e_axes_pos();
 
-void set_tran();
-
 #if 0
 extern int      savedit;
 #endif
@@ -4998,7 +4996,7 @@ char	**argv;
 		  if(SEDIT_TRAN){
 		    vect_t temp;
 		    
-		    MAT4X3PNT( absolute_slew, model2view, es_para );
+		    MAT4X3PNT( edit_absolute_tran, model2view, es_para );
 		  }
 #endif
 			/* must convert to base units */
@@ -5010,16 +5008,6 @@ char	**argv;
 			break;
 	}
 
-#if 0
-	if(es_edflag >= SROT && es_edflag <= ECMD_ETO_ROT_C){
-	  VMOVE(absolute_rotate, es_para);
-	}else
-
-	if(es_edflag >= STRANS && es_edflag <= PTARB){
-	  if(!tran_set)
-	    set_tran(es_para[0], es_para[1], es_para[2]);
-	}
-#endif
 	return TCL_OK;
 
 	/* XXX I would prefer to see an explicit call to the guts of sedit()

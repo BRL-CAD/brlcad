@@ -48,6 +48,7 @@ struct _mged_variables default_mged_variables = {
 /* send_key */                  0,
 /* hot_key */                   0,
 /* view */                      0,
+/* edit */                      0,
 /* predictor */			0,
 /* predictor_advance */		1.0,
 /* predictor_length */		2.0,
@@ -89,7 +90,7 @@ nmg_eu_dist_set()
 #define MV_O(_m)	offsetof(struct _mged_variables, _m)
 struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		FUNC_NULL },
-	{"%d",	1, "rateknobs",		MV_O(rateknobs),	FUNC_NULL },
+	{"%d",	1, "rateknobs",		MV_O(rateknobs),	set_scroll },
 	{"%d",	1, "adcflag",		MV_O(adcflag),          set_scroll },
 	{"%d",	1, "scroll_enabled",	MV_O(scroll_enabled),   set_scroll },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	FUNC_NULL },
@@ -102,6 +103,7 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "send_key",          MV_O(send_key),         FUNC_NULL },
 	{"%d",  1, "hot_key",           MV_O(hot_key),         FUNC_NULL },
 	{"%d",  1, "view",              MV_O(view),             set_view },
+	{"%d",  1, "edit",              MV_O(edit),             set_scroll },
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
@@ -290,26 +292,23 @@ set_view()
   }
 
   if(EDIT_TRAN)
-    MAT4X3PNT(model_pos, view2model, absolute_slew);
+    MAT4X3PNT(model_pos, view2model, edit_absolute_tran);
 
   /* restore previously saved view and Viewscale */
   mat_copy(Viewrot, viewrot_table[current_view]);
   Viewscale = viewscale_table[current_view];
   new_mats();
 
-  if(EDIT_TRAN){
-    MAT4X3PNT(absolute_slew, model2view, model_pos);
-  }else{
-    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-    MAT4X3PNT(absolute_slew, model2view, new_pos);
-  }
+  if(EDIT_TRAN)
+    MAT4X3PNT(edit_absolute_tran, model2view, model_pos);
+
+  VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+  MAT4X3PNT(absolute_slew, model2view, new_pos);
 }
 
 static void
 set_scroll()
 {
-  /* pre-toggle scroll_enabled */
-  mged_variables.scroll_enabled = !mged_variables.scroll_enabled;
-
-  sl_toggle_scroll();
+  if( mged_variables.scroll_enabled )
+    Tcl_Eval( interp, "sliders on");
 }

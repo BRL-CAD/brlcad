@@ -233,28 +233,15 @@ XEvent *eventPtr;
 
       break;
     case ALT_MOUSE_MODE_ROTATE:
-#if 0
       bu_vls_printf( &cmd, "knob -i ax %f ay %f\n",
-		     (my - ((struct ogl_vars *)dmp->dm_vars)->omy)/4.0,
-		     (mx - ((struct ogl_vars *)dmp->dm_vars)->omx)/4.0 );
-#else
-      bu_vls_printf( &cmd, "vrot %f %f 0.0",
 		     (my - ((struct ogl_vars *)dmp->dm_vars)->omy) * 0.25,
-		     (mx - ((struct ogl_vars *)dmp->dm_vars)->omx) * 0.25);
-#endif
+		     (mx - ((struct ogl_vars *)dmp->dm_vars)->omx) * 0.25 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
       {
 	fastf_t fx, fy;
-#if 1
-	fx = (mx - ((struct ogl_vars *)dmp->dm_vars)->omx)/
-	  (fastf_t)((struct ogl_vars *)dmp->dm_vars)->width * 4095.0;
-	fy = (((struct ogl_vars *)dmp->dm_vars)->omy - my)/
-	  (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height * 4095.0;
-	bu_vls_printf( &cmd, "tran -i %f %f", fx, fy);
-#else
-	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
-	   (edobj || es_edflag > 0)){
+
+	if(EDIT_TRAN){
 	  fx = (mx/(fastf_t)((struct ogl_vars *)dmp->dm_vars)->width - 0.5) * 2;
 	  fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dmp->dm_vars)->height) * 2;
 	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy);
@@ -265,7 +252,6 @@ XEvent *eventPtr;
 		(fastf_t)((struct ogl_vars *)dmp->dm_vars)->height * 2.0;
 	  bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy);
 	}
-#endif
       }	     
       break;
     case ALT_MOUSE_MODE_ZOOM:
@@ -771,9 +757,7 @@ char	**argv;
 	break;
       case 't':
 	am_mode = ALT_MOUSE_MODE_TRANSLATE;
-#if 0
-	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
-	   (edobj || es_edflag > 0)){
+	if(EDIT_TRAN){
 	  bu_vls_init(&vls);
 	  bu_vls_printf(&vls, "knob aX %f aY %f\n",
 			(((struct ogl_vars *)dmp->dm_vars)->omx /
@@ -783,7 +767,7 @@ char	**argv;
 	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	}
-#endif
+
 	break;
       case 'z':
 	am_mode = ALT_MOUSE_MODE_ZOOM;

@@ -504,9 +504,9 @@ int axes;
   else{/* use default color */
     switch(axes){
     case E_AXES:
-      r = 230;
-      g = 50;
-      b = 50;
+      r = DM_WHITE_R;
+      g = DM_WHITE_G;
+      b = DM_WHITE_B;
       index = 1;
       break;
     case W_AXES:

@@ -76,33 +76,59 @@
 #define ECMD_ARS_PICK_MENU	46	/* display the ARS pick menu */
 #define ECMD_ARS_EDIT_MENU	47	/* display the ARS edit menu */
 
-#define SEDIT_ROTATE (es_edflag == SROT || \
-		     es_edflag == ECMD_TGC_ROT_H || \
-		     es_edflag ==  ECMD_TGC_ROT_AB || \
-		     es_edflag == ECMD_ARB_ROTATE_FACE || \
-		     es_edflag == ECMD_ETO_ROT_C)
-#define OEDIT_ROTATE (edobj == BE_O_ROTATE)
+#define SEDIT_ROTATE (state == ST_S_EDIT && \
+		      mged_variables.edit && \
+		      (es_edflag == SROT || \
+		       es_edflag == ECMD_TGC_ROT_H || \
+		       es_edflag ==  ECMD_TGC_ROT_AB || \
+		       es_edflag == ECMD_ARB_ROTATE_FACE || \
+		       es_edflag == ECMD_ETO_ROT_C))
+#define OEDIT_ROTATE (state == ST_O_EDIT && \
+		      mged_variables.edit && \
+		      edobj == BE_O_ROTATE)
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
-#define SEDIT_SCALE (es_edflag == SSCALE || \
-		     es_edflag == PSCALE )
-#define OEDIT_SCALE (edobj == BE_O_XSCALE || \
-		     edobj == BE_O_YSCALE || \
-		     edobj == BE_O_ZSCALE || \
-		     edobj == BE_O_SCALE)
+
+#define SEDIT_SCALE (state == ST_S_EDIT && \
+		     mged_variables.edit && \
+		     (es_edflag == SSCALE || \
+		      es_edflag == PSCALE ))
+#define OEDIT_SCALE (state == ST_O_EDIT && \
+		     mged_variables.edit && \
+		     (edobj == BE_O_XSCALE || \
+		      edobj == BE_O_YSCALE || \
+		      edobj == BE_O_ZSCALE || \
+		      edobj == BE_O_SCALE))
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
-#define SEDIT_TRAN (es_edflag == STRANS || \
-		    es_edflag == ECMD_TGC_MV_H || \
-		    es_edflag == ECMD_TGC_MV_HH || \
-		    es_edflag == EARB || \
-		    es_edflag == PTARB || \
-		    es_edflag == ECMD_ARB_MOVE_FACE || \
-		    es_edflag == ECMD_VTRANS || \
-		    es_edflag == ECMD_NMG_EMOVE || \
-		    es_edflag == ECMD_PIPE_PT_MOVE)
-#define OEDIT_TRAN (edobj == BE_O_X || \
-		    edobj == BE_O_Y || \
-		    edobj == BE_O_XY)
+
+#define SEDIT_TRAN (state == ST_S_EDIT && \
+		    mged_variables.edit && \
+		    (es_edflag == STRANS || \
+		     es_edflag == ECMD_TGC_MV_H || \
+		     es_edflag == ECMD_TGC_MV_HH || \
+		     es_edflag == EARB || \
+		     es_edflag == PTARB || \
+		     es_edflag == ECMD_ARB_MOVE_FACE || \
+		     es_edflag == ECMD_VTRANS || \
+		     es_edflag == ECMD_NMG_EMOVE || \
+		     es_edflag == ECMD_PIPE_PT_MOVE))
+#define OEDIT_TRAN (state == ST_O_EDIT && \
+		    mged_variables.edit && \
+		    (edobj == BE_O_X || \
+		     edobj == BE_O_Y || \
+		     edobj == BE_O_XY))
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
+
+extern vect_t edit_absolute_rotate;
+extern vect_t edit_rate_rotate;
+extern int edit_rateflag_rotate;
+
+extern vect_t edit_absolute_tran;
+extern vect_t edit_rate_tran;
+extern int edit_rateflag_tran;
+
+extern fastf_t edit_absolute_scale;
+extern fastf_t edit_rate_scale;
+extern int edit_rateflag_scale;
 
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */

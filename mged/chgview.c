@@ -79,9 +79,17 @@ extern long	nvectors;	/* from dodraw.c */
 extern struct rt_tol mged_tol;	/* from ged.c */
 
 vect_t edit_absolute_rotate;
-vect_t edit_absolute_slew;
 vect_t edit_rate_rotate;
-vect_t edit_rate_slew;
+int edit_rateflag_rotate;
+
+vect_t edit_absolute_tran;
+vect_t edit_rate_tran;
+int edit_rateflag_tran;
+
+fastf_t edit_absolute_scale;
+fastf_t edit_rate_scale;
+int edit_rateflag_scale;
+
 double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
@@ -145,7 +153,7 @@ double x, y, z;
   point_t new_pos;
 
   if(EDIT_TRAN)
-    MAT4X3PNT(model_pos, view2model, absolute_slew);
+    MAT4X3PNT(model_pos, view2model, edit_absolute_tran);
 
   mat_idn( newrot );
   buildHrot( newrot, x * degtorad, y * degtorad, z * degtorad);
@@ -159,12 +167,11 @@ double x, y, z;
   }
   new_mats();
 
-  if(EDIT_TRAN){
-    MAT4X3PNT(absolute_slew, model2view, model_pos);
-  }else{
-    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-    MAT4X3PNT(absolute_slew, model2view, new_pos);
-  }
+  if(EDIT_TRAN)
+    MAT4X3PNT(edit_absolute_tran, model2view, model_pos);
+
+  VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+  MAT4X3PNT(absolute_slew, model2view, new_pos);
 
   return TCL_OK;
 }
@@ -1485,6 +1492,34 @@ check_nonzero_rates()
   else
     rateflag_zoom = 0;
 
+  if(EDIT_TRAN){
+    if( edit_rate_tran[X] != 0.0 ||
+	edit_rate_tran[Y] != 0.0 ||
+	edit_rate_tran[Z] != 0.0 )
+      edit_rateflag_tran = 1;
+    else
+      edit_rateflag_tran = 0;
+  }else 
+    edit_rateflag_tran = 0;
+
+  if(EDIT_ROTATE){
+    if( edit_rate_rotate[X] != 0.0 ||
+	edit_rate_rotate[Y] != 0.0 ||
+	edit_rate_rotate[Z] != 0.0 )
+      edit_rateflag_rotate = 1;
+    else
+      edit_rateflag_rotate = 0;
+  }else
+    edit_rateflag_rotate = 0;
+
+  if(EDIT_SCALE){
+    if( edit_rate_scale )
+      edit_rateflag_scale = 1;
+    else
+      edit_rateflag_scale = 0;
+  }else
+    edit_rateflag_scale = 0;
+ 
   dmaflag = 1;	/* values changed so update faceplate */
 }
 
@@ -1500,6 +1535,7 @@ char	**argv;
   fastf_t f;
   char	*cmd;/* = argv[1];*/
   static int aslewflag = 0;
+  int view_flag = 0;  /* force view */
   vect_t	aslew;
   int iknob = 0;
   int do_tran = 0;
@@ -1546,12 +1582,28 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  /* Check for -i option */
-  if(argv[1][0] == '-' && argv[1][1] == 'i'){
-    iknob = 1;  /* treat arguments as incremental values */
-    ++argv;
-    --argc;
+  /* Check for options */
+  {
+    int c;
+
+    bu_optind = 1;
+    while((c = bu_getopt(argc, argv, "iv")) != EOF){
+      switch(c){
+      case 'i':
+	iknob = 1;
+	break;
+      case 'v':
+	view_flag = 1;
+	break;
+      default:
+	break;
+      }
+    }
+   
+    argv += bu_optind - 1;
+    argc -= bu_optind - 1;
   }
+  
 
   for(--argc, ++argv; argc; --argc, ++argv){
     cmd = *argv;
@@ -1567,7 +1619,8 @@ char	**argv;
       VSETALL( rate_slew, 0 );
       if(state != ST_VIEW){
 	VSETALL( edit_rate_rotate, 0 );
-	VSETALL( edit_rate_slew, 0 );
+	VSETALL( edit_rate_tran, 0 );
+	edit_rate_scale = 0.0;
       }
       rate_zoom = 0;
 		
@@ -1601,40 +1654,82 @@ char	**argv;
 
       switch( cmd[0] )  {
       case 'x':
-	if(iknob)
-	  rate_rotate[X] += f;
-	else
-	  rate_rotate[X] = f;
+	if(iknob){
+	  if(EDIT_ROTATE && !view_flag)
+	    edit_rate_rotate[X] += f;
+	  else
+	    rate_rotate[X] += f;
+	}else{
+	  if(EDIT_ROTATE && !view_flag)
+	    edit_rate_rotate[X] = f;
+	  else
+	    rate_rotate[X] = f;
+	}
 	break;
       case 'y':
-	if(iknob)
-	  rate_rotate[Y] += f;
-	else
-	  rate_rotate[Y] = f;
+	if(iknob){
+	  if(EDIT_ROTATE && !view_flag)
+	    edit_rate_rotate[Y] += f;
+	  else
+	    rate_rotate[Y] += f;
+	}else{
+	  if(EDIT_ROTATE && !view_flag)
+	    edit_rate_rotate[Y] = f;
+	  else
+	    rate_rotate[Y] = f;
+	}
 	break;
       case 'z':
-	if(iknob)
-	rate_rotate[Z] += f;
-      else
-	rate_rotate[Z] = f;
+	if(iknob){
+	  if(EDIT_ROTATE && !view_flag)
+	    edit_rate_rotate[Z] += f;
+	  else
+	    rate_rotate[Z] += f;
+	}else{
+	  if(EDIT_ROTATE && !view_flag)
+	    edit_rate_rotate[Z] = f;
+	  else
+	    rate_rotate[Z] = f;
+	}
       break;
     case 'X':
-      if(iknob)
-	rate_slew[X] += f;
-      else
-	rate_slew[X] = f;
+      if(iknob){
+	if(EDIT_TRAN && !view_flag)
+	  edit_rate_tran[X] += f;
+	else
+	  rate_slew[X] += f;
+      }else{
+	if(EDIT_TRAN && !view_flag)
+	  edit_rate_tran[X] = f;
+	else
+	  rate_slew[X] = f;
+      }
       break;
     case 'Y':
-      if(iknob)
-	rate_slew[Y] += f;
-      else
-	rate_slew[Y] = f;
+      if(iknob){
+	if(EDIT_TRAN && !view_flag)
+	  edit_rate_tran[Y] += f;
+	else
+	  rate_slew[Y] += f;
+      }else{
+	if(EDIT_TRAN && !view_flag)
+	  edit_rate_tran[Y] = f;
+	else
+	  rate_slew[Y] = f;
+      }
       break;
     case 'Z':
-      if(iknob)
-	rate_slew[Z] += f;
-      else
-	rate_slew[Z] = f;
+      if(iknob){
+	if(EDIT_TRAN && !view_flag)
+	  edit_rate_tran[Z] += f;
+	else
+	  rate_slew[Z] += f;
+      }else{
+	if(EDIT_TRAN && !view_flag)
+	  edit_rate_tran[Z] = f;
+	else
+	  rate_slew[Z] = f;
+      }
       break;
     case 'S':
       if(iknob)
@@ -1649,154 +1744,212 @@ char	**argv;
     switch( cmd[1] ) {
     case 'x':
       if(iknob){
-#if 1
-	if(state == ST_S_EDIT && EDIT_ROTATE){
-#else
-	  if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
-#endif
-	    absolute_rotate[X] += f;
-	    (void)irot(absolute_rotate[X],
-		       absolute_rotate[Y],
-		       absolute_rotate[Z], 0);
-	  }else {
+	if(SEDIT_ROTATE && !view_flag){
+	  edit_absolute_rotate[X] += f;
+	  (void)irot(edit_absolute_rotate[X],
+		     edit_absolute_rotate[Y],
+		     edit_absolute_rotate[Z], 0);
+	}else {
+	  if(OEDIT_ROTATE && !view_flag){
 	    (void)irot(f, 0.0, 0.0, 1);
+	    edit_absolute_rotate[X] += f;
+	  }else{
+	    (void)mged_vrot(f, 0.0, 0.0);
 	    absolute_rotate[X] += f;
 	  }
-	}else{
-#if 1
-	  if(state == ST_S_EDIT && EDIT_ROTATE){
-#else
-	    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
-#endif
-	      absolute_rotate[X] = f;
-	      (void)irot(absolute_rotate[X],
-			 absolute_rotate[Y],
-			 absolute_rotate[Z], 0);
-	    }else {
-	      (void)irot(f - absolute_rotate[X], 0.0, 0.0, 1);
+	}
+      }else{
+	  if(SEDIT_ROTATE && !view_flag){
+	    edit_absolute_rotate[X] = f;
+	    (void)irot(edit_absolute_rotate[X],
+		       edit_absolute_rotate[Y],
+		       edit_absolute_rotate[Z], 0);
+	  }else {
+	    if(OEDIT_ROTATE && !view_flag){
+	      (void)irot(f - edit_absolute_rotate[X], 0.0, 0.0, 1);
+	      edit_absolute_rotate[X] = f;
+	    }else{
+	      mged_vrot(f - absolute_rotate[X], 0.0, 0.0);
 	      absolute_rotate[X] = f;
 	    }
+	    
 	  }
+      }
 	  
 	  /* wrap around */
-	  if(absolute_rotate[X] < -180.0)
-	    absolute_rotate[X] = absolute_rotate[X] + 360.0;
-	  else if(absolute_rotate[X] > 180.0)
-	    absolute_rotate[X] = absolute_rotate[X] - 360.0;
+      if(EDIT_ROTATE && !view_flag){
+	if(edit_absolute_rotate[X] < -180.0)
+	  edit_absolute_rotate[X] = edit_absolute_rotate[X] + 360.0;
+	else if(edit_absolute_rotate[X] > 180.0)
+	  edit_absolute_rotate[X] = edit_absolute_rotate[X] - 360.0;
+      }else{
+	if(absolute_rotate[X] < -180.0)
+	  absolute_rotate[X] = absolute_rotate[X] + 360.0;
+	else if(absolute_rotate[X] > 180.0)
+	  absolute_rotate[X] = absolute_rotate[X] - 360.0;
+      }
 
-	  break;
-	case 'y':
-		  if(iknob){
-#if 1
-		    if(state == ST_S_EDIT && EDIT_ROTATE){
-#else
-		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
-#endif
-		      absolute_rotate[Y] += f;
-		      (void)irot(absolute_rotate[X],
-				 absolute_rotate[Y],
-				 absolute_rotate[Z], 0);
-		    }else {
-		      (void)irot(0.0, f, 0.0, 1);
-		      absolute_rotate[Y] += f;
-		    }
-		  }else{
-#if 1
-		    if(state == ST_S_EDIT && EDIT_ROTATE){
-#else
-		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
-#endif
-		      absolute_rotate[Y] = f;
-		      (void)irot(absolute_rotate[X],
-				 absolute_rotate[Y],
-				 absolute_rotate[Z], 0);
-		    }else {
-		      (void)irot(0.0, f - absolute_rotate[Y], 0.0, 1);
-		      absolute_rotate[Y] = f;
-		    }
-		  }
+      break;
+    case 'y':
+      if(iknob){
+	if(SEDIT_ROTATE && !view_flag){
+	  edit_absolute_rotate[Y] += f;
+	  (void)irot(edit_absolute_rotate[X],
+		     edit_absolute_rotate[Y],
+		     edit_absolute_rotate[Z], 0);
+	}else {
+	  if(OEDIT_ROTATE && !view_flag){
+	    (void)irot(0.0, f, 0.0, 1);
+	    edit_absolute_rotate[Y] += f;
+	  }else{
+	    (void)mged_vrot(0.0, f, 0.0);
+	    absolute_rotate[Y] += f;
+	  }
+	}
+      }else{
+	  if(SEDIT_ROTATE && !view_flag){
+	    edit_absolute_rotate[Y] = f;
+	    (void)irot(edit_absolute_rotate[X],
+		       edit_absolute_rotate[Y],
+		       edit_absolute_rotate[Z], 0);
+	  }else {
+	    if(OEDIT_ROTATE && !view_flag){
+	      (void)irot(0.0, f - edit_absolute_rotate[Y], 0.0, 1);
+	      edit_absolute_rotate[Y] = f;
+	    }else{
+	      mged_vrot(0.0, f - absolute_rotate[Y], 0.0);
+	      absolute_rotate[Y] = f;
+	    }
+	    
+	  }
+      }
+	  
+	  /* wrap around */
+      if(EDIT_ROTATE && !view_flag){
+	if(edit_absolute_rotate[Y] < -180.0)
+	  edit_absolute_rotate[Y] = edit_absolute_rotate[Y] + 360.0;
+	else if(edit_absolute_rotate[Y] > 180.0)
+	  edit_absolute_rotate[Y] = edit_absolute_rotate[Y] - 360.0;
+      }else{
+	if(absolute_rotate[Y] < -180.0)
+	  absolute_rotate[Y] = absolute_rotate[Y] + 360.0;
+	else if(absolute_rotate[Y] > 180.0)
+	  absolute_rotate[Y] = absolute_rotate[Y] - 360.0;
+      }
 
-		  /* wrap around */
-		  if(absolute_rotate[Y] < -180.0)
-		    absolute_rotate[Y] = absolute_rotate[Y] + 360.0;
-		  else if(absolute_rotate[Y] > 180.0)
-		    absolute_rotate[Y] = absolute_rotate[Y] - 360.0;
+      break;
+    case 'z':
+      if(iknob){
+	if(SEDIT_ROTATE && !view_flag){
+	  edit_absolute_rotate[Z] += f;
+	  (void)irot(edit_absolute_rotate[X],
+		     edit_absolute_rotate[Y],
+		     edit_absolute_rotate[Z], 0);
+	}else {
+	  if(OEDIT_ROTATE && !view_flag){
+	    (void)irot(0.0, 0.0, f, 1);
+	    edit_absolute_rotate[Z] += f;
+	  }else{
+	    (void)mged_vrot(0.0, 0.0, f);
+	    absolute_rotate[Z] += f;
+	  }
+	}
+      }else{
+	  if(SEDIT_ROTATE && !view_flag){
+	    edit_absolute_rotate[Z] = f;
+	    (void)irot(edit_absolute_rotate[X],
+		       edit_absolute_rotate[Y],
+		       edit_absolute_rotate[Z], 0);
+	  }else {
+	    if(OEDIT_ROTATE && !view_flag){
+	      (void)irot(0.0, 0.0, f - edit_absolute_rotate[Z], 1);
+	      edit_absolute_rotate[Z] = f;
+	    }else{
+	      mged_vrot(0.0, 0.0, f - absolute_rotate[Z]);
+	      absolute_rotate[Z] = f;
+	    }
+	    
+	  }
+      }
+	  
+	  /* wrap around */
+      if(EDIT_ROTATE && !view_flag){
+	if(edit_absolute_rotate[Z] < -180.0)
+	  edit_absolute_rotate[Z] = edit_absolute_rotate[Z] + 360.0;
+	else if(edit_absolute_rotate[Z] > 180.0)
+	  edit_absolute_rotate[Z] = edit_absolute_rotate[Z] - 360.0;
+      }else{
+	if(absolute_rotate[Z] < -180.0)
+	  absolute_rotate[Z] = absolute_rotate[Z] + 360.0;
+	else if(absolute_rotate[Z] > 180.0)
+	  absolute_rotate[Z] = absolute_rotate[Z] - 360.0;
+      }
 
-		  break;
-		case 'z':
-		  if(iknob){
-#if 1
-		    if(state == ST_S_EDIT && EDIT_ROTATE){
-#else
-		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
-#endif
-		      absolute_rotate[Z] += f;
-		      (void)irot(absolute_rotate[X],
-				 absolute_rotate[Y],
-				 absolute_rotate[Z], 0);
-		    }else {
-		      (void)irot(0.0, 0.0, f, 1);
-		      absolute_rotate[Z] += f;
-		    }
-		  }else{
-#if 1
-		    if(state == ST_S_EDIT && EDIT_ROTATE){
-#else
-		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
-#endif
-		      absolute_rotate[Z] = f;
-		      (void)irot(absolute_rotate[X],
-				 absolute_rotate[Y],
-				 absolute_rotate[Z], 0);
-		    }else {
-		      (void)irot(0.0, 0.0, f - absolute_rotate[Z], 1);
-		      absolute_rotate[Z] = f;
-		    }
-		  }
+      break;
+    case 'X':
+      if(iknob){
+	if(EDIT_TRAN && !view_flag)
+	  edit_absolute_tran[X] += f;
+	else
+	  absolute_slew[X] += f;
+      }else{
+	if(EDIT_TRAN && !view_flag)
+	  edit_absolute_tran[X] = f;
+	else
+	  absolute_slew[X] = f;
+      }
+      
+      do_tran = 1;
+      break;
+    case 'Y':
+      if(iknob){
+	if(EDIT_TRAN && !view_flag)
+	  edit_absolute_tran[Y] += f;
+	else
+	  absolute_slew[Y] += f;
+      }else{
+	if(EDIT_TRAN && !view_flag)
+	  edit_absolute_tran[Y] = f;
+	else
+	  absolute_slew[Y] = f;
+      }
+      
+      do_tran = 1;
+      break;
+    case 'Z':
+      if(iknob){
+	if(EDIT_TRAN && !view_flag)
+	  edit_absolute_tran[Z] += f;
+	else
+	  absolute_slew[Z] += f;
+      }else{
+	if(EDIT_TRAN && !view_flag)
+	  edit_absolute_tran[Z] = f;
+	else
+	  absolute_slew[Z] = f;
+      }
+      
+      do_tran = 1;
+      break;
+    case 'S':
+      if(iknob){
+	if(EDIT_SCALE)
+	  edit_absolute_scale += f;
+	else
+	  absolute_zoom += f;
+      }else{
+	if(EDIT_SCALE)
+	  edit_absolute_scale = f;
+	else
+	  absolute_zoom = f;
+      }
 
-		  /* wrap around */
-		  if(absolute_rotate[Z] < -180.0)
-		    absolute_rotate[Z] = absolute_rotate[Z] + 360.0;
-		  else if(absolute_rotate[Z] > 180.0)
-		    absolute_rotate[Z] = absolute_rotate[Z] - 360.0;
-
-		  break;
-		case 'X':
-		  if(iknob)
-		    absolute_slew[X] += f;
-		  else
-		    absolute_slew[X] = f;
-
-		  do_tran = 1;
-		  break;
-		case 'Y':
-		  if(iknob)
-		    absolute_slew[Y] += f;
-		  else
-		    absolute_slew[Y] = f;
-
-		  do_tran = 1;
-		  break;
-		case 'Z':
-		  if(iknob)
-		    absolute_slew[Z] += f;
-		  else
-		    absolute_slew[Z] = f;
-
-		  do_tran = 1;
-		  break;
-		case 'S':
-		  if(iknob)
-		    absolute_zoom += f;
-		  else
-		    absolute_zoom = f;
-
-		  abs_zoom();
-		  break;
-		default:
-			goto usage;
-		}
-	} else if( strcmp( cmd, "xadc" ) == 0 )  {
+      abs_zoom();
+      break;
+    default:
+      goto usage;
+    }
+  } else if( strcmp( cmd, "xadc" ) == 0 )  {
 	  char *av[4];
 	  char    sval[32];
 
@@ -1885,9 +2038,13 @@ usage:
       }
   }
 
-  if(do_tran)
-    (void)tran( absolute_slew );
-
+  if(do_tran){
+    if(EDIT_TRAN && !view_flag)
+      (void)tran( edit_absolute_tran );
+    else
+      (void)tran( absolute_slew );
+  }
+ 
   check_nonzero_rates();
   return TCL_OK;
 }

@@ -61,7 +61,7 @@ mat_t	acc_rot_sol;
 fastf_t	acc_sc_sol;
 fastf_t	acc_sc[3];	/* local object scale factors --- accumulations */
 
-static void bv_zoomin(), bv_zoomout(), bv_rate_toggle();
+static void bv_zoomin(), bv_zoomout(), bv_rate_toggle(), bv_edit_toggle();
 static void bv_top(), bv_bottom(), bv_right();
 static void bv_left(), bv_front(), bv_rear();
 static void bv_vrestore(), bv_vsave(), bv_adcursor(), bv_reset();
@@ -109,6 +109,7 @@ struct buttons  {
 	BV_ZOOM_IN,	"zoomin",	bv_zoomin,
 	BV_ZOOM_OUT,	"zoomout",	bv_zoomout,
 	BV_RATE_TOGGLE, "rate",		bv_rate_toggle,
+	BV_EDIT_TOGGLE, "edit",		bv_edit_toggle,
 	-1,		"-end-",	be_reject
 };
 
@@ -143,6 +144,7 @@ static struct menu_item second_menu[] = {
 	{ "Zero Sliders", sl_halt_scroll, 0 },
 	{ "Sliders", sl_toggle_scroll, 0 },
 	{ "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
+	{ "Edit/View", btn_item_hit, BV_EDIT_TOGGLE },
 	{ "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
 	{ "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
 	{ "Solid Illum", btn_item_hit, BE_S_ILLUMINATE },
@@ -318,21 +320,24 @@ static void bv_zoomout()
 	new_mats();
 }
 
+static void
+bv_edit_toggle()
+{
+  mged_variables.edit = !mged_variables.edit;
+
+  if(mged_variables.scroll_enabled){
+    Tcl_Eval(interp, "sliders on");
+  }
+
+  dmaflag = 1;
+}
+
 static void bv_rate_toggle()
 {
   mged_variables.rateknobs = !mged_variables.rateknobs;
 
   if(mged_variables.scroll_enabled){
-#if 0
-    char *av[3];
-
-    av[0] = "sliders";
-    av[1] = "on";
-    av[2] = NULL;
-    (void)cmd_sliders((ClientData)NULL, interp, 2, av);
-#else
     Tcl_Eval(interp, "sliders on");
-#endif
   }
 
   dmaflag = 1;

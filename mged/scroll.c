@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 
 #include "./mgedtcl.h"
+#include "./sedit.h"
 
 /************************************************************************
  *									*
@@ -288,134 +289,209 @@ int
 scroll_display( y_top )
 int y_top;
 { 
-	register int		y;
-	struct scroll_item	*mptr;
-	struct scroll_item	**m;
-	int		xpos;
-	int second_menu = -1;
-	fastf_t f;
+  register int		y;
+  struct scroll_item	*mptr;
+  struct scroll_item	**m;
+  int		xpos;
+  int second_menu = -1;
+  fastf_t f;
 
-	/* XXX this should be driven by the button event */
-	if( mged_variables.adcflag && mged_variables.scroll_enabled )
-		scroll_array[1] = sl_adc_menu;
-	else
-		scroll_array[1] = SCROLL_NULL;
+  /* XXX this should be driven by the button event */
+  if( mged_variables.adcflag && mged_variables.scroll_enabled )
+    scroll_array[1] = sl_adc_menu;
+  else
+    scroll_array[1] = SCROLL_NULL;
 
-	scroll_top = y_top;
-	y = y_top;
+  scroll_top = y_top;
+  y = y_top;
 
-	dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+  dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
 
-	for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
-	  ++second_menu;
-	  for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
-	    y += SCROLL_DY;		/* y is now bottom line pos */
+  for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
+    ++second_menu;
+    for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
+      y += SCROLL_DY;		/* y is now bottom line pos */
 
-	    switch(mptr->scroll_val){
-	    case 0:
-	      if(second_menu)
-                f = (double)dv_xadc / 2047.0;
-	      else {
-		if(mged_variables.rateknobs)
-		  f = rate_slew[X];
-		else
-		  f = absolute_slew[X];
-	      }
-	      break;
-	    case 1:
-	      if(second_menu)
-		f = (double)dv_yadc / 2047.0;
-	      else {
-		if(mged_variables.rateknobs)
-		  f = rate_slew[Y];
-		else
-		  f = absolute_slew[Y];
-	      }
-	      break;
-	    case 2:
-	      if(second_menu)
-		f = (double)dv_1adc / 2047.0;
-	      else {
-		if(mged_variables.rateknobs)
-		  f = rate_slew[Z];
-		else
-		  f = absolute_slew[Z];
-	      }
-	      break;
-	    case 3:
-	      if(second_menu)
-		f = (double)dv_2adc / 2047.0;
-	      else {
-		if(mged_variables.rateknobs)
-		  f = rate_zoom;
-		else
-		  f = absolute_zoom;
-	      }
-	      break;
-	    case 4:
-	      if(second_menu)
-		f = (double)dv_distadc / 2047.0;
-	      else {
-		if(mged_variables.rateknobs)
-		  f = rate_rotate[X];
-		else
-		  f = absolute_rotate[X] / 180.0;
-	      }
-	      break;
-	    case 5:
-	      if(second_menu)
-		Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
-				 (char *)NULL);
-	      else {
-		if(mged_variables.rateknobs)
-		  f = rate_rotate[Y];
-		else
-		  f = absolute_rotate[Y] / 180.0;
-	      }
-	      break;
-	    case 6:
-	      if(second_menu)
-		Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
-				 (char *)NULL);
-	      else {
-		if(mged_variables.rateknobs)
-		  f = rate_rotate[Z];
-		else
-		  f = absolute_rotate[Z] / 180.0;
-	      }
-	      break;
-	    default:
-	      if(second_menu)
-		Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
-				 (char *)NULL);
-	      else
-		Tcl_AppendResult(interp, "scroll_display: first scroll menu is hosed\n",
-				 (char *)NULL);
-	    }
-
-	    if(f > 0)
-	      xpos = (f + SL_TOL) * 2047.0;
-	    else if(f < 0)
-	      xpos = (f - SL_TOL) * -MENUXLIM;
+      switch(mptr->scroll_val){
+      case 0:
+	if(second_menu)
+	  f = (double)dv_xadc / 2047.0;
+	else {
+	  if(EDIT_TRAN){
+	    if(mged_variables.rateknobs)
+	      f = edit_rate_tran[X];
 	    else
-	      xpos = 0;
+	      f = edit_absolute_tran[X];
+
+	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	  }else{
+	    if(mged_variables.rateknobs)
+	      f = rate_slew[X];
+	    else
+	      f = absolute_slew[X];
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
-	    dmp->dm_drawString2D( dmp, mptr->scroll_string,
-			   xpos, y-SCROLL_DY/2, 0 );
-	    dmp->dm_setColor(dmp, DM_YELLOW, 1);
-	    dmp->dm_drawLine2D(dmp, XMAX, y, MENUXLIM, y);
 	  }
 	}
+	break;
+      case 1:
+	if(second_menu)
+	  f = (double)dv_yadc / 2047.0;
+	else {
+	  if(EDIT_TRAN){
+	    if(mged_variables.rateknobs)
+	      f = edit_rate_tran[Y];
+	    else
+	      f = edit_absolute_tran[Y];
 
+	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	  }else{
+	    if(mged_variables.rateknobs)
+	      f = rate_slew[Y];
+	    else
+	      f = absolute_slew[Y];
 
-	if( y != y_top )  {
-	  /* Sliders were drawn, so make left vert edge */
-	  dmp->dm_setColor(dmp, DM_YELLOW, 1);
-	  dmp->dm_drawLine2D( dmp, MENUXLIM, scroll_top-1,
-			      MENUXLIM, y, 0, DM_YELLOW );
+	    dmp->dm_setColor(dmp, DM_RED, 1);
+	  }
 	}
-	return( y );
+	break;
+      case 2:
+	if(second_menu)
+	  f = (double)dv_1adc / 2047.0;
+	else {
+	  if(EDIT_TRAN){
+	    if(mged_variables.rateknobs)
+	      f = edit_rate_tran[Z];
+	    else
+	      f = edit_absolute_tran[Z];
+
+	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	  }else{
+	    if(mged_variables.rateknobs)
+	      f = rate_slew[Z];
+	    else
+	      f = absolute_slew[Z];
+
+	    dmp->dm_setColor(dmp, DM_RED, 1);
+	  }
+	}
+	break;
+      case 3:
+	if(second_menu)
+	  f = (double)dv_2adc / 2047.0;
+	else {
+	  if(EDIT_SCALE){
+	    if(mged_variables.rateknobs)
+	      f = edit_rate_scale;
+	    else
+	      f = edit_absolute_scale;
+
+	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	  }else{
+	    if(mged_variables.rateknobs)
+	      f = rate_zoom;
+	    else
+	      f = absolute_zoom;
+
+	    dmp->dm_setColor(dmp, DM_RED, 1);
+	  }
+	}
+	break;
+      case 4:
+	if(second_menu)
+	  f = (double)dv_distadc / 2047.0;
+	else {
+	  if(EDIT_ROTATE){
+	    if(mged_variables.rateknobs)
+	      f = edit_rate_rotate[X];
+	    else
+	      f = edit_absolute_rotate[X] / 180.0;
+
+	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	  }else{
+	    if(mged_variables.rateknobs)
+	      f = rate_rotate[X];
+	    else
+	      f = absolute_rotate[X] / 180.0;
+
+	    dmp->dm_setColor(dmp, DM_RED, 1);
+	  }
+	}
+	break;
+      case 5:
+	if(second_menu)
+	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+			   (char *)NULL);
+	else {
+	  if(EDIT_ROTATE){
+	    if(mged_variables.rateknobs)
+	      f = edit_rate_rotate[Y];
+	    else
+	      f = edit_absolute_rotate[Y] / 180.0;
+
+	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	  }else{
+	    if(mged_variables.rateknobs)
+	      f = rate_rotate[Y];
+	    else
+	      f = absolute_rotate[Y] / 180.0;
+
+	    dmp->dm_setColor(dmp, DM_RED, 1);
+	  }
+	}
+	break;
+      case 6:
+	if(second_menu)
+	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+			   (char *)NULL);
+	else {
+	  if(EDIT_ROTATE){
+	    if(mged_variables.rateknobs)
+	      f = edit_rate_rotate[Z];
+	    else
+	      f = edit_absolute_rotate[Z] / 180.0;
+
+	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	  }else{
+	    if(mged_variables.rateknobs)
+	      f = rate_rotate[Z];
+	    else
+	      f = absolute_rotate[Z] / 180.0;
+
+	    dmp->dm_setColor(dmp, DM_RED, 1);
+	  }
+	}
+	break;
+      default:
+	if(second_menu)
+	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+			   (char *)NULL);
+	else
+	  Tcl_AppendResult(interp, "scroll_display: first scroll menu is hosed\n",
+			   (char *)NULL);
+      }
+
+      if(f > 0)
+	xpos = (f + SL_TOL) * 2047.0;
+      else if(f < 0)
+	xpos = (f - SL_TOL) * -MENUXLIM;
+      else
+	xpos = 0;
+
+      dmp->dm_drawString2D( dmp, mptr->scroll_string,
+			    xpos, y-SCROLL_DY/2, 0 );
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+      dmp->dm_drawLine2D(dmp, XMAX, y, MENUXLIM, y);
+    }
+  }
+
+  if( y != y_top )  {
+    /* Sliders were drawn, so make left vert edge */
+    dmp->dm_setColor(dmp, DM_YELLOW, 1);
+    dmp->dm_drawLine2D( dmp, MENUXLIM, scroll_top-1,
+			MENUXLIM, y, 0, DM_YELLOW );
+  }
+  return( y );
 }
 
 /*

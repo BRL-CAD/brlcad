@@ -245,6 +245,7 @@ extern struct dm_list *curr_dm_list;
 #define BV_35_25	0+32
 
 #define BV_RATE_TOGGLE	1+32
+#define BV_EDIT_TOGGLE  2+32
 
 #define BV_MAXFUNC	64	/* largest code used */
 
