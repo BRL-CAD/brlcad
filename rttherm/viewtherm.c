@@ -52,7 +52,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadefuncs.h"
 #include "shadework.h"
 #include "../rt/ext.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 #include "../rt/light.h"
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
@@ -308,11 +308,11 @@ register struct application *ap;
 /*
  *			V I E W _ E N D
  */
+void
 view_end(ap)
 struct application *ap;
 {
 	free_scanlines();
-	return(0);		/* OK */
 }
 
 /*
@@ -749,7 +749,7 @@ char	*framename;
 	default:
 		rt_bomb("bad lighting model #");
 	}
-	ap->a_rt_i->rti_nlights = light_init();
+	ap->a_rt_i->rti_nlights = light_init(ap);
 
 	/* Compute radiant emittance of background */
 	/* XXX This is wrong, need actual power (radiant flux) emitted */
