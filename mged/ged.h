@@ -61,8 +61,9 @@ extern char		*local_unit[];			/* titles.c */
 extern int		dmaflag;		/* !0 forces screen update */
 
 /* Tolerances */
-extern double		mged_abs_tol;
-extern double		mged_rel_tol;
+extern double		mged_abs_tol;		/* abs surface tolerance */
+extern double		mged_rel_tol;		/* rel surface tolerance */
+extern double		mged_nrm_tol;		/* surface normal tolerance */
 
 /* default region codes       defined in mover.c */
 extern int	item_default;
