@@ -142,6 +142,12 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 	dsp->dsp_xcnt = hip->w;
 	dsp->dsp_ycnt = hip->n;
 	dsp->dsp_smooth = 0;
+	dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
+	if (RT_G_DEBUG & DEBUG_HF) {
+	    bu_log("Converting from cut-style lower-left/upper-right to adaptive\n");
+	}
+	dsp->dsp_datasrc = RT_DSP_SRC_FILE;
+
 
 	MAT_IDN(dsp->dsp_stom);
 	MAT_DELTAS_VEC(dsp->dsp_stom, hip->v);	/* translate */
