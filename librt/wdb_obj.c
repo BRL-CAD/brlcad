@@ -165,7 +165,7 @@ extern int wdb_comb_std_tcl();
 
 /* from librt/g_bot.c */
 extern int rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece );
-extern int rt_bot_decimate( struct rt_bot_internal *bot, fastf_t max_chord_error, fastf_t max_normal_error );
+extern int rt_bot_decimate( struct rt_bot_internal *bot, fastf_t max_chord_error, fastf_t max_normal_error, fastf_t min_edge_length );
 
 /* from db5_scan.c */
 HIDDEN int db5_scan();
@@ -8825,13 +8825,15 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 	     int		argc,
 	     char 		**argv)
 {
+	char c;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 	struct directory *dp;
-	fastf_t max_chord_error;
-	fastf_t max_normal_error=90.0;
+	fastf_t max_chord_error=-1.0;
+	fastf_t max_normal_error=-1.0;
+	fastf_t min_edge_length=-1.0;
 
-	if( argc < 4 || argc > 5 ) {
+	if( argc < 5 || argc > 9 ) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -8841,15 +8843,58 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	/* make sure new solid does no already exist */
-	if( (dp=db_lookup( wdbp->dbip, argv[1], LOOKUP_QUIET ) ) != DIR_NULL ) {
-	  Tcl_AppendResult(interp, argv[1], " already exists!!\n", (char *)NULL );
+	/* process args */
+	bu_optind = 1;
+	bu_opterr = 0;
+	while( (c=bu_getopt(argc,argv,"c:n:e:")) != EOF )  {
+		switch(c) {
+			case 'c':
+				max_chord_error = atof( bu_optarg );
+				break;
+			case 'n':
+				max_normal_error = atof( bu_optarg );
+				break;
+			case 'e':
+				min_edge_length = atof( bu_optarg );
+				break;
+			default:
+				{
+					struct bu_vls vls;
+
+					bu_vls_init(&vls);
+					bu_vls_printf(&vls, "helplib_alias wdb_bot_decimate %s",
+						      argv[0]);
+					Tcl_Eval(interp, bu_vls_addr(&vls));
+					bu_vls_free(&vls);
+					return TCL_ERROR;
+				}
+		}
+	}
+
+	if( max_chord_error <= SMALL_FASTF &&
+	    max_normal_error <= SMALL_FASTF &&
+	    min_edge_length <= SMALL_FASTF ) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_bot_decimate %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	argc -= bu_optind;
+	argv += bu_optind;
+
+	/* make sure new solid does not already exist */
+	if( (dp=db_lookup( wdbp->dbip, argv[0], LOOKUP_QUIET ) ) != DIR_NULL ) {
+	  Tcl_AppendResult(interp, argv[0], " already exists!!\n", (char *)NULL );
 	  return TCL_ERROR;
 	}
 
 	/* make sure current solid does exist */
-	if( (dp=db_lookup( wdbp->dbip, argv[2], LOOKUP_QUIET ) ) == DIR_NULL ) {
-		Tcl_AppendResult(interp, argv[2], " Does not exist\n", (char *)NULL );
+	if( (dp=db_lookup( wdbp->dbip, argv[1], LOOKUP_QUIET ) ) == DIR_NULL ) {
+		Tcl_AppendResult(interp, argv[1], " Does not exist\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
@@ -8873,34 +8918,19 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 
 	RT_BOT_CK_MAGIC( bot );
 
-	/* convert maximum error to mm */
-	max_chord_error = atof( argv[3] ) * wdbp->dbip->dbi_local2base;
-
-	if( max_chord_error <= 0.0 ) {
-		Tcl_AppendResult(interp, "maximum chord error must be greater than zero\n", (char *)NULL );
-		rt_db_free_internal( &intern, wdbp->wdb_resp );
-		return TCL_ERROR;
-	}
-
-	if( argc == 5 ) {
-		max_normal_error = atof( argv[4] );
-		if( max_normal_error < 0.0 || max_normal_error > 90.0 ) {
-			Tcl_AppendResult(interp, "maximum normal error must be between 0.0 and 90.0\n",
-					 (char *)NULL );
-			rt_db_free_internal( &intern, wdbp->wdb_resp );
-			return TCL_ERROR;
-		}
-	}
+	/* convert maximum error and edge length to mm */
+	max_chord_error = max_chord_error * wdbp->dbip->dbi_local2base;
+	min_edge_length = min_edge_length * wdbp->dbip->dbi_local2base;
 
 	/* do the decimation */
-	if( rt_bot_decimate( bot, max_chord_error, max_normal_error) < 0 ) {
+	if( rt_bot_decimate( bot, max_chord_error, max_normal_error, min_edge_length) < 0 ) {
 		Tcl_AppendResult(interp, "Decimation Error\n", (char *)NULL );
 		rt_db_free_internal( &intern, wdbp->wdb_resp );
 		return TCL_ERROR;
 	}
 
 	/* save the result to the database */
-	if( wdb_put_internal( wdbp, argv[1], &intern, 1.0 ) < 0 ) {
+	if( wdb_put_internal( wdbp, argv[0], &intern, 1.0 ) < 0 ) {
 		Tcl_AppendResult(interp, "Failed to write decimated BOT back to database\n", (char *)NULL );
 		return TCL_ERROR;
 	}

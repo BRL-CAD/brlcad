@@ -3342,6 +3342,8 @@ bot_face_free_edge_count( int face, int *faces, int num_faces )
  *		"max_chord_error" is the maximum distance allowed between the old surface and new.
  *		"max_normal_error" is actually the minimum dot product allowed between old and new
  *			surface normals (cosine).
+ *		"min_edge_length_sq" is the square of the minimum allowed edge length.
+ *		any constraint value of -1 means ignore this constraint
  *	returns 1 if edge can be eliminated without breaking conatraints, 0 otherwise
  */
 
@@ -3354,7 +3356,8 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 		       int v1,
 		       int v2,
 		       fastf_t max_chord_error,
-		       fastf_t max_normal_error )
+		       fastf_t max_normal_error,
+		       fastf_t min_edge_length_sq )
 {
 	int i, j, k;
 	int num_faces=bot->num_faces;
@@ -3428,56 +3431,64 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 	/* calculate edge vector */
 	VSUB2( v12, &vertices[v1*3], &vertices[v2*3] );
 
-	/* check if surface is within max_chord_error of vertex to be eliminated */
-	/* loop through all affected faces */
-	for( i=0 ; i<affected_count ; i++ ) {
-	        fastf_t dist;
-                fastf_t dot;
-		plane_t pla, plb;
-		int va, vb, vc;
-
-		/* calculate plane of this face before and after adjustment
-		*  if the normal changes too much, do not decimate
-		*/
-
-		/* first calculate original face normal (use original BOT face list) */
-		va = bot->faces[faces_affected[i]];
-		vb = bot->faces[faces_affected[i]+1];
-		vc = bot->faces[faces_affected[i]+2];
-		VSUB2( v01, &vertices[vb*3], &vertices[va*3] );
-		VSUB2( v02, &vertices[vc*3], &vertices[va*3] );
-		VCROSS( plb, v01, v02 );
-		VUNITIZE( plb );
-		plb[3] = VDOT( &vertices[va*3], plb );
-
-		/* do the same using the working face list */
-		va = faces[faces_affected[i]];
-		vb = faces[faces_affected[i]+1];
-		vc = faces[faces_affected[i]+2];
-		/* make the proposed decimation changes */
-		if( va == v1 ) {
-		  va = v2;
-		} else if( vb == v1 ) {
-		  vb = v2;
-		} else if( vc == v1 ) {
-		  vc = v2;
-		}
-		VSUB2( v01, &vertices[vb*3], &vertices[va*3] );
-		VSUB2( v02, &vertices[vc*3], &vertices[va*3] );
-		VCROSS( pla, v01, v02 );
-		VUNITIZE( pla );
-		pla[3] = VDOT( &vertices[va*3], pla );
-
-		/* max_normal_error is actually a minimum dot product */
-		dot = VDOT( pla, plb );
-		if( dot < max_normal_error ) {
+	if( min_edge_length_sq > SMALL_FASTF ) {
+		if( MAGSQ( v12 ) > min_edge_length_sq ) {
 			return 0;
 		}
+	}
 
-		/* check the distance between this new plane and vertex v1 */
-		dist = fabs( DIST_PT_PLANE( &vertices[v1*3], pla ) );
-		if( dist > max_chord_error ) {
-		  return 0;
+	if( max_chord_error > SMALL_FASTF || max_normal_error > SMALL_FASTF ) {
+		/* check if surface is within max_chord_error of vertex to be eliminated */
+		/* loop through all affected faces */
+		for( i=0 ; i<affected_count ; i++ ) {
+			fastf_t dist;
+			fastf_t dot;
+			plane_t pla, plb;
+			int va, vb, vc;
+
+			/* calculate plane of this face before and after adjustment
+			 *  if the normal changes too much, do not decimate
+			 */
+
+			/* first calculate original face normal (use original BOT face list) */
+			va = bot->faces[faces_affected[i]];
+			vb = bot->faces[faces_affected[i]+1];
+			vc = bot->faces[faces_affected[i]+2];
+			VSUB2( v01, &vertices[vb*3], &vertices[va*3] );
+			VSUB2( v02, &vertices[vc*3], &vertices[va*3] );
+			VCROSS( plb, v01, v02 );
+			VUNITIZE( plb );
+			plb[3] = VDOT( &vertices[va*3], plb );
+
+			/* do the same using the working face list */
+			va = faces[faces_affected[i]];
+			vb = faces[faces_affected[i]+1];
+			vc = faces[faces_affected[i]+2];
+			/* make the proposed decimation changes */
+			if( va == v1 ) {
+				va = v2;
+			} else if( vb == v1 ) {
+				vb = v2;
+			} else if( vc == v1 ) {
+				vc = v2;
+			}
+			VSUB2( v01, &vertices[vb*3], &vertices[va*3] );
+			VSUB2( v02, &vertices[vc*3], &vertices[va*3] );
+			VCROSS( pla, v01, v02 );
+			VUNITIZE( pla );
+			pla[3] = VDOT( &vertices[va*3], pla );
+
+			/* max_normal_error is actually a minimum dot product */
+			dot = VDOT( pla, plb );
+			if( max_normal_error > SMALL_FASTF && dot < max_normal_error ) {
+				return 0;
+			}
+
+			/* check the distance between this new plane and vertex v1 */
+			dist = fabs( DIST_PT_PLANE( &vertices[v1*3], pla ) );
+			if( max_chord_error > SMALL_FASTF && dist > max_chord_error ) {
+				return 0;
+			}
 		}
 	}
 
@@ -3500,10 +3511,12 @@ struct bot_edge {
 int
 rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
 		 fastf_t max_chord_error,	/* maximum allowable chord error (mm) */
-		 fastf_t max_normal_error )	/* maximum allowable normal error (degrees) */
+		 fastf_t max_normal_error,	/* maximum allowable normal error (degrees) */
+		 fastf_t min_edge_length )	/* minimum allowed edge length */
 {
 	int *faces;
 	struct bot_edge **edges;
+	fastf_t min_edge_length_sq;
 	int edges_deleted=0;
 	int edge_count=0;
 	int face_count;
@@ -3514,14 +3527,21 @@ rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
 
 	RT_BOT_CK_MAGIC( bot );
 
-	if( max_chord_error <= SMALL_FASTF )
+	if( max_chord_error <= SMALL_FASTF &&
+	    max_normal_error <= SMALL_FASTF &&
+	    min_edge_length <= SMALL_FASTF )
 		return 0;
 
-	if( max_normal_error <= SMALL_FASTF )
-		return 0 ;
-
 	/* convert normal error to something useful (a minimum dot product) */
-	max_normal_error = cos( max_normal_error * M_PI / 180.0 );
+	if( max_normal_error > SMALL_FASTF ) {
+		max_normal_error = cos( max_normal_error * M_PI / 180.0 );
+	}
+
+	if( min_edge_length > SMALL_FASTF ) {
+		min_edge_length_sq = min_edge_length * min_edge_length;
+	} else {
+		min_edge_length_sq = min_edge_length;
+	}
 
 	/* make a working copy of the face list */
 	faces = (int *)bu_malloc( sizeof( int ) * bot->num_faces * 3, "faces" );
@@ -3593,11 +3613,11 @@ rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
 
 	    /* check if this edge can be eliminated (try both directions) */
 	    if( edge_can_be_decimated( bot, faces, i, ptr->v,
-				       max_chord_error, max_normal_error )) {
+				       max_chord_error, max_normal_error, min_edge_length_sq )) {
 	      face_count -= decimate_edge( i, ptr->v, faces, bot->num_faces );
 	      edges_deleted++;
 	    } else if( edge_can_be_decimated( bot, faces, ptr->v, i,
-				       max_chord_error, max_normal_error )) {
+				       max_chord_error, max_normal_error, min_edge_length_sq )) {
 	      face_count -= decimate_edge( ptr->v, i, faces, bot->num_faces );
 	      edges_deleted++;
 	    }
