@@ -3,8 +3,9 @@
  *
  *	Meshing routines for n-Manifold Geometry
  *
- *  Author -
+ *  Authors -
  *	Lee A. Butler
+ *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -209,7 +210,7 @@ struct edgeuse *eu1, *eu2;
 	    (eu1->eumate_p->vu_p->v_p != eu2->vu_p->v_p && eu1->eumate_p->vu_p->v_p != eu2->eumate_p->vu_p->v_p) )
 		rt_bomb("nmg_join_eu(): edgeuses don't share both vertices\n");
 
-	if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+	if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) ) {
 		EUPRINT("\tJoining", eu1);
 		EUPRINT("\t     to", eu2);
 	}
@@ -269,62 +270,103 @@ struct edgeuse *eu1, *eu2;
 }
 
 /*
- *			C M P _ M E S H _ E U
+ *			N M G _ M E S H _ T W O _ F A C E S
  *
- *	compare the edgeuses in the edgeuse list "eu2" with the edgeuse "eu1"
- *	Any edgeuses which share the same vertices as "eu1" should also be
- *	made to share the same edge.
+ *  Actuall do the work of meshing two faces.
+ *  The two fu arguments may be the same, which causes the face to be
+ *  meshed against itself.
+ *
+ *  The return is the number of edges meshed.
  */
-static cmp_mesh_eu(eu1, hd)
-struct edgeuse *eu1;
-struct rt_list *hd;
+static int
+nmg_mesh_two_faces(fu1, fu2)
+register struct faceuse *fu1, *fu2;
 {
-	struct edgeuse *eu;
+	struct loopuse	*lu1;
+	struct loopuse	*lu2;
+	struct edgeuse	*eu1;
+	struct edgeuse	*eu2;
+	struct vertex	*v1a, *v1b;
+	struct edge	*e1;
+	pointp_t	pt1, pt2;
+	int		count = 0;
 
-	pointp_t pt1, pt2;
-	
-	NMG_CK_EDGEUSE(eu1);
-	NMG_CK_LIST(hd);
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_FACEUSE(fu2);
 
-	pt1 = eu1->vu_p->v_p->vg_p->coord;
-	pt2 = eu1->eumate_p->vu_p->v_p->vg_p->coord;
-	if (rt_g.NMG_debug & DEBUG_MESH_EU)
-		rt_log("meshing against %g, %g, %g -> %g, %g, %g (edge %8x)\n",
-		pt1[X], pt1[Y], pt1[Z], pt2[X], pt2[Y], pt2[Z], eu1->e_p);
+	/* Visit all the loopuses in faceuse 1 */
+	for (RT_LIST_FOR(lu1, loopuse, &fu1->lu_hd)) {
+		NMG_CK_LOOPUSE(lu1);
+		/* Ignore self-loops */
+		if (RT_LIST_FIRST_MAGIC(&lu1->down_hd) != NMG_EDGEUSE_MAGIC)
+			continue;
 
-	for (RT_LIST_FOR(eu, edgeuse, hd)) {
-		NMG_CK_EDGEUSE(eu);
-		if (rt_g.NMG_debug & DEBUG_MESH_EU) {
-			pt1 = eu->vu_p->v_p->vg_p->coord;
-			pt2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
-			rt_log("\tcomparing %g, %g, %g -> %g, %g, %g (edge %8x)\n",
-			    pt1[X], pt1[Y], pt1[Z], pt2[X], pt2[Y], pt2[Z], eu->e_p);
+		/* Visit all the edgeuses in loopuse1 */
+		for(RT_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
+			NMG_CK_EDGEUSE(eu1);
+
+			v1a = eu1->vu_p->v_p;
+			v1b = eu1->eumate_p->vu_p->v_p;
+			NMG_CK_VERTEX(v1a);
+			NMG_CK_VERTEX(v1b);
+			e1 = eu1->e_p;
+			NMG_CK_EDGE(e1);
+			if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
+				pt1 = v1a->vg_p->coord;
+				pt2 = v1b->vg_p->coord;
+				rt_log("ref_e=%8x v:%8x--%8x (%g, %g, %g)->(%g, %g, %g)\n",
+					e1, v1a, v1b,
+					V3ARGS(pt1), V3ARGS(pt2) );
+			}
+
+			/* Visit all the loopuses in faceuse2 */
+			for (RT_LIST_FOR(lu2, loopuse, &fu2->lu_hd)) {
+				/* Ignore self-loops */
+				if(RT_LIST_FIRST_MAGIC(&lu2->down_hd) != NMG_EDGEUSE_MAGIC)
+					continue;
+				/* Visit all the edgeuses in loopuse2 */
+				for( RT_LIST_FOR(eu2, edgeuse, &lu2->down_hd) )  {
+					NMG_CK_EDGEUSE(eu2);
+					if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+						pt1 = eu2->vu_p->v_p->vg_p->coord;
+						pt2 = eu2->eumate_p->vu_p->v_p->vg_p->coord;
+						rt_log("\te:%8x v:%8x--%8x (%g, %g, %g)->(%g, %g, %g)\n",
+							eu2->e_p,
+							eu2->vu_p->v_p,
+							eu2->eumate_p->vu_p->v_p,
+							V3ARGS(pt1), V3ARGS(pt2) );
+					}
+
+					/* See if already shared */
+					if( eu2->e_p == e1 ) continue;
+					if( (eu2->vu_p->v_p == v1a &&
+					     eu2->eumate_p->vu_p->v_p == v1b) ||
+					    (eu2->eumate_p->vu_p->v_p == v1a &&
+					     eu2->vu_p->v_p == v1b) )  {
+						nmg_join_eu(eu1, eu2);
+					     	count++;
+					 }
+				}
+			}
 		}
-
-		/* if vertices are the same but edges aren't shared, make
-		 * them shared
-		 */
-		if (eu->e_p != eu1->e_p &&
-		    (eu->vu_p->v_p == eu1->vu_p->v_p &&
-		    eu->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p ||
-		    eu->eumate_p->vu_p->v_p == eu1->vu_p->v_p &&
-		    eu->vu_p->v_p == eu1->eumate_p->vu_p->v_p))
-			nmg_join_eu(eu1, eu);
 	}
-
+	return count;
 }
 
 /*
  *			N M G _ M E S H _ F A C E S
  *
- *	Make sure that all shareable edges of fu1/fu2 are indeed shared
+ *  Scan through all the edges of fu1 and fu2, ensuring that all
+ *  edges involving the same vertex pair are indeed shared.
+ *  This means worrying about merging ("meshing") all the faces in the
+ *  proper radial orientation around the edge.
+ *  XXX probably should return(count);
  */
 void
 nmg_mesh_faces(fu1, fu2)
 struct faceuse *fu1, *fu2;
 {
-	struct loopuse *lu1, *lu2;
-	struct edgeuse *eu;
+	int	count = 0;
 
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
@@ -334,58 +376,90 @@ struct faceuse *fu1, *fu2;
     	    	nmg_pl_2fu( "Before_mesh%d.pl", fnum++, fu1, fu2, 1 );
     	}
 
-	/* Make sure all edges within fu1 that can be shared
-	 * with other edges in fu1 are in fact shared.
-	 */
+	if (rt_g.NMG_debug & DEBUG_MESH)
+		rt_log("meshing self (fu1 %8x)\n", fu1);
+	count += nmg_mesh_two_faces( fu1, fu1 );
 
 	if (rt_g.NMG_debug & DEBUG_MESH)
-		rt_log("meshing self (fu %8x)\n", fu1);
-
-	for (RT_LIST_FOR(lu1, loopuse, &fu1->lu_hd)) {
-
-		NMG_CK_LOOPUSE(lu1);
-		if (RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_EDGEUSE_MAGIC){
-			for(RT_LIST_FOR(eu, edgeuse, &lu1->down_hd)) {
-
-				NMG_CK_EDGEUSE(eu);
-				for (lu2 = RT_LIST_PNEXT(loopuse, lu1);
-				    RT_LIST_NOT_HEAD(lu2, &fu1->lu_hd) ;
-				    lu2 = RT_LIST_PNEXT(loopuse, lu2) ) {
-
-				    	if (RT_LIST_FIRST_MAGIC(&lu2->down_hd)
-				    	    == NMG_EDGEUSE_MAGIC)
-				    	        cmp_mesh_eu(eu, &lu2->down_hd);
-				}
-			}
-		}
-	}
+		rt_log("meshing self (fu2 %8x)\n", fu2);
+	count += nmg_mesh_two_faces( fu2, fu2 );
 
 	if (rt_g.NMG_debug & DEBUG_MESH)
 		rt_log("meshing to other (fu1:%8x fu2:%8x)\n", fu1, fu2);
-
-
-	/* now make sure that all edges of fu2 that could be shared with
-	 * an edge of fu1 are indeed shared
-	 */
-	for (RT_LIST_FOR(lu1, loopuse, &fu1->lu_hd)) {
-
-		NMG_CK_LOOPUSE(lu1);
-		if (RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_EDGEUSE_MAGIC){
-			for(RT_LIST_FOR(eu, edgeuse, &lu1->down_hd)) {
-
-				NMG_CK_EDGEUSE(eu);
-				for (RT_LIST_FOR(lu2, loopuse, &fu2->lu_hd)) {
-
-				    	if(RT_LIST_FIRST_MAGIC(&lu2->down_hd)
-				    	    == NMG_EDGEUSE_MAGIC)
-						cmp_mesh_eu(eu, &lu2->down_hd);
-				}
-			}
-		}
-	}
+	count += nmg_mesh_two_faces( fu1, fu2 );
 
     	if (rt_g.NMG_debug & DEBUG_MESH && rt_g.NMG_debug & DEBUG_PLOTEM) {
     		static int fno=1;
     	    	nmg_pl_2fu( "After_mesh%d.pl", fno++, fu1, fu2, 1 );
     	}
+}
+
+/*
+ *			N M G _ M E S H _ F A C E _ S H E L L
+ *
+ *  The return is the number of edges meshed.
+ */
+int
+nmg_mesh_face_shell( fu1, s )
+struct faceuse	*fu1;
+struct shell	*s;
+{
+	register struct faceuse	*fu2;
+	int		count = 0;
+
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_SHELL(s);
+
+	count += nmg_mesh_two_faces( fu1, fu1 );
+	for( RT_LIST_FOR( fu2, faceuse, &s->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu2);
+		count += nmg_mesh_two_faces( fu2, fu2 );
+		count += nmg_mesh_two_faces( fu1, fu2 );
+	}
+	/* XXX What about wire edges in the shell? */
+	return count;
+}
+
+/*
+ *			N M G _ M E S H _ S H E L L _ S H E L L
+ *
+ *  Mesh every edge in shell 1 with every edge in shell 2.
+ *  The return is the number of edges meshed.
+ *
+ *  Does not use nmg_mesh_face_shell() to keep face/self meshing
+ *  to the absolute minimum necessary.
+ */
+int
+nmg_mesh_shell_shell( s1, s2 )
+struct shell	*s1;
+struct shell	*s2;
+{
+	struct faceuse	*fu1;
+	struct faceuse	*fu2;
+	int		count = 0;
+
+	NMG_CK_SHELL(s1);
+	NMG_CK_SHELL(s2);
+
+	/* First, mesh all faces of shell 2 with themselves */
+	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu2);
+		count += nmg_mesh_two_faces( fu2, fu2 );
+	}
+
+	/* Visit every face in shell 1 */
+	for( RT_LIST_FOR( fu1, faceuse, &s1->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu1);
+
+		/* First, mesh each face in shell 1 with itself */
+		count += nmg_mesh_two_faces( fu1, fu1 );
+
+		/* Visit every face in shell 2 */
+		for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
+			NMG_CK_FACEUSE(fu2);
+			count += nmg_mesh_two_faces( fu1, fu2 );
+		}
+	}
+	/* XXX What about wire edges in the shell? */
+	return count;
 }
