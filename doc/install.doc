@@ -1509,11 +1509,19 @@ cake
 .NH 2
 CRAY WARNINGS
 .PP
-When running \fBrt\fR on multiple processors on either the XMP and Cray-2,
-the message
-``rt_parallel: PID changed ..., open file table may be botched''
-can (finally) be safely ignored.  As of UNICOS 5, the open file table
-is no longer botched when this condition occurs.
+When performing multi-tasking on either the XMP or the Cray-2,
+the librt/timerunix.c routine has great difficulty in collecting
+correct timing.  On the average, one run in four will have correct
+timing data.  This is due to a wierd interaction between the
+Cray multi-tasking library and the UNIX times() system call.
+In particular, the multi-tasking library provides an arbitrary
+mapping between ``virtual cpu'' and tfork()-ed UNIX process, so
+that the ``main'' thread of control can land in any process in
+the multi-tasking group \(em but only one of those processes is
+the parent process, where timing data is being collected.
+Presently, there is no known fix, except to re-run the benchmarks
+many times, and only use timing data from runs where the
+``rt_parallel: PID changed ...'' warning does not occur.
 .PP
 Ignore warning messags of this form:
 .sp .5
