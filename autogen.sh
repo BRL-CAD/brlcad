@@ -103,14 +103,20 @@ else
   _version_line="`$AUTOCONF --version | head -${TAIL_N}1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
     _maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9][0-9].*/\1/'`"
-    _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9][0-9]\).*/\1/'`"
+    _maj_version="`echo $_maj_version | sed 's/.*[A-Z].*//'`"
     [ "x$_maj_version" = "x" ] && _maj_version=0
+    _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9][0-9]\).*/\1/'`"
+    _min_version="`echo $_min_version | sed 's/.*[A-Z].*//'`"
     [ "x$_min_version" = "x" ] && _min_version=0
+
     if [ $_maj_version -lt $AUTOCONF_MAJOR_VERSION ] ; then
       _report_error=yes
-    elif [ $_min_version -lt $AUTOCONF_MINOR_VERSION ] ; then
-      _report_error=yes
+    elif [ $_maj_version -eq $AUTOCONF_MAJOR_VERSION ] ; then
+      if [ $_min_version -lt $AUTOCONF_MINOR_VERSION ] ; then
+	_report_error=yes
+      fi
     fi
+
     $ECHO "Found GNU Autoconf version $_maj_version.$_min_version"
   fi
 fi
@@ -149,18 +155,27 @@ else
   _version_line="`$AUTOMAKE --version | head -${TAIL_N}1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
     _maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9].*/\1/'`"
-    _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
-    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p*\([0-9]*\).*/\1/'`"
+    _maj_version="`echo $_maj_version | sed 's/.*[A-Z].*//'`"
     [ "x$_maj_version" = "x" ] && _maj_version=0
+    _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
+    _min_version="`echo $_min_version | sed 's/.*[A-Z].*//'`"
     [ "x$_min_version" = "x" ] && _min_version=0
+    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p*\([0-9]*\).*/\1/'`"
+    _pat_version="`echo $_pat_version | sed 's/.*[A-Z].*//'`"
     [ "x$_pat_version" = "x" ] && _pat_version=0
+
     if [ $_maj_version -lt $AUTOMAKE_MAJOR_VERSION ] ; then
       _report_error=yes
-    elif [ $_min_version -lt $AUTOMAKE_MINOR_VERSION ] ; then
-      _report_error=yes
-    elif [ $_pat_version -lt $AUTOMAKE_PATCH_VERSION ] ; then
-      _report_error=yes
+    elif [ $_maj_version -eq $AUTOMAKE_MAJOR_VERSION ] ; then
+      if [ $_min_version -lt $AUTOMAKE_MINOR_VERSION ] ; then
+	_report_error=yes
+      elif [ $_min_version -eq $AUTOMAKE_MINOR_VERSION ] ; then
+	if [ $_pat_version -lt $AUTOMAKE_PATCH_VERSION ] ; then
+	  _report_error=yes
+	fi
+      fi
     fi
+
     $ECHO "Found GNU Automake version $_maj_version.$_min_version.$_pat_version"
   fi
 fi
@@ -227,10 +242,12 @@ if [ ! $? = 0 ] ; then
 	_glti="`which $tool`"
 	_gltidir="`dirname $_glti`"
 	$ECHO "   sudo ln -s $_glti $_gltidir/libtoolize"
+	$ECHO
       else
 	$ECHO "   ln -s $glti $_gltidir/libtoolize"
 	$ECHO 
 	$ECHO "Run that as root or with proper permissions to the $_gltidir directory"
+	$ECHO
       fi
       _ltfound=yes
       break
@@ -249,18 +266,27 @@ else
   _version_line="`$LIBTOOLIZE --version | head -${TAIL_N}1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
     _maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9].*/\1/'`"
-    _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
-    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p*\([0-9]*\).*/\1/'`"
+    _maj_version="`echo $_maj_version | sed 's/.*[A-Z].*//'`"
     [ "x$_maj_version" = "x" ] && _maj_version=0
+    _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
+    _min_version="`echo $_min_version | sed 's/.*[A-Z].*//'`"
     [ "x$_min_version" = "x" ] && _min_version=0
+    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p*\([0-9]*\).*/\1/'`"
+    _pat_version="`echo $_pat_version | sed 's/.*[A-Z].*//'`"
     [ "x$_pat_version" = "x" ] && _pat_version=0
+
     if [ $_maj_version -lt $LIBTOOL_MAJOR_VERSION ] ; then
       _report_error=yes
-    elif [ $_min_version -lt $LIBTOOL_MINOR_VERSION ] ; then
-      _report_error=yes
-    elif [ $_pat_version -lt $LIBTOOL_PATCH_VERSION ] ; then
-      _report_error=yes
+    elif [ $_maj_version -eq $LIBTOOL_MAJOR_VERSION ] ; then
+      if [ $_min_version -lt $LIBTOOL_MINOR_VERSION ] ; then
+	_report_error=yes
+      elif [ $_min_version -eq $LIBTOOL_MINOR_VERSION ] ; then
+	if [ $_pat_version -lt $LIBTOOL_PATCH_VERSION ] ; then
+	  _report_error=yes
+	fi
+      fi
     fi
+
     $ECHO "Found GNU Libtool version $_maj_version.$_min_version.$_pat_version"
   fi
 fi
@@ -414,6 +440,7 @@ fi
 #  automake -a -c -f
 ####
 if [ "x$reconfigure_manually" = "xyes" ] ; then
+  $ECHO
   $ECHO $ECHO_N "Preparing build ... $ECHO_C"
 
   $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
