@@ -160,7 +160,6 @@ BDIRS="bench \
 	libtcl \
 	libtk \
 	libdm \
-	rfbd \
 	fbserv \
 	librt \
 	libredblack \
@@ -210,8 +209,7 @@ if test "${HAS_TCP}" = "0"
 then
 	BDIRS=`echo ${BDIRS} | sed -e  's/libpkg//
 					s/remrt//
-					s/fbserv//
-					s/rfbd//'`
+					s/fbserv//'`
 fi
 
 # If this is not an SGI 4D with GL, eliminate SGI GL-specific directories
