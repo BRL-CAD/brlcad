@@ -582,12 +582,12 @@ dmo_drawVList_tcl(clientData, interp, argc, argv)
 static int
 dmo_drawSList(dmop, hsp)
      struct dm_obj *dmop;
-     struct solid *hsp;
+     struct bu_list *hsp;
 {
 	struct solid *sp;
 	int linestyle = -1;
 
-	FOR_ALL_SOLIDS(sp, &hsp->l) {
+	FOR_ALL_SOLIDS(sp, hsp) {
 		if (linestyle != sp->s_soldash) {
 			linestyle = sp->s_soldash;
 			DM_SET_LINE_ATTR(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
@@ -619,7 +619,7 @@ dmo_drawSList_tcl(clientData, interp, argc, argv)
      char    **argv;
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
-	struct solid *hsp;
+	struct bu_list *hsp;
 
 	if (argc != 3) {
 		struct bu_vls vls;
