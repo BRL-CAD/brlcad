@@ -70,6 +70,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../rt/ext.h"
 #include "../rt/rdebug.h"
 
+#ifndef R_OK
+#define R_OK	0x04
+#endif
+
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
