@@ -1070,19 +1070,23 @@ wdb_tops_cmd(struct rt_wdb	*wdbp,
 	int				c;
 	int				gflag = 0;
 	int				uflag = 0;
+	int				no_decorate = 0;
 
 	RT_CK_WDB_TCL(interp, wdbp);
 	RT_CK_DBI_TCL(interp, wdbp->dbip);
 
 	/* process any options */
 	bu_optind = 1;	/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, argv, "gu")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "gun")) != EOF) {
 		switch (c) {
 		case 'g':
 			gflag = 1;
 			break;
 		case 'u':
 			uflag = 1;
+			break;
+		case 'n':
+			no_decorate = 1;
 			break;
 		default:
 			break;
@@ -1123,7 +1127,7 @@ wdb_tops_cmd(struct rt_wdb	*wdbp,
 	}
 
 	bu_vls_init(&vls);
-	wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+	wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0), no_decorate);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
 	bu_vls_free(&vls);
         bu_free((genptr_t)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
@@ -1760,7 +1764,7 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 		wdb_vls_line_dpp(&vls, dirp0, (int)(dirp - dirp0),
 				 aflag, cflag, rflag, sflag);
 	else
-		wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+		wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0), 0);
 
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
@@ -3618,7 +3622,7 @@ wdb_dup_cmd(struct rt_wdb	*wdbp,
 	rt_mempurge( &(newdbp->dbi_freep) );        /* didn't really build a directory */
 
 	bu_vls_init(&vls);
-	wdb_vls_col_pr4v(&vls, dirp0, (int)(dcs.dup_dirp - dirp0));
+	wdb_vls_col_pr4v(&vls, dirp0, (int)(dcs.dup_dirp - dirp0), 0);
 	bu_vls_printf(&vls, "\n -----  %d duplicate names found  -----", wdbp->wdb_num_dups);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
@@ -8145,7 +8149,8 @@ wdb_vls_col_eol(struct bu_vls	*str,
 void
 wdb_vls_col_pr4v(struct bu_vls		*vls,
 		 struct directory	**list_of_names,
-		 int			num_in_list)
+		 int			num_in_list,
+		 int			no_decorate)
 {
 #if 0
 	int lines, i, j, namelen, this_one;
@@ -8249,12 +8254,12 @@ wdb_vls_col_pr4v(struct bu_vls		*vls,
 			 * be delayed until now.  There is no way to make the
 			 * decision on where to place them before now.
 			 */
-			if (list_of_names[this_one]->d_flags & DIR_COMB) {
+			if ( !no_decorate && list_of_names[this_one]->d_flags & DIR_COMB) {
 				bu_vls_putc(vls, '/');
 				namelen++;
 			}
 
-			if (list_of_names[this_one]->d_flags & DIR_REGION) {
+			if ( !no_decorate && list_of_names[this_one]->d_flags & DIR_REGION) {
 				bu_vls_putc(vls, 'R');
 				namelen++;
 			}
@@ -8828,7 +8833,7 @@ wdb_dir_summary(struct db_i	*dbip,
 			if (dp->d_flags & flag)
 				*dirp++ = dp;
 
-	wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+	wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0), 0);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	bu_free((genptr_t)dirp0, "dir_getspace");
