@@ -63,7 +63,7 @@ wall:	wall.o
  */
 %.o&:	rt,,%,o			if exist ../rt/%.c
 
-%9,,%,o&:	../%9/%.c [[cakeinclude.sh ../%9/%.c INCDIR ../%9]] \
+%9,,%,o&:	../%9/%.c [[cakeinclude ../%9/%.c INCDIR ../%9]] \
 					if exist ../%9/%.c
 	CC CFLAGS -c ../%9/%.c
 
