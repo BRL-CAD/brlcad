@@ -54,14 +54,14 @@ FILE *infp;
 char	usage[] = "\
 Usage: bw-fb [-h -i -c -r -g -b]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
-	[-s squaresize] [-H height] [-W width] [file.pix]\n";
+	[-s squaresize] [-W width] [-H height] [file.pix]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hicrgbx:y:X:Y:s:H:W:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hicrgbx:y:X:Y:s:W:H:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -98,11 +98,11 @@ register char **argv;
 			/* square size */
 			height = width = atoi(optarg);
 			break;
-		case 'H':
-			height = atoi(optarg);
-			break;
 		case 'W':
 			width = atoi(optarg);
+			break;
+		case 'H':
+			height = atoi(optarg);
 			break;
 
 		default:		/* '?' */

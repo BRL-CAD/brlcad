@@ -43,34 +43,34 @@ int width;				/* input width */
 FBIO *fbp;
 
 char usage[] = "\
-Usage: pix-fb [-h -i -c] [-s squaresize] [-H height] [-W width] [file.pix]\n";
+Usage: pix-fb [-h -i -c] [-s squaresize] [-W width] [-H height] [file.pix]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hics:H:W:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hics:W:H:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
 			height = width = 1024;
-			break;
-		case 's':
-			/* square size */
-			height = width = atoi(optarg);
-			break;
-		case 'H':
-			height = atoi(optarg);
-			break;
-		case 'W':
-			width = atoi(optarg);
 			break;
 		case 'i':
 			inverse = 1;
 			break;
 		case 'c':
 			clear = 1;
+			break;
+		case 's':
+			/* square size */
+			height = width = atoi(optarg);
+			break;
+		case 'W':
+			width = atoi(optarg);
+			break;
+		case 'H':
+			height = atoi(optarg);
 			break;
 
 		default:		/* '?' */
