@@ -28,7 +28,7 @@
  *	Christopher T. Johnson - 88/12/27
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

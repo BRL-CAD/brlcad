@@ -26,7 +26,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -97,7 +97,7 @@ extern BU_FILE			bu_iob[1];
  *	This software is Copyright (C) 1997 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
-static char RCSrtstring[] = "@(#)$Header$ (BRL)";
+static const char RCSrtstring[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 

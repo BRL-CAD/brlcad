@@ -16,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Id$ (BRL)";
+static const char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include "conf.h"

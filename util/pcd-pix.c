@@ -21,7 +21,7 @@
  *  any way. This software is not public domain.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 /* define DEBUG for some debugging informations, just remove the x from xDEBUG */
