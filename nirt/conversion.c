@@ -4,10 +4,13 @@ static char RCSid[] = "$Header$";
 #endif
 
 /*	INCLUDES	*/
+#include "conf.h"
+
 #include <stdio.h>
-#include <machine.h>
-#include <vmath.h>
 #include <math.h>
+
+#include "machine.h"
+#include "vmath.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
 
