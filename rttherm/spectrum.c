@@ -414,14 +414,17 @@ if(rt_g.debug) rt_log("rt_spect_black_body_points( x%x, %g degK )\n", data, temp
  *			R T _ S P E C T _ C U R V E _ T O _ X Y Z
  *
  *  Convenience routine.
+ *  Serves same function as Roy Hall's CLR_spect_to_xyz(), pg 233.
+ *  The normalization xyz_scale = 1.0 / rt_tabdata_area2( cie_y );
+ *  has been folded into rt_spect_make_CIE_XYZ();
  */
 void
 rt_spect_curve_to_xyz( xyz, tabp, cie_x, cie_y, cie_z )
 point_t			xyz;
-struct rt_tabdata	*tabp;
-struct rt_tabdata	*cie_x;
-struct rt_tabdata	*cie_y;
-struct rt_tabdata	*cie_z;
+CONST struct rt_tabdata	*tabp;
+CONST struct rt_tabdata	*cie_x;
+CONST struct rt_tabdata	*cie_y;
+CONST struct rt_tabdata	*cie_z;
 {
 	FAST fastf_t	tab_area;
 
@@ -453,14 +456,16 @@ rt_log(" tab_area = %g\n", tab_area);
  *  caller must scale into meaningful units.
  *
  *  Convenience routine.
+XXX This routine is probably wrong.  Or at least, it needs different curves.
+XXX Converting rgb to a curve, directly, should be easy.
  */
 void
 rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z )
 struct rt_tabdata	*tabp;
 CONST point_t		xyz;
-struct rt_tabdata	*cie_x;
-struct rt_tabdata	*cie_y;
-struct rt_tabdata	*cie_z;
+CONST struct rt_tabdata	*cie_x;
+CONST struct rt_tabdata	*cie_y;
+CONST struct rt_tabdata	*cie_z;
 {
 	rt_tabdata_blend3( tabp,
 		xyz[X], cie_x,
