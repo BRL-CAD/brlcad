@@ -724,6 +724,20 @@ cmd_setup()
 					(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
 	}
 
+	/* overrides/wraps the built-in tree command */
+	{
+		struct bu_vls	vls;
+		char		*pathname;
+
+		/* Locate the BRL-CAD-specific Tcl scripts */
+		pathname = bu_brlcad_path("");
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "source %stclscripts/mged/tree.tcl", pathname);
+		(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+	}
+
 	bu_vls_strcpy(&temp, "glob_compat_mode");
 	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&glob_compat_mode,
 		    TCL_LINK_BOOLEAN);
