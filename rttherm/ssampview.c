@@ -541,13 +541,22 @@ char	**argv;
 
 	rt_make_ntsc_xyz2rgb( xyz2rgb );
 
-	if( argc > 1 )  {
+	if( argc < 2 )  {
+		fprintf(stderr, "Usage: disp [-t] file.ssamp\n");
+		exit(2);
+	}
+
+	if( argc > 1 && strcmp(argv[1], "-t") == 0 )  {
+		fprintf(stderr, "disp: conducting library tests\n");
 		conduct_tests();
 		first_command = "do_testing";
 		Tk_Main( 1, argv, tcl_appinit );
 		/* NOTREACHED */
 		exit(0);
 	}
+
+	basename = argv[1];
+
 	first_command = "doit1 42";
 
 	if( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
@@ -563,7 +572,7 @@ char	**argv;
 	}
 
 	/* Read atmosphere curve -- input is in microns, not nm */
-	atmosphere_orig = rt_read_table_and_tabdata( "std_day_1km.dat" );
+	atmosphere_orig = rt_read_table_and_tabdata( "../rttherm/std_day_1km.dat" );
 	rt_table_scale( (struct rt_table *)(atmosphere_orig->table), 1000.0 );
 	atmosphere = rt_tabdata_resample_max( spectrum, atmosphere_orig );
 
