@@ -39,6 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 
 #include "tcl.h"
+#include "tk.h"
 
 #include "machine.h"
 #include "bu.h"
@@ -59,6 +60,13 @@ extern void solid_list_callback(); /* chgview.c */
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */
 extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. from dodraw.c */
+extern int			classic_mged;
+
+extern Tk_Window	tkwin;
+
+static char *really_delete="tk_messageBox -icon question -title {Are you sure?}\
+ -type yesno -message {If you delete the \"_GLOBAL\" object you will be losing some important information\
+ such as your preferred units and the title of the database. Do you really want to do this?}";
 
 void	aexists();
 
@@ -85,6 +93,7 @@ cmd_kill(ClientData	clientData,
 	struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
 	int			is_phony;
 	int			verbose = LOOKUP_NOISY;
+	int			force=0;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -101,12 +110,35 @@ cmd_kill(ClientData	clientData,
 
 	if( argc > 1 && strcmp( argv[1], "-f" ) == 0 )  {
 		verbose = LOOKUP_QUIET;
+		force = 1;
 		argc--;
 		argv++;
 	}
 
 	for( i = 1; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], verbose )) != DIR_NULL )  {
+			if( !force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0 ) {
+				/* kill the _GLOBAL object?? */
+				if( classic_mged || tkwin == NULL ) {
+					/* Tk is not available */
+					bu_log( "You attempted to delete the _GLOBAL object.\n" );
+					bu_log( "\tIf you delete the \"_GLOBAL\" object you will be losing some important information\n" );
+					bu_log( "\tsuch as your preferred units and the title of the database.\n" );
+					bu_log( "\tUse the \"-f\" option, if you really want to do this.\n" );
+					continue;
+				} else {
+					/* Use tk_messageBox to question user */
+					Tcl_ResetResult( interp );
+					if( Tcl_Eval( interp, really_delete ) != TCL_OK ) {
+						bu_bomb( "Tcl_Eval() failed!!!\n" );
+					}
+					if( strcmp( Tcl_GetStringResult( interp ), "yes" ) ) {
+						Tcl_ResetResult( interp );
+						continue;
+					}
+					Tcl_ResetResult( interp );
+				}
+			}
 			is_phony = (dp->d_addr == RT_DIR_PHONY_ADDR);
 			dpp[0] = dp;
 			eraseobjall(dpp);
