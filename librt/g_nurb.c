@@ -99,21 +99,26 @@ struct rt_i		*rtip;
 	{
 		struct snurb * s;
 		struct nurb_specific * n;
+		struct rt_list	bezier;
 
 		GETSTRUCT( n, nurb_specific);
 
-		n->srf = (struct snurb *) rt_nurb_scopy (sip->srfs[i]);
+		/* Store off the original snurb */
+		n->srf = rt_nurb_scopy (sip->srfs[i]);
+		NMG_CK_SNURB(n->srf);
+		rt_nurb_s_bound(n->srf, n->min, n->max);
 
 		n->b_list = (struct nurb_b_list *)0;
-
-		rt_nurb_s_bound(n->srf, n->min, n->max);
 		
-		s = (struct snurb *) rt_nurb_bezier(n->srf);
+		RT_LIST_INIT( &bezier );
+		(void)rt_nurb_bezier( &bezier, sip->srfs[i] );
 		
-		while( s != (struct snurb *)0 )
-		{
+		/* Pull off each Bezier snurb, and wrap with nurb_b_list */
+		while( RT_LIST_WHILE( s, snurb, &bezier ) )  {
 			struct nurb_b_list *b;
 
+			NMG_CK_SNURB(s);
+			RT_LIST_DEQUEUE( &s->l );
 			b = (struct nurb_b_list *) rt_malloc( 
 				sizeof(struct nurb_b_list ),
 				"rt_nurb_prep:nurb_b_list");
@@ -122,8 +127,6 @@ struct rt_i		*rtip;
 			
 			VMINMAX( stp->st_min, stp->st_max, b->min);
 			VMINMAX( stp->st_min, stp->st_max, b->max);
-			s = s->next;
-			b->srf->next = (struct snurb *)0;
 			b->next = n->b_list;
 			n->b_list = b;
 		}
