@@ -5,7 +5,7 @@
  */
 
 #define SRCDIR	jove
-#define PRODUCTS	jove findcom
+#define PRODUCTS	jove findcom teach-jove
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -32,8 +32,9 @@
 		jove_re.o \
 		jove_screen.o \
 		jove_term.o \
-		jove_tune.o \
-		jove_wind.o 
+		jove_wind.o \
+		tune.o \
+		version.o
 
 
 #include "../Cakefile.defs"
@@ -43,10 +44,26 @@
 /* Do not use LIBES symbol.  We don't need anything but libc */
 
 jove:	JOVE_OBJ
-	sh ../SRCDIR/mkversion.sh
-	CC LDFLAGS -o jove JOVE_OBJ version.o LIBTERMLIB
+	CC LDFLAGS -o jove JOVE_OBJ LIBTERMLIB
 
-findcom:	findcom.o jove_tune.o
-	CC LDFLAGS findcom.o jove_tune.o -o findcom
+findcom:	findcom.o tune.o
+	CC LDFLAGS findcom.o tune.o -o findcom
+
+teach-jove:	teach-jove.sh FRC
+	sed -e 's;BinDir;$(BINDIR);' -e 's;LibDir;$(LIBDIR);' < teach-jove.sh > teach-jove
+
+tune.c:		jove_tune.c FRC
+	sed -e 's;LibDir;$(LIBDIR);' < jove_tune.c > tune.c
+
+version.c:	FRC
+	if test ! -f version.number ; then echo 0 > version.number; fi
+	c=`cat version.number`; \
+	rm -f version.number version.c; \
+	echo $$c | \
+		awk '{version = $$1 + 1; };END{printf "%d\n", version > "version.number"; }'; \
+	c=`cat version.number`; \
+	echo "char	version[] = \"2.$$c\";" > version.c
+
+FRC:
 
 #include "../Cakefile.rules"
