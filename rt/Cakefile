@@ -64,6 +64,12 @@ rtpp:	RTPP_OBJ LIBRT
 rtrad:	RTRAD_OBJ LIBRT
 	CC LDFLAGS RTRAD_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtrad
 
+#define RTSCAT_OBJ	rt.o opt.o do.o worker.o mathtab.o \
+			material.o viewscat.o
+
+rtbscat: RTSCAT_OBJ LIBRT LIBRAD
+	CC LDFLAGS RTSCAT_OBJ LIB_PRE''LIBRAD LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtbscat
+
 #define RTCHECK_OBJ	rt.o opt.o do.o worker.o viewcheck.o \
 			mathtab.o material.o
 
