@@ -1033,7 +1033,7 @@ weave:
 	 *  been computed.  Evaluate the boolean trees over each partition.
 	 */
 	(void)rt_boolfinal( &InitialPart, &FinalPart, BACKING_DIST,
-		rtip->rti_inf_box.bn.bn_len > 0 ? INFINITY : ss.model_end,
+		INFINITY,
 		regionbits, ap, solidbits);
 
 	if( FinalPart.pt_forw == &FinalPart )  {
