@@ -37,11 +37,11 @@ static const char RCSbot[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 #include "./plane.h"
-
+#include "./bot.h"
 
 /* XXX Set this to 32 to enable pieces by default */
 int rt_bot_minpieces = 32;
-
+int rt_bot_tri_per_piece = 4;
 
 /*
  *			R T _ B O T F A C E
@@ -118,7 +118,7 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
 		   int			ntri,
 		   const struct bn_tol		*tol)
 {
-    struct bound_rpp	*minmax;
+    struct bound_rpp	*minmax = (struct bound_rpp *)NULL;
     struct tri_specific **fap;
     register struct tri_specific *trip;
     point_t b,c;
@@ -126,23 +126,45 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
     vect_t offset;
     fastf_t los;
     int surfno;
+    long num_rpps;
+    int tri_per_piece, tpp_m1;
 
-    stp->st_npieces = ntri;
+    tri_per_piece = bot->bot_tri_per_piece = rt_bot_tri_per_piece;
+
+    num_rpps = ntri / tri_per_piece;
+    if (ntri % tri_per_piece) num_rpps++;
+
+    stp->st_npieces = num_rpps;
+
+    bu_log("ntri:%d num_rpps:%d\n", ntri, num_rpps);
 
     fap = bot->bot_facearray = (struct tri_specific **)
 	bu_malloc( sizeof(struct tri_specific *) * ntri,
 		   "bot_facearray" );
 
     stp->st_piece_rpps = (struct bound_rpp *)
-	bu_malloc( sizeof(struct bound_rpp) * ntri,
+	bu_malloc( sizeof(struct bound_rpp) * num_rpps,
 		   "st_piece_rpps" );
 
 
+    tpp_m1 = tri_per_piece - 1;
     trip = bot->bot_facelist;
+    minmax = &stp->st_piece_rpps[num_rpps-1];
     for (surfno=ntri-1 ; trip; trip = trip->tri_forw, surfno-- )  {
 
+	if ( (surfno % tri_per_piece) == tpp_m1) {
+	    /* top most surfno in a piece group */
+	    /* first surf for this piece */
+	    minmax = &stp->st_piece_rpps[surfno / tri_per_piece];
+
+	    minmax->min[X] = minmax->max[X] = trip->tri_A[X];
+	    minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
+	    minmax->min[Z] = minmax->max[Z] = trip->tri_A[Z];
+	} else {
+	    VMINMAX( minmax->min, minmax->max, trip->tri_A);
+	}
+
 	fap[surfno] = trip;
-	minmax = &stp->st_piece_rpps[surfno];
 
 	/* It is critical that the surfno's used in
 	 * rt error messages (from hit_surfno) match
@@ -152,7 +174,8 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
 	 */
 	BU_ASSERT_LONG( trip->tri_surfno, ==, surfno );
 
-	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
+	if (bot->bot_mode == RT_BOT_PLATE ||
+	   bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
 	    if( BU_BITTEST( bot->bot_facemode, surfno ) )  {
 		/* Append full thickness on both sides */
 		los = bot->bot_thickness[surfno];
@@ -165,9 +188,6 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
 	    los = tol->dist;	/* typ 0.005mm */
 	}
 
-	minmax->min[X] = minmax->max[X] = trip->tri_A[X];
-	minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
-	minmax->min[Z] = minmax->max[Z] = trip->tri_A[Z];
 	VADD2( b, trip->tri_BA, trip->tri_A );
 	VADD2( c, trip->tri_CA, trip->tri_A );
 	VMINMAX( minmax->min, minmax->max, b );
@@ -190,6 +210,7 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
 	VMINMAX( minmax->min, minmax->max, d );
 	VMINMAX( minmax->min, minmax->max, e );
 	VMINMAX( minmax->min, minmax->max, f );
+
     }
 
 
@@ -295,8 +316,11 @@ struct rt_i		*rtip;
 
 	/*
 	 *  Support for solid 'pieces'
-	 *  For now, each triangle is considered a separate piece.
-	 *  These array allocations can't be made until the number of
+	 *
+	 *  Each piece can represent a number of triangles.  This is encoded
+	 *  in bot->bot_tri_per_piece.
+	 *
+      	 *  These array allocations can't be made until the number of
 	 *  triangles are known.
 	 *
 	 *  If the number of triangles is too small,
@@ -321,6 +345,181 @@ register const struct soltab *stp;
 {
 }
 
+static int
+rt_bot_plate_segs(struct hit		*hits,
+		  int			nhits,
+		  struct soltab		*stp,
+		  struct xray		*rp,
+		  struct application	*ap,
+		  struct seg		*seghead,
+		  struct bot_specific	*bot)
+{
+    register struct seg *segp;
+    register int i;
+    register fastf_t los;
+    int surfno;
+
+
+    for( i=0; i < nhits; i++ ) {
+	surfno = hits[i].hit_surfno;
+
+	if( bot->bot_mode == RT_BOT_PLATE_NOCOS )
+	    los = bot->bot_thickness[surfno];
+	else {
+	    los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
+	    if( los < 0.0 )
+		los = -los;
+	}
+	if( BU_BITTEST( bot->bot_facemode, hits[i].hit_surfno ) ) {
+				/* append thickness to hit point */
+	    RT_GET_SEG( segp, ap->a_resource);
+	    segp->seg_stp = stp;
+
+				/* set in hit */
+	    segp->seg_in = hits[i];
+	    segp->seg_in.hit_vpriv[Z] = 1;
+
+				/* set out hit */
+	    segp->seg_out.hit_surfno = surfno;
+	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
+	    segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
+	    segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
+	    segp->seg_out.hit_vpriv[Z] = -1; /* a clue for rt_bot_norm that this is an exit */
+	    segp->seg_out.hit_private = segp->seg_in.hit_private;
+	    segp->seg_out.hit_rayp = &ap->a_ray;
+
+	    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+	} else {
+				/* center thickness about hit point */
+	    RT_GET_SEG( segp, ap->a_resource);
+	    segp->seg_stp = stp;
+
+				/* set in hit */
+	    segp->seg_in.hit_surfno = surfno;
+	    segp->seg_in.hit_vpriv[X] = hits[i].hit_vpriv[X]; /* ray dir dot normal */
+	    segp->seg_in.hit_vpriv[Y] = bot->bot_orientation;
+	    segp->seg_in.hit_vpriv[Z] = 1;
+	    segp->seg_in.hit_private = hits[i].hit_private;
+	    segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5 );
+	    segp->seg_in.hit_rayp = &ap->a_ray;
+
+				/* set out hit */
+	    segp->seg_out.hit_surfno = surfno;
+	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
+	    segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
+	    segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
+	    segp->seg_out.hit_vpriv[Z] = -1;
+	    segp->seg_out.hit_private = hits[i].hit_private;
+	    segp->seg_out.hit_rayp = &ap->a_ray;
+
+	    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+	}
+    }
+    /* Every hit turns into two, and makes a seg.  No leftovers */
+    return( nhits*2 );
+
+}
+
+static int
+rt_bot_unoriented_segs(struct hit		*hits,
+		  int			nhits,
+		  struct soltab		*stp,
+		  struct xray		*rp,
+		  struct application	*ap,
+		  struct seg		*seghead,
+		  struct bot_specific	*bot)
+{
+    register struct seg *segp;
+    register int i, j;
+
+    /*
+     *  RT_BOT_SOLID, RT_BOT_UNORIENTED.
+     */
+    fastf_t rm_dist=0.0;
+    int	removed=0;
+
+    if( nhits == 1 ) {
+	/* make a zero length partition */
+	RT_GET_SEG( segp, ap->a_resource );
+	segp->seg_stp = stp;
+
+	/* set in hit */
+	segp->seg_in = hits[0];
+	segp->seg_in.hit_vpriv[Z] = 1;
+
+	/* set out hit */
+	segp->seg_out = hits[0];
+	segp->seg_out.hit_vpriv[Z] = -1;
+
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+	return( 1 );
+    }
+
+    /* Remove duplicate hits */
+    for( i=0 ; i<nhits-1 ; i++ ) {
+	fastf_t dist;
+
+	dist = hits[i].hit_dist - hits[i+1].hit_dist;
+	if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) ) {
+	    removed++;
+	    rm_dist = hits[i+1].hit_dist;
+	    for( j=i ; j<nhits-1 ; j++ )
+		hits[j] = hits[j+1];
+	    nhits--;
+	    i--;
+	}
+    }
+
+
+    if( nhits == 1 )
+	return( 0 );
+
+    if( nhits&1 && removed ) {
+	/* If we have an odd number of hits and have removed
+	 * a duplicate, then it was likely on an edge, so
+	 * remove the one we left.
+	 */
+	register int j;
+
+	for( i=0 ; i<nhits ; i++ ) {
+	    if( hits[i].hit_dist == rm_dist ) {
+		for( j=i ; j<nhits-1 ; j++ )
+		    hits[j] = hits[j+1];
+		nhits--;
+		i--;
+		break;
+	    }
+	}
+    }
+
+    for( i=0 ; i<(nhits&~1) ; i += 2 ) {
+	RT_GET_SEG( segp, ap->a_resource );
+	segp->seg_stp = stp;
+
+	/* set in hit */
+	segp->seg_in = hits[i];
+	segp->seg_in.hit_vpriv[Z] = 1;
+
+	/* set out hit */
+	segp->seg_out = hits[i+1];
+	segp->seg_out.hit_vpriv[Z] = -1;
+
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+    }
+    if( nhits&1 ) {
+	if( RT_G_DEBUG & DEBUG_SHOOT ) {
+	    bu_log( "rt_bot_makesegs(%s): WARNING: odd number of hits (%d), last hit ignored\n",
+		    stp->st_name, nhits );
+	    bu_log( "\tray = -p %g %g %g -d %g %g %g\n",
+		    V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
+	}
+	nhits--;
+    }
+    return( nhits );
+}
+
+
+
 /*
  *			R T _ B O T _ M A K E S E G S
  *
@@ -336,198 +535,44 @@ struct xray		*rp;
 struct application	*ap;
 struct seg		*seghead;
 {
-	struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-	register struct seg *segp;
-	register int i;
+    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+    register struct seg *segp;
+    register int i;
 
-	RT_CK_SOLTAB(stp);
+    RT_CK_SOLTAB(stp);
 
-	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )
-	{
-		for( i=0; i < nhits; i++ )
-		{
-			register int surfno = hits[i].hit_surfno;
-			register fastf_t los;
+    if(bot->bot_mode == RT_BOT_PLATE ||
+       bot->bot_mode == RT_BOT_PLATE_NOCOS) {
+	return rt_bot_plate_segs(hits, nhits, stp, rp, ap, seghead, bot);
+    }
 
-			if( bot->bot_mode == RT_BOT_PLATE_NOCOS )
-			  los = bot->bot_thickness[surfno];
-			else
-			  {
-			    los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
-			    if( los < 0.0 )
-			      los = -los;
-			  }
-			if( BU_BITTEST( bot->bot_facemode, hits[i].hit_surfno ) )
-			{
-				/* append thickness to hit point */
-				RT_GET_SEG( segp, ap->a_resource);
-				segp->seg_stp = stp;
+    if( bot->bot_mode == RT_BOT_SURFACE ) {
+	for( i=0 ; i<nhits ; i++ )
+	    {
+		RT_GET_SEG( segp, ap->a_resource );
+		segp->seg_stp = stp;
 
-				/* set in hit */
-				segp->seg_in = hits[i];
-				segp->seg_in.hit_vpriv[Z] = 1;
+		/* set in hit */
+		segp->seg_in = hits[i];
+		segp->seg_in.hit_vpriv[Z] = 1;
 
-				/* set out hit */
-				segp->seg_out.hit_surfno = surfno;
-				segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
-				segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
-				segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
-				segp->seg_out.hit_vpriv[Z] = -1; /* a clue for rt_bot_norm that this is an exit */
-				segp->seg_out.hit_private = segp->seg_in.hit_private;
-				segp->seg_out.hit_rayp = &ap->a_ray;
+		/* set out hit */
+		segp->seg_out = hits[i];
+		segp->seg_out.hit_vpriv[Z] = -1;
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+	    }
+	/* Every hit turns into two, and makes a seg.  No leftovers */
+	return( nhits*2 );
+    }
 
-				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-			}
-			else
-			{
-				/* center thickness about hit point */
-				RT_GET_SEG( segp, ap->a_resource);
-				segp->seg_stp = stp;
+    BU_ASSERT( bot->bot_mode == RT_BOT_SOLID );
 
-				/* set in hit */
-				segp->seg_in.hit_surfno = surfno;
-				segp->seg_in.hit_vpriv[X] = hits[i].hit_vpriv[X]; /* ray dir dot normal */
-				segp->seg_in.hit_vpriv[Y] = bot->bot_orientation;
-				segp->seg_in.hit_vpriv[Z] = 1;
-				segp->seg_in.hit_private = hits[i].hit_private;
-				segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5 );
-				segp->seg_in.hit_rayp = &ap->a_ray;
+    if( bot->bot_orientation == RT_BOT_UNORIENTED ) {
+	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap,
+				      seghead, bot);
+    }
 
-				/* set out hit */
-				segp->seg_out.hit_surfno = surfno;
-				segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
-				segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
-				segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
-				segp->seg_out.hit_vpriv[Z] = -1;
-				segp->seg_out.hit_private = hits[i].hit_private;
-				segp->seg_out.hit_rayp = &ap->a_ray;
-
-				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-			}
-		}
-		/* Every hit turns into two, and makes a seg.  No leftovers */
-		return( nhits*2 );
-	}
-
-	if( bot->bot_mode == RT_BOT_SURFACE )
-	{
-		for( i=0 ; i<nhits ; i++ )
-		{
-			RT_GET_SEG( segp, ap->a_resource );
-			segp->seg_stp = stp;
-
-			/* set in hit */
-			segp->seg_in = hits[i];
-			segp->seg_in.hit_vpriv[Z] = 1;
-
-			/* set out hit */
-			segp->seg_out = hits[i];
-			segp->seg_out.hit_vpriv[Z] = -1;
-			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-		}
-		/* Every hit turns into two, and makes a seg.  No leftovers */
-		return( nhits*2 );
-	}
-
-	BU_ASSERT( bot->bot_mode == RT_BOT_SOLID );
-
-	if( bot->bot_orientation == RT_BOT_UNORIENTED )
-	{
-		/*
-		 *  RT_BOT_SOLID, RT_BOT_UNORIENTED.
-		 */
-		fastf_t rm_dist=0.0;
-		int	removed=0;
-
-		if( nhits == 1 )
-		{
-			/* make a zero length partition */
-			RT_GET_SEG( segp, ap->a_resource );
-			segp->seg_stp = stp;
-
-			/* set in hit */
-			segp->seg_in = hits[0];
-			segp->seg_in.hit_vpriv[Z] = 1;
-
-			/* set out hit */
-			segp->seg_out = hits[0];
-			segp->seg_out.hit_vpriv[Z] = -1;
-
-			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-			return( 1 );
-		}
-
-		/* Remove duplicate hits */
-		{
-			register int j;
-
-			for( i=0 ; i<nhits-1 ; i++ )
-			{
-				fastf_t dist;
-
-				dist = hits[i].hit_dist - hits[i+1].hit_dist;
-				if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) )
-				{
-					removed++;
-					rm_dist = hits[i+1].hit_dist;
-					for( j=i ; j<nhits-1 ; j++ )
-						hits[j] = hits[j+1];
-					nhits--;
-					i--;
-				}
-			}
-		}
-
-		if( nhits == 1 )
-			return( 0 );
-
-		if( nhits&1 && removed ) {
-			/* If we have an odd number of hits and have removed
-			 * a duplicate, then it was likely on an edge, so
-			 * remove the one we left.
-			 */
-			register int j;
-
-			for( i=0 ; i<nhits ; i++ ) {
-				if( hits[i].hit_dist == rm_dist ) {
-					for( j=i ; j<nhits-1 ; j++ )
-						hits[j] = hits[j+1];
-					nhits--;
-					i--;
-					break;
-				}
-			}
-		}
-
-		for( i=0 ; i<(nhits&~1) ; i += 2 )
-		{
-			RT_GET_SEG( segp, ap->a_resource );
-			segp->seg_stp = stp;
-
-			/* set in hit */
-			segp->seg_in = hits[i];
-			segp->seg_in.hit_vpriv[Z] = 1;
-
-			/* set out hit */
-			segp->seg_out = hits[i+1];
-			segp->seg_out.hit_vpriv[Z] = -1;
-
-			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-		}
-		if( nhits&1 )
-		{
-			if( RT_G_DEBUG & DEBUG_SHOOT ) {
-				bu_log( "rt_bot_makesegs(%s): WARNING: odd number of hits (%d), last hit ignored\n",
-					stp->st_name, nhits );
-				bu_log( "\tray = -p %g %g %g -d %g %g %g\n",
-					V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
-			}
-			nhits--;
-		}
-		return( nhits );
-	}
-
-	/*
+    /*
 	 *  RT_BOT_SOLID, RT_BOT_ORIENTED.
 	 *
 	 *  From this point on, process very similar to a polysolid
@@ -543,126 +588,126 @@ struct seg		*seghead;
 	 *   that we grazed an edge, and thus we should leave both
 	 *   in the hit list.
 	 */
-	{
-		register int j;
+    {
+	register int j;
 
-		for( i=0 ; i<nhits-1 ; i++ )
-		{
-			FAST fastf_t dist;
+	for( i=0 ; i<nhits-1 ; i++ )
+	    {
+		FAST fastf_t dist;
 
-			dist = hits[i].hit_dist - hits[i+1].hit_dist;
-			if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
-				hits[i].hit_vpriv[X] * hits[i+1].hit_vpriv[X] > 0)
-			{
-				for( j=i ; j<nhits-1 ; j++ )
-					hits[j] = hits[j+1];
-				nhits--;
-				i--;
-			}
-		}
-	}
+		dist = hits[i].hit_dist - hits[i+1].hit_dist;
+		if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
+		    hits[i].hit_vpriv[X] * hits[i+1].hit_vpriv[X] > 0)
+		    {
+			for( j=i ; j<nhits-1 ; j++ )
+			    hits[j] = hits[j+1];
+			nhits--;
+			i--;
+		    }
+	    }
+    }
 
-	if( (nhits&1) )  {
-		register int i;
-		/*
-		 * If this condition exists, it is almost certainly due to
-		 * the dn==0 check above.  Thus, we will make the last
-		 * surface rather thin.
-		 * This at least makes the
-		 * presence of this solid known.  There may be something
-		 * better we can do.
-		 */
+    if( (nhits&1) )  {
+	register int i;
+	/*
+	 * If this condition exists, it is almost certainly due to
+	 * the dn==0 check above.  Thus, we will make the last
+	 * surface rather thin.
+	 * This at least makes the
+	 * presence of this solid known.  There may be something
+	 * better we can do.
+	 */
 #if 0
-		static int nerrors = 0;		/* message counter */
+	static int nerrors = 0;		/* message counter */
 
-		if( nerrors++ < 6 )  {
-			bu_log("rt_bot_makesegs(%s): WARNING %d hits:\n", stp->st_name, nhits);
-			bu_log( "\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
-				V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
-			for(i=0; i < nhits; i++ )
-			{
-				point_t tmp_pt;
-
-				VJOIN1( tmp_pt, rp->r_pt, hits[i].hit_dist, rp->r_dir );
-				if( hits[i].hit_vpriv[X] < 0.0 && bot->bot_orientation == RT_BOT_CCW )
-					bu_log("\tentrance at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
-				else
-					bu_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
-			}
-		}
-#endif
-		if( nhits > 2 )
+	if( nerrors++ < 6 )  {
+	    bu_log("rt_bot_makesegs(%s): WARNING %d hits:\n", stp->st_name, nhits);
+	    bu_log( "\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
+		    V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
+	    for(i=0; i < nhits; i++ )
 		{
-			fastf_t dot1,dot2;
-			int j;
+		    point_t tmp_pt;
 
-			/* likely an extra hit,
-			 * look for consecutive entrances or exits */
-
-			dot2 = 1.0;
-			i = 0;
-			while( i<nhits )
-			{
-				dot1 = dot2;
-				dot2 = hits[i].hit_vpriv[X];
-				if( dot1 > 0.0 && dot2 > 0.0 )
-				{
-					/* two consectutive exits,
-					 * manufacture an entrance at same distance
-					 * as second exit.
-					 */
-					/* XXX This consumes an extra hit structure in the array */
-					for( j=nhits ; j>i ; j-- )
-						hits[j] = hits[j-1];	/* struct copy */
-
-					hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
-					dot2 = hits[i].hit_vpriv[X];
-					nhits++;
-					bu_log( "\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name );
-				}
-				else if( dot1 < 0.0 && dot2 < 0.0 )
-				{
-					/* two consectutive entrances,
-					 * manufacture an exit between them.
-					 */
-					/* XXX This consumes an extra hit structure in the array */
-
-					for( j=nhits ; j>i ; j-- )
-						hits[j] = hits[j-1];	/* struct copy */
-
-					hits[i] = hits[i-1];	/* struct copy */
-					hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
-					dot2 = hits[i].hit_vpriv[X];
-					nhits++;
-					bu_log( "\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name );
-				}
-				i++;
-			}
+		    VJOIN1( tmp_pt, rp->r_pt, hits[i].hit_dist, rp->r_dir );
+		    if( hits[i].hit_vpriv[X] < 0.0 && bot->bot_orientation == RT_BOT_CCW )
+			bu_log("\tentrance at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
+		    else
+			bu_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
 		}
 	}
-	if( (nhits&1) )  {
-#if 1
-		/* XXX This consumes an extra hit structure in the array */
-		hits[nhits] = hits[nhits-1];	/* struct copy */
-		hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
-		nhits++;
-#else
-		nhits--;
 #endif
-	}
+	if( nhits > 2 )
+	    {
+		fastf_t dot1,dot2;
+		int j;
 
-	/* nhits is even, build segments */
-	for( i=0; i < nhits; i += 2 )  {
-		RT_GET_SEG(segp, ap->a_resource);
-		segp->seg_stp = stp;
-		segp->seg_in = hits[i];		/* struct copy */
-		segp->seg_in.hit_vpriv[Z] = 1;
-		segp->seg_out = hits[i+1];	/* struct copy */
-		segp->seg_out.hit_vpriv[Z] = -1;
-		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-	}
+		/* likely an extra hit,
+		 * look for consecutive entrances or exits */
 
-	return(nhits);			/* HIT */
+		dot2 = 1.0;
+		i = 0;
+		while( i<nhits )
+		    {
+			dot1 = dot2;
+			dot2 = hits[i].hit_vpriv[X];
+			if( dot1 > 0.0 && dot2 > 0.0 )
+			    {
+				/* two consectutive exits,
+				 * manufacture an entrance at same distance
+				 * as second exit.
+				 */
+				/* XXX This consumes an extra hit structure in the array */
+				for( j=nhits ; j>i ; j-- )
+				    hits[j] = hits[j-1];	/* struct copy */
+
+				hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
+				dot2 = hits[i].hit_vpriv[X];
+				nhits++;
+				bu_log( "\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name );
+			    }
+			else if( dot1 < 0.0 && dot2 < 0.0 )
+			    {
+				/* two consectutive entrances,
+				 * manufacture an exit between them.
+				 */
+				/* XXX This consumes an extra hit structure in the array */
+
+				for( j=nhits ; j>i ; j-- )
+				    hits[j] = hits[j-1];	/* struct copy */
+
+				hits[i] = hits[i-1];	/* struct copy */
+				hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
+				dot2 = hits[i].hit_vpriv[X];
+				nhits++;
+				bu_log( "\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name );
+			    }
+			i++;
+		    }
+	    }
+    }
+    if( (nhits&1) )  {
+#if 1
+	/* XXX This consumes an extra hit structure in the array */
+	hits[nhits] = hits[nhits-1];	/* struct copy */
+	hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
+	nhits++;
+#else
+	nhits--;
+#endif
+    }
+
+    /* nhits is even, build segments */
+    for( i=0; i < nhits; i += 2 )  {
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+	segp->seg_in = hits[i];		/* struct copy */
+	segp->seg_in.hit_vpriv[Z] = 1;
+	segp->seg_out = hits[i+1];	/* struct copy */
+	segp->seg_out.hit_vpriv[Z] = -1;
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+    }
+
+    return(nhits);			/* HIT */
 }
 
 /*
@@ -805,6 +850,7 @@ struct seg		*seghead;
 	const int	debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
 	int		starting_hits;
 	fastf_t		toldist, dn_plus_tol;
+	int		trinum;
 
 	RT_CK_PIECELIST(plp);
 	RT_CK_PIECESTATE(psp);
@@ -815,7 +861,9 @@ struct seg		*seghead;
 	bot = (struct bot_specific *)stp->st_specific;
 	starting_hits = psp->htab.end;
 
-	if( bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID ) {
+	if( bot->bot_orientation != RT_BOT_UNORIENTED &&
+	    bot->bot_mode == RT_BOT_SOLID ) {
+
 		toldist = ap->a_rt_i->rti_tol.dist;
 	} else {
 		toldist = 0.0;
@@ -830,11 +878,14 @@ struct seg		*seghead;
 		LOCAL vect_t	wxb;		/* vertex - ray_start */
 		LOCAL vect_t	xp;		/* wxb cross ray_dir */
 		register struct tri_specific *trip;
-
+		
 		piecenum = *sol_piece_subscr_p;
 
 		if( BU_BITTEST( psp->shot, piecenum ) )  {
-			if(debug_shoot) bu_log("%s piece %d already shot\n", stp->st_name, piecenum);
+			if(debug_shoot) 
+			    bu_log("%s piece %d already shot\n", 
+				   stp->st_name, piecenum);
+
 			resp->re_piece_ndup++;
 			continue;	/* this piece already shot */
 		}
@@ -844,71 +895,83 @@ struct seg		*seghead;
 		if(debug_shoot)
 		    bu_log("%s piece %d ...\n", stp->st_name, piecenum);
 
-		/* Now intersect with each piece */
-		trip = bot->bot_facearray[piecenum];
-		if (trip->tri_surfno != piecenum) {
-		    bu_log("trip->tri_surfno:%d != piecenum%d", 
-			   trip->tri_surfno, piecenum);
-		}
-		BU_ASSERT_LONG(trip->tri_surfno, ==, piecenum);
-
-		/*
-		 *  Ray Direction dot N.  (N is outward-pointing normal)
-		 *  wn points inwards, and is not unit length.
+		/* Now intersect with each piece, which means
+		 * intesecting with each triangle that makes up 
+		 * the piece.
 		 */
-		dn = VDOT( trip->tri_wn, rp->r_dir );
+		trip = bot->bot_facearray[piecenum*bot->bot_tri_per_piece];
+		for (trinum=bot->bot_tri_per_piece; trinum ; trinum--, trip++){
 
-		/*
-		 *  If ray lies directly along the face, (ie, dot product
-		 *  is zero), drop this face.
-		 */
-		abs_dn = dn >= 0.0 ? dn : (-dn);
-		if( abs_dn < SQRT_SMALL_FASTF ) {
+		    if (trip->tri_surfno < (piecenum*bot->bot_tri_per_piece) ||
+			trip->tri_surfno >= 
+			((piecenum + 1) * bot->bot_tri_per_piece )) {
+			    bu_log("trip->tri_surfno:%d != piecenum%d", 
+				   trip->tri_surfno, piecenum);
+		    }
+
+		    /*
+		     *  Ray Direction dot N.  (N is outward-pointing normal)
+		     *  wn points inwards, and is not unit length.
+		     */
+		    dn = VDOT( trip->tri_wn, rp->r_dir );
+
+		    /*
+		     *  If ray lies directly along the face, (ie, dot product
+		     *  is zero), drop this face.
+		     */
+		    abs_dn = dn >= 0.0 ? dn : (-dn);
+		    if( abs_dn < SQRT_SMALL_FASTF ) {
 			continue;
-		}
-		VSUB2( wxb, trip->tri_A, rp->r_pt );
-		VCROSS( xp, wxb, rp->r_dir );
+		    }
+		    VSUB2( wxb, trip->tri_A, rp->r_pt );
+		    VCROSS( xp, wxb, rp->r_dir );
 
-		dn_plus_tol = toldist + abs_dn;
+		    dn_plus_tol = toldist + abs_dn;
 
-		/* Check for exceeding along the one side */
-		alpha = VDOT( trip->tri_CA, xp );
-		if( dn < 0.0 )  alpha = -alpha;
-		if( alpha < -toldist || alpha > dn_plus_tol ) {
+		    /* Check for exceeding along the one side */
+		    alpha = VDOT( trip->tri_CA, xp );
+		    if( dn < 0.0 )  alpha = -alpha;
+		    if( alpha < -toldist || alpha > dn_plus_tol ) {
 			continue;
-		}
+		    }
 
-		/* Check for exceeding along the other side */
-		beta = VDOT( trip->tri_BA, xp );
-		if( dn > 0.0 )  beta = -beta;
-		if( beta < -toldist || beta > dn_plus_tol ) {
+		    /* Check for exceeding along the other side */
+		    beta = VDOT( trip->tri_BA, xp );
+		    if( dn > 0.0 )  beta = -beta;
+		    if( beta < -toldist || beta > dn_plus_tol ) {
 			continue;
-		}
-		if( alpha+beta > dn_plus_tol ) {
+		    }
+		    if( alpha+beta > dn_plus_tol ) {
 			continue;
-		}
-		k = VDOT( wxb, trip->tri_wn ) / dn;
+		    }
+		    k = VDOT( wxb, trip->tri_wn ) / dn;
 
-		/* HIT is within planar face */
-		hp = rt_htbl_get( &psp->htab );
-		hp->hit_magic = RT_HIT_MAGIC;
-		hp->hit_dist = k + dist_corr;
-		hp->hit_private = (genptr_t)trip;
-		hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
-		hp->hit_vpriv[Y] = bot->bot_orientation;
-		hp->hit_surfno = trip->tri_surfno;
-		hp->hit_rayp = &ap->a_ray;
-		if(debug_shoot) bu_log("%s piece %d ... HIT %g\n", stp->st_name, piecenum, hp->hit_dist);
-	}
+		    /* HIT is within planar face */
+		    hp = rt_htbl_get( &psp->htab );
+		    hp->hit_magic = RT_HIT_MAGIC;
+		    hp->hit_dist = k + dist_corr;
+		    hp->hit_private = (genptr_t)trip;
+		    hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
+		    hp->hit_vpriv[Y] = bot->bot_orientation;
+		    hp->hit_surfno = trip->tri_surfno;
+		    hp->hit_rayp = &ap->a_ray;
+		    if(debug_shoot)
+			bu_log("%s piece %d ... HIT %g\n",
+			       stp->st_name, piecenum, hp->hit_dist);
+		} /* for (trinum...) */
+	} /* for (;sol_piece_subscr_p...) */
+
 	if( psp->htab.end > 0 &&
-	    (bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS) )
-	{
+	    (bot->bot_mode == RT_BOT_PLATE || 
+	     bot->bot_mode == RT_BOT_PLATE_NOCOS) ) {
 		/*
-		 * Each of these hits is really two, resulting in an instant seg.
-		 * Saving an odd number of these will confuse a_onehit processing.
+		 * Each of these hits is really two, resulting in an instant
+		 * seg.  Saving an odd number of these will confuse a_onehit
+		 * processing.
 		 */
 		rt_hitsort( psp->htab.hits, psp->htab.end );
-		return rt_bot_makesegs( psp->htab.hits, psp->htab.end, stp, rp, ap, seghead );
+		return rt_bot_makesegs( psp->htab.hits, psp->htab.end,
+					stp, rp, ap, seghead );
 	}
 	return psp->htab.end - starting_hits;
 }
