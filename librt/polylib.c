@@ -418,7 +418,7 @@ register complex	root[];
 	LOCAL poly		cube, quad1, quad2;
 	LOCAL complex		u[3];
 	LOCAL fastf_t		U, p, q, q1, q2;
-#define Max3( a, b, c )		( Max( c, Max( a, b )) )
+#define Max3(a,b,c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
 
 	cube.dgr = 3;
 	cube.cf[0] = 1.0;
