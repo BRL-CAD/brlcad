@@ -167,14 +167,7 @@ while { [file exists $mged_html_dir/index.html]==0 } {
 	    mged_html_dir $mged_html_dir 0 OK
 }
 
-#catch { source [lindex $auto_path 0]/sliders.tcl }
-# The new_sliders are not quite ready ---- need to test
 catch { source [lindex $auto_path 0]/new_sliders.tcl }
-#trace variable mged_display(state)    w ia_changestate
-#trace variable mged_display(path_lhs) w ia_changestate
-#trace variable mged_display(path_rhs) w ia_changestate
-#trace variable mged_display(keypoint) w ia_changestate
-#trace variable mged_display(adc)      w ia_changestate
 
 proc ia_help { parent screen cmds } {
     set w $parent.help
@@ -366,6 +359,7 @@ proc ia_invoke { w } {
 
     if {([string length [$w get promptEnd insert]] == 1) &&\
 	    ([string length $ia_more_default($id)] > 0)} {
+	#If no input and a default is supplied then use it
 	set cmd [concat $ia_cmd_prefix($id) $ia_more_default($id)]
     } else {
 	set cmd [concat $ia_cmd_prefix($id) [$w get promptEnd insert]]
@@ -574,11 +568,12 @@ proc ia_get_html {file} {
 
 #==============================================================================
 #
-# TCL version of MGED "help" command
+# TCL versions of MGED "help", "?", and "apropos" commands
 #
 #==============================================================================
 
-set help_data(?)		{{}	{summary of available commands}}
+set help_data(?)		{{}	{summary of available mged commands}}
+set help_data(?lib)		{{}	{summary of available library commands}}
 set help_data(%)		{{}	{escape to interactive shell}}
 set help_data(3ptarb)		{{}	{makes arb given 3 pts, 2 coord of 4th pt, and thickness}}
 set help_data(adc)		{{[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> value(s)]}	{control the angle/distance cursor}}
@@ -593,11 +588,13 @@ set help_data(area)		{{[endpoint_tolerance]}	{calculate presented area of view}}
 set help_data(attach)		{{[-d display_string] [-i init_script] [-n name]
 	      [-t is_toplevel] [-W width] [-N height]
 	      [-S square_size] dev_type}	{attach to a display manager}}
+set help_data(attach4)		{{id screen dtype}	{open a set of 4 display windows}}
 set help_data(B)		{{<objects>}	{clear screen, edit objects}}
 set help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{Boolean evaluation of objects via NMG's}}
 set help_data(c)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
 set help_data(cat)		{{<objects>}	{list attributes (brief)}}
 set help_data(center)		{{x y z}	{set view center}}
+set help_data(closew)		{{id}	{close display/command window pair}}
 set help_data(color)		{{low high r g b str}	{make color entry}}
 set help_data(comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
 set help_data(comb_color)	{{comb R G B}	{assign a color to a combination (like 'mater')}}
@@ -645,6 +642,7 @@ set help_data(g)		{{groupname <objects>}	{group objects}}
 set help_data(getknob)		{{knobname}	{Gets the current setting of the given knob}}
 set help_data(output_hook)	{{output_hook_name}	{All output is sent to the Tcl procedure \"output_hook_name\"}}
 set help_data(help)		{{[commands]}	{give usage message for given commands}}
+set help_data(helplib)		{{[library commands]}	{give usage message for given library commands}}
 set help_data(history)		{{[-delays]}	{list command history}}
 set help_data(hist_prev)	{{}	{Returns previous command in history}}
 set help_data(hist_next)	{{}	{Returns next command in history}}
@@ -655,6 +653,7 @@ set help_data(ill)		{{name}	{illuminate object}}
 set help_data(in)		{{[-f] [-s] parameters...}	{keyboard entry of solids.  -f for no drawing, -s to enter solid edit}}
 set help_data(inside)		{{}	{finds inside solid per specified thicknesses}}
 set help_data(item)		{{region item [air [GIFTmater [los]]]}	{set region ident codes}}
+set help_data(jcs)		{{id}	{join collaborative session}}
 set help_data(joint)		{{command [options]}	{articulation/animation commands}}
 set help_data(journal)		{{[-d] fileName}	{record all commands and timings to journal}}
 set help_data(keep)		{{keep_file object(s)}	{save named objects in specified file}}
@@ -686,6 +685,7 @@ set help_data(nirt)		{{}	{trace a single ray from current view}}
 set help_data(nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set help_data(oed)		{{path_lhs path_rhs}	{Go from view to object_edit of path_lhs/path_rhs}}
 set help_data(opendb)		{{database.g}	{Close current .g file, and open new .g file}}
+set help_data(openw)		{{[-c] [-j] id screen dtype [dscreen]}	{open display/command window pair}}
 set help_data(orientation)	{{x y z w}	{Set view direction from quaternion}}
 set help_data(orot)		{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set help_data(oscale)		{{factor}	{scale object by factor}}
@@ -693,6 +693,8 @@ set help_data(overlay)		{{file.plot [name]}	{Read UNIX-Plot as named overlay}}
 set help_data(p)		{{dx [dy dz]}	{set parameters}}
 set help_data(paths)		{{pattern}	{lists all paths matching input path}}
 set help_data(pathlist)		{{name(s)}	{list all paths from name(s) to leaves}}
+set help_data(pcs)		{{}	{print collaborative participants}}
+set help_data(pmp)		{{}	{print mged players}}
 set help_data(permute)		{{tuple}	{permute vertices of an ARB}}
 set help_data(plot)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{make UNIX-plot of view}}
 set help_data(pl)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{Experimental - uses dm-plot:make UNIX-plot of view}}
@@ -706,6 +708,7 @@ set help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l l
 set help_data(push)		{{object[s]}	{pushes object's path transformations to solids}}
 set help_data(putmat)		{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}
 set help_data(q)		{{}	{quit}}
+set help_data(qcs)		{{id}	{quit collaborative session}}
 set help_data(quit)		{{}	{quit}}
 set help_data(qorot)		{{x y z dx dy dz theta}	{rotate object being edited about specified vector}}
 set help_data(qvrot)		{{dx dy dz theta}	{set view from direction vector and twist angle}}
@@ -718,6 +721,7 @@ set help_data(regdebug)		{{}	{toggle register print}}
 set help_data(regdef)		{{item [air [los [GIFTmaterial]]]}	{change next region default codes}}
 set help_data(regions)		{{file object(s)}	{make ascii summary of regions}}
 set help_data(release)		{{[name]}	{release display processor}}
+set help_data(release4)		{{id}	{release the display manager window opened with attach4}}
 set help_data(rfarb)		{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
 set help_data(rm)		{{comb <members>}	{remove members from comb}}
 set help_data(rmater)		{{filename}	{read combination materials from filename}}
@@ -746,7 +750,7 @@ set help_data(t)		{{}	{table of contents}}
 set help_data(tab)		{{object[s]}	{tabulates objects as stored in database}}
 set help_data(ted)		{{}	{text edit a solid's parameters}}
 set help_data(tie)		{{pathName1 pathName2}	{tie display manager pathName1 to display manager pathName2}}
-set help_data(title)		{{string}	{change the title}}
+set help_data(title)		{{[string]}	{print or change the title}}
 set help_data(tol)		{{[abs #] [rel #] [norm #] [dist #] [perp #]}	{show/set tessellation and calculation tolerances}}
 set help_data(tops)		{{}	{find all top level objects}}
 set help_data(track)		{{<parameters>}	{adds tracks to database}}
@@ -780,51 +784,23 @@ set help_data(zoom)		{{scale_factor}	{zoom view in or out}}
 proc help {args}	{
 	global help_data
 
-	if {[llength $args] > 0}	{
-		set cmd [lindex $args 0]
-		if [info exists help_data($cmd)] {
-			return "Usage: $cmd [lindex $help_data($cmd) 0]\n\t([lindex $help_data($cmd) 1])"
-		} else {
-			return "Command not found: $cmd"
-		}
-	} else {
-		foreach cmd [lsort [array names help_data]] {
-			append info "$cmd [lindex $help_data($cmd) 0]\n\t[lindex $help_data($cmd) 1]\n"
-		}
-
-		return $info
-	}
+	if {[llength $args] > 0} {
+                return [help_comm help_data $args]
+        } else {
+                return [help_comm help_data]
+        }
 }
 
 proc ? {} {
-    global help_data
+	global help_data
 
-    set i 1
-    foreach cmd [lsort [array names help_data]] {
-	append info [format "%-16s" $cmd]
-	if { ![expr $i % 4] } {
-	    append info "\n"
-	}
-	incr i
-    }
-    return $info
+	return [?_comm help_data 15 5]
 }
 
 proc apropos key {
-    global help_data
+	global help_data
 
-    set info ""
-    foreach cmd [lsort [array names help_data]] {
-	if {[string first $key $cmd] != -1} {
-	    append info "$cmd "
-	} elseif {[string first $key [lindex $help_data($cmd) 0]] != -1} {
-	    append info "$cmd "
-	} elseif {[string first $key [lindex $help_data($cmd) 1]] != -1} {
-	    append info "$cmd "
-	}
-    }
-
-    return $info
+	return [apropos_comm help_data $key]
 }
 
 
