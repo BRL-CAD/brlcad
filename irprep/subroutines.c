@@ -18,9 +18,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "externs.h"
 
 #define PI 3.14159265358979323846264		/*  Pi.  */
 

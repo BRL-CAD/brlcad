@@ -25,7 +25,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include <stdlib.h>	/*  Need for mallocing arrays.  */
 #include <string.h>
 #include <math.h>
 
