@@ -235,7 +235,7 @@ register matp_t output;
 			}
 		}
 
-		if( fabs(y) < 0.000001 )  {
+		if( fabs(y) < SQRT_SMALL_FASTF )  {
 			rt_log("mat_inv:  error!\n");
 			abort();
 			return;		/* ERROR */
