@@ -204,7 +204,7 @@ struct edge_info	*edge_list;
 	vect_t		left;
 	vect_t		pt_vec;
 	vect_t		v_to_pt;
-	int		found = 0;
+	int		found_data = 0;
 
 	NMG_CK_FPI(fpi);	
 	RT_CK_TOL(fpi->tol);
@@ -227,7 +227,7 @@ struct edge_info	*edge_list;
 				rt_log ("pt previously classified WRT Edge\n");
 
 			ved = ed;
-			found = 1;
+			found_data = 1;
 			goto found;
 		}
 
@@ -244,7 +244,7 @@ struct edge_info	*edge_list;
 					V3ARGS(v_p->vg_p->coord));
 			}
 			ved = ed;
-			found = 1;
+			found_data = 1;
 			goto found;
 		}
 	}
@@ -281,7 +281,7 @@ found:
 		ei->class = NMG_CLASS_AonBshared;
 		if (fpi->eu_func &&
 		    (fpi->hits == NMG_FPI_PERUSE ||
-		     (fpi->hits == NMG_FPI_PERGEOM && !found) ) ) {
+		     (fpi->hits == NMG_FPI_PERGEOM && !found_data) ) ) {
 			fpi->eu_func(eu, fpi->pt, fpi->priv);
 		}
 		break;
@@ -301,7 +301,7 @@ found:
 
 		if (fpi->vu_func &&
 		    (fpi->hits == NMG_FPI_PERUSE ||
-		     (fpi->hits == NMG_FPI_PERGEOM && !found) ) ) {
+		     (fpi->hits == NMG_FPI_PERGEOM && !found_data) ) ) {
 			fpi->vu_func(eu->vu_p, fpi->pt, fpi->priv);
 		}
 
@@ -321,7 +321,7 @@ found:
 		RT_LIST_APPEND(&fpi->ve_dh, &ed->l);
 		if (fpi->vu_func &&
 		    (fpi->hits == NMG_FPI_PERUSE ||
-		     (fpi->hits == NMG_FPI_PERGEOM && !found) ) ) {
+		     (fpi->hits == NMG_FPI_PERGEOM && !found_data) ) ) {
 			fpi->vu_func(eu->vu_p, fpi->pt, fpi->priv);
 		}
 		break;
@@ -354,7 +354,7 @@ found:
 	if (rt_g.NMG_debug & DEBUG_PT_FU) {
 		rt_log("pt @ dist %g from edge classed %s vs edge\n",
 			ei->ved_p->dist, nmg_class_name(ei->class));
-		pl_pt_e(fpi, ei);
+/*		pl_pt_e(fpi, ei); */
 	}
 
 	/* now that it's complete, add ei to the edge list */
@@ -507,6 +507,7 @@ struct edge_info *ei;
 
 	pl_color(fd, 255, 64, 255);
 
+	/* make a nice axis-cross at the point in question */
 	for (i=0 ; i < 3 ; i++) {
 		VMOVE(p1, fpi->pt);
 		p1[i] -= 1.0;
@@ -799,6 +800,54 @@ struct fpi	*fpi;
 }
 
 
+static void
+plot_parity_error(fu, pt)
+struct faceuse *fu;
+point_t pt;
+{
+	long *b;
+	char name[80];
+	FILE *fp; 
+	point_t p1, p2;
+	int i;
+
+	NMG_CK_FACEUSE(fu);
+
+	if (!(fp=fopen("pt_fu_parity_error.pl", "w")) )
+		rt_bomb("error opening pt_fu_parity_error.pl\n");
+
+
+	rt_log("overlay pt_fu_parity_error.pl\n");
+
+	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex,
+			      sizeof(long), "bit vec"),
+
+
+	pl_erase(fp);
+	pd_3space(fp,
+                fu->f_p->min_pt[0]-1.0,
+                fu->f_p->min_pt[1]-1.0,
+                fu->f_p->min_pt[2]-1.0,
+                fu->f_p->max_pt[0]+1.0,
+                fu->f_p->max_pt[1]+1.0,
+                fu->f_p->max_pt[2]+1.0);
+
+	nmg_pl_fu(fp, fu, b, 200, 200, 200);
+
+
+	/* make a nice axis-cross at the point in question */
+	for (i=0 ; i < 3 ; i++) {
+		VMOVE(p1, pt);
+		p1[i] -= 1.0;
+		VMOVE(p2, pt);
+		p2[i] += 1.0;
+		pdv_3line(fp, p1, p2);
+	}
+
+	rt_free((char *)b, "plot table");
+	fclose(fp);
+
+}
 
 /*
  *
@@ -916,6 +965,9 @@ CONST struct rt_tol     *tol;
 		rt_log("nmg_class_pt_fu_except(%g %g %g)\nParity error @ %s:%d ot_same_in:%d ot_opposite_out:%d\n",
 			V3ARGS(pt), __FILE__, __LINE__,
 			ot_same_in, ot_opposite_out);
+
+		plot_parity_error(fu, pt);
+
 		rt_bomb("nmg_class_pt_fu_except() loop classification parity error\n");
 	}
 
@@ -955,6 +1007,16 @@ struct rt_tol	*tol;
 	int		lu_class = NMG_CLASS_Unknown;
 	struct ve_dist	*ved_p;
 	double		dist;
+
+	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+		rt_log("nmg_class_pt_lu_except( (%g %g %g) ", V3ARGS(pt), e_p);
+		if (e_p)
+			rt_log(" e_p=(%g %g %g) <-> (%g %g %g) )\n",
+				V3ARGS(e_p->eu_p->vu_p->v_p->vg_p->coord),
+				V3ARGS(e_p->eu_p->eumate_p->vu_p->v_p->vg_p->coord) );
+		else
+			rt_log(" e_p=(NULL) )\n");
+	}
 
 	NMG_CK_LOOPUSE(lu);
 
@@ -1005,7 +1067,14 @@ struct rt_tol	*tol;
 	fpi.magic = NMG_FPI_MAGIC;
 
 	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		if (eu->e_p == e_p) continue;
+		if (eu->e_p == e_p) {
+			if (rt_g.NMG_debug & DEBUG_PT_FU )
+				rt_log("skipping edguse (%g %g %g) -> (%g %g %g) on \"except\" edge\n",
+					V3ARGS(eu->vu_p->v_p->vg_p->coord),
+					V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
+
+			continue;
+		}
 
 		ei = nmg_class_pt_eu(&fpi, eu, &edge_list);
 		NMG_CK_EI(ei);
@@ -1030,6 +1099,10 @@ struct rt_tol	*tol;
 		RT_LIST_DEQUEUE( &ved_p->l );
 		rt_free( (char *)ved_p, "ve_dist struct");
 	}
+
+	if (rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log("nmg_class_pt_lu_except() returns %s\n",
+			nmg_class_name(lu_class));
 
 	return lu_class;
 }
