@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 
 extern struct region	env_region;		/* import from view.c */
 
