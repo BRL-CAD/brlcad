@@ -473,7 +473,7 @@ int			pos;
 			/* Edge goes from otherv to v */
 			VSUB2( heading, v->vg_p->coord, otherv->vg_p->coord );
 		}
-		if( MAGSQ(heading) < SMALL_FASTF )  rt_bomb("null heading\n");
+		if( MAGSQ(heading) < SMALL_FASTF )  rt_bomb("nmg_assess_eu() null heading\n");
 		if( VDOT( heading, rs->dir ) < 0 )  {
 			ret = NMG_E_ASSESSMENT_ON_REV;
 		} else {
@@ -488,7 +488,7 @@ int			pos;
 	 *  Check vector from v to otherv against "left" vector.
 	 */
 	VSUB2( heading, otherv->vg_p->coord, v->vg_p->coord );
-	if( MAGSQ(heading) < SMALL_FASTF )  rt_bomb("null heading 2\n");
+	if( MAGSQ(heading) < SMALL_FASTF )  rt_bomb("nmg_assess_eu() null heading 2\n");
 	if( VDOT( heading, rs->left ) < 0 )  {
 		ret = NMG_E_ASSESSMENT_RIGHT;
 	} else {
@@ -2433,7 +2433,7 @@ filename = "error.g";	/* XXX First arg is getting trashed! */
 		rt_log("nmg_stash_model_to_file: solid export failure\n");
 		if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
 		db_free_external( &ext );
-		rt_bomb("zappo");
+		rt_bomb("nmg_stash_model_to_file() ft_export() error\n");
 	}
 	rt_functab[ID_NMG].ft_ifree( &intern );
 	NAMEMOVE( "error", ((union record *)ext.ext_buf)->s.s_name );
