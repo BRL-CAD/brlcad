@@ -1883,7 +1883,7 @@ char **argv;
 	point_t			rpp_min,rpp_max;
 	struct db_full_path	path;
 	struct directory	*dp;
-	struct rt_arb_internal	arb;
+	struct rt_arb_internal	*arb;
 	struct rt_db_internal	new_intern;
 	struct region		*regp;
 	char			*new_name;
@@ -2044,21 +2044,22 @@ not_found:
 	}
 
 	/* build bounding RPP */
-	VMOVE( arb.pt[0], rpp_min );
-	VSET( arb.pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z] );
-	VSET( arb.pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z] );
-	VSET( arb.pt[3], rpp_min[X], rpp_max[Y], rpp_min[Z] );
-	VSET( arb.pt[4], rpp_max[X], rpp_min[Y], rpp_min[Z] );
-	VSET( arb.pt[5], rpp_max[X], rpp_min[Y], rpp_max[Z] );
-	VMOVE( arb.pt[6], rpp_max );
-	VSET( arb.pt[7], rpp_max[X], rpp_max[Y], rpp_min[Z] );
-	arb.magic = RT_ARB_INTERNAL_MAGIC;
+	arb = (struct rt_arb_internal *)bu_malloc( sizeof( struct rt_arb_internal ), "arb" );
+	VMOVE( arb->pt[0], rpp_min );
+	VSET( arb->pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z] );
+	VSET( arb->pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z] );
+	VSET( arb->pt[3], rpp_min[X], rpp_max[Y], rpp_min[Z] );
+	VSET( arb->pt[4], rpp_max[X], rpp_min[Y], rpp_min[Z] );
+	VSET( arb->pt[5], rpp_max[X], rpp_min[Y], rpp_max[Z] );
+	VMOVE( arb->pt[6], rpp_max );
+	VSET( arb->pt[7], rpp_max[X], rpp_max[Y], rpp_min[Z] );
+	arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 	/* set up internal structure */
 	RT_INIT_DB_INTERNAL( &new_intern );
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_meth = &rt_functab[ID_ARB8];
-	new_intern.idb_ptr = (genptr_t)(&arb);
+	new_intern.idb_ptr = (genptr_t)arb;
 
 	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
