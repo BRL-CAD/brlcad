@@ -72,6 +72,8 @@ install-nobak&: Makefile.MTYPE
 	cp ../SRCDIR/zlib.h .
 	cp ../SRCDIR/zconf.h .
 	make -f Makefile.MTYPE install prefix=BASEDIR
+	mv BASEDIR/lib/PRODUCTS BASEDIR/lib/SHARED_PRODUCT
+	sharedliblink.sh BASEDIR/lib/SHARED_PRODUCT
 
 test&: Makefile.MTYPE
 	make -f Makefile.MTYPE test
