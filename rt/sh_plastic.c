@@ -109,6 +109,9 @@ register struct region *rp;
 	pp->refrac_index = RI_AIR;
 
 	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (mp_off_ty)pp );
+
+	VSCALE( rp->reg_mater.ma_transmit, 
+		rp->reg_mater.ma_color, pp->transmit );
 	return(1);
 }
 
@@ -134,6 +137,9 @@ register struct region *rp;
 	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (mp_off_ty)pp );
 	if(rdebug&RDEBUG_MATERIAL)
 		mlib_print(rp->reg_name, phong_parse, (mp_off_ty)pp);
+
+	VSCALE( rp->reg_mater.ma_transmit, 
+		rp->reg_mater.ma_color, pp->transmit );
 	return(1);
 }
 
@@ -152,13 +158,17 @@ register struct region *rp;
 	pp->shine = 4;
 	pp->wgt_specular = 0.7;
 	pp->wgt_diffuse = 0.3;
-	pp->transmit = 0.7;
+	pp->transmit = 0.6;
 	pp->reflect = 0.3;
+	/* leaving 0.1 for diffuse/specular */
 	pp->refrac_index = 1.65;
 
 	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (mp_off_ty)pp );
 	if(rdebug&RDEBUG_MATERIAL)
 		mlib_print(rp->reg_name, phong_parse, (mp_off_ty)pp);
+
+	VSCALE( rp->reg_mater.ma_transmit, 
+		rp->reg_mater.ma_color, pp->transmit );
 	return(1);
 }
 
@@ -313,15 +323,19 @@ struct shadework	*swp;
 			sub_ap.a_ray.r_dir[Y] =  lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
 			sub_ap.a_ray.r_dir[Z] =  lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
 			VUNITIZE( sub_ap.a_ray.r_dir );
+			VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
 			light_visible = rt_shootray( &sub_ap );
+			/* sub_ap.a_color now contains visible fraction */
 		} else {
 			light_visible = 1;
+			VSETALL( sub_ap.a_color, 1 );
 		}
 	
 		/* If not shadowed add this light contribution */
 		if( light_visible )  {
 			auto fastf_t cosI;
 			auto fastf_t cosS;
+			vect_t light_intensity;
 
 			/* Diffuse reflectance from this light source. */
 			VSUB2( to_light, lp->lt_pos, swp->sw_hit.hit_point );
@@ -335,8 +349,11 @@ struct shadework	*swp;
 					cosI = 1;
 				}
 				Rd = cosI * lp->lt_fraction * ps->wgt_diffuse;
-				VELMUL( cprod, matcolor, lp->lt_color );
-				VJOIN1( swp->sw_color, swp->sw_color, Rd, cprod );
+				VELMUL( light_intensity, lp->lt_color,
+					sub_ap.a_color );
+				VELMUL( cprod, matcolor, light_intensity );
+				VJOIN1( swp->sw_color, swp->sw_color,
+					Rd, cprod );
 			}
 
 			/* Calculate specular reflectance.
@@ -355,7 +372,10 @@ struct shadework	*swp;
 				}
 				Rs = ps->wgt_specular * lp->lt_fraction *
 					ipow(cosS, ps->shine);
-				VJOIN1( swp->sw_color, swp->sw_color, Rs, lp->lt_color );
+				VELMUL( light_intensity, lp->lt_color,
+					sub_ap.a_color );
+				VJOIN1( swp->sw_color, swp->sw_color,
+					Rs, light_intensity );
 			}
 		}
 	}
@@ -388,20 +408,32 @@ register int cnt;
 /* 
  *			L I G H T _ H I T
  *
+ *  Input -
+ *	a_color[] contains the fraction of a the light that will be
+ *	propagated back along the ray, so far.  If this gets too small,
+ *	recursion through lots of glass ought to stop.
+ *  Output -
+ *	a_color[] contains the fraction of light that can be seen.
+ *	RGB transmissions are separately indicated, to allow simplistic
+ *	colored glass (with apologies to Roy Hall).
+ *
  *  These shadow functions return a boolean "light_visible".
  * 
- *  This is an incredibly simplistic algorithm, in need of improvement.
- *  If glass is hit, we need to keep going.
+ *  This is a simplified algorithm, and could be improved.
  *  Reflected light can't be dealt with at all.
- *  Would also be nice to return an energy level, rather than
- *  a boolean, which could account for lots of interesting effects.
+ *
+ *  Would also be nice to return an actual energy level, rather than
+ *  a boolean, which could account for distance, etc.
  */
 light_hit(ap, PartHeadp)
 struct application *ap;
 struct partition *PartHeadp;
 {
 	register struct partition *pp;
+	register struct region *regp;
+	struct application sub_ap;
 	extern int light_render();
+	int ret;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -409,11 +441,46 @@ struct partition *PartHeadp;
 		rt_log("light_hit:  no hit out front?\n");
 		return(0);
 	}
+	regp = pp->pt_regionp;
 
 	/* Check to see if we hit a light source */
-	if( ((struct mfuncs *)(pp->pt_regionp->reg_mfuncs))->mf_render == light_render )
+	if( ((struct mfuncs *)(regp->reg_mfuncs))->mf_render == light_render )  {
+		VSETALL( ap->a_color, 1 );
 		return(1);		/* light_visible = 1 */
-	return(0);			/* light_visible = 0 */
+	}
+
+	/* If we hit an entirely opaque object, this light is invisible */
+	if( pp->pt_outhit->hit_dist >= INFINITY || (
+	    regp->reg_mater.ma_transmit[0] +
+	    regp->reg_mater.ma_transmit[1] +
+	    regp->reg_mater.ma_transmit[2] <= 0 ) )  {
+		VSETALL( ap->a_color, 0 );
+		return(0);			/* light_visible = 0 */
+	}
+
+	/*
+	 * We hit a transparant object.  Continue on.
+	 */
+	if( ap->a_color[0] + ap->a_color[1] + ap->a_color[2] < 0.01 )  {
+	    	/* Any light energy is "fully" attenuated by here */
+		VSETALL( ap->a_color, 0 );
+		return(0);		/* light_visible = 0 */
+	}
+
+	/* Push on to exit point, and trace on from there.
+	 * Transmission so far is passed along in sub_ap.a_color[];
+	 */
+	sub_ap = *ap;			/* struct copy */
+	sub_ap.a_level = ap->a_level+1;
+	{
+		FAST fastf_t f;
+		f = pp->pt_outhit->hit_dist+0.0001;
+		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
+	}
+	ret = rt_shootray( &sub_ap );
+	VELMUL( ap->a_color, sub_ap.a_color,
+		regp->reg_mater.ma_transmit );
+	return(ret);			/* light_visible = ret */
 }
 
 /*
@@ -427,6 +494,15 @@ light_miss(ap, PartHeadp)
 register struct application *ap;
 struct partition *PartHeadp;
 {
+	extern struct light_specific *LightHeadp;
+
+	if( LightHeadp )  {
+		/* Explicit lights exist, somehow we missed (dither?) */
+		VSETALL( ap->a_color, 0 );
+		return(0);		/* light_visible = 0 */
+	}
+	/* No explicit light -- it's hard to hit */
+	VSETALL( ap->a_color, 1 );
 	return(1);			/* light_visible = 1 */
 }
 
