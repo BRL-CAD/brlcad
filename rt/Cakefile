@@ -149,8 +149,8 @@ rtexample:	rtexample.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 rtregis:	rtregis.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS rtregis.o read-rtlog.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o rtregis
 
-rtscale:	rtscale.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBPLOT_DEP
-	CC LDFLAGS rtscale.o read-rtlog.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBPLOT LIBES -o rtscale
+rtscale:	rtscale.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rtscale.o read-rtlog.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBES -o rtscale
 
 #define RTTHERM_OBJ	RTUIF viewtherm.o wray.o spectrum.o
 
@@ -168,6 +168,6 @@ rtsil:	RTSIL_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 
 /* Temp hack -Mike */
 disp:	disp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
-	CC LDFLAGS disp.o spectrum.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBPLOT LIBFB LIBFB_LIBES LIBTCL LIBTK LIBES -o disp
+	CC LDFLAGS disp.o spectrum.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBFB LIBFB_LIBES LIBTCL LIBTK LIBES -o disp
 
 #include "../Cakefile.rules"
