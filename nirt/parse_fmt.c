@@ -250,11 +250,23 @@ int	outcom_type;	/* Type of output command */
 	of = oip -> format;
 	while (up != uos)
 	{
-	    if ((*up == '\\') && (*(up + 1) == 'n'))
-	    {
-		*of++ = '\n';
-		up += 2;
-	    }
+	    if (*up == '\\')
+		switch (*(up + 1))
+		{
+		    case 'n':
+			*of++ = '\n';
+			up += 2;
+			break;
+		    case '\042':
+		    case '\047':
+		    case '\134':
+			*of++ = *(up + 1);
+			up += 2;
+			break;
+		    default:
+			*of++ = *up++;
+			break;
+		}
 	    else
 		*of++ = *up++;
 	}
