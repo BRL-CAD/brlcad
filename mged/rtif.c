@@ -322,7 +322,7 @@ run_rt()
 /*
  *			F _ R T
  */
-void
+int
 f_rt( argc, argv )
 int	argc;
 char	**argv;
@@ -335,7 +335,7 @@ char	**argv;
 	char	pstring[32];
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
-		return;
+		return CMD_BAD;
 
 	/*
 	 * This may be a workstation where RT and MGED have to share the
@@ -367,6 +367,8 @@ char	**argv;
 	}
 	if( needs_reattach )
 		attach( dm );
+
+	return CMD_OK;
 }
 
 /*
@@ -376,7 +378,7 @@ char	**argv;
  *  an "rt" command (above).
  *  Typically used to invoke a remote RT (hence the name).
  */
-void
+int
 f_rrt( argc, argv )
 int	argc;
 char	**argv;
@@ -388,7 +390,7 @@ char	**argv;
 	int	needs_reattach;
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
-		return;
+		return CMD_BAD;
 
 	/*
 	 * This may be a workstation where RT and MGED have to share the
@@ -413,6 +415,8 @@ char	**argv;
 	}
 	if( needs_reattach )
 		attach( dm );
+
+	return CMD_OK;
 }
 
 /*
@@ -420,7 +424,7 @@ char	**argv;
  *
  *  Invoke "rtcheck" to find overlaps, and display them as a vector overlay.
  */
-void
+int
 f_rtcheck( argc, argv )
 int	argc;
 char	**argv;
@@ -436,7 +440,7 @@ char	**argv;
 	struct rt_vlblock	*vbp;
 
 	if( not_state( ST_VIEW, "Overlap check in current view" ) )
-		return;
+		return CMD_BAD;
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rtcheck";
@@ -503,6 +507,8 @@ char	**argv;
 	cvt_vlblock_to_solids( vbp, "OVERLAPS", 0 );
 	rt_vlblock_free(vbp);
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
 /*
@@ -534,7 +540,7 @@ register char *p1, *suff;
 /*
  *			F _ S A V E V I E W
  */
-void
+int
 f_saveview( argc, argv )
 int	argc;
 char	**argv;
@@ -546,7 +552,7 @@ char	**argv;
 
 	if( (fp = fopen( argv[1], "a")) == NULL )  {
 		perror(argv[1]);
-		return;
+		return CMD_BAD;
 	}
 	base = basename( argv[1], ".sh" );
 	(void)chmod( argv[1], 0755 );	/* executable */
@@ -591,6 +597,8 @@ char	**argv;
 	
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
+
+	return CMD_OK;
 }
 
 /*
@@ -603,7 +611,7 @@ char	**argv;
  *	0	put eye in viewcenter, don't rotate.
  *	1	leave view alone, animate solid named "EYE"
  */
-void
+int
 f_rmats( argc, argv )
 int	argc;
 char	**argv;
@@ -622,11 +630,11 @@ char	**argv;
 	register struct rt_vlist *vp;
 
 	if( not_state( ST_VIEW, "animate from matrix file") )
-		return;
+		return CMD_BAD;
 
 	if( (fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
-		return;
+		return CMD_BAD;
 	}
 	mode = -1;
 	if( argc > 2 )
@@ -750,10 +758,12 @@ work:
 	}
 	dmaflag = 1;
 	fclose(fp);
+
+	return CMD_OK;
 }
 
 /* Save a keyframe to a file */
-void
+int
 f_savekey( argc, argv )
 int	argc;
 char	**argv;
@@ -766,7 +776,7 @@ char	**argv;
 
 	if( (fp = fopen( argv[1], "a")) == NULL )  {
 		perror(argv[1]);
-		return;
+		return CMD_BAD;
 	}
 	if( argc > 2 ) {
 		time = atof( argv[2] );
@@ -779,6 +789,8 @@ char	**argv;
 	MAT4X3PNT( eye_model, view2model, temp );
 	rt_oldwrite(fp, eye_model);
 	(void)fclose( fp );
+
+	return CMD_OK;
 }
 
 extern int	cm_start();
@@ -874,7 +886,7 @@ rtif_sigint()
 /*
  *			F _ P R E V I E W
  */
-void
+int
 f_preview( argc, argv )
 int	argc;
 char	**argv;
@@ -884,7 +896,7 @@ char	**argv;
 	vect_t	temp;
 
 	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
-		return;
+		return CMD_BAD;
 
 	/* Save any state variables we plan on changing */
 	rtif_saved_state = mged_variables;	/* struct copy */
@@ -915,7 +927,7 @@ char	**argv;
 	if(rtif_fp)  fclose(rtif_fp);
 	if( (rtif_fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
-		return;
+		return CMD_BAD;
 	}
 
 	/* Build list of top-level objects in view, in rt_cmd_vec[] */
@@ -954,6 +966,8 @@ char	**argv;
 
 	/* Restore state variables */
 	mged_variables = rtif_saved_state;	/* struct copy */
+
+	return CMD_OK;
 }
 
 /*
@@ -961,7 +975,7 @@ char	**argv;
  *
  *  Invoke NIRT with the current view & stuff
  */
-void
+int
 f_nirt( argc, argv )
 int	argc;
 char	**argv;
@@ -982,7 +996,7 @@ char	**argv;
 	vect_t	unit_H, unit_V;
 
 	if( not_state( ST_VIEW, "Single ray-trace from current view" ) )
-		return;
+		return CMD_BAD;
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "nirt";
@@ -1092,6 +1106,8 @@ char	**argv;
 
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
+
+	return CMD_OK;
 }
 
 cm_start(argc, argv)
