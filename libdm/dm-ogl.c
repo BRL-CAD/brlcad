@@ -65,15 +65,15 @@
 
 extern Tk_Window tkwin;
 
-void	Ogl_configure_window_shape();
-void    Ogl_establish_perspective();
-void    Ogl_set_perspective();
-void	Ogl_establish_lighting();
-void	Ogl_establish_zbuffer();
-int     Ogl_irisX2ged();
-int     Ogl_irisY2ged();
+void	ogl_configure_window_shape();
+void    ogl_establish_perspective();
+void    ogl_set_perspective();
+void	ogl_establish_lighting();
+void	ogl_establish_zbuffer();
+int     ogl_irisX2ged();
+int     ogl_irisY2ged();
 
-static XVisualInfo *Ogl_set_visual();
+static XVisualInfo *ogl_set_visual();
 
 /* Flags indicating whether the ogl and sgi display managers have been
  * attached.
@@ -87,44 +87,44 @@ char  ogl_sgi_used = 0;
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-struct dm	*Ogl_open();
-static int	Ogl_close();
-static int	Ogl_drawBegin();
-static int      Ogl_drawEnd();
-static int	Ogl_normal(), Ogl_newrot();
-static int	Ogl_drawString2D(), Ogl_drawLine2D();
-static int      Ogl_drawVertex2D();
-static int	Ogl_drawVList();
-static int      Ogl_setColor(), Ogl_setLineAttr();
-static unsigned Ogl_cvtvecs(), Ogl_load();
-static int	Ogl_setWinBounds(), Ogl_debug();
+struct dm	*ogl_open();
+static int	ogl_close();
+static int	ogl_drawBegin();
+static int      ogl_drawEnd();
+static int	ogl_normal(), ogl_newrot();
+static int	ogl_drawString2D(), ogl_drawLine2D();
+static int      ogl_drawVertex2D();
+static int	ogl_drawVList();
+static int      ogl_setColor(), ogl_setLineAttr();
+static unsigned ogl_cvtvecs(), ogl_load();
+static int	ogl_setWinBounds(), ogl_debug();
 
 struct dm dm_ogl = {
-  Ogl_open,
-  Ogl_close,
-  Ogl_drawBegin,
-  Ogl_drawEnd,
-  Ogl_normal,
-  Ogl_newrot,
-  Ogl_drawString2D,
-  Ogl_drawLine2D,
-  Ogl_drawVertex2D,
-  Ogl_drawVList,
-  Ogl_setColor,
-  Ogl_setLineAttr,
-  Ogl_cvtvecs,
-  Ogl_load,
-  Ogl_setWinBounds,
-  Ogl_debug,
+  ogl_close,
+  ogl_drawBegin,
+  ogl_drawEnd,
+  ogl_normal,
+  ogl_newrot,
+  ogl_drawString2D,
+  ogl_drawLine2D,
+  ogl_drawVertex2D,
+  ogl_drawVList,
+  ogl_setColor,
+  ogl_setLineAttr,
+  ogl_cvtvecs,
+  ogl_load,
+  ogl_setWinBounds,
+  ogl_debug,
   Nu_int0,
   0,				/* no displaylist */
   IRBOUND,
-  "ogl", "X Windows with OpenGL graphics",
+  "ogl",
+  "X Windows with OpenGL graphics",
+  DM_TYPE_OGL,
   1,
   0,
   0,
   1.0, /* aspect ratio */
-  0,
   0,
   0,
   0,
@@ -157,7 +157,7 @@ static float light2_diffuse[] = {0.10, 0.30, 0.10, 1.0}; /* green */
 static float light3_diffuse[] = {0.10, 0.10, 0.30, 1.0}; /* blue */
 
 void
-Ogl_do_fog(dmp)
+ogl_do_fog(dmp)
 struct dm *dmp;
 {
   glHint(GL_FOG_HINT,
@@ -170,7 +170,7 @@ struct dm *dmp;
  *  then to MGED-style +/-2048 range.
  */
 int
-Ogl_irisX2ged(dmp, x, use_aspect)
+ogl_irisX2ged(dmp, x, use_aspect)
 struct dm *dmp;
 register int x;
 int use_aspect;
@@ -183,7 +183,7 @@ int use_aspect;
 }
 
 int
-Ogl_irisY2ged(dmp, y)
+ogl_irisY2ged(dmp, y)
 struct dm *dmp;
 register int y;
 {
@@ -197,7 +197,7 @@ register int y;
  *
  */
 struct dm *
-Ogl_open(eventHandler, argc, argv)
+ogl_open(eventHandler, argc, argv)
 int (*eventHandler)();
 int argc;
 char *argv[];
@@ -216,6 +216,7 @@ char *argv[];
   XInputClassInfo *cip;
   struct bu_vls str;
   struct bu_vls top_vls;
+  struct bu_vls init_proc_vls;
   Display *tmp_dpy;
   fastf_t tmp_vp;
   struct dm *dmp;
@@ -234,22 +235,18 @@ char *argv[];
     BU_LIST_INIT( &head_ogl_vars.l );
   }
 
-  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct ogl_vars), "Ogl_init: ogl_vars");
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct ogl_vars), "ogl_open: ogl_vars");
   if(dmp->dm_vars == (genptr_t)NULL){
-    bu_free(dmp, "Ogl_open: dmp");
+    bu_free(dmp, "ogl_open: dmp");
     return DM_NULL;
   }
 
   bu_vls_init(&dmp->dm_pathName);
   bu_vls_init(&dmp->dm_tkName);
   bu_vls_init(&dmp->dm_dName);
-  bu_vls_init(&dmp->dm_initWinProc);
+  bu_vls_init(&init_proc_vls);
 
-  i = dm_process_options(dmp,
-			 &dmp->dm_width,
-			 &dmp->dm_height,
-			 argc,
-			 argv);
+  i = dm_process_options(dmp, &init_proc_vls, --argc, ++argv);
 
   if(bu_vls_strlen(&dmp->dm_pathName) == 0)
      bu_vls_printf(&dmp->dm_pathName, ".dm_ogl%d", count);
@@ -263,8 +260,8 @@ char *argv[];
     else
       bu_vls_strcpy(&dmp->dm_dName, ":0.0");
   }
-  if(bu_vls_strlen(&dmp->dm_initWinProc) == 0)
-    bu_vls_strcpy(&dmp->dm_initWinProc, "bind_dm");
+  if(bu_vls_strlen(&init_proc_vls) == 0)
+    bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
   /* initialize dm specific variables */
   ((struct ogl_vars *)dmp->dm_vars)->devmotionnotify = LASTEvent;
@@ -292,13 +289,13 @@ char *argv[];
 
   BU_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)dmp->dm_vars)->l);
 
-  /* this is important so that Ogl_configure_notify knows to set
+  /* this is important so that ogl_configure_notify knows to set
    * the font */
   ((struct ogl_vars *)dmp->dm_vars)->fontstruct = NULL;
 
   if((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL){
     bu_vls_free(&str);
-    (void)Ogl_close(dmp);
+    (void)ogl_close(dmp);
     return DM_NULL;
   }
 
@@ -362,7 +359,7 @@ char *argv[];
     Tcl_AppendResult(interp, "dm-Ogl: Failed to open ",
 		     bu_vls_addr(&dmp->dm_pathName),
 		     "\n", (char *)NULL);
-    (void)Ogl_close(dmp);
+    (void)ogl_close(dmp);
     return DM_NULL;
   }
 
@@ -371,15 +368,16 @@ char *argv[];
 
   bu_vls_init(&str);
   bu_vls_printf(&str, "_init_dm %S %S\n",
-		&dmp->dm_initWinProc,
+		&init_proc_vls,
 		&dmp->dm_pathName);
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&str);
-    (void)Ogl_close(dmp);
+    (void)ogl_close(dmp);
     return DM_NULL;
   }
 
+  bu_vls_free(&init_proc_vls);
   bu_vls_free(&str);
 
   ((struct ogl_vars *)dmp->dm_vars)->dpy =
@@ -390,11 +388,11 @@ char *argv[];
 		     dmp->dm_height);
 
   /* must do this before MakeExist */
-  if((vip=Ogl_set_visual(dmp,
+  if((vip=ogl_set_visual(dmp,
 			 ((struct ogl_vars *)dmp->dm_vars)->xtkwin))==NULL){
-    Tcl_AppendResult(interp, "Ogl_open: Can't get an appropriate visual.\n",
+    Tcl_AppendResult(interp, "ogl_open: Can't get an appropriate visual.\n",
 		     (char *)NULL);
-    (void)Ogl_close(dmp);
+    (void)ogl_close(dmp);
     return DM_NULL;
   }
 
@@ -415,9 +413,9 @@ char *argv[];
   if ((((struct ogl_vars *)dmp->dm_vars)->glxc =
        glXCreateContext(((struct ogl_vars *)dmp->dm_vars)->dpy, vip, 0,
 			ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
-    Tcl_AppendResult(interp, "Ogl_open: couldn't create glXContext.\n",
+    Tcl_AppendResult(interp, "ogl_open: couldn't create glXContext.\n",
 		     (char *)NULL);
-    (void)Ogl_close(dmp);
+    (void)ogl_close(dmp);
     return DM_NULL;
   }
   /* If we used an indirect context, then as far as sgi is concerned,
@@ -494,20 +492,29 @@ Done:
   if (!glXMakeCurrent(((struct ogl_vars *)dmp->dm_vars)->dpy,
 		      ((struct ogl_vars *)dmp->dm_vars)->win,
 		      ((struct ogl_vars *)dmp->dm_vars)->glxc)){
-    Tcl_AppendResult(interp, "Ogl_open: Couldn't make context current\n", (char *)NULL);
-    (void)Ogl_close(dmp);
+    Tcl_AppendResult(interp, "ogl_open: Couldn't make context current\n", (char *)NULL);
+    (void)ogl_close(dmp);
     return DM_NULL;
   }
 
   /* display list (fontOffset + char) will displays a given ASCII char */
   if ((((struct ogl_vars *)dmp->dm_vars)->fontOffset = glGenLists(128))==0){
     Tcl_AppendResult(interp, "dm-ogl: Can't make display lists for font.\n", (char *)NULL);
-    (void)Ogl_close(dmp);
+    (void)ogl_close(dmp);
     return DM_NULL;
   }
 
+  glDrawBuffer(GL_FRONT_AND_BACK);
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.doublebuffer)
+    glDrawBuffer(GL_BACK);
+  else
+    glDrawBuffer(GL_FRONT);
+
   /* do viewport, ortho commands and initialize font*/
-  Ogl_configure_window_shape(dmp);
+  ogl_configure_window_shape(dmp);
 
   /* Lines will be solid when stippling disabled, dashed when enabled*/
   glLineStipple( 1, 0xCF33);
@@ -547,7 +554,7 @@ Done:
  *  Gracefully release the display.
  */
 static int
-Ogl_close(dmp)
+ogl_close(dmp)
 struct dm *dmp;
 {
   if(((struct ogl_vars *)dmp->dm_vars)->dpy){
@@ -580,9 +587,8 @@ struct dm *dmp;
   bu_vls_free(&dmp->dm_pathName);
   bu_vls_free(&dmp->dm_tkName);
   bu_vls_free(&dmp->dm_dName);
-  bu_vls_free(&dmp->dm_initWinProc);
-  bu_free(dmp->dm_vars, "Ogl_close: ogl_vars");
-  bu_free(dmp, "Ogl_close: dmp");
+  bu_free(dmp->dm_vars, "ogl_close: ogl_vars");
+  bu_free(dmp, "ogl_close: dmp");
 
   return TCL_OK;
 }
@@ -593,7 +599,7 @@ struct dm *dmp;
  * There are global variables which are parameters to this routine.
  */
 static int
-Ogl_drawBegin(dmp)
+ogl_drawBegin(dmp)
 struct dm *dmp;
 {
   GLint mm; 
@@ -602,20 +608,22 @@ struct dm *dmp;
   GLfloat fogdepth;
 
   if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "Ogl_drawBegin\n", (char *)NULL);
+    Tcl_AppendResult(interp, "ogl_drawBegin\n", (char *)NULL);
 
   if (!glXMakeCurrent(((struct ogl_vars *)dmp->dm_vars)->dpy,
 		      ((struct ogl_vars *)dmp->dm_vars)->win,
 		      ((struct ogl_vars *)dmp->dm_vars)->glxc)){
     Tcl_AppendResult(interp,
- 		     "Ogl_drawBegin: Couldn't make context current\n", (char *)NULL);
+ 		     "ogl_drawBegin: Couldn't make context current\n", (char *)NULL);
     return TCL_ERROR;
   }
 
+#if 0
   if (!((struct ogl_vars *)dmp->dm_vars)->mvars.doublebuffer){
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
+#endif
 
   if (((struct ogl_vars *)dmp->dm_vars)->face_flag){
     glMatrixMode(GL_PROJECTION);
@@ -646,11 +654,11 @@ struct dm *dmp;
  *			O G L _ E P I L O G
  */
 static int
-Ogl_drawEnd(dmp)
+ogl_drawEnd(dmp)
 struct dm *dmp;
 {
   if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "Ogl_drawEnd\n", (char *)NULL);
+    Tcl_AppendResult(interp, "ogl_drawEnd\n", (char *)NULL);
 
   if(((struct ogl_vars *)dmp->dm_vars)->mvars.doublebuffer ){
     glXSwapBuffers(((struct ogl_vars *)dmp->dm_vars)->dpy,
@@ -659,9 +667,6 @@ struct dm *dmp;
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
-
-  /* Prevent lag between events and updates */
-  XSync(((struct ogl_vars *)dmp->dm_vars)->dpy, 0);
 
   if(((struct ogl_vars *)dmp->dm_vars)->mvars.debug){
     int error;
@@ -686,7 +691,7 @@ struct dm *dmp;
  *  load new rotation matrix onto top of stack
  */
 static int
-Ogl_newrot(dmp, mat, which_eye)
+ogl_newrot(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t mat;
 int which_eye;
@@ -700,7 +705,7 @@ int which_eye;
   if(((struct ogl_vars *)dmp->dm_vars)->mvars.debug){
     struct bu_vls tmp_vls;
 
-    Tcl_AppendResult(interp, "Ogl_newrot()\n", (char *)NULL);
+    Tcl_AppendResult(interp, "ogl_newrot()\n", (char *)NULL);
 
     bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
@@ -722,7 +727,7 @@ int which_eye;
     /* R eye */
     glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1); 
     glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
-    Ogl_drawString2D( "R", 2020, 0, 0, DM_RED );
+    ogl_drawString2D( "R", 2020, 0, 0, DM_RED );
     break;
   case 2:
     /* L eye */
@@ -801,7 +806,7 @@ int which_eye;
 
 /* ARGSUSED */
 static int
-Ogl_drawVList( dmp, vp, m )
+ogl_drawVList( dmp, vp, m )
 struct dm *dmp;
 register struct rt_vlist *vp;
 fastf_t *m;
@@ -813,7 +818,7 @@ fastf_t *m;
   int i,j;
 
   if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "Ogl_drawVList()\n", (char *)NULL);
+    Tcl_AppendResult(interp, "ogl_drawVList()\n", (char *)NULL);
 
   /*
    *  It is claimed that the "dancing vector disease" of the
@@ -901,13 +906,13 @@ fastf_t *m;
  * Turns off windowing.
  */
 static int
-Ogl_normal(dmp)
+ogl_normal(dmp)
 struct dm *dmp;
 {
   GLint mm; 
 
   if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "Ogl_normal\n", (char *)NULL);
+    Tcl_AppendResult(interp, "ogl_normal\n", (char *)NULL);
 
   if (!((struct ogl_vars *)dmp->dm_vars)->face_flag){
     glMatrixMode(GL_PROJECTION);
@@ -933,7 +938,7 @@ struct dm *dmp;
  * The starting position of the beam is as specified.
  */
 static int
-Ogl_drawString2D( dmp, str, x, y, size, use_aspect )
+ogl_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
 int x, y;
@@ -941,7 +946,7 @@ int size;
 int use_aspect;
 {
   if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "Ogl_drawString2D()\n", (char *)NULL);
+    Tcl_AppendResult(interp, "ogl_drawString2D()\n", (char *)NULL);
 
   if(use_aspect)	
     glRasterPos2f(GED2IRIS(x) * dmp->dm_aspect,  GED2IRIS(y));
@@ -960,7 +965,7 @@ int use_aspect;
  *
  */
 static int
-Ogl_drawLine2D( dmp, x1, y1, x2, y2 )
+ogl_drawLine2D( dmp, x1, y1, x2, y2 )
 struct dm *dmp;
 int x1, y1;
 int x2, y2;
@@ -968,7 +973,7 @@ int x2, y2;
   register int nvec;
   
   if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "Ogl_drawLine2D()\n", (char *)NULL);
+    Tcl_AppendResult(interp, "ogl_drawLine2D()\n", (char *)NULL);
 
   if(((struct ogl_vars *)dmp->dm_vars)->mvars.debug){
     GLfloat pmat[16];
@@ -1001,7 +1006,7 @@ int x2, y2;
 }
 
 static int
-Ogl_drawVertex2D(dmp, x, y)
+ogl_drawVertex2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
@@ -1014,7 +1019,7 @@ int x, y;
 
 
 static int
-Ogl_setColor(dmp, r, g, b, strict)
+ogl_setColor(dmp, r, g, b, strict)
 struct dm *dmp;
 register short r, g, b;
 int strict;
@@ -1050,7 +1055,7 @@ int strict;
 
 
 static int
-Ogl_setLineAttr(dmp, width, dashed)
+ogl_setLineAttr(dmp, width, dashed)
 struct dm *dmp;
 int width;
 int dashed;
@@ -1069,7 +1074,7 @@ int dashed;
 
 /* ARGSUSED */
 static unsigned
-Ogl_cvtvecs( dmp, sp )
+ogl_cvtvecs( dmp, sp )
 struct dm *dmp;
 struct solid *sp;
 {
@@ -1080,14 +1085,14 @@ struct solid *sp;
  * Loads displaylist
  */
 static unsigned
-Ogl_load( dmp, addr, count )
+ogl_load( dmp, addr, count )
 struct dm *dmp;
 unsigned addr, count;
 {
   struct bu_vls tmp_vls;
 
   bu_vls_init(&tmp_vls);
-  bu_vls_printf(&tmp_vls, "Ogl_load(x%x, %d.)\n", addr, count );
+  bu_vls_printf(&tmp_vls, "ogl_load(x%x, %d.)\n", addr, count );
   Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
   bu_vls_free(&tmp_vls);
   return( 0 );
@@ -1095,7 +1100,7 @@ unsigned addr, count;
 
 /* ARGSUSED */
 static int
-Ogl_debug(dmp, lvl)
+ogl_debug(dmp, lvl)
 struct dm *dmp;
 {
   ((struct ogl_vars *)dmp->dm_vars)->mvars.debug = lvl;
@@ -1106,7 +1111,7 @@ struct dm *dmp;
 }
 
 static int
-Ogl_setWinBounds(w)
+ogl_setWinBounds(w)
 register int w[];
 {
   return TCL_OK;
@@ -1117,7 +1122,7 @@ register int w[];
  * OpenGL
  */
 static XVisualInfo *
-Ogl_set_visual(dmp, tkwin)
+ogl_set_visual(dmp, tkwin)
 struct dm *dmp;
 Tk_Window tkwin;
 {
@@ -1263,7 +1268,7 @@ Tk_Window tkwin;
  * also change font size if necessary
  */
 void
-Ogl_configure_window_shape(dmp)
+ogl_configure_window_shape(dmp)
 struct dm *dmp;
 {
   int		npix;
@@ -1282,9 +1287,9 @@ struct dm *dmp;
 	    (dmp->dm_height)+1);
 
   if( ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuffer_on )
-    Ogl_establish_zbuffer(dmp);
+    ogl_establish_zbuffer(dmp);
 
-  Ogl_establish_lighting(dmp);
+  ogl_establish_lighting(dmp);
 
 #if 0
   glDrawBuffer(GL_FRONT_AND_BACK);
@@ -1302,6 +1307,9 @@ struct dm *dmp;
 
   /*CJXX*/
   glFlush();
+#else
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #endif
   /*CJXX this might cause problems in perspective mode? */
   glGetIntegerv(GL_MATRIX_MODE, &mm);
@@ -1395,7 +1403,7 @@ struct dm *dmp;
 }
 
 void	
-Ogl_establish_lighting(dmp)
+ogl_establish_lighting(dmp)
 struct dm *dmp;
 {
   if (!((struct ogl_vars *)dmp->dm_vars)->mvars.lighting_on) {
@@ -1407,7 +1415,7 @@ struct dm *dmp;
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
     glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
-    /* light positions specified in Ogl_newrot */
+    /* light positions specified in ogl_newrot */
 
     glLightfv(GL_LIGHT0, GL_SPECULAR, light0_diffuse);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
@@ -1427,7 +1435,7 @@ struct dm *dmp;
 }	
 
 void	
-Ogl_establish_zbuffer(dmp)
+ogl_establish_zbuffer(dmp)
 struct dm *dmp;
 {
   if( ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuf == 0 ) {
@@ -1444,7 +1452,7 @@ struct dm *dmp;
 }
 
 void
-Ogl_establish_perspective(dmp)
+ogl_establish_perspective(dmp)
 struct dm *dmp;
 {
   struct bu_vls vls;
@@ -1464,7 +1472,7 @@ struct dm *dmp;
   perspective_angle is set to the value of (dummy_perspective - 1).
 */
 void
-Ogl_set_perspective(dmp)
+ogl_set_perspective(dmp)
 struct dm *dmp;
 {
   /* set perspective matrix */
