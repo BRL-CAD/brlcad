@@ -293,4 +293,5 @@ AC_OUTPUT([
 	tclscripts/util/Makefile
 	tools/Makefile
 	util/Makefile
+	vfont/Makefile
 ])

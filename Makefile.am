@@ -2,21 +2,21 @@
 
 SUBDIRS=\
 	h\
+	libpng\
 	libtcl8.4\
 	libtk8.4\
 	libitcl3.2\
 	iwidgets4.0.1\
 	libz\
-	libpng\
 	libbn\
 	libbu\
 	libcursor\
 	libdm\
-	libpkg\
 	libfb\
 	libfft\
 	liboptical\
 	liborle\
+	libpkg\
 	librt\
 	libsysv\
 	libtermio\
@@ -27,10 +27,12 @@ SUBDIRS=\
 	burst\
 	bwish\
 	conv\
+	doc\
 	fb\
 	fbed\
 	fbserv\
 	gtools\
+	html\
 	irprep\
 	mged\
 	rt\
@@ -39,5 +41,4 @@ SUBDIRS=\
 	tclscripts\
 	tools\
 	util\
-	html\
-	doc
+	vfont
