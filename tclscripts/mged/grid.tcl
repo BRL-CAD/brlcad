@@ -59,8 +59,8 @@ proc do_grid_spacing { id spacing_type } {
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "grid_spacing_apply $id $spacing_type"
-    button $top.resetB -relief raised -text "Reset"\
-	    -command "grid_spacing_reset $id $spacing_type"
+    button $top.loadB -relief raised -text "Load"\
+	    -command "grid_spacing_load $id $spacing_type"
     button $top.autosizeB -relief raised -text "Autosize"\
 	    -command "grid_control_autosize $id"
     button $top.dismissB -relief raised -text "Dismiss"\
@@ -72,7 +72,7 @@ proc do_grid_spacing { id spacing_type } {
     grid columnconfigure $top.gridF1 1 -weight 1
     grid columnconfigure $top.gridF1 3 -weight 1
 
-    grid $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF2
+    grid $top.applyB x $top.loadB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF2
     grid columnconfigure $top.gridF2 1 -weight 1
     grid columnconfigure $top.gridF2 1 -minsize 10
     grid columnconfigure $top.gridF2 4 -weight 1
@@ -83,7 +83,7 @@ proc do_grid_spacing { id spacing_type } {
 
     grid columnconfigure $top 0 -weight 1
 
-    grid_spacing_reset $id $spacing_type
+    grid_spacing_load $id $spacing_type
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]
@@ -119,7 +119,7 @@ proc do_grid_anchor { id } {
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "doit $id \"set grid_anchor \\\$grid_control_anchor($id)\""
-    button $top.resetB -relief raised -text "Reset"\
+    button $top.loadB -relief raised -text "Load"\
 	    -command "winset \$mged_active_dm($id); set grid_control_anchor($id) \$grid_anchor"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
@@ -131,7 +131,7 @@ proc do_grid_anchor { id } {
     grid $top.anchorF -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
     grid columnconfigure $top.gridF1 0 -weight 1
 
-    grid $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF2
+    grid $top.applyB x $top.loadB x $top.dismissB -sticky "ew" -in $top.gridF2
     grid columnconfigure $top.gridF2 1 -weight 1
     grid columnconfigure $top.gridF2 1 -weight 3
 
@@ -198,7 +198,7 @@ proc do_grid_color { id } {
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "doit $id \"set grid_color \\\$grid_control_color($id)\""
-    button $top.resetB -relief raised -text "Reset"\
+    button $top.loadB -relief raised -text "Load"\
 	    -command "winset \$mged_active_dm($id);\
 	    set grid_control_color($id) \$grid_color;\
 	    grid_control_set_colorMB $id $top;"
@@ -214,7 +214,7 @@ proc do_grid_color { id } {
     grid $top.colorF -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
     grid columnconfigure $top.gridF1 0 -weight 1
 
-    grid $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF2
+    grid $top.applyB x $top.loadB x $top.dismissB -sticky "ew" -in $top.gridF2
     grid columnconfigure $top.gridF2 1 -weight 1
     grid columnconfigure $top.gridF2 3 -weight 1
 
@@ -339,8 +339,8 @@ proc init_grid_control { id } {
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "grid_control_apply $id"
-    button $top.resetB -relief raised -text "Reset"\
-	    -command "grid_control_reset $id $top"
+    button $top.loadB -relief raised -text "Load"\
+	    -command "grid_control_load $id $top"
     button $top.autosizeB -relief raised -text "Autosize"\
 	    -command "grid_control_autosize $id"
     button $top.dismissB -relief raised -text "Dismiss"\
@@ -366,7 +366,7 @@ proc init_grid_control { id } {
     grid $top.gridEffectsL x $top.drawCB x $top.snapCB x -sticky "ew" -in $top.gridFF3\
 	    -padx 8 -pady 8
 
-    grid $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF4
+    grid $top.applyB x $top.loadB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF4
 
     grid columnconfigure $top.gridFF1 1 -weight 1
     grid columnconfigure $top.gridFF1 3 -weight 1
@@ -399,7 +399,7 @@ proc init_grid_control { id } {
 
     bind $top.colorE <Return> "grid_control_set_colorMB $id $top"
 
-    grid_control_reset $id $top
+    grid_control_load $id $top
     grid_control_set_colorMB $id $top
     set_grid_square $id
 
@@ -485,7 +485,7 @@ proc grid_control_apply { id } {
     set mged_grid_snap($id) $grid_control_snap($id)
 }
 
-proc grid_control_reset { id top } {
+proc grid_control_load { id top } {
     global mged_active_dm
     global grid_control_draw
     global grid_control_snap
@@ -651,7 +651,7 @@ proc grid_spacing_apply { id spacing_type } {
     catch { destroy .$id.grid_spacing }
 }
 
-proc grid_spacing_reset { id spacing_type } {
+proc grid_spacing_load { id spacing_type } {
     global mged_active_dm
     global grid_control_h
     global grid_control_v
