@@ -1497,16 +1497,16 @@ static unsigned char broken_colors[][3] = {
 	{ 255, 255, 255 },	/* UNKNOWN (white) */
 	{ 255, 255, 125 }	/* no classification list (cyan) */
 };
-#define PICK_BROKEN_COLOR(type, p) { \
+#define PICK_BROKEN_COLOR(p) { \
 	if (global_classlist == (long **)NULL) { \
 		broken_color = 5; \
-	} else if( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AinB], ((struct type *)p)) ) \
+	} else if( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AinB], (p)) ) \
 		broken_color = NMG_CLASS_AinB; \
-	else if( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AonBshared], ((struct type *)p)) ) \
+	else if( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AonBshared], (p)) ) \
 		broken_color = NMG_CLASS_AonBshared; \
-	else if( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AonBanti], ((struct type *)p)) ) \
+	else if( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AonBanti], (p)) ) \
 		broken_color = NMG_CLASS_AonBanti; \
-	else if ( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AoutB], ((struct type *)p)) ) \
+	else if ( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AoutB], (p)) ) \
 		broken_color = NMG_CLASS_AoutB; \
 	else \
 		broken_color = 4;}
@@ -1536,10 +1536,10 @@ CONST struct vertexuse *vu;
 	NMG_CK_VERTEX_G(v->vg_p);
 	p = v->vg_p->coord;
 
-	PICK_BROKEN_COLOR(vertex, vu->v_p);
+	PICK_BROKEN_COLOR(vu->v_p);
 	if (broken_color == 4) {
 /*		fprintf(stderr, "vertex broken_color %d...", broken_color); */
-		PICK_BROKEN_COLOR(vertexuse, vu);
+		PICK_BROKEN_COLOR(vu);
 /*		fprintf(stderr, "vertexuse broken_color %d\n", broken_color); */
 	}
 	vh = rt_vlblock_find( vbp, 
@@ -1604,10 +1604,10 @@ CONST struct edgeuse *eu;
 	VSUB2(end1, p1, v);
 
 
-	PICK_BROKEN_COLOR(edge, eu->e_p);
+	PICK_BROKEN_COLOR(eu->e_p);
 	if (broken_color == 4) {
 /*		fprintf(stderr, "edge broken_color %d... ", broken_color); */
-		PICK_BROKEN_COLOR(edgeuse, eu);
+		PICK_BROKEN_COLOR(eu);
 /*		fprintf(stderr, "edgeuse broken_color %d\n", broken_color); */
 	}
 
@@ -1737,7 +1737,7 @@ CONST struct loopuse *lu;
 	/* Draw colored polygons for the actual face loops */
 	/* Faces are not classified, only loops */
 	/* This can obscure the edge/vertex info */
-	PICK_BROKEN_COLOR(face, lu->l_p);
+	PICK_BROKEN_COLOR(lu->l_p);
 	vh = rt_vlblock_find( vbp, 
 		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
 
