@@ -67,7 +67,7 @@ struct trap *p, *v;
 }
 
 
-struct pt2d *find_pt2d();	
+static struct pt2d *find_pt2d();	
 static FILE *plot_fd;
 
 void
