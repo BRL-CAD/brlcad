@@ -17,12 +17,14 @@
 struct light_specific {
 	struct rt_list	l;	/* doubly linked list */
 	/* User-specified fields */
+	vect_t	lt_dir;		/* explicit coordinate aim */
 	fastf_t	lt_intensity;	/* Intensity Lumens (cd*sr): total output */
 	fastf_t	lt_angle;	/* beam dispersion angle (degrees) 0..180 */
 	fastf_t	lt_fraction;	/* fraction of total light */
 	int	lt_shadows;	/* !0 if this light casts shadows */
 	int	lt_infinite;	/* !0 if infinitely distant */
 	int	lt_invisible;	/* !0 if implicitly modeled or invisible */
+	int	lt_exaim;	/* !0 if explicit aim in lt_dir */
 	/* Internal fields */
 	vect_t	lt_color;	/* RGB, as 0..1 */
 	fastf_t	lt_radius;	/* approximate radius of spherical light */
