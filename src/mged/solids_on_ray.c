@@ -42,7 +42,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "redblack.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"

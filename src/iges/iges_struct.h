@@ -13,7 +13,6 @@ extern char	version[];
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "rtlist.h"
 #include "rtstring.h"

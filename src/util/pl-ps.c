@@ -25,8 +25,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -38,8 +36,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "bu.h"
-
-#include "externs.h"
 
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */

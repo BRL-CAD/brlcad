@@ -23,14 +23,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
 #include "machine.h"
-#include "externs.h"			/* For getenv */
 
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */

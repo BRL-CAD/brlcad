@@ -23,19 +23,12 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "externs.h"
 
 static int	file_width = 512;	/* default input width */
 static int	file_height = 512;	/* default input height */

@@ -23,14 +23,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <math.h>	/* for atof() */
 #include <time.h>	/* for ctime() */
 
 #include "machine.h"
-#include "externs.h"	/* For getopt */
 
 #define	DEFAULT_SIZE	6.75		/* default output size in inches */
 #define	MAX_BYTES	(64*128)	/* max bytes per image chunk */

@@ -93,7 +93,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <sys/time.h>		/* For struct timeval */
 
 #include "machine.h"
-#include "externs.h"		/* For malloc, getopt */
 #include "fb.h"
 #include "pkg.h"
 

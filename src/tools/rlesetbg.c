@@ -33,12 +33,9 @@ static const char rcs_ident[] = "$Id$";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 char buffer[4096];

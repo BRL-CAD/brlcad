@@ -51,7 +51,6 @@
 
 
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "mater.h"
 #include "bu.h"

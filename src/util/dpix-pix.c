@@ -29,13 +29,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "machine.h"
-#include "externs.h"
 
 #define NUM	(1024 * 16)	/* Note the powers of 2 -- v. efficient */
 static double		doub[NUM];

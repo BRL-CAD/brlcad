@@ -18,7 +18,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For getopt */
 
 /* declarations to support use of getopt() system call */
 char *options = "h";

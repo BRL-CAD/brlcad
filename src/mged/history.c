@@ -46,7 +46,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "./ged.h"
 #include "./mgedtcl.h"
 

@@ -39,7 +39,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"			/* For getopt */
 #include "fb.h"
 
 #define	LSB	0	/* Least Signifigent Byte */

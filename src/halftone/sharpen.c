@@ -10,7 +10,6 @@ static const char RCSid[] = "$Header$";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"			/* For malloc */
 
 extern int Debug;
 extern double Beta;
@@ -47,57 +46,6 @@ extern double Beta;
  *
  * Author:
  *	Christopher T. Johnson
- *
- * $Log$
- * Revision 11.7  2004/05/10 15:30:42  erikg
- * change conf.h to a wrapped config.h
- *
- * Revision 11.6  2004/04/05 07:47:59  morrison
- * merge of ansi-6-0-branch into HEAD
- *
- * Revision 11.5.2.1  2002/09/19 18:00:58  morrison
- * Initial ANSIfication
- *
- * Revision 11.5  2002/08/20 17:07:30  jra
- * Restoration of entire source tree to Pre-Hartley state
- *
- * Revision 11.3  2000/08/24 23:09:00  mike
- *
- * lint
- *
- * Revision 11.2  2000/08/24 23:07:42  mike
- *
- * lint
- *
- * Revision 11.1  1995/01/04  10:21:52  mike
- * Release_4.4
- *
- * Revision 10.2  94/08/23  17:59:09  gdurf
- * Added includes of conf.h, machine.h, externs.h for malloc
- * 
- * Revision 10.1  1991/10/12  06:53:19  mike
- * Release_4.0
- *
- * Revision 2.4  91/08/30  00:26:43  mike
- * Stardent ANSI C
- * 
- * Revision 2.3  91/01/03  23:01:09  cjohnson
- * Added range checking, to limit values to 0..255
- * 
- * Revision 2.2  90/04/13  03:09:03  cjohnson
- * Back off code to reduce number of floating point multiblies.
- * 
- * Revision 2.1  90/04/13  01:23:12  cjohnson
- * First Relese.
- * 
- * Revision 1.2  90/04/13  00:46:54  cjohnson
- * Clean up comments.
- * Fix error on second line.
- * 
- * Revision 1.1  90/04/13  00:31:49  cjohnson
- * Initial revision
- * 
- * 
  */
 int
 sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)

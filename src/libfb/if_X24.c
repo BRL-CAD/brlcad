@@ -82,7 +82,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "machine.h"
 #include "fb.h"
-#include "externs.h"
 #include "./fblocal.h"
 
 #ifdef HAVE_SYS_MMAN_H

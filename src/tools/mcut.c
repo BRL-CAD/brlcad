@@ -38,7 +38,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 /*****************************************************************

@@ -51,7 +51,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "pkg.h"
 #include "./pkgtypes.h"
 #include "fb.h"

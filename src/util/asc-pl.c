@@ -24,8 +24,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -34,8 +32,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <ctype.h>
 #include "machine.h"
-#include "externs.h"
-
 #include "plot3.h"
 
 #define		BUF_LEN		512

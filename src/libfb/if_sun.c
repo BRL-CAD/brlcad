@@ -69,7 +69,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <suntool/canvas.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"
 #include "./fblocal.h"
 

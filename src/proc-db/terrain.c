@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include "machine.h"		/* BRLCAD specific machine data types */
-#include "externs.h"
 #include "bu.h"
 #include "vmath.h"		/* BRLCAD Vector macros */
 #include "nurb.h"		/* BRLCAD Spline data structures */

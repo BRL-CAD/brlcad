@@ -19,7 +19,6 @@
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 /*

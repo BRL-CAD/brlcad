@@ -35,7 +35,6 @@ static const char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"

@@ -40,7 +40,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For getopt */
 
 char *progname = "(noname)";
 char	*file_name;

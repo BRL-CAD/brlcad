@@ -57,7 +57,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"			/* For malloc */
 #include "fb.h"
 #include "./fblocal.h"
 

@@ -44,7 +44,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "tk.h"
 #include "tkPlatDecls.h"
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "fb.h"
 #include "./fblocal.h"

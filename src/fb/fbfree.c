@@ -29,7 +29,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"			/* For getopt() */
 #include "fb.h"
 
 static char	*framebuffer = NULL;

@@ -23,8 +23,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -37,7 +35,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "plot3.h"
-#include "externs.h"			/* For atof and atoi */
 
 
 static char usage[] = "Usage: plline2 x1 y1 x2 y2 [r g b]\n";

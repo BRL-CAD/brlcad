@@ -30,8 +30,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <sys/time.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
@@ -42,7 +40,6 @@
 #include <stdlib.h>
 
 #include "machine.h"
-#include "externs.h"			/* For malloc and getopt */
 
 static char	*f1_name;
 static char	*f2_name;

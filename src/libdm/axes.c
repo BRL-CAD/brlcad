@@ -26,7 +26,6 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "dm.h"
 
 void

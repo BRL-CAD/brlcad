@@ -50,7 +50,6 @@ static const char RCSid[] = "$Header$";
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "rtlist.h"
 #include "rtstring.h"

@@ -43,7 +43,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For malloc, calloc and free */
 #include "rle.h"
 
 #define CHECK_MALLOC( ptr ) \

@@ -29,12 +29,9 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 #define MALLOC_ERR {fprintf(stderr, "%s: ran out of heap space\n", \

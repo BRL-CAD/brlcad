@@ -36,7 +36,6 @@ static const char RCSpolyif[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"

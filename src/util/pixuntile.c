@@ -25,8 +25,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -35,7 +33,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"			/* For malloc and getopt */
 
 int out_width = 64;	/* width of input sub-images in pixels (64) */
 int out_height = 64;	/* height of input sub-images in scanlines (64) */

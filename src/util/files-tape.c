@@ -48,8 +48,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -57,7 +55,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include "machine.h"
-#include "externs.h"		/* For malloc and getopt */
 
 #define	TSIZE	(6144*24*1024)	/* # of bytes on 2400' 6250bpi reel */
 long	byteswritten = 0;	/* Number of bytes written */

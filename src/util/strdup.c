@@ -22,14 +22,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #if !defined(HAVE_STRDUP)
 
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 
 /*
  *			S T R D U P

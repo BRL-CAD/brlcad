@@ -25,8 +25,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
@@ -35,7 +33,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"
 
 long	bin[256];

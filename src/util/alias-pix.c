@@ -10,12 +10,9 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include "machine.h"
-#include "externs.h"
 
 char *progname = "(noname)";
 void usage(void)

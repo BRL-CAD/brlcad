@@ -26,8 +26,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -37,7 +35,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For getopt */
 
 #define MAXLINE		(8*1024)
 #define DEFAULT_WIDTH	512

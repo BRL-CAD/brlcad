@@ -31,8 +31,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -43,7 +41,6 @@
 #include <errno.h>
 
 #include "machine.h"
-#include "externs.h"			/* For stdlib stuff */
 #include "rle.h"
 
 /* "short" in our world is 16 bits.  Beware of swyte-bopping. */

@@ -11,7 +11,6 @@ static const char RCSid[] = "$Header$";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"		/* For alloc */
 
 #define	DLEVEL	1
 extern int Debug;
@@ -51,55 +50,6 @@ int eq_cubic(int x);
  * Change History:
  *	ctj 90/04/04 - change to use a standard cubic line format for the
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
- *
- * $Log$
- * Revision 11.8  2004/05/10 15:30:42  erikg
- * change conf.h to a wrapped config.h
- *
- * Revision 11.7  2004/04/05 07:47:59  morrison
- * merge of ansi-6-0-branch into HEAD
- *
- * Revision 11.6.2.1  2002/09/19 18:00:59  morrison
- * Initial ANSIfication
- *
- * Revision 11.6  2002/08/20 17:07:31  jra
- * Restoration of entire source tree to Pre-Hartley state
- *
- * Revision 11.4  2000/08/24 23:09:00  mike
- *
- * lint
- *
- * Revision 11.3  2000/01/31 16:20:25  jra
- * Eliminated an unused variable
- *
- * Revision 11.2  1996/07/17 17:02:46  jra
- * Minor Mods for IRIX 6.2
- *
- * Revision 11.1  1995/01/04  10:21:56  mike
- * Release_4.4
- *
- * Revision 10.2  94/08/23  17:58:17  gdurf
- * Added include of conf.h, machine.h and externs.h, the last for malloc()
- * 
- * Revision 10.1  1991/10/12  06:53:23  mike
- * Release_4.0
- *
- * Revision 2.2  91/07/19  01:51:34  mike
- * Can't declare something static and extern both
- * 
- * Revision 2.1  90/04/13  01:23:27  cjohnson
- * First Relese.
- * 
- * Revision 1.3  90/04/13  01:13:52  cjohnson
- * Cleanup the comments.
- * 
- * Revision 1.2  90/04/10  03:29:34  cjohnson
- * Bug fixes to allow Tonescale to be used.
- * added debug to print Cubics
- * 
- * Revision 1.1  90/04/09  16:18:47  cjohnson
- * Initial revision
- * 
  */
 void
 tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))

@@ -41,7 +41,6 @@
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 
 #include "./rletogif.h"
 

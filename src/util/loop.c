@@ -26,8 +26,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -37,7 +35,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"
 
 #define	INTEGER 0
 #define	REAL	1

@@ -29,8 +29,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -39,7 +37,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"			/* For malloc, calloc, and free */
 #include "rle.h"
 
 typedef FILE	*FILPTR;

@@ -58,8 +58,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <signal.h>
 #ifdef USE_STRING_H
@@ -71,7 +69,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "externs.h"
 #include "rtstring.h"
 #include "raytrace.h"
 #include "rtgeom.h"

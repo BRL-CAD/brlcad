@@ -52,7 +52,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/extensions/multibuf.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"

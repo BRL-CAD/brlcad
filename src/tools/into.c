@@ -44,7 +44,6 @@
 #include <sys/stat.h>
 
 #include "machine.h"
-#include "externs.h"
 
 #ifdef S_IFSOCK				/* should work */
 # define BSD42

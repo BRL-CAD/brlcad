@@ -21,7 +21,6 @@ static const char rcs_ident[] = "$Header$";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 #include "pyramid.h"
 

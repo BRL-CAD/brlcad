@@ -46,7 +46,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "./ged.h"
 
 static int	col_count;		/* names listed on current line */

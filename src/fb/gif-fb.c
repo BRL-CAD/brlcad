@@ -76,7 +76,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"			/* BRL CAD package libfb.a interface */
 
 #ifndef EXIT_SUCCESS

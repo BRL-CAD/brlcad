@@ -15,8 +15,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #ifdef USE_STRING_H
@@ -26,7 +24,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"			/* For malloc, calloc, and free */
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_raw.h"

@@ -28,7 +28,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>		/* Direct the output to stdout */
 #include "machine.h"		/* BRLCAD specific machine data types */
-#include "externs.h"
 #include "vmath.h"		/* BRLCAD Vector macros */
 #include "nmg.h"
 #include "nurb.h"		/* BRLCAD Spline data structures */

@@ -23,7 +23,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
 #include <stdio.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -31,7 +30,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/stat.h>
 #include <string.h>
 #include "machine.h"
-#include "externs.h"		/* For getopt(), etc. */
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

@@ -23,7 +23,6 @@ static const char RCSid[] = "@(#) glob.c 2.2, modified 1/5/87 at 16:57:29, archi
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"
 
 #include "./std.h"

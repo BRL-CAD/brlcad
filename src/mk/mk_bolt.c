@@ -27,7 +27,6 @@
 
 #include "machine.h"
 #include "vmath.h"
-#include "externs.h"
 #include "db.h"
 #include "raytrace.h"
 #include "wdb.h"

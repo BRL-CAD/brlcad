@@ -33,12 +33,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"		/* For malloc */
 
 #define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */
 

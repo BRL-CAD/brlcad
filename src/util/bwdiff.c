@@ -26,14 +26,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
 #include "machine.h"
-#include "externs.h"
 
 FILE *fp1, *fp2;
 

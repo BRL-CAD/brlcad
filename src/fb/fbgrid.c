@@ -28,7 +28,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"
 
 static unsigned char	*white_line, *grey_line, *dark_line;

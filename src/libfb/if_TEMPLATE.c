@@ -28,7 +28,6 @@
 
 #include "machine.h"
 #include "fb.h"
-#include "externs.h"
 #include "./fblocal.h"
 
 _LOCAL_ int	DEVNAME_open(FBIO *ifp, char *file, int width, int height),

@@ -11,7 +11,6 @@ static const char RCSid[] = "$Header$";
 #include <ctype.h>
 #include <math.h>
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "msr.h"
@@ -60,6 +59,9 @@ static const char RCSid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.1  2004/05/20 15:19:10  morrison
+ * Vast reorganization begins.  Sources moved from top-level directories into src/.
+ *
  * Revision 11.9  2004/05/10 15:30:42  erikg
  * change conf.h to a wrapped config.h
  *

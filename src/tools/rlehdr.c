@@ -39,9 +39,7 @@
 #endif /* USE_STRING_H */
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
-/* #include "../patchlevel.h" */
 
 /* Utah Raster Toolkit major version number. */
 #define URT_VERSION 	3.0

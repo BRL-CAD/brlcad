@@ -32,11 +32,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 #include <math.h>
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"
 
 char *options = "vf:F:";
-/* externs.h includes externs for getopt and associated variables */
 
 static char usage[] = "\
 Usage: fbgammamod [-v] [-f in_file] [-F framebuffer] \

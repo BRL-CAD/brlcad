@@ -44,7 +44,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 
 #if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include "./canon.h"

@@ -45,7 +45,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "cmd.h"
 #include "libtermio.h"
 

@@ -33,7 +33,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* For struct timeval */
 
 #include "machine.h"
-#include "externs.h"		/* For getopt() */
 #include "fb.h"
 
 int		sec;

@@ -40,8 +40,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -50,7 +48,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"			/* For malloc and getopt */
 
 #define NFILES		4		/* Two in, two out */
 #define EL_WIDTH	32		/* Max width of one element */

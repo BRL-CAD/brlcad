@@ -30,7 +30,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "machine.h"
-#include "externs.h"		/* for getopt() */
 #include "fb.h"
 
 FBIO	*fbp;

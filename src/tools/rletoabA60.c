@@ -30,8 +30,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <math.h>
 
@@ -42,7 +40,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"			/* For malloc and free */
 #include "rle.h"
 
 #define LINE_LENGTH 720

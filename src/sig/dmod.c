@@ -26,7 +26,6 @@
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"
 
 char	*file_name;
 FILE	*infp;

@@ -23,12 +23,9 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"			/* For malloc and getopt */
 #include "fb.h"
 #include "orle.h"
 

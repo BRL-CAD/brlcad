@@ -36,7 +36,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For malloc, getopt */
 #include "fb.h"
 #include "pkg.h"
 

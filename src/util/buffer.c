@@ -30,8 +30,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-#include "externs.h"	/* optional */
-
 int mread(int fd, char *bufp, int n );
 
 char	template[] = "/usr/tmp/bufferXXXXXX";

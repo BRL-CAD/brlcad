@@ -33,7 +33,6 @@ char getopt_dummy;   /* some systems can't handle empty object modules */
 #endif
 
 #include "machine.h"
-#include "externs.h"
 
 /*
  * get option letter from argument vector

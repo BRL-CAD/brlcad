@@ -41,7 +41,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For malloc, calloc, and free */
 #include "rle.h"
 
 void get_rle_map(rle_hdr *the_hdr, char *fname);

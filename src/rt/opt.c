@@ -35,7 +35,6 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

@@ -53,7 +53,6 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"

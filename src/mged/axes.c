@@ -34,7 +34,6 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "./ged.h"
 #include "./mged_dm.h"
 

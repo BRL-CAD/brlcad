@@ -42,12 +42,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"			/* For getopt */
 
 #define	MAC_HEIGHT	576	/* input height (y), in bits */
 #define	MAC_WIDTH	720	/* input width (x), in bits */

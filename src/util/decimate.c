@@ -31,12 +31,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 
 static char usage[] = "\
 Usage: decimate nbytes/pixel width height [outwidth outheight]\n\

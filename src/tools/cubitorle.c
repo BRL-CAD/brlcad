@@ -35,7 +35,6 @@
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 void read_cubi_hdr(FILE **cubifiles, short int *xlen, short int *ylen);

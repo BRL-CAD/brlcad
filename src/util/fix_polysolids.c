@@ -28,8 +28,6 @@ static const char RCSid[] = "$Header$";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -39,7 +37,6 @@ static const char RCSid[] = "$Header$";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

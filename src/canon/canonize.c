@@ -36,8 +36,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <strings.h>
 #endif
 
-#include "externs.h"
-
 #include "./canon.h"
 
 char cmdbuf[64]="/usr/mdqs/bin/qpr -q "; /* queue name filled in by main() */

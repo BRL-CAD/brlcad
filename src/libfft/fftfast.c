@@ -33,8 +33,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>	/* for stderr */
 #include <math.h>	/* for double sin(), cos() */
 
-#include "externs.h"
-
 #define	MAXSIZE	65536	/* Needed for sin/cos tables */
 int	_init_size = 0;	/* Internal: shows last initialized size */
 

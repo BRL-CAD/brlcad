@@ -40,7 +40,6 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "externs.h"
 #include "rtprivate.h"
 #include "../librt/debug.h"
 

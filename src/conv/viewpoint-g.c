@@ -40,7 +40,6 @@
 #include <errno.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

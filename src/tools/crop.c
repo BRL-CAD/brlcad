@@ -38,7 +38,6 @@ static const char rcs_ident[] = "$Header$";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 extern void rle_box(rle_hdr *the_hdr, int *xminp, int *xmaxp, int *yminp, int *ymaxp);

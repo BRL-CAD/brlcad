@@ -33,13 +33,10 @@ static const char rcs_ident[] = "$Header$";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"		/* For malloc and free */
 #include "rle.h"
 
 void init_color(void);

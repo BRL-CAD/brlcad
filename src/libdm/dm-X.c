@@ -51,7 +51,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

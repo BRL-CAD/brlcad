@@ -7,14 +7,11 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

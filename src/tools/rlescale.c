@@ -20,13 +20,10 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_raw.h"

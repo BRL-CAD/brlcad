@@ -97,7 +97,6 @@ Example Use -
 #include "mater.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "./sedit.h"
 #include "./ged.h"
 #include "./mged_solid.h"

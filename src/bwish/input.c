@@ -52,7 +52,6 @@
 #include <ctype.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "libtermio.h"
 

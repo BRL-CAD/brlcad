@@ -74,7 +74,6 @@ in all countries except the USA.  All rights reserved.";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

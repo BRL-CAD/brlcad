@@ -24,8 +24,6 @@ static const char RCSid[] = "@(#)$Header";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -35,7 +33,6 @@ static const char RCSid[] = "@(#)$Header";
 
 #include "machine.h"
 #include "vmath.h"
-#include "externs.h"
 #include "db.h"
 #include "raytrace.h"
 #include "wdb.h"

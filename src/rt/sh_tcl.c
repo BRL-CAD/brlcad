@@ -49,7 +49,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "shadefuncs.h"
 
 extern struct mfuncs	*mfHead;	/* rt/view.c */

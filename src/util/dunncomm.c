@@ -24,8 +24,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -46,7 +44,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 
 /*
  *  This file will work IFF one of these three flags is set:

@@ -33,11 +33,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <math.h>
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"
 
 char *options = "ihoF:";
-/* externs.h includes externs for getopt and associated variables */
 
 void	checkgamma(double g);
 

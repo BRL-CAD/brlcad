@@ -39,7 +39,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "externs.h"
 
 point_t	eye_model;		/* model-space location of eye */
 mat_t	Viewrotscale;

@@ -65,7 +65,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 
 /* Read multiple times until quantity is obtained.  Necessary for pipes */
 static int

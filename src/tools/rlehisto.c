@@ -34,8 +34,6 @@ static const char rcs_ident[] = "$Id$";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"		/* For malloc, calloc, and free */
-
 #include "rle.h"
 
 #define MAXCHAN 10

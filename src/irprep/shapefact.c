@@ -67,7 +67,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /*  Need the following for rt_shootray.  */
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "msr.h"

@@ -32,8 +32,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifndef USE_STRING_H
 #include <strings.h>
@@ -42,7 +40,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For malloc and free */
 #include "rle.h"
 #include "./rletogif.h"
 

@@ -42,8 +42,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <sys/types.h>
 
@@ -54,7 +52,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"			/* For malloc and free */
 #include "rle.h"
 
 /*

@@ -30,7 +30,6 @@
 #include <time.h>
 
 #include "machine.h"
-#include "externs.h"		/* For malloc and free */
 #include "rle.h"
 
 /* Change this according the value on your system.  This is a crock.

@@ -21,11 +21,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include "machine.h"
-#include "externs.h"
 
 FILE	*out1;
 FILE	*out2;

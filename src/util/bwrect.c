@@ -24,12 +24,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"		/* For malloc */
 
 int	xnum, ynum;		/* Number of pixels in new map */
 int	xorig, yorig;		/* Bottom left corner to extract from */

@@ -30,8 +30,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -40,7 +38,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"			/* For getopt */
 
 /* declarations to support use of getopt() system call */
 char *options = "hs:w:n:";

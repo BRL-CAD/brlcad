@@ -30,8 +30,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #ifdef USE_STRING_H
@@ -41,7 +39,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 #define LEFTSCALE	0.7		/* Default left scale factor. */

@@ -23,8 +23,6 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <time.h>
 #ifdef HAVE_STRING_H
@@ -34,7 +32,6 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For malloc, getenv, strdup, ... */
 #include "fb.h"
 #include "rle.h"
 

@@ -26,13 +26,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 
 #include "machine.h"
-#include "externs.h"		/* For getopt */
 
 #define	INTERACTIVE	0
 #define	COMMAND_LINE	1

@@ -17,8 +17,6 @@
  *      This software is Copyright (C) 1998-2004 by the United States Army
  *      in all countries except the USA.  All rights reserved.
  */
-
-
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -27,13 +25,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include "png.h"
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

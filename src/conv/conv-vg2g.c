@@ -33,7 +33,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include "machine.h"
-#include "externs.h"
 #include "db.h"
 
 void	mat_pr(char *title, float *mp);

@@ -8,7 +8,6 @@
 # include "config.h"
 #endif
 
-
 #include <stdio.h>
 #include <math.h>
 #ifdef USE_STRING_H
@@ -17,7 +16,6 @@
 #include <strings.h>
 #endif
 #include "machine.h"
-#include "externs.h"
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"

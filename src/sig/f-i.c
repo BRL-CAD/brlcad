@@ -26,7 +26,6 @@
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"		/* For atof, if math.h doesn't have it */
 
 float	ibuf[512];
 short	obuf[512];

@@ -32,7 +32,6 @@
 #endif
 #include <ctype.h>
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"
 #include "vfont-if.h"
 

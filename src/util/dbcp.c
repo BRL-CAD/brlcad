@@ -24,14 +24,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
 
 #include "machine.h"
-#include "externs.h"			/* For getopt and malloc and atoi */
 
 int mread(int fd, char *bufp, int n );
 

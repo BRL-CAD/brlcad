@@ -57,7 +57,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "dm.h"
-#include "externs.h"
 #include "solid.h"
 #include "tcl.h"
 

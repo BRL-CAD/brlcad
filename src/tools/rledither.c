@@ -45,7 +45,6 @@ static const char rcs_ident[] = "$Id$";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 #define MALLOC_ERR {fprintf(stderr, "%s: ran out of heap space\n", \

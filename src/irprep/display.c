@@ -52,7 +52,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 

@@ -26,7 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "externs.h"
 
 extern int	getopt();
 extern char	*optarg;

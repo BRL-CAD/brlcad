@@ -27,8 +27,6 @@ extern int rfft_adds, rfft_mults;
 #include <stdio.h>
 #include <math.h>
 
-#include "externs.h"
-
 #include "./fft.h"
 
 static char usage[] = "\

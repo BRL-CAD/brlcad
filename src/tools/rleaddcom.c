@@ -39,7 +39,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 /* AIX uses the same define to mean something else, disable it for this file */

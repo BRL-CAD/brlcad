@@ -29,12 +29,9 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"		/* For malloc and free */
 #include "rle.h"
 
 /*****************************************************************

@@ -61,7 +61,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "rle.h"
 
 #define MAXCHAN 4

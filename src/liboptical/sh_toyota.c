@@ -39,7 +39,6 @@
 #include <strings.h>
 #endif
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"

@@ -39,8 +39,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -48,7 +46,6 @@
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"			/* For malloc and getopt */
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

@@ -32,15 +32,12 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
 #include <bu.h>
 #include <vmath.h>
 #include <bn.h>
-#include "externs.h"		/* For getopt, etc */
 
 static char	*file_name;
 static FILE	*infp;

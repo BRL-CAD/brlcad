@@ -35,7 +35,6 @@
 #include <math.h>
 #include <stdio.h>
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "anim.h"

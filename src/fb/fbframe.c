@@ -28,7 +28,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"
 
 char *Usage="[-h] [-F framebuffer]\n\

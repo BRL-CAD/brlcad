@@ -32,7 +32,6 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #include <strings.h>
 #endif
 #include "machine.h"
-#include "externs.h"			/* For getopt() */
 #include "fb.h"
 #include "orle.h"
 

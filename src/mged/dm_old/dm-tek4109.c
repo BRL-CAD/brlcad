@@ -54,7 +54,6 @@ is different from the factory default.
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "./ged.h"
 #include "./titles.h"
 #include "./dm.h"

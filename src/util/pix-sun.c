@@ -20,8 +20,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
@@ -31,7 +29,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For getopt and isatty */
 
 /* declarations to support use of getopt() system call */
 char *options = "hs:w:n:d";

@@ -31,7 +31,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include "machine.h"
-#include "externs.h"			/* For getopt() */
 #include "fb.h"
 
 typedef int	bool;			/* boolean data type */

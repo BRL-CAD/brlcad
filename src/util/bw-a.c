@@ -34,12 +34,9 @@ static const char RCSid[] = "$Header$";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"			/* For getopt */
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

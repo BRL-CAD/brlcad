@@ -33,11 +33,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 # include "config.h"
 #endif
 
-
 #include <stdio.h>
 #include <ctype.h>
 #include "machine.h"
-#include "externs.h"			/* for getopt() */
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -107,8 +105,6 @@ static const char RCSrtstring[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
@@ -121,7 +117,6 @@ static const char RCSrtstring[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 /*

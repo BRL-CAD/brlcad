@@ -25,7 +25,6 @@
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"		/* For atof, if math.h doesn't have it */
 
 double	ibuf[512];
 unsigned char	obuf[512];

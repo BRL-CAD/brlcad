@@ -40,7 +40,6 @@
 #endif
 #include "tclInt.h"
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "libtermio.h"
 

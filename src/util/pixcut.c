@@ -26,8 +26,6 @@ static const char RCSid[] = "@(#)$Header$";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -39,8 +37,6 @@ static const char RCSid[] = "@(#)$Header$";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-
-#include "externs.h"		/* For getopt and malloc */
 
 static int	org_width = 512;	/* Default file sizes 512x512 */
 static int	org_height = 512;

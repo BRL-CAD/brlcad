@@ -18,7 +18,6 @@
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 /* declarations to support use of getopt() system call */

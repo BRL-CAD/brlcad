@@ -25,7 +25,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"			/* For malloc */
 #include "vmath.h"
 #include "raytrace.h"
 #include "msr.h"

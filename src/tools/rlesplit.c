@@ -12,8 +12,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -22,7 +20,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For calloc */
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_raw.h"

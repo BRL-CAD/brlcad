@@ -9,8 +9,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -21,8 +19,6 @@
 #else
 #include <strings.h>
 #endif
-
-#include "externs.h"
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

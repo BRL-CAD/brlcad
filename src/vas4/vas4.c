@@ -26,8 +26,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #ifdef USE_STRING_H
@@ -37,7 +35,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For getopt */
 #include "fb.h"
 #include "./vas4.h"
 

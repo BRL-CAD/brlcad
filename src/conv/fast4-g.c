@@ -41,7 +41,6 @@ static const char RCSid[] = "$Header$";
 #include <errno.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"

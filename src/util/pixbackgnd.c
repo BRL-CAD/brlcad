@@ -27,13 +27,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>	
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"		/* For getopt and atof */
 
 double col[3] = {128,128,128};		/* r,g,b */
 double hsv[3];				/* h,s,v */

@@ -20,7 +20,6 @@
 #define INCL_FBLOCAL
 
 #include "machine.h"
-#include "externs.h"
 
 #define Malloc_Bomb( _bytes_ ) \
 		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \

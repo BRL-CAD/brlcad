@@ -76,7 +76,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
 #ifdef HAVE_UNIX_DOMAIN_SOCKETS

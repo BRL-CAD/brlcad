@@ -37,7 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 
 #include "machine.h"
-#include "externs.h"		/* For malloc */
 #include "fb.h"
 #include "./fblocal.h"
 #include <ultra/ugraf.h>

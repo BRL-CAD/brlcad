@@ -29,12 +29,9 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"		/* For malloc, realloc and free */
 #include "rle.h"
 
 static void insert(int **sorted_list_p, int i, int n);

@@ -48,7 +48,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtstring.h"
 #include "rtlist.h"
 #include "raytrace.h"
-#include "externs.h"
 
 #include "./ihost.h"
 

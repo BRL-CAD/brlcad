@@ -38,7 +38,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* For struct timeval */
 
 #include "machine.h"
-#include "externs.h"		/* For getopt and malloc */
 #include "fb.h"
 
 int	file_width = 512;	/* width of input sub-images in pixels */

@@ -53,13 +53,10 @@ static const char rcs_ident[] = "$Id$";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"		/* For malloc and free */
 #include "rle.h"
 
 void prologue(FILE *outfile, int scribe_mode, int nr, int nc, float x1, float y1, float x2, float y2), puthexpix(FILE *outfile, unsigned char p), epilogue(FILE *outfile, int scribemode);

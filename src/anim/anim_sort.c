@@ -34,7 +34,6 @@
 #include <stdlib.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 #define MAXLEN	50		/*maximum length of lines to be read */

@@ -63,7 +63,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #undef RED
 
 #include "machine.h"
-#include "externs.h"
 #include "fb.h"
 #include "./fblocal.h"
 

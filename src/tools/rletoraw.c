@@ -41,8 +41,6 @@
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 
 #ifdef USE_STRING_H
@@ -52,7 +50,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"		/* For malloc and free */
 #include "rle.h"
 
 /* hey.. why spin normally! */

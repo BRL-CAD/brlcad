@@ -61,7 +61,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include "machine.h"
-#include "externs.h"			/* For getopt */
 #include "bu.h"
 #include "png.h"
 
