@@ -537,7 +537,7 @@ int			noisy;
 		if( db_apply_state_from_comb( tsp, pathp, rp ) < 0 )
 			goto fail;
 
-		for( i=1; i < dp->d_len; i++ )  {
+		for( i=1; i < comb_dp->d_len; i++ )  {
 			mp = &(rp[i].M);
 
 			/* If this is not the desired element, skip it */
