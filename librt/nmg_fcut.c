@@ -273,7 +273,7 @@ rt_log("ang=%g, vec=(%g,%g,%g), x=(%g,%g,%g), y=(%g,%g,%g)\n",
 #define NMG_V_ASSESSMENT_LONE		1
 #define NMG_V_ASSESSMENT_COMBINE(_p,_n)	(((_p)<<2)|(_n))
 
-static char *assessment_names[16] = {
+static char *nmg_e_assessment_names[16] = {
 	"ASSESS_0",
 	"LONE",
 	"ASSESS_2",
@@ -290,6 +290,13 @@ static char *assessment_names[16] = {
 	"On,Left",
 	"On,Right",
 	"On,On"
+};
+
+static char *nmg_v_assessment_names[4] = {
+	"*ERROR*",
+	"LEFT",
+	"RIGHT",
+	"ON"
 };
 
 struct nmg_ray_state {
@@ -317,15 +324,15 @@ int			forw;
 struct nmg_ray_state	*rs;
 int			pos;
 {
-	struct vertexuse	*thisvu;
 	struct vertex		*v;
-	struct vertexuse	*othervu;
+	struct vertex		*otherv = (struct vertex *)0;
 	struct edgeuse		*othereu;
 	vect_t			heading;
+	int			ret;
 	register int		i;
 
-	thisvu = eu->vu_p;
-	v = thisvu->v_p;
+	v = eu->vu_p->v_p;
+	NMG_CK_VERTEX(v);
 	othereu = eu;
 	do {
 		if( forw )  {
@@ -336,52 +343,45 @@ int			pos;
 		if( othereu == eu )  {
 			/* Back to where search started */
 rt_log("ON: (no edges)\n");
-			return NMG_E_ASSESSMENT_ON;
+			ret = NMG_E_ASSESSMENT_ON;
+			goto out;
 		}
 		/* Skip over any edges that stay on this vertex */
-		othervu = othereu->vu_p;
-	} while( othervu->v_p == v );
+		otherv = othereu->vu_p->v_p;
+	} while( otherv == v );
 
-	/*  If the othervu is on the ray list, edge is "on" the ray.
+	/*  If the other vertex is mentioned anywhere on the ray's vu list,
+	 *  then the edge is "on" the ray.
+	 *  There is a slight possibility that loop/face orientation might
+	 *  play a factor in choosing the correct scan direction.
 	 */
-#if 0
-	if( forw )  {
-		for( i=pos+1; i<rs->nvu; i++ )  {
-			if( rs->vu[i] == othervu )
-				return NMG_E_ASSESSMENT_ON;
-		}
-	} else {
-		for( i=pos-1; i >= 0; i-- )  {
-			if( rs->vu[i] == othervu )
-				return NMG_E_ASSESSMENT_ON;
+/**	for( i=rs->nvu-1; i >= 0; i-- )  { **/
+	for( i=0; i < rs->nvu; i++ )  {
+		if( rs->vu[i]->v_p == otherv )  {
+rt_log("ON: vu[%d]=x%x otherv=x%x, i=%d\n", pos, rs->vu[pos], otherv, i );
+			ret = NMG_E_ASSESSMENT_ON;
+			goto out;
 		}
 	}
-#else
-	/* 
-	 * For now, just scan the whole vertexuse list.
-	 * There is a slight possibility that loop/face orientation might
-	 * also play a factor in choosing the correct scan direction.
-	 */
-	for( i=rs->nvu-1; i >= 0; i-- )  {
-		if( rs->vu[i] == othervu )  {
-rt_log("ON: vu[%d]=x%x othervu=x%x, i=%d\n", pos, rs->vu[pos], othervu, i );
-			return NMG_E_ASSESSMENT_ON;
-		}
-	}
-#endif
 
 	/*
 	 *  The edge must lie to one side or the other of the ray.
 	 */
 #if 0
-VPRINT("assess_eu from", thisvu->v_p->vg_p->coord);
-VPRINT("          to  ", othervu->v_p->vg_p->coord);
+VPRINT("assess_eu from", v->vg_p->coord);
+VPRINT("          to  ", otherv->vg_p->coord);
 #endif
-	VSUB2( heading, othervu->v_p->vg_p->coord, thisvu->v_p->vg_p->coord );
+	VSUB2( heading, otherv->vg_p->coord, v->vg_p->coord );
 	if( VDOT( heading, rs->left ) < 0 )  {
-		return NMG_E_ASSESSMENT_RIGHT;
+		ret = NMG_E_ASSESSMENT_RIGHT;
+	} else {
+		ret = NMG_E_ASSESSMENT_LEFT;
 	}
-	return NMG_E_ASSESSMENT_LEFT;
+out:
+	rt_log("nmg_assess_eu(x%x, fw=%d, pos=%d) v=x%x otherv=x%x: %s\n",
+		eu, forw, pos, v, otherv,
+		nmg_v_assessment_names[ret] );
+	return ret;
 }
 
 /*
@@ -485,7 +485,7 @@ rt_log("nmg_face_vu_sort(, %d, %d)\n", start, end);
 		lu = nmg_lu_of_vu( rs->vu[i] );
 		ass = nmg_assess_vu( rs, i );
 		rt_log("vu[%d]=x%x v=x%x assessment=%s\n",
-			i, rs->vu[i], rs->vu[i]->v_p, assessment_names[ass] );
+			i, rs->vu[i], rs->vu[i]->v_p, nmg_e_assessment_names[ass] );
 		/*  Ignore lone vertices, unless that is all that there is,
 		 *  in which case, let just one through.  (return 'start+1');
 		 */
@@ -601,6 +601,13 @@ VPRINT("left", rs.left);
 
 	nmg_face_plot( fu1 );
 
+	/* Print list of intersections */
+	rt_log("Ray vu intersection list:\n");
+	for( i=0; i < b->end; i++ )  {
+		rt_log(" %d ", i );
+		nmg_pr_vu_briefly( vu[i], (char *)0 );
+	}
+
 	/*
 	 *  Find the extent of the vertexuses at this distance.
 	 *  ptbl_vsort() will have forced all the distances to be
@@ -609,7 +616,6 @@ VPRINT("left", rs.left);
 	 *  Two cases:  lone vertexuse, and range of vertexuses.
 	 */
 	for( i = 0; i < b->end; i = j )  {
-nmg_pr_vu_briefly(vu[i], (char *)0);
 		if( i == b->end-1 || mag[i+1] != mag[i] )  {
 			/* Single vertexuse at this dist */
 rt_log("single vertexuse at index %d\n", i);
@@ -809,7 +815,7 @@ struct nmg_ray_state	*rs;
 		break;
 	}
 rt_log("nmg_face_state_transition(vu x%x)\n\told=%s, assessed=%s, new=%s, action=%s\n",
-vu, state_names[old], assessment_names[assessment],
+vu, state_names[old], nmg_e_assessment_names[assessment],
 state_names[stp->new_state], action_names[stp->action] );
 
 	switch( stp->action )  {
@@ -817,7 +823,12 @@ state_names[stp->new_state], action_names[stp->action] );
 	case NMG_ACTION_ERROR:
 		/* First, print this faceuse */
 		lu = nmg_lu_of_vu( vu );
+		/* Drop a plot file */
+		rt_g.NMG_debug |= DEBUG_COMBINE|DEBUG_PLOTEM;
+		nmg_pl_comb_fu( 0, 1, lu->up.fu_p );
+		/* Print the faceuse for later analysis */
 		nmg_pr_fu(lu->up.fu_p, (char *)0);
+		/* Explode */
 		rt_bomb("nmg_face_state_transition: got action=ERROR\n");
 	case NMG_ACTION_NONE:
 		if( *(vu->up.magic_p) == NMG_LOOPUSE_MAGIC )  {
