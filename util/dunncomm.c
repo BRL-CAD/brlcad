@@ -62,10 +62,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  endif	/* BSD */
 
 #  ifdef SYSV
-struct timeval {
-	int	tv_sec;
-	int	tv_usec;
-};
+#	if !defined(__sparc)
+		struct timeval {
+			int	tv_sec;
+			int	tv_usec;
+	};
+#	endif
 #   include <termio.h>
     struct	termio	tty;
 #  endif /* SYSV */
