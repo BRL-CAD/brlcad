@@ -58,7 +58,17 @@
 #define DB_H seen
 
 #define NAMESIZE		16
+
+/*
+ *  Define the database format for storing binary floating point values.
+ *  The ultimate intention is to store everything in 8 bytes, using
+ *  IEEE double precision in network order.
+ */
+#if defined(CRAY)
+typedef double dbfloat_t;
+#else
 typedef float dbfloat_t;
+#endif
 
 #define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
 extern char *strncpy();
@@ -80,11 +90,12 @@ union record  {
 #define ID_BSOLID	'b'	/* B-spline solid.  multiple surfs */
 #define ID_BSURF	'D'     /* d_spline surface header */
 #define ID_MATERIAL	'm'	/* Material description record */
+#define ID_STRSOL	's'	/* String solid description */
 
 	char	u_size[DB_MINREC];	/* Minimum record size */
 
 	struct ident  {
-		char	i_id;		/* I */
+		char	i_id;		/* ID_IDENT */
 		char	i_units;	/* units */
 #define ID_NO_UNIT	0		/* unspecified */
 #define ID_MM_UNIT	1		/* milimeters (preferred) */
@@ -109,7 +120,7 @@ union record  {
 	} i;
 
 	struct solidrec  {
-		char	s_id;		/* = SOLID */
+		char	s_id;		/* ID_SOLID */
 		char	s_type;		/* GED primitive type */
 /* also TOR 	16	/* toroid */
 #define GENTGC	18	/* supergeneralized TGC; internal form */
@@ -117,8 +128,8 @@ union record  {
 #define GENARB8	20	/* generalized ARB8:  V, and 7 other vectors */
 #define	ARS	21	/* HACK arbitrary triangular-surfaced polyhedron */
 #define ARSCONT 22	/* HACK extension record type for ARS solid */
-#define SPLINE   22	/* HACK and trouble */
 #define HALFSPACE 24	/* half-space */
+#define SPLINE   25	/* HACK and trouble */
 		char	s_name[NAMESIZE];	/* unique name */
 		short	s_cgtype;		/* COMGEOM solid type */
 #define RPP	1	/* axis-aligned rectangular parallelopiped */
@@ -166,7 +177,7 @@ union record  {
 	}  s;
 
 	struct combination  {
-		char	c_id;		/* C */
+		char	c_id;			/* ID_COMB */
 		char	c_flags;		/* `R' if region, else ` ' */
 		char	c_name[NAMESIZE];	/* unique name */
 		short	c_regionid;		/* region ID code */
@@ -184,7 +195,7 @@ union record  {
 #define DB_INH_HIGHER	1			/* Higher nodes override */
 	}  c;
 	struct member  {
-		char	m_id;		/* M */
+		char	m_id;			/* ID_MEMB */
 		char	m_relation;		/* boolean operation */
 #define INTERSECT	'+'
 #define SUBTRACT	'-'
@@ -243,7 +254,7 @@ union record  {
 	} q;
 
 	struct ars_rec  {
-		char	a_id;		/* A */
+		char	a_id;			/* ID_ARS_A */
 		char	a_type;			/* primitive type */
 		char	a_name[NAMESIZE];	/* unique name */
 		short	a_m;			/* # of curves */
@@ -259,14 +270,21 @@ union record  {
 		dbfloat_t a_zmax;		/* max z coordinate */
 		dbfloat_t a_zmin;		/* min z coordinate */
 	}  a;
-	struct ars_ext  {			/* one "granule" */
-		char	b_id;		/* B */
+	struct ars_ext  {
+		char	b_id;			/* ID_ARS_B */
 		char	b_type;			/* primitive type */
 		short	b_n;			/* current curve # */
 		short	b_ngranule;		/* curr. granule for curve */
 		short	b_pad;
 		dbfloat_t	b_values[8*3];		/* vectors */
 	}  b;
+	struct strsol  {
+		char	ss_id;			/* ID_STRSOL */
+		char	ss_pad;
+		char	ss_name[NAMESIZE];	/* solid name */
+#define DB_SS_LEN	(DB_MINREC-NAMESIZE-2)
+		char	ss_str[DB_SS_LEN];	/* string keyword & values */
+	}  ss;
 };
 
-#endif DB_H
+#endif	/* DB_H */
