@@ -1866,11 +1866,11 @@ err1:
 	VUNITIZE(xip->y);
 
 	/* Prepare for cracking input file format */
-	if( (in_cookie = cv_cookie( xip->fmt )) == 0 )  {
+	if( (in_cookie = bu_cv_cookie( xip->fmt )) == 0 )  {
 		rt_log("rt_hf_import() fmt='%s' unknown\n", xip->fmt);
 		goto err1;
 	}
-	in_len = cv_itemlen( in_cookie );
+	in_len = bu_cv_itemlen( in_cookie );
 
 	/*
 	 *  Load data file, and transform to internal format
@@ -1888,23 +1888,23 @@ err1:
 	/* Transform external data to internal format -- short or float */
 	if( xip->shorts )  {
 		mp->apbuflen = sizeof(unsigned short) * count;
-		out_cookie = cv_cookie("hus");
+		out_cookie = bu_cv_cookie("hus");
 	} else {
 		mp->apbuflen = sizeof(float) * count;
-		out_cookie = cv_cookie("hf");
+		out_cookie = bu_cv_cookie("hf");
 	}
 
-	if( cv_optimize(in_cookie) == cv_optimize(out_cookie) )  {
+	if( bu_cv_optimize(in_cookie) == bu_cv_optimize(out_cookie) )  {
 		/* Don't replicate the data, just re-use the pointer */
 		mp->apbuf = mp->buf;
 		return 0;		/* OK */
 	}
 
 	mp->apbuf = (genptr_t)rt_malloc( mp->apbuflen, "rt_hf_import apbuf[]" );
-	got = cv_w_cookie( mp->apbuf, out_cookie, mp->apbuflen,
+	got = bu_cv_w_cookie( mp->apbuf, out_cookie, mp->apbuflen,
 		mp->buf, in_cookie, count );
 	if( got != count )  {
-		rt_log("rt_hf_import(%s) cv_w_cookie count=%d, got=%d\n",
+		rt_log("rt_hf_import(%s) bu_cv_w_cookie count=%d, got=%d\n",
 			xip->dfile, count, got );
 	}
 
