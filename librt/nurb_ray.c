@@ -102,6 +102,7 @@ struct internal_convex_hull {
 
 #define SIGN(a)	((a < 0.0)? -1 : 1)
 
+void
 rt_nurb_clip_srf( srf, dir, min, max)
 struct snurb *srf;
 int	dir;
