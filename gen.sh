@@ -124,7 +124,7 @@ ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		cray.sh cray-ar.sh ranlib5.sh sgisnap.sh \
 		machinetype.sh gen.sh setup.sh newvers.sh \
-		sharedlibvers.sh \
+		sharedlibvers.sh cadbug.sh \
 		cakeinclude.sh newbindir.sh pixinfo.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
