@@ -79,8 +79,8 @@ set mged_help_data(find)	{{[-s] <objects>}	{find all references to objects}}
 set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face}}
 set mged_help_data(g)		{{groupname <objects>}	{group objects}}
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
-set mged_help_data(gui)	{{[-config b|c|g] [-d display string]
-        [-gd graphics display string] [-dt graphics type]
+set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
+        [-gd graphics_display_string] [-dt graphics_type]
         [-id name] [-c -h -j -s]}	{create display/command window pair}}
 set mged_help_data(help)	{{[commands]}	{give usage message for given commands}}
 set mged_help_data(helplib)	{{[library commands]}	{give usage message for given library commands}}
@@ -143,7 +143,7 @@ set mged_help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] 
 set mged_help_data(push)	{{object[s]}	{pushes object's path transformations to solids}}
 set mged_help_data(putmat)	{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}
 set mged_help_data(q)		{{}	{quit}}
-set mged_help_data(qray)	{{command}	{get/set query_ray characteristics}}
+set mged_help_data(qray)	{{subcommand}	{get/set query_ray characteristics}}
 set mged_help_data(query_ray)	{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
 set mged_help_data(quit)	{{}	{quit}}
 set mged_help_data(qorot)	{{x y z dx dy dz theta}	{rotate object being edited about specified vector}}
@@ -199,7 +199,7 @@ set mged_help_data(t_muves)	{{}	{list all the known MUVES components/systems}}
 set mged_help_data(units)	{{[mm|cm|m|in|ft|...]}	{change units}}
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
 set mged_help_data(vdraw)	{{write|insert|delete|read|length|show [args]}	{Expermental drawing (cnuzman)}}
-set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{Experimental - get/set view parameters (local units).}}
+set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (local units).}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
 set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
 set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
