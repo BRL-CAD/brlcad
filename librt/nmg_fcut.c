@@ -44,7 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define NMG_STATE_ON_R		3
 #define NMG_STATE_ON_B		4
 #define NMG_STATE_IN		5
-static char *state_names[] = {
+static char *nmg_state_names[] = {
 	"*ERROR*",
 	"out",
 	"on_L",
@@ -52,6 +52,50 @@ static char *state_names[] = {
 	"on_both",
 	"in",
 	"TOOBIG"
+};
+
+#define NMG_E_ASSESSMENT_LEFT		1
+#define NMG_E_ASSESSMENT_RIGHT		2
+#define NMG_E_ASSESSMENT_ON		3
+
+#define NMG_V_ASSESSMENT_LONE		1
+#define NMG_V_ASSESSMENT_COMBINE(_p,_n)	(((_p)<<2)|(_n))
+
+static char *nmg_v_assessment_names[16] = {
+	"ASSESS_0",
+	"LONE",
+	"ASSESS_2",
+	"ASSESS_3",
+	"Left,0",
+	"Left,Left",
+	"Left,Right",
+	"Left,On",
+	"Right,0",
+	"Right,Left",
+	"Right,Right",
+	"Right,On",
+	"On,0",
+	"On,Left",
+	"On,Right",
+	"On,On"
+};
+
+static char *nmg_e_assessment_names[4] = {
+	"*ERROR*",
+	"LEFT",
+	"RIGHT",
+	"ON"
+};
+
+struct nmg_ray_state {
+	struct vertexuse	**vu;		/* ptr to vu array */
+	int			nvu;		/* len of vu[] */
+	point_t			pt;		/* The ray */
+	vect_t			dir;
+	vect_t			left;		/* points left of ray, on face */
+	int			state;
+	vect_t			ang_x_dir;	/* x axis for angle measure */
+	vect_t			ang_y_dir;	/* y axis for angle measure */
 };
 
 /*
@@ -149,6 +193,11 @@ fastf_t		dist_tol;
 	}
 }
 
+/*
+ *			N M G _ E U _ W I T H _ V U _ I N _ L U
+ *
+ * XXX should move to nmg_mod.c or nmg_misc.c
+ */
 struct edgeuse *
 nmg_eu_with_vu_in_lu( lu, vu )
 struct loopuse		*lu;
@@ -266,50 +315,6 @@ rt_log("ang=%g, vec=(%g,%g,%g), x=(%g,%g,%g), y=(%g,%g,%g)\n",
 	return ang;
 }
 
-#define NMG_E_ASSESSMENT_LEFT		1
-#define NMG_E_ASSESSMENT_RIGHT		2
-#define NMG_E_ASSESSMENT_ON		3
-
-#define NMG_V_ASSESSMENT_LONE		1
-#define NMG_V_ASSESSMENT_COMBINE(_p,_n)	(((_p)<<2)|(_n))
-
-static char *nmg_v_assessment_names[16] = {
-	"ASSESS_0",
-	"LONE",
-	"ASSESS_2",
-	"ASSESS_3",
-	"Left,0",
-	"Left,Left",
-	"Left,Right",
-	"Left,On",
-	"Right,0",
-	"Right,Left",
-	"Right,Right",
-	"Right,On",
-	"On,0",
-	"On,Left",
-	"On,Right",
-	"On,On"
-};
-
-static char *nmg_e_assessment_names[4] = {
-	"*ERROR*",
-	"LEFT",
-	"RIGHT",
-	"ON"
-};
-
-struct nmg_ray_state {
-	struct vertexuse	**vu;		/* ptr to vu array */
-	int			nvu;		/* len of vu[] */
-	point_t			pt;		/* The ray */
-	vect_t			dir;
-	vect_t			left;		/* points left of ray, on face */
-	int			state;
-	vect_t			ang_x_dir;	/* x axis for angle measure */
-	vect_t			ang_y_dir;	/* y axis for angle measure */
-};
-
 /*
  *			N M G _ A S S E S S _ E U
  *
@@ -423,8 +428,8 @@ struct nmg_vu_stuff {
 	fastf_t			vu_angle;
 };
 struct nmg_loop_stuff {
-	struct loopuse	*lu;
-	fastf_t		max_angle;
+	struct loopuse		*lu;
+	fastf_t			max_angle;
 };
 
 /*
@@ -653,7 +658,7 @@ rt_log("interval from %d to %d\n", i, j );
 
 	if( rs.state != NMG_STATE_OUT )  {
 		rt_log("ERROR nmg_face_combine() ended in state %s?\n",
-			state_names[rs.state] );
+			nmg_state_names[rs.state] );
 	}
 
 	rt_free((char *)mag, "vector magnitudes");
@@ -818,8 +823,8 @@ struct nmg_ray_state	*rs;
 		break;
 	}
 rt_log("nmg_face_state_transition(vu x%x)\n\told=%s, assessed=%s, new=%s, action=%s\n",
-vu, state_names[old], nmg_v_assessment_names[assessment],
-state_names[stp->new_state], action_names[stp->action] );
+vu, nmg_state_names[old], nmg_v_assessment_names[assessment],
+nmg_state_names[stp->new_state], action_names[stp->action] );
 
 	switch( stp->action )  {
 	default:
@@ -939,6 +944,8 @@ rt_log("nmg_cut_loop\n");
  *
  *  Intended to join an interior and exterior loop together,
  *  by building a bridge between the two indicated vertices.
+ *
+ *XXX Should move to nmg_mod.c
  */
 int
 nmg_join_2loops( vu1, vu2 )
