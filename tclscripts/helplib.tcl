@@ -58,6 +58,7 @@ set helplib_data(wdb_binary)		{{(-i|-o) major_type minor_type dest source}
                  For input, source is a file name and dest is an object name.
                  For output source is an object name and dest is a file name.
                  Only uniform array binary objects (major_type=u) are currently supported}}
+set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece }}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{low high r g b} {make color entry}}
 set helplib_data(wdb_comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}

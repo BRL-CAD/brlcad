@@ -39,6 +39,7 @@ set mged_help_data(import_body)	{{object file type}	{read an object's body from 
 set mged_help_data(export_body)	{{file object}	{write an object's body to a file}}
 set mged_help_data(bot_condense) {{new_bot_solid old_bot_solid} {remove unreferenced vertices in a BOT solid}}
 set mged_help_data(bot_face_fuse) {{new_bot_solid old_bot_solid} {eliminate duplicate faces in a BOT solid}}
+set mged_help_data(bot_face_sort) $helplib_data(wdb_bot_face_sort)
 set mged_help_data(bot_vertex_fuse) {{new_bot_solid old_bot_solid} {fuse duplicate vertices in a BOT solid}}
 set mged_help_data(build_region) {{[-a region_number] tag start end} {build a region from solids matching RE "tag.s*"}}
 set mged_help_data(c)		$helplib_data(wdb_comb_std)
