@@ -9,8 +9,13 @@ rcs_id[] = "$Header$";
 #include	<errno.h>
 #include	<sys/stat.h>
 #ifndef		ATT
+#if defined(__MACHINETYPE__vax)
+#include	<dir.h>
+typedef struct	direct Dirent;
+#else
 #include	<dirent.h>
 typedef	struct	dirent	Dirent;
+#endif
 #include	<sys/time.h>
 #else
 #include	<time.h>
