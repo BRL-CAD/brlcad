@@ -4,45 +4,37 @@
 #  Author	Lee A. Butler	<butler@arl.mil>
 #
 #  A file selection dialog, which is not unlike the one present in netscape.
-#  Uses straight Tcl/Tk with no extensions
+#  Uses straight Tcl/Tk with no extensions, and no bitmaps
 #
 #  Parameter	Meaning
 #  ------------------------------------------------------------
-#  w		The name of the widget to use for the toplevel window
-#  parent	The parent window (for positioning information)
+#  w		The name of the widget to use for the toplevel dialog window
+#  parent	The parent window (for positioning/screen information)
 #  pattern	A file matching pattern that specifies the directory and
 #			file(s) to look for
-#  caller_filename
-#		The name of a variable in the caller's frame to get the
-#			filename.  This is only set if the user confirms
-#			the selection
 #  Return:
-#	boolean: (1) string was set (0) User cancelled dialog
+#	string:	"" if cancel selected, full filename selected otherwise
 #
 #  Example Usage:
-#
-#	if { [fs_dialog .w .main $pattern "new_file" ] } {
-#		puts "User Selected File: $new_file"
-#	} else {
-#		puts "User Cancelled File selection"
-#	}	
+#	set filename [fs_dialog .w . /usr/*/bin/*]
 #
 #  To try the dialog:
 #	$ wish
 #	% source fs_dialog.tk
 #	% fs_dialog_test
 #
-proc fs_dialog {w parent pattern caller_filename} {
+proc fs_dialog {w parent pattern} {
     global fs_glob
-    upvar $caller_filename filename
+
+    set parent_toplevel [winfo toplevel $parent]
 
     # if $w already exists we need to get rid of it.
     catch {destroy $w}
 
-    toplevel $w -class FSDialog
+    toplevel $w -class FSDialog -screen [winfo screen $parent_toplevel]
     wm withdraw $w
 
-    fs_dialog_res
+    fs_dialog_resources
 
     wm title $w FileDialog
     wm iconname $w FileDialog
@@ -53,8 +45,8 @@ proc fs_dialog {w parent pattern caller_filename} {
     # the dialog can become obscured by other windows in the application,
     # even though its grab keeps the rest of the application from being 
     # used.
+    wm transient $w $parent_toplevel
 
-    wm transient $w [winfo toplevel [winfo parent $w]]
     set fs_glob(win) $w
 
     #
@@ -130,7 +122,7 @@ proc fs_dialog {w parent pattern caller_filename} {
     
     update idletasks
 
-    scan [wm geometry [winfo toplevel $parent]] "%dx%d+%d+%d" p_w p_h p_x p_y
+    scan [wm geometry $parent_toplevel] "%dx%d+%d+%d" p_w p_h p_x p_y
 
     # put the window in the middle of the parent, but not off the screen
     set m_w [winfo reqwidth $w]
@@ -156,9 +148,10 @@ proc fs_dialog {w parent pattern caller_filename} {
 
     tkwait variable fs_glob(button)
     destroy $w
-    set ret_status $fs_glob(button)
     if { $fs_glob(button) } {
-	set filename $fs_glob(selection)
+	set ret_status $fs_glob(selection)
+    } else {
+	set ret_status ""
     }
 
     # Clean up our garbage
@@ -182,7 +175,7 @@ proc fs_dialog {w parent pattern caller_filename} {
 #
 #  Set the resource for the dialog strings
 #
-proc fs_dialog_res {} {
+proc fs_dialog_resources {} {
     option add *FSDialog*filter.hdr.lbl.text	Filter		startup
     option add *FSDialog*files.lbl.text		Files		startup
     option add *FSDialog*dirs.lbl.text		Directories	startup
@@ -202,32 +195,59 @@ proc fs_dialog_res {} {
 proc fs_dialog_rescan {} {
     global fs_glob
 
-    # Fill in the directory listbox
-    set pat(1) $fs_glob(pat_dir).?*
-    set pat(2) $fs_glob(pat_dir)*
-    $fs_glob(listbox_dir) delete 0 end
-    foreach i [lsort [glob -nocomplain $pat(1) $pat(2) ]] {
-	if { [file isdirectory $i]} {
-		$fs_glob(listbox_dir) insert end [file tail $i]
-	}
-    }
-
-    # Fill in the file listbox
-    set pat(1) 
-    $fs_glob(listbox_file) delete 0 end
-    foreach i [lsort [glob -nocomplain $fs_glob(pat_dir)$fs_glob(pat_file)]] {
- 	if { ! [file isdirectory $i]} {
-		$fs_glob(listbox_file) insert end [file tail $i]
-	}
-    }
-
     # Put the directory part in the selection box if
     # only 1 directory matches pat_dir
-    if { [llength [glob -nocomplain $fs_glob(pat_dir)]] == 1 } {
-	set fs_glob(selection) $fs_glob(pat_dir)
+    set dir [glob -nocomplain $fs_glob(pat_dir)]
+    if { [llength $dir] == 1 } {
+	set fs_glob(selection) $dir
+	set fs_glob(fully_qualified) 0
+
+	# Fill in the directory listbox
+	set pat(1) $fs_glob(pat_dir).?*
+	set pat(2) $fs_glob(pat_dir)*
+	$fs_glob(listbox_dir) delete 0 end
+	foreach i [lsort [glob -nocomplain $pat(1) $pat(2) ]] {
+	    if { [file isdirectory $i]} {
+		$fs_glob(listbox_dir) insert end [file tail $i]
+	    }
+	}
+
+	# Fill in the file listbox
+	set pat(1) 
+	$fs_glob(listbox_file) delete 0 end
+	foreach i [lsort [glob -nocomplain $fs_glob(pat_dir)$fs_glob(pat_file)]] {
+ 	    if { ! [file isdirectory $i]} {
+		$fs_glob(listbox_file) insert end [file tail $i]
+	    }
+	}
+
     } else {
     	set fs_glob(selection) ""
+	set fs_glob(fully_qualified) 1
+
+	# Fill in the directory listbox
+	set pat(1) $fs_glob(pat_dir).?*
+	set pat(2) $fs_glob(pat_dir)*
+	$fs_glob(listbox_dir) delete 0 end
+	foreach i [lsort [glob -nocomplain $pat(1) $pat(2) ]] {
+	    if { [file isdirectory $i]} {
+		$fs_glob(listbox_dir) insert end $i
+	    }
+	}
+
+	# Fill in the file listbox
+	set pat(1) 
+	$fs_glob(listbox_file) delete 0 end
+	foreach i [lsort [glob -nocomplain $fs_glob(pat_dir)$fs_glob(pat_file)]] {
+ 	    if { ! [file isdirectory $i]} {
+		$fs_glob(listbox_file) insert end $i
+	    }
+	}
+
     }
+
+
+
 }
 
 
@@ -260,10 +280,14 @@ proc fs_dialog_filterstring {pattern} {
 #  by the listbox widget.
 #
 proc fs_dialog_click_file {} {
-	global fs_glob
+    global fs_glob
 
-	# update the selection
+    # update the selection
+    if { $fs_glob(fully_qualified) == 0} {
 	set fs_glob(selection) $fs_glob(pat_dir)[selection get]
+    } else {
+	set fs_glob(selection) [selection get]
+    }
 }
 
 #
@@ -277,11 +301,19 @@ proc fs_dialog_click_file {} {
 proc fs_dialog_click_dir {y} {
 	global fs_glob
 
+	set newdir [$fs_glob(listbox_dir) get [$fs_glob(listbox_dir) nearest $y]]
+
+	if { $fs_glob(fully_qualified) == 1} {
+		#
+		set fs_glob(pat_dir) $newdir/
+		set fs_glob(filter) $newdir/$fs_glob(pat_file)
+		fs_dialog_rescan
+		return
+	}
 
 	# if we've selected ".." do relative/absolute raise
 	# else just add selection to the end of the directory pattern
 	
-	set newdir [$fs_glob(listbox_dir) get [$fs_glob(listbox_dir) nearest $y]]
 
 	if {[regexp {^/} $fs_glob(pat_dir)]} {
 		# Absolute Path
@@ -368,15 +400,15 @@ proc fs_dialog_test {} {
 		global pattern
 
 		.msg delete 1.0 end
-		if { [fs_dialog .w .main $pattern "new_file" ] } {
-			.msg insert end "User file: $new_file"
-		} else {
+		set new_file [fs_dialog .w .main $pattern]
+		if { $new_file == "" } {
 			.msg insert end "User Cancelled"
-		}	
+		} else {
+			.msg insert end "User file: $new_file"
+		}
 	}
 
 	bind .main.ent <KeyPress-Return> {doit}
-
 
 	text .msg -width 40 -height 2
 	pack .msg -side bottom -expand 1 -fill x
