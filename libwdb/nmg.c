@@ -69,6 +69,10 @@ FILE *out_fp;
 char *name;
 struct shell *s;
 {
+#if 1
+bu_bomb("write_shell_as_polysolid -- use nmg_to_bot converter routine\n");
+
+#else
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
@@ -77,10 +81,6 @@ struct shell *s;
 	int max_count;
 	int i;
 	struct bn_tol tol;
-
-bu_bomb("write_shell_as_polysolid -- use nmg_to_bot converter routine\n");
-
-#if 0
 	NMG_CK_SHELL( s );
 
 	/* XXX Need support for v5 here */
