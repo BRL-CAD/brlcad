@@ -2145,8 +2145,8 @@ struct rt_bot_internal *bot;
 				continue;
 
 			/* we are eliminating face number "elim" */
-			for( l=elim*3 ; l< num_faces-1 ; l++ )
-				bot->faces[l] = bot->faces[l+3];
+			for( l=elim ; l< num_faces-1 ; l++ )
+				VMOVE( &bot->faces[l*3], &bot->faces[(l+1)*3] )
 			if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
 			{
 				for( l=elim ; l<num_faces-1 ; l++ )
