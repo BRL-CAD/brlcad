@@ -47,6 +47,8 @@ class Drawable {
     public method vdraw {args}
     public method get_autoview {}
     public method get_name {}
+    public method illum {obj}
+    public method label {obj}
 }
 
 body Drawable::observer {args} {
@@ -111,4 +113,12 @@ body Drawable::get_autoview {} {
 
 body Drawable::get_name {} {
     return $dg
+}
+
+body Drawable::illum {args} {
+    eval $dg illum $args
+}
+
+body Drawable::label {args} {
+    eval $dg label $args
 }

@@ -80,6 +80,8 @@ class Mged {
     public method erase_all {args}
     public method overlay {args}
     public method vdraw {args}
+    public method illum {obj}
+    public method label {obj}
 
     public method pane {args}
     public method multi_pane {args}
@@ -406,6 +408,14 @@ body Mged::overlay {args} {
 
 body Mged::vdraw {args} {
     eval $db vdraw $args
+}
+
+body Mged::illum {args} {
+    eval $db illum $args
+}
+
+body Mged::label {args} {
+    eval $db label $args
 }
 
 ######################### Commands related to QuadDisplay #########################
