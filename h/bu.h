@@ -117,12 +117,12 @@ extern char	*realloc();
 # define BU_GETSTRUCT(_p,_str) \
 	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), #_str " (getstruct)" )
 # define BU_GETUNION(_p,_unn) \
-	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), #_unn " (getstruct)")
+	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), #_unn " (getunion)")
 #else
 # define BU_GETSTRUCT(_p,_str) \
 	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), "_str (getstruct)")
 # define BU_GETUNION(_p,_unn) \
-	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), "_unn (getstruct)")
+	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), "_unn (getunion)")
 #endif
 
 
