@@ -104,6 +104,8 @@ char		*framebuffer;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
 			RT_PART_NUBSPT;
+int		nugrid_dimlimit = 0;	/* limit to each dimension of
+					   the nugrid */
 double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 		      /* constant factor in NUgrid algorithm, if applicable */
 
@@ -123,7 +125,7 @@ register char **argv;
 	bu_optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	".:,:a:b:c:d:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
+	".:,:@:a:b:c:d:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -132,6 +134,9 @@ register char **argv;
 			break;
 		case ',':
 			space_partition = atoi(bu_optarg);
+			break;
+		case '@':
+			nugrid_dimlimit = atoi(bu_optarg);
 			break;
 		case 'c':
 			(void)rt_do_cmd( (struct rt_i *)0, bu_optarg, rt_cmdtab );
