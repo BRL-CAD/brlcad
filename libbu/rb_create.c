@@ -49,14 +49,23 @@ int	(**order_funcs)();
     tree -> rbt_unique = (char *)
 		rt_malloc((size_t) ceil((double) (nm_orders / 8.0)),
 			    "red-black uniqueness flags");
-    tree -> rbt_empty_node = (struct rb_node *)
+    rb_null(tree) = (struct rb_node *)
 		    rt_malloc(sizeof(struct rb_node), "red-black empty node");
     rb_null(tree) -> rbn_parent = (struct rb_node **)
 		rt_malloc(nm_orders * sizeof(struct rb_node *),
 			    "red-black parents");
+    rb_null(tree) -> rbn_left = (struct rb_node **)
+		rt_malloc(nm_orders * sizeof(struct rb_node *),
+			    "red-black left children");
+    rb_null(tree) -> rbn_right = (struct rb_node **)
+		rt_malloc(nm_orders * sizeof(struct rb_node *),
+			    "red-black right children");
     rb_null(tree) -> rbn_color = (char *)
 		rt_malloc((size_t) ceil((double) (nm_orders / 8.0)),
 			    "red-black colors");
+    rb_null(tree) -> rbn_package = (struct rb_package **)
+		rt_malloc(nm_orders * sizeof(struct rb_package *),
+			    "red-black packages");
     /*
      *	Fill in the tree
      */
@@ -67,7 +76,7 @@ int	(**order_funcs)();
     tree -> rbt_print = 0;
     rb_uniq_all_off(tree);
     tree -> rbt_debug = 0x0;
-    tree -> rbt_current = tree -> rbt_empty_node;
+    tree -> rbt_current = rb_null(tree);
     for (order = 0; order < nm_orders; ++order)
 	rb_root(tree, order) = rb_null(tree);
 
@@ -80,9 +89,10 @@ int	(**order_funcs)();
     {
 	rb_parent(rb_null(tree), order) = RB_NODE_NULL;
 	rb_set_color(rb_null(tree), order, RB_BLACK);
+	rb_left_child(rb_null(tree), order) = RB_NODE_NULL;
+	rb_right_child(rb_null(tree), order) = RB_NODE_NULL;
+	(rb_null(tree) -> rbn_package)[order] = RB_PKG_NULL;
     }
-    rb_null(tree) -> rbn_left = 0;
-    rb_null(tree) -> rbn_right = 0;
 
     return (tree);
 }
