@@ -9,8 +9,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 
@@ -18,22 +16,23 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+
 _LOCAL_ int	deb_open(FBIO *ifp, char *file, int width, int height),
 		deb_close(FBIO *ifp),
-		deb_clear(FBIO *ifp, RGBpixel (*pp)),
-		deb_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count),
-		deb_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count),
+		deb_clear(FBIO *ifp, unsigned char *pp),
+		deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
+		deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
 		deb_rmap(FBIO *ifp, ColorMap *cmp),
-		deb_wmap(FBIO *ifp, ColorMap *cmp),
+		deb_wmap(FBIO *ifp, const ColorMap *cmp),
 		deb_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
 		deb_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-		deb_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
+		deb_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
 		deb_cursor(FBIO *ifp, int mode, int x, int y),
 		deb_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-		deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp)),
-		deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp)),
-		deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp)),
-		deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp)),
+		deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
+		deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
+		deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
+		deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
 		deb_poll(FBIO *ifp),
 		deb_flush(FBIO *ifp),
 		deb_free(FBIO *ifp),
@@ -83,6 +82,7 @@ FBIO debug_interface = {
 	0			/* debug */
 };
 
+
 _LOCAL_ int
 deb_open(FBIO *ifp, char *file, int width, int height)
 {
@@ -125,7 +125,7 @@ deb_close(FBIO *ifp)
 }
 
 _LOCAL_ int
-deb_clear(FBIO *ifp, RGBpixel (*pp))
+deb_clear(FBIO *ifp, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
 	if( pp == 0 )
@@ -133,13 +133,13 @@ deb_clear(FBIO *ifp, RGBpixel (*pp))
 	else
 		fb_log( "fb_clear( 0x%lx, &[%d %d %d] )\n",
 			(unsigned long)ifp,
-			(int)((*pp)[RED]), (int)((*pp)[GRN]),
-			(int)((*pp)[BLU]) );
+			(int)(pp[RED]), (int)(pp[GRN]),
+			(int)(pp[BLU]) );
 	return	0;
 }
 
 _LOCAL_ int
-deb_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
+deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	FB_CK_FBIO(ifp);
 	fb_log( "fb_read( 0x%lx,%4d,%4d, 0x%lx, %d )\n",
@@ -149,7 +149,7 @@ deb_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 }
 
 _LOCAL_ int
-deb_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
+deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	int	i;
 
@@ -163,8 +163,8 @@ deb_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 		for( i = 0; i < count; i++ ) {
 			if( i % 4 == 0 )
 				fb_log( "%4d:", i );
-			fb_log( "  [%3d,%3d,%3d]", pixelp[i][RED],
-				pixelp[i][GRN], pixelp[i][BLU] );
+			fb_log( "  [%3d,%3d,%3d]", *(pixelp+(i*3)+RED),
+				*(pixelp+(i*3)+GRN), *(pixelp+(i*3)+BLU) );
 			if( i % 4 == 3 )
 				fb_log( "\n" );
 		}
@@ -185,7 +185,7 @@ deb_rmap(FBIO *ifp, ColorMap *cmp)
 }
 
 _LOCAL_ int
-deb_wmap(FBIO *ifp, ColorMap *cmp)
+deb_wmap(FBIO *ifp, const ColorMap *cmp)
 {
 	int	i;
 
@@ -233,7 +233,7 @@ deb_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 _LOCAL_ int
-deb_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+deb_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	FB_CK_FBIO(ifp);
 	fb_log( "fb_setcursor( 0x%lx, 0x%lx, %d, %d, %d, %d )\n",
@@ -262,7 +262,7 @@ deb_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 }
 
 _LOCAL_ int
-deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp))
+deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
 	fb_log( "fb_readrect( 0x%lx, (%4d,%4d), %4d,%4d, 0x%lx )\n",
@@ -272,7 +272,7 @@ deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp
 }
 
 _LOCAL_ int
-deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp))
+deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
 	fb_log( "fb_writerect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
@@ -282,7 +282,7 @@ deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*p
 }
 
 _LOCAL_ int
-deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp))
+deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
 	fb_log( "fb_bwreadrect( 0x%lx, (%4d,%4d), %4d,%4d, 0x%lx )\n",
@@ -292,7 +292,7 @@ deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*
 }
 
 _LOCAL_ int
-deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp))
+deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
 	fb_log( "fb_bwwriterect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
