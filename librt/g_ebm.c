@@ -476,23 +476,24 @@ ebm_import( rp )
 union record	*rp;
 {
 	register struct ebm_specific *ebmp;
+	struct rt_vls	str;
 	FILE	*fp;
 	int	nbytes;
 	register int	y;
-	char	*str;
 	char	*cp;
 
 	GETSTRUCT( ebmp, ebm_specific );
 
-	str = rt_strdup( rp->ss.ss_str );
+	rt_vls_init( &str );
+	cp = rp->ss.ss_str;
 	/* First word is name of solid type (eg, "ebm") -- skip over it */
-	cp = str;
 	while( *cp && !isspace(*cp) )  cp++;
 	/* Skip all white space */
 	while( *cp && isspace(*cp) )  cp++;
 
-	rt_structparse( cp, ebm_parse, (char *)ebmp );
-	rt_free( str, "ss_str" );
+	rt_vls_strcpy( &str, cp );
+	rt_structparse( &str, ebm_parse, (char *)ebmp );
+	rt_vls_free( &str );
 
 	/* Check for reasonable values */
 	if( ebmp->ebm_file[0] == '\0' || ebmp->ebm_xdim < 1 ||
