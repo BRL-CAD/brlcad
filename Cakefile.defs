@@ -249,6 +249,7 @@ set -S2 "/bin/sh"
 					-OPT:const_copy_limit=16000 \
 					-use_readonly_const \
 					-woff 1203,1048,1110,1209
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
