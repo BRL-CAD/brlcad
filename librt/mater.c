@@ -48,7 +48,6 @@ register struct mater *mp;
 {
 	(void)fprintf(stderr, "%5d..%d\t", mp->mt_low, mp->mt_high );
 	(void)fprintf(stderr, "%d,%d,%d\t", mp->mt_r, mp->mt_g, mp->mt_b);
-	(void)fprintf(stderr, "%s\n", mp->mt_handle );
 }
 
 /*
