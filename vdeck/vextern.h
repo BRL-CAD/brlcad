@@ -13,7 +13,7 @@
 #include <math.h>
 #include <setjmp.h>
 
-typedef float fastf_t		/* Machine.h use to be here
+				/* Machine.h use to be here
 				 * and seemed to break everything 
 				 * for vdeck since it wanted 
 				 * to use only floats so here is
@@ -21,6 +21,13 @@ typedef float fastf_t		/* Machine.h use to be here
 				 * since we should really not be 
 			 	 * supporting this anyways.
 				 */
+
+typedef float	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	static		/* static|auto, for serial|parallel cpu */
+#define FAST	LOCAL		/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
 #include "vmath.h"
 #include "db.h"
 
