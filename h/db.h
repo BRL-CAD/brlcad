@@ -202,14 +202,14 @@ union record  {
 #define INTERSECT	'+'
 #define SUBTRACT	'-'
 #define UNION		'u'
-		char	m_brname[NAMESIZE];	/* name of this branch */
+		char	m_brname[NAMESIZE];	/* DEPRECATED: name of this branch */
 		char	m_instname[NAMESIZE];	/* name of referred-to obj. */
 		short	m_pad1;
 		dbfloat_t m_mat[16];		/* homogeneous trans matrix */
-		short	m_num;			/* COMGEOM solid # ref */
+		short	m_num;			/* DEPRECATED: COMGEOM solid # ref */
 	}  M;
 
-	struct material_rec {
+	struct material_rec {		/* whole record is DEPRECATED */
 		char	md_id;		/* = ID_MATERIAL color override */
 		char	md_flags;	/* UNUSED */
 		short	md_low;		/* lower end of region IDs affected */
