@@ -3060,7 +3060,7 @@ fixup:
 						pdv_3ray( fp, (*eg1)->e_pt, (*eg1)->e_dir, 1.0 );
 						pdv_3cont( fp, hit_v->vg_p->coord );
 						fclose(fp);
-						rt_log("wrote %s, red is on_eg, yellow is eg1\n", buf);
+						rt_log("overlay %s red is on_eg, yellow is eg1\n", buf);
 					} else perror(buf);
 					rt_log("\tTopology intersection.  hit_v=x%x (%g, %g, %g)\n",
 						hit_v,
@@ -4016,14 +4016,14 @@ coplanar:
 
     	    	sprintf(name, "shellA%d.pl", nshell);
     	    	if( (fp = fopen(name, "w")) != NULL )  {
-    	    		rt_log("Plotting to %s\n", name);
+    	    		rt_log("overlay %s\n", name);
     	    		nmg_pl_s( fp, fu1->s_p );
     	    		fclose(fp);
     	    	}
 
-    	    	sprintf(name, "shellB%d.pl", nshell);
+    	    	sprintf(name, "shellB%d.pl", nshell++);
     	    	if( (fp = fopen(name, "w")) != NULL )  {
-    	    		rt_log("Plotting to %s\n", name);
+    	    		rt_log("overlay %s\n", name);
     	    		nmg_pl_s( fp, fu2->s_p );
     	    		fclose(fp);
     	    	}
