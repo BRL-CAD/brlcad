@@ -2346,45 +2346,66 @@ CONST char *name;
  *  "shader space".
  */
 void
-db_shader_mat(model_to_shader, dbip, rp)
+db_shader_mat(model_to_shader, rtip, rp, p_min, p_max)
 mat_t model_to_shader;
-CONST struct db_i *dbip;
+CONST struct rt_i *rtip;
 CONST struct region *rp;
+point_t p_min;	/* shader/region min point */
+point_t p_max;	/* shader/region max point */
 {
 	mat_t	model_to_region;
 	mat_t	m_xlate;
 	mat_t	m_scale;
-	mat_t	tmp;
-	vect_t	m_bb_min, m_bb_max, v_tmp, r_bb_min, r_bb_max;
+	mat_t	m_tmp;
+	vect_t	v_tmp;
+	struct	rt_i *my_rtip;
+	CONST char	*reg_name;
 
+	reg_name = rt_basename(rp->reg_name);
+#ifdef DEBUG_SHADER_MAT
+	bu_log("db_shader_mat(%s)\n", rp->reg_name);
+#endif
 	/* get model-to-region space mapping */
-	db_region_mat(model_to_region, dbip, rp->reg_name);
+	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
 
-	/*
-	 * Obtain region bounding box
-	 */
-	VSETALL(m_bb_max, -INFINITY);
-	VSETALL(m_bb_min, INFINITY);
-	rt_bound_tree(rp->reg_treetop, m_bb_min, m_bb_max);
+#ifdef DEBUG_SHADER_MAT
+	mat_print("model_to_region", model_to_region);
+#endif
+	if (VEQUAL(p_min, p_max)) {
 
-	/* convert bb values to "region" coordinates */
-	MAT4X3PNT(r_bb_min, model_to_region, m_bb_min)
-	MAT4X3PNT(r_bb_max, model_to_region, m_bb_max)
-
+		bu_log("db_shader_mat() min/max equal, getting bounding box of \"%s\"\n", reg_name);
+		/* User/shader did not specify bounding box,
+		 * obtain bounding box for un-transformed region
+		 */
+		my_rtip = rt_new_rti(rtip->rti_dbip);
+		my_rtip->useair = rtip->useair;
+		
+		/* XXX Should have our own semaphore here */
+		bu_semaphore_acquire( RT_SEM_STATS );
+		if (rt_gettree(my_rtip, reg_name)) bu_bomb(rp->reg_name);
+		bu_semaphore_release( RT_SEM_STATS );
+		rt_rpp_region(my_rtip, reg_name, p_min, p_max);
+		rt_clean(my_rtip);
+	}
+#ifdef DEBUG_SHADER_MAT
+	bu_log("db_shader_mat(%s) min(%g %g %g) max(%g %g %g)\n", reg_name,
+			V3ARGS(p_min), V3ARGS(p_max));
+#endif
 	/*
 	 * Translate bounding box to origin
 	 */
 	mat_idn(m_xlate);
-	VSCALE(v_tmp, r_bb_min, -1);
+	VSCALE(v_tmp, p_min, -1);
 	MAT_DELTAS_VEC(m_xlate, v_tmp);
-	mat_mul(tmp, m_xlate, model_to_region);
+	mat_mul(m_tmp, m_xlate, model_to_region);
+
 
 	/* 
 	 * Scale the bounding box to unit cube
 	 */
-	VSUB2(v_tmp, r_bb_max, r_bb_min);
+	VSUB2(v_tmp, p_max, p_min);
 	VINVDIR(v_tmp, v_tmp);
 	mat_idn(m_scale);
 	MAT_SCALE_VEC(m_scale, v_tmp);
-	mat_mul(model_to_shader, m_scale, tmp);
+	mat_mul(model_to_shader, m_scale, m_tmp);
 }
