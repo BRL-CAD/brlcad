@@ -430,6 +430,7 @@ register struct pkg_conn *pc;
 char			*buf;
 {
 	char	*hp, *fb;
+	int	w, h;
 
 	if( debug )  fprintf(stderr, "rtsync_ph_openfb: %s\n", buf );
 
@@ -438,13 +439,25 @@ char			*buf;
 	fb = strchr(hp, ' ');
 	*fb++ = '\0';
 
-	if( debug )  fprintf(stderr, "rtsync_ph_openfb: %s %d %d\n",
-		fb, atoi(buf), atoi(hp) );
+	w = atoi(buf);
+	h = atoi(hp);
 
-	if( (fbp = fb_open( fb, atoi(buf), atoi(hp) ) ) == 0 )  {
-		bu_log("rtnode: fb_open(%s, %s, %s) failed\n", fb, buf, hp );
+	if( debug )  fprintf(stderr, "rtsync_ph_openfb: %d %d %s\n",
+		w, h, fb );
+
+	if( (fbp = fb_open( fb, w, h ) ) == 0 )  {
+		bu_log("rtnode: fb_open(%s, %d, %d) failed\n", fb, w, h );
 		exit(1);
 	}
+
+	if( w <= 0 || fb_getwidth(fbp) < w )
+		width = fb_getwidth(fbp);
+	else
+		width = w;
+	if( h <= 0 || fb_getheight(fbp) < h )
+		height = fb_getheight(fbp);
+	else
+		height = h;
 
 	if( pkg_send( RTSYNCMSG_OPENFB, NULL, 0,
 	    pcsrv ) < 0 )
@@ -632,10 +645,6 @@ char			*buf;
 	min_res = atoi(argv[0]);
 	start_line = atoi(argv[1]);
 	end_line = atoi(argv[2]);
-
-	width = fb_getwidth(fbp);
-	height = fb_getheight(fbp);
-	if( width > height )  width = height; /* prevent stretching due to 1280x1024 */
 
 	VSET( viewcenter_model, atof(argv[3]), atof(argv[4]), atof(argv[5]) );
 	VSET( orient, atof(argv[6]), atof(argv[7]), atof(argv[8]) );
