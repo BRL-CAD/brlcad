@@ -26,6 +26,7 @@
  *	#include "vmath.h"	/_* For vect_t definition *_/
  *	#include "rtlist.h"	/_* OPTIONAL, auto-included by wdb.h *_/
  *	#include "nmg.h"	/_* OPTIONAL, precedes wdb.h when used *_/
+ *	#include "raytrace.h"	/_* OPTIONAL, precedes wdb.h when used *_/
  *	#include "nurb.h"	/_* OPTIONAL, precedes wdb.h when used *_/
  *	#include "wdb.h"
  *
@@ -120,11 +121,11 @@ WDB_EXTERN(int mk_arbn, (FILE *fp, char *name, int neqn, plane_t eqn[]) );
 WDB_EXTERN(int mk_ars, (FILE *fp, char *name, int ncurves, int pts_per_curve,
 			fastf_t	*curves[]) );
 WDB_EXTERN(int mk_bsolid, (FILE *fp, char *name, int nsurf, double res) );
-#if defined(NURB_H)
-WDB_EXTERN(int mk_bsurf, (FILE *fp, struct snurb *bp) );
-#else /* !NURB_H */
+#if defined(NMG_H)
+WDB_EXTERN(int mk_bsurf, (FILE *fp, struct face_g_snurb *bp) );
+#else /* !NMG_H */
 WDB_EXTERN(int mk_bsurf, (FILE *fp, genptr_t bp) );
-#endif /* NURB_H */
+#endif /* NMG_H */
 WDB_EXTERN(int mk_particle, (FILE *fp, char *name, point_t vertex,
 			vect_t height, double vradius, double hradius) );
 WDB_EXTERN(int mk_pipe, (FILE *fp, char *name, struct wdb_pipept *headp) );
