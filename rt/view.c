@@ -1516,7 +1516,7 @@ bu_log("mallocing curr_float_frame\n");
 
                 /* Build Photon Map */
 		PM_Activated= 1;
-		BuildPhotonMap(ap,npsw,width,height,hypersample,(int)pmargs[0],pmargs[1],(int)pmargs[2],pmargs[3],(int)pmargs[4],(int)pmargs[5]);
+		BuildPhotonMap(ap,npsw,width,height,hypersample,(int)pmargs[0],pmargs[1],(int)pmargs[2],pmargs[3],(int)pmargs[4],(int)pmargs[5],pmargs[6]);
 
                 ap -> a_ray.r_pt[0]= m1[0];
                 ap -> a_ray.r_pt[1]= m1[1];
