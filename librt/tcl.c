@@ -234,6 +234,9 @@ struct rt_wdb		**wdbpp;
 
 /*
  *			R T _ W D B _ I N M E M _ R G B
+ *
+ *  XXX A hack until "db adjust" works on combinations.
+ *  XXX Bad name, no longer restricted to inmem databases.
  */
 int
 rt_wdb_inmem_rgb( clientData, interp, argc, argv )
@@ -336,7 +339,7 @@ struct dbcmdstruct {
 /*
  *			R T _ D B
  *
- * Generic interface for the database manipulation routines.
+ * Generic interface for the database_class manipulation routines.
  * Usage:
  *        widget_command dbCmdName ?args?
  * Returns: result of cmdName database command.
@@ -393,6 +396,8 @@ char **argv;
 {
     struct bu_vls matches;
     int nummatch;
+
+	/* XXX Verify that this wdb supports lookup operations (non-null dbip) */
 
 #if 1
 	/* regexp_match_all() needs to take a dbip arg, be moved into LIBRT, new name, for this to work. */
@@ -510,13 +515,13 @@ extern struct bu_structparse rt_ebm_parse[];
 extern struct bu_structparse rt_hf_parse[];
 extern struct bu_structparse rt_vol_parse[];
 
-struct solid_type_lookup {
+struct rt_solid_type_lookup {
     char id;
     size_t db_internal_size;
     long magic;
     char *label;
     struct bu_structparse *parsetab;
-} solid_type_lookup[] = {
+} rt_solid_type_lookup[] = {
     { ID_TOR,     sizeof(struct rt_tor_internal), (long)RT_TOR_INTERNAL_MAGIC, "tor", rt_tor_parse },
     { ID_TGC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "tgc", rt_tgc_parse },
     { ID_REC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "rec", rt_tgc_parse },
@@ -533,12 +538,12 @@ struct solid_type_lookup {
     { 0, 0, 0, 0 }
 };
 
-struct solid_type_lookup *
-get_parsetab_by_id(s_id)
+struct rt_solid_type_lookup *
+rt_get_parsetab_by_id(s_id)
 int s_id;
 {
-    register struct solid_type_lookup *stlp;
-    static struct solid_type_lookup solid_type;
+    register struct rt_solid_type_lookup *stlp;
+    static struct rt_solid_type_lookup solid_type;
 
     if (s_id == ID_EBM) {
 	solid_type.id = ID_EBM;
@@ -563,7 +568,7 @@ int s_id;
 	return &solid_type;
     }
 
-    for (stlp = solid_type_lookup; stlp->id != 0; stlp++)
+    for (stlp = rt_solid_type_lookup; stlp->id != 0; stlp++)
 	if (stlp->id == s_id)
 	    break;
 
@@ -573,12 +578,14 @@ int s_id;
     return stlp;
 }
 
-struct solid_type_lookup *
-get_parsetab_by_name(s_type)
+/*
+ */
+struct rt_solid_type_lookup *
+rt_get_parsetab_by_name(s_type)
 char *s_type;
 {
     register int i;
-    register struct solid_type_lookup *stlp;
+    register struct rt_solid_type_lookup *stlp;
     char *type;
 
     type = (char *)bu_malloc(strlen(s_type)+1, "lowercase solid type");
@@ -589,16 +596,16 @@ char *s_type;
 
     if (strcmp(type, "ebm") == 0) {
 	bu_free((genptr_t)type, "lowercase solid type");
-	return get_parsetab_by_id(ID_EBM);
+	return rt_get_parsetab_by_id(ID_EBM);
     } else if (strcmp(type, "vol") == 0) {
 	bu_free((genptr_t)type, "lowercase solid type");
-	return get_parsetab_by_id(ID_VOL);
+	return rt_get_parsetab_by_id(ID_VOL);
     } else if (strcmp(type, "hf") == 0) {
 	bu_free((genptr_t)type, "lowercase solid type");
-	return get_parsetab_by_id(ID_HF);
+	return rt_get_parsetab_by_id(ID_HF);
     }
 
-    for (stlp = solid_type_lookup; stlp->id != 0; stlp++)
+    for (stlp = rt_solid_type_lookup; stlp->id != 0; stlp++)
 	if (strcmp(type, stlp->label) == 0)
 	    break;
 
@@ -609,8 +616,9 @@ char *s_type;
     return stlp;
 }
 
-/** 
- ** rt_db_get 
+/*
+ *			R T _ D B _ G E T
+ *
  **
  ** For use with Tcl, this routine accepts as its first argument the name
  ** of an object in the database.  If only one argument is given, this routine
@@ -629,7 +637,7 @@ char **argv;
 {
     register struct directory *dp;
     register struct bu_structparse *sp = NULL;
-    register struct solid_type_lookup *stlp;
+    register struct rt_solid_type_lookup *stlp;
     int id, status;
     struct rt_db_internal intern;
     struct bu_vls str;
@@ -647,6 +655,8 @@ char **argv;
 
     bu_vls_init(&str);
 
+	/* XXX Verify that this wdb supports lookup operations (non-null dbip) */
+
     dp = db_lookup(wdb->dbip, argv[1], LOOKUP_QUIET);
     if (dp == NULL) {
 	Tcl_AppendResult(interp, argv[1], ": not found\n", (char *)NULL);
@@ -662,7 +672,7 @@ char **argv;
 
     /* Find out what type of object we are dealing with and report on it. */
 	id = intern.idb_type;
-	stlp = get_parsetab_by_id(id);
+	stlp = rt_get_parsetab_by_id(id);
 	if (stlp != NULL) {
 	    bu_vls_strcat(&str, stlp->label);
 	    sp = stlp->parsetab;
@@ -707,12 +717,13 @@ yet been implemented", (char *)NULL);
 }
 
 /*
- *                  S T R U C T P A R S E _ A R G V
+ *			B U _ S T R U C T P A R S E _ A R G V
  *
  * Support routine for db adjust and db put.  Much like bu_structparse routine,
  * but takes the arguments as lists, a more Tcl-friendly method.
  * Also knows about the Tcl result string, so it can make more informative
  * error messages.
+ * XXX move to libbu/bu_tcl.c
  */
 
 int
@@ -989,8 +1000,8 @@ only %d given",
     return TCL_OK;
 }
 
-/**
- ** rt_db_put
+/*
+ *			R T _ D B _ P U T
  **
  ** Creates an object and stuffs it into the databse.
  ** All arguments must be specified.  Object cannot already exist.
@@ -1004,7 +1015,7 @@ int argc;
 char **argv;
 {
     struct rt_db_internal intern;
-    register struct solid_type_lookup *stlp;
+    register struct rt_solid_type_lookup *stlp;
     register struct directory *dp;
     int status, ngran, id;
     char *newargv[3];
@@ -1017,6 +1028,9 @@ char **argv;
 	return TCL_ERROR;
     }
     
+	/* XXX Verify that this wdb supports lookup operations (non-null dbip) */
+	/* If not, just skip the lookup test and write the object */
+
     if (db_lookup(wdb->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
 	Tcl_AppendResult(interp, argv[1], " already exists", (char *)NULL);
 	return TCL_ERROR;
@@ -1024,14 +1038,14 @@ char **argv;
 
     RT_INIT_DB_INTERNAL(&intern);
 
-    stlp = get_parsetab_by_name(argv[2]);
+    stlp = rt_get_parsetab_by_name(argv[2]);
     if (stlp == NULL) {
 	Tcl_AppendResult(interp, "unknown object type", (char *)NULL);
 	return TCL_ERROR;
     }
 
     id = intern.idb_type = stlp->id;
-    intern.idb_ptr = (genptr_t)bu_malloc(stlp->db_internal_size, "rt_db_put");
+    intern.idb_ptr = bu_malloc(stlp->db_internal_size, "rt_db_put");
     *((long *)intern.idb_ptr) = stlp->magic;
     if (bu_structparse_argv(interp, argc-3, argv+3, stlp->parsetab,
 			 (char *)intern.idb_ptr) == TCL_ERROR) {
@@ -1048,8 +1062,9 @@ char **argv;
 	return TCL_OK;
 }
 
-/** 
- ** rt_db_adjust
+/*
+ *			R T _ D B _ A D J U S T
+ *
  **
  ** For use with Tcl, this routine accepts as its first argument, an item in
  ** the database; as its remaining arguments it takes the properties that
@@ -1079,6 +1094,8 @@ char **argv;
 	return TCL_ERROR;
     }
 
+	/* XXX Verify that this wdb supports lookup operations (non-null dbip) */
+
     dp = db_lookup(wdb->dbip, argv[1], LOOKUP_QUIET);
     if (dp == DIR_NULL) {
 	Tcl_AppendResult(interp, argv[1], ": not found\n", (char *)NULL);
@@ -1095,7 +1112,7 @@ char **argv;
     /* Find out what type of object we are dealing with and tweak it. */
     id = intern.idb_type;
 
-	sp = get_parsetab_by_id(id)->parsetab;
+	sp = rt_get_parsetab_by_id(id)->parsetab;
 
 	/* If we were able to find an entry in on the "cheat sheet", just
 	   use the handy parse functions to return the object. */
@@ -1135,7 +1152,7 @@ int argc;
 char **argv;
 {
     register struct bu_structparse *sp = NULL;
-    register struct solid_type_lookup *stlp;
+    register struct rt_solid_type_lookup *stlp;
     register int i;
     struct bu_vls str;
     register char *cp;
@@ -1147,7 +1164,7 @@ char **argv;
     }
 
     bu_vls_init(&str);
-    sp = get_parsetab_by_name(argv[1])->parsetab;
+    sp = rt_get_parsetab_by_name(argv[1])->parsetab;
     
     if (sp != NULL)
 	while (sp->sp_name != NULL) {
