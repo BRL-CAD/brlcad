@@ -520,10 +520,9 @@ struct db_i	*dbip;
 	/*
 	 * We are done with the input solid so free it if required.
 	 */
-	if (free && ip != op) {
-		rt_functab[ip->idb_type].ft_ifree( ip );
-		ip->idb_ptr = (genptr_t) 0;
-	}
+	if (free && ip != op)
+		rt_db_free_internal( ip );
+
 	/*
 	 * The transformed normal is all that is required.
 	 * The new distance is found from the transforemd point on the plane.
