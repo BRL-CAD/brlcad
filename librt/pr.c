@@ -7,16 +7,20 @@
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
@@ -734,5 +738,21 @@ CONST vect_t	vec;
 	}
 	if( vec[Y] < 0 ) {
 		angles[3] = 360.0 - angles[3];
+	}
+}
+
+/*
+ *			R T _ P R _ T O L
+ *
+ *  Print a tolerance structure.
+ */
+void
+CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
+	RT_CK_TOL(tol);
+	BN_CK_TOL(tol);
+	rt_log("%8.8x TOL %e (sq=%e) perp=%e, para=%e\n",
+	bu_log("%8.8x TOL %e (sq=%e) perp=%e, para=%e\n",
+		tol, tol->dist, tol->dist_sq,
 		tol->perp, tol->para );
 }
