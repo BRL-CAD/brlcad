@@ -9,7 +9,13 @@
  *    h    help
  *    o    offset from begining of data from which to start dump
  *
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include <ctype.h>
 
