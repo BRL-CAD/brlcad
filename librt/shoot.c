@@ -184,7 +184,11 @@ register struct shootray_status	*ssp;
 			CONST union cutter	*nu_grid =
 			     curcut->nugn.nu_grid;
 
-			t0 = ssp->box_start;
+			/* We add in OFFSET_DIST in order to get the
+			   same results as NUBSPT.  XXX This may want
+			   to go away eventually. */
+
+			t0 = ssp->box_start /* + OFFSET_DIST */;
 			if( ssp->lastcut == CUTTER_NULL ) {
 				/* We have just started into this NUgrid.  We
 				   must find our location and set up the
@@ -192,12 +196,6 @@ register struct shootray_status	*ssp;
 				register fastf_t px, py, pz;
 				register int x, y, z;
 
-				/* We add in OFFSET_DIST in order to get the
-				   same results as NUBSPT.  XXX This may want
-				   to go away eventually. */
-#if 0				
-				t0 += OFFSET_DIST;
-#endif				
 				px = ap->a_ray.r_pt[X] + t0*ap->a_ray.r_dir[X];
 				py = ap->a_ray.r_pt[Y] + t0*ap->a_ray.r_dir[Y];
 				pz = ap->a_ray.r_pt[Z] + t0*ap->a_ray.r_dir[Z];
@@ -264,16 +262,18 @@ again:				if( ssp->rstep[out_axis] > 0 ) {
 					out_axis = Y;
 				}
 			}
-
+#if 1
 			if( cutp->cut_type == CUT_BOXNODE &&
 			    cutp->bn.bn_len <= 0 ) {
 				++ssp->resp->re_nempty_cells;
+				t0 = ssp->tv[out_axis];
 				goto again;
 			}
+#endif			
 
 			ssp->out_axis = out_axis;
 			t1 = ssp->tv[out_axis];
-#if 0
+#if 1
 			if( rt_g.debug&DEBUG_ADVANCE )
 				bu_log( "Exit axis is %c, t1=%g\n",
 					"XYZ*"[ssp->out_axis], t1 );
@@ -286,8 +286,8 @@ again:				if( ssp->rstep[out_axis] > 0 ) {
 			ssp->obox_start = ssp->box_start;
 			ssp->obox_end = ssp->box_end;
 #endif
-#if 0
 
+#if 1
 			VJOIN1( ssp->newray.r_pt,
 				ap->a_ray.r_pt, t0, ap->a_ray.r_dir );
 			ssp->newray.r_min = 0.0;
@@ -296,8 +296,21 @@ again:				if( ssp->rstep[out_axis] > 0 ) {
 #else
 			ssp->newray.r_min = t0;
 			ssp->newray.r_max = t1;
-#endif			
-			ssp->box_end = t1;
+#endif
+			ssp->box_start = ssp->dist_corr + ssp->newray.r_min;
+			ssp->box_end = ssp->dist_corr + ssp->newray.r_max;
+
+			if( rt_g.debug&DEBUG_ADVANCE ) {
+				bu_log( "rt_advance_to_next_cell() box=(%g, %g)\n",
+					ssp->box_start, ssp->box_end );
+			}
+
+			/* Minor optimization */
+			if( cutp->cut_type == CUT_BOXNODE ) {
+				ssp->lastcut = cutp;
+				return cutp;
+			}
+			
 			break; }
 		case CUT_NUBSPTNODE: {
 #define MUCHO_DIAGS	1
@@ -357,7 +370,7 @@ again:				if( ssp->rstep[out_axis] > 0 ) {
 				break;	/* done! */
 			}
 
-			cutp = (union cutter *)curcut->nubn.first_cut;
+			cutp = curcut->nubn.first_cut;
 			while( cutp->cut_type == CUT_CUTNODE ) {
 				switch( cutp->cn.cn_axis )  {
 				case X:
@@ -554,11 +567,12 @@ again:				if( ssp->rstep[out_axis] > 0 ) {
 		if( cutp==CUTTER_NULL ) {
 			/* Move up out of the current node, or return if there
 			   is nothing left to do. */
-			struct shootray_status *old = ssp->old_status;
+			register struct shootray_status *old = ssp->old_status;
 
 			if( old == NULL ) return CUTTER_NULL;
 			*ssp = *old;		/* struct copy */
 			bu_free( old, "old shootray_status" );
+			curcut = ssp->curcut;
 		} else {
 			/* We end up here only if we have encountered a
 			   high-level node that we need to descend into or
@@ -586,7 +600,7 @@ again:				if( ssp->rstep[out_axis] > 0 ) {
 				/* Descend into node */
 				ssp->old_status = old;
 				ssp->lastcut = CUTTER_NULL;
-				ssp->curcut = cutp;
+				curcut = ssp->curcut = cutp;
 				if( cutp->cut_type == CUT_NUGRIDNODE )
 					ssp->dist_corr = 0.0;
 				break; }	
@@ -900,7 +914,7 @@ register struct application *ap;
 		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
 			register struct soltab *stp = *stpp;
 
-			/* On m35.g, this block of code eats 15% of CPU! */
+
 			if( BU_BITTEST( solidbits, stp->st_bit ) )  {
 				resp->re_ndup++;
 				continue;	/* already shot */
