@@ -1292,6 +1292,9 @@ int				ass;
  *  If one loop gets cut, then unwind the whole call stack, and reassess
  *  where things stand.  (The caller needs to re-call in that case).
  *
+ *  The goal here is to get rid of nested wedges.
+ *  To do that, join loops wherever possible, cut them sparingly.
+ *
  *  Returns -
  *	0	Nothing needed changing, OK to proceed with vertex sorting.
  *	1	Loops were cut or joined, need to reclassify everything
@@ -1341,6 +1344,11 @@ CONST struct rt_tol	*tol;
 			rt_log("\tvu[%d]=x%x, lu=x%x\n", i, vs[i].vu, lu);
 			nmg_vlblock_lu(vbp, lu, b, 255, 0, 0, 0 );
 		}
+		for( i=start; i < end; i++ )  {
+			struct loopuse	*lu;
+			lu = nmg_find_lu_of_vu(vs[i].vu);
+			nmg_pr_lu_briefly(lu,0);
+		}
 		sprintf(buf, "wedge%d.pl", num++);
 		fp = fopen(buf, "w");
 		rt_plot_vlblock( fp, vbp );
@@ -1368,6 +1376,7 @@ again:
 	outer_lu = nmg_find_lu_of_vu( vs[outer_wedge].vu );
 	NMG_CK_LOOPUSE(outer_lu);
 
+again_inner:
 	inner_wedge = nmg_find_vu_in_wedge( vs, start, end,
 		vs[outer_wedge].lo_ang, vs[outer_wedge].hi_ang,
 		wclass, exclude );
@@ -1384,20 +1393,22 @@ again:
 	class2 = nmg_compare_2_wedges( vs[outer_wedge].lo_ang, vs[outer_wedge].hi_ang,
 		vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang );
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
-		rt_log("nmg_special_wedge_processing() outer=%d, inner=%d, class2=%s\n", outer_wedge, inner_wedge, WEDGE2_TO_STRING(class2) );
+		rt_log("+++nmg_special_wedge_processing() outer=%d, inner=%d, class2=%s\n", outer_wedge, inner_wedge, WEDGE2_TO_STRING(class2) );
 
 	inner_lu = nmg_find_lu_of_vu( vs[inner_wedge].vu );
 	NMG_CK_LOOPUSE(inner_lu);
 
 	if( outer_lu == inner_lu )  {
 		struct loopuse	*new_lu;
-#if 0
-		if( class2 == WEDGE2_IDENTICAL )  {
+		if( class2 == WEDGE2_IDENTICAL &&
+		    NEAR_ZERO( vs[inner_wedge].hi_ang - vs[inner_wedge].lo_ang, WEDGE_ANG_TOL )
+		    )  {
 			if(rt_g.NMG_debug&DEBUG_VU_SORT)
-				rt_log("nmg_special_wedge_processing() inner and outer wedges from same loop, wedges identical, nothing to do\n");
-			return 0;
+				rt_log("nmg_special_wedge_processing:  inner and outer wedges from same loop, WEDGE2_IDENTICAL & 0deg spread, already in final form.\n");
+			exclude[inner_wedge] = 1;	/* Don't return this wedge again */
+			/* Don't need to recurse only because this is a crack */
+			goto again_inner;
 		}
-#endif
 		if(rt_g.NMG_debug&DEBUG_VU_SORT)
 			rt_log("nmg_special_wedge_processing:  inner and outer wedges from same loop, cutting loop\n");
 		new_lu = nmg_cut_loop( vs[outer_wedge].vu, vs[inner_wedge].vu );
@@ -1411,6 +1422,7 @@ again:
 	}
 
 	/* XXX Or they could be WEDGE2_IDENTICAL */
+	/* XXX If WEDGE2_IDENTICAL, could we join and then simplify? */
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 		rt_log("wedge at vu[%d] is inside wedge at vu[%d]\n", inner_wedge, outer_wedge);
 
@@ -1431,7 +1443,6 @@ again:
 	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass, exclude, tol ) )
 		return 1;	/* An inner wedge was cut */
 
-#if 1
 	/*
 	 *  Inner and outer are different loopuses,
 	 *  have different orientations,
@@ -1444,12 +1455,6 @@ again:
 	vs[inner_wedge].vu = nmg_join_2loops( vs[outer_wedge].vu,
 		vs[inner_wedge].vu );
 	return 1;		/* cutjoin was done */
-#else
-	/* This is adequate for Test16.r to work, but is a hack. */
-	if(rt_g.NMG_debug&DEBUG_VU_SORT)
-		rt_log("No inner wedges needed cutting, nothing further to do.\n");
-	return 0;
-#endif
 }
 
 /*
