@@ -97,7 +97,7 @@ Every machine / software version combination will fall into
 one of these three categories:
 .IP a)
 For every configuration that we have available to test with at BRL,
-the software has been designed to install automaticly, without
+the software has been designed to install automatically, without
 need for any modifications to the configuration files.
 The hardware/software configurations
 which are known to have "automatic support" in this release
@@ -1336,7 +1336,7 @@ However, the necessary definitions are still carried in
 \fBCakefile.defs\fR, and if you are still using SGI release 3.4,
 things will probably work.
 In the SGI 3-D section, define the symbol "Version3_4"
-right before where it it checked, eg:
+right before where it is checked, eg:
 .sp .5
 .nf
 .ft B
@@ -1642,7 +1642,7 @@ but for complete safety, you should save the old binary to "conv/g2asc"
 someplace safe, so that if you find the binary format of the database
 incompatable you can convert your old databases from binary to ASCII
 form. Having to do this is system dependent (only Sun, SGI, and Alliant
-users are likely to be affected), but it difficult to recover from
+users are likely to be affected), but it is difficult to recover from
 without having saved the old converter (or your old distribution tape).
 .NH 1
 UPGRADING FROM RELEASE 2.0 to 2.3
