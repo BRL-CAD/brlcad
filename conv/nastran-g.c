@@ -1236,7 +1236,7 @@ char *argv[];
 	}
 
 	fdout = wdb_fopen( output_file );
-	if( fdout == (FILE *)NULL )
+	if( fdout == NULL )
 	{
 		bu_log( "Cannot open BRL-CAD file (%s) for writing!!!\n", output_file );
 		bu_log( "Usage", argv[0] );
