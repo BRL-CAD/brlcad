@@ -534,6 +534,7 @@ int framenumber;
 	int	npix;			/* # of pixel values to be done */
 	int	lim;
 	vect_t	work, temp;
+	quat_t	quat;
 
 	rt_log( "\n...................Frame %5d...................\n",
 		framenumber);
@@ -564,7 +565,29 @@ int framenumber;
 	rt_log(
 		"View: %g azimuth, %g elevation off of front view\n",
 		azimuth, elevation);
+	quat_mat2quat( quat, model2view );
+	rt_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat) );
+	rt_log("Eye_pos: %g, %g, %g\n", V3ARGS(eye_model) );
 	rt_log("Size: %gmm\n", viewsize);
+#if 0
+	/*
+	 *  This code shows how the model2view matrix can be reconstructed
+	 *  using the information from the Orientation, Eye_pos, and Size
+	 *  messages.
+	 */
+	{
+		mat_t	rotscale, xlate;
+		mat_t	new;
+
+		mat_print("model2view", model2view);
+		quat_quat2mat( rotscale, quat );
+		rotscale[15] = 0.5 * viewsize;
+		mat_idn( xlate );
+		MAT_DELTAS( xlate, -eye_model[X], -eye_model[Y], -eye_model[Z] );
+		mat_mul( new, rotscale, xlate );
+		mat_print("reconstructed m2v", new);
+	}
+#endif
 	rt_log("Grid: (%g, %g) mm, (%d, %d) pixels\n",
 		cell_width, cell_height,
 		width, height );
