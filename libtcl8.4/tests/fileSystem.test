@@ -9,7 +9,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest
+package require tcltest 2
 namespace eval ::tcl::test::fileSystem {
 
     catch {
@@ -42,6 +42,9 @@ if {[catch {
 } else {
     tcltest::testConstraint hasLinks 1
 }
+
+tcltest::testConstraint testsimplefilesystem \
+  [string equal testsimplefilesystem [info commands testsimplefilesystem]]
 
 test filesystem-1.0 {link normalisation} {hasLinks} {
    string equal [file normalize gorp.file] [file normalize link.file]
@@ -389,7 +392,7 @@ test filesystem-6.33 {empty file name} {
 while {![catch {testfilesystem 0}]} {}
 }
 
-test filesystem-7.1 {load from vfs} {win} {
+test filesystem-7.1 {load from vfs} {win testsimplefilesystem} {
     # This may cause a crash on exit
     set dir [pwd]
     cd [file dirname [info nameof]]
@@ -403,7 +406,8 @@ test filesystem-7.1 {load from vfs} {win} {
     # The real result of this test is what happens when Tcl exits.
 } {ok}
 
-test filesystem-7.2 {cross-filesystem copy from vfs maintains mtime} {
+test filesystem-7.2 {cross-filesystem copy from vfs maintains mtime} \
+  {testsimplefilesystem} {
     set dir [pwd]
     cd [tcltest::temporaryDirectory]
     # We created this file several tests ago.
@@ -455,7 +459,6 @@ test filesystem-8.2 {relative path objects and use of pwd} {
     cd ..
     removeFile [file join abc foo]
     removeDirectory abc
-    removeDirectory def
     cd $origdir
     set res
 } {1}

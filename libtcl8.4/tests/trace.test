@@ -1980,9 +1980,10 @@ foo {if {[catch {bar}]} {
 	}} 2 error leavestep
 foo foo 0 error leave}}
 
-test trace-28.4 {exec traces in slave with 'return -code error'} {knownBug} {
+test trace-28.4 {exec traces in slave with 'return -code error'} {
     interp create slave
     interp alias slave traceExecute {} traceExecute
+    set info {}
     set res [interp eval slave {
 	set info {}
 	set res {}
@@ -2009,16 +2010,16 @@ test trace-28.4 {exec traces in slave with 'return -code error'} {knownBug} {
 	trace remove execution foo {enter enterstep leave leavestep} \
 	  [list traceExecute foo]
 	
-	list $res [join $info \n]
+	list $res
     }]
     interp delete slave
-    set res
+    lappend res [join $info \n]
 } {{error error} {foo foo enter
 foo {if {[catch {bar}]} {
-	    return "error"
-	} else {
-	    return "ok"
-	}} enterstep
+		return "error"
+	    } else {
+		return "ok"
+	    }} enterstep
 foo {catch bar} enterstep
 foo bar enterstep
 foo {return -code error msg} enterstep
@@ -2028,10 +2029,10 @@ foo {catch bar} 0 1 leavestep
 foo {return error} enterstep
 foo {return error} 2 error leavestep
 foo {if {[catch {bar}]} {
-	    return "error"
-	} else {
-	    return "ok"
-	}} 2 error leavestep
+		return "error"
+	    } else {
+		return "ok"
+	    }} 2 error leavestep
 foo foo 0 error leave}}
 
 test trace-28.5 {exec traces} {
@@ -2092,6 +2093,44 @@ test trace-28.9 {exec trace info nonsense} {
 test trace-28.10 {exec trace info nonsense} {
     list [catch {trace remove execution} res] $res
 } {1 {wrong # args: should be "trace remove execution name opList command"}}
+
+# Missing test number to keep in sync with the 8.5 branch
+# (want to backport those tests?)
+
+test trace-31.1 {command and execution traces shared struct} {
+    # Tcl Bug 807243
+    proc foo {} {}
+    trace add command foo delete foo
+    trace add execution foo enter foo
+    set result [trace info command foo]
+    trace remove command foo delete foo
+    trace remove execution foo enter foo
+    rename foo {}
+    set result
+} [list [list delete foo]]
+test trace-31.2 {command and execution traces shared struct} {
+    # Tcl Bug 807243
+    proc foo {} {}
+    trace add command foo delete foo
+    trace add execution foo enter foo
+    set result [trace info execution foo]
+    trace remove command foo delete foo
+    trace remove execution foo enter foo
+    rename foo {}
+    set result
+} [list [list enter foo]]
+
+test trace-32.1 {
+    TraceCommandInfo refcount decr in TraceCommandProc w/o loss of reference
+} {
+    # Tcl Bug 811483
+    proc foo {} {}
+    trace add command foo delete foo
+    trace add execution foo enter foo
+    set result [trace info command foo]
+    rename foo {}
+    set result
+} [list [list delete foo]]
 
 # Delete procedures when done, so we don't clash with other tests
 # (e.g. foobar will clash with 'unknown' tests).

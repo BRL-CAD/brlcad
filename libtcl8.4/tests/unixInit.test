@@ -266,6 +266,41 @@ test unixInit-2.9 {TclpInitLibraryPath: paths relative to executable} {unix noSp
     set x
 } [list /tmp/lib/tcl[info tclversion] /lib/tcl[info tclversion] \
         /tmp/library /library /tcl[info patchlevel]/library]
+
+test unixInit-2.10 {TclpInitLibraryPath: executable relative} -constraints {
+	unixOnly stdio
+} -setup {
+    set tmpDir [makeDirectory tmp]
+    set sparklyDir [makeDirectory sparkly $tmpDir]
+    set execPath [file join [makeDirectory bin $sparklyDir] tcltest]
+    file copy [interpreter] $execPath
+    set libDir [makeDirectory lib $sparklyDir]
+    set scriptDir [makeDirectory tcl[info tclversion] $libDir]
+    makeFile {} init.tcl $scriptDir
+    set saveDir [pwd]
+    cd $libDir
+} -body {
+    # Checking for Bug 832657
+    # The proposed patch in TclFindEncodings was not correct x-platform.
+    lrange [getlibpath [file join .. bin tcltest]] 2 3
+} -cleanup {
+    cd $saveDir
+    unset saveDir
+    removeFile init.tcl $scriptDir
+    unset scriptDir
+    removeDirectory tcl[info tclversion] $libDir
+    unset libDir
+    file delete $execPath
+    unset execPath
+    removeDirectory bin $sparklyDir
+    removeDirectory lib $sparklyDir
+    unset sparklyDir
+    removeDirectory sparkly $tmpDir
+    unset tmpDir
+    removeDirectory tmp
+} -result [list [file join [temporaryDirectory] tmp sparkly library] \
+	[file join [temporaryDirectory] tmp library] ]
+
 test unixInit-3.1 {TclpSetInitialEncodings} -constraints {
 	unixOnly stdio
 } -body {
@@ -303,7 +338,7 @@ test unixInit-3.2 {TclpSetInitialEncodings} {unixOnly stdio} {
     }
     expr {[lsearch -exact $validEncodings $enc] < 0}
 } 0
-    
+
 test unixInit-4.1 {TclpSetVariables} {unixOnly} {
     # just make sure they exist
 
@@ -319,6 +354,21 @@ test unixInit-5.1 {Tcl_Init} {emptyTest unixOnly} {
 test unixInit-6.1 {Tcl_SourceRCFile} {emptyTest unixOnly} {
 } {}
 
+test unixInit-7.1 {closed standard channel: Bug 772288} -constraints {
+	unixOnly stdio
+} -body {
+    set tclsh [interpreter]
+    makeFile {puts [open /dev/null]} crash.tcl
+    makeFile "
+	close stdin
+	[list exec $tclsh crash.tcl]
+    " crashtest.tcl
+    exec $tclsh crashtest.tcl
+} -cleanup {
+    removeFile crash.tcl
+    removeFile crashtest.tcl
+} -returnCodes 0
+
 # cleanup
 if {[info exists oldlibrary]} {
     set env(TCL_LIBRARY) $oldlibrary
@@ -327,4 +377,3 @@ catch {unset env(LANG)}
 catch {set env(LANG) $oldlang}
 ::tcltest::cleanupTests
 return
-

@@ -19,8 +19,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
-removeFile test1
-removeFile pipe
+testConstraint fcopy [llength [info commands fcopy]]
 
 test iocmd-1.1 {puts command} {
    list [catch {puts} msg] $msg
@@ -122,7 +121,7 @@ test iocmd-4.7 {read command} {
    list [catch {read -nonewline stdout} msg] $msg
 } {1 {channel "stdout" wasn't opened for reading}}
 test iocmd-4.8 {read command with incorrect combination of arguments} {
-    removeFile test1
+    file delete $path(test1)
     set f [open $path(test1) w]
     puts $f "Two lines: this one"
     puts $f "and this one"
@@ -198,7 +197,7 @@ test iocmd-8.3 {fconfigure command} {
     list [catch {fconfigure a b} msg] $msg
 } {1 {can not find channel named "a"}}
 test iocmd-8.4 {fconfigure command} {
-    removeFile test1
+    file delete $path(test1)
     set f1 [open $path(test1) w]
     set x [list [catch {fconfigure $f1 froboz} msg] $msg]
     close $f1
@@ -211,7 +210,7 @@ test iocmd-8.6 {fconfigure command} {
     list [catch {fconfigure stdin -translation froboz} msg] $msg
 } {1 {bad value for -translation: must be one of auto, binary, cr, lf, crlf, or platform}}
 test iocmd-8.7 {fconfigure command} {
-    removeFile test1
+    file delete $path(test1)
     set f1 [open $path(test1) w]
     fconfigure $f1 -translation lf -eofchar {} -encoding unicode
     set x [fconfigure $f1]
@@ -219,7 +218,7 @@ test iocmd-8.7 {fconfigure command} {
     set x
 } {-blocking 1 -buffering full -buffersize 4096 -encoding unicode -eofchar {} -translation lf}
 test iocmd-8.8 {fconfigure command} {
-    removeFile test1
+    file delete $path(test1)
     set f1 [open $path(test1) w]
     fconfigure $f1 -translation lf -buffering line -buffersize 3030 \
 		-eofchar {} -encoding unicode
@@ -230,7 +229,7 @@ test iocmd-8.8 {fconfigure command} {
     set x
 } {line {-blocking 1 -buffering line -buffersize 3030 -encoding unicode -eofchar {} -translation lf}}
 test iocmd-8.9 {fconfigure command} {
-    removeFile test1
+    file delete $path(test1)
     set f1 [open $path(test1) w]
     fconfigure $f1 -translation binary -buffering none -buffersize 4040 \
 		-eofchar {} -encoding binary
@@ -365,7 +364,7 @@ test iocmd-10.5 {fblocked command} {
 set path(test4) [makeFile {} test4]
 set path(test5) [makeFile {} test5]
 
-removeFile test5
+file delete $path(test5)
 test iocmd-11.1 {I/O to command pipelines} {unixOrPc unixExecs} {
     set f [open $path(test4) w]
     close $f
@@ -379,7 +378,7 @@ test iocmd-11.3 {I/O to command pipelines} {unixOrPc unixExecs} {
 } {1 {can't read output from command: standard output was redirected} NONE}
 
 test iocmd-12.1 {POSIX open access modes: RDONLY} {
-    removeFile test1
+    file delete $path(test1)
     set f [open $path(test1) w]
     puts $f "Two lines: this one"
     puts $f "and this one"
@@ -390,23 +389,19 @@ test iocmd-12.1 {POSIX open access modes: RDONLY} {
     string compare $x \
 	"{Two lines: this one} 1 [list [format "channel \"%s\" wasn't opened for writing" $f]]"
 } 0
-test iocmd-12.2 {POSIX open access modes: RDONLY} {
-    removeFile test3
-    set msg [list [catch {open $path(test3) RDONLY} msg] $msg]
-    regsub [file join {} $path(test3)] $msg "test3" msg
-	string tolower $msg
-} {1 {couldn't open "test3": no such file or directory}}
-test iocmd-12.3 {POSIX open access modes: WRONLY} {
-    removeFile test3
-    set msg [list [catch {open $path(test3) WRONLY} msg] $msg]
-    regsub [file join {} $path(test3)] $msg "test3" msg
-	string tolower $msg
-} {1 {couldn't open "test3": no such file or directory}}
+test iocmd-12.2 {POSIX open access modes: RDONLY} -match regexp -body {
+    file delete $path(test3)
+    open $path(test3) RDONLY
+} -returnCodes error -result {(?i)couldn't open ".*test3": no such file or directory}
+test iocmd-12.3 {POSIX open access modes: WRONLY} -match regexp -body {
+    file delete $path(test3)
+    open $path(test3) WRONLY
+} -returnCodes error -result {(?i)couldn't open ".*test3": no such file or directory}
 #
 # Test 13.4 relies on assigning the same channel name twice.
 #
 test iocmd-12.4 {POSIX open access modes: WRONLY} {unixOnly} {
-    removeFile test3
+    file delete $path(test3)
     set f [open $path(test3) w]
     fconfigure $f -eofchar {}
     puts $f xyzzy
@@ -424,12 +419,10 @@ test iocmd-12.4 {POSIX open access modes: WRONLY} {unixOnly} {
     set y [list 1 [format "channel \"%s\" wasn't opened for reading" $f] abzzy]
     string compare $x $y
 } 0
-test iocmd-12.5 {POSIX open access modes: RDWR} {
-    removeFile test3
-    set msg [list [catch {open $path(test3) RDWR} msg] $msg]
-    regsub [file join {} $path(test3)] $msg "test3" msg
-	string tolower $msg
-} {1 {couldn't open "test3": no such file or directory}}
+test iocmd-12.5 {POSIX open access modes: RDWR} -match regexp -body {
+    file delete $path(test3)
+    open $path(test3) RDWR
+} -returnCodes error -result {(?i)couldn't open ".*test3": no such file or directory}
 test iocmd-12.6 {POSIX open access modes: errors} {
     concat [catch {open $path(test3) "FOO \{BAR BAZ"} msg] $msg\n$errorInfo
 } "1 unmatched open brace in list
@@ -443,6 +436,7 @@ test iocmd-12.7 {POSIX open access modes: errors} {
 test iocmd-12.8 {POSIX open access modes: errors} {
     list [catch {open $path(test3) {TRUNC CREAT}} msg] $msg
 } {1 {access mode must include either RDONLY, WRONLY, or RDWR}}
+close [open $path(test3) w]
 
 test iocmd-13.1 {errors in open command} {
     list [catch {open} msg] $msg
@@ -501,19 +495,19 @@ test iocmd-14.10 {file id parsing errors} {
     list [catch {eof $f} msg] $msg
 } $expect
 
-test iocmd-15.1 {Tcl_FcopyObjCmd} {
+test iocmd-15.1 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy} msg] $msg
 } {1 {wrong # args: should be "fcopy input output ?-size size? ?-command callback?"}}
-test iocmd-15.2 {Tcl_FcopyObjCmd} {
+test iocmd-15.2 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy 1} msg] $msg
 } {1 {wrong # args: should be "fcopy input output ?-size size? ?-command callback?"}}
-test iocmd-15.3 {Tcl_FcopyObjCmd} {
+test iocmd-15.3 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy 1 2 3 4 5 6 7} msg] $msg
 } {1 {wrong # args: should be "fcopy input output ?-size size? ?-command callback?"}}
-test iocmd-15.4 {Tcl_FcopyObjCmd} {
+test iocmd-15.4 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy 1 2 3} msg] $msg
 } {1 {wrong # args: should be "fcopy input output ?-size size? ?-command callback?"}}
-test iocmd-15.5 {Tcl_FcopyObjCmd} {
+test iocmd-15.5 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy 1 2 3 4 5} msg] $msg
 } {1 {wrong # args: should be "fcopy input output ?-size size? ?-command callback?"}}
 
@@ -525,25 +519,25 @@ close $f
 set rfile [open $path(test1) r]
 set wfile [open $path(test2) w]
 
-test iocmd-15.6 {Tcl_FcopyObjCmd} {
+test iocmd-15.6 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy foo $wfile} msg] $msg
 } {1 {can not find channel named "foo"}}
-test iocmd-15.7 {Tcl_FcopyObjCmd} {
+test iocmd-15.7 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy $rfile foo} msg] $msg
 } {1 {can not find channel named "foo"}}
-test iocmd-15.8 {Tcl_FcopyObjCmd} {
+test iocmd-15.8 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy $wfile $wfile} msg] $msg
 } "1 {channel \"$wfile\" wasn't opened for reading}"
-test iocmd-15.9 {Tcl_FcopyObjCmd} {
+test iocmd-15.9 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy $rfile $rfile} msg] $msg
 } "1 {channel \"$rfile\" wasn't opened for writing}"
-test iocmd-15.10 {Tcl_FcopyObjCmd} {
+test iocmd-15.10 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy $rfile $wfile foo bar} msg] $msg
 } {1 {bad switch "foo": must be -size or -command}}
-test iocmd-15.11 {Tcl_FcopyObjCmd} {
+test iocmd-15.11 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy $rfile $wfile -size foo} msg] $msg
 } {1 {expected integer but got "foo"}}
-test iocmd-15.12 {Tcl_FcopyObjCmd} {
+test iocmd-15.12 {Tcl_FcopyObjCmd} {fcopy} {
     list [catch {fcopy $rfile $wfile -command bar -size foo} msg] $msg
 } {1 {expected integer but got "foo"}}
 
@@ -552,12 +546,12 @@ close $wfile
 
 # cleanup
 foreach file [list test1 test2 test3 test4] {
-    catch {::tcltest::removeFile $file}
+    removeFile $file
 }
 # delay long enough for background processes to finish
 after 500
-foreach file [list test5 pipe output] {
-    catch {::tcltest::removeFile $file}
+foreach file [list test5] {
+    removeFile $file
 }
-::tcltest::cleanupTests
+cleanupTests
 return

@@ -138,7 +138,7 @@ test exec-2.6 {redirecting input from immediate source, with UTF} {exec} {
 # I/O redirection: output to file.
 
 set path(gorp.file) [makeFile {} gorp.file]
-removeFile gorp.file
+file delete $path(gorp.file)
 
 test exec-3.1 {redirecting output to file} {exec} {
     exec [interpreter] $path(echo) "Some simple words" > $path(gorp.file)
@@ -179,7 +179,7 @@ test exec-3.7 {redirecting output to file} {exec} {
 
 # I/O redirection: output and stderr to file.
 
-removeFile gorp.file
+file delete $path(gorp.file)
 
 test exec-4.1 {redirecting output and stderr to file} {exec} {
     exec [interpreter] "$path(echo)" "test output" >& $path(gorp.file)
@@ -264,7 +264,7 @@ test exec-6.3 {redirecting stderr through a pipeline} {exec stdio} {
 # I/O redirection: combinations.
 
 set path(gorp.file2) [makeFile {} gorp.file2]
-removeFile gorp.file2
+file delete $path(gorp.file2)
 
 test exec-7.1 {multiple I/O redirections} {exec} {
     exec << "command input" > $path(gorp.file2) [interpreter] $path(cat) < $path(gorp.file)
@@ -420,7 +420,7 @@ test exec-11.4 {commands in background} {exec stdio} {
 } 3
 test exec-11.5 {commands in background} {exec} {
     set f [open $path(gorp.file) w]
-    puts $f [format { catch { exec [info nameofexecutable] {%s} foo & } } $path(echo)]
+    puts $f [list catch [list exec [info nameofexecutable] $path(echo) foo &]]
     close $f
     string compare "foo" [exec [interpreter] $path(gorp.file)]
 } 0
@@ -567,12 +567,13 @@ set path(script) [makeFile {} script]
 
 test exec-17.1 { inheriting standard I/O } {exec} {
     set f [open $path(script) w]
-    puts $f [format {close stdout
-	set f [open {%s} w]
-	catch {exec [info nameofexecutable] {%s} foobar &}
-	exec [info nameofexecutable] {%s} 2
-	close $f
-    } $path(gorp.file) $path(echo) $path(sleep)]
+    puts -nonewline $f {close stdout
+	set f [}
+    puts $f [list open $path(gorp.file) w]]
+    puts $f [list catch \
+	    [list exec [info nameofexecutable] $path(echo) foobar &]]
+    puts $f [list exec [info nameofexecutable] $path(sleep) 2]
+    puts $f {close $f}
     close $f
     catch {exec [interpreter] $path(script)} result
     set f [open $path(gorp.file) r]

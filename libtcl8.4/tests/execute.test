@@ -713,6 +713,14 @@ test execute-7.34 {Wide int handling} {longIs32bit} {
     expr {wide(0x1) * 1024 * 1024 * 1024 * 1024}
 } 1099511627776
 
+test execute-8.1 {Stack protection} {
+    # If [Bug #804681] has not been properly
+    # taken care of, this should segfault
+    proc whatever args {llength $args}
+    trace add variable ::errorInfo {write unset} whatever
+    catch {expr {1+9/0}}
+} 1
+
 # cleanup
 if {[info commands testobj] != {}} {
    testobj freeallvars

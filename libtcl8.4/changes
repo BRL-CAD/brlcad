@@ -5880,3 +5880,86 @@ Improved documentation, new tests, and some code cleanup.
 763312, 769895, 771539, 771840, 771947, 771949, 772333]
 
 --- Released 8.4.4, July 22, 2003 --- See ChangeLog for details ---
+
+2003-07-23 (bug fix)[775976] fix registry compilation for VC7.
+
+2003-08-05 (enhancement)[781585] Use Tcl_ResetResult in bytecodes to
+prevent potential costly Tcl_Obj duplication.
+
+2003-08-06 (bug fix)[781609] prevent non-Windows platforms from trying to
+use the registry package inside msgcat.
+
+2003-08-27 (bug fix)[411825] Fix TclNeedSpace to handle non-breaking space
+(\u00A0) and backslash escapes correctly.
+
+2003-09-01 (bug fix)[788780] Fix thread-safety issues in filesystem records.
+
+2003-09-19 (bug fix)[804681] Protect ::errorInfo and ::errorCode traces
+from corrupting stack.
+
+2003-09-23 (bug fix)[218871] Fix handling of glob-sensitive chars in
+auto_load and auto_import.
+
+2003-10-03 (bug fix)[811483] Fixed refcount management for command and
+execution traces.
+
+2003-10-04 (bug fix)[789040] Fixed exec command.com error for Win9x.
+
+2003-10-06 (bug fix)[767834, 813273] Fixed volumerelative file
+normalization and 'file join' inconsistencies.
+
+2003-10-08 (bug fix)[769812] Fix Tcl_NumUtfChars string length calculation
+when negative parameter is given.
+
+2003-10-22 (bug fix)[800106] Handle VFS mountpoints inside glob'd dirs.
+
+2003-10-22 (bug fix)[599468] Watch for FD_CLOSE too on Windows when
+asked for writable events by the generic layer.
+
+2003-10-23 (bug fix)[813606] Detect OS X pipes correctly.
+
+2003-11-05 (bug fix)[832657] Allow .. in libpath initialization.
+
+2003-11-11 (bug fix) Improve AIX-64 build configuration.
+
+2003-11-17 (bug fix)[230589, 504785, 505048, 703709, 840258] fixes to
+various odd regexp "can't happen" bugs.
+
+--- Released 8.4.5, November 20, 2003 --- See ChangeLog for details ---
+
+2003-12-02 (bug fix)[851747] object sharing fix in [binary scan]
+
+2003-12-09 (platform support)[852369] update errno usage for recent glibc
+
+2003-12-12 (bug fix)[858937] fix for [file normalize ~nobody] 
+
+2003-12-17 (bug fix)[839519] fixed two memory leaks (vasiljevic)
+
+2004-01-09 (bug fix)[873311] fixed infinite loop in TclFinalizeFilesystem
+
+2004-02-02 (bug fix)[405995] Tcl_Ungets buffer filling fix
+
+2004-02-04 (bug fix)[833910] tcltest command line option parsing error
+=> tcltest 2.4.5
+
+2004-02-04 (bug fix)[833637] code error in tcltest -preservecore operation
+
+2004-02-12 (feature enhancement) update HP-11 build libs setup
+
+2004-02-17 (bug fix)[849514,859251] corrected [file normailze] of $link/.. 
+
+2004-02-17 (bug fix)[772288] Unix std channels forced to exist at startup.
+
+2004-02-17 (new default) tcltest::configure -verbose {body error}
+
+2004-02-19 (bug fix) init.tcl search path with unusual --libdir (samson)
+
+2004-02-25 (bug fix)[554068] stopped broken [exec] quoting of { (gravereaux)
+
+2004-02-25 (bug fix)[888777] plugged memory leak with long host names (cassoff)
+
+2004-03-01 (bug fix)[462580] corrected level interpretation of Tcl_CreateTrace
+
+2004-03-01 (platform support)[218561] Allow 64-bit configure on IRIX64-6.5*
+
+--- Released 8.4.6, March 1, 2004 --- See ChangeLog for details ---

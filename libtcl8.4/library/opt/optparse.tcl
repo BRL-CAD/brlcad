@@ -10,10 +10,10 @@
 #
 # RCS: @(#) $Id$
 
-package require Tcl 8
+package require Tcl 8.2
 # When this version number changes, update the pkgIndex.tcl file
 # and the install directory in the Makefiles.
-package provide opt 0.4.4
+package provide opt 0.4.4.1
 
 namespace eval ::tcl {
 

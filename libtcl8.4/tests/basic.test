@@ -536,6 +536,15 @@ test basic-39.9 {Tcl_CreateObjTrace, status return unknown} {testcmdtrace} {
     list [catch {testcmdtrace resulttest {OtherStatus $x}} result] [set result]
 } {6 {}}
 
+test basic-39.10 {Tcl_CreateTrace, correct level interpretation} {testcmdtrace} {
+    proc foo {} {uplevel 1 bar}
+    proc bar {} {uplevel 1 grok}
+    proc grok {} {uplevel 1 spock}
+    proc spock {} {uplevel 1 fascinating}
+    proc fascinating {} {}
+    testcmdtrace leveltest {foo}
+} {foo {foo} {uplevel 1 bar} {uplevel 1 bar} bar {bar} {uplevel 1 grok} {uplevel 1 grok}}
+
 test basic-40.1 {Tcl_DeleteTrace} {emptyTest} {
     # the above tests have tested Tcl_DeleteTrace
 } {}
@@ -580,63 +589,71 @@ test basic-46.1 {Tcl_AllowExceptions: exception return not allowed} {stdio} {
 DONE
 }}
 
-test basic-46.2 {Tcl_AllowExceptions: exception return not allowed} {exec} {
+test basic-46.2 {Tcl_AllowExceptions: exception return not allowed} -setup {
     set fName [makeFile {
 	puts hello
 	break
     } BREAKtest]
-    set res [list [catch {exec [interpreter] $fName} msg] $msg]
+} -constraints {
+    exec
+} -body {
+    exec [interpreter] $fName
+} -cleanup {
     removeFile BREAKtest
-    regsub {file ".*BREAKtest"} $res {file "BREAKtest"} res
-    set res
-} {1 {hello
+} -returnCodes error -match glob -result {hello
 invoked "break" outside of a loop
     while executing
 "break"
-    (file "BREAKtest" line 3)}}    
+    (file "*BREAKtest" line 3)}    
 
-test basic-46.3 {Tcl_AllowExceptions: exception return not allowed} {exec} {
+test basic-46.3 {Tcl_AllowExceptions: exception return not allowed} -setup {
     set fName [makeFile {
 	interp alias {} patch {} info patchlevel
 	patch
 	break
     } BREAKtest]
-    set res [list [catch {exec [interpreter] $fName} msg] $msg]
+} -constraints {
+    exec
+} -body {
+    exec [interpreter] $fName
+} -cleanup {
     removeFile BREAKtest
-    regsub {file ".*BREAKtest"} $res {file "BREAKtest"} res
-    set res
-} {1 {invoked "break" outside of a loop
+} -returnCodes error -match glob -result {invoked "break" outside of a loop
     while executing
 "break"
-    (file "BREAKtest" line 4)}}    
+    (file "*BREAKtest" line 4)}    
 
-test basic-46.4 {Tcl_AllowExceptions: exception return not allowed} {exec} {
+test basic-46.4 {Tcl_AllowExceptions: exception return not allowed} -setup {
     set fName [makeFile {
 	foo [set a 1] [break]
     } BREAKtest]
-    set res [list [catch {exec [interpreter] $fName} msg] $msg]
+} -constraints {
+    exec
+} -body {
+    exec [interpreter] $fName
+} -cleanup {
     removeFile BREAKtest
-    regsub {file ".*BREAKtest"} $res {file "BREAKtest"} res
-    set res
-} {1 {invoked "break" outside of a loop
+} -returnCodes error -match glob -result {invoked "break" outside of a loop
     while executing
 "break"
     invoked from within
-"foo [set a 1] [break]"
-    (file "BREAKtest" line 2)}}
+"foo \[set a 1] \[break]"
+    (file "*BREAKtest" line 2)}
 
-test basic-46.5 {Tcl_AllowExceptions: exception return not allowed} {exec} {
+test basic-46.5 {Tcl_AllowExceptions: exception return not allowed} -setup {
     set fName [makeFile {
 	return -code return
     } BREAKtest]
-    set res [list [catch {exec [interpreter] $fName} msg] $msg]
+} -constraints {
+    exec
+} -body {
+    exec [interpreter] $fName
+} -cleanup {
     removeFile BREAKtest
-    regsub {file ".*BREAKtest"} $res {file "BREAKtest"} res
-    set res
-} {1 {command returned bad code: 2
+} -returnCodes error -match glob -result {command returned bad code: 2
     while executing
 "return -code return"
-    (file "BREAKtest" line 2)}}
+    (file "*BREAKtest" line 2)}
 
 test basic-47.1 {Tcl_EvalEx: check for missing close-bracket} -body {
     subst {a[set b [format cd]}
