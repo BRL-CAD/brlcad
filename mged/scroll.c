@@ -103,7 +103,7 @@ struct scroll_item sl_adc_menu[] = {
 void
 set_scroll()
 {
-  if (mged_variables->mv_slidersflag) {
+  if (mged_variables->mv_sliders) {
     if(mged_variables->mv_rateknobs)
       scroll_array[0] = sl_menu;
     else
@@ -142,7 +142,7 @@ sl_halt_scroll()
 void
 sl_toggle_scroll()
 {
-  mged_variables->mv_slidersflag = mged_variables->mv_slidersflag ? 0 : 1;
+  mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;
 
   set_scroll_private();
 }
@@ -729,7 +729,7 @@ int do_func;
 	struct scroll_item	**m;
 	register struct scroll_item     *mptr;
 
-	if( !mged_variables->mv_slidersflag )  return(0);	/* not enabled */
+	if( !mged_variables->mv_sliders )  return(0);	/* not enabled */
 
 	if( pen_y > scroll_top )
 		return(-1);	/* pen above menu area */
