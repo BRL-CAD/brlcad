@@ -1,19 +1,21 @@
 /*
-  Authors -
-	Paul R. Stay
-	Gary S. Moss
-	Mike J. Muuss
-
-  Source -
-	SECAD/VLD Computing Consortium, Bldg 394
-	The U. S. Army Ballistic Research Laboratory
-	Aberdeen Proving Ground, Maryland  21005-5066
-  
-  Copyright Notice -
-	This software is Copyright (C) 1986 by the United States Army.
-	All rights reserved.
-
-	$Header$ (BRL)
+ *			I F _ S G I W . C
+ *
+ *  SGI window (MEX) oriented interface, which operates in 12-bit mode.
+ *
+ *  Authors -
+ *	Paul R. Stay
+ *	Gary S. Moss
+ *	Mike J. Muuss
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -30,6 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define Abs( x_ )	((x_) < 0 ? -(x_) : (x_))
 
 #define MARGIN	4			/* # pixels margin to screen edge */
+#define BANNER	18			/* Size of MEX title banner */
 #define WIN_L	(1024-ifp->if_width-MARGIN)
 #define WIN_R	(1024-MARGIN)
 #define WIN_B	MARGIN
@@ -206,8 +209,8 @@ int	width, height;
 	if ( width > ifp->if_max_width - 2 * MARGIN) 
 		width = ifp->if_max_width - 2 * MARGIN;
 
-	if ( height > ifp->if_max_height - 2 * MARGIN - 20)
-		height = ifp->if_max_height - 2 * MARGIN - 20;	/* MEX bar */
+	if ( height > ifp->if_max_height - 2 * MARGIN - BANNER)
+		height = ifp->if_max_height - 2 * MARGIN - BANNER;
 
 	ifp->if_width = width;
 	ifp->if_height = height;
@@ -303,7 +306,7 @@ register RGBpixel	*pixelp;
 int	count;
 {	register union gepipe *hole = GEPIPE;
 	short scan_count;
-	Colorindex colors[1024];
+	Colorindex colors[1025];
 	register int i;
 
 	x *= xzoom;
@@ -313,7 +316,7 @@ int	count;
 			scan_count = ifp->if_width;
 		else
 			scan_count = count;
-		if( xzoom == 1 && yzoom == 1 || special_zoom )
+		if( (xzoom == 1 && yzoom == 1) || special_zoom )
 			{ /* No pixel replication, so read scan of pixels. */
 			CMOV2S( hole, x, ypos );
 			readpixels( scan_count, colors );
@@ -362,6 +365,7 @@ int	count;
 	{	register union gepipe *hole = GEPIPE;
 		short scan_count;
 		register int i;
+
 	writemask( 0x3FF );
 	x *= xzoom;
 	while( count > 0 )
@@ -370,7 +374,7 @@ int	count;
 			scan_count = ifp->if_width;
 		else
 			scan_count = count;
-		if( xzoom == 1 && yzoom == 1 || special_zoom )
+		if( (xzoom == 1 && yzoom == 1) || special_zoom )
 			{	register Colorindex	colori;
 			CMOV2S( hole, x, ypos );
 			for( i = scan_count; i > 0; )
@@ -399,9 +403,7 @@ int	count;
 		else
 			for( i = 0; i < scan_count; i++, pixelp++ )
 				{	register Colorindex	col;
-					register Coord	l = x,
-							b = ypos,
-							r = x + xzoom - 1,
+					register Coord	r = x + xzoom - 1,
 							t = ypos - yzoom + 1;
 				CMOV2S( hole, x, ypos );
 #if MAP_PREALLOCATED
@@ -412,7 +414,7 @@ int	count;
 				col = get_Color_Index( pixelp );
 #endif
 				color( col );
-				im_rectf( l, b, r, t );
+				im_rectf( (Coord)x, (Coord)ypos, r, t );
 				x += xzoom;
 				}
 		count -= scan_count;
@@ -486,6 +488,8 @@ sgw_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 	{
+	if( x == 0 )  x = 1;
+	if( y == 0 )  y = 1;
 	if( x < 0 || y < 0 )
 		{
 		special_zoom = 1;
