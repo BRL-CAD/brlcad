@@ -63,7 +63,6 @@ void	Ir_window(), Ir_debug();
 
 
 static char ir_title[] = "BRL MGED";
-static int big_txt = 0;		/* Text window size flag - hack for Ir_puts */
 static int cueing_on = 1;	/* Depth cueing flag - for colormap work */
 static int zclipping_on = 1;	/* Z Clipping flag */
 static int zbuffer_on = 1;	/* Hardware Z buffer is on */
@@ -155,7 +154,6 @@ struct dm dm_4d = {
 extern struct device_values dm_values;	/* values read from devices */
 
 static int	ir_debug;		/* 2 for basic, 3 for full */
-static int	ir_buffer;
 static int	ir_is_gt;		/* 0 for non-GT machines */
 static int	ir_has_zbuf;		/* 0 if no Z buffer */
 static int	ir_has_rgb;		/* 0 if mapped mode must be used */
@@ -229,6 +227,12 @@ long val;
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
+
+/*
+ *  Mouse coordinates are in absolute screen space, not relative to
+ *  the window they came from.  Convert to window-relative,
+ *  then to MGED-style +/-2048 range.
+ */
 static int
 irisX2ged(x)
 register int x;
@@ -254,6 +258,78 @@ register int y;
 	return(y);
 }
 
+/* 
+ *			I R _ C O N F I G U R E _ W I N D O W _ S H A P E
+ *
+ *  Either initially, or on resize/reshape of the window,
+ *  sense the actual size of the window, and perform any
+ *  other initializations of the window configuration.
+ */
+static void
+Ir_configure_window_shape()
+{
+	int		npix;
+
+	getsize( &winx_size, &winy_size);
+	getorigin( &win_l, & win_b );
+	win_r = win_l + winx_size;
+	win_t = win_b + winy_size;
+
+	/* Write enable all the bloody bits after resize! */
+	viewport(0, winx_size, 0, winy_size);
+
+	if( ir_has_zbuf && zbuffer_on ) 
+	{
+		zbuffer(1);
+		lsetdepth(0, 0x07fffff );
+	}
+
+	/* Clear out image from windows underneath */
+	frontbuffer(1);
+	ir_clear_to_black();
+	frontbuffer(0);
+	ir_clear_to_black();
+	
+	switch( getmonitor() )  {
+	default:
+		/*
+		 *  Set an 8 minute screensaver blanking, which will light up
+		 *  the screen again if it was dark, and will protect it otherwise.
+		 *  4D/60 has a hardware botch limiting the time to 2**15 frames.
+		 */
+		blanktime( (long) 32767L );
+		break;
+	case NTSC:
+		/* Only use the central square part */
+		npix = YMAX170-30;
+		winx_size = npix * 5 / 4;	/* NTSC aspect ratio */
+		winy_size = npix;
+		win_l = (XMAX170 - winx_size)/2;
+		win_r = win_l + winx_size;
+		win_b = (YMAX170-winy_size)/2;
+		win_t = win_b + winy_size;
+		viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
+			(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
+		linewidth(3);
+		blanktime(0);	/* don't screensave while recording video! */
+		break;
+	case PAL:
+		/* Only use the central square part */
+		npix = YMAXPAL-30;
+		winx_size = npix;
+		winy_size = npix;
+		win_l = (XMAXPAL - winx_size)/2;
+		win_r = win_l + winx_size;;
+		win_b = (YMAXPAL-winy_size)/2;
+		win_t = win_b + winy_size;
+		viewport( (XMAXPAL - npix)/2, npix + (XMAXPAL - npix)/2,
+			(YMAXPAL-npix)/2, npix + (YMAXPAL-npix)/2 );
+		linewidth(3);
+		blanktime(0);	/* don't screensave while recording video! */
+		break;
+	}
+}
+
 #define CMAP_BASE	32
 #define CMAP_RAMP_WIDTH	16
 #define MAP_ENTRY(x)	((cueing_on) ? \
@@ -277,8 +353,6 @@ Ir_open()
 	register int	i;
 	Matrix		m;
 	inventory_t	*inv;
-	int		npix;
-	int		monitor;
 #if IR_WIDGETS
 	int		use_widgets=0;
 #endif
@@ -312,14 +386,15 @@ Ir_open()
 		printf( "No more graphics ports available.\n" );
 		return	-1;
 	}
+	keepaspect(1,1);	/* enforce 1:1 aspect ratio */
+	winconstraints();	/* remove constraints on the window size */
 
 	/*
 	 *  If monitor is in special mode, close window and re-open.
 	 *  winconstraints() does not work, and getmonitor() can't
 	 *  be called before a window is open.
 	 */
-	monitor = getmonitor();
-	switch( monitor )  {
+	switch( getmonitor() )  {
 	case HZ30:
 	case HZ30_SG:
 		/* Dunn camera, etc. */
@@ -355,12 +430,6 @@ Ir_open()
 		break;
 	}
 
-	/* Sense the actual size of the window */
-	getsize( &winx_size, &winy_size);
-	getorigin( &win_l, & win_b );
-	win_r = win_l + winx_size;
-	win_t = win_b + winy_size;
-
 	/*
 	 *  Configure the operating mode of the pixels in this window.
 	 *  Do not output graphics, clear screen, etc, until *after*
@@ -392,58 +461,7 @@ Ir_open()
 	glcompat( GLC_ZRANGEMAP, 0 );
 #endif
 
-	if( ir_has_zbuf && zbuffer_on ) 
-	{
-		zbuffer(1);
-		lsetdepth(0, 0x07fffff );
-	}
-
-	/* Clear out image from windows underneath */
-	frontbuffer(1);
-	ir_clear_to_black();
-	frontbuffer(0);
-	
-	ir_buffer = 0;
-
-	/* Set special television-specific behaviors */
-	switch( monitor )  {
-	default:
-		/*
-		 *  Set an 8 minute screensaver blanking, which will light up
-		 *  the screen again if it was dark, and will protect it otherwise.
-		 *  4D/60 has a hardware botch limiting the time to 2**15 frames.
-		 */
-		blanktime( (long) 32767L );
-		break;
-	case NTSC:
-		/* Only use the central square part */
-		npix = YMAX170-30;
-		winx_size = npix;
-		winy_size = npix;
-		win_l = (XMAX170 - winx_size)/2;
-		win_r = win_l + winx_size;
-		win_b = (YMAX170-winy_size)/2;
-		win_t = win_b + winy_size;
-		viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
-			(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
-		linewidth(3);
-		blanktime(0);	/* don't screensave while recording video! */
-		break;
-	case PAL:
-		/* Only use the central square part */
-		npix = YMAXPAL-30;
-		winx_size = npix;
-		winy_size = npix;
-		win_l = (XMAXPAL - winx_size)/2;
-		win_r = win_l + winx_size;;
-		win_b = (YMAXPAL-winy_size)/2;
-		win_t = win_b + winy_size;
-		viewport( (XMAXPAL - npix)/2, npix + (XMAXPAL - npix)/2,
-			(YMAXPAL-npix)/2, npix + (YMAXPAL-npix)/2 );
-		linewidth(3);
-		blanktime(0);	/* don't screensave while recording video! */
-		break;
-	}
+	Ir_configure_window_shape();
 
 	/* Enable qdev() input from various devices */
 #if IR_WIDGETS
@@ -618,8 +636,6 @@ Ir_epilog()
 	/* End of faceplate */
 
 	swapbuffers();
-
-	ir_buffer = (ir_buffer==0)?1:0;
 
 	/* give Graphics pipe time to work */
 	ir_clear_to_black();
@@ -1339,7 +1355,8 @@ checkevents()  {
 				dm_values.dv_penpress = DV_INZOOM;
 			break;
 		case REDRAW:
-			/* Window may have moved? */
+			/* Window may have moved */
+			Ir_configure_window_shape();
 			dmaflag = 1;
 			refresh();		/* to fix back buffer */
 			dmaflag = 1;
@@ -1395,7 +1412,8 @@ checkevents()  {
 			}
 			break;
 		case REDRAW:
-			/* Window may have moved? */
+			/* Window may have moved */
+			Ir_configure_window_shape();
 			dmaflag = 1;
 			refresh();		/* to fix back buffer */
 			dmaflag = 1;
