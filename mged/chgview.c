@@ -15,14 +15,31 @@
  *	f_zap		zap the display -- everything dropped
  *	f_status	print view info
  *	f_fix		fix display processor after hardware error
- *	f_refresh	request display refresh
- *	f_attach	attach display device
- *	f_release	release display device
  *	eraseobj	Drop an object from the visible list
  *	pr_schain	Print info about visible list
  *	f_ill		illuminate the named object
  *	f_sed		simulate pressing "solid edit" then illuminate
  *	f_knob		simulate knob twist
+ *	f_slewview	Slew the view
+ *	slewview	guts for f_setview
+ *	f_setview	Set the current view
+ *	setview		guts for f_setview
+ *	usejoy		Apply joystick to viewing perspective
+ *      absview_v       Absolute view rotation about view center
+ *      f_vrot_center   Set the center of rotation -- not ready yet
+ *      cmd_getknob     returns knob/slider value
+ *      f_svbase        Set view base references (i.e. i_Viewscale and orig_pos)
+ *      mged_svbase     Guts for f_svbase
+ *      f_tran          Translate view center
+ *      mged_tran       Guts for f_tran
+ *      f_qvrot         Set view from direction vector and twist angle
+ *      f_orientation   Set current view direction from a quaternion
+ *      f_zoom          zoom view
+ *      mged_zoom       guts for f_zoom
+ *      abs_zoom        absolute zoom
+ *      f_tol           set or display tolerance
+ *      knob_tran       handle translations for f_knob
+ *      f_aetview       set view using azimuth, elevation and twist angles
  *
  *  Author -
  *	Michael John Muuss
@@ -64,13 +81,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "../librt/debug.h"	/* XXX */
 
+#define DO_KNOB_EXPERIMENT 1
+
 extern int mged_param();
 extern void color_soltab();
 
-int mged_zoom();
+int mged_svbase();
 int knob_tran();
+int mged_tran();
 int mged_vrot();
+int mged_zoom();
 static void abs_zoom();
+void usejoy();
 
 #ifndef M_SQRT2
 #define M_SQRT2		1.41421356237309504880
@@ -85,6 +107,10 @@ extern long	nvectors;	/* from dodraw.c */
 
 extern struct bn_tol mged_tol;	/* from ged.c */
 extern vect_t e_axes_pos;
+
+fastf_t ar_scale_factor = 2047.0 / ABS_ROT_FACTOR;
+fastf_t rr_scale_factor = 2047.0 / RATE_ROT_FACTOR;
+fastf_t adc_angle_scale_factor = 2047.0 / ADC_ANGLE_FACTOR;
 
 vect_t edit_absolute_rotate;
 vect_t edit_rate_rotate;
@@ -1179,21 +1205,6 @@ char	**argv;
   return status;
 }
 
-int
-f_release(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
-
-  if(argc == 2)
-    return release(argv[1], 1);
-
-  return release(NULL, 1);
-}
 
 /*
  *			E R A S E O B J
@@ -1536,6 +1547,81 @@ check_nonzero_rates()
   dmaflag = 1;	/* values changed so update faceplate */
 }
 
+
+int
+mged_print_knobvals(interp)
+Tcl_Interp *interp;
+{
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+
+  if(mged_variables.rateknobs){
+    if(EDIT_ROTATE && mged_variables.edit){
+      bu_vls_printf(&vls, "x = %f\n", edit_rate_rotate[X]);
+      bu_vls_printf(&vls, "y = %f\n", edit_rate_rotate[Y]);
+      bu_vls_printf(&vls, "z = %f\n", edit_rate_rotate[Z]);
+    }else{
+      bu_vls_printf(&vls, "x = %f\n", rate_rotate[X]);
+      bu_vls_printf(&vls, "y = %f\n", rate_rotate[Y]);
+      bu_vls_printf(&vls, "z = %f\n", rate_rotate[Z]);
+    }
+
+    if(EDIT_SCALE && mged_variables.edit)
+      bu_vls_printf(&vls, "S = %f\n", edit_rate_scale);
+    else
+      bu_vls_printf(&vls, "S = %f\n", rate_zoom);
+
+    if(EDIT_TRAN && mged_variables.edit){
+      bu_vls_printf(&vls, "X = %f\n", edit_rate_tran[X]);
+      bu_vls_printf(&vls, "Y = %f\n", edit_rate_tran[Y]);
+      bu_vls_printf(&vls, "Z = %f\n", edit_rate_tran[Z]);
+    }else{
+      bu_vls_printf(&vls, "X = %f\n", rate_slew[X]);
+      bu_vls_printf(&vls, "Y = %f\n", rate_slew[Y]);
+      bu_vls_printf(&vls, "Z = %f\n", rate_slew[Z]);
+    }
+  }else{
+    if(EDIT_ROTATE && mged_variables.edit){
+      bu_vls_printf(&vls, "ax = %f\n", edit_absolute_rotate[X]);
+      bu_vls_printf(&vls, "ay = %f\n", edit_absolute_rotate[Y]);
+      bu_vls_printf(&vls, "az = %f\n", edit_absolute_rotate[Z]);
+    }else{
+      bu_vls_printf(&vls, "ax = %f\n", absolute_rotate[X]);
+      bu_vls_printf(&vls, "ay = %f\n", absolute_rotate[Y]);
+      bu_vls_printf(&vls, "az = %f\n", absolute_rotate[Z]);
+    }
+
+    if(EDIT_SCALE && mged_variables.edit)
+      bu_vls_printf(&vls, "aS = %f\n", edit_absolute_scale);
+    else
+      bu_vls_printf(&vls, "aS = %f\n", absolute_zoom);
+
+    if(EDIT_TRAN && mged_variables.edit){
+      bu_vls_printf(&vls, "aX = %f\n", edit_absolute_tran[X]);
+      bu_vls_printf(&vls, "aY = %f\n", edit_absolute_tran[Y]);
+      bu_vls_printf(&vls, "aZ = %f\n", edit_absolute_tran[Z]);
+    }else{
+      bu_vls_printf(&vls, "aX = %f\n", absolute_slew[X]);
+      bu_vls_printf(&vls, "aY = %f\n", absolute_slew[Y]);
+      bu_vls_printf(&vls, "aZ = %f\n", absolute_slew[Z]);
+    }
+  }
+
+  if(mged_variables.adcflag){
+    bu_vls_printf(&vls, "xadc = %d\n", dv_xadc);
+    bu_vls_printf(&vls, "yadc = %d\n", dv_yadc);
+    bu_vls_printf(&vls, "ang1 = %d\n", dv_1adc);
+    bu_vls_printf(&vls, "ang2 = %d\n", dv_2adc);
+    bu_vls_printf(&vls, "distadc = %d\n", dv_distadc);
+  }
+
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
+
+  return TCL_RETURN;
+}
+
 /* Main processing of knob twists.  "knob id val id val ..." */
 int
 f_knob(clientData, interp, argc, argv)
@@ -1548,6 +1634,7 @@ char	**argv;
   fastf_t f;
   vect_t tvec;
   char	*cmd;
+  char  knob_val_pair[128];
   int do_tran = 0;
   int incr_flag = 0;  /* interpret values as increments */
   int view_flag = 0;  /* force view interpretation */
@@ -1555,45 +1642,6 @@ char	**argv;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
-
-  /* print the current values */
-  if(argc == 1){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-
-    if(mged_variables.rateknobs){
-      bu_vls_printf(&vls, "x = %f\n", rate_rotate[X]);
-      bu_vls_printf(&vls, "y = %f\n", rate_rotate[Y]);
-      bu_vls_printf(&vls, "z = %f\n", rate_rotate[Z]);
-      bu_vls_printf(&vls, "S = %f\n", rate_zoom);
-      bu_vls_printf(&vls, "X = %f\n", rate_slew[X]);
-      bu_vls_printf(&vls, "Y = %f\n", rate_slew[Y]);
-      bu_vls_printf(&vls, "Z = %f\n", rate_slew[Z]);
-    }else{
-      bu_vls_printf(&vls, "ax = %f\n", absolute_rotate[X]);
-      bu_vls_printf(&vls, "ay = %f\n", absolute_rotate[Y]);
-      bu_vls_printf(&vls, "az = %f\n", absolute_rotate[Z]);
-      bu_vls_printf(&vls, "aS = %f\n", absolute_zoom);
-      bu_vls_printf(&vls, "aX = %f\n", absolute_slew[X]);
-      bu_vls_printf(&vls, "aY = %f\n", absolute_slew[Y]);
-      bu_vls_printf(&vls, "aZ = %f\n", absolute_slew[Z]);
-    }
-
-    if(mged_variables.adcflag){
-      bu_vls_printf(&vls, "xadc = %d\n", dv_xadc);
-      bu_vls_printf(&vls, "yadc = %d\n", dv_yadc);
-      bu_vls_printf(&vls, "ang1 = %d\n", dv_1adc);
-      bu_vls_printf(&vls, "ang2 = %d\n", dv_2adc);
-      bu_vls_printf(&vls, "distadc = %d\n", dv_distadc);
-    }
-
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-
-/*XXX Should be returning TCL_OK */
-    return TCL_ERROR;
-  }
 
   /* Check for options */
   {
@@ -1619,7 +1667,10 @@ char	**argv;
     argv += bu_optind - 1;
     argc -= bu_optind - 1;
   }
-  
+
+  /* print the current values */
+  if(argc == 1)
+    return mged_print_knobvals(interp);
 
   for(--argc, ++argv; argc; --argc, ++argv){
     cmd = *argv;
@@ -1633,12 +1684,10 @@ char	**argv;
 
       VSETALL( rate_rotate, 0 );
       VSETALL( rate_slew, 0 );
-      if(state != ST_VIEW){
-	VSETALL( edit_rate_rotate, 0 );
-	VSETALL( edit_rate_tran, 0 );
-	edit_rate_scale = 0.0;
-      }
       rate_zoom = 0;
+      VSETALL( edit_rate_rotate, 0 );
+      VSETALL( edit_rate_tran, 0 );
+      edit_rate_scale = 0.0;
 		
       (void)f_adc( clientData, interp, 2, av );
 
@@ -1683,6 +1732,15 @@ char	**argv;
 	  else
 	    rate_rotate[X] = f;
 	}
+
+#if DO_KNOB_EXPERIMENT
+	if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  (void)sprintf(knob_val_pair, "{x} {%d}",
+			dm_unlimit( (int)(edit_rate_rotate[X] * rr_scale_factor) ));
+	else
+	  (void)sprintf(knob_val_pair, "{x} {%d}",
+			dm_unlimit( (int)(rate_rotate[X] * rr_scale_factor) ));
+#endif
 	break;
       case 'y':
 	if(incr_flag){
@@ -1696,6 +1754,15 @@ char	**argv;
 	  else
 	    rate_rotate[Y] = f;
 	}
+
+#if DO_KNOB_EXPERIMENT
+	if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  (void)sprintf(knob_val_pair, "{y} {%d}",
+			dm_unlimit( (int)(edit_rate_rotate[Y] * rr_scale_factor) ));
+	else
+	  (void)sprintf(knob_val_pair, "{y} {%d}",
+			dm_unlimit( (int)(rate_rotate[Y] * rr_scale_factor) ));
+#endif
 	break;
       case 'z':
 	if(incr_flag){
@@ -1709,6 +1776,15 @@ char	**argv;
 	  else
 	    rate_rotate[Z] = f;
 	}
+
+#if DO_KNOB_EXPERIMENT
+	if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  (void)sprintf(knob_val_pair, "{z} {%d}",
+			dm_unlimit( (int)(edit_rate_rotate[Z] * rr_scale_factor) ));
+	else
+	  (void)sprintf(knob_val_pair, "{z} {%d}",
+			dm_unlimit( (int)(rate_rotate[Z] * rr_scale_factor) ));
+#endif
       break;
     case 'X':
       if(incr_flag){
@@ -1722,6 +1798,15 @@ char	**argv;
 	else
 	  rate_slew[X] = f;
       }
+
+#if DO_KNOB_EXPERIMENT
+      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	(void)sprintf(knob_val_pair, "{X} {%d}",
+		      dm_unlimit( (int)(edit_rate_tran[X] * 2047.0) ));
+      else
+	(void)sprintf(knob_val_pair, "{X} {%d}",
+		      dm_unlimit( (int)(rate_slew[X] * 2047.0) ));
+#endif
       break;
     case 'Y':
       if(incr_flag){
@@ -1735,6 +1820,15 @@ char	**argv;
 	else
 	  rate_slew[Y] = f;
       }
+
+#if DO_KNOB_EXPERIMENT
+      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	(void)sprintf(knob_val_pair, "{Y} {%d}",
+		      dm_unlimit( (int)(edit_rate_tran[Y] * 2047.0) ));
+      else
+	(void)sprintf(knob_val_pair, "{Y} {%d}",
+		      dm_unlimit( (int)(rate_slew[Y] * 2047.0) ));
+#endif
       break;
     case 'Z':
       if(incr_flag){
@@ -1748,6 +1842,15 @@ char	**argv;
 	else
 	  rate_slew[Z] = f;
       }
+
+#if DO_KNOB_EXPERIMENT
+      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	(void)sprintf(knob_val_pair, "{Z} {%d}",
+		      dm_unlimit( (int)(edit_rate_tran[Z] * 2047.0) ));
+      else
+	(void)sprintf(knob_val_pair, "{Z} {%d}",
+		      dm_unlimit( (int)(rate_slew[Z] * 2047.0) ));
+#endif
       break;
     case 'S':
       if(incr_flag){
@@ -1761,6 +1864,15 @@ char	**argv;
 	else
 	  rate_zoom = f;
       }
+
+#if DO_KNOB_EXPERIMENT
+      if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag))
+	(void)sprintf(knob_val_pair, "{S} {%d}",
+		      dm_unlimit( (int)(edit_rate_scale * 2047.0) ));
+      else
+	(void)sprintf(knob_val_pair, "{S} {%d}",
+		      dm_unlimit( (int)(rate_zoom * 2047.0) ));
+#endif
       break;
     default:
       goto usage;
@@ -1785,21 +1897,21 @@ char	**argv;
 	  }
 	}
       }else{
-	  if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
+	if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
+	  edit_absolute_rotate[X] = f;
+	  (void)mged_param(interp, 3, edit_absolute_rotate);
+	}else {
+	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
+	    tvec[X] = f - edit_absolute_rotate[X];
+	    tvec[Y] = 0.0;
+	    tvec[Z] = 0.0;
+	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[X] = f;
-	    (void)mged_param(interp, 3, edit_absolute_rotate);
-	  }else {
-	    if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	      tvec[X] = f - edit_absolute_rotate[X];
-	      tvec[Y] = 0.0;
-	      tvec[Z] = 0.0;
-	      mged_rot_obj(interp, 1, tvec);
-	      edit_absolute_rotate[X] = f;
-	    }else{
-	      mged_vrot(f - absolute_rotate[X], 0.0, 0.0);
-	      absolute_rotate[X] = f;
-	    }
+	  }else{
+	    mged_vrot(f - absolute_rotate[X], 0.0, 0.0);
+	    absolute_rotate[X] = f;
 	  }
+	}
       }
 	  
 	  /* wrap around */
@@ -1808,11 +1920,23 @@ char	**argv;
 	  edit_absolute_rotate[X] = edit_absolute_rotate[X] + 360.0;
 	else if(edit_absolute_rotate[X] > 180.0)
 	  edit_absolute_rotate[X] = edit_absolute_rotate[X] - 360.0;
+
+#if DO_KNOB_EXPERIMENT
+	(void)sprintf(knob_val_pair, "{ax} {%d}",
+		      dm_unlimit( (int)(edit_absolute_rotate[X] * ar_scale_factor) ));
+	Tcl_AppendElement(interp, knob_val_pair);
+#endif
       }else{
 	if(absolute_rotate[X] < -180.0)
 	  absolute_rotate[X] = absolute_rotate[X] + 360.0;
 	else if(absolute_rotate[X] > 180.0)
 	  absolute_rotate[X] = absolute_rotate[X] - 360.0;
+
+#if DO_KNOB_EXPERIMENT
+	(void)sprintf(knob_val_pair, "{ax} {%d}",
+		      dm_unlimit( (int)(absolute_rotate[X] * ar_scale_factor) ));
+	Tcl_AppendElement(interp, knob_val_pair);
+#endif
       }
 
       break;
@@ -1834,21 +1958,21 @@ char	**argv;
 	  }
 	}
       }else{
-	  if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
+	if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
+	  edit_absolute_rotate[Y] = f;
+	  (void)mged_param(interp, 3, edit_absolute_rotate);
+	}else {
+	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
+	    tvec[X] = 0.0;
+	    tvec[Y] = f - edit_absolute_rotate[Y];
+	    tvec[Z] = 0.0;
+	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Y] = f;
-	    (void)mged_param(interp, 3, edit_absolute_rotate);
-	  }else {
-	    if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	      tvec[X] = 0.0;
-	      tvec[Y] = f - edit_absolute_rotate[Y];
-	      tvec[Z] = 0.0;
-	      mged_rot_obj(interp, 1, tvec);
-	      edit_absolute_rotate[Y] = f;
-	    }else{
-	      mged_vrot(0.0, f - absolute_rotate[Y], 0.0);
-	      absolute_rotate[Y] = f;
-	    }
+	  }else{
+	    mged_vrot(0.0, f - absolute_rotate[Y], 0.0);
+	    absolute_rotate[Y] = f;
 	  }
+	}
       }
 	  
 	  /* wrap around */
@@ -1857,11 +1981,23 @@ char	**argv;
 	  edit_absolute_rotate[Y] = edit_absolute_rotate[Y] + 360.0;
 	else if(edit_absolute_rotate[Y] > 180.0)
 	  edit_absolute_rotate[Y] = edit_absolute_rotate[Y] - 360.0;
+
+#if DO_KNOB_EXPERIMENT
+	(void)sprintf(knob_val_pair, "{ay} {%d}",
+		      dm_unlimit( (int)(edit_absolute_rotate[Y] * ar_scale_factor) ));
+	Tcl_AppendElement(interp, knob_val_pair);
+#endif
       }else{
 	if(absolute_rotate[Y] < -180.0)
 	  absolute_rotate[Y] = absolute_rotate[Y] + 360.0;
 	else if(absolute_rotate[Y] > 180.0)
 	  absolute_rotate[Y] = absolute_rotate[Y] - 360.0;
+
+#if DO_KNOB_EXPERIMENT
+	(void)sprintf(knob_val_pair, "{ay} {%d}",
+		      dm_unlimit( (int)(absolute_rotate[Y] * ar_scale_factor) ));
+	Tcl_AppendElement(interp, knob_val_pair);
+#endif
       }
 
       break;
@@ -1883,35 +2019,46 @@ char	**argv;
 	  }
 	}
       }else{
-	  if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
+	if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
+	  edit_absolute_rotate[Z] = f;
+	  (void)mged_param(interp, 3, edit_absolute_rotate);
+	}else {
+	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
+	    tvec[X] = 0.0;
+	    tvec[Y] = 0.0;
+	    tvec[Z] = f - edit_absolute_rotate[Z];
+	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Z] = f;
-	    (void)mged_param(interp, 3, edit_absolute_rotate);
-	  }else {
-	    if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	      tvec[X] = 0.0;
-	      tvec[Y] = 0.0;
-	      tvec[Z] = f - edit_absolute_rotate[Z];
-	      mged_rot_obj(interp, 1, tvec);
-	      edit_absolute_rotate[Z] = f;
-	    }else{
-	      mged_vrot(0.0, 0.0, f - absolute_rotate[Z]);
-	      absolute_rotate[Z] = f;
-	    }
-	    
+	  }else{
+	    mged_vrot(0.0, 0.0, f - absolute_rotate[Z]);
+	    absolute_rotate[Z] = f;
 	  }
+	}
       }
 	  
-	  /* wrap around */
+      /* wrap around */
       if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	if(edit_absolute_rotate[Z] < -180.0)
 	  edit_absolute_rotate[Z] = edit_absolute_rotate[Z] + 360.0;
 	else if(edit_absolute_rotate[Z] > 180.0)
 	  edit_absolute_rotate[Z] = edit_absolute_rotate[Z] - 360.0;
+
+#if DO_KNOB_EXPERIMENT
+	(void)sprintf(knob_val_pair, "{az} {%d}",
+		      dm_unlimit( (int)(edit_absolute_rotate[Z] * ar_scale_factor) ));
+	Tcl_AppendElement(interp, knob_val_pair);
+#endif
       }else{
 	if(absolute_rotate[Z] < -180.0)
 	  absolute_rotate[Z] = absolute_rotate[Z] + 360.0;
 	else if(absolute_rotate[Z] > 180.0)
 	  absolute_rotate[Z] = absolute_rotate[Z] - 360.0;
+
+#if DO_KNOB_EXPERIMENT
+	(void)sprintf(knob_val_pair, "{az} {%d}",
+		      dm_unlimit( (int)(absolute_rotate[Z] * ar_scale_factor) ));
+	Tcl_AppendElement(interp, knob_val_pair);
+#endif
       }
 
       break;
@@ -1927,6 +2074,17 @@ char	**argv;
 	else
 	  absolute_slew[X] = f;
       }
+
+#if DO_KNOB_EXPERIMENT
+      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	(void)sprintf(knob_val_pair, "{aX} {%d}",
+		      dm_unlimit( (int)(edit_absolute_tran[X] * 2047.0)));
+      else
+	(void)sprintf(knob_val_pair, "{aX} {%d}",
+		      dm_unlimit( (int)(absolute_slew[X] * 2047.0)));
+
+      Tcl_AppendElement(interp, knob_val_pair);
+#endif
       
       do_tran = 1;
       break;
@@ -1943,6 +2101,16 @@ char	**argv;
 	  absolute_slew[Y] = f;
       }
       
+#if DO_KNOB_EXPERIMENT
+      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	(void)sprintf(knob_val_pair, "{aY} {%d}",
+		      dm_unlimit( (int)(edit_absolute_tran[Y] * 2047.0)));
+      else
+	(void)sprintf(knob_val_pair, "{aY} {%d}",
+		      dm_unlimit( (int)(absolute_slew[Y] * 2047.0)));
+
+      Tcl_AppendElement(interp, knob_val_pair);
+#endif
       do_tran = 1;
       break;
     case 'Z':
@@ -1958,6 +2126,16 @@ char	**argv;
 	  absolute_slew[Z] = f;
       }
       
+#if DO_KNOB_EXPERIMENT
+      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	(void)sprintf(knob_val_pair, "{aZ} {%d}",
+		      dm_unlimit( (int)(edit_absolute_tran[Z] * 2047.0)));
+      else
+	(void)sprintf(knob_val_pair, "{aZ} {%d}",
+		      dm_unlimit( (int)(absolute_slew[Z] * 2047.0)));
+
+      Tcl_AppendElement(interp, knob_val_pair);
+#endif
       do_tran = 1;
       break;
     case 'S':
@@ -1985,6 +2163,14 @@ char	**argv;
 	}
       }
 
+#if DO_KNOB_EXPERIMENT
+      if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag))
+	(void)sprintf(knob_val_pair, "{S} {%d}",
+		      dm_unlimit( (int)(edit_absolute_scale * 2047.0) ));
+      else
+	(void)sprintf(knob_val_pair, "{S} {%d}",
+		      dm_unlimit( (int)(absolute_zoom * 2047.0) ));
+#endif
       break;
     default:
       goto usage;
@@ -2477,3 +2663,484 @@ char	*path;
 
     return(result);
 }
+
+
+int
+f_setview(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    *argv[];
+{
+  double x, y, z;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  if(sscanf(argv[1], "%lf", &x) < 1){
+    Tcl_AppendResult(interp, "f_setview: bad x value - ",
+		     argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[2], "%lf", &y) < 1){
+    Tcl_AppendResult(interp, "f_setview: bad y value - ",
+		     argv[2], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[3], "%lf", &z) < 1){
+    Tcl_AppendResult(interp, "f_setview: bad z value - ",
+		     argv[3], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  setview(x, y, z);
+
+  return TCL_OK;
+}
+
+
+int
+mged_tran(interp, tranvec)
+Tcl_Interp *interp;
+vect_t tranvec;
+{
+  vect_t old_pos;
+  vect_t new_pos;
+  vect_t diff;
+
+  VMOVE(absolute_slew, tranvec);
+  MAT4X3PNT( new_pos, view2model, absolute_slew );
+  MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
+  VSUB2( diff, new_pos, old_pos );
+  VADD2(new_pos, orig_pos, diff);
+  MAT_DELTAS_VEC( toViewcenter, new_pos);
+#if 0
+  MAT_DELTAS_VEC( ModelDelta, new_pos);
+#endif
+  new_mats();
+
+  return TCL_OK;
+}
+
+
+int
+f_tran(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	*argv[];
+{
+  int incr = 0;
+  int x, y, z;
+  vect_t tranvec;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  /* Check for -i option */
+  if(argv[1][0] == '-' && argv[1][1] == 'i'){
+    incr = 1;  /* treat arguments as incremental values */
+    ++argv;
+    --argc;
+  }
+
+  if(sscanf(argv[1], "%d", &x) < 1){
+    Tcl_AppendResult(interp, "f_slewview: bad x value - ",
+		     argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[2], "%d", &y) < 1){
+    Tcl_AppendResult(interp, "f_slewview: bad y value - ",
+		     argv[2], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(argc == 4){
+    if(sscanf(argv[3], "%d", &z) < 1){
+      Tcl_AppendResult(interp, "f_slewview: bad z value - ",
+		       argv[3], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }else{
+    if(incr)
+      z = 0.0;
+    else
+      z = absolute_slew[Z];
+  }
+
+  if(incr){
+    point_t tpoint;
+
+    VSET(tpoint, x, y, z)
+    VADD2(tranvec, absolute_slew, tpoint);
+  }else{
+    VSET(tranvec, x, y, z);
+  }
+
+  return mged_tran(interp, tranvec);
+}
+
+
+int
+f_slewview(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	*argv[];
+{
+  int x, y, z;
+  vect_t slewvec;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  if(sscanf(argv[1], "%d", &x) < 1){
+    Tcl_AppendResult(interp, "f_slewview: bad x value - ",
+		     argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[2], "%d", &y) < 1){
+    Tcl_AppendResult(interp, "f_slewview: bad y value - ",
+		     argv[2], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(argc == 4){
+    if(sscanf(argv[3], "%d", &z) < 1){
+      Tcl_AppendResult(interp, "f_slewview: bad z value - ",
+		       argv[3], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }else
+    z = 0;
+
+  VSET(slewvec, x/2047.0, y/2047.0, z/2047.0);
+  VSUB2(absolute_slew, absolute_slew, slewvec);
+  slewview( slewvec );
+
+  return TCL_OK;
+}
+
+
+/* set view reference base */
+int
+mged_svbase()
+{ 
+  i_Viewscale = Viewscale;
+  MAT_DELTAS_GET(orig_pos, toViewcenter);
+
+  /* reset absolute slider values */
+  VSETALL( absolute_rotate, 0.0);
+  VSETALL( absolute_slew, 0.0);
+  absolute_zoom = 0.0;
+
+  dmaflag = 1;
+
+  return TCL_OK;
+}
+
+
+int
+f_svbase(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  return mged_svbase();
+}
+
+
+/*
+ *	G E T K N O B
+ *
+ *	Procedure called by the Tcl/Tk interface code to find the values
+ *	of the knobs/sliders.
+ */
+
+int
+cmd_getknob(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  int len;
+  fastf_t f;
+  char *cp;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  cp  = argv[1];
+  len = strlen(cp);
+  if(len == 1){
+    switch(*cp){
+    case 'x':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_rate_rotate[X];
+      else
+	f = rate_rotate[X];
+      break;
+    case 'y':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_rate_rotate[Y];
+      else
+	f = rate_rotate[Y];
+      break;
+    case 'z':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_rate_rotate[Z];
+      else
+	f = rate_rotate[Z];
+      break;
+    case 'X':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_rate_tran[X];
+      else
+	f = rate_slew[X];
+      break;
+    case 'Y':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_rate_tran[Y];
+      else
+	f = rate_slew[Y];
+      break;
+    case 'Z':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_rate_tran[Z];
+      else
+	f = rate_slew[Z];
+      break;
+    case 'S':
+      if(EDIT_SCALE && mged_variables.edit)
+	f = edit_rate_scale;
+      else
+	f = rate_zoom;
+      break;
+    default:
+      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }else if(len == 2){
+    if(*cp++ != 'a'){
+      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    switch(*cp){
+    case 'x':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_absolute_rotate[X];
+      else
+	f = absolute_rotate[X];
+      break;
+    case 'y':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_absolute_rotate[Y];
+      else
+	f = absolute_rotate[Y];
+      break;
+    case 'z':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_absolute_rotate[Z];
+      else
+	f = absolute_rotate[Z];
+      break;
+    case 'X':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_absolute_tran[X];
+      else
+	f = absolute_slew[X];
+      break;
+    case 'Y':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_absolute_tran[Y];
+      else
+	f = absolute_slew[Y];
+      break;
+    case 'Z':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_absolute_tran[Z];
+      else
+	f = absolute_slew[Z];
+      break;
+    case 'S':
+      if(EDIT_SCALE && mged_variables.edit)
+	f = edit_absolute_scale;
+      else
+	f = absolute_zoom;
+      break;
+    default:
+      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }else{
+    if(strcmp(argv[1], "xadc") == 0)
+      f = dv_xadc;
+    else if(strcmp(argv[1], "yadc") == 0)
+      f = dv_yadc;
+    else if(strcmp(argv[1], "ang1") == 0)
+      f = dv_1adc;
+    else if(strcmp(argv[1], "ang2") == 0)
+      f = dv_2adc;
+    else if(strcmp(argv[1], "distadc") == 0)
+      f = dv_distadc;
+    else{
+      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
+       return TCL_ERROR;
+    }
+  }
+
+  sprintf(interp->result, "%lf", f);
+  return TCL_OK;
+}
+
+/*
+ *			F _ V R O T _ C E N T E R
+ *
+ *  Set the center of rotation, either in model coordinates, or
+ *  in view (+/-1) coordinates.
+ *  The default is to rotate around the view center: v=(0,0,0).
+ */
+int
+f_vrot_center(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  Tcl_AppendResult(interp, "Not ready until tomorrow.\n", (char *)NULL);
+  return TCL_OK;
+}
+
+/*
+ *			U S E J O Y
+ *
+ *  Apply the "joystick" delta rotation to the viewing direction,
+ *  where the delta is specified in terms of the *viewing* axes.
+ *  Rotation is performed about the view center, for now.
+ *  Angles are in radians.
+ */
+void
+usejoy( xangle, yangle, zangle )
+double	xangle, yangle, zangle;
+{
+	mat_t	newrot;		/* NEW rot matrix, from joystick */
+
+	if( state == ST_S_EDIT )  {
+		if( sedit_rotate( xangle, yangle, zangle ) > 0 )
+			return;		/* solid edit claimed event */
+	} else if( state == ST_O_EDIT )  {
+		if( objedit_rotate( xangle, yangle, zangle ) > 0 )
+			return;		/* object edit claimed event */
+	}
+
+	/* NORMAL CASE.
+	 * Apply delta viewing rotation for non-edited parts.
+	 * The view rotates around the VIEW CENTER.
+	 */
+	bn_mat_idn( newrot );
+	buildHrot( newrot, xangle, yangle, zangle );
+
+	bn_mat_mul2( newrot, Viewrot );
+	{
+		mat_t	newinv;
+		bn_mat_inv( newinv, newrot );
+		wrt_view( ModelDelta, newinv, ModelDelta );
+	}
+	new_mats();
+}
+
+/*
+ *			A B S V I E W _ V
+ *
+ *  The "angle" ranges from -1 to +1.
+ *  Assume rotation around view center, for now.
+ */
+void
+absview_v( ang )
+CONST point_t	ang;
+{
+	point_t	rad;
+
+	VSCALE( rad, ang, bn_pi );	/* range from -pi to +pi */
+	buildHrot( Viewrot, rad[X], rad[Y], rad[Z] );
+	new_mats();
+}
+
+/*
+ *			S E T V I E W
+ *
+ * Set the view.  Angles are DOUBLES, in degrees.
+ *
+ * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
+ * we just replace the rotation matrix.
+ * (This assumes rotation around the view center).
+ */
+void
+setview( a1, a2, a3 )
+double a1, a2, a3;		/* DOUBLE angles, in degrees */
+{
+  point_t model_pos;
+  point_t temp;
+
+  buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
+  new_mats();
+
+  if(absolute_slew[X] != 0.0 ||
+     absolute_slew[Y] != 0.0 ||
+     absolute_slew[Z] != 0.0){
+    VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, temp);
+  }
+
+  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
+    Tcl_Eval(interp, "set_sliders");
+}
+
+
+/*
+ *			S L E W V I E W
+ *
+ *  Given a position in view space,
+ *  make that point the new view center.
+ */
+void
+slewview( view_pos )
+vect_t view_pos;
+{
+  point_t old_model_center;
+  point_t new_model_center;
+  vect_t diff;
+  vect_t temp;
+  mat_t	delta;
+
+  MAT_DELTAS_GET_NEG( old_model_center, toViewcenter );
+
+  MAT4X3PNT( new_model_center, view2model, view_pos );
+  MAT_DELTAS_VEC_NEG( toViewcenter, new_model_center );
+
+  VSUB2( diff, new_model_center, old_model_center );
+  bn_mat_idn( delta );
+  MAT_DELTAS_VEC( delta, diff );
+  bn_mat_mul2( delta, ModelDelta );
+  new_mats();
+
+  VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+  MAT4X3PNT(absolute_slew, model2view, temp);
+
+  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
+    (void)Tcl_Eval(interp, "set_sliders");
+}
+
