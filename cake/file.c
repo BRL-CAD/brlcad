@@ -7,9 +7,9 @@ rcs_id[] = "$Header$";
 
 #include	"cake.h"
 #include	<errno.h>
-#include	<sys/dir.h>
 #include	<sys/stat.h>
 #ifndef		ATT
+#include	<sys/dir.h>
 #include	<sys/time.h>
 #endif
 
