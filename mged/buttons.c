@@ -250,7 +250,7 @@ char *str;{
 		    if( mptr->menu_func != ((void (*)())0) )
 			(*(mptr->menu_func))(mptr->menu_arg, menu, item);
 
-		    if(!ignore_scroll_and_menu)
+		    if(mged_variables.show_menu)
 		      dmaflag = 1;
 		    return;
 		}
@@ -781,7 +781,7 @@ btn_head_menu(i, menu, item)  {
 		break;
 	}
 
-	if(!ignore_scroll_and_menu)
+	if(mged_variables.show_menu)
 	  dmaflag = 1;
 }
 

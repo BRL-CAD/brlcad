@@ -183,7 +183,7 @@ X_open()
 	}
 
 	/* Ignore the old scrollbars and menus */
-	ignore_scroll_and_menu = 1;
+	mged_variables.show_menu = 0;
 
 	return(0);			/* OK */
 }
@@ -205,9 +205,6 @@ X_close()
 
     /* to prevent events being processed after window destroyed */
     win = -1;
-
-    /* Stop ignoring the old scrollbars and menus */
-    ignore_scroll_and_menu = 0;
 }
 
 /*
