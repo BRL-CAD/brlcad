@@ -185,7 +185,6 @@ struct rt_i		*rtip;
 	static vect_t	Hv, A, B, C, D;
 	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
 	static vect_t	work;
-	static vect_t	temp;
 	static fastf_t	f;
 
 	/* Apply rotation to Hv, A,B,C,D */
