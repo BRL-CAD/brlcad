@@ -71,7 +71,18 @@ struct ell_internal  {
 #define RT_ELL_INTERNAL_MAGIC	0x93bb23ff
 #define RT_ELL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ELL_INTERNAL_MAGIC,"ell_internal")
 
-/* ID_ARB8 */
+/*
+ *	ID_ARB8
+ *
+ *  The internal (in memory) form of an ARB8 -- 8 points in space.
+ *  The first 4 form the "bottom" face, the second 4 form the "top" face.
+ */
+struct rt_arb_internal {
+	long	magic;
+	point_t	pt[8];
+};
+#define RT_ARB_INTERNAL_MAGIC	0x9befd010
+#define RT_ARB_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARB_INTERNAL_MAGIC,"rt_arb_internal")
 
 /*
  *	ID_ARS
