@@ -283,6 +283,9 @@ union record  {
 		short	b_pad;
 		dbfloat_t	b_values[8*3];		/* vectors */
 	}  b;
+	/*
+	 *  All records below here are in machine-independent format.
+	 */
 	struct strsol  {
 		char	ss_id;			/* ID_STRSOL */
 		char	ss_pad;
@@ -294,15 +297,15 @@ union record  {
 		char	n_id;			/* DBID_ARBN */
 		char	n_pad;
 		char	n_name[NAMESIZE];
-		int	n_neqn;			/* # equations which follow */
-		int	n_grans;		/* # eqn granules to follow */
+		char	n_neqn[4];		/* # equations which follow */
+		char	n_grans[4];		/* # eqn granules to follow */
 		/* Note that eqn granules are in "network" byte order */
 	}  n;
 	struct pipe_wire_rec  {
 		char	pw_id;			/* DBID_PIPE */
 		char	pw_pad;
 		char	pw_name[NAMESIZE];
-		int	pw_count;		/* # granules used */
+		char	pw_count[4];		/* # granules used */
 		struct exported_pipeseg  {
 			char		eps_type[4];
 			char		eps_start[8*3];
@@ -324,8 +327,8 @@ union record  {
 		char	N_id;			/* DBID_NMG */
 		char	N_pad;
 		char	N_name[NAMESIZE];
-		int	N_count;		/* # additional granules */
-		char	N_structs[22*4+16];	/* # of structs needed */
+		char	N_count[4];		/* # additional granules */
+		char	N_structs[26*4];	/* # of structs needed */
 	} nmg;
 };
 #endif /* !RECORD_DEFINED || !__STDC__ */
