@@ -41,12 +41,12 @@ struct	matparse marble_parse[] = {
 
 
 HIDDEN int  marble_setup(), marble_render();
-extern int mlib_zero();
-extern HIDDEN int rpp_tree();
+extern int	mlib_zero(), mlib_one();
+extern void	mlib_void();
 
 struct	mfuncs marble_mfuncs[] = {
 	"marble",	0,		0,		MFI_HIT,
-	marble_setup,	marble_render,	mlib_zero,	mlib_zero,
+	marble_setup,	marble_render,	mlib_void,	mlib_void,
 
 	(char *)0,	0,		0,		0,
 	0,		0,		0,		0
@@ -54,7 +54,7 @@ struct	mfuncs marble_mfuncs[] = {
 
 
 #define	IPOINTS	10
-double	n[IPOINTS+1][IPOINTS+1][IPOINTS+1];
+HIDDEN double	n[IPOINTS+1][IPOINTS+1][IPOINTS+1];
 
 /*
  * (marble_setup)
@@ -75,7 +75,7 @@ char	**dpp;
 
 	VSETALL(mp->mar_min,  INFINITY);
 	VSETALL(mp->mar_max, -INFINITY);
-	rpp_tree(rp->reg_treetop,mp->mar_min,mp->mar_max);
+	rt_rpp_tree(rp->reg_treetop,mp->mar_min,mp->mar_max);
 
 	for( i = 0; i < IPOINTS+1; i++ )
 		for( j = 0; j < IPOINTS+1; j++ )

@@ -73,60 +73,6 @@ struct	mfuncs stxt_mfuncs[] = {
 	0,		0,		0,		0
 };
 
-
-/*
- *			R P P _ T R E E
- *
- *	NOTE: Modified slightly from librt/tree.c:rt_rpp_tree()
- *
- *	Calculate the bounding RPP of the region whose boolean tree is 'tp'.
- *	Depends on caller having initialized min_rpp and max_rpp.
- *	Returns 0 for failure (and prints a diagnostic), or 1 for success.
- */
-HIDDEN int
-rpp_tree( tp, min_rpp, max_rpp )
-register union tree *tp;
-register fastf_t *min_rpp, *max_rpp;
-{	
-	register int i;
-
-	if( tp == TREE_NULL )  {
-		rt_log( "styx:rpp_tree: NULL tree pointer.\n" );
-		return(0);
-	}
-
-	switch( tp->tr_op )  {
-
-	case OP_SOLID:
-		VMIN( min_rpp, tp->tr_a.tu_stp->st_min );
-		VMAX( max_rpp, tp->tr_a.tu_stp->st_max );
-		return(1);
-
-	default:
-		rt_log( "styx:rpp_tree: unknown op=x%x\n", tp->tr_op );
-		return(0);
-
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-		/* BINARY type */
-		if( !rpp_tree( tp->tr_b.tb_left, min_rpp, max_rpp )  ||
-		    !rpp_tree( tp->tr_b.tb_right, min_rpp, max_rpp )  )
-			return	0;
-		break;
-	case OP_NOT:
-	case OP_GUARD:
-		/* UNARY tree */
-		if( !rpp_tree( tp->tr_b.tb_left, min_rpp, max_rpp ) )
-			return	0;
-		break;
-	}
-	return	1;
-}
-
-
-
 /*
  *			S T X T _ R E A D
  *
@@ -204,7 +150,7 @@ char	**dpp;
 	stp->stx_norm = 0;
 	VSETALL(stp->stx_min,  INFINITY);
 	VSETALL(stp->stx_max, -INFINITY);
-	rpp_tree(rp->reg_treetop,stp->stx_min,stp->stx_max);
+	rt_rpp_tree(rp->reg_treetop,stp->stx_min,stp->stx_max);
 
 	/**	Get input values  **/
 	mlib_parse( matparm, stxt_parse, (mp_off_ty)stp );
