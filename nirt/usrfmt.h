@@ -93,30 +93,55 @@ extern FILE	*fopenrc();
 #define		VTI_REG_ID	23
 #define		VTI_OBLIQ_IN	24
 #define		VTI_OBLIQ_OUT	25
-#define		VTI_OV_REG1_NAME 26
-#define		VTI_OV_REG1_ID	27
-#define		VTI_OV_REG2_NAME 28
-#define		VTI_OV_REG2_ID	29
-#define		VTI_OV_SOL_IN	30
-#define		VTI_OV_SOL_OUT	31
-#define		VTI_OV_LOS	32
-#define		VTI_OV_X_IN	33
-#define		VTI_OV_Y_IN	34
-#define		VTI_OV_Z_IN	35
-#define		VTI_OV_D_IN	36
-#define		VTI_OV_X_OUT	37
-#define		VTI_OV_Y_OUT	38
-#define		VTI_OV_Z_OUT	39
-#define		VTI_OV_D_OUT	40
+#define		VTI_NM_X_IN	26
+#define		VTI_NM_Y_IN	27
+#define		VTI_NM_Z_IN	28
+#define		VTI_NM_D_IN	29
+#define		VTI_NM_H_IN	30
+#define		VTI_NM_V_IN	31
+#define		VTI_NM_X_OUT	32
+#define		VTI_NM_Y_OUT	33
+#define		VTI_NM_Z_OUT	34
+#define		VTI_NM_D_OUT	35
+#define		VTI_NM_H_OUT	36
+#define		VTI_NM_V_OUT	37
+#define		VTI_OV_REG1_NAME 38
+#define		VTI_OV_REG1_ID	39
+#define		VTI_OV_REG2_NAME 40
+#define		VTI_OV_REG2_ID	41
+#define		VTI_OV_SOL_IN	42
+#define		VTI_OV_SOL_OUT	43
+#define		VTI_OV_LOS	44
+#define		VTI_OV_X_IN	45
+#define		VTI_OV_Y_IN	46
+#define		VTI_OV_Z_IN	47
+#define		VTI_OV_D_IN	48
+#define		VTI_OV_X_OUT	49
+#define		VTI_OV_Y_OUT	50
+#define		VTI_OV_Z_OUT	51
+#define		VTI_OV_D_OUT	52
 
 #define		direct(i)	(ValTab[VTI_X_DIR + i].value.fval)
 #define		target(i)	(ValTab[VTI_X_ORIG + i].value.fval)
 #define		r_entry(i)	(ValTab[VTI_X_IN + i].value.fval)
 #define		r_exit(i)	(ValTab[VTI_X_OUT + i].value.fval)
+#define		n_entry(i)	(ValTab[VTI_NM_X_IN + i].value.fval)
+#define		n_exit(i)	(ValTab[VTI_NM_X_OUT + i].value.fval)
 #define		ov_entry(i)	(ValTab[VTI_OV_X_IN + i].value.fval)
 #define		ov_exit(i)	(ValTab[VTI_OV_X_OUT + i].value.fval)
 #define		grid(i)		(ValTab[VTI_H + i].value.fval)
 #define		azimuth()	(ValTab[VTI_A].value.fval)
 #define		elevation()	(ValTab[VTI_E].value.fval)
 
+/* Define D, H, and V for use with the preceeding macros.
+ *
+ *	NOTE! --- H was defined in vmath.h as the index of
+ *		  the fourth homogeneous coordinate.  In
+ *		  NIRT, we are not using H that way!
+ */
 #define		D		3
+#ifdef H
+#	undef H
+#endif
+#define		H		4
+#define		V		5

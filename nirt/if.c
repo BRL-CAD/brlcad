@@ -52,6 +52,8 @@ struct partition 	*part_head;
 	{
 	    r_entry(i) = part-> pt_inhit -> hit_point[i];
 	    r_exit(i) = part-> pt_outhit -> hit_point[i];
+	    n_entry(i) = part -> pt_inhit -> hit_normal[i];
+	    n_exit(i) = part -> pt_outhit -> hit_normal[i];
 	}
 	r_entry(D) = r_entry(X) * cos(er) * cos(ar)
 		    + r_entry(Y) * cos(er) * sin(ar)
@@ -59,6 +61,22 @@ struct partition 	*part_head;
 	r_exit(D) = r_exit(X) * cos(er) * cos(ar)
 		    + r_exit(Y) * cos(er) * sin(ar)
 		    + r_exit(Z) * sin(er);
+	n_entry(D) = n_entry(X) * cos(er) * cos(ar)
+		    + n_entry(Y) * cos(er) * sin(ar)
+		    + n_entry(Z) * sin(er);
+	n_entry(H) = n_entry(X) * (-sin(ar))
+		    + n_entry(Y) * cos(ar);
+	n_entry(V) = n_entry(X) * (-sin(er)) * cos(ar)
+		    + n_entry(Y) * (-sin(er)) * sin(ar)
+		    + n_entry(Z) * cos(er);
+	n_exit(D) = n_exit(X) * cos(er) * cos(ar)
+		    + n_exit(Y) * cos(er) * sin(ar)
+		    + n_exit(Z) * sin(er);
+	n_exit(H) = n_exit(X) * (-sin(ar))
+		    + n_exit(Y) * cos(ar);
+	n_exit(V) = n_exit(X) * (-sin(er)) * cos(ar)
+		    + n_exit(Y) * (-sin(er)) * sin(ar)
+		    + n_exit(Z) * cos(er);
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
 	ValTab[VTI_PATH_NAME].value.sval =
 	    (char *)(part -> pt_regionp -> reg_name);
