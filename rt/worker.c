@@ -94,7 +94,7 @@ grid_setup()
 	}
 
 	/* "Lower left" corner of viewing plane */
-	if( rt_perspective )  {
+	if( rt_perspective > 0.0 )  {
 		fastf_t	zoomout;
 		extern double mat_degtorad;
 		zoomout = 1.0 / tan( mat_degtorad * rt_perspective / 2.0 );
@@ -115,6 +115,8 @@ grid_setup()
 		ap.a_rbeam = 0.5 * viewsize / width;
 		ap.a_diverge = 0;
 	}
+	if( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
+		rt_bomb("zero-radius beam");
 	MAT4X3PNT( viewbase_model, view2model, temp );
 }
 
@@ -214,7 +216,7 @@ worker()
 					a.a_x, dx_model,
 					a.a_y, dy_model );
 			}
-			if( rt_perspective )  {
+			if( rt_perspective > 0.0 )  {
 				VSUB2( a.a_ray.r_dir,
 					point, eye_model );
 				VUNITIZE( a.a_ray.r_dir );
@@ -234,7 +236,7 @@ worker()
 
 				VSUB2(  point, point,
 					left_eye_delta );
-				if( rt_perspective )  {
+				if( rt_perspective > 0.0 )  {
 					VSUB2( a.a_ray.r_dir,
 						point, eye_model );
 					VUNITIZE( a.a_ray.r_dir );
