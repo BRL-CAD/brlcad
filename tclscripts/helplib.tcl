@@ -30,16 +30,12 @@ set helplib_data(dm_getaspect)		{{} {Get window's aspect ratio }}
 set helplib_data(dm_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 
 set helplib_data(wdb_adjust)		{{object attr value ?attr value?} {adjust object's attribute(s)}}
-set helplib_data(wdb_attr)        {{object [attr_name [attr_value]] [attr_name attr_value ...]}
-	      {get, assign or adjust attribute values for the specified object.
-              with only an object specified,
-                    displays all the attributes of that object.
-              with an object and an attribute name specified,
-                    displays the value of that attribute.
-              with an object and attribute value pairs specified,
-                    it sets the value of the specified attributes for that object}   }
-set helplib_data(wdb_attr_rm)     {{object attr_name [attr_name attr_name ...]}
-	      {delete attributes for the specified object}}
+set helplib_data(wdb_attr)        {{ {set|get|rm|append} object [args]}
+	      {set, get, remove or append to attribute values for the specified object.
+         for the "set" subcommand, the arguments are attribute name/value pairs
+         for the "get" subcommand, the arguments are attribute names
+         for the "rm" subcommand, the arguments are attribute names
+         for the "append" subcommand, the arguments are attribute name/value pairs } }
 set helplib_data(wdb_binary)		{{(-i|-o) major_type minor_type dest source}
                 {manipulate opaque objects.
                  Must specify one of -i (for creating or adjusting objects (input))
