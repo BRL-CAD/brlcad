@@ -36,7 +36,8 @@ _LOCAL_ int	stk_dopen(),
 		stk_zoom_set(),
 		stk_curs_set(),
 		stk_cmemory_addr(),
-		stk_cscreen_addr();
+		stk_cscreen_addr(),
+		stk_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO stk_interface =  {
@@ -54,6 +55,7 @@ FBIO stk_interface =  {
 	stk_curs_set,		/* curs_set		*/
 	stk_cmemory_addr,	/* cursor_move_memory_addr */
 	stk_cscreen_addr,	/* cursor_move_screen_addr */
+	stk_help,
 	"Device Stacker",	/* device description	*/
 	1280,			/* max width		*/
 	1024,			/* max height		*/
@@ -104,6 +106,11 @@ int	width, height;
 	while( *cp != NULL && *cp != ' ' && *cp != '\t' )
 		cp++;	/* skip suffix */
 
+	/* special check for a possibly user confusing case */
+	if( cp == NULL ) {
+		fb_log("stack_dopen: No devices specified\n");
+	}
+
 	i = 0;
 	while( i < MAXIF && *cp != NULL ) {
 		char	*dp;
@@ -112,7 +119,7 @@ int	width, height;
 		if( *cp == NULL )
 			break;
 		dp = devbuf;
-		while( *cp != NULL && *cp != ' ' && *cp != '\t' && *cp != ';' )
+		while( *cp != NULL && *cp != ';' )
 			*dp++ = *cp++;
 		*dp = NULL;
 		if( (SI(ifp)->if_list[i] = fb_open(devbuf, width, height)) != FBIO_NULL )
@@ -317,6 +324,26 @@ int	x, y;
 
 	while( *ip != (FBIO *)NULL ) {
 		fb_scursor( (*ip), mode, x, y );
+		ip++;
+	}
+
+	return(0);
+}
+
+_LOCAL_ int
+stk_help( ifp )
+FBIO	*ifp;
+{
+	register FBIO **ip = SI(ifp)->if_list;
+	int	i;
+
+	fb_log("Device: /dev/stack\n");
+	fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
+
+	i = 0;
+	while( *ip != (FBIO *)NULL ) {
+		fb_log("=== Current stack device #%d ===\n", i++);
+		fb_help( (*ip) );
 		ip++;
 	}
 
