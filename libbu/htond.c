@@ -44,6 +44,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
 #define	OUT_IEEE_ZERO	{ \
@@ -68,30 +70,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	*out++ = 0xAD; \
 	continue; } \
 
-
-#if defined(sun) || (defined(alliant) && !defined(i860)) || \
-	defined(ardent) || \
-	defined(stellar) || defined(sparc) || defined(mips) || \
-	(defined(sgi) && defined(mips)) || \
-	(defined(__sgi) && defined(__mips)) || \
-	defined(pyr) || defined(apollo) || defined(aux) || \
-	defined(_AIX) || defined(NeXT) || defined(hpux)
-
-	/*  These systems already operate in
-	 *  IEEE format internally, using big-endian order.
-	 */
-#	define	NATURAL_IEEE	yes
-#endif
-
-#if defined(n16) || defined(i386) || defined(i860) || defined(__stardent)
-	/* These systems operate in IEEE format, using little-endian order */
-#	define	REVERSED_IEEE	yes
-#endif
-
-#if defined(NATURAL_IEEE) && defined(REVERSED_IEEE)
-# include "htond.c:  ERROR, two IEEE conversions defined for this machine type"
-#endif
-
 /*
  *			H T O N D
  *
@@ -103,22 +81,16 @@ register unsigned char	*out;
 register unsigned char	*in;
 int			count;
 {
-#ifdef	NATURAL_IEEE
+#if	defined(NATURAL_IEEE)
 	/*
 	 *  First, the case where the system already operates in
 	 *  IEEE format internally, using big-endian order.
 	 *  These are the lucky ones.
 	 */
-#	ifdef SYSV
-	memcpy( out, in, count*8 );
-#	else
 	bcopy( in, out, count*8 );
-#	endif
 	return;
 #	define	HTOND	yes
-#endif
-
-#if	defined(REVERSED_IEEE)
+#elif	defined(REVERSED_IEEE)
 	/* This machine uses IEEE, but in little-endian byte order */
 	register int	i;
 	for( i=count-1; i >= 0; i-- )  {
@@ -133,9 +105,10 @@ int			count;
 		in += 8;
 	}
 #	define	HTOND	yes
-#endif
 
-#if	defined(sgi) && !defined(mips)
+	/* Now, for the machine-specific stuff. */
+
+#elif	defined(sgi) && !defined(mips)
 	/*
 	 *  Silicon Graphics Iris workstation.
 	 *  On the 2-D and 3-D, a double is type converted to a float
@@ -168,9 +141,7 @@ int			count;
 	}
 	return;
 #	define	HTOND	yes
-#endif
-
-#if	defined(vax)
+#elif	defined(vax)
 	/*
 	 *  Digital Equipment's VAX.
 	 *  VAX order is +6, +4, +2, sign|exp|fraction+0
@@ -213,9 +184,7 @@ int			count;
 	}
 	return;
 #	define	HTOND	yes
-#endif
-
-#if	defined(ibm) || defined(gould)
+#elif	defined(ibm) || defined(gould)
 	/*
 	 *  IBM Format.
 	 *  7-bit exponent, base 16.
@@ -319,9 +288,7 @@ ibm_normalized:
 	}
 	return;
 #	define	HTOND	yes
-#endif
-
-#if	defined(CRAY1) || defined(CRAY2) || defined(eta10)
+#elif	defined(CRAY1) || defined(CRAY2) || defined(eta10)
 	/*
 	 *  Cray version.  Somewhat easier using 64-bit registers.
 	 *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
@@ -375,9 +342,7 @@ ibm_normalized:
 	}
 	return;
 #	define	HTOND	yes
-#endif
-
-#if defined(convex) || defined(__convex__)
+#elif defined(convex) || defined(__convex__)
 	/*
 	 *  Convex C1 version, for Native Convex floating point.
 	 *  (Which seems to be VAX "G" format -- almost IEEE).
@@ -435,16 +400,10 @@ int			count;
 	 */
 	if( sizeof(double) != 8 )
 		fprintf(stderr, "ntohd:  sizeof(double) != 8\n");
-#	ifdef SYSV
-	memcpy( out, in, count*8 );
-#	else
 	bcopy( in, out, count*8 );
-#	endif
 	return;
 #	define	NTOHD	yes
-#endif
-
-#if	defined(REVERSED_IEEE)
+#elif	defined(REVERSED_IEEE)
 	/* This machine uses IEEE, but in little-endian byte order */
 	register int	i;
 	for( i=count-1; i >= 0; i-- )  {
@@ -459,9 +418,7 @@ int			count;
 		in += 8;
 	}
 #	define	NTOHD	yes
-#endif
-
-#if	defined(sgi) && !defined(mips)
+#elif	defined(sgi) && !defined(mips)
 	/*
 	 *  Silicon Graphics Iris workstation.
 	 *  See comments in htond() for discussion of the braindamage.
@@ -489,9 +446,7 @@ int			count;
 	}
 	return;
 #	define	NTOHD	yes
-#endif
-
-#if	defined(vax)
+#elif	defined(vax)
 	/*
 	 *  Digital Equipment's VAX.
 	 *  VAX order is +6, +4, +2, sign|exp|fraction+0
@@ -550,9 +505,7 @@ vax_undef:		*out++ = 0x80;		/* VAX "undefined" */
 	}
 	return;
 #	define	NTOHD	yes
-#endif
-
-#if	defined(ibm) || defined(gould)
+#elif	defined(ibm) || defined(gould)
 	/*
 	 *  IBM Format.
 	 *  7-bit exponent, base 16.
@@ -642,9 +595,7 @@ ibm_undef:		*out++ = 0;		/* IBM zero.  No NAN */
 	}
 	return;
 #	define	NTOHD	yes
-#endif
-
-#if	defined(CRAY1) || defined(CRAY2) || defined(eta10)
+#elif	defined(CRAY1) || defined(CRAY2) || defined(eta10)
 	/*
 	 *  Cray version.  Somewhat easier using 64-bit registers.
 	 *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
@@ -693,9 +644,7 @@ cray_out:
 	}
 	return;
 #	define	NTOHD	yes
-#endif
-
-#if defined(convex) || defined(__convex__)
+#elif defined(convex) || defined(__convex__)
 	/*
 	 *  Convex C1 version, for Native Convex floating point.
 	 */
