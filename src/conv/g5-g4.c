@@ -51,12 +51,10 @@
 
 #include "common.h"
 
-
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <stdio.h>
@@ -194,60 +192,3 @@ main(int argc, char **argv)
 	bu_log( "%ld attempted objects failed to convert\n", errors);
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

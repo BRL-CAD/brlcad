@@ -1,11 +1,59 @@
+/****** conv/g4-g5.c
+*
+*       NAME
+*               g4-g5: program to convert version 4 databases to version 5
+*
+*       COPYRIGHT
+*               Re-distribution of this software is restricted, as described in your
+*               "Statement of Terms and Conditions for the Release of The BRL-CAD
+*               Package" agreement.
+*
+*               Portions of this software and the associated databases and images are
+*               Copyright (C) 1985, 1986, 1987, 1988, 1989, 1991, 1994, 1995, 2000, 2001
+*               by the United States Army in all countries except the USA. Unauthorized
+*               redistribution in any form is prohibited. Recipients of this
+*               distribution are authorized unlimited use within their corporation,
+*               organization, or agency.
+*
+*               The mark "BRL-CAD" is a Registered Trademark of the United States Army.
+*               All rights reserved.
+*
+*               There is no warranty or other guarantee of fitness for this software,
+*               it is provided solely "as is".  Bug reports or fixes must be sent
+*               to ARL, which may or may not act on them.
+*
+*               This software was developed by and is proprietary to the United States
+*               Government, and any use of the software without the written permission
+*               of the US Army Research Laboratory is strictly prohibited. Any
+*               unauthorized use of the software will be construed as an infringement of
+*               the Government's rights and will subject the unauthorized user to
+*               action(s) for infringement damages. (BRL MFR 380-15, Feb-88)
+*
+*               The software in the "contributed" directory is Public Domain, Distribution
+*               Unlimited.  In addition, certain other modules in the BRL-CAD package
+*               bear this designation.  Files so marked are available for unlimited use.
+*       USAGE
+*               g4-g5 v4_input_database v5_output_database
+*
+*       DESCRIPTION
+*               Imports version 4 database objects and writes out the equivalent v5 database
+*               objects as best it can.
+*
+*       AUTHOR
+*               John R. Anderson
+*
+*       EXAMPLE
+*               g4-g5 model_v4.g model_v5.g
+*
+******
+*/
+
 #include "common.h"
 
-
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <stdio.h>
@@ -16,7 +64,6 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-
 
 
 int
@@ -135,60 +182,3 @@ main(int argc, char **argv)
 	fprintf(stderr, "%ld objects failed to convert\n", errors);
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
