@@ -86,7 +86,7 @@ vect_t l2vec;			/* 2st light vector */
 vect_t l0pos;			/* pos of light0 (overrides l0vec) */
 extern double AmbientIntensity;
 
-#define MAX_IREFLECT	3	/* Maximum internal reflection level */
+#define MAX_IREFLECT	6	/* Maximum internal reflection level */
 #define MAX_BOUNCE	3	/* Maximum recursion level */
 
 HIDDEN int	rfr_hit(), rfr_miss();
@@ -867,7 +867,7 @@ register struct application *ap;
 			VPRINT("LIGHT0 at", l0pos);
 			break;
 		}
-		rtlog("No explicit light\n");
+		if(debug)rtlog("No explicit light\n");
 		goto debug_lighting;
 	case 1:
 	case 2:
