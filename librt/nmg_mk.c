@@ -1492,6 +1492,35 @@ struct loopuse *lu1;
 	return(0);
 }
 
+/*
+ *			N M G _ E N S U R E _ V E R T E X
+ *
+ *	Ensure that this shell contains a single-vertex loop
+ *	on the given vertex.
+ *	If it does not, then one is created.
+ */
+void nmg_ensure_vertex(v, s)
+struct vertex	*v;
+struct shell	*s;
+{
+	struct vertexuse *vu;
+
+	NMG_CK_VERTEX(v);
+	NMG_CK_SHELL(s);
+
+	/* try to find the vertex in a loopuse of this shell */
+	for (RT_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
+		NMG_CK_VERTEXUSE(vu);
+		if (*vu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+		NMG_CK_LOOPUSE(vu->up.lu_p);
+		NMG_CK_SHELL(vu->up.lu_p->up.s_p);
+		if( vu->up.lu_p->up.s_p == s)
+			return;
+	}
+
+	(void)nmg_mlv(&s->l.magic, v, OT_SAME);
+}
+
 /*			N M G _ D E M O T E _ E U
  *
  *	Demote a wire edge into a pair of verticies
