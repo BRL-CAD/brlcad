@@ -1381,7 +1381,7 @@ CONST struct db_i		*dbip;
 
 	/* scale values into local buffer */
 	VSCALE( &vec[0*3], tip->v, local2mm );
-	VCOPY(  &vec[1*3], tip->h);		/* UNIT vector, not scaled */
+	VMOVE(  &vec[1*3], tip->h);		/* UNIT vector, not scaled */
 	vec[2*3+0] = tip->r_a*local2mm;
 	vec[2*3+1] = tip->r_h*local2mm;
 
