@@ -66,10 +66,10 @@ EXTRA_DIST=ChangeLog $(PACKAGE).spec.in
  
 .PHONY : rpm
 rpm: dist
-	cp $(PACKAGE)-$(VERSION).tar.gz /usr/src/redhat/SOURCES/
-	rpm -ba $(PACKAGE).spec
-	cp /usr/src/redhat/RPMS/i386/$(PACKAGE)-$(VERSION)-*.i386.rpm .
-	cp /usr/src/redhat/SRPMS/$(PACKAGE)-$(VERSION)-*.src.rpm .
- 
+	cp $(PACKAGE)-$(VERSION).tar.gz ${HOME}/rpm/SOURCES/
+	rpmbuild -ba $(PACKAGE).spec
+	cp ${HOME}/rpm/RPMS/i386/$(PACKAGE)-$(VERSION)-*.i386.rpm .
+	cp ${HOME}/rpm/SRPMS/$(PACKAGE)-$(VERSION)-*.src.rpm .
+
 packages: rpm
 
