@@ -35,10 +35,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nurb.h"
 
 static void 	vertex_neighborhood RT_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
-RT_EXTERN(void	nmg_isect_ray_model, (struct ray_data *rd));
-
-/* XXX move to ./nmg_rt.h */
-#define NMG_RAY_STATE_ANY	8
 
 CONST char *
 nmg_rt_inout_str( code )
