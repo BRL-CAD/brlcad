@@ -32,7 +32,7 @@ FBIO *fbp;
 
 int	fbwidth = 512;
 int	fbheight = 512;
-int	flavor = BINARY;
+int	flavor = DECIMAL;
 int	clear = 0;
 
 char usage[] = "\
