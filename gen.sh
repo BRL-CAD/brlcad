@@ -174,6 +174,7 @@ BDIRS="bench \
 	edpix \
 	nirt irprep \
 	xmged \
+	anim \
 	jove \
 	canon \
 	dhrystone"
