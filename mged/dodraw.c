@@ -176,6 +176,8 @@ int			id;
 	union tree	*curtree;
 	int		dashflag;		/* draw with dashed lines */
 	struct rt_list	vhead;
+	struct rt_tess_tol	ttol;
+	struct rt_tol		tol;
 
 	RT_LIST_INIT( &vhead );
 
@@ -197,10 +199,22 @@ int			id;
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
+	ttol.magic = RT_TESS_TOL_MAGIC;
+	ttol.abs = mged_abs_tol;
+	ttol.rel = mged_rel_tol;
+	ttol.norm = mged_nrm_tol;
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
 	if( rt_functab[id].ft_plot(
 	    &vhead,
 	    &intern,
-	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
+	    &ttol, &tol ) < 0 )  {
 		printf("%s: plot failure\n",
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 		rt_functab[id].ft_ifree( &intern );
@@ -234,6 +248,8 @@ int			id;
 	struct nmgregion	*r1;
 	union tree		*curtree;
 	struct directory	*dp;
+	struct rt_tess_tol	ttol;
+	struct rt_tol		tol;
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
@@ -246,9 +262,21 @@ int			id;
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
+	ttol.magic = RT_TESS_TOL_MAGIC;
+	ttol.abs = mged_abs_tol;
+	ttol.rel = mged_rel_tol;
+	ttol.norm = mged_nrm_tol;
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
 	if( rt_functab[id].ft_tessellate(
 	    &r1, mged_nmg_model, &intern,
-	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
+	    &ttol, &tol ) < 0 )  {
 		rt_log("%s: tessellation failure\n",
 			dp->d_namep);
 		rt_functab[id].ft_ifree( &intern );
@@ -287,9 +315,9 @@ register union tree	*tp;
 	register struct nmgregion	*l;
 	register struct nmgregion	*r;
 	vect_t			diag;
-	fastf_t			tol;
 	fastf_t			rel;
 	int			op;
+	struct rt_tol		tol;
 
 	switch( tp->tr_op )  {
 	case OP_NOP:
@@ -344,23 +372,23 @@ com:
 	 *  The geometry is guaranteed to contain no errors larger than
 	 *  this tolerance value.
 	 */
-	tol = mged_abs_tol;
+	tol.dist = mged_abs_tol;
 	if( mged_rel_tol > 0.0 )  {
 		if( l->ra_p )  {
 			VSUB2( diag, l->ra_p->max_pt, l->ra_p->min_pt );
 			rel = MAGNITUDE(diag) * mged_rel_tol;
-			if( tol <= 0.0 || rel < tol )  tol = rel;
+			if( tol.dist <= 0.0 || rel < tol.dist )  tol.dist = rel;
 		}
 		if( r->ra_p )  {
 			VSUB2( diag, r->ra_p->max_pt, r->ra_p->min_pt );
 			rel = MAGNITUDE(diag) * mged_rel_tol;
-			if( tol <= 0.0 || rel < tol )  tol = rel;
+			if( tol.dist <= 0.0 || rel < tol.dist )  tol.dist = rel;
 		}
 	}
-	if( tol <= 0.0 )  tol = 0.1;		/* mm */
+	if( tol.dist <= 0.0 )  tol.dist = 0.1;		/* mm */
 
 	/* input r1 and r2 are destroyed, output is new r1 */
-	r = nmg_do_bool( l, r, op, tol );
+	r = nmg_do_bool( l, r, op, &tol );
 
 	/* debug */
 	NMG_CK_REGION( r );
@@ -766,6 +794,8 @@ mat_t		mat;
 	int			id;
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
+	struct rt_tess_tol	ttol;
+	struct rt_tol		tol;
 
 	RT_LIST_INIT( &vhead );
 
@@ -802,8 +832,20 @@ mat_t		mat;
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
+	ttol.magic = RT_TESS_TOL_MAGIC;
+	ttol.abs = mged_abs_tol;
+	ttol.rel = mged_rel_tol;
+	ttol.norm = mged_nrm_tol;
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
 	if( rt_functab[id].ft_plot( &vhead, &intern,
-	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
+	    &ttol, &tol ) < 0 )  {
 		(void)printf("%s: re-plot failure\n",
 			sp->s_path[sp->s_last]->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );

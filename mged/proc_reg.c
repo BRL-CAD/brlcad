@@ -362,6 +362,8 @@ struct mater_info	*materp;
 	int dashflag;		/* draw with dashed lines */
 	int count;
 	struct rt_list	vhead;
+	struct rt_tess_tol	ttol;
+	struct rt_tol		toler;
 
 	RT_LIST_INIT( &vhead );
 	if( regmemb >= 0 ) {
@@ -429,9 +431,21 @@ struct mater_info	*materp;
 		}
 		RT_CK_DB_INTERNAL( &intern );
 
+		ttol.magic = RT_TESS_TOL_MAGIC;
+		ttol.abs = mged_abs_tol;
+		ttol.rel = mged_rel_tol;
+		ttol.norm = mged_nrm_tol;
+
+		/* XXX These need to be improved */
+		toler.magic = RT_TOL_MAGIC;
+		toler.dist = 0.005;
+		toler.dist_sq = toler.dist * toler.dist;
+		toler.perp = 1e-6;
+		toler.para = 1 - toler.perp;
+
 		if( rt_functab[id].ft_plot( &vhead,
 		    &intern,
-		    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
+		    &ttol, &toler ) < 0 )  {
 			printf("%s: vector conversion failure\n",
 				cur_path[pathpos]->d_namep);
 		}
@@ -1055,6 +1069,14 @@ struct rt_list	*vhead;
 	static int itemp;
 	static int lmemb, umemb;/* lower and upper limit of members of region
 				 * from one OR to the next OR */
+	struct rt_tol	toler;
+
+	/* XXX These need to be improved */
+	toler.magic = RT_TOL_MAGIC;
+	toler.dist = 0.005;
+	toler.dist_sq = toler.dist * toler.dist;
+	toler.perp = 1e-6;
+	toler.para = 1 - toler.perp;
 
 	/* calculate center and scale for COMPLETE REGION since may have ORs */
 	lmemb = umemb = 0;
@@ -1128,7 +1150,7 @@ orregion:	/* sent here if region has or's */
 					}
 noskip:
 					if( rt_isect_2planes( xb, wb,
-					    &peq[i*4], &peq[j*4], reg_min ) < 0 )
+					    &peq[i*4], &peq[j*4], reg_min, &toler ) < 0 )
 						continue;
 
 					/* check if ray intersects region */
@@ -1366,6 +1388,7 @@ fastf_t *p, *q, *r, *s;
 {
 	register fastf_t *pp,*pf;
 	register int i;
+	struct rt_tol	toler;
 
 	/* If all 4 pts have coord outside region RPP,
 	 * discard this plane, as the polygon is definitely outside */
@@ -1382,7 +1405,12 @@ fastf_t *p, *q, *r, *s;
 	/* Do these three points form a valid plane? */
 	/* WARNING!!  Fourth point is never even looked at!! */
 	pp = &peq[lc*4];
-	if( rt_mk_plane_3pts( pp, p, q, r, 1.0e-6 ) < 0 )  return;
+	toler.magic = RT_TOL_MAGIC;
+	toler.dist = 1e-6;
+	toler.dist_sq = toler.dist * toler.dist;
+	toler.perp = 1e-6;
+	toler.para = 1 - toler.perp;
+	if( rt_mk_plane_3pts( pp, p, q, r, &toler ) < 0 )  return;
 
 	if((pp[3]-VDOT(pp,pcenter)) > 0.)  {
 		VREVERSE( pp, pp );

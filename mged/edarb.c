@@ -418,13 +418,21 @@ int loc, use1, use2, use3;
 struct solidrec *sp;
 {
 	vect_t	a,b,c;
+	struct rt_tol	tol;
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	/* XXX This converts data types as well! */
 	VMOVE( a, &sp->s_values[use1*3] );
 	VMOVE( b, &sp->s_values[use2*3] );
 	VMOVE( c, &sp->s_values[use3*3] );
 
-	return( rt_mk_plane_3pts( es_peqn[loc], a, b, c, 0.000001 ) );
+	return( rt_mk_plane_3pts( es_peqn[loc], a, b, c, &tol ) );
 }
 
 /*	INTERSECT:
