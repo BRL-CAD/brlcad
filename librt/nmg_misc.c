@@ -41,6 +41,34 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
+fastf_t
+mat_determinant( m )
+CONST mat_t m;
+{
+	fastf_t det[4];
+	fastf_t sum;
+
+	det[0] = m[5] * (m[10]*m[15] - m[11]*m[14])
+		-m[6] * (m[ 9]*m[15] - m[11]*m[13])
+		+m[7] * (m[ 9]*m[14] - m[10]*m[13]);
+
+	det[1] = m[4] * (m[10]*m[15] - m[11]*m[14])
+		-m[6] * (m[ 8]*m[15] - m[11]*m[12])
+		+m[7] * (m[ 8]*m[14] - m[10]*m[12]);
+
+	det[2] = m[4] * (m[ 9]*m[15] - m[11]*m[13])
+		-m[5] * (m[ 8]*m[15] - m[11]*m[12])
+		+m[7] * (m[ 8]*m[13] - m[ 9]*m[12]);
+
+	det[3] = m[4] * (m[ 9]*m[14] - m[10]*m[13])
+		-m[5] * (m[ 8]*m[14] - m[10]*m[12])
+		+m[6] * (m[ 8]*m[13] - m[ 9]*m[12]);
+
+	sum = m[0]*det[0] - m[1]*det[1] + m[2]*det[2] - m[3]*det[3];
+
+	return( sum );
+
+}
 
 /*	R T _ I S E C T _ P L A N E S
  *
@@ -60,8 +88,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *
  * There is likely a more economical solution rather than matrix inversion, but
  * mat_inv was handy at the time.
+ *
+ * Checks if these planes form a singular matrix and returns:
+ *	0 - all is well
+ *	1 - planes form a singular matrix (no solution)
  */
-void
+int
 rt_isect_planes( pt , planes , pl_count )
 point_t pt;
 CONST plane_t planes[];
@@ -71,6 +103,7 @@ CONST int pl_count;
 	mat_t inverse;
 	mat_t test;
 	vect_t hpq;
+	fastf_t det;
 	int i,j;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
@@ -103,9 +136,16 @@ CONST int pl_count;
 	matrix[9] = matrix[6];
 	matrix[15] = 1.0;
 
+	/* Check that we don't have a singular matrix */
+	det = mat_determinant( matrix );
+	if( NEAR_ZERO( det , SMALL_FASTF ) )
+		return( 1 );
+
 	mat_inv( inverse , matrix );
 
 	MAT4X3PNT( pt , inverse , hpq );
+
+	return( 0 );
 
 }
 
@@ -161,9 +201,6 @@ CONST struct rt_tol *tol;
 		fu = (struct faceuse *)NMG_TBL_GET( &fus , fu_no );
 
 		NMG_CK_FACEUSE( fu );
-
-		if( rt_g.NMG_debug & DEBUG_BASIC )
-			rt_log( "nmg_extrude_cleanup: fu=x%x\n" );
 
 		/* move fu to another shell to avoid radial edge problems */
 		nmg_mv_fu_between_shells( s_fu, s, fu );
@@ -498,6 +535,103 @@ plane_t pl;
 
 	plane[3] = pt_dot_plane/pt_count;
 	HMOVE( pl , plane );
+
+	return( area );
+}
+
+/*	The following routines calculate surface area of
+ *	NMG objects. Note that this includes all surfaces,
+ *	not just external surfaces, i.e., an NMG object consisting
+ *	of two adjacent cubes with a coincident face will have a
+ *	surface area of 12*s*s (s is length of one side)
+ */
+
+fastf_t
+nmg_faceuse_area( fu )
+CONST struct faceuse *fu;
+{
+	struct loopuse *lu;
+	plane_t plane;
+	fastf_t area=0.0;
+	fastf_t tmp_area;
+
+	NMG_CK_FACEUSE( fu );
+
+	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	{
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		tmp_area = nmg_loop_plane_area( lu , plane );
+		if( tmp_area < 0.0 )
+			continue;
+
+		if( lu->orientation == OT_SAME )
+			area += tmp_area;
+		else if( lu->orientation == OT_OPPOSITE )
+			area -= tmp_area;
+		else
+		{
+			rt_log( "nmg_faceuse_area: Cannot calculate area (lu with %s orientation)\n",
+				nmg_orientation( lu->orientation ) );
+			return( (fastf_t)-1.0 );
+		}
+	}
+
+	return( area );
+}
+
+fastf_t
+nmg_shell_area( s )
+CONST struct shell *s;
+{
+	fastf_t area=0.0;
+	fastf_t tmp_area;
+	struct faceuse *fu;
+
+	NMG_CK_SHELL( s );
+
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		tmp_area = nmg_faceuse_area( fu );
+		if( tmp_area < 0.0 )
+			continue;
+
+		area += tmp_area;
+	}
+
+	return( area );
+}
+
+fastf_t
+nmg_region_area( r )
+CONST struct nmgregion *r;
+{
+	struct shell *s;
+	fastf_t area=0.0;
+
+	NMG_CK_REGION( r );
+
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		area += nmg_shell_area( s );
+
+	return( area );
+}
+
+fastf_t
+nmg_model_area( m )
+CONST struct model *m;
+{
+	struct nmgregion *r;
+	fastf_t area=0.0;
+
+	NMG_CK_MODEL( m );
+
+	for( RT_LIST_FOR( r , nmgregion , &m->r_hd ) )
+		area += nmg_region_area( r );
 
 	return( area );
 }
@@ -3558,6 +3692,10 @@ CONST struct nmg_ptbl *faces;
 			break;
 	}
 
+	if( failed )
+		rt_log( "nmg_simple_vertex_solve: Failed to determine new coordinates for vertex at ( %f %f %f )\n",
+			V3ARGS( new_v->vg_p->coord ) );
+
 	return( failed );
 }
 
@@ -3932,6 +4070,8 @@ CONST struct rt_tol *tol;
 					V4ARGS( fu2->f_p->fg_p->N ) );
 				rt_log( "\tfus x%x and x%x, faces x%x and x%x\n" ,
 					fu1, fu2, fu1->f_p, fu2->f_p );
+				nmg_pr_fu_briefly( fu1 , "fu1: " );
+				nmg_pr_fu_briefly( fu2 , "fu2: " );
 				rt_bomb( "Can't find plane intersection\n" );
 			}
 			/* Make the start point at closest approach to old vertex */
@@ -5461,7 +5601,15 @@ CONST struct rt_tol *tol;
 	}
 
 	if( pl_count > 2 )
-		rt_isect_planes( new_v->vg_p->coord , planes , pl_count );
+	{
+		if( rt_isect_planes( new_v->vg_p->coord , planes , pl_count ) )
+		{
+			rt_log( "nmg_cacl_new_v: Cannot solve for new geometry at ( %f %f %f )\n",
+				V3ARGS( new_v->vg_p->coord ) );
+			rt_free( (char *)planes , "nmg_calc_new_v: planes" );
+			return( 1 );
+		}
+	}
 	else if( pl_count == 1 )
 	{
 		fastf_t vert_move_len;
@@ -5520,8 +5668,11 @@ CONST struct rt_tol *tol;
  *	can't do (more than three faces intersecting at a vertex)
  *
  *	This routine may create new edges and/or faces and
- *
  *	Modifies the location of "new_v"
+ *
+ *	if approximate is non-zero, the new geomatry is
+ *	approximated by calculating the point with minimum
+ *	distance to all the intersectinf faces
  *
  *	returns:
  *		0 - if everything is OK
@@ -5529,9 +5680,10 @@ CONST struct rt_tol *tol;
  */
 
 int
-nmg_complex_vertex_solve( new_v , faces , tol )
+nmg_complex_vertex_solve( new_v , faces , approximate , tol )
 struct vertex *new_v;
 CONST struct nmg_ptbl *faces;
+CONST int approximate;
 CONST struct rt_tol *tol;
 {
 	struct model *m;
@@ -5560,6 +5712,29 @@ CONST struct rt_tol *tol;
 	NMG_CK_VERTEX( new_v );
 	NMG_CK_PTBL( faces );
 	RT_CK_TOL( tol );
+
+	if( approximate )
+	{
+		plane_t *planes;
+
+		planes = (plane_t *)rt_calloc( NMG_TBL_END( faces ) , sizeof( plane_t ) , "nmg_complex_vertex_solve: planes" );
+		for( i=0 ; i<NMG_TBL_END( faces ) ; i++ )
+		{
+			fp1 = (struct face *)NMG_TBL_GET( faces , i );
+			fu = fp1->fu_p;
+			NMG_GET_FU_PLANE( planes[i] , fu );
+		}
+
+		if( rt_isect_planes( new_v->vg_p->coord , planes , NMG_TBL_END( faces ) ) )
+		{
+			rt_log( "nmg_complex_vertex_solve: Could not calculate new geometry at ( %f %f %f )\n",
+				V3ARGS( new_v->vg_p->coord ) );
+			rt_free( (char *) planes , "nmg_complex_vertex_solve: planes" );
+			return( 1 );
+		}
+		rt_free( (char *) planes , "nmg_complex_vertex_solve: planes" );
+		return( 0 );
+	}
 
 	m = nmg_find_model( &new_v->magic );
 
@@ -5599,10 +5774,6 @@ CONST struct rt_tol *tol;
 
 	/* fix intersection points that cause loops that cross themselves */
 	nmg_fix_crossed_loops( new_v , &int_faces , tol );
-#if 0
-	/* calculate geometry for new_v */
-	nmg_calc_new_v( new_v , &int_faces , tol );
-#endif
 
 	nmg_remove_short_eus_inter( new_v , &int_faces , tol );
 
@@ -6359,6 +6530,8 @@ CONST struct rt_tol *tol;
 		struct vertex *v;
 		vect_t to_vpa,to_vpb;
 		fastf_t dist_to_a_sq,dist_to_b_sq;
+		fastf_t area;
+		plane_t pl;
 
 		v = (struct vertex *)NMG_TBL_GET( verts , i );
 		NMG_CK_VERTEX( v );
@@ -6402,13 +6575,22 @@ CONST struct rt_tol *tol;
 				}
 
 				new_fu = nmg_cface( dst , face_verts , verts_in_face );
-				if( nmg_fu_planeeqn( new_fu , tol ) )
+				lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
+				area = nmg_loop_plane_area( lu , pl );
+				if( area <= 0.0 )
+				{
 					rt_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn\n" );
+					nmg_kfu( new_fu );
+				}
+				else
+				{
+					made_face = 1;
 
-				made_face = 1;
+					nmg_face_g( new_fu , pl );
 
-				/* glue this face in */
-				nmg_glue_face_in_shell( new_fu , dst , tol );
+					/* glue this face in */
+					nmg_glue_face_in_shell( new_fu , dst , tol );
+				}
 
 				if( dist_to_b_sq <= dist_to_a_sq && face_verts[0] == vpa )
 				{
@@ -6427,10 +6609,22 @@ CONST struct rt_tol *tol;
 					}
 
 					new_fu = nmg_cface( dst , face_verts , 3 );
-					if( nmg_fu_planeeqn( new_fu , tol ) )
-						rt_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn\n" );
+					lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
+					area = nmg_loop_plane_area( lu , pl );
+					if( area <= 0.0 )
+					{
+						rt_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn for middle face\n" );
+						nmg_kfu( new_fu );
+					}
+					else
+					{
+						made_face = 1;
 
-					nmg_glue_face_in_shell( new_fu , dst , tol );
+						nmg_face_g( new_fu , pl );
+
+						/* glue this face in */
+						nmg_glue_face_in_shell( new_fu , dst , tol );
+					}
 				}
 
 				/* get ready for next face, if necessary */
@@ -6693,10 +6887,16 @@ CONST struct rt_tol *tol;
  *	plane has already been moved a distance inward and
  *	the surface normals have been reversed.
  *
+ *	if approximate is non-zero, then the coordinates of the new
+ *	vertex may be calculated as the point with minimum distance
+ *	to all the faces that intersect at the vertex for vertices
+ *	where more than three faces intersect.
+ *
  */
 int
-nmg_in_vert( new_v , tol )
+nmg_in_vert( new_v , approximate , tol )
 struct vertex *new_v;
+CONST int approximate;
 CONST struct rt_tol *tol;
 {
 	struct model *m;
@@ -6728,7 +6928,7 @@ CONST struct rt_tol *tol;
 	}
 	else
 	{
-		if( nmg_complex_vertex_solve( new_v , &faces , tol ) )
+		if( nmg_complex_vertex_solve( new_v , &faces , approximate , tol ) )
 		{
 			failed = 1;
 			rt_log( "Could not solve complex vertex\n" );
