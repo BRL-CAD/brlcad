@@ -1,6 +1,8 @@
 .\" $Header$
 .\" groff -t -ms -X benchmark.doc
 .\" groff -t -ms benchmark.doc | print-postscript
+.\"
+.\"  sort '-t       ' +7nr -8
 .de BR
 \fB\\$1\fR\\$2
 ..
@@ -93,7 +95,7 @@ For a detailed explanation of various hardware specific modifications
 necessary to take advantage of parallel processing, see the document
 \fIWorkstations, Networking, Distributed Graphics, and
 Parallel Processing\fR.
-Implementations for several different types of hardware in use at BRL
+Implementations for several different types of hardware in use at ARL
 are included.
 .PP
 If you encounter difficulty
@@ -176,6 +178,7 @@ and for statistics on the differences, use
 .ft B
 	bwdiff moss.pix ../pix/moss.pix \(or pixstat
 .ft R
+.ne 8i
 .NH 1
 THE COMPETITION
 .PP
@@ -195,10 +198,17 @@ _	_
 axposf	DEC Alpha 4000/710, 256M, OSF/1 V3.0 \(dg
 pk	Cray C90, C916/161024, UNICOS 8.0.2.4
 vapor	SGI, 18* 75 MHz R8000 IP21, 1024G RAM 8-way, Irix 6.0
-vgr	DEC VAX-11/780, FPA, 4.3 BSD
-vj	SGI Ingido**2, 100 MHz IP22, 96M RAM, Irix 5.2
+vblt	66 MHz 486DX2/66, 16M RAM, Linux 1.1.73
+vgr	DEC VAX-11/780 w/FPA, 64M RAM, 4.3 BSD
+vision	Sun-3/160 w/68881 FPA, 16M RAM, SunOS 4.1.1
+voyage	SGI, 4* 25 MHz R3000 IP7, 56M RAM, Irix 4.0.1
+whiz	SGI Ingido**2, 100 MHz IP22, 96M RAM, Irix 5.2
+waffle	SGI, 4* 25 MHz R3000 IP7, 64M RAM, Irix 4.0.5 (heavy network use)
+warp	Sun SPARCstation 5, 32M RAM, SunOS 4.1.4
 wax	SGI, 24* 150 MHz R4400 IP19, 1024G RAM 4-way, Irix 5.2
 wilson	SGI, 8* 100 MHz R4400 IP19, 1024G RAM 8-way, Irix 5.2
+wilted	Sun-4/25 ELC, 16M RAM, SunOS 4.1.1
+wimp	33 MHz 386DX/33 w/387, 256k cache, 16M RAM, BSDI 2.0beta2
 wimpy	Sun SS10BSX-GX, 2* 50 MHz SuperSPARC, 64M RAM, SunOS 5.4
 wizard	SGI Ingido**2, 150 MHz IP22, 96M RAM, Irix 5.3
 .TE
@@ -229,56 +239,98 @@ considered differently than those entries with a dagger.
 Generally the results are not available because time constraints
 prevented running the complete set of databases.
 .fi
+.br
+.ne 8i
 .NH 1
 RELEASE 4.4 STATISTICS (4-Jan-1995)
 .PP
 There is very little difference in RTFM numbers between Release 4.0 and
 Release 4.4, so they can be usefully compared.
+In some cases the 4.4 performance is slower due to the use of shared
+libraries.  For example "vision" dropped from 1.33 to 1.22 due to
+the shared libraries.  For most users reducing the disk consumption
+from 300 MBytes to 30 MBytes makes this a reasonable tradeoff.
+However, for the best performance, use non-shared libraries.
 .LP
-.TS
+.TS H
 expand box;
-l l | n n n n n | n | l.
-A/*	H/W	Moss	World	Star	Bldg	M35	Mean	S/W Notes
+l | n n n n n | n | l.
+H/W	Moss	World	Star	Bldg	M35	Mean	S/W Notes
 _
-Abs	pk	128056.46	52355.48	38787.38	36797.60	121368.30	75473.04
-*vgr	pk	934.65	780.72	691.76	689.61	1716.90	962.72	-P16
+.TH
+vapor	810.91	1091.39	1012.63	1027.25	1092.85	1007	-P18 static
+pk	934.65	780.72	691.76	689.61	1716.90	962.72	-P16
+vapor	773.8	1038.7	979.49	970.91	1036.62	959.9	-P17
+vapor	732.85	1021.69	968.93	922.62	1024.15	934.04	-P18 (SW lock)
+wax	769.38	940.83	953.36	924.7	1050.14	927.68	-P24
+vapor	730.17	994.97	934.43	917.1	987.83	912.9	-P16
+wax	725.26	957.68	927.61	932.67	992.75	907.19	-P24
+wax	756.95	915.96	940.43	903.45	966.09	896.57	-P23
+vapor	686.8	939.63	897.72	884.39	927.16	867.14	-P15
+wax	691.18	853.75	887.17	859.32	933.41	844.96	-P21
+wax	724.73	683.08	890.87	900.82	939.31	827.76	-P22
+vapor	645.32	881.18	843.23	801.41	859.26	806.08	-P14
+wax	637.28	757.74	820.21	871.37	877.6	792.84	-P20
+vapor	608.12	835.84	795.36	759.95	806.32	761.11	-P13
 _
-Abs	vapor	100408.15	68514.86	54328.03	49231.49	72397.64	68976.03	(S/W locks)
-*vgr	vapor	732.85	1021.69	968.93	922.62	1024.15	934.04	-P18
+pk	913.69	764.21	682.97	686.97	741.01	757.77	-P8
+wax	606.98	784.3	754.46	799.95	794.52	748.04	-P19
+wax	590.16	758.23	794.06	794.52	757.79	738.95	-P18
+wax	579.29	722.35	787.55	720.26	754.65	712.82	-P17
+vapor	571.14	783.72	740.47	697.24	746.72	707.85	-P12
+wax	553.72	697.1	744.21	663.61	723.03	676.33	-P16
+vapor	534.85	716.58	685.87	656.25	685.77	655.86	-P11
+wax	519.01	655.57	690.95	651.9	663.92	636.27	-P15
+wax	475.88	637.33	665.38	608.31	653.99	608.17	-P14
+vapor	499.46	663.26	633.48	614.58	624.34	607.02	-P10
+wax	449.16	591.54	616.21	590.59	614.25	572.35	-P13
+vapor	463.3	598.34	575.07	555.62	560.89	550.64	-P9
+wax	424.71	556.8	595.02	521.63	538.78	527.38	-P12
+vapor	424.89	534.5	509.85	497.63	503.99	494.17	-P8
+wax	391.66	490.63	545.28	488.57	508.96	485.02	-P11
+wax	315.45	472.03	525.47	442.37	461.44	443.35	-P10
+vapor	381.1	467.67	440.13	425.57	442.04	431.3	-P7
+wax	309.35	426.37	386.11	417.85	434.96	394.92	-P9
+vapor	336.55	392.2	390.72	373.92	380.03	374.68	-P6
 _
-Abs	wax	99368.72	64222.13	52011.23	49767.33	70178.03	67109.48
-*vgr	wax	725.26	957.68	927.61	932.67	992.75	907.19	-P24
+wax	307.6	361.32	396.07	380.17	380.74	365.18	-P8
+wax	245.87	332.33	362.5	338.62	331.39	322.14	-P7
+vapor	288.45	327.78	328.76	314.54	320.16	315.93	-P5
+wax	254.82	255.29	299.93	302.08	256.54	273.73	-P6
+wilson	223.01	265.17	287.8	262.19	269.62	261.55	-P8
+vapor	240.6	269.93	266.46	253.99	259.05	258	-P4
+wax	215.96	231.65	221.78	248.63	221.45	227.89	-P5
+wax	177.94	185.27	213.74	201.64	197.27	195.17	-P4
+vapor	187.58	198.84	202.28	191.94	194.74	195.07	-P3
+wax	120.4	138.01	162.12	159.36	141.33	144.24	-P3
+vapor	130.61	140.04	134.88	129.38	129.78	132.93	-P2
+wax	100.83	102.09	111.12	87.26	98.62	99.98	-P2
+wimpy	99.10	95.78	92.15	97.51	96.65	96.23	-P2
+wimpy	82.14	93.60	92.17	103.59	82.22	90.74	-P2
 _
-Abs	pk	125185.43	51247.95	38294.13	36657.21	52382.70	60753.48
-*vgr	pk	913.69	764.21	682.97	686.97	741.01	757.77	-P8
-_
-Abs	wilson	30554.70	17782.60	16137.37	13990.98	19059.79	19505.08	Irix 5.2
-*vgr	wilson	223.01	265.17	287.8	262.19	269.62	261.55	-P8
-_
-Abs	wimpy	11254.66	6277.37	5168.14	5527.90	5812.74	6808.16
-*vgr	wimpy	82.14	93.60	92.17	103.59	82.22	90.74	-P2
-_
-Abs	axposf	11105.83	5517.03	4862.82	4501.46	5604.39	6318.30
-*vgr	axposf	81.05	82.27	86.72	84.36	79.28	82.73	-P1
-_
-Abs	vapor	9501.09	4703.98	3786.13	3497.90	4714.63	5240.74
-*vgr	vapor	69.34	70.14	67.52	65.55	66.69	67.84	-P1
-_
-Abs	wax	8533.66	3928.70	3658.15	3596.25	4193.07	4781.96
-*vgr	wax	62.28	58.58	65.24	67.39	59.31	62.56	-P1
-_
-Abs	pk	8891.78	3736.08	2692.20	2641.33	3777.48	4347.77
-*vgr	pk	64.89	55.71	48.01	49.50	53.43	54.30	-P1
-_
-Abs	wimpy	6550.35	2899.18	2880.83	2886.95	3268.20	3697.10
-*vgr	wimpy	47.80	43.23	51.37	54.10	46.23	48.54	-P1
-_
-Abs	weber	6375.24	2914.15	2853.04	2686.09	3253.90	3616.48
-*vgr	weber	46.53	43.45	50.88	50.33	46.03	47.44	-P1
-_
-Abs	wilson	5640.40	2652.05	2578.19	2290.79	2461.91	3124.66
-*vgr	wilson	41.16	39.54	45.98	42.93	34.82	40.88	-P1
+axposf	81.05	82.27	86.72	84.36	79.28	82.73	-P1
+vapor	79.68	77.7	73.89	71.38	70.06	74.54	-P1 static
+vapor	69.34	70.14	67.52	65.55	66.69	67.84	-P1 shared
+wizard	63.8	55.86	68.97	73.21	61.56	64.68
+wax	62.28	58.58	65.24	67.39	59.31	62.56	-P1
+wax	59.08	56.06	61.45	64.4	56.11	59.42	-P1
+voyage	52.78	55.44	58.19	58.03	52.41	55.37	-P4
+pk	64.89	55.71	48.01	49.50	53.43	54.30	-P1
+waffle	38.56	47.63	62.36	59.62	51.20	51.87	-P4
+wimpy	50.17	48.82	50.46	55.12	49.27	50.76	-P1
+wimpy	47.80	43.23	51.37	54.10	46.23	48.54	-P1
+weber	46.53	43.45	50.88	50.33	46.03	47.44	-P1
+wilson	41.16	39.54	45.98	42.93	34.82	40.88	-P1
+whiz	36.25	31.08	37.21	39.62	36.98	36.22
+warp	19.88	21.33	23.71	24.19	22.60	22.34
+wilted	9.58	9.53	10.66	10.53	9.87	10.03
+vblt	4.85	4.89	5.29	5.24	4.90	5.03	
+wimp	1.16	1.34	1.82	2.25	2.06	1.72	
+vision	1.07	1.23	1.23	1.31	1.26	1.22	-P1
+vgr	1.0	1.0	1.0	1.0	1.0	1.0
 .TE
+.br
+.ne 8i
 .NH 1
 THE OLD COMPETITION
 .PP
@@ -345,6 +397,8 @@ whisper	Sun SPARCStation 1+
 wilted	Sun SPARCstation ELC , Diskless, 12MB memory Sun UNIX 4.1.1
 worm	Silicon Graphics 4D/280 25 Mhz clock 64 MB memory Irix 3.3.1
 .TE
+.br
+.ne 8i
 .NH 1
 OLD BENCHMARK RESULTS
 .PP
@@ -794,7 +848,7 @@ _
 .NH	1
 ADDITIONAL STATISTICS
 .PP
-It would be greatly appreciated if you would return to BRL any
+It would be greatly appreciated if you could FAX or E-mail to ARL any
 statistics that you gather, including:
 the ``summary'' file produced by the benchmark script,
 which BRL-CAD release
