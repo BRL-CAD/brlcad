@@ -38,6 +38,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_INIT(ptr)		RES_RELEASE(ptr)
 #define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
 #define RES_RELEASE(ptr)	(void)Daset(ptr,3)	/* set full */
+#define MAX_PSW		128	/* Max number of process streams */
 
 #endif HEP
 
@@ -56,6 +57,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_INIT(ptr)		RES_RELEASE(ptr)
 /* RES_ACQUIRE is a function in rt.c, using tas instruction */
 #define RES_RELEASE(ptr)	*(ptr)=0;
+#define MAX_PSW		8	/* Max number of processors */
 
 #endif alliant
 
@@ -81,6 +83,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_ACQUIRE(ptr)	LOCKON(ptr);
 #define RES_RELEASE(ptr)	LOCKOFF(ptr);
 #endif
+#define MAX_PSW		4	/* Max number of processors */
 
 /**buggy #define bzero(str,n)		memset( str, '\0', n ) ***/
 #define bcopy(from,to,count)	memcpy( to, from, count )
@@ -104,7 +107,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_ACQUIRE(ptr)	;
 #define RES_RELEASE(ptr)	;
 #endif
-
+#define MAX_PSW	1		/* only one processor, max */
 
 #define BITV_MASK	((1<<BITV_SHIFT)-1)
 
