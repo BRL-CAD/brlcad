@@ -37,33 +37,34 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	DEFEDITOR	"/bin/ed"
 
 extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
 
 static char	tmpfil[] = "/tmp/GED.aXXXXX";
 
 void writesolid(), readsolid();
 int editit();
 
-void
-f_tedit()
+int
+f_tedit(argc, argv)
+int argc;
+char **argv;
 {
 	register int i;
 	struct solidrec lsolid;		/* local copy of solid */
 
 	/* Only do this if in solid edit state */
 	if( not_state( ST_S_EDIT, "Solid Text Edit" ) )
-		return;
+		return CMD_BAD;
 
 	if( es_rec.u_id != ID_SOLID ) {
 		(void)printf("tedit: not a solid\n");
-		return;
+		return CMD_BAD;
 	}
 
 	(void)mktemp(tmpfil);
 	i=creat(tmpfil, 0600);
 	if( i < 0 )  {
 		perror(tmpfil);
-		return;
+		return CMD_BAD;
 	}
 	(void)close(i);
 
@@ -97,6 +98,8 @@ f_tedit()
 		(void)printf("done\n");
 	}
 	(void)unlink(tmpfil);
+
+	return CMD_OK;
 }
 
 /* Write numerical parameters of a solid into a file */
