@@ -44,10 +44,7 @@
 
 #include <GL/glx.h>
 #include <GL/gl.h>
-/*XXXX*/
-#if 1
 #include <gl/device.h>
-#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -416,12 +413,8 @@ Ogl_close()
 
   rt_free(dm_vars, "Ogl_close: dm_vars");
 
-#if 0
-	Tk_DeleteGenericHandler(Ogl_doevent, (ClientData)curr_dm_list);
-#else
-	if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
-	  Tk_DeleteGenericHandler(Ogl_doevent, (ClientData)NULL);
-#endif
+  if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
+    Tk_DeleteGenericHandler(Ogl_doevent, (ClientData)NULL);
 }
 
 /*
@@ -444,10 +437,6 @@ Ogl_prolog()
     Tcl_AppendResult(interp, "Ogl_prolog: Couldn't make context current\n", (char *)NULL);
     return;
   }
-
-#if 0
-  Ogl_configure_window_shape();
-#endif
 
   if (!((struct ogl_vars *)dm_vars)->mvars.doublebuffer){
     glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -962,15 +951,11 @@ XEvent *eventPtr;
   }
 
   if ( eventPtr->type == Expose && eventPtr->xexpose.count == 0 ) {
-#if 0
-    Ogl_configure_window_shape();
-#else
     glClearColor(0.0, 0.0, 0.0, 0.0);
     if (((struct ogl_vars *)dm_vars)->mvars.zbuf)
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     else
        glClear(GL_COLOR_BUFFER_BIT);
-#endif
 
     dirty = 1;
     refresh();
@@ -1028,7 +1013,9 @@ XEvent *eventPtr;
 
     omx = mx;
     omy = my;
-  }else if( eventPtr->type == devmotionnotify ){
+  }
+#if IR_KNOBS
+  else if( eventPtr->type == devmotionnotify ){
     XDeviceMotionEvent *M;
     int setting;
 
@@ -1288,7 +1275,10 @@ XEvent *eventPtr;
 
     /* Keep track of the knob values */
     knob_values[M->first_axis] = M->axis_data[0];
-  }else if( eventPtr->type == devbuttonpress ){
+  }
+#endif
+#if IR_BUTTONS
+  else if( eventPtr->type == devbuttonpress ){
     XDeviceButtonEvent *B;
 
     B = (XDeviceButtonEvent * ) eventPtr;
@@ -1315,7 +1305,9 @@ XEvent *eventPtr;
       button0 = 0;
 
     goto end;
-  }else
+  }
+#endif
+  else
     goto end;
 
   status = cmdline(&cmd, FALSE);
@@ -1677,16 +1669,20 @@ char	*name;
 	for(cip = dev->classes, k = 0; k < dev->num_classes;
 	    ++k, ++cip){
 	  switch(cip->input_class){
+#if IR_BUTTONS
 	  case ButtonClass:
 	    DeviceButtonPress(dev, devbuttonpress, e_class[nclass]);
 	    ++nclass;
 	    DeviceButtonRelease(dev, devbuttonrelease, e_class[nclass]);
 	    ++nclass;
 	    break;
+#endif
+#if IR_KNOBS
 	  case ValuatorClass:
 	    DeviceMotionNotify(dev, devmotionnotify, e_class[nclass]);
 	    ++nclass;
 	    break;
+#endif
 	  default:
 	    break;
 	  }
@@ -1700,15 +1696,6 @@ char	*name;
 Done:
   XFreeDeviceList(olist);
 
-#if 0
-  /* Register the file descriptor with the Tk event handler */
-  Tk_CreateGenericHandler(Ogl_doevent, (ClientData)curr_dm_list);
-#endif
-
-#if 0
-  Tk_SetWindowBackground(xtkwin, bg);
-#endif
-
   if (!glXMakeCurrent(dpy, win, glxc)){
     Tcl_AppendResult(interp, "Ogl_open: Couldn't make context current\n", (char *)NULL);
     return -1;
@@ -1719,8 +1706,6 @@ Done:
     Tcl_AppendResult(interp, "dm-ogl: Can't make display lists for font.\n", (char *)NULL);
     return -1;
   }
-
-  Tk_MapWindow(xtkwin);
 
   /* do viewport, ortho commands and initialize font*/
   Ogl_configure_window_shape();
@@ -1754,6 +1739,7 @@ Done:
   glLoadIdentity();
   ((struct ogl_vars *)dm_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
 		
+  Tk_MapWindow(xtkwin);
   return 0;
 }
 
@@ -2420,13 +2406,8 @@ set_knob_offset()
 {
   int i;
 
-  for(i = 0; i < 8; ++i){
-#if 0
-    knobs_offset[i] = knobs[i];
-#else
+  for(i = 0; i < 8; ++i)
     knobs[i] = 0;
-#endif
-  }
 }
 
 static void
