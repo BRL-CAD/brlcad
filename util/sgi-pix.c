@@ -22,7 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 
-#ifdef sgi
+#if HAS_SGIGL
 # ifdef mips
 #	include <gl/gl.h>
 # else
@@ -50,7 +50,7 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-#ifndef sgi
+#if !HAS_SGIGL
 	fprintf(stderr, "sgi-pix:  This program only works on SGI machines\n");
 	exit(1);
 #else
@@ -161,7 +161,7 @@ char **argv;
 /*
  *  This block of code is for SGI 3030 machines, and 4Ds running Irix 3.
  */
-#if defined(sgi) && !defined(__mips)
+#if HAS_SGIGL && !defined(__mips)
 /*
  *			S A V E S C R E E N
  */
@@ -238,9 +238,9 @@ int	xorg,yorg,xsize,ysize;
 #endif
 
 /*
- *  This block of code is for SGI 4Ds running Irix 4.
+ *  This block of code is for SGI 4Ds running Irix.
  */
-#if defined(__sgi) && defined(__mips)
+#if HAS_SGIGL && defined(__mips)
 /*
  *			S A V E S C R E E N
  *

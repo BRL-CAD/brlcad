@@ -17,7 +17,7 @@
 /*	30 September 1994- Change name from see2.c to ir-sgi.c & the one  */
 /*			reference to see2 was changed.  */
 
-#if defined(IRIX)
+#if HAS_SGIGL
 
 /*  Include files needed.  */
 #include <stdio.h>
