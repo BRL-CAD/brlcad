@@ -24,11 +24,10 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "machine.h"
+#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"		/* for rt_g.debug */
-#include "../librt/debug.h"
 
 /*
  *			B N _ D I S T _ P T 3 _ P T 3
