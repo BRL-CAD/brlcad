@@ -26,6 +26,13 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+/* XXX move to raytrace.h */
+RT_EXTERN(double	rt_dist_pt3_along_line3, (CONST point_t	p,
+			CONST vect_t d, CONST point_t x));
+RT_EXTERN(double	rt_dist_pt2_along_line2, (CONST point_t p,
+			CONST vect_t d, CONST point_t x));
+
+
 /*
  *			R T _ P T 3 _ P T 3 _ E Q U A L
  *
@@ -706,8 +713,9 @@ CONST struct rt_tol	*tol;
 	 */
 	VADD2_2D( b, a, c );
 	if( rt_distsq_line2_point2( p, d, a ) <= tol->dist_sq  &&
-	    rt_distsq_line2_point2( p, d, b ) <= tol->dist_sq )  {
+	    (ctol=rt_distsq_line2_point2( p, d, b )) <= tol->dist_sq )  {
 		if( rt_g.debug & DEBUG_MATH )  {
+rt_log("b=(%g, %g), b_dist_sq=%g\n", V2ARGS(b), ctol);
 			rt_log("rt_isect_line2_lseg2() pts A and B within tol of line\n");
 		}
 	    	/* Find the parametric distance along the ray */
@@ -2155,7 +2163,16 @@ CONST vect_t	d;
 CONST point_t	x;
 {
 	vect_t	x_p;
+	double	ret;
 
 	VSUB2_2D( x_p, x, p );
-	return VDOT_2D( x_p, d );
+	ret = VDOT_2D( x_p, d );
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_dist_pt2_along_line2() p=(%g, %g), d=(%g, %g), x=(%g, %g) ret=%g\n",
+			V2ARGS(p),
+			V2ARGS(d),
+			V2ARGS(x),
+			ret );
+	}
+	return ret;
 }
