@@ -135,7 +135,7 @@ char	*name;
 {
 	char	buf[128];
 
-	pl_strncpy( buf, name, sizeof(buf) );
+	pl_strncpy( buf, name, (int)sizeof(buf) );
 	if( (*plotfp = fopen(buf, "w")) == NULL )
 		perror(buf);
 }
@@ -166,7 +166,7 @@ FILE	**plotfp;
 char *s;
 {
 	char buf[32];
-	pl_strncpy( buf, s, sizeof(buf) );
+	pl_strncpy( buf, s, (int)sizeof(buf) );
 	pl_linmod( *plotfp, buf );
 }
 
@@ -192,7 +192,7 @@ FILE	**plotfp;
 char *s;
 {
 	char	buf[256];
-	pl_strncpy( buf, s, sizeof(buf) );
+	pl_strncpy( buf, s, (int)sizeof(buf) );
 	pl_label( *plotfp, buf );
 }
 
