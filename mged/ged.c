@@ -349,7 +349,7 @@ char **argv;
 	mged_slider_link_vars(curr_dm_list);
 
 	/* This initializes libdm */
-	(void)dm_Tcl_Init(interp);
+	(void)dm_tclInit(interp);
 
 	setview( 0.0, 0.0, 0.0 );
 
