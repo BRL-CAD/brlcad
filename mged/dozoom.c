@@ -192,16 +192,16 @@ VPRINT("h", h);
 		case 0:
 			/* Non-stereo case */
 			mat = model2view;
-#if 0
-			/* This way works, with reasonable Z-clipping */
-			persp_mat( pmat, mged_variables.perspective,
-				1.0, 0.01, 1.0e10, 1.0 );
-#else
-			/* This way does not have reasonable Z-clipping,
-			 * but includes shear, for GDurf's testing.
-			 */
-			deering_persp_mat( pmat, l, h, eye_pos_scr );
-#endif
+			if( eye_pos_scr[Z] == 1.0 )  {
+				/* This way works, with reasonable Z-clipping */
+				persp_mat( pmat, mged_variables.perspective,
+					1.0, 0.01, 1.0e10, 1.0 );
+			} else {
+				/* This way does not have reasonable Z-clipping,
+				 * but includes shear, for GDurf's testing.
+				 */
+				deering_persp_mat( pmat, l, h, eye_pos_scr );
+			}
 			break;
 		case 1:
 			/* R */
