@@ -709,6 +709,8 @@ register long	magic;
 		return NMG_KIND_LOOPUSE;
 	case NMG_LOOP_G_MAGIC:
 		return NMG_KIND_LOOP_G;
+	case NMG_LOOP_MAGIC:
+		return NMG_KIND_LOOP;
 	case NMG_EDGEUSE_MAGIC:
 		return NMG_KIND_EDGEUSE;
 	case NMG_EDGE_MAGIC:
