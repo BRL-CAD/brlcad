@@ -1992,7 +1992,8 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	VMOVE(hits[1].hit_point, p2);
 	hits[1].hit_dist = isect->r.r_max;
 
-	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, 3, 0);
+	if (RT_G_DEBUG & DEBUG_HF)
+	    plot_cell_top(isect, dsp_bb, A, B, C, D, hits, 3, 0);
     }
     return 0;
 }
