@@ -3,7 +3,7 @@
  */
 
 #define SRCDIR	off
-#define PRODUCTS	off-g /* g-off */
+#define PRODUCTS	off-g g-off
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -11,11 +11,11 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
-/*
+
 g-off:	g-off.o LIBRT_DEP
-	CC LDFLAGS -o g-off g-off.o LIBRT LIBRT_LIBES LIBES
-*/
+	CC LDFLAGS -o g-off g-off.o LIBRT LIBBU LIBBU_LIBES LIBES
+
 off-g:	off-g.o LIBWDB_DEP LIBRT_DEP
-	CC LDFLAGS -o off-g off-g.o LIBWDB LIBRT LIBRT_LIBES LIBES
+	CC LDFLAGS -o off-g off-g.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES
 
 #include "../Cakefile.rules"
