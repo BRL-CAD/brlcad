@@ -3520,6 +3520,129 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ P I P E _ I M P O R T 5
+ */
+int
+rt_pipe_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	register struct wdb_pipept	*ptp;
+	struct rt_pipe_internal		*pipe;
+	fastf_t				*vec;
+	int				total_count;
+	int				double_count;
+	int				byte_count;
+	unsigned long			pipe_count;
+	int				i;
+
+	BU_CK_EXTERNAL( ep );
+
+	pipe_count = bu_glong((unsigned char *)ep->ext_buf);
+	double_count = pipe_count * 6;
+	byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
+	total_count = 4 + byte_count;
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, total_count);
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_PIPE;
+	ip->idb_meth = &rt_functab[ID_PIPE];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal");
+
+	pipe = (struct rt_pipe_internal *)ip->idb_ptr;
+	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+	pipe->pipe_count = pipe_count;
+
+	vec = (fastf_t *)bu_malloc(byte_count, "rt_pipe_import5: vec");
+	/* Convert from database (network) to internal (host) format */
+	ntohd((unsigned char *)vec, (unsigned char *)ep->ext_buf + 4, double_count);
+
+	/*
+	 *  Walk the array of segments in reverse order,
+	 *  allocating a linked list of segments in internal format,
+	 *  using exactly the same structures as libwdb.
+	 */
+	BU_LIST_INIT( &pipe->pipe_segs_head );
+	for (i = 0; i < double_count; i += 6) {
+		/* Apply modeling transformations */
+		BU_GETSTRUCT( ptp, wdb_pipept );
+		ptp->l.magic = WDB_PIPESEG_MAGIC;
+		MAT4X3PNT( ptp->pp_coord, mat, &vec[i] );
+		ptp->pp_id =		vec[i+3] / mat[15];
+		ptp->pp_od =		vec[i+4] / mat[15];
+		ptp->pp_bendradius =	vec[i+5] / mat[15];
+		BU_LIST_APPEND( &pipe->pipe_segs_head, &ptp->l );
+	}
+
+	bu_free((genptr_t)vec, "rt_pipe_import5: vec");
+	return(0);			/* OK */
+}
+
+/*
+ *			R T _ P I P E _ E X P O R T 5
+ */
+int
+rt_pipe_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_pipe_internal	*pip;
+	struct bu_list		*headp;
+	register struct wdb_pipept	*ppt;
+	fastf_t				*vec;
+	int				total_count;
+	int				double_count;
+	int				byte_count;
+	unsigned long			pipe_count;
+	int				i = 0;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_PIPE )  return(-1);
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
+	RT_PIPE_CK_MAGIC(pip);
+
+	headp = &pip->pipe_segs_head;
+
+	/* Count number of points */
+	pipe_count = 0;
+	for( BU_LIST_FOR( ppt, wdb_pipept, headp ) )
+		pipe_count++;
+
+	if( pipe_count <= 1 )
+		return(-4);			/* Not enough for 1 pipe! */
+
+	double_count = pipe_count * 6;
+	byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
+	total_count = 4 + byte_count;
+	vec = (fastf_t *)bu_malloc(byte_count, "rt_pipe_export5: vec");
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = total_count;
+	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "pipe external");
+
+	(void)bu_plong((unsigned char *)ep->ext_buf, pipe_count);
+
+	/* Convert the pipe segments to external form */
+	for( BU_LIST_FOR( ppt, wdb_pipept, headp ), i += 6  )  {
+		/* Convert from user units to mm */
+		VSCALE( &vec[i], ppt->pp_coord, local2mm );
+		vec[i+3] = ppt->pp_id * local2mm;
+		vec[i+4] = ppt->pp_od * local2mm;
+		vec[i+5] = ppt->pp_bendradius * local2mm;
+	}
+
+	/* Convert from internal (host) to database (network) format */
+	htond((unsigned char *)ep->ext_buf + 4, (unsigned char *)vec, double_count);
+
+	bu_free((genptr_t)vec, "rt_pipe_export5: vec");
+	return(0);
+}
+
+/*
  *			R T _ P I P E _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
