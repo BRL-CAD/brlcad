@@ -808,7 +808,7 @@ double		local2mm;
 
 	/* Second, create the attribute-only object */
 	bu_vls_init( &units );
-	bu_vls_printf( &units, "%.25f", local2mm );
+	bu_vls_printf( &units, "%.25e", local2mm );
 
 	bu_avs_init( &avs, 4, "db5_fwrite_ident" );
 	bu_avs_add( &avs, "title", title );
