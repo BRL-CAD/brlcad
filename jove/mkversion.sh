@@ -11,4 +11,4 @@ rm -f version.number version.c
 echo $c | awk '{version = $1 + 1; };END{printf "%d\n", version > "version.number"; }'
 c=`cat version.number`
 
-echo "char	*version = \"2.$c\";" > version.c
+echo "char	version[] = \"2.$c\";" > version.c
