@@ -13,6 +13,20 @@
 #   more space.)
 #=============================================================================
 
+#
+#    Preliminary...
+#    Ensure that all commands used here but not defined herein
+#    are provided by the application
+#
+
+set extern_commands "_mged_sliders _mged_knob _mged_iknob"
+foreach cmd $extern_commands {
+    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	puts stderr "Application fails to provide command '$cmd'"
+	return
+    }
+}
+
 # size of dead spot on sliders
 set sliders(NOISE) 64
 set sliders(scale) 2048.0;
