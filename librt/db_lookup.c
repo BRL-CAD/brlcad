@@ -556,7 +556,7 @@ int op;	/* 1 -> all attribute name/value pairs must be present and match */
 	struct bu_attribute_value_set obj_avs;
 	struct directory *dp;
 	struct bu_ptbl *tbl;
-	int match_count;
+	int match_count=0;
 	int attr_count;
 	int i,j;
 	int draw;
