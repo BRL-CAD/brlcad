@@ -123,11 +123,11 @@ static int	pwidth;			/* Width of each pixel (in bytes) */
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 #if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
-	{"%d",	1, "bounces",	bu_byteoffset(max_bounces),		FUNC_NULL },
-	{"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		FUNC_NULL },
-	{"%f", ELEMENTS_PER_VECT, "background",bu_byteoffset(background[0]),	FUNC_NULL },
+	{"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", ELEMENTS_PER_VECT, "background",bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL },
 #endif
-	{"",	0, (char *)0,	0,				FUNC_NULL }
+	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /*
@@ -179,7 +179,7 @@ register struct application *ap;
 		}
 	}
 
-	if(rdebug&RDEBUG_HITS) rt_log("rgb=%3d,%3d,%3d xy=%3d,%3d (%g,%g,%g)\n",
+	if(rdebug&RDEBUG_HITS) bu_log("rgb=%3d,%3d,%3d xy=%3d,%3d (%g,%g,%g)\n",
 		r,g,b, ap->a_x, ap->a_y,
 		ap->a_color[0], ap->a_color[1], ap->a_color[2] );
 
@@ -202,10 +202,10 @@ register struct application *ap;
 			}
 			if( fbp != FBIO_NULL )  {
 				/* Framebuffer output */
-				RES_ACQUIRE( &rt_g.res_syscall );
+				bu_semaphore_acquire( BU_SEM_SYSCALL );
 				npix = fb_write( fbp, ap->a_x, ap->a_y,
 					(unsigned char *)p, 1 );
-				RES_RELEASE( &rt_g.res_syscall );
+				bu_semaphore_release( BU_SEM_SYSCALL);
 				if( npix < 1 )  rt_bomb("pixel fb_write error");
 			}
 		}
@@ -216,7 +216,7 @@ register struct application *ap;
 		/* Multi-pixel buffer */
 		pixelp = scanbuf+ pwidth * 
 			((ap->a_y*width) + ap->a_x - srv_startpix);
-		RES_ACQUIRE( &rt_g.res_results );
+		bu_semaphore_acquire( RT_SEM_RESULTS );
 		*pixelp++ = r ;
 		*pixelp++ = g ;
 		*pixelp++ = b ;
@@ -231,7 +231,7 @@ register struct application *ap;
 		    *pixelp++ = dist[6];
 		    *pixelp++ = dist[7];
 		}
-		RES_RELEASE( &rt_g.res_results );
+		bu_semaphore_release( RT_SEM_RESULTS );
 		return;
 #endif
 
@@ -243,9 +243,9 @@ register struct application *ap;
 
 	case BUFMODE_DYNAMIC:
 		slp = &scanline[ap->a_y];
-		RES_ACQUIRE( &rt_g.res_results );
+		bu_semaphore_acquire( RT_SEM_RESULTS );
 		if( slp->sl_buf == (char *)0 )  {
-			slp->sl_buf = rt_calloc( width, pwidth, "sl_buf scanline buffer" );
+			slp->sl_buf = bu_calloc( width, pwidth, "sl_buf scanline buffer" );
 		}
 		pixelp = slp->sl_buf+(ap->a_x*pwidth);
 		*pixelp++ = r ;
@@ -264,7 +264,7 @@ register struct application *ap;
 		}
 		if( --(slp->sl_left) <= 0 )
 			do_eol = 1;
-		RES_RELEASE( &rt_g.res_results );
+		bu_semaphore_release( RT_SEM_RESULTS );
 		break;
 
 	case BUFMODE_INCR:
@@ -274,12 +274,12 @@ register struct application *ap;
 
 			spread = 1<<(incr_nlevel-incr_level);
 
-			RES_ACQUIRE( &rt_g.res_results );
+			bu_semaphore_acquire( RT_SEM_RESULTS );
 			for( dy=0; dy<spread; dy++ )  {
 				if( ap->a_y+dy >= height )  break;
 				slp = &scanline[ap->a_y+dy];
 				if( slp->sl_buf == (char *)0 )
-					slp->sl_buf = rt_calloc( width+32,
+					slp->sl_buf = bu_calloc( width+32,
 						pwidth, "sl_buf scanline buffer" );
 
 				pixelp = slp->sl_buf+(ap->a_x*pwidth);
@@ -305,7 +305,7 @@ register struct application *ap;
 				if( --(scanline[ap->a_y].sl_left) <= 0 )
 					do_eol = 1;
 			}
-			RES_RELEASE( &rt_g.res_results );
+			bu_semaphore_release( RT_SEM_RESULTS );
 		}
 		break;
 
@@ -325,7 +325,7 @@ register struct application *ap;
 			int		npix = 0;
 
 			spread = (1<<(incr_nlevel-incr_level))-1;
-			RES_ACQUIRE( &rt_g.res_syscall );
+			bu_semaphore_acquire( BU_SEM_SYSCALL );
 			for( dy=spread; dy >= 0; dy-- )  {
 				yy = ap->a_y + dy;
 				npix = fb_write( fbp, 0, yy,
@@ -333,7 +333,7 @@ register struct application *ap;
 					width );
 				if( npix != width )  break;
 			}
-			RES_RELEASE( &rt_g.res_syscall );
+			bu_semaphore_release( BU_SEM_SYSCALL);
 			if( npix != width )  rt_bomb("fb_write error (incremental res)");
 		}
 		break;
@@ -341,25 +341,25 @@ register struct application *ap;
 	case BUFMODE_DYNAMIC:
 		if( fbp != FBIO_NULL )  {
 			int		npix;
-			RES_ACQUIRE( &rt_g.res_syscall );
+			bu_semaphore_acquire( BU_SEM_SYSCALL );
 			npix = fb_write( fbp, 0, ap->a_y,
 			    (unsigned char *)scanline[ap->a_y].sl_buf, width );
-			RES_RELEASE( &rt_g.res_syscall );
+			bu_semaphore_release( BU_SEM_SYSCALL);
 			if( npix < width )  rt_bomb("scanline fb_write error");
 		}
 		if( outfp != NULL )  {
 			int	count;
 
-			RES_ACQUIRE( &rt_g.res_syscall );
+			bu_semaphore_acquire( BU_SEM_SYSCALL );
 			if( fseek( outfp, ap->a_y*width*pwidth, 0 ) != 0 )
 				fprintf(stderr, "fseek error\n");
 			count = fwrite( scanline[ap->a_y].sl_buf,
 				sizeof(char), width*pwidth, outfp );
-			RES_RELEASE( &rt_g.res_syscall );
+			bu_semaphore_release( BU_SEM_SYSCALL);
 			if( count != width*pwidth )
 				rt_bomb("view_pixel:  fwrite failure\n");
 		}
-		rt_free( scanline[ap->a_y].sl_buf, "sl_buf scanline buffer" );
+		bu_free( scanline[ap->a_y].sl_buf, "sl_buf scanline buffer" );
 		scanline[ap->a_y].sl_buf = (char *)0;
 	}
 }
@@ -411,11 +411,11 @@ struct rt_i	*rtip;
 		switch( mlib_setup( regp, rtip ) )  {
 		case -1:
 		default:
-			rt_log("mlib_setup failure on %s\n", regp->reg_name);
+			bu_log("mlib_setup failure on %s\n", regp->reg_name);
 			break;
 		case 0:
 			if(rdebug&RDEBUG_MATERIAL)
-				rt_log("mlib_setup: drop region %s\n", regp->reg_name);
+				bu_log("mlib_setup: drop region %s\n", regp->reg_name);
 			{
 				struct region *r = regp->reg_forw;
 				/* zap reg_udata? beware of light structs */
@@ -453,7 +453,7 @@ struct rt_i	*rtip;
 		mlib_free( regp );
 	}
 	if( env_region.reg_mfuncs )  {
-		rt_free( (char *)env_region.reg_name, "env_region.reg_name" );
+		bu_free( (char *)env_region.reg_name, "env_region.reg_name" );
 		env_region.reg_name = (char *)0;
 		mlib_free( &env_region );
 	}
@@ -505,25 +505,25 @@ struct partition *PartHeadp;
 		u.sw.sw_inputs = MFI_NORMAL|MFI_UV;
 		VREVERSE( u.sw.sw_hit.hit_normal, ap->a_ray.r_dir );
 		/* U is azimuth, atan() range: -pi to +pi */
-		u.sw.sw_uv.uv_u = mat_atan2( ap->a_ray.r_dir[Y],
-			ap->a_ray.r_dir[X] ) * rt_inv2pi;
+		u.sw.sw_uv.uv_u = bn_atan2( ap->a_ray.r_dir[Y],
+			ap->a_ray.r_dir[X] ) * bn_inv2pi;
 		if( u.sw.sw_uv.uv_u < 0 )
 			u.sw.sw_uv.uv_u += 1.0;
 		/*
 		 *  V is elevation, atan() range: -pi/2 to +pi/2,
 		 *  because sqrt() ensures that X parameter is always >0
 		 */
-		u.sw.sw_uv.uv_v = mat_atan2( ap->a_ray.r_dir[Z],
+		u.sw.sw_uv.uv_v = bn_atan2( ap->a_ray.r_dir[Z],
 			sqrt( ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y]) ) *
-			rt_invpi + 0.5;
+			bn_invpi + 0.5;
 		u.sw.sw_uv.uv_du = u.sw.sw_uv.uv_dv = 0;
 
 		VSETALL( u.sw.sw_color, 1 );
 		VSETALL( u.sw.sw_basecolor, 1 );
 
 		if (rdebug&RDEBUG_SHADE)
-			rt_log("hit_nothing calling viewshade\n");
+			bu_log("hit_nothing calling viewshade\n");
 
 		(void)viewshade( ap, &u.part, &u.sw );
 
@@ -556,19 +556,19 @@ struct seg *finished_segs;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("colorview:  no hit out front?\n");
+		bu_log("colorview:  no hit out front?\n");
 		return(0);
 	}
 	hitp = pp->pt_inhit;
 
 	if(rdebug&RDEBUG_HITS)  {
-		rt_log("colorview: lvl=%d coloring %s\n",
+		bu_log("colorview: lvl=%d coloring %s\n",
 			ap->a_level,
 			pp->pt_regionp->reg_name);
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("colorview:  entry beyond infinity\n");
+		bu_log("colorview:  entry beyond infinity\n");
 		VSET( ap->a_color, .5, 0, 0 );
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
 		ap->a_dist = hitp->hit_dist;
@@ -592,7 +592,7 @@ struct seg *finished_segs;
 		    ap->a_level > max_bounces )  {
 		    	if( rdebug&RDEBUG_SHOWERR )  {
 				VSET( ap->a_color, 9, 0, 0 );	/* RED */
-				rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
+				bu_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 					pp->pt_regionp->reg_name,
 					ap->a_x, ap->a_y, ap->a_level);
 		    	} else {
@@ -675,7 +675,7 @@ struct seg *finished_segs;
 	VSETALL( sw.sw_basecolor, 1 );
 
 	if (rdebug&RDEBUG_SHADE)
-		rt_log("colorview calling viewshade\n");
+		bu_log("colorview calling viewshade\n");
 
 	/* individual shaders must handle reflection & refraction */
 	(void)viewshade( ap, pp, &sw );
@@ -685,7 +685,7 @@ struct seg *finished_segs;
 	ap->a_dist = hitp->hit_dist;
 out:
 	if(rdebug&RDEBUG_HITS)  {
-		rt_log("colorview: lvl=%d ret a_user=%d %s\n",
+		bu_log("colorview: lvl=%d ret a_user=%d %s\n",
 			ap->a_level,
 			ap->a_user,
 			pp->pt_regionp->reg_name);
@@ -714,7 +714,7 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("viewit:  no hit out front?\n");
+		bu_log("viewit:  no hit out front?\n");
 		return(0);
 	}
 	hitp = pp->pt_inhit;
@@ -726,7 +726,7 @@ struct partition *PartHeadp;
 	switch( lightmodel )  {
 	case 1:
 		/* Light from the "eye" (ray source).  Note sign change */
-		lp = RT_LIST_FIRST( light_specific, &(LightHead.l) );
+		lp = BU_LIST_FIRST( light_specific, &(LightHead.l) );
 		diffuse0 = 0;
 		if( (cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0 )
 			diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
@@ -779,7 +779,7 @@ struct partition *PartHeadp;
 
 	if(rdebug&RDEBUG_HITS)  {
 		rt_pr_hit( " In", hitp );
-		rt_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
+		bu_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
 		VPRINT("RGB", ap->a_color);
 	}
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
@@ -792,11 +792,11 @@ free_scanlines()
 
 	for( y=0; y<height; y++ )  {
 		if( scanline[y].sl_buf )  {
-			rt_free( scanline[y].sl_buf, "sl_buf scanline buffer" );
+			bu_free( scanline[y].sl_buf, "sl_buf scanline buffer" );
 			scanline[y].sl_buf = (char *)0;
 		}
 	}
-	rt_free( (char *)scanline, "struct scanline[height]" );
+	bu_free( (char *)scanline, "struct scanline[height]" );
 	scanline = (struct scanline *)0;
 }
 
@@ -912,7 +912,7 @@ char	*framename;
 	if( !incr_mode || !scanline )
 	{
 		if( scanline )  free_scanlines();
-		scanline = (struct scanline *)rt_calloc(
+		scanline = (struct scanline *)bu_calloc(
 			height, sizeof(struct scanline),
 			"struct scanline[height]" );
 	}
@@ -933,11 +933,11 @@ char	*framename;
 
 	switch( buf_mode )  {
 	case BUFMODE_UNBUF:
-		rt_log("Single pixel I/O, unbuffered\n");
+		bu_log("Single pixel I/O, unbuffered\n");
 		break;	
 #ifdef RTSRV
 	case BUFMODE_RTSRV:
-		scanbuf = rt_malloc( srv_scanlen*pwidth + sizeof(long),
+		scanbuf = bu_malloc( srv_scanlen*pwidth + sizeof(long),
 			"scanbuf [multi-line]" );
 		break;
 #endif
@@ -946,7 +946,7 @@ char	*framename;
 			register int j = 1<<incr_level;
 			register int w = 1<<(incr_nlevel-incr_level);
 
-			rt_log("Incremental resolution %d\n", j);
+			bu_log("Incremental resolution %d\n", j);
 
 			/* Diminish buffer expectations on work-saved lines */
 			for( i=0; i<j; i++ )  {
@@ -961,7 +961,7 @@ char	*framename;
 		break;
 
 	case BUFMODE_DYNAMIC:
-		rt_log("Dynamic scanline buffering\n");
+		bu_log("Dynamic scanline buffering\n");
 		for( i=0; i<height; i++ )
 			scanline[i].sl_left = width;
 
@@ -999,16 +999,16 @@ char	*framename;
 				xx, yy,
 				sb.st_size );
 
-			scanline[yy].sl_buf = rt_calloc( width,
+			scanline[yy].sl_buf = bu_calloc( width,
 				sizeof(RGBpixel), 
 				"sl_buf scanline buffer (for continuation scanline)");
 			if( fseek( outfp, yy*width*3L, 0 ) != 0 )
-		    		rt_log("fseek error\n");
+		    		bu_log("fseek error\n");
 		    	/* Read the fractional scanline */
 			got = fread( scanline[yy].sl_buf, sizeof(RGBpixel),
 			    xx, outfp );
 		    	if( got != xx )
-		    		rt_log("Unable to fread fractional scanline, wanted %d, got %d pixels\n", xx, got);
+		    		bu_log("Unable to fread fractional scanline, wanted %d, got %d pixels\n", xx, got);
 
 			/* Account for pixels that don't need to be done */
 			scanline[yy].sl_left -= xx;
@@ -1028,9 +1028,9 @@ char	*framename;
 		/* If user did not specify any light sources then 
 		 *	create default light sources
 		 */
-		if( RT_LIST_IS_EMPTY( &(LightHead.l) )  ||
-		    RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-			if(rdebug&RDEBUG_SHOWERR)rt_log("No explicit light\n");
+		if( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
+		    BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+			if(rdebug&RDEBUG_SHOWERR)bu_log("No explicit light\n");
 			light_maker(1, view2model);
 		}
 		break;
