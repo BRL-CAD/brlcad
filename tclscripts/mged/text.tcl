@@ -100,53 +100,86 @@ proc vi_style { w c } {
 		"\r"
 		    -
 		"\n" {
+		    # <Return>
 		    execute_cmd $w
 		}
+		"\a" {
+		    # <Control-g>
+		}
+		"\b" {
+		    # <Control-h> or <Backspace>
+		    backward_delete_char $w
+		}
+		"\f" {
+		    # <Control-l>
+		}
+		"\v" {
+		    # <Control-k>
+		}
 		"\x01" {
-		    break
+		    # <Control-a>
 		}
 		"\x02" {
-		    break
+		    # <Control-b>
 		}
 		"\x03" {
-		    break
+		    # <Control-c>
 		}
 		"\x04" {
-		    break
+		    # <Control-d>
 		}
 		"\x05" {
-		    break
+		    # <Control-e>
 		}
 		"\x06" {
-		    break
-		}
-		"\x08" {
-		    break
-		}
-		"\x0b" {
-		    break
+		    # <Control-f>
 		}
 		"\x0e" {
-		    break
+		    # <Control-n>
+		}
+		"\x0f" {
+		    # <Control-o>
 		}
 		"\x10" {
-		    break
+		    # <Control-p>
+		}
+		"\x11" {
+		    # <Control-q>
+		}
+		"\x12" {
+		    # <Control-r>
+		}
+		"\x13" {
+		    # <Control-s>
 		}
 		"\x14" {
-		    break
+		    # <Control-t>
 		}
 		"\x15" {
-		    break
+		    # <Control-u>
+		}
+		"\x16" {
+		    # <Control-v>
 		}
 		"\x17" {
-		    break
+		    # <Control-w>
+		}
+		"\x18" {
+		    # <Control-x>
+		}
+		"\x19" {
+		    # <Control-y>
+		}
+		"\x1a" {
+		    # <Control-z>
 		}
 		"\x1b" {
+		    # <Escape>
 		    vi_edit_mode $w
-		    break
 		}
 		"\x7f" {
-		    break
+		    # <Delete>
+		    delete_char $w
 		}
 		default {
 		    $w insert insert $c
@@ -158,10 +191,11 @@ proc vi_style { w c } {
 		"\r"
 		    -
 		"\n" {
+		    # <Return>
 		    execute_cmd $w
 		}
 		default {
-		    vi_process_edit_cmd $w $c 0
+		    vi_process_edit_cmd $w $c
 		}
 	    }
 	}
@@ -173,54 +207,112 @@ proc emacs_style { w c } {
 	"\r"
 	     -
 	"\n" {
+	    # <Return>
 	    execute_cmd $w
 	}
+	"\a" {
+	    # <Control-g>
+	}
+	"\b" {
+	    # <Control-h> or <Backspace>
+	    backward_delete_char $w
+	}
+	"\f" {
+	    # <Control-l>
+	}
+	"\v" {
+	    # <Control-k>
+	    delete_end_of_line $w
+	}
 	"\x01" {
+	    # <Control-a>
 	    beginning_of_line $w
 	}
 	"\x02" {
+	    # <Control-b>
 	    backward_char $w
 	}
 	"\x03" {
+	    # <Control-c>
 	    interrupt_cmd $w
 	}
 	"\x04" {
+	    # <Control-d>
 	    delete_char $w
 	}
 	"\x05" {
+	    # <Control-e>
 	    end_of_line $w
 	}
 	"\x06" {
+	    # <Control-f>
 	    forward_char $w
 	}
-	"\x08" {
-	    backward_delete_char $w
-	}
-	"\x0b" {
-	    delete_end_of_line $w
-	}
 	"\x0e" {
+	    # <Control-n>
 	    next_command $w
 	}
+	"\x0f" {
+	    # <Control-o>
+	}
 	"\x10" {
+	    # <Control-p>
 	    prev_command $w
 	}
+	"\x11" {
+	    # <Control-q>
+	}
+	"\x12" {
+	    # <Control-r>
+	}
+	"\x13" {
+	    # <Control-s>
+	}
 	"\x14" {
+	    <Control-t>
 	    transpose $w
 	}
 	"\x15" {
+	    # <Control-u>
 	    delete_line $w
 	}
+	"\x16" {
+	    # <Control-v>
+	}
 	"\x17" {
+	    # <Control-w>
 	    backward_delete_word $w
 	}
+	"\x18" {
+	    # <Control-x>
+	}
+	"\x19" {
+	    # <Control-y>
+	}
+	"\x1a" {
+	    # <Control-z>
+	}
+	"\x1b" {
+	    # <Escape>
+	    vi_edit_mode $w
+	}
 	"\x7f" {
+	    # <Delete>
 	    delete_char $w
 	}
 	default {
 	    $w insert insert $c
 	}
     }
+}
+
+proc first_char_in_line { w } {
+    $w mark set insert promptEnd
+    set c [$w get insert]
+    if {$c == " "} {
+	forward_word $w
+    }
+    cursor_highlight $w
 }
 
 proc beginning_of_line { w } {
@@ -328,16 +420,18 @@ proc delete_end_word { w } {
 
 
 proc delete_line { w } {
-    $w delete promptEnd {end - 2c}
-    $w mark set insert promptEnd
+    $w delete promptEnd end-2c
     cursor_highlight $w
 }
 
 proc delete_end_of_line { w } {
-    if [$w compare insert >= promptEnd] {
-	$w delete insert {end - 2c}
-	cursor_highlight $w
-    }
+    $w delete insert end-2c
+    cursor_highlight $w
+}
+
+proc delete_beginning_of_line { w } {
+    $w delete promptEnd insert
+    cursor_highlight $w
 }
 
 proc next_command { w } {
@@ -445,80 +539,190 @@ proc vi_edit_mode { w } {
     global vi_mode
 
     set vi_mode($w) edit
-    bind $w <KeyPress> {
-	vi_process_edit_cmd %W %K 1
+
+    bind $w <BackSpace> {
+	backward_char %W
 	break
     }
-    bind $w <Delete> {}
-    bind $w <BackSpace> {}
+
+    bind $w <space> {
+	forward_char %W
+	break
+    }
+
+    bind $w <KeyPress> {
+	vi_process_edit_cmd %W %A
+	break
+    }
 }
 
 proc vi_insert_mode { w } {
     global vi_mode
 
     set vi_mode($w) insert
+
+    bind $w <BackSpace> {
+	backward_delete_char %W
+	break
+    }
+
+    bind $w <space> {}
     bind $w <KeyPress> {}
-    bind $w <Delete> { break }
-    bind $w <BackSpace> { break }
 }
 
-proc vi_process_edit_cmd { w c iskeysym } {
+proc vi_process_edit_cmd { w c } {
+    global vi_change_flag
     global vi_delete_flag
     global vi_search_flag
+    global vi_search_char
     global vi_debug
 
     set vi_debug($w) $c
 
     switch $vi_search_flag($w) {
 	f {
+	    set vi_search_char($w) $c
 	    set newindex [$w search $c {insert + 1c} {end - 2c}]
 	    if {$newindex != ""} {
-		$w mark set insert $newindex
+		if {$vi_delete_flag($w)} {
+		    $w delete insert $newindex+1c
+		} elseif {$vi_change_flag($w)} {
+		    $w delete insert $newindex+1c
+		    vi_insert_mode $w
+		} else {
+		    $w mark set insert $newindex
+		}
+
 		cursor_highlight $w
 	    }
+
+	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	    set vi_search_flag($w) 0
+
 	    return
 	}
 	F {
+	    set vi_search_char($w) $c
 	    set newindex [$w search -backwards $c {insert - 1c} promptEnd]
 	    if {$newindex != ""} {
-		$w mark set insert $newindex
+		if {$vi_delete_flag($w)} {
+		    $w delete $newindex insert
+		} elseif {$vi_change_flag($w)} {
+		    $w delete $newindex insert
+		    vi_insert_mode $w
+		} else {
+		    $w mark set insert $newindex
+		}
+
 		cursor_highlight $w
 	    }
+
+	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	    set vi_search_flag($w) 0
+
 	    return
 	}
     }
 
     switch $c {
-	0 {
-	    beginning_of_line $w
+	; {
 	    set vi_delete_flag($w) 0
+	    if {$vi_search_char($w) == ""} {
+		return
+	    }
+	    set newindex [$w search $vi_search_char($w) {insert + 1c} {end - 2c}]
+	    if {$newindex != ""} {
+		if {$vi_delete_flag($w)} {
+		    $w delete insert $newindex+1c
+		    set vi_delete_flag($w) 0
+		} elseif {$vi_change_flag($w)} {
+		    $w delete insert $newindex+1c
+		    vi_insert_mode $w
+		    set vi_change_flag($w) 0
+		} else {
+		    $w mark set insert $newindex
+		}
+		cursor_highlight $w
+	    }
+	}
+	, {
+	    set vi_delete_flag($w) 0
+	    if {$vi_search_char($w) == ""} {
+		return
+	    }
+	    set newindex [$w search -backwards $vi_search_char($w) {insert - 1c} promptEnd]
+	    if {$newindex != ""} {
+		if {$vi_delete_flag($w)} {
+		    $w delete $newindex insert
+		    set vi_delete_flag($w) 0
+		} elseif {$vi_change_flag($w)} {
+		    $w delete $newindex insert
+		    vi_insert_mode $w
+		    set vi_change_flag($w) 0
+		} else {
+		    $w mark set insert $newindex
+		}
+		cursor_highlight $w
+	    }
+	}
+	0 {
+	    if {$vi_delete_flag($w)} {
+		delete_beginning_of_line $w
+		set vi_delete_flag($w) 0
+	    } elseif {$vi_change_flag($w)} {
+		delete_beginning_of_line $w
+		vi_insert_mode $w
+		set vi_change_flag($w) 0
+	    } else {
+		beginning_of_line $w
+	    }
 	}
 	a {
 	    forward_char $w
 	    vi_insert_mode $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
 	b {
 	    if {$vi_delete_flag($w)} {
 		backward_delete_word $w
+		set vi_delete_flag($w) 0
+	    } elseif {$vi_change_flag($w)} {
+		backward_delete_word $w
+		vi_insert_mode $w
+		set vi_change_flag($w) 0
 	    } else {
 		backward_word $w
+	    }
+	}
+	c {
+	    if {$vi_change_flag($w)} {
+		delete_line $w
+		vi_insert_mode $w
+		set vi_change_flag($w) 0
+	    } else {
+		set vi_change_flag($w) 1
 	    }
 	    set vi_delete_flag($w) 0
 	}
 	d {
-	    if { $vi_delete_flag($w)} {
+	    if {$vi_delete_flag($w)} {
 		delete_line $w
 		set vi_delete_flag($w) 0
 	    } else {
 		set vi_delete_flag($w) 1
 	    }
+	    set vi_change_flag($w) 0
 	}
 	e {
 	    if {$vi_delete_flag($w)} {
 		delete_end_word $w
+	    } elseif {$vi_change_flag($w)} {
+		delete_end_word $w
+		vi_insert_mode $w
+		set vi_change_flag($w) 0
 	    } else {
 		end_word $w
 	    }
@@ -526,89 +730,115 @@ proc vi_process_edit_cmd { w c iskeysym } {
 	}
 	f {
 	    set vi_search_flag($w) f
-	    set vi_delete_flag($w) 0
 	}
 	h {
-	    backward_char $w
-	    set vi_delete_flag($w) 0
+	    if {$vi_delete_flag($w)} {
+		backward_delete_char $w
+		set vi_delete_flag($w) 0
+	    } elseif {$vi_change_flag($w)} {
+		backward_delete_char $w
+		vi_insert_mode $w
+		set vi_change_flag($w) 0
+	    } else {
+		backward_char $w
+	    }
 	}
 	i {
 	    vi_insert_mode $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
 	j {
 	    next_command $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
 	k {
 	    prev_command $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
 	l {
-	    forward_char $w
+	    if {$vi_delete_flag($w)} {
+		delete_char $w
+		set vi_delete_flag($w) 0
+	    } elseif {$vi_change_flag($w)} {
+		delete_char $w
+		vi_insert_mode $w
+		set vi_change_flag($w) 0
+	    } else {
+		forward_char $w
+	    }
+	}
+	s {
+	    delete_char $w
+	    vi_insert_mode $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
 	w {
 	    if {$vi_delete_flag($w)} {
 		delete_word $w
+		set vi_delete_flag($w) 0
+	    } elseif {$vi_change_flag($w)} {
+		delete_word $w
+		vi_insert_mode $w
+		set vi_change_flag($w) 0
 	    } else {
 		forward_word $w
 	    }
-	    set vi_delete_flag($w) 0
 	}
 	x {
 	    delete_char $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
 	A {
 	    end_of_line $w
 	    vi_insert_mode $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
+	}
+	C {
+	    delete_end_of_line $w
+	    vi_insert_mode $w
+	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
 	D {
 	    delete_end_of_line $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
 	F {
 	    set vi_search_flag($w) F
-	    set vi_delete_flag($w) 0
 	}
 	I {
 	    beginning_of_line $w
 	    vi_insert_mode $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
 	X {
 	    backward_delete_char $w
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
+	}
+	$ {
+	    if {$vi_delete_flag($w)} {
+		delete_end_of_line $w
+		set vi_delete_flag($w) 0
+	    } elseif {$vi_change_flag($w)} {
+		delete_end_of_line $w
+		vi_insert_mode $w
+		set vi_change_flag($w) 0
+	    } else {
+		end_of_line $w
+	    }
+	}
+	"" {
 	}
 	default {
-	    if { $iskeysym } {
-		switch $c {
-		    BackSpace {
-			backward_delete_char $w
-		    }
-		    Delete {
-			delete_char $w
-		    }
-		    dollar {
-			end_of_line $w
-		    }
-		}
-	    } else {
-		switch $c {
-		    "\b" {
-			backward_delete_char $w
-		    }
-		    "\x7f" {
-			delete_char $w
-		    }
-		    $ {
-			end_of_line $w
-		    }
-		}
-	    }
-
 	    set vi_delete_flag($w) 0
 	}
     }
@@ -755,75 +985,34 @@ proc set_text_key_bindings { id } {
 
 	    bind $w <Left> {
 		backward_char %W
+		vi_edit_mode %W
 		break
 	    }
 
 	    bind $w <Right> {
 		forward_char %W
+		vi_edit_mode %W
 		break
 	    }
 
-	    bind $w <Up> {
-		break
-	    }
-
-	    bind $w <Down> {
-		break
-	    }
-
-	    bind $w <Control-a> {
-		break
-	    }
-
-	    bind $w <Control-b> {
-		break
-	    }
-
-	    bind $w <Control-c> {
-		break
-	    }
 
 	    bind $w <Control-d> {
 		break
 	    }
 
-	    bind $w <Control-e> {
-		break
-	    }
-
-	    bind $w <Control-f> {
-		break
-	    }
-
-	    bind $w <Control-k> {
-		break
-	    }
-
-	    bind $w <Control-n> {
-		break
-	    }
-
-	    bind $w <Control-p> {
-		break
-	    }
-
-	    bind $w <Control-t> {
-		break
-	    }
-
 	    bind $w <Control-u> {
+		delete_beginning_of_line %W
 		break
 	    }
 
-	    bind $w <Control-w> {
+	    bind $w <Return> {
+		execute_cmd %W
+		vi_insert_mode %W
 		break
 	    }
 
-	    bind $w <Meta-d> {
-		break
-	    }
-
-	    bind $w <Meta-BackSpace> {
+	    bind $w <Delete> {
+		backward_delete_char %W
 		break
 	    }
 	}
@@ -844,61 +1033,8 @@ proc set_text_key_bindings { id } {
 		break
 	    }
 
-	    bind $w <Up> {
-		break
-	    }
-
-	    bind $w <Down> {
-		break
-	    }
-
-	    bind $w <Control-a> {
-		beginning_of_line %W
-		break
-	    }
-
-	    bind $w <Control-b> {
-		backward_char %W
-		break
-	    }
-
-	    bind $w <Control-c> {
-		interrupt_cmd %W
-		break
-	    }
-
 	    bind $w <Control-d> {
 		delete_char %W
-		break
-	    }
-
-	    bind $w <Control-e> {
-		end_of_line %W
-		break
-	    }
-
-	    bind $w <Control-f> {
-		forward_char %W
-		break
-	    }
-
-	    bind $w <Control-k> {
-		delete_end_of_line %W
-		break
-	    }
-
-	    bind $w <Control-n> {
-		next_command %W
-		break
-	    }
-
-	    bind $w <Control-p> {
-		prev_command %W
-		break
-	    }
-
-	    bind $w <Control-t> {
-		transpose %W
 		break
 	    }
 
@@ -907,23 +1043,9 @@ proc set_text_key_bindings { id } {
 		break
 	    }
 
-	    bind $w <Control-w> {
-		backward_delete_word %W
+	    bind $w <BackSpace> {
+		backward_delete_char %W
 		break
-	    }
-
-	    bind $w <Meta-d> {
-		if [%W compare insert < promptEnd] {
-		    break
-		}
-		cursor_highlight %W
-	    }
-
-	    bind $w <Meta-BackSpace> {
-		if [%W compare insert <= promptEnd] {
-		    break
-		}
-		cursor_highlight %W
 	    }
 
 	    bind $w <Delete> {
@@ -931,8 +1053,8 @@ proc set_text_key_bindings { id } {
 		break
 	    }
 
-	    bind $w <BackSpace> {
-		backward_delete_char %W
+	    bind $w <Return> {
+		execute_cmd %W
 		break
 	    }
 
@@ -941,8 +1063,97 @@ proc set_text_key_bindings { id } {
     }
 
 # Common Key Bindings
-    bind $w <Return> {
-	execute_cmd %W
+    bind $w <Control-a> "\
+	if {\$mged_edit_style($id) == \"vi\"} {\
+	    first_char_in_line %W\
+	} else {\
+	    beginning_of_line %W\
+	};\
+	break"
+
+    bind $w <Control-b> {
+	backward_char %W
+	break
+    }
+
+    bind $w <Control-c> "\
+	interrupt_cmd %W;\
+	if {\$mged_edit_style($id) == \"vi\"} {\
+	    vi_insert_mode %W\
+	};\
+	break"
+
+    bind $w <Control-e> {
+	end_of_line %W
+	break
+    }
+
+    bind $w <Control-f> {
+	forward_char %W
+	break
+    }
+
+    bind $w <Control-k> {
+	delete_end_of_line %W
+	break
+    }
+
+    bind $w <Control-n> {
+	next_command %W
+	break
+    }
+
+    bind $w <Control-p> {
+	prev_command %W
+	break
+    }
+
+    bind $w <Control-t> {
+	transpose %W
+	break
+    }
+
+    bind $w <Control-w> {
+	backward_delete_word %W
+	break
+    }
+
+    bind $w <Up> {
+	prev_command %W
+	break
+    }
+
+    bind $w <Down> {
+	next_command %W
+	break
+    }
+
+    bind $w <Home> {
+	beginning_of_line %W
+	break
+    }
+
+    bind $w <End> {
+	end_of_line %W
+	break
+    }
+
+    bind $w <Meta-d> {
+	if [%W compare insert < promptEnd] {
+	    break
+	}
+	cursor_highlight %W
+    }
+
+    bind $w <Meta-BackSpace> {
+	if [%W compare insert <= promptEnd] {
+	    break
+	}
+	cursor_highlight %W
+    }
+
+    bind $w <Alt-Key> {
+	tkTraverseToMenu %W %A
 	break
     }
 }
