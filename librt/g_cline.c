@@ -162,7 +162,7 @@ struct seg		*seghead;
 	point_t pt1, pt2;
 	vect_t diff;
 	fastf_t tmp;
-
+	fastf_t distmin, distmax;
 
 	BU_LIST_INIT( &ref_seghead.l );
 
@@ -179,7 +179,7 @@ struct seg		*seghead;
 
 		VJOIN2( diff, cline->V, 1.0, cline->height, -1.0, rp->r_pt );
 		dist[0] = VDOT( diff, rp->r_dir );
-		if( dist[1] > dist[0] )
+		if( dist[1] < dist[0] )
 		{
 			dist[2] = dist[0];
 			dist[0] = dist[1];
@@ -263,6 +263,22 @@ struct seg		*seghead;
 	else
 		half_los = cline->radius / sina;
 
+	VSUB2( diff, cline->V, rp->r_pt );
+	distmin = VDOT( rp->r_dir, diff );
+	VADD2( diff, cline->V, cline->height );
+	VSUB2( diff, diff, rp->r_pt );
+	distmax = VDOT( rp->r_dir, diff );
+
+	if( distmin > distmax )
+	{
+		tmp = distmin;
+		distmin = distmax;
+		distmax = tmp;
+	}
+
+	distmin -= cline->radius;
+	distmax += cline->radius;
+
 	if( cline->thickness <= 0.0 )
 	{
 		/* volume mode */
@@ -271,10 +287,14 @@ struct seg		*seghead;
 		segp->seg_stp = stp;
 		segp->seg_in.hit_surfno = 2;
 		segp->seg_in.hit_dist = dist[1] - half_los;
+		if( segp->seg_in.hit_dist < distmin )
+			segp->seg_in.hit_dist = distmin;
 		VMOVE( segp->seg_in.hit_vpriv, cline->h );
 
 		segp->seg_out.hit_surfno = -2;
 		segp->seg_out.hit_dist = dist[1] + half_los;
+		if( segp->seg_out.hit_dist > distmax )
+			segp->seg_out.hit_dist = distmax;
 		VMOVE( segp->seg_out.hit_vpriv, cline->h );
 		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 
@@ -288,6 +308,8 @@ struct seg		*seghead;
                         segp->seg_stp = stp;
                         segp->seg_in.hit_surfno = 2;
 		segp->seg_in.hit_dist = dist[1] - half_los;
+		if( segp->seg_in.hit_dist < distmin )
+			segp->seg_in.hit_dist = distmin;
 		VMOVE( segp->seg_in.hit_vpriv, cline->h );
 
 		segp->seg_out.hit_surfno = -2;
@@ -298,7 +320,10 @@ struct seg		*seghead;
 		RT_GET_SEG( segp, ap->a_resource);
                         segp->seg_stp = stp;
                         segp->seg_in.hit_surfno = 2;
-		segp->seg_in.hit_dist = dist[1] + half_los - cline->thickness;
+		segp->seg_in.hit_dist = dist[1] + half_los;
+		if( segp->seg_in.hit_dist > distmax )
+			segp->seg_in.hit_dist = distmax;
+		segp->seg_in.hit_dist -=  cline->thickness;
 		VMOVE( segp->seg_in.hit_vpriv, cline->h );
 
 		segp->seg_out.hit_surfno = -2;
