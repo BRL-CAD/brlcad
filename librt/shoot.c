@@ -66,7 +66,6 @@ register struct application *ap;
 	auto struct seg *HeadSeg;
 	auto int ret;
 	auto vect_t inv_dir;		/* inverses of ap->a_ray.r_dir */
-	auto vect_t point;
 	auto fastf_t	box_start, box_end, model_end;
 	auto fastf_t	last_bool_start;
 	auto union bitv_elem *solidbits;/* bits for all solids shot so far */
@@ -78,7 +77,11 @@ register struct application *ap;
 	auto struct partition FinalPart;	/* Head of Final Partitions */
 	auto struct seg *waitsegs;	/* segs awaiting rt_boolweave() */
 	auto struct soltab **stpp;
+	auto struct xray newray;	/* closer ray start */
+	auto fastf_t dist_corr;		/* correction distance */
 	register union cutter *cutp;
+fastf_t old_dist_corr, old_box_start, old_box_end;
+int push_flag = 0;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		rt_log("**********shootray  %d,%d lvl=%d\n",
@@ -122,7 +125,7 @@ register struct application *ap;
 	}
 
 	/* Compute the inverse of the direction cosines */
-#define ZERO_COS	1.0e-10
+#define ZERO_COS	1.0e-20
 	if( !NEAR_ZERO( ap->a_ray.r_dir[X], ZERO_COS ) )  {
 		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
 	} else {
@@ -209,23 +212,30 @@ register struct application *ap;
 	lastcut = CUTTER_NULL;
 	last_bool_start = -10.0;
 	trybool = 0;
+	newray = ap->a_ray;		/* struct copy */
+old_dist_corr = old_box_start = old_box_end = -99;
 
 	/*
 	 *  While the ray remains inside model space,
 	 *  push from box to box until ray emerges from
 	 *  model space again (or first hit is found, if user is impatient).
 	 */
-	while( box_start < model_end )  {
+	for(;;)  {
+		/*
+		 * Move newray point (not box_start)
+		 * slightly into the new box.
+		 * Note that a box is never less than 1mm wide per axis.
+		 */
+		dist_corr = box_start + 0.99;
+		if( dist_corr >= model_end )
+			break;	/* done! */
+		VJOIN1( newray.r_pt, ap->a_ray.r_pt,
+			dist_corr, ap->a_ray.r_dir );
 
-		/* Move point (not box_start) slightly into the new box */
-		{
-			FAST fastf_t f;
-			f = box_start + 0.005;
-			VJOIN1( point, ap->a_ray.r_pt, f, ap->a_ray.r_dir );
-		}
 		cutp = &(ap->a_rt_i->rti_CutHead);
 		while( cutp->cut_type == CUT_CUTNODE )  {
-			if( point[cutp->cn.cn_axis] >= cutp->cn.cn_point )  {
+			if( newray.r_pt[cutp->cn.cn_axis] >=
+			    cutp->cn.cn_point )  {
 				cutp=cutp->cn.cn_r;
 			}  else  {
 				cutp=cutp->cn.cn_l;
@@ -236,33 +246,50 @@ register struct application *ap;
 
 		/* Don't get stuck within the same box for long */
 		if( cutp==lastcut )  {
-			rt_log("%d,%d box push failed %g,%g\n",
-				ap->a_x, ap->a_y, box_start, box_end);
-			box_end += 1.0;		/* Advance 1mm */
-			box_start = box_end;
+			rt_log("%d,%d box push dist_corr o=%e n=%e model_end=%e\n",
+				ap->a_x, ap->a_y,
+				old_dist_corr, dist_corr, model_end );
+			rt_log("box_start o=%e n=%e, box_end o=%e n=%e\n",
+				old_box_start, box_start,
+				old_box_end, box_end );
+			VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
+		     	VPRINT("Point", newray.r_pt);
+			VPRINT("Dir", newray.r_dir);
+		     	rt_pr_cut( cutp, 0 );
+			box_start = box_end + 1.0;/* Advance 1mm */
+			push_flag = 1;
 			continue;
+		}
+		if( push_flag )  {
+			push_flag = 0;
+			rt_log("Finally escaped with dist_corr=%e, box_start=%e, box_end=%e\n",
+				dist_corr, box_start, box_end );
 		}
 		lastcut = cutp;
 
-		if( !rt_in_rpp(&ap->a_ray, inv_dir,
+		if( !rt_in_rpp(&newray, inv_dir,
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
-			rt_log("\nrt_shootray:  ray misses box? (%g,%g) (%g,%g) \n",ap->a_ray.r_min, ap->a_ray.r_max, box_start, box_end);
-		     	if(rt_g.debug&DEBUG_SHOOT)  {
-				VPRINT("r_pt", ap->a_ray.r_pt);
-			     	VPRINT("Point", point);
-				VPRINT("Dir", ap->a_ray.r_dir);
+			rt_log("\nrt_shootray:  ray misses box? (%g,%g) (%g,%g) \n",newray.r_min, newray.r_max, box_start, box_end);
+/**		     	if(rt_g.debug&DEBUG_SHOOT)  { ***/ {
+				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
+			     	VPRINT("Point", newray.r_pt);
+				VPRINT("Dir", newray.r_dir);
 			     	rt_pr_cut( cutp, 0 );
 		     	}
 		     	if( box_end >= INFINITY )  break;
-			box_end += 1.0;		/* Advance 1mm */
 			box_start = box_end;
+			box_end += 1.0;		/* Advance 1mm */
 		     	continue;
 		}
-		box_end = ap->a_ray.r_max;	
+		old_dist_corr = dist_corr;
+		old_box_start = box_start;
+		old_box_end = box_end;
+		box_start = dist_corr + newray.r_min;
+		box_end = dist_corr + newray.r_max;
 
 		if(rt_g.debug&DEBUG_SHOOT) {
 			rt_log("ray (%g, %g) %g\n", box_start, box_end, model_end);
-			VPRINT("Point", point);
+			VPRINT("Point", newray.r_pt);
 			rt_pr_cut( cutp, 0 );
 		}
 
@@ -286,9 +313,9 @@ register struct application *ap;
 			/* If ray does not strike the bounding RPP, skip on */
 			if(
 			   rt_functab[stp->st_id].ft_use_rpp &&
-			   ( !rt_in_rpp( &ap->a_ray, inv_dir,
+			   ( !rt_in_rpp( &newray, inv_dir,
 			      stp->st_min, stp->st_max ) ||
-			      ap->a_ray.r_max < -10.0 )
+			      dist_corr + newray.r_max < -10.0 )
 			)  {
 				ap->a_rt_i->nmiss_solid++;
 				continue;	/* MISS */
@@ -296,22 +323,30 @@ register struct application *ap;
 
 			ap->a_rt_i->nshots++;
 			if( (newseg = rt_functab[stp->st_id].ft_shot( 
-				stp, &ap->a_ray )
+				stp, &newray )
 			     ) == SEG_NULL )  {
 				ap->a_rt_i->nmiss++;
 				continue;	/* MISS */
 			}
+
 			if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
-			trybool++;	/* flag to rerun bool, below */
 
 			/* Add seg chain to list awaiting rt_boolweave() */
 			{
 				register struct seg *seg2 = newseg;
-				while( seg2->seg_next != SEG_NULL )
+				for(;;)  {
+					/* Restore to original distance */
+					seg2->seg_in.hit_dist += dist_corr;
+					seg2->seg_out.hit_dist += dist_corr;
+					if( seg2->seg_next == SEG_NULL )
+						break;
 					seg2 = seg2->seg_next;
+				}
 				seg2->seg_next = waitsegs;
 				waitsegs = newseg;
 			}
+			trybool++;	/* flag to rerun bool, below */
+
 			/* Would be even better done by per-partition bitv */
 			rt_bitv_or( regionbits, stp->st_regions, stp->st_maxreg);
 			if(rt_g.debug&DEBUG_PARTITION)
@@ -393,6 +428,8 @@ weave:
 	 *  A DIRECT HIT.
 	 *  Last chance to compute exact hit points and surface normals.
 	 *  Then hand final partitioned intersection list to the application.
+	 * ---- computing normals should probably be moved into the
+	 * application, to prevent wasteful computation.
 	 */
 hitit:
 	{
