@@ -50,6 +50,7 @@ extern int		jitter;			/* jitter (bit vector) */
 #define JITTER_FRAME	0x2			/* jitter position of entire frame */
 extern fastf_t		rt_perspective;		/* presp (degrees X) 0 => ortho */
 extern fastf_t		aspect;			/* view aspect ratio X/Y */
+extern point_t		viewbase_model;		/* model-space location of viewplane corner */
 extern vect_t		dx_model;		/* view delta-X as model-space vect */
 extern vect_t		dy_model;		/* view delta-Y as model-space vect */
 extern fastf_t		cell_width;		/* model space grid cell width */
