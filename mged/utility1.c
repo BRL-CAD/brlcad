@@ -1051,10 +1051,8 @@ char	**argv;
 				if( !(dp->d_flags & DIR_COMB) )
 					continue;
 
-				if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
-					Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
-						") failure", (char *)NULL );
-					return TCL_ERROR;
+				if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+					TCL_READ_ERR_return;
 				}
 				comb = (struct rt_comb_internal *)intern.idb_ptr;
 
