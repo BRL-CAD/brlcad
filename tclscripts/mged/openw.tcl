@@ -378,7 +378,7 @@ hoc_register_menu_data "File" "Open..." "Open Database"\
 hoc_register_menu_data "File" "Insert..." "Insert Database"\
 	{ { summary "Insert another database into the current database." }
           { see_also dbconcat } }
-.$id.menubar.file add command -label "Extract..." -underline 1 -command "init_extractTool $id"
+.$id.menubar.file add command -label "Extract..." -underline 0 -command "init_extractTool $id"
 hoc_register_menu_data "File" "Extract..." "Extract Objects"\
 	{ { summary "Tool for extracting objects out of the current database." }
           { see_also keep } }
@@ -403,7 +403,7 @@ hoc_register_menu_data "File" "Raytrace..." "Raytrace View"\
 hoc_register_menu_data "File" "Close" "Close Window"\
 	{ { summary "Close this graphical user interface." }
           { see_also } }
-.$id.menubar.file add command -label "Exit" -underline 0 -command _mged_quit
+.$id.menubar.file add command -label "Exit" -underline 1 -command _mged_quit
 hoc_register_menu_data "File" "Exit" "Exit MGED"\
 	{ { summary "Exit MGED." }
           { see_also "exit q quit" } }
@@ -428,11 +428,11 @@ hoc_register_menu_data "Save View As" "PostScript..." "PostScript File"\
 menu .$id.menubar.file.pref -title "Preferences" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.file.pref add cascade -label "Units" -underline 0\
 	-menu .$id.menubar.file.pref.units
-.$id.menubar.file.pref add cascade -label "Command Line Edit" -underline 0\
+.$id.menubar.file.pref add cascade -label "Command Line Edit" -underline 13\
 	-menu .$id.menubar.file.pref.cle
 .$id.menubar.file.pref add cascade -label "Special Characters" -underline 0\
 	-menu .$id.menubar.file.pref.special_chars
-.$id.menubar.file.pref add command -label "Color Schemes..." -underline 6\
+.$id.menubar.file.pref add command -label "Color Schemes..." -underline 0\
 	-command "color_scheme_build $id \"Color Schemes\" [list $mged_color_scheme(primary_map)]\
 	\"Faceplate Colors\" [list $mged_color_scheme(secondary_map)]"
 hoc_register_menu_data "Preferences" "Color Schemes..." "Color Schemes"\
@@ -683,7 +683,7 @@ hoc_register_menu_data "View" "Front" "Front View"\
 	{ { summary "View of the front (i.e. azimuth = 0, elevation = 0)." }
           { accelerator "f" }
           { see_also "press, ae, view, viewset, viewget" } }
-.$id.menubar.view add command -label "Rear" -underline 3\
+.$id.menubar.view add command -label "Rear" -underline 1\
 	-command "mged_apply $id \"press rear\""
 hoc_register_menu_data "View" "Rear" "Rear View"\
 	{ { summary "View of the rear (i.e. azimuth = 180, elevation = 0)." }
@@ -1573,7 +1573,7 @@ hoc_register_menu_data "Misc" "Faceplate GUI" "Faceplate GUI"\
 consists of the faceplate menu and sliders." }
           { see_also "rset, vars" } }
 .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_gui($id,forward_keys) -label "Keystroke Forwarding" -underline 8\
+	-variable mged_gui($id,forward_keys) -label "Keystroke Forwarding" -underline 0\
 	-command "mged_apply $id \"set_forward_keys \\\[winset\\\] \$mged_gui($id,forward_keys)\""
 hoc_register_menu_data "Misc" "Keystroke Forwarding" "Keystroke Forwarding"\
 	{ { summary "Toggle keystroke forwarding. When forwarding keystrokes, each
