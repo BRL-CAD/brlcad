@@ -26,8 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<stdio.h>
 #include "../h/db.h"
 
-#define NONAME "NoNaMe"			/* For null string names */
-
 extern void	exit();
 extern int	close(), creat(), open(), read(), write();
 extern int	printf(), fprintf(), sscanf();		/* bzero()? */
@@ -190,11 +188,10 @@ membbld()	/* Build Member record */
 {
 	int temp1;
 
-		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 */
-	(void)sscanf( buf, "%c %c %s %s %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %d", 
+		/*		      0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 */
+	(void)sscanf( buf, "%c %c %s %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %d", 
 		&record.M.m_id,
 		&record.M.m_relation,
-		&record.M.m_brname[0],
 		&record.M.m_instname[0],
 		&record.M.m_mat[0],
 		&record.M.m_mat[1],
@@ -214,11 +211,6 @@ membbld()	/* Build Member record */
 		&record.M.m_mat[15],
 		&temp1
 	);
-	/* Check for NONAME entry */
-	if( (strcmp( record.M.m_brname, NONAME )) == 0 )  {
-		/* Fill string with nulls */
-		(void)bzero( (char *)record.M.m_brname, sizeof(record.M.m_brname) );
-	}
 	record.M.m_num = (short)temp1;
 }
 
@@ -327,6 +319,7 @@ polydbld()	/* Build Polydata record */
 {
 	int temp1;
 
+#ifdef later
 		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 */
 	(void)sscanf( buf, "%c %d %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e", 
 		&record.q.q_id,
@@ -363,6 +356,7 @@ polydbld()	/* Build Polydata record */
 		&record.q.q_norms[4][2]
 	);
 	record.q.q_count = (char)temp1;
+#endif
 }
 
 void

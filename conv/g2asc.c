@@ -26,8 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<stdio.h>
 #include "../h/db.h"
 
-#define NONAME	"NoNaMe"		/* For null string names */
-
 extern void	exit();
 extern int	close(), creat(), open(), read(), write();
 extern int	printf(), fprintf();
@@ -74,7 +72,7 @@ main()
 			materdump();
 		}
 		else  {
-			(void)fprintf(stderr,"VG2ASC: bad record type\n");
+			(void)fprintf(stderr,"G2ASC: bad record type\n");
 			exit(1);
 		}
 	}
@@ -177,7 +175,6 @@ membdump()	/* Print out Member record information */
 
 	(void)printf("%c ", record.M.m_id );		/* M */
 	(void)printf("%c ", record.M.m_relation );	/* Boolean oper. */
-	(void)printf("%s ", record.M.m_brname[0] ? record.M.m_brname : NONAME );	/* name of branch */
 	(void)printf("%s ", record.M.m_instname );	/* referred-to obj. */
 	for( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
 		(void)printf("%.9e ", record.M.m_mat[i] );
