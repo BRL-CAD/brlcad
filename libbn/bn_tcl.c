@@ -855,6 +855,20 @@ bn_cmd_random(ClientData clientData,
 }
 
 /*
+ *			B N _ M A T _ P R I N T
+ */
+void
+bn_tcl_mat_print(Tcl_Interp		*interp,
+		 const char		*title,
+		 const mat_t		m)
+{
+	char		obuf[1024];	/* sprintf may be non-PARALLEL */
+
+	bn_mat_print_guts(title, m, obuf);
+	Tcl_AppendResult(interp, obuf, "\n", (char *)NULL);
+}
+
+/*
  *			B N _ T C L _ S E T U P
  *
  *  Add all the supported Tcl interfaces to LIBBN routines to
