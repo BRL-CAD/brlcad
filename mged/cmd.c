@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -360,6 +360,7 @@ static struct cmdtab cmdtab[] = {
 	{"view_ring", f_view_ring},
 	{"viewget", cmd_viewget},
 	{"viewset", cmd_viewset},
+	{"viewsize", f_size},		/* alias "size" for saveview scripts */
 	{"view2grid_lu", f_view2grid_lu},
 	{"view2model", f_view2model},
 	{"view2model_vec", f_view2model_vec},
