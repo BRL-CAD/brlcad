@@ -126,6 +126,17 @@ typedef fastf_t hpoint_t[HPT_LEN];
 			if( f < 1.0e-10 ) f = 0.0; else f = 1.0/f; \
 			(a)[0] *= f; (a)[1] *= f; (a)[2] *= f; }
 
+/* Combine together several vectors, scaled by a scalar */
+#define VCOMB3(o, a,b, c,d, e,f)	{\
+	(o)[X] = (a) * (b)[X] + (c) * (d)[X] + (e) * (f)[X];\
+	(o)[Y] = (a) * (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y];\
+	(o)[Z] = (a) * (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z];}
+
+#define VCOMB2(o, a,b, c,d)	{\
+	(o)[X] = (a) * (b)[X] + (c) * (d)[X];\
+	(o)[Y] = (a) * (b)[Y] + (c) * (d)[Y];\
+	(o)[Z] = (a) * (b)[Z] + (c) * (d)[Z];}
+
 /* Compose vector at `a' of:
  *	Vector at `b' plus
  *	scalar `c' times vector at `d' plus
