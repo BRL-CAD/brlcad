@@ -203,9 +203,10 @@ register struct partition	*pt_headp;
 	critical components were encountered.
  */
 STATIC int
-f_BurstHit( ap, pt_headp )
+f_BurstHit( ap, pt_headp, segp )
 struct application *ap;
 struct partition *pt_headp;
+struct seg *segp;
 	{	Pt_Queue *qshield = PT_Q_NULL;
 		register struct partition *cpp, *spp;
 		register int nbar;
@@ -395,9 +396,10 @@ struct partition *pheadp;
 	handed to rt_shootray() by burstRay().  Otherwise, true is returned.
  */
 STATIC int
-f_ShotHit( ap, pt_headp )
+f_ShotHit( ap, pt_headp, segp )
 struct application *ap;
 struct partition *pt_headp;
+struct seg *segp;
 	{	register struct partition *pp;
 		struct partition *bp = PT_NULL;
 		fastf_t burstnorm[3]; /* normal at burst point */
