@@ -189,7 +189,7 @@ fbframe:	fbframe.o LIBFB
 	CC LDFLAGS -o fbframe fbframe.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 bw-a:		bw-a.o LIBFB
-	CC LDFLAGS -o bw-a bw-a.o LIB_PRE''LIBFB LIBFB_LIBS LIBES
+	CC LDFLAGS -o bw-a bw-a.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 bw-fb:		bw-fb.o LIBFB
 	CC LDFLAGS -o bw-fb bw-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
