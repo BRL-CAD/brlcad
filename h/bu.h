@@ -803,7 +803,19 @@ struct bu_mapped_file {
 
 /* formerly rt_g.rtg_logindent, now use bu_log_indent_delta() */
 typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
+
+struct bu_hook_list {
+	struct bu_list	l;
+	bu_hook_t	hookfunc;
+	genptr_t 	clientdata;
+};
+
 #define BUHOOK_NULL 0
+#define BUHOOK_LIST_MAGIC	0x90d5dead	/* Nietzsche? */
+#define BUHOOK_LIST_NULL	((struct bu_hook_list *) 0)
+
+extern struct bu_hook_list bu_log_hook_list;
+extern struct bu_hook_list bu_bomb_hook_list;
 
 /*----------------------------------------------------------------------*/
 /* avs.c */
@@ -1330,11 +1342,17 @@ BU_EXTERN(void			bu_ck_list, (CONST struct bu_list *hd,
 BU_EXTERN(void			bu_ck_list_magic, (CONST struct bu_list *hd,
 				CONST char *str, CONST long magic) );
 
+/* hook.c */
+BU_EXTERN(void			bu_hook_list_init, (struct bu_hook_list *hlp));
+BU_EXTERN(void			bu_add_hook, (struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata));
+BU_EXTERN(void			bu_delete_hook, (struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata));
+BU_EXTERN(void			bu_call_hook, (struct bu_hook_list *hlp, genptr_t buf));
+
 /* log.c */
 BU_EXTERN(void			bu_log_indent_delta, (int delta) );
 BU_EXTERN(void			bu_log_indent_vls, (struct bu_vls *v) );
-BU_EXTERN(void			bu_add_hook, (bu_hook_t func, genptr_t clientdata));
-BU_EXTERN(void			bu_delete_hook, (bu_hook_t func, genptr_t clientdata));
+BU_EXTERN(void			bu_log_add_hook, (bu_hook_t func, genptr_t clientdata));
+BU_EXTERN(void			bu_log_delete_hook, (bu_hook_t func, genptr_t clientdata));
 BU_EXTERN(void			bu_putchar, (int c) );
 #if __STDC__
  BU_EXTERN(void			bu_log, (char *, ... ) );
