@@ -721,7 +721,8 @@ NMG_EXTERN(void		nmg_shell_a, (struct shell *s) );
 NMG_EXTERN(void		nmg_jv, (struct vertex *v1, struct vertex *v2) );
 NMG_EXTERN(void		nmg_moveltof, (struct faceuse *fu, struct shell *s) );
 NMG_EXTERN(void		nmg_pl_fu, (FILE *fp, struct faceuse *fu,
-					struct nmg_ptbl *b ) );
+					struct nmg_ptbl *b, int red,
+					int green, int blue ) );
 NMG_EXTERN(void		nmg_pl_lu, (FILE *fp, struct loopuse *fu, 
 					struct nmg_ptbl *b, int red,
 					int green, int blue) );
