@@ -55,6 +55,8 @@ menu .mbar.help.menu
 menu .mbar.debug.menu
 .mbar.debug.menu add command -label "Net Speed Test ON" -command "net_speed_test 1"
 .mbar.debug.menu add command -label "Net Speed Test OFF" -command "net_speed_test 0"
+.mbar.debug.menu add command -label "Remote bu_log ON" -command "node_send set print_on 1"
+.mbar.debug.menu add command -label "Remote bu_log OFF" -command "node_send set print_on 0"
 menu .mbar.spacepart.menu
 .mbar.spacepart.menu add command -label "Muuss NUBSP" -command "space_partitioning 1"
 .mbar.spacepart.menu add command -label "Gigante NUgrid" -command "space_partitioning 0"
