@@ -39,6 +39,13 @@ extern char *getenv();
 int _disk_enable = 1;
 
 /*
+ * Debug flag.  Needed globally so debug interface can catch the
+ * buffered IO calls as well.  This is a level: the higher the
+ * value the more verbose it is.
+ */
+int _fb_debug = 0;
+
+/*
  *		f b _ n u l l
  *
  *  Filler for FBIO function slots not used by a particular device
