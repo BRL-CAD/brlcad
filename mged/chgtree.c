@@ -53,7 +53,6 @@ f_name()
 
 	NAMEMOVE( cmd_args[2], record.c.c_name );
 	db_putrec( dp, &record, 0 );
-	(void)printf("done\n");
 }
 
 /* Copy a solid */
@@ -143,7 +142,6 @@ f_copy()
 		(void)putchar( 7 );
 		return;
 	}
-	(void)printf("done\n");
 }
 
 /* Create an instance of something */
@@ -167,7 +165,6 @@ f_instance()
 	if( combadd( dp, cmd_args[2], cmd_args[3], '\0', oper, 0, 0 ) ==
 	    DIR_NULL )
 		return;
-	(void)printf("done\n");
 }
 
 /* add solids to a region or create the region */
@@ -222,7 +219,6 @@ f_region()
 			return;
 		}
 	}
-	(void)printf("done\n");
 }
 
 /* Remove an object or several from the description */
@@ -241,7 +237,6 @@ f_kill()
 		}
 	}
 	dmaflag = 1;
-	(void)printf("done\n");
 }
 
 /* Grouping command */
@@ -262,7 +257,6 @@ f_group()
 		else
 			(void)printf("skip member %s\n", cmd_args[i]);
 	}
-	(void)printf("done\n");
 }
 
 /* Delete members of a combination */
@@ -300,5 +294,4 @@ top:
 			goto top;
 		}
 	}
-	(void)printf("done\n");
 }

@@ -410,9 +410,58 @@ f_rt()
 
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
-	(void)printf("done\n");
 }
-#undef LEN
+
+void
+f_saveview()
+{
+	register struct solid *sp;
+	register int i;
+	register FILE *fp;
+
+	if( state != ST_VIEW )  {
+		state_err( "Ray-trace of current view" );
+		return;
+	}
+	if( (fp = fopen( cmd_args[1], "a")) == NULL )  {
+		perror(cmd_args[1]);
+		return;
+	}
+	fprintf(fp, "#!/bin/sh\nrt -M ");
+	for( i=2; i < numargs; i++ )
+		fprintf(fp,"%s ", cmd_args[i]);
+	fprintf(fp," -o %s.pix", filename);
+	fprintf(fp,"%s ", filename);
+
+	/* Find all unique top-level entrys.
+	 *  Mark ones already done with s_iflag == UP
+	 */
+	FOR_ALL_SOLIDS( sp )
+		sp->s_iflag = DOWN;
+	FOR_ALL_SOLIDS( sp )  {
+		register struct solid *forw;	/* XXX */
+
+		if( sp->s_iflag == UP )
+			continue;
+		fprintf(fp, "%s ", sp->s_path[0]->d_namep);
+		sp->s_iflag = UP;
+		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
+			if( forw->s_path[0] == sp->s_path[0] )
+				forw->s_iflag = UP;
+		}
+	}
+	fprintf(fp," 2>&1 > %s.log", filename);
+	fprintf(fp," <<EOF\n");
+
+	/* Send out model2view matrix */
+	for( i=0; i < 16; i++ )
+		fprintf( fp, "%f ", model2view[i] );
+	fprintf(fp,"\nEOF\n");
+	fclose( fp );
+	
+	FOR_ALL_SOLIDS( sp )
+		sp->s_iflag = DOWN;
+}
 
 void
 f_attach()

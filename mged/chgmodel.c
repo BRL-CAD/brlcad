@@ -70,7 +70,6 @@ f_itemair()
 	record.c.c_regionid = ident;
 	record.c.c_aircode = air;
 	db_putrec( dp, &record, 0 );
-	(void)printf("done\n");
 }
 
 /* Add/modify material code and los percent of a region */
@@ -101,7 +100,6 @@ f_modify()
 	record.c.c_material = mat;
 	record.c.c_los = los;
 	db_putrec( dp, &record, 0 );
-	(void)printf("done\n");
 }
 
 /* Mirror image */
@@ -197,7 +195,6 @@ f_mirror()
 	}
 	drawHobj( dp, ROOT, 0, identity );
 	dmaflag = 1;
-	(void)printf("done\n");
 }
 
 /* Extrude command - project an arb face */
@@ -451,7 +448,6 @@ f_arbdef()
 	}
 	drawHobj( dp, ROOT, 0, identity );
 	dmaflag = 1;
-	(void)printf("done\n");
 }
 
 /* Modify Combination record information */
@@ -487,7 +483,6 @@ f_edcomb()
 	record.c.c_material = mat;
 	record.c.c_los = los;
 	db_putrec( dp, &record, 0 );
-	(void)printf("done\n");
 }
 
 /* Mirface command - mirror an arb face */
@@ -905,7 +900,6 @@ f_make()  {
 	/* draw the "made" solid */
 	drawHobj(dp, ROOT, 0, identity);
 	dmaflag = 1;
-	(void)printf("done\n");
 }
 
 /* allow precise changes to object rotation */
