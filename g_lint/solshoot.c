@@ -26,8 +26,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "rtstring.h"
+#include "rtlist.h"
 #include "raytrace.h"
 #include "redblack.h"
+#include "../librt/debug.h"
 
 #define	TITLE_LEN		80
 #define	ORDER_BY_NAME		 0
@@ -97,7 +99,7 @@ fastf_t	dist;
     struct sol_name_dist	*sp;
 
     sp = (struct sol_name_dist *)
-	    rt_malloc(sizeof(struct sol_name_dist), "solid");
+	    rt_malloc(sizeof(struct sol_name_dist), "solid name-and_dist");
     sp -> magic = SOL_NAME_DIST_MAGIC;
     sp -> name = name;
     sp -> dist = dist;
@@ -108,15 +110,17 @@ fastf_t	dist;
 /*
  *			F R E E _ S O L I D
  */
-void free_solid (sol)
+void free_solid (vp)
 
-struct sol_name_dist	*sol;
+char	*vp;
 
 {
-    RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    struct sol_name_dist	*sol = (struct sol_name_dist *) vp;
+
+    RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "solid name-and-dist");
 
     rt_log("freeing solid (%s, %g)...\n", sol -> name, sol -> dist);
-    rt_free((char *) sol, "solid");
+    rt_free((char *) sol, "solid name-and-dist");
 }
 
 /*
@@ -136,16 +140,18 @@ int	depth;
 
 /*			R P T _ H I T
  *
- *	Hit handler for use by rt_shootray_for_sols().
+ *	Hit handler for use by rt_shootray().
  *
  *	Does nothing.  Returns 1.
  */
-static int rpt_hit (ap, sh)
+static int rpt_hit (ap, ph)
 
 struct application	*ap;
-struct seg		*sh;
+struct partition	*ph;
 
 {
+    struct partition		*pp;
+    struct seg			*sh;
     struct seg			*sp;
     rb_tree			*solids;
     struct sol_name_dist	*old_sol;
@@ -168,6 +174,21 @@ struct seg		*sh;
     solids -> rbt_print = print_solid;
     rb_uniq_on(solids, ORDER_BY_NAME);
 
+    /*
+     *	Get the list of segments along this ray
+     *	and seek to its head
+     */
+    RT_CKMAG(ph, PT_HD_MAGIC, "partition head");
+    pp = ph -> pt_forw;
+    RT_CKMAG(pp, PT_MAGIC, "partition structure");
+    for (sh = pp -> pt_inseg;
+	    *((long *) sh) != RT_LIST_HEAD_MAGIC;
+	    sh = (struct seg *) (sh -> l.forw))
+	RT_CKMAG(sh, RT_SEG_MAGIC, "segment structure");
+
+    /*
+     *	March down the list of segments
+     */
     for (sp = (struct seg *) (sh -> l.forw);
 	    sp != sh;
 	    sp = (struct seg *) sp -> l.forw)
@@ -183,30 +204,40 @@ struct seg		*sh;
 	    old_sol = (struct sol_name_dist *) rb_curr(solids, ORDER_BY_NAME);
 	    RT_CKMAG(old_sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 	    if (sol -> dist >= old_sol -> dist)
-		free_solid(sol);
+		free_solid((char *) sol);
 	    else
 	    {
 		rb_delete(solids, ORDER_BY_NAME);
 		rb_insert(solids, sol);
-		free_solid(old_sol);
+		free_solid((char *) old_sol);
 	    }
 	}
     }
     rt_log("\n- - - Solids along the ray - - -\n");
     rb_walk(solids, ORDER_BY_DISTANCE, print_solid, INORDER);
+
+    rt_prmem("Before rb_free()...");
+    rb_diagnose_tree(solids, ORDER_BY_NAME, INORDER);
+#if 0
+    rb_free(solids, RB_RETAIN_DATA);
+#else
+    rb_free(solids, free_solid);
+#endif
+    rt_prmem("After rb_free()...");
+
     return (1);
 }
 
 /*			N O _ O P
  *
- *	Null event handler for use by rt_shootray_for_sols().
+ *	Null event handler for use by rt_shootray().
  *
  *	Does nothing.  Returns 1.
  */
-static int no_op (ap, sh)
+static int no_op (ap, ph)
 
 struct application	*ap;
-struct seg		*sh;
+struct partition	*ph;
 
 {
     return (1);
@@ -248,6 +279,8 @@ char	**argv;
     rt_prep(rtip);
     rt_log("\n");
 
+    rt_g.debug = DEBUG_MEM_FULL;
+
     /* Initialize the application structure */
     ap.a_hit = rpt_hit;
     ap.a_miss = no_op;
@@ -259,12 +292,12 @@ char	**argv;
     ap.a_zero2 = 0;
     ap.a_purpose = "Determine which segments get reported";
 
-#if 0
+#if 1
     VSET(ap.a_ray.r_pt, 7.0, 7.0, 0.0);
     VSET(ap.a_ray.r_dir, -0.7071067812, -0.7071067812, 0.0);
 #else
     VSET(ap.a_ray.r_pt, 20.0, 0.0, 0.0);
     VSET(ap.a_ray.r_dir, -1.0, 0.0, 0.0);
 #endif
-    (void) rt_shootray_for_sols(&ap);
+    (void) rt_shootray(&ap);
 }
