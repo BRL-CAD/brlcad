@@ -423,7 +423,7 @@ pop_space_stack:
 			ssp->newray.r_pt[Z] = pz;
 			ssp->newray.r_min = 0;
 			ssp->newray.r_max = ssp->tv[ssp->out_axis] - t0;
-			goto done;
+			goto done_return_cutp;
 		}
 
 		/*  Given direction of travel, see if point is outside bound.
@@ -493,7 +493,7 @@ pop_space_stack:
 			/* Don't get stuck within the same box for long */
 			if( cutp==ssp->lastcut ) {
 				fastf_t	delta;
-push:				;	
+push_to_next_box:				;	
 				if( rt_g.debug & DEBUG_ADVANCE ) {
 					bu_log(
 						"%d,%d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
@@ -590,10 +590,10 @@ push:				;
 				       ssp->newray.r_min,
 				       ssp->newray.r_max,
 				       ssp->box_start, ssp->box_end );
-				goto push;
+				goto push_to_next_box;
 			}
 
-done:			ssp->lastcut = cutp;
+done_return_cutp:	ssp->lastcut = cutp;
 #if EXTRA_SAFETY
 			/* Diagnostic purposes only */
 			ssp->odist_corr = ssp->dist_corr;
