@@ -113,7 +113,7 @@ struct rt_tess_tol  {
 	double		norm;			/* normal tol */
 };
 #define RT_TESS_TOL_MAGIC	0xb9090dab
-#define RT_CK_TESS_TOL(_p)	RT_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
+#define RT_CK_TESS_TOL(_p)	BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
 
 /*
  *  Macros for providing function prototypes, regardless of whether
@@ -143,7 +143,7 @@ struct rt_db_internal  {
 #define RT_DB_INTERNAL_MAGIC	0x0dbbd867
 #define RT_INIT_DB_INTERNAL(_p)	{(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
 	(_p)->idb_type = -1; (_p)->idb_ptr = GENPTR_NULL;}
-#define RT_CK_DB_INTERNAL(_p)	RT_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
+#define RT_CK_DB_INTERNAL(_p)	BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /*
  *			D B _ F U L L _ P A T H
@@ -159,7 +159,7 @@ struct db_full_path {
 #define DB_FULL_PATH_POP(_pp)	{(_pp)->fp_len--;}
 #define DB_FULL_PATH_CUR_DIR(_pp)	((_pp)->fp_names[(_pp)->fp_len-1])
 #define DB_FULL_PATH_MAGIC	0x64626670
-#define RT_CK_FULL_PATH(_p)	RT_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
+#define RT_CK_FULL_PATH(_p)	BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /*
  *			X R A Y
@@ -209,7 +209,7 @@ struct hit {
 	register int _id = (_stp)->st_id; \
 	RT_CHECK_SOLTAB(_stp); \
 	if( _id <= 0 || _id > ID_MAXIMUM ) { \
-		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, _rayp); \
+		bu_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, _rayp); \
 		rt_bomb("RT_HIT_NORM:  bad st_id");\
 	} \
 	rt_functab[_id].ft_norm(_hitp, _stp, _rayp); }
@@ -258,7 +258,7 @@ struct curvature {
 	register int _id = (_stp)->st_id; \
 	RT_CHECK_SOLTAB(_stp); \
 	if( _id <= 0 || _id > ID_MAXIMUM )  { \
-		rt_log("stp=x%x, id=%d.\n", _stp, _id); \
+		bu_log("stp=x%x, id=%d.\n", _stp, _id); \
 		rt_bomb("RT_CURVE:  bad st_id"); \
 	} \
 	rt_functab[_id].ft_curve( _curvp, _hitp, _stp ); \
@@ -283,7 +283,7 @@ struct uvcoord {
 	register int _id = (_stp)->st_id; \
 	RT_CHECK_SOLTAB(_stp); \
 	if( _id <= 0 || _id > ID_MAXIMUM )  { \
-		rt_log("stp=x%x, id=%d.\n", _stp, _id); \
+		bu_log("stp=x%x, id=%d.\n", _stp, _id); \
 		rt_bomb("RT_UVCOORD:  bad st_id"); \
 	} \
 	rt_functab[_id].ft_uv( ap, _stp, _hitp, uvp ); }
@@ -300,7 +300,7 @@ struct uvcoord {
  * a ray through a torus).
  */
 struct seg {
-	struct rt_list	l;
+	struct bu_list	l;
 	struct hit	seg_in;		/* IN information */
 	struct hit	seg_out;	/* OUT information */
 	struct soltab	*seg_stp;	/* pointer back to soltab */
@@ -308,29 +308,29 @@ struct seg {
 #define RT_SEG_NULL	((struct seg *)0)
 #define RT_SEG_MAGIC	0x98bcdef1
 
-#define RT_CHECK_SEG(_p)	RT_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
-#define RT_CK_SEG(_p)		RT_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
+#define RT_CHECK_SEG(_p)	BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
+#define RT_CK_SEG(_p)		BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 
 #define RT_GET_SEG(p,res)    { \
-	while( !RT_LIST_WHILE((p),seg,&((res)->re_seg)) || !(p) ) \
+	while( !BU_LIST_WHILE((p),seg,&((res)->re_seg)) || !(p) ) \
 		rt_get_seg(res); \
-	RT_LIST_DEQUEUE( &((p)->l) ); \
-	(p)->l.forw = (p)->l.back = RT_LIST_NULL; \
+	BU_LIST_DEQUEUE( &((p)->l) ); \
+	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
 	res->re_segget++; }
 
 #define RT_FREE_SEG(p,res)  { \
 	RT_CHECK_SEG(p); \
-	RT_LIST_INSERT( &((res)->re_seg), &((p)->l) ); \
+	BU_LIST_INSERT( &((res)->re_seg), &((p)->l) ); \
 	res->re_segfree++; }
 
 /*  This could be
- *	RT_LIST_INSERT_LIST( &((_res)->re_seg), &((_segheadp)->l) )
+ *	BU_LIST_INSERT_LIST( &((_res)->re_seg), &((_segheadp)->l) )
  *  except for security of checking & counting each element this way.
  */
 #define RT_FREE_SEG_LIST( _segheadp, _res )	{ \
 	register struct seg *_a; \
-	while( RT_LIST_WHILE( _a, seg, &((_segheadp)->l) ) )  { \
-		RT_LIST_DEQUEUE( &(_a->l) ); \
+	while( BU_LIST_WHILE( _a, seg, &((_segheadp)->l) ) )  { \
+		BU_LIST_DEQUEUE( &(_a->l) ); \
 		RT_FREE_SEG( _a, _res ); \
 	} }
 
@@ -360,8 +360,8 @@ struct seg {
  * Leaf name and Xform matrix are unique identifier.
  */
 struct soltab {
-	struct rt_list	l;		/* links, headed by rti_headsolid */
-	struct rt_list	l2;		/* links, headed by st_dp->d_use_hd */
+	struct bu_list	l;		/* links, headed by rti_headsolid */
+	struct bu_list	l2;		/* links, headed by st_dp->d_use_hd */
 	struct rt_i	*st_rtip;	/* "up" pointer to rt_i */
 	int		st_uses;	/* Usage count, for instanced solids */
 	int		st_id;		/* Solid ident */
@@ -383,8 +383,8 @@ struct soltab {
 #define RT_SOLTAB_MAGIC		0x92bfcde0	/* l.magic */
 #define RT_SOLTAB2_MAGIC	0x92bfcde2	/* l2.magic */
 
-#define RT_CHECK_SOLTAB(_p)	RT_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
-#define RT_CK_SOLTAB(_p)	RT_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
+#define RT_CHECK_SOLTAB(_p)	BU_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
+#define RT_CK_SOLTAB(_p)	BU_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
 
 /*
  *  Values for Solid ID.
@@ -455,7 +455,7 @@ struct region  {
 };
 #define REGION_NULL	((struct region *)0)
 #define RT_REGION_MAGIC	0xdffb8001
-#define RT_CK_REGION(_p)	RT_CKMAG(_p,RT_REGION_MAGIC,"struct region")
+#define RT_CK_REGION(_p)	BU_CKMAG(_p,RT_REGION_MAGIC,"struct region")
 
 /*
  *  			P A R T I T I O N
@@ -472,7 +472,7 @@ struct region  {
  */
 
 struct partition {
-	/* This can be thought of and operated on as a struct rt_list */
+	/* This can be thought of and operated on as a struct bu_list */
 	long		pt_magic;		/* sanity check */
 	struct partition *pt_forw;		/* forwards link */
 	struct partition *pt_back;		/* backwards link */
@@ -490,8 +490,8 @@ struct partition {
 #define PT_HD_MAGIC	0x87687680
 
 #define RT_CHECK_PT(_p)	RT_CK_PT(_p)	/* compat */
-#define RT_CK_PT(_p)	RT_CKMAG(_p,PT_MAGIC, "struct partition")
-#define RT_CK_PT_HD(_p)	RT_CKMAG(_p,PT_HD_MAGIC, "struct partition list head")
+#define RT_CK_PT(_p)	BU_CKMAG(_p,PT_MAGIC, "struct partition")
+#define RT_CK_PT_HD(_p)	BU_CKMAG(_p,PT_HD_MAGIC, "struct partition list head")
 
 /* Macros for copying only the essential "middle" part of a partition struct */
 #define RT_PT_MIDDLE_START	pt_inseg		/* 1st elem to copy */
@@ -510,8 +510,8 @@ struct partition {
 	bzero( ((char *) &(p)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(p) ); }
 
 #define GET_PT(ip,p,res)   { \
-	if( RT_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
-		RT_LIST_DEQUEUE((struct rt_list *)(p)); \
+	if( BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
+		BU_LIST_DEQUEUE((struct bu_list *)(p)); \
 		bu_ptbl_reset( &(p)->pt_solids_hit ); \
 	} else { \
 		(p) = (struct partition *)bu_malloc(sizeof(struct partition), "struct partition"); \
@@ -522,7 +522,7 @@ struct partition {
 	res->re_partget++; }
 
 #define FREE_PT(p,res)  { \
-	RT_LIST_APPEND( &(res->re_parthead), (struct rt_list *)(p) ); \
+	BU_LIST_APPEND( &(res->re_parthead), (struct bu_list *)(p) ); \
 	res->re_partfree++; }
 
 #define RT_FREE_PT_LIST( _headp, _res )		{ \
@@ -536,13 +536,13 @@ struct partition {
 	}
 
 /* Insert "new" partition in front of "old" partition.  Note order change */
-#define INSERT_PT(_new,_old)	RT_LIST_INSERT((struct rt_list *)_old,(struct rt_list *)_new)
+#define INSERT_PT(_new,_old)	BU_LIST_INSERT((struct bu_list *)_old,(struct bu_list *)_new)
 
 /* Append "new" partition after "old" partition.  Note arg order change */
-#define APPEND_PT(_new,_old)	RT_LIST_APPEND((struct rt_list *)_old,(struct rt_list *)_new)
+#define APPEND_PT(_new,_old)	BU_LIST_APPEND((struct bu_list *)_old,(struct bu_list *)_new)
 
 /* Dequeue "cur" partition from doubly-linked list */
-#define DEQUEUE_PT(_cur)	RT_LIST_DEQUEUE((struct rt_list *)_cur)
+#define DEQUEUE_PT(_cur)	BU_LIST_DEQUEUE((struct bu_list *)_cur)
 
 /*
  *			C U T
@@ -632,8 +632,8 @@ struct db_i  {
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
 
-#define RT_CHECK_DBI(_p)	RT_CKMAG(_p,DBI_MAGIC,"struct db_i")
-#define RT_CK_DBI(_p)		RT_CKMAG(_p,DBI_MAGIC,"struct db_i")
+#define RT_CHECK_DBI(_p)	BU_CKMAG(_p,DBI_MAGIC,"struct db_i")
+#define RT_CK_DBI(_p)		BU_CKMAG(_p,DBI_MAGIC,"struct db_i")
 
 /*
  *			D I R E C T O R Y
@@ -648,11 +648,11 @@ struct directory  {
 	long		d_len;			/* # of db granules used */
 	long		d_nref;			/* # times ref'ed by COMBs */
 	int		d_flags;		/* flags */
-	struct rt_list	d_use_hd;		/* heads list of uses (struct soltab l2) */
+	struct bu_list	d_use_hd;		/* heads list of uses (struct soltab l2) */
 };
 #define DIR_NULL	((struct directory *)0)
 #define RT_DIR_MAGIC	0x05551212		/* Directory assistance */
-#define RT_CK_DIR(_dp)	RT_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
+#define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define RT_DIR_PHONY_ADDR	(-1L)	/* Special marker for d_addr field */
 
@@ -695,11 +695,11 @@ struct db_tree_state {
 	union tree *	(*ts_leaf_func) RT_ARGS((
 				struct db_tree_state * /*tsp*/,
 				struct db_full_path * /*pathp*/,
-				struct rt_external * /*ep*/,
+				struct bu_external * /*ep*/,
 				int /*id*/
 			));
 	CONST struct rt_tess_tol *ts_ttol;	/* Tessellation tolerance */
-	CONST struct rt_tol	*ts_tol;	/* Math tolerance */
+	CONST struct bn_tol	*ts_tol;	/* Math tolerance */
 #if defined(NMG_H)
 	struct model		**ts_m;		/* ptr to ptr to NMG "model" */
 #else
@@ -719,7 +719,7 @@ struct combined_tree_state {
 	struct db_full_path	cts_p;
 };
 #define RT_CTS_MAGIC	0x98989123
-#define RT_CK_CTS(_p)	RT_CKMAG(_p, RT_CTS_MAGIC, "combined_tree_state")
+#define RT_CK_CTS(_p)	BU_CKMAG(_p, RT_CTS_MAGIC, "combined_tree_state")
 
 /*
  *			T R E E
@@ -779,7 +779,7 @@ union tree {
 		long		magic;
 		int		tl_op;		/* leaf, OP_DB_LEAF */
 		matp_t		tl_mat;		/* xform matp, NULL ==> identity */
-		char		*tl_name;	/* Name of this leaf (rt_strdup'ed) */
+		char		*tl_name;	/* Name of this leaf (bu_strdup'ed) */
 	} tr_l;
 };
 /* Things which are in the same place in both A & B structures */
@@ -788,7 +788,7 @@ union tree {
 
 #define TREE_NULL	((union tree *)0)
 #define RT_TREE_MAGIC	0x91191191
-#define RT_CK_TREE(_p)	RT_CKMAG(_p, RT_TREE_MAGIC, "union tree")
+#define RT_CK_TREE(_p)	BU_CKMAG(_p, RT_TREE_MAGIC, "union tree")
 
 /*
  *			A N I M A T E
@@ -843,7 +843,7 @@ struct animate {
 
 #define ANIM_NULL	((struct animate *)0)
 #define ANIMATE_MAGIC	0x414e4963		/* 1095649635 */
-#define RT_CK_ANIMATE(_p)	RT_CKMAG((_p), ANIMATE_MAGIC, "animate")
+#define RT_CK_ANIMATE(_p)	BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
 /*
  *			R E S O U R C E
@@ -870,17 +870,17 @@ struct animate {
 struct resource {
 	long		re_magic;	/* Magic number */
 	int		re_cpu;		/* processor number, for ID */
-	struct rt_list 	re_seg;		/* Head of segment freelist */
+	struct bu_list 	re_seg;		/* Head of segment freelist */
 	struct bu_ptbl	re_seg_blocks;	/* Table of malloc'ed blocks of segs */
 	long		re_seglen;
 	long		re_segget;
 	long		re_segfree;
-	struct rt_list	re_parthead;	/* Head of freelist */
+	struct bu_list	re_parthead;	/* Head of freelist */
 	long		re_partlen;
 	long		re_partget;
 	long		re_partfree;
-	struct rt_list	re_solid_bitv;	/* head of freelist */
-	struct rt_list	re_region_ptbl;	/* head of freelist */
+	struct bu_list	re_solid_bitv;	/* head of freelist */
+	struct bu_list	re_region_ptbl;	/* head of freelist */
 	union tree	**re_boolstack;	/* Stack for rt_booleval() */
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	float		*re_randptr;	/* ptr into random number table */
@@ -897,8 +897,8 @@ struct resource {
 extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RESOURCE_MAGIC	0x83651835
-#define RT_RESOURCE_CHECK(_p)	RT_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
-#define RT_CK_RESOURCE(_p)	RT_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
+#define RT_RESOURCE_CHECK(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
+#define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
 /*
  *			A P P L I C A T I O N
@@ -996,7 +996,7 @@ struct rt_g {
 	long		res_stats;	/* lock on statistics */
 	long		res_results;	/* lock on result buffer */
 	long		res_model;	/* lock on model growth (splines) */
-	struct rt_list	rtg_vlfree;	/* head of rt_vlist freelist */
+	struct bu_list	rtg_vlfree;	/* head of rt_vlist freelist */
 	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 };
 extern struct rt_g rt_g;
@@ -1055,18 +1055,18 @@ struct rt_i {
 	int		rti_nsol_by_type[ID_MAXIMUM+1];
 	int		rti_maxsol_by_type;
 	int		rti_air_discards;/* # of air regions discarded */
-	struct histogram rti_hist_cellsize; /* occupancy of cut cells */
-	struct histogram rti_hist_cutdepth; /* depth of cut tree */
+	struct bu_hist rti_hist_cellsize; /* occupancy of cut cells */
+	struct bu_hist rti_hist_cutdepth; /* depth of cut tree */
 	struct soltab	**rti_Solids;	/* ptrs to soltab [st_bit] */
-	struct rt_tol	rti_tol;	/* Tolerances for this model */
-	struct rt_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
+	struct bn_tol	rti_tol;	/* Tolerances for this model */
+	struct bu_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
 	struct bu_ptbl	rti_resources;	/* list of 'struct resource'es encountered */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/* magic # for integrity check */
 
-#define RT_CHECK_RTI(_p)	RT_CKMAG(_p, RTI_MAGIC, "struct rt_i")
-#define RT_CK_RTI(_p)		RT_CKMAG(_p, RTI_MAGIC, "struct rt_i")
+#define RT_CHECK_RTI(_p)	BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
+#define RT_CK_RTI(_p)		BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
 
 /*
  *  Macros to painlessly visit all the active solids.  Serving suggestion:
@@ -1076,9 +1076,9 @@ struct rt_i {
  *	} RT_VISIT_ALL_SOLTABS_END
  */
 #define RT_VISIT_ALL_SOLTABS_START(_s, _rti)	{ \
-	register struct rt_list	*_head = &((_rti)->rti_solidheads[0]); \
+	register struct bu_list	*_head = &((_rti)->rti_solidheads[0]); \
 	for( ; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++ ) \
-		for( RT_LIST_FOR( _s, soltab, _head ) )  {
+		for( BU_LIST_FOR( _s, soltab, _head ) )  {
 
 #define RT_VISIT_ALL_SOLTABS_END	} }
 
@@ -1093,10 +1093,10 @@ struct rt_i {
  *  On 32-bit machines, RT_VLIST_CHUNK of 35 results in rt_vlist structures
  *  just less than 1k bytes.
  *
- *  The head of the doubly linked list can be just a "struct rt_list" head.
+ *  The head of the doubly linked list can be just a "struct bu_list" head.
  *
  *  To visit all the elements in the vlist:
- *	for( RT_LIST_FOR( vp, rt_vlist, hp ) )  {
+ *	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
  *		register int	i;
  *		register int	nused = vp->nused;
  *		register int	*cmd = vp->cmd;
@@ -1109,14 +1109,14 @@ struct rt_i {
  */
 #define RT_VLIST_CHUNK	35		/* 32-bit mach => just less than 1k */
 struct rt_vlist  {
-	struct rt_list	l;			/* magic, forw, back */
+	struct bu_list	l;			/* magic, forw, back */
 	int		nused;			/* elements 0..nused active */
 	int		cmd[RT_VLIST_CHUNK];	/* VL_CMD_* */
 	point_t		pt[RT_VLIST_CHUNK];	/* associated 3-point/vect */
 };
 #define RT_VLIST_NULL	((struct rt_vlist *)0)
 #define RT_VLIST_MAGIC	0x98237474
-#define RT_CK_VLIST(_p) RT_CKMAG((_p), RT_VLIST_MAGIC, "rt_vlist")
+#define RT_CK_VLIST(_p) BU_CKMAG((_p), RT_VLIST_MAGIC, "rt_vlist")
 
 /* Values for cmd[] */
 #define RT_VLIST_LINE_MOVE	0
@@ -1131,38 +1131,38 @@ struct rt_vlist  {
 /*
  *  Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
  *  are required to execute this macro once, first:
- *		RT_LIST_INIT( &rt_g.rtg_vlfree );
+ *		BU_LIST_INIT( &rt_g.rtg_vlfree );
  */
 #define RT_GET_VLIST(p) {\
-		(p) = RT_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree ); \
-		if( RT_LIST_IS_HEAD( (p), &rt_g.rtg_vlfree ) )  { \
+		(p) = BU_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree ); \
+		if( BU_LIST_IS_HEAD( (p), &rt_g.rtg_vlfree ) )  { \
 			(p) = (struct rt_vlist *)rt_malloc(sizeof(struct rt_vlist), "rt_vlist"); \
 			(p)->l.magic = RT_VLIST_MAGIC; \
 		} else { \
-			RT_LIST_DEQUEUE( &((p)->l) ); \
+			BU_LIST_DEQUEUE( &((p)->l) ); \
 		} \
 		(p)->nused = 0; \
 	}
 
 /* Place an entire chain of rt_vlist structs on the global freelist */
 #define RT_FREE_VLIST(hd)	{ \
-	RT_CK_LIST_HEAD( (hd) ); \
-	RT_LIST_APPEND_LIST( &rt_g.rtg_vlfree, (hd) ); \
+	BU_CK_LIST_HEAD( (hd) ); \
+	BU_LIST_APPEND_LIST( &rt_g.rtg_vlfree, (hd) ); \
 	}
 
 #define RT_ADD_VLIST(hd,pnt,draw)  { \
 	register struct rt_vlist *_vp; \
-	RT_CK_LIST_HEAD( hd ); \
-	_vp = RT_LIST_LAST( rt_vlist, (hd) ); \
-	if( RT_LIST_IS_HEAD( _vp, (hd) ) || _vp->nused >= RT_VLIST_CHUNK )  { \
+	BU_CK_LIST_HEAD( hd ); \
+	_vp = BU_LIST_LAST( rt_vlist, (hd) ); \
+	if( BU_LIST_IS_HEAD( _vp, (hd) ) || _vp->nused >= RT_VLIST_CHUNK )  { \
 		RT_GET_VLIST(_vp); \
-		RT_LIST_INSERT( (hd), &(_vp->l) ); \
+		BU_LIST_INSERT( (hd), &(_vp->l) ); \
 	} \
 	VMOVE( _vp->pt[_vp->nused], (pnt) ); \
 	_vp->cmd[_vp->nused++] = (draw); \
 	}
 
-/* Macro RT_CK_LIST_HEAD() is defined in rtlist.h */
+/* Macro BU_CK_LIST_HEAD() is defined in rtlist.h */
 
 /* For NMG plotting, a way of separating vlists into colorer parts */
 struct rt_vlblock {
@@ -1170,19 +1170,19 @@ struct rt_vlblock {
 	int		nused;
 	int		max;
 	long		*rgb;		/* rgb[max] */
-	struct rt_list	*head;		/* head[max] */
+	struct bu_list	*head;		/* head[max] */
 };
 #define RT_VLBLOCK_MAGIC	0x981bd112
-#define RT_CK_VLBLOCK(_p)	RT_CKMAG((_p), RT_VLBLOCK_MAGIC, "rt_vlblock")
+#define RT_CK_VLBLOCK(_p)	BU_CKMAG((_p), RT_VLBLOCK_MAGIC, "rt_vlblock")
 /*
  *  Replacements for definitions from ../h/vmath.h
  */
 #undef V2PRINT
 #undef VPRINT
 #undef HPRINT
-#define V2PRINT(a,b)	rt_log("%s (%g, %g)\n", a, (b)[0], (b)[1] );
-#define VPRINT(a,b)	rt_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
-#define HPRINT(a,b)	rt_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
+#define V2PRINT(a,b)	bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1] );
+#define VPRINT(a,b)	bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
+#define HPRINT(a,b)	bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 /*
  *			C O M M A N D _ T A B
@@ -1243,10 +1243,10 @@ struct rt_functab {
 	int	(*ft_classify)();
 	void	(*ft_free) RT_ARGS((struct soltab * /*stp*/));
 	int	(*ft_plot) RT_ARGS((
-			struct rt_list * /*vhead*/,
+			struct bu_list * /*vhead*/,
 			struct rt_db_internal * /*ip*/,
 			CONST struct rt_tess_tol * /*ttol*/,
-			CONST struct rt_tol * /*tol*/));
+			CONST struct bn_tol * /*tol*/));
 	void	(*ft_vshot) RT_ARGS((struct soltab * /*stp*/[],
 			struct xray *[] /*rp*/,
 			struct seg [] /*segp*/, int /*n*/,
@@ -1257,29 +1257,29 @@ struct rt_functab {
 			struct model * /*m*/,
 			struct rt_db_internal * /*ip*/,
 			CONST struct rt_tess_tol * /*ttol*/,
-			CONST struct rt_tol * /*tol*/));
+			CONST struct bn_tol * /*tol*/));
 	int	(*ft_tnurb) RT_ARGS((
 			struct nmgregion ** /*r*/,
 			struct model * /*m*/,
 			struct rt_db_internal * /*ip*/,
-			CONST struct rt_tol * /*tol*/));
+			CONST struct bn_tol * /*tol*/));
 #else
 	int	(*ft_tessellate) RT_ARGS((
 			genptr_t * /*r*/,
 			genptr_t /*m*/,
 			struct rt_db_internal * /*ip*/,
 			CONST struct rt_tess_tol * /*ttol*/,
-			CONST struct rt_tol * /*tol*/));
+			CONST struct bn_tol * /*tol*/));
 	int	(*ft_tnurb) RT_ARGS((
 			genptr_t * /*r*/,
 			genptr_t /*m*/,
 			struct rt_db_internal * /*ip*/,
-			CONST struct rt_tol * /*tol*/));
+			CONST struct bn_tol * /*tol*/));
 #endif
 	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
-			CONST struct rt_external * /*ep*/,
+			CONST struct bu_external * /*ep*/,
 			CONST mat_t /*mat*/));
-	int	(*ft_export) RT_ARGS((struct rt_external * /*ep*/,
+	int	(*ft_export) RT_ARGS((struct bu_external * /*ep*/,
 			CONST struct rt_db_internal * /*ip*/,
 			double /*local2mm*/));
 	void	(*ft_ifree) RT_ARGS((struct rt_db_internal * /*ip*/));
@@ -1455,11 +1455,11 @@ RT_EXTERN(int db_get, (struct db_i *, CONST struct directory *dp,
 RT_EXTERN(int db_put, ( struct db_i *, CONST struct directory *dp,
 	genptr_t where, int offset, int len ) );
 #endif /* RECORD_DEFINED */
-RT_EXTERN(int db_get_external, ( struct rt_external *ep,
+RT_EXTERN(int db_get_external, ( struct bu_external *ep,
 	CONST struct directory *dp, struct db_i *dbip ) );
-RT_EXTERN(int db_put_external, ( struct rt_external *ep,
+RT_EXTERN(int db_put_external, ( struct bu_external *ep,
 	struct directory *dp, struct db_i *dbip ) );
-RT_EXTERN(void db_free_external, ( struct rt_external *ep ) );
+RT_EXTERN(void db_free_external, ( struct bu_external *ep ) );
 
 /* db_scan.c */
 					/* read db (to build directory) */
@@ -1504,7 +1504,7 @@ RT_EXTERN(void db_pr_tree_state, (CONST struct db_tree_state *tsp));
 RT_EXTERN(void db_pr_combined_tree_state,
 	(CONST struct combined_tree_state *ctsp));
 RT_EXTERN(int db_apply_state_from_comb, (struct db_tree_state *tsp,
-	CONST struct db_full_path *pathp, CONST struct rt_external *ep));
+	CONST struct db_full_path *pathp, CONST struct bu_external *ep));
 #if defined(DB_H)
 RT_EXTERN(int db_apply_state_from_memb, (struct db_tree_state *tsp,
 	struct db_full_path *pathp, CONST struct member	*mp));
@@ -1541,13 +1541,13 @@ RT_EXTERN(void rt_memclose,() );
 
 RT_EXTERN(struct rt_vlblock *rt_vlblock_init, () );
 RT_EXTERN(void rt_vlblock_free, (struct rt_vlblock *vbp) );
-RT_EXTERN(struct rt_list *rt_vlblock_find, (struct rt_vlblock *vbp,
+RT_EXTERN(struct bu_list *rt_vlblock_find, (struct rt_vlblock *vbp,
 	int r, int g, int b) );
 
 /* plane.c */
  
-/* CxDiv, CxSqrt */
-extern void rt_pr_roots();		/* print complex roots */
+/* bn_cx_div, CxSqrt */
+extern void bn_pr_roots();		/* print complex roots */
 
 /* rtassoc.c */
 RT_EXTERN(struct bu_vls *rt_assoc, (char *fname, char *value, int field_sep));
@@ -1558,13 +1558,13 @@ RT_EXTERN(void rt_pr_hit_vls, (struct bu_vls *v, CONST char *str,
 	CONST struct hit *hitp));
 RT_EXTERN(void rt_pr_pt_vls, (struct bu_vls *v, CONST struct rt_i *rtip,
 	CONST struct partition *pp));
-RT_EXTERN(void rt_logindent_vls, (struct bu_vls	*v));
+RT_EXTERN(void bu_logindent_vls, (struct bu_vls	*v));
 RT_EXTERN(void rt_pr_fallback_angle, (struct bu_vls *str, CONST char *prefix,
 	CONST double angles[5]));
 RT_EXTERN(void rt_find_fallback_angle, (double angles[5], CONST vect_t vec));
 
 /* table.c */
-RT_EXTERN(int rt_id_solid, (struct rt_external *ep));
+RT_EXTERN(int rt_id_solid, (struct bu_external *ep));
 
 /* units.c */
 RT_EXTERN(double rt_units_conversion, (CONST char *str) );
@@ -1578,23 +1578,23 @@ RT_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
 /* vlist.c */
 RT_EXTERN(struct rt_vlblock *	rt_vlblock_init, () );
 RT_EXTERN(void			rt_vlblock_free, (struct rt_vlblock *vbp) );
-RT_EXTERN(struct rt_list *	rt_vlblock_find, (struct rt_vlblock *vbp,
+RT_EXTERN(struct bu_list *	rt_vlblock_find, (struct rt_vlblock *vbp,
 				int r, int g, int b) );
 RT_EXTERN(void			rt_vlist_cleanup, () );
 RT_EXTERN(void			rt_vlist_export, (struct bu_vls *vls,
-				struct rt_list *hp,
+				struct bu_list *hp,
 				CONST char *name));
-RT_EXTERN(void			rt_vlist_import, (struct rt_list *hp,
+RT_EXTERN(void			rt_vlist_import, (struct bu_list *hp,
 				struct bu_vls *namevls,
 				CONST unsigned char *buf));
 RT_EXTERN(void			rt_plot_vlblock, (FILE *fp,
 				CONST struct rt_vlblock	*vbp) );
 RT_EXTERN(void			rt_vlist_to_uplot, (FILE *fp,
-				CONST struct rt_list *vhead));
+				CONST struct bu_list *vhead));
 RT_EXTERN(int			rt_uplot_to_vlist, (struct rt_vlblock *vbp,
 				FILE *fp, double char_size) );
 RT_EXTERN(void			rt_label_vlist_verts, (struct rt_vlblock *vbp,
-				struct rt_list *src, mat_t mat,
+				struct bu_list *src, mat_t mat,
 				double sz, double mm2local) );
 
 
@@ -1629,11 +1629,11 @@ RT_EXTERN(void			nmg_vertex_gv, (struct vertex *v, CONST point_t pt) );
 RT_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
 RT_EXTERN(void			nmg_edge_g, (struct edgeuse *eu) );
 RT_EXTERN(int			nmg_use_edge_g, (struct edgeuse *eu, long *eg) );
-RT_EXTERN(void			nmg_loop_g, (struct loop *l, CONST struct rt_tol *tol) );
+RT_EXTERN(void			nmg_loop_g, (struct loop *l, CONST struct bn_tol *tol) );
 RT_EXTERN(void			nmg_face_g, (struct faceuse *fu, CONST plane_t p) );
-RT_EXTERN(void			nmg_face_bb, (struct face *f, CONST struct rt_tol *tol) );
-RT_EXTERN(void			nmg_shell_a, (struct shell *s, CONST struct rt_tol *tol) );
-RT_EXTERN(void			nmg_region_a, (struct nmgregion *r, CONST struct rt_tol *tol) );
+RT_EXTERN(void			nmg_face_bb, (struct face *f, CONST struct bn_tol *tol) );
+RT_EXTERN(void			nmg_shell_a, (struct shell *s, CONST struct bn_tol *tol) );
+RT_EXTERN(void			nmg_region_a, (struct nmgregion *r, CONST struct bn_tol *tol) );
 /*	DEMOTE routines */
 RT_EXTERN(int			nmg_demote_lu, (struct loopuse *lu) );
 RT_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
@@ -1649,16 +1649,16 @@ RT_EXTERN(void			nmg_jeg, (struct edge_g_lseg *dest_eg,
 /* From nmg_mod.c */
 /*	SHELL Routines */
 RT_EXTERN(int			nmg_simplify_shell, (struct shell *s) );
-RT_EXTERN(void			nmg_rm_redundancies, (struct shell *s, CONST struct rt_tol *tol ) );
+RT_EXTERN(void			nmg_rm_redundancies, (struct shell *s, CONST struct bn_tol *tol ) );
 RT_EXTERN(void			nmg_sanitize_s_lv, (struct shell *s,
 				int orient) );
 RT_EXTERN(void			nmg_s_split_touchingloops, (struct shell *s,
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 /*	FACE Routines */
 RT_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], int n) );
 RT_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
 RT_EXTERN(struct faceuse	*nmg_add_loop_to_face, (struct shell *s, struct faceuse *fu, struct vertex **verts, int n, int dir) );
-RT_EXTERN(int			nmg_fu_planeeqn, (struct faceuse *fu, CONST struct rt_tol *tol) );
+RT_EXTERN(int			nmg_fu_planeeqn, (struct faceuse *fu, CONST struct bn_tol *tol) );
 RT_EXTERN(void			nmg_gluefaces, (struct faceuse *fulist[], int n) );
 RT_EXTERN(int			nmg_simplify_face, (struct faceuse *fu) );
 RT_EXTERN(void			nmg_reverse_face, (struct faceuse *fu) );
@@ -1675,7 +1675,7 @@ RT_EXTERN(struct vertexuse	*nmg_join_2singvu_loops, (struct vertexuse *vu1, stru
 RT_EXTERN(struct loopuse	*nmg_cut_loop, (struct vertexuse *vu1, struct vertexuse *vu2) );
 RT_EXTERN(struct loopuse	*nmg_split_lu_at_vu, (struct loopuse *lu, struct vertexuse *vu) );
 RT_EXTERN(void			nmg_split_touchingloops, (struct loopuse *lu,
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 RT_EXTERN(int			nmg_join_touchingloops, (struct loopuse *lu) );
 RT_EXTERN(void			nmg_simplify_loop, (struct loopuse *lu) );
 RT_EXTERN(int			nmg_kill_snakes, (struct loopuse *lu) );
@@ -1691,7 +1691,7 @@ RT_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu,
 RT_EXTERN(struct edgeuse	*nmg_esplit, (struct vertex *v, struct edgeuse *eu, int share_geom) );
 RT_EXTERN(struct edgeuse	*nmg_ebreak, (struct vertex *v, struct edgeuse *eu));
 RT_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
-				struct edgeuse *eu, CONST struct rt_tol *tol));
+				struct edgeuse *eu, CONST struct bn_tol *tol));
 RT_EXTERN(struct vertex		*nmg_e2break, (struct edgeuse *eu1, struct edgeuse *eu2) );
 RT_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
 RT_EXTERN(void			nmg_mv_eu_between_shells, (struct shell *dest,
@@ -1726,7 +1726,7 @@ RT_EXTERN(double		nmg_measure_fu_angle, (CONST struct edgeuse *eu,
 RT_EXTERN(struct loopuse	*nmg_find_lu_of_vu, (CONST struct vertexuse *vu) );
 RT_EXTERN(int			nmg_loop_is_a_crack, (CONST struct loopuse *lu) );
 RT_EXTERN(int			nmg_loop_is_ccw, (CONST struct loopuse *lu,
-				CONST plane_t norm, CONST struct rt_tol *tol) );
+				CONST plane_t norm, CONST struct bn_tol *tol) );
 RT_EXTERN(CONST struct vertexuse *nmg_loop_touches_self, (CONST struct loopuse *lu));
 RT_EXTERN(int			nmg_2lu_identical, (CONST struct edgeuse *eu1,
 				CONST struct edgeuse *eu2));
@@ -1744,15 +1744,15 @@ RT_EXTERN(struct edgeuse	*nmg_find_eu_with_vu_in_lu, (CONST struct loopuse *lu,
 RT_EXTERN(CONST struct edgeuse	*nmg_faceradial, (CONST struct edgeuse *eu) );
 RT_EXTERN(CONST struct edgeuse	*nmg_radial_face_edge_in_shell, (CONST struct edgeuse *eu) );
 RT_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1,
-				CONST struct faceuse *fu2, CONST struct rt_tol *tol));
+				CONST struct faceuse *fu2, CONST struct bn_tol *tol));
 RT_EXTERN(struct edge		*nmg_find_e_nearest_pt2, (long *magic_p,
 				CONST point_t pt2, CONST mat_t mat,
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 RT_EXTERN(struct edgeuse	*nmg_find_matching_eu_in_s, (
 				CONST struct edgeuse *eu1, CONST struct shell *s2));
 RT_EXTERN(void			nmg_eu_2vecs_perp, (vect_t xvec, vect_t yvec,
 				vect_t zvec, CONST struct edgeuse *eu,
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 RT_EXTERN(int			nmg_find_eu_leftvec, (vect_t left,
 				CONST struct edgeuse *eu) );
 
@@ -1762,36 +1762,36 @@ RT_EXTERN(struct vertexuse	*nmg_find_v_in_face, (CONST struct vertex *,
 RT_EXTERN(struct vertexuse	*nmg_find_v_in_shell, (CONST struct vertex *v,
 				CONST struct shell *s, int edges_only));
 RT_EXTERN(struct vertexuse	*nmg_find_pt_in_lu, (CONST struct loopuse *lu,
-				CONST point_t pt, CONST struct rt_tol *tol));
+				CONST point_t pt, CONST struct bn_tol *tol));
 RT_EXTERN(struct vertexuse	*nmg_find_pt_in_face, (CONST struct faceuse *fu,
 				CONST point_t pt,
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 RT_EXTERN(struct vertex		*nmg_find_pt_in_shell, (CONST struct shell *s,
-				CONST point_t pt, CONST struct rt_tol *tol) );
+				CONST point_t pt, CONST struct bn_tol *tol) );
 RT_EXTERN(struct vertex		*nmg_find_pt_in_model, (CONST struct model *m,
-				CONST point_t pt, CONST struct rt_tol *tol));
+				CONST point_t pt, CONST struct bn_tol *tol));
 RT_EXTERN(int			nmg_is_vertex_in_edgelist, (CONST struct vertex *v,
-				CONST struct rt_list *hd) );
+				CONST struct bu_list *hd) );
 RT_EXTERN(int			nmg_is_vertex_in_looplist, (CONST struct vertex *v,
-				CONST struct rt_list *hd, int singletons) );
+				CONST struct bu_list *hd, int singletons) );
 RT_EXTERN(int			nmg_is_vertex_a_selfloop_in_shell, (CONST struct vertex *v,
 				CONST struct shell *s) );
 RT_EXTERN(int			nmg_is_vertex_in_facelist, (CONST struct vertex *v,
-				CONST struct rt_list *hd) );
+				CONST struct bu_list *hd) );
 RT_EXTERN(int			nmg_is_edge_in_edgelist, (CONST struct edge *e,
-				CONST struct rt_list *hd) );
+				CONST struct bu_list *hd) );
 RT_EXTERN(int			nmg_is_edge_in_looplist, (CONST struct edge *e,
-				CONST struct rt_list *hd) );
+				CONST struct bu_list *hd) );
 RT_EXTERN(int			nmg_is_edge_in_facelist, (CONST struct edge *e,
-				CONST struct rt_list *hd) );
+				CONST struct bu_list *hd) );
 RT_EXTERN(int			nmg_is_loop_in_facelist, (CONST struct loop *l,
-				CONST struct rt_list *fu_hd) );
+				CONST struct bu_list *fu_hd) );
 
-RT_EXTERN(void			nmg_edgeuse_tabulate, (struct nmg_ptbl *tab,
+RT_EXTERN(void			nmg_edgeuse_tabulate, (struct bu_ptbl *tab,
 				CONST long *magic_p));
-RT_EXTERN(void			nmg_vertex_tabulate, (struct nmg_ptbl *tab,
+RT_EXTERN(void			nmg_vertex_tabulate, (struct bu_ptbl *tab,
 				CONST long *magic_p));
-RT_EXTERN(void			nmg_face_tabulate, (struct nmg_ptbl *tab,
+RT_EXTERN(void			nmg_face_tabulate, (struct bu_ptbl *tab,
 				CONST long *magic_p));
 
 /* From nmg_pr.c */
@@ -1821,17 +1821,17 @@ RT_EXTERN(void			nmg_pr_vua, (CONST long *magic_p, char *h) );
 RT_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
 
 /* From nmg_misc.c */
-RT_EXTERN(int			nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
-RT_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct nmg_ptbl *vert_list, fastf_t *mag, CONST struct faceuse *fu, CONST struct rt_tol *tol));
-RT_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct nmg_ptbl *b) );
-RT_EXTERN(void			nmg_rebound, (struct model *m, CONST struct rt_tol *tol) );
+RT_EXTERN(int			bu_ptbl, (struct bu_ptbl *b, int func, long *p) );
+RT_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct bu_ptbl *vert_list, fastf_t *mag, CONST struct faceuse *fu, CONST struct bn_tol *tol));
+RT_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct bu_ptbl *b) );
+RT_EXTERN(void			nmg_rebound, (struct model *m, CONST struct bn_tol *tol) );
 RT_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
 RT_EXTERN(void			nmg_stash_model_to_file, (CONST char *filename,
 				CONST struct model *m, CONST char *title) );
 
 /* From nmg_tri.c */
-RT_EXTERN(void			nmg_triangulate_model, (struct model *m, CONST struct rt_tol   *tol) );
-RT_EXTERN(void			nmg_triangulate_fu, (struct faceuse *fu, CONST struct rt_tol   *tol) );
+RT_EXTERN(void			nmg_triangulate_model, (struct model *m, CONST struct bn_tol   *tol) );
+RT_EXTERN(void			nmg_triangulate_fu, (struct faceuse *fu, CONST struct bn_tol   *tol) );
 
 /* nmg_manif.c */
 RT_EXTERN(int			nmg_dangling_face, (CONST struct faceuse *fu,
@@ -1848,11 +1848,11 @@ RT_EXTERN(char	 		*nmg_manifolds, (struct model *m) );
 /* nmg_class.c */
 RT_EXTERN(int			nmg_class_pt_f, (CONST point_t pt,
 				CONST struct faceuse *fu,
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 RT_EXTERN(int			nmg_class_pt_s, (CONST point_t pt,
 				CONST struct shell *s,
 				CONST int in_or_out_only,
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 
 /* From nmg_pt_fu.c */
 RT_EXTERN(int			nmg_class_pt_fu_except, (CONST point_t pt,
@@ -1862,7 +1862,7 @@ RT_EXTERN(int			nmg_class_pt_fu_except, (CONST point_t pt,
 				CONST char *priv,
 				CONST int call_on_hits,
 				CONST int in_or_out_only,
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 
 /* From nmg_plot.c */
 /* add nmg_xxx_to_vlist routines here */
@@ -1903,7 +1903,7 @@ RT_EXTERN(void			nmg_vlblock_m, (struct rt_vlblock *vbp,
 RT_EXTERN(void			nmg_pl_around_edge, (FILE *fd,
 				long *b, CONST struct edgeuse *eu) );
 RT_EXTERN(void			nmg_pl_isect, (CONST char *filename,
-				CONST struct shell *s, CONST struct rt_tol *tol) );
+				CONST struct shell *s, CONST struct bn_tol *tol) );
 RT_EXTERN(void			nmg_pl_comb_fu, (int num1, int num2,
 				CONST struct faceuse *fu1) );
 RT_EXTERN(void			nmg_pl_2fu, (CONST char *str, int num,
@@ -1914,20 +1914,20 @@ RT_EXTERN(void			nmg_2face_plot, (CONST struct faceuse *fu1,
 				CONST struct faceuse *fu2) );
 RT_EXTERN(void			nmg_face_lu_plot, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu1, CONST struct vertexuse *vu2) );
-RT_EXTERN(void			nmg_cnurb_to_vlist, (struct rt_list *vhead,
+RT_EXTERN(void			nmg_cnurb_to_vlist, (struct bu_list *vhead,
 				CONST struct edgeuse *eu,int n_interior,
 				int cmd) );
 
 
 /* from nmg_mesh.c */
 RT_EXTERN(void			nmg_radial_join_eu, (struct edgeuse *eu1,
-				struct edgeuse *eu2, CONST struct rt_tol *tol));
+				struct edgeuse *eu2, CONST struct bn_tol *tol));
 RT_EXTERN(void			nmg_mesh_faces, (struct faceuse *fu1,
-				struct faceuse *fu2, CONST struct rt_tol *tol) );
+				struct faceuse *fu2, CONST struct bn_tol *tol) );
 RT_EXTERN(int			nmg_mesh_face_shell, (struct faceuse *fu1,
-				struct shell *s, CONST struct rt_tol *tol));
+				struct shell *s, CONST struct bn_tol *tol));
 RT_EXTERN(int			nmg_mesh_shell_shell, (struct shell *s1,
-				struct shell *s2, CONST struct rt_tol *tol));
+				struct shell *s2, CONST struct bn_tol *tol));
 RT_EXTERN(double		nmg_measure_fu_angle, (CONST struct edgeuse *eu,
 				CONST vect_t xvec, CONST vect_t yvec,
 				CONST vect_t zvec));
@@ -1935,27 +1935,27 @@ RT_EXTERN(double		nmg_measure_fu_angle, (CONST struct edgeuse *eu,
 /* from nmg_bool.c */
 RT_EXTERN(struct nmgregion	*nmg_do_bool, (struct nmgregion *s1,
 				struct nmgregion *s2,
-				CONST int oper, CONST struct rt_tol *tol) );
+				CONST int oper, CONST struct bn_tol *tol) );
 RT_EXTERN(void			nmg_shell_coplanar_face_merge,
-				(struct shell *s, CONST struct rt_tol *tol,
+				(struct shell *s, CONST struct bn_tol *tol,
 				CONST int simplify) );
 RT_EXTERN(int			nmg_two_region_vertex_fuse, (struct nmgregion *r1,
-				struct nmgregion *r2, CONST struct rt_tol *tol));
+				struct nmgregion *r2, CONST struct bn_tol *tol));
 RT_EXTERN(union tree		*nmg_booltree_leaf_tess, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
-				struct rt_external *ep, int id));
+				struct bu_external *ep, int id));
 RT_EXTERN(union tree		*nmg_booltree_leaf_tnurb, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
-				struct rt_external *ep, int id));
+				struct bu_external *ep, int id));
 RT_EXTERN(union tree		*nmg_booltree_evaluate, (union tree *tp,
-				CONST struct rt_tol *tol));
+				CONST struct bn_tol *tol));
 RT_EXTERN(void			nmg_region_v_unique, (struct nmgregion *r1,
-				CONST struct rt_tol *tol));
+				CONST struct bn_tol *tol));
 
 /* from nmg_class.c */
 RT_EXTERN(void			nmg_class_shells, (struct shell *sA,
 				struct shell *sB, long *classlist[4],
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 
 /* from nmg_fcut.c */
 RT_EXTERN(void			nmg_set_lu_orientation, (struct loopuse	*lu,
@@ -1965,12 +1965,12 @@ RT_EXTERN(double		nmg_vu_angle_measure, (struct vertexuse	*vu,
 				vect_t x_dir, vect_t y_dir, int assessment,
 				int in) );
 RT_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
-				struct nmg_ptbl *b1, struct nmg_ptbl *b2,
+				struct bu_ptbl *b1, struct bu_ptbl *b2,
 				fastf_t *mag1, fastf_t *mag2,
 				struct faceuse *fu1, struct faceuse *fu2,
 				point_t pt, vect_t dir,
 				struct edge_g_lseg *eg,
-				CONST struct rt_tol *tol) );
+				CONST struct bn_tol *tol) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
@@ -1998,17 +1998,17 @@ RT_EXTERN(int			nmg_ray_isect_segs, (struct soltab *stp,
 #endif
 /* From nmg_ck.c */
 /* XXX many others here */
-RT_EXTERN(void			nmg_ck_list, (struct rt_list *hd, CONST char *str) );
+RT_EXTERN(void			nmg_ck_list, (struct bu_list *hd, CONST char *str) );
 RT_EXTERN(void			nmg_ck_lueu, (struct loopuse *lu, char *s) );
-RT_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu, CONST struct rt_tol *tol));
-RT_EXTERN(int			nmg_ck_closed_surf, (CONST struct shell *s, CONST struct rt_tol *tol) );
-RT_EXTERN(int			nmg_ck_closed_region, (CONST struct nmgregion *r, CONST struct rt_tol *tol) );
+RT_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu, CONST struct bn_tol *tol));
+RT_EXTERN(int			nmg_ck_closed_surf, (CONST struct shell *s, CONST struct bn_tol *tol) );
+RT_EXTERN(int			nmg_ck_closed_region, (CONST struct nmgregion *r, CONST struct bn_tol *tol) );
 RT_EXTERN(void			nmg_ck_v_in_2fus, (CONST struct vertex *vp,
 				CONST struct faceuse *fu1, CONST struct faceuse *fu2,
-				CONST struct rt_tol *tol));
+				CONST struct bn_tol *tol));
 
 /* From nmg_inter.c */
-RT_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct rt_tol *tol) );
+RT_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct bn_tol *tol) );
 
 /* From nmg_index.c */
 RT_EXTERN(int			nmg_index_of_struct, (long *p) );
@@ -2044,16 +2044,9 @@ RT_EXTERN(void			rt_dspline_n, (double *r, CONST mat_t m,
  *  Constants provided and used by the RT library.
  */
 extern CONST struct db_tree_state	rt_initial_tree_state;
-extern CONST double rt_pi;
-extern CONST double rt_twopi;
-extern CONST double rt_halfpi;
-extern CONST double rt_invpi;
-extern CONST double rt_inv2pi;
-extern CONST double rt_inv255;
-extern CONST double rt_degtorad;
-extern CONST double rt_radtodeg;
-extern CONST mat_t  rt_identity;
 extern CONST char   *rt_vlist_cmd_descriptions[];
+
+/* vers.c (created by librt/Cakefile) */
 extern CONST char   rt_version[];
 
 #if defined(NMG_H)
