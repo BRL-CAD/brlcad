@@ -427,6 +427,8 @@ struct rt_g {
 	int		res_malloc;	/* lock on memory allocation */
 	int		res_printf;	/* lock on printing */
 	int		res_bitv;	/* lock on bitvectors */
+	int		res_worker;	/* lock on work to do */
+	int		res_stats;	/* lock on statistics */
 };
 extern struct rt_g rt_g;
 
@@ -465,6 +467,15 @@ struct rt_i {
 #define RTI_NULL	((struct rt_i *)0)
 
 extern struct rt_i rt_i;	/* Eventually, will be a return value */
+
+/*
+ *  Replacements for definitions from ../h/vmath.h
+ */
+#undef VPRINT
+#undef HPRINT
+#define VPRINT(a,b)	rt_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
+#define HPRINT(a,b)	rt_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
+
 
 /*****************************************************************
  *                                                               *
