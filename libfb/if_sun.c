@@ -264,18 +264,18 @@ static unsigned char redmap[256], grnmap[256], blumap[256];
 static int      biggest = RR * GR * BR - 1;
 
 #define COLOR_APPROX(p) \
-	(((*p)[RED] * RR ) / 256) * GR*BR + \
-	(((*p)[GRN] * GR ) / 256) * BR  + \
-	(((*p)[BLU] * BR ) / 256) + 1
+	(((p)[RED] * RR ) / 256) * GR*BR + \
+	(((p)[GRN] * GR ) / 256) * BR  + \
+	(((p)[BLU] * BR ) / 256) + 1
 
 #define SUN_CMAPVAL( p, o )\
 	if( SUN(ifp)->su_cmap_flag )\
 		{\
-		(*o)[RED] = CMR(ifp)[(*p)[RED]];\
-		(*o)[GRN] = CMG(ifp)[(*p)[GRN]];\
-		(*o)[BLU] = CMB(ifp)[(*p)[BLU]];\
+		(o)[RED] = CMR(ifp)[(*p)[RED]];\
+		(o)[GRN] = CMG(ifp)[(*p)[GRN]];\
+		(o)[BLU] = CMB(ifp)[(*p)[BLU]];\
 		}\
-	else	COPYRGB( *o, *p );
+	else	COPYRGB( o, *p );
 
 static Pixwin	*windowpw;
 static Pixwin	*imagepw;
@@ -420,14 +420,14 @@ int		xlft, ytop, width, height;
 RGBpixel	*pp;
 	{	static int		lastvalue = 0;
 		register int		value;
-		register RGBpixel	*vp;
+		RGBpixel		v;
 	/*fb_log( "sun_rectclear(%d,%d,%d,%d)\n", xlft, ytop, width, height ); /* XXX-debug */
 	/* Get color map value for pixel. */
-	SUN_CMAPVAL( pp, vp );
+	SUN_CMAPVAL( pp, v );
 
  	if( SUN(ifp)->su_depth == 1 )
 		{ /* Construct dither pattern in memory pixrect. */
-		value = ((*vp)[RED] + (*vp)[GRN] + (*vp)[BLU]);
+		value = (v[RED] + v[GRN] + v[BLU]);
 		if( value == 0 )
 			{
 			sunrop( xlft, ytop, width, height,
@@ -453,7 +453,7 @@ RGBpixel	*pp;
 		}
 	else
 		{ /* Grey-scale or color image. */
-		pixel_mpr_buf[0] = COLOR_APPROX(vp);
+		pixel_mpr_buf[0] = COLOR_APPROX(v);
 		sunreplrop( xlft, ytop, width, height,
 			PIX_SRC, &pixel_mpr, 0, 0
 			);
@@ -481,10 +481,10 @@ RGBpixel	*pp;
 		(void) memset( scan_mpr_buf, 0xff, XMAXWINDOW );
 		for( x = xlft; x <= xrgt; x++, sx += xzoom, pp++ )
 			{	register int		value;
-				register RGBpixel	*vp;
+				RGBpixel		v;
 			/* Get color map value for pixel. */
-			SUN_CMAPVAL( pp, vp );
-			value = (*vp)[RED] + (*vp)[GRN] + (*vp)[BLU];
+			SUN_CMAPVAL( pp, v );
+			value = v[RED] + v[GRN] + v[BLU];
 			if( value != 0 )
 				{ register int	maxdy = yzoom < DITHERSZ ?
 							yzoom : DITHERSZ;
@@ -515,11 +515,11 @@ RGBpixel	*pp;
 			register int	sx = xl;
 		for( x = xlft; x <= xrgt; x++, pp++, sx += xzoom )
 			{	register int		dx;
-				register RGBpixel	*vp;
 				register int		value;
+				RGBpixel		v;
 			/* Get color map value for pixel. */
-			SUN_CMAPVAL( pp, vp );
-			value = COLOR_APPROX(vp);
+			SUN_CMAPVAL( pp, v );
+			value = COLOR_APPROX(v);
 			for( dx = 0; dx < xzoom; dx++ )
 				scan_mpr_buf[sx+dx] = value; 
 			}
