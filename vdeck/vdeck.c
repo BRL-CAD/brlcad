@@ -75,7 +75,9 @@ struct soltab	sol_hd;
 
 struct db_i	*dbip;		/* Database instance ptr */
 
-/*	m a i n ( )							*/
+/*
+ *			M A I N
+ */
 main( argc, argv )
 char	*argv[];
 	{
@@ -280,6 +282,8 @@ union tree		*curtree;
 	char			*cp;
 	int			left;
 	int			length;
+	struct directory	*regdp;
+	int			i;
 
 	RT_VLS_INIT( &ident );
 	RT_VLS_INIT( &reg );
@@ -288,6 +292,12 @@ union tree		*curtree;
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 	dp->d_uses++;		/* instance number */
+
+	/* For name, find pointer to region combination */
+	for( i=0; i < pathp->fp_len; i++ )  {
+		regdp = pathp->fp_names[i];
+		if( regdp->d_flags & DIR_REGION )  break;
+	}
 
 	/* ---------------- */
 
@@ -317,17 +327,21 @@ rt_log("flat tree='%s'\n", cp);
 		if( left > 9*7 )  {
 			strncpy( op, cp, 9*7 );
 			op += 9*7;
-			*op = '\n';
-			ewrite( regfd, obuf, 6+9*7+1 );
 			left -= 9*7;
 		} else {
 			strncpy( op, cp, left );
 			op += left;
-			*op = '\n';
-			ewrite( regfd, obuf, 6+left+1 );
+			while( left < 9*7 )  {
+				*op++ = ' ';
+				left++;
+			}
 			left = 0;
-			break;
 		}
+		strcpy( op, regdp->d_namep );
+		op += strlen(op);
+		*op++ = '\n';
+		*op = '\0';
+		ewrite( regfd, obuf, strlen(obuf) );
 	} while( left > 0 );
 
 	/*
@@ -348,7 +362,8 @@ rt_log("flat tree='%s'\n", cp);
 		*bp = '*';
 		rt_vls_strcat( &ident, bp );
 	} else {
-		rt_vls_strcat( &ident, fullname );
+		/* Omit leading slash, for compat with old version */
+		rt_vls_strcat( &ident, fullname+1 );
 	}
 	rt_vls_strcat( &ident, "\n" );
 	ewrite( ridfd, rt_vls_addr(&ident), rt_vls_strlen(&ident) );
@@ -459,34 +474,41 @@ next_one: ;
 
 	stp->st_bit = ++nns;
 
-	/* Write solid #.						*/
-	vls_itoa( &sol, stp->st_bit+delsol, 5 );
+	/* Solid number is stp->st_bit + delsol */
 
 	/* Process appropriate solid type.				*/
 	switch( intern.idb_type )  {
-	case ID_TOR :
+	case ID_TOR:
 		addtor( &sol, (struct rt_tor_internal *)intern.idb_ptr,
 			dp->d_namep, stp->st_bit+delsol );
 		break;
-	case GENARB8 :
-		addarb( &rec );
+	case ID_ARB8:
+		addarb( &sol, (struct rt_arb_internal *)intern.idb_ptr,
+			dp->d_namep, stp->st_bit+delsol );
 		break;
-	case ID_ELL :
+	case ID_ELL:
 		addell( &sol, (struct rt_ell_internal *)intern.idb_ptr,
 			dp->d_namep, stp->st_bit+delsol );
 		break;
-	case GENTGC :
+#if 0
+	case ID_TGC:
 		addtgc( &rec );
 		break;
-	case ARS :
+	case ID_ARS:
 		addars( &rec );
 		break;
+#endif
 	default:
 		(void) fprintf( stderr,
-				"Solid type (%d) unknown.\n", rec.s.s_type
-				);
-		exit( 10 );
-		}
+			"vdeck: '%s' Solid type has no corresponding COMGEOM soild, skipping\n",
+			rt_functab[id].ft_name );
+		vls_itoa( &sol, stp->st_bit+delsol, 5 );
+		rt_vls_strcat( &sol, rt_functab[id].ft_name );
+		vls_blanks( &sol, 5*10 );
+		rt_vls_strcat( &sol, dp->d_namep );
+		rt_vls_strcat( &sol, "\n");
+		break;
+	}
 
 rt_log("solid='%s'\n", rt_vls_addr(&sol) );
 	ewrite( solfd, rt_vls_addr(&sol), rt_vls_strlen(&sol) );
@@ -1013,147 +1035,132 @@ register double	*d1, *d2;
 	return;
 	}
 
-/*	a d d t o r ( )
-	Process torus.
+/*
+ *			A D D T O R
+ *
+ *  Process torus.
  */
-addtor( v, tor, name, num )
+addtor( v, gp, name, num )
 struct rt_vls		*v;
-struct rt_tor_internal	*tor;
+struct rt_tor_internal	*gp;
 char			*name;
 int			num;
 {
 	vect_t	norm;
 
 	RT_VLS_CHECK(v);
-	RT_TOR_CK_MAGIC(tor);
+	RT_TOR_CK_MAGIC(gp);
 
 	/* V, N, r1, r2 */
-	VSCALE( norm, tor->h, 1/tor->r_h );
+	VSCALE( norm, gp->h, 1/gp->r_h );
 
+	vls_itoa( v, num, 5 );
 	rt_vls_strcat( v, "tor  " );		/* 5 */
-	vls_ftoa_vec_cvt( v, tor->v, 10, 4 );
+	vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 	vls_ftoa_vec( v, norm, 10, 4 );
 	rt_vls_strcat( v, name );
 	rt_vls_strcat( v, "\n" );
 
 	vls_itoa( v, num, 5 );
 	vls_blanks( v, 5 );
-	vls_ftoa( v, tor->r_a*unit_conversion, 10, 4 );
-	vls_ftoa( v, tor->r_h*unit_conversion, 10, 4 );
+	vls_ftoa( v, gp->r_a*unit_conversion, 10, 4 );
+	vls_ftoa( v, gp->r_h*unit_conversion, 10, 4 );
 	vls_blanks( v, 4*10 );
 	rt_vls_strcat( v, name );
 	rt_vls_strcat( v, "\n");
 }
 
-/*	a d d a r b ( )
-	Process generalized arb.
- */
-addarb( rec )
-register Record	*rec;
-	{	register int	i;
-		float	work[3], worc[3];
-		hvect_t	v_work, v_workk;
-		double	xmin, xmax, ymin, ymax, zmin, zmax;
-		int	univecs[8], samevecs[11];
-	
-	/* Operate on vertex.						*/
-	vtoh_move( v_workk, &(rec->s.s_values[0]) );
-	matXvec( v_work, xform, v_workk );
-	htov_move( &(rec->s.s_values[0]), v_work );
+static void
+vls_solid_pts( v, pts, npts, name, num, kind )
+struct rt_vls	*v;
+CONST point_t	pts[];
+CONST char	*name;
+CONST int	num;
+CONST char	*kind;
+{
+	register int	i;
 
-	/* Rest of vectors.						*/
-	for( i = 3; i <= 21; i += 3 )
-		{
-		vtoh_move( v_workk, &(rec->s.s_values[i]) );
-		matXvec( v_work, notrans, v_workk );
-		htov_move( v_workk, v_work );
-
-		/* Point notation.					*/
-		VADD2(	&(rec->s.s_values[i]),
-			&(rec->s.s_values[0]),
-			v_workk
-			);
+	for( i = 0; i < npts; )  {
+		vls_itoa( v, num, 5 );
+		if( i == 0 )
+			rt_vls_strncat( v, kind, 5 );
+		else
+			rt_vls_strcat( v, "     " );
+		vls_ftoa_vec_cvt( v, pts[i], 10, 4 );
+		if( ++i < npts )  {
+			vls_ftoa_vec_cvt( v, pts[i], 10, 4 );
+		} else {
+			vls_blanks( v, 3*10 );
 		}
+		i++;
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
+	}
+}
+
+/*
+ *			A D D A R B
+ *
+ *  Process generalized arb.
+ */
+addarb( v, gp, name, num )
+struct rt_vls		*v;
+struct rt_arb_internal	*gp;
+char			*name;
+int			num;
+{
+	register int	i;
+	int	uniq_pts[8];
+	int	samevecs[11];
+	int	cgtype;
+	point_t	pts[8];		/* GIFT-order points */
 
 	/* Enter new arb code.						*/
-	if( (i = cgarbs( rec, univecs, samevecs )) == 0 ) return;
-	(void) redoarb( rec, univecs, samevecs, i );
-	rec->s.s_cgtype *= -1;
+	if( (i = cgarbs( &cgtype, gp, uniq_pts, samevecs, CONV_EPSILON )) == 0 ||
+	    redoarb( pts, gp, uniq_pts, samevecs, i, cgtype ) == 0 )  {
+		fprintf(stderr,"vdeck: addarb(%s): failure\n", name);
+		vls_itoa( v, num, 5 );
+		rt_vls_strncat( v, "arb??", 5 );
+		vls_blanks( v, 6*10 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
+		return;
+	}
 	
 	/* Print the solid parameters.					*/
-	switch( rec->s.s_cgtype )
-		{
-	case ARB8 :
-		ewrite( solfd, "arb8 ", 5 );
-		psp( 8, rec );
+	switch( cgtype )  {
+	case 8:
+		vls_solid_pts( v, pts, 8, name, num, "arb8 " );
 		break;
-	case ARB7 :
-		ewrite( solfd, "arb7 ", 5 );
-		psp( 7, rec );
+	case 7:
+		vls_solid_pts( v, pts, 7, name, num, "arb7 " );
 		break;
-	case ARB6 :
-		ewrite( solfd, "arb6 ", 5 );
-		VMOVE( SV5, SV6 );
-		psp( 6, rec );
+	case 6:
+		VMOVE( pts[5], pts[6] );
+		vls_solid_pts( v, pts, 6, name, num, "arb6 " );
 		break;
-	case ARB5 :
-		ewrite( solfd, "arb5 ", 5 );
-		psp( 5, rec );
+	case 5:
+		vls_solid_pts( v, pts, 5, name, num, "arb5 " );
 		break;
-	case ARB4 :
-		ewrite( solfd, "arb4 ", 5 );
-		VMOVE( SV3, SV4 );
-		psp( 4, rec );
+	case 4:
+		VMOVE( pts[3], pts[4] );
+		vls_solid_pts( v, pts, 4, name, num, "arb4 " );
 		break;
-	case RAW :
-		ewrite( solfd, "raw  ", 5 );
-		VSUB2( work, SV1, SV0 );
-		VSUB2( SV1, SV3, SV0);		/* H */
-		VMOVE( SV2, work);		/* W */
-		VSUB2( SV3, SV4, SV0);		/* D */
-		psp( 4, rec );
-		break;
-	case BOX :
-		ewrite( solfd, "box  ", 5 );
-		VSUB2( work, SV1, SV0 );
-		VSUB2( SV1, SV3, SV0);		/* H */
-		VMOVE( SV2, work);		/* W */
-		VSUB2( SV3, SV4, SV0);		/* D */
-		psp( 4, rec );
-		break;
-	case RPP :
-		ewrite( solfd, "rpp  ", 5 );
-		xmin = ymin = zmin = 100000000.0;
-		xmax = ymax = zmax = -100000000.0;
-		for( i = 0; i <= 21; i += 3 )
-			{
-			MINMAX(xmin, xmax, rec->s.s_values[i]);
-			MINMAX(ymin, ymax, rec->s.s_values[i+1]);
-			MINMAX(zmin, zmax, rec->s.s_values[i+2]);
-			}
-		work[0] = xmin;
-		work[1] = xmax;
-		work[2] = ymin;
-		worc[0] = ymax;
-		worc[1] = zmin;
-		worc[2] = zmax;
-		VMOVE( SV0, work );
-		VMOVE( SV1, worc );
-		psp( 2, rec );
-		break;
-	default :
-		(void) fprintf( stderr, "Unknown arb (%d).\n", rec->s.s_cgtype );
+
+	/* Currently, cgarbs() will not return RAW, BOX, or RPP */
+	default:
+		(void) fprintf( stderr, "addarb: Unknown arb cgtype=%d.\n",
+			cgtype );
 		exit( 10 );
-		}
-	return;
 	}
+}
 
 /*	a d d e l l ( )
 	Process the general ellipsoid.
  */
-addell( v, ell, name, num )
+addell( v, gp, name, num )
 struct rt_vls		*v;
-struct rt_ell_internal	*ell;
+struct rt_ell_internal	*gp;
 char			*name;
 int			num;
 {
@@ -1162,9 +1169,9 @@ int			num;
 	int	cgtype;
 	
 	/* Check for ell1 or sph.					*/
-	ma = MAGNITUDE( ell->a );
-	mb = MAGNITUDE( ell->b );
-	mc = MAGNITUDE( ell->c );
+	ma = MAGNITUDE( gp->a );
+	mb = MAGNITUDE( gp->b );
+	mc = MAGNITUDE( gp->c );
 	if( fabs( ma-mb ) < CONV_EPSILON )  {
 		/* vector A == vector B */
 		cgtype = ELL1;
@@ -1173,14 +1180,14 @@ int			num;
 			cgtype = SPH;
 		else	/* switch A and C */
 			{
-			swap_vec( ell->a, ell->c );
+			swap_vec( gp->a, gp->c );
 			swap_dbl( &ma, &mc );
 			}
 	} else if( fabs( ma-mc ) < CONV_EPSILON ) {
 		/* vector A == vector C */
 		cgtype = ELL1;
 		/* switch vector A and vector B */
-		swap_vec( ell->a, ell->b );
+		swap_vec( gp->a, gp->b );
 		swap_dbl( &ma, &mb );
 	} else if( fabs( mb-mc ) < CONV_EPSILON ) 
 		cgtype = ELL1;
@@ -1188,25 +1195,26 @@ int			num;
 		cgtype = GENELL;
 
 	/* Print the solid parameters.					*/
+	vls_itoa( v, num, 5 );
 	switch( cgtype )  {
-	case GENELL :
+	case GENELL:
 		rt_vls_strcat( v, "ellg " );		/* 5 */
-		vls_ftoa_vec_cvt( v, ell->v, 10, 4 );
-		vls_ftoa_vec_cvt( v, ell->a, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
 		rt_vls_strcat( v, name );
 		rt_vls_strcat( v, "\n" );
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
-		vls_ftoa_vec_cvt( v, ell->b, 10, 4 );
-		vls_ftoa_vec_cvt( v, ell->c, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->c, 10, 4 );
 		rt_vls_strcat( v, name );
 		rt_vls_strcat( v, "\n");
 		break;
-	case ELL1 :
+	case ELL1:
 		rt_vls_strcat( v, "ell1 " );		/* 5 */
-		vls_ftoa_vec_cvt( v, ell->v, 10, 4 );
-		vls_ftoa_vec_cvt( v, ell->a, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
 		rt_vls_strcat( v, name );
 		rt_vls_strcat( v, "\n" );
 
@@ -1217,15 +1225,15 @@ int			num;
 		rt_vls_strcat( v, name );
 		rt_vls_strcat( v, "\n");
 		break;
-	case SPH :
+	case SPH:
 		rt_vls_strcat( v, "sph  " );		/* 5 */
-		vls_ftoa_vec_cvt( v, ell->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 		vls_ftoa_cvt( v, ma, 10, 4 );
 		vls_blanks( v, 2*10 );
 		rt_vls_strcat( v, name );
 		rt_vls_strcat( v, "\n" );
 		break;
-	default :
+	default:
 		(void) fprintf( stderr,
 				"Error in type of ellipse (%d).\n",
 				cgtype
@@ -1315,7 +1323,7 @@ int			num;
 	/* Print the solid parameters.					*/
 	switch( rec->s.s_cgtype )
 		{
-	case TGC :
+	case TGC:
 		ewrite( solfd, "tgc  ", 5 );
 		work[0] = mc;
 		work[1] = md;
@@ -1323,14 +1331,14 @@ int			num;
 		VMOVE( SV4, work );
 		psp( 5, rec );
 		break;
-	case RCC :
+	case RCC:
 		ewrite( solfd, "rcc  ", 5 );
 		work[0] = ma;
 		work[1] = work[2] = 0.0;
 		VMOVE( SV2, work );
 		psp( 3, rec );
 		break;
-	case TRC :
+	case TRC:
 		ewrite( solfd, "trc  ", 5 );
 		work[0] = ma;
 		work[1] = mc;
@@ -1338,7 +1346,7 @@ int			num;
 		VMOVE( SV2, work );
 		psp( 3, rec );
 		break;
-	case TEC :
+	case TEC:
 		ewrite( solfd, "tec  ", 5 );
 		/* This backwards conversion is to counteract an unnecessary
 			conversion of this ratio in 'psp()'.  Sorry about
@@ -1349,11 +1357,11 @@ int			num;
 		VMOVE( SV4, work );
 		psp( 5, rec );
 		break;
-	case REC :
+	case REC:
 		ewrite( solfd, "rec  ", 5 );
 		psp( 4, rec );
 		break;
-	default :
+	default:
 		(void) fprintf( stderr,
 				"Error in tgc type (%d).\n",
 				rec->s.s_cgtype
@@ -1374,6 +1382,7 @@ register Record *rec;
 		float	work[3], vertex[3];
 		hvect_t	v_work, v_workk;
 
+#if 0
 	ngrans = rec->a.a_curlen;
 	totlen = rec->a.a_totlen;
 	npts = rec->a.a_n;
@@ -1424,7 +1433,8 @@ register Record *rec;
 		parsp( npt, rec );
 		}
 	return;
-	}
+#endif
+}
 
 #define MAX_PSP	60
 /*	p s p ( )
