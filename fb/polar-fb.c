@@ -599,7 +599,6 @@ char	*argv[];
 	    (void) fputs("Bad interior.  Shouldn't happen\n",
 			    stderr);
 	    (void) exit (1);
-	    Fill_Func = Fill_Constant;
 	    break;
     }
 
@@ -886,11 +885,11 @@ bool		merge;		/* Overlay onto current FB contents? */
 {
     RGBpixel	ThisPix;	/* Ramped color for current pixel */
 
-    ThisPix[RED] = Color[C_RAMP][RED] * rho / unit_r +
+    ThisPix[RED] = ((double)Color[C_RAMP][RED]) * rho / unit_r +
 	255 * (1 - rho / unit_r);
-    ThisPix[GRN] = Color[C_RAMP][GRN] * rho / unit_r +
+    ThisPix[GRN] = ((double)Color[C_RAMP][GRN]) * rho / unit_r +
 	255 * (1 - rho / unit_r);
-    ThisPix[BLU] = Color[C_RAMP][BLU] * rho / unit_r +
+    ThisPix[BLU] = ((double)Color[C_RAMP][BLU]) * rho / unit_r +
 	255 * (1 - rho / unit_r);
     COPYRGB(*fbbPtr, ThisPix)
 }
