@@ -11,6 +11,19 @@
  *
  * Author -
  *	Robert G. Parker
+ *
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1997 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #if 1
 #define USE_FBSERV
@@ -23,12 +36,11 @@
 
 #include "machine.h"
 #include "externs.h"
-#include "bu.h"
+#include "cmd.h"                  /* includes bu.h */
 #include "vmath.h"
 #include "bn.h"
+#include "raytrace.h"
 #include "dm.h"
-#include "solid.h"
-#include "cmd.h"
 #ifdef USE_FBSERV
 #include "dm-X.h"
 #ifdef DM_OGL
@@ -37,7 +49,6 @@
 #include "dm-ogl.h"
 #endif
 #include "dm_xvars.h"
-#include "./fbserv_obj.h"
 #endif
 
 /* These functions live in libfb. */
@@ -48,17 +59,11 @@ extern int _ogl_open_existing();
 extern int ogl_close_existing();
 extern int ogl_refresh();
 
-struct dm_obj {
-  struct bu_list	l;
-  struct bu_vls		dmo_name;		/* display manager name/cmd */
-  struct dm		*dmo_dmp;		/* display manager pointer */
-#ifdef USE_FBSERV
-  struct fbserv_obj	dmo_fbs;		/* fbserv object */
-#endif
-};
-
+HIDDEN int dmo_open_tcl();
+HIDDEN int dmo_close_tcl();
 HIDDEN int dmo_drawBegin_tcl();
 HIDDEN int dmo_drawEnd_tcl();
+HIDDEN int dmo_clear_tcl();
 HIDDEN int dmo_normal_tcl();
 HIDDEN int dmo_loadmat_tcl();
 HIDDEN int dmo_drawString_tcl();
@@ -66,12 +71,15 @@ HIDDEN int dmo_drawPoint_tcl();
 HIDDEN int dmo_drawLine_tcl();
 HIDDEN int dmo_drawVList_tcl();
 HIDDEN int dmo_drawSList_tcl();
+HIDDEN int dmo_drawGeom_tcl();
 HIDDEN int dmo_fg_tcl();
 HIDDEN int dmo_bg_tcl();
 HIDDEN int dmo_lineWidth_tcl();
 HIDDEN int dmo_lineStyle_tcl();
 HIDDEN int dmo_configure_tcl();
 HIDDEN int dmo_zclip_tcl();
+HIDDEN int dmo_zbuffer_tcl();
+HIDDEN int dmo_light_tcl();
 HIDDEN int dmo_bounds_tcl();
 HIDDEN int dmo_perspective_tcl();
 HIDDEN int dmo_debug_tcl();
@@ -81,12 +89,15 @@ HIDDEN int dmo_closeFb_tcl();
 HIDDEN int dmo_listen_tcl();
 HIDDEN int dmo_refreshFb_tcl();
 #endif
+HIDDEN int dmo_flush_tcl();
+HIDDEN int dmo_sync_tcl();
 
 HIDDEN struct dm_obj HeadDMObj;	/* head of display manager object list */
 
 HIDDEN struct bu_cmdtab dmo_cmds[] = {
 	"drawBegin",		dmo_drawBegin_tcl,
 	"drawEnd",		dmo_drawEnd_tcl,
+	"clear",		dmo_clear_tcl,
 	"normal",		dmo_normal_tcl,
 	"loadmat",		dmo_loadmat_tcl,
 	"drawString",		dmo_drawString_tcl,
@@ -94,11 +105,14 @@ HIDDEN struct bu_cmdtab dmo_cmds[] = {
 	"drawLine",		dmo_drawLine_tcl,
 	"drawVList",		dmo_drawVList_tcl,
 	"drawSList",		dmo_drawSList_tcl,
+	"drawGeom",		dmo_drawGeom_tcl,
 	"fg",			dmo_fg_tcl,
 	"bg",			dmo_bg_tcl,
 	"linewidth",		dmo_lineWidth_tcl,
 	"linestyle",		dmo_lineStyle_tcl,
 	"configure",		dmo_configure_tcl,
+	"light",		dmo_light_tcl,
+	"zbuffer",		dmo_zbuffer_tcl,
 	"zclip",		dmo_zclip_tcl,
 	"bounds",		dmo_bounds_tcl,
 	"perspective",		dmo_perspective_tcl,
@@ -109,6 +123,9 @@ HIDDEN struct bu_cmdtab dmo_cmds[] = {
 	"listen",		dmo_listen_tcl,
 	"refreshfb",		dmo_refreshFb_tcl,
 #endif
+	"flush",		dmo_flush_tcl,
+	"sync",			dmo_sync_tcl,
+	"close",		dmo_close_tcl,
 	(char *)0,		(int (*)())0
 };
 
@@ -136,6 +153,8 @@ Dmo_Init(interp)
 Tcl_Interp *interp;
 {
   BU_LIST_INIT(&HeadDMObj.l);
+  (void)Tcl_CreateCommand(interp, "dm_open", dmo_open_tcl,
+			  (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
   return TCL_OK;
 }
@@ -154,6 +173,36 @@ ClientData clientData;
   BU_LIST_DEQUEUE(&dmop->l);
   bu_free((genptr_t)dmop, "dmo_deleteProc: dmop");
 
+}
+
+/*
+ * Close a display manager object.
+ *
+ * Usage:
+ *	  procname close
+ */
+HIDDEN int
+dmo_close_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+	struct bu_vls vls;
+	struct dm_obj *dmop = (struct dm_obj *)clientData;
+
+	if (argc != 2) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dmo_close");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* Among other things, this will call dmo_deleteProc. */
+	Tcl_DeleteCommand(interp, bu_vls_addr(&dmop->dmo_name));
+
+	return TCL_OK;
 }
 
 /*
@@ -269,8 +318,8 @@ char    **argv;
   dmop->dmo_dmp = dmp;
   VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
   VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
-  dmop->dmo_fbs.fbs_listener.l_fbsp = &dmop->dmo_fbs;
-  dmop->dmo_fbs.fbs_listener.l_fd = -1;
+  dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;
+  dmop->dmo_fbs.fbs_listener.fbsl_fd = -1;
 
   /* append to list of dm_obj's */
   BU_LIST_APPEND(&HeadDMObj.l,&dmop->l);
@@ -314,6 +363,22 @@ int     argc;
 char    **argv;
 {
   struct dm_obj *dmop = (struct dm_obj *)clientData;
+
+  return DM_DRAW_END(dmop->dmo_dmp);
+}
+
+HIDDEN int
+dmo_clear_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_obj *dmop = (struct dm_obj *)clientData;
+  int status;
+
+  if ((status = DM_DRAW_BEGIN(dmop->dmo_dmp)) != TCL_OK)
+    return status;
 
   return DM_DRAW_END(dmop->dmo_dmp);
 }
@@ -485,6 +550,27 @@ char    **argv;
   return DM_DRAW_VLIST(dmop->dmo_dmp, vp);
 }
 
+dmo_drawSList(dmop, hsp)
+     struct dm_obj *dmop;
+     struct solid *hsp;
+{
+	struct solid *sp;
+	int linestyle = -1;
+
+	FOR_ALL_SOLIDS(sp, &hsp->l) {
+		if (linestyle != sp->s_soldash) {
+			linestyle = sp->s_soldash;
+			DM_SET_LINE_ATTR(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
+		}
+
+		DM_SET_FGCOLOR(dmop->dmo_dmp,
+			       (short)sp->s_color[0],
+			       (short)sp->s_color[1],
+			       (short)sp->s_color[2], 0);
+		DM_DRAW_VLIST(dmop->dmo_dmp, (struct rt_vlist *)&sp->s_vlist);
+	}
+}
+
 /*
  * Usage:
  *	  procname drawSList sid
@@ -496,60 +582,67 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  struct dm_obj *dmop = (struct dm_obj *)clientData;
-  struct solid *hsp;
-  struct solid *sp;
-  struct rt_vlist *vp;
-  int linestyle;
-#if 0
-  fastf_t ratio;
-  fastf_t inv_viewsize;
-#endif
+	struct dm_obj *dmop = (struct dm_obj *)clientData;
+	struct solid *hsp;
 
-  if (argc != 3) {
-    struct bu_vls vls;
+	if (argc != 3) {
+		struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helplib drawSList");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib drawSList");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  if (sscanf(argv[2], "%lu", (unsigned long *)&hsp) != 1) {
-    Tcl_AppendResult(interp, "invalid vlist pointer - ", argv[2], (char *)NULL);
-    return TCL_ERROR;
-  }
+	if (sscanf(argv[2], "%lu", (unsigned long *)&hsp) != 1) {
+		Tcl_AppendResult(interp, "invalid solid list pointer - ",
+				 argv[2], "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+	dmo_drawSList(dmop, hsp);
 
-#if 0
-  inv_viewsize = 1 / VIEWSIZE;
-#endif
+	return TCL_OK;
+}
 
-  FOR_ALL_SOLIDS(sp, &hsp->l) {
-#if 0
-    ratio = sp->s_size * inv_viewsize;
+/*
+ * Draw "drawable geometry" objects.
+ *
+ * Usage:
+ *	  procname drawGeom dg_obj(s)
+ */
+HIDDEN int
+dmo_drawGeom_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+	struct dm_obj *dmop = (struct dm_obj *)clientData;
+	struct dg_obj *dgop;
+	struct bu_vls vls;
+	register int i;
 
-    /*
-     * Check for this object being bigger than 
-     * dmp->dm_bound * the window size, or smaller than a speck.
-     */
-    if (ratio >= dmop->dmo_dmp->dm_bound || ratio < 0.001)
-      continue;
-#endif
+	if (argc < 3) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dm_drawGeom");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-    if (linestyle != sp->s_soldash) {
-      linestyle = sp->s_soldash;
-      DM_SET_LINE_ATTR(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
-    }
+	argc -= 2;
+	argv += 2;
+	for (i = 0; i < argc; ++i) {
+		for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l)) {
+			if (strcmp(bu_vls_addr(&dgop->dgo_name), argv[i]) == 0) {
+				dmo_drawSList(dmop, &dgop->dgo_headSolid);
+				break;
+			}
+		}
+	}
 
-    DM_SET_FGCOLOR(dmop->dmo_dmp,
-		   (short)sp->s_color[0],
-		   (short)sp->s_color[1],
-		   (short)sp->s_color[2], 0);
-    DM_DRAW_VLIST(dmop->dmo_dmp, (struct rt_vlist *)&sp->s_vlist);
-  }
-
-  return TCL_OK;
+	return TCL_OK;
 }
 
 /*
@@ -804,8 +897,7 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  dm_configureWindowShape(dmop->dmo_dmp);
-  return TCL_OK;
+  return DM_CONFIGURE_WIN(dmop->dmo_dmp);
 }
 
 /*
@@ -848,6 +940,96 @@ char    **argv;
 
   bu_vls_init(&vls);
   bu_vls_printf(&vls, "helplib dm_zclip");
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+  return TCL_ERROR;
+}
+
+/*
+ * Get/set the display manager's zbuffer flag.
+ *
+ * Usage:
+ *	  procname zbuffer [0|1]
+ */
+HIDDEN int
+dmo_zbuffer_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_obj *dmop = (struct dm_obj *)clientData;
+  struct bu_vls vls;
+  int zbuffer;
+
+  /* get zbuffer flag */
+  if (argc == 2) {
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_zbuffer);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  /* set zbuffer flag */
+  if (argc == 3) {
+    if (sscanf(argv[2], "%d", &zbuffer) != 1) {
+      Tcl_AppendResult(interp, "dmo_zbuffer: invalid zbuffer value - ",
+		       argv[2], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    DM_SET_ZBUFFER(dmop->dmo_dmp, zbuffer);
+    return TCL_OK;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "helplib dm_zbuffer");
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+  return TCL_ERROR;
+}
+
+/*
+ * Get/set the display manager's light flag.
+ *
+ * Usage:
+ *	  procname light [0|1]
+ */
+HIDDEN int
+dmo_light_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_obj *dmop = (struct dm_obj *)clientData;
+  struct bu_vls vls;
+  int light;
+
+  /* get light flag */
+  if (argc == 2) {
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_light);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  /* set light flag */
+  if (argc == 3) {
+    if (sscanf(argv[2], "%d", &light) != 1) {
+      Tcl_AppendResult(interp, "dmo_light: invalid light value - ",
+		       argv[2], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    DM_SET_LIGHT(dmop->dmo_dmp, light);
+    return TCL_OK;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "helplib dm_light");
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
   return TCL_ERROR;
@@ -1133,7 +1315,7 @@ char    **argv;
 
   /* return the port number */
   if (argc == 2) {
-    bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.l_port);
+    bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -1149,7 +1331,7 @@ char    **argv;
     }
 
     fbs_open(interp, &dmop->dmo_fbs, port);
-    bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.l_port);
+    bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -1185,3 +1367,45 @@ char    **argv;
   return TCL_OK;
 }
 #endif
+
+/*
+ * Flush the output buffer.
+ *
+ * Usage:
+ *	  procname flush
+ *
+ */
+HIDDEN int
+dmo_flush_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_obj *dmop = (struct dm_obj *)clientData;
+
+  XFlush(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy);
+  
+  return TCL_OK;
+}
+
+/*
+ * Flush the output buffer and process all events.
+ *
+ * Usage:
+ *	  procname sync
+ *
+ */
+HIDDEN int
+dmo_sync_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_obj *dmop = (struct dm_obj *)clientData;
+
+  XSync(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy, 0);
+  
+  return TCL_OK;
+}
