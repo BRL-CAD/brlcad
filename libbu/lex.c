@@ -1,16 +1,36 @@
 /*		R T L E X . C
  *
+ *  Author -
+ *	Christopher T. Johnson
+ *  
+ *  Source -
+ *	Geometric Solutions, Inc.
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
 
 #include <stdio.h>
 #include <ctype.h>
 #include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "rtstring.h"
 #include "rtlex.h"
+
 static int rt_lex_reading_comment = 0;
-char *
-getone(used, rtstr)
+
+/*
+ *			R T _ G E T O N E
+ */
+static char *
+rt_getone(used, rtstr)
 int *used;
 struct rt_vls *rtstr;
 {
@@ -123,6 +143,10 @@ top:
 	if (*used == 0) *used = 1;
 	return unit;
 }
+
+/*
+ *			R T _ L E X
+ */
 int
 rt_lex(token, rtstr, keywords, symbols)
 union rt_lex_token *token;
@@ -138,7 +162,7 @@ struct rt_lex_key *symbols;
 	 * get a unit of information from rtstr.
 	 */
 	used = 0;
-	unit = getone(&used, rtstr);
+	unit = rt_getone(&used, rtstr);
 
 	/*
 	 * Was line empty or commented out.

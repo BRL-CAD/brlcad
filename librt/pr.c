@@ -204,7 +204,6 @@ rt_pr_pt( rtip, pp )
 CONST struct rt_i		*rtip;
 register CONST struct partition *pp;
 	struct rt_vls	v;
-	char		buf[128];
 	struct bu_vls	v;
 
 	RT_CHECK_RTI(rtip);
@@ -255,7 +254,6 @@ CONST char		*str;
 register CONST bitv_t	*bv;
 register int		len;
 {
-	register int	i;
 	struct rt_vls	v;
 
 	rt_vls_init( &v );
