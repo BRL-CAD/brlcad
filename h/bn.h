@@ -236,7 +236,7 @@ BU_EXTERN(int		bn_pt3_pt3_equal, ( CONST point_t a, CONST point_t b,
 				CONST struct bn_tol *tol));
 BU_EXTERN(int		bn_dist_pt2_lseg2, ( fastf_t *dist_sq, 
 				fastf_t pca[2], CONST point_t a,
-				point_t b, point_t p,
+				CONST point_t b, CONST point_t p,
 				CONST struct bn_tol *tol));
 BU_EXTERN(int		bn_isect_lseg3_lseg3, ( fastf_t *dist,
 				CONST point_t p, CONST vect_t pdir,
