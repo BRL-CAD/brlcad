@@ -437,16 +437,16 @@ register struct resource *res;
 	RT_CHECK_RTI(rtip);
 	RT_RESOURCE_CHECK(res);
 
-	if( res->re_parthead.pt_forw == PT_NULL )  {
-		res->re_parthead.pt_forw = res->re_parthead.pt_back =
-			&(res->re_parthead);
+	if( res->re_parthead.forw == PT_NULL )  {
+		RT_LIST_INIT( &res->re_parthead );
 		res->re_partlen = 0;
 	}
 
 	bytes = rtip->rti_pt_bytes;
 
 	/* First, march through the free queue, discarding wrong sizes */
-	for( pp = res->re_parthead.pt_forw; pp != &(res->re_parthead); )  {
+	pp = RT_LIST_FIRST( partition, &res->re_parthead );
+	while( RT_LIST_NOT_HEAD( pp, &res->re_parthead ) )  {
 		RT_CHECK_PT(pp);
 		if( pp->pt_len != bytes )  {
 			register struct partition	*nextpp;
