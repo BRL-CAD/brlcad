@@ -32,8 +32,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 
+extern double nmg_eue_dist;		/* from nmg_plot.c */
 
-static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
+static char	usage[] = "\
+Usage: %s [-v] [-d] [-xX lvl] [-u eu_dist]\n\
+	[-a abs_tol] [-r rel_tol] [-n norm_tol]\n\
+	[-p prefix] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -104,6 +108,7 @@ char	*argv[];
 	{
 		extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
 		/* XXX This value is specific to the Bradley */
+		/* Set it here, before the getopt() */
 		nmg_eue_dist = 2.0;
 	}
 
@@ -111,7 +116,7 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:dn:p:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:dn:p:r:u:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
@@ -127,6 +132,9 @@ char	*argv[];
 			break;
 		case 'r':		/* Relative tolerance. */
 			ttol.rel = atof(optarg);
+			break;
+		case 'u':
+			nmg_eue_dist = atof(optarg);
 			break;
 		case 'v':
 			verbose++;
