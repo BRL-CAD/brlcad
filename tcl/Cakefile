@@ -3,16 +3,17 @@
  */
 
 #define SRCDIR	tcl
-#define PRODUCTS	tclsh wish
+#define PRODUCTS	tclsh wish bwish tcltest tktest
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
-#define CONFIGDEFS -I''XINCDIR
+#define CONFIGDEFS -I''XINCDIR -I../libtcl -I../libtk
 
 #include "../Cakefile.defs"
-#include "../Cakefile.prog"
 
 /* Explicit composition of each product */
+
+everything&::	PRODUCTS
 
 tclsh:  tclAppInit.o LIBTCL_DEP
 	CC LDFLAGS -o tclsh tclAppInit.o LIBTCL LIBES
@@ -20,11 +21,31 @@ tclsh:  tclAppInit.o LIBTCL_DEP
 wish: tkAppInit.o LIBTCL_DEP LIBTK_DEP
 	CC LDFLAGS -o wish tkAppInit.o LIBTK LIBTCL -L''XLIBDIR -lX11 LIBES
 
-/* This one needs tclInt.h to compile.  Ugh.
+bwish: bwish.o LIBTCLCAD_DEP LIBTCL_DEP LIBTK_DEP
+	CC LDFLAGS -o bwish bwish.o LIBTCLCAD LIBTK LIBTCL LIBRT -L''XLIBDIR -lX11 LIBES
 
-tcltest:	tclTest.o LIBTCL_DEP
+tcltest: tclTest.o LIBTCL_DEP
 	CC LDFLAGS -o tcltest tclTest.o LIBTCL LIBES
 
-*/
+tktest: tkTest.o tkSquare.o LIBTCL_DEP LIBTK_DEP
+	CC LDFLAGS -o tktest tkTest.o tkSquare.o LIBTK LIBTCL -L''XLIBDIR -lX11 LIBES
+
+tclAppInit.o: ../SRCDIR/tclAppInit.c
+	CC CFLAGS -c ../SRCDIR/tclAppInit.c
+
+tkAppInit.o: ../SRCDIR/tkAppInit.c
+	CC CFLAGS -c ../SRCDIR/tkAppInit.c
+
+bwish.o: ../SRCDIR/bwish.c
+	CC CFLAGS -c ../SRCDIR/bwish.c
+
+tclTest.o: ../SRCDIR/tclTest.c
+	CC CFLAGS -c ../SRCDIR/tclTest.c
+
+tkTest.o: ../SRCDIR/tkTest.c
+	CC CFLAGS -c ../SRCDIR/tkTest.c
+
+tkSquare.o: ../SRCDIR/tkSquare.c
+	CC CFLAGS -c ../SRCDIR/tkSquare.c
 
 #include "../Cakefile.rules"
