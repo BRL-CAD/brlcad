@@ -97,11 +97,12 @@ struct uplot letters[] = {
 
 int	verbose;
 long	counts['z'-'A'+1];	/* for counting command usage */
+FILE	*fp;
 
 void	outchar(), outstring(), outshort(), outfloat();
 
 static char usage[] = "\
-Usage: pldebug [-v] < unix_plot\n";
+Usage: pldebug [-v] [unix_plot]\n";
 
 main( argc, argv )
 int	argc;
@@ -120,12 +121,20 @@ char	**argv;
 		argc--;
 		argv++;
 	}
-	if( argc > 1 || isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+	if( argc == 2 ) {
+		if( (fp = fopen(argv[1],"r")) == NULL ) {
+			perror( "pldebug" );
+			exit( 1 );
+		}
+	} else {
+		fp = stdin;
+		if( argc > 1 || isatty(fileno(stdin)) ) {
+			fprintf( stderr, usage );
+			exit( 1 );
+		}
 	}
 
-	while( (c = getchar()) != EOF ) {
+	while( (c = getc(fp)) != EOF ) {
 		/* look it up */
 		if( c < 'A' || c > 'z' ) {
 			up = &uerror;
@@ -185,7 +194,7 @@ int	n;
 	for( i = 0; i < n; i++ ) {
 		if( i != 0 )
 			putchar(',');
-		c = getchar();
+		c = getc(fp);
 		printf("%3d", c );
 	}
 	putchar(')');
@@ -198,7 +207,7 @@ int	n;
 	int	c;
 
 	putchar('"');
-	while( (c = getchar()) != '\n' && c != EOF )
+	while( (c = getc(fp)) != '\n' && c != EOF )
 		putchar(c);
 	putchar('"');
 }
@@ -228,7 +237,7 @@ int	n;
 	char	in[8*16];
 	double	out[16];
 
-	fread( in, 8, n, stdin );
+	fread( in, 8, n, fp );
 	ntohd( out, in, n );
 
 	putchar('(');
@@ -244,8 +253,8 @@ getshort()
 {
 	register long	v, w;
 
-	v = getchar();
-	v |= (getchar()<<8);	/* order is important! */
+	v = getc(fp);
+	v |= (getc(fp)<<8);	/* order is important! */
 
 	/* worry about sign extension - sigh */
 	if( v <= 0x7FFF )  return(v);
