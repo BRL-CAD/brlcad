@@ -98,7 +98,7 @@ struct model *m;
 	n_u = n_cols+u_order;
 	n_v = n_rows+v_order;
 	if( !m )
-		srf = rt_nurb_new_snurb( u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type );
+		srf = rt_nurb_new_snurb( u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type, (struct resource *)NULL );
 	else
 	{
 		int pnum;
@@ -1121,7 +1121,7 @@ struct bu_list *hit_list;
 
 	BU_LIST_INIT( &bezier );
 
-	rt_nurb_bezier( &bezier, fg );
+	rt_nurb_bezier( &bezier, fg, (struct resource *)NULL );
 	while( BU_LIST_NON_EMPTY( &bezier ) )
 	{
 		struct face_g_snurb *srf;
@@ -1130,7 +1130,7 @@ struct bu_list *hit_list;
 		srf = BU_LIST_FIRST( face_g_snurb,  &bezier );
 		BU_LIST_DEQUEUE( &srf->l );
 
-		hp = rt_nurb_intersect( srf, pl1, pl2, UV_TOL );
+		hp = rt_nurb_intersect( srf, pl1, pl2, UV_TOL, (struct resource *)NULL );
 		/* process each hit point */
 		while( hp != (struct rt_nurb_uv_hit *)NULL )
 		{
@@ -1206,7 +1206,7 @@ struct bu_list *hit_list;
 			bu_free( (char *)hp, "nurb_uv_hit" );
 			hp = next;
 		}
-		rt_nurb_free_snurb( srf );
+		rt_nurb_free_snurb( srf, (struct resource *)NULL );
 	}
 }
 
