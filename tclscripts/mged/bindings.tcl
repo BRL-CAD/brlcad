@@ -1,14 +1,9 @@
-set mged_rotate_factor 1
-set mged_tran_factor .01
-
 if ![info exists mged_players] {
     set mged_players {}
 }
 
 proc mged_bind_dm { w } {
     global hot_key
-    global mged_rotate_factor
-    global mged_tran_factor
     global forwarding_key
 
     set hot_key 65478
@@ -128,18 +123,18 @@ proc default_key_bindings { w } {
     bind $w <F9> "toggle_forward_key_bindings $w; update_gui $w forward_keys \$forwarding_key($w); break"
     bind $w <F12> "winset $w; knob zero; break"
 
-    bind $w <Left> "winset $w; knob -i ay -\$mged_rotate_factor; break"
-    bind $w <Right> "winset $w; knob -i ay \$mged_rotate_factor; break"
-    bind $w <Down> "winset $w; knob -i ax \$mged_rotate_factor; break"
-    bind $w <Up> "winset $w; knob -i ax -\$mged_rotate_factor; break"
-    bind $w <Shift-Left> "winset $w; knob -i aX \$mged_tran_factor; break"
-    bind $w <Shift-Right> "winset $w; knob -i aX -\$mged_tran_factor; break"
-    bind $w <Shift-Down> "winset $w; knob -i aZ -\$mged_tran_factor; break"
-    bind $w <Shift-Up> "winset $w; knob -i aZ \$mged_tran_factor; break"
-    bind $w <Control-Shift-Left> "winset $w; knob -i az \$mged_rotate_factor; break"
-    bind $w <Control-Shift-Right> "winset $w; knob -i az -\$mged_rotate_factor; break"
-    bind $w <Control-Shift-Down> "winset $w; knob -i aY \$mged_tran_factor; break"
-    bind $w <Control-Shift-Up> "winset $w; knob -i aY -\$mged_tran_factor; break"
+    bind $w <Left> "winset $w; knob -i ay -\$mged_default(rot_factor); break"
+    bind $w <Right> "winset $w; knob -i ay \$mged_default(rot_factor); break"
+    bind $w <Down> "winset $w; knob -i ax \$mged_default(rot_factor); break"
+    bind $w <Up> "winset $w; knob -i ax -\$mged_default(rot_factor); break"
+    bind $w <Shift-Left> "winset $w; knob -i aX \$mged_default(tran_factor); break"
+    bind $w <Shift-Right> "winset $w; knob -i aX -\$mged_default(tran_factor); break"
+    bind $w <Shift-Down> "winset $w; knob -i aZ -\$mged_default(tran_factor); break"
+    bind $w <Shift-Up> "winset $w; knob -i aZ \$mged_default(tran_factor); break"
+    bind $w <Control-Shift-Left> "winset $w; knob -i az \$mged_default(rot_factor); break"
+    bind $w <Control-Shift-Right> "winset $w; knob -i az -\$mged_default(rot_factor); break"
+    bind $w <Control-Shift-Down> "winset $w; knob -i aY \$mged_default(tran_factor); break"
+    bind $w <Control-Shift-Up> "winset $w; knob -i aY -\$mged_default(tran_factor); break"
 
     bind $w <Control-n> "winset $w; _mged_view_ring next; break"
     bind $w <Control-p> "winset $w; _mged_view_ring prev; break"

@@ -26,6 +26,14 @@ if ![info exists tk_version] {
     loadtk
 }
 
+if ![info exists mged_default(rot_factor)] {
+    set mged_default(rot_factor) 1
+}
+
+if ![info exists mged_default(tran_factor)] {
+    set mged_default(tran_factor) 0.01
+}
+
 if ![info exists mged_default(html_dir)] {
     set mged_default(html_dir) [bu_brlcad_path html/manuals/mged]
 }
