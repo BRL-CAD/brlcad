@@ -314,7 +314,7 @@ reg	char	*mode;
 			_exit(127);
 
 		close(child_end);
-		execv(argv[0], argv);
+		execvp(argv[0], argv);
 		sprintf(scratchbuf, "cake system error, %s exec", argv[0]);
 		perror(scratchbuf);
 		_exit(127);
