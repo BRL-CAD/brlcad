@@ -108,6 +108,8 @@ typedef	fastf_t	*vectp_t;
 typedef fastf_t	point_t[ELEMENTS_PER_PT];
 typedef fastf_t	*pointp_t;
 
+typedef fastf_t point2d_t[2];
+
 typedef fastf_t hvect_t[HVECT_LEN];
 typedef fastf_t hpoint_t[HPT_LEN];
 
