@@ -231,10 +231,7 @@ char **argv;
 			if( n <= 0 ) break;
 			height = streamline;
 			if( n != scanbytes )  {
-				fprintf(stderr,
-					"pix-fb: short read, y=%d, nbytes=%d s/b=%d\n",
-					y, n, scanbytes);
-				height = n/(xout*sizeof(RGBpixel));
+				height = (n/sizeof(RGBpixel)+xout-1)/xout;
 				if( height <= 0 )  break;
 			}
 			m = fb_writerect( fbp, 0, y, scr_width, height,
