@@ -2067,11 +2067,11 @@ if { $comb } {
 set num_players [llength $mged_players]
 switch $num_players {
     1 {
-	.$id.menubar.file entryconfigure 11 -state disabled
+	.$id.menubar.file entryconfigure 13 -state disabled
     }
     2 {
 	set id [lindex $mged_players 0]
-	.$id.menubar.file entryconfigure 11 -state normal
+	.$id.menubar.file entryconfigure 13 -state normal
     }
 }
 }
@@ -2109,7 +2109,7 @@ proc gui_destroy args {
 
     if { [llength $mged_players] == 1 } {
 	set id [lindex $mged_players 0]
-	.$id.menubar.file entryconfigure 11 -state disabled
+	.$id.menubar.file entryconfigure 13 -state disabled
     }
 }
 
