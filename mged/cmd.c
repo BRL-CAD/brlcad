@@ -283,7 +283,7 @@ static struct funtab funtab[] = {
         cmd_prev, 1, 1, TRUE,
 "hist_next", "", "Returns next command in history",
         cmd_next, 1, 1, TRUE,
-"hist_add", "", "Adds command to the history (without executing it)",
+"hist_add", "[command]", "Adds command to the history (without executing it)",
         cmd_hist_add, 1, 2, TRUE,
 "i", "obj combination [operation]", "add instance of obj to comb",
 	f_instance,3,4,TRUE,
@@ -993,6 +993,7 @@ void
 mged_setup()
 {
   struct rt_vls str;
+  char *filename;
 
   /* The following is for GUI output hooks: contains name of function to
      run with output */
@@ -1017,8 +1018,9 @@ mged_setup()
 
 #ifdef MGED_LIBRARY
   rt_vls_init(&str);
+  filename = getenv("MGED_TCL_LIBRARY");
   rt_vls_printf(&str, "set auto_path \\[linsert $auto_path 0 %s\\];\
-set junk \"\"", MGED_LIBRARY);
+set junk \"\"", filename ? filename : MGED_LIBRARY);
   (void)cmdline(&str, False);
   rt_vls_free(&str);
   Tcl_ResetResult(interp);
