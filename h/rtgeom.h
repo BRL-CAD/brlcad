@@ -211,6 +211,31 @@ struct rt_vol_internal  {
 #define RT_VOL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_VOL_INTERNAL_MAGIC,"rt_vol_internal")
 
 /*
+ *	ID_HF
+ */
+struct rt_hf_internal {
+	long		magic;
+	/* BEGIN USER SETABLE VARIABLES */
+	char		cfile[128];	/* name of control file (optional) */
+	char		dfile[128];	/* name of data file */
+	char		fmt[8];		/* CV style file format descriptor */
+	int		w;		/* # samples wide of data file.  ("i", "x") */
+	int		n;		/* nlines of data file.  ("j", "y") */
+	int		shorts;		/* !0 --> memory array is short, not float */
+	fastf_t		file2mm;	/* scale factor to cvt file units to mm */
+	vect_t		v;		/* origin of HT in model space */
+	vect_t		x;		/* model vect corresponding to "w" dir (will be unitized) */
+	vect_t		y;		/* model vect corresponding to "n" dir (will be unitized) */
+	fastf_t		xlen;		/* model len of HT rpp in "w" dir */
+	fastf_t		ylen;		/* model len of HT rpp in "n" dir */
+	fastf_t		zscale;		/* scale of data in ''up'' dir (after file2mm is applied) */
+	/* END USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
+	struct rt_mapped_file	*mp;	/* actual data */
+};
+#define RT_HF_INTERNAL_MAGIC	0x4846494d
+#define RT_HF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HF_INTERNAL_MAGIC,"rt_hf_internal")
+
+/*
  *	ID_ARBN
  */
 struct rt_arbn_internal  {
