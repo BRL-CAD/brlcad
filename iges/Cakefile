@@ -46,13 +46,13 @@
 iges-g:	I_G_OBJ
 	sh ../newvers.sh version "IGES-to-BRLCAD Translator"
 	CC CFLAGS -c vers.c
-	CC LDFLAGS -o iges-g I_G_OBJ vers.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES
+	CC LDFLAGS -o iges-g I_G_OBJ vers.o LIBWDB LIBRT LIBRT_LIBES LIBES
 
 #define G_I_OBJ g-iges.o iges.o
 
 g-iges: G_I_OBJ
 	sh ../newvers.sh version "BRLCAD-to-IGES Translator"
 	CC CFLAGS -c vers.c
-	CC LDFLAGS -o g-iges G_I_OBJ vers.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES
+	CC LDFLAGS -o g-iges G_I_OBJ vers.o LIBWDB LIBRT LIBRT_LIBES LIBES
 
 #include "../Cakefile.rules"
