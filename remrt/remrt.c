@@ -423,6 +423,9 @@ stamp()
 
 /*
  *			S T A T E _ T O _ S T R I N G
+ *
+ *  Return a pointer to a string, generally less than 8 bytes,
+ *  that describes this state.
  */
 char *
 state_to_string( state )
@@ -432,21 +435,21 @@ int	state;
 
 	switch( state )  {
 	case SRST_NEW:
-		return("New");
+		return("..New..");
 	case SRST_VERSOK:
 		return("Vers_OK");
 	case SRST_DOING_DIRBUILD:
-		return("Doing_DIRBUILD");
+		return("DirBuild");
 	case SRST_READY:
-		return("READY");
+		return(" Ready");
 	case SRST_RESTART:
-		return("--about to restart--");
+		return("Restart");
 	case SRST_CLOSING:
-		return("*closing*");
+		return("Closing");
 	case SRST_DOING_GETTREES:
-		return("Doing_GETTREES");
+		return("GetTrees");
 	}
-	sprintf(buf, "Unknown_state_x%x", state);
+	sprintf(buf, "UNKNOWN_x%x", state);
 	return(buf);
 }
 
@@ -1035,12 +1038,10 @@ FILE	*fp;
 		GET_FRAME(fr);
 		fr->fr_number = frame;
 		prep_frame(fr);
-		rt_vls_vlscatzap( &fr->fr_cmd, &prelude );
+		rt_vls_vlscat( &fr->fr_cmd, &prelude );
 		rt_vls_vlscatzap( &fr->fr_cmd, &body );
 		rt_vls_vlscatzap( &fr->fr_after_cmd, &finish );
 		if( create_outputfilename( fr ) < 0 )  {
-			rt_log("'%s': unable to create file\n",
-				fr->fr_filename);
 			FREE_FRAME(fr);
 		} else {
 			APPEND_FRAME( fr, FrameHead.fr_back );
@@ -1050,7 +1051,10 @@ bad:
 		buf = nsbuf;
 		nsbuf = (char *)0;
 	}
-out:	;
+out:	
+	rt_vls_free( &prelude );
+	rt_vls_free( &body );
+	rt_vls_free( &finish );
 }
 
 /*
@@ -1615,10 +1619,52 @@ out:
 	return;
 }
 
-#define ASSIGNMENT_TIME		5		/* desired seconds/result */
+#define MIN_ASSIGNMENT_TIME	5		/* desired seconds/result */
 #define TARDY_SERVER_INTERVAL	(9*60)		/* max seconds of silence */
 #define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */
-#define MAX_LUMP		(8*1024)	/* max pixels/assignment */
+
+/*
+ *			N U M B E R _ O F _ R E A D Y _ S E R V E R S
+ *
+ *  Returns the number of servers that are ready (or busy) with
+ *  computing frames.
+ */
+int
+number_of_ready_servers()
+{
+	register struct servers	*sp;
+	register int		count = 0;
+
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+		if( sp->sr_state == SRST_READY ||
+		    sp->sr_state == SRST_DOING_GETTREES )
+			count++;
+	}
+	return  count;
+}
+
+/*
+ *			A S S I G N M E N T _ T I M E
+ *
+ *  Determine how many seconds of work should be assigned to
+ *  a worker, given the current configuration of workers.
+ *  One overall goal is to keep the dispatcher (us) from
+ *  having to process more than one response every two seconds,
+ *  to ensure adequate processing power will be available to
+ *  handle the LOG messages, starting new servers, writing
+ *  results to the disk and/or framebuffer, etc.
+ */
+int
+assignment_time()
+{
+	int	sec;
+
+	sec = 2 * number_of_ready_servers();
+	if( sec < MIN_ASSIGNMENT_TIME )
+		return  MIN_ASSIGNMENT_TIME;
+	return  sec;
+}
 
 /*
  *			T A S K _ S E R V E R
@@ -1659,7 +1705,7 @@ struct timeval		*nowp;
 
 	/*
 	 *  Check for tardy server.
-	 *  The assignments are estimated to take only ASSIGNMENT_TIME
+	 *  The assignments are estimated to take about MIN_ASSIGNMENT_TIME
 	 *  seconds, so waiting many minutes is unreasonable.
 	 *  However, if the picture "suddenly" became very complex,
 	 *  or a system got very busy,
@@ -1710,16 +1756,16 @@ struct timeval		*nowp;
 
 	/*
 	 *  Make this assignment size based on weighted average of
-	 *  past behavior.  Using rays/elapsed_sec metric takes into
+	 *  past behavior.  Using pixels/elapsed_sec metric takes into
 	 *  account:
 	 *	remote processor speed
 	 *	remote processor load
 	 *	available network bandwidth & load
 	 *	local processing delays
 	 */
-	sp->sr_lump = ASSIGNMENT_TIME * sp->sr_w_elapsed;
+	sp->sr_lump = assignment_time() * sp->sr_w_elapsed;
 	if( sp->sr_lump < 32 )  sp->sr_lump = 32;
-	if( sp->sr_lump > MAX_LUMP )  sp->sr_lump = MAX_LUMP;
+	if( sp->sr_lump > REMRT_MAX_PIXELS )  sp->sr_lump = REMRT_MAX_PIXELS;
 
 	a = lp->li_start;
 	b = a+sp->sr_lump-1;	/* work increment */
@@ -2119,7 +2165,7 @@ char *buf;
 		double	blend1;	/* fraction of historical value to use */
 		double	blend2;	/* fraction of new value to use */
 
-		if( sp->sr_l_elapsed > ASSIGNMENT_TIME )  {
+		if( sp->sr_l_elapsed > assignment_time() )  {
 			/*
 			 *  Took longer than expected, put more weight on
 			 *  this sample, and less on the historical values.
@@ -3300,7 +3346,52 @@ char	**argv;
 }
 
 /*
+ *			C D _ S T A T
+ *
+ *  Brief version
+ */
+cd_stat( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct servers *sp;
+    	int	frame;
+	char	*s;
+
+	s = stamp();
+
+	/* Print work assignments */
+	rt_log("%s Worker assignment interval=%d seconds:\n",
+		s, assignment_time() );
+	rt_log("   Server   Last  Last   Average  Cur   Machine\n");
+	rt_log("    State   Lump Elapsed pix/sec Frame   Name \n");
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+
+		/* Ignore one-shot command interfaces */
+		if( sp->sr_state == SRST_NEW )  continue;
+
+		if( sp->sr_curframe != FRAME_NULL )  {
+			CHECK_FRAME(sp->sr_curframe);
+			frame = sp->sr_curframe->fr_number;
+		}  else  {
+			frame = -1;
+		}
+
+		rt_log("  %8s %5d %7g %7g %5d %s\n",
+			state_to_string(sp->sr_state),
+			sp->sr_lump,
+			sp->sr_l_elapsed,
+			sp->sr_w_elapsed,
+			frame,
+			sp->sr_host->ht_name );
+	}
+}
+
+/*
  *			C D _ S T A T U S
+ *
+ *  Full status version
  */
 cd_status( argc, argv )
 int	argc;
@@ -3334,7 +3425,8 @@ char	**argv;
 		s, ourname, pkg_permport);
 
 	/* Print work assignments */
-	rt_log("%s Servers:\n", s);
+	rt_log("%s Worker assignment interval=%d seconds:\n",
+		s, assignment_time() );
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
 		rt_log("  %2d  %s %s",
@@ -3597,7 +3689,9 @@ struct command_tab cmd_tab[] = {
 		cd_reset,	1, 1,
 	"frames", "",		"summarize waiting frames",
 		cd_frames,	1, 1,
-	"stat", "",		"server status",
+	"stat", "",		"brief worker status",
+		cd_stat,	1, 1,
+	"status", "",		"full worker status",
 		cd_status,	1, 1,
 	"detach", "",		"detatch from interactive keyboard",
 		cd_detach,	1, 1,
