@@ -65,9 +65,9 @@ rt_cut_it()  {
 	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
 	 *  but solids will typically span several leaves.
 	 */
-	rt_cutLen = (int)log((double)rt_i.nsolids);
+	rt_cutLen = (int)log((double)rt_i.nsolids);	/* ln ~= log2 */
+	rt_cutDepth = 2 * rt_cutLen;
 	if( rt_cutLen < 3 )  rt_cutLen = 3;
-	rt_cutDepth = (int)(2 * log((double)rt_i.nsolids));	/* ln ~= log2 */
 	if( rt_cutDepth < 9 )  rt_cutDepth = 9;
 	if( rt_cutDepth > 24 )  rt_cutDepth = 24;		/* !! */
 rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );

@@ -935,8 +935,10 @@ rt_prep()
 	register struct soltab *stp;
 
 	if(!rt_i.needprep)
-		rt_bomb("second invocation of rt_prep");
+		rt_bomb("rt_prep: re-invocation");
 	rt_i.needprep = 0;
+	if( rt_i.nsolids <= 0 )
+		rt_bomb("rt_prep:  no solids to prep");
 
 	/*
 	 *  Allocate space for a per-solid bit of rt_i.nregions length.
