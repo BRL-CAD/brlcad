@@ -74,7 +74,7 @@ proc hoc_build_string { sname subject ksl } {
     }
 
     if { $range != "" } {
-	set hoc_string "$hoc_string\n\n$range"
+	set hoc_string "$hoc_string\n\nRANGE\n\t$range"
     }
 
     if { $see_also != "" } {
