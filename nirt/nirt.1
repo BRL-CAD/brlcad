@@ -126,6 +126,9 @@ command below.
 sets
 .IR nirt "'s"
 own debug flags to the hexadecimal bit vector \fIv\fR.
+See the discussion of the
+.I debug
+command below.
 
 If there is a file called .nirtrc in the current directory,
 otherwise in the user's home directory,
@@ -281,6 +284,22 @@ debug flags
 to the hexadecimal bit vector \fIv\fR.
 These flags control the amount and kind of diagnostic print statements
 .IR librt (3)
+executes.
+If \fIv\fR is 0,
+then no diagnostics are produced.
+If this command is invoked with no arguments,
+.I nirt
+prints the current value of \fIv\fR
+and the names of any of its bits that are set.
+Default is 0.
+.TP 12
+.BI debug " v"
+Sets
+.IR nirt "'s"
+internal debug flags
+to the hexadecimal bit vector \fIv\fR.
+These flags control the amount and kind of diagnostic print statements
+.I nirt
 executes.
 If \fIv\fR is 0,
 then no diagnostics are produced.

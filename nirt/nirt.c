@@ -41,6 +41,7 @@ static char RCSid[] = "$Header$";
 
 extern char	version[];		/* from vers.c */
 extern void	cm_libdebug();
+extern void	cm_debug();
 
 char		*db_name;	/* the name of the MGED file      */
 com_table	ComTab[] =
@@ -73,6 +74,8 @@ com_table	ComTab[] =
 			"item" },
 		    { "libdebug", cm_libdebug,
 			"set/query librt debug flags", "hex_flag_value" },
+		    { "debug", cm_debug,
+			"set/query nirt debug flags", "hex_flag_value" },
 		    { "!", sh_esc, "escape to the shell" },
 		    { "q", quit, "quit" },
 		    { "?", show_menu, "display this help menu" },
