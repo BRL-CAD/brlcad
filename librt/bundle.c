@@ -15,7 +15,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSbundle[] = "@(#)$Header$ (BRL)";
+static const char RCSbundle[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

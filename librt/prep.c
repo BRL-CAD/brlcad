@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSprep[] = "@(#)$Header$ (BRL)";
+static const char RCSprep[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

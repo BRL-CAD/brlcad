@@ -19,7 +19,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSpg[] = "@(#)$Header$ (BRL)";
+static const char RCSpg[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

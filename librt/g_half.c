@@ -33,7 +33,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCShalf[] = "@(#)$Header$ (BRL)";
+static const char RCShalf[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

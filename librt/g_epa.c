@@ -136,7 +136,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSepa[] = "@(#)$Header$ (BRL)";
+static const char RCSepa[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

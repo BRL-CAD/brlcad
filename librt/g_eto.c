@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSeto[] = "@(#)$Header$ (BRL)";
+static const char RCSeto[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -19,7 +19,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCScmd[] = "@(#)$Header$ (BRL)";
+static const char RCScmd[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

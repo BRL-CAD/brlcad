@@ -16,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSpipe[] = "@(#)$Header$ (BRL)";
+static const char RCSpipe[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

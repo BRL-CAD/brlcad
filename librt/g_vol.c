@@ -20,7 +20,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSvol[] = "@(#)$Header$ (BRL)";
+static const char RCSvol[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

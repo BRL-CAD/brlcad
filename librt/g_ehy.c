@@ -138,7 +138,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSehy[] = "@(#)$Header$ (BRL)";
+static const char RCSehy[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -12,7 +12,7 @@
  *	This file is public domain, distribution unlimited.
  */
 #ifndef lint
-static char RCSmkbundle[] = "@(#)$Header$ (BRL)";
+static const char RCSmkbundle[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

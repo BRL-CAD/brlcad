@@ -20,7 +20,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCStorus[] = "@(#)$Header$ (BRL)";
+static const char RCStorus[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

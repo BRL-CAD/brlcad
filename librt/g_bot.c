@@ -15,7 +15,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSbot[] = "@(#)$Header$ (BRL)";
+static const char RCSbot[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -38,7 +38,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSextrude[] = "@(#)$Header$ (BRL)";
+static const char RCSextrude[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

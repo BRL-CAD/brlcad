@@ -26,7 +26,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCScut[] = "@(#)$Header$ (BRL)";
+static const char RCScut[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

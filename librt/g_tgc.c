@@ -27,7 +27,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCStgc[] = "@(#)$Header$ (BRL)";
+static const char RCStgc[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSroots[] = "@(#)$Header$ (BRL)";
+static const char RCSroots[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

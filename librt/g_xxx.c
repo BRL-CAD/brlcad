@@ -43,7 +43,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSxxx[] = "@(#)$Header$ (BRL)";
+static const char RCSxxx[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -27,7 +27,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSsubmodel[] = "@(#)$Header$ (BRL)";
+static const char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
+static const char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

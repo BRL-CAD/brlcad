@@ -19,7 +19,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSdir[] = "@(#)$Header$";
+static const char RCSdir[] = "@(#)$Header$";
 #endif
 
 #include "conf.h"

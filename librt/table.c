@@ -16,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCStree[] = "@(#)$Header$ (BRL)";
+static const char RCStree[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

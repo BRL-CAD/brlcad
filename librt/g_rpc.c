@@ -147,7 +147,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSrpc[] = "@(#)$Header$ (BRL)";
+static const char RCSrpc[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -37,7 +37,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSshoot[] = "@(#)$Header$ (BRL)";
+static const char RCSshoot[] = "@(#)$Header$ (BRL)";
 #endif
 
 char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991,2000 by the United States Army";

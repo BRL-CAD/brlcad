@@ -5,7 +5,7 @@
  *	To provide timing information on Microsoft Windows NT.
  */
 #ifndef lint
-static char RCStimer_nt[] = "@(#)$Header$ (BRL)";
+static const char RCStimer_nt[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>

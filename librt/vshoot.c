@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSshoot[] = "@(#)$Header$ (BRL)";
+static const char RCSshoot[] = "@(#)$Header$ (BRL)";
 #endif
 
 char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";

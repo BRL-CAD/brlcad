@@ -16,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSanim[] = "@(#)$Header$ (BRL)";
+static const char RCSanim[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

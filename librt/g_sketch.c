@@ -38,7 +38,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSsketch[] = "@(#)$Header$ (BRL)";
+static const char RCSsketch[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

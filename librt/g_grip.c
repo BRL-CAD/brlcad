@@ -22,7 +22,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSgrip[] = "@(#)$Header$ (BRL)";
+static const char RCSgrip[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

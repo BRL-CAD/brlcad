@@ -166,7 +166,7 @@
  *  The calculation for theta come from a diagram drawn by PJT on 18-Nov-99.
  */
 #ifndef lint
-static char RCSpart[] = "@(#)$Header$ (BRL)";
+static const char RCSpart[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

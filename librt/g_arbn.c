@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSarbn[] = "@(#)$Header$ (BRL)";
+static const char RCSarbn[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

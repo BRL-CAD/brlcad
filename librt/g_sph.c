@@ -19,7 +19,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSsph[] = "@(#)$Header$ (BRL)";
+static const char RCSsph[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
