@@ -477,6 +477,7 @@ body Dm::createDm {type} {
     } {}
 
     pack $itk_component(dm) -fill both -expand yes
+    set tkwin $itk_component(dm)
 } 
 
 body Dm::initDm {} {
