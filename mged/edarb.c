@@ -35,9 +35,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "./sedit.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./objdir.h"
 #include "./dm.h"
 
 extern int	printf();
