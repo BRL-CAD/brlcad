@@ -67,6 +67,10 @@ struct db_i	*dbip;
 	rtip->rti_tol.perp = 1e-6;
 	rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
 
+	rtip->rti_space_partition = RT_PART_NUBSPT;
+	rtip->rti_nugrid_dimlimit = 0;
+	rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
+
 	return rtip;
 }
 
