@@ -606,46 +606,27 @@ minimum bounding polygon of the region and ignores holes.
 </DD>
 <HR>
 
-<DT><a NAME="attr"><B>attr</B> <I>object_name</I> [<I>attribute_name</I>] [<I>attribute_value</I>]
-[<I>attribute_name attribute_value ...</I>]</DT>
+<DT><a NAME="attr"><B>attr</B> get|set|rm|append|show <I>object_name</I> [<I>arguments</I>]</DT>
 
-<DD>The ``attr'' command is used to create, change, or retrieve
-attributes of database objects.  With just an object name, this
-commands returns a list of all the attributes for that object and
-their values.  With just an object name and an attribute name, the
-value of that attribute is returned. If an object name, attribute
-name, and an attribute value is provided, that attribute/value pair is
-assigned to the specified object.  If that attribute does not exist,
-it is created, otherwise, the value is changed to the one
-provided. Any additional arguments must be attribute/value pairs to be
-assigned to the object. Note that the attribute values may not contain
-embedded white space unless the entire value is enclosed in double
-quotes or ``{}'', and attribute names may not contain any white space.
-
+<DD>The ``attr'' command is used to create, change, retrieve, or view
+attributes of database objects.
+The arguments for "set" and "append" subcommands are attribute name/value pairs.
+The arguments for "get", "rm", and "show" subcommandsare attribute names.
+The "set" subcommand sets the specified attributes for the object.
+The "append" subcommand appends the provided value to an existing attribute,
+or creates a new attribute if it does not already exist.
+The "get" subcommand retrieves and displays the specified attributes.
+The "rm" subcommand deletes the specified attributes.
+The "show" subcommand does a "get" and displays the results in a user readable format.
+Note that the attribute names may not contain embedded white space, and if attribute values contain
+embedded white space, they must be surrounded by ``{}'' or double qoutes.
 <DL>
 <DT><big>Examples:</big></DT>
 <DD>
-<kbd>mged></kbd> <b>attr region_1 comment {This is a comment for region_1}</b><br>
+<kbd>mged></kbd> <b>attr set region_1 comment {This is a comment for region_1}</b><br>
 -- assign an attribute named ``comment'' to <I>region_1</I>, its value is ``This is a comment for region_1''<br>
-<kbd>mged></kbd> <b>attr region_1 comment</b><br>
+<kbd>mged></kbd> <b>attr show region_1 comment</b><br>
 -- list all the attributes for <I>region_1</I><br>
-</DD>
-</DL>
-</DD>
-<HR>
-
-<DT><a NAME="attr_rm"><B>attr_rm</B> <I>object_name</I></DT>
-[<I>attribute_name</I>] [<I>attribute_name</I>] ...
-
-<DD>The ``attr_rm'' command is used to remove attributes. The object
-to lose its attributes, and the specific attribute names to be removed
-must be specified.
-
-<DL>
-<DT><big>Examples:</big></DT>
-<DD>
-<kbd>mged></kbd> <b>attr_rm region_1 comment</b><br>
--- delete the attribute named ``comment'' from <I>region_1</I><br>
 </DD>
 </DL>
 </DD>
