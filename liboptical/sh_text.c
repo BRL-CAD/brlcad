@@ -438,11 +438,12 @@ opaque:
  *			T X T _ S E T U P
  */
 HIDDEN int
-txt_setup( rp, matparm, dpp, mfp )
+txt_setup( rp, matparm, dpp, mfp, rtip )
 register struct region	*rp;
 struct rt_vls		*matparm;
 char			**dpp;
 CONST struct mfuncs	*mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct txt_specific *tp;
 	int		pixelbytes = 3;
@@ -556,10 +557,12 @@ char	*dp;
  *			C K R _ S E T U P
  */
 HIDDEN int
-ckr_setup( rp, matparm, dpp )
+ckr_setup( rp, matparm, dpp, mfp, rtip )
 register struct region	 *rp;
 struct rt_vls		*matparm;
 char			**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct ckr_specific *ckp;
 

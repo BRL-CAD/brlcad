@@ -105,10 +105,12 @@ extern double phg_ipow();
  *			P H O N G _ S E T U P
  */
 HIDDEN int
-phong_setup( rp, matparm, dpp )
+phong_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct phong_specific *pp;
 
@@ -139,10 +141,12 @@ char	**dpp;
  *			M I R R O R _ S E T U P
  */
 HIDDEN int
-mirror_setup( rp, matparm, dpp )
+mirror_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct phong_specific *pp;
 
@@ -173,11 +177,13 @@ char	**dpp;
  *			G L A S S _ S E T U P
  */
 HIDDEN int
-glass_setup( rp, matparm, dpp )
+glass_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
 {
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 	register struct phong_specific *pp;
 
 	RT_VLS_CHECK( matparm );

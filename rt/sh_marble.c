@@ -310,10 +310,12 @@ char *value;
  * Initialize the table of noise points
  */
 HIDDEN int
-marble_setup( rp, matparm, dpp )
+marble_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct marble_specific *mp, *mc;
 	vect_t c_min, c_max;

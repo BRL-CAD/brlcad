@@ -138,10 +138,12 @@ struct mfuncs toyota_mfuncs[] = {
  *			(MINOLTA CS-100)
  */
 HIDDEN int
-toyota_setup(rp, matparm, dtp)
+toyota_setup(rp, matparm, dtp, mfp, rtip)
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dtp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	char	mfile[200];
 	fastf_t	l, a, b;
@@ -235,10 +237,12 @@ char	**dtp;
  *	M I R R O R _ S E T U P
  */
 HIDDEN int
-tmirror_setup(rp, matparm, dpp)
+tmirror_setup(rp, matparm, dpp, mfp, rtip)
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
 
@@ -256,10 +260,12 @@ char	**dpp;
  *	G L A S S _ S E T U P
  */
 HIDDEN int
-tglass_setup(rp, matparm, dpp)
+tglass_setup(rp, matparm, dpp, mfp, rtip)
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
 

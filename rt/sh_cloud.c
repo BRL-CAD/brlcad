@@ -112,10 +112,12 @@ fastf_t Contrast, initFx, initFy;
  *			C L O U D _ S E T U P
  */
 HIDDEN int
-cloud_setup( rp, matparm, dpp )
+cloud_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
+struct mfuncs	*mfp;
+struct rt_i	*rtip;
 {
 	register struct cloud_specific *cp;
 

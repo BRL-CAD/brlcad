@@ -96,10 +96,12 @@ char	*dp;
  *	>0	success
  */
 HIDDEN int
-spm_setup( rp, matparm, dpp )
+spm_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct spm_specific *spp;
 

@@ -82,10 +82,12 @@ struct points {
  *	>0	success
  */
 HIDDEN int
-points_setup( rp, matparm, dpp )
+points_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;
 char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct points_specific *ptp;
 	char	buf[513];

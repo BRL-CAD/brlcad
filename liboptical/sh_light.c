@@ -130,10 +130,12 @@ char	*dp;
  *  Called once for each light-emitting region.
  */
 HIDDEN int
-light_setup( rp, matparm, dpp )
+light_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;
 genptr_t	*dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct light_specific *lp;
 	register struct soltab *stp;

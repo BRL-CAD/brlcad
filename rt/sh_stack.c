@@ -145,7 +145,8 @@ char	*dp;
 		if( rdebug&RDEBUG_SHADE && i > 0 )  {
 			pr_shadework( "before next stacked mf_render", swp );
 		}
-		(void)(sp->mfuncs[i]->mf_render( ap, pp, swp, sp->udata[i] ));
+		if (!(sp->mfuncs[i]->mf_render( ap, pp, swp, sp->udata[i] )))
+			break; 
 	}
 	return(1);
 }
