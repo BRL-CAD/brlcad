@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = bwish btclsh
 
-LDFLAGS =
+AM_LDFLAGS =
 bwish_SOURCES = cmd.c input.c main.c tcl.c
 bwish_LDADD = @ITK_LIBS@ @TK_LIBS@ @TCLCAD@ @ITCL_LIBS@ @FB@ @DM@ @SYSV@ @TERMIO@ @WDB@ @PNG_LIBS@
 bwish_CFLAGS = -DBWISH=1 @X_CFLAGS@
