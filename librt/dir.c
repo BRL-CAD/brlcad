@@ -123,6 +123,10 @@ rt_db_get_internal(
 	bu_free_external( &ext );
 	RT_CK_DB_INTERNAL( ip );
 	ip->idb_meth = &rt_functab[id];
+
+	/* prior to version 5, there are no attributes */
+	bu_avs_init_empty( &ip->idb_avs );
+
 	return id;			/* OK */
 }
 
