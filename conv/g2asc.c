@@ -33,18 +33,14 @@ extern long	lseek();
 
 void	idendump(), polyhead(), polydata();
 void	soldump(), combdump(), membdump(), arsadump(), arsbdump();
-void	materdump();
+void	materdump(), bspldump(), bsurfdump();
 
 union record	record;		/* GED database record */
-int	count;				/* Number of records */
 
 main()
 {
-	count = 0;
-
 	/* Read database file */
 	while( read( 0, (char*)&record, sizeof record ) > 0 )  {
-		count++;
 
 		/* Check record type and skip deleted records */
 		if( record.u_id == ID_FREE )  {
@@ -71,6 +67,12 @@ main()
 		else if( record.u_id == ID_MATERIAL )  {
 			materdump();
 		}
+		else if( record.u_id == ID_BSOLID )  {
+			bspldump();
+		}
+		else if( record.u_id == ID_BSURF )  {
+			bsurfdump();
+		}
 		else  {
 			(void)fprintf(stderr,"G2ASC: bad record type\n");
 			exit(1);
@@ -82,17 +84,19 @@ main()
 void
 idendump()	/* Print out Ident record information */
 {
-	(void)printf("%c ", record.i.i_id );		/* I */
-	(void)printf("%d ", record.i.i_units );		/* units */
-	(void)printf("%s ", record.i.i_version );	/* version */
-	(void)printf("\n");			/* Terminate w/ a newline */
-	(void)printf("%s", record.i.i_title );		/* title or description */
-	(void)printf("\n");			/* Terminate w/ a newline */
+	(void)printf( "%c %d %s\n",
+		record.i.i_id,			/* I */
+		record.i.i_units,		/* units */
+		record.i.i_version		/* version */
+	);
+	(void)printf( "%s\n",
+		record.i.i_title	/* title or description */
+	);
 
 	/* Print a warning message on stderr if versions differ */
 	if( strcmp( record.i.i_version, ID_VERSION ) != 0 )  {
-			(void)fprintf(stderr,"File is Version %s, Program is version %s\n",
-				record.i.i_version, ID_VERSION );
+		(void)fprintf(stderr,"File is Version %s, Program is version %s\n",
+			record.i.i_version, ID_VERSION );
 	}
 }
 
@@ -229,14 +233,103 @@ arsbdump()	/* Print out ARS B record information */
 }
 
 void
-materdump()
+materdump()	/* Print out material description record information */
 {
-	(void)printf( "%c %d %d %d %d %d %d %s\n",
-		record.md.md_id,
-		record.md.md_flags,
-		record.md.md_low,
-		record.md.md_hi,
+	(void)printf( "%c %d %d %d %d %d %d\n",
+		record.md.md_id,			/* m */
+		record.md.md_flags,			/* UNUSED */
+		record.md.md_low,	/* low end of region IDs affected */
+		record.md.md_hi,	/* high end of region IDs affected */
 		record.md.md_r,
-		record.md.md_g,
+		record.md.md_g,		/* color of regions: 0..255 */
 		record.md.md_b );
+}
+
+void
+bspldump()	/* Print out B-spline solid description record information */
+{
+	(void)printf( "%c %s %d %.9e\n",
+		record.B.B_id,		/* b */
+		record.B.B_name,	/* unique name */
+		record.B.B_nsurf,	/* # of surfaces in this solid */
+		record.B.B_resolution );	/* resolution of flatness */
+}
+
+void
+bsurfdump()	/* Print d-spline surface description record information */
+{
+	register int i;
+	register float *vp;
+	int nbytes, count;
+	float *fp;
+
+	(void)printf( "%c %d %d %d %d %d %d %d %d %d\n",
+		record.d.d_id,		/* D */
+		record.d.d_order[0],	/* order of u and v directions */
+		record.d.d_order[1],	/* order of u and v directions */
+		record.d.d_kv_size[0],	/* knot vector size (u and v) */
+		record.d.d_kv_size[1],	/* knot vector size (u and v) */
+		record.d.d_ctl_size[0],	/* control mesh size (u and v) */
+		record.d.d_ctl_size[1],	/* control mesh size (u and v) */
+		record.d.d_geom_type,	/* geom type 3 or 4 */
+		record.d.d_nknots,	/* # granules of knots */
+		record.d.d_nctls );	/* # granules of ctls */
+	/* 
+	 * The b_surf_head record is followed by
+	 * d_nknots granules of knot vectors (first u, then v),
+	 * and then by d_nctls granules of control mesh information.
+	 * Note that neither of these have an ID field!
+	 *
+	 * B-spline surface record, followed by
+	 *	d_kv_size[0] floats,
+	 *	d_kv_size[1] floats,
+	 *	padded to d_nknots granules, followed by
+	 *	ctl_size[0]*ctl_size[1]*geom_type floats,
+	 *	padded to d_nctls granules.
+	 *
+	 * IMPORTANT NOTE: granule == sizeof(union record)
+	 */
+
+	/* Malloc and clear memory for the KNOT DATA and read it */
+	nbytes = record.d.d_nknots * sizeof(union record);
+	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
+		(void)fprintf(stderr, "G2ASC: spline knot malloc error\n");
+		exit(1);
+	}
+	fp = vp;
+	(void)bzero( (char *)fp, nbytes );
+	count =	read( 0, (char*)fp, nbytes );
+	if( count != nbytes )  {
+		(void)fprintf(stderr, "G2ASC: spline knot read failure\n");
+		exit(1);
+	}
+	/* Print the knot vector information */
+	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
+	for( i = 0; i < count; i++ )  {
+		(void)printf("%.9e\n", *vp++);
+	}
+	/* Free the knot data memory */
+	(void)free( (char *)fp );
+
+	/* Malloc and clear memory for the CONTROL MESH data and read it */
+	nbytes = record.d.d_nctls * sizeof(union record);
+	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
+		(void)fprintf(stderr, "G2ASC: control mesh malloc error\n");
+		exit(1);
+	}
+	fp = vp;
+	(void)bzero( (char *)fp, nbytes );
+	count =	read( 0, (char*)fp, nbytes );
+	if( count != nbytes )  {
+		(void)fprintf(stderr, "G2ASC: control mesh read failure\n");
+		exit(1);
+	}
+	/* Print the control mesh information */
+	count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
+		record.d.d_geom_type;
+	for( i = 0; i < count; i++ )  {
+		(void)printf("%.9e\n", *vp++);
+	}
+	/* Free the control mesh memory */
+	(void)free( (char *)fp );
 }

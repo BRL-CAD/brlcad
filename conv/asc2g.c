@@ -34,21 +34,17 @@ extern char	*strcpy();
 
 void	identbld(), polyhbld(), polydbld();
 void	solbld(), combbld(), membbld(), arsabld(), arsbbld();
-void	materbld();
+void	materbld(), bsplbld(), bsurfbld();
 
 static union record	record;		/* GED database record */
-int	count;				/* Number of records */
 char	*bp;				/* Pointer for input buffer */
 #define BUFSIZE		1000		/* Record input buffer size */
 static char buf[BUFSIZE];		/* Record input buffer */
 
 main()
 {
-	count = 0;
-
 	/* Read ASCII input file, each record on a line */
 	while( ( fgets( buf, BUFSIZE, stdin ) ) != (char *)0 )  {
-		count++;
 		bp = &buf[0];
 
 		/* Clear the output record */
@@ -58,57 +54,49 @@ main()
 		if( buf[0] == ID_SOLID )  {
 			/* Build the record */
 			solbld();
-			/* Write out the record */
-			(void)write( 1, (char *)&record, sizeof record );
 		}
 		else if( buf[0] == ID_COMB )  {
 			/* Build the record */
 			combbld();
-			/* Write out the record */
-			(void)write( 1, (char *)&record, sizeof record );
 		}
 		else if( buf[0] == ID_MEMB )  {
 			/* Build the record */
 			membbld();
-			/* Write out the record */
-			(void)write( 1, (char *)&record, sizeof record );
 		}
 		else if( buf[0] == ID_ARS_A )  {
 			/* Build the record */
 			arsabld();
-			/* Write out the record */
-			(void)write( 1, (char *)&record, sizeof record );
 		}
 		else if( buf[0] == ID_ARS_B )  {
 			/* Build the record */
 			arsbbld();
-			/* Write out the record */
-			(void)write( 1, (char *)&record, sizeof record );
 		}
 		else if( buf[0] == ID_P_HEAD )  {
 			/* Build the record */
 			polyhbld();
-			/* Write out the record */
-			(void)write( 1, (char *)&record, sizeof record );
 		}
 		else if( buf[0] == ID_P_DATA )  {
 			/* Build the record */
 			polydbld();
-			/* Write out the record */
-			(void)write( 1, (char *)&record, sizeof record );
 		}
 		else if( buf[0] == ID_IDENT )  {
 			/* Build the record */
 			identbld();
-			/* Write out the record */
-			(void)write( 1, (char *)&record, sizeof record );
 		}
 		else if( buf[0] == ID_MATERIAL )  {
+			/* Build the record */
 			materbld();
-			(void)write( 1, (char *)&record, sizeof record );
+		}
+		else if( buf[0] == ID_BSOLID )  {
+			/* Build the record */
+			bsplbld();
+		}
+		else if( buf[0] == ID_BSURF )  {
+			/* Build the record */
+			bsurfbld();
 		}
 		else  {
-			(void)fprintf(stderr,"ASC2VG: bad record type\n");
+			(void)fprintf(stderr,"ASC2G: bad record type\n");
 			exit(1);
 		}
 	}
@@ -153,6 +141,9 @@ solbld()	/* Build Solid record */
 	);
 	record.s.s_type = (char)temp1;
 	record.s.s_cgtype = (short)temp2;
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
 }
 
 void
@@ -181,6 +172,9 @@ combbld()	/* Build Combination record */
 	record.c.c_num = (short)temp4;
 	record.c.c_material = (short)temp5;
 	record.c.c_los = (short)temp6;
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
 }
 
 void
@@ -212,6 +206,9 @@ membbld()	/* Build Member record */
 		&temp1
 	);
 	record.M.m_num = (short)temp1;
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
 }
 
 void
@@ -239,6 +236,9 @@ arsabld()	/* Build ARS A record */
 	record.a.a_n = (short)temp3;
 	record.a.a_curlen = (short)temp4;
 	record.a.a_totlen = (short)temp5;
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
 }
 
 void
@@ -280,6 +280,9 @@ arsbbld()	/* Build ARS B record */
 	record.b.b_type = (char)temp1;
 	record.b.b_n = (short)temp2;
 	record.b.b_ngranule = (short)temp3;
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
 }
 
 void
@@ -303,6 +306,9 @@ identbld()	/* Build Ident record */
 		bp++;
 	}
 	(void)strcpy( &record.i.i_title[0], buf );
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
 }
 
 void
@@ -312,6 +318,9 @@ polyhbld()	/* Build Polyhead record */
 		&record.p.p_id,
 		&record.p.p_name[0]
 	);
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
 }
 
 void
@@ -356,6 +365,9 @@ polydbld()	/* Build Polydata record */
 		&record.q.q_norms[4][2]
 	);
 	record.q.q_count = (char)temp1;
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
 #endif
 }
 
@@ -364,17 +376,129 @@ materbld()
 {
 	int flags, low, hi, r, g, b;
 
-	(void)sscanf( buf, "%c %d %d %d %d %d %d %s",
+	(void)sscanf( buf, "%c %d %d %d %d %d %d",
 		&record.md.md_id,
 		&flags, &low, &hi,
-		&r, &g, &b,
-		record.md.md_material );
-	record.md.md_flags = flags;
-	record.md.md_low = low;
-	record.md.md_hi = hi;
-	record.md.md_r = r;
-	record.md.md_g = g;
-	record.md.md_b = b;
+		&r, &g, &b
+	);
+	record.md.md_flags = (char)flags;
+	record.md.md_low = (short)low;
+	record.md.md_hi = (short)hi;
+	record.md.md_r = (unsigned char)r;
+	record.md.md_g = (unsigned char)g;
+	record.md.md_b = (unsigned char)b;
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
+}
+
+void
+bsplbld()	/* Build B-spline solid record */
+{
+	int temp1;
+
+	(void)sscanf( buf, "%c %s %d %e",
+		&record.B.B_id,
+		&record.B.B_name[0],
+		&temp1,
+		&record.B.B_resolution
+	);
+	record.B.B_nsurf = (short)temp1;
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
+}
+
+void
+bsurfbld()	/* Build d-spline surface description record */
+{
+	register int i;
+	register float *vp;
+	int nbytes, count;
+	float *fp;
+	int temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9;
+
+	(void)sscanf( buf, "%c %d %d %d %d %d %d %d %d %d",
+		&record.d.d_id,
+		&temp1,
+		&temp2,
+		&temp3,
+		&temp4,
+		&temp5,
+		&temp6,
+		&temp7,
+		&temp8,
+		&temp9
+	);
+	record.d.d_order[0] = (short)temp1;
+	record.d.d_order[1] = (short)temp2;
+	record.d.d_kv_size[0] = (short)temp3;
+	record.d.d_kv_size[1] = (short)temp4;
+	record.d.d_ctl_size[0] = (short)temp5;
+	record.d.d_ctl_size[1] = (short)temp6;
+	record.d.d_geom_type = (short)temp7;
+	record.d.d_nknots = (short)temp8;
+	record.d.d_nctls = (short)temp9;
+
+	/* Write out the record */
+	(void)write( 1, (char *)&record, sizeof record );
+
+	/* 
+	 * The b_surf_head record is followed by
+	 * d_nknots granules of knot vectors (first u, then v),
+	 * and then by d_nctls granules of control mesh information.
+	 * Note that neither of these have an ID field!
+	 *
+	 * B-spline surface record, followed by
+	 *	d_kv_size[0] floats,
+	 *	d_kv_size[1] floats,
+	 *	padded to d_nknots granules, followed by
+	 *	ctl_size[0]*ctl_size[1]*geom_type floats,
+	 *	padded to d_nctls granules.
+	 *
+	 * IMPORTANT NOTE: granule == sizeof(union record)
+	 */
+
+	/* Malloc and clear memory for the KNOT DATA and read it */
+	nbytes = record.d.d_nknots * sizeof(union record);
+	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
+		(void)fprintf(stderr, "ASC2G: spline knot malloc error\n");
+		exit(1);
+	}
+	fp = vp;
+	(void)bzero( (char *)vp, nbytes );
+	/* Read the knot vector information */
+	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
+	for( i = 0; i < count; i++ )  {
+		fgets( buf, BUFSIZE, stdin );
+		(void)sscanf( buf, "%e", vp++);
+	}
+	/* Write out the information */
+	(void)write( 1, (char *)fp, nbytes );
+
+	/* Free the knot data memory */
+	(void)free( (char *)fp );
+
+	/* Malloc and clear memory for the CONTROL MESH data and read it */
+	nbytes = record.d.d_nctls * sizeof(union record);
+	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
+		(void)fprintf(stderr, "ASC2G: control mesh malloc error\n");
+		exit(1);
+	}
+	fp = vp;
+	(void)bzero( (char *)vp, nbytes );
+	/* Read the control mesh information */
+	count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
+		record.d.d_geom_type;
+	for( i = 0; i < count; i++ )  {
+		fgets( buf, BUFSIZE, stdin );
+		(void)sscanf( buf, "%e", vp++);
+	}
+	/* Write out the information */
+	(void)write( 1, (char *)fp, nbytes );
+
+	/* Free the control mesh memory */
+	(void)free( (char *)fp );
 }
 
 #ifndef BSD42
