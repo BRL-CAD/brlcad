@@ -928,7 +928,11 @@ struct light_obs_stuff {
 	struct light_specific *lp;
 	int *rand_idx;
 
-	void *inten;
+#if RT_MULTISPECTRAL
+	struct bn_tabdata **inten;
+#else
+	fastf_t *inten;
+#endif
 	int iter;
 	vect_t to_light_center;	/* coordinate system on light */
 	vect_t light_x;
@@ -1085,19 +1089,19 @@ struct light_obs_stuff *los;
 
 #if RT_MULTISPECTRAL
 		BN_CK_TABDATA(sub_ap.a_spectrum);
-		if (los->inten == BN_TABDATA_NULL) {
-			los->inten = sub_ap.a_spectrum;
+		if (*(los->inten) == BN_TABDATA_NULL) {
+			*(los->inten) = sub_ap.a_spectrum;
 		} else {
-			BN_CK_TABDATA(los->inten);
-			bn_tabdata_add(los->inten,
-				       los->inten,
+			BN_CK_TABDATA(*(los->inten));
+			bn_tabdata_add(*(los->inten),
+				       *(los->inten),
 				       sub_ap.a_spectrum);
 
 			bn_tabdata_free(sub_ap.a_spectrum);
 		}
 		sub_ap.a_spectrum = BN_TABDATA_NULL;
 #else
-		VMOVE( ((vectp_t)los->inten), sub_ap.a_color );
+		VMOVE( los->inten, sub_ap.a_color );
 #endif
 		return 1;
 	}
@@ -1172,10 +1176,10 @@ int have;
 
 		los.lp = lp;
 #if RT_MULTISPECTRAL
-		los.inten = (void *)&swp->msw_intensity[i];
-		if(los.inten) BN_CK_TABDATA(los.inten);
+		if(swp->msw_intensity[i]) BN_CK_TABDATA(swp->msw_intensity[i]);
+		los.inten = &swp->msw_intensity[i];
 #else
-		los.inten = (void *)&swp->sw_intensity[3*i];
+		los.inten = &swp->sw_intensity[3*i];
 #endif
 
 		/* create a coordinate system about the light center
