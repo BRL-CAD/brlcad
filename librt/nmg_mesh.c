@@ -106,6 +106,7 @@ CONST struct rt_tol	*tol;
 {
 	struct edgeuse	*original_eu1 = eu1;
 	struct edgeuse	*nexteu;
+	struct edgeuse	*eus;
 	struct edgeuse	*eur;
 	struct faceuse	*fu1;
 	struct faceuse	*fu2;
@@ -397,9 +398,17 @@ insert:
 		 * radial edgeuses IN THE SAME SHELL will never point in
 		 * the same direction or share the same vertex.  We thus make
 		 * sure that eu2 is an edgeuse which might be radial to eu1
-		 * XXX Need to look back for last eu IN THIS SHELL.
+		 * XXX Need to look back for last eu IN THE SHELL OF eu2.
+		 * XXX Even this isn't good enough, as we may be inserting
+		 * XXX something new _after_ that last starting point.
 		 */
-		if (eu2->vu_p->v_p == eu1->vu_p->v_p)
+		eus = eu1;
+		while( nmg_find_s_of_eu(eus) != nmg_find_s_of_eu(eu2) )  {
+			eus = eus->eumate_p->radial_p;
+			if( eus == eu1 )  break;	/* full circle */
+		}
+
+		if (eu2->vu_p->v_p == eus->vu_p->v_p)
 			eu2 = eu2->eumate_p;
 
 		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
