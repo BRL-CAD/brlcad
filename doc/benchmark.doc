@@ -1,3 +1,5 @@
+.\" $Header$
+.\" tbl benchmark.doc | troff -t -ms | ...
 .TL
 The BRL-CAD Benchmark Test
 .AU
@@ -36,21 +38,65 @@ shuttlecraft Galileo, to scale.
 bldg391.g  --  An exploded view of a two-story imaginary computer site,
 including various walls, red stairways, green disk drives, etc.
 The lower floor is a mirror, the upper floor is glass.
-.sp
+.PP
 The RT benchmark requires a binary database for input ("db/xxx.g"), and
 produces a binary image as output ("bench/xxx.pix"), along with a log
-file ("bench/xxx.log").  To make the benchmark
- distribution machine independent,
+file ("bench/xxx.log").
+.NH 1
+MACHINE INDEPENDENCE
+.PP
+To make the benchmark
+distribution machine independent,
 the databases are provided
 in an ASCII format in the "db" directory, and
-ascii-to-binary converters are provided.
+ascii-to-binary converters are provided in the "conv" directory.
+The setup command "\fBcake benchmark\fR"
+(see the document \fIInstalling the BRL-CAD Package\fR)
+will automaticly compile and run the converters.
+.PP
 If you are running this
 benchmark on a non-UNIX machine that has difficulty writing binary
 streams, change the "-o file.pix" flag to "-O file.a_pix" and RT
 will write an ASCII form directly.  For more discussion, consult
 the doc/pix.5 and conv/asc2pix.1 manual pages.
-.IP "BENCHMARK RESULTS"
-.sp
+.PP
+The reference images are distributed in binary BRL-CAD
+.BR pix (5)
+format.
+Earlier releases distributed the reference images in the portable
+ASCII form, and the converted them to the binary form.
+This consumed a significant amount of extra storage on UNIX machines,
+so this practice was discontinued.
+It is assumed that anyone attempting to benchmark a system that
+can not read pure binary files will at least have access to a
+UNIX system that can be used to convert the reference images to
+the portable ASCII form with the
+.BR pix2asc (1)
+tool, and then send those images to the machine under test.
+.PP
+If you encounter difficulty
+with running the benchmark,
+you might wish to build the full BRL-CAD package, to
+take advantage of the image tools in determining the nature of the problem.
+For example, one system suffered from a compiler bug that made
+TGC solids vanish, while another system had difficulties with
+the light visibility calculations.
+.NH 1
+OBTAINING CORRECT RESULTS
+.PP
+The benchmark timings are not considered valid unless
+the correct results are given.
+Make sure that the answers match the reference files
+to within plus-or-minus one in each color (see pixdiff(1)).
+You may wish to
+compare the execution times and log file remarks
+from your tests (in the "bench/xxx.log" files) with the
+VAX-11/780 (with hardware FPA) times which are given in the
+"pix/xxx.log" files.
+The reference images are also located in the "pix/" directory.
+.NH 1
+BENCHMARK RESULTS
+.PP
 In the tradition of Dongarra, the Rays/sec figure is considered the
 "RT Figure of Merit" (RTFM).  Note that the RTFM can only be compared
 between different runs on the \fIsame\fR database;  it is not meaningful
@@ -79,12 +125,19 @@ brl-virus	Sun-3/50, 15 Mhz clock, 12 Mhz 68881, Sun UNIX 3.2
 brl-vista	SGI 3030, w/FP chip, UNIX release 3.5
 brl-vmb	Gould PN 9080, no MACCs, UTX 2.0, 12x1Mb mem boards
 brl-vhs	Silicon Graphics 4D/60T, 12.5 Mhz clock 8MB memory
-c1east	Convex C1 XP (2 IOPs, 4 Multibus, 4-way disk striping, 64 Mbytes), Convex Unix 6.0.1.12
+c1east	T{
+Convex C1 XP (2 IOPs, 4 Multibus, 64 Mbytes),
+S/W 6.0.1.12
+T}
 elxsi-gnu	Elxsi 6420, BSD 4.2 16 MB
 elxsi-gnuy	Elxsi 6420, Sys Vr2, 16MB
 elxsi-m1	Elxsi 6410, BSD 4.2 16 MB
 hep	Denelcor HEP, 4 PEMs
 indigo	SGI Iris 3030, FPA, GL2-W3.5
+mseries	T{
+MIPS Mseries, Release 0.6, UMIPS 2.1, 16 MB of R2350 RAM.
+R2000 CPU rev 5.0, R2010 FP rev 2.0
+T}
 multiflow	Multiflow Trace 7/200 (PRELIMINARY)
 nrl-xmp	Cray X-MP/12, COS V115, 9.5ns clock
 nrtc-785	VAX 785, FPA, VMS+Eunice_4.1
@@ -111,6 +164,7 @@ _
   83.2	  118.8	  1.00	brl-vgr
  262.8	  375.4	  3.16	brl-vmb, UTX 2.0
  670.9	  958.3	  8.07	brl-vhs, -O2 optimization
+ 692.0	  988.3	  8.32	mseries
 1418.7	 1856.7	 15.63	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
 1851.7	 2423.5	 20.40	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
 2420.2	 3456.5	 29.10	brl-patton, 1 CPU, no vectors, UNICOS 2.1
@@ -181,6 +235,7 @@ _
   36.0	   64.9	  1.00	brl-vgr
  121.3	  218.6	  3.37	brl-vmb, UTX 2.0
  302.6	  545.6	  9.41	brl-vhs, -O2 optimization
+ 334.8	  603.5	  9.29	mseries
  479.3	  801.9	 12.36	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
  625.0	 1045.7	 16.11	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
  938.4	 1691.8	 26.07	brl-patton, 1 CPU, no vectors, UNICOS 2.1
@@ -241,6 +296,7 @@ _
   30.5	   36.5	 1.00	brl-vgr
  156.0	  186.4	 5.11	brl-vmb, UTX 2.0
  374.0	  447.0	12.25	brl-vhs, -O2 optimization
+ 431.5	  515.6	14.13	mseries
  482.2	  574.1	15.73	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
  604.2	  719.3	19.71	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
  978.2	 1169.0	32.03	brl-patton, 1 CPU, no vectors, UNICOS 2.1
@@ -301,6 +357,7 @@ _
   23.0	   34.2	 1.00	brl-vgr
  132.0	  196.2	 5.74	brl-vgr, UTX 2.0
  278.6	  414.1	12.11	brl-vhs, -O2 optimization
+ 330.7	  491.6	14.37	mseries
  383.7	  500.3	15.62	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
  467.4	  609.4	17.82	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
  702.1	 1043.6	30.51	brl-patton, 1 CPU, no vectors, UNICOS 2.1
@@ -346,11 +403,29 @@ _
  814.6	 1208.4	23.83	brl-vector, 8 CEs, no vectors (7.69X)
  852.4	 1266.4	24.98	alliant, 8 CEs, no vectors
 .TE
-.fi
-.sp 2
+.NH 1
+RELEASE 3.0 STATISTICS
+.PP
+For Release 3.0, the statistics are being recorded in
+a more easily understood format, with all results for
+a particular configuration listed on a single line.
+The numbers reported are the rays/sec (RTFM) figure.
+.TS
+expand box;
+l l | n n n n | n l.
+A/*	H/W	Moss	World	Star	Bldg	Mean	S/W Notes
+_
+Abs	vgr	118.8	64.9	36.5	34.2	?	BSD 4.3 [PRELIM]
+*vgr	vgr	1.0	1.0	1.0	1.0	1.0
+.TE
+.NH 1
+ADDITIONAL STATISTICS
+.PP
 It would be greatly appreciated if you would return to BRL any
 statistics that you gather, including:  which BRL CAD release
 was used, the manufacturer of the machine,
-hardware and software version numbers, presence or absence of floating
-point hardware, and the name (preferably InterNet or UUCP) of the
+hardware model name/number,
+OS/compiler software version numbers,
+presence or absence of floating point hardware,
+and the local name (preferably InterNet or UUCP) of the
 specific machine used.
