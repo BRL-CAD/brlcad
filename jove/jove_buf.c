@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:38:49  gwyn
+ * Eliminated trailing blanks.
+ * Changed memcpy calls back to bcopy.
+ *
  * Revision 11.1  95/01/04  10:35:08  mike
  * Release_4.4
  *
@@ -179,6 +183,7 @@ extern int
 	LineAI(),
 	Newline();
 
+void
 setfuncs(flags)
 int	*flags;
 {
@@ -208,6 +213,7 @@ int	*flags;
 		BindFunc(mainmap, CTL('M'), Newline);
 }
 
+void
 noflags(f)
 register int	*f;
 {
@@ -217,6 +223,7 @@ register int	*f;
 		*f++ = 0;
 }
 
+void
 setflags(buf)
 BUFFER	*buf;
 {
@@ -256,6 +263,7 @@ char	*fname,
 char *
 ralloc(obj, size)
 char	*obj;
+size_t size;
 {
 	char	*new;
 	if (obj)
@@ -269,6 +277,7 @@ char	*obj;
 	return new;
 }
 
+void
 setbname(bp, name)
 BUFFER	*bp;
 char	*name;
@@ -281,6 +290,7 @@ char	*name;
 		bp->b_name = 0;
 }
 
+void
 setfname(bp, name)
 BUFFER	*bp;
 char	*name;
@@ -293,6 +303,7 @@ char	*name;
 		bp->b_fname = 0;
 }
 
+void
 set_ino(bp)
 BUFFER	*bp;
 {
@@ -330,6 +341,7 @@ char	*fname;
 	return bp;
 }
 
+void
 tiewind(wp, bp)
 WINDOW	*wp;
 BUFFER	*bp;
@@ -342,6 +354,7 @@ BUFFER	*bp;
 	}
 }
 
+void
 FindFile()
 {
 	char	*name;
@@ -366,6 +379,7 @@ BUFFER	*newbuf;
 	setfuncs(curbuf->b_flags);
 }
 
+void
 SelBuf()
 {
 	char	*bname;
@@ -387,6 +401,7 @@ char	*name;
 	return new;
 }
 
+void
 defb_wind(bp)
 BUFFER *bp;
 {
@@ -431,6 +446,7 @@ char	*prompt;
 	return delbuf;
 }
 
+void
 BufErase()
 {
 	BUFFER	*delbuf;
@@ -460,6 +476,7 @@ BufKill()
 	UpdModLine++;				/* Update buffer numbers */
 }
 
+void
 BufList()
 {
 	char	format[40];
@@ -495,6 +512,7 @@ BufList()
 	StopTelling();
 }
 
+void
 b_format(fmt)
 char	*fmt;
 {
@@ -506,8 +524,8 @@ char	*fmt;
 	for (bp = world; bp; bp = bp->b_next) {
 		if (bp->b_zero == 0)
 			continue;
-		flen = max(flen, (bp->b_fname ? strlen(bp->b_fname) : 0));
-		blen = max(blen, strlen(bp->b_name));
+		flen = max(flen, (int)(bp->b_fname ? strlen(bp->b_fname) : 0));
+		blen = max(blen, (int)strlen(bp->b_name));
 	}
 	ignore(sprintf(fmt, " %%-4s %%-11s  %%-%ds   %%-%ds  %%s", flen, blen));
 }
