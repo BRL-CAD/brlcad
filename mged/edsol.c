@@ -80,7 +80,7 @@ static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
 static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
 static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 
-void build_tcl_edit_menu();
+int get_edit_solid_menus();
 void pscale();
 #if 0
 void	calc_planes();
@@ -2128,12 +2128,12 @@ init_sedit()
 
 	/* Read solid description.  Save copy of original data */
 	BU_INIT_EXTERNAL(&es_ext);
-	RT_INIT_DB_INTERNAL(&es_int);
 	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 ){
 	  TCL_READ_ERR;
 	  return;
 	}
 
+	RT_INIT_DB_INTERNAL(&es_int);
 	id = rt_id_solid( &es_ext );
 	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity, dbip ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
@@ -2197,13 +2197,10 @@ init_sedit()
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
 	chg_l2menu(ST_S_EDIT);
 	es_edflag = IDLE;
-	sedit();
 
 	button( BE_S_EDIT );	/* Drop into edit menu right away */
 
 #if 1
-	build_tcl_edit_menu();
-
 	bn_mat_idn(acc_rot_sol);
 
 	VSETALL( edit_absolute_model_rotate, 0.0 );
@@ -2226,6 +2223,15 @@ init_sedit()
 	VSETALL( edit_rate_view_tran, 0.0 );
 
 	set_e_axes_pos(1);
+
+	{
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "begin_edit_callback");
+	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	}
 #endif
 }
 
@@ -2238,28 +2244,15 @@ init_sedit()
 void
 replot_editing_solid()
 {
-#if 0
-	struct rt_db_internal	*ip;
+  mat_t mat;
+  register struct solid *sp;
 
-	(void)illump->s_path[illump->s_last];
-
-	ip = &es_int;
-	RT_CK_DB_INTERNAL( ip );
-
-	(void)replot_modified_solid( illump, ip, es_mat );
-#else
-	{
-	  mat_t mat;
-	  register struct solid *sp;
-
-	  FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
-	    if(sp->s_path[sp->s_last]->d_addr == illump->s_path[illump->s_last]->d_addr){
-	      pathHmat( sp, mat, sp->s_last-1 );
-	      (void)replot_modified_solid( sp, &es_int, mat );
-	    }
-	  }
-	}
-#endif
+  FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
+    if(sp->s_path[sp->s_last]->d_addr == illump->s_path[illump->s_last]->d_addr){
+      pathHmat( sp, mat, sp->s_last-1 );
+      (void)replot_modified_solid( sp, &es_int, mat );
+    }
+  }
 }
 
 /*
@@ -4635,9 +4628,17 @@ sedit()
 	set_e_axes_pos(0);
 	replot_editing_solid();
 
+	if(update_views){
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "active_edit_callback");
+	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	}
+
 	inpara = 0;
 	es_mvalid = 0;
-	return;
 }
 
 /*
@@ -6127,7 +6128,6 @@ init_objedit()
 {
 	int			id;
 	char			*strp="";
-	struct bu_vls		vls;
 	struct menu_item        *mip;
 
 	/* for safety sake */
@@ -6209,10 +6209,14 @@ init_objedit()
 	VSETALL( edit_rate_model_tran, 0.0 );
 	VSETALL( edit_rate_view_tran, 0.0 );
 
-	bu_vls_init(&vls);
-	bu_vls_strcpy(&vls, "do_edit_menu {} {}");
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+	{
+	  struct bu_vls		vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_strcpy(&vls, "begin_edit_callback");
+	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	}
 }
 
 void oedit_reject();
@@ -7544,19 +7548,23 @@ char	**argv;
   return TCL_ERROR;
 }
 
-
-void
-build_tcl_edit_menu()
+get_edit_solid_menus(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
   struct menu_item *mip;
   struct bu_vls vls;
 
+  if(state != ST_S_EDIT)
+    return TCL_ERROR;
+
   bu_vls_init(&vls);
+  bu_vls_printf(&vls, "{");
 
   switch( es_int.idb_type ) {
   case ID_ARB8:
-    bu_vls_printf(&vls, "do_arb_edit_menu arb8 {");
-
     /* build "move edge" menu */
     mip = which_menu[es_type-4];
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
@@ -7578,132 +7586,279 @@ build_tcl_edit_menu()
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
 
-    /* end "rotate face" menu */
-    bu_vls_printf(&vls, " }\n");
     break;
-  case ID_TGC:
-    bu_vls_printf(&vls, "do_edit_menu tgc {");
-    mip = tgc_menu;
+  default:
+    switch( es_int.idb_type ) {
+    case ID_TGC:
+      mip = tgc_menu;
+      break;
+    case ID_TOR:
+      mip = tor_menu;
+      break;
+    case ID_ELL:
+      mip = ell_menu;
+      break;
+    case ID_ARS:
+      mip = ars_menu;
+      break;
+    case ID_BSPLINE:
+      mip = spline_menu;
+      break;
+    case ID_RPC:
+      mip = rpc_menu;
+      break;
+    case ID_RHC:
+      mip = rhc_menu;
+      break;
+    case ID_EPA:
+      mip = epa_menu;
+      break;
+    case ID_EHY:
+      mip = ehy_menu;
+      break;
+    case ID_ETO:
+      mip = eto_menu;
+      break;
+    case ID_NMG:
+      mip = nmg_menu;
+      break;
+    case ID_PIPE:
+      mip = pipe_menu;
+      break;
+    case ID_VOL:
+      mip = vol_menu;
+      break;
+    case ID_EBM:
+      mip = ebm_menu;
+      break;
+    case ID_DSP:
+      mip = dsp_menu;
+      break;
+    }
+
+    if(mip == (struct menu_item *)NULL)
+      break;
+
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
 
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_TOR:
-    bu_vls_printf(&vls, "do_edit_menu tor {");
-    mip = tor_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_ELL:
-    bu_vls_printf(&vls, "do_edit_menu ell {");
-    mip = ell_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_ARS:
-    bu_vls_printf(&vls, "do_edit_menu ars {");
-    mip = ars_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_BSPLINE:
-    bu_vls_printf(&vls, "do_edit_menu spline {");
-    mip = spline_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_RPC:
-    bu_vls_printf(&vls, "do_edit_menu rpc {");
-    mip = rpc_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_RHC:
-    bu_vls_printf(&vls, "do_edit_menu rhc {");
-    mip = rhc_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_EPA:
-    bu_vls_printf(&vls, "do_edit_menu epa {");
-    mip = epa_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_EHY:
-    bu_vls_printf(&vls, "do_edit_menu ehy {");
-    mip = ehy_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_ETO:
-    bu_vls_printf(&vls, "do_edit_menu eto {");
-    mip = eto_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_NMG:
-    bu_vls_printf(&vls, "do_edit_menu nmg {");
-    mip = nmg_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_PIPE:
-    bu_vls_printf(&vls, "do_edit_menu pipe {");
-    mip = pipe_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_VOL:
-    bu_vls_printf(&vls, "do_edit_menu vol {");
-    mip = vol_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_EBM:
-    bu_vls_printf(&vls, "do_edit_menu ebm {");
-    mip = ebm_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
-    break;
-  case ID_DSP:
-    bu_vls_printf(&vls, "do_edit_menu dsp {");
-    mip = dsp_menu;
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
-
-    bu_vls_printf(&vls, " }\n");
     break;
   }
 
-
-  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_printf(&vls, " }");
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
   bu_vls_free(&vls);
+
+  return TCL_OK;
+}
+
+struct rt_solid_type_lookup {
+  char			id;
+  size_t		db_internal_size;
+  long			magic;
+  char			*label;
+  struct bu_structparse	*parsetab;
+};
+
+extern int rt_db_report();
+extern struct rt_solid_type_lookup *rt_get_parsetab_by_name();
+
+int
+f_get_edit_solid(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  int i;
+  int status;
+  struct rt_db_internal ces_int;
+  Tcl_Obj *pto;
+  Tcl_Obj *pnto;
+
+  if(argc < 1 || 2 < argc){
+    Tcl_AppendResult(interp, "Usage: get_edit_solid [-c]", (char *)0);
+    return TCL_ERROR;
+  }
+
+  if(state != ST_S_EDIT){
+    Tcl_AppendResult(interp, "get_edit_solid: must be in solid edit state", (char *)0);
+    return TCL_ERROR;
+  }
+
+  if(argc == 1){
+    /* get solid type and parameters */
+    status = rt_db_report(interp, &es_int, (char *)0);
+    pto = Tcl_GetObjResult(interp);
+
+    pnto = Tcl_NewObj();
+    /* insert solid name, type and parameters */
+    Tcl_AppendStringsToObj(pnto, illump->s_path[illump->s_last]->d_namep, " ",
+			   Tcl_GetStringFromObj(pto, (int *)0), (char *)0);
+
+    Tcl_SetObjResult(interp, pnto);
+    return status;
+  }
+
+  if(argv[1][0] != '-' || argv[1][1] != 'c'){
+    Tcl_AppendResult(interp, "Usage: get_edit_solid [-c]", (char *)0);
+    return TCL_ERROR;
+  }
+
+  RT_INIT_DB_INTERNAL(&ces_int);
+  /* apply matrices along the path */
+  transform_editing_solid(&ces_int, es_mat, &es_int, 0);
+
+  /* get solid type and parameters */
+  status = rt_db_report(interp, &ces_int, (char *)0);
+  pto = Tcl_GetObjResult(interp);
+
+  pnto = Tcl_NewObj();
+  /* insert full pathname */
+  for(i=0; i <= illump->s_last; i++){
+    Tcl_AppendStringsToObj(pnto, "/", illump->s_path[i]->d_namep, (char *)0);
+  }
+
+  /* insert solid type and parameters */
+  Tcl_AppendStringsToObj(pnto, " ", Tcl_GetStringFromObj(pto, (int *)0), (char *)0);
+
+  Tcl_SetObjResult(interp, pnto);
+
+  if( ces_int.idb_ptr )
+    rt_functab[ces_int.idb_type].ft_ifree( &ces_int );
+
+  return status;
+}
+
+int
+f_put_edit_solid(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  register struct rt_solid_type_lookup *stlp;
+  long save_magic;
+  int context;
+
+  /*XXX needs better argument checking */
+  if(argc < 6){
+    return TCL_ERROR;
+  }
+
+  if(state != ST_S_EDIT){
+    Tcl_AppendResult(interp, "put_edit_solid: must be in solid edit state", (char *)0);
+    return TCL_ERROR;
+  }
+
+  /* look for -c */
+  if(argv[1][0] == '-' && argv[1][1] == 'c'){
+    context = 1;
+    --argc;
+    ++argv;
+  } else
+    context = 0;
+
+  stlp = rt_get_parsetab_by_name( argv[1] );
+  if( stlp == NULL ) {
+    Tcl_AppendResult( interp,
+		      "put_edit_solid: unknown object type",
+		      (char *)0 );
+    return TCL_ERROR;
+  }
+
+  if( es_int.idb_type != stlp->id ) {
+    Tcl_AppendResult( interp,
+		      "put_edit_solid: type mismatch",
+		      (char *)0 );
+  }
+
+  save_magic = *((long *)es_int.idb_ptr);
+  *((long *)es_int.idb_ptr) = stlp->magic;
+  if( bu_structparse_argv(interp, argc-2, argv+2, stlp->parsetab,
+			  (char *)es_int.idb_ptr )==TCL_ERROR ) {
+    return TCL_ERROR;
+  }
+  *((long *)es_int.idb_ptr) = save_magic;
+
+  if(context)
+    transform_editing_solid(&es_int, es_invmat, &es_int, 1);
+
+  /* must re-calculate the face plane equations for arbs */
+  if( es_int.idb_type == ID_ARB8 ){
+    struct rt_arb_internal *arb;
+
+    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    RT_ARB_CK_MAGIC( arb );
+
+    (void)rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol );
+  }
+
+  if(!es_keyfixed)
+    get_solid_keypoint(es_keypoint, &es_keytag, &es_int, es_mat);
+
+  set_e_axes_pos(0);
+  replot_editing_solid();
+
+  return TCL_OK;
+}
+
+int
+f_reset_edit_solid(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  int id;
+
+  if(state != ST_S_EDIT)
+    return TCL_ERROR;
+
+  /* free old copy */
+  if(es_int.idb_ptr)
+    rt_functab[es_int.idb_type].ft_ifree(&es_int);
+
+  /* read in a fresh copy */
+  RT_INIT_DB_INTERNAL(&es_int);
+  id = rt_id_solid( &es_ext );
+  if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity, dbip ) < 0 )  {
+    Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
+		     "):  solid import failure\n", (char *)NULL);
+    if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
+    db_free_external( &es_ext );
+    return TCL_ERROR;				/* FAIL */
+  }
+  RT_CK_DB_INTERNAL( &es_int );
+  replot_editing_solid();
+
+  /* Establish initial keypoint */
+  es_keytag = "";
+  get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
+
+  /* Reset relevant variables */
+  bn_mat_idn(acc_rot_sol);
+  VSETALL( edit_absolute_model_rotate, 0.0 );
+  VSETALL( edit_absolute_object_rotate, 0.0 );
+  VSETALL( edit_absolute_view_rotate, 0.0 );
+  VSETALL( last_edit_absolute_model_rotate, 0.0 );
+  VSETALL( last_edit_absolute_object_rotate, 0.0 );
+  VSETALL( last_edit_absolute_view_rotate, 0.0 );
+  VSETALL( edit_absolute_model_tran, 0.0 );
+  VSETALL( edit_absolute_view_tran, 0.0 );
+  VSETALL( last_edit_absolute_model_tran, 0.0 );
+  VSETALL( last_edit_absolute_view_tran, 0.0 );
+  edit_absolute_scale = 0.0;
+  acc_sc_sol = 1.0;
+  VSETALL( edit_rate_model_rotate, 0.0 );
+  VSETALL( edit_rate_object_rotate, 0.0 );
+  VSETALL( edit_rate_view_rotate, 0.0 );
+  VSETALL( edit_rate_model_tran, 0.0 );
+  VSETALL( edit_rate_view_tran, 0.0 );
+
+  set_e_axes_pos(1);
+
+  update_views = 1;
+
+  return TCL_OK;
 }
