@@ -344,7 +344,7 @@ extern "C" {
  * semaphore.c
  *
  * Backwards compatability for existing Release 4.4 LIBRT applications.
- *  No #define compatability, edit source with "h/sed4" script for
+ *  No #define compatability, edit source with "sed4" script for
  *  automatic upgrade.
  *
  * RES_ACQUIRE( &rt_g.res_syscall )   becomes  bu_semaphore_acquire( BU_SEM_SYSCALL )

@@ -25,44 +25,6 @@
  * Copyright (c) 1984 Todd W. Fuqua
  * 
  * $Header$
- * $Log$
- * Revision 11.1  1995/01/04 09:48:47  mike
- * Release_4.4
- *
- * Revision 10.1  91/10/12  06:35:41  mike
- * Release_4.0
- * 
- * Revision 9.1  89/05/19  05:44:36  mike
- * Release_3.5
- * 
- * Revision 8.1  88/10/05  00:24:38  mike
- * Release_3.0
- * 
- * Revision 1.1  88/09/10  05:33:25  mike
- * Initial revision
- * 
- * Revision 2.7  86/11/10  11:25:18  thomas
- * Add rle_get_setup return codes.
- * Add is_seek flag to make pipe input work.
- * 
- * Revision 2.6  86/10/08  13:06:07  thomas
- * Add sv_comments field.
- * Add is_eof flag to Runget private data.
- * 
- * Revision 2.4  86/02/27  10:05:40  thomas
- * Change for new sv_globals & sv_putrow interface.
- * Add comments to data structure.
- * 
- * Revision 2.3  85/04/26  15:10:04  thomas
- * New sv_globals structure.  sv_dispatch no longer global variable
- * (incorporated into globals struct).
- * 
- * Revision 2.2  85/04/04  16:42:09  thomas
- * Take out verbose flag, mapflag.  Add ncmap/cmaplen and map pointer.
- * 
- * Revision 2.1  85/03/05  16:02:03  thomas
- * *** empty log message ***
- * 
  */
 
 enum sv_dispatch {

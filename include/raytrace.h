@@ -914,7 +914,7 @@ struct directory  {
  *
  *  In-memory format for database "combination" record (non-leaf node).
  *  (Regions and Groups are both a kind of Combination).
- *  Perhaps move to h/wdb.h or h/rtgeom.h?
+ *  Perhaps move to wdb.h or rtgeom.h?
  */
 struct rt_comb_internal  {
 	long		magic;
@@ -944,7 +944,7 @@ struct rt_comb_internal  {
  *			R T _ B I N U N I F _ I N T E R N A L
  *
  *  In-memory format for database uniform-array binary object.
- *  Perhaps move to h/wdb.h or h/rtgeom.h?
+ *  Perhaps move to wdb.h or rtgeom.h?
  */
 struct rt_binunif_internal {
 	long		magic;
@@ -1683,7 +1683,7 @@ struct rt_g {
 	/* XXX rtg_parallel is not used by LIBRT any longer */
 	int		rtg_parallel;	/* !0 = trying to use multi CPUs */
 	struct bu_list	rtg_vlfree;	/* head of bn_vlist freelist */
-	int		NMG_debug;	/* debug bits for NMG's see h/nmg.h */
+	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 	struct rt_wdb	rtg_headwdb;	/* head of database object list */
 };
 RT_EXPORT extern struct rt_g rt_g;
@@ -1849,7 +1849,7 @@ struct rt_i {
 
 
 /*
- *  Replacements for definitions from ../h/vmath.h
+ *  Replacements for definitions from vmath.h
  */
 #undef V2PRINT
 #undef VPRINT
@@ -2598,7 +2598,7 @@ RT_EXPORT BU_EXTERN(void rt_pr_hit,
 		     const struct hit *hitp));
 
 /* rt_fastf_float, rt_mat_dbmat, rt_dbmat_mat
- * declarations moved to h/db.h */
+ * declarations moved to db.h */
 
 /* storage obtainers */
 RT_EXPORT BU_EXTERN(void rt_get_seg,

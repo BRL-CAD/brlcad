@@ -1076,7 +1076,7 @@ struct bu_attribute_value_set {
 /*----------------------------------------------------------------------*/
 /* vls.c */
 /*
- *  Variable Length Strings: bu_vls support (formerly rt_vls in h/rtstring.h)
+ *  Variable Length Strings: bu_vls support (formerly rt_vls in rtstring.h)
  */
 struct bu_vls  {
 	long	vls_magic;

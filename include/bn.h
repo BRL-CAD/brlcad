@@ -1350,7 +1350,7 @@ BN_EXPORT extern const double bn_radtodeg;
  *  increase wavelength sampling density around "important" frequencies.
  *
  *  See Also -
- *	h/spectrum.h, spectrum.c
+ *	spectrum.h, spectrum.c
  */
 struct bn_table {
 	long		magic;

@@ -89,7 +89,7 @@ struct wmember  {
 
 /*
  *  Definitions for pipe (wire) segments
- * XXX Why isn't this in h/rtgeom.h?
+ * XXX Why isn't this in rtgeom.h?
  */
 
 struct wdb_pipept {
