@@ -795,9 +795,12 @@ This version was compiled on RedHat Linux 5.2
 EOF
 	rpm -bb $SPEC
 	# Oddly, this produces /usr/src/redhat/RPMS/i386/${RPM_BASE}.rpm
-	gzip -9 < /usr/src/redhat/RPMS/i386/${RPM_BASE}.rpm > ./${RPM_BASE}.rpm.gz
-	# Privacy step still needed.
-	# enigma $KEY < ./${RPM_BASE}.rpm.gz > ./${RPM_BASE}.rpm.gz.cy
+	# No advantage to gzip'ing, according to Lee.
+	##gzip -9 < /usr/src/redhat/RPMS/i386/${RPM_BASE}.rpm > ./${RPM_BASE}.rpm.gz
+	cp /usr/src/redhat/RPMS/i386/${RPM_BASE}.rpm ./${RPM_BASE}.rpm
+	# Privacy step still needed to be run by hand.
+	## enigma $KEY < ./${RPM_BASE}.rpm.gz > ./${RPM_BASE}.rpm.gz.crypt
+	# enigma $KEY < ./${RPM_BASE}.rpm > ./${RPM_BASE}.rpm.crypt
 	;;
 
 *)
