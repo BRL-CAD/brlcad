@@ -2316,9 +2316,9 @@ struct rt_tol		*tol;
 	top_eu = eu;
 
 	VSET( uvw, 0,0,0);
-	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw);
+	nmg_vertexuse_a_cnurb( eu->vu_p, uvw);
 	VSET( uvw, 1, 0, 0);
-	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
 	/* Top cap surface */
@@ -2364,9 +2364,9 @@ struct rt_tol		*tol;
 	bot_eu = eu;
 
 	VSET( uvw, 0,0,0);
-	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw);
+	nmg_vertexuse_a_cnurb( eu->vu_p, uvw);
 	VSET( uvw, 1, 0, 0);
-	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
 
 
 	nmg_tgc_disk( bot_fu, bot_mat, 0.0, 1 );
@@ -2424,7 +2424,7 @@ fastf_t nmg_uv_unitcircle[27] = {
 	1.0,   .5,  1.0
 };
 
-void
+static void
 nmg_tgc_disk(fu, rmat, height, flip)
 struct faceuse	* fu;
 mat_t 	rmat;
@@ -2577,7 +2577,7 @@ int	flip;
  * for the top row of the surface and the bot row of the surface
  * respectively.
  */
-void
+static void
 nmg_tgc_nurb_cyl(fu, top_mat, bot_mat)
 struct faceuse *fu;
 mat_t	top_mat;
@@ -2657,21 +2657,21 @@ mat_t	bot_mat;
 	nmg_vertex_gv( eu->vu_p->v_p, point );	/* 0,0 vertex */
 
 	VSET( uvw, 0, 0, 0);
-	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
 	VSET( uvw, 1, 0, 0);
-	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
 	VSET( uvw, 1, 0, 0);
-	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
 	VSET( uvw, 1, 1, 0);
-	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
 	VSET( uvw, 1, 1, 0);
-	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
 	VSET( uvw, 0, 1, 0);
-	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
 
 	rt_nurb_s_eval( fg, 1., 1., hvect);
 	HDIVIDE( point, hvect);
@@ -2680,9 +2680,9 @@ mat_t	bot_mat;
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
 	VSET( uvw, 0, 1, 0);
-	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
 	VSET( uvw, 0, 0, 0);
-	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
 	/* Create the edge loop geometry */
