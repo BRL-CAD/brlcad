@@ -63,6 +63,7 @@ struct shadework {
 	int		sw_frame;	/* # of current frame */
 	fastf_t		sw_frametime;	/* frame time delta off 1st frame */
 	fastf_t		sw_pixeltime;	/* pixel time delta off 1st pixel of 1st frame */
+	struct seg	*sw_segs;	/* segs which made partition */
 };
 
 extern void pr_shadework();
