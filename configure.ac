@@ -701,7 +701,7 @@ WIFEXITED(x);           /* Generates an error if WIFEXITED
     ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
 AC_MSG_RESULT($tcl_cv_union_wait)
 if test $tcl_cv_union_wait = no; then
-    AC_DEFINE(NO_UNION_WAIT,, Lacking a "union wait")
+    AC_DEFINE(NO_UNION_WAIT,, From Tcl -- Lacking a "union wait")
 fi
 dnl ============================================================
 
@@ -712,6 +712,12 @@ AC_CHECK_DECL(sys_errlist,
 	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]), 
 	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),
 	      [# include <stdio.h>])
+
+
+dnl XXX -- necessary checks from tcl8.4 tcl.m4
+builtin(include,src/other/libtcl/unix/tcl.m4)
+SC_SERIAL_PORT
+SC_TCL_64BIT_FLAGS
 
 
 dnl ******************************************
@@ -1184,22 +1190,26 @@ AC_SUBST(WDB)
 dnl tcl
 dnl Need to update version number(s) in src/other/libtcl/Makefile.am
 TCL_VERSION="8.4"
-TCL_LIBRARY="'${prefix}/tcl${TCL_VERSION}'"
+TCL_LIBRARY="'${prefix}/lib/tcl${TCL_VERSION}'"
 TCL_PACKAGE_PATH="'${libdir}'"
 TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la'
+TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
 AC_SUBST(TCL_VERSION)
 AC_SUBST(TCL_LIBRARY)
 AC_SUBST(TCL_PACKAGE_PATH)
 AC_SUBST(TCL)
+AC_SUBST(TCLSTUB)
 
 dnl tk
 dnl Need to update version number(s) in src/other/libtk/Makefile.am
 TK_VERSION="8.4"
-TK_LIBRARY="'${prefix}/tk${TK_VERSION}'"
+TK_LIBRARY="'${prefix}/lib/tk${TK_VERSION}'"
 TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
+TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 AC_SUBST(TK_VERSION)
 AC_SUBST(TK_LIBRARY)
 AC_SUBST(TK)
+AC_SUBST(TKSTUB)
 
 dnl itcl/itk
 ITCL_VERSION="3.3"
@@ -1321,15 +1331,7 @@ AC_CONFIG_FILES([
 	src/other/libtcl/unix/Makefile
 	src/other/libtcl/unix/tclConfig.sh
 	src/other/libtk/Makefile
-	src/other/libtk/doc/Makefile
-	src/other/libtk/generic/Makefile
-	src/other/libtk/library/Makefile
 	src/other/libtk/library/pkgIndex.tcl
-	src/other/libtk/library/demos/Makefile
-	src/other/libtk/library/demos/images/Makefile
-	src/other/libtk/library/images/Makefile
-	src/other/libtk/library/msgs/Makefile
-	src/other/libtk/unix/Makefile
 	src/other/libtk/unix/tkConfig.sh
 	src/other/libtkGLX/Makefile
 	src/other/libutahrle/Makefile
