@@ -176,6 +176,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(a)[_vmove] = (b)[_vmove]; \
 	}
 
+/* Move a homogeneous 4-tuple */
+#define HMOVE(a,b)	{ \
+			(a)[X] = (b)[X];\
+			(a)[Y] = (b)[Y];\
+			(a)[Z] = (b)[Z];\
+			(a)[W] = (b)[W]; }
+
 /* Reverse the direction of b and store it in a */
 #define VREVERSE(a,b)	{ \
 			(a)[X] = -(b)[X]; \
@@ -276,6 +283,12 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(a)[Y] = (b)[Y] * (c);\
 			(a)[Z] = (b)[Z] * (c); }
 #endif /* SHORT_VECTORS */
+
+#define HSCALE(a,b,c)	{ \
+			(a)[X] = (b)[X] * (c);\
+			(a)[Y] = (b)[Y] * (c);\
+			(a)[Z] = (b)[Z] * (c);\
+			(a)[W] = (b)[W] * (c); }
 
 /* Scale vector of length `n' at `b' by scalar `c', store result at `a' */
 #define VSCALEN(a,b,c,n) \
@@ -415,6 +428,12 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	for(_vjoin1 = 0; _vjoin1 < (n); _vjoin1++) \
 		(a)[_vjoin1] = (b)[_vjoin1] + (c) * (d)[_vjoin1]; \
 	}
+
+#define HJOIN1(a,b,c,d)	{ \
+			(a)[X] = (b)[X] + (c) * (d)[X]; \
+			(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
+			(a)[Z] = (b)[Z] + (c) * (d)[Z]; \
+			(a)[W] = (b)[W] + (c) * (d)[W]; }
 
 /*
  *  Blend into vector `a'
