@@ -650,7 +650,6 @@ int	kind;
 			break;
 		case 'C':
 			{
-				char		buf[128];
 				int		r,g,b;
 				register char	*cp = bu_optarg;
 
@@ -870,8 +869,6 @@ struct solid		*existing_sp;
 {
 	register struct solid *sp;
 	register int	i;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 
 	if( !existing_sp )  {
 		if (pathp->fp_len > MAX_PATH) {
@@ -997,8 +994,6 @@ full_path_from_solid( pathp, sp )
 struct db_full_path	*pathp;
 register struct solid	*sp;
 {
-	register int	j;
-
 	pathp->fp_len = pathp->fp_maxlen = sp->s_last+1;
 	pathp->fp_names = (struct directory **)bu_malloc(
 		pathp->fp_maxlen * sizeof(struct directory *),
@@ -1027,7 +1022,6 @@ matp_t matp;
 	struct db_tree_state	ts;
 	struct db_full_path	null_path;
 	struct db_full_path	path;
-	int			ret;
 
 	RT_CHECK_DBI(dbip);
 
@@ -1037,7 +1031,7 @@ matp_t matp;
 	ts = mged_initial_tree_state;		/* struct copy */
 	ts.ts_dbip = dbip;
 
-	ret = db_follow_path( &ts, &null_path, &path, LOOKUP_NOISY, depth+1 );
+	(void)db_follow_path( &ts, &null_path, &path, LOOKUP_NOISY, depth+1 );
 	db_free_full_path( &null_path );
 	db_free_full_path( &path );
 
@@ -1252,8 +1246,6 @@ int			copy;
 	char		shortname[32];
 	char		namebuf[64];
 	char		*av[4];
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 
 	strncpy( shortname, name, 16-6 );
 	shortname[16-6] = '\0';
@@ -1301,8 +1293,6 @@ int		copy;
 {
 	register struct directory	*dp;
 	register struct solid		*sp;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 
 	if(dbip == DBI_NULL)
 	  return 0;
@@ -1944,8 +1934,6 @@ char	**argv;
 {
 	struct directory	*dp;
 	int		i;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 
 	CHECK_DBI_NULL;
 

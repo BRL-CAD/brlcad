@@ -231,10 +231,8 @@ struct bu_vls *overlay_vls;
 {
 	register int    i;
 	register int    x, y;			/* for menu computations */
-	static vect_t   work, work1;		/* work vector */
-	static vect_t   temp, temp1;
+	static vect_t   temp;
 	register int    yloc, xloc;
-	auto fastf_t	az, el, tw;
 	int		scroll_ybot;
 	struct bu_vls   vls;
 	typedef char    c_buf[80];
