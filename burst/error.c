@@ -48,39 +48,59 @@ char *str;
  */
 /* VARARGS */
 void
-rt_log( fmt, va_alist )
-char	*fmt;
+rt_log( va_alist )
 va_dcl
-	{	va_list		ap;
+	{	register char *format; /* picked up by va_arg() */
+		va_list	ap;
 	va_start( ap );
+	format  = va_arg( ap, char * );
 	if( tty && (errfile[0] == '\0' || ! strcmp( errfile, "/dev/tty" )) )
 		{
-		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM ) )
-			{
-			(void) ScMvCursor( 1, SCROLL_BTM );
-			(void) ScClrEOL();
-			(void) _doprnt( fmt, ap, stdout );
-			(void) ScClrScrlReg();
-			}
-		else
+		TcClrTabs( HmTtyFd );
 		if( ScDL != NULL )
 			{
 			(void) ScMvCursor( 1, SCROLL_TOP );
 			(void) ScDeleteLn();
 			(void) ScMvCursor( 1, SCROLL_BTM );
 			(void) ScClrEOL();
-			(void) _doprnt( fmt, ap, stdout );
+			(void) vprintf( format, ap );
+			}			
+		else
+		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM+1 ) )
+			{	char buf[LNBUFSZ];
+				char *p;
+			(void) ScMvCursor( 1, SCROLL_BTM+1 );
+			(void) ScClrEOL();
+			/* Work around for problem with vprintf(): it doesn't
+				cause the screen to scroll, don't know why. */
+			(void) vsprintf( buf, format, ap );
+			/* Newline will cause double scroll. */
+			p = buf+strlen(buf)-1;
+			if( *p == '\n' )
+				*p = '\0'; /* clobber newline */
+			(void) puts( buf );
+			/*(void) vprintf( format, ap );*/
+			(void) ScMvCursor( 1, SCROLL_BTM+1 );
+			(void) ScClrScrlReg();
 			}
 		else
 			{
-			(void) _doprnt( fmt, ap, stdout );
+			(void) fprintf( stderr,
+					"%s %s %s %s!\n",
+					"This terminal has no delete line",
+					"or scrolling region capability,",
+					"please dump it somewhere and get",
+					"a real terminal"
+					);
+			exit( 1 );
 			}
 		(void) fflush( stdout );
 		}
 	else
-		(void) _doprnt( fmt, ap, stderr );
+		{
+		(void) vfprintf( stderr, format, ap );
+		}
 	va_end( ap );
-	return;
 	}
 
 /*
@@ -90,10 +110,9 @@ va_dcl
  */
 /* VARARGS */
 void
-fb_log( fmt, va_alist )
-char	*fmt;
+fb_log( va_alist )
 va_dcl
 	{
-	(void) rt_log( fmt, va_alist );
+	(void) rt_log( va_alist );
 	return;
 	}

@@ -17,12 +17,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./vecmath.h"
 #include "./burst.h"
 #include "./extern.h"
-#define R_GRID	255
-#define G_GRID	255
-#define B_GRID	0
-#define R_BURST	255
-#define G_BURST	0
-#define B_BURST	0
 
 void
 plotInit()
@@ -84,19 +78,6 @@ struct region		*regp;
 	{
 	if( plotfp == NULL )
 		return;
-#if 0
-	if(	regp->reg_mater.ma_rgb[0] == 0
-	    &&	regp->reg_mater.ma_rgb[1] == 0
-	    &&	regp->reg_mater.ma_rgb[2] == 0
-		)
-		pl_color( plotfp, 255, 255, 255 );
-	else
-		pl_color(	plotfp,
-				(int) regp->reg_mater.ma_rgb[0],
-				(int) regp->reg_mater.ma_rgb[1],
-				(int) regp->reg_mater.ma_rgb[2]
-				);
-#endif
 	RES_ACQUIRE( &rt_g.res_syscall );
 	pl_3line(	plotfp,
 			(int) ihitp->hit_point[X],
@@ -107,22 +88,5 @@ struct region		*regp;
 			(int) ohitp->hit_point[Z]
 			);
 	RES_RELEASE( &rt_g.res_syscall );
-	return;
-	}
-
-void
-plotShieldComp( rayp, qp )
-register struct xray	*rayp;
-register Pt_Queue	*qp;
-	{	register struct hit	*ohitp;
-	if( qp == PT_Q_NULL )
-		return;
-	plotShieldComp( rayp, qp->q_next );
-
-	/* Fill in hit point and normal.				*/
-	ohitp = qp->q_part->pt_outhit;
-	VJOIN1( ohitp->hit_point, rayp->r_pt, ohitp->hit_dist, rayp->r_dir );
-	colorPartition( qp->q_part->pt_regionp, C_SHIELD );
-	plotPartition( qp->q_part->pt_inhit, ohitp, rayp, qp->q_part->pt_regionp );
 	return;
 	}

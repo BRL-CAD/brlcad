@@ -182,6 +182,7 @@ FILE *fp;
 		if( strcmp( cmdname, CMD_COMMENT ) == 0 )
 			{ /* special handling for comments */
 			cmdptr = cmdbuf;
+			cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */
 			(*cmdfunc)( (HmItem *) 0 );
 			}
 		else
@@ -198,7 +199,7 @@ FILE *fp;
 /*
 	int main( int argc, char *argv[] )
  */
-STATIC int
+int
 #if STD_C
 main( int argc, char *argv[] )
 #else
@@ -233,6 +234,10 @@ char *argv[];
 #if DEBUG_BURST
 	prntTrie( cmdtrie, 0 );
 #endif
+	assert( airids.i_next == NULL );
+	assert( armorids.i_next == NULL );
+	assert( critids.i_next == NULL );
+
 	if( ! isatty( 0 ) || ! tty )
 		readBatchInput( stdin );
 	if( tty )

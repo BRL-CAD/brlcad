@@ -34,7 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ascii.h"
 #include "./extern.h"
 
-#define DEBUG_UI	1
+#define DEBUG_UI	0
 
 static char promptbuf[LNBUFSZ];
 static char *bannerp = "BURST (%s)";
@@ -592,7 +592,7 @@ HmItem *itemp;
 		(void) strcpy( airfile, ip->buffer );
 	else
 		airfile[0] = NUL;
-	if( (airfp = fopen( airfile, "r" )) == (FILE  *) NULL )
+	if( (airfp = fopen( airfile, "r" )) == NULL )
 		{
 		(void) sprintf( scrbuf,
 				"Read access denied for \"%s\"",
@@ -606,6 +606,7 @@ HmItem *itemp;
 	logCmd( scrbuf );
 	notify( "Reading burst air idents", NOTIFY_APPEND );
 	readIdents( &airids, airfp );
+	(void) fclose( airfp );
 	notify( NULL, NOTIFY_DELETE );
 	return;
 	}
@@ -624,7 +625,7 @@ HmItem *itemp;
 		(void) strcpy( armorfile, ip->buffer );
 	else
 		armorfile[0] = NUL;
-	if( (armorfp = fopen( armorfile, "r" )) == (FILE  *) NULL )
+	if( (armorfp = fopen( armorfile, "r" )) == NULL )
 		{
 		(void) sprintf( scrbuf,
 				"Read access denied for \"%s\"",
@@ -638,6 +639,7 @@ HmItem *itemp;
 	logCmd( scrbuf );
 	notify( "Reading burst armor idents", NOTIFY_APPEND );
 	readIdents( &armorids, armorfp );
+	(void) fclose( armorfp );
 	notify( NULL, NOTIFY_DELETE );
 	return;
 	}
@@ -673,7 +675,7 @@ HmItem *itemp;
 		(void) strcpy( outfile, ip->buffer );
 	else
 		outfile[0] = NUL;
-	if( (outfp = fopen( outfile, "w" )) == (FILE  *) NULL )
+	if( (outfp = fopen( outfile, "w" )) == NULL )
 		{
 		(void) sprintf( scrbuf,
 				"Write access denied for \"%s\"",
@@ -721,7 +723,7 @@ HmItem *itemp;
 		(void) strcpy( colorfile, ip->buffer );
 	else
 		colorfile[0] = NUL;
-	if( (colorfp = fopen( colorfile, "r" )) == (FILE  *) NULL )
+	if( (colorfp = fopen( colorfile, "r" )) == NULL )
 		{
 		(void) sprintf( scrbuf,
 				"Read access denied for \"%s\"",
@@ -795,7 +797,7 @@ HmItem *itemp;
 		(void) strcpy( critfile, ip->buffer );
 	else
 		critfile[0] = NUL;
-	if( (critfp = fopen( critfile, "r" )) == (FILE  *) NULL )
+	if( (critfp = fopen( critfile, "r" )) == NULL )
 		{
 		(void) sprintf( scrbuf,
 				"Read access denied for \"%s\"",
@@ -809,6 +811,7 @@ HmItem *itemp;
 	logCmd( scrbuf );
 	notify( "Reading critical component idents", NOTIFY_APPEND );
 	readIdents( &critids, critfp );
+	(void) fclose( critfp );
 	notify( NULL, NOTIFY_DELETE );
 	return;
 	}
@@ -1059,7 +1062,7 @@ HmItem *itemp;
 		(void) strcpy( gridfile, ip->buffer );
 	else
 		histfile[0] = NUL;
-	if( (gridfp = fopen( gridfile, "w" )) == (FILE  *) NULL )
+	if( (gridfp = fopen( gridfile, "w" )) == NULL )
 		{
 		(void) sprintf( scrbuf,
 				"Write access denied for \"%s\"",
@@ -1132,7 +1135,7 @@ HmItem *itemp;
 		(void) strcpy( histfile, ip->buffer );
 	else
 		histfile[0] = NUL;
-	if( (histfp = fopen( histfile, "w" )) == (FILE  *) NULL )
+	if( (histfp = fopen( histfile, "w" )) == NULL )
 		{
 		(void) sprintf( scrbuf,
 				"Write access denied for \"%s\"",
@@ -1309,7 +1312,7 @@ HmItem *itemp;
 		(void) strcpy( plotfile, ip->buffer );
 	else
 		plotfile[0] = NUL;
-	if( (plotfp = fopen( plotfile, "w" )) == (FILE  *) NULL )
+	if( (plotfp = fopen( plotfile, "w" )) == NULL )
 		{
 		(void) sprintf( scrbuf,
 				"Write access denied for \"%s\"",
@@ -1567,9 +1570,9 @@ HmItem *itemp;
 
 #if STD_SIGNAL_DECLS
 /*ARGSUSED*/
-STATIC void
+void
 #else
-STATIC int
+int
 #endif
 intr_sig( sig )
 int sig;
@@ -1604,7 +1607,7 @@ void
 logCmd( cmd )
 char *cmd;
 	{
-	prntScr( "%s", cmd );
+	prntScr( "%s", cmd ); /* avoid possible problems with '%' in string */
 	if( fprintf( tmpfp, "%s\n", cmd ) < 0 )
 		{
 		locPerror( "fprintf" );

@@ -158,25 +158,33 @@ typedef char *pointer;			/* generic pointer */
 /* white space in input tokens */
 #define WHITESPACE	" \t"
 
-#define R_OUTAIR	100
+/* colors for UNIX plot files */
+#define R_GRID		255	/* grid - yellow */
+#define G_GRID		255
+#define B_GRID		0
+
+#define R_BURST		255	/* burst cone - red */
+#define G_BURST		0
+#define B_BURST		0
+
+#define R_OUTAIR	100	/* outside air - light blue */
 #define G_OUTAIR	100
 #define B_OUTAIR	255
-#define R_INAIR		100
+
+#define R_INAIR		100	/* inside air - light green */
 #define G_INAIR		255
 #define B_INAIR		100
-#define R_COMP		0
+
+#define R_COMP		0	/* component (default) - blue */
 #define G_COMP		0
 #define B_COMP		255
-#define R_CRIT		255
+
+#define R_CRIT		255	/* critical component (default) - purple */
 #define G_CRIT		0
 #define B_CRIT		255
-#define R_SHIELD	255
-#define G_SHIELD	255
-#define B_SHIELD	255
 
 #define C_MAIN		0
 #define C_CRIT		1
-#define C_SHIELD	2
 
 #define TWO_PI		6.28318530717958647692528676655900576839433879875022
 

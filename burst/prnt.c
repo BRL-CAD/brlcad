@@ -585,6 +585,7 @@ fastf_t cosobliquity;
 	a_thick.a_level++;     
 	a_thick.a_uptr = regp->reg_name;
 	a_thick.a_user = regp->reg_regionid;
+	a_thick.a_purpose = "normal thickness";
 	CopyVec( a_thick.a_ray.r_pt, ihitp->hit_point );
 	if( AproxEq( cosobliquity, 1.0, COS_TOL ) )
 		{ /* Trajectory was normal to surface, so no need
@@ -793,40 +794,46 @@ fastf_t	los;		/* LOS of space */
 #include <varargs.h>
 /* VARARGS */
 void
-prntScr( fmt, va_alist )
-char	*fmt;
+prntScr( va_alist )
 va_dcl
-	{	va_list		ap;
+	{	register char *format; /* picked up by va_arg() */
+		va_list	ap;
 	va_start( ap );
+	format  = va_arg( ap, char * );
 	if( tty )
 		{
 		TcClrTabs( HmTtyFd );
-		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM ) )
-			{
-			(void) ScMvCursor( 1, SCROLL_BTM );
-			(void) ScClrEOL();
-			(void) _doprnt( fmt, ap, stdout );
-			(void) ScClrScrlReg();
-			}
-		else
 		if( ScDL != NULL )
 			{
 			(void) ScMvCursor( 1, SCROLL_TOP );
 			(void) ScDeleteLn();
 			(void) ScMvCursor( 1, SCROLL_BTM );
 			(void) ScClrEOL();
-			(void) _doprnt( fmt, ap, stdout );
+			(void) vprintf( format, ap );
+			}
+		else
+		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM+1 ) )
+			{	char buf[LNBUFSZ];
+			(void) ScMvCursor( 1, SCROLL_BTM+1 );
+			(void) ScClrEOL();
+			/* Work around for problem with vprintf(): it doesn't
+				cause the screen to scroll, don't know why. */
+			(void) vsprintf( buf, format, ap );
+			(void) puts( buf );
+			/*(void) vprintf( format, ap );*/
+			(void) ScMvCursor( 1, SCROLL_BTM+1 );
+			(void) ScClrScrlReg();
 			}
 		else
 			{
-			(void) _doprnt( fmt, ap, stdout );
+			(void) vprintf( format, ap );
 			(void) fputs( "\n", stdout );
 			}
 		(void) fflush( stdout );
 		}
 	else
 		{
-		(void) _doprnt( fmt, ap, stderr );
+		(void) vfprintf( stderr, format, ap );
 		(void) fputs( "\n", stderr );
 		}
 	va_end( ap );

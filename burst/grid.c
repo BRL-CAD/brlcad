@@ -84,13 +84,13 @@ int type;
 	{	Colors	*colorp;
 	if( plotfile[0] == NUL )
 		return;
-	assert( plotfp != (FILE *) NULL );
+	assert( plotfp != NULL );
 	RES_ACQUIRE( &rt_g.res_syscall );
 	switch( type )
 		{
 	case C_CRIT :
 		if( (colorp = findColors( regp->reg_regionid, &colorids ))
-			== COLORS_NULL )
+			== NULL )
 			pl_color( plotfp, R_CRIT, G_CRIT, B_CRIT );
 		else
 			pl_color( plotfp,
@@ -99,12 +99,9 @@ int type;
 				  (int) colorp->c_rgb[2]
 				  );
 		break;
-	case C_SHIELD :
-		pl_color( plotfp, R_SHIELD, G_SHIELD, B_SHIELD );
-		break;
 	case C_MAIN :
 		if( (colorp = findColors( regp->reg_regionid, &colorids ))
-			== COLORS_NULL )
+			== NULL )
 			{
 			if( InsideAir(regp ) )
 				pl_color( plotfp,
@@ -315,10 +312,10 @@ struct region		*reg1, *reg2;
 	rt_log( "reg=%s osol=%s,\n",
 		reg2->reg_name, pp->pt_outseg->seg_stp->st_name
 		);
-	rt_log( "depth %gmm at (%g,%g,%g) x%d y%d lvl%d\n",
+	rt_log( "depth %.2fmm at (%g,%g,%g) x%d y%d lvl%d purpose=%s\n",
 		depth,
 		pt[X], pt[Y], pt[Z],
-		ap->a_x, ap->a_y, ap->a_level
+		ap->a_x, ap->a_y, ap->a_level, ap->a_purpose
 		);
 	noverlaps++;
 	return	1;
@@ -624,7 +621,7 @@ struct partition *pt_headp;
 			CopyVec( burstpt, bp->pt_outhit->hit_point );
 
 		/* Only generate burst rays if nspallrays is greater then
-			zero. */
+			zero. */
 		if( nspallrays < 1 )
 			return	true;
 
@@ -1017,7 +1014,7 @@ gridModel()
 	ag.a_overlap = reportoverlaps ? f_Overlap : f_HushOverlap;
 	ag.a_rt_i = rtip;
 	if( ! TSTBIT(firemode,FM_BURST) )
-		{ /* set up for shot lines */
+		{ /* set up for shotlines */
 		ag.a_hit = f_ShotHit;
 		ag.a_miss = f_ShotMiss;
 		}
@@ -1076,7 +1073,7 @@ gridShot()
 	assert( a.a_rt_i == ag.a_rt_i );
 	assert( a.a_onehit == ag.a_onehit );
 	a.a_user = 0;
-	a.a_purpose = "shot line";
+	a.a_purpose = "shotline";
 	prntGridOffsets( gridxorg, gridyorg );
 	noverlaps = 0;
 	for( ; ! userinterrupt; view_pix( &a ) )

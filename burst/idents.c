@@ -8,6 +8,15 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+#ifndef DEBUG
+#define NDEBUG
+#define STATIC static
+#else
+#define STATIC
+#endif
+
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include "./burst.h"
@@ -41,7 +50,7 @@ register Ids	*idp;
 
 Colors *
 findColors( ident, colp )
-int		ident;
+int ident;
 register Colors	*colp;
 	{
 	for( colp = colp->c_next; colp != COLORS_NULL; colp = colp->c_next )
@@ -54,24 +63,40 @@ register Colors	*colp;
 	return	COLORS_NULL;
 	}
 
+/*
+	void freeIdents( register Ids *idp )
+
+	Free up linked list, except for the head node.
+ */
+STATIC void
+freeIdents( idp )
+register Ids *idp;
+	{
+	if( idp->i_next == NULL )
+		return;	/* finished */
+	freeIdents( idp->i_next );
+	free( (char *) idp->i_next );
+	}
+
 bool
 readIdents( idlist, fp )
-Ids	*idlist;
-FILE	*fp;
-	{	char		input_buf[BUFSIZ];
-		int		lower, upper;
-		register Ids	*idp;
+Ids *idlist;
+FILE *fp;
+	{	char input_buf[BUFSIZ];
+		int lower, upper;
+		register Ids *idp;
+	freeIdents( idlist ); /* free old list if it exists */
 	for(	idp = idlist;
 		fgets( input_buf, BUFSIZ, fp ) != NULL;
 		)
-		{	char	*token;
+		{	char *token;
 		token = strtok( input_buf, ",-:; \t" );
 		if( token == NULL || sscanf( token, "%d", &lower ) < 1 )
 			continue;
 		token = strtok( NULL, " \t" );
 		if( token == NULL || sscanf( token, "%d", &upper ) < 1 )
 			upper = lower;
-		if( (idp->i_next = (Ids *) malloc( sizeof(Ids) )) == IDS_NULL )
+		if( (idp->i_next = (Ids *) malloc( sizeof(Ids) )) == NULL )
 			{
 			Malloc_Bomb( sizeof(Ids) );
 			return	false;
@@ -88,14 +113,14 @@ bool
 readColors( colorlist, fp )
 Colors	*colorlist;
 FILE	*fp;
-	{	char		input_buf[BUFSIZ];
-		int		lower, upper;
-		int		rgb[3];
+	{	char input_buf[BUFSIZ];
+		int lower, upper;
+		int rgb[3];
 		register Colors	*colp;
 	for(	colp = colorlist;
 		fgets( input_buf, BUFSIZ, fp ) != NULL;
 		)
-		{	int	items;
+		{	int items;
 		if( (items =
 			sscanf(	input_buf,
 				"%d %d %d %d %d\n",
@@ -113,8 +138,7 @@ FILE	*fp;
 				}
 			}
 		if( (colp->c_next = (Colors *) malloc( sizeof(Colors) ))
-			== COLORS_NULL
-			)
+			== NULL )
 			{
 			Malloc_Bomb( sizeof(Colors) );
 			return	false;

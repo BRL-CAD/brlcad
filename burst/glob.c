@@ -27,9 +27,9 @@ FILE *shotfp = NULL;	/* input stream for shot positions */
 FILE *shotlnfp = NULL;	/* shotline file output stream */
 FILE *tmpfp = NULL;	/* temporary file output stream for logging input */
 HmMenu	*mainhmenu;
-Ids	airids;		/* burst air idents */
-Ids	armorids;	/* burst armor idents */
-Ids	critids;	/* critical component idents */
+Ids airids;		/* burst air idents */
+Ids armorids;		/* burst armor idents */
+Ids critids;		/* critical component idents */
 RGBpixel *pixgrid;
 RGBpixel pixaxis  = { 255,   0,   0 }; /* grid axis */
 RGBpixel pixbhit  = { 200, 255, 200 }; /* burst ray hit non-critical comps */
@@ -39,7 +39,7 @@ RGBpixel pixcrit  = { 255, 200, 200 }; /* burst ray hit critical component */
 RGBpixel pixghit  = { 255,   0, 255 }; /* ground burst */
 RGBpixel pixmiss  = { 200, 200, 200 }; /* shot missed target */
 RGBpixel pixtarg  = { 255, 255, 255 }; /* shot hit target */
-Trie	*cmdtrie = TRIE_NULL;
+Trie *cmdtrie = NULL;
 
 bool batchmode = false;		/* are we processing batch input now */
 bool cantwarhead = false;	/* pitch or yaw will be applied to warhead */
