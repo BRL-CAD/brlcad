@@ -13,6 +13,7 @@
  *	mat_print( &title, &m )		Print matrix (with title) on stdout.
  *	mat_trn( &o, &i )		Transpose matrix i into matrix o
  *	mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
+ *	ae_vec( &az, &el, v )		Find az/elev from dir vector
  *	mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
  *	eigen2x2()			Eigen values and vectors
  *	mat_lookat			Make rot mat:  xform from D to -Z
@@ -422,6 +423,22 @@ double elev;
 
 	m[12] = m[13] = m[14] = 0;
 	m[15] = 1.0;
+}
+
+/*
+ *			A E _ V E C
+ *
+ *  Find the azimuth and elevation angles that correspond to the
+ *  direction (not including twist) given by a direction vector.
+ */
+void
+ae_vec( azp, elp, v )
+fastf_t	*azp;
+fastf_t	*elp;
+vect_t	v;
+{
+	*azp = mat_atan2( v[Y], v[X] );
+	*elp = mat_atan2( v[Z], hypot( v[X], v[Y] ) );
 }
 
 /*
