@@ -718,6 +718,8 @@ readinfont()
 	sprintf(cbuf, "%s.%d", fontname[fnum], size);
 
 	if( (vfp = vfont_get( cbuf )) == VFONT_NULL )  {
+		/* Ignore font change */
+		fprintf(stderr,"cat-fb:  Unable to acquire font '%s'\n", cbuf);
 		fontwanted = 0;
 		return (-1);
 	}
