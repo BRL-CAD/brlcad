@@ -69,7 +69,6 @@ void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 void mged_global_variable_setup();
 
-extern void set_scroll();			/* in set.c */
 extern void sync();
 extern void init_qray();			/* in qray.c */
 extern int gui_setup();				/* in attach.c */
@@ -87,78 +86,6 @@ struct bu_vls tcl_output_hook;
 Tcl_Interp *interp = NULL;
 Tk_Window tkwin;
 
-/*
- *			C M D _ L E F T _ M O U S E
- *
- *  Default old-MGED binding for left mouse button.
- */
-int
-cmd_left_mouse(clientData, interp, argc, argv)
-	ClientData	clientData;
-	Tcl_Interp	*interp;
-	int		argc;
-	char		*argv[];
-{
-	if(argc < 4 || 4 < argc){
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help L");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	if( atoi(argv[1]) != 0 ){
-		int status;
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "zoom 0.5\n");
-		status = Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return status;
-	}
-
-	return TCL_OK;
-}
-
-/*
- *			C M D _ R I G H T _ M O U S E
- *
- *  Default old-MGED binding for right mouse button.
- */
-int
-cmd_right_mouse(clientData, interp, argc, argv)
-	ClientData	clientData;
-	Tcl_Interp	*interp;
-	int		argc;
-	char		*argv[];
-{
-	if(argc < 4 || 4 < argc){
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help R");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	if( atoi(argv[1]) != 0 ){
-		int status;
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "zoom 2.0\n");
-		status = Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return status;
-	}
-
-	return TCL_OK;
-}
-
 struct cmdtab {
 	char *ct_name;
 	int (*ct_func)();
@@ -168,9 +95,7 @@ static struct cmdtab cmdtab[] = {
 	"%", f_comm,
 	"3ptarb", f_3ptarb,
 	"adc", f_adc,
-	"add_view", f_add_view,
 	"ae", f_aetview,
-	"aim", f_aim,
 	"aip", f_aip,
 	"analyze", f_analyze,
 	"arb", f_arbdef,
@@ -194,8 +119,6 @@ static struct cmdtab cmdtab[] = {
 	"copymat", f_copymat,
 	"cp", f_copy,
 	"cpi", f_copy_inv,
-	"cs_def", f_cs_def,
-	"cs_set", f_cs_set,
 	"d", f_erase,
 	"dall", f_erase_all,
 	"db_glob", cmd_mged_glob,
@@ -207,7 +130,6 @@ static struct cmdtab cmdtab[] = {
 	"debugnmg", f_debugnmg,
 	"decompose", f_decompose,
 	"delay", f_delay,
-	"delete_view", f_delete_view,
 	"dm", f_dm,
 	"draw", f_edit,
 	"dup", f_dup,
@@ -216,10 +138,10 @@ static struct cmdtab cmdtab[] = {
 	"eac", f_eac,
 	"echo", cmd_echo,
 	"edcodes", f_edcodes,
-	"edmater", f_edmater,
 	"edcolor", f_edcolor,
 	"edcomb", f_edcomb,
 	"edgedir", f_edgedir,
+	"edmater", f_edmater,
 	"erase", f_erase,
 	"erase_all", f_erase_all,
 	"ev", f_ev,
@@ -238,9 +160,6 @@ static struct cmdtab cmdtab[] = {
 	"get_dm_list", f_get_dm_list,
 	"get_edit_solid", f_get_edit_solid,
 	"get_more_default", cmd_get_more_default,
-	"get_rect", f_get_rect, 
-	"get_view", f_get_view,
-	"goto_view", f_goto_view,
 	"grid2model_lu", f_grid2model_lu,
 	"grid2view_lu", f_grid2view_lu,
 	"output_hook", cmd_output_hook,
@@ -267,7 +186,6 @@ static struct cmdtab cmdtab[] = {
 	"knob", f_knob,
 	"l", cmd_list,
 	"l_muves", f_l_muves,
-	"L", cmd_left_mouse,
 	"labelvert", f_labelvert,
 	"listeval", f_pathsum,
 	"loadtk", cmd_tk,
@@ -290,7 +208,6 @@ static struct cmdtab cmdtab[] = {
 	"model2view_lu", f_model2view_lu,
 	"mv", f_name,
 	"mvall", f_mvall,
-	"next_view", f_next_view,
 	"nirt", f_nirt,
 	"nmg_collapse", f_edge_collapse,
 	"nmg_simplify", f_nmg_simplify,
@@ -310,7 +227,6 @@ static struct cmdtab cmdtab[] = {
 	"pov", f_pov,
 	"prcolor", f_prcolor,
 	"prefix", f_prefix,
-	"prev_view", f_prev_view,
 	"preview", f_preview,
 	"press", f_press,
 	"ps", f_ps,
@@ -325,7 +241,6 @@ static struct cmdtab cmdtab[] = {
 	"qorot", f_qorot,
 	"qvrot", f_qvrot,
 	"r", f_region,
-	"R", cmd_right_mouse,
 	"rcodes", f_rcodes,
 	"read_muves", f_read_muves,
 	"red", f_red,
@@ -343,6 +258,7 @@ static struct cmdtab cmdtab[] = {
 	"rot", f_rot,
 	"rotobj", f_rot_obj,
 	"rrt", f_rrt,
+	"rset", f_rset,
 	"rt", f_rt,
 	"rtcheck", f_rtcheck,
 #if 0
@@ -353,16 +269,12 @@ static struct cmdtab cmdtab[] = {
 	"sca", f_sca,
 	"showmats", f_showmats,
 	"sed", f_sed,
-	"set_rect", f_set_rect,
 	"set_more_default", cmd_set_more_default,
 	"setview", f_setview,
-	"shells", f_shells,
 	"shader", f_shader,
-	"share_menu", f_share_menu,
-	"share_vars", f_share_vars,
-	"share_view", f_share_view,
+	"share", f_share,
+	"shells", f_shells,
 	"size", f_size,
-	"sliders", cmd_sliders,
 	"solids", f_tables,
 	"solids_on_ray", cmd_solids_on_ray,
 	"status", f_status,
@@ -373,8 +285,8 @@ static struct cmdtab cmdtab[] = {
 	"sync", f_sync,
 	"t", dir_print,
 	"ted", f_tedit,
+	"tie", f_tie,
 	"title", f_title,
-	"toggle_view", f_toggle_view,
 	"tol", f_tol,
 	"tops", f_tops,
 	"tra", f_tra,
@@ -382,22 +294,18 @@ static struct cmdtab cmdtab[] = {
 	"translate", f_tr_obj,
 	"tree", f_tree,
 	"t_muves", f_t_muves,
-	"unaim", f_unaim,
 	"units", f_units,
-	"unshare_menu", f_unshare_menu,
-	"unshare_vars", f_unshare_vars,
-	"unshare_view", f_unshare_view,
 	"mged_update", f_update,
 	"vars", f_set,
 	"vdraw", cmd_vdraw,
 	"view", f_view,
+	"view_ring", f_view_ring,
 	"viewget", cmd_viewget,
 	"viewset", cmd_viewset,
 	"view2grid_lu", f_view2grid_lu,
 	"view2model", f_view2model,
 	"view2model_vec", f_view2model_vec,
 	"view2model_lu", f_view2model_lu,
-	"viewsize", f_size,
 	"vnirt", f_vnirt,
 	"vquery_ray", f_vnirt,
 	"vrmgr", f_vrmgr,
@@ -761,143 +669,6 @@ mged_setup()
 	mged_variable_setup(interp);
 #endif
 
-#if 0
-	/*XXX
-	 * The variables below are no longer necessary. They were
-	 * once used by Tcl/Tk sliders.
-	 */
-	bu_vls_init(&edit_rate_model_tran_vls[X]);
-	bu_vls_init(&edit_rate_model_tran_vls[Y]);
-	bu_vls_init(&edit_rate_model_tran_vls[Z]);
-	bu_vls_init(&edit_rate_view_tran_vls[X]);
-	bu_vls_init(&edit_rate_view_tran_vls[Y]);
-	bu_vls_init(&edit_rate_view_tran_vls[Z]);
-	bu_vls_init(&edit_rate_model_rotate_vls[X]);
-	bu_vls_init(&edit_rate_model_rotate_vls[Y]);
-	bu_vls_init(&edit_rate_model_rotate_vls[Z]);
-	bu_vls_init(&edit_rate_object_rotate_vls[X]);
-	bu_vls_init(&edit_rate_object_rotate_vls[Y]);
-	bu_vls_init(&edit_rate_object_rotate_vls[Z]);
-	bu_vls_init(&edit_rate_view_rotate_vls[X]);
-	bu_vls_init(&edit_rate_view_rotate_vls[Y]);
-	bu_vls_init(&edit_rate_view_rotate_vls[Z]);
-	bu_vls_init(&edit_rate_scale_vls);
-	bu_vls_init(&edit_absolute_model_tran_vls[X]);
-	bu_vls_init(&edit_absolute_model_tran_vls[Y]);
-	bu_vls_init(&edit_absolute_model_tran_vls[Z]);
-	bu_vls_init(&edit_absolute_view_tran_vls[X]);
-	bu_vls_init(&edit_absolute_view_tran_vls[Y]);
-	bu_vls_init(&edit_absolute_view_tran_vls[Z]);
-	bu_vls_init(&edit_absolute_model_rotate_vls[X]);
-	bu_vls_init(&edit_absolute_model_rotate_vls[Y]);
-	bu_vls_init(&edit_absolute_model_rotate_vls[Z]);
-	bu_vls_init(&edit_absolute_object_rotate_vls[X]);
-	bu_vls_init(&edit_absolute_object_rotate_vls[Y]);
-	bu_vls_init(&edit_absolute_object_rotate_vls[Z]);
-	bu_vls_init(&edit_absolute_view_rotate_vls[X]);
-	bu_vls_init(&edit_absolute_view_rotate_vls[Y]);
-	bu_vls_init(&edit_absolute_view_rotate_vls[Z]);
-	bu_vls_init(&edit_absolute_scale_vls);
-
-	bu_vls_strcpy(&edit_rate_model_tran_vls[X], "edit_rate_model_tran(X)");
-	bu_vls_strcpy(&edit_rate_model_tran_vls[Y], "edit_rate_model_tran(Y)");
-	bu_vls_strcpy(&edit_rate_model_tran_vls[Z], "edit_rate_model_tran(Z)");
-	bu_vls_strcpy(&edit_rate_view_tran_vls[X], "edit_rate_view_tran(X)");
-	bu_vls_strcpy(&edit_rate_view_tran_vls[Y], "edit_rate_view_tran(Y)");
-	bu_vls_strcpy(&edit_rate_view_tran_vls[Z], "edit_rate_view_tran(Z)");
-	bu_vls_strcpy(&edit_rate_model_rotate_vls[X], "edit_rate_model_rotate(X)");
-	bu_vls_strcpy(&edit_rate_model_rotate_vls[Y], "edit_rate_model_rotate(Y)");
-	bu_vls_strcpy(&edit_rate_model_rotate_vls[Z], "edit_rate_model_rotate(Z)");
-	bu_vls_strcpy(&edit_rate_object_rotate_vls[X], "edit_rate_object_rotate(X)");
-	bu_vls_strcpy(&edit_rate_object_rotate_vls[Y], "edit_rate_object_rotate(Y)");
-	bu_vls_strcpy(&edit_rate_object_rotate_vls[Z], "edit_rate_object_rotate(Z)");
-	bu_vls_strcpy(&edit_rate_view_rotate_vls[X], "edit_rate_view_rotate(X)");
-	bu_vls_strcpy(&edit_rate_view_rotate_vls[Y], "edit_rate_view_rotate(Y)");
-	bu_vls_strcpy(&edit_rate_view_rotate_vls[Z], "edit_rate_view_rotate(Z)");
-	bu_vls_strcpy(&edit_rate_scale_vls, "edit_rate_scale");
-	bu_vls_strcpy(&edit_absolute_model_tran_vls[X], "edit_abs_model_tran(X)");
-	bu_vls_strcpy(&edit_absolute_model_tran_vls[Y], "edit_abs_model_tran(Y)");
-	bu_vls_strcpy(&edit_absolute_model_tran_vls[Z], "edit_abs_model_tran(Z)");
-	bu_vls_strcpy(&edit_absolute_view_tran_vls[X], "edit_abs_view_tran(X)");
-	bu_vls_strcpy(&edit_absolute_view_tran_vls[Y], "edit_abs_view_tran(Y)");
-	bu_vls_strcpy(&edit_absolute_view_tran_vls[Z], "edit_abs_view_tran(Z)");
-	bu_vls_strcpy(&edit_absolute_model_rotate_vls[X], "edit_abs_model_rotate(X)");
-	bu_vls_strcpy(&edit_absolute_model_rotate_vls[Y], "edit_abs_model_rotate(Y)");
-	bu_vls_strcpy(&edit_absolute_model_rotate_vls[Z], "edit_abs_model_rotate(Z)");
-	bu_vls_strcpy(&edit_absolute_object_rotate_vls[X], "edit_abs_object_rotate(X)");
-	bu_vls_strcpy(&edit_absolute_object_rotate_vls[Y], "edit_abs_object_rotate(Y)");
-	bu_vls_strcpy(&edit_absolute_object_rotate_vls[Z], "edit_abs_object_rotate(Z)");
-	bu_vls_strcpy(&edit_absolute_view_rotate_vls[X], "edit_abs_view_rotate(X)");
-	bu_vls_strcpy(&edit_absolute_view_rotate_vls[Y], "edit_abs_view_rotate(Y)");
-	bu_vls_strcpy(&edit_absolute_view_rotate_vls[Z], "edit_abs_view_rotate(Z)");
-	bu_vls_strcpy(&edit_absolute_scale_vls, "edit_abs_scale");
-
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[X]),
-		    (char *)&edit_rate_model_tran[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Y]),
-		    (char *)&edit_rate_model_tran[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Z]),
-		    (char *)&edit_rate_model_tran[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[X]),
-		    (char *)&edit_rate_view_tran[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[Y]),
-		    (char *)&edit_rate_view_tran[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[Z]),
-		    (char *)&edit_rate_view_tran[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[X]),
-		    (char *)&edit_rate_model_rotate[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Y]),
-		    (char *)&edit_rate_model_rotate[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Z]),
-		    (char *)&edit_rate_model_rotate[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[X]),
-		    (char *)&edit_rate_object_rotate[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[Y]),
-		    (char *)&edit_rate_object_rotate[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[Z]),
-		    (char *)&edit_rate_object_rotate[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[X]),
-		    (char *)&edit_rate_view_rotate[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[Y]),
-		    (char *)&edit_rate_view_rotate[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[Z]),
-		    (char *)&edit_rate_view_rotate[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_scale_vls),
-		    (char *)&edit_rate_scale, TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[X]),
-		    (char *)&edit_absolute_model_tran[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[Y]),
-		    (char *)&edit_absolute_model_tran[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[Z]),
-		    (char *)&edit_absolute_model_tran[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_tran_vls[X]),
-		    (char *)&edit_absolute_view_tran[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_tran_vls[Y]),
-		    (char *)&edit_absolute_view_tran[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_tran_vls[Z]),
-		    (char *)&edit_absolute_view_tran[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_rotate_vls[X]),
-		    (char *)&edit_absolute_model_rotate[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_rotate_vls[Y]),
-		    (char *)&edit_absolute_model_rotate[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_rotate_vls[Z]),
-		    (char *)&edit_absolute_model_rotate[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_object_rotate_vls[X]),
-		    (char *)&edit_absolute_object_rotate[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_object_rotate_vls[Y]),
-		    (char *)&edit_absolute_object_rotate[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_object_rotate_vls[Z]),
-		    (char *)&edit_absolute_object_rotate[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_rotate_vls[X]),
-		    (char *)&edit_absolute_view_rotate[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_rotate_vls[Y]),
-		    (char *)&edit_absolute_view_rotate[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_rotate_vls[Z]),
-		    (char *)&edit_absolute_view_rotate[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_scale_vls),
-		    (char *)&edit_absolute_scale, TCL_LINK_DOUBLE);
-#endif
-
 	bu_vls_init(&str);
 	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s/mged %s]",
 		      filename, filename);
@@ -984,7 +755,7 @@ cmd_init(clientData, interp, argc, argv)
 
 	/* Search to see if there exists a command window with this name */
 	for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
-		if(!strcmp(argv[1], bu_vls_addr(&clp->name))){
+		if(!strcmp(argv[1], bu_vls_addr(&clp->cl_name))){
 			name_not_used = 0;
 			break;
 		}
@@ -993,16 +764,16 @@ cmd_init(clientData, interp, argc, argv)
 		clp = (struct cmd_list *)bu_malloc(sizeof(struct cmd_list), "cmd_list");
 		bzero((void *)clp, sizeof(struct cmd_list));
 		BU_LIST_APPEND(&head_cmd_list.l, &clp->l);
-		clp->cur_hist = head_cmd_list.cur_hist;
-		bu_vls_init(&clp->more_default);
-		bu_vls_init(&clp->name);
-		bu_vls_strcpy(&clp->name, argv[1]);
+		clp->cl_cur_hist = head_cmd_list.cl_cur_hist;
+		bu_vls_init(&clp->cl_more_default);
+		bu_vls_init(&clp->cl_name);
+		bu_vls_strcpy(&clp->cl_name, argv[1]);
 	}else{
-		clp->cur_hist = head_cmd_list.cur_hist;
+		clp->cl_cur_hist = head_cmd_list.cl_cur_hist;
 
-		if(clp->aim != NULL){
-			clp->aim->aim = CMD_LIST_NULL;
-			clp->aim = DM_LIST_NULL;
+		if(clp->cl_tie != NULL){
+			clp->cl_tie->dml_tie = CMD_LIST_NULL;
+			clp->cl_tie = DM_LIST_NULL;
 		}
 	}
 
@@ -1027,7 +798,7 @@ cmd_close(clientData, interp, argc, argv)
 	/* First, search to see if there exists a command window with the name
 	   in argv[1] */
 	for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
-		if(!strcmp(argv[1], bu_vls_addr(&clp->name)))
+		if(!strcmp(argv[1], bu_vls_addr(&clp->cl_name)))
 			break;
 
 	if(clp == &head_cmd_list){
@@ -1042,10 +813,10 @@ cmd_close(clientData, interp, argc, argv)
 		curr_cmd_list = &head_cmd_list;
 
 	BU_LIST_DEQUEUE( &clp->l );
-	if(clp->aim != NULL)
-		clp->aim->aim = CMD_LIST_NULL;
-	bu_vls_free(&clp->more_default);
-	bu_vls_free(&clp->name);
+	if(clp->cl_tie != NULL)
+		clp->cl_tie->dml_tie = CMD_LIST_NULL;
+	bu_vls_free(&clp->cl_more_default);
+	bu_vls_free(&clp->cl_name);
 	bu_free((genptr_t)clp, "cmd_close: clp");
 
 	return TCL_OK;
@@ -1062,30 +833,30 @@ cmd_get(clientData, interp, argc, argv)
 	struct dm_list *p;
 	struct bu_vls vls;
 
-	if(!curr_cmd_list->aim){
+	if(!curr_cmd_list->cl_tie){
 		Tcl_AppendElement(interp, bu_vls_addr(&pathName));
-		Tcl_AppendElement(interp, bu_vls_addr(curr_dm_list->s_info->opp));
-		if(curr_dm_list->aim)
-			Tcl_AppendElement(interp, bu_vls_addr(&curr_dm_list->aim->name));
+		Tcl_AppendElement(interp, bu_vls_addr(&pathName));
+		if(curr_dm_list->dml_tie)
+			Tcl_AppendElement(interp, bu_vls_addr(&curr_dm_list->dml_tie->cl_name));
 		else
-			Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->name));
+			Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_name));
 
 		return TCL_OK;
 	}
 
-	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->aim->_dmp->dm_pathName));
-	Tcl_AppendElement(interp, bu_vls_addr(curr_cmd_list->aim->s_info->opp));
-	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->name));
+	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_tie->dml_dmp->dm_pathName));
+	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_tie->dml_dmp->dm_pathName));
+	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_name));
 	bu_vls_init(&vls);
 
 	/* return all ids associated with the current command window */
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 		/* The display manager tied to the current command window shares
 		   information with display manager p */
-		if(curr_cmd_list->aim->s_info == p->s_info)
+		if(curr_cmd_list->cl_tie->dml_view_state == p->dml_view_state)
 			/* This display manager is tied to a command window */
-			if(p->aim)
-				bu_vls_printf(&vls, "{%S} ", &p->aim->name);
+			if(p->dml_tie)
+				bu_vls_printf(&vls, "{%S} ", &p->dml_tie->cl_name);
 	}
 
 	Tcl_AppendElement(interp, bu_vls_addr(&vls));
@@ -1108,16 +879,16 @@ cmd_set(clientData, interp, argc, argv)
 	}
 
 	for( BU_LIST_FOR(curr_cmd_list, cmd_list, &head_cmd_list.l) ){
-		if(strcmp(bu_vls_addr(&curr_cmd_list->name), argv[1]))
+		if(strcmp(bu_vls_addr(&curr_cmd_list->cl_name), argv[1]))
 			continue;
 
 		break;
 	}
 
-	if(curr_cmd_list->aim)
-		curr_dm_list = curr_cmd_list->aim;
+	if(curr_cmd_list->cl_tie)
+		curr_dm_list = curr_cmd_list->cl_tie;
 
-	bu_vls_trunc(&curr_cmd_list->more_default, 0);
+	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
 	return TCL_OK;
 }
 
@@ -1128,14 +899,12 @@ cmd_get_more_default(clientData, interp, argc, argv)
 	int argc;
 	char **argv;
 {
-	struct cmd_list *p;
-
 	if(argc != 1){
 		Tcl_AppendResult(interp, "Usage: get_more_default", (char *)NULL);
 		return TCL_ERROR;
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&curr_cmd_list->more_default), (char *)NULL);
+	Tcl_AppendResult(interp, bu_vls_addr(&curr_cmd_list->cl_more_default), (char *)NULL);
 	return TCL_OK;
 }
 
@@ -1146,14 +915,12 @@ cmd_set_more_default(clientData, interp, argc, argv)
 	int argc;
 	char **argv;
 {
-	struct cmd_list *p;
-
 	if(argc != 2){
 		Tcl_AppendResult(interp, "Usage: set_more_default more_default", (char *)NULL);
 		return TCL_ERROR;
 	}
 
-	bu_vls_strcpy(&curr_cmd_list->more_default, argv[1]);
+	bu_vls_strcpy(&curr_cmd_list->cl_more_default, argv[1]);
 	return TCL_OK;
 }
 
@@ -1905,24 +1672,42 @@ f_savedit(argc, argv)
 }
 #endif
 
+/*
+ * SYNOPSIS
+ *	tie [cw [dm]]
+ *	tie -u cw
+ *
+ * DESCRIPTION
+ *	This command ties/associates a command window (cw) to a display manager window (dm).
+ *	When a command window is tied to a display manager window, all commands issued from
+ *	this window will be directed at a particular display manager. If a command window
+ *	is not tied to a display manager window, the commands issued will be directed at
+ *	the current display manager window.
+ *
+ * EXAMPLES
+ *	tie		--->	returns a list of the command_window/display_manager associations
+ *	tie cw1		--->	returns the display_manager, if it exists, associated with cw1
+ *	tie cw1 dm1	--->	associated cw1 with dm1
+ *	tie -u cw1	--->	removes the association, if it exists, cw1 has with a display manager
+ */
 int
-f_aim(clientData, interp, argc, argv)
+f_tie(clientData, interp, argc, argv)
 	ClientData clientData;
 	Tcl_Interp *interp;
 	int argc;
 	char *argv[];
 {
+	register int uflag = 0;		/* untie flag */
 	struct cmd_list *clp;
 	struct cmd_list *save_cclp;
 	struct dm_list *dlp;
-	struct dm_list *save_cdlp;
 	struct bu_vls vls2;
 
 	if(argc < 1 || 3 < argc){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help aim");
+		bu_vls_printf(&vls, "help tie");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1930,44 +1715,69 @@ f_aim(clientData, interp, argc, argv)
 
 	if(argc == 1){
 		for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
-			if(clp->aim)
-				Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
-						 bu_vls_addr(&clp->aim->_dmp->dm_pathName),
+			if(clp->cl_tie)
+				Tcl_AppendResult(interp, bu_vls_addr(&clp->cl_name), " ---> ",
+						 bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName),
 						 "\n", (char *)NULL);
 			else
-				Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
+				Tcl_AppendResult(interp, bu_vls_addr(&clp->cl_name), " ---> ",
 						 "\n", (char *)NULL);
 
-		if(clp->aim)
-			Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
-					 bu_vls_addr(&clp->aim->_dmp->dm_pathName),
+		if(clp->cl_tie)
+			Tcl_AppendResult(interp, bu_vls_addr(&clp->cl_name), " ---> ",
+					 bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName),
 					 "\n", (char *)NULL);
 		else
-			Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
+			Tcl_AppendResult(interp, bu_vls_addr(&clp->cl_name), " ---> ",
 					 "\n", (char *)NULL);
 
 		return TCL_OK;
 	}
 
+	if(argv[1][0] == '-' && argv[1][1] == 'u'){
+		uflag = 1;
+		--argc;
+		++argv;
+	}
+
+	if(argc < 2){
+		struct bu_vls vls;
+
+                bu_vls_init(&vls);
+                bu_vls_printf(&vls, "help tie");
+                Tcl_Eval(interp, bu_vls_addr(&vls));
+                bu_vls_free(&vls);
+                return TCL_ERROR;
+	}
+
 	for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
-		if(!strcmp(bu_vls_addr(&clp->name), argv[1]))
+		if(!strcmp(bu_vls_addr(&clp->cl_name), argv[1]))
 			break;
 
 	if(clp == &head_cmd_list &&
-	   (strcmp(bu_vls_addr(&head_cmd_list.name), argv[1]))){
-		Tcl_AppendResult(interp, "f_aim: unrecognized command_window - ", argv[1],
+	   (strcmp(bu_vls_addr(&head_cmd_list.cl_name), argv[1]))){
+		Tcl_AppendResult(interp, "f_tie: unrecognized command_window - ", argv[1],
 				 "\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 
-	/* print out the display manager being aimed at */
+	if(uflag){
+		if(clp->cl_tie)
+			clp->cl_tie->dml_tie = (struct cmd_list *)NULL;
+
+		clp->cl_tie = (struct dm_list *)NULL;
+
+		return TCL_OK;
+	}
+
+	/* print out the display manager that we're tied to */
 	if(argc == 2){
-		if(clp->aim)
-			Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
-					 bu_vls_addr(&clp->aim->_dmp->dm_pathName),
+		if(clp->cl_tie)
+			Tcl_AppendResult(interp, bu_vls_addr(&clp->cl_name), " ---> ",
+					 bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName),
 					 "\n", (char *)NULL);
 		else
-			Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ", "\n", (char *)NULL);
+			Tcl_AppendResult(interp, bu_vls_addr(&clp->cl_name), " ---> ", "\n", (char *)NULL);
 
 		return TCL_OK;
 	}
@@ -1980,11 +1790,11 @@ f_aim(clientData, interp, argc, argv)
 		bu_vls_strcpy(&vls2, argv[2]);
 
 	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-		if(!strcmp(bu_vls_addr(&vls2), bu_vls_addr(&dlp->_dmp->dm_pathName)))
+		if(!strcmp(bu_vls_addr(&vls2), bu_vls_addr(&dlp->dml_dmp->dm_pathName)))
 			break;
 
 	if(dlp == &head_dm_list){
-		Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ",
+		Tcl_AppendResult(interp, "f_tie: unrecognized pathName - ",
 				 bu_vls_addr(&vls2), "\n", (char *)NULL);
 		bu_vls_free(&vls2);
 		return TCL_ERROR;
@@ -1992,71 +1802,21 @@ f_aim(clientData, interp, argc, argv)
 
 	bu_vls_free(&vls2);
 
-	/* already aiming */
-	if(clp->aim)
-		clp->aim->aim = (struct cmd_list *)NULL;
+	/* already tied */
+	if(clp->cl_tie)
+		clp->cl_tie->dml_tie = (struct cmd_list *)NULL;
 
-	clp->aim = dlp;
+	clp->cl_tie = dlp;
 
-	/* already being aimed at */
-	if(dlp->aim)
-		dlp->aim->aim = (struct dm_list *)NULL;
+	/* already tied */
+	if(dlp->dml_tie)
+		dlp->dml_tie->cl_tie = (struct dm_list *)NULL;
 
-	dlp->aim = clp;
+	dlp->dml_tie = clp;
 
-	save_cdlp = curr_dm_list;
-	save_cclp = curr_cmd_list;
-	curr_dm_list = dlp;
-	curr_cmd_list = clp;
-
-#ifdef DO_SCROLL_UPDATES
-	set_scroll();
-#endif
-
-	curr_dm_list = save_cdlp;
-	curr_cmd_list = save_cclp;
-
-	Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
-			 bu_vls_addr(&clp->aim->_dmp->dm_pathName),
+	Tcl_AppendResult(interp, bu_vls_addr(&clp->cl_name), " ---> ",
+			 bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName),
 			 "\n", (char *)NULL);
-
-	return TCL_OK;
-}
-
-int
-f_unaim(clientData, interp, argc, argv)
-	ClientData clientData;
-	Tcl_Interp *interp;
-	int argc;
-	char *argv[];
-{
-	struct cmd_list *clp;
-
-	if(argc != 2){
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help unaim");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
-		if(!strcmp(bu_vls_addr(&clp->name), argv[1]))
-			break;
-
-	if(clp == &head_cmd_list &&
-	   (strcmp(bu_vls_addr(&head_cmd_list.name), argv[1]))){
-		Tcl_AppendResult(interp, "f_unaim: unrecognized command_window - ", argv[1],
-				 "\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-
-	if(clp->aim)
-		clp->aim->aim = (struct cmd_list *)NULL;
-
-	clp->aim = (struct dm_list *)NULL;
 
 	return TCL_OK;
 }
@@ -2072,7 +1832,7 @@ f_ps(clientData, interp, argc, argv)
 	int status;
 	char *av[2];
 	struct dm_list *dml;
-	struct shared_info *sip;
+	struct _view_state *vsp;
 
 	if(argc < 2 || MAXARGS < argc){
 		struct bu_vls vls;
@@ -2089,30 +1849,23 @@ f_ps(clientData, interp, argc, argv)
 	if(status == TCL_ERROR)
 		return TCL_ERROR;
 
-	sip = curr_dm_list->s_info;  /* save state info pointer */
-	curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
-	*mged_variables = *dml->_mged_variables; /* struct copy */
-#if 1
-	bu_free((genptr_t)curr_dm_list->menu_vars,"f_ps: menu_vars");
-	curr_dm_list->menu_vars = dml->menu_vars;
-#else
-	bcopy((void *)dml->_menu_array, (void *)menu_array,
-	      sizeof(struct menu_item *) * NMENU);
-	menuflag = dml->_menuflag;
-	menu_top = dml->_menu_top;
-	cur_menu = dml->_cur_menu;
-	cur_item = dml->_cur_menu_item;
-#endif
-	scroll_top = dml->_scroll_top;
-	scroll_active = dml->_scroll_active;
-	scroll_y = dml->_scroll_y;
-	bcopy((void *)dml->_scroll_array, (void *)scroll_array,
+	vsp = view_state;  /* save state info pointer */
+	view_state = dml->dml_view_state;  /* use dml's state info */
+	*mged_variables = *dml->dml_mged_variables; /* struct copy */
+
+	bu_free((genptr_t)menu_state,"f_ps: menu_state");
+	menu_state = dml->dml_menu_state;
+
+	scroll_top = dml->dml_scroll_top;
+	scroll_active = dml->dml_scroll_active;
+	scroll_y = dml->dml_scroll_y;
+	bcopy((void *)dml->dml_scroll_array, (void *)scroll_array,
 	      sizeof(struct scroll_item *) * 6);
 
 	dirty = 1;
 	refresh();
 
-	curr_dm_list->s_info = sip;  /* restore state info pointer */
+	view_state = vsp;  /* restore state info pointer */
 	av[0] = "release";
 	av[1] = NULL;
 	status = f_release(clientData, interp, 1, av);
@@ -2136,7 +1889,7 @@ f_pl(clientData, interp, argc, argv)
 	int status;
 	char *av[2];
 	struct dm_list *dml;
-	struct shared_info *sip;
+	struct _view_state *vsp;
 
 	if(argc < 2 || MAXARGS < argc){
 		struct bu_vls vls;
@@ -2153,30 +1906,23 @@ f_pl(clientData, interp, argc, argv)
 	if(status == TCL_ERROR)
 		return TCL_ERROR;
 
-	sip = curr_dm_list->s_info;  /* save state info pointer */
-	curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
-	*mged_variables = *dml->_mged_variables; /* struct copy */
-#if 1
-	bu_free((genptr_t)curr_dm_list->menu_vars,"f_pl: menu_vars");
-	curr_dm_list->menu_vars = dml->menu_vars;
-#else
-	bcopy((void *)dml->_menu_array, (void *)menu_array,
-	      sizeof(struct menu_item *) * NMENU);
-	menuflag = dml->_menuflag;
-	menu_top = dml->_menu_top;
-	cur_menu = dml->_cur_menu;
-	cur_item = dml->_cur_menu_item;
-#endif
-	scroll_top = dml->_scroll_top;
-	scroll_active = dml->_scroll_active;
-	scroll_y = dml->_scroll_y;
-	bcopy( (void *)dml->_scroll_array, (void *)scroll_array,
+	vsp = view_state;  /* save state info pointer */
+	view_state = dml->dml_view_state;  /* use dml's state info */
+	*mged_variables = *dml->dml_mged_variables; /* struct copy */
+
+	bu_free((genptr_t)menu_state,"f_pl: menu_state");
+	menu_state = dml->dml_menu_state;
+
+	scroll_top = dml->dml_scroll_top;
+	scroll_active = dml->dml_scroll_active;
+	scroll_y = dml->dml_scroll_y;
+	bcopy( (void *)dml->dml_scroll_array, (void *)scroll_array,
 	       sizeof(struct scroll_item *) * 6);
 
 	dirty = 1;
 	refresh();
 
-	curr_dm_list->s_info = sip;  /* restore state info pointer */
+	view_state = vsp;  /* restore state info pointer */
 	av[0] = "release";
 	av[1] = NULL;
 	status = f_release(clientData, interp, 1, av);
@@ -2241,11 +1987,11 @@ f_winset(clientData, interp, argc, argv)
 
 	/* change primary focus to window argv[1] */
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-		if( !strcmp( argv[1], bu_vls_addr( &p->_dmp->dm_pathName ) ) ){
+		if( !strcmp( argv[1], bu_vls_addr( &p->dml_dmp->dm_pathName ) ) ){
 			curr_dm_list = p;
 
-			if(curr_dm_list->aim)
-				curr_cmd_list = curr_dm_list->aim;
+			if(curr_dm_list->dml_tie)
+				curr_cmd_list = curr_dm_list->dml_tie;
 			else
 				curr_cmd_list = &head_cmd_list;
 
