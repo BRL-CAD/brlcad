@@ -1,0 +1,1169 @@
+/*
+ *	d e c k . c
+ *	Generates interactively, a COMGEOM deck of objects from GED data
+ *	base file.
+ *
+ *	Written by	Gary S. Moss
+ *
+ *	All rights reserved:
+ *				Ballistic Research Laboratory
+ *				Aberdeen Proving Ground, Md.  21005
+ *
+ *	Derived from KARDS, written by Keith Applin.
+ *
+ *	To compile	make all
+ */
+#include <stdio.h>
+#include <signal.h>
+#include "ged_types.h"
+#include "3d.h"
+#include "deck.h"
+#include "deck_glob.h"
+#include "tty.h"
+
+static char	*cmd[] = {
+"",
+"C O M M A N D                  D E S C R I P T I O N",
+"",
+"deck [output file prefix]      produce COM GEOM card deck",
+"erase                          erase current list of objects",
+"insert [object[s]]             add an object to current list",
+"list [object[s]]               display current list of selected objects",
+"number [solid] [region]        specify starting numbers for objects",
+"quit                           terminate run",
+"remove [object[s]]             remove an object from current list",
+"toc [object[s]]                table of contents of solids database",
+"! [shell command]              execute a UNIX shell command",
+"",
+"NOTE:",
+"First letter of command is sufficient, and all arguments are optional.",
+"Objects may be specified with string matching operators (*, [], -, ? or \\)",
+"as in the UNIX shell.",
+0 };
+
+static char	*usage[] = {
+"",
+"D E C K ====",
+"Make COMGEOM decks of objects from a GED data base file",
+"Usage:  deck file [{obj1} {obj2} ... {objn}]",
+"",
+0 };
+
+/*	==== M A I N ( )
+ *	
+ */
+main(	argc,	 argv )
+int	argc;
+char		*argv[];
+{
+	int	i;
+
+	/* no file name given
+	 */
+	if( argc < 2 ) { menu( usage );	exit( 10 ); }
+
+	delsol = delreg = 0;		
+
+	/* open  G E D  data base object file
+	 */
+	if( (objfd = open( argv[1], 0 )) < 0 )  {
+		perror( argv[1] );
+		menu( usage );
+		exit( 10 );
+	} else	objfile = argv[1];
+	
+	/* build directory from object file
+	 */
+	builddir();
+	
+	/* traverse directory and build table of contents
+	 */
+	toc();
+	
+	/* get terminal type for clearing screen
+	 */
+	if( (term = getenv( "TERM" )) )	printf( "TERM=%s\n", term );	
+
+	/* add solids listed on command line to current list
+	 */
+	if( argc > 1 ) {
+		pars_arg( argv, argc );
+		insert( arg_list, arg_ct );
+	}
+
+	/* point of re-entry from aborted command
+	 */
+	setjmp( env );
+
+	/* C O M M A N D   I N T E R P R E T E R
+	 */
+	printf( "%s", CMD_PROMPT );	
+	while( 1 ) {
+		/* return to default interrupt handler after every command,
+		 * allows exit from program only while command interpreter
+		 * is waiting for input from keyboard
+		 */
+		signal( SIGINT, quit );
+
+		switch( getcmd( arg_list, 0 ) ) {
+		case DECK:
+			deck( arg_list[1] );
+			break;
+		case ERASE:
+			while( curr_ct > 0 ) free( curr_list[--curr_ct] );
+			break;
+		case INSERT:
+			if( arg_list[1] == 0 ) {
+				printf( "enter object[s] to insert: " );
+				getcmd( arg_list, arg_ct );
+			}
+			insert( arg_list, arg_ct );
+			break;
+		case LIST:
+			if( arg_list[1] == 0 ) {
+				col_prt( curr_list, curr_ct );
+				break;
+			}
+			for( tmp_ct = 0, i = 0; i < curr_ct; i++ )
+				if( match( arg_list[1], curr_list[i] ) )
+					tmp_list[tmp_ct++] = curr_list[i];
+			col_prt( tmp_list, tmp_ct );
+			break;
+		case MENU:
+			menu( cmd );
+			printf( "%s", PROMPT );
+			continue;
+		case NUMBER:
+			if( arg_list[1] == 0 ) {
+				printf( "enter number of 1st solid: " );
+				getcmd( arg_list, arg_ct );
+				printf( "enter number of 1st region: " );
+				getcmd( arg_list, arg_ct );
+			}
+			if( arg_list[1] ) delsol = atoi( arg_list[1] ) - 1;
+			if( arg_list[2] ) delreg = atoi( arg_list[2] ) - 1;
+			break;
+		case REMOVE:
+			if( arg_list[1] == 0 ) {
+				printf( "enter object[s] to remove: " );
+				getcmd( arg_list, arg_ct );
+			}
+			delete( arg_list );
+			break;
+		case RETURN:
+			printf( "%s", PROMPT );
+			continue;
+		case SHELL:
+			if( arg_list[1] == 0 ) {
+				printf( "enter shell command: " );
+				getcmd( arg_list, arg_ct );
+			}
+			new_screen( term );
+			shell( arg_list );
+			break;
+		case TOC:
+			list_toc( arg_list );
+			break;
+		case QUIT:
+			printf( "quitting...\n" );
+			exit( 0 );
+		UNKNOWN:
+			printf( "invalid command\n%s", PROMPT );
+			continue;
+		}
+		printf( "%s", CMD_PROMPT );		
+	}
+}
+
+/*	==== C G O B J ( )
+ *	build deck for object pointed to by 'dp'
+ */
+cgobj( dp, pathpos, old_xlate )
+Directory *dp;
+int	pathpos;
+matp_t	old_xlate;
+{
+	register struct members	*mp;
+	Record		rec;
+	Directory	*nextdp, *tdp;
+	mat_t			new_xlate;
+	long	savepos;
+	int	nparts;
+	int	i, j;
+	int	length;
+	int	dchar = 0;
+	int	nnt;
+	char	buf[80], *bp;
+	char	ars_name[16];
+
+	if( pathpos >= 8 ) {
+		printf( "nesting exceeds 8 levels\n" );
+		for( i = 0; i < 8; i++ ) printf( "/%s", path[i]->d_namep );
+		printf( "\n" );
+		return;
+	}
+	savepos = lseek( objfd, 0L, 1 );
+	lseek( objfd, dp->d_addr, 0 );
+	read( objfd, &rec, sizeof rec );
+
+	/* C O M B I N A T I O N  record
+	 */
+	if( rec.u_id == COMB )  {
+		if( regflag > 0 ) {
+			/* record is part of a region
+			 */
+			if( operate == UNION ) {
+				printf( "region: %s is member of ",
+					rec.c.c_name );
+				printf( "region: %s with OR operation\n",
+					buff );
+				exit( 10 );
+			}
+
+			/* check for end of line in region table
+			 */
+			if(	(isave % 9 ==  1 && isave >  1)
+			    ||	(isave % 9 == -1 && isave < -1) )
+			{
+				write( regfd, buff, strlen( buff ) );
+				write( regfd, LF, 1 );
+				blank_fill( regfd, 6 );
+			}
+			buf[0] = 'r';	buf[1] = 'g';	buf[2] = operate;
+			write( regfd, buf, 3 );
+
+			/* check if this region is in desc yet
+			 */
+			lseek( rd_rrfd, 0L, 0 );
+			for( j = 1; j <= nnr; j++ ) {
+				read( rd_rrfd, name, 16 );
+				if( strcmp( name, rec.c.c_name ) == 0 ) {
+					/* region is #j
+					 */
+					itoa( j+delreg, buf, 4 );
+					write( regfd, buf, 4 );
+					break;
+				}
+			}
+			if( j > nnr ) {   /* region not in desc yet */
+				numrr++;
+				if( numrr > MAXRR ) {
+					printf( "more than %d regions\n",
+						MAXRR );
+					exit( 10 );
+				}
+
+				/* add to list of regions to look up later
+				 */
+				findrr[numrr].rr_pos = lseek(	regfd,
+								0L,
+								1 );
+				for( i = 0; i < 16; i++ )
+					findrr[numrr].rr_name[i] =
+						   rec.c.c_name[i];
+				blank_fill( regfd, 4 );
+			}
+
+			/* check for end of this region
+			 */
+			if( isave < 0 ) {
+				isave = -isave;
+				regflag = 0;
+				if( (j = isave % 9) > 0 )
+					blank_fill( regfd, 7*(9-j) );
+				write( regfd, buff, strlen( buff ) );
+				write( regfd, LF, 1 );
+			}
+			lseek( objfd, savepos, 0);
+			return;
+		}
+
+		regflag = 0;
+		nparts = rec.c.c_length;
+		if( rec.c.c_flags == 'R') {
+			/* record is a region but not member of a region
+			 */
+			regflag = 1;
+			nnr++;
+
+			/* dummy region
+			 */
+			if( nparts == 0 )	regflag = 0;
+
+			/* save the region name
+			 */
+			strncpy( buff, rec.c.c_name, 16 );
+
+			/* start new region
+			 */
+			itoa( nnr+delreg, buf, 5 );
+			write( regfd, buf, 5 );
+			blank_fill( regfd, 1 );
+
+			/* check for dummy region
+			 */
+			if( nparts == 0 ) {
+				write( regfd, LF, 1 );
+				regflag = 0;
+			}
+
+			/* add region to list of regions in desc
+			 */
+			lseek( rrfd, 0L, 2 );
+			write( rrfd, rec.c.c_name, 16 );
+
+			/* check for any OR
+			 */
+			orflag = 0;
+			if( nparts > 1 ) {
+				/* first OR doesn't count, throw away
+				 * first member
+				 */
+				read( objfd, &rec, sizeof rec );
+				for( i = 2; i <= nparts; i++ ) {
+					read( objfd, &rec, sizeof rec );
+					if( rec.M.m_relation == UNION ) {
+						orflag = 1;
+						break;
+					}
+				}
+				lseek( objfd, dp->d_addr, 0 );
+				read( objfd, &rec, sizeof rec );
+			}
+
+			/* write region ident table
+			 */
+			itoa(	nnr+delreg,	buf,	  10 );
+			itoa(	rec.c.c_regionid,	&buf[10], 10 );
+			itoa(	rec.c.c_aircode,	&buf[20], 10 );
+			write(	ridfd,		buf,	  30 );
+			blank_fill( ridfd,		  10 );
+			bp = buf;
+			length = strlen( rec.c.c_name );
+			for( j = 0; j < pathpos; j++ ) {
+				strncpy(	bp,
+						path[j]->d_namep,
+						strlen( path[j]->d_namep )
+				);
+				bp += strlen( path[j]->d_namep );
+				*bp++ = '/';
+			}
+			length += bp - buf;
+			if( length > 34 ) {
+				bp = buf + (length - 34);
+				*bp = '*';
+				write(	ridfd,
+					bp,
+					34 - strlen( rec.c.c_name )
+				);
+			} else	write( ridfd, buf, bp - buf );
+			write( ridfd, rec.c.c_name, strlen( rec.c.c_name ) );
+			write( ridfd, LF, 1 );
+			printf( "\nREGION %4d    ", nnr+delreg );
+			for( j = 0; j < pathpos; j++ )
+				printf( "/%s", path[j]->d_namep );
+			printf( "/%s", rec.c.c_name );
+		}
+		isave = 0;
+		for( i = 1; i <= nparts; i++ )  {
+			if( ++isave == nparts )	isave = -isave;
+			read( objfd, &rec, sizeof rec );
+			mp = &rec.M;
+ 
+			/* save this operation
+			 */
+			operate = mp->m_relation;
+ 
+			path[pathpos] = dp;
+			if(	(nextdp =
+				lookup( mp->m_instname, NOISY )) == -1 )
+				continue;
+			if( mp->m_brname[0] != 0 )  {
+				/* Create an alias.
+				 * First step towards full branch naming.
+				 * User is responsible for his branch names
+				 * being unique.
+				 */
+				if(	(tdp =
+					lookup( mp->m_brname, QUIET )) !=
+					-1 )
+					/* use existing alias
+					 */
+					nextdp = tdp;
+				else	nextdp = diradd(mp->m_brname,
+							nextdp->d_addr );
+			}
+			mat_mul( new_xlate, mp->m_mat, old_xlate );
+
+			/* Recursive call
+			 */
+			cgobj( nextdp, pathpos+1, new_xlate );
+		}
+		lseek( objfd, savepos, 0 );
+		return;
+	}
+
+	/* N O T  a  C O M B I N A T I O N  record
+	 */
+	if( rec.u_id != SOLID && rec.u_id != ARS_A ) {
+		printf( "bad input: should have a 'S' or 'A' record " );
+		printf( "but have '%c'\n", rec.u_id );
+		exit( 10 );
+	}
+
+	/* now have proceeded down branch to a solid
+	 *
+	 * if regflag = 1  add this solid to present region
+         * if regflag = 0  solid not defined as part of a region
+	 *		   make new region if scale != 0 
+	 *
+	 * if orflag = 1   this region has or's
+	 * if orflag = 0   none
+	 */
+	if( old_xlate[15] < .0001 ) {     /* do not add solid */
+		lseek( objfd, savepos, 0 );
+		return;
+	}
+
+	/* fill ident struct
+	 */
+	mat_copy( ident.i_mat, old_xlate );
+	strncpy( ident.i_name, rec.s.s_name, 16 );
+	strncpy(     ars_name, rec.s.s_name, 16 );
+	
+	/* calculate first look discriminator for this solid
+	 */
+	dchar = 0;
+	for( i = 0; i < 16; i++ ) {
+		if( rec.s.s_name[i] == 0 )	break;
+		dchar += (rec.s.s_name[i] << (i&7));
+	}
+
+	/* quick check if solid already in solid table
+	 */
+	nnt = 0;
+	for( i = 0; i < nns; i++ ) {
+		if( dchar == discr[i] ) {
+			/* quick look match - check further
+			 */
+			lseek( rd_idfd, ((long)i) * sizeof ident, 0);
+			read( rd_idfd, &idbuf, sizeof ident );
+			ident.i_index = i + 1;
+			if( check( &ident, &idbuf ) == 1 ) {
+				/*really is an old solid
+				 */
+				nnt = i + 1;
+				goto notnew;
+			}
+			/* false alarm - keep looking for
+			 * quick look matches */
+		}
+	}
+
+	/* new solid
+	 */
+	discr[nns] = dchar;
+	nns++;
+	ident.i_index = nns;
+
+	if( nns > MAXSOL ) {
+		printf("\n\nnumber of solids (%d) greater than max (%d)\n",
+			nns, MAXSOL );
+		exit( 10 );
+	}
+
+	/* write ident struct at end of idfd file
+	 */
+	lseek( idfd, 0L, 2 );
+	write( idfd, &ident, sizeof ident );
+	nnt = nns;
+
+	/* process this solid
+	 */
+	mat_copy( xform, old_xlate );
+	mat_copy( notrans, xform );
+
+	/* notrans = homogeneous matrix with a zero translation vector
+	 */
+	notrans[3]  = notrans[7]  = notrans[11] = 0.0;
+
+	/* write solid #
+	 */
+	itoa( nnt+delsol, buf, 3 );
+	write( solfd, buf, 3 );
+
+	/* process appropriate solid type
+	 */
+	switch( rec.s.s_type ) {
+	case TOR :
+		addtor( &rec );
+		break;
+	case GENARB8 :
+		addarb( &rec );
+		break;
+	case GENELL :
+		addell( &rec );
+		break;
+	case GENTGC :
+		addtgc( &rec );
+		break;
+	case ARS :
+		addars( &rec );
+		break;
+	default:
+		printf( "cgobj: solid type (%d) unknown\n", rec.s.s_type );
+		exit( 10 );
+	}
+
+notnew:	/* sent here if solid already in solid table
+	 */
+	/* finished with solid
+	 */
+	/* put solid in present region if regflag == 1
+	 */
+	if( regflag == 1 ) {
+		/* isave = number of this solid in this region
+		 * if negative then is the last solid in this region */
+		if(	(isave % 9 ==  1 && isave >  1)
+		    ||	(isave % 9 == -1 && isave < -1) ) {
+			/* new line
+			 */
+			write( regfd, buff, strlen( buff ) );
+			write( regfd, LF, 1 );
+			blank_fill( regfd, 6 );
+		}
+		buf[0] = ' ';	buf[1] = ' ';
+		nnt += delsol;
+		if( operate == '-' )	nnt = -nnt;
+		if( orflag == 1 ) {
+			if( operate == UNION || isave == 1 ) {
+				buf[0] = 'o';
+				buf[1] = 'r';
+			}
+		}
+		write( regfd, buf, 2 );
+		itoa( nnt, buf, 5 );
+		write( regfd, buf, 5 );
+		if( nnt < 0 )	nnt = -nnt;
+		nnt -= delsol;
+		if( isave < 0 ) {   /* end this region */
+			isave = -isave;
+			regflag = 0;
+			if( (j = isave % 9) > 0 )
+				blank_fill( regfd, 7*(9-j) );
+			write( regfd, buff, strlen( buff ) );
+			write( regfd, LF, 1 );
+		}
+	} else if( old_xlate[15] > 0.0001 ) {
+		/* solid not part of a region
+		 * make solid into region if scale > 0
+		 */
+		++nnr;
+		itoa(	nnr+delreg, buf,     5 );
+		itoa(	nnt+delsol, &buf[5], 8 );
+		write(	regfd,	    buf,    13 );
+		blank_fill( regfd, 56 );
+		write( regfd, rec.s.s_name, strlen( rec.s.s_name ) );
+		itoa( nnr+delreg, buf,	  10 );
+		itoa(	item,	&buf[10], 10 );
+		itoa(	space,	&buf[20], 10 );
+		write(	ridfd,	buf,	  30 );
+		blank_fill( ridfd, 10 );
+		printf( "\nREGION %4d    ", nnr+delreg );
+		j = strlen( rec.s.s_name );
+		for( i = 0; i < pathpos; i++ ) {
+			if( j += strlen( path[i]->d_namep ) < 38 )
+				write(	ridfd,
+					path[i]->d_namep,
+					strlen( path[i]->d_namep ) );
+			write( ridfd, "/", 1 );
+			printf( "/%s", path[i]->d_namep );
+			j++;
+		}
+		
+		if( rec.u_id == ARS_B ) {	/* ars extension record
+						 */
+			printf( "/%s", ars_name );
+			write( ridfd, ars_name, strlen( ars_name ) );
+		} else	{
+			printf( "/%s", rec.s.s_name );
+			write( ridfd, rec.s.s_name, strlen( rec.s.s_name ) );
+		}
+		write( ridfd, LF, 1 );
+		write( regfd, LF, 1 );
+	}
+	if( isave < 0 )	regflag = 0;
+	lseek( objfd, savepos, 0 );
+	return;
+}
+
+/*	==== P S P ( )
+ *	print solid parameters  -  npts points or vectors
+ */
+psp(	npts,  rec )
+int	npts;
+Record *rec;
+{
+	int	i, j, k, jk;
+	char	buf[60];
+
+	j = jk = 0;
+	for( i = 0; i < npts*3; i += 3 )  {
+		/* write 3 points
+		 */
+		for( k = i; k <= i+2; k++ ) {
+			ftoascii( rec->s.s_values[k], &buf[jk*10], 10, 4 );
+			++jk;
+		}
+
+		if( (++j & 01) == 0 ) {
+			/* end of line
+			 */
+			write( solfd, buf, 60 );
+			jk = 0;
+			write( solfd, rec->s.s_name, strlen( rec->s.s_name ) );
+			write( solfd, LF, 1 );
+			if( i != (npts-1)*3 ) {   /* new line */
+				itoa( nns+delsol, buf, 3 );
+				write( solfd, buf, 3 );
+				blank_fill( solfd, 7 );
+			}
+		}
+	}	
+	if( (j & 01) == 1 ) {   /* finish off rest of line */
+		for( k = 30; k <= 60; k++ )	buf[k] = ' ';
+		write( solfd, buf, 60 );
+		write( solfd, rec->s.s_name, strlen( rec->s.s_name ) );
+		write( solfd, LF, 1 );
+	}
+	return;
+}
+
+/*	==== A D D T O R ( )
+ *	process torus
+ */
+addtor( rec )
+Record *rec;
+{
+	int	i;
+	float	work[3];
+	float	rr1,rr2;
+	vect_t	v_work;
+
+	write( solfd, "tor    ", 7 );
+
+	/* operate on vertex
+	 */
+	matXvec( v_work, xform, &(rec->s.s_values[0]) );
+	VMOVE( &(rec->s.s_values[0]) , v_work );
+
+	/* rest of vectors
+	 */
+	for( i = 3; i <= 21; i += 3 ) {
+		matXvec( v_work, notrans, &(rec->s.s_values[i]) );
+		VMOVE( &(rec->s.s_values[i]), v_work );
+	}
+	rr1 = MAGNITUDE( SV2 );	/* r1 */
+	rr2 = MAGNITUDE( SV1 );	/* r2 */    
+
+	/*  print solid parameters
+	 */
+	work[0] = rr1;
+	work[1] = rr2;
+	work[2] = 0.0;
+	VMOVE( SV2, work );
+	psp( 3, rec );
+	return;
+}
+
+/*	==== A D D A R B ( )
+ *	process generalized arb
+ */
+addarb( rec )
+Record *rec;
+{
+	register int	i;
+	float	work[3], worc[3];
+	vect_t	v_work, v_workk;
+
+	if( rec->s.s_type == GENARB8 )	/*** KLUDGE ****/
+		if( rec->s.s_num > 0 )	rec->s.s_num = ARB8;
+		else			rec->s.s_num *= -1;
+
+	/* operate on vertex
+	 */
+	vtoh_move( v_workk, &(rec->s.s_values[0]) );
+	matXvec( v_work, xform, v_workk );
+	htov_move( &(rec->s.s_values[0]), v_work );
+
+	/* rest of vectors
+	 */
+	for( i = 3; i <= 21; i += 3 ) {
+		vtoh_move( v_workk, &(rec->s.s_values[i]) );
+		matXvec( v_work, notrans, v_workk );
+		htov_move( v_workk, v_work );
+
+		/* point notation
+		 */
+		VADD2( &(rec->s.s_values[i]), &(rec->s.s_values[0]), v_workk );
+	}
+
+	
+	/* print the solid parameters
+	 */
+	switch( rec->s.s_num ) {
+	case ARB8:
+		write( solfd, "arb8   ", 7 );
+		psp( 8, rec );
+		break;
+	case ARB7:
+		write( solfd, "arb7   ", 7 );
+		psp( 7, rec );
+		break;
+	case ARB6:
+		write( solfd, "arb6   ", 7 );
+		VMOVE( SV5, SV6 );
+		psp( 6, rec );
+		break;
+	case ARB5:
+		write( solfd, "arb5   ", 7 );
+		psp( 5, rec );
+		break;
+	case ARB4:
+		write( solfd, "arb4   ", 7 );
+		VMOVE( SV3, SV4 );
+		psp( 4, rec );
+		break;
+	case RAW:
+		write( solfd, "raw    ", 7 );
+		VSUB2( work, SV1, SV0 );
+		VSUB2( SV1, SV3, SV0);		/* H */
+		VMOVE( SV2, work);		/* W */
+		VSUB2( SV3, SV4, SV0);		/* D */
+		psp( 4, rec );
+		break;
+	case BOX:
+		write( solfd, "box    ", 7 );
+		VSUB2( work, SV1, SV0 );
+		VSUB2( SV1, SV3, SV0);		/* H */
+		VMOVE( SV2, work);		/* W */
+		VSUB2( SV3, SV4, SV0);		/* D */
+		psp( 4, rec );
+		break;
+	case RPP:
+		write( solfd, "rpp    ", 7 );
+		work[0] = rec->s.s_values[18];	/* xmin */
+		work[1] = rec->s.s_values[0];	/* xmax */
+		work[2] = rec->s.s_values[1];	/* ymin */
+		worc[0] = rec->s.s_values[19];	/* ymax */
+		worc[1] = rec->s.s_values[2];	/* zmin */
+		worc[2] = rec->s.s_values[20];	/* zmax */
+		VMOVE( SV0, work );
+		VMOVE( SV1, worc );
+		psp( 2, rec );
+		break;
+	default:
+		fprintf( stderr, "unknown arb (%d)\n", rec->s.s_num );
+		exit( 10 );
+	}
+	return;
+}
+
+/*	==== A D D E L L ( )
+ *	process the general ellipsoid
+ */
+addell( rec )
+Record *rec;
+{
+	int	i;
+	float	work[3];
+	vect_t	v_work, v_workk;
+
+	/* operate on vertex
+	 */
+	vtoh_move( v_workk, &(rec->s.s_values[0]) );
+	matXvec( v_work, xform, v_workk);
+	htov_move( &(rec->s.s_values[0]), v_work );
+
+	/* rest of vectors
+	 */
+	for( i = 3; i <= 9; i += 3 ) {
+		vtoh_move( v_workk, &(rec->s.s_values[i]) );
+		matXvec( v_work, notrans, v_workk );
+		htov_move( &(rec->s.s_values[i]), v_work );
+	}
+
+	/* check for ell1 or sph
+	 */
+	rec->s.s_num = GENELL;
+
+	/* ell1 if mag B = mag C
+	 */
+	if( fabs( MAGNITUDE( SV2 ) - MAGNITUDE( SV3 ) ) < .0001 )
+		rec->s.s_num = ELL1;
+		
+	/* sph if ell1 and mag A = mag B
+	 */
+	if(	rec->s.s_num == ELL1
+	    &&	fabs( MAGNITUDE( SV1 ) - MAGNITUDE( SV2 ) ) < .0001
+	)
+		rec->s.s_num = SPH;
+
+	/* print the solid parameters
+	 */
+	switch( rec->s.s_num ) {
+	case GENELL:
+		write( solfd, "ellg   ", 7 );
+		psp( 4, rec );
+		break;
+	case ELL1:
+		write( solfd, "ell1   ", 7 );
+		work[0] = MAGNITUDE( SV2 );
+		work[1] = work[2] = 0.0;
+		VMOVE( SV2, work );
+		psp( 3, rec );
+		break;
+	case SPH:
+		write( solfd, "sph    ", 7 );
+		work[0] = MAGNITUDE( SV1 );
+		work[1] = work[2] = 0.0;
+		VMOVE( SV1, work );
+		psp( 2, rec );
+		break;
+	default:
+		fprintf( stderr, "error in type of ellipse (%d)\n",
+			rec->s.s_num );
+		exit( 10 );
+	}
+	return;
+}
+
+/*	==== A D D T G C ( )
+ *	process generalized truncated cone
+ */
+addtgc( rec )
+Record *rec;
+{
+	int	i;
+	float	work[3], axb[3], cxd[3];
+	vect_t	v_work, v_workk;
+	float	ma, mb, mc, md, maxb, mcxd, mh;
+
+	/* operate on vertex
+	 */
+	vtoh_move( v_workk, &(rec->s.s_values[0]) );
+	matXvec( v_work, xform, v_workk );
+	htov_move( &(rec->s.s_values[0]), v_work );
+
+	for( i = 3; i <= 15; i += 3 ) {
+		vtoh_move( v_workk, &(rec->s.s_values[i]) );
+		matXvec( v_work, notrans, v_workk );
+		htov_move( &(rec->s.s_values[i]), v_work );
+	}
+
+	/* check for tec rec trc rcc
+	 */
+	rec->s.s_num = TGC;
+	VCROSS( axb, SV2, SV3 );
+	VCROSS( cxd, SV4, SV5 );
+	ma = MAGNITUDE( SV2 );
+	mb = MAGNITUDE( SV3 );
+	mc = MAGNITUDE( SV4 );
+	md = MAGNITUDE( SV5 );
+	maxb = MAGNITUDE( axb );
+	mcxd = MAGNITUDE( cxd );
+	mh = MAGNITUDE( SV1 );
+
+	/* tec if ratio top and bot vectors equal and base parallel to top
+	 */
+	if(	fabs( (mb/md)-(ma/mc) ) < .0001
+	    &&	fabs( DOT( axb, cxd )) < .0001
+	)	rec->s.s_num = TEC;
+
+	/* check for right cylinder
+	 */
+	if( fabs( DOT( SV1, axb )) < .0001 ) {
+		if( fabs( ma-mb ) < .0001 ) {
+			if( fabs( ma-mc ) < .0001 )	rec->s.s_num = RCC;
+			else				rec->s.s_num = TRC;
+		} else    /* elliptical */
+		if( fabs( ma-mc ) < .0001 )		rec->s.s_num = REC;
+	}
+
+	/* print the solid parameters
+	 */
+	switch( rec->s.s_num ) {
+	case TGC :
+		write( solfd, "tgc    ", 7 );
+		work[0] = MAGNITUDE( SV4 );
+		work[1] = MAGNITUDE( SV5 );
+		work[2] = 0.0;
+		VMOVE( SV4, work );
+		psp( 5, rec );
+		break;
+	case RCC :
+		write( solfd, "rcc    ", 7 );
+		work[0] = MAGNITUDE( SV2 );
+		work[1] = work[2] = 0.0;
+		VMOVE( SV2, work );
+		psp( 3, rec );
+		break;
+	case TRC :
+		write( solfd, "trc    ", 7 );
+		work[0] = MAGNITUDE( SV2 );
+		work[1] = MAGNITUDE( SV4 );
+		work[2] = 0.0;
+		VMOVE( SV2, work );
+		psp( 3, rec );
+		break;
+	case TEC :
+		write( solfd, "tec    ", 7 );
+		work[0] = MAGNITUDE( SV2) / MAGNITUDE( SV4 );
+		work[1] = work[2] = 0.0;
+		VMOVE( SV4, work );
+		psp( 5, rec );
+		break;
+	case REC :
+		write( solfd, "rec    ", 7 );
+		psp( 4, rec );
+		break;
+	default:
+		fprintf( stderr, "error in tgc type (%d)\n", rec->s.s_num );
+		exit( 10 );
+	}
+	return;
+}
+
+/*	==== A D D A R S ( )
+ *	process triangular surfaced polyhedron - ars
+ */
+addars( rec )
+Record *rec;
+{
+	char	buf[10];
+	int	i, vec;
+	int	npt, npts, ncurves, ngrans, granule, totlen;
+	float	work[3], vertex[3];
+	vect_t	v_work, v_workk;
+
+	ngrans = rec->a.a_curlen;
+	totlen = rec->a.a_totlen;
+	npts = rec->a.a_n;
+	ncurves = rec->a.a_m;
+
+	/* write ars header line in solid table
+	 */
+	write( solfd, "ars    ", 7 );
+	itoa( ncurves, buf, 10 );
+	write( solfd, buf, 10 );
+	itoa( npts, buf, 10 );
+	write( solfd, buf, 10 );
+	blank_fill( solfd, 40 );
+	write( solfd, rec->a.a_name, strlen( rec->a.a_name ) );
+	write( solfd, LF, 1 );
+
+	/* process the data one granule at a time
+	 */
+	for( granule = 1; granule <= totlen; granule++ ) {
+		/* read a granule (ars extension record 'B')
+		 */
+		read( objfd, rec, sizeof record );
+
+		/* find number of points in this granule
+		 */
+		if( rec->b.b_ngranule == ngrans && (npt = npts % 8) != 0 );
+		else				  npt = 8;
+
+		/* operate on vertex
+		 */
+		if( granule == 1 ) {
+			vtoh_move( v_workk, &(rec->b.b_values[0]) );
+			matXvec( v_work, xform, v_workk );
+			htov_move( &(rec->b.b_values[0]), v_work );
+			VMOVE( vertex, &(rec->b.b_values[0]) );
+			vec = 1;
+		} else	vec = 0;
+
+		/* rest of vectors
+		 */
+		for( i = vec; i < npt; i++, vec++ ) {
+			vtoh_move( v_workk, &(rec->b.b_values[vec*3]) );
+			matXvec( v_work, notrans, v_workk );
+			htov_move( work, v_work );
+			VADD2( &(rec->b.b_values[vec*3]), vertex, work );
+		}
+
+		/* print the solid parameters
+		 */
+		parsp( npt, rec );
+	}
+	return;
+}
+
+/*	==== P A R S P ( )
+ *	print npts points of an ars
+ */
+parsp(	npts,	 rec )
+int	npts;
+Record	*rec;
+{
+	int	i, j, k, jk;
+	char	bufout[80];
+
+	j = jk = 0;
+
+	itoa( nns+delsol, &bufout[0], 3 );
+	for( i = 3; i < 10; i++ )	bufout[i] = ' ';
+	strncpy( &bufout[70], "curve ", 6 );
+	itoa( rec->b.b_n, &bufout[76], 3 );
+	bufout[79] = '\n';
+
+	for( i = 0; i < npts*3; i += 3 ) {
+		/* write 3 points
+		 */
+		for( k = i; k <= i+2; k++ ) {
+			++jk;
+			ftoascii(	rec->b.b_values[k],
+					&bufout[jk*10],
+					10,
+					4 );
+		}
+		if( (++j & 01) == 0 ) {
+			/* end of line
+			 */
+			bufout[70] = 'c';
+			write( solfd, bufout, 80 );
+			jk = 0;
+		}
+	}
+
+	if( (j & 01) == 1 ) {
+		/* finish off line
+		 */
+		for( k = 40; k < 70; k++ )	bufout[k] = ' ';
+		write( solfd, bufout, 80 );
+	}
+	return;
+}
+
+/*	==== M A T _ Z E R O ( )
+ *	Fill in the matrix "m" with zeros.
+ */
+mat_zero(	m )
+register matp_t m;
+{
+	register int	i;
+
+	/* Clear everything */
+	for( i = 0; i < 16; i++ )	*m++ = 0;
+}
+
+/*	M A T _ I D N ( )
+ *	Fill in the matrix "m" with an identity matrix.
+ */
+mat_idn(	m )
+register matp_t m;
+{
+	mat_zero( m );
+	m[0] = m[5] = m[10] = m[15] = 1;
+}
+
+/*	==== M A T _ C O P Y ( )
+ *	Copy the matrix "im" into the matrix "om".
+ */
+mat_copy(	om, im )
+register matp_t om, im;
+{
+	register int i = 0;
+
+	/* Copy all elements */
+	for( ; i< 16; i++ )	*om++ = *im++;
+}
+
+
+/*	==== M A T _ M U L ( )
+ *	Multiply matrix "im1" by "im2" and store the result in "om".
+ *	NOTE:  This is different from multiplying "im2" by "im1" (most
+ *	of the time!)
+ */
+mat_mul(	om, im1, im2 )
+register matp_t om, im1, im2;
+{
+	register int em1;		/* Element subscript for im1 */
+	register int em2;		/* Element subscript for im2 */
+	register int el = 0;		/* Element subscript for om */
+	register int i;			/* For counting */
+
+	/* For each element in the output matrix... */
+	for( ; el < 16; el++ ) {
+
+		om[el] = 0;		/* Start with zero in output */
+		em1 = (el / 4) * 4;	/* Element at rt of row in im1 */
+		em2 = el % 4;		/* Element at top of col in im2 */
+
+		for( i = 0; i < 4; i++ ) {
+			om[el] += im1[em1] * im2[em2];
+
+			em1++;		/* Next row element in m1 */
+			em2 += 4;	/* Next column element in m2 */
+		}
+	}
+}
+
+
+/*	==== M A T   X   V E C ( )
+ *	Multiply the vector "iv" by the matrix "im" and store the result
+ *	in the vector "ov".
+ */
+matXvec( op, mp, vp )
+register vectp_t op;
+register matp_t  mp;
+register vectp_t vp;
+{
+	register int io;		/* Position in output vector */
+	register int im = 0;		/* Position in input matrix */
+	register int iv;		/* Position in input vector */
+
+	/* fill each element of output vector with
+	 */
+	for( io = 0; io < 4; io++ ) {
+		/* dot product of each row with each element of input vec
+		 */
+		op[io] = 0.;
+		for( iv = 0; iv < 4; iv++ ) op[io] += mp[im++] * vp[iv];
+	}
+}
+
+/*	==== V T O H _ M O V E ( )
+ *
+ */
+vtoh_move(	h, v)
+register float *h,*v;
+{
+	*h++ = *v++;
+	*h++ = *v++;
+	*h++ = *v;
+	*h++ = 1.;
+}
+
+/*	==== H T O V _ M O V E ( )
+ *
+ */
+htov_move(	v, h )
+register float *v,*h;
+{
+	static float inv;
+
+	if( h[3] == 1. ) {
+		*v++ = *h++;
+		*v++ = *h++;
+		*v   = *h;
+	}
+	else {
+		if( h[3] == 0. )	inv = 1.;
+		else			inv = 1. / h[3];
+		*v++ = *h++ * inv;
+		*v++ = *h++ * inv;
+		*v = *h * inv;
+	}
+}
