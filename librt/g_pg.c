@@ -760,7 +760,7 @@ double				local2mm;
 CONST struct db_i		*dbip;
 {
 	bu_log( "Export of polysolids to a version 5 database is not allowed\n" );
-	bu_log( "\tPolysolids should be converted to BOT solids using the pg_bot() routine or g4-g5 utility.\n" );
+	bu_log( "\tPolysolids should be converted to BoT solids using the rt_pg_to_bot() routine or g4-g5 utility.\n" );
 	return -1;
 }
 
@@ -862,8 +862,18 @@ struct rt_db_internal	*ip;
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+/*
+ *			R T _ P G _ T O _ B O T
+ *
+ *  Convert in-memory form of a polysolid (pg) to a bag of triangles (BoT)
+ *  There is no record in the V5 database for a polysolid.
+ *
+ *  Returns -
+ *	-1	FAIL
+ *	0	OK
+ */
 int
-pg_bot( ip, tol )
+rt_pg_to_bot( ip, tol )
 struct rt_db_internal *ip;
 CONST struct bn_tol *tol;
 {
@@ -875,7 +885,7 @@ CONST struct bn_tol *tol;
 
 	if( ip->idb_type != ID_POLY )
 	{
-		bu_log( "ERROR: pg_bot() called with a non-polysolid!!!\n" );
+		bu_log( "ERROR: rt_pt_to_bot() called with a non-polysolid!!!\n" );
 		return -1;
 	}
 	ip_pg = (struct rt_pg_internal *)ip->idb_ptr;
