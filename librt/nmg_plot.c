@@ -380,7 +380,8 @@ int			poly_markers;
 
 		if( fu->f_p->g.magic_p && *fu->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC )  {
 
-			nmg_snurb_fu_to_vlist( vhead, fu, poly_markers );
+			if( !(poly_markers & NMG_VLIST_STYLE_NO_SURFACES) )
+				nmg_snurb_fu_to_vlist( vhead, fu, poly_markers );
 
 			VSET( n, 1, 0, 0 );	/* sanity */
 			for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
