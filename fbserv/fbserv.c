@@ -170,6 +170,16 @@ int fd;
 }
 #endif /* BSD */
 
+static void *
+sigalarm()
+{
+	/*printf("alarm %s\n", fbp ? "FBP" : "NULL");*/
+	if( fbp != FBIO_NULL )
+		fb_flush(fbp);
+	(void)signal( SIGALRM, sigalarm );	/* SYSV removes handler */
+	alarm(1);
+}
+
 main( argc, argv )
 int argc; char **argv;
 {
@@ -181,6 +191,8 @@ int argc; char **argv;
 	_fb_disk_enable = 0;
 
 	(void)signal( SIGPIPE, SIG_IGN );
+	(void)signal( SIGALRM, sigalarm );
+	alarm(1);
 
 #ifdef BSD
 	/*
@@ -322,8 +334,10 @@ do1()
 
 	if( !single_fb && fbp != FBIO_NULL )
 		fb_close(fbp);
-	if( rem_pcp != PKC_NULL )
+	if( rem_pcp != PKC_NULL ) {
 		pkg_close( rem_pcp );
+		rem_pcp = PKC_NULL;	/* so we wont use fb_log() */
+	}
 }
 
 /*
