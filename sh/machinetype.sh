@@ -54,11 +54,21 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	HAS_SYMLINKS=1;
 #endif
 
-#ifdef alliant
+#if defined(alliant) && !defined(i860)
+/*	Alliant FX/8 or FX/80 */
 #	undef	fx
 	MACHINE=fx;
 	UNIXTYPE=BSD;
 	HAS_TCP=1;
+	HAS_SYMLINKS=1;
+#endif
+
+#if defined(alliant) && defined(i860)
+/*	Alliant FX/2800 */
+#	undef	fy
+	MACHINE=fy;
+	UNIXTYPE=BSD;
+	HAS_TCP=0;
 	HAS_SYMLINKS=1;
 #endif
 
@@ -205,34 +215,6 @@ then
 	# which should cause more sensible errors downstream than
 	# having Shell variables competely unset.
 fi
-
-# Special cases for discriminating between different versions of
-# systems from vendors.
-# Try very hard to avoid putting stuff here, because this technique
-# is not available for use in "Cakefile.defs", so special handling
-# will be required.
-#case ${MACHINE} in
-#
-#4d)
-#	if test -d /usr/NeWS
-#	then
-#		# This is definitely an SGI sw Release 3.? system
-#		if test ! -x /tmp/gt
-#		then
-#			echo 'main(){char b[50];gversion(b);printf("%2.2s\\n",b+4);exit(0);}'>/tmp/gt.c
-#			cc /tmp/gt.c -lgl -o /tmp/gt
-#		fi
-#		case `/tmp/gt` in
-#		GT)	MACHINE=4gt;;
-#		PI)	MACHINE=4p;;	# Personal Iris
-#		*)	MACHINE=4d;;
-#		esac
-#	else
-#		# This is an SGI sw Release 2 system
-#		MACHINE=4d2		# Unsupported
-#	fi;;
-#
-#esac
 
 # Now, look at first arg to determine output behavior
 case x$1 in
