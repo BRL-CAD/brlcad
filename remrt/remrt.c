@@ -1,10 +1,12 @@
 /*
- *  			C T L . C
+ *  			R E M R T . C
  *  
  *  Controller for network ray-tracing
- *  Operating as a network server, handles incomming
- *  connections, accepting input, and returning output,
- *  both solicited and unsolicited, via the pkg.c routines.
+ *  Operating as both a network client and server,
+ *  starts remote invocations of "rtsrv" via "rsh", then
+ *  handles incomming connections offering cycles,
+ *  accepting input (solicited and unsolicited) via the pkg.c routines,
+ *  and storing the results in files and/or a framebuffer.
  *
  *  Author -
  *	Michael John Muuss
@@ -36,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "pkg.h"
 
 #include "./rtsrv.h"
-#include "./ctl.h"
+#include "./remrt.h"
 
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
 int cur_fbsize;			/* current fb size */
