@@ -28,7 +28,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *	0 - LORES, 30 hz, interlaced
  *	1 - LORES, 60 hz, non-interlaced
  *	2 - HIRES, 30 hz, interlaced
- *	3 - LORES, 30 hz, interlaced, with external sync and NTSC timing
+ *	3 - LORES, 30 hz, interlaced, with NTSC timing
+ *	4 - LORES, 30 hz, interlaced, with external sync and NTSC timing
  *
  * All that is provided is a prototype for the FBC registers;
  * the user is responsible for changing them (zooming, etc),
@@ -103,7 +104,7 @@ FBIO adage_interface =
 		0
 		};
 
-static struct ik_fbc ikfbc_setup[4] = {
+static struct ik_fbc ikfbc_setup[5] = {
     {
 	/* 0 - LORES, 30 hz, interlaced */
 	0,	32,		/* x, y, viewport */
@@ -132,10 +133,20 @@ static struct ik_fbc ikfbc_setup[4] = {
 	FBC_HIRES | FBC_RS343, FBCH_PIXELCLOCK(19) | FBCH_DRIVEBPCK,
 	0,	64
     }, {
-	/* 3 - LORES, 30 hz, interlaced, *NTSC*, external sync */
+	/* 3 - LORES, 30 hz, interlaced, *NTSC*, internal sync */
 	0,	32,		/* x, y, viewport */
 	511,	511,		/* x, y, sizeview */
-	0,	4080,		/* x, y, window */
+	0,	4067,		/* x, y, window */
+	0,	0,		/* x, y, zoom */
+	300,	560,		/* horiztime, nlines [no effect] */
+	0,	FBCH_PIXELCLOCK(47) | FBCH_DRIVEBPCK,
+				/* Lcontrol, Hcontrol */
+	0,	32		/* x, y, cursor */
+    }, {
+	/* 4 - LORES, 30 hz, interlaced, *NTSC*, external sync */
+	0,	32,		/* x, y, viewport */
+	511,	511,		/* x, y, sizeview */
+	0,	4067,		/* x, y, window */
 	0,	0,		/* x, y, zoom */
 	300,	560,		/* horiztime, nlines [no effect] */
 	FBC_EXTERNSYNC,	FBCH_PIXELCLOCK(47) | FBCH_DRIVEBPCK,
@@ -191,6 +202,7 @@ typedef unsigned char IKONASpixel[4];
  *	/dev/ik3	for ik3
  *	/dev/ik4n	for ik4, no init
  *	/dev/ik5v	for ik5, NTSC Video
+ *	/dev/i65e	for ik6, NTSC Video, external sync
  *
  *  Using the BRL-enhanced "lseek interface", we have to open a
  *  device node using a file name of the form:
@@ -214,6 +226,7 @@ int	width, height;
 	int	unit = 0;
 	int	noinit = 0;
 	int	ntsc = 0;
+	int	ext_sync = 0;
 
 	/* Only 512 and 1024 opens are available */
 	if( width > 512 || height > 512 )
@@ -230,6 +243,11 @@ int	width, height;
 	if( *cp != '\0' )  switch( *cp )  {
 		case 'n':
 			noinit = 1;
+			break;
+		case 'e':
+			ext_sync = 1;
+			ntsc = 1;
+			width = height = 512;
 			break;
 		case 'v':
 			ntsc = 1;
@@ -260,7 +278,10 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 	if( ntsc )  {
-		IKI(ifp)->mode = 3;
+		if( ext_sync )
+			IKI(ifp)->mode = 4;
+		else
+			IKI(ifp)->mode = 3;
 	} else switch( ifp->if_width ) {
 	case 512:
 		IKI(ifp)->mode = 1;
