@@ -66,7 +66,7 @@ static unsigned char *writeable[MAX_PSW];
 static unsigned char *scanline[MAX_PSW];
 static unsigned char *blendline[MAX_PSW];
 static struct cell   *saved[MAX_PSW];
-
+static struct resource occlusion_resources[MAX_PSW];
 
 int   		nEdges = 0;
 int   		nPixels = 0;
@@ -294,6 +294,13 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
     RT_CK_DBI(dbip);
 
     occlusion_rtip = rt_new_rti( dbip ); /* clones dbip */
+
+    for( i=0; i < MAX_PSW; i++ )  
+      {
+	rt_init_resource( &occlusion_resources[i], i, occlusion_rtip );
+	bn_rand_init( occlusion_resources[i].re_randptr, i );
+      }
+
     db_close(dbip);			 /* releases original dbip */
 
     for (i=0; i<nObjs; ++i) {
