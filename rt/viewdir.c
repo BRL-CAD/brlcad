@@ -248,3 +248,4 @@ struct application *ap;
 }
 
 
+void application_init () {}

@@ -239,3 +239,5 @@ view_end()
 
 void view_setup() {}
 void view_cleanup() {}
+
+void application_init () {}

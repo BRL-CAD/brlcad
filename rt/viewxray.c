@@ -283,3 +283,5 @@ struct partition *PartHeadp;
 
 	return(0);	/* report miss to main routine */
 }
+
+void application_init () {}

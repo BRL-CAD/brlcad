@@ -557,3 +557,5 @@ totbuf += buf;
 
 	return( 1 );
 }
+
+void application_init () {}

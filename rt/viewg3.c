@@ -743,3 +743,5 @@ top:		nextpp = pp->pt_forw;
 	}
 
 }
+
+void application_init () {}

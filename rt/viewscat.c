@@ -433,3 +433,5 @@ struct hit *hitp;
 
 	return( rt_shootray( &sub_ap ) );
 }
+
+void application_init () {}

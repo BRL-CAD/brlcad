@@ -422,3 +422,5 @@ struct region           *reg2;
         RES_RELEASE( &rt_g.res_syscall );
 	return(0);
 	}
+
+void application_init () {}

@@ -182,3 +182,5 @@ register struct application *ap;
 
 	return(0);
 }
+
+void application_init () {}

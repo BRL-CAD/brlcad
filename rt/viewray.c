@@ -227,3 +227,5 @@ struct application	*ap;
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
 }
+
+void application_init () {}

@@ -745,3 +745,5 @@ int		file_width;
 		VSET(inbuffp->c_rdir, 0, 0, 0);
 	}
 }
+
+void application_init () {}
