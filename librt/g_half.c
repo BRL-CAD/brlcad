@@ -727,9 +727,10 @@ CONST struct db_i               *dbip;
 
 	/* Convert from internal (host) to database (network) format */
 	/* the normal */
-	htond( ep->ext_buf, (unsigned char *)hip->eqn, 3 );
+	htond( (unsigned char *)ep->ext_buf, (unsigned char *)hip->eqn, 3 );
 	/* the distance */
-	htond( (unsigned char *)(ep->ext_buf + SIZEOF_NETWORK_DOUBLE*3), (unsigned char *)&scaled_dist, 1);
+	htond( ((unsigned char *)(ep->ext_buf)) + SIZEOF_NETWORK_DOUBLE*3,
+		(unsigned char *)&scaled_dist, 1);
 
 	return 0;
 }

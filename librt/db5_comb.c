@@ -119,6 +119,7 @@ db_tree_counter( CONST union tree *tp, struct db_tree_counter_state *tcsp )
 	default:
 		bu_log("db_tree_counter: bad op %d\n", tp->tr_op);
 		bu_bomb("db_tree_counter\n");
+		/* NOTREACHED */
 	}
 }
 
@@ -446,8 +447,8 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 			BU_GETUNION( tp, tree );
 			tp->tr_l.magic = RT_TREE_MAGIC;
 			tp->tr_l.tl_op = OP_DB_LEAF;
-			tp->tr_l.tl_name = bu_strdup( leafp );
-			leafp += strlen(leafp) + 1;
+			tp->tr_l.tl_name = bu_strdup( (const char *)leafp );
+			leafp += strlen( (const char *)leafp) + 1;
 
 			/* Get matrix index */
 			leafp += db5_decode_signed( &mi, leafp, wid );
@@ -502,8 +503,8 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 		switch( *exprp )  {
 		case DB5COMB_TOKEN_LEAF:
 			tp->tr_l.tl_op = OP_DB_LEAF;
-			tp->tr_l.tl_name = bu_strdup( leafp );
-			leafp += strlen(leafp) + 1;
+			tp->tr_l.tl_name = bu_strdup( (const char *)leafp );
+			leafp += strlen( (const char *)leafp) + 1;
 
 			/* Get matrix index */
 			mi = bu_glong( leafp );
