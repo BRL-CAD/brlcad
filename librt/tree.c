@@ -4,10 +4,6 @@
  *  Ray Tracing library database tree walker.
  *  Collect and prepare regions and solids for subsequent ray-tracing.
  *
- *  PARALLEL lock usage note -
- *	res_model	used for interlocking rti_headsolid list (PARALLEL)
- *	res_results	used for interlocking HeadRegion list (PARALLEL)
- *
  *  Author -
  *	Michael John Muuss
  *  
@@ -81,6 +77,36 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 };
 
 static struct rt_i	*rt_tree_rtip;
+
+#define ACQUIRE_SEMAPHORE_TREE(_hash)	switch((_hash)&03)  { \
+	case 0: \
+		bu_semaphore_acquire( RT_SEM_TREE0 ); \
+		break; \
+	case 1: \
+		bu_semaphore_acquire( RT_SEM_TREE1 ); \
+		break; \
+	case 2: \
+		bu_semaphore_acquire( RT_SEM_TREE2 ); \
+		break; \
+	default: \
+		bu_semaphore_acquire( RT_SEM_TREE3 ); \
+		break; \
+	}
+
+#define RELEASE_SEMAPHORE_TREE(_hash)	switch((_hash)&03)  { \
+	case 0: \
+		bu_semaphore_release( RT_SEM_TREE0 ); \
+		break; \
+	case 1: \
+		bu_semaphore_release( RT_SEM_TREE1 ); \
+		break; \
+	case 2: \
+		bu_semaphore_release( RT_SEM_TREE2 ); \
+		break; \
+	default: \
+		bu_semaphore_release( RT_SEM_TREE3 ); \
+		break; \
+	}
 
 /*
  *			R T _ G E T T R E E _ R E G I O N _ S T A R T
@@ -260,20 +286,7 @@ struct rt_i			*rtip;
 	hash = db_dirhash( dp->d_namep );
 
 	/* Enter the appropriate dual critical-section */
-	switch( hash&3 )  {
-	case 0:
-		bu_semaphore_acquire( RT_SEM_TREE0 );
-		break;
-	case 1:
-		bu_semaphore_acquire( RT_SEM_TREE1 );
-		break;
-	case 2:
-		bu_semaphore_acquire( RT_SEM_TREE2 );
-		break;
-	default:
-		bu_semaphore_acquire( RT_SEM_TREE3 );
-		break;
-	}
+	ACQUIRE_SEMAPHORE_TREE(hash);
 
 	/* If solid has not been referenced yet, the search can be skipped */
 	if( dp->d_uses > 0 )  {
@@ -351,20 +364,8 @@ struct rt_i			*rtip;
 	}
 
 	/* Leave the appropriate dual critical-section */
-	switch( hash&3 )  {
-	case 0:
-		bu_semaphore_release( RT_SEM_TREE0 );
-		break;
-	case 1:
-		bu_semaphore_release( RT_SEM_TREE1 );
-		break;
-	case 2:
-		bu_semaphore_release( RT_SEM_TREE2 );
-		break;
-	default:
-		bu_semaphore_release( RT_SEM_TREE3 );
-		break;
-	}
+	RELEASE_SEMAPHORE_TREE(hash);
+
 	return stp;
 }
 
@@ -525,13 +526,12 @@ found_it:
  *  release associated storage, and free the structure.
  *
  *  This routine can not be used in PARALLEL, hence the st_aradius hack.
+ *	???? XXX is this still true?
  *
- *  This routine will semaphore protect against other copies of itself
- *  running in parallel.  However, there is no protection against
+ *  This routine must semaphore protect against other copies of itself
+ *  running in parallel, both in this code and in
  *  other routines (such as rt_find_identical_solid()) which might
- *  be modifying the linked list heads while locked on other semaphores
- *  (resources).  This is the strongest argument I can think of for
- *  removing the 3-way semaphore stuff in rt_find_identical_solid().
+ *  be modifying the linked list heads.
  *
  *  Called by -
  *	db_free_tree()
@@ -543,39 +543,40 @@ void
 rt_free_soltab( stp )
 struct soltab	*stp;
 {
+	int	hash;
+
 	RT_CK_SOLTAB(stp);
 	if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
 		rt_bomb("rt_free_soltab:  bad st_id");
+	hash = db_dirhash(stp->st_dp->d_namep);
 
-	bu_semaphore_acquire( RT_SEM_MODEL );
+	ACQUIRE_SEMAPHORE_TREE(hash);		/* start critical section */
 	if( --(stp->st_uses) > 0 )  {
-		bu_semaphore_release( RT_SEM_MODEL );
+		RELEASE_SEMAPHORE_TREE(hash);
 		return;
 	}
+	BU_LIST_DEQUEUE( &(stp->l2) );		/* remove from st_dp->d_use_hd list */
+	BU_LIST_DEQUEUE( &(stp->l) );		/* uses rti_solidheads[] */
 
-	/* NON-PARALLEL, on d_use_hd (may be locked on other semaphore) */
-	BU_LIST_DEQUEUE( &(stp->l2) );	/* remove from st_dp->d_use_hd list */
-
-	BU_LIST_DEQUEUE( &(stp->l) );	/* NON-PARALLEL on rti_solidheads[] */
-
-	bu_semaphore_release( RT_SEM_MODEL );
+	RELEASE_SEMAPHORE_TREE(hash);		/* end critical section */
 
 	if( stp->st_aradius > 0 )  {
 		rt_functab[stp->st_id].ft_free( stp );
 		stp->st_aradius = 0;
 	}
-	if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
+	if( stp->st_matp )  bu_free( (char *)stp->st_matp, "st_matp");
 	stp->st_matp = (matp_t)0;	/* Sanity */
 
 	bu_ptbl_free(&stp->st_regions);
 
 	stp->st_dp = DIR_NULL;		/* Sanity */
-	rt_free( (char *)stp, "struct soltab" );
 
 	if( stp->st_path.magic )  {
 		RT_CK_FULL_PATH( &stp->st_path );
 		db_free_full_path( &stp->st_path );
 	}
+
+	bu_free( (char *)stp, "struct soltab" );
 }
 
 /*
@@ -608,7 +609,7 @@ CONST char	*node;
  *  Semaphores used for critical sections in parallel mode:
  *	RT_SEM_MODEL	protects rti_solidheads[] lists
  *	RT_SEM_RESULTS	protects HeadRegion, mdl_min/max, d_uses, nregions
- *	res_worker	(db_walk_dispatcher, from db_walk_tree)
+ *	RT_SEM_WORKER	(db_walk_dispatcher, from db_walk_tree)
  *  
  *  Returns -
  *  	0	Ordinarily
