@@ -24,7 +24,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *	BSD		use Version 7 / BSD sgttyb and TIOCSETP ioctl
  */
 
-#if defined(_POSIX_SOURCE)
+#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE)
+#  if defined(_POSIX_C_SOURCE) && !defined(_POSIX_SOURCE)
+#	define _POSIX_SOURCE 1
+#  endif
 #  if !defined(_XOPEN_SOURCE)
 #	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
 #  endif
@@ -245,7 +248,7 @@ int	fd;
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef SYSV
+#ifdef _POSIX_SOURCE
 	curr_tio[fd].c_oflag |= TAB3;		/* Tab expansion ON.	*/
 	(void)tcsetattr( fd, TCSANOW, &curr_tio[fd] );
 #endif
@@ -316,7 +319,7 @@ clr_CRNL( fd )
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef SYSV
+#ifdef _POSIX_SOURCE
 	curr_tio[fd].c_oflag &= ~(ONLCR|OCRNL);
 	curr_tio[fd].c_iflag &= ~(ICRNL|INLCR);
 	(void)tcsetattr( fd, TCSAFLUSH, &curr_tio[fd] );
@@ -376,7 +379,7 @@ int	fd;
 #if SYSV
 	(void) ioctl( fd, TCSETA, &save_tio[fd] ); /* Write setting.		*/
 #endif
-#if SYSV
+#if _POSIX_SOURCE
 	(void)tcsetattr( fd, TCSAFLUSH, &save_tio[fd] );
 #endif
 	return;
