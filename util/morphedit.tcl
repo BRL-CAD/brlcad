@@ -1,4 +1,4 @@
-#!/m/cad/.tcl.6d/bwish -f
+#!/m/cad/.tk.6d/bwish -f
 #
 # Author -
 #	Glenn Durfee
