@@ -9,15 +9,10 @@
 #define		PM_NULL			(poly *)0
 
 /* polynomial data type:			*/
-typedef  struct
-	{
+typedef  struct {
 	int		dgr;
 	double		cf[MAXP];
-	}  poly;
-
-#define	polyAllo()		((poly *)malloc( sizeof(poly) ))
-
-extern char	*malloc();
+}  poly;
 
 
 /* library functions:				*/
