@@ -817,6 +817,21 @@ extern BU_FILE			bu_iob[1];
 #define BU_FILE_NO_COMMENT	-1
 
 /*----------------------------------------------------------------------*/
+/* color.c */
+#define	HUE		0
+#define	SAT		1
+#define	VAL		2
+#define	ACHROMATIC	-1.0
+
+struct bu_color
+{
+    long	buc_magic;
+    fastf_t	buc_rgb[3];
+};
+#define	BU_COLOR_MAGIC	0x6275636c
+#define	BU_COLOR_NULL	((struct bu_color *) 0)
+
+/*----------------------------------------------------------------------*/
 /* Miscellaneous macros */
 #define bu_made_it()		bu_log("Made it to %s:%d\n",	\
 					__FILE__, __LINE__)
@@ -963,10 +978,10 @@ BU_EXTERN(void			bu_parse_mm, (CONST struct bu_structparse *sdp,
 				CONST char *name,
 				char *base,
 				CONST char *value));
-BU_EXTERN( char *		bu_key_eq_to_key_val, (CONST char *in) );
-BU_EXTERN( char *		bu_shader_to_key_val, (CONST char *in) );
-BU_EXTERN( char *		bu_key_val_to_key_eq, (CONST char *in) );
-BU_EXTERN( char *		bu_shader_to_key_eq, (CONST char *in) );
+BU_EXTERN( int                  bu_key_eq_to_key_val, (char *in, char **next, struct bu_vls *vls) );
+BU_EXTERN( int                  bu_shader_to_tcl_list, (char *in, struct bu_vls *vls) );
+BU_EXTERN( int                  bu_key_val_to_key_eq, (char *in) );
+BU_EXTERN( int                  bu_shader_to_key_eq, (char *in, struct bu_vls *vls) );
 				
 
 
