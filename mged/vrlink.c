@@ -47,6 +47,7 @@ static char		*tcp_port = "5555";	/* "gedd", remote mged */
 #define VRMSG_EVENT	3	/* from MGED: device event */
 #define VRMSG_POV	4	/* from MGED: point of view info */
 #define VRMSG_VLIST	5	/* transfer binary vlist block */
+#define VRMSG_CMD_REPLY	6	/* from MGED: reply to VRMSG_CMD */
 
 void	ph_cmd();
 void	ph_vlist();
@@ -313,22 +314,26 @@ char	*argv[];
 /*
  *			P H _ C M D
  *
- *  Package handler for incomming commands.  Do whatever he says.
+ *  Package handler for incomming commands.  Do whatever he says,
+ *  and send a reply back.
  */
 void
 ph_cmd(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
-	struct bu_vls	str;
+	int		status;
 
-	bu_vls_init(&str);
+	status = Tcl_Eval(interp, buf);
 
-	bu_vls_strcpy( &str, buf );
-
-	(void)cmdline( &str, FALSE );
-
-	bu_vls_free( &str );
+	if( pkg_2send( VRMSG_CMD_REPLY,
+		(status == TCL_OK) ? "Y" : "N", 1,
+		interp->result, strlen(interp->result)+1, pc ) < 0 )  {
+		bu_log("ph_cmd: pkg_2send reply to vrmgr failed, disconnecting\n");
+		pkg_close(vrmgr);
+		vrmgr = PKC_NULL;
+		cmdline_hook = 0;	/* Relinquish this hook */
+	}
 	if(buf) (void)free(buf);
 }
 
