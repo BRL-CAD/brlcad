@@ -267,32 +267,50 @@ double ratio;
 				segp->y1 = lasty;
 				segp->x2 = x;
 				segp->y2 = y;
-				if( ++nseg >= 1024 ) {
-					(void) fprintf(stderr, "dm-X: nseg clipped to 1024\n" );
-					break;
-				}
+				nseg++;
 				segp++;
 				lastx = x;
 				lasty = y;
 				useful = 1;
+				if( nseg == 1024 ) {
+					XDrawSegments( dpy, win, gc, segbuf, nseg );
+					if( white ) {
+						int	i;
+						/* XXX - width and height don't work on Sun! */
+						/* Thus the following gross hack */
+						segp = segbuf;
+						for( i = 0; i < nseg; i++ ) {
+							segp->x1++;
+							segp->y1++;
+							segp->x2++;
+							segp->y2++;
+							segp++;
+						}
+						XDrawSegments( dpy, win, gc, segbuf, nseg );
+					}
+					nseg = 0;
+					segp = segbuf;
+				}
 				break;
 			}
 		}
 	}
-	XDrawSegments( dpy, win, gc, segbuf, nseg );
-	if( white ) {
-		int	i;
-		/* XXX - width and height don't work on Sun! */
-		/* Thus the following gross hack */
-		segp = segbuf;
-		for( i = 0; i < nseg; i++ ) {
-			segp->x1++;
-			segp->y1++;
-			segp->x2++;
-			segp->y2++;
-			segp++;
-		}
+	if( nseg ) {
 		XDrawSegments( dpy, win, gc, segbuf, nseg );
+		if( white ) {
+			int	i;
+			/* XXX - width and height don't work on Sun! */
+			/* Thus the following gross hack */
+			segp = segbuf;
+			for( i = 0; i < nseg; i++ ) {
+				segp->x1++;
+				segp->y1++;
+				segp->x2++;
+				segp->y2++;
+				segp++;
+			}
+			XDrawSegments( dpy, win, gc, segbuf, nseg );
+		}
 	}
 
 	return(useful);
