@@ -78,6 +78,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./ihost.h"
 
+#define pkg_send_vls(type,vlsp,pkg)	pkg_send( (type), rt_vls_addr((vlsp)), rt_vls_strlen((vlsp))+1, (pkg) )
+
 extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 
 /*
@@ -114,23 +116,46 @@ int			print_on = 1;
  */
 #define RTSYNCMSG_PRINT	 999	/* StoM:  Diagnostic message */
 #define RTSYNCMSG_ALIVE	1001	/* StoM:  protocol version, # of processors */
+#define RTSYNCMSG_OPENFB 1002	/* both:  width height framebuffer */
+#define RTSYNCMSG_DIRBUILD 1003	/* both:  database */
+#define RTSYNCMSG_GETTREES 1004	/* both:  treetop(s) */
 #define RTSYNCMSG_POV	1007	/* MtoS:  pov, min_res, start&end lines */
 #define RTSYNCMSG_HALT	1008	/* MtoS:  abandon frame & xmit, NOW */
 #define RTSYNCMSG_DONE	1009	/* StoM:  halt=0/1, res, elapsed, etc... */
 
 void	rtsync_ph_alive();
+void	rtsync_ph_openfb();
+void	rtsync_ph_dirbuild();
+void	rtsync_ph_gettrees();
 void	rtsync_ph_done();
 void	ph_print();
 static struct pkg_switch rtsync_pkgswitch[] = {
+	{ RTSYNCMSG_DONE,	rtsync_ph_done, "RTNODE assignment done" },
 	{ RTSYNCMSG_ALIVE,	rtsync_ph_alive, "RTNODE is alive" },
+	{ RTSYNCMSG_OPENFB,	rtsync_ph_openfb, "RTNODE open(ed) fb" },
+	{ RTSYNCMSG_DIRBUILD,	rtsync_ph_dirbuild, "RTNODE dirbuilt/built" },
+	{ RTSYNCMSG_GETTREES,	rtsync_ph_gettrees, "RTNODE prep(ed) db" },
 	{ RTSYNCMSG_POV,	ph_default,	"POV" },
 	{ RTSYNCMSG_HALT,	ph_default,	"HALT" },
-	{ RTSYNCMSG_DONE,	rtsync_ph_done, "RTNODE assignment done" },
 	{ RTSYNCMSG_PRINT,	ph_print,	"Log Message" },
 	{ 0,			0,		(char *)0 }
 };
 
 int			rtsync_listen_fd;	/* for new connections */
+
+#define STATE_NEWBORN	0		/* No packages received yet */
+#define STATE_ALIVE	1		/* ALIVE pkg recv'd */
+#define STATE_OPENFB	2		/* OPENFB ack pkg received */
+#define STATE_DIRBUILT	3		/* DIRBUILD ack pkg received */
+#define STATE_PREPPED	4		/* GETTREES ack pkg received */
+CONST char *states[] = {
+	"NEWBORN",
+	"ALIVE",
+	"OPENFB",
+	"DIRBUILT",
+	"PREPPED",
+	"n+1"
+};
 
 /*
  *			R T N O D E
@@ -141,6 +166,7 @@ struct rtnode {
 	int		fd;
 	struct pkg_conn	*pkg;
 	struct ihost	*host;
+	int		state;
 	int		ncpus;		/* Ready when > 0, for now */
 	int		busy;
 };
@@ -154,6 +180,9 @@ static	FBIO	*fbp;
 static	char	*framebuffer;
 static	int	width = 0;		/* use default size */
 static	int	height = 0;
+
+CONST char	*database;
+struct rt_vls	treetops;
 
 void	new_rtnode();
 void	drop_rtnode();
@@ -199,8 +228,6 @@ register char **argv;
 			return(0);
 		}
 	}
-	if( argc > optind )
-		return(0);	/* print usage */
 
 	return(1);		/* OK */
 }
@@ -217,9 +244,27 @@ char	*argv[];
 		exit( 1 );
 	}
 
+	if( optind >= argc )  {
+		fprintf(stderr,"rtsync:  MGED database not specified\n");
+		(void)fputs(usage, stderr);
+		exit(1);
+	}
+	database = argv[optind++];
+	if( optind >= argc )  {
+		fprintf(stderr,"rtsync:  tree top(s) not specified\n");
+		(void)fputs(usage, stderr);
+		exit(1);
+	}
+
+	rt_vls_init( &treetops );
+	rt_vls_from_argv( &treetops, argc - optind, argv+optind );
+	rt_log("DB: %s %s\n", database, rt_vls_addr(&treetops) );
+
 	RT_LIST_INIT( &rt_g.rtg_vlfree );
 
 	/* Connect up with framebuffer, for control & size purposes */
+	if( !framebuffer )  framebuffer = getenv("FB_FILE");
+	if( !framebuffer )  rt_bomb("rtsync:  No -F and $FB_FILE not set\n");
 	if( (fbp = fb_open(framebuffer, width, height)) == FBIO_NULL )
 		exit(1);
 
@@ -377,6 +422,7 @@ dispatcher()
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].fd <= 0 )  continue;
+		if( rtnodes[i].state != STATE_PREPPED )  continue;
 		if( rtnodes[i].ncpus <= 0 )  continue;
 		if( rtnodes[i].busy )  return 0;	/* Still working on last one */
 		ncpu += rtnodes[i].ncpus;
@@ -394,7 +440,7 @@ dispatcher()
 
 		if( start_line >= height )  break;
 		if( rtnodes[i].fd <= 0 )  continue;
-		if( rtnodes[i].ncpus <= 0 )  continue;
+		if( rtnodes[i].state != STATE_PREPPED )  continue;
 
 		if( i <= lowest_index )  {
 			end_line = height-1;
@@ -409,7 +455,7 @@ dispatcher()
 			256,
 			start_line, end_line,
 			pending_pov+4 );
-		if( pkg_send( RTSYNCMSG_POV, rt_vls_addr(&msg), rt_vls_strlen(&msg)+1, rtnodes[i].pkg ) < 0 )  {
+		if( pkg_send_vls( RTSYNCMSG_POV, &msg, rtnodes[i].pkg ) < 0 )  {
 			drop_rtnode( i );
 			rt_vls_free(&msg);
 			continue;	/* Don't update start_line */
@@ -441,6 +487,8 @@ struct pkg_conn	*pcp;
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].fd != 0 )  continue;
 		/* Found an available slot */
+		bzero( (char *)&rtnodes[i], sizeof(rtnodes[0]) );
+		rtnodes[i].state = STATE_NEWBORN;
 		rtnodes[i].pkg = pcp;
 		rtnodes[i].fd = pcp->pkc_fd;
 		FD_SET(pcp->pkc_fd, &select_list);
@@ -508,6 +556,29 @@ int	fd;
 		if( m < 0 || n < 0 )  perror("rtsync setsockopt()");
 	}
 #endif
+}
+
+/*
+ *			C H A N G E _ S T A T E
+ */
+int
+change_state( i, old, new )
+int	i;
+int	old;
+int	new;
+{
+	rt_log("%s %s %s --> %s\n", stamp(),
+		rtnodes[i].host->ht_name,
+		states[rtnodes[i].state], states[new] );
+	if( rtnodes[i].state != old )  {
+		rt_log("%s was in state %s, should have been %s, dropping\n",
+			rtnodes[i].host->ht_name,
+			states[rtnodes[i].state], states[old] );
+		drop_rtnode(i);
+		return -1;
+	}
+	rtnodes[i].state = new;
+	return 0;
 }
 
 /*
@@ -612,21 +683,131 @@ char			*buf;
 {
 	register int	i;
 	int		ncpu;
+	struct rt_vls	cmd;
 
 	ncpu = atoi(buf);
+	if( buf )  free(buf);
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].pkg != pc )  continue;
 
 		/* Found it */
-		rt_log("%s ALIVE %d cpus, %s\n", stamp(),
-			ncpu, rtnodes[i].host->ht_name );
+		rt_log("%s %s ALIVE %d cpus\n", stamp(),
+			rtnodes[i].host->ht_name,
+			ncpu );
 
 		rtnodes[i].ncpus = ncpu;
-		if( buf )  free(buf);
+
+		if( change_state( i, STATE_NEWBORN, STATE_ALIVE ) < 0 )
+			return;
+
+		rt_vls_init( &cmd );
+		rt_vls_printf( &cmd, "%d %d %s", width, height, framebuffer );
+
+		if( pkg_send_vls( RTSYNCMSG_OPENFB, &cmd, rtnodes[i].pkg ) < 0 )  {
+			rt_vls_free( &cmd );
+			drop_rtnode(i);
+		     	return;
+		}
+		rt_vls_free( &cmd );
 		return;
 	}
 	rt_bomb("ALIVE Message received from phantom pkg?\n");
+}
+
+/*
+ *			R T S Y N C _ P H _ O P E N F B
+ */
+void
+rtsync_ph_openfb(pc, buf)
+register struct pkg_conn *pc;
+char			*buf;
+{
+	register int	i;
+	int		ncpu;
+
+	if( buf )  free(buf);
+
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].pkg != pc )  continue;
+
+		/* Found it */
+		if( change_state( i, STATE_ALIVE, STATE_OPENFB ) < 0 )
+			return;
+
+		if( pkg_send( RTSYNCMSG_DIRBUILD, database, strlen(database)+1,
+		     rtnodes[i].pkg ) < 0 )  {
+			drop_rtnode(i);
+		     	return;
+		}
+		return;
+	}
+	rt_bomb("OPENFB Message received from phantom pkg?\n");
+}
+
+/*
+ *			R T S Y N C _ P H _ D I R B U I L D
+ *
+ *  Reply contains database title string.
+ */
+void
+rtsync_ph_dirbuild(pc, buf)
+register struct pkg_conn *pc;
+char			*buf;
+{
+	register int	i;
+	int		ncpu;
+
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].pkg != pc )  continue;
+
+		/* Found it */
+		rt_log("%s %s %s\n", stamp(),
+			rtnodes[i].host->ht_name, buf );
+		if( buf )  free(buf);
+
+		if( change_state( i, STATE_OPENFB, STATE_DIRBUILT ) < 0 )
+			return;
+
+		if( pkg_send_vls( RTSYNCMSG_GETTREES, &treetops,
+		     rtnodes[i].pkg ) < 0 )  {
+			drop_rtnode(i);
+		     	return;
+		}
+		return;
+	}
+	rt_bomb("DIRBUILD Message received from phantom pkg?\n");
+}
+
+/*
+ *			R T S Y N C _ P H _ G E T T R E E S
+ *
+ *  Reply contains name of first treetop.
+ */
+void
+rtsync_ph_gettrees(pc, buf)
+register struct pkg_conn *pc;
+char			*buf;
+{
+	register int	i;
+	int		ncpu;
+
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].pkg != pc )  continue;
+
+		/* Found it */
+		rt_log("%s %s %s\n", stamp(),
+			rtnodes[i].host->ht_name, buf );
+		if( buf )  free(buf);
+
+		if( change_state( i, STATE_DIRBUILT, STATE_PREPPED ) < 0 )
+			return;
+
+		/* No more dialog, next pkg will be a POV */
+
+		return;
+	}
+	rt_bomb("GETTREES Message received from phantom pkg?\n");
 }
 
 /*
@@ -653,6 +834,7 @@ char			*buf;
 check_others:
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].fd <= 0 )  continue;
+		if( rtnodes[i].state != STATE_PREPPED )  continue;
 		if( rtnodes[i].ncpus <= 0 )  continue;
 		if( rtnodes[i].busy )  return;	/* Still working on last one */
 	}

@@ -30,6 +30,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #ifdef HAVE_STDARG_H
 # include <stdarg.h>
 #else
@@ -86,8 +91,6 @@ extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 int		rdebug;			/* RT program debugging (not library) */
 
-static char idbuf[132];			/* First ID record info */
-
 /* State flags */
 static int	seen_dirbuild;
 static int	seen_gettrees;
@@ -108,24 +111,30 @@ int print_on = 1;
  */
 #define RTSYNCMSG_PRINT	 999	/* StoM:  Diagnostic message */
 #define RTSYNCMSG_ALIVE	1001	/* StoM:  protocol version, # of processors */
+#define RTSYNCMSG_OPENFB 1002	/* both:  width height framebuffer */
+#define RTSYNCMSG_DIRBUILD 1003	/* both:  database */
+#define RTSYNCMSG_GETTREES 1004	/* both:  treetop(s) */
 #define RTSYNCMSG_POV	1007	/* MtoS:  pov, min_res, start&end lines */
 #define RTSYNCMSG_HALT	1008	/* MtoS:  abandon frame & xmit, NOW */
 #define RTSYNCMSG_DONE	1009	/* StoM:  halt=0/1, res, elapsed, etc... */
 
 void	ph_default();
 void	rtsync_ph_pov();
+void	rtsync_ph_openfb();
+void	rtsync_ph_dirbuild();
+void	rtsync_ph_gettrees();
 void	rtsync_ph_halt();
 static struct pkg_switch rtsync_pkgswitch[] = {
-	{ RTSYNCMSG_ALIVE,	ph_default,	"ALIVE" },
 	{ RTSYNCMSG_POV,	rtsync_ph_pov, "POV" },
+	{ RTSYNCMSG_ALIVE,	ph_default,	"ALIVE" },
 	{ RTSYNCMSG_HALT,	rtsync_ph_halt, "HALT" },
+	{ RTSYNCMSG_OPENFB,	rtsync_ph_openfb, "RTNODE open(ed) fb" },
+	{ RTSYNCMSG_GETTREES,	rtsync_ph_gettrees, "RTNODE prep(ed) db" },
+	{ RTSYNCMSG_DIRBUILD,	rtsync_ph_dirbuild, "RTNODE dirbuilt/built" },
 	{ RTSYNCMSG_DONE,	ph_default,	"DONE" },
 	{ RTSYNCMSG_PRINT,	ph_default,	"Log Message" },
 	{ 0,			0,		(char *)0 }
 };
-
-void	ph_gettrees();
-void	ph_dirbuild();
 
 struct pkg_conn *pcsrv;		/* PKG connection to server */
 char		*control_host;	/* name of host running controller */
@@ -198,11 +207,6 @@ char **argv;
 #endif
 		pkg_close( pcsrv );
 		exit(0);
-	}
-
-	if( (fbp = fb_open( NULL, 0, 0 ) ) == 0 )  {
-		fprintf(stderr,"rtnode: fb_open() failed\n");
-		exit(1);
 	}
 
 #if BSD == 43
@@ -293,7 +297,7 @@ char **argv;
 			rt_log("Load average = %g\n", load);
 			fclose(fp);
 
-			iload = (int)(load + 0.9);	/* round up */
+			iload = (int)(load + 0.5);	/* round up */
 			max_cpus -= iload;
 			if( max_cpus <= 0 )  {
 				rt_log("This machine is overloaded, aborting.\n");
@@ -321,10 +325,6 @@ char **argv;
 		pkg_close(pcsrv);
 		exit(0);
 	}
-
-	/* XXX Hack -- do this before ALIVE message */
-	ph_dirbuild( 0, rt_strdup("moss.g") );
-	ph_gettrees( 0, rt_strdup("all.g") );
 
 	/* Send our version string */
 #define PROTOCOL_VERSION	"Version1.0"
@@ -411,13 +411,47 @@ char *buf;
 	exit(1);
 }
 
+/* -------------------- */
+
 /*
- *			P H _ D I R B U I L D
+ *			R T S Y N C _ P H _ O P E N F B
+ *
+ *  Format:  width, height, framebuffer
+ */
+void
+rtsync_ph_openfb(pc, buf)
+register struct pkg_conn *pc;
+char			*buf;
+{
+	char	*hp, *fb;
+
+	if( debug )  fprintf(stderr, "rtsync_ph_openfb: %s\n", buf );
+
+	hp = strchr(buf, ' ');
+	*hp++ = '\0';
+	fb = strchr(hp, ' ');
+	*fb++ = '\0';
+
+	if( debug )  fprintf(stderr, "rtsync_ph_openfb: %s %d %d\n",
+		fb, atoi(buf), atoi(hp) );
+
+	if( (fbp = fb_open( fb, atoi(buf), atoi(hp) ) ) == 0 )  {
+		rt_log("rtnode: fb_open(%s, %s, %s) failed\n", fb, buf, hp );
+		exit(1);
+	}
+
+	if( pkg_send( RTSYNCMSG_OPENFB, NULL, 0,
+	    pcsrv ) < 0 )
+		fprintf(stderr,"RTSYNCMSG_OPENFB reply error\n");
+}
+
+/*
+ *			R T S Y N C _ P H _ D I R B U I L D
  *
  *  The only argument is the name of the database file.
  */
 void
-ph_dirbuild(pc, buf)
+rtsync_ph_dirbuild(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
 {
@@ -425,7 +459,7 @@ char *buf;
 	char	*argv[MAXARGS+1];
 	struct rt_i *rtip;
 
-	if( debug )  fprintf(stderr, "ph_dirbuild: %s\n", buf );
+	if( debug )  fprintf(stderr, "rtsync_ph_dirbuild: %s\n", buf );
 
 	if( (rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
 		/* No words in input */
@@ -434,7 +468,7 @@ char *buf;
 	}
 
 	if( seen_dirbuild )  {
-		rt_log("ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
+		rt_log("rtsync_ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
 		(void)free(buf);
 		return;
 	}
@@ -442,27 +476,25 @@ char *buf;
 	title_file = rt_strdup(argv[0]);
 
 	/* Build directory of GED database */
-	if( (rtip=rt_dirbuild( title_file, idbuf, sizeof(idbuf) )) == RTI_NULL )  {
-		rt_log("ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
+	if( (rtip=rt_dirbuild( title_file, NULL, 0 )) == RTI_NULL )  {
+		rt_log("rtsync_ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
 	seen_dirbuild = 1;
 
-#if 0
-	if( pkg_send( MSG_DIRBUILD_REPLY,
-	    idbuf, strlen(idbuf)+1, pcsrv ) < 0 )
-		fprintf(stderr,"MSG_DIRBUILD_REPLY error\n");
-#endif
+	if( pkg_send( RTSYNCMSG_DIRBUILD,
+	    rtip->rti_dbip->dbi_title, strlen(rtip->rti_dbip->dbi_title)+1, pcsrv ) < 0 )
+		fprintf(stderr,"RTSYNCMSG_DIRBUILD reply error\n");
 }
 
 /*
- *			P H _ G E T T R E E S
+ *			R T S Y N C _ P H _ G E T T R E E S
  *
  *  Each word in the command buffer is the name of a treetop.
  */
 void
-ph_gettrees(pc, buf)
+rtsync_ph_gettrees(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
 {
@@ -473,7 +505,7 @@ char *buf;
 
 	RT_CK_RTI(rtip);
 
-	if( debug )  fprintf(stderr, "ph_gettrees: %s\n", buf );
+	if( debug )  fprintf(stderr, "rtsync_ph_gettrees: %s\n", buf );
 
 	/* Copy values from command line options into rtip */
 	rtip->useair = use_air;
@@ -531,15 +563,11 @@ char *buf;
 		exit(3);
 	}
 
-#if 0
 	/* Acknowledge that we are ready */
-	if( pkg_send( MSG_GETTREES_REPLY,
+	if( pkg_send( RTSYNCMSG_GETTREES,
 	    title_obj, strlen(title_obj)+1, pcsrv ) < 0 )
-		fprintf(stderr,"MSG_START error\n");
-#endif
+		fprintf(stderr,"RTSYNCMSG_GETTREES reply error\n");
 }
-
-/* -------------------- */
 
 /*
  *			R T S Y N C _ P H _ P O V
@@ -567,7 +595,7 @@ char			*buf;
 
 	RT_CK_RTI(rtip);
 
-	if( debug )  fprintf(stderr, "ph_pov: %s\n", buf );
+	if( debug )  fprintf(stderr, "rtsync_ph_pov: %s\n", buf );
 
 	if( (argc = rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
 		/* No words in input */
