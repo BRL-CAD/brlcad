@@ -2347,6 +2347,8 @@ BU_EXTERN(int rt_gettrees, (struct rt_i	*rtip,
 	int argc, const char **argv, int ncpus));
 BU_EXTERN(int rt_gettrees_and_attrs, (struct rt_i *rtip, const char **attrs,
 				      int argc, const char **argv, int ncpus ) );
+BU_EXTERN(int rt_gettrees_muves, (struct rt_i *rtip, const char **attrs, Tcl_HashTable *tbl,
+				  int argc, const char **argv, int ncpus ) );
 BU_EXTERN(int rt_load_attrs, ( struct rt_i *rtip, char **attrs ) );
 					/* Print seg struct */
 BU_EXTERN(void rt_pr_seg, (const struct seg *segp) );
