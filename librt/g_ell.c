@@ -739,7 +739,6 @@ struct vert_strip {
 	int		nverts_per_strip;
 	int		nverts;
 	struct vertex	**vp;
-	int		nfaces_per_strip;
 	int		nfaces;
 	struct faceuse	**fu;
 };
@@ -952,6 +951,8 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 
 	/*  Find total number of strips of vertices that will be needed.
 	 *  nsegs for each hemisphere, plus the equator.
+	 *  Note that faces are listed in the the stripe ABOVE, ie, toward
+	 *  the poles.  Thus, strips[0] will have 4 faces.
 	 */
 	nstrips = 2 * nsegs + 1;
 	strips = (struct vert_strip *)rt_calloc( nstrips,
@@ -960,38 +961,32 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 	/* North pole */
 	strips[0].nverts = 1;
 	strips[0].nverts_per_strip = 0;
-	strips[0].nfaces = 0;
-	strips[0].nfaces_per_strip = 0;
-	strips[0].fu = (struct faceuse **)0;
+	strips[0].nfaces = 4;
 	/* South pole */
 	strips[nstrips-1].nverts = 1;
 	strips[nstrips-1].nverts_per_strip = 0;
-	strips[nstrips-1].nfaces = 0;
-	strips[nstrips-1].nfaces_per_strip = 0;
-	strips[nstrips-1].fu = (struct faceuse **)0;
+	strips[nstrips-1].nfaces = 4;
 	/* equator */
 	strips[nsegs].nverts = nsegs * 4;
 	strips[nsegs].nverts_per_strip = nsegs;
-	strips[nsegs].nfaces_per_strip = 2 * nsegs - 1;
-	strips[nsegs].nfaces = (2 * nsegs - 1)*4;
+	strips[nsegs].nfaces = 0;
 
 	for( i=1; i<nsegs; i++ )  {
 		strips[i].nverts_per_strip =
 			strips[nstrips-1-i].nverts_per_strip = i;
 		strips[i].nverts =
 			strips[nstrips-1-i].nverts = i * 4;
-		strips[i].nfaces_per_strip =
-			strips[nstrips-1-i].nfaces_per_strip = 2 * i - 1;
 		strips[i].nfaces =
-			strips[nstrips-1-i].nfaces = (2 * i - 1)*4;
+			strips[nstrips-1-i].nfaces = (2 * i + 1)*4;
 	}
 	/* All strips have vertices */
 	for( i=0; i<nstrips; i++ )  {
 		strips[i].vp = (struct vertex **)rt_calloc( strips[i].nverts,
 			sizeof(struct vertex *), "strip vertex[]" );
 	}
-	/* All strips have faces, except for the poles */
-	for( i=1; i < nstrips-1; i++ )  {
+	/* All strips have faces, except for the equator */
+	for( i=0; i < nstrips; i++ )  {
+		if( strips[i].nfaces <= 0 )  continue;
 		strips[i].fu = (struct faceuse **)rt_calloc( strips[i].nfaces,
 			sizeof(struct faceuse *), "strip faceuse[]" );
 	}
@@ -1013,7 +1008,7 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 				vertp[0] = &(strips[i].vp[j+boff]);
 				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
-				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
@@ -1023,7 +1018,7 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[1] = &(strips[i-1].vp[(j+1+toff)%tlim]);
 				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
-				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
@@ -1046,7 +1041,7 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 				vertp[0] = &(strips[i].vp[j+boff]);
 				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
-				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
@@ -1056,7 +1051,7 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i+1].vp[(j+1+toff)%tlim]);
-				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
@@ -1073,13 +1068,13 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 		double	beta;		/* angle around equator (azimuth) */
 		fastf_t		cos_alpha, sin_alpha;
 		fastf_t		cos_beta, sin_beta;
+		point_t		sphere_pt;
+		point_t		model_pt;
 
 		alpha = (((double)i) / (nstrips-1));
 		cos_alpha = cos(alpha*rt_pi);
 		sin_alpha = sin(alpha*rt_pi);
 		for( j=0; j < strips[i].nverts; j++ )  {
-			point_t		sphere_pt;
-			point_t		model_pt;
 
 			beta = ((double)j) / strips[i].nverts;
 			cos_beta = cos(beta*rt_twopi);
@@ -1092,16 +1087,14 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 			MAT4X3PNT( model_pt, state.invRinvS, sphere_pt );
 			VADD2( model_pt, model_pt, state.ei.v );
 			/* Associate vertex geometry */
-			if( strips[i].vp[j] )
-				nmg_vertex_gv( strips[i].vp[j], model_pt );
+			nmg_vertex_gv( strips[i].vp[j], model_pt );
 		}
 	}
 
-	/* Associate face geometry.  Poles have no faces "above" them. */
-	for( i=1; i < nstrips-1; i++ )  {
+	/* Associate face geometry.  Equator has no faces */
+	for( i=0; i < nstrips; i++ )  {
 		for( j=0; j < strips[i].nfaces; j++ )  {
-			if( strips[i].fu[j] )
-				rt_mk_nmg_planeeqn( strips[i].fu[j] );
+			rt_mk_nmg_planeeqn( strips[i].fu[j] );
 		}
 	}
 
@@ -1113,8 +1106,9 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 	for( i=0; i<nstrips; i++ )  {
 		rt_free( (char *)strips[i].vp, "strip vertex[]" );
 	}
-	/* All strips have faces, except for the poles */
-	for( i=1; i < nstrips-1; i++ )  {
+	/* All strips have faces, except for equator */
+	for( i=0; i < nstrips; i++ )  {
+		if( strips[i].fu == (struct faceuse *)0 )  continue;
 		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
 	rt_free( (char *)strips, "strips[]" );
@@ -1125,8 +1119,9 @@ fail:
 	for( i=0; i<nstrips; i++ )  {
 		rt_free( (char *)strips[i].vp, "strip vertex[]" );
 	}
-	/* All strips have faces, except for the poles */
-	for( i=1; i < nstrips-1; i++ )  {
+	/* All strips have faces, except for equator */
+	for( i=0; i < nstrips; i++ )  {
+		if( strips[i].fu == (struct faceuse *)0 )  continue;
 		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
 	rt_free( (char *)strips, "strips[]" );
