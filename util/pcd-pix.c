@@ -428,15 +428,15 @@ char **argv;
 	}
 
 	if( do_headeronly )  {
-		printf("-w%d -n%d\n", w, h);
+		printf("-w%ld -n%ld\n", w, h);
 		exit(0);
 	}
 
 	if( do_pixfb )  {
 		if( do_bw )
-			sprintf(nbuf, "bw-fb -w%d -n%d", w, h);
+			sprintf(nbuf, "bw-fb -w%ld -n%ld", w, h);
 		else
-			sprintf(nbuf, "pix-fb -w%d -n%d", w, h);
+			sprintf(nbuf, "pix-fb -w%ld -n%ld", w, h);
 
 		if( (fout = popen( nbuf, "w" )) == NULL )  {
 			perror(nbuf);

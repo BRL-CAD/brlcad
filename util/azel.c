@@ -135,7 +135,7 @@ char    **argv;
 		Round = 1;
 		break;
 	    default:
-		fprintf(stderr, "Bad option '-%s'\n", Ch);
+		fprintf(stderr, "Bad option '-%c'\n", Ch);
 	    case '?':
 		PrintUsage();
 		exit (Ch != '?');

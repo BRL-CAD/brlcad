@@ -123,7 +123,7 @@ char **argv;
 		}
 	}
 	fprintf(stderr,
-		"pixdiff bytes: %7d matching, %7d off by 1, %7d off by many\n",
+		"pixdiff bytes: %7ld matching, %7ld off by 1, %7ld off by many\n",
 		matching, off1, offmany );
 	exit(0);
 }

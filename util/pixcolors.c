@@ -59,7 +59,7 @@ FILE *fd;
 			}
 		}
 	}
-	(void) printf("%u\n", count);
+	(void) printf("%lu\n", count);
 	if (verbose)
 		for (i=0 ; i < 1<<24 ; ++i)
 			if ( (vals[i>>3] & (1<<(i & 0x07))) )
