@@ -126,7 +126,6 @@ register struct application *ap;
 	register char	*pixelp;
 	register struct scanline	*slp;
 	register int	do_eol = 0;
-	int		npix;
 
 	if( ap->a_user == 0 )  {
 		/* Shot missed the model, don't dither */
@@ -168,6 +167,7 @@ register struct application *ap;
 	case BUFMODE_UNBUF:
 		{
 			RGBpixel	p;
+			int		npix;
 			p[0] = r ;
 			p[1] = g ;
 			p[2] = b ;
@@ -264,6 +264,7 @@ register struct application *ap;
 		{
 			register int dy, yy;
 			register int spread;
+			int		npix = 0;
 
 			spread = 1<<(incr_nlevel-incr_level)-1;
 			RES_ACQUIRE( &rt_g.res_syscall );
@@ -286,6 +287,7 @@ register struct application *ap;
 
 	case BUFMODE_DYNAMIC:
 		if( fbp != FBIO_NULL )  {
+			int		npix;
 			RES_ACQUIRE( &rt_g.res_syscall );
 			npix = fb_write( fbp, 0, ap->a_y,
 			    scanline[ap->a_y].sl_buf, width );
