@@ -1553,7 +1553,7 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || 3 < argc){
+	if(argc != 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
