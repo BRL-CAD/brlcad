@@ -1290,7 +1290,8 @@ struct application  {
 	/* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
 	struct resource	*a_resource;	/* dynamic memory resources */
 	int		(*a_overlap)();	/* DEPRECATED */
-	void		(*a_multioverlap)BU_ARGS( (struct application *, struct partition *, struct bu_ptbl *, struct partition *) );	/* called when overlaps occur */
+	void		(*a_multioverlap)BU_ARGS( (struct application *, struct partition *, struct bu_ptbl *, struct partition *) );	/* called to resolve overlaps */
+	void		(*a_logoverlap)BU_ARGS( (struct application *, CONST struct partition *, CONST struct bu_ptbl *, CONST struct partition *) );	/* called to log overlaps */
 	int		a_level;	/* recursion level (for printing) */
 	int		a_x;		/* Screen X of ray, if applicable */
 	int		a_y;		/* Screen Y of ray, if applicable */
