@@ -558,6 +558,20 @@ char *h;
 	Return;
 }
 
+void
+nmg_pr_eg(eg, h);
+struct edge_g *eg;
+char *h;
+{
+	MKPAD(h);
+	NMG_CK_EDGE_G(eg);
+	
+	rt_log("%sEDGE_G %8x %d  pt:(%f %f %f)  dir:(%f %f %f)",
+		h, eg, eg->usage, V3ARGS(eg->e_pt), V3ARGS(eg->e_dir));
+
+	Return;
+}
+
 void 
 nmg_pr_e(e, h)
 struct edge *e;
@@ -573,9 +587,13 @@ char *h;
 	}
 	rt_log("%s%8x eu_p\n", h, e->eu_p);
 	rt_log("%s%8x eg_p\n", h, e->eg_p);
-	
+
+	if (e->eg_p)
+		nmg_pr_eg(e->eg_p, h);
+
 	Return;
 }
+
 
 void 
 nmg_pr_eu(eu, h)
