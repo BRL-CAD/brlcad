@@ -7,7 +7,9 @@
 #define SRCDIR	proc-db
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
 			pipetest nmgmodel brickwall wall tea_nmg \
-			pipe terrain sphflake pickett_fence
+			pipe terrain sphflake
+/* pickett_fence */
+
 #define STATIC_PRODUCTS		\
 	../SRCDIR/mol-data.dat ../SRCDIR/mol-data1.dat \
 	../SRCDIR/mol-data2.dat \
