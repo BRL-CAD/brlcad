@@ -57,6 +57,12 @@ struct mfuncs light_mfuncs[] = {
  *			L I G H T _ R E N D E R
  *
  *  If we have a direct view of the light, return it's color.
+ *  A cosine term is needed in the shading of the light source,
+ *  to make it have dimension and shape.  However, just a simple
+ *  cosine of the angle between the normal and the direction vector
+ *  leads to a pretty dim looking light.  Therefore, a cos/2 + 0.5
+ *  term is used when the viewer is within the beam, and a cos/2 term
+ *  when the beam points away.
  */
 HIDDEN int
 light_render( ap, pp, swp, dp )
@@ -67,15 +73,19 @@ char	*dp;
 {
 	register struct light_specific *lp =
 		(struct light_specific *)dp;
-	register fastf_t f, dot;
+	register fastf_t f;
+
+	/* Provide cosine/2 shading, to make light look round */
+	if( (f = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )*0.5) < 0 )
+		f = 0;
 
 	/* See if surface normal falls in light beam direction */
-	if( (dot= VDOT( lp->lt_aim, swp->sw_hit.hit_normal)) < lp->lt_cosangle )  {
+	if( VDOT( lp->lt_aim, swp->sw_hit.hit_normal) < lp->lt_cosangle )  {
 		/* dark, outside of light beam area */
-		f = lp->lt_fraction * 0.5;
+		f *= lp->lt_fraction;
 	} else {
 		/* within beam area */
-		f = lp->lt_fraction;
+		f = (f+0.5) * lp->lt_fraction;
 	}
 	VSCALE( swp->sw_color, lp->lt_color, f );
 }
