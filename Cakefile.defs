@@ -281,9 +281,9 @@ set -S2 "/bin/sh"
 				-lxmalloc -ll
 #else
 /* 	Carl's test version */
-#	define	MGED_OBJS	dm-4d dm-X dm-ogl
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
-#	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
+#	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX
+#	define	MGED_LIBES	LIBTKGLX -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
 #       define  XMGED_ALLOCA    alloca
 #	define	XMGED_OBJS	dm-4d dm-X Xmgl dm-ogl
 #	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -DXMGED -I/usr/include/X11 -DDM_OGL
@@ -1617,6 +1617,9 @@ set -S2 "/bin/sh"
 #	define	LIBREDBLACK_DIR	../.libredblack.MTYPE
 #	define	LIBREDBLACK	-L''LIBREDBLACK_DIR -lredblack
 #	define	LIBREDBLACK_DEP	[[LIBVERS ../.libredblack.MTYPE/libredblack.ARCH_SUF]]
+#	define	LIBTKGLX_DIR	../.libtkGLX.MTYPE
+#	define	LIBTKGLX	-L''LIBTKGLX_DIR -ltkGLX
+#	define	LIBTKGLX_DEP	[[LIBVERS ../.libtkGLX.MTYPE/libtkGLX.ARCH_SUF]]
 #	if HAS_TCP
 #		define	LIBPKG_DIR	../.libpkg.MTYPE
 #		define	LIBPKG	-L''LIBPKG_DIR -lpkg
