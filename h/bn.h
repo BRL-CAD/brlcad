@@ -55,7 +55,6 @@ extern "C" {
 
 #define BN_H_VERSION	"@(#)$Header$ (BRL)"
 
-
 /*			B N _ T O L
  *
  *  A handy way of passing around the tolerance information needed to
@@ -474,7 +473,6 @@ BU_EXTERN(void quat_log, (quat_t out, CONST quat_t in));
 /*----------------------------------------------------------------------*/
 /* rand.c */
 
-
 /*  A supply of fast pseudo-random numbers from table in bn/rand.c.
  *  The values are in the range 0..1
  *
@@ -487,15 +485,21 @@ BU_EXTERN(void quat_log, (quat_t out, CONST quat_t in));
  *	while (NEED_MORE_RAND_NUMBERS) {
  *		f = BN_RANDOM( idx );
  *	}
+ *
+ * Note that the values from bn_rand_half() become all 0.0 when the benchmark
+ * flag is set (bn_rand_halftab is set to all 0's).  The numbers from 
+ * bn_rand_table do not change, because the procedural noise would cease to
+ * exist.
  */
 #define BN_RAND_TABSIZE 4096
 #define BN_RAND_TABMASK 0xfff
-#define BN_RANDSEED( _i, _seed )        _i = ((unsigned)_seed) % BN_RAND_TABSIZE
+#define BN_RANDSEED( _i, _seed )  _i = ((unsigned)_seed) % BN_RAND_TABSIZE
+extern CONST float bn_rand_table[BN_RAND_TABSIZE];
 
-/* BN_RANDOM gives numbers between 0.0 and 1.0 */
+/* BN_RANDOM always gives numbers between 0.0 and 1.0 */
 #define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
 
-/* BN_RANDHALF gives numbers between -0.5 and 0.5 */
+/* BN_RANDHALF always gives numbers between -0.5 and 0.5 */
 #define BN_RANDHALF( _i ) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
 #define BN_RANDHALF_INIT(_p) _p = bn_rand_table
 
@@ -504,28 +508,36 @@ BU_EXTERN(void quat_log, (quat_t out, CONST quat_t in));
 /* #define rand_init bn_rand_init */
 /* #define rand0to1  bn_rand0to1 */
 
+/* random numbers between -0.5 and 0.5, except when benchmark flag is set, 
+ * when this becomes a constant 0.0
+ */
+#define BN_RANDHALFTABSIZE	16535	/* Powers of two give streaking */
+extern int bn_randhalftabsize;
+extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
+
 #define bn_rand_half(_p)	\
-	( (++(_p) >= &bn_rand_halftab[BN_RANDHALFTABSIZE] || (_p) < bn_rand_halftab) ? \
+	( (++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
+	     (_p) < bn_rand_halftab) ? \
 		*((_p) = bn_rand_halftab) : *(_p))
 
 #define bn_rand_init(_p, _seed)	\
-	(_p) = &bn_rand_halftab[(int)((bn_rand_halftab[(_seed)%BN_RANDHALFTABSIZE] + \
-		0.5)*(BN_RANDHALFTABSIZE-1))]
+	(_p) = &bn_rand_halftab[ \
+		(int)( \
+		      (bn_rand_halftab[(_seed)%bn_randhalftabsize] + 0.5) * \
+		      (bn_randhalftabsize-1) ) ]
 
+/* random numbers 0..1 except when benchmarking, when this is always 0.5 */
 #define bn_rand0to1(_q)	(bn_rand_half(_q)+0.5)
 
+
+#define	BN_SINTABSIZE		2048
 extern double bn_sin_scale;
 #define bn_tab_sin(_a)	(((_a) > 0) ? \
 	( bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)] ) :\
 	(-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)] ) )
-
-#define BN_RANDHALFTABSIZE	2047	/* Powers of two give streaking */
-#define	BN_SINTABSIZE		2048
-
-
-extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 extern CONST float bn_sin_table[BN_SINTABSIZE];
-extern CONST float bn_rand_table[BN_RAND_TABSIZE];
+
+
 
 /*----------------------------------------------------------------------*/
 /* wavelet.c */

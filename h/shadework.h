@@ -37,6 +37,7 @@ struct shadework {
 #endif
 	fastf_t		sw_tolight[3*SW_NLIGHTS];   /* light directions */
 	char		*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
+	fastf_t		sw_lightfract[SW_NLIGHTS];/* % light visible */
 	int		sw_xmitonly;	/* flag: need sw_transmit only */
 					/* sw_xmitonly=1, compute transmission only */
 					/* sw_xmitonly=2, want parameters only, not even transmission */
