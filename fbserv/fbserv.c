@@ -445,7 +445,7 @@ init_syslog()
 #endif /* BSD && !CRAY2 */
 }
 
-void
+static void
 setup_socket(fd)
 int	fd;
 {
