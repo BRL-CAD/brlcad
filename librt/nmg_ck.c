@@ -1365,6 +1365,11 @@ char *s;
  *
  *	check to see if all radial uses of an edge (within a shell) are
  *	properly oriented with respect to each other.
+ *	NOTE that ONLY edgeuses belonging to the shell of eu are checked.
+ *
+ *	Can't check faceuse orientation parity for
+ *	things from more than one shell;  parity is conserved
+ *	only within faces from a single shell.
  *
  *  XXX Added code to skip dangling faces (needs to be checked a little more) - JRA
  *
@@ -1379,6 +1384,7 @@ CONST struct edgeuse	*eu;
 CONST struct rt_tol	*tol;
 {
 	char curr_orient;
+	CONST struct edgeuse	*eu_orig;
 	CONST struct edgeuse	*eur;
 	CONST struct edgeuse	*eu1;
 	CONST struct edgeuse	*eurstart;
@@ -1395,10 +1401,12 @@ CONST struct rt_tol	*tol;
 		rt_log("nmg_check_radial(eu=x%x, tol)\n", eu);
 	}
 
+	eu_orig = eu;
 	eu1 = eu;
 
 	/* If this eu is a wire, advance to first non-wire (skipping dangling faces). */
 	while( (fu = nmg_find_fu_of_eu(eu)) == (struct faceuse *)NULL ||
+		nmg_find_s_of_eu((struct edgeuse *)eu) != s ||
 		nmg_dangling_face( fu, (char *)NULL ) )  {
 		eu = eu->radial_p->eumate_p;
 		if( eu == eu1 )  return 0;	/* wires all around */
@@ -1407,13 +1415,7 @@ CONST struct rt_tol	*tol;
 	curr_orient = fu->orientation;
 	eur = eu->radial_p;
 	eurstart = eur;
-
-	/* skip the wire edges and dangling faces in the radial direction from eu. */
-	while( (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL ||
-		nmg_dangling_face( fu, (char *)NULL ) )  {
-		eur = eur->eumate_p->radial_p;
-		if( eur == eurstart )  return 0;
-	}
+	eu1 = eu;				/* virtual radial to eur */
 
 	NMG_CK_EDGEUSE(eur);
 	do {
@@ -1428,23 +1430,11 @@ CONST struct rt_tol	*tol;
 			/* Advance to next eur */
 			NMG_CK_EDGEUSE(eur->eumate_p);
 			if (eur->eumate_p->eumate_p != eur) {
-				p = eur->vu_p->v_p->vg_p->coord;
-				q = eur->eumate_p->vu_p->v_p->vg_p->coord;
-				rt_log("edgeuse mate has different mate %g %g %g -> %g %g %g\n",
-					p[0], p[1], p[2], q[0], q[1], q[2]);
-				nmg_pr_lu(eu->up.lu_p, (char *)NULL);
-				nmg_pr_lu(eu->eumate_p->up.lu_p, (char *)NULL);
 				rt_bomb("nmg_check_radial: bad edgeuse mate\n");
-				/*return(1);*/
 			}
 			eur = eur->eumate_p->radial_p;
 			NMG_CK_EDGEUSE(eur);
 			if( eur == eurstart )  return 0;
-
-			/* Can't check faceuse orientation parity for
-			 * things from another shell;  parity is conserved
-			 * only within faces from a single shell.
-			 */
 		}
 
 		/* if that radial edgeuse doesn't have the
@@ -1463,7 +1453,9 @@ CONST struct rt_tol	*tol;
 			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
 			rt_log("nmg_check_radial(): Radial orientation problem at edge %g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
-			rt_log("Problem Edgeuses: eu1=%8x, eur=%8x\n", eu1, eur);
+			rt_log("Problem Edgeuses: eu_orig=%8x, eur=%8x, s=x%x, eurstart=x%x, curr_orient=%s\n",
+				eu_orig, eur, s, eurstart,
+				nmg_orientation(curr_orient) );
 
 			/* Plot the edge in yellow, & the loops */
 			rt_g.NMG_debug |= DEBUG_PLOTEM;
@@ -1478,9 +1470,10 @@ CONST struct rt_tol	*tol;
 		    	nmg_stash_model_to_file("radial.g", 
 		    		nmg_find_model(&(fu->l.magic)), buf);
 
-			nmg_pr_fu_around_eu( eu1, tol );
+			nmg_pr_fu_around_eu( eu_orig, tol );
 
 			rt_log("nmg_check_radial: unclosed space\n");
+rt_bomb("aborting");
 			return(2);
 		}
 
@@ -1491,6 +1484,129 @@ CONST struct rt_tol	*tol;
 		eur = eu1->radial_p;
 	} while (eur != eurstart);
 	return(0);
+}
+
+/*
+ *			N M G _ E U _ 2 S _ O R I E N T _ B A D
+ *
+ *  Given an edgeuse, check that the proper orientation "parity" of
+ *  same/opposite/opposite/same is preserved, for all non-wire edgeuses
+ *  within shell s1.
+ *  If s2 is non-null, then ensure that the parity of all edgeuses in
+ *  BOTH s1 and s2 are correct, and mutually compatible.
+ *
+ *  This routine does not care if a face is "dangling" or not.
+ *
+ *  If the edgeuse specified is a wire edgeuse, skip forward to a non-wire.
+ *
+ *  Returns -
+ *	0	OK
+ *	!0	Bad orientation parity.
+ */
+int
+nmg_eu_2s_orient_bad(eu, s1, s2, tol)
+CONST struct edgeuse	*eu;
+CONST struct shell	*s1;
+CONST struct shell	*s2;
+CONST struct rt_tol	*tol;
+{
+	char			curr_orient;
+	CONST struct edgeuse	*eu_orig;
+	CONST struct edgeuse	*eur;
+	CONST struct edgeuse	*eu1;
+	CONST struct edgeuse	*eurstart;
+	CONST struct faceuse	*fu;
+	CONST struct shell	*s;
+	int			ret = 0;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_SHELL(s1);
+	if(s2) NMG_CK_SHELL(s2);	/* s2 may be NULL */
+	RT_CK_TOL(tol);
+
+	eu_orig = eu;			/* for printing */
+	eu1 = eu;			/* remember, for loop termination */
+
+	/*
+	 *  If this eu is not in s1, or it is a wire,
+	 *  advance to first non-wire.
+	 */
+	for(;;)  {
+		fu = nmg_find_fu_of_eu(eu);
+		if( !fu ) goto next_a;		/* it's a wire */
+		s = fu->s_p;
+		NMG_CK_SHELL(s);
+		if( s != s1 )  goto next_a;
+		break;
+next_a:
+		eu = eu->radial_p->eumate_p;
+		if( eu == eu1 )  goto out;	/* wires all around */
+	}
+
+	curr_orient = fu->orientation;
+	eur = eu->radial_p;
+	eurstart = eur;
+	eu1 = eu;				/* virtual radial to eur */
+
+	NMG_CK_EDGEUSE(eur);
+	do {
+		/*
+		 *  Search until another edgeuse in shell s1 or s2 is found.
+		 *  Continue search if it is a wire edge or dangling face.
+		 */
+		for(;;)  {
+			fu = nmg_find_fu_of_eu(eur);
+			if( !fu ) goto next_eu;		/* it's a wire */
+			NMG_CK_FACEUSE(fu);
+			s = fu->s_p;
+			NMG_CK_SHELL(s);
+			if( s != s1 )  {
+				if( !s2 )  goto next_eu;
+				if( s != s2 )  goto next_eu;
+			}
+			break;
+next_eu:
+			/* Advance to next eur */
+			NMG_CK_EDGEUSE(eur->eumate_p);
+			if (eur->eumate_p->eumate_p != eur)
+				rt_bomb("nmg_eu_2s_orient_bad: bad edgeuse mate\n");
+
+			eur = eur->eumate_p->radial_p;
+			NMG_CK_EDGEUSE(eur);
+			if( eur == eurstart )  goto out;
+		}
+
+		/*
+		 *  eur is mate's radial of last eu.
+		 *  If the orientation does not match, this is an error.
+		 *  If radial (eur) is my (virtual, this-shell) mate (eu1),
+		 *  then it's OK, a mis-match is to be expected when there
+		 *  is only one edgeuse&mate from this shell on this edge.
+		 */
+		if (fu->orientation != curr_orient &&
+		    eur != eu1->eumate_p ) {
+			nmg_pr_fu_around_eu( eu_orig, tol );
+			rt_log("nmg_eu_2s_orient_bad(eu=x%x, s1=x%x, s2=x%x) bad radial parity eu1=x%x, eur=x%x, eurstart=x%x\n",
+				eu_orig, s1, s2, eu1, eur, eurstart);
+		    	ret = 1;
+		    	goto out;
+		}
+
+		/* If eu belongs to a face, eumate had better, also! */
+		eu1 = eur->eumate_p;
+		NMG_CK_LOOPUSE(eu1->up.lu_p);
+		fu = eu1->up.lu_p->up.fu_p;
+		NMG_CK_FACEUSE(fu);
+		curr_orient = fu->orientation;
+		eur = eu1->radial_p;
+	} while (eur != eurstart);
+	/* All is well, the whole way 'round */
+out:
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_eu_2s_orient_bad(eu=x%x, s1=x%x, s2=x%x) ret=%d\n",
+			eu_orig, s1, s2, ret);
+	}
+	return ret;
 }
 
 /*
