@@ -33,20 +33,18 @@ libmfb \- multiple device, generic frame buffer library
 .B FBIO *fbiop;
 .B ColorMap *cmap;
 .P
-.B int fb_clear(fbiop);
+.B int fb_clear(fbiop, colorp);
+.B FBIO *fbiop;
+.B Pixel *colorp;
+.P
+.B char *fb_gettype(fbiop);
 .B FBIO *fbiop;
 .P
-.B int fb_gettype(fbiop);
+.B int fb_getwidth(fbiop);
 .B FBIO *fbiop;
 .P
-.B int fb_getsize(fbiop);
+.B int fb_getheight(fbiop);
 .B FBIO *fbiop;
-.P
-.B void fb_setsize(size);
-.P
-.B void fb_setbackground(fbiop, pixelp);
-.B FBIO *fbiop;
-.B Pixel *pixelp;
 .P
 /* Hardware specific frame buffer routines: */
 .P
@@ -98,6 +96,8 @@ images.
 The coordinate system used is first-quadrant (0..width, 0..height),
 with integer addressing.  Translation to hardware coordinate systems
 is handled by the library.
+For unfortuante historical reasons, multi-line transfers proceed towards
+lower numbered scanlines.
 .P
 This version of the library assumes that red, green, and blue
 intensities are described by unsigned 8-bit bytes in the range (0..255).
@@ -115,6 +115,7 @@ the left-most portion of each entry is used.
 is used to open a frame buffer file
 .IR fbfile\^ .
 The file may be either the name of a supported frame buffer interface,
+referenced as "/dev/interface",
 or the name of a UNIX file.
 The routine will try to determine if the file opened was
 a real frame buffer by examining the name,
@@ -133,7 +134,9 @@ is set, then the value of
 is used;
 otherwise a default
 frame buffer device is used.
-A "debug" interface exists which just logs all calls to the library.
+A "/dev/debug" interface exists which just logs all calls to the library.
+If the remote interface is available, remote devices can be accessed
+as "hostname:/dev/device".
 The
 .I width\^
 and
@@ -141,6 +144,8 @@ and
 parameters specify the initial size of display desired.
 On a successful open,
 the frame buffer I/O (FBIO) structure pointer is returned.
+This structure contains size you were actually given, as well
+as the maximum possible size for the selected device.
 A return of FBIO_NULL indicates failure.
 .P
 .I Fb_close\^
@@ -168,6 +173,11 @@ by
 .I x\^
 and
 .IR y\^ .
+.I Fb_read\^
+and
+.I Fb_write\^
+both return the number of pixels actually read or written, or
+-1 on error.
 .P
 .I Fb_rmap\^
 reads in the color map from the frame buffer and
@@ -185,41 +195,22 @@ is
 then a linear color map is used as the default.
 .P
 .I Fb_clear\^
-erases the frame buffer by setting all pixels to the background
+erases the frame buffer by setting all pixels to the given
 color.
-The default is black.
+If the color pointer is NULL, black will be used.
 On a UNIX file, this entails writing the entire file,
 which is an expensive operation, whereas on most
 frame buffer displays
 this can be done in less than a second by a special command.
 .P
 .I Fb_gettype\^
-returns the type of the frame buffer specified by the FBIO pointer.
-The
-valid values are defined in
-.BR fbm.h .
+returns a pointer to a string describing the frame buffer
+specified by the FBIO pointer.
 .P
-.I Fb_setsize\^
-should be used to specify the size of the frame buffer in pixels per side.
-Typically this is either 512 or 1024 (the frame buffer is
-assumed to be square).
-.I Fb_setsize\^
-should be used before
-.I fb_open\^
-if the frame buffer size is not the default, 512.
-.I Fb_getsize\^
-returns the current size of the frame buffer.
-Regardless of whether a high or low resolution device name was provided to
-.IR fb_open\^ ,
-that device name will be altered to reflect the current frame buffer size.
-.P
-.I Fb_setbackground\^
-sets the desired background color
-as specified by the pixel pointed to
-by
-.IR pixelp\^ .
-.I Fb_clear\^
-will attempt to clear the frame buffer to this color.
+.I Fb_getwidth\^
+and
+.I Fb_getheight\^
+returns the current size of the FBIO frame buffer.
 .P
 The following routines work in conjunction with those described above
 to provide functions which only apply if the frame buffer
@@ -355,18 +346,18 @@ RasterTek 1/80 (untested)
 .P
 TCP-based network links to a remote frame-buffer
 .SH EXAMPLE
-.I Libfb\^
+.I Libmfb\^
 can be loaded with any
 C
 program:
 .P
 .RS
-$ \|\fI/bin/cc \|program.c \|-lfb\fP
+$ \|\fI/bin/cc \|program.c \|-lmfb\fP
 .RE
 .SH FILES
 fbm.h
 .br
-/usr/local/lib/libfb.a
+/usr/local/lib/libmfb.a
 .SH "SEE ALSO"
 ik(4B), fb(5B), rle(5B).
 .SH "RETURN VALUES"
@@ -390,6 +381,12 @@ return \-1 to indicate failure.
 .I Fb_open\^
 returns FBIO_NULL to indicate failure, and a non-null FBIO structure pointer
 upon success.
+.IR fb_read\^ ,
+and
+.IR fb_write\^
+return the number of pixels actually read or written.
+.IR fb_gettype\^
+returns a pointer to NULL terminated a description string.
 .SH AUTHORS
 Gary S. Moss, BRL/VLD-VMB
 .br
