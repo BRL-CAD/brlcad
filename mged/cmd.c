@@ -1069,7 +1069,7 @@ cmd_mged_glob(clientData, interp, argc, argv)
 {
 	struct bu_vls dest, src;
 
-	if(argc != 2){
+	if (argc != 2) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1082,7 +1082,7 @@ cmd_mged_glob(clientData, interp, argc, argv)
 	bu_vls_init(&src);
 	bu_vls_init(&dest);
 	bu_vls_strcpy(&src, argv[1]);
-	mged_compat(&dest, &src, 1);
+	mged_compat(&dest, &src, 0);
 	Tcl_AppendResult(interp, bu_vls_addr(&dest), (char *)NULL);
 	bu_vls_free(&src);
 	bu_vls_free(&dest);
