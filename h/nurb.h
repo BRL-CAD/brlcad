@@ -154,8 +154,6 @@ struct oslo_mat {
 	fastf_t		* o_vec;
 };
 
-#define EPSILON 0.0001
-#define APX_EQ(x,y)    (fabs(x - y) < EPSILON)
 #define MAX(i,j)    ( (i) > (j) ? (i) : (j) )
 #define MIN(i,j)    ( (i) < (j) ? (i) : (j) )
 
