@@ -2290,7 +2290,8 @@ FBIO *ifp;
 {
 
 	XVisualInfo *vip, *vibase, *maxvip, template;
-	int good[40];
+#define NGOOD 200
+	int good[NGOOD];
 	int num, i, j;
 	int m_hard_cmap, m_sing_buf, m_doub_buf;
 	int use, rgba, dbfr;
@@ -2298,6 +2299,8 @@ FBIO *ifp;
 	m_hard_cmap = ((ifp->if_mode & MODE_7MASK)==MODE_7NORMAL);
 	m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
 	m_doub_buf =  !m_sing_buf;
+
+	bzero((void *)&template, sizeof(XVisualInfo));
 	
 	/* get a list of all visuals on this display */	
 	vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &template, &num);
@@ -2313,6 +2316,16 @@ FBIO *ifp;
 			if (!rgba)
 				continue;
 			/* desires */
+			/* X_CreateColormap needs a DirectColor visual */
+			/* There should be some way of handling this with TrueColor,
+			 * for example:
+			    visual id:    0x50
+			    class:    TrueColor
+			    depth:    24 planes
+			    available colormap entries:    256 per subfield
+			    red, green, blue masks:    0xff0000, 0xff00, 0xff
+			    significant bits in color specification:    8 bits
+			 */
 			if ( (m_hard_cmap) && (vip->class!=DirectColor))
 				continue;
 			if ( (m_hard_cmap) && (vip->colormap_size<256))
@@ -2324,6 +2337,10 @@ FBIO *ifp;
 				continue;
 
 			/* this visual meets criteria */
+			if( j >= NGOOD-1 )  {
+				fb_log("ogl_open:  More than %d candidate visuals!\n", NGOOD);
+				break;
+			}
 			good[j++] = i;
 		}
 		
@@ -2368,4 +2385,3 @@ FBIO *ifp;
 	}
 		
 }
-
