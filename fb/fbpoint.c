@@ -39,7 +39,7 @@ char	*yprefix = NULL;
 char	null_str = '\0';
 
 char usage[] = "\
-Usage: fbpoint [-h] [-x[prefix]] [-y[prefix]] [-X init_x] [-Y init_y]\n";
+Usage: fbpoint [-h] [-x[prefix]] [-y[prefix]] [initx inity]\n";
 
 static char *help = "\
 Char:   Command:                                                \r\n\
@@ -51,7 +51,7 @@ H ^B	Left (many)\r\n\
 J ^N	Down (many)\r\n\
 K ^P	Up (many)\r\n\
 L ^F	Right (many)\r\n\
-q Q	QUIT\r\n\
+q Q cr	QUIT\r\n\
 ";
 
 SimpleInput()	/* ==== get keyboard input.	*/
@@ -75,6 +75,7 @@ SimpleInput()	/* ==== get keyboard input.	*/
 
 	case 'q':
 	case 'Q':
+	case '\r':
 		Run = 0;
 		return;
 #define ctl(x)	('x'&037)
@@ -135,24 +136,22 @@ char **argv;
 			if( yflag++ != 0 )
 				break;
 			yprefix = &argv[1][2];
-		} else if( strncmp( argv[1], "-X", 2 ) == 0 ) {
-			if( strlen(argv[1]) > 2 )
-				curX = atoi( &argv[1][2] );
-			else if( argc > 1 ) {
-				curX = atoi( argv[2] );
-				argc--; argv++;
-			} else
-				;	/* no value given */
-		} else if( strncmp( argv[1], "-Y", 2 ) == 0 ) {
-			if( strlen(argv[1]) > 2 )
-				curY = atoi( &argv[1][2] );
-			else if( argc > 1 ) {
-				curY = atoi( argv[2] );
-				argc--; argv++;
-			} else
-				;	/* no value given */
 		} else
 			break;
+		argc--;
+		argv++;
+	}
+	/*
+	 * Check for optional starting coordinate.
+	 * Test for bad flags while we're at it.
+	 */
+	if( argc > 1 && argv[1][0] != '-' ) {
+		curX = atoi( argv[1] );
+		argc--;
+		argv++;
+	}
+	if( argc > 1 && argv[1][0] != '-' ) {
+		curY = atoi( argv[1] );
 		argc--;
 		argv++;
 	}
