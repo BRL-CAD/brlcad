@@ -8,7 +8,8 @@
 			star.pix star.log \
 			bldg391.pix bldg391.log \
 			m35.pix m35.log \
-			lgt1.pix lgt2.pix lgt3.pix
+			lgt1.pix lgt2.pix \
+			lgt3.pix sphflake.pix
 #define SRCDIR	pix
 #define FILES	/**/
 #define	SRCSUFF	.pix

@@ -6,7 +6,7 @@
 
 PRODUCTS	= moss.p_asc star.p_asc bldg391.p_asc world.p_asc \
 		  moss.log star.log bldg391.log world.log \
-		  m109.p_asc
+		  m109.p_asc sphflake.log
 
 DISTDIR		= /m/dist/pix
 
@@ -26,6 +26,8 @@ world.p_asc:	world.pix
 star.p_asc:	star.pix
 	$(P2A) < $? > $*.p_asc ; chmod 444 $*.p_asc
 m109.p_asc:	m109.pix
+	$(P2A) < $? > $*.p_asc ; chmod 444 $*.p_asc
+sphflake.p_asc:	sphflake.pix
 	$(P2A) < $? > $*.p_asc ; chmod 444 $*.p_asc
 
 depend:

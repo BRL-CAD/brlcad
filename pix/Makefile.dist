@@ -10,7 +10,7 @@
 A2P=../conv/asc2pix
 P2A=../conv/pix2asc
 
-all:	moss.pix world.pix star.pix bldg391.pix m109.pix
+all:	moss.pix world.pix star.pix bldg391.pix m109.pix sphflake.pix
 
 clean:
 	echo "pix: clean"
