@@ -549,7 +549,7 @@ struct partition *PartHeadp;
 	VSETALL( sw.sw_color, 1 );
 	VSETALL( sw.sw_basecolor, 1 );
 
-	viewshade( ap, pp, &sw );
+	(void)viewshade( ap, pp, &sw );
 
 	VSCALE( filter_color, sw.sw_color, sw.sw_transmit );
 	if( filter_color[0] + filter_color[1] + filter_color[2] < 0.01 )  {
