@@ -2777,18 +2777,19 @@ int			pos;
 int			multi;
 int			other_rs_state;
 {
-	struct vertexuse	*vu;
 	int			assessment;
 	int			old_state;
 	int			new_state;
 	CONST struct state_transitions	*stp;
+	struct vertexuse	*vu;
 	struct vertexuse	*prev_vu;
-	struct edgeuse		*eu;
 	struct loopuse		*lu;
-	struct faceuse		*fu;
 	struct loopuse		*prev_lu;
-	struct edgeuse	*first_new_eu;
-	struct edgeuse	*second_new_eu;
+	struct faceuse		*fu;
+	struct edgeuse		*eu;
+	struct edgeuse		*first_new_eu;
+	struct edgeuse		*second_new_eu;
+	struct edgeuse		*old_eu;
 	int			e_assessment;
 	int			action;
 	int			e_pos;
@@ -3114,16 +3115,24 @@ rt_log("force next eu to ray\n");
 		 *  join the two loops into one loop.
 		 *  No edgeuses are deleted at this stage,
 		 *  so some "snakes" may appear in the process.
+		 *  See if there is an edge joining the 2 vertices already.
 		 */
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log("nmg_join_2loops(prev_vu=x%x, vu=x%x)\n",
-			prev_vu, vu);
+		old_eu = nmg_findeu(prev_vu->v_p, vu->v_p, (struct shell *)NULL,
+			(struct edgeuse *)NULL, 0);
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)  {
+			rt_log("nmg_face_state_transition() joining 2 loops, prev_vu=x%x, vu=x%x, old_eu=x%x\n",
+				prev_vu, vu, old_eu);
+		}
 
 		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC ||
 		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
 		    	/* One (or both) is a loop of a single vertex */
 		    	/* This is the special boolean vertex marker */
-		    	struct edgeuse *new_eu;
+
+		    	/* See if there is an existing edge between
+		    	 * the two vertices.
+		    	 */
 
 			if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *vu->up.magic_p != NMG_LOOPUSE_MAGIC )  {
@@ -3131,30 +3140,14 @@ rt_log("force next eu to ray\n");
 			    		rt_log( "\tprev_vu is a vertex loop\n" );
 			    	/* if prev_vu is geometrically on an edge that goes through vu,
 			    	 * then split that edge at prev_vu */
-/* XXX If there is an ON condition, this is bad. */
-#if 0
-			    	if( nmg_insert_vu_if_on_edge( prev_vu , vu , new_eu , rs->tol ) )
-			    		rt_bomb("insert_vu_if_on_edge 1\n");
-			    	if( nmg_insert_vu_if_on_edge( prev_vu , vu , new_eu , rs->tol ) )
-			    		rs->vu[pos-1] = new_eu->vu_p;
-			    	else
-#endif
-				    	rs->vu[pos-1] = nmg_join_singvu_loop( vu, prev_vu );
+				rs->vu[pos-1] = nmg_join_singvu_loop( vu, prev_vu );
 			} else if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *prev_vu->up.magic_p != NMG_LOOPUSE_MAGIC )  {
 			    	if(rt_g.NMG_debug&DEBUG_FCUT)
 			    		rt_log( "\tvu is a vertex loop\n" );
 			    	/* if vu is geometrically on an edge that goes through prev_vu,
 			    	 * then split that edge at vu */
-/* XXX If there is an ON condition, this is bad. */
-#if 0
-			    	if( nmg_insert_vu_if_on_edge( vu , prev_vu , new_eu , rs->tol ) )
-			    		rt_bomb("insert_vu_if_on_edge 2\n");
-			    	if( nmg_insert_vu_if_on_edge( vu , prev_vu , new_eu , rs->tol ) )
-			    		rs->vu[pos] = new_eu->vu_p;
-			    	else
-#endif
-				    	rs->vu[pos] = nmg_join_singvu_loop( prev_vu, vu );
+				rs->vu[pos] = nmg_join_singvu_loop( prev_vu, vu );
 			} else {
 				/* Both are loops of single vertex */
 			    	if(rt_g.NMG_debug&DEBUG_FCUT)
@@ -3181,7 +3174,7 @@ rt_log("force next eu to ray\n");
 		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, rs->vu[pos]->up.eu_p);
 		NMG_CK_EDGEUSE(first_new_eu);
 		if( eu == first_new_eu )  {
-			/*  We know edge geom is null, make it be the isect line */
+			if( old_eu )  nmg_radial_join_eu( old_eu, eu, rs->tol );
 			nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
 		}
 
