@@ -299,6 +299,9 @@ struct bu_mapped_file	*mp;
 {
 	BU_CK_MAPPED_FILE(mp);
 
+	if( bu_debug&BU_DEBUG_MAPPED_FILE )
+		bu_pr_mapped_file("close:uses--", mp);
+
 	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 	--mp->uses;
 	bu_semaphore_release(BU_SEM_MAPPEDFILE);
@@ -335,6 +338,9 @@ int	verbose;
 {
 	struct bu_mapped_file	*mp;
 
+	if( bu_debug&BU_DEBUG_MAPPED_FILE )
+		bu_log("bu_free_mapped_files(verbose=%d)\n", verbose);
+
 	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 
 	for( BU_LIST_FOR( mp, bu_mapped_file, &bu_mapped_file_list ) )  {
@@ -343,7 +349,8 @@ int	verbose;
 		if( mp->uses > 0 )  continue;
 
 		/* Found one that needs to have storage released */
-		if(verbose)  bu_pr_mapped_file( "freeing", mp );
+		if(verbose || (bu_debug&BU_DEBUG_MAPPED_FILE))
+			bu_pr_mapped_file( "freeing", mp );
 
 		BU_LIST_DEQUEUE( &mp->l );
 
