@@ -546,12 +546,6 @@ checkcomb()
 		  return( -1 );
 		}
 
-		if( db_lookup( dbip , name , LOOKUP_NOISY ) == DIR_NULL )
-		{
-		  Tcl_AppendResult(interp, " ", name, " does not exist\n", (char *)NULL);
-		  fclose( fp );
-		  return( -1 );
-		}
 		node_count++;
 	}
 
@@ -798,14 +792,8 @@ char *old_name;
 			name[i] = '\0';
 
 		/* Check for existence of member */
-		if( (dp1=db_lookup( dbip , name , LOOKUP_NOISY )) == DIR_NULL )
-		{
-		  Tcl_AppendResult(interp, " ", name, " does not exist\n", (char *)NULL);
-		  if( rt_tree_array )
-			bu_free( (char *)rt_tree_array, "red: tree list" );
-		  fclose( fp );
-		  return( 1 );
-		}
+		if( (dp1=db_lookup( dbip , name , LOOKUP_QUIET )) == DIR_NULL )
+		  Tcl_AppendResult(interp, "\tWARNING: '", name, "' does not exist\n", (char *)NULL);
 
 		/* get matrix */
 		ptr = strtok( (char *)NULL, delims );
