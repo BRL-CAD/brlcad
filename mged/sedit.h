@@ -61,6 +61,21 @@
 #define	ECMD_PIPE_PT_DEL	32	/* Delete a pipe point */
 #define	ECMD_PIPE_PT_MOVE	33	/* Move a pipe point */
 
+#define	ECMD_ARS_PICK		34	/* select an ARS point */
+#define	ECMD_ARS_NEXT_PT	35	/* select next ARS point in same curve */
+#define	ECMD_ARS_PREV_PT	36	/* select previous ARS point in same curve */
+#define	ECMD_ARS_NEXT_CRV	37	/* select corresponding ARS point in next curve */
+#define	ECMD_ARS_PREV_CRV	38	/* select corresponding ARS point in previous curve */
+#define	ECMD_ARS_MOVE_PT	39	/* translate an ARS point */
+#define	ECMD_ARS_DEL_CRV	40	/* delete an ARS curve */
+#define	ECMD_ARS_DEL_COL	41	/* delete all corresponding points in each curve (a column) */
+#define	ECMD_ARS_DUP_CRV	42	/* duplicate an ARS curve */
+#define	ECMD_ARS_DUP_COL	43	/* duplicate an ARS column */
+#define	ECMD_ARS_MOVE_CRV	44	/* translate an ARS curve */
+#define	ECMD_ARS_MOVE_COL	45	/* translate an ARS column */
+#define ECMD_ARS_PICK_MENU	46	/* display the ARS pick menu */
+#define ECMD_ARS_EDIT_MENU	47	/* display the ARS edit menu */
+
 #define SEDIT_ROTATE (es_edflag == SROT || \
 		     es_edflag == ECMD_TGC_ROT_H || \
 		     es_edflag ==  ECMD_TGC_ROT_AB || \
