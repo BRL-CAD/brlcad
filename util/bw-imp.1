@@ -76,6 +76,11 @@ To threshold and invert the black/white sense of a pix file, use:
 \fIbwmod\| -m\| -8\| -a\| 255\| image.pix\| | \|pix-bw\| | \|bw-imp\| -t1\| |
  ttcp\| -t\| -p35 printhost \fP
 .RE
+.sp
+To use the halftone package:
+.RS
+\fIpix-bw\| -ntsc\| image.pix\| | \|haftone\| | \|bw-imp\| | \| qpr \|\-qi300\fP \|&
+.RE
 .SH "SEE ALSO"
 rle-pix(1), pix-bw(1), bw(5), pix(5)
 .SH DIAGNOSTICS
