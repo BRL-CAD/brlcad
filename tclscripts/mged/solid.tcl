@@ -13,6 +13,9 @@
 #       your "Statement of Terms and Conditions for the Release of
 #       The BRL-CAD Package" agreement.
 #
+# Contributors -
+#
+#
 # Description -
 #	solid_data_vv_pairs - an array that holds the default variable/value pairs.
 #	solid_data_init - initializes the solid_data variables.
@@ -20,6 +23,99 @@
 
 set solid_data_vv_pairs {
     { types {arb8 sph ell tor tgc rec half rpc rhc epa ehy eto part} }
+    { hoc,arb8 "This is an arbitrary convex polyhedron
+with 8 vertices." }
+    { hoc,sph "This is a sphere. The sphere
+has the following input fields:
+
+     V     vector to center of sphere
+     A     radius vector A
+     B     radius vector B
+     C     radius vector C" }
+    { hoc,ell "This is an ellipsoid. The ell
+has the following input fields:
+
+     V     vector to center of ellipsoid
+     A     radius vector A
+     B     radius vector B
+     C     radius vector C" }
+    { hoc,tor "This is a torus. The tor
+has the following input fields:
+
+     V     vector to center of torus
+     H     radius vector, normal to plane of torus
+     r_a   radius in A direction
+     r_h   radius in H direction" }
+    { hoc,tgc "This is a truncated general cone. The tgc
+has the following input fields:
+
+     V     vector to center of tgc
+     H     height vector
+     A     radius of A
+     B     radius of B
+     C     radius of C
+     D     radius of D" }
+    { hoc,rec "This is a right elliptical cylinder. The rec
+has the following input fields:
+
+     V     vector to center of rec
+     H     height vector
+     A     radius of A
+     B     radius of B
+     C     radius of C
+     D     radius of D" }
+    { hoc,half "This is a half space. The half space
+has the following input fields:
+
+     N     outward pointing normal vector
+     d     distance from the origin to the plane" }
+    { hoc,rpc "This is a right parabolic cylinder. The rpc
+has the following input fields:
+
+     V     vector to center of rpc
+     H     height vector
+     B     breadth vector
+     r     scalar half-width of rectangular face" }
+    { hoc,rhc "This is a right hyperbolic cylinder. The rhc
+has the following input fields:
+
+     V     vector to center of rhc
+     H     height vector
+     B     breadth vector
+     r     scalar half-width of rectangular face
+     c     dist from hyperbola to vertex of asymptotes" }
+    { hoc,epa "This is an elliptical paraboloid. The epa
+has the following input fields:
+
+     V     vector to center of epa
+     H     height vector
+     A     vector along semi-major axis
+     r_1   scalar semi-major axis length
+     r_2   scalar semi-minor axis length" }
+    { hoc,ehy "This is a right hyperbolic cylinder. The ehy
+has the following input fields:
+
+     V     vector to center of ehy
+     H     height vector
+     A     vector along semi-major axis
+     r_1   scalar semi-major axis length
+     r_2   scalar semi-minor axis length
+     c     dist from hyperbola to vertex of asymptotes" }
+    { hoc,eto "This is an elliptical torus. The eto
+has the following input fields:
+
+     V     vector from origin to center of eto
+     N     unit normal to plane of eto
+     C     semi-major axis of ellipse
+     r     radius of revolution
+     r_d   semi-minor axis of ellipse" }
+    { hoc,part "This is a particle solid. The particle
+solid has the following input fields:
+
+     V     vector from origin to center of part
+     H     height vector
+     r_v   radius of v
+     r_h   radius of h" }
     { label,arb8 "Arbitrary 8-vertex polyhedron" }
     { label,sph  "Sphere" }
     { label,ell  "Ellipsoid" }
