@@ -96,6 +96,13 @@ char	*argv[];
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
+	/* XXX For visualization purposes, in the debug plot files */
+	{
+		extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
+		/* XXX This value is specific to the Bradley */
+		nmg_eue_dist = 2.0;
+	}
+
 	the_model = nmg_mm();
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
