@@ -171,14 +171,21 @@ do_inside:
 			swp->sw_refrac_index, RI_AIR,
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
+			static long count = 0;
+
 			/* Reflected internally -- keep going */
 			if( (++sub_ap.a_level) <= MAX_IREFLECT )
 				goto do_inside;
 
+			if( ++count > 100 )  {
+				if( (count%100) != 3 )  goto show_err;
+				rt_log("(reflections omitted)\n");
+			}
 			rt_log("rr_render: %s Internal reflection stopped after %d bounces, (x%d, y%d, lvl=%d)\n",
 				pp->pt_inseg->seg_stp->st_name,
 				sub_ap.a_level,
 				sub_ap.a_x, sub_ap.a_y, ap->a_level );
+show_err:		;
 			if(rdebug&RDEBUG_SHOWERR) {
 				VSET( swp->sw_color, 0, 9, 0 );	/* green */
 			} else {
