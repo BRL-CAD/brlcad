@@ -145,7 +145,7 @@ proc init_edit_solid_int { id } {
     incr row
     set esolint_control(buttons) $row
     frame $w._F$row -borderwidth 2
-    button $w.applyB -text "Apply" -command "esolint_apply $id $w"
+    button $w.applyB -text "Apply" -command "esolint_apply $id"
     button $w.resetB -text "Reset" -command "esolint_reset"
     button $w.acceptB -text "Accept" -command "press accept"
     button $w.rejectB -text "Reject" -command "press reject"
@@ -368,7 +368,7 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 
 ## - esolint_apply
 #
-proc esolint_apply { id w } {
+proc esolint_apply { id } {
     global esolint_control
 
     if $esolint_control($id,cflag) {
