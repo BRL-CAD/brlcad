@@ -894,7 +894,8 @@ char			*buf;
 			y += todo;
 		}
 	} else {
-		do_run( start_line*width, end_line*width+width-1 );
+		if( reproject_mode != 2 )
+			do_run( start_line*width, end_line*width+width-1 );
 		(void)rt_get_timer( (struct bu_vls *)NULL, &rt_elapsed_time  );
 		rt_prep_timer();
 
@@ -924,6 +925,33 @@ fp->ff_dist, V3ARGS(fp->ff_hitpt) );
 			npix = fb_writerect( fbp, 0, start_line,
 				width, nlines, bigbuf );
 			if( npix < 0 )  rt_bomb("rtnode: fb_writerect() error\n");
+/* Pure debugging -- form image to the right in fb */
+{
+			op = bigbuf;
+			fp = &curr_float_frame[start_line*width];
+			for( ; npix > 0; fp++,npix-- )  {
+				register int val;
+				if( fp->ff_dist <= -INFINITY )  {
+					/* Red = missed */
+					*op++ = 200;
+					*op++ = 0;
+					*op++ = 0;
+				} else if( fp->ff_frame != curframe )  {
+					/* Green = reprojected */
+					*op++ = 0;
+					*op++ = 200;
+					*op++ = 0;
+				} else {
+					/* Blue = freshly computed */
+					*op++ = 0;
+					*op++ = 0;
+					*op++ = 200;
+				}
+			}
+			npix = fb_writerect( fbp, width, start_line,
+				width, nlines, bigbuf );
+			if( npix < 0 )  rt_bomb("rtnode: fb_writerect() error\n");
+}
 			bu_free( (char *)bigbuf, "bigbuf[] full image buffer");
 		}
 		view_end(&ap);
