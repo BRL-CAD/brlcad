@@ -8,7 +8,21 @@
  *	f_rfarb()	finds arb8 defined by rot & fallback angles, one point,
  *			2 coordinates of the 3 remaining points, and a thickness
  *
+ *  Author -
+ *	Keith A. Applin
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <signal.h>
 #include <stdio.h>
