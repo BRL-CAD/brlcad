@@ -113,7 +113,6 @@ genptr_t	*dpp;
 
 	RT_VLS_CHECK( matparm );
 	GETSTRUCT( lp, light_specific );
-	*dpp = (genptr_t)lp;
 
 	RT_LIST_MAGIC_SET( &(lp->l), LIGHT_MAGIC );
 	lp->lt_intensity = 1000.0;	/* Lumens */
@@ -202,9 +201,11 @@ genptr_t	*dpp;
 
 	if( lp->lt_invisible )  {
 		lp->lt_rp = REGION_NULL;
+		/* Note that *dpp (reg_udata) is left null */
 		return(0);	/* don't show light, destroy it */
 	}
 
+	*dpp = (genptr_t)lp;	/* Associate lp with reg_udata */
 	return(1);
 }
 
