@@ -271,18 +271,18 @@ char *argv[];
 	}
 	/*  Read last line of data.  */
 	(void)fgets(line,150,fpr);
-	if(last_line = 1) (void)sscanf(line,"%lf",&r[0]);
-	if(last_line = 2) (void)sscanf(line,"%lf %lf",&r[0],&r[1]);
-	if(last_line = 3) (void)sscanf(line,"%lf %lf %lf",&r[0],&r[1],&r[2]);
-	if(last_line = 4) (void)sscanf(line,"%lf %lf %lf %lf",&r[0],&r[1],&r[2],
+	if(last_line == 1) (void)sscanf(line,"%lf",&r[0]);
+	if(last_line == 2) (void)sscanf(line,"%lf %lf",&r[0],&r[1]);
+	if(last_line == 3) (void)sscanf(line,"%lf %lf %lf",&r[0],&r[1],&r[2]);
+	if(last_line == 4) (void)sscanf(line,"%lf %lf %lf %lf",&r[0],&r[1],&r[2],
 		&r[3]);
-	if(last_line = 5) (void)sscanf(line,"%lf %lf %lf %lf %lf",
+	if(last_line == 5) (void)sscanf(line,"%lf %lf %lf %lf %lf",
 		&r[0],&r[1],&r[2],&r[3],&r[4]);
-	if(last_line = 6) (void)sscanf(line,"%lf %lf %lf %lf %lf %lf",
+	if(last_line == 6) (void)sscanf(line,"%lf %lf %lf %lf %lf %lf",
 		&r[0],&r[1],&r[2],&r[3],&r[4],&r[5]);
-	if(last_line = 7) (void)sscanf(line,"%lf %lf %lf %lf %lf %lf %lf",
+	if(last_line == 7) (void)sscanf(line,"%lf %lf %lf %lf %lf %lf %lf",
 		&r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6]);
-	if(last_line = 8) (void)sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",
+	if(last_line == 8) (void)sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",
 		&r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6],&r[7]);
 	if(last_line != 0)
 	{
