@@ -55,7 +55,8 @@ librtms_la_SOURCES = \
 	sh_light.c \
 	sh_noise.c \
 	sh_plastic.c \
-	sh_stack.c
+	sh_stack.c \
+	shade.c
 
 EXTRA_DIST = \
 	liboptical.dsp \
