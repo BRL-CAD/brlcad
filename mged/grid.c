@@ -86,6 +86,10 @@ set_grid_draw()
 {
   struct dm_list *dlp;
 
+  if (dbip == DBI_NULL) {
+	  grid_state->gr_draw = 0;
+	  return;
+  }
   grid_set_dirty_flag();
 
   /* This gets done at most one time. */
@@ -132,7 +136,8 @@ draw_grid()
 	fastf_t 		inv_grid_res_v;
 	fastf_t 		inv_aspect;
 
-	if (NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
+	if (dbip == DBI_NULL ||
+	    NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
 	    NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
 		return;
 
@@ -226,8 +231,9 @@ snap_to_grid(
   register fastf_t sf;
   register fastf_t inv_sf;
 
-  if(NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-     NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+  if (dbip == DBI_NULL ||
+      NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
+      NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
     return;
 
   sf = view_state->vs_Viewscale*base2local;
@@ -273,6 +279,9 @@ snap_keypoint_to_grid()
   point_t model_pt;
   struct bu_vls cmd;
 
+  if (dbip == DBI_NULL)
+	  return;
+
   if (state != ST_S_EDIT && state != ST_O_EDIT) {
 	  bu_log("snap_keypoint_to_grid: must be in an edit state\n");
 	  return;
@@ -306,6 +315,9 @@ snap_view_center_to_grid()
 {
   point_t view_pt, model_pt;
 
+  if (dbip == DBI_NULL)
+	  return;
+
   MAT_DELTAS_GET_NEG(model_pt, view_state->vs_toViewcenter);
   MAT4X3PNT(view_pt, view_state->vs_model2view, model_pt);
   snap_to_grid(&view_pt[X], &view_pt[Y]);
@@ -332,8 +344,9 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
   fastf_t sf, inv_sf;
   int nh, nv;
 
-  if(NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-     NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+  if (dbip == DBI_NULL ||
+      NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
+      NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
     return;
 
   sf = view_state->vs_Viewscale*base2local;
@@ -371,8 +384,9 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
   point_t model_pt, view_pt;
   point_t vcenter, diff;
 
-  if(NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-     NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+  if (dbip == DBI_NULL ||
+      NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
+      NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
     return;
 
   round_to_grid(&view_dx, &view_dy);

@@ -207,6 +207,9 @@ XMotionEvent *xmotion;
   fastf_t fx, fy;
   fastf_t td;
 
+  if (dbip == DBI_NULL)
+	  return;
+
   bu_vls_init(&cmd);
 
   mx = xmotion->x;
@@ -715,6 +718,9 @@ XDeviceMotionEvent *dmep;
   int save_edflag = -1;
   int setting;
   fastf_t f;
+
+  if (dbip == DBI_NULL)
+	  return;
 
   if(button0){
     common_dbtext((adc_state->adc_draw ? kn1_knobs:kn2_knobs)[dmep->first_axis]);
