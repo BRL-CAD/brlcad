@@ -545,7 +545,6 @@ register struct application *ap;
 	struct seg		new_segs;	/* from solid intersections */
 	struct seg		waiting_segs;	/* awaiting rt_boolweave() */
 	struct seg		finished_segs;	/* processed by rt_boolweave() */
-	AUTO int		ret;
 	AUTO fastf_t		last_bool_start;
 	AUTO union bitv_elem	*solidbits;	/* bits for all solids shot so far */
 	AUTO bitv_t		*regionbits;	/* bits for all involved regions */
@@ -688,7 +687,7 @@ register struct application *ap;
 	    		goto weave;
 	    	}
 		rtip->nmiss_model++;
-		ret = ap->a_miss( ap );
+		ap->a_return = ap->a_miss( ap );
 		status = "MISS model";
 		goto out;
 	}
@@ -846,7 +845,7 @@ weave:
 
 	/* finished_segs chain now has all segments hit by this ray */
 	if( RT_LIST_IS_EMPTY( &(finished_segs.l) ) )  {
-		ret = ap->a_miss( ap );
+		ap->a_return = ap->a_miss( ap );
 		status = "MISS solids";
 		goto out;
 	}
@@ -860,7 +859,7 @@ weave:
 		regionbits, ap);
 
 	if( FinalPart.pt_forw == &FinalPart )  {
-		ret = ap->a_miss( ap );
+		ap->a_return = ap->a_miss( ap );
 		status = "MISS bool";
 		RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
 		RT_FREE_SEG_LIST( &finished_segs, ap->a_resource );
@@ -890,7 +889,7 @@ hitit:
 	RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
 	RT_FREE_SEG_LIST( &finished_segs, ap->a_resource );
 
-	ret = ap->a_hit( ap, &FinalPart );
+	ap->a_return = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
 
 	RT_FREE_PT_LIST( &FinalPart, ap->a_resource );
@@ -912,9 +911,9 @@ out:
 			ap->a_x, ap->a_y,
 			ap->a_level,
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?",
-			status, ret);
+			status, ap->a_return);
 	}
-	return( ret );
+	return( ap->a_return );
 }
 
 /*
