@@ -1,8 +1,8 @@
 /*
  *			T R I . C
  *
- *  Program to generate recursive 3-d triangles (arb4).
- *  Inspired by the SigGraph paper of ???
+ *  Program to generate recursive 3-d pyramids (arb4).
+ *  Inspired by the SigGraph paper of Glasser.
  *
  *  Author -
  *	Michael John Muuss
@@ -34,7 +34,7 @@ char	**argv;
 	int depth;
 
 	if( argc != 2 )  {
-		fprintf(stderr, "Usage:  tri recursion\n");
+		fprintf(stderr, "Usage:  pyramid recursion\n");
 		exit(1);
 	}
 	depth = atoi( argv[1] );
@@ -42,11 +42,14 @@ char	**argv;
 
 	mk_id( stdout, "Triangles" );
 
-	do_leaf();
+	do_leaf("leaf");
+	do_pleaf("polyleaf");
 	do_tree("tree", depth);
 }
 
-do_leaf()
+/* Make a leaf node out of an ARB4 */
+do_leaf(name)
+char	*name;
 {
 	point_t pt[4];
 
@@ -55,7 +58,87 @@ do_leaf()
 	VSET( pt[2], 0.5, sin60, 0);
 	VSET( pt[3], 0.5, sin60/3, sin60 );
 
-	mk_arb4( stdout, "leaf", pt );
+	mk_arb4( stdout, name, pt );
+}
+
+/* Make a leaf node out of 4 polygons */
+do_pleaf(name)
+char	*name;
+{
+	point_t pt[4];
+	fastf_t	verts[5][3];
+	fastf_t	norms[5][3];
+	point_t	centroid;
+	register int i;
+
+	VSET( pt[0], 0, 0, 0);
+	VSET( pt[1], 1, 0, 0);
+	VSET( pt[2], 0.5, sin60, 0);
+	VSET( pt[3], 0.5, sin60/3, sin60 );
+
+	VMOVE( centroid, pt[0] );
+	for( i=1; i<4; i++ )  {
+		VADD2( centroid, centroid, pt[i] );
+	}
+	VSCALE( centroid, centroid, 0.25 );
+
+	mk_polysolid( stdout, name );
+
+	VMOVE( verts[0], pt[0] );
+	VMOVE( verts[1], pt[1] );
+	VMOVE( verts[2], pt[2] );
+	pnorms( norms, verts, centroid, 3 );
+	mk_facet( stdout, 3, verts, norms );
+
+	VMOVE( verts[0], pt[0] );
+	VMOVE( verts[1], pt[1] );
+	VMOVE( verts[2], pt[3] );
+	pnorms( norms, verts, centroid, 3 );
+	mk_facet( stdout, 3, verts, norms );
+
+	VMOVE( verts[0], pt[0] );
+	VMOVE( verts[1], pt[2] );
+	VMOVE( verts[2], pt[3] );
+	pnorms( norms, verts, centroid, 3 );
+	mk_facet( stdout, 3, verts, norms );
+
+	VMOVE( verts[0], pt[1] );
+	VMOVE( verts[1], pt[2] );
+	VMOVE( verts[2], pt[3] );
+	pnorms( norms, verts, centroid, 3 );
+	mk_facet( stdout, 3, verts, norms );
+}
+
+/*
+ *  Find the single outward pointing normal for a facet.
+ *  Assumes all points are coplanar (they better be!).
+ */
+pnorms( norms, verts, centroid, npts )
+fastf_t	norms[5][3];
+fastf_t	verts[5][3];
+point_t	centroid;
+int	npts;
+{
+	register int i;
+	vect_t	ab, ac;
+	vect_t	n;
+	vect_t	out;		/* hopefully points outwards */
+
+	VSUB2( ab, verts[1], verts[0] );
+	VSUB2( ac, verts[2], verts[0] );
+	VCROSS( n, ab, ac );
+	VUNITIZE( n );
+
+	/* If normal points inwards (towards centroid), flip it */
+	VSUB2( out, verts[0], centroid );
+	if( VDOT( n, out ) < 0 )  {
+		VREVERSE( n, n );
+	}
+
+	/* Use same normal for all vertices (flat shading) */
+	for( i=0; i<npts; i++ )  {
+		VMOVE( norms[i], n );
+	}
 }
 
 do_tree(name, level)
