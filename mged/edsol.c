@@ -904,12 +904,12 @@ mat_t		mat;
 
 			RT_PART_CK_MAGIC( part );
 
-			if( strcmp( cp , "V" ) )
+			if( !strcmp( cp , "V" ) )
 			{
 				VMOVE( mpt , part->part_V );
 				*strp = "V";
 			}
-			else if( strcmp( cp , "H" ) )
+			else if( !strcmp( cp , "H" ) )
 			{
 				VADD2( mpt , part->part_V , part->part_H );
 				*strp = "H";	
@@ -919,6 +919,7 @@ mat_t		mat;
 				VMOVE( mpt , part->part_V );
 				*strp = "V";
 			}
+			break;
 		}
 	case ID_PIPE:
 		{
