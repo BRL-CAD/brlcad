@@ -49,6 +49,7 @@ struct light_specific {
 	struct	region *lt_rp;	/* our region of origin */
 	int	lt_pt_count;
 	struct light_pt lt_sample_pts[MAX_LIGHT_SAMPLES];
+	fastf_t lt_parse_pt[6];
 };
 #define LIGHT_NULL	((struct light_specific *)0)
 #define LIGHT_MAGIC	0xdbddbdb7
