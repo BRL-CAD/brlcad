@@ -6,6 +6,7 @@ anim_fly - make animation table to simulate flying motion
 .B [-f factor]
 .B [-r]
 .B [-p integer] 
+.B [-b max_bank_angle]
 .B < in.table 
 .B > out.table
 .SH DESCRIPTION
@@ -22,15 +23,23 @@ banking.
 .TP
 .B -f#
 This option specifies a factor to control the severity of the banking.
-The best factor depends mainly on the scale of the path
-being traveled, and can best be determined by trial and error. If the
+The best factor is a subjective decision; a good starting point can best
+be obtained by using the -b option. Animations representing aircraft
+of different scales will need different factors.
+If the
 slightest curve throws the plane into a 90 degree bank, the factor is
 too large; if it doesn't bank enough, the factor is too small. The size
-of the best factor varies inversely with the size of the plane. As a
-rule of thumb, if the plane is on the order of 1000 units, the factor
-should be on the order of 1/1,000. If a factor of 0 is used, there will
+of the best factor varies inversely with the size of the imagined
+aircraft plane. 
+If a factor of 0 is used, there will
 be no banking. This would be appropriate for animating a ground
 vehicle.
+.TP
+.B -b#
+This option is used to estimate a good value for the -f option. The
+parameter is the maximum desired banking angle. Anim_fly then computes
+the factor necessary to keep the banking below the specified angle. This
+value is returned instead of anim_fly's usual output.
 .TP
 .B -r
 Suppress vertical loop smoothing.
