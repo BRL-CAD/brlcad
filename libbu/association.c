@@ -55,6 +55,8 @@ int	field_sep;
     struct rt_vls	*vp = 0;
     struct rt_vls	buffer;
 
+	/* XXX NONPARALLEL */
+	/* I'd prefer using "rt_open_mapped_file()" here instead, I think  -Mike */
     if ((fp = fopen(fname, "r")) == NULL)
     {
 	/*	XXX
