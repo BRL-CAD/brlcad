@@ -1188,7 +1188,7 @@ char	**argv;
 	(void)fprintf(tabptr,"5 -4         user         : %s\n",getpwuid(getuid())->pw_gecos);
 	(void)fprintf(tabptr,"6 -3         target title : %s\n",cur_title);
 	(void)fprintf(tabptr,"7 -2         target units : %s\n",
-		rt_units_string(dbip->dbi_local2base) );
+		bu_units_string(dbip->dbi_local2base) );
 	(void)fprintf(tabptr,"8 -1         objects      :");
 	for(i=2; i<argc; i++) {
 		if( (i%8) == 0 )

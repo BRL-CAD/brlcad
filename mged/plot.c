@@ -419,7 +419,7 @@ char	**argv;
 	fclose(fp_w);
 
 	Tcl_AppendResult(interp, "Presented area from this viewpoint, square ",
-			 rt_units_string(dbip->dbi_local2base), ":\n", (char *)NULL);
+			 bu_units_string(dbip->dbi_local2base), ":\n", (char *)NULL);
 
 	/* Read result */
 	fgets(result, MAXLINE, fp_r);

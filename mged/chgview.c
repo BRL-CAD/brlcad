@@ -3496,7 +3496,7 @@ char	**argv;
 
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "\tabs %g %s\n", mged_abs_tol * base2local,
-			  rt_units_string(dbip->dbi_local2base) );
+			  bu_units_string(dbip->dbi_local2base) );
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	  } else {
@@ -3539,7 +3539,7 @@ char	**argv;
 	    bu_vls_printf(&vls,"Calculational tolerances:\n");
 	    bu_vls_printf(&vls,
 			  "\tdistance = %g %s\n\tperpendicularity = %g (cosine of %g degrees)\n",
-			   mged_tol.dist*base2local, rt_units_string(local2base), mged_tol.perp,
+			   mged_tol.dist*base2local, bu_units_string(local2base), mged_tol.perp,
 			  acos(mged_tol.perp)*bn_radtodeg);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);

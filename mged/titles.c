@@ -286,7 +286,7 @@ struct bu_vls *overlay_vls;
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(units)", MGED_DISPLAY_VAR);
 	Tcl_SetVar(interp, bu_vls_addr(&vls),
-		   (char *)rt_units_string(dbip->dbi_local2base), TCL_GLOBAL_ONLY);
+		   (char *)bu_units_string(dbip->dbi_local2base), TCL_GLOBAL_ONLY);
 
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f",
@@ -471,7 +471,7 @@ if(mged_variables->mv_faceplate){
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls,
 		      " cent=(%s, %s, %s), %s %s, ", cent_x, cent_y, cent_z,
-		      size, rt_units_string(dbip->dbi_local2base));
+		      size, bu_units_string(dbip->dbi_local2base));
 	bu_vls_printf(&vls,
 		       "az=%3.2f el=%3.2f tw=%3.2f ang=(%s, %s, %s)",
 		      view_state->vs_azimuth,
