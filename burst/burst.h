@@ -207,7 +207,7 @@ typedef char *pointer;			/* generic pointer */
 #define InsideAir(rp)	(Air(rp)&& !OutsideAir(rp))
 
 #define Malloc_Bomb( _bytes_ ) \
-                rt_log( "\"%s\"(%d) : allocation of %d bytes failed.\n",\
+                bu_log( "\"%s\"(%d) : allocation of %d bytes failed.\n",\
                                 __FILE__, __LINE__, _bytes_ )
 
 #define Swap_Doubles( a_, b_ ) \

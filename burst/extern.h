@@ -93,9 +93,9 @@ extern void prompt();
 extern void readCmdFile();
 #if defined(HAVE_STDARG_H)
 extern void prntScr( char *, ...);
-extern void rt_log( char *, ... );
+extern void bu_log( char *, ... );
 #else
-extern void rt_log();
+extern void bu_log();
 extern void prntScr();
 #endif
 extern void warning();

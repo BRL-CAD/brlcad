@@ -50,7 +50,7 @@ register struct xray	*rayp;
 	if( plotfp == NULL )
 		return;
 	VJOIN1( endpoint, rayp->r_pt, cellsz, rayp->r_dir );
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	pl_color( plotfp, R_BURST, G_BURST, B_BURST );
 #if 0
 	pl_3line(	plotfp,
@@ -64,7 +64,7 @@ register struct xray	*rayp;
 #else
 	pl_3point( plotfp, (int) endpoint[X], (int) endpoint[Y], (int) endpoint[Z] );
 #endif
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 	return;
 	}
 
@@ -77,7 +77,7 @@ struct region		*regp;
 	{
 	if( plotfp == NULL )
 		return;
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	pl_3line(	plotfp,
 			(int) ihitp->hit_point[X],
 			(int) ihitp->hit_point[Y],
@@ -86,6 +86,6 @@ struct region		*regp;
 			(int) ohitp->hit_point[Y],
 			(int) ohitp->hit_point[Z]
 			);
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 	return;
 	}

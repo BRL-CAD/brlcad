@@ -82,9 +82,9 @@ static char *pgmverp = "2.2";
 		if(	tokptr == NULL\
 		    ||	sscanf( tokptr, (ptr)->fmt, &(var) ) != 1 )\
 			{\
-			rt_log( "ERROR -- command syntax:\n" );\
-			rt_log( "\t%s\n", cmdbuf );\
-			rt_log( "\tcommand (%s): argument (%s) is of wrong type, %s expected.\n",\
+			bu_log( "ERROR -- command syntax:\n" );\
+			bu_log( "\t%s\n", cmdbuf );\
+			bu_log( "\tcommand (%s): argument (%s) is of wrong type, %s expected.\n",\
 				cmdptr, tokptr == NULL ? "(null)" : tokptr,\
 				(ptr)->fmt );\
 			}\

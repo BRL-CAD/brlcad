@@ -85,7 +85,7 @@
 #define V_Length( a, l ) \
 		{	double f, m; \
 		if( (m=Mag(a)) == 0.0 ) \
-			rt_log( "Magnitude is zero!\n" ); \
+			bu_log( "Magnitude is zero!\n" ); \
 		else \
 			{ \
 			f = (l)/m; \

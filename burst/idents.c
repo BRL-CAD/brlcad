@@ -28,12 +28,12 @@ int		ident;
 register Ids	*idp;
 	{
 #if DEBUG_IDENTS
-	rt_log( "findIdents(%d)\n", ident );
+	bu_log( "findIdents(%d)\n", ident );
 #endif
 	for( idp = idp->i_next ; idp != IDS_NULL; idp = idp->i_next )
 		{
 #if DEBUG_IDENTS
-		rt_log( "lower=%d, upper=%d\n", (int) idp->i_lower,
+		bu_log( "lower=%d, upper=%d\n", (int) idp->i_lower,
 			(int) idp->i_upper );
 #endif
 		if(	ident >= (int) idp->i_lower
@@ -42,7 +42,7 @@ register Ids	*idp;
 			return	true;
 		}
 #if DEBUG_IDENTS
-	rt_log( "returned false\n" );
+	bu_log( "returned false\n" );
 #endif
 	return	false;
 	}
@@ -131,7 +131,7 @@ FILE	*fp;
 				break;
 			else
 				{
-				rt_log( "readColors(): only %d items read\n",
+				bu_log( "readColors(): only %d items read\n",
 					items );
 				continue;
 				}

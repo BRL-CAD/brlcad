@@ -84,7 +84,7 @@ int type;
 	if( plotfile[0] == NUL )
 		return;
 	assert( plotfp != NULL );
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	switch( type )
 		{
 	case C_CRIT :
@@ -120,10 +120,10 @@ int type;
 				 );
 		break;
 	default :
-		rt_log( "colorPartition: bad type %d.\n", type );
+		bu_log( "colorPartition: bad type %d.\n", type );
 		break;
 		}
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 	return;
 	}
 
@@ -155,7 +155,7 @@ doBursts()
 		if( ! burstPoint( &ag, zaxis, burstpoint ) )
 			{
 			/* fatal error in application routine */
-			rt_log( "Fatal error: raytracing aborted.\n" );
+			bu_log( "Fatal error: raytracing aborted.\n" );
 			return	false;
 			}
 		if( ! TSTBIT(firemode,FM_FILE) )
@@ -351,14 +351,14 @@ struct partition *pheadp;
 
 		VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 			ap->a_ray.r_dir );
-		rt_log( "OVERLAP:\n" );
-		rt_log( "reg=%s isol=%s,\n",
+		bu_log( "OVERLAP:\n" );
+		bu_log( "reg=%s isol=%s,\n",
 			reg1->reg_name, pp->pt_inseg->seg_stp->st_name
 			);
-		rt_log( "reg=%s osol=%s,\n",
+		bu_log( "reg=%s osol=%s,\n",
 			reg2->reg_name, pp->pt_outseg->seg_stp->st_name
 			);
-		rt_log( "depth %.2fmm at (%g,%g,%g) x%d y%d lvl%d purpose=%s\n",
+		bu_log( "depth %.2fmm at (%g,%g,%g) x%d y%d lvl%d purpose=%s\n",
 			depth,
 			pt[X], pt[Y], pt[Z],
 			ap->a_x, ap->a_y, ap->a_level, ap->a_purpose
@@ -402,9 +402,9 @@ struct partition *pt_headp;
 		struct partition *bp = PT_NULL;
 		fastf_t burstnorm[3]; /* normal at burst point */
 #if DEBUG_GRID
-	rt_log( "f_ShotHit\n" );
+	bu_log( "f_ShotHit\n" );
 	for( pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw )
-		rt_log( "\tregion is '%s',\tid=%d\taircode=%d\n",
+		bu_log( "\tregion is '%s',\tid=%d\taircode=%d\n",
 			pp->pt_regionp->reg_name,
 			(int) pp->pt_regionp->reg_regionid,
 			(int) pp->pt_regionp->reg_aircode );
@@ -453,16 +453,16 @@ struct partition *pt_headp;
 		if( np != pt_headp )
 			{
 #if DEBUG_GRID
-			rt_log( "\tprocessing region '%s',\tid=%d\taircode=%d\n",
+			bu_log( "\tprocessing region '%s',\tid=%d\taircode=%d\n",
 				pp->pt_regionp->reg_name,
 				(int) pp->pt_regionp->reg_regionid,
 				(int) pp->pt_regionp->reg_aircode );
-			rt_log( "\tcheck for voids\n" );
+			bu_log( "\tcheck for voids\n" );
 #endif
 			los = np->pt_inhit->hit_dist -
 					pp->pt_outhit->hit_dist;
 #if DEBUG_GRID
-			rt_log( "\tlos=%g tolerance=%g\n",
+			bu_log( "\tlos=%g tolerance=%g\n",
 				los, LOS_TOL );
 #endif
 			voidflag = ( los > LOS_TOL );
@@ -471,7 +471,7 @@ struct partition *pt_headp;
 			if( OutsideAir( np->pt_regionp ) )
 				{
 #if DEBUG_GRID
-				rt_log( "\t\toutside air\n" );
+				bu_log( "\t\toutside air\n" );
 #endif
 				if( voidflag )
 					{
@@ -505,7 +505,7 @@ struct partition *pt_headp;
 		if( np != pt_headp && InsideAir( np->pt_regionp ) )
 			{
 #if DEBUG_GRID
-			rt_log( "\tmerging inside airs\n" );
+			bu_log( "\tmerging inside airs\n" );
 #endif
 			for(	cp = np->pt_forw;
 				cp != pt_headp;
@@ -530,7 +530,7 @@ struct partition *pt_headp;
 			/* If adjacent partitions are the same air, extend
 				the first on to include them. */
 #if DEBUG_GRID
-			rt_log( "\tphantom armor before internal air\n" );
+			bu_log( "\tphantom armor before internal air\n" );
 #endif
 			for( cp = np; cp != pt_headp; cp = cp->pt_forw )
 				{
@@ -566,7 +566,7 @@ struct partition *pt_headp;
 				"shotline exit normal" );
 
 #if DEBUG_GRID
-			rt_log( "\twe have a component\n" );
+			bu_log( "\twe have a component\n" );
 #endif
 			/* In the case of fragmenting munitions, a hit on any
 				component will cause a burst point. */
@@ -580,7 +580,7 @@ struct partition *pt_headp;
 			if( voidflag )
 				{
 #if DEBUG_GRID
-				rt_log( "\t\tthere is a void, %s\n",
+				bu_log( "\t\tthere is a void, %s\n",
 					"so outputting 01 air" );
 #endif
 				if(	bp == PT_NULL && ! reqburstair
@@ -600,7 +600,7 @@ struct partition *pt_headp;
 						np->pt_inhit->hit_dist;
 				/* Check for interior burst point. */
 #if DEBUG_GRID
-				rt_log( "\t\texplicit air follows\n" );
+				bu_log( "\t\texplicit air follows\n" );
 #endif
 				if(	bp == PT_NULL && bdist <= 0.0
 				    &&	findIdents( regp->reg_regionid,
@@ -621,7 +621,7 @@ struct partition *pt_headp;
 				{
 				/* Last component gets 09 air. */
 #if DEBUG_GRID
-				rt_log( "\t\tlast component\n" );
+				bu_log( "\t\tlast component\n" );
 #endif
 				prntSeg( ap, pp, EXIT_AIR,
 					entrynorm, exitnorm, pp == bp );
@@ -631,7 +631,7 @@ struct partition *pt_headp;
 			if( SameCmp( regp, nregp ) )
 				{
 #if DEBUG_GRID
-				rt_log( "\t\tmerging adjacent components\n" );
+				bu_log( "\t\tmerging adjacent components\n" );
 #endif
 				/* Merge adjacent components with same
 					idents. */
@@ -643,7 +643,7 @@ struct partition *pt_headp;
 			else
 				{
 #if DEBUG_GRID
-				rt_log( "\t\tdifferent component follows\n" );
+				bu_log( "\t\tdifferent component follows\n" );
 #endif
 				prntSeg( ap, pp, 0,
 					entrynorm, exitnorm, pp == bp );
@@ -655,7 +655,7 @@ struct partition *pt_headp;
 		if( InsideAir( regp ) )
 			{
 #if DEBUG_GRID
-			rt_log( "\tcheck for adjacency of differing airs; inside air\n" );
+			bu_log( "\tcheck for adjacency of differing airs; inside air\n" );
 #endif
 			/* Inside air followed by implicit outside air. */
 			if( voidflag )
@@ -665,7 +665,7 @@ struct partition *pt_headp;
 		if( np != pt_headp )
 			{
 #if DEBUG_GRID
-			rt_log( "\tcheck next partition for adjacency\n" );
+			bu_log( "\tcheck next partition for adjacency\n" );
 #endif
 			/* See if inside air follows impl. outside air. */
 			if( voidflag && InsideAir( nregp ) )
@@ -673,7 +673,7 @@ struct partition *pt_headp;
 						np->pt_outhit->hit_dist -
 						np->pt_inhit->hit_dist;
 #if DEBUG_GRID
-				rt_log( "\t\tinside air follows impl. outside air\n" );
+				bu_log( "\t\tinside air follows impl. outside air\n" );
 #endif
 				prntPhantom( np->pt_inhit, nregp->reg_aircode,
 						slos );
@@ -688,7 +688,7 @@ struct partition *pt_headp;
 				{	fastf_t slos = np->pt_outhit->hit_dist -
 						 np->pt_inhit->hit_dist;
 #if DEBUG_GRID
-				rt_log( "\t\tdiffering airs are adjacent\n" );
+				bu_log( "\t\tdiffering airs are adjacent\n" );
 #endif
 				prntPhantom( np->pt_inhit,
 						(int) nregp->reg_aircode,
@@ -699,7 +699,7 @@ struct partition *pt_headp;
 		if( np == pt_headp && InsideAir( regp ) )
 			{
 #if DEBUG_GRID
-			rt_log( "\tinternal air last hit\n" );
+			bu_log( "\tinternal air last hit\n" );
 #endif
 			prntPhantom( pp->pt_outhit, EXIT_AIR, 0.0 );
 			}
@@ -782,8 +782,8 @@ char *purpose;
 	if( NearZero( f ) )
 		{
 #ifdef DEBUG
-		rt_log( "chkEntryNorm: near 90 degree obliquity.\n" );
-		rt_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
+		bu_log( "chkEntryNorm: near 90 degree obliquity.\n" );
+		bu_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
 			rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
 			rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
 			normvec[X], normvec[Y], normvec[Z] );
@@ -793,21 +793,21 @@ char *purpose;
 	if( f > 0.0 )
 		{
 		flipct++;
-		rt_log( "Fixed flipped entry normal:\n" );
-		rt_log( "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
+		bu_log( "Fixed flipped entry normal:\n" );
+		bu_log( "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
 			pp->pt_regionp->reg_name, stp->st_name,
 			stp->st_id, purpose );
 #ifdef DEBUG
-		rt_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
+		bu_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
 			rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
 			rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
 			normvec[X], normvec[Y], normvec[Z] );
-		rt_log( "\tDist %g Hit Pnt %g,%g,%g\n",
+		bu_log( "\tDist %g Hit Pnt %g,%g,%g\n",
 			pp->pt_inhit->hit_dist,
 			pp->pt_inhit->hit_point[X],
 			pp->pt_inhit->hit_point[Y],
 			pp->pt_inhit->hit_point[Z] );
-		rt_log( "\t%d of %d normals flipped.\n", flipct, totalct );
+		bu_log( "\t%d of %d normals flipped.\n", flipct, totalct );
 #endif
 		ScaleVec( normvec, -1.0 );
 		ret = false;
@@ -832,8 +832,8 @@ char *purpose;
 	if( NearZero( f ) )
 		{
 #ifdef DEBUG
-		rt_log( "chkExitNorm: near 90 degree obliquity.\n" );
-		rt_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
+		bu_log( "chkExitNorm: near 90 degree obliquity.\n" );
+		bu_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
 			rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
 			rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
 			normvec[X], normvec[Y], normvec[Z] );
@@ -843,21 +843,21 @@ char *purpose;
 	if( f < 0.0 )
 		{
 		flipct++;
-		rt_log( "Fixed flipped exit normal:\n" );
-		rt_log( "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
+		bu_log( "Fixed flipped exit normal:\n" );
+		bu_log( "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
 			pp->pt_regionp->reg_name, stp->st_name,
 			stp->st_id, purpose );
 #ifdef DEBUG
-		rt_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
+		bu_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
 			rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
 			rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
 			normvec[X], normvec[Y], normvec[Z] );
-		rt_log( "\tDist %g Hit Pnt %g,%g,%g\n",
+		bu_log( "\tDist %g Hit Pnt %g,%g,%g\n",
 			pp->pt_outhit->hit_dist,
 			pp->pt_outhit->hit_point[X],
 			pp->pt_outhit->hit_point[Y],
 			pp->pt_outhit->hit_point[Z] );
-		rt_log( "\t%d of %d normals flipped.\n", flipct, totalct );
+		bu_log( "\t%d of %d normals flipped.\n", flipct, totalct );
 #endif
 		ScaleVec( normvec, -1.0 );
 		ret = false;
@@ -910,7 +910,7 @@ register struct application *ap;
 			else
 			if( bdist < 0.0 )
 				{ /* interior burst not implemented in ground */
-				rt_log( "User error: %s %s.\n",
+				bu_log( "User error: %s %s.\n",
 					"negative burst distance can not be",
 					"specified with ground plane bursting"
 					);
@@ -1036,25 +1036,25 @@ gridInit()
 
 #if DEBUG_SHOT
 	if( TSTBIT(firemode,FM_BURST) )
-		rt_log( "gridInit: reading burst points.\n" );
+		bu_log( "gridInit: reading burst points.\n" );
 	else	{
 		if( TSTBIT(firemode,FM_SHOT) )
-			rt_log( "gridInit: shooting discrete shots.\n" );
+			bu_log( "gridInit: shooting discrete shots.\n" );
 		else
-			rt_log( "gridInit: shooting %s.\n",
+			bu_log( "gridInit: shooting %s.\n",
 				TSTBIT(firemode,FM_PART) ?
 				"partial envelope" : "full envelope" );
 		}
 	if( TSTBIT(firemode,FM_BURST) || TSTBIT(firemode,FM_SHOT) )
 		{
-		rt_log( "gridInit: reading %s coordinates from %s.\n",
+		bu_log( "gridInit: reading %s coordinates from %s.\n",
 			TSTBIT(firemode,FM_3DIM) ? "3-d" : "2-d",
 			TSTBIT(firemode,FM_FILE) ? "file" : "command stream" );
 		
 		}
 	else
 	if( TSTBIT(firemode,FM_FILE) || TSTBIT(firemode,FM_3DIM) )
-		rt_log( "BUG: insane combination of fire mode bits:0x%x\n",
+		bu_log( "BUG: insane combination of fire mode bits:0x%x\n",
 			firemode );
 	if( TSTBIT(firemode,FM_BURST) || shotburst )
 		nriplevels = 1;
@@ -1066,7 +1066,7 @@ gridInit()
 				"Ground bursting directive ignored: %s.\n",
 				"only relevant if bursting along shotline" );
 		warning( scrbuf );
-		rt_log( scrbuf );
+		bu_log( scrbuf );
 		}
 #endif
 	/* compute grid unit vectors */
@@ -1077,7 +1077,7 @@ gridInit()
 			fastf_t	sinpitch = sin( pitch );
 			fastf_t	xdeltavec[3], ydeltavec[3];
 #if DEBUG_SHOT
-		rt_log( "gridInit: canting warhead\n" );
+		bu_log( "gridInit: canting warhead\n" );
 #endif
 		cantwarhead = true;
 		Scale2Vec( gridhor,  negsinyaw, xdeltavec );
@@ -1214,9 +1214,9 @@ gridInit()
 		gridyfin++;
 		}
 #if DEBUG_SHOT
-	rt_log( "gridInit: xorg,xfin,yorg,yfin=%d,%d,%d,%d\n",
+	bu_log( "gridInit: xorg,xfin,yorg,yfin=%d,%d,%d,%d\n",
 		gridxorg, gridxfin, gridyorg, gridyfin );
-	rt_log( "gridInit: left,right,down,up=%g,%g,%g,%g\n",
+	bu_log( "gridInit: left,right,down,up=%g,%g,%g,%g\n",
 		gridlf, gridrt, griddn, gridup );
 #endif
 
@@ -1335,7 +1335,7 @@ gridShot()
 		if( rt_shootray( &a ) == -1 && fatalerror )
 			{
 			/* fatal error in application routine */
-			rt_log( "Fatal error: raytracing aborted.\n" );
+			bu_log( "Fatal error: raytracing aborted.\n" );
 			return	false;
 			}
 		if( ! TSTBIT(firemode,FM_FILE) && TSTBIT(firemode,FM_SHOT) )
@@ -1437,7 +1437,7 @@ register fastf_t	*vec;
 		{
 		if( items != EOF )
 			{
-			rt_log( "Fatal error: %d burst coordinates read.\n",
+			bu_log( "Fatal error: %d burst coordinates read.\n",
 				items );
 			fatalerror = true;
 			return	false;
@@ -1480,7 +1480,7 @@ register fastf_t	*vec;
 			{
 			if( items != EOF )
 				{
-				rt_log( "Fatal error: only %d firing coordinates read.\n", items );
+				bu_log( "Fatal error: only %d firing coordinates read.\n", items );
 				fatalerror = true;
 				return	false;
 				}
@@ -1507,7 +1507,7 @@ register fastf_t	*vec;
 			{
 			if( items != EOF )
 				{
-				rt_log( "Fatal error: %d firing coordinates read.\n", items );
+				bu_log( "Fatal error: %d firing coordinates read.\n", items );
 				fatalerror = true;
 				return	false;
 				}
@@ -1523,7 +1523,7 @@ register fastf_t	*vec;
 		}
 	else
 		{
-		rt_log( "BUG: readShot called with bad firemode.\n" );
+		bu_log( "BUG: readShot called with bad firemode.\n" );
 		return	false;
 		}
 	return	true;
@@ -1571,7 +1571,7 @@ spallInit()
 		delta = 0.0;
 		phiinc = 0.0;
 		raysolidangle = 0.0;
-		rt_log( "%d sampling rays\n", spallct );
+		bu_log( "%d sampling rays\n", spallct );
 		return;
 		}
 
@@ -1596,9 +1596,9 @@ spallInit()
 			spallct++;
 		}
 	raysolidangle = theta / spallct;
-	rt_log( "Solid angle of sampling cone = %g\n", theta );
-	rt_log( "Solid angle per sampling ray = %g\n", raysolidangle );
-	rt_log( "%d sampling rays\n", spallct );
+	bu_log( "Solid angle of sampling cone = %g\n", theta );
+	bu_log( "Solid angle per sampling ray = %g\n", raysolidangle );
+	bu_log( "%d sampling rays\n", spallct );
 	return;
 	}
 
@@ -1669,11 +1669,11 @@ burstRay()
 			fastf_t	gamma, gammainc, gammalast;
 			register int done;
 			int m;
-		RES_ACQUIRE( &rt_g.res_worker );
+		bu_semaphore_acquire( RT_SEM_WORKER );
 		phi = comphi;
 		comphi += phiinc;
 		done = phi > conehfangle;
-		RES_RELEASE( &rt_g.res_worker );
+		bu_semaphore_release( RT_SEM_WORKER );
 		if( done )
 			break;
 		sinphi = sin( phi );
@@ -1686,14 +1686,14 @@ burstRay()
 			spallVec( a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
 				 phi, gamma );
 			plotRay( &a_spall.a_ray );
-			RES_ACQUIRE( &rt_g.res_worker );
+			bu_semaphore_acquire( RT_SEM_WORKER );
 			a_spall.a_user = a_burst.a_user++;
-			RES_RELEASE( &rt_g.res_worker );
+			bu_semaphore_release( RT_SEM_WORKER );
 			if(	(ncrit = rt_shootray( &a_spall )) == -1
 			     &&	fatalerror )
 				{
 				/* Fatal error in application routine. */
-				rt_log( "Error: ray tracing aborted.\n" );
+				bu_log( "Error: ray tracing aborted.\n" );
 				return	false;
 				}
 			if( fbfile[0] != NUL && ncrit > 0 )
@@ -1703,9 +1703,9 @@ burstRay()
 				}
 			if( histfile[0] != NUL )
 				{
-				RES_ACQUIRE( &rt_g.res_syscall );
+				bu_semaphore_acquire( BU_SEM_SYSCALL );
 				(void) fprintf( histfp, "%d\n", ncrit );
-				RES_RELEASE( &rt_g.res_syscall );
+				bu_semaphore_release( BU_SEM_SYSCALL );
 				}
 			}
 		}
@@ -1807,12 +1807,12 @@ STATIC void
 view_pix( ap )
 register struct application	*ap;
 	{
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	if( ! TSTBIT(firemode,FM_BURST) )
 		prntGridOffsets( ap->a_x, ap->a_y );
 	if( tty )
 		prntTimer( NULL );
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 	return;
 	}
 
@@ -1832,7 +1832,7 @@ view_end()
 		(void) fflush( shotlnfp );
 	prntTimer( "view" );
 	if( noverlaps > 0 )
-		rt_log( "%d overlaps detected over %g mm thick.\n",
+		bu_log( "%d overlaps detected over %g mm thick.\n",
 			noverlaps, OVERLAP_TOL );
 	return;
 	}
