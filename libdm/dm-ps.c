@@ -80,6 +80,8 @@ struct dm dm_ps = {
   0,
   0,
   0,
+  0,
+  0,
   1.0, /* aspect ratio */
   0,
   0,
@@ -536,12 +538,15 @@ int strict;
 }
 
 static int
-ps_setLineAttr(dmp, width, dashed)
+ps_setLineAttr(dmp, width, style)
 struct dm *dmp;
 int width;
-int dashed;
+int style;
 {
-  if( dashed )
+  dmp->dm_lineWidth = width;
+  dmp->dm_lineStyle = style;
+
+  if(style == DM_DASHED_LINE)
     fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "DDV "); /* Dot-dashed vectors */
   else
     fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "NV "); /* Normal vectors */
