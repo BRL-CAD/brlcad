@@ -16,7 +16,7 @@
 	files-tape gencolor hd loop mac-pix \
 	op-bw orle-pix \
 	pix-alias pix-bw pix-bw3 pix-orle \
-	pix-ps pix-rle pix-spm pix-sun \
+	pix-ps pix-rle bw-rle pix-spm pix-sun \
 	pix3filter pixbackgnd pixbgstrip pixbustup pixcolors pixdiff \
 	pixfade pixfields pixfilter pixhalve pixhist \
 	pixhist3d-pl pixhist3d pixinterp2x pixmatte pixmerge \
@@ -100,6 +100,9 @@ rle-pix:	rle-pix.o strdup.o LIBRLE
 
 pix-rle:	pix-rle.o strdup.o LIBRLE
 	CC LDFLAGS -o pix-rle pix-rle.o strdup.o LIB_PRE''LIBRLE LIBES
+
+bw-rle:	bw-rle.o strdup.o LIBRLE
+	CC LDFLAGS -o bw-rle bw-rle.o strdup.o LIB_PRE''LIBRLE LIBES
 
 ap-pix:		ap-pix.o
 	CC LDFLAGS -o ap-pix ap-pix.o LIBES
