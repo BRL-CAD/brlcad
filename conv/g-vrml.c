@@ -377,12 +377,12 @@ struct mater_info *mater;
 		r = g = b = 0.5;
 	}
 
-	if( strcmp( "light", mater->ma_matname ) == 0 )
+	if( strncmp( "light", mater->ma_shader, 5 ) == 0 )
 	{
 		/* this is a light source */
 		is_light = 1;
 		}
-	else if( strcmp( "plastic", mater->ma_matname ) == 0 )
+	else if( strcmp( "plastic", mater->ma_shader, 7 ) == 0 )
 	{
 		struct vrml_mat mat;
 		struct rt_vls vls;
@@ -406,7 +406,7 @@ struct mater_info *mater;
 			fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
 		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
 	}
-	else if( strcmp( "glass", mater->ma_matname ) == 0 )
+	else if( strncmp( "glass", mater->ma_shader, 5 ) == 0 )
 	{
 		struct vrml_mat mat;
 		struct rt_vls vls;
@@ -430,7 +430,7 @@ struct mater_info *mater;
 			fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
 		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
 	}
-	else if( strcmp( "texture", mater->ma_matname ) == 0 )
+	else if( strncmp( "texture", mater->ma_shader, 7 ) == 0 )
 	{
 		struct vrml_texture tex;
 		struct rt_vls vls;
