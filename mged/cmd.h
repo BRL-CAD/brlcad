@@ -218,6 +218,7 @@ MGED_EXTERN(int cmd_get_ptr, (ClientData clientData, Tcl_Interp *interp, int arg
 MGED_EXTERN(int cmd_get_more_default, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_hist, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_list, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_lm, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_lt, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_mged_glob, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_mmenu_get, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

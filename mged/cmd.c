@@ -273,6 +273,7 @@ static struct cmdtab cmdtab[] = {
 	{"labelvert", f_labelvert},
 	{"left",		bv_left},
 	{"listeval", cmd_pathsum},
+	{"lm", cmd_lm},
 #ifdef DM_X
 	{"loadtk", cmd_tk},
 #endif
@@ -3143,6 +3144,87 @@ cmd_list(ClientData	clientData,
 		return wdb_list_cmd(wdbp, interp, argc, argv);
 	}
 }
+
+/*
+ *			C M D _ L M
+ *
+ *	List regions based on values of their MUVES_Component attribute
+ */
+int
+cmd_lm(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	struct bu_attribute_value_set avs;
+	struct bu_vls vls;
+	struct bu_ptbl *tbl;
+	struct directory *dp;
+	int i;
+	int last_opt=0;
+	int new_arg_count=1;
+	int new_argc;
+	int ret;
+	char **new_argv;
+
+	bu_vls_init( &vls );
+	bu_vls_strcat( &vls, argv[0] );
+	for( i=1 ; i<argc ; i++ ) {
+		if( *argv[i] == '-' ) {
+			bu_vls_putc( &vls, ' ' );
+			bu_vls_strcat( &vls, argv[i] );
+			last_opt = i;
+			new_arg_count++;
+		} else {
+			break;
+		}
+	}
+
+	bu_avs_init( &avs, argc - last_opt, "cmd_lm avs" );
+	for( i=last_opt+1 ; i<argc ; i++ ) {
+		bu_avs_add_nonunique( &avs, "MUVES_Component", argv[i] );
+	}
+
+	tbl = db_lookup_by_attr( dbip, DIR_REGION, &avs, 2 );
+	if( !tbl ) {
+		/* Error!!! */
+		Tcl_AppendResult( interp, "Error: db_lookup_by_attr() failed!!\n", (char *)NULL );
+		bu_vls_free( &vls );
+		bu_avs_free( &avs );
+		return TCL_ERROR;
+	}
+
+	if( BU_PTBL_LEN( tbl ) == 0 ) {
+		/* no matches */
+		bu_vls_free( &vls );
+		bu_avs_free( &avs );
+		bu_ptbl_free( tbl );
+		bu_free( (char *)tbl, "cmd_lm ptbl" );
+		return TCL_OK;
+	}
+
+	for( i=0 ; i<BU_PTBL_LEN( tbl ) ; i++ ) {
+		dp = (struct directory *)BU_PTBL_GET( tbl, i );
+		bu_vls_putc( &vls, ' ' );
+		bu_vls_strcat( &vls, dp->d_namep );
+		new_arg_count++;
+	}
+
+	bu_ptbl_free( tbl );
+	bu_free( (char *)tbl, "cmd_lm ptbl" );
+
+	/* create a new argc and argv to pass to the cmd_ls routine */
+	new_argv = (char **)bu_calloc( new_arg_count + 1, sizeof( char *), "cmd_lm new_argv" );
+	new_argc = bu_argv_from_string( new_argv, new_arg_count+1, bu_vls_addr( &vls ) );
+
+	ret = cmd_ls( clientData, interp, new_argc, new_argv );
+
+	bu_vls_free( &vls );
+	bu_free( (char *)new_argv, "cmd_lm new_argv" );
+
+	return( ret );
+}
+
 
 /*
  *			C M D _ L T
