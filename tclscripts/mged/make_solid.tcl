@@ -34,14 +34,14 @@ proc make_dsp { id top } {
 		return
 	}
 
-	set ret [catch {_mged_in $mged_gui($id,solid_name) dsp $mged_gui($id,dsp_file_name) $mged_gui($id,dsp_file_width) $mged_gui($id,dsp_file_length) $mged_gui($id,dsp_smooth) } result]
+	set ret [catch {_mged_in $mged_gui($id,solid_name) dsp $mged_gui($id,dsp_file_name) $mged_gui($id,dsp_file_width) $mged_gui($id,dsp_file_length) $mged_gui($id,dsp_smooth) $mged_gui($id,dsp_cell_size) $mged_gui($id,dsp_elev_size)} result]
 	if { $ret != 0 } {
 		cad_dialog .$id.solidDialog $mged_gui($id,screen) "ERROR creaing DSP" $reslult "" 0 OK
 	}
 
 	catch {_mged_sed $mged_gui($id,solid_name)}
 	catch "destroy $top"
-}
+    }
 
 proc dsp_create { id } {
 	global mged_gui
@@ -87,6 +87,20 @@ proc dsp_create { id } {
 	hoc_register_data $top.smoothL "Smoothing" $tmp_hoc
 	hoc_register_data $top.smoothC "Smoothing" $tmp_hoc
 
+	label $top.celldimL -text "Cell size:"
+	entry $top.celldimE -relief sunken -bd 2 -textvar mged_gui($id,dsp_cell_size)
+	set tmp_hoc [list [list summary $dsp_dscr] [list description "This is the size of a cell in the X and Y dimension"]]
+	hoc_register_data $top.celldimL "Cell Size" $tmp_hoc
+	hoc_register_data $top.celldimE "Cell Size" $tmp_hoc
+
+	label $top.cellelevL -text "Unit Elevation:"
+	entry $top.cellelevE -relief sunken -bd 2 -textvar mged_gui($id,dsp_elev_size)
+	set tmp_hoc [list [list summary $dsp_dscr] [list description "This is the distance represented by each step in elevation"]]
+
+	hoc_register_data $top.cellelevL "Unit Elevation" $tmp_hoc
+	hoc_register_data $top.cellelevE "Unit Elevation" $tmp_hoc
+
+
 	button $top.applyB -text Apply -command "make_dsp $id $top"
 	button $top.autonameB -text "Autoname" -command "solid_auto_name $id"
 	button $top.dismissB -text Dismiss -command "catch {destroy $top}"
@@ -107,6 +121,10 @@ proc dsp_create { id } {
 	grid $top.heightE -sticky "ew" -row 3 -column 1
 	grid $top.smoothC -sticky "e" -row 4 -column 0
 	grid $top.smoothL -sticky "w" -row 4 -column 1
+	grid $top.celldimL -sticky "w" -row 5 -column 0
+	grid $top.celldimE -sticky "ew" -row 5 -column 1
+	grid $top.cellelevL -sticky "w" -row 6 -column 0
+	grid $top.cellelevE -sticky "ew" -row 6 -column 1
 	grid $top.applyB $top.autonameB $top.dismissB -sticky "ew" -padx 8 -pady 8
 
     bind $top <Return> "make_dsp $id $top; break"

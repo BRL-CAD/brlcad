@@ -85,7 +85,9 @@ char *p_dsp[] = {
 	"Enter name of displacement-map file: ",
 	"Enter width of displacement-map (number of values): ",
 	"Enter length of displacement-map (number of values): ",
-	"Normal Interpolation? 0=no 1=yes default=1: "
+	"Normal Interpolation? 0=no 1=yes: ",
+	"Cell size: ",
+	"Unit elevation: "
 };
 
 char *p_hf[] = {
@@ -556,7 +558,7 @@ char **argv;
 		menu = p_hf;
 		fn_in = hf_in;
 	} else if( strcmp( argv[2], "dsp" ) == 0 )  {
-		nvals = 4;
+		nvals = 6;
 		menu = p_dsp;
 		fn_in = dsp_in;
 	} else if( strcmp( argv[2], "pipe" ) == 0 ) {
@@ -799,8 +801,14 @@ struct rt_db_internal	*intern;
 	dsp->dsp_xcnt = atoi( cmd_argvs[4] );
 	dsp->dsp_ycnt = atoi( cmd_argvs[5] );
 	dsp->dsp_smooth = atoi( cmd_argvs[6] );
-	bn_mat_idn( dsp->dsp_mtos );
 	bn_mat_idn( dsp->dsp_stom );
+	
+	dsp->dsp_stom[0] = dsp->dsp_stom[5] = 
+		atof( cmd_argvs[7] ) * local2base;
+
+	dsp->dsp_stom[10] = atof( cmd_argvs[8] ) * local2base;
+
+	bn_mat_inv( dsp->dsp_mtos, dsp->dsp_stom );
 
 	return( 0 );
 }
