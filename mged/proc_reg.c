@@ -357,14 +357,13 @@ struct rt_external	*ep;
 int			regionid;
 struct mater_info	*materp;
 {
-	register struct vlist *vp;
+	register struct rt_vlist *vp;
 	register int i;
 	int dashflag;		/* draw with dashed lines */
 	int count;
-	struct vlhead	vhead;
-	vect_t		maxvalue, minvalue;
+	struct rt_list	vhead;
 
-	vhead.vh_first = vhead.vh_last = VL_NULL;
+	RT_LIST_INIT( &vhead );
 	if( regmemb >= 0 ) {
 		/* processing a member of a processed region */
 		/* regmemb  =>  number of members left */
@@ -449,21 +448,10 @@ struct mater_info	*materp;
 	/*
 	 * Compute the min, max, and center points.
 	 */
-	VSETALL( maxvalue, -INFINITY );
-	VSETALL( minvalue,  INFINITY );
-	sp->s_vlist = vhead.vh_first;
-	sp->s_vlen = 0;
-	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
-		VMINMAX( minvalue, maxvalue, vp->vl_pnt );
-		sp->s_vlen++;
-	}
+	RT_LIST_APPEND_LIST( &(sp->s_vlist), &vhead );
+
+	mged_bound_solid( sp );
 	nvectors += sp->s_vlen;
-
-	VADD2SCALE( sp->s_center, minvalue, maxvalue, 0.5 );
-
-	sp->s_size = maxvalue[X] - minvalue[X];
-	MAX( sp->s_size, maxvalue[Y] - minvalue[Y] );
-	MAX( sp->s_size, maxvalue[Z] - minvalue[Z] );
 
 	/*
 	 * If this solid is not illuminated, fill in it's information.
@@ -660,7 +648,7 @@ arbcom:		/* common area for arbs */
 
 int
 finish_region(vhead)
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 {
 	/* last member solid has been seen, now draw the region */
 	nmemb = memb_count;
@@ -1059,7 +1047,7 @@ static char	oper;
 
 static void
 dwreg(vhead)
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 {
 	register int i,j;
 	static int k,l;
@@ -1154,8 +1142,8 @@ noskip:
 
 						VJOIN1( pi, xb, regi[n], wb );
 						VJOIN1( po, xb, rego[n], wb );
-						ADD_VL( vhead, pi, 0 );
-						ADD_VL( vhead, po, 1 );
+						RT_ADD_VLIST( vhead, pi, RT_VLIST_LINE_MOVE );
+						RT_ADD_VLIST( vhead, po, RT_VLIST_LINE_DRAW );
 					}
 skplane:				 ;
 				}

@@ -66,8 +66,8 @@ f_polybinout( argc, argv )
 int	argc;
 char	**argv;
 {
-	register struct solid *sp;
-	register struct vlist *vp;
+	register struct solid		*sp;
+	register struct rt_vlist	*vp;
 	FILE	*fp;
 	int	pno = 1;
 	struct polygon_header ph;
@@ -82,78 +82,83 @@ char	**argv;
 	}
 
 	FOR_ALL_SOLIDS( sp )  {
-		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-			/* For each polygon, spit it out.  Ignore vectors */
-			switch( vp->vl_draw )  {
-			case VL_CMD_LINE_MOVE:
-				/* Move, start line */
-				break;
-			case VL_CMD_LINE_DRAW:
-				/* Draw line */
-				break;
-			case VL_CMD_POLY_START:
-				/* Start poly marker & normal, followed by POLY_MOVE */
-				ph.magic = POLYGON_HEADER_MAGIC;
-				ph.ident = pno++;
-				ph.interior = 0;
-				ph.npts = 0;
-				/* Set surface normal (vl_pnt points outward) */
-				VMOVE( ph.normal, vp->vl_pnt );
-				need_normal = 0;
-				break;
-			case VL_CMD_POLY_MOVE:
-				/* Start of polygon, has first point */
-				/* fall through to... */
-			case VL_CMD_POLY_DRAW:
-				/* Polygon Draw */
-				if( ph.npts >= MAX_VERTS )  {
-					printf("excess vertex skipped\n");
+		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+			register int	i;
+			register int	nused = vp->nused;
+			register int	*cmd = vp->cmd;
+			register point_t *pt = vp->pt;
+			for( i = 0; i < nused; i++,cmd++,pt++ )  {
+				/* For each polygon, spit it out.  Ignore vectors */
+				switch( *cmd )  {
+				case RT_VLIST_LINE_MOVE:
+					/* Move, start line */
+					break;
+				case RT_VLIST_LINE_DRAW:
+					/* Draw line */
+					break;
+				case RT_VLIST_POLY_START:
+					/* Start poly marker & normal, followed by POLY_MOVE */
+					ph.magic = POLYGON_HEADER_MAGIC;
+					ph.ident = pno++;
+					ph.interior = 0;
+					ph.npts = 0;
+					/* Set surface normal (vl_pnt points outward) */
+					VMOVE( ph.normal, *pt );
+					need_normal = 0;
+					break;
+				case RT_VLIST_POLY_MOVE:
+					/* Start of polygon, has first point */
+					/* fall through to... */
+				case RT_VLIST_POLY_DRAW:
+					/* Polygon Draw */
+					if( ph.npts >= MAX_VERTS )  {
+						printf("excess vertex skipped\n");
+						break;
+					}
+					VMOVE( verts[ph.npts], *pt );
+					ph.npts++;
+					break;
+				case RT_VLIST_POLY_END:
+					/*
+					 *  End Polygon.  Point given is repeat of
+					 *  first one, ignore it.
+					 * XXX note:  if poly_markers was not set,
+					 * XXX poly will end with next POLY_MOVE.
+					 */
+					if( ph.npts < 3 )  {
+						printf("polygon with %d points discarded\n",
+							ph.npts);
+						break;
+					}
+					if( need_normal )  {
+						vect_t	e1, e2;
+						VSUB2( e1, verts[0], verts[1] );
+						VSUB2( e2, verts[0], verts[2] );
+						VCROSS( ph.normal, e1, e2 );
+					}
+					if( rt_struct_export( &obuf, (genptr_t)&ph, polygon_desc ) < 0 )  {
+						printf("header export error\n");
+						break;
+					}
+					if (rt_struct_put(fp, &obuf) != obuf.ext_nbytes) {
+						perror("rt_struct_put");
+						break;
+					}
+					db_free_external( &obuf );
+					/* Now export the vertices */
+					vertex_desc[0].im_count = ph.npts * 3;
+					if( rt_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
+						printf("vertex export error\n");
+						break;
+					}
+					if( rt_struct_put( fp, &obuf ) != obuf.ext_nbytes )  {
+						perror("rt_struct_buf");
+						break;
+					}
+					db_free_external( &obuf );
+					ph.npts = 0;		/* sanity */
 					break;
 				}
-				VMOVE( verts[ph.npts], vp->vl_pnt );
-				ph.npts++;
-				break;
-			case VL_CMD_POLY_END:
-				/*
-				 *  End Polygon.  Point given is repeat of
-				 *  first one, ignore it.
-				 * XXX note:  if poly_markers was not set,
-				 * XXX poly will end with next POLY_MOVE.
-				 */
-				if( ph.npts < 3 )  {
-					printf("polygon with %d points discarded\n",
-						ph.npts);
-					break;
-				}
-				if( need_normal )  {
-					vect_t	e1, e2;
-					VSUB2( e1, verts[0], verts[1] );
-					VSUB2( e2, verts[0], verts[2] );
-					VCROSS( ph.normal, e1, e2 );
-				}
-				if( rt_struct_export( &obuf, (genptr_t)&ph, polygon_desc ) < 0 )  {
-					printf("header export error\n");
-					break;
-				}
-				if (rt_struct_put(fp, &obuf) != obuf.ext_nbytes) {
-					perror("rt_struct_put");
-					break;
-				}
-				db_free_external( &obuf );
-
-				/* Now export the vertices */
-				vertex_desc[0].im_count = ph.npts * 3;
-				if( rt_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
-					printf("vertex export error\n");
-					break;
-				}
-				if( rt_struct_put( fp, &obuf ) != obuf.ext_nbytes )  {
-					perror("rt_struct_buf");
-					break;
-				}
-				db_free_external( &obuf );
-				ph.npts = 0;		/* sanity */
-				break;
 			}
 		}
 	}

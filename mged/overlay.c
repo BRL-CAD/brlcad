@@ -162,9 +162,8 @@ char	**argv;
 {
 	char		*name;
 	FILE		*fp;
-	struct vlhead	vhead;
 	int		ret;
-	struct vlblock	*vbp;
+	struct rt_vlblock	*vbp;
 
 	if( argc <= 2 )
 		name = "_PLOT_OVERLAY_";
@@ -199,10 +198,10 @@ char	**argv;
  */
 int
 uplot_vlist( vbp, fp )
-struct vlblock	*vbp;
+struct rt_vlblock	*vbp;
 register FILE		*fp;
 {
-	register struct vlhead	*vhead;
+	register struct rt_list	*vhead;
 	register int	c;
 	mat_t	mat;
 	struct	uplot *up;
@@ -215,7 +214,7 @@ register FILE		*fp;
 	int	i;
 	int	j;
 
-	vhead = &vbp->cvp[0].head;	/* Yellow */
+	vhead = rt_vlblock_find( vbp, 0xFF, 0xFF, 0x00 );	/* Yellow */
 
 	while( (c = getc(fp)) != EOF ) {
 		/* look it up */
@@ -270,52 +269,52 @@ register FILE		*fp;
 		case 'o':
 			/* 2-D move */
 			arg[Z] = 0;
-			ADD_VL( vhead, arg, 0 );
+			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_MOVE );
 			break;
 		case 'M':
 		case 'O':
 			/* 3-D move */
-			ADD_VL( vhead, arg, 0 );
+			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_MOVE );
 			break;
 		case 'n':
 		case 'q':
 			/* 2-D draw */
 			arg[Z] = 0;
-			ADD_VL( vhead, arg, 1 );
+			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_DRAW );
 			break;
 		case 'N':
 		case 'Q':
 			/* 3-D draw */
-			ADD_VL( vhead, arg, 1 );
+			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_DRAW );
 			break;
 		case 'l':
 		case 'v':
 			/* 2-D line */
 			VSET( a, arg[0], arg[1], 0.0 );
 			VSET( b, arg[2], arg[3], 0.0 );
-			ADD_VL( vhead, a, 0 );
-			ADD_VL( vhead, b, 1 );
+			RT_ADD_VLIST( vhead, a, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, b, RT_VLIST_LINE_DRAW );
 			break;
 		case 'L':
 		case 'V':
 			/* 3-D line */
 			VSET( a, arg[0], arg[1], arg[2] );
 			VSET( b, arg[3], arg[4], arg[5] );
-			ADD_VL( vhead, a, 0 );
-			ADD_VL( vhead, b, 1 );
+			RT_ADD_VLIST( vhead, a, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, b, RT_VLIST_LINE_DRAW );
 			break;
 		case 'p':
 		case 'x':
 			/* 2-D point */
 			arg[Z] = 0;
-			ADD_VL( vhead, arg, 0 );
-			ADD_VL( vhead, arg, 1 );
+			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_DRAW );
 			break;
 		case 'P':
 		case 'X':
 			/* 3-D point */
-			ADD_VL( vhead, arg, 0 );
-			ADD_VL( vhead, arg, 1 );
+			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_DRAW );
 			break;
 		case 'C':
 			/* Color */
@@ -325,8 +324,11 @@ register FILE		*fp;
 		case 't':
 			/* Text string */
 			mat_idn(mat);
-			if( vhead->vh_first != VL_NULL )  {
-				VMOVE( last_pos, vhead->vh_last->vl_pnt );
+			if( RT_LIST_NON_EMPTY( vhead ) )  {
+				struct rt_vlist *vlp;
+				/* Use coordinates of last op */
+				vlp = RT_LIST_LAST( rt_vlist, vhead );
+				VMOVE( last_pos, vlp->pt[vlp->nused-1] );
 			} else {
 				VSETALL( last_pos, 0 );
 			}
@@ -384,7 +386,7 @@ tp_setup()
  */
 void
 vlist_3symbol( vhead, string, origin, rot, scale )
-register struct vlhead	*vhead;
+register struct rt_list	*vhead;
 char	*string;		/* string of chars to be plotted */
 point_t	origin;			/* lower left corner of 1st char */
 mat_t	rot;			/* Transform matrix (WARNING: may xlate) */
@@ -427,7 +429,7 @@ double	scale;			/* scale factor to change 1x1 char sz */
 
 		VSET( temp, offset, 0, 0 );
 		MAT4X3PNT( loc, mat, temp );
-		ADD_VL( vhead, loc, 0 );		/* move */
+		RT_ADD_VLIST( vhead, loc, RT_VLIST_LINE_MOVE );		/* move */
 
 		for( p = tp_cindex[*cp]; ((stroke= *p)&0xFF) != LAST; p++ )  {
 			int	draw;
@@ -450,9 +452,9 @@ double	scale;			/* scale factor to change 1x1 char sz */
 				   (ysign * (stroke%11)) * 0.1 * scale, 0 );
 			MAT4X3PNT( loc, mat, temp );
 			if( draw )  {
-				ADD_VL( vhead, loc, 1 );
+				RT_ADD_VLIST( vhead, loc, RT_VLIST_LINE_DRAW );
 			} else {
-				ADD_VL( vhead, loc, 0 );
+				RT_ADD_VLIST( vhead, loc, RT_VLIST_LINE_MOVE );
 			}
 		}
 	}

@@ -98,10 +98,10 @@ char	**argv;
 		printf("no filename or filter specified\n");
 		return;
 	}
-	if( argv[2][0] == '|' )  {
+	if( argv[1][0] == '|' )  {
 		struct rt_vls	str;
 		rt_vls_init( &str );
-		rt_vls_strcpy( &str, &argv[2][1] );
+		rt_vls_strcpy( &str, &argv[1][1] );
 		while( (++argv)[1] != (char *)0 )  {
 			rt_vls_strcat( &str, " " );
 			rt_vls_strcat( &str, argv[1] );

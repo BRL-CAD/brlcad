@@ -371,7 +371,7 @@ char	**argv;
 	int	i_pipe[2];
 	FILE	*fp;
 	struct solid *sp;
-	struct vlblock	*vbp;
+	struct rt_vlblock	*vbp;
 
 	if( not_state( ST_VIEW, "Overlap check in current view" ) )
 		return;
@@ -554,7 +554,7 @@ char	**argv;
 	int	mode;
 	fastf_t	scale;
 	mat_t	rot;
-	register struct vlist *vp;
+	register struct rt_vlist *vp;
 
 	if( not_state( ST_VIEW, "animate from matrix file") )
 		return;
@@ -575,8 +575,9 @@ char	**argv;
 		db_get( dbip,  dp, &rec, 0 , 1);
 		FOR_ALL_SOLIDS(sp)  {
 			if( sp->s_path[sp->s_last] != dp )  continue;
-			if( sp->s_vlist == VL_NULL )  continue;
-			VMOVE( sav_start, sp->s_vlist->vl_pnt );
+			if( RT_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
+			vp = RT_LIST_LAST( rt_vlist, &(sp->s_vlist) );
+			VMOVE( sav_start, vp->pt[vp->nused-1] );
 			VMOVE( sav_center, sp->s_center );
 			printf("animating EYE solid\n");
 			goto work;
@@ -629,10 +630,27 @@ work:
 	    		VMOVE( sp->s_center, eye_model );
 
 	    		/* Adjust vector list for non-dl devices */
-	    		if( sp->s_vlist == VL_NULL )  break;
-	    		VSUB2( xlate, eye_model, sp->s_vlist->vl_pnt );
-			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-				VADD2( vp->vl_pnt, vp->vl_pnt, xlate );
+	    		if( RT_LIST_IS_EMPTY( &(sp->s_vlist) ) )  break;
+			vp = RT_LIST_LAST( rt_vlist, &(sp->s_vlist) );
+	    		VSUB2( xlate, eye_model, vp->pt[vp->nused-1] );
+			for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+				register int	i;
+				register int	nused = vp->nused;
+				register int	*cmd = vp->cmd;
+				register point_t *pt = vp->pt;
+				for( i = 0; i < nused; i++,cmd++,pt++ )  {
+					switch( *cmd )  {
+					case RT_VLIST_POLY_START:
+						break;
+					case RT_VLIST_LINE_MOVE:
+					case RT_VLIST_LINE_DRAW:
+					case RT_VLIST_POLY_MOVE:
+					case RT_VLIST_POLY_DRAW:
+					case RT_VLIST_POLY_END:
+						VADD2( *pt, *pt, xlate );
+						break;
+					}
+				}
 			}
 	    		break;
 	    	}
@@ -641,10 +659,27 @@ work:
 	}
 	if( mode == 1 )  {
     		VMOVE( sp->s_center, sav_center );
-		if( sp->s_vlist != VL_NULL )  {
-	    		VSUB2( xlate, sav_start, sp->s_vlist->vl_pnt );
-			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-				VADD2( vp->vl_pnt, vp->vl_pnt, xlate );
+		if( RT_LIST_NON_EMPTY( &(sp->s_vlist) ) )  {
+			vp = RT_LIST_LAST( rt_vlist, &(sp->s_vlist) );
+	    		VSUB2( xlate, sav_start, vp->pt[vp->nused-1] );
+			for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+				register int	i;
+				register int	nused = vp->nused;
+				register int	*cmd = vp->cmd;
+				register point_t *pt = vp->pt;
+				for( i = 0; i < nused; i++,cmd++,pt++ )  {
+					switch( *cmd )  {
+					case RT_VLIST_POLY_START:
+						break;
+					case RT_VLIST_LINE_MOVE:
+					case RT_VLIST_LINE_DRAW:
+					case RT_VLIST_POLY_MOVE:
+					case RT_VLIST_POLY_DRAW:
+					case RT_VLIST_POLY_END:
+						VADD2( *pt, *pt, xlate );
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -735,7 +770,7 @@ static struct command_tab cmdtab[] = {
  */
 static vect_t	rtif_eye_model;
 static mat_t	rtif_viewrot;
-static struct vlblock *rtif_vbp;
+static struct rt_vlblock	*rtif_vbp;
 
 void
 f_preview( argc, argv )
@@ -853,11 +888,14 @@ int	argc;
 	vect_t	xv, yv;			/* view x, y */
 	vect_t	xm, ym;			/* model x, y */
 	int	move;
-	struct vlhead	*vhead = &rtif_vbp->cvp[0].head;
+	struct rt_list		*vhead = &rtif_vbp->head[0];
 
 	/* Record eye path as a polyline.  Move, then draws */
-	move = vhead->vh_first != VL_NULL;
-	ADD_VL( vhead, rtif_eye_model, move );
+	if( RT_LIST_IS_EMPTY( vhead ) )  {
+		RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_MOVE );
+	} else {
+		RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_DRAW );
+	}
 	
 	/* First step:  put eye at view center (view 0,0,0) */
        	mat_copy( Viewrot, rtif_viewrot );
@@ -875,10 +913,10 @@ int	argc;
 	VSET( yv, 0, 0.05, 0 );
 	MAT4X3PNT( xm, view2model, xv );
 	MAT4X3PNT( ym, view2model, yv );
-	ADD_VL( vhead, xm, 1 );
-	ADD_VL( vhead, rtif_eye_model, 0 );
-	ADD_VL( vhead, ym, 1 );
-	ADD_VL( vhead, rtif_eye_model, 0 );
+	RT_ADD_VLIST( vhead, xm, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, ym, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_MOVE );
 
 	/*  Second step:  put eye at view 0,0,1.
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
