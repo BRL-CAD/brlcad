@@ -238,9 +238,9 @@ pixpaste: new image == original image.\n");
 				E=1;
 				(void)fprintf(stderr,"pixpaste: original file is short.\n");
 			}
-			result = fwrite(buffer, num_bytes, result, paste);
+			result = fwrite(buffer, num_bytes, result, stdout);
 			if (!E && result != org_width) {
-				perror("pixpaste: fwrite");
+				perror("pixpaste: fwrite1");
 				E=1;
 			}
 			if (E) break;
@@ -287,7 +287,7 @@ pixpaste: new image == original image.\n");
 		}
 		result = fwrite(origbuf, num_bytes, org_width, stdout);
 		if (result != org_width) {
-			perror("pixpaste: fwrite");
+			perror("pixpaste: fwrite2");
 			exit(3);
 		}
 		row++;
@@ -312,7 +312,7 @@ pixpaste: new image == original image.\n");
 		}
 		result = fwrite(origbuf, num_bytes, org_width, stdout);
 		if (result != org_width) {
-			perror("pixpaste: fwrite");
+			perror("pixpaste: fwrite3");
 			exit(3);
 		}
 		row++;
@@ -331,7 +331,7 @@ pixpaste: new image == original image.\n");
 		}
 		result = fwrite(origbuf, num_bytes, org_width, stdout);
 		if (result != org_width) {
-			perror("pixpaste: fwrite");
+			perror("pixpaste: fwrite4");
 			exit(3);
 		}
 		row++;
