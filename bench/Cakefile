@@ -5,7 +5,7 @@
 #define SRCDIR	bench
 #define	PRODUCTS	pixcmp
 #define	SRCSUFF	.c
-#define MANSECTION	9
+/* #define MANSECTION	9 */
 
 #define FILES	pixcmp
 
