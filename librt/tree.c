@@ -37,7 +37,7 @@ HIDDEN void rt_add_regtree();
 HIDDEN union tree *rt_make_bool_tree();
 HIDDEN int rt_rpp_tree();
 HIDDEN char *rt_basename();
-HIDDEN struct region *rt_find_region();
+HIDDEN struct region *rt_getregion();
 
 extern int nul_prep(),	nul_print(), nul_norm(), nul_uv();
 extern int tor_prep(),	tor_print(), tor_norm(), tor_uv();
@@ -863,7 +863,7 @@ register char	*str;
 }
 
 /*
- *			R T _ F I N D _ R E G I O N
+ *			R T _ G E T R E G I O N
  *
  *  Return a pointer to the corresponding region structure of the given
  *  region's name (reg_name), or REGION_NULL if it does not exist.
@@ -874,7 +874,7 @@ register char	*str;
  *  time in the tree, then this routine will simply return the first one.
  */
 HIDDEN struct region *
-rt_find_region( rtip, reg_name )
+rt_getregion( rtip, reg_name )
 struct rt_i	*rtip;
 register char	*reg_name;
 {	
@@ -899,7 +899,7 @@ register char	*reg_name;
  *			R T _ R P P _ R E G I O N
  *
  *  Calculate the bounding RPP for a region given the name of
- *  the region node in the database.  See remarks in rt_find_region()
+ *  the region node in the database.  See remarks in rt_getregion()
  *  above for name conventions.
  *  Returns 0 for failure (and prints a diagnostic), or 1 for success.
  */
@@ -909,7 +909,7 @@ struct rt_i		*rtip;
 char			*reg_name;
 register fastf_t	*min_rpp, *max_rpp;
 {	
-	register struct region	*regp = rt_find_region( rtip, reg_name );
+	register struct region	*regp = rt_getregion( rtip, reg_name );
 
 	if( regp == REGION_NULL )  return(0);
 	VMOVE( min_rpp, rtip->mdl_max );
