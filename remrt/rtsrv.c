@@ -58,6 +58,7 @@ struct application ap;
 int		stereo = 0;	/* stereo viewing */
 vect_t		left_eye_delta;
 int		hypersample=0;	/* number of extra rays to fire */
+int		jitter=0;		/* jitter ray starting positions */
 int		rt_perspective=0;	/* perspective view -vs- parallel */
 fastf_t		persp_angle = 90;	/* prespective angle (degrees X) */
 fastf_t		aspect = 1;		/* aspect ratio Y/X */
@@ -101,20 +102,20 @@ static int seen_start, seen_matrix;	/* state flags */
 
 static char *title_file, *title_obj;	/* name of file and first object */
 
-#define MAX_WIDTH	(8*1024)
+#define MAX_WIDTH	(16*1024)
 
 /*
  * Package Handlers.
  */
 extern int pkg_nochecking;
-int ph_unexp();	/* foobar message handler */
-int ph_start();
-int ph_matrix();
-int ph_options();
-int ph_lines();
-int ph_end();
-int ph_restart();
-int ph_loglvl();
+void	ph_unexp();	/* foobar message handler */
+void	ph_start();
+void	ph_matrix();
+void	ph_options();
+void	ph_lines();
+void	ph_end();
+void	ph_restart();
+void	ph_loglvl();
 struct pkg_switch pkgswitch[] = {
 	{ MSG_START, ph_start, "Startup" },
 	{ MSG_MATRIX, ph_matrix, "Set Matrix" },
@@ -132,11 +133,12 @@ char *cmd_args[MAXARGS];
 int numargs;
 
 struct pkg_conn *pcsrv;		/* PKG connection to server */
-char *control_host;	/* name of host running controller */
+char		*control_host;	/* name of host running controller */
+char		*tcp_port;	/* TCP port on control_host */
 
 int debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
-char srv_usage[] = "Usage: rtsrv [-d] control-host\n";
+char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port\n";
 
 /*
  *			M A I N
@@ -155,7 +157,7 @@ char **argv;
 		argc--; argv++;
 		debug++;
 	}
-	if( argc != 2 )  {
+	if( argc != 3 )  {
 		fprintf(stderr, srv_usage);
 		exit(2);
 	}
@@ -164,7 +166,7 @@ char **argv;
 
 #ifdef CRAY1
 	npsw = 1;			/* >1 on GOS crashes system */
-#endif cray
+#endif
 
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
 	if( npsw > 1 )  {
@@ -178,12 +180,12 @@ char **argv;
 
 	pkg_nochecking = 1;
 	control_host = argv[1];
-	pcsrv = pkg_open( control_host, "rtsrv", "tcp", "", "",
+	tcp_port = argv[2];
+	pcsrv = pkg_open( control_host, tcp_port, "tcp", "", "",
 		pkgswitch, rt_log );
-	if( pcsrv == PKC_ERROR &&
-	    (pcsrv = pkg_open( control_host, "4446", "tcp", "", "",
-	    pkgswitch, rt_log )) == PKC_ERROR )  {
-		fprintf(stderr, "unable to contact %s\n", control_host);
+	if( pcsrv == PKC_ERROR )  {
+		fprintf(stderr, "rtsrv: unable to contact %s, port %s\n",
+			control_host, tcp_port);
 		exit(1);
 	}
 	if( !debug )  {
@@ -221,6 +223,7 @@ char **argv;
 	exit(0);
 }
 
+void
 ph_restart(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
@@ -230,11 +233,12 @@ char *buf;
 	if(debug)fprintf(stderr,"ph_restart %s\n", buf);
 	rt_log("Restarting\n");
 	pkg_close(pcsrv);
-	execlp( "rtsrv", "rtsrv", control_host, (char *)0);
+	execlp( "rtsrv", "rtsrv", control_host, tcp_port, (char *)0);
 	perror("rtsrv");
 	exit(1);
 }
 
+void
 ph_options(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
@@ -245,6 +249,7 @@ char *buf;
 	if( debug )  fprintf(stderr,"ph_options: %s\n", buf);
 	/* Start options in a known state */
 	hypersample = 0;
+	jitter = 0;
 	rt_perspective = 0;
 	persp_angle = 90;
 	eye_backoff = 1.414;
@@ -267,8 +272,13 @@ char *buf;
 		case 'S':
 			stereo = 1;
 			break;
+		case 'J':
+			jitter = atoi( &cp[2] );
+			break;
 		case 'H':
 			hypersample = atoi( &cp[2] );
+			if( hypersample > 0 )
+				jitter = 1;
 			break;
 		case 'A':
 			AmbientIntensity = atof( &cp[2] );
@@ -341,6 +351,7 @@ char *buf;
 	(void)free(buf);
 }
 
+void
 ph_start(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
@@ -399,6 +410,7 @@ char *buf;
 		fprintf(stderr,"MSG_START error\n");
 }
 
+void
 ph_matrix(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
@@ -494,6 +506,7 @@ char *buf;
  *  Process scanlines from 'a' to 'b', inclusive, sending each back
  *  as soon as it's done.
  */
+void
 ph_lines(pc, buf)
 struct pkg_comm *pc;
 char *buf;
@@ -533,6 +546,8 @@ char *buf;
 }
 
 int print_on = 1;
+
+void
 ph_loglvl(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
@@ -585,6 +600,7 @@ char *str;
 	exit(12);
 }
 
+void
 ph_unexp(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
@@ -600,6 +616,7 @@ char *buf;
 	(void)free(buf);
 }
 
+void
 ph_end(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
@@ -609,6 +626,7 @@ char *buf;
 	exit(0);
 }
 
+void
 ph_print(pc, buf)
 register struct pkg_conn *pc;
 char *buf;

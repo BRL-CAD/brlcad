@@ -54,10 +54,10 @@ int detached = 0;		/* continue after EOF */
 /*
  * Package Handlers.
  */
-int ph_default();	/* foobar message handler */
-int ph_pixels();
-int ph_print();
-int ph_start();
+void	ph_default();	/* foobar message handler */
+void	ph_pixels();
+void	ph_print();
+void	ph_start();
 struct pkg_switch pkgswitch[] = {
 	{ MSG_START, ph_start, "Startup ACK" },
 	{ MSG_MATRIX, ph_default, "Set Matrix" },
@@ -142,6 +142,7 @@ char	out_file[256];		/* output file name */
 extern char *malloc();
 
 int	tcp_listen_fd;
+extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 
 /*
  *			E R R L O G
@@ -176,8 +177,10 @@ int argc; char **argv;
 	}
 
 	/* Listen for our PKG connections */
-	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, errlog)) < 0 )
+	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, errlog)) < 0 &&
+	    (tcp_listen_fd = pkg_permserver("20210", "tcp", 8, errlog)) < 0 )
 		exit(1);
+	/* Now, pkg_permport has tcp port number */
 	printf("REMRT listening\n");
 	(void)signal( SIGPIPE, SIG_IGN );
 	clients = (1<<0);
@@ -267,7 +270,7 @@ struct pkg_conn *pc;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_speed = 3;
 	sp->sr_index = fd;
-#ifdef cray
+#ifdef CRAY
 	sp->sr_addr = from.sin_addr;
 	hp = gethostbyaddr(&(sp->sr_addr), sizeof (struct in_addr),
 		from.sin_family);
@@ -275,7 +278,7 @@ struct pkg_conn *pc;
 	sp->sr_addr = from.sin_addr.s_addr;
 	hp = gethostbyaddr(&from.sin_addr, sizeof (struct in_addr),
 		from.sin_family);
-#endif cray
+#endif
 	if (hp == 0) {
 		sprintf( sp->sr_name, "x%x", ntohl(sp->sr_addr) );
 	} else {
@@ -610,9 +613,10 @@ FILE *fp;
 	if( strcmp( cmd_args[0], "add" ) == 0 )  {
 		char cmd[128];
 		for( i=1; i<numargs; i++ )  {
+			/* XXX should use rexecd! */
 			sprintf(cmd,
-				"rsh %s 'hostname; cd cad/remrt; rtsrv %s;uptime'",
-				cmd_args[i], ourname );
+				"rsh %s 'hostname; cd cad/remrt; rtsrv %s %d;uptime'",
+				cmd_args[i], ourname, pkg_permport );
 			if( vfork() == 0 )  {
 				/* 1st level child */
 				(void)close(0);
@@ -1090,6 +1094,7 @@ char *line;
 /*
  *			P H _ D E F A U L T
  */
+void
 ph_default(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
@@ -1112,6 +1117,7 @@ char *buf;
  *  and then responds with a MSG_START in return, which indicates
  *  that he is ready to accept work now.
  */
+void
 ph_start(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
@@ -1135,6 +1141,7 @@ char *buf;
 /*
  *			P H _ P R I N T
  */
+void
 ph_print(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
@@ -1149,6 +1156,7 @@ char *buf;
  *
  *  When a scanline is received from a server, file it away.
  */
+void
 ph_pixels(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
