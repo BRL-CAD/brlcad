@@ -118,7 +118,7 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 }
 	
 /*
- *			R T _ S T R U C T _ E X P O R T
+ *			B U _ S T R U C T _ E X P O R T
  */
 int
 bu_struct_export( ext, base, imp )
@@ -273,7 +273,7 @@ CONST struct bu_structparse *imp;
 }
 
 /*
- *			R T _ S T R U C T _ I M P O R T
+ *			B U _ S T R U C T _ I M P O R T
  */
 int
 bu_struct_import( base, imp, ext )
@@ -409,7 +409,7 @@ CONST struct bu_external	*ext;
 }
 
 /*
- *			R T _ S T R U C T _ P U T
+ *			B U _ S T R U C T _ P U T
  *
  *  Put a structure in external form to a stdio file.
  *  All formatting must have been accomplished previously.
@@ -425,7 +425,7 @@ CONST struct bu_external	*ext;
 }
 
 /*
- *			R T _ S T R U C T _ G E T
+ *			B U _ S T R U C T _ G E T
  *
  *  Obtain the next structure in external form from a stdio file.
  */
@@ -491,7 +491,7 @@ FILE *fp;
  */
 
 /*
- *			R T _ G S H O R T
+ *			B U _ G S H O R T
  */
 unsigned short
 bu_gshort(msgp)
@@ -512,7 +512,7 @@ CONST unsigned char *msgp;
 }
 
 /*
- *			R T _ G L O N G
+ *			B U _ G L O N G
  */
 unsigned long
 bu_glong(msgp)
@@ -528,7 +528,7 @@ CONST unsigned char *msgp;
 }
 
 /*
- *			R T _ P S H O R T
+ *			B U _ P S H O R T
  */
 unsigned char *
 bu_pshort(msgp, s)
@@ -542,7 +542,7 @@ register int s;
 }
 
 /*
- *			R T _ P L O N G
+ *			B U _ P L O N G
  */
 unsigned char *
 bu_plong(msgp, l)
@@ -558,7 +558,7 @@ register unsigned long l;
 }
 
 /*
- *			R T _ S T R U C T _ B U F
+ *			B U _ S T R U C T _ B U F
  *
  *  Given a buffer with an external representation of a structure
  *  (e.g. the ext_buf portion of the output from bu_struct_export),
