@@ -69,12 +69,15 @@ struct rt_vls  {
  *  Subroutine declarations
  */
 RT_VLS_EXTERN(void rt_vls_init, (struct rt_vls *vp) );
+RT_VLS_EXTERN(struct rt_vls* rt_vls_vlsinit, () );
 RT_VLS_EXTERN(char *rt_vls_addr, (struct rt_vls *vp) );
+RT_VLS_EXTERN(char *rt_vls_strdup, (struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_extend, (struct rt_vls *vp, int extra) );
 RT_VLS_EXTERN(int rt_vls_strlen, (CONST struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_trunc, (struct rt_vls *vp, int len) );
 RT_VLS_EXTERN(void rt_vls_nibble, (struct rt_vls *vp, int len) );
 RT_VLS_EXTERN(void rt_vls_free, (struct rt_vls *vp) );
+RT_VLS_EXTERN(void rt_vls_vlsfree, (struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_strcpy, (struct rt_vls *vp, CONST char *s) );
 RT_VLS_EXTERN(void rt_vls_strncpy, (struct rt_vls *vp, CONST char *s, int n) );
 RT_VLS_EXTERN(void rt_vls_strcat, (struct rt_vls *vp, CONST char *s) );
