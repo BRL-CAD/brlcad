@@ -50,7 +50,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  Architecture constraints suggest different values for each vendor.
  */
 #ifdef CRAY1
-#	define	INMEM_LIM	1*8*1024*1024	/* includes XMP */
+#	define	INMEM_LIM	1*1024*1024	/* includes XMP */
 #endif
 #ifdef CRAY2
 #	define	INMEM_LIM	32*8*1024*1024
