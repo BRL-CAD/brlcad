@@ -36,7 +36,9 @@ static char RCSpolylib[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <setjmp.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "rtstring.h"
 #include "./polyno.h"
 #include "./complex.h"
@@ -299,8 +301,8 @@ HIDDEN void catch_FPE(sig)
 int	sig;
 {
 	if( !expecting_fpe )
-		rt_bomb("unexpected SIGFPE! sig=%d\n", sig);
-	if( !rt_g.parallel )
+		rt_bomb("unexpected SIGFPE!");
+	if( !rt_g.rtg_parallel )
 		(void)signal(SIGFPE, catch_FPE);	/* Renew handler */
 	longjmp(abort_buf, 1);	/* return error code */
 }
@@ -314,7 +316,7 @@ register complex	root[];
 	register int	i;
 	static int	first_time = 1;
 	
-	if( !rt_g.parallel ) {
+	if( !rt_g.rtg_parallel ) {
 		/* abort_buf is NOT parallel! */
 		if( first_time )  {
 			first_time = 0;

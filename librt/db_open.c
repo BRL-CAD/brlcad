@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 
-#ifdef USE_UNIX_IO
+#ifdef HAVE_UNIX_IO
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif
