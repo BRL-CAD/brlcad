@@ -262,14 +262,6 @@ char **argv;
 	}
 	rt_db_free_internal(&intern);
 
-	/* For compatability, here is the "old way" */
-	MAT4X3PNT( &es_rec.s.s_values[3*0], es_invmat, arb->pt[0] );
-	for(i=1; i<8; i++){
-		vect_t	diff;
-		VSUB2( diff, arb->pt[i], arb->pt[0] );
-		MAT4X3VEC( &es_rec.s.s_values[3*i], es_invmat, diff );
-	}
-
 	/* draw the new solid */
 	replot_editing_solid();
 	return CMD_OK;				/* everything OK */
