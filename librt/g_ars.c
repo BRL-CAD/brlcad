@@ -31,6 +31,14 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 
 #define TRI_NULL	((struct tri_specific *)0)
 
+/* The internal (in memory) form of an ARS */
+struct ars_internal {
+	int ncurves;
+	int pts_per_curve;
+	fastf_t ** curves
+};
+
+
 /* Describe algorithm here */
 
 HIDDEN fastf_t	*rt_ars_rd_curve();
@@ -39,35 +47,34 @@ HIDDEN void	rt_ars_hitsort();
 extern int	rt_ars_face();
 
 /*
- *			R T _ A R S _ R E A D I N
+ *			R T _ A R S _ I M P O R T
  *
  *  Read all the curves in as a two dimensional array.
  *  The caller is responsible for freeing the dynamic memory.
  */
-HIDDEN fastf_t **
-rt_ars_readin( rp, mat )
+int
+rt_ars_import( ari, rp, mat )
+struct ars_internal * ari;
 union record	*rp;
 matp_t		mat;
 {
 	register int	i, j;
-	register fastf_t **curves;	/* array of curve base addresses */
-	LOCAL int	pts_per_curve;
-	LOCAL int	ncurves;
 	LOCAL vect_t	base_vect;
 	int		currec;
 
-	ncurves = rp[0].a.a_m;
-	pts_per_curve = rp[0].a.a_n;
+	ari->ncurves = rp[0].a.a_m;
+	ari->pts_per_curve = rp[0].a.a_n;
 
 	/*
 	 * Read all the curves into memory, and store their pointers
 	 */
-	i = (ncurves+1) * sizeof(fastf_t **);
-	curves = (fastf_t **)rt_malloc( i, "ars curve ptrs" );
+	i = (ari->ncurves+1) * sizeof(fastf_t **);
+	ari->curves = (fastf_t **)rt_malloc( i, "ars curve ptrs" );
 	currec = 1;
-	for( i=0; i < ncurves; i++ )  {
-		curves[i] = rt_ars_rd_curve( &rp[currec], pts_per_curve );
-		currec += (pts_per_curve+7)/8;
+	for( i=0; i < ari->ncurves; i++ )  {
+		ari->curves[i] = 
+			rt_ars_rd_curve( &rp[currec], ari->pts_per_curve );
+		currec += (ari->pts_per_curve+7)/8;
 	}
 
 	/*
@@ -75,11 +82,11 @@ matp_t		mat;
 	 * by rotating vectors and adding base vector.
 	 * Observe special treatment for base vector.
 	 */
-	for( i = 0; i < ncurves; i++ )  {
+	for( i = 0; i < ari->ncurves; i++ )  {
 		register fastf_t *v;
 
-		v = curves[i];
-		for( j = 0; j < pts_per_curve; j++ )  {
+		v = ari->curves[i];
+		for( j = 0; j < ari->pts_per_curve; j++ )  {
 			LOCAL vect_t	homog;
 
 			if( i==0 && j == 0 )  {
@@ -93,9 +100,9 @@ matp_t		mat;
 			}
 			v += ELEMENTS_PER_VECT;
 		}
-		VMOVE( v, curves[i] );		/* replicate first point */
+		VMOVE( v, ari->curves[i] );		/* replicate first point */
 	}
-	return( curves );
+	return( 0 );
 }
 
 /*
@@ -120,14 +127,15 @@ struct rt_i	*rtip;
 	LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
 	register int	i, j;
 	register fastf_t **curves;	/* array of curve base addresses */
-	LOCAL int	pts_per_curve;
-	LOCAL int	ncurves;
 	LOCAL fastf_t	f;
+	LOCAL struct ars_internal ari;
 
-	ncurves = rp[0].a.a_m;
-	pts_per_curve = rp[0].a.a_n;
+	i = rt_ars_readin( &ari, rp, stp->st_pathmat );
 
-	curves = rt_ars_readin( rp, stp->st_pathmat );
+	if ( i < 0) {
+		rt_log("rt_ars_prep(%s): db import failure\n", stp->st_name);
+		return(-1);
+	}
 
 	/*
 	 * Compute bounding sphere.
@@ -136,11 +144,11 @@ struct rt_i	*rtip;
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-	for( i = 0; i < ncurves; i++ )  {
+	for( i = 0; i < ari.ncurves; i++ )  {
 		register fastf_t *v;
 
-		v = curves[i];
-		for( j = 0; j < pts_per_curve; j++ )  {
+		v = ari.curves[i];
+		for( j = 0; j < ari.pts_per_curve; j++ )  {
 			VMINMAX( stp->st_min, stp->st_max, v );
 			v += ELEMENTS_PER_VECT;
 		}
@@ -164,12 +172,12 @@ struct rt_i	*rtip;
 	 *  Compute planar faces
 	 *  Will examine curves[i][pts_per_curve], provided by rt_ars_rd_curve.
 	 */
-	for( i = 0; i < ncurves-1; i++ )  {
+	for( i = 0; i < ari.ncurves-1; i++ )  {
 		register fastf_t *v1, *v2;
 
-		v1 = curves[i];
-		v2 = curves[i+1];
-		for( j = 0; j < pts_per_curve;
+		v1 = ari.curves[i];
+		v2 = ari.curves[i+1];
+		for( j = 0; j < ari.pts_per_curve;
 		    j++, v1 += ELEMENTS_PER_VECT, v2 += ELEMENTS_PER_VECT )  {
 		    	/* carefully make faces, w/inward pointing normals */
 			rt_ars_face( stp,
@@ -186,10 +194,10 @@ struct rt_i	*rtip;
 	/*
 	 *  Free storage for faces
 	 */
-	for( i = 0; i < ncurves; i++ )  {
-		rt_free( (char *)curves[i], "ars curve" );
+	for( i = 0; i < ari.ncurves; i++ )  {
+		rt_free( (char *)ari.curves[i], "ars curve" );
 	}
-	rt_free( (char *)curves, "ars curve ptrs" );
+	rt_free( (char *)ari.curves, "ars curve ptrs" );
 
 	return(0);		/* OK */
 }
@@ -600,45 +608,45 @@ struct directory *dp;
 {
 	register int	i;
 	register int	j;
-	register fastf_t **curves;	/* array of curve base addresses */
-	int	pts_per_curve;
-	int	ncurves;
+	struct ars_internal ari;
 
-	ncurves = rp[0].a.a_m;
-	pts_per_curve = rp[0].a.a_n;
+	i = rt_ars_import(&ari, rp, mat );
 
-	curves = rt_ars_readin( rp, mat );
+	if ( i < 0) {
+		rt_log("rt_ars_plot: db import failure\n");
+		return(-1);
+	}
 
 	/*
 	 *  Draw the "waterlines", by tracing each curve.
 	 *  n+1th point is first point replicated by code above.
 	 */
-	for( i = 0; i < ncurves; i++ )  {
+	for( i = 0; i < ari.ncurves; i++ )  {
 		register fastf_t *v1;
 
-		v1 = curves[i];
+		v1 = ari.curves[i];
 		ADD_VL( vhead, v1, 0 );
 		v1 += ELEMENTS_PER_VECT;
-		for( j = 1; j <= pts_per_curve; j++, v1 += ELEMENTS_PER_VECT )
+		for( j = 1; j <= ari.pts_per_curve; j++, v1 += ELEMENTS_PER_VECT )
 			ADD_VL( vhead, v1, 1 );
 	}
 
 	/*
 	 *  Connect the Ith points on each curve, to make a mesh.
 	 */
-	for( i = 0; i < pts_per_curve; i++ )  {
-		ADD_VL( vhead, &curves[0][i*ELEMENTS_PER_VECT], 0 );
-		for( j = 1; j < ncurves; j++ )
-			ADD_VL( vhead, &curves[j][i*ELEMENTS_PER_VECT], 1 );
+	for( i = 0; i < ari.pts_per_curve; i++ )  {
+		ADD_VL( vhead, &ari.curves[0][i*ELEMENTS_PER_VECT], 0 );
+		for( j = 1; j < ari.ncurves; j++ )
+			ADD_VL( vhead, &ari.curves[j][i*ELEMENTS_PER_VECT], 1 );
 	}
 
 	/*
 	 *  Free storage for faces
 	 */
-	for( i = 0; i < ncurves; i++ )  {
-		rt_free( (char *)curves[i], "ars curve" );
+	for( i = 0; i < ari.ncurves; i++ )  {
+		rt_free( (char *)ari.curves[i], "ars curve" );
 	}
-	rt_free( (char *)curves, "ars curves[]" );
+	rt_free( (char *)ari.curves, "ars curves[]" );
 	return(0);
 }
 
