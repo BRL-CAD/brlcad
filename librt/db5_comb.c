@@ -262,7 +262,10 @@ CONST struct db_i		*dbip;
 	 */
 	bzero( (char *)&tcs, sizeof(tcs) );
 	tcs.magic = DB_TREE_COUNTER_STATE_MAGIC;
-	max_stack_depth = db_tree_counter( comb->tree, &tcs );
+	if( comb->tree )
+		max_stack_depth = db_tree_counter( comb->tree, &tcs );
+	else
+		max_stack_depth = 0;	/* some combinations have no tree */
 
 	if( tcs.non_union_seen )  {
 		/* RPN expression needs one byte for each leaf or operator node */
@@ -279,9 +282,6 @@ CONST struct db_i		*dbip;
 	 * Ignore the slight chance that a smaller 'wid' might now be possible.
 	 */
 	tcs.leafbytes -= tcs.n_leaf * (8 - db5_enc_len[wid]);
-
-bu_log("wid=%d, n_max=%d, n_leaf=%d, n_oper=%d, leafbytes=%d, non_union_seen=%d, max_stack_depth=%d, rpn_len=%d\n",
-wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.leafbytes, tcs.non_union_seen, max_stack_depth, rpn_len);
 
 	/* Second pass -- determine amount of on-disk storage needed */
 	need =  1 +			/* width code */
@@ -332,7 +332,8 @@ wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.leafbytes, tcs.non_union_seen, max_s
 	else
 		ss.exprp = NULL;
 
-	rt_comb_v5_serialize( comb->tree, &ss );
+	if( comb->tree )
+		rt_comb_v5_serialize( comb->tree, &ss );
 
 	BU_ASSERT_LONG( ss.mat_num, ==, tcs.n_mat );
 	BU_ASSERT_PTR( ss.matp, ==, cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) );
@@ -455,7 +456,6 @@ const struct db_i	*dbip;
 	leafp = cp + nmat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
 	exprp = leafp + leafbytes;
 	leafp_end = exprp;
-bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_len, max_stack_depth);
 
 	if( rpn_len == 0 )  {
 		int	i;
