@@ -93,7 +93,7 @@ register char **argv;
 {
 	register int c;
 
-	while( (c=getopt( argc, argv, "SH:F:D:MA:s:f:a:e:l:O:o:p:P:" )) != EOF )  {
+	while( (c=getopt( argc, argv, "SH:F:D:MA:x:s:f:a:e:l:O:o:p:P:" )) != EOF )  {
 		switch( c )  {
 		case 'S':
 			stereo = 1;
