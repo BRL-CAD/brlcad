@@ -27,74 +27,62 @@ if test "x$MACHINE" = "x" ; then
 fi
 
 echo Looking for RT...
-# find RT (environment variable overrides)
+# find the raytracer
+# RT environment variable overrides
 if test "x${RT}" = "x" ; then
-  echo ...checking for NFS or local build...
-  echo "pwd is `pwd`  and $0"
-  # check for NFS build
-  if test -x $path_to_run_sh/../.rt.$MACHINE/rt ; then
-    echo ...found NFS build
-    RT=$path_to_run_sh/../.rt.$MACHINE/rt
-    if test x${DB} != x ; then DB=$path_to_run_sh/../.db.$MACHINE ; fi
-    LD_LIBRARY_PATH=$path_to_run_sh/../.libbu.$MACHINE:$path_to_run_sh/../.libbn.$MACHINE:$path_to_run_sh/../.liboptical.$MACHINE:$path_to_run_sh/../.libitcl3.2.$MACHINE:$path_to_run_sh/../.libtcl8.3.$MACHINE:$path_to_run_sh/../.librt.$MACHINE:$path_to_run_sh/../.libfb.$MACHINE:$path_to_run_sh/../.libpkg.$MACHINE:$path_to_run_sh/../.libsysv.$MACHINE:$LD_LIBRARY_PATH
-  # check for local build
-  elif test -f $path_to_run_sh/../rt/rt ; then
-    echo ...found local build
-    RT=$path_to_run_sh/../rt/rt
-    if test x${DB} != x ; then DB=$path_to_run_sh/../db ; fi
-    LD_LIBRARY_PATH=$path_to_run_sh/../libbu:$path_to_run_sh/../libbn:$path_to_run_sh/../liboptical:$path_to_run_sh/../libitcl3.2:$path_to_run_sh/../libtcl8.3:$path_to_run_sh/../librt:$path_to_run_sh/../libfb:$path_to_run_sh/../libpkg:$path_to_run_sh/../libsysv:$LD_LIBRARY_PATH
+  # see if we find the rt binary
+  if test -x "$path_to_run_sh/../src/rt" ; then
+    echo ...found $path_to_run_sh/../src/rt/rt
+    RT="$path_to_run_sh/../src/rt/rt"
+    LD_LIBRARY_PATH="$path_to_run_sh/../src/rt:$LD_LIBRARY_PATH"
   fi
+else
+  echo ...using $RT from RT environment variable setting
 fi
 
 echo Looking for geometry database directory...
 # find geometry database directory if we do not already know where it is
 # DB environment variable overrides
 if test "x${DB}" = "x" ; then
-  echo ...checking for NFS or local build...	
-  # check for NFS build
-  if test -f $path_to_run_sh/../.db.$MACHINE/sphflake.g ;	then 
-    echo ...found NFS build
-    DB=$path_to_run_sh/../.db.$MACHINE
-    LD_LIBRARY_PATH=$path_to_run_sh/../.libbu.$MACHINE:$path_to_run_sh/../.libbn.$MACHINE:$path_to_run_sh/../.liboptical.$MACHINE:$path_to_run_sh/../.libitcl3.2.$MACHINE:$path_to_run_sh/../.libtcl8.3.$MACHINE:$path_to_run_sh/../.librt.$MACHINE:$path_to_run_sh/../.libfb.$MACHINE:$path_to_run_sh/../.libpkg.$MACHINE:$path_to_run_sh/../.libsysv.$MACHINE:$LD_LIBRARY_PATH
-  # check for local build
-  elif test -f $path_to_run_sh/../db/sphflake.g ; then
-    echo ...found local build
-    DB=$path_to_run_sh/../db
-    LD_LIBRARY_PATH=$path_to_run_sh/../libbu:$path_to_run_sh/../libbn:$path_to_run_sh/../liboptical:$path_to_run_sh/../libitcl3.2:$path_to_run_sh/../libtcl8.3:$path_to_run_sh/../librt:$path_to_run_sh/../libfb:$path_to_run_sh/../libpkg:$path_to_run_sh/../libsysv:$LD_LIBRARY_PATH
+  if test -f "$path_to_run_sh/../db/sphflake.g" ; then
+    echo ...found $path_to_run_sh/../db
+    DB="$path_to_run_sh/../db"
   fi
-
+else
+  echo ...using $DB from DB environment variable setting
 fi
 
 echo Checking for pixel comparison utility...
 # find pixel comparison utility
 # CMP environment variable overrides
 if test "x${CMP}" = "x" ; then
-  echo ...checking for NFS of local build...
-  if test -x $path_to_run_sh/../.bench.$MACHINE/pixcmp ; then
-    echo ...found NFS build
-    CMP=$path_to_run_sh/../.bench.$MACHINE/pixcmp
-  elif test -x $path_to_run_sh/pixcmp ;	then
-    echo ...found local build
-    CMP=$path_to_run_sh/pixcmp
+  if test -x $path_to_run_sh/pixcmp ; then
+    echo ...found $path_to_run_sh/pixcmp
+    CMP="$path_to_run_sh/pixcmp"
   else
-    echo ...need to build pixcmp
-    cake >& /dev/null
-    if test "x$?" = "x0" ; then
-      echo ...building pixcmp with cake	
-      cake pixcmp
-    else
-      if test "x${CC}" = "x" ; then
-	CC=gcc
-	$CC >& /dev/null
-	if ! test "x$?" = "x1" ; then
-	  CC=cc
+    if test -f "$path_to_run_sh/pixcmp.c" ; then
+      echo ...need to build pixcmp
+
+      for compiler in $CC gcc cc ; do
+	CC=$compiler
+
+	$CC "$path_to_run_sh/pixcmp.c" >& /dev/null
+	if $? = 0 ; then
+	  break
 	fi
+	if test -f "$path_to_run_sh/pixcmp" ; then
+	  break;
+	fi
+      done
+      
+      if test -f "$path_to_run_sh/pixcmp" ; then
+        echo ...built pixcmp with $CC
+        CMP="$path_to_run_sh/pixcmp"
       fi
     fi
-    echo ...building pixcmp with $CC
-    $CC -o pixcmp -I$path_to_run_sh/../h pixcmp.c
-    CMP=$path_to_run_sh/pixcmp
   fi
+else
+  echo ...using $CMP from CMP environment variable setting
 fi
 
 # Alliant NFS hack
@@ -105,22 +93,21 @@ if test "x${MACHINE}" = "xfx" ; then
   CMP=/tmp/pixcmp
 fi
 
-
 # print results or choke
 if test "x${RT}" = "x" ; then
-  echo "ERROR:  Could not find RT"
+  echo "ERROR:  Could not find the BRL-CAD raytracer"
   exit 1
 else
   echo "Using [$RT] for RT"
 fi
 if test "x${DB}" = "x" ; then
-  echo "ERROR:  Could not find database directory"
+  echo "ERROR:  Could not find the BRL-CAD database directory"
   exit 1
 else
   echo "Using [$DB] for DB"
 fi
 if test "x${CMP}" = "x" ; then
-  echo "ERROR:  Could not find pixel comparison utility"
+  echo "ERROR:  Could not find the BRL-CAD pixel comparison utility"
   exit 1
 else
   echo "Using [$CMP] for CMP"
