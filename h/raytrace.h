@@ -612,6 +612,7 @@ struct resource {
 	union tree	**re_boolstack;	/* Stack for rt_booleval() */
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	int		re_cpu;		/* processor number, for ID */
+	float		*re_randptr;	/* ptr into random number table */
 	long		re_magic;	/* Magic number */
 };
 #define RESOURCE_NULL	((struct resource *)0)
