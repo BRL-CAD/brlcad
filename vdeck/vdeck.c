@@ -305,14 +305,16 @@ char	*argv[];
 		case EOF :
 		case QUIT :
 			(void) printf( "quitting...\n" );
-			exit( 0 );
-UNKNOWN :
+			goto out;
+		default :
 			(void) printf( "Invalid command\n" );
 			prompt( PROMPT );
 			continue;
 		}
 		prompt( CMD_PROMPT );
 	}
+out:
+	exit( 0 );
 }
 
 /*
