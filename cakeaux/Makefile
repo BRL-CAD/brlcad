@@ -26,6 +26,7 @@ all:		$(PROGS)
 install:	$(PROGS)
 		eval `machinetype.sh -v` ; \
 		BINDIR=$${BASEDIR}/bin; \
+		umask 0222; \
 		cp $(PROGS) $${BINDIR}
 
 base:		base.o pattern_s.o
