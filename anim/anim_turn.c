@@ -24,6 +24,7 @@
  *      in all countries except the USA.  All rights reserved.
  */
 
+#include "conf.h"
 #include <math.h>
 #include <stdio.h>
 #include "machine.h"
@@ -118,7 +119,7 @@ char **argv;
 				sign = -1.0;
 			yaw = mat_atan2(sign*v[1],sign*v[0]);
 			if (radius > VDIVIDE_TOL)
-				roll_ang += sign * MAGNITUDE(v) / radius;
+				roll_ang -= sign * MAGNITUDE(v) / radius;
 
 			if (!(count%print_int))
 				printf("%f %f %f 0.0\n",time,factor*RTOD*yaw,RTOD*roll_ang);

@@ -4,6 +4,7 @@
  *
  */
 
+#include "conf.h"
 #include <math.h>
 #include <stdio.h>
 #include "machine.h"
