@@ -28,15 +28,20 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
-#ifdef HAVE_TERMCAP_H
-#  include <termcap.h>
-#else
-extern char	*getenv(), *tgetstr(const char *, char **);
-extern int	tgetent(void *, const char *);
-#endif
 
-#ifdef __ppc__
-#  include <curses.h>
+#ifdef HAVE_NCURSES_H
+#  include <ncurses.h>
+#else
+#  ifdef HAVE_CURSES_H
+#    include <curses.h>
+#  endif
+#endif
+#ifdef HAVE_TERM_H
+#  include <term.h>
+#else
+#  ifdef HAVE_TERMCAP_H
+#    include <termcap.h>
+#  endif
 #endif
 
 #include <sys/ioctl.h>
