@@ -1402,7 +1402,13 @@ int
 Rt_Init(interp)
 Tcl_Interp *interp;
 {
+	char *version_number;
+
 	rt_tcl_setup(interp);
+	Tcl_Eval(interp, "lindex $rt_version 2");
+	version_number = Tcl_GetStringResult(interp);
+	Tcl_PkgProvide(interp,  "Rt", version_number);
+
 	return TCL_OK;
 }
 
