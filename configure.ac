@@ -677,23 +677,23 @@ dnl *** Check for functions ***
 dnl ***************************
 
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS( \
-	access \
-	bzero \
-	dlopen \
-	drand \
-	fabs \ 
-	gethostname \
-	getopt \
-	sbrk \
-	strcasecmp \
-	strchr \
-	strdup \
-	strdup\
-	vfork \
-	vprintf \
-	writev \
-)
+AC_CHECK_FUNCS([
+	access
+	bzero
+	dlopen
+	drand
+	fabs 
+	gethostname
+	getopt
+	sbrk
+	strcasecmp
+	strchr
+	strcpy
+	strdup
+	vfork
+	vprintf
+	writev
+])
 
 AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
 AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
