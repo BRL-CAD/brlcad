@@ -454,6 +454,23 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
+#if defined (mips) && defined (ultrix)
+/*      mips-equipped DECStations running ULTRIX v4.2a          */
+#	undef	mips
+#	define MTYPE	mips
+#	define BSD	42
+#	define HAS_TCP	1
+#	define CC_DEFS	-Dvoid=int
+#	define CC_OPTS	-Olimit 4096
+#	define LIBFB_OBJS	if_X if_remote if_ab if_ptty
+#	define LIBFB_CONFIG	-DIF_X -DIF_REMOTE -DIF_AB -DIF_PTTY
+#	define LIBFB_LIBES	LIBPKB -lX11
+#	define LIBRT_TIMER	timer42
+#	define MGED_CONFIG	-DDM_X
+#	define MGED_OBJS	dm-X
+#	define MGED_LIBES	LIBPKG -lX11
+#endif
+
 #if defined(__CAKE__irix4) || (defined(__sgi) && defined(__mips))
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
