@@ -23,14 +23,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-#define MAX_LINE	1024		/* Max pixels/line */
+#define MAX_LINE	2048		/* Max pixels/line */
 static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 
-struct pixel outline[MAX_LINE];
+Pixel outline[MAX_LINE];
 
 int inverse = 0;			/* Draw upside-down */
 int clear = 0;
+
+FBIO *fbp;
 
 char usage[] = "Usage: pix-fb [-h] [-i] [-c] [width] <file.pix\n";
 
@@ -50,7 +52,7 @@ char **argv;
 
 	fbsize = 512;
 	nlines = 512;
-	while( argv[1][0] == '-' )  {
+	while( argv[1] != NULL && argv[1][0] == '-' )  {
 		if( strcmp( argv[1], "-h" ) == 0 )  {
 			fbsize = 1024;
 			nlines = 1024;
@@ -76,24 +78,24 @@ char **argv;
 		fprintf(stderr,"%s", usage);
 		exit(1);
 	}
-	if( nlines > 512 )
-		fbsetsize(fbsize);
 
 	scanbytes = nlines * 3;
 
-	if( fbopen( NULL, CREATE ) < 0 )
+	if( (fbp = fb_open( NULL, fbsize, fbsize )) == NULL )  {
+		fprintf(stderr,"fb_open failed\n");
 		exit(12);
+	}
 	if( clear )
-		fbclear();
-	fbzoom( fbsize==nlines? 0 : fbsize/nlines,
+		fb_clear( fbp, (Pixel *) 0 );
+	fb_zoom( fbp, fbsize==nlines? 0 : fbsize/nlines,
 		fbsize==nlines? 0 : fbsize/nlines );
-	fbwindow( nlines/2, nlines/2 );		/* center of view */
+	fb_window( fbp, nlines/2, nlines/2 );		/* center of view */
 
 	if( !inverse )  {
 		/* Normal way -- bottom to top */
 		for( y = nlines-1; y >= 0; y-- )  {
 			register char *in;
-			register struct pixel *out;
+			register Pixel *out;
 			register int i;
 
 			if( fread( (char *)scanline, scanbytes, 1, stdin ) != 1 )
@@ -105,15 +107,15 @@ char **argv;
 				out->red = *in++;
 				out->green = *in++;
 				out->blue = *in++;
-				(out++)->spare = 0;
+				out++;
 			}
-			fbwrite( 0, y, outline, nlines );
+			fb_write( fbp, 0, y, outline, nlines );
 		}
 	}  else  {
 		/* Inverse -- top to bottom */
 		for( y=0; y < nlines; y++ )  {
 			register char *in;
-			register struct pixel *out;
+			register Pixel *out;
 			register int i;
 
 			if( fread( (char *)scanline, scanbytes, 1, stdin ) != 1 )
@@ -127,8 +129,9 @@ char **argv;
 				out->blue = *in++;
 				(out++)->spare = 0;
 			}
-			fbwrite( 0, y, outline, nlines );
+			fb_write( fbp, 0, y, outline, nlines );
 		}
 	}
+	fb_close( fbp );
 	exit(0);
 }

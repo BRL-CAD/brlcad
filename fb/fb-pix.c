@@ -23,13 +23,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-#define MAX_LINE	1024		/* Max pixels/line */
+#define MAX_LINE	2048		/* Max pixels/line */
 static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 
-struct pixel outline[MAX_LINE];
+Pixel outline[MAX_LINE];
 
 int inverse = 0;			/* Draw upside-down */
+
+FBIO *fbp;
 
 char usage[] = "Usage: fb-pix [-h] [-i] [width] > file.pix\n";
 
@@ -48,7 +50,7 @@ char **argv;
 
 	fbsize = 512;
 	nlines = 512;
-	while( argv[1][0] == '-' )  {
+	while( argv[1] != NULL && argv[1][0] == '-' )  {
 		if( strcmp( argv[1], "-h" ) == 0 )  {
 			fbsize = 1024;
 			nlines = 1024;
@@ -67,12 +69,10 @@ char **argv;
 		fprintf(stderr,"%s", usage);
 		exit(1);
 	}
-	if( nlines > 512 )
-		fbsetsize(fbsize);
 
 	scanbytes = nlines * 3;
 
-	if( fbopen( NULL, APPEND ) < 0 )  {
+	if( (fbp = fb_open( NULL, fbsize, fbsize )) == NULL )  {
 		fprintf(stderr,"fbopen failed\n");
 		exit(12);
 	}
@@ -81,10 +81,10 @@ char **argv;
 		/*  Regular -- draw bottom to top */
 		for( y = nlines-1; y >= 0; y-- )  {
 			register char *in;
-			register struct pixel *out;
+			register Pixel *out;
 			register int i;
 
-			fbread( 0, y, outline, nlines );
+			fb_read( fbp, 0, y, outline, nlines );
 
 			in = scanline;
 			out = outline;
@@ -94,8 +94,8 @@ char **argv;
 				*in++ = out->blue;
 				out++;
 			}
-			if( write( 1, (char *)scanline, scanbytes ) != scanbytes )  {
-				perror("write");
+			if( fwrite( (char *)scanline, scanbytes, 1, stdout ) != 1 )  {
+				perror("fwrite");
 				exit(1);
 			}
 		}
@@ -103,10 +103,10 @@ char **argv;
 		/*  Inverse -- draw top to bottom */
 		for( y=0; y < nlines; y++ )  {
 			register char *in;
-			register struct pixel *out;
+			register Pixel *out;
 			register int i;
 
-			fbread( 0, y, outline, nlines );
+			fb_read( fbp, 0, y, outline, nlines );
 
 			in = scanline;
 			out = outline;
@@ -116,11 +116,12 @@ char **argv;
 				*in++ = out->blue;
 				out++;
 			}
-			if( write( 1, (char *)scanline, scanbytes ) != scanbytes )  {
-				perror("write");
+			if( fwrite( (char *)scanline, scanbytes, 1, stdout ) != 1 )  {
+				perror("fwrite");
 				exit(1);
 			}
 		}
 	}
+	fb_close( fbp );
 	exit(0);
 }

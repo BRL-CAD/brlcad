@@ -24,33 +24,39 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
+FBIO	*fbp;
+
 long	rxb[256][256], rxg[256][256], bxg[256][256];
 
-struct	pix_element {
-	unsigned char red, green, blue;
-};
+unsigned char ibuf[512*3];
 
 static char *Usage = "usage: pixhist3d < file.pix\n";
 
 main()
 {
-	int	n, x;
-	struct	pix_element scan[512];
+	int	n;
 	
 	if( isatty(fileno(stdin)) ) {
 		fprintf( stderr, Usage );
 		exit( 1 );
 	}
 
-	while( (n = fread(&scan[0], sizeof(*scan), 512, stdin)) > 0 ) {
-		for( x = 0; x < n; x++ ) {
-			rxb[ scan[x].red ][ scan[x].blue ]++;
-			rxg[ scan[x].red ][ scan[x].green ]++;
-			bxg[ scan[x].blue ][ scan[x].green ]++;
-		}
+	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
+		fprintf(stderr,"fb_open failed\n");
+		exit(12);
 	}
 
-	fbopen( 0, 0 );
+	while( (n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), stdin)) > 0 ) {
+		register unsigned char *bp;
+		register int i;
+
+		bp = &ibuf[0];
+		for( i = n/3; i > 0; i--, bp += 3 )  {
+			rxb[ bp[0] ][ bp[2] ]++;
+			rxg[ bp[0] ][ bp[1] ]++;
+			bxg[ bp[2] ][ bp[1] ]++;
+		}
+	}
 
 	disp_array( rxg, 0, 0 );
 	disp_array( rxb, 256, 0 );
@@ -64,8 +70,9 @@ disp_array( v, xoff, yoff )
 long v[256][256];
 int xoff, yoff;
 {
-	int	x, y, value;
-	int	max;
+	register int	x, y;
+	static long	max;
+	static double scale;
 	Pixel	obuf[256];
 
 	/* Find max value */
@@ -76,15 +83,18 @@ int xoff, yoff;
 				max = v[y][x];
 		}
 	}
+	scale = 255.0 / ((double)max);
 
 	/* plot them */
 	for( y = 0; y < 256; y++ ) {
 		for( x = 0; x < 256; x++ ) {
-			value = v[y][x] / (double)max * 255;
+			register int value;
+
+			value = v[y][x] * scale;
 			if( value < 20 && v[y][x] != 0 )
 				value = 20;
 			obuf[x].red = obuf[x].green = obuf[x].blue = value;
 		}
-		fbwrite( xoff, 511-(yoff+y), &obuf[0], 256 );
+		fb_write( fbp, xoff, 511-(yoff+y), &obuf[0], 256 );
 	}
 }

@@ -25,8 +25,8 @@ char	sccsTag[] = "@(#) rle-fb.c	1.9	last edit 2/4/86 at 16:38:20";
 #define MAX_DMA	1024*16
 #endif
 #define DMA_PIXELS	(MAX_DMA/sizeof(Pixel))
-#define DMA_SCANS	(DMA_PIXELS/_fbsize)
-#define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
+#define DMA_SCANS	(DMA_PIXELS/width)
+#define PIXEL_OFFSET	((scan_ln%dma_scans)*width)
 
 typedef unsigned char	u_char;
 static char	*usage[] =
@@ -42,6 +42,7 @@ static char	*usage[] =
 0
 	};
 
+static FBIO	*fbp;
 static FILE	*fp = stdin;
 static Pixel	bgpixel = { 0, 0, 0, 0 };
 static int	bgflag = 0;
@@ -52,6 +53,7 @@ static int	xlen = -1, ylen = -1;
 static int	xpos = -1, ypos = -1;
 static void	prnt_Cmap();
 static void	prnt_Usage();
+static int	width = 512;
 
 /*	m a i n ( )							*/
 main( argc, argv )
@@ -82,18 +84,21 @@ char	*argv[];
 
 	/* Automatic selection of high res. device.			*/
 	if( xpos + xlen > 512 || ypos + ylen > 512 )
-		fbsetsize( 1024 );
-	if( xpos + xlen > _fbsize )
-		xlen = _fbsize - xpos;
-	if( ypos + ylen > _fbsize )
-		ylen = _fbsize - ypos;
+		width = 1024;
+	if( xpos + xlen > width )
+		xlen = width - xpos;
+	if( ypos + ylen > width )
+		ylen = width - ypos;
 	rle_wlen( xlen, ylen, 0 );
 
 	dma_pixels = DMA_PIXELS;
 	dma_scans = DMA_SCANS;
-	scan_bytes = _fbsize * sizeof(Pixel);
-	if( fbopen( NULL, CREATE ) == -1 )
-		return	1;
+	scan_bytes = width * sizeof(Pixel);
+
+	if( (fbp = fb_open( NULL, width, width )) == NULL )  {
+		fprintf(stderr,"fb_open failed\n");
+		exit(12);
+	}
 
 	if( rle_verbose )
 		(void) fprintf( stderr,
@@ -119,7 +124,7 @@ char	*argv[];
 				(void) fprintf( stderr,
 					"Writing color map to framebuffer\n"
 						);
-			if( fb_wmap( &cmap ) == -1 )
+			if( fb_wmap( fbp, &cmap ) == -1 )
 				return	1;
 			}
 		}
@@ -130,7 +135,7 @@ char	*argv[];
 			(void) fprintf( stderr,
 					"Creating standard color map\n"
 					);
-		if( fb_wmap( (ColorMap *) NULL ) == -1 )
+		if( fb_wmap( fbp, COLORMAP_NULL ) == -1 )
 			return	1;
 		}
 	/* Fill buffer with background.					*/
@@ -140,29 +145,29 @@ char	*argv[];
 			register Pixel	*from;
 		to = bg_scan;
 		from = &bgpixel;
-		for( i = 0; i < _fbsize; i++ )
+		for( i = 0; i < width; i++ )
 			*to++ = *from;
 		}
 
 	{	register int	page_fault = 1;
 		register int	dirty_flag = 1;
-		register int	by = _fbsize - dma_scans;
+		register int	by = width - dma_scans;
 		int		btm = ypos + (ylen-1);
 		int		top = ypos;
-	for( scan_ln = _fbsize-1; scan_ln >= 0; scan_ln-- )
+	for( scan_ln = width-1; scan_ln >= 0; scan_ln-- )
 		{
 		if( page_fault )
 			{
 			if( olflag )
 				{ /* Overlay - read cluster from fb.	*/
-				if( fbread( 0, by, scans, dma_pixels ) == -1 )
+				if( fb_read( fbp, 0, by, scans, dma_pixels ) == -1 )
 					return	1;
 				}
 			else
 			if( (get_flags & NO_BOX_SAVE) && dirty_flag )
 				fill_Buffer(	(char *) scans,
 						(char *) bg_scan,
-						_fbsize*sizeof(Pixel),
+						width*sizeof(Pixel),
 						dma_scans
 						);
 			dirty_flag = 0;
@@ -178,7 +183,7 @@ char	*argv[];
 			}
 		if( page_fault = ! (scan_ln%dma_scans) )
 			{
-			if( fbwrite( 0, by, scans, dma_pixels ) == -1 )
+			if( fb_write( fbp, 0, by, scans, dma_pixels ) == -1 )
 				return	1;
 			by -= dma_scans;
 			}
@@ -191,18 +196,17 @@ char	*argv[];
 	Fill cluster buffer from scanline (as fast as possible).
  */
 fill_Buffer( buff_p, scan_p, scan_bytes, dma_scans )
-register char	*buff_p;	/* On VAX, known to be R11 */
-register char	*scan_p;	/* VAX R10 */
-register int	scan_bytes;	/* VAX R9 */
+register char	*buff_p;
+register char	*scan_p;
+register int	scan_bytes;
 register int	dma_scans;
 	{	register int	i;
 	for( i = 0; i < dma_scans; ++i )
 		{
-#if ! defined( vax ) || defined( lint )
-		(void) strncpy( buff_p, scan_p, scan_bytes );
+#ifdef BSD
+		bcopy( (char *)buff_p, (char *)scan_p, scan_bytes );
 #else
-		/* Pardon the efficiency.  movc3 len,src,dest */
-		asm("	movc3	r9,(r10),(r11)");
+		memcpy( (char *)scan_p, (char *)buff_p, scan_bytes );
 #endif
 		buff_p += scan_bytes;
 		}
@@ -311,7 +315,7 @@ prnt_Usage()
 static void
 prnt_Cmap( cmap )
 ColorMap	*cmap;
-	{	register u_char	*cp;
+	{	register unsigned short	*cp;
 		register int	i;
 	(void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
 	(void) fprintf( stderr, "Red segment :\n" );

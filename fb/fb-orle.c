@@ -25,8 +25,8 @@ char	sccsTag[] = "@(#) fb-rle.c	1.11	last edit 2/12/86 at 13:22:00";
 #define MAX_DMA	1024*16
 #endif
 #define DMA_PIXELS	(MAX_DMA/sizeof(Pixel))
-#define DMA_SCANS	(DMA_PIXELS/_fbsize)
-#define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
+#define DMA_SCANS	(DMA_PIXELS/width)
+#define PIXEL_OFFSET	((scan_ln%dma_scans)*width)
 static char	*usage[] = {
 "",
 "fb-rle (1.11)",
@@ -38,6 +38,8 @@ static char	*usage[] = {
 "	to specify the framebuffer file or device to read from.",
 0
 };
+
+static FBIO	*fbp;
 static FILE	*fp = stdout;
 static Pixel	bgpixel = { 0, 0, 0, 0 };
 static int	bgflag = 1;
@@ -48,6 +50,7 @@ static int	xpos = 0, ypos = 0, xlen = 0, ylen = 0;
 static int	parsArgv();
 static void	do_Crunch();
 static void	prntUsage();
+static int	width = 512;
 
 /*	m a i n ( )							*/
 main( argc, argv )
@@ -69,13 +72,27 @@ char	*argv[];
 	setbuf( fp, malloc( BUFSIZ ) );
 	dma_pixels = DMA_PIXELS;
 	dma_scans = DMA_SCANS;
-	scan_bytes = _fbsize * sizeof(Pixel);
+	scan_bytes = width * sizeof(Pixel);
 	rle_wlen( xlen, ylen, 1 );
 	rle_wpos( xpos, ypos, 1 );
-	if( fbopen( NULL, APPEND ) == -1 )
-		return	1;
+
+	if( (fbp = fb_open( NULL, width, width )) == NULL )  {
+		fprintf(stderr,"fb_open failed\n");
+		exit(12);
+	}
+
+	/* Read color map, see if it's linear */
+	cmflag = 1;		/* Need to save colormap */
+	if( fb_rmap( fbp, &cmap ) == -1 )
+		cmflag = 0;
+	if( is_linear_cmap( &cmap ) )
+		cmflag = 0;
+	if( crunch && (cmflag == 0) )
+		crunch = 0;
+
+	/* Acquire "background" pixel from special location */
 	if(	bgflag
-	    &&	fbread( 1, 1, &bgpixel, 1 ) == -1
+	    &&	fb_read( fbp, 1, 1, &bgpixel, 1 ) == -1
 		)
 		{
 		(void) fprintf( stderr, "Couldn't read background!\n" );
@@ -86,31 +103,21 @@ char	*argv[];
 				"Background saved as %d %d %d\n",
 				bgpixel.red, bgpixel.green, bgpixel.blue
 				);
+
+	/* Write RLE header */
 	if( rle_whdr( fp, ncolors, bgflag, cmflag, &bgpixel ) == -1 )
 		return	1;
-	if( cmflag )
-		{
-		if( fb_rmap( &cmap ) == -1 )
-			{ /* No map saved, assume standard map.		*/
-			if( rle_wmap( fp, (ColorMap *) NULL ) == -1 )
-				return	1;
-			}
-		else
-			{
-			if( rle_wmap( fp, &cmap ) == -1 )
-				return	1;
-			}
+
+	/* Follow RLE header with colormap */
+	if( cmflag )  {
+		if( rle_wmap( fp, &cmap ) == -1 )
+			return	1;
 		if( rle_debug )
 			(void) fprintf( stderr,
 					"Color map saved.\n"
 					);
-		}
-	else
-	if( crunch && fb_rmap( &cmap ) == -1 )
-		{
-		(void) fprintf( stderr, "Could not read colormap!\n" );
-		crunch = 0;
-		}
+	}
+
 	if( ncolors == 0 )
 		/* Only save colormap, so we are finished.		*/
 		return	0;
@@ -122,7 +129,7 @@ char	*argv[];
 		{
 		if( page_fault )
 			{
-			if( fbread( 0, y_buffer, scan_buf, dma_pixels ) == -1)
+			if( fb_read( fbp, 0, y_buffer, scan_buf, dma_pixels ) == -1)
 				{
 				(void) fprintf(	stderr,
 					"read of %d pixels from (0,%d) failed!\n",
@@ -177,7 +184,7 @@ register char	**argv;
 			rle_debug = 1;
 			break;
 		case 'h' : /* High resolution.				*/
-			fbsetsize( 1024 );
+			width = 1024;
 			break;
 		case 'l' : /* Length in x and y.			*/
 			if( argc - optind < 1 )
@@ -249,9 +256,9 @@ register char	**argv;
 		return	0;
 		}
 	if( xlen == 0 )
-		xlen = _fbsize;
+		xlen = width;
 	if( ylen == 0 )
-		ylen = _fbsize;
+		ylen = width;
 	return	1;
 	}
 
@@ -279,9 +286,29 @@ register ColorMap	*cmap;
 	{
 	for( ; pixel_ct > 0; pixel_ct--, scan_buf++ )
 		{
-		scan_buf->red = cmap->cm_red[scan_buf->red];
-		scan_buf->green = cmap->cm_green[scan_buf->green];
-		scan_buf->blue = cmap->cm_blue[scan_buf->blue];
+		scan_buf->red = cmap->cm_red[scan_buf->red]>>8;
+		scan_buf->green = cmap->cm_green[scan_buf->green]>>8;
+		scan_buf->blue = cmap->cm_blue[scan_buf->blue]>>8;
 		}
 	return;
 	}
+
+/*
+ *  Check for a color map being linear in R, G, and B.
+ *  Returns 1 for linear map, 0 for non-linear map
+ *  (ie, non-identity map).
+ */
+is_linear_cmap( cmap )
+register ColorMap *cmap;
+{
+	register int i;
+	unsigned short v;
+
+	for( i=0; i<256; i++ )  {
+		v = (unsigned short)(i<<8);
+		if( cmap->cm_red[i] != v )  return(0);
+		if( cmap->cm_green[i] != v )  return(0);
+		if( cmap->cm_blue[i] != v )  return(0);
+	}
+	return(1);
+}
