@@ -55,7 +55,12 @@ proc init_edit_solid_int { id } {
 	set esolint_control($id,cflag) 0
     }
 
-    set esolint_info [get_edit_solid]
+    if [catch {get_edit_solid} esolint_info] {
+	# a Tcl output routine doesn't exist for this solid type
+	build_edit_info $id
+	return
+    }
+
     set esolint_control(name) [lindex $esolint_info 0]
     set esolint_control(type) [lindex $esolint_info 1]
     set esolint_vals [lrange $esolint_info 2 end]
@@ -65,6 +70,7 @@ proc init_edit_solid_int { id } {
     set esolint_cvals [lrange $esolint_info 2 end]
 
     if [catch {db form $esolint_control(type)}] {
+	#  a form routine doesn't exist for this solid type
 	build_edit_info $id
 	return
     }
@@ -494,7 +500,10 @@ proc esolint_update {} {
     global solid_data
     global esolint_control
 
-    set esolint_info [get_edit_solid]
+    if [catch {get_edit_solid} esolint_info] {
+	# a Tcl output routine doesn't exist for this solid type
+	return
+    }
     set esolint_vals [lrange $esolint_info 2 end]
 
     set esolint_cinfo [get_edit_solid -c]

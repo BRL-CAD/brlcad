@@ -62,7 +62,7 @@ proc begin_edit_callback {} {
 	    }
 	}
 
-	set esolint_info [get_edit_solid]
+	catch {get_edit_solid} esolint_info
 	set esolint_type [lindex $esolint_info 1]
 
 	# load solid edit menus
