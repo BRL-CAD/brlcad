@@ -18,7 +18,10 @@
 *			and
 *	3) concatenate the scales and a copy of the original image into a
 *	   a composite that it printed on standard out.  For the moment this
-*	   is achieved by saying " cat file.pl scale.pl >> out.file ".  Later
+*	   is achieved by saying " cat scale.pl file.pl >> out.file ".  
+*	   The order of the files is very important: if not cat'edin the
+*	   right order, the scales will be lost when plrot is applied though
+*	   they will still be seen with pl-sgi and mged. Later
 *	   this will be handled by scale.c as an fread() and fwrite().
 *
 *
@@ -149,6 +152,9 @@ fprintf(stderr, "label=%s\n", label);
 /* mat_print("view2model", view2model);
  */
 
+	/* Make a bounding rpp for the model and put out a space command. */
+	make_bounding_rpp(stdout, view2model);
+
 	ret = layout_n_plot(stdout, label, view2model, model2view, intervals, m_len);
 	if(ret < 0)  {
 		exit(-1);
@@ -157,9 +163,6 @@ fprintf(stderr, "label=%s\n", label);
 	/* For diagnostic purposes, a border can be put out. */
 	make_border(stdout, view2model);
 
-	/* Make a bounding rpp for the model and put out a space command. */
-/*	make_bounding_rpp(stdout, view2model);
- */
 
 	exit(0);
 
