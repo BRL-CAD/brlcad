@@ -18,6 +18,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -1115,6 +1117,9 @@ struct soltab		*stp;
 	int seg_count = 0;
 	struct seg *seg_p;
 
+	NMG_CK_HITMISS_LISTS(a_hit, rd);
+
+
 	while (RT_LIST_NON_EMPTY(&rd->rd_hit) ) {
 
 		a_hit = RT_LIST_FIRST(hitmiss, &rd->rd_hit);
@@ -1190,6 +1195,17 @@ struct soltab		*stp;
 			}
 		}
 	}
+
+
+	while ( RT_LIST_NON_EMPTY(&rd->rd_miss) ) {
+		a_hit = RT_LIST_FIRST(hitmiss, &rd->rd_miss);
+		NMG_CK_HITMISS(a_hit);
+		RT_LIST_DEQUEUE( &a_hit->l );
+		if (rt_g.NMG_debug & DEBUG_RT_SEGS)
+			rt_log("freeing miss point\n");
+		rt_free((char *)a_hit, "freeing miss point");
+	}
+
 	return seg_count;
 }
 
@@ -1433,6 +1449,8 @@ struct ray_data	*rd;
 {
 	struct hitmiss *a_hit;
 	int seg_count=0;
+
+	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 	if (RT_LIST_IS_EMPTY(&rd->rd_hit)) {
 		if (rt_g.NMG_debug & DEBUG_RT_SEGS)
