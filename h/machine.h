@@ -132,6 +132,37 @@ typedef long	bitv_t;		/* largest integer type */
 #define PARALLEL	1
 #endif
 
+#ifdef SGI4D
+/********************************
+ *				*
+ *	SGI 4D102GTX		*
+ *				*
+ ********************************/
+# include <sys/types.h>
+# include <sys/prctl.h>
+# include <ulocks.h>
+
+#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#ifdef PARALLEL
+# define RES_RELEASE(ptr)	usunsetlock((ulock_t) *(ptr))
+# define RES_ACQUIRE(ptr)	ussetlock((ulock_t) *(ptr))
+# define MAX_PSW		4	/* Max number of processors */
+# define DEFAULT_PSW	MAX_PSW
+#else
+# define RES_RELEASE(ptr)
+# define RES_ACQUIRE(ptr)
+# define MAX_PSW		1
+# define DEFAULT_PSW	MAX_PSW
+#endif
+
+#endif SGI4D
+
 
 #ifndef LOCAL
 /********************************
