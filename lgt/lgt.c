@@ -66,18 +66,14 @@ char	*argv[];
 #endif
 	beginptr = sbrk(0);
 
-#ifdef PARALLEL
-#ifndef alliant
 	if( npsw > 1 )
 		rt_g.rtg_parallel = 1;
 	else
 		rt_g.rtg_parallel = 0;
-#endif
 	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
-#endif
 
 #if 0
 	nicem( C_PROC, 0, NICENESS );

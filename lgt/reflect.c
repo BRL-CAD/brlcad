@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./tree.h"
 #include "./screen.h"
 #include "./extern.h"
+extern void	rt_parallel();
 /* WARNING: These checks are still necessary in ARSes because of bug in LIBRT
 	which flips normals */
 #define Check_Iflip( _pp, _normal, _rdir, _stp )\
@@ -96,9 +97,7 @@ static int		hits_lit;
 /* Local communication with worker().					*/
 static int curr_scan;		/* Current scan line number.		*/
 static int last_scan;		/* Last scan.				*/
-#ifdef PARALLEL
 static int nworkers;		/* Number of workers now running.	*/
-#endif
 static int a_gridsz;
 static fastf_t	grid_dh[3], grid_dv[3];
 static struct application ag;	/* Global application structure.	*/
@@ -150,15 +149,6 @@ static short	*hl_regmap = NULL;
 		}\
 	}
 
-#ifdef cray
-int	render_Scan();
-struct taskcontrol {
-	int	tsk_len;
-	int	tsk_id;
-	int	tsk_value;
-} taskcontrol[MAX_PSW];
-#endif
-
 _LOCAL_ fastf_t		ipow();
 _LOCAL_ fastf_t		correct_Lgt();
 _LOCAL_ fastf_t		*mirror_Reflect();
@@ -202,17 +192,10 @@ void
 render_Model( frame )
 int	frame;
 	{
-#ifdef alliant
-	register int	d7;	/* known to be in d7 */
-#endif
-#ifdef PARALLEL
-	int		a, x;
-#endif
 	(void) signal( SIGINT, abort_sig );
-#ifdef PARALLEL
 	if( npsw > 1 )
 		pix_buffered = B_LINE;
-#endif
+
 	if( aperture_sz < 1 )
 		aperture_sz = 1;
 	if( ir_mapping & IR_OCTREE )
@@ -307,49 +290,20 @@ int	frame;
 		SCROLL_DL_MOVE();
 		(void) fflush( stdout );
 		}
-#ifdef PARALLEL
+	if( ! rt_g.rtg_parallel )
+		{
+		/*
+		 * SERIAL case -- one CPU does all the work.
+		 */
+		render_Scan(0);
+		return;
+		}
 	/*
 	 *  Parallel case.
-	 *  The workers are started and terminated here.
 	 */
 	nworkers = 0;
-#ifdef cray
-	/* Create any extra worker tasks */
-RES_ACQUIRE( &rt_g.res_worker );
-	for( x=1; x<npsw; x++ ) {
-		taskcontrol[x].tsk_len = 3;
-		taskcontrol[x].tsk_value = x;
-		TSKSTART( &taskcontrol[x], render_Scan, x );
-	}
-for( x=0; x<1000000; x++ ) a=x+1;	/* take time to get started */
-RES_RELEASE( &rt_g.res_worker );
-	render_Scan(0);	/* avoid wasting this task */
-	/* Wait for them to finish */
-	for( x=1; x<npsw; x++ )  {
-		TSKWAIT( &taskcontrol[x] );
-	}
-#endif
-#ifdef alliant
-	{
-		asm("	movl		_npsw,d0");
-		asm("	subql		#1,d0");
-		asm("	cstart		d0");
-		asm("super_loop:");
-		render_Scan(d7);	/* d7 has current index, like magic */
-		asm("	crepeat		super_loop");
-	}
-#endif
-	/* Ensure that all the workers are REALLY dead */
-	x = 0;
-	while( nworkers > 0 )  x++;
-	if( x > 0 )
-		rt_log( "Termination took %d extra loops\n", x );
-#else
-	/*
-	 * SERIAL case -- one CPU does all the work.
-	 */
-	render_Scan( 0 );
-#endif
+	rt_parallel( render_Scan, npsw );
+
 	view_end();
 	(void) signal( SIGINT, norml_sig );
 	return;
@@ -365,16 +319,12 @@ int	cpu;
 		struct application	a;
 
 		register int com;
-#ifdef PARALLEL
 	RES_ACQUIRE( &rt_g.res_worker );
 	com = nworkers++;
 	RES_RELEASE( &rt_g.res_worker );
 
-	a.a_resource = &resource[cpu];
 	resource[cpu].re_cpu = cpu;
-#else
-	a.a_resource = RESOURCE_NULL;
-#endif
+
 	for( ; ! user_interrupt; )
 		{
 		RES_ACQUIRE( &rt_g.res_worker );
@@ -392,6 +342,8 @@ int	cpu;
 		a.a_rt_i = ag.a_rt_i;
 		a.a_rbeam = ag.a_rbeam;
 		a.a_diverge = ag.a_diverge;
+		a.a_resource = &resource[cpu];
+		a.a_purpose = "render_Scan";
 		if( anti_aliasing )
 			{
 			a.a_x *= aperture_sz;
@@ -455,11 +407,9 @@ int	cpu;
 				}
 			}
 		}
-#ifdef PARALLEL
 	RES_ACQUIRE( &rt_g.res_worker );
 	nworkers--;
 	RES_RELEASE( &rt_g.res_worker );
-#endif
 	return;
 	}
 
@@ -478,18 +428,34 @@ register struct application *ap;
 struct partition *pt_headp;
 	{	register struct partition	*pp;
 		register struct region		*regp;
-		register struct xray		*rayp;
+		register struct soltab		*stp;
+		register struct xray		*rp;
 		register struct hit		*ihitp;
 	Get_Partition( ap, pp, pt_headp, "f_Region" );
 	regp = pp->pt_regionp;
-	rayp = &ap->a_ray;
+	stp = pp->pt_inseg->seg_stp;
+	rp = &ap->a_ray;
 	ihitp = pp->pt_inhit;
-	VJOIN1( ihitp->hit_point, rayp->r_pt, ihitp->hit_dist, rayp->r_dir );
+	if( ihitp->hit_dist < BEHIND_ME_TOL )
+		{ /* We are inside a solid, so slice it. */
+		VJOIN1( ihitp->hit_point, rp->r_pt, ihitp->hit_dist,
+			rp->r_dir );
+		VSCALE( ihitp->hit_normal, rp->r_dir, -1.0 );
+		}
+	else
+		{
+		RT_HIT_NORM( ihitp, stp, rp );
+		}
 	prnt_Scroll(	"Hit region \"%s\"\n", regp->reg_name );
 	prnt_Scroll(	"\timpact point: <%8.2f,%8.2f,%8.2f>\n",
 			ihitp->hit_point[X],
 			ihitp->hit_point[Y],
 			ihitp->hit_point[Z]
+			);
+	prnt_Scroll(	"\tsurface normal: <%8.2f,%8.2f,%8.2f>\n",
+			ihitp->hit_normal[X],
+			ihitp->hit_normal[Y],
+			ihitp->hit_normal[Z]
 			);
 	prnt_Scroll(	"\tid: %d, aircode: %d, material: %d, LOS: %d\n",
 			regp->reg_regionid,
@@ -562,14 +528,23 @@ struct partition *pt_headp;
 		register Mat_Db_Entry		*entry;
 		register struct soltab		*stp;
 		register struct hit		*ihitp;
+		register struct xray		*rp = &ap->a_ray;
 		int				material_id;
 		fastf_t				rgb_coefs[3];
 	Get_Partition( ap, pp, pt_headp, "f_Model" );
 	stp = pp->pt_inseg->seg_stp;
 	ihitp = pp->pt_inhit;
-	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
+	if( ihitp->hit_dist < BEHIND_ME_TOL )
+		{ /* We are inside a solid, so slice it. */
+		VJOIN1( ihitp->hit_point, rp->r_pt, ihitp->hit_dist,
+			rp->r_dir );
+		VSCALE( ihitp->hit_normal, rp->r_dir, -1.0 );
+		}
+	else
+		{
+		RT_HIT_NORM( ihitp, stp, rp );
+		}
 	Check_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
-
 #if 0
 	{	register struct hit	*ohitp;
 	stp = pp->pt_outseg->seg_stp;
@@ -843,9 +818,9 @@ register Lgt_Source		*lgt_entry;
 		if( rt_g.debug & DEBUG_RGB )
 			{
 			rt_log( "\t\tcos. of angle to lgt center = %g\n", cos_angl );
-			rt_log( "\t\t           angular distance = %g\n", ang_dist );
-			rt_log( "\t\t            relative radius = %g\n", rel_radius );
-			rt_log( "\t\t        relative distance = %g\n", ang_dist/rel_radius );
+			rt_log( "\t\t	   angular distance = %g\n", ang_dist );
+			rt_log( "\t\t	    relative radius = %g\n", rel_radius );
+			rt_log( "\t\t	relative distance = %g\n", ang_dist/rel_radius );
 			}
 		/* Return weighted and attenuated light intensity.	*/
 		return	gauss_Wgt_Func( ang_dist/rel_radius ) *
@@ -1368,6 +1343,9 @@ fastf_t				*view_dir;
 		}
 	else
 		{	
+		if( ! shadowing ) /* No shadows. */
+			lgt_energy = lgt_entry->energy;
+		else
 		/* Compute attenuated light intensity due to shadowing.	*/
 		if( (lgt_energy = correct_Lgt( ap, pp, lgt_entry )) == 0.0 )
 			{
