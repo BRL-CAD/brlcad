@@ -34,6 +34,7 @@ class Command {
     itk_option define -cmd_color cmd_color TextColor black
     itk_option define -oldcmd_color oldcmd_color TextColor red3
     itk_option define -result_color result_color TextColor blue3
+    itk_option define -maxlines maxlines MaxLines 1000
 
     public method history {}
     public method edit_style {args}
@@ -146,6 +147,12 @@ configbody Command::result_color {
 	$itk_component(text) tag configure result -foreground $itk_option(-result_color)
 }
 
+configbody Command::maxlines {
+    if {$itk_option(-maxlines) < 1} {
+	error "-maxlines must be greater than zero"
+    }
+}
+
 body Command::constructor {args} {
 	eval itk_initialize $args
 
@@ -226,6 +233,12 @@ body Command::invoke {} {
 
 	$hist add $hcmd
 	print_prompt
+
+	# get rid of oldest output
+	set nlines [expr int([$w index end])]
+	if {$nlines > $itk_option(-maxlines)} {
+	    $w delete 1.0 [expr $nlines - $itk_option(-maxlines)].end
+	}
     }
     $w see insert
 }
