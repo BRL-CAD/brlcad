@@ -5671,6 +5671,9 @@ struct nmg_inter_struct *is;
 	if( NMG_TBL_END( &cut_list ) < 2 )
 	{
 		nmg_tbl( &cut_list, TBL_FREE, (long *)NULL );
+
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log( "No loops need cutting\n" );
 		return;
 	}
 
@@ -5710,6 +5713,9 @@ struct nmg_inter_struct *is;
 		if( NMG_TBL_END( &cut_list ) == 0 )
 		{
 			nmg_tbl( &cut_list, TBL_FREE, (long *)NULL );
+
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log( "no loops need cutting\n" );
 			return;
 		}
 
@@ -5735,6 +5741,8 @@ struct nmg_inter_struct *is;
 				{
 					if( nmg_find_lu_of_vu( vu1 ) == lu1 )
 					{
+						if (rt_g.NMG_debug & DEBUG_POLYSECT)
+							rt_log( "Splitting lu x%x at vu x%x\n", lu1, vu1 );
 						new_lu = nmg_split_lu_at_vu( lu1, vu1 );
 						nmg_lu_reorient( lu1 );
 						nmg_lu_reorient( new_lu );
@@ -5899,6 +5907,8 @@ struct nmg_inter_struct *is;
 			}
 		}
 
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log( "nmg_cut_lu_into_coplanar_and_non: calling face cutter\n" );
 		nmg_tbl( is->l2, TBL_RST, (long *)NULL );
 		(void)nmg_face_cutjoin( is->l1, is->l2, is->mag1, is->mag2, is->fu1,
 			is->fu2, is->pt, is->dir, is->on_eg, &is->tol);
@@ -6888,6 +6898,85 @@ struct faceuse *fu1,*fu2;
 	nmg_tbl( &loops, TBL_FREE, (long *)NULL );
 	nmg_tbl( &verts, TBL_FREE, (long *)NULL );
 
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	{
+		plane_t pl1,pl2;
+		fastf_t dist;
+
+		rt_log( "After splitting loops into coplanar and non:\n" );
+		nmg_pr_fu_briefly( fu1, "" );
+		nmg_pr_fu_briefly( fu2, "" );
+
+		NMG_GET_FU_PLANE( pl1, fu1 );
+		NMG_GET_FU_PLANE( pl2, fu2 );
+
+		for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )
+		{
+			int in=0,on=0,out=0;
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct vertex_g *vg;
+
+				vg = eu->vu_p->v_p->vg_p;
+
+				dist = DIST_PT_PLANE( vg->coord, pl2 );
+
+				if( dist > is->tol.dist )
+					out++;
+				else if( dist < (-is->tol.dist ))
+					in++;
+				else
+					on++;
+			}
+
+			if( in && out )
+				rt_log( "lu x%x is in and out of fu x%x\n", lu, fu2 );
+			else if( in )
+				rt_log( "lu x%x is inside of fu x%x\n", lu, fu2 );
+			else if( out )
+				rt_log( "lu x%x is outside of fu x%x\n", lu, fu2 );
+			else if( on )
+				rt_log( "lu x%x is on of fu x%x\n", lu, fu2 );
+			else
+				rt_log( "Can't figure lu x%x w.r.t fu x%x, on=%d, in=%d, out=%d\n",
+					lu, fu2, on,in,out);
+		}
+
+		for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )
+		{
+			int in=0,on=0,out=0;
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct vertex_g *vg;
+
+				vg = eu->vu_p->v_p->vg_p;
+
+				dist = DIST_PT_PLANE( vg->coord, pl1 );
+
+				if( dist > is->tol.dist )
+					out++;
+				else if( dist < (-is->tol.dist ))
+					in++;
+				else
+					on++;
+			}
+
+			if( in && out )
+				rt_log( "lu x%x is in and out of fu x%x\n", lu, fu1 );
+			else if( in )
+				rt_log( "lu x%x is inside of fu x%x\n", lu, fu1 );
+			else if( out )
+				rt_log( "lu x%x is outside of fu x%x\n", lu, fu1 );
+			else if( on )
+				rt_log( "lu x%x is on of fu x%x\n", lu, fu1 );
+			else
+				rt_log( "Can't figure lu x%x w.r.t fu x%x, on=%d, in=%d, out=%d\n",
+					lu, fu1, on,in,out);
+		}
+	}
+
 	/* now intersect only EU's that lie in the plane of the other faceuse */
 	nmg_tbl( &eu1_list, TBL_RST, (long *)NULL );
 	nmg_tbl( &eu2_list, TBL_RST, (long *)NULL );
@@ -6902,6 +6991,85 @@ struct faceuse *fu1,*fu2;
 
 	nmg_tbl( is->l1, TBL_FREE, (long *)NULL );
 	nmg_tbl( is->l2, TBL_FREE, (long *)NULL );
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	{
+		plane_t pl1,pl2;
+		fastf_t dist;
+
+		rt_log( "After intersection nearly coplanar faces:\n" );
+		nmg_pr_fu_briefly( fu1, "" );
+		nmg_pr_fu_briefly( fu2, "" );
+
+		NMG_GET_FU_PLANE( pl1, fu1 );
+		NMG_GET_FU_PLANE( pl2, fu2 );
+
+		for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )
+		{
+			int in=0,on=0,out=0;
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct vertex_g *vg;
+
+				vg = eu->vu_p->v_p->vg_p;
+
+				dist = DIST_PT_PLANE( vg->coord, pl2 );
+
+				if( dist > is->tol.dist )
+					out++;
+				else if( dist < (-is->tol.dist ))
+					in++;
+				else
+					on++;
+			}
+
+			if( in && out )
+				rt_log( "lu x%x is in and out of fu x%x\n", lu, fu2 );
+			else if( in )
+				rt_log( "lu x%x is inside of fu x%x\n", lu, fu2 );
+			else if( out )
+				rt_log( "lu x%x is outside of fu x%x\n", lu, fu2 );
+			else if( on )
+				rt_log( "lu x%x is on of fu x%x\n", lu, fu2 );
+			else
+				rt_log( "Can't figure lu x%x w.r.t fu x%x, on=%d, in=%d, out=%d\n",
+					lu, fu2, on,in,out);
+		}
+
+		for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )
+		{
+			int in=0,on=0,out=0;
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct vertex_g *vg;
+
+				vg = eu->vu_p->v_p->vg_p;
+
+				dist = DIST_PT_PLANE( vg->coord, pl1 );
+
+				if( dist > is->tol.dist )
+					out++;
+				else if( dist < (-is->tol.dist ))
+					in++;
+				else
+					on++;
+			}
+
+			if( in && out )
+				rt_log( "lu x%x is in and out of fu x%x\n", lu, fu1 );
+			else if( in )
+				rt_log( "lu x%x is inside of fu x%x\n", lu, fu1 );
+			else if( out )
+				rt_log( "lu x%x is outside of fu x%x\n", lu, fu1 );
+			else if( on )
+				rt_log( "lu x%x is on of fu x%x\n", lu, fu1 );
+			else
+				rt_log( "Can't figure lu x%x w.r.t fu x%x, on=%d, in=%d, out=%d\n",
+					lu, fu1, on,in,out);
+		}
+	}
 
 }
 
