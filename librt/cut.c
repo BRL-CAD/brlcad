@@ -305,7 +305,6 @@ int		depth;
  *  Assess the possibility of making a cut along the indicated axis.
  *  
  *  Returns -
- *	1 if box cut and cutp has become a CUT_CUTNODE;
  *	0	if a cut along this axis is not possible
  *	1	if a cut along this axis *is* possible, plus:
  *		*where		is proposed cut point, and
@@ -556,6 +555,8 @@ int	depth;
 	/**** XXX This test can be improved ****/
 	if( depth >= 6 && cutp->bn.bn_len <= rt_cutLen )
 		return;				/* Fine enough */
+#if 0
+ /* New way */
 	/*
 	 *  Attempt to make an optimal cut
 	 */
@@ -563,10 +564,102 @@ int	depth;
 		/* Unable to further subdivide this box node */
 		return;
 	}
-
+#else
+ /* Old (Release 3.7) way */
+ {
+ 	int axis;
+ 	int oldlen;
+ 	double where, offcenter;
+	/*
+	 *  In general, keep subdividing until things don't get any better.
+	 *  Really we might want to proceed for 2-3 levels.
+	 *
+	 *  First, make certain this is a worthwhile cut.
+	 *  In absolute terms, each box must be at least 1mm wide after cut.
+	 */
+	axis = AXIS(depth);
+	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
+		return;
+	oldlen = cutp->bn.bn_len;	/* save before rt_ct_box() */
+ 	if( rt_ct_old_assess( cutp, axis, &where, &offcenter ) <= 0 )
+ 		return;			/* not practical */
+	if( rt_ct_box( cutp, axis, where ) == 0 )  {
+	 	if( rt_ct_old_assess( cutp, AXIS(depth+1), &where, &offcenter ) <= 0 )
+	 		return;			/* not practical */
+		if( rt_ct_box( cutp, AXIS(depth+1), where ) == 0 )
+			return;	/* hopeless */
+	}
+	if( cutp->cn.cn_l->bn.bn_len >= oldlen &&
+	    cutp->cn.cn_r->bn.bn_len >= oldlen )  return;	/* hopeless */
+ }
+#endif
 	/* Box node is now a cut node, recurse */
 	rt_ct_optim( cutp->cn.cn_l, depth+1 );
 	rt_ct_optim( cutp->cn.cn_r, depth+1 );
+}
+
+/*
+ *  From RCS revision 9.4
+ *  NOTE:  Changing from rt_ct_assess() to this seems to result
+ *  in a *massive* change in cut tree size.
+ *	This version results in nbins=22, maxlen=3, avg=1.09,
+ *  while new vewsion results in nbins=42, maxlen=3, avg=1.667 (on moss.g).
+ */
+HIDDEN int
+rt_ct_old_assess( cutp, axis, where_p, offcenter_p )
+register union cutter *cutp;
+register int axis;
+double	*where_p;
+double	*offcenter_p;
+{
+	auto double d_close;		/* Closest distance from midpoint */
+	auto double pt_close;		/* Point closest to midpoint */
+	auto double middle;		/* midpoint */
+	auto double d;
+	register int i;
+
+	if(rt_g.debug&DEBUG_CUTDETAIL)rt_log("rt_ct_old_assess(x%x, %c)\n",cutp,"XYZ345"[axis]);
+
+	/*  In absolute terms, each box must be at least 1mm wide after cut. */
+	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
+		return(0);
+
+	/*
+	 *  Split distance between min and max in half.
+	 *  Find the closest edge of a solid's bounding RPP
+	 *  to the mid-point, and split there.
+	 *  This should ordinarily guarantee that at least one side of the
+	 *  cut has one less item in it.
+	 */
+	pt_close = cutp->bn.bn_min[axis];
+	middle = (pt_close + cutp->bn.bn_max[axis]) * 0.5;
+	d_close = middle - pt_close;
+	for( i=0; i < cutp->bn.bn_len; i++ )  {
+		d = cutp->bn.bn_list[i]->st_min[axis] - middle;
+		if( d < 0 )  d = (-d);
+		if( d < d_close )  {
+			d_close = d;
+			pt_close = cutp->bn.bn_list[i]->st_min[axis]-0.1;
+		}
+		d = cutp->bn.bn_list[i]->st_max[axis] - middle;
+		if( d < 0 )  d = (-d);
+		if( d < d_close )  {
+			d_close = d;
+			pt_close = cutp->bn.bn_list[i]->st_max[axis]+0.1;
+		}
+	}
+	if( pt_close <= cutp->bn.bn_min[axis] ||
+	    pt_close >= cutp->bn.bn_max[axis] )
+		return(0);	/* not reasonable */
+
+	if( pt_close - cutp->bn.bn_min[axis] <= 1.0 ||
+	    cutp->bn.bn_max[axis] - pt_close <= 1.0 )
+		return(0);	/* cut will be too small */
+
+	/* We are going to cut */
+	*where_p = pt_close;
+	*offcenter_p = d_close;
+	return(1);
 }
 
 /*
