@@ -519,7 +519,8 @@ Ir_close()
 void
 Ir_prolog()
 {
-
+	if (ir_debug)
+		fprintf(stderr, "Ir_prolog\n");
 	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
 
 	if( dmaflag && !ir_has_doublebuffer )
@@ -539,6 +540,9 @@ Ir_prolog()
 void
 Ir_normal()
 {
+	if (ir_debug)
+		fprintf(stderr, "Ir_normal\n");
+
 	if( ir_has_rgb )  {
 		RGBcolor( (short)0, (short)0, (short)0 );
 	} else {
@@ -554,6 +558,8 @@ Ir_normal()
 void
 Ir_epilog()
 {
+	if (ir_debug)
+		fprintf(stderr, "Ir_epilog\n");
 	/*
 	 * A Point, in the Center of the Screen.
 	 * This is drawn last, to always come out on top.
@@ -604,6 +610,8 @@ mat_t	mat;
 	mat_t	newm;
 	int	i;
 
+	if (ir_debug)
+		fprintf(stderr, "Ir_newrot()\n");
 	if( ! zclipping_on ) {
 		mat_t	nozclip;
 
@@ -659,6 +667,8 @@ int		white;
 	int first;
 	int i,j;	
 
+	if (ir_debug)
+		fprintf(stderr, "Ir_Object()\n");
 	/* It seems that this needs to be done before the loadmatrix() */
 	if( ir_is_gt && lighting_on )  {
 		/* Separate projection matrix from
@@ -799,6 +809,8 @@ int		white;
 void
 Ir_update()
 {
+	if (ir_debug)
+		fprintf(stderr, "Ir_update()\n");
 	if( !dmaflag )
 		return;
 }
@@ -814,6 +826,8 @@ Ir_puts( str, x, y, size, colour )
 register char *str;
 int x,y,size, colour;
 {
+	if (ir_debug)
+		fprintf(stderr, "Ir_puts()\n");
 	cmov2( GED2IRIS(x), GED2IRIS(y));
 	if( ir_has_rgb )  {
 		RGBcolor( (short)ir_rgbtab[colour].r,
@@ -837,6 +851,8 @@ int dashed;
 {
 	register int nvec;
 
+	if (ir_debug)
+		fprintf(stderr, "Ir_2d_line()\n");
 	if( ir_has_rgb )  {
 		/* Yellow */
 		if(cueing_on)  {
@@ -887,6 +903,8 @@ Ir_input( cmd_fd, rateflg )
 /*XXX*/	extern void		(*extrapoll_hook)();	/* ged.c */
 /*XXX*/	extern int		extrapoll_fd;
 
+	if (ir_debug)
+		fprintf(stderr, "Ir_input()\n");
 	if( (width = getdtablesize()) <= 0 )
 		width = 32;
 
