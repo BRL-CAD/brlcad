@@ -686,44 +686,69 @@ int *id;
 		char *name;
 		char *value;
 		register char *p;
+		int len;
+		int i;
+		int mid_len;
+
 	if( !map->ma_shader )
 		return false;
 	if( map->ma_shader && map->ma_shader[0] == '\0' )
 		return	false;
 	/* copy parameter string to scratch buffer and null terminate */
 	copy = bu_strdup( map->ma_shader );
-	/* get <name>=<value> string */
-	if( (name = strtok( copy, MA_WHITESP )) == NULL )
+
+	mid_len = strlen( MA_MID );
+	p = copy;
+	len = strlen( copy );
+	while( *p != '\0' )
+	{
+		if( strchr( MA_WHITESP, *p ) )
+			*p = '\0';
+		p++;
+	}
+	i = 0;
+	p = copy;
+	while( i < len )
+	{
+		if( p[i] == '\0' )
+			i++;
+		else
 		{
-		bu_free( (genptr_t)copy, "getMaMID" );
-		return	false;
-		}
-	do
-		{
-		/* break it down into name and value */
-again:
-		value = NULL;
-		for( p = name; *p != '\0'; p++ )
-			if( *p == '=' )
-				{
-				value = p+1;
-				*p = '\0';
-				break;
-				}
-		if( value == NULL )
-			continue; /* No '=' in input token. */
-		/* if we have a material id, get it and return */
-		if(	strcmp( name, MA_MID ) == 0
-		    &&	sscanf( value, "%d", id ) == 1 )
+			if( strncmp( &p[i], MA_MID, mid_len ) )
 			{
-			bu_free( (genptr_t)copy, "getMaMID" );
-			return	true;
+				while( ++i < len && p[i] != '\0' );
+			}
+			else
+			{
+				/* found MA_MID */
+				/* find '=' */
+				i += (mid_len - 1);
+				while( ++i < len && p[i] != '=' );
+				if( p[i] != '=' )
+				{
+					/* cannot find '=' */
+					bu_free( (genptr_t)copy, "getMaMID" );
+					return  false;
+				}
+
+				/* found '=', now get value */
+				while( ++i < len && p[i] == '\0' );
+				if( p[i] == '\0' )
+				{
+					/* cannot find value */
+					bu_free( (genptr_t)copy, "getMaMID" );
+					return  false;
+				}
+
+				*id = atoi( &p[i] );
+				bu_free( (genptr_t)copy, "getMaMID" );
+				return  true;
 			}
 		}
-	/* keep trying for rest of parameter string */
-	while( (name = strtok( NULL, MA_WHITESP )) != NULL );
+	}
 	bu_free( (genptr_t)copy, "getMaMID" );
 	return	false;		
+
 	}
 
 
@@ -778,10 +803,8 @@ struct partition *pt_headp;
 	}
 
 	/* Get material id as index into material database. */
-	RES_ACQUIRE( &rt_g.res_syscall ); /* protect use of strtok() */
 	if( ! getMaMID( &pp->pt_regionp->reg_mater, &material_id ) )
 		material_id = (int)(pp->pt_regionp->reg_gmater);
-	RES_RELEASE( &rt_g.res_syscall );
 
 	/* Get material database entry. */
 	if( ir_mapping )
