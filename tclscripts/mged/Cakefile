@@ -3,8 +3,8 @@
  */
 #include "../../Cakefile.defs"
 
-#define PRODUCTS	*.tcl tclIndex
-#define STATIC_PRODUCTS	*.tcl tclIndex
+#define PRODUCTS	*.tcl tclIndex *.ppm
+#define STATIC_PRODUCTS	*.tcl tclIndex *.ppm
 #define SRCDIR	mged
 #undef BINDIR
 #define BINDIR	TCLSCRIPTSDIR/mged
