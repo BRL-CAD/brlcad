@@ -144,7 +144,7 @@ db_delete( dbip, dp )
 struct db_i	*dbip;
 struct directory *dp;
 {
-	register int i;
+	register int i = -1;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
