@@ -36,11 +36,11 @@ static char RCSrayview[] = "@(#)$Header$ (BRL)";
 char usage[] = "\
 Usage:  rtray [options] model.g objects... >file.ray\n\
 Options:\n\
- -f#		Grid size in pixels, default 512, max 1024\n\
- -aAz		Azimuth in degrees	(conflicts with -M)\n\
- -eElev		Elevation in degrees	(conflicts with -M)\n\
+ -f #		Grid size in pixels, default 512, max 1024\n\
+ -a Az		Azimuth in degrees	(conflicts with -M)\n\
+ -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -x#		Set debug flags\n\
+ -x #		Set debug flags\n\
 ";
 
 /* Null function -- handle a miss */
@@ -75,6 +75,7 @@ char *file, *obj;
 
 	if( minus_o )
 		fprintf(stderr,"Warning:  -o ignored, rays go to stdout\n");
+	return(0);		/* No framebuffer needed */
 }
 
 view_eol() {

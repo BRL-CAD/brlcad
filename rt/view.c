@@ -47,16 +47,16 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
 Options:\n\
- -f#		Grid size in pixels, default 512, max 1024\n\
- -aAz		Azimuth in degrees\n\
- -eElev		Elevation in degrees\n\
+ -f #		Grid size in pixels, default 512, max 1024\n\
+ -a Az		Azimuth in degrees\n\
+ -e Elev	Elevation in degrees\n\
  -M		Read model2view matrix on stdin\n\
  -o model.pix	Specify output file, .pix format (default=fb)\n\
- -x#		Set debug flags\n\
- -p[#]		Perspective viewing, focal length scaling\n\
+ -x #		Set debug flags\n\
+ -p #		Perspective viewing, focal length scaling\n\
 ";
 
-FBIO	*fbp = FBIO_NULL;	/* Framebuffer handle */
+extern FBIO	*fbp;		/* Framebuffer handle */
 
 extern int lightmodel;		/* lighting model # to use */
 extern mat_t view2model;
@@ -362,28 +362,9 @@ char *file, *obj;
 	if( minus_o )  {
 		/* Output is destined for a pixel file */
 		pixelp = &scanline[0];
+		return(0);		/* don't open framebuffer */
 	}  else  {
-		int width;
-
-		/* Output interactively to framebuffer */
-		if( npts <= 512 )
-			width = 512;
-		else {
-			if( npts <= 1024 )
-				width = 1024;
-			else
-				width = npts;
-		}
-
-		if( (fbp = fb_open( NULL, width, width )) == FBIO_NULL )  {
-			rt_log("view:  can't open frame buffer\n");
-			exit(12);
-		}
-		fb_clear( fbp, PIXEL_NULL );
-		fb_wmap( fbp, COLORMAP_NULL );
-		/* KLUDGE ALERT:  The library want zoom before window! */
-		fb_zoom( fbp, width/npts, width/npts );
-		fb_window( fbp, npts/2, npts/2 );
+		return(1);		/* open a framebuffer */
 	}
 }
 

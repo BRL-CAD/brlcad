@@ -34,11 +34,11 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 char usage[] = "\
 Usage:  rtpp [options] model.g objects... >file.pp\n\
 Options:\n\
- -f#		Grid size in pixels, default 512, max 1024\n\
- -aAz		Azimuth in degrees	(conflicts with -M)\n\
- -eElev		Elevation in degrees	(conflicts with -M)\n\
+ -f #		Grid size in pixels, default 512, max 1024\n\
+ -a Az		Azimuth in degrees	(conflicts with -M)\n\
+ -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -x#		Set debug flags\n\
+ -x #		Set debug flags\n\
 ";
 
 /* Stuff for pretty-picture output format */
@@ -166,6 +166,7 @@ char *file, *obj;
 	fprintf(stdout, "%s: %s (RT)\n", file, obj );
 	fprintf(stdout, "%10d%10d", (int)azimuth, (int)elevation );
 	fprintf(stdout, "%10d%10d\n", npts, npts );
+	return(0);		/* no framebuffer needed */
 }
 
 view_2init()  {;}
