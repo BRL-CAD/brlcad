@@ -670,8 +670,37 @@ union tree		*curtree;
 	regions_converted++;
 	if (r != 0)
 	{
+		struct shell *s;
+		int empty_region=0;
+		int empty_model=0;
+
+		/* Kill cracks */
+		s = RT_LIST_FIRST( shell, &r->s_hd );
+		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+			if( nmg_kill_cracks( s ) )
+			{
+				if( nmg_ks( s ) )
+				{
+					empty_region = 1;
+					break;
+				}
+			}
+			s = next_s;
+		}
+
+		/* kill zero length edgeuses */
+		if( !empty_region )
+		{
+			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
+		}
+
 		/* Write the region to the EUCLID file */
-		Write_euclid_region( r , tsp , fp_out );
+		if( !empty_region && !empty_model )
+			Write_euclid_region( r , tsp , fp_out );
 
 		rt_log( "Wrote region %s\n" , dir->d_namep );
 

@@ -353,14 +353,45 @@ union tree		*curtree;
 		char nmg_name[16];
 		unsigned char rgb[3];
 		struct wmember headp;
+		struct shell *s;
+		int empty_region=0;
+		int empty_model=0;
 
-		/* Write the nmgregion to the output file */
-		nmg_count++;
-		sprintf( nmg_name , "nmg.%d" , nmg_count );
-		mk_nmg( fp_out , nmg_name , *tsp->ts_m );
+		/* Kill cracks */
+		s = RT_LIST_FIRST( shell, &r->s_hd );
+		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+			if( nmg_kill_cracks( s ) )
+			{
+				if( nmg_ks( s ) )
+				{
+					empty_region = 1;
+					break;
+				}
+			}
+			s = next_s;
+		}
+
+		/* kill zero length edgeuses */
+		if( !empty_region )
+		{
+			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
+		}
+
+		if( !empty_region && !empty_model )
+		{
+			/* Write the nmgregion to the output file */
+			nmg_count++;
+			sprintf( nmg_name , "nmg.%d" , nmg_count );
+			mk_nmg( fp_out , nmg_name , *tsp->ts_m );
+		}
 
 		/* NMG region is no longer necessary */
-		nmg_kr(r);
+		if( !empty_model )
+			nmg_kr(r);
 
 		/* Now make a normal brlcad region */
 		RT_LIST_INIT( &headp.l );
