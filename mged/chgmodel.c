@@ -506,6 +506,13 @@ char	**argv;
 	struct rt_ell_internal	*ell_ip;
 	struct rt_tor_internal	*tor_ip;
 	struct rt_grip_internal	*grp_ip;
+	struct rt_half_internal *half_ip;
+	struct rt_rpc_internal *rpc_ip;
+	struct rt_rhc_internal *rhc_ip;
+	struct rt_epa_internal *epa_ip;
+	struct rt_ehy_internal *ehy_ip;
+	struct rt_eto_internal *eto_ip;
+	struct rt_part_internal *part_ip;
 
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[1] );
@@ -515,7 +522,7 @@ char	**argv;
 	RT_INIT_DB_INTERNAL( &internal );
 
 	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell |
-	 * sph | tor | tgc | rec | trc | rcc | grp> */
+	 * sph | tor | tgc | rec | trc | rcc | grp | half> */
 	if( strcmp( argv[2], "arb8" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
 		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
@@ -725,11 +732,88 @@ char	**argv;
 		VSET( tgc_ip->b,  0, (0.5*Viewscale), 0 );
 		VSET( tgc_ip->c,  (0.5*Viewscale), 0, 0 );
 		VSET( tgc_ip->d,  0, (0.5*Viewscale), 0 );
-	} else if( strcmp( argv[2], "ars" ) == 0 )  {
-		(void)printf("make ars not implimented yet\n");
+	} else if( strcmp( argv[2], "half" ) == 0 ) {
+		internal.idb_type = ID_HALF;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_half_internal) , "rt_half_internal" );
+		half_ip = (struct rt_half_internal *)internal.idb_ptr;
+		half_ip->magic = RT_HALF_INTERNAL_MAGIC;
+		VSET( half_ip->eqn , 0 , 0 , 1 );
+		half_ip->eqn[3] = (-toViewcenter[MDZ]);
+	} else if( strcmp( argv[2], "rpc" ) == 0 ) {
+		internal.idb_type = ID_RPC;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_rpc_internal) , "rt_rpc_internal" );
+		rpc_ip = (struct rt_rpc_internal *)internal.idb_ptr;
+		rpc_ip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
+		VSET( rpc_ip->rpc_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
+		VSET( rpc_ip->rpc_H, 0, 0, Viewscale );
+		VSET( rpc_ip->rpc_B, 0, (Viewscale*0.5), 0 );
+		rpc_ip->rpc_r = Viewscale*0.25;
+	} else if( strcmp( argv[2], "rhc" ) == 0 ) {
+		internal.idb_type = ID_RHC;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_rhc_internal) , "rt_rhc_internal" );
+		rhc_ip = (struct rt_rhc_internal *)internal.idb_ptr;
+		rhc_ip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+		VSET( rhc_ip->rhc_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
+		VSET( rhc_ip->rhc_H, 0, 0, Viewscale );
+		VSET( rhc_ip->rhc_B, 0, (Viewscale*0.5), 0 );
+		rhc_ip->rhc_r = Viewscale*0.25;
+		rhc_ip->rhc_c = Viewscale*0.10;
+	} else if( strcmp( argv[2], "epa" ) == 0 ) {
+		internal.idb_type = ID_EPA;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_epa_internal) , "rt_epa_internal" );
+		epa_ip = (struct rt_epa_internal *)internal.idb_ptr;
+		epa_ip->epa_magic = RT_EPA_INTERNAL_MAGIC;
+		VSET( epa_ip->epa_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
+		VSET( epa_ip->epa_H, 0, 0, Viewscale );
+		VSET( epa_ip->epa_Au, 0, 1, 0 );
+		epa_ip->epa_r1 = Viewscale*0.5;
+		epa_ip->epa_r2 = Viewscale*0.25;
+	} else if( strcmp( argv[2], "ehy" ) == 0 ) {
+		internal.idb_type = ID_EHY;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ehy_internal) , "rt_ehy_internal" );
+		ehy_ip = (struct rt_ehy_internal *)internal.idb_ptr;
+		ehy_ip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
+		VSET( ehy_ip->ehy_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
+		VSET( ehy_ip->ehy_H, 0, 0, Viewscale );
+		VSET( ehy_ip->ehy_Au, 0, 1, 0 );
+		ehy_ip->ehy_r1 = Viewscale*0.5;
+		ehy_ip->ehy_r2 = Viewscale*0.25;
+		ehy_ip->ehy_c = ehy_ip->ehy_r2;
+	} else if( strcmp( argv[2], "eto" ) == 0 ) {
+		internal.idb_type = ID_ETO;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_eto_internal) , "rt_eto_internal" );
+		eto_ip = (struct rt_eto_internal *)internal.idb_ptr;
+		eto_ip->eto_magic = RT_ETO_INTERNAL_MAGIC;
+		VSET( eto_ip->eto_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
+		VSET( eto_ip->eto_N, 0, 0, 1 );
+		VSET( eto_ip->eto_C, Viewscale*0.1, 0, Viewscale*0.1 );
+		eto_ip->eto_r = Viewscale*0.5;
+		eto_ip->eto_rd = Viewscale*0.05;
+	} else if( strcmp( argv[2], "part" ) == 0 ) {
+		internal.idb_type = ID_PARTICLE;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_part_internal) , "rt_part_internal" );
+		part_ip = (struct rt_part_internal *)internal.idb_ptr;
+		part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
+		VSET( part_ip->part_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
+		VSET( part_ip->part_H, 0, 0, Viewscale );
+		part_ip->part_vrad = Viewscale*0.5;
+		part_ip->part_hrad = Viewscale*0.25;
+		part_ip->part_type = RT_PARTICLE_TYPE_CONE;
+	} else if( strcmp( argv[2], "ars" ) == 0 ||
+		   strcmp( argv[2], "poly" ) == 0 ||
+		   strcmp( argv[2], "nmg" ) == 0 ||
+		   strcmp( argv[2], "ebm" ) == 0 ||
+		   strcmp( argv[2], "vol" ) == 0 ||
+		   strcmp( argv[2], "arbn" ) == 0 ||
+		   strcmp( argv[2], "pipe" ) == 0 ||
+		   strcmp( argv[2], "nurb" ) == 0 ||
+		   strcmp( argv[2], "spline" ) == 0 )  {
+		(void)printf("make %s not implimented yet\n", argv[2]);
 		return CMD_BAD;
 	} else {
 		(void)printf("make:  %s is not a known primitive\n", argv[2]);
+		(void)printf("\tchoices are: arb8, arb7, arb6, arb5, arb4, sph, ell, ellg, grip, tor,\n" );
+		(void)printf("\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part\n" );
 		return CMD_BAD;
 	}
 
