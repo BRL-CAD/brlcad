@@ -394,9 +394,9 @@ proc on_context_help { id } {
 proc ia_invoke { w } {
     global ia_cmd_prefix
     global ia_more_default
-    global dm_insert_char_flag
     global mged_apply_to
     global glob_compat_mode
+    global dm_insert_char_flag
 
     set id [get_player_id_t $w]
 
@@ -421,15 +421,15 @@ proc ia_invoke { w } {
     set ia_more_default($id) ""
 
     if [info complete $cmd] {
-	if {!$dm_insert_char_flag} {
+	if {!$dm_insert_char_flag($w)} {
 	    cmd_set $id
 	}
 
-	if {$glob_compat_mode} {
-	    catch { expand $cmd } globbed_cmd
-	    set result [catch { uplevel #0 $globbed_cmd } ia_msg]
-	} else {
+	if {$glob_compat_mode == 0} {
 	    set result [catch { uplevel #0 $cmd } ia_msg]
+	} else {
+	    catch { db_glob $cmd } globbed_cmd
+	    set result [catch { uplevel #0 $globbed_cmd } ia_msg]
 	}
 
 	if { ![winfo exists $w] } {
