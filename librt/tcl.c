@@ -883,7 +883,11 @@ CONST char		*item;
 		}
 
 		if( comb->inherit )
+		{
 			Tcl_DStringAppendElement( &ds, "inherit" );
+			strcpy( buf, comb->inherit ? "yes" : "no" );
+			Tcl_DStringAppendElement( &ds, buf );
+		}
 
 		Tcl_DStringAppendElement( &ds, "tree" );
 		Tcl_DStringStartSublist( &ds );
