@@ -71,7 +71,8 @@ struct rt_vls  {
 RT_VLS_EXTERN(void rt_vls_init, (struct rt_vls *vp) );
 RT_VLS_EXTERN(struct rt_vls* rt_vls_vlsinit, () );
 RT_VLS_EXTERN(char *rt_vls_addr, (struct rt_vls *vp) );
-RT_VLS_EXTERN(char *rt_vls_strdup, (struct rt_vls *vp) );
+RT_VLS_EXTERN(char *rt_vls_strdup, (CONST struct rt_vls *vp) );
+RT_VLS_EXTERN(char *rt_vls_strgrab, (struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_extend, (struct rt_vls *vp, int extra) );
 RT_VLS_EXTERN(int rt_vls_strlen, (CONST struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_trunc, (struct rt_vls *vp, int len) );
