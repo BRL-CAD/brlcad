@@ -128,7 +128,7 @@ char **argv;
 		else if (go){
 			printf("start %d;\n", first_frame + frame);
 			printf("clean;\n");
-			printf("anim %s matrix rmul\n", *(argv+optind));
+			printf("anim %s matrix lmul\n", *(argv+optind));
 			an_mat_print(a,1);
 			printf("end;\n");
 		}
