@@ -1,6 +1,7 @@
 /*
  *			D B _ P A T H . C
  *
+ *  Routines to manipulate "db_full_path" structures
  *
  * Functions -
  *
@@ -36,6 +37,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 #include "./debug.h"
+
+/*
+ *			D B _ F U L L _ P A T H _ I N I T
+ */
+void
+db_full_path_init( pathp )
+struct db_full_path	*pathp;
+{
+	pathp->fp_len = 0;
+	pathp->fp_maxlen = 0;
+	pathp->fp_names = (struct directory **)NULL;
+	pathp->magic = DB_FULL_PATH_MAGIC;
+}
 
 /*
  *			D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
@@ -84,6 +98,57 @@ register CONST struct db_full_path	*oldp;
 		"duplicate full path array" );
 	bcopy( (char *)oldp->fp_names, (char *)newp->fp_names,
 		newp->fp_len * sizeof(struct directory *) );
+}
+
+/*
+ *			D B _ E X T E N D _ F U L L _ P A T H
+ *
+ *  Extend "pathp" so that it can grow from current fp_len by incr more names.
+ */
+void
+db_extend_full_path( pathp, incr )
+register struct db_full_path	*pathp;
+int				incr;
+{
+	int		newlen;
+
+	RT_CK_FULL_PATH(pathp);
+
+	if( pathp->fp_maxlen <= 0 )  {
+		pathp->fp_len = 0;
+		pathp->fp_maxlen = incr;
+		pathp->fp_names = (struct directory **)rt_malloc(
+			pathp->fp_maxlen * sizeof(struct directory *),
+			"empty fp_names extension" );
+		return;
+	}
+
+	newlen = pathp->fp_len + incr;
+	if( pathp->fp_maxlen < newlen )  {
+		pathp->fp_maxlen = newlen+1;
+		pathp->fp_names = (struct directory **)rt_realloc(
+			(char *)pathp->fp_names,
+			pathp->fp_maxlen * sizeof(struct directory *),
+			"fp_names extension" );
+	}
+}
+
+/*
+ *			D B _ A P P E N D _ F U L L _ P A T H
+ */
+void
+db_append_full_path( dest, src )
+register struct db_full_path	*dest;
+register struct db_full_path	*src;
+{
+	RT_CK_FULL_PATH(dest);
+	RT_CK_FULL_PATH(src);
+
+	db_extend_full_path( dest, src->fp_len );
+	bcopy( (char *)&src->fp_names[0],
+		(char *)&dest->fp_names[dest->fp_len],
+		src->fp_len * sizeof(struct directory *) );
+	dest->fp_len += src->fp_len;
 }
 
 /*
@@ -155,12 +220,26 @@ register CONST struct db_full_path	*pp;
 }
 
 /*
+ *			D B _ P R _ F U L L _ P A T H
+ */
+void
+db_pr_full_path( msg, pathp )
+CONST char			*msg;
+CONST struct db_full_path	*pathp;
+{
+	char	*sofar = db_path_to_string(pathp);
+
+	rt_log("%s %s\n", msg, sofar );
+	rt_free(sofar, "path string");
+}
+
+/*
  *			D B _ S T R I N G _ T O _ P A T H
  *
  *  Reverse the effects of db_path_to_string().
  *
- *  The db_full_path structure is initialized.  If it was already in use,
- *  call db_free_full_path() first.
+ *  The db_full_path structure will be initialized.  If it was already in use,
+ *  user should call db_free_full_path() first.
  *
  *  Returns -
  *	-1	failure (shouldn't happen)
@@ -183,6 +262,12 @@ CONST char			*str;
 
 	/* Count slashes */
 	while( *str == '/' )  str++;	/* strip off leading slashes */
+	if( *str == '\0' )  {
+		/* Path of a lone slash */
+		db_full_path_init( pp );
+		return 0;
+	}
+
 	copy = rt_strdup( str );
 	cp = copy;
 	while( *cp )  {
