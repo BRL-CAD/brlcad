@@ -1157,19 +1157,20 @@ weave:
 	if( rt_g.debug&DEBUG_ADVANCE )
 		bu_log( "rt_shootray: ray has left known space\n" );
 
-	/* Comment on any dangling (odd) hits leftover from solid pieces */
-	if( rtip->rti_nsolids_with_pieces > 0 )  {
-		struct rt_piecestate *psp;
-		for( psp = &(resp->re_pieces[rtip->rti_nsolids_with_pieces-1]);
-		     psp >= resp->re_pieces; psp-- )
-		{
-			if( psp->htab.end <= 0 )  continue;
-			/* Convert any pending hits into segs */
-			/* Distance correction was handled in ft_piece_shot */
-			psp->stp->st_meth->ft_piece_hitsegs( psp, &waiting_segs, ap );
+	/* Process any pending hits into segs */
+	if( BU_PTBL_LEN( &resp->re_pieces_pending ) > 0 )  {
+		struct rt_piecestate **psp;
+		for( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
+			if( (*psp)->htab.end > 0 )  {
+				/* Convert any pending hits into segs */
+				/* Distance correction was handled in ft_piece_shot */
+				(*psp)->stp->st_meth->ft_piece_hitsegs( *psp, &waiting_segs, ap );
+				rt_htbl_reset( &(*psp)->htab );
+			}
+			*psp = NULL;
 		}
+		bu_ptbl_reset( &resp->re_pieces_pending );
 	}
-
 	
 	if( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 		rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
@@ -1240,6 +1241,16 @@ out:
 	BU_LIST_APPEND( &resp->re_solid_bitv, &solidbits->l );
 	BU_CK_PTBL(regionbits);
 	BU_LIST_APPEND( &resp->re_region_ptbl, &regionbits->l );
+
+	/* Clean up any pending hits */
+	if( BU_PTBL_LEN( &resp->re_pieces_pending ) > 0 )  {
+		struct rt_piecestate **psp;
+		for( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
+			if( (*psp)->htab.end > 0 )
+				rt_htbl_reset( &(*psp)->htab );
+		}
+		bu_ptbl_reset( &resp->re_pieces_pending );
+	}
 
 	/* Terminate any logging */
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS))  {
