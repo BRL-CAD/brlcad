@@ -1267,8 +1267,10 @@ mged_fb_open()
 {
   if(dmp->dm_type == DM_TYPE_X)
     X_fb_open();
+#ifdef DM_OGL
   else if(dmp->dm_type == DM_TYPE_OGL)
     Ogl_fb_open();
+#endif
 }
 
 void

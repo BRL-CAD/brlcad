@@ -39,7 +39,7 @@ extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
 static void draw_axes();
 
-void
+static void
 draw_axes(vpos, rot_mat, size, axes_color, label_color, linewidth)
 point_t vpos;
 mat_t rot_mat;
