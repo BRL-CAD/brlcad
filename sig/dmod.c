@@ -42,6 +42,7 @@ int	op[256];		/* operations */
 double	val[256];		/* arguments to operations */
 double	buf[BUFLEN];		/* working buffer */
 
+int
 get_args( argc, argv )
 register char **argv;
 {
