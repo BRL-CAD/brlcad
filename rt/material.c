@@ -79,10 +79,10 @@ struct rt_i		*rtip;
 	}
 	rt_vls_init( &param );
 	material = rp->reg_mater.ma_matname;
-	rt_vls_strcpy( &param, rp->reg_mater.ma_matparm );
-	if( material[0] == '\0' )  {
+	if( material == NULL || material[0] == '\0' )  {
 		material = mdefault;
-		rt_vls_trunc( &param, 0 );
+	} else {
+		rt_vls_strcpy( &param, rp->reg_mater.ma_matparm );
 	}
 retry:
 	for( mfp=mfHead; mfp != MF_NULL; mfp = mfp->mf_forw )  {
