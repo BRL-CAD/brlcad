@@ -52,7 +52,8 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 
-double mat_degtorad = 0.0174532925199433;
+double	mat_degtorad = 0.0174532925199433;
+double	mat_radtodeg = 57.29577951308230698802;
 
 
 /*
@@ -707,13 +708,13 @@ int	yflip;
 	hypot_xy = hypot( dir[X], dir[Y] );
 	mat_zrot( first, -dir[Y] / hypot_xy, dir[X] / hypot_xy );
 #if 0
-rt_log(" az angle=%g\n", mat_atan2( -dir[Y] / hypot_xy, dir[X] / hypot_xy )/mat_degtorad );
+rt_log(" az angle=%g\n", mat_atan2( -dir[Y] / hypot_xy, dir[X] / hypot_xy )*mat_radtodeg );
 #endif
 
 	/* Next, rotate D around Y axis to match -Z axis (elevation) */
 	mat_yrot( second, -hypot_xy, -dir[Z] );
 #if 0
-rt_log(" el angle=%g\n", mat_atan2( -hypot_xy, -dir[Z] )/mat_degtorad );
+rt_log(" el angle=%g\n", mat_atan2( -hypot_xy, -dir[Z] )*mat_radtodeg );
 #endif
 	mat_mul( prod12, second, first );
 
@@ -729,7 +730,7 @@ rt_log(" el angle=%g\n", mat_atan2( -hypot_xy, -dir[Z] )/mat_degtorad );
 	}
 	mat_zrot( third, -xproj[Y] / hypot_xy, xproj[X] / hypot_xy );
 #if 0
-rt_log(" tw angle=%g\n", mat_atan2( -xproj[Y] / hypot_xy, xproj[X] / hypot_xy )/mat_degtorad);
+rt_log(" tw angle=%g\n", mat_atan2( -xproj[Y] / hypot_xy, xproj[X] / hypot_xy )*mat_radtodeg);
 #endif
 	mat_mul( rot, third, prod12 );
 
