@@ -2645,6 +2645,10 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		if( coords != 2 && !RT_NURB_IS_PT_RATIONAL(c->pt_type) ) rt_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
 		nmg_hack_snurb( &s, fu->f_p->g.snurb_p );
 
+		/* This section uses rt_nurb_c_eval(), but rt_nurb_c_refine is likely faster.
+		 * XXXX Need a way to selectively and recursively refine curve to avoid
+		 * feeding rt_nurb_s_eval() parameters outside domain of surface.
+		 */
 		param_delta = (c->knot.knots[c->knot.k_size-1] - c->knot.knots[0])/(fastf_t)(n_interior+1);
 		crv_param = c->knot.knots[0];
 		for( i = 0; i < n_interior; i++)  {
