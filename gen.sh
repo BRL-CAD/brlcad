@@ -82,7 +82,7 @@ RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=Today
 # For this purpose, specifically exclude "dot" from the check.
 #
 NECESSARY_CMDS="cake cakesub cakeinclude machinetype.sh \
-	ranlib5.sh"
+	ranlib5.sh cadbug.sh"
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
