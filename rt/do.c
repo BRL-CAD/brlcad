@@ -324,7 +324,7 @@ CONST char	**argv;
 		return(0);
 	}
 	rt_prep_timer();
-	if( rt_gettrees(rtip, argc, argv, npsw) < 0 )
+	if( rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0 )
 		rt_log("rt_gettrees(%s) FAILED\n", argv[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	rt_log("GETTREE: %s\n", outbuf);
