@@ -86,6 +86,7 @@ struct txt_specific {
 	int	tx_n;		/* Number of scanlines */
 	int	tx_trans_valid;	/* boolean: is tx_transp valid ? */
 	fastf_t	tx_scale[2];	/* replication factors in U, V */
+	int	tx_mirror;	/* flag: repetitions are mirrored */
 	struct bu_mapped_file	*mp;
 };
 #define TX_NULL	((struct txt_specific *)0)
@@ -101,6 +102,7 @@ struct bu_structparse txt_parse[] = {
 	{"%d",	1, "trans_valid",TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "t",		TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  2, "uv",	TX_AO(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "m",		TX_O(tx_mirror),	BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -166,10 +168,14 @@ char	*dp;
 	uvc.uv_u *= tp->tx_scale[X];
 	tmp = uvc.uv_u;
 	uvc.uv_u -= tmp;
+	if (tp->tx_mirror && (tmp & 1) )
+		uvc.uv_u = 1.0 - uvc.uv_u;
 
 	uvc.uv_v *= tp->tx_scale[Y];
 	tmp = uvc.uv_v;
 	uvc.uv_v -= tmp;
+	if (tp->tx_mirror && (tmp & 1) )
+		uvc.uv_v = 1.0 - uvc.uv_v;
 
 	uvc.uv_du /= tp->tx_scale[X];
 	uvc.uv_dv /= tp->tx_scale[X];
@@ -411,10 +417,14 @@ char	*dp;
 	uvc.uv_u *= tp->tx_scale[X];
 	tmp = uvc.uv_u;
 	uvc.uv_u -= tmp;
+	if (tp->tx_mirror && (tmp & 1) )
+		uvc.uv_u = 1.0 - uvc.uv_u;
 
 	uvc.uv_v *= tp->tx_scale[Y];
 	tmp = uvc.uv_v;
 	uvc.uv_v -= tmp;
+	if (tp->tx_mirror && (tmp & 1) )
+		uvc.uv_v = 1.0 - uvc.uv_v;
 
 	uvc.uv_du /= tp->tx_scale[X];
 	uvc.uv_dv /= tp->tx_scale[X];
@@ -504,6 +514,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	tp->tx_trans_valid = 0;
 	tp->tx_scale[X] = 1.0;
 	tp->tx_scale[Y] = 1.0;
+	tp->tx_mirror = 0;
 	if (bu_struct_parse( matparm, txt_parse, (char *)tp ) < 0 )  {
 		bu_free( (char *)tp, "txt_specific" );
 		return(-1);
