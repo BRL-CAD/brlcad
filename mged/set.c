@@ -220,7 +220,7 @@ Tcl_Interp *interp;
     register int i;
 
     for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
-	read_var( (ClientData)sp, interp, sp->sp_name, NULL, 0 );
+	read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
 	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
 		      read_var, (ClientData)sp );
 	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
