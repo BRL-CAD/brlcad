@@ -603,7 +603,12 @@ rt_init_resource(
 	} else {
 		BU_ASSERT_PTR( resp, !=, NULL );
 		BU_ASSERT_LONG( cpu_num, >=, 0 );
-		BU_ASSERT_LONG( cpu_num, <, MAX_PSW );
+		if( rtip->rti_treetop ) {
+			/* this is a submodel */
+			BU_ASSERT_LONG( cpu_num, <, rtip->rti_resources.blen );
+		} else {
+			BU_ASSERT_LONG( cpu_num, <, MAX_PSW );
+		}
 		RT_CK_RTI(rtip);		/* mandatory */
 	}
 
