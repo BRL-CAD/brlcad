@@ -16,10 +16,10 @@
 
 /* Explicit composition of each product */
 
-fast4-g: fast4-g.o LIBRT LIBWDB
+fast4-g: fast4-g.o
 	CC LDFLAGS fast4-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o fast4-g
 
-asc2g:	asc2g.o LIBRT LIBWDB
+asc2g:	asc2g.o
 	CC LDFLAGS asc2g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o asc2g
 
 g2asc:	g2asc.o
@@ -34,31 +34,31 @@ pix2asc:	pix2asc.o
 asc2pix:	asc2pix.o
 	CC LDFLAGS asc2pix.o -o asc2pix
 
-euclid-g:	euclid-g.o LIBRT LIBWDB
+euclid-g:	euclid-g.o
 	CC LDFLAGS euclid-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o euclid-g
 
-g-euclid:	g-euclid.o LIBRT
+g-euclid:	g-euclid.o
 	CC LDFLAGS g-euclid.o LIBRT LIBRT_LIBES LIBES -o g-euclid
 
-g-euclid1:	g-euclid1.o LIBRT
+g-euclid1:	g-euclid1.o
 	CC LDFLAGS g-euclid1.o LIBRT LIBRT_LIBES LIBES -o g-euclid1
 
 euclid_format:	euclid_format.o
 	CC LDFLAGS euclid_format.o LIBRT LIBRT_LIBES LIBES -o euclid_format
 
-tankill-g:	tankill-g.o LIBRT LIBWDB
+tankill-g:	tankill-g.o
 	CC LDFLAGS tankill-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o tankill-g
 
-g-tankill:	g-tankill.o LIBRT
+g-tankill:	g-tankill.o
 	CC LDFLAGS g-tankill.o LIBRT LIBRT_LIBES LIBES -o g-tankill
 
-viewpoint-g:	viewpoint-g.o LIBRT LIBWDB
+viewpoint-g:	viewpoint-g.o
 	CC LDFLAGS viewpoint-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o viewpoint-g
 
-dxf-g:	dxf-g.o LIBRT LIBWDB
+dxf-g:	dxf-g.o
 	CC LDFLAGS dxf-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o dxf-g
 
-g-nmg:	g-nmg.o LIBRT LIBWDB
+g-nmg:	g-nmg.o
 	CC LDFLAGS g-nmg.o LIBWDB LIBRT LIBRT_LIBES LIBES -o g-nmg
 
 #include "../Cakefile.rules"
