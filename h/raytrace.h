@@ -1686,7 +1686,7 @@ RT_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], in
 RT_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
 RT_EXTERN(struct faceuse	*nmg_add_loop_to_face, (struct shell *s, struct faceuse *fu, struct vertex **verts, int n, int dir) );
 RT_EXTERN(int			nmg_fu_planeeqn, (struct faceuse *fu, CONST struct bn_tol *tol) );
-RT_EXTERN(void			nmg_gluefaces, (struct faceuse *fulist[], int n) );
+RT_EXTERN(void			nmg_gluefaces, (struct faceuse *fulist[], int n, CONST struct bn_tol *tol) );
 RT_EXTERN(int			nmg_simplify_face, (struct faceuse *fu) );
 RT_EXTERN(void			nmg_reverse_face, (struct faceuse *fu) );
 RT_EXTERN(void			nmg_mv_fu_between_shells, (struct shell *dest,
