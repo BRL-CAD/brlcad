@@ -5,7 +5,7 @@
 
 .SUFFIXES: .pix .p_asc
 
-.p_asc.pix: ; $(A2P) < $? > $@
+.p_asc.pix: ; $(A2P) < $< > $@
 
 A2P=../conv/asc2pix
 P2A=../conv/pix2asc
