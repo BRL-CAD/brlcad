@@ -37,11 +37,12 @@ int entityno;
 	int	prop3;	/* !0 if polynomial (else rational) */
 	int	prop4;	/* !0 if periodic in first direction */
 	int	prop5;	/* !0 if periodic in second direction */
-	fastf_t *params; /* Surface parameters */
 	int	sol_num; /* IGES solid type number */
 	int	n1, n2, a, b, c;
 	int	i, j;
-	fastf_t	*dp;
+	int	count=0;
+	fastf_t	min_knot;
+	fastf_t max_wt;
 	struct snurb *b_patch;
 
 	/* Acquiring Data */
@@ -71,12 +72,6 @@ int entityno;
 	b = n2 + 2 * m2;
 	c = (k1 + 1)*(k2 + 1);
 
-	/* Allocate space for the parameters */
-	params =(fastf_t *)calloc( 15+a+b+4*c , sizeof(fastf_t ) );
-
-	for( i=10 ; i<15+a+b+4*c ; i++ )
-		Readcnv( &params[i] , "" );
-
 	/*  spl_new: Creates a spline surface data structure
 	 *	u_order		(e.g. cubic = order 4)
 	 *	v_order
@@ -92,39 +87,90 @@ int entityno;
 		k2+1, k1+1, RT_NURB_MAKE_PT_TYPE( 4 , 2 , 0 ) );
 
 	/* U knot vector */
-	for (i = 0; i <= n1+2*m1; i++) {
-		b_patch->u_knots.knots[i] = params[10+i];
+	min_knot = 0.0;
+	for (i = 0; i <= n1+2*m1; i++)
+	{
+		Readdbl( &b_patch->u_knots.knots[i] , "" );
+		if( b_patch->u_knots.knots[i] < min_knot )
+			min_knot = b_patch->u_knots.knots[i];
 	}
 
+	if( min_knot < 0.0 )
+	{
+		for (i = 0; i <= n1+2*m1; i++)
+		{
+			b_patch->u_knots.knots[i] -= min_knot;
+		}
+	}
+
+	min_knot = 0.0;
 	/* V knot vector */
-	for (i = 0; i <= n2+2*m2; i++) {
-		b_patch->v_knots.knots[i] = params[11+a+i];
+	for (i = 0; i <= n2+2*m2; i++)
+	{
+		Readdbl( &b_patch->v_knots.knots[i] , "" );
+		if( b_patch->v_knots.knots[i] < min_knot )
+			min_knot = b_patch->v_knots.knots[i];
+	}
+	if( min_knot < 0.0 )
+	{
+		for (i = 0; i <= n1+2*m1; i++)
+		{
+			b_patch->v_knots.knots[i] -= min_knot;
+		}
+	}
+
+
+	/* weights */
+	max_wt = 0.0;
+	count = 0;
+	for( i=0 ; i<=k2 ; i++ )
+	{
+		for( j=0 ; j<= k1 ; j++ )
+		{
+			Readdbl( &b_patch->ctl_points[ count*4 + 3 ] , "" );
+			if( b_patch->ctl_points[ count*4 + 3 ] > max_wt )
+				max_wt = b_patch->ctl_points[ count*4 + 3 ];
+			count++;
+		}
 	}
 
 	/* control points */
-	dp = b_patch->ctl_points;
-	for (i = 0; i <= k2; i++) {
-		for (j = 0; j <= k1; j++) {
-			fastf_t	x, y, z, w;
-			w = params[12+a+b + i*(k1+1) + j];
-			x = params[12+a+b+c + (i*(k1+1) + j)*3];
-			y = params[13+a+b+c + (i*(k1+1) + j)*3];
-			z = params[14+a+b+c + (i*(k1+1) + j)*3];
-			/* Why were these mutiplied by 1000??? */
-/*			x *= 1000 * w;
-			y *= 1000 * w;
-			z *= 1000 * w;	*/
-			*dp++ = x;
-			*dp++ = y;
-			*dp++ = z;
-			*dp++ = w;
+	count = 0;
+	for (i = 0; i <= k2; i++)
+	{
+		for (j = 0; j <= k1; j++)
+		{
+			Readcnv( &b_patch->ctl_points[ count*4 ] , "" );
+			Readcnv( &b_patch->ctl_points[ count*4 + 1 ] , "" );
+			Readcnv( &b_patch->ctl_points[ count*4 + 2 ] , "" );
+			count++;
 		}
 	}
+
+#if 0
+	/* normalize */
+	if( max_wt > 1.0 )
+	{
+		count = 0;
+		for( i=0 ; i<=k2 ; i++ )
+		{
+			for( j=0 ; j<=k1 ; j++ )
+			{
+				int k;
+
+				if( b_patch->ctl_points[ count*4 + 3 ] == max_wt )
+				{
+					for( k=0 ; k<4 ; k++ )
+						b_patch->ctl_points[ count*4 + k ] = b_patch->ctl_points[ count*4 + k ]/max_wt;
+				}
+				count++;
+			}
+		}
+	}
+#endif
 
 	/* Output the the b_spline through the libwdb interface */
 	mk_bsurf(fdout, b_patch);
 
-	/* Free some memory */
-	free( params );
 	return( 1 );
 }
