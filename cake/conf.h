@@ -110,8 +110,6 @@ typedef	int	Cast;
 
 #if __MACHINETYPE__sun5
 	/* SunOS 5 with unbundled compilers */
-#	undef __STDC__
-#	define __STDC__ 1	/* hack! */
 #	define	CPP		"cc"
 	/*
 	 * WARNING:  Make sure /opt/SUNWspro/bin is ahead of /usr/ucb
