@@ -67,6 +67,7 @@ struct dm dm_ps = {
   ps_drawVList,
   ps_setFGColor,
   Nu_int0,
+  Nu_int0,
   ps_setLineAttr,
   ps_setWinBounds,
   ps_debug,

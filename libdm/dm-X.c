@@ -71,7 +71,7 @@ static int      X_drawString2D();
 static int	X_drawLine2D();
 static int      X_drawPoint2D();
 static int	X_drawVList();
-static int      X_setFGColor(), X_setBGColor();
+static int      X_setFGColor(), X_setBGColor(), X_getBGColor();
 static int	X_setLineAttr();
 static int	X_setWinBounds(), X_debug();
 
@@ -87,6 +87,7 @@ struct dm dm_X = {
   X_drawVList,
   X_setFGColor,
   X_setBGColor,
+  X_getBGColor,
   X_setLineAttr,
   X_setWinBounds,
   X_debug,
@@ -934,6 +935,10 @@ int r, g, b;
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
     bu_log("X_setBGColor()\n");
 
+  ((struct x_vars *)dmp->dm_vars.priv_vars)->r = r / 255.0;
+  ((struct x_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
+  ((struct x_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
+
   if(((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor){
     XColor color;
 
@@ -947,6 +952,24 @@ int r, g, b;
   } else
     ((struct x_vars *)dmp->dm_vars.priv_vars)->bg =
       dm_get_pixel(r, g, b, ((struct x_vars *)dmp->dm_vars.priv_vars)->pixels, CUBE_DIMENSION);
+
+  return TCL_OK;
+}
+
+static int
+X_getBGColor(dmp, interp)
+struct dm *dmp;
+Tcl_Interp *interp;
+{
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "%d %d %d",
+		(int)(((struct x_vars *)dmp->dm_vars.priv_vars)->r * 255.0),
+		(int)(((struct x_vars *)dmp->dm_vars.priv_vars)->g * 255.0),
+		(int)(((struct x_vars *)dmp->dm_vars.priv_vars)->b * 255.0));
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
 
   return TCL_OK;
 }

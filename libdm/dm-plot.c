@@ -67,6 +67,7 @@ struct dm dm_plot = {
   plot_drawVList,
   plot_setFGColor,
   Nu_int0,
+  Nu_int0,
   plot_setLineAttr,
   plot_setWinBounds,
   plot_debug,

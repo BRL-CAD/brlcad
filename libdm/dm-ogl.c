@@ -98,7 +98,7 @@ static int	ogl_normal(), ogl_loadMatrix();
 static int	ogl_drawString2D(), ogl_drawLine2D();
 static int      ogl_drawPoint2D();
 static int	ogl_drawVList();
-static int      ogl_setFGColor(), ogl_setBGColor();
+static int      ogl_setFGColor(), ogl_setBGColor(), ogl_getBGColor();
 static int	ogl_setLineAttr();
 static int	ogl_setWinBounds(), ogl_debug();
 static int      ogl_beginDList(), ogl_endDList();
@@ -117,6 +117,7 @@ struct dm dm_ogl = {
   ogl_drawVList,
   ogl_setFGColor,
   ogl_setBGColor,
+  ogl_getBGColor,
   ogl_setLineAttr,
   ogl_setWinBounds,
   ogl_debug,
@@ -992,6 +993,7 @@ int strict;
   return TCL_OK;
 }
 
+static int
 ogl_setBGColor(dmp, r, g, b)
 struct dm *dmp;
 int r, g, b;
@@ -1021,6 +1023,24 @@ int r, g, b;
 		 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
+
+  return TCL_OK;
+}
+
+static int
+ogl_getBGColor(dmp, interp)
+struct dm *dmp;
+Tcl_Interp *interp;
+{
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "%d %d %d",
+		(int)(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r * 255.0),
+		(int)(((struct ogl_vars *)dmp->dm_vars.priv_vars)->g * 255.0),
+		(int)(((struct ogl_vars *)dmp->dm_vars.priv_vars)->b * 255.0));
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
 
   return TCL_OK;
 }
