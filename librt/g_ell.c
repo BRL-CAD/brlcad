@@ -1259,21 +1259,16 @@ struct rt_db_internal	*ip;
 	ip->idb_ptr = GENPTR_NULL;
 }
 
+/*  The U parameter runs south to north.
+ *  In order to orient loop CCW, need to start with 0,1-->0,0 transition
+ *  at the south pole.
+ */
 static CONST fastf_t rt_ell_uvw[5*3] = {
-#if 0
+	0, 1, 0,
 	0, 0, 0,
 	1, 0, 0,
 	1, 1, 0,
-	0, 1, 0,
-	0, 0, 0
-#else
-	/* Somewhat surprisingly, the U parameter runs south to north */
-	0, 0, 0,
-	0, 1, 0,
-	1, 1, 0,
-	1, 0, 0,
-	0, 0, 0
-#endif
+	0, 1, 0
 };
 
 /*
