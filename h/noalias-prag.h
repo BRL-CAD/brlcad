@@ -22,8 +22,8 @@
  *
  *  @(#)$Header$ (BRL)
  */
-#if defined(__STDC__)
-#	ifdef cray
+#if defined(__STDC__) || defined(CRAY)
+#	if defined(CRAY)
 #		pragma ivdep
 #	endif
 #	if defined(alliant)
