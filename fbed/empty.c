@@ -43,11 +43,7 @@ struct timeval
 /* 4.2 does not define these */
 #define	FD_SET(n, p)	((p)->fds_bits[0] |= (n) == 0 ? 1 : (1 << (n)))
 #define FD_ZERO(p)	(p)->fds_bits[0] = 0
-#ifndef alliant
-typedef	struct fd_set {
-	fd_mask	fds_bits[1];
-} fd_set;
-#endif alliant
+/** typedef	struct fd_set { fd_mask	fds_bits[1]; } fd_set; **/
 #endif FD_ZERO
 
 /*	e m p t y ( )
