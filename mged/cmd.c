@@ -45,6 +45,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
+#ifdef XMGED
+#include "./sedit.h"
+#include "rtgeom.h"
+#endif
+
 #ifdef MGED_TCL
 #  define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #  include "tcl.h"
@@ -1662,7 +1667,32 @@ struct funtab *functions;
 		    functions->ft_name);
 		return CMD_BAD;
 	}
+#ifdef XMGED
+/* check for aliases first */
+	for(curr = atop; curr != NULL;){
+		if((cmp = strcmp(argv[0], curr->name)) == 0){
+			if(curr->marked)
+		/* alias has same name as real command, so call real command */
+				break;
 
+	/* repackage alias commands with any arguments and call cmdline again */
+			save_journal = journal;
+			journal = 0;	/* temporarily shut off journalling */
+			rt_vls_init( &cmd );
+			curr->marked = 1;
+			if(!extract_alias_def(&cmd, curr, argc, argv))
+				(void)cmdline(&cmd, False);
+
+			rt_vls_free( &cmd );
+			curr->marked = 0;
+			journal = save_journal;	/* restore journal state */
+			return CMD_OK;
+		}else if(cmp > 0)
+			curr = curr->right;
+		else
+			curr = curr->left;
+	}
+#endif
 	for( ftp = functions+1; ftp->ft_name ; ftp++ )  {
 		if( strcmp( ftp->ft_name, argv[0] ) != 0 )
 			continue;
@@ -1673,6 +1703,18 @@ struct funtab *functions;
 		    	 * Call function listed in table, with
 		    	 * main(argc, argv) style args
 		    	 */
+#ifdef XMGED
+		  result = ftp->ft_func(argc, argv);
+
+/*  This needs to be done here in order to handle multiple commands within
+    an alias.  */
+			if( sedraw > 0) {
+				sedit();
+				sedraw = 0;
+				dmaflag = 1;
+			}
+			return result;
+#else
 			switch (ftp->ft_func(argc, argv)) {
 			case CMD_OK:
 				return CMD_OK;
@@ -1685,6 +1727,7 @@ struct funtab *functions;
 					ftp->ft_name);
 				return CMD_BAD;
 			}
+#endif
 		}
 		rt_log("Usage: %s%s %s\n\t(%s)\n",functions->ft_name,
 		    ftp->ft_name, ftp->ft_parms, ftp->ft_comment);

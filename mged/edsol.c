@@ -1925,6 +1925,9 @@ sedit()
 	static float la, lb, lc, ld;	/* TGC: length of vectors */
 
 	sedraw = 0;
+#ifdef XMGED
+	update_views = 1;
+#endif
 
 	switch( es_edflag ) {
 
