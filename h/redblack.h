@@ -66,7 +66,6 @@ typedef struct
     void		(*rbt_print)();	  /* Data pretty-print function */
     int			rbt_debug;	  /* Debug bits */
     char		*rbt_description; /* Comment for diagnostics */
-    void		*rbt_aptr;	  /* Application-specific pointer */
     /* CLASS III - Applications should not manipulate directly... */
     int		 	rbt_nm_orders;	  /* Number of simultaneous orders */
     int			(**rbt_order)();  /* Comparison functions */

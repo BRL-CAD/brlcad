@@ -557,15 +557,6 @@ includes
     void (*rbt_print)();   /* Data pretty-print function */
     int  rbt_debug;        /* Debug bits */
     char *rbt_description; /* Comment for diagnostics */
-    void *rbt_aptr;        /* Arbitrary pointer */
-.PP
-The
-.I rbt_aptr
-member is a means of providing
-arbitrary application-specific data to
-a comparison or print function,
-or a visit function called by
-.I rb_walk.
 .PP
 Class III comprises
 members that applications should not manipulate directly;
