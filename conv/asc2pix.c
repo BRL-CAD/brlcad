@@ -20,6 +20,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
 int lmap[256];		/* Map HEX ASCII to binary in left nybble */
