@@ -2086,10 +2086,12 @@ char	**argv;
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
 
   bu_vls_strcpy(&vls, "local2base");
+  Tcl_UnlinkVar(interp, bu_vls_addr(&vls));
   Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&local2base,
 	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
   bu_vls_strcpy(&vls, "base2local");
+  Tcl_UnlinkVar(interp, bu_vls_addr(&vls));
   Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&base2local,
 	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
