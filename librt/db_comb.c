@@ -274,7 +274,8 @@ CONST matp_t			matrix;		/* NULL if identity */
 	}
 	/* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
 	/* XXX cf: ma_cinherit, ma_minherit */
-	comb->inherit = rp[0].c.c_inherit;
+	/* This ? is necessary to clean up old databases with grunge here */
+	comb->inherit = (rp[0].c.c_inherit == DB_INH_HIGHER) ? 1 : 0;
 	/* Automatic material table lookup here? */
 	bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
 
