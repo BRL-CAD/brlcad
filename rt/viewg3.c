@@ -40,6 +40,12 @@ static const char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"

@@ -45,6 +45,13 @@ static const char RCSregis[] = "@(#)$Header$";
 #include "conf.h"
 
 #include <stdio.h>
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
