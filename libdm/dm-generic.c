@@ -45,6 +45,7 @@ extern struct dm *X_open();
 #ifdef DM_OGL
 extern struct dm *ogl_open();
 extern void ogl_fogHint();
+extern int ogl_share_dlist();
 #endif /* DM_OGL */
 #endif /* DM_X */
 
