@@ -135,14 +135,19 @@ char **argv;
 	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
 		char line[128];
 
-	    	perror( argv[1] );
-		if( !isatty(0) )
-			exit(2);		/* NOT finish() */
-		(void)fprintf(outfile, "Create new database (y|n)[n]? ");
-		fflush(outfile);
-		(void)fgets(line, sizeof(line), infile);
-		if( line[0] != 'y' && line[0] != 'Y' )
+		if( isatty(0) ) {
+
+		    perror( argv[1] );
+		    (void)fprintf(outfile, "Create new database (y|n)[n]? ");
+		    fflush(outfile);
+		    (void)fgets(line, sizeof(line), infile);
+		    if( line[0] != 'y' && line[0] != 'Y' )
 			exit(0);		/* NOT finish() */
+		} else
+		    (void)fprintf(outfile,
+		    	"Creating new database \"%s\"\n", argv[1]);
+			
+
 		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
 			perror( argv[1] );
 			exit(2);		/* NOT finish() */
