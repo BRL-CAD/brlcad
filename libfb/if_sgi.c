@@ -24,6 +24,8 @@
  *	adb -w -k /vmunix
  *	shminfo?W 250000
  *	shminfo+0x14?W 258
+ *	tcp_sendspace?W 4000
+ *	tcp_recvspace?W 4000
  *
  *  Note that these numbers are for release 3.5;  other versions
  *  may vary.
