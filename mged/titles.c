@@ -279,7 +279,10 @@ dotitles()
 	MAT4X3VEC( temp , view2model , work );
 	VSET( work1 , 1 , 0 , 0 );	/* view x-direction */
 	MAT4X3VEC( temp1 , view2model , work1 );
-	mat_aet_vec( &az , &el , &twist , temp , temp1 );
+
+	/* calculate angles using accuracy of 0.005, since display
+	 * shows 2 digits right of decimal point */
+	mat_aet_vec( &az , &el , &twist , temp , temp1 , (fastf_t)0.005 );
 
 	(void)sprintf( cp, "az=%3.2f el=%2.2f twist=%3.2f ang=(%.2f, %.2f, %.2f)",
 		az, el, twist,
