@@ -869,7 +869,7 @@ int have;
 			} else {
 				VSUB2(tolight, lp->lt_pos,
 					swp->sw_hit.hit_point);
-#if 0
+#if 1
 		/*
 		 *  Dither light pos for penumbra by +/- 0.5 light radius;
 		 *  this presently makes a cubical light source distribution.
