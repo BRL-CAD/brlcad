@@ -194,6 +194,10 @@
 #	define HAVE_SBRK_DECL		1
 #endif
 
+#if SOLARIS >= 52
+#	define HAVE_SBRK_DECL		1
+#endif
+
 #if !defined(SYSV)			/* XXXXXXXXX */
 #	define HAVE_CALTECH_MALLOC 1   /* XXX Bleh. See librt/storage.c */
 #endif
