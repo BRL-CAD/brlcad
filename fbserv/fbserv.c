@@ -47,11 +47,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
+
 #if defined(HAVE_STDARG_H)
 # include <stdarg.h>
-#elif defined(HAVE_VARARGS_H)
+#endif
+#if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
 # include <varargs.h>
 #endif
+
 #include <sys/time.h>		/* For struct timeval */
 
 #if defined(BSD) && !defined(CRAY2)
