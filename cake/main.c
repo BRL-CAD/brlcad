@@ -370,6 +370,9 @@ char	**argv;
 #if defined(CPP_OPTIONS2)
 	cppargv[cppargc++] = new_name(CPP_OPTIONS2);
 #endif
+#if defined(CPP_OPTIONS3)
+	cppargv[cppargc++] = new_name(CPP_OPTIONS3);
+#endif
 	strcpy(cakeflagbuf, "-DCAKEFLAGS=");
 
 	if ((envstr = getenv("CAKE")) != NULL)

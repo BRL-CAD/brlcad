@@ -62,6 +62,7 @@ typedef	int	Cast;
 	 */
 #	define	CPP_OPTIONS	"-E"
 #	define	CPP_OPTIONS2	"-Xs"
+#	define	CPP_OPTIONS3	"-D__CAKE__SunOS5=1"
 #endif
 
 /*
