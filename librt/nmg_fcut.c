@@ -557,7 +557,6 @@ int			pos;
 	struct edgeuse		*othereu;
 	vect_t			heading;
 	int			ret;
-	int			ret2;
 	register int		i;
 
 	NMG_CK_EDGEUSE(eu);
@@ -2251,7 +2250,6 @@ struct nmg_ray_state *rs;
 	struct vertexuse *vu1,*vu2;
 	struct loopuse *match_lu=(struct loopuse *)NULL;
 	struct loopuse *prior_lu,*next_lu;
-	struct vertexuse *prior_vu, *next_vu;
 	struct bu_ptbl *cuts=(struct bu_ptbl *)NULL;
 	struct loop_cuts *lcut;
 	int count=0;
@@ -2832,9 +2830,8 @@ struct nmg_ray_state *rs;
 {
 	register int	cur;
 	struct vertexuse *vu1,*vu2;
-	struct loopuse *lu;
 	struct loopuse *new_lu;
-	struct edgeuse *new_eu1,*new_eu2;
+	struct edgeuse *new_eu1;
 	struct edgeuse *old_eu;
 	struct vertex *prev_v;
 	struct bu_ptbl *cuts;
@@ -2881,7 +2878,6 @@ struct nmg_ray_state *rs;
 		int orient1,orient2;
 		int prior_end;
 		int next_start,next_end;
-		int count;
 		int i;
 		int index1,index2;
 

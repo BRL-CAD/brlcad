@@ -1407,14 +1407,7 @@ nmg_check_radial(eu, tol)
 CONST struct edgeuse	*eu;
 CONST struct bn_tol	*tol;
 {
-	char curr_orient;
-	CONST struct edgeuse	*eu_orig;
-	CONST struct edgeuse	*eur;
-	CONST struct edgeuse	*eu1;
-	CONST struct edgeuse	*eurstart;
-	CONST struct faceuse	*fu;
 	CONST struct shell	*s;
-	pointp_t p, q;
 
 	NMG_CK_EDGEUSE(eu);
 	BN_CK_TOL(tol);

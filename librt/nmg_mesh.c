@@ -203,18 +203,6 @@ struct edgeuse		*eu1;
 struct edgeuse		*eu2;
 CONST struct bn_tol	*tol;
 {
-	struct edgeuse	*original_eu1 = eu1;
-	struct edgeuse	*nexteu;
-	struct edgeuse	*eus;
-	struct edgeuse	*eur;
-	struct faceuse	*fu1;
-	struct faceuse	*fu2;
-	struct edge_g_lseg	*best_eg;
-	int		iteration1, iteration2;
-	vect_t		xvec, yvec, zvec;
-	fastf_t		abs1;
-	fastf_t		abs2;
-	fastf_t		absr;
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu1->radial_p);
