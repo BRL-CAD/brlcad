@@ -1295,7 +1295,7 @@ char	**argv;
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
-	return TCL_ERROR;
+	return TCL_OK;
 }
 
 /*
