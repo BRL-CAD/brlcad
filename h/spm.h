@@ -19,7 +19,7 @@
  */
 
 typedef	struct	{
-	int	magic;
+	long	magic;
 	int	ny;		/* Number of "y" bins */
 	int	*nx;		/* Number of "x" bins per "y" bin */
 	int	elsize;		/* Size of each bin element */
