@@ -348,9 +348,9 @@ int y_top;
   y = y_top;
 
 #if 1
-  dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
+  DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
 #else
-  dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+  DM_SET_LINE_ATTR(dmp, 1, 0);  /* linewidth - 1, not dashed */
 #endif
 
   for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
@@ -381,7 +381,7 @@ int y_top;
 	      break;
 	    }
 
-	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -395,7 +395,7 @@ int y_top;
 		f = absolute_tran[X];
 	    }
 
-	    dmp->dm_setColor(dmp, DM_RED, 1);
+	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -420,7 +420,7 @@ int y_top;
 	      break;
 	    }
 
-	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -434,7 +434,7 @@ int y_top;
 		f = absolute_tran[Y];
 	    }
 
-	    dmp->dm_setColor(dmp, DM_RED, 1);
+	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -459,7 +459,7 @@ int y_top;
 	      break;
 	    }
 
-	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -473,7 +473,7 @@ int y_top;
 		f = absolute_tran[Z];
 	    }
 
-	    dmp->dm_setColor(dmp, DM_RED, 1);
+	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -487,14 +487,14 @@ int y_top;
 	    else
 	      f = edit_absolute_scale;
 
-	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs)
 	      f = rate_scale;
 	    else
 	      f = absolute_scale;
 
-	    dmp->dm_setColor(dmp, DM_RED, 1);
+	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -523,7 +523,7 @@ int y_top;
 	      break;
 	    }
 
-	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -537,7 +537,7 @@ int y_top;
 		f = absolute_rotate[X] / ABS_ROT_FACTOR;
 	    }
 
-	    dmp->dm_setColor(dmp, DM_RED, 1);
+	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -569,7 +569,7 @@ int y_top;
 	      break;
 	    }
 
-	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -583,7 +583,7 @@ int y_top;
 		f = absolute_rotate[Y] / ABS_ROT_FACTOR;
 	    }
 
-	    dmp->dm_setColor(dmp, DM_RED, 1);
+	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -615,7 +615,7 @@ int y_top;
 	      break;
 	    }
 
-	    dmp->dm_setColor(dmp, DM_WHITE, 1);
+	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -629,7 +629,7 @@ int y_top;
 		f = absolute_rotate[Z] / ABS_ROT_FACTOR;
 	    }
 
-	    dmp->dm_setColor(dmp, DM_RED, 1);
+	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -649,18 +649,17 @@ int y_top;
       else
 	xpos = 0;
 
-      dmp->dm_drawString2D( dmp, mptr->scroll_string,
+      DM_DRAW_STRING_2D( dmp, mptr->scroll_string,
 			    xpos, y-SCROLL_DY/2, 0, 0 );
-      dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawLine2D(dmp, XMAX, y, MENUXLIM, y);
+      DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+      DM_DRAW_LINE_2D(dmp, XMAX, y, MENUXLIM, y);
     }
   }
 
   if( y != y_top )  {
     /* Sliders were drawn, so make left vert edge */
-    dmp->dm_setColor(dmp, DM_YELLOW, 1);
-    dmp->dm_drawLine2D( dmp, MENUXLIM, scroll_top-1,
-			MENUXLIM, y, 0, DM_YELLOW );
+    DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+    DM_DRAW_LINE_2D(dmp, MENUXLIM, scroll_top-1, MENUXLIM, y);
   }
   return( y );
 }

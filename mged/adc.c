@@ -73,14 +73,14 @@ adcursor()
 	idxy[1] = (idxy[1] < MINVAL ? MINVAL : idxy[1]);
 	idxy[1] = (idxy[1] > MAXVAL ? MAXVAL : idxy[1]);
 
-	dmp->dm_setColor(dmp, DM_YELLOW, 1);
+	DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
 #if 1
-	dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
+	DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
 #else
-	dmp->dm_setLineAttr(dmp, 1, 0);    /* linewidth - 1, not dashed */
+	DM_SET_LINE_ATTR(dmp, 1, 0);    /* linewidth - 1, not dashed */
 #endif
-	dmp->dm_drawLine2D( dmp, MINVAL, idxy[1], MAXVAL, idxy[1] ); /* Horizontal */
-	dmp->dm_drawLine2D( dmp, idxy[0], MAXVAL, idxy[0], MINVAL );  /* Vertical */
+	DM_DRAW_LINE_2D( dmp, MINVAL, idxy[1], MAXVAL, idxy[1] ); /* Horizontal */
+	DM_DRAW_LINE_2D( dmp, idxy[0], MAXVAL, idxy[0], MINVAL );  /* Vertical */
 
 	curs_x = (fastf_t) (idxy[0]);
 	curs_y = (fastf_t) (idxy[1]);
@@ -109,8 +109,8 @@ adcursor()
 	y4 = curs_y + d1;
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
-	dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
-	dmp->dm_drawLine2D( dmp, (int)x3, (int)y3, (int)x4, (int)y4 );
+	DM_DRAW_LINE_2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
+	DM_DRAW_LINE_2D( dmp, (int)x3, (int)y3, (int)x4, (int)y4 );
 
 	d1 = cos (angle2) * 8000.0;
 	d2 = sin (angle2) * 8000.0;
@@ -127,16 +127,16 @@ adcursor()
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
 #if 1
-	dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 1);
+	DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 1);
 #else
-	dmp->dm_setLineAttr(dmp, 1, 1);  /* linewidth - 1, dashed */
+	DM_SET_LINE_ATTR(dmp, 1, 1);  /* linewidth - 1, dashed */
 #endif
-	dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
-	dmp->dm_drawLine2D( dmp, (int)x3, (int)y3, (int)x4, (int)y4 );
+	DM_DRAW_LINE_2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
+	DM_DRAW_LINE_2D( dmp, (int)x3, (int)y3, (int)x4, (int)y4 );
 #if 1
-	dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
+	DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
 #else
-	dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+	DM_SET_LINE_ATTR(dmp, 1, 0);  /* linewidth - 1, not dashed */
 #endif
 
 	/*
@@ -157,7 +157,7 @@ adcursor()
 	x2 = curs_x + d1 -t1;
 	y2 = curs_y + d2 + t2;
 	if (clip ( &x1, &Y1, &x2, &y2 ) == 0) {
-	  dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
+	  DM_DRAW_LINE_2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	}
 
 	/* Quadrant 2 */
@@ -166,7 +166,7 @@ adcursor()
 	x2 = curs_x - d2 - t2;
 	y2 = curs_y + d1 - t1;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-	  dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
+	  DM_DRAW_LINE_2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	}
 
 	/* Quadrant 3 */
@@ -175,7 +175,7 @@ adcursor()
 	x2 = curs_x - d1 + t1;
 	y2 = curs_y - d2 - t2;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-	  dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
+	  DM_DRAW_LINE_2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	}
 
 	/* Quadrant 4 */
@@ -184,7 +184,7 @@ adcursor()
 	x2 = curs_x + d2 + t2;
 	y2 = curs_y - d1 + t1;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-	  dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
+	  DM_DRAW_LINE_2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	}
 }
 
@@ -239,20 +239,12 @@ char	**argv;
 	if(strstr(argv[0], "iadc"))
 	   iadc = 1;
 
-	if (argc == 1)
-	{
-	  if (mged_variables->adcflag)  {
-#if 0
-	    dmp->dm_light( dmp, LIGHT_OFF, BV_ADCURSOR );
-#endif
+	if (argc == 1){
+	  if (mged_variables->adcflag)
 	    mged_variables->adcflag = 0;
-	  } else {
-#if 0
-	    dmp->dm_light( dmp, LIGHT_ON, BV_ADCURSOR );
-#endif
+	  else
 	    mged_variables->adcflag = 1;
-	  }
-
+	  
 	  set_scroll();
 	  dmaflag = 1;
 	  return TCL_OK;
@@ -263,9 +255,6 @@ char	**argv;
 	for (i = 0; i < argc; ++i)
 		pt[i] = atof(argv[i + 2]);
 	MAT_DELTAS_GET_NEG(center_model, toViewcenter);
-#if 0
-	MAT4X3VEC(center_view, Viewrot, center_model);
-#endif
 
 	if( strcmp( parameter, "a1" ) == 0 )  {
 	  if (argc == 1) {
@@ -372,15 +361,9 @@ char	**argv;
 	}
 	if( strcmp(parameter, "hv") == 0)  {
 	  if (argc == 2) {
-#if 0
-	    VSCALE(pt, pt, local2base);
-	    VSUB2(pt3, pt, center_view);
-	    dv_xadc = pt3[X] * view2dm;
-	    dv_yadc = pt3[Y] * view2dm;
-#else
 	    dv_xadc = pt[X] * 2047.0 / (Viewscale * base2local);
 	    dv_yadc = pt[Y] * 2047.0 / (Viewscale * base2local);
-#endif
+
 	    dmaflag = 1;
 	    return TCL_OK;
 	  }

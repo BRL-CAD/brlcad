@@ -81,7 +81,7 @@ register struct bu_vls	*vp;
 	/*
 	 * Set up for character output.  For the best generality, we
 	 * don't assume that the display can process a CRLF sequence,
-	 * so each line is written with a separate call to dmp->dm_drawString2D().
+	 * so each line is written with a separate call to DM_DRAW_STRING_2D().
 	 */
 
 	/* print solid info at top of screen */
@@ -186,7 +186,7 @@ register struct bu_vls	*vp;
  *
  * Set up for character output.  For the best generality, we
  * don't assume that the display can process a CRLF sequence,
- * so each line is written with a separate call to dmp->dm_drawString2D().
+ * so each line is written with a separate call to DM_DRAW_STRING_2D().
  */
 void
 screen_vls( xbase, ybase, vp )
@@ -217,7 +217,7 @@ register struct bu_vls	*vp;
 	  *p = ' ';
     }
 #endif
-    dmp->dm_drawString2D( dmp, start, xbase, y, 0, 0 );
+    DM_DRAW_STRING_2D(dmp, start, xbase, y, 0, 0);
     start = end+1;
     y += TEXT0_DY;
   }
@@ -311,7 +311,7 @@ struct bu_vls *overlay_vls;
 	Tcl_SetVar(interp, bu_vls_addr(&ang_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
-	dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
+	DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
 
 	/* Label the vertices of the edited solid */
 	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
@@ -329,10 +329,10 @@ struct bu_vls *overlay_vls;
 
 		label_edited_solid( pl, 8+1, xform, &es_int );
 
-		dmp->dm_setColor(dmp, DM_YELLOW, 1);
+		DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
 		for( i=0; i<8+1; i++ )  {
 			if( pl[i].str[0] == '\0' )  break;
-			dmp->dm_drawString2D( dmp, pl[i].str,
+			DM_DRAW_STRING_2D( dmp, pl[i].str,
 				((int)(pl[i].pt[X]*2048))+15,
 				((int)(pl[i].pt[Y]*2048))+15, 0, 1 );
 		}
@@ -340,16 +340,16 @@ struct bu_vls *overlay_vls;
 
 if(mged_variables->faceplate){
 	/* Line across the bottom, above two bottom status lines */
-	dmp->dm_setColor(dmp, DM_YELLOW, 1);
-	dmp->dm_drawLine2D( dmp, XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
+	DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	DM_DRAW_LINE_2D( dmp, XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
 			      TITLE_YBASE-TEXT1_DY );
 
 	if(mged_variables->orig_gui){
 	  /* Enclose window in decorative box.  Mostly for alignment. */
-	  dmp->dm_drawLine2D( dmp, XMIN, YMIN, XMAX, YMIN );
-	  dmp->dm_drawLine2D( dmp, XMAX, YMIN, XMAX, YMAX );
-	  dmp->dm_drawLine2D( dmp, XMAX, YMAX, XMIN, YMAX );
-	  dmp->dm_drawLine2D( dmp, XMIN, YMAX, XMIN, YMIN );
+	  DM_DRAW_LINE_2D( dmp, XMIN, YMIN, XMAX, YMIN );
+	  DM_DRAW_LINE_2D( dmp, XMAX, YMIN, XMAX, YMAX );
+	  DM_DRAW_LINE_2D( dmp, XMAX, YMAX, XMIN, YMAX );
+	  DM_DRAW_LINE_2D( dmp, XMIN, YMAX, XMIN, YMIN );
 
 	  /* Display scroll bars */
 	  scroll_ybot = scroll_display( SCROLLY ); 
@@ -358,9 +358,9 @@ if(mged_variables->faceplate){
 
 	  /* Display state and local unit in upper right corner, boxed */
 #define YPOS	(MENUY - MENU_DY - 75 )
-	  dmp->dm_drawLine2D(dmp, MENUXLIM, YPOS, MENUXLIM, YMAX);	/* vert. */
-	  dmp->dm_setColor(dmp, DM_WHITE, 1);
-	  dmp->dm_drawString2D(dmp, state_str[state], MENUX, MENUY - MENU_DY, 1, 0 );
+	  DM_DRAW_LINE_2D(dmp, MENUXLIM, YPOS, MENUXLIM, YMAX);	/* vert. */
+	  DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	  DM_DRAW_STRING_2D(dmp, state_str[state], MENUX, MENUY - MENU_DY, 1, 0 );
 #undef YPOS
 	}else{
 	  scroll_ybot = SCROLLY;
@@ -375,12 +375,12 @@ if(mged_variables->faceplate){
 	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
 	  for( i=0; i <= illump->s_last; i++ )  {
 	    if( i == ipathpos  &&  state == ST_O_PATH )  {
-	      dmp->dm_setColor(dmp, DM_WHITE, 1);
-	      dmp->dm_drawString2D( dmp, "[MATRIX]", x, y, 0, 0 );
+	      DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	      DM_DRAW_STRING_2D( dmp, "[MATRIX]", x, y, 0, 0 );
 	      y += MENU_DY;
 	    }
-	    dmp->dm_setColor(dmp, DM_YELLOW, 1);
-	    dmp->dm_drawString2D( dmp, illump->s_path[i]->d_namep, x, y, 0, 0 );
+	    DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	    DM_DRAW_STRING_2D( dmp, illump->s_path[i]->d_namep, x, y, 0, 0 );
 	    y += MENU_DY;
 	  }
 	}
@@ -397,18 +397,18 @@ if(mged_variables->faceplate){
 		MAT4X3PNT(temp, model2objview, es_keypoint);
 		xloc = (int)(temp[X]*2048);
 		yloc = (int)(temp[Y]*2048);
-		dmp->dm_setColor(dmp, DM_YELLOW, 1);
-		dmp->dm_drawLine2D(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
+		DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+		DM_DRAW_LINE_2D(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
 				 yloc-TEXT0_DY);
-		dmp->dm_drawLine2D(dmp, xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY,
+		DM_DRAW_LINE_2D(dmp, xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY,
 				 yloc+TEXT0_DY);
-		dmp->dm_drawLine2D(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
+		DM_DRAW_LINE_2D(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
 				 yloc+TEXT0_DY);
-		dmp->dm_drawLine2D(dmp, xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY,
+		DM_DRAW_LINE_2D(dmp, xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY,
 				 yloc-TEXT0_DY);
-		dmp->dm_drawLine2D(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
+		DM_DRAW_LINE_2D(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
 				 yloc-TEXT0_DY);
-		dmp->dm_drawLine2D(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
+		DM_DRAW_LINE_2D(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
 				 yloc-TEXT0_DY);
 	      }
 	}
@@ -436,8 +436,8 @@ if(mged_variables->faceplate){
 		      curr_dm_list->s_info->elevation,
 		      curr_dm_list->s_info->twist,
 		      ang_x, ang_y, ang_z);
-	dmp->dm_setColor(dmp, DM_WHITE, 1);
-	dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1, 0 );
+	DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1, 0 );
 } /* if faceplate !0 */
 
 	/*
@@ -474,8 +474,8 @@ if(mged_variables->faceplate){
 			(curs_x / 2047.0) *Viewscale*base2local,
 			(curs_y / 2047.0) *Viewscale*base2local );
 		if(mged_variables->faceplate){
-		  dmp->dm_setColor(dmp, DM_YELLOW, 1);
-		  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+		  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+		  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 					TITLE_YBASE + TEXT1_DY, 1, 0 );
 		}
 		Tcl_SetVar(interp, bu_vls_addr(&adc_name),
@@ -497,8 +497,8 @@ if(mged_variables->faceplate){
 			 es_keypoint[Y] * base2local,
 			 es_keypoint[Z] * base2local);
 	  if(mged_variables->faceplate && ss_line_not_drawn){
-	    dmp->dm_setColor(dmp, DM_YELLOW, 1);
-	    dmp->dm_drawString2D( dmp, bu_vls_addr(&kp_vls), TITLE_XBASE,
+	    DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&kp_vls), TITLE_XBASE,
 				  TITLE_YBASE + TEXT1_DY, 1, 0 );
 	    ss_line_not_drawn = 0;
 	  }
@@ -526,8 +526,8 @@ if(mged_variables->faceplate){
 		bu_vls_strcat( &vls, "/__MATRIX__" );
 	      bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
 	    }
-	    dmp->dm_setColor(dmp, DM_YELLOW, 1);
-	    dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+	    DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 				  TITLE_YBASE + TEXT1_DY, 1, 0 );
 
 	    ss_line_not_drawn = 0;
@@ -537,8 +537,8 @@ if(mged_variables->faceplate){
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%.2f fps", 1/frametime );
 	if(mged_variables->faceplate && ss_line_not_drawn){
-	  dmp->dm_setColor(dmp, DM_YELLOW, 1);
-	  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+	  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 				TITLE_YBASE + TEXT1_DY, 1, 0 );
 	}
 	Tcl_SetVar(interp, bu_vls_addr(&fps_name),
