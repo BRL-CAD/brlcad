@@ -25,7 +25,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
 #include "./sedit.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -33,8 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
-
-extern void	arb_center();
 
 static void	do_anal();
 static void	arb_anal();
@@ -648,6 +645,9 @@ struct rt_db_internal	*ip;
 			sur_area*base2local*base2local);
 }
 
+#define MGED_ANAL_RCC	1
+#define MGED_ANAL_TRC	2
+#define MGED_ANAL_REC	3
 
 /*	analyze tgc */
 static void
@@ -679,21 +679,21 @@ struct rt_db_internal	*ip;
 			if(fabs(mc-md) < .00001) {
 				/* have a circular top */
 				if(fabs(ma-mc) < .00001)
-					cgtype = RCC;
+					cgtype = MGED_ANAL_RCC;
 				else
-					cgtype = TRC;
+					cgtype = MGED_ANAL_TRC;
 			}
 		}
 		else {
 			/* have an elliptical base */
 			if(fabs(ma-mc) < .00001 && fabs(mb-md) < .00001)
-				cgtype = REC;
+				cgtype = MGED_ANAL_REC;
 		}
 	}
 
 	switch( cgtype ) {
 
-		case RCC:
+		case MGED_ANAL_RCC:
 			area_base = pi * ma * ma;
 			area_top = area_base;
 			area_side = 2.0 * pi * ma * mh;
@@ -701,7 +701,7 @@ struct rt_db_internal	*ip;
 			rt_vls_printf(vp, "RCC ");
 			break;
 
-		case TRC:
+		case MGED_ANAL_TRC:
 			area_base = pi * ma * ma;
 			area_top = pi * mc * mc;
 			area_side = pi * (ma+mc) * sqrt((ma-mc)*(ma-mc)+(mh*mh));
@@ -709,7 +709,7 @@ struct rt_db_internal	*ip;
 			rt_vls_printf(vp, "TRC ");
 			break;
 
-		case REC:
+		case MGED_ANAL_REC:
 			area_base = pi * ma * mb;
 			area_top = pi * mc * md;
 			/* approximate */
@@ -718,10 +718,6 @@ struct rt_db_internal	*ip;
 			rt_vls_printf(vp, "REC ");
 			break;
 
-		case TEC:
-			rt_vls_printf(vp,"TEC Cannot find areas and volume\n");
-			return;
-		case TGC:
 		default:
 			rt_vls_printf(vp,"TGC Cannot find areas and volume\n");
 			return;
