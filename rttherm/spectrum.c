@@ -159,6 +159,152 @@ again:
 	rt_tabdata_scale( c, c, xyz_scale );
 }
 
+static CONST double rt_NTSC_R[][2] = {
+	{543, 0.0001},
+	{552, 0.05},
+	{562, 0.2},
+	{572, 0.4},
+	{577, 0.6},
+	{580, 0.8},
+	{583, 0.9},
+	{588, 0.95},
+	{590, 1.0},
+	{600, 1.0},
+	{601, 0.95},
+	{605, 0.9},
+	{610, 0.8},
+	{620, 0.6},
+	{630, 0.4},
+	{640, 0.26},
+	{650, 0.2},
+	{670, 0.1},
+	{690, 0.05},
+	{730, 0.0001},
+	{-1, -1}
+};
+
+static CONST double rt_NTSC_G[][2] = {
+	{456, 0.0001},
+	{475, 0.05},
+	{480, 0.1},
+	{492, 0.2},
+	{507, 0.4},
+	{515, 0.6},
+	{522, 0.8},
+	{528, 0.9},
+	{531, 0.95},
+	{537, 1.0},
+	{545, 1.0},
+	{548, 0.95},
+	{551, 0.9},
+	{555, 0.8},
+	{562, 0.6},
+	{572, 0.4},
+	{582, 0.2},
+	{591, 0.1},
+	{603, 0.05},
+	{630, 0.0001},
+	{-1, -1}
+};
+
+static CONST double rt_NTSC_B[][2] = {
+	{347, 0.0001},
+	{373, 0.05},
+	{385, 0.1},
+	{396, 0.2},
+	{409, 0.4},
+	{415, 0.6},
+	{423, 0.8},
+	{430, 0.9},
+	{433, 0.95},
+	{440, 1.0},
+	{450, 1.0},
+	{457, 0.95},
+	{460, 0.9},
+	{467, 0.8},
+	{470, 0.6},
+	{479, 0.4},
+	{492, 0.2},
+	{503, 0.1},
+	{515, 0.05},
+	{543, 0.0001},
+	{-1, -1}
+};
+
+static struct rt_tabdata *rt_NTSC_r_tabdata;
+static struct rt_tabdata *rt_NTSC_g_tabdata;
+static struct rt_tabdata *rt_NTSC_b_tabdata;
+
+/* XXX Move to librt/tabdata.c */
+/*
+ *			R T _ T A B D A T A _ F R O M _ A R R A Y
+ *
+ *  Given an array of (x,y) pairs, build the relevant rt_table and
+ *  rt_tabdata structures.
+ *  The table is terminated by an x value <= 0.
+ *  Consistent with the interpretation of the spans,
+ *  invent a final span ending x value.
+ */
+struct rt_tabdata *
+rt_tabdata_from_array( array )
+CONST double *array;
+{
+	register CONST double	*dp;
+	int			len = 0;
+	struct rt_table		*tabp;
+	struct rt_tabdata	*data;
+	register int		i;
+
+	/* First, find len */
+	for( dp = array; *dp > 0; dp += 2 )	/* NIL */ ;
+	len = (dp - array) >> 1;
+
+	/* Second, build rt_table */
+	RT_GET_TABLE( tabp, len );
+	for( i = 0; i < len; i++ )  {
+		tabp->x[i] = array[i<<1];
+	}
+	tabp->x[len] = tabp->x[len-1] + 1;	/* invent span end */
+
+	/* Third, build rt_tabdata (last input "y" is ignored) */
+	RT_GET_TABDATA( data, tabp );
+	for( i = 0; i < len-1; i++ )  {
+		data->y[i] = array[(i<<1)+1];
+	}
+	return data;
+}
+
+/*
+ *			R T _ S P E C T _ M A K E _ N T S C _ R G B
+ *
+ *  Using the "Representative set of camera taking sensitivities"
+ *  for a NTSC television camera, from Benson "Television Engineering
+ *  Handbook" page 4.58, convert an RGB value in range 0..1 to
+ *  a spectral curve also in range 0..1.
+ */
+void
+rt_spect_make_NTSC_RGB( rp, gp, bp, tabp )
+struct rt_tabdata		**rp;
+struct rt_tabdata		**gp;
+struct rt_tabdata		**bp;
+CONST struct rt_table		*tabp;
+{
+	RT_CK_TABLE(tabp);
+
+	/* Convert array of number pairs into rt_tabdata & rt_table */
+	rt_NTSC_r_tabdata = rt_tabdata_from_array( rt_NTSC_R );
+	rt_NTSC_g_tabdata = rt_tabdata_from_array( rt_NTSC_G );
+	rt_NTSC_b_tabdata = rt_tabdata_from_array( rt_NTSC_B );
+bu_log("ntsc_R:\n");rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_r_tabdata );
+bu_log("ntsc_G:\n");rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_g_tabdata );
+bu_log("ntsc_B:\n");rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_b_tabdata );
+
+	/* Resample original NTSC curves to match given rt_table sampling */
+	*rp = rt_tabdata_resample( tabp, rt_NTSC_r_tabdata );
+	*gp = rt_tabdata_resample( tabp, rt_NTSC_g_tabdata );
+	*bp = rt_tabdata_resample( tabp, rt_NTSC_b_tabdata );
+}
+
 /*
  *  These are the NTSC primaries with D6500 white point for use as
  *  the default initialization as given in sect 5.1.1 Color
@@ -447,6 +593,28 @@ rt_log(" tab_area = %g\n", tab_area);
 	xyz[X] = rt_tabdata_mul_area2( tabp, cie_x ) * tab_area;
 	xyz[Y] = rt_tabdata_mul_area2( tabp, cie_y ) * tab_area;
 	xyz[Z] = rt_tabdata_mul_area2( tabp, cie_z ) * tab_area;
+}
+
+/*
+ *			R T _ S P E C T _ R G B _ T O _ C U R V E
+ *
+ *  Using the "Representative set of camera taking sensitivities"
+ *  for a NTSC television camera, from Benson "Television Engineering
+ *  Handbook" page 4.58, convert an RGB value in range 0..1 to
+ *  a spectral curve also in range 0..1.
+ */
+void
+rt_spect_rgb_to_curve( tabp, rgb, ntsc_r, ntsc_g, ntsc_b )
+struct rt_tabdata	*tabp;
+CONST point_t		rgb;
+CONST struct rt_tabdata	*ntsc_r;
+CONST struct rt_tabdata	*ntsc_g;
+CONST struct rt_tabdata	*ntsc_b;
+{
+	rt_tabdata_blend3( tabp,
+		rgb[0], ntsc_r,
+		rgb[1], ntsc_g,
+		rgb[2], ntsc_b );
 }
 
 /*
