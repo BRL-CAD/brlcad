@@ -397,14 +397,14 @@ struct application *ap;
 			continue;
 		}
 
-#ifndef NEW
+#ifndef OLDBOOL
 		/* Evaluate the boolean trees of any regions involved */
 		for( i=0; i < rt_i.nregions; i++ )  {
 			register struct region *regp;
 
 /**			if( !BITTEST(regionbits, i) )  continue; **/
 			{
-				register int j;
+				register bitv_t j;
 				if( (j = regionbits[i>>BITV_SHIFT])==0 )  {
 					i = ((i+1+BITV_MASK)&(~BITV_MASK))-1;
 					continue;
