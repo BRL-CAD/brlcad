@@ -404,7 +404,10 @@ struct partition *PartHeadp;
 		VREVERSE( sw.sw_hit.hit_normal, ap->a_ray.r_dir );
 		sw.sw_uv.uv_u = mat_atan2( ap->a_ray.r_dir[Y],
 			ap->a_ray.r_dir[X] ) * rt_inv2pi + 0.5;
-		sw.sw_uv.uv_v = asin( ap->a_ray.r_dir[Z] ) * rt_invpi + 0.5;
+		sw.sw_uv.uv_v = mat_atan2( ap->a_ray.r_dir[Z],
+			sqrt( ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
+			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y]) ) *
+			rt_invpi + 0.5;
 		sw.sw_uv.uv_du = sw.sw_uv.uv_dv = 0;
 
 		VSETALL( sw.sw_color, 1 );
