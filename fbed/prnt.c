@@ -9,7 +9,23 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef HAVE_STDARG_H
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+#include "machine.h"
+#include "externs.h"
+#include "fb.h"
+
+#include "./std.h"
+#include "./ascii.h"
+#include "./font.h"
+#include "./try.h"
 #include "./extern.h"
 
 #define PIXEL_MOVE()		MvCursor( 7, 1 )
@@ -134,15 +150,13 @@ RGBpixel *pixelp;
 	return;
 	}
 
-#if __STDC__
-#include <stdarg.h>
+#if defined(HAVE_STDARG_H)
 #define Va_Decl( _func )	_func(char *fmt, ...)
 #define Va_Start()		va_list	ap; va_start( ap, fmt )
 #define Va_End()		va_end( ap )
 #define Va_Print( _p )		(void) vfprintf( _p, fmt, ap )
 #else
-#include <varargs.h>
-#ifdef CRAY
+#if !defined(HAVE_VARARGS_H)
 #define Va_Decl( _func )	_func(fmt, a,b,c,d,e,f,g,h,i) char *fmt;
 #define Va_Start()
 #define Va_End()
