@@ -163,6 +163,7 @@ BDIRS="bench \
 	fbserv \
 	libnurb \
 	librt \
+	libredblack \
 	conv \
 	db \
 	rt \
@@ -174,7 +175,6 @@ BDIRS="bench \
 	liborle \
 	librle \
 	libfft \
-	libredblack \
 	proc-db \
 	jack \
 	mk \
