@@ -44,10 +44,19 @@ void
 shootray( ap )
 register struct application *ap;
 {
-	register struct soltab *stp;
 	LOCAL vect_t diff;	/* diff between shot base & solid center */
 	FAST fastf_t distsq;	/* distance**2 */
-	auto struct seg *HeadSeg;
+	auto struct seg *HeadSeg; /* must NOT be static (recursion ) */
+	LOCAL fastf_t inout[2];	/* entry_dist, exit_dist for bounding RPP */
+
+
+	/* If ray does not enter the model RPP, skip on */
+	if( !in_rpp( &ap->a_ray, model_min, model_max, inout )  ||
+	    inout[1] < 0.0 )  {
+		nmiss++;
+		ap->a_miss( ap );
+		return;
+	}
 
 	if(debug&DEBUG_ALLRAYS) {
 		VPRINT("\nRay Start", ap->a_ray.r_pt);
@@ -57,13 +66,40 @@ register struct application *ap;
 
 	HeadSeg = SEG_NULL;
 
+#ifndef Tree_Method
+  {
+	register struct region *rp;
+	extern struct region *HeadRegion;
+
+	for( rp=HeadRegion; rp != REGION_NULL; rp = rp->reg_forw )  {
+		
+		/* Check region bounding RPP */
+		if( !in_rpp(
+			&ap->a_ray, rp->reg_treetop->tr_min,
+			rp->reg_treetop->tr_max, inout )  ||
+		    inout[1] < 0.0 )  {
+			nmiss++;
+			continue;
+		}
+
+		/* Boolean TRUE signals hit of 1 or more solids in tree */
+		/* At leaf node, it will calll ft_shot & add to chain */
+		if( !shoot_tree( ap, rp->reg_treetop, &HeadSeg ) )
+			continue;
+		/* If any solid hit, add this region to active chain */
+	}
+ }
+#else
+ {
+	register struct soltab *stp;
+
 	/*
 	 * For now, shoot at all solids in model.
 	 */
 	for( stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw ) {
 		register struct seg *newseg;		/* XXX */
 
-#ifndef never
+#	ifndef never
 		/* Consider bounding sphere */
 		VSUB2( diff, stp->st_center, ap->a_ray.r_pt );
 		distsq = VDOT(ap->a_ray.r_dir, diff);
@@ -71,12 +107,21 @@ register struct application *ap;
 			nmiss++;
 			continue;
 		}
-#endif
+#	endif
 
-		/* Here we also consider the bounding RPP */
-		if( !in_rpp( &ap->a_ray, stp->st_min, stp->st_max ) )  {
+		/* If ray does not strike the bounding RPP, skip on */
+		if( !in_rpp( &ap->a_ray, stp->st_min, stp->st_max, inout ) ) {
 			nmiss++;
 			continue;
+		}
+
+		/*
+		 * Rays have direction.  If ray enters and exits this
+		 * solid entirely behind the start point, skip on.
+		 */
+		if( inout[1] < 0.0 )  {
+			nmiss++;
+			continue;	/* enters & exits behind eye */
 		}
 
 		nshots++;
@@ -105,6 +150,8 @@ register struct application *ap;
 			HeadSeg = newseg;
 		}
 	}
+ }
+#endif
 
 	/* HeadSeg chain now has all segments hit by this ray */
 	if( HeadSeg == SEG_NULL )  {
@@ -151,15 +198,15 @@ register struct application *ap;
 }
 
 /*
- *			I N _ R P P . C
+ *			I N _ R P P
  *
  *  Compute the intersections of a ray with a rectangular parallelpiped (RPP)
  *  that has faces parallel to the coordinate planes
  *
  *  The algorithm here was developed by Gary Kuehl for GIFT.
- *
- * enter_dist = distance from start of ray to point at which ray enters solid
- * exit_dist  = distance from start of ray to point at which ray leaves solid
+ *  A good description of the approach used can be found in
+ *  "??" by XYZZY and Barsky,
+ *  ACM Transactions on Graphics, Vol 3 No 1, January 1984.
  *
  * Note -
  *  The computation of entry and exit distance is mandatory, as the final
@@ -168,20 +215,22 @@ register struct application *ap;
  *  Returns -
  *	 0  if ray does not hit RPP,
  *	!0  if ray hits RPP.
+ *	bounds[0] = dist from start of ray to point at which ray ENTERS solid
+ *	bounds[1] = dist from start of ray to point at which ray LEAVES solid
  */
-in_rpp( rp, min, max )
+in_rpp( rp, min, max, bounds )
 struct xray *rp;
 register fastf_t *min, *max;
+register fastf_t *bounds;
 {
-	LOCAL fastf_t enter_dist, exit_dist;
 	LOCAL fastf_t sv;
 	LOCAL fastf_t st;
 	register fastf_t *pt = &rp->r_pt[0];
 	register fastf_t *dir = &rp->r_dir[0];
 	register int i;
 
-	enter_dist = -INFINITY;
-	exit_dist = INFINITY;
+	*bounds = -INFINITY;
+	bounds[1] = INFINITY;
 
 	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
 		if( NEAR_ZERO( *dir ) )  {
@@ -198,20 +247,101 @@ register fastf_t *min, *max;
 		if( *dir < 0.0 )  {
 			if( (sv = (*min - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
-			if(exit_dist > sv)
-				exit_dist = sv;
-			if( enter_dist < (st = (*max - *pt) / *dir) )
-				enter_dist = st;
+			if(bounds[1] > sv)
+				bounds[1] = sv;
+			if( *bounds < (st = (*max - *pt) / *dir) )
+				*bounds = st;
 		}  else  {
 			if( (st = (*max - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
-			if(exit_dist > st)
-				exit_dist = st;
-			if( enter_dist < ((sv = (*min - *pt) / *dir)) )
-				enter_dist = sv;
+			if(bounds[1] > st)
+				bounds[1] = st;
+			if( *bounds < ((sv = (*min - *pt) / *dir)) )
+				*bounds = sv;
 		}
 	}
-	if( enter_dist >= exit_dist )
+	if( *bounds >= bounds[1] )
 		return(0);	/* MISS */
 	return(1);		/* HIT */
+}
+
+/* Boolean values.  Not easy to change, but defined symbolicly */
+#define FALSE	0
+#define TRUE	1
+
+/*
+ *  			S H O O T _ T R E E
+ *
+ *  Returns FALSE when there is definitely NO HIT.
+ *  Returns TRUE when there is the Potential for a hit;
+ *  bool_regions() must ultimately decide.
+ */
+shoot_tree( ap, tp, HeadSegp )
+register struct application *ap;
+register struct tree *tp;
+struct seg **HeadSegp;
+{
+	LOCAL vect_t inout;
+
+	/* If ray does not strike the bounding RPP, skip on */
+	if( !in_rpp( &ap->a_ray, tp->tr_min, tp->tr_max, inout )  ||
+	    inout[1] < 0.0 )
+		return( FALSE );	/* MISS subtree */
+
+	switch( tp->tr_op )  {
+
+	case OP_SOLID:
+	    {
+		register struct seg *newseg;
+
+		nshots++;
+		newseg = functab[tp->tr_stp->st_id].ft_shot( tp->tr_stp, &ap->a_ray );
+		if( newseg == SEG_NULL )
+			return( FALSE );/* MISS subtree (solid) */
+
+		/* Add segment chain to list */
+		{
+			register struct seg *seg2 = newseg;
+			while( seg2->seg_next != SEG_NULL )
+				seg2 = seg2->seg_next;
+			seg2->seg_next = (*HeadSegp);
+			(*HeadSegp) = newseg;
+		}
+		return( TRUE );		/* HIT, solid added */
+	    }
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+		shoot_tree( ap, tp->tr_left, HeadSegp );
+		shoot_tree( ap, tp->tr_right, HeadSegp );
+		return(TRUE);
+#ifdef never
+	case OP_UNION:
+		/* NOTE:  It is important to always evaluate both */
+		if(	shoot_tree( ap, tp->tr_left, HeadSegp ) == FALSE &&
+			shoot_tree( ap, tp->tr_right, HeadSegp ) == FALSE )
+			return(FALSE);
+		return(TRUE);			/* May have a hit */
+
+	case OP_INTERSECT:
+		return(	shoot_tree( ap, tp->tr_left, HeadSegp )  &&
+			shoot_tree( ap, tp->tr_right, HeadSegp )  );
+
+	case OP_SUBTRACT:
+		if( shoot_tree( ap, tp->tr_left, HeadSegp ) == FALSE )
+			return(FALSE);		/* FALSE = FALSE - X */
+		/* If ray hit left solid, we MUST compute potential
+		 *  hit with right solid, as only bool_regions()
+		 *  can really tell the final story.  Always give TRUE.
+		 */
+		shoot_tree( ap, tp->tr_right, HeadSegp );
+		return( TRUE );		/* May have a hit */
+#endif
+
+	default:
+		fprintf(stderr,"shoot_tree: bad op=x%x", tp->tr_op );
+		return( FALSE );
+	}
+	/* NOTREACHED */
 }
