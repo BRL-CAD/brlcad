@@ -40,6 +40,8 @@ struct rb_node
 #define	rb_min(t,o)	rb_extreme((t), (o), SENSE_MIN)
 #define	SENSE_MAX	1
 #define	rb_max(t,o)	rb_extreme((t), (o), SENSE_MAX)
+#define rb_pred(o)	rb_neighbor((o), SENSE_MIN)
+#define rb_succ(o)	rb_neighbor((o), SENSE_MAX)
 
 /*
  *	Applications interface to LIBREDBLACK
@@ -48,6 +50,10 @@ rb_tree *rb_create	(
 			    char	*description,
 			    int 	nm_orders,
 			    int		(**order_funcs)()
+			);
+int rb_delete		(
+			    rb_tree	*tree,
+			    void	*data
 			);
 void rb_diagnose_tree	(
 			    rb_tree	*tree,
@@ -61,6 +67,10 @@ void *rb_extreme	(
 int rb_insert		(
 			    rb_tree	*tree,
 			    void	*data
+			);
+void *rb_neighbor	(
+			    int		order,
+			    int		sense
 			);
 void *rb_search		(
 			    rb_tree	*tree,
