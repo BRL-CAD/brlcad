@@ -1,8 +1,36 @@
 #!/bin/sh
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, HAS_TCP
+if test -f ../.rt.$MACHINE/rt
+then
+	RT=../.rt.$MACHINE/rt
+	DB=../.db.$MACHINE
+	LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
+else
+	if test ! -f ../rt/rt
+	then
+		echo "Can't find RT"
+		exit 1
+	fi
+	RT=../rt/rt
+	DB=../db
+	LD_LIBRARY_PATH=../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+fi
+export LD_LIBRARY_PATH
+
+# Alliant NFS hack
+if test x${MACHINE} = xfx
+then
+	cp ${RT} /tmp/rt
+	RT=/tmp/rt
+fi
+
 # WARNING THIS IS A REAL CPU HOG
-../rt/rt -p90 -f1024 -H3 -M $*\
+if test -f cube.pix; then mv -f cube.pix cube.pix.$$; fi
+if test -f cube.log; then mv -f cube.log cube.log.$$; fi
+$RT -p90 -f1024 -H3 -M $*\
  -o cube.pix\
- ../db/cube.g\
+ $DB/cube.g\
  'all.g' \
  2> cube.log\
  <<EOF
