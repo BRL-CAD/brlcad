@@ -2,7 +2,7 @@
 # include "config.h"
 #endif
 
-
+/* system headers */
 #include <stdio.h>
 #include <math.h>
 #ifdef USE_STRING_H
@@ -10,6 +10,16 @@
 #else
 #  include <strings.h>
 #endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#else
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
+#include <ctype.h>
+
+/* interface headers */
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -17,7 +27,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include <ctype.h>
 
 static FILE *ply_fp=NULL;
 static struct rt_wdb *out_fp=NULL;
@@ -174,14 +183,14 @@ void lswap8(unsigned long long *in, unsigned long long *out )
 	long long r;
 
 	r = *in;
-	*out = ((r & 0xff) << 56) |
-	       ((r & 0xff00) << 40) |
-	       ((r & 0xff0000) << 24) |
-	       ((r & 0xff000000) << 8) |
-	       ((r & 0xff00000000) >> 8) |
-	       ((r & 0xff0000000000) >> 24) |
-	       ((r & 0xff000000000000) >> 40) |
-	       ((r & 0xff00000000000000) >> 56);
+	*out = ((r & 0xffLL) << 56) |
+	       ((r & 0xff00LL) << 40) |
+	       ((r & 0xff0000LL) << 24) |
+	       ((r & 0xff000000LL) << 8) |
+	       ((r & 0xff00000000LL) >> 8) |
+	       ((r & 0xff0000000000LL) >> 24) |
+	       ((r & 0xff000000000000LL) >> 40) |
+	       ((r & 0xff00000000000000LL) >> 56);
 }
 
 void
