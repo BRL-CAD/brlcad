@@ -890,16 +890,16 @@ hitit:
 	if(debug_shoot)  rt_pr_partitions(rtip,&FinalPart,"a_hit()");
 
 	/*
-	 *  Before recursing, release storage for unused Initial partitions
-	 *  and segments.  Otherwise, this can amount to a source of
-	 *  persistent memory growth.
+	 *  Before recursing, release storage for unused Initial partitions.
+	 *  finished_segs can not be released yet, because FinalPart
+	 *  partitions will point to hits in those segments.
 	 */
 	RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
-	RT_FREE_SEG_LIST( &finished_segs, ap->a_resource );
 
 	ap->a_return = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
 
+	RT_FREE_SEG_LIST( &finished_segs, ap->a_resource );
 	RT_FREE_PT_LIST( &FinalPart, ap->a_resource );
 
 	/*
