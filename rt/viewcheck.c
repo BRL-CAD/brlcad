@@ -21,7 +21,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1987 by the United States Army.
+ *	This software is Copyright (C) 1988 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -36,6 +36,8 @@ static char RCScheckview[] = "@(#)$Header$ (BRL)";
 extern FILE	*outfp;
 
 char usage[] = "Usage:  rtcheck [options] model.g objects...\n";
+
+static int	noverlaps;		/* Number of overlaps seen */
 
 /*
  *			H I T
@@ -82,13 +84,18 @@ struct region		*reg2;
 	VJOIN1( ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir );
 	VJOIN1( ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir );
 
-	/* Not PARALLEL -- needs syscall resource lock around this call */
+	RES_ACQUIRE( &rt_g.res_syscall );
 	pdv_3line( outfp, ihit, ohit );
+	noverlaps++;
+	RES_RELEASE( &rt_g.res_syscall );
+
 	return(0);	/* No further consideration to this partition */
 }
 
 /*
  *  			V I E W _ I N I T
+ *
+ *  Called once for this run.
  */
 view_init( ap, file, obj, npts, minus_o )
 register struct application *ap;
@@ -102,25 +109,37 @@ char *file, *obj;
 }
 
 /*
- *	Stubs
+ *			V I E W _ 2 I N I T
+ *
+ *  Called at the beginning of each frame
  */
-view_pixel() {}
-
-view_eol() {}
-
-view_end() {
-	pl_flush(outfp);
-	fflush(outfp);
-}
-
 view_2init( ap )
 register struct application *ap;
 {
 	register struct rt_i *rtip = ap->a_rt_i;
 	
 	pdv_3space( outfp, rtip->rti_pmin, rtip->rti_pmax );
-	return	0;
+	noverlaps = 0;
+	return(0);
 }
+
+/*
+ *			V I E W _ E N D
+ *
+ *  Called at the end of each frame
+ */
+view_end() {
+	pl_flush(outfp);
+	fflush(outfp);
+	rt_log("%d overlaps detected\n", noverlaps);
+}
+
+/*
+ *	Stubs
+ */
+view_pixel() {}
+
+view_eol() {}
 
 mlib_setup() { 
 	return(1); 
