@@ -1409,7 +1409,22 @@ register struct frame	*fp;
 send_start(sp)
 register struct servers *sp;
 {
+	register struct ihost	*ihp;
+
 	if( start_cmd[0] == '\0' || sp->sr_started != SRST_NEW )  return;
+
+	ihp = sp->sr_host;
+	switch( ihp->ht_where )  {
+	case HT_CD:
+		if( pkg_send( MSG_CD, ihp->ht_path, strlen(ihp->ht_path)+1, sp->sr_pc ) < 0 )
+			dropclient(sp->sr_pc);
+		break;
+	case HT_CONVERT:
+	default:
+		printf("conversion of database is unimplemented\n");
+		dropclient(sp->sr_pc);
+		return;
+	}
 
 	if( pkg_send( MSG_START, start_cmd, strlen(start_cmd)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
