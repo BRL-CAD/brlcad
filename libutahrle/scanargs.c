@@ -49,7 +49,7 @@
 #elif defined(HAVE_VARARGS_H)
 # include <varargs.h>
 #else
-# error "Need stdarg.h or varargs.h"
+# include "Need stdarg.h or varargs.h"
 #endif
 
 #include "machine.h"
