@@ -93,6 +93,7 @@ fi
 #
 # Handle any vendor-specific configurations and setups.
 # This is messy, and should be avoided where possible.
+chmod 664 Cakefile.defs
 eval `sh machinetype.sh -b`
 case X$MACHINE in
 
