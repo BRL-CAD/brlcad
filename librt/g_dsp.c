@@ -946,8 +946,16 @@ rt_dsp_prep( stp, ip, rtip )
     case RT_DSP_SRC_V4_FILE: 
     case RT_DSP_SRC_FILE:
 	BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+
+	/* we do this here and now because we will need it for the
+	 * dsp_specific structure in a few lines
+	 */
+	bu_semaphore_acquire( RT_SEM_MODEL);
+	++dsp_ip->dsp_mp->uses;
+	bu_semaphore_release( RT_SEM_MODEL);
 	break;
     case RT_DSP_SRC_OBJ:
+	RT_CK_BINUNIF(dsp_ip->dsp_bip);
 	break;
     }
 
@@ -955,10 +963,6 @@ rt_dsp_prep( stp, ip, rtip )
     BU_GETSTRUCT( dsp, dsp_specific );
     stp->st_specific = (genptr_t) dsp;
     dsp->dsp_i = *dsp_ip;		/* struct copy */
-
-    bu_semaphore_acquire( RT_SEM_MODEL);
-    ++dsp_ip->dsp_mp->uses;
-    bu_semaphore_release( RT_SEM_MODEL);
 
     dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
     dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
@@ -1017,6 +1021,7 @@ rt_dsp_prep( stp, ip, rtip )
 	BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	break;
     case RT_DSP_SRC_OBJ:
+	RT_CK_BINUNIF(dsp_ip->dsp_bip);
 	break;
     }
 
@@ -1165,8 +1170,8 @@ add_seg(struct isect_stuff *isect,
 	return 0;
     }
 
+    /* if the segment is inside-out, we need to say something about it */
     if (delta < 0.0) {
-
 	bu_log(" %s:%dDSP:  Adding inside-out seg in:%g out:%g\n",
 	       __FILE__, __LINE__,
 	       in_hit->hit_dist, out_hit->hit_dist);
@@ -3303,6 +3308,7 @@ get_obj_data(struct rt_dsp_internal	*dsp_ip,
 	     const struct db_i		*dbip)
 {
     struct rt_binunif_internal	*bip;
+    int				in_cookie, out_cookie, got;
 
     BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
 
@@ -3322,6 +3328,25 @@ get_obj_data(struct rt_dsp_internal	*dsp_ip,
 	bu_log("binunif magic: 0x%08x  type: %d count:%d data[0]:%u\n",
 	       bip->magic, bip->type, bip->count, bip->u.uint16[0]);
 
+
+    in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
+    out_cookie = bu_cv_cookie("hus");
+
+    if ( bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
+	/* if we're on a little-endian machine we convert the
+	 * input file from network to host format
+	 */
+
+	got = bu_cv_w_cookie(bip->u.uint16, out_cookie,
+			     bip->count * sizeof(unsigned short),
+			     bip->u.uint16, in_cookie, bip->count);
+
+	if (got != bip->count) {
+	    bu_log("got %d != count %d", got, bip->count);
+	    bu_bomb("\n");
+	}
+    }
+
     dsp_ip->dsp_buf = bip->u.uint16;
     return 0;
 }
@@ -3333,6 +3358,10 @@ get_obj_data(struct rt_dsp_internal	*dsp_ip,
  *
  *  This include applying the modelling transform, and fetching the
  *  actual data.
+ *
+ *  Return:
+ *	0	success
+ *	!0	failure
  */
 static int
 dsp_get_data(struct rt_dsp_internal	*dsp_ip,
@@ -3341,7 +3370,8 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 	     register const mat_t	mat,
 	     const struct db_i		*dbip)
 {
-    mat_t				tmp;
+    mat_t	tmp;
+    char	*p;
 
     /* Apply Modeling transform */
     MAT_COPY(tmp, dsp_ip->dsp_stom);
@@ -3349,17 +3379,31 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 	
     bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
+    p = bu_vls_addr(&dsp_ip->dsp_name);
+
     switch (dsp_ip->dsp_datasrc) {
     case RT_DSP_SRC_FILE:
     case RT_DSP_SRC_V4_FILE:
+	/* Retrieve the data from an external file */
 	if (RT_G_DEBUG & DEBUG_HF)
-	    bu_log("getting data from file\n");
-	return get_file_data(dsp_ip, ip, ep, mat, dbip);
+	    bu_log("getting data from file \"%s\"\n", p);
+
+	if (get_file_data(dsp_ip, ip, ep, mat, dbip))
+	    p = "file";
+	else
+	    return 0;
+
 	break;
     case RT_DSP_SRC_OBJ:
+	/* Retrieve the data from an internal db object */
 	if (RT_G_DEBUG & DEBUG_HF)
-	    bu_log("getting data from object\n");
-	return get_obj_data(dsp_ip, ip, ep, mat, dbip);
+	    bu_log("getting data from object \"%s\"\n", p);
+
+	if (get_obj_data(dsp_ip, ip, ep, mat, dbip))
+	    p = "object";
+	else
+	    return 0;
+
 	break;
     default:
 	bu_log("%s:%d Odd dsp data src '%c' s/b '%c' or '%c'\n", 
@@ -3367,6 +3411,16 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 	       RT_DSP_SRC_FILE, RT_DSP_SRC_OBJ);
 	return -1;
     }
+
+    bu_log("Cannot retrieve DSP data from %s \"%s\"\n", p,
+	   bu_vls_addr(&dsp_ip->dsp_name));
+
+    dsp_ip->dsp_mp = (struct bu_mapped_file *)NULL;
+    dsp_ip->dsp_buf = bu_calloc(sizeof(short),
+		dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt,
+		"dsp fake data");
+
+    return 1;
 }
 
 /*
@@ -3387,6 +3441,9 @@ rt_dsp_import( ip, ep, mat, dbip )
     struct bu_vls			str;
 
 
+
+    if (RT_G_DEBUG & DEBUG_HF)	
+	bu_log("rt_dsp_import_v4()\n");
 
 
 
@@ -3445,9 +3502,7 @@ rt_dsp_import( ip, ep, mat, dbip )
 	IMPORT_FAIL("zero dimension on map");
     }
 	
-    if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
-	IMPORT_FAIL("DSP data");
-    }
+    (void)dsp_get_data(dsp_ip, ip, ep, mat, dbip);
 
     if (RT_G_DEBUG & DEBUG_HF) {
 	bu_vls_trunc(&str, 0);
@@ -3502,7 +3557,7 @@ rt_dsp_export( ep, ip, local2mm, dbip )
     bu_vls_init( &str );
     bu_vls_struct_print( &str, rt_dsp_ptab, (char *)&dsp);
     if (RT_G_DEBUG & DEBUG_HF)	
-	bu_log("rt_dsp_export(%s)\n", bu_vls_addr(&str) );
+	bu_log("rt_dsp_export_v4(%s)\n", bu_vls_addr(&str) );
 
     rec->ss.ss_id = DBID_STRSOL;
     strncpy( rec->ss.ss_keyword, "dsp", NAMESIZE-1 );
@@ -3524,14 +3579,19 @@ rt_dsp_export( ep, ip, local2mm, dbip )
  *  Apply modeling transformations as well.
  */
 int
-rt_dsp_import5( ip, ep, mat, dbip )
+rt_dsp_import5( ip, ep, mat, dbip, resp, minor_type )
      struct rt_db_internal		*ip;
      const struct bu_external	*ep;
      register const mat_t		mat;
      const struct db_i		*dbip;
+     struct resource		*resp;
+     const int			minor_type;
 {
     struct rt_dsp_internal	*dsp_ip;
     unsigned char		*cp;
+
+    if (RT_G_DEBUG & DEBUG_HF)	
+	bu_log("rt_dsp_import_v5()\n");
 
 
 
@@ -3614,18 +3674,7 @@ rt_dsp_import5( ip, ep, mat, dbip )
     bu_vls_strncpy( &dsp_ip->dsp_name, (char *)cp,
 		    ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf) );
 
-    if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
-	/* We didn't get the file.  Instead of returning a full error
-	 * we invent some data.  This allows the user to edit a DSP which
-	 * is missing the data
-	 */
-
-	dsp_ip->dsp_mp = (struct bu_mapped_file *)NULL;
-	dsp_ip->dsp_buf = bu_calloc(sizeof(short),
-				    dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt,
-				    "dsp fake data");
-
-    }
+    (void)dsp_get_data(dsp_ip, ip, ep, mat, dbip);
 
     return 0; /* OK */
 }
@@ -3636,11 +3685,13 @@ rt_dsp_import5( ip, ep, mat, dbip )
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_dsp_export5( ep, ip, local2mm, dbip )
+rt_dsp_export5( ep, ip, local2mm, dbip, resp, minor_type )
      struct bu_external		*ep;
      const struct rt_db_internal	*ip;
      double				local2mm;
      const struct db_i		*dbip;
+     struct resource		*resp;
+     const int			minor_type;
 {
     struct rt_dsp_internal	*dsp_ip;
     unsigned long		name_len;
@@ -3650,6 +3701,11 @@ rt_dsp_export5( ep, ip, local2mm, dbip )
     if (ip->idb_type != ID_DSP )  return(-1);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
+
+    if (RT_G_DEBUG & DEBUG_HF)	
+	bu_log("rt_dsp_export_v5()\n");
+    
+
 
     name_len = bu_vls_strlen(&dsp_ip->dsp_name) + 1;
 
@@ -3971,6 +4027,7 @@ char			**argv;
 	return bu_structparse_argv(interp, argc, argv, sp,
 				(char *)intern->idb_ptr );
 }
+
 
 /* Important when concatenating source files together */
 #undef dlog
