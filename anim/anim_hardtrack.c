@@ -38,6 +38,10 @@
 #define NW	num_wheels
 #define NEXT(i)	(i+1)%NW
 #define PREV(i)	(i+NW-1)%NW
+
+#define TRACK_ANIM	0
+#define TRACK_ARCED	1
+
 typedef double *pdouble;
 
 struct wheel {
@@ -86,6 +90,8 @@ int wheel_nindex;	/* argv[wheel_nindex] = wheelname*/
 int link_nindex;	/* argv[link_nindex] = linkname*/
 int print_wheel;	/* flag: do wheel animation */
 int print_link;		/* flag: do link animation */
+int print_mode;		/*  anim for rt or arced for mged */
+int arced_frame;	/* which frame to arced */
 int links_placed;	/* flag: links are initially on the track */
 int axes, cent;		/* flags: alternate axes, centroid specified */
 int steer;		/* flag: vehicle automatically steered */
@@ -94,6 +100,9 @@ fastf_t radius;		/* common radius of all wheels */
 fastf_t init_dist; 	/* initial distance of first link along track */
 vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
 mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
+char link_cmd[10];		/* default is "rarc" */
+char wheel_cmd[10];		/* default is "lmul" */
+int get_circumf;	/* flag: just return circumference of track */
 
 main(argc,argv)
 int argc;
@@ -106,6 +115,7 @@ char **argv;
 	vect_t zero, position, vdelta, temp, to_track, to_front;
 	mat_t mat_v, wmat, mat_x;
 	FILE *stream;
+	int last_frame;
 
 	VSETALL(zero,0.0);
 	VSETALL(to_track,0.0);
@@ -113,15 +123,17 @@ char **argv;
 	VSETALL(rcentroid,0.0);
 	init_dist = y_rot = radius= 0.0;
 	first_frame = num_wheels = steer = axes = cent = links_placed=0;
-	num_wheels = num_links = 0;
+	num_wheels = num_links = last_frame = 0;
 	MAT_IDN(mat_v);
 	MAT_IDN(mat_x);
 	MAT_IDN(wmat);
 	MAT_IDN(m_axes);
 	MAT_IDN(m_rev_axes);
 
-	if (!get_args(argc,argv))
-		fprintf(stderr,"Argument error.");
+	if (!get_args(argc,argv)){
+		fprintf(stderr,"anim_hardtrack: argument error.");
+		return(-1);
+	}
 
 	if (axes || cent ){ /* vehicle has own reference frame */
 		anim_add_trans(m_axes,centroid,zero);
@@ -167,6 +179,11 @@ char **argv;
 
 	(void) track_prep();
 
+	if (get_circumf) {
+		printf("%.10g\n",tracklen);
+		return(0);
+	}
+
 	/* initialize to_track */
 	VSET(to_track, 0.0, track_y, 0.0);
 	VSET(to_front,1.0,0.0,0.0);
@@ -176,7 +193,7 @@ char **argv;
 		exit(0);
 	}
 	/* main loop */
-	distance = init_dist;
+	distance = 0.0;
 	if(!steer)
 		frame = first_frame;
 	else
@@ -224,10 +241,15 @@ char **argv;
 		}
 
 		if (go){
-			printf("start %d;\nclean;\n", frame);
+			if (print_mode==TRACK_ANIM) {
+				printf("start %d;\nclean;\n", frame);
+			} else if (print_mode==TRACK_ARCED) {
+				if (frame != arced_frame) continue;
+				last_frame = 1;
+			}
 			if (print_link) {
 			        for (count=0;count<num_links;count++){
-		        	        (void) get_link(position,&y_rot,distance+tracklen*count/num_links);
+		        	        (void) get_link(position,&y_rot,distance+tracklen*count/num_links+init_dist);
 					anim_y_p_r2mat(wmat,0.0,y_rot+r[count].ang,0.0);
 			        	anim_add_trans(wmat,position,r[count].pos);
 			        	if ((axes || cent) && links_placed){ /* link moved from vehicle coords */
@@ -238,8 +260,13 @@ char **argv;
 			        		MAT_MOVE(mat_x,wmat);
 			        		mat_mul(wmat,m_axes,mat_x);
 			        	}
-					printf("anim %s.%d matrix lmul\n", *(argv+link_nindex),count);
-			        	anim_mat_print(wmat,1);
+			        	if (print_mode==TRACK_ANIM) {
+						printf("anim %s.%d matrix %s\n", *(argv+link_nindex),count,link_cmd);
+			        		anim_mat_printf(wmat,"%.10g ","\n",";\n");
+			        	} else if (print_mode==TRACK_ARCED) {
+			        		printf("arced %s.%d matrix %s ", *(argv+link_nindex),count,link_cmd);
+			        		anim_mat_printf(wmat,"%.10g ","","\n");
+			        	}
 				}
 			}
 			if (print_wheel){
@@ -251,12 +278,19 @@ char **argv;
 				        	mat_mul(mat_x,wmat,m_rev_axes);
 			        		mat_mul(wmat,m_axes,mat_x);
 			        	}
-					printf("anim %s.%d matrix lmul\n",*(argv+wheel_nindex),count);
-					anim_mat_print(wmat,1);
+			        	if (print_mode==TRACK_ANIM) {
+						printf("anim %s.%d matrix %s\n",*(argv+wheel_nindex),count,wheel_cmd);
+			        		anim_mat_printf(wmat,"%.10g ","\n",";\n");
+			        	} else if (print_mode==TRACK_ARCED) {
+						printf("arced %s.%d matrix %s ",*(argv+wheel_nindex),count,wheel_cmd);
+			        		anim_mat_printf(wmat,"%.10g ","","\n");
+			        	}
 				}
 			}
-			printf("end;\n");
+			if (print_mode==TRACK_ANIM)
+				printf("end;\n");
 		}
+		if (last_frame) break;
 	}
 }
 
@@ -358,8 +392,7 @@ vect_t pos;
 	return -1;
 }
 
-#define OPT_STR "b:d:f:i:l:pr:w:s"
-
+#define OPT_STR "b:d:f:i:l:pr:w:sg:m:c"
 int get_args(argc,argv)
 int argc;
 char **argv;
@@ -368,6 +401,10 @@ char **argv;
 	void anim_dx_y_z2mat(), anim_dz_y_x2mat();
 	int c, i;
 	axes = cent = links_placed = print_wheel = print_link = 0;
+	get_circumf = 0;
+	print_mode = TRACK_ANIM;
+	strcpy(link_cmd, "rarc");
+	strcpy(wheel_cmd, "lmul");
         while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
                 i=0;
                 switch(c){
@@ -415,6 +452,27 @@ char **argv;
                         break;
                 case 's':
                 	steer = 1;
+                	break;
+                case 'g':
+                	sscanf(optarg,"%d",&arced_frame);
+                	print_mode = TRACK_ARCED;
+                	break;
+                case 'm':
+                	switch (*optarg) {
+                	case 'l':
+                		strncpy(link_cmd,argv[optind], 10);
+                		break;
+                	case 'w':
+                		strncpy(wheel_cmd,argv[optind], 10);
+                		break;
+                	default:
+                		fprintf(stderr,"Unknown option: -m%c\n",*optarg);
+                		return(0);
+                	}
+                	optind += 1;
+                	break;
+                case 'c':
+                	get_circumf = 1;
                 	break;
                 default:
                         fprintf(stderr,"Unknown option: -%c\n",c);
