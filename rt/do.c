@@ -625,7 +625,7 @@ int framenumber;
 	}
 
 	grid_setup();
-	fprintf(stderr,"Beam radius=%g mm, divergance=%g mm/1mm\n",
+	fprintf(stderr,"Beam radius=%g mm, divergence=%g mm/1mm\n",
 		ap.a_rbeam, ap.a_diverge );
 
 	/* initialize lighting */
