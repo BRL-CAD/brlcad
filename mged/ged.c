@@ -383,12 +383,6 @@ char **argv;
 	  bu_vls_free(&vls);
 	}
 
-	/* Initialize libdm */
-	(void)dm_tclInit(interp);
-
-	/* Initialize libfb */
-	(void)fb_tclInit(interp);
-
 	setview( 0.0, 0.0, 0.0 );
 
 	if(dpy_string == (char *)NULL)
