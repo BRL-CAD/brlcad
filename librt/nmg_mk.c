@@ -55,6 +55,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+static struct vertexuse *nmg_mvu RT_ARGS( (struct vertex *v, long *upptr,
+					 struct model *m) );
+static struct vertexuse *nmg_mvvu RT_ARGS( (long *upptr, struct model *m) );
+
 
 /************************************************************************
  *									*
@@ -69,7 +73,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *			N M G _ M M
  *
  *	Make Model
- *	Create a new model.
+ *	Create a new model.  The region list is empty.
+ *
+ *  Returns -
+ *	(struct model *)
  */
 struct model *
 nmg_mm()
@@ -93,6 +100,9 @@ nmg_mm()
  *	Make Model and Region
  *	Create a new model, and an "empty" region to go with it.  Essentially
  *	this creates a minimal model system.
+ *
+ *  Returns -
+ *	(struct model *)
  *
  *  Implicit Return -
  *	The new region is found with RT_LIST_FIRST( nmgregion, &m->r_hd );
@@ -120,9 +130,16 @@ nmg_mmr()
 /*
  *			N M G _ M R S V
  *
- *	Make new region, shell, vertex in model
- *	Create a new (2nd, 3rd, ...) region in model consisting of a minimal
- *	shell.
+ *	Make new region, shell, vertex in model.
+ *	Create a new region in model consisting of a minimal shell.
+ *
+ *  Returns -
+ *	(struct nmgregion *)
+ *
+ *  Implicit Returns -
+ *	Region is also found with r=RT_LIST_FIRST( nmgregion, &m->r_hd );
+ *	The new shell is found with s=RT_LIST_FIRST( shell, &r->s_hd );
+ *	The new vertexuse is s->vu_p;
  */
 struct nmgregion *
 nmg_mrsv(m)
@@ -151,29 +168,36 @@ struct model *m;
  *	Make Shell, Vertex Use, Vertex
  *	Create a new shell in a specified region.  The shell will consist
  *	of a single vertexuse and vertex (which are also created).
+ *
+ *  Returns -
+ *	(struct shell *)
+ *
+ *  Implicit Returns -
+ *	The new shell is also found with s=RT_LIST_FIRST( shell, &r->s_hd );
+ *	The new vertexuse is s->vu_p;
  */
 struct shell *
-nmg_msv(r_p)
-struct nmgregion	*r_p;
+nmg_msv(r)
+struct nmgregion	*r;
 {
 	struct shell 		*s;
 	struct vertexuse	*vu;
 
-	NMG_CK_REGION(r_p);
+	NMG_CK_REGION(r);
 
 	/* set up shell */
-	GET_SHELL(s, r_p->m_p);
+	GET_SHELL(s, r->m_p);
 	s->l.magic = NMG_SHELL_MAGIC;
 
-	s->r_p = r_p;
-	RT_LIST_APPEND( &r_p->s_hd, &s->l );
+	s->r_p = r;
+	RT_LIST_APPEND( &r->s_hd, &s->l );
 
 	s->sa_p = (struct shell_a *)NULL;
 	RT_LIST_INIT( &s->fu_hd );
 	RT_LIST_INIT( &s->lu_hd );
 	RT_LIST_INIT( &s->eu_hd );
 
-	vu = nmg_mvvu(&s->l.magic);
+	vu = nmg_mvvu(&s->l.magic, r->m_p);
 	s->vu_p = vu;
 	return(s);
 }
@@ -184,6 +208,10 @@ struct nmgregion	*r_p;
  *	Make Face from a wire loop.
  *	make a face from a pair of loopuses.  The loopuses must be direct
  *	children of a shell.  The new face will be a child of the same shell.
+ *
+ *  Implicit Returns -
+ *	The first faceuse is fu1=RT_LIST_FIRST( faceuse, &s->fu_hd );
+ *	The second faceuse follows:  fu2=RT_LIST_NEXT( faceuse, &fu1->l.magic );
  */
 struct faceuse *
 nmg_mf(lu1)
@@ -251,9 +279,25 @@ struct loopuse *lu1;
  *	in a shell or face.
  *	If the vertex 'v' is NULL, the shell's lone vertex is used,
  *	or a new vertex is created.
+ *
+ *  "magic" must point to the magic number of a faceuse or shell.
+ *
+ *  If the shell has a lone vertex in it, that lone vertex *will*
+ *  be used.  If a non-NULL 'v' is provided, the lone vertex and
+ *  'v' will be fused together.  XXX Why is this good?
+ *
+ *  If a convenient shell does not exist, use s=nmg_msv() to make
+ *  the shell and vertex, then call lu=nmg_mlv(s,NULL,).
  * 
- *  Implicit return -
- *	The loopuse is inserted at the head of the appropriate list.
+ *  Implicit returns -
+ *	The new vertexuse can be had by:
+ *		RT_LIST_FIRST(vertexuse, &lu->down_hd);
+ *
+ *	In case the returned loopuse isn't retained, the new loopuse was
+ *	inserted at the +head+ of the appropriate list, e.g.:
+ *		lu = RT_LIST_FIRST(loopuse, &fu->lu_hd);
+ *	or
+ *		lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
  */
 struct loopuse *
 nmg_mlv(magic, v, orientation)
@@ -316,14 +360,14 @@ int		orientation;
 			if (v) nmg_movevu(vu1, v);
 		}
 		else {
-			if (v) vu1 = nmg_mvu(v, &lu1->l.magic);
-			else vu1 = nmg_mvvu(&lu1->l.magic);
+			if (v) vu1 = nmg_mvu(v, &lu1->l.magic, m);
+			else vu1 = nmg_mvvu(&lu1->l.magic, m);
 		}
 		NMG_CK_VERTEXUSE(vu1);
 		RT_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
 		/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
-		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
+		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, m);
 		NMG_CK_VERTEXUSE(vu2);
 		RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 		/* vu2->up.lu_p = lu2; done by nmg_mvu() */
@@ -341,12 +385,12 @@ int		orientation;
 		RT_LIST_INSERT( &p.fu->lu_hd, &lu1->l );
 
 		/* Second, build the vertices */
-		if (v) vu1 = nmg_mvu(v, &lu1->l.magic);
-		else vu1 = nmg_mvvu(&lu1->l.magic);
+		if (v) vu1 = nmg_mvu(v, &lu1->l.magic, m);
+		else vu1 = nmg_mvvu(&lu1->l.magic, m);
 		RT_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
 		/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
-		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
+		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, m);
 		RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 		/* vu2->up.lu_p = lu2; done by nmg_mvu() */
 	} else {
@@ -360,16 +404,21 @@ int		orientation;
 /*			N M G _ M V U
  *
  *	Make Vertexuse on existing vertex
+ *
+ *  This is a support routine for this module, and is not intended for
+ *  general use, as it requires lots of cooperation from the caller.
+ *  (Like setting the parent's down pointer appropriately).
  */
-struct vertexuse *
-nmg_mvu(v, upptr)
-struct vertex *v;
-long *upptr;		/* pointer to parent struct */
+static struct vertexuse *
+nmg_mvu(v, upptr, m)
+struct vertex	*v;
+long		*upptr;		/* pointer to parent struct */
+struct model	*m;
 {
 	struct vertexuse *vu;
-	struct model	*m;
 
 	NMG_CK_VERTEX(v);
+	NMG_CK_MODEL(m);
 
 	if (*upptr != NMG_SHELL_MAGIC &&
 	    *upptr != NMG_LOOPUSE_MAGIC &&
@@ -380,7 +429,6 @@ long *upptr;		/* pointer to parent struct */
 		rt_bomb("nmg_mvu() Cannot build vertexuse without parent\n");
 	}
 
-	m = nmg_find_model( upptr );
 	GET_VERTEXUSE(vu, m);
 	vu->l.magic = NMG_VERTEXUSE_MAGIC;
 
@@ -395,27 +443,31 @@ long *upptr;		/* pointer to parent struct */
 /*			N M G _ M V V U
  *
  *	Make Vertex, Vertexuse
+ *
+ *  This is a support routine for this module, and is not intended for
+ *  general use, as it requires lots of cooperation from the caller.
+ *  (Like setting the parent's down pointer appropriately).
  */
-struct vertexuse *
-nmg_mvvu(upptr)
-long *upptr;
+static struct vertexuse *
+nmg_mvvu(upptr, m)
+long		*upptr;
+struct model	*m;
 {
 	struct vertex	*v;
-	struct model	*m;
 
-	m = nmg_find_model( upptr );
+	NMG_CK_MODEL(m);
 	GET_VERTEX(v, m);
 	v->magic = NMG_VERTEX_MAGIC;
 	RT_LIST_INIT( &v->vu_hd );
 	v->vg_p = (struct vertex_g *)NULL;
-	return(nmg_mvu(v, upptr));
+	return(nmg_mvu(v, upptr, m));
 }
 
 
 /*
  *			N M G _ M E
  *
- *	Make edge
+ *	Make wire edge
  *	Make a new edge between a pair of vertices in a shell.
  *
  *	A new vertex will be made for any NULL vertex pointer parameters.
@@ -471,30 +523,29 @@ struct shell *s;
 	/* link the edgeuses to the parent shell */
 	eu1->up.s_p = eu2->up.s_p = s;
 
-	if (v1)
-		eu1->vu_p = nmg_mvu(v1, &eu1->l.magic);
-	else if (s->vu_p)  {
+	if (v1)  {
+		eu1->vu_p = nmg_mvu(v1, &eu1->l.magic, m);
+	} else if (s->vu_p)  {
 		/* steal the vertex from the shell */
 		vu = s->vu_p;
 		s->vu_p = (struct vertexuse *)NULL;
 		eu1->vu_p = vu;
 		vu->up.eu_p = eu1;
+	} else {
+		eu1->vu_p = nmg_mvvu(&eu1->l.magic, m);
 	}
-	else
-		eu1->vu_p = nmg_mvvu(&eu1->l.magic);
 
-
-	if (v2)
-		eu2->vu_p = nmg_mvu(v2, &eu2->l.magic);
-	else if (s->vu_p)  {
+	if (v2)  {
+		eu2->vu_p = nmg_mvu(v2, &eu2->l.magic, m);
+	} else if (s->vu_p)  {
 		/* steal the vertex from the shell */
 		vu = s->vu_p;
 		s->vu_p = (struct vertexuse *)NULL;
 		eu2->vu_p = vu;
 		vu->up.eu_p = eu2;
+	} else {
+		eu2->vu_p = nmg_mvvu(&eu2->l.magic, m);
 	}
-	else
-		eu2->vu_p = nmg_mvvu(&eu2->l.magic);
 
 	if( s->vu_p )  {
 		/* Ensure shell no longer has any stored vertexuse */
@@ -512,8 +563,16 @@ struct shell *s;
 /*
  *			N M G _ M E o n V U
  *
- * Make edge on vertexuse.
- * Vertexuse must be sole element of either a shell or a loopuse.
+ *  Make an edge on vertexuse.
+ *  The new edge runs from and to that vertex.
+ *
+ *  If the vertexuse was the shell's sole vertexuse, then the new edge
+ *  is a wire edge in the shell's eu_hd list.
+ *
+ *  If the vertexuse was part of a loop-of-a-single-vertex, either
+ *  as a loop in a face or as a wire-loop in the shell, the
+ *  loop becomes a regular loop with one edge that runs from and to
+ *  the original vertex.
  */
 struct edgeuse *
 nmg_meonvu(vu)
@@ -524,12 +583,6 @@ struct vertexuse *vu;
 	struct model	*m;
 
 	NMG_CK_VERTEXUSE(vu);
-	if (*vu->up.magic_p != NMG_SHELL_MAGIC &&
-	    *vu->up.magic_p != NMG_LOOPUSE_MAGIC) {
-		rt_log("nmg_meonvu() Error in %s at %d vertexuse not for shell/loop\n", 
-		    __FILE__, __LINE__);
-		rt_bomb("nmg_meonvu() cannot make edge, vertexuse not sole element of object\n");
-	}
 
 	m = nmg_find_model( vu->up.magic_p );
 	GET_EDGE(e, m);
@@ -553,7 +606,7 @@ struct vertexuse *vu;
 		struct shell	*s;
 
 		eu1->vu_p = vu;
-		eu2->vu_p = nmg_mvu(vu->v_p, &eu2->l.magic);
+		eu2->vu_p = nmg_mvu(vu->v_p, &eu2->l.magic, m);
 		s = eu2->up.s_p = eu1->up.s_p = vu->up.s_p;
 		if( s->vu_p != vu )
 			rt_bomb("nmg_meonvu() vetexuse parent shell disowns vertexuse!\n");
@@ -561,8 +614,7 @@ struct vertexuse *vu;
 		vu->up.eu_p = eu1;
 		RT_LIST_APPEND( &s->eu_hd, &eu2->l );
 		RT_LIST_APPEND( &s->eu_hd, &eu1->l );
-	}
-	else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+	} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 		struct loopuse		*lu;
 		struct loopuse		*lumate;
 		struct vertexuse	*vumate;
@@ -600,6 +652,8 @@ struct vertexuse *vu;
 		/* vertexuses point up at edgeuses */
 		vu->up.eu_p = eu1;
 		vumate->up.eu_p = eu2;
+	} else {
+		rt_bomb("nmg_meonvu() cannot make edge, vertexuse not sole element of object\n");
 	}
 	return(eu1);
 }
@@ -618,10 +672,10 @@ struct vertexuse *vu;
  * 		shell list)
  *	B) non-contiguous with the previous edge
  * 
- * A loop is created from this list of edges.  The edges must
- * form a true circuit, or we dump core on your disk.  If we
- * succeed, then the edgeuses are moved from the shell edgeuse list
- * to the loop, and the two loopuses are inserted into the shell.
+ *	A loop is created from this list of edges.  The edges must
+ *	form a true circuit, or we dump core on your disk.  If we
+ *	succeed, then the edgeuses are moved from the shell edgeuse list
+ *	to the loop, and the two loopuses are inserted into the shell.
  */
 struct loopuse *
 nmg_ml(s)
@@ -670,7 +724,7 @@ struct shell *s;
 		RT_LIST_SET_DOWN_TO_VERT( &lu1->down_hd, vu1 );
 		vu1->up.lu_p = lu1;
 
-		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
+		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, m);
 		/* vu2->up.lu_p = lu2; done by nmg_mvu() */
 		RT_LIST_SET_DOWN_TO_VERT( &lu2->down_hd, vu2 );
 
@@ -1788,7 +1842,8 @@ struct edgeuse *eudst, *eusrc;
 	eudst->radial_p = eusrc;
 }
 
-/*			N M G _ U N G L U E E D G E
+/*
+ *			N M G _ U N G L U E E D G E
  *
  *	If edgeuse is part of a shared edge (more than one pair of edgeuses
  *	on the edge), it and its mate are "unglued" from the edge, and 
