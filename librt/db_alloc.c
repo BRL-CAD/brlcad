@@ -5,7 +5,6 @@
  *	db_alloc	Find a contiguous block of database storage
  *	db_grow		Increase size of existing database entry
  *	db_trunc	Decrease size of existing entry, from it's end
- *	db_delrec	Delete a specific record from database entry
  *	db_delete	Delete storage associated w/entry, zap records
  *	db_zapper	Zap region of file into ID_FREE records
  *
@@ -235,31 +234,8 @@ int			recnum;
 	if(rt_g.debug&DEBUG_DB) bu_log("db_delrec(%s) x%x, x%x, recnum=%d\n",
 		dp->d_namep, dbip, dp, recnum );
 
-	if( dbip->dbi_read_only )  {
-		bu_log("db_delrec on READ-ONLY file\n");
-		return(-1);
-	}
-	/* If deleting last member, just truncate */
-	if( recnum == dp->d_len-1 )
-		return( db_trunc( dbip, dp, 1 ) );
-
-	/* "Ripple up" the rest of the entry */
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-		return(-1);
-	in = out = rp;
-	for( i=0; i<dp->d_len; i++ )  {
-		if( i == recnum )  {
-			in++;
-			/* don't bump "out" */
-			continue;
-		}
-		*out++ = *in++;		/* struct copy */
-	}
-	if( db_put( dbip, dp, rp, 0, dp->d_len-1 ) < 0 )
-		return(-1);
-	rt_free( (char *)rp, "db_delrec temp");
-		
-	return( db_trunc( dbip, dp, 1 ) );
+	bu_log("ERROR db_delrec() is no longer supported.  Use combination import/export routines.\n");
+	return -1;
 }
 
 /*
