@@ -1116,10 +1116,10 @@ union tree		*curtree;
 	return(curtree);
 }
 
-HIDDEN union tree *db_gettree_leaf( tsp, pathp, rp, id )
+HIDDEN union tree *db_gettree_leaf( tsp, pathp, ext, id )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-union record		*rp;
+struct rt_external	*ext;
 int			id;
 {
 	register struct combined_tree_state	*cts;
