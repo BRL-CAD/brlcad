@@ -4,9 +4,12 @@
  *  Apply a Hamming Window to the given samples.
  *  Precomputes the window function.
  */
+#include <stdlib.h>
 #include <stdio.h>	/* for stderr */
 #include <math.h>	/* for double sin(), cos() */
 #include "./complex.h"
+
+int init_hamwintab( int size );
 
 static int	_init_length = 0;	/* Internal: last initialized size */
 static int	maxinitlen = 0;
