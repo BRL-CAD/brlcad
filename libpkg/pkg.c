@@ -50,7 +50,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* for struct timeval */
 #endif
 
-#ifdef BSD
+#if defined(BSD) && !defined(cray)
+#define	HAS_WRITEV
+#endif
+
+#ifdef HAS_WRITEV
 #include <sys/uio.h>		/* for struct iovec (writev) */
 #endif
 
@@ -109,6 +113,11 @@ void (*errlog)();
 	struct sockaddr_in sinhim;		/* Server */
 	register struct hostent *hp;
 	register int netfd;
+#ifdef cray
+	unsigned long addr_tmp;
+#else
+	struct in_addr addr_tmp;
+#endif
 
 	/* Check for default error handler */
 	if( errlog == NULL )
@@ -141,7 +150,8 @@ void (*errlog)();
 	if( atoi( host ) > 0 )  {
 		/* Numeric */
 		sinhim.sin_family = AF_INET;
-		sinhim.sin_addr.s_addr = inet_addr(host);
+		addr_tmp = inet_addr(host);
+		sinhim.sin_addr = addr_tmp;
 	} else {
 #ifdef BSD
 		if( (hp = gethostbyname(host)) == NULL )  {
@@ -151,7 +161,8 @@ void (*errlog)();
 			return(PKC_ERROR);
 		}
 		sinhim.sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr, (char *)&sinhim.sin_addr, hp->h_length);
+		bcopy(hp->h_addr, (char *)&addr_tmp, hp->h_length);
+		sinhim.sin_addr = addr_tmp;
 #endif
 #ifdef SGI_EXCELAN
 		char **hostp = &host;
@@ -473,7 +484,7 @@ char *buf;
 int len;
 register struct pkg_conn *pc;
 {
-#ifdef BSD
+#ifdef HAS_WRITEV
 	static struct iovec cmdvec[2];
 #endif
 	static struct pkg_header hdr;
@@ -524,7 +535,7 @@ register struct pkg_conn *pc;
 	hdr.pkg_type = htons(type);	/* should see if it's a valid type */
 	hdr.pkg_len = htonl(len);
 
-#ifdef BSD
+#ifdef HAS_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
 	cmdvec[0].iov_len = sizeof(hdr);
 	cmdvec[1].iov_base = (caddr_t)buf;
@@ -574,7 +585,7 @@ char *buf1, *buf2;
 int len1, len2;
 register struct pkg_conn *pc;
 {
-#ifdef BSD
+#ifdef HAS_WRITEV
 	static struct iovec cmdvec[3];
 #endif
 	static struct pkg_header hdr;
@@ -614,7 +625,7 @@ register struct pkg_conn *pc;
 	hdr.pkg_type = htons(type);	/* should see if it's a valid type */
 	hdr.pkg_len = htonl(len1+len2);
 
-#ifdef BSD
+#ifdef HAS_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
 	cmdvec[0].iov_len = sizeof(hdr);
 	cmdvec[1].iov_base = (caddr_t)buf1;
