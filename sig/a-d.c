@@ -9,7 +9,6 @@ main( argc, argv )
 int	argc;
 char	**argv;
 {
-	char	s[80];
 	double	d;
 	int	i;
 
@@ -27,13 +26,15 @@ char	**argv;
 	} else {
 		/* get them from stdin */
 #if 0
+		char	s[80];
 		while( fgets(s, 80, stdin) != NULL ) {
 			d = atof( s );
 #else
 		/* XXX This one is slower but allows more than 1 per line */
-		while( scanf("%f", &d) == 1 ) {
+		while( scanf("%lf", &d) == 1 ) {
 #endif
 			fwrite( &d, sizeof(d), 1, stdout );
 		}
 	}
+	return(0);
 }
