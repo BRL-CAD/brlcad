@@ -315,6 +315,7 @@ void do_run( int a, int b )
 			continue;
 		}
 		rt_add_res_stats( ap.a_rt_i, &tmp_res[cpu] );
+		rt_zero_res_stats( &resource[cpu] );
 	}
 #  else
 	/* Tally up the statistics */
