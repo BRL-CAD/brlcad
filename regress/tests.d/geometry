@@ -177,10 +177,11 @@ for PRIM in $PRIMITIVES ; do
     #
     # (rec) Arguments
     # 
-    # in args =>
+    # in args => xvertex yvertex zvertex xheight yheight zheight
+    #            xradius1 yradius1 zradius1
     #
-    set rec_IN_ARGS ""
-    set rec_DB_ARGS ""
+    set rec_IN_ARGS "0 0 0  0 0 50  40 0 0  0 10 0"
+    set rec_DB_ARGS "V {0 0 0} H {0 0 50} A {40 0 0} B {0 10 0} C {40 0 0} D {0 10 0}"
 
     #
     # (rhc) Arguments
