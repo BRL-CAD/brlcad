@@ -64,7 +64,7 @@ char g(),gc();
 struct colors {
 	char *name;
 	RGBpixel c_pixel;
-}color[] = {
+}colortab[] = {
 	"black",	0,0,0,
 	"blue",		0,0,255,
 	"brown",	200,130,0,
@@ -238,12 +238,12 @@ view:	printf("Title: ");
 				strg[k]='\0';
 				if(itmc[i]!=iclr) continue;
 				printf("%5ld %-7s  %s\n",itm[i],
-					color[jclr].name,strg);
+					colortab[jclr].name,strg);
 				itmc[i]=jclr;
 			}
 			break;
 		case 'b':
-			printf("%s background changed to ",color[ibc].name);
+			printf("%s background changed to ",colortab[ibc].name);
 			scanf("%3s",cs);
 			ibc=cclr(cs);
 			if(ibc<0){
@@ -253,7 +253,7 @@ view:	printf("Title: ");
 			break;
 		case 't':
 			printf("%s transparent color changed to ",
-				color[itc].name);
+				colortab[itc].name);
 			scanf("%3s",cs);
 			itc=cclr(cs);
 			if(itc<0){
@@ -265,15 +265,15 @@ view:	printf("Title: ");
 			prtclr(0);
 			break;
 		case 'l':
-			printf("Background color is %s\n",color[ibc].name);
-			printf("Transparent color is %s\n\n",color[itc].name);
+			printf("Background color is %s\n",colortab[ibc].name);
+			printf("Transparent color is %s\n\n",colortab[itc].name);
 			lseek(ifd,loci,0);
 			loct=loci;
 			ic=0;
 			for(i=0;i<ni;i++){
 				for(j=0;j<10;j++) gc();
 				printf("%5ld %-7s  ",itm[i],
-					color[itmc[i]].name);
+					colortab[itmc[i]].name);
 				while((c=gc())!='\n') putchar(c);
 				putchar('\n');
 				if((i%20)==19){
@@ -302,7 +302,7 @@ view:	printf("Title: ");
 					loci+=6;
 					lseek(ifd,loci,0);
 					ic=0;
-					for(j=0,cp=color[itmc[i]].name;j<3;
+					for(j=0,cp=colortab[itmc[i]].name;j<3;
 							cp++,j++){
 						loci++;
 						write(ifd,cp,1);
@@ -341,7 +341,7 @@ view:	printf("Title: ");
 				strg[k]='\0';
 				if(itm[i]<il || itm[i]>iu) continue;
 				printf("%5ld %-7s  %s\n",itm[i],
-					color[iclr].name,strg);
+					colortab[iclr].name,strg);
 				itmc[i]=iclr;
 			}
 			break;
@@ -359,7 +359,7 @@ back:				for(j=0;j<10;j++) gc();
 				for(k=0;(c=gc())!='\n';) strg[k++]=c;
 				strg[k]='\0';
 again:				printf("      %-7s  %s%c%5ld ",
-					color[itmc[i]].name,strg,13,itm[i]);
+					colortab[itmc[i]].name,strg,13,itm[i]);
 				if(iskp>0){
 					iskp--;
 					printf("\015\n");
@@ -392,7 +392,7 @@ again:				printf("      %-7s  %s%c%5ld ",
 					goto again;
 				}
 				printf("%c%5ld %-7s%c\n",13,itm[i],
-					color[itmc[i]].name,13);
+					colortab[itmc[i]].name,13);
 				lclr=itmc[i];
 			}
 			reset_Tty(0);
@@ -411,12 +411,12 @@ paint()
 	register RGBpixel *fb_p;	/* Current position in buffer.	*/
 
 	printf("Picture is being painted\n");
-	bp[RED]=color[ibc].c_pixel[RED];
-	bp[GRN]=color[ibc].c_pixel[GRN];
-	bp[BLU]=color[ibc].c_pixel[BLU];
-	tp[RED]=color[itc].c_pixel[RED];
-	tp[GRN]=color[itc].c_pixel[GRN];
-	tp[BLU]=color[itc].c_pixel[BLU];
+	bp[RED]=colortab[ibc].c_pixel[RED];
+	bp[GRN]=colortab[ibc].c_pixel[GRN];
+	bp[BLU]=colortab[ibc].c_pixel[BLU];
+	tp[RED]=colortab[itc].c_pixel[RED];
+	tp[GRN]=colortab[itc].c_pixel[GRN];
+	tp[BLU]=colortab[itc].c_pixel[BLU];
 	fb_clear(fbp,bp);
 	lseek(ifd,locd,0);
 	loct=locd;
@@ -491,9 +491,9 @@ noread:		if(io>31){
 			} else {
 				j=itmc[i];
 			}
-			pmix[RED]=color[j].c_pixel[RED];
-			pmix[GRN]=color[j].c_pixel[GRN];
-			pmix[BLU]=color[j].c_pixel[BLU];
+			pmix[RED]=colortab[j].c_pixel[RED];
+			pmix[GRN]=colortab[j].c_pixel[GRN];
+			pmix[BLU]=colortab[j].c_pixel[BLU];
 			break;
 /* shadow (&) */
 		case 6:
@@ -562,7 +562,7 @@ char *pc;
 	char *cp;
 	int i;
 	for(i=0;i<20;i++){
-		cp=color[i].name;
+		cp=colortab[i].name;
 		if(*cp== *pc&&*(cp+1)== *(pc+1)&&*(cp+2)==*(pc+2)) return(i);
 		else if(*cp> *pc) return(-1);
 	}
@@ -682,7 +682,7 @@ char raw;
 	printf("Available Colors\n");
 	if(raw)	putchar('\015');
 	for(i=0;i<20;i++){
-		printf("%-8s",color[i].name);
+		printf("%-8s",colortab[i].name);
 		if((i%7)==6){
 			if(raw) putchar('\015');
 			putchar('\n');
