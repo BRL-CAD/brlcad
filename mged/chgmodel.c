@@ -561,6 +561,7 @@ char	**argv;
 	struct rt_ehy_internal *ehy_ip;
 	struct rt_eto_internal *eto_ip;
 	struct rt_part_internal *part_ip;
+	struct rt_nmg_internal *nmg_ip;
 
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[1] );
@@ -570,7 +571,7 @@ char	**argv;
 	RT_INIT_DB_INTERNAL( &internal );
 
 	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell |
-	 * sph | tor | tgc | rec | trc | rcc | grp | half> */
+	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg> */
 	if( strcmp( argv[2], "arb8" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
 		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
@@ -847,9 +848,20 @@ char	**argv;
 		part_ip->part_vrad = Viewscale*0.5;
 		part_ip->part_hrad = Viewscale*0.25;
 		part_ip->part_type = RT_PARTICLE_TYPE_CONE;
+	} else if( strcmp( argv[2], "nmg" ) == 0 ) {
+		struct model *m;
+		struct nmgregion *r;
+		struct shell *s;
+
+		m = nmg_mm();
+		r = nmg_mrsv( m );
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+		nmg_vertex_g( s->vu_p->v_p, -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ]);
+		(void)nmg_meonvu( s->vu_p );
+		internal.idb_type = ID_NMG;
+		internal.idb_ptr = (genptr_t)m;
 	} else if( strcmp( argv[2], "ars" ) == 0 ||
 		   strcmp( argv[2], "poly" ) == 0 ||
-		   strcmp( argv[2], "nmg" ) == 0 ||
 		   strcmp( argv[2], "ebm" ) == 0 ||
 		   strcmp( argv[2], "vol" ) == 0 ||
 		   strcmp( argv[2], "arbn" ) == 0 ||
