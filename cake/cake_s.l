@@ -106,6 +106,15 @@ enonl	({nonl}|\\{nl})
 
 <middle>({sp}|\\{nl})*	{ BEGIN middle;			}
 
+<edge>{sp}*{nl}		{
+				BEGIN edge;
+				/* Must come *before* the ACT rule, below */
+				if (lexdebug)
+					printf("empty line\n");
+				if (! afterifdef)
+					ret(EMPTYLINE);
+			}
+
 <edge>[@!+-]*"{"{enonl}*{nl}	|
 <edge>[@!+-]*"}"{enonl}*{nl}	|
 <edge>{sp}+{enonl}+{nl}	{
@@ -145,14 +154,6 @@ enonl	({nonl}|\\{nl})
 				if (lexdebug)
 					printf("hash line\n");
 				yyhash(yytext);
-				if (! afterifdef)
-					ret(EMPTYLINE);
-			}
-
-<edge>{sp}*{nl}		{
-				BEGIN edge;
-				if (lexdebug)
-					printf("empty line\n");
 				if (! afterifdef)
 					ret(EMPTYLINE);
 			}
