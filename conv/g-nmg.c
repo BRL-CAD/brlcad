@@ -25,9 +25,16 @@
 static char RCSid[] = "$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
@@ -125,18 +132,7 @@ char	*argv[];
 	register int	c;
 	double		percent;
 
-#ifdef BSD
-	setlinebuf( stderr );
-#else
-#	if defined( SYSV ) && !defined( sgi ) && !defined(CRAY2) && \
-	 !defined(n16)
-		(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
-#	endif
-#	if defined(sgi) && defined(mips)
-		if( setlinebuf( stderr ) != 0 )
-			perror("setlinebuf(stderr)");
-#	endif
-#endif
+	port_setlinebuf( stderr );
 
 #if MEMORY_LEAK_CHECKING
 	rt_g.debug |= DEBUG_MEM_FULL;

@@ -24,9 +24,17 @@
  *	in all countries except the USA.  All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <errno.h>
+
 #include "machine.h"
 #include "db.h"
 #include "externs.h"
@@ -38,8 +46,6 @@
 #include "../librt/debug.h"
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , (struct loopuse *lu , plane_t pl ) );
-
-extern int errno;
 
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64
@@ -408,4 +414,5 @@ char *argv[];
 	if( mk_lcomb( out_fp , base_name , &reg_head , 0, (char *)0, (char *)0, (char *)0, 0 ) )
 		rt_log( "viewpoint-g: Error in making top level group" );
 
+	return 0;
 }

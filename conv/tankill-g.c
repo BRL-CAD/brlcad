@@ -24,9 +24,17 @@
 static char RCSid[] = "$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <errno.h>
+
 #include "machine.h"
 #include "db.h"
 #include "externs.h"
@@ -37,7 +45,6 @@ static char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/debug.h"
 
-extern int errno;
 static int keep_1001=0;		/* flag to indicate that components with id 1001 should not be ignored */
 
 #define START_ARRAY_SIZE	64
@@ -587,4 +594,5 @@ char *argv[];
 		if( mk_lcomb( out_fp , "all" , &reg_head , 0, (char *)0, (char *)0, (char *)0, 0 ) )
 			rt_bomb( "tankill: Error in freeing region memory" );
 	}
+	return 0;
 }
