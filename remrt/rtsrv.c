@@ -745,21 +745,19 @@ va_dcl
 
 	if( print_on == 0 )  return;
 	if( cp == (char *)0 )  cp = buf+1;
-#if defined(mips)
-	strbuf._file = 20;	/* _NFILE, flags as not a file */
-	strbuf._flag = 0;
-	strbuf._ptr = cp;
-	strbuf._cnt = sizeof(buf)-(cp-buf);
+
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	va_start(ap);
+	fmt = va_arg(ap,char *);
+#if defined(mips) || (defined(alliant) && defined(i860))
+	(void) vsprintf( cp, fmt, ap );
 #else
 	strbuf._flag = _IOWRD|_IOSTRG;
 	strbuf._ptr = cp;
 	strbuf._cnt = sizeof(buf)-(cp-buf);
-#endif
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
-	va_start(ap);
-	fmt = va_arg(ap,char *);
 	(void) _doprnt( fmt, ap, &strbuf );
 	putc( '\0', &strbuf );
+#endif
 	va_end(ap);
 
 	if(debug) fprintf(stderr, "%s", buf+1);
