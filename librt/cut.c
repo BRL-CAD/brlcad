@@ -269,15 +269,21 @@ int		depth;
 	int	i;
 
 	for( axis = X; axis <= Z; axis++ )  {
+#if 0
+ /* New way */
 		status[axis] = rt_ct_assess(
 			cutp, axis, &where[axis], &offcenter[axis] );
+#else
+ /* Old way */
+		status[axis] = rt_ct_old_assess(
+			cutp, axis, &where[axis], &offcenter[axis] );
+#endif
 	}
 
 	for(;;)  {
 		best = -1;
 		bestoff = INFINITY;
-		for( i = X; i <= Z; i++ )  {
-			axis = (depth + i) % 3;
+		for( axis = X; axis <= Z; axis++ )  {
 			if( status[axis] <= 0 )  continue;
 			if( offcenter[axis] >= bestoff )  continue;
 			/* This one is better than previous ones */
@@ -555,7 +561,7 @@ int	depth;
 	/**** XXX This test can be improved ****/
 	if( depth >= 6 && cutp->bn.bn_len <= rt_cutLen )
 		return;				/* Fine enough */
-#if 0
+#if 1
  /* New way */
 	/*
 	 *  Attempt to make an optimal cut
@@ -612,16 +618,18 @@ register int axis;
 double	*where_p;
 double	*offcenter_p;
 {
-	auto double d_close;		/* Closest distance from midpoint */
-	auto double pt_close;		/* Point closest to midpoint */
-	auto double middle;		/* midpoint */
-	auto double d;
-	register int i;
+	double		val;
+	double		offcenter;		/* Closest distance from midpoint */
+	double		where;		/* Point closest to midpoint */
+	double		middle;		/* midpoint */
+	double		d;
+	register int	i;
+	register double	left, right;
 
 	if(rt_g.debug&DEBUG_CUTDETAIL)rt_log("rt_ct_old_assess(x%x, %c)\n",cutp,"XYZ345"[axis]);
 
 	/*  In absolute terms, each box must be at least 1mm wide after cut. */
-	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
+	if( (right=cutp->bn.bn_max[axis])-(left=cutp->bn.bn_min[axis]) < 2.0 )
 		return(0);
 
 	/*
@@ -631,34 +639,34 @@ double	*offcenter_p;
 	 *  This should ordinarily guarantee that at least one side of the
 	 *  cut has one less item in it.
 	 */
-	pt_close = cutp->bn.bn_min[axis];
-	middle = (pt_close + cutp->bn.bn_max[axis]) * 0.5;
-	d_close = middle - pt_close;
+	where = left;
+	middle = (left + right) * 0.5;
+	offcenter = middle - where;
 	for( i=0; i < cutp->bn.bn_len; i++ )  {
-		d = cutp->bn.bn_list[i]->st_min[axis] - middle;
+		val = cutp->bn.bn_list[i]->st_min[axis];
+		d = val - middle;
 		if( d < 0 )  d = (-d);
-		if( d < d_close )  {
-			d_close = d;
-			pt_close = cutp->bn.bn_list[i]->st_min[axis]-0.1;
+		if( d < offcenter )  {
+			offcenter = d;
+			where = val-0.1;
 		}
-		d = cutp->bn.bn_list[i]->st_max[axis] - middle;
+		val = cutp->bn.bn_list[i]->st_max[axis];
+		d = val - middle;
 		if( d < 0 )  d = (-d);
-		if( d < d_close )  {
-			d_close = d;
-			pt_close = cutp->bn.bn_list[i]->st_max[axis]+0.1;
+		if( d < offcenter )  {
+			offcenter = d;
+			where = val+0.1;
 		}
 	}
-	if( pt_close <= cutp->bn.bn_min[axis] ||
-	    pt_close >= cutp->bn.bn_max[axis] )
+	if( where <= left || where >= right )
 		return(0);	/* not reasonable */
 
-	if( pt_close - cutp->bn.bn_min[axis] <= 1.0 ||
-	    cutp->bn.bn_max[axis] - pt_close <= 1.0 )
+	if( where - left <= 1.0 || right - where <= 1.0 )
 		return(0);	/* cut will be too small */
 
 	/* We are going to cut */
-	*where_p = pt_close;
-	*offcenter_p = d_close;
+	*where_p = where;
+	*offcenter_p = offcenter;
 	return(1);
 }
 
