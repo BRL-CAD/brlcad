@@ -621,7 +621,8 @@ extern double rt_read_timer();		/* Read timer, return time + str */
 extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
 extern void mat_inv(), mat_trn(), mat_ae(), mat_angles();
 extern void vtoh_move(), htov_move(), mat_print();
-
+extern void eigen2x2(), mat_fromto(), mat_lookat();
+extern double mat_atan2();
 
 /*****************************************************************
  *                                                               *
@@ -645,7 +646,8 @@ extern void rt_pr_tree();		/* Print an expr tree */
 extern void rt_pr_pt();			/* Print a partition */
 extern void rt_pr_bitv();		/* Print a bit vector */
 extern void rt_pr_hit();		/* Print a hit point */
-extern void rt_fastf_float();		/* convert float->fastf_t */
+extern void rt_fastf_float();		/* convert dbfloat->fastf_t */
+extern void rt_mat_dbmat();		/* convert dbfloat mat->fastf_t */
 extern void rt_get_seg();		/* storage obtainer */
 extern void rt_get_pt();
 extern void rt_get_bitv();
