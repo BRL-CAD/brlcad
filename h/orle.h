@@ -1,10 +1,6 @@
 /*
-	SCCS id:	@(#) rle.h	1.7
-	Last edit: 	8/15/85 at 10:15:45	G S M
-	Retrieved: 	8/13/86 at 10:31:24
-	SCCS archive:	/m/cad/librle/RCS/s.rle.h
 
-	Modified for by :	Gary S. Moss
+	Modified by :		Gary S. Moss
 				U. S. Army Ballistic Research Laboratory
 				Aberdeen Proving Ground
 				Maryland 21005-5066
@@ -22,14 +18,9 @@
  * Copyright (c) 1982 Spencer W. Thomas
  */
 
-/********* Be certain to update this!! **********/
-#if !defined( vax )
-#define BIGENDIAN	/* Byte [0] on left side of word */
-#else
-/* Little-endian.  Byte [0] on right side of word */
-#endif
+#include "machine.h"		/* for BIG_ENDIAN definition */
 
-#ifdef BIGENDIAN
+#ifdef BIG_ENDIAN
 #define SWAB(shrt)  (shrt = ((shrt >> 8) & 0xff) | ((shrt << 8) & 0xff00))
 #else
 #define	SWAB(shrt)
