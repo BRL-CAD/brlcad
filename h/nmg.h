@@ -56,9 +56,9 @@
 #define	NMG_EXTERN(type_and_name,args)	RT_EXTERN(type_and_name,args)
 
 
-#define DEBUG_PL_ANIM	0x00000001	/* 1 mged animated evaluation */
-#define DEBUG_PL_SLOW	0x00000002	/* 2 add delays to animation */
-#define DEBUG_GRAPHCL	0x00000004	/* 3 graphic classification */
+#define DEBUG_PL_ANIM	0x00000001	/* 1 mged: animated evaluation */
+#define DEBUG_PL_SLOW	0x00000002	/* 2 mged: add delays to animation */
+#define DEBUG_GRAPHCL	0x00000004	/* 3 mged: graphic classification */
 #define DEBUG_PL_LOOP	0x00000008	/* 4 loop class (needs GRAPHCL) */
 #define DEBUG_PLOTEM	0x00000010	/* 5 make plots in debugged routines (needs other flags set too) */
 #define DEBUG_POLYSECT	0x00000020	/* 6 nmg_inter: face intersection */
@@ -117,7 +117,7 @@
 #define NMG_CLASS_BoutA		7
 
 /* orientations available.  All topological elements are orientable. */
-#define OT_NONE     0    /* no orientation */
+#define OT_NONE     0    /* no orientation (error) */
 #define OT_SAME     1    /* orientation same */
 #define OT_OPPOSITE 2    /* orientation opposite */
 #define OT_UNSPEC   3    /* orientation unspecified */
@@ -148,8 +148,14 @@ struct nmg_ptbl {
 #define NMG_PTBL_MAGIC		0x7074626c		/* "ptbl" */
 #define NMG_CK_PTBL(_p)		NMG_CKMAG(_p, NMG_PTBL_MAGIC, "nmg_ptbl")
 
-/* For those routines that have to "peek" a little */
+/*
+ *  For those routines that have to "peek" into the ptbl a little bit.
+ *  A handy way to visit all the elements of the list is:
+ *	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
+ *	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup-- )  {
+ */
 #define NMG_TBL_BASEADDR(p)	((p)->buffer)
+#define NMG_TBL_LASTADDR(p)	((p)->buffer + (p)->end - 1)
 #define NMG_TBL_END(p)		((p)->end)
 #define NMG_TBL_GET(p,i)	((p)->buffer[(i)])
 
@@ -210,13 +216,7 @@ struct nmg_ptbl {
 #define NMG_CK_VERTEXUSE_A(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_A_MAGIC, "vertexuse_a")
 #define NMG_CK_LIST(_p)		NMG_CKMAG(_p, RT_LIST_HEAD_MAGIC, "rt_list")
 
-#define NMG_TEST_LOOPUSE(_p) \
-	if (!(_p)->up.magic_p || !(_p)->l.forw || !(_p)->l.back || \
-	    !(_p)->l_p || !(_p)->lumate_p || !(_p)->down.magic_p) { \
-		rt_log("at %d in %s BAD loopuse member pointer\n", \
-			__LINE__, __FILE__); nmg_pr_lu(_p, (char *)NULL); \
-			rt_bomb("Null pointer\n"); }
-
+/* Used only in nmg_mod.c */
 #define NMG_TEST_EDGEUSE(_p) \
 	if (!(_p)->l.forw || !(_p)->l.back || !(_p)->eumate_p || \
 	    !(_p)->radial_p || !(_p)->e_p || !(_p)->vu_p || \
@@ -576,8 +576,8 @@ struct vertexuse_a {
 #endif
 /*
  *  Macros to create and destroy storage for the NMG data structures.
- *  Since nmg_mk.c is the only source file which should perform these
- *  most fundamental operations, the macros do not belong in nmg.h
+ *  Since nmg_mk.c and g_nmg.c are the only source file which should perform
+ *  these most fundamental operations, the macros do not belong in nmg.h
  *  In particular, application code should NEVER do these things.
  *  Any need to do so should be handled by extending nmg_mk.c
  */
@@ -629,14 +629,17 @@ struct vertexuse_a {
 #define FREE_VERTEXUSE(p)   NMG_FREESTRUCT(p, vertexuse)
 #define FREE_VERTEXUSE_A(p) NMG_FREESTRUCT(p, vertexuse_a)
 
-/* two edges share same vertices */
-#define EDGESADJ(_e1, _e2) (((_e1)->vu_p->v_p == (_e2)->vu_p->v_p && \
-		 (_e1)->eumate_p->vu_p->v_p == (_e2)->eumate_p->vu_p->v_p) || \
-		 ((_e1)->vu_p->v_p == (_e2)->eumate_p->vu_p->v_p && \
-		 (_e1)->eumate_p->vu_p->v_p == (_e2)->vu_p->v_p ) )
+/* Do two edgeuses share the same two vertices? If yes, eu's should be joined. */
+#define NMG_ARE_EUS_ADJACENT(_eu1,_eu2)	(  \
+	( (_eu1)->vu_p->v_p == (_eu2)->vu_p->v_p &&   \
+	  (_eu1)->eumate_p->vu_p->v_p == (_eu2)->eumate_p->vu_p->v_p )  ||  \
+	( (_eu1)->vu_p->v_p == (_eu2)->eumate_p->vu_p->v_p &&  \
+	  (_eu1)->eumate_p->vu_p->v_p == (_eu2)->vu_p->v_p ) )
 
-/* Used by nmg_class.c */
-#define EUPRINT(_s, _eu)	nmg_euprint( (_s), (_eu) )
+/* Compat: Used in nmg_misc.c and nmg_mod.c */
+#define EDGESADJ(_e1, _e2) NMG_ARE_EUS_ADJACENT(_e1,_e2)
+
+/* Print a plane equation. */
 #define PLPRINT(_s, _pl) rt_log("%s %gx + %gy + %gz = %g\n", (_s), \
 	(_pl)[0], (_pl)[1], (_pl)[2], (_pl)[3])
 
