@@ -41,6 +41,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 
 int gui_setup();
+int mged_attach();
+void get_attached();
+void print_valid_dm();
 void dm_var_init();
 void mged_slider_init_vls();
 void mged_slider_free_vls();
@@ -308,11 +311,11 @@ int     argc;
 char    **argv;
 {
   register struct w_dm *wp;
-  register struct solid *sp;
-  register struct dm_list *o_dm_list;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL)){
+    print_valid_dm();
     return TCL_ERROR;
+  }
 
   for( wp = &which_dm[0]; wp->dp != (struct dm *)0; wp++ )
     if( strcmp(argv[argc - 1], wp->dp->dm_name ) == 0 )
@@ -320,7 +323,17 @@ char    **argv;
 
   if(wp->dp == (struct dm *)0){
     Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
-    Tcl_AppendResult(interp, "\tPlease attach to one of the following display manager types: ", (char *)NULL);
+    print_valid_dm();
+    return TCL_ERROR;
+  }
+
+  return mged_attach(wp, argc, argv);
+}
+
+void
+print_valid_dm()
+{
+    Tcl_AppendResult(interp, "\tThe following display manager types are valid: ", (char *)NULL);
 #ifdef DM_X
     Tcl_AppendResult(interp, "X  ", (char *)NULL);
 #endif
@@ -331,8 +344,16 @@ char    **argv;
     Tcl_AppendResult(interp, "glx", (char *)NULL);
 #endif
     Tcl_AppendResult(interp, "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
+}
+
+int
+mged_attach(wp, argc, argv)
+register struct w_dm *wp;
+int argc;
+char *argv[];
+{
+  register struct solid *sp;
+  register struct dm_list *o_dm_list;
 
   o_dm_list = curr_dm_list;
   BU_GETSTRUCT(curr_dm_list, dm_list);
@@ -402,6 +423,45 @@ Bad:
     release((char *)NULL, 0);  /* release() will not call dm_close */
 
   return TCL_ERROR;
+}
+
+void
+get_attached()
+{
+  int argc;
+  char *argv[3];
+  char line[80];
+  register struct w_dm *wp;
+
+  while(1){
+    bu_log("attach (nu");
+    /* skip plot and ps */
+    wp = &which_dm[2];
+    for( ; wp->dp != (struct dm *)0; wp++ )
+      bu_log("|%s", wp->dp->dm_name);
+    bu_log(")[nu]? ");
+    (void)fgets(line, sizeof(line), stdin); /* \n, Null terminated */
+
+    if(line[0] == '\n' || strncmp(line, "nu", 2) == 0)
+      return;  /* Nothing more to do. */
+
+    line[strlen(line)-1] = '\0';        /* remove newline */
+
+    for( wp = &which_dm[0]; wp->dp != (struct dm *)0; wp++ )
+      if( strcmp( line, wp->dp->dm_name ) == 0 )
+	break;
+
+    if( wp->dp != (struct dm *)0 )
+      break;
+
+    /* Not a valid choice, loop. */
+  }
+
+  argc = 2;
+  argv[0] = "";
+  argv[1] = "";
+  argv[2] = (char *)NULL;
+  (void)mged_attach(wp, argc, argv);
 }
 
 
