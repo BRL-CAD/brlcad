@@ -46,7 +46,7 @@ main(int argc, char **argv)
 {
 	int image_offset;
 	int framenumber;
-	char *basename;
+	char *base_name;
 	char name[128];
 
 	if( argc < 3 )  {
@@ -54,7 +54,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	basename = argv[1];
+	base_name = argv[1];
 	nlines = atoi(argv[2] );
 
 	pix_line = nlines;	/* Square pictures */
@@ -75,7 +75,7 @@ main(int argc, char **argv)
 
 		if( read( 0, in1, scanbytes ) != scanbytes )
 			break;
-		sprintf(name, "%s.%d", basename, framenumber);
+		sprintf(name, "%s.%d", base_name, framenumber);
 		if( (fd=creat(name,0444))<0 )  {
 			perror(name);
 			continue;

@@ -43,7 +43,7 @@ int out_width = 64;	/* width of input sub-images in pixels (64) */
 int out_height = 64;	/* height of input sub-images in scanlines (64) */
 int in_width = 512;	/* number of output pixels/line (512, 1024) */
 int in_height = 512;	/* number of output lines (512, 1024) */
-char *basename;		/* basename of input file(s) */
+char *base_name;		/* basename of input file(s) */
 int framenumber = 0;	/* starting frame number (default is 0) */
 int islist = 0;
 
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 	}
 
 	if( optind+1 == argc )  {
-		basename = argv[optind];
+		base_name = argv[optind];
 		islist = 0;
 	} else {
 		islist = 1;
@@ -147,7 +147,7 @@ main(int argc, char **argv)
 						goto done;
 					strcpy( name, argv[optind++] );
 				} else {
-					sprintf( name, "%s.%d", basename, framenumber );
+					sprintf( name, "%s.%d", base_name, framenumber );
 				}
 				if( (f[i] = fopen(name,"w")) == NULL ) {
 					perror( name );
