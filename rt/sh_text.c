@@ -76,12 +76,13 @@ struct txt_specific {
 #define TX_O(m)	offsetof(struct txt_specific, m)
 
 struct structparse txt_parse[] = {
-#ifndef CRAY
+#if CRAY && !__STDC__
+	/* Hack for old Cray compilers */
+	"%C",	"transp",	0,			FUNC_NULL,
+	"%s",	"file",		8,			FUNC_NULL,
+#else
 	"%C",	"transp",	offsetofarray(struct txt_specific, tx_transp),	FUNC_NULL,
 	"%s",	"file",		offsetofarray(struct txt_specific, tx_file),		FUNC_NULL,
-#else
-	"%C",	"transp",	0,			FUNC_NULL,
-	"%s",	"file",		1,			FUNC_NULL,
 #endif
 	"%d",	"w",		TX_O(tx_w),		FUNC_NULL,
 	"%d",	"n",		TX_O(tx_n),		FUNC_NULL,
@@ -292,12 +293,13 @@ struct ckr_specific  {
 #define CKR_O(m)	offsetof(struct ckr_specific, m)
 
 struct structparse ckr_parse[] = {
-#ifndef CRAY
+#if CRAY && !__STDC__
+	/* Hack for old Cray compilers */
+	"%C",	"a",		0,			FUNC_NULL,
+	"%C",	"b",		8,			FUNC_NULL,
+#else
 	"%C",	"a",		offsetofarray(struct ckr_specific, ckr_a),		FUNC_NULL,
 	"%C",	"b",		offsetofarray(struct ckr_specific, ckr_b),		FUNC_NULL,
-#else
-	"%C",	"a",		0,			FUNC_NULL,
-	"%C",	"b",		1,			FUNC_NULL,
 #endif
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
