@@ -62,6 +62,12 @@
 
 #define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
 
+#ifdef vax
+#	define VDIVIDE_TOL	(1.0e-10)
+#else
+#	define VDIVIDE_TOL	(1.0e-20)
+#endif
+
 /*
  * Types for matrixes and vectors.
  */
@@ -72,6 +78,7 @@ typedef	fastf_t	*matp_t;
 #define ELEMENTS_PER_PT         3
 #define HVECT_LEN		4	/* # of fastf_t's per hvect_t */
 #define HPT_LEN			4
+#define ELEMENTS_PER_PLANE	4
 
 typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
 typedef	fastf_t	*vectp_t;
@@ -82,11 +89,16 @@ typedef fastf_t	*pointp_t;
 typedef fastf_t hvect_t[HVECT_LEN];
 typedef fastf_t hpoint_t[HPT_LEN];
 
+typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
+
+#define quat_t	hvect_t		/* 4-element quaternion */
+
 /* Element names in homogeneous vector (4-tuple) */
 #define	X	0
 #define	Y	1
 #define Z	2
 #define H	3
+#define W	H
 
 /* Locations of deltas in 4x4 Homogenous Transform matrix */
 #define MDX	3
@@ -222,13 +234,13 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VUNITIZE(a) \
 	{ register double _f; register int _vunitize; \
 	_f = MAGNITUDE(a); \
-	if( _f < 1.0e-10 ) _f = 0.0; else _f = 1.0/_f; \
+	if( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
 	for(_vunitize = 0; _vunitize < 3; _vunitize++) \
 		(a)[_vunitize] *= _f; \
 	}
 #else
 #define VUNITIZE(a)	{ register double _f; _f = MAGNITUDE(a); \
-			if( _f < 1.0e-10 ) _f = 0.0; else _f = 1.0/_f; \
+			if( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
 			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; }
 #endif /* VECTORIZE */
 
@@ -543,5 +555,62 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(a)[Y] = (b)[Y] / (b)[H];\
 	(a)[Z] = (b)[Z] / (b)[H];
 #endif /* VECTORIZE */
+
+/*
+ *  Quaternion math definitions.
+ *
+ *  Note that the W component will be put in the last [3] place
+ *  rather than the first [0] place,
+ *  so that the X, Y, Z elements will be compatible with vectors.
+ *  None of the macros here depend on component locations, however.
+ *
+ *  Phillip Dykstra, 26 Sep 1985.
+ */
+
+/* Set quaternion at `a' to have coordinates `b', `c', `d', `e' */
+#define QSET(a,b,c,d,e)	(a)[0] = (b);\
+			(a)[1] = (c);\
+			(a)[2] = (d);\
+			(a)[3] = (e)
+
+/* Transfer quaternion at `b' to quaternion at `a' */
+#define QMOVE(a,b)	(a)[0] = (b)[0];\
+			(a)[1] = (b)[1];\
+			(a)[2] = (b)[2];\
+			(a)[3] = (b)[3]
+
+/* Add quaternions at `b' and `c', store result at `a' */
+#define QADD2(a,b,c)	(a)[0] = (b)[0] + (c)[0];\
+			(a)[1] = (b)[1] + (c)[1];\
+			(a)[2] = (b)[2] + (c)[2];\
+			(a)[3] = (b)[3] + (c)[3]
+
+/* Subtract quaternion at `c' from quaternion at `b', store result at `a' */
+#define QSUB2(a,b,c)	(a)[0] = (b)[0] - (c)[0];\
+			(a)[1] = (b)[1] - (c)[1];\
+			(a)[2] = (b)[2] - (c)[2];\
+			(a)[3] = (b)[3] - (c)[3]
+
+/* Scale quaternion at `b' by scalar `c', store result at `a' */
+#define QSCALE(a,b,c)	(a)[0] = (b)[0] * (c);\
+			(a)[1] = (b)[1] * (c);\
+			(a)[2] = (b)[2] * (c);\
+			(a)[3] = (b)[3] * (c)
+
+/* Normalize quaternion 'a' to be a unit quaternion */
+#define QUNITIZE(a)	{FAST double f; f = QMAGNITUDE(a); \
+			if( f < VDIVIDE_TOL ) f = 0.0; else f = 1.0/f; \
+			(a)[0] *= f; (a)[1] *= f; (a)[2] *= f; (a)[3] *= f; }
+
+/* Return scalar magnitude squared of quaternion at `a' */
+#define QMAGSQ(a)	( (a)[0]*(a)[0] + (a)[1]*(a)[1] \
+			+ (a)[2]*(a)[2] + (a)[3]*(a)[3] )
+
+/* Return scalar magnitude of quaternion at `a' */
+#define QMAGNITUDE(a)	sqrt( QMAGSQ( a ) )
+
+/* Compute dot product of quaternions at `a' and `b' */
+#define QDOT(a,b)	( (a)[0]*(b)[0] + (a)[1]*(b)[1] \
+			+ (a)[2]*(b)[2] + (a)[3]*(b)[3] )
 
 #endif /* VMATH_H */
