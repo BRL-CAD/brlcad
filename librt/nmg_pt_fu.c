@@ -802,13 +802,15 @@ CONST struct rt_tol     *tol;
 			ot_same_in, ot_opposite_out);
 
 	if (ot_same_in == ot_opposite_out) fu_class = NMG_CLASS_AoutB;
-	else if (ot_same_in - 1 != ot_opposite_out) {
-		/* Panic time!  How did I get a parity mis-match? */
-		rt_log("nmg_class_pt_fu_except(%g %g %g) Parity error @ %s:%d\n",
-			V3ARGS(pt), __FILE__, __LINE__);
-		rt_bomb("");
-	} else 
+	else if (ot_same_in > ot_opposite_out) {
 		fu_class = NMG_CLASS_AinB;
+	} else {
+		/* Panic time!  How did I get a parity mis-match? */
+		rt_log("nmg_class_pt_fu_except(%g %g %g)\nParity error @ %s:%d ot_same_in:%d ot_opposite_out:%d\n",
+			V3ARGS(pt), __FILE__, __LINE__,
+			ot_same_in, ot_opposite_out);
+		rt_bomb("");
+	}
 
 	while (RT_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 		RT_LIST_DEQUEUE( &ved_p->l );
