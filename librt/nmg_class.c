@@ -923,6 +923,9 @@ CONST struct rt_tol	*tol;
 	reason = "of nmg_class_pt_s()";
 	class = nmg_class_pt_s(pt, sB, tol);
 	
+	/* XXX For major efficiency, should store classification for
+	 * XXX all other uses of this vertex in this shell (sA)!
+	 */
 	if( class == NMG_CLASS_AoutB )  {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
 		status = OUTSIDE;
@@ -1159,6 +1162,9 @@ CONST struct rt_tol	*tol;
 		nmg_class_status(euv_cl), nmg_class_status(matev_cl) );
 	rt_bomb("class_eu_vs_s() inconsistent edgeuse\n");
 out:
+	/* XXX For major efficiency, should store classification for
+	 * XXX all other edgeuses of this edge in this shell (sA)!
+	 */
 	if (rt_g.NMG_debug & DEBUG_GRAPHCL)
 		nmg_show_broken_classifier_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
