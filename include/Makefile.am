@@ -16,7 +16,50 @@ brlcadinclude_required = \
 	rtserver.h \
 	rtstring.h
 
+headers_libutahrle = \
+	pyramid.h \
+	rle.h \
+	rle_code.h \
+	rle_config.h \
+	rle_getraw.h \
+	rle_put.h \
+	rle_raw.h
+
+headers_libpng = \
+	png.h \
+	pngconf.h
+
+headers_libitcl = \
+	itcl.h \
+	itclDecls.h \
+	itclInt.h \
+	itclIntDecls.h \
+	itk.h \
+	itkDecls.h
+
+headers_libtcl = \
+	tcl.h \
+	tclDecls.h \
+	tclInt.h \
+	tclIntDecls.h \
+	tclIntPlatDecls.h \
+	tclPlatDecls.h
+
+headers_libtk = \
+	tk.h \
+	tkDecls.h \
+	tkInt.h \
+	tkIntDecls.h \
+	tkIntPlatDecls.h \
+	tkIntXlibDecls.h \
+	tkPlatDecls.h
+
 brlcadinclude_wanted = \
+	$(headers_libutahrle) \
+	$(headers_libpng) \
+	$(headers_libitcl) \
+	$(headers_libtcl) \
+	$(headers_libtk) \
 	XtndRunsv.h \
 	anim.h \
 	cmd.h \
@@ -37,12 +80,6 @@ brlcadinclude_wanted = \
 	fb.h \
 	fbserv_obj.h \
 	forms.h \
-	itcl.h \
-	itclDecls.h \
-	itclInt.h \
-	itclIntDecls.h \
-	itk.h \
-	itkDecls.h \
 	libtermio.h \
 	light.h \
 	machine.h \
@@ -57,17 +94,8 @@ brlcadinclude_wanted = \
 	pkg.h \
 	plastic.h \
 	plot3.h \
-	png.h \
-	pngconf.h \
-	pyramid.h \
 	redblack.h \
 	regex.h \
-	rle.h \
-	rle_code.h \
-	rle_config.h \
-	rle_getraw.h \
-	rle_put.h \
-	rle_raw.h \
 	shadefuncs.h \
 	shadework.h \
 	shortvect-pr.h \
@@ -77,19 +105,6 @@ brlcadinclude_wanted = \
 	spm.h \
 	svfb.h \
 	svfb_global.h \
-	tcl.h \
-	tclDecls.h \
-	tclInt.h \
-	tclIntDecls.h \
-	tclIntPlatDecls.h \
-	tclPlatDecls.h \
-	tk.h \
-	tkDecls.h \
-	tkInt.h \
-	tkIntDecls.h \
-	tkIntPlatDecls.h \
-	tkIntXlibDecls.h \
-	tkPlatDecls.h \
 	vectfont.h \
 	vfont-if.h \
 	vmath.h \
