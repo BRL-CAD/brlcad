@@ -229,12 +229,20 @@ char	**argv;
 	  }
 
 	  if(mged_variables.scroll_enabled){
+#if 0
 	    char *av[3];
 
 	    av[0] = "sliders";
 	    av[1] = "on";
 	    av[2] = NULL;
 	    (void)cmd_sliders(clientData, interp, 2, av);
+#else
+	    /* 
+	     * We need to send this through the interpreter in case
+	     * the built-in "sliders" command has been redefined.
+	     */
+	    Tcl_Eval(interp, "sliders on");
+#endif
 	  }
 
 	  dmaflag = 1;
