@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.7  86/09/23  22:28:52  mike
+ * Externs now declared properly.
+ * I/O fixes for SysV
+ * 
  * Revision 2.7  86/09/23  22:26:46  mike
  * Externs now declared properly.
  * I/O fixes for SysV
@@ -139,6 +143,8 @@ finish(code)
 		}
 	}
 	if (code) {
+		if (code == SIGHUP)
+			ignorf(signal(code, SIG_IGN));	/* A little privacy */
 		if (!Crashing) {
 			putstr("Writing modified JOVE buffers...");
 			Crashing++;
