@@ -919,6 +919,10 @@ CONST struct rt_i *rtip;
 
 /*
  *			R T _ C U T _ E X T E N D
+ *
+ *  Add a solid into a given boxnode, extending the list there.
+ *
+ *  The solid it put onto the main list whether or not it has pieces.
  */
 void
 rt_cut_extend( cutp, stp, rtip )
