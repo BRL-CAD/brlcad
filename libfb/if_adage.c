@@ -94,7 +94,8 @@ FBIO adage_interface =
 		0,
 		0L,
 		0L,
-		0L
+		0L,
+		0
 		};
 
 static struct ik_fbc ikfbc_setup[3] = {

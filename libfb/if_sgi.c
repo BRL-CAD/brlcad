@@ -91,7 +91,8 @@ FBIO sgi_interface =
 		0,			/* page_ref */
 		0L,			/* page_curpos */
 		0L,			/* page_bytes */
-		0L			/* page_pixels */
+		0L,			/* page_pixels */
+		0			/* debug */
 		};
 
 

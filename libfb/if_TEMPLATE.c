@@ -1,15 +1,18 @@
 /*
- * How to add a new device interface:
+ *  How to add a new device interface:
  *
- * Copy this file to if_devname.c
- * Do a global replace of DEVNAME with your devname.
- * Fill in the device description, max width and height, and
- *  shortname (what you will look it up as).
- * Set the unimplemented functions to "fb_null"
- *  (and remove the skeletons if you're tidy)
- * Go add an "ifdef IF_devname" to fb_generic.c.
- * Fix Makefile.loc in 3 places.
- * Replace this header.
+ *  Copy this file to if_devname.c
+ *  Do a global replace of DEVNAME with your devname.
+ *   (In the interest of non-flexnames, DEVNAME should be
+ *   about three characters; except for DEVNAME_interface)
+ *  Fill in the device description, max width and height,
+ *   default width and height, and shortname (what you will
+ *   look it up as).
+ *  Set the unimplemented functions to "fb_null"
+ *   (and remove the skeletons if you're tidy)
+ *  Go add an "ifdef IF_DEVNAME" to fb_generic.c.
+ *  Fix Makefile.loc in 3 places.
+ *  Replace this header.
  */
 
 #include "./fblocal.h"
@@ -59,7 +62,8 @@ FBIO DEVNAME_interface =  {
 	0,				/* page_ref		*/
 	0L,				/* page_curpos		*/
 	0L,				/* page_bytes		*/
-	0L				/* page_pixels		*/
+	0L,				/* page_pixels		*/
+	0				/* debug		*/
 };
 
 _LOCAL_ int
