@@ -184,7 +184,7 @@ char	**argv;
 	  if(record.c.c_matparm[0] == '\0')
 	    rt_vls_printf(&curr_cmd_list->more_default, "del");
 	  else
-	    rt_vls_printf(&curr_cmd_list->more_default, "%s", record.c.c_matparm);
+	    rt_vls_printf(&curr_cmd_list->more_default, "\"%s\"", record.c.c_matparm);
 
 	  return TCL_ERROR;
 	}
