@@ -45,7 +45,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -70,6 +70,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <sys/socket.h>
 #include <netinet/in.h>		/* For htonl(), etc */
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <sys/wait.h>
 
 #include "machine.h"
 #include "externs.h"		/* For malloc, getopt */
@@ -124,6 +130,7 @@ Usage: fbserv port_num\n\
           (for a single-frame-buffer server)\n\
 ";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -258,6 +265,7 @@ int	sub;
 /*
  *			M A I N
  */
+int
 main( argc, argv )
 int argc; char **argv;
 {
