@@ -962,7 +962,7 @@ struct nmg_exp_counts	*ecnt;
 			rt_bomb("rt_nmg_reindex(): unable to obtain struct index\n");
 		} else {
 			ret = ecnt[index].new_subscript;
-			if( ecnt[index].kind <= 0 )  {
+			if( ecnt[index].kind < 0 )  {
 				rt_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, index, ret, ecnt[index].kind);
 				rt_bomb("rt_nmg_reindex() This index not found in ecnt[]\n");
 			}
@@ -2252,7 +2252,10 @@ int				compact;
 	double_count = 0;
 	fastf_byte_count = 0;
 	for( i=0; i < m->maxindex; i++ )  {
-		if( ptrs[i] == (long *)0 )  continue;
+		if( ptrs[i] == (long *)0 )  {
+			ecnt[i].kind = -1;
+			continue;
+		}
 		kind = rt_nmg_magic_to_kind( *(ptrs[i]) );
 		ecnt[i].per_struct_index = kind_counts[kind]++;
 		ecnt[i].kind = kind;
