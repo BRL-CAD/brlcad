@@ -411,9 +411,5 @@ dotitles()
 			(void)sprintf(cp, "/%s", illump->s_path[i]->d_namep );
 		}
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-	} else {
-		/* Title of model */
-		(void)sprintf(&linebuf[0], " %s", cur_title);
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	}
 }
