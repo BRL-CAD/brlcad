@@ -121,7 +121,6 @@ char *base;		/* base address of users structure */
 		rt_log("matlib_parse:  %s=%s not a valid arg\n", name, value);
 out:		;
 	}
-	matlib_print( "matlib_parse", parsetab, base );
 }
 
 /*
@@ -136,19 +135,22 @@ char *base;		/* base address of users structure */
 
 	rt_log( "%s\n", title );
 	for( mp = parsetab; mp->mp_name != (char *)0; mp++ )  {
-		rt_log( " %s=", mp->mp_name );
 		switch( mp->mp_fmt[1] )  {
 		case 's':
-			rt_log( "%s\n", base + mp->mp_offset );
+			rt_log( " %s=%s\n", mp->mp_name,
+				base + mp->mp_offset );
 			break;
 		case 'd':
-			rt_log( "%d\n", *((int *)(base + mp->mp_offset)) );
+			rt_log( " %s=%d\n", mp->mp_name,
+				*((int *)(base + mp->mp_offset)) );
 			break;
 		case 'f':
-			rt_log( "%f\n", *((double *)(base + mp->mp_offset)) );
+			rt_log( " %s=%f\n", mp->mp_name,
+				*((double *)(base + mp->mp_offset)) );
 			break;
 		default:
-			rt_log( " %s??\n", mp->mp_fmt );
+			rt_log( " %s=%s??\n", mp->mp_name,
+				mp->mp_fmt );
 			break;
 		}
 	}
