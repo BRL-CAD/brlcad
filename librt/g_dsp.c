@@ -128,7 +128,8 @@ struct isect_stuff {
 
 #define INHIT(isp, dist, surf, cell) {\
 	if (isp->sp_is_valid) {\
-		bu_log("%s:%d ", __FILE__, __LINE__); \
+		bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, \
+			isp->ap->a_x, isp->ap->a_y); \
 		bu_bomb("trying to enter solid when inside\n"); \
 	} \
  \
@@ -149,7 +150,8 @@ struct isect_stuff {
 
 #define OUTHIT(isp, dist, surf, cell) {\
 	if (! isp->sp_is_valid) {\
-		bu_log("%s:%d ", __FILE__, __LINE__); \
+		bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, \
+			isp->ap->a_x, isp->ap->a_y); \
 		bu_bomb("Trying to set outpoint when not inside\n"); \
 	} \
 	isp->sp->seg_out.hit_dist = dist; \
@@ -166,7 +168,8 @@ struct isect_stuff {
 
 #define HIT_COMMIT(isp) { \
 	if ( ! (isp)->sp_is_valid) { \
-		bu_log("%s:%d ", __FILE__, __LINE__); \
+		bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, \
+			isp->ap->a_x, isp->ap->a_y); \
 		bu_bomb("attempt to commit an invalid seg\n"); \
 	} \
  \
@@ -548,6 +551,7 @@ int *inside;
 	FILE *fd;
 	struct seg *seg_p;
 	point_t in, out;
+	point_t in_pt, out_pt;
 
 	RES_ACQUIRE( &rt_g.res_model);
 	sprintf(buf, "dsp%d.pl", plot_file_num++);
@@ -579,19 +583,24 @@ int *inside;
 		for (BU_LIST_FOR(seg_p, seg, &isect->seglist)) {
 			VJOIN1(in, isect->r.r_pt, seg_p->seg_in.hit_dist,
 				isect->r.r_dir);
+			MAT4X3PNT(in_pt, isect->dsp->dsp_i.dsp_stom, in);
+
 			VJOIN1(out, isect->r.r_pt, seg_p->seg_out.hit_dist,
 				isect->r.r_dir);
+			MAT4X3PNT(out_pt, isect->dsp->dsp_i.dsp_stom, out);
 
-			pdv_3line(fd, in, out);
+			pdv_3line(fd, in_pt, out_pt);
 		}
 
 		if (*inside) {
 			pl_color(fd, 128, 128, 128);
 			VJOIN1(in, isect->r.r_pt, isect->sp->seg_in.hit_dist,
 				isect->r.r_dir);
+			MAT4X3PNT(in_pt, isect->dsp->dsp_i.dsp_stom, in);
 			VADD2(out, in, isect->r.r_dir);
+			MAT4X3PNT(out_pt, isect->dsp->dsp_i.dsp_stom, out);
 
-			pdv_3line(fd, in, out);
+			pdv_3line(fd, in_pt, out_pt);
 		}
 
 		fclose(fd);
@@ -617,7 +626,9 @@ int line;
 	if (NdotD < 0.0) {
 		/* Entering Solid */
 		if (*inside) {
-			bu_log("%s:%d from %d NdotD:%g\n", __FILE__, __LINE__, line, NdotD);
+			bu_log("%s:%d from %d NdotD:%g pixel(%d,%d)\n",
+				__FILE__, __LINE__, line, NdotD, 
+				isect->ap->a_x, isect->ap->a_y);
 			print_isect_segs(isect, inside);
 			bu_bomb("Can't enter DSP top from inside\n");
 		}
@@ -630,7 +641,9 @@ int line;
 	} else {
 		/* Leaving Solid */
 		if (! *inside) {
-			bu_log("%s:%d from %d NdotD:%g", __FILE__, __LINE__, line, NdotD);
+			bu_log("%s:%d from %d NdotD:%g pixel(%d,%d)\n",
+				__FILE__, __LINE__, line, NdotD,
+				isect->ap->a_x, isect->ap->a_y);
 			print_isect_segs(isect, inside);
 			bu_bomb("Can't leave DSP top from outside\n");
 		}
@@ -660,13 +673,13 @@ int inside;
 {
 	FILE *fd;
 	char buf[132];
-	vect_t tmp;
+	point_t A, B, C, D, tmp, pt;
 	vect_t A_B;
 	vect_t A_C;
 	short min_val;
 	short max_val;
 	int outside;
-	vect_t A, B, C, D;
+
 
 	VSET(A, cell[X],   cell[Y],   DSP(isect->dsp, cell[X],   cell[Y])  );
 	VSET(B, cell[X]+1, cell[Y],   DSP(isect->dsp, cell[X]+1, cell[Y])  );
@@ -688,29 +701,83 @@ int inside;
 			cell_minmax(isect->dsp, cell[X], cell[Y],
 				&min_val, &max_val);
 
+
+		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+
 			/* plot cell top bounding box */
 			pl_color(fd, 60, 60, 190);
-			pd_3move(fd, A[X], A[Y], (double)min_val);
-			pd_3cont(fd, B[X], B[Y], (double)min_val);
-			pd_3cont(fd, D[X], D[Y], (double)min_val);
-			pd_3cont(fd, C[X], C[Y], (double)min_val);
-			pd_3cont(fd, A[X], A[Y], (double)min_val);
 
-			pd_3cont(fd, A[X], A[Y], (double)max_val);
-			pd_3cont(fd, B[X], B[Y], (double)max_val);
-			pd_3cont(fd, D[X], D[Y], (double)max_val);
-			pd_3cont(fd, C[X], C[Y], (double)max_val);
-			pd_3cont(fd, A[X], A[Y], (double)max_val);
+			tmp[Z] = (double)min_val;
+
+			VMOVEN(tmp, A, 2);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3move(fd, pt);
+
+			VMOVEN(tmp, B, 2);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
+			VMOVEN(tmp, D, 2);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
+			VMOVEN(tmp, C, 2);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
+			VMOVEN(tmp, A, 2);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
+			tmp[Z] = (double)max_val;
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
+			VMOVEN(tmp, B, 2);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
+			VMOVEN(tmp, D, 2);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
+			VMOVEN(tmp, C, 2);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
+			VMOVEN(tmp, A, 2);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
 		}
+
+
 
 		/* plot the triangles */
 		pl_color(fd, 90, 220, 90);
-		pdv_3move(fd, A);
-		pdv_3cont(fd, B);
-		pdv_3cont(fd, D);
-		pdv_3cont(fd, A);
-		pdv_3cont(fd, C);
-		pdv_3cont(fd, D);
+
+		VMOVE(tmp, A);
+		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+		pdv_3move(fd, pt);
+
+		VMOVE(tmp, B);
+		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+		pdv_3cont(fd, pt);
+
+		VMOVE(tmp, D);
+		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+		pdv_3cont(fd, pt);
+
+		VMOVE(tmp, A);
+		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+		pdv_3cont(fd, pt);
+
+		VMOVE(tmp, C);
+		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+		pdv_3cont(fd, pt);
+
+		VMOVE(tmp, D);
+		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+		pdv_3cont(fd, pt);
 
 
 		/* plot the ray */
@@ -721,65 +788,83 @@ int inside;
 		else
 			pl_color(fd, 255, 255, 100);
 
-		pdv_3move(fd, curr_pt);
+
+		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, curr_pt);
+		pdv_3move(fd, pt);
 
 		if (hit1 && hit2) {
 			if (dist1 < dist2) {
 				VJOIN1(tmp, isect->r.r_pt, dist1, isect->r.r_dir);
-				pdv_3cont(fd, tmp);
+				MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+				pdv_3cont(fd, pt);
+
 				if (outside)
 					pl_color(fd, 255, 255, 100);
 				else
 					pl_color(fd, 255, 40, 40);
-				pdv_3move(fd, tmp);
+
+				pdv_3move(fd, pt);
+
 				outside = !outside;
 				VJOIN1(tmp, isect->r.r_pt, dist2, isect->r.r_dir);
-				pdv_3cont(fd, tmp);
+				MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+				pdv_3cont(fd, pt);
+
 				if (outside)
 					pl_color(fd, 255, 255, 100);
 				else
 					pl_color(fd, 255, 40, 40);
-				pdv_3move(fd, tmp);
+
+				pdv_3move(fd, pt);
 				outside = !outside;
 			} else {
 				VJOIN1(tmp, isect->r.r_pt, dist2, isect->r.r_dir);
-				pdv_3cont(fd, tmp);
+				MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+				pdv_3cont(fd, pt);
+
 				if (outside)
 					pl_color(fd, 255, 255, 100);
 				else
 					pl_color(fd, 255, 40, 40);
-				pdv_3move(fd, tmp);
+				pdv_3move(fd, pt);
 				outside = !outside;
 				VJOIN1(tmp, isect->r.r_pt, dist1, isect->r.r_dir);
-				pdv_3cont(fd, tmp);
+				MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+				pdv_3cont(fd, pt);
+
 				if (outside)
 					pl_color(fd, 255, 255, 100);
 				else
 					pl_color(fd, 255, 40, 40);
-				pdv_3move(fd, tmp);
+				pdv_3move(fd, pt);
 				outside = !outside;
 			}
 		} else if (hit1) {
 			VJOIN1(tmp, isect->r.r_pt, dist1, isect->r.r_dir);
-			pdv_3cont(fd, tmp);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
 			if (outside)
 				pl_color(fd, 255, 255, 100);
 			else
 				pl_color(fd, 255, 40, 40);
-			pdv_3move(fd, tmp);
+			pdv_3move(fd, pt);
 
 		} else if (hit2) {
 			VJOIN1(tmp, isect->r.r_pt, dist2, isect->r.r_dir);
-			pdv_3cont(fd, tmp);
+			MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
+			pdv_3cont(fd, pt);
+
 			if (outside)
 				pl_color(fd, 255, 255, 100);
 			else
 				pl_color(fd, 255, 40, 40);
-			pdv_3move(fd, tmp);
+			pdv_3move(fd, pt);
 		}
 
-		pdv_3cont(fd, next_pt);
-
+		
+		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, next_pt);
+		pdv_3cont(fd, pt);
 
 		fclose(fd);
 		RES_RELEASE( &rt_g.res_syscall);
@@ -968,15 +1053,17 @@ done:
 		if (firstND < 0) {
 			/* entering */
 			if (*inside) {
-				bu_log("%s:%d ray entering while inside dsp",
-					__FILE__, __LINE__);
+				bu_log("%s:%d ray entering while inside dsp pixel(%d,%d)",
+					__FILE__, __LINE__,
+					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
 			INHIT(isect, first, first_tri, cell);
 
 			if (secondND < 0) {
-				bu_log("%s:%d ray entering while inside dsp",
-					__FILE__, __LINE__);
+				bu_log("%s:%d ray entering while inside dsp pixel(%d,%d)",
+					__FILE__, __LINE__,
+					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
 			OUTHIT(isect, second, second_tri, cell);
@@ -985,8 +1072,9 @@ done:
 		} else {
 			/* leaving */
 			if (! *inside) {
-				bu_log("%s:%d ray leaving while outside dsp",
-					__FILE__, __LINE__);
+				bu_log("%s:%d ray leaving while outside dsp pixel(%d,%d)",
+					__FILE__, __LINE__,
+					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
 			OUTHIT(isect, first, TRI1, cell);
@@ -994,8 +1082,9 @@ done:
 			*inside = 0;
 
 			if (secondND > 0) {
-				bu_log("%s:%d ray leaving while outside dsp",
-					__FILE__, __LINE__);
+				bu_log("%s:%d ray leaving while outside dsp pixel(%d,%d)",
+					__FILE__, __LINE__,
+					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
 			INHIT(isect, second, second_tri, cell);
@@ -1010,8 +1099,9 @@ done:
 				bu_log("hit triangle 1 entering dist:%g\n", dist1);
 
 			if (*inside) {
-				bu_log("%s:%d ray entering while inside dsp",
-					__FILE__, __LINE__);
+				bu_log("%s:%d ray entering while inside dsp pixel(%d,%d)",
+					__FILE__, __LINE__,
+					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
 
@@ -1023,8 +1113,9 @@ done:
 				bu_log("hit triangle 1 leaving dist:%g\n", dist1);
 
 			if (! *inside) {
-				bu_log("%s:%d ray leaving while outside dsp",
-					__FILE__, __LINE__);
+				bu_log("%s:%d ray leaving while outside dsp pixel(%d,%d)",
+					__FILE__, __LINE__,
+					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
 			OUTHIT(isect, dist1, TRI1, cell);
@@ -1040,8 +1131,9 @@ done:
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("hit triangle 2 entering dist:%g\n", dist2);
 			if (*inside) {
-				bu_log("%s:%d ray entering while inside dsp",
-					__FILE__, __LINE__);
+				bu_log("%s:%d ray entering while inside dsp pixel(%d,%d)",
+					__FILE__, __LINE__,
+					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
 
@@ -1053,8 +1145,9 @@ done:
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("hit triangle 2 leaving dist:%g\n", dist2);
 			if (! *inside) {
-				bu_log("%s:%d ray leaving while outside dsp",
-					__FILE__, __LINE__);
+				bu_log("%s:%d ray leaving while outside dsp pixel(%d,%d)",
+					__FILE__, __LINE__,
+					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
 			OUTHIT(isect, dist2, TRI2, cell);
@@ -1103,7 +1196,8 @@ point_t pt;
 		a = DSP(isect->dsp, cell[X]+1, cell[Y]);
 		b = DSP(isect->dsp, cell[X]+1, cell[Y]+1);
 	} else {
-		bu_log("%s:%d ", __FILE__, __LINE__);
+		bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__,
+			isect->ap->a_x, isect->ap->a_y);
 		bu_log("bad surface %d, isect_cell_x_entry_wall()\n", surf);
 		bu_bomb("");
 	}
@@ -1148,7 +1242,8 @@ point_t pt;
 		a = DSP(isect->dsp, cell[X],   cell[Y]+1);
 		b = DSP(isect->dsp, cell[X]+1, cell[Y]+1);
 	} else {
-		bu_log("%s:%d ", __FILE__, __LINE__);
+		bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__,
+			isect->ap->a_x, isect->ap->a_y);
 		bu_log("bad surface %d, isect_cell_y_entry_wall()\n", surf);
 		bu_bomb("");
 	}
@@ -1414,8 +1509,9 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 					break;
 				case BBSURF(ZMIN) :
 					if (curr_dist != bbin_dist){
-						bu_log("%s:%d hitting bottom of dsp for entry while past bottom?\n",
-							__FILE__, __LINE__);
+						bu_log("%s:%d hitting bottom of dsp for entry while past bottom?  pixel(%d,%d)\n",
+							__FILE__, __LINE__,
+							isect->ap->a_x, isect->ap->a_y);
 						bu_bomb("");
 					}
 					hit = 1;
@@ -1424,7 +1520,7 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 					hit = 0;
 					break;
 				default:
-					bu_log("%s:%d surface %d ", __FILE__, __LINE__, curr_surf);
+					bu_log("%s:%d pixel(%d,%d) surface %d ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y, curr_surf);
 					bu_bomb("bad surface to intersect\n");
 				}
 
@@ -1445,7 +1541,7 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 
 				if (hit) {
 					if (!inside) {
-						bu_log("%s:%d ", __FILE__, __LINE__);
+						bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y);
 						bu_log("hit dsp and not inside g_dsp.c line:%d", __LINE__);
 						bu_bomb("");
 					}
@@ -1550,8 +1646,9 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 					break;
 				case BBSURF(ZMIN) :
 					if (curr_dist != bbin_dist) {
-						bu_log("%s:%d hitting bottom of dsp for entry while past bottom?\n",
-							__FILE__, __LINE__);
+						bu_log("%s:%d pixel(%d,%d) hitting bottom of dsp for entry while past bottom?\n",
+							__FILE__, __LINE__,
+							isect->ap->a_x, isect->ap->a_y);
 						bu_bomb("");
 					}
 					hit = 1;
@@ -1560,7 +1657,7 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 					hit = 0;
 					break;
 				default:
-					bu_log("%s:%d surface %d ", __FILE__, __LINE__, curr_surf);
+					bu_log("%s:%d pixel(%d,%d) surface %d ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y, curr_surf);
 					bu_bomb("bad surface to intersect\n");
 				}
 
@@ -1580,7 +1677,7 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 
 				if (hit) {
 					if (!inside) {
-						bu_log("%s:%d ", __FILE__, __LINE__);
+						bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y);
 						bu_log("hit and not inside g_dsp.c line:%d", __LINE__);
 						bu_bomb("");
 					}
@@ -1798,7 +1895,7 @@ register struct xray	*rp;
 {
 	register struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
-	vect_t N, T, A, B, C, D, AB, AC, AD;
+	vect_t N, tmp, A, B, C, D, AB, AC, AD;
 	int cell[2];
 
  	if (rt_g.debug & DEBUG_HF)
@@ -1808,38 +1905,44 @@ register struct xray	*rp;
 	if (hitp->hit_surfno < 0) {
 		MAT4X3VEC( N, dsp->dsp_i.dsp_stom, 
 			dsp_pl[ BBSURF(hitp->hit_surfno) ] );
+
 	} else if ( hitp->hit_surfno == TRI1 ) {
 		cell[X] = hitp->hit_vpriv[X];
 		cell[Y] = hitp->hit_vpriv[Y];
 		
-		VSET(A, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
-		VSET(B, cell[X]+1, cell[Y],   DSP(dsp, cell[X]+1, cell[Y])  );
-		VSET(D, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
+		VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
+		MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+
+		VSET(tmp, cell[X]+1, cell[Y],   DSP(dsp, cell[X]+1, cell[Y])  );
+		MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
+
+		VSET(tmp, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
+		MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+
 
 		VSUB2(AB, B, A);
 		VSUB2(AD, D, A);
 
-		VCROSS(T, AB, AD); 
-		VUNITIZE(T);
-
-		MAT4X3VEC(N, dsp->dsp_i.dsp_stom, T);
+		VCROSS(N, AB, AD); 
 
 	} else if ( hitp->hit_surfno == TRI2 ) {
 		cell[X] = hitp->hit_vpriv[X];
 		cell[Y] = hitp->hit_vpriv[Y];
 
-		VSET(A, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
-		VSET(C, cell[X],   cell[Y]+1, DSP(dsp, cell[X],   cell[Y]+1));
-		VSET(D, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
+		VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
+		MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+
+		VSET(tmp, cell[X],   cell[Y]+1, DSP(dsp, cell[X],   cell[Y]+1));
+		MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+
+		VSET(tmp, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
+		MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
 
 		VSUB2(AD, D, A);
 		VSUB2(AC, C, A);
 
 
-		VCROSS(T, AD, AC); 
-		VUNITIZE(T);
-
-		MAT4X3VEC(N, dsp->dsp_i.dsp_stom, T);
+		VCROSS(N, AD, AC); 
 
 	} else {
 		bu_log("%s:%d ", __FILE__, __LINE__);
@@ -1851,13 +1954,37 @@ register struct xray	*rp;
 	VMOVE(hitp->hit_normal, N);
 
 	
-	if (rt_g.debug & DEBUG_HF)
+	if (rt_g.debug & DEBUG_HF) {
+		vect_t tmp;
+		char buf[32];
+		FILE *fd;
 
-		bu_log("surf[%d] pt(%g %g %g) Norm[%g %g %g](%g %g %g)\n",
-			hitp->hit_surfno,
-			V3ARGS(hitp->hit_point),
-			V3ARGS(dsp_pl[ hitp->hit_surfno ]),
-			V3ARGS(N));
+		if ( hitp->hit_surfno == TRI1 || hitp->hit_surfno == TRI2 )
+			bu_log("surf[%d] cell(%d,%d) pt(%g %g %g) Norm[%g %g %g](%g %g %g)\n",
+				hitp->hit_surfno,
+				cell[X], cell[Y],
+				V3ARGS(hitp->hit_point),
+				V3ARGS(dsp_pl[ hitp->hit_surfno ]),
+				V3ARGS(N));
+		else
+			bu_log("surf[%d] cell(?,?) pt(%g %g %g) Norm[%g %g %g](%g %g %g)\n",
+				hitp->hit_surfno,
+				V3ARGS(hitp->hit_point),
+				V3ARGS(dsp_pl[ hitp->hit_surfno ]),
+				V3ARGS(N));
+
+		RES_ACQUIRE( &rt_g.res_model);
+		sprintf(buf, "dsp%d.pl", plot_file_num++);
+		RES_RELEASE( &rt_g.res_model);
+		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
+			pl_color(fd, 90, 220, 90);
+
+			pdv_3move(fd, hitp->hit_point);
+			VADD2(tmp, hitp->hit_point, N);
+			pdv_3cont(fd, tmp);
+			fclose(fd);
+		}
+	}
 }
 
 /*
