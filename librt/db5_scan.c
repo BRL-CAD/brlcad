@@ -126,46 +126,25 @@ db5_diradd(
 	   long				laddr,
 	   genptr_t			client_data )
 {
-	register struct directory **headp;
+	struct directory **headp;
 	register struct directory *dp;
-	char *cp=NULL;
 	struct bu_vls local;
 
 	RT_CK_DBI( dbip );
 
-	if( db_lookup( dbip, rip->name.ext_buf, LOOKUP_QUIET ) != DIR_NULL )  {
-		register int	c;
-
-		bu_vls_init(&local);
-		bu_vls_strcpy( &local, "A_" );
-		bu_vls_strcat( &local, rip->name.ext_buf );
-		cp = bu_vls_addr(&local);
-
-		for( c = 'A'; c <= 'Z'; c++ )  {
-			*cp = c;
-			if( db_lookup( dbip, cp, 0 ) == DIR_NULL )
-				break;
-		}
-		if( c > 'Z' )  {
-			bu_log("db5_diradd_handler: Duplicate of name '%s', ignored\n",
-				cp );
-			bu_vls_free(&local);
-			return( DIR_NULL );
-		}
-		bu_log("db5_diradd_handler: Duplicate of '%s', given temporary name '%s'\n",
-			rip->name.ext_buf, cp );
+	bu_vls_init(&local);
+	bu_vls_strcpy(&local, rip->name.ext_buf);
+	if (db_dircheck(dbip, &local, 0, &headp) < 0) {
+		bu_vls_free(&local);
+		return DIR_NULL;
 	}
 
 	/* Duplicates the guts of db_diradd() */
 	RT_GET_DIRECTORY( dp, &rt_uniresource );
 	RT_CK_DIR(dp);
 	BU_LIST_INIT( &dp->d_use_hd );
-	if( cp )  {
-		RT_DIR_SET_NAMEP( dp, cp );		/* sets d_namep */
-		bu_vls_free( &local );
-	} else {
-		RT_DIR_SET_NAMEP( dp, rip->name.ext_buf ); /* sets d_namep */
-	}
+	RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
+	bu_vls_free(&local);
 	dp->d_un.file_offset = laddr;
 	dp->d_major_type = rip->major_type;
 	dp->d_minor_type = rip->minor_type;
@@ -208,8 +187,6 @@ db5_diradd(
 	dp->d_animate = NULL;
 	dp->d_nref = 0;
 	dp->d_uses = 0;
-
-	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
 	dp->d_forw = *headp;
 	*headp = dp;
 

@@ -129,6 +129,76 @@ CONST char *str;
 	return( RT_DBHASH(sum) );
 }
 
+/*
+ *  Name -
+ *	D B _ D I R C H E C K
+ *
+ *  Description -
+ *	This routine ensures that ret_name is not already in the
+ *	directory. If it is, it tries a fixed number of times to
+ *	modify ret_name before giving up. Note - most of the time,
+ *	the hash for ret_name is computed once.
+ *
+ *  Inputs -
+ *	dbip		database instance pointer
+ *	ret_name	the original name
+ *	noisy		to blather or not
+ *
+ *  Outputs -
+ *	ret_name	the name to use
+ *	headp		pointer to the first (struct directory *) in the bucket
+ *
+ *  Returns -
+ *	 0	success
+ *	<0	fail
+ */
+int
+db_dircheck(struct db_i		*dbip,
+	    struct bu_vls	*ret_name,
+	    int			noisy,
+	    struct directory	***headp)
+{
+	register struct directory	*dp;
+	register char			*cp = bu_vls_addr(ret_name);
+	register char			n0 = cp[0];
+	register char			n1 = cp[1];
+
+	/* Compute hash only once (almost always the case) */
+	*headp = &(dbip->dbi_Head[db_dirhash(cp)]);
+
+	for (dp = **headp; dp != DIR_NULL; dp=dp->d_forw) {
+		register char	*this;
+		if (n0 == *(this=dp->d_namep)  &&	/* speed */
+		    n1 == this[1]  &&			/* speed */
+		    strcmp(cp, this) == 0) {
+			/* Name exists in directory already */
+			register int	c;
+
+			bu_vls_strcpy(ret_name, "A_");
+			bu_vls_strcat(ret_name, this);
+
+			for (c = 'A'; c <= 'Z'; c++) {
+				*cp = c;
+				if (db_lookup(dbip, cp, noisy) == DIR_NULL)
+					break;
+			}
+			if (c > 'Z') {
+				bu_log("db_dircheck: Duplicate of name '%s', ignored\n",
+				       cp);
+				return -1;	/* fail */
+			}
+			bu_log("db_dircheck: Duplicate of '%s', given temporary name '%s'\n",
+			       cp+2, cp);
+
+			/* no need to recurse, simply recompute the hash and break */
+			*headp = &(dbip->dbi_Head[db_dirhash(cp)]);
+			break;
+		}
+	}
+
+	return 0;	/* success */
+}
+
 
 /*
  *			D B _ L O O K U P
@@ -194,6 +264,7 @@ genptr_t		ptr;		/* for db version 5, this is a pointer to an unsigned char (mino
 {
 	struct directory **headp;
 	register struct directory *dp;
+	struct bu_vls	local;
 
 	RT_CK_DBI(dbip);
 
@@ -207,48 +278,18 @@ genptr_t		ptr;		/* for db version 5, this is a pointer to an unsigned char (mino
 		return DIR_NULL;
 	}
 
-	/* Compute hash only once */
-	headp = &(dbip->dbi_Head[db_dirhash(name)]);
-
-	/* Use inline version of db_lookup here, to save re-hash */
-	{
-		register char	n0 = name[0];
-		register char	n1 = name[1];
-		for(dp = *headp; dp != DIR_NULL; dp=dp->d_forw )  {
-			register char	*this;
-			if(
-				n0 == *(this=dp->d_namep)  &&	/* speed */
-				n1 == this[1]  &&	/* speed */
-				strcmp( name, this ) == 0
-			)  {
-				/* Name exists in directory already */
-				struct bu_vls	local;
-				register int	c;
-
-				bu_vls_init( &local );
-				for( c = 'A'; c <= 'Z'; c++ )  {
-					bu_vls_printf( &local, "%c_%s", c, this );
-					if( db_lookup( dbip, bu_vls_addr( &local ), 0 ) == DIR_NULL )
-						break;
-				}
-				if( c > 'Z' )  {
-					bu_log("db_diradd: Duplicate of name '%s', ignored\n",
-						bu_vls_addr( &local ) );
-					return( DIR_NULL );
-				}
-				bu_log("db_diradd: Duplicate of '%s', given temporary name '%s'\n",
-					name, bu_vls_addr( &local ) );
-				/* Use recursion to simplify the code */
-				return db_diradd( dbip, bu_vls_addr( &local ), laddr, len, flags, ptr );
-				bu_vls_free( &local );
-			}
-		}
+	bu_vls_init(&local);
+	bu_vls_strcpy(&local, name);
+	if (db_dircheck(dbip, &local, 0, &headp) < 0) {
+		bu_vls_free(&local);
+		return DIR_NULL;
 	}
 
 	/* 'name' not found in directory, add it */
-	RT_GET_DIRECTORY( dp, &rt_uniresource );
+	RT_GET_DIRECTORY(dp, &rt_uniresource);
 	RT_CK_DIR(dp);
-	RT_DIR_SET_NAMEP( dp, name );		/* sets d_namep */
+	RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
+	bu_vls_free(&local);
 	dp->d_un.file_offset = laddr;
 	dp->d_flags = flags & ~(RT_DIR_INMEM);
 	dp->d_len = len;
