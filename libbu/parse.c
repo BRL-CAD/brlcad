@@ -614,7 +614,7 @@ bu_struct_lookup( sdp, name, base, value )
 register CONST struct bu_structparse	*sdp;	/* structure description */
 register CONST char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+CONST char			* CONST	value;	/* string containing value */
 {
 	register char *loc;
 	int i, retval = 0;
@@ -687,10 +687,12 @@ CONST char				*value;	/* string containing value */
 			{	register short *ip = (short *)loc;
 				register short tmpi;
 				register CONST char *cp;
-				for (i=0 ; i < sdp->sp_count && *value ; ++i){
-					tmpi = atoi( value );
+				register CONST char *pv = value;
 
-					cp = value;
+				for (i=0 ; i < sdp->sp_count && *pv ; ++i){
+					tmpi = atoi( pv );
+
+					cp = pv;
 					if (*cp && (*cp == '+' || *cp == '-'))
 						cp++;
 
@@ -700,17 +702,17 @@ CONST char				*value;	/* string containing value */
 					/* make sure we actually had an
 					 * integer out there
 					 */
-					if (cp == value ||
-					    (cp == value+1 &&
-					    (*value == '+' || *value == '-'))){
+					if (cp == pv ||
+					    (cp == pv+1 &&
+					    (*pv == '+' || *pv == '-'))){
 					    retval = -2;
 					    break;
 					} else {
 						*(ip++) = tmpi;
-						value = cp;
+						pv = cp;
 					}
 					/* skip the separator */
-					if (*value) value++;
+					if (*pv) pv++;
 				}
 			}
 			break;
@@ -718,17 +720,19 @@ CONST char				*value;	/* string containing value */
 			{	register int *ip = (int *)loc;
 				register int tmpi;
 				register char CONST *cp;
+				register CONST char *pv = value;
+
 				/* Special case:  '=!' toggles a boolean */
-				if( *value == '!' )  {
+				if( *pv == '!' )  {
 					*ip = *ip ? 0 : 1;
-					value++;
+					pv++;
 					break;
 				}
 				/* Normal case: an integer */
-				for (i=0 ; i < sdp->sp_count && *value ; ++i){
-					tmpi = atoi( value );
+				for (i=0 ; i < sdp->sp_count && *pv ; ++i){
+					tmpi = atoi( pv );
 
-					cp = value;
+					cp = pv;
 					if (*cp && (*cp == '+' || *cp == '-'))
 						cp++;
 
@@ -738,17 +742,17 @@ CONST char				*value;	/* string containing value */
 					/* make sure we actually had an
 					 * integer out there
 					 */
-					if (cp == value ||
-					    (cp == value+1 &&
-					    (*value == '+' || *value == '-'))){
+					if (cp == pv ||
+					    (cp == pv+1 &&
+					    (*pv == '+' || *pv == '-'))){
 					    retval = -2;
 					    break;
 					} else {
 						*(ip++) = tmpi;
-						value = cp;
+						pv = cp;
 					}
 					/* skip the separator */
-					if (*value) value++;
+					if (*pv) pv++;
 				}
 			}
 			break;
