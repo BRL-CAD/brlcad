@@ -43,6 +43,16 @@ struct cmap {
 	unsigned char blu;
 } cmap[4096];
 
+#if !HAS_SGIGL
+int
+main(argc,argv)
+int argc;
+char **argv;
+{
+	fprintf(stderr, "sgi-pix:  This program only works on SGI machines\n");
+	exit(1);
+}
+#else
 static char usage[] = "\
 Usage: sgi-pix [x1 x2 y1 y2] [outfile]\n";
 
@@ -51,10 +61,6 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-#if !HAS_SGIGL
-	fprintf(stderr, "sgi-pix:  This program only works on SGI machines\n");
-	exit(1);
-#else
 	int i, y, gotfirst;
 	int x1, x2, y1, y2;
 	int xsize, ysize;
@@ -156,8 +162,8 @@ char **argv;
 	}
 #endif
 	return(0);
-#endif
 }
+#endif
 
 /*
  *  This block of code is for SGI 3030 machines, and 4Ds running Irix 3.
