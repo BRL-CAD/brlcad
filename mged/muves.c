@@ -6,6 +6,7 @@
 
 #include <signal.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -355,7 +356,7 @@ char    *argv[];
 		char *ptr;
 		char *c;
 		int is_constant=1;
-		int is_def;
+		int is_def = 0;
 		int i;
 		int in_subscript;
 		char *equal_sign=(char *)NULL;
