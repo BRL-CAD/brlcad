@@ -110,8 +110,8 @@ extern struct dm dm_X;
 extern struct dm dm_XGL;
 #endif
 
-#ifdef DM_GL
-extern struct dm dm_gl;
+#ifdef DM_OGL
+extern struct dm dm_ogl;
 #endif
 
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
@@ -156,8 +156,8 @@ static struct dm *which_dm[] = {
 #ifdef DM_PS
 	&dm_Ps,
 #endif
-#ifdef DM_GL
-	&dm_gl,
+#ifdef DM_OGL
+	&dm_ogl,
 #endif
 	0
 };
