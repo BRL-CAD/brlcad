@@ -737,9 +737,9 @@ CONST struct partition *pp;
 
 	RT_CK_REGION(*fr1);
 	RT_CK_REGION(*fr2);
-
+#if 0
 	bu_log("Resolving FASTGEN volume/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
-
+#endif
 	rt_get_region_seglist_for_partition( &sl1, pp, *fr1 );
 	rt_get_region_seglist_for_partition( &sl2, pp, *fr2 );
 
@@ -807,9 +807,9 @@ struct application *ap;
 	RT_CK_REGION(*fr2);
 	RT_CK_PT(pp);
 	RT_CK_AP(ap);
-
+#if 0
 	bu_log("Resolving FASTGEN plate/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
-
+#endif
 	prev = pp->pt_back;
 	if( prev->pt_magic == PT_HD_MAGIC )  {
 		/* No prev partition, this is the first.  d=0, plate wins */
@@ -909,9 +909,9 @@ struct partition	*InputHdp;
 	if( n_fastgen >= 2 )  {
 		struct region **fr1;
 		struct region **fr2;
-
+#if 0
 		bu_log("I see %d FASTGEN overlaps in this partition\n", n_fastgen);
-
+#endif
 		/*
 		 *  First, resolve volume_mode/volume_mode overlaps
 		 *  because they are a simple choice.
@@ -2114,4 +2114,181 @@ register CONST struct partition	*pp;
 		bu_bomb("rt_tree_max_raynum: bad op\n");
 	}
 	return 0;
+}
+
+void
+rt_rebuild_overlaps( PartHdp, ap, rebuild_fastgen_plates_only )
+struct partition	*PartHdp;
+struct application	*ap;
+int			rebuild_fastgen_plates_only;
+{
+	struct partition	*pp, *next, *curr;
+	struct region		*pp_reg;
+	struct partition	*pp_open;
+	struct bu_ptbl		open_parts;
+	int			i, j;
+
+/* rt_pr_partitions( ap->a_rt_i, PartHdp, "In rt_rebuild_overlaps:" ); */
+
+	RT_CK_PT_HD(PartHdp);
+	RT_CK_AP(ap);
+
+	bu_ptbl_init( &open_parts, 0, "Open partitions" );
+
+	pp = PartHdp->pt_forw;
+	while( pp != PartHdp )
+	{
+		next = pp->pt_forw;
+
+		if( rebuild_fastgen_plates_only && pp->pt_regionp->reg_is_fastgen != REGION_FASTGEN_PLATE )
+		{
+			bu_ptbl_trunc( &open_parts, 0 );
+			pp = next;
+			continue;
+		}
+
+		for( i=0 ; i<BU_PTBL_END( &open_parts ) ; i++ )
+		{
+			int keep_open=0;
+
+			pp_open = (struct partition *)BU_PTBL_GET( &open_parts, i );
+			if( !pp_open )
+				continue;
+
+			if( pp->pt_overlap_reg )
+			{
+				j = -1;
+				while( (pp_reg = pp->pt_overlap_reg[++j]) )
+				{
+					if( pp_reg == (struct region *)(-1) )
+						continue;
+
+					if( pp_reg == pp_open->pt_regionp )
+					{
+						/* add this partition to pp_open */
+						pp_open->pt_outseg = pp->pt_outseg;
+						pp_open->pt_outhit = pp->pt_outhit;
+						pp_open->pt_outflip = pp->pt_outflip;
+						bu_ptbl_cat_uniq( &pp_open->pt_seglist, &pp->pt_seglist );
+
+						/* mark it as used */
+						pp->pt_overlap_reg[j] = (struct region *)(-1);
+						if( pp_reg == pp->pt_regionp )
+							pp->pt_regionp = (struct region *)NULL;
+
+						/* keep pp_open open */
+						keep_open = 1;
+					}
+				}
+			}
+			else
+			{
+				if( pp->pt_regionp == pp_open->pt_regionp )
+				{
+					/* add this partition to pp_open */
+					pp_open->pt_outseg = pp->pt_outseg;
+					pp_open->pt_outhit = pp->pt_outhit;
+					pp_open->pt_outflip = pp->pt_outflip;
+					bu_ptbl_cat_uniq( &pp_open->pt_seglist, &pp->pt_seglist );
+
+					/* eliminate this partition */
+					BU_LIST_DEQUEUE( (struct bu_list *)pp )
+					FREE_PT( pp, ap->a_resource )
+					pp = (struct partition *)NULL;
+
+					/* keep pp_open open */
+					keep_open = 1;
+				}
+			}
+
+			if( !keep_open )
+			{
+				BU_PTBL_CLEAR_I( &open_parts, i );
+			}
+		}
+
+		/* if all region claims have been removed, eliminate the partition */
+		if( pp && pp->pt_overlap_reg )
+		{
+			int reg_count=0;
+
+			/* count remaining region claims */
+			j = -1;
+			while( (pp_reg = pp->pt_overlap_reg[++j]) )
+				if( pp_reg != (struct region *)(-1) )
+					reg_count++;
+
+			if( !reg_count )
+			{
+				BU_LIST_DEQUEUE( (struct bu_list *)pp )
+				bu_free( (char *)pp->pt_overlap_reg, "overlap list" );
+				FREE_PT( pp, ap->a_resource )
+				pp = (struct partition *)NULL;
+			}
+		}
+
+		/* any remaining region claims must produce new partitions */
+		if( pp )
+		{
+			if( pp->pt_overlap_reg )
+			{
+				j = -1;
+				curr = pp;
+				while( (pp_reg = pp->pt_overlap_reg[++j]) )
+				{
+					struct partition *new_pp;
+
+					if( pp_reg == (struct region *)(-1) )
+						continue;
+
+					if( rebuild_fastgen_plates_only && 
+						pp_reg->reg_is_fastgen != REGION_FASTGEN_PLATE )
+							continue;
+
+					/* if the original partition is available, just use it */
+					if( !pp->pt_regionp )
+					{
+						pp->pt_regionp = pp_reg;
+						bu_ptbl_ins( &open_parts, (long *)pp );
+					}
+					else
+					{
+						/* create a new partition, link it to the end of the current pp,
+						 * and add it to the open list */
+						RT_DUP_PT( ap->a_rt_i, new_pp, pp, ap->a_resource )
+						new_pp->pt_regionp = pp_reg;
+						new_pp->pt_overlap_reg = (struct region **)NULL;
+						BU_LIST_APPEND( (struct bu_list *)curr, (struct bu_list *)new_pp )
+						bu_ptbl_ins( &open_parts, (long *)new_pp );
+						curr = new_pp;
+					}
+				}
+			}
+			else
+			{
+				if( rebuild_fastgen_plates_only )
+				{
+					if( pp->pt_regionp->reg_is_fastgen == REGION_FASTGEN_PLATE )
+					{
+						bu_ptbl_ins( &open_parts, (long *)pp );
+					}
+				}
+				else
+				{
+					bu_ptbl_ins( &open_parts, (long *)pp );
+				}
+			}
+			if( pp->pt_overlap_reg )
+			{
+				bu_free( (char *)pp->pt_overlap_reg, "overlap list" );
+				pp->pt_overlap_reg = (struct region **)NULL;
+			}
+		}
+		pp = next;
+	}
+
+	bu_ptbl_free( &open_parts );
+
+/* rt_pr_partitions( ap->a_rt_i, PartHdp, "partitions at end of rt_rebuild_overlaps:" ); */
+
 }
