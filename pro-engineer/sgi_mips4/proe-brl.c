@@ -25,6 +25,7 @@
 #include <string.h>
 #include <wchar.h>
 #include "ProToolkit.h"
+#include "ProAssembly.h"
 #include "ProMessage.h"
 #include "ProMenuBar.h"
 #include "ProMode.h"
@@ -529,12 +530,10 @@ make_legal( char *name )
 
 	c = (unsigned char *)name;
 	while( *c ) {
-		if( *c < '0' ) {
+		if( *c <= ' ' || *c == '/' ) {
 			*c = '_';
 		} else if( *c > '~' ) {
 			*c = '_';
-		} else if( *c == '/' ) {
-			*c = '_';	
 		}
 		c++;
 	}
@@ -568,9 +567,19 @@ create_unique_name( char *name )
 	make_legal( bu_vls_addr( &tmp_name ) );
 	initial_length = bu_vls_strlen( &tmp_name );
 	while( bu_rb_insert( brlcad_names, bu_vls_addr( &tmp_name ) ) < 0 ) {
+		char *data;
+		if( (data=(char *)bu_rb_search1( brlcad_names, bu_vls_addr( &tmp_name ) ) ) != NULL ) {
+			if( logger ) {
+				fprintf( logger, "\t\tfound duplicate (%s)\n", data );
+				fflush( logger );
+			}
+		}
 		bu_vls_trunc( &tmp_name, initial_length );
 		count++;
 		bu_vls_printf( &tmp_name, "_%d", count );
+		if( logger ) {
+			fprintf( logger, "\tTrying %s\n", bu_vls_addr( &tmp_name ) );
+		}
 	}
 
 	if( logger ) {
@@ -666,7 +675,7 @@ free_csg_ops()
 		ptr2 = ptr1->next;
 		bu_vls_free( &ptr1->name );
 		bu_vls_free( &ptr1->dbput );
-		free( ptr1 );
+		bu_free( ptr1, "csg op" );
 		ptr1 = ptr2;
 	}
 
@@ -768,7 +777,8 @@ add_to_empty_list( char *name )
 	}
 
 	if( empty_parts_root == NULL ) {
-		empty_parts_root = (struct empty_parts *)malloc( sizeof( struct empty_parts ) );
+		empty_parts_root = (struct empty_parts *)bu_malloc( sizeof( struct empty_parts ),
+								    "empty parts root");
 		ptr = empty_parts_root;
 	} else {
 		ptr = empty_parts_root;
@@ -780,7 +790,8 @@ add_to_empty_list( char *name )
 			ptr = ptr->next;
 		}
 		if( !found ) {
-			ptr->next = (struct empty_parts *)malloc( sizeof( struct empty_parts ) );
+			ptr->next = (struct empty_parts *)bu_malloc( sizeof( struct empty_parts ),
+								     "empty parts node");
 			ptr = ptr->next;
 		}
 	}
@@ -822,11 +833,15 @@ free_empty_parts()
 	while( ptr ) {
 		prev = ptr;
 		ptr = ptr->next;
-		free( prev->name );
-		free( prev );
+		bu_free( prev->name, "empty part node name" );
+		bu_free( prev, "empty part node" );
 	}
 
 	empty_parts_root = NULL;
+
+	if( logger ) {
+		fprintf( logger, "Free empty parts list done\n" );
+	}
 }
 
 /* routine to check for bad triangles
@@ -882,7 +897,8 @@ add_triangle_and_normal( int v1, int v2, int v3, int n1, int n2, int n3 )
 	if( curr_tri >= max_tri ) {
 		/* allocate more memory for triangles and normals */
 		max_tri += TRI_BLOCK;
-		part_tris = (ProTriangle *)realloc( part_tris, sizeof( ProTriangle ) * max_tri );
+		part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
+						       "part triangles");
 		if( !part_tris ) {
 			(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
 						"Failed to allocate memory for part triangles" );
@@ -890,7 +906,8 @@ add_triangle_and_normal( int v1, int v2, int v3, int n1, int n2, int n3 )
 			(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 			exit( 1 );
 		}
-		part_norms = (int *)realloc( part_norms, sizeof( int ) * max_tri * 3 );
+		part_norms = (int *)bu_realloc( part_norms, sizeof( int ) * max_tri * 3,
+						"part normals");
 	}
 
 	/* fill in triangle info */
@@ -914,7 +931,8 @@ add_triangle( int v1, int v2, int v3 )
 	if( curr_tri >= max_tri ) {
 		/* allocate more memory for triangles */
 		max_tri += TRI_BLOCK;
-		part_tris = (ProTriangle *)realloc( part_tris, sizeof( ProTriangle ) * max_tri );
+		part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
+						       "part rtiangles");
 		if( !part_tris ) {
 			(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
 						"Failed to allocate memory for part triangles" );
@@ -989,8 +1007,9 @@ Add_to_feature_delete_list( int id )
 {
 	if( feat_id_count >= feat_id_len ) {
 		feat_id_len += FEAT_ID_BLOCK;
-		feat_ids_to_delete = (int *)realloc( (char *)feat_ids_to_delete,
-						     feat_id_len * sizeof( int ) );
+		feat_ids_to_delete = (int *)bu_realloc( (char *)feat_ids_to_delete,
+						     feat_id_len * sizeof( int ),
+							"fetaure ids to delete");
 
 	}
 	feat_ids_to_delete[feat_id_count++] = id;
@@ -1305,11 +1324,11 @@ Subtract_hole()
 		if( diameter < min_hole_diameter )
 			return 1;
 		if( !csg_root ) {
-			csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+			csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 			csg = csg_root;
 			csg->next = NULL;
 		} else {
-			csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+			csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
 			csg->next = csg_root;
 			csg_root = csg;
 		}
@@ -1354,11 +1373,11 @@ Subtract_hole()
 		if( add_cbore == PRO_HLE_ADD_CBORE ) {
 
 			if( !csg_root ) {
-				csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 				csg = csg_root;
 				csg->next = NULL;
 			} else {
-				csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
 				csg->next = csg_root;
 				csg_root = csg;
 			}
@@ -1392,11 +1411,11 @@ Subtract_hole()
 			double cs_radius=cs_diam / 2.0;
 
 			if( !csg_root ) {
-				csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 				csg = csg_root;
 				csg->next = NULL;
 			} else {
-				csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
 				csg->next = csg_root;
 				csg_root = csg;
 			}
@@ -1431,11 +1450,11 @@ Subtract_hole()
 		}
 
 		if( !csg_root ) {
-			csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+			csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 			csg = csg_root;
 			csg->next = NULL;
 		} else {
-			csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+			csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
 			csg->next = csg_root;
 			csg_root = csg;
 		}
@@ -1469,11 +1488,11 @@ Subtract_hole()
 			double tip_depth;
 
 			if( !csg_root ) {
-				csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
 				csg = csg_root;
 				csg->next = NULL;
 			} else {
-				csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
 				csg->next = csg_root;
 				csg_root = csg;
 			}
@@ -1778,7 +1797,8 @@ output_part( ProMdl model )
 {
 	ProName part_name;
 	Pro_surf_props props;
-	char sol_name[PRO_NAME_SIZE + 30];
+	char *brl_name=NULL;
+	char *sol_name=NULL;
 	ProSurfaceTessellationData *tess=NULL;
 	ProError status;
 	ProMdlType type;
@@ -2043,10 +2063,12 @@ output_part( ProMdl model )
 
 			/* actually output the part */
 			/* first the BOT solid with a made-up name */
-			sprintf( sol_name, "s.%s", get_brlcad_name( curr_part_name ) );
+			brl_name = get_brlcad_name( curr_part_name );
+			sol_name = (char *)bu_malloc( strlen( brl_name ) + 3, "aol_name" );
+			sprintf( sol_name, "s.%s", brl_name );
 			if( logger ) {
 				fprintf( logger, "Creating bot primitive (%s) for part %s\n",
-					 sol_name, get_brlcad_name( curr_part_name ) );
+					 sol_name, brl_name );
 			}
 			fprintf( outfp, "put %s bot mode volume orient no V { ", sol_name );
 			for( i=0 ; i<vert_tree_root->curr_vert ; i++ ) {
@@ -2083,6 +2105,7 @@ output_part( ProMdl model )
 			/* build the tree for this region */
 			bu_vls_init( &tree );
 			build_tree( sol_name, &tree );
+			bu_free( sol_name, "sol_name" );
 			output_csg_prims();
 
 			/* get the surface properties for the part
@@ -2242,7 +2265,7 @@ free_assem( struct asm_head *curr_assem )
 	while( ptr ) {
 		tmp = ptr;
 		ptr = ptr->next;
-		free( (char *)tmp );
+		bu_free( (char *)tmp, "asm member" );
 	}
 }
 
@@ -2270,6 +2293,7 @@ output_assembly( ProMdl model )
 	ProName asm_name;
 	ProMassProperty mass_prop;
 	ProError status;
+	ProBoolean is_exploded;
 	struct asm_head curr_assem;
 	struct asm_member *member;
 	int member_count=0;
@@ -2310,6 +2334,31 @@ output_assembly( ProMdl model )
 	strcpy( curr_assem.name, curr_part_name );
 	curr_assem.members = NULL;
 	curr_assem.model = model;
+
+	/* make sure this assembly is not "exploded"!!!
+	 * some careless designers leave assemblies in exploded mode
+	 */
+
+	status = ProAssemblyIsExploded( model, &is_exploded );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to get explode status of %s\n", curr_assem.name );
+		if( logger ) {
+			fprintf( logger, "Failed to get explode status of %s\n", curr_assem.name );
+		}
+	}
+
+	if( is_exploded ) {
+		/* unexplode this assembly !!!! */
+		status = ProAssemblyUnexplode( model );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to un-explode assembly %s\n", curr_assem.name );
+			fprintf( stderr, "\tcomponents will be incorrectly positioned\n" );
+			if( logger ) {
+				fprintf( logger, "Failed to un-explode assembly %s\n", curr_assem.name );
+				fprintf( logger, "\tcomponents will be incorrectly positioned\n" );
+			}
+		}
+	}
 
 	/* use feature visit to get info about assembly members.
 	 * also calls output functions for members (parts or assemblies)
@@ -2467,12 +2516,13 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 			prev = member;
 			member = member->next;
 		}
-		member->next = (struct asm_member *)malloc( sizeof( struct asm_member ) );
+		member->next = (struct asm_member *)bu_malloc( sizeof( struct asm_member ), "asm member" );
 		prev = member;
 		member = member->next;
 	} else {
-		curr_assem->members = (struct asm_member *)malloc(
-					 sizeof( struct asm_member ) );
+		curr_assem->members = (struct asm_member *)bu_malloc(
+					 sizeof( struct asm_member ),
+					 "asm member");
 		member = curr_assem->members;
 	}
 
@@ -2536,7 +2586,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 			} else {
 				curr_assem->members = NULL;
 			}
-			free( (char *)member );
+			bu_free( (char *)member, "asm member" );
 		}
 		break;
 	}
@@ -2764,10 +2814,6 @@ create_name_hash( FILE *name_fd )
 	struct bu_hash_entry *entry=NULL;
 	int new_entry=0;
 	long line_no=0;
-	struct bu_vls error_msg;
-	wchar_t w_error_msg[2048];
-	int dialog_return=0;
-	ProError status;
 
 	htbl = bu_create_hash_tbl( NUM_HASH_TABLE_BINS );
 
@@ -2776,7 +2822,6 @@ create_name_hash( FILE *name_fd )
 	}
 	while( fgets( line, MAX_LINE_LEN, name_fd ) ) {
 		char *part_no, *part_name, *ptr;
-
 		line_no++;
 
 		if( logger ) {
@@ -2785,56 +2830,25 @@ create_name_hash( FILE *name_fd )
 
 		ptr = strtok( line, " \t\n" );
 		if( !ptr ) {
-			free_hash_values( htbl );
-			bu_log( "*****Error processing part name file at line #%d:\n", line_no );
-			bu_log( "\t%s\n", line );
-			status = ProUIDialogCreate( "proe_brl_gen_error", "proe_brl_gen_error" );
-			if( status != PRO_TK_NO_ERROR ) {
-				fprintf( stderr, "Failed to create error dialog (%d)\n", status );
-			}
-			(void)ProUIPushbuttonActivateActionSet( "proe_brl_gen_error",
-								"ok_button",
-								kill_gen_error_dialog, NULL );
-			bu_vls_init( &error_msg );
-			bu_vls_printf( &error_msg,
-				       "\nError while processing part name file (line #%d):\n\n",
-				       line_no );
-			bu_vls_strcat( &error_msg, line );
-			ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
-			(void)ProUITextareaValueSet( "proe_brl_gen_error", "error_message", w_error_msg );
-			(void)ProUIDialogActivate( "proe_brl_gen_error", &dialog_return );
-			bu_vls_free( &error_msg );
-			bu_hash_tbl_free( htbl );
-			return( (struct bu_hash_tbl *)NULL );
+			bu_log( "Warning: unrecognizable line in part name file:\n\t%s\n", line );	
+			bu_log( "\tIgnoring\n" );
+			continue;
 		}
 		part_no = bu_strdup( ptr );
 		lower_case( part_no );
 		ptr = strtok( (char *)NULL, " \t\n" );
 		if( !ptr ) {
-			free_hash_values( htbl );
-			bu_log( "******Error processing part name file at line #%d:\n", line_no );
-			bu_log( "\t%s\n", line );
-			status = ProUIDialogCreate( "proe_brl_gen_error", "proe_brl_gen_error" );
-			if( status != PRO_TK_NO_ERROR ) {
-				fprintf( stderr, "Failed to create error dialog (%d)\n", status );
+			bu_log( "Warning: unrecognizable line in part name file:\n\t%s\n", line );	
+			bu_log( "\tIgnoring\n" );
+			continue;
+		}
+		entry = bu_hash_add_entry( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
+		if( !new_entry ) {
+			if( logger ) {
+				fprintf( logger, "\t\t\tHash table entry already exists for above part\n" );
 			}
-			status = ProUIPushbuttonActivateActionSet( "proe_brl_gen_error",
-								"ok_button",
-								kill_gen_error_dialog, NULL );
-			if( status != PRO_TK_NO_ERROR ) {
-				fprintf( stderr, "Failed to set button action for error dialog (%d)\n", status );
-			}
-			bu_vls_init( &error_msg );
-			bu_vls_printf( &error_msg,
-				       "\nError while processing part name file (line #%d):\n\n",
-				       line_no );
-			bu_vls_strcat( &error_msg, line );
-			ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
-			(void)ProUITextareaValueSet( "proe_brl_gen_error", "error_message", w_error_msg );
-			(void)ProUIDialogActivate( "proe_brl_gen_error", &dialog_return );
-			bu_vls_free( &error_msg );
-			bu_hash_tbl_free( htbl );
-			return( (struct bu_hash_tbl *)NULL );
+			bu_free( part_no, "part_no" );
+			continue;
 		}
 		lower_case( ptr );
 		part_name = create_unique_name( ptr );
@@ -2843,20 +2857,11 @@ create_name_hash( FILE *name_fd )
 			fprintf( logger, "\t\tpart_no = %s, part name = %s\n", part_no, part_name );
 		}
 
-		entry = bu_hash_add_entry( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
 
-		if( new_entry ) {
-			if( logger ) {
-				fprintf( logger, "\t\t\tCreating new hash tabel entry for above names\n" );
-			}
-			bu_set_hash_value( entry, (unsigned char *)part_name );
-		} else {
-			if( logger ) {
-				fprintf( logger, "\t\t\tHash table entry already exists for above part\n" );
-			}
-			bu_free( part_no, "part_no" );
-			bu_free( part_name, "part_name" );
+		if( logger ) {
+			fprintf( logger, "\t\t\tCreating new hash tabel entry for above names\n" );
 		}
+		bu_set_hash_value( entry, (unsigned char *)part_name );
 	}
 
 	return( htbl );
@@ -2878,6 +2883,22 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	char output_file[128];
 	char name_file[128];
 	char log_file[128];
+	int ret_status=0;
+
+	empty_parts_root = (struct empty_parts *)NULL;
+	brlcad_names = (bu_rb_tree *)NULL;
+
+	ProStringToWstring( tmp_line, "Not processing" );
+	status = ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
+	}
+	status = ProUIDialogActivate( "proe_brl", &ret_status );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
+			 status );
+		fprintf( stderr, "\t dialog returned %d\n", ret_status );
+	}
 
 	/* get the name of the log file */
 	status = ProUIInputpanelValueGet( "proe_brl", "log_file", &tmp_str );
@@ -3033,7 +3054,9 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* open log file, if a name was provided */
 	if( strlen( log_file ) > 0 ) {
-		if( (logger=fopen( log_file, "w" ) ) == NULL ) {
+		if( strcmp( log_file, "stderr" ) == 0 ) {
+			logger = stderr;
+		} else if( (logger=fopen( log_file, "w" ) ) == NULL ) {
 			(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open log file" );
 			ProMessageClear();
 			fprintf( stderr, "Cannot open log file\n" );
@@ -3096,6 +3119,19 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		if( logger ) {
 			fprintf( logger, "Creating name hash\n" );
 		}
+
+		ProStringToWstring( tmp_line, "Processing part name file" );
+		status = ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
+		}
+		status = ProUIDialogActivate( "proe_brl", &ret_status );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
+				 status );
+			fprintf( stderr, "\t dialog returned %d\n", ret_status );
+		}
+
 		name_hash = create_name_hash( name_fd );
 		fclose( name_fd );
 		
@@ -3103,7 +3139,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		if( logger ) {
 			fprintf( logger, "No name hash used\n" );
 		}
-		name_hash = (struct bu_hash_tbl *)NULL;
+		/* create an empty hash table */
+		name_hash = bu_create_hash_tbl( 512 );
 	}
 
 	/* get the curently displayed model in Pro/E */
@@ -3219,37 +3256,51 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	if( part_tris ) {
-		free( (char *)part_tris );
+		bu_free( (char *)part_tris, "part triangles" );
+		part_tris = NULL;
 	}
-	part_tris = NULL;
 
 	if( part_norms ) {
-		free( (char *)part_norms );
+		bu_free( (char *)part_norms, "part normals" );
+		part_norms = NULL;
 	}
-	part_norms = NULL;
 
 	free_vert_tree( vert_tree_root );
+	vert_tree_root = NULL;
 	free_vert_tree( norm_tree_root );
+	norm_tree_root = NULL;
 
 	max_tri = 0;
 
 	free_empty_parts();
 
-	fclose( outfp );
-
 	if( logger ) {
-		fclose( logger );
+		fprintf( logger, "Closing output file\n" );
 	}
 
+	fclose( outfp );
+
 	if( name_hash ) {
+		if( logger ) {
+			fprintf( logger, "freeing name hash\n" );
+		}
 		free_hash_values( name_hash );
 		bu_hash_tbl_free( name_hash );
 		name_hash = (struct bu_hash_tbl *)NULL;
 	}
 
 	if( brlcad_names ) {
-		bu_rb_free( brlcad_names, free_rb_data );
+		if( logger ) {
+			fprintf( logger, "freeing name rb_tree\n" );
+		}
+		bu_rb_free( brlcad_names, NULL );	/* data was already freed by free_hash_values() */
 		brlcad_names = (bu_rb_tree *)NULL;
+	}
+
+	if( logger ) {
+		fprintf( logger, "Closing logger file\n" );
+		fclose( logger );
+		logger = (FILE *)NULL;
 	}
 
 	return;
@@ -3513,7 +3564,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
 	/* free a bunch of stuff */
 	if( done ) {
-		free( (char *)done );
+		bu_free( (char *)done, "done" );
 	}
 	done = NULL;
 	max_done = 0;
@@ -3525,7 +3576,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	bu_ptbl_free( &search_path_list );
 
 	if( part_tris ) {
-		free( (char *)part_tris );
+		bu_free( (char *)part_tris, "part triangles" );
 	}
 	part_tris = NULL;
 
