@@ -444,6 +444,8 @@ struct curve                    *crv;
 				}
 				tot_ang = end_ang - start_ang;
 				nsegs = ceil( tot_ang / delta );
+				if( nsegs < 0 )
+					nsegs = -nsegs;
 				if( nsegs < 3 )
 					nsegs = 3;
 				delta = tot_ang / nsegs;
