@@ -1503,6 +1503,33 @@ fastf_t x, y, z;
 	nmg_vertex_gv(v, pt);
 }
 
+/* 			N M G _ V E R T E X U S E _ N V
+ *
+ *	Assign a normal vector to a vertexuse
+ */
+void
+nmg_vertexuse_nv( vu , norm )
+struct vertexuse *vu;
+CONST vect_t norm;
+{
+	struct vertexuse_a *vua_p;
+	struct model *m;
+
+	NMG_CK_VERTEXUSE( vu );
+
+	if( !vu->vua_p )
+	{
+		m = nmg_find_model( &vu->l.magic );
+		GET_VERTEXUSE_A( vua_p , m );
+		vua_p->magic = NMG_VERTEXUSE_A_MAGIC;
+		vu->vua_p = vua_p;
+	}
+	else
+		NMG_CK_VERTEXUSE_A( vu->vua_p );
+
+	VMOVE( vu->vua_p->N , norm );
+}
+
 /*
  *			N M G _ E D G E _ G
  *
