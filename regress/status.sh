@@ -131,7 +131,7 @@ if [ $MASTER_LOG_COUNT -gt 0 ] ; then
 	MASTER_RETURN=`tail -1 $MASTER_FILE | awk '{print $1}'`
 	if [ ! "x$DEBUG" = "x" ] ; then log "MASTER_RETURN=[$MASTER_RETURN]" ; fi
 	if [ ! "x$MASTER_RETURN" = "xDone" ] ; then
-	    REGRESS_LOG="${REGRESS_LOG}the master script did not complete successfully\n\t(see [$MASTER_FILE] for details)\n"
+	    REGRESS_LOG="${REGRESS_LOG}The master script did not complete successfully\n\t(see [$MASTER_FILE] for details)\n"
 	fi
     fi
     
@@ -163,7 +163,7 @@ if [ $CVS_LOG_COUNT -gt 0 ] ; then
 	    if [ "x$CVS_RETURN" = "xERROR:" ] ; then
 		REGRESS_LOG="${REGRESS_LOG}cvs export failed\n\t(see [$CVS_FILE] for details)\n"
 	    else
-		REGRESS_LOG="${REGRESS_LOG}cvs export appears to be in progress or was aborted\n\y(see [$CVS_FILE] for details)\n"
+		REGRESS_LOG="${REGRESS_LOG}cvs export appears to be in progress or was aborted\n\t(see [$CVS_FILE] for details)\n"
 	    fi
 	fi
     fi
