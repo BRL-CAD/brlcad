@@ -29,6 +29,10 @@
  *	vect_t objects are 3-tuples
  *	hvect_t objects are 4-tuples
  *
+ *  Most of these macros require that the result be in
+ *  separate storage, distinct from the input parameters,
+ *  except where noted.
+ *
  *  Author -
  *	Michael John Muuss
  *
@@ -349,6 +353,26 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(a)[_vjoin1] = (b)[_vjoin1] + (c) * (d)[_vjoin1]; \
 	}
 
+/*
+ *  Blend into vector `a'
+ *	scalar `b' times vector at `c' plus
+ *	scalar `d' times vector at `e'
+ */
+#ifdef VECTORIZE
+#define VBLEND2(a,b,c,d,e)	VBLEND2N(a,b,c,d,e,3)
+#else
+#define VBLEND2(a,b,c,d,e)	\
+	(a)[X] = (b) * (c)[X] + (d) * (e)[X];\
+	(a)[Y] = (b) * (c)[Y] + (d) * (e)[Y];\
+	(a)[Z] = (b) * (c)[Z] + (d) * (e)[Z];
+#endif /* VECTORIZE */
+
+#define VBLEND2N(a,b,c,d,e,n)	\
+	{ register int _vblend2; \
+	for(_vblend2 = 0; _vblend2 < (n); _vblend2++) \
+		(a)[_vblend2] = (b) * (c)[_vblend2] + (d) * (e)[_vblend2]; \
+	}
+
 /* Return scalar magnitude squared of vector at `a' */
 #define MAGSQ(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z] )
 
@@ -568,49 +592,91 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  */
 
 /* Set quaternion at `a' to have coordinates `b', `c', `d', `e' */
-#define QSET(a,b,c,d,e)	(a)[0] = (b);\
-			(a)[1] = (c);\
-			(a)[2] = (d);\
-			(a)[3] = (e)
+#define QSET(a,b,c,d,e)	(a)[X] = (b);\
+			(a)[Y] = (c);\
+			(a)[Z] = (d);\
+			(a)[W] = (e)
 
 /* Transfer quaternion at `b' to quaternion at `a' */
-#define QMOVE(a,b)	(a)[0] = (b)[0];\
-			(a)[1] = (b)[1];\
-			(a)[2] = (b)[2];\
-			(a)[3] = (b)[3]
+#define QMOVE(a,b)	(a)[X] = (b)[X];\
+			(a)[Y] = (b)[Y];\
+			(a)[Z] = (b)[Z];\
+			(a)[W] = (b)[W]
 
 /* Add quaternions at `b' and `c', store result at `a' */
-#define QADD2(a,b,c)	(a)[0] = (b)[0] + (c)[0];\
-			(a)[1] = (b)[1] + (c)[1];\
-			(a)[2] = (b)[2] + (c)[2];\
-			(a)[3] = (b)[3] + (c)[3]
+#define QADD2(a,b,c)	(a)[X] = (b)[X] + (c)[X];\
+			(a)[Y] = (b)[Y] + (c)[Y];\
+			(a)[Z] = (b)[Z] + (c)[Z];\
+			(a)[W] = (b)[W] + (c)[W]
 
 /* Subtract quaternion at `c' from quaternion at `b', store result at `a' */
-#define QSUB2(a,b,c)	(a)[0] = (b)[0] - (c)[0];\
-			(a)[1] = (b)[1] - (c)[1];\
-			(a)[2] = (b)[2] - (c)[2];\
-			(a)[3] = (b)[3] - (c)[3]
+#define QSUB2(a,b,c)	(a)[X] = (b)[X] - (c)[X];\
+			(a)[Y] = (b)[Y] - (c)[Y];\
+			(a)[Z] = (b)[Z] - (c)[Z];\
+			(a)[W] = (b)[W] - (c)[W]
 
 /* Scale quaternion at `b' by scalar `c', store result at `a' */
-#define QSCALE(a,b,c)	(a)[0] = (b)[0] * (c);\
-			(a)[1] = (b)[1] * (c);\
-			(a)[2] = (b)[2] * (c);\
-			(a)[3] = (b)[3] * (c)
+#define QSCALE(a,b,c)	(a)[X] = (b)[X] * (c);\
+			(a)[Y] = (b)[Y] * (c);\
+			(a)[Z] = (b)[Z] * (c);\
+			(a)[W] = (b)[W] * (c)
 
 /* Normalize quaternion 'a' to be a unit quaternion */
-#define QUNITIZE(a)	{FAST double f; f = QMAGNITUDE(a); \
-			if( f < VDIVIDE_TOL ) f = 0.0; else f = 1.0/f; \
-			(a)[0] *= f; (a)[1] *= f; (a)[2] *= f; (a)[3] *= f; }
+#define QUNITIZE(a)	{register double _f; _f = QMAGNITUDE(a); \
+			if( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
+			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; (a)[W] *= _f; }
 
 /* Return scalar magnitude squared of quaternion at `a' */
-#define QMAGSQ(a)	( (a)[0]*(a)[0] + (a)[1]*(a)[1] \
-			+ (a)[2]*(a)[2] + (a)[3]*(a)[3] )
+#define QMAGSQ(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] \
+			+ (a)[Z]*(a)[Z] + (a)[W]*(a)[W] )
 
 /* Return scalar magnitude of quaternion at `a' */
 #define QMAGNITUDE(a)	sqrt( QMAGSQ( a ) )
 
 /* Compute dot product of quaternions at `a' and `b' */
-#define QDOT(a,b)	( (a)[0]*(b)[0] + (a)[1]*(b)[1] \
-			+ (a)[2]*(b)[2] + (a)[3]*(b)[3] )
+#define QDOT(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] \
+			+ (a)[Z]*(b)[Z] + (a)[W]*(b)[W] )
+
+/*
+ *  Compute quaternion product a = b * c
+ *	a[W] = b[W]*c[W] - VDOT(b,c);
+	VCROSS( temp, b, c );
+ *	VJOIN2( a, temp, b[W], c, c[W], b );
+ */
+#define QMUL(a,b,c)	{ \
+    (a)[W] = (b)[W]*(c)[W] - (b)[X]*(c)[X] - (b)[Y]*(c)[Y] - (b)[Z]*(c)[Z]; \
+    (a)[X] = (b)[W]*(c)[X] + (b)[X]*(c)[W] + (b)[Y]*(c)[Z] - (b)[Z]*(c)[Y]; \
+    (a)[Y] = (b)[W]*(c)[Y] + (b)[Y]*(c)[W] + (b)[Z]*(c)[X] - (b)[X]*(c)[Z]; \
+    (a)[Z] = (b)[W]*(c)[Z] + (b)[Z]*(c)[W] + (b)[X]*(c)[Y] - (b)[Y]*(c)[X]; }
+
+/* Conjugate quaternion */
+#define QCONJUGATE(a,b)	{ \
+	(a)[X] = -(b)[X]; \
+	(a)[Y] = -(b)[Y]; \
+	(a)[Z] = -(b)[Z]; \
+	(a)[W] =  (b)[W]; }
+
+/* Multiplicative inverse quaternion */
+#define QINVERSE(a,b)	{ register double _f = QMAGSQ(b); \
+	if( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
+	(a)[X] = -(b)[X] * _f; \
+	(a)[Y] = -(b)[Y] * _f; \
+	(a)[Z] = -(b)[Z] * _f; \
+	(a)[W] =  (b)[W] * _f; }
+
+/*
+ *  Blend into quaternion `a'
+ *	scalar `b' times quaternion at `c' plus
+ *	scalar `d' times quaternion at `e'
+ */
+#ifdef VECTORIZE
+#define QBLEND2(a,b,c,d,e)	VBLEND2N(a,b,c,d,e,4)
+#else
+#define QBLEND2(a,b,c,d,e)	\
+	(a)[X] = (b) * (c)[X] + (d) * (e)[X];\
+	(a)[Y] = (b) * (c)[Y] + (d) * (e)[Y];\
+	(a)[Z] = (b) * (c)[Z] + (d) * (e)[Z];\
+	(a)[W] = (b) * (c)[W] + (d) * (e)[W];
+#endif /* VECTORIZE */
 
 #endif /* VMATH_H */
