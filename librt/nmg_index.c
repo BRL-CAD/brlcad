@@ -63,6 +63,8 @@ register long	*p;
 		return ((struct face *)p)->index;
 	case NMG_FACE_G_PLANE_MAGIC:
 		return ((struct face_g_plane *)p)->index;
+	case NMG_FACE_G_SNURB_MAGIC:
+		return ((struct face_g_snurb *)p)->index;
 	case NMG_LOOPUSE_MAGIC:
 		return ((struct loopuse *)p)->index;
 	case NMG_LOOP_MAGIC:
