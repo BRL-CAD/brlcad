@@ -62,7 +62,8 @@ extern char	*malloc(), *tempnam();
 extern int	close(), dup(), execl(), fork(), getuid(), open(), pipe(),
 		printf(), unlink(), write();
 extern long	time();
-#ifdef BSD42
+
+#ifdef BSD
 extern char	*sprintf();
 #else
 extern int	sprintf();
