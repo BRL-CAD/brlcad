@@ -24,7 +24,7 @@
  *  This program generates an ASCII data file which contains
  *  a GED database.
  *
- *  Usage:  g2asc < file.g > file.asc
+ *  Usage:  g2asc file.g file.asc
  *  
  *  Author -
  *  	Charles M Kennedy
@@ -86,8 +86,7 @@ void	strsol_dump(void);
 union record	record;		/* GED database record */
 
 static char usage[] = "\
-Usage: g2asc < file.g > file.asc\n\
-   or  g2asc file.g file.asc\n\
+Usage: g2asc file.g file.asc\n\
  Convert a binary BRL-CAD database to machine-independent ASCII form\n\
 ";
 

@@ -4,13 +4,7 @@ g2asc,
 asc2g \- convert between binary and ASCII \fBmged\fP databases.
 .SH SYNOPSIS
 .B g2asc
-< file.g > file.asc
-.br
-.B g2asc
  file.g  file.asc
-.br
-.B asc2g
-< file.asc > file.g
 .br
 .B asc2g
  file.asc  file.g
@@ -37,9 +31,6 @@ to another machine.  On the local machine, files are converted to ASCII using
 then transferred to the remote machine.  On the remote machine, the files
 are then converted back to the binary representation for that machine using
 .IR asc2g (1).
-.LP
-They can be used either as UNIX filters, converting stdin to stdout,
-or with both filenames specified on the command line.
 .SH EXAMPLE
 .I
 g2asc  file.g  file.asc
@@ -47,8 +38,6 @@ g2asc  file.g  file.asc
 rcp file.asc remote:file.asc
 .br
 rsh remote "asc2g  file.asc  file.g"
-.LP
-g2asc < file.g | rsh remote "asc2g > file.g"
 .SH DIAGNOSTICS
 The diagnostics are intended to be self-explanatory.
 .SH SEE ALSO
