@@ -121,7 +121,8 @@ proc start_rtsync {} {
 
 	# Test access to framebuffer by clearing it.
 	# On fail will pop-up an error window and abort this func.
-	exec fbclear -F$fbserv_host 0 200 0
+	catch { exec fbclear -F$fbserv_host 0 200 0 } code
+	puts "exec FBCLEAR result = $code"
 
 	set code "!error?"
 	catch {
@@ -301,17 +302,18 @@ register "wax" "wax-uni0.arl.mil"
 register wilson "wilson-uni0.arl.mil"
 register jewel "jewel-atm.arl.mil"
 register cosm0 "cosm0-atm.arl.hpc.mil"
-register cosm1 "cosm1-atm.arl.hpc.mil"
-register cosm2 "cosm2-atm.arl.hpc.mil"
-register cosm3 "cosm3-atm.arl.hpc.mil"
-register cosm4 "cosm4-atm.arl.hpc.mil"
-register cosm5 "cosm5-atm.arl.hpc.mil"
-register cosm6 "cosm6-atm.arl.hpc.mil"
-register cosm7 "cosm7-atm.arl.hpc.mil"
-register eckert "eckert-atm.arl.hpc.mil"
-register toltec "toltec.nvl.army.mil"
+#register cosm1 "cosm1-atm.arl.hpc.mil"
+#register cosm2 "cosm2-atm.arl.hpc.mil"
+#register cosm3 "cosm3-atm.arl.hpc.mil"
+#register cosm4 "cosm4-atm.arl.hpc.mil"
+#register cosm5 "cosm5-atm.arl.hpc.mil"
+#register cosm6 "cosm6-atm.arl.hpc.mil"
+#register cosm7 "cosm7-atm.arl.hpc.mil"
+#register eckert "eckert-atm.arl.hpc.mil"
+#register toltec "toltec.nvl.army.mil"
 #register olmec "olmec.nvl.army.mil"		# Only 1 200Mhz cpu
-register octopus "octopus.nvl.army.mil"
+#register octopus "octopus.nvl.army.mil"
+#register vdemo3 "vdemo3.arl.mil"
 
 frame .button1_fr
 frame .button2_fr
