@@ -845,11 +845,12 @@ char		*name;
 	cmdline(cmd_buf);
 
 	for( i=0; i < vbp->count; i++ )  {
+		if( vbp->cvp[i].rgb == 0 )  continue;
+		if( vbp->cvp[i].head.vh_first == VL_NULL )  continue;
 		if( i== 0 )  {
 			invent_solid( name, &vbp->cvp[0] );
 			continue;
 		}
-		if( vbp->cvp[i].rgb == 0 )  continue;
 		sprintf( namebuf, "%s%x",
 			shortname, vbp->cvp[i].rgb );
 		invent_solid( namebuf, &vbp->cvp[i] );
@@ -892,6 +893,16 @@ struct color_vlhead	*cvl;
 		/* Need to enter phony name in directory structure */
 		dp = db_diradd( dbip,  name, PHONY_ADDR, 0, DIR_SOLID );
 	}
+
+#if 0
+	/* XXX need to get this going. */
+	path.fp_names[0] = dp;
+	state.ts_mater.ma_color[0] = ((cvl->rgb>>16) & 0xFF) / 255.0
+	state.ts_mater.ma_color[1] = ((cvl->rgb>> 8) & 0xFF) / 255.0
+	state.ts_mater.ma_color[2] = ((cvl->rgb    ) & 0xFF) / 255.0
+	drawH_part2( 0, vhead->vh_first, path, &state, SOLID_NULL );
+	vhead->vh_first = vhead->vh_last = VL_NULL;
+#else
 
 	/* Obtain a fresh solid structure, and fill it in */
 	GET_SOLID(sp);
@@ -946,5 +957,6 @@ struct color_vlhead	*cvl;
 	APPEND_SOLID( sp, HeadSolid.s_back );
 	dmp->dmr_viewchange( DM_CHGV_ADD, sp );
 	dmp->dmr_colorchange();
+#endif
 	return(0);		/* OK */
 }
