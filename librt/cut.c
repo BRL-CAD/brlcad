@@ -220,11 +220,11 @@ CONST void *p1, *p2;
  */
 
 void
-rt_nugrid_cut( nugnp, fromp, rtip, just_collect_info )
+rt_nugrid_cut( nugnp, fromp, rtip, just_collect_info, depth )
 register struct nugridnode	*nugnp;
 register struct boxnode		*fromp;
 struct rt_i			*rtip;
-int				 just_collect_info;
+int				 just_collect_info, depth;
 {
 #define USE_HIST 0
 #if USE_HIST	
@@ -236,6 +236,7 @@ int				 just_collect_info;
 	int	nu_ncells;		/* # cells along one axis */
 	int	nu_sol_per_cell;	/* avg # solids per cell */
 	int	nu_max_ncells;		/* hard limit on nu_ncells */
+	int	fake_depth;
 	register int	i, j, xp, yp, zp;
 	vect_t	xmin, xmax, ymin, ymax, zmin, zmax;
 	struct boxnode nu_xbox, nu_ybox, nu_zbox;
@@ -304,13 +305,12 @@ int				 just_collect_info;
 
 	nu_ncells = (int)ceil( 2.0 + rtip->rti_nu_gfactor *
 			       pow( (double)fromp->bn_len, 1.0/3.0 ) );
-#define EXPERIMENT 0
-#if EXPERIMENT
-	if( nu_ncells > 6 ) nu_ncells = 6;
-#endif
-		
+	if( rtip->rti_nugrid_dimlimit > 0 &&
+	    nu_ncells > rtip->rti_nugrid_dimlimit )
+		nu_ncells = rtip->rti_nugrid_dimlimit;
 	nu_sol_per_cell = (fromp->bn_len + nu_ncells - 1) / nu_ncells;
 	nu_max_ncells = 2*nu_ncells + 8;
+	fake_depth = 0;/*depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells));*/
 
 	if( rt_g.debug&DEBUG_CUT )
 		bu_log(
@@ -647,31 +647,15 @@ int				 just_collect_info;
 				       nu_zbox.bn_len *
 				       sizeof(struct soltab *) );
 
-#if EXPERIMENT
-#if 1				
-				rt_ct_optim( rtip, cutp, 0 );
+				if( rtip->rti_nugrid_dimlimit > 0 ) {
+#if 1					
+					rt_ct_optim( rtip, cutp, fake_depth );
 #else
 				/* Recurse, but only if we're cutting down on
 				   the cellsize. */
-				if( cutp->bn.bn_len > 5 &&
+					if( cutp->bn.bn_len > 5 &&
 				    cutp->bn.bn_len < fromp->bn_len>>1 ) {
-#if 1
-					/* Make a little NUBSPT node here
-					   to clean things up */
-					union cutter *firstp;
 
-					BU_GETUNION( firstp, cutter );
-					*firstp = *cutp;  /* union copy */
-
-					cutp->cut_type = CUT_NUBSPTNODE;
-					VMOVE( cutp->nubn.nu_min,
-					       firstp->bn.bn_min );
-					VMOVE( cutp->nubn.nu_max,
-					       firstp->bn.bn_max );
-					cutp->nubn.first_cut = firstp;
-
-					rt_ct_optim( rtip, firstp, 0 );
-#else
 					/* Make a little NUGRID node here
 					   to clean things up */
 					union cutter temp;
@@ -680,11 +664,11 @@ int				 just_collect_info;
 					cutp->cut_type = CUT_NUGRIDNODE;
 					/* recursive call! */
 					rt_nugrid_cut( &cutp->nugn,
-						       &temp, rtip, 0 );
-#endif					
-				}
+						       &temp.bn, rtip, 0,
+						       depth+1 );
+					}
 #endif
-#endif					
+				}
 			}
 		}
 	}
@@ -708,7 +692,7 @@ register struct rt_i	*rtip;
 int			ncpu;
 {
 	register struct soltab *stp;
-	union cutter *finp;
+	union cutter *finp;	/* holds the finite solids */
 	FILE *plotfp;
 	
 	/* For plotting, compute a slight enlargement of the model RPP,
@@ -764,32 +748,25 @@ int			ncpu;
 		bu_log( "Cut: Tree Depth=%d, Leaf Len=%d\n",
 			rt_cutDepth, rt_cutLen );
 
+	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids,
+		      "rti_cuts_waiting ptbl" );
+
 	switch( rtip->rti_space_partition ) {
 	case RT_PART_NUGRID:
 		rtip->rti_CutHead.cut_type = CUT_NUGRIDNODE;
-		rt_nugrid_cut( &rtip->rti_CutHead.nugn, &finp->bn, rtip, 0 );
+		rt_nugrid_cut( &rtip->rti_CutHead.nugn, &finp->bn, rtip, 0,0 );
 		rt_fr_cut( rtip, finp ); /* done with finite solids box */
-		bu_free( (genptr_t)finp, "finite solid box" );
 		break;
 	case RT_PART_NUBSPT: {
 #ifdef NEW_WAY		
 		struct nugridnode nuginfo;
-#endif		
-		rtip->rti_CutHead.cut_type = CUT_NUBSPTNODE;
-		VMOVE( rtip->rti_CutHead.nubn.nu_min, rtip->mdl_min );
-		VMOVE( rtip->rti_CutHead.nubn.nu_max, rtip->mdl_max );
-		rtip->rti_CutHead.nubn.first_cut = finp;
 
-#ifdef NEW_WAY		
 		/* Collect statistics to assist binary space partition tree
 		   construction */
 		nuginfo.nu_type = CUT_NUGRIDNODE;
-		rt_nugrid_cut( &nuginfo, &fin_box, rtip, 1 );
+		rt_nugrid_cut( &nuginfo, &fin_box, rtip, 1, 0 );
 #endif		
-
-		bu_ptbl_init( &rtip->rti_cuts_waiting,
-			      rtip->nsolids, "rti_cuts_waiting ptbl" );
-
+		rtip->rti_CutHead = *finp;	/* union copy */
 #ifdef NEW_WAY
 		if( rtip->nsolids < 50000 )  {
 #endif
@@ -799,24 +776,26 @@ int			ncpu;
 		 * benchmark tests seem to be very sensitive to how the space
 		 * partitioning is laid out.  Until we go to full NUgrid, this
 		 * will have to do.  */
-			rt_ct_optim( rtip, finp, 0 );
+			rt_ct_optim( rtip, &rtip->rti_CutHead, 0 );
 #ifdef NEW_WAY
 		} else {
-			Needs to be updated for the new union cutter elts.
-							    
+
+			XXX This hasnt been tested since massive
+			    NUgrid changes were made
+			
 			/* New way, mostly parallel */
 			union cutter	*head;
 			int	i;
 			
 			head = rt_cut_one_axis( &rtip->rti_cuts_waiting, rtip,
-						Y, 0, nuginfo.nu_cells_per_axis[Y]-1, &nuginfo );
+			    Y, 0, nuginfo.nu_cells_per_axis[Y]-1, &nuginfo );
 			rtip->rti_CutHead = *head;	/* struct copy */
 			rt_free( (char *)head, "union cutter" );
 			
 			if(rt_g.debug&DEBUG_CUTDETAIL)  {
 				for( i=0; i<3; i++ )  {
 					bu_log("\nNUgrid %c axis:  %d cells\n",
-					       "XYZ*"[i], nuginfo.nu_cells_per_axis[i] );
+				     "XYZ*"[i], nuginfo.nu_cells_per_axis[i] );
 				}
 				rt_pr_cut( &rtip->rti_CutHead, 0 );
 			}
@@ -833,6 +812,8 @@ int			ncpu;
 	default:
 		rt_bomb( "rt_cut_it: unknown space partitioning method\n" );
 	}
+
+	bu_free( (genptr_t)finp, "finite solid box" );
 
 	/* Measure the depth of tree, find max # of RPPs in a cut node */
 
@@ -853,8 +834,7 @@ int			ncpu;
 			    "cut_tree: Number of solids per leaf cell");
 		bu_hist_pr( &rtip->rti_hist_cutdepth,
 			    "cut_tree: Depth (height)");
-		bu_log( "Counts: %d nubspt nodes, %d nugrid nodes, %d cutnodes, %d boxnodes\n",
-			rtip->rti_ncut_by_type[CUT_NUBSPTNODE],
+		bu_log( "Counts: %d nugrid nodes, %d cutnodes, %d boxnodes\n",
 			rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
 			rtip->rti_ncut_by_type[CUT_CUTNODE],
 			rtip->rti_ncut_by_type[CUT_BOXNODE] );
@@ -1518,7 +1498,6 @@ int lvl;			/* recursion level */
 		return;
 
 	case CUT_NUGRIDNODE:
-	case CUT_NUBSPTNODE:
 		/* not implemented yet */
 	default:
 		bu_log("Unknown type=x%x\n", cutp->cut_type );
@@ -1546,12 +1525,6 @@ register union cutter *cutp;
 	}
 
 	switch( cutp->cut_type )  {
-
-	case CUT_NUBSPTNODE:
-		rt_fr_cut( rtip, cutp->nubn.first_cut );
-		rt_ct_free( rtip, cutp->nubn.first_cut );
-		cutp->nubn.first_cut = CUTTER_NULL;
-		return;
 
 	case CUT_CUTNODE:
 		rt_fr_cut( rtip, cutp->cn.cn_l );
@@ -1729,11 +1702,6 @@ int			lvl;
 		}
 			
 		return; }
-	case CUT_NUBSPTNODE:
-		pl_color( fp, 0, 255, 255 );
-		pdv_3box( fp, cutp->nubn.nu_min, cutp->nubn.nu_max );
-		rt_plot_cut( fp, rtip, cutp->nubn.first_cut, lvl );
-		return;
 	case CUT_CUTNODE:
 		rt_plot_cut( fp, rtip, cutp->cn.cn_l, lvl+1 );
 		rt_plot_cut( fp, rtip, cutp->cn.cn_r, lvl+1 );
@@ -1845,10 +1813,6 @@ int			depth;
 
 	RT_CK_RTI(rtip);
 	switch( cutp->cut_type ) {
-	case CUT_NUBSPTNODE:
-		rtip->rti_ncut_by_type[CUT_NUBSPTNODE]++;
-		rt_ct_measure( rtip, cutp->nubn.first_cut, depth+1 );
-		return;
 	case CUT_NUGRIDNODE: {
 		register int i;
 		register union cutter *bp;
