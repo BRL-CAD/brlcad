@@ -1,0 +1,71 @@
+.TH FBED 1V VMB
+'\"	last edit:	86/08/07	G. S. Moss
+'\"	SCCS ID:	@(#)fbed.1	1.22
+.SH NAME
+fbed \- framebuffer editor
+.SH SYNOPSIS
+.B fbed
+[
+.B \-ph
+]
+.SH DESCRIPTION
+.I Fbed\^
+is a screen editor for framebuffer images.
+.P
+If the
+.B \-p
+option is supplied,
+.I fbed\^
+uses the
+.SM
+.B GTCO
+bitpad to position the cursor on the screen.  This option does not prevent
+the user from positioning the cursor with the keyboard commands also.  The
+.B \-h
+option is for editing
+.SM
+.B HIRES
+(1024x1024x24) images.
+.SH HINTS
+This program may require a little practice, be sure to save a copy of the
+input files until you are confident.  There is an on-line menu available
+by typing a `?'.  The first time using the program you should start out
+by listing the menu and finding the command for saving (Run-Length Encoding)
+your image and use it if you don't already have a copy.
+.SH CAVIATS
+Even though this program uses the generic framebuffer library, there is only
+support for the
+.I Ikonas\^
+at present in the library.  It will work on
+.SM
+.B UNIX
+files if you don't need to see what is happening.  As far as data tablets go,
+there is currently only support for the
+.SM
+.B GTCO
+bitpad and it assumes that there is only one available.  The subroutines
+dealing with this should be made into a library and generalized to allow
+for different hardware and multiple devices on the system.
+.SH WARNING
+Be careful not to use the
+.B \-p
+option unless you are sitting next to the
+.SM
+.B GTCO
+bitpad which is operational.  Currently at
+.SM
+.B BRL
+the only one hooked up is at the
+.SM
+.B VGR
+.IR /dev/ik1\^ .
+.SH EXAMPLE
+.RS
+$ \|\fIfbed \|\-h\fR
+.RE
+.SH FILES
+/vld/lib/libfb.a
+.SH "SEE ALSO"
+fb-rle(1V), rle-fb(1V), libfb(3V)
+.SH AUTHOR
+G. S. Moss, BRL/VLD-VMB
