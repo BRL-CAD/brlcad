@@ -1067,7 +1067,7 @@ if test "$ok" = "yes"; then
     SHLIB_CFLAGS="${SHLIB_CFLAGS}"
     eval "ITK_LIB_FILE=libitk${VERSION}${SHLIB_SUFFIX}"
     ITK_PKG_FILE="[file join [file dirname \$dir] ${ITK_LIB_FILE}]"
-    MAKE_LIB="\$(SHLIB_LD) ${ITK_LIB_FILE} \$(OBJS) ${SHLIB_LD_LIBS} \$(LD_SEARCH_FLAGS)"
+    MAKE_LIB="\$(SHLIB_LD) ${ITK_LIB_FILE} \$(OBJS) ${SHLIB_LD_LIBS}"
     RANLIB=":"
 else
     SHLIB_CFLAGS=""

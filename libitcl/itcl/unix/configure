@@ -1015,7 +1015,7 @@ if test "$ok" = "yes"; then
     SHLIB_CFLAGS="${SHLIB_CFLAGS}"
     eval "ITCL_LIB_FILE=libitcl${VERSION}${SHLIB_SUFFIX}"
     ITCL_PKG_FILE="[file join [file dirname \$dir] ${ITCL_LIB_FILE}]"
-    MAKE_LIB="\$(SHLIB_LD) ${ITCL_LIB_FILE} \$(OBJS) ${SHLIB_LD_LIBS} \$(LD_SEARCH_FLAGS)"
+    MAKE_LIB="\$(SHLIB_LD) ${ITCL_LIB_FILE} \$(OBJS) ${SHLIB_LD_LIBS}"
     RANLIB=":"
 else
     SHLIB_CFLAGS=""
