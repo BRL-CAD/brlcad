@@ -83,6 +83,7 @@ proc sketch_popup_main { {p .} } {
 	catch {destroy $root}
 
 	toplevel $root
+	place_near_mouse $root
 	wm title $root "MGED AnimMate"
 	button $root.b0 -text "CURVE EDITOR" -command "sketch_popup_draw $root"
 	button $root.b1 -text "VIEW EDITOR" -command "sketch_popup_view $root"
@@ -157,6 +158,7 @@ proc sketch_popup_draw { p } {
 		return
 	}
 	toplevel $root
+	place_near_mouse $root
 	wm title $root "MGED AnimMate curve editor"
 	button $root.b0 -text "ADD" -command {sketch_add [viewget center] $mged_sketch_node}
 	button $root.b1 -text "INSERT" -command {sketch_insert [viewget center] $mged_sketch_node}
@@ -895,6 +897,7 @@ proc sketch_popup_view { p } {
 		return
 	}
 	toplevel $root
+	place_near_mouse $root
 	wm title $root "MGED AnimMate view curve editor"
 	button $root.b0 -text "ADD" -command {sketch_vadd $mged_sketch_vnode}
 	button $root.b1 -text "INSERT" -command {sketch_vinsert $mged_sketch_vnode}
@@ -1723,6 +1726,7 @@ proc sketch_popup_table_create { p suffix label {mode table}} {
 		set name "$p.$suffix"
 	}
 	toplevel $name
+	place_near_mouse $name
 	wm title $name "MGED AnimMate $label"
 	if { $mode == "vcurve" } {
 		wm withdraw $name
@@ -1954,6 +1958,7 @@ proc sketch_popup_table_col {w wbar} {
 
 	catch { destroy ._sketch_col }
 	toplevel ._sketch_col
+	place_near_mouse ._sketch_col
 	wm title ._sketch_col "Edit Columns"
 	frame ._sketch_col.fa
 	frame ._sketch_col.fb
@@ -2084,6 +2089,7 @@ proc sketch_popup_table_interp {w wbar}	{
 
 	catch { destroy ._sketch_col }
 	toplevel ._sketch_col
+	place_near_mouse ._sketch_col
 	wm title ._sketch_col "Column Interpolator"
 	frame ._sketch_col.fz
 	label ._sketch_col.fz.l0 -text "0:" 
@@ -2532,6 +2538,7 @@ proc sketch_popup_objanim { p {mode obj} } {
 		"curve:" "view curve:" "table editor:" "file:" 
 	entry $root.f1.e0 -width 20 -textvariable mged_sketch_objsource
 	frame $root.f2
+	place_near_mouse $root
 	if {$mode == "view"} {
 		wm title $root "MGED AnimMate View Animation"
 		label $root.l$mode -text "CREATE VIEW ANIMATION"
@@ -3063,6 +3070,7 @@ proc sketch_popup_track_anim { p } {
 
 	toplevel $root
 
+	place_near_mouse $root
 	wm title $root "MGED AnimMate Track Animation"
 	label $root.l0 -text "CREATE TRACK ANIMATION"
 	frame $root.f0
@@ -3346,6 +3354,7 @@ proc sketch_popup_sort { p } {
 		return
 	}
 	toplevel $root
+	place_near_mouse $root
 	wm title $root "MGED AnimMate Combine Scripts"
 	label $root.l0 -text "COMBINE SCRIPTS"
 	frame $root.f0
@@ -3513,6 +3522,7 @@ proc sketch_popup_preview { p {filename ""} } {
 		return
 	}
 	toplevel $root
+	place_near_mouse $root
 	wm title $root "MGED AnimMate Show Script"
 	label $root.l0 -text "SHOW SCRIPT"
 	frame $root.f0
@@ -3845,6 +3855,7 @@ proc sketch_print {} {
 proc sketch_popup_input {title entries buttons} {
 	catch {destroy ._sketch_input}
 	toplevel ._sketch_input
+	place_near_mouse ._sketch_input
 	if {$title != ""} { wm title ._sketch_input $title }
 	set max 0
 	foreach pair $entries {
