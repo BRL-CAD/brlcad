@@ -266,7 +266,18 @@ char	**argv;
 	static vect_t last;
 	static vect_t fin;
 	char buf[128];
-	FILE *fp;
+	FILE *fp_r;
+	FILE *fp_w;
+	int fd1[2]; /* mged | cad_boundp */
+	int fd2[2]; /* cad_boundp | cad_parea */
+	int fd3[2]; /* cad_parea | mged */
+	int pid1;
+	int pid2;
+	int rpid;
+	int retcode;
+	char result[MAXLINE];
+	char tol_str[32];
+	char *tol_ptr;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -281,67 +292,126 @@ char	**argv;
 	  }
 	}
 
-	/* Create pipes to cad_boundp | cad_parea */
-	if( argc == 2 )  {
-	  sprintf( buf, "cad_boundp -t %s | cad_parea", argv[1] );
+	if(argc == 2){
 	  Tcl_AppendResult(interp, "Tolerance is ", argv[1], "\n", (char *)NULL);
-	}  else  {
+	  tol_ptr = argv[1];
+	}else{
 	  struct bu_vls tmp_vls;
 	  double tol = VIEWSIZE * 0.001;
 
 	  bu_vls_init(&tmp_vls);
-	  sprintf( buf, "cad_boundp -t %e | cad_parea", tol );
-	  bu_vls_printf(&tmp_vls, "Auto-tolerance of 0.1%% is %e\n", tol);
+	  sprintf(tol_str, "%e", tol);
+	  tol_ptr = tol_str;
+	  bu_vls_printf(&tmp_vls, "Auto-tolerance of 0.1%% is %s\n", tol_str);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	}
 
-	if( (fp = popen( buf, "w" )) == NULL )  {
-	  perror( buf );
+	if(pipe(fd1) != 0){
+	  perror("f_area");
 	  return TCL_ERROR;
 	}
+
+	if(pipe(fd2) != 0){
+	  perror("f_area");
+	  return TCL_ERROR;
+	}
+
+	if(pipe(fd3) != 0){
+	  perror("f_area");
+	  return TCL_ERROR;
+	}
+
+	if ((pid1 = fork()) == 0){
+	  dup2(fd1[0], STDIN_FILENO);
+	  dup2(fd2[1], STDOUT_FILENO);
+
+	  close(fd1[0]);
+	  close(fd1[1]);
+	  close(fd2[0]);
+	  close(fd2[1]);
+	  close(fd3[0]);
+	  close(fd3[1]);
+
+	  execlp("cad_boundp", "cad_boundp", "-t", tol_ptr, (char *)NULL);
+	}
+
+	if ((pid2 = fork()) == 0){
+	  dup2(fd2[0], STDIN_FILENO);
+	  dup2(fd3[1], STDOUT_FILENO);
+
+	  close(fd1[0]);
+	  close(fd1[1]);
+	  close(fd2[0]);
+	  close(fd2[1]);
+	  close(fd3[0]);
+	  close(fd3[1]);
+
+	  execlp("cad_parea", "cad_parea", (char *)NULL);
+	}
+
+	close(fd1[0]);
+	close(fd2[0]);
+	close(fd2[1]);
+	close(fd3[1]);
+
+	fp_w = fdopen(fd1[1], "w");
+	fp_r = fdopen(fd3[0], "r");
 
 	/*
 	 * Write out rotated but unclipped, untranslated,
 	 * and unscaled vectors
 	 */
 	FOR_ALL_SOLIDS( sp )  {
-		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
-			register int	i;
-			register int	nused = vp->nused;
-			register int	*cmd = vp->cmd;
-			register point_t *pt = vp->pt;
-			for( i = 0; i < nused; i++,cmd++,pt++ )  {
-				switch( *cmd )  {
-				case RT_VLIST_POLY_START:
-				case RT_VLIST_POLY_VERTNORM:
-					continue;
-				case RT_VLIST_POLY_MOVE:
-				case RT_VLIST_LINE_MOVE:
-					/* Move, not draw */
-					MAT4X3VEC( last, Viewrot, *pt );
-					continue;
-				case RT_VLIST_POLY_DRAW:
-				case RT_VLIST_POLY_END:
-				case RT_VLIST_LINE_DRAW:
-					/* draw.  */
-					MAT4X3VEC( fin, Viewrot, *pt );
-					break;
-				}
+	  for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	    register int	i;
+	    register int	nused = vp->nused;
+	    register int	*cmd = vp->cmd;
+	    register point_t *pt = vp->pt;
+	    for( i = 0; i < nused; i++,cmd++,pt++ )  {
+	      switch( *cmd )  {
+	      case RT_VLIST_POLY_START:
+	      case RT_VLIST_POLY_VERTNORM:
+		continue;
+	      case RT_VLIST_POLY_MOVE:
+	      case RT_VLIST_LINE_MOVE:
+		/* Move, not draw */
+		MAT4X3VEC( last, Viewrot, *pt );
+		continue;
+	      case RT_VLIST_POLY_DRAW:
+	      case RT_VLIST_POLY_END:
+	      case RT_VLIST_LINE_DRAW:
+		/* draw.  */
+		MAT4X3VEC( fin, Viewrot, *pt );
+		break;
+	      }
 
-				fprintf(fp, "%.9e %.9e %.9e %.9e\n",
-					last[X] * base2local,
-					last[Y] * base2local,
-					fin[X] * base2local,
-					fin[Y] * base2local );
+	      fprintf(fp_w, "%.9e %.9e %.9e %.9e\n",
+		      last[X] * base2local,
+		      last[Y] * base2local,
+		      fin[X] * base2local,
+		      fin[Y] * base2local );
 
-				VMOVE( last, fin );
-			}
-		}
+	      VMOVE( last, fin );
+	    }
+	  }
 	}
+	
+	fclose(fp_w);
+
 	Tcl_AppendResult(interp, "Presented area from this viewpoint, square ",
 			 rt_units_string(dbip->dbi_local2base), ":\n", (char *)NULL);
 
-	pclose( fp );
+	/* Read result */
+	fgets(result, MAXLINE, fp_r);
+	Tcl_AppendResult(interp, result, "\n", (char *)NULL);
+
+	while ((rpid = wait(&retcode)) != pid1 && rpid != -1);
+	while ((rpid = wait(&retcode)) != pid2 && rpid != -1);
+
+	fclose(fp_r);
+	close(fd1[1]);
+	close(fd3[0]);
+
 	return TCL_OK;
 }
