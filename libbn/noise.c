@@ -62,8 +62,18 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  * designed to extend the effective domain of the function, albeit by
  * introducing periodicity.	-FKM 4/93
  */
+
+
 #define MAXVAL  	2147483647.  /* (2^31)-1 max val for noise integers */
 #define TWICE_MAXVAL 	4294967294.
+
+/* XXX Do we need this for 64bit integer architectures?
+ *
+ * #define MAXVAL	  	 9223372036854775807.
+ * #define TWICE_MAXVAL 	18446744073709551615.
+ * #endif
+ */
+
 #define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
 
 #define FILTER_ARGS( src) {\
@@ -87,7 +97,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 	y = dst[1];	iy = FLOOR(y);	fy = y - iy; \
 	z = dst[2];	iz = FLOOR(z);	fz = z - iz; \
 }
-
 
 
 /* 
