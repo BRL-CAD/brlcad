@@ -1312,8 +1312,11 @@ register struct xray	*rp;
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
 	if( (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && trip->tri_normals ) {
+		fastf_t old_ray_dot_norm, new_ray_dot_norm;
 		fastf_t u, v, w; /*barycentric coords of hit point */
 		int i;
+
+		old_ray_dot_norm = VDOT( hitp->hit_normal, rp->r_dir );
 
 		v = hitp->hit_vpriv[Y];
 		if( v < 0.0 ) v = 0.0;
@@ -1330,6 +1333,21 @@ register struct xray	*rp;
 		for( i=X ; i<=Z ; i++ ) {
 			hitp->hit_normal[i] = u*trip->tri_normals[i] + v*trip->tri_normals[i+3] + w*trip->tri_normals[i+6];
 		}
+
+		new_ray_dot_norm = VDOT( hitp->hit_normal, rp->r_dir );
+
+		if( (old_ray_dot_norm < 0.0 && new_ray_dot_norm > 0.0) ||
+		    (old_ray_dot_norm > 0.0 && new_ray_dot_norm < 0.0) ) {
+			/* surface normal interpolation has produced an incompatible normal direction
+			 * clamp the normal to 90 degrees to the ray direction
+			 */
+
+			vect_t tmp;
+
+			VCROSS( tmp, rp->r_dir, hitp->hit_normal );
+			VCROSS( hitp->hit_normal, tmp, rp->r_dir );
+		}
+
 		VUNITIZE( hitp->hit_normal );
 	}
 }
