@@ -58,7 +58,9 @@ int		rt_nu_cells_per_axis[3];
 union cutter	*rt_nu_grid;
 /* XXX end NUgrid hack */
 
-static struct nmg_ptbl	rt_waiting_nodes;	/* parallel work queue */
+static struct nmg_ptbl	rt_waiting_nodes={
+	0,0,0,(long**)0
+};	/* parallel work queue */
 
 /*
  *			R T _ F I N D _ N U G R I D
