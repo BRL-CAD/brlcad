@@ -26,11 +26,11 @@
 	extern char *rindex();
 #endif
 
-#ifndef HAS_TERMIOS
+#ifndef HAVE_TERMIOS_H
 #if (defined(BSD) && BSD >= 44) || defined(_POSIX_SOURCE)
-#	define HAS_TERMIOS	1
+#	define HAVE_TERMIOS_H	1
 #else
-#	define HAS_TERMIOS	0
+#	define HAVE_TERMIOS_H	0
 #endif
 #endif
 

@@ -12,19 +12,19 @@
 
 # For SGI 4D
 CC = cc
-CFLAGS= -O2 -DSYS5 -DHAS_TERMIOS
-#CFLAGS= -ansi -O2 -DSYS5 -DHAS_TERMIOS
+CFLAGS= -O2 -DSYS5 -DHAVE_TERMIOS_H
+#CFLAGS= -ansi -O2 -DSYS5 -DHAVE_TERMIOS_H
 LDFLAGS = -O2
 LB=	-lcurses
 
 # For Solaris 2.x
 #CC = cc
-#CFLAGS = -O -i -Xc -xstrconst -DSYS5 -DHAS_TERMIOS
+#CFLAGS = -O -i -Xc -xstrconst -DSYS5 -DHAVE_TERMIOS_H
 #LB = -lcurses
 
 # For BSD/OS
 CC = cc
-CFLAGS= -O2 -DBSD=42 -DHAS_TERMIOS
+CFLAGS= -O2 -DBSD=44 -DHAVE_TERMIOS_H
 LB=	-ltermlib
 
 DESTDIR=

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.3  1997/01/03  17:42:17  jra
+ * Mods for Irix 6.2
+ *
  * Revision 11.2  1995/06/21  03:45:25  gwyn
  * Eliminated trailing blanks.
  * Don't assume SYS5 implies TAB3.
@@ -73,7 +76,7 @@ static char RCSid[] = "@(#)$Header$";
 
 #include "./jove.h"
 
-#if HAS_TERMIOS
+#if HAVE_TERMIOS_H
 #  if !defined(_XOPEN_SOURCE)
 #	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
 #  endif
@@ -158,7 +161,7 @@ void
 getTERM()
 {
 	char	*getenv();
-#if HAS_TERMIOS
+#if HAVE_TERMIOS_H
 	struct termios	tty;
 #else
 # ifndef SYS5
@@ -166,14 +169,14 @@ getTERM()
 # else
 	struct termio tty;
 # endif
-#endif	/* HAS_TERMIOS */
+#endif	/* HAVE_TERMIOS_H */
 	char	termbuf[32],
 		*termname,
 		*termp = tspace,
 		tbuff[1024];
 	int	i;
 
-#if HAS_TERMIOS
+#if HAVE_TERMIOS_H
 	if (tcgetattr( 0, &tty ) < 0 )
 #else
 # ifdef SYS5
@@ -181,10 +184,10 @@ getTERM()
 # else
 	if (gtty(0, &tty))
 # endif
-#endif	/* HAS_TERMIOS */
+#endif	/* HAVE_TERMIOS_H */
 		TermError("ioctl fails");
 
-#if HAS_TERMIOS
+#if HAVE_TERMIOS_H
 #	if defined(TAB3)
 		TABS = !((tty.c_oflag & TAB3) == TAB3);
 #	else
@@ -203,7 +206,7 @@ getTERM()
 	TABS = !(tty.sg_flags & XTABS);
 	jove_ospeed = tty.sg_ospeed;
 # endif
-#endif	/* HAS_TERMIOS */
+#endif	/* HAVE_TERMIOS_H */
 
 	termname = getenv("TERM");
 	if (termname == 0 || *termname == 0) {
@@ -241,12 +244,12 @@ getTERM()
 		*(meas[i]) = (char *)tgetstr(ts,&termp);
 		ts += 2;
 	}
-#ifdef SYS5
+
 	if (M_AL) TERMINFOfix(M_AL);
 	if (M_DL) TERMINFOfix(M_DL);
 	if (M_IC) TERMINFOfix(M_IC);
 	if (M_DC) TERMINFOfix(M_DC);
-#endif
+
 	if (XS)
 		SO = SE = 0;
 
@@ -259,7 +262,6 @@ getTERM()
 	disp_opt_init();
 }
 
-#ifdef SYS5
 #include <ctype.h>
 /* Find TERMINFO %p# strings in the string and kill them */
 /* This is a SYS5 bug fix.   -DPK- */
@@ -274,7 +276,7 @@ char *cp;
 			cp++;
 	}
 }
-#endif
+
 /*
    Deals with output to the terminal, setting up the amount of characters
    to be buffered depending on the output baud rate.  Why it's in a
@@ -354,7 +356,7 @@ settout()
 	};
 	int	val;
 
-#if !HAS_TERMIOS
+#if !HAVE_TERMIOS_H
 	val = speeds[jove_ospeed & 0xF];
 #else
 	/* In POSIX, this is a vendor-specific code, not a useful number. */
