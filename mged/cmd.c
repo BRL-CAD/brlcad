@@ -402,7 +402,7 @@ static struct funtab funtab[] = {
 	f_rm,3,MAXARGS,TRUE,
 "rmater", "filename", "read combination materials from filename",
         f_rmater, 2, 2, TRUE,
-"rmats", "file", "load views from file (experimental)",
+"rmats", "file", "load view(s) from 'savekey' file",
 	f_rmats,2,MAXARGS,TRUE,
 "rotobj", "[-i] xdeg ydeg zdeg", "rotate object being edited",
 	f_rot_obj, 4, 5,TRUE,
