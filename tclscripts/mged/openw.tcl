@@ -959,7 +959,7 @@ if { $use_grid_gm } {
 set mged_multi_view($id) $mged_default_mvmode
 
 if { $use_grid_gm } {
-    if {$comb && $mged_show_dm($id)} {
+    if { !$comb || ($comb && $mged_show_dm($id)) } {
 	grid $mged_dmc($id) -sticky nsew -row 0 -column 0
     }
 
@@ -968,7 +968,7 @@ if { $use_grid_gm } {
     grid columnconfigure .$id.tf 1 -weight 0
     grid rowconfigure .$id.tf 0 -weight 1
 
-    if { $mged_show_cmd($id) } {
+    if { !$comb || ($comb && $mged_show_cmd($id)) } {
 	grid .$id.tf -sticky "nsew" -row 1 -column 0
     }
 
@@ -992,7 +992,7 @@ if { $use_grid_gm } {
     grid rowconfigure .$id.status 1 -weight 0
     grid rowconfigure .$id.status 2 -weight 0
 
-    if { $mged_show_status($id) } {
+    if { !$comb || ($comb && $mged_show_status($id)) } {
 	grid .$id.status -sticky "ew" -row 2 -column 0
     }
 
