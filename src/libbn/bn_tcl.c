@@ -87,7 +87,7 @@ bn_decode_hvect(fastf_t *v, const char *str)
 }
 
 void
-bn_encode_mat(struct bu_vls *vp, const fastf_t *m)
+bn_encode_mat(struct bu_vls *vp, const mat_t m)
 {
 	if( m == NULL )  {
 		bu_vls_putc(vp, 'I');
@@ -100,61 +100,61 @@ bn_encode_mat(struct bu_vls *vp, const fastf_t *m)
 }
 
 void
-bn_encode_quat(struct bu_vls *vp, const fastf_t *q)
+bn_encode_quat(struct bu_vls *vp, const mat_t q)
 {
 	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
 }
 
 void
-bn_encode_vect(struct bu_vls *vp, const fastf_t *v)
+bn_encode_vect(struct bu_vls *vp, const mat_t v)
 {
 	bu_vls_printf(vp, "%g %g %g", V3ARGS(v));
 }
 
 void
-bn_encode_hvect(struct bu_vls *vp, const fastf_t *v)
+bn_encode_hvect(struct bu_vls *vp, const mat_t v)
 {
 	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(v));
 }
 
 void
-bn_quat_distance_wrapper(double *dp, fastf_t *q1, fastf_t *q2)
+bn_quat_distance_wrapper(double *dp, mat_t q1, mat_t q2)
 {
 	*dp = quat_distance(q1, q2);
 }
 
 void
-bn_mat_scale_about_pt_wrapper(int *statusp, fastf_t *mat, const fastf_t *pt, const double scale)
+bn_mat_scale_about_pt_wrapper(int *statusp, mat_t mat, const point_t pt, const double scale)
 {
 	*statusp = bn_mat_scale_about_pt(mat, pt, scale);
 }
 
 static void
-bn_mat4x3pnt(fastf_t *o, fastf_t *m, fastf_t *i)
+bn_mat4x3pnt(fastf_t *o, mat_t m, point_t i)
 {
 	MAT4X3PNT(o, m, i);
 }
 
 static void
-bn_mat4x3vec(fastf_t *o, fastf_t *m, fastf_t *i)
+bn_mat4x3vec(fastf_t *o, mat_t m, vect_t i)
 {
 	MAT4X3VEC(o, m, i);
 }
 
 static void
-bn_hdivide(fastf_t *o, const fastf_t *i)
+bn_hdivide(fastf_t *o, const mat_t i)
 {
 	HDIVIDE(o, i);
 }
 
 static void
-bn_vjoin1(fastf_t *o, const fastf_t *pnt, double scale, const fastf_t *dir)
+bn_vjoin1(fastf_t *o, const point_t pnt, double scale, const vect_t dir)
 {
 	VJOIN1( o, pnt, scale, dir );
 }
 
 
-static void bn_vblend(fastf_t *a, fastf_t b, fastf_t *c, fastf_t d, fastf_t *e)
+static void bn_vblend(mat_t a, fastf_t b, mat_t c, fastf_t d, mat_t e)
 {
 	VBLEND2( a, b, c, d, e );
 }

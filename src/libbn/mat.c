@@ -204,7 +204,7 @@ register const mat_t	src;
  * NOTE: "o" must not be the same as either of the inputs.
  */
 void
-bn_mat_mul(register fastf_t *o, register const fastf_t *a, register const fastf_t *b)
+bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
 {
 	o[ 0] = a[ 0]*b[ 0] + a[ 1]*b[ 4] + a[ 2]*b[ 8] + a[ 3]*b[12];
 	o[ 1] = a[ 0]*b[ 1] + a[ 1]*b[ 5] + a[ 2]*b[ 9] + a[ 3]*b[13];
@@ -236,7 +236,7 @@ bn_mat_mul(register fastf_t *o, register const fastf_t *a, register const fastf_
  *  The arugment ordering is confusing either way.
  */
 void
-bn_mat_mul2(register const fastf_t *i, register fastf_t *o)
+bn_mat_mul2(register const mat_t i, register mat_t o)
 {
 	mat_t	temp;
 
@@ -252,7 +252,7 @@ bn_mat_mul2(register const fastf_t *i, register fastf_t *o)
  *  The output matrix may be the same as 'b' or 'c', but may not be 'a'.
  */
 void
-bn_mat_mul3(fastf_t *o, const fastf_t *a, const fastf_t *b, const fastf_t *c)
+bn_mat_mul3(mat_t o, const mat_t a, const mat_t b, const mat_t c)
 {
 	mat_t	t;
 
@@ -268,13 +268,13 @@ bn_mat_mul3(fastf_t *o, const fastf_t *a, const fastf_t *b, const fastf_t *c)
  *  The output matrix may be the same as any input matrix.
  */
 void
-bn_mat_mul4(fastf_t *o, const fastf_t *a, const fastf_t *b, const fastf_t *c, const fastf_t *d)
+bn_mat_mul4(mat_t ao, const mat_t a, const mat_t b, const mat_t c, const mat_t d)
 {
 	mat_t	t, u;
 
 	bn_mat_mul( u, c, d );
 	bn_mat_mul( t, a, b );
-	bn_mat_mul( o, t, u );
+	bn_mat_mul( ao, t, u );
 }
 
 /*
@@ -285,7 +285,7 @@ bn_mat_mul4(fastf_t *o, const fastf_t *a, const fastf_t *b, const fastf_t *c, co
  * operates on 4-tuples.  Use MAT4X3VEC() to operate on 3-tuples.
  */
 void
-bn_matXvec(register fastf_t *ov, register const fastf_t *im, register const fastf_t *iv)
+bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv)
 {
 	register int eo = 0;		/* Position in output vector */
 	register int em = 0;		/* Position in input matrix */
@@ -314,7 +314,7 @@ bn_matXvec(register fastf_t *ov, register const fastf_t *im, register const fast
  * Note:  Inversion is done in place, with 3 work vectors
  */
 void
-bn_mat_inv(register fastf_t *output, const fastf_t *input)
+bn_mat_inv(register mat_t output, const mat_t input)
 {
 	register int i, j;			/* Indices */
 	LOCAL int k;				/* Indices */
@@ -401,15 +401,15 @@ bn_mat_inv(register fastf_t *output, const fastf_t *input)
  * Takes a pointer to a [x,y,z] vector, and a pointer
  * to space for a homogeneous vector [x,y,z,w],
  * and builds [x,y,z,1].
- */
 void
-bn_vtoh_move(register fastf_t *h, register const fastf_t *v)
+bn_vtoh_move(register vert_t h2, register const vert_t v2)
 {
-	h[X] = v[X];
-	h[Y] = v[Y];
-	h[Z] = v[Z];
-	h[W] = 1.0;
+	h2[X] = v2[X];
+	h2[Y] = v2[Y];
+	h2[Z] = v2[Z];
+	h2[W] = 1.0;
 }
+ */
 
 /*
  *			B N _ H T O V _ M O V E
@@ -419,7 +419,7 @@ bn_vtoh_move(register fastf_t *h, register const fastf_t *v)
  * Optimization for the case of w==1 is performed.
  */
 void
-bn_htov_move(register fastf_t *v, register const fastf_t *h)
+bn_htov_move(register vect_t v, register const vect_t h)
 {
 	register fastf_t inv;
 
@@ -444,7 +444,7 @@ bn_htov_move(register fastf_t *v, register const fastf_t *h)
  *			B N _ M A T _ T R N
  */
 void
-bn_mat_trn(fastf_t *om, register const fastf_t *im)
+bn_mat_trn(mat_t om, register const mat_t im)
 {
 	register matp_t op = om;
 
@@ -518,7 +518,7 @@ bn_mat_ae(register fastf_t *m, double azimuth, double elev)
  *  direction (not including twist) given by a direction vector.
  */
 void
-bn_ae_vec(fastf_t *azp, fastf_t *elp, const fastf_t *v)
+bn_ae_vec(fastf_t *azp, fastf_t *elp, const vect_t v)
 {
 	register fastf_t	az;
 
@@ -758,7 +758,7 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
  *  The output vector will have unit length only if the input vector did.
  */
 void
-bn_vec_perp(fastf_t *new, const fastf_t *old)
+bn_vec_perp(vect_t new, const vect_t old)
 {
 	register int i;
 	LOCAL vect_t another;	/* Another vector, different */
@@ -786,7 +786,7 @@ bn_vec_perp(fastf_t *new, const fastf_t *old)
  *  MAT4X3VEC( to, m, from ) is the identity that is created.
  */
 void
-bn_mat_fromto(fastf_t *m, const fastf_t *from, const fastf_t *to)
+bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
 {
 	vect_t	test_to;
 	vect_t	unit_from, unit_to;
@@ -961,7 +961,7 @@ bn_mat_zrot(fastf_t *m, double sinz, double cosz)
  *	    used in animation.
  */
 void
-bn_mat_lookat(fastf_t *rot, const fastf_t *dir, int yflip)
+bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 {
 	mat_t	first;
 	mat_t	second;
@@ -1022,7 +1022,7 @@ bn_mat_lookat(fastf_t *rot, const fastf_t *dir, int yflip)
  *  a faster algorithm may be possible.
  */
 void
-bn_vec_ortho(register fastf_t *out, register const fastf_t *in)
+bn_vec_ortho(register vect_t out, register const vect_t in)
 {
 	register int j, k;
 	FAST fastf_t	f;
@@ -1074,7 +1074,7 @@ bn_vec_ortho(register fastf_t *out, register const fastf_t *in)
  *	 0	if OK.
  */
 int
-bn_mat_scale_about_pt(fastf_t *mat, const fastf_t *pt, const double scale)
+bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
 {
 	mat_t	xlate;
 	mat_t	s;
@@ -1103,7 +1103,7 @@ bn_mat_scale_about_pt(fastf_t *mat, const fastf_t *pt, const double scale)
  *  Build a matrix to apply arbitary 4x4 transformation around a given point.
  */
 void
-bn_mat_xform_about_pt(fastf_t *mat, const fastf_t *xform, const fastf_t *pt)
+bn_mat_xform_about_pt(mat_t mat, const mat_t xform, const point_t pt)
 {
 	mat_t	xlate;
 	mat_t	tmp;
@@ -1125,7 +1125,7 @@ bn_mat_xform_about_pt(fastf_t *mat, const fastf_t *xform, const fastf_t *pt)
  *	1	When matricies are equal
  */
 int
-bn_mat_is_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
+bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
 {
 	register int i;
 	register double f;
@@ -1185,7 +1185,7 @@ bn_mat_is_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
  *	1	a perfect identity matrix
  */
 int
-bn_mat_is_identity(const fastf_t *m)
+bn_mat_is_identity(const mat_t m)
 {
 	return (! memcmp(m, bn_mat_identity, sizeof(mat_t)));
 }
@@ -1198,7 +1198,7 @@ bn_mat_is_identity(const fastf_t *m)
  *	The angle of rotation is "ang"
  */
 void
-bn_mat_arb_rot(fastf_t *m, const fastf_t *pt, const fastf_t *dir, const fastf_t ang)
+bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
 {
 	mat_t tran1,tran2,rot;
 	double cos_ang, sin_ang, one_m_cosang;
@@ -1259,7 +1259,7 @@ bn_mat_arb_rot(fastf_t *m, const fastf_t *pt, const fastf_t *dir, const fastf_t 
  *  Return a pointer to a copy of the matrix in dynamically allocated memory.
  */
 matp_t
-bn_mat_dup(const fastf_t *in)
+bn_mat_dup(const mat_t in)
 {
 	matp_t	out;
 
@@ -1279,7 +1279,7 @@ bn_mat_dup(const fastf_t *in)
  *	 0	OK
  */
 int
-bn_mat_ck(const char *title, const fastf_t *m)
+bn_mat_ck(const char *title, const mat_t m)
 {
 	vect_t	A, B, C;
 	fastf_t	fx, fy, fz;
@@ -1328,7 +1328,7 @@ bn_mat_ck(const char *title, const fastf_t *m)
  *	part of the passed matrix
  */
 fastf_t
-bn_mat_det3(const fastf_t *m)
+bn_mat_det3(const mat_t m)
 {
 	FAST fastf_t sum;
 
@@ -1346,7 +1346,7 @@ bn_mat_det3(const fastf_t *m)
  *	Calculates the determinant of the 4X4 matrix
  */
 fastf_t
-bn_mat_determinant(const fastf_t *m)
+bn_mat_determinant(const mat_t m)
 {
 	fastf_t det[4];
 	fastf_t sum;

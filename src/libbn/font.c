@@ -40,7 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  'scale' is the width, in mm, of one character.
  */
 void
-bn_vlist_3string(struct bu_list *vhead, struct bu_list *free_hd, const char *string, const fastf_t *origin, const fastf_t *rot, double scale)
+bn_vlist_3string(struct bu_list *vhead, struct bu_list *free_hd, const char *string, const vect_t origin, const mat_t rot, double scale)
               	       
               	         	/* source of free vlists */
           	        	/* string of chars to be plotted */

@@ -56,7 +56,6 @@
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -72,6 +71,7 @@
 #define NORMAL		0
 #define ERROR1		1
 #define ERROR2		2
+
 
 /* Orientation conventions:
  * The default object orientation is facing the positive x-axis, with 
@@ -844,7 +844,6 @@ normal value, and 0 when there is not yet information to remember.
 */
 int anim_steer_mat(mat_t  mat, vect_t point, int end)
 {
-	void anim_dir2mat(fastf_t *m, const fastf_t *d, const fastf_t *d2b), anim_add_trans(fastf_t *m, const fastf_t *post, const fastf_t *pre), anim_view_rev(fastf_t *m);
 	static vect_t p1, p2, p3;
 	vect_t dir;
 	static vect_t norm;
