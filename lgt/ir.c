@@ -41,7 +41,7 @@ adjust_Page( y )
 int	y;
 	{	int	scans_per_page = fbiop->if_ppixels/fbiop->if_width;
 		int	newy = y - (y % scans_per_page);
-	return	newy < grid_sz / 2 ? y : newy;
+	return	newy < grid_sz / 2 ? grid_sz / 2 : newy;
 	}
 
 #define D_XPOS	(x-xmin)
@@ -61,11 +61,6 @@ int	xmin, ymax;
 	if( ir_table == RGBPIXEL_NULL )
 		{
 		rt_log( "IR table not initialized.\n" );
-		return;
-		}
-	if( ! get_Font( (char *) NULL ) )
-		{
-		rt_log( "Could not load font.\n" );
 		return;
 		}
 	for( y = ymin; y <= ymax; y++ )
@@ -93,6 +88,12 @@ int	xmin, ymax;
 				(void) fb_wpixel( fbiop, pixel );
 				}
 			}
+		}
+	if( ! get_Font( (char *) NULL ) )
+		{
+		rt_log( "Could not load font.\n" );
+		fb_flush( fbiop );
+		return;
 		}
 	y = ymin;
 	for( x = xmin; x <= xmax; x += interval )
@@ -189,7 +190,7 @@ FILE	*fp;
 						{
 						if( ir_octree.o_temp == ABSOLUTE_ZERO )
 							ir_octree.o_temp = AMBIENT - 1;
-						display_Temps( grid_sz/8, grid_sz * 3 / 4);
+						display_Temps( grid_sz/8, fy );
 						close_Output_Device();
 						return	1;
 						}
@@ -313,7 +314,12 @@ init_Temp_To_RGB()
 
 pixel_To_Temp( pixel )
 register RGBpixel	*pixel;
-	{	register RGBpixel	*p, *q = (RGBpixel *) ir_table[ir_max-ir_min];
+	{
+#ifdef CRAY2
+		RGBpixel	*p, *q = (RGBpixel *) ir_table[ir_max-ir_min];
+#else
+		register RGBpixel	*p, *q = (RGBpixel *) ir_table[ir_max-ir_min];
+#endif	
 		register int	temp = ir_min;
 	for( p = (RGBpixel *) ir_table[0]; p <= q; p++, temp++ )
 		{
