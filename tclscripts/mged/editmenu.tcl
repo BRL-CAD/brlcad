@@ -141,11 +141,13 @@ proc build_solid_menu { type id paths } {
     create_listbox $top $screen Solid $rpaths "destroy $top"
     set mged_gui($id,edit_menu) $top
 
-    bind_listbox $top "<B1-Motion>"\
+    bind_listbox $top <B1-Motion> \
 	    "set item \[get_listbox_entry %W %x %y\];\
 	    solid_illum \$item"
-    bind_listbox $top "<ButtonPress-1>" "doubleClickHack %W %x %y %t $id $type junkpath"
-    bind_listbox $top "<ButtonRelease-1>" "%W selection clear 0 end; _mged_press reject"
+    bind_listbox $top "<ButtonPress-1>" \
+	    "doubleClickHack %W %x %y %t $id $type junkpath"
+    bind_listbox $top "<ButtonRelease-1>" \
+	    "%W selection clear 0 end; _mged_press reject"
 }
 
 proc build_matrix_menu { id path } {
@@ -173,13 +175,13 @@ proc build_matrix_menu { id path } {
     create_listbox $top $screen Matrix $path_components "_mged_press reject; destroy $top"
     set mged_gui($id,edit_menu) $top
 
-    bind_listbox $top "<B1-Motion>"\
+    bind_listbox $top "<B1-Motion>" \
 	    "set path_pos \[%W index @%x,%y\];\
 	    matrix_illum $path \$path_pos"
-    bind_listbox $top "<ButtonPress-1>" "doubleClickHack %W %x %y %t $id m $path"
-    bind_listbox $top "<ButtonRelease-1>"\
-	    "%W selection clear 0 end;\
-	    _mged_press reject"
+    bind_listbox $top "<ButtonPress-1>" \
+	    "doubleClickHack %W %x %y %t $id m $path"
+    bind_listbox $top "<ButtonRelease-1>" \
+	    "%W selection clear 0 end; _mged_press reject"
 }
 
 proc doubleClickHack {w x y t id type path} {
@@ -215,21 +217,23 @@ proc doubleClickHack {w x y t id type path} {
 		set sol_data [db get $item]
 		set sol_type [lindex $sol_data 0]
 		if { $sol_type == "sketch" } {
-			Sketch_editor .#auto $item
+		    Sketch_editor .#auto $item
 		} else {
-			_mged_sed -i 1 $item
+		    _mged_sed -i 1 $item
 		}
-		destroy [winfo parent $w]
+		bind $w <ButtonRelease-1> \
+			"destroy [winfo parent $w]; break"
 	    }
 	    o {
-		destroy [winfo parent $w]
-		build_matrix_menu $id $item
+		bind $w <ButtonRelease-1> \
+			"destroy [winfo parent $w]; build_matrix_menu $id $item; break"
 	    }
 	    m {
 		_mged_press oill
 		_mged_ill -i 1 $path
 		_mged_matpick $item
-		destroy [winfo parent $w]
+		bind $w <ButtonRelease-1> \
+			"destroy [winfo parent $w]; break"
 	    }
 	}
     }
