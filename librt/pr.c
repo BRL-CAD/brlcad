@@ -196,10 +196,19 @@ int lvl;			/* recursion level */
 
 	switch( tp->tr_op )  {
 
+		rt_log("NOP\n");
+		bu_log("NOP\n");
+		return;
+
 		rt_log("SOLID %s (bit %d)\n",
 			tp->tr_a.tu_stp->st_name,
 			tp->tr_a.tu_stp->st_dp->d_namep,
-		break;
+			tp->tr_a.tu_stp->st_bit );
+		return;
+
+		rt_log("REGION 'stp'=x%x\n",
+			tp->tr_a.tu_stp );
+			tp->tr_l.tl_mat ? " (matrix)" : "" );
 		return;
 
 		rt_log("Unknown op=x%x\n", tp->tr_op );
@@ -223,8 +232,6 @@ int lvl;			/* recursion level */
 		break;
 	}
 
-	case OP_SOLID:
-		break;
 	switch( tp->tr_op )  {
 	case OP_UNION:
 	case OP_INTERSECT:
@@ -235,6 +242,7 @@ int lvl;			/* recursion level */
 		rt_pr_tree( tp->tr_b.tb_right, lvl+1 );
 		break;
 	case OP_NOT:
+	case OP_GUARD:
 	case OP_XNOP:
 		/* UNARY tree */
 		bu_vls_strcat( vls, ") " );
