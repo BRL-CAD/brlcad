@@ -2,15 +2,8 @@
                                                                                                                                             
 bin_PROGRAMS = burst
 
-BN=$(top_builddir)/libbn/libbn.la $(BU)
-BU=$(top_builddir)/libbu/libbu.la @TCL_LIBS@ @PTHREAD_LIBS@ -lm
-FB=$(top_builddir)/libfb/libfb.la @X_LIBS@ $(PKG) $(BU)
-RT=$(top_builddir)/librt/librt.la $(BN)
-TERMIO=$(top_builddir)/libtermio/libtermio.la
-PKG=$(top_builddir)/libpkg/libpkg.la
-
 burst_SOURCES = burst.c error.c fb.c glob.c grid.c gridrotate.c Hm.c HmGetc.c HmGlob.c idents.c paint.c plot.c prnt.c Sc.c Tc.c trie.c ui.c
-burst_LDADD = ${RT} ${BN} ${FB} ${BU} ${PKG} ${TERMIO} -lncurses
+burst_LDADD = @RT@ @FB@ @TERMIO@ -lncurses
 
 test:	../.burst.MTYPE/burst tfiles/ktank.g
 	../.burst.MTYPE/burst -b < tfiles/ktank.in

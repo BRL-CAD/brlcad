@@ -27,46 +27,30 @@ bin_PROGRAMS= alias-pix ap-pix asc-pl azel bary buffer dbcp \
 	wavelet pixsubst terrain ttcp dsp_add \
 	pl-X
 
-# pix_ci pl-starbase pl-X10
-
-#utildir=$(bindir)
-#util_SCRIPTS=morphedit.tcl rtwizard
-#util_SCRIPTS=rtwizard
-
-BN=$(top_builddir)/libbn/libbn.la $(BU)
-BU=$(top_builddir)/libbu/libbu.la @TCL_LIBS@ @PTHREAD_LIBS@ -lm 
-FB=$(top_builddir)/libfb/libfb.la @X_LIBS@ $(PKG) $(BU)
-PKG=$(top_builddir)/libpkg/libpkg.la
-PNG=@PNG_LIBS@
-SYSV=$(top_builddir)/libsysv/libsysv.la
-ORLE=$(top_builddir)/liborle/liborle.la
-RLE=$(top_builddir)/libutahrle/libutahrle.la -lm
-RT=$(top_builddir)/librt/librt.la $(BN)
-
 pixsubst_SOURCES = pixsubst.c
 
 wavelet_SOURCES = wavelet.c
-wavelet_LDADD = $(BN) $(FB)
+wavelet_LDADD = @BN@ @FB@
 
 png_info_SOURCES = png_info.c
-png_info_LDADD = $(BN) $(PNG)
+png_info_LDADD = @BN@ @PNG@
 
 pix_png_SOURCES = pix-png.c
-pix_png_LDADD = $(BN) $(PNG)
+pix_png_LDADD = @BN@ @PNG@
 
 png_pix_SOURCES = png-pix.c
-png_pix_LDADD = $(BN) $(PNG)
+png_pix_LDADD = @BN@ @PNG@
 
 bw_png_SOURCES = bw-png.c
-bw_png_LDADD = $(BN) $(PNG)
+bw_png_LDADD = @BN@ @PNG@
 
 png_bw_SOURCES = png-bw.c
-png_bw_LDADD = $(BN) $(PNG)
+png_bw_LDADD = @BN@ @PNG@
 
 dunncolor_SOURCES = dunncolor.c dunncomm.c
 
 dunnsnap_SOURCES = dunnsnap.c dunncomm.c
-dunnsnap_LDADD = $(FB)
+dunnsnap_LDADD = @FB@
 
 loop_SOURCES = loop.c
 
@@ -83,7 +67,7 @@ pixmatte_SOURCES = pixmatte.c
 pixbustup_SOURCES = pixbustup.c
 
 pixfade_SOURCES = pixfade.c
-pixfade_LDADD = $(BN)
+pixfade_LDADD = @BN@
 
 pixfields_SOURCES = pixfields.c
 
@@ -98,29 +82,29 @@ pixtile_SOURCES = pixtile.c
 pixuntile_SOURCES = pixuntile.c
 
 orle_pix_SOURCES = orle-pix.c
-orle_pix_LDADD = $(FB) $(ORLE)
+orle_pix_LDADD = @FB@ @ORLE@
 
 pix_orle_SOURCES = pix-orle.c
-pix_orle_LDADD = $(FB) $(ORLE)
+pix_orle_LDADD = @FB@ @ORLE@
 
 rle_pix_SOURCES = rle-pix.c strdup.c
-rle_pix_LDADD = $(RLE)
+rle_pix_LDADD = @RLE@
 
 pix_rle_SOURCES = pix-rle.c strdup.c
-pix_rle_LDADD = $(RLE)
+pix_rle_LDADD = @RLE@
 
 bw_rle_SOURCES = bw-rle.c strdup.c
-bw_rle_LDADD = $(RLE)
+bw_rle_LDADD = @RLE@
 
 ap_pix_SOURCES = ap-pix.c
 
 pixbackgnd_SOURCES = pixbackgnd.c
 
 pixbgstrip_SOURCES = pixbgstrip.c
-pixbgstrip_LDADD = $(BN)
+pixbgstrip_LDADD = @BN@
 
 bw_a_SOURCES = bw-a.c
-bw_a_LDADD = $(BN)
+bw_a_LDADD = @BN@
 
 bw_imp_SOURCES = bw-imp.c
 
@@ -137,7 +121,7 @@ bwdiff_SOURCES = bwdiff.c
 bwfilter_SOURCES = bwfilter.c
 
 bwhist_SOURCES = bwhist.c
-bwhist_LDADD = $(FB)
+bwhist_LDADD = @FB@
 
 bwhisteq_SOURCES = bwhisteq.c
 
@@ -163,10 +147,10 @@ pix_bw3_SOURCES = pix-bw3.c
 pixfilter_SOURCES = pixfilter.c
 
 pixhist_SOURCES = pixhist.c
-pixhist_LDADD = $(FB)
+pixhist_LDADD = @FB@
 
 pixhist3d_SOURCES = pixhist3d.c
-pixhist3d_LDADD = $(FB)
+pixhist3d_LDADD = @FB@
 
 pixrect_SOURCES = pixrect.c
 
@@ -177,46 +161,46 @@ pixscale_SOURCES = pixscale.c
 pixembed_SOURCES = pixembed.c
 
 pixcut_SOURCES = pixcut.c
-pixcut_LDADD = $(BN)
+pixcut_LDADD = @BN@
 
 pixpaste_SOURCES = pixpaste.c
-pixpaste_LDADD = $(BN)
+pixpaste_LDADD = @BN@
 
 pixstat_SOURCES = pixstat.c
 pixstat_LDADD = -lm
 
 pixhist3d_pl_SOURCES = pixhist3d-pl.c
-pixhist3d_pl_LDADD = $(BN)
+pixhist3d_pl_LDADD = @BN@
 
 pl_sgi_SOURCES = pl-sgi.c
 
 pl_ps_SOURCES = pl-ps.c
-pl_ps_LDADD = $(BU)
+pl_ps_LDADD = @BU@
 
 pldebug_SOURCES = pldebug.c
-pldebug_LDADD = $(BU)
+pldebug_LDADD = @BU@
 
 plgetframe_SOURCES = plgetframe.c
 
 plrot_SOURCES = plrot.c
-plrot_LDADD = $(BN)
+plrot_LDADD = @BN@
 
 cv_SOURCES = cv.c
-cv_LDADD = $(BU)
+cv_LDADD = @BU@
 
 op_bw_SOURCES = op-bw.c
 
 plcolor_SOURCES = plcolor.c
-plcolor_LDADD = $(BN)
+plcolor_LDADD = @BN@
 
 plline2_SOURCES = plline2.c
-plline2_LDADD = $(BN)
+plline2_LDADD = @BN@
 
 pl_pl_SOURCES = pl-pl.c
-pl_pl_LDADD = $(BU)
+pl_pl_LDADD = @BU@
 
 pl_tek_SOURCES = pl-tek.c
-pl_tek_LDADD = $(BU)
+pl_tek_LDADD = @BU@
 
 buffer_SOURCES = buffer.c
 
@@ -227,7 +211,7 @@ files_tape_SOURCES = files-tape.c
 pix3filter_SOURCES = pix3filter.c
 
 pix_spm_SOURCES = pix-spm.c
-pix_spm_LDADD = $(BN)
+pix_spm_LDADD = @BN@
 
 pix_sun_SOURCES = pix-sun.c
 
@@ -250,55 +234,55 @@ pixshrink_SOURCES = pixshrink.c
 bwshrink_SOURCES = bwshrink.c
 
 pixhalve_SOURCES = pixhalve.c
-pixhalve_LDADD = $(BN)
+pixhalve_LDADD = @BN@
 
 pix_ps_SOURCES = pix-ps.c
 
 pix_ppm_SOURCES = pix-ppm.c 
-pix_ppm_LDADD = $(BN)
+pix_ppm_LDADD = @BN@
 
 pcd_pix_SOURCES = pcd-pix.c
 
 pix_yuv_SOURCES = pix-yuv.c
-pix_yuv_LDADD = $(BN)
+pix_yuv_LDADD = @BN@
 
 yuv_pix_SOURCES = yuv-pix.c
-yuv_pix_LDADD = $(BN)
+yuv_pix_LDADD = @BN@
 
 plstat_SOURCES = plstat.c
-plstat_LDADD = $(BU)
+plstat_LDADD = @BU@
 
 pl_asc_SOURCES = pl-asc.c
-pl_asc_LDADD = $(BU)
+pl_asc_LDADD = @BU@
 
 asc_pl_SOURCES = asc-pl.c
-asc_pl_LDADD = $(BN) $(BU) -lm
+asc_pl_LDADD = @BN@ -lm
 
 pl_hpgl_SOURCES = pl-hpgl.c
 
 xyz_pl_SOURCES = xyz-pl.c
-xyz_pl_LDADD = $(BN)
+xyz_pl_LDADD = @BN@
 
 azel_SOURCES = azel.c
 azel_LDADD = -lm
 
 bary_SOURCES = bary.c
-bary_LDADD = $(BU)
+bary_LDADD = @BU@
 
 pixdsplit_SOURCES = pixdsplit.c
-pixdsplit_LDADD = $(BU)
+pixdsplit_LDADD = @BU@
 
 mst_SOURCES = mst.c
-mst_LDADD = $(BU)
+mst_LDADD = @BU@
 
 remapid_SOURCES = remapid.c
-remapid_LDADD = $(RT)
+remapid_LDADD = @RT@
 
 texturescale_SOURCES = texturescale.c
-texturescale_LDADD = $(BN)
+texturescale_LDADD = @BN@
 
 double_asc_SOURCES = double-asc.c
-double_asc_LDADD = $(BN)
+double_asc_LDADD = @BN@
 
 bwthresh_SOURCES = bwthresh.c
 
@@ -309,7 +293,7 @@ dpix_pix_SOURCES = dpix-pix.c
 
 pl_X_SOURCES = pl-X.c
 pl_X_CFLAGS = @X_CFLAGS@
-pl_X_LDADD = @X_LIBS@ $(BU)
+pl_X_LDADD = @X_LIBS@ @BU@
 
 #pl_X10_SOURCES = pl-X10.c
 
@@ -320,33 +304,33 @@ pixelswap_SOURCES = pixelswap.c
 decimate_SOURCES = decimate.c
 
 msrandom_SOURCES = msrandom.c
-msrandom_LDADD = $(BN)
+msrandom_LDADD = @BN@
 
 pixblend_SOURCES = pixblend.c
 
 pixmorph_SOURCES = pixmorph.c
-pixmorph_LDADD = $(BN)
+pixmorph_LDADD = @BN@
 
 pixborder_SOURCES = pixborder.c
-pixborder_LDADD = $(BN)
+pixborder_LDADD = @BN@
 
 pixclump_SOURCES = pixclump.c
-pixclump_LDADD = $(BU)
+pixclump_LDADD = @BU@
 
 pixcount_SOURCES = pixcount.c
-pixcount_LDADD = $(BU)
+pixcount_LDADD = @BU@
 
 imgdims_SOURCES = imgdims.c
-imgdims_LDADD = $(BN)
+imgdims_LDADD = @BN@
 
 terrain_SOURCES = terrain.c
-terrain_LDADD = $(BN)
+terrain_LDADD = @BN@
 
 dsp_add_SOURCES = dsp_add.c
-dsp_add_LDADD = $(BU)
+dsp_add_LDADD = @BU@
 
 binfo_SOURCES = binfo.c 
-binfo_LDADD = $(BN) $(FB)
+binfo_LDADD = @BN@ @FB@
 
 # huh, these are just if NFS
 #morphedit.tcl:

@@ -48,7 +48,7 @@ dnl 	*)
 dnl 		TCL_LIBS="-ltcl8.4"
 dnl 		;;
 dnl esac
-TCL_LIBS='${top_builddir}'"/libtcl8.4/libtcl.la @DL@ -lm"
+TCL_LIBS='${top_builddir}/libtcl8.4/libtcl.la @DL@ -lm'
 TCL=libtcl8.4
 AC_SUBST(TCL)
 AC_SUBST(TCL_LIBS)
@@ -64,23 +64,23 @@ fi
 echo "TCL_BUILD_CFLAGS = $TCL_BUILD_CFLAGS"
 AC_SUBST(TCL_BUILD_CFLAGS)
 
-ITCL_LIBS='${top_builddir}'"/libitcl3.2/itcl/libitcl.la"
+ITCL_LIBS='${top_builddir}/libitcl3.2/itcl/libitcl.la'
 ITCL_VERSION="3.2"
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 
 dnl tk
-TK_LIBS='${top_builddir}'"/libtk8.4/libtk.la"
+TK_LIBS='${top_builddir}/libtk8.4/libtk.la'
 TK=
 TK_LIBRARY="$prefix/tk8.4"
 AC_SUBST(TK)
 AC_SUBST(TK_LIBS)
 AC_SUBST(TK_LIBRARY)
 
-ITK_LIBS='${top_builddir}'"/libitcl3.2/itk/libitk.la"
+ITK_LIBS='${top_builddir}/libitcl3.2/itk/libitk.la'
 AC_SUBST(ITK_LIBS)
 
-PNG_LIBS='${top_builddir}'"/libpng/libpng.la "'${top_builddir}'"/libz/libz.la"
+PNG_LIBS='${top_builddir}/libpng/libpng.la ${top_builddir}/libz/libz.la'
 AC_SUBST(PNG_LIBS)
 
 dnl headers
@@ -107,8 +107,31 @@ dnl ============================================================
 
 AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld",AC_ERROR(No dynamic loader found)))])
 echo "DL is: $DL"
+BN='${top_builddir}/libbn/libbn.la ${BU}'
+BU='${top_builddir}/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS} -lm ${DL}'
+DM='${top_builddir}/libdm/libdm.la ${TK_LIBS} ${RT}'
+FB='${top_builddir}/libfb/libfb.la ${X_LIBS} ${PKG} ${BU}'
+OPTICAL='${top_builddir}/liboptical/liboptical.la'
+ORLE='${top_builddir}/liborle/liborle.la'
+PKG='${top_builddir}/libpkg/libpkg.la'
+RLE='${top_builddir}/libutahrle/libutahrle.la -lm'
+RT='${top_builddir}/librt/librt.la ${BN}'
+SYSV='${top_builddir}/libsysv/libsysv.la'
+TERMIO='${top_builddir}/libtermio/libtermio.la'
+WDB='${top_builddir}/libwdb/libwdb.la'
+AC_SUBST(BN)
+AC_SUBST(BU)
+AC_SUBST(DM)
 AC_SUBST(DL)
-
+AC_SUBST(FB)
+AC_SUBST(OPTICAL)
+AC_SUBST(ORLE)
+AC_SUBST(PKG)
+AC_SUBST(RLE)
+AC_SUBST(RT)
+AC_SUBST(SYSV)
+AC_SUBST(TERMIO)
+AC_SUBST(WDB)
 
 X_CFLAGS="-I/usr/X11R6/include"
 AC_SUBST(X_CFLAGS)
