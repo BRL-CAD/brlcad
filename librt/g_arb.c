@@ -92,13 +92,17 @@ struct prep_arb {
 
 HIDDEN void	arb_add_pt();
 
-/* Layout of arb in input record */
+/*
+ *  Layout of arb in input record.
+ *  Points are listed in "clockwise" order,
+ *  to make proper outward-pointing face normals.
+ */
 static struct arb_info {
 	char	*ai_title;
 	int	ai_sub[4];
 } arb_info[6] = {
-	{ "1234", 3, 2, 1, 0 },
-	{ "8765", 4, 5, 6, 7 },
+	{ "1234", 3, 2, 1, 0 },		/* "bottom" face */
+	{ "8765", 4, 5, 6, 7 },		/* "top" face */
 	{ "1485", 4, 7, 3, 0 },
 	{ "2673", 2, 6, 5, 1 },
 	{ "1562", 1, 5, 4, 0 },
@@ -860,7 +864,7 @@ struct directory	*dp;
 	register int		i;
 	struct faceuse		*outfaceuses[6];
 	struct vertex		*verts[8];
-	struct vertex		*vertlist[4];
+	struct vertex		**vertp[4];
 	struct edgeuse		*eu, *eu2;
 	int			face;
 	plane_t			plane;
@@ -877,41 +881,47 @@ struct directory	*dp;
 	s = m->r_p->s_p;
 
 	/* make "top" */
-	outfaceuses[0] = nmg_cface(s, verts, 4);
+	vertp[0] = &verts[0];
+	vertp[1] = &verts[1];
+	vertp[2] = &verts[2];
+	vertp[3] = &verts[3];
+	outfaceuses[0] = nmg_cmface(s, vertp, 4);
 
 	/* make "bottom", going the other way around */
-	for( i=0; i<4; i++ )  vertlist[i] = (struct vertex *)0;
-	outfaceuses[1] = nmg_cface(s, vertlist, 4);
-	for( i=0; i<4; i++ )  verts[8-1-i] = vertlist[i];
+	vertp[0] = &verts[7];
+	vertp[1] = &verts[6];
+	vertp[2] = &verts[5];
+	vertp[3] = &verts[4];
+	outfaceuses[1] = nmg_cmface(s, vertp, 4);
 
 	/* make sure that vertices are listed in clockwise fashion when
 	 * viewed from the outside of the face.  In this way the face
 	 * geometry will be properly computed.
 	 * ????? XXX
 	 */
-	vertlist[0] = verts[0];
-	vertlist[1] = verts[1];
-	vertlist[2] = verts[5];
-	vertlist[3] = verts[4];
-	outfaceuses[2] = nmg_cface(s, vertlist, 4);
+	vertp[0] = &verts[0];
+	vertp[1] = &verts[1];
+	vertp[2] = &verts[5];
+	vertp[3] = &verts[4];
+	outfaceuses[2] = nmg_cmface(s, vertp, 4);
 
-	vertlist[0] = verts[0];
-	vertlist[1] = verts[4];
-	vertlist[2] = verts[7];
-	vertlist[3] = verts[3];
-	outfaceuses[3] = nmg_cface(s, vertlist, 4);
+	vertp[0] = &verts[0];
+	vertp[1] = &verts[4];
+	vertp[2] = &verts[7];
+	vertp[3] = &verts[3];
+	outfaceuses[3] = nmg_cmface(s, vertp, 4);
 
-	vertlist[0] = verts[2];
-	vertlist[1] = verts[6];
-	vertlist[2] = verts[5];
-	vertlist[3] = verts[1];
-	outfaceuses[4] = nmg_cface(s, vertlist, 4);
+	vertp[0] = &verts[2];
+	vertp[1] = &verts[6];
+	vertp[2] = &verts[5];
+	vertp[3] = &verts[1];
+	outfaceuses[4] = nmg_cmface(s, vertp, 4);
 
-	vertlist[0] = verts[2];
-	vertlist[1] = verts[3];
-	vertlist[2] = verts[7];
-	vertlist[3] = verts[6];
-	outfaceuses[5] = nmg_cface(s, vertlist, 4);
+	vertp[0] = &verts[2];
+	vertp[1] = &verts[3];
+	vertp[2] = &verts[7];
+	vertp[3] = &verts[6];
+	outfaceuses[5] = nmg_cmface(s, vertp, 4);
 
 	/* Associate vertex geometry */
 	for( i=0; i<8; i++ )
@@ -934,8 +944,8 @@ struct directory	*dp;
 		else nmg_face_g(outfaceuses[i], plane);
 	}
 
-	/* Glue the edges of different outward pointing face uses together */
-	nmg_gluefaces( outfaceuses, 6 );
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r );
 
 	return(0);
 }
