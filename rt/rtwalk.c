@@ -62,7 +62,6 @@ int		rdebug;			/* program debugging (not library) */
 int		npsw = 1;		/* Run serially */
 int		interactive = 0;	/* human is watching results */
 
-struct resource		resource;
 struct application	ap;
 
 point_t		start_point;
@@ -269,7 +268,6 @@ char **argv;
 				failed_try, max_dist_togo);
 			ap.a_hit = hit;
 			ap.a_miss = miss;
-			ap.a_resource = &resource;
 			ap.a_onehit = 1;
 			if( rt_shootray( &ap ) == 0 )  {
 				/* A miss, the way is clear all the way */
