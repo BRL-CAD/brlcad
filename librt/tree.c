@@ -78,6 +78,7 @@ char *node;
 	register struct directory *dp;
 	mat_t	root;
 	struct mater_info root_mater;
+	int	prev_sol_count;
 
 	if( rtip->rti_magic != RTI_MAGIC )  {
 		rt_log("rtip=x%x, rti_magic=x%x s/b x%x\n", rtip,
@@ -92,6 +93,8 @@ char *node;
 
 	if( (dp = db_lookup( rtip->rti_dbip, node, LOOKUP_NOISY )) == DIR_NULL )
 		return(-1);		/* ERROR */
+
+	prev_sol_count = rtip->nsolids;
 
 	/* Process animations located at the root */
 	mat_idn( root );
@@ -125,6 +128,9 @@ char *node;
 		regionp->reg_name = rt_strdup(rt_path_str(path,0));
 		rt_add_regtree( rtip, regionp, curtree );
 	}
+
+	if( rtip->nsolids <= prev_sol_count )
+		rt_log("rt_gettree(%s) warning:  no solids found\n", node);
 	return(0);	/* OK */
 }
 
@@ -196,8 +202,11 @@ matp_t		mat;
 next_one: ;
 	}
 
-	if( (id = rt_id_solid( rec )) == ID_NULL )  
+	if( (id = rt_id_solid( rec )) == ID_NULL )  {
+		rt_log("rt_add_solid(%s) unable to convert solid id\n",
+			dp->d_namep);
 		return( SOLTAB_NULL );		/* BAD */
+	}
 
 	if( id < 0 || id >= rt_nfunctab )
 		rt_bomb("rt_add_solid:  bad st_id");
@@ -220,6 +229,7 @@ next_one: ;
 	 */
 	if( rt_functab[id].ft_prep( stp, rec, rtip ) )  {
 		/* Error, solid no good */
+		rt_log("rt_add_solid(%s):  prep failure\n", dp->d_namep );
 		rt_free( (char *)stp, "struct soltab");
 		return( SOLTAB_NULL );		/* BAD */
 	}
