@@ -910,6 +910,7 @@ struct resource {
 	long		re_partfree;
 	struct bu_list	re_solid_bitv;	/* head of freelist */
 	struct bu_list	re_region_ptbl;	/* head of freelist */
+	struct bu_list	re_nmgfree;	/* head of NMG hitmiss freelist */
 	union tree	**re_boolstack;	/* Stack for rt_booleval() */
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	float		*re_randptr;	/* ptr into random number table */
@@ -1027,7 +1028,6 @@ struct rt_g {
 	long		res_results;	/* lock on result buffer */
 	long		res_model;	/* lock on model growth (splines) */
 	struct bu_list	rtg_vlfree;	/* head of rt_vlist freelist */
-	struct bu_list	rtg_nmgfree;	/* head of NMG hitmiss freelist */
 	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 };
 extern struct rt_g rt_g;
@@ -1509,17 +1509,17 @@ struct ray_data {
 
 
 #ifdef FAST_NMG
-#define GET_HITMISS(_p) { \
-	(_p) = BU_LIST_FIRST( hitmiss, &rt_g.rtg_nmgfree ); \
-	if( BU_LIST_IS_HEAD( (_p), &rt_g.rtg_nmgfree ) ) \
+#define GET_HITMISS(_p, _ap) { \
+	(_p) = BU_LIST_FIRST( hitmiss, &((_ap)->a_resource->re_nmgfree) ); \
+	if( BU_LIST_IS_HEAD( (_p), &((_ap)->a_resource->re_nmgfree ) ) ) \
 		(_p) = (struct hitmiss *)rt_calloc(1, sizeof( struct hitmiss ), "hitmiss" ); \
 	else \
 		BU_LIST_DEQUEUE( &((_p)->l) ); \
 	}
 
-#define NMG_FREE_HITLIST(_p) { \
+#define NMG_FREE_HITLIST(_p, _ap) { \
 	BU_CK_LIST_HEAD( (_p) ); \
-	BU_LIST_APPEND_LIST( &rt_g.rtg_nmgfree, (_p) ); \
+	BU_LIST_APPEND_LIST( &((_ap)->a_resource->re_nmgfree), (_p) ); \
 	}
 #else
 #define GET_HITMISS(_p) { \
