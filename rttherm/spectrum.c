@@ -1,10 +1,7 @@
 /*
- *			T A B L E . C
  *			S P E C T R U M . C
-    ...about to be split....
  *
- *  This should perhaps be called the "table" package, as it's use is
- *  really much more general than just storing spectral curves.
+ *  An application of the 'tabdata' package to spectral data.
  *
  *  Author -
  *	Michael John Muuss
@@ -132,7 +129,7 @@ CONST struct rt_table	*tabp;
 		FAST fastf_t	fract;		/* fraction from [i] to [i+1] */
 
 again:
-		if( j >= tabp->nx )  return;
+		if( j >= tabp->nx )  break;
 		if( tabp->x[j] < rt_CIE_XYZ[i][0] ) rt_bomb("rt_spect_make_CIE_XYZ assertion1 failed\n");
 		if( tabp->x[j] >= rt_CIE_XYZ[i+1][0] )  continue;
 		/* The CIE table has 5nm spacing */
@@ -411,6 +408,64 @@ if(rt_g.debug) rt_log("rt_spect_black_body_points( x%x, %g degK )\n", data, temp
 	for( j = 0; j < tabp->nx; j++ )  {
 		data->y[j] = PLANCK( (tabp->x[j]*0.001), temp );
 	}
+}
+
+/*
+ *			R T _ S P E C T _ C U R V E _ T O _ X Y Z
+ *
+ *  Convenience routine.
+ */
+void
+rt_spect_curve_to_xyz( xyz, tabp, cie_x, cie_y, cie_z )
+point_t			xyz;
+struct rt_tabdata	*tabp;
+struct rt_tabdata	*cie_x;
+struct rt_tabdata	*cie_y;
+struct rt_tabdata	*cie_z;
+{
+	FAST fastf_t	tab_area;
+
+	RT_CK_TABDATA(tabp);
+
+#if 0
+	tab_area = rt_tabdata_area2( tabp );
+rt_log(" tab_area = %g\n", tab_area);
+	if( fabs(tab_area) < VDIVIDE_TOL )  {
+		rt_log("rt_spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
+		VSETALL( xyz, 0 );
+		return;
+	}
+	tab_area = 1 / tab_area;
+#else
+	/* This is what Roy says to do, but I'm not certain */
+	tab_area = 1;
+#endif
+
+	xyz[X] = rt_tabdata_mul_area2( tabp, cie_x ) * tab_area;
+	xyz[Y] = rt_tabdata_mul_area2( tabp, cie_y ) * tab_area;
+	xyz[Z] = rt_tabdata_mul_area2( tabp, cie_z ) * tab_area;
+}
+
+/*
+ *			R T _ S P E C T _ X Y Z _ T O _ C U R V E
+ *
+ *  Values of the curve will be normalized to 0..1 range;
+ *  caller must scale into meaningful units.
+ *
+ *  Convenience routine.
+ */
+void
+rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z )
+struct rt_tabdata	*tabp;
+CONST point_t		xyz;
+struct rt_tabdata	*cie_x;
+struct rt_tabdata	*cie_y;
+struct rt_tabdata	*cie_z;
+{
+	rt_tabdata_blend3( tabp,
+		xyz[X], cie_x,
+		xyz[Y], cie_y,
+		xyz[Z], cie_z );
 }
 
 #if 0
