@@ -580,6 +580,28 @@ vect_t *pos;
 }
 
 /*
+ *  			F I N D _ S O L I D
+ *  
+ *  Given the (leaf) name of a solid, find the first occurance of it
+ *  in the solid list.  Used mostly to find the light source.
+ */
+struct soltab *
+find_solid( name )
+register char *name;
+{
+	register struct soltab *stp;
+	register char *cp;
+	for( stp = HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+		if( *(cp = stp->st_name) == *name  &&
+		    strcmp( cp, name ) == 0 )  {
+			return(stp);
+		}
+	}
+	return(SOLTAB_NULL);
+}
+
+
+/*
  *  			A D D _ R E G T R E E
  *  
  *  Add a region and it's boolean tree to all the appropriate places.
