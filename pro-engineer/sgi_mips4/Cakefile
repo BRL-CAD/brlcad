@@ -9,7 +9,7 @@
 #undef BINDIR
 #define BINDIR	BASEDIR/pro-engineer/sgi_mips4
 #undef BINPERM
-#define BINPERM 444
+#define BINPERM 755
 
 #define FILES	/**/
 #define	SRCSUFF	/**/
