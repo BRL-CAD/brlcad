@@ -156,6 +156,13 @@ case $FILE in
 	wrap=0
 	commentchar="#"
 	;;
+    *.m4)
+	echo "$FILE is an M4 source file"
+	mode="m4"
+	mode_vars="standard-indent"
+	wrap=0
+	commentchar="#"
+	;;
     *)
 	echo "WARNING: $FILE has an unknown filetype"
 	;;
@@ -252,9 +259,12 @@ done
 existing_vi="`cat $FILE | grep -i "${prefixspace}${commentchar} ex:"`"
 if [ "x$existing_vi" = "x" ] ; then
     echo "No vi line found..."
-elif [ "x$existing_vi" != "x${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width" ] ; then
-    echo "vi line is wrong ... fixing"
-    perl -pi -e "s/(${prefixspace}[${commentchar}] ex:.*)/${prefixspace}${commentchar} ex: shiftwidth=${indentation} tabstop=${tab_width}/i" $FILE
+else
+    vi_line="${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"
+    if [ "x$existing_vi" != "x$vi_line" ] ; then
+	echo "vi line is wrong ... fixing"
+	perl -pi -e "s/(${prefixspace}[${commentchar}] ex:.*)/${prefixspace}${commentchar} ex: shiftwidth=${indentation} tabstop=${tab_width}/i" $FILE
+    fi
 fi
 
 
