@@ -615,29 +615,46 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	undef	sun
 #	undef	sun5
 #	define	MTYPE	sun5
-/*	For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
-#	define	CC		/opt/SUNWspro/bin/cc
-
 #	define	HAS_TCP		1
 
-#	if 1	/* PRODUCTION=1 */
-#		define	OPTIMIZER	-dalign -xcg92 -xO4
+#	if defined( __GNUC__ )
+#		define	CC		gcc
+#		if 0	/* PRODUCTION=1 */
+#			define	OPTIMIZER	-O2 -fwritable-strings
+#		else
+#			define	OPTIMIZER	-g -fwritable-strings
+#		endif
+#		define	CC_DEFS		-D_REENTRANT -DSUNOS=53
 #	else
-#		define	OPTIMIZER	-g
+/*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
+#		define	CC		/opt/SUNWspro/bin/cc
+#		if 1	/* PRODUCTION=1 */
+#			define	OPTIMIZER	-dalign -xcg92 -xO4
+#		else
+#			define	OPTIMIZER	-g
+#		endif
+#		define	CC_OPTS		-Xc -K PIC
+/*		SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
+#		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=53
 #	endif
-#	define	CC_OPTS		-Xc -K PIC
-/*	SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
-#	define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=53
 
 /*	Shared library support */
-#	define	ARCH_SUF	so
-#	define	LIBVERS		../sharedlibvers.sh
-#	define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
+#	if 1	/* shared libraries */
+#		define	ARCH_SUF	so
+#		define	LIBVERS		../sharedlibvers.sh
+#		if defined( __GNUC__ )
+#			define	CC_OPTS		-shared
+#			define	BUILD_LIBRARY	ar -sq
+#		else
+#			define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
+#		endif
+#	endif
 #	define	RANLIB		true
-#	define	STANDARD_LIBES	-lm -lnsl -lsocket -R /usr/lib:LIBDIR
 
-#	define	XINCDIR		/usr/X11/include
-#	define	XLIBDIR		/usr/X11/lib
+#	define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR
+
+#	define	XINCDIR		/usr/openwin/include
+#	define	XLIBDIR		/usr/openwin/lib
 
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
 #	define	LIBPKG_LIBES	-lnsl -lsocket
@@ -648,7 +665,7 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
-#	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DNO_STRING_H=1 -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -Dstrtod=fixstrtod -DSTDC_HEADERS=1 -DNO_UNION_WAIT=1 -DNEED_MATHERR=1 -Dvfork=fork -DGETTOD_NOT_DECLARED=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
+#	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -Dstrtod=fixstrtod -DSTDC_HEADERS=1 -DNO_UNION_WAIT=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	TCL_COMPAT_FILES	fixstrtod
 #	define	TK_DEFS		-DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -Dstrtod=fixstrtod
 #	define	LIBTK_CONFIG	-I''XINCDIR
