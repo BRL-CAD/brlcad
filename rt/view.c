@@ -609,16 +609,16 @@ struct rt_i	*rtip;
  *			V I E W _ R E _ S E T U P
  *
  *	This routine is used to do a "mlib_setup" on reprepped regions.
- *	only regions whose bit number is greater than "old_nregions" will be processed.
+ *	only regions with a NULL reg_mfuncs pointer will be processed.
  */
 void
-view_re_setup( struct rt_i *rtip, int old_nregions, struct resource *resp )
+view_re_setup( struct rt_i *rtip )
 {
 	struct region *rp;
 
 	rp = BU_LIST_FIRST( region, &(rtip->HeadRegion) );
 	while( BU_LIST_NOT_HEAD( rp, &(rtip->HeadRegion) ) ) {
-		if( rp->reg_bit >= old_nregions ) {
+		if( !rp->reg_mfuncs ) {
 			switch( mlib_setup( &mfHead, rp, rtip ) ) {
 			default:
 			case -1:
