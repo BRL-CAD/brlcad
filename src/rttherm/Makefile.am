@@ -29,7 +29,8 @@ rttherm_CFLAGS = -DRT_MULTISPECTRAL
 rttherm_LDADD = \
 	$(top_builddir)/src/rt/librttherm.a \
 	${MULTISPECTRAL} \
-	${OPTICAL}
+	${OPTICAL} \
+	${FB}
 
 ssampview_SOURCES = \
 	spectrum.c \
@@ -46,6 +47,9 @@ ssampview_LDADD = \
 
 ssamp_bw_SOURCES = \
 	ssamp-bw.c
+ssamp_bw_LDADD = \
+	${BU} \
+	${BN}
 
 # pixtest removed, looks like an outdated sample_application
 #pixtest_SOURCES = \
