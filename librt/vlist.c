@@ -62,9 +62,10 @@ int		max_ent;
 		sizeof(long), "rgb[]" );
 
 	for( i=0; i < vbp->max; i++ )  {
-		vbp->rgb[i] = 0;	/* black, unused */
+		vbp->rgb[i] = 0;
 		BU_LIST_INIT( &(vbp->head[i]) );
 	}
+
 	vbp->rgb[0] = 0xFFFF00L;	/* Yellow, default */
 	vbp->rgb[1] = 0xFFFFFFL;	/* White */
 	vbp->nused = 2;
@@ -110,15 +111,11 @@ int	r, g, b;
 {
 	long	new;
 	int	n;
+	int	omax;		/* old max */
 
 	BN_CK_VLBLOCK(vbp);
 
 	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
-
-#if 0
-	/* Map black plots into default color (yellow) */
-	if( new == 0 ) return( &(vbp->head[0]) );
-#endif
 
 	for( n=0; n < vbp->nused; n++ )  {
 		if( vbp->rgb[n] == new )
@@ -130,11 +127,48 @@ int	r, g, b;
 		vbp->rgb[n] = new;
 		return( &(vbp->head[n]) );
 	}
-	/*  RGB does not match any existing entry, and table is full.
-	 *  Eventually, enlarge table.
-	 *  For now, just default to yellow.
-	 */
-	return( &(vbp->head[0]) );
+
+	/************** enlarge the table ****************/
+	omax = vbp->max;
+	vbp->max *= 2;
+
+	/* Look for empty lists and mark for use below. */
+	for (n=0; n < omax; n++)
+		if (BU_LIST_IS_EMPTY(&vbp->head[n]))
+			vbp->head[n].forw = BU_LIST_NULL;
+
+	vbp->head = (struct bu_list *)bu_realloc((genptr_t)vbp->head,
+						 vbp->max * sizeof(struct bu_list),
+						 "head[]");
+	vbp->rgb = (long *)bu_realloc((genptr_t)vbp->rgb,
+				      vbp->max * sizeof(long),
+				      "rgb[]");
+
+	/* re-initialize pointers in lower half */
+	for (n=0; n < omax; n++) {
+		/* 
+		 * Check to see if list is empty
+		 * (i.e. yellow and/or white are not used).
+		 * Note - we can't use BU_LIST_IS_EMPTY here because
+		 * the addresses of the list heads have possibly changed.
+		 */
+		if (vbp->head[n].forw == BU_LIST_NULL) {
+			vbp->head[n].forw = &vbp->head[n];
+			vbp->head[n].back = &vbp->head[n];
+		} else {
+			vbp->head[n].forw->back = &vbp->head[n];
+			vbp->head[n].back->forw = &vbp->head[n];
+		}
+	}
+
+	/* initialize upper half of memory */
+	for (n=omax; n < vbp->max; n++) {
+		vbp->rgb[n] = 0;
+		BU_LIST_INIT(&vbp->head[n]);
+	}
+
+	/* here we go again */
+	return rt_vlblock_find(vbp, r, g, b);
 }
 
 /************************************************************************
