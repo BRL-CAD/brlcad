@@ -2724,8 +2724,9 @@ struct shell *s;
 }
 
 int
-Check_radials( s_p )
+Check_radials( s_p, max_use_count )
 struct shell *s_p;
+int max_use_count;
 {
 	struct nmg_ptbl edgeuses;
 	struct nmg_ptbl uses;
@@ -2803,12 +2804,24 @@ struct shell *s_p;
 			}
 		}
 
-		if( use_count%2 )
+		if( max_use_count )
+		{
+
+			if( use_count > max_use_count )
+			{
+				radials_ok = 0;
+				break;
+			}
+		}
+		
+
+		if( !max_use_count && use_count%2 )
 		{
 			radials_ok = 0;
 			break;
 		}
-		if( use_count != 2 )
+
+		if( !max_use_count && use_count != 2 )
 		{
 			struct edgeuse *eu,*prev_eu;
 			vect_t xvec,yvec,zvec;
@@ -3012,6 +3025,14 @@ make_nmg_objects()
 		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (before triangulation)\n" );
 
+		if( Check_radials( s , 2 ) )
+		{
+			rt_log( "Failed to Extrude group_id = %d, component_id = %d\n" , group_id , comp_id );
+			nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+			failed = 1;
+			goto out;
+		}
+
 		/* make all faces triangular
 		 * nmg_break_long_edges may have made non-triangular faces
 		 */
@@ -3111,7 +3132,7 @@ make_nmg_objects()
 	else
 	{
 		/* Check radial orientation around all edges */
-		if( Check_radials( s ) )
+		if( Check_radials( s, 0 ) )
 			return( 1 );
 
 		/* Check if a valid closed shell has been produced */
