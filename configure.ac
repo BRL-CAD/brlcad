@@ -915,6 +915,7 @@ AC_CHECK_FUNCS(\
 	access \
 	alarm \
 	atexit \
+	basename \
 	bzero \
 	dlopen \
 	drand \
