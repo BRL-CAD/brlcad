@@ -54,6 +54,10 @@
 #include "compat4.h"
 #include "bn.h"
 
+#ifndef NMG_H
+#include "nmg.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -421,8 +425,10 @@ struct soltab {
 #define ID_JOINT	23	/* Pseudo Solid/Region Joint */
 #define ID_HF		24	/* Height Field */
 #define ID_DSP		25	/* Displacement map */
+#define	ID_SKETCH	26	/* 2D sketch */
+#define	ID_EXTRUDE	27	/* Solid of extrusion */
 
-#define ID_MAXIMUM	25	/* Maximum defined ID_xxx value */
+#define ID_MAXIMUM	27	/* Maximum defined ID_xxx value */
 
 #define ID_COMBINATION	(ID_MAXIMUM+1)	/* Combination Record (non-geometric) */
 
@@ -1052,13 +1058,8 @@ extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
 	struct xray	a_ray;		/* Actual ray to be shot */
-#if defined ( __cplusplus )
-	int		(*a_hit)( struct application *, struct partition *);	/* called when shot hits model */
-	int		(*a_miss)( struct application *);	/* called when shot misses */
-#else
-	int		(*a_hit)();	/* called when shot hits model */
-	int		(*a_miss)();	/* called when shot misses */
-#endif
+	int		(*a_hit)BU_ARGS( (struct application *, struct partition *, struct seg *));	/* called when shot hits model */
+	int		(*a_miss)BU_ARGS( (struct application *));	/* called when shot misses */
 	int		a_onehit;	/* flag to stop on first hit */
 	fastf_t		a_ray_length;	/* distance from ray start to end intersections */
 	struct rt_i	*a_rt_i;	/* this librt instance */
@@ -1343,6 +1344,44 @@ struct rt_point_labels {
 	char	str[8];
 	point_t	pt;
 };
+
+/*
+ *			L I N E _ S E G
+ *	used by the solid of extrusion
+ */
+
+struct line_seg		/* line segment */
+{
+	long			magic;
+	int			start, end;	/* indices into sketch's array of vertices */
+	int			curve_count;	/* number of curves using this segment */
+	struct curve		**curves;	/* array of pointers to curves using this segment */
+};
+#define CURVE_LSEG_MAGIC     0x6c736567		/* lseg */
+
+struct carc_seg		/* circular arc segment */
+{
+	long			magic;
+	int			start, end;	/* indices */
+	fastf_t			radius;		/* radius < 0.0 -> full circle with start point on
+						 * circle and "end" at center */
+
+	int			orientation;	/* 0 -> ccw, !0 -> cw */
+	int			curve_count;	/* number of curves using this segment */
+	struct curve		**curves;	/* array of pointers to curves using this segment */
+};
+#define CURVE_CARC_MAGIC     0x63617263		/* carc */
+
+struct nurb_seg		/* NURB curve segment */
+{
+	long			magic;
+	int			start, end;	/* indices */
+	struct edge_g_cnurb	cnurb;		/* NURB curve (some fields ignored) */
+	int			curve_count;	/* number of curves using this segment */
+	struct curve		**curves;	/* array of pointers to curves using this segment */
+};
+#define CURVE_NURB_MAGIC     0x6e757262		/* nurb */
+
 
 /*
  *			R T _ F U N C T A B
@@ -2413,9 +2452,10 @@ RT_EXTERN(void			rt_dspline_matrix, (mat_t m,CONST char *type,
 					CONST double	bias) );
 RT_EXTERN(double		rt_dspline4, (mat_t m, double a, double b,
 					double c, double d, double alpha) );
-RT_EXTERN(void			rt_dspline4v, (double *pt, mat_t m, double *a,
-					double *b, double *c, double *d,
-					int depth, double alpha) );
+RT_EXTERN(void			rt_dspline4v, (double *pt, CONST mat_t m,
+					CONST double *a, CONST double *b,
+					CONST double *c, CONST double *d,
+					CONST int depth, CONST double alpha) );
 RT_EXTERN(void			rt_dspline_n, (double *r, CONST mat_t m,
 					CONST double *knots, CONST int n,
 					CONST int depth, CONST double alpha));
