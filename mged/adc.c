@@ -3,9 +3,11 @@
  *
  * Functions -
  *	adcursor	implement the angle/distance cursor
+ *	f_adc		control angle/distance cursor from keyboard
  *
  * Authors -
  *	Gary Steven Moss
+ *	Paul J. Tanenbaum
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -24,8 +26,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
+
+#ifndef M_SQRT2
+#define M_SQRT2		1.41421356237309504880
+#endif
 
 /*
  * These variables are global for the benefit of
@@ -36,6 +43,7 @@ fastf_t	curs_y;		/* cursor Y position */
 fastf_t	c_tdist;		/* Cursor tick distance */
 fastf_t	angle1;		/* Angle to solid wiper */
 fastf_t	angle2;		/* Angle to dashed wiper */
+
 
 /*
  *			A D C U R S O R
@@ -122,7 +130,7 @@ adcursor()
 	 */
 	/* map -2048 - 2047 into 0 - 4096 * sqrt (2) */
 	/* Tick distance */
-	c_tdist = ((fastf_t)(dm_values.dv_distadc) + 2047.0) * 1.4142136;
+	c_tdist = ((fastf_t)(dm_values.dv_distadc) + 2047.0) * M_SQRT2;
 
 	d1 = c_tdist * cos (angle1);
 	d2 = c_tdist * sin (angle1);
@@ -163,5 +171,119 @@ adcursor()
 	y2 = curs_y - d1 + t1;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
 		dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+	}
+}
+
+/*
+ *			F _ A D C
+ *
+ *	"adc"		toggles display of angle/distance cursor
+ *	"adc a1 #"	sets angle1
+ *	"adc a2 #"	sets angle1
+ *	"adc x #"	sets horz. coord of angle/distance cursor location
+ *	"adc y #"	sets vert. coord of angle/distance cursor location
+ *	"adc dst #"	sets radius of angle/distance cursor tick
+ *	"adc reset"	Resets angles, location, and tick distance
+ */
+#define ADCPARM_A1	1
+#define ADCPARM_A2	2
+#define ADCPARM_X	3
+#define ADCPARM_Y	4
+#define ADCPARM_DST	5
+#define ADCPARM_RESET	6
+#define ADCPARM_NONE	0
+
+void f_adc (argc, argv)
+int	argc;
+char	**argv;
+{
+	char	*parameter;
+	double	f;
+	int	parm_code;
+
+	if (argc == 1)
+	{
+		if (adcflag)  {
+			dmp->dmr_light( LIGHT_OFF, BV_ADCURSOR );
+			adcflag = 0;
+		} else {
+			dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
+			adcflag = 1;
+		}
+		dmaflag = 1;
+		return;
+	}
+	parameter = argv[1];
+
+	if( strcmp( parameter, "x" ) == 0 )  {
+		parm_code = ADCPARM_X;
+	} else if( strcmp( parameter, "y" ) == 0 )  {
+		parm_code = ADCPARM_Y;
+	} else if( strcmp( parameter, "a1" ) == 0 )  {
+		parm_code = ADCPARM_A1;
+	} else if( strcmp( parameter, "a2" ) == 0 )  {
+		parm_code = ADCPARM_A2;
+	} else if( (strcmp(parameter, "dst") == 0))  {
+		parm_code = ADCPARM_DST;
+	} else if( (strcmp(parameter, "reset") == 0))  {
+		parm_code = ADCPARM_RESET;
+	} else  {
+		(void) printf("ADC: unrecognized parameter: '%s'\n", argv[1]);
+		(void) printf("valid parameters: <a1|a2|x|y|dst|reset>\n");
+		return;
+	}
+	if (parm_code == ADCPARM_RESET)
+	{
+		if (argc != 2)
+		{
+			(void) printf("ADC: the parameter '%s' accepts no value\n",
+			    parameter);
+			return;
+		}
+	}
+	else
+	{
+		if (argc == 2)
+		{
+			(void) printf("ADC: no value provided for parameter '%s'\n",
+			    parameter);
+			return;
+		}
+		else
+			f = atof(argv[2]);
+	}
+
+	switch (parm_code)
+	{
+	case ADCPARM_X:
+		dm_values.dv_xadc = f * 2047.0 / (Viewscale * base2local);
+		dm_values.dv_flagadc = 1;
+		return;
+	case ADCPARM_Y:
+		dm_values.dv_yadc = f * 2047.0 / (Viewscale * base2local);
+		dm_values.dv_flagadc = 1;
+		return;
+	case ADCPARM_A1:
+		dm_values.dv_1adc = (1.0 - f / 45.0) * 2047.0;
+		dm_values.dv_flagadc = 1;
+		return;
+	case ADCPARM_A2:
+		dm_values.dv_2adc = (1.0 - f / 45.0) * 2047.0;
+		dm_values.dv_flagadc = 1;
+		return;
+	case ADCPARM_DST:
+		dm_values.dv_distadc = (f / (Viewscale * base2local * M_SQRT2) -1.0)
+		    * 2047.0;
+		dm_values.dv_flagadc = 1;
+		return;
+	case ADCPARM_RESET:
+		dm_values.dv_xadc = dm_values.dv_yadc = 0;
+		dm_values.dv_1adc = dm_values.dv_2adc = 0;
+		dm_values.dv_distadc = 0;
+		dm_values.dv_flagadc = 1;
+		return;
+	default:
+		(void) fprintf(stderr,
+		    "f_adc(): parm_code=%d.  This shouldn't happen\n", parm_code);
 	}
 }
