@@ -23,6 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -105,6 +106,7 @@ int	*heightp;		/* pointer to returned height */
 register int	npixels;	/* Number of pixels */
 {
 	register struct	sizes	*sp;
+	int			root;
 
 	if( npixels <= 0 )
 		return	0;
@@ -118,5 +120,15 @@ register int	npixels;	/* Number of pixels */
 		}
 		sp++;
 	}
+
+	/* If the size is a perfect square, then use that. */
+	root = (int)(sqrt((double)npixels)+0.999);
+	if( root*root == npixels )  {
+		*widthp = root;
+		*heightp = root;
+		return	1;
+	}
+
+	/* Nope, we are clueless. */
 	return	0;
 }
