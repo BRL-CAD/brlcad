@@ -76,14 +76,23 @@ static int	Ogl_doevent();
 static void     Ogl_colorchange();
 static void     establish_zbuffer();
 static void     establish_lighting();
-static void     establish_perspective();
-static void     set_perspective();
 static void     refresh_hook();
-static void     do_fog();
+static void     do_fogHint();
 
-#if IR_KNOBS
-void ogl_dbtext();
-#endif
+struct bu_structparse Ogl_vparse[] = {
+	{"%d",	1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
+	{"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	refresh_hook },
+	{"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer },
+	{"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting },
+	{"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fogHint },
+	{"%f",  1, "density",		Ogl_MV_O(fogdensity),	refresh_hook },
+	{"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "debug",		Ogl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+};
 
 #ifdef IR_BUTTONS
 /*
@@ -104,24 +113,8 @@ static unsigned char bmap[IR_BUTTONS] = {
 };
 #endif
 
-struct bu_structparse Ogl_vparse[] = {
-	{"%d",	1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
-	{"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	refresh_hook },
-	{"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer },
-	{"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting },
- 	{"%d",  1, "perspective",       Ogl_MV_O(perspective_mode), establish_perspective },
-	{"%d",  1, "set_perspective",   Ogl_MV_O(dummy_perspective),  set_perspective },
-	{"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fog },
-	{"%f",  1, "density",		Ogl_MV_O(fogdensity),	refresh_hook },
-	{"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "debug",		Ogl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
-};
-
 #ifdef IR_KNOBS
+void ogl_dbtext();
 /*
  *  Labels for knobs in help mode.
  */
@@ -176,10 +169,11 @@ char *argv[];
   bu_free(av, "Ogl_dm_init: av");
   /*XXXX this eventually needs to move into Ogl's private structure */
   dmp->dm_vp = &Viewscale;
+  ((struct ogl_vars *)dmp->dm_vars)->perspective_mode = &mged_variables->perspective_mode;
   eventHandler = Ogl_doevent;
   curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-  ogl_configure_window_shape(dmp);
+  dm_configureWindowShape(dmp);
 
   return TCL_OK;
 }
@@ -232,7 +226,7 @@ XEvent *eventPtr;
     dirty = 1;
     goto handled;
   } else if( eventPtr->type == ConfigureNotify ) {
-    ogl_configure_window_shape(dmp);
+    dm_configureWindowShape(dmp);
 
     dirty = 1;
     goto handled;
@@ -1894,35 +1888,21 @@ Ogl_colorchange()
 static void
 establish_zbuffer()
 {
-  ogl_establish_zbuffer(dmp);
+  dm_zbuffer(dmp);
   ++dmaflag;
 }
 
 static void
 establish_lighting()
 {
-  ogl_establish_lighting(dmp);
+  dm_lighting(dmp);
   ++dmaflag;
 }
 
 static void
-establish_perspective()
+do_fogHint()
 {
-  ogl_establish_perspective(dmp);
-  ++dmaflag;
-}
-
-static void
-set_perspective()
-{
-  ogl_set_perspective(dmp);
-  ++dmaflag;
-}
-
-static void
-do_fog()
-{
-  ogl_do_fog(dmp);
+  ogl_fogHint(dmp);
   ++dmaflag;
 }
 
