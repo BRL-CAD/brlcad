@@ -215,6 +215,13 @@ CONST char				*value;	/* string containing value */
 			{	register int *ip = (int *)loc;
 				register int tmpi;
 				register char CONST *cp;
+				/* Special case:  '=!' toggles a boolean */
+				if( *value == '!' )  {
+					*ip = *ip ? 0 : 1;
+					value++;
+					break;
+				}
+				/* Normal case: an integer */
 				for (i=0 ; i < sdp->sp_count && *value ; ++i){
 					tmpi = atoi( value );
 
