@@ -191,6 +191,10 @@ char **argv;
 
 	/*	 Scan input file and build the directory	 */
 	db_scan( dbip, (int (*)())db_diradd);
+	/* XXX - save local units */
+	localunit = dbip->dbi_localunit;
+	local2base = dbip->dbi_local2base;
+	base2local = dbip->dbi_base2local;
 
 	/* Print title/units information */
 	if( argc == 2 )

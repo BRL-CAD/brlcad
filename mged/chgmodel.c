@@ -906,6 +906,10 @@ f_units()
 	if( new_unit ) {
 		/* change to the new local unit */
 		db_conversions( dbip, new_unit );
+		/* XXX - save local units */
+		localunit = dbip->dbi_localunit;
+		local2base = dbip->dbi_local2base;
+		base2local = dbip->dbi_base2local;
 		db_ident( dbip, dbip->dbi_title, new_unit );
 		if(state == ST_S_EDIT)
 			pr_solid( &es_rec.s );
