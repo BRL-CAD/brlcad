@@ -54,9 +54,9 @@ char	*name;
 	point_t pt[4];
 
 	VSET( pt[0], 0, 0, 0);
-	VSET( pt[1], 1, 0, 0);
-	VSET( pt[2], 0.5, sin60, 0);
-	VSET( pt[3], 0.5, sin60/3, sin60 );
+	VSET( pt[1], 100, 0, 0);
+	VSET( pt[2], 50, 100*sin60, 0);
+	VSET( pt[3], 50, 100*sin60/3, 100*sin60 );
 
 	mk_arb4( stdout, name, pt );
 }
@@ -72,9 +72,9 @@ char	*name;
 	register int i;
 
 	VSET( pt[0], 0, 0, 0);
-	VSET( pt[1], 1, 0, 0);
-	VSET( pt[2], 0.5, sin60, 0);
-	VSET( pt[3], 0.5, sin60/3, sin60 );
+	VSET( pt[1], 100, 0, 0);
+	VSET( pt[2], 50, 100*sin60, 0);
+	VSET( pt[3], 50, 100*sin60/3, 100*sin60 );
 
 	VMOVE( centroid, pt[0] );
 	for( i=1; i<4; i++ )  {
