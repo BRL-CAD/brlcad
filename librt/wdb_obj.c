@@ -888,7 +888,7 @@ wdb_tops_tcl(clientData, interp, argc, argv)
 		for (dp = wdbp->dbip->dbi_Head[i];
 		     dp != DIR_NULL;
 		     dp = dp->d_forw)  {
-			if (dp->d_nref == 0)
+			if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN))
 				Tcl_AppendElement( interp, dp->d_namep);
 		}
 	return TCL_OK;
