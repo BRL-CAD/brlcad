@@ -40,8 +40,6 @@ HIDDEN fastf_t	*rt_ars_rd_curve();
 HIDDEN void	rt_ars_hitsort();
 extern int	rt_ars_face();
 
-extern struct vertex *rt_nmg_find_pt_in_shell();
-
 /*
  *			R T _ A R S _ I M P O R T
  *
@@ -832,7 +830,7 @@ struct rt_tol		*tol;
 #define FIND_IJ(a,b)	\
 	if( !(verts[IJ(a,b)]) )  { \
 		verts[IJ(a,b)] = \
-		rt_nmg_find_pt_in_shell( s, ARS_PT(a,b), tol ); \
+		nmg_find_pt_in_shell( s, ARS_PT(a,b), tol ); \
 	}
 #define ASSOC_GEOM(corn, a,b)	\
 	if( !((*corners[corn])->vg_p) )  { \
