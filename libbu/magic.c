@@ -41,6 +41,7 @@ static char RCSmagic[] = "@(#)$Header$ (BRL)";
 #include "../libredblack/rb_internals.h"
 #include "bu.h"
 #include "bn.h"
+#include "tabdata.h"
 
 /*
  *			B U _ I D E N T I F Y _ M A G I C
@@ -60,6 +61,13 @@ register long	magic;
 		return "NULL";
 	default:
 		return "Unknown_Magic";
+	/*
+	 *  tabdata.h
+	 */
+	case RT_TABLE_MAGIC:
+		return "rt_table";
+	case RT_TABDATA_MAGIC:
+		return "rt_tabdata";
 	/*
 	 *  bu.h
 	 */
