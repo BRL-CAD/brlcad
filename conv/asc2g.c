@@ -37,7 +37,6 @@ void	solbld(), combbld(), membbld(), arsabld(), arsbbld();
 void	materbld(), bsplbld(), bsurfbld();
 
 static union record	record;		/* GED database record */
-char	*bp;				/* Pointer for input buffer */
 #define BUFSIZE		1000		/* Record input buffer size */
 static char buf[BUFSIZE];		/* Record input buffer */
 
@@ -45,7 +44,6 @@ main()
 {
 	/* Read ASCII input file, each record on a line */
 	while( ( fgets( buf, BUFSIZE, stdin ) ) != (char *)0 )  {
-		bp = &buf[0];
 
 		/* Clear the output record */
 		(void)bzero( (char *)&record, sizeof(record) );
@@ -96,7 +94,7 @@ main()
 			bsurfbld();
 		}
 		else  {
-			(void)fprintf(stderr,"ASC2G: bad record type\n");
+			(void)fprintf(stderr,"ASC2G: bad record type '%c'\n", buf[0]);
 			exit(1);
 		}
 	}
@@ -150,8 +148,13 @@ void
 combbld()	/* Build Combination record */
 {
 	int temp1, temp2, temp3, temp4, temp5, temp6;
+	int temp_override, temp_r, temp_g, temp_b;
+	int temp_nflag, temp_pflag;
 
-	(void)sscanf( buf, "%c %c %s %d %d %d %d %d %d",
+	temp_override = 0;
+	temp_nflag = temp_pflag = 0;	/* optional fields */
+
+	(void)sscanf( buf, "%c %c %s %d %d %d %d %d %d %d %d %d %d %d %d",
 		&record.c.c_id,
 		&record.c.c_flags,
 		&record.c.c_name[0],
@@ -160,7 +163,11 @@ combbld()	/* Build Combination record */
 		&temp3,
 		&temp4,
 		&temp5,
-		&temp6
+		&temp6,
+		&temp_override,
+		&temp_r, &temp_g, &temp_b,
+		&temp_nflag,
+		&temp_pflag
 	);
 	if( record.c.c_flags == 'Y' )
 		record.c.c_flags = 'R';
@@ -172,6 +179,21 @@ combbld()	/* Build Combination record */
 	record.c.c_num = (short)temp4;
 	record.c.c_material = (short)temp5;
 	record.c.c_los = (short)temp6;
+	record.c.c_override = temp_override;
+	record.c.c_rgb[0] = temp_r;
+	record.c.c_rgb[1] = temp_g;
+	record.c.c_rgb[2] = temp_b;
+
+	if( temp_nflag )  {
+		fgets( buf, BUFSIZE, stdin );
+		zap_nl();
+		strncpy( record.c.c_matname, buf, sizeof(record.c.c_matname) );
+	}
+	if( temp_pflag )  {
+		fgets( buf, BUFSIZE, stdin );
+		zap_nl();
+		strncpy( record.c.c_matparm, buf, sizeof(record.c.c_matparm) );
+	}
 
 	/* Write out the record */
 	(void)write( 1, (char *)&record, sizeof record );
@@ -285,6 +307,19 @@ arsbbld()	/* Build ARS B record */
 	(void)write( 1, (char *)&record, sizeof record );
 }
 
+zap_nl()
+{
+	register char *bp;
+
+	bp = &buf[0];
+
+	while( *bp != '\0' )  {
+		if( *bp == '\n' )
+			*bp = '\0';
+		bp++;
+	}
+}
+
 void
 identbld()	/* Build Ident record */
 {
@@ -298,13 +333,7 @@ identbld()	/* Build Ident record */
 	record.i.i_units = (char)temp1;
 
 	(void)fgets( buf, BUFSIZE, stdin);
-	bp = &buf[0];
-
-	while( *bp != '\0' )  {
-		if( *bp == '\n' )
-			*bp = '\0';
-		bp++;
-	}
+	zap_nl();
 	(void)strcpy( &record.i.i_title[0], buf );
 
 	/* Write out the record */

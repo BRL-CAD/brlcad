@@ -160,7 +160,23 @@ combdump()	/* Print out Combination record information */
 	(void)printf("%d ", record.c.c_num );		/* COMGEOM region # */
 	(void)printf("%d ", record.c.c_material );	/* material code */
 	(void)printf("%d ", record.c.c_los );		/* equiv. LOS est. */
+	(void)printf("%d %d %d %d ",
+		record.c.c_override,
+		record.c.c_rgb[0],
+		record.c.c_rgb[1],
+		record.c.c_rgb[2] );
+	if( record.c.c_matname[0] )  {
+		printf("1 ");	/* flag: line 1 follows */
+		if( record.c.c_matparm[0] )
+			printf("2 ");	/* flag: line 2 follows */
+	}
 	(void)printf("\n");			/* Terminate w/ a newline */
+
+	if( record.c.c_matname[0] )  {
+		(void)printf("%s\n", record.c.c_matname );
+		if( record.c.c_matparm[0] )
+			(void)printf("%s\n", record.c.c_matparm );
+	}
 
 	length = (int)record.c.c_length;	/* Get # of member records */
 
