@@ -52,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define TYPELEN			10
 #define NAME_LEN			20
 
-void		identbld(), polyhbld(), polydbld(), pipebld(), particlebld();
+void		identbld(), polyhbld(), pipebld(), particlebld();
 void		solbld(), arbnbld(), clinebld(), botbld(), extrbld(), sktbld();
 int		combbld();
 void		membbld(), arsabld(), arsbbld();
@@ -138,7 +138,7 @@ after_read:
 			continue;
 
 		case ID_P_DATA:
-			polydbld();
+			bu_log("Unattached POLY-solid P_DATA (Q) record, skipping\n");
 			continue;
 
 		case ID_IDENT:
@@ -1198,51 +1198,9 @@ polyhbld()
 	/* BoT internal has been freed */
 }
 
-/*		P O L Y D B L D
- *
- * This routine builds a polydata record using libwdb.
- */
-
-void
-polydbld()
-{
-#if 0
-	register char	*cp;
-	register int	i, j;
-	char		count;		/* number of vertices */
-	fastf_t		verts[5][3];	/* vertices for the polygon */
-	fastf_t		norms[5][3];	/* normals at each vertex */
-
-	cp = buf;
-	cp++;				/* ident */
-	cp = nxt_spc( cp );		/* skip the space */
-
-	count = (char)atoi( cp );
-
-	for( i = 0; i < 5; i++ )  {
-		for( j = 0; j < 3; j++ )  {
-			cp = nxt_spc( cp );
-			verts[i][j] = atof( cp );
-		}
-	}
-
-	for( i = 0; i < 5; i++ )  {
-		for( j = 0; j < 3; j++ )  {
-			cp = nxt_spc( cp );
-			norms[i][j] = atof( cp );
-		}
-	}
-
-	mk_poly(ofp, count, verts, norms);
-#else
-	bu_bomb("polydbld() needs to be upgraded to v5\n");
-#endif
-}
-
-
 /*		M A T E R B L D
  *
- * The need for this is being phased out. Leave alone.
+ *  Add information to the region-id based coloring table.
  */
 
 void
