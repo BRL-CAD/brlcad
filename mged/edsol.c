@@ -1399,6 +1399,7 @@ void
 sedit()
 {
 	register dbfloat_t *op;
+	struct rt_arb_internal *arb;
 	fastf_t	*eqp;
 	static vect_t work;
 	register int i;
@@ -1444,25 +1445,30 @@ sedit()
 	case ECMD_ARB_MOVE_FACE:
 		/* move face through definite point */
 		if(inpara) {
+			arb = (struct rt_arb_internal *)es_int.idb_ptr;
 			/* apply es_invmat to convert to real model space */
 			MAT4X3PNT(work,es_invmat,es_para);
 			/* change D of planar equation */
 			es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], work);
 			/* find new vertices, put in record in vector notation */
-			calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
+			(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
+			new_way = 1;
 		}
 		break;
 
 	case ECMD_ARB_SETUP_ROTFACE:
+		new_way = 1;
+		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+
 		/* check if point 5 is in the face */
 		pnt5 = 0;
 		for(i=0; i<4; i++)  {
-			if( arb_vertices[es_rec.s.s_cgtype-4][es_menu*4+i]==5 )
+			if( arb_vertices[es_type-4][es_menu*4+i]==5 )
 				pnt5=1;
 		}
 		
 		/* special case for arb7 */
-		if( es_rec.s.s_cgtype == ARB7  && pnt5 ){
+		if( es_type == ARB7  && pnt5 ){
 				(void)printf("\nFixed vertex is point 5.\n");
 				fixv = 5;
 		}
@@ -1473,7 +1479,7 @@ sedit()
 				int	type,loc,valid;
 				char	line[128];
 				
-				type = es_rec.s.s_cgtype - 4;
+				type = es_type - 4;
 				(void)printf("\nEnter fixed vertex number( ");
 				loc = es_menu*4;
 				for(i=0; i<4; i++){
@@ -1499,7 +1505,7 @@ sedit()
 				}
 				if( !valid )
 					fixv=0;
-			} while( fixv <= 0 || fixv > es_rec.s.s_cgtype );
+			} while( fixv <= 0 || fixv > es_type );
 		}
 		
 		pr_prompt();
@@ -1511,6 +1517,10 @@ sedit()
 
 	case ECMD_ARB_ROTATE_FACE:
 		/* rotate a GENARB8 defining plane through a fixed vertex */
+
+		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		new_way = 1;
+
 		if(inpara) {
 			static mat_t invsolr;
 			static vect_t tempvec;
@@ -1557,12 +1567,7 @@ sedit()
 			}
 
 			/* point notation of fixed vertex */
-			if( fixv ){		/* special case for solid vertex */
-				VADD2(tempvec, &es_rec.s.s_values[fixv*3], &es_rec.s.s_values[0] );
-			}
-			else{
-				VMOVE( tempvec, &es_rec.s.s_values[fixv] );
-			}
+			VMOVE( tempvec, arb->pt[fixv] );
 
 			/* set D of planar equation to anchor at fixed vertex */
 			/* es_menu == plane of interest */
@@ -1580,19 +1585,14 @@ sedit()
 			MAT4X3VEC( eqp, incr_change, work );
 
 			/* point notation of fixed vertex */
-			if( fixv ){		/* special case for solid vertex */
-				VADD2(tempvec, &es_rec.s.s_values[fixv*3], &es_rec.s.s_values[0] );
-			}
-			else{
-				VMOVE( tempvec, &es_rec.s.s_values[fixv] );
-			}
+			VMOVE( tempvec, arb->pt[fixv] );
 
 			/* set D of planar equation to anchor at fixed vertex */
 			/* es_menu == plane of interest */
 			es_peqn[es_menu][3]=VDOT(eqp,tempvec);	
 		}
 
-		calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
+		(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
 		mat_idn( incr_change );
 
 		/* no need to calc_planes again */
@@ -1910,8 +1910,8 @@ sedit()
 	}
 
 	/* must re-calculate the face plane equations for arbs */
-	if( es_rec.s.s_type == GENARB8 )
-		calc_planes( &es_rec.s, es_rec.s.s_cgtype );
+	if( es_int.idb_type == GENARB8 )
+		(void)rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol );
 
 	/* If the keypoint changed location, find about it here */
 	if( new_way )  {
@@ -1948,6 +1948,7 @@ CONST vect_t	mousevec;
 	vect_t	pos_model;		/* Rotated screen space pos */
 	vect_t	tr_temp;		/* temp translation vector */
 	vect_t	temp;
+	struct rt_arb_internal *arb;
 
 	if( es_edflag <= 0 )  return;
 	switch( es_edflag )  {
@@ -3448,6 +3449,56 @@ struct rt_db_internal	*ip;
 	strncpy( pl[npl++].str, _str, sizeof(pl[0].str)-1 ); }
 
 	case ID_ARB8:
+		if( new_way )
+		{
+			struct rt_arb_internal *arb=
+				(struct rt_arb_internal *)es_int.idb_ptr;
+			RT_ARB_CK_MAGIC( arb );
+			switch( es_type )
+			{
+				case ARB8:
+					for( i=0 ; i<8 ; i++ )
+					{
+						MAT4X3PNT( pos_view, xform, arb->pt[i] );
+						POINT_LABEL( pos_view, i+'1' );
+					}
+					break;
+				case ARB7:
+					for( i=0 ; i<7 ; i++ )
+					{
+						MAT4X3PNT( pos_view, xform, arb->pt[i] );
+						POINT_LABEL( pos_view, i+'1' );
+					}
+					break;
+				case ARB6:
+					for( i=0 ; i<5 ; i++ )
+					{
+						MAT4X3PNT( pos_view, xform, arb->pt[i] );
+						POINT_LABEL( pos_view, i+'1' );
+					}
+					MAT4X3PNT( pos_view, xform, arb->pt[6] );
+					POINT_LABEL( pos_view, '6' );
+					break;
+				case ARB5:
+					for( i=0 ; i<5 ; i++ )
+					{
+						MAT4X3PNT( pos_view, xform, arb->pt[i] );
+						POINT_LABEL( pos_view, i+'1' );
+					}
+					break;
+				case ARB4:
+					for( i=0 ; i<3 ; i++ )
+					{
+						MAT4X3PNT( pos_view, xform, arb->pt[i] );
+						POINT_LABEL( pos_view, i+'1' );
+					}
+					MAT4X3PNT( pos_view, xform, arb->pt[4] );
+					POINT_LABEL( pos_view, '4' );
+					break;
+			}
+		}
+		else
+		{
 		MAT4X3PNT( pos_view, xform, es_rec.s.s_values );
 		POINT_LABEL( pos_view, '1' );
 		temp_rec.s = es_rec.s;
@@ -3461,6 +3512,7 @@ struct rt_db_internal	*ip;
 			VADD2( work, es_rec.s.s_values, &temp_rec.s.s_values[i*3] );
 			MAT4X3PNT(pos_view, xform, work);
 			POINT_LABEL( pos_view, i + '1' );
+		}
 		}
 		break;
 	case ID_TGC:
