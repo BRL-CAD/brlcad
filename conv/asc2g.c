@@ -255,7 +255,7 @@ combbld()
 	int 		temp_nflag, temp_pflag;
 
 	char		override;
-	char		id;		/* Freebie.. not used */
+	char		id;		/* == ID_COMB */
 	char		reg_flags;	/* region flag */
 	int		is_reg;
 	short		regionid;
@@ -276,7 +276,7 @@ combbld()
 	temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
 
 	cp = buf;
-	id = *cp++;
+	id = *cp++;			/* ID_COMB */
 	cp = nxt_spc( cp );		/* skip the space */
 
 	reg_flags = *cp++;
@@ -339,7 +339,7 @@ combbld()
 		temp_nflag ? matname : (char *)0,
 		temp_pflag ? matparm : (char *)0,
 		override ? rgb : (char *)0,
-		id, aircode, material, los, inherit) < 0 )  {
+		regionid, aircode, material, los, inherit) < 0 )  {
 			fprintf(stderr,"asc2g: mk_rcomb fail\n");
 			exit(1);
 	}
