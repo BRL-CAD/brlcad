@@ -78,7 +78,7 @@ register long	*p;
 	case NMG_VERTEXUSE_MAGIC:
 		return ((struct vertexuse *)p)->index;
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-		return ((struct vertexuse_a *)p)->index;
+		return ((struct vertexuse_a_plane *)p)->index;
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
 		return ((struct vertexuse_a_cnurb *)p)->index;
 	case NMG_VERTEX_MAGIC:
@@ -170,9 +170,9 @@ struct model	*m;
 						vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 						NMG_CK_VERTEXUSE(vu);
 						NMG_MARK_INDEX(vu);
-						if(vu->vua_p)  {
-							NMG_CK_VERTEXUSE_A(vu->vua_p);
-							NMG_MARK_INDEX(vu->vua_p);
+						if(vu->a.plane_p)  {
+							NMG_CK_VERTEXUSE_A_PLANE(vu->a.plane_p);
+							NMG_MARK_INDEX(vu->a.plane_p);
 						}
 						v = vu->v_p;
 						NMG_CK_VERTEX(v);
@@ -222,9 +222,9 @@ struct model	*m;
 					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 					NMG_CK_VERTEXUSE(vu);
 					NMG_MARK_INDEX(vu);
-					if(vu->vua_p)  {
-						NMG_CK_VERTEXUSE_A(vu->vua_p);
-						NMG_MARK_INDEX(vu->vua_p);
+					if(vu->a.plane_p)  {
+						NMG_CK_VERTEXUSE_A_PLANE(vu->a.plane_p);
+						NMG_MARK_INDEX(vu->a.plane_p);
 					}
 					v = vu->v_p;
 					NMG_CK_VERTEX(v);
@@ -364,7 +364,7 @@ register long	newindex;
 						vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 						NMG_CK_VERTEXUSE(vu);
 						NMG_ASSIGN_NEW_INDEX(vu);
-						if(vu->vua_p)  NMG_ASSIGN_NEW_INDEX(vu->vua_p);
+						if(vu->a.plane_p)  NMG_ASSIGN_NEW_INDEX(vu->a.plane_p);
 						v = vu->v_p;
 						NMG_CK_VERTEX(v);
 						NMG_ASSIGN_NEW_INDEX(v);
@@ -401,7 +401,7 @@ register long	newindex;
 					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 					NMG_CK_VERTEXUSE(vu);
 					NMG_ASSIGN_NEW_INDEX(vu);
-					if(vu->vua_p)  NMG_ASSIGN_NEW_INDEX(vu->vua_p);
+					if(vu->a.plane_p)  NMG_ASSIGN_NEW_INDEX(vu->a.plane_p);
 					v = vu->v_p;
 					NMG_CK_VERTEX(v);
 					NMG_ASSIGN_NEW_INDEX(v);
@@ -488,8 +488,8 @@ CONST struct nmg_struct_counts	*ctr;
 	rt_vls_printf(str, "\t%6d edge\n", ctr->edge);
 	rt_vls_printf(str, "\t%6d edge_g\n", ctr->edge_g);
 	rt_vls_printf(str, "\t%6d vertexuse\n", ctr->vertexuse);
-	rt_vls_printf(str, "\t%6d vertexuse_a_plane\n", ctr->vertexuse_a_plane);
-	rt_vls_printf(str, "\t%6d vertexuse_a_cnurb\n", ctr->vertexuse_a_cnurb);
+	rt_vls_printf(str, "\t%6d vertexuse_a_plane_plane\n", ctr->vertexuse_a_plane);
+	rt_vls_printf(str, "\t%6d vertexuse_a_plane_cnurb\n", ctr->vertexuse_a_cnurb);
 	rt_vls_printf(str, "\t%6d vertex\n", ctr->vertex);
 	rt_vls_printf(str, "\t%6d vertex_g\n", ctr->vertex_g);
 	rt_vls_printf(str, " Abstractions:\n");
@@ -615,9 +615,9 @@ CONST struct model			*m;
 						vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 						NMG_CK_VERTEXUSE(vu);
 						NMG_UNIQ_INDEX(vu, vertexuse);
-						if(vu->vua_p)  {
-							NMG_CK_VERTEXUSE_A(vu->vua_p);
-							NMG_UNIQ_INDEX(vu->vua_p, vertexuse_a);
+						if(vu->a.plane_p)  {
+							NMG_CK_VERTEXUSE_A_PLANE(vu->a.plane_p);
+							NMG_UNIQ_INDEX(vu->a.plane_p, vertexuse_a_plane);
 						}
 						v = vu->v_p;
 						NMG_CK_VERTEX(v);
@@ -670,9 +670,9 @@ CONST struct model			*m;
 					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 					NMG_CK_VERTEXUSE(vu);
 					NMG_UNIQ_INDEX(vu, vertexuse);
-					if(vu->vua_p)  {
-						NMG_CK_VERTEXUSE_A(vu->vua_p);
-						NMG_UNIQ_INDEX(vu->vua_p, vertexuse_a);
+					if(vu->a.plane_p)  {
+						NMG_CK_VERTEXUSE_A_PLANE(vu->a.plane_p);
+						NMG_UNIQ_INDEX(vu->a.plane_p, vertexuse_a_plane);
 					}
 					v = vu->v_p;
 					NMG_CK_VERTEX(v);

@@ -703,7 +703,14 @@ char *h;
 	}
 	rt_log("%s%8x l.forw\n", h, vu->l.forw);
 	rt_log("%s%8x l.back\n", h, vu->l.back);
-	rt_log("%s%8x vua_p\n", h, vu->vua_p);
+	if( vu->a.magic_p )  switch( *vu->a.magic_p )  {
+	case NMG_VERTEXUSE_A_PLANE_MAGIC:
+		rt_log("%s%8x a.plane_p\n", h, vu->a.plane_p);
+		break;
+	case NMG_VERTEXUSE_A_CNURB_MAGIC:
+		rt_log("%s%8x a.cnurb_p\n", h, vu->a.cnurb_p);
+		break;
+	}
 	rt_log("%s%8x v_p\n", h, vu->v_p);
 	nmg_pr_v(vu->v_p, h);
 	

@@ -189,7 +189,7 @@ struct nmg_ptbl {
 #define NMG_VERTEX_MAGIC	0x00123123
 #define NMG_VERTEX_G_MAGIC	0x72737707
 #define NMG_VERTEXUSE_MAGIC	0x12341234
-#define NMG_VERTEXUSE_A_MAGIC	0x69676874
+#define NMG_VERTEXUSE_A_MAGIC	bogus_nmg_vertexuse_a_magic;
 #define NMG_VERTEXUSE_A_PLANE_MAGIC	0x69676874
 #define NMG_VERTEXUSE_A_CNURB_MAGIC	0x20416e64
 #define NMG_KNOT_VECTOR_MAGIC	0x6b6e6f74	/* aka RT_KNOT_VECTOR_MAGIC */
@@ -226,7 +226,7 @@ struct nmg_ptbl {
 #define NMG_CK_VERTEX(_p)	NMG_CKMAG(_p, NMG_VERTEX_MAGIC, "vertex")
 #define NMG_CK_VERTEX_G(_p)	NMG_CKMAG(_p, NMG_VERTEX_G_MAGIC, "vertex_g")
 #define NMG_CK_VERTEXUSE(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_MAGIC, "vertexuse")
-#define NMG_CK_VERTEXUSE_A(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_A_MAGIC, "vertexuse_a")
+#define NMG_CK_VERTEXUSE_A(_p)	bogus_ck_vertexuse_a;
 #define NMG_CK_VERTEXUSE_A_PLANE(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_A_PLANE_MAGIC, "vertexuse_a_plane")
 #define NMG_CK_VERTEXUSE_A_CNURB(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_A_CNURB_MAGIC, "vertexuse_a_cnurb_plane")
 #define NMG_CK_LIST(_p)		NMG_CKMAG(_p, RT_LIST_HEAD_MAGIC, "rt_list")
@@ -358,7 +358,6 @@ struct shell_a {
  *  To find them, go up fu_p for one, then across fumate_p to other.
  */
 #define edge_g			edge_g_lseg	/* compat */
-#define vertexuse_a		vertexuse_a_plane	/* compat */
 struct face {
 	struct rt_list		l;	/* faces in face_g's f_hd list */
 	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
@@ -605,12 +604,15 @@ struct vertexuse {
 		long		*magic_p; /* for those times when we're not sure */
 	} up;
 	struct vertex		*v_p;	/* vertex definition and attributes */
-	struct vertexuse_a	*vua_p;	/* Attributes */
+	union {
+		long				*magic_p;
+		struct vertexuse_a_plane	*plane_p;
+		struct vertexuse_a_cnurb	*cnurb_p;
+	} a;				/* Attributes */
 	long			index;	/* struct # in this model */
 };
 
-/* vertexuse_a_plane */
-struct vertexuse_a {
+struct vertexuse_a_plane {
 	long			magic;
 	vect_t			N;	/* (opt) surface Normal at vertexuse */
 	long			index;	/* struct # in this model */
@@ -683,7 +685,7 @@ struct vertexuse_a_cnurb {
 #define GET_VERTEX(p,m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p,m);}
 #define GET_VERTEX_G(p,m)   {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p,m);}
 #define GET_VERTEXUSE(p,m)  {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEXUSE_A(p,m) {NMG_GETSTRUCT(p, vertexuse_a); NMG_INCR_INDEX(p,m);}
+#define GET_VERTEXUSE_A(p,m) bogus_get_vertexuse_a;
 #define GET_VERTEXUSE_A_PLANE(p,m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p,m);}
 #define GET_VERTEXUSE_A_CNURB(p,m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p,m);}
 
@@ -712,7 +714,7 @@ struct vertexuse_a_cnurb {
 #define FREE_VERTEX(p)	    NMG_FREESTRUCT(p, vertex)
 #define FREE_VERTEX_G(p)    NMG_FREESTRUCT(p, vertex_g)
 #define FREE_VERTEXUSE(p)   NMG_FREESTRUCT(p, vertexuse)
-#define FREE_VERTEXUSE_A(p) NMG_FREESTRUCT(p, vertexuse_a)
+#define FREE_VERTEXUSE_A(p) bogus_free_vertexuse_a;
 #define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
 

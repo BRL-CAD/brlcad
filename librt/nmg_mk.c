@@ -637,7 +637,7 @@ struct model	*m;
 	GET_VERTEXUSE(vu, m);
 
 	vu->v_p = v;
-	vu->vua_p = (struct vertexuse_a *)NULL;
+	vu->a.plane_p = (struct vertexuse_a_plane *)NULL;
 	RT_LIST_APPEND( &v->vu_hd, &vu->l );
 	vu->up.magic_p = upptr;
 	vu->l.magic = NMG_VERTEXUSE_MAGIC;	/* Vertexuse struct is GOOD */
@@ -1109,7 +1109,16 @@ register struct vertexuse *vu;
 
 	NMG_CK_VERTEXUSE(vu);
 
-	if (vu->vua_p) FREE_VERTEXUSE_A(vu->vua_p);
+	if (vu->a.magic_p) switch(*vu->a.magic_p)  {
+	case NMG_VERTEXUSE_A_PLANE_MAGIC:
+		FREE_VERTEXUSE_A_PLANE(vu->a.plane_p);
+		break;
+	case NMG_VERTEXUSE_A_CNURB_MAGIC:
+		FREE_VERTEXUSE_A_CNURN(vu->a.cnurb_p);
+		break;
+	default:
+		rt_bomb("nmg_kvu() illegal vua\n");
+	}
 
 	v = vu->v_p;
 	NMG_CK_VERTEX(v);
@@ -1611,22 +1620,24 @@ nmg_vertexuse_nv( vu , norm )
 struct vertexuse *vu;
 CONST vect_t norm;
 {
-	struct vertexuse_a *vua_p;
 	struct model *m;
 
 	NMG_CK_VERTEXUSE( vu );
 
-	if( !vu->vua_p )
-	{
+	if( !vu->a.magic_p )  {
+		struct vertexuse_a_plane *vua;
 		m = nmg_find_model( &vu->l.magic );
-		GET_VERTEXUSE_A( vua_p , m );
-		vua_p->magic = NMG_VERTEXUSE_A_MAGIC;
-		vu->vua_p = vua_p;
+		GET_VERTEXUSE_A_PLANE( vua , m );
+		vua->magic = NMG_VERTEXUSE_A_PLANE_MAGIC;
+		vu->a.plane_p = vua;
+	}  else if( *vu->a.magic_p == NMG_VERTEXUSE_A_CNURB_MAGIC )  {
+		/* Assigning a normal vector to a cnurb vua is illegal */
+		rt_bomb("nmg_vertexuse_nv() Illegal assignment of normal vector to edge_g_cnurb vertexuse\n");
 	}  else  {
-		NMG_CK_VERTEXUSE_A( vu->vua_p );
+		NMG_CK_VERTEXUSE_A_PLANE( vu->a.plane_p );
 	}
 
-	VMOVE( vu->vua_p->N , norm );
+	VMOVE( vu->a.plane_p->N , norm );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_vertexuse_nv(vu=x%x, norm=(%g %g %g))\n", vu , V3ARGS( norm ));

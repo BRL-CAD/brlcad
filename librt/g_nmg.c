@@ -578,13 +578,19 @@ struct disk_vertexuse {
 	struct disk_rt_list	l;
 	disk_index_t		up;
 	disk_index_t		v_p;
-	disk_index_t		vua_p;
+	disk_index_t		a;
 };
 
-#define DISK_VERTEXUSE_A_MAGIC	0x4e767561	/* Nvua */
-struct disk_vertexuse_a {
+#define DISK_VERTEXUSE_A_PLANE_MAGIC	0x4e767561	/* Nvua */
+struct disk_vertexuse_a_plane {
 	unsigned char		magic[4];
 	unsigned char		N[3*8];
+};
+
+#define DISK_VERTEXUSE_A_CNURB_MAGIC	0x4e766163	/* Nvac */
+struct disk_vertexuse_a_cnurb {
+	unsigned char		magic[4];
+	unsigned char		param[3*8];
 };
 
 /* ---------------------------------------------------------------------- */
@@ -635,7 +641,7 @@ int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_edge),
 	sizeof(struct disk_edge_g),
 	sizeof(struct disk_vertexuse),
-	sizeof(struct disk_vertexuse_a),
+	sizeof(struct disk_vertexuse_a_plane),
 	sizeof(struct disk_vertex),
 	sizeof(struct disk_vertex_g)
 };
@@ -1011,17 +1017,17 @@ double		local2mm;
 			INDEXL( d, vu, l );
 			rt_plong( d->up, rt_nmg_reindex((genptr_t)(vu->up.magic_p), ecnt) );
 			INDEX( d, vu, v_p );
-			INDEX( d, vu, vua_p );
+			rt_plong( d->a, rt_nmg_reindex((genptr_t)(vu->a.magic_p), ecnt) );
 		}
 		return;
 	case NMG_KIND_VERTEXUSE_A_PLANE:
 		{
-			struct vertexuse_a	*vua = (struct vertexuse_a *)ip;
-			struct disk_vertexuse_a	*d;
+			struct vertexuse_a_plane	*vua = (struct vertexuse_a_plane *)ip;
+			struct disk_vertexuse_a_plane	*d;
 			plane_t			plane;
-			d = &((struct disk_vertexuse_a *)op)[oindex];
-			NMG_CK_VERTEXUSE_A(vua);
-			PUTMAGIC( DISK_VERTEXUSE_A_MAGIC );
+			d = &((struct disk_vertexuse_a_plane *)op)[oindex];
+			NMG_CK_VERTEXUSE_A_PLANE(vua);
+			PUTMAGIC( DISK_VERTEXUSE_A_PLANE_MAGIC );
 			VMOVE( plane, vua->N );
 			plane[3] = vua->N[3] * local2mm;
 			htond( d->N, plane, 4 );
@@ -1357,23 +1363,35 @@ mat_t		mat;
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_MAGIC );
 			vu->up.magic_p = (long *)ptrs[rt_glong(d->up)];
 			INDEX( d, vu, vertex, v_p );
-			INDEX( d, vu, vertexuse_a, vua_p );
+			vu->a.magic_p = (long *)ptrs[rt_glong(d->a)];
 			NMG_CK_VERTEX(vu->v_p);
 			INDEXL_HD( d, vu, l, vu->v_p->vu_hd );
 		}
 		return 0;
 	case NMG_KIND_VERTEXUSE_A_PLANE:
 		{
-			struct vertexuse_a	*vua = (struct vertexuse_a *)op;
-			struct disk_vertexuse_a	*d;
+			struct vertexuse_a_plane	*vua = (struct vertexuse_a_plane *)op;
+			struct disk_vertexuse_a_plane	*d;
 			plane_t			plane;
-			d = &((struct disk_vertexuse_a *)ip)[iindex];
-			NMG_CK_VERTEXUSE_A(vua);
-			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_MAGIC );
+			d = &((struct disk_vertexuse_a_plane *)ip)[iindex];
+			NMG_CK_VERTEXUSE_A_PLANE(vua);
+			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_PLANE_MAGIC );
 			ntohd( plane, d->N, 4 );
 			rt_rotate_plane( vua->N, mat, plane );
 		}
 		return 0;
+#if 0
+	case NMG_KIND_VERTEXUSE_A_CNURB:
+		{
+			struct vertexuse_a_cnurb	*vua = (struct vertexuse_a_cnurb *)op;
+			struct disk_vertexuse_a_cnurb	*d;
+			d = &((struct disk_vertexuse_a_cnurb *)ip)[iindex];
+			NMG_CK_VERTEXUSE_A_PLANE(vua);
+			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_PLANE_MAGIC );
+			ntohd( vua->param, d->param, 3 );
+		}
+		return 0;
+#endif
 	case NMG_KIND_VERTEX:
 		{
 			struct vertex	*v = (struct vertex *)op;
@@ -1574,12 +1592,22 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				break;
 			case NMG_KIND_VERTEXUSE_A_PLANE:
 				{
-					struct vertexuse_a	*vua;
-					GET_VERTEXUSE_A( vua, m );
-					vua->magic = NMG_VERTEXUSE_A_MAGIC;
+					struct vertexuse_a_plane	*vua;
+					GET_VERTEXUSE_A_PLANE( vua, m );
+					vua->magic = NMG_VERTEXUSE_A_PLANE_MAGIC;
 					ptrs[subscript] = (long *)vua;
 				}
 				break;
+#if 0
+			case NMG_KIND_VERTEXUSE_A_CNURB:
+				{
+					struct vertexuse_a_cnurb	*vua;
+					GET_VERTEXUSE_A_CNURB( vua, m );
+					vua->magic = NMG_VERTEXUSE_A_CNURB_MAGIC;
+					ptrs[subscript] = (long *)vua;
+				}
+				break;
+#endif
 			case NMG_KIND_VERTEX:
 				{
 					struct vertex	*v;

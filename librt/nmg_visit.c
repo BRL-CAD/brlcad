@@ -71,8 +71,8 @@ genptr_t			*state;		/* Handler's private state */
 
 	nmg_visit_vertex( vu->v_p, htab, state );
 
-	if(htab->vis_vertexuse_a && vu->vua_p)
-		htab->vis_vertexuse_a( (long *)vu->vua_p, state, 0 );
+	if(htab->vis_vertexuse_a && vu->a.magic_p)
+		htab->vis_vertexuse_a( vu->a.magic_p, state, 0 );
 
 	if(htab->aft_vertexuse) htab->aft_vertexuse( (long *)vu, state, 1 );
 }
