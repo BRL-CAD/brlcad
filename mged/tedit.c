@@ -792,8 +792,13 @@ char *file;
 #endif
 #else
 	register int pid, xpid;
+	register char *ed;
 	int stat;
 	void (*s2)(), (*s3)();
+
+	if ((ed = getenv("EDITOR")) == (char *)0)
+		ed = DEFEDITOR;
+	bu_log("Invoking %s %s\n", ed, file);
 
 	s2 = signal( SIGINT, SIG_IGN );
 	s3 = signal( SIGQUIT, SIG_IGN );
@@ -802,17 +807,14 @@ char *file;
 		return (0);
 	}
 	if (pid == 0) {
-		register char *ed;
 		register int i;
+		/* Don't call bu_log() here in the child! */
 
 		for( i=3; i < 20; i++ )
 			(void)close(i);
 
 		(void)signal( SIGINT, SIG_DFL );
 		(void)signal( SIGQUIT, SIG_DFL );
-		if ((ed = getenv("EDITOR")) == (char *)0)
-			ed = DEFEDITOR;
-		bu_log("Invoking %s...\n", ed);
 #if 0
 		(void)execlp(ed, ed, file, 0);
 #else
