@@ -892,10 +892,11 @@ register struct xray	*rp;
 {
 	struct tri_specific *trip=(struct tri_specific *)hitp->hit_private;
 	fastf_t dn=hitp->hit_vpriv[X]; /* ray dir dot normal */
+	struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
-	if( hitp->hit_vpriv[Y] == RT_BOT_UNORIENTED )
+	if( hitp->hit_vpriv[Y] == RT_BOT_UNORIENTED || bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )
 	{
 		if( hitp->hit_vpriv[Z] < 0 ) /* this is an out hit */
 		{
