@@ -35,6 +35,7 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "./debug.h"
 #include "./complex.h"
 #include "./polyno.h"
@@ -62,6 +63,14 @@ struct  tgc_specific {
 	char	tgc_AD_CB;	/*  boolean:  A*D == C*B  */
 };
 
+struct tgc_internal {
+	vect_t	v;
+	vect_t	h;
+	vect_t	a;
+	vect_t	b;
+	vect_t	c;
+	vect_t	d;
+};
 
 #define VLARGE		1000000.0
 #define	ALPHA(x,y,c,d)	( (x)*(x)*(c) + (y)*(y)*(d) )
@@ -92,10 +101,9 @@ struct rt_i		*rtip;
 	LOCAL mat_t	Rot, Shr, Scl;
 	LOCAL mat_t	iRot, tShr, iShr, iScl;
 	LOCAL mat_t	tmp;
-	LOCAL vect_t	V, Hv, A, B, C, D;
 	LOCAL vect_t	nH;
 	LOCAL vect_t	work;
-	fastf_t		vec[3*6];
+	LOCAL struct tgc_internal	ti;
 
 	/*
 	 *  For a fast way out, hand this solid off to the REC routine.
@@ -105,31 +113,15 @@ struct rt_i		*rtip;
 	if( rec_prep( stp, rec, rtip ) == 0 )
 		return(0);		/* OK */
 
-	rt_fastf_float( vec, rec->s.s_values, 6 );
-
-#define TGC_V	&vec[0*ELEMENTS_PER_VECT]
-#define TGC_H	&vec[1*ELEMENTS_PER_VECT]
-#define TGC_A	&vec[2*ELEMENTS_PER_VECT]
-#define TGC_B	&vec[3*ELEMENTS_PER_VECT]
-#define TGC_C	&vec[4*ELEMENTS_PER_VECT]
-#define TGC_D	&vec[5*ELEMENTS_PER_VECT]
-
-	/* Apply full 4X4mat to V */
-	MAT4X3PNT( V, stp->st_pathmat, TGC_V );
-
-	/* Apply rotation to Hv, A,B,C,D */
-	MAT4X3VEC( Hv, stp->st_pathmat, TGC_H );
-	MAT4X3VEC( A, stp->st_pathmat, TGC_A );
-	MAT4X3VEC( B, stp->st_pathmat, TGC_B );
-	MAT4X3VEC( C, stp->st_pathmat, TGC_C );
-	MAT4X3VEC( D, stp->st_pathmat, TGC_D );
+	if( tgc_import( &ti, rec, stp->st_pathmat ) < 0 )
+		return(-1);		/* BAD */
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
-	mag_h = sqrt( magsq_h = MAGSQ( Hv ) );
-	mag_a = sqrt( magsq_a = MAGSQ( A ) );
-	mag_b = sqrt( magsq_b = MAGSQ( B ) );
-	mag_c = sqrt( magsq_c = MAGSQ( C ) );
-	mag_d = sqrt( magsq_d = MAGSQ( D ) );
+	mag_h = sqrt( magsq_h = MAGSQ( ti.h ) );
+	mag_a = sqrt( magsq_a = MAGSQ( ti.a ) );
+	mag_b = sqrt( magsq_b = MAGSQ( ti.b ) );
+	mag_c = sqrt( magsq_c = MAGSQ( ti.c ) );
+	mag_d = sqrt( magsq_d = MAGSQ( ti.d ) );
 	prod_ab = mag_a * mag_b;
 	prod_cd = mag_c * mag_d;
 
@@ -160,17 +152,17 @@ struct rt_i		*rtip;
 		/* Exchange ends, so that in solids with one degenerate end,
 		 * the CD end always is always the degenerate one
 		 */
-		VADD2( V, V, Hv );
-		VREVERSE( Hv, Hv );
+		VADD2( ti.v, ti.v, ti.h );
+		VREVERSE( ti.h, ti.h );
 #define VXCH( a, b, tmp )	{ VMOVE(tmp,a); VMOVE(a,b); VMOVE(b,tmp); }
-		VXCH( A, C, work );
-		VXCH( B, D, work );
+		VXCH( ti.a, ti.c, work );
+		VXCH( ti.b, ti.d, work );
 		rt_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
 	}
 
 	/* Ascertain whether H lies in A-B plane 			*/
-	VCROSS( work, A, B );
-	f = VDOT( Hv, work ) / ( prod_ab*mag_h );
+	VCROSS( work, ti.a, ti.b );
+	f = VDOT( ti.h, work ) / ( prod_ab*mag_h );
 	if ( NEAR_ZERO(f, RT_DOT_TOL) ) {
 		rt_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
 		return(1);		/* BAD */
@@ -178,30 +170,30 @@ struct rt_i		*rtip;
 
 	if( prod_ab > SMALL )  {
 		/* Validate that A.B == 0 */
-		f = VDOT( A, B ) / prod_ab;
+		f = VDOT( ti.a, ti.b ) / prod_ab;
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  A not perpendicular to B, f=%g\n",
 				stp->st_name, f);
 			rt_log("tgc: dot=%g / a*b=%g\n",
-				VDOT( A, B ),  prod_ab );
+				VDOT( ti.a, ti.b ),  prod_ab );
 			return(1);		/* BAD */
 		}
 	}
 	if( prod_cd > SMALL )  {
 		/* Validate that C.D == 0 */
-		f = VDOT( C, D ) / prod_cd;
+		f = VDOT( ti.c, ti.d ) / prod_cd;
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  C not perpendicular to D, f=%g\n",
 				stp->st_name, f);
 			rt_log("tgc: dot=%g / c*d=%g\n",
-				VDOT( C, D ), prod_cd );
+				VDOT( ti.c, ti.d ), prod_cd );
 			return(1);		/* BAD */
 		}
 	}
 
 	if( mag_a * mag_c > SMALL )  {
 		/* Validate that  A || C */
-		f = 1.0 - VDOT( A, C ) / (mag_a * mag_c);
+		f = 1.0 - VDOT( ti.a, ti.c ) / (mag_a * mag_c);
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  A not parallel to C, f=%g\n",
 				stp->st_name, f);
@@ -211,7 +203,7 @@ struct rt_i		*rtip;
 
 	if( mag_b * mag_d > SMALL )  {
 		/* Validate that  B || D, for parallel planes	*/
-		f = 1.0 - VDOT( B, D ) / (mag_b * mag_d);
+		f = 1.0 - VDOT( ti.b, ti.d ) / (mag_b * mag_d);
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  B not parallel to D, f=%g\n",
 				stp->st_name, f);
@@ -223,7 +215,7 @@ struct rt_i		*rtip;
 	GETSTRUCT( tgc, tgc_specific );
 	stp->st_specific = (int *)tgc;
 
-	VMOVE( tgc->tgc_V, V );
+	VMOVE( tgc->tgc_V, ti.v );
 	tgc->tgc_A = mag_a;
 	tgc->tgc_B = mag_b;
 	tgc->tgc_C = mag_c;
@@ -245,8 +237,8 @@ struct rt_i		*rtip;
 	 */
 	f = rt_reldiff( (tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B) );
 	tgc->tgc_AD_CB = (f < 0.0001);		/* A*D == C*B */
-	tgc_rotate( A, B, Hv, Rot, iRot, tgc );
-	MAT4X3VEC( nH, Rot, Hv );
+	tgc_rotate( ti.a, ti.b, ti.h, Rot, iRot, tgc );
+	MAT4X3VEC( nH, Rot, ti.h );
 	tgc->tgc_sH = nH[Z];
 
 	tgc->tgc_CdAm1 = tgc->tgc_C/tgc->tgc_A - 1.0;
@@ -280,30 +272,30 @@ struct rt_i		*rtip;
 
 		/* There are 8 corners to the bounding RPP */
 		/* This may not be minimal, but does fully contain the TGC */
-		VADD2( temp, tgc->tgc_V, A );
-		VADD2( work, temp, B );
+		VADD2( temp, tgc->tgc_V, ti.a );
+		VADD2( work, temp, ti.b );
 #define TGC_MM(v)	VMINMAX( stp->st_min, stp->st_max, v );
 		TGC_MM( work );	/* V + A + B */
-		VSUB2( work, temp, B );
+		VSUB2( work, temp, ti.b );
 		TGC_MM( work );	/* V + A - B */
 
-		VSUB2( temp, tgc->tgc_V, A );
-		VADD2( work, temp, B );
+		VSUB2( temp, tgc->tgc_V, ti.a );
+		VADD2( work, temp, ti.b );
 		TGC_MM( work );	/* V - A + B */
-		VSUB2( work, temp, B );
+		VSUB2( work, temp, ti.b );
 		TGC_MM( work );	/* V - A - B */
 
-		VADD3( temp, tgc->tgc_V, Hv, C );
-		VADD2( work, temp, D );
+		VADD3( temp, tgc->tgc_V, ti.h, ti.c );
+		VADD2( work, temp, ti.d );
 		TGC_MM( work );	/* V + H + C + D */
-		VSUB2( work, temp, D );
+		VSUB2( work, temp, ti.d );
 		TGC_MM( work );	/* V + H + C - D */
 
-		VADD2( temp, tgc->tgc_V, Hv );
-		VSUB2( temp, temp, C );
-		VADD2( work, temp, D );
+		VADD2( temp, tgc->tgc_V, ti.h );
+		VSUB2( temp, temp, ti.c );
+		VADD2( work, temp, ti.d );
 		TGC_MM( work );	/* V + H - C + D */
-		VSUB2( work, temp, D );
+		VSUB2( work, temp, ti.d );
 		TGC_MM( work );	/* V + H - C - D */
 
 		VSET( stp->st_center,
@@ -1414,13 +1406,40 @@ tgc_class()
 	return(0);
 }
 
-/* Names for TGC fields */
-#define VVAL	&points[0]
-#define HVAL	&points[3]
-#define AVAL	&points[6]
-#define BVAL	&points[9]
-#define CVAL	&points[12]
-#define DVAL	&points[15]
+
+/*
+ *			T G C _ I M P O R T
+ *
+ *  Import a TGC from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+tgc_import( tip, rp, matp )
+struct tgc_internal	*tip;
+union record		*rp;
+register matp_t		matp;
+{
+	LOCAL fastf_t	vec[3*6];
+
+	/* Check record type */
+	if( rp->u_id != ID_SOLID )  {
+		rt_log("tgc_import: defective record\n");
+		return(-1);
+	}
+
+	/* Convert from database to internal format */
+	rt_fastf_float( vec, rp->s.s_values, 6 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( tip->v, matp, &vec[0*3] );
+	MAT4X3VEC( tip->h, matp, &vec[1*3] );
+	MAT4X3VEC( tip->a, matp, &vec[2*3] );
+	MAT4X3VEC( tip->b, matp, &vec[3*3] );
+	MAT4X3VEC( tip->c, matp, &vec[4*3] );
+	MAT4X3VEC( tip->d, matp, &vec[5*3] );
+
+	return(0);		/* OK */
+}
 
 /*
  *			T G C _ P L O T
@@ -1433,26 +1452,17 @@ struct vlhead	*vhead;
 struct directory *dp;
 {
 	register int		i;
-	register fastf_t	*op;
-	register dbfloat_t	*ip;
-	fastf_t			top[16*3];
-	fastf_t			bottom[16*3];
-	static vect_t		work;		/* Vec addition work area */
-	static fastf_t		points[3*8];
+	LOCAL fastf_t		top[16*3];
+	LOCAL fastf_t		bottom[16*3];
+	LOCAL vect_t		work;		/* Vec addition work area */
+	LOCAL fastf_t		points[3*8];
+	LOCAL struct tgc_internal	ti;
 
-	MAT4X3PNT( &points[0], matp, &rp[0].s.s_values[0] );
+	if( tgc_import( &ti, rp, matp ) < 0 )  return;
 
-	ip = &rp[0].s.s_values[1*3];
-	op = &points[1*3];
-	for( i=1; i<6; i++ )  {
-		MAT4X3VEC( op, matp, ip );
-		op += ELEMENTS_PER_VECT;
-		ip += 3;
-	}
-
-	ell_16pts( bottom, VVAL, AVAL, BVAL );
-	VADD2( work, VVAL, HVAL );
-	ell_16pts( top, work, CVAL, DVAL );
+	ell_16pts( bottom, ti.v, ti.a, ti.b );
+	VADD2( work, ti.v, ti.h );
+	ell_16pts( top, work, ti.c, ti.d );
 
 	/* Draw the top */
 	ADD_VL( vhead, &top[15*ELEMENTS_PER_VECT], 0 );
@@ -1550,4 +1560,95 @@ struct soltab *stp;
 	eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
 	VCOMB2( cvp->crv_pdir, vec1[X], u, vec1[Y], v );
 	VUNITIZE( cvp->crv_pdir );
+}
+
+/*
+ *			T G C _ T E S S
+ *
+ *  Preliminary tesselation of the TGC, same algorithm as vector list.
+ */
+void
+tgc_tess( s, rp, matp, dp )
+struct shell	*s;
+union record	*rp;
+register matp_t matp;
+struct directory *dp;
+{
+	register int		i;
+	LOCAL fastf_t		top[16*3];
+	struct vertex		*vtop[16+1];
+	LOCAL fastf_t		bottom[16*3];
+	struct vertex		*vbottom[16+1];
+	LOCAL vect_t		work;		/* Vec addition work area */
+	LOCAL fastf_t		points[3*8];
+	LOCAL struct tgc_internal	ti;
+
+	if( tgc_import( &ti, rp, matp ) < 0 )  return;
+
+	/* Create two 16 point ellipses */
+	ell_16pts( bottom, ti.v, ti.a, ti.b );
+	VADD2( work, ti.v, ti.h );
+	ell_16pts( top, work, ti.c, ti.d );
+
+	for( i=0; i<16; i++ )  {
+		vbottom[i] = (struct vertex *)0;
+	}
+
+	/* Create the top face topology */
+	if( nmg_mkface1(s) )  goto fail;
+	vtop[0] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
+
+	for( i=1; i<16; i++ )  {
+		if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
+		vtop[i] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
+	}
+
+	/* Duplicate [0] as [16] */
+	vtop[16] = vtop[0];
+	/* Build topology for 16 side faces hanging down from the top one */
+	for( i=0; i<16; i++ )  {
+		if( nmg_mkfaceN(s, vtop[i] ) )  goto fail;
+
+		/* Move down */
+		if( vbottom[i] )  {
+			if( nmg_insfacev( vbottom[i], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
+		} else {
+			if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
+			vbottom[i] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
+		}
+		if( i==0 )  vbottom[16] = vbottom[0];
+
+		/* Move left */
+		if( vbottom[i+1] )  {
+			if( nmg_insfacev( vbottom[i+1], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
+		} else {
+			if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
+			vbottom[i+1] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
+		}
+
+		/* Return to the top */
+		if( nmg_insfacev( vtop[i+1], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
+	}
+
+	/* Build topology for bottom plate.  Go in reverse direction */
+	if( nmg_mkfaceN(s, vbottom[15]) )  goto fail;
+	for( i=15-1; i>=0; i-- )  {
+		if( nmg_insfacev( vbottom[i], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
+	}
+
+	/* Supply the top geometry */
+	for( i=0; i<16; i++ )  {
+		NMG_CK_VERTEX(vtop[i]);
+		if( nmg_vertex_gv( vtop[i], &top[3*i] ) )  goto fail;
+	}
+
+	/* Supply the bottom geometry */
+	for( i=0; i<16; i++ )  {
+		NMG_CK_VERTEX(vbottom[i]);
+		if( nmg_vertex_gv( vbottom[i], &bottom[3*i] ) )  goto fail;
+	}
+
+	return;
+fail:
+	rt_log("tgc_tess: failure\n");
 }
