@@ -31,6 +31,9 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
+extern void	rt_structparse();
+extern void	rt_structprint();
+
 /*
  *			R T _ P A R S E _ R G B
  *
@@ -189,7 +192,8 @@ stroff_t		base;		/* base address of users structure */
 		name = cp;
 		while( *cp != '\0' && *cp != '=' )  cp++;
 		if( *cp == '\0' )  {
-			rt_log("rt_structparse: name %s without value\n", name );
+			if( name == cp )  break;
+			rt_log("rt_structparse: name '%s' without '='\n", name );
 		}
 		*cp++ = '\0';
 
@@ -203,8 +207,9 @@ stroff_t		base;		/* base address of users structure */
 
 		/* Lookup name in parsetab table */
 		if( rt_struct_lookup( parsetab, name, base, value ) < 0 )  {
-			rt_log("rt_structparse:  %s=%s not a valid arg\n",
+			rt_log("rt_structparse:  '%s=%s', element name not found in:\n",
 				name, value);
+			rt_structprint( "troublesome one", parsetab, base );
 		}
 	}
 }
@@ -242,7 +247,8 @@ stroff_t		base;		/* base address of users structure */
 			switch( spp->sp_fmt[1] )  {
 
 			case 's':
-				rt_log( " %s=%s\n", spp->sp_name, (char *)loc );
+				rt_log( " %s=%s\n", spp->sp_name,
+					(char *)loc );
 				break;
 			case 'd':
 				rt_log( " %s=%d\n", spp->sp_name,
