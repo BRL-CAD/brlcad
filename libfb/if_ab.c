@@ -878,7 +878,10 @@ int	n;
 #define	VDOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
 #define	V5DOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
 #define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
-#define	CLIP(v)		(v<0?0:v>255?255:v)
+#define	CLIP(out,in)		{ register int t; \
+		if( (t = (in)) < 0 )  (out) = 0; \
+		else if( t >= 255 )  (out) = 255; \
+		else (out) = t; }
 
 #define	LINE_LENGTH	720
 #define	FRAME_LENGTH	486
@@ -950,32 +953,28 @@ ab_yuv_to_rgb( rgb_buf, yuv_buf, len )
 unsigned char *rgb_buf;
 unsigned char *yuv_buf;
 {
-	int	pixel;
-	double	y, u, v;
-	double	r, g, b;
-
 	register unsigned char *rgbp;
 	register unsigned char *yuvp;
+	register double	y, u, v;
+	register int	pixel;
+	int		last;
 
-	/*  uy  vy  uy  vy  */
+	/* Input stream looks like:  uy  vy  uy  vy  */
 
 	rgbp = rgb_buf;
 	yuvp = yuv_buf;
-	for( pixel = len/2; pixel; pixel-- ) {
-		/* even pixel */
-		if( pixel == len/2 ) {
+	last = len/2;
+	for( pixel = last; pixel; pixel-- ) {
+		/* even pixel, get y and next v */
+		if( pixel == last ) {
 			u = (*yuvp++ - 128.0) * 255.0/224.0;
 		}
 		y = (*yuvp++ - 16.0) * 255.0/219.0;
 		v = (*yuvp++ - 128.0) * 255.0/224.0;
 
-		r = y + 1.4026 * v;		/* R */
-		g = y - 0.3444 * u -0.7144 * v;	/* G */
-		b = y + 1.7730 * u;		/* B */
-
-		*rgbp++ = CLIP(r);
-		*rgbp++ = CLIP(g);
-		*rgbp++ = CLIP(b);
+		CLIP( *rgbp++, y + 1.4026 * v);			/* R */
+		CLIP( *rgbp++, y - 0.3444 * u - 0.7144 * v);	/* G */
+		CLIP( *rgbp++, y + 1.7730 * u);			/* B */
 
 		/* odd pixel, got v already, get y and next u */
 		y = (*yuvp++ - 16.0) * 255.0/219.0;
@@ -983,12 +982,8 @@ unsigned char *yuv_buf;
 			u = (*yuvp++ - 128.0) * 255.0/224.0;
 		}
 
-		r = y + 1.4026 * v;		/* R */
-		g = y - 0.3444 * u -0.7144 * v;	/* G */
-		b = y + 1.7730 * u;		/* B */
-
-		*rgbp++ = CLIP(r);
-		*rgbp++ = CLIP(g);
-		*rgbp++ = CLIP(b);
+		CLIP( *rgbp++, y + 1.4026 * v);			/* R */
+		CLIP( *rgbp++, y - 0.3444 * u - 0.7144 * v);	/* G */
+		CLIP( *rgbp++, y + 1.7730 * u);			/* B */
 	}
 }
