@@ -43,8 +43,54 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "RtServerImpl.h"
 
+/* number of cpus (only used for call to rt_prep_parallel) */
+int ncpus=1;
+
 /* verbosity flag */
 static int verbose=0;
+
+/* number of threads */
+static int num_threads=0;
+
+/* the threads */
+static pthread_t *threads=NULL;
+
+/* mutex to protect the resources */
+static pthread_mutex_t resource_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/* mutexes to protect the input and output queues */
+static pthread_mutex_t *input_queue_mutex=NULL, *output_queue_mutex=NULL;
+
+/* input queues condition and mutex */
+static pthread_mutex_t input_queue_ready_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t input_queue_ready = PTHREAD_COND_INITIALIZER;
+
+/* output queues condition and mutex */
+static pthread_mutex_t output_queue_ready_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t output_queue_ready = PTHREAD_COND_INITIALIZER;
+
+/* the queues */
+static struct rtserver_job *input_queue=NULL;
+static struct rtserver_result *output_queue=NULL;
+static int num_queues=0;
+
+/* resources for librtserver */
+struct rts_resources {
+	struct bu_list rtserver_results;
+	struct bu_list ray_results;
+	struct bu_list ray_hits;
+	struct bu_list rtserver_jobs;
+	struct bu_ptbl xrays;
+};
+
+static struct rts_resources rts_resource;
+
+/* From here down should be combined into a single structure to
+ * allow more than one RtServer in the same JAVA VM.
+ * The sessionId would then be a packed number containing two
+ * indices, one for the usual sessionID and the other is an index
+ * into these new structures
+ */
 
 /* total number of MUVES component names */
 static int comp_count=0;
@@ -65,31 +111,6 @@ static Tcl_HashTable name_tbl;		/* all the MUVES component names (key is the MUV
 static Tcl_HashTable ident_tbl;		/* all the non-air regions (key = ident, value = MUVES id number) */
 static Tcl_HashTable air_tbl;		/* all the air regions (key = aircode, value = MUVES id number) */
 
-/* number of threads */
-static int num_threads=1;
-
-/* the threads */
-static pthread_t *threads;
-
-/* mutex to protect the resources */
-static pthread_mutex_t resource_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-/* mutexes to protect the input and output queues */
-static pthread_mutex_t *input_queue_mutex, *output_queue_mutex;
-
-/* input queues condition and mutex */
-static pthread_mutex_t input_queue_ready_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t input_queue_ready = PTHREAD_COND_INITIALIZER;
-
-/* output queues condition and mutex */
-static pthread_mutex_t output_queue_ready_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t output_queue_ready = PTHREAD_COND_INITIALIZER;
-
-/* the queues */
-static struct rtserver_job *input_queue;
-static struct rtserver_result *output_queue;
-static int num_queues=3;
-
 /* the geometry */
 static struct rtserver_geometry **rts_geometry=NULL;	/* array of rtserver_geometry structures
 							 * indexed by session id
@@ -101,23 +122,8 @@ static int used_session_0=0;	/* flag indicating if initial session has been used
 static int needs_initialization=1;	/* flag indicating if init has already been done */
 #define GEOMETRIES_BLOCK_SIZE	5	/* the number of slots to allocate at one time */
 
-/* number of cpus (only used for call to rt_prep_parallel) */
-int ncpus=1;
-
 /* the title of this BRL-CAD database */
 static char *title=NULL;
-
-
-/* resources for librtserver */
-struct rts_resources {
-	struct bu_list rtserver_results;
-	struct bu_list ray_results;
-	struct bu_list ray_hits;
-	struct bu_list rtserver_jobs;
-	struct bu_ptbl xrays;
-};
-
-static struct rts_resources rts_resource;
 
 void
 fillItemTree( jobject parent_node,
@@ -131,7 +137,7 @@ fillItemTree( jobject parent_node,
 
 
 /* MACRO to add a ray to a job */
-#define RTS_ADD_RAY_TO_JOB( _ajob, _aray ) bu_ptbl_ins( &(_ajob)->rtjob_rays, (long *)(_aray) );
+#define RTS_ADD_RAY_TO_JOB( _ajob, _aray ) bu_ptbl_ins( &(_ajob)->rtjob_rays, (long *)(_aray) )
 
 /* MACROS for getting and releasing resources */
 #define RTS_GET_XRAY( _p ) \
@@ -1119,33 +1125,48 @@ rts_submit_job( struct rtserver_job *ajob, int queue )
  * the number of threads and queues are global
  */
 void
-rts_start_server_threads()
+rts_start_server_threads( int thread_count, int queue_count )
 {
 	int i;
 
-	/* create the queues */
-	input_queue = (struct rtserver_job *)calloc( num_queues, sizeof( struct rtserver_job ) );
-	output_queue = (struct rtserver_result *)calloc( num_queues,
-							 sizeof( struct rtserver_result ) );
+	if( queue_count > 0 ) {
+	  int old_queue_count=num_queues;
 
-	/* create the mutexes */
-	input_queue_mutex = (pthread_mutex_t *)calloc( num_queues, sizeof( pthread_mutex_t ) );
-	output_queue_mutex = (pthread_mutex_t *)calloc( num_queues, sizeof( pthread_mutex_t ) );
+	  num_queues += queue_count;
 
-	/* initialize the mutexes and the queues */
-	for( i=0 ; i<num_queues ; i++ ) {
-		BU_LIST_INIT( &input_queue[i].l );
-		BU_LIST_INIT( &output_queue[i].l );
-		pthread_mutex_init( &input_queue_mutex[i], NULL );
-		pthread_mutex_init( &output_queue_mutex[i], NULL );
+	  /* create the queues */
+	  input_queue = (struct rtserver_job *)realloc( input_queue,
+				      num_queues * sizeof( struct rtserver_job ) );
+	  output_queue = (struct rtserver_result *)realloc( output_queue,
+				      num_queues * sizeof( struct rtserver_result ) );
+
+	  /* create the mutexes */
+	  input_queue_mutex = (pthread_mutex_t *)realloc( input_queue_mutex,
+				      num_queues * sizeof( pthread_mutex_t ) );
+	  output_queue_mutex = (pthread_mutex_t *)realloc( output_queue_mutex,
+				      num_queues * sizeof( pthread_mutex_t ) );
+
+	  /* initialize the new mutexes and the new queues */
+	  for( i=old_queue_count ; i<num_queues ; i++ ) {
+	    BU_LIST_INIT( &input_queue[i].l );
+	    BU_LIST_INIT( &output_queue[i].l );
+	    pthread_mutex_init( &input_queue_mutex[i], NULL );
+	    pthread_mutex_init( &output_queue_mutex[i], NULL );
+	  }
 	}
 
-	/* create the thread variables */
-	threads = (pthread_t *)calloc( num_threads, sizeof( pthread_t ) );
+	if( thread_count > 0 ) {
+	  int old_thread_count = num_threads;
 
-	/* start the threads */
-	for( i=0 ; i<num_threads ; i++ ) {
-		(void)pthread_create( &threads[i], NULL, rtserver_thread, (void *)i );
+	  num_threads += thread_count;
+
+	  /* create the thread variables */
+	  threads = (pthread_t *)realloc( threads,  num_threads * sizeof( pthread_t ) );
+
+	  /* start the new threads */
+	  for( i=old_thread_count ; i<num_threads ; i++ ) {
+	    (void)pthread_create( &threads[i], NULL, rtserver_thread, (void *)i );
+	  }
 	}
 }
 
@@ -1391,6 +1412,7 @@ rts_shutdown()
 		pthread_t thread = threads[i];
 		pthread_join( thread, NULL );
 	}
+	num_threads = 0;
 
 	/* clean up */
 	bu_free( (char *)threads, "threads" );
@@ -1408,6 +1430,34 @@ rts_shutdown()
 		bu_free( (char *)rts_geometry, "rts_geometry" );
 	}
 	rts_geometry = NULL;
+
+	/* free queues and mutexes */
+	for( i=0 ; i<num_queues ; i++ ) {
+		while( BU_LIST_NON_EMPTY( &input_queue[i].l )) {
+			struct rtserver_job *ajob;
+
+			ajob = BU_LIST_FIRST( rtserver_job, &input_queue[i].l );
+			BU_LIST_DEQUEUE( &ajob->l );
+			RTS_FREE_RTSERVER_JOB( ajob );
+		}
+
+		while( BU_LIST_NON_EMPTY( &output_queue[i].l )) {
+			struct rtserver_result *ares;
+
+			ares = BU_LIST_FIRST( rtserver_result, &output_queue[i].l );
+			BU_LIST_DEQUEUE( &ares->l );
+			RTS_FREE_RTSERVER_RESULT( ares );
+		}
+	}
+	free( input_queue );
+	input_queue = NULL;
+	free( output_queue );
+	output_queue = NULL;
+	free( input_queue_mutex );
+	input_queue_mutex = NULL;
+	free( output_queue_mutex );
+	output_queue_mutex = NULL;
+	num_queues = 0;
 
 	if( hash_table_exists ) {
 		Tcl_DeleteHashTable( &name_tbl );
@@ -1710,6 +1760,7 @@ fillItemTree( jobject parent_node,
 	struct rt_db_internal intern;
 	jstring nodeName;
 	jobject node;
+	const char *muvesName;
 
 	if( (dp=db_lookup( dbip, name, LOOKUP_QUIET )) == DIR_NULL ) {
 		return;
@@ -1738,6 +1789,29 @@ fillItemTree( jobject parent_node,
 
 
 	if( dp->d_flags & DIR_REGION ) {
+		if( (id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) ) < 0 ) {
+			fprintf( stderr, "Failed to get internal form of BRL-CAD object (%s)\n", name );
+			return;
+		}
+
+		/* check for MUVES_Component */
+		if( (muvesName=bu_avs_get( &intern.idb_avs, "MUVES_Component" )) != NULL ) {
+			/* add this attribute */
+			jstring jmuvesName;
+
+			jmuvesName = (*env)->NewStringUTF( env, muvesName );
+			(*env)->CallVoidMethod( env, node, itemTree_setMuvesName_id, jmuvesName );
+
+			/* check for any exceptions */
+			if( (*env)->ExceptionOccurred(env) ) {
+				fprintf( stderr, "Exception thrown while setting the ItemTree MuvesName\n" );
+				(*env)->ExceptionDescribe(env);
+				return;
+			}
+		}
+
+		rt_db_free_internal( &intern, &rt_uniresource );
+
 		/* do not recurse into regions */
 		return;
 	}
@@ -1745,7 +1819,6 @@ fillItemTree( jobject parent_node,
 	if( dp->d_flags & DIR_COMB ) {
 		/* recurse into this combination */
 		struct rt_comb_internal *comb;
-		const char *muvesName;
 
 		if( (id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) ) < 0 ) {
 			fprintf( stderr, "Failed to get internal form of BRL-CAD object (%s)\n", name );
@@ -1906,30 +1979,32 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 		bu_log( "Failed to load geometry, rts_load_geometry() returned %d\n", rts_load_return );
 		ret = 2;
 	} else {
+	        int thread_count, queue_count;
+
 		/* get number of queues specified by command line */
 		jstring jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 0 );
 		char *str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
-		num_queues = atoi( str );
+		queue_count = atoi( str );
 		(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
 
 		/* do not use less than two queues */
-		if( num_queues < 2 ) {
-			num_queues = 2;
+		if( queue_count + num_queues < 2 ) {
+		  queue_count = 2 - num_queues;
 		}
 
 		/* get number of threads from comamnd line */
 		jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 1 );
 		str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
-		num_threads = atoi( str );
+		thread_count = atoi( str );
 		(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
 
 		/* do not use less than one thread */
-		if( num_threads < 1 ) {
-			num_threads = 1;
+		if( num_threads + thread_count < 1 ) {
+			thread_count = 1 - num_threads;
 		}
 
 		/* start raytrace threads */
-		rts_start_server_threads();
+		rts_start_server_threads( thread_count, queue_count );
 	}
 
 	/* release the JAVA String objects that we created */
@@ -2133,6 +2208,8 @@ main( int argc, char *argv[] )
 	char **result_map;
 	struct bu_ptbl objs;
 	int my_session_id;
+	int queue_count=3;
+	int thread_count=2;
 
 	/* Things like bu_malloc() must have these initialized for use with parallel processing */
 	bu_semaphore_init( RT_SEM_LAST );
@@ -2150,10 +2227,10 @@ main( int argc, char *argv[] )
 			ncpus = atoi( optarg );
 			break;
 		case 't':	/* number of server threads to start */
-			num_threads = atoi( optarg );
+			thread_count = atoi( optarg );
 			break;
 		case 'q':	/* number of request queues to create */
-			num_queues = atoi( optarg );
+			queue_count = atoi( optarg );
 			break;
 		case 'a':	/* set flag to use air regions in the BRL-CAD model */
 			use_air = 1;
@@ -2220,7 +2297,7 @@ main( int argc, char *argv[] )
 	}
 #endif
 	/* start the server threads */
-	rts_start_server_threads( nthreads, num_queues );
+	rts_start_server_threads( thread_count, queue_count );
 
 	/* submit and wait for a job */
 	RTS_GET_RTSERVER_JOB( ajob );
