@@ -3065,16 +3065,19 @@ struct bn_tol *tol;
 	 *  it didn't work, and let caller try another direction.
 	 */
 	if( hari_kari_minus || hari_kari_plus )  {
-		bu_log("hari_kari = %d, %d\n", hari_kari_minus, hari_kari_plus);
+		if(rt_g.NMG_debug)
+			bu_log("hari_kari = %d, %d\n", hari_kari_minus, hari_kari_plus);
 		plus_class = NMG_CLASS_Unknown;
 		goto out;
 	}
 	if (plus_class != minus_class || plus_class == NMG_CLASS_Unknown ||
 	    minus_class == NMG_CLASS_Unknown ) {
-/*		nmg_rt_print_hitlist(&rd.rd_hit);
+#if 0
+		nmg_rt_print_hitlist(&rd.rd_hit);
 		bu_log("minus_class = (%s) %d, hari_kari=%d\n", nmg_class_name(minus_class), minus_class, hari_kari_minus);
 		bu_log("plus_class = (%s)\n", nmg_class_name(plus_class));
-		bu_log("nmg_class_ray_vs_shell() -- can't tell\n"); */
+		bu_log("nmg_class_ray_vs_shell() -- can't tell\n");
+#endif
 		plus_class = NMG_CLASS_Unknown;
 	}
 out:
