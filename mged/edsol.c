@@ -1122,17 +1122,21 @@ register vect_t		unitv;
 	angles[4] = asin(unitv[Z]);
 
 	/* rotation angle */
-	if((f = cos(angles[4])) > 1.0e-20 || f < -1.0e-20 )  {
+	/* For the tolerance below, on an SGI 4D/70, cos(asin(1.0)) != 0.0
+	 * with an epsilon of +/- 1.0e-17, so the tolerance below was
+	 * substituted for the original +/- 1.0e-20.
+	 */
+	if((f = cos(angles[4])) > 1.0e-16 || f < -1.0e-16 )  {
 		f = unitv[X]/f;
 		if( f <= -1.0 )
-			angles[3] = -90;
+			angles[3] = 180;
 		else if( f >= 1.0 )
-			angles[3] = 90;
+			angles[3] = 0;
 		else
 			angles[3] = radtodeg * acos( f );
 	}  else
 		angles[3] = 0.0;
-	if( unitv[1] < 0 )
+	if( unitv[Y] < 0 )
 		angles[3] = 360.0 - angles[3];
 
 	angles[4] *= radtodeg;
