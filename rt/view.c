@@ -1192,18 +1192,15 @@ char	*framename;
 		buf_mode = BUFMODE_FULLFLOAT;
 	} else if( incr_mode )  {
 		buf_mode = BUFMODE_INCR;
-	} else if( rt_g.rtg_parallel )  {
-		if( npsw > 1 && npsw <= height )  {
-		    	/* Have each CPU do a whole scanline.
-		    	 * Saves lots of semaphore overhead.
-		    	 */
-			per_processor_chunk = width;
-		    	buf_mode = BUFMODE_SCANLINE;
-		} else {
-			buf_mode = BUFMODE_DYNAMIC;
-		}
 	} else if( width <= 96 )  {
 		buf_mode = BUFMODE_UNBUF;
+	} else if( npsw <= height/4 )  {
+	    	/* Have each CPU do a whole scanline.
+	    	 * Saves lots of semaphore overhead.
+		 * For load balancing make sure each CPU has several lines to do.
+	    	 */
+		per_processor_chunk = width;
+	    	buf_mode = BUFMODE_SCANLINE;
 	}  else  {
 		buf_mode = BUFMODE_DYNAMIC;
 	}
