@@ -97,6 +97,7 @@ void	f_fracture();
 void	f_orientation();
 void	f_dm();
 void	f_vrot_center();
+void	f_opendb();
 
 static struct funtab {
 	char *ft_name;
@@ -244,6 +245,8 @@ static struct funtab {
 	f_mvall, 3, 3,
 "nirt", "", "trace a single ray from current view",
 	f_nirt,1,MAXARGS,
+"opendb", "database.g", "Close current .g file, and open new .g file",
+	f_opendb, 2, 2,
 "orientation", "x y z w", "Set view direction from quaternion",
 	f_orientation, 5, 5,
 "overlay", "file.plot [name]", "Read UNIX-Plot as named overlay",
