@@ -70,7 +70,7 @@ dnl 	*)
 dnl 		TCL_LIBS="-ltcl8.4"
 dnl 		;;
 dnl esac
-TCL_LIBS='${top_builddir}/libtcl8.4/libtcl8.4.la @DL@ -lm'
+TCL_LIBS='${top_builddir}/libtcl8.4/libtcl8.4.la @DL@ @SOCKET@ -lm'
 TCL=libtcl8.4
 TCLVER=8.4
 AC_SUBST(TCL)
@@ -131,6 +131,9 @@ fi
 dnl ============================================================
 
 AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld",AC_ERROR(No dynamic loader found)))])
+AC_SUBST(DL)
+AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_ERROR(No dynamic loader found)))])
+AC_SUBST(SOCKET)
 
 
 X_CFLAGS="-I/usr/X11R6/include"
@@ -209,7 +212,6 @@ WDB='${top_builddir}/libwdb/libwdb.la'
 AC_SUBST(BN)
 AC_SUBST(BU)
 AC_SUBST(CURSOR)
-AC_SUBST(DL)
 AC_SUBST(DM)
 AC_SUBST(FB)
 AC_SUBST(FFT)
