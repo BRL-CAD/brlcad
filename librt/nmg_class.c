@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "rtlist.h"
 #include "raytrace.h"
+#include "./debug.h"
 
 /* XXX Move to vmath.h */
 #define V3PT_IN_RPP(_pt, _lo, _hi)	( \
@@ -582,14 +583,14 @@ CONST struct rt_tol	*tol;
 	 */
 	if (hitcount & 1) {
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			rt_log("	INSIDE face / pt (%g, %g, %g) hitcount: %d\n",
+			rt_log("pt_inout_s: INSIDE. pt=(%g, %g, %g) hitcount: %d\n",
 			pt[0], pt[1], pt[2], hitcount);
 
 		return(INSIDE);
 	}
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("	OUTSIDE face / pt (%g, %g, %g) hitcount: %d\n",
+		rt_log("pt_inout_s: OUTSIDE. pt=(%g, %g, %g) hitcount: %d\n",
 			pt[0], pt[1], pt[2], hitcount);
 
 	return(OUTSIDE);
@@ -689,8 +690,8 @@ CONST struct rt_tol	*tol;
 
 out:
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		rt_log("  vertex class=%s because '%s'\n",
-			nmg_class_status(status), reason );
+		rt_log("class_vu_vs_s(vu=x%x) return %s because %s\n",
+			vu, nmg_class_status(status), reason );
 	}
 	return(status);
 }
@@ -748,6 +749,7 @@ CONST struct rt_tol	*tol;
 	    	nmg_pr_class_status("eumate vu", matev_cl);
 	    	if( rt_g.debug || rt_g.NMG_debug )  {
 		    	/* Do them over, so we can watch */
+	    		rt_g.debug |= DEBUG_MATH;
 			rt_g.NMG_debug |= DEBUG_CLASSIFY;
 			(void)class_vu_vs_s(eu->vu_p, s, classlist, tol);
 			(void)class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
