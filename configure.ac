@@ -32,7 +32,7 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
-AC_INIT(librt/bool.c)
+AC_INIT(src/librt/bool.c)
 AC_PREREQ(2.50)
 
 MAJOR_VERSION=6
