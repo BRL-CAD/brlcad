@@ -1,4 +1,24 @@
-# Author - Bob Parker
+# Author -
+#	Bob Parker
+#
+# Source -
+#	The U. S. Army Ballistic Research Laboratory
+#	Aberdeen Proving Ground, Maryland  21005
+#
+# Distribution Notice -
+#	Re-distribution of this software is restricted, as described in
+#       your "Statement of Terms and Conditions for the Release of
+#       The BRL-CAD Package" agreement.
+#
+# Copyright Notice -
+#       This software is Copyright (C) 1995 by the United States Army
+#       in all countries except the USA.  All rights reserved.
+#
+# Description -
+#	MGED's Tcl/Tk interface.
+#
+# $Revision
+#
 
 check_externs "_mged_attach _mged_aim _mged_add_view _mged_delete_view _mged_get_view _mged_goto_view _mged_next_view _mged_prev_view _mged_toggle_view"
 
@@ -8,16 +28,16 @@ if [info exists env(MGED_HTML_DIR)] {
         set mged_html_dir [lindex $auto_path 0]/../html/mged
 }
 
+if ![info exists dm_insert_char_flag] {
+    set dm_insert_char_flag 0
+}
+
 if ![info exists mged_players] {
     set mged_players ""
 }
 
 if ![info exists mged_collaborators] {
     set mged_collaborators ""
-}
-
-if ![info exists mged_default_gt] {
-    set mged_default_gt [dm_best_name]
 }
 
 if ![info exists mged_default_id] {
@@ -52,62 +72,53 @@ if ![info exists mged_default_gdisplay] {
     }
 }
 
+if ![info exists mged_default_dt] {
+    set mged_default_dt [dm_bestXType $mged_default_gdisplay]
+}
+
 if ![info exists mged_default_comb] {
     set mged_default_comb 0
 }
 
-if ![info exists mged_default_vap] {
-    winset nu
-    switch $v_axes_pos {
-	1 {
-	    set mged_default_vap "Lower Left"
-	}
-	2 {
-	    set mged_default_vap "Upper Left"
-	}
-	3 {
-	    set mged_default_vap "Upper Right"
-	}
-	4 {
-	    set mged_default_vap "Lower Right"
-	}
-	default {
-	    set mged_default_vap Center
-	}
-    }
-}
-
 set do_tearoffs 0
 
-proc openw args {
-    global ia_cmd_prefix
-    global ia_more_default
-    global ia_font
-    global ia_illum_label
+proc gui_create_default { args } {
+    global player_screen
+    global mged_default_id
+    global mged_default_dt
+    global mged_default_pane
+    global mged_default_mvmode
+    global mged_default_config
+    global mged_default_display
+    global mged_default_gdisplay
+    global mged_default_comb
     global mged_html_dir
     global mged_players
     global mged_collaborators
     global mged_display
-    global player_screen
-    global openw_usage
-    global env
-    global faceplate
-    global transform
-    global transform_what
-    global rotate_about
-    global rotate_about_what
-    global coords
-    global coord_type
-    global rateknobs
-    global rateknobs_on
-    global adcflag
-    global adcflag_on
-    global edit_info
-    global edit_info_on
-    global multi_view
-    global sliders_on
-    global buttons_on
-    global win_size
+    global mged_use_air
+    global mged_echo_query_ray_cmd
+    global mged_listen
+    global mged_fb
+    global mged_fb_all
+    global mged_fb_overlay
+    global mged_rubber_band
+    global mged_grid_draw
+    global mged_grid_snap
+    global mged_mouse_behavior
+    global mged_query_ray_behavior
+    global mged_coords
+    global mged_rotate_about
+    global mged_transform
+    global mged_rateknobs
+    global mged_adcflag
+    global mged_v_axes_pos
+    global mged_v_axes
+    global mged_m_axes
+    global mged_e_axes
+    global mged_apply_to
+    global mged_grid_control
+    global mged_apply_list
     global mged_top
     global mged_dmc
     global mged_active_dm
@@ -115,56 +126,53 @@ proc openw args {
     global mged_dm_loc
     global save_small_dmc
     global save_dm_loc
+    global ia_cmd_prefix
+    global ia_more_default
+    global ia_font
+    global ia_illum_label
+    global env
+    global edit_info
+    global edit_info_on
+    global multi_view
+    global buttons_on
+    global win_size
     global cmd_win
     global dm_win
     global status_bar
-    global mged_default_id
-    global mged_default_gt
-    global mged_default_pane
-    global mged_default_mvmode
-    global mged_default_config
-    global mged_default_display
-    global mged_default_gdisplay
-    global mged_default_comb
-    global mged_default_vap
     global view_ring
-    global view_axes_pos
-    global view_axes
-    global v_axes
-    global model_axes
-    global m_axes
-    global edit_axes
-    global e_axes
     global do_tearoffs
 
 # set defaults
-set save_id [lindex [cmd_get] 2]
-set comb $mged_default_comb
-set join_c 0
-set dtype $mged_default_gt
-set id ""
-set scw 0
-set sgw 0
-set i 0
-
-set screen $mged_default_display
-set dscreen $mged_default_gdisplay
-
-if {$mged_default_config == "b"} {
-    set scw 1
-    set sgw 1
-} elseif {$mged_default_config == "c"} {
-    set scw 1
-    set sgw 0
-} elseif {$mged_default_config == "g"} {
+    set save_id [lindex [cmd_get] 2]
+    set comb $mged_default_comb
+    set join_c 0
+    set dtype $mged_default_dt
+    set id ""
     set scw 0
-    set sgw 1
-}
+    set sgw 0
+    set i 0
+
+    set screen $mged_default_display
+    set gscreen $mged_default_gdisplay
+
+    if {$mged_default_config == "b"} {
+	set scw 1
+	set sgw 1
+    } elseif {$mged_default_config == "c"} {
+	set scw 1
+	set sgw 0
+    } elseif {$mged_default_config == "g"} {
+	set scw 0
+	set sgw 1
+    }
 
 #==============================================================================
 # PHASE 0: Process options
 #==============================================================================
-set argc [llength $args]
+    set argc [llength $args]
+    set dtype_set 0
+    set screen_set 0
+    set gscreen_set 0
 
 for {set i 0} {$i < $argc} {incr i} {
     set arg [lindex $args $i]
@@ -172,7 +180,7 @@ for {set i 0} {$i < $argc} {incr i} {
 	incr i
 
 	if {$i >= $argc} {
-	    return [help openw]
+	    return [help gui_create_default]
 	}
 
 	set arg [lindex $args $i]
@@ -188,57 +196,78 @@ for {set i 0} {$i < $argc} {incr i} {
 	    set scw 0
 	    set sgw 1
 	} else {
-	    return [help openw]
+	    return [help gui_create_default]
 	}
     } elseif {$arg == "-d" || $arg == "-display"} {
-# display string for everything but the graphics window
+# display string for everything
 	incr i
 
 	if {$i >= $argc} {
-	    return [help openw]
+	    return [help gui_create_default]
 	}
 
 	set screen [lindex $args $i]
+	set screen_set 1
+	if {!$gscreen_set} {
+	    set gscreen $screen
+
+	    if {!$dtype_set} {
+		set dtype [dm_bestXType $gscreen]
+	    }
+	}
     } elseif {$arg == "-gd" || $arg == "-gdisplay"} {
 # display string for graphics window
 	incr i
 
 	if {$i >= $argc} {
-	    return [help openw]
+	    return [help gui_create_default]
 	}
 
-	set dscreen [lindex $args $i]
-    } elseif {$arg == "-gt"} {
+	set gscreen [lindex $args $i]
+	set gscreen_set 1
+	if {!$screen_set} {
+	    set screen $gscreen
+	}
+
+	if {!$dtype_set} {
+	    set dtype [dm_bestXType $gscreen]
+	}
+    } elseif {$arg == "-dt"} {
 	incr i
 
 	if {$i >= $argc} {
-	    return [help openw]
+	    return [help gui_create_default]
 	}
 
 	set dtype [lindex $args $i]
+	set dtype_set 1
     } elseif {$arg == "-id"} {
 	incr i
 
 	if {$i >= $argc} {
-	    return [help openw]
+	    return [help gui_create_default]
 	}
 
 	set id [lindex $args $i]
     } elseif {$arg == "-j" || $arg == "-join"} { 
 	set join_c 1
     } elseif {$arg == "-h" || $arg == "-help"} {
-	return [help openw]
+	return [help gui_create_default]
     } elseif {$arg == "-s" || $arg == "-sep"} {
 	set comb 0
     } elseif {$arg == "-c" || $arg == "-comb"} {
 	set comb 1
     } else {
-	return [help openw]
+	return [help gui_create_default]
     }
 }
 
+if {$comb} {
+    set gscreen $screen
+}
+
 if {$id == "mged"} {
-    return "openw: not allowed to use \"mged\" as id"
+    return "gui_create_default: not allowed to use \"mged\" as id"
 }
 
 if {$id == ""} {
@@ -256,6 +285,12 @@ if {$scw == 0 && $sgw == 0} {
 set cmd_win($id) $scw
 set dm_win($id) $sgw
 set status_bar($id) 1
+set mged_apply_to($id) 0
+set mged_grid_control($id) 0
+
+if ![dm_validXType $gscreen $dtype] {
+    return "gui_create_default: $gscreen does not support $dtype"
+}
 
 if { [info exists tk_strictMotif] == 0 } {
     loadtk $screen
@@ -286,21 +321,21 @@ if {$comb} {
     set win_size($id) $win_size($id,big)
     set mv_size [expr $win_size($id) / 2 - 4]
 
-    if [catch { openmv $mged_top($id) $mged_dmc($id) $dtype $mv_size } result] {
-	closew $id
+    if [catch { openmv $id $mged_top($id) $mged_dmc($id) $screen $dtype $mv_size } result] {
+	gui_destroy $id
 	return $result
     }
 } else {
     set mged_top($id) .top$id
     set mged_dmc($id) $mged_top($id)
 
-    toplevel $mged_dmc($id) -screen $dscreen -relief sunken -borderwidth 2
+    toplevel $mged_dmc($id) -screen $gscreen -relief sunken -borderwidth 2
     set win_size($id,big) [expr [winfo screenheight $mged_dmc($id)] - 24]
     set win_size($id,small) [expr $win_size($id,big) - 100]
     set win_size($id) $win_size($id,big)
     set mv_size [expr $win_size($id) / 2 - 4]
-    if [catch { openmv $mged_top($id) $mged_dmc($id) $dtype $mv_size } result] {
-	closew $id
+    if [catch { openmv $id $mged_top($id) $mged_dmc($id) $gscreen $dtype $mv_size } result] {
+	gui_destroy $id
 	return $result
     }
 }
@@ -312,6 +347,7 @@ set mged_small_dmc($id) $mged_dmc($id).$vloc.$hloc
 set mged_dm_loc($id) $mged_default_pane
 set save_dm_loc($id) $mged_dm_loc($id)
 set save_small_dmc($id) $mged_small_dmc($id)
+set mged_apply_list($id) $mged_active_dm($id)
 
 #==============================================================================
 # PHASE 2: Construction of menu bar
@@ -329,7 +365,7 @@ menu .$id.m.file.m -tearoff $do_tearoffs
 .$id.m.file.m add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
 .$id.m.file.m add cascade -label "Save View As" -menu .$id.m.file.m.cm_saveview
 .$id.m.file.m add separator
-.$id.m.file.m add command -label "Close" -underline 0 -command "closew $id"
+.$id.m.file.m add command -label "Close" -underline 0 -command "gui_destroy $id"
 .$id.m.file.m add command -label "Exit" -command quit -underline 0
 
 menu .$id.m.file.m.cm_saveview -tearoff $do_tearoffs
@@ -356,36 +392,36 @@ menu .$id.m.edit.m.cm_add -tearoff $do_tearoffs
 menubutton .$id.m.view -text "View" -underline 0 -menu .$id.m.view.m
 menu .$id.m.view.m -tearoff $do_tearoffs
 .$id.m.view.m add command -label "Top" -underline 0\
-	-command "cmd_set $id; press top"
+	-command "doit $id \"press top\""
 .$id.m.view.m add command -label "Bottom" -underline 5\
-	-command "cmd_set $id; press bottom"
+	-command "doit $id \"press bottom\""
 .$id.m.view.m add command -label "Right" -underline 0\
-	-command "cmd_set $id; press right"
+	-command "doit $id \"press right\""
 .$id.m.view.m add command -label "Left" -underline 0\
-	-command "cmd_set $id; press left"
+	-command "doit $id \"press left\""
 .$id.m.view.m add command -label "Front" -underline 0\
-	-command "cmd_set $id; press front"
+	-command "doit $id \"press front\""
 .$id.m.view.m add command -label "Back" -underline 0\
-	-command "cmd_set $id; press rear"
+	-command "doit $id \"press rear\""
 .$id.m.view.m add command -label "az35,el25" -underline 2\
-	-command "cmd_set $id; press 35,25"
+	-command "doit $id \"press 35,25\""
 .$id.m.view.m add command -label "az45,el45" -underline 2\
-	-command "cmd_set $id; press 45,45"
+	-command "doit $id \"press 45,45\""
 .$id.m.view.m add separator
 .$id.m.view.m add command -label "Zoom In" -underline 5\
-	-command "cmd_set $id; zoom 2"
+	-command "doit $id \"zoom 2\""
 .$id.m.view.m add command -label "Zoom Out" -underline 5\
-	-command "cmd_set $id; zoom 0.5"
+	-command "doit $id \"zoom 0.5\""
 .$id.m.view.m add separator
 .$id.m.view.m add command -label "Save" -underline 0\
-	-command "cmd_set $id; press save"
+	-command "doit $id \"press save\""
 .$id.m.view.m add command -label "Restore" -underline 1\
-	-command "cmd_set $id; press restore"
+	-command "doit $id \"press restore\""
 .$id.m.view.m add separator
 .$id.m.view.m add command -label "Reset Viewsize"\
-	-underline 6 -command "cmd_set $id; press reset"
+	-underline 6 -command "doit $id \"press reset\""
 .$id.m.view.m add command -label "Zero" -underline 0\
-	-command "cmd_set $id; knob zero"
+	-command "doit $id \"knob zero\""
 
 menubutton .$id.m.viewring -text "ViewRing" -underline 4 -menu .$id.m.viewring.m
 menu .$id.m.viewring.m -tearoff $do_tearoffs
@@ -402,133 +438,204 @@ set view_ring($id) 1
 menu .$id.m.viewring.m.cm_delete -tearoff $do_tearoffs
 do_view_ring_entries $id d
 
-menubutton .$id.m.options -text "Options" -underline 0 -menu .$id.m.options.m
-menu .$id.m.options.m -tearoff $do_tearoffs
-.$id.m.options.m add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
-	-label "Status Bar" -underline 0 -command "toggle_status_bar $id"
-if {$comb} {
-.$id.m.options.m add checkbutton -offvalue 0 -onvalue 1 -variable cmd_win($id)\
-	-label "Command Window" -underline 0 -command "set_cmd_win $id"
-.$id.m.options.m add checkbutton -offvalue 0 -onvalue 1 -variable dm_win($id)\
-	-label "Graphics Window" -underline 0 -command "set_dm_win $id"
-} 
-.$id.m.options.m add checkbutton -offvalue 0 -onvalue 1 -variable rateknobs_on($id)\
-	-label "Rateknobs" -underline 0 -command "set_rateknobs $id"
-.$id.m.options.m add separator
-.$id.m.options.m add cascade -label "Multi-Pane" -menu .$id.m.options.m.cm_mpane
-.$id.m.options.m add cascade -label "Units" -menu .$id.m.options.m.cm_units
-.$id.m.options.m add cascade -label "Constraint Coords" -menu .$id.m.options.m.cm_coord
-#.$id.m.options.m add cascade -label "Rate/Abs" -menu .$id.m.options.m.cm_rate_type
-.$id.m.options.m add cascade -label "Rotate About..." -menu .$id.m.options.m.cm_origin
-.$id.m.options.m add cascade -label "Transform..." -menu .$id.m.options.m.cm_transform
+#menubutton .$id.m.options -text "Options" -underline 0 -menu .$id.m.options.m
+#menu .$id.m.options.m -tearoff $do_tearoffs
 
-menu .$id.m.options.m.cm_mpane -tearoff $do_tearoffs
-.$id.m.options.m.cm_mpane add checkbutton -offvalue 0 -onvalue 1\
-	-variable multi_view($id) -label "Multi Pane" -underline 0\
-	-command "setmv $id"
-.$id.m.options.m.cm_mpane add separator
-.$id.m.options.m.cm_mpane add radiobutton -value ul -variable mged_dm_loc($id)\
+menubutton .$id.m.modes -text "Modes" -underline 0 -menu .$id.m.modes.m
+menu .$id.m.modes.m -tearoff $do_tearoffs
+.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_rateknobs($id)\
+	-label "Rateknobs" -underline 0 -command "doit $id \"set rateknobs \$mged_rateknobs($id)\""
+#.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_use_air($id)\
+#	-label "Use Air" -underline 0 -command "doit $id \"set use_air \$mged_use_air($id)\""
+#.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_echo_query_ray_cmd($id)\
+#	-label "Echo Query Ray Command" -underline 0 -command "doit $id \"set echo_query_ray_cmd \$mged_echo_query_ray_cmd($id)\""
+.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
+	-label "Rubber Band" -underline 7 -command "doit $id \"set rubber_band \$mged_rubber_band($id)\""
+.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
+	-label "Draw Grid" -command "doit $id \"set grid_draw \$mged_grid_draw($id)\""
+.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
+	-label "Snap To Grid" -command "doit $id \"set grid_snap \$mged_grid_snap($id)\""
+.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable multi_view($id)\
+	-label "Multi Pane" -underline 0 -command "setmv $id"
+.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
+	-label "Framebuffer" -underline 0 -command "set_fb $id"
+.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
+	-label "Listen For Clients" -underline 0 -command "set_listen $id" -state disabled
+
+menubutton .$id.m.settings -text "Settings" -underline 0 -menu .$id.m.settings.m
+menu .$id.m.settings.m -tearoff $do_tearoffs
+.$id.m.settings.m add cascade -label "Apply To..." -menu .$id.m.settings.m.cm_applyTo
+.$id.m.settings.m add cascade -label "Mouse Behavior" -menu .$id.m.settings.m.cm_mb
+.$id.m.settings.m add cascade -label "Transform..." -menu .$id.m.settings.m.cm_transform
+.$id.m.settings.m add cascade -label "Constraint Coords" -menu .$id.m.settings.m.cm_coord
+.$id.m.settings.m add cascade -label "Rotate About..." -menu .$id.m.settings.m.cm_origin
+.$id.m.settings.m add cascade -label "Query Ray Effects" -menu .$id.m.settings.m.cm_qray
+.$id.m.settings.m add cascade -label "Multi-Pane" -menu .$id.m.settings.m.cm_mpane
+.$id.m.settings.m add cascade -label "Units" -menu .$id.m.settings.m.cm_units
+.$id.m.settings.m add cascade -label "Framebuffer" -menu .$id.m.settings.m.cm_fb
+.$id.m.settings.m add cascade -label "Grid" -menu .$id.m.settings.m.cm_grid
+.$id.m.settings.m add cascade -label "View Axes Position" -menu .$id.m.settings.m.cm_vap
+
+menu .$id.m.settings.m.cm_applyTo -tearoff $do_tearoffs
+.$id.m.settings.m.cm_applyTo add radiobutton -value 0 -variable mged_apply_to($id)\
+	-label "Active Pane"
+.$id.m.settings.m.cm_applyTo add radiobutton -value 1 -variable mged_apply_to($id)\
+	-label "Local Panes"
+.$id.m.settings.m.cm_applyTo add radiobutton -value 2 -variable mged_apply_to($id)\
+	-label "Listed Panes"
+.$id.m.settings.m.cm_applyTo add radiobutton -value 3 -variable mged_apply_to($id)\
+	-label "All Panes"
+
+menu .$id.m.settings.m.cm_mb -tearoff $do_tearoffs
+.$id.m.settings.m.cm_mb add radiobutton -value p -variable mged_mouse_behavior($id)\
+	-label "Paint Rectangle Area" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.m.settings.m.cm_mb add radiobutton -value r -variable mged_mouse_behavior($id)\
+	-label "Raytrace Rectangle Area" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.m.settings.m.cm_mb add radiobutton -value z -variable mged_mouse_behavior($id)\
+	-label "Zoom Rectangle Area" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.m.settings.m.cm_mb add radiobutton -value q -variable mged_mouse_behavior($id)\
+	-label "Query Ray" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.m.settings.m.cm_mb add radiobutton -value d -variable mged_mouse_behavior($id)\
+	-label "Default" -command "doit $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+
+menu .$id.m.settings.m.cm_qray -tearoff $do_tearoffs
+.$id.m.settings.m.cm_qray add radiobutton -value t -variable mged_query_ray_behavior($id)\
+	-label "Text" -command "doit $id \"set query_ray_behavior \$mged_query_ray_behavior($id)\""
+.$id.m.settings.m.cm_qray add radiobutton -value g -variable mged_query_ray_behavior($id)\
+	-label "Graphics" -command "doit $id \"set query_ray_behavior \$mged_query_ray_behavior($id)\""
+.$id.m.settings.m.cm_qray add radiobutton -value b -variable mged_query_ray_behavior($id)\
+	-label "both" -command "doit $id \"set query_ray_behavior \$mged_query_ray_behavior($id)\""
+
+menu .$id.m.settings.m.cm_mpane -tearoff $do_tearoffs
+.$id.m.settings.m.cm_mpane add radiobutton -value ul -variable mged_dm_loc($id)\
 	-label "Upper Left" -command "set_active_dm $id"
-.$id.m.options.m.cm_mpane add radiobutton -value ur -variable mged_dm_loc($id)\
+.$id.m.settings.m.cm_mpane add radiobutton -value ur -variable mged_dm_loc($id)\
 	-label "Upper Right" -command "set_active_dm $id"
-.$id.m.options.m.cm_mpane add radiobutton -value ll -variable mged_dm_loc($id)\
+.$id.m.settings.m.cm_mpane add radiobutton -value ll -variable mged_dm_loc($id)\
 	-label "Lower Left" -command "set_active_dm $id"
-.$id.m.options.m.cm_mpane add radiobutton -value lr -variable mged_dm_loc($id)\
+.$id.m.settings.m.cm_mpane add radiobutton -value lr -variable mged_dm_loc($id)\
 	-label "Lower right" -command "set_active_dm $id"
-.$id.m.options.m.cm_mpane add radiobutton -value lv -variable mged_dm_loc($id)\
+.$id.m.settings.m.cm_mpane add radiobutton -value lv -variable mged_dm_loc($id)\
 	-label "Last Visited" -command "do_last_visited $id"
 
-menu .$id.m.options.m.cm_units -tearoff $do_tearoffs
-.$id.m.options.m.cm_units add radiobutton -value um -variable mged_display(units)\
+menu .$id.m.settings.m.cm_units -tearoff $do_tearoffs
+.$id.m.settings.m.cm_units add radiobutton -value um -variable mged_display(units)\
 	-label "micrometers" -command "do_Units $id"
-.$id.m.options.m.cm_units add radiobutton -value mm -variable mged_display(units)\
+.$id.m.settings.m.cm_units add radiobutton -value mm -variable mged_display(units)\
 	-label "millimeters" -command "do_Units $id"
-.$id.m.options.m.cm_units add radiobutton -value cm -variable mged_display(units)\
+.$id.m.settings.m.cm_units add radiobutton -value cm -variable mged_display(units)\
 	-label "centimeters" -command "do_Units $id"
-.$id.m.options.m.cm_units add radiobutton -value m -variable mged_display(units)\
+.$id.m.settings.m.cm_units add radiobutton -value m -variable mged_display(units)\
 	-label "meters" -command "do_Units $id"
-.$id.m.options.m.cm_units add radiobutton -value km -variable mged_display(units)\
+.$id.m.settings.m.cm_units add radiobutton -value km -variable mged_display(units)\
 	-label "kilometers" -command "do_Units $id"
-.$id.m.options.m.cm_units add separator
-.$id.m.options.m.cm_units add radiobutton -value in -variable mged_display(units)\
+.$id.m.settings.m.cm_units add separator
+.$id.m.settings.m.cm_units add radiobutton -value in -variable mged_display(units)\
 	-label "inches" -command "do_Units $id"
-.$id.m.options.m.cm_units add radiobutton -value ft -variable mged_display(units)\
+.$id.m.settings.m.cm_units add radiobutton -value ft -variable mged_display(units)\
 	-label "feet" -command "do_Units $id"
-.$id.m.options.m.cm_units add radiobutton -value yd -variable mged_display(units)\
+.$id.m.settings.m.cm_units add radiobutton -value yd -variable mged_display(units)\
 	-label "yards" -command "do_Units $id"
-.$id.m.options.m.cm_units add radiobutton -value mi -variable mged_display(units)\
+.$id.m.settings.m.cm_units add radiobutton -value mi -variable mged_display(units)\
 	-label "miles" -command "do_Units $id"
 
-menu .$id.m.options.m.cm_coord -tearoff $do_tearoffs
-.$id.m.options.m.cm_coord add radiobutton -value m -variable coord_type($id)\
-	-label "Model" -command "set_coords $id"
-.$id.m.options.m.cm_coord add radiobutton -value v -variable coord_type($id)\
-	-label "View" -command "set_coords $id"
-.$id.m.options.m.cm_coord add radiobutton -value o -variable coord_type($id)\
-	-label "Object" -command "set_coords $id" -state disabled
+menu .$id.m.settings.m.cm_fb -tearoff $do_tearoffs
+.$id.m.settings.m.cm_fb add radiobutton -value 1 -variable mged_fb_all($id)\
+	-label "All" -command "doit $id \"set fb_all \$mged_fb_all($id)\""
+.$id.m.settings.m.cm_fb add radiobutton -value 0 -variable mged_fb_all($id)\
+	-label "Rectangle Area" -command "doit $id \"set fb_all \$mged_fb_all($id)\""
+.$id.m.settings.m.cm_fb add separator
+.$id.m.settings.m.cm_fb add radiobutton -value 1 -variable mged_fb_overlay($id)\
+	-label "Overlay" -command "doit $id \"set fb_overlay \$mged_fb_overlay($id)\""
+.$id.m.settings.m.cm_fb add radiobutton -value 0 -variable mged_fb_overlay($id)\
+	-label "Underlay" -command "doit $id \"set fb_overlay \$mged_fb_overlay($id)\""
 
-#menu .$id.m.options.m.cm_rate_type -tearoff $do_tearoffs
-#.$id.m.options.m.cm_rate_type add checkbutton -offvalue 0 -onvalue 1\
-#	-variable rateknobs -label "rateknobs"
-#.$id.m.options.m.cm_rate_type add command -label "zero" -command "knob zero"
-#.$id.m.options.m.cm_rate_type add separator
-#.$id.m.options.m.cm_rate_type add radiobutton -value p -variable rate_type\
-#	-label "Pos Rate" -command "set_rate_type $id"
-#.$id.m.options.m.cm_rate_type add radiobutton -value v -variable rate_type\
-#	-label "Vel Rate" -command "set_rate_type $id"
-#.$id.m.options.m.cm_rate_type add command -label "Set Friction..." -underline 0 -command "set_friction $id"
+menu .$id.m.settings.m.cm_grid -tearoff $do_tearoffs
+.$id.m.settings.m.cm_grid add cascade -label "Spacing" -menu .$id.m.settings.m.cm_grid.cm_spacing
+.$id.m.settings.m.cm_grid add cascade -label "Advanced" -menu .$id.m.settings.m.cm_grid.cm_adv
 
-menu .$id.m.options.m.cm_origin -tearoff $do_tearoffs
-.$id.m.options.m.cm_origin add radiobutton -value v -variable rotate_about_what($id)\
-	-label "View Center" -command "set_rotate_about $id"
-.$id.m.options.m.cm_origin add radiobutton -value e -variable rotate_about_what($id)\
-	-label "Eye" -command "set_rotate_about $id"
-.$id.m.options.m.cm_origin add radiobutton -value m -variable rotate_about_what($id)\
-	-label "Model Origin" -command "set_rotate_about $id"
-.$id.m.options.m.cm_origin add radiobutton -value k -variable rotate_about_what($id)\
-	-label "Key Point" -command "set_rotate_about $id" -state disabled
+menu .$id.m.settings.m.cm_grid.cm_spacing -tearoff $do_tearoffs
+.$id.m.settings.m.cm_grid.cm_spacing add command -label "Both" -underline 0\
+	-command "do_grid_spacing $id b"
+.$id.m.settings.m.cm_grid.cm_spacing add command -label "Horizontal" -underline 0\
+	-command "do_grid_spacing $id h"
+.$id.m.settings.m.cm_grid.cm_spacing add command -label "Vertical" -underline 0\
+	-command "do_grid_spacing $id v"
+.$id.m.settings.m.cm_grid.cm_spacing add command -label "Autosize" -underline 0\
+	-command "grid_control_autosize $id; grid_spacing_apply $id b"
 
-menu .$id.m.options.m.cm_transform -tearoff $do_tearoffs
-.$id.m.options.m.cm_transform add radiobutton -value v -variable transform_what($id)\
+menu .$id.m.settings.m.cm_grid.cm_adv -tearoff $do_tearoffs
+.$id.m.settings.m.cm_grid.cm_adv add command -label "Anchor" -underline 0\
+	-command "do_grid_anchor $id"
+.$id.m.settings.m.cm_grid.cm_adv add command -label "Color" -underline 0\
+	-command "do_grid_color $id"
+
+menu .$id.m.settings.m.cm_coord -tearoff $do_tearoffs
+.$id.m.settings.m.cm_coord add radiobutton -value m -variable mged_coords($id)\
+	-label "Model" -command "doit $id \"set coords \$mged_coords($id)\""
+.$id.m.settings.m.cm_coord add radiobutton -value v -variable mged_coords($id)\
+	-label "View" -command "doit $id \"set coords \$mged_coords($id)\""
+.$id.m.settings.m.cm_coord add radiobutton -value o -variable mged_coords($id)\
+	-label "Object" -command "doit $id \"set coords \$mged_coords($id)\"" -state disabled
+
+menu .$id.m.settings.m.cm_origin -tearoff $do_tearoffs
+.$id.m.settings.m.cm_origin add radiobutton -value v -variable mged_rotate_about($id)\
+	-label "View Center" -command "doit $id \"set rotate_about \$mged_rotate_about($id)\""
+.$id.m.settings.m.cm_origin add radiobutton -value e -variable mged_rotate_about($id)\
+	-label "Eye" -command "doit $id \"set rotate_about \$mged_rotate_about($id)\""
+.$id.m.settings.m.cm_origin add radiobutton -value m -variable mged_rotate_about($id)\
+	-label "Model Origin" -command "doit $id \"set rotate_about \$mged_rotate_about($id)\""
+.$id.m.settings.m.cm_origin add radiobutton -value k -variable mged_rotate_about($id)\
+	-label "Key Point" -command "doit $id \"set rotate_about \$mged_rotate_about($id)\"" -state disabled
+
+menu .$id.m.settings.m.cm_transform -tearoff $do_tearoffs
+.$id.m.settings.m.cm_transform add radiobutton -value v -variable mged_transform($id)\
 	-label "View" -command "set_transform $id"
-.$id.m.options.m.cm_transform add radiobutton -value a -variable transform_what($id)\
+.$id.m.settings.m.cm_transform add radiobutton -value a -variable mged_transform($id)\
 	-label "ADC" -command "set_transform $id"
-.$id.m.options.m.cm_transform add radiobutton -value e -variable transform_what($id)\
+.$id.m.settings.m.cm_transform add radiobutton -value e -variable mged_transform($id)\
 	-label "Model Params" -command "set_transform $id" -state disabled
+
+menu .$id.m.settings.m.cm_vap -tearoff $do_tearoffs
+.$id.m.settings.m.cm_vap add radiobutton -value 0 -variable mged_v_axes_pos($id)\
+	-label "Center" -command "doit $id \"set v_axes_pos {0 0}\""
+.$id.m.settings.m.cm_vap add radiobutton -value 1 -variable mged_v_axes_pos($id)\
+	-label "Lower Left" -command "doit $id \"set v_axes_pos {-1750 -1750}\""
+.$id.m.settings.m.cm_vap add radiobutton -value 2 -variable mged_v_axes_pos($id)\
+	-label "Upper Left" -command "doit $id \"set v_axes_pos {-1750 1750}\""
+.$id.m.settings.m.cm_vap add radiobutton -value 3 -variable mged_v_axes_pos($id)\
+	-label "Upper Right" -command "doit $id \"set v_axes_pos {1750 1750}\""
+.$id.m.settings.m.cm_vap add radiobutton -value 4 -variable mged_v_axes_pos($id)\
+	-label "Lower Right" -command "doit $id \"set v_axes_pos {1750 -1750}\""
 
 menubutton .$id.m.tools -text "Tools" -menu .$id.m.tools.m
 menu .$id.m.tools.m -tearoff $do_tearoffs
-.$id.m.tools.m add cascade -label "Axes" -menu .$id.m.tools.m.cm_axes
-.$id.m.tools.m add cascade -label "View Axes Position" -menu .$id.m.tools.m.cm_vap
-.$id.m.tools.m add separator
-.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
-	-label "Button Menu" -underline 0 -command "toggle_button_menu $id"
-.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable adcflag_on($id)\
-	 -label "Angle/Dist Cursor" -underline 0 -command "toggle_adc $id"
-#.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable sliders_on($id)\
-#	-label "Sliders" -underline 0 -command "toggle_sliders $id"
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_adcflag($id)\
+	-label "Angle/Dist Cursor" -underline 0 -command "doit $id \"set adcflag \$mged_adcflag($id)\""
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable edit_info_on($id)\
 	-label "Edit Info" -underline 0 -command "toggle_edit_info $id"
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
+	-label "Status Bar" -underline 0 -command "toggle_status_bar $id"
+if {$comb} {
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable cmd_win($id)\
+	-label "Command Window" -underline 0 -command "set_cmd_win $id"
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable dm_win($id)\
+	-label "Graphics Window" -underline 0 -command "set_dm_win $id"
+} 
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
+	-label "Button Menu" -underline 0 -command "toggle_button_menu $id"
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_control($id)\
+	-label "Grid Control Panel" -command "init_grid_control $id"
+.$id.m.tools.m add separator
+.$id.m.tools.m add cascade -label "Axes" -menu .$id.m.tools.m.cm_axes
 
 menu .$id.m.tools.m.cm_axes -tearoff $do_tearoffs
 .$id.m.tools.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable view_axes($id) -label "View" -command "set_view_axes $id"
+	-variable mged_v_axes($id) -label "View" -command "doit $id \"set v_axes \$mged_v_axes($id)\""
 .$id.m.tools.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable model_axes($id) -label "Model" -command "set_model_axes $id"
+	-variable mged_m_axes($id) -label "Model" -command "doit $id \"set m_axes \$mged_m_axes($id)\""
 .$id.m.tools.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable edit_axes($id) -label "Edit" -command "set_edit_axes $id"
-
-menu .$id.m.tools.m.cm_vap -tearoff $do_tearoffs
-.$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Center" -command "set_v_axes_pos $id"
-.$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Lower Left" -command "set_v_axes_pos $id"
-.$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Upper Left" -command "set_v_axes_pos $id"
-.$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Upper Right" -command "set_v_axes_pos $id"
-.$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Lower Right" -command "set_v_axes_pos $id"
+	-variable mged_e_axes($id) -label "Edit" -command "doit $id \"set e_axes \$mged_e_axes($id)\""
 
 menubutton .$id.m.help -text "Help" -menu .$id.m.help.m
 menu .$id.m.help.m -tearoff $do_tearoffs
@@ -585,128 +692,136 @@ if {$comb} {
     text .$id.t -relief sunken -bd 2 -yscrollcommand ".$id.s set" -setgrid true
 }
 scrollbar .$id.s -relief flat -command ".$id.t yview"
+do_text_highlight .$id.t
 
 bind .$id.t <Enter> "focus .$id.t"
 
-bind .$id.t <Return> {
-    %W mark set insert {end - 1c};
-    %W insert insert \n;
-    ia_invoke %W;
-    break;
-}
-
-bind .$id.t <Control-u> {
-    %W delete promptEnd {promptEnd lineend}
-    %W mark set insert promptEnd
-}
-
-bind .$id.t <Control-p> {
-    %W delete promptEnd {promptEnd lineend}
-    %W mark set insert promptEnd
-    set id [get_player_id_t %W]
-    cmd_set $id
-    set result [catch hist_prev msg]
-    if {$result==0} {
-	%W insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
-    }
+bind .$id.t <ButtonPress-1> {
     break
 }
 
-bind .$id.t <Control-n> {
-    %W delete promptEnd {promptEnd lineend}
-    %W mark set insert promptEnd
-    set id [get_player_id_t %W]
-    cmd_set $id
-    set result [catch hist_next msg]
-    if {$result==0} {
-	%W insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
-    }
+bind .$id.t <ButtonRelease-1> {
+    break
+}
+
+bind .$id.t <Button1-Motion> {
+    break
+}
+
+bind .$id.t <ButtonPress-2> {
+    break
+}
+
+bind .$id.t <ButtonRelease-2> {
+    break
+}
+
+bind .$id.t <Button2-Motion> {
+    break
+}
+
+bind .$id.t <ButtonPress-3> {
+    break
+}
+
+bind .$id.t <ButtonRelease-3> {
+    break
+}
+
+bind .$id.t <Return> {
+    do_return %W
+    break
+}
+
+bind .$id.t <Control-a> {
+    do_ctrl_a %W
+    break
+}
+
+bind .$id.t <Control-b> {
+    do_ctrl_b %W
     break
 }
 
 bind .$id.t <Control-c> {
-    %W mark set insert {end - 1c};
-    %W insert insert \n;
-    ia_print_prompt %W "mged> "
-    %W see insert
-    set id [get_player_id_t %W]
-    set ia_cmd_prefix($id) ""
-    set ia_more_default($id) ""
-}
-
-bind .$id.t <Control-w> {
-    set ti [%W search -backwards -regexp "\[ \t\]\[^ \t\]+\[ \t\]*" insert promptEnd]
-    if [string length $ti] {
-	%W delete "$ti + 1c" insert
-    } else {
-	%W delete promptEnd insert
-    }
-}
-
-bind .$id.t <Control-a> {
-    %W mark set insert promptEnd
+    do_ctrl_c %W
     break
 }
 
-#bind .$id.t <Delete> {
-#    catch {%W tag remove sel sel.first promptEnd}
-#    if {[%W tag nextrange sel 1.0 end] == ""} {
-#	if [%W compare insert < promptEnd] {
-#	    break
-#	}
-#    }
-#}
-#
-#bind .$id.t <BackSpace> {
-#    catch {%W tag remove sel sel.first promptEnd}
-#    if {[%W tag nextrange sel 1.0 end] == ""} {
-#	if [%W compare insert <= promptEnd] {
-#	    break
-#	}
-#    }
-#}
-#
-#bind .$id.t <Control-d> {
-#    if [%W compare insert < promptEnd] {
-#	break
-#    }
-#}
-#
-#bind .$id.t <Control-k> {
-#    if [%W compare insert < promptEnd] {
-#	break
-#    }
-#}
-#
-#bind .$id.t <Control-t> {
-#    if [%W compare insert < promptEnd] {
-#	break
-#    }
-#}
-#
-#bind .$id.t <Meta-d> {
-#    if [%W compare insert < promptEnd] {
-#	break
-#    }
-#}
-#
-#bind .$id.t <Meta-BackSpace> {
-#    if [%W compare insert <= promptEnd] {
-#	break
-#    }
-#}
-#
-#bind .$id.t <Control-h> {
-#    if [%W compare insert <= promptEnd] {
-#	break
-#    }
-#}
+bind .$id.t <Control-d> {
+    do_ctrl_d %W
+    break
+}
+
+bind .$id.t <Control-e> {
+    do_ctrl_e %W
+    break
+}
+
+bind .$id.t <Control-f> {
+    do_ctrl_f %W
+    break
+}
+
+bind .$id.t <Control-k> {
+    do_ctrl_k %W
+    break
+}
+
+bind .$id.t <Control-n> {
+    do_ctrl_n %W
+    break
+}
+
+bind .$id.t <Control-p> {
+    do_ctrl_p %W
+    break
+}
+
+bind .$id.t <Control-t> {
+    do_ctrl_t %W
+    break
+}
+
+bind .$id.t <Control-u> {
+    do_ctrl_u %W
+    break
+}
+
+bind .$id.t <Control-w> {
+    do_ctrl_w %W
+    break
+}
+
+bind .$id.t <Meta-d> {
+    if [%W compare insert < promptEnd] {
+	break
+    }
+    do_text_highlight %W
+}
+
+bind .$id.t <Meta-BackSpace> {
+    if [%W compare insert <= promptEnd] {
+	break
+    }
+    do_text_highlight %W
+}
+
+bind .$id.t <Delete> {
+    do_delete %W
+    break
+}
+
+bind .$id.t <BackSpace> {
+    do_backspace %W
+    break
+}
 
 set ia_cmd_prefix($id) ""
 set ia_more_default($id) ""
 ia_print_prompt .$id.t "mged> "
+.$id.t insert insert " "
+do_ctrl_a .$id.t
 
 .$id.t tag configure bold -font -*-Courier-Bold-R-Normal-*-120-*-*-*-*-*-*
 set ia_font -*-Courier-Medium-R-Normal-*-120-*-*-*-*-*-*
@@ -716,7 +831,7 @@ set ia_font -*-Courier-Medium-R-Normal-*-120-*-*-*-*-*-*
 # Pack windows
 #==============================================================================
 
-pack .$id.m.file .$id.m.edit .$id.m.view .$id.m.viewring .$id.m.options .$id.m.tools -side left
+pack .$id.m.file .$id.m.edit .$id.m.view .$id.m.viewring .$id.m.modes .$id.m.settings .$id.m.tools -side left
 pack .$id.m.help -side right
 pack .$id.m -side top -fill x
 
@@ -760,30 +875,7 @@ if { $join_c } {
 }
 
 trace variable mged_display($mged_active_dm($id),fps) w "ia_changestate $id"
-#trace variable adcflag w "set_adcflag $id"
-
-winset $mged_active_dm($id)
-set rateknobs_on($id) $rateknobs
-set rotate_about_what($id) $rotate_about
-set coord_type($id) $coords
-set transform_what($id) $transform
-if {$v_axes} {
-    set view_axes($id) 1
-} else {
-    set view_axes($id) 0
-}
-set model_axes($id) $m_axes
-set edit_axes($id) $e_axes
-set view_axes_pos($id) $mged_default_vap
-
-set_rateknobs $id
-set_rotate_about $id
-set_coords $id
-set_transform $id
-set_view_axes $id
-set_v_axes_pos $id
-set_model_axes $id
-set_edit_axes $id
+update_mged_vars $id
 
 # reset current_cmd_list so that its cur_hist gets updated
 cmd_set $save_id
@@ -794,17 +886,16 @@ share_menu $mged_top($id).ul $mged_top($id).ll
 share_menu $mged_top($id).ul $mged_top($id).lr
 
 do_rebind_keys $id
+set_active_dm $id
 
-wm protocol $mged_top($id) WM_DELETE_WINDOW "closew $id"
-wm title $mged_top($id) "MGED Interaction Window ($id) - Upper Right"
+wm protocol $mged_top($id) WM_DELETE_WINDOW "gui_destroy $id"
 wm geometry $mged_top($id) -0+0
 }
 
-proc closew args {
+proc gui_destroy_default args {
     global mged_players
     global mged_collaborators
     global multi_view
-    global sliders_on
     global buttons_on
     global edit_info
     global edit_info_on
@@ -812,7 +903,7 @@ proc closew args {
     global mged_dmc
 
     if { [llength $args] != 1 } {
-	return [help closew]
+	return [help gui_destroy_default]
     }
 
     set id [lindex $args 0]
@@ -830,12 +921,11 @@ proc closew args {
 	set shared_id [lindex $cmd_list 1]
 	qcs $id
 	if {"$mged_top($id).ur" == "$shared_id"} {
-	    reconfig_openw_all
+	    reconfig_all_gui_default
 	}
     }
 
     set multi_view($id) 0
-    set sliders_on($id) 0
     set buttons_on($id) 0
     set edit_info_on($id) 0
 
@@ -847,7 +937,7 @@ proc closew args {
     catch { destroy .$id }
 }
 
-proc reconfig_openw { id } {
+proc reconfig_gui_default { id } {
     global mged_display
 
     cmd_set $id
@@ -864,11 +954,84 @@ proc reconfig_openw { id } {
 #    reconfig_mmenu $id
 }
 
-proc reconfig_openw_all {} {
+proc reconfig_all_gui_default {} {
     global mged_collaborators
 
     foreach id $mged_collaborators {
-	reconfig_openw $id
+	reconfig_gui_default $id
+    }
+}
+
+proc update_mged_vars { id } {
+    global mged_active_dm
+    global rateknobs
+    global mged_rateknobs
+    global adcflag
+    global mged_adcflag
+    global m_axes
+    global mged_m_axes
+    global v_axes
+    global mged_v_axes
+    global v_axes_pos
+    global mged_v_axes_pos
+    global e_axes
+    global mged_e_axes
+    global use_air
+    global mged_use_air
+    global echo_query_ray_cmd
+    global mged_echo_query_ray_cmd
+    global listen
+    global mged_listen
+    global fb
+    global mged_fb
+    global fb_all
+    global mged_fb_all
+    global fb_overlay
+    global mged_fb_overlay
+    global rubber_band
+    global mged_rubber_band
+    global mouse_behavior
+    global mged_mouse_behavior
+    global query_ray_behavior
+    global mged_query_ray_behavior
+    global coords
+    global mged_coords
+    global rotate_about
+    global mged_rotate_about
+    global transform
+    global mged_transform
+    global grid_draw
+    global mged_grid_draw
+    global grid_snap
+    global mged_grid_snap
+
+    winset $mged_active_dm($id)
+    set mged_rateknobs($id) $rateknobs
+    set mged_adcflag($id) $adcflag
+    set mged_m_axes($id) $m_axes
+    set mged_v_axes($id) $v_axes
+    set mged_v_axes_pos($id) $v_axes_pos
+    set mged_e_axes($id) $e_axes
+    set mged_use_air($id) $use_air
+    set mged_echo_query_ray_cmd($id) $echo_query_ray_cmd
+    set mged_fb($id) $fb
+    set mged_fb_all($id) $fb_all
+    set mged_fb_overlay($id) $fb_overlay
+    set mged_rubber_band($id) $rubber_band
+    set mged_mouse_behavior($id) $mouse_behavior
+    set mged_query_ray_behavior($id) $query_ray_behavior
+    set mged_coords($id) $coords
+    set mged_rotate_about($id) $rotate_about
+    set mged_transform($id) $transform
+    set mged_grid_draw($id) $grid_draw
+    set mged_grid_snap($id) $grid_snap
+
+    if {$mged_fb($id)} {
+	.$id.m.modes.m entryconfigure 8 -state normal
+	set mged_listen($id) $listen
+    } else {
+	.$id.m.modes.m entryconfigure 8 -state disabled
+	set mged_listen($id) $listen
     }
 }
 
@@ -882,20 +1045,6 @@ proc toggle_button_menu { id } {
     }
 
     mmenu_init $id
-}
-
-proc toggle_sliders { id } {
-    global sliders_on
-    global scroll_enabled
-
-    if [ winfo exists .sliders$id ] {
-	cmd_set $id
-	sliders off
-	return
-    }
-
-    cmd_set $id
-    sliders on
 }
 
 proc toggle_edit_info { id } {
@@ -948,7 +1097,7 @@ proc jcs { id } {
 	}
 
 	catch { share_view $ow $nw }
-	reconfig_openw $id
+	reconfig_gui_default $id
     }
 
     lappend mged_collaborators $id
@@ -998,7 +1147,7 @@ proc aim args {
     set result [eval _mged_aim $args]
     
     if { [llength $args] == 2 } {
-	reconfig_openw [lindex $args 0]
+	reconfig_gui_default [lindex $args 0]
     }
 
     return $result
@@ -1015,23 +1164,11 @@ proc set_active_dm { id } {
     global save_small_dmc
     global multi_view
     global win_size
-    global sliders_on
-    global adcflag
-    global adcflag_on
     global mged_display
     global view_ring
-    global view_axes_pos
-    global view_axes
-    global v_axes
-    global model_axes
-    global m_axes
-    global edit_axes
-    global e_axes
 
-    bind $mged_top($id).ul <Enter> "winset $mged_top($id).ul; focus $mged_top($id).ul"
-    bind $mged_top($id).ur <Enter> "winset $mged_top($id).ur; focus $mged_top($id).ur"
-    bind $mged_top($id).ll <Enter> "winset $mged_top($id).ll; focus $mged_top($id).ll"
-    bind $mged_top($id).lr <Enter> "winset $mged_top($id).lr; focus $mged_top($id).lr"
+    # unhighlight
+    $mged_small_dmc($id) configure -bg #d9d9d9
 
     trace vdelete mged_display($mged_active_dm($id),fps) w "ia_changestate $id"
 
@@ -1040,19 +1177,13 @@ proc set_active_dm { id } {
     set mged_active_dm($id) $mged_top($id).$mged_dm_loc($id)
     set mged_small_dmc($id) $mged_dmc($id).$vloc.$hloc
 
+    # highlight
+    $mged_small_dmc($id) configure -bg yellow
+
     trace variable mged_display($mged_active_dm($id),fps) w "ia_changestate $id"
 
-    winset $mged_active_dm($id)
-    set adcflag_on($id) $adcflag
+    update_mged_vars $id
     set view_ring($id) [get_view]
-    if {$v_axes} {
-	set view_axes($id) 1
-    } else {
-	set view_axes($id) 0
-    }
-    set view_axes_pos($id) [get_view_axes_pos $id]
-    set model_axes($id) $m_axes
-    set edit_axes($id) $e_axes
 
     aim $id $mged_active_dm($id)
 
@@ -1091,10 +1222,6 @@ proc do_last_visited { id } {
 
     unaim $id
     wm title $mged_top($id) "MGED Interaction Window ($id) - Last Visited"
-    bind $mged_top($id).ul <Enter> "winset $mged_top($id).ul; focus $mged_top($id).ul; sliders \[subst \$slidersflag\]"
-    bind $mged_top($id).ur <Enter> "winset $mged_top($id).ur; focus $mged_top($id).ur; sliders \[subst \$slidersflag\]"
-    bind $mged_top($id).ll <Enter> "winset $mged_top($id).ll; focus $mged_top($id).ll; sliders \[subst \$slidersflag\]"
-    bind $mged_top($id).lr <Enter> "winset $mged_top($id).lr; focus $mged_top($id).lr; sliders \[subst \$slidersflag\]"
 }
 
 proc set_cmd_win { id } {
@@ -1132,13 +1259,15 @@ proc set_dm_win { id } {
 
 proc do_add_view { id } {
     global mged_active_dm
+    global mged_dm_loc
     global view_ring
     global mged_collaborators
     global mged_top
 
-    if {$mged_active_dm($id) != "lv"} {
-	winset $mged_active_dm($id)
-    }
+#    if {$mged_dm_loc($id) != "lv"} {
+#	winset $mged_active_dm($id)
+#    }
+    winset $mged_active_dm($id)
 
     _mged_add_view
 
@@ -1161,13 +1290,15 @@ proc do_add_view { id } {
 
 proc do_delete_view { id vid } {
     global mged_active_dm
+    global mged_dm_loc
     global view_ring
     global mged_collaborators
     global mged_top
 
-    if {$mged_active_dm($id) != "lv"} {
-	winset $mged_active_dm($id)
-    }
+#    if {$mged_dm_loc($id) != "lv"} {
+#	winset $mged_active_dm($id)
+#    }
+    winset $mged_active_dm($id)
 
     _mged_delete_view $vid
 
@@ -1190,13 +1321,15 @@ proc do_delete_view { id vid } {
 
 proc do_goto_view { id vid } {
     global mged_active_dm
+    global mged_dm_loc
     global view_ring
     global mged_collaborators
     global mged_top
 
-    if {$mged_active_dm($id) != "lv"} {
-	winset $mged_active_dm($id)
-    }
+#    if {$mged_dm_loc($id) != "lv"} {
+#	winset $mged_active_dm($id)
+#    }
+    winset $mged_active_dm($id)
 
     _mged_goto_view $vid
 
@@ -1214,13 +1347,15 @@ proc do_goto_view { id vid } {
 
 proc do_next_view { id } {
     global mged_active_dm
+    global mged_dm_loc
     global view_ring
     global mged_collaborators
     global mged_top
 
-    if {$mged_active_dm($id) != "lv"} {
-	winset $mged_active_dm($id)
-    }
+#    if {$mged_dm_loc($id) != "lv"} {
+#	winset $mged_active_dm($id)
+#    }
+    winset $mged_active_dm($id)
 
     _mged_next_view
 
@@ -1239,13 +1374,15 @@ proc do_next_view { id } {
 
 proc do_prev_view { id } {
     global mged_active_dm
+    global mged_dm_loc
     global view_ring
     global mged_collaborators
     global mged_top
 
-    if {$mged_active_dm($id) != "lv"} {
-	winset $mged_active_dm($id)
-    }
+#    if {$mged_dm_loc($id) != "lv"} {
+#	winset $mged_active_dm($id)
+#    }
+    winset $mged_active_dm($id)
 
     _mged_prev_view
 
@@ -1264,13 +1401,15 @@ proc do_prev_view { id } {
 
 proc do_toggle_view { id } {
     global mged_active_dm
+    global mged_dm_loc
     global view_ring
     global mged_collaborators
     global mged_top
 
-    if {$mged_active_dm($id) != "lv"} {
-	winset $mged_active_dm($id)
-    }
+#    if {$mged_dm_loc($id) != "lv"} {
+#	winset $mged_active_dm($id)
+#    }
+    winset $mged_active_dm($id)
 
     _mged_toggle_view
 
@@ -1312,89 +1451,6 @@ proc do_view_ring_entries { id m } {
     }
 }
 
-proc set_friction { id } {
-}
-
-proc set_coords { id } {
-    global mged_top
-    global mged_active_dm
-    global coords
-    global coord_type
-
-    winset $mged_top($id).ul
-    set coords $coord_type($id)
-
-    winset $mged_top($id).ur
-    set coords $coord_type($id)
-
-    winset $mged_top($id).ll
-    set coords $coord_type($id)
-
-    winset $mged_top($id).lr
-    set coords $coord_type($id)
-}
-
-proc set_ecoords { id } {
-    global mged_top
-    global mged_active_dm
-    global ecoords
-    global coord_type
-
-    winset $mged_top($id).ul
-    set ecoords $coord_type($id)
-
-    winset $mged_top($id).ur
-    set ecoords $coord_type($id)
-
-    winset $mged_top($id).ll
-    set ecoords $coord_type($id)
-
-    winset $mged_top($id).lr
-    set ecoords $coord_type($id)
-}
-
-
-proc set_rotate_about { id } {
-    global mged_top
-    global mged_active_dm
-    global rotate_about
-    global rotate_about_what
-
-    winset $mged_top($id).ul
-    set rotate_about $rotate_about_what($id)
-
-    winset $mged_top($id).ur
-    set rotate_about $rotate_about_what($id)
-
-    winset $mged_top($id).ll
-    set rotate_about $rotate_about_what($id)
-
-    winset $mged_top($id).lr
-    set rotate_about $rotate_about_what($id)
-}
-
-proc set_erotate_about { id } {
-    global mged_top
-    global mged_active_dm
-    global erotate_about
-    global rotate_about_what
-
-    winset $mged_top($id).ul
-    set erotate_about $rotate_about_what($id)
-
-    winset $mged_top($id).ur
-    set erotate_about $rotate_about_what($id)
-
-    winset $mged_top($id).ll
-    set erotate_about $rotate_about_what($id)
-
-    winset $mged_top($id).lr
-    set erotate_about $rotate_about_what($id)
-}
-
-proc set_rate_type { id } {
-}
-
 proc toggle_status_bar { id } {
     global status_bar
 
@@ -1414,23 +1470,25 @@ proc set_transform { id } {
     global mged_top
     global mged_active_dm
     global transform
-    global transform_what
+    global mged_transform
 
     winset $mged_top($id).ul
-    set transform $transform_what($id)
+    set transform $mged_transform($id)
     do_mouse_bindings $mged_top($id).ul
 
     winset $mged_top($id).ur
-    set transform $transform_what($id)
+    set transform $mged_transform($id)
     do_mouse_bindings $mged_top($id).ur
 
     winset $mged_top($id).ll
-    set transform $transform_what($id)
+    set transform $mged_transform($id)
     do_mouse_bindings $mged_top($id).ll
 
     winset $mged_top($id).lr
-    set transform $transform_what($id)
+    set transform $mged_transform($id)
     do_mouse_bindings $mged_top($id).lr
+
+    winset $mged_active_dm($id)
 }
 
 proc do_rebind_keys { id } {
@@ -1456,13 +1514,13 @@ proc adc { args } {
     global mged_active_dm
     global transform
     global adcflag
-    global adcflag_on
+    global mged_adcflag
 
     set result [eval _mged_adc $args]
     set id [lindex [cmd_get] 2]
 
     if {[info exists mged_active_dm($id)]} {
-	set adcflag_on($id) $adcflag
+	set mged_adcflag($id) $adcflag
     }
 
     if {$transform == "a"} {
@@ -1472,118 +1530,89 @@ proc adc { args } {
     return $result
 }
 
-proc toggle_adc { id } {
-    cmd_set $id
-    adc
-}
-
-proc set_adcflag { args } {
+proc doit { id cmd } {
     global mged_active_dm
-    global adcflag_on
-    global adcflag
+    global mged_dm_loc
+    global mged_apply_to
 
-    set id [lindex $args 0]
+    if {$mged_apply_to($id) == 1} {
+	doit_local $id $cmd
+    } elseif {$mged_apply_to($id) == 2} {
+	doit_using_list $id $cmd
+    } elseif {$mged_apply_to($id) == 3} {
+	doit_all $cmd
+    } else {
+	if {$mged_dm_loc($id) != "lv"} {
+	    winset $mged_active_dm($id)
+	}
 
-    if {[winset] == $mged_active_dm($id)} {
-	set adcflag_on($id) $adcflag
+	catch [list uplevel #0 $cmd]
     }
 }
 
-proc set_rateknobs { id } {
+proc doit_local { id cmd } {
     global mged_top
     global mged_active_dm
-    global rateknobs
-    global rateknobs_on
 
     winset $mged_top($id).ul
-    set rateknobs $rateknobs_on($id)
+    catch [list uplevel #0 $cmd]
 
     winset $mged_top($id).ur
-    set rateknobs $rateknobs_on($id)
+    catch [list uplevel #0 $cmd]
 
     winset $mged_top($id).ll
-    set rateknobs $rateknobs_on($id)
+    catch [list uplevel #0 $cmd]
 
     winset $mged_top($id).lr
-    set rateknobs $rateknobs_on($id)
-}
-
-proc set_view_axes { id } {
-    global mged_active_dm
-    global view_axes
-    global v_axes
+    catch [list uplevel #0 $cmd] msg
 
     winset $mged_active_dm($id)
-    set v_axes $view_axes($id)
+
+    return $msg
 }
 
-proc set_model_axes { id } {
-    global mged_active_dm
-    global model_axes
-    global m_axes
+proc doit_using_list { id cmd } {
+    global mged_apply_list
 
-    winset $mged_active_dm($id)
-    set m_axes $model_axes($id)
-}
-
-proc set_edit_axes { id } {
-    global mged_active_dm
-    global edit_axes
-    global e_axes
-
-    winset $mged_active_dm($id)
-    set e_axes $edit_axes($id)
-}
-
-proc set_v_axes_pos { id } {
-    global mged_active_dm
-    global view_axes_pos
-    global v_axes_pos
-    global v_axes
-
-    winset $mged_active_dm($id)
-    switch $view_axes_pos($id) {
-	"Lower Left" {
-	    set v_axes_pos 1
-	}
-	"Upper Left" {
-	    set v_axes_pos 2
-	}
-	"Upper Right" {
-	    set v_axes_pos 3
-	}
-	"Lower Right" {
-	    set v_axes_pos 4
-	}
-	default {
-	    set v_axes_pos 0
-	}
+    foreach dm $mged_apply_list($id) {
+	winset $dm
+	catch [list uplevel #0 $cmd] msg
     }
+
+    return $msg
 }
 
-proc get_view_axes_pos { id } {
-    global mged_active_dm
-    global view_axes_pos
-    global v_axes_pos
-    global v_axes
+proc doit_all { cmd } {
+    foreach dm [get_dm_list] {
+	winset $dm
+	catch [list uplevel #0 $cmd] msg
+    }
 
-    winset $mged_active_dm($id)
+    return $msg
+}
 
-    switch $v_axes_pos {
-	1 {
-	    return "Lower Left"
-	}
-	2 {
-	    return "Upper Left"
-	}
-	3 {
-	    return "Upper Right"
-	}
-	4 {
-	    return "Lower Right"
-	}
-	default{
-	    return Center
-	}
+proc set_listen { id } {
+    global listen
+    global mged_listen
+
+    doit $id "set listen $mged_listen($id)"
+
+# In case things didn't work.
+    set mged_listen($id) $listen
+}
+
+proc set_fb { id } {
+    global fb
+    global mged_fb
+    global listen
+    global mged_listen
+
+    doit $id "set fb $mged_fb($id)"
+
+    if {$mged_fb($id)} {
+	.$id.m.modes.m entryconfigure 8 -state normal
+    } else {
+	set mged_listen($id) 0
+	.$id.m.modes.m entryconfigure 8 -state disabled
     }
 }
