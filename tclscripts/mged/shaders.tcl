@@ -96,6 +96,10 @@ proc set_extern_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
+	        set shader_name [lindex $shader_str 0]
+	        if { $shader_name != "extern" } {
+		    return
+		}
 	} else {
 		set params ""
 	}
@@ -422,6 +426,16 @@ proc do_camo {  shade_var id } {
 proc set_camo_values { shader_str id } {
 	global shader_params
 
+	if { [llength $shader_str] > 1 } then {
+		set params [lindex $shader_str 1]
+	        set shader_name [lindex $shader_str 0]
+	        if { $shader_name != "camo" } {
+		    return
+		}
+	} else {
+		set params ""
+	}
+
 	# temporarily remove traces on the colors
 	set tr1_info [trace vinfo shader_params($id,c1)]
 	set tr1_len [llength $tr1_info]
@@ -454,11 +468,6 @@ proc set_camo_values { shader_str id } {
 	set shader_params($id,t2) $shader_params($id,def_t2)
 	set shader_params($id,delta) $shader_params($id,def_delta)
 
-	if { [llength $shader_str] > 1 } then {
-		set params [lindex $shader_str 1]
-	} else {
-		set params ""
-	}
 	set err [catch {set list_len [llength $params]}]
 	if { $err } {set list_len 0}
 	if { $list_len > 0 } then {
@@ -707,6 +716,10 @@ proc set_prj_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
+	        set shader_name [lindex $shader_str 0]
+	        if { $shader_name != "prj" } {
+		    return
+		}
 	} else {
 		set params ""
 	}
@@ -883,6 +896,10 @@ proc set_checker_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
+	        set shader_name [lindex $shader_str 0]
+	        if { $shader_name != "checker" } {
+		    return
+		}
 	} else {
 		set params ""
 	}
@@ -1226,6 +1243,10 @@ proc set_phong_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
+	        set shader_name [lindex $shader_str 0]
+	        if { $shader_name != "plastic" && $shader_name != "glass" && $shader_name != "mirror" } {
+		    return
+		}
 	} else {
 		set params ""
 	}
@@ -1453,6 +1474,10 @@ proc set_texture_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
+	        set shader_name [lindex $shader_str 0]
+	        if { $shader_name != "bump" && $shader_name != "bwtexture" && $shader_name != "texture" } {
+		    return
+		}
 	} else {
 		set params ""
 	}
@@ -1645,6 +1670,10 @@ proc set_light_values { shader_str id } {
 	# grab OUR shader parameters from the shader string
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
+	        set shader_name [lindex $shader_str 0]
+	        if { $shader_str != "light" } {
+		    return
+		}
 	} else {
 		set params ""
 	}
@@ -2629,6 +2658,10 @@ proc set_cloud_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
+	        set shader_name [lindex $shader_str 0]
+	        if { $shader_name != "cloud" } {
+		    return
+		}
 	} else {
 		set params ""
 	}
@@ -2825,6 +2858,10 @@ proc set_air_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
+	        set shader_name [lindex $shader_str 0]
+	        if { $shader_name != "air" } {
+		    return
+		}
 	} else {
 		set params ""
 	}
