@@ -50,6 +50,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/ioctl.h>		/* for FIONBIO */
 #include <netinet/in.h>		/* for htons(), etc */
 #include <netdb.h>
+#include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
+#include <sys/un.h>		/* UNIX Domain sockets */
 #endif
 
 /*
@@ -220,9 +222,14 @@ void (*errlog)();
 {
 	struct sockaddr_in sinme;		/* Client */
 	struct sockaddr_in sinhim;		/* Server */
+#ifdef BSD
+	struct sockaddr_un sunhim;		/* Server, UNIX Domain */
+#endif
 	register struct hostent *hp;
 	register int netfd;
 	unsigned long addr_tmp;
+	struct	sockaddr *addr;			/* UNIX or INET addr */
+	int	addrlen;			/* length of address */
 
 	pkg_ck_debug();
 	if( pkg_debug )  {
@@ -240,6 +247,17 @@ void (*errlog)();
 
 	bzero((char *)&sinhim, sizeof(sinhim));
 	bzero((char *)&sinme, sizeof(sinme));
+
+#ifdef BSD
+	if( host == NULL || strlen(host) == 0 || strcmp(host,"unix") == 0 ) {
+		/* UNIX Domain socket, port = pathname */
+		sunhim.sun_family = AF_UNIX;
+		strncpy( sunhim.sun_path, service, sizeof(sunhim.sun_path) );
+		addr = (struct sockaddr *) &sunhim;
+		addrlen = strlen(sunhim.sun_path) + 2;
+		goto ready;
+	}
+#endif
 
 	/* Determine port for service */
 	if( atoi(service) > 0 )  {
@@ -295,24 +313,30 @@ void (*errlog)();
 			errlog(errbuf);
 			return(PKC_ERROR);
 		}
-
 #endif
 	}
+	addr = (struct sockaddr *) &sinhim;
+	addrlen = sizeof(struct sockaddr_in);
 
 #ifdef BSD
-	if( (netfd = socket(sinhim.sin_family, SOCK_STREAM, 0)) < 0 )  {
+ready:
+	if( (netfd = socket(addr->sa_family, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_open:  client socket" );
 		return(PKC_ERROR);
 	}
-	sinme.sin_port = 0;		/* let kernel pick it */
 
-	if( bind(netfd, (char *)&sinme, sizeof(sinme)) < 0 )  {
-		pkg_perror( errlog, "pkg_open: bind" );
-		close(netfd);
-		return(PKC_ERROR);
+#if BSD >= 43 && defined(TCP_NODELAY)
+	/* SunOS 3.x defines it but doesn't support it! */
+	if( addr->sa_family == AF_INET ) {
+		int	on = 1;
+		if( setsockopt( netfd, IPPROTO_TCP, TCP_NODELAY,
+		    (char *)&on, sizeof(on) ) < 0 )  {
+			pkg_perror( errlog, "pkg_open: setsockopt TCP_NODELAY" );
+		}
 	}
+#endif
 
-	if( connect(netfd, (char *)&sinhim, sizeof(sinhim)) < 0 )  {
+	if( connect(netfd, addr, addrlen) < 0 )  {
 		pkg_perror( errlog, "pkg_open: client connect" );
 		close(netfd);
 		return(PKC_ERROR);
@@ -385,10 +409,15 @@ int backlog;
 void (*errlog)();
 {
 	struct sockaddr_in sinme;
+#ifdef BSD
+	struct sockaddr_un sunme;		/* UNIX Domain */
+#endif
 #ifdef SGI_EXCELAN
 	struct sockaddr_in sinhim;		/* Server */
 #endif
 	register struct servent *sp;
+	struct	sockaddr *addr;			/* UNIX or INET addr */
+	int	addrlen;			/* length of address */
 	int	pkg_listenfd;
 	int	on = 1;
 
@@ -407,6 +436,16 @@ void (*errlog)();
 
 	bzero((char *)&sinme, sizeof(sinme));
 
+#ifdef BSD
+	if( service != NULL && service[0] == '/' ) {
+		/* UNIX Domain socket */
+		strncpy( sunme.sun_path, service, sizeof(sunme.sun_path) );
+		sunme.sun_family = AF_UNIX;
+		addr = (struct sockaddr *) &sunme;
+		addrlen = strlen(sunme.sun_path) + 2;
+		goto ready;
+	}
+#endif
 	/* Determine port for service */
 	if( atoi(service) > 0 )  {
 		sinme.sin_port = htons((unsigned short)atoi(service));
@@ -428,19 +467,31 @@ void (*errlog)();
 	}
 	pkg_permport = sinme.sin_port;		/* XXX -- needs formal I/F */
 	sinme.sin_family = AF_INET;
+	addr = (struct sockaddr *) &sinme;
+	addrlen = sizeof(struct sockaddr_in);
 
 #ifdef BSD
-	if( (pkg_listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 )  {
+ready:
+	if( (pkg_listenfd = socket(addr->sa_family, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_permserver:  socket" );
 		return(-1);
 	}
 
-	if( setsockopt( pkg_listenfd, SOL_SOCKET, SO_REUSEADDR,
-	    (char *)&on, sizeof(on) ) < 0 )  {
-		pkg_perror( errlog, "pkg_permserver: setsockopt SO_REUSEADDR" );
+	if( addr->sa_family == AF_INET ) {
+		if( setsockopt( pkg_listenfd, SOL_SOCKET, SO_REUSEADDR,
+		    (char *)&on, sizeof(on) ) < 0 )  {
+			pkg_perror( errlog, "pkg_permserver: setsockopt SO_REUSEADDR" );
+		}
+#if BSD >= 43 && defined(TCP_NODELAY)
+		/* SunOS 3.x defines it but doesn't support it! */
+		if( setsockopt( pkg_listenfd, IPPROTO_TCP, TCP_NODELAY,
+		    (char *)&on, sizeof(on) ) < 0 )  {
+			pkg_perror( errlog, "pkg_permserver: setsockopt TCP_NODELAY" );
+		}
+#endif
 	}
 
-	if( bind(pkg_listenfd, &sinme, sizeof(sinme)) < 0 )  {
+	if( bind(pkg_listenfd, addr, addrlen) < 0 )  {
 		pkg_perror( errlog, "pkg_permserver: bind" );
 		close(pkg_listenfd);
 		return(-1);
