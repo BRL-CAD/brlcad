@@ -29,8 +29,8 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=3.11;	RCS_REVISION=9;		REL_DATE=Today
-RELEASE=3.10;	RCS_REVISION=9;		REL_DATE=1-Jul-91	# alpha
+RELEASE=3.11;	RCS_REVISION=9;		REL_DATE=Today
+#RELEASE=3.10;	RCS_REVISION=9;		REL_DATE=1-Jul-91	# alpha
 #RELEASE=3.9;	RCS_REVISION=9;		REL_DATE=28-Jan-91	# internal
 #RELEASE=3.8;	RCS_REVISION=9;		REL_DATE=3-Jan-91	# internal
 #RELEASE=3.7;	RCS_REVISION=9;		REL_DATE=19-June-89
@@ -381,9 +381,11 @@ dist)
 
 # Use as final step of making a distribution -- write the archive
 arch)
-	# $4 will be file size in bytes, pad to 200K byte boundary for SGI
+	cd ${DISTDIR}; tar cfv ${ARCHIVE} *
+	# $4 will be file size in bytes (BSD machine)
+	# $5 will be file size in bytes (SYSV machine)
 	# pad to 200K byte boundary for SGI cartridge tapes.
-	PADBYTES=`echo "204800 $4 204800 %-p" | dc`
+	set -- `ls -l ${ARCHIVE}`
 	PADBYTES=`echo "204800 $5 204800 %-p" | dc`
 	if test ${PADBYTES} -lt 204800
 	then
