@@ -2005,6 +2005,10 @@ RT_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *to
 RT_EXTERN(void			nmg_stash_model_to_file, (CONST char *filename,
 				CONST struct model *m, CONST char *title) );
 
+/* From nmg_tri.c */
+RT_EXTERN(void			nmg_triangulate_model, (struct model *m, struct rt_tol   *tol) );
+RT_EXTERN(void			nmg_triangulate_fu, (struct faceuse *fu, struct rt_tol   *tol) );
+
 /* nmg_manif.c */
 RT_EXTERN(int			nmg_dangling_face, (CONST struct faceuse *fu));
 /* static paint_face */
