@@ -623,7 +623,7 @@ int pathpos;
 			(void)fprintf(stdout,"/%s%s\r",record.c.c_name,
 					nparts==0 ? " **DUMMY REGION**" : "");
 			/*edit this line */
-			if( editline() ) {
+			if( editline(dp) ) {
 				(void)printf("aborted\n");
 				regflag = ABORTED;
 				return;
@@ -699,7 +699,8 @@ register char *a, *b;
 
 int item, air, mat, los;	/* temp values */
 
-editline()
+editline(dp)
+struct directory	*dp;
 {
 
 	char c;
@@ -786,8 +787,7 @@ editline()
 					record.c.c_material = mat;
 					record.c.c_los = los;
 					/* write out all changes */
-					(void)lseek(dbip->dbi_fd, -(long)sizeof record, 1);
-					(void)write(dbip->dbi_fd, (char *)&record, sizeof record);
+					(void)db_put( dbip, dp, &record, 0, 1 );
 				}
 				/* get out of loop */
 				return(0);
