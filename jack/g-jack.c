@@ -259,6 +259,7 @@ union tree		*curtree;
 {
 	extern FILE		*fp_fig;
 	struct rt_list		vhead;
+	int			failed;
 
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_TREE(curtree);
@@ -310,12 +311,10 @@ union tree		*curtree;
 			goto out;
 		}
 	}
-	(void)nmg_model_fuse( *tsp->ts_m, tsp->ts_tol );
-	curtree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_done++;
-	if( curtree != 0 && curtree->tr_op == OP_NMG_TESS &&
-	    curtree->tr_d.td_r != 0 )  {
+	if( !failed )  {
 		FILE	*fp_psurf;
 		int	i;
 		struct rt_vls	file_base;
@@ -406,6 +405,7 @@ union tree		*curtree;
 	 *  Dispose of original tree, so that all associated dynamic
 	 *  memory is released now, not at the end of all regions.
 	 *  A return of TREE_NULL from this routine signals an error,
+	 *  and there is no point to adding _another_ message to our output,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
 	db_free_tree(curtree);		/* Does an nmg_kr() */
