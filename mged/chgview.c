@@ -682,190 +682,6 @@ char	**argv;
 }
 
 /*
- *			M G E D _ C O M B _ D E S C R I B E
- *
- *  Describe the non-tree portion of a combination node.
- */
-void
-mged_comb_describe( vls, comb )
-struct bu_vls			*vls;
-CONST struct rt_comb_internal	*comb;
-{
-	RT_CK_COMB(comb);
-
-	if( comb->region_flag ) {
-		bu_vls_printf( vls,
-		       "REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
-			comb->region_id,
-			comb->aircode,
-			comb->los,
-			comb->GIFTmater );
-	}
-
-	bu_vls_strcat( vls, "--\n" );
-	if( bu_vls_strlen(&comb->shader) > 0 ) {
-		bu_vls_printf( vls,
-			"Shader '%s'\n",
-			bu_vls_addr(&comb->shader) );
-	}
-
-	if( comb->rgb_valid ) {
-		bu_vls_printf( vls,
-			"Color %d %d %d\n",
-			comb->rgb[0],
-			comb->rgb[1],
-			comb->rgb[2]);
-	}
-
-	if( bu_vls_strlen(&comb->shader) > 0 || comb->rgb_valid )  {
-		if( comb->inherit ) {
-			bu_vls_strcat( vls, 
-	"(These material properties override all lower ones in the tree)\n");
-		}
-	}
-}
-
-#define STAT_ROT	1
-#define STAT_XLATE	2
-#define STAT_PERSP	4
-#define STAT_SCALE	8
-/*
- *			M A T _ C A T E G O R I Z E
- *
- *  Describe with a bit vector the effects this matrix will have.
- */
-int
-mat_categorize( matp )
-CONST mat_t	matp;
-{
-	int	status = 0;
-
-	if( !matp )  return 0;
-
-	if( matp[0] != 1.0 || matp[5] != 1.0 || matp[10] != 1.0 )
-		status |= STAT_ROT;
-
-	if( matp[MDX] != 0.0 ||
-	    matp[MDY] != 0.0 ||
-	    matp[MDZ] != 0.0 )
-		status |= STAT_XLATE;
-
-	if( matp[12] != 0.0 ||
-	    matp[13] != 0.0 ||
-	    matp[14] != 0.0 )
-		status |= STAT_PERSP;
-
-	if( matp[15] != 1.0 )  status |= STAT_SCALE;
-
-	return status;
-}
-
-/*
- *			M G E D _ T R E E _ D E S C R I B E
- */
-void
-mged_tree_describe( vls, tp, indented, lvl )
-struct bu_vls		*vls;
-CONST union tree	*tp;
-int			indented;
-int			lvl;
-{
-	int	status;
-
-	BU_CK_VLS(vls);
-
-	if( !tp )
-	{
-		/* no tree, probably an empty combination */
-		bu_vls_strcat( vls, "-empty-\n" );
-		return;
-	}
-	RT_CK_TREE(tp);
-	switch( tp->tr_op )  {
-
-	case OP_DB_LEAF:
-		status = mat_categorize( tp->tr_l.tl_mat );
-
-		/* One per line, out onto the vls */
-		if( !indented )  bu_vls_spaces( vls, 2*lvl );
-		bu_vls_strcat( vls, tp->tr_l.tl_name );
-		if( status & STAT_ROT ) {
-			fastf_t	az, el;
-			bn_ae_vec( &az, &el, tp->tr_l.tl_mat ?
-				tp->tr_l.tl_mat : bn_mat_identity );
-			bu_vls_printf( vls, 
-				" az=%g, el=%g, ",
-				az, el );
-		}
-		if( status & STAT_XLATE ) {
-			bu_vls_printf( vls, " [%g,%g,%g]",
-				tp->tr_l.tl_mat[MDX]*base2local,
-				tp->tr_l.tl_mat[MDY]*base2local,
-				tp->tr_l.tl_mat[MDZ]*base2local);
-		}
-		if( status & STAT_SCALE ) {
-			bu_vls_printf( vls, " scale %g",
-				1.0/tp->tr_l.tl_mat[15] );
-		}
-		if( status & STAT_PERSP ) {
-			bu_vls_printf( vls, 
-				" Perspective=[%g,%g,%g]??",
-				tp->tr_l.tl_mat[12],
-				tp->tr_l.tl_mat[13],
-				tp->tr_l.tl_mat[14] );
-		}
-		bu_vls_printf( vls, "\n" );
-		return;
-
-		/* This node is known to be a binary op */
-	case OP_UNION:
-		if(!indented) bu_vls_spaces( vls, 2*lvl );
-		bu_vls_strcat( vls, "u " );
-		goto bin;
-	case OP_INTERSECT:
-		if(!indented) bu_vls_spaces( vls, 2*lvl );
-		bu_vls_strcat( vls, "+ " );
-		goto bin;
-	case OP_SUBTRACT:
-		if(!indented) bu_vls_spaces( vls, 2*lvl );
-		bu_vls_strcat( vls, "- " );
-		goto bin;
-	case OP_XOR:
-		if(!indented) bu_vls_spaces( vls, 2*lvl );
-		bu_vls_strcat( vls, "^ " );
-bin:
-		mged_tree_describe( vls, tp->tr_b.tb_left, 1, lvl+1 );
-		mged_tree_describe( vls, tp->tr_b.tb_right, 0, lvl+1 );
-		return;
-
-		/* This node is known to be a unary op */
-	case OP_NOT:
-		if(!indented) bu_vls_spaces( vls, 2*lvl );
-		bu_vls_strcat( vls, "! " );
-		goto unary;
-	case OP_GUARD:
-		if(!indented) bu_vls_spaces( vls, 2*lvl );
-		bu_vls_strcat( vls, "G " );
-		goto unary;
-	case OP_XNOP:
-		if(!indented) bu_vls_spaces( vls, 2*lvl );
-		bu_vls_strcat( vls, "X " );
-unary:
-		mged_tree_describe( vls, tp->tr_b.tb_left, 1, lvl+1 );
-		return;
-
-	case OP_NOP:
-		if(!indented) bu_vls_spaces( vls, 2*lvl );
-		bu_vls_strcat( vls, "NOP\n" );
-		return;
-
-	default:
-		bu_log("mged_tree_describe: bad op %d\n", tp->tr_op);
-		bu_bomb("mged_tree_describe\n");
-	}
-}
-
-/*
  *			D O _ L I S T
  */
 void
@@ -874,64 +690,21 @@ struct bu_vls	*outstrp;
 register struct directory *dp;
 int	verbose;
 {
-	register int	i;
 	int			id;
-	struct bu_external	ext;
 	struct rt_db_internal	intern;
-	mat_t			ident;
-	struct bu_vls		str;
 
-	bu_vls_init( &str );
 	bu_vls_printf( outstrp, "%s:  ", dp->d_namep );
-	BU_INIT_EXTERNAL(&ext);
-	if( db_get_external( &ext, dp, dbip ) < 0 )  {
-	  Tcl_AppendResult(interp, "db_get_external(", dp->d_namep,
-			   ") failure\n", (char *)NULL);
-	  return;
+
+	if( (id = rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL )) < 0 )  {
+		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
+			") failure", (char *)NULL );
+		return;
 	}
 
-	if( dp->d_flags & DIR_COMB )  {
-		struct rt_comb_internal	*comb;
-
-		/* Combination */
-		bu_vls_printf( outstrp, "%s (len %d) ", dp->d_namep, 
-			       dp->d_len-1 );
-
-		if( rt_comb_v4_import( &intern, &ext, NULL ) < 0 ||
-		    intern.idb_type != ID_COMBINATION )  {
-			Tcl_AppendResult(interp, "rt_comb_v4_import(",
-				dp->d_namep, ") failure\n", (char *)NULL);
-			goto out;
-		}
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		RT_CK_COMB(comb);
-		mged_comb_describe( outstrp, comb );
-		if( verbose )  {
-			mged_tree_describe( outstrp, comb->tree, 0, 1 );
-		} else {
-			rt_pr_tree_vls( outstrp, comb->tree );
-		}
-		rt_comb_ifree( &intern );
-		goto out;
-	}
-
-	id = rt_id_solid( &ext );
-	bn_mat_idn( ident );
-	if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )  {
-	  Tcl_AppendResult(interp, dp->d_namep, ": database import error\n", (char *)NULL);
-	  goto out;
-	}
-
-	if( rt_functab[id].ft_describe( &str, &intern,
+	if( rt_functab[id].ft_describe( outstrp, &intern,
 	    verbose, base2local ) < 0 )
 	  Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_functab[id].ft_ifree( &intern );
-	bu_vls_vlscat( outstrp, &str );
-
-out:
-	db_free_external( &ext );
-
-	bu_vls_free( &str );
 }
 
 /*
