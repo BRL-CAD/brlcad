@@ -17,10 +17,25 @@ char	*Joverc		= "/usr/brl/lib/jove/joverc";
 			/* Where to search for the describe command */
 int	Dfltmode	= 0644;
 
+#ifdef BSD
 char	*cerrfmt = "\\([^:]*\\):\\([0-9][0-9]*\\):";
 	/* C error scanf format string for errors of the form
 	 * filename:linenum: error message
 	 */
+#else
+# ifdef CRAY
+	/* Cray has their own stupid error format */
+char	*cerrfmt = " \\* [FW] \\* :\\([^:]*\\): \\([0-9][0-9]*\\):";
+	/* C error scanf format string for errors of the form
+	 * sp * sp [FW] sp * sp :filename: sp linenum:sp error message.
+	 */
+# else
+char	*cerrfmt = "\"\\([^:]*\\)\", line \\([0-9][0-9]*\\):";
+	/* C error scanf format string for errors of the form
+	 * "filename", line linenum: error message., used on SYSV.
+	 */
+# endif
+#endif
 
 char	*lerrfmt = "\"\\([^:]*\\)\", line \\([0-9][0-9]*\\):";
 	/* Lint error for errors of the form

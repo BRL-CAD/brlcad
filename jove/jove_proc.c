@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.6  91/08/30  18:59:50  mike
+ * Modifications for clean compilation on the XMP
+ * 
  * Revision 2.5  91/08/30  18:46:08  mike
  * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
  * 
@@ -308,11 +311,7 @@ MakeErrors()
 		ErrFree();
 
 	if (status)
-#ifndef VMUNIX
 		ErrParse(cerrfmt);
-#else
-		ErrParse(lerrfmt);
-#endif
 
 	if (thiserror)
 		NextError();
