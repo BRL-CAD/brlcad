@@ -235,6 +235,13 @@ matp_t old_xlate;
 			else
 				nextdp=dir_add(rec.M.m_brname,nextdp->d_addr);
 		}
+#ifdef never
+		/* Don't Fix horrid GED mistake */
+		rec.M.m_mat[12] = rec.M.m_mat[3];
+		rec.M.m_mat[13] = rec.M.m_mat[7];
+		rec.M.m_mat[14] = rec.M.m_mat[11];
+		rec.M.m_mat[3] = rec.M.m_mat[7] = rec.M.m_mat[11] = 0.0;
+#endif
 		mat_mul(new_xlate, rec.M.m_mat, old_xlate);
 
 		/* Recursive call */
