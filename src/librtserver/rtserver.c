@@ -901,8 +901,8 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 	/* get the results pointer from the application structure */
 	ray_res = (struct ray_result *)ap->a_uptr;
 
-	/* save a pointer to the fired ray */
-	ray_res->the_ray = &ap->a_ray;
+	/* save a copy of the fired ray */
+	ray_res->the_ray = ap->a_ray;
 
 	/* build a list of hits */
 	for( BU_LIST_FOR( pp, partition, (struct bu_list *)partHeadp ) ) {
@@ -1655,11 +1655,11 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		vect_t reverse_ray_dir;
 
 		/* get reverse ray direction for obliquity calculation */
-		VREVERSE( reverse_ray_dir, ray_res->the_ray->r_dir );
+		VREVERSE( reverse_ray_dir, ray_res->the_ray.r_dir );
 
 		/* calculate the entrance and exit hit coordinates */
-		VJOIN1( in_hit, ray_res->the_ray->r_pt, ahit->hit_dist, ray_res->the_ray->r_dir );
-		VJOIN1( out_hit, ray_res->the_ray->r_pt, ahit->hit_dist + ahit->los, ray_res->the_ray->r_dir );
+		VJOIN1( in_hit, ray_res->the_ray.r_pt, ahit->hit_dist, ray_res->the_ray.r_dir );
+		VJOIN1( out_hit, ray_res->the_ray.r_pt, ahit->hit_dist + ahit->los, ray_res->the_ray.r_dir );
 
 		/* Create an entrance hit point (JAVA Point) */
 		jinhitPoint = (*env)->NewObject( env, point_class, point_constructor_id,
@@ -1692,7 +1692,7 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 			inObl = M_PI_2;
 		}
 
-		outObl = acos( VDOT( ray_res->the_ray->r_dir, ahit->exit_normal ) );
+		outObl = acos( VDOT( ray_res->the_ray.r_dir, ahit->exit_normal ) );
 		if( outObl < 0.0 ) {
 			outObl = -outObl;
 		}
