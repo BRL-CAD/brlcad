@@ -7,7 +7,7 @@
  * Copyright (c) 1987-1994 The Regents of the University of California.
  * Copyright (c) 1993-1996 Lucent Technologies.
  * Copyright (c) 1994-1998 Sun Microsystems, Inc.
- * Copyright (c) 1998-1999 by Scriptics Corporation.
+ * Copyright (c) 1998-2000 by Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -38,28 +38,31 @@ extern "C" {
  * When version numbers change here, must also go into the following files
  * and update the version numbers:
  *
- * library/init.tcl	(only if major.minor changes, not patchlevel)
- * unix/configure.in
- * win/configure.in	(only if major.minor changes, not patchlevel)
- * win/makefile.bc	(only if major.minor changes, not patchlevel)
- * win/makefile.vc	(only if major.minor changes, not patchlevel)
- * win/pkgIndex.tcl	(for tclregNN.dll, not patchlevel)
- * README
- * mac/README
- * win/README.binary
- * win/README		(only if major.minor changes, not patchlevel)
- * unix/README		(only if major.minor changes, not patchlevel)
- * tools/tcl.hpj.in	(for windows installer)
+ * library/init.tcl	(only if Major.minor changes, not patchlevel) 1 LOC
+ * unix/configure.in	(2 LOC Major, 2 LOC minor, 1 LOC patch)
+ * win/configure.in	(as above)
+ * win/tcl.m4		(not patchlevel)
+ * win/makefile.vc	(not patchlevel) 2 LOC
+ * win/pkgIndex.tcl	(not patchlevel, for tclregNN.dll)
+ * README		(sections 0 and 2)
+ * mac/README		(2 LOC, not patchlevel)
+ * win/README.binary	(sections 0-4)
+ * win/README		(not patchlevel) (sections 0 and 2)
+ * unix/README		(not patchlevel) (part (h))
+ * unix/tcl.spec	(2 LOC Major/Minor, 1 LOC patch)
+ * tests/basic.test	(not patchlevel) (version checks)
+ * tools/tcl.hpj.in	(not patchlevel, for windows installer)
  * tools/tcl.wse.in	(for windows installer)
+ * tools/tclSplash.bmp	(not patchlevel)
  */
 
 #define TCL_MAJOR_VERSION   8
-#define TCL_MINOR_VERSION   2
+#define TCL_MINOR_VERSION   3
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  1
+#define TCL_RELEASE_SERIAL  2
 
-#define TCL_VERSION	    "8.2"
-#define TCL_PATCH_LEVEL	    "8.2.1"
+#define TCL_VERSION	    "8.3"
+#define TCL_PATCH_LEVEL	    "8.3.2"
 
 /*
  * The following definitions set up the proper options for Windows
@@ -161,8 +164,10 @@ extern "C" {
 #ifndef TCL_THREADS
 #define Tcl_MutexLock(mutexPtr)
 #define Tcl_MutexUnlock(mutexPtr)
+#define Tcl_MutexFinalize(mutexPtr)
 #define Tcl_ConditionNotify(condPtr)
 #define Tcl_ConditionWait(condPtr, mutexPtr, timePtr)
+#define Tcl_ConditionFinalize(condPtr)
 #endif /* TCL_THREADS */
 
 /* 
@@ -276,6 +281,13 @@ extern "C" {
 #   define CONST
 #endif
 
+/*
+ * Make sure EXTERN isn't defined elsewhere
+ */
+#ifdef EXTERN
+#undef EXTERN
+#endif /* EXTERN */
+
 #ifdef __cplusplus
 #   define EXTERN extern "C" TCL_STORAGE_CLASS
 #else
@@ -374,6 +386,50 @@ typedef struct Tcl_ThreadId_ *Tcl_ThreadId;
 typedef struct Tcl_TimerToken_ *Tcl_TimerToken;
 typedef struct Tcl_Trace_ *Tcl_Trace;
 typedef struct Tcl_Var_ *Tcl_Var;
+typedef struct Tcl_ChannelTypeVersion_ *Tcl_ChannelTypeVersion;
+
+/*
+ * Definition of the interface to procedures implementing threads.
+ * A procedure following this definition is given to each call of
+ * 'Tcl_CreateThread' and will be called as the main fuction of
+ * the new thread created by that call.
+ */
+
+#ifdef MAC_TCL
+typedef pascal void *(Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
+#elif defined __WIN32__
+typedef unsigned (__stdcall Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
+#else
+typedef void (Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
+#endif
+
+
+/*
+ * Threading function return types used for abstracting away platform
+ * differences when writing a Tcl_ThreadCreateProc.  See the NewThread
+ * function in generic/tclThreadTest.c for it's usage.
+ */
+#ifdef MAC_TCL
+#   define Tcl_ThreadCreateType		pascal void *
+#   define TCL_THREAD_CREATE_RETURN	return NULL
+#elif defined __WIN32__
+#   define Tcl_ThreadCreateType		unsigned __stdcall
+#   define TCL_THREAD_CREATE_RETURN	return 0
+#else
+#   define Tcl_ThreadCreateType		void
+#   define TCL_THREAD_CREATE_RETURN	
+#endif
+
+
+
+/*
+ * Definition of values for default stacksize and the possible flags to be
+ * given to Tcl_CreateThread.
+ */
+
+#define TCL_THREAD_STACK_DEFAULT (0)    /* Use default size for stack */
+#define TCL_THREAD_NOFLAGS       (0000) /* Standard flags, default behaviour */
+#define TCL_THREAD_JOINABLE      (0001) /* Mark the thread as joinable */
 
 /*
  * Flag values passed to Tcl_GetRegExpFromObj.
@@ -681,7 +737,7 @@ typedef struct Tcl_SavedResult {
 /*
  * The following definitions support Tcl's namespace facility.
  * Note: the first five fields must match exactly the fields in a
- * Namespace structure (see tcl.h). 
+ * Namespace structure (see tclInt.h). 
  */
 
 typedef struct Tcl_Namespace {
@@ -1085,7 +1141,7 @@ typedef int (Tcl_WaitForEventProc) _ANSI_ARGS_((Tcl_Time *timePtr));
  */
 
 #define TCL_CLOSE_READ		(1<<1)
-#define TCL_CLOSE_WRITE	(1<<2)
+#define TCL_CLOSE_WRITE		(1<<2)
 
 /*
  * Value to use as the closeProc for a channel that supports the
@@ -1093,6 +1149,13 @@ typedef int (Tcl_WaitForEventProc) _ANSI_ARGS_((Tcl_Time *timePtr));
  */
 
 #define TCL_CLOSE2PROC	((Tcl_DriverCloseProc *)1)
+
+/*
+ * Channel version tag.  This was introduced in 8.3.2/8.4.
+ */
+
+#define TCL_CHANNEL_VERSION_1	((Tcl_ChannelTypeVersion) 0x1)
+#define TCL_CHANNEL_VERSION_2	((Tcl_ChannelTypeVersion) 0x2)
 
 /*
  * Typedefs for the various operations in a channel type:
@@ -1121,6 +1184,10 @@ typedef void	(Tcl_DriverWatchProc) _ANSI_ARGS_((
 typedef int	(Tcl_DriverGetHandleProc) _ANSI_ARGS_((
 		    ClientData instanceData, int direction,
 		    ClientData *handlePtr));
+typedef int	(Tcl_DriverFlushProc) _ANSI_ARGS_((
+		    ClientData instanceData));
+typedef int	(Tcl_DriverHandlerProc) _ANSI_ARGS_((
+		    ClientData instanceData, int interestMask));
 
 /*
  * The following declarations either map ckalloc and ckfree to
@@ -1169,38 +1236,50 @@ typedef enum Tcl_EolTranslation {
  * One such structure exists for each type (kind) of channel.
  * It collects together in one place all the functions that are
  * part of the specific channel type.
+ *
+ * It is recommend that the Tcl_Channel* functions are used to access
+ * elements of this structure, instead of direct accessing.
  */
 
 typedef struct Tcl_ChannelType {
     char *typeName;			/* The name of the channel type in Tcl
-                                         * commands. This storage is owned by
-                                         * channel type. */
-    Tcl_DriverBlockModeProc *blockModeProc;
-    					/* Set blocking mode for the
-                                         * raw channel. May be NULL. */
+					 * commands. This storage is owned by
+					 * channel type. */
+    Tcl_ChannelTypeVersion version;	/* Version of the channel type. */
     Tcl_DriverCloseProc *closeProc;	/* Procedure to call to close the
-                                         * channel, or TCL_CLOSE2PROC if the
-                                         * close2Proc should be used
-                                         * instead. */
+					 * channel, or TCL_CLOSE2PROC if the
+					 * close2Proc should be used
+					 * instead. */
     Tcl_DriverInputProc *inputProc;	/* Procedure to call for input
-                                         * on channel. */
+					 * on channel. */
     Tcl_DriverOutputProc *outputProc;	/* Procedure to call for output
-                                         * on channel. */
+					 * on channel. */
     Tcl_DriverSeekProc *seekProc;	/* Procedure to call to seek
-                                         * on the channel. May be NULL. */
+					 * on the channel. May be NULL. */
     Tcl_DriverSetOptionProc *setOptionProc;
-    					/* Set an option on a channel. */
+					/* Set an option on a channel. */
     Tcl_DriverGetOptionProc *getOptionProc;
-    					/* Get an option from a channel. */
+					/* Get an option from a channel. */
     Tcl_DriverWatchProc *watchProc;	/* Set up the notifier to watch
-                                         * for events on this channel. */
+					 * for events on this channel. */
     Tcl_DriverGetHandleProc *getHandleProc;
 					/* Get an OS handle from the channel
-                                         * or NULL if not supported. */
-    Tcl_DriverClose2Proc *close2Proc;   /* Procedure to call to close the
+					 * or NULL if not supported. */
+    Tcl_DriverClose2Proc *close2Proc;	/* Procedure to call to close the
 					 * channel if the device supports
 					 * closing the read & write sides
 					 * independently. */
+    Tcl_DriverBlockModeProc *blockModeProc;
+					/* Set blocking mode for the
+					 * raw channel. May be NULL. */
+    /*
+     * Only valid in TCL_CHANNEL_VERSION_2 channels
+     */
+    Tcl_DriverFlushProc *flushProc;	/* Procedure to call to flush a
+					 * channel. May be NULL. */
+    Tcl_DriverHandlerProc *handlerProc;	/* Procedure to call to handle a
+					 * channel event.  This will be passed
+					 * up the stacked channel chain. */
 } Tcl_ChannelType;
 
 /*
@@ -1209,8 +1288,8 @@ typedef struct Tcl_ChannelType {
  * as arguments to the blockModeProc procedure in the above structure.
  */
 
-#define TCL_MODE_BLOCKING 0		/* Put channel into blocking mode. */
-#define TCL_MODE_NONBLOCKING 1		/* Put channel into nonblocking
+#define TCL_MODE_BLOCKING	0	/* Put channel into blocking mode. */
+#define TCL_MODE_NONBLOCKING	1	/* Put channel into nonblocking
 					 * mode. */
 
 /*

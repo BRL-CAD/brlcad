@@ -89,7 +89,7 @@ EXTERN void		TclDeleteVars _ANSI_ARGS_((Interp * iPtr,
 /* 13 */
 EXTERN int		TclDoGlob _ANSI_ARGS_((Tcl_Interp * interp, 
 				char * separators, Tcl_DString * headPtr, 
-				char * tail));
+				char * tail, GlobTypeData * types));
 /* 14 */
 EXTERN void		TclDumpMemoryInfo _ANSI_ARGS_((FILE * outFile));
 /* Slot 15 is reserved */
@@ -506,19 +506,30 @@ EXTERN void		TclRegExpRangeUniChar _ANSI_ARGS_((Tcl_RegExp re,
 EXTERN void		TclSetLibraryPath _ANSI_ARGS_((Tcl_Obj * pathPtr));
 /* 153 */
 EXTERN Tcl_Obj *	TclGetLibraryPath _ANSI_ARGS_((void));
-/* 154 */
-EXTERN int		TclTestChannelCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int argc, char ** argv));
-/* 155 */
-EXTERN int		TclTestChannelEventCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
-				int argc, char ** argv));
+/* Slot 154 is reserved */
+/* Slot 155 is reserved */
 /* 156 */
 EXTERN void		TclRegError _ANSI_ARGS_((Tcl_Interp * interp, 
 				char * msg, int status));
 /* 157 */
 EXTERN Var *		TclVarTraceExists _ANSI_ARGS_((Tcl_Interp * interp, 
 				char * varName));
+/* 158 */
+EXTERN void		TclSetStartupScriptFileName _ANSI_ARGS_((
+				char * filename));
+/* 159 */
+EXTERN char *		TclGetStartupScriptFileName _ANSI_ARGS_((void));
+/* 160 */
+EXTERN int		TclpMatchFilesTypes _ANSI_ARGS_((Tcl_Interp * interp, 
+				char * separators, Tcl_DString * dirPtr, 
+				char * pattern, char * tail, 
+				GlobTypeData * types));
+/* 161 */
+EXTERN int		TclChannelTransform _ANSI_ARGS_((Tcl_Interp * interp, 
+				Tcl_Channel chan, Tcl_Obj * cmdObjPtr));
+/* 162 */
+EXTERN void		TclChannelEventScriptInvoker _ANSI_ARGS_((
+				ClientData clientData, int flags));
 
 typedef struct TclIntStubs {
     int magic;
@@ -553,7 +564,7 @@ typedef struct TclIntStubs {
     int (*tclCreateProc) _ANSI_ARGS_((Tcl_Interp * interp, Namespace * nsPtr, char * procName, Tcl_Obj * argsPtr, Tcl_Obj * bodyPtr, Proc ** procPtrPtr)); /* 10 */
     void (*tclDeleteCompiledLocalVars) _ANSI_ARGS_((Interp * iPtr, CallFrame * framePtr)); /* 11 */
     void (*tclDeleteVars) _ANSI_ARGS_((Interp * iPtr, Tcl_HashTable * tablePtr)); /* 12 */
-    int (*tclDoGlob) _ANSI_ARGS_((Tcl_Interp * interp, char * separators, Tcl_DString * headPtr, char * tail)); /* 13 */
+    int (*tclDoGlob) _ANSI_ARGS_((Tcl_Interp * interp, char * separators, Tcl_DString * headPtr, char * tail, GlobTypeData * types)); /* 13 */
     void (*tclDumpMemoryInfo) _ANSI_ARGS_((FILE * outFile)); /* 14 */
     void *reserved15;
     void (*tclExprFloatError) _ANSI_ARGS_((Tcl_Interp * interp, double value)); /* 16 */
@@ -710,10 +721,15 @@ typedef struct TclIntStubs {
     void (*tclRegExpRangeUniChar) _ANSI_ARGS_((Tcl_RegExp re, int index, int * startPtr, int * endPtr)); /* 151 */
     void (*tclSetLibraryPath) _ANSI_ARGS_((Tcl_Obj * pathPtr)); /* 152 */
     Tcl_Obj * (*tclGetLibraryPath) _ANSI_ARGS_((void)); /* 153 */
-    int (*tclTestChannelCmd) _ANSI_ARGS_((ClientData clientData, Tcl_Interp * interp, int argc, char ** argv)); /* 154 */
-    int (*tclTestChannelEventCmd) _ANSI_ARGS_((ClientData clientData, Tcl_Interp * interp, int argc, char ** argv)); /* 155 */
+    void *reserved154;
+    void *reserved155;
     void (*tclRegError) _ANSI_ARGS_((Tcl_Interp * interp, char * msg, int status)); /* 156 */
     Var * (*tclVarTraceExists) _ANSI_ARGS_((Tcl_Interp * interp, char * varName)); /* 157 */
+    void (*tclSetStartupScriptFileName) _ANSI_ARGS_((char * filename)); /* 158 */
+    char * (*tclGetStartupScriptFileName) _ANSI_ARGS_((void)); /* 159 */
+    int (*tclpMatchFilesTypes) _ANSI_ARGS_((Tcl_Interp * interp, char * separators, Tcl_DString * dirPtr, char * pattern, char * tail, GlobTypeData * types)); /* 160 */
+    int (*tclChannelTransform) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Channel chan, Tcl_Obj * cmdObjPtr)); /* 161 */
+    void (*tclChannelEventScriptInvoker) _ANSI_ARGS_((ClientData clientData, int flags)); /* 162 */
 } TclIntStubs;
 
 #ifdef __cplusplus
@@ -1339,14 +1355,8 @@ extern TclIntStubs *tclIntStubsPtr;
 #define TclGetLibraryPath \
 	(tclIntStubsPtr->tclGetLibraryPath) /* 153 */
 #endif
-#ifndef TclTestChannelCmd
-#define TclTestChannelCmd \
-	(tclIntStubsPtr->tclTestChannelCmd) /* 154 */
-#endif
-#ifndef TclTestChannelEventCmd
-#define TclTestChannelEventCmd \
-	(tclIntStubsPtr->tclTestChannelEventCmd) /* 155 */
-#endif
+/* Slot 154 is reserved */
+/* Slot 155 is reserved */
 #ifndef TclRegError
 #define TclRegError \
 	(tclIntStubsPtr->tclRegError) /* 156 */
@@ -1354,6 +1364,26 @@ extern TclIntStubs *tclIntStubsPtr;
 #ifndef TclVarTraceExists
 #define TclVarTraceExists \
 	(tclIntStubsPtr->tclVarTraceExists) /* 157 */
+#endif
+#ifndef TclSetStartupScriptFileName
+#define TclSetStartupScriptFileName \
+	(tclIntStubsPtr->tclSetStartupScriptFileName) /* 158 */
+#endif
+#ifndef TclGetStartupScriptFileName
+#define TclGetStartupScriptFileName \
+	(tclIntStubsPtr->tclGetStartupScriptFileName) /* 159 */
+#endif
+#ifndef TclpMatchFilesTypes
+#define TclpMatchFilesTypes \
+	(tclIntStubsPtr->tclpMatchFilesTypes) /* 160 */
+#endif
+#ifndef TclChannelTransform
+#define TclChannelTransform \
+	(tclIntStubsPtr->tclChannelTransform) /* 161 */
+#endif
+#ifndef TclChannelEventScriptInvoker
+#define TclChannelEventScriptInvoker \
+	(tclIntStubsPtr->tclChannelEventScriptInvoker) /* 162 */
 #endif
 
 #endif /* defined(USE_TCL_STUBS) && !defined(USE_TCL_STUB_PROCS) */

@@ -790,12 +790,6 @@ EXTERN void TclThreadDataKeySet _ANSI_ARGS_((Tcl_ThreadDataKey *keyPtr, VOID *da
 #define TCL_TSD_INIT(keyPtr)	(ThreadSpecificData *)Tcl_GetThreadData((keyPtr), sizeof(ThreadSpecificData))
 
 
-#ifdef MAC_TCL
-typedef pascal void *(Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
-#else
-typedef void (Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
-#endif
-
 /*
  *----------------------------------------------------------------
  * Data structures related to bytecode compilation and execution.
@@ -1480,6 +1474,41 @@ typedef int (*TclObjCmdProcType) _ANSI_ARGS_((ClientData clientData,
 
 typedef struct TclpTime_t_ *TclpTime_t;
 
+/* 
+ * The following structure is used to pass glob type data amongst
+ * the various glob routines and TclpMatchFilesTypes.  Currently
+ * most of the fields are ignored.  However they will be used in
+ * a future release to implement glob's ability to find files
+ * of particular types/permissions/etc only.
+ */
+typedef struct GlobTypeData {
+    /* Corresponds to bcdpfls as in 'find -t' */
+    int type;
+    /* Corresponds to file permissions */
+    int perm;
+    /* Acceptable mac type */
+    Tcl_Obj* macType;
+    /* Acceptable mac creator */
+    Tcl_Obj* macCreator;
+} GlobTypeData;
+
+/*
+ * type and permission definitions for glob command
+ */
+#define TCL_GLOB_TYPE_BLOCK		(1<<0)
+#define TCL_GLOB_TYPE_CHAR		(1<<1)
+#define TCL_GLOB_TYPE_DIR		(1<<2)
+#define TCL_GLOB_TYPE_PIPE		(1<<3)
+#define TCL_GLOB_TYPE_FILE		(1<<4)
+#define TCL_GLOB_TYPE_LINK		(1<<5)
+#define TCL_GLOB_TYPE_SOCK		(1<<6)
+
+#define TCL_GLOB_PERM_RONLY		(1<<0)
+#define TCL_GLOB_PERM_HIDDEN		(1<<1)
+#define TCL_GLOB_PERM_R			(1<<2)
+#define TCL_GLOB_PERM_W			(1<<3)
+#define TCL_GLOB_PERM_X			(1<<4)
+
 /*
  *----------------------------------------------------------------
  * Variables shared among Tcl modules but not used by the outside world.
@@ -1544,6 +1573,8 @@ EXTERN int		TclAccessInsertProc _ANSI_ARGS_((TclAccessProc_ *proc));
 EXTERN void		TclAllocateFreeObjects _ANSI_ARGS_((void));
 EXTERN int		TclArraySet _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *arrayNameObj, Tcl_Obj *arrayElemObj));
+EXTERN int		TclCheckBadOctal _ANSI_ARGS_((Tcl_Interp *interp,
+			    char *value));
 EXTERN int		TclCleanupChildren _ANSI_ARGS_((Tcl_Interp *interp,
 			    int numPids, Tcl_Pid *pidPtr,
 			    Tcl_Channel errorChan));
@@ -1568,7 +1599,7 @@ EXTERN void		TclDeleteVars _ANSI_ARGS_((Interp *iPtr,
 			    Tcl_HashTable *tablePtr));
 EXTERN int		TclDoGlob _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *separators, Tcl_DString *headPtr,
-			    char *tail));
+			    char *tail, GlobTypeData *types));
 EXTERN void		TclDumpMemoryInfo _ANSI_ARGS_((FILE *outFile));
 EXTERN void		TclExpandTokenArray _ANSI_ARGS_((
 			    Tcl_Parse *parsePtr));
@@ -1586,8 +1617,6 @@ EXTERN int		TclFileRenameCmd _ANSI_ARGS_((Tcl_Interp *interp,
 			    int argc, char **argv)) ;
 EXTERN void		TclFinalizeAllocSubsystem _ANSI_ARGS_((void));
 EXTERN void		TclFinalizeCompExecEnv _ANSI_ARGS_((void));
-EXTERN void		TclFinalizeCondition _ANSI_ARGS_((
-			    Tcl_Condition *condPtr));
 EXTERN void		TclFinalizeCompilation _ANSI_ARGS_((void));
 EXTERN void		TclFinalizeEncodingSubsystem _ANSI_ARGS_((void));
 EXTERN void		TclFinalizeEnvironment _ANSI_ARGS_((void));
@@ -1595,7 +1624,6 @@ EXTERN void		TclFinalizeExecution _ANSI_ARGS_((void));
 EXTERN void		TclFinalizeIOSubsystem _ANSI_ARGS_((void));
 EXTERN void		TclFinalizeLoad _ANSI_ARGS_((void));
 EXTERN void		TclFinalizeMemorySubsystem _ANSI_ARGS_((void));
-EXTERN void		TclFinalizeMutex _ANSI_ARGS_((Tcl_Mutex *mutex));
 EXTERN void		TclFinalizeNotifier _ANSI_ARGS_((void));
 EXTERN void		TclFinalizeSynchronization _ANSI_ARGS_((void));
 EXTERN void		TclFinalizeThreadData _ANSI_ARGS_((void));
@@ -1634,7 +1662,8 @@ EXTERN int		TclGetOpenMode _ANSI_ARGS_((Tcl_Interp *interp,
 EXTERN Tcl_Command	TclGetOriginalCommand _ANSI_ARGS_((
 			    Tcl_Command command));
 EXTERN int		TclGlob _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *pattern, int noComplain));
+			    char *pattern, char *unquotedPrefix, 
+			    int globFlags, GlobTypeData* types));
 EXTERN int		TclGlobalInvoke _ANSI_ARGS_((Tcl_Interp *interp,
 			    int argc, char **argv, int flags));
 EXTERN int		TclGuessPackageName _ANSI_ARGS_((char *fileName,
@@ -1764,8 +1793,6 @@ EXTERN int		TclProcCompileProc _ANSI_ARGS_((Tcl_Interp *interp,
 EXTERN void		TclProcDeleteProc _ANSI_ARGS_((ClientData clientData));
 EXTERN int		TclProcInterpProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
-EXTERN int		TclpThreadCreate _ANSI_ARGS_((Tcl_ThreadId *idPtr,
-			    Tcl_ThreadCreateProc proc, ClientData clientData));
 EXTERN VOID *		TclpThreadDataKeyGet _ANSI_ARGS_((
 			    Tcl_ThreadDataKey *keyPtr));
 EXTERN void		TclpThreadDataKeyInit _ANSI_ARGS_((
@@ -1908,8 +1935,6 @@ EXTERN int	Tcl_OpenObjCmd _ANSI_ARGS_((ClientData clientData,
 EXTERN int	Tcl_PackageObjCmd _ANSI_ARGS_((ClientData clientData,
 		    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 EXTERN int	Tcl_PidObjCmd _ANSI_ARGS_((ClientData clientData,
-		    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int	Tcl_ProcObjCmd _ANSI_ARGS_((ClientData clientData,
 		    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 EXTERN int	Tcl_PutsObjCmd _ANSI_ARGS_((ClientData clientData,
 		    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));

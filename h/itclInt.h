@@ -57,24 +57,6 @@
 # define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
-/*
- * Since the Tcl/Tk distribution doesn't perform any asserts,
- * dynamic loading can fail to find the __assert function.
- * As a workaround, we'll include our own.
- */
-#undef  assert
-#ifdef  NDEBUG
-#define assert(EX) ((void)0)
-#else
-EXTERN void Itcl_Assert _ANSI_ARGS_((char *testExpr, char *fileName, int lineNum)
-);
-#if defined(__STDC__)
-#define assert(EX) (void)((EX) || (Itcl_Assert(#EX, __FILE__, __LINE__), 0))
-#else
-#define assert(EX) (void)((EX) || (Itcl_Assert("EX", __FILE__, __LINE__), 0))
-#endif  /* __STDC__ */
-#endif  /* NDEBUG */
-
 
 /*
  *  Common info for managing all known objects.
@@ -257,277 +239,24 @@ typedef struct ItclContext {
 } ItclContext;
 
 
-/*
- *  Functions used within the package, but not considered "public"
- */
-
-EXTERN int Itcl_IsClassNamespace _ANSI_ARGS_((Tcl_Namespace *namesp));
-EXTERN int Itcl_IsClass _ANSI_ARGS_((Tcl_Command cmd));
-EXTERN ItclClass* Itcl_FindClass _ANSI_ARGS_((Tcl_Interp* interp,
-    char* path, int autoload));
-
-EXTERN int Itcl_FindObject _ANSI_ARGS_((Tcl_Interp *interp,
-    char *name, ItclObject **roPtr));
-EXTERN int Itcl_IsObject _ANSI_ARGS_((Tcl_Command cmd));
-EXTERN int Itcl_ObjectIsa _ANSI_ARGS_((ItclObject *contextObj,
-    ItclClass *cdefn));
-
-
-EXTERN int Itcl_Protection _ANSI_ARGS_((Tcl_Interp *interp,
-    int newLevel));
-EXTERN char* Itcl_ProtectionStr _ANSI_ARGS_((int pLevel));
-EXTERN int Itcl_CanAccess _ANSI_ARGS_((ItclMember* memberPtr,
-    Tcl_Namespace* fromNsPtr));
-EXTERN int Itcl_CanAccessFunc _ANSI_ARGS_((ItclMemberFunc* mfunc,
-    Tcl_Namespace* fromNsPtr));
-EXTERN Tcl_Namespace* Itcl_GetTrueNamespace _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclObjectInfo *info));
-
-EXTERN void Itcl_ParseNamespPath _ANSI_ARGS_((char *name,
-    Tcl_DString *buffer, char **head, char **tail));
-EXTERN int Itcl_DecodeScopedCommand _ANSI_ARGS_((Tcl_Interp *interp,
-    char *name, Tcl_Namespace **rNsPtr, char **rCmdPtr));
-EXTERN int Itcl_EvalArgs _ANSI_ARGS_((Tcl_Interp *interp, int objc,
-    Tcl_Obj *CONST objv[]));
-EXTERN Tcl_Obj* Itcl_CreateArgs _ANSI_ARGS_((Tcl_Interp *interp,
-    char *string, int objc, Tcl_Obj *CONST objv[]));
-
-EXTERN int Itcl_PushContext _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclMember *member, ItclClass *contextClass, ItclObject *contextObj,
-    ItclContext *contextPtr));
-EXTERN void Itcl_PopContext _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclContext *contextPtr));
-EXTERN int Itcl_GetContext _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclClass **cdefnPtr, ItclObject **odefnPtr));
-
-EXTERN void Itcl_InitHierIter _ANSI_ARGS_((ItclHierIter *iter,
-    ItclClass *cdefn));
-EXTERN void Itcl_DeleteHierIter _ANSI_ARGS_((ItclHierIter *iter));
-EXTERN ItclClass* Itcl_AdvanceHierIter _ANSI_ARGS_((ItclHierIter *iter));
-
-EXTERN int Itcl_FindClassesCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_FindObjectsCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ProtectionCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_DelClassCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_DelObjectCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ScopeCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_CodeCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_StubCreateCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_StubExistsCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_IsStub _ANSI_ARGS_((Tcl_Command cmd));
-
+#include "itclIntDecls.h"
 
 /*
- *  Functions for manipulating classes
+ * Since the Tcl/Tk distribution doesn't perform any asserts,
+ * dynamic loading can fail to find the __assert function.
+ * As a workaround, we'll include our own.
  */
-EXTERN int Itcl_CreateClass _ANSI_ARGS_((Tcl_Interp* interp, char* path,
-    ItclObjectInfo *info, ItclClass **rPtr));
-EXTERN int Itcl_DeleteClass _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclClass *cdefnPtr));
-EXTERN Tcl_Namespace* Itcl_FindClassNamespace _ANSI_ARGS_((Tcl_Interp* interp,
-    char* path));
-EXTERN int Itcl_HandleClass _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ClassCmdResolver _ANSI_ARGS_((Tcl_Interp *interp,
-    char* name, Tcl_Namespace *context, int flags, Tcl_Command *rPtr));
-EXTERN int Itcl_ClassVarResolver _ANSI_ARGS_((Tcl_Interp *interp,
-    char* name, Tcl_Namespace *context, int flags, Tcl_Var *rPtr));
-EXTERN int Itcl_ClassCompiledVarResolver _ANSI_ARGS_((Tcl_Interp *interp,
-    char* name, int length, Tcl_Namespace *context, Tcl_ResolvedVarInfo **rPtr));
-EXTERN void Itcl_BuildVirtualTables _ANSI_ARGS_((ItclClass* cdefnPtr));
-EXTERN int Itcl_CreateVarDefn _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclClass* cdefn, char* name, char* init, char* config,
-    ItclVarDefn** vdefnPtr));
-EXTERN void Itcl_DeleteVarDefn _ANSI_ARGS_((ItclVarDefn *vdefn));
-EXTERN char* Itcl_GetCommonVar _ANSI_ARGS_((Tcl_Interp *interp,
-    char *name, ItclClass *contextClass));
-EXTERN ItclMember* Itcl_CreateMember _ANSI_ARGS_((Tcl_Interp* interp,
-    ItclClass *cdefn, char* name));
-EXTERN void Itcl_DeleteMember _ANSI_ARGS_((ItclMember *memPtr));
 
-
-/*
- *  Functions for manipulating objects
- */
-EXTERN int Itcl_CreateObject _ANSI_ARGS_((Tcl_Interp *interp,
-    char* name, ItclClass *cdefn, int objc, Tcl_Obj *CONST objv[],
-    ItclObject **roPtr));
-EXTERN int Itcl_DeleteObject _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclObject *contextObj));
-EXTERN int Itcl_DestructObject _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclObject *contextObj, int flags));
-EXTERN int Itcl_HandleInstance _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN char* Itcl_GetInstanceVar _ANSI_ARGS_((Tcl_Interp *interp,
-    char *name, ItclObject *contextObj, ItclClass *contextClass));
-EXTERN int Itcl_ScopedVarResolver _ANSI_ARGS_((Tcl_Interp *interp,
-    char *name, Tcl_Namespace *contextNs, int flags, Tcl_Var *rPtr));
-
-
-/*
- *  Functions for manipulating methods and procs
- */
-EXTERN int Itcl_BodyCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ConfigBodyCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_CreateMethod _ANSI_ARGS_((Tcl_Interp* interp,
-    ItclClass *cdefn, char* name, char* arglist, char* body));
-EXTERN int Itcl_CreateProc _ANSI_ARGS_((Tcl_Interp* interp,
-    ItclClass *cdefn, char* name, char* arglist, char* body));
-EXTERN int Itcl_CreateMemberFunc _ANSI_ARGS_((Tcl_Interp* interp,
-    ItclClass *cdefn, char* name, char* arglist, char* body,
-    ItclMemberFunc** mfuncPtr));
-EXTERN int Itcl_ChangeMemberFunc _ANSI_ARGS_((Tcl_Interp* interp,
-    ItclMemberFunc* mfunc, char* arglist, char* body));
-EXTERN void Itcl_DeleteMemberFunc _ANSI_ARGS_((char* cdata));
-EXTERN int Itcl_CreateMemberCode _ANSI_ARGS_((Tcl_Interp* interp,
-    ItclClass *cdefn, char* arglist, char* body, ItclMemberCode** mcodePtr));
-EXTERN void Itcl_DeleteMemberCode _ANSI_ARGS_((char* cdata));
-EXTERN int Itcl_GetMemberCode _ANSI_ARGS_((Tcl_Interp* interp,
-    ItclMember* member));
-EXTERN int Itcl_CompileMemberCodeBody _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclMember *member, char *desc, Tcl_Obj *bodyPtr));
-EXTERN int Itcl_EvalMemberCode _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclMemberFunc *mfunc, ItclMember *member, ItclObject *contextObj,
-    int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_CreateArgList _ANSI_ARGS_((Tcl_Interp* interp,
-    char* decl, int* argcPtr, CompiledLocal** argPtr));
-EXTERN CompiledLocal* Itcl_CreateArg _ANSI_ARGS_((char* name,
-    char* init));
-EXTERN void Itcl_DeleteArgList _ANSI_ARGS_((CompiledLocal *arglist));
-EXTERN Tcl_Obj* Itcl_ArgList _ANSI_ARGS_((int argc, CompiledLocal* arglist));
-EXTERN int Itcl_EquivArgLists _ANSI_ARGS_((CompiledLocal* arg1, int arg1c,
-    CompiledLocal* arg2, int arg2c));
-EXTERN void Itcl_GetMemberFuncUsage _ANSI_ARGS_((ItclMemberFunc *mfunc,
-    ItclObject *contextObj, Tcl_Obj *objPtr));
-EXTERN int Itcl_ExecMethod _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ExecProc _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_AssignArgs _ANSI_ARGS_((Tcl_Interp *interp,
-    int objc, Tcl_Obj *CONST objv[], ItclMemberFunc *mfunc));
-EXTERN int Itcl_ConstructBase _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclObject *contextObj, ItclClass *contextClass));
-EXTERN int Itcl_InvokeMethodIfExists _ANSI_ARGS_((Tcl_Interp *interp,
-    char *name, ItclClass *contextClass, ItclObject *contextObj,
-    int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_EvalBody _ANSI_ARGS_((Tcl_Interp *interp,
-    Tcl_Obj *bodyPtr));
-EXTERN int Itcl_ReportFuncErrors _ANSI_ARGS_((Tcl_Interp* interp,
-    ItclMemberFunc *mfunc, ItclObject *contextObj, int result));
-
-
-/*
- *  Commands for parsing class definitions
- */
-EXTERN int Itcl_ParseInit _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclObjectInfo *info));
-EXTERN int Itcl_ClassCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ClassInheritCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ClassProtectionCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ClassConstructorCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ClassDestructorCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ClassMethodCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ClassProcCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ClassVariableCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ClassCommonCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_ParseVarResolver _ANSI_ARGS_((Tcl_Interp *interp,
-    char* name, Tcl_Namespace *contextNs, int flags, Tcl_Var* rPtr));
-
-
-/*
- *  Commands in the "builtin" namespace
- */
-EXTERN int Itcl_BiInit _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int Itcl_InstallBiMethods _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclClass *cdefn));
-EXTERN int Itcl_BiIsaCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiConfigureCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiCgetCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiChainCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiInfoClassCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiInfoInheritCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiInfoHeritageCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiInfoFunctionCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiInfoVariableCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiInfoBodyCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_BiInfoArgsCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_DefaultInfoCmd _ANSI_ARGS_((ClientData dummy,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-
-
-/*
- *  Ensembles
- */
-EXTERN int Itcl_EnsembleInit _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int Itcl_CreateEnsemble _ANSI_ARGS_((Tcl_Interp *interp,
-    char* ensName));
-EXTERN int Itcl_AddEnsemblePart _ANSI_ARGS_((Tcl_Interp *interp,
-    char* ensName, char* partName, char* usageInfo,
-    Tcl_ObjCmdProc *objProc, ClientData clientData,
-    Tcl_CmdDeleteProc *deleteProc));
-EXTERN int Itcl_GetEnsemblePart _ANSI_ARGS_((Tcl_Interp *interp,
-    char *ensName, char *partName, Tcl_CmdInfo *infoPtr));
-EXTERN int Itcl_IsEnsemble _ANSI_ARGS_((Tcl_CmdInfo* infoPtr));
-EXTERN int Itcl_GetEnsembleUsage _ANSI_ARGS_((Tcl_Interp *interp,
-    char *ensName, Tcl_Obj *objPtr));
-EXTERN int Itcl_GetEnsembleUsageForObj _ANSI_ARGS_((Tcl_Interp *interp,
-    Tcl_Obj *ensObjPtr, Tcl_Obj *objPtr));
-EXTERN int Itcl_EnsembleCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_EnsPartCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itcl_EnsembleErrorCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-
-
-/*
- *  Commands provided for backward compatibility
- */
-EXTERN int Itcl_OldInit _ANSI_ARGS_((Tcl_Interp* interp,
-    ItclObjectInfo* info));
-EXTERN int Itcl_InstallOldBiMethods _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclClass *cdefn));
-
-
-/*
- *  Things that should be in the Tcl core.
- */
-EXTERN Tcl_CallFrame* _Tcl_GetCallFrame _ANSI_ARGS_((Tcl_Interp *interp,
-    int level));
-EXTERN Tcl_CallFrame* _Tcl_ActivateCallFrame _ANSI_ARGS_((Tcl_Interp *interp,
-    Tcl_CallFrame *framePtr));
-EXTERN Var* _TclNewVar _ANSI_ARGS_((void));
+#undef  assert
+#ifdef  NDEBUG
+#define assert(EX) ((void)0)
+#else
+#if defined(__STDC__)
+#define assert(EX) (void)((EX) || (Itcl_Assert(#EX, __FILE__, __LINE__), 0))
+#else
+#define assert(EX) (void)((EX) || (Itcl_Assert("EX", __FILE__, __LINE__), 0))
+#endif  /* __STDC__ */
+#endif  /* NDEBUG */
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
