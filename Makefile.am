@@ -142,3 +142,7 @@ rpm: dist
 
 packages: rpm
 
+benchmark: all
+	sh $(srcdir)/bench/run.sh
+
+bench: benchmark
