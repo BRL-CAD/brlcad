@@ -12,11 +12,11 @@ SUBDIRS=\
 	libbu\
 	libcursor\
 	libdm\
+	libpkg\
 	libfb\
 	libfft\
 	liboptical\
 	liborle\
-	libpkg\
 	librt\
 	libsysv\
 	libtermio\
