@@ -151,8 +151,8 @@ struct region		*reg2;
 			noverlaps,reg1->reg_name,
 			noverlaps,reg2->reg_name,
 			noverlaps,depth,
-			noverlaps,ihit[X],ihit[Y],ihit[Z],depth,
-			noverlaps,ohit[X],ohit[Y],ohit[Z],depth);
+			noverlaps,ihit[X],ihit[Y],ihit[Z],
+			noverlaps,ohit[X],ohit[Y],ohit[Z]);
 
 	/* If we report overlaps, don't print if already noted once.
 	 * Build up a linked list of known overlapping regions and compare 
