@@ -34,10 +34,13 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 
 /* The internal (in memory) form of an ARS */
 struct ars_internal {
-	int ncurves;
-	int pts_per_curve;
-	fastf_t ** curves;
+	int	magic;
+	int	ncurves;
+	int	pts_per_curve;
+	fastf_t	**curves;
 };
+#define RT_ARS_INTERNAL_MAGIC	0x77ddbbe3
+#define RT_ARS_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARS_INTERNAL_MAGIC,"ars_internal")
 
 
 /* Describe algorithm here */
@@ -60,23 +63,37 @@ extern struct vertex *rt_nmg_find_pt_in_shell();
  *  as the last point, to make processing the data easier.
  */
 int
-rt_ars_import( ari, rp, mat )
-struct ars_internal * ari;
-union record	*rp;
-matp_t		mat;
+rt_ars_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+mat_t			mat;
 {
+	struct ars_internal *ari;
+	union record	*rp;
 	register int	i, j;
 	LOCAL vect_t	base_vect;
 	int		currec;
 
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	if( rp->u_id != ID_ARS_A )  {
+		rt_log("rt_ars_import: defective record\n");
+		return(-1);
+	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_ARS;
+	ip->idb_ptr = rt_malloc(sizeof(struct ars_internal), "ars_internal");
+	ari = (struct ars_internal *)ip->idb_ptr;
+	ari->magic = RT_ARS_INTERNAL_MAGIC;
 	ari->ncurves = rp[0].a.a_m;
 	ari->pts_per_curve = rp[0].a.a_n;
 
 	/*
-	 * Read all the curves into memory, and store their pointers
+	 * Read all the curves into internal form.
 	 */
-	i = (ari->ncurves+1) * sizeof(fastf_t **);
-	ari->curves = (fastf_t **)rt_malloc( i, "ars curve ptrs" );
+	ari->curves = (fastf_t **)rt_malloc(
+		(ari->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs" );
 	currec = 1;
 	for( i=0; i < ari->ncurves; i++ )  {
 		ari->curves[i] = 
@@ -113,6 +130,164 @@ matp_t		mat;
 }
 
 /*
+ *			R T _ A R S _ E X P O R T
+ *
+ *  The name will be added by the caller.
+ *  Generally, only libwdb will set conv2mm != 1.0
+ */
+int
+rt_ars_export( ep, ip, conv2mm )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+double			conv2mm;
+{
+	struct ars_internal	*arip;
+	union record		*rec;
+	point_t		base_pt;
+	int		per_curve_grans;
+	int		cur;		/* current curve number */
+	int		gno;		/* current granule number */
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_ARS )  return(-1);
+	arip = (struct ars_internal *)ip->idb_ptr;
+	RT_ARS_CK_MAGIC(arip);
+
+	per_curve_grans = (arip->pts_per_curve+7)/8;
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = (1 + per_curve_grans * arip->ncurves) *
+		sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "ars external");
+	rec = (union record *)ep->ext_buf;
+
+	rec[0].a.a_id = ID_ARS_A;
+	rec[0].a.a_type = ARS;			/* obsolete? */
+	rec[0].a.a_m = arip->ncurves;
+	rec[0].a.a_n = arip->pts_per_curve;
+	rec[0].a.a_curlen = per_curve_grans;
+	rec[0].a.a_totlen = per_curve_grans * arip->ncurves;
+
+	VMOVE( base_pt, &arip->curves[0][0] );
+	/* The later subtraction will "undo" this, leaving just base_pt */
+	VADD2( &arip->curves[0][0], &arip->curves[0][0], base_pt);
+
+	gno = 1;
+	for( cur=0; cur<arip->ncurves; cur++ )  {
+		register fastf_t	*fp;
+		int			npts;
+		int			left;
+
+		fp = arip->curves[cur];
+		left = arip->pts_per_curve;
+		for( npts=0; npts < arip->pts_per_curve; npts+=8, left -= 8 )  {
+			register int	el;
+			register int	lim;
+			register struct ars_ext	*bp = &rec[gno].b;
+
+			bp->b_id = ID_ARS_B;
+			bp->b_type = ARSCONT;	/* obsolete? */
+			bp->b_n = cur+1;		/* obsolete? */
+			bp->b_ngranule = (npts/8)+1; /* obsolete? */
+
+			lim = (left > 8 ) ? 8 : left;
+			for( el=0; el < lim; el++ )  {
+				vect_t	diff;
+				VSUB2SCALE( diff, fp, base_pt, conv2mm );
+				/* NOTE: also type converts to dbfloat_t */
+				VMOVE( &(bp->b_values[el*3]), diff );
+				fp += ELEMENTS_PER_VECT;
+			}
+			gno++;
+		}
+	}
+	return(0);
+}
+
+/*
+ *			R T _ A R S _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_ars_describe( str, ip, verbose, units )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+double			units;
+{
+	register int			j;
+	register struct ars_internal	*arip =
+		(struct ars_internal *)ip->idb_ptr;
+	char				buf[256];
+	int				i;
+
+	RT_ARS_CK_MAGIC(arip);
+	rt_vls_strcat( str, "arbitrary rectangular solid (ARS)\n");
+
+	sprintf(buf, "\t%d curves, %d points per curve\n",
+		arip->ncurves, arip->pts_per_curve );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\tV (%g, %g, %g)\n",
+		arip->curves[0][X] * units,
+		arip->curves[0][Y] * units,
+		arip->curves[0][Z] * units );
+	rt_vls_strcat( str, buf );
+
+	if( !verbose )  return;
+
+	/* Print out all the points */
+	for( i=0; i < arip->ncurves; i++ )  {
+		register fastf_t *v = arip->curves[i];
+
+		sprintf( buf, "\tCurve %d:\n", i );
+		rt_vls_strcat( str, buf );
+		for( j=0; j < arip->pts_per_curve; j++ )  {
+			sprintf(buf, "\t\t(%g, %g, %g)\n",
+				v[X] * units,
+				v[Y] * units,
+				v[Z] * units );
+			rt_vls_strcat( str, buf );
+			v += ELEMENTS_PER_VECT;
+		}
+	}
+
+	return(0);
+}
+
+/*
+ *			R T _ A R S _ I F R E E
+ *
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ */
+void
+rt_ars_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	register struct ars_internal	*arip;
+	register int			i;
+
+	RT_CK_DB_INTERNAL(ip);
+	arip = (struct ars_internal *)ip->idb_ptr;
+	RT_ARS_CK_MAGIC(arip);
+
+	/*
+	 *  Free storage for faces
+	 */
+	for( i = 0; i < arip->ncurves; i++ )  {
+		rt_free( (char *)arip->curves[i], "ars curve" );
+	}
+	rt_free( (char *)arip->curves, "ars curve ptrs" );
+	arip->magic = 0;		/* sanity */
+	arip->ncurves = 0;
+	rt_free( (char *)arip, "ars ifree" );
+	ip->idb_ptr = GENPTR_NULL;	/* sanity */
+}
+
+/*
  *			R T _ A R S _ P R E P
  *  
  *  This routine is used to prepare a list of planar faces for
@@ -125,24 +300,42 @@ matp_t		mat;
  *  This routine is unusual in that it has to read additional
  *  database records to obtain all the necessary information.
  */
+#if NEW_IF
 int
-rt_ars_prep( stp, rp, rtip )
+rt_ars_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
+{
+#else
+int
+rt_ars_prep( stp, rec, rtip )
 struct soltab	*stp;
-union record	*rp;
+union record	*rec;
 struct rt_i	*rtip;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
 	register int	i, j;
 	register fastf_t **curves;	/* array of curve base addresses */
 	LOCAL fastf_t	f;
-	LOCAL struct ars_internal ari;
+	struct ars_internal	*arip;
 
-	i = rt_ars_import( &ari, rp, stp->st_pathmat );
-
-	if ( i < 0) {
-		rt_log("rt_ars_prep(%s): db import failure\n", stp->st_name);
-		return(-1);
-	}
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+	ip = &intern;
+	if( rt_ars_import( ip, ep, stp->st_pathmat ) < 0 )
+		return(-1);		/* BAD */
+	RT_CK_DB_INTERNAL( ip );
+#endif
+	arip = (struct ars_internal *)ip->idb_ptr;
 
 	/*
 	 * Compute bounding sphere.
@@ -151,11 +344,11 @@ struct rt_i	*rtip;
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-	for( i = 0; i < ari.ncurves; i++ )  {
+	for( i = 0; i < arip->ncurves; i++ )  {
 		register fastf_t *v;
 
-		v = ari.curves[i];
-		for( j = 0; j < ari.pts_per_curve; j++ )  {
+		v = arip->curves[i];
+		for( j = 0; j < arip->pts_per_curve; j++ )  {
 			VMINMAX( stp->st_min, stp->st_max, v );
 			v += ELEMENTS_PER_VECT;
 		}
@@ -179,12 +372,12 @@ struct rt_i	*rtip;
 	 *  Compute planar faces
 	 *  Will examine curves[i][pts_per_curve], provided by rt_ars_rd_curve.
 	 */
-	for( i = 0; i < ari.ncurves-1; i++ )  {
+	for( i = 0; i < arip->ncurves-1; i++ )  {
 		register fastf_t *v1, *v2;
 
-		v1 = ari.curves[i];
-		v2 = ari.curves[i+1];
-		for( j = 0; j < ari.pts_per_curve;
+		v1 = arip->curves[i];
+		v2 = arip->curves[i+1];
+		for( j = 0; j < arip->pts_per_curve;
 		    j++, v1 += ELEMENTS_PER_VECT, v2 += ELEMENTS_PER_VECT )  {
 		    	/* carefully make faces, w/inward pointing normals */
 			rt_ars_face( stp,
@@ -198,13 +391,7 @@ struct rt_i	*rtip;
 		}
 	}
 
-	/*
-	 *  Free storage for faces
-	 */
-	for( i = 0; i < ari.ncurves; i++ )  {
-		rt_free( (char *)ari.curves[i], "ars curve" );
-	}
-	rt_free( (char *)ari.curves, "ars curve ptrs" );
+	rt_ars_ifree( ip );
 
 	return(0);		/* OK */
 }
@@ -602,6 +789,17 @@ rt_ars_class()
 /*
  *			R T _ A R S _ P L O T
  */
+#if NEW_IF
+int
+rt_ars_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_ars_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol  )
 union record		*rp;
@@ -612,53 +810,79 @@ double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	register int	i;
 	register int	j;
-	struct ars_internal ari;
+	struct ars_internal	*arip;
 
-	i = rt_ars_import(&ari, rp, mat );
-
-	if ( i < 0) {
-		rt_log("rt_ars_plot: db import failure\n");
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_ars_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_ars_plot(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	arip = (struct ars_internal *)ip->idb_ptr;
+	RT_ARS_CK_MAGIC(arip);
 
 	/*
 	 *  Draw the "waterlines", by tracing each curve.
 	 *  n+1th point is first point replicated by code above.
 	 */
-	for( i = 0; i < ari.ncurves; i++ )  {
+	for( i = 0; i < arip->ncurves; i++ )  {
 		register fastf_t *v1;
 
-		v1 = ari.curves[i];
+		v1 = arip->curves[i];
 		ADD_VL( vhead, v1, 0 );
 		v1 += ELEMENTS_PER_VECT;
-		for( j = 1; j <= ari.pts_per_curve; j++, v1 += ELEMENTS_PER_VECT )
+		for( j = 1; j <= arip->pts_per_curve; j++, v1 += ELEMENTS_PER_VECT )
 			ADD_VL( vhead, v1, 1 );
 	}
 
 	/*
 	 *  Connect the Ith points on each curve, to make a mesh.
 	 */
-	for( i = 0; i < ari.pts_per_curve; i++ )  {
-		ADD_VL( vhead, &ari.curves[0][i*ELEMENTS_PER_VECT], 0 );
-		for( j = 1; j < ari.ncurves; j++ )
-			ADD_VL( vhead, &ari.curves[j][i*ELEMENTS_PER_VECT], 1 );
+	for( i = 0; i < arip->pts_per_curve; i++ )  {
+		ADD_VL( vhead, &arip->curves[0][i*ELEMENTS_PER_VECT], 0 );
+		for( j = 1; j < arip->ncurves; j++ )
+			ADD_VL( vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], 1 );
 	}
 
 	/*
 	 *  Free storage for faces
 	 */
-	for( i = 0; i < ari.ncurves; i++ )  {
-		rt_free( (char *)ari.curves[i], "ars curve" );
+	for( i = 0; i < arip->ncurves; i++ )  {
+		rt_free( (char *)arip->curves[i], "ars curve" );
 	}
-	rt_free( (char *)ari.curves, "ars curves[]" );
+	rt_free( (char *)arip->curves, "ars curves[]" );
 	return(0);
 }
 
 /*
  *			R T _ A R S _ T E S S
  */
+#if NEW_IF
+int
+rt_ars_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+register mat_t		mat;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_ars_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -670,21 +894,35 @@ double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	register int	i;
 	register int	j;
-	struct ars_internal ari;
+	struct ars_internal	*arip;
 	struct shell	*s;
 	struct vertex	**verts;
 	struct faceuse	*fu;
 	fastf_t		tol;
 	fastf_t		tol_sq;
 
-	i = rt_ars_import( &ari, rp, mat );
-
-	if ( i < 0) {
-		rt_log("rt_ars_tess: db import failure\n");
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_ars_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_ars_tess(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	arip = (struct ars_internal *)ip->idb_ptr;
+	RT_ARS_CK_MAGIC(arip);
 
 	/* rel_tol is hard to deal with, given we don't know the RPP yet */
 	tol = abs_tol;
@@ -697,12 +935,12 @@ double			norm_tol;
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
 
-	verts = (struct vertex **)rt_calloc( ari.ncurves * (ari.pts_per_curve+1),
+	verts = (struct vertex **)rt_calloc( arip->ncurves * (arip->pts_per_curve+1),
 		sizeof(struct vertex *),
 		"rt_tor_tess *verts[]" );
 
-#define IJ(ii,jj)	(((i+(ii))*(ari.pts_per_curve+1))+(j+(jj)))
-#define ARS_PT(ii,jj)	(&ari.curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
+#define IJ(ii,jj)	(((i+(ii))*(arip->pts_per_curve+1))+(j+(jj)))
+#define ARS_PT(ii,jj)	(&arip->curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
 #define FIND_IJ(a,b)	\
 	if( !(verts[IJ(a,b)]) )  { \
 		verts[IJ(a,b)] = \
@@ -717,8 +955,8 @@ double			norm_tol;
 	 *  Draw the "waterlines", by tracing each curve.
 	 *  n+1th point is first point replicated by import code.
 	 */
-	for( i = 0; i < ari.ncurves-1; i++ )  {
-		for( j = 0; j < ari.pts_per_curve; j++ )  {
+	for( i = 0; i < arip->ncurves-1; i++ )  {
+		for( j = 0; j < arip->pts_per_curve; j++ )  {
 			struct vertex **corners[3];
 
 			/*
@@ -787,9 +1025,9 @@ double			norm_tol;
 	/*
 	 *  Free storage for imported curves
 	 */
-	for( i = 0; i < ari.ncurves; i++ )  {
-		rt_free( (char *)ari.curves[i], "ars curve" );
+	for( i = 0; i < arip->ncurves; i++ )  {
+		rt_free( (char *)arip->curves[i], "ars curve" );
 	}
-	rt_free( (char *)ari.curves, "ars curves[]" );
+	rt_free( (char *)arip->curves, "ars curves[]" );
 	return(0);
 }
