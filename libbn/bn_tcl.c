@@ -20,7 +20,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 
@@ -50,7 +50,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 
 int
-bn_decode_mat(mat_t m, const char *str)
+bn_decode_mat(m, str)
+mat_t m;
+char *str;
 {
 	if( strcmp( str, "I" ) == 0 )  {
 		bn_mat_idn( m );
@@ -64,102 +66,76 @@ bn_decode_mat(mat_t m, const char *str)
 	    &m[8], &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
 }
 
-/*
- *			B N _ D E C O D E _ T O L
- *
- *  If the user specifies {}, or only the distance tolerance,
- *  provide the same defaults that LIBRT uses.
- */
 int
-bn_decode_tol(struct bn_tol *tol, const char *str)
-{
-	tol->magic = BN_TOL_MAGIC;
-
-	/* provide meaningful defaults */
-	tol->dist = 0.005;
-	tol->perp = 1e-6;
-
-	if( *str == '{' )  str++;
-	(void)sscanf(str, "%lf %lf", &tol->dist, &tol->perp);
-	tol->dist_sq = tol->dist * tol->dist;
-	tol->para = 1 - tol->perp;
-
-	return 2;	/* You always get something good */
-}
-
-int
-bn_decode_quat(quat_t q, const char *str)
+bn_decode_quat(q, str)
+quat_t q;
+char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
 }
 
 int
-bn_decode_vect( vect_t v, const char *str )
+bn_decode_vect(v, str)
+vect_t v;
+char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
 }
 
 int
-bn_decode_hvect(hvect_t v, const char *str)
+bn_decode_hvect(v, str)
+hvect_t v;
+char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
 }
-
-int
-bn_decode_plane(plane_t v, const char *str)
-{
-	if( *str == '{' )  str++;
-	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
-}
-
-/*
- *  Encoding routines.
- *  All these tuples should be wrapped in {}s.
- */
 
 void
-bn_encode_mat(struct bu_vls *vp, const mat_t m)
+bn_encode_mat(vp, m)
+struct bu_vls *vp;
+mat_t m;
 {
 	if( m == NULL )  {
 		bu_vls_putc(vp, 'I');
 		return;
 	}
 
-	bu_vls_printf(vp, "{%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g} ",
+	bu_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
 	    m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7],
 	    m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
 }
 
 void
-bn_encode_quat(struct bu_vls *vp, const quat_t q)
+bn_encode_quat(vp, q)
+struct bu_vls *vp;
+quat_t q;
 {
-	bu_vls_printf(vp, "{%g %g %g %g} ", V4ARGS(q));
+	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
 }
 
 void
-bn_encode_vect(struct bu_vls *vp, const vect_t v)
+bn_encode_vect(vp, v)
+struct bu_vls *vp;
+vect_t v;
 {
-	bu_vls_printf(vp, "{%g %g %g} ", V3ARGS(v));
+	bu_vls_printf(vp, "%g %g %g", V3ARGS(v));
 }
 
 void
-bn_encode_hvect(struct bu_vls *vp, const hvect_t v)
+bn_encode_hvect(vp, v)
+struct bu_vls *vp;
+hvect_t v;
 {
-	bu_vls_printf(vp, "{%g %g %g %g} ", V4ARGS(v));
+	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(v));
 }
-
-/*
- *  Wrappers for macros and multiple-return-value functions
- */
 
 void
 bn_quat_distance_wrapper(dp, q1, q2)
 double *dp;
-const quat_t q1;
-const quat_t q2;
+quat_t q1, q2;
 {
 	*dp = quat_distance(q1, q2);
 }
@@ -209,16 +185,16 @@ CONST vect_t dir;
 }
 
 /*
- *			B N _ M A T H _ C M D _ V O I D
+ *			B N _ M A T H _ C M D
  *
- * Tcl wrappers for the math functions of type void.
+ * Tcl wrappers for the math functions.
  *
  * This is where you should put clauses, in the below "if" statement, to add
  * Tcl support for the LIBBN math routines.
  */
 
 int
-bn_math_cmd_void(clientData, interp, argc, argv)
+bn_math_cmd(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -562,119 +538,45 @@ error:
 	return TCL_ERROR;
 }
 
-static struct math_func_link_void {
+static struct math_func_link {
 	char *name;
 	void (*func)();
-} math_funcs_void[] = {
-	{"mat_mul",            bn_mat_mul},
-	{"mat_inv",            bn_mat_inv},
-	{"mat_trn",            bn_mat_trn},
-	{"matXvec",            bn_matXvec},
-	{"mat4x3vec",          bn_mat4x3vec},
-	{"mat4x3pnt",          bn_mat4x3pnt},
-	{"hdivide",            bn_hdivide},
-	{"vjoin1",	       bn_vjoin1},
-	{"mat_ae",             bn_mat_ae},
-	{"mat_ae_vec",         bn_ae_vec},	/* wrong name! */
-	{"bn_ae_vec",          bn_ae_vec},
-	{"mat_aet_vec",        bn_aet_vec},
-	{"bn_aet_vec",         bn_aet_vec},	/* wrong name! */
-	{"mat_angles",         bn_mat_angles},
-	{"mat_eigen2x2",       bn_eigen2x2},
-	{"mat_fromto",         bn_mat_fromto},
-	{"mat_xrot",           bn_mat_xrot},
-	{"mat_yrot",           bn_mat_yrot},
-	{"mat_zrot",           bn_mat_zrot},
-	{"mat_lookat",         bn_mat_lookat},
-	{"mat_vec_ortho",      bn_vec_ortho},	/* wrong name! */
-	{"bn_vec_ortho",       bn_vec_ortho},
-	{"mat_vec_perp",       bn_vec_perp},	/* wrong name! */
-	{"bn_vec_perp",        bn_vec_perp},
-	{"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper},
-	{"mat_xform_about_pt", bn_mat_xform_about_pt},
-	{"mat_arb_rot",        bn_mat_arb_rot},
-	{"quat_mat2quat",      quat_mat2quat},
-	{"quat_quat2mat",      quat_quat2mat},
-	{"quat_distance",      bn_quat_distance_wrapper},
-	{"quat_double",        quat_double},
-	{"quat_bisect",        quat_bisect},
-	{"quat_slerp",         quat_slerp},
-	{"quat_sberp",         quat_sberp},
-	{"quat_make_nearest",  quat_make_nearest},
-	{"quat_exp",           quat_exp},
-	{"quat_log",           quat_log},
-	{0, 0}
+} math_funcs[] = {
+	"mat_mul",            bn_mat_mul,
+	"mat_inv",            bn_mat_inv,
+	"mat_trn",            bn_mat_trn,
+	"matXvec",            bn_matXvec,
+	"mat4x3vec",          bn_mat4x3vec,
+	"mat4x3pnt",          bn_mat4x3pnt,
+	"hdivide",            bn_hdivide,
+	"vjoin1",	      bn_vjoin1,
+	"mat_ae",             bn_mat_ae,
+	"mat_ae_vec",         bn_ae_vec,
+	"mat_aet_vec",        bn_aet_vec,
+	"mat_angles",         bn_mat_angles,
+	"mat_eigen2x2",       bn_eigen2x2,
+	"mat_fromto",         bn_mat_fromto,
+	"mat_xrot",           bn_mat_xrot,
+	"mat_yrot",           bn_mat_yrot,
+	"mat_zrot",           bn_mat_zrot,
+	"mat_lookat",         bn_mat_lookat,
+	"mat_vec_ortho",      bn_vec_ortho,
+	"mat_vec_perp",       bn_vec_perp,
+	"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper,
+	"mat_xform_about_pt", bn_mat_xform_about_pt,
+	"mat_arb_rot",        bn_mat_arb_rot,
+	"quat_mat2quat",      quat_mat2quat,
+	"quat_quat2mat",      quat_quat2mat,
+	"quat_distance",      bn_quat_distance_wrapper,
+	"quat_double",        quat_double,
+	"quat_bisect",        quat_bisect,
+	"quat_slerp",         quat_slerp,
+	"quat_sberp",         quat_sberp,
+	"quat_make_nearest",  quat_make_nearest,
+	"quat_exp",           quat_exp,
+	"quat_log",           quat_log,
+	0, 0
 };
-
-
-/*
- *			B N _ M A T H _ C M D _ I N T
- *
- * Tcl wrappers for the math functions of type int.
- *
- * This is where you should put clauses, in the below "if" statement, to add
- * Tcl support for the LIBBN math routines.
- */
-
-int
-bn_math_cmd_int(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	int (*math_func)();
-	struct bu_vls result;
-
-	math_func = (int (*)())clientData; /* object-to-function cast */
-	bu_vls_init(&result);
-
-	if (math_func == bn_isect_2planes )  {
-		plane_t	a, b;
-		point_t	rpp_min;
-		struct bn_tol tol;
-		point_t	out_pt;
-		vect_t	out_dir;
-		int	ret;
-
-		if( argc != 5 ||
-		    bn_decode_plane(a, argv[1]) < 4 ||
-		    bn_decode_plane(b, argv[2]) < 4 ||
-		    bn_decode_vect(rpp_min, argv[3]) < 3 ||
-		    bn_decode_tol(&tol, argv[4]) < 2
-		)  {
-			bu_vls_printf(&result, "usage: %s plane_a plane_b rpp_min tol\n", argv[0]);
-			goto error;
-		}
-		if( (ret = bn_isect_2planes( out_pt, out_dir, a, b, rpp_min, &tol )) < 0 )  {
-			bu_vls_printf(&result, "bn_isect_2planes() failed, ret=%d\n", ret);
-			goto error;
-		}
-		bn_encode_vect( &result, out_pt );
-		bn_encode_vect( &result, out_dir );
-	} else {
-		bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet", argv[0]);
-		goto error;
-	}
-
-	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-	bu_vls_free(&result);
-	return TCL_OK;
-
-error:
-	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-	bu_vls_free(&result);
-	return TCL_ERROR;
-}
-
-static struct math_func_link_int {
-	char *name;
-	int (*func)();
-} math_funcs_int[] = {
-	{"bn_isect_2planes",	bn_isect_2planes},
-	{0, 0}
-};
-
 
 /*
  *			B N _ C M D _ C O M M O N _ F I L E _ S I Z E
@@ -881,6 +783,47 @@ bn_cmd_noise_slice(ClientData clientData,
 }
 
 
+int
+bn_cmd_random(ClientData clientData,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char **argv)
+{
+	int val;
+	char *str;
+	double rnd;
+	char buf[32];
+
+	if (argc != 2) {
+		Tcl_AppendResult(interp, "Wrong # args:  Should be \"",
+				 argv[0], " varname\"", NULL);
+		return TCL_ERROR;
+	}
+
+	if (! (str=Tcl_GetVar(interp, argv[1], 0))) {
+		Tcl_AppendResult(interp, "Error getting variable ", 
+				 argv[1], NULL);
+		return TCL_ERROR;
+	}
+	val = atoi(str);
+
+	if (val < 0) val = 0;
+
+	rnd = BN_RANDOM(val);
+
+	sprintf(buf, "%d", val);
+
+	if (!Tcl_SetVar(interp, argv[1], buf, 0)) {
+		Tcl_AppendResult(interp, "Error setting variable ",
+				 argv[1], NULL);
+		return TCL_ERROR;
+	}
+
+	sprintf(buf, "%g", rnd);
+	Tcl_AppendResult(interp, buf, NULL);
+	return TCL_OK;
+}
+
 /*
  *			B N _ T C L _ S E T U P
  *
@@ -891,18 +834,11 @@ void
 bn_tcl_setup(interp)
 Tcl_Interp *interp;
 {
-	struct math_func_link_void *vp;
-	struct math_func_link_int *ip;
+	struct math_func_link *mp;
 
-	for (vp = math_funcs_void; vp->name != NULL; vp++) {
-		(void)Tcl_CreateCommand(interp, vp->name, bn_math_cmd_void,
-		    (ClientData)vp->func, /* Function-to-Object pointer cast */
-		    (Tcl_CmdDeleteProc *)NULL);
-	}
-
-	for (ip = math_funcs_int; ip->name != NULL; ip++) {
-		(void)Tcl_CreateCommand(interp, ip->name, bn_math_cmd_int,
-		    (ClientData)ip->func, /* Function-to-Object pointer cast */
+	for (mp = math_funcs; mp->name != NULL; mp++) {
+		(void)Tcl_CreateCommand(interp, mp->name, bn_math_cmd,
+		    (ClientData)mp->func, /* Function-to-Object pointer cast */
 		    (Tcl_CmdDeleteProc *)NULL);
 	}
 
@@ -924,6 +860,10 @@ Tcl_Interp *interp;
 
 	(void)Tcl_CreateCommand(interp, "bn_common_file_size",
 		bn_cmd_common_file_size, (ClientData)NULL,
+		(Tcl_CmdDeleteProc *)NULL);
+
+	(void)Tcl_CreateCommand(interp, "bn_random",
+		bn_cmd_random, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
 
 
