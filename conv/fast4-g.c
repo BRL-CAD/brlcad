@@ -70,13 +70,8 @@ static int	bot=0;			/* Flag: >0 -> There are BOT's in current component */
 static int	warnings=0;		/* Flag: >0 -> Print warning messages */
 static int	debug=0;		/* Debug flag */
 static int	rt_debug=0;		/* rt_g.debug */
-static int	nmg_debug=0;		/* rt_g.NMG_debug */
 static int	quiet=0;		/* flag to not blather */
-static int	sol_count=0;		/* number of solids, used to create unique solid names */
 static int	comp_count=0;		/* Count of components in FASTGEN4 file */
-static long	curr_offset=0;		/* Offset into input file for current element */
-static long	curr_sect=0;		/* Offset into input file for current section card */
-static long	prev_sect=0;		/* Offset into input file for previous section card */
 static int	do_skips=0;		/* flag indicating that not all components will be processed */
 static int	*region_list;		/* array of region_ids to be processed */
 static int	region_list_len=0;	/* actual length of the malloc'd region_list array */
@@ -220,8 +215,6 @@ struct holes
 #define WALL 2
 
 point_t *grid_pts;
-
-static int elem_match[4]={1,2,4,8};
 
 int
 is_a_hole( id )
@@ -2309,7 +2302,6 @@ do_tri()
 	int pt1,pt2,pt3;
 	fastf_t thick;
 	int pos;
-	int overlap;
 
 	if( debug )
 		bu_log( "do_tri: %s\n" , line );
@@ -2560,9 +2552,6 @@ int final;
 	if( debug )
 		bu_log( "do_section(%d): %s\n", final , line );
 
-	prev_sect = curr_sect;
-	curr_sect = curr_offset;
-
 	if( pass )	/* doing geometry */
 	{
 		if( region_id && !skip_region( region_id ) )
@@ -2649,15 +2638,12 @@ int final;
 void
 do_hex1()
 {
-	struct wmember head;
 	fastf_t thick=0.0;
-	point_t points[8];
 	int pos;
 	int pts[8];
 	int element_id;
 	int i;
 	int cont1,cont2;
-	char name[NAMESIZE+1];
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
@@ -2881,7 +2867,6 @@ int pass_number;
 
 	region_id = 0;
 	pass = pass_number;
-	curr_offset = ftell( fdin );
 	if( !getline() || !line[0] )
 		strcpy( line, "ENDDATA" );
 	while( 1 )
@@ -2923,12 +2908,6 @@ int pass_number;
 		}
 		else
 			bu_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
-
-		if( (curr_offset = ftell( fdin )) < 0 )
-		{
-			perror( "ftell" );
-			bu_bomb( "ftell() failed!!\n" );
-		}
 
 		if( !getline() || !line[0] )
 			strcpy( line, "ENDDATA" );
