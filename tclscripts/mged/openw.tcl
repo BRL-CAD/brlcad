@@ -439,7 +439,7 @@ hoc_register_menu_data "Preferences" "Color Schemes..." "Color Schemes"\
 	{ { summary "Tool for setting colors." }
           { see_also "rset" } }
 .$id.menubar.file.pref add command -label "Fonts..." -underline 0 \
-	-command "font_gui_init $id"
+	-command "font_scheme_init $id"
 hoc_register_menu_data "Preferences" "Fonts..." "Fonts" \
 	{ { summary "Tool for creating/configuring named fonts." }
           { see_also "font" } }
@@ -1814,28 +1814,32 @@ if [info exists env(WEB_BROWSER)] {
 	set web_cmd "exec $env(WEB_BROWSER) -display $screen\
 		$mged_html_dir/index.html &"
     }
-} else {
-# Failing that, use the browser specified by mged_default(web_browser)
-    if [ file exists $mged_default(web_browser) ] {
-	set web_cmd "exec $mged_default(web_browser) -display $screen\
-		$mged_html_dir/index.html &"
-    }
 }
 
-# When all else fails, attempt to locate a browser
+# Attempt to locate a browser
 if ![info exists web_cmd] {
-    if [ file exists /usr/bin/netscape ] {
-	set web_cmd "exec /usr/bin/netscape -display $screen\
-		$mged_html_dir/index.html &"
-    } elseif [ file exists /usr/local/bin/netscape ] {
-	set web_cmd "exec /usr/local/bin/netscape -display $screen\
-		$mged_html_dir/index.html &"
-    } elseif [ file exists /usr/X11/bin/netscape ] {
-	set web_cmd "exec /usr/X11/bin/netscape -display $screen\
-		$mged_html_dir/index.html &"
-    } else {
-	# When all else fails use lame built-in browser
-	set web_cmd "ia_man .$id $screen"
+    # First, search the user's path
+    if [info exists env(PATH)] {
+	set pathlist [split $env(PATH) :]
+	foreach path $pathlist {
+	    if [file exists $path/netscape] {
+		set web_cmd "exec $path/netscape -display $screen \
+			$mged_html_dir/index.html &"
+		break;
+	    }
+	}
+    }
+
+    if ![info exists web_cmd] {
+	# Failing that, use the browser specified by mged_default(web_browser)
+	if [ file exists $mged_default(web_browser) ] {
+	    set web_cmd "exec $mged_default(web_browser) -display $screen\
+		    $mged_html_dir/index.html &"
+	} else {
+	    # When all else fails, admit defeat
+	    set web_cmd {puts "Sorry, a web browser is not available."; 
+	    puts "Please check your PATH."}
+	}
     }
 }
 
@@ -2272,7 +2276,7 @@ proc build_edit_info { id } {
 
     if {$mged_gui($id,show_edit_info)} {
 	toplevel .sei$id -screen $mged_gui($id,screen)
-	label .sei$id.l -bg black -fg yellow -textvar edit_info -font fixed
+	label .sei$id.l -bg black -fg yellow -textvar edit_info
 	pack .sei$id.l -expand 1 -fill both
 
 	wm title .sei$id "$id\'s Edit Info"
