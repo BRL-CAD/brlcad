@@ -587,7 +587,14 @@ char **argv;
 
 	for( i=0; i < listc; i += 2 )  {
 		if( strcmp( iwant, listv[i] ) == 0 )  {
-			Tcl_AppendElement( interp, listv[i+1] );
+			/* If value is a list, don't nest it in another list */
+			if( listv[i+1][0] == '{' )  {
+				Tcl_AppendResult( interp, " ",
+					listv[i+1], (char *)NULL );
+			} else {
+				/* Else use caution */
+				Tcl_AppendElement( interp, listv[i+1] );
+			}
 			if(tofree) free( (char *)tofree );	/* not bu_free() */
 			return TCL_OK;
 		}
