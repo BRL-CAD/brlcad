@@ -940,6 +940,11 @@ union tree	*tp;
 	case OP_SOLID:
 		if( tp->tr_a.tu_stp )  {
 			register struct soltab	*stp = tp->tr_a.tu_stp;
+			/* XXX If solid is used multiple times,
+			 * XXX the pointer may now be bogus.
+			 * XXX rt_free() will smash magic number to -1.
+			 */
+			if( stp->l.magic == -1 )  break;	/* XXX */
 			RT_CK_SOLTAB(stp);
 			RT_LIST_DEQUEUE( &(stp->l) );
 			rt_free( (char *)stp, "(union tree) solid" );
