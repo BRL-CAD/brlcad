@@ -83,7 +83,7 @@ class Dm {
     protected variable width 512
     protected variable height 512
     protected variable invWidth ""
-    protected variable aspect ""
+    protected variable aspect 1.0
 
     private variable type X
 }
@@ -260,11 +260,11 @@ body Dm::linestyle {args} {
 
 body Dm::handle_configure {} {
     $itk_component(dm) configure
-    set $itk_option(-dmsize) [$itk_component(dm) size]
+    set itk_option(-dmsize) [$itk_component(dm) size]
     set width [lindex $itk_option(-dmsize) 0]
     set height [lindex $itk_option(-dmsize) 1]
     set invWidth [expr 1.0 / $width]
-    set aspect [expr (1.0 * $width) / $height]
+    set aspect [get_aspect]
 }
 
 body Dm::zclip {args} {
