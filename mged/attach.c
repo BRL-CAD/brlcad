@@ -57,15 +57,18 @@ static void find_new_owner();
 void mged_fb_open();
 void mged_fb_close();
 
-extern void set_port(); /* defined in fbserv.c */
-extern void predictor_init(); /* defined in predictor.c */
-extern void set_scroll();  /* defined in set.c */
+extern struct _color_scheme default_color_scheme;
+extern void cs_set_bg();	/* defined in color_scheme.c */
+extern void set_port();		/* defined in fbserv.c */
+extern void predictor_init();	/* defined in predictor.c */
+extern void set_scroll();	/* defined in set.c */
 
 extern int mged_view_init(); /* defined in chgview.c */
 
 /* All systems can compile these! */
 extern int Plot_dm_init();
 extern int PS_dm_init();
+
 #ifdef DM_X
 extern int X_dm_init();
 extern void X_fb_open();
@@ -88,11 +91,10 @@ extern int Pex_dm_init();
 	IS_DM_TYPE_X(_type) )
 
 extern Tk_Window tkwin;
-extern struct _mged_variables default_mged_variables;
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
 char tmp_str[1024];
-static int windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, -2048, 2047 };
+static int windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
 static char *default_view_strings[] = {
   "top",
@@ -941,8 +943,13 @@ struct dm_list *initial_dm_list;
   int i;
 
   BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
+
   BU_GETSTRUCT(mged_variables, _mged_variables);
   *mged_variables = *initial_dm_list->_mged_variables; /* struct copy */
+
+  BU_GETSTRUCT(color_scheme, _color_scheme);
+  *color_scheme = *initial_dm_list->_color_scheme;	/* struct copy */
+  color_scheme->active = default_color_scheme.active;
 
 #if 1
   bn_mat_copy(Viewrot, initial_dm_list->s_info->_Viewrot);
