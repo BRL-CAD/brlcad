@@ -29,7 +29,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "vmath.h"
 
-#include "../libspl/b_spline.h"
+#include "../libnurb/nurb.h"
+#define B_SPLINE_DEFINED 1		/* currently wdb.h needs this */
+
 #include "wdb.h"
 
 #ifdef SYSV
@@ -71,10 +73,11 @@ double	res;
  *  Write the external MGED description of a single B-spline surface
  *  given it's internal form from b_spline.h
  */
+
 int
-mk_bsurf( filep, bp )
-FILE	*filep;
-struct b_spline *bp;
+mk_bsurf( filep, srf )
+FILE	* filep;
+struct snurb * srf;
 {
 	union record rec;
 	dbfloat_t	*kp;		/* knot vector area */
@@ -84,8 +87,8 @@ struct b_spline *bp;
 	register int	i;
 	int		n;
 
-	if( bp->u_kv->k_size != bp->ctl_mesh->mesh_size[COL] + bp->order[0] ||
-	    bp->v_kv->k_size != bp->ctl_mesh->mesh_size[ROW] + bp->order[1]) {
+	if( srf->u_knots->k_size != srf->mesh->s_size[COL] + srf->order[0] ||
+	    srf->v_knots->k_size != srf->mesh->s_size[ROW] + srf->order[1]) {
 	    	fprintf(stderr,"mk_bsurf:  mis-matched knot/mesh/order\n");
 	    	return(-1);
 	}
@@ -93,38 +96,38 @@ struct b_spline *bp;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.d.d_id = ID_BSURF;
 
-	n = bp->u_kv->k_size + bp->v_kv->k_size;
+	n = srf->u_knots->k_size + srf->v_knots->k_size;
 	n = ((n * sizeof(dbfloat_t)) + sizeof(rec)-1) / sizeof(rec);
 	kp = (dbfloat_t *)malloc(n*sizeof(rec));
 	bzero( (char *)kp, n*sizeof(rec) );
 	rec.d.d_nknots = n;
-	rec.d.d_order[ROW] = bp->order[ROW];	/* [0] */
-	rec.d.d_order[COL] = bp->order[COL];	/* [1] */
-	rec.d.d_kv_size[ROW] = bp->u_kv->k_size;
-	rec.d.d_kv_size[COL] = bp->v_kv->k_size;
+	rec.d.d_order[ROW] = srf->order[ROW];	/* [0] */
+	rec.d.d_order[COL] = srf->order[COL];	/* [1] */
+	rec.d.d_kv_size[ROW] = srf->u_knots->k_size;
+	rec.d.d_kv_size[COL] = srf->v_knots->k_size;
 
-	n = bp->ctl_mesh->mesh_size[ROW] * bp->ctl_mesh->mesh_size[COL] *
-	    bp->ctl_mesh->pt_type;
+	n = srf->mesh->s_size[ROW] * srf->mesh->s_size[COL] *
+	    EXTRACT_COORDS(srf->mesh->pt_type);
 	n = ((n * sizeof(dbfloat_t)) + sizeof(rec)-1) / sizeof(rec);
 	mp = (dbfloat_t *)malloc(n*sizeof(rec));
 	bzero( (char *)mp, n*sizeof(rec) );
 	rec.d.d_nctls = n;
-	rec.d.d_geom_type = bp->ctl_mesh->pt_type;
-	rec.d.d_ctl_size[ROW] = bp->ctl_mesh->mesh_size[ROW];
-	rec.d.d_ctl_size[COL] = bp->ctl_mesh->mesh_size[COL];
+	rec.d.d_geom_type = EXTRACT_COORDS(srf->mesh->pt_type);
+	rec.d.d_ctl_size[ROW] = srf->mesh->s_size[ROW];
+	rec.d.d_ctl_size[COL] = srf->mesh->s_size[COL];
 
 	/* Reformat the knot vectors */
 	dbp = kp;
-	for( i=0; i<bp->u_kv->k_size; i++ )
-		*dbp++ = bp->u_kv->knots[i];
-	for( i=0; i<bp->v_kv->k_size; i++ )
-		*dbp++ = bp->v_kv->knots[i];
+	for( i=0; i<srf->u_knots->k_size; i++ )
+		*dbp++ = srf->u_knots->knots[i];
+	for( i=0; i<srf->v_knots->k_size; i++ )
+		*dbp++ = srf->v_knots->knots[i];
 
 	/* Reformat the mesh */
 	dbp = mp;
-	fp = bp->ctl_mesh->mesh;
-	i = bp->ctl_mesh->mesh_size[ROW] * bp->ctl_mesh->mesh_size[COL] *
-	    bp->ctl_mesh->pt_type;	/* # floats/point */
+	fp = srf->mesh->ctl_points;
+	i = srf->mesh->s_size[ROW] * srf->mesh->s_size[COL] *
+	    EXTRACT_COORDS(srf->mesh->pt_type);	/* # floats/point */
 	for( ; i>0; i-- )
 		*dbp++ = *fp++ * mk_conv2mm;
 
