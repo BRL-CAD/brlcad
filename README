@@ -26,17 +26,16 @@ To obtain a copy of the distribution, you should send the authors:
 .sp
 1)  Enough magnetic tape for 20 Mbytes of data. Standard nine-track
 half-inch magtape is the strongly preferred format, and can be written
-at either 1600 or 6250 bpi, in either TAR format with 10k byte records,
-or CPIO format with 5k byte records. For sites with no half-inch tape
-drives, Silicon Graphics and SUN tape cartridges can also be
-accommodated.
+at either 1600 or 6250 bpi, in TAR format with 10k byte records. For
+sites with no half-inch tape drives, Silicon Graphics and SUN tape
+cartridges can also be accommodated.
 .sp
 2)  A letter indicating:
 .sp
 .nf
 	-- Who you are
 	-- What the BRL CAD package is to be used for
-	-- Equipment and operating system(s) you plan on using
+	-- The equipment and operating system(s) you plan on using
 	-- That you agree to the conditions listed below.
 .fi
 .sp
@@ -68,19 +67,24 @@ authorization from BRL.
 6. You will own full rights to any databases or images you create with this
 package.
 .sp
-For non-US sites, an extra step is required. Any requests from Foreign
-governments should be sent on a Government to Government basis. You must
-send your letter and tape to your Ambassador to the United States in
-Washington DC, for forwarding to BRL through official channels. Have
-your Embassy send the request to the Deputy Chief of Staff for
-Intelligence, Department of the Army; they handle all requests from
-foreign governments.  This procedure has been used many times now, and
-works successfully. The address to use is:
+All requests from US citizens, or from US government agencies should be
+sent to:
 .sp
 .nf
-	Deputy Chief of Staff for Intelligence
+	Ballistic Research Lab
+	Attn: Mike Muuss
+	APG, MD  21005-5066
+.fi
+.sp
+If you are not a US citizen (regardless of any affiliation with a
+US industry), or if you represent a foreign-owned or foreign-controlled
+industry, you must send your letter and tape through your Ambassador to
+the United States in Washington DC. Have your Ambassador submit the
+request to:
+.sp
+.nf
 	Army Headquarters
-	ATTN: DAM-CIT
+	Attn: DAMI-FL
 	Washington, DC  20310
 .fi
 .sp
