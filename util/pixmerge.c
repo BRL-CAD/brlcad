@@ -42,6 +42,7 @@ static FILE	*f2;
 #define LT	1
 #define EQ	2
 #define GT	4
+#define NE	8
 static int	wanted;			/* LT|EQ|GT conditions to pick fb */
 
 static int	seen_const;
@@ -82,7 +83,7 @@ register char **argv;
 			seen_formula = 1;
 			break;
 		case 'n':
-			wanted |= GT|LT;
+			wanted |= NE;
 			seen_formula = 1;
 			break;
 		case 'w':
@@ -158,6 +159,7 @@ char **argv;
 	if( wanted & LT )  putc( '<', stderr );
 	if( wanted & EQ )  putc( '=', stderr );
 	if( wanted & GT )  putc( '>', stderr );
+	if( wanted & NE )  fprintf( stderr, "!=" );
 	if( seen_const )  {
 		register int i;
 
@@ -210,16 +212,24 @@ char **argv;
 				bp = const;
 			else
 				bp = cb2;
-			for( ep = cb1+width; ap < ep; ap++,bp++ )  {
-				if( *ap > *bp )  {
-					if( !(GT & wanted) ) goto fail;
-				} else if( *ap == *bp )  {
-					if( !(EQ & wanted) ) goto fail;
-				} else  {
-					if( !(LT & wanted) ) goto fail;
+			if( wanted & NE )  {
+				for( ep = cb1+width; ap < ep; ap++,bp++ )  {
+					if( *ap != *bp )
+						goto success;
+				}
+				goto fail;
+			} else {
+				for( ep = cb1+width; ap < ep; ap++,bp++ )  {
+					if( *ap > *bp )  {
+						if( !(GT & wanted) ) goto fail;
+					} else if( *ap == *bp )  {
+						if( !(EQ & wanted) ) goto fail;
+					} else  {
+						if( !(LT & wanted) ) goto fail;
+					}
 				}
 			}
-			/* success */
+success:
 			{
 				register int i;
 				ap = cb1;
