@@ -2154,7 +2154,7 @@ int		first;
  *  Given a pointer to any nmg data structure,
  *  build an nmg_ptbl list which cites every edgeuse
  *  pointer from there on "down" in the model
- *  that has both edgeuses within tolerance of the given line.
+ *  that has both vertices within tolerance of the given line.
  */
 void
 nmg_edgeuse_on_line_tabulate( tab, magic_p, pt, dir, tol )
