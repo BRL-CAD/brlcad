@@ -1247,8 +1247,6 @@ FILE		*fp;
 CONST char	*buf;
 unsigned	bytes;
 {	
-	int	bytes_written;
-
 	if( bytes == 0 )  return;
 
 	if( fwrite( buf, bytes, 1, fp ) != 1 )  {
@@ -1272,8 +1270,6 @@ unsigned	bytes;
 deck( prefix )
 register char *prefix;
 {	
-	register int	i;
-
 	nns = nnr = 0;
 
 	/* Create file for solid table.					*/

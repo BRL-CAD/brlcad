@@ -184,7 +184,7 @@ FILE	*fp;
 char	*name;
 int	width, height;		/* in points */
 {
-	long	ltime;
+	time_t	ltime;
 
 	ltime = time(0);
 

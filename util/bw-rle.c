@@ -37,9 +37,11 @@ static char RCSid[] = "@(#)$Id$ (BRL)";
 static rle_hdr	outrle;
 #define		outfp		outrle.rle_file
 static char			comment[128];
+#if HAVE_GETHOSTNAME
 static char			host[128];
+#endif
 static rle_pixel		**rows;
-static long			now;
+static time_t			now;
 static char			*who;
 
 static FILE	*infp;
@@ -175,7 +177,7 @@ char	*argv[];
 			rle_putcom( strdup(comment), &outrle );
 		}
 	}
-#	ifdef BSD
+#	if HAVE_GETHOSTNAME
 	gethostname( host, sizeof(host) );
 	sprintf( comment, "converted_host=%s", host);
 	rle_putcom( strdup(comment), &outrle );
