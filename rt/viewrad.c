@@ -129,7 +129,7 @@ struct application *ap;
 	rt_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
 
 	/* Header Record */
-	bzero( &r, sizeof(r) );
+	bzero( (char *)&r, sizeof(r) );
 
 	/*XXX*/
 	r.h.head[0] = 'h'; r.h.head[1] = 'e';
@@ -155,7 +155,7 @@ struct application *ap;
 	writerec( &r, outfp );
 
 	/* XXX - write extra header records */
-	bzero( &r, sizeof(r) );
+	bzero( (char *)&r, sizeof(r) );
 	writerec( &r, outfp );
 	writerec( &r, outfp );
 }
@@ -403,7 +403,7 @@ int depth;
 	/* Firing record */
 	/*printf( "Ray [%d %d], depth = %d\n", ap->a_x, ap->a_y, depth );*/
 
-	bzero( &r, sizeof(r) );
+	bzero( (char *)&r, sizeof(r) );
 
 	/*XXX*/
 	r.f.head[0] = 'f'; r.f.head[1] = 'i';
@@ -437,7 +437,7 @@ int depth;
 		return;			/* no escape */
 
 	/* Escape record */
-	bzero( &r, sizeof(r) );
+	bzero( (char *)&r, sizeof(r) );
 
 	/*XXX*/
 	r.e.head[0] = 'e'; r.e.head[1] = 's';
@@ -464,7 +464,7 @@ struct rayinfo *rp;
 #endif
 
 	/* Reflection record */
-	bzero( &r, sizeof(r) );
+	bzero( (char *)&r, sizeof(r) );
 
 	/*XXX*/
 	r.r.head[0] = 'r'; r.r.head[1] = 'e';
@@ -532,7 +532,7 @@ static int totbuf = 0;
 int buf = 0;
 
 	/* Pad out the record if not full */
-	bzero( &skiprec, sizeof(skiprec) );
+	bzero( (char *)&skiprec, sizeof(skiprec) );
 	skiprec.p.pad[16] = -1;
 	while( precindex < 256 ) {
 		bcopy( &skiprec, &physrec[precindex*sizeof(union radrec)], sizeof(skiprec) );
@@ -548,7 +548,7 @@ buf++;
 	}
 	fwrite( &length, sizeof(length), 1, fp );
 
-	bzero( physrec, sizeof(physrec) );	/* paranoia */
+	bzero( (char *)physrec, sizeof(physrec) );	/* paranoia */
 	precindex = 0;
 	precnum++;
 

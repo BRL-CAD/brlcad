@@ -420,11 +420,13 @@ extern struct structparse view_parse[];
 #  endif
 #endif
 struct structparse set_parse[] = {
+#if !defined(__alpha)	/* XXX Alpha does not support this initialization! */
 	{"%d",	1, "width",	byteoffset(width),		FUNC_NULL },
 	{"%d",	1, "height",	byteoffset(height),		FUNC_NULL },
 	{"%f",	1, "perspective", byteoffset(rt_perspective),	FUNC_NULL },
 	{"%f",	1, "angle",	byteoffset(rt_perspective),	FUNC_NULL },
 	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, FUNC_NULL },
+#endif
 	{"",	0, (char *)0,	0,				FUNC_NULL }
 };
 
