@@ -55,6 +55,9 @@ register struct rt_i *rtip;
 {
 	register struct soltab *stp;
 	FILE *plotfp;
+	struct histogram xhist;
+	struct histogram yhist;
+	struct histogram zhist;
 
 	rtip->rti_CutHead.bn.bn_type = CUT_BOXNODE;
 	VMOVE( rtip->rti_CutHead.bn.bn_min, rtip->mdl_min );
@@ -72,6 +75,54 @@ register struct rt_i *rtip;
 			rt_cut_extend( &rtip->rti_CutHead, stp );
 		}
 	}
+
+	/* For plotting, compute a slight enlargement of the model RPP,
+	 * to allow room for rays clipped to the model RPP to be depicted.
+	 * Always do this, because application debugging may use it too.
+	 */
+	{
+		register fastf_t f, diff;
+
+		diff = (rtip->mdl_max[X] - rtip->mdl_min[X]);
+		f = (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
+		if( f > diff )  diff = f;
+		f = (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
+		if( f > diff )  diff = f;
+		diff *= 0.1;	/* 10% expansion of box */
+		rtip->rti_pmin[0] = rtip->mdl_min[0] - diff;
+		rtip->rti_pmin[1] = rtip->mdl_min[1] - diff;
+		rtip->rti_pmin[2] = rtip->mdl_min[2] - diff;
+		rtip->rti_pmax[0] = rtip->mdl_max[0] + diff;
+		rtip->rti_pmax[1] = rtip->mdl_max[1] + diff;
+		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
+	}
+
+	/*
+	 *  Build histograms of solid RPP extent distribution
+	 *  when projected onto X, Y, and Z axes.
+	 *  First stage in implementing the Gigante NUgrid algorithm.
+	 *  (Proc. Ausgraph 1990, pg 157)
+	 *  XXX For small or huge models, needs a floating-point histogram.
+	 */
+#define	RT_NUGRID_NBINS	120
+	rt_hist_init( &xhist, (int)rtip->rti_pmin[X], (int)rtip->rti_pmax[X], RT_NUGRID_NBINS );
+	rt_hist_init( &yhist, (int)rtip->rti_pmin[Y], (int)rtip->rti_pmax[Y], RT_NUGRID_NBINS );
+	rt_hist_init( &zhist, (int)rtip->rti_pmin[Z], (int)rtip->rti_pmax[Z], RT_NUGRID_NBINS );
+	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		if( stp->st_aradius >= INFINITY )  continue;
+		rt_hist_range( &xhist, (int)stp->st_min[X], (int)stp->st_max[X] );
+		rt_hist_range( &yhist, (int)stp->st_min[Y], (int)stp->st_max[Y] );
+		rt_hist_range( &zhist, (int)stp->st_min[Z], (int)stp->st_max[Z] );
+	}
+	if(rt_g.debug&DEBUG_CUT)  {
+		rt_hist_pr( &xhist, "cut_tree:  solid RPP extent distribution in X" );
+		rt_hist_pr( &yhist, "cut_tree:  solid RPP extent distribution in Y" );
+		rt_hist_pr( &zhist, "cut_tree:  solid RPP extent distribution in Z" );
+	}
+	rt_hist_free( &xhist );
+	rt_hist_free( &yhist );
+	rt_hist_free( &zhist );
+
 	/*  Dynamic decisions on tree limits.
 	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
 	 *  but solids will typically span several leaves.
@@ -97,28 +148,6 @@ register struct rt_i *rtip;
 		((double)rtip->rti_cut_totobj)/rtip->rti_cut_nbins );
 		rt_hist_pr( &rtip->rti_hist_cellsize, "cut_tree: Number of solids per leaf cell");
 		rt_hist_pr( &rtip->rti_hist_cutdepth, "cut_tree: Depth (height)"); 
-	}
-
-	/* For plotting, build slightly enlarged model RPP, to
-	 * allow rays clipped to the model RPP to be depicted,
-	 * and compute a scale factor for using 4096 units.
-	 * Always do this, because application debugging uses it too.
-	 */
-	{
-		register fastf_t f, diff;
-
-		diff = (rtip->mdl_max[X] - rtip->mdl_min[X]);
-		f = (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
-		if( f > diff )  diff = f;
-		f = (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
-		if( f > diff )  diff = f;
-		diff *= 0.1;	/* 10% expansion of box */
-		rtip->rti_pmin[0] = rtip->mdl_min[0] - diff;
-		rtip->rti_pmin[1] = rtip->mdl_min[1] - diff;
-		rtip->rti_pmin[2] = rtip->mdl_min[2] - diff;
-		rtip->rti_pmax[0] = rtip->mdl_max[0] + diff;
-		rtip->rti_pmax[1] = rtip->mdl_max[1] + diff;
-		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
 	}
 
 	if( rt_g.debug&DEBUG_PLOTBOX )  {
