@@ -859,10 +859,8 @@ const struct rt_functab rt_functab[] = {
 		rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
 		rt_dsp_describe,rt_dsp_xform,	rt_dsp_parse,
 		sizeof(struct rt_dsp_internal), RT_DSP_INTERNAL_MAGIC,
-	        rt_dsp_tclget,
-	 rt_dsp_tcladjust,
-	 rt_nul_tclform,
-		NULL,
+	        rt_dsp_tclget,  rt_dsp_tcladjust, rt_nul_tclform, 
+	        rt_nul_make,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_SKETCH", "sketch",
