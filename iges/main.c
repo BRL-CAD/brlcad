@@ -53,8 +53,9 @@ int argc;
 char *argv[];
 {
 	int i;
+	int do_splines=0;
 
-	if( argc != 3 )
+	if( argc != 3 && argc != 4 )
 		usage();
 
 	printf( "%s", version+5);
@@ -64,6 +65,14 @@ char *argv[];
 	regroot = NULL;
 	edge_root = NULL;
 	vertex_root = NULL;
+
+	if( argc == 4 )
+	{
+		if( strcmp( *++argv , "-n" ) )
+			usage();
+		else
+			do_splines = 1;
+	}
 
 	fd = fopen( *++argv , "r" );	/* open IGES file */
 	if( fd == NULL )
@@ -123,7 +132,8 @@ char *argv[];
 
 	Convsolids();	/* Convert solid entities */
 
-	Convsurfs();	/* Convert NURBS */
+	if( do_splines )
+		Convsurfs();	/* Convert NURBS */
 
 	Convtree();	/* Convert Boolean Trees */
 
