@@ -697,7 +697,7 @@ start_face_loops:
 				rt_bomb("nmg_eval_shell() retaining face with no loops?\n");
 			}
 		}
-		if( s != bs->bs_dest )  {
+		if( fu->last->s_p != bs->bs_dest )  {
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x moved to A shell\n", fu);
 			nmg_mv_fu_between_shells( bs->bs_dest, s, fu->last );
@@ -729,7 +729,7 @@ start_wire_loop:
 			goto start_wire_loop;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( s == bs->bs_dest )  break;
+			if( lu->last->up.s_p == bs->bs_dest )  break;
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu->last );
 			goto start_wire_loop;
 		}
@@ -752,7 +752,7 @@ start_wire_edge:
 			goto start_wire_edge;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( s == bs->bs_dest )  break;
+			if( eu->last->up.s_p == bs->bs_dest )  break;
 			nmg_mv_eu_between_shells( bs->bs_dest, s, eu->last );
 			goto start_wire_edge;
 		}
@@ -791,7 +791,7 @@ start_vertex_loops:
 			goto start_vertex_loops;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( s == bs->bs_dest )  break;
+			if( lu->last->up.s_p == bs->bs_dest )  break;
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu->last );
 			goto start_vertex_loops;
 		}
@@ -811,7 +811,7 @@ start_vertex_loops:
 			break;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( s == bs->bs_dest )  break;
+			if( vu->up.s_p == bs->bs_dest )  break;
 			nmg_mv_vu_between_shells( bs->bs_dest, s, vu );
 			s->vu_p = (struct vertexuse *)0;	/* sanity */
 			break;
