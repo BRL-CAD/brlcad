@@ -240,12 +240,12 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 
 		    if $do_entries {
 			# Bummer, we have to enable the entry to set its value programmatically
-			set save_state [$sform._$attr\E$num configure -state]
+			set save_state [$sform._$attr\E$num cget -state]
 			$sform._$attr\E$num configure -state normal
 			$sform._$attr\E$num delete 0 end
 			$sform._$attr\E$num insert insert \
 				[lindex [lindex $vals $i] $num]
-			$sform._$attr\E$num configure -state [lindex $save_state 4]
+			$sform._$attr\E$num configure -state $save_state
 		    }
 
 		    if $do_state {
@@ -279,11 +279,11 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 
 		    if $do_entries {
 			# Bummer, we have to enable the entry to set its value programmatically
-			set save_state [$sform._$attr\E$num configure -state]
+			set save_state [$sform._$attr\E$num cget -state]
 			$sform._$attr\E$num configure -state normal
 			$sform._$attr\E$num delete 0 end
 			$sform._$attr\E$num insert insert [lindex [lindex $vals $i] $num]
-			$sform._$attr\E$num configure -state [lindex $save_state 4]
+			$sform._$attr\E$num configure -state $save_state
 		    }
 
 		    if $do_state {
@@ -319,13 +319,13 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 
 		    if $do_entries {
 			# Bummer, we have to enable the entry to set its value programmatically
-			set save_state [$sform._$attr\E$num configure -state]
+			set save_state [$sform._$attr\E$num cget -state]
 			$sform._$attr\E$num configure -state normal
 			$sform._$attr\E$num delete 0 end
 			$sform._$attr\E$num insert insert \
 				[format $esolint_control($id,format_string) [expr [lindex \
 				[lindex $vals $i] $num] * $base2local]]
-			$sform._$attr\E$num configure -state [lindex $save_state 4]
+			$sform._$attr\E$num configure -state $save_state
 		    }
 
 		    if $do_state {
