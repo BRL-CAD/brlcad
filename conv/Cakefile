@@ -9,7 +9,7 @@
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
 			asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave \
-			nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g
+			nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g bot_shell-vtk
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -19,6 +19,10 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
+
+bot_shell-vtk: bot_shell-vtk.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBSYSV_DEP
+	CC LDFLAGS bot_shell-vtk.o LIBRT LIBBN LIBBU LIBTCL LIBES LIBSYSV -o bot_shell-vtk
+
 enf-g: enf-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP LIBSYSV_DEP
 	CC LDFLAGS enf-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES LIBSYSV -o enf-g
 
