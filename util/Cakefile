@@ -46,7 +46,7 @@
 dunncolor:	dunncolor.o dunncomm.o
 	CC LDFLAGS -o dunncolor dunncolor.o dunncomm.o LIBES
 
-dunnsnap:	dunnsnap.o dunncomm.o
+dunnsnap:	dunnsnap.o dunncomm.o LIBFB_DEP
 	CC LDFLAGS -o dunnsnap dunnsnap.o dunncomm.o LIBFB LIBFB_LIBES LIBES
 
 loop:		loop.o
@@ -92,23 +92,23 @@ pixuntile:	pixuntile.o
 
 /* Old RLE Programs (Utah format Edition 2) */
 
-orle-pix:	orle-pix.o
+orle-pix:	orle-pix.o LIBFB_DEP LIBORLE_DEP
 	CC LDFLAGS -o orle-pix orle-pix.o LIBORLE LIBFB LIBFB_LIBES LIBES
 
-pix-orle:	pix-orle.o
+pix-orle:	pix-orle.o LIBORLE_DEP
 	CC LDFLAGS -o pix-orle pix-orle.o LIBORLE LIBES
 
 /* New RLE Programs (Utah format Edition 3) -- matches Utah Raster Toolkit */
 
 /*** oldtonewrle.c ? */
 
-rle-pix:	rle-pix.o strdup.o
+rle-pix:	rle-pix.o strdup.o LIBRLE_DEP
 	CC LDFLAGS -o rle-pix rle-pix.o strdup.o LIBRLE LIBES
 
-pix-rle:	pix-rle.o strdup.o
+pix-rle:	pix-rle.o strdup.o LIBRLE_DEP
 	CC LDFLAGS -o pix-rle pix-rle.o strdup.o LIBRLE LIBES
 
-bw-rle:	bw-rle.o strdup.o
+bw-rle:	bw-rle.o strdup.o LIBRLE_DEP
 	CC LDFLAGS -o bw-rle bw-rle.o strdup.o LIBRLE LIBES
 
 ap-pix:		ap-pix.o
@@ -117,11 +117,11 @@ ap-pix:		ap-pix.o
 pixbackgnd:	pixbackgnd.o
 	CC LDFLAGS -o pixbackgnd pixbackgnd.o LIBES
 
-pixbgstrip:	pixbgstrip.o
-	CC LDFLAGS -o pixbgstrip pixbgstrip.o LIBFB LIBFB_LIBES LIBBN LIBES
+pixbgstrip:	pixbgstrip.o LIBFB_DEP LIBRT_DEP LIBBU_DEP LIBBN_DEP
+	CC LDFLAGS -o pixbgstrip pixbgstrip.o LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBBN LIBES
 
-bw-a:		bw-a.o
-	CC LDFLAGS -o bw-a bw-a.o LIBFB LIBFB_LIBES LIBBN LIBES
+bw-a:		bw-a.o LIBFB_DEP LIBRT_DEP LIBBU_DEP LIBBN_DEP
+	CC LDFLAGS -o bw-a bw-a.o LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 bw-imp:	bw-imp.o
 	CC LDFLAGS -o bw-imp bw-imp.o LIBES
@@ -144,7 +144,7 @@ bwdiff:		bwdiff.o
 bwfilter:	bwfilter.o
 	CC LDFLAGS -o bwfilter bwfilter.o LIBES
 
-bwhist:		bwhist.o
+bwhist:		bwhist.o LIBFB_DEP
 	CC LDFLAGS -o bwhist bwhist.o LIBFB LIBFB_LIBES LIBES
 
 bwhisteq:	bwhisteq.o
@@ -177,10 +177,10 @@ pix-bw3:	pix-bw3.o
 pixfilter:	pixfilter.o
 	CC LDFLAGS -o pixfilter pixfilter.o LIBES
 
-pixhist:	pixhist.o
+pixhist:	pixhist.o LIBFB_DEP
 	CC LDFLAGS -o pixhist pixhist.o LIBFB LIBFB_LIBES LIBES
 
-pixhist3d:	pixhist3d.o
+pixhist3d:	pixhist3d.o LIBFB_DEP
 	CC LDFLAGS -o pixhist3d pixhist3d.o LIBFB LIBFB_LIBES LIBES
 
 pixrect:	pixrect.o
@@ -195,51 +195,51 @@ pixscale:	pixscale.o
 pixembed:	pixembed.o
 	CC LDFLAGS -o pixembed pixembed.o LIBES
 
-pixcut:	pixcut.o
-	CC LDFLAGS -o pixcut pixcut.o LIBFB LIBFB_LIBES LIBBN LIBES
+pixcut:	pixcut.o LIBFB_DEP LIBRT_DEP LIBBU_DEP LIBBN_DEP
+	CC LDFLAGS -o pixcut pixcut.o LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
-pixpaste:	pixpaste.o
-	CC LDFLAGS -o pixpaste pixpaste.o LIBFB LIBFB_LIBES LIBBN LIBES
+pixpaste:	pixpaste.o LIBFB_DEP LIBRT_DEP LIBBU_DEP LIBBN_DEP
+	CC LDFLAGS -o pixpaste pixpaste.o LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 pixstat:	pixstat.o
 	CC LDFLAGS -o pixstat pixstat.o LIBES
 
-pixhist3d-pl:	pixhist3d-pl.o
-	CC LDFLAGS -o pixhist3d-pl pixhist3d-pl.o LIBPLOT LIBES
+pixhist3d-pl:	pixhist3d-pl.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o pixhist3d-pl pixhist3d-pl.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-pl-sgi:		pl-sgi.o
-	CC LDFLAGS -o pl-sgi pl-sgi.o LIBPLOT LIBFB LIBFB_LIBES LIBES
+pl-sgi:		pl-sgi.o LIBPLOT_DEP LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-sgi pl-sgi.o LIBPLOT LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
 
-pl-ps:		pl-ps.o
-	CC LDFLAGS -o pl-ps pl-ps.o LIBPLOT LIBES
+pl-ps:		pl-ps.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-ps pl-ps.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-pldebug:	pldebug.o
-	CC LDFLAGS -o pldebug pldebug.o LIBPLOT LIBES
+pldebug:	pldebug.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o pldebug pldebug.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-plgetframe:	plgetframe.o
-	CC LDFLAGS -o plgetframe plgetframe.o LIBPLOT LIBES
+plgetframe:	plgetframe.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o plgetframe plgetframe.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
 /* Gets LIBPLOT from within LIBRT */
-plrot:		plrot.o
-	CC LDFLAGS -o plrot plrot.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
+plrot:		plrot.o LIBPLOT_DEP LIBBU_DEP LIBBN_DEP
+	CC LDFLAGS -o plrot plrot.o LIBPLOT  LIBBN LIBBU LIBBU_LIBES LIBES
 
-cv:		cv.o
+cv:		cv.o LIBRT_DEP LIBBU_DEP LIBBN_DEP
 	CC LDFLAGS -o cv cv.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 op-bw:		op-bw.o
 	CC LDFLAGS -o op-bw op-bw.o LIBES
 
-plcolor:	plcolor.o
-	CC LDFLAGS -o plcolor plcolor.o LIBPLOT LIBES
+plcolor:	plcolor.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o plcolor plcolor.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-plline2:	plline2.o
-	CC LDFLAGS -o plline2 plline2.o LIBPLOT LIBES
+plline2:	plline2.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o plline2 plline2.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-pl-pl:	pl-pl.o
-	CC LDFLAGS -o pl-pl pl-pl.o LIBPLOT LIBES
+pl-pl:	pl-pl.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-pl pl-pl.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-pl-tek:	pl-tek.o
-	CC LDFLAGS -o pl-tek pl-tek.o LIBPLOT LIBES
+pl-tek:	pl-tek.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-tek pl-tek.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
 buffer:		buffer.o
 	CC LDFLAGS -o buffer buffer.o LIBES
@@ -253,7 +253,7 @@ files-tape:	files-tape.o
 pix3filter:	pix3filter.o
 	CC LDFLAGS -o pix3filter pix3filter.o LIBES
 
-pix-spm:	pix-spm.o
+pix-spm:	pix-spm.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS -o pix-spm pix-spm.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 pix-sun:	pix-sun.o
@@ -271,7 +271,7 @@ pixcolors:	pixcolors.o
 hd:	hd.o
 	CC LDFLAGS -o hd hd.o LIBES
 
-sgi-pix:	sgi-pix.o
+sgi-pix:	sgi-pix.o LIBFB_DEP
 	CC LDFLAGS -o sgi-pix sgi-pix.o LIBFB LIBFB_LIBES LIBES
 
 pixsaturate:	pixsaturate.o
@@ -286,53 +286,53 @@ pixshrink: pixshrink.o
 bwshrink: bwshrink.o
 	CC LDFLAGS -o bwshrink bwshrink.o LIBES
 
-pixhalve: pixhalve.o
-	CC LDFLAGS -o pixhalve pixhalve.o LIBFB LIBFB_LIBES LIBBN LIBES
+pixhalve: pixhalve.o LIBFB_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pixhalve pixhalve.o LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 pix-ps: pix-ps.o
 	CC LDFLAGS -o pix-ps pix-ps.o LIBES
 
-pix-ppm: pix-ppm.o
-	CC LDFLAGS -o pix-ppm pix-ppm.o LIBFB LIBFB_LIBES LIBBN LIBES
+pix-ppm: pix-ppm.o  LIBFB_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pix-ppm pix-ppm.o LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBBN LIBES
 
 pcd-pix: pcd-pix.o
 	CC LDFLAGS -o pcd-pix pcd-pix.o LIBES
 
-pix-yuv: pix-yuv.o
-	CC LDFLAGS -o pix-yuv pix-yuv.o LIBFB LIBFB_LIBES LIBBN LIBES
+pix-yuv: pix-yuv.o LIBFB_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pix-yuv pix-yuv.o LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBBN LIBES
 
-yuv-pix: yuv-pix.o
-	CC LDFLAGS -o yuv-pix yuv-pix.o LIBFB LIBFB_LIBES LIBBN LIBES
+yuv-pix: yuv-pix.o LIBFB_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o yuv-pix yuv-pix.o LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
-plstat: plstat.o
-	CC LDFLAGS -o plstat plstat.o LIBPLOT LIBES
+plstat: plstat.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o plstat plstat.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-pl-asc: pl-asc.o
-	CC LDFLAGS -o pl-asc pl-asc.o LIBPLOT LIBES
+pl-asc: pl-asc.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-asc pl-asc.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-asc-pl: asc-pl.o
-	CC LDFLAGS -o asc-pl asc-pl.o LIBPLOT LIBES
+asc-pl: asc-pl.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o asc-pl asc-pl.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-pl-hpgl: pl-hpgl.o
-	CC LDFLAGS -o pl-hpgl pl-hpgl.o LIBPLOT LIBES
+pl-hpgl: pl-hpgl.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-hpgl pl-hpgl.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
-xyz-pl: xyz-pl.o
-	CC LDFLAGS -o xyz-pl xyz-pl.o LIBPLOT LIBES
+xyz-pl: xyz-pl.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS -o xyz-pl xyz-pl.o LIBPLOT LIBBU LIBBU_LIBES LIBES
 
 azel:	azel.o
 	CC LDFLAGS -o azel azel.o LIBES
 
-bary:	bary.o
+bary:	bary.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS -o bary bary.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
-pixdsplit:	pixdsplit.o
-	CC LDFLAGS -o pixdsplit pixdsplit.o LIBPLOT LIBBU LIBBU_LIBES LIBES
+pixdsplit:	pixdsplit.o LIBPLOT_DEP LIBRT_DEP LIBBU_DEP
+	CC LDFLAGS -o pixdsplit pixdsplit.o LIBPLOT LIBRT LIBBU LIBBU_LIBES LIBES
 
-mst:	mst.o
+mst:	mst.o LIBREDBLACK_DEP LIBBU_DEP
 	CC LDFLAGS -o mst mst.o LIBREDBLACK LIBBU LIBBU_LIBES LIBES
 
-double-asc:	double-asc.o
-	CC LDFLAGS -o double-asc double-asc.o LIBPLOT LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBBN LIBES
+double-asc:	double-asc.o LIBPLOT_DEP LIBFB_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o double-asc double-asc.o LIBPLOT LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBBN LIBES
 
 bwthresh: bwthresh.o
 	CC LDFLAGS -o bwthresh bwthresh.o LIBES
@@ -343,7 +343,7 @@ dpix-pix: dpix-pix.o
 pix-ci:	pix-ci.o
 	CC LDFLAGS -o pix-ci pix-ci.o LIBES
 
-pl-X:	../SRCDIR/pl-X.c
+pl-X:	../SRCDIR/pl-X.c LIBFB_DEP LIBPLOT_DEP
 	CC CFLAGS -I/usr/X11/include -o pl-X ../SRCDIR/pl-X.c LIBFB LIBFB_LIBES LIBPLOT LIBES
 
 pl-X10:	pl-X10.o
@@ -358,16 +358,16 @@ pixelswap : pixelswap.o
 decimate : decimate.o
 	CC LDFLAGS -o decimate decimate.o
 
-msrandom: msrandom.o LIBBN_DEP LIBBU_DEP
-	CC LDFLAGS -o msrandom msrandom.o LIBBN LIBBU LIBBU_LIBES LIBES
+msrandom: msrandom.o LIBBN_DEP LIBBU_DEP LIBRT_DEP
+	CC LDFLAGS -o msrandom msrandom.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 pixblend:	pixblend.o
 	CC LDFLAGS -o pixblend pixblend.o LIBES
 
-pixmorph:	pixmorph.o
-	CC LDFLAGS -o pixmorph pixmorph.o LIBFB LIBFB_LIBES LIBBN LIBES
+pixmorph:	pixmorph.o LIBFB_DEP LIBBN_DEP LIBBU_DEP LIBRT_DEP
+	CC LDFLAGS -o pixmorph pixmorph.o LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
-pixborder:	pixborder.o
-	CC LDFLAGS -o pixborder pixborder.o LIBFB LIBFB_LIBES LIBBN LIBES
+pixborder:	pixborder.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	CC LDFLAGS -o pixborder pixborder.o LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 #include "../Cakefile.rules"
