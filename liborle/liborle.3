@@ -1,6 +1,6 @@
 .TH LIBRLE 3V VMB
-'\"	last edit:	85/03/22	G. S. Moss
-'\"	SCCS ID:	@(#)librle.3	1.2
+'\"	last edit:	85/03/25	G. S. Moss
+'\"	SCCS ID:	@(#)librle.3	1.3
 .SH NAME
 librle \- run-length encoded image library
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ librle \- run-length encoded image library
 .B int *xsize, *ysize;
 .B int *xpos, *ypos;
 .P
-\fBrle_whdr( stream, bwflag, bgflag, cmflag, bgpixel )\fR
+\fBrle_whdr( stream, ncolors, bgflag, cmflag, bgpixel )\fR
 .B FILE *stream;
 .B Pixel *bgpixel;
 .P
@@ -123,10 +123,14 @@ is used first to specify the encoding scheme to use and to
 write the
 .B
 .SM RLE
-header to the name output stream which will contain this information.
-If
-.I bwflag\^
-is set, the image will saved as monochrome.
+header to the named output stream which will contain this information.
+The
+.I ncolors\^
+parameter specifies the number of color channels.  Normally, this should
+be set to 3 for red, green, and blue channels.  If
+.I ncolors\^
+equals 1, a monochrome (black and white) image is assumed, and if
+it is 0, only the color map will be saved.
 The
 .I bgflag\^
 specifies whether or not the image is saved with the background.  If
@@ -135,16 +139,14 @@ is set, only the foreground image is saved.  If the flag is reset,
 the entire image is encoded.
 .I Rle_whdr\^
 stores the background color along with the other set up information.
-If the
-.I bwflag\^
-is set, the
+If a monochrome image has been specified, the
 .B
 .SM NTSC
 standard is used to calculate the background color from
 .IR bgpixel\^ ,
 otherwise
 .I bgpixel\^
-is used.
+is used as the background color.
 The
 .I cmflag\^
 is used to indicate that the color map is to be saved and this is
@@ -201,10 +203,12 @@ before performing any I/O, but all other functions rely on sequential
 read/write operations on the
 .B
 .SM RLE
-file.
-The main problem would occur in decoding 2 images
-asynchronously.  Since some global information is stored by
+file.  It is not recommended to process 2 images asynchronously, that is,
+you should finish one before you begin the next.
+The problem stems from the fact that some global information is stored by
 .IR rle_rhdr\^ ,
+which is clobbered by subsequent calls.
+Therefore,
 if switching back to an image that is partially decoded, the file offset
 must be determined with
 .IR ftell\^ (3)
@@ -213,6 +217,11 @@ and then
 can be envoked again to set up things and finally
 .IR fseek\^ (3)
 used to reposition the file pointer.
+.SH DISCUSSION
+It would be nice to fix the problem of asynchronous calls by passing a
+pointer to storage for the set up structure to the read/write header and
+read/write scanline routines so that there is no global information
+to contend with.
 .SH EXAMPLE
 The library may be loaded as follows:
 .RS
@@ -230,3 +239,5 @@ libfb(3V)
 All functions will print a message and return a -1 upon error.
 .SH AUTHOR
 Gary S. Moss, BRL/VLD-VMB
+Mike J. Muuss, BRL/SECAD
+Spencer W. Thomas, U. of Utah
