@@ -29,8 +29,8 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 
 struct rt_g rt_g;				/* All global state */
 
-extern int	nul_prep(), nul_class();
-extern int	tor_prep(), tor_class();
+extern int	rt_nul_prep(), rt_nul_class();
+extern int	rt_tor_prep(), rt_tor_class();
 extern int	tgc_prep(), tgc_class();
 extern int	ell_prep(), ell_class();
 extern int	arb_prep(), arb_class();
@@ -42,10 +42,10 @@ extern int	spl_prep(), spl_class();
 extern int	sph_prep(), sph_class();
 extern int	ebm_prep(), ebm_class();
 extern int	vol_prep(), vol_class();
-extern int	arbn_prep(), arbn_class();
+extern int	rt_arbn_prep(), rt_arbn_class();
 
-extern void	nul_print(), nul_norm(), nul_uv();
-extern void	tor_print(), tor_norm(), tor_uv();
+extern void	rt_nul_print(), rt_nul_norm(), rt_nul_uv();
+extern void	rt_tor_print(), rt_tor_norm(), rt_tor_uv();
 extern void	tgc_print(), tgc_norm(), tgc_uv();
 extern void	ell_print(), ell_norm(), ell_uv();
 extern void	arb_print(), arb_norm(), arb_uv();
@@ -57,10 +57,10 @@ extern void	spl_print(), spl_norm(), spl_uv();
 extern void	sph_print(), sph_norm(), sph_uv();
 extern void	ebm_print(), ebm_norm(), ebm_uv();
 extern void	vol_print(), vol_norm(), vol_uv();
-extern void	arbn_print(), arbn_norm(), arbn_uv();
+extern void	rt_arbn_print(), rt_arbn_norm(), rt_arbn_uv();
 
-extern void	nul_curve(), nul_free();
-extern void	tor_curve(), tor_free();
+extern void	rt_nul_curve(), rt_nul_free();
+extern void	rt_tor_curve(), rt_tor_free();
 extern void	tgc_curve(), tgc_free();
 extern void	ell_curve(), ell_free();
 extern void	arb_curve(), arb_free();
@@ -72,10 +72,10 @@ extern void	spl_curve(), spl_free();
 extern void	sph_curve(), sph_free();
 extern void	ebm_curve(), ebm_free();
 extern void	vol_curve(), vol_free();
-extern void	arbn_curve(), arbn_free();
+extern void	rt_arbn_curve(), rt_arbn_free();
 
-extern int	nul_plot();
-extern int	tor_plot();
+extern int	rt_nul_plot();
+extern int	rt_tor_plot();
 extern int	tgc_plot();
 extern int	ell_plot();
 extern int	arb_plot();
@@ -87,10 +87,10 @@ extern int	spl_plot();
 extern int	sph_plot();
 extern int	ebm_plot();
 extern int	vol_plot();
-extern int	arbn_plot();
+extern int	rt_arbn_plot();
 
-extern struct seg *nul_shot();
-extern struct seg *tor_shot();
+extern struct seg *rt_nul_shot();
+extern struct seg *rt_tor_shot();
 extern struct seg *tgc_shot();
 extern struct seg *ell_shot();
 extern struct seg *arb_shot();
@@ -102,20 +102,20 @@ extern struct seg *spl_shot();
 extern struct seg *sph_shot();
 extern struct seg *ebm_shot();
 extern struct seg *vol_shot();
-extern struct seg *arbn_shot();
+extern struct seg *rt_arbn_shot();
 
-extern void	nul_vshot();
+extern void	rt_nul_vshot();
 extern void	ell_vshot();
 extern void	sph_vshot();
 extern void	hlf_vshot();
 extern void	rec_vshot();
 extern void	arb_vshot();
 extern void	tgc_vshot();
-extern void	tor_vshot();
-extern void	arbn_vshot();
+extern void	rt_tor_vshot();
+extern void	rt_arbn_vshot();
 extern void	rt_vstub();	/* XXX vshoot.c */
 
-extern int	nul_tess();
+extern int	rt_nul_tess();
 extern int	ell_tess();
 extern int	sph_tess();
 #if 0
@@ -124,23 +124,23 @@ extern int	rec_tess();
 #endif
 extern int	arb_tess();
 extern int	tgc_tess();
+extern int	rt_tor_tess();
 #if 0
-extern int	tor_tess();
 extern int	ebm_tess();
 extern int	vol_tess();
 #endif
-extern int	arbn_tess();
+extern int	rt_arbn_tess();
 
 struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_NULL",	0,
-		nul_prep,	nul_shot,	nul_print, 	nul_norm,
-	 	nul_uv,		nul_curve,	nul_class,	nul_free,
-		nul_plot,	nul_vshot,	nul_tess,
+		rt_nul_prep,	rt_nul_shot,	rt_nul_print, 	rt_nul_norm,
+	 	rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
+		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,
 		
 	"ID_TOR",	1,
-		tor_prep,	tor_shot,	tor_print,	tor_norm,
-		tor_uv,		tor_curve,	tor_class,	tor_free,
-		tor_plot,	tor_vshot,	nul_tess,
+		rt_tor_prep,	rt_tor_shot,	rt_tor_print,	rt_tor_norm,
+		rt_tor_uv,	rt_tor_curve,	rt_tor_class,	rt_tor_free,
+		rt_tor_plot,	rt_tor_vshot,	rt_tor_tess,
 
 	"ID_TGC",	1,
 		tgc_prep,	tgc_shot,	tgc_print,	tgc_norm,
@@ -160,27 +160,27 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_ARS",	1,
 		ars_prep,	ars_shot,	ars_print,	ars_norm,
 		ars_uv,		ars_curve,	ars_class,	ars_free,
-		ars_plot,	rt_vstub,	nul_tess,
+		ars_plot,	rt_vstub,	rt_nul_tess,
 
 	"ID_HALF",	0,
 		hlf_prep,	hlf_shot,	hlf_print,	hlf_norm,
 		hlf_uv,		hlf_curve,	hlf_class,	hlf_free,
-		hlf_plot,	hlf_vshot,	nul_tess,
+		hlf_plot,	hlf_vshot,	rt_nul_tess,
 
 	"ID_REC",	1,
 		rec_prep,	rec_shot,	rec_print,	rec_norm,
 		rec_uv,		rec_curve,	rec_class,	rec_free,
-		tgc_plot,	rec_vshot,	nul_tess,
+		tgc_plot,	rec_vshot,	rt_nul_tess,
 
 	"ID_POLY",	1,
 		pg_prep,	pg_shot,	pg_print,	pg_norm,
 		pg_uv,		pg_curve,	pg_class,	pg_free,
-		pg_plot,	rt_vstub,	nul_tess,
+		pg_plot,	rt_vstub,	rt_nul_tess,
 
 	"ID_BSPLINE",	1,
 		spl_prep,	spl_shot,	spl_print,	spl_norm,
 		spl_uv,		spl_curve,	spl_class,	spl_free,
-		spl_plot,	rt_vstub,	nul_tess,
+		spl_plot,	rt_vstub,	rt_nul_tess,
 
 	"ID_SPH",	1,
 		sph_prep,	sph_shot,	sph_print,	sph_norm,
@@ -188,29 +188,29 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		ell_plot,	sph_vshot,	sph_tess,
 
 	"ID_STRINGSOL",	0,
-		nul_prep,	nul_shot,	nul_print,	nul_norm,
-		nul_uv,		nul_curve,	nul_class,	nul_free,
-		nul_plot,	nul_vshot,	nul_tess,
+		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
+		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
+		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,
 
 	"ID_EBM",	0,
 		ebm_prep,	ebm_shot,	ebm_print,	ebm_norm,
 		ebm_uv,		ebm_curve,	ebm_class,	ebm_free,
-		ebm_plot,	rt_vstub,	nul_tess,
+		ebm_plot,	rt_vstub,	rt_nul_tess,
 
 	"ID_VOL",	0,
 		vol_prep,	vol_shot,	vol_print,	vol_norm,
 		vol_uv,		vol_curve,	vol_class,	vol_free,
-		vol_plot,	rt_vstub,	nul_tess,
+		vol_plot,	rt_vstub,	rt_nul_tess,
 
 	"ID_ARBN",	0,
-		arbn_prep,	arbn_shot,	arbn_print,	arbn_norm,
-		arbn_uv,	arbn_curve,	arbn_class,	arbn_free,
-		arbn_plot,	arbn_vshot,	arbn_tess,
+		rt_arbn_prep,	rt_arbn_shot,	rt_arbn_print,	rt_arbn_norm,
+		rt_arbn_uv,	rt_arbn_curve,	rt_arbn_class,	rt_arbn_free,
+		rt_arbn_plot,	rt_arbn_vshot,	rt_arbn_tess,
 
 	">ID_MAXIMUM",	0,
-		nul_prep,	nul_shot,	nul_print,	nul_norm,
-		nul_uv,		nul_curve,	nul_class,	nul_free,
-		nul_plot,	nul_vshot,	nul_tess
+		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
+		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
+		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess
 };
 int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 
@@ -221,17 +221,17 @@ int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 #define IDEF(func)	func() { rt_log("func unimplemented\n"); return(0); }
 #define NDEF(func)	func() { rt_log("func unimplemented\n"); return(-1); }
 
-int IDEF(nul_prep)
-struct seg * IDEF(nul_shot)
-void DEF(nul_print)
-void DEF(nul_norm)
-void DEF(nul_uv)
-void DEF(nul_curve)
-int IDEF(nul_class)
-void DEF(nul_free)
-int NDEF(nul_plot)
-void DEF(nul_vshot)
-int NDEF(nul_tess)
+int IDEF(rt_nul_prep)
+struct seg * IDEF(rt_nul_shot)
+void DEF(rt_nul_print)
+void DEF(rt_nul_norm)
+void DEF(rt_nul_uv)
+void DEF(rt_nul_curve)
+int IDEF(rt_nul_class)
+void DEF(rt_nul_free)
+int NDEF(rt_nul_plot)
+void DEF(rt_nul_vshot)
+int NDEF(rt_nul_tess)
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
