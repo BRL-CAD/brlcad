@@ -29,6 +29,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <strings.h>
 #endif
 
+
 #include "machine.h"
 
 #include "./canon.h"
@@ -37,9 +38,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 int ipu_debug = 0;
-#if !(defined(IRIX) && (IRIX == 4 || IRIX == 5))
+
 int dsdebug = 0;
-#endif
 
 static void
 toshort(dest, src)
@@ -60,6 +60,31 @@ int	src;
 	dest[3] = (u_char)src;
 }
 #if defined(IRIX) && (IRIX == 4 || IRIX == 5)
+static void scsi_perror(int val, struct dsreq *dsp)
+{
+	fprintf(stderr, "doscsicmd retuns: %d ds_ret: 0x%02x   ds_status: 0x%02x  ds_msg: 0x%02x\n",
+		val,
+		dsp->ds_ret,
+		dsp->ds_status,
+		dsp->ds_msg);
+	switch(dsp->ds_status) {
+	case  0:
+		fprintf(stderr, "scsi cmd finished normally\n");
+		break;
+	case  0x02:
+		fprintf(stderr, "scsi cmd aborted, check\n");
+		break;
+	case  0x08:
+		fprintf(stderr, "scsi cmd aborted, unit busy\n");
+		break;
+	case  0x10:
+		fprintf(stderr, "scsi cmd with link finished\n");
+		break;
+	case  0x18:
+		fprintf(stderr, "scsi unit aborted, reserved\n");
+		break;
+	}
+}
 /*	I P U _ A C Q U I R E
  *
  *	Wait for the IPU to finish what it was doing.  Exit program if IPU
@@ -191,7 +216,8 @@ ipu_remote(struct dsreq *dsp)
 	filldsreq(dsp, (u_char *)NULL, 0, DSRQ_SENSE);
 
 	if (i=doscsireq(getfd(dsp), dsp)) {
-		if (ipu_debug) fprintf(stderr, "ipu_remote failure %d\n", i);
+		fprintf(stderr, "ipu_remote failure %d\n");
+		scsi_perror(i, dsp);
 		return -1;
 	}
 	return 0;
@@ -225,6 +251,7 @@ ipu_create_file(struct dsreq *dsp,
 {
 	char *p;
 	u_char file_params[8];
+	int i;
 
 	if (ipu_debug)
 		fprintf(stderr, "ipu_create_file(%d, t=%d %dx%d, %d)\n",
@@ -245,9 +272,10 @@ ipu_create_file(struct dsreq *dsp,
 	filldsreq(dsp, file_params, sizeof(file_params),
 		DSRQ_WRITE|DSRQ_SENSE);
 
-	if ( doscsireq(getfd(dsp), dsp) )  {
-		fprintf(stderr, "create_file(%d, %d by %d failed\n",
+	if ( i=doscsireq(getfd(dsp), dsp) )  {
+		fprintf(stderr, "create_file(%d, %d by %d) failed",
 			(int)id, width, height);
+		scsi_perror(i, dsp);
 		exit(-1);
 	}
 }
@@ -264,6 +292,7 @@ ipu_delete_file(struct dsreq *dsp,
 {
 	register char *p;
 	static short ids;
+	int i;
 
 	if (ipu_debug) fprintf(stderr, "ipu_delete_file(%d)\n", id);
 
@@ -276,8 +305,10 @@ ipu_delete_file(struct dsreq *dsp,
 
 	filldsreq(dsp, (u_char *)&ids, 2, DSRQ_WRITE|DSRQ_SENSE);
 
-	if (doscsireq(getfd(dsp), dsp)) {
-		fprintf(stderr, "delete_file(%d)\n", id);
+	if (i=doscsireq(getfd(dsp), dsp)) {
+		fprintf(stderr, "delete_file(%d) failed\n",
+			id);
+		scsi_perror(i, dsp);
 		exit(-1);;
 	}
 }
@@ -294,6 +325,7 @@ ipu_get_image(struct dsreq *dsp,
 {
 	register u_char *p;
 	int size;
+	int i;
 
 	if (ipu_debug) fprintf(stderr, "ipu_get_image()\n");
 
@@ -315,9 +347,10 @@ ipu_get_image(struct dsreq *dsp,
 	}
 
 	filldsreq(dsp, p, size, DSRQ_READ|DSRQ_SENSE);
-	if ( doscsireq(getfd(dsp), dsp) )  {
+	if ( i=doscsireq(getfd(dsp), dsp) )  {
 		fprintf(stderr, "get_image(%d, %d,%d, %d,%d) failed\n",
 			(int)id, sx, sy, w, h);
+		scsi_perror(i, dsp);
 		exit(-1);
 	}
 
@@ -345,6 +378,7 @@ ipu_put_image(struct dsreq *dsp,
 {
 	u_char *ipubuf, *p;
 	int saved_debug;
+	int i;
 
 	int bytes_per_line, lines_per_buf, bytes_per_buf, img_line;
 	int buf_no, buf_line, orphan_lines, fullbuffers, pixel, ip;
@@ -420,10 +454,11 @@ ipu_put_image(struct dsreq *dsp,
 		if (dsdebug)
 			fwrite(ipubuf, bytes_per_buf, 1, fd);
 
-		if ( doscsireq(getfd(dsp), dsp) )  {
+		if ( i=doscsireq(getfd(dsp), dsp) )  {
 			fprintf(stderr,
 			    "\nput_image(%d, %d,%d) buffer %d failed\n",
 			    (int)id, w, h, buf_no);
+			scsi_perror(i, dsp);
 			exit(-1);
 		} else if ( ipu_debug )
 			fprintf(stderr, "buffer %d of %d\r", buf_no, fullbuffers);
@@ -468,10 +503,11 @@ ipu_put_image(struct dsreq *dsp,
 		if (dsdebug)
 			fwrite(ipubuf, orphan_lines*bytes_per_line, 1, fd);
 
-		if ( doscsireq(getfd(dsp), dsp) )  {
+		if ( i=doscsireq(getfd(dsp), dsp) )  {
 			fprintf(stderr,
 			    "\nipu_put_image(%d, %d,%d) orphan_lines failed\n",
 			    (int)id, w, h);
+			scsi_perror(i, dsp);
 			exit(-1);
 		} else if ( ipu_debug )
 			fprintf(stderr, "orphan_lines written\n");
@@ -535,6 +571,7 @@ ipu_print_config(struct dsreq *dsp,
 	u_char params[255];
 	int bytes;
 	int save;
+	int i;
 
 	if (ipu_debug)
 		fprintf(stderr,
@@ -572,8 +609,9 @@ ipu_print_config(struct dsreq *dsp,
 
 	filldsreq(dsp, params, bytes, DSRQ_WRITE|DSRQ_SENSE);
 
-	if ( doscsireq(getfd(dsp), dsp) )  {
-		fprintf(stderr, "error doing print config\n");
+	if ( i=doscsireq(getfd(dsp), dsp) )  {
+		fprintf(stderr, "error doing print config.\n");
+		scsi_perror(i, dsp);
 		exit(-1);
 	}
 	dsdebug = save;
@@ -597,6 +635,7 @@ ipu_print_file(struct dsreq *dsp,
 {
 	register u_char *p;
 	char buf[18];
+	int i;
 
 	if (ipu_debug) fprintf(stderr,
 	"ipu_print_file(id=%d copies=%d wait=%d sx=%d sy=%d sw=%d sh=%d\n\
@@ -627,8 +666,9 @@ ipu_print_file(struct dsreq *dsp,
 	bcopy(pr_param, &buf[14], 4);
 
 	filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_WRITE|DSRQ_SENSE);
-	if ( doscsireq(getfd(dsp), dsp) )  {
+	if ( i=doscsireq(getfd(dsp), dsp) )  {
 		fprintf(stderr, "error printing file %d\n", id);
+		scsi_perror(i, dsp);
 		exit(-1);
 	}
 }
@@ -660,6 +700,7 @@ ipu_scan_config(struct dsreq *dsp,
 	register u_char *p;
 	u_char params[255];
 	int bytes;
+	int i;
 
 	if (ipu_debug) fprintf(stderr, "ipu_scan_config()\n");
 
@@ -699,8 +740,9 @@ ipu_scan_config(struct dsreq *dsp,
 
 	filldsreq(dsp, params, bytes, DSRQ_WRITE|DSRQ_SENSE);
 
-	if ( doscsireq(getfd(dsp), dsp) )  {
-		fprintf(stderr, "error doing scan config\n");
+	if ( i=doscsireq(getfd(dsp), dsp) )  {
+		fprintf(stderr, "error doing scan config.\n");
+		scsi_perror(i, dsp);
 		exit(-1);
 	}
 }
@@ -719,6 +761,7 @@ ipu_scan_file(struct dsreq *dsp,
 {
 	register u_char *p;
 	char buf[18];
+	int i;
 
 	if (ipu_debug) fprintf(stderr,
 		"ipu_scan_file(id=%d wait=%d sx=%d sy=%d sw=%d sh=%d\n\
@@ -742,8 +785,9 @@ ipu_scan_file(struct dsreq *dsp,
 	bcopy(sc_param, &buf[14], 4);
 
 	filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_WRITE|DSRQ_SENSE);
-	if ( doscsireq(getfd(dsp), dsp) )  {
-		fprintf(stderr, "error scanning file %d\n", id);
+	if ( i=doscsireq(getfd(dsp), dsp) )  {
+		fprintf(stderr, "error scanning file %d.\n", id);
+		scsi_perror(i, dsp);
 		exit(-1);
 	}
 }
@@ -773,8 +817,9 @@ ipu_list_files(struct dsreq *dsp)
 
 	filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_READ|DSRQ_SENSE);
 
-	if (doscsireq(getfd(dsp), dsp)) {
-		fprintf(stderr, "error in ipu_list_files()\n");
+	if (i=doscsireq(getfd(dsp), dsp)) {
+		fprintf(stderr, "error in ipu_list_files().\n");
+		scsi_perror(i, dsp);
 		exit(-1);
 	}
 
@@ -818,6 +863,7 @@ ipu_stop(struct dsreq *dsp,
 {
 	register char *p;
 	char buf[18];
+	int i;
 
 	if (ipu_debug) fprintf(stderr, "ipu_stop(%d)\n", halt);
 
@@ -831,8 +877,9 @@ ipu_stop(struct dsreq *dsp,
 	bzero(buf, sizeof(buf));
 	filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_READ|DSRQ_SENSE);
 
-	if (doscsireq(getfd(dsp), dsp) == -1) {
-		fprintf(stderr, "Error doing ipu_stop()\n");
+	if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
+		fprintf(stderr, "Error doing ipu_stop().\n");
+		scsi_perror(i, dsp);
 		exit(-1);
 	}
 
@@ -858,8 +905,9 @@ ipu_get_conf(struct dsreq *dsp)
 	bzero(params, sizeof(params));
 	filldsreq(dsp, params, sizeof(params), DSRQ_READ|DSRQ_SENSE);
 
-	if (doscsireq(getfd(dsp), dsp) == -1) {
-		fprintf(stderr, "Error reading IPU configuration\n");
+	if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
+		fprintf(stderr, "Error reading IPU configuration.\n");
+		scsi_perror(i, dsp);
 		exit(-1);;
 	}
 
@@ -888,8 +936,9 @@ ipu_get_conf(struct dsreq *dsp)
 	bzero(params, sizeof(params));
 	filldsreq(dsp, params, sizeof(params), DSRQ_READ|DSRQ_SENSE);
 
-	if (doscsireq(getfd(dsp), dsp) == -1) {
-		fprintf(stderr, "Error reading IPU configuration\n");
+	if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
+		fprintf(stderr, "Error reading IPU configuration.\n");
+		scsi_perror(i, dsp);
 		exit(-1);;
 	}
 
@@ -971,6 +1020,7 @@ ipu_get_conf_long(struct dsreq *dsp)
 {
 	register u_char *p;
 	static u_char params[65535];
+	int i;
 
 	if (ipu_debug) fprintf(stderr, "ipu_config_printer()\n");
 
@@ -983,8 +1033,9 @@ ipu_get_conf_long(struct dsreq *dsp)
 	bzero(params, sizeof(params));
 	filldsreq(dsp, params, sizeof(params), DSRQ_READ|DSRQ_SENSE);
 
-	if (doscsireq(getfd(dsp), dsp) == -1) {
-		fprintf(stderr, "Error reading IPU configuration\n");
+	if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
+		fprintf(stderr, "Error reading IPU configuration.\n");
+		scsi_perror(i, dsp);
 		exit(-1);;
 	}
 
