@@ -48,6 +48,7 @@ static char RCSxxx[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -1423,4 +1424,254 @@ CONST mat_t	mat;
 	bu_free( (char *)edge_list, "bot edge list" );
 
 	return( 0 );
+}
+
+static char *modes[]={
+	"ERROR: Unrecognized mode",
+	"surf",
+	"volume",
+	"plate"
+};
+
+static char *orientation[]={
+	"ERROR: Unrecognized orientation",
+	"no",
+	"rh",
+	"lh"
+};
+
+static char *los[]={
+	"center",
+	"append"
+};
+
+int
+rt_bot_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+CONST struct rt_db_internal	*intern;
+CONST char			*attr;
+{
+	register struct rt_bot_internal *bot=(struct rt_bot_internal *)intern->idb_ptr;
+	Tcl_DString	ds;
+	struct bu_vls	vls;
+	int		status;
+	int		i;
+
+	RT_BOT_CK_MAGIC( bot );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	if( attr == (char *)NULL )
+	{
+		bu_vls_strcpy( &vls, "BOT" );
+		bu_vls_printf( &vls, " mode %s orient %s V {",
+				modes[bot->mode], orientation[bot->orientation] );
+		for( i=0 ; i<bot->num_vertices ; i++ )
+			bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
+				V3ARGS( &bot->vertices[i*3] ) );
+		bu_vls_strcat( &vls, " } F { " );
+		for( i=0 ; i<bot->num_faces ; i++ )
+			bu_vls_printf( &vls, " { %d %d %d }",
+				V3ARGS( &bot->faces[i*3] ) );
+		bu_vls_strcat( &vls, " }" );
+		if( bot->mode == RT_BOT_PLATE )
+		{
+			bu_vls_strcat( &vls, " T {" );
+			for( i=0 ; i<bot->num_faces ; i++ )
+				bu_vls_printf( &vls, " %.25G", bot->thickness[i] );
+			bu_vls_strcat( &vls, " } fm " );
+			bu_bitv_to_hex( &vls, bot->face_mode );
+		}
+		status = TCL_OK;
+	}
+	else
+	{
+		if( !strncmp( attr, "fm", 2 ) )
+		{
+			if( bot->mode != RT_BOT_PLATE )
+			{
+				bu_vls_strcat( &vls, "Only plate mode BOTs have face_modes" );
+				status = TCL_ERROR;
+			}
+			else
+			{
+				if( attr[2] == '\0' )
+				{
+					bu_bitv_to_hex( &vls, bot->face_mode );
+					status = TCL_OK;
+				}
+				else
+				{
+					i = atoi( &attr[2] ) - 1;
+					if( i < 0 || i >=bot->num_faces )
+					{
+						bu_vls_strcat( &vls, "face number out of range" );
+						status = TCL_ERROR;
+					}
+					else
+					{
+						bu_vls_printf( &vls, "%s",
+							los[BU_BITTEST( bot->face_mode, i )] );
+						status = TCL_OK;
+					}
+				}
+			}
+		}
+		else if( attr[0] == 'V' )
+		{
+			if( attr[1] != '\0' )
+			{
+				i = atoi( &attr[1] ) - 1;
+				if( i < 0 || i >=bot->num_vertices )
+				{
+					bu_vls_strcat( &vls, "vertex number out of range" );
+					status = TCL_ERROR;
+				}
+				else
+				{
+					bu_vls_printf( &vls, "%.25G %.25G %.25G",
+						V3ARGS( &bot->vertices[i*3] ) );
+					status = TCL_OK;
+				}
+			}
+			else
+			{
+				for( i=0 ; i<bot->num_vertices ; i++ )
+					bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
+						V3ARGS( &bot->vertices[i*3] ) );
+				status = TCL_OK;
+			}
+		}
+		else if( attr[0] == 'F' )
+		{
+			if( attr[1] == '\0' )
+			{
+				for( i=0 ; i<bot->num_faces ; i++ )
+					bu_vls_printf( &vls, " { %d %d %d }",
+						V3ARGS( &bot->faces[i*3] ) );
+				status = TCL_OK;
+			}
+			else
+			{
+				i = atoi( &attr[1] ) - 1;
+				if( i < 0 || i >=bot->num_faces )
+				{
+					bu_vls_strcat( &vls, "face number out of range" );
+					status = TCL_ERROR;
+				}
+				else
+				{
+					bu_vls_printf( &vls, "%d %d %d",
+						V3ARGS( &bot->faces[i*3] ) );
+					status = TCL_OK;
+				}
+			}
+		}
+		else if( attr[0] == 'T' )
+		{
+			if( bot->mode != RT_BOT_PLATE )
+			{
+				bu_vls_strcat( &vls, "Only plate mode BOTs have thicknesses" );
+				status = TCL_ERROR;
+			}
+			else
+			{
+				if( attr[1] == '\0' )
+				{
+					for( i=0 ; i<bot->num_faces ; i++ )
+						bu_vls_printf( &vls, " %.25G", bot->thickness[i] );
+					status = TCL_OK;
+				}
+				else
+				{
+					i = atoi( &attr[1] ) - 1;
+					if( i < 0 || i >=bot->num_faces )
+					{
+						bu_vls_strcat( &vls, "face number out of range" );
+						status = TCL_ERROR;
+					}
+					else
+					{
+						bu_vls_printf( &vls, " %.25G", bot->thickness[i] );
+						status = TCL_OK;
+					}
+				}
+			}
+		}
+		else if( !strcmp( attr, "nv" ) )
+		{
+			bu_vls_printf( &vls, "%d", bot->num_vertices );
+			status = TCL_OK;
+		}
+		else if( !strcmp( attr, "nt" ) )
+		{
+			bu_vls_printf( &vls, "%d", bot->num_faces );
+			status = TCL_OK;
+		}
+		else if( !strcmp( attr, "mode" ) )
+		{
+			bu_vls_printf( &vls, "%s", modes[bot->mode] );
+			status = TCL_OK;
+		}
+		else if( !strcmp( attr, "orient" ) )
+		{
+			bu_vls_printf( &vls, "%s", orientation[bot->orientation] );
+			status = TCL_OK;
+		}
+		else
+		{
+			bu_vls_strcat( &vls, "no such attribute" );
+			status = TCL_ERROR;
+		}
+	}
+
+	Tcl_DStringAppendElement( &ds, bu_vls_addr( &vls ) );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+
+	return( status );
+}
+
+int
+rt_bot_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
+{
+	struct rt_bot_internal *bot;
+	Tcl_Obj *obj, *list;
+	int len;
+
+	RT_CK_DB_INTERNAL( intern );
+	bot = (struct rt_bot_internal *)intern->idb_ptr;
+	RT_BOT_CK_MAGIC( bot );
+
+	while( argc >= 2 )
+	{
+		obj = Tcl_NewStringObj( argv[1], -1 );
+		list = Tcl_NewListObj( 0, NULL );
+		Tcl_ListObjAppendList( interp, list, obj );
+
+		if( !strcmp( argv[0], "fm" ) )
+		{
+			bu_log( "fm=%s\n", argv[1] );
+			if( bot->face_mode )
+				bu_free( (char *)bot->face_mode, "bot->face_mode" );
+			bot->face_mode = bu_hex_to_bitv( argv[1] );
+		}
+		else if( *argv[0] == 'V' )
+		{
+			bu_log( "V: %s\n", argv[1] );
+			(void)Tcl_ListObjLength( interp, list, &len );
+			bu_log( "Length = %d\n", len );
+		}
+
+		Tcl_DecrRefCount( list );
+
+		argc -= 2;
+		argv += 2;
+	}
 }
