@@ -37,10 +37,10 @@ INSTALL_ROOT =
 # Directory from which applications will reference the library of Tcl
 # scripts (note: you can set the TCL_LIBRARY environment variable at
 # run-time to override this value):
-TCL_LIBRARY =	$(prefix)/lib/tcl$(VERSION)
+TCL_LIBRARY =	$(prefix)/tcl
 
 # Package search path.
-TCL_PACKAGE_PATH = @TCL_PACKAGE_PATH@
+TCL_PACKAGE_PATH = $(TCL_LIBRARY)
 
 # Path name to use when installing library scripts:
 SCRIPT_INSTALL_DIR =	$(INSTALL_ROOT)$(TCL_LIBRARY)
