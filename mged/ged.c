@@ -171,7 +171,7 @@ char **argv;
 
 	/* Initialize the menu mechanism to be off, but ready. */
 	menu_init();
-	button_menu(0);			/* unlabeled menu */
+	btn_head_menu(0,0,0);		/* unlabeled menu */
 
 	refresh();			/* Put up faceplate */
 
@@ -381,24 +381,28 @@ float xangle, yangle, zangle;
 
 	dmaflag = 1;
 
-	/*
-	 * Joystick is used for parameter or solid rotation (ST_S_EDIT),
-	 * or for object rotation (ST_O_EDIT).
-	 */
-	if( es_edflag == PROT || es_edflag == SROT || movedir == ROTARROW ) {
+	/* Joystick is used for parameter or solid rotation (ST_S_EDIT) */
+	if(es_edflag == PROT || es_edflag == SROT || es_edflag == ROTFACE)  {
 		static mat_t tempp;
 		static vect_t point;
 
 		mat_idn( incr_change );
 		buildHrot( incr_change, xangle, yangle, zangle );
 
-		if( es_edflag == SROT || es_edflag == PROT )  {
-			/* accumulate the translations */
-			mat_mul(tempp, incr_change, acc_rot_sol);
-			mat_copy(acc_rot_sol, tempp);
-			sedit();	/* change es_rec only, NOW */
-			return;
-		}
+		/* accumulate the translations */
+		mat_mul(tempp, incr_change, acc_rot_sol);
+		mat_copy(acc_rot_sol, tempp);
+		sedit();	/* change es_rec only, NOW */
+		return;
+	}
+	/* Joystick is used for object rotation (ST_O_EDIT) */
+	if( movedir == ROTARROW )  {
+		static mat_t tempp;
+		static vect_t point;
+
+		mat_idn( incr_change );
+		buildHrot( incr_change, xangle, yangle, zangle );
+
 		/* accumulate change matrix - do it wrt a point NOT view center */
 		mat_mul(tempp, modelchanges, es_mat);
 		MAT4X3PNT(point, tempp, es_rec.s.s_values);
