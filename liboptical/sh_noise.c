@@ -110,20 +110,20 @@ struct noise_specific noise_defaults = {
 	4.0,		/* octaves */
 	1.0,		/* size */
 	1.57079632679489661923,		/* max_angle M_PI_2 */
-	{ 1.0, 1.0, 1.0 },	/* vscale */
+	{ 1.0, 1.0, 1.0 },		/* vscale */
 	{ 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
-	{	0.0, 0.0, 0.0, 0.0,
+	{	0.0, 0.0, 0.0, 0.0,	/* m_to_sh */
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0 },
-	{	0.0, 0.0, 0.0, 0.0,
+	{	0.0, 0.0, 0.0, 0.0,	/* sh_to_m */
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0 },
-	0.0,
-	0.0,
-	0.0,
-	0
+	0.0,				/* max_delta */
+	0.0,				/* nsd */
+	0.0,				/* minval */
+	0				/* shader_number */
 	};
 
 #define SHDR_NULL	((struct noise_specific *)0)
@@ -145,8 +145,8 @@ struct bu_structparse noise_print_tab[] = {
 	{"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
-
 };
+
 struct bu_structparse noise_parse_tab[] = {
 	{"i",	bu_byteoffset(noise_print_tab[0]), "noise_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
@@ -154,8 +154,8 @@ struct bu_structparse noise_parse_tab[] = {
 	{"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(delta),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "d",			SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt },
 	{"%f",  1, "s",			SHDR_O(size),		bu_mm_cvt },
 	{"%f",  1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad },
