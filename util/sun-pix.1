@@ -8,6 +8,7 @@ convert Sun bitmaps from screendump(1) into pix(5) or bw(5) raster image
 .RB [ \-h ]
 .RB [ \-i ]
 .RB [ \-P ]
+.RB [ \-v ]
 [sun.bitmap]
 .SH DESCRIPTION
 .I Sun-pix
@@ -33,6 +34,10 @@ for use with other
 .IR brlcad (1)
 tools such as
 .IR pix-fb (1).
+The
+.B \-v
+flag is specified, all the fields of the header are printed on stderr,
+to aid debugging.  Note that the ``encoded'' format is not supported.
 .PP
 Specifying the
 .B \-i
