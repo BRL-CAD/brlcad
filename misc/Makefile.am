@@ -10,6 +10,4 @@ SUBDIRS = \
 	pro-engineer \
 	vfont
 
-DIST_SUBDIRS = engima
-
 MAINTAINERCLEANFILES = Makefile.in
