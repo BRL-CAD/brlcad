@@ -181,11 +181,11 @@ int	region;
  *  Must be part of combination/member clump of records.
  */
 int
-mk_memb( fp, name, mat, op )
+mk_memb( fp, name, mat, bool_op )
 FILE	*fp;
 char	*name;
 mat_t	mat;
-char	op;
+int	bool_op;
 {
 	static union record rec;
 	register int i;
@@ -193,8 +193,8 @@ char	op;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.M.m_id = ID_MEMB;
 	NAMEMOVE( name, rec.M.m_instname );
-	if( op )
-		rec.M.m_relation = op;
+	if( bool_op )
+		rec.M.m_relation = bool_op;
 	else
 		rec.M.m_relation = UNION;
 	if( mat ) {
