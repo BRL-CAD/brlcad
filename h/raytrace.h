@@ -397,6 +397,7 @@ struct seg {
  */
 struct soltab {
 	struct rt_list	l;		/* links, headed by rti_headsolid */
+	int		st_uses;	/* Usage count, for instanced solids */
 	int		st_id;		/* Solid ident */
 	vect_t		st_center;	/* Centroid of solid */
 	fastf_t		st_aradius;	/* Radius of APPROXIMATING sphere */
