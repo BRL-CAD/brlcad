@@ -17,124 +17,40 @@
 #       in all countries except the USA.  All rights reserved.
 #
 # Description -
-#	The Display class is comprised of a display manager object and
-#       a view object. This class is capable of displaying one or more drawable
+#	The Display class inherits from View and Dm. 
+#       This class is capable of displaying one or more drawable
 #       geometry objects.
 #
 class Display {
-    private common dlist ""
-    private variable dm ""
-    private variable view ""
+    inherit View Dm
+
     private variable x ""
     private variable y ""
-    private variable invWidth ""
-    private variable aspect ""
-    private variable initializing 1
-    private variable width 512
-    private variable height 512
+    private variable geolist ""
+    private variable perspective_angle_index 0
+    private variable perspective_angles {90 60 45 30}
 
-    public variable dm_name ""
-    public variable istoplevel 1
-    public variable type X
-    public variable dm_size 512
-    public variable size 2000
     public variable rscale 0.4
     public variable sscale 2.0
-    public variable title ""
-    public variable geolist ""
-    public variable listen -1
-    public variable fb_active 0
-    public variable fb_update 1
-    public variable bg "0 0 0"
 
-    constructor {args} {
+    constructor {view_args dm_args args} {
+	eval View::constructor $view_args
+	eval Dm::constructor $dm_args
+    } {
 	# process options
 	eval configure $args
 
-	# create default dm_name
-	if {$dm_name == ""} {
-	    set dm_name .[string map {:: ""} $this]
-	}
+	attach
 
-	# create display manager object
-	set dm [dm_open $dm_name $type -t $istoplevel -W $width -N $height]
-
-	# create view object
-	set view [v_open $this\_view]
-	$view center {0 0 0}
-	$view scale [expr 0.5 * $size]
-
-	# initialize display manager object's view
-	$dm clear
-	$dm loadmat [$view model2view] 0
-
-	# event bindings
+	handle_configure
 	doBindings
-
-	if {$istoplevel} {
-	    wm title $dm $title
-	}
-
-	if {$geolist != ""} {
-	    autoview
-	}
-
-	if {$listen != -1} {
-	    listen $listen
-	}
-
-	# append to list of Display objects
-	lappend dlist $this
-
-	set initializing 0
     }
 
-    destructor {
-	if {$listen >= 0} {
-	    $dm listen -1
-	}
-	$dm close
-	$view close
+    destructor {}
 
-	# remove from list of Display objects
-	set index [lsearch $dlist $this]
-	set dlist [lreplace $dlist $index $index]
-    }
-
-    private method toggle_zclip {}
-    private method toggle_zbuffer {}
-    private method toggle_light {}
-    private method idle_mode {}
-    private method rotate_mode {_x _y}
-    private method translate_mode {_x _y}
-    private method scale_mode {_x _y}
-    private method constrain_rmode {coord _x _y}
-    private method constrain_tmode {coord _x _y}
-    private method handle_rotation {_x _y}
-    private method handle_translation {_x _y}
-    private method handle_scale {_x _y}
-    private method handle_constrain_rot {coord _x _y}
-    private method handle_constrain_tran {coord _x _y}
-    private method handle_configure {}
-    private method handle_expose {}
-    private method doBindings {}
-
-    # methods for controlling the display manager object
+    public method update {obj}
     public method refresh {}
-    public method clear {}
-    public method bg {args}
-    public method dm_size {args}
-    public method dm_name {}
-
-    # methods for controlling the view object
-    public method aet {args}
-    public method center {args}
-    public method rot {args}
-    public method slew {args}
-    public method tra {args}
-    public method size {args}
-    public method scale {args}
-    public method zoom {sf}
+    public method rt {args}
     public method autoview {}
 
     # methods for maintaining the list of geometry objects
@@ -142,239 +58,125 @@ class Display {
     public method remove {glist}
     public method contents {}
 
-    # methods for interacting with the framebuffer
-    public method listen {args}
+    # methods that override inherited methods
+    public method slew {x y}
     public method fb_active {args}
-    public method fb_update {args}
-    public method rt {args}
+    public method zclip {args}
+    public method zbuffer {args}
+    public method light {args}
+    public method perspective {args}
+    public method toggle_zclip {}
+    public method toggle_zbuffer {}
+    public method toggle_light {}
+    public method toggle_perspective {}
+    public method toggle_perspective_angle {}
+
+    protected method attach {}
+    protected method detach {}
+    protected method idle_mode {}
+    protected method rotate_mode {x y}
+    protected method translate_mode {x y}
+    protected method scale_mode {x y}
+    protected method constrain_rmode {coord x y}
+    protected method constrain_tmode {coord x y}
+    protected method handle_rotation {x y}
+    protected method handle_translation {x y}
+    protected method handle_scale {x y}
+    protected method handle_constrain_rot {coord x y}
+    protected method handle_constrain_tran {coord x y}
+    protected method handle_configure {}
+    protected method handle_expose {}
+    protected method doBindings {}
 }
 
-configbody Display::dm_name {
-    if {!$initializing} {
-	return -code error "dm_name is read-only"
-    }
-}
-
-configbody Display::dm_size {
-    # save dm_size
-    set s $dm_size
-
-    # For now, put back the old value.
-    # If the size really does change, dm_size will
-    # be set in the handle_configure method.
-    set dm_size "$width $height"
-
-    # request a size change
-    eval dm_size $s
-}
-
-configbody Display::title {
-    if {$istoplevel && [winfo exists $dm]} {
-	wm title $dm $title
-    }
-}
-
-configbody Display::istoplevel {
-    if {!$initializing} {
-	return -code error "istoplevel is read-only"
-    }
-}
-
-configbody Display::type {
-    if {!$initializing} {
-	return -code error "type is read-only"
-    }
-    
-    switch $type {
-	X -
-	ogl {
-	}
-	default {
-	    set type X
-	}
-    }
-}
-
-configbody Display::geolist {
-    if {!$initializing} {
-	autoview
-    }
-}
-
-configbody Display::listen {
-    if {!$initializing} {
-	listen $listen
-    }
-}
-
-configbody Display::fb_active {
-    fb_active $fb_active
-}
-
-configbody Display::fb_update {
-    fb_update $fb_update
-}
-
-configbody Display::size {
-    if {!$initializing} {
-	size $size
-    }
-}
-
-configbody Display::bg {
-    if {!$initializing} {
-	bg $bg
-    }
+########################### ###########################
+########################### Public/Interface Methods ###########################
+body Display::update {obj} {
+    refresh
 }
 
 body Display::refresh {} {
-    $dm drawBegin
-    $dm loadmat [$view model2view] 0
+    Dm::drawBegin
+
+    if {$perspective} {
+	Dm::loadmat [View::pmodel2view] 0
+    } else {
+	Dm::loadmat [View::model2view] 0
+    }
+
     if {$fb_active < 2} {
 	if {$fb_active} {
 	    # underlay
-	    $dm refreshfb
+	    Dm::refreshfb
 	}
 
 	foreach geo $geolist {
-	    $dm drawGeom $geo
+	    Dm::drawGeom $geo
 	}
     } else {
 	# overlay
-	$dm refreshfb
+	Dm::refreshfb
     }
-    $dm drawEnd
+    Dm::drawEnd
 }
 
-# Clear the display manager window
-body Display::clear {} {
-    $dm clear
-}
+body Display::rt {args} {
+    if {$listen < 0} {
+	return "rt: not listening"
+    }
 
-# Get/set the background color
-body Display::bg {args} {
-    if {$args == ""} {
-	$dm bg
+    set len [llength $args]
+
+    if {$len > 1 && [lindex $args 0] == "-geo"} {
+	set index [lindex $args 1]
+	set args [lrange $args 2 end]
+	set geo [lindex $geolist $index]
     } else {
-	$dm bg $args
-	refresh
-    }
-}
-
-body Display::aet {args} {
-    set len [llength $args]
-
-    # get aet
-    if {$len == 0} {
-	return [$view aet]
+	set geo [lindex $geolist 0]
     }
 
-    # set aet
-    $view aet $args
-    refresh
-}
-
-body Display::center {args} {
-    set len [llength $args]
-
-    # get center
-    if {$len == 0} {
-	return [$view center]
+    if {$geo == ""} {
+	return "rt: bad geometry index"
     }
 
-    # set center
-    $view center $args
-    refresh
+    set v_obj [View::get_name]
+    eval $geo rt $v_obj -F $listen -w $width -n $height -V $aspect $args
 }
 
-body Display::rot {args} {
-    # rotate view
-    $view rot $args
-    refresh
-}
-
-body Display::slew {args} {
-    if {[llength $args] != 2} {
-	return -code error "Display::slew - need two numbers"
-    }
-
-    set x2 [expr $width * 0.5]
-    set y2 [expr $height * 0.5]
-    set sf [expr 2.0 * $invWidth]
-
-    set _x [expr ([lindex $args 0] - $x2) * $sf]
-    set _y [expr (-1.0 * [lindex $args 1] + $y2) * $sf]
-
-    $view slew "$_x $_y"
-    refresh
-}
-
-body Display::tra {args} {
-    # translate view
-    $view tra $args
-    refresh
-}
-
-body Display::size {args} {
-    set len [llength $args]
-
-    # get size
-    if {$len == 0} {
-	return [$view size]
-    }
-
-    # set size
-    $view size $args
-
-    set size [$view size]
-    refresh
-}
-
-body Display::scale {args} {
-    set len [llength $args]
-
-    # get scale
-    if {$len == 0} {
-	return [$view scale]
-    }
-
-    # set scale
-    $view scale $args
-
-    set size [$view size]
-    refresh
-}
-
-body Display::zoom {sf} {
-    $view zoom $sf
-    set size [$view size]
-    refresh
-}
 
 body Display::autoview {} {
     if [llength $geolist] {
 	set geo [lindex $geolist 0]
 	set aview [$geo get_autoview]
-	eval $view [lrange $aview 0 1]
-	eval $view [lrange $aview 2 3]
-	set size [$view size]
-	refresh
+	eval [lrange $aview 0 1]
+	eval [lrange $aview 2 3]
     }
 }
 
 body Display::add {glist} {
     if [llength $geolist] {
-	set empty_screen 0
+	set blank 0
     } else {
-	set empty_screen 1
+	set blank 1
     }
-    eval lappend geolist $glist
 
-    if $empty_screen {
-	autoview
-    } else {
-	refresh
+    foreach geo $glist {
+	set index [lsearch $geolist $geo]
+	if {$index != -1} {
+	    continue
+	}
+
+	lappend geolist $geo
+	$geo observer attach $this
     }
+
+    if {$blank} {
+	detach
+	autoview
+	attach
+    }
+
+    refresh
 }
 
 body Display::remove {glist} {
@@ -385,7 +187,9 @@ body Display::remove {glist} {
 	}
 
 	set geolist [lreplace $geolist $index $index]
+	$geo observer detach $this
     }
+
     refresh
 }
 
@@ -393,40 +197,91 @@ body Display::contents {} {
     return $geolist
 }
 
-body Display::toggle_zclip {} {
-    set zclip [$dm zclip]
+########################### Public Methods That Override ###########################
+body Display::slew {x1 y1} {
+    set x2 [expr $width * 0.5]
+    set y2 [expr $height * 0.5]
+    set sf [expr 2.0 * $invWidth]
 
-    if $zclip {
-	$dm zclip 0
-    } else {
-	$dm zclip 1
-    }
+    set _x [expr ($x1 - $x2) * $sf]
+    set _y [expr (-1.0 * $y1 + $y2) * $sf]
 
+    View::slew $_x $_y
+}
+
+body Display::fb_active {args} {
+    eval Dm::fb_active $args
     refresh
+    return $fb_active
+}
+
+body Display::zclip {args} {
+    eval Dm::zclip $args
+    refresh
+    return $zclip
+}
+
+body Display::zbuffer {args} {
+    eval Dm::zbuffer $args
+    refresh
+    return $zbuffer
+}
+
+body Display::light {args} {
+    eval Dm::light $args
+    refresh
+    return $light
+}
+
+body Display::perspective {args} {
+    eval Dm::perspective $args
+    refresh
+    return $perspective
+}
+
+body Display::toggle_zclip {} {
+    Dm::toggle_zclip
+    refresh
+    return $zclip
 }
 
 body Display::toggle_zbuffer {} {
-    set zbuffer [$dm zbuffer]
-
-    if $zbuffer {
-	$dm zbuffer 0
-    } else {
-	$dm zbuffer 1
-    }
-
+    Dm::toggle_zbuffer
     refresh
+    return $zbuffer
 }
 
 body Display::toggle_light {} {
-    set light [$dm light]
+    Dm::toggle_light
+    refresh
+    return $light
+}
 
-    if $light {
-	$dm light 0
+body Display::toggle_perspective {} {
+    Dm::toggle_perspective
+    refresh
+    return $perspective
+}
+
+body Display::toggle_perspective_angle {} {
+    if {$perspective_angle_index == 3} {
+	set perspective_angle_index 0
     } else {
-	$dm light 1
+	incr perspective_angle_index
     }
 
-    refresh
+    View::perspective [lindex $perspective_angles $perspective_angle_index]
+}
+
+########################### Protected Methods ###########################
+body Display::attach {} {
+    Dm::observer attach $this
+    View::observer attach $this
+}
+
+body Display::detach {} {
+    Dm::observer detach $this
+    View::observer detach $this
 }
 
 body Display::idle_mode {} {
@@ -477,7 +332,7 @@ body Display::constrain_tmode {coord _x _y} {
 body Display::handle_rotation {_x _y} {
     set dx [expr ($y - $_y) * $rscale]
     set dy [expr ($x - $_x) * $rscale]
-    $view rot "$dx $dy 0"
+    rot "$dx $dy 0"
     refresh
 
     #update instance variables x and y
@@ -488,7 +343,7 @@ body Display::handle_rotation {_x _y} {
 body Display::handle_translation {_x _y} {
     set dx [expr ($x - $_x) * $invWidth * $size]
     set dy [expr ($_y - $y) * $invWidth * $size]
-    $view tra "$dx $dy 0"
+    tra "$dx $dy 0"
     refresh
 
     #update instance variables x and y
@@ -506,7 +361,7 @@ body Display::handle_scale {_x _y} {
 	set f [expr 1.0 + $dy]
     }
 
-    $view zoom $f
+    zoom $f
     refresh
 
     #update instance variables x and y
@@ -525,13 +380,13 @@ body Display::handle_constrain_rot {coord _x _y} {
     }
     switch $coord {
 	x {
-	    $view rot "$f 0 0"
+	    rot "$f 0 0"
 	}
 	y {
-	    $view rot "0 $f 0"
+	    rot "0 $f 0"
 	}
 	z {
-	    $view rot "0 0 $f"
+	    rot "0 0 $f"
 	}
     }
     refresh
@@ -552,13 +407,13 @@ body Display::handle_constrain_tran {coord _x _y} {
     }
     switch $coord {
 	x {
-	    $view tra "$f 0 0"
+	    tra "$f 0 0"
 	}
 	y {
-	    $view tra "0 $f 0"
+	    tra "0 $f 0"
 	}
 	z {
-	    $view tra "0 0 $f"
+	    tra "0 0 $f"
 	}
     }
     refresh
@@ -566,6 +421,15 @@ body Display::handle_constrain_tran {coord _x _y} {
     #update instance variables x and y
     set x $_x
     set y $_y
+}
+
+body Display::handle_configure {} {
+    Dm::handle_configure
+    refresh
+}
+
+body Display::handle_expose {} {
+    refresh
 }
 
 body Display::doBindings {} {
@@ -626,165 +490,9 @@ body Display::doBindings {} {
     bind $dm l "$this aet \"90 0 0\"; break"
     bind $dm t "$this aet \"0 90 0\"; break"
     bind $dm b "$this aet \"0 270 0\"; break"
-    bind $dm <F2> "$this toggle_zclip; break"
-    bind $dm <F4> "$this toggle_zbuffer; break"
-    bind $dm <F5> "$this toggle_light; break"
-}
-
-body Display::handle_configure {} {
-    $dm configure
-    set dm_size [$dm size]
-    set width [lindex $dm_size 0]
-    set height [lindex $dm_size 1]
-    set invWidth [expr 1.0 / $width]
-    set aspect [expr (1.0 * $width) / $height]
-    refresh
-}
-
-body Display::handle_expose {} {
-    refresh
-}
-
-body Display::listen {args} {
-    set len [llength $args]
-
-    if {$len > 1} {
-	return "Usage: $this listen \[port\]"
-    }
-
-    if {$len} {
-	set port [lindex $args 0]
-	set listen [$dm listen $port]
-    }
-
-    return $listen
-}
-
-body Display::rt {args} {
-    if {$listen < 0} {
-	return "rt: not listening"
-    }
-
-    set len [llength $args]
-
-    if {$len > 1 && [lindex $args 0] == "-geo"} {
-	set index [lindex $args 1]
-	set args [lrange $args 2 end]
-	set geo [lindex $geolist $index]
-    } else {
-	set geo [lindex $geolist 0]
-    }
-
-    if {$geo == ""} {
-	return "rt: bad geometry index"
-    }
-
-    eval $geo rt $view -F $listen -w $width -n $height -V $aspect $args
-#    eval $geo rt $view -F $listen $args
-}
-
-body Display::fb_active {args} {
-    set len [llength $args]
-
-    if {$len > 1} {
-	return "Usage: $this fb_active \[0|1|2\]"
-    }
-
-    if {$len} {
-	set fba [lindex $args 0]
-	if {$fba < 0 || 2 < $fba} {
-	    return -code error "Usage: $this fb_active \[0|1|2\]"
-	}
-
-	# update saved value
-	set fb_active $fba
-    }
-
-    refresh
-    return $fb_active
-}
-
-body Display::fb_update {args} {
-    set len [llength $args]
-
-    if {$len > 1} {
-	return "Usage: $this fb_update \[0|1\]"
-    }
-
-    if {$len} {
-	set fbu [lindex $args 0]
-	if {$fbu < 0 || 1 < $fbu} {
-	    return -code error "Usage: $this fb_update \[0|1\]"
-	}
-
-	# update saved value
-	set fb_update $fbu
-    }
-
-    return $fb_update
-}
-
-body Display::dm_size {args} {
-    set nargs [llength $args]
-
-    # get display manager window size
-    if {$nargs == 0} {
-	return $dm_size
-    }
-
-    if {$nargs == 1} {
-	set w $args
-	set h $args
-    } elseif {$nargs == 2} {
-	set w [lindex $args 0]
-	set h [lindex $args 1]
-    } else {
-	return -code error "dm_size: bad size - $args"
-    }
-
-    if {$initializing} {
-	set width $w
-	set height $h
-	set dm_size $args
-    } else {
-	# make request to set display manager window size
-	if {$istoplevel} {
-	    wm geometry $dm $w\x$h
-	} else {
-	    $dm size $w $h
-	}
-    }
-}
-
-body Display::dm_name {} {
-    return $dm_name
-}
-
-## - fbs_callback
-#
-# This is called by the display manager object
-# when it's framebuffer receives data.
-#
-proc fbs_callback {dm_obj} {
-    foreach obj $::Display::dlist {
-	if {$dm_obj == [$obj dm_name]} {
-	    if [$obj fb_update] {
-		$obj refresh
-	    }
-	    break
-	}
-    }
-}
-
-## - dgo_callback
-#
-# This is called by the drawable geometry object.
-#
-proc dgo_callback {dg_obj} {
-    foreach obj $::Display::dlist {
-	set contents [$obj contents]
-	if {[lsearch $contents $dg_obj] != -1} {
-	    $obj refresh
-	}
-    }
+    bind $dm <F2> "[code $this toggle_zclip]; break"
+    bind $dm <F3> "[code $this toggle_perspective]; break"
+    bind $dm <F4> "[code $this toggle_zbuffer]; break"
+    bind $dm <F5> "[code $this toggle_light]; break"
+    bind $dm <F6> "[code $this toggle_perspective_angle]; break"
 }
