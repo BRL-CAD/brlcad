@@ -175,6 +175,7 @@ register char **argv;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
 			fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
+			break;
 		case 'X':
 			sscanf( optarg, "%x", &rdebug );
 			fprintf(stderr,"rt rdebug=x%x\n", rdebug);
