@@ -1730,17 +1730,26 @@ CONST struct loopuse *lu;
 		return;
 	}
 
-	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd))
-		show_broken_eu(vbp, eu, fancy);
+	if (rt_g.NMG_debug & DEBUG_GRAPHCL)  {
+		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd))
+			show_broken_eu(vbp, eu, fancy);
+	}
 
-	if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP) ) {
-		/* Draw colored polygons for the actual face loops */
-		/* Faces are not classified, only loops */
-		/* This can obscure the edge/vertex info */
-		PICK_BROKEN_COLOR(face, lu->l_p);
-		vh = rt_vlblock_find( vbp, 
-			broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
+	/* Draw colored polygons for the actual face loops */
+	/* Faces are not classified, only loops */
+	/* This can obscure the edge/vertex info */
+	PICK_BROKEN_COLOR(face, lu->l_p);
+	vh = rt_vlblock_find( vbp, 
+		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
+
+	if ((rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_PL_LOOP) ) {
+		/* If only DEBUG_PL_LOOP set, just draw lu as wires */
+		nmg_lu_to_vlist( vh, lu, 0, lu->up.fu_p->f_p->fg_p->N );
+	} else if ((rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_GRAPHCL|DEBUG_PL_LOOP) ) {
+		/* Draw as polygons if both set */
 		nmg_lu_to_vlist( vh, lu, 1, lu->up.fu_p->f_p->fg_p->N );
+	} else {
+		/* If only DEBUG_GRAPHCL set, don't draw lu's at all */
 	}
 }
 
