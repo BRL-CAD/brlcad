@@ -295,12 +295,16 @@ struct seg **HeadSegp;
 		return( FALSE );	/* MISS subtree */
 	}
 
+    {
+	register int flag;
+
 	switch( tp->tr_op )  {
 
 	case OP_UNION:
 		/* NOTE:  It is important to always evaluate both */
-		if(	shoot_tree( ap, tp->tr_left, HeadSegp ) == FALSE &&
-			shoot_tree( ap, tp->tr_right, HeadSegp ) == FALSE )
+		flag = shoot_tree( ap, tp->tr_left, HeadSegp );
+		if( shoot_tree( ap, tp->tr_right, HeadSegp ) == FALSE  &&
+		    flag == FALSE )
 			return(FALSE);
 		return(TRUE);			/* May have a hit */
 
@@ -321,6 +325,7 @@ struct seg **HeadSegp;
 	default:
 		fprintf(stderr,"shoot_tree: bad op=x%x", tp->tr_op );
 		return( FALSE );
-	}
+	  }
+    }
 	/* NOTREACHED */
 }
