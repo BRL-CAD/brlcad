@@ -48,6 +48,7 @@ static char	sccsid[] = "@(#)cad_boundp.c	1.13";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "externs.h"
 
 #include "./vld_std.h"

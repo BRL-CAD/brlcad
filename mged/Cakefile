@@ -41,10 +41,10 @@ mged:	OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBTCL_DEP LIBTK_DEP LIBDM_DE
 	CC CFLAGS -c vers.c
 	CC -o mged LDFLAGS OBJ COMPLETE_LIBES vers.o
 
-cad_boundp: cad_boundp.o
-	CC -o cad_boundp LDFLAGS cad_boundp.o LIBES
+cad_boundp: cad_boundp.o LIBBU_DEP
+	CC -o cad_boundp LDFLAGS cad_boundp.o LIBBU LIBBU_LIBES LIBES
 
-cad_parea: cad_parea.o
-	CC -o cad_parea LDFLAGS cad_parea.o LIBES
+cad_parea: cad_parea.o LIBBU_DEP
+	CC -o cad_parea LDFLAGS cad_parea.o LIBBU LIBBU_LIBES LIBES
 
 #include "../Cakefile.rules"

@@ -29,6 +29,7 @@ static char	sccsid[] = "@(#)cad_parea.c	1.6";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "externs.h"
 
 #include	"./vld_std.h"
