@@ -579,7 +579,7 @@ char *buf;
 	if( rtip->needprep == 0 )  {
 		/* First clean up after the end of the previous frame */
 		if(debug)bu_log("Cleaning previous model\n");
-		view_end( &ap );
+		/* Allow lighting model to clean up (e.g. lights, materials, etc) */
 		view_cleanup( rtip );
 		rt_clean(rtip);
 		if(rdebug&RDEBUG_RTMEM_END)
