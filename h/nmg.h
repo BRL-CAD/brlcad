@@ -249,8 +249,6 @@ struct nmg_ptbl {
 /*
  *			M O D E L
  */
-#if !defined(MODEL_DEFINED)
-#define MODEL_DEFINED
 struct model {
 	long			magic;
 	struct model_a		*ma_p;
@@ -259,7 +257,6 @@ struct model {
 	char			*manifolds; /*  structure 1-3manifold table */
 	long			maxindex; /* # of structs so far */
 };
-#endif /* !MODEL_DEFINED */
 
 struct model_a {
 	long			magic;
@@ -269,8 +266,6 @@ struct model_a {
 /*
  *			R E G I O N
  */
-#if !defined(NMGREGION_DEFINED)
-#define NMGREGION_DEFINED
 struct nmgregion {
 	struct rt_list		l;	/* regions, in model's r_hd list */
 	struct model   		*m_p;	/* owning model */
@@ -278,7 +273,6 @@ struct nmgregion {
 	struct rt_list		s_hd;	/* list of shells in region */
 	long			index;	/* struct # in this model */
 };
-#endif /* !NMGREGION_DEFINED */
 
 struct nmgregion_a {
 	long			magic;

@@ -808,7 +808,7 @@ struct db_tree_state {
 			));
 	CONST struct rt_tess_tol *ts_ttol;	/* Tessellation tolerance */
 	CONST struct rt_tol	*ts_tol;	/* Math tolerance */
-#if defined(MODEL_DEFINED)
+#if defined(NMG_H)
 	struct model		**ts_m;		/* ptr to ptr to NMG "model" */
 #else
 	genptr_t		*ts_m;		/* ptr to genptr */
@@ -870,7 +870,7 @@ union tree {
 	struct tree_nmgregion {
 		int		td_op;		/* leaf, OP_NMG_TESS */
 		struct region	*td_pad;	/* unused */
-#if defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
+#if defined(NMG_H)
 		struct nmgregion *td_r;		/* ptr to NMG region */
 #else
 		genptr_t	td_r;
@@ -1397,7 +1397,7 @@ struct rt_functab {
 			struct xray *[] /*rp*/,
 			struct seg [] /*segp*/, int /*n*/,
 			struct application * /*ap*/ ));
-#if defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
+#if defined(NMG_H)
 	int	(*ft_tessellate) RT_ARGS((
 			struct nmgregion ** /*r*/,
 			struct model * /*m*/,
@@ -2109,6 +2109,19 @@ RT_EXTERN(void			nmg_eval_shell, (struct shell *s,
 RT_EXTERN(void			nmg_eval_plot, (struct nmg_bool_state *bs,
 				int num, int delay) );
 #endif
+
+
+/* From nmg_rt_isect.c */
+
+RT_EXTERN(struct hitmiss *	nmg_isect_ray_model, (struct xray *rp,
+					vect_t invdir, struct model *m,
+					struct rt_tol *tol) );
+/* From nmg_rt_segs.c */
+RT_EXTERN(int			nmg_ray_isect_segs, (struct soltab *stp,
+					struct xray *rp,
+					struct application *ap,
+					struct seg *seghead,
+					struct nmg_specific *nmg_spec) );
 
 /* From nmg_ck.c */
 /* XXX many others here */
