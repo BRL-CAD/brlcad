@@ -98,6 +98,7 @@ struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
 #ifdef MULTI_ATTACH
 int    update_views;
 extern struct dm dm_Null;
+extern struct _mged_variables default_mged_variables;
 #else
 int		dmaflag;		/* Set to 1 to force new screen DMA */
 #endif
@@ -221,6 +222,10 @@ char **argv;
 	RT_LIST_INIT( &head_dm_list.l );
 	head_dm_list._dmp = &dm_Null;
 	curr_dm_list = &head_dm_list;
+	curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
+							       "shared_info");
+	bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
+	mged_variables = default_mged_variables;
 	rt_vls_init(&pathName);
 	rt_vls_strcpy(&pathName, "nu");
 #endif
@@ -946,7 +951,7 @@ refresh()
 
     curr_dm_list = p;
 
-    if(update_views || dmaflag) {
+    if(update_views || dmaflag || dirty) {
       double	elapsed_time;
 
 #else
@@ -1000,12 +1005,13 @@ refresh()
 			frametime = 0.9 * frametime + 0.1 * elapsed_time;
 		}
 #ifdef MULTI_ATTACH
-      dmaflag = 0;
+      dirty = 0;
     }
   }
 
   curr_dm_list = save_dm_list;
   update_views = 0;
+  dmaflag = 0;
 #else
   } else {
 		/* For displaylist machines??? */
