@@ -25,7 +25,13 @@ check_externs "_mged_attach _mged_tie _mged_view_ring"
 set mged_Priv(arb8) {arb8 arb7 arb6 arb5 arb4 rpp}
 set mged_Priv(cones) {rcc rec rhc rpc tec tgc trc}
 set mged_Priv(ellipses) {ehy ell ell1 epa sph}
-set mged_Priv(other_prims) {ars arbn bot epa eto extrude grip half nmg part pipe sketch tor}
+
+# grip is purposely not a part of the other_prims list or any
+# other prim list because it's not considered geometry
+set mged_Priv(other_prims) {ars dsp epa eto extrude half part pipe sketch tor}
+
+# weak edit support for these primitives
+set mged_Priv(weak_prims) {arbn bot nmg}
 
 if {![info exists tk_version]} {
     loadtk
@@ -754,27 +760,37 @@ foreach ptype $mged_Priv(ellipses) {
     hoc_register_menu_data "Ellipses" "$ptype..." "Make a $ptype" $ksl
 }
 
-# separate cascades from other entries
-#    .$id.menubar.create add separator
-
-# populate the remainder of the Create menu
+# populate the Create menu with other_prims
 foreach ptype $mged_Priv(other_prims) {
+    if {$ptype == "dsp"} {
+	.$id.menubar.create add command -label "dsp..."\
+		-command "dsp_create $id"
+
+	set ksl {}
+	lappend ksl "summary \"Make a dsp solid.\"" "see_also \"make, in\""
+	hoc_register_menu_data "Create" "dsp..." "Make a dsp solid" $ksl
+    } else {
+	.$id.menubar.create add command -label "$ptype..."\
+		-command "init_solid_create $id $ptype"
+
+	set ksl {}
+	lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+	hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
+    }
+}
+
+# separate weak prims from other entries
+.$id.menubar.create add separator
+
+# populate the remainder of the Create menu with weak_prims
+foreach ptype $mged_Priv(weak_prims) {
     .$id.menubar.create add command -label "$ptype..."\
 	    -command "init_solid_create $id $ptype"
 
     set ksl {}
-    lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+    lappend ksl "summary \"Make a $ptype.\"" "see_also \"make, in\""
     hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 }
-
-# separate dsp from other entries
-.$id.menubar.create add separator
-
-.$id.menubar.create add command -label "dsp..."\
-	-command "dsp_create $id"
-set ksl {}
-lappend ksl "summary \"Make a dsp solid.\"" "see_also \"make, in\""
-hoc_register_menu_data "Create" "dsp..." "Make a dsp solid" $ksl
 
 menu .$id.menubar.view -title "View" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.view add command -label "Top" -underline 0\
