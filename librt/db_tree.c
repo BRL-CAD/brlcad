@@ -1429,6 +1429,36 @@ union tree	*tp;
 	rt_free( (char *)tp, "union tree" );
 }
 
+/*			D B _ L E F T _ H V Y _ N O D E
+ *
+ *	Re-balance this node to make it left heavy.
+ *	Unions operators will be moved to left side.
+ *	when finished "tp" MUST still point to top node
+ *	od this subtree.
+ */
+void
+db_left_hvy_node( tp )
+register union tree *tp;
+{
+	union tree *lhs, *rhs;
+
+	RT_CK_TREE(tp);
+
+	if( tp->tr_op != OP_UNION )
+		return;
+
+	while( tp->tr_b.tb_right->tr_op == OP_UNION )
+	{
+		lhs = tp->tr_b.tb_left;
+		rhs = tp->tr_b.tb_right;
+
+		tp->tr_b.tb_left = rhs;
+		tp->tr_b.tb_right = rhs->tr_b.tb_right;
+		rhs->tr_b.tb_right = rhs->tr_b.tb_left;
+		rhs->tr_b.tb_left = lhs;
+	}
+}
+
 /*
  *			D B _ N O N _ U N I O N _ P U S H
  *
@@ -1441,6 +1471,10 @@ void
 db_non_union_push( tp )
 register union tree	*tp;
 {
+	union tree *A, *B, *C, *D;
+	union tree *dup, *tmp, *new;
+	int repush_child=0;
+
 	RT_CK_TREE(tp);
 top:
 	switch( tp->tr_op )  {
@@ -1454,25 +1488,18 @@ top:
 		/* This tree has nothing in it, done */
 		return;
 
-	case OP_UNION:
-		/* This node is known to be a binary op */
-		/* Recurse both left and right */
+	default:
 		db_non_union_push( tp->tr_b.tb_left );
 		db_non_union_push( tp->tr_b.tb_right );
-		return;
+		break;
 	}
-
-	if( tp->tr_op == OP_INTERSECT || tp->tr_op == OP_SUBTRACT )  {
+	if( (tp->tr_op == OP_INTERSECT || tp->tr_op == OP_SUBTRACT) &&
+	    tp->tr_b.tb_left->tr_op == OP_UNION ) {
 		union tree	*lhs = tp->tr_b.tb_left;
 	    	union tree	*rhs;
 
-		if( lhs->tr_op != OP_UNION )  {
-			/* Recurse left only */
-			db_non_union_push( lhs );
-			if( (lhs=tp->tr_b.tb_left)->tr_op != OP_UNION )
-				return;
-			/* lhs rewrite turned up a union here, do rewrite */
-		}
+	    	if( tp->tr_b.tb_right->tr_op == OP_UNION )
+	    		repush_child = 1;
 
 		/*  Rewrite intersect and subtraction nodes, such that
 		 *  (A u B) - C  becomes (A - C) u (B - C)
@@ -1527,10 +1554,60 @@ top:
 		 *	A  C' B   C
 		 */
 
-		/* Now reconsider whole tree again */
-		goto top;
 	}
-    	bu_log("db_non_union_push() ERROR tree op=%d.?\n", tp->tr_op );
+
+	else if( tp->tr_op == OP_INTERSECT && 
+		tp->tr_b.tb_right->tr_op == OP_UNION )
+	{
+		/* C + (A u B) -> (C + A) u (C + B) */
+
+		if( tp->tr_b.tb_left->tr_op == OP_UNION )
+			repush_child = 1;
+
+		C = tp->tr_b.tb_left;
+		A = tp->tr_b.tb_right->tr_b.tb_left;
+		B = tp->tr_b.tb_right->tr_b.tb_right;
+		tp->tr_op = OP_UNION;
+		GETUNION( tmp, tree );
+		tmp->tr_regionp = tp->tr_regionp;
+		tmp->magic = RT_TREE_MAGIC;
+		tmp->tr_op = OP_INTERSECT;
+		tmp->tr_b.tb_left = C;
+		tmp->tr_b.tb_right = A;
+		tp->tr_b.tb_left = tmp;
+		tp->tr_b.tb_right->tr_op = OP_INTERSECT;
+		tp->tr_b.tb_right->tr_b.tb_left = db_dup_subtree( C );
+	}
+	else if( tp->tr_op == OP_SUBTRACT &&
+		tp->tr_b.tb_right->tr_op == OP_UNION )
+	{
+		/* C - (A u B) -> C - A - B */
+
+		if( tp->tr_b.tb_left->tr_op == OP_UNION )
+			repush_child = 1;
+
+		C = tp->tr_b.tb_left;
+		A = tp->tr_b.tb_right->tr_b.tb_left;
+		B = tp->tr_b.tb_right->tr_b.tb_right;
+		tp->tr_b.tb_left = tp->tr_b.tb_right;
+		tp->tr_b.tb_left->tr_op = OP_SUBTRACT;
+		tp->tr_b.tb_right = B;
+		tmp = tp->tr_b.tb_left;
+		tmp->tr_b.tb_left = C;
+		tmp->tr_b.tb_right = A;
+	}
+
+	/* if this operation has moved a UNION operator towards the leaves
+	 * then the children must be processed again
+	 */
+	if( repush_child )
+	{
+		db_non_union_push( tp->tr_b.tb_left );
+		db_non_union_push( tp->tr_b.tb_right );
+	}
+
+	/* rebalance this node (moves UNIONs to left side) */
+	db_left_hvy_node( tp );
 }
 
 /*
