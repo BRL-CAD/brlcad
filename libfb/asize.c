@@ -70,7 +70,7 @@ int	pixel_size;		/* bytes per pixel */
 	struct	stat	sbuf;
 	int	size;
 
-	if( filename == NULL || *filename == NULL )
+	if( filename == NULL || *filename == '\0' )
 		return	0;
 	if( stat( filename, &sbuf ) < 0 )
 		return	0;

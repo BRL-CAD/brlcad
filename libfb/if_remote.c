@@ -186,7 +186,7 @@ char *device;	/* device part */
 	}
 	if( (colon = strchr(file, ':')) != NULL ) {
 		strncpy( prefix, file, colon-file );
-		prefix[colon-file] = NULL;
+		prefix[colon-file] = '\0';
 		rest = colon+1;
 		if( numeric(prefix) ) {
 			/* 0:[dev] */
@@ -206,7 +206,7 @@ char *device;	/* device part */
 				/* check for [host]:0:[dev] */
 				if( (colon = strchr(rest, ':')) != NULL ) {
 					strncpy( prefix, rest, colon-rest );
-					prefix[colon-rest] = NULL;
+					prefix[colon-rest] = '\0';
 					if( numeric(prefix) ) {
 						port = atoi(prefix);
 						dev = colon+1;
@@ -273,8 +273,8 @@ int	width, height;
 	char	device[MAX_HOSTNAME];
 	int	port;
 
-	hostname[0] = NULL;
-	portname[0] = NULL;
+	hostname[0] = '\0';
+	portname[0] = '\0';
 	port = 0;
 
 	if( file == NULL || parse_file(file, hostname, &port, device) < 0 ) {

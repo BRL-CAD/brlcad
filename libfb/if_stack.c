@@ -113,11 +113,11 @@ int	width, height;
 	}
 
 	cp = &file[strlen("/dev/stack")];
-	while( *cp != NULL && *cp != ' ' && *cp != '\t' )
+	while( *cp != '\0' && *cp != ' ' && *cp != '\t' )
 		cp++;	/* skip suffix */
 
 	/* special check for a possibly user confusing case */
-	if( *cp == NULL ) {
+	if( *cp == '\0' ) {
 		fb_log("stack_dopen: No devices specified\n");
 		fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
 		return(-1);
@@ -130,14 +130,14 @@ int	width, height;
 		register char	*dp;
 		register FBIO	*fbp;
 
-		while( *cp != NULL && (*cp == ' ' || *cp == '\t' || *cp == ';') )
+		while( *cp != '\0' && (*cp == ' ' || *cp == '\t' || *cp == ';') )
 			cp++;	/* skip blanks and separators */
-		if( *cp == NULL )
+		if( *cp == '\0' )
 			break;
 		dp = devbuf;
-		while( *cp != NULL && *cp != ';' )
+		while( *cp != '\0' && *cp != ';' )
 			*dp++ = *cp++;
-		*dp = NULL;
+		*dp = '\0';
 		if( (fbp = fb_open(devbuf, width, height)) != FBIO_NULL )  {
 			/* Track the minimum of all the actual sizes */
 			if( fbp->if_width < ifp->if_width )

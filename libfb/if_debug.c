@@ -94,7 +94,7 @@ int	width, height;
 	/* set debug bit vector */
 	if( file != NULL ) {
 		char *cp;
-		for( cp = file; *cp != NULL && !isdigit(*cp); cp++ ) ;
+		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
 		sscanf( cp, "%d", &ifp->if_debug );
 	} else {
 		ifp->if_debug = 0;

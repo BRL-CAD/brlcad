@@ -179,9 +179,9 @@ int	width, height;
 		return(-1);
 	}
 	cp = &file[strlen("/dev/mem")];
-	while( *cp != NULL && *cp != ' ' && *cp != '\t' )
+	while( *cp != '\0' && *cp != ' ' && *cp != '\t' )
 		cp++;	/* skip suffix */
-	while( *cp != NULL && (*cp == ' ' || *cp == '\t' || *cp == ';') )
+	while( *cp != '\0' && (*cp == ' ' || *cp == '\t' || *cp == ';') )
 		cp++;	/* skip blanks and separators */
 
 	if( *cp ) {
