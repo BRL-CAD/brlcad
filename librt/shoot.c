@@ -717,11 +717,12 @@ register struct application *ap;
 		 *  are remembered for later cleanup by the library.
 		 */
 		rt_init_resource( resp, resp->re_cpu );
-
-		bu_semaphore_acquire(RT_SEM_MODEL);
-		bu_ptbl_ins_unique( &rtip->rti_resources, (long *)resp );
-		bu_semaphore_release(RT_SEM_MODEL);
 	}
+	/* Ensure that this CPU's resource structure is registered */
+	if( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) == NULL )  {
+		BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) = (long *)resp;
+	}
+
 	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
 		solidbits = bu_bitv_new( rtip->nsolids );
 	} else {

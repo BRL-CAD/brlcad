@@ -79,6 +79,7 @@ struct db_i	*dbip;
 
 	/* This table is used for discovering the per-cpu resource structures */
 	bu_ptbl_init( &rtip->rti_resources, MAX_PSW, "rti_resources ptbl" );
+	BU_PTBL_END(&rtip->rti_resources) = MAX_PSW;	/* Make 'em all available */
 
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
 
@@ -145,6 +146,7 @@ struct rt_i	*rtip;
 	db_close_client( rtip->rti_dbip, (long *)rtip );
 	rtip->rti_dbip = (struct db_i *)NULL;
 
+	/* Freeing the actual resource structures's memory is the app's job */
 	bu_ptbl_free( &rtip->rti_resources );
 
 	bu_free( (char *)rtip, "struct rt_i" );
@@ -221,10 +223,8 @@ int			ncpu;
 	rtip->rti_radius = 0.5 * MAGNITUDE(diag);
 
 	/*  If a resource structure has been provided for us, use it. */
-	if( BU_PTBL_LEN( &rtip->rti_resources ) > 0 )
-		resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
-	else
-		resp = &rt_uniresource;
+	resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
+	if( !resp )  resp = &rt_uniresource;
 	RT_CK_RESOURCE(resp);
 
 	/*  Build array of region pointers indexed by reg_bit.
@@ -630,6 +630,7 @@ struct resource	*resp;
 		while( BU_LIST_WHILE( bvp, bu_bitv, &resp->re_solid_bitv ) )  {
 			BU_CK_BITV( bvp );
 			BU_LIST_DEQUEUE( &bvp->l );
+			bvp->nbits = 0;		/* sanity */
 			bu_free( (genptr_t)bvp, "struct bu_bitv" );
 		}
 	}
@@ -707,6 +708,7 @@ register struct rt_i *rtip;
 
 	/*
 	 *  Clear out the solid table, AFTER doing the region table.
+	 *  Can't use RT_VISIT_ALL_SOLTABS_START here
 	 */
 	head = &(rtip->rti_solidheads[0]);
 	for( ; head < &(rtip->rti_solidheads[RT_DBNHASH]); head++ )  {
@@ -752,7 +754,7 @@ register struct rt_i *rtip;
 	 *  rt_shootray() saved a table of them for us to use here.
 	 *  rt_uniresource may or may not be in this table.
  	 */
-	if( BU_LIST_IS_INITIALIZED( &rtip->rti_resources.l ) )  {
+	if( BU_LIST_MAGIC_OK(&rtip->rti_resources.l, BU_PTBL_MAGIC ) )  {
 		struct resource	**rpp;
 		BU_CK_PTBL( &rtip->rti_resources );
 		for( BU_PTBL_FOR( rpp, (struct resource **), &rtip->rti_resources ) )  {
@@ -763,9 +765,9 @@ register struct rt_i *rtip;
 			RT_CK_RESOURCE(*rpp);
 			/* Clean but do not free the resource struct */
 			rt_clean_resource(rtip, *rpp);
+			/* Forget remembered ptr, but keep ptbl allocated */
+			*rpp = NULL;
 		}
-		/* Forget the remembered pointers, but keep ptbl ready */
-		bu_ptbl_trunc( &rtip->rti_resources, 0 );
 	}
 	if( rt_uniresource.re_magic )  {
 		rt_clean_resource(rtip, &rt_uniresource );/* Used for rt_optim_tree() */
@@ -784,6 +786,27 @@ register struct rt_i *rtip;
 
 	bu_hist_free( &rtip->rti_hist_cellsize );
 	bu_hist_free( &rtip->rti_hist_cutdepth );
+
+	/*
+	 *  Zero the solid instancing counters in dbip database instance.
+	 *  Done here because the same dbip could be used by multiple
+	 *  rti's, and rt_gettrees() can be called multiple times on
+	 *  this one rtip.
+	 *  There is a race (collision!) here on d_uses if rt_gettrees()
+	 *  is called on another rtip of the same dbip
+	 *  before this rtip is done
+	 *  with all it's treewalking.
+	 *
+	 *  This must be done for each 'clean' to keep
+	 *  rt_find_identical_solid() working properly as d_uses goes up.
+	 */
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		register struct directory	*dp;
+
+		dp = rtip->rti_dbip->dbi_Head[i];
+		for( ; dp != DIR_NULL; dp = dp->d_forw )
+			dp->d_uses = 0;
+	}
 
 	rtip->rti_magic = RTI_MAGIC;
 	rtip->needprep = 1;
