@@ -91,7 +91,7 @@ struct db_i	*dbip;
 
 	/* XXX These defaults need to be improved */
 	rtip->rti_tol.magic = BN_TOL_MAGIC;
-	rtip->rti_tol.dist = 0.005;
+	rtip->rti_tol.dist = 0.0005;
 	rtip->rti_tol.dist_sq = rtip->rti_tol.dist * rtip->rti_tol.dist;
 	rtip->rti_tol.perp = 1e-6;
 	rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
