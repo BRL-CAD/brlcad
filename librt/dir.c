@@ -261,7 +261,7 @@ int			noisy;
     }
     if ((dp = db_lookup(dbip, obj_name, noisy)) == DIR_NULL)
 	return ID_NULL;
-    if (rt_db_get_internal(ip, dp, dbip, (mat_t *) NULL ) < 0 )
+    if (rt_db_get_internal(ip, dp, dbip, (matp_t) NULL ) < 0 )
     {
 	if (noisy == LOOKUP_NOISY)
 	    bu_log("Failed to get internal form of object '%s'\n",
