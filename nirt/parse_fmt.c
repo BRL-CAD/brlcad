@@ -106,7 +106,7 @@ char		*def_fmt[] =
 		    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
 		};
 
-void				free_ospec();
+void				free_ospec(outitem *oil);
 
 extern double			base2local;
 extern struct application	ap;
@@ -122,8 +122,8 @@ format_output (char *buffer, com_table	*ctp)
     int		i;
     int		use_defaults = 0;
 
-    void	parse_fmt();
-    void	show_ospec();
+    void	parse_fmt(char *uoutspec, int outcom_type);
+    void	show_ospec(outitem *oil);
 
     /* Handle no args, arg=='?', and obvious bad arg */
     if (*bp != '\0')
@@ -196,10 +196,10 @@ format_output (char *buffer, com_table	*ctp)
 	parse_fmt(bp, fmt_type);
 }
 
-void parse_fmt(uoutspec, outcom_type)
+void parse_fmt(char *uoutspec, int outcom_type)
 
-char	*uoutspec;	/* The user's output specification (format & args) */
-int	outcom_type;	/* Type of output command */
+    	          	/* The user's output specification (format & args) */
+   	            	/* Type of output command */
 
 {
     char	*of;		/* Format for current output item */
@@ -360,7 +360,7 @@ int	outcom_type;	/* Type of output command */
     rt_free(mycopy, "Copy of user's output spec");
 }
 
-void default_ospec ()
+void default_ospec (void)
 {
     int	i;
 
@@ -371,9 +371,9 @@ void default_ospec ()
     }
 }
 
-void show_ospec (oil)
+void show_ospec (outitem *oil)
 
-outitem		*oil;		/* List of output items */
+       		     		/* List of output items */
 
 {
     outitem	*oip;		/* Pointer into list of output items */
@@ -398,10 +398,7 @@ outitem		*oil;		/* List of output items */
 }
 
 
-void report(outcom_type)
-
-int	outcom_type;
-
+void report(int outcom_type)
 {
     outitem	*oip;
 
@@ -440,11 +437,7 @@ int	outcom_type;
     fflush(outf);
 }
 
-void print_item (buffer, ctp)
-
-char		*buffer;
-com_table	*ctp;
-
+void print_item (char *buffer, com_table *ctp)
 {
     char	*bp = buffer;
     char	*bp0;
@@ -511,7 +504,7 @@ com_table	*ctp;
     }
 }
 
-FILE *fopenrc()
+FILE *fopenrc(void)
 {
     char	*rc_file_name;
     char	*home;
@@ -530,10 +523,7 @@ FILE *fopenrc()
     return (fPtr);
 }
 
-int check_conv_spec (oip)
-
-outitem	*oip;
-
+int check_conv_spec (outitem *oip)
 {
     char	*cp;
     int		oi_type;
@@ -629,11 +619,7 @@ outitem	*oip;
     return (warnings);
 }
 
-void direct_output(buffer, ctp)
-
-char		*buffer;
-com_table	*ctp;
-
+void direct_output(char *buffer, com_table *ctp)
 {
     int 	i = 0;      /* current position on the *buffer        */
     FILE	*newf;
@@ -697,11 +683,7 @@ com_table	*ctp;
     dest_string = new_dest;
 }
 
-void state_file(buffer, ctp)
-
-char		*buffer;
-com_table	*ctp;
-
+void state_file(char *buffer, com_table *ctp)
 {
     int 	i = 0;      /* current position on the *buffer        */
     static char	*new_name;
@@ -736,11 +718,7 @@ com_table	*ctp;
     sf_name = new_name;
 }
 
-void dump_state(buffer, ctp)
-
-char		*buffer;
-com_table	*ctp;
-
+void dump_state(char *buffer, com_table *ctp)
 {
     char	*c;
     static char	fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o'};
@@ -788,11 +766,7 @@ com_table	*ctp;
     fclose(sfPtr);
 }
 
-void load_state(buffer, ctp)
-
-char		*buffer;
-com_table	*ctp;
-
+void load_state(char *buffer, com_table *ctp)
 {
     FILE	*sfPtr;
 
@@ -807,9 +781,9 @@ com_table	*ctp;
     fclose(sfPtr);
 }
 
-void free_ospec (oil)
+void free_ospec (outitem *oil)
 
-outitem		*oil;		/* List of output items */
+       		     		/* List of output items */
 
 {
     outitem	*next = oil;	/* Pointer to next output item */

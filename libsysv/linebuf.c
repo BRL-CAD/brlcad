@@ -12,8 +12,7 @@
 #include "machine.h"
 
 void
-port_setlinebuf( fp )
-FILE *fp;
+port_setlinebuf(FILE *fp)
 {
 #ifdef WIN32
 	(void) setvbuf( fp, (char *) NULL, _IOLBF, BUFSIZ );

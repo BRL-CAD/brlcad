@@ -58,8 +58,8 @@ static const char rcs_ident[] = "$Id$";
 #define DATUM(inst) (inst[1] & 0xff)	/* Make sure it's unsigned. */
 
 static int	   debug_f;		/* If non-zero, print debug info. */
-static void	bfill();
-extern int vax_gshort();
+static void	bfill(register char *s, register int n, register int c);
+extern int vax_gshort(char *msgp);
 
 /*****************************************************************
  * TAG( rle_get_setup )
@@ -81,8 +81,7 @@ extern int vax_gshort();
  * 	Read in the setup info and fill in the_hdr.
  */
 int
-rle_get_setup( the_hdr )
-rle_hdr * the_hdr;
+rle_get_setup(rle_hdr *the_hdr)
 {
     struct XtndRsetup setup;
     short magic;
@@ -246,10 +245,7 @@ rle_hdr * the_hdr;
  *	Returns code.
  */
 int
-rle_get_error( code, pgmname, fname )
-int code;
-const char *pgmname;
-const char *fname;
+rle_get_error(int code, const char *pgmname, const char *fname)
 {
     if (! fname)
 	fname = "Standard Input";
@@ -309,10 +305,7 @@ const char *fname;
  * 	rle_get_setup does all the work.
  */
 void
-rle_get_setup_ok( the_hdr, prog_name, file_name )
-rle_hdr * the_hdr;
-const char *prog_name;
-const char *file_name;
+rle_get_setup_ok(rle_hdr *the_hdr, const char *prog_name, const char *file_name)
 {
     int code;
 
@@ -336,8 +329,7 @@ const char *file_name;
  *	[None]
  */
 void
-rle_debug( on_off )
-int on_off;
+rle_debug(int on_off)
 {
     static char std_err_buf[BUFSIZ];	/* BUFSIZ from stdio.h */
     debug_f = on_off;
@@ -378,9 +370,7 @@ int on_off;
  *	discarding input until end of image.
  */
 int
-rle_getrow( the_hdr, scanline )
-rle_hdr * the_hdr;
-rle_pixel *scanline[];
+rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
 {
     register rle_pixel * scanc;
     register int nc;
@@ -590,9 +580,7 @@ rle_pixel *scanline[];
 
 /* Fill buffer at s with n copies of character c.  N must be <= 65535*/
 /* ARGSUSED */
-static void bfill( s, n, c )
-register char *s;
-register int n, c;
+static void bfill(register char *s, register int n, register int c)
 {
 #ifdef vax
     asm("   movc5   $0,*4(ap),12(ap),8(ap),*4(ap)");

@@ -53,13 +53,7 @@ extern int rt_pipe_ck( const struct bu_list *headp );
  *	<0	failure
  */
 int
-mk_particle( fp, name, vertex, height, vradius, hradius )
-struct rt_wdb	*fp;
-const char	*name;
-point_t	vertex;
-vect_t	height;
-double	vradius;
-double	hradius;
+mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *height, double vradius, double hradius)
 {
 	struct rt_part_internal	*part;
 
@@ -86,10 +80,7 @@ double	hradius;
  *	<0	failure
  */
 int
-mk_pipe( fp, name, headp )
-struct rt_wdb		*fp;
-const char			*name;
-struct bu_list	*headp;
+mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 {
 	struct rt_pipe_internal		*pipe;
 	int				ret;

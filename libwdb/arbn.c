@@ -41,11 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	 0	OK
  */
 int
-mk_arbn( filep, name, neqn, eqn )
-struct rt_wdb	*filep;
-const char	*name;
-int	neqn;
-plane_t	*eqn;
+mk_arbn(struct rt_wdb *filep, const char *name, int neqn, plane_t (*eqn))
 {
 	struct rt_arbn_internal	*arbn;
 

@@ -43,11 +43,7 @@
  * 	color, if one is given.
  */
 void    
-rle_rawtorow(the_hdr, raw, nraw, outrows)
-rle_hdr * the_hdr;
-rle_op ** raw;
-int * nraw;
-rle_pixel ** outrows;
+rle_rawtorow(rle_hdr *the_hdr, rle_op **raw, int *nraw, rle_pixel **outrows)
 {
     register int i, j;
     register rle_pixel * outptr;

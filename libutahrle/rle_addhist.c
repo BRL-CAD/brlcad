@@ -61,15 +61,13 @@
  *	rle_putcom.
  */
 
-void rle_addhist(argv,in_hdr,out_hdr)
-register char	*argv[];
-rle_hdr *in_hdr,*out_hdr;
+void rle_addhist(register char **argv, rle_hdr *in_hdr, rle_hdr *out_hdr)
 {
 	register int	length,i;
 	time_t	temp;
 	static char	*histoire="HISTORY",					/* padding must give number of characters in histoire 	*/
 			*padding="\t";						/*     plus one for "="					*/
-	char	*getenv();
+	char	*getenv(const char *);
 	char	*timedate,*old= NULL;
 	static char	*newc;
 

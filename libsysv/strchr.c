@@ -14,9 +14,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 char *
-strchr( sp, c )
-register char	*sp;
-register char	c;
+strchr(register char *sp, register char c)
 {
 	do {
 		if( *sp == c )

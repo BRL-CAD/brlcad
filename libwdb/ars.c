@@ -45,12 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	-1	Fail
  */
 int
-mk_ars( filep, name, ncurves, pts_per_curve, curves )
-struct rt_wdb	*filep;
-const char	*name;
-int	ncurves;
-int	pts_per_curve;
-fastf_t	**curves;
+mk_ars(struct rt_wdb *filep, const char *name, int ncurves, int pts_per_curve, fastf_t **curves)
 {
 	struct rt_ars_internal	*ars;
 

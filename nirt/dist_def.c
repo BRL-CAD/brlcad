@@ -15,7 +15,7 @@ static const char RCSid[] = "$Header$";
 extern struct rt_i	*rtip;
 extern outval		ValTab[];
 
-double dist_default()
+double dist_default(void)
 {
     vect_t		targ[8];       /* corners of target bounds       */
     vect_t		Gr;              /* corners of grid bounds         */

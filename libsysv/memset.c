@@ -17,10 +17,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 char *
-memset( s, c, n )
-char	*s;
-register char	c;
-register int	n;
+memset(char *s, register char c, register int n)
 {
 	register char *p=s;
 
