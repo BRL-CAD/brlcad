@@ -129,7 +129,7 @@ proc start_rtsync {} {
 		setenv cadroot /m/cad ";" \
 		setenv TCL_LIBRARY {$cadroot/libtcl/library} ";" \
 		setenv TK_LIBRARY {$cadroot/libtk/library} ";" \
-		/m/cad/remrt/rtsync \
+		/m/cad/.remrt.6d/rtsync \
 		-s$fbserv_resolution \
 		-F$fbserv_host \
 		$database_file $mged_treetops \
@@ -292,19 +292,19 @@ proc register {informal_name formalname} {
 	pack .fr_$informal_name -side top -in .rtnode_fr
 }
 
-register "vapor" "vapor.arl.mil"
-register "wax" "wax.arl.mil"
-register wilson "wilson.arl.mil"
-register jewel "jewel.arl.mil"
-register cosm0 "cosm0.arl.hpc.mil"
-register cosm1 "cosm1.arl.hpc.mil"
-register cosm2 "cosm2.arl.hpc.mil"
-register cosm3 "cosm3.arl.hpc.mil"
-register cosm4 "cosm4.arl.hpc.mil"
-register cosm5 "cosm5.arl.hpc.mil"
-register cosm6 "cosm6.arl.hpc.mil"
-register cosm7 "cosm7.arl.hpc.mil"
-register eckert "eckert-ether.arl.hpc.mil"
+register "vapor" "vapor-uni0.arl.mil"
+register "wax" "wax-uni0.arl.mil"
+register wilson "wilson-uni0.arl.mil"
+register jewel "jewel-atm.arl.mil"
+register cosm0 "cosm0-atm.arl.hpc.mil"
+register cosm1 "cosm1-atm.arl.hpc.mil"
+register cosm2 "cosm2-atm.arl.hpc.mil"
+register cosm3 "cosm3-atm.arl.hpc.mil"
+register cosm4 "cosm4-atm.arl.hpc.mil"
+register cosm5 "cosm5-atm.arl.hpc.mil"
+register cosm6 "cosm6-atm.arl.hpc.mil"
+register cosm7 "cosm7-atm.arl.hpc.mil"
+register eckert "eckert-atm.arl.hpc.mil"
 
 
 button .sense_button -text "SENSE" -command sense_servers
@@ -373,3 +373,4 @@ puts "demo.tcl done"
 
 ## Todo:  send change directory command.
 ##  Maybe give a sequence of 'em.
+# how about a "re-read 'register' list cmd, by grepping through tcl src.
