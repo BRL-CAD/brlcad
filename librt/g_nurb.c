@@ -510,8 +510,11 @@ CONST struct bn_tol		*tol;
                                 rel = ttol->abs;
                 }
 
-
-                tess = (fastf_t) rt_nurb_par_edge(n, rel);
+		if( n->order[0] < 3 || n->order[1] < 3 ) {
+			/* Cannot use rt_nurb_par_edge() in this case */
+			tess = 0.25;	/* just a hack for now */
+		} else
+	                tess = (fastf_t) rt_nurb_par_edge(n, rel);
 
                 num_knots = (int)floor(1.0/((M_SQRT1_2 / 2.0) * tess));
 
