@@ -339,7 +339,7 @@ set -S2 "/bin/sh"
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath /usr/lib64:LIBDIR
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
-#		define	LD_OPTS		GFLAG -Wl,-woff,84,-woff,134 -Wl,-woff,85
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
