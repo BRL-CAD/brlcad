@@ -23,6 +23,7 @@
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
+#include "../rt/ext.h"
 #include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
@@ -47,6 +48,7 @@ struct img_specific {
 	char		i_through;	/* ignore surface normal */
 	char		i_antialias;	/* anti-alias texture */
 	char		i_behind;	/* shade points behind img plane */
+	fastf_t		i_perspective;	/* perspective angle 0=ortho */
 };
 #define img_MAGIC	0x696d6700	/* "img" */
 
@@ -60,6 +62,66 @@ struct prj_specific {
 	mat_t			prj_m_to_sh;
 	FILE			*prj_plfd;
 };
+/*
+ *
+ *  Bounds checking on perspective angle
+ *
+ */
+static void 
+persp_hook( sdp, name, base, value )
+register CONST struct bu_structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
+{
+	struct img_specific *img_sp = (struct img_specific *)base;
+
+	if (img_sp->i_perspective < 0.0) {
+		bu_log("perspecitve %s < 0.0\n", value);
+		bu_bomb("");
+	}
+
+ 	if (img_sp->i_perspective > 180.0) {
+		bu_log("perspective %s > 180.\n", value);
+		bu_bomb("");
+	}
+
+	if (img_sp->i_perspective != 0.0)
+		bu_bomb("non-ortho perspective not yet implemented!\n");
+}
+
+
+/*
+ * Check for value < 0.0
+ *
+ */
+static void 
+dimen_hook( sdp, name, base, value )
+register CONST struct bu_structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
+{
+	if (! strcmp("%f", sdp->sp_fmt)) {
+		fastf_t *f;
+		f = (fastf_t *)(base + sdp->sp_offset);
+		if (*f < 0.0) {
+			bu_log("%s value %g(%s) < 0.0\n",
+				sdp->sp_name, *f, value);
+			bu_bomb("");
+		}
+	} else if (! strcmp("%d", sdp->sp_fmt)) {
+		int *i;
+		i = (int *)(base + sdp->sp_offset);
+		if (*i < 0) {
+			bu_log("%s value %d(%s) < 0.0\n",
+				sdp->sp_name, *i, value);
+			bu_bomb("");
+		}
+	}
+}
+
+
 #if 0
 static void 
 noop_hook( sdp, name, base, value )
@@ -206,20 +268,22 @@ CONST char				*value;	/* string containing value */
 #define IMG_O(m)	offsetof(struct img_specific, m)
 #define IMG_AO(m)	offsetofarray(struct img_specific, m)
 
+
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse img_parse_tab[] = {
 	{"%S",	1, "image",		IMG_O(i_file),		FUNC_NULL},
-	{"%d",	1, "w",			IMG_O(i_width),		FUNC_NULL},
-	{"%d",	1, "n",			IMG_O(i_height),	FUNC_NULL},
-	{"%f",	1, "viewsize",		IMG_O(i_viewsize),	FUNC_NULL},
+	{"%d",	1, "w",			IMG_O(i_width),		dimen_hook},
+	{"%d",	1, "n",			IMG_O(i_height),	dimen_hook},
+	{"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook},
 	{"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	FUNC_NULL},
 	{"%f",	4, "orientation",	IMG_AO(i_orient),	orient_hook},
 	{"%c",	1, "through",		IMG_O(i_through),	FUNC_NULL},
 	{"%c",	1, "antialias",		IMG_O(i_antialias),	FUNC_NULL},
 	{"%c",	1, "behind",		IMG_O(i_behind),	FUNC_NULL},
+	{"%c",	1, "perspective",	IMG_O(i_perspective),	persp_hook},
 	{"",	0, (char *)0,		0,			FUNC_NULL}
 };
 struct bu_structparse img_print_tab[] = {
@@ -296,7 +360,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 	fname = bu_vls_addr(matparm);
-#if 1
+#if 0
 	if (! isspace(*fname) )
 		bu_log("------ Stack shader fixed?  Remove hack from prj shader ----\n");
 	while (isspace(*fname)) fname++; /* XXX Hack till stack shader fixed */
@@ -321,7 +385,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* set defaults on img_specific struct */
 	prj_sp->prj_images.i_width = prj_sp->prj_images.i_height = 512;
-	prj_sp->prj_images.i_antialias = 1;
+	prj_sp->prj_images.i_antialias = '1';
 
 
 	if(bu_struct_parse( &parameter_data, img_parse_tab, 
@@ -334,11 +398,14 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 */
 	for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
 		if (img_sp->i_antialias) {
+			if( rdebug&RDEBUG_SHADE)
+				bu_log("setting prismtrace 1");
 			rtip->rti_prismtrace = 1;
 			break;
 		}
 	}
 
+	
 
 
 	bu_vls_free( &parameter_data );
@@ -407,6 +474,91 @@ char *cp;
 
 	bu_free( cp, "prj_specific" );
 }
+static CONST double	cs = (1.0/255.0);
+static CONST point_t delta = {0.5, 0.5, 0.0};
+
+static int
+project_antialiased(sh_color, img_sp, prj_sp, ap, r_pe, r_N, r_pt)
+point_t sh_color;
+CONST struct img_specific *img_sp;
+CONST struct prj_specific *prj_sp;
+CONST struct application *ap;
+CONST struct pixel_ext *r_pe;	/* pts on plane of hit */
+CONST plane_t r_N;
+CONST point_t r_pt;
+{
+	int i, x, y;
+	point_t sh_pts[CORNER_PTS];
+	struct pixel_ext	pe;
+	unsigned char *pixel[CORNER_PTS];
+
+	/* project hit plane corner points into image space */
+	for (i=0 ; i < CORNER_PTS ; i++) {
+		MAT4X3PNT(sh_pts[i], img_sp->i_sh_to_img, 
+			pe.corner[i].r_pt);
+		/* compute image coordinates */
+
+		sh_pts[i][Z] = 0.0;
+		VADD2(sh_pts[i], sh_pts[i], delta);
+
+
+		sh_pts[i][X] *= img_sp->i_width - 1;
+		sh_pts[i][Y] *= img_sp->i_height - 1;
+		x = sh_pts[i][X];
+		y = sh_pts[i][Y];
+		pixel[i] = &img_sp->i_img[x*3 + y*img_sp->i_width*3 ];
+		sh_pts[i][X] = x;
+		sh_pts[i][y] = y;
+	}
+	return 0;
+}
+
+static int
+project_point(sh_color, img_sp, prj_sp, r_pt)
+point_t sh_color;
+struct img_specific *img_sp;
+struct prj_specific *prj_sp;
+point_t r_pt;
+{
+	int x, y;
+	point_t sh_pt;
+	point_t tmp_pt;
+	unsigned char *pixel;
+
+	MAT4X3PNT(sh_pt, img_sp->i_sh_to_img, r_pt);
+	VADD2(sh_pt, sh_pt, delta);
+
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("sh_pt", sh_pt);
+	}
+	x = sh_pt[X] * (img_sp->i_width-1);
+	y = sh_pt[Y] * (img_sp->i_height-1);
+	pixel = &img_sp->i_img[x*3 + y*img_sp->i_width*3];
+
+
+	if (x >= img_sp->i_width || x < 0 ||
+	    y >= img_sp->i_height || y < 0 ||
+	    ((!img_sp->i_behind && sh_pt[Z] > 0.0)) ) {
+	    	/* we're out of bounds,
+	    	 * leave the color alone
+	    	 */
+		return 1;
+	}
+
+	if( rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
+		/* plot projection direction */
+		pl_color(prj_sp->prj_plfd, V3ARGS(pixel));
+		pdv_3move(prj_sp->prj_plfd, r_pt);
+		VMOVE(tmp_pt, r_pt);
+
+		VSCALE(tmp_pt, img_sp->i_plane, -sh_pt[Z]);
+		VADD2(tmp_pt, r_pt, tmp_pt);
+		pdv_3cont(prj_sp->prj_plfd, tmp_pt);
+	}
+	VMOVE(sh_color, pixel);	/* int/float conversion */
+	return 0;
+}
+
 
 /*
  *	P R J _ R E N D E R
@@ -424,19 +576,17 @@ char			*dp;	/* ptr to the shader-specific struct */
 {
 	register struct prj_specific *prj_sp =
 		(struct prj_specific *)dp;
-	const static point_t delta = {0.5, 0.5, 0.0};
 	point_t r_pt;
 	plane_t	r_N;
-	point_t sh_pt;
-	static CONST double	cs = (1.0/255.0);
-	point_t	img_v;
-	int x, y, i;
-	unsigned char *pixel;
+	int x, y, i, status;
 	struct img_specific *img_sp;
 	point_t	sh_color;
 	point_t	final_color;
 	point_t tmp_pt;
 	fastf_t	divisor;
+	struct pixel_ext r_pe;	/* region coord version of ap->a_pixelext */
+	fastf_t dist;
+
 
 
 	/* check the validity of the arguments we got */
@@ -467,6 +617,58 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	VSET(final_color, 0.0, 0.0, 0.0);
 	divisor = 0.0;
+
+	if (ap->a_pixelext) {
+
+		BU_CK_PIXEL_EXT(ap->a_pixelext);
+
+		/* We need to compute the extent of the pixel on an
+		 * imaginary plane through the hit point with the same
+		 * normal as the surface normal at the hit point.  Later
+		 * this quadrilateral will be projected onto the image
+		 * plane(s) to facilitate anti-aliasing.
+		 */
+
+		/* compute region coordinates for pixel extent */
+		for ( i=0 ; i < CORNER_PTS ; i++) {
+			MAT4X3PNT(r_pe.corner[i].r_pt,
+				prj_sp->prj_m_to_sh, 
+				ap->a_pixelext->corner[i].r_pt);
+			MAT4X3VEC(r_pe.corner[i].r_dir, 
+				prj_sp->prj_m_to_sh, 
+				ap->a_pixelext->corner[i].r_dir);
+		}
+
+		/* compute plane of hit point */
+		VUNITIZE(r_N);
+		r_N[H] = VDOT(r_N, r_pt);
+
+		/* project corner points into plane of hit point */
+		for (i=0 ; i < CORNER_PTS ; i++) {
+			dist = 0.0;
+			status = bn_isect_line3_plane(
+				&dist,
+				r_pe.corner[i].r_pt,
+				r_pe.corner[i].r_dir,
+				r_N,
+				&(ap->a_rt_i->rti_tol));
+
+			if (status <= 0) {
+				/* XXX What to do if we don't
+				 * hit plane?
+				 */
+				bu_log("%s:%d The unthinkable has happened\n",
+					__FILE__, __LINE__);
+			}
+
+			VJOIN1(r_pe.corner[i].r_pt,
+				r_pe.corner[i].r_pt,
+				dist,
+				r_pe.corner[i].r_dir);
+		}
+	}
+
+
 	for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
 		if ( ! img_sp->i_through && VDOT(r_N, img_sp->i_plane) < 0.0) {
 			/* normal and projection dir don't match, skip on */
@@ -487,60 +689,26 @@ char			*dp;	/* ptr to the shader-specific struct */
 			continue;
 		}
 		
-		if (img_sp->i_antialias) {
-			point_t	img_pt[4];
-
-			if (!ap->a_pixelext)
+#if 0
+		if (img_sp->i_antialias == '1') {
+			if (ap->a_pixelext)
 				bu_bomb("pixel corners structure not set\n");
-			BU_CK_PIXEL_EXT(ap->a_pixelext);
 
-			/* compute plane of hit point */
-			VUNITIZE(r_N);
-			r_N[H] = VDOT(r_N, r_pt);
-
-			/* project corner points into hit plane */
-			for (i=0 ; i < CORNER_PTS ; i++) {
-				
-			}
-			/* project hit plane corner points into image plane */
+			if (project_antialiased(sh_color, img_sp, prj_sp, 
+				ap, &r_pe, r_N, r_pt))
+				continue;
 
 		} else { 
-			MAT4X3PNT(sh_pt, img_sp->i_sh_to_img, r_pt);
-			VADD2(img_v, sh_pt, delta);
-			if( rdebug&RDEBUG_SHADE) {
-				VPRINT("sh_pt", sh_pt);
-				VPRINT("img_v", img_v);
-			}
-			x = img_v[X] * (img_sp->i_width-1);
-			y = img_v[Y] * (img_sp->i_height-1);
-			pixel = &img_sp->i_img[x*3 + y*img_sp->i_width*3];
-
-
-			if (x >= img_sp->i_width || x < 0 ||
-			    y >= img_sp->i_height || y < 0 ||
-			    ((!img_sp->i_behind && sh_pt[Z] > 0.0)) ) {
-			    	/* we're out of bounds,
-			    	 * leave the color alone
-			    	 */
-				continue;
-			}
-
-
-			if( rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
-				/* plot projection direction */
-				pl_color(prj_sp->prj_plfd, V3ARGS(pixel));
-				pdv_3move(prj_sp->prj_plfd, r_pt);
-				VMOVE(tmp_pt, r_pt);
-
-				VSCALE(tmp_pt, img_sp->i_plane, -sh_pt[Z]);
-				VADD2(tmp_pt, r_pt, tmp_pt);
-				pdv_3cont(prj_sp->prj_plfd, tmp_pt);
-			}
-			VMOVE(sh_color, pixel);	/* int/float conversion */
-			VSCALE(sh_color, sh_color, cs);
-			VADD2(final_color, final_color, sh_color);
-			divisor++;
+			if (project_point(sh_color, img_sp, prj_sp, r_pt))
+					continue;
 		}
+#else
+			if (project_point(sh_color, img_sp, prj_sp, r_pt))
+					continue;
+#endif
+		VSCALE(sh_color, sh_color, cs);
+		VADD2(final_color, final_color, sh_color);
+		divisor++;
 	}
 
 	if (divisor > 0.0) {
