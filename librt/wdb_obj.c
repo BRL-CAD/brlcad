@@ -56,9 +56,9 @@ extern int rt_tcl_import_from_path();
 extern void rt_generic_make();
 
 /* from librt/dg_obj.c */
-extern void dgo_eraseobjall_callback();
-extern void dgo_impending_wdb_close();
-extern void dgo_zapall();
+extern void dgo_eraseobjall_callback();	/* called when killing database object's */
+extern void dgo_impending_wdb_close();	/* called in wdb_deleteProc */
+extern void dgo_zapall();		/* called in wdb_reopen_tcl */
 
 /* from librt/wdb_comb_std.c */
 extern int wdb_comb_std_tcl();
