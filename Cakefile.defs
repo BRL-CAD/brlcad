@@ -837,7 +837,7 @@ set -S2 "/bin/sh"
 #			define	OPTIMIZER	-O -g
 #			define  PROFILER	-pg
 #		endif
-#		define	CC_DEFS		-Wall -pedantic -D_REENTRANT -DSUNOS=58
+#		define	CC_DEFS		-std=iso9899:199409 -Wall -pedantic -D_REENTRANT -DSUNOS=58
 #		define	CC_OPTS		-I''XINCDIR
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
@@ -1013,6 +1013,8 @@ set -S2 "/bin/sh"
 #	define	BSD	44
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
+#	define	CC	gcc
+#	define	CC_DEFS -std=iso9899:199409 -pipe -fPIC -Wall -pedantic
 #	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O3 -fno-strict-aliasing
 #	else
@@ -1021,8 +1023,6 @@ set -S2 "/bin/sh"
 #	endif
 #	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support.  Requires ELF for Linux. */
-#		define	CC	gcc
-#		define	CC_DEFS -pipe -fPIC -Wall -pedantic
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	gcc -shared -o
@@ -1030,10 +1030,7 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR
 #	else
 /*		Static linked executables */
-#		define	CC	gcc
 #		define	RANLIB	ar -s
-/*		Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
-#		define	CC_DEFS -pipe -Wall -pedantic
 #	endif
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
@@ -1109,6 +1106,7 @@ set -S2 "/bin/sh"
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
 #	define	CC	gcc
+#	define	CC_DEFS -std=iso9899:199409 -pipe -fPIC -Wall -pedantic
 #	define	LEX_OPTS	-l
 #	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O3 -fno-strict-aliasing
@@ -1118,16 +1116,13 @@ set -S2 "/bin/sh"
 #	endif
 #	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support.  */
-#		define	CC_DEFS -pipe -fPIC -Wall -pedantic
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bshareable -o
 #		define	STANDARD_LIBES	-lm -Wl,-R -Wl,LIBDIR
 #	else
 /*		Static linked executables */
-#		define	CC_DEFS -pipe -Wall -pedantic
 #	endif
-
 #	define	LIBRT_TIMER	timer42
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #	if BUILD_OPENGL	/* Use MESA  and GLX */
