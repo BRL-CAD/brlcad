@@ -650,10 +650,13 @@ f_help( argc, argv )
 int	argc;
 char	**argv;
 {
+#if 0
+	/* There needs to be a better way to trigger this */
 	if( argc <= 1 )  {
 		/* User typed just "help" */
 		system("Mosaic http://ftp.arl.mil/ftp/brl-cad/html/mged &");
 	}
+#endif
 	return f_help2(argc, argv, &funtab[0]);
 }
 
