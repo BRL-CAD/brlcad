@@ -3071,6 +3071,12 @@ struct bn_tol *tol;
 					if( lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , new_lu , (long *)lu );
 					new_fu = nmg_mf( new_lu );
+					if( lu->orientation == OT_OPPOSITE )
+					{
+						/* nmg_mf forces loops to OT_SAME */
+						new_lu->orientation = OT_OPPOSITE;
+						new_lu->lumate_p->orientation = OT_OPPOSITE;
+					}
 					if( fu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu , (long *)new_fu );
 					if( new_fu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
@@ -3962,6 +3968,7 @@ CONST struct bn_tol *tol;
 	struct shell *dup_s;
 	struct shell *s1;
 	struct nmgregion *tmp_r, *tmp_r2;
+	struct faceuse *fu;
 	struct bu_ptbl reverse;
 	int shell_count;
 	long **trans_tbl;
@@ -3971,6 +3978,34 @@ CONST struct bn_tol *tol;
 
 	NMG_CK_SHELL( s_orig );
 	BN_CK_TOL( tol );
+
+	/* Currently we can only fix normals for planar faces
+	 * check that there are no TNURB faces
+	 */
+	for( BU_LIST_FOR( fu, faceuse, &s_orig->fu_hd ) )
+	{
+		struct face *f;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		f = fu->f_p;
+
+		if( !f->g.magic_p )
+		{
+			rt_log( "nmg_fix_normals failed, found a face with no geometry (x%x)\n", f );
+			return;
+		}
+
+		if( *f->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
+		{
+			rt_log( "nmg_fix_normals: non-planar face found (x%x)\n", f );
+			rt_log( "	cannot fix normals\n" );
+			return;
+		}
+	}
 
 	m = s_orig->r_p->m_p;
 
@@ -4054,7 +4089,6 @@ CONST struct bn_tol *tol;
 	nmg_connect_same_fu_orients( s_orig );
 	for( BU_LIST_FOR( s1, shell, &tmp_r->s_hd ) )
 	{
-		struct faceuse *fu;
 		int reversed;
 
 		if( bu_ptbl_locate( &reverse, (long *)s1 ) == (-1 ))
@@ -4072,6 +4106,12 @@ CONST struct bn_tol *tol;
 				continue;
 
 			fu_in_s = NMG_INDEX_GETP( faceuse, trans_tbl, fu );
+			if( !fu_in_s )
+			{
+				rt_log( "fu x%x does not have corrrespondence in original shell\n", fu );
+				nmg_pr_fu_briefly( fu, "" );
+				continue;
+			}
 			if( fu_in_s->orientation != OT_SAME  )
 				fu_in_s = fu_in_s->fumate_p;
 
