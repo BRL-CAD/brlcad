@@ -1371,7 +1371,7 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 
 	/* get the JAVA method id for the Ray class constructor */
 	if( (ray_constructor_id=(*env)->GetMethodID( env, ray_class, "<init>",
-	    "(Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vect;)V" )) == NULL ) {
+	    "(Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vector3;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ray constructor\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -1715,7 +1715,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject job
 
 	/* extract direction vector */
 	if( (vect_class = (*env)->GetObjectClass( env, jdir ) ) == NULL ) {
-		fprintf( stderr, "Failed to find Vect class\n" );
+		fprintf( stderr, "Failed to find Vector3 class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
