@@ -108,8 +108,20 @@ proc dbupgrade {args} {
     global tkPriv
     global dbupgrade_priv
 
+    set id [get_player_id_dm [winset]]
+
     # first time through only
     if {![info exists dbupgrade_priv(dbname)]} {
+	if {[opendb] == ""} {
+	    if {[info exists tkPriv]} {
+		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+			"No database has been opened!" info 0 OK
+		return
+	    } else {
+		error "No database has been opened!"
+	    }
+	}
+
 	if {[dbversion] > 4} {
 	    error "[opendb] is already current!"
 	}
@@ -127,8 +139,6 @@ proc dbupgrade {args} {
 
     set dbname $dbupgrade_priv(dbname)
     set tmp_dbname $dbupgrade_priv(tmp_dbname)
-
-    set id [get_player_id_dm [winset]]
     set overwrite 0
 
     if {[llength $args] == 0} {

@@ -34,6 +34,12 @@ proc build_edit_menu_all { type } {
     set win [winset]
     set id [get_player_id_dm $win]
 
+    if {[opendb] == ""} {
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     if {[info exists mged_gui($id,edit_menu)] && \
 	    [winfo exists $mged_gui($id,edit_menu)]} {
 	destroy $mged_gui($id,edit_menu)

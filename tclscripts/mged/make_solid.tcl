@@ -45,7 +45,14 @@ proc make_dsp { id top } {
     }
 
 proc dsp_create { id } {
-	global mged_gui
+    global mged_gui
+    global tkPriv
+
+    if {[opendb] == ""} {
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
 
 	set top .$id.make_dsp
 
