@@ -93,43 +93,41 @@ static int	linger();
 #define EQUALRGB(aa,bb) \
 	((aa)[RED]==(bb)[RED]&&(aa)[GRN]==(bb)[GRN]&&(aa)[BLU]==(bb)[BLU])
 #define XIMAGE2SCR( x ) \
- ((x)*SUN(ifp)->su_xzoom-(SUN(ifp)->su_xcenter*SUN(ifp)->su_xzoom-ifp->if_width/2))
+ ((x)*ifp->if_xzoom-(ifp->if_xcenter*ifp->if_xzoom-ifp->if_width/2))
 #define YIMAGE2SCR( y ) \
- ((ifp->if_height-1)-((y)*SUN(ifp)->su_yzoom-(SUN(ifp)->su_ycenter*SUN(ifp)->su_yzoom - ifp->if_height/2)))
-_LOCAL_ int	sun_dopen(),
-		sun_dclose(),
-		sun_dclear(),
-		sun_bread(),
-		sun_bwrite(),
-		sun_cmread(),
-		sun_cmwrite(),
-		sun_viewport_set(),
-		sun_window_set(),
-		sun_zoom_set(),
-		sun_curs_set(),
-		sun_cmemory_addr(),
-		sun_cscreen_addr(),
+ ((ifp->if_height-1)-((y)*ifp->if_yzoom-(ifp->if_ycenter*ifp->if_yzoom - ifp->if_height/2)))
+_LOCAL_ int	sun_open(),
+		sun_close(),
+		sun_clear(),
+		sun_read(),
+		sun_write(),
+		sun_rmap(),
+		sun_wmap(),
+		sun_view(),
+		sun_setcursor(),
+		sun_cursor(),
+		sun_getcursor(),
+		sun_poll(),
 		sun_free(),
 		sun_help();
 
 /* This is the ONLY thing that we "export" */
 FBIO sun_interface = {
-		sun_dopen,
-		sun_dclose,
-		fb_null,	/* reset? */
-		sun_dclear,
-		sun_bread,
-		sun_bwrite,
-		sun_cmread,
-		sun_cmwrite,
-		sun_viewport_set,
-		sun_window_set,
-		sun_zoom_set,
-		sun_curs_set,
-		sun_cmemory_addr,
-		sun_cscreen_addr,
+		sun_open,
+		sun_close,
+		sun_clear,
+		sun_read,
+		sun_write,
+		sun_rmap,
+		sun_wmap,
+		sun_view,
+		fb_sim_getview,
+		sun_setcursor,
+		sun_cursor,
+		sun_getcursor,
 		fb_sim_readrect,
 		fb_sim_writerect,
+		sun_poll,
 		fb_null,		/* flush */
 		sun_free,		/* free */
 		sun_help,
@@ -139,7 +137,11 @@ FBIO sun_interface = {
 		"/dev/sun",
 		512,		/* current/default width  */
 		512,		/* current/default height */
+		-1,		/* select fd */
 		-1,		/* file descriptor */
+		1, 1,		/* zoom */
+		256, 256,	/* window center */
+		0, 0, 0,	/* cursor */
 		PIXEL_NULL,	/* page_base */
 		PIXEL_NULL,	/* page_curp */
 		PIXEL_NULL,	/* page_endp */
@@ -169,10 +171,6 @@ struct suninfo
 	Window	canvas;
 	short	su_curs_on;
 	short	su_cmap_flag;
-	short	su_xzoom;
-	short	su_yzoom;
-	short	su_xcenter;
-	short	su_ycenter;
 	short	su_xcursor;
 	short	su_ycursor;
 	short	su_depth;
@@ -623,7 +621,7 @@ register int	xrgt;
 RGBpixel	*pp;
 {
 	register int	sy = YIMAGE2SCR( ybtm+1 ) + 1;
-	register int	xzoom = SUN(ifp)->su_xzoom;
+	register int	xzoom = ifp->if_xzoom;
 	int		xl = XIMAGE2SCR( xlft );
 
 	/*fb_log( "sun_scanwrite(%d,%d,%d,0x%x)\n", xlft, ybtm, xrgt, pp );
@@ -632,7 +630,7 @@ RGBpixel	*pp;
  	if( SUN(ifp)->su_depth == 1 ) {
 		register int	x;
 		register int	sx = xl;
-		int		yzoom = SUN(ifp)->su_yzoom;
+		int		yzoom = ifp->if_yzoom;
 
 		/* Clear buffer to black. */
 		(void) memset( scan_mpr_buf, 0xff, XMAXWINDOW );
@@ -694,7 +692,7 @@ RGBpixel	*pp;
 				scan_mpr_buf[sx+dx] = value; 
 		}
 		sunreplrop( xl, sy,
-			(xrgt-xlft+1)*xzoom, SUN(ifp)->su_yzoom,
+			(xrgt-xlft+1)*xzoom, ifp->if_yzoom,
 			PIX_SRC, &scan8_mpr,
 			xl, 0 );
 	}
@@ -731,31 +729,31 @@ register FBIO	*ifp;
 	int		xscroff, yscroff;
 	int		xscrpad, yscrpad;
 	/*fb_log( "sun_repaint: xzoom=%d yzoom=%d xcenter=%d ycenter=%d\n",
-		SUN(ifp)->su_xzoom, SUN(ifp)->su_yzoom,
-		SUN(ifp)->su_xcenter, SUN(ifp)->su_ycenter ); /* XXX-debug */
+		ifp->if_xzoom, ifp->if_yzoom,
+		ifp->if_xcenter, ifp->if_ycenter ); /* XXX-debug */
 	xscroff = yscroff = 0;
 	xscrpad = yscrpad = 0;
-	xwidth = ifp->if_width/SUN(ifp)->su_xzoom;
+	xwidth = ifp->if_width/ifp->if_xzoom;
 	i = xwidth/2;
-	xmin = SUN(ifp)->su_xcenter - i;
-	xmax = SUN(ifp)->su_xcenter + i - 1;
-	i = (ifp->if_height/2)/SUN(ifp)->su_yzoom;
-	ymin = SUN(ifp)->su_ycenter - i;
-	ymax = SUN(ifp)->su_ycenter + i - 1;
+	xmin = ifp->if_xcenter - i;
+	xmax = ifp->if_xcenter + i - 1;
+	i = (ifp->if_height/2)/ifp->if_yzoom;
+	ymin = ifp->if_ycenter - i;
+	ymax = ifp->if_ycenter + i - 1;
 	if( xmin < 0 ) {
-		xscroff = -xmin * SUN(ifp)->su_xzoom;
+		xscroff = -xmin * ifp->if_xzoom;
 		xmin = 0;
 	}
 	if( ymin < 0 ) {
-		yscroff = -ymin * SUN(ifp)->su_yzoom;
+		yscroff = -ymin * ifp->if_yzoom;
 		ymin = 0;
 	}
 	if( xmax > ifp->if_width-1 ) {
-		xscrpad = (xmax-(ifp->if_width-1))*SUN(ifp)->su_xzoom;
+		xscrpad = (xmax-(ifp->if_width-1))*ifp->if_xzoom;
 		xmax = ifp->if_width-1;
 	}
 	if( ymax > ifp->if_height-1 ) {
-		yscrpad = (ymax-(ifp->if_height-1))*SUN(ifp)->su_yzoom;
+		yscrpad = (ymax-(ifp->if_height-1))*ifp->if_yzoom;
 		ymax = ifp->if_height-1;
 	}
 	/* Blank out area left of image.			*/
@@ -850,7 +848,7 @@ common:
 	
 	/* Initialize the colormap and clear memory frame buffer to black */
 	if( new ) {
-		sun_cmwrite( ifp, COLORMAP_NULL );
+		sun_wmap( ifp, COLORMAP_NULL );
 		sun_storebackground( ifp, 0, 0, black, ifp->if_max_width*ifp->if_max_height );
 	}
 	return	0;
@@ -879,10 +877,10 @@ sun_zapmem()
 }
 
 /*
- *			S U N _ D O P E N 
+ *			S U N _ O P E N 
  */
 _LOCAL_ int
-sun_dopen(ifp, file, width, height)
+sun_open(ifp, file, width, height)
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -949,11 +947,11 @@ int	width, height;
 		height = ifp->if_max_height;
 
 	if( SUN(ifp) != (struct suninfo *) NULL ) {
-		fb_log( "sun_dopen, already open\n" );
+		fb_log( "sun_open, already open\n" );
 		return	-1;	/* FAIL */
 	}
 	if( (SUNL(ifp) = calloc( 1, sizeof(struct suninfo) )) == NULL ) {
-		fb_log( "sun_dopen:  suninfo calloc failed\n" );
+		fb_log( "sun_open:  suninfo calloc failed\n" );
 		return	-1;
 	}
 	SUN(ifp)->su_mode = mode;
@@ -961,7 +959,7 @@ int	width, height;
 #define WHICH_FONT	"/usr/lib/fonts/fixedwidthfonts/screen.b.14"
 	myfont = pf_open( WHICH_FONT );
 	if( myfont == 0 )  {
-		fb_log("sun_dopen: pf_open %s failure\n", WHICH_FONT);
+		fb_log("sun_open: pf_open %s failure\n", WHICH_FONT);
 		return(-1);
 	}
 
@@ -983,7 +981,7 @@ int	width, height;
 		frame = window_create(NULL, FRAME,
 			      FRAME_LABEL, "Frame Buffer", 0);
 		if( frame == 0 )  {
-			fb_log("sun_dopen: window_create frame failure\n");
+			fb_log("sun_open: window_create frame failure\n");
 			return(-1);
 		}
 		/* XXX - "command line" args? pg.51 */
@@ -991,7 +989,7 @@ int	width, height;
 			      WIN_WIDTH, width,
 			      WIN_HEIGHT, height, 0);
 		if( canvas == 0 )  {
-			fb_log("sun_dopen: window_create canvas failure\n");
+			fb_log("sun_open: window_create canvas failure\n");
 			return(-1);
 		}
 		/* Fit window to canvas (width+10, height+20) */
@@ -1032,7 +1030,7 @@ int	width, height;
 
 		screenpr = pr_open( "/dev/fb" );
 		if( screenpr == (Pixrect *) NULL ) {
-			fb_log("sun_dopen: pr_open /dev/fb failure\n");
+			fb_log("sun_open: pr_open /dev/fb failure\n");
 			return(-1);
 		}
 		windowpr = pr_region(	screenpr,
@@ -1041,7 +1039,7 @@ int	width, height;
 			width+BORDER*2, height+BANNER+BORDER*3
 			);
 		if( windowpr == 0 )  {
-			fb_log("sun_dopen: pr_region failure\n");
+			fb_log("sun_open: pr_region failure\n");
 			return(-1);
 		}
 
@@ -1088,10 +1086,10 @@ int	width, height;
 
 	ifp->if_width = width;
 	ifp->if_height = height;
-	SUN(ifp)->su_xzoom = 1;
-	SUN(ifp)->su_yzoom = 1;
-	SUN(ifp)->su_xcenter = width/2;
-	SUN(ifp)->su_ycenter = height/2;
+	ifp->if_xzoom = 1;
+	ifp->if_yzoom = 1;
+	ifp->if_xcenter = width/2;
+	ifp->if_ycenter = height/2;
 	sun_getmem( ifp );
 
 	/* Must call "is_linear_cmap" AFTER "sun_getmem" which allocates
@@ -1107,17 +1105,17 @@ int	width, height;
 }
 
 /*
- *			S U N _ D C L O S E 
+ *			S U N _ C L O S E 
  */
 _LOCAL_ int
-sun_dclose(ifp)
+sun_close(ifp)
 FBIO	*ifp;
 {
 	register Pixrect *p;
 	register int i;
 
 	if( SUNL(ifp) == (char *) NULL ) {
-		fb_log( "sun_dclose: frame buffer not open.\n" );
+		fb_log( "sun_close: frame buffer not open.\n" );
 		return	-1;
 	}
 	if( sun_pixwin ) {
@@ -1148,7 +1146,7 @@ FBIO	*ifp;
 	if( SUN(ifp)->su_shmid >= 0 ) {
 		/* detach from shared memory */
 		if( shmdt( ifp->if_mem ) == -1 ) {
-			fb_log("sun_dclose shmdt failed, errno=%d\n", errno);
+			fb_log("sun_close shmdt failed, errno=%d\n", errno);
 			return -1;
 		}
 	} else {
@@ -1158,6 +1156,17 @@ FBIO	*ifp;
 	(void) free( (char *) SUNL(ifp) );
 	SUNL(ifp) = NULL;
 	return	0;
+}
+
+/*
+ *			S U N _ P O L L
+ */
+_LOCAL_ int
+sun_poll(ifp)
+FBIO	*ifp;
+{
+	/* XXX - Need to empty event queue here, not just one event */
+	notify_dispatch();
 }
 
 /*
@@ -1210,10 +1219,10 @@ FBIO	*ifp;
 }
 
 /*
- *			S U N _ D C L E A R 
+ *			S U N _ C L E A R 
  */
 _LOCAL_ int
-sun_dclear(ifp, pp)
+sun_clear(ifp, pp)
 FBIO			*ifp;
 register RGBpixel	*pp;
 {
@@ -1229,22 +1238,29 @@ register RGBpixel	*pp;
 }
 
 /*
- *			S U N _ W I N D O W _ S E T 
+ *			S U N _ V I E W
  */
 _LOCAL_ int
-sun_window_set(ifp, xcenter, ycenter)
+sun_view(ifp, xcenter, ycenter, xzoom, yzoom)
 FBIO	*ifp;
 int     xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	/*fb_log( "sun_window_set(0x%x,%d,%d)\n", ifp, xcenter , ycenter );*/
-	if( SUN(ifp)->su_xcenter == xcenter && SUN(ifp)->su_ycenter == ycenter )
+	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
+	 && ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom )
 		return	0;
 	if( xcenter < 0 || xcenter >= ifp->if_width )
 		return	-1;
 	if( ycenter < 0 || ycenter >= ifp->if_height )
 		return	-1;
-	SUN(ifp)->su_xcenter = xcenter;
-	SUN(ifp)->su_ycenter = ycenter;
+	if( xzoom >= ifp->if_width || yzoom >= ifp->if_height )
+		return	-1;
+
+	ifp->if_xcenter = xcenter;
+	ifp->if_ycenter = ycenter;
+	ifp->if_xzoom = xzoom;
+	ifp->if_yzoom = yzoom;
 
 	/* Redraw 24-bit image from memory. */
 	sun_repaint(ifp);
@@ -1252,31 +1268,10 @@ int     xcenter, ycenter;
 }
 
 /*
- *			S U N _ Z O O M _ S E T 
+ *			S U N _ S E T C U R S O R
  */
 _LOCAL_ int
-sun_zoom_set(ifp, xzoom, yzoom)
-FBIO	*ifp;
-int	xzoom, yzoom;
-{
-	/*fb_log( "sun_zoom_set(0x%x,%d,%d)\n", ifp, xzoom, yzoom );*/
-	if( SUN(ifp)->su_xzoom == xzoom && SUN(ifp)->su_yzoom == yzoom )
-		return	0;
-	if( xzoom >= ifp->if_width || yzoom >= ifp->if_height )
-		return	-1;
-	SUN(ifp)->su_xzoom = xzoom;
-	SUN(ifp)->su_yzoom = yzoom;
-
-	/* Redraw 24-bit image from memory. */
-	sun_repaint( ifp );
-	return	0;
-}
-
-/*
- *			S U N _ C U R S _ S E T
- */
-_LOCAL_ int
-sun_curs_set(ifp, bits, xbits, ybits, xorig, yorig )
+sun_setcursor(ifp, bits, xbits, ybits, xorig, yorig )
 FBIO		*ifp;
 unsigned char	*bits;
 int		xbits, ybits;
@@ -1307,10 +1302,10 @@ int		xorig, yorig;
 }
 
 /*
- *			S U N _ C M E M O R Y _ A D D R
+ *			S U N _ C U R S O R
  */
 _LOCAL_ int
-sun_cmemory_addr( ifp, mode, x, y )
+sun_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -1318,6 +1313,8 @@ int	x, y;
 	short	xmin, ymin;
 	register short	i;
 	short	xwidth;
+
+	fb_sim_cursor(ifp, mode, x, y);
 	if( ! sun_pixwin )
 		return	0; /* No cursor outside of suntools yet. */
 	SUN(ifp)->su_curs_on = mode;
@@ -1325,15 +1322,15 @@ int	x, y;
 		/* XXX turn off cursor. */
 		return	0;
 	}
-	xwidth = ifp->if_width/SUN(ifp)->su_xzoom;
+	xwidth = ifp->if_width/ifp->if_xzoom;
 	i = xwidth/2;
-	xmin = SUN(ifp)->su_xcenter - i;
-	i = (ifp->if_height/2)/SUN(ifp)->su_yzoom;
-	ymin = SUN(ifp)->su_ycenter - i;
+	xmin = ifp->if_xcenter - i;
+	i = (ifp->if_height/2)/ifp->if_yzoom;
+	ymin = ifp->if_ycenter - i;
 	x -= xmin;
 	y -= ymin;
-	x *= SUN(ifp)->su_xzoom;
-	y *= SUN(ifp)->su_yzoom;
+	x *= ifp->if_xzoom;
+	y *= ifp->if_yzoom;
 	y = ifp->if_height - y;
 	/* Move cursor/mouse to <x,y>. */	
 	if(	x < 1 || x > ifp->if_width
@@ -1350,41 +1347,23 @@ int	x, y;
 }
 
 /*
- *			S U N _ C S C R E E N _ A D D R
+ *			S U N _ G E T C U R S O R
  */
 _LOCAL_ int
-sun_cscreen_addr( ifp, mode, x, y )
+sun_getcursor(ifp, mode, x, y)
 FBIO	*ifp;
-int	mode;
-int	x, y;
+int	*mode;
+int	*x, *y;
 {
-	if( ! sun_pixwin )
-		return	0; /* No cursor outside of suntools yet. */
-	SUN(ifp)->su_curs_on = mode;
-	if( ! mode ) {
-		/* XXX turn off cursor. */
-		return	0;
-	}
-	y = ifp->if_height - y;
-	/* Move cursor/mouse to <x,y>. */	
-	if(	x < 1 || x > ifp->if_width
-	    ||	y < 1 || y > ifp->if_height
-		)
-		return	-1;
-	/* Translate address from window to tile space. */
-	x += BORDER;
-	y += BORDER*2 + BANNER;
-	SUN(ifp)->su_xcursor = x;
-	SUN(ifp)->su_ycursor = y;
-	win_setmouseposition( ifp->if_windowfd, x, y );
+	fb_sim_getcursor(ifp, mode, x, y);	/*XXX*/
 	return	0;
 }
 
 /*
- *			S U N _ B R E A D 
+ *			S U N _ R E A D 
  */
 _LOCAL_ int
-sun_bread(ifp, x, y, p, count)
+sun_read(ifp, x, y, p, count)
 FBIO			*ifp;
 int			x, y;
 register RGBpixel	*p;
@@ -1404,10 +1383,10 @@ register int		count;
 }
 
 /*
- *			S U N _ B W R I T E
+ *			S U N _ W R I T E
  */
 _LOCAL_ int
-sun_bwrite(ifp, x, y, p, count)
+sun_write(ifp, x, y, p, count)
 register FBIO	*ifp;
 int		x, y;
 RGBpixel	*p;
@@ -1416,14 +1395,14 @@ register int	count;
 	int		xmax, ymax;
 	register int	xwidth;
 
-	/*fb_log( "sun_bwrite(0x%x,%d,%d,0x%x,%d)\n", ifp, x, y, p, count );
+	/*fb_log( "sun_write(0x%x,%d,%d,0x%x,%d)\n", ifp, x, y, p, count );
 		/* XXX--debug */
 	/* Store pixels in memory. */
 	/*sun_storepixel( ifp, x, y, p, count );*/
 	bcopy( p, &ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)],
 		count*sizeof(RGBpixel) );
 
-	xwidth = ifp->if_width/SUN(ifp)->su_xzoom;
+	xwidth = ifp->if_width/ifp->if_xzoom;
 	xmax = count >= xwidth-x ? xwidth-1 : x+count-1;
 	ymax = y + (count-1)/ ifp->if_width;
 	sun_rectwrite( ifp, x, y, xmax, ymax, p, y*ifp->if_width+x );
@@ -1431,20 +1410,10 @@ register int	count;
 }
 
 /*
- *			S U N _ V I E W P O R T _ S E T 
+ *			S U N _ R M A P
  */
 _LOCAL_ int
-sun_viewport_set( ifp )
-FBIO	*ifp;
-{
-	return	0;
-}
-
-/*
- *			S U N _ C M R E A D 
- */
-_LOCAL_ int
-sun_cmread( ifp, cmp )
+sun_rmap( ifp, cmp )
 register FBIO		*ifp;
 register ColorMap	*cmp;
 {
@@ -1482,10 +1451,10 @@ register FBIO	*ifp;
 }
 
 /*
- *			S U N _ C M W R I T E 
+ *			S U N _ W M A P
  */
 _LOCAL_ int
-sun_cmwrite(ifp, cmp)
+sun_wmap(ifp, cmp)
 register FBIO		*ifp;
 register ColorMap	*cmp;
 {
