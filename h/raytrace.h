@@ -359,7 +359,7 @@ struct soltab {
 #define ID_POLY		8	/* Polygonal facted object */
 #define ID_BSPLINE	9	/* B-spline object */
 #define ID_SPH		10	/* Sphere */
-#define	ID_STRINGSOL	11	/* String-defined solid */
+#define	ID_NMG		11	/* n-Manifold Geometry solid */
 #define ID_EBM		12	/* Extruded bitmap solid */
 #define ID_VOL		13	/* 3-D Volume */
 #define ID_ARBN		14	/* ARB with N faces */
