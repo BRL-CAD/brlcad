@@ -181,6 +181,7 @@ struct frame {
 	double		fr_cpu;		/* CPU seconds used so far */
 	/* Current view */
 	struct rt_vls	fr_cmd;		/* RT options & command string */
+	int		fr_needgettree; /* Do we need a gettree message */
 	struct rt_vls	fr_after_cmd;	/* local commands, after frame done */
 };
 struct frame FrameHead;
@@ -290,10 +291,11 @@ struct servers {
 #define SRST_NEW		1	/* connected, awaiting vers check */
 #define SRST_VERSOK		2	/* version OK, no model loaded yet */
 #define SRST_DOING_DIRBUILD	3	/* doing dirbuild, awaiting response */
-#define SRST_READY		4	/* loaded, ready */
-#define SRST_RESTART		5	/* about to restart */
-#define SRST_CLOSING		6	/* Needs to be closed */
-#define SRST_DOING_GETTREES	7	/* doing gettrees */
+#define SRST_NEED_TREE		4	/* need our first gettree */
+#define SRST_READY		5	/* loaded, ready */
+#define SRST_RESTART		6	/* about to restart */
+#define SRST_CLOSING		7	/* Needs to be closed */
+#define SRST_DOING_GETTREES	8	/* doing gettrees */
 	struct frame	*sr_curframe;	/* ptr to current frame */
 	/* Timings */
 	struct timeval	sr_sendtime;	/* time of last sending */
@@ -466,6 +468,8 @@ int	state;
 		return("Vers_OK");
 	case SRST_DOING_DIRBUILD:
 		return("DirBuild");
+	case SRST_NEED_TREE:
+		return("WaitTree");
 	case SRST_READY:
 		return(" Ready");
 	case SRST_RESTART:
@@ -888,7 +892,7 @@ char	*why;
 	}
 	FD_CLR(sp->sr_pc->pkc_fd, &clients);
 
-	if( oldstate != SRST_READY )  return;
+	if( oldstate != SRST_READY && oldstate != SRST_NEED_TREE )  return;
 
 	/* Need to requeue any work that was in progress */
 	lhp = &(sp->sr_work);
@@ -1100,11 +1104,19 @@ FILE	*fp;
 
 	/* A "start" command has been seen, and is saved in buf[] */
 	while( !feof(fp) )  {
+		int needtree;
+		needtree = 0;
 		/* Gobble until "end" keyword seen */
 		while( (ebuf = rt_read_cmd( fp )) != (char *)0 )  {
 			if( strncmp( ebuf, "end", 3 ) == 0 )  {
 				rt_free( ebuf, "end line" );
 				break;
+			}
+			if( strncmp( ebuf, "clean", 5 ) == 0 ) {
+				needtree=1;
+			}
+			if( strncmp( ebuf, "tree", 4 ) == 0 ) {
+				needtree=1;
 			}
 			rt_vls_strcat( &body, ebuf );
 			rt_vls_strcat( &body, ";" );
@@ -1144,6 +1156,7 @@ FILE	*fp;
 		/* Might see if frame file exists 444 mode, then skip also */
 		GET_FRAME(fr);
 		fr->fr_number = frame;
+		fr->fr_needgettree = needtree;
 		prep_frame(fr);
 		rt_vls_vlscat( &fr->fr_cmd, &prelude );
 		rt_vls_vlscatzap( &fr->fr_cmd, &body );
@@ -1595,7 +1608,8 @@ all_servers_idle()
 
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		if( sp->sr_state != SRST_READY )  continue;
+		if( sp->sr_state != SRST_READY && 
+		    sp->sr_state != SRST_NEED_TREE )  continue;
 		if( sp->sr_work.li_forw == &(sp->sr_work) )  continue;
 		return(0);		/* nope, still more work */
 	}
@@ -1844,7 +1858,7 @@ struct timeval		*nowp;
 
 	if( sp->sr_pc == PKC_NULL )  return(0);
 
-	if( sp->sr_state != SRST_READY )
+	if( sp->sr_state != SRST_READY && sp->sr_state != SRST_NEED_TREE )
 		return(0);	/* not running yet */
 
 	CHECK_FRAME(fr);
@@ -1906,10 +1920,11 @@ struct timeval		*nowp;
 		}
 		sp->sr_curframe = fr;
 		send_matrix( sp, fr );
-		/* XXX should see if this is necessary... */
-		send_gettrees( sp, fr );
-		/* Now in state SRST_DOING_GETTREES */
-		return 1;	/* need more work */
+		if (fr->fr_needgettree || sp->sr_state == SRST_NEED_TREE) {
+			send_gettrees( sp, fr );
+			/* Now in state SRST_DOING_GETTREES */
+			return 1;	/* need more work */
+		}
 	}
 
 	/* Special handling for the first assignment of each frame */
@@ -2095,7 +2110,7 @@ char *buf;
 		drop_server( sp, "wrong state" );
 		return;
 	}
-	sp->sr_state = SRST_READY;
+	sp->sr_state = SRST_NEED_TREE;
 }
 
 /*
@@ -2218,7 +2233,7 @@ char *buf;
 	(void)gettimeofday( &tvnow, (struct timezone *)0 );
 
 	sp = &servers[pc->pkc_fd];
-	if( sp->sr_state != SRST_READY &&
+	if( sp->sr_state != SRST_READY && sp->sr_state != SRST_NEED_TREE &&
 	    sp->sr_state != SRST_DOING_GETTREES )  {
 		rt_log("%s Ignoring MSG_PIXELS from %s\n",
 			stamp(), sp->sr_host->ht_name);
