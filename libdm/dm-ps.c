@@ -359,7 +359,7 @@ mat_t mat;
   int useful = 0;
 
   if( !((struct ps_vars *)dmp->dm_vars)->ps_fp )
-    return(0);
+    return TCL_ERROR;
 
 #if 0
   if( linestyle )
@@ -408,7 +408,10 @@ mat_t mat;
     }
   }
 
-  return(useful);
+  if(useful)
+    return TCL_OK;
+
+  return TCL_ERROR;
 }
 
 /*
