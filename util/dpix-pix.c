@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 main(argc, argv)
 int	argc;
 char	*argv[];
-
 {
 	int		count;			/* count of items */
 	int		got;			/* count of bytes */
@@ -44,6 +43,10 @@ char	*argv[];
 	double		b;			/* intercept */
 	unsigned char	c[NUM];
 
+	if( argc < 2 )  {
+		fprintf(stderr, "Usage: dpix-pix file.dpix > file.pix\n");
+		exit(1);
+	}
 
 	if( (fd = open(argv[1], 0)) < 0 )  {
 		perror(argv[1]);
