@@ -896,7 +896,67 @@ mat_t		mat;
 	RT_CK_DB_INTERNAL( ip );
 
 	switch( ip->idb_type )  {
+	case ID_EBM:
+		{
+			struct rt_ebm_internal *ebm =
+				(struct rt_ebm_internal *)ip->idb_ptr;
+			point_t pt;
+
+			RT_EBM_CK_MAGIC( ebm );
+
+			VSETALL( pt , 0.0 );
+			MAT4X3PNT( mpt , ebm->mat , pt );
+			*strp = "V";
+			break;
+		}
+	case ID_VOL:
+		{
+			struct rt_vol_internal *vol =
+				(struct rt_vol_internal *)ip->idb_ptr;
+			point_t pt;
+
+			RT_VOL_CK_MAGIC( vol );
+
+			VSETALL( pt , 0.0 );
+			MAT4X3PNT( mpt , vol->mat , pt );
+			*strp = "V";
+			break;
+		}
+	case ID_HALF:
+		{
+			struct rt_half_internal *haf =
+				(struct rt_half_internal *)ip->idb_ptr;
+			RT_HALF_CK_MAGIC( haf );
+
+			VSCALE( mpt , haf->eqn , haf->eqn[H] );
+			*strp = "V";
+			break;
+		}
+	case ID_ARB8:
+		{
+			struct rt_arb_internal *arb =
+				(struct rt_arb_internal *)ip->idb_ptr;
+			RT_ARB_CK_MAGIC( arb );
+
+			if( *cp == 'V' ) {
+				int vertex_number;
+				char *ptr;
+
+				ptr = cp + 1;
+				vertex_number = (*ptr) - '0';
+				if( vertex_number < 1 || vertex_number > 8 )
+					vertex_number = 1;
+				VMOVE( mpt , arb->pt[vertex_number-1] );
+				sprintf( *strp , "V%d" , vertex_number );
+				break;
+			}
+			/* Default */
+			VMOVE( mpt , arb->pt[0] );
+			*strp = "V1";
+			break;
+		}
 	case ID_ELL:
+	case ID_SPH:
 		{
 			struct rt_ell_internal	*ell = 
 				(struct rt_ell_internal *)ip->idb_ptr;
@@ -907,24 +967,18 @@ mat_t		mat;
 				*strp = "V";
 				break;
 			}
-
-/* XXXX Does this really make sense???  A, B, and C are vectors, not points.
- * Would someone really want to rotate this solid about a point
- * that happens to have the same coordinates as one of these
- * vectors??	-JRA
- */
 			if( strcmp( cp, "A" ) == 0 )  {
-				VMOVE( mpt, ell->a );
+				VADD2( mpt , ell->v , ell->a );
 				*strp = "A";
 				break;
 			}
 			if( strcmp( cp, "B" ) == 0 )  {
-				VMOVE( mpt, ell->b );
+				VADD2( mpt , ell->v , ell->b );
 				*strp = "B";
 				break;
 			}
 			if( strcmp( cp, "C" ) == 0 )  {
-				VMOVE( mpt, ell->c );
+				VADD2( mpt , ell->v , ell->c );
 				*strp = "C";
 				break;
 			}
@@ -950,6 +1004,7 @@ mat_t		mat;
 			break;
 		}
 	case ID_TGC:
+	case ID_REC:
 		{
 			struct rt_tgc_internal	*tgc = 
 				(struct rt_tgc_internal *)ip->idb_ptr;
