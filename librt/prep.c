@@ -84,11 +84,11 @@ int			ncpu;
 
 	/* In case everything is a halfspace, set a minimum space */
 	if( rtip->mdl_min[X] >= INFINITY )  {
-		bu_log("All solids are halspaces, setting minimum\n");
+		bu_log("All solids are halfspaces, setting minimum\n");
 		VSETALL( rtip->mdl_min, -1 );
 	}
 	if( rtip->mdl_max[X] <= -INFINITY )  {
-		bu_log("All solids are halspaces, setting maximum\n");
+		bu_log("All solids are halfspaces, setting maximum\n");
 		VSETALL( rtip->mdl_max, 1 );
 	}
 
@@ -183,6 +183,7 @@ int			ncpu;
 
 	/* Partition space */
 	/* This is the only part which uses multiple CPUs */
+	for( i=1; i<=CUT_MAXIMUM; i++ ) rtip->rti_ncut_by_type[i] = 0;
 	rt_cut_it(rtip, ncpu);
 
 	/* Plot bounding RPPs */
