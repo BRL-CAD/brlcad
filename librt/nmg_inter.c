@@ -2336,14 +2336,20 @@ struct faceuse		*fu2;
 		if (vu2) {
 			/* the other face has a convenient vertex for us */
 			new_v = vu2->v_p;
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("\t\tre-using vertex v=x%x from face\n", new_v);
 		} else {
 			new_v = (struct vertex *)NULL;
 		}
 		vu1_final = nmg_ebreak(new_v, eu1)->vu_p;
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1_final->l.magic);
-		if( !new_v )  nmg_vertex_gv( vu1_final->v_p, hit_pt );	/* 3d geom */
+		if( !new_v )  {
+			nmg_vertex_gv( vu1_final->v_p, hit_pt );	/* 3d geom */
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log("\t\tmaking new vertex vu=x%x v=x%x\n",
+					vu1_final, vu1_final->v_p);
+		} else {
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log("\t\tre-using vertex v=x%x from face, vu=x%x\n", new_v, vu1_final);
+		}
 		nmg_insert_other_fu_vu_in_list( is, list, vu1_final, fu2 );
 
 		nmg_ck_face_worthless_edges( fu1 );
