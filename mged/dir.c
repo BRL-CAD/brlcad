@@ -578,7 +578,7 @@ char	**argv;
  *  	Save named objects in specified file.
  *	Good for pulling parts out of one model for use elsewhere.
  */
-static int	keepfd;
+static FILE	*keepfp;
 
 void
 node_write( dbip, dp )
@@ -594,8 +594,9 @@ register struct directory *dp;
 	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
 		READ_ERR_return;
 	want = dp->d_len*sizeof(union record);
-	if( write( keepfd, (char *)rp, want ) != want )
-		perror("keep write");
+	if( fwrite( (char *)rp, want, 1, keepfp ) != 1 )
+		perror("keep fwrite");
+	rt_free( (char *)rp, "keep rec[]" );
 }
 
 void
@@ -612,25 +613,28 @@ char	**argv;
 			dp->d_nref = 0;
 	}
 
-	if( (keepfd = creat( argv[1], 0644 )) < 0 )  {
+	if( (keepfp = fopen( argv[1], "a" ) ) == NULL )  {
 		perror( argv[1] );
 		return;
 	}
 	
 	/* ident record */
-	(void)lseek(keepfd, 0L, 0);
 	record.i.i_id = ID_IDENT;
 	record.i.i_units = localunit;
 	strcpy(record.i.i_version, ID_VERSION);
 	sprintf(record.i.i_title, "Parts of: %s", cur_title);	/* XXX len */
-	(void)write(keepfd, (char *)&record, sizeof record);
+	if( fwrite( (char *)&record, sizeof(record), 1, keepfp ) != 1 )  {
+		perror("keep fwrite (ident)");
+		fclose(keepfp);
+		return;
+	}
 
 	for(i = 2; i < argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
 		db_functree( dbip, dp, node_write, node_write );
 	}
-	(void) close(keepfd);
+	fclose(keepfp);
 }
 
 #ifdef OLD
