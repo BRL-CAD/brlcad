@@ -38,7 +38,6 @@
 /* Boolean operations */
 #define NMG_BOOL_SUB 1		/* subtraction */
 #define NMG_BOOL_ADD 2		/* addition/union */
-#define NMG_BOOL_XOR 3		/* exclusive or */
 #define NMG_BOOL_ISECT 4	/* intsersection */
 
 /* orientations available.  All topological elements are orientable. */
@@ -208,6 +207,8 @@ struct nmgregion {
 
 struct nmgregion_a {
 	long	magic;
+	point_t	min_pt;	/* minimums of bounding box */
+	point_t	max_pt;	/* maximums of bounding box */
 };
 
 /*  S H E L L
@@ -499,6 +500,7 @@ extern char *rt_calloc();
  */
 #if __STDC__
 extern struct model	*nmg_mmr();
+extern struct model	*nmg_mm();
 extern struct shell 	*nmg_msv(struct nmgregion *r_p);
 extern struct nmgregion	*nmg_mrsv(struct model *m);
 extern struct vertexuse	*nmg_mvu(struct vertex *v, long *upptr);
@@ -509,7 +511,8 @@ extern struct edgeuse	*nmg_eins(struct edgeuse *eu);
 extern struct loopuse	*nmg_ml(struct shell *s);
 extern struct loopuse	*nmg_mlv(long *magic, struct vertex *v);
 extern struct faceuse	*nmg_mf(struct loopuse *lu1);
-extern struct faceuse	*nmg_cface(struct shell *s, struct vertex **vt,	unsigned n);
+extern struct faceuse	*nmg_cface(struct shell *s, struct vertex **vt,	int n);
+extern struct faceuse	*nmg_cmface(struct shell *s, struct vertex **vt, int n);
 extern struct edgeuse	*nmg_eusplit(struct vertex *v, struct edgeuse *oldeu);
 extern struct edge	*nmg_esplit(struct vertex *v, struct edge *e);
 extern char		*nmg_identify_magic(long magic);
@@ -560,7 +563,7 @@ extern void		nmg_pl_m(FILE *fp, struct model *m);
 extern struct vertexuse	*nmg_find_vu_in_face(point_t pt, struct faceuse *fu);
 extern void		nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2);
 extern void		nmg_isect_faces(struct faceuse *fu1, struct faceuse *fu2);
-extern struct shell	*nmg_do_bool(struct shell *s1, struct shell *s2, int oper);
+extern struct nmgregion	*nmg_do_bool(struct shell *s1, struct shell *s2, int oper);
 extern void		nmg_ck_closed_surf(struct shell *s);
 extern void		nmg_m_to_g(FILE *fp, struct model *m);
 extern void		nmg_r_to_g(FILE *fp, struct nmgregion *r);
@@ -570,6 +573,7 @@ extern void		nmg_pr_orient(char o, char *h);
 
 #else
 extern struct model	*nmg_mmr();
+extern struct model	*nmg_mm();
 extern struct shell 	*nmg_msv();
 extern struct nmgregion	*nmg_mrsv();
 extern struct vertexuse	*nmg_mvu();
@@ -581,6 +585,7 @@ extern struct loopuse	*nmg_ml();
 extern struct loopuse	*nmg_mlv();
 extern struct faceuse	*nmg_mf();
 extern struct faceuse	*nmg_cface();
+extern struct faceuse	*nmg_cmface();
 extern struct edgeuse	*nmg_eusplit();
 extern struct edge	*nmg_esplit();
 extern char		*nmg_identify_magic();
@@ -625,7 +630,7 @@ extern void		nmg_pl_eu();
 extern struct vertexuse	*nmg_find_vu_in_face();
 extern void		nmg_mesh_faces();
 extern void		nmg_isect_faces();
-extern struct shell	*nmg_do_bool();
+extern struct nmgregion	*nmg_do_bool();
 extern void		nmg_ck_closed_surf();
 extern void		nmg_m_to_g();
 extern void		nmg_r_to_g();
