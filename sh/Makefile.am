@@ -2,7 +2,6 @@
 
 bin_SCRIPTS = \
 	any-png.sh \
-	brlcad-check.sh \
 	cadbug.sh \
 	cakeinclude.sh \
 	copyright.sh \
