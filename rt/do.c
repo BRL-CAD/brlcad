@@ -589,8 +589,8 @@ int framenumber;
 	struct bu_vls	times;
 	char framename[128];		/* File name to hold current frame */
 	struct rt_i *rtip = ap.a_rt_i;
-	double	utime;			/* CPU time used */
-	double	nutime;			/* CPU time used, normalized by ncpu */
+	double	utime = 0.0;			/* CPU time used */
+	double	nutime = 0.0;			/* CPU time used, normalized by ncpu */
 	double	wallclock;		/* # seconds of wall clock time */
 	int	npix,i;			/* # of pixel values to be done */
 	int	lim;
@@ -836,10 +836,12 @@ int framenumber;
 	 *  It may prove desirable to do this in chunks
 	 */
 	rt_prep_timer();
+
 	if( incr_mode )  {
 		for( incr_level = 1; incr_level <= incr_nlevel; incr_level++ )  {
 			if( incr_level > 1 )
 				view_2init( &ap, framename );
+
 			do_run( 0, (1<<incr_level)*(1<<incr_level)-1 );
 		}
 	} else {
@@ -886,6 +888,14 @@ int framenumber;
 	} else
 #endif
 		nutime = utime;
+
+	/* prevent a bogus near-zero time to prevent infinate and near-infinate
+	 * results without relying on IEEE floating point zero comparison.
+	 */
+	if (NEAR_ZERO(nutime, VDIVIDE_TOL)) {
+	  bu_log("WARNING:  Raytrace timings are likely to be meaningless\n");
+	  nutime = VDIVIDE_TOL;
+	}
 
 	/*
 	 *  All done.  Display run statistics.
