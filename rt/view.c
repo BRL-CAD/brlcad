@@ -418,12 +418,17 @@ struct partition *PartHeadp;
 		/* "Surface" Normal points inward, UV is azim/elev of ray */
 		sw.sw_inputs = MFI_NORMAL|MFI_UV;
 		VREVERSE( sw.sw_hit.hit_normal, ap->a_ray.r_dir );
+		/* U is azimuth, atan() range: -pi to +pi */
 		sw.sw_uv.uv_u = mat_atan2( ap->a_ray.r_dir[Y],
 			ap->a_ray.r_dir[X] ) * rt_inv2pi + 0.5;
+		/*
+		 *  V is elevation, atan() range: -pi/2 to +pi/2,
+		 *  because sqrt() ensures that X parameter is always >0
+		 */
 		sw.sw_uv.uv_v = mat_atan2( ap->a_ray.r_dir[Z],
 			sqrt( ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y]) ) *
-			rt_inv2pi + 0.5;
+			rt_invpi + 0.5;
 		sw.sw_uv.uv_du = sw.sw_uv.uv_dv = 0;
 
 		VSETALL( sw.sw_color, 1 );
