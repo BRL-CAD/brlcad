@@ -34,6 +34,14 @@ struct rb_node
 #define	RB_NODE_NULL	((struct rb_node *) 0)
 
 /*
+ *	Applications interface to _rb_extreme()
+ */
+#define	SENSE_MIN	0
+#define	rb_min(t,o)	_rb_extreme((t), (o), SENSE_MIN)
+#define	SENSE_MAX	1
+#define	rb_max(t,o)	_rb_extreme((t), (o), SENSE_MAX)
+
+/*
  *	Applications interface to LIBREDBLACK
  */
 rb_tree *rb_create	(
@@ -41,13 +49,19 @@ rb_tree *rb_create	(
 			    int 	nm_orders,
 			    int		(**order)()
 			);
+void *_rb_extreme	(
+			    rb_tree	*tree,
+			    int		order_nm,
+			    int		sense
+			);
 int rb_insert		(
 			    rb_tree	*tree,
 			    void	*data
 			);
-void *rb_min		(
+void rb_walk		(
 			    rb_tree	*tree,
-			    int		order_nm
+			    int		order,
+			    void	(*visit)()
 			);
 
 #endif /* REDBLACK_H */
