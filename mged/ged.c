@@ -124,6 +124,7 @@ int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
 int		classic_mged=0;
 char		*dpy_string = (char *)NULL;
+static int	mged_init_flag = 1;	/* >0 means in initialization stage */
 
 struct bu_vls input_str, scratchline, input_str_prefix;
 int input_str_index = 0;
@@ -141,8 +142,8 @@ static char *units_str[] = {
 	"mm",
 	"um",
 	"cm",
-	"km",
 	"meters",
+	"km",
 	"inches",
 	"feet",
 	"yards",
@@ -490,6 +491,8 @@ char **argv;
 	  Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
 				std_out_or_err, (ClientData)pipe_err[0]);
 	}
+
+	mged_init_flag = 0;	/* all done with initialization */
 
 	/****************  M A I N   L O O P   *********************/
 	while(1) {
@@ -1904,8 +1907,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  static int first = 1;
-  int force_new = 0;
   struct db_i *save_dbip;
   struct bu_vls vls;
 
@@ -1950,49 +1951,47 @@ char	**argv;
       ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
     char line[128];
 
-    if( isatty(0) ) {
-      if(first){
-	if(classic_mged){
-	  perror( argv[1] );
-	  bu_log("Create new database (y|n)[n]? ");
-	  (void)fgets(line, sizeof(line), stdin);
-	  if( line[0] != 'y' && line[0] != 'Y' )
-	    exit(0);                /* NOT finish() */
-	}else{
-	  int status;
-	  struct bu_vls vls;
+    if(mged_init_flag){
+      if(classic_mged){
+	perror( argv[1] );
+	bu_log("Create new database (y|n)[n]? ");
+	(void)fgets(line, sizeof(line), stdin);
+	if( line[0] != 'y' && line[0] != 'Y' )
+	    return TCL_OK;
+      }else{
+	int status;
+	struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  if(dpy_string != (char *)NULL)
-	    bu_vls_printf(&vls, "mged_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
-			  dpy_string, argv[1]);
-	  else
-	    bu_vls_printf(&vls, "mged_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
-			  argv[1]);
-	    
-	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
+	bu_vls_init(&vls);
+	if(dpy_string != (char *)NULL)
+	  bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
+			dpy_string, argv[1]);
+	else
+	  bu_vls_printf(&vls, "cad_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
+			argv[1]);
 
-	  if(status != TCL_OK)
-	    exit(0);
+	status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
-	  if(interp->result[0] != '0')
-	    exit(0);
-	}
-      } else {
-	if(argc == 2){
-	  /* need to reset this before returning */
-	  dbip = save_dbip;
-	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
-			   (char *)NULL);
-	  bu_vls_printf(&curr_cmd_list->more_default, "n");
-	  return TCL_ERROR;
-	}
-
-	if( *argv[2] != 'y' && *argv[2] != 'Y' ){
-	  dbip = save_dbip;
+	if(status != TCL_OK)
 	  return TCL_OK;
-	}
+
+	if(interp->result[0] != '0')
+	  return TCL_OK;
+      }
+    } else { /* not initializing mged */
+      if(argc == 2){
+	/* need to reset this before returning */
+	dbip = save_dbip;
+	Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
+			 (char *)NULL);
+	bu_vls_printf(&curr_cmd_list->more_default, "n");
+	return TCL_ERROR;
+      }
+
+      if( *argv[2] != 'y' && *argv[2] != 'Y' ){
+	dbip = save_dbip; /* restore previous database */
+	return TCL_OK;
       }
     }
 
@@ -2003,7 +2002,7 @@ char	**argv;
       perror( argv[1] );
       exit(2);		/* NOT finish() */
     }
-  }
+  }/* if( ((dbip = db_open( argv[1] ..... */
 
   if( save_dbip )  {
     char *av[2];
@@ -2025,9 +2024,6 @@ char	**argv;
 
   /* Quick -- before he gets away -- write a logfile entry! */
   log_event( "START", argv[1] );
-
-  if(first)
-    first = 0;
 
   /* --- Scan geometry database and build in-memory directory --- */
   db_scan( dbip, (int (*)())db_diradd, 1);
