@@ -3,6 +3,7 @@
  *
  * 4 x 4 Matrix manipulation functions..............
  *
+ *	mat_atan2()			Wrapper for library atan2()
  *	mat_zero( &m )			Fill matrix m with zeros
  *	mat_idn( &m )			Fill matrix m with identity matrix
  *	mat_copy( &o, &i )		Copy matrix i to matrix o
@@ -14,6 +15,8 @@
  *	mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
  *	mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
  *	eigen2x2()			Eigen values and vectors
+ *	mat_lookat			Make rot mat:  xform from D to -Z
+ *	mat_fromto			Make rot mat:  xform from A to B
  *
  *
  * Matrix array elements have the following positions in the matrix:
@@ -49,10 +52,27 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
-extern double	sin(), cos();
+double mat_degtorad = 0.0174532925199433;
 
-static double degtorad = 0.0174532925199433;
 
+/*
+ *			M A T _ A T A N 2
+ *
+ *  A wrapper for the system atan2().  On the Silicon Graphics,
+ *  and perhaps on others, x==0 incorrectly returns infinity.
+ */
+double
+mat_atan2(y,x)
+double	y,x;
+{
+	if( x > -1.0e-20 && x < 1.0e-20 )  {
+		/* X is equal to zero, check Y */
+		if( y < -1.0e-20 )  return( -3.14159265358979323/2 );
+		if( y >  1.0e-20 )  return(  3.14159265358979323/2 );
+		return(0.0);
+	}
+	return( atan2( y, x ) );
+}
 
 /*
  *			M A T _ Z E R O
@@ -372,8 +392,8 @@ double elev;
 	LOCAL double sin_az, sin_el;
 	LOCAL double cos_az, cos_el;
 
-	azimuth *= degtorad;
-	elev *= degtorad;
+	azimuth *= mat_degtorad;
+	elev *= mat_degtorad;
 
 	sin_az = sin(azimuth);
 	cos_az = cos(azimuth);
@@ -404,6 +424,10 @@ double elev;
  *
  * This routine builds a Homogeneous rotation matrix, given
  * alpha, beta, and gamma as angles of rotation, in degrees.
+ *
+ * Alpha is angle of rotation about the X axis, and is done third.
+ * Beta is angle of rotation about the Y axis, and is done second.
+ * Gamma is angle of rotation about Z axis, and is done first.
  */
 void
 mat_angles( mat, alpha, beta, ggamma )
@@ -418,9 +442,9 @@ double alpha, beta, ggamma;
 		return;
 	}
 
-	alpha *= degtorad;
-	beta *= degtorad;
-	ggamma *= degtorad;
+	alpha *= mat_degtorad;
+	beta *= mat_degtorad;
+	ggamma *= mat_degtorad;
 
 	calpha = cos( alpha );
 	cbeta = cos( beta );
@@ -430,13 +454,6 @@ double alpha, beta, ggamma;
 	sbeta = sin( beta );
 	sgamma = sin( ggamma );
 
-	/*
-	 * compute the new rotation to apply to the previous
-	 * viewing rotation.
-	 * Alpha is angle of rotation about the X axis, and is done third.
-	 * Beta is angle of rotation about the Y axis, and is done second.
-	 * Gamma is angle of rotation about Z axis, and is done first.
-	 */
 	mat[0] = cbeta * cgamma;
 	mat[1] = -cbeta * sgamma;
 	mat[2] = -sbeta;
@@ -507,4 +524,83 @@ fastf_t	a, b, c;
 	}
 	VUNITIZE( vec1 );
 	VSET( vec2, -vec1[Y], vec1[X], 0.0 );	/* vec1 X vec2 = +Z */
+}
+
+/*
+ *			M A T _ F R O M T O
+ *
+ *  Given two vectors, compute a rotation matrix that will transform
+ *  space by the angle between the two.  Since there are many
+ *  candidate matricies, the method used here is to convert the vectors
+ *  to azimuth/elevation form (azimuth is +X, elevation is +Z),
+ *  take the difference, and form the rotation matrix.
+ *  See mat_ae for that algorithm.
+ *
+ *  The input 'from' and 'to' vectors must be unit length.
+ *
+ *  MAT4X3VEC( to, m, from ) is the identity that is created.
+ */
+mat_fromto( m, from, to )
+mat_t	m;
+vect_t	from;
+vect_t	to;
+{
+	double	az, el;
+	LOCAL double sin_az, sin_el;
+	LOCAL double cos_az, cos_el;
+
+	az = mat_atan2( to[Y], to[X] ) - mat_atan2( from[Y], from[X] );
+	el = asin( to[Z] ) - asin( from[Z] );
+
+	sin_az = sin(az);
+	cos_az = cos(az);
+	sin_el = sin(el);
+	cos_el = cos(el);
+
+	m[0] = cos_el * cos_az;
+	m[1] = -sin_az;
+	m[2] = -sin_el * cos_az;
+	m[3] = 0;
+
+	m[4] = cos_el * sin_az;
+	m[5] = cos_az;
+	m[6] = -sin_el * sin_az;
+	m[7] = 0;
+
+	m[8] = sin_el;
+	m[9] = 0;
+	m[10] = cos_el;
+	m[11] = 0;
+
+	m[12] = m[13] = m[14] = 0;
+	m[15] = 1.0;
+}
+
+/*
+ *			M A T _ L O O K A T
+ *
+ *  Given a direction vector D, product a matrix suitable for use
+ *  as a "model2view" matrix that transforms the vector D
+ *  into the -Z ("view") axis.
+ *
+ *  Note that due to the special property of mat_fromto()
+ *  that prevents "twist" on the vector by orienting on the X-Y
+ *  plane, we must first find the transformation that maps
+ *  D into the +X axis, and then rotate to the -Z axis.
+ */
+mat_lookat( rot, dir )
+mat_t rot;
+vect_t dir;
+{
+	mat_t	second;
+	mat_t	first;
+	vect_t	x;
+
+	/* Rotate from Dir to +X */
+	VSET( x, 1, 0, 0 );
+	mat_fromto( first, dir, x );
+
+	/* Rotate so that +X is now -Z axis */
+	mat_angles( second, -90.0, 0.0, 90.0 );
+	mat_mul( rot, second, first );
 }
