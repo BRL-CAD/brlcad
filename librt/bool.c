@@ -201,7 +201,9 @@ struct application	*ap;
 		segp = BU_LIST_FIRST( seg, &(in_hd->l) );
 		RT_CHECK_SEG(segp);
 		RT_CK_HIT(&(segp->seg_in));
+		RT_CK_RAY(segp->seg_in.hit_rayp);
 		RT_CK_HIT(&(segp->seg_out));
+		RT_CK_RAY(segp->seg_out.hit_rayp);
 		if(rt_g.debug&DEBUG_PARTITION)  {
 			point_t		pt;
 
