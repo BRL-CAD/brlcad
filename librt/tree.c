@@ -300,8 +300,8 @@ struct rt_i			*rtip;
 
 			if( stp->st_matp == (matp_t)0 )  {
 				if( mat == (matp_t)0 )  {
-					have_match = 1;
-					break;
+					/* Both have identity matrix */
+					goto more_checks;
 				}
 				continue;
 			}
@@ -310,6 +310,7 @@ struct rt_i			*rtip;
 			if( !rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol))
 				continue;
 
+more_checks:
 			/* Don't instance this solid from some other model instance */
 			/* As this is nearly always equal, check it last */
 			if( stp->st_rtip != rtip )  continue;
