@@ -214,6 +214,18 @@ register struct shadework *swp;
 	int	i;
 
 	rt_log( "Shadework %s: 0x%x\n", str, swp );
+	if (swp->sw_inputs && MFI_HIT)
+		rt_log( " sw_hit.dist:%g  sw_hit.point(%g %g %g)\n",
+			swp->sw_hit.hit_dist, 
+			V3ARGS(swp->sw_hit.hit_point));
+	else
+		rt_log( " sw_hit.dist:%g\n", swp->sw_hit.hit_dist);
+
+	if (swp->sw_inputs && MFI_NORMAL) 
+		rt_log(" sw_hit.normal(%g %g %g)\n",
+			V3ARGS(swp->sw_hit.hit_normal));
+
+
 	rt_log( " sw_transmit %f\n", swp->sw_transmit );
 	rt_log( " sw_reflect %f\n", swp->sw_reflect );
 	rt_log( " sw_refract_index %f\n", swp->sw_refrac_index );
