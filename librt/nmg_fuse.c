@@ -385,23 +385,30 @@ CONST struct rt_tol	*tol;
 
 				dist = DIST_PT_PLANE(vg->coord, fg1->N);
 				if( dist > tol->dist )  {
-					rt_log("nmg_model_face_fuse: plane eqns equal, v x%x off plane by %e, skipping (f1=x%x, f2=x%x)\n", v, dist, f1, f2);
-					VPRINT(" pt", vg->coord);
-					PLPRINT(" fg1", fg1->N);
-					PLPRINT(" fg2", fg2->N);
+					if (rt_g.NMG_debug & DEBUG_MESH)  {
+						rt_log("nmg_model_face_fuse: plane eqns equal, v x%x off plane by %e, skipping (f1=x%x, f2=x%x)\n", v, dist, f1, f2);
+						VPRINT(" pt", vg->coord);
+						PLPRINT(" fg1", fg1->N);
+						PLPRINT(" fg2", fg2->N);
+					}
 					goto next_face;
 				}
 			}
 			/* All points are on the plane, it's OK to fuse */
 			if( flip2 == 0 )  {
-				rt_log("joining face geometry (same dir) f1=x%x, f2=x%x\n", f1, f2);
-				PLPRINT(" fg1", fg1->N);
-				PLPRINT(" fg2", fg2->N);
+				if (rt_g.NMG_debug & DEBUG_MESH)  {
+					rt_log("joining face geometry (same dir) f1=x%x, f2=x%x\n", f1, f2);
+					PLPRINT(" fg1", fg1->N);
+					PLPRINT(" fg2", fg2->N);
+				}
 				nmg_jfg( f1, f2 );
 				total++;
 			} else {
 				register struct face	*fn;
-				rt_log("joining face geometry (opposite dirs)\n");
+
+				if (rt_g.NMG_debug & DEBUG_MESH)  {
+					rt_log("joining face geometry (opposite dirs)\n");
+				}
 				/* Flip flags of faces using fg2, first! */
 				for( RT_LIST_FOR( fn, face, &fg2->f_hd ) )  {
 					NMG_CK_FACE(fn);
