@@ -56,7 +56,7 @@ static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 
 void pscale();
 void	calc_planes();
-static short int fixv;		/* used in ROTFACE,f_eqn(): fixed vertex */
+static short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
@@ -375,7 +375,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = EARB;
 	if(arg == 12)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -392,7 +392,7 @@ int arg;
 		es_menu = 4;	/* location of point */
 	}
 	if(arg == 12)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -414,7 +414,7 @@ int arg;
 		es_menu = 6;
 	}
 	if(arg == 10)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -431,7 +431,7 @@ int arg;
 		es_menu = 4;
 	}
 	if(arg == 9)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -443,7 +443,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PTARB;
 	if(arg == 5)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -454,12 +454,14 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
-	if(arg == MENU_TGC_ROT_H || arg == MENU_TGC_ROT_AB)
-		es_edflag = PROT;
+	if(arg == MENU_TGC_ROT_H )
+		es_edflag = ECMD_TGC_ROT_H;
+	if(arg == MENU_TGC_ROT_AB)
+		es_edflag = ECMD_TGC_ROT_AB;
 	if(arg == MENU_TGC_MV_H)
-		es_edflag = MOVEH;
+		es_edflag = ECMD_TGC_MV_H;
 	if(arg == MENU_TGC_MV_HH)
-		es_edflag = MOVEHH;
+		es_edflag = ECMD_TGC_MV_HH;
 }
 
 
@@ -484,9 +486,9 @@ arb8_mv_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = MVFACE;
+	es_edflag = ECMD_ARB_MOVE_FACE;
 	if(arg == 7)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -496,9 +498,9 @@ arb7_mv_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = MVFACE;
+	es_edflag = ECMD_ARB_MOVE_FACE;
 	if(arg == 7)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }		
@@ -508,9 +510,9 @@ arb6_mv_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = MVFACE;
+	es_edflag = ECMD_ARB_MOVE_FACE;
 	if(arg == 6)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -520,9 +522,9 @@ arb5_mv_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = MVFACE;
+	es_edflag = ECMD_ARB_MOVE_FACE;
 	if(arg == 6)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -532,9 +534,9 @@ arb4_mv_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = MVFACE;
+	es_edflag = ECMD_ARB_MOVE_FACE;
 	if(arg == 5)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -544,10 +546,10 @@ arb8_rot_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = SETUP_ROTFACE;
+	es_edflag = ECMD_ARB_SETUP_ROTFACE;
 	sedraw = 1;
 	if(arg == 7)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -557,10 +559,10 @@ arb7_rot_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = SETUP_ROTFACE;
+	es_edflag = ECMD_ARB_SETUP_ROTFACE;
 	sedraw = 1;
 	if(arg == 7)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }		
@@ -570,10 +572,10 @@ arb6_rot_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = SETUP_ROTFACE;
+	es_edflag = ECMD_ARB_SETUP_ROTFACE;
 	sedraw = 1;
 	if(arg == 6)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -583,10 +585,10 @@ arb5_rot_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = SETUP_ROTFACE;
+	es_edflag = ECMD_ARB_SETUP_ROTFACE;
 	sedraw = 1;
 	if(arg == 6)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -596,10 +598,10 @@ arb4_rot_face( arg )
 int arg;
 {
 	es_menu = arg - 1;
-	es_edflag = SETUP_ROTFACE;
+	es_edflag = ECMD_ARB_SETUP_ROTFACE;
 	sedraw = 1;
 	if(arg == 5)  {
-		es_edflag = CONTROL;
+		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
 }
@@ -609,7 +611,7 @@ arb_control( arg )
 int arg;
 {
 	es_menu = arg;
-	es_edflag = CHGMENU;
+	es_edflag = ECMD_ARB_SPECIFIC_MENU;
 	sedraw = 1;
 }
 
@@ -810,6 +812,8 @@ sedit_menu()  {
 		menu_array[MENU_L1] = spline_menu;
 		break;
 	}
+	es_edflag = IDLE;	/* Drop out of previous edit mode */
+	es_menu = 0;
 }
 
 /*
@@ -829,7 +833,7 @@ sedit()
 	fastf_t	*eqp;
 	static vect_t work;
 	register int i;
-	static int pnt5;		/* SETUP_ROTFACE, special arb7 case */
+	static int pnt5;		/* ECMD_ARB_SETUP_ROTFACE, special arb7 case */
 	static int j;
 	static float la, lb, lc, ld;	/* TGC: length of vectors */
 
@@ -841,14 +845,14 @@ sedit()
 		/* do nothing */
 		break;
 
-	case CONTROL:
-		/* put up control menu for GENARB8s */
+	case ECMD_ARB_MAIN_MENU:
+		/* put up control (main) menu for GENARB8s */
 		menuflag = 0;
 		es_edflag = IDLE;
 		menu_array[MENU_L1] = cntrl_menu;
 		break;
 
-	case CHGMENU:
+	case ECMD_ARB_SPECIFIC_MENU:
 		/* put up specific arb edit menus */
 		menuflag = 0;
 		es_edflag = IDLE;
@@ -868,7 +872,7 @@ sedit()
 		}
 		break;
 
-	case MVFACE:
+	case ECMD_ARB_MOVE_FACE:
 		/* move face through definite point */
 		if(inpara) {
 			/* apply es_invmat to convert to real model space */
@@ -880,7 +884,7 @@ sedit()
 		}
 		break;
 
-	case SETUP_ROTFACE:
+	case ECMD_ARB_SETUP_ROTFACE:
 		/* check if point 5 is in the face */
 		pnt5 = 0;
 		for(i=0; i<4; i++)  {
@@ -894,7 +898,7 @@ sedit()
 				fixv = 5;
 		}
 		else{
-			/* find fixed vertex for ROTFACE */
+			/* find fixed vertex for ECMD_ARB_ROTATE_FACE */
 			fixv=0;
 			do  {
 				int	type,loc,valid;
@@ -930,12 +934,12 @@ sedit()
 		
 		pr_prompt();
 		fixv--;
-		es_edflag = ROTFACE;
+		es_edflag = ECMD_ARB_ROTATE_FACE;
 		mat_idn( acc_rot_sol );
 		dmaflag = 1;	/* draw arrow, etc */
 		break;
 
-	case ROTFACE:
+	case ECMD_ARB_ROTATE_FACE:
 		/* rotate a GENARB8 defining plane through a fixed vertex */
 		if(inpara) {
 			static mat_t invsolr;
@@ -1026,7 +1030,7 @@ sedit()
 		return;
 
 	case SSCALE:
-		/* scale the solid */
+		/* scale the solid uniformly about it's vertex point */
 		if(inpara) {
 			/* accumulate the scale factor */
 			es_scale = es_para[0] / acc_sc_sol;
@@ -1053,11 +1057,7 @@ sedit()
 		}
 		break;
 
-	case MENU:
-		/* do nothing */
-		break;
-
-	case MOVEH:
+	case ECMD_TGC_MV_H:
 		/*
 		 * Move end of H of tgc, keeping plates perpendicular
 		 * to H vector.
@@ -1105,7 +1105,7 @@ sedit()
 		VSCALE(&es_rec.s.s_tgc_B, &es_rec.s.s_tgc_B, lb);
 		break;
 
-	case MOVEHH:
+	case ECMD_TGC_MV_HH:
 		/* Move end of H of tgc - leave ends alone */
 		if( inpara ) {
 			/* apply es_invmat to convert to real model coordinates */
@@ -1180,21 +1180,19 @@ sedit()
 		mat_idn( incr_change );
 		break;
 
-	case PROT:   /* partial rotation of a solid */
-		switch( es_menu ) {
+	case ECMD_TGC_ROT_H:
+		/* rotate height vector */
+		MAT4X3VEC(work, incr_change, &es_rec.s.s_tgc_H);
+		VMOVE(&es_rec.s.s_tgc_H, work);
+		mat_idn( incr_change );
+		break;
 
-		case MENU_TGC_ROT_H:  /* rotate height vector */
-			MAT4X3VEC(work, incr_change, &es_rec.s.s_tgc_H);
-			VMOVE(&es_rec.s.s_tgc_H, work);
-			break;
-
-		case MENU_TGC_ROT_AB:  /* rotate surfaces AxB and CxD (tgc) */
-			for(i=2; i<6; i++) {
-				op = &es_rec.s.s_values[i*3];
-				MAT4X3VEC( work, incr_change, op );
-				VMOVE( op, work );
-			}
-			break;
+	case ECMD_TGC_ROT_AB:
+		/* rotate surfaces AxB and CxD (tgc) */
+		for(i=2; i<6; i++) {
+			op = &es_rec.s.s_values[i*3];
+			MAT4X3VEC( work, incr_change, op );
+			VMOVE( op, work );
 		}
 		mat_idn( incr_change );
 		break;
@@ -1259,8 +1257,8 @@ CONST vect_t	mousevec;
 		MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
 		sedraw = 1;
 		return;
-	case MOVEH:
-	case MOVEHH:
+	case ECMD_TGC_MV_H:
+	case ECMD_TGC_MV_HH:
 		/* Use mouse to change location of point V+H */
 		VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
 		MAT4X3PNT(pos_model, es_mat, temp);
@@ -1297,7 +1295,7 @@ CONST vect_t	mousevec;
 		editarb( pos_model );
 		sedraw = 1;
 		return;
-	case MVFACE:
+	case ECMD_ARB_MOVE_FACE:
 		/* move arb face, through  indicated  point */
 		mousevec[X] = mousevec[X];
 		mousevec[Y] = mousevec[Y];
@@ -1895,7 +1893,7 @@ f_eqn()
 		(void)printf("Eqn: type must be GENARB8\n");
 		return;
 	}
-	else if( es_edflag != ROTFACE ){
+	else if( es_edflag != ECMD_ARB_ROTATE_FACE ){
 		(void)printf("Eqn: must be rotating a face\n");
 		return;
 	}
@@ -2009,7 +2007,7 @@ char	**argv;
 		(void)printf("A solid editor option not selected\n");
 		return;
 	}
-	if( es_edflag == PROT ) {
+	if( es_edflag == ECMD_TGC_ROT_H || es_edflag == ECMD_TGC_ROT_AB ) {
 		(void)printf("\"p\" command not defined for this option\n");
 		return;
 	}
@@ -2018,8 +2016,7 @@ char	**argv;
 	sedraw++;
 	for( i = 1; i < argc; i++ )  {
 		es_para[ i - 1 ] = atof( argv[i] );
-		if( es_edflag == PSCALE ||
-					es_edflag == SSCALE )  {
+		if( es_edflag == PSCALE || es_edflag == SSCALE )  {
 			if(es_para[0] <= 0.0) {
 				(void)printf("ERROR: SCALE FACTOR <= 0\n");
 				inpara = 0;
@@ -2034,9 +2031,9 @@ char	**argv;
 		case STRANS:
 		case PSCALE:
 		case EARB:
-		case MVFACE:
-		case MOVEH:
-		case MOVEHH:
+		case ECMD_ARB_MOVE_FACE:
+		case ECMD_TGC_MV_H:
+		case ECMD_TGC_MV_HH:
 		case PTARB:
 			/* must convert to base units */
 			es_para[0] *= local2base;
@@ -2046,4 +2043,62 @@ char	**argv;
 		default:
 			return;
 	}
+}
+
+/*
+ *  Returns -
+ *	1	solid edit claimes the rotate event
+ *	0	rotate event can be used some other way.
+ */
+int
+sedit_rotate( xangle, yangle, zangle )
+double	xangle, yangle, zangle;
+{
+	mat_t	tempp;
+
+	if( es_edflag != ECMD_TGC_ROT_H &&
+	    es_edflag != ECMD_TGC_ROT_AB &&
+	    es_edflag != SROT &&
+	    es_edflag != ECMD_ARB_ROTATE_FACE)
+		return 0;
+
+	mat_idn( incr_change );
+	buildHrot( incr_change, xangle, yangle, zangle );
+
+	/* accumulate the translations */
+	mat_mul(tempp, incr_change, acc_rot_sol);
+	mat_copy(acc_rot_sol, tempp);
+
+	/* sedit() will use incr_change or acc_rot_sol ?? */
+	sedit();	/* change es_rec only, NOW */
+
+	return 1;
+}
+
+/*
+ *  Returns -
+ *	1	object edit claimes the rotate event
+ *	0	rotate event can be used some other way.
+ */
+int
+objedit_rotate( xangle, yangle, zangle )
+double	xangle, yangle, zangle;
+{
+	mat_t	tempp;
+	vect_t	point;
+
+	if( movedir != ROTARROW )  return 0;
+
+	mat_idn( incr_change );
+	buildHrot( incr_change, xangle, yangle, zangle );
+
+	/* accumulate change matrix - do it wrt a point NOT view center */
+	mat_mul(tempp, modelchanges, es_mat);
+	/* XXX should have an es_keypoint for this */
+	MAT4X3PNT(point, tempp, es_rec.s.s_values);
+	wrt_point(modelchanges, incr_change, modelchanges, point);
+
+	new_mats();
+
+	return 1;
 }
