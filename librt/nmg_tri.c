@@ -723,7 +723,7 @@ struct pt2d *pt, *tbl2d;
 struct bu_list *tlist;
 {
 	struct trap *new_trap, *tp;
-	struct edgeuse *upper_edge, *lower_edge;
+	struct edgeuse *upper_edge=NULL, *lower_edge=NULL;
 	struct pt2d *pnext, *plast;
 
 	NMG_CK_TBL2D(tbl2d);
@@ -1348,7 +1348,7 @@ struct faceuse *fu;
 vect_t dir;
 int find_max;
 {
-	struct edgeuse *eu, *keep_eu, *eu_next;
+	struct edgeuse *eu, *keep_eu=NULL, *eu_next;
 	int go_radial_not_mate = 0;
 	double dot_limit;
 	double euleft_dot;
@@ -1464,7 +1464,7 @@ CONST struct bn_tol	*tol;
 {
 	struct vertexuse *vu_first, *vu_last;
 	int max_dir, min_dir;	/* 1: forward -1 reverse */
-	struct edgeuse *eu_first, *eu_last, *eu_p;
+	struct edgeuse *eu_first, *eu_last, *eu_p=NULL;
 
 	NMG_CK_VERTEX(v);
 	NMG_CK_FACEUSE(fu);
@@ -2346,7 +2346,7 @@ struct bu_list *tbl2d, *tlist;
 struct loopuse *lu;
 CONST struct bn_tol *tol;
 {
-	struct pt2d *min, *max, *new, *first, *prev, *next, *current;
+	struct pt2d *min, *max, *new, *first=NULL, *prev, *next, *current;
 	struct edgeuse *eu;
 	int verts=0;
 	int vert_count_sq;	/* XXXXX Hack for catching infinite loop */

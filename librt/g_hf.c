@@ -345,7 +345,7 @@ int			xCell, yCell;
 	register struct hf_specific *hfp =
 		(struct hf_specific *)stp->st_specific;
 
-	fastf_t dn, abs_dn, k1st, k2nd , alpha, beta;
+	fastf_t dn, abs_dn, k1st=0, k2nd=0, alpha, beta;
 	int dir1st, dir2nd;
 	vect_t wxb, xp;
 	vect_t tri_wn1st, tri_wn2nd, tri_BA1st, tri_BA2nd;
@@ -644,9 +644,9 @@ struct hit **hp;
 int *nhits;
 
 {
-	double left, right, xx, xright, answer;
+	double left, right, xx=0, xright=0, answer;
 	vect_t loc;
-	int CellX, CellY;
+	int CellX=0, CellY=0;
 
 	if (plane == -6) return;
 
@@ -765,7 +765,7 @@ struct seg		*seghead;
 	double	xWidth, yWidth;
 
 	vect_t  peqn;
-	fastf_t pdist;
+	fastf_t pdist=0;
 	fastf_t allDist[6];	/* The hit point for all rays. */
 	fastf_t cosine;
 

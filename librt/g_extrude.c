@@ -562,7 +562,7 @@ struct seg		*seghead;
 {
 	struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
 	register int i, j, k;
-	fastf_t dist_top, dist_bottom, to_bottom;
+	fastf_t dist_top, dist_bottom, to_bottom=0;
 	fastf_t dist[2];
 	fastf_t dot_pl1, dir_dot_z;
 	point_t tmp, tmp2;
@@ -571,14 +571,14 @@ struct seg		*seghead;
 	struct hit hits[MAX_HITS];
 	fastf_t dists_before[MAX_HITS];
 	fastf_t dists_after[MAX_HITS];
-	fastf_t *dists;
-	int dist_count;
+	fastf_t *dists=NULL;
+	int dist_count=0;
 	int hit_count=0;
 	int hits_before_bottom=0, hits_after_top=0;
 	int code;
 	int check_inout=0;
 	int top_face=TOP_FACE, bot_face=BOTTOM_FACE;
-	int surfno;
+	int surfno= -42;
 	int free_dists=0;
 
 	crv = &extr->crv;
@@ -642,7 +642,7 @@ struct seg		*seghead;
 	{
 		long *lng=(long *)crv->segments[i];
 		struct line_seg *lsg;
-		struct carc_seg *csg;
+		struct carc_seg *csg=NULL;
 		fastf_t diff;
 
 		if( free_dists )
