@@ -23,12 +23,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
-#include "../librt/debug.h"
+
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "pkg.h"
-#include "rtsrv.h"
+#include "../librt/debug.h"
+
+#include "./rtsrv.h"
 
 extern double atof();
 
@@ -38,33 +40,51 @@ double azimuth, elevation;
 int lightmodel;		/* Select lighting model */
 mat_t view2model;
 mat_t model2view;
+int hex_out;
 /***** end of sharing with viewing model *****/
 
-/***** variables shared with worker() */
-static int	hypersample=0;	/* number of extra rays to fire */
-static int	perspective=0;	/* perspective view -vs- parallel view */
-static vect_t	dx_model;	/* view delta-X as model-space vector */
-static vect_t	dy_model;	/* view delta-Y as model-space vector */
-static point_t	eye_model;	/* model-space location of eye */
-static point_t	viewbase_model;	/* model-space location of viewplane corner */
-static int npts;	/* # of points to shoot: x,y */
-int npsw = 1;		/* HEP: number of worker PSWs to run */
-void worker();
-int work_word;		/* semaphored (x<<16)|y */
+extern void grid_setup();
+extern void worker();
+/***** variables shared with worker() ******/
+struct application ap;
+int	stereo = 0;	/* stereo viewing */
+vect_t left_eye_delta;
+int	hypersample=0;	/* number of extra rays to fire */
+int	perspective=0;	/* perspective view -vs- parallel view */
+vect_t	dx_model;	/* view delta-X as model-space vector */
+vect_t	dy_model;	/* view delta-Y as model-space vector */
+point_t	eye_model;	/* model-space location of eye */
+point_t	viewbase_model;	/* model-space location of viewplane corner */
+int npts;	/* # of points to shoot: x,y */
+int cur_pixel;		/* current pixel number, 0..last_pixel */
+int last_pixel;		/* last pixel number */
+mat_t Viewrotscale;
+mat_t toEye;
+fastf_t viewsize;
+fastf_t	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 
-#define LINENO_WIDTH	2
-/* We don't know exactly how much we will need */
-char scanbuf[(8*1024*3) + LINENO_WIDTH + 8];/* scan line, line # as header */
+#ifdef PARALLEL
+#ifdef cray
+#define MAX_PSW		4
+struct taskcontrol {
+	int	tsk_len;
+	int	tsk_id;
+	int	tsk_value;
+} taskcontrol[MAX_PSW];
+#endif
+
+#ifdef alliant
+#define MAX_PSW	8
+#endif
+#endif
 /***** end variables shared with worker() */
 
+char scanbuf[8*1024*3];		/* generous scan line */
+
 /* Variables shared within mainline pieces */
-static struct application ap;
-static float	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
+int npsw;
 static char outbuf[132];
 static char idbuf[132];		/* First ID record info */
-static mat_t Viewrotscale;
-static mat_t toEye;
-static fastf_t viewsize;
 
 static int seen_start, seen_matrix;	/* state flags */
 
@@ -79,7 +99,7 @@ int ph_lines();
 int ph_end();
 int ph_restart();
 int ph_loglvl();
-struct pkg_switch pkg_switch[] = {
+struct pkg_switch pkgswitch[] = {
 	{ MSG_START, ph_start, "Startup" },
 	{ MSG_MATRIX, ph_matrix, "Set Matrix" },
 	{ MSG_OPTIONS, ph_options, "Set options" },
@@ -87,9 +107,9 @@ struct pkg_switch pkg_switch[] = {
 	{ MSG_END, ph_end, "End" },
 	{ MSG_PRINT, ph_unexp, "Log Message" },
 	{ MSG_LOGLVL, ph_loglvl, "Change log level" },
-	{ MSG_RESTART, ph_restart, "Restart" }
+	{ MSG_RESTART, ph_restart, "Restart" },
+	{ 0, 0, (char *)0 }
 };
-int pkg_swlen = sizeof(pkg_switch)/sizeof(struct pkg_switch);
 
 #define MAXARGS 48
 char *cmd_args[MAXARGS];
@@ -114,8 +134,8 @@ char **argv;
 	}
 
 	control_host = argv[1];
-	if( (pcsrv = pkg_open( control_host, "rtsrv" )) == 0 &&
-	    (pcsrv = pkg_open( control_host, "4446" )) == 0 )  {
+	if( (pcsrv = pkg_open( control_host, "rtsrv", pkgswitch, rt_log )) == 0 &&
+	    (pcsrv = pkg_open( control_host, "4446", pkgswitch, rt_log )) == 0 )  {
 		fprintf(stderr, "unable to contact %s\n", control_host);
 		exit(1);
 	}
@@ -329,40 +349,7 @@ char *buf;
 		exit(2);
 	}
 
-	/* model2view takes us to eye_model location & orientation */
-	mat_idn( toEye );
-	toEye[MDX] = -eye_model[X];
-	toEye[MDY] = -eye_model[Y];
-	toEye[MDZ] = -eye_model[Z];
-	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-	mat_mul( model2view, Viewrotscale, toEye );
-	mat_inv( view2model, model2view );
-
-	/* Chop -1.0..+1.0 range into npts parts */
-	VSET( temp, 2.0/npts, 0, 0 );
-	MAT4X3VEC( dx_model, view2model, temp );
-	VSET( temp, 0, 2.0/npts, 0 );
-	MAT4X3VEC( dy_model, view2model, temp );
-
-	/* "Upper left" corner of viewing plane */
-	if( perspective )  {
-		VSET( temp, -1, -1, -zoomout );	/* viewing plane */
-		/*
-		 * Divergance is (0.5 * viewsize / npts) mm at
-		 * a ray distance of (viewsize * zoomout) mm.
-		 */
-		ap.a_diverge = (0.5 / npts) / zoomout;
-		ap.a_rbeam = 0;
-	}  else  {
-		VSET( temp, 0, 0, -1 );
-		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
-		VUNITIZE( ap.a_ray.r_dir );
-
-		VSET( temp, -1, -1, 0 );	/* eye plane */
-		ap.a_rbeam = 0.5 * viewsize / npts;
-		ap.a_diverge = 0;
-	}
-	MAT4X3PNT( viewbase_model, view2model, temp );
+	grid_setup();
 
 	/* initialize lighting */
 	view_2init( &ap, -1 );
@@ -395,95 +382,18 @@ char *buf;
 	}
 
 	for( y = a; y <= b; y++)  {
-		for( x = 0; x < npts; x++)  {
-			work_word = (x<<16) | y;
-			worker( &ap );
-		}
-		scanbuf[0] = y&0xFF;
-		scanbuf[1] = (y>>8);
-		pkg_send( MSG_PIXELS, scanbuf, LINENO_WIDTH+npts*3, pcsrv );
+		char buf[4];
+
+		cur_pixel = y*npts + 0;
+		last_pixel = cur_pixel + npts;
+		worker();	/* fills scanbuf */
+
+		buf[0] = y&0xFF;
+		buf[1] = (y>>8);
+		pkg_2send( MSG_PIXELS, buf, 2,
+			scanbuf, npts*3, pcsrv );
 	}
 	(void)free(buf);
-}
-
-/*
- *  			W O R K E R
- *  
- *  Compute one pixel, and store it.
- */
-void
-worker( ap )
-register struct application *ap;
-{
-	LOCAL struct application a;
-	LOCAL vect_t tempdir;
-	LOCAL vect_t colorsum;
-	register char *pixelp;
-	register int r,g,b;
-	register int com;
-
-	a.a_onehit = 1;
-	{
-		com = work_word;
-		a.a_x = (com>>16)&0xFFFF;
-		a.a_y = (com&0xFFFF);
-		a.a_hit = ap->a_hit;
-		a.a_miss = ap->a_miss;
-		a.a_rt_i = ap->a_rt_i;
-		a.a_rbeam = ap->a_rbeam;
-		a.a_diverge = ap->a_diverge;
-		a.a_rbeam = ap->a_rbeam;
-		a.a_diverge = ap->a_diverge;
-		VSETALL( colorsum, 0 );
-		for( com=0; com<=hypersample; com++ )  {
-			if( hypersample )  {
-				FAST fastf_t dx, dy;
-				dx = a.a_x + rand_half();
-				dy = (npts-a.a_y-1) + rand_half();
-				VJOIN2( a.a_ray.r_pt, viewbase_model,
-					dx, dx_model, dy, dy_model );
-			}  else  {
-				register int yy = npts-a.a_y-1;
-				VJOIN2( a.a_ray.r_pt, viewbase_model,
-					a.a_x, dx_model,
-					yy, dy_model );
-			}
-			if( perspective )  {
-				VSUB2( a.a_ray.r_dir,
-					a.a_ray.r_pt, eye_model );
-				VUNITIZE( a.a_ray.r_dir );
-				VMOVE( a.a_ray.r_pt, eye_model );
-			} else {
-			 	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
-			}
-
-			a.a_level = 0;		/* recursion level */
-			rt_shootray( &a );
-			VADD2( colorsum, colorsum, a.a_color );
-		}
-		if( hypersample )  {
-			FAST fastf_t f;
-			f = 1.0 / (hypersample+1);
-			VSCALE( a.a_color, colorsum, f );
-		}
-		pixelp = scanbuf+LINENO_WIDTH+(a.a_x*3);
-		r = a.a_color[0]*255.;
-		g = a.a_color[1]*255.;
-		b = a.a_color[2]*255.;
-		/* Truncate glints, etc */
-		if( r > 255 )  r=255;
-		if( g > 255 )  g=255;
-		if( b > 255 )  b=255;
-		if( r<0 || g<0 || b<0 )  {
-			rt_log("Negative RGB %d,%d,%d\n", r, g, b );
-			r = 0x80;
-			g = 0xFF;
-			b = 0x80;
-		}
-		*pixelp++ = r ;
-		*pixelp++ = g ;
-		*pixelp++ = b ;
-	}
 }
 
 int print_on = 1;
@@ -516,6 +426,10 @@ char *str;
 	while( *cp++ )  ;		/* leave at null */
 	if( cp[-1] != '\n' )
 		return;
+	if( pcsrv == PKC_NULL )  {
+		fprintf(stderr, "%s", buf+1);
+		return;
+	}
 	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )
 		exit(12);
 	cp = buf+1;
@@ -536,11 +450,11 @@ char *buf;
 {
 	register int i;
 
-	for( i=0; i<pkg_swlen; i++ )  {
-		if( pkg_switch[i].pks_type == pc->pkc_type )  break;
+	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
+		if( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
 	}
 	rt_log("rtsrv: unable to handle %s message: len %d",
-		pkg_switch[i].pks_title, pc->pkc_len);
+		pc->pkc_switch[i].pks_title, pc->pkc_len);
 	*buf = '*';
 	(void)free(buf);
 }
@@ -596,5 +510,16 @@ char *line;
 	}
 	/* Null terminate pointer array */
 	cmd_args[numargs] = (char *)0;
+	return(0);
+}
+
+fb_open( name, w, h )
+char *name;
+{
+	return(0);
+}
+
+fb_close()
+{
 	return(0);
 }
