@@ -32,6 +32,25 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "tcl.h"
 #include "tk.h"
 
+extern void
+rt_spect_curve_to_xyz(
+		      point_t			xyz,
+		      const struct bn_tabdata	*tabp,
+		      const struct bn_tabdata	*cie_x,
+		      const struct bn_tabdata	*cie_y,
+		      const struct bn_tabdata	*cie_z);
+
+extern void
+rt_spect_make_NTSC_RGB(struct bn_tabdata		**rp,
+		       struct bn_tabdata		**gp,
+		       struct bn_tabdata		**bp,
+		       const struct bn_table		*tabp);
+
+
+extern void
+rt_make_ntsc_xyz2rgb( mat_t	xyz2rgb );
+
+
 int	width = 64;				/* Linked with TCL */
 int	height = 64;				/* Linked with TCL */
 int	nwave = 2;				/* Linked with TCL */
@@ -471,7 +490,12 @@ double x, y, z;
 #else
 	MAT3X3VEC( rgb, xyz2rgb, xyz );
 	VPRINT( "rgb", rgb );
-	rt_spect_reflectance_rgb( tabp, rgb );
+	{
+	    float rrggbb[3];
+	    VMOVE( rrggbb, rgb);
+
+	    rt_spect_reflectance_rgb( tabp, rrggbb );
+	}
 #endif
 	bn_print_table_and_tabdata( "/dev/tty", tabp );
 	tab_area = bn_tabdata_area2( tabp );
@@ -540,6 +564,7 @@ Usage: ssampview [-t] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 		file.ssamp\n";
 
 
+int
 get_args( argc, argv )
 register char **argv;
 {

@@ -123,11 +123,10 @@ struct bn_tabdata *rt_NTSC_b_tabdata;
  *  to NTSC RGB values.
  */
 void
-rt_spect_make_NTSC_RGB( rp, gp, bp, tabp )
-struct bn_tabdata		**rp;
-struct bn_tabdata		**gp;
-struct bn_tabdata		**bp;
-const struct bn_table		*tabp;
+rt_spect_make_NTSC_RGB(struct bn_tabdata		**rp,
+		       struct bn_tabdata		**gp,
+		       struct bn_tabdata		**bp,
+		       const struct bn_table		*tabp)
 {
 	BN_CK_TABLE(tabp);
 
@@ -171,69 +170,6 @@ const static point_t      rgb_NTSC[4] = {
     {0.140,     0.080,      0.780},     /* blue */
     {0.313,     0.329,      0.358}};    /* white */
 
-/*
- *			R T _ M A K E _ N T S C _ X Y Z 2 R G B
- *
- *  Create the map from 
- *  CIE XYZ perceptual space into
- *  an idealized RGB space assuming NTSC primaries with D6500 white.
- *  Only high-quality television-studio monitors are like this, but...
- */
-void
-rt_make_ntsc_xyz2rgb( xyz2rgb )
-mat_t	xyz2rgb;
-{
-	mat_t	rgb2xyz;
-	point_t	tst, new;
-
-	if( rt_clr__cspace_to_xyz( rgb_NTSC, rgb2xyz ) == 0 )
-		rt_bomb("rt_make_ntsc_xyz2rgb() can't initialize color space\n");
-	mat_inv( xyz2rgb, rgb2xyz );
-
-#if 1
-	/* Verify that it really works, I'm a skeptic */
-	VSET( tst, 1, 1, 1 );
-	MAT3X3VEC( new, rgb2xyz, tst );
-	VPRINT( "white_rgb (i)", tst );
-	VPRINT( "white_xyz (o)", new );
-
-	VSET( tst, 0.313,     0.329,      0.358);
-	MAT3X3VEC( new, xyz2rgb, tst );
-	VPRINT( "white_xyz (i)", tst );
-	VPRINT( "white_rgb (o)", new );
-
-	VSET( tst, 1, 0, 0 );
-	MAT3X3VEC( new, rgb2xyz, tst );
-	VPRINT( "red_rgb (i)", tst );
-	VPRINT( "red_xyz (o)", new );
-
-	VSET( tst, 0.670,     0.330,      0.000);
-	MAT3X3VEC( new, xyz2rgb, tst );
-	VPRINT( "red_xyz (i)", tst );
-	VPRINT( "red_rgb (o)", new );
-
-	VSET( tst, 0, 1, 0 );
-	MAT3X3VEC( new, rgb2xyz, tst );
-	VPRINT( "grn_rgb (i)", tst );
-	VPRINT( "grn_xyz (o)", new );
-
-	VSET( tst, 0.210,     0.710,      0.080);
-	MAT3X3VEC( new, xyz2rgb, tst );
-	VPRINT( "grn_xyz (i)", tst );
-	VPRINT( "grn_rgb (o)", new );
-
-	VSET( tst, 0, 0, 1 );
-	MAT3X3VEC( new, rgb2xyz, tst );
-	VPRINT( "blu_rgb (i)", tst );
-	VPRINT( "blu_xyz (o)", new );
-
-	VSET( tst, 0.140,     0.080,      0.780);
-	MAT3X3VEC( new, xyz2rgb, tst );
-	VPRINT( "blu_xyz (i)", tst );
-	VPRINT( "blu_rgb (o)", new );
-#endif
-}
-
 /* ****************************************************************
  * clr__cspace_to_xyz (cspace, t_mat)
  *  CLR_XYZ       cspace[4]   (in)  - the color space definition,
@@ -257,9 +193,8 @@ mat_t	xyz2rgb;
  *	!0 if OK
  */
 int
-rt_clr__cspace_to_xyz (cspace, rgb2xyz)
-const point_t	cspace[4];
-mat_t		rgb2xyz;
+rt_clr__cspace_to_xyz (const point_t	cspace[4],
+		       mat_t		rgb2xyz)
 {
 	int     ii, jj, kk, tmp_i, ind[3];
 	fastf_t  mult, white[3], scale[3];
@@ -325,6 +260,70 @@ mat_t		rgb2xyz;
 }
 
 /*
+ *			R T _ M A K E _ N T S C _ X Y Z 2 R G B
+ *
+ *  Create the map from 
+ *  CIE XYZ perceptual space into
+ *  an idealized RGB space assuming NTSC primaries with D6500 white.
+ *  Only high-quality television-studio monitors are like this, but...
+ */
+void
+rt_make_ntsc_xyz2rgb( xyz2rgb )
+mat_t	xyz2rgb;
+{
+	mat_t	rgb2xyz;
+	point_t	tst, new;
+
+	if( rt_clr__cspace_to_xyz( rgb_NTSC, rgb2xyz ) == 0 )
+		rt_bomb("rt_make_ntsc_xyz2rgb() can't initialize color space\n");
+	mat_inv( xyz2rgb, rgb2xyz );
+
+#if 1
+	/* Verify that it really works, I'm a skeptic */
+	VSET( tst, 1, 1, 1 );
+	MAT3X3VEC( new, rgb2xyz, tst );
+	VPRINT( "white_rgb (i)", tst );
+	VPRINT( "white_xyz (o)", new );
+
+	VSET( tst, 0.313,     0.329,      0.358);
+	MAT3X3VEC( new, xyz2rgb, tst );
+	VPRINT( "white_xyz (i)", tst );
+	VPRINT( "white_rgb (o)", new );
+
+	VSET( tst, 1, 0, 0 );
+	MAT3X3VEC( new, rgb2xyz, tst );
+	VPRINT( "red_rgb (i)", tst );
+	VPRINT( "red_xyz (o)", new );
+
+	VSET( tst, 0.670,     0.330,      0.000);
+	MAT3X3VEC( new, xyz2rgb, tst );
+	VPRINT( "red_xyz (i)", tst );
+	VPRINT( "red_rgb (o)", new );
+
+	VSET( tst, 0, 1, 0 );
+	MAT3X3VEC( new, rgb2xyz, tst );
+	VPRINT( "grn_rgb (i)", tst );
+	VPRINT( "grn_xyz (o)", new );
+
+	VSET( tst, 0.210,     0.710,      0.080);
+	MAT3X3VEC( new, xyz2rgb, tst );
+	VPRINT( "grn_xyz (i)", tst );
+	VPRINT( "grn_rgb (o)", new );
+
+	VSET( tst, 0, 0, 1 );
+	MAT3X3VEC( new, rgb2xyz, tst );
+	VPRINT( "blu_rgb (i)", tst );
+	VPRINT( "blu_xyz (o)", new );
+
+	VSET( tst, 0.140,     0.080,      0.780);
+	MAT3X3VEC( new, xyz2rgb, tst );
+	VPRINT( "blu_xyz (i)", tst );
+	VPRINT( "blu_rgb (o)", new );
+#endif
+}
+
+
+/*
  *			R T _ S P E C T _ C U R V E _ T O _ X Y Z
  *
  *  Convenience routine.
@@ -333,12 +332,12 @@ mat_t		rgb2xyz;
  *  has been folded into rt_spect_make_CIE_XYZ();
  */
 void
-rt_spect_curve_to_xyz( xyz, tabp, cie_x, cie_y, cie_z )
-point_t			xyz;
-const struct bn_tabdata	*tabp;
-const struct bn_tabdata	*cie_x;
-const struct bn_tabdata	*cie_y;
-const struct bn_tabdata	*cie_z;
+rt_spect_curve_to_xyz(
+		      point_t			xyz,
+		      const struct bn_tabdata	*tabp,
+		      const struct bn_tabdata	*cie_x,
+		      const struct bn_tabdata	*cie_y,
+		      const struct bn_tabdata	*cie_z)
 {
 	FAST fastf_t	tab_area;
 

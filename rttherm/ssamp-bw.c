@@ -65,6 +65,7 @@ Usage: ssamp-bw [-s squarefilesize] [-w file_width] [-n file_height]\n\
 /*
  *			G E T _ A R G S
  */
+int
 get_args( argc, argv )
 register char **argv;
 {

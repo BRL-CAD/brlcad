@@ -54,6 +54,13 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../rt/ext.h"
 #include "rtprivate.h"
 #include "../rt/light.h"
+#include "plot3.h"
+
+extern int viewshade(struct application *ap, 
+		     register const struct partition *pp,
+		     register struct shadework *swp);
+
+extern void multispectral_shader_init(struct mfuncs **headp);
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
 BU_EXTERN( double	rt_pixel_footprint, (const struct application *ap,
@@ -348,7 +355,7 @@ struct rt_i	*rtip;
 			{
 				struct region *r = BU_LIST_NEXT( region, &regp->l );
 				/* zap reg_udata? beware of light structs */
-				rt_del_regtree( rtip, regp );
+				rt_del_regtree( rtip, regp, &rt_uniresource );
 				regp = r;
 				continue;
 			}
@@ -398,7 +405,8 @@ struct rt_i	*rtip;
  *  Background texture mapping could be done here.
  *  For now, return a pleasant dark blue.
  */
-static hit_nothing( ap )
+static int 
+hit_nothing( ap )
 register struct application *ap;
 {
 	if( rdebug&RDEBUG_MISSPLOT )  {
@@ -418,7 +426,8 @@ register struct application *ap;
 			struct shadework sw;
 		} u;
 
-		bzero( (char *)&u, sizeof(u) );
+		memset((char *)&u, 0, sizeof(u) );
+
 		/* Make "miss" hit the environment map */
 		/* Build up the fakery */
 		u.part.pt_inhit = u.part.pt_outhit = &u.hit;
@@ -593,7 +602,7 @@ struct seg *finished_segs;
 
 	if( !ap->a_spectrum )  curve_attach(ap);
 /* XXX This is the right way to do this, but isn't quite ready yet. */
-	bzero( (char *)&sw, sizeof(sw) );
+	memset( (char *)&sw, 0, sizeof(sw) );
 	sw.sw_transmit = sw.sw_reflect = 0.0;
 	sw.sw_refrac_index = 1.0;
 	sw.sw_extinction = 0;
@@ -662,6 +671,7 @@ free_scanlines()
  *
  *  Called once, early on in RT setup, before view size is set.
  */
+int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
