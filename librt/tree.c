@@ -270,6 +270,7 @@ matp_t		mat;
 	static fastf_t fx, fy, fz;
 	FAST fastf_t f;
 	register struct soltab *nsp;
+	int id;
 
 	/* Validate that matrix preserves perpendicularity of axis */
 	/* by checking that A.B == 0, B.C == 0, A.C == 0 */
@@ -314,26 +315,17 @@ matp_t		mat;
 next_one: ;
 	}
 
+	if( (id = rt_id_solid( rec )) == ID_NULL )  
+		return( SOLTAB_NULL );		/* BAD */
+
+	if( id < 0 || id >= rt_nfunctab )
+		rt_bomb("rt_add_solid:  bad st_id");
+
 	GETSTRUCT(stp, soltab);
-	switch( rec->u_id )  {
-	case ID_SOLID:
-		stp->st_id = idmap[rec->s.s_type];
+	stp->st_id = id;
+	if( rec->u_id == ID_SOLID )  {
 		/* Convert from database (float) to fastf_t */
 		rt_fastf_float( v, rec->s.s_values, 8 );
-		break;
-	case ID_ARS_A:
-		stp->st_id = ID_ARS;
-		break;
-	case ID_P_HEAD:
-		stp->st_id = ID_POLY;
-		break;
-	case ID_BSOLID:
-		stp->st_id = ID_BSPLINE;
-		break;
-	default:
-		rt_log("rt_add_solid:  u_id=x%x unknown\n", rec->u_id);
-		free(stp);
-		return( SOLTAB_NULL );		/* BAD */
 	}
 	stp->st_name = name;
 	stp->st_specific = (int *)0;
@@ -342,11 +334,9 @@ next_one: ;
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-	if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
-		rt_bomb("rt_add_solid:  bad st_id");
-	if( rt_functab[stp->st_id].ft_prep( v, stp, mat, &(rec->s), rtip ) )  {
+	if( rt_functab[id].ft_prep( v, stp, mat, &(rec->s), rtip ) )  {
 		/* Error, solid no good */
-		free(stp);
+		rt_free(stp, "struct soltab");
 		return( SOLTAB_NULL );		/* BAD */
 	}
 
@@ -378,9 +368,42 @@ next_one: ;
 		rt_log("Bounding Sph Radius = %g\n", stp->st_bradius);
 		VPRINT("Bound RPP min", stp->st_min);
 		VPRINT("Bound RPP max", stp->st_max);
-		rt_functab[stp->st_id].ft_print( stp );
+		rt_functab[id].ft_print( stp );
 	}
 	return( stp );
+}
+
+/*
+ *			R T _ I D _ S O L I D
+ *
+ *  Given a database record, determine the proper rt_functab subscript.
+ *  Used by MGED as well as internally to librt.
+ */
+int
+rt_id_solid( rec )
+register union record *rec;
+{
+	register int id;
+
+	switch( rec->u_id )  {
+	case ID_SOLID:
+		id = idmap[rec->s.s_type];
+		break;
+	case ID_ARS_A:
+		id = ID_ARS;
+		break;
+	case ID_P_HEAD:
+		id = ID_POLY;
+		break;
+	case ID_BSOLID:
+		id = ID_BSPLINE;
+		break;
+	default:
+		rt_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
+		id = ID_NULL;		/* BAD */
+		break;
+	}
+	return(id);
 }
 
 /*
