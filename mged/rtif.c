@@ -205,7 +205,6 @@ run_rt()
 		(void)dup( o_pipe[0] );
 		for( i=3; i < 20; i++ )
 			(void)close(i);
-
 		(void)signal( SIGINT, SIG_DFL );
 		(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
 		perror( rt_cmd_vec[0] );
@@ -257,7 +256,8 @@ f_rt()
 	 * display, so let display go.  We will try to reattach at the end.
 	 */
 	dm = dmp->dmr_name;
-	release();
+	if(dmp->dmr_releasedisplay)
+		release();
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rt";
@@ -275,7 +275,8 @@ f_rt()
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
-	attach( dm );
+	if(dmp->dmr_releasedisplay)
+		attach( dm );
 }
 
 /*
@@ -301,7 +302,8 @@ f_rrt()
 	 * display, so let display go.  We will try to reattach at the end.
 	 */
 	dm = dmp->dmr_name;
-	release();
+	if(dmp->dmr_releasedisplay)
+		release();
 
 	vp = &rt_cmd_vec[0];
 	for( i=1; i < numargs; i++ )
@@ -316,7 +318,8 @@ f_rrt()
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
-	attach( dm );
+	if(dmp->dmr_releasedisplay)
+		attach( dm );
 }
 
 /*
