@@ -29,7 +29,7 @@
 	pl-pl pl-tek pl-ps pl-sgi \
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
-	pixborder mst
+	pixborder mst texturescale
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -329,6 +329,9 @@ pixdsplit:	pixdsplit.o LIBBN_DEP LIBBU_DEP
 
 mst:	mst.o LIBREDBLACK_DEP LIBBU_DEP
 	CC LDFLAGS -o mst mst.o LIBREDBLACK LIBBU LIBBU_LIBES LIBES
+
+texturescale:	texturescale.o LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	CC LDFLAGS -o texturescale texturescale.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
 
 double-asc:	double-asc.o LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS -o double-asc double-asc.o LIBBN LIBBU LIBBU_LIBES LIBES
