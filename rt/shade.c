@@ -39,128 +39,6 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "./light.h"
 #include "plot3.h"
 
-HIDDEN void	shade_inputs();
-
-
-/*
- *			V I E W S H A D E
- *
- *  Call the material-specific shading function, after making certain
- *  that all shadework fields desired have been provided.
- *
- *  Returns -
- *	0 on failure
- *	1 on success
- *
- *	But of course, nobody cares what this returns.
- *	Everyone calls us as (void)viewshade()
- */
-int
-viewshade( ap, pp, swp )
-struct application *ap;
-register CONST struct partition *pp;
-register struct shadework *swp;
-{
-	register CONST struct mfuncs *mfp;
-	register CONST struct region *rp;
-	register CONST struct light_specific *lp;
-	register int	want;
-
-	RT_AP_CHECK(ap);
-	RT_CK_RTI(ap->a_rt_i);
-	RT_CK_PT(pp);
-	RT_CK_HIT(pp->pt_inhit);
-	RT_CK_RAY(pp->pt_inhit->hit_rayp);
-	rp = pp->pt_regionp;
-	RT_CK_REGION(rp);
-	mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
-	RT_CK_MF(mfp);
-
-	want = mfp->mf_inputs;
-
-	if( rdebug&RDEBUG_SHADE ) {
-		bu_log("viewshade(%s)\n Using \"%s\" shader, ",
-			rp->reg_name, mfp->mf_name);
-		bu_printb( "mfp_inputs", want, MFI_FORMAT );
-		bu_log( "\n");
-	}
-
-	swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
-
-#if RT_MULTISPECTRAL
-	/* XXX where does region get reflectance?  Default temperature? */
-	BN_CK_TABDATA(swp->msw_color);
-	BN_CK_TABDATA(swp->msw_basecolor);
-	if( rp->reg_mater.ma_color_valid )  {
-		rt_spect_reflectance_rgb( swp->msw_color, rp->reg_mater.ma_color );
-	}
-	bn_tabdata_copy(swp->msw_basecolor, swp->msw_color);
-#else
-	/* Default color is white (uncolored) */
-	if( rp->reg_mater.ma_color_valid )  {
-		VMOVE( swp->sw_color, rp->reg_mater.ma_color );
-	}
-	VMOVE( swp->sw_basecolor, swp->sw_color );
-#endif
-
-	if( swp->sw_hit.hit_dist < 0.0 )
-		swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */
-	ap->a_cumlen += swp->sw_hit.hit_dist;
-
-	/* If light information is not needed, set the light
-	 * array to "safe" values,
-	 * and claim that the light is visible, in case they are used.
-	 */
-	if( swp->sw_xmitonly )  want &= ~MFI_LIGHT;
-	if( !(want & MFI_LIGHT) )  {
-		register int	i;
-
-		/* sanity */
-		i=0;
-		for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
-			RT_CK_LIGHT(lp);
-			swp->sw_visible[i++] = (char *)lp;
-		}
-		for( ; i < SW_NLIGHTS; i++ )  {
-			swp->sw_visible[i] = (char *)NULL;
-		}
-	}
-
-	/* If optional inputs are required, have them computed */
-	if( want & (MFI_HIT|MFI_NORMAL|MFI_LIGHT|MFI_UV) )  {
-		VJOIN1( swp->sw_hit.hit_point, ap->a_ray.r_pt,
-			swp->sw_hit.hit_dist, ap->a_ray.r_dir );
-		swp->sw_inputs |= MFI_HIT;
-	}
-	if( (swp->sw_inputs & want) != want )  {
-		shade_inputs( ap, pp, swp, want );
-	} else if( !(want & MFI_LIGHT) )  {
-		register int	i;
-
-		/* sanity */
-		for( i = SW_NLIGHTS-1; i >= 0; i-- )  {
-			swp->sw_visible[i] = (char *)NULL;
-		}
-	}
-
-	if( rdebug&RDEBUG_SHADE ) {
-		pr_shadework( "before mf_render", swp );
-	}
-
-
-	/* Invoke the actual shader (may be a tree of them) */
-	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
-
-	if( rdebug&RDEBUG_SHADE ) {
-		pr_shadework( "after mf_render", swp );
-		bu_log("\n");
-	}
-
-	return(1);
-}
-
-
-
 
 
 /*
@@ -177,7 +55,7 @@ register struct shadework *swp;
  *  If MFI_LIGHT is not on, the presumption is that the sw_visible[]
  *  array is not needed, or has been handled elsewhere.
  */
-HIDDEN void
+void
 shade_inputs( ap, pp, swp, want )
 struct application *ap;
 register CONST struct partition *pp;
@@ -299,6 +177,127 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 	if( (want & have) != want )
 		bu_log("shade_inputs:  unable to satisfy request for x%x\n", want);
 }
+
+/*
+ *			V I E W S H A D E
+ *
+ *  Call the material-specific shading function, after making certain
+ *  that all shadework fields desired have been provided.
+ *
+ *  Returns -
+ *	0 on failure
+ *	1 on success
+ *
+ *	But of course, nobody cares what this returns.
+ *	Everyone calls us as (void)viewshade()
+ */
+int
+viewshade( ap, pp, swp )
+struct application *ap;
+register CONST struct partition *pp;
+register struct shadework *swp;
+{
+	register CONST struct mfuncs *mfp;
+	register CONST struct region *rp;
+	register CONST struct light_specific *lp;
+	register int	want;
+
+	RT_AP_CHECK(ap);
+	RT_CK_RTI(ap->a_rt_i);
+	RT_CK_PT(pp);
+	RT_CK_HIT(pp->pt_inhit);
+	RT_CK_RAY(pp->pt_inhit->hit_rayp);
+	rp = pp->pt_regionp;
+	RT_CK_REGION(rp);
+	mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
+	RT_CK_MF(mfp);
+
+	want = mfp->mf_inputs;
+
+	if( rdebug&RDEBUG_SHADE ) {
+		bu_log("viewshade(%s)\n Using \"%s\" shader, ",
+			rp->reg_name, mfp->mf_name);
+		bu_printb( "mfp_inputs", want, MFI_FORMAT );
+		bu_log( "\n");
+	}
+
+	swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
+
+#if RT_MULTISPECTRAL
+	/* XXX where does region get reflectance?  Default temperature? */
+	BN_CK_TABDATA(swp->msw_color);
+	BN_CK_TABDATA(swp->msw_basecolor);
+	if( rp->reg_mater.ma_color_valid )  {
+		rt_spect_reflectance_rgb( swp->msw_color, rp->reg_mater.ma_color );
+	}
+	bn_tabdata_copy(swp->msw_basecolor, swp->msw_color);
+#else
+	/* Default color is white (uncolored) */
+	if( rp->reg_mater.ma_color_valid )  {
+		VMOVE( swp->sw_color, rp->reg_mater.ma_color );
+	}
+	VMOVE( swp->sw_basecolor, swp->sw_color );
+#endif
+
+	if( swp->sw_hit.hit_dist < 0.0 )
+		swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */
+	ap->a_cumlen += swp->sw_hit.hit_dist;
+
+	/* If light information is not needed, set the light
+	 * array to "safe" values,
+	 * and claim that the light is visible, in case they are used.
+	 */
+	if( swp->sw_xmitonly )  want &= ~MFI_LIGHT;
+	if( !(want & MFI_LIGHT) )  {
+		register int	i;
+
+		/* sanity */
+		i=0;
+		for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+			RT_CK_LIGHT(lp);
+			swp->sw_visible[i++] = (char *)lp;
+		}
+		for( ; i < SW_NLIGHTS; i++ )  {
+			swp->sw_visible[i] = (char *)NULL;
+		}
+	}
+
+	/* If optional inputs are required, have them computed */
+	if( want & (MFI_HIT|MFI_NORMAL|MFI_LIGHT|MFI_UV) )  {
+		VJOIN1( swp->sw_hit.hit_point, ap->a_ray.r_pt,
+			swp->sw_hit.hit_dist, ap->a_ray.r_dir );
+		swp->sw_inputs |= MFI_HIT;
+	}
+	if( (swp->sw_inputs & want) != want )  {
+		shade_inputs( ap, pp, swp, want );
+	} else if( !(want & MFI_LIGHT) )  {
+		register int	i;
+
+		/* sanity */
+		for( i = SW_NLIGHTS-1; i >= 0; i-- )  {
+			swp->sw_visible[i] = (char *)NULL;
+		}
+	}
+
+	if( rdebug&RDEBUG_SHADE ) {
+		pr_shadework( "before mf_render", swp );
+	}
+
+
+	/* Invoke the actual shader (may be a tree of them) */
+	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
+
+	if( rdebug&RDEBUG_SHADE ) {
+		pr_shadework( "after mf_render", swp );
+		bu_log("\n");
+	}
+
+	return(1);
+}
+
+
+
+
 
 /*
  *			P R _ S H A D E W O R K
