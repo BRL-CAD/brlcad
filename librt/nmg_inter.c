@@ -48,6 +48,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrach.h for nmg_info.c */
+RT_EXTERN(struct vertex	*	nmg_find_pt_in_model, (CONST struct model *m,
+				CONST point_t pt, CONST struct rt_tol *tol));
+
+
 /* XXX move to vmath.h */
 #define VDOT_2D(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] )
 #define VSUB2_2D(a,b,c)	{ \
@@ -639,7 +644,7 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 	 * Otherwise, re-use the existing one.
 	 * Can't just search other face, might miss relevant vert.
 	 */
-	v2 = nmg_find_pt_in_shell(fu2->s_p, hit_pt, &(is->tol));
+	v2 = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
 	if (v2) {
 		/* the other face has a convenient vertex for us */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -800,6 +805,7 @@ CONST struct rt_tol	*tol;
 CONST char		*str;
 {
 	int	nbreak = 0;
+	fastf_t	d0, d1;
 
 	NMG_CK_VERTEXUSE(vu1a);
 	NMG_CK_VERTEXUSE(vu1b);
@@ -816,24 +822,38 @@ CONST char		*str;
 	nmg_ck_face_worthless_edges( fu1 );
 	nmg_ck_face_worthless_edges( fu2 );
 
-	if( dist[0] > dist[1] )  rt_bomb("nmg_isect_two_colinear_edge2p() dist [0] > [1]\n");
+	if( dist[0] > dist[1] )  {
+		/* Need to swap vu2a and vu2b */
+		struct vertexuse	*vu;
+		fastf_t			t;
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("nmg_isect_two_colinear_edge2p() dist [0] > [1], flip\n");
+		vu = vu2a;
+		vu2a = vu2b;
+		vu2b = vu;
+		d0 = dist[1];
+		d1 = dist[0];
+	} else {
+		d0 = dist[0];
+		d1 = dist[1];
+	}
 
 	/* First intersection point:  break eu1 */
-	if( dist[0] == 0 )  {
+	if( d0 == 0 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu1a intersects vu2a\n");
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 		nmg_jv(vu1a->v_p, vu2a->v_p);
 		nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
-	} else if( dist[0] == 1 )  {
+	} else if( d0 == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu1a intersects vu2b\n");
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_jv(vu1a->v_p, vu2b->v_p);
 		nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
-	} else if( dist[0] > 0 && dist[0] < 1 )  {
+	} else if( d0 > 0 && d0 < 1 )  {
 		/* Break eu1 into two pieces */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu2a=x%x breaks eu1=x%x\n", vu2a, eu1 );
@@ -849,21 +869,21 @@ CONST char		*str;
 	}
 
 	/* Second intersection point: break eu1 again */
-	if( dist[1] == 0 )  {
+	if( d1 == 0 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu1a intersects vu2b\n");
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_jv(vu1a->v_p, vu2b->v_p);
 		nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
-	} else if( dist[1] == 1 )  {
+	} else if( d1 == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu1b intersects vu2b\n");
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1b->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_jv(vu1b->v_p, vu2b->v_p);
 		nmg_ck_v_in_2fus(vu1b->v_p, fu1, fu2, tol);
-	} else if( dist[1] > 0 && dist[1] < 1 )  {
+	} else if( d1 > 0 && d1 < 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu2b=x%x breaks eu1=x%x\n", vu2b, eu1 );
 		(void)nmg_ebreak( vu2b->v_p, eu1 );
@@ -1177,7 +1197,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 			struct vertex		*new_v2;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
-			new_v2 = nmg_find_pt_in_shell(fu2->s_p, hit_pt, &(is->tol) );
+			new_v2 = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol) );
 			new_vu2 = nmg_ebreak( new_v2, eu2 )->vu_p;
 			if( !new_v2 )  {
 				/* A new vertex was created, assign geom */
@@ -1544,7 +1564,7 @@ struct faceuse		*fu2;
 		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1_final->l.magic);
 
 		/* XXX SHouldn't this be a topology search, since vertex fuser has already run? */
-		v2 = nmg_find_pt_in_shell(fu2->s_p, v1a->vg_p->coord, &(is->tol));
+		v2 = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, v1a->vg_p->coord, &(is->tol));
 		if (v2) {
 			register pointp_t	p3;
 			/* Other shell has a very similar vertex.  Add to list */
@@ -1601,7 +1621,7 @@ struct faceuse		*fu2;
 		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1_final->l.magic);
 
 		/* XXX Shouldn't this be a topology search, rather than geom?  Vert fuser has already run */
-		v2 = nmg_find_pt_in_shell(fu2->s_p, v1b->vg_p->coord, &(is->tol));
+		v2 = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, v1b->vg_p->coord, &(is->tol));
 		if (v2) {
 			register pointp_t	p3;
 			/* Face has a very similar vertex.  Add to list */
@@ -2077,6 +2097,10 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 			NMG_CK_EDGEUSE(eu);
 			/* XXX What about return code here? */
 			nmg_isect_edge2p_face2p( is, eu, fu2, fu1 );
+
+			/* XXX "eu" may have been simplified away! */
+			if( eu->l.magic != NMG_EDGEUSE_MAGIC ) goto f1_again;
+
 			/* "eu" may have moved to another loop,
 			 * need to abort for() to avoid getting
 			 * RT_LIST_NEXT on wrong linked list!
@@ -2109,6 +2133,10 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 			NMG_CK_EDGEUSE(eu);
 			/* XXX What about return code here? */
 			nmg_isect_edge2p_face2p( is, eu, fu1, fu2 );
+
+			/* XXX "eu" may have been simplified away! */
+			if( eu->l.magic != NMG_EDGEUSE_MAGIC ) goto f1_again;
+
 			/* "eu" may have moved to another loop */
 			NMG_CK_EDGEUSE(eu);
 			if(eu->up.lu_p != lu )  goto f2_again;
@@ -2394,7 +2422,7 @@ struct faceuse		*fu2;
 		 * Otherwise, re-use the existing one.
 		 * Can't just search other face, might miss relevant vert.
 		 */
-		new_v = nmg_find_pt_in_shell(fu2->s_p, hit_pt, &(is->tol));
+		new_v = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
 		vu1_final = nmg_ebreak(new_v, eu1)->vu_p;
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1_final->l.magic);
 		if( !new_v )  {
