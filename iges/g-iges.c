@@ -48,7 +48,7 @@ extern char	version[];
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "../iges-g/iges.h"
+#include "../iges/iges.h"
 #include "../librt/debug.h"
 
 #define	CP_BUF_SIZE	1024	/* size of buffer for file copy */
