@@ -577,7 +577,7 @@ rt_plot_solid(
  *
  *  Note that this routine is also called as part of rt_clean_resource().
  *
- *  Special case, resp == rt_uniresource, no rtip is required.
+ *  Special case, resp == rt_uniresource, rtip may be NULL (but give it if you have it).
  */
 void
 rt_init_resource(
@@ -587,7 +587,14 @@ rt_init_resource(
 {
 	int i;
 
-	if( resp != &rt_uniresource )  RT_CK_RTI(rtip);
+	if( resp == &rt_uniresource )  {
+		cpu_num = MAX_PSW;		/* array is [MAX_PSW+1] just for this */
+		if(rtip)  RT_CK_RTI(rtip);	/* check it if provided */
+	} else {
+		BU_ASSERT_LONG( cpu_num, >=, 0 );
+		BU_ASSERT_LONG( cpu_num, <, MAX_PSW );
+		RT_CK_RTI(rtip);		/* mandatory */
+	}
 
 	resp->re_magic = RESOURCE_MAGIC;
 	resp->re_cpu = cpu_num;
@@ -629,7 +636,7 @@ rt_init_resource(
 	resp->re_boolstack = NULL;
 	resp->re_boolslen = 0;
 
-	if( resp == &rt_uniresource )  return;
+	if( rtip == NULL )  return;	/* only in rt_uniresource case */
 
 	/* Ensure that this CPU's resource structure is registered in rt_i */
 	/* It may already be there when we're called from rt_clean_resource */
