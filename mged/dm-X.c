@@ -790,12 +790,14 @@ checkevents()
 				XGetWindowAttributes( dpy, win, &xwa );
 				height = xwa.height;
 				width = xwa.width;
-				dmaflag = 1;
-				refresh();
+				rt_vls_printf( &dm_values.dv_string, "refresh\n");
 			}
 		} else if( event.type == MotionNotify ) {
-			dm_values.dv_xpen = (event.xmotion.x/(double)width - 0.5) * 4095;
-			dm_values.dv_ypen = (0.5 - event.xmotion.y/(double)height) * 4095;
+			int	x, y;
+			x = (event.xmotion.x/(double)width - 0.5) * 4095;
+			y = (0.5 - event.xmotion.y/(double)height) * 4095;
+			rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
+				x, y );
 		} else if( event.type == ButtonPress ) {
 			/* In MGED this is a "penpress" */
 			switch( event.xbutton.button ) {
