@@ -129,12 +129,12 @@ struct rt_list *tbl2d;
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_TRAP(tp);
 
-	rt_log("trap top pt2d:0x%08x %g %g vu:0x%08x\n",
+	rt_log("trap top pt2d: 0x%08x %g %g vu:0x%08x\n",
 			&tp->top, tp->top->coord[X], tp->top->coord[Y],
 			tp->top->vu_p);
 
 	if (tp->bot)
-		rt_log("\tbot pt2d:0x%08x %g %g vu:0x%08x\n",
+		rt_log("     bot pt2d: 0x%08x %g %g vu:0x%08x\n",
 			&tp->bot, tp->bot->coord[X], tp->bot->coord[Y],
 			tp->bot->vu_p);
 	else {
@@ -142,10 +142,10 @@ struct rt_list *tbl2d;
 	}
 			
 	if (tp->e_left)
-		print_2d_eu("\te_left", tp->e_left, tbl2d);
+		print_2d_eu("       e_left", tp->e_left, tbl2d);
 
 	if (tp->e_right)
-		print_2d_eu("\te_right", tp->e_right, tbl2d);
+		print_2d_eu("      e_right", tp->e_right, tbl2d);
 }
 static void
 print_tlist(tbl2d, tlist)
@@ -554,6 +554,9 @@ struct rt_list *tbl2d;
 	p = PT2D_PREV(tbl2d, v);
 	n = PT2D_NEXT(tbl2d, v);
 
+
+	lu = nmg_find_lu_of_vu( v->vu_p );
+
 	if (p == n && n == v) {
 		/* loopuse of vertexuse or loopuse of 1 edgeuse */
 		if (lu->orientation == OT_SAME)
@@ -561,8 +564,6 @@ struct rt_list *tbl2d;
 		else if (lu->orientation == OT_OPPOSITE)
 			return(HOLE_POINT);
 	}
-
-	lu = nmg_find_lu_of_vu( v->vu_p );
 
 	if (P_GT_V(n, v) && P_GT_V(p, v)) {
 		/* 
@@ -573,6 +574,18 @@ struct rt_list *tbl2d;
 		 * if this is a convex point, this is a polygon end
 		 * if it is a concave point, this is a hole end
 		 */
+
+		if (p == n) {
+			if (lu->orientation == OT_OPPOSITE)
+				return(HOLE_END);
+			else if (lu->orientation == OT_SAME)
+				return(POLY_END);
+			else {
+				rt_log("%s: %d loopuse is not OT_SAME or OT_OPPOSITE\n",
+					__FILE__, __LINE__);
+				rt_bomb("bombing\n");
+			}
+		}
 
 		if (is_convex(p, v, n)) return(POLY_END);
 		else return(HOLE_END);
@@ -587,6 +600,19 @@ struct rt_list *tbl2d;
 		 * if this is a convex point, this is a polygon start
 		 * if this is a concave point, this is a hole start
 		 */
+
+		if (p == n) {
+			if (lu->orientation == OT_OPPOSITE)
+				return(HOLE_START);
+			else if (lu->orientation == OT_SAME)
+				return(POLY_START);
+			else {
+				rt_log("%s: %d loopuse is not OT_SAME or OT_OPPOSITE\n",
+					__FILE__, __LINE__);
+				rt_bomb("bombing\n");
+			}
+		}
+
 		if (is_convex(p, v, n))
 			return(POLY_START);
 		else
@@ -835,9 +861,39 @@ struct rt_list *tlist, *tbl2d;
 		 */
 		if (tp->bot) {
 			if (rt_g.NMG_debug & DEBUG_TRI)
-				rt_log("Trapezoid completed... Skipping\n");
+				rt_log("Trapezoid %g %g / %g %g completed... Skipping\n",
+					tp->top->coord[X],
+					tp->top->coord[Y],
+					tp->bot->coord[X],
+					tp->bot->coord[Y]);
 			continue;
 		}
+
+		/* if point is at the other end of either the left edge
+		 * or the right edge, we've found the trapezoid to complete.
+		 *
+		 * First, we check the left edge
+		 */
+		e_pt = find_pt2d(tbl2d, tp->e_left->vu_p);
+		next_pt = find_pt2d(tbl2d,
+			(RT_LIST_PNEXT_CIRC(edgeuse, tp->e_left))->vu_p);
+
+		if (e_pt->vu_p->v_p == pt->vu_p->v_p ||
+		    next_pt->vu_p->v_p == pt->vu_p->v_p)
+			goto gotit;
+
+
+		/* check to see if the point is at the end of the right edge
+		 * of the trapezoid
+		 */
+		e_pt = find_pt2d(tbl2d, tp->e_right->vu_p);
+		next_pt = find_pt2d(tbl2d,
+			(RT_LIST_PNEXT_CIRC(edgeuse, tp->e_right))->vu_p);
+
+		if (e_pt->vu_p->v_p == pt->vu_p->v_p ||
+		    next_pt->vu_p->v_p == pt->vu_p->v_p)
+			goto gotit;
+
 
 		/* if point is right of left edge and left of right edge
 		 * we've found the trapezoid we need to work with.
@@ -876,7 +932,16 @@ struct rt_list *tlist, *tbl2d;
 
 	}
 
-	rt_bomb("didn't find trapezoid for hole-start point\n");
+	nmg_stash_model_to_file("tri_lone_hole.g",
+		nmg_find_model(&pt->vu_p->l.magic),
+		"lone hole start");
+
+	rt_log("didn't find trapezoid for hole-start point at:\n\t%g %g %g\n",
+		pt->vu_p->v_p->vg_p->coord[0],
+		pt->vu_p->v_p->vg_p->coord[1],
+		pt->vu_p->v_p->vg_p->coord[2]);
+
+	rt_bomb("bombing\n");
 gotit:
 	/* complete existing trapezoid */
 	tp->bot = pt;
@@ -1642,9 +1707,27 @@ int void_ok;
 			rt_log("parent loops are not the same %s %d,\n\ttrying join ", __FILE__, __LINE__);
 			join_mapped_loops(tbl2d, p1, p2, color, tol);
 			return (struct pt2d *)NULL;
+		} else {
+			char buf[80];
+			char name[32];
+			static int iter=0;
+
+			rt_log("parent loops are not the same %s %d\n",
+				__FILE__, __LINE__);
+
+			sprintf(name, "bad_tri_cut%d.g", iter++);
+			sprintf(buf, "cut %g %g %g -> %g %g %g\n",
+				p1->vu_p->v_p->vg_p->coord[0],
+				p1->vu_p->v_p->vg_p->coord[1],
+				p1->vu_p->v_p->vg_p->coord[2],
+				p2->vu_p->v_p->vg_p->coord[0],
+				p2->vu_p->v_p->vg_p->coord[1],
+				p2->vu_p->v_p->vg_p->coord[2]);
+
+			nmg_stash_model_to_file( name, 
+				nmg_find_model(&p1->vu_p->l.magic), buf );
+			rt_bomb("cut_mapped_loop() goodnight 2\n");
 		}
-		rt_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
-		rt_bomb("cut_mapped_loop() goodnight 2\n");
 	}
 
 	if (plot_fd) {
@@ -1659,10 +1742,11 @@ int void_ok;
 	NMG_CK_LOOP(new_lu->l_p);
 	nmg_loop_g(new_lu->l_p, tol);
 
-/* XXX Does anyone care about loopuse orientations at this stage?
+	/* XXX Does anyone care about loopuse orientations at this stage?
 	nmg_lu_reorient( old_lu, tol );
 	nmg_lu_reorient( new_lu, tol );
- */
+	 */
+
 	/* get the edgeuse of the new vertexuse we just created */
 	eu = RT_LIST_PPREV_CIRC(edgeuse, &new_lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
@@ -1701,15 +1785,23 @@ CONST struct rt_tol	*tol;
 	NMG_CK_VERTEXUSE(vu1);
 	NMG_CK_VERTEXUSE(vu2);
 
-	if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
+	if (p1 == p2) {
+		rt_log("%s %d: Attempting to join loop to itself?\n",
+			__FILE__, __LINE__);
+		rt_bomb("bombing\n");
+	} else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 		rt_log("parent loops are the same %s %d\n", __FILE__, __LINE__);
 		rt_bomb("goodnight\n");
 	}
 
-	pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);	
+	pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
 
-	if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
-		rt_log("parent loops are the same %s %d\n", __FILE__, __LINE__);
+	if (p1 == p2) {
+		rt_log("%s: %d I'm a fool trying to join a vertexuse to itself\n",
+			__FILE__, __LINE__);
+	} else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
+		rt_log("parent loops are the same %s %d\n",
+			__FILE__, __LINE__);
 		(void)cut_mapped_loop(tbl2d, p1, p2, color, tol, 1);
 		return;
 	}
@@ -1879,6 +1971,8 @@ CONST struct rt_tol	*tol;
 					tp->bot->coord[Y]);
 			continue;
 		}
+
+
 		if (skip_cut(tbl2d, tp->top, tp->bot)) {
 		    	if (rt_g.NMG_debug & DEBUG_TRI)
 				rt_log("skipping %g %g/%g %g ... pts on same edge\n",
@@ -1963,10 +2057,10 @@ CONST struct rt_tol	*tol;
 			}
 
 		} else {
+
 			/* points are in different loops, join the
 			 * loops together.
 			 */
-			/* XXX This is un-tested */
 
 			if (toplu->orientation == OT_OPPOSITE &&
 				botlu->orientation == OT_OPPOSITE)
@@ -2018,7 +2112,13 @@ CONST struct rt_tol *tol;
 	/* find min/max points & count vertex points */
 	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		new = find_pt2d(tbl2d, eu->vu_p);
-		if (!new) rt_bomb("why can't I find this?\n");
+		if (!new) {
+			rt_log("why can't I find a 2D point for %g %g %g?\n",
+			eu->vu_p->v_p->vg_p->coord[0],
+			eu->vu_p->v_p->vg_p->coord[1],
+			eu->vu_p->v_p->vg_p->coord[2]);
+			rt_bomb("bombing\n");
+		}
 
 		if (rt_g.NMG_debug & DEBUG_TRI)
 			rt_log("%g %g\n", new->coord[X], new->coord[Y]);
@@ -2036,8 +2136,16 @@ CONST struct rt_tol *tol;
 		first = min;
 	else if (PT2D_NEXT(tbl2d, min) == max)
 		first = max;
-	else 
-		rt_bomb("is this a loop of just 2 points?\n");
+	else {
+		rt_log("is this a unimonotone loop of just 2 points?:\t%g %g %g and %g %g %g?\n",
+			min->vu_p->v_p->vg_p->coord[0],
+			min->vu_p->v_p->vg_p->coord[1],
+			min->vu_p->v_p->vg_p->coord[2],
+			max->vu_p->v_p->vg_p->coord[0],
+			max->vu_p->v_p->vg_p->coord[1],
+			max->vu_p->v_p->vg_p->coord[2]);
+		rt_bomb("aborting\n");
+	}
 	
 	/* */
 	if (rt_g.NMG_debug & DEBUG_TRI)
@@ -2112,8 +2220,8 @@ struct rt_list *tbl2d;
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_FACEUSE(fu);
 
-	if (!plot_fd && (plot_fd = popen("pl-fb", "w")) == (FILE *)NULL) {
-		rt_log( "cannot open pipe\n");
+	if (!plot_fd && (plot_fd = fopen("triplot.pl", "w")) == (FILE *)NULL) {
+		rt_log( "cannot open triplot.pl\n");
 	}
 
 	pl_erase(plot_fd);
@@ -2190,10 +2298,15 @@ CONST struct rt_tol	*tol;
 	struct rt_list *tbl2d;
 	struct loopuse *lu;
 	struct edgeuse *eu;
+	struct vertexuse *vu;
 	struct rt_list tlist;
 	struct trap *tp;
 	struct pt2d *pt;
 	int vert_count;
+	static int iter=0;
+	static int monotone=0;
+
+	char db_name[32];
 
 	RT_CK_TOL(tol);
 	NMG_CK_FACEUSE(fu);
@@ -2228,31 +2341,60 @@ CONST struct rt_tol	*tol;
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		rt_log("Diagonals are cut ----------\n");
 
-	
+	if (rt_g.NMG_debug & DEBUG_TRI) {
+		sprintf(db_name, "uni%d.g", iter);
+		nmg_stash_model_to_file(db_name,
+			nmg_find_model(&fu->s_p->l.magic),
+			"trangles and unimonotones");
+	}
+
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
 		nmg_split_touchingloops( lu, tol );
 
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
-		nmg_lu_reorient(lu, tol);
-
+	if (rt_g.NMG_debug & DEBUG_TRI) {
+		sprintf(db_name, "uni_split%d.g", iter++);
+		nmg_stash_model_to_file(db_name,
+			nmg_find_model(&fu->s_p->l.magic),
+			"split trangles and unimonotones");
+	}
+	
 	/* now we're left with a face that has some triangle loops and some
 	 * uni-monotone loops.  Find the uni-monotone loops and triangulate.
 	 */
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
 		if (RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC) {
-			rt_bomb("How did I miss this?\n");
+			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+			
+			rt_log("How did I miss this vertex loop %g %g %g?\n%s\n",
+				vu->v_p->vg_p->coord[0],
+				vu->v_p->vg_p->coord[1],
+				vu->v_p->vg_p->coord[2],
+				"I'm supposed to be dealing with unimonotone loops now");
+			rt_bomb("aborting\n");
+
 		} else if (RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC) {
 			vert_count = 0;
 			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd )) {
 				if (++vert_count > 3) {
 					cut_unimonotone(tbl2d, &tlist, lu, tol);
+
+					if (rt_g.NMG_debug & DEBUG_TRI) {
+						sprintf(db_name, "uni_mono%d.g", monotone++);
+						nmg_stash_model_to_file(db_name,
+							nmg_find_model(&fu->s_p->l.magic),
+							"newly cut unimonotone");
+					}
+
 					break;
 				}
 			}
 		}
 	}
 
+
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
+		nmg_lu_reorient(lu, tol);
 
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		plfu( fu, tbl2d );
