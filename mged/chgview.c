@@ -665,7 +665,7 @@ char	**argv;
 
 	Tcl_SetResult(interp, rt_vls_strdup( &str), TCL_DYNAMIC);
 
-	rt_vls_vlsfree( &str );
+	rt_vls_free( &str );
 	return TCL_OK;
 }
 
