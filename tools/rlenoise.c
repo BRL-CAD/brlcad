@@ -69,7 +69,7 @@ char ** argv;
 		   &noise_amount, &noise_amount, &oflag, &out_fname, &in_fname) == 0 )
 	exit( 1 );
 
-#if (defined(__EXTENSIONS__) || defined (_POSIX_SOURCE))
+#if defined(HUGE_VAL)
     rand_mult = noise_amount / HUGE_VAL;
 #else
     rand_mult = noise_amount / HUGE;
