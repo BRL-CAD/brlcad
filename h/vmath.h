@@ -172,6 +172,25 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(_v)[Y] = -(_m)[MDY]; \
 			(_v)[Z] = -(_m)[MDZ]; }
 
+/* Locations of scaling values in 4x4 Homogenous Transform matrix */
+#define MSX	0
+#define MSY	5
+#define MSZ	10
+#define MSA	15
+
+#define MAT_SCALE(_m, _x, _y, _z) { \
+	(_m)[MSX] = _x; \
+	(_m)[MSY] = _y; \
+	(_m)[MSZ] = _z; }
+
+#define MAT_SCALE_VEC(_m, _v) {\
+	(_m)[MSX] = (_v)[X]; \
+	(_m)[MSY] = (_v)[Y]; \
+	(_m)[MSZ] = (_v)[Z]; }
+
+#define MAT_SCALE_ALL(_m, _s) (_m)[MSA] = (_s)
+
+
 /* Macro versions of librt/mat.c functions, for when speed really matters */
 #define MAT_ZERO(m)	{\
 	register int _j; \
