@@ -149,7 +149,7 @@ struct structparse fire_print_tab[] = {
 	{"%f",	1, "lacunarity", SHDR_O(noise_lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 	SHDR_O(noise_h_val),		FUNC_NULL },
 	{"%f",	1, "octaves", 	SHDR_O(noise_octaves),		FUNC_NULL },
-	{"%f",  1, "scale",	SHDR_O(noise_scale),		FUNC_NULL },
+	{"%f",  1, "scale",	SHDR_AO(noise_scale),		FUNC_NULL },
 	{"%f",  3, "delta",	SHDR_AO(noise_delta),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
