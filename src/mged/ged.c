@@ -57,16 +57,21 @@ in all countries except the USA.  All rights reserved.";
                                                                                                                                                                             
 #include <stdio.h>
 #ifdef USE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-#include <fcntl.h>
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
-#ifndef WIN32
-#include <sys/errno.h>
+#ifdef HAVE_SYS_ERRNO_H
+#  include <sys/errno.h>
+#endif
+#ifdef HAVE_ERRNO_H
+#  include <errno.h>
 #endif
 
 #ifdef DM_X
@@ -90,8 +95,6 @@ in all countries except the USA.  All rights reserved.";
 #include "./cmd.h"
 
 #ifdef WIN32
-#include <fcntl.h>
-#include <errno.h>
 #define R_OK 2
 #define W_OK 4
 #endif
