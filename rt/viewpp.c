@@ -55,10 +55,18 @@ pphit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	register struct partition *pp = PartHeadp->pt_forw;
-	register struct hit *hitp= pp->pt_inhit;
+	register struct partition *pp;
+	register struct hit *hitp;
 	LOCAL double cosI0;
 	register int i,j;
+
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if( pp == PartHeadp )  {
+		rt_log("pphit:  no hit out front?\n");
+		return(0);
+	}
+	hitp = pp->pt_inhit;
 
 #define pchar(c) {putc(c,stdout);if(col++==74){putc('\n',stdout);col=0;}}
 
