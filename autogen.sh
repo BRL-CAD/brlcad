@@ -175,9 +175,10 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
   echo $ECHO_N "Automatically preparing build ...$ECHO_C"
   autoreconf -i
   if [ ! $? = 0 ] ; then
-    reconfigure_manually=yes
-    echo "WARNING: autoreconf failed"
+    echo "Warning: autoreconf failed"
     echo "Attempting to run the configuration steps individually"
+    reconfigure_manually=yes
+  fi
 else
   reconfigure_manually=yes
 fi
