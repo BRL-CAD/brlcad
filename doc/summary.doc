@@ -1,28 +1,3 @@
-
-Lately, this news group has seen a lot of discussion of various ray-tracers.
-While many of the ray tracing packages that have been mentioned (eg, MTV)
-are fine examples to study, none that we at BRL have taken a look at are
-part of a full "production quality" modeling and rendering system.
-
-For many years, I have been frustrated by the fact that a great deal of
-energy is expended on building reduced-scale ray-tracers, because this
-means that usually the individual involved runs out of interest, time,
-and energy after doing a single ray-tracing application (usually a
-lighting model). There is a great deal more analysis that can be done
-using ray-tracing: predictive radar signatures, thermal signatures,
-structural analysis, heat transfer, mass properties analysis, etc, etc.
-To encourage others to progress beyond building ray-tracers, BRL has
-made available at no cost the full source code to our BRL-CAD Package,
-in the hopes that some researchers would skip over the building of
-yet another ray-tracer, and experiment with building novel applications
-that exploit the ray-tracing paradigm, using an existing ray-tracing
-library.
-
-For more details about what geometric models are useful for, see M.
-Muuss, ``Understanding the Preparation and Analysis of Solid Models'',
-in ``Techniques for Computer Graphics'', ed: Rogers & Earnshaw, Springer
-Verlag, 1987 (minor plug).
-
 The BRL-CAD Package includes a powerful solid modeling capability and
 a network-distributed image-processing capability. This software is now
 running at over 400 sites.  It has been distributed to 42 acedemic
@@ -74,6 +49,11 @@ o Neutron Transport Code
 o Link to PATRAN [TM] and hence to ADINA, EPIC-2, NASTRAN, etc.
 	for structural/stress analysis
 o X-Ray calculation
+
+For more details about what geometric models are useful for, see M.
+Muuss, ``Understanding the Preparation and Analysis of Solid Models'',
+in ``Techniques for Computer Graphics'', ed: Rogers & Earnshaw, Springer
+Verlag, 1987.
 
 To obtain a copy of the BRL CAD Package distribution, you must send
 enough magnetic tape for 20 Mbytes of data. Standard nine-track
