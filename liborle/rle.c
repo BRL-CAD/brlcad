@@ -23,7 +23,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #include "orle.h"
 
@@ -529,6 +534,7 @@ RGBpixel	*scan_buf;
 			PRNT_A1_DEBUG( "Byte-Data", n );
 			if( ! _bw_flag )
 				{
+#if 0
 				/*
 				 * This is the most common region of code.
 				 * The STDIO getc() macro is actually quite
@@ -551,6 +557,7 @@ RGBpixel	*scan_buf;
 #endif
 					}
 				else
+#endif
 				while( n-- > 0 )
 					{
 					*pp = getc(fp);
@@ -829,6 +836,7 @@ int		n;
 	{	register int	count = n;
 	RByteData(n-1);
 
+#if 0
 	/* More STDIO optimization, watch out...			*/
 	if( fp->_cnt >= count )
 		{ register unsigned char *op = (unsigned char *)fp->_ptr;
@@ -845,6 +853,7 @@ int		n;
 #endif
 		}
 	else
+#endif
 	while( count-- > 0 )
 		{
 		(void) putc( (int) *cp, fp );
