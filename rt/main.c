@@ -75,6 +75,8 @@ extern char	*outputfile;		/* name of base of output file */
 extern int	interactive;		/* human is watching results */
 /***** end variables shared with do.c *****/
 
+extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
+extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern char	*framebuffer;		/* desired framebuffer */
 
 extern struct command_tab	rt_cmdtab[];
@@ -186,7 +188,18 @@ char **argv;
 	}
 	ap.a_rt_i = rtip;
 	fprintf(stderr, "db title:  %s\n", idbuf);
+
+	/* Copy values from command line options into rtip */
 	rtip->useair = use_air;
+	if( rt_dist_tol > 0 )  {
+		rtip->rti_tol.dist = rt_dist_tol;
+		rtip->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
+	}
+	if( rt_perp_tol > 0 )  {
+		rtip->rti_tol.perp = rt_perp_tol;
+		rtip->rti_tol.para = 1 - rt_perp_tol;
+	}
+	rt_pr_tol( &rtip->rti_tol );
 
 	/* before view_init */
 	if( outputfile && strcmp( outputfile, "-") == 0 )

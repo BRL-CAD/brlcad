@@ -24,6 +24,12 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
@@ -84,6 +90,8 @@ int		interactive = 0;	/* human is watching results */
 int		benchmark = 0;		/* No random numbers:  benchmark */
 /***** end variables shared with do.c *****/
 
+fastf_t		rt_dist_tol = 0;	/* Value for rti_tol.dist */
+fastf_t		rt_perp_tol = 0;	/* Value for rti_tol.perp */
 char		*framebuffer;		/* desired framebuffer */
 
 #define MAX_WIDTH	(32*1024)
@@ -102,7 +110,7 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"a:b:c:e:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:SU:V:X:"
+	"a:b:c:e:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:ST:U:V:X:"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -133,6 +141,22 @@ register char **argv;
 					rt_cmdtab );
 			}
 			break;
+		case 'T':
+			{
+				fastf_t		f;
+				char		*cp;
+				if( sscanf( optarg, "%f", &f ) == 1 )  {
+					if( f > 0 )
+						rt_dist_tol = f;
+				}
+				if( (cp = strchr(optarg, '/')) ||
+				    (cp = strchr(optarg, ',')) )  {
+					if( sscanf( optarg, "%f", &f ) == 1 )  {
+						if( f > 0 && f < 1 )
+							rt_perp_tol = f;
+					}
+				}
+			}
 		case 'U':
 			use_air = atoi( optarg );
 			break;
