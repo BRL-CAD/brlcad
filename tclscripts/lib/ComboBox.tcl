@@ -20,6 +20,11 @@
 #	The ComboBox combines an entry widget with a menubutton and menu.
 #
 
+
+#itk::usual Display {
+#    keep -tearoff
+#}
+
 class cadwidgets::ComboBox {
     inherit itk::Widget
 
@@ -61,20 +66,25 @@ body cadwidgets::ComboBox::constructor {args} {
     }
 
     itk_component add entry {
-	entry $itk_interior.entry -relief flat -width 12 \
-		-textvariable [scope entrytext]
+	entry $itk_interior.entry -relief flat -width 12
     } {
 	usual
+	keep -state
+	rename -textvariable -entryvariable entryvariable Text
     }
 
     itk_component add menubutton {
 	menubutton $itk_interior.menubutton -relief raised -bd 2 \
 		-menu $itk_interior.menubutton.m -indicatoron 1
-    } {}
+    } {
+	usual
+    }
 
     itk_component add menu {
-	menu $itk_interior.menubutton.m -tearoff 0
-    } {}
+	menu $itk_interior.menubutton.m
+    } {
+	usual
+    }
 
     grid $itk_component(entry) $itk_component(menubutton) \
 	    -sticky "nsew" -in $itk_component(frame)
@@ -84,6 +94,8 @@ body cadwidgets::ComboBox::constructor {args} {
     grid rowconfigure $itk_interior 0 -weight 1
     grid columnconfigure $itk_interior 1 -weight 1
 
+    # Associate the entrytext variable with the entry component
+    configure -entryvariable [scope entrytext]
     eval itk_initialize $args
 }
 
@@ -116,11 +128,15 @@ body cadwidgets::ComboBox::entryConfigure {args} {
 }
 
 body cadwidgets::ComboBox::getText {} {
-    return $entrytext
+    set ev [cget -entryvariable]
+
+    # $-substitution should work, but doesn't
+    return [set $ev]
 }
 
 body cadwidgets::ComboBox::setText {val} {
-    set entrytext $val
+    set ev [cget -entryvariable]
+    set $ev $val
 }
 
 body cadwidgets::ComboBox::type {index} {
