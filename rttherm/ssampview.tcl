@@ -73,7 +73,7 @@ proc update { {foo 0} } {
 
 	# Points to lower left corner of selected pixel, bump up one.
 	fb_cursor -42 $cursor_on [expr $pixel_num + 1] [expr $line_num + 1]
-	puts [fb_readpixel -42 $pixel_num $line_num]
+	### puts [fb_readpixel -42 $pixel_num $line_num]
 }
 
 proc scalechange {var value} {
@@ -121,6 +121,7 @@ proc scanline { {foo 0} } {
 	set ymax 256
 
 	.canvas_scanline delete T
+	.canvas_scanline create line $pixel_num 0 $pixel_num $ymax -tags T -fill grey
 
 	set y $line_num
 	set x0 0
@@ -143,7 +144,6 @@ proc scanline { {foo 0} } {
 		set y0 $y1
 ##		puts "$x0 $y0 $x1 $y1"
 	}
-	.canvas_scanline create line $pixel_num [expr $ymax - 4] $pixel_num $ymax -tags T
 }
 
 
@@ -165,6 +165,7 @@ proc pixelplot { {foo 0} } {
 	set ymax 256
 
 	.canvas_pixel delete T
+	.canvas_pixel create line $wavel 0 $wavel $ymax -tags T -fill grey
 
 	set x $pixel_num
 	set y $line_num
@@ -188,7 +189,6 @@ proc pixelplot { {foo 0} } {
 		set y0 $y1
 ##		puts "$x0 $y0 $x1 $y1"
 	}
-	.canvas_pixel create line $wavel [expr $ymax - 4] $wavel $ymax -tags T
 }
 
 
