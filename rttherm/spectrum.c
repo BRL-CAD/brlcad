@@ -281,6 +281,9 @@ CONST double *array;
  *  for a NTSC television camera, from Benson "Television Engineering
  *  Handbook" page 4.58, convert an RGB value in range 0..1 to
  *  a spectral curve also in range 0..1.
+ *
+ *  These curves should be used in converting spectral samples
+ *  to NTSC RGB values.
  */
 void
 rt_spect_make_NTSC_RGB( rp, gp, bp, tabp )
@@ -292,17 +295,67 @@ CONST struct rt_table		*tabp;
 	RT_CK_TABLE(tabp);
 
 	/* Convert array of number pairs into rt_tabdata & rt_table */
-	rt_NTSC_r_tabdata = rt_tabdata_from_array( rt_NTSC_R );
-	rt_NTSC_g_tabdata = rt_tabdata_from_array( rt_NTSC_G );
-	rt_NTSC_b_tabdata = rt_tabdata_from_array( rt_NTSC_B );
-bu_log("ntsc_R:\n");rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_r_tabdata );
-bu_log("ntsc_G:\n");rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_g_tabdata );
-bu_log("ntsc_B:\n");rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_b_tabdata );
+	rt_NTSC_r_tabdata = rt_tabdata_from_array( &rt_NTSC_R[0][0] );
+	rt_NTSC_g_tabdata = rt_tabdata_from_array( &rt_NTSC_G[0][0] );
+	rt_NTSC_b_tabdata = rt_tabdata_from_array( &rt_NTSC_B[0][0] );
+
+bu_log("ntsc_R: area=%g\n", rt_tabdata_area2(rt_NTSC_r_tabdata) );
+	rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_r_tabdata );
+bu_log("ntsc_G: area=%g\n", rt_tabdata_area2(rt_NTSC_g_tabdata) );
+	rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_g_tabdata );
+bu_log("ntsc_B: area=%g\n", rt_tabdata_area2(rt_NTSC_b_tabdata) );
+	rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_b_tabdata );
 
 	/* Resample original NTSC curves to match given rt_table sampling */
 	*rp = rt_tabdata_resample( tabp, rt_NTSC_r_tabdata );
 	*gp = rt_tabdata_resample( tabp, rt_NTSC_g_tabdata );
 	*bp = rt_tabdata_resample( tabp, rt_NTSC_b_tabdata );
+}
+
+/*
+ *  Given reflectance data (in range 0..1) in terms of RGB color,
+ *  convert that to a spectral reflectance curve.
+ *
+ *  The assumption here is that the spectrum is made up of exactly three
+ *  non-overlapping bands, and the reflectance is constant over each:
+ *
+ *	red	572nm to 1,000,000nm	(includes the full IR band)
+ *	green	492nm to 572nm		(just green)
+ *	blue	1nm to 492nm		(includes Ultraviolet)
+ *
+ *  As the caller may be doing a lot of this, the caller is expected
+ *  to provide a pointer to a valid rt_tabdata structure which is
+ *  to be filled in.  Allowing caller to re-cycle them rather than
+ *  doing constant malloc/free cycle.
+ */
+void
+rt_spect_reflectance_rgb( curve, rgb )
+struct rt_tabdata	*curve;
+CONST point_t		rgb;
+{
+	register int	i;
+	register CONST struct rt_table	*tabp;
+
+	RT_CK_TABDATA(curve);
+	tabp = curve->table;
+	RT_CK_TABLE(tabp);
+
+	/* Fill in blue values, everything up to but not including 492nm */
+	for( i=0; i < tabp->nx; i++ )  {
+		if( tabp->x[i] >= 492 )  break;
+		curve->y[i] = rgb[2];
+	}
+
+	/* Fill in green values, everything up to but not including 572nm */
+	for( ; i < tabp->nx; i++ )  {
+		if( tabp->x[i] >= 572 )  break;
+		curve->y[i] = rgb[1];
+	}
+
+	/* Fill in red values, everything from here up to end of table */
+	for( ; i < tabp->nx; i++ )  {
+		curve->y[i] = rgb[0];
+	}
 }
 
 /*
@@ -336,14 +389,47 @@ mat_t	xyz2rgb;
 		rt_bomb("rt_make_ntsc_xyz2rgb() can't initialize color space\n");
 	mat_inv( xyz2rgb, rgb2xyz );
 
-#if 0
+#if 1
 	/* Verify that it really works, I'm a skeptic */
 	VSET( tst, 1, 1, 1 );
 	MAT3X3VEC( new, rgb2xyz, tst );
-	VPRINT( "white_xyz", new );
-	VSET( tst, 0.951368, 1, 1.08815);
+	VPRINT( "white_rgb (i)", tst );
+	VPRINT( "white_xyz (o)", new );
+
+	VSET( tst, 0.313,     0.329,      0.358);
 	MAT3X3VEC( new, xyz2rgb, tst );
-	VPRINT( "white_rgb", new );
+	VPRINT( "white_xyz (i)", tst );
+	VPRINT( "white_rgb (o)", new );
+
+	VSET( tst, 1, 0, 0 );
+	MAT3X3VEC( new, rgb2xyz, tst );
+	VPRINT( "red_rgb (i)", tst );
+	VPRINT( "red_xyz (o)", new );
+
+	VSET( tst, 0.670,     0.330,      0.000);
+	MAT3X3VEC( new, xyz2rgb, tst );
+	VPRINT( "red_xyz (i)", tst );
+	VPRINT( "red_rgb (o)", new );
+
+	VSET( tst, 0, 1, 0 );
+	MAT3X3VEC( new, rgb2xyz, tst );
+	VPRINT( "grn_rgb (i)", tst );
+	VPRINT( "grn_xyz (o)", new );
+
+	VSET( tst, 0.210,     0.710,      0.080);
+	MAT3X3VEC( new, xyz2rgb, tst );
+	VPRINT( "grn_xyz (i)", tst );
+	VPRINT( "grn_rgb (o)", new );
+
+	VSET( tst, 0, 0, 1 );
+	MAT3X3VEC( new, rgb2xyz, tst );
+	VPRINT( "blu_rgb (i)", tst );
+	VPRINT( "blu_xyz (o)", new );
+
+	VSET( tst, 0.140,     0.080,      0.780);
+	MAT3X3VEC( new, xyz2rgb, tst );
+	VPRINT( "blu_xyz (i)", tst );
+	VPRINT( "blu_rgb (o)", new );
 #endif
 }
 
