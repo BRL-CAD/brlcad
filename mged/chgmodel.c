@@ -612,8 +612,8 @@ f_mirface()
 		return;
 	}
 	face = atoi( cmd_args[1] );
-	if( face < 1000 || face > 9999 ) {
-		(void)printf("ERROR: face must be 4 points\n");
+	if( face > 9999 || (face < 1000 && es_type != ARB6) ) {
+		(void)printf("ERROR: %d bad face\n",face);
 		return;
 	}
 	/* check which axis */
