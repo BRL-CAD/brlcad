@@ -37,6 +37,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <sys/stat.h>
 #endif
 
+#if defined(sgi) && defined(mips)
+# include <sys/mman.h>
+extern caddr_t	mmap();
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -64,8 +69,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef vax
 #	define	INMEM_LIM	8*1024*1024
 #endif
-#ifdef mips
-#	define	INMEM_LIM	2*1024*1024
+#if defined(sgi) && defined(mips)
+#	define	INMEM_LIM	8*1024*1024
 #endif
 #if !defined(INMEM_LIM)
 #	define	INMEM_LIM	1*1024*1024	/* default */
@@ -109,12 +114,28 @@ char	*mode;
 				goto fail;
 			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
 				goto fail;
-			if( sb.st_size <= INMEM_LIM )  {
+
+#			if defined(sgi) && defined(mips)
+			/* Attempt to access as memory-mapped file */
+			if( (dbip->dbi_inmem = mmap(
+			    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
+			    dbip->dbi_fd, (off_t)0 )) == (caddr_t)-1 )  {
+				perror("mmap");
+				dbip->dbi_inmem = (char *)0;
+			} else {
+				if(rt_g.debug&DEBUG_DB)
+					rt_log("db_open: memory mapped file\n");
+			}
+#endif
+
+			if( !dbip->dbi_inmem && sb.st_size <= INMEM_LIM )  {
 				dbip->dbi_inmem = rt_malloc( sb.st_size,
 					"in-memory database" );
 				if( read( dbip->dbi_fd, dbip->dbi_inmem,
 				    sb.st_size ) != sb.st_size )
 					goto fail;
+				if(rt_g.debug&DEBUG_DB)
+					rt_log("db_open: in-memory file\n");
 			}
 #		else
 			if( (dbip->dbi_fp = fopen( name, "r")) == NULL )
