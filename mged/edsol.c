@@ -2311,6 +2311,10 @@ init_sedit()
 	es_ars_crv = (-1);
 	es_ars_col = (-1);
 
+	bot_verts[0] = -1;
+	bot_verts[1] = -1;
+	bot_verts[2] = -1;
+
 	/* Finally, enter solid edit state */
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
 	if( id == ID_FGP )
