@@ -130,7 +130,7 @@ register char	**argv;
 		infile = "-";
 	}
 	if( argc > ++optind )
-		(void) fprintf( stderr, "Excess arguments ignored\n" );
+		(void) fprintf( stderr, "rle-fb:  excess arguments ignored\n" );
 
 	if( isatty(fileno(infp)) )
 		return 0;
@@ -146,8 +146,10 @@ char ** argv;
 {
 	FBIO	*fbp;
 	register int i;
-	int	x_len, y_len;
-	int	xbase;
+	int	file_width;		/* unclipped width of rectangle */
+	int	file_skiplen;		/* # of pixels to skip on l.h.s. */
+	int	screen_xbase;		/* screen X of l.h.s. of rectangle */
+	int	screen_xlen;		/* clipped len of rectangle */
 	int	ncolors;
 
 	if( !get_args( argc, argv ) )  {
@@ -196,33 +198,61 @@ char ** argv;
 			sv_globals.sv_bg_color[i] = background[i];
 	}
 
+	/* Incorporate command-line rectangle repositioning */
 	sv_globals.sv_xmin += scr_xoff;
 	sv_globals.sv_xmax += scr_xoff;
 	sv_globals.sv_ymin += scr_yoff;
 	sv_globals.sv_ymax += scr_yoff;
-	if( sv_globals.sv_xmax > screen_width ||
-	    sv_globals.sv_ymax > screen_height )  {
+
+	/* If screen sizes not specified, try to display rectangle part > 0 */
+	if( screen_width == 0 )
 	    	screen_width = sv_globals.sv_xmax + 1;
+	if( screen_height == 0 )
 	    	screen_height = sv_globals.sv_ymax + 1;
-	}
 
-	x_len = sv_globals.sv_xmax - sv_globals.sv_xmin + 1;
-	y_len = sv_globals.sv_ymax - sv_globals.sv_ymin + 1;
+	file_width = sv_globals.sv_xmax - sv_globals.sv_xmin + 1;
 
-	/* Pretend saved image origin is at 0, fix in fb_write call */
-	xbase = sv_globals.sv_xmin;
-	sv_globals.sv_xmax -= xbase;
+	/* Pretend saved image origin is at 0, clip & position in fb_write call */
+	screen_xbase = sv_globals.sv_xmin;
+	sv_globals.sv_xmax -= screen_xbase;
 	sv_globals.sv_xmin = 0;
 
 	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == FBIO_NULL )
 		exit(12);
-	screen_width = fb_getwidth(fbp);
-	screen_height = fb_getheight(fbp);
+
+	/* Honor original screen size desires, if set, unless they shrank */
+	if( screen_width > 0 && fb_getwidth(fbp) < screen_width )
+		screen_width = fb_getwidth(fbp);
+	if( screen_height > 0 && fb_getheight(fbp) < screen_height )
+		screen_height = fb_getheight(fbp);
+
+	/* Discard any scanlines which exceed screen height */
+	if( sv_globals.sv_ymax > screen_height-1 )
+		sv_globals.sv_ymax = screen_height-1;
+
+	/* Clip left edge */
+	screen_xlen = sv_globals.sv_xmax + 1;
+	file_skiplen = 0;
+	if( screen_xbase < 0 )  {
+		file_skiplen = -screen_xbase;
+		screen_xbase = 0;
+		screen_xlen -= file_skiplen;
+	}
+	/* Clip right edge */
+	if( screen_xbase + screen_xlen > screen_width )
+		screen_xlen = screen_width - screen_xbase;
+	if( screen_xlen <= 0 ||
+	    sv_globals.sv_ymin > screen_height ||
+	    sv_globals.sv_ymax < 0 )  {
+	    	fprintf(stderr,
+		"rle-fb:  Warning:  RLE image rectangle entirely off screen\n");
+		goto done;
+	}
 
 	scan_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * screen_width );
 
 	for( i=0; i < ncolors; i++ )
-		rows[i] = (unsigned char *)malloc(x_len);
+		rows[i] = (unsigned char *)malloc(file_width);
 	for( ; i < 3; i++ )
 		rows[i] = rows[0];	/* handle monochrome images */
 
@@ -259,44 +289,49 @@ char ** argv;
 		(void)fb_wmap( fbp, &cmap );
 
 
-	for ( i = sv_globals.sv_ymin; i <= sv_globals.sv_ymax; i++)  {
+	/* Handle any lines below zero in y.  Decode and discard. */
+	for( i = sv_globals.sv_ymin; i < 0; i++ )
+		rle_getrow( &sv_globals, rows );
+
+	for( ; i <= sv_globals.sv_ymax; i++)  {
 		register unsigned char	*pp = (unsigned char *)scan_buf;
-		register rle_pixel	*rp = rows[0];
-		register rle_pixel	*gp = rows[1];
-		register rle_pixel	*bp = rows[2];
+		register rle_pixel	*rp = &(rows[0][file_skiplen]);
+		register rle_pixel	*gp = &(rows[1][file_skiplen]);
+		register rle_pixel	*bp = &(rows[2][file_skiplen]);
 		register int		j;
 
 		if( overlay )  {
-			fb_read( fbp, xbase, i, scan_buf, x_len );
-			for( j = 0; j < x_len; j++ )  {
+			fb_read( fbp, screen_xbase, i, scan_buf, screen_xlen );
+			for( j = 0; j < screen_xlen; j++ )  {
 				*rp++ = *pp++;
 				*gp++ = *pp++;
 				*bp++ = *pp++;
 			}
 			pp = (unsigned char *)scan_buf;
-			rp = rows[0];
-			gp = rows[1];
-			bp = rows[2];
+			rp = &(rows[0][file_skiplen]);
+			gp = &(rows[1][file_skiplen]);
+			bp = &(rows[2][file_skiplen]);
 		}
 
 		rle_getrow(&sv_globals, rows );
 
 		/* Grumble, convert from Utah layout */
 		if( !crunch )  {
-			for ( j = 0; j < x_len; j++)  {
+			for( j = 0; j < screen_xlen; j++)  {
 				*pp++ = *rp++;
 				*pp++ = *gp++;
 				*pp++ = *bp++;
 			}
 		} else {
-			for ( j = 0; j < x_len; j++)  {
+			for( j = 0; j < screen_xlen; j++)  {
 				*pp++ = cmap.cm_red[*rp++]>>8;
 				*pp++ = cmap.cm_green[*gp++]>>8;
 				*pp++ = cmap.cm_blue[*bp++]>>8;
 			}
 		}
-		fb_write( fbp, xbase, i, scan_buf, x_len );
+		fb_write( fbp, screen_xbase, i, scan_buf, screen_xlen );
 	}
+done:
 	fb_close( fbp );
 	exit(0);
 }
