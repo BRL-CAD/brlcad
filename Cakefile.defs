@@ -171,7 +171,7 @@ set -S2 "/bin/sh"
 #	define	LD_OPTS	CC_OPTS
 #	define	FC	/usr/alliant/fortran
 #	define	LIBMALLOC	/* use vendor library */
-#	define	RT_LIBES	-lcvec
+#	define	RT_LIBES	-lcvec -lcommon
 #	define	LIBRT_TIMER	timer42
 #endif
 
@@ -459,7 +459,7 @@ set -S2 "/bin/sh"
 #		define	CC_DEFS -hvector,olevel_3,vmesg_2 -DVECTORIZE
 #		define	CC	/bin/ncc
 #			define	CC	/bin/ncc
-#	define	FC	/bin/cft77
+#	endif
 		AR x /usr/lib/libnet.a select.o socket.o; \
 #	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
 #	define	RFBD_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
