@@ -137,8 +137,9 @@ struct	ikinfo {
 	short	*_ikUBaddr;		/* Mapped-in Ikonas address */
 	/* Current values initialized in adage_init() */
 	int	x_zoom, y_zoom;
-	int	x_window, y_window;
+	int	x_window, y_window;	/* Ikonas, upper left of window */
 	int	mode;			/* 0,1,2 */
+	int	y_winoff;		/* y window correction factor */
 };
 #define	IKI(ptr) ((struct ikinfo *)((ptr)->u1.p))
 #define	IKIL(ptr) ((ptr)->u1.p)		/* left hand side version */
@@ -275,7 +276,8 @@ int	width, height;
 	}
 	IKI(ifp)->x_zoom = 1;
 	IKI(ifp)->y_zoom = 1;
-	IKI(ifp)->x_window = IKI(ifp)->y_window = 0;
+	IKI(ifp)->x_window = 0;
+	IKI(ifp)->y_window = 0;
 	return	ifp->if_fd;
 }
 
@@ -721,10 +723,6 @@ int	x, y;
 	int first_line;
 	int top_margin;
 
-	/* for the cursor routines, save q4 window parameters (??) */
-	IKI(ifp)->x_window = x;
-	IKI(ifp)->y_window = ifp->if_height-1-y;	/* q1 -> q4 */
-
 	/*
 	 *  To start with, we are given the 1st quadrant coordinates
 	 *  of the CENTER of the region we wish to view.  Since the
@@ -737,6 +735,10 @@ int	x, y;
 	ikx = x - (ifp->if_width / IKI(ifp)->x_zoom)/2;
 	iky = y + (ifp->if_height / IKI(ifp)->y_zoom)/2 - 1;
 	iky = ifp->if_height-1-iky;		/* q1 -> q4 */
+
+	/* for the cursor routines, save q4 upper left */
+	IKI(ifp)->x_window = ikx;
+	IKI(ifp)->y_window = iky;
 
 	/*
  	 *  These formulas are taken from section 5.2.3.2.4 (page 5-5)
@@ -760,6 +762,7 @@ int	x, y;
 		y_window = first_line - top_margin + 6;		/* was 9 */
 		break;
 	}
+	IKI(ifp)->y_winoff = y_window;
 	y_window /= IKI(ifp)->y_zoom;
 
 	if( IKI(ifp)->mode != 2 )
@@ -782,8 +785,10 @@ int	x, y;
 }
 
 /*	a d a g e _ c u r s o r _ m o v e _ m e m o r y _ a d d r ( )
-	Place cursor at image coordinates x and y.
-	IMPORTANT : Adage cursor addressing is in screen space.
+ *
+ *	Place cursor at image (pixel) coordinates x and y.
+ *	IMPORTANT : Adage cursor addressing is in screen space,
+ *	so backwards correction must be applied.
  */
 _LOCAL_ int
 adage_cmemory_addr( ifp, mode, x, y )
@@ -791,6 +796,7 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+#ifdef never
 	register int	x_cursor_offset, y_cursor_offset;
 	int x_origin = ifp->if_width / 2;	/* Odd formulas */
 	int y_origin = ifp->if_height / 2;
@@ -828,6 +834,26 @@ int	x, y;
 		- IKI(ifp)->x_window)*IKI(ifp)->x_zoom + x_cursor_offset;
 	y = y_origin + ((y - y_origin)
 		- IKI(ifp)->y_window)*IKI(ifp)->y_zoom + y_cursor_offset;
+#endif
+
+	y = ifp->if_height-1-y;		/* q1 -> q4 */
+	y -= IKI(ifp)->y_window;
+	x -= IKI(ifp)->x_window;
+
+	if( y < 0 )  y = 0;
+	if( x < 0 )  x = 0;
+#ifdef never
+	if( x >= ifp->if_width/IKI(ifp)->x_zoom-1 )
+		x = ifp->if_width/IKI(ifp)->x_zoom-1;
+	if( y >= ifp->if_height/IKI(ifp)->y_zoom-1 )
+		y = ifp->if_height/IKI(ifp)->y_zoom-1;
+	y -= IKI(ifp)->y_winoff;
+#else
+	y *= IKI(ifp)->y_zoom;
+	x *= IKI(ifp)->x_zoom;
+	y -= IKI(ifp)->y_winoff;
+	y += (IKI(ifp)->y_zoom-1)*2;	/* HACK to correct drift */
+#endif
 
 	if( mode )
 		IKI(ifp)->ikfbcmem.fbc_Lcontrol |= FBC_CURSOR;
@@ -932,22 +958,30 @@ FBIO	*ifp;
 register ColorMap	*cp;
 {
 	long cmap[1024];
-	register long *lp = cmap;
-	register int i;
+	register int i, j;
 
 	/* Note that RGB10(r,g,b) flips to cmap order (b,g,r). */
-	if( cp == (ColorMap *) NULL )
-		for( i=0; i < 256; i++ )
-			*lp++ = RGB10( i<<2, i<<2, i<<2 );
-	else
-		for( i=0; i < 256; i++ )
-			*lp++ = RGB10( cp->cm_red[i]>>6,
+	if( cp == (ColorMap *) NULL )  {
+		for( i=0; i < 256; i++ )  {
+			j = i<<2;
+			cmap[i] = RGB10( j, j, j );
+			j = ((i+128)%255)<<2;
+			cmap[i+256] = RGB10( j, j, j );
+		}
+	}  else  {
+		for( i=0; i < 256; i++ )  {
+			cmap[i] = RGB10( cp->cm_red[i]>>6,
 				       cp->cm_green[i]>>6,
 				       cp->cm_blue[i]>>6 );
+			cmap[i+256] = RGB10( ((cp->cm_red[i]>>6)+512)%1023,
+				       ((cp->cm_green[i]>>6)+512)%1023,
+				       ((cp->cm_blue[i]>>6)+512)%1023 );
+		}
+	}
 
 #ifdef pdp11
 	/* 16-bit-word-in-long flipping for PDP's */
-	for( i=0; i < 256; i++ ) {
+	for( i=0; i < 512; i++ ) {
 		register struct twiddle {
 			short rhs;
 			short lhs;
@@ -961,12 +995,9 @@ register ColorMap	*cp;
 	/*
 	 * Replicate first copy of color map onto second copy,
 	 * and also do the "overlay" portion too.
-	 * TODO:  Load inverse map into "overlay" (for cursor),
-	 * and load standard film map into second map.
 	 */
-	for( i=0; i < 256; i++ ) {
+	for( i=0; i < 256*2; i++ ) {
 		cmap[i+512] = cmap[i];
-		cmap[i+512+256] = cmap[i+256] = ~cmap[i];
 	}
 	if( lseek( ifp->if_fd, LUVO*4L, 0) == -1 ) {
 		fb_log( "adage_colormap_write : lseek failed.\n" );
