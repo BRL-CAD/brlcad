@@ -140,6 +140,7 @@ TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		gen.sh setup.sh newbindir.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
+# XXX MGED won't run unless "cake install" installs /usr/brlcad/html !!
 ADIRS="h doc pix vfont whetstone awf brlman tclscripts"
 
 # Has no Cakefile, just copy it (and all sub-directories!) verbatim.
