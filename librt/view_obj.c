@@ -269,8 +269,8 @@ vo_size(struct view_obj	*vop,
 	vop->vo_size = vop->vo_local2base * size;
 	if (vop->vo_size < RT_MINVIEWSIZE)
 		vop->vo_size = RT_MINVIEWSIZE;
-	vop->vo_invSize = 1.0 / size;
-	vop->vo_scale = 0.5 * size;
+	vop->vo_invSize = 1.0 / vop->vo_size;
+	vop->vo_scale = 0.5 * vop->vo_size;
 	vo_update(vop, interp, 1);
 }
 
