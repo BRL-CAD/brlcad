@@ -2535,7 +2535,9 @@ CONST struct rt_tol   *tol;
 	NMG_CK_MODEL(m);
 	nmg_vmodel(m);
 
-	rt_log("Triangulating NMG\n");
+	if (rt_g.NMG_debug & DEBUG_TRI)
+		rt_log("Triangulating NMG\n");
+
 	for (RT_LIST_FOR(r, nmgregion, &m->r_hd)) {
 		NMG_CK_REGION(r);
 		for (RT_LIST_FOR(s, shell, &r->s_hd)) {
@@ -2550,5 +2552,7 @@ CONST struct rt_tol   *tol;
 		}
 	}
 	nmg_vmodel(m);
-	rt_log("Triangulation completed\n");
+
+	if (rt_g.NMG_debug & DEBUG_TRI)
+		rt_log("Triangulation completed\n");
 }
