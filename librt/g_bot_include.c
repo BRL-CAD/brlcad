@@ -145,6 +145,9 @@ XGLUE(rt_bot_prep_pieces_,TRI_TYPE)(struct bot_specific	*bot,
     tpp_m1 = tri_per_piece - 1;
     trip = bot->bot_facelist;
     minmax = &stp->st_piece_rpps[num_rpps-1];
+    minmax->min[X] = minmax->max[X] = trip->tri_A[X];
+    minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
+    minmax->min[Z] = minmax->max[Z] = trip->tri_A[Z];
     for (surfno=ntri-1 ; trip; trip = trip->tri_forw, surfno-- )  {
 
 	if ( (surfno % tri_per_piece) == tpp_m1) {
@@ -197,6 +200,9 @@ XGLUE(rt_bot_prep_pieces_,TRI_TYPE)(struct bot_specific	*bot,
 	VMINMAX( minmax->min, minmax->max, d );
 	VMINMAX( minmax->min, minmax->max, e );
 	VMINMAX( minmax->min, minmax->max, f );
+
+	VMINMAX( stp->st_min, stp->st_max, minmax->min );
+	VMINMAX( stp->st_min, stp->st_max, minmax->max );
 
     }
 
@@ -257,9 +263,13 @@ struct rt_i		*rtip;
 		VMOVE( p1, &bot_ip->vertices[bot_ip->faces[tri_index*3]*3] );
 		VMOVE( p2, &bot_ip->vertices[bot_ip->faces[tri_index*3 + 1]*3] );
 		VMOVE( p3, &bot_ip->vertices[bot_ip->faces[tri_index*3 + 2]*3] );
-		VMINMAX( stp->st_min, stp->st_max, p1 );
-		VMINMAX( stp->st_min, stp->st_max, p2 );
-		VMINMAX( stp->st_min, stp->st_max, p3 );
+
+		if( rt_bot_minpieces <= 0 || bot_ip->num_faces < rt_bot_minpieces ) {
+			VMINMAX( stp->st_min, stp->st_max, p1 );
+			VMINMAX( stp->st_min, stp->st_max, p2 );
+			VMINMAX( stp->st_min, stp->st_max, p3 );
+		}
+
 		if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot_ip->bot_flags & RT_BOT_USE_NORMALS)
 			&& (bot_ip->num_normals > 0) && (bot_ip->num_face_normals > tri_index) ) {
 			for( i=0 ; i<3 ; i++ ) {
@@ -302,6 +312,10 @@ struct rt_i		*rtip;
 
 	bot->bot_ntri = ntri;
 
+	if( rt_bot_minpieces > 0 && bot_ip->num_faces > rt_bot_minpieces ) {
+		rt_bot_prep_pieces( bot, stp, ntri, tol );
+	}
+
 	/* zero thickness will get missed by the raytracer */
 	for( i=0 ; i<3 ; i++ )
 	{
@@ -338,10 +352,7 @@ struct rt_i		*rtip;
 	 *  To disable BoT pieces, on the RT command line specify:
 	 *	-c "set rt_bot_minpieces=0"
 	 */
-	if( rt_bot_minpieces <= 0 )  return 0;
-	if( ntri < rt_bot_minpieces )  return 0;
 
-	rt_bot_prep_pieces(bot, stp, ntri, tol);
 	return 0;
 }
 
