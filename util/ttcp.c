@@ -415,7 +415,7 @@ int count;
 	int len = sizeof(from);
 	register int cnt;
 	if( udp )  {
-		cnt = recvfrom( fd, (void *)buf, count, 0, &from, &len );
+		cnt = recvfrom( fd, (void *)buf, count, 0, (struct sockaddr *)&from, &len );
 	} else {
 		if( b_flag )
 			cnt = mread( fd, buf, count );	/* fill buf */
@@ -437,7 +437,7 @@ int count;
 	register int cnt;
 	if( udp )  {
 again:
-		cnt = sendto( fd, (void *)buf, count, 0, &sinhim, sizeof(sinhim) );
+		cnt = sendto( fd, (void *)buf, count, 0, (struct sockaddr *)&sinhim, sizeof(sinhim) );
 		if( cnt<0 && errno == ENOBUFS )  {
 			delay(18000);
 			errno = 0;
@@ -554,7 +554,7 @@ char **argv;
 		err("socket");
 	mes("socket");
 
-	if (bind(fd, &sinme, sizeof(sinme)) < 0)
+	if (bind(fd, (struct sockaddr *)&sinme, sizeof(sinme)) < 0)
 		err("bind");
 
 	if (!udp)  {
@@ -568,7 +568,7 @@ char **argv;
 #endif
 				err("setsockopt");
 		}
-		if(connect(fd, &sinhim, sizeof(sinhim) ) < 0)
+		if(connect(fd, (struct sockaddr *)&sinhim, sizeof(sinhim) ) < 0)
 			err("connect");
 		mes("connect");
 	    } else {
@@ -586,7 +586,7 @@ char **argv;
 		}
 		fromlen = sizeof(frominet);
 		domain = AF_INET;
-		if((fd=accept(fd, &frominet, &fromlen) ) < 0)
+		if((fd=accept(fd, (struct sockaddr *)&frominet, &fromlen) ) < 0)
 			err("accept");
 		mes("accept");
 	    }
