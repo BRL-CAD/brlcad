@@ -233,7 +233,7 @@ struct faceuse *fu;
 
 			fu2lg = fu2lu->l_p->lg_p;
 			NMG_CK_LOOP_G(fu2lg);
-			if (NMG_EXTENT_OVERLAP(fu2lg->min_pt, fu2lg->max_pt,
+			if (V3RPP_OVERLAP(fu2lg->min_pt, fu2lg->max_pt,
 			    lg->min_pt, lg->max_pt)) {
 				overlap = 1;
 				break;
