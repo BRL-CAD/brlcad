@@ -40,12 +40,23 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "dm-plot.h"
 
-struct dm *Plot_dm_init();
+extern void dm_var_init();
 
-struct dm *
-Plot_dm_init(argc, argv)
+int
+Plot_dm_init(o_dm_list, argc, argv)
+struct dm_list *o_dm_list;
 int argc;
 char *argv[];
 {
+#if DO_NEW_LIBDM_OPEN
+  dm_var_init(o_dm_list);
+
+  if((dmp = Plot_open(DM_EVENT_HANDLER_NULL, argc - 1, argv + 1)) == DM_NULL)
+    return TCL_ERROR;
+
+  curr_dm_list->s_info->opp = &tkName;
+  return TCL_OK;
+#else
   return Plot_open((int (*)())NULL, argc, argv);
+#endif
 }

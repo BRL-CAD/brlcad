@@ -231,6 +231,7 @@ char	**argv;
 	  }
 
 	  set_scroll();
+	  dmaflag = 1;
 	  return TCL_OK;
 	}
 
