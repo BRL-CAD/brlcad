@@ -329,66 +329,116 @@ RGBpixel	*bgpp;
 	return	0;
 }
 
+/*
+ *  Buffered Reads and Writes:
+ *  We divide the users pixel buffer into three parts, as up to
+ *  three seeks and DMA's are necessary to read or write this 1st
+ *  quadrant buffer in Ikonas order.
+ *
+ *	[....................]			tailfrag
+ *	[...............................]	fullscans
+ *	[...............................]
+ *	             [0.................]	headfrag
+ *		      ^
+ *		      + start of pixelp buffer.
+ */
+
+#define	IKSEEK(x,y)	if(lseek(ifp->if_fd,((y)*ifp->if_width+(x))\
+	    		*sizeof(IKONASpixel),0) == -1) return -1;
+
 _LOCAL_ int
 adage_buffer_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
-int	x,  y;
-RGBpixel	*pixelp;
-int	count;
+int	x, y;
+RGBpixel *pixelp;
+long	count;
 {
-	register char *out, *in;
 	register int i;
-	long ikbytes = count * (long) sizeof(IKONASpixel);
-	long todo;
-	int toread;
-	int width;
-	int scanlines;
-	int maxikdma;
+	register char *out, *in;
+	int	headfrag, tailfrag, fullscans;
+	int	scan, doscans;
+	int	maxikscans;
+	int	width, pixels, topiky;
 
 	if( count == 1 )
 		return adage_read_pio_pixel( ifp, x, y, pixelp );
 
-	scanlines = (count+ifp->if_width-1) / ifp->if_width;	/* ceil */
-	width = count - (scanlines-1) * ifp->if_width;	/* residue on last line */
+	width = ifp->if_width;
+	pixels = count;
 
-	y = ifp->if_width-y-scanlines;		/* 1st quadrant */
-	if( lseek(	ifp->if_fd,
-			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(IKONASpixel),
-			0
-			)
-	    == -1L ) {
-		fb_log( "adage_buffer_read : seek to %ld failed.\n",
-			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(IKONASpixel) );
-		return	-1;
+	topiky = ifp->if_height - 1 - y;	/* 1st quadrant */
+	topiky -= ( x + count - 1 ) / width;	/* first y on screen */
+	if( x + count <= width ) {
+		/* all on one line */
+		headfrag = count;
+		goto headin;
 	}
-	out = (char *)&(pixelp[(scanlines-1) * ifp->if_width][RED]);
-	maxikdma =  ADAGE_DMA_BYTES /
-		(ifp->if_width*sizeof(IKONASpixel)) *
-		(ifp->if_width*sizeof(IKONASpixel)); /* even # of scanlines */
-	while( ikbytes > 0 ) {
-		if( ikbytes > maxikdma )
-			todo = maxikdma;
-		else
-			todo = ikbytes;
-		toread = todo;
-		if( read( ifp->if_fd, _pixbuf, toread ) != toread )
-			return	-1;
+	if( x != 0 ) {
+		/* doesn't start of beginning of line => headfrag */
+		headfrag = width - x;
+		pixels -= headfrag;
+	} else
+		headfrag = 0;
 
+	fullscans = pixels / width;
+	tailfrag = pixels - fullscans * width;	/* remainder */
+
+	if( tailfrag != 0 ) {
+		IKSEEK( 0, topiky );
+		topiky++;
+		if( read( ifp->if_fd, _pixbuf, tailfrag*sizeof(IKONASpixel) )
+		    != tailfrag*sizeof(IKONASpixel) )
+			return	-1;
+		out = (char *) &(pixelp[count-tailfrag][RED]);
 		in = _pixbuf;
-		do {
-			for( i = width; i > 0; i-- ) {
-				*out++ = *in;
-				*out++ = in[1];
-				*out++ = in[2];
-				in += sizeof(IKONASpixel);
+		for( i = tailfrag; i > 0; i-- ) {
+			/* VAX subscripting faster than ++ */
+			*out++ = *in;
+			*out++ = in[1];
+			*out++ = in[2];
+			in += sizeof(IKONASpixel);
+		}
+	}
+	/* Do the full scanlines */
+	if( fullscans > 0 ) {
+		maxikscans =  ADAGE_DMA_BYTES / (ifp->if_width*sizeof(IKONASpixel));
+		out = (char *) &(pixelp[count-tailfrag-width][RED]);
+		IKSEEK( 0, topiky );
+		topiky += fullscans;
+		while( fullscans > 0 ) {
+			in = _pixbuf;
+			doscans = fullscans > maxikscans ? maxikscans : fullscans;
+			if( read( ifp->if_fd, _pixbuf, doscans*width*sizeof(IKONASpixel) )
+			    != doscans*width*sizeof(IKONASpixel) )
+				return	-1;
+			for( scan = doscans; scan > 0; scan-- ) {
+				for( i = width; i > 0; i-- ) {
+					/* VAX subscripting faster than ++ */
+					*out++ = *in;
+					*out++ = in[1];
+					*out++ = in[2];
+					in += sizeof(IKONASpixel);
+				}
+				out -= (width << 1) * sizeof(RGBpixel);
 			}
-			todo -= width * sizeof(IKONASpixel);
-			out -= (width + ifp->if_width) * sizeof(RGBpixel);
-			width = ifp->if_width;
-		} while( todo > 0 );
-		ikbytes -= toread;
+			fullscans -= doscans;
+		}
+	}
+headin:
+	if( headfrag != 0 ) {
+		IKSEEK( x, topiky );
+		out = (char *) pixelp;
+		in = _pixbuf;
+		if( read( ifp->if_fd, _pixbuf, headfrag*sizeof(IKONASpixel) )
+		    != headfrag*sizeof(IKONASpixel) )
+			return	-1;
+		for( i = headfrag; i > 0; i-- ) {
+			/* VAX subscripting faster than ++ */
+			*out++ = *in;
+			*out++ = in[1];
+			*out++ = in[2];
+			in += sizeof(IKONASpixel);
+		}
 	}
 	return	count;
 }
@@ -397,62 +447,95 @@ _LOCAL_ int
 adage_buffer_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+RGBpixel *pixelp;
 long	count;
 {
-	register char *out, *in;
 	register int i;
-	register long	ikbytes = count * (long) sizeof(IKONASpixel);
-	register int	todo;
-	int towrite;
-	int width;
-	int scanlines;
-	int maxikdma;
+	register char *out, *in;
+	int	headfrag, tailfrag, fullscans;
+	int	scan, doscans;
+	int	maxikscans;
+	int	width, pixels, topiky;
 
 	if( count == 1 )
 		return adage_write_pio_pixel( ifp, x, y, pixelp );
 
-	scanlines = (count+ifp->if_width-1) / ifp->if_width;	/* ceil */
-	width = count - (scanlines-1) * ifp->if_width;	/* residue on last line */
+	width = ifp->if_width;
+	pixels = count;
 
-	y = ifp->if_height-y-scanlines;	/* 1st quadrant */
-	if( lseek(	ifp->if_fd,
-			((long) y * (long) ifp->if_width + (long) x)
-			* (long) sizeof(IKONASpixel),
-			0
-			)
-	    == -1L ) {
-		fb_log( "adage_buffer_write : seek to %ld failed.\n",
-			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(IKONASpixel) );
-		return	-1;
+	topiky = ifp->if_height - 1 - y;	/* 1st quadrant */
+	topiky -= ( x + count - 1 ) / width;	/* first y on screen */
+	if( x + count <= width ) {
+		/* all on one line */
+		headfrag = count;
+		goto headout;
 	}
-	in = (char *)&(pixelp[(scanlines-1) * ifp->if_width][RED]);
-	maxikdma =  ADAGE_DMA_BYTES /
-		(ifp->if_width*sizeof(IKONASpixel)) *
-		(ifp->if_width*sizeof(IKONASpixel)); /* even # of scanlines */
-	while( ikbytes > 0 ) {
-		if( ikbytes > maxikdma )
-			todo = maxikdma;
-		else
-			todo = ikbytes;
-		towrite = todo;
+	if( x != 0 ) {
+		/* doesn't start of beginning of line => headfrag */
+		headfrag = width - x;
+		pixels -= headfrag;
+	} else
+		headfrag = 0;
+
+	fullscans = pixels / width;
+	tailfrag = pixels - fullscans * width;	/* remainder */
+
+	if( tailfrag != 0 ) {
+		IKSEEK( 0, topiky );
+		topiky++;
+		in = (char *) &(pixelp[count-tailfrag][RED]);
 		out = _pixbuf;
-		do {
-			for( i = width; i > 0; i-- ) {
-				/* VAX subscripting faster than ++ */
-				*out = *in++;
-				out[1] = *in++;
-				out[2] = *in++;
-				out += sizeof(IKONASpixel);
-			}
-			todo -= width * sizeof(IKONASpixel);
-			in -= (width + ifp->if_width) * sizeof(RGBpixel);
-			width = ifp->if_width;
-		} while( todo > 0 );
-		if( write( ifp->if_fd, _pixbuf, towrite ) != towrite )
+		for( i = tailfrag; i > 0; i-- ) {
+			/* VAX subscripting faster than ++ */
+			*out = *in++;
+			out[1] = *in++;
+			out[2] = *in++;
+			out += sizeof(IKONASpixel);
+		}
+		if( write( ifp->if_fd, _pixbuf, tailfrag*sizeof(IKONASpixel) )
+		    != tailfrag*sizeof(IKONASpixel) )
 			return	-1;
-		ikbytes -= towrite;
+	}
+	/* Do the full scanlines */
+	if( fullscans > 0 ) {
+		maxikscans =  ADAGE_DMA_BYTES / (ifp->if_width*sizeof(IKONASpixel));
+		in = (char *) &(pixelp[count-tailfrag-width][RED]);
+		IKSEEK( 0, topiky );
+		topiky += fullscans;
+		while( fullscans > 0 ) {
+			out = _pixbuf;
+			doscans = fullscans > maxikscans ? maxikscans : fullscans;
+			for( scan = doscans; scan > 0; scan-- ) {
+				for( i = width; i > 0; i-- ) {
+					/* VAX subscripting faster than ++ */
+					*out = *in++;
+					out[1] = *in++;
+					out[2] = *in++;
+					out += sizeof(IKONASpixel);
+				}
+				in -= (width << 1) * sizeof(RGBpixel);
+			}
+			if( write( ifp->if_fd, _pixbuf, doscans*width*sizeof(IKONASpixel) )
+			    != doscans*width*sizeof(IKONASpixel) )
+				return	-1;
+			fullscans -= doscans;
+		}
+	}
+headout:
+	if( headfrag != 0 ) {
+		IKSEEK( x, topiky );
+		in = (char *) pixelp;
+		out = _pixbuf;
+		for( i = headfrag; i > 0; i-- ) {
+			/* VAX subscripting faster than ++ */
+			*out = *in++;
+			out[1] = *in++;
+			out[2] = *in++;
+			out += sizeof(IKONASpixel);
+		}
+		if( write( ifp->if_fd, _pixbuf, headfrag*sizeof(IKONASpixel) )
+		    != headfrag*sizeof(IKONASpixel) )
+			return	-1;
 	}
 	return	count;
 }
