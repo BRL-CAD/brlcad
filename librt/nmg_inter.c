@@ -1459,6 +1459,7 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 	struct loopuse	*lu;
 	struct vertexuse	*vu1;
 	struct vertexuse	*vu2;
+	struct edgeuse		*otherf_eu;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu);
@@ -1468,24 +1469,19 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_edge2p_face2p(eu=x%x, fu=x%x)\n", eu, fu);
 
-	/* See if this edge is topologically on other face already */
-	if( (vu1 = nmg_find_v_in_face( eu->vu_p->v_p, fu )) &&
-	    (vu2 = nmg_find_v_in_face( eu->eumate_p->vu_p->v_p, fu )) )  {
-#if 0
-		rt_log("edge: (%g,%g,%g) (%g,%g,%g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord), V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
-#endif
-	    	/* Even though the endpoints are shared, ensure that
-	    	 * the edge is also shared.
-	    	 * XXX As the intersection progresses, the edges are not
-	    	 * XXX initially shared.
-	    	 * XXX Is there any merit to calling nmg_radial_join_eu()
-	    	 * XXX here, or can it wait?
-	    	 */
-#if 0
-	    	if( !nmg_is_edge_in_looplist( eu->e_p, &fu->lu_hd ) )
-			rt_log("nmg_isect_edge2p_face2p() edge is not shared with other face\n");
-#endif
-		return;
+	/*  See if an edge exists in other face that connects these 2 verts */
+	/* XXX This searches whole other shell.  Should be shared w/fu, but... */
+	otherf_eu = nmg_findeu( eu->vu_p->v_p, eu->eumate_p->vu_p->v_p,
+	    fu->s_p, (CONST struct edgeuse *)NULL, 0 );
+	if( otherf_eu != (struct edgeuse *)NULL )  {
+		/* There is an edge in other face that joins these 2 verts. */
+		NMG_CK_EDGEUSE(otherf_eu);
+		if( otherf_eu->e_p != eu->e_p )  {
+			/* Not the same edge, fuse! */
+			rt_log("nmg_isect_edge2p_face2p() fusing unshared shared edge\n");
+			nmg_radial_join_eu( eu, otherf_eu, &is->tol );
+			return;		/* Topology is completely shared */
+		}
 	}
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
