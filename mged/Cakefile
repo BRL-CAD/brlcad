@@ -1,7 +1,6 @@
 /*
  *			mged/Cakefile
  */
-#define	CONFIGDEFS	MGED_CONFIG "-Dyylex=cmd_nop"
 
 #define SRCDIR	mged
 #define PRODUCTS	mged cad_boundp cad_parea
@@ -17,8 +16,8 @@
 			proc_reg polyif red \
 			mater math plot overlay inside \
 			concat utility1 utility2 track arbs \
-			facedef arb set animedit db comb_std \
-			comb_bool_parse bool_rewrite solids_on_ray history \
+			facedef arb set animedit db comb \
+			solids_on_ray history \
 			TCP_FILES attach dm-plot dm-ps \
 			MGED_OBJS vdraw
 
