@@ -1373,7 +1373,11 @@ CONST struct rt_tol	*tol;
  */
 
 void
-nmg_ck_v_in_2fus( struct vertex *vp , struct faceuse *fu1 , struct faceuse *fu2 , struct rt_tol *tol )
+nmg_ck_v_in_2fus( vp , fu1 , fu2 , tol )
+CONST struct vertex *vp;
+CONST struct faceuse *fu1;
+CONST struct faceuse *fu2;
+CONST struct rt_tol *tol;
 {
 	struct rt_vls str;
 	struct faceuse *fu;
@@ -1410,8 +1414,8 @@ nmg_ck_v_in_2fus( struct vertex *vp , struct faceuse *fu1 , struct faceuse *fu2 
 	}
 
 	/* geometry check */
-	dist1 = VDOT( vp->vg_p->coord , fu1->f_p->fg_p->N ) - fu1->f_p->fg_p->N[3];
-	dist2 = VDOT( vp->vg_p->coord , fu2->f_p->fg_p->N ) - fu2->f_p->fg_p->N[3];
+	dist1 = DIST_PT_PLANE( vp->vg_p->coord , fu1->f_p->fg_p->N );
+	dist2 = DIST_PT_PLANE( vp->vg_p->coord , fu2->f_p->fg_p->N );
 
 	if( !NEAR_ZERO( dist1 , tol->dist ) || !NEAR_ZERO( dist2 , tol->dist ) )
 	{
@@ -1425,4 +1429,84 @@ nmg_ck_v_in_2fus( struct vertex *vp , struct faceuse *fu1 , struct faceuse *fu2 
 		rt_bomb( rt_vls_addr( &str ) );
 	}
 
+}
+/*	N M G _ C K _ V S _ I N _ R E G I O N
+ *
+ *	Visits every vertex in the region and checks if the
+ *	vertex coordinates are within tolerance of every face
+ *	it is supposed to be in (according to the topology).
+ *
+ */
+
+static CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
+struct v_ck_state {
+        char            *visited;
+        struct nmg_ptbl *tabl;
+	struct rt_tol	*tol;
+};
+
+static void
+nmg_ck_v_in_fus( vp , state , first )
+CONST long		*vp;
+genptr_t	        state;
+CONST int		first;
+{
+        register struct v_ck_state *sp = (struct v_ck_state *)state;
+        register struct vertex  *v = (struct vertex *)vp;
+
+        NMG_CK_VERTEX(v);
+        /* If this vertex has been processed before, do nothing more */
+        if( NMG_INDEX_FIRST_TIME(sp->visited, v) )
+	{
+		struct vertexuse *vu;
+		struct faceuse *fu;
+
+		for( RT_LIST_FOR( vu , vertexuse , &v->vu_hd ) )
+		{
+			fastf_t dist;
+
+			fu = nmg_find_fu_of_vu( vu );
+			if( fu )
+			{
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					continue;
+				dist = DIST_PT_PLANE( v->vg_p->coord , fu->f_p->fg_p->N );
+				if( !NEAR_ZERO( dist , sp->tol->dist ) )
+				{
+					rt_log( "ERROR - nmg_ck_vs_in_region: vertex x%x ( %g %g %g ) is %g from faceuse x%x\n" , 
+						v , V3ARGS( v->vg_p->coord ) , dist , fu );
+				}
+			}
+		}
+	}
+}
+
+void
+nmg_ck_vs_in_region( r , tol )
+struct nmgregion *r;
+struct rt_tol *tol;
+{
+	struct model			*m;
+	struct v_ck_state		st;
+	struct nmg_visit_handlers       handlers;
+	struct nmg_ptbl			tab;
+
+        NMG_CK_REGION(r);
+        m = r->m_p;
+        NMG_CK_MODEL(m);
+
+        st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+        st.tabl = &tab;
+	st.tol = tol;
+
+        (void)nmg_tbl( &tab, TBL_INIT, 0 );
+
+        handlers = nmg_visit_handlers_null;             /* struct copy */
+        handlers.vis_vertex = nmg_ck_v_in_fus;
+        nmg_visit( &r->l.magic, &handlers, (genptr_t)&st );
+
+	nmg_tbl( &tab , TBL_FREE , 0 );
+
+        rt_free( (char *)st.visited, "visited[]");
 }
