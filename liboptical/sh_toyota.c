@@ -2211,7 +2211,6 @@ struct shadework	*swp;	/* Holds surface normal. */
 	/* Get vector which cuts through center of solid angle. */
 	VBLEND2(Ctr, cos(alpha_c), swp->sw_hit.hit_normal,
 		sin(alpha_c), Horiz);
-	VUNITIZE(Xaxis);
 	VUNITIZE(Yaxis);
 	VUNITIZE(Ctr);
 
@@ -2445,6 +2444,7 @@ rt_log("S . N = %g\n", sun_dot_n);
 			pl_color( stdout, 0, 150, 255 );
 			pdv_3line( stdout, swp->sw_hit.hit_point, work);
 		}
+		t_vl = 0; /* XXX Was uninitialized variable */
 		refl_radiance = skylight_spectral_dist(ts->lambda,
 			ts->Zenith, Reflected, Sun, ts->weather, t_vl);
 
