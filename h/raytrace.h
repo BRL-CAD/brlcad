@@ -193,9 +193,9 @@ union tree {
 #define TREE_NULL	((union tree *)0)
 
 /*
- *			M A T E R I A L
+ *			M A T E R _ I N F O
  */
-struct material {
+struct mater_info {
 	char	ma_override;		/* non-0 ==> c_rgb is color */
 	unsigned char ma_rgb[3];	/* explicit color:  0..255  */
 	char	ma_matname[32];		/* Material name */
@@ -216,7 +216,7 @@ struct region  {
 	short		reg_gmater;	/* GIFT Material code */
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
-	struct material	reg_mater;	/* Real material information */
+	struct mater_info reg_mater;	/* Real material information */
 	int		(*reg_ufunc)();	/* User appl. func for material */
 	char		*reg_udata;	/* User appl. data for material */
 };
