@@ -984,6 +984,7 @@ struct rt_wdb  {
 	int		wdb_air_default;
 	int		wdb_mat_default;/* GIFT material code */
 	int		wdb_los_default;/* Line-of-sight estimate */
+	struct bu_observer	wdb_observers;
 };
 
 #define	RT_WDB_MAGIC			0x5f576462
@@ -1031,13 +1032,9 @@ struct dg_obj {
 	struct solid		dgo_headSolid;	/* head of solid list */
 	struct bu_list		dgo_headVDraw;	/* head of vdraw list */
 	struct vd_curve		*dgo_currVHead;	/* current vdraw head */
-#if 0   /*XXX moved to rt_wdb */
-	struct db_tree_state	dgo_initial_tree_state;
-	struct rt_tess_tol	dgo_ttol;
-	struct bn_tol		dgo_tol;
-#endif
 	char			*dgo_rt_cmd[RT_MAXARGS];
 	int			dgo_rt_cmd_len;
+	struct bu_observer	dgo_observers;
 };
 extern struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 #define RT_DGO_NULL		((struct dg_obj *)NULL)
@@ -1048,22 +1045,23 @@ extern struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
  * A view object maintains state for controlling a view.
  */
 struct view_obj {
-  struct bu_list	l;
-  struct bu_vls		vo_name;		/* view object name/cmd */
-  fastf_t		vo_scale;
-  fastf_t		vo_size;		/* 2.0 * scale */
-  fastf_t		vo_invSize;		/* 1.0 / size */
-  fastf_t 		vo_perspective;		/* perspective angle */
-  fastf_t		vo_local2base;		/* scale local units to base units (i.e. mm) */
-  fastf_t		vo_base2local;		/* scale base units (i.e. mm) to local units */
-  vect_t		vo_aet;
-  vect_t		vo_eye_pos;		/* eye position */
-  mat_t			vo_rotation;
-  mat_t			vo_center;
-  mat_t			vo_model2view;
-  mat_t			vo_pmodel2view;
-  mat_t			vo_view2model;
-  mat_t			vo_pmat;		/* perspective matrix */
+	struct bu_list	l;
+	struct bu_vls		vo_name;		/* view object name/cmd */
+	fastf_t			vo_scale;
+	fastf_t			vo_size;		/* 2.0 * scale */
+	fastf_t			vo_invSize;		/* 1.0 / size */
+	fastf_t			vo_perspective;		/* perspective angle */
+	fastf_t			vo_local2base;		/* scale local units to base units (i.e. mm) */
+	fastf_t			vo_base2local;		/* scale base units (i.e. mm) to local units */
+	vect_t			vo_aet;
+	vect_t			vo_eye_pos;		/* eye position */
+	mat_t			vo_rotation;
+	mat_t			vo_center;
+	mat_t			vo_model2view;
+	mat_t			vo_pmodel2view;
+	mat_t			vo_view2model;
+	mat_t			vo_pmat;		/* perspective matrix */
+	struct bu_observer	vo_observers;
 };
 extern struct view_obj HeadViewObj;		/* head of view object list */
 #define RT_VIEW_OBJ_NULL		((struct view_obj *)NULL)
