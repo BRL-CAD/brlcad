@@ -361,7 +361,15 @@ if(rt_g.debug&DEBUG_EBM)rt_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X] );
 if(rt_g.debug&DEBUG_EBM)rt_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y] );
 
 	/* Find face of entry into first cell -- max initial t value */
-	if( t[X] >= t[Y] )  {
+	if( t[X] == INFINITY ) {
+		in_index = Y;
+		t0 = t[Y];
+	}
+	else if( t[Y] == INFINITY ) {
+		in_index = X;
+		t0 = t[X];
+	}
+	else if( t[X] >= t[Y]  )  {
 		in_index = X;
 		t0 = t[X];
 	} else {
