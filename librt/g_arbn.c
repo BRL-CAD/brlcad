@@ -24,7 +24,12 @@ static const char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <math.h>
+#include <ctype.h>
+#include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -1071,4 +1076,159 @@ struct rt_db_internal	*ip;
 	bu_free( (char *)aip, "rt_arbn_internal" );
 
 	ip->idb_ptr = (genptr_t)0;	/* sanity */
+}
+
+int
+rt_arbn_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+const struct rt_db_internal	*intern;
+const char			*attr;
+{
+	register struct rt_arbn_internal *arbn=(struct rt_arbn_internal *)intern->idb_ptr;
+	Tcl_DString	ds;
+	struct bu_vls	vls;
+	int		i;
+
+	RT_ARBN_CK_MAGIC( arbn );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	if( attr == (char *)NULL ) {
+		bu_vls_strcpy( &vls, "arbn" );
+		bu_vls_printf( &vls, " N %d", arbn->neqn );
+		for( i=0 ; i<arbn->neqn ; i++ ) {
+			bu_vls_printf( &vls, " P%d {%.25g %.25g %.25g %.25g}", i,
+				       V4ARGS( arbn->eqn[i] ) );
+		}
+	}
+	else if( !strcmp( attr, "N" ) )
+		bu_vls_printf( &vls, "%d", arbn->neqn );
+	else if( !strcmp( attr, "P" ) ) {
+		for( i=0 ; i<arbn->neqn ; i++ ) {
+			bu_vls_printf( &vls, " P%d {%.25g %.25g %.25g}", i,
+				       V4ARGS( arbn->eqn[i] ) );
+		}
+	}
+	else if( attr[0] == 'P' ) {
+		if( isdigit( attr[1] ) == 0 ) {
+			Tcl_SetResult( interp, "ERROR: Illegal plane number\n",
+				       TCL_STATIC );
+			bu_vls_free( &vls );
+			return( TCL_ERROR );
+		}
+
+		i = atoi( &attr[1] );
+		if( i >= arbn->neqn || i < 0 ) {
+			Tcl_SetResult( interp, "ERROR: Illegal plane number\n",
+				       TCL_STATIC );
+			bu_vls_free( &vls );
+			return( TCL_ERROR );
+		}
+
+		bu_vls_printf( &vls, "%.25g %.25g %.25g %.25g", V4ARGS( arbn->eqn[i] ) );
+	}
+	else {
+		Tcl_SetResult( interp,"ERROR: Unknown attribute, choices are N, P, or P#\n",
+		TCL_STATIC );
+		bu_vls_free( &vls );
+		return( TCL_ERROR );       
+	}
+
+	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+	return( TCL_OK );
+}
+
+int
+rt_arbn_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
+{
+	struct rt_arbn_internal *arbn;
+	unsigned char		*c;
+	int			len;
+	int			i;
+	fastf_t			*new_planes;
+	fastf_t			*array;
+	int			ret;
+
+	RT_CK_DB_INTERNAL( intern );
+
+	arbn = (struct rt_arbn_internal *)intern->idb_ptr;
+	RT_ARBN_CK_MAGIC( arbn );
+
+	while( argc >= 2 ) {
+		if( !strcmp( argv[0], "N" ) ) {
+			arbn->neqn = atoi( argv[1] );
+			arbn->eqn = (plane_t *)bu_realloc( arbn->eqn,
+					     arbn->neqn * sizeof( plane_t ),
+							   "arbn->eqn");
+		}
+		else if( !strcmp( argv[0], "P" ) ) {
+			/* eliminate all the '{' and '}' chars */
+			c = argv[1];
+			while( *c != '\0' ) {
+				if( *c == '{' || *c == '}' )
+					*c = ' ';
+				c++;
+			}
+			len = 0;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new_planes,
+							  &len )) != TCL_OK ) {
+				return( ret );
+			}
+
+			if( len%4 ) {
+				Tcl_SetResult( interp,
+				       "ERROR: Incorrect number of plane coefficients\n",
+					TCL_STATIC );
+				if( len )
+					bu_free( (char *)new_planes, "new_planes" );
+				return( TCL_ERROR );
+			}
+			if( arbn->eqn )
+				bu_free( (char *)arbn->eqn, "arbn->eqn" );
+			arbn->eqn = (plane_t *)new_planes;
+			arbn->neqn = len / 4;
+		}
+		else if( argv[0][0] == 'P' ) {
+			if( !isdigit( argv[0][1] ) ) {
+				Tcl_SetResult( interp,
+					       "ERROR: Illegal plane number\n",
+					       TCL_STATIC );
+				return( TCL_ERROR );
+			}
+			i = atoi( &argv[0][1] );
+			if( i < 0 || i > arbn->neqn ) {
+				Tcl_SetResult( interp,
+					       "ERROR: plane number out of range\n",
+					       TCL_STATIC );
+				return( TCL_ERROR );
+			}
+			if( i == arbn->neqn ) {
+				arbn->eqn = (plane_t *)bu_realloc( arbn->eqn,
+							 (i+1) * sizeof( plane_t ),
+							 "arbn->eqn" );
+			}
+			len = 4;
+			array = (fastf_t *)&arbn->eqn[i];
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1],
+							  &array, &len ) ) != TCL_OK ) {
+				arbn->eqn = (plane_t *)bu_realloc( arbn->eqn,
+							 arbn->neqn * sizeof( plane_t ),
+							 "arbn->eqn" );
+				return( ret );
+			}
+			if( i == arbn->neqn )
+				arbn->neqn++;
+		}
+		argc -= 2;
+		argv += 2;
+	}
+	return( TCL_OK );
 }

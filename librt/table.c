@@ -336,6 +336,13 @@ BU_EXTERN(int rt_parsetab_tclform, (const struct rt_functab *ftp,
 BU_EXTERN(void rt_generic_make, (const struct rt_functab *ftp,
 		struct rt_db_internal *intern, double diameter));
 
+/* ARBN solid */
+BU_EXTERN(int rt_arbn_tclget, (Tcl_Interp *interp,
+		const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_arbn_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *resp));
+
 /* PIPE solid */
 BU_EXTERN(int rt_pipe_tclget, (Tcl_Interp *interp,
 		const struct rt_db_internal *intern, const char *attr));
@@ -643,7 +650,7 @@ const struct rt_functab rt_functab[] = {
 		rt_arbn_import,	rt_arbn_export,	rt_arbn_ifree,
 		rt_arbn_describe,rt_arbn_xform,	NULL,
 		sizeof(struct rt_arbn_internal), RT_ARBN_INTERNAL_MAGIC,
-		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		rt_arbn_tclget, rt_arbn_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
 
