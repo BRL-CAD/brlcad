@@ -6,7 +6,7 @@
 
 #define SRCDIR	proc-db
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
-			pipetest
+			pipetest nmgmodel brickwall wall
 #define STATIC_PRODUCTS	mol-data mol-data1 mol-data2 mol-cube \
 			mol-gfa2 mol-gfa3
 #define	SRCSUFF	.c
@@ -46,6 +46,15 @@ teapot:		tea.o
 
 pipetest:	pipetest.o
 	CC LDFLAGS pipetest.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o pipetest
+
+nmgmodel:	nmgmodel.o
+	CC LDFLAGS nmgmodel.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o nmgmodel
+
+brickwall:	brickwall.o
+	CC LDFLAGS brickwall.o LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o brickwall
+
+wall:	wall.o
+	CC LDFLAGS wall.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o wall
 
 /*
  *  Special rules for additions from other directories
