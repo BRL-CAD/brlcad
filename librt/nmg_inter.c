@@ -30,8 +30,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 struct nmg_boolstruct {
-	struct nmg_ptbl	*l1;
-	struct nmg_ptbl *l2;
+	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
+	struct nmg_ptbl *l2;		/* intersection between planes */
 	fastf_t		tol;
 	point_t		pt;		/* line of intersection */
 	vect_t		dir;
