@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) vdeck.c	2.10
-	Last edit: 	3/25/85 at 11:13:27
-	Retrieved: 	8/13/86 at 08:13:14
+	SCCS id:	@(#) vdeck.c	2.11
+	Last edit: 	8/6/85 at 12:16:32
+	Retrieved: 	8/13/86 at 08:13:43
 	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
 
 	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
 			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.10	last edit 3/25/85 at 11:13:27";
+char	sccsTag[] = "@(#) vdeck.c	2.11	last edit 8/6/85 at 12:16:32";
 
 /*
 	Derived from KARDS, written by Keith Applin.
@@ -190,10 +190,10 @@ matp_t	old_xlate;
 	char	buf[80], *bp;
 	char	ars_name[16];
 
-	/* Limit tree hierarchy to 8 levels.				*/
-	if( pathpos >= 8 ) {
-		fprintf( stderr, "Nesting exceeds 8 levels\n" );
-		for( i = 0; i < 8; i++ )
+	/* Limit tree hierarchy to MAXPATH levels.			*/
+	if( pathpos >= MAXPATH ) {
+		fprintf( stderr, "Nesting exceeds %d levels\n", MAXPATH );
+		for( i = 0; i < MAXPATH; i++ )
 			fprintf( stderr, "/%s", path[i]->d_namep );
 		fprintf( stderr, "\n" );
 		return;
