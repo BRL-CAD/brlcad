@@ -21,3 +21,11 @@ d-a <testdouble.bin >d-a.log
 if [ ! -f d-a.log ] ; then
   echo "ERROR: d-a output not found"
 fi
+d-a <testdouble2.bin >d-a.log
+if [ ! -f d-a.log ] ; then
+  echo "ERROR: d-a output not found"
+fi
+d-a <testdouble3.bin >d-a.log
+if [ ! -f d-a.log ] ; then
+  echo "ERROR: d-a output not found"
+fi
