@@ -164,6 +164,7 @@ pt patch;
 
 		switch( i )
 		{
+			default:
 			case 0:
 				VSET( uvw , 0.0 , 0.0 , 0.0 );
 				k = 0;
