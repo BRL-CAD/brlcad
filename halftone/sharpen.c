@@ -39,6 +39,9 @@ extern double Beta;
  *	Christopher T. Johnson
  *
  * $Log$
+ * Revision 2.1  90/04/13  01:23:12  cjohnson
+ * First Relese.
+ * 
  * Revision 1.2  90/04/13  00:46:54  cjohnson
  * Clean up comments.
  * Fix error on second line.
@@ -160,13 +163,13 @@ unsigned char *Map;
 	if (!last) {
 		i=0;
 		value=next[i] + cur[i+1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*(value*cur[i]/(255*2));
+		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
 		for (; i < linelen-1; i++) {
 			value = next[i] + cur[i-1] + cur[i+1] - cur[i]*3;
-			buf[i] = cur[i] - Beta*(value*cur[i]/(255*3));
+			buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
 		}
 		value=next[i] + cur[i-1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*(value*cur[i]/(255*2));
+		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
 /*
  *		first time through so we will need this buffer space
  *		the next time through.
@@ -178,27 +181,27 @@ unsigned char *Map;
 	} else if (!next) {
 		i=0;
 		value=last[i] + cur[i+1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*(value*cur[i]/(255*2));
+		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
 		for (; i < linelen-1; i++) {
 			value = last[i] + cur[i-1] + cur[i+1] - cur[i]*3;
-			buf[i] = cur[i] - Beta*(value*cur[i]/(255*3));
+			buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
 		}
 		value=last[i] + cur[i-1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*(value*cur[i]/(255*2));
+		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
 /*
  *	all other lines.
  */
 	} else {
 		i=0;
 		value=last[i] + next[i] + cur[i+1] - cur[i]*3;
-		buf[i] = cur[i] - Beta*(value*cur[i]/(255*3));
+		buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
 		for (; i < linelen-1; i++) {
 			value = last[i] + next[i] + cur[i-1] + cur[i+1]
 			     - cur[i]*4;
-			buf[i] = cur[i] - Beta*(value*cur[i]/(255*4));
+			buf[i] = cur[i] - Beta*value*cur[i]/(255*4);
 		}
 		value=last[i] + next[i] + cur[i-1] - cur[i]*3;
-		buf[i] = cur[i] - Beta*(value*cur[i]/(255*3));
+		buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
 	}
 	return(linelen);
 }
