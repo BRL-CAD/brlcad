@@ -1476,6 +1476,22 @@ For example, if the user rotates the view about
 the X axis, the view continues to rotate about the
 X axis until the rate rotation is stopped." }
           { see_also "knob" } }
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_dlist($id)\
+	-label "Display Lists" -underline 8\
+	-command "mged_apply $id \"set dlist \$mged_dlist($id)\""
+hoc_register_menu_data "Modes" "Display Lists" "Display Lists"\
+	{ { summary "Toggle the use of display lists. This currently affects
+only Ogl display managers. When using display lists the
+screen update time is significantly faster. This is especially
+noticable when running MGED remotely. Use of display lists
+is encouraged unless the geometry being viewed is bigger
+than the Ogl server can handle (i.e. the server runs out
+of available memory for storing display lists). When this
+happens the machine will begin to swap (and little else).
+If huge pieces of geometry need to be viewed, consider
+toggling off display lists. Note that using display lists
+while viewing geometry of any significant size will incur
+noticable compute time up front to create the display lists."} }
 
 menu .$id.menubar.modes.axes -title "Axes" -tearoff $do_tearoffs
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
@@ -1961,6 +1977,8 @@ proc update_mged_vars { id } {
     global fb_all
     global mged_fb_all
     global fb_overlay
+    global dlist
+    global mged_dlist
     global mged_fb_overlay
     global mouse_behavior
     global mged_mouse_behavior
@@ -1987,6 +2005,7 @@ proc update_mged_vars { id } {
     set mged_fb($id) $fb
     set mged_fb_all($id) $fb_all
     set mged_fb_overlay($id) $fb_overlay
+    set mged_dlist($id) $dlist
     set mged_rubber_band($id) [rset rb draw]
     set mged_mouse_behavior($id) $mouse_behavior
     set mged_coords($id) $coords
