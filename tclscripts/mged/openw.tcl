@@ -122,6 +122,7 @@ bind Menubutton <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Radiobutton <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 
 proc gui { args } {
+    global tmp_hoc
     global mged_gui
     global mged_default
     global mged_html_dir
@@ -953,39 +954,54 @@ both textual and graphical output is used to
 represent the results of firing a query ray." }
           { see_also "qray" } }
 
+set tmp_summary "Set the active pane to be the upper left pane. Any interaction with the GUI that affects a pane
+(display manager) will be directed at the upper left pane.
+
+The following is a list of default key bindings for panes:
+
+$mged_default(dm_key_bindings)"
+set tmp_hoc [list [list summary $tmp_summary]]
 menu .$id.menubar.settings.mpane -title "Active Pane" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.settings.mpane add radiobutton -value ul -variable mged_gui($id,dm_loc)\
 	-label "Upper Left" -underline 6\
 	-command "set_active_dm $id"
-hoc_register_menu_data "Active Pane" "Upper Left" "Active Pane - Upper Left"\
-	{ { summary "Set the active pane to be the upper left pane.
-Any interaction with the GUI that affects a pane
-(display manager) will be directed at the upper
-left pane." } }
+hoc_register_menu_data "Active Pane" "Upper Left" "Active Pane - Upper Left" $tmp_hoc
+
+set tmp_summary "Set the active pane to be the upper right pane. Any interaction with the GUI that affects a pane
+(display manager) will be directed at the upper right pane.
+
+The following is a list of default key bindings for panes:
+
+$mged_default(dm_key_bindings)"
+set tmp_hoc [list [list summary $tmp_summary]]
 .$id.menubar.settings.mpane add radiobutton -value ur -variable mged_gui($id,dm_loc)\
 	-label "Upper Right" -underline 6\
 	-command "set_active_dm $id"
-hoc_register_menu_data "Active Pane" "Upper Right" "Active Pane - Upper Right"\
-	{ { summary "Set the active pane to be the upper right pane.
-Any interaction with the GUI that affects a pane
-(display manager) will be directed at the upper
-right pane." } }
+hoc_register_menu_data "Active Pane" "Upper Right" "Active Pane - Upper Right" $tmp_hoc
+
+set tmp_summary "Set the active pane to be the lower left pane. Any interaction with the GUI that affects a pane
+(display manager) will be directed at the lower left pane.
+
+The following is a list of default key bindings for panes:
+
+$mged_default(dm_key_bindings)"
+set tmp_hoc [list [list summary $tmp_summary]]
 .$id.menubar.settings.mpane add radiobutton -value ll -variable mged_gui($id,dm_loc)\
 	-label "Lower Left" -underline 2\
 	-command "set_active_dm $id"
-hoc_register_menu_data "Active Pane" "Lower Left" "Active Pane - Lower Left"\
-	{ { summary "Set the active pane to be the lower left pane.
-Any interaction with the GUI that affects a pane
-(display manager) will be directed at the lower
-left pane." } }
+hoc_register_menu_data "Active Pane" "Lower Left" "Active Pane - Lower Left" $tmp_hoc
+
+set tmp_summary "Set the active pane to be the lower right pane. Any interaction with the GUI that affects a pane
+(display manager) will be directed at the lower right pane.
+
+The following is a list of default key bindings for panes:
+
+$mged_default(dm_key_bindings)"
+set tmp_hoc [list [list summary $tmp_summary]]
 .$id.menubar.settings.mpane add radiobutton -value lr -variable mged_gui($id,dm_loc)\
 	-label "Lower Right" -underline 3\
 	-command "set_active_dm $id"
-hoc_register_menu_data "Active Pane" "Lower Right" "Active Pane - Lower Right"\
-	{ { summary "Set the active pane to be the lower right pane.
-Any interaction with the GUI that affects a pane
-(geometry window) will be directed at the lower
-right pane." } }
+hoc_register_menu_data "Active Pane" "Lower Right" "Active Pane - Lower Right" $tmp_hoc
 
 menu .$id.menubar.settings.fb -title "Framebuffer" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_gui($id,fb_all)\
@@ -1406,6 +1422,9 @@ hoc_register_menu_data "Modes" "Graphics Window" "Graphics Window"\
 	{ { summary "Toggle display of the graphics window." } }
 } 
 .$id.menubar.modes add separator
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,collaborate)\
+	-label "Collaborate" -underline 0\
+	-command "collab_doit $id"
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rateknobs)\
 	-label "Rateknobs" -underline 0\
 	-command "mged_apply $id \"set rateknobs \$mged_gui($id,rateknobs)\""
@@ -1583,6 +1602,57 @@ menu .$id.menubar.help -title "Help" -tearoff $mged_default(tearoff_menus)
 	-command "do_About_MGED $id"
 hoc_register_menu_data "Help" "About" "About MGED"\
 	{ { summary "Information about MGED" } }
+.$id.menubar.help add command -label "Getting Started..." -underline 0\
+	-command "hoc_dialog .$id.menubar.help \"Help,Getting Started Document\""
+hoc_register_menu_data "Help" "Getting Started..." "Getting Started"\
+	{ { summary "This document contains information to help the user
+quickly get started using MGED." } }
+hoc_register_menu_data "Help" "Getting Started Document" "Getting Started Document"\
+	{ { synopsis "mged \[-c\] \[-d display\] \[-h\] \[-r\] \[-x#\] \[-X#\]\
+\[database \[command\]\]" }
+{ description "The -c (Classic MGED) option causes MGED to start in the usual way, that is by
+prompting the user to select a display manager to attach and to remain attached to the tty.
+Without this option MGED will detach itself from the tty and bring up the new GUI. The -d option
+provides a way to specify a display string. This string is expected to be in the same format
+as the X DISPLAY environment variable. The -h option causes the help message to print out.
+The -r option causes the database to be read-only (i.e. no editing allowed). The -x and -X
+options provide a way for the user to specify the debug level of librt and libbu, respectively.
+Note that if MGED is started by redirecting stdin or stdout, MGED will not enter interactive
+mode. Similarly, if MGED is started with a command, that command will be executed and MGED
+will exit.
+        If the user starts MGED in \"Classic\" mode, the new GUI is still available. See the \"gui\"
+command. There can be many instances of the GUI running at the same time. Each instance of the GUI
+owns four display manager windows (panes) and by default each of these panes has its view initialized
+as follows:
+
+\t\t\tPane\t\tAzimuth and Elevation
+\t\t\tupper left\t\t0 90
+\t\t\tupper right\t\t35 25
+\t\t\tlower left\t\t0 0
+\t\t\tlower right\t\t90 0.
+
+All four panes can be displayed simultaneously, or a single large pane containing the active pane
+can be displayed (look in the \"Modes\" menu). The active pane is the pane that is controlled by the
+GUI. The active pane can be changed from the \"Settings\" menu, or by certain key or mouse button
+actions. Essentially, any key sequence or mouse button action that will pop up an MGED menu in the
+pane will cause the active pane to move to the pane wherein this action occurred. For example, alt-f
+will pop up the file menu and make this pane the active pane. Similarly, alt-Button1 will pop up the
+\"Settings\" menu and alt-Button2 will pop up the \"Modes\" menu.
+        The new GUI also provides \"Help on Context\". This is always available via the right mouse
+button (i.e. button 3). The user can right mouse click on some feature of the GUI and a message window
+pops up with information about the feature. This behavior works everywhere except in the drawing
+panes (i.e. display manager windows) where a right mouse button is bound to \"zoom 2.0\".
+        There are many new features and improvements in MGED providing greater access to its
+underlying power. The single greatest improvement to MGED was adopting the use of Tcl/Tk. Tcl (tool
+command language) is an interpreted command language that can be imbedded into an application
+providing the application with an interpreter as well as a built-in command language. Tk is an
+extension to Tcl for building GUI's. Incorporating Tcl/Tk into MGED gives the user the ability to
+develop their own commands and GUI's. Other new features are: command line editing similar to tcsh,
+multiple display managers opened simultaneously, shareable resources among display managers, view
+axes, model axes, edit axes, rubber banding for zoom or raytracing, support for color schemes, frame
+buffer support for display managers, snap to grid for accuracy with the mouse, query rays for
+interrogating the geometry, and improved solid/object/combination selection from among displayed
+geometry." } }
 .$id.menubar.help add command -label "Commands..." -underline 0\
 	-command "command_help $id"
 hoc_register_menu_data "Help" "Commands..." "Commands"\
