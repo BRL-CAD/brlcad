@@ -22,6 +22,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 
+#include "tcl.h"
+#include "tk.h"
+
 #include "machine.h"
 #include "vmath.h"
 #include "rtstring.h"
@@ -33,8 +36,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int		(*cmdline_hook)();	/* cmd.c */
 extern void		(*viewpoint_hook)();	/* ged.c */
-extern void		(*extrapoll_hook)();	/* ged.c */
-extern int		extrapoll_fd;
 
 extern point_t		eye_pos_scr;		/* dozoom.c */
 
@@ -96,7 +97,7 @@ struct rt_vls	*vp;
 }
 
 /*
- *  Called from ged.c event_check().
+ *  Called from the Tk event handler
  */
 void
 vr_input_hook()
@@ -110,10 +111,9 @@ vr_input_hook()
 		rt_log("vrmgr sent us an EOF\n");
 	}
 	if( val <= 0 )  {
+		Tk_DeleteFileHandler(vrmgr->pkc_fd);
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
-		extrapoll_fd = 0;
-		extrapoll_hook = NULL;	/* Relinquish this hook */
 		return;
 	}
 	if( pkg_process( vrmgr ) < 0 )
@@ -249,8 +249,8 @@ char	*argv[];
 	} else if( strcmp( role, "overview" ) == 0 )  {
 		/* No hooks required, just listen */
 	}
-	extrapoll_fd = vrmgr->pkc_fd;
-	extrapoll_hook = vr_input_hook;
+	Tk_CreateFileHandler(vrmgr->pkc_fd, TK_READABLE,
+			     (Tk_FileProc (*))vr_input_hook, (ClientData)NULL);
 	rt_vls_free( &str );
 
 	return CMD_OK;

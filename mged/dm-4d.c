@@ -74,6 +74,7 @@ unsigned Ir_cvtvecs(), Ir_load();
 void	Ir_statechange(), Ir_viewchange(), Ir_colorchange();
 void	Ir_window(), Ir_debug();
 int	Ir_dm();
+void    Ircheckevents();
 
 /*
  * These variables are visible and modifiable via a "dm set" command.
@@ -654,6 +655,7 @@ Ir_open()
 
 	ir_fd = qgetfd();
 
+	Tk_CreateFileHandler(ir_fd, 1, Ircheckevents, (void *)NULL);
 	return(0);
 }
 
@@ -1205,7 +1207,7 @@ input_waiting:
 	 */
 
 	if( FD_ISSET( ir_fd, input ) )
-		checkevents();
+		Ircheckevents();
 
 	return;
 }
@@ -1214,7 +1216,8 @@ input_waiting:
  *
  *  Look at events to check for button, dial, and mouse movement.
  */
-checkevents()  {
+void
+Ircheckevents()  {
 #define NVAL 48
 	short values[NVAL];
 	register short *valp;
@@ -1225,6 +1228,9 @@ checkevents()  {
 	static	pending_middleval = 0;
 	static	pending_x = 0;
 	static	pending_y = 0;
+
+	if (qtest() == 0)
+	    return;
 
 	n = blkqread( values, NVAL );	/* n is # of shorts returned */
 	if( ir_debug ) rt_log("blkqread gave %d\n", n);
