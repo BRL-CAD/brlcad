@@ -252,7 +252,7 @@ CONST struct rt_tabdata		*in2;
  *  'out' may overlap in1 or in2.
  */
 void
-rt_tabdata_join1( out, in1, scale2, in2, scale3, in3 )
+rt_tabdata_join2( out, in1, scale2, in2, scale3, in3 )
 struct rt_tabdata		*out;
 CONST struct rt_tabdata		*in1;
 register double			scale2;
