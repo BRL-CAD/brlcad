@@ -263,7 +263,7 @@ char **argv;
 	width = height = 512;
 	azimuth = -35.0;			/* GIFT defaults */
 	elevation = -25.0;
-#ifdef cray
+#ifdef CRAY1
 	npsw = 1;			/* >1 on GOS crashes system */
 #endif cray
 
