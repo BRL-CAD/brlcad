@@ -1953,7 +1953,7 @@ rt_log("force next eu to ray\n");
 				rt_bomb("nmg_face_state_transition: LONE_V_ESPLIT could not find ON edge to split\n");
 			}
 		}
-		(void)nmg_ebreak( vu->v_p, eu->e_p );
+		(void)nmg_ebreak( vu->v_p, eu );
 		/* Update vu table with new value */
 		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
 		/* Kill lone vertex loop */

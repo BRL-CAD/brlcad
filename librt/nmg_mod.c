@@ -26,9 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h */
-RT_EXTERN( struct vertex *nmg_e2break, (struct edge *e1, struct edge *e2) );
-
 /*
  *			N M G _ F U _ P L A N E E Q N
  *
@@ -368,8 +365,11 @@ int		n;
  *	If v is null, then a new vertex is created for the begining of the
  *	new edge.
  *
- *	In either case, the new edge will exist as the "next" edge after
- *	the edge passed as a parameter.
+ *	In either case, the new edge will exist as the "next" edgeuse after
+ *	the edgeuse passed as a parameter.
+ *
+ *  Explicit return -
+ *	edgeuse of new edge, starting at v.
  *
  *  List on entry -
  *
@@ -809,72 +809,60 @@ struct shell *s;
  *	If v is null, then a new vertex is created for the begining of the
  *	new edge.
  *
- *	In either case, the new edge will exist as the "next" edge after
- *	the edge passed as a parameter.
+ *	In either case, the new edgeuse will exist as the "next" edgeuse
+ *	after the edgeuse passed as a parameter.
  *
- *	Explicit return:
- *		edge pointer, referring to the edge structure which
- *		replaces the edge passed in as parameter "e".
- *		The calling routine should be careful to update it's
- *		"e" variable with this new value, assuming that "e"
- *		wasn't derived as eu->e_p, which will still evaluate to
- *		the correct edge (but with a different pointer value
- *		than before).
- *		This is silly, because the return is *always* "e".
+ *	Note that eu->e_p changes value upon return, because the old
+ *	edge is incrementally replaced by two new ones.
  *
- * XXX I don't understand what the return is, by reading this comment.
- * XXX something more useful might be along these lines:
- *	The explicit return (ret_e) referrs to the new edge.
- *	On return, e->eu_p will run from A to V, and
- *	(ret_e)->eu_p will run from V to B.
- *	Note that only edgeuses are oriented, not edges, so it's
- *	not possible to say whether ret_e "starts" or "ends" at V.
- * XXX The question is, is this what really happens?
+ *  Explicit return -
+ *	Pointer to the edgeuse which starts at the newly created
+ *	vertex (V), and runs to B.
  *
- *	Vertex A is e->eu_p->vu_p->v_p,
- *	Vertex B is e->eu_p->eumate_p->vu_p->v_p,
- *	and vertex V (either made new or as an argument) will lie inbetween.
+ *  Implicit returns -
+ *	ret_eu->vu_p->v_p gives the new vertex ("v", if non-null), and
+ *	ret_eu->e_p is the new edge that runs from V to B.
  *
  *	If the call was nmg_esplit( NULL, eu->e_p );
  *	then on return the new vertex created will be eu->eumate_p->vu_p->v_p;
  *
  *  Edge on entry -
  *
- *		       oldeu
+ *			eu
  *		  .------------->
  *		 /
  *		A =============== B (edge)
  *				 /
  *		  <-------------.
- *		      oldeumate
+ *		    eu->eumate_p
  *
  *  Edge on return -
  *
- *		     oldeu(cw)    eu1
- *		    .------->   .----->
+ *			eu	  ret_eu
+ *		    .------->   .--------->
  *		   /           /
- *	   (edge) A ========= V ~~~~~~~ B (new edge)
- *			     /         /
- *		    <-------.   <-----.
- *		       mate	 mate
+ *	(newedge) A ========= V ~~~~~~~~~~~ B (new edge)
+ *			     /             /
+ *		    <-------.   <---------.
  */
-struct edge *
-nmg_esplit(v, e)
-struct vertex *v;
-struct edge *e;
+struct edgeuse *
+nmg_esplit(v, eu)
+struct vertex	*v;
+struct edgeuse	*eu;
 {
-	struct edgeuse	*eu,	/* placeholder edgeuse */
-			*eur,	/* radial edgeuse of placeholder */
+	struct edge	*e;	/* eu->e_p */
+	struct edgeuse	*eur,	/* radial edgeuse of eu */
 			*eu2,	/* new edgeuse (next of eur) */
 			*neu1, *neu2; /* new (split) edgeuses */
 	int 		notdone=1;
-	struct vertex	*v1, *v2;
+	struct vertex	*v1, *v2;	/* start and end of eu */
 
-	NMG_CK_EDGE(e);
-	eu = e->eu_p;
 	neu1 = neu2 = (struct edgeuse *)NULL;
 
 	NMG_CK_EDGEUSE(eu);
+	e = eu->e_p;
+	NMG_CK_EDGE(e);
+
 	NMG_CK_VERTEXUSE(eu->vu_p);
 	v1 = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v1);
@@ -896,8 +884,9 @@ struct edge *e;
 	 */
 	do {
 		eur = eu->radial_p;
-		/* eur could run either from v1 to v2, or from v2 to v1 */
+		/* eur could runs from v1 to v2 */
 		eu2 = nmg_eusplit(v, eur);
+		/* Now, eur runs from v1 to v, eu2 runs from v to v2 */
 		NMG_CK_EDGEUSE(eur);
 		NMG_CK_EDGEUSE(eu2);
 		NMG_TEST_EDGEUSE(eur);
@@ -932,6 +921,7 @@ struct edge *e;
 			rt_bomb("nmg_esplit() eur->vu_p->v_p is neither v1 nor v2\n");
 		}
 	} while (notdone);
+	/* Here, "e" pointer is invalid -- it no longer exists */
 
 	/* Error checking loops */
 	eu = neu1;
@@ -951,9 +941,11 @@ struct edge *e;
 		eu = eu->radial_p->eumate_p;
 	} while (eu != neu2);
 
-	if( neu2->e_p != e )  rt_log("nmg_esplit: neu2->e_p != e\n");
+	/* Find an edgeuse that runs from v to v2 */
+	if( neu2->vu_p->v_p == v && neu2->eumate_p->vu_p->v_p == v2 )
+		return neu2;
 
-	return(e);
+	rt_bomb("nmg_esplit: *** unable to find eu starting at new v ***\n");
 }
 
 /*
@@ -966,22 +958,40 @@ struct edge *e;
  *
  *  The return is the return of nmg_esplit().
  */
-struct edge *
-nmg_ebreak(v, e)
-struct vertex *v;
-struct edge *e;
+struct edgeuse *
+nmg_ebreak(v, eu)
+struct vertex	*v;
+struct edgeuse	*eu;
 {
-	struct edge *new_e;
+	struct edgeuse	*new_eu;
+	struct edge_g	*eg;
 
-	new_e = nmg_esplit(v, e);
+	NMG_CK_EDGEUSE(eu);
+	eg = eu->e_p->eg_p;
+	/* XXX if eg is null, and vertex geom exists, really ought to make edge geom */
+
+	/* nmg_esplit() will delete eu->e_p, so if geom is present, save it! */
+	if( eg )  {
+		NMG_CK_EDGE_G(eg);
+		eg->usage++;
+	}
+
+	new_eu = nmg_esplit(v, eu);
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_EDGEUSE(new_eu);
+
+	/* If there wasn't any edge geometry before, nothing more to do */
+	if( !eg ) return new_eu;
 
 	/* Make sure the two edges share same geometry, if there was any. */
-	if (!e->eg_p) return new_e;
-	if (new_e->eg_p)  rt_bomb("nmg_ebreak() new edge developed geometry?\n");
+	if( eu->e_p->eg_p )  rt_bomb("nmg_ebreak() eu grew geometry?\n");
+	if( new_eu->e_p->eg_p )  rt_bomb("nmg_ebreak() new_eu grew geometry?\n");
 
-	new_e->eg_p = e->eg_p;
-	new_e->eg_p->usage++;
-	return new_e;
+	NMG_CK_EDGE_G(eg);
+	eu->e_p->eg_p = eg;		/* eg->usage++ was done above */
+	new_eu->e_p->eg_p = eg;
+	eg->usage++;
+	return new_eu;
 }
 
 /*
@@ -993,23 +1003,23 @@ struct edge *e;
  *  Return a pointer to the new vertex.
  */
 struct vertex *
-nmg_e2break( e1, e2 )
-struct edge	*e1;
-struct edge	*e2;
+nmg_e2break( eu1, eu2 )
+struct edgeuse	*eu1;
+struct edgeuse	*eu2;
 {
 	struct vertex		*v;
 	struct vertexuse	*vu;
 	long			*magicp;
-	struct edge		*repl_e1;
+	struct edgeuse		*new_eu;
 
-	NMG_CK_EDGE(e1);
-	NMG_CK_EDGE(e2);
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_EDGEUSE(eu2);
 	/*
-	 * Need to get from e1 up to shell, so that the vertex can
+	 * Need to get from eu1 up to shell, so that the vertex can
 	 * be made in the current shell.
 	 * Otherwise, nmg_kvu() will zap our edge!
 	 */
-	magicp = e1->eu_p->up.magic_p;		/* loopuse or shell */
+	magicp = eu1->up.magic_p;		/* loopuse or shell */
 	if( *magicp == NMG_LOOPUSE_MAGIC )
 		magicp = ((struct loopuse *)magicp)->up.magic_p;
 	if( *magicp == NMG_FACEUSE_MAGIC )
@@ -1021,10 +1031,12 @@ struct edge	*e2;
 	NMG_CK_VERTEXUSE(vu);
 	v = vu->v_p;
 	NMG_CK_VERTEX(v);
-	repl_e1 = nmg_ebreak( v, e1 );
-	/* XXX If we could get the new v info here, the nmg_mvvu()
+	new_eu = nmg_ebreak( v, eu1 );
+	/* XXX  get the new v info here, then the nmg_mvvu()
 	 * XXX gunk could be avoided. */
-	(void)nmg_ebreak( v, e2 );
+	if( new_eu->vu_p->v_p != v )  rt_bomb("nmg_e2break: new vertex mis-match?\n");
+
+	(void)nmg_ebreak( v, eu2 );
 
 	/* Note:  nmg_kvu() nulls out vu->up.magic_p's down pointer! */
 	nmg_kvu( vu );			/* Kill initial (temporary) use */

@@ -31,8 +31,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* XXX move to vmath.h */
 #define V2ARGS(a)	(a)[X], (a)[Y]
 
-RT_EXTERN( struct vertex *nmg_e2break, (struct edge *e1, struct edge *e2) );
-
 /*
  *			R T _ P T 3 _ P T 3 _ E Q U A L
  *
@@ -677,7 +675,7 @@ struct vertexuse	*vu;
 		return;
 	case 3:
 		/* pt is in interior of edge, break edge */
-		nmg_ebreak( vu->v_p, eu->e_p );
+		(void)nmg_ebreak( vu->v_p, eu );
 		return;
 	}
 }
@@ -909,14 +907,14 @@ struct vertex	*v1mate;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("re-using vertex from other face\n");
 
-		(void)nmg_ebreak(vu_other->v_p, eu->e_p);
+		(void)nmg_ebreak(vu_other->v_p, eu);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 	} else {
 		/* The other face has no vertex in this vicinity */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("Making new vertex\n");
 
-		(void)nmg_ebreak((struct vertex *)NULL, eu->e_p);
+		(void)nmg_ebreak((struct vertex *)NULL, eu);
 
 		(void)mega_check_ebreak_result(eu);
 		euforw = RT_LIST_PNEXT(edgeuse, eu);
@@ -1093,7 +1091,7 @@ CONST char		*str;
 		/* Break eu1 into two pieces */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu2a=x%x breaks eu1=x%x\n", vu2a, eu1 );
-		(void)nmg_ebreak( vu2a->v_p, eu1->e_p );
+		(void)nmg_ebreak( vu2a->v_p, eu1 );
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
 	}
@@ -1114,7 +1112,7 @@ CONST char		*str;
 	} else if( dist[1] > 0 && dist[1] < 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu2b=x%x breaks eu1=x%x\n", vu2b, eu1 );
-		(void)nmg_ebreak( vu2b->v_p, eu1->e_p );
+		(void)nmg_ebreak( vu2b->v_p, eu1 );
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
 	}
@@ -1301,7 +1299,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 		/* Break eu2 on our first vertex */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tbreaking eu2 on vu1a\n");
-		(void)nmg_ebreak( vu1a->v_p, eu2->e_p );
+		(void)nmg_ebreak( vu1a->v_p, eu2 );
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
@@ -1339,7 +1337,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 		/* Break eu2 on our second vertex */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tbreaking eu2 on vu1b\n");
-		(void)nmg_ebreak( vu1b->v_p, eu2->e_p );
+		(void)nmg_ebreak( vu1b->v_p, eu2 );
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
@@ -1387,7 +1385,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 			struct vertexuse	*new_vu;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
-			(void)nmg_ebreak( NULL, eu2->e_p );
+			(void)nmg_ebreak( NULL, eu2 );
 			/* Can't use eumate_p here, it's in wrong orientation face */
 			new_vu = RT_LIST_PNEXT_CIRC(edgeuse,eu2)->vu_p;
 			nmg_vertex_gv( new_vu->v_p, hit_pt );	/* 3d geom */
@@ -1420,7 +1418,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 			rt_log("\t\tintersect point is vu2a\n");
 		vu = vu2a;
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
-		nmg_ebreak( vu->v_p, eu1->e_p );
+		nmg_ebreak( vu->v_p, eu1 );
 		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1b->l.magic);
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
@@ -1429,7 +1427,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 			rt_log("\t\tintersect point is vu2b\n");
 		vu = vu2b;
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
-		nmg_ebreak( vu->v_p, eu1->e_p );
+		nmg_ebreak( vu->v_p, eu1 );
 		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1b->l.magic);
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
@@ -1438,7 +1436,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 		struct vertex	*new_v;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		    	VPRINT("\t\tBreaking both edges at intersect point", hit_pt);
-		new_v = nmg_e2break( eu1->e_p, eu2->e_p );
+		new_v = nmg_e2break( eu1, eu2 );
 		nmg_vertex_gv( new_v, hit_pt );	/* 3d geometry */
 
 		/* new_v is at far end of eu1 */
