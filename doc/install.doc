@@ -1,17 +1,17 @@
 .\" $Header$
-.\" tbl install.doc | troff -t -ms | catimp -P imt1
+.\"	groff -ms install.doc | print-postscript
 .TL
 Installing the BRL-CAD Package
 .br
-Release 4.0
+Release 4.4
 .sp
-10-October-1991
+10-October-1994
 .AU
 Michael John Muuss
 .AI
-US Army Ballistic Research Laboratory
-APG, MD  21005-5066
-<Mike@BRL.MIL>
+US Army Research Laboratory
+APG, MD  21005-5068
+<Mike@ARL.MIL>
 .NH 1
 VERSION
 .PP
@@ -26,7 +26,7 @@ the distribution tape.
 GOING QUICKLY
 .PP
 This document exists to help you install the BRL-CAD Package. With
-approximately 280,000 lines of source code, and support for over a dozen
+approximately 435,000 lines of source code, and support for over a dozen
 hardware platforms, the configuration is important.
 It would be best if you read
 these directions first. However, it would be quite understandable if
@@ -58,7 +58,7 @@ agreement.
 Please recall that to obtain this software, you agreed that
 before using the software at additional sites, or for permission to
 use this work as part of a commercial package, you would first obtain
-authorization from BRL.
+authorization from ARL.
 .NH 1
 INTRODUCTION
 .PP
@@ -73,7 +73,7 @@ The second most important advantage of a source-code-only distribution
 is that it gives you complete control of your destiny.
 If you need to add a feature, change something, or fix a bug,
 you have everything required.
-Since BRL is unable to offer any kind of support of this software to
+Since ARL is unable to offer any kind of support of this software to
 non-Government recipients, distributing full source code ensures
 that you need not become "stuck".
 .PP
@@ -273,7 +273,7 @@ standard QIC-24 format, rather than the default Sun behavior of reading
 the tape in QIC-11 format.
 .IP 5)
 Apply all the relevant errata sheets.  They are stored on the
-anonymous FTP server host ftp.brl.mil, in the directory brl-cad,
+anonymous FTP server host ftp.arl.mil, in the directory brl-cad,
 and are named "errata4.0-irix4" and the like.
 .NH 1
 SOFTWARE ORGANIZATION
@@ -1289,7 +1289,7 @@ If the machine that you are porting to implements one of the
 already supported native types, all you need to do is adjust
 the \fB#if\fR directives for the symbol NATURAL_IEEE
 to include your machine type.
-(Please notify BRL when you do this, so that we can update the
+(Please notify ARL when you do this, so that we can update the
 master copy).
 .PP
 If it seems that your machine uses a novel internal floating point
@@ -1298,7 +1298,7 @@ Before undertaking such an effort, please read the file
 "papers/dist-graphics", \fIWorkstations, Networking, Distributed
 Graphics, and Parallel Processing\fR, where this whole issue
 is discussed in great detail.
-You may also wish to contact BRL via E-mail to see
+You may also wish to contact ARL via E-mail to see
 whether support for your machine has already been accomplished by others.
 .NH 2
 Adding Support For New Displays
@@ -1311,7 +1311,7 @@ The second module needed is an \fBmged\fR display manager, like mged/dm-XX.c.
 Here, the task is somewhat harder, as two major modes of behavior are
 supported:  displaylist and refresh.  You should examine display
 managers for devices similar to yours, and proceed from there.
-BRL would be most interested in obtaining any additional display modules
+ARL would be most interested in obtaining any additional display modules
 that you might develop, should you wish to share them.
 .NH 2
 Potential Optimizations
@@ -1329,7 +1329,7 @@ to machine-specific code.
 If you do this, please submit the "rays/sec" figures for the
 original as well as the optimized runs.
 .sp
-BRL is currently
+ARL is currently
 working with compilers that detect implicit vectorization.
 The full results of this work will be included in a subsequent release.
 .NH 1
@@ -1494,10 +1494,10 @@ opinions to the vendor.
 SILICON GRAPHICS 4-D WARNINGS
 .PP
 There is utterly no support for SGI 4-D machines running SGI software
-releases earlier than 3.0 \(em they don't work well.
-Similarly, IRIX 4.0 had not been released at the time BRL-CAD Release 4.0
+releases earlier than 4.0 \(em they don't work well.
+Similarly, IRIX 6.0 had not been released at the time BRL-CAD Release 4.4
 was being finalized, so it is unclear how well this combination will work.
-Contact BRL for an errata sheet when IRIX 4.0 is available.
+Contact ARL for an errata sheet when IRIX 6.0 is available.
 .NH 2
 ALLIANT WARNINGS
 .PP
@@ -1584,13 +1584,13 @@ try running \fBcsh\fR before starting \fBmged\fR.
 .NH 1
 ENHANCEMENTS
 .PP
-If you develop additional software for the BRL CAD environment that
+If you develop additional software for the BRL-CAD environment that
 you would be willing to share, please send it to us for inclusion
 in the next release.
 The first such inclusion was the Utah Raster Toolkit, included "as is"
 in the directory contributed and integrated into the system in the
 directories tools and librle.
-Note that BRL considers the RLE format a long-term image storage format,
+Note that ARL considers the RLE format a long-term image storage format,
 with pix(5) format used for image manipulation, while Utah uses RLE
 format for all manipulation stages as well.
 .NH 1
@@ -1699,7 +1699,7 @@ You are invited to participate in the DARPA InterNet (aka "ARPANET")
 electronic mailing list on the BRL-CAD software, which is called
 .sp .5
 .ti +1i
-<CAD @ BRL.MIL>.
+<CAD @ ARL.MIL>.
 .sp .5
 Bug reports and discussions of new features
 are the main topics;  volume of messages has been light (so far).
@@ -1707,9 +1707,9 @@ Direct your bug reports to this address.  Request a subscription by
 sending to
 .sp .5
 .ti +1i
-<CAD-REQUEST @ BRL.MIL>.
+<CAD-REQUEST @ ARL.MIL>.
 .sp .5
 If you find bugs, please report your experiences by E-mail.
-While BRL makes no
+While ARL makes no
 offer of support, we are most interested in hearing about your
 experiences.
