@@ -76,6 +76,7 @@ static struct rt_i	*rt_tree_rtip;
  *
  *  This routine must be prepared to run in parallel.
  */
+/* ARGSUSED */
 HIDDEN int rt_gettree_region_start( tsp, pathp )
 CONST struct db_tree_state	*tsp;
 CONST struct db_full_path	*pathp;
@@ -513,7 +514,16 @@ int		ncpus;
 
 	rt_tree_rtip = (struct rt_i *)0;	/* sanity */
 
-	/* Eliminate any "dead" solids that parallel code couldn't change */
+	/*
+	 *  Eliminate any "dead" solids that parallel code couldn't change.
+	 *  First remove any references from the region tree,
+	 *  then remove actual soltab structs from the soltab list.
+	 */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		RT_CK_REGION(regp);
+		rt_tree_kill_dead_solid_refs( regp->reg_treetop );
+		(void)rt_tree_elim_nops( regp->reg_treetop );
+	}
 again:
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		RT_CK_SOLTAB(stp);
@@ -683,6 +693,165 @@ vect_t				tree_max;
 	case OP_NOP:
 		/* Implies that this tree has nothing in it */
 		break;
+	}
+	return(0);
+}
+
+/*
+ *			R T _ T R E E _ K I L L _ D E A D _ S O L I D _ R E F S
+ *
+ *  Convert any references to "dead" solids into NOP nodes.
+ */
+rt_tree_kill_dead_solid_refs( tp )
+register union tree	*tp;
+{	
+
+	if( tp == TREE_NULL )  {
+		rt_log( "rt_tree_kill_dead_solid_refs(): NULL tree pointer.\n" );
+		return;
+	}
+
+	switch( tp->tr_op )  {
+
+	case OP_SOLID:
+		{
+			register CONST struct soltab	*stp;
+
+			stp = tp->tr_a.tu_stp;
+			RT_CK_SOLTAB(stp);
+			if( stp->st_aradius <= 0 )  {
+				if(rt_g.debug&DEBUG_TREEWALK)rt_log("rt_tree_kill_dead_solid_refs: encountered dead solid '%s' stp=x%x, tp=x%x\n",
+					stp->st_dp->d_namep, stp, tp);
+				tp->tr_a.tu_stp = SOLTAB_NULL;
+				tp->tr_op = OP_NOP;	/* Convert to NOP */
+			}
+			return;
+		}
+
+	default:
+		rt_log( "rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
+			tp, tp->tr_op );
+		return;
+
+	case OP_XOR:
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+		/* BINARY */
+		rt_tree_kill_dead_solid_refs( tp->tr_b.tb_left );
+		rt_tree_kill_dead_solid_refs( tp->tr_b.tb_right );
+		break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		/* UNARY tree -- for completeness only, should never be seen */
+		rt_tree_kill_dead_solid_refs( tp->tr_b.tb_left );
+		break;
+	case OP_NOP:
+		/* This sub-tree has nothing further in it */
+		return;
+	}
+	return;
+}
+
+/*
+ *			R T _ T R E E _ E L I M _ N O P S
+ *
+ *  Eliminate any references to NOP nodes from the tree.
+ *  It is safe to use db_free_tree() here, because there will not
+ *  be any dead solids.  They will all have been converted to OP_NOP
+ *  nodes by rt_tree_kill_dead_solid_refs(), previously, so there
+ *  is no need to worry about multiple db_free_tree()'s repeatedly
+ *  trying to free one solid that has been instanced multiple times.
+ *
+ *  Returns -
+ *	0	this node is OK.
+ *	-1	request caller to kill this node
+ */
+int
+rt_tree_elim_nops( tp )
+register union tree	*tp;
+{	
+	union tree	*left, *right;
+top:
+	if( tp == TREE_NULL )  {
+		rt_log( "rt_tree_elim_nops(): NULL tree pointer.\n" );
+		return(-1);
+	}
+
+	switch( tp->tr_op )  {
+
+	case OP_SOLID:
+		return(0);		/* Retain */
+
+	default:
+		rt_log( "rt_tree_elim_nops(x%x): unknown op=x%x\n",
+			tp, tp->tr_op );
+		return(-1);
+
+	case OP_XOR:
+	case OP_UNION:
+		/* BINARY type -- rewrite tp as surviving side */
+		left = tp->tr_b.tb_left;
+		right = tp->tr_b.tb_right;
+		if( rt_tree_elim_nops( left ) < 0 )  {
+			*tp = *right;	/* struct copy */
+			rt_free( (char *)left, "rt_tree_elim_nops union tree");
+			rt_free( (char *)right, "rt_tree_elim_nops union tree");
+			goto top;
+		}
+		if( rt_tree_elim_nops( right ) < 0 )  {
+			*tp = *left;	/* struct copy */
+			rt_free( (char *)left, "rt_tree_elim_nops union tree");
+			rt_free( (char *)right, "rt_tree_elim_nops union tree");
+			goto top;
+		}
+		break;
+	case OP_INTERSECT:
+		/* BINARY type -- if either side fails, nuke subtree */
+		left = tp->tr_b.tb_left;
+		right = tp->tr_b.tb_right;
+		if( rt_tree_elim_nops( left ) < 0 ||
+		    rt_tree_elim_nops( right ) < 0 )  {
+		    	db_free_tree( left );
+		    	db_free_tree( right );
+		    	tp->tr_op = OP_NOP;
+		    	return(-1);	/* eliminate reference to tp */
+		}
+		break;
+	case OP_SUBTRACT:
+		/* BINARY type -- if right fails, rewrite (X - 0 = X).
+		 *  If left fails, nuke entire subtree (0 - X = 0).
+		 */
+		left = tp->tr_b.tb_left;
+		right = tp->tr_b.tb_right;
+		if( rt_tree_elim_nops( left ) < 0 )  {
+		    	db_free_tree( left );
+		    	db_free_tree( right );
+		    	tp->tr_op = OP_NOP;
+		    	return(-1);	/* eliminate reference to tp */
+		}
+		if( rt_tree_elim_nops( right ) < 0 )  {
+			*tp = *left;	/* struct copy */
+			rt_free( (char *)left, "rt_tree_elim_nops union tree");
+			rt_free( (char *)right, "rt_tree_elim_nops union tree");
+			goto top;
+		}
+		break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		/* UNARY tree -- for completeness only, should never be seen */
+		left = tp->tr_b.tb_left;
+		if( rt_tree_elim_nops( left ) < 0 )  {
+			rt_free( (char *)left, "rt_tree_elim_nops union tree");
+			tp->tr_op = OP_NOP;
+			return(-1);	/* Kill ref to unary op, too */
+		}
+		break;
+	case OP_NOP:
+		/* Implies that this tree has nothing in it */
+		return(-1);		/* Kill ref to this NOP */
 	}
 	return(0);
 }
