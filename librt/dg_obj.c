@@ -366,7 +366,7 @@ dgo_open_tcl(ClientData	clientData,
 	dgop = dgo_open_cmd(argv[1], wdbp);
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&dgop->dgo_name),
-				dgo_cmd,
+				(Tcl_CmdProc *)dgo_cmd,
 				(ClientData)dgop,
 				dgo_deleteProc);
 

@@ -222,7 +222,7 @@ vo_open_tcl(ClientData	clientData,
 	vop = vo_open_cmd(argv[1]);
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&vop->vo_name),
-				vo_cmd,
+				(Tcl_CmdProc *)vo_cmd,
 				(ClientData)vop,
 				vo_deleteProc);
 
