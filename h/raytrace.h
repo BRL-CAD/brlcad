@@ -1465,25 +1465,25 @@ RT_EXTERN(void db_close, ( struct db_i *dbip ) );
  */
 #if defined(RECORD_DEFINED)
 					/* malloc & read records */
-RT_EXTERN(union record *db_getmrec, ( struct db_i *, CONST struct directory *dp ) );
+RT_EXTERN(union record *db_getmrec, ( CONST struct db_i *, CONST struct directory *dp ) );
 					/* get several records from db */
-RT_EXTERN(int db_get, (struct db_i *, CONST struct directory *dp,
+RT_EXTERN(int db_get, (CONST struct db_i *, CONST struct directory *dp,
 	union record *where, int offset, int len ) );
 					/* put several records into db */
-RT_EXTERN(int db_put, ( struct db_i *, CONST struct directory *dp, union record *where,
+RT_EXTERN(int db_put, ( CONST struct db_i *, CONST struct directory *dp, union record *where,
 	int offset, int len ) );
 #else /* RECORD_DEFINED */
 					/* malloc & read records */
-RT_EXTERN(genptr_t db_getmrec, ( struct db_i *, CONST struct directory *dp ) );
+RT_EXTERN(genptr_t db_getmrec, ( CONST struct db_i *, CONST struct directory *dp ) );
 					/* get several records from db */
-RT_EXTERN(int db_get, (struct db_i *, CONST struct directory *dp,
+RT_EXTERN(int db_get, (CONST struct db_i *, CONST struct directory *dp,
 	genptr_t where, int offset, int len ) );
 					/* put several records into db */
-RT_EXTERN(int db_put, ( struct db_i *, CONST struct directory *dp,
+RT_EXTERN(int db_put, ( CONST struct db_i *, CONST struct directory *dp,
 	genptr_t where, int offset, int len ) );
 #endif /* RECORD_DEFINED */
 RT_EXTERN(int db_get_external, ( struct bu_external *ep,
-	CONST struct directory *dp, struct db_i *dbip ) );
+	CONST struct directory *dp, CONST struct db_i *dbip ) );
 RT_EXTERN(int db_put_external, ( struct bu_external *ep,
 	struct directory *dp, struct db_i *dbip ) );
 RT_EXTERN(void db_free_external, ( struct bu_external *ep ) );
