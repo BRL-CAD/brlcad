@@ -27,6 +27,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include "gl.h"
 # include "device.h"
 
+#define	HUGE	1.0e10	/* for near/far clipping */
+
 #define Min( x1, x2 )	((x1) < (x2) ? (x1) : (x2))
 #define Max( x1, x2 )	((x1) > (x2) ? (x1) : (x2))
 
@@ -35,15 +37,31 @@ Matrix	viewortho;	/* ortho viewing projection */
 Matrix	viewpersp;	/* perspective viewing projection */
 Matrix	centermat;	/* center screen matrix */
 Coord	viewsize;
+
+int	axis = 0;	/* display coord axis */
+
+static char usage[] = "\
+Usage: tiris [-a] < unixplot\n";
 #endif sgi
 
-main()
+main( argc, argv )
+int	argc;
+char	**argv;
 {
 #ifdef sgi
 	Coord	max[3], min[3];
 
+	while( argc > 1 ) {
+		if( strcmp(argv[1],"-a") == 0 ) {
+			axis++;
+		} else
+			break;
+		argc--;
+		argv++;
+	}
+
 	if( isatty(fileno(stdin)) ) {
-		fprintf( stderr, "Usage: tiris < unixplot\n" );
+		fprintf( stderr, usage );
 		exit( 1 );
 	}
 
@@ -67,7 +85,7 @@ main()
 	/* set up and save the viewing projection matrix */
 	if( ismex() ) {
 		ortho( -viewsize, viewsize, -viewsize, viewsize,
-			-32768.0, 32768.0 );
+			-HUGE, HUGE );
 		getmatrix( viewortho );
 		perspective( 900, 1.0, 0.01, 1.0e10 );
 		/*polarview( 1.414, 0, 0, 0 );*/
@@ -75,7 +93,7 @@ main()
 	} else {
 		/* Try to make up for the rectangular display surface */
 		ortho( -1.33*viewsize, 1.33*viewsize, -viewsize, viewsize,
-			-32768.0, 32768.0 );
+			-HUGE, HUGE );
 		getmatrix( viewortho );
 		perspective( 900, 1.0, 0.01, 1.0e10 );
 		/*polarview( 1.414, 0, 0, 0 );*/
@@ -143,11 +161,18 @@ view_loop()
 /*	depthcue(1);*/
 	cursoff();
 
-	while (1) {
+	/*
+	 *  Each time through this loop, m holds the current
+	 *  orientation matrix.  An identity matrix is placed
+	 *  on the stack and acted on by device inputs.
+	 *  After inputs, m = oldm * stack.
+	 *  The stack is then replaced by m*viewmat for drawing.
+	 */
+	while( 1 ) {
 		Coord		fval;
 
-		if (qtest())
-			event = qread(&val);
+		if( qtest() )
+			event = qread( &val );
 		fval = val;
 
 		loadmatrix ( ident );
@@ -189,19 +214,39 @@ view_loop()
 			setvaluator(ZOOM, 1, -1000, 1000);
 			break;
 		case LEFTMOUSE:
-		case SW3:
-			loadmatrix( centermat );
-			getmatrix( m );
-			loadmatrix( ident );
+			if( val == 0 )
+				break;
+			fval = 0.5;
+			scale( fval, fval, fval );
 			break;
 		case MIDDLEMOUSE:
+			if( val == 0 )
+				break;
 			end_it = 1;
 			break;
+		case RIGHTMOUSE:
+			if( val == 0 )
+				break;
+			fval = 2.0;
+			scale( fval, fval, fval );
+			break;
 		case SW0:
+			if( val == 0 )
+				break;
 			viewmat = (Matrix *)viewortho;
 			break;
 		case SW1:
+			if( val == 0 )
+				break;
 			viewmat = (Matrix *)viewpersp;
+			break;
+		case SW2:
+			if( val == 0 )
+				break;
+			/* reset */
+			loadmatrix( centermat );
+			getmatrix( m );
+			loadmatrix( ident );
 			break;
 		}
 		event = 0;
@@ -220,6 +265,8 @@ view_loop()
 		/* draw the object */
 		color(BLACK);
 		clear();
+		if( axis )
+			draw_axis();
 		callobj(obj_num);
 		swapbuffers();
 	}
@@ -294,6 +341,7 @@ init_display()
 
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
+	qdevice(RIGHTMOUSE);
 
 	qdevice( SW0 );
 	qdevice( SW1 );
@@ -459,5 +507,22 @@ eat_string()
 
 	while( (c = getchar()) != '\n' && c != EOF )
 		;
+}
+
+draw_axis() {
+	color( MAGENTA );
+	movei( 0, 0, 0 );
+	drawi( 10, 0, 0 );
+	cmovi( 12, 0, 0 );
+	charstr( "x" );
+	movei( 0, 0, 0 );
+	drawi( 0, 10, 0 );
+	cmovi( 0, 12, 0 );
+	charstr( "y" );
+	movei( 0, 0, 0 );
+	drawi( 0, 0, 10 );
+	cmovi( 0, 0, 12 );
+	charstr( "z" );
+	movei( 0, 0, 0 );	/* back to origin */
 }
 #endif sgi
