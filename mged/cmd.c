@@ -70,7 +70,6 @@ extern int f_nmg_simplify();
 extern int f_make_bb();
 extern int f_whatid();
 extern int f_which_air();
-extern int f_eid();
 extern int f_eac();
 
 extern short earb4[5][18];
@@ -251,8 +250,6 @@ static struct funtab funtab[] = {
 	f_edcomb,6,7,TRUE,
 "edgedir", "[delta_x delta_y delta_z]|[rot fb]", "define direction of ARB edge being moved",
 	f_edgedir, 3, 4, TRUE,
-"eid", "ident(s)", "display all regions with given ident code",
-	f_eid, 2, MAXARGS,TRUE,
 "ev",	"[-dnqstuvwT] [-P #] <objects>", "evaluate objects via NMG tessellation",
 	f_ev, 2, MAXARGS, TRUE,
 "eqn", "A B C", "planar equation coefficients",
