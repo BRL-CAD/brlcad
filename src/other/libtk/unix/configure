@@ -556,12 +556,14 @@ LOCALES="cs de el en en_gb es fr it nl ru"
 #--------------------------------------------------------------------
 
 
+if test "x$with_tcl" = "x" ; then
+    with_tcl=../../libtcl/unix
+fi
     #
     # Ok, lets find the tcl configuration
     # First, look for one uninstalled.
     # the alternative search directory is invoked by --with-tcl
     #
-
     if test x"${no_tcl}" = x ; then
 	# we reset no_tcl in case something fails here
 	no_tcl=true

@@ -19,6 +19,10 @@ LOCALES="cs de el en en_gb es fr it nl ru"
 # Find and load the tclConfig.sh file
 #--------------------------------------------------------------------
 
+
+if test "x$with_tcl" = "x" ; then
+    with_tcl=../../libtcl/unix
+fi
 SC_PATH_TCLCONFIG
 SC_LOAD_TCLCONFIG
 
