@@ -255,7 +255,7 @@ if [ -f ${REGRESS_DIR}/$LOGFILE ] ; then
 	mv ${REGRESS_DIR}/$LOGFILE ${REGRESS_DIR}/${LOGFILE}.$$
 	warn "Moving previous master log file [${REGRESS_DIR}/$LOGFILE] to [${REGRESS_DIR}/${LOGFILE}.$$]" $TLOG
     else
-	rm ${REGRESS_DIR}/$LOGFILE
+	rm -f ${REGRESS_DIR}/$LOGFILE
 	log "Clobbered previous master log file" $TLOG
     fi
 fi
@@ -267,7 +267,7 @@ if [ -w ${REGRESS_DIR}/${LOGFILE} ] ; then
 else
     bomb "unable to write log file [${REGRESS_DIR}/${LOGFILE}]"
 fi
-rm $TLOG
+rm -f $TLOG
 LOG=${REGRESS_DIR}/$LOGFILE ; export LOG
 
 #
