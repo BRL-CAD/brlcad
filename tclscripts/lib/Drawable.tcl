@@ -45,6 +45,7 @@ class Drawable {
     public method rt {args}
     public method rtcheck {args}
     public method vdraw {args}
+    public method get_autoview {}
 }
 
 body Drawable::observer {args} {
@@ -101,4 +102,8 @@ body Drawable::rtcheck {args} {
 
 body Drawable::vdraw {args} {
     eval $dg vdraw $args
+}
+
+body Drawable::get_autoview {} {
+    eval $dg get_autoview
 }
