@@ -29,7 +29,8 @@ nmg_dangling_face(fu)
 CONST struct faceuse	*fu;
 {
 	struct loopuse *lu;
-	struct edgeuse *eu, *eur;
+	struct edgeuse *eu;
+	CONST struct edgeuse *eur;
 	struct faceuse *newfu;
 	register char *tbl;
 
@@ -86,7 +87,8 @@ int paint_color;
 {
 	struct faceuse *newfu;
 	struct loopuse *lu;
-	struct edgeuse *eu, *eur;
+	struct edgeuse *eu;
+	CONST struct edgeuse *eur;
 
 	if (NMG_INDEX_VALUE(paint_table, fu->index) != 0)
 		return;
