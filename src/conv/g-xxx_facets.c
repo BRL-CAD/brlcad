@@ -28,22 +28,26 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "../librt/debug.h"
+
+
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 #define VSETIN( a, b )	{\
     (a)[X] = (b)[X]/25.4; \

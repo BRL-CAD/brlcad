@@ -1,19 +1,12 @@
 # $Id$
 
-pkglibdir = $(libdir)/itk3.3
+brlcadscriptdir = $(libdir)/itk3.3
 
-itkscripts =\
-	$(top_srcdir)/src/other/incrTcl/itk/library/Archetype.itk\
-	$(top_srcdir)/src/other/incrTcl/itk/library/Toplevel.itk\
-	$(top_srcdir)/src/other/incrTcl/itk/library/Widget.itk\
-	$(top_srcdir)/src/other/incrTcl/itk/library/itk.tcl\
-	$(top_srcdir)/src/other/incrTcl/itk/library/tclIndex
+brlcadscript_SCRIPTS =\
+	Archetype.itk \
+	Toplevel.itk \
+	Widget.itk \
+	itk.tcl \
+	tclIndex
 
-install-data-hook:
-	@mkdir -p $(DESTDIR)$(pkglibdir)
-	@for i in $(itkscripts) ; do \
-	    echo "Installing $$i" ; \
-	    $(INSTALL_DATA) $$i $(DESTDIR)$(pkglibdir)/. ; \
-	done;
-
-EXTRA_DIST = Archetype.itk Toplevel.itk Widget.itk itk.tcl tclIndex
+EXTRA_DIST = $(brlcadscript_SCRIPTS)

@@ -1464,6 +1464,10 @@ AC_SUBST(ITCL_LIBS)
 ITK_LIBS='${top_builddir}/src/other/incrTcl/itk/libitk${ITCL_VERSION}.la'
 AC_SUBST(ITK_LIBS)
 
+dnl sample applications
+SAMPLE_APPLICATIONS_DIR='${prefix}/sample_applications'
+AC_SUBST(SAMPLE_APPLICATIONS_DIR)
+
 
 AC_CONFIG_FILES([
 	Makefile
@@ -1595,7 +1599,6 @@ AC_CONFIG_FILES([
 	src/rt/Makefile
 	src/rttherm/Makefile
 	src/sample_applications/Makefile
-	src/sample_applications/mk
 	src/sig/Makefile
 	src/tab/Makefile
 	src/tclscripts/Makefile

@@ -25,10 +25,8 @@ AM_CFLAGS = ${X_CFLAGS}
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
-pkglibdir = $(libdir)/itk3.3
+brlcadscriptdir = $(libdir)/itk3.3
 
-install-data-hook:
-	@mkdir -p $(DESTDIR)$(pkglibdir)
-	$(INSTALL_DATA) $(top_builddir)/src/other/incrTcl/itk/pkgIndex.tcl $(DESTDIR)$(pkglibdir)/. 
+brlcadscript_SCRIPTS = pkgIndex.tcl
 
-EXTRA_DIST = pkgIndex.tcl
+EXTRA_DIST = $(brlcadscript_SCRIPTS)

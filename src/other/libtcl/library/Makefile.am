@@ -13,7 +13,7 @@ SUBDIRS = \
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
-brlcadscriptdir = @TCL_LIBRARY@
+brlcadscriptdir = $(TCL_LIBRARY)
 
 brlcadscript_SCRIPTS = \
 	auto.tcl \

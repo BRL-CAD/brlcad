@@ -121,6 +121,9 @@ bin_PROGRAMS = \
 	xyz-pl \
 	yuv-pix
 
+# XXX - doesn't work, needs to be updated to newer dm interface
+# noinst_PROGRAMS = pl-dm
+
 dist_bin_SCRIPTS = rtwizard morphedit.tcl
 
 pixsubst_SOURCES = pixsubst.c
@@ -267,6 +270,10 @@ pixstat_LDADD = ${LIBM}
 
 pixhist3d_pl_SOURCES = pixhist3d-pl.c
 pixhist3d_pl_LDADD = ${BN}
+
+# XXX - example code doesn't work so disable for now
+# pl_dm_SOURCES = pl-dm.c
+# pl_dm_LDADD = ${BU} ${DM}
 
 pl_sgi_SOURCES = pl-sgi.c
 pl_sgi_LDADD = ${SGIGL} ${BU}
@@ -544,3 +551,7 @@ EXTRA_DIST = $(man_MANS)
 
 pl-X10.1: $(srcdir)/pl-X.1
 	cp $? $(srcdir)/$@
+
+sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
+
+sample_applications_DATA = pl-dm.c

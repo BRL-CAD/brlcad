@@ -57,8 +57,8 @@ EXTRA_DIST = \
 	brlcad.spec.in \
 	libtool
 
-MAINTAINERCLEANFILES = \
-	@CONFIG_CACHE@ \
+DISTCLEANFILES = \
+	$(CONFIG_CACHE) \
 	Makefile.in \
 	aclocal.m4 \
 	autom4te.cache \

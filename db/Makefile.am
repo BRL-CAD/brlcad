@@ -38,11 +38,12 @@ MODELS = \
 	world.asc \
 	xmp.asc
 
+DISTCLEANFILES = ${MODELS:asc=g}
+
 EXTRA_DIST = \
+	${DISTCLEANFILES} \
 	${MODELS} \
 	db.php
-
-MAINTAINERCLEANFILES = Makefile.in
 
 all: ${MODELS:asc=g}
 
@@ -67,6 +68,6 @@ uninstall:
 clean:
 	@list='${MODELS:asc=g}'; for p in $$list; do \
 	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " rm -f $$f"; \
-	  rm -f $$f; \
+	  echo " rm -f $(builddir)/db/$$f"; \
+	  rm -f $(builddir)/db/$$f; \
 	done

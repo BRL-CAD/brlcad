@@ -19,7 +19,8 @@
 struct application	ap;
 
 /* routines for shootray() to call on hit or miss */
-extern int hit(struct application *ap, struct partition *PartHeadp), miss(register struct application *ap);
+extern int hit(struct application *ap, struct partition *PartHeadp, struct seg *segs);
+extern int miss(register struct application *ap);
 
 char	usage[] = "\
 Usage:  rtexample model.g objects...\n";

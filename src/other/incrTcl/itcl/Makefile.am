@@ -34,8 +34,8 @@ MAINTAINERCLEANFILES = \
 
 pkglibdir = $(libdir)/itcl3.3
 
-install-data-hook:
-	@mkdir -p $(DESTDIR)$(pkglibdir)
-	$(INSTALL_DATA) $(top_builddir)/src/other/incrTcl/itcl/pkgIndex.tcl $(DESTDIR)$(pkglibdir)/. 
+brlcadscriptdir = $(libdir)/itcl3.3
 
-EXTRA_DIST = pkgIndex.tcl
+brlcadscript_SCRIPTS = pkgIndex.tcl
+
+EXTRA_DIST = $(brlcadscript_SCRIPTS)

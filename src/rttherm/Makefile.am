@@ -45,6 +45,6 @@ ssamp_bw_SOURCES = \
 #	pixtest.c \
 #	spectrum.c
 
-BUILT_SOURCES = vers.c
+#BUILT_SOURCES = vers.c
 vers.c: $(ALLSRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh version "Thermal Multi-Spectral RT" > $@

@@ -27,7 +27,6 @@ kitchensink_dirs = \
 	libmultispectral \
 	libtclcad \
 	libtermio \
-	libwdb \
 	anim \
 	brlman \
 	burst \
@@ -102,6 +101,7 @@ endif
 # end ONLY_BENCHMARK
 
 DIST_SUBDIRS= \
+	$(SUBDIRS) \
 	canon
 
 MAINTAINERCLEANFILES = \

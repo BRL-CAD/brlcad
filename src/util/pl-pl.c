@@ -22,21 +22,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <unistd.h>
 
-#include "common.h"
-
-
 #include "machine.h"
 #include "bu.h"
+
 
 struct uplot {
 	int	targ;	/* type of args */

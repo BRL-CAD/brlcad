@@ -2,6 +2,10 @@
 
 SUBDIRS = \
 	doc \
+	library
+
+DIST_SUBDIRS = \
+	doc \
 	generic \
 	library \
 	unix
@@ -84,23 +88,35 @@ unix_src = \
 	$(srcdir)/unix/tclUnixThrd.c \
 	$(srcdir)/unix/tclUnixTime.c
 
-lib_LTLIBRARIES = libtcl.la libtcl@TCL_VERSION@.la
+lib_LTLIBRARIES = \
+	libtcl.la \
+	libtcl@TCL_VERSION@.la
 
 libtcl_la_SOURCES = $(generic_src) $(unix_src)
+
 libtcl_la_LDFLAGS = -version-info 19:1
+
 libtcl_la_LIBADD = ${LIBZ} ${LIBM}
 
+
 libtcl@TCL_VERSION@_la_SOURCES = $(libtcl_la_SOURCES)
+
 libtcl@TCL_VERSION@_la_LDFLAGS = $(libtcl_la_LDFLAGS)
+
 libtcl@TCL_VERSION@_la_LIBADD = $(libtcl_la_LIBADD)
+
 
 bin_PROGRAMS = tclsh tclsh.static
 
 tclsh_SOURCES = unix/tclAppInit.c
-tclsh_LDADD = $(lib_LTLIBRARIES) ${TCL} libtcl.la
 
+tclsh_LDADD = $(lib_LTLIBRARIES) ${TCL}
+
+
+# XXX - should not have to do this, but quick fix for muves folks for now
 tclsh_static_SOURCES = unix/tclAppInit.c
 tclsh_static_LDADD = .libs/libtcl.a
+
 
 tcllibdir = ${libdir}
 

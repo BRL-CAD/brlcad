@@ -1,16 +1,12 @@
 # $Id$
 
-tklib_DATA = tkConfig.sh
+tklibdir = ${libdir}
 
-noinst_HEADERS = \
-	tkUnixDefault.h \
-	tkUnixInt.h \
-	tkUnixPort.h
+tklib_DATA = tkConfig.sh
 
 EXTRA_DIST = \
 	README \
 	mkLinks \
-	tkAppInit.c \
 	tkConfig.sh.in \
 	tkUnix.c \
 	tkUnix3d.c \
@@ -38,8 +34,7 @@ EXTRA_DIST = \
 	tkUnixWm.c \
 	tkUnixXId.c
 
-brlcadincludedir = $(includedir)/brlcad
-
-tklibdir = ${libdir}
-tkdir = ${prefix}/tk8.4
-
+noinst_HEADERS = \
+	tkUnixDefault.h \
+	tkUnixInt.h \
+	tkUnixPort.h

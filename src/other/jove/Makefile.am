@@ -1,6 +1,7 @@
 # $Id$
 
 bin_PROGRAMS = jove findcom
+
 bin_SCRIPTS = teach-jove
 
 SRCS = \
@@ -28,12 +29,28 @@ jove_SOURCES = \
 	version.c
 
 jove_LDADD = ${CURSES}
-findcom_SOURCES = findcom.c tune.c
 
-BUILT_SOURCES = tune.c version.c
-noinst_HEADERS = jove.h jove_temp.h termcap.h
+findcom_SOURCES = \
+	findcom.c \
+	tune.c
 
-dist_man_MANS = jove.1 describe.com.1 teach-jove.1
+BUILT_SOURCES = \
+	tune.c \
+	version.c
+
+noinst_HEADERS = \
+	jove.h \
+	jove_temp.h \
+	termcap.h
+
+dist_man_MANS = \
+	jove.1 \
+	describe.com.1 \
+	teach-jove.1
+
+DISTCLEANFILES = \
+	version.c \
+	version.number
 
 tune.c:	$(top_srcdir)/src/other/jove/jove_tune.c
 	rm -f tune.c
@@ -55,5 +72,6 @@ install-data-local:
 EXTRA_DIST = \
 	describe.com.1 \
 	jove_tune.c \
+	mkversion.sh \
 	teach-jove.1 \
 	teach-jove.sh

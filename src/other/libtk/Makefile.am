@@ -2,22 +2,13 @@
 
 SUBDIRS = \
 	doc \
+	library
+
+DIST_SUBDIRS = \
+	doc \
 	generic \
 	library \
 	unix
-
-EXTRA_DIST = \
-	README \
-	bitmaps \
-	changes \
-	compat \
-	license.terms \
-	mac \
-	macosx \
-	tests \
-	unix \
-	win \
-	xlib
 
 generic_src = \
 	$(srcdir)/generic/tk3d.c \
@@ -118,18 +109,45 @@ unix_src = \
 	$(srcdir)/unix/tkUnixWm.c \
 	$(srcdir)/unix/tkUnixXId.c
 
-lib_LTLIBRARIES = libtk@TK_VERSION@.la libtk.la
+EXTRA_DIST = \
+	README \
+	bitmaps \
+	changes \
+	compat \
+	license.terms \
+	mac \
+	macosx \
+	tests \
+	win \
+	xlib
+
+lib_LTLIBRARIES = \
+	libtk.la \
+	libtk@TK_VERSION@.la 
 
 libtk_la_SOURCES = $(generic_src) $(unix_src)
+
 libtk_la_LDFLAGS = -version-info 19:1
+
 libtk_la_LIBADD = ${X_LIBS}
 
+
 libtk@TK_VERSION@_la_SOURCES = $(libtk_la_SOURCES)
+
 libtk@TK_VERSION@_la_LDFLAGS = $(libtk_la_LDFLAGS)
 
-bin_PROGRAMS = wish #wish.static
-wish_SOURCES = unix/tkAppInit.c
+libtk@TK_VERSION@_la_LIBADD = $(libtk_la_LIBADD)
+
+
+bin_PROGRAMS = wish
+
+# moved from unix to this dir
+wish_SOURCES = tkAppInit.c
+
 wish_LDADD = $(lib_LTLIBRARIES) ${TCL}
+
+
+tklibdir = ${libdir}
 
 AM_CPPFLAGS = \
 	-DTK_LIBRARY="\"${TK_LIBRARY}\"" \

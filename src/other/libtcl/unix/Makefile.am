@@ -1,6 +1,7 @@
 # $Id$
 
 tcllibdir = ${libdir}
+
 tcllib_DATA = tclConfig.sh
 
 EXTRA_DIST = \
@@ -24,4 +25,3 @@ EXTRA_DIST = \
 noinst_HEADERS = \
 	tclUnixPort.h \
 	tclUnixThrd.h
-

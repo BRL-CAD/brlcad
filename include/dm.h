@@ -2,17 +2,17 @@
 #define SEEN_DM_H
 
 #if defined(WIN32) && !defined(__CYGWIN__)
-#ifdef DM_EXPORT_DLL
-#define DM_EXPORT __declspec(dllexport)
+#  ifdef DM_EXPORT_DLL
+#    define DM_EXPORT __declspec(dllexport)
+#  else
+#    define DM_EXPORT __declspec(dllimport)
+#  endif
 #else
-#define DM_EXPORT __declspec(dllimport)
-#endif
-#else
-#define DM_EXPORT
+#  define DM_EXPORT
 #endif
 
 #ifndef SEEN_BU_H
-#include <bu.h>
+#  include <bu.h>
 #endif
 
 #include "fbserv_obj.h"

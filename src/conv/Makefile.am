@@ -8,6 +8,10 @@ bin_PROGRAMS = \
 	g2asc \
 	pix2asc
 
+EXTRA_DIST = \
+	g-xxx_facets.c \
+	g-xxx.c
+
 else !ONLY_BENCHMARK
 
 bin_PROGRAMS = \
@@ -49,13 +53,17 @@ bin_PROGRAMS = \
 	tankill-g \
 	viewpoint-g
 
+noinst_PROGRAMS = \
+	g-xxx \
+	g-xxx_facets
+
 endif
 # end ONLY_BENCHMARK
 
 asc2g_LDADD = ${WDB} ${RT} ${TCL}
 asc_nmg_LDADD = ${WDB} ${RT} 
-bot_shell_vtk_LDADD = ${RT} ${SYSV} 
 bot_bldxf_LDADD = ${RT}
+bot_shell_vtk_LDADD = ${RT} ${SYSV} 
 cy_g_LDADD = ${WDB} ${RT} 
 dbupgrade_LDADD = ${WDB} ${RT} 
 dxf_g_LDADD = ${WDB} ${RT} 
@@ -76,6 +84,8 @@ g_tankill_LDADD = ${RT}
 g_vrml_LDADD = ${WDB} ${RT} 
 g_wave_LDADD = ${WDB} ${RT} 
 g_x3d_LDADD = ${WDB} ${RT} 
+g_xxx_LDADD = ${WDB} ${RT} 
+g_xxx_facets_LDADD = ${WDB} ${RT} 
 nastran_g_LDADD = ${WDB} ${RT} 
 nmg_bot_LDADD = ${WDB} ${RT} 
 nmg_rib_LDADD = ${WDB} ${RT} 
@@ -113,6 +123,8 @@ g_tankill_SOURCES = g-tankill.c
 g_vrml_SOURCES = g-vrml.c 
 g_wave_SOURCES = g-wave.c 
 g_x3d_SOURCES = g-x3d.c 
+g_xxx_SOURCES = g-xxx.c 
+g_xxx_facets_SOURCES = g-xxx_facets.c 
 nastran_g_SOURCES = nastran-g.c 
 nmg_bot_SOURCES = nmg-bot.c 
 nmg_rib_SOURCES = nmg-rib.c 
@@ -157,6 +169,10 @@ dist_man_MANS = \
 	tankill-g.1 \
 	viewpoint-g.1
 
-EXTRA_DIST = \
-	g-xxx_facets.c \
-	g-xxx.c
+sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
+
+sample_applications_DATA = \
+	g-xxx.c \
+	g-xxx_facets.c
+
+

@@ -28,14 +28,15 @@ static const char RCSid[] = "$Header$";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
@@ -45,6 +46,7 @@ static const char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"
+
 
 BU_EXTERN( void comb_func , ( struct db_i *dbip , struct directory *dp, genptr_t data ) );
 BU_EXTERN( void primitive_func , ( struct db_i *dbip , struct directory *dp, genptr_t data ) );

@@ -26,6 +26,10 @@ bin_PROGRAMS = \
 	rtwalk \
 	rtweight \
 	rtxray
+
+noinst_PROGRAMS = \
+	rtexample
+
 endif
 
 ALLSRCS = \
@@ -116,6 +120,9 @@ rtedge_SOURCES = \
 	$(COMMON) \
 	rtedge_vers.c \
 	viewedge.c
+
+rtexample_SOURCES = \
+	rtexample.c
 
 rtfrac_vers.c: $(COMMON) viewfrac.c
 	@SH@ $(top_srcdir)/sh/vers.sh version "RT frac?" > $@
@@ -249,3 +256,7 @@ EXTRA_DIST = \
 	$(ALLSRCS) \
 	$(man_MANS)
 
+
+sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
+
+sample_applications_DATA = rtexample.c
