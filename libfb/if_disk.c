@@ -29,24 +29,24 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define FILE_CMAP_ADDR	((long) ifp->if_width*ifp->if_height\
 			*sizeof(Pixel))
 
-_LOCAL_ int	disk_dopen(),
-		disk_dclose(),
-		disk_dclear(),
-		disk_bread(),
-		disk_bwrite(),
-		disk_cmread(),
-		disk_cmwrite();
+_LOCAL_ int	dsk_dopen(),
+		dsk_dclose(),
+		dsk_dclear(),
+		dsk_bread(),
+		dsk_bwrite(),
+		dsk_cmread(),
+		dsk_cmwrite();
 
 FBIO disk_interface =
 		{
-		disk_dopen,
-		disk_dclose,
+		dsk_dopen,
+		dsk_dclose,
 		fb_null,		/* dreset */
-		disk_dclear,
-		disk_bread,
-		disk_bwrite,
-		disk_cmread,
-		disk_cmwrite,
+		dsk_dclear,
+		dsk_bread,
+		dsk_bwrite,
+		dsk_cmread,
+		dsk_cmwrite,
 		fb_null,		/* viewport_set */
 		fb_null,		/* window_set */
 		fb_null,		/* zoom_set */
@@ -71,7 +71,7 @@ FBIO disk_interface =
 		};
 
 _LOCAL_ int
-disk_dopen( ifp, file, width, height )
+dsk_dopen( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -106,14 +106,14 @@ int	width, height;
 	}
 
 _LOCAL_ int
-disk_dclose( ifp )
+dsk_dclose( ifp )
 FBIO	*ifp;
 	{
 	return	close( ifp->if_fd );
 	}
 
 _LOCAL_ int
-disk_dclear( ifp, bgpp )
+dsk_dclear( ifp, bgpp )
 FBIO	*ifp;
 Pixel	*bgpp;
 	{
@@ -126,7 +126,7 @@ Pixel	*bgpp;
 	}
 
 _LOCAL_ int
-disk_bread( ifp, x, y, pixelp, count )
+dsk_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int		x,  y;
 Pixel		*pixelp;
@@ -160,7 +160,7 @@ int		count;
 	}
 
 _LOCAL_ int
-disk_bwrite( ifp, x, y, pixelp, count )
+dsk_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 Pixel	*pixelp;
@@ -193,7 +193,7 @@ long	count;
 	}
 
 _LOCAL_ int
-disk_cmread( ifp, cmap )
+dsk_cmread( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 	{
@@ -217,7 +217,7 @@ ColorMap	*cmap;
 	}
 
 _LOCAL_ int
-disk_cmwrite( ifp, cmap )
+dsk_cmwrite( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 	{
