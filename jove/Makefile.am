@@ -8,8 +8,9 @@ jove_LDADD = @CURSES@
 findcom_SOURCES = findcom.c tune.c
 
 BUILT_SOURCES = tune.c version.c
+noinst_HEADERS = jove.h jove_temp.h termcap.h
 
-man_MANS = jove.1 describe.com.1 teach-jove.1
+dist_man_MANS = jove.1 describe.com.1 teach-jove.1
 
 tune.c:	$(top_srcdir)/jove/jove_tune.c
 	rm -f tune.c
@@ -21,9 +22,8 @@ version.c:
 teach-jove:	$(top_srcdir)/jove/teach-jove.sh
 	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/jove/teach-jove.sh > teach-jove
 
-
 install-data-local:
 	$(INSTALL_DATA) $(srcdir)/describe.com.1 $(libdir)/describe.com
 	$(INSTALL_DATA) $(srcdir)/teach-jove.1 $(libdir)/teach-jove
 
-EXTRA_DIST = $(man_MANS) describe.com.1 teach-jove.1 jove_tune.c
+EXTRA_DIST = describe.com.1 teach-jove.1 jove_tune.c teach-jove.sh

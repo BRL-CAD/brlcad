@@ -9,6 +9,8 @@ rtsrv_SOURCES = rtsrv.c $(top_srcdir)/rt/do.c $(top_srcdir)/rt/opt.c $(top_srcdi
 rtsrv_LDADD = @PKG@ @OPTICAL@ @RT@
 rtsrv_CFLAGS = -DRTSRV
 
+noinst_HEADERS = ihost.h protocol.h
+
 vers.c:
 	$(top_srcdir)/sh/newvers2.sh version "Network-Distributed RT (REMRT)" > vers.c
 
