@@ -107,7 +107,6 @@ struct rt_i		*rtip;
 	{
 		struct snurb * s;
 		struct nurb_specific * n;
-		struct snurb * stmp;
 
 		GETSTRUCT( n, nurb_specific);
 
@@ -295,7 +294,6 @@ struct seg		*seghead;
 	while( hit_list.next != NULL_HIT )
 	{
 		struct nurb_hit * h1, * h2;
-		struct seg * seg2p;
 
 		RT_GET_SEG( segp, ap->a_resource);
 
@@ -370,8 +368,8 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct nurb_specific *nurb =
-		(struct nurb_specific *)stp->st_specific;
+/*	register struct nurb_specific *nurb =
+		(struct nurb_specific *)stp->st_specific; */
 
 	struct snurb * n  = (struct snurb *) hitp->hit_private;
 	fastf_t u = hitp->hit_vpriv[0];
@@ -403,8 +401,8 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-	register struct nurb_specific *nurb =
-		(struct nurb_specific *)stp->st_specific;
+/*	register struct nurb_specific *nurb =
+		(struct nurb_specific *)stp->st_specific; */
 	struct snurb * srf = (struct snurb *) hitp->hit_private;
 	struct snurb * us, *vs, * uus, * vvs, *uvs;
 	fastf_t *ue, *ve, *uue, *vve, *uve, *se;
@@ -567,8 +565,8 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct nurb_specific *nurb =
-		(struct nurb_specific *)stp->st_specific;
+/*	register struct nurb_specific *nurb =
+		(struct nurb_specific *)stp->st_specific; */
 	uvp->uv_u = hitp->hit_vpriv[0];
 	uvp->uv_v = hitp->hit_vpriv[1];
 	return;
@@ -727,9 +725,7 @@ register CONST mat_t		mat;
 
 	struct rt_nurb_internal * sip;
 	union record 		*rp;
-	register int		i,j;
-	LOCAL vect_t		base_vect;
-	int 			currec;
+	register int		i;
 	int			s;
 
 	RT_CK_EXTERNAL( ep );
@@ -822,8 +818,7 @@ plane_t plane2;
 			* s_list,
 			* osrf;
 	int 		dir,
-			sub,
-			origin;
+			sub;
 
 	point_t 	vmin,
 			vmax;
@@ -971,7 +966,6 @@ struct uv_hit * h;
 	struct nurb_hit * hit;
 	fastf_t * pt;
 	point_t vecsub;
-	fastf_t dist;
 
 	hit = (struct nurb_hit *) rt_malloc( sizeof (struct nurb_hit),
 		"rt_conv_uv:nurb hit");
@@ -1087,7 +1081,6 @@ double				local2mm;
 	register int		rec_ptr;
 	struct rt_nurb_internal	* sip;
 	union record		* rec;
-	point_t			base_pt;
 	int			s;
 	int			grans;
 	int			total_grans;

@@ -59,9 +59,8 @@ struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-	register struct pipe_specific *pipe;
+/*	register struct pipe_specific *pipe; */
 	struct rt_pipe_internal	*pip;
-	int			i;
 
 	RT_CK_DB_INTERNAL( ip );
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
@@ -77,8 +76,8 @@ void
 rt_pipe_print( stp )
 register CONST struct soltab *stp;
 {
-	register struct pipe_specific *pipe =
-		(struct pipe_specific *)stp->st_specific;
+/*	register struct pipe_specific *pipe =
+		(struct pipe_specific *)stp->st_specific; */
 }
 
 /*
@@ -99,9 +98,9 @@ register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
 {
-	register struct pipe_specific *pipe =
+/*	register struct pipe_specific *pipe =
 		(struct pipe_specific *)stp->st_specific;
-	register struct seg *segp;
+	register struct seg *segp; */
 
 	return(0);			/* MISS */
 }
@@ -135,8 +134,8 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct pipe_specific *pipe =
-		(struct pipe_specific *)stp->st_specific;
+/*	register struct pipe_specific *pipe =
+		(struct pipe_specific *)stp->st_specific; */
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
@@ -152,8 +151,8 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-	register struct pipe_specific *pipe =
-		(struct pipe_specific *)stp->st_specific;
+/*	register struct pipe_specific *pipe =
+		(struct pipe_specific *)stp->st_specific; */
 
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
@@ -176,8 +175,8 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct pipe_specific *pipe =
-		(struct pipe_specific *)stp->st_specific;
+/*	register struct pipe_specific *pipe =
+		(struct pipe_specific *)stp->st_specific; */
 }
 
 /*

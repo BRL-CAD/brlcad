@@ -216,7 +216,6 @@ struct rt_i		*rtip;
 {
 	register struct part_specific *part;
 	struct rt_part_internal	*pip;
-	int			i;
 	vect_t		Hunit;
 	vect_t		a, b;
 	mat_t		R, Rinv;
@@ -726,8 +725,8 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct part_specific *part =
-		(struct part_specific *)stp->st_specific;
+/*	register struct part_specific *part =
+		(struct part_specific *)stp->st_specific; */
 }
 
 /*
