@@ -25,6 +25,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <string.h>
 #include "machine.h"
 
 unsigned char	obuf[3*1024];
