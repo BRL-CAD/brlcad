@@ -351,7 +351,7 @@ char **argv;
 	while(1) {
 		/* This test stops optimizers from complaining about an infinite loop */
 		if( (rateflag = event_check( rateflag )) < 0 )  break;
-
+#if 0
 		/* apply solid editing changes if necessary */
 		if( sedraw > 0) {
 			sedit();
@@ -360,7 +360,7 @@ char **argv;
 			dmaflag = 1;
 #endif
 		}
-
+#endif
 		/*
 		 * Cause the control portion of the displaylist to be
 		 * updated to reflect the changes made above.
