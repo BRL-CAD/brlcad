@@ -193,7 +193,7 @@ long		offset;		/* byte offset from start of file */
 		return(0);
 	}
 	RES_ACQUIRE( &rt_g.res_syscall );
-#ifdef USE_UNIX_IO
+#ifdef HAVE_UNIX_IO
 	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
 		rt_log("db_read: lseek returns %d not %d\n", s, offset);
 		rt_bomb("Goodbye");
@@ -252,7 +252,7 @@ long		offset;
 		return(-1);
 	}
 	RES_ACQUIRE( &rt_g.res_syscall );
-#ifdef USE_UNIX_IO
+#ifdef HAVE_UNIX_IO
 	(void)lseek( dbip->dbi_fd, offset, 0 );
 	got = write( dbip->dbi_fd, addr, count );
 #else
