@@ -34,10 +34,6 @@
 #include "tclWinInt.h"
 #endif
 
-#ifndef blkcnt_t
-# define blkcnt_t fsblkcnt_t
-#endif
-
 /* 
  * struct FilesystemRecord --
  * 
@@ -203,7 +199,7 @@ Tcl_Stat(path, oldStyleBuf)
 	oldStyleBuf->st_ctime   = buf.st_ctime;
 #ifdef HAVE_ST_BLOCKS
 	oldStyleBuf->st_blksize = buf.st_blksize;
-	oldStyleBuf->st_blocks  = (blkcnt_t) buf.st_blocks;
+	oldStyleBuf->st_blocks  = buf.st_blocks;
 #endif
     }
     return ret;
