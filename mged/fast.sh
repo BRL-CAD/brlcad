@@ -9,6 +9,9 @@
 
 SILENT="$1"
 
+# Prevent the massive compilation from degrading interactive windows.
+renice 12 $$ > /dev/null 2>&1
+
 cake ${SILENT} \
  adc.o \
  anal.o \
