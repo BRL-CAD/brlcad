@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  87/04/14  20:19:12  dpk
+ * Fixed casting on RunEdit call
+ * 
  * Revision 2.1  84/12/31  16:43:09  dpk
  * Make CTL(Y)==CTL(R) in RunEdit() (command line editor)
  * 
@@ -295,6 +298,8 @@ LINE	*l1,
 		goal = RMargin - (RMargin / 10);
 		Eol();	/* End of line */
 		if ((curcol = calc_pos(linebuf, curchar)) == 0) {
+			if (curline->l_next == 0)
+				break;
 			SetLine(curline->l_next);	/* Skip blank lines */
 			nlines--;
 		} else if (curcol < goal) {
@@ -324,10 +329,14 @@ LINE	*l1,
 					DelNChar();
 				}
 			} else {
+				if (curline->l_next == 0)
+					break;
 				SetLine(curline->l_next);
 				nlines--;
 			}
 		} else {
+			if (curline->l_next == 0)
+				break;
 			SetLine(curline->l_next);
 			nlines--;
 		}
