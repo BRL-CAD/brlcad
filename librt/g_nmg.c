@@ -1013,8 +1013,8 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-	register struct nmg_specific *nmg =
-		(struct nmg_specific *)stp->st_specific;
+/*	register struct nmg_specific *nmg =
+		(struct nmg_specific *)stp->st_specific; */
 
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
@@ -1037,8 +1037,8 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct nmg_specific *nmg =
-		(struct nmg_specific *)stp->st_specific;
+/*	register struct nmg_specific *nmg =
+		(struct nmg_specific *)stp->st_specific; */
 }
 
 /*
@@ -1681,7 +1681,6 @@ double		local2mm;
 		{
 			struct face_g	*fg = (struct face_g *)ip;
 			struct disk_face_g	*d;
-			point_t			min, max;
 			plane_t			plane;
 			d = &((struct disk_face_g *)op)[oindex];
 			NMG_CK_FACE_G(fg);
@@ -2008,7 +2007,6 @@ mat_t		mat;
 			struct face_g	*fg = (struct face_g *)op;
 			struct disk_face_g	*d;
 			plane_t			plane;
-			point_t			min, max;
 			d = &((struct disk_face_g *)ip)[iindex];
 			NMG_CK_FACE_G(fg);
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_MAGIC );
@@ -2687,7 +2685,6 @@ CONST struct rt_external	*ep;
 register CONST mat_t		mat;
 {
 	struct model			*m;
-	struct nmgregion		*r;
 	union record			*rp;
 
 	RT_CK_EXTERNAL( ep );
@@ -2720,7 +2717,6 @@ CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
 	struct model			*m;
-	union record			*rp;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_NMG )  return(-1);
@@ -2747,7 +2743,6 @@ double			mm2local;
 {
 	register struct model	*m =
 		(struct model *)ip->idb_ptr;
-	char	buf[256];
 
 	NMG_CK_MODEL(m);
 	rt_vls_strcat( str, "n-Manifold Geometry solid (NMG)\n");

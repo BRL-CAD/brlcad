@@ -600,11 +600,11 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	struct rt_half_internal	*vip;
-	register int	i;
-	struct shell	*s;
-	struct vertex	**verts;	/* dynamic array of pointers */
-	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
-	struct faceuse	*fu;
+/*	register int	i;		*/
+/*	struct shell	*s;		*/
+/*	struct vertex	**verts;	/* dynamic array of pointers */
+/*	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
+/*	struct faceuse	*fu;		*/
 
 	RT_CK_DB_INTERNAL(ip);
 	vip = (struct rt_half_internal *)ip->idb_ptr;

@@ -199,7 +199,7 @@ epa_plot()
 
 int
 epa_import( epa, rp, matp )
-struct epa_internal	*epa;
+struct rt_epa_internal	*epa;
 union record		*rp;
 register matp_t		matp;
 {
