@@ -1367,7 +1367,7 @@ char	      **argv;
 	if( strcmp(type, "comb")==0 ) {
 		struct rt_comb_internal *comb;
 		id = intern.idb_type = ID_COMBINATION;
-		intern.idb_ptr = bu_malloc( sizeof(struct rt_comb_internal),
+		intern.idb_ptr = bu_calloc( sizeof(struct rt_comb_internal), 1,
 					    "rt_db_put" );
 		/* Create combination with appropriate values */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -1400,7 +1400,7 @@ char	      **argv;
 		}
 
 		id = intern.idb_type = stlp->id;
-		intern.idb_ptr = bu_malloc( stlp->db_internal_size,
+		intern.idb_ptr = bu_calloc( stlp->db_internal_size, 1,
 					    "rt_db_put" );
 		*((long *)intern.idb_ptr) = stlp->magic;
 		if( bu_structparse_argv(interp, argc-3, argv+3, stlp->parsetab,
