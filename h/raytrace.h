@@ -1508,7 +1508,7 @@ struct ray_data {
 };
 
 
-#if FAST_NMG
+#ifdef FAST_NMG
 #define GET_HITMISS(_p) { \
 	(_p) = BU_LIST_FIRST( hitmiss, &rt_g.rtg_nmgfree ); \
 	if( BU_LIST_IS_HEAD( (_p), &rt_g.rtg_nmgfree ) ) \
