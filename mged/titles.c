@@ -93,20 +93,15 @@ dotitles()
 	dmp->dmr_2d_line(XLIM, YPOS, XLIM, 2047, 0);
 #undef YPOS
 
-	/* Menu area border */
-	if( illump != SOLID_NULL )  {
-		dmp->dmr_2d_line(  XLIM,  2047,  XLIM,  TITLE_YBASE-TEXT1_DY, 0 );
-	}
-
 	/*
 	 * Print information about object illuminated
 	 */
 	y = MENUY;
 
-	if( illump != SOLID_NULL )  {
+	if( illump != SOLID_NULL &&
+	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
 		for( i=0; i <= illump->s_last; i++ )  {
-			if( i == ipathpos  &&
-			    (state == ST_O_PATH || state == ST_O_EDIT) )  {
+			if( i == ipathpos  &&  state == ST_O_PATH )  {
 				dmp->dmr_puts( "[MATRIX]", MENUX, y, 0, DM_WHITE );
 				y += MENU_DY;
 			}
@@ -115,17 +110,8 @@ dotitles()
 		}
 	}
 
-	/* put horiz lines to seperate path info and menu */
-	if( state == ST_S_EDIT ) {
-		/* solid edit */
-		dmp->dmr_2d_line(XLIM, y-MENU_DY/2, 2047, y-MENU_DY/2, 0);
-		dmp->dmr_2d_line(XLIM, y-MENU_DY/2+10, 2047, y-MENU_DY/2+10, 0);
-	}
-
 	/*
-	 * The "y" value is passed so that the menu can be presented
-	 * even when in illuminate path mode.
-	 * This is probably unlikely, but is there if needed.
+	 * The top of the menu (if any) begins at the Y value specified.
 	 */
 	menu_display( y );
 
@@ -210,13 +196,6 @@ dotitles()
 		MAT4X3PNT( pos_view, model2objview, temp );
 		dmp->dmr_puts( "H", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 		break;
-	}
-
-	/* prefix item selected with "==>" to let user know it is selected */
-	if( es_edflag >= 0 && menuflag ) {
-		dmp->dmr_puts("==>", MENUX-114, menuyy, 0, DM_WHITE);
-		dmp->dmr_puts("==>", MENUX-114, menuyy, 0, DM_WHITE);
-		dmp->dmr_puts("==>", MENUX-114, menuyy, 0, DM_WHITE);
 	}
 
 	/*
