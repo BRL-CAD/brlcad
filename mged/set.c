@@ -71,7 +71,7 @@ struct _mged_variables default_mged_variables = {
 /* mv_send_key */		0,
 /* mv_hot_key */		0,
 /* mv_context */		1,
-/* mv_dlist */			1,
+/* mv_dlist */			0,
 /* mv_use_air */		0,
 /* mv_listen */			0,
 /* mv_port */			0,
@@ -367,55 +367,67 @@ set_absolute_model_tran()
 static void
 set_dlist()
 {
-  struct dm_list *dmlp;
-  struct dm_list *save_dmlp;
+  int save_dlist_id = 0;
+  struct dm_list *dlp;
+  struct dm_list *dlp1;
+  struct dm_list *dlp2;
+  struct dm_list *save_dlp;
 
-  save_dmlp = curr_dm_list;
+  /* save current display manager */
+  save_dlp = curr_dm_list;
 
-#ifdef DO_DISPLAY_LISTS
   if(mged_variables->mv_dlist){
     /* create display lists */
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-      if(dmlp->dml_mged_variables != save_dmlp->dml_mged_variables)
+
+    /* for each display manager dlp1 that shares its' dml_mged_variables with save_dlp */
+    FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l) {
+      if (dlp1->dml_mged_variables != save_dlp->dml_mged_variables) {
 	continue;
+      }
 
-      curr_dm_list = dmlp;
-
-      /* if display manager supports display lists */
-      if(displaylist){
-	dirty = 1;
-#ifdef DO_SINGLE_DISPLAY_LIST
-	createDList(&HeadSolid);
-#else
-	createDLists(&HeadSolid); 
-#endif
+      if (dlp1->dml_dmp->dm_displaylist &&
+	  dlp1->dml_dlist_state->dl_active == 0) {
+	curr_dm_list = dlp1;
+	createDLists(&HeadSolid);
+	dlp1->dml_dlist_state->dl_active = 1;
+	dlp1->dml_dirty = 1;
       }
     }
   }else{
-    /* free display lists */
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-      if(dmlp->dml_mged_variables != save_dmlp->dml_mged_variables)
+    /*
+     * Free display lists if not being used by another display manager
+     */
+
+    /* for each display manager dlp1 that shares its' dml_mged_variables with save_dlp */
+    FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l) {
+      if (dlp1->dml_mged_variables != save_dlp->dml_mged_variables)
 	continue;
 
-      curr_dm_list = dmlp;
+      if (dlp1->dml_dlist_state->dl_active) {
+	/* for each display manager dlp2 that is sharing display lists with dlp1 */
+	FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l) {
+	  if (dlp2->dml_dlist_state != dlp1->dml_dlist_state) {
+	    continue;
+	  }
 
-      /* if display manager supports display lists */
-      if(displaylist){
-	dirty = 1;
-#ifdef DO_SINGLE_DISPLAY_LIST
-	DM_FREEDLISTS(dmp, HeadSolid.s_dlist, 1);
-#else
-	DM_FREEDLISTS(dmp, HeadSolid.s_dlist,
-			   BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
-			   HeadSolid.s_dlist + 1);
-#endif
+	  /* found a dlp2 that is actively using dlp1's display lists */
+	  if (dlp2->dml_mged_variables->mv_dlist)
+	    break;
+	}
+
+	/* these display lists are not being used, so free them */
+	if (BU_LIST_IS_HEAD(dlp2, &head_dm_list.l)) {
+	  dlp1->dml_dlist_state->dl_active = 0;
+	  DM_FREEDLISTS(dlp1->dml_dmp,
+			HeadSolid.s_dlist,
+			BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist - HeadSolid.s_dlist + 1);
+	}
       }
     }
   }
-#endif
 
-  /* restore */
-  curr_dm_list = save_dmlp;
+  /* restore current display manager */
+  curr_dm_list = save_dlp;
 }
 
 static void

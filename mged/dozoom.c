@@ -411,11 +411,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 #ifdef DO_DISPLAY_LISTS
 	  if(displaylist && mged_variables->mv_dlist){
-#ifdef DO_SINGLE_DISPLAY_LIST
-	    /* don't draw anything here --- just update variables */
-#else
 	    DM_DRAWDLIST(dmp, sp->s_dlist);
-#endif
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }else{
@@ -431,13 +427,6 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  }
 #endif
 	}
-
-#ifdef DO_SINGLE_DISPLAY_LIST
-	if(displaylist && mged_variables->mv_dlist){
-	  /* draw single display list containing all solids */
-	  DM_DRAWDLIST(dmp, 1);
-	}
-#endif
 
 	/* draw predictor vlist */
 	if(mged_variables->mv_predictor){
@@ -488,13 +477,6 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  }
 
 #ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
-	  /* draw in immediate mode */
-	  if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective) == TCL_OK){
-	    sp->s_flag = UP;
-	    ndrawn++;
-	  }
-#else
 	  if(displaylist && mged_variables->mv_dlist){
 	    DM_DRAWDLIST(dmp, sp->s_dlist);
 	    sp->s_flag = UP;
@@ -506,7 +488,6 @@ bn_mat_print("perspective_mat", perspective_mat);
 	      ndrawn++;
 	    }
 	  }
-#endif
 #else
 	  if( DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK){
 	    sp->s_flag = UP;
@@ -517,48 +498,6 @@ bn_mat_print("perspective_mat", perspective_mat);
 }
 
 #ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
-/*
- * Create Display List
- */
-void
-createDList(hsp)
-struct solid *hsp;
-{
-  register struct solid *sp;
-  int linestyle = -1;  /* not dashed */
-  short r = -1;
-  short g = -1;
-  short b = -1;
-
-  DM_BEGINDLIST(dmp, 1);
-
-  FOR_ALL_SOLIDS(sp, &hsp->l){
-    if(linestyle != sp->s_soldash){
-      linestyle = sp->s_soldash;
-      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
-    }
-
-    if(!DM_SAME_COLOR(r,g,b,
-		      (short)sp->s_color[0],
-		      (short)sp->s_color[1],
-		      (short)sp->s_color[2])){
-      DM_SET_FGCOLOR(dmp,
-		       (short)sp->s_color[0],
-		       (short)sp->s_color[1],
-		       (short)sp->s_color[2], 0);
-      DM_COPY_COLOR(r,g,b,
-		    (short)sp->s_color[0],
-		    (short)sp->s_color[1],
-		    (short)sp->s_color[2]);
-    }
-
-    DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective);
-  }
-
-  DM_ENDDLIST(dmp);
-}
-#else
 /*
  * Create Display List
  */
@@ -584,5 +523,81 @@ struct solid *hsp;
     createDList(sp);
   }
 }
-#endif
+
+/*
+ * Create a display list for "sp" for every display manager
+ * manager that:
+ *		1 - supports display lists
+ *		2 - is actively using display lists
+ *		3 - has not already been created (i.e. sharing with a
+ *			display manager that has already created the display list)
+ */
+void
+createDListALL(sp)
+struct solid *sp;
+{
+  struct dm_list *dlp;
+  struct dm_list *save_dlp;
+
+  save_dlp = curr_dm_list;
+
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+    dlp->dml_dlist_state->dl_flag = 1;
+
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
+    if(dlp->dml_dmp->dm_displaylist &&
+       dlp->dml_mged_variables->mv_dlist){
+      if(dlp->dml_dlist_state->dl_flag){
+	curr_dm_list = dlp;
+	createDList(sp);
+      }
+    }
+
+    dlp->dml_dirty = 1;
+    dlp->dml_dlist_state->dl_flag = 0;
+  }
+
+  curr_dm_list = save_dlp;
+}
+
+/*
+ * Call createDListALL for all solids. See createDListALL above
+ * for a description.
+ */
+void
+createDListsAll(hsp)
+struct solid *hsp;
+{
+  struct solid *sp;
+
+  FOR_ALL_SOLIDS(sp, &hsp->l){
+    createDListALL(sp);
+  }
+}
+
+/*
+ * Free the range of display lists for all display managers
+ * that support display lists and have them activated.
+ */
+void
+freeDListsAll(dlist, range)
+unsigned int dlist;
+int range;
+{
+  struct dm_list *dlp;
+
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+    dlp->dml_dlist_state->dl_flag = 1;
+
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
+    if(dlp->dml_dmp->dm_displaylist &&
+       dlp->dml_mged_variables->mv_dlist){
+      if(dlp->dml_dlist_state->dl_flag)
+	DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
+    }
+
+    dlp->dml_dirty = 1;
+    dlp->dml_dlist_state->dl_flag = 0;
+  }
+}
 #endif

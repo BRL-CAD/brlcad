@@ -66,6 +66,7 @@ extern int Glx_dm_init();
 extern int Pex_dm_init();
 #endif
 
+extern void share_dlist();	/* defined in share.c */
 extern void set_port();		/* defined in fbserv.c */
 extern void predictor_init();	/* defined in predictor.c */
 extern void view_ring_init(); /* defined in chgview.c */
@@ -86,6 +87,7 @@ static int do_2nd_attach_prompt();
 void mged_fb_open();
 void mged_fb_close();
 
+int mged_default_dlist = 1;   /* This variable is available via Tcl for controlling use of display lists */
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
 char tmp_str[1024];
@@ -176,21 +178,8 @@ int need_close;
   if(curr_dm_list->dml_tie != NULL)
     curr_dm_list->dml_tie->cl_tie = (struct dm_list *)NULL;
 
-  if(need_close){
-#ifdef DO_DISPLAY_LISTS
-    if(displaylist &&
-       mged_variables->mv_dlist &&
-       BU_LIST_NON_EMPTY(&HeadSolid.l))
-#ifdef DO_SINGLE_DISPLAY_LIST
-    DM_FREEDLISTS(dmp, 1, 1);
-#else
-    DM_FREEDLISTS(dmp, BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist,
-		       BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
-		       BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist + 1);
-#endif
-#endif
+  if(need_close)
     DM_CLOSE(dmp);
-  }
 
   RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
   BU_LIST_DEQUEUE( &curr_dm_list->l );
@@ -326,6 +315,7 @@ char *argv[];
 {
   register struct solid *sp;
   register struct dm_list *o_dm_list;
+  struct dm_list *dlp;
 
   o_dm_list = curr_dm_list;
   BU_GETSTRUCT(curr_dm_list, dm_list);
@@ -334,7 +324,6 @@ char *argv[];
   BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
   predictor_init();
 
-  BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
   /* Only need to do this once */
   if(tkwin == NULL && NEED_GUI(wp->type)){
     struct dm *tmp_dmp;
@@ -348,7 +337,6 @@ char *argv[];
     dm_processOptions(tmp_dmp, &tmp_vls, argc - 1, argv + 1);
     if(strlen(bu_vls_addr(&tmp_dmp->dm_dName))){
       if(gui_setup(bu_vls_addr(&tmp_dmp->dm_dName)) == TCL_ERROR){
-	BU_LIST_DEQUEUE( &curr_dm_list->l );
 	bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
 	curr_dm_list = o_dm_list;
 	bu_vls_free(&tmp_dmp->dm_pathName);
@@ -358,7 +346,6 @@ char *argv[];
 	return TCL_ERROR;
       }
     } else if(gui_setup((char *)NULL) == TCL_ERROR){
-      BU_LIST_DEQUEUE( &curr_dm_list->l );
       bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
       curr_dm_list = o_dm_list;
       bu_vls_free(&tmp_dmp->dm_pathName);
@@ -377,6 +364,11 @@ char *argv[];
   if(wp->init(o_dm_list, argc, argv) == TCL_ERROR)
     goto Bad;
 
+  BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
+
+  /* initialize the background color */
+  cs_set_bg();
+
   mged_slider_link_vars(curr_dm_list);
 
   Tcl_ResetResult(interp);
@@ -384,12 +376,10 @@ char *argv[];
 		   ")\n", (char *)NULL);
 
 #ifdef DO_DISPLAY_LISTS
-  if(displaylist && mged_variables->mv_dlist)
-#ifdef DO_SINGLE_DISPLAY_LIST
-    createDList(&HeadSolid);
-#else
+  share_dlist(curr_dm_list);
+
+  if(displaylist && mged_variables->mv_dlist && !dlist_state->dl_active)
     createDLists(&HeadSolid); 
-#endif
 #endif
 
   DM_SET_WIN_BOUNDS(dmp, windowbounds);
@@ -558,6 +548,7 @@ struct dm_list *initial_dm_list;
   BU_GETSTRUCT(mged_variables, _mged_variables);
   *mged_variables = *initial_dm_list->dml_mged_variables;	/* struct copy */
   mged_variables->mv_rc = 1;
+  mged_variables->mv_dlist = mged_default_dlist;
 
   BU_GETSTRUCT(color_scheme, _color_scheme);
   *color_scheme = *initial_dm_list->dml_color_scheme;		/* struct copy */
@@ -573,6 +564,10 @@ struct dm_list *initial_dm_list;
   BU_GETSTRUCT(axes_state, _axes_state);
   *axes_state = *initial_dm_list->dml_axes_state;		/* struct copy */
   axes_state->ax_rc = 1;
+
+  BU_GETSTRUCT(dlist_state, _dlist_state);
+  dlist_state->dl_rc = 1;
+  dlist_state->dl_active = mged_variables->mv_dlist;
 
   BU_GETSTRUCT(view_state, _view_state);
   *view_state = *initial_dm_list->dml_view_state;		/* struct copy */
