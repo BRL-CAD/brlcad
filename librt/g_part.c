@@ -242,6 +242,7 @@ struct rt_i		*rtip;
 	pip = &part->part_int;
 
 	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
+		/* XXX Ought to hand off to rt_sph_prep() here */
 		/* Compute bounding sphere and RPP */
 		VMOVE( stp->st_center, pip->part_V );
 		stp->st_aradius = stp->st_bradius = pip->part_vrad;
@@ -914,8 +915,33 @@ struct rt_tol		*tol;
 	return(0);
 }
 
+struct part_state {
+	struct shell	*s;
+	mat_t		upper_invRinvS;
+	mat_t		upper_invRoS;
+	mat_t		lower_invRinvS;
+	mat_t		lower_invRoS;
+	fastf_t		theta_tol;
+};
+
+struct vert_strip {
+	int		nverts_per_strip;
+	int		nverts;
+	struct vertex	**vp;
+	vect_t		*norms;
+	int		nfaces;
+	struct faceuse	**fu;
+};
+
 /*
  *			R T _ P A R T _ T E S S
+ *
+ *  Based upon the tesselator for the ellipsoid.
+ *
+ *  Break the particle into three parts:
+ *	Upper hemisphere	0..nsegs			H	North
+ *	middle cylinder		nsegs..nsegs+1
+ *	lower hemisphere	nsegs+1..nstrips-1		V	South
  */
 int
 rt_part_tess( r, m, ip, ttol, tol )
@@ -925,6 +951,381 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
+	struct rt_part_internal	*pip;
+	LOCAL mat_t	R;
+	LOCAL mat_t	S;
+	LOCAL mat_t	invR;
+	LOCAL mat_t	invS;
+	LOCAL vect_t	zz;
+	LOCAL vect_t	hcenter;
+	LOCAL fastf_t	f;
+	struct part_state	state;
+	register int		i;
+	fastf_t		radius;
+	int		nsegs;
+	int		nstrips;
+	struct vert_strip	*strips;
+	int		j;
+	struct vertex		**vertp[5];
+	int	faceno;
+	int	stripno;
+	int	boff;		/* base offset */
+	int	toff;		/* top offset */
+	int	blim;		/* base subscript limit */
+	int	tlim;		/* top subscrpit limit */
+	fastf_t	rel;		/* Absolutized relative tolerance */
+
+	RT_CK_DB_INTERNAL(ip);
+	pip = (struct rt_part_internal *)ip->idb_ptr;
+	RT_PART_CK_MAGIC(pip);
+
+	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )
+		return(-1);
+	/* For now, concentrate on the most important kind. */
+
+	VADD2( hcenter, pip->part_V, pip->part_H );
+
+	/* Compute R and Rinv matrices */
+	/* R is the same for both upper and lower hemispheres */
+	/* R is rotation from model coords to unit sphere */
+	/* For rotation of the particle, +H (model) becomes +Z (unit sph) */
+	VSET( zz, 0, 0, 1 );
+	bn_mat_fromto( R, pip->part_H, zz );
+	mat_trn( invR, R );			/* inv of rot mat is trn */
+
+	/*** Upper (H) ***/
+
+	/* Compute S and invS matrices */
+	/* invS is just 1/diagonal elements */
+	mat_idn( S );
+	S[ 0] = S[ 5] = S[10] = 1/pip->part_hrad;
+	mat_inv( invS, S );
+
+	/* invRinvS, for converting points from unit sphere to model */
+	mat_mul( state.upper_invRinvS, invR, invS );
+
+	/* invRoS, for converting normals from unit sphere to model */
+	mat_mul( state.upper_invRoS, invR, S );
+
+	/*** Lower (V) ***/
+
+	/* Compute S and invS matrices */
+	/* invS is just 1/diagonal elements */
+	mat_idn( S );
+	S[ 0] = S[ 5] = S[10] = 1/pip->part_vrad;
+	mat_inv( invS, S );
+
+	/* invRinvS, for converting points from unit sphere to model */
+	mat_mul( state.lower_invRinvS, invR, invS );
+
+	/* invRoS, for converting normals from unit sphere to model */
+	mat_mul( state.lower_invRoS, invR, S );
+
+	/* Find the larger of two hemispheres */
+	radius = pip->part_vrad;
+	if( pip->part_hrad > radius )
+		radius = pip->part_hrad;
+
+	/*
+	 *  Establish tolerances
+	 */
+	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+		rel = 0.0;		/* none */
+	} else {
+		/* Convert rel to absolute by scaling by radius */
+		rel = ttol->rel * radius;
+	}
+	if( ttol->abs <= 0.0 )  {
+		if( rel <= 0.0 )  {
+			/* No tolerance given, use a default */
+			rel = 0.10 * radius;	/* 10% */
+		} else {
+			/* Use absolute-ized relative tolerance */
+		}
+	} else {
+		/* Absolute tolerance was given, pick smaller */
+		if( ttol->rel <= 0.0 || rel > ttol->abs )
+		{
+			rel = ttol->abs;
+			if( rel > radius )
+				rel = radius;
+		}
+	}
+
+	/*
+	 *  Converte distance tolerance into a maximum permissible
+	 *  angle tolerance.  'radius' is largest radius.
+	 */
+	state.theta_tol = 2 * acos( 1.0 - rel / radius );
+
+	/* To ensure normal tolerance, remain below this angle */
+	if( ttol->norm > 0.0 && ttol->norm < state.theta_tol )  {
+		state.theta_tol = ttol->norm;
+	}
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	state.s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+
+	/* Find the number of segments to divide 90 degrees worth into */
+	nsegs = rt_halfpi / state.theta_tol + 0.999;
+	if( nsegs < 2 )  nsegs = 2;
+
+	/*  Find total number of strips of vertices that will be needed.
+	 *  nsegs for each hemisphere, plus one equator each.
+	 *  The two equators will be stitched together to make the cylinder.
+	 *  Note that faces are listed in the the stripe ABOVE, ie, toward
+	 *  the poles.  Thus, strips[0] will have 4 faces.
+	 */
+	nstrips = 2 * nsegs + 2;
+	strips = (struct vert_strip *)rt_calloc( nstrips,
+		sizeof(struct vert_strip), "strips[]" );
+
+	/* North pole (Upper hemisphere, H end) */
+	strips[0].nverts = 1;
+	strips[0].nverts_per_strip = 0;
+	strips[0].nfaces = 4;
+	/* South pole (Lower hemispehre, V end) */
+	strips[nstrips-1].nverts = 1;
+	strips[nstrips-1].nverts_per_strip = 0;
+	strips[nstrips-1].nfaces = 4;
+	/* upper equator (has faces) */
+	strips[nsegs].nverts = nsegs * 4;
+	strips[nsegs].nverts_per_strip = nsegs;
+	strips[nsegs].nfaces = nsegs * 4;
+	/* lower equator (no faces) */
+	strips[nsegs+1].nverts = nsegs * 4;
+	strips[nsegs+1].nverts_per_strip = nsegs;
+	strips[nsegs+1].nfaces = 0;
+
+	for( i=1; i<nsegs; i++ )  {
+		strips[i].nverts_per_strip =
+			strips[nstrips-1-i].nverts_per_strip = i;
+		strips[i].nverts =
+			strips[nstrips-1-i].nverts = i * 4;
+		strips[i].nfaces =
+			strips[nstrips-1-i].nfaces = (2 * i + 1)*4;
+	}
+	/* All strips have vertices and normals */
+	for( i=0; i<nstrips; i++ )  {
+		strips[i].vp = (struct vertex **)rt_calloc( strips[i].nverts,
+			sizeof(struct vertex *), "strip vertex[]" );
+		strips[i].norms = (vect_t *)rt_calloc( strips[i].nverts,
+			sizeof( vect_t ), "strip normals[]" );
+	}
+	/* All strips have faces, except for the one (marked) equator */
+	for( i=0; i < nstrips; i++ )  {
+		if( strips[i].nfaces <= 0 )  {
+			strips[i].fu = (struct faceuse **)NULL;
+			continue;
+		}
+		strips[i].fu = (struct faceuse **)rt_calloc( strips[i].nfaces,
+			sizeof(struct faceuse *), "strip faceuse[]" );
+	}
+
+	/* First, build the triangular mesh topology */
+	/* Do the top. "toff" in i-1 is UP, towards +B */
+	for( i = 1; i <= nsegs; i++ )  {
+		faceno = 0;
+		tlim = strips[i-1].nverts;
+		blim = strips[i].nverts;
+		for( stripno=0; stripno<4; stripno++ )  {
+			toff = stripno * strips[i-1].nverts_per_strip;
+			boff = stripno * strips[i].nverts_per_strip;
+
+			/* Connect this quarter strip */
+			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+
+				/* "Right-side-up" triangle */
+				vertp[0] = &(strips[i].vp[j+boff]);
+				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
+				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
+				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+					rt_log("rt_part_tess() nmg_cmface failure\n");
+					goto fail;
+				}
+				if( j+1 >= strips[i].nverts_per_strip )  break;
+
+				/* Follow with interior "Up-side-down" triangle */
+				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
+				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
+				vertp[2] = &(strips[i-1].vp[(j+1+toff)%tlim]);
+				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+					rt_log("rt_part_tess() nmg_cmface failure\n");
+					goto fail;
+				}
+			}
+		}
+	}
+
+	/* Connect the two equators with rectangular (4-point) faces */
+	i = nsegs+1;
+	{
+		faceno = 0;
+		tlim = strips[i-1].nverts;
+		blim = strips[i].nverts;
+		{
+			/* Connect this whole strip */
+			for( j = 0; j < strips[i].nverts; j++ )  {
+
+				/* "Right-side-up" rectangle */
+				vertp[3] = &(strips[i].vp[(j)%blim]);
+				vertp[2] = &(strips[i-1].vp[(j)%tlim]);
+				vertp[1] = &(strips[i-1].vp[(j+1)%tlim]);
+				vertp[0] = &(strips[i].vp[(j+1)%blim]);
+				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 4 )) == 0 )  {
+					rt_log("rt_part_tess() nmg_cmface failure\n");
+					goto fail;
+				}
+			}
+		}
+	}
+
+	/* Do the bottom.  Everything is upside down. "toff" in i+1 is DOWN */
+	for( i = nsegs+1; i < nstrips; i++ )  {
+		faceno = 0;
+		tlim = strips[i+1].nverts;
+		blim = strips[i].nverts;
+		for( stripno=0; stripno<4; stripno++ )  {
+			toff = stripno * strips[i+1].nverts_per_strip;
+			boff = stripno * strips[i].nverts_per_strip;
+
+			/* Connect this quarter strip */
+			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+
+				/* "Right-side-up" triangle */
+				vertp[0] = &(strips[i].vp[j+boff]);
+				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
+				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
+				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+					rt_log("rt_part_tess() nmg_cmface failure\n");
+					goto fail;
+				}
+				if( j+1 >= strips[i].nverts_per_strip )  break;
+
+				/* Follow with interior "Up-side-down" triangle */
+				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
+				vertp[1] = &(strips[i+1].vp[(j+1+toff)%tlim]);
+				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
+				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+					rt_log("rt_part_tess() nmg_cmface failure\n");
+					goto fail;
+				}
+			}
+		}
+	}
+
+	/*  Compute the geometry of each vertex.
+	 *  Start with the location in the unit sphere, and project back.
+	 *  i=0 is "straight up" along +H.
+	 */
+	for( i=0; i < nstrips; i++ )  {
+		double	alpha;		/* decline down from B to A */
+		double	beta;		/* angle around equator (azimuth) */
+		fastf_t		cos_alpha, sin_alpha;
+		fastf_t		cos_beta, sin_beta;
+		point_t		sphere_pt;
+		point_t		model_pt;
+
+		/* Compensate for extra equator */
+		if( i <= nsegs )
+			alpha = (((double)i) / (nstrips-1-1));
+		else
+			alpha = (((double)i-1) / (nstrips-1-1));
+		cos_alpha = cos(alpha*rt_pi);
+		sin_alpha = sin(alpha*rt_pi);
+		for( j=0; j < strips[i].nverts; j++ )  {
+
+			beta = ((double)j) / strips[i].nverts;
+			cos_beta = cos(beta*rt_twopi);
+			sin_beta = sin(beta*rt_twopi);
+			VSET( sphere_pt,
+				cos_beta * sin_alpha,
+				sin_beta * sin_alpha,
+				cos_alpha );
+			/* Convert from ideal sphere coordinates */
+			if( i <= nsegs )  {
+				MAT4X3PNT( model_pt, state.upper_invRinvS, sphere_pt );
+				VADD2( model_pt, model_pt, hcenter );
+				/* Convert sphere normal to ellipsoid normal */
+				MAT4X3VEC( strips[i].norms[j], state.upper_invRoS, sphere_pt );
+			} else {
+				MAT4X3PNT( model_pt, state.lower_invRinvS, sphere_pt );
+				VADD2( model_pt, model_pt, pip->part_V );
+				/* Convert sphere normal to ellipsoid normal */
+				MAT4X3VEC( strips[i].norms[j], state.lower_invRoS, sphere_pt );
+			}
+
+			/* May not be unit length anymore */
+			VUNITIZE( strips[i].norms[j] );
+			/* Associate vertex geometry */
+			nmg_vertex_gv( strips[i].vp[j], model_pt );
+		}
+	}
+
+	/* Associate face geometry.  lower Equator has no faces */
+	for( i=0; i < nstrips; i++ )  {
+		for( j=0; j < strips[i].nfaces; j++ )  {
+			if( nmg_fu_planeeqn( strips[i].fu[j], tol ) < 0 )
+				goto fail;
+		}
+	}
+
+	/* Associate normals with vertexuses */
+	for( i=0; i < nstrips; i++ )
+	{
+		for( j=0; j < strips[i].nverts; j++ )
+		{
+			struct faceuse *fu;
+			struct vertexuse *vu;
+			vect_t norm_opp;
+
+			NMG_CK_VERTEX( strips[i].vp[j] );
+			VREVERSE( norm_opp , strips[i].norms[j] )
+
+			for( RT_LIST_FOR( vu , vertexuse , &strips[i].vp[j]->vu_hd ) )
+			{
+				fu = nmg_find_fu_of_vu( vu );
+				NMG_CK_FACEUSE( fu );
+				/* get correct direction of normals depending on
+				 * faceuse orientation
+				 */
+				if( fu->orientation == OT_SAME )
+					nmg_vertexuse_nv( vu , strips[i].norms[j] );
+				else if( fu->orientation == OT_OPPOSITE )
+					nmg_vertexuse_nv( vu , norm_opp );
+			}
+		}
+	}
+
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r, tol );
+
+	/* Release memory */
+	/* All strips have vertices and normals */
+	for( i=0; i<nstrips; i++ )  {
+		rt_free( (char *)strips[i].vp, "strip vertex[]" );
+		rt_free( (char *)strips[i].norms, "strip norms[]" );
+	}
+	/* All strips have faces, except for equator */
+	for( i=0; i < nstrips; i++ )  {
+		if( strips[i].fu == (struct faceuse **)0 )  continue;
+		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
+	}
+	rt_free( (char *)strips, "strips[]" );
+	return(0);
+fail:
+	/* Release memory */
+	/* All strips have vertices and normals */
+	for( i=0; i<nstrips; i++ )  {
+		rt_free( (char *)strips[i].vp, "strip vertex[]" );
+		rt_free( (char *)strips[i].norms, "strip norms[]" );
+	}
+	/* All strips have faces, except for equator */
+	for( i=0; i < nstrips; i++ )  {
+		if( strips[i].fu == (struct faceuse **)0 )  continue;
+		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
+	}
+	rt_free( (char *)strips, "strips[]" );
 	return(-1);
 }
 
