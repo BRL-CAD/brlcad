@@ -158,6 +158,10 @@ register long	magic;
 		return("rt_tess_tol");
 	case RT_DB_INTERNAL_MAGIC:
 		return("rt_db_internal");
+	case RT_RAY_MAGIC:
+		return "rt xray";
+	case RT_HIT_MAGIC:
+		return "rt hit";
 	case RT_SEG_MAGIC:
 		return("rt seg");
 	case RT_SOLTAB_MAGIC:
@@ -182,6 +186,10 @@ register long	magic;
 		return("rt animate");
 	case RESOURCE_MAGIC:
 		return("rt resource");
+	case PIXEL_EXT_MAGIC:
+		return "rt pixel_ext";
+	case RT_AP_MAGIC:
+		return "rt application";
 	case RTI_MAGIC:
 		return("rt_i");
 
