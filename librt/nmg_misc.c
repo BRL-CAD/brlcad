@@ -3010,6 +3010,7 @@ long ***trans_tbl;
 	struct edgeuse *eu;
 	struct faceuse *new_fu;
 	struct bu_ptbl faces;
+	int tbl_size;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC) 
 		bu_log( "nmg_dup_shell( s = x%x , trans_tbl = x%x )\n" , s , trans_tbl );
@@ -3019,13 +3020,17 @@ long ***trans_tbl;
 	m = nmg_find_model( (long *)s );
 
 	/* create translation table double size to accomodate both copies */
-	(*trans_tbl) = (long **)rt_calloc(m->maxindex*3, sizeof(long *),
+	tbl_size = m->maxindex * 3;
+	(*trans_tbl) = (long **)rt_calloc(tbl_size, sizeof(long *),
 		"nmg_dup_shell trans_tbl" );
 
 	bu_ptbl_init( &faces , 64, " &faces ");
 
 	new_s = nmg_msv( s->r_p );
+	if( s->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 	NMG_INDEX_ASSIGN( (*trans_tbl) , s , (long *)new_s );
+	if( new_s->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+	NMG_INDEX_ASSIGN( (*trans_tbl) , new_s , (long *)s );
 
 	/* copy face uses */
 	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
@@ -3040,16 +3045,31 @@ long ***trans_tbl;
 				if( new_fu )
 				{
 					new_lu = nmg_dup_loop( lu , &new_fu->l.magic , (*trans_tbl) );
+					if( lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
+					if( new_lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , new_lu , (long *)lu );
 				}
 				else
 				{
 					new_lu = nmg_dup_loop( lu , &new_s->l.magic , (*trans_tbl) );
+					if( new_lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
+					if( lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , new_lu , (long *)lu );
 					new_fu = nmg_mf( new_lu );
+					if( fu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu , (long *)new_fu );
+					if( new_fu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , new_fu , (long *)fu );
+					if( fu->fumate_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu->fumate_p , (long *)new_fu->fumate_p );
+					if( new_fu->fumate_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , new_fu->fumate_p , (long *)fu->fumate_p );
+					if( fu->f_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p , (long *)new_fu->f_p );
+					if( new_fu->f_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , new_fu->f_p , (long *)fu->f_p );
 				}
 			}
 			if (fu->f_p->g.plane_p)
@@ -3065,7 +3085,10 @@ long ***trans_tbl;
 #endif
 
 				/* XXX Perhaps this should be new_fu->f_p->g.plane_p ? */
+				if( fu->f_p->g.plane_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 				NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p->g.plane_p , (long *)new_fu->f_p->g.plane_p );
+				if( new_fu->f_p->g.plane_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+				NMG_INDEX_ASSIGN( (*trans_tbl) , new_fu->f_p->g.plane_p , (long *)fu->f_p->g.plane_p );
 			}
 			new_fu->orientation = fu->orientation;
 			new_fu->fumate_p->orientation = fu->fumate_p->orientation;
@@ -3082,7 +3105,10 @@ long ***trans_tbl;
 	{
 		NMG_CK_LOOPUSE( lu );
 		new_lu = nmg_dup_loop( lu , &new_s->l.magic , (*trans_tbl) );
+		if( lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
+		if( new_lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		NMG_INDEX_ASSIGN( (*trans_tbl) , new_lu , (long *)lu );
 	}
 
 	/* copy wire edges */
@@ -3105,22 +3131,37 @@ long ***trans_tbl;
 
 		/* make the wire edge */
 		new_eu = nmg_me( new_v1 , new_v2 , new_s );
+		if( eu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , eu , (long *)new_eu );
+		if( new_eu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		NMG_INDEX_ASSIGN( (*trans_tbl) , new_eu , (long *)eu );
 
 		new_v1 = new_eu->vu_p->v_p;
+		if( old_v1->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , old_v1 , (long *)new_v1 );
+		if( new_v1->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		NMG_INDEX_ASSIGN( (*trans_tbl) , new_v1 , (long *)old_v1 );
 		if( !new_v1->vg_p )
 		{
 			nmg_vertex_gv( new_v1 , old_v1->vg_p->coord );
+			if( old_v1->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v1->vg_p , (long *)new_v1->vg_p );
+			if( new_v1->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			NMG_INDEX_ASSIGN( (*trans_tbl) , new_v1->vg_p , (long *)old_v1->vg_p );
 		}
 
 		new_v2 = new_eu->eumate_p->vu_p->v_p;
+		if( old_v2->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , old_v2 , (long *)new_v2 );
+		if( new_v2->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		NMG_INDEX_ASSIGN( (*trans_tbl) , new_v2 , (long *)old_v2 );
 		if( !new_v2->vg_p )
 		{
 			nmg_vertex_gv( new_v2 , old_v2->vg_p->coord );
+			if( old_v2->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v2->vg_p , (long *)new_v2->vg_p );
+			if( new_v2->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			NMG_INDEX_ASSIGN( (*trans_tbl) , new_v2->vg_p , (long *)old_v2->vg_p );
 		}
 
 	}
@@ -3151,11 +3192,17 @@ long ***trans_tbl;
 			new_v = new_s->vu_p->v_p;
 
 			/* put entry in table */
+			if( old_v->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v , (long *)new_v );
+			if( new_v->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			NMG_INDEX_ASSIGN( (*trans_tbl) , new_v , (long *)old_v );
 
 			/* assign the same geometry as the old copy */
 			nmg_vertex_gv( new_v , old_v->vg_p->coord );
+			if( old_v->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v->vg_p , (long *)new_v->vg_p );
+			if( new_v->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			NMG_INDEX_ASSIGN( (*trans_tbl) , new_v->vg_p , (long *)old_v->vg_p );
 		}
 	}
 #endif
@@ -3480,16 +3527,23 @@ struct shell *s;
 CONST struct bn_tol *tol;
 {
 	struct model *m;
+	struct nmgregion *tmp_r;
+	struct shell *dup_s;
+	struct shell *s1;
+	struct shell *kill_s;
 	struct face *f_top;
 	struct faceuse *fu;
 	long *flags;
+	long **trans_tbl;
 	int missed_faces=1;
+	int shell_count=0;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		bu_log( "nmg_fix_normals( s = x%x )\n" , s );
 
 	NMG_CK_SHELL( s );
 	BN_CK_TOL( tol );
+
 
 	/* Make an index table to insure we visit each face once and only once */
 	m = s->r_p->m_p;
@@ -3554,20 +3608,12 @@ CONST struct bn_tol *tol;
 			fu = fu->fumate_p;
 
 		NMG_CK_FACEUSE( fu );
-#if 0
-		/* Establish radial parity */
-		nmg_s_radial_harmonize( s, tol );
-#endif
 
 		/* fu is now known to be a correctly oriented faceuse,
 		 * propagate this throughout the shell, face by face, by
 		 * traversing the shell using the radial edge structure */
 
 		nmg_propagate_normals( fu , flags , tol );
-#if 0
-		/* Re-establish radial parity */
-		nmg_s_radial_harmonize( s, tol );
-#endif
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 		{
@@ -3591,10 +3637,90 @@ missed:
 					missed_faces++;
 			}
 		}
+
+		shell_count++;
 	}
 
 	/* free some memory */
 	rt_free( (char *)flags , "nmg_fix_normals: flags" );
+
+	if( shell_count == 1 )
+		return;
+
+	/* this shell is actually more than one piece
+	 * it may be than some pieces are inner voids and should have
+	 * their normals reversed.
+	 */
+
+	/* make a temporary nmgregion to work in */
+	tmp_r = nmg_mrsv( m );
+	kill_s = RT_LIST_FIRST( shell, &tmp_r->s_hd );
+	(void)nmg_ks( kill_s );
+
+	/* duplicate the shell in question */
+	dup_s = nmg_dup_shell( s, &trans_tbl );
+
+	/* move the duplicate shell to the temporary nmgregion */
+	(void)nmg_mv_shell_to_region( dup_s, tmp_r );
+	nmg_region_a( tmp_r, tol );
+
+	if( (shell_count=nmg_decompose_shell( dup_s , tol )) > 1 )
+	{
+		/* This shell has more than one part */
+		int inner_count; /* count of how many shells contain this shell */
+		struct bu_ptbl reverse_list;
+		int i;
+
+		bu_ptbl_init( &reverse_list, shell_count, "list of shells to be reversed" );
+
+		for( RT_LIST_FOR( s1 , shell , &tmp_r->s_hd ) )
+			nmg_shell_a( s1 , tol );
+
+		for( RT_LIST_FOR( s1 , shell , &tmp_r->s_hd ) )
+		{
+			struct shell *s2;
+
+			inner_count = 0;
+			for( RT_LIST_FOR( s2 , shell , &tmp_r->s_hd ) )
+			{
+				if( s1 == s2 )
+					continue;
+
+				if( nmg_classify_s_vs_s( s1, s2, tol ) == NMG_CLASS_AinB )
+					inner_count++;
+			}
+
+			if( inner_count % 2 )
+			{
+
+				/* this shell is contained by an odd number of shells
+				 * it must be a void region, so reverse the surface normals
+				 */
+				bu_ptbl_ins( &reverse_list, (long *)s1 );
+
+			}
+		}
+
+
+		/* reverse shells on list */
+		for( i=0 ; i<BU_PTBL_END( &reverse_list ); i++ )
+		{
+			s1 = (struct shell *)BU_PTBL_GET( &reverse_list, i );
+			for( BU_LIST_FOR( fu, faceuse, &s1->fu_hd ) )
+			{
+				struct faceuse *fu_in_s;
+
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				fu_in_s = NMG_INDEX_GETP( faceuse, trans_tbl, fu );
+				NMG_CK_FACEUSE( fu_in_s );
+				nmg_reverse_face_and_radials( fu_in_s , tol );
+			}
+		}
+	}
+	rt_free( (char *)trans_tbl, "trans_tbl" );
+	(void)nmg_kr( tmp_r );
 }
 
 /*	N M G _ B R E A K _ L O N G _ E D G E S
