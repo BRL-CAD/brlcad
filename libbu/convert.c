@@ -40,6 +40,19 @@ static char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 /*
+ * Forward declarations.
+ */
+int bu_cv_w_cookie(genptr_t, int, int, genptr_t, int, int);
+int bu_cv_ntohss(SIGNED short *, int, genptr_t, int);
+int bu_cv_ntohus(unsigned short *, int, genptr_t, int);
+int bu_cv_ntohsl(SIGNED long int *, int, genptr_t, int);
+int bu_cv_ntohul(unsigned long int *, int, genptr_t, int);
+int bu_cv_htonss(genptr_t, int, SIGNED short *, int);
+int bu_cv_htonus(genptr_t, int, unsigned short *, int);
+int bu_cv_htonsl(genptr_t, int, long *, int);
+int bu_cv_htonul(genptr_t, int, unsigned long *, int);
+
+/*
  * Theses should be moved to a header file soon.
  */
 #define CV_CHANNEL_MASK	0x00ff
@@ -315,6 +328,7 @@ int	cookie;
  *	outfmt	output format
  *
  */
+int
 cv(out, outfmt, size, in, infmt, count)
 genptr_t out;
 char	*outfmt;
@@ -500,6 +514,7 @@ register int	cookie;
  *		fi
  *	done
  */
+int
 bu_cv_w_cookie(out, outcookie, size, in, incookie, count)
 genptr_t out;
 int	outcookie;
