@@ -13,7 +13,6 @@
 
 #define TRY_COLOR_CUBE 1
 #define NUM_PIXELS  216
-#define IS_DM_TYPE_X(_t) ((_t) == DM_TYPE_X)
 #define X_MV_O(_m) offsetof(struct modifiable_x_vars, _m)
 
 struct modifiable_x_vars {
