@@ -19,13 +19,13 @@ set mged_helpdevel_data(grid2model_lu)	{{gx gy}	{given a point in grid coordinat
 set mged_helpdevel_data(grid2view_lu)	{{gx gy}	{given a point in grid coordinates (local units),
         convert it to view coordinates (local units).}}
 set mged_helpdevel_data(gui_destroy)	{{id}	{destroy display/command window pair}}
-set mged_helpdevel_data(hist_prev)	{{}	{returns previous command in history}}
-set mged_helpdevel_data(hist_next)	{{}	{returns next command in history}}
 set mged_helpdevel_data(hist_add)	{{[command]}	{adds command to the history (without executing it)}}
+set mged_helpdevel_data(hist_next)	{{}	{returns next command in history}}
+set mged_helpdevel_data(hist_prev)	{{}	{returns previous command in history}}
 set mged_helpdevel_data(jcs)		{{id}	{join collaborative session}}
-set mged_helpdevel_data(make_name)	{{template}	{make an object name not occuring in database}}
+set mged_helpdevel_data(make_name)	{{template}	{make an object name not occuring in the database}}
 set mged_helpdevel_data(mged_update)	{{}	{handle outstanding events and refresh}}
-set mged_helpdevel_data(mmenu_get)	{{index}	{get menu corresponding to index}}
+set mged_helpdevel_data(mmenu_get)	{{[index]}	{get menu corresponding to index}}
 set mged_helpdevel_data(mmenu_set)	{{w id i menu}	{this Tcl proc is used to set/install menu "i"}}
 set mged_helpdevel_data(model2grid_lu)	{{mx my mz}	{convert point in model coords (local units)
         to grid coords (local units)}}
