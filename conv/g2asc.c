@@ -27,6 +27,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <ctype.h>
 #include "machine.h"
 #include "vmath.h"
@@ -67,11 +72,13 @@ Usage: g2asc < file.g > file.asc\n\
 
 FILE	*ifp;
 FILE	*ofp;
+char	*iname = "-";
 
 int
 main(argc, argv)
 char **argv;
 {
+	iname = "-";
 	ifp = stdin;
 	ofp = stdout;
 
@@ -81,8 +88,9 @@ char **argv;
 #endif
 
 	if( argc >= 3 ) {
-		ifp = fopen(argv[1],"r");
-		if( !ifp )  perror(argv[1]);
+		iname = argv[1];
+		ifp = fopen(iname,"r");
+		if( !ifp )  perror(iname);
 		ofp = fopen(argv[2],"w");
 		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
@@ -93,6 +101,54 @@ char **argv;
 	if (isatty(fileno(ifp))) {
 		(void)fprintf(stderr, usage);
 		exit(1);
+	}
+
+	/* First, determine what version database this is */
+	if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )  {
+		bu_log("g2asc(%s) ERROR, file too short to be BRL-CAD database\n",
+			iname);
+		exit(2);
+	}
+
+	if( db5_header_is_valid( (unsigned char *)&record ) )  {
+		Tcl_Interp	*interp;
+		struct db_i	*dbip;
+		struct directory *dp;
+
+		bu_log("Attempting to export v5 database\n");
+
+		interp = Tcl_CreateInterp();
+		/* This runs the init.tcl script */
+		if( Tcl_Init(interp) == TCL_ERROR )
+			bu_log("Tcl_Init error %s\n", interp->result);
+
+		if( (dbip = db_open( iname, "r" )) == NULL )  {
+			bu_log("Unable to db_open() file '%s', aborting\n", iname );
+			exit(4);
+		}
+		RT_CK_DBI(dbip);
+		db_dirbuild( dbip );
+		FOR_ALL_DIRECTORY_START(dp, dbip)  {
+			struct rt_db_internal	intern;
+
+			if( rt_db_get_internal( &intern, dp, dbip, NULL ) < 0 )  {
+				bu_log("Unable to read '%s', skipping\n", dp->d_namep);
+				continue;
+			}
+			if( intern.idb_meth->ft_tclget( interp, &intern, NULL ) != TCL_OK )  {
+				rt_db_free_internal( &intern );
+				bu_log("Unable to export '%s', skipping\n", dp->d_namep );
+				continue;
+			}
+			rt_db_free_internal( &intern );
+			fprintf( ofp, "db put %s %s\n",
+				dp->d_namep,
+				interp->result );
+			Tcl_ResetResult( interp );
+		} FOR_ALL_DIRECTORY_END;
+		return 0;
+	} else {
+		goto top;
 	}
 
 	/* Read database file */
