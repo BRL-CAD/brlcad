@@ -84,12 +84,12 @@ int y_top;
 		for( item=0, mptr = *m;
 		     mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
 		     mptr++, y += MENU_DY, item++ )  {
-			dmp->dmr_puts( mptr->menu_string, MENUX, y, 0,
+			dmp->dmr_puts( mptr->menu_string, MENUX, y-15, 0,
 				mptr == *m ? DM_RED : DM_YELLOW );
 			dmp->dmr_2d_line(MENUXLIM, y+(MENU_DY/2), XMIN, y+(MENU_DY/2), 0);
 			if( cur_item == item && cur_menu == menu && menuflag )  {
 				/* prefix item selected with "==>" */
-				dmp->dmr_puts("==>", XMIN, y, 0, DM_WHITE);
+				dmp->dmr_puts("==>", XMIN, y-15, 0, DM_WHITE);
 			}
 		}
 	}
