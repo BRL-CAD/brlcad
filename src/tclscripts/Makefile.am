@@ -1,11 +1,18 @@
 # $Id$
-SUBDIRS=geometree lib mged nirt pl-dm rtwizard util
+
+SUBDIRS = \
+	geometree \
+	lib \
+	mged \
+	nirt \
+	pl-dm \
+	rtwizard \
+	util
 
 this_dir = tclscripts
 tcldir = $(prefix)/$(this_dir)
 
-dist_tcl_SCRIPTS= \
-	$(BUILT_SOURCES) \
+scripties = \
 	ami.tcl \
 	ampi.tcl \
 	cad_clrpick.tcl \
@@ -21,6 +28,10 @@ dist_tcl_SCRIPTS= \
 	mouse.tcl \
 	vmath.tcl
 
+tcl_SCRIPTS= \
+	$(BUILT_SOURCES) \
+	$(scripties)
+
 BUILT_SOURCES = \
 	pkgIndex.tcl \
 	tclIndex
@@ -31,7 +42,7 @@ pkgIndex.tcl:
 tclIndex:
 	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
 
-EXTRA_DIST = $(dist_tcl_SCRIPTS)
+EXTRA_DIST = $(scripties)
 
 CLEANFILES = $(BUILT_SOURCES)
 

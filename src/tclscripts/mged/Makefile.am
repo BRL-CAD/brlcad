@@ -3,8 +3,7 @@
 this_dir = tclscripts/mged
 tcldir = $(prefix)/$(this_dir)
 
-dist_tcl_SCRIPTS = \
-	$(BUILT_SOURCES) \
+scripties = \
 	accel.tcl \
 	adc.tcl \
 	anim.tcl \
@@ -117,6 +116,10 @@ dist_tcl_DATA = \
 	mike-dedication.txt \
 	mike-tux.ppm
 
+tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
+	$(scripties)
+
 #	pkgIndex.tcl 
 BUILT_SOURCES = \
 	tclIndex
@@ -129,7 +132,7 @@ tclIndex:
 
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
-	$(dist_tcl_SCRIPTS)
+	$(scripties)
 
 CLEANFILES = $(BUILT_SOURCES)
 

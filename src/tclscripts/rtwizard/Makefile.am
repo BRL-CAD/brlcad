@@ -4,9 +4,11 @@ SUBDIRS = examples lib
 this_dir = tclscripts/rtwizard
 tcldir = $(prefix)/$(this_dir)
 
-dist_tcl_SCRIPTS = \
+scripties = rtwizard.tcl
+
+tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
-	rtwizard.tcl
+	$(scripties)
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
@@ -18,7 +20,7 @@ pkgIndex.tcl:
 tclIndex:
 	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
 
-EXTRA_DIST = $(dist_tcl_SCRIPTS)
+EXTRA_DIST = $(scripties)
 
 CLEANFILES = $(BUILT_SOURCES)
 

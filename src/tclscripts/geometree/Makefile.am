@@ -3,10 +3,13 @@
 this_dir = tclscripts/geometree
 tcldir = $(prefix)/$(this_dir)
 
-dist_tcl_SCRIPTS = \
-	$(BUILT_SOURCES) \
+scripties = \
 	GeometryBrowser.tcl \
 	geometree.tcl
+
+tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
+	$(scripties)
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
@@ -18,7 +21,7 @@ pkgIndex.tcl:
 tclIndex:
 	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
 
-EXTRA_DIST = $(dist_tcl_SCRIPTS)
+EXTRA_DIST = $(scripties)
 
 CLEANFILES = $(BUILT_SOURCES)
 

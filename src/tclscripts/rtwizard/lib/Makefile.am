@@ -3,8 +3,7 @@
 this_dir = tclscripts/rtwizard/lib
 tcldir = $(prefix)/$(this_dir)
 
-dist_tcl_SCRIPTS = \
-	$(BUILT_SOURCES) \
+scripties = \
 	DbPage.itk \
 	ExamplePage.itk \
 	FbPage.itk \
@@ -26,6 +25,10 @@ dist_tcl_SCRIPTS = \
 	PictureTypeF.itcl \
 	Wizard.itk
 
+tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
+	$(scripties)
+
 BUILT_SOURCES = \
 	pkgIndex.tcl \
 	tclIndex
@@ -36,7 +39,7 @@ pkgIndex.tcl:
 tclIndex:
 	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
 
-EXTRA_DIST = $(dist_tcl_SCRIPTS)
+EXTRA_DIST = $(scripties)
 
 CLEANFILES = $(BUILT_SOURCES)
 
