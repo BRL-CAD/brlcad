@@ -1391,3 +1391,29 @@ rt_tcl_setup(interp)
 
 	Tcl_SetVar(interp, "rt_version", (char *)rt_version+5, TCL_GLOBAL_ONLY);
 }
+
+
+/* ====================================================================== */
+
+/* TCL-oriented C support for LIBRT */
+
+
+/*
+ * (db_path.c)
+ *			D B _ F U L L _ P A T H _ A P P E N D R E S U L T
+ *
+ *  Take a db_full_path and append it to the TCL result string.
+ */
+void
+db_full_path_appendresult( interp, pp )
+Tcl_Interp			*interp;
+CONST struct db_full_path	*pp;
+{
+	register int i;
+
+	RT_CK_FULL_PATH(pp);
+
+	for( i=0; i<pp->fp_len; i++ )  {
+		Tcl_AppendResult(interp, "/", pp->fp_names[i]->d_namep, (char *)NULL );
+	}
+}
