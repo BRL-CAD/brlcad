@@ -759,7 +759,7 @@ int			num;
 	vls_itoa( v, num, 5 );
 	rt_vls_strcat( v, "haf  " );		/* 5 */
 	vls_ftoa_vec( v, gp->eqn, 10, 4 );
-	vls_ftoa_cvt( v, gp->eqn[3], 10, 4 );
+	vls_ftoa_cvt( v, -(gp->eqn[3]), 10, 4 );
 	vls_blanks( v, 2*10 );
 	rt_vls_strcat( v, name );
 	rt_vls_strcat( v, "\n" );
