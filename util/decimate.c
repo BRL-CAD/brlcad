@@ -1,11 +1,16 @@
 /*
- *			S C R U N C H . C
+ *			D E C I M A T E . C
  *
- *  Program to take N by M array of tuples, and reduce it down to
+ *  Program to take M by N array of tuples, and reduce it down to
  *  being an I by J array of tuples, by discarding unnecessary stuff.
+ *  The borders are padded with zeros.
  *
  *  Especially useful for looking at image files which are larger than
  *  your biggest framebuffer, quickly.
+ *
+ *  Specify nbytes/pixel as:
+ *	1	.bw files
+ *	3	.pix files
  *
  *  Author -
  *	Michael John Muuss
@@ -25,7 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 static char usage[] = "\
-Usage: scrunch nbytes/pixel width height [outwidth outheight]\n\
+Usage: decimate nbytes/pixel width height [outwidth outheight]\n\
 ";
 
 int	nbytes;
