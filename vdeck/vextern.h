@@ -91,7 +91,6 @@
 #define MINMAX( min, max, val )		MIN( min, val );\
 				else	MAX( max, val )
 
-extern double	unit_conversion;
 extern int	debug;
 extern char	*usage[], *cmd[];
 extern mat_t	xform, notrans, identity;
