@@ -236,7 +236,7 @@ char	*argv[];
 	outrle.sv_background = 2;		/* use background */
 	outrle.sv_bg_color = background;
 	outrle.sv_alpha = 0;			/* no alpha channel */
-	if( cm_save_needed ) {
+	if( cm_save_needed && !crunch ) {
 		outrle.sv_ncmap = 3;
 		outrle.sv_cmaplen = 8;		/* 1<<8 = 256 */
 		outrle.sv_cmap = rlemap;
