@@ -1006,7 +1006,7 @@ CONST struct db_i		*dbip;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
-		bu_log( "Barrier check at start of sketch_import():\n" );
+		bu_log( "Barrier check at start of sketch_import5():\n" );
 		bu_mem_barriercheck();
 	}
 
@@ -1124,7 +1124,7 @@ CONST struct db_i		*dbip;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
-		bu_log( "Barrier check at end of sketch_import():\n" );
+		bu_log( "Barrier check at end of sketch_import5():\n" );
 		bu_mem_barriercheck();
 	}
 
@@ -1151,7 +1151,7 @@ CONST struct db_i		*dbip;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
-		bu_log( "Barrier check at start of sketch_export():\n" );
+		bu_log( "Barrier check at start of sketch_export5():\n" );
 		bu_mem_barriercheck();
 	}
 
@@ -1177,7 +1177,7 @@ CONST struct db_i		*dbip;
 		switch( *lng )
 		{
 			case CURVE_LSEG_MAGIC:
-				ep->ext_nbytes += 2 * SIZEOF_NETWORK_LONG;
+				ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG;
 				break;
 			case CURVE_CARC_MAGIC:
 				ep->ext_nbytes += 5 * SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE;
@@ -1273,7 +1273,7 @@ CONST struct db_i		*dbip;
 				(void)bu_plong( cp, nseg->k.k_size );
 				cp += SIZEOF_NETWORK_LONG;
 				htond( cp, (CONST unsigned char *)nseg->k.knots, nseg->k.k_size );
-				cp += nseg->k.k_size * 8;
+				cp += nseg->k.k_size * SIZEOF_NETWORK_DOUBLE;
 				(void)bu_plong( cp, nseg->c_size );
 				cp += SIZEOF_NETWORK_LONG;
 				for( i=0 ; i<nseg->c_size ; i++ )
@@ -1299,9 +1299,10 @@ CONST struct db_i		*dbip;
 		(void)bu_plong( cp, sketch_ip->skt_curve.reverse[seg_no] );
 		cp += SIZEOF_NETWORK_LONG;
 	}
+
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
-		bu_log( "Barrier check at end of sketch_export():\n" );
+		bu_log( "Barrier check at end of sketch_export5():\n" );
 		bu_mem_barriercheck();
 	}
 
