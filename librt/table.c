@@ -570,7 +570,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_vol_uv,	rt_vol_curve,	rt_vol_class,	rt_vol_free,
 		rt_vol_plot,	rt_vstub,	rt_vol_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_vol_import5, rt_vol_export5,
 		rt_vol_import,	rt_vol_export,	rt_vol_ifree,
 		rt_vol_describe,rt_vol_xform,	rt_vol_parse,
 		sizeof(struct rt_vol_internal), RT_VOL_INTERNAL_MAGIC,

@@ -534,6 +534,141 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ V O L _ I M P O R T 5
+ *
+ *  Read in the information from the string solid record.
+ *  Then, as a service to the application, read in the bitmap
+ *  and set up some of the associated internal variables.
+ */
+int
+rt_vol_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+CONST mat_t			mat;
+CONST struct db_i		*dbip;
+{
+	register struct rt_vol_internal *vip;
+	struct bu_vls	str;
+	FILE		*fp;
+	int		nbytes;
+	register int	y;
+	register int	z;
+	mat_t		tmat;
+	int		ret;
+
+	BU_CK_EXTERNAL( ep );
+
+	RT_CK_DB_INTERNAL( ip );
+	ip->idb_type = ID_VOL;
+	ip->idb_meth = &rt_functab[ID_VOL];
+	ip->idb_ptr = bu_calloc(1, sizeof(struct rt_vol_internal), "rt_vol_internal");
+	vip = (struct rt_vol_internal *)ip->idb_ptr;
+	vip->magic = RT_VOL_INTERNAL_MAGIC;
+
+	/* Establish defaults */
+	bn_mat_idn( vip->mat );
+	vip->lo = 0;
+	vip->hi = 255;
+
+	/* Default VOL cell size in ideal coordinates is one unit/cell */
+	VSETALL( vip->cellsize, 1 );
+
+	bu_vls_init( &str );
+	bu_vls_strcpy( &str, ep->ext_buf );
+	if( bu_struct_parse( &str, rt_vol_parse, (char *)vip ) < 0 )  {
+		bu_vls_free( &str );
+		return -2;
+	}
+	bu_vls_free( &str );
+
+	/* Check for reasonable values */
+	if( vip->file[0] == '\0' || vip->xdim < 1 ||
+	    vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
+	    vip->lo < 0 || vip->hi > 255 )  {
+	    	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
+			(char *)vip );
+	    	return(-1);
+	}
+
+	/* Apply any modeling transforms to get final matrix */
+	bn_mat_mul( tmat, mat, vip->mat );
+	bn_mat_copy( vip->mat, tmat );
+
+	/* Get bit map from .bw(5) file */
+	nbytes = (vip->xdim+VOL_XWIDEN*2)*
+		(vip->ydim+VOL_YWIDEN*2)*
+		(vip->zdim+VOL_ZWIDEN*2);
+	vip->map = (unsigned char *)bu_calloc( 1, nbytes, "vol_import bitmap" );
+
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+	if( (fp = fopen(vip->file, "r")) == NULL )  {
+		perror(vip->file);
+		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+		return(-1);
+	}
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+
+	/* Because of in-memory padding, read each scanline separately */
+	for( z=0; z < vip->zdim; z++ )  {
+		for( y=0; y < vip->ydim; y++ )  {
+			bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+			ret = fread( &VOL(vip, 0, y, z), vip->xdim, 1, fp ); /* res_syscall */
+			bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+			if( ret < 1 )  {
+				bu_log("rt_vol_import(%s): Unable to read whole VOL, y=%d, z=%d\n",
+					vip->file, y, z);
+				bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+				fclose(fp);
+				bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+				return -1;
+			}
+		}
+	}
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+	fclose(fp);
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+	return( 0 );
+}
+
+/*
+ *			R T _ V O L _ E X P O R T 5
+ *
+ *  The name will be added by the caller.
+ */
+int
+rt_vol_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_vol_internal	*vip;
+	struct rt_vol_internal	vol;	/* scaled version */
+	struct bu_vls		str;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_VOL )  return(-1);
+	vip = (struct rt_vol_internal *)ip->idb_ptr;
+	RT_VOL_CK_MAGIC(vip);
+	vol = *vip;			/* struct copy */
+
+	/* Apply scale factor */
+	vol.mat[15] /= local2mm;
+
+	BU_CK_EXTERNAL(ep);
+
+	bu_vls_init( &str );
+	bu_vls_struct_print( &str, rt_vol_parse, (char *)&vol );
+	ep->ext_nbytes = bu_vls_strlen( &str );
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "vol external");
+
+	strcpy( ep->ext_buf, bu_vls_addr(&str) );
+	bu_vls_free( &str );
+
+	return(0);
+}
+
+/*
  *			R T _ V O L _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
