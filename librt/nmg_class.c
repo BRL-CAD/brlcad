@@ -1164,6 +1164,7 @@ CONST struct rt_tol	*tol;
 out:
 	/* XXX For major efficiency, should store classification for
 	 * XXX all other edgeuses of this edge in this shell (sA)!
+	 * Nope, edges get the classification, not edgeuses.
 	 */
 	if (rt_g.NMG_debug & DEBUG_GRAPHCL)
 		nmg_show_broken_classifier_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
@@ -1286,6 +1287,89 @@ out:
 }
 
 /*
+ *			N M G _ R E C L A S S I F Y _ L U _ E U
+ *
+ *  Make all the edges and vertices of a loop carry the same classification
+ *  as the loop.
+ *  There is no intrinsic way to tell if an edge is "shared" or
+ *  "antishared", except by reference to it's loopuse, but the heritage
+ *  of the edgeuse makes a difference to the boolean evaluator.
+ *
+ *  "newclass" should only be AonBshared or AonBanti.
+ */
+void
+nmg_reclassify_lu_eu( lu, classlist, newclass )
+struct loopuse	*lu;
+long		*classlist[4];
+int		newclass;
+{
+	struct vertexuse	*vu;
+	struct edgeuse		*eu;
+	struct vertex		*v;
+
+	NMG_CK_LOOPUSE(lu);
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_reclassify_lu_eu(lu=x%x, classlist=x%x, newclass=%s)\n",
+			lu, classlist, nmg_class_name(newclass) );
+	}
+
+	if( newclass != NMG_CLASS_AonBshared && newclass != NMG_CLASS_AonBanti )
+		rt_bomb("nmg_reclassify_lu_eu() bad newclass\n");
+
+	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC)  {
+		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+
+		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], v) ||
+		    NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], v) )
+			rt_bomb("nmg_reclassify_lu_eu() changing in/out vert of lone vu loop to ON?\n");
+
+		/* Clear out other classifications */
+		NMG_INDEX_CLEAR(classlist[NMG_CLASS_AonBshared], v);
+		NMG_INDEX_CLEAR(classlist[NMG_CLASS_AonBanti], v);
+		/* Establish new classification */
+		NMG_INDEX_SET(classlist[newclass], v);
+		return;
+	}
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		struct edge	*e;
+		NMG_CK_EDGEUSE(eu);
+		e = eu->e_p;
+		NMG_CK_EDGE(e);
+
+		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], e) ||
+		    NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], e) )
+			rt_bomb("nmg_reclassify_lu_eu() changing in/out edge to ON?\n");
+
+		/* Clear out other edge classifications */
+		NMG_INDEX_CLEAR(classlist[NMG_CLASS_AonBshared], e);
+		NMG_INDEX_CLEAR(classlist[NMG_CLASS_AonBanti], e);
+		/* Establish new edge classification */
+		NMG_INDEX_SET(classlist[newclass], e);
+
+		/* Same thing for the vertices.  Only need to do start vert here. */
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+
+		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], v) ||
+		    NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], v) )
+			rt_bomb("nmg_reclassify_lu_eu() changing in/out vert to ON?\n");
+
+		/* Clear out other classifications */
+		NMG_INDEX_CLEAR(classlist[NMG_CLASS_AonBshared], v);
+		NMG_INDEX_CLEAR(classlist[NMG_CLASS_AonBanti], v);
+		/* Establish new classification */
+		NMG_INDEX_SET(classlist[newclass], v);
+	}
+}
+
+/*
  *			C L A S S _ L U _ V S _ S
  */
 static int 
@@ -1316,7 +1400,8 @@ CONST struct rt_tol	*tol;
 		goto out;
 	}
 
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], lu->l_p) )  {
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], lu->l_p) ||
+	    NMG_INDEX_TEST(classlist[NMG_CLASS_AonBanti], lu->l_p) )  {
 		reason = "of classlist";
 		status = ON_SURF;
 		goto out;
@@ -1392,7 +1477,9 @@ retry:
 				else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
 					nmg_euprint("Out: edgeuse", eu);
 				else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
-					nmg_euprint("On:  edgeuse", eu);
+					nmg_euprint("OnShare:  edgeuse", eu);
+				else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBanti], eu->e_p))
+					nmg_euprint("OnAnti:  edgeuse", eu);
 				else
 					nmg_euprint("BAD: edgeuse", eu);
 			}
@@ -1486,38 +1573,36 @@ retry:
 	    		break;
 	    	case 1:
 	    		/* ON-shared */
-	    		if( lu->orientation == OT_OPPOSITE )
-	    		{
+	    		if( lu->orientation == OT_OPPOSITE )  {
 			    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
 			    		lu->l_p );
 				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 					rt_log("Loop is on-antishared (lu orient is OT_OPPOSITE)\n");
-	    		}
-	    		else
-	    		{
+				nmg_reclassify_lu_eu( lu, classlist, NMG_CLASS_AonBanti );
+	    		}  else {
 			    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 			    		lu->l_p );
 				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 					rt_log("Loop is on-shared\n");
+	    			/* no need to reclassify, edges were previously marked as AonBshared */
 	    		}
 			reason = "edges identical with radial face, normals colinear";
 	    		status = ON_SURF;
 	    		goto out;
 	    	case 2:
 	    		/* ON-antishared */
-	    		if( lu->orientation == OT_OPPOSITE )
-	    		{
+	    		if( lu->orientation == OT_OPPOSITE )  {
 				NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 					lu->l_p );
 				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 					rt_log("Loop is on-shared (lu orient is OT_OPPOSITE)\n");
-	    		}
-	    		else
-	    		{
+	    			/* no need to reclassify, edges were previously marked as AonBshared */
+	    		}  else  {
 				NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
 					lu->l_p );
 				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 					rt_log("Loop is on-antishared\n");
+				nmg_reclassify_lu_eu( lu, classlist, NMG_CLASS_AonBanti );
 	    		}
 			reason = "edges identical with radial face, normals opposite";
 			status = ON_SURF;
