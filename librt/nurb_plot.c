@@ -28,23 +28,9 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-void rt_nurb_setfile(n)
-int n;
-{
-	pl_color(stdout, n * 25 % 255, n * 50 % 255, n * 75 %255);
-}
-
-rt_nurb_closefile()
-{
-
-}
-
-void rt_nurb_s_plot( srf )
-CONST struct snurb * srf;
-{
-	rt_nurb_plot_snurb( stdout, srf );
-}
-
+/*
+ *			R T _ N U R B _ P L O T _ S N U R B
+ */
 void
 rt_nurb_plot_snurb( fp, srf )
 FILE	*fp;
@@ -87,6 +73,9 @@ CONST struct snurb	*srf;
 	}
 }
 
+/*
+ *			R T _ N U R B _ P L O T _ C N U R B
+ */
 void
 rt_nurb_plot_cnurb( fp, crv )
 FILE	*fp;
@@ -103,4 +92,21 @@ CONST struct cnurb	*crv;
 			pdv_3cont( fp, m_ptr );
 		m_ptr += evp;
 	}
+}
+
+/* Old routines included for backwards compat.  Don't use in new code. */
+void rt_nurb_setfile(n)
+int n;
+{
+	pl_color(stdout, n * 25 % 255, n * 50 % 255, n * 75 %255);
+}
+
+rt_nurb_closefile()
+{
+}
+
+void rt_nurb_s_plot( srf )
+CONST struct snurb * srf;
+{
+	rt_nurb_plot_snurb( stdout, srf );
 }
