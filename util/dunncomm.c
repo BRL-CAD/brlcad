@@ -51,7 +51,9 @@ unsigned char	values[21];
 int	readfds;
 int	polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
 
-unsnooze()
+void
+unsnooze(x)
+int	x;
 {
 	printf("\007dunnsnap: request timed out, aborting\n");
 	exit(1);
