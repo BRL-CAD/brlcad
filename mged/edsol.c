@@ -59,6 +59,8 @@ void	calc_planes();
 static short int fixv;		/* used in ROTFACE,f_eqn(): fixed vertex */
 
 /* data for solid editing */
+int			sedraw;	/* apply solid editing changes */
+
 struct rt_external	es_ext;
 struct rt_db_internal	es_int;
 struct rt_db_internal	es_int_orig;
@@ -70,9 +72,32 @@ fastf_t	es_scale;		/* scale factor */
 fastf_t	es_para[3];		/* keyboard input parameter changes */
 fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t	es_m[3];		/* edge(line) slope */
-int	es_menu;		/* item selected from menu */
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
+
+/*  These values end up in es_menu, as do ARB vertex numbers */
+int	es_menu;		/* item selected from menu */
+#define MENU_TOR_R1		21
+#define MENU_TOR_R2		22
+#define MENU_TGC_ROT_H		23
+#define MENU_TGC_ROT_AB 	24
+#define	MENU_TGC_MV_H		25
+#define MENU_TGC_MV_HH		26
+#define MENU_TGC_SCALE_H	27
+#define MENU_TGC_SCALE_A	28
+#define MENU_TGC_SCALE_B	29
+#define MENU_TGC_SCALE_C	30
+#define MENU_TGC_SCALE_D	31
+#define MENU_TGC_SCALE_AB	32
+#define MENU_TGC_SCALE_CD	33
+#define MENU_TGC_SCALE_ABCD	34
+#define MENU_ARB_MV_EDGE	35
+#define MENU_ARB_MV_FACE	36
+#define MENU_ARB_ROT_FACE	37
+#define MENU_ELL_SCALE_A	38
+#define MENU_ELL_SCALE_B	39
+#define MENU_ELL_SCALE_C	40
+#define MENU_ELL_SCALE_ABC	41
 
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */
@@ -156,34 +181,34 @@ struct menu_item  point4_menu[] = {
 
 struct menu_item  tgc_menu[] = {
 	{ "TGC MENU", (void (*)())NULL, 0 },
-	{ "scale H",	tgc_ed, MENUH },
-	{ "scale A",	tgc_ed, MENUA },
-	{ "scale B",	tgc_ed, MENUB },
-	{ "scale c",	tgc_ed, MENUP1 },
-	{ "scale d",	tgc_ed, MENUP2 },
-	{ "scale A,B",	tgc_ed, MENUAB },
-	{ "scale C,D",	tgc_ed, MENUCD },
-	{ "scale A,B,C,D", tgc_ed, MENUABCD },
-	{ "rotate H",	tgc_ed, MENURH },
-	{ "rotate AxB",	tgc_ed, MENURAB },
-	{ "move end H(rt)", tgc_ed, MENUMH },
-	{ "move end H", tgc_ed, MENUMHH },
+	{ "scale H",	tgc_ed, MENU_TGC_SCALE_H },
+	{ "scale A",	tgc_ed, MENU_TGC_SCALE_A },
+	{ "scale B",	tgc_ed, MENU_TGC_SCALE_B },
+	{ "scale c",	tgc_ed, MENU_TGC_SCALE_C },
+	{ "scale d",	tgc_ed, MENU_TGC_SCALE_D },
+	{ "scale A,B",	tgc_ed, MENU_TGC_SCALE_AB },
+	{ "scale C,D",	tgc_ed, MENU_TGC_SCALE_CD },
+	{ "scale A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
+	{ "rotate H",	tgc_ed, MENU_TGC_ROT_H },
+	{ "rotate AxB",	tgc_ed, MENU_TGC_ROT_AB },
+	{ "move end H(rt)", tgc_ed, MENU_TGC_MV_H },
+	{ "move end H", tgc_ed, MENU_TGC_MV_HH },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  tor_menu[] = {
 	{ "TORUS MENU", (void (*)())NULL, 0 },
-	{ "scale radius 1", tor_ed, MENUR1 },
-	{ "scale radius 2", tor_ed, MENUR2 },
+	{ "scale radius 1", tor_ed, MENU_TOR_R1 },
+	{ "scale radius 2", tor_ed, MENU_TOR_R2 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  ell_menu[] = {
 	{ "ELLIPSOID MENU", (void (*)())NULL, 0 },
-	{ "scale A", ell_ed, MENUA },
-	{ "scale B", ell_ed, MENUB },
-	{ "scale C", ell_ed, MENUC },
-	{ "scale A,B,C", ell_ed, MENUABC },
+	{ "scale A", ell_ed, MENU_ELL_SCALE_A },
+	{ "scale B", ell_ed, MENU_ELL_SCALE_B },
+	{ "scale C", ell_ed, MENU_ELL_SCALE_C },
+	{ "scale A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -311,9 +336,9 @@ struct menu_item rot4_menu[] = {
 
 struct menu_item cntrl_menu[] = {
 	{ "ARB MENU", (void (*)())NULL, 0 },
-	{ "move edges", arb_control, EDGEMENU },
-	{ "move faces", arb_control, MOVEMENU },
-	{ "rotate faces", arb_control, ROTMENU },
+	{ "move edges", arb_control, MENU_ARB_MV_EDGE },
+	{ "move faces", arb_control, MENU_ARB_MV_FACE },
+	{ "rotate faces", arb_control, MENU_ARB_ROT_FACE },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -349,8 +374,10 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = EARB;
-	if(arg == 12)
+	if(arg == 12)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -364,8 +391,10 @@ int arg;
 		es_edflag = PTARB;
 		es_menu = 4;	/* location of point */
 	}
-	if(arg == 12)
+	if(arg == 12)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -384,8 +413,10 @@ int arg;
 		es_edflag = PTARB;
 		es_menu = 6;
 	}
-	if(arg == 10)
+	if(arg == 10)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -399,8 +430,10 @@ int arg;
 		es_edflag = PTARB;
 		es_menu = 4;
 	}
-	if(arg == 9)
+	if(arg == 9)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -409,8 +442,10 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = PTARB;
-	if(arg == 5)
+	if(arg == 5)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -419,11 +454,11 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
-	if(arg == MENURH || arg == MENURAB)
+	if(arg == MENU_TGC_ROT_H || arg == MENU_TGC_ROT_AB)
 		es_edflag = PROT;
-	if(arg == MENUMH)
+	if(arg == MENU_TGC_MV_H)
 		es_edflag = MOVEH;
-	if(arg == MENUMHH)
+	if(arg == MENU_TGC_MV_HH)
 		es_edflag = MOVEHH;
 }
 
@@ -450,8 +485,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = MVFACE;
-	if( arg == 7 )
+	if(arg == 7)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -460,8 +497,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = MVFACE;
-	if( arg == 7 )
+	if(arg == 7)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }		
 
 static void
@@ -470,8 +509,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = MVFACE;
-	if( arg == 6 )
+	if(arg == 6)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -480,8 +521,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = MVFACE;
-	if( arg == 6 )
+	if(arg == 6)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -490,8 +533,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = MVFACE;
-	if( arg == 5 )
+	if(arg == 5)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -500,8 +545,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
-	if( arg == 7 )
+	if(arg == 7)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -510,8 +557,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
-	if( arg == 7 )
+	if(arg == 7)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }		
 
 static void
@@ -520,8 +569,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
-	if( arg == 6 )
+	if(arg == 6)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -530,8 +581,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
-	if( arg == 6 )
+	if(arg == 6)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -540,8 +593,10 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
-	if( arg == 5 )
+	if(arg == 5)  {
 		es_edflag = CONTROL;
+		sedraw = 1;
+	}
 }
 
 static void
@@ -726,6 +781,11 @@ sedit_menu()  {
  * 			S E D I T
  * 
  * A great deal of magic takes place here, to accomplish solid editing.
+ *
+ *  Called from mged main loop after any event handlers:
+ *		if( sedraw > 0 )  sedit();
+ *  to process any residual events that the event handlers were too
+ *  lazy to handle themselves.
  */
 void
 sedit()
@@ -758,13 +818,13 @@ sedit()
 		menuflag = 0;
 		es_edflag = IDLE;
 		switch( es_menu ){
-			case EDGEMENU:  
+			case MENU_ARB_MV_EDGE:  
 				menu_array[MENU_L1] = which_menu[es_type-4];
 				break;
-			case MOVEMENU:
+			case MENU_ARB_MV_FACE:
 				menu_array[MENU_L1] = which_menu[es_type+1];
 				break;
-			case ROTMENU:
+			case MENU_ARB_ROT_FACE:
 				menu_array[MENU_L1] = which_menu[es_type+6];
 				break;
 			default:
@@ -1088,12 +1148,12 @@ sedit()
 	case PROT:   /* partial rotation of a solid */
 		switch( es_menu ) {
 
-		case MENURH:  /* rotate height vector */
+		case MENU_TGC_ROT_H:  /* rotate height vector */
 			MAT4X3VEC(work, incr_change, &es_rec.s.s_tgc_H);
 			VMOVE(&es_rec.s.s_tgc_H, work);
 			break;
 
-		case MENURAB:  /* rotate surfaces AxB and CxD (tgc) */
+		case MENU_TGC_ROT_AB:  /* rotate surfaces AxB and CxD (tgc) */
 			for(i=2; i<6; i++) {
 				op = &es_rec.s.s_values[i*3];
 				MAT4X3VEC( work, incr_change, op );
@@ -1118,6 +1178,196 @@ sedit()
 	return;
 }
 
+/*
+ *			S E D I T _ M O U S E
+ *
+ *  Mouse (pen) press in graphics area while doing Solid Edit.
+ */
+void
+sedit_mouse( mousevec )
+CONST vect_t	mousevec;
+{
+	vect_t	pos_view;	 	/* Unrotated view space pos */
+	vect_t	pos_model;		/* Rotated screen space pos */
+	vect_t	tr_temp;		/* temp translation vector */
+	vect_t	temp;
+
+	if( es_edflag <= 0 )  return;
+	switch( es_edflag )  {
+
+	case SSCALE:
+	case PSCALE:
+		/* use mouse to get a scale factor */
+		es_scale = 1.0 + 0.25 * ((fastf_t)
+			(mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
+		if ( mousevec[Y] <= 0 )
+			es_scale = 1.0 / es_scale;
+
+		/* accumulate scale factor */
+		acc_sc_sol *= es_scale;
+
+		sedraw = 1;
+		return;
+	case STRANS:
+		/* 
+		 * Use mouse to change solid's location.
+		 * Project solid's V point into view space,
+		 * replace X,Y (but NOT Z) components, and
+		 * project result back to model space.
+		 */
+		/* XXX this makes bad assumptions about format of es_rec !! */
+		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
+		MAT4X3PNT( pos_view, model2view, temp );
+		pos_view[X] = mousevec[X];
+		pos_view[Y] = mousevec[Y];
+		MAT4X3PNT( temp, view2model, pos_view );
+		MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
+		sedraw = 1;
+		return;
+	case MOVEH:
+	case MOVEHH:
+		/* Use mouse to change location of point V+H */
+		VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
+		MAT4X3PNT(pos_model, es_mat, temp);
+		MAT4X3PNT( pos_view, model2view, pos_model );
+		pos_view[X] = mousevec[X];
+		pos_view[Y] = mousevec[Y];
+		/* Do NOT change pos_view[Z] ! */
+		MAT4X3PNT( temp, view2model, pos_view );
+		MAT4X3PNT( tr_temp, es_invmat, temp );
+		VSUB2( &es_rec.s.s_tgc_H, tr_temp, &es_rec.s.s_tgc_V );
+		sedraw = 1;
+		return;
+	case PTARB:
+		/* move an arb point to indicated point */
+		/* point is located at es_values[es_menu*3] */
+		VADD2(temp, es_rec.s.s_values, &es_rec.s.s_values[es_menu*3]);
+		MAT4X3PNT(pos_model, es_mat, temp);
+		MAT4X3PNT(pos_view, model2view, pos_model);
+		pos_view[X] = mousevec[X];
+		pos_view[Y] = mousevec[Y];
+		MAT4X3PNT(temp, view2model, pos_view);
+		MAT4X3PNT(pos_model, es_invmat, temp);
+		editarb( pos_model );
+		sedraw = 1;
+		return;
+	case EARB:
+		/* move arb edge, through indicated point */
+		mousevec[X] = mousevec[X];
+		mousevec[Y] = mousevec[Y];
+		mousevec[Z] = 0;
+		MAT4X3PNT( temp, view2model, mousevec );
+		/* apply inverse of es_mat */
+		MAT4X3PNT( pos_model, es_invmat, temp );
+		editarb( pos_model );
+		sedraw = 1;
+		return;
+	case MVFACE:
+		/* move arb face, through  indicated  point */
+		mousevec[X] = mousevec[X];
+		mousevec[Y] = mousevec[Y];
+		mousevec[Z] = 0;
+		MAT4X3PNT( temp, view2model, mousevec );
+		/* apply inverse of es_mat */
+		MAT4X3PNT( pos_model, es_invmat, temp );
+		/* change D of planar equation */
+		es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
+		/* calculate new vertices, put in record as vectors */
+		calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
+		sedraw = 1;
+		return;
+		
+	default:
+		(void)printf("mouse press undefined in this solid edit mode\n");
+		break;
+	}
+}
+
+/*
+ *  Object Edit
+ */
+void
+objedit_mouse( mousevec )
+CONST vect_t	mousevec;
+{
+	fastf_t			scale;
+	vect_t	pos_view;	 	/* Unrotated view space pos */
+	vect_t	pos_model;	/* Rotated screen space pos */
+	vect_t	tr_temp;		/* temp translation vector */
+	vect_t	temp;
+
+	mat_idn( incr_change );
+	scale = 1;
+	if( movedir & SARROW )  {
+		/* scaling option is in effect */
+		scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
+			mousevec[Y] : -mousevec[Y]);
+		if ( mousevec[Y] <= 0 )
+			scale = 1.0 / scale;
+
+		/* switch depending on scaling option selected */
+		switch( edobj ) {
+
+			case BE_O_SCALE:
+				/* global scaling */
+				incr_change[15] = 1.0 / scale;
+			break;
+
+			case BE_O_XSCALE:
+				/* local scaling ... X-axis */
+				incr_change[0] = scale;
+				/* accumulate the scale factor */
+				acc_sc[0] *= scale;
+			break;
+
+			case BE_O_YSCALE:
+				/* local scaling ... Y-axis */
+				incr_change[5] = scale;
+				/* accumulate the scale factor */
+				acc_sc[1] *= scale;
+			break;
+
+			case BE_O_ZSCALE:
+				/* local scaling ... Z-axis */
+				incr_change[10] = scale;
+				/* accumulate the scale factor */
+				acc_sc[2] *= scale;
+			break;
+		}
+
+		/* Have scaling take place with respect to a point,
+		 * NOT the view center.
+		 */
+		/* XXX should have an es_keypoint for this */
+		MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
+		MAT4X3PNT(pos_model, modelchanges, temp);
+		wrt_point(modelchanges, incr_change, modelchanges, pos_model);
+	}  else if( movedir & (RARROW|UARROW) )  {
+		mat_t oldchanges;	/* temporary matrix */
+
+		/* Vector from object center to cursor */
+		/* XXX should have an es_keypoint for this */
+		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
+		MAT4X3PNT( pos_view, model2objview, temp );
+		if( movedir & RARROW )
+			pos_view[X] = mousevec[X];
+		if( movedir & UARROW )
+			pos_view[Y] = mousevec[Y];
+
+		MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
+		MAT4X3PNT( tr_temp, modelchanges, temp );
+		VSUB2( tr_temp, pos_model, tr_temp );
+		MAT_DELTAS(incr_change,
+			tr_temp[X], tr_temp[Y], tr_temp[Z]);
+		mat_copy( oldchanges, modelchanges );
+		mat_mul( modelchanges, incr_change, oldchanges );
+	}  else  {
+		(void)printf("No object edit mode selected;  mouse press ignored\n");
+		return;
+	}
+	mat_idn( incr_change );
+	new_mats();
+}
 
 /*
  *			F I N D A N G
@@ -1220,7 +1470,7 @@ pscale()
 
 	switch( es_menu ) {
 
-	case MENUH:	/* scale height vector */
+	case MENU_TGC_SCALE_H:	/* scale height vector */
 		op = &es_rec.s.s_tgc_H;
 		if( inpara ) {
 			/* take es_mat[15] (path scaling) into account */
@@ -1231,7 +1481,7 @@ pscale()
 		VSCALE(op, op, es_scale);
 		break;
 
-	case MENUR1:
+	case MENU_TOR_R1:
 		/* scale radius 1 of TOR */
 		mr2 = MAGNITUDE(&es_rec.s.s_tor_H);
 		op = &es_rec.s.s_tor_B;
@@ -1271,7 +1521,7 @@ torcom:
 		VSCALE(op, op, ma/mb);
 		break;
 
-	case MENUR2:
+	case MENU_TOR_R2:
 		/* scale radius 2 of TOR */
 		op = &es_rec.s.s_values[3];
 		if( inpara ) {
@@ -1288,61 +1538,52 @@ torcom:
 		}
 		goto torcom;
 
-	case MENUA:
+	case MENU_TGC_SCALE_A:
 		/* scale vector A */
-		switch( es_int.idb_type ) {
-
-		case ID_ELL:
-			op = &es_rec.s.s_ell_A;
-			if( inpara ) {
-				/* take es_mat[15] (path scaling) into account */
-				es_para[0] *= es_mat[15];
-				es_scale = es_para[0] / MAGNITUDE(op);
-			}
-			VSCALE(op, op, es_scale);
-			break;
-
-		case ID_TGC:
-			op = &es_rec.s.s_tgc_A;
-			if( inpara ) {
-				/* take es_mat[15] (path scaling) into account */
-				es_para[0] *= es_mat[15];
-				es_scale = es_para[0] / MAGNITUDE(op);
-			}
-			VSCALE(op, op, es_scale);
-			break;
-
+		op = &es_rec.s.s_tgc_A;
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
+			es_scale = es_para[0] / MAGNITUDE(op);
 		}
+		VSCALE(op, op, es_scale);
 		break;
 
-	case MENUB:
+	case MENU_TGC_SCALE_B:
 		/* scale vector B */
-		switch( es_int.idb_type ) {
-
-		case ID_ELL:
-			op = &es_rec.s.s_ell_B;
-			if( inpara ) {
-				/* take es_mat[15] (path scaling) into account */
-				es_para[0] *= es_mat[15];
-				es_scale = es_para[0] / MAGNITUDE(op);
-			}
-			VSCALE(op, op, es_scale);
-			break;
-
-		case ID_TGC:
-			op = &es_rec.s.s_tgc_B;
-			if( inpara ) {
-				/* take es_mat[15] (path scaling) into account */
-				es_para[0] *= es_mat[15];
-				es_scale = es_para[0] / MAGNITUDE(op);
-			}
-			VSCALE(op, op, es_scale);
-			break;
+		op = &es_rec.s.s_tgc_B;
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
+			es_scale = es_para[0] / MAGNITUDE(op);
 		}
+		VSCALE(op, op, es_scale);
 		break;
 
-	case MENUC:
-		/* scale vector C (ELL only) */
+	case MENU_ELL_SCALE_A:
+		/* scale vector A */
+		op = &es_rec.s.s_ell_A;
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
+			es_scale = es_para[0] / MAGNITUDE(op);
+		}
+		VSCALE(op, op, es_scale);
+		break;
+
+	case MENU_ELL_SCALE_B:
+		/* scale vector B */
+		op = &es_rec.s.s_ell_B;
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
+			es_scale = es_para[0] / MAGNITUDE(op);
+		}
+		VSCALE(op, op, es_scale);
+		break;
+
+	case MENU_ELL_SCALE_C:
+		/* scale vector C */
 		op = &es_rec.s.s_ell_C;
 		if( inpara ) {
 			/* take es_mat[15] (path scaling) into account */
@@ -1353,7 +1594,7 @@ torcom:
 		VSCALE(op, op, es_scale);
 		break;
 
-	case MENUP1:
+	case MENU_TGC_SCALE_C:
 		/* TGC: scale ratio "c" */
 		op = &es_rec.s.s_tgc_C;
 		if( inpara ) {
@@ -1364,7 +1605,7 @@ torcom:
 		VSCALE(op, op, es_scale);
 		break;
 
-	case MENUP2:   /* scale  d for tgc */
+	case MENU_TGC_SCALE_D:   /* scale  d for tgc */
 		op = &es_rec.s.s_tgc_D;
 		if( inpara ) {
 			/* take es_mat[15] (path scaling) into account */
@@ -1374,7 +1615,7 @@ torcom:
 		VSCALE(op, op, es_scale);
 		break;
 
-	case MENUAB:
+	case MENU_TGC_SCALE_AB:
 		op = &es_rec.s.s_tgc_A;
 		if( inpara ) {
 			/* take es_mat[15] (path scaling) into account */
@@ -1388,7 +1629,7 @@ torcom:
 		VSCALE(op, op, ma/mb);
 		break;
 
-	case MENUCD:	/* scale C and D of tgc */
+	case MENU_TGC_SCALE_CD:	/* scale C and D of tgc */
 		op = &es_rec.s.s_tgc_C;
 		if( inpara ) {
 			/* take es_mat[15] (path scaling) into account */
@@ -1402,7 +1643,7 @@ torcom:
 		VSCALE(op, op, ma/mb);
 		break;
 
-	case MENUABCD: 		/* scale A,B,C, and D of tgc */
+	case MENU_TGC_SCALE_ABCD: 		/* scale A,B,C, and D of tgc */
 		op = &es_rec.s.s_tgc_A;
 		if( inpara ) {
 			/* take es_mat[15] (path scaling) into account */
@@ -1422,7 +1663,7 @@ torcom:
 		VSCALE(op, op, ma/mb);
 		break;
 
-	case MENUABC:	/* scale A,B, and C of ellg */
+	case MENU_ELL_SCALE_ABC:	/* scale A,B, and C of ellg */
 		op = &es_rec.s.s_ell_A;
 		if( inpara ) {
 			/* take es_mat[15] (path scaling) into account */
