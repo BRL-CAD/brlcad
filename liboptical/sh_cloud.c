@@ -30,8 +30,8 @@ static char RCScloud[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 
 struct cloud_specific {
-	float	cl_thresh;
-	float	cl_range;
+	fastf_t	cl_thresh;
+	fastf_t	cl_range;
 };
 #define CL_NULL	((struct cloud_specific *)0)
 #define CL_O(m)	offsetof(struct cloud_specific, m)
@@ -62,8 +62,8 @@ struct mfuncs cloud_mfuncs[] = {
  */
 double
 cloud_texture(x,y,Contrast,initFx,initFy)
-register float x, y;
-float Contrast, initFx, initFy;
+register fastf_t x, y;
+fastf_t Contrast, initFx, initFy;
 {
 	register int	i;
 	FAST fastf_t	Px, Py, Fx, Fy, C;
