@@ -112,11 +112,14 @@ char	**argv;
 
 	/* Make a piece of pipe */
 	RT_LIST_INIT( &head.l );
-	for( i=0; pipe1[i].ps_type != WDB_PIPESEG_TYPE_END; i++ )  {
+	for( i=0; ; i++ )  {
 		RT_LIST_INSERT( &head.l, &pipe1[i].l );
+		if( pipe1[i].ps_type == WDB_PIPESEG_TYPE_END )
+			break;
 	}
-	pr_pipe( "pipe1", pipe1 );
-	mk_pipe( stdout, "pipe1", &head );
+	pr_pipe( "pipe1", &head );
+	if( (i = mk_pipe( stdout, "pipe1", &head )) < 0 )
+		fprintf(stderr,"mk_pipe(%s) returns %d\n", "pipe1", i);
 
 	do_bending( stdout, "pipe2", pipe2, pipe2_npts, 0.1, 0.05 );
 }
@@ -219,7 +222,8 @@ struct wdb_pipeseg *head;
 				psp->ps_bendcenter[Z] );
 			break;
 		default:
-			fprintf(stderr," *** unknown ***\n");
+			fprintf(stderr," *** unknown ps_type=%d psp=x%x ***\n",
+				psp->ps_type, psp );
 			break;
 		}
 	}
