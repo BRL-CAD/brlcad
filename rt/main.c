@@ -203,6 +203,8 @@ char **argv;
 
 	/* 
 	 *  Initialize application.
+	 *  Note that width & height may not have been set yet,
+	 *  since they may change from frame to frame.
 	 */
 	if( view_init( &ap, title_file, title_obj, outputfile!=(char *)0 ) != 0 )  {
 		/* Framebuffer is desired */
@@ -222,9 +224,13 @@ char **argv;
 			exit(12);
 		}
 		RES_ACQUIRE( &rt_g.res_syscall );
-		zoom = fb_getwidth(fbp)/width;
-		if( fb_getheight(fbp)/height < zoom )
-			zoom = fb_getheight(fbp)/height;
+		if( width > 0 && height > 0 )  {
+			zoom = fb_getwidth(fbp)/width;
+			if( fb_getheight(fbp)/height < zoom )
+				zoom = fb_getheight(fbp)/height;
+		} else {
+			zoom = 1;
+		}
 		(void)fb_view( fbp, width/2, height/2,
 			zoom, zoom );
 		RES_RELEASE( &rt_g.res_syscall );
