@@ -348,10 +348,23 @@ benchmark)
 #  clobber	clean + noprod
 #  lint
 #  ls		ls -al of all subdirectories
+#
+#  If operations are enclosed in sub-shells "(...)",
+#  then on newer systems, ^C will only terminate the sub-shell
 all)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${SILENT} )
+		if test ! -d ${DIRPRE}${dir}${DIRSUF}
+		then	continue;
+		fi
+		cd ${DIRPRE}${dir}${DIRSUF}
+		if test -f ../${dir}/fast.sh
+		then
+			../${dir}/fast.sh
+		else
+			cake -k ${SILENT}
+		fi
+		cd ..
 	done;;
 
 clean|noprod|clobber|lint)
