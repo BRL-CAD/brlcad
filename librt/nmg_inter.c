@@ -3619,12 +3619,12 @@ struct nmg_inter_struct *is;
 
 	/* check if it is within fu's */
 	code = nmg_class_pt_fu_except( vg->coord, fu1, (struct loopuse *)NULL,
-		(void *)NULL, (void *)NULL, (char *)NULL, 0, 0, &is->tol );
+		(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, &is->tol );
 	if( code != NMG_CLASS_AinB )
 		return( 0 );
 
 	code = nmg_class_pt_fu_except( vg->coord, fu2, (struct loopuse *)NULL,
-		(void *)NULL, (void *)NULL, (char *)NULL, 0, 0, &is->tol );
+		(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, &is->tol );
 	if( code != NMG_CLASS_AinB )
 		return( 0 );
 

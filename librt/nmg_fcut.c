@@ -2869,7 +2869,7 @@ struct nmg_ray_state *rs;
 		 */
 		VAVERAGE( mid_pt, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord )
 		class = nmg_class_pt_fu_except( mid_pt, rs->fu1, (struct loopuse *)NULL,
-			(void *)NULL, (void *)NULL, (char *)NULL, 0, 1, rs->tol );
+			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 1, rs->tol );
 
 		if(rt_g.NMG_debug&DEBUG_FCUT)
 		{
