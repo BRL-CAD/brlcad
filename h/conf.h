@@ -212,9 +212,11 @@
 #	define SPRINTF_NOT_PARALLEL	1
 #endif
 
-#if defined(sun) || (defined(alliant) && !defined(i860)) || \
-        defined(ardent) || \
-        defined(stellar) || defined(sparc) || defined(mips) || \
+#if defined(sun) || \
+	(defined(alliant) && !defined(i860)) || \
+        defined(ardent) || defined(stellar) || \
+	defined(sparc) || defined(__sparc) || defined(__sparc__) || \
+	defined(mips) || \
         (defined(sgi) && defined(mips)) || \
         (defined(__sgi) && defined(__mips)) || \
         defined(pyr) || defined(apollo) || defined(aux) || \
@@ -226,7 +228,10 @@
 #       define  NATURAL_IEEE    yes
 #endif
 
-#if defined(n16) || defined(i386) || defined(i860) || defined(__stardent)
+#if defined(n16) || defined(i386) || defined(i860) || \
+	defined(__i386) || \
+	defined(__stardent)
+
         /* These systems operate in IEEE format, using little-endian order */
 #       define  REVERSED_IEEE   yes
 #endif
