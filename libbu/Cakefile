@@ -20,7 +20,7 @@
 	rb_free rb_insert rb_order_stats	\
 	rb_rotate rb_search rb_walk		\
 	vfont brlcad_path xdr \
-	vls htond units bu_tcl color cmd \
+	vls htond htonf units bu_tcl color cmd \
 	cmdhist cmdhist_obj observer avs
 
 #define VERSION_VARIABLE	bu_version
