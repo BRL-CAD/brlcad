@@ -1,17 +1,19 @@
 /*
-	SCCS id:	@(#) vdeck.c	2.11
-	Last edit: 	8/6/85 at 12:16:32
-	Retrieved: 	8/13/86 at 08:13:43
+	SCCS id:	@(#) vdeck.c	2.12
+	Last edit: 	12/20/85 at 19:03:57
+	Retrieved: 	8/13/86 at 08:14:09
 	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
 
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
-			Maryland 21005
-			(301)278-6647 or AV-283-6647
- */
+			Maryland 21005-5066
+			(301)278-6647 or AV-298-6647
+*/
+#if ! defined( lint )
 static
-char	sccsTag[] = "@(#) vdeck.c	2.11	last edit 8/6/85 at 12:16:32";
+char	sccsTag[] = "@(#) vdeck.c	2.12	last edit 12/20/85 at 19:03:57";
+#endif
 
 /*
 	Derived from KARDS, written by Keith Applin.
@@ -57,155 +59,173 @@ char	sccsTag[] = "@(#) vdeck.c	2.11	last edit 8/6/85 at 12:16:32";
 extern Directory	*diradd();
 extern double		fabs();
 extern long		lseek();
-int			quit(), abort();
 char			getcmd();
 char			regBuffer[BUFSIZ], *regBufPtr;
-#define endRegion( buff )     	sprintf( regBufPtr, "%s\n", buff );\
-			    	write( regfd, regBuffer, strlen( regBuffer ) );\
-			    	regBufPtr = regBuffer;
+extern void		quit();
+void			prompt();
+#define endRegion( buff ) \
+	     	(void) sprintf( regBufPtr, "%s\n", buff ); \
+	    	(void) write( regfd, regBuffer, (unsigned) strlen( regBuffer ) ); \
+	    	regBufPtr = regBuffer;
 
-#define putSpaces( s, xx ) {	register int i;\
-				for( i = 0; i < (xx); i++ ) *s++ = ' ';\
-			  }
+#define putSpaces( s, xx ) \
+		{	register int ii; \
+		for( ii = 0; ii < (xx); ii++ ) \
+			*s++ = ' '; \
+		}
 
-/*	m a i n ( )
- */
-main( argc, argv )	char	*argv[];
-{
-	setbuf( stdout, malloc( BUFSIZ ) );
+/*	m a i n ( )							*/
+main( argc, argv )
+char	*argv[];
+	{
+	setbuf( stdout, emalloc( BUFSIZ ) );
 
-	if( ! parsArg( argc, argv ) ) {
+	if( ! parsArg( argc, argv ) )
+		{
 		menu( usage );
 		exit( 1 );
-	}
+		}
 
 	builddir();	/* Build directory from object file.	 	*/
 	toc();		/* Build table of contents from directory.	*/
 
 	/*      C o m m a n d   I n t e r p r e t e r			*/
 	setjmp( env );	/* Point of re-entry from aborted command.	*/
-	prompt( "%s", CMD_PROMPT );	
-	while( 1 ) {
+	(void) printf( "%s", CMD_PROMPT );	
+	while( 1 )
+		{
 		/* Return to default interrupt handler after every command,
 		 allows exit from program only while command interpreter
 		 is waiting for input from keyboard.
 		 */
 		signal( SIGINT, quit );
 
-		switch( getcmd( arg_list, 0 ) ) {
-		case DECK:
+		switch( getcmd( arg_list, 0 ) )
+			{
+		case DECK :
 			regBufPtr = regBuffer;
 			deck( arg_list[1] );
 			break;
-		case ERASE:
-			while( curr_ct > 0 ) free( curr_list[--curr_ct] );
+		case ERASE :
+			while( curr_ct > 0 )
+				free( curr_list[--curr_ct] );
 			break;
-		case INSERT:
-			if( arg_list[1] == 0 ) {
-				prompt( "enter object[s] to insert: " );
+		case INSERT :
+			if( arg_list[1] == 0 )
+				{
+				(void) printf( "enter object[s] to insert: " );
 				getcmd( arg_list, arg_ct );
-			}
+				}
 			insert( arg_list, arg_ct );
 			break;
-		case LIST:
-		{	register int	i;
-			if( arg_list[1] == 0 ) {
+		case LIST :
+			{	register int	i;
+			if( arg_list[1] == 0 )
+				{
 				col_prt( curr_list, curr_ct );
 				break;
-			}
+				}
 			for( tmp_ct = 0, i = 0; i < curr_ct; i++ )
 				if( match( arg_list[1], curr_list[i] ) )
 					tmp_list[tmp_ct++] = curr_list[i];
 			col_prt( tmp_list, tmp_ct );
 			break;
-		}
-		case MENU:
+			}
+		case MENU :
 			menu( cmd );
-			prompt( "%s", PROMPT );
+			(void) printf( "%s", PROMPT );
 			continue;
-		case NUMBER:
-			if( arg_list[1] == 0 ) {
-				prompt( "enter number of 1st solid: " );
+		case NUMBER :
+			if( arg_list[1] == 0 )
+				{
+				(void) printf( "enter number of 1st solid: " );
 				getcmd( arg_list, arg_ct );
-				prompt( "enter number of 1st region: " );
+				(void) printf( "enter number of 1st region: " );
 				getcmd( arg_list, arg_ct );
-			}
-			if( arg_list[1] ) delsol = atoi( arg_list[1] ) - 1;
-			if( arg_list[2] ) delreg = atoi( arg_list[2] ) - 1;
+				}
+			if( arg_list[1] )
+				delsol = atoi( arg_list[1] ) - 1;
+			if( arg_list[2] )
+				delreg = atoi( arg_list[2] ) - 1;
 			break;
-		case REMOVE:
-			if( arg_list[1] == 0 ) {
-				prompt( "enter object[s] to remove: " );
+		case REMOVE :
+			if( arg_list[1] == 0 )
+				{
+				(void) printf( "enter object[s] to remove: " );
 				getcmd( arg_list, arg_ct );
-			}
+				}
 			delete( arg_list );
 			break;
-		case RETURN:
-			prompt( "%s", PROMPT );
+		case RETURN :
+			(void) printf( "%s", PROMPT );
 			continue;
-		case SHELL:
-			if( arg_list[1] == 0 ) {
-				prompt( "enter shell command: " );
+		case SHELL :
+			if( arg_list[1] == 0 )
+				{
+				(void) printf( "enter shell command: " );
 				getcmd( arg_list, arg_ct );
-			}
+				}
 			shell( arg_list );
 			break;
-		case SORT_TOC:
+		case SORT_TOC :
 			sort( toc_list, ndir );
 			break;
-		case TOC:
+		case TOC :
 			list_toc( arg_list );
 			break;
-		case EOF:
-		case QUIT:
-			prompt( "quitting...\n" );
+		case EOF :
+		case QUIT :
+			(void) printf( "quitting...\n" );
 			exit( 0 );
-		UNKNOWN:
-			prompt( "invalid command\n%s", PROMPT );
+		UNKNOWN :
+			(void) printf( "invalid command\n%s", PROMPT );
 			continue;
+			}
+		(void) printf( "%s", CMD_PROMPT );		
 		}
-		prompt( "%s", CMD_PROMPT );		
 	}
-}
 
 /*	c g o b j ( )
-	Build deck for object pointed to by 'dp'.
+	Build deck for object pointed to by 'dirp'.
  */
-cgobj(	   dp, pathpos, old_xlate )
-register
-Directory *dp;
-int	pathpos;
-matp_t	old_xlate;
-{
+cgobj( dirp, pathpos, old_xlate )
+register Directory	*dirp;
+int			pathpos;
+matp_t			old_xlate;
+	{
 	register struct member	*mp;
-	Record		rec;
-	Directory	*nextdp, *tdp;
+	register char		*bp;
+	Record			rec;
+	Directory		*nextdirp, *tdirp;
+	static Directory	*path[MAXPATH];
 	mat_t			new_xlate;
-	long	savepos, RgOffset;
-	int	nparts;
-	int	i, j;
-	int	length;
-	int	dchar = 0;
-	int	nnt;
-	char	buf[80], *bp;
-	char	ars_name[16];
+	long			savepos, RgOffset;
+	int			nparts;
+	int			i, j;
+	int			length;
+	int			dchar = 0;
+	int			nnt;
+	static char		buf[MAXPATH*NAMESIZE];
+	char			ars_name[NAMESIZE];
 
 	/* Limit tree hierarchy to MAXPATH levels.			*/
-	if( pathpos >= MAXPATH ) {
-		fprintf( stderr, "Nesting exceeds %d levels\n", MAXPATH );
+	if( pathpos >= MAXPATH )
+		{
+		(void) fprintf( stderr, "Nesting exceeds %d levels\n", MAXPATH );
 		for( i = 0; i < MAXPATH; i++ )
-			fprintf( stderr, "/%s", path[i]->d_namep );
-		fprintf( stderr, "\n" );
+			(void) fprintf( stderr, "/%s", path[i]->d_namep );
+		(void) fprintf( stderr, "\n" );
 		return;
-	}
+		}
 	savepos = lseek( objfd, 0L, 1 );
-	lseek( objfd, dp->d_addr, 0 );
-	readF( objfd, &rec, sizeof rec );
+	(void) lseek( objfd, dirp->d_addr, 0 );
+	readF( objfd, (char *) &rec, sizeof rec );
 
-	if( rec.u_id == ID_COMB )  { /* We have a group.		*/
-		if( regflag > 0 ) {
-			/* record is part of a region
-			 */
+	if( rec.u_id == ID_COMB )
+		{ /* We have a group.					*/
+		if( regflag > 0 )
+			{
+			/* Record is part of a region.			*/
 			if( rec.c.c_flags != 'R' )
 				{
 				(void) fprintf( stderr,
@@ -215,203 +235,215 @@ matp_t	old_xlate;
 						);
 				return;
 				}
-			if( operate == UNION ) {
-				fprintf( stderr,
+			if( operate == UNION )
+				{
+				(void) fprintf( stderr,
 					"Region: %s is member of ",
 					rec.c.c_name );
-				fprintf( stderr,
+				(void) fprintf( stderr,
 					"region %s with OR operation.\n",
 					buff );
 				return;
-			}
+				}
 
 			/* Check for end of line in region table.	*/
 			if(	(isave % 9 ==  1 && isave >  1)
-			    ||	(isave % 9 == -1 && isave < -1) )
-			{
+			    ||	(isave % 9 == -1 && isave < -1)
+				)
+				{
 				endRegion( buff );
 				putSpaces( regBufPtr, 6 );
-			}
-			sprintf( regBufPtr, "rg%c", operate );
+				}
+			(void) sprintf( regBufPtr, "rg%c", operate );
 			regBufPtr += 3;
 			RgOffset = (long)(regBufPtr - regBuffer);
 
 			/* Check if this region is in desc yet		*/
-			lseek( rd_rrfd, 0L, 0 );
-			for( j = 1; j <= nnr; j++ ) {
-				readF( rd_rrfd, name, 16 );
-				if( strcmp( name, rec.c.c_name ) == 0 ) {
-					/* Region is #j.		*/
-					sprintf( regBufPtr, "%4d", j+delreg );
+			(void) lseek( rd_rrfd, 0L, 0 );
+			for( j = 1; j <= nnr; j++ )
+				{
+				readF( rd_rrfd, name, (unsigned) NAMESIZE );
+				if( strcmp( name, rec.c.c_name ) == 0 )
+					{ /* Region is #j.		*/
+					(void) sprintf( regBufPtr, "%4d", j+delreg );
 					regBufPtr += 4;
 					break;
+					}
 				}
-			}
-			if( j > nnr ) {   /* region not in desc yet */
+			if( j > nnr )
+				{   /* region not in desc yet */
 				numrr++;
-				if( numrr > MAXRR ) {
-					fprintf( stderr,
+				if( numrr > MAXRR )
+					{
+					(void) fprintf( stderr,
 						"More than %d regions.\n",
-						MAXRR );
+						MAXRR
+						);
 					exit( 10 );
-				}
+					}
 
 				/* Add to list of regions to look up.	*/
 				findrr[numrr].rr_pos = lseek(	regfd,
 								0L,
 								1
 								) + RgOffset;
-				for( i = 0; i < 16; i++ )
+				for( i = 0; i < NAMESIZE; i++ )
 					findrr[numrr].rr_name[i] =
 						   rec.c.c_name[i];
 				putSpaces( regBufPtr, 4 );
-			}
-
+				}
 			/* Check for end of this region.		*/
-			if( isave < 0 ) { int	n;
+			if( isave < 0 )
+				{	int	n;
 				isave = -isave;
 				regflag = 0;
 				n = 69 - (regBufPtr - regBuffer);
 				putSpaces( regBufPtr, n );
 				endRegion( buff );
-			}
-			lseek( objfd, savepos, 0);
+				}
+			(void) lseek( objfd, savepos, 0);
 			return;
-		}
+			}
 
 		regflag = 0;
 		nparts = rec.c.c_length;
-		if( rec.c.c_flags == 'R') {
-			/* Record is region but not member of a region.	*/
+		if( rec.c.c_flags == 'R')
+			{ /* Record is region but not member of a region.	*/
 			regflag = 1;
 			nnr++;
-
-			/* dummy region */
-			if( nparts == 0 )	regflag = 0;
-
+			/* Dummy region.				*/
+			if( nparts == 0 )
+				regflag = 0;
 			/* Save the region name.			*/
-			strncpy( buff, rec.c.c_name, 16 );
-
+			(void) strncpy( buff, rec.c.c_name, NAMESIZE );
 			/* Start new region.				*/
-			sprintf( regBufPtr, "%5d ", nnr+delreg );
+			(void) sprintf( regBufPtr, "%5d ", nnr+delreg );
 			regBufPtr += 6;
-
 			/* Check for dummy region.			*/
-			if( nparts == 0 ) { int	n;
+			if( nparts == 0 )
+				{	int	n;
 				n = 69 - (regBufPtr - regBuffer);
 				putSpaces( regBufPtr, n );
 				endRegion( "" );
 				regflag = 0;
-			}
+				}
 
 			/* Add region to list of regions in desc.	*/
-			lseek( rrfd, 0L, 2 );
-			write( rrfd, rec.c.c_name, 16 );
-
+			(void) lseek( rrfd, 0L, 2 );
+			(void) write( rrfd, rec.c.c_name, NAMESIZE );
 			/* Check for any OR.				*/
 			orflag = 0;
-			if( nparts > 1 ) {
-				/* First OR doesn't count, throw away
-					first member.
-				 */
-				readF( objfd, &rec, sizeof rec );
-				for( i = 2; i <= nparts; i++ ) {
-					readF( objfd, &rec, sizeof rec );
-					if( rec.M.m_relation == UNION ) {
+			if( nparts > 1 )
+				{ /* First OR doesn't count, throw away
+					first member.		 	*/
+				readF( objfd, (char *) &rec, sizeof rec );
+				for( i = 2; i <= nparts; i++ )
+					{
+					readF( objfd, (char *) &rec, sizeof rec );
+					if( rec.M.m_relation == UNION )
+						{
 						orflag = 1;
 						break;
+						}
 					}
+				(void) lseek( objfd, dirp->d_addr, 0 );
+				readF( objfd, (char *) &rec, sizeof rec );
 				}
-				lseek( objfd, dp->d_addr, 0 );
-				readF( objfd, &rec, sizeof rec );
-			}
-
 			/* Write region ident table.			*/
 			itoa( nnr+delreg, buf, 5 );
 			itoa( rec.c.c_regionid,	&buf[5], 5 );
 			itoa( rec.c.c_aircode, &buf[10], 5 );
 /* + */			itoa( rec.c.c_material, &buf[15], 5 );
 /* + */			itoa( rec.c.c_los, &buf[20], 5 );
-			write(	ridfd,		buf,	  25 );
-			blank_fill( ridfd,		  5 );
+			(void) write( ridfd, buf, 25 );
+			blank_fill( ridfd, 5 );
 			bp = buf;
 			length = strlen( rec.c.c_name );
-			for( j = 0; j < pathpos; j++ ) {
-				strncpy(	bp,
+			for( j = 0; j < pathpos; j++ )
+				{
+				(void) strncpy(	bp,
 						path[j]->d_namep,
 						strlen( path[j]->d_namep )
-				);
+						);
 				bp += strlen( path[j]->d_namep );
 				*bp++ = '/';
-			}
+				*bp = '\0';
+				}
 			length += bp - buf;
-			if( length > 50 ) {
+			if( length > 50 )
+				{
 				bp = buf + (length - 50);
 				*bp = '*';
-				write(	ridfd,
-					bp,
-					50 - strlen( rec.c.c_name )
-				);
-			} else	write( ridfd, buf, bp - buf );
-			write(	ridfd,
-				rec.c.c_name,
-				strlen( rec.c.c_name )
-			);
-			write( ridfd, LF, 1 );
-			printf( "\nREGION %4d    ", nnr+delreg );
+				(void) write(	ridfd,
+						bp,
+						(unsigned)(50 - strlen( rec.c.c_name ))
+						);
+				}
+			else
+				(void) write( ridfd, buf, (unsigned)(bp - buf) );
+			(void) write(	ridfd,
+					rec.c.c_name,
+					(unsigned) strlen( rec.c.c_name )
+					);
+			(void) write( ridfd, LF, 1 );
+			(void) printf( "%4d:", nnr+delreg );
 			for( j = 0; j < pathpos; j++ )
-				printf( "/%s", path[j]->d_namep );
-			prompt( "/%s", rec.c.c_name );
-		}
+				(void) printf( "/%s", path[j]->d_namep );
+			(void) printf( "/%s\n", rec.c.c_name );
+			}
 		isave = 0;
-		for( i = 1; i <= nparts; i++ )  {
-			if( ++isave == nparts )	isave = -isave;
-			readF( objfd, &rec, sizeof rec );
+		for( i = 1; i <= nparts; i++ )
+			{
+			if( ++isave == nparts )
+				isave = -isave;
+			readF( objfd, (char *) &rec, sizeof rec );
 			mp = &rec.M;
  
 			/* Save this operation.				*/
 			operate = mp->m_relation;
- 
-			path[pathpos] = dp;
-			if(	(nextdp =
-				lookup( mp->m_instname, NOISY )) == DIR_NULL )
+ 			path[pathpos] = dirp;
+			if(	(nextdirp =
+				lookup( mp->m_instname, NOISY )) == DIR_NULL
+				)
 				continue;
-			if( mp->m_brname[0] != 0 )  {
+			if( mp->m_brname[0] != 0 )
+				{
 				/* Create an alias.  First step towards
 					full branch naming.  User is
 					responsible for his branch names
 				 	being unique.
 				 */
-				if(	(tdp =
-					lookup( mp->m_brname, QUIET ))
+				if(	(tdirp =
+					lookup( mp->m_brname, NOISY ))
 				     !=	DIR_NULL
 					)
 					/* Use existing alias.		*/
-					nextdp = tdp;
-				else	nextdp = diradd(mp->m_brname,
-							nextdp->d_addr );
-			}
+					nextdirp = tdirp;
+				else
+					nextdirp = diradd(mp->m_brname,
+							nextdirp->d_addr );
+				}
 			mat_mul( new_xlate, old_xlate, mp->m_mat );
 
-			/* Recursive call
-			 */
-			cgobj( nextdp, pathpos+1, new_xlate );
-		}
-		lseek( objfd, savepos, 0 );
+			/* Recursive call.				*/
+			cgobj( nextdirp, pathpos+1, new_xlate );
+			}
+		(void) lseek( objfd, savepos, 0 );
 		return;
-	}
+		}
 
 	/* N O T  a  C O M B I N A T I O N  record.			*/
-	if( rec.u_id != ID_SOLID && rec.u_id != ID_ARS_A ) {
-		fprintf( stderr,
-			"Bad input: should have a 'S' or 'A' record, " );
-		fprintf( stderr,
-			"but have '%c'.\n", rec.u_id );
+	if( rec.u_id != ID_SOLID && rec.u_id != ID_ARS_A )
+		{
+		(void) fprintf( stderr,
+				"Bad input: should have a 'S' or 'A' record, " );
+		(void) fprintf( stderr,
+				"but have '%c'.\n", rec.u_id );
 		exit( 10 );
-	}
+		}
 
 	/* Now have proceeded down branch to a solid
-	
+
 		if regflag = 1  add this solid to present region
 		if regflag = 0  solid not defined as part of a region
 				make new region if scale != 0 
@@ -421,56 +453,62 @@ matp_t	old_xlate;
 	*/
 	if( old_xlate[15] < EPSILON )
 		{ /* Do not add solid.		*/
-		lseek( objfd, savepos, 0 );
+		(void) lseek( objfd, savepos, 0 );
 		return;
 		}
 
 	/* Fill ident struct.						*/
 	mat_copy( d_ident.i_mat, old_xlate );
-	strncpy( d_ident.i_name, rec.s.s_name, 16 );
-	strncpy(     ars_name, rec.s.s_name, 16 );
+	(void) strncpy( d_ident.i_name, rec.s.s_name, NAMESIZE );
+	(void) strncpy( ars_name, rec.s.s_name, NAMESIZE );
 	
 	/* Calculate first look discriminator for this solid.		*/
 	dchar = 0;
-	for( i = 0; i < 16; i++ ) {
-		if( rec.s.s_name[i] == 0 )	break;
+	for( i = 0; i < NAMESIZE; i++ )
+		{
+		if( rec.s.s_name[i] == 0 )
+			break;
 		dchar += (rec.s.s_name[i] << (i&7));
-	}
+		}
 
 	/* Quick check if solid already in solid table.			*/
 	nnt = 0;
-	for( i = 0; i < nns; i++ ) {
-		if( dchar == discr[i] ) {
-			/* Quick look match - check further.		*/
-			lseek( rd_idfd, ((long)i) * sizeof d_ident, 0);
-			readF( rd_idfd, &idbuf, sizeof d_ident );
+	for( i = 0; i < nns; i++ )
+		{
+		if( dchar == discr[i] )
+			{ /* Quick look match - check further.		*/
+			(void) lseek( rd_idfd, (long)(i * sizeof d_ident), 0 );
+			readF( rd_idfd, (char *) &idbuf, sizeof d_ident );
 			d_ident.i_index = i + 1;
-			if( check( &d_ident, &idbuf ) == 1 ) {
+			if( check( (char *) &d_ident, (char *) &idbuf ) == 1 )
+				{
 				/* Really is an old solid.		*/
 				nnt = i + 1;
 				goto notnew;
-			}
+				}
 			/* False alarm - keep looking for quick look
 				matches.
 			 */
+			}
 		}
-	}
 
 	/* New solid.							*/
 	discr[nns] = dchar;
 	nns++;
 	d_ident.i_index = nns;
 
-	if( nns > MAXSOL ) {
-		fprintf( stderr,
-			"\nNumber of solids (%d) greater than max (%d).\n",
-			nns, MAXSOL );
+	if( nns > MAXSOL )
+		{
+		(void) fprintf( stderr,
+				"\nNumber of solids (%d) greater than max (%d).\n",
+				nns, MAXSOL
+				);
 		exit( 10 );
-	}
+		}
 
 	/* Write ident struct at end of idfd file.			*/
-	lseek( idfd, 0L, 2 );
-	write( idfd, &d_ident, sizeof d_ident );
+	(void) lseek( idfd, 0L, 2 );
+	(void) write( idfd, (char *) &d_ident, sizeof d_ident );
 	nnt = nns;
 
 	/* Process this solid.						*/
@@ -482,10 +520,11 @@ matp_t	old_xlate;
 
 	/* Write solid #.						*/
 	itoa( nnt+delsol, buf, 5 );
-	write( solfd, buf, 5 );
+	(void) write( solfd, buf, 5 );
 
 	/* Process appropriate solid type.				*/
-	switch( rec.s.s_type ) {
+	switch( rec.s.s_type )
+		{
 	case TOR :
 		addtor( &rec );
 		break;
@@ -502,58 +541,71 @@ matp_t	old_xlate;
 		addars( &rec );
 		break;
 	default:
-		fprintf( stderr,
-			"Solid type (%d) unknown.\n", rec.s.s_type );
+		(void) fprintf( stderr,
+				"Solid type (%d) unknown.\n", rec.s.s_type
+				);
 		exit( 10 );
-	}
+		}
 
 notnew:	/* Sent here if solid already in solid table.			*/
 	/* Finished with solid.						*/
 	/* Put solid in present region if regflag == 1.			*/
-	if( regflag == 1 ) {
+	if( regflag == 1 )
+		{
 		/* isave = number of this solid in this region, if
 			negative then is the last solid in this region.
 		 */
 		if(	(isave % 9 ==  1 && isave >  1)
-		    ||	(isave % 9 == -1 && isave < -1) ) { int	n;
+		    ||	(isave % 9 == -1 && isave < -1)
+			)
+			{	int	n;
 			/* New line.					*/
 		    	n = 69 - (regBufPtr - regBuffer);
 		    	putSpaces( regBufPtr, n );
 		    	endRegion( buff );
 			putSpaces( regBufPtr, 6 );
-		}
+			}
 		nnt += delsol;
 		if( operate == '-' )	nnt = -nnt;
-		if( orflag == 1 ) {
-			if( operate == UNION || isave == 1 ) {
-				sprintf( regBufPtr, "or" );
+		if( orflag == 1 )
+			{
+			if( operate == UNION || isave == 1 )
+				{
+				(void) sprintf( regBufPtr, "or" );
 				regBufPtr += 2;
-			} else
+				}
+			else
 				putSpaces( regBufPtr, 2 );
-		} else		putSpaces( regBufPtr, 2 );
-		sprintf( regBufPtr, "%5d", nnt );
+			}
+		else
+			putSpaces( regBufPtr, 2 );
+		(void) sprintf( regBufPtr, "%5d", nnt );
 		regBufPtr += 5;
 		if( nnt < 0 )	nnt = -nnt;
 		nnt -= delsol;
-		if( isave < 0 ) {  int	n; /* end this region */
+		if( isave < 0 )
+			{	int	n; /* end this region */
 			isave = -isave;
 			regflag = 0;
 			n = 69 - (regBufPtr - regBuffer);
 			putSpaces( regBufPtr, n );
 			endRegion( buff );
+			}
 		}
-	} else if( old_xlate[15] > EPSILON ) {
+	else
+	if( old_xlate[15] > EPSILON )
+		{
 		/* Solid not part of a region, make solid into region
 			if scale > 0
 		 */
 		++nnr;
-		sprintf( regBufPtr, "%5d%8d", nnr+delreg, nnt+delsol );
+		(void) sprintf( regBufPtr, "%5d%8d", nnr+delreg, nnt+delsol );
 		regBufPtr += 13;
 		putSpaces( regBufPtr, 56 );
-		sprintf( regBufPtr, rec.s.s_name );
+		(void) sprintf( regBufPtr, rec.s.s_name );
 		regBufPtr += strlen( rec.s.s_name );
 		itoa( nnr+delreg, buf, 5 );
-		write( ridfd, buf, 5 );
+		(void) write( ridfd, buf, 5 );
 
 		/* Values for item, space, material and percentage are
 			meaningless at this point.
@@ -563,48 +615,59 @@ notnew:	/* Sent here if solid already in solid table.			*/
 		(void) write( ridfd, "    0", 5 );
 		(void) write( ridfd, "    0", 5 );
 		blank_fill( ridfd, 5 );
-		printf( "\nREGION %4d    ", nnr+delreg );
+		(void) printf( "%4d:", nnr+delreg );
 		bp = buf;
 		length = strlen( rec.s.s_name );
-		for( i = 0; i < pathpos; i++ ) {
-			strncpy(	bp,
+		for( i = 0; i < pathpos; i++ )
+			{
+			(void) strncpy(	bp,
 					path[i]->d_namep,
 					strlen( path[i]->d_namep )
-			);
+					);
 			bp += strlen( path[i]->d_namep );
 			*bp++ = '/';
-		}
+			}
 		length += bp - buf;
-		if( length > 50 ) {
+		if( length > 50 )
+			{
 			bp = buf + (length - 50);
 			*bp = '*';
-			write(	ridfd,
-				bp,
-				50 - strlen( rec.s.s_name )
-			);
-		} else	write( ridfd, buf, bp - buf );
+			(void) write(	ridfd,
+					bp,
+					(unsigned) (50 - strlen( rec.s.s_name ))
+					);
+			}
+		else
+			(void) write( ridfd, buf, (unsigned)(bp - buf) );
 
-		if( rec.u_id == ID_ARS_B ) { /* Ars extension record.	*/
-			prompt( "/%s", ars_name );
-			write( ridfd, ars_name, strlen( ars_name ) );
-		} else	{
-			prompt( "/%s", rec.s.s_name );
-			write(	ridfd,
-				rec.s.s_name,
-				strlen( rec.s.s_name )
-			);
+		if( rec.u_id == ID_ARS_B )
+			{ /* Ars extension record.	*/
+			printf( "/%s\n", ars_name );
+			(void) write(	ridfd,
+					ars_name,
+					(unsigned) strlen( ars_name )
+					);
+			}
+		else
+			{
+			printf( "/%s\n", rec.s.s_name );
+			(void) write(	ridfd,
+					rec.s.s_name,
+					(unsigned) strlen( rec.s.s_name )
+					);
+			}
+		(void) write( ridfd, LF, 1 );
+		{	int	n;
+		n = 69 - (regBufPtr - regBuffer);
+		putSpaces( regBufPtr, n );
+		endRegion( "" );
 		}
-		write( ridfd, LF, 1 );
-		{ int	n;
-			n = 69 - (regBufPtr - regBuffer);
-			putSpaces( regBufPtr, n );
-			endRegion( "" );
 		}
-	}
-	if( isave < 0 )	regflag = 0;
-	lseek( objfd, savepos, 0 );
+	if( isave < 0 )
+		regflag = 0;
+	(void) lseek( objfd, savepos, 0 );
 	return;
-}
+	}
 
 /*	a d d t o r ( )
 	Process torus.
@@ -971,101 +1034,101 @@ Record *rec;
 	npts = rec->a.a_n;
 	ncurves = rec->a.a_m;
 
-	/* write ars header line in solid table
-	 */
-	write( solfd, "ars  ", 5 );
+	/* Write ars header line in solid table.			*/
+	(void) write( solfd, "ars  ", 5 );
 	itoa( ncurves, buf, 10 );
-	write( solfd, buf, 10 );
+	(void) write( solfd, buf, 10 );
 	itoa( npts, buf, 10 );
-	write( solfd, buf, 10 );
+	(void) write( solfd, buf, 10 );
 	blank_fill( solfd, 40 );
-	write( solfd, rec->a.a_name, strlen( rec->a.a_name ) );
-	write( solfd, LF, 1 );
+	(void) write( solfd, rec->a.a_name, (unsigned) strlen( rec->a.a_name ) );
+	(void) write( solfd, LF, 1 );
 
-	/* process the data one granule at a time
-	 */
-	for( granule = 1; granule <= totlen; granule++ ) {
-		/* read a granule (ars extension record 'B')
-		 */
-		readF( objfd, rec, sizeof record );
-
-		/* find number of points in this granule
-		 */
-		if( rec->b.b_ngranule == ngrans && (npt = npts % 8) != 0 );
-		else				  npt = 8;
-
-		/* operate on vertex
-		 */
-		if( granule == 1 ) {
+	/* Process the data one granule at a time.			*/
+	for( granule = 1; granule <= totlen; granule++ )
+		{
+		/* Read a granule (ars extension record 'B').		*/
+		readF( objfd, (char *) rec, sizeof record );
+		/* Find number of points in this granule.		*/
+		if( rec->b.b_ngranule == ngrans && (npt = npts % 8) != 0 )
+			;
+		else
+			npt = 8;
+		/* Operate on vertex.					*/
+		if( granule == 1 )
+			{
 			vtoh_move( v_workk, &(rec->b.b_values[0]) );
 			matXvec( v_work, xform, v_workk );
 			htov_move( &(rec->b.b_values[0]), v_work );
 			VMOVE( vertex, &(rec->b.b_values[0]) );
 			vec = 1;
-		} else	vec = 0;
+			}
+		else
+			vec = 0;
 
-		/* rest of vectors
-		 */
-		for( i = vec; i < npt; i++, vec++ ) {
+		/* Rest of vectors.					*/
+		for( i = vec; i < npt; i++, vec++ )
+			{
 			vtoh_move( v_workk, &(rec->b.b_values[vec*3]) );
 			matXvec( v_work, notrans, v_workk );
 			htov_move( work, v_work );
 			VADD2( &(rec->b.b_values[vec*3]), vertex, work );
-		}
+			}
 
-		/* print the solid parameters
-		 */
+		/* Print the solid parameters.				*/
 		parsp( npt, rec );
-	}
+		}
 	return;
-}
+	}
 
 /*	p s p ( )
 	Print solid parameters  -  npts points or vectors.
  */
-psp(	npts,  rec )
-register
-int	npts;
-register
-Record *rec;
-{
-	register int	i, j, k, jk;
-	char		buf[60];
-
+psp( npts, rec )
+register int	npts;
+register Record *rec;
+	{	register int	i, j, k, jk;
+		char		buf[60];
 	j = jk = 0;
-	for( i = 0; i < npts*3; i += 3 )  {
-		/* Write 3 points.					*/
-		for( k = i; k <= i+2; k++ ) {
+	for( i = 0; i < npts*3; i += 3 )
+		{ /* Write 3 points.					*/
+		for( k = i; k <= i+2; k++ )
+			{
 			rec->s.s_values[k] *= unit_conversion;
 			ftoascii( rec->s.s_values[k], &buf[jk*10], 10, 4 );
 			++jk;
-		}
-
-		if( (++j & 01) == 0 ) {
-			/* end of line
-			 */
-			write( solfd, buf, 60 );
-			jk = 0;
-			write(	solfd,
-				rec->s.s_name,
-				strlen( rec->s.s_name )
-			);
-			write( solfd, LF, 1 );
-			if( i != (npts-1)*3 ) {   /* new line */
-				itoa( nns+delsol, buf, 5 );
-				write( solfd, buf, 5 );
-				blank_fill( solfd, 5 );
 			}
+
+		if( (++j & 01) == 0 )
+			{ /* End of line.				*/
+			(void) write( solfd, buf, 60 );
+			jk = 0;
+			(void) write(	solfd,
+					rec->s.s_name,
+					(unsigned) strlen( rec->s.s_name )
+					);
+			(void) write( solfd, LF, 1 );
+			if( i != (npts-1)*3 )
+				{   /* new line */
+				itoa( nns+delsol, buf, 5 );
+				(void) write( solfd, buf, 5 );
+				blank_fill( solfd, 5 );
+				}
+			}
+		}	
+	if( (j & 01) == 1 )
+		{ /* Finish off rest of line.				*/
+		for( k = 30; k <= 60; k++ )
+			buf[k] = ' ';
+		(void) write( solfd, buf, 60 );
+		(void) write(	solfd,
+				rec->s.s_name,
+				(unsigned) strlen( rec->s.s_name )
+				);
+		(void) write( solfd, LF, 1 );
 		}
-	}	
-	if( (j & 01) == 1 ) {   /* finish off rest of line */
-		for( k = 30; k <= 60; k++ )	buf[k] = ' ';
-		write( solfd, buf, 60 );
-		write( solfd, rec->s.s_name, strlen( rec->s.s_name ) );
-		write( solfd, LF, 1 );
-	}
 	return;
-}
+	}
 
 /*	p a r s p ( )
 	Print npts points of an ars.
@@ -1229,30 +1292,60 @@ register float *v,*h;
 	}
 }
 
-/*	p r o m p t ( )
-	Flush stdout after the printf.
- */
-#ifndef prompt
-prompt( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9 )
-{
-	printf( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9 );
-	fflush( stdout );
-}
-#endif
+#include <varargs.h>
+/*	p r o m p t ( )							*/
+/*VARARGS*/
+void
+prompt( fmt, va_alist )
+char	*fmt;
+va_dcl
+	{	va_list		ap;
+	va_start( ap );
+	(void) _doprnt( fmt, ap, stdout );
+	(void) fflush( stdout );
+	va_end( ap );
+	return;
+	}
 
 /*	r e a d F ( )
 	Read with error checking and debugging.
  */
-readF(	fd, buf, bytes )
-int	fd,	 bytes;
-char	   *buf;
-{ register int	bytesRead;
-	if( (bytesRead = read( fd, buf, bytes )) != bytes ) {
-		;
-#ifdef debug
-	fprintf( stderr, "Read failed! Only %d bytes read.\n",
-				bytesRead );
-#endif
+readF( fd, buf, bytes )
+int		fd;
+char   		*buf;
+unsigned	bytes;
+	{	register int	bytesRead;
+	if(	(bytesRead = read( fd, buf, bytes )) != (int) bytes
+	   &&	bytesRead != 0
+		)
+		(void) fprintf( stderr,
+				"ERROR: Read of %d bytes returned %d\n",
+				bytes,
+				bytesRead
+				);
+	return	bytesRead;
 	}
-	return( bytesRead );
-}
+
+pr_dir( dirp )
+Directory	*dirp;
+	{
+	(void) fprintf( stdout,
+			"dirp(0x%x)->d_namep=%s d_addr=%ld\n",
+			dirp, dirp->d_namep, dirp->d_addr
+			);
+	(void) fflush( stdout );
+	return	1;
+	}
+
+char *
+emalloc( size )
+int	size;
+	{	extern char	*malloc();
+		char		*ptr;
+	if( (ptr = malloc( (unsigned) size )) == NULL )
+		{
+		(void) fprintf( stderr, "Malloc() failed!\n" );
+		exit( 1 );
+		}
+	return	ptr;
+	}
