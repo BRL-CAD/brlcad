@@ -1381,7 +1381,7 @@ register union tree *tp;
 	case OP_XOR:
 		rt_fr_tree( tp->tr_b.tb_left );
 		rt_fr_tree( tp->tr_b.tb_right );
-		rt_free( (char *)tp, "binary tree union");
+		/*rt_free( (char *)tp, "binary tree union"); XXX*/
 		return;
 	default:
 		rt_log("rt_fr_tree: bad op x%x\n", tp->tr_op);
