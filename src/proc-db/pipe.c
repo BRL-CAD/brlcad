@@ -33,15 +33,16 @@ static const char RCSid[] = "$Header$";
 #endif
 
 #include "common.h"
-
-
+#ifdef VERSION
+#  undef VERSION
+#endif
 
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -49,11 +50,11 @@ static const char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "wdb.h"
 
+
 #define NAMESIZE 80		/* in v5, they can be longer than 16 */
 
 #define	VERSION	3
 #define	RELEASE	1
-
 
 #define REGION	1
 
