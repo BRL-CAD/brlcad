@@ -38,9 +38,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX Move to raytrace.h */
-RT_EXTERN(void		nmg_ck_list_magic, (CONST struct bu_list *hd,
-			CONST char *str, CONST long magic) );
 
 /************************************************************************
  *									*
