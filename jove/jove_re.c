@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/10/26  05:56:57  mike
+ * ANSI C
+ * 
  * Revision 10.1  91/10/12  06:54:03  mike
  * Release_4.0
  * 
@@ -153,6 +156,8 @@ replace(query)
 BUFLOC *
 dosearch(str, direction, magic)
 char	*str;
+int	direction;
+int	magic;		/* 0=> don't process "*[." regular expression chars */
 {
 	static BUFLOC	ret;
 	LINE	*a1;
@@ -399,6 +404,8 @@ char	*buf;
    optional, like in the case of '.' there is no CHAR. */
 void
 compile(aeof, magic)
+int	aeof;
+int	magic;		/* 0=> don't process "*[." regular expression chars */
 {
 	register int	xeof,
 			c;
@@ -1011,7 +1018,11 @@ char	*tagname;
 	SetBuf(do_find(curwind, filebuf));
 	Bof();
 
-	if ((bp = dosearch(sprint(sstr, tagname), 1, 1)) == 0)
+	/*
+	 * Search forward without treating ".*[" specially.
+	 * This is necessary to handle ANSI function declaration style.
+	 */
+	if ((bp = dosearch(sprint(sstr, tagname), 1, 0)) == 0)
 		TagError(tagname);
 	else
 		SetDot(bp);
