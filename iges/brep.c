@@ -39,9 +39,19 @@ int entityno;
 	int		num_of_voids;		/* Number of inner void shells */
 	struct model	*m;			/* NMG model */
 	struct nmgregion *r;			/* NMG region */
+	struct shell	*s;			/* NMG shell */
+	struct faceuse	*fu;			/* NMG faceuse */
 	struct iges_vertex_list *v_list;
 	struct iges_edge_list	*e_list;
+	struct rt_tol		tol;
 	int		i;
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	/* Acquiring Data */
 
@@ -83,6 +93,7 @@ int entityno;
 			goto err;
 	}
 
+	/* Associate geometry */
 	v_list = vertex_root;
 	while( v_list != NULL )
 	{
@@ -95,8 +106,26 @@ int entityno;
 		v_list = v_list->next;
 	}
 
+        for (RT_LIST_FOR(s, shell, &r->s_hd))
+        {
+            NMG_CK_SHELL( s );
+            for (RT_LIST_FOR(fu, faceuse, &s->fu_hd))
+            {
+            	NMG_CK_FACEUSE( fu );
+            	if( fu->orientation == OT_SAME )
+            	{
+	            	if( nmg_fu_planeeqn( fu , &tol ) )
+	            		rt_log( "Failed to calculate plane eqn\n" );
+            	}
+            }
+        }
+
+
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( r );
+
+	/* only do this in extreme cricumstances */
+/*	nmg_pr_m( m );	*/
 
 	if( mk_nmg( fdout , dir[entityno]->name , m ) )
 		goto err;
