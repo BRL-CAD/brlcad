@@ -42,6 +42,7 @@ extern vect_t		dx_model;		/* view delta-X as model-space vect */
 extern vect_t		dy_model;		/* view delta-Y as model-space vect */
 extern fastf_t		cell_width;		/* model space grid cell width */
 extern fastf_t		cell_height;		/* model space grid cell height */
+extern int		cell_newsize;		/* new grid cell size (for worker) */
 extern point_t		eye_model;		/* model-space location of eye */
 extern fastf_t		eye_backoff;		/* dist from eye to center */
 extern int		width;			/* # of pixels in X */
