@@ -56,16 +56,18 @@ q Q cr	QUIT\r\n\
 
 SimpleInput()	/* ==== get keyboard input.	*/
 {
-	char ch;
+	register char ch;
+	static char c;
 
-	if( read( 0, &ch, 1) <= 0 ) {
+	if( read( 0, &c, 1) <= 0 ) {
 		Run = 0;
 		return;
 	}
+	ch = c & ~0x80;		/* strip off parity bit */
 	switch( ch ) {
 	default:
 		fprintf( stderr,
-		"Unknown command(%c:%o). Type '?' for help!           \r\n",
+		"Unknown command(%c:0%o). Type '?' for help!           \r\n",
 			ch, ch );
 		break;
 

@@ -102,11 +102,11 @@ RETURN	Exit\r\n";
 
 doKeyPad()
 	{ 
-	register ch;	
+	register int ch;
 
 	if( (ch = getchar()) == EOF )
-			return	0;		/* done */
-
+		return	0;		/* done */
+	ch &= ~0x80;			/* strip off parity bit */
 	switch( ch )
 		{
 	default :
