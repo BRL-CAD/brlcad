@@ -381,7 +381,7 @@ CONST struct bn_tabdata		*in2;
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join1(x%x, x%x, %g, x%x)\n", out, in1, scale, in2 );
 
 	BN_CK_TABDATA( out );
-	BN_CK_TABDATA( in1 )
+	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 
 	if( in1->table != out->table )
@@ -423,7 +423,7 @@ CONST struct bn_tabdata		*in3;
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join2(x%x, x%x, %g, x%x, %g, x%x)\n", out, in1, scale2, in2, scale3, in3 );
 
 	BN_CK_TABDATA( out );
-	BN_CK_TABDATA( in1 )
+	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 
 	if( in1->table != out->table )
@@ -464,7 +464,7 @@ CONST struct bn_tabdata		*in3;
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend3(x%x, %g, x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2, scale3, in3 );
 
 	BN_CK_TABDATA( out );
-	BN_CK_TABDATA( in1 )
+	BN_CK_TABDATA( in1 );
 	BN_CK_TABDATA( in2 );
 	BN_CK_TABDATA( in3 );
 
