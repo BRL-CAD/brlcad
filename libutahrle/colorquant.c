@@ -28,6 +28,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.1  91/01/03  17:30:45  butler
+ * Initial revision
+ * 
  * Revision 3.0.1.2  90/11/29  15:18:04  spencer
  * Remove a typo.
  * 
@@ -74,6 +77,7 @@
  */
 #include <math.h>
 #include <stdio.h>
+#include "rle_config.h"		/* to get macro for bzero if necessary */
 
 /* Ansi uses HUGE_VAL. */
 #ifndef HUGE
