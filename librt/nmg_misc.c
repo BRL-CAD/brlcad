@@ -1401,6 +1401,13 @@ long *flags;
 
 	NMG_CK_FACEUSE( fu_in );
 	fu = fu_in;
+	if( fu->orientation != OT_SAME )
+		fu = fu->fumate_p;
+	if( fu->orientation != OT_SAME )
+	{
+		rt_log( "nmg_propagate_normals: Could not find OT_SAME orientation of faceuse x%x\n" , fu_in );
+		return;
+	}
 
 	/* set flag for this face since we know this one is OK */
 	NMG_INDEX_SET( flags , fu->f_p );
@@ -1416,7 +1423,9 @@ long *flags;
 			continue;
 		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 		{
-			NMG_PUSH( eu , &stack );
+			/* don't push free edges on the stack */
+			if( eu->radial_p->eumate_p != eu )
+				NMG_PUSH( eu , &stack );
 		}
 	}
 
@@ -1471,7 +1480,9 @@ long *flags;
 					continue;
 				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 				{
-					NMG_PUSH( eu , &stack );
+					/* don't push free edges on the stack */
+					if( eu->radial_p->eumate_p != eu )
+						NMG_PUSH( eu , &stack );
 				}
 			}
 		}
