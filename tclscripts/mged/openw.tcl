@@ -40,6 +40,14 @@ if ![info exists mged_collaborators] {
     set mged_collaborators ""
 }
 
+if ![info exists mged_default(ggeom)] {
+    set mged_default(ggeom) -0+0
+}
+
+if ![info exists mged_default(geom)] {
+    set mged_default(geom) +8+32
+}
+
 if ![info exists mged_default(id)] {
     set mged_default(id) "id"
 }
@@ -48,8 +56,8 @@ if ![info exists mged_default(pane)] {
     set mged_default(pane) "ur"
 }
 
-if ![info exists mged_default(mvmode)] {
-    set mged_default(mvmode) 0
+if ![info exists mged_default(multi_view)] {
+    set mged_default(multi_view) 0
 }
 
 if ![info exists mged_default(config)] {
@@ -269,6 +277,7 @@ if {$id == ""} {
 if {$scw == 0 && $sgw == 0} {
     set sgw 1
 }
+
 set mged_gui($id,comb) $comb
 set mged_gui($id,show_cmd) $scw
 set mged_gui($id,show_dm) $sgw
@@ -276,6 +285,8 @@ set mged_gui($id,show_status) 1
 set mged_gui($id,apply_to) 0
 set mged_gui($id,edit_info_pos) "+0+0"
 set mged_gui($id,num_lines) $mged_default(num_lines)
+set mged_gui($id,multi_view) $mged_default(multi_view)
+set mged_gui($id,dm_loc) $mged_default(pane)
 
 if ![dm_validXType $gscreen $dtype] {
     return "gui: $gscreen does not support $dtype"
@@ -305,12 +316,8 @@ if {$comb} {
     set mged_gui($id,dmc) .$id.dmf
 
     frame $mged_gui($id,dmc) -relief sunken -borderwidth 2
-    set mged_gui($id,win_size_big) [expr [winfo screenheight $mged_gui($id,dmc)] - 130]
-    set mged_gui($id,win_size_small) [expr $mged_gui($id,win_size_big) - 80]
-    set mged_gui($id,win_size) $mged_gui($id,win_size_big)
-    set mv_size [expr $mged_gui($id,win_size) / 2 - 4]
 
-    if [catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $screen $dtype $mv_size } result] {
+    if [catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $screen $dtype } result] {
 	gui_destroy $id
 	return $result
     }
@@ -319,23 +326,14 @@ if {$comb} {
     set mged_gui($id,dmc) $mged_gui($id,top)
 
     toplevel $mged_gui($id,dmc) -screen $gscreen -relief sunken -borderwidth 2
-    set mged_gui($id,win_size_big) [expr [winfo screenheight $mged_gui($id,dmc)] - 24]
-    set mged_gui($id,win_size_small) [expr $mged_gui($id,win_size_big) - 100]
-    set mged_gui($id,win_size) $mged_gui($id,win_size_big)
-    set mv_size [expr $mged_gui($id,win_size) / 2 - 4]
-    if [catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $gscreen $dtype $mv_size } result] {
+
+    if [catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $gscreen $dtype } result] {
 	gui_destroy $id
 	return $result
     }
 }
 
 set mged_gui($id,active_dm) $mged_gui($id,top).$mged_default(pane)
-set vloc [string range $mged_default(pane) 0 0]
-set hloc [string range $mged_default(pane) 1 1]
-set mged_gui($id,small_dmc) $mged_gui($id,dmc).$vloc.$hloc
-set mged_gui($id,dm_loc) $mged_default(pane)
-set mged_gui($id,save_dm_loc) $mged_gui($id,dm_loc)
-set mged_gui($id,save_small_dmc) $mged_gui($id,small_dmc)
 set mged_gui($id,apply_list) $mged_gui($id,active_dm)
 
 #==============================================================================
@@ -1666,9 +1664,8 @@ set vi_state(.$id.t,search_dir) ""
 # Pack windows
 #==============================================================================
 
-grid $mged_gui($id,active_dm) -in $mged_gui($id,dmc) -sticky "nsew" -row 0 -column 0
-
-set mged_gui($id,multi_view) $mged_default(mvmode)
+setupmv $id
+setmv $id
 
 if { $comb } {
     if { $mged_gui($id,show_dm) } {
@@ -1678,7 +1675,6 @@ if { $comb } {
 
 grid .$id.t .$id.s -in .$id.tf -sticky "nsew"
 grid columnconfigure .$id.tf 0 -weight 1
-grid columnconfigure .$id.tf 1 -weight 0
 grid rowconfigure .$id.tf 0 -weight 1
 
 if { !$comb || ($comb && $mged_gui($id,show_cmd)) } {
@@ -1687,23 +1683,12 @@ if { !$comb || ($comb && $mged_gui($id,show_cmd)) } {
 
 grid .$id.status.cent .$id.status.size .$id.status.units .$id.status.aet\
 	.$id.status.ang x -in .$id.status.dpy -sticky "ew"
-grid columnconfigure .$id.status.dpy 0 -weight 0
-grid columnconfigure .$id.status.dpy 1 -weight 0
-grid columnconfigure .$id.status.dpy 2 -weight 0
-grid columnconfigure .$id.status.dpy 3 -weight 0
-grid columnconfigure .$id.status.dpy 4 -weight 0
 grid columnconfigure .$id.status.dpy 5 -weight 1
-grid rowconfigure .$id.status.dpy 0 -weight 0
 grid .$id.status.dpy -sticky "ew"
 grid .$id.status.illum.label x -sticky "ew"
-grid columnconfigure .$id.status.illum 0 -weight 0
 grid columnconfigure .$id.status.illum 1 -weight 1
-grid rowconfigure .$id.status.illum 0 -weight 0
 grid .$id.status.illum -sticky "w"
 grid columnconfigure .$id.status 0 -weight 1
-grid rowconfigure .$id.status 0 -weight 0
-grid rowconfigure .$id.status 1 -weight 0
-grid rowconfigure .$id.status 2 -weight 0
 
 if { $mged_gui($id,show_status) } {
     grid .$id.status -sticky "ew" -row 2 -column 0
@@ -1711,13 +1696,11 @@ if { $mged_gui($id,show_status) } {
 
 grid columnconfigure .$id 0 -weight 1
 if { $comb } {
+    # let only the display manager window grow
     grid rowconfigure .$id 0 -weight 1
-    grid rowconfigure .$id 1 -weight 0
-    grid rowconfigure .$id 2 -weight 0
 } else {
-    grid rowconfigure .$id 0 -weight 0
+    # let only the text window (i.e. enter commands here) grow
     grid rowconfigure .$id 1 -weight 1
-    grid rowconfigure .$id 2 -weight 0
 }
 
 #==============================================================================
@@ -1735,7 +1718,6 @@ if {[info procs cad_MenuFirstEntry] == ""} {
 }
 
 cmd_init $id
-setupmv $id
 tie $id $mged_gui($id,active_dm)
 
 # Force display manager windows to update their respective color schemes
@@ -1759,7 +1741,6 @@ share m $mged_gui($id,top).ul $mged_gui($id,top).ll
 share m $mged_gui($id,top).ul $mged_gui($id,top).lr
 
 do_rebind_keys $id
-bind $mged_gui($id,dmc) <Configure> "setmv $id"
 
 # Throw away key events
 bind $mged_gui($id,top) <KeyPress> { break }
@@ -1767,11 +1748,15 @@ bind $mged_gui($id,top) <KeyPress> { break }
 set dbname [_mged_opendb]
 set_wm_title $id $dbname
 
+# set the size here in case the user didn't specify it in mged_default(ggeom)
+set height [expr [winfo screenheight $mged_gui($id,top)] - 70]
+set width $height
+wm geometry $mged_gui($id,top) $width\x$height
+
+# set geometry (i.e. size and position) according to mged_default(ggeom)
+wm geometry $mged_gui($id,top) $mged_default(ggeom)
+
 wm protocol $mged_gui($id,top) WM_DELETE_WINDOW "gui_destroy $id"
-wm geometry $mged_gui($id,top) -0+0
-#set width [winfo screenwidth $mged_gui($id,top)]
-#set height [winfo screenheight $mged_gui($id,top)]
-#wm geometry $mged_gui($id,top) $width\x$height+8+40
 
 if { $comb } {
     if { !$mged_gui($id,show_dm) } {
@@ -1780,7 +1765,7 @@ if { $comb } {
     }
 } else {
     # Position command window in upper left corner
-    wm geometry .$id +8+32
+    wm geometry .$id $mged_default(geom)
     update
 
     # Prevent command window from resizing itself as labels change
@@ -2096,8 +2081,6 @@ proc set_active_dm { id } {
     global mged_display
     global view_ring
 
-    set vloc [string range $mged_gui($id,dm_loc) 0 0]
-    set hloc [string range $mged_gui($id,dm_loc) 1 1]
     set new_dm $mged_gui($id,top).$mged_gui($id,dm_loc)
 
 # Nothing to do
@@ -2112,7 +2095,6 @@ proc set_active_dm { id } {
     rset cs mode 0
 
     set mged_gui($id,active_dm) $new_dm
-    set mged_gui($id,small_dmc) $mged_gui($id,dmc).$vloc.$hloc
 
     # make active
     winset $mged_gui($id,active_dm)
@@ -2126,20 +2108,8 @@ proc set_active_dm { id } {
     tie $id $mged_gui($id,active_dm)
 
     if {!$mged_gui($id,multi_view)} {
-# unpack previously active dm
-	grid forget $mged_gui($id,top).$mged_gui($id,save_dm_loc)
-
-# resize and repack previously active dm into smaller frame
-	winset $mged_gui($id,top).$mged_gui($id,save_dm_loc)
-	set mv_size [expr $mged_gui($id,win_size) / 2 - 4]
-	dm size $mv_size $mv_size
-
-	grid $mged_gui($id,top).$mged_gui($id,save_dm_loc) -in $mged_gui($id,save_small_dmc) -sticky "nsew"
-
 	setmv $id
     }
-    set mged_gui($id,save_dm_loc) $mged_gui($id,dm_loc)
-    set mged_gui($id,save_small_dmc) $mged_gui($id,small_dmc)
 
     # update view_ring entries
     update_view_ring_entries $id s
