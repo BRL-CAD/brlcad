@@ -31,9 +31,4 @@
 #define _LOCAL_ static
 #endif
 
-#ifdef BSD
-#define strchr	index
-#define	strrchr	rindex
-#endif
-
 #endif /* INCL_FBLOCAL */
