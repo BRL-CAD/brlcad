@@ -31,7 +31,7 @@ echo
 echo Creating the necessary directories
 
 for LAST in \
-	bin include include/brlcad lib vfont \
+	bin include include/brlcad html lib vfont \
 	man man/man1 man/man3 man/man5 etc tcl tk tclscripts
 do
 	if test ! -d $BASEDIR/$LAST
