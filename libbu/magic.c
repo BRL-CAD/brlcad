@@ -163,37 +163,37 @@ register long	magic;
 	case RT_DB_INTERNAL_MAGIC:
 		return("rt_db_internal");
 	case RT_RAY_MAGIC:
-		return "rt xray";
+		return "librt xray";
 	case RT_HIT_MAGIC:
-		return "rt hit";
+		return "librt hit";
 	case RT_SEG_MAGIC:
-		return("rt seg");
+		return("librt seg");
 	case RT_SOLTAB_MAGIC:
-		return("rt soltab");
+		return("librt soltab");
 	case RT_REGION_MAGIC:
-		return("rt region");
-	case PT_MAGIC:
-		return("rt partition");
-	case PT_HD_MAGIC:
-		return "rt partition list head";
+		return("librt region");
+	case RT_PT_MAGIC:
+		return("librt partition");
 	case DBI_MAGIC:
-		return("rt db_i");
+		return("librt db_i");
 	case RT_DIR_MAGIC:
-		return "(librt)directory";
+		return "librt directory";
 	case DB_FULL_PATH_MAGIC:
-		return "db_full_path";
+		return "librt db_full_path";
 	case RT_CTS_MAGIC:
-		return "combined_tree_state";
+		return "librt combined_tree_state";
 	case RT_TREE_MAGIC:
-		return "rt union tree";
+		return "librt union tree";
+	case RT_WDB_MAGIC:
+		return "rt_wdb";
 	case ANIMATE_MAGIC:
-		return("rt animate");
+		return("librt animate");
 	case RESOURCE_MAGIC:
-		return("rt resource");
+		return("librt resource");
 	case PIXEL_EXT_MAGIC:
-		return "rt pixel_ext";
+		return "librt pixel_ext";
 	case RT_AP_MAGIC:
-		return "rt application";
+		return "librt application";
 	case RTI_MAGIC:
 		return("rt_i");
 	case RT_FUNCTAB_MAGIC:
