@@ -137,7 +137,7 @@ body Db::dump {args} {
 }
 
 body Db::dbip {} {
-    eval $db dbip
+    $db dbip
 }
 
 body Db::ls {args} {
