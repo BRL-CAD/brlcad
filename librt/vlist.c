@@ -1,7 +1,9 @@
 /*
  *			V L I S T . C
  *
- *  Routines for the import and export of vlist chains.
+ *  Routines for the import and export of vlist chains as:
+ *	Network independent binary,
+ *	BRL-extended UNIX-Plot files.
  *
  *  Author -
  *	Michael John Muuss
@@ -147,5 +149,45 @@ rt_vlist_cleanup()
 		RT_CK_VLIST( vp );
 		RT_LIST_DEQUEUE( &(vp->l) );
 		rt_free( (char *)vp, "rt_vlist" );
+	}
+}
+
+/*
+ *			R T _ V L I S T _ T O _ U P L O T
+ *
+ *  Output a vlist as an extended 3-D floating point UNIX-Plot file.
+ *  You provide the file.
+ */
+void
+rt_vlist_to_uplot( fp, vhead )
+FILE		*fp;
+struct rt_list	*vhead;
+{
+	register struct rt_vlist	*vp;
+
+	for( RT_LIST_FOR( vp, rt_vlist, vhead ) )  {
+		register int		i;
+		register int		nused = vp->nused;
+		register CONST int	*cmd = vp->cmd;
+		register point_t	 *pt = vp->pt;
+
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			switch( *cmd )  {
+			case RT_VLIST_POLY_START:
+				break;
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_LINE_MOVE:
+				pdv_3move( fp, *pt );
+				break;
+			case RT_VLIST_POLY_DRAW:
+			case RT_VLIST_POLY_END:
+			case RT_VLIST_LINE_DRAW:
+				pdv_3cont( fp, *pt );
+				break;
+			default:
+				rt_log("rt_vlist_to_uplot: unknown vlist cmd x%x\n",
+					*cmd );
+			}
+		}
 	}
 }
