@@ -378,7 +378,7 @@ parse_line()
 		if((*lp == ' ') || (*lp == '\t') || (*lp == '\n'))  {
 			*lp = '\0';
 			lp1 = lp + 1;
-			if((*lp1 == ' ') || (*lp1 == '\t'))
+			if((*lp1 == ' ') || (*lp1 == '\t') || (*lp1 == '\n'))
 				continue;
 			/* If not cmd [0], check for regular exp */
 			if( numargs > 0 )
