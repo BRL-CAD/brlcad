@@ -72,7 +72,7 @@ register char *out;
 register char *in;
 register int sz;
 {
-	register int c;
+	register int c = '\0';
 
 	while( --sz > 0 && (c = *in++) != '\0' && c != '$' )
 		*out++ = c;
