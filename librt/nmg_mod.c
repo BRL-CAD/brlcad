@@ -1144,27 +1144,29 @@ struct edgeuse *eup;
 	return((struct edgeuse *)NULL);
 }
 
-/*			N M G _ J L
+/*
+ *			N M G _ J L
  *
- *	Join two loops together which share a common edge
- *
+ *  Join two loops together which share a common edge,
+ *  such that both occurances of the common edge are deleted.
  */
 void nmg_jl(lu, eu)
 struct loopuse *lu;
 struct edgeuse *eu;
 {
 	struct edgeuse *eu_r, *nexteu;
+
 	NMG_CK_LOOPUSE(lu);
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGEUSE(eu->eumate_p);
-	NMG_CK_EDGEUSE(eu->radial_p);
-	NMG_CK_EDGEUSE(eu->radial_p->eumate_p);
+	eu_r = eu->radial_p;
+	NMG_CK_EDGEUSE(eu_r);
+	NMG_CK_EDGEUSE(eu_r->eumate_p);
 
 	if (eu->up.lu_p != lu)
 		rt_bomb("nmg_jl: edgeuse is not child of loopuse?\n");
 
-	eu_r = eu->radial_p;
 	if (*eu_r->up.magic_p != NMG_LOOPUSE_MAGIC)
 		rt_bomb("nmg_jl: radial edgeuse not part of loopuse\n");
 
@@ -1181,8 +1183,8 @@ struct edgeuse *eu;
 	    eu->eumate_p->radial_p->eumate_p->radial_p != eu)
 	    	rt_bomb("nmg_jl: edgeuses must be sole uses of edge to join loops\n");
 
-
-	/* remove all the edgeuses "ahead" of our radial and insert them
+	/*
+	 * Remove all the edgeuses "ahead" of our radial and insert them
 	 * "behind" the current edgeuse.
 	 */
 	nexteu = RT_LIST_PNEXT_CIRC(edgeuse, eu_r);
@@ -1198,13 +1200,15 @@ struct edgeuse *eu;
 		nexteu = RT_LIST_PNEXT_CIRC(edgeuse, eu_r);
 	}
 
-	/* at this point, the other loop just has the one edgeuse/edge in
-	 * it.  we can delete the other loop.
+	/*
+	 * The other loop just has the one edgeuse/edge left in it.
+	 * Delete the other loop.
 	 */
 	nmg_klu(eu_r->up.lu_p);
 
-	/* we pop out the one remaining use of the "shared" edge and
-	 * voila! we should have one contiguous loop.
+	/*
+	 * Kill the one remaining use of the "shared" edge and
+	 * voila: one contiguous loop.
 	 */
 	nmg_keu(eu);
 }
