@@ -214,6 +214,7 @@ char **argv;
 	bu_log("db title:  %s\n", idbuf);
 
 	/* Copy values from command line options into rtip */
+	rtip->rti_space_partition = space_partition;
 	rtip->useair = use_air;
 	if( rt_dist_tol > 0 )  {
 		rtip->rti_tol.dist = rt_dist_tol;
