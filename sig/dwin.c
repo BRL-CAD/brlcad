@@ -47,6 +47,8 @@ void	fill_buffer();
 void	seek_sample();
 void	biaswin();
 void	bartwin();
+void	hamwin();
+void	coswin();
 
 static char usage[] = "\
 Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
