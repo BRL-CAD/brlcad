@@ -69,7 +69,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	continue; } \
 
 
-#if defined(sun) || defined(alliant) || defined(ardent) || \
+#if defined(sun) || (defined(alliant) && !defined(i860)) || \
+	defined(ardent) || \
 	defined(stellar) || defined(sparc) || defined(mips) || \
 	defined(pyr) || defined(apollo) || defined(aux)
 
@@ -79,7 +80,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	define	NATURAL_IEEE	yes
 #endif
 
-#if defined(n16)
+#if defined(n16) || defined(i860)
 	/* These systems operate in IEEE format, using little-endian order */
 #	define	REVERSED_IEEE	yes
 #endif
