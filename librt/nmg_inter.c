@@ -278,6 +278,7 @@ struct faceuse *fu;
 			rt_log("\tMATE vertex topologically on intersection plane. skipping edgeuse\n");
 		}
 #if 0
+		/* For some reason, this currently causes trouble */
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->eumate_p->vu_p->l.magic);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 #endif
@@ -363,8 +364,9 @@ struct faceuse *fu;
 			    		v1->vg_p->coord);
 
 			plu = nmg_mlv(&fu->l.magic, v1, OT_UNSPEC);
-			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
-				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
+			vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
+			NMG_CK_VERTEXUSE(vu_other);
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		}
 		return;
 	}
@@ -461,11 +463,12 @@ struct faceuse *fu;
 			 */
 			plu = nmg_mlv(&fu->l.magic,
 				eu->eumate_p->vu_p->v_p, OT_SAME);
+			vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
+			NMG_CK_VERTEXUSE(vu_other);
 
 			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			    	VPRINT("Making vertexloop",
-				RT_LIST_PNEXT(vertexuse,&plu->down_hd)->
-					v_p->vg_p->coord);
+					vu_other->v_p->vg_p->coord);
 				if (RT_LIST_FIRST_MAGIC(&plu->down_hd) !=
 					NMG_VERTEXUSE_MAGIC)
 					rt_bomb("bad plu\n");
@@ -474,8 +477,7 @@ struct faceuse *fu;
 					rt_bomb("bad plumate\n");
 
 			}
-			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
-				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		}
 
 		euforw = RT_LIST_PNEXT_CIRC(edgeuse, eu);
@@ -502,6 +504,7 @@ struct faceuse *fu;
 			rt_bomb("isect_edge_face: discontinuous eu loop\n");
 
 #if 0
+		/* Adding these guys causes bool.g Test7.r to die */
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 #endif
 
@@ -518,15 +521,16 @@ struct faceuse *fu;
 			/* Combine the two vertices */
 			nmg_jv(v1mate, vu_other->v_p);
 		} else {
-#if 0
 			/* Insert copy of this vertex into face */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("Making vertexloop",
 			    		v1mate->vg_p->coord);
 
 			plu = nmg_mlv(&fu->l.magic, v1mate, OT_UNSPEC);
-			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
-				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
+			vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
+			NMG_CK_VERTEXUSE(vu_other);
+#if 0
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 #endif
 		}
 		return;
