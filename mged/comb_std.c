@@ -329,7 +329,6 @@ struct bu_list *hp;
 	for( BU_LIST_FOR( tok, tokens, hp ) )
 	{
 		struct tokens *prev, *next;
-		union tree *tp;
 
 		if( tok->type != TOK_TREE )
 			continue;
@@ -603,8 +602,6 @@ char	**argv;
 	for( i=0 ; i<argc ; i++ )
 	{
 		char *ptr;
-		char *ptr_next;
-		union tree *node;
 
 		ptr = argv[i];
 		while( *ptr )

@@ -286,7 +286,6 @@ char **argv;
 	int	id;
 	int	i;
 	int	endpos;
-	int status = TCL_OK;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -488,12 +487,9 @@ int pathpos;
 mat_t old_xlate;
 int flag;
 {
-
-	struct directory *nextdp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	mat_t new_xlate;
-	int nparts, i, k;
+	int i, k;
 	int id;
 	struct bu_vls str;
 
@@ -959,7 +955,6 @@ identitize( dp )
 struct directory *dp;
 {
 
-	struct directory *nextdp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 
@@ -1048,9 +1043,6 @@ struct directory *dp;
 genptr_t	ptr;
 {
 	struct object_use *use;
-	struct bu_external sol_ext;
-	struct rt_db_internal sol_int;
-	int id;
 
 	if(dbip == DBI_NULL)
 	  return;
@@ -1298,8 +1290,6 @@ mat_t xform;
 	struct directory *found;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	mat_t new_xform;
-	int i;
 
 	if(dbip == DBI_NULL)
 	  return DIR_NULL;
@@ -1405,7 +1395,7 @@ char **argv;
 	struct directory *old_dp;
 	struct bu_ptbl tops;
 	mat_t xform;
-	int i,j;
+	int i;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -1512,7 +1502,6 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	matp_t	acc_matrix;
 	int	*count;
 	char	*child;
-	mat_t	matrix;
 
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( comb_leaf );
@@ -1572,8 +1561,6 @@ char **argv;
 	parent = strtok( argv[1], "/" );
 	while( child = strtok( (char *)NULL, "/" ) )
 	{
-		int j;
-		int found;
 		int count;
 		struct rt_db_internal	intern;
 		struct rt_comb_internal *comb;
@@ -1641,13 +1628,11 @@ char *argv[];
 	struct directory *dp;
 	struct rt_db_internal nmg_intern;
 	struct rt_db_internal new_intern;
-	struct bu_external new_extern;
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
 	int do_all=1;
 	int do_arb=0;
-	int do_ell=0;
 	int do_tgc=0;
 	int do_poly=0;
 	char *new_name;
@@ -1675,8 +1660,6 @@ char *argv[];
 		do_all = 0;
 		if( !strncmp( argv[1], "arb", 3 ) )
 			do_arb = 1;
-		else if( !strncmp( argv[1], "ell", 3 ) )
-			do_ell = 1;
 		else if( !strncmp( argv[1], "tgc", 3 ) )
 			do_tgc = 1;
 		else if( !strncmp( argv[1], "poly", 4 ) )
@@ -1894,7 +1877,7 @@ int argc;
 char **argv;
 {
 	struct rt_i		*rtip;
-	int			i,j;
+	int			i;
 	point_t			rpp_min,rpp_max;
 	struct db_full_path	path;
 	struct directory	*dp;

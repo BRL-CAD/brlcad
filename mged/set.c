@@ -171,7 +171,6 @@ int flags;
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
-    register int i;
 
     /* Ask the libbu structparser for the value of the variable */
 
@@ -363,8 +362,6 @@ set_absolute_model_tran()
 static void
 set_dlist()
 {
-  int save_dlist_id = 0;
-  struct dm_list *dlp;
   struct dm_list *dlp1;
   struct dm_list *dlp2;
   struct dm_list *save_dlp;

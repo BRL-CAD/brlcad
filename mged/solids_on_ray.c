@@ -231,20 +231,14 @@ struct seg		*finished_segs;
     char			**result;
     struct db_full_path		*fp;
     int				i;
-    int				full_path; /* Get full path, not base? */
     struct partition		*pp;
-    struct reg_db_internals	*dbintp;
     bu_rb_tree			*solids;
-    struct seg			*segh;
     struct seg			*segp;
-    struct solid		*sp;
     struct sol_name_dist	*old_sol;
     struct sol_name_dist	*sol;
     struct soltab		*stp;
     struct bu_vls		sol_path_name;
     int				index;
-
-    full_path = ap -> a_user;
 
     /*
      *	Initialize the solid list
@@ -547,7 +541,6 @@ int		full_path;
     struct application	ap;
     struct rt_i		*rtip;
     struct bu_list	sol_list;
-    struct sol_name_dist	*sol;
 
 	if (argc <= 0) {
 		Tcl_AppendResult( interp, "skewer_solids argc<=0\n", (char *)NULL );
