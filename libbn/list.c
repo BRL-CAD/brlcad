@@ -162,11 +162,10 @@ F2MLST( fp, x, y, np, flag, mark, interval, size )
 FILE	*fp;
 float	*x, *y;
 int	*np;
-int	*flag;
+int	*flag;		/* indicates user's mode request */
 int	*mark, *interval;
 float	*size;
 {
-	register int flag;		/* indicates user's mode request */
 	register int i;			/* index variable */
 	register int counter;		/* interval counter */
 	int mk;
@@ -175,9 +174,9 @@ float	*size;
 	if( npoints <= 0 )
 		return;
 
-	if( flag & TP_LINE )
+	if( *flag & TP_LINE )
 		F2LIST( fp, x, y, np );
-	if( flag & TP_MARK )  {
+	if( *flag & TP_MARK )  {
 		tp_2marker( *fp, mk, *x++, *y++, *size );
 		counter = 1;			/* We already plotted one */
 		for( i=1; i<npoints; i++ )  {
