@@ -26,14 +26,14 @@ WARNMORE=-Wwrite-strings -Wpointer-arith -Wshadow \
 	-Wstrict-prototypes -Wmissing-prototypes #-Wconversion
 CFLAGS=-I$(ZLIBINC) $(SUN_CC_FLAGS) \
 	# $(WARNMORE) -g -DPNG_DEBUG=5
-LDFLAGS=-L. -R. $(SUN_LD_FLAGS) -L$(ZLIBLIB) -R$(ZLIBLIB) -lpng12 -lz -lm
+LDFLAGS=$(SUN_LD_FLAGS) -L$(ZLIBLIB) -R$(ZLIBLIB) libpng.a -lz -lm
 
 #RANLIB=ranlib
 RANLIB=echo
 
 LIBNAME=libpng12
 PNGMAJ = 0
-PNGMIN = 1.2.5
+PNGMIN = 1.2.8
 PNGVER = $(PNGMAJ).$(PNGMIN)
 
 INCPATH=$(prefix)/include
@@ -138,9 +138,10 @@ install-static: install-headers libpng.a
 	(cd $(DL); ln -f -s $(LIBNAME).a libpng.a)
 
 install-shared: install-headers $(LIBNAME).so.$(PNGVER) libpng.pc \
-	libpng.so.3
+	libpng.so.3.$(PNGMIN)
 	-@if [ ! -d $(DL) ]; then mkdir $(DL); fi
 	-@/bin/rm -f $(DL)/$(LIBNAME).so.$(PNGVER)* $(DL)/$(LIBNAME).so
+	-@/bin/rm -f $(DL)/$(LIBNAME).so.$(PNGMAJ)
 	-@/bin/rm -f $(DL)/libpng.so
 	-@/bin/rm -f $(DL)/libpng.so.3
 	-@/bin/rm -f $(DL)/libpng.so.3.$(PNGVER)*
@@ -177,12 +178,22 @@ install-config: libpng-config
 	-@/bin/rm -f $(DB)/libpng12-config
 	cp libpng-config $(DB)/libpng12-config
 	chmod 755 $(DB)/libpng12-config
-	(cd $(DB); ln -sf libpng12-config libpng-config)
+	(cd $(DB); ln -f -s libpng12-config libpng-config)
 
 install: install-static install-shared install-man install-config
 
 # If you installed in $(DESTDIR), test-installed won't work until you
-# move the library to its final location.
+# move the library to its final location.  Use test-dd to test it
+# before then.
+
+test-dd:
+	echo
+	echo Testing installed dynamic shared library in $(DL).
+	$(CC) $(SUN_CC_FLAGS) -I$(DI) -I$(ZLIBINC) \
+	   `$(BINPATH)/libpng12-config --cflags` pngtest.c \
+	   -o pngtestd -L$(DL) -R$(DL) `$(BINPATH)/libpng12-config --ldflags` \
+	   $(SUN_LD_FLAGS) -L$(ZLIBLIB) -R$(ZLIBLIB)
+	./pngtestd pngtest.png
 
 test-installed:
 	echo

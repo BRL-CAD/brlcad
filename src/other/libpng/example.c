@@ -85,14 +85,14 @@ void read_png(char *file_name)  /* We need to open the file */
 
    if ((fp = fopen(file_name, "rb")) == NULL)
       return (ERROR);
-#else /* no_open_file - prototype 2 */
+#else no_open_file /* prototype 2 */
 void read_png(FILE *fp, unsigned int sig_read)  /* file is already open */
 {
    png_structp png_ptr;
    png_infop info_ptr;
    png_uint_32 width, height;
    int bit_depth, color_type, interlace_type;
-#endif /* no_open_file - only use one prototype! */
+#endif no_open_file /* only use one prototype! */
 
    /* Create and initialize the png_struct with the desired error handler
     * functions.  If you want to use the default stderr and longjump method,
@@ -137,13 +137,13 @@ void read_png(FILE *fp, unsigned int sig_read)  /* file is already open */
    /* Set up the input control if you are using standard C streams */
    png_init_io(png_ptr, fp);
 
-#else /* no_streams - PNG file I/O method 2 */
+#else no_streams /* PNG file I/O method 2 */
    /* If you are using replacement read functions, instead of calling
     * png_init_io() here you would call:
     */
    png_set_read_fn(png_ptr, (void *)user_io_ptr, user_read_fn);
    /* where user_io_ptr is a structure you want available to the callbacks */
-#endif /* no_streams - Use only one I/O method! */
+#endif no_streams /* Use only one I/O method! */
 
    /* If we have already read some of the signature */
    png_set_sig_bytes(png_ptr, sig_read);
@@ -346,7 +346,7 @@ void read_png(FILE *fp, unsigned int sig_read)  /* file is already open */
 #ifdef entire /* Read the entire image in one go */
    png_read_image(png_ptr, row_pointers);
 
-#else /* no_entire - Read the image one or more scanlines at a time */
+#else no_entire /* Read the image one or more scanlines at a time */
    /* The other way to read images - deal with interlacing: */
 
    for (pass = 0; pass < number_passes; pass++)
@@ -357,27 +357,27 @@ void read_png(FILE *fp, unsigned int sig_read)  /* file is already open */
          png_read_rows(png_ptr, &row_pointers[y], png_bytepp_NULL, 1);
       }
 
-#else /* no_single - Read the image several rows at a time */
+#else no_single /* Read the image several rows at a time */
       for (y = 0; y < height; y += number_of_rows)
       {
 #ifdef sparkle /* Read the image using the "sparkle" effect. */
          png_read_rows(png_ptr, &row_pointers[y], png_bytepp_NULL,
             number_of_rows);
-#else /* no_sparkle - Read the image using the "rectangle" effect */
+#else no_sparkle /* Read the image using the "rectangle" effect */
          png_read_rows(png_ptr, png_bytepp_NULL, &row_pointers[y],
             number_of_rows);
-#endif /* no_sparkle - use only one of these two methods */
+#endif no_sparkle /* use only one of these two methods */
       }
 
       /* if you want to display the image after every pass, do
          so here */
-#endif /* no_single - use only one of these two methods */
+#endif no_single /* use only one of these two methods */
    }
-#endif /* no_entire - use only one of these two methods */
+#endif no_entire /* use only one of these two methods */
 
    /* read rest of file, and get additional chunks in info_ptr - REQUIRED */
    png_read_end(png_ptr, info_ptr);
-#endif /* hilevel */
+#endif hilevel
 
    /* At this point you have read the entire image */
 
@@ -601,13 +601,13 @@ void write_png(char *file_name /* , ... other image information ... */)
 #ifdef streams /* I/O initialization method 1 */
    /* set up the output control if you are using standard C streams */
    png_init_io(png_ptr, fp);
-#else /* no_streams - I/O initialization method 2 */
+#else no_streams /* I/O initialization method 2 */
    /* If you are using replacement read functions, instead of calling
     * png_init_io() here you would call */
    png_set_write_fn(png_ptr, (void *)user_io_ptr, user_write_fn,
       user_IO_flush_function);
    /* where user_io_ptr is a structure you want available to the callbacks */
-#endif /* no_streams - only use one initialization method */
+#endif no_streams /* only use one initialization method */
 
 #ifdef hilevel
    /* This is the easy way.  Use it if you already have all the
@@ -631,7 +631,7 @@ void write_png(char *file_name /* , ... other image information ... */)
 
    /* set the palette if there is one.  REQUIRED for indexed-color images */
    palette = (png_colorp)png_malloc(png_ptr, PNG_MAX_PALETTE_LENGTH
-             * sizeof (png_color));
+             * png_sizeof (png_color));
    /* ... set palette colors ... */
    png_set_PLTE(png_ptr, info_ptr, palette, PNG_MAX_PALETTE_LENGTH);
    /* You must not free palette here, because png_set_PLTE only makes a link to
@@ -741,6 +741,10 @@ void write_png(char *file_name /* , ... other image information ... */)
    png_uint_32 k, height, width;
    png_byte image[height][width*bytes_per_pixel];
    png_bytep row_pointers[height];
+
+   if (height > PNG_UINT_32_MAX/png_sizeof(png_bytep))
+     png_error (png_ptr, "Image is too tall to process in memory");
+
    for (k = 0; k < height; k++)
      row_pointers[k] = image + k*width*bytes_per_pixel;
 
@@ -750,7 +754,7 @@ void write_png(char *file_name /* , ... other image information ... */)
 
    /* the other way to write the image - deal with interlacing */
 
-#else /* no_entire - write out the image data by one or more scanlines */
+#else no_entire /* write out the image data by one or more scanlines */
    /* The number of passes is either 1 for non-interlaced images,
     * or 7 for interlaced images.
     */
@@ -765,7 +769,7 @@ void write_png(char *file_name /* , ... other image information ... */)
          png_write_rows(png_ptr, &row_pointers[y], 1);
       }
    }
-#endif /* no_entire - use only one output method */
+#endif no_entire /* use only one output method */
 
    /* You can write optional chunks like tEXt, zTXt, and tIME at the end
     * as well.  Shouldn't be necessary in 1.1.0 and up as all the public
@@ -775,7 +779,7 @@ void write_png(char *file_name /* , ... other image information ... */)
 
    /* It is REQUIRED to call this to finish writing the rest of the file */
    png_write_end(png_ptr, info_ptr);
-#endif /* hilevel */
+#endif hilevel
 
    /* If you png_malloced a palette, free it here (don't free info_ptr->palette,
       as recommended in versions 1.0.5m and earlier of this example; if

@@ -7,6 +7,7 @@ libpng_la_SOURCES = \
 	example.c \
 	png.c \
 	pngerror.c \
+	pnggccrd.c \
 	pngget.c \
 	pngmem.c \
 	pngpread.c \
@@ -22,10 +23,7 @@ libpng_la_SOURCES = \
 	pngwtran.c \
 	pngwutil.c
 
-
-noinst_PROGRAMS = ansi2knr pngtest
-
-ansi2knr_SOURCES = ansi2knr.c
+noinst_PROGRAMS = pngtest
 
 pngtest_SOURCES = pngtest.c
 
@@ -34,16 +32,30 @@ pngtest_LDADD = \
 	${LIBZ} \
 	${LIBM}
 
-include_HEADERS = png.h pngconf.h
+include_HEADERS = \
+	png.h \
+	pngconf.h
 
-dist_man_MANS = ansi2knr.1 libpng.3 libpngpf.3 png.5
+dist_man_MANS = \
+	libpng.3 \
+	libpngpf.3 \
+	png.5
 
 EXTRA_DIST = \
 	ANNOUNCE \
 	CHANGES \
+	INSTALL \
 	KNOWNBUG \
+	LICENSE \
 	Makefile \
-	libpng.txt
+	README \
+	TODO \
+	Y2KINFO \
+	libpng.txt \
+	pngbar.jpg \
+	pngbar.png \
+	pngnow.png \
+	pngtest.png
 
 .PHONY : test
 test:	pngtest
