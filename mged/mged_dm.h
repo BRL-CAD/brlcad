@@ -22,6 +22,7 @@ struct device_values  {
 };
 extern struct device_values dm_values;
 
+/* defined in ged.c */
 extern int dm_pipe[];
 
 #define VIRTUAL_TRACKBALL_OFF 0
@@ -126,6 +127,7 @@ struct dm_list {
   struct rt_vls _pathName; /* full name of drawing window */
   int _dirty;      /* true if received an expose or configuration event */
   int _owner;
+  char _dname[80];  /* Display name */
   void (*_knob_offset_hook)();
   void (*_axis_color_hook)();
 };
@@ -140,6 +142,7 @@ extern struct dm_list *curr_dm_list;
 #define pathName curr_dm_list->_pathName
 #define dirty curr_dm_list->_dirty
 #define owner curr_dm_list->_owner
+#define dname curr_dm_list->_dname
 #define knob_offset_hook curr_dm_list->_knob_offset_hook
 #define axis_color_hook curr_dm_list->_axis_color_hook
 
