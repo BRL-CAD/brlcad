@@ -454,7 +454,7 @@ proc do_Raytrace { id } {
     if {$rt_control($id,lmodel) != ""} {
 	append rt_cmd " -l$rt_control($id,lmodel)"
 	if {$rt_control($id,lmodel) == 7} {
-		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmIrradianceHypersamplingCache),,$rt_control($id,pmLightIntensityEntry) -A0"
+		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,VisualizeIrradiance),$rt_control($id,pmLightIntensityEntry) -A0"
 	}
     }
 	puts "-b-";
@@ -1313,8 +1313,9 @@ proc rt_init_vars { id win } {
 	set rt_control($id,pmIrradianceRaysScale) 10
 	set rt_control($id,pmAngularTolerance) 60.0
 	set rt_control($id,pmRandomSeedEntry) 0
-	set rt_control($id,pmLightIntensityScale) 1.0
 	set rt_control($id,pmIrradianceHypersamplingCache) 1
+	set rt_control($id,pmVisualizeIrradiance) 0
+	set rt_control($id,pmLightIntensityScale) 1.0
 
 
 	# set widget padding
@@ -1512,6 +1513,11 @@ proc PMMenu {id top enable} {
     checkbutton $top.gridF4.pmIrradianceHypersamplingCache -text "Use Irradiance Hypersampling Cache" -variable rt_control($id,pmIrradianceHypersamplingCache)
     grid $top.gridF4.pmIrradianceHypersamplingCache -row 7 -column 1 -columnspan 2 -sticky w
     $top.gridF4.pmIrradianceHypersamplingCache select
+
+    ## Irradiance Hypersampling
+    checkbutton $top.gridF4.pmVisualizeIrradiance -text "Visualize Irradiance Cache" -variable rt_control($id,pmVisualizeIrradiance)
+    grid $top.gridF4.pmVisualizeIrradiance -row 8 -column 1 -columnspan 2 -sticky w
+#    $top.gridF4.pmVisualizeIrradiance select
 
     ## Edge Compensator
 #    checkbutton $top.gridF4.pmEdgeCompensation -text "Edge Compensation"
