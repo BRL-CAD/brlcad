@@ -173,7 +173,7 @@ static struct funtab funtab[] = {
 	f_comb,4,MAXARGS,TRUE,
 "comb_color", "comb R G B", "assign a color to a combination (like 'mater')",
 	f_comb_color, 5,5,TRUE,
-"copyeval", "new_solid path_to_old_solid (separate path components with spaces, not /)",
+"copyeval", "new_solid path_to_old_solid",
 	"copy an 'evaluated' path solid",
 	f_copyeval, 1, 27, TRUE,
 "copymat", "a/b c/d", "copy matrix from one combination's arc to another's",
