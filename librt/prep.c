@@ -403,33 +403,22 @@ struct soltab		*stp;
 {
 	struct bu_list			vhead;
 	struct region			*regp;
-	struct bu_external		ext;
 	struct rt_db_internal		intern;
-	int				id = stp->st_id;
 	int				rnum;
-	matp_t				mat;
+
+	RT_CK_RTI(rtip);
+	RT_CK_SOLTAB(stp);
 
 	BU_LIST_INIT( &vhead );
 
-	if( db_get_external( &ext, stp->st_dp, rtip->rti_dbip ) < 0 )  {
-		bu_log("rt_plot_solid(%s): db_get_external() failure\n",
+	if( rt_db_get_internal( &intern, stp->st_dp, rtip->rti_dbip, stp->st_matp ) < 0 )  {
+		bu_log("rt_plot_solid(%s): rt_db_get_internal() failed\n",
 			stp->st_name);
-		return(-1);			/* FAIL */
-	}
-
-	if( !(mat = stp->st_matp) )
-		mat = (matp_t)bn_mat_identity;
-    	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, mat, rtip->rti_dbip ) < 0 )  {
-		bu_log("rt_plot_solid(%s):  solid import failure\n",
-			stp->st_name );
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		db_free_external( &ext );
 		return(-1);			/* FAIL */
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
-	if( rt_functab[id].ft_plot(
+	if( rt_functab[intern.idb_type].ft_plot(
 		&vhead,
 		&intern,
 		&rtip->rti_ttol,
@@ -437,12 +426,10 @@ struct soltab		*stp;
 	    ) < 0 )  {
 		bu_log("rt_plot_solid(%s): ft_plot() failure\n",
 			stp->st_name);
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		db_free_external( &ext );
+		rt_db_free_internal( &intern );
 	    	return(-2);
 	}
-	rt_functab[id].ft_ifree( &intern );
-	db_free_external( &ext );
+	rt_db_free_internal( &intern );
 
 	/* Take color from one region */
 	if( (regp = (struct region *)BU_PTBL_GET(&stp->st_regions,0)) != REGION_NULL )  {
