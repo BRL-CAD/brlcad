@@ -510,7 +510,8 @@ char	**argv;
     int				i;
     int				val;
     register struct directory	*dp;
-    union record		record;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
 
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;
@@ -522,12 +523,13 @@ char	**argv;
       return TCL_ERROR;
     }
 
-    if (db_get(dbip,  dp, &record, 0 , 1) < 0)
-    {
-      TCL_READ_ERR_return;
-    }
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+		TCL_READ_ERR_return;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
 
-    for (i = 0; i < 3; ++i)
+    for (i = 0; i < 3; ++i)  {
 	if (((val = atoi(argv[i + 2])) < 0) || (val > 255))
 	{
 	  Tcl_AppendResult(interp, "RGB value out of range: ", argv[i + 2],
@@ -535,15 +537,14 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 	else
-	    record.c.c_rgb[i] = val;
-    record.c.c_override = 1;
-
-    if (db_put( dbip, dp, &record, 0, 1) < 0)
-    {
-      TCL_WRITE_ERR_return;
+	    comb->rgb[i] = val;
     }
 
-    return TCL_OK;
+	comb->rgb_valid = 1;
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		TCL_WRITE_ERR_return;
+	}
+	return TCL_OK;
 }
 
 /*
@@ -607,7 +608,6 @@ char	**argv;
 	int			id;
 	mat_t mirmat;
 	mat_t temp;
-	int ngran;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -1114,8 +1114,9 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	union record record;
 	int regionid, air, mat, los;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -1132,22 +1133,23 @@ char	**argv;
 	los = atoi( argv[5] );
 	mat = atoi( argv[6] );
 
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-	  TCL_READ_ERR_return;
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+		TCL_READ_ERR_return;
 	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
 
 	if( argv[2][0] == 'R' )
-		record.c.c_flags = 'R';
+		comb->region_flag = 1;
 	else
-		record.c.c_flags =' ';
-	record.c.c_regionid = regionid;
-	record.c.c_aircode = air;
-	record.c.c_los = los;
-	record.c.c_material = mat;
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-	  TCL_WRITE_ERR_return;
+		comb->region_flag = 0;
+	comb->region_id = regionid;
+	comb->aircode = air;
+	comb->los = los;
+	comb->GIFTmater = mat;
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		TCL_WRITE_ERR_return;
 	}
-
 	return TCL_ERROR;
 }
 
@@ -1289,10 +1291,8 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	int ngran;
 	int i;
 	struct rt_db_internal	internal;
-	struct bu_external	external;
 	struct rt_arb_internal	*arb_ip;
 	struct rt_tgc_internal	*tgc_ip;
 	struct rt_ell_internal	*ell_ip;
@@ -1647,31 +1647,15 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( rt_functab[internal.idb_type].ft_export( &external, &internal, 1.0 ) < 0 )
-	{
-	  Tcl_AppendResult(interp, "f_make: export failure\n", (char *)NULL);
-	  rt_functab[internal.idb_type].ft_ifree( &internal );
-	  return TCL_ERROR;
-	}
-	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
-
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
-	if( (dp = db_diradd( dbip, argv[1], -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )
-	    {
-	    	db_free_external( &external );
+	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID)) == DIR_NULL )  {
 	    	TCL_ALLOC_ERR_return;
-	    }
-
-	if (db_put_external( &external, dp, dbip ) < 0 )
-	{
-		db_free_external( &external );
+	}
+	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
-	db_free_external( &external );
 
 	{
 	  char *av[3];
