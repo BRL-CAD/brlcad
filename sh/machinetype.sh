@@ -105,7 +105,7 @@ cat << EOF > ${IN_FILE}
 #if defined(unix) && defined(i386) && defined(linux)
 /* IBM PC with Linux */
 	MACHINE=li;
-	UNIXTYPE=SYSV;
+	UNIXTYPE=BSD;
 	HAS_TCP=1;
 	HAS_SYMLINKS=1;
 #endif
