@@ -20,7 +20,7 @@
 #include <strings.h>
 #endif
 
-/* #define DEBUG 1 /* Define to only print system commands */
+/* #define DEBUG 1  Define to only print system commands */
 
 #ifdef DEBUG
 #define SYSTEM(c)	fprintf(stderr,"system(%s);\n",c)
