@@ -112,6 +112,7 @@ int			count;
 		*out++ = in[0];
 		in += SIZEOF_NETWORK_DOUBLE;
 	}
+	return;
 #	define	HTOND	yes2
 
 	/* Now, for the machine-specific stuff. */
@@ -438,6 +439,7 @@ int			count;
 		*out++ = in[0];
 		in += SIZEOF_NETWORK_DOUBLE;
 	}
+	return;
 #	define	NTOHD	yes2
 #endif
 #if	defined(sgi) && !defined(mips)
