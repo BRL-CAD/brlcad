@@ -40,7 +40,8 @@ static const char part_RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
-extern int rt_pipe_ck( struct wdb_pipept *headp);
+
+extern int rt_pipe_ck( const struct bu_list *headp );
 
 
 /*
