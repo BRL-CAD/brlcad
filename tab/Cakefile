@@ -14,10 +14,10 @@
 
 /* Explicit composition of each product */
 
-tabinterp: tabinterp.o LIBRT_DEP LIBMALLOC_DEP
+tabinterp: tabinterp.o LIBRT_DEP
 	CC LDFLAGS tabinterp.o LIBRT LIBRT_LIBES LIBMALLOC LIBES -o tabinterp
 
-tabsub:	tabsub.o  LIBRT_DEP LIBMALLOC_DEP
+tabsub:	tabsub.o  LIBRT_DEP
 	CC LDFLAGS tabsub.o LIBRT LIBRT_LIBES LIBMALLOC LIBES -o tabsub
 
 txyz-pl:	txyz-pl.o LIBPLOT_DEP LIBMALLOC_DEP
