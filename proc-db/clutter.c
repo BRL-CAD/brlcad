@@ -39,13 +39,14 @@ struct mtab {
 	char	mt_name[64];
 	char	mt_param[96];
 } mtab[] = {
-	"plastic",	"",
-	"glass",	"",
-	"plastic",	"",
-	"mirror",	"",
-	"plastic",	"",
-	"testmap",	"",
-	"plastic",	""
+	{"plastic",	""},
+	{"glass",	""},
+	{"plastic",	""},
+	{"mirror",	""},
+	{"plastic",	""},
+	{"testmap",	""},
+	{"plastic",	""},
+	{"",		""}
 };
 int	nmtab = sizeof(mtab)/sizeof(struct mtab);
 
@@ -54,8 +55,13 @@ int	nmtab = sizeof(mtab)/sizeof(struct mtab);
 double	ball_stack(), prim_stack(), crystal_stack(), crystal_layer();
 void	do_plate(), do_rings();
 
+void	get_rgb(unsigned char *rgb);
+void	do_light(char *name, point_t pos, vect_t dir_at, int da_flag,
+		double r, unsigned char *rgb, struct wmember *headp);
+
 struct bn_unif	*rbuf;
 
+int
 main(argc, argv)
 char	**argv;
 {
@@ -151,6 +157,8 @@ char	**argv;
 
 	/* Build the overall combination */
 	mk_lfcomb( stdout, "clut", &head, 0 );
+
+	return 0;
 }
 
 double
