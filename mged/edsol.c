@@ -63,7 +63,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 extern void set_scroll();   /* defined in set.c */
-extern void bv_edit_toggle();
 extern struct bn_tol		mged_tol;	/* from ged.c */
 
 extern short earb4[5][18];
@@ -1998,15 +1997,17 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
     }else
       es_edclass = EDIT_CLASS_NULL;
 
+#if 0
     if(mged_variables.edit)
       scroll_edit = es_edclass;
     else
       scroll_edit = EDIT_CLASS_NULL;
+#endif
 
     bn_mat_idn(acc_rot_sol);
 
-    mged_variables.edit = 0;
-    bv_edit_toggle();
+    mged_variables.edit = 1;
+    set_scroll();
   }
 }
 
@@ -2333,7 +2334,7 @@ get_rotation_vertex()
   }
   bu_vls_printf(&str, ") [%d]: ",arb_vertices[type][loc]);
 
-  bu_vls_printf(&cmd, "mged_input_dialog .get_vertex %s {Need vertex for solid rotate}\
+  bu_vls_printf(&cmd, "mged_input_dialog .get_vertex %S {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 OK", dname, bu_vls_addr(&str), arb_vertices[type][loc]);
 
   while(!valid){
@@ -2352,15 +2353,6 @@ get_rotation_vertex()
 
   bu_vls_free(&str);
   return fixv;
-  
-#if 0
-  /* check whether nimble fingers entered valid vertex */
-  valid = 0;
-  for(j=0; j<4; j++)  {
-    if( fixv==arb_vertices[type][loc+j] )
-      valid=1;
-  }
-#endif
 }
 
 char *
@@ -6150,6 +6142,8 @@ oedit_accept()
 	bn_mat_idn( modelchanges );
 	bn_mat_idn( acc_rot_sol );
 	es_edclass = EDIT_CLASS_NULL;
+	scroll_edit = EDIT_CLASS_NULL;
+	set_scroll();
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
@@ -6160,6 +6154,8 @@ void
 oedit_reject()
 {
   es_edclass = EDIT_CLASS_NULL;
+  scroll_edit = EDIT_CLASS_NULL;
+  set_scroll();
 
   if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
   es_int.idb_ptr = (genptr_t)NULL;
@@ -6268,10 +6264,12 @@ sedit_accept()
 		return;
 	}
 
-	es_edflag = -1;
-	es_edclass = EDIT_CLASS_NULL;
 	menuflag = 0;
 	movedir = 0;
+	es_edflag = -1;
+	es_edclass = EDIT_CLASS_NULL;
+	scroll_edit = EDIT_CLASS_NULL;
+	set_scroll();
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
@@ -6302,7 +6300,6 @@ sedit_reject()
 
 	/* Restore the original solid everywhere */
 	{
-	  mat_t mat;
 	  register struct solid *sp;
 
 	  FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
@@ -6315,6 +6312,8 @@ sedit_reject()
 	movedir = 0;
 	es_edflag = -1;
 	es_edclass = EDIT_CLASS_NULL;
+	scroll_edit = EDIT_CLASS_NULL;
+	set_scroll();
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
