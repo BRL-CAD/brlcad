@@ -42,11 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./dm.h"
 
-extern int 	numargs;
-extern char	*cmd_args[];
 extern int	newargs;
-extern int	args;
-extern int	argcnt;
 extern char	**promp;
 
 static int	cgarbs();
@@ -71,7 +67,7 @@ char *p_arb3pt[] = {
  *				3.  thickness
  *
  */
-void
+int
 f_3ptarb( argc, argv )
 int	argc;
 char	**argv;
@@ -88,6 +84,132 @@ char	**argv;
 	struct rt_db_internal	internal;
 	struct rt_external	external;
 	struct rt_arb_internal	*aip;
+	struct rt_arb_internal	ai;
+
+	/* interupts */
+	(void)signal( SIGINT, sig2 );
+
+	/* get the arb name */
+	if( argc < 2 ) {
+		(void)printf("Enter name for this arb: ");
+		return CMD_MORE;
+	}
+
+	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
+		(void)printf("%s:  already exists\n", argv[1]);
+		return CMD_BAD;
+	}
+
+	if( (int)strlen(argv[1]) >= NAMESIZE ) {
+		(void)printf("Names are limited to %d charscters\n",NAMESIZE-1);
+		return CMD_BAD;
+	}
+	strcpy( name , argv[1] );
+
+	/* read the three points */
+	promp = &p_arb3pt[0];
+	if( argc < 11 ) {
+		(void)printf("%s", promp[argc-2]);
+		return CMD_MORE;
+	}
+
+	/* preliminary calculations to check input so far */
+	for(i=0; i<3; i++) {
+		vec1[i] = atof(argv[i+2]) - atof(argv[i+5]);
+		vec2[i] = atof(argv[i+2]) - atof(argv[i+8]);
+	}
+	VCROSS(norm, vec1, vec2);
+	length = MAGNITUDE( norm );
+	if(length == 0.0) {
+		(void)printf("points are colinear\n");
+		return CMD_BAD;
+	}
+	VSCALE(norm, norm, 1.0/length);
+
+coordin:  	/* sent here to input coordinate to find again */
+
+	if( argc < 12 ) {
+		(void)printf("Enter coordinate to solve for (x, y, or z): ");
+		return CMD_MORE;
+	}
+
+	switch( argv[11][0] ) {
+
+	case 'x':
+		if(norm[0] == 0.0) {
+			(void)printf("X not unique in this face\n");
+			return CMD_BAD;
+		}
+		solve = X;
+
+		if( argc < 13 ) {			
+			(void)printf("Enter the Y, Z coordinate values: ");
+			return CMD_MORE;
+		}
+		if( argc < 14 ) {
+			(void)printf("Enter the Z coordinate value: ");
+			return CMD_MORE;
+		}
+		pt4[0] = atof( argv[12] ) * local2base;
+		pt4[1] = atof( argv[13] ) * local2base;
+		break;
+
+	case 'y':
+		if(norm[1] == 0.0) {
+			(void)printf("Y not unique in this face\n");
+			return CMD_BAD;
+		}
+		solve = Y;
+
+		if ( argc < 13 ) {
+			(void)printf("Enter the X, Z coordinate values: ");
+			return CMD_MORE;
+		}
+		if ( argc < 14 ) {
+			(void)printf("Enter the Z coordinate value: ");
+			return CMD_MORE;
+		}
+
+		pt4[0] = atof( argv[12] ) * local2base;
+		pt4[1] = atof( argv[13] ) * local2base;
+		break;
+
+	case 'z':
+		if(norm[2] == 0.0) {
+			(void)printf("Z not unique in this face\n");
+			return CMD_BAD;
+		}
+		solve = Z;
+
+		if ( argc < 13 ) {
+			(void)printf("Enter the X, Y coordinate values: ");
+			return CMD_MORE;
+		}
+		if ( argc < 14 ) {
+			(void)printf("Enter the Y coordinate value: ");
+			return CMD_MORE;
+		}
+		pt4[0] = atof( argv[12] ) * local2base;
+		pt4[1] = atof( argv[13] ) * local2base;
+		break;
+
+	default:
+		(void)printf("coordinate must be x, y, or z\n");
+		return CMD_BAD;
+	}
+
+
+thickagain:
+
+	if ( argc < 15 ) {
+		(void)printf("Enter thickness for this arb: ");
+		return CMD_MORE;
+	}
+
+	if( (thick = (atof( argv[14] ))) == 0.0 ) {
+		(void)printf("thickness = 0.0\n");
+		return CMD_BAD;
+	}
 
 	RT_INIT_DB_INTERNAL( &internal );
 	internal.idb_type = ID_ARB8;
@@ -95,145 +217,15 @@ char	**argv;
 	aip = (struct rt_arb_internal *)internal.idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
-	args = numargs;
-	argcnt = 0;
-
-	/* interupts */
-	(void)signal( SIGINT, sig2 );
-
 	for(i=0; i<8; i++) {
 		VSET( aip->pt[i] , 0.0 , 0.0 , 0.0 );
 	}
 
-	/* get the arb name */
-	while( args < 2 ) {
-		(void)printf("Enter name for this arb: ");
-		argcnt = getcmd(args);
-		args += argcnt;
-	}
-	if( db_lookup( dbip, cmd_args[1], LOOKUP_QUIET) != DIR_NULL ) {
-		(void)printf("%s:  already exists\n",cmd_args[1]);
-		return;
-	}
-
-	if( (int)strlen(cmd_args[1]) >= NAMESIZE ) {
-		(void)printf("Names are limited to %d charscters\n",NAMESIZE-1);
-		return;
-	}
-	strcpy( name , cmd_args[1] );
-
-	/* read the three points */
-	promp = &p_arb3pt[0];
-	while( args < 11 ) {
-		(void)printf("%s", promp[args-2]);
-		if( (argcnt = getcmd(args)) < 0 )
-			return;
-		args += argcnt;
-	}
-
-	/* preliminary calculations to check input so far */
-	for(i=0; i<3; i++) {
-		vec1[i] = atof(cmd_args[(i+2)]) - atof(cmd_args[(i+5)]);
-		vec2[i] = atof(cmd_args[(i+2)]) - atof(cmd_args[(i+8)]);
-	}
-	VCROSS(norm, vec1, vec2);
-	length = MAGNITUDE( norm );
-	if(length == 0.0) {
-		(void)printf("points are colinear\n");
-		return;
-	}
-	VSCALE(norm, norm, 1.0/length);
-
 	for(i=0; i<3; i++) {
 		/* the three given vertices */
-		VSET( aip->pt[i] , atof( cmd_args[i*3+2] )*local2base , atof( cmd_args[i*3+3] )*local2base , atof( cmd_args[i*3+4] )*local2base );
+		VSET( aip->pt[i] , atof( argv[i*3+2] )*local2base , atof( argv[i*3+3] )*local2base , atof( argv[i*3+4] )*local2base );
 	}
 
-coordin:  	/* sent here to input coordinate to find again */
-
-	(void)printf("Enter coordinate to solve for (x, y, or z): ");
-	argcnt = getcmd(args);
-	switch( *cmd_args[args] ) {
-
-		case 'x':
-			if(norm[0] == 0.0) {
-				(void)printf("X not unique in this face\n");
-				args += argcnt;
-				goto coordin;
-			}
-			solve = X;
-			args += argcnt;
-			(void)printf("Enter the Y, Z coordinate values: ");
-			argcnt = getcmd(args);
-			pt4[0] = atof( cmd_args[args] ) * local2base;
-			pt4[1] = atof( cmd_args[args+1] ) * local2base;
-			args += argcnt;
-			if( argcnt == 1 ) {
-				(void)printf("Enter the Z coordinate value: ");
-				argcnt = getcmd(args);
-				pt4[1] = atof( cmd_args[args] ) * local2base;
-				args += argcnt;
-			}
-		break;
-
-		case 'y':
-			if(norm[1] == 0.0) {
-				(void)printf("Y not unique in this face\n");
-				args += argcnt;
-				goto coordin;
-			}
-			solve = Y;
-			args += argcnt;
-			(void)printf("Enter the X, Z coordinate values: ");
-			argcnt = getcmd(args);
-			pt4[0] = atof( cmd_args[args] ) * local2base;
-			pt4[1] = atof( cmd_args[args+1] ) * local2base;
-			args += argcnt;
-			if( argcnt == 1 ) {
-				(void)printf("Enter the Z coordinate value: ");
-				argcnt = getcmd(args);
-				pt4[1] = atof( cmd_args[args] ) * local2base;
-				args += argcnt;
-			}
-		break;
-
-		case 'z':
-			if(norm[2] == 0.0) {
-				(void)printf("Z not unique in this face\n");
-				args += argcnt;
-				goto coordin;
-			}
-			solve = Z;
-			args += argcnt;
-			(void)printf("Enter the X, Y coordinate values: ");
-			argcnt = getcmd(args);
-			pt4[0] = atof( cmd_args[args] ) * local2base;
-			pt4[1] = atof( cmd_args[args+1] ) * local2base;
-			args += argcnt;
-			if( argcnt == 1 ) {
-				(void)printf("Enter the Y coordinate value: ");
-				argcnt = getcmd(args);
-				pt4[1] = atof( cmd_args[args] ) * local2base;
-				args += argcnt;
-			}
-		break;
-
-		default:
-			(void)printf("coordinate must be x, y, or z\n");
-			args += argcnt;
-			goto coordin;
-	}
-
-
-thickagain:
-	(void)printf("Enter thickness for this arb: ");
-	argcnt = getcmd(args);
-	if( (thick = (atof( cmd_args[args] ))) == 0.0 ) {
-		(void)printf("thickness = 0.0\n");
-		args += argcnt;
-		goto thickagain;
-	}
-	args += argcnt;
 	thick *= local2base;
 
 	ndotv = VDOT( aip->pt[0], norm );
@@ -272,7 +264,7 @@ thickagain:
 
 		default:
 			(void)printf("bad coordinate to solve for\n");
-			return;
+			return CMD_BAD;
 
 	}
 
@@ -285,7 +277,7 @@ thickagain:
 	{
 		rt_log( "f_3ptarb: export failure\n" );
 		rt_functab[internal.idb_type].ft_ifree( &internal );
-		return;
+		return CMD_BAD;
 	}
 	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
@@ -294,21 +286,22 @@ thickagain:
 
 	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
 	if( (dp = db_diradd( dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )
-	    {
+	    db_alloc( dbip, dp, 1 ) < 0 ) {
 	    	db_free_external( &external );
-	    	ALLOC_ERR_return;
-	    }
+	    	ALLOC_ERR;
+		return CMD_BAD;
+	}
 
-	if (db_put_external( &external, dp, dbip ) < 0 )
+	if (db_put_external( &external, dp, dbip ) < 0 ) 
 	{
 		db_free_external( &external );
-		WRITE_ERR_return;
+		WRITE_ERR;
+		return CMD_BAD;
 	}
 	db_free_external( &external );
 
 	/* draw the "made" solid */
-	f_edit( 2, cmd_args );	/* depends on solid name being in cmd_args[1] */
+	return f_edit( 2, argv ); /* depends on solid name being in argv[1] */
 }
 
 
@@ -326,7 +319,7 @@ char *p_rfin[] = {
  *		3. rot and fallback angles
  *		4. thickness
  */
-void
+int
 f_rfarb( argc, argv )
 int	argc;
 char	**argv;
@@ -344,58 +337,45 @@ char	**argv;
 	struct rt_external	external;
 	struct rt_arb_internal	*aip;
 
-	RT_INIT_DB_INTERNAL( &internal );
-	internal.idb_type = ID_ARB8;
-	internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
-	aip = (struct rt_arb_internal *)internal.idb_ptr;
-	aip->magic = RT_ARB_INTERNAL_MAGIC;
-
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
 
-	args = numargs;
-	argcnt = 0;
-
-	for(i=0; i<8; i++) {
-		VSET( aip->pt[i] , 0.0 , 0.0 , 0.0 );
-	}
-
 	/* get the arb name */
-	while( args < 2 ) {
+	if( argc < 2 ) {
 		(void)printf("Enter name for this arb: ");
-		argcnt = getcmd(args);
-		args += argcnt;
+		return CMD_MORE;
 	}
-	if( db_lookup( dbip, cmd_args[1], LOOKUP_QUIET) != DIR_NULL ) {
-		(void)printf("%s:  already exists\n",cmd_args[1]);
-		return;
+	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
+		(void)printf("%s:  already exists\n", argv[1]);
+		return CMD_BAD;
 	}
 
-	if( (int)strlen(cmd_args[1]) >= NAMESIZE ) {
+	if( (int)strlen(argv[1]) >= NAMESIZE ) {
 		(void)printf("Names are limited to %d charscters\n",NAMESIZE-1);
-		return;
+		return CMD_BAD;
 	}
-	strcpy( name , cmd_args[1] );
+	strcpy( name , argv[1] );
 
 	/* read the known point */
 	promp = &p_rfin[0];
-	while( args < 5 ) {
-		(void)printf("%s", promp[args-2]);
-		if( (argcnt = getcmd(args)) < 0 )
-			return;
-		args += argcnt;
+	if( argc < 5 ) {
+		(void)printf("%s", promp[argc-2]);
+		return CMD_MORE;
 	}
 
-	VSET( aip->pt[0] , atof(cmd_args[2])*local2base , atof(cmd_args[3])*local2base , atof(cmd_args[4])*local2base );
+	if ( argc < 6 ) {
+		(void)printf("Enter ROTATION angle (deg): ");
+		return CMD_MORE;
+	}
 
-	(void)printf("Enter ROTATION angle (deg): ");
-	argcnt = getcmd(args);
-	rota = atof( cmd_args[args] ) * degtorad;
-	args += argcnt;
-	(void)printf("Enter FALL BACK angle (deg): ");
-	argcnt = getcmd(args);
-	fba = atof( cmd_args[args] ) * degtorad;
-	args += argcnt;
+	rota = atof( argv[5] ) * degtorad;
+
+	if ( argc < 7 ) {
+		(void)printf("Enter FALL BACK angle (deg): ");
+		return CMD_MORE;
+	}
+
+	fba = atof( argv[6] ) * degtorad;
 
 	/* calculate plane defined by these angles */
 	norm[0] = cos(fba) * cos(rota);
@@ -404,91 +384,99 @@ char	**argv;
 
 	for(i=0; i<3; i++) {
 coordagain:	/* sent here to redo a point */
-		(void)printf("POINT %d...",i+2);
-		(void)printf("Enter coordinate to solve for (x, y, or z): ");
-		argcnt = getcmd(args);
-		switch( *cmd_args[args] ) {
+		if( argc < 8+3*i ) {
+			(void)printf("POINT %d...",i+2);
+			(void)printf("Enter coordinate to solve for (x, y, or z): ");
+			return CMD_MORE;
+		}
 
-			case 'x':
-				if(norm[0] == 0.0) {
-					(void)printf("X not unique in this face\n");
-					args += argcnt;
-					goto coordagain;
-				}
-				solve[i] = X;
-				args += argcnt;
+		switch( argv[7+3*i][0] ) {
+		case 'x':
+			if(norm[0] == 0.0) {
+				(void)printf("X not unique in this face\n");
+				return CMD_BAD;
+			}
+			solve[i] = X;
+
+			if( argc < 7+3*i+1 ) {
 				(void)printf("Enter the Y, Z coordinate values: ");
-				argcnt = getcmd(args);
-				pt[i][0] = atof( cmd_args[args] ) * local2base;
-				pt[i][1] = atof( cmd_args[args+1] ) * local2base;
-				args += argcnt;
-				if( argcnt == 1 ) {
-					(void)printf("Enter the Z coordinate value: ");
-					argcnt = getcmd(args);
-					pt[i][1] = atof( cmd_args[args] ) * local2base;
-					args += argcnt;
-				}
+				return CMD_MORE;
+			}
+			if( argc < 7+3*i+2 ) {
+				(void)printf("Enter the Z coordinate value: ");
+				return CMD_MORE;
+			}
+			pt[i][0] = atof( argv[7+3*i+1] ) * local2base;
+			pt[i][1] = atof( argv[7+3*i+2] ) * local2base;
 			break;
 
-			case 'y':
-				if(norm[1] == 0.0) {
-					(void)printf("Y not unique in this face\n");
-					args += argcnt;
-					goto coordagain;
-				}
-				solve[i] = Y;
-				args += argcnt;
+		case 'y':
+			if(norm[1] == 0.0) {
+				(void)printf("Y not unique in this face\n");
+				return CMD_BAD;
+			}
+			solve[i] = Y;
+
+			if( argc < 7+3*i+1 ) {
 				(void)printf("Enter the X, Z coordinate values: ");
-				argcnt = getcmd(args);
-				pt[i][0] = atof( cmd_args[args] ) * local2base;
-				pt[i][1] = atof( cmd_args[args+1] ) * local2base;
-				args += argcnt;
-				if( argcnt == 1 ) {
-					(void)printf("Enter the Z coordinate value: ");
-					argcnt = getcmd(args);
-					pt[i][1] = atof( cmd_args[args] ) * local2base;
-					args += argcnt;
-				}
+				return CMD_MORE;
+			}
+			if( argc < 7+3*i+2 ) {
+				(void)printf("Enter the Z coordinate value: ");							
+				return CMD_MORE;
+			}
+			pt[i][0] = atof( argv[7+3*i+1] ) * local2base;
+			pt[i][1] = atof( argv[7+3*i+2] ) * local2base;
 			break;
 
-			case 'z':
-				if(norm[2] == 0.0) {
-					(void)printf("Z not unique in this face\n");
-					args += argcnt;
-					goto coordagain;
-				}
-				solve[i] = Z;
-				args += argcnt;
+		case 'z':
+			if(norm[2] == 0.0) {
+				(void)printf("Z not unique in this face\n");
+				return CMD_BAD;
+			}
+			solve[i] = Z;
+
+			if( argc < 7+3*i+1 ) {
 				(void)printf("Enter the X, Y coordinate values: ");
-				argcnt = getcmd(args);
-				pt[i][0] = atof( cmd_args[args] ) * local2base;
-				pt[i][1] = atof( cmd_args[args+1] ) * local2base;
-				args += argcnt;
-				if( argcnt == 1 ) {
-					(void)printf("Enter the Y coordinate value: ");
-					argcnt = getcmd(args);
-					pt[i][1] = atof( cmd_args[args] ) * local2base;
-					args += argcnt;
-				}
+				return CMD_MORE;
+			}
+			if( argc < 7+3*i+2 ) {
+				(void)printf("Enter the Y coordinate value: ");
+				return CMD_MORE;
+			}
+			pt[i][0] = atof( argv[7+3*i+1] ) * local2base;
+			pt[i][1] = atof( argv[7+3*i+2] ) * local2base;
 			break;
 
-			default:
-				(void)printf("coordinate must be x, y, or z\n");
-				args += argcnt;
-				goto coordagain;
+		default:
+			(void)printf("coordinate must be x, y, or z\n");
+			return CMD_BAD;
 		}
 	}
 
 thckagain:
-	(void)printf("Enter thickness for this arb: ");
-	argcnt = getcmd(args);
-	if( (thick = (atof( cmd_args[args] ))) == 0.0 ) {
-		(void)printf("thickness = 0.0\n");
-		args += argcnt;
-		goto thckagain;
+
+	if( argc < 8+3*3 ) {
+		(void)printf("Enter thickness for this arb: ");
+		return CMD_MORE;
 	}
-	args += argcnt;
+	if( (thick = (atof( argv[7+3*3] ))) == 0.0 ) {
+		(void)printf("thickness = 0.0\n");
+		return CMD_BAD;
+	}
 	thick *= local2base;
+
+	RT_INIT_DB_INTERNAL( &internal );
+	internal.idb_type = ID_ARB8;
+	internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+	aip = (struct rt_arb_internal *)internal.idb_ptr;
+	aip->magic = RT_ARB_INTERNAL_MAGIC;
+
+	for(i=0; i<8; i++) {
+		VSET( aip->pt[i] , 0.0 , 0.0 , 0.0 );
+	}
+
+	VSET( aip->pt[0] , atof(argv[2])*local2base , atof(argv[3])*local2base , atof(argv[4])*local2base );
 
 	ndotv = VDOT( aip->pt[0], norm );
 
@@ -524,7 +512,7 @@ thckagain:
 			break;
 
 			default:
-			return;
+				return CMD_BAD;
 		}
 	}
 
@@ -537,7 +525,7 @@ thckagain:
 	{
 		rt_log( "f_3ptarb: export failure\n" );
 		rt_functab[internal.idb_type].ft_ifree( &internal );
-		return;
+		return CMD_BAD;
 	}
 	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
@@ -549,18 +537,20 @@ thckagain:
 	    db_alloc( dbip, dp, 1 ) < 0 )
 	    {
 	    	db_free_external( &external );
-	    	ALLOC_ERR_return;
+	    	ALLOC_ERR;
+		return CMD_BAD;
 	    }
 
 	if (db_put_external( &external, dp, dbip ) < 0 )
 	{
 		db_free_external( &external );
-		WRITE_ERR_return;
+		WRITE_ERR;
+		return CMD_BAD;
 	}
 	db_free_external( &external );
 
 	/* draw the "made" solid */
-	f_edit( 2, cmd_args );	/* depends on solid name being in cmd_args[1] */
+	return f_edit( 2, argv );	/* depends on solid name being in argv[1] */
 }
 
 /* ------------------------------ old way ------------------------------ */
