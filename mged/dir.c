@@ -1642,9 +1642,9 @@ f_mvall()
  */
 void
 f_killall()
-{
+																		{
 	register FILE *fp;
-	char combname[NAMESIZE];
+	char combname[NAMESIZE+2];
 	int len;
 
 	/* no interupts */
@@ -1658,23 +1658,23 @@ f_killall()
 	/* hunt for all combinations with matching member records */
 	while( fread( (char*)&record, sizeof(record), 1, fp ) == 1 &&
 	     ! feof(fp) )  {
-		if( record.u_id == ID_COMB ) {
-			if( (len = record.c.c_length) == 0)
+		if( record.u_id != ID_COMB )
+	     		continue;
+		if( (len = record.c.c_length) == 0)
+			continue;
+		/* save the combination name */
+	     	NAMEMOVE( record.c.c_name, combname );
+		while( len-- ) {	/* each member */
+			register int i;
+			fread( (char *)&record, sizeof(record), 1, fp );
+			if( record.u_id != ID_MEMB )
 				continue;
-			/* save the combination name */
-			strcpy(combname, record.c.c_name);
-			while( len-- ) {	/* each member */
-				fread( (char *)&record, sizeof(record), 1, fp );
-				if( record.u_id == ID_MEMB ) {
-					register int i;
-					for(i=1; i<numargs; i++) {
-						if(strcmp(cmd_args[i], record.M.m_instname) == 0) {
-							/* match ... must remove at least one member */
-							rm_membs( combname );
-							break;
-						}
-					}
-				}
+			for(i=1; i<numargs; i++) {
+				if(strcmp(cmd_args[i], record.M.m_instname) != 0)
+					continue;
+				/* match ... must remove at least one member */
+				rm_membs( combname );
+				break;
 			}
 		}
 	}
@@ -1688,6 +1688,8 @@ f_killall()
  *			R M _ M E M B S
  *
  *  Hack:  re-uses cmd_args[]
+ *  Note that the buffering of fread() may occasionally cause
+ *  odd interactions...
  */
 rm_membs( name )
 char *name;
@@ -1702,25 +1704,16 @@ char *name;
 
 	/* Examine all the Member records, one at a time */
 	num_deleted = 0;
+top:
 	for( rec = 1; rec < dp->d_len; rec++ )  {
 		db_getrec( dp, &record, rec );
-top:
 		/* Compare this member to each command arg */
 		for( i = 1; i < numargs; i++ )  {
 			if( strcmp( cmd_args[i], record.M.m_instname ) != 0 )
 				continue;
 			(void)printf("deleting member %s\n", cmd_args[i] );
 			num_deleted++;
-
-			/* If deleting last member, just truncate */
-			if( rec == dp->d_len-1 ) {
-				db_trunc(dp, 1);
-				continue;
-			}
-
-			db_getrec( dp, &record, dp->d_len-1 );	/* last one */
-			db_putrec( dp, &record, rec );		/* xch */
-			db_trunc( dp, 1 );
+			db_delrec( dp, rec );
 			goto top;
 		}
 	}
