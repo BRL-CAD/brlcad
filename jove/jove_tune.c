@@ -12,7 +12,7 @@ char	*Describe	= "/usr/brl/lib/jove/describe.com";
 char	*Findcom	= "/usr/brl/lib/jove/findcom";
 char	*Joverc		= "/usr/brl/lib/jove/joverc";
 			/* Where to search for the describe command */
-int	Dfltmode	= 0666;
+int	Dfltmode	= 0644;
 
 char	*cerrfmt = "\\([^:]*\\):\\([0-9][0-9]*\\):";
 	/* C error scanf format string for errors of the form
