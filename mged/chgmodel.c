@@ -123,8 +123,15 @@ char	**argv;
 	static int skip1 = 0;
 	static int skip2 = 0;
 	static int skip3 = 0;
+	static struct cmd_list *clp = (struct cmd_list *)NULL;
 	char inherit;
-	char	*nlp;
+
+	if(clp == (struct cmd_list *)NULL)
+	  clp = curr_cmd_list;
+	else if(curr_cmd_list != clp){
+	  rt_log("f_mater: Currently being used by %s.\n", clp->name);
+	  return CMD_OK;
+	}
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return CMD_BAD;
@@ -160,6 +167,7 @@ char	**argv;
 	  }
 
 	  mark = 1;
+
 	  /* Material */
 	  (void)rt_log( "Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
 	  return CMD_MORE;
@@ -181,6 +189,7 @@ Mark1:
 	  }
 
 	  mark = 2;
+
 	  /* Parameters */
 	  (void)rt_log( "Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
 	  return CMD_MORE;
@@ -278,6 +287,7 @@ out:
 
 	mark = 0;
 	skip1 = skip2 = skip3 = 0;
+	clp = (struct cmd_list *)NULL;
 	return CMD_OK;
 }
 
