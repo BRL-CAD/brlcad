@@ -79,6 +79,10 @@ extern struct dm dm_Ps;
 extern struct dm dm_Ir;
 #endif
 
+#ifdef DM_SUNPW
+extern struct dm dm_SunPw;
+#endif
+
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 
 /* The [0] entry will be the startup default */
@@ -89,6 +93,9 @@ static struct dm *which_dm[] = {
 	&dm_Plot,
 #ifdef DM_IR
 	&dm_Ir,
+#endif
+#ifdef DM_SUNPW
+	&dm_SunPw,
 #endif
 #ifdef BSD
 	&dm_Mg,
