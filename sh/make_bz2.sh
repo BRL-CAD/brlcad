@@ -1,5 +1,5 @@
 #!/bin/sh
-#                     M A K E _ T B Z . S H
+#                     M A K E _ B Z 2 . S H
 # BRL-CAD
 #
 # Copyright (c) 2005 United States Government as represented by
@@ -34,6 +34,34 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+
+PKG_NAME="$1"
+if [ "x$PKG_NAME" = "x" ] ; then
+    echo "Usage: $0 package_name"
+    echo "ERROR: must specify a package name"
+    exit 1
+fi
+
+TAR_NAME="${PKG_NAME}.bin.tar"
+if [ ! -f "${TAR_NAME}" ] ; then
+    echo "ERROR: unable to locate tape archive $TAR_NAME"
+    exit 1
+fi
+if [ ! -r "${TAR_NAME}" ] ; then
+    echo "ERROR: unable to read tape archive $TAR_NAME"
+    exit 1
+fi
+
+bzip2 "${TAR_NAME}"
+if [ $? != 0 ] ; then
+    echo "ERROR: unable to successfully bzip2 compress archive \"${TAR_NAME}\""
+    exit 1
+fi
+if [ ! -f "${TAR_NAME}.bz2" ] ; then
+    echo "ERROR: compressed tape archive \"${TAR_NAME}.bz2\" does not exist"
+    exit 1
+fi
+
 
 # Local Variables:
 # mode: sh

@@ -17,7 +17,7 @@ bin_SCRIPTS = \
 	make_pkg.sh \
 	make_rpm.sh \
 	make_tar.sh \
-	make_tbz.sh \
+	make_bz2.sh \
 	make_tgz.sh \
 	make_zip.sh \
 	pixinfo.sh \
