@@ -2834,6 +2834,10 @@ int		is_opposite;
  *
  *  Based upon a geometric calculation, reorient a loop and it's mate,
  *  if the stored orientation differs from the geometric one.
+ *
+ *  Note that the loopuse and it's mate have the same orientation;
+ *  it's the faceuses that are normalward and anti-normalward.
+ *  The loopuses either both agree with their faceuse, or both differ.
  */
 void
 nmg_lu_reorient( lu, tol )
@@ -2847,13 +2851,22 @@ CONST struct rt_tol	*tol;
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
-	fu = lu->up.fu_p;
-	NMG_CK_FACEUSE(fu);
-	if( fu->orientation != OT_SAME )  fu = fu->fumate_p;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_lu_reorient(lu=x%x, tol)\n", lu);
 	}
+
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+	if( fu->orientation != OT_SAME )  {
+		lu = lu->lumate_p;
+		NMG_CK_LOOPUSE(lu);
+		fu = lu->up.fu_p;
+		NMG_CK_FACEUSE(fu);
+		if( fu->orientation != OT_SAME )
+			rt_bomb("nmg_lu_reorient() no OT_SAME fu?\n");
+	}
+
 
 	/* Get OT_SAME faceuse's normal */
 	NMG_GET_FU_PLANE( norm, fu );
@@ -2875,8 +2888,50 @@ CONST struct rt_tol	*tol;
 			geom_orient = OT_SAME;
 			break;
 		case NMG_CLASS_AonBshared:
-			/* ALL vu's touch other loops in face, should have been joined. */
-			rt_bomb("nmg_lu_reorient() lu is ON another lu, should have been joined\n");
+			/* ALL vu's touch other loops in face. */
+			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+				/* Lone vertex that touches lu.  Call it solid. */
+				geom_orient = OT_SAME;
+			} else {
+				/* Decide by calculating midpoint */
+				point_t		mid;
+				struct edgeuse	*eu;
+				struct vertex	*v1, *v2;
+
+				eu = RT_LIST_NEXT(edgeuse, &lu->down_hd);
+				NMG_CK_EDGEUSE(eu);
+				v1 = eu->vu_p->v_p;
+				NMG_CK_VERTEX(v1);
+
+				while( RT_LIST_NOT_HEAD(&eu->l, &lu->down_hd) )  {
+					v2 = eu->vu_p->v_p;
+					NMG_CK_VERTEX(v2);
+					if( v2 != v1 )  goto found;
+					eu = RT_LIST_NEXT(edgeuse, &eu->l);
+				}
+				rt_bomb("nmg_lu_reorient() no 2nd vertex?\n");
+found:
+				VADD2SCALE( mid, v1->vg_p->coord, v2->vg_p->coord, 0.5 );
+				class = nmg_class_pt_f_except( mid, fu, lu, tol );
+rt_log("nmg_lu_reorient() eu midpoint=(%g, %g, %g), class=%s\n", V3ARGS(mid), nmg_class_name(class) );
+				switch( class )  {
+				case NMG_CLASS_AinB:
+					/* An interior point, must be a hole */
+					geom_orient = OT_OPPOSITE;
+					break;
+				case NMG_CLASS_AoutB:
+					/* An exterior "solid point" */
+					geom_orient = OT_SAME;
+					break;
+				case NMG_CLASS_AonBshared:
+					rt_log("nmg_lu_reorient() bad luck, midpoint didn't break edge, but is ON an edge.  Assume OT_UNSPEC\n");
+					geom_orient = OT_UNSPEC;
+					break;
+				default:
+					rt_bomb("nmg_lu_reorient() bad class from nmg_class_pt_f\n");
+				}
+			}
+			break;
 		default:
 			rt_bomb("nmg_lu_reorient() bad class from nmg_class_lu_fu()\n");
 		}
