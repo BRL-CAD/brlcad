@@ -2658,7 +2658,7 @@ struct faceuse		*fu1, *fu2;
 				}
 
 				if( hitv )
-					(void)nmg_model_break_all_es_on_v( m, hitv, &is->tol );
+					(void)nmg_break_all_es_on_v( &m->magic, hitv, &is->tol );
 			}
 		}
 	}
@@ -4067,7 +4067,7 @@ struct edgeuse		*eu;
 		if( v == eu->vu_p->v_p || v == eu->eumate_p->vu_p->v_p )
 			goto out;
 
-		(void)nmg_model_break_all_es_on_v( m, v, &is->tol );
+		(void)nmg_break_all_es_on_v( &m->magic, v, &is->tol );
 
 		goto out;
 	}
@@ -4132,7 +4132,7 @@ struct edgeuse		*eu;
 		{
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log( "Breaking edges at vertex #%d, dist=%g, v=x%x\n", i+1, inter_dist[i], v );
-			(void)nmg_model_break_all_es_on_v( m, v, &is->tol );
+			(void)nmg_break_all_es_on_v( &m->magic, v, &is->tol );
 		}
 
 		inter_dist[index_at_max] = (-10.0);
@@ -6055,7 +6055,7 @@ struct nmg_ptbl *eu2_list;
 				}
 
 				if( hitv )
-					(void)nmg_model_break_all_es_on_v( m, hitv, &is->tol );
+					(void)nmg_break_all_es_on_v( &m->magic, hitv, &is->tol );
 			}
 		}
 	}
