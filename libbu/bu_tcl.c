@@ -589,11 +589,17 @@ char **argv;
 		if( strcmp( iwant, listv[i] ) == 0 )  {
 			/* If value is a list, don't nest it in another list */
 			if( listv[i+1][0] == '{' )  {
-				Tcl_AppendResult( interp, " ",
-					listv[i+1], (char *)NULL );
+				struct bu_vls	str;
+				bu_vls_init( &str );
+				/* Skip leading { */
+				bu_vls_strcat( &str, &listv[i+1][1] );
+				/* Trim trailing } */
+				bu_vls_trunc( &str, -1 );
+				Tcl_AppendResult( interp,
+					bu_vls_addr(&str), (char *)NULL );
+				bu_vls_free( &str );
 			} else {
-				/* Else use caution */
-				Tcl_AppendElement( interp, listv[i+1] );
+				Tcl_AppendResult( interp, listv[i+1], (char *)NULL );
 			}
 			if(tofree) free( (char *)tofree );	/* not bu_free() */
 			return TCL_OK;
