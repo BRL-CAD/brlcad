@@ -1127,33 +1127,30 @@ char **argv;
     /* Find out what type of object we are dealing with and tweak it. */
     id = intern.idb_type;
 
-	sp = rt_get_parsetab_by_id(id)->parsetab;
+    if (rt_get_parsetab_by_id(id) == NULL ||
+	(sp = rt_get_parsetab_by_id(id)->parsetab) == NULL) {
+	    Tcl_AppendResult(interp, "manipulation routines for this type \
+			     have not yet been implemented", (char *)NULL);
+	    rt_db_free_internal(&intern);
+	    return TCL_ERROR;
+    } else {
+	    /* If we were able to find an entry in on the "cheat sheet", just
+	       use the handy parse functions to return the object. */
 
-	/* If we were able to find an entry in on the "cheat sheet", just
-	   use the handy parse functions to return the object. */
-
-	if (sp != NULL) {
 	    if (bu_structparse_argv(interp, argc-2, argv+2, sp,
-				 (char *)intern.idb_ptr) == TCL_ERROR) {
-		rt_db_free_internal(&intern);
-		return TCL_ERROR;
+				    (char *)intern.idb_ptr) == TCL_ERROR) {
+		    rt_db_free_internal(&intern);
+		    return TCL_ERROR;
 	    }
-	}
-    	else
-    	{
-		Tcl_AppendResult(interp, "manipulation routines for this type have \
-			not yet been implemented", (char *)NULL);
-    		rt_db_free_internal(&intern);
-    		return TCL_ERROR;
-    	}
 
-	if( wdb_export( wdb, argv[1], intern.idb_ptr, intern.idb_type, 1.0 ) < 0 )  {
-		Tcl_AppendResult(interp, "wdb_export(", argv[1], ") failure\n", (char *)NULL);
-		rt_db_free_internal(&intern);
-		return TCL_ERROR;
-	}
-	rt_db_free_internal(&intern);
-	return TCL_OK;
+	    if( wdb_export( wdb, argv[1], intern.idb_ptr, intern.idb_type, 1.0 ) < 0 )  {
+		    Tcl_AppendResult(interp, "wdb_export(", argv[1], ") failure\n", (char *)NULL);
+		    rt_db_free_internal(&intern);
+		    return TCL_ERROR;
+	    }
+	    rt_db_free_internal(&intern);
+	    return TCL_OK;
+    }
 }
 
 /*
@@ -1179,7 +1176,8 @@ char **argv;
     }
 
     bu_vls_init(&str);
-    sp = rt_get_parsetab_by_name(argv[1])->parsetab;
+    sp = rt_get_parsetab_by_name(argv[1]) == NULL ? NULL :
+	    rt_get_parsetab_by_name(argv[1])->parsetab;
     
     if (sp != NULL)
 	while (sp->sp_name != NULL) {
@@ -1235,7 +1233,7 @@ Tcl_Interp *interp;
 
 	(void)Tcl_CreateCommand(interp, "rt_wdb_inmem_rgb", rt_wdb_inmem_rgb,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "rt_wdb_inmem_shader", rt_wdb_inmem_shader,
+ 	(void)Tcl_CreateCommand(interp, "rt_wdb_inmem_shader", rt_wdb_inmem_shader,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_SetVar(interp, "rt_version", (char *)rt_version+5, TCL_GLOBAL_ONLY);
