@@ -18,10 +18,12 @@ int CutLen = 3;			/* normal limit on number objs per box node */
 int CutDepth = 32;		/* normal limit on depth of cut tree */
 
 union cutter CutHead;		/* Global head of cutting tree */
+union cutter *CutFree;		/* Head of freelist */
 
 extern int ck_overlap();
 extern void cut_it(), pr_cut();
 HIDDEN void cut_add(), cut_box(), cut_optim();
+HIDDEN union cutter *cut_get();
 
 #define AXIS(depth)	((depth>>1)%3)	/* cuts: X, X, Y, Y, Z, Z, repeat */
 
@@ -60,9 +62,9 @@ cut_it()  {
 	 */
 	CutLen = (int)log((double)nsolids);
 	if( CutLen < 3 )  CutLen = 3;
-	CutDepth = (int)(3 * log((double)nsolids));	/* ln ~= log2 */
+	CutDepth = (int)(2 * log((double)nsolids));	/* ln ~= log2 */
 	if( CutDepth < 9 )  CutDepth = 9;
-	if( CutDepth > 48 )  CutDepth = 48;		/* !! */
+	if( CutDepth > 24 )  CutDepth = 24;		/* !! */
 rtlog("Cut: Tree Depth=%d, Leaf Len=%d\n", CutDepth, CutLen );
 	cut_optim( &CutHead, 0 );
 	if(debug&DEBUG_CUT) pr_cut( &CutHead, 0 );
@@ -220,8 +222,7 @@ register int axis;
 		cutp->cn.cn_point = pt_close;
 
 	/* LEFT side */
-	cutp->cn.cn_l = (union cutter *)vmalloc( sizeof(union cutter),
-		"cut_box:  left node");
+	cutp->cn.cn_l = cut_get();
 	bp = &(cutp->cn.cn_l->bn);
 	bp->bn_type = CUT_BOXNODE;
 	VMOVE( bp->bn_min, oldbox.bn.bn_min );
@@ -239,8 +240,7 @@ register int axis;
 	}
 
 	/* RIGHT side */
-	cutp->cn.cn_r = (union cutter *)vmalloc( sizeof(union cutter),
-		"cut_box:  right node");
+	cutp->cn.cn_r = cut_get();
 	bp = &(cutp->cn.cn_r->bn);
 	bp->bn_type = CUT_BOXNODE;
 	VMOVE( bp->bn_min, oldbox.bn.bn_min );
@@ -338,6 +338,30 @@ int depth;
 }
 
 /*
+ *  			C U T _ G E T
+ */
+HIDDEN union cutter *
+cut_get()
+{
+	register union cutter *cutp;
+
+	if( CutFree == CUTTER_NULL )  {
+		register int bytes;
+
+		bytes = byte_roundup(64*sizeof(union cutter));
+		cutp = (union cutter *)vmalloc(bytes," cut_get");
+		while( bytes >= sizeof(union cutter) )  {
+			cutp->cut_forw = CutFree;
+			CutFree = cutp++;
+			bytes -= sizeof(union cutter);
+		}
+	}
+	cutp = CutFree;
+	CutFree = cutp->cut_forw;
+	return(cutp);
+}
+
+/*
  *  			P R _ C U T
  *  
  *  Print out a cut tree.
@@ -403,6 +427,9 @@ int lvl;			/* recursion level */
 	return;
 }
 
+/*
+ *  			P L O T _ C U T
+ */
 plot_cut( cutp, lvl )
 register union cutter *cutp;
 int lvl;
