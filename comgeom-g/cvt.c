@@ -15,6 +15,7 @@ March 81  CAS	Added processing for ARS
 8205.21 Bob S.	Appending the string to the g recoreds.
 			I did this one the hard way.
  */
+#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <math.h>
@@ -210,32 +211,32 @@ join( &record, "g19", 10000, 32767 );		**************/
 printf("producing groups\n");
 	{ static int i,k,n;	  static char str[12], st[12];
 		strcpy( str, "g00");
-		strappend( str, name_it );
+		strcat( str, name_it );
 		join( &record, str, 0,0 );
 
 		strcpy( str, "g0" );
-		strappend( str, name_it );
+		strcat( str, name_it );
 		join( &record, str, 1, 99 );
 
 		n = 100;
 		for( i=1, k=100; i <= 9; ++i, k += n)
 		{	str[1] = '\0';
 			f2a( (float)i, st, 12, 0 );
-			strappend( str, st );
-			strappend( str, name_it );
+			strcat( str, st );
+			strcat( str, name_it );
 			join( &record, str, k, (k + n -1) );
 		}
 		n = 1000;
 		for( ; i <= 18; ++i, k += n)
 		{	str[1] = '\0';
 			f2a( (float)i, st, 12, 0 );
-			strappend( str, st );
-			strappend( str, name_it );
+			strcat( str, st );
+			strcat( str, name_it );
 			join( &record, str, k, (k + n -1) );
 		}
 
 		strcpy( str, "g19" );
-		strappend( str, name_it );
+		strcat( str, name_it );
 		join( &record, str, 10000, 32767 );
 
 	}
@@ -314,18 +315,4 @@ register char *from, *to;
 { register int i;
 	for( i=0; i<16; i++ )		to[i] = 0;
 	while( *to++ = *from++ );
-}
-
-/*			P U T C H A R
- * This is a special version of putchar which buffers
- * output a line-at-a-time.  Especially useful with
- * programs which only write lines, on DMA terminals. */
-putchar( c )
-register char c;
-{ static char buffer[140];
- static char *bp = &buffer[0];
-	if( (*bp++ = c) == '\n' || bp >= &buffer[140] )  {
-		write( 1, buffer, bp-buffer );
-		bp = &buffer[0];
-	}
 }

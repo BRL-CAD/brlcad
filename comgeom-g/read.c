@@ -651,13 +651,14 @@ table[] =  {
 /*
  *			L O O K U P
  */
+int
 lookup( cp )  {
 	register struct table *tp;
 
 	tp = &table[0];
 
 	while( tp->t_value != 0 )  {
-		if( strcmp( cp, tp->t_name ) != 0 )
+		if( strcmp( cp, tp->t_name ) == 0 )
 			return( tp->t_value );
 		tp++;
 	}
@@ -665,32 +666,6 @@ lookup( cp )  {
 	printf("ERROR:  bad solid type '%s'\n", cp );
 	return(0);
 }
-
-/*
- *			S T R C M P
- */
-strcmp( s1, s2 )
-register char *s1, *s2;
-{
-	while( *s1++ == *s2 )
-		if( *s2++ == '\0' )
-			return(1);
-	return(0);
-}
-
-/*
- * Buffer for GETC
- */
-/*
-struct buf  {
-	int	fildes;
-	int	nunused;
-	char	*xfree;
-	char	buff[512];
-} 
-inbuf = { 
-	0, 0, };
-*/
 
 /*
  *			G E T L I N E
@@ -725,8 +700,8 @@ register int n;
 	str[0] = c;			/* record type letter.*/
 	str[1] = '\0';			/* terminate string.*/
 	f2a( (float)n, s, 12, 0 );	/* get string for 'n'.*/
-	strappend( str, s );		/* append 'n'string.*/
-	strappend( str, name_it );	/* append argv[3].*/
+	strcat( str, s );		/* append 'n'string.*/
+	strcat( str, name_it );	/* append argv[3].*/
 	strncpy( cp, str, 16 );		/* truncate str to 16 chars.*/
 }
 
@@ -744,6 +719,7 @@ get_title()
 		printf("Empty input file\n");
 		exit(10);
 	}
+	/* First 2 chars are units */
 	printf("Units  Title: %s\n",ctitle);
 	return;
 }
@@ -757,6 +733,7 @@ get_control()
 {
 	int i;
 	char ch[80];
+	int	reg_total=0;
 
 	if( (i = getline( ch )) == EOF ) {
 		printf("No control card .... STOP\n");
@@ -764,16 +741,11 @@ get_control()
 	}
 
 #ifdef GIFT5
-	ch[5] = 0;
-	sol_total = atoi( ch );
+	sscanf( ch, "%5d%5d", &sol_total, &reg_total );
 #else
 	ch[20] = 0;
 	sol_total = atoi( ch+10 );
 #endif
 
-	return;
-
+	printf("Expecting %d solids, %d regions\n", sol_total, reg_total);
 }
-
-
-
