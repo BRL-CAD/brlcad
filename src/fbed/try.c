@@ -11,8 +11,7 @@ static const char RCSid[] = "@(#) try.c 2.1, modified 12/9/86 at 15:54:34, archi
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 
