@@ -30,6 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct timeval tv;
 #endif
 
+FBIO *fbp;
 int pix_line;		/* Number of pixels/line */
 int zoom;		/* Zoom Factor.			*/
 int xPan, yPan;		/* Pan Location.		*/
@@ -97,11 +98,9 @@ char **argv;
 		tv.tv_usec = 1000000/fps;
 	}
 #endif
-	if( pix_line > 512 )
-		fbsetsize(pix_line);
 
-	if( fbopen( NULL, APPEND ) < 0 )  {
-		fprintf(stderr,"fbopen failed\n");
+	if( (fbp = fb_open( NULL, pix_line, pix_line )) == NULL )  {
+		fprintf(stderr,"fb_open failed\n");
 		exit(12);
 	}
 
@@ -109,7 +108,8 @@ char **argv;
 	im_line = pix_line/w;	/* number of images across line */
 	xPan = yPan = 0;
 
-	fbzoom( pix_line==w? 0 : pix_line/w,
+	fb_zoom( fbp,
+		pix_line==w? 0 : pix_line/w,
 		pix_line==w? 0 : pix_line/w );
 
 	while(passes-- > 0)  {
@@ -136,7 +136,7 @@ register int i;
 		printf("%3d: %3d %3d\n", i, xPan, yPan);
 		fflush( stdout );
 	}
-	fbwindow( xPan, yPan );
+	fb_window( fbp, xPan, yPan );
 #ifdef BSD
 	(void)select( 0, 0, 0, 0, &tv );
 #endif
