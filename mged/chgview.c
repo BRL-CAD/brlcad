@@ -60,6 +60,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"	/* XXX */
 
+#ifndef M_SQRT2
+#define M_SQRT2		1.41421356237309504880
+#endif
+
 extern long	nvectors;	/* from dodraw.c */
 
 double		mged_abs_tol;
@@ -1031,27 +1035,28 @@ char	**argv;
 			goto usage;
 		}
 	} else if( strcmp( cmd, "xadc" ) == 0 )  {
-		dm_values.dv_xadc = i;
-		dm_values.dv_flagadc = 1;
+		rt_vls_printf( &dm_values.dv_string, "adc x %d\n" , i );
+		return CMD_OK;
 	} else if( strcmp( cmd, "yadc" ) == 0 )  {
-		dm_values.dv_yadc = i;
-		dm_values.dv_flagadc = 1;
+		rt_vls_printf( &dm_values.dv_string, "adc y %d\n" , i );
+		return CMD_OK;
 	} else if( strcmp( cmd, "ang1" ) == 0 )  {
-		dm_values.dv_1adc = i;
-		dm_values.dv_flagadc = 1;
+		rt_vls_printf( &dm_values.dv_string, "adc a1 %f\n", 45.0*(1.0-(double)i/2047.0) );
+		return CMD_OK;
 	} else if( strcmp( cmd, "ang2" ) == 0 )  {
-		dm_values.dv_2adc = i;
-		dm_values.dv_flagadc = 1;
+		rt_vls_printf( &dm_values.dv_string, "adc a2 %f\n", 45.0*(1.0-(double)i/2047.0) );
+		return CMD_OK;
 	} else if( strcmp( cmd, "distadc" ) == 0 )  {
-		dm_values.dv_distadc = i;
-		dm_values.dv_flagadc = 1;
+		rt_vls_printf( &dm_values.dv_string, "adc dst %f\n",
+			((double)i/2047.0 + 1.0)*Viewscale * base2local * M_SQRT2 );
+		return CMD_OK;
 	} else if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
 		char	*av[3];
 
 		VSETALL( rate_rotate, 0 );
 		VSETALL( rate_slew, 0 );
 		rate_zoom = 0;
-
+		
 		av[0] = "adc";
 		av[1] = "reset";
 		av[2] = (char *)NULL;
