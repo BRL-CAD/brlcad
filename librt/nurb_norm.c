@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 /* If the order of the surface is linear either direction
  * than approximate it.

@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 #define AMAX(i,j)    ( (i) > (j) ? (i) : (j) )
 #define AMIN(i,j)    ( (i) < (j) ? (i) : (j) )

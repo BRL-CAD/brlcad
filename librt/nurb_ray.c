@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 struct snurb *
 rt_nurb_project_srf( srf, plane1, plane2)

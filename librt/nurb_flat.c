@@ -22,7 +22,7 @@
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 fastf_t internal_crv_flat();
 

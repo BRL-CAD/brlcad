@@ -23,7 +23,7 @@
 
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 static FILE * plotfile;
 

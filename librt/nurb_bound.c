@@ -26,10 +26,13 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 #define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
+
+#ifndef INFINITY		/* if INFINITY is not defined define it */
 #define INFINITY	(1.0e20)
+#endif
 
 /* rt_nurb_sbound()
  * 	Calculates the bounding Right Parallel Piped (RPP) of the

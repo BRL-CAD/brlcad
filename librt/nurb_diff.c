@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 /* Given a NURB surface and a direction, differentiate the surface
  * and return a new surface which is the derivative of the original

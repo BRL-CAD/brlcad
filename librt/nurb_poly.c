@@ -20,7 +20,7 @@
 
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 /* Algorithm -
  * From the four corners of the surface, return the two parts split by the

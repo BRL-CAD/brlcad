@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"	
+#include "nurb.h"	
 
 void	rt_nurb_doolittle();
 void	rt_nurb_forw_solve();

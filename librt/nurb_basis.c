@@ -22,7 +22,7 @@ static char	rcs_ident[] = "$Header$";
 
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 /* This uses the traditional De Boor-Cox algorithm, 
  *

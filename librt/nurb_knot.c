@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 /* rt_nurb_kvknot()
  * Generate a open knot vector with n=order knots at the beginning of

@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 struct snurb *
 rt_nurb_s_refine( srf, dir, kv )

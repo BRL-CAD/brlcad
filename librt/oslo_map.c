@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "./nurb.h"
+#include "nurb.h"
 
 /* This routine takes a oslo refinement matrix as described in the
  * paper "Making the Oslo Algorithm More Efficient" and maps it to the
