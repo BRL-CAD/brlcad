@@ -259,7 +259,7 @@ int	kind;
 {
 	register struct directory *dp;
 	register int	i;
-	long		stime, etime;	/* start & end times */
+	double		elapsed_time;
 	int		initial_blank_screen;
 
 	initial_blank_screen = (HeadSolid.s_forw == &HeadSolid);
@@ -284,10 +284,10 @@ int	kind;
 	(void)signal( SIGINT, sig2 );	/* allow interupts after here */
 
 	nvectors = 0;
-	(void)time( &stime );
+	rt_prep_timer();
 	drawtrees( argc, argv, kind );
-	(void)time( &etime );
-	(void)printf("%ld vectors in %ld sec\n", nvectors, etime - stime );
+	(void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
+	(void)printf("%ld vectors in %g sec\n", nvectors, elapsed_time );
 	
 	/* If we went from blank screen to non-blank, resize */
 	if (mged_variables.autosize  && initial_blank_screen &&
