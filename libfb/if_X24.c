@@ -210,7 +210,8 @@ struct	xinfo {
 	int		xi_usereg;	/* Flag determining whether or not to use regions */
 	Colormap	xi_cmap;	/* Colormap */
 	XImage		*xi_image;	/* XImage (size of screen) */
-	Window		xi_curswin;	/* Cursor Window ID */
+	Window		xi_cwinp;	/* Cursor's Parent Window ID */
+	Window		xi_cwin;	/* Cursor Window ID */
 	unsigned long	xi_wp;		/* White pixel */
 	unsigned long	xi_bp;		/* Black pixel */
 
@@ -555,13 +556,14 @@ char **argv;
 {
   Display *dpy;
   Window win;
+  Window cwinp;
   Colormap cmap;
   XVisualInfo *vip;
   int width;
   int height;
   GC gc;
 
-  if(argc != 8)
+  if(argc != 9)
     return -1;
 
   if(sscanf(argv[1], "%lu", (unsigned long *)&dpy) != 1)
@@ -570,29 +572,33 @@ char **argv;
   if(sscanf(argv[2], "%lu", (unsigned long *)&win) != 1)
     return -1;
 
-  if(sscanf(argv[3], "%lu", (unsigned long *)&cmap) != 1)
+  if(sscanf(argv[3], "%lu", (unsigned long *)&cwinp) != 1)
     return -1;
 
-  if(sscanf(argv[4], "%lu", (unsigned long *)&vip) != 1)
+  if(sscanf(argv[4], "%lu", (unsigned long *)&cmap) != 1)
     return -1;
 
-  if(sscanf(argv[5], "%d", &width) != 1)
+  if(sscanf(argv[5], "%lu", (unsigned long *)&vip) != 1)
     return -1;
 
-  if(sscanf(argv[6], "%d", &height) != 1)
+  if(sscanf(argv[6], "%d", &width) != 1)
     return -1;
 
-  if(sscanf(argv[7], "%lu", (unsigned long *)&gc) != 1)
+  if(sscanf(argv[7], "%d", &height) != 1)
     return -1;
 
-  return _X24_open_existing(ifp, dpy, win, cmap, vip, width, height, gc);
+  if(sscanf(argv[8], "%lu", (unsigned long *)&gc) != 1)
+    return -1;
+
+  return _X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc);
 }
 
 int
-_X24_open_existing(ifp, dpy, win, cmap, vip, width, height, gc)
+_X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc)
 FBIO *ifp;
 Display *dpy;
 Window win;
+Window cwinp;
 Colormap cmap;
 XVisualInfo *vip;
 int width;
@@ -631,6 +637,7 @@ GC gc;
   xi->xi_depth = vip->depth;
   xi->xi_cmap = cmap;
   xi->xi_win = win;
+  xi->xi_cwinp = cwinp;
 
   /*XXX For now use same GC for both */
   xi->xi_gc = gc;
@@ -1169,7 +1176,7 @@ int	x, y;
     register int delta;
 
     /* If we don't have a cursor, create it */
-    if (!xi->xi_curswin) {
+    if (!xi->xi_cwin) {
       XSetWindowAttributes xswa;
 
       xswa.background_pixel = xi->xi_bp;
@@ -1177,7 +1184,7 @@ int	x, y;
       xswa.colormap = xi->xi_cmap;
       xswa.save_under = True;
 
-      xi->xi_curswin = XCreateWindow(xi->xi_dpy, xi->xi_win,
+      xi->xi_cwin = XCreateWindow(xi->xi_dpy, xi->xi_cwinp,
 				     0, 0, 4, 4, 2, xi->xi_depth, InputOutput,
 				     xi->xi_visual, CWBackPixel | CWBorderPixel |
 				     CWSaveUnder | CWColormap, &xswa);
@@ -1195,14 +1202,14 @@ int	x, y;
     xy = xi->xi_xheight - xy;
 
     /* Move cursor into place; make it visible if it isn't */
-    XMoveWindow(xi->xi_dpy, xi->xi_curswin, xx - 4, xy - 4);
+    XMoveWindow(xi->xi_dpy, xi->xi_cwin, xx - 4, xy - 4);
 
     if (!ifp->if_cursmode)
-      XMapRaised(xi->xi_dpy, xi->xi_curswin);
+      XMapRaised(xi->xi_dpy, xi->xi_cwin);
   } else {
     /* If we have a cursor and it's visible, hide it */
-    if (xi->xi_curswin && ifp->if_cursmode)
-      XUnmapWindow(xi->xi_dpy, xi->xi_curswin);
+    if (xi->xi_cwin && ifp->if_cursmode)
+      XUnmapWindow(xi->xi_dpy, xi->xi_cwin);
   }
 
   /* Without this flush, cursor movement is sluggish */
@@ -1860,6 +1867,7 @@ printf("Creating window\n");
 		InputOutput, xi->xi_visual, CWEventMask | CWBackPixel |
 		    CWBorderPixel | CWBitGravity | CWBackingStore | CWColormap,
 		&xswa);
+	xi->xi_cwinp = xi->xi_win;
 
 	if (xi->xi_win == 0) {
 		fb_log("if_X: Can't create window\n");
