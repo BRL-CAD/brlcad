@@ -41,7 +41,7 @@
  *	Public Domain, Distribution Unlimited
  */
 #ifndef lint
-static char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
+static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

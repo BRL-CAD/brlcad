@@ -18,7 +18,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
+static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"

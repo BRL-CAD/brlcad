@@ -14,7 +14,7 @@
  *  Distribution Status -
  *      Public Domain, Distribution Unlimitied.
  */
-static char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
+static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 

@@ -23,7 +23,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
+static const char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 
@@ -36,6 +36,7 @@ static char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
 #else
 #include <strings.h>
 #endif
+#include <ctype.h>
 
 #include "tcl.h"
 
@@ -149,7 +150,8 @@ char				*base;		/* base addr of users struct */
 {
 	register char				*cp, *loc;
 	register CONST struct bu_structparse	*sdp;
-	register int				 i, j;
+	register int				 j;
+	register int				ii;
 	struct bu_vls				 str;
 
 	if( desc == (struct bu_structparse *)NULL ) {
@@ -205,12 +207,12 @@ char				*base;		/* base addr of users struct */
 					bu_vls_free( &str );
 					return TCL_ERROR;
 				}
-				for( i = j = 0;
-				     j < sdp->sp_count && argv[0][i] != '\0';
-				     loc[j++] = argv[0][i++] )
+				for( ii = j = 0;
+				     j < sdp->sp_count && argv[0][ii] != '\0';
+				     loc[j++] = argv[0][ii++] )
 					;
-				if( i < sdp->sp_count )
-					loc[i] = '\0';
+				if( ii < sdp->sp_count )
+					loc[ii] = '\0';
 				if( sdp->sp_count > 1 ) {
 					loc[sdp->sp_count-1] = '\0';
 					Tcl_AppendResult( interp,
@@ -245,12 +247,12 @@ char				*base;		/* base addr of users struct */
 				register int tmpi;
 				register char CONST *cp;
 
-				if( argc < 1 ) {
+				if( argc < 1 ) { /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str,
-      "not enough values for \"%s\" argument: should have %d, only %d given",
+      "not enough values for \"%s\" argument: should have %d",
 						       sdp->sp_name,
-						       sdp->sp_count, i );
+						       sdp->sp_count);
 					Tcl_AppendResult( interp,
 							  bu_vls_addr(&str),
 							  (char *)NULL );
@@ -273,7 +275,7 @@ char				*base;		/* base addr of users struct */
 				}
 				/* Normal case: an integer */
 				cp = *argv;
-				for( i = 0; i < sdp->sp_count; ++i ) {
+				for( ii = 0; ii < sdp->sp_count; ++ii ) {
 					if( *cp == '\0' ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
@@ -347,14 +349,14 @@ char				*base;		/* base addr of users struct */
 						  (char *)NULL );
 
 				cp = *argv;
-				for( i = 0; i < sdp->sp_count; i++ ) {
+				for( ii = 0; ii < sdp->sp_count; ii++ ) {
 					if( *cp == '\0' ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
        "not enough values for \"%s\" argument: should have %d, only %d given",
 							       sdp->sp_name,
 							       sdp->sp_count,
-							       i );
+							       ii );
 						Tcl_AppendResult( interp,
 							    bu_vls_addr(&str),
 							    (char *)NULL );

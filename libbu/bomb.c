@@ -18,7 +18,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSbomb[] = "@(#)$Header$ (ARL)";
+static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"

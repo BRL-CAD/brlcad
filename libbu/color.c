@@ -19,7 +19,7 @@
  *	This software is Copyright (C) 1997 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
-static char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
+static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 

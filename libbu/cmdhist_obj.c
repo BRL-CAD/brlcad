@@ -43,11 +43,11 @@ static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object 
 
 static struct bu_cmdtab ch_cmds[] = 
 {
-	"add",		bu_cmdhist_add,
-	"curr",		bu_cmdhist_curr,
-	"next",		bu_cmdhist_next,
-	"prev",		bu_cmdhist_prev,
-	(char *)NULL,	CMD_NULL
+	{"add",		bu_cmdhist_add},
+	{"curr",	bu_cmdhist_curr},
+	{"next",	bu_cmdhist_next},
+	{"prev",	bu_cmdhist_prev},
+	{(char *)NULL,	CMD_NULL}
 };
 
 int
@@ -62,12 +62,12 @@ cho_hist(clientData, interp, argc, argv)
 
 static struct bu_cmdtab cho_cmds[] = 
 {
-	"add",		bu_cmdhist_add,
-	"curr",		bu_cmdhist_curr,
-	"history",	bu_cmdhist_history,
-	"next",		bu_cmdhist_next,
-	"prev",		bu_cmdhist_prev,
-	(char *)NULL,	CMD_NULL
+	{"add",		bu_cmdhist_add},
+	{"curr",	bu_cmdhist_curr},
+	{"history",	bu_cmdhist_history},
+	{"next",	bu_cmdhist_next},
+	{"prev",	bu_cmdhist_prev},
+	{(char *)NULL,	CMD_NULL}
 };
 
 static int
@@ -118,6 +118,7 @@ cho_deleteProc(clientData)
 	bu_free((genptr_t)chop, "cho_deleteProc: chop");
 }
 
+#if 0			/* As far as I can tell, this is not used.  CTJ */
 /*
  * Close a command history object.
  *
@@ -147,6 +148,7 @@ cho_close_tcl(clientData, interp, argc, argv)
 
 	return TCL_OK;
 }
+#endif
 
 static struct bu_cmdhist_obj *
 cho_open(clientData, interp, name)

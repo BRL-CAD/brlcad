@@ -23,7 +23,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
+static const char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"

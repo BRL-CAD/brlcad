@@ -28,7 +28,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSlog[] = "@(#)$Header$ (ARL)";
+static const char RCSlog[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"

@@ -22,7 +22,7 @@
  *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
-static char RCSmagic[] = "@(#)$Header$ (BRL)";
+static const char RCSmagic[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
