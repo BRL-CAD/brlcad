@@ -224,7 +224,6 @@ char    **argv;
   struct dm *dmp;
   struct bu_vls vls;
   int type;
-  char *save_argv1;
 
   if (argc == 1) {
     /* get list of display manager objects */
@@ -1206,7 +1205,6 @@ int     argc;
 char    **argv;
 {
   struct dm_obj *dmop = (struct dm_obj *)clientData;
-  struct bu_vls vls;
   char *X_name = "/dev/X";
 #ifdef DM_OGL
   char *ogl_name = "/dev/ogl";

@@ -181,9 +181,8 @@ int argc;
 char *argv[];
 {
   static int count = 0;
-  int a_screen;
   GLfloat backgnd[4];
-  int i, j, k;
+  int j, k;
   int make_square = -1;
   int ndevices;
   int nclass = 0;
@@ -222,7 +221,7 @@ char *argv[];
   bu_vls_init(&dmp->dm_dName);
   bu_vls_init(&init_proc_vls);
 
-  i = dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
+  dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
   if(bu_vls_strlen(&dmp->dm_pathName) == 0)
      bu_vls_printf(&dmp->dm_pathName, ".dm_ogl%d", count);
@@ -727,9 +726,6 @@ HIDDEN int
 ogl_drawBegin(dmp)
 struct dm *dmp;
 {
-  GLint mm; 
-  char i;
-  char *str = "a";
   GLfloat fogdepth;
 
   if (dmp->dm_debugLevel)
@@ -823,10 +819,8 @@ mat_t mat;
 int which_eye;
 {
   register fastf_t *mptr;
-  GLfloat gtmat[16], view[16];
-  GLfloat *gtmatp;
+  GLfloat gtmat[16];
   mat_t	newm;
-  int	i;
 	
   if(dmp->dm_debugLevel){
     struct bu_vls tmp_vls;
@@ -922,7 +916,6 @@ register struct rt_vlist *vp;
 {
   register struct rt_vlist *tvp;
   int first;
-  int i,j;
 
   if (dmp->dm_debugLevel)
     bu_log("ogl_drawVList()\n");
@@ -988,7 +981,6 @@ HIDDEN int
 ogl_normal(dmp)
 struct dm *dmp;
 {
-  GLint mm; 
 
   if (dmp->dm_debugLevel)
     bu_log("ogl_normal\n");
@@ -1049,7 +1041,6 @@ struct dm *dmp;
 fastf_t x1, y1;
 fastf_t x2, y2;
 {
-  register int nvec;
   
   if (dmp->dm_debugLevel)
     bu_log("ogl_drawLine2D()\n");
@@ -1330,9 +1321,8 @@ Tk_Window tkwin;
 	if (Tk_SetWindowVisual(tkwin,
 			       maxvip->visual, maxvip->depth,
 			       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)){
-	  int result;
 
-	  result = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	  glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       maxvip, GLX_DEPTH_SIZE,
 		       &((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth);
 	  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
@@ -1381,7 +1371,6 @@ HIDDEN int
 ogl_configureWin(dmp)
 struct dm *dmp;
 {
-  int		npix;
   GLint mm; 
   XWindowAttributes xwa;
   XFontStruct	*newfontstruct;
