@@ -10,7 +10,11 @@ proc check_externs {extern_list} {
     upvar #0 argv0 app
     foreach cmd $extern_list {
 	if {[string length [info command $cmd]] == 0} {
-	    puts stderr "Application '$app' unsuited to use Tcl script '$s':"
+	    if { [info exists app] } {
+		    puts stderr "Application '$app' unsuited to use Tcl script '$s':"
+	    } else {
+		    puts stderr "Application unsuited to use Tcl script '$s':"
+	    }
 	    puts stderr " Fails to define command '$cmd'"
 	    set unsat 1
 	}
