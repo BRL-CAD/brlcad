@@ -44,6 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
+#include <math.h>
 #include <gl.h>
 #include <get.h>
 #include <device.h>
@@ -61,9 +62,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 
 extern char	*sbrk();
-extern char	*malloc();
+/* extern char	*malloc(); */
 extern int	errno;
-extern char	*shmat();
+/* extern char	*shmat(); */
 extern int	brk();
 
 extern inventory_t	*getinvent();
@@ -153,9 +154,9 @@ static int	is_linear_cmap();
  *  Note that only the lower 8 bits are significant.
  */
 struct sgi_cmap {
-	unsigned short	cmr[256];
-	unsigned short	cmg[256];
-	unsigned short	cmb[256];
+	short	cmr[256];
+	short	cmg[256];
+	short	cmb[256];
 };
 
 /*
@@ -249,6 +250,10 @@ struct sgiinfo {
 #define MODE_9NORMAL	(0<<8)
 #define MODE_9SINGLEBUF	(1<<8)
 
+#define MODE_10MASK	(1<<9)
+#define MODE_10NORMAL	(0<<9)
+#define MODE_10WIDGET	(1<<9)
+
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)
@@ -293,6 +298,7 @@ struct sgi_clip {
 	int	xscrpad;
 	int	yscrpad;
 };
+
 
 /************************************************************************/
 /************************************************************************/
@@ -537,8 +543,10 @@ int		npix;
 					SGI(ifp)->mi_yoff+y,
 					SGI(ifp)->mi_xoff+xbase+npix-1,
 					SGI(ifp)->mi_yoff+y,
-					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
-					    sizeof(struct sgi_pixel)] );
+					(unsigned long *)&ifp->if_mem[
+					    (y*SGI(ifp)->mi_memwidth+xbase)*
+					    sizeof(struct sgi_pixel)]
+				);
 			else
 				fake_rectwrite(
 					xbase,
@@ -575,7 +583,7 @@ int		npix;
 					SGI(ifp)->mi_yoff+y,
 					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
 					SGI(ifp)->mi_yoff+y+nlines-1,
-					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
+					(unsigned long *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
 					    sizeof(struct sgi_pixel)] );
 			else
 				fake_rectwrite(
@@ -602,7 +610,7 @@ int		npix;
 					SGI(ifp)->mi_yoff+y,
 					SGI(ifp)->mi_xoff+xbase+npix-1,
 					SGI(ifp)->mi_yoff+y,
-					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
+					(unsigned long *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
 					    sizeof(struct sgi_pixel)] );
 			else
 				fake_rectwrite(
@@ -640,7 +648,7 @@ int		npix;
 					SGI(ifp)->mi_yoff+y,
 					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
 					SGI(ifp)->mi_yoff+y,
-					op );
+					(unsigned long *)op );
 			else
 				fake_rectwrite(
 					0,
@@ -735,7 +743,8 @@ int		npix;
 					lrectwrite(
 						xscrmin, yscr,
 						xscrmax, yscr,
-						SGI(ifp)->mi_scanline );
+						(unsigned long *)
+						    SGI(ifp)->mi_scanline );
 				else
 					fake_rectwrite(
 						xscrmin - SGI(ifp)->mi_xoff,
@@ -753,7 +762,7 @@ int		npix;
 /*
  *			S I G K I D
  */
-static int sigkid()
+static void sigkid()
 {
 	exit(0);
 }
@@ -1231,6 +1240,7 @@ FBIO	*ifp;
 		curson();
 	}
 
+
 	winclose( ifp->if_fd );		/* close window */
 
 	if( SGIL(ifp) != NULL ) {
@@ -1296,9 +1306,16 @@ _LOCAL_ int
 sgi_close( ifp )
 FBIO	*ifp;
 {
-	int menu, menuval, val, dev, f;
+	int menu, menuval, dev, f;
+	short val;
 	int k;
 	FILE *fp = NULL;
+	long	win_lx, win_ly;
+	long	win_hx, win_hy;
+	int 	mousex;
+	int 	mousey;
+	int	pending_middlemouse;
+	int	pending_leftmouse;
 
 	winset(ifp->if_fd);
 
@@ -1343,21 +1360,71 @@ FBIO	*ifp;
 
 	kill(SGI(ifp)->mi_parent, SIGUSR1);	/* zap the lurking parent */
 
-	menu = defpup("close");
+	menu = defpup("framebuffer %t|close|reset view");
 	qdevice(RIGHTMOUSE);
+	qdevice(LEFTMOUSE);
+	tie(LEFTMOUSE, MOUSEX, MOUSEY);
+	qdevice(MIDDLEMOUSE);
+	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
 	qdevice(REDRAW);
 	
 	while(1)  {
+
 		val = 0;
 		dev = qread( &val );
+
 		switch( dev )  {
 
 		case RIGHTMOUSE:
 			menuval = dopup( menu );
 			if (menuval == 1 )
 				goto out;
+			if (menuval == 2)
+				sgi_view(ifp, ifp->if_width/2,
+					ifp->if_height/2, 1, 1);
 			break;
-
+		case MIDDLEMOUSE:
+			/* will also get MOUSEX and MOUSEY so we remember
+			 * this event until MOUSEY
+			 */
+			if (val) {
+				pending_middlemouse = 1;
+				getorigin( &win_lx, &win_ly );
+				getsize( &win_hx, &win_hy );
+			}
+			break;
+		case LEFTMOUSE:
+			/* will also get MOUSEX and MOUSEY so we remember
+			 * this event until MOUSEY
+			 */
+			if (val == 1) {
+				pending_leftmouse = 1;
+				getorigin( &win_lx, &win_ly );
+				getsize( &win_hx, &win_hy );
+			}
+			break;
+		case MOUSEX:
+			mousex = val - win_lx;
+			break;
+		case MOUSEY:
+			if (pending_middlemouse) {
+				mousey = val - win_ly;
+				pending_middlemouse = !pending_middlemouse;
+				mousex = (mousex - ifp->if_width/2)
+						/ ifp->if_xzoom;
+				mousey = (mousey - ifp->if_height/2)
+						/ ifp->if_xzoom;
+				sgi_view(ifp,
+					ifp->if_xcenter + mousex,
+					ifp->if_ycenter + mousey,
+					ifp->if_xzoom, ifp->if_yzoom);
+			} else if (pending_leftmouse) {
+				pending_leftmouse = !pending_leftmouse;
+				sgi_view(ifp,
+					ifp->if_xcenter, ifp->if_ycenter,
+					mousex/16, mousex/16);
+			}
+			break;
 		case REDRAW:
 			reshapeviewport();
 			sgi_xmit_scanlines(ifp, 0, ifp->if_height,
@@ -1482,7 +1549,8 @@ int	xzoom, yzoom;
 
 	if( ifp->if_xzoom > 1 || ifp->if_yzoom > 1 )
 		ifp->if_zoomflag = 1;
-	else	ifp->if_zoomflag = 0;
+	else	
+		ifp->if_zoomflag = 0;
 
 	if( SGI(ifp)->mi_is_gt )  {
 		/* Transmitting the Zbuffer is all that is needed */
@@ -1490,6 +1558,7 @@ int	xzoom, yzoom;
 	} else {
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	}
+
 	return(0);
 }
 
