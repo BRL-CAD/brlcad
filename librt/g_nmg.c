@@ -2271,7 +2271,6 @@ int				compact;
 			break;
 		}
 	}
-rt_log("kind_counts[DOUBLE]=%d, double_count=%d\n", kind_counts[NMG_KIND_DOUBLE_ARRAY], double_count);
 	if( compact )  {
 		kind_counts[NMG_KIND_NMGREGION_A] = 0;
 		kind_counts[NMG_KIND_SHELL_A] = 0;
@@ -2302,7 +2301,6 @@ rt_log("kind_counts[DOUBLE]=%d, double_count=%d\n", kind_counts[NMG_KIND_DOUBLE_
 	}
 	/* Tack on the variable sized fastf_t arrays at the end */
 	rt_nmg_cur_fastf_subscript = subscript;
-rt_log("first fastf subscript=%d, count=%d\n", subscript, kind_counts[NMG_KIND_DOUBLE_ARRAY] );
 	subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
 
 	/* Sanity checking */
@@ -2421,6 +2419,9 @@ register CONST mat_t		mat;
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
+	if( rt_g.debug || rt_g.NMG_debug )
+		nmg_vmodel(m);
+
 	return(0);			/* OK */
 }
 
@@ -2442,6 +2443,9 @@ double				local2mm;
 	if( ip->idb_type != ID_NMG )  return(-1);
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
+
+	if( rt_g.debug || rt_g.NMG_debug )
+		nmg_vmodel(m);
 
 	/* The "compact" flag is used to save space in the database */
 	return  rt_nmg_export_internal( ep, ip, local2mm, 1 );
