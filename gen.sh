@@ -224,6 +224,15 @@ case "${MACHINE}" in
 		;;
 esac
 
+# If this system has good vendor-provided libtcl and libtk, use them.
+# Needs to be coordinated with setting of LIBTCL in Cakefile.defs
+case "${MACHINE}" in
+	li)
+		BDIRS=`echo ${BDIRS} | sed -e  's/libtcl//' -e 's/libtk//' `
+		;;
+esac
+
+
 if test "$1" = ""
 then	TARGET=all
 else	TARGET=$1

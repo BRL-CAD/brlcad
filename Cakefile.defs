@@ -885,7 +885,14 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
+/*	Use the system-provided TCL and Tk libraries */
+#	define	LIBTCL_DIR	_use_system_tcl_
+#	define	LIBTCL		-ltcl8.0
+#	define	LIBTCL_DEP	/**/
 #	define	LIBTCL_LIBES	-ldl
+#	define	LIBTK_DIR	_use_system_tk_
+#	define	LIBTK		-ltk8.0
+#	define	LIBTK_DEP	/**/
 #endif
 
 #if defined(__CAKE__fbsd)
