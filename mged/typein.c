@@ -73,6 +73,17 @@ char *p_half[] = {
 	"Enter the distance from the origin: "
 };
 
+char *p_ars[] = {
+	"Enter number of points per waterline, and number of waterlines: ",
+	"Enter number of waterlines: ",
+	"Enter X, Y, Z for First row point: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X  Y  Z",
+	"Enter Y",
+	"Enter Z",
+};
+
 char *p_arb[] = {
 	"Enter X, Y, Z for point 1: ",
 	"Enter Y: ",
@@ -395,8 +406,14 @@ f_in()
 		}
 		goto do_update;
 	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
+#ifdef ARS_DEBUGGED
+		if (ars_in(&record) != 0)
+			(void)printf("ERROR, ars not made!\n");
+		return;
+#else
 		(void)printf("typein ars not implimented yet\n");
 		return;
+#endif
 	} else {
 		(void)printf("f_in:  %s is not a known primitive\n", cmd_args[2]);
 		return;
@@ -476,10 +493,184 @@ union record	*rp;
 	rp->ss.ss_id = ID_STRSOL;
 	return(0);		/* OK */
 }
+#ifdef ARS_DEBUGGED
+static void
+mk_mem_ars( rec, p_data, total_points, pts_per_curve, n_waterlines )
+union record *rec;
+fastf_t p_data[][ELEMENTS_PER_PT];
+int total_points, pts_per_curve, n_waterlines;
+{
+	register struct directory *dp;
+	union record *p_recs;
+	int i, j;
+	int tot_recs, gran_per_curve;
 
+	gran_per_curve = (pts_per_curve+7)/8;
+	tot_recs = gran_per_curve * n_waterlines;
+
+	p_recs = (union record *)rt_malloc(sizeof(union record) * tot_recs+1);
+
+	NAMEMOVE( rec->a.a_name, p_recs[0].a.a_name );
+
+	p_recs[0].a.a_id = ID_ARS_A;
+	p_recs[0].a.a_type = ARS;	/* obsolete? */
+	p_recs[0].a.a_m = n_waterlines;
+	p_recs[0].a.a_n = pts_per_curve;
+	p_recs[0].a.a_curlen = gran_per_curve;
+	p_recs[0].a.a_totlen = tot_recs; /* total granules */
+
+	for (i=0,j=1 ; i < total_points ; i += 8 ) {
+		p_recs[j].b.b_id = ID_ARS_B;
+		p_recs[j].b.b_type = ARSCONT;	/* obsolete? */
+		p_recs[j].b.b_n = i / pts_per_curve;/* obs? curve number */
+		p_recs[j].b.b_ngranule = ((i%pts_per_curve)/8)+1; /* obs? */
+
+		for (j=0 ; j < 8 ; ++j)
+			VSCALE(&(p_recs[j].b.b_values[j]),
+				&(p_data[i][j]), local2base);
+	}
+
+	if ((dp=db_diradd(dbip, p_recs[0].a.a_name, -1, tot_recs, DIR_SOLID))
+	    == DIR_NULL || db_alloc(dbip, dp, tot_recs ) < 0) {
+	    	ALLOC_ERR_return;
+	}
+
+
+	if (db_put(dbip, dp, p_recs, 0, tot_recs) < 0 )  {
+		WRITE_ERR_return;
+	}
+
+	/* draw the "made" solid */
+	strcpy(cmd_args[0], "e");
+
+	cmd_args[1] = cmd_args[0] + 2;
+	bcopy( rec->a.a_name , cmd_args[1], sizeof(rec->a.a_name));
+	*((char *)(cmd_args[1] + sizeof(rec->a.a_name))) = '\0';
+
+	cmd_args[2] = (char *)NULL;
+
+	f_edit( 2, cmd_args );	/* depends on name being in argv[1] */
+}
+
+
+int
+ars_in(rec)
+union record *rec;
+{
+	int pts_per_curve;
+	int n_waterlines;
+	int i;
+	int total_points;
+	int axis;	/* current element in pt vector */
+	int pt;	/* current point in waterline */
+	fastf_t (*point_data)[ELEMENTS_PER_PT];
+
+	while (args < 5) {
+		(void)printf("%s", p_ars[args-3]);
+		if ((argcnt=getcmd(args)) < 0) {
+			return(1);	/* failure */
+		}
+		args += argcnt;
+	}
+
+	if ((pts_per_curve = atoi(cmd_args[3])) < 3 ||
+	    (n_waterlines =  atoi(cmd_args[4])) < 3 ) {
+	    	printf("Invalid number of lines or pts_per_curve\n");
+		return(1);
+	}
+	printf("Waterlines: %d curve points: %d\n", n_waterlines, pts_per_curve);
+	/* */
+	total_points = n_waterlines * pts_per_curve;
+
+	point_data = (fastf_t (*)[ELEMENTS_PER_PT])rt_malloc(
+			sizeof(point_t) * total_points);
+
+	while (args < 8) {
+		(void)printf("%s", p_ars[args-3]);
+		if ((argcnt=getcmd(args)) < 0) {
+			return(1);	/* failure */
+		}
+		args += argcnt;
+	}
+	/* fill in the point of the first row */
+	point_data[0][0] = atof(cmd_args[5]);
+	point_data[0][1] = atof(cmd_args[6]);
+	point_data[0][2] = atof(cmd_args[7]);
+
+	/* fill in the other points of the first row */
+	for (pt=1 ; pt < pts_per_curve ; ++pt) {
+		point_data[pt][0] = point_data[0][0];
+		point_data[pt][1] = point_data[0][1];
+		point_data[pt][2] = point_data[0][2];
+	}
+
+	axis = 0;
+	/* scan each of the other points we've already got */
+	for (i=8 ; i < args && i < total_points * ELEMENTS_PER_PT ; ++i) {
+
+		point_data[pt][axis] = atof(cmd_args[i]);
+		if (++axis >= ELEMENTS_PER_PT) {
+			axis = 0;
+			++pt;
+		}
+	}
+
+	/* go get the waterline points from the user */
+	while (pt < total_points-pts_per_curve+1) {
+		if (pt < total_points-pts_per_curve)
+			(void)printf("%s for Waterline %d, Point %d : ",
+				p_ars[5+axis],
+				pt / pts_per_curve +1,
+				pt % pts_per_curve +1);
+		else
+			(void)printf("%s for point of last waterline : ",
+				p_ars[5+axis],
+				pt / pts_per_curve +1,
+				pt % pts_per_curve +1);
+
+		*cmd_args[0] = '\0';
+		if ((argcnt = getcmd(1)) < 0)
+			return(1);
+
+		/* scan each of the args we've already got */
+		for (i=1 ; i < argcnt+1 &&
+		    pt < n_waterlines * pts_per_curve * ELEMENTS_PER_PT ; ++i) {
+			point_data[pt][axis] = atof(cmd_args[i]);
+			if (++axis >= ELEMENTS_PER_PT) {
+				axis = 0;
+				++pt;
+			}
+		}
+	}
+
+	/* replicate last point */
+	for (i=pt+1 ; i < total_points ; ++i) {
+		point_data[i][0] = point_data[pt][0];
+		point_data[i][1] = point_data[pt][1];
+		point_data[i][2] = point_data[pt][2];
+	}
+
+	/* now it's time to make the in-memory database records */
+
+	rec->a.a_id = ID_ARS_A;
+	rec->a.a_type = ARS;	/* obsolete? */
+	rec->a.a_m = n_waterlines;
+	rec->a.a_n = pts_per_curve;
+	rec->a.a_curlen = (pts_per_curve+7)/8;	/* granules per curve */
+	rec->a.a_totlen = rec->a.a_curlen * n_waterlines; /* total granules */
+
+	mk_mem_ars(rec, point_data, total_points,
+			pts_per_curve, n_waterlines);
+
+	rt_free((char *)point_data);
+	return(0);
+}
+#endif
 /*	H A L F _ I N ( ) :    	reads halfspace parameters from keyboard
  *				returns 0 if successful read
  *					1 if unsuccessful read
+ *
+ *	where's half_out?  This cat named Schrodinger wants to know.
  */
 int
 half_in()
