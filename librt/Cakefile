@@ -37,7 +37,7 @@
         nurb_eval.o nurb_flat.o nurb_poly.o nurb_xsplit.o \
         nurb_split.o nurb_util.o nurb_refine.o nurb_solve.o nurb_bezier.o \
 	nurb_ray.o nurb_norm.o nurb_copy.o nurb_plot.o \
-	nurb_c2.o \
+	nurb_c2.o nurb_trim.o \
         oslo_calc.o oslo_map.o 
 
 
