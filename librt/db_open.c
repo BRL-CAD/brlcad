@@ -94,14 +94,15 @@ CONST char	*mode;
 #endif
 
 	if( mode[0] == 'r' && mode[1] == '\0' )  {
+		struct bu_mapped_file	*mfp;
 		/* Read-only mode */
-		dbip->dbi_mf = bu_open_mapped_file( name, "db_i" );
-		if( dbip->dbi_mf == NULL )  goto fail;
+		mfp = bu_open_mapped_file( name, "db_i" );
+		if( mfp == NULL )  goto fail;
 
 		/* Is this a re-use of a previously mapped file? */
-		if( dbip->dbi_mf->apbuf )  {
+		if( mfp->apbuf )  {
 			bu_free( (genptr_t)dbip, "db_open: unwanted db_i");
-			dbip = (struct db_i *)dbip->dbi_mf->apbuf;
+			dbip = (struct db_i *)mfp->apbuf;
 			RT_CK_DBI(dbip);
 			dbip->dbi_uses++;
 			if(rt_g.debug&DEBUG_DB)
@@ -109,8 +110,9 @@ CONST char	*mode;
 			return dbip;
 		}
 
-		dbip->dbi_eof = dbip->dbi_mf->buflen;
-		dbip->dbi_inmem = dbip->dbi_mf->buf;
+		dbip->dbi_mf = mfp;
+		dbip->dbi_eof = mfp->buflen;
+		dbip->dbi_inmem = mfp->buf;
 		dbip->dbi_mf->apbuf = (genptr_t)dbip;
 
 #ifdef HAVE_UNIX_IO
