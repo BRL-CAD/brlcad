@@ -36,10 +36,11 @@ extern int	rdebug;
 #define RDEBUG_INSTANCE	0x00000100	/* 9 Debug instance revectoring */
 
 /* These will cause binary debugging output */
+#define RDEBUG_MISSPLOT	0x20000000	/* 30 plot(5) missed rays to stdout */
 #define RDEBUG_RAYWRITE	0x40000000	/* 31 Ray(5V) view rays to stdout */
 #define RDEBUG_RAYPLOT	0x80000000	/* 32 plot(5) rays to stdout */
 
 /* Format string for rt_printb() */
 #define RDEBUG_FORMAT	\
-"\020\040RAYPLOT\037RAYWRITE\
+"\020\040RAYPLOT\037RAYWRITE\036MISSPLOT\
 \1HITS\2MATERIAL\3SHOWERR\4RTMEM\5SHADE\6PARSE\7LIGHT\010REFRACT\011INSTANCE"
