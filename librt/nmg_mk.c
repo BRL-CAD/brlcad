@@ -1793,7 +1793,10 @@ struct edgeuse *eu;
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
 	if(eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
-		rt_bomb("nmg_edge_g(): edge runs from+to same vertex, 0 len!\n");
+	{
+		rt_log("nmg_edge_g(): Warning - edge runs from+to same vertex, 0 len!\n");
+		return;
+	}
 
 	if (eg_p = eu->g.lseg_p) {
 		NMG_CK_EDGE_G_LSEG(eg_p);
