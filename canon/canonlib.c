@@ -45,6 +45,8 @@ int timeout;
 {
 	int i=0;
 	int status=0;
+	u_char buf[48];
+	char *p;
 
 	if (ipu_debug) fprintf(stderr, "ipu_acquire(%d)\n", timeout);
 
@@ -67,6 +69,23 @@ int timeout;
 
 	if (i >= timeout) {
 		fprintf(stderr, "IPU timeout after %d seconds\n", i);
+		exit(-1);
+	}
+
+	/* now let's make sure we're talking to a "CANON IPU-" somthing */
+
+	bzero(p=CMDBUF(dsp), 16);
+	bzero(buf, sizeof(buf));
+	p[0] = 0x12;
+	p[4] = (u_char)sizeof(buf);
+	CMDLEN(dsp) = 6;
+	filldsreq(dsp, buf, sizeof(buf), DSRQ_READ|DSRQ_SENSE);
+
+	if (!doscsireq(getfd(dsp), dsp) &&
+	    bcmp(&buf[8], "CANON   IPU-", 12)) {
+		fprintf(stderr,
+			"ipu_inquire() device is not IPU-10/CLC500!\n%s\n",
+			&buf[8]);
 		exit(-1);
 	}
 }
