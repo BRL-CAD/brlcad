@@ -7,10 +7,9 @@
 /* library functions */
 #if __STDC__
 # include <stdlib.h>
+# include <string.h>
 #else
-# if !defined(__bsdi__)
-extern	char	*malloc();
-# endif
+# include <malloc.h>
 #endif /* __STDC__ */
 
 #ifdef	ATT
