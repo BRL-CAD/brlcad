@@ -29,8 +29,6 @@
  *
  * Author -
  *	Robert G. Parker
- *
- *
  */
 #include "common.h"
 

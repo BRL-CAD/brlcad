@@ -1271,8 +1271,6 @@ dgo_get_autoview_tcl(ClientData	clientData,
 
 /*
  * support for get_eyemodel
- *
- *
  */
 int
 dgo_get_eyemodel_cmd(struct dg_obj	*dgop,

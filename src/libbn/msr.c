@@ -227,8 +227,6 @@ bn_unif_double_fill(struct bn_unif *p)
 
 /*	bn_unif_free	free random number table
  *
- *
- *
  */
 void
 bn_unif_free(struct bn_unif *p)

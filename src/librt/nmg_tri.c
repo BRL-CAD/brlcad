@@ -1676,8 +1676,6 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
  *  of new vertexuses, it is necessary to add a 2D mapping for the new
  *  vertexuses.
  *
- *
- *
  */
 static void join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol);
 static struct pt2d *

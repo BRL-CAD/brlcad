@@ -1005,8 +1005,6 @@ int diffpixel (RGBpixel a, RGBpixel b)
 }
 
 /*
- *
- *
  */
 void choose_color (RGBpixel col, struct cell *me,
 		  struct cell *left, struct cell *below)

@@ -24,8 +24,6 @@
  *
  *	6) Edit shaders.tcl and comb.tcl in the ../tclscripts/mged directory to
  *		add a new gui for this shader.
- *
- *
  */
 #include "common.h"
 

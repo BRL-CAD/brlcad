@@ -400,8 +400,6 @@ lunar2(point_t point, double h, double lacunarity, double octaves, double offset
 }
 /***********************************************************************
  * This one's got detail on the peaks
- *
- *
  */
 double
 land(point_t point, double h, double lacunarity, double octaves, double offset)

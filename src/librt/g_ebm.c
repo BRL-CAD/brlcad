@@ -230,8 +230,6 @@ static int rt_ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  *			R T _ E B M _ D D A
  *
  *  Step through the 2-D array, in local coordinates ("ideal space").
- *
- *
  */
 int
 rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap, struct seg *seghead)

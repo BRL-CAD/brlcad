@@ -62,8 +62,6 @@
  *	anim_rotatez()		rotate vector about z-axis
  *	anim_mat_print()	print matrix with optional semi-colon
  *	anim_view_rev()		reverse view matrix
- *
- *
  */
 
 #include "common.h"

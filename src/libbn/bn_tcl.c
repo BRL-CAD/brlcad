@@ -636,8 +636,6 @@ bn_cmd_noise_perlin(ClientData clientData,
 /*
  *  usage: bn_noise_fbm X Y Z h_val lacunarity octaves
  *
- *
- *
  */
 int
 bn_cmd_noise(ClientData clientData,

@@ -745,8 +745,6 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 /***********************************************************************
  *
  *	From "Texturing and Modeling, A Procedural Approach" 2nd ed p338
- *
- *
  */
 double
 bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)

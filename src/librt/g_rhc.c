@@ -828,8 +828,6 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 /*
  *	R T _ M K _ H Y P E R B O L A
- *
- *
  */
 int
 rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol)

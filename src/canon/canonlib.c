@@ -808,8 +808,6 @@ ipu_scan_config(struct dsreq *dsp,
 }
 
 /*	I P U _ S C A N _ F I L E
- *
- *
  */
 void
 ipu_scan_file(struct dsreq *dsp, 

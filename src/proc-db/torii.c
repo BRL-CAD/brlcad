@@ -19,8 +19,6 @@
  * information.
  */
 /** @file torii.c
- *
- *
  */
 #include "common.h"
 

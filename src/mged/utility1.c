@@ -100,8 +100,6 @@ struct identt identt, idbuf;
 /*
  *
  *	F _ T A B L E S :	control routine to build ascii tables
- *
- *
  */
 
 char operate;

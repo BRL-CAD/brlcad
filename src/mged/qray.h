@@ -33,8 +33,6 @@
  *	SLAD CAD Team
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005
- *
- *
  */
 
 #define QRAY_BASENAME "query_ray"

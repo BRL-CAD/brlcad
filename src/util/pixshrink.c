@@ -95,8 +95,6 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 }
 
 /*	W R I T E _ I M A G E
- *
- *
  */
 void write_image(int Width, int Height, unsigned char *buffer)
 {

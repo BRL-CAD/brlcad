@@ -175,8 +175,6 @@ air_free(char *cp)
  *
  *	This is called (from viewshade() in shade.c)
  *	once for each hit point to be shaded.
- *
- *
  */
 int
 airtest_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
