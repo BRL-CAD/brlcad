@@ -394,7 +394,7 @@ char		**argv;
 	int	i;
 	int	at_root = 0;
 
-	if( !(anp = db_parse_1anim( dbip, argv )) )
+	if( !(anp = db_parse_1anim( dbip, argc, argv )) )
 		return -1;	/* BAD */
 
 	if( argv[1][0] == '/' )
