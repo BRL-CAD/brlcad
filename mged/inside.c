@@ -13,6 +13,7 @@
  *
  *  Authors -
  *	Keith A Applin
+ *	Michael Markowski
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -102,6 +103,34 @@ static char *p_tgcin[] = {
 	"Enter thickness for base (AxB): ",
 	"Enter thickness for top (CxD): ",
 	"Enter thickness for side: ",
+};
+
+static char *p_rpcin[] = {
+	"Enter thickness for front plate (contains V): ",
+	"Enter thickness for back plate: ",
+	"Enter thickness for top plate: ",
+	"Enter thickness for body: ",
+};
+
+static char *p_rhcin[] = {
+	"Enter thickness for front plate (contains V): ",
+	"Enter thickness for back plate: ",
+	"Enter thickness for top plate: ",
+	"Enter thickness for body: ",
+};
+
+static char *p_epain[] = {
+	"Enter thickness for top plate: ",
+	"Enter thickness for body: ",
+};
+
+static char *p_ehyin[] = {
+	"Enter thickness for top plate: ",
+	"Enter thickness for body: ",
+};
+
+static char *p_etoin[] = {
+	"Enter thickness for body: ",
 };
 
 
@@ -298,6 +327,76 @@ f_inside()
 		thick[0] = atof( cmd_args[args] ) * local2base;
 
 		if( torin(&intern, thick) )
+			return;
+		break;
+
+	case ID_RPC:
+		promp = p_rpcin;
+		for (i = 0; i < 4; i++) {
+			(void)printf("%s",promp[i]);
+			if( (argcnt = getcmd(args)) < 0 )
+				return;
+			thick[i] = atof( cmd_args[args] ) * local2base;
+			args += argcnt;
+		}
+
+		if( rpcin(&intern, thick) )
+			return;
+		break;
+
+	case ID_RHC:
+		promp = p_rhcin;
+		for (i = 0; i < 4; i++) {
+			(void)printf("%s",promp[i]);
+			if( (argcnt = getcmd(args)) < 0 )
+				return;
+			thick[i] = atof( cmd_args[args] ) * local2base;
+			args += argcnt;
+		}
+
+		if( rhcin(&intern, thick) )
+			return;
+		break;
+
+	case ID_EPA:
+		promp = p_epain;
+		for (i = 0; i < 2; i++) {
+			(void)printf("%s",promp[i]);
+			if( (argcnt = getcmd(args)) < 0 )
+				return;
+			thick[i] = atof( cmd_args[args] ) * local2base;
+			args += argcnt;
+		}
+
+		if( epain(&intern, thick) )
+			return;
+		break;
+
+	case ID_EHY:
+		promp = p_ehyin;
+		for (i = 0; i < 2; i++) {
+			(void)printf("%s",promp[i]);
+			if( (argcnt = getcmd(args)) < 0 )
+				return;
+			thick[i] = atof( cmd_args[args] ) * local2base;
+			args += argcnt;
+		}
+
+		if( ehyin(&intern, thick) )
+			return;
+		break;
+
+	case ID_ETO:
+		promp = p_etoin;
+		for (i = 0; i < 1; i++) {
+			(void)printf("%s",promp[i]);
+			if( (argcnt = getcmd(args)) < 0 )
+				return;
+			thick[i] = atof( cmd_args[args] ) * local2base;
+			args += argcnt;
+		}
+
+		if( etoin(&intern, thick) )
 			return;
 		break;
 
@@ -518,5 +617,142 @@ fastf_t	thick[6];
 	VSCALE(ell->a, ell->a, nmag[0]/mag[0]);
 	VSCALE(ell->b, ell->b, nmag[1]/mag[1]);
 	VSCALE(ell->c, ell->c, nmag[2]/mag[2]);
+	return(0);
+}
+
+/* finds inside of rpc, not quite right - r needs to be smaller */
+int
+rpcin(ip, thick)
+struct rt_db_internal	*ip;
+fastf_t	thick[4];
+{
+	struct rt_rpc_internal	*rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+	fastf_t			b, bp, th, rp, yp;
+	vect_t			Bu, Hu, Norm, Ru;
+
+	RT_RPC_CK_MAGIC(rpc);
+
+	/* get unit coordinate axes */
+	VMOVE( Bu, rpc->rpc_B );
+	VMOVE( Hu, rpc->rpc_H );
+	VCROSS( Ru, Hu, Bu );
+	VUNITIZE( Bu );
+	VUNITIZE( Hu );
+	VUNITIZE( Ru );
+
+	b = MAGNITUDE(rpc->rpc_B);
+	VJOIN2( rpc->rpc_V, rpc->rpc_V, thick[0], Hu, thick[2], Bu );
+	VSCALE( rpc->rpc_H, Hu, MAGNITUDE(rpc->rpc_H) - thick[0] - thick[1] );
+	VSCALE( rpc->rpc_B, Bu, b - thick[2] - thick[3] );
+#if 0
+	bp = b - thick[2] - thick[3];
+	rp = rpc->rpc_r - thick[3];	/* !!! ESTIMATE !!! */
+	yp = rp * sqrt( (bp - thick[2])/bp );
+	VSET( Norm,
+		0.,
+		2 * bp * yp/(rp * rp),
+		-1.);
+	VUNITIZE(Norm)
+	th = thick[3] / Norm[Y];
+	rpc->rpc_r -= th;
+#endif
+	rpc->rpc_r -= thick[3];
+
+	return(0);
+}
+
+/* finds inside of rhc, not quite right */
+int
+rhcin(ip, thick)
+struct rt_db_internal	*ip;
+fastf_t	thick[4];
+{
+	struct rt_rhc_internal	*rhc = (struct rt_rhc_internal *)ip->idb_ptr;
+	fastf_t			rn;
+	point_t			Vn;
+	vect_t			Bn, Hn, Bu, Hu, Ru;
+
+	RT_RHC_CK_MAGIC(rhc);
+	
+	VMOVE( Vn, rhc->rhc_V );
+	VMOVE( Bn, rhc->rhc_B );
+	VMOVE( Hn, rhc->rhc_H );
+	rn = rhc->rhc_r;
+	
+	/* get unit coordinate axes */
+	VMOVE( Bu, Bn );
+	VMOVE( Hu, Hn );
+	VCROSS( Ru, Hu, Bu );
+	VUNITIZE( Bu );
+	VUNITIZE( Hu );
+	VUNITIZE( Ru );
+
+	VJOIN2( rhc->rhc_V, rhc->rhc_V, thick[0], Hu, thick[2], Bu );
+	VSCALE( rhc->rhc_H, Hu, MAGNITUDE(rhc->rhc_H) - thick[0] - thick[1] );
+	VSCALE( rhc->rhc_B, Bu, MAGNITUDE(rhc->rhc_B) - thick[2] - thick[3] );
+	rhc->rhc_r -= thick[3];
+
+	return(0);
+}
+
+/* finds inside of epa, not quite right */
+int
+epain(ip, thick)
+struct rt_db_internal	*ip;
+fastf_t	thick[2];
+{
+	struct rt_epa_internal	*epa = (struct rt_epa_internal *)ip->idb_ptr;
+	vect_t			Hu;
+
+	RT_EPA_CK_MAGIC(epa);
+	
+	VMOVE( Hu, epa->epa_H );
+	VUNITIZE( Hu );
+
+	VJOIN1( epa->epa_V, epa->epa_V, thick[0], Hu );
+	VSCALE( epa->epa_H, Hu, MAGNITUDE(epa->epa_H) - thick[0] - thick[1] );
+	epa->epa_r1 -= thick[1];
+	epa->epa_r2 -= thick[1];
+
+	return(0);
+}
+
+/* finds inside of ehy, not quite right, */
+int
+ehyin(ip, thick)
+struct rt_db_internal	*ip;
+fastf_t	thick[2];
+{
+	struct rt_ehy_internal	*ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+	vect_t			Hu;
+
+	RT_EHY_CK_MAGIC(ehy);
+	
+	VMOVE( Hu, ehy->ehy_H );
+	VUNITIZE( Hu );
+	
+	VJOIN1( ehy->ehy_V, ehy->ehy_V, thick[0], Hu );
+	VSCALE( ehy->ehy_H, Hu, MAGNITUDE(ehy->ehy_H) - thick[0] - thick[1] );
+	ehy->ehy_r1 -= thick[1];
+	ehy->ehy_r2 -= thick[1];
+
+	return(0);
+}
+
+/* finds inside of eto */
+int
+etoin(ip, thick)
+struct rt_db_internal	*ip;
+fastf_t	thick[1];
+{
+	fastf_t			c;
+	struct rt_eto_internal	*eto = (struct rt_eto_internal *)ip->idb_ptr;
+
+	RT_ETO_CK_MAGIC(eto);
+
+	c = 1. - thick[0]/MAGNITUDE(eto->eto_C);
+	VSCALE( eto->eto_C, eto->eto_C, c );
+	eto->eto_rd -= thick[0];
+
 	return(0);
 }
