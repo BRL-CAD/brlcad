@@ -1,4 +1,4 @@
-/*		This module implimenst the 'E' command
+/*		This module impliments the 'E' command
  *
  *  Author -
  *	John Anderson
@@ -37,17 +37,38 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include <ctype.h>
+/* #define debug 1 */
 
 extern struct bn_tol		mged_tol;
 extern struct rt_tess_tol	mged_ttol;
 extern int			mged_wireframe_color_override;
 extern int			mged_wireframe_color[3];
-static struct application	ap;
+static struct application	*ap=(struct application *)NULL;
 static time_t			start_time, etime;
 static struct bu_ptbl		leaf_list;
 static long			nvectors;
 static struct rt_i		*rtip;
-static int			do_polysolids;
+static int			do_polysolids; /* if this is non-zero, convert all the solids to polysolids
+						* for the raytracing (otherwise just raytrace the solids
+						* themselves). Raytracing polysolids is slower, but produces
+						* a better plot, since the polysolids exactly match the NMGs
+						* that provide the starting edges.
+						*/
+
+/* segment types (stored in the "seg_stp" field of the (struct seg) */
+#define	ON_SURF	(struct soltab *)0x1
+#define IN_SOL  (struct soltab *)0x2
+
+#define NOT_SEG_OVERLAP( _a, _b )	((_a->seg_out.hit_dist <= _b->seg_in.hit_dist) || (_b->seg_out.hit_dist <= _a->seg_in.hit_dist))
+
+/* RT_FREE_SEG_LIST assumed list head is a "struct seg" */
+#define MY_FREE_SEG_LIST( _segheadp, _res )	{ \
+	register struct seg *_a; \
+	while( BU_LIST_WHILE( _a, seg, (_segheadp) ) )  { \
+		BU_LIST_DEQUEUE( &(_a->l) ); \
+		RT_FREE_SEG( _a, _res ); \
+	} }
+
 
 /*
  * The tree walker neds to have an initial state.  We could
@@ -84,11 +105,14 @@ static struct db_tree_state E_initial_tree_state = {
 };
 
 
+/* structures for building a tree corresponding to the region to be drawn
+ * uses the same "op" values as "union tree"
+ */
 union E_tree
 {
 	long magic;
 
-	struct E_node
+	struct E_node	/* the operator nodes */
 	{
 		long magic;
 		int op;
@@ -96,15 +120,14 @@ union E_tree
 		union E_tree *right;
 	} n;
 
-	struct E_leaf
+	struct E_leaf	/* the leaf nodes */
 	{
 		long magic;
 		int op;
-		int the_edge;
-		struct model *m;
-		struct seg seghead;
-		struct bu_ptbl edge_list;
-		struct soltab *stp;
+		struct model *m;		/* NMG version of this leaf solid */
+		struct bu_list seghead;		/* head of list of segments for this leaf solid */
+		struct bu_ptbl edge_list;	/* list of edges from above NMG */
+		struct soltab *stp;		/* the usual soltab pointer */
 	} l;
 };
 
@@ -117,6 +140,7 @@ Edrawtree( dp )
 	return;
 }
 
+/* build an E_tree corresponding to the region tree (tp) */
 union E_tree *
 build_etree( tp )
 union tree *tp;
@@ -143,8 +167,7 @@ union tree *tp;
 			break;
 		case OP_DB_LEAF:
 			eptr->l.op = tp->tr_op;
-			eptr->l.the_edge = 0;
-			BU_LIST_INIT( &eptr->l.seghead.l );
+			BU_LIST_INIT( &eptr->l.seghead );
 			if( (dp=db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 			{
 				eptr->l.m = (struct model *)NULL;
@@ -160,6 +183,8 @@ union tree *tp;
 			}
 			if( id == ID_COMBINATION )
 			{
+				/* do explicit expansion of referenced combinations */
+
 				struct rt_comb_internal *comb;
 
 				bu_free( (char *)eptr, "eptr" );
@@ -172,6 +197,7 @@ union tree *tp;
 				break;
 			}
 
+			/* create the NMG version of this solid */
 			eptr->l.m = nmg_mm();
 			if (rt_functab[id].ft_tessellate( &r, eptr->l.m, &intern,
 				&mged_ttol, &mged_tol) < 0)
@@ -180,6 +206,7 @@ union tree *tp;
 					"\n", (char *)NULL );
 			}
 
+			/* get the soltab stuff */
 			BU_GETSTRUCT( eptr->l.stp, soltab );
 			eptr->l.stp->st_dp = dp;
 			eptr->l.stp->st_matp = tp->tr_l.tl_mat;
@@ -190,6 +217,8 @@ union tree *tp;
 
 				if( do_polysolids )
 				{
+					/* create and prep a polysolid version of this solid */
+
 					eptr->l.stp->st_id = ID_POLY;
 					BU_GETSTRUCT( pg, rt_pg_internal );
 
@@ -211,6 +240,8 @@ union tree *tp;
 				}
 				else
 				{
+					/* prep this solid */
+
 					eptr->l.stp->st_id = id;
 					if( rt_functab[id].ft_prep( eptr->l.stp, &intern, rtip ) < 0 )
 						Tcl_AppendResult(interp, "Prep failure for solid '", dp->d_namep,
@@ -227,9 +258,10 @@ union tree *tp;
 	return( eptr );
 }
 
+/* a handy routine (for debugging) that prints asegment list */
 void
 show_seg( seg, str )
-struct seg *seg;
+struct bu_list *seg;
 {
 	struct seg *ptr;
 
@@ -237,259 +269,612 @@ struct seg *seg;
 		bu_log( "%s - NULL seg list\n", str );
 	else
 	{
-		if( BU_LIST_IS_EMPTY( &seg->l ) )
-			bu_log( "%s - empty\n" );
+		if( BU_LIST_IS_EMPTY( seg ) )
+			bu_log( "%s - empty\n", str );
 		else
 		{
 			bu_log( "%s:\n", str );
-			for( BU_LIST_FOR( ptr, seg, &seg->l ) )
+			for( BU_LIST_FOR( ptr, seg, seg ) )
 			{
-				bu_log( "\t %g to %g\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
+				if( ptr->seg_stp == ON_SURF )
+					bu_log( "\t %g to %g (ON)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
+				else if( ptr->seg_stp == IN_SOL )
+					bu_log( "\t %g to %g (IN)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
+				else
+					bu_log( "\t %g to %g (??)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
 			}
 		}
 	}
 }
 
-HIDDEN struct seg *
-eval_op( A, op, B )
+/* given a segment list, eliminate any overlaps in the segments */
+HIDDEN  void
+eliminate_overlaps( seghead )
+struct bu_list *seghead;
+{
+	struct seg *a, *b, *nexta, *nextb;
+
+	a = BU_LIST_FIRST( seg, seghead );
+	while( BU_LIST_NOT_HEAD( &a->l, seghead ) )
+	{
+		b = BU_LIST_PNEXT( seg, &a->l );
+		if( BU_LIST_IS_HEAD( &b->l, seghead ) )
+			break;
+
+		while( BU_LIST_NOT_HEAD( &b->l, seghead ) )
+		{
+			nextb = BU_LIST_PNEXT( seg, &b->l );
+			if( NOT_SEG_OVERLAP( a, b ) )
+				break;
+
+			if( b->seg_in.hit_dist < a->seg_out.hit_dist )
+			{
+				a->seg_out.hit_dist = b->seg_out.hit_dist;
+				BU_LIST_DEQUEUE( &b->l );
+				RT_FREE_SEG( b, ap->a_resource );
+				b = nextb;
+				continue;
+			}
+
+			b = nextb;
+		}
+
+		a = BU_LIST_PNEXT(seg, &a->l );
+	}
+}
+
+/* perform the intersection of two segments
+ * the result is assigned the type from segment A
+ */
+HIDDEN void
+do_intersect( A, B, seghead )
 struct seg *A;
 struct seg *B;
-int op;
+struct bu_list *seghead;
 {
-	struct seg *sega, *segb;
-	struct seg *ptr;
-	struct seg *final=(struct seg *)NULL;
+	struct seg *tmp=(struct seg *)NULL;
 
-	/* handle special cases for "THE EDGE" */
-	if( A && B && A->seg_stp && B->seg_stp )
+	if( NOT_SEG_OVERLAP( A, B ) )
+		return;
+
+	RT_GET_SEG( tmp, ap->a_resource );
+	if( A->seg_in.hit_dist <= B->seg_in.hit_dist )
 	{
-		/* this wil only happen while plotting solid intersection lines */
-		if( op != OP_INTERSECT )
-			return( eval_op( A, OP_INTERSECT, B ) );
+		if( B->seg_out.hit_dist <= A->seg_out.hit_dist )
+		{
+			*tmp = *B;
+			tmp->seg_stp = A->seg_stp;
+		}
+		else
+		{
+			tmp->seg_in.hit_dist = B->seg_in.hit_dist;
+			tmp->seg_out.hit_dist = A->seg_out.hit_dist;
+			tmp->seg_stp = A->seg_stp;
+		}
 	}
 	else
 	{
-
-		if( B && op == OP_SUBTRACT && B->seg_stp )
+		if( B->seg_out.hit_dist >= A->seg_out.hit_dist )
 		{
-			return( eval_op( A, OP_INTERSECT, B ) );
+			*tmp = *A;
 		}
-
-		if( A && op == OP_UNION && A->seg_stp )
-		{
-			return( eval_op( A, OP_SUBTRACT, B ) );
-		}
-
-		if( B && op == OP_UNION && B->seg_stp )
-		{
-			return( eval_op( B, OP_SUBTRACT, A ) );
-		}
-	}
-
-	if(  (A && A->seg_stp) || (B && B->seg_stp) )
-	{
-		if( A )
-			A->seg_stp = (struct soltab *)0x1;
-		if( B )
-			B->seg_stp = (struct soltab *)0x1;
-	}
-
-	if( op == OP_INTERSECT )
-	{
-		if( !B )
-			return( A );
-		if( !A )
-		{
-			RT_FREE_SEG_LIST( B, ap.a_resource );
-			return( B );
-		}
-
-		BU_GETSTRUCT( final, seg );
-		BU_LIST_INIT( &final->l );
-
-		if( A->seg_stp || B->seg_stp )
-			final->seg_stp = (struct soltab *)0x1;
 		else
-			final->seg_stp = (struct soltab *)NULL;
-
-		for( BU_LIST_FOR( sega, seg, &A->l ) )
 		{
-			for( BU_LIST_FOR( segb, seg, &B->l ) )
-			{
-				if( segb->seg_out.hit_dist <= sega->seg_in.hit_dist )
-					continue;
-				if( segb->seg_in.hit_dist >= sega->seg_out.hit_dist )
-					continue;
-
-				RT_GET_SEG( ptr, ap.a_resource );
-				if( sega->seg_in.hit_dist > segb->seg_in.hit_dist )
-					ptr->seg_in.hit_dist = sega->seg_in.hit_dist;
-				else
-					ptr->seg_in.hit_dist = segb->seg_in.hit_dist;
-
-				if( sega->seg_out.hit_dist < segb->seg_out.hit_dist )
-					ptr->seg_out.hit_dist = sega->seg_out.hit_dist;
-				else
-					ptr->seg_out.hit_dist = segb->seg_out.hit_dist;
-
-				BU_LIST_INSERT( &final->l, &ptr->l );
-			}
+			tmp->seg_in.hit_dist = A->seg_in.hit_dist;
+			tmp->seg_out.hit_dist = B->seg_out.hit_dist;
+			tmp->seg_stp = A->seg_stp;
 		}
-		RT_FREE_SEG_LIST( A, ap.a_resource );
-		RT_FREE_SEG_LIST( B, ap.a_resource );
-		BU_LIST_INSERT_LIST( &A->l, &final->l );
-		bu_free( (char *)final, "final" );
-		return( A );
+	}
+	if( tmp )
+		BU_LIST_INSERT( seghead, &tmp->l )
+	return;
+}
+
+/* perform the subtraction of one segment from another
+ * the result is assigned the type from segment A
+ */
+HIDDEN void
+do_subtract( A, B, seghead )
+struct seg *A;
+struct seg *B;
+struct bu_list *seghead;
+{
+	struct seg *tmp=(struct seg *)NULL;
+
+
+	if( NOT_SEG_OVERLAP( A, B ) )
+	{
+		RT_GET_SEG( tmp, ap->a_resource )
+		*tmp = *A;
+		BU_LIST_INSERT( seghead, &tmp->l )
+		return;
 	}
 
-	if( op == OP_SUBTRACT )
+	if( B->seg_in.hit_dist<= A->seg_in.hit_dist )
 	{
-		if( !A )
+		if( B->seg_out.hit_dist < A->seg_out.hit_dist )
 		{
-			RT_FREE_SEG_LIST( B, ap.a_resource );
-			return( B );
+			RT_GET_SEG( tmp, ap->a_resource )
+			*tmp = *A;
+			tmp->seg_in.hit_dist = B->seg_out.hit_dist;
+			BU_LIST_INSERT( seghead, &tmp->l )
+			return;
 		}
-		if( !B )
-			return( A );
-
-		for( BU_LIST_FOR( sega, seg, &A->l ) )
+		else
+			return;
+	}
+	else
+	{
+		if( B->seg_out.hit_dist >= A->seg_out.hit_dist )
 		{
-			for( BU_LIST_FOR( segb, seg, &B->l ) )
-			{
-				if( segb->seg_out.hit_dist <= sega->seg_in.hit_dist )
-					continue;
-				if( segb->seg_in.hit_dist >= sega->seg_out.hit_dist )
-					continue;
-
-				if( sega->seg_in.hit_dist >= segb->seg_in.hit_dist &&
-				    sega->seg_out.hit_dist <= segb->seg_out.hit_dist )
-				{
-					struct seg *tmp;
-
-					/* remove entire segment */
-					tmp = sega;
-					sega = BU_LIST_PREV( seg, &sega->l );
-					BU_LIST_DEQUEUE( &tmp->l );
-					RT_FREE_SEG( tmp, ap.a_resource );
-					continue;
-				}
-
-				if( segb->seg_in.hit_dist > sega->seg_in.hit_dist &&
-				    segb->seg_out.hit_dist < sega->seg_out.hit_dist )
-				{
-					/* splits segment into two */
-					RT_GET_SEG( ptr, ap.a_resource );
-					ptr->seg_in.hit_dist = sega->seg_in.hit_dist;
-					ptr->seg_out.hit_dist = segb->seg_in.hit_dist;
-					sega->seg_in.hit_dist = segb->seg_out.hit_dist;
-					BU_LIST_INSERT( &sega->l, &ptr->l );
-				}
-				else
-				{
-					if( segb->seg_in.hit_dist > sega->seg_in.hit_dist )
-						sega->seg_out.hit_dist = segb->seg_in.hit_dist;
-					if( segb->seg_out.hit_dist < sega->seg_out.hit_dist )
-						sega->seg_in.hit_dist = segb->seg_out.hit_dist;
-				}
-			}
+			RT_GET_SEG( tmp, ap->a_resource )
+			*tmp = *A;
+			tmp->seg_out.hit_dist = B->seg_in.hit_dist;
+			BU_LIST_INSERT( seghead, &tmp->l )
+			return;
 		}
-		RT_FREE_SEG_LIST( B, ap.a_resource );
-		return( A );
+		else
+		{
+			RT_GET_SEG( tmp, ap->a_resource );
+			tmp->seg_in.hit_dist = A->seg_in.hit_dist;
+			tmp->seg_out.hit_dist = B->seg_in.hit_dist;
+			tmp->seg_stp = A->seg_stp;
+			BU_LIST_INSERT( seghead, &tmp->l )
+			RT_GET_SEG( tmp, ap->a_resource );
+			tmp->seg_in.hit_dist = B->seg_out.hit_dist;
+			tmp->seg_out.hit_dist = A->seg_out.hit_dist;
+			tmp->seg_stp = A->seg_stp;
+			BU_LIST_INSERT( seghead, &tmp->l )
+			return;
+		}
+	}
+}
+
+/* perform the union of two segments
+ * the types of A and B should be the same
+ */
+HIDDEN void
+do_union( A, B, seghead )
+struct seg *A;
+struct seg *B;
+struct bu_list *seghead;
+{
+	struct seg *tmp;
+
+	RT_GET_SEG( tmp, ap->a_resource )
+
+	if( NOT_SEG_OVERLAP( A, B ) )
+	{
+		if( A->seg_in.hit_dist <= B->seg_in.hit_dist )
+		{
+			*tmp = *A;
+			BU_LIST_INSERT( seghead, &tmp->l )
+			RT_GET_SEG( tmp, ap->a_resource )
+			*tmp = *B;
+			BU_LIST_INSERT( seghead, &tmp->l )
+		}
+		else
+		{
+			*tmp = *B;
+			BU_LIST_INSERT( seghead, &tmp->l )
+			RT_GET_SEG( tmp, ap->a_resource )
+			*tmp = *A;
+			BU_LIST_INSERT( seghead, &tmp->l )
+		}
+		return;
 	}
 
-	if( op == OP_UNION )
+	if( A->seg_in.hit_dist <= B->seg_in.hit_dist )
 	{
-		if( !A && !B )
-			return( (struct seg *)NULL );
-		if( !A )
-			return( B );
-		if( !B )
-			return( A );
+		*tmp = *A;
+		if( B->seg_out.hit_dist > A->seg_out.hit_dist )
+			tmp->seg_out.hit_dist = B->seg_out.hit_dist;
+	}
+	else
+	{
+		*tmp = *B;
+		if( A->seg_out.hit_dist > B->seg_out.hit_dist )
+			tmp->seg_out.hit_dist = B->seg_out.hit_dist;
+	}
 
-		while( BU_LIST_WHILE( segb, seg, &B->l ) )
-		{
-			int found=0;
+	BU_LIST_INSERT( seghead, &tmp->l )
+}
 
-			for( BU_LIST_FOR( sega, seg, &A->l ) )
+/* Evaluate an operation on the operands (segment lists) */
+HIDDEN struct bu_list *
+eval_op( A, op, B )
+struct bu_list *A;
+struct bu_list *B;
+int op;
+{
+	struct seg *sega, *segb, *tmp, *next;
+	struct bu_list ret, ons, ins;
+	int found, inserted;
+
+	BU_LIST_INIT( &ret );
+
+	#ifdef debug
+	bu_log( "In eval_op:\n" );
+	show_seg( A, "\tA:" );
+	show_seg( B, "\tB:" );
+	#endif
+
+	switch( op )
+	{
+		case OP_SUBTRACT:
+
+			#ifdef debug
+			bu_log( "\t\tSUBTACT\n" );
+			#endif
+
+			if( BU_LIST_IS_EMPTY( A ) )
 			{
-				if( segb->seg_in.hit_dist > sega->seg_out.hit_dist )
-					continue;
+				MY_FREE_SEG_LIST( B, ap->a_resource );
+				bu_free( (char *)B, "bu_list" );
 
-				found = 1;
-				if( segb->seg_out.hit_dist <= sega->seg_out.hit_dist &&
-				    segb->seg_in.hit_dist >= sega->seg_in.hit_dist )
-				{
-					/* nothing to do */
-					BU_LIST_DEQUEUE( &segb->l );
-					bu_free( (char *)segb, "segb" );
-					break;
-				}
+				#ifdef debug
+				show_seg( A, "Returning" );
+				#endif
 
-				if( segb->seg_out.hit_dist < sega->seg_in.hit_dist )
-				{
-					/* insert B segment before A segment */
-					BU_LIST_DEQUEUE( &segb->l );
-					BU_LIST_INSERT( &sega->l, &segb->l );
-					break;
-				}
+				return( A );
+			}
+			else if( BU_LIST_IS_EMPTY( B ) )
+			{
+				bu_free( (char *)B, "bu_list" );
 
-				/* segments overlap */
-				if( segb->seg_in.hit_dist < sega->seg_in.hit_dist )
-					sega->seg_in.hit_dist = segb->seg_in.hit_dist;
-				if( segb->seg_out.hit_dist > sega->seg_out.hit_dist )
-					sega->seg_out.hit_dist = segb->seg_out.hit_dist;
+				#ifdef debug
+				show_seg( A, "Returning" );
+				#endif
 
-				BU_LIST_DEQUEUE( &segb->l );
-				bu_free( (char *)segb, "segb" );
-				break;
+				return( A );
 			}
 
-			if( !found )
+			/* A - B:
+			 *	keep segments:
+			 *			ON_A - IN_B
+			 * 			ON_A + ON_B
+			 *			ON_B + IN_A
+			 *			IN_A - IN_B
+			 */
+			for( BU_LIST_FOR( sega, seg, A ) )
 			{
-				/* segment from B gets added to end of A */
+				for( BU_LIST_FOR( segb, seg, B ) )
+				{
+					if( sega->seg_stp == ON_SURF )
+					{
+						if( segb->seg_stp == IN_SOL )
+							do_subtract( sega, segb, &ret );
+						else
+							do_intersect( sega, segb, &ret );
+					}
+					else if( segb->seg_stp == ON_SURF )
+						do_intersect( segb, sega, &ret );
+					else
+						do_subtract( sega, segb, &ret );
+				}
+			}
+			MY_FREE_SEG_LIST( B, ap->a_resource );
+			bu_free( (char *)B, "bu_list" );
+			MY_FREE_SEG_LIST( A, ap->a_resource );
+			BU_LIST_INSERT_LIST( A, &ret )
+
+			#ifdef debug
+			show_seg( A, "Returning" );
+			#endif
+
+			return( A );
+			break;
+		case OP_INTERSECT:
+
+			#ifdef debug
+			bu_log( "\t\tINTERSECT\n" );
+			#endif
+
+			if( BU_LIST_IS_EMPTY( A ) || BU_LIST_IS_EMPTY( B ) )
+			{
+				MY_FREE_SEG_LIST( A, ap->a_resource );
+				MY_FREE_SEG_LIST( B, ap->a_resource );
+				bu_free( (char *)B, "bu_list" );
+
+				#ifdef debug
+				show_seg( A, "Returning" );
+				#endif
+
+				return( A );
+			}
+			/* A + B
+			 *	This is merely the intersection of segments from A with those from B
+			 *	The two different calls to "do_intersect" get the types (IN, ON) right
+			 */
+			for( BU_LIST_FOR( sega, seg, A ) )
+			{
+				for( BU_LIST_FOR( segb, seg, B ) )
+				{
+					if( sega->seg_stp == ON_SURF )
+						do_intersect( sega, segb, &ret );
+					else
+						do_intersect( segb, sega, &ret );
+				}
+			}
+			MY_FREE_SEG_LIST( B, ap->a_resource );
+			bu_free( (char *)B, "bu_list" );
+			MY_FREE_SEG_LIST( A, ap->a_resource );
+			BU_LIST_INSERT_LIST( A, &ret )
+
+			#ifdef debug
+			show_seg( A, "Returning" );
+			#endif
+
+			return( A );
+			break;
+		case OP_UNION:
+
+			#ifdef debug
+			bu_log( "\t\tUNION\n" );
+			#endif
+
+			if( BU_LIST_IS_EMPTY( A ) )
+			{
+				bu_free( (char *)A, "bu_list" );
+
+				#ifdef debug
+				show_seg( B, "Returning B (A is empty)" );
+				#endif
+
+				return( B );
+			}
+			if( BU_LIST_IS_EMPTY( B ) )
+			{
+				bu_free( (char *)B, "bu_list" );
+
+				#ifdef debug
+				show_seg( A, "Returning A (B is empty)" );
+				#endif
+
+				return( A );
+			}
+			/* A u B:
+			 *	keep segments:
+			 *		ON_A - IN_B (ON)
+			 *		IN_B + ON_A (IN )
+			 *		ON_B - IN_A (ON)
+			 *		IN_A + ON_B (IN)
+			 * 		all remaining unique ON or IN segments
+			 */
+
+			/* create two new lists, one with all the ON segments,
+			 * the other with all the IN segments
+			 */
+			BU_LIST_INIT( &ons )
+			BU_LIST_INIT( &ins )
+
+			/* Put the A operand segments on the lists */
+			while( BU_LIST_WHILE( sega, seg, A ) )
+			{
+				BU_LIST_DEQUEUE( &sega->l )
+
+				if( sega->seg_stp == ON_SURF )
+					BU_LIST_INSERT( &ons, &sega->l )
+				else
+					BU_LIST_INSERT( &ins, &sega->l )
+			}
+
+			/* insert the B operand segments in the lists (maintaining order from smaller starting
+			 * hit distance to larger
+			 */
+			while( BU_LIST_WHILE( segb, seg, B ) )
+			{
+				int inserted;
 				BU_LIST_DEQUEUE( &segb->l )
-				BU_LIST_INSERT( &A->l, &segb->l );
+
+				if( segb->seg_stp == IN_SOL )
+				{
+					inserted = 0;
+					for( BU_LIST_FOR( tmp, seg, &ins ) )
+					{
+						if( tmp->seg_in.hit_dist >= segb->seg_in.hit_dist )
+						{
+							inserted = 1;
+							BU_LIST_INSERT( &tmp->l, &segb->l )
+							break;
+						}
+					}
+					if( !inserted )
+						BU_LIST_INSERT( &ins, &segb->l )
+				}
+				else
+				{
+					inserted = 0;
+					for( BU_LIST_FOR( tmp, seg, &ons ) )
+					{
+						if( tmp->seg_in.hit_dist >= segb->seg_in.hit_dist )
+						{
+							inserted = 1;
+							BU_LIST_INSERT( &tmp->l, &segb->l )
+							break;
+						}
+					}
+					if( !inserted )
+						BU_LIST_INSERT( &ons, &segb->l )
+				}
 			}
-		}
-		return( A );
+
+			/* make sure the segments are unique */
+			eliminate_overlaps( &ins );
+			eliminate_overlaps( &ons );
+
+			#ifdef debug
+			show_seg( &ons, "ONS" );
+			show_seg( &ins, "INS" );
+			#endif
+
+			/* subtract INS from ONS */
+			#ifdef debug
+			bu_log( "doing subtraction:\n" );
+			#endif
+			sega = BU_LIST_FIRST( seg, &ons );
+			while( BU_LIST_NOT_HEAD( &sega->l, &ons ) )
+			{
+				next = BU_LIST_PNEXT( seg, &sega->l );
+
+				#ifdef debug
+				bu_log( "A is %g to %g:\n", sega->seg_in.hit_dist, sega->seg_out.hit_dist );
+				#endif
+
+				for( BU_LIST_FOR( segb, seg, &ins ) )
+				{
+					#ifdef debug
+					bu_log( "\tcomparing to B %g to %g\n", segb->seg_in.hit_dist, segb->seg_out.hit_dist );
+					#endif
+
+					if( NOT_SEG_OVERLAP( sega, segb ) )
+					{
+						#ifdef debug
+						bu_log( "\t\tNo overlap!!\n" );
+						#endif
+
+						continue;
+					}
+
+					if( segb->seg_in.hit_dist <= sega->seg_in.hit_dist &&
+					    segb->seg_out.hit_dist >= sega->seg_out.hit_dist )
+					{
+						#ifdef debug
+						bu_log( "\t\teliminating A\n" );
+						#endif
+
+						/* eliminate sega */
+						BU_LIST_DEQUEUE( &sega->l )
+						RT_FREE_SEG( sega, ap->a_resource )
+						sega = next;
+						break;
+					}
+
+					if( segb->seg_in.hit_dist > sega->seg_in.hit_dist &&
+					    segb->seg_out.hit_dist < sega->seg_out.hit_dist )
+					{
+						/* split sega */
+						RT_GET_SEG( tmp, ap->a_resource )
+						*tmp = *sega;
+						tmp->seg_in.hit_dist = segb->seg_out.hit_dist;
+						sega->seg_out.hit_dist = segb->seg_in.hit_dist;
+						BU_LIST_APPEND( &sega->l, &tmp->l )
+						next = tmp;
+
+						#ifdef debug
+						bu_log( "\t\tsplit A into: %g to %g and %g to %g\n", sega->seg_in.hit_dist, sega->seg_out.hit_dist, tmp->seg_in.hit_dist, tmp->seg_out.hit_dist );
+						#endif
+					}
+					else
+					{
+						/* subtract edges */
+						if( segb->seg_in.hit_dist > sega->seg_in.hit_dist )
+							sega->seg_out.hit_dist = segb->seg_in.hit_dist;
+						if( segb->seg_out.hit_dist < sega->seg_out.hit_dist )
+							sega->seg_in.hit_dist = segb->seg_out.hit_dist;
+
+						#ifdef debug
+						bu_log( "\t\tsubtracted A down to %g to %g\n", sega->seg_in.hit_dist, sega->seg_out.hit_dist );
+						#endif
+					}
+				}
+				sega = next;
+			}
+
+			/* put the resuling ONS list on the result list */
+			BU_LIST_INSERT_LIST( &ret, &ons )
+
+			/* add INS to the return list (maintain order) */
+			while( BU_LIST_WHILE( sega, seg, &ins ) )
+			{
+				BU_LIST_DEQUEUE( &sega->l )
+
+				inserted = 0;
+				for( BU_LIST_FOR( segb, seg, &ret ) )
+				{
+					if( sega->seg_in.hit_dist < segb->seg_in.hit_dist )
+					{
+						BU_LIST_INSERT( &segb->l, &sega->l )
+						inserted = 1;
+						break;
+					}
+				}
+
+				if( !inserted )
+					BU_LIST_INSERT( &ret, &sega->l )
+			}
+
+			MY_FREE_SEG_LIST( B, ap->a_resource );
+			bu_free( (char *)B, "bu_list" );
+			MY_FREE_SEG_LIST( A, ap->a_resource );
+			BU_LIST_INSERT_LIST( A, &ret )
+
+			#ifdef debug
+			show_seg( A, "Returning" );
+			#endif
+
+			return( A );
+			break;
 	}
 
 	/* should never get here */
-	return( (struct seg *)NULL );   /* for the compilers */
+	MY_FREE_SEG_LIST( A, ap->a_resource );
+	MY_FREE_SEG_LIST( B, ap->a_resource );
+	bu_free( (char *)B, "bu_list" );
+
+	#ifdef debug
+	show_seg( A, "Returning (default)" );
+	#endif
+
+	return( A );
+	
 }
 
-HIDDEN struct seg *
+/* evaluate an E-tree */
+HIDDEN struct bu_list *
 eval_etree( eptr )
 union E_tree *eptr;
 {
-	struct seg *A, *B;
+	struct bu_list *A, *B;
 
 	CK_ETREE( eptr );
+
+	#ifdef debug
+	bu_log( "In eval_etree:\n" );
+	#endif
 
 	switch( eptr->l.op )
 	{
 		case OP_DB_LEAF:
-			if( eptr->l.the_edge )
-			{
-				eptr->l.seghead.seg_stp = (struct soltab *)0x1;
-			}
-			else
-			{
-				eptr->l.seghead.seg_stp = (struct soltab *)NULL;
-			}
-			return( &eptr->l.seghead );
+			A = (struct bu_list *)bu_malloc( sizeof( struct bu_list ), "bu_list" );
+			BU_LIST_INIT( A );
+			BU_LIST_INSERT_LIST( A, &eptr->l.seghead )
+
+			#ifdef debug
+			show_seg( A, "LEAF:" );
+			#endif
+
+			return( A );
 		case OP_SUBTRACT:
 		case OP_INTERSECT:
 		case OP_UNION:
+			#ifdef debug
+			bu_log( "Evaluating subtrees\n" );
+			#endif
+
 			A = eval_etree( eptr->n.left );
 			B = eval_etree( eptr->n.right );
 			return( eval_op( A, eptr->n.op, B ) );
 	}
 
 	/* should never get here */
-	return( (struct seg *)NULL );	/* for the compilers */
+	return( (struct bu_list *)NULL );	/* for the compilers */
 }
 
+/* Shoot rays (corresponding to possible edges in the result)
+ * at the solids, put the results in the E-tree leaves as type IN_SOL.
+ * Call eval_etree() and plot the results
+ */
 HIDDEN void
 shoot_and_plot( start_pt, dir, vhead, edge_len, skip_leaf1, skip_leaf2, eptr )
 point_t start_pt;
@@ -502,7 +887,7 @@ union E_tree *eptr;
 	struct xray rp;
 	struct ray_data rd;
 	int shoot_leaf;
-	struct seg *final_segs;
+	struct bu_list *final_segs;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
 		bu_log( "Error at start of shoot_and_plot()\n" );
@@ -510,14 +895,6 @@ union E_tree *eptr;
 	CK_ETREE( eptr );
 
 	bzero( &rd, sizeof( struct ray_data ) );
-	bzero( &ap, sizeof( struct application ) );
-
-	ap.a_resource = &rt_uniresource;
-	rt_uniresource.re_magic = RESOURCE_MAGIC;
-	ap.a_rt_i = rtip;
-
-	if( BU_LIST_UNINITIALIZED( &rt_uniresource.re_nmgfree ) )
-		BU_LIST_INIT( &rt_uniresource.re_nmgfree );
 
 	BU_GETSTRUCT( rd.seghead, seg );
 	BU_LIST_INIT( &rd.seghead->l );
@@ -547,12 +924,14 @@ union E_tree *eptr;
 	/* set up "ray_data" structure for nmg raytrace */
 	rd.rp = &rp;
 	rd.tol = &mged_tol;
-	rd.ap = &ap;
+	rd.ap = ap;
 	rd.magic = NMG_RAY_DATA_MAGIC;
 	rd.classifying_ray = 0;
 	rd.hitmiss = (struct hitmiss **)NULL;
 
-	/* shoot this ray at every leaf solid except the current one */
+	/* shoot this ray at every leaf solid except the one this edge came from
+	 * (or the two that this intersection line came from
+	 */
 	for( shoot_leaf=0 ; shoot_leaf < BU_PTBL_END( &leaf_list ) ; shoot_leaf++ )
 	{
 		union E_tree *shoot;
@@ -560,16 +939,18 @@ union E_tree *eptr;
 
 		shoot = (union E_tree *)BU_PTBL_GET( &leaf_list, shoot_leaf );
 
-		if( BU_LIST_NON_EMPTY( &shoot->l.seghead.l ) )
+		if( BU_LIST_NON_EMPTY( &shoot->l.seghead ) )
 		{
-			RT_FREE_SEG_LIST( &shoot->l.seghead, ap.a_resource );
+			MY_FREE_SEG_LIST( &shoot->l.seghead, ap->a_resource );
 		}
-		BU_LIST_INIT( &shoot->l.seghead.l );
+		BU_LIST_INIT( &shoot->l.seghead );
 
+		/* don't shoot rays at the leaves that were the source of this possible edge */
 		if( shoot_leaf == skip_leaf1 || shoot_leaf == skip_leaf2 )
 			dont_shoot = 1;
 		else
 		{
+			/* don't shoot at duplicate solids either */
 			union E_tree *leaf;
 
 			if( skip_leaf1 >= 0 )
@@ -600,20 +981,15 @@ union E_tree *eptr;
 		{
 			struct seg *seg;
 
-			/* put entire edge in seg list */
-			RT_GET_SEG( seg, ap.a_resource );
+			/* put entire edge in seg list and mark it as ON the surface */
+			RT_GET_SEG( seg, ap->a_resource );
 			seg->l.magic = RT_SEG_MAGIC;
 			seg->seg_in.hit_dist = 0.0;
 			seg->seg_out.hit_dist = edge_len;
-			BU_LIST_INSERT( &shoot->l.seghead.l, &seg->l );
-			if( shoot_leaf == skip_leaf1 || shoot_leaf == skip_leaf2 )
-				shoot->l.the_edge = 1;
-			else
-				shoot->l.the_edge = 0;
+			seg->seg_stp = ON_SURF;
+			BU_LIST_INSERT( &shoot->l.seghead, &seg->l );
 			continue;
 		}
-
-		shoot->l.the_edge = 0;
 
 		/* initialize the lists of things that have been hit/missed */
 		rd.rd_m = shoot->l.m;
@@ -622,20 +998,30 @@ union E_tree *eptr;
 
 		rd.stp = shoot->l.stp;
 
-		/* make sure this solid is identified as not "THE EDGE" */
-		shoot->l.the_edge = 0;
-
-		/* actually shoot the ray */
+		/* actually shoot the ray, assign segments to the leaf, and mark them as IN_SOL */
 		if( rt_in_rpp( &rp, rd.rd_invdir, shoot->l.stp->st_min, shoot->l.stp->st_max ) )
 		{
-			if( rt_functab[shoot->l.stp->st_id].ft_shot( shoot->l.stp, &rp, &ap, rd.seghead ) )
+			if( rt_functab[shoot->l.stp->st_id].ft_shot( shoot->l.stp, &rp, ap, rd.seghead ) )
 			{
 				struct seg *seg;
 
-				seg = BU_LIST_FIRST( seg, &rd.seghead->l );
 				/* put the segments in the lead solid structure */
-				BU_LIST_INSERT_LIST( &shoot->l.seghead.l, &rd.seghead->l );
-				shoot->l.seghead.seg_stp = shoot->l.stp;
+				while( BU_LIST_WHILE( seg, seg, &rd.seghead->l ) )
+				{
+					BU_LIST_DEQUEUE( &seg->l )
+					/* clip segments to the edge being considered */
+					if( seg->seg_in.hit_dist >= edge_len || seg->seg_out.hit_dist <= 0 )
+						RT_FREE_SEG( seg, ap->a_resource )
+					else
+					{
+						if( seg->seg_in.hit_dist < 0.0 )
+							seg->seg_in.hit_dist = 0.0;
+						if( seg->seg_out.hit_dist > edge_len )
+							seg->seg_out.hit_dist = edge_len;
+						seg->seg_stp = IN_SOL;
+						BU_LIST_INSERT(  &shoot->l.seghead, &seg->l )
+					}
+				}
 			}
 		}
 	}
@@ -643,27 +1029,52 @@ union E_tree *eptr;
 	/* Evaluate the Boolean tree to get the "final" segments
 	 * which are to be plotted.
 	 */
+	#ifdef debug
+	bu_log( "EVALUATING ETREE:\n" );
+	bu_log( "ray start (%g %g %g), dir=(%g %g %g)\n", V3ARGS( start_pt ), V3ARGS( dir ) );
+	#endif
+
 	final_segs = eval_etree( eptr );
+
+	#ifdef debug
+	show_seg( final_segs, "DRAWING" );
+	#endif
 
 	if( final_segs )
 	{
 		struct seg *seg;
 
 		/* add the segemnts to the VLIST */
-		for( BU_LIST_FOR( seg, seg, &final_segs->l ) )
+		for( BU_LIST_FOR( seg, seg, final_segs ) )
 		{
 			point_t pt;
+
+			/* only plot the resulting segments that are ON the SURFace */
+			if( seg->seg_stp != ON_SURF )
+				continue;
+
 			nvectors++;
 			VJOIN1( pt, rp.r_pt, seg->seg_in.hit_dist, rp.r_dir )
+
+			#ifdef debug
+			bu_log( "\t\tDRAW (%g %g %g)", V3ARGS( pt ) );
+			#endif
+
 			RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
 			VJOIN1( pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir )
+
+			#ifdef debug
+			bu_log( "<->(%g %g %g)\n", V3ARGS( pt ) );
+			#endif
+
 			RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
 		}
 		
 	}
 
 	if( final_segs )
-		RT_FREE_SEG_LIST( final_segs, ap.a_resource );
+		MY_FREE_SEG_LIST( final_segs, ap->a_resource );
+	bu_free( (char *)final_segs, "bu_list" );
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
 		bu_log( "Error at end of shoot_and_plot()\n" );
@@ -714,8 +1125,6 @@ struct bu_list *vhead;
 		if( !leaf_ptr->l.m )
 			continue;
 
-		leaf_ptr->l.the_edge = 1;
-
 		/* do each edge of the current leaf solid */
 		for( edge_no=0 ; edge_no < BU_PTBL_END( &leaf_ptr->l.edge_list ) ; edge_no++ )
 		{
@@ -742,14 +1151,12 @@ struct bu_list *vhead;
 				continue;
 			inv_len = 1.0/edge_len;
 			VSCALE( dir, dir, inv_len );
-
 			shoot_and_plot( vg->coord, dir, vhead, edge_len, leaf_no, -1, eptr );
 
 		}
 	}
 
 	/* Now draw solid intersection lines */
-
 	for( leaf_no=0 ; leaf_no < BU_PTBL_END( &leaf_list ) ; leaf_no++ )
 	{
 		int leaf2;
@@ -787,6 +1194,7 @@ struct bu_list *vhead;
 					continue;
 
 				f1 = fu1->f_p;
+				NMG_GET_FU_PLANE( pl1, fu1 );
 
 				for( BU_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )
 				{
@@ -799,6 +1207,7 @@ struct bu_list *vhead;
 					vect_t to_hit;
 					fastf_t inv_len;
 					fastf_t lena, lenb;
+					vect_t diff;
 
 					if( fu2->orientation != OT_SAME )
 						continue;
@@ -809,7 +1218,6 @@ struct bu_list *vhead;
 						f1->min_pt, f1->max_pt, &mged_tol) )
 							continue;
 
-					NMG_GET_FU_PLANE( pl1, fu1 );
 					NMG_GET_FU_PLANE( pl2, fu2 );
 
 					if( bn_coplanar( pl1, pl2, &mged_tol ) )
@@ -832,21 +1240,23 @@ struct bu_list *vhead;
 
 							if( bn_isect_line3_plane( &dist, vg1a->coord, dir, pl2, &mged_tol ) < 1 )
 								continue;
-
-							if( dist < 0.0 || dist >= 1.0 )
+							if( dist < 0.0 || dist > 1.0 )
 								continue;
 
-							if( NEAR_ZERO( old_dist - dist, mged_tol.dist ) )
-								continue;
-
-							old_dist = dist;
 							VJOIN1( hits[hit_count], vg1a->coord, dist, dir )
+							if( hit_count == 1 )
+							{
+								VSUB2( diff, hits[hit_count], hits[hit_count-1] )
+								len = MAGSQ( diff );
+								if ( NEAR_ZERO( len, mged_tol.dist_sq ) )
+									continue;
+							}
 							hit_count++;
 							if( hit_count == 2 )
-								break;;
+								break;
 						}
 						if( hit_count == 2 )
-							break;;
+							break;
 					}
 					old_dist = MAX_FASTF;
 					for( BU_LIST_FOR( lu2, loopuse, &fu2->lu_hd ) )
@@ -865,20 +1275,23 @@ struct bu_list *vhead;
 							if( bn_isect_line3_plane( &dist, vg2a->coord, dir, pl1, &mged_tol ) < 1 )
 								continue;
 
-							if( dist < 0.0 || dist >= 1.0 )
+							if( dist < 0.0 || dist > 1.0 )
 								continue;
 
-							if( NEAR_ZERO( old_dist - dist, mged_tol.dist ) )
-								continue;
-
-							old_dist = dist;
 							VJOIN1( hits[hit_count], vg2a->coord, dist, dir )
+							if( hit_count == 3 )
+							{
+								VSUB2( diff, hits[hit_count], hits[hit_count-1] )
+								len = MAGSQ( diff );
+								if ( NEAR_ZERO( len, mged_tol.dist_sq ) )
+									continue;
+							}
 							hit_count++;
 							if( hit_count == 4 )
-								break;;
+								break;
 						}
 						if( hit_count == 4 )
-							break;;
+							break;
 					}
 
 					/* now should have 4 hit points along line of intersection */
@@ -956,9 +1369,9 @@ union E_tree *eptr;
 				nmg_km( eptr->l.m );
 				eptr->l.m = (struct model *)NULL;
 			}
-			if( BU_LIST_NON_EMPTY( &eptr->l.seghead.l ) )
+			if( BU_LIST_NON_EMPTY( &eptr->l.seghead ) )
 			{
-				RT_FREE_SEG_LIST( &eptr->l.seghead, ap.a_resource );
+				MY_FREE_SEG_LIST( &eptr->l.seghead, ap->a_resource );
 			}
 			if( BU_LIST_NON_EMPTY( &eptr->l.edge_list.l ) )
 			{
@@ -1189,6 +1602,15 @@ char	**argv;
 	mged_ttol.rel = mged_rel_tol;
 	mged_ttol.norm = mged_nrm_tol;
 
+	if( !ap )
+	{
+		ap = (struct application *)bu_calloc( 1, sizeof( struct application ), "Big E app" );
+		ap->a_resource = &rt_uniresource;
+		rt_uniresource.re_magic = RESOURCE_MAGIC;
+		if( BU_LIST_UNINITIALIZED( &rt_uniresource.re_nmgfree ) )
+			BU_LIST_INIT( &rt_uniresource.re_nmgfree );
+	}
+
 	bu_ptbl_init( &leaf_list, 8, "leaf_list" );
 
 	if( setjmp( jmp_env ) == 0 )
@@ -1201,6 +1623,7 @@ char	**argv;
 
 	rtip = rt_new_rti( dbip );
 	rtip->rti_tol = mged_tol;	/* struct copy */
+	ap->a_rt_i = rtip;
 
 	nvectors = 0;
 	(void)time( &start_time );
