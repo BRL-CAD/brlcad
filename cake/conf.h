@@ -5,7 +5,11 @@
 */
 
 /* type used when type is not known */
+#if __STDC__
+typedef	void	*Cast;
+#else
 typedef	int	Cast;
+#endif
 
 /* location of the systemwide cake library */
 /*#define	SLIB		"/u/pgrad/zs/lib/cake" **BRL*/
