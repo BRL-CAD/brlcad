@@ -50,6 +50,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/resource.h>
 #endif
 
+#if IRIX == 5
+/* we need a struct timeval */
+struct timeval {
+        long    tv_sec;         /* seconds */
+        long    tv_usec;        /* and microseconds */
+};
+#endif
+
 struct sockaddr_in sinme;
 struct sockaddr_in sinhim;
 struct sockaddr_in sindum;
