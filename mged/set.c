@@ -63,6 +63,7 @@ struct _mged_variables default_mged_variables = {
 };
 
 static void set_view();
+static void set_v_axes();
 void set_scroll();
 void set_rateknobs();
 void set_adcflag();
@@ -75,6 +76,12 @@ static void
 refresh_hook()
 {
 	dmaflag = 1;
+}
+
+static void
+dirty_hook()
+{
+  dirty = 1;
 }
 
 static void
@@ -99,21 +106,21 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "scroll_enabled",	MV_O(scroll_enabled),   set_scroll },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "faceplate",		MV_O(faceplate),	refresh_hook },
-	{"%d",	1, "show_menu",		MV_O(show_menu),	refresh_hook },
-	{"%d",  1, "w_axes",            MV_O(w_axes),           refresh_hook },
-	{"%d",  1, "v_axes",            MV_O(v_axes),           refresh_hook },
-	{"%d",  1, "e_axes",            MV_O(e_axes),           refresh_hook },
+	{"%d",	1, "faceplate",		MV_O(faceplate),	dirty_hook },
+	{"%d",	1, "show_menu",		MV_O(show_menu),	dirty_hook },
+	{"%d",  1, "w_axes",            MV_O(w_axes),           dirty_hook },
+	{"%d",  1, "v_axes",            MV_O(v_axes),           set_v_axes },
+	{"%d",  1, "e_axes",            MV_O(e_axes),           dirty_hook },
 	{"%d",  1, "send_key",          MV_O(send_key),         BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "view",              MV_O(view),             set_view },
 	{"%d",  1, "edit",              MV_O(edit),             set_scroll },
-	{"%d",  1, "context",           MV_O(context),          refresh_hook },
+	{"%d",  1, "context",           MV_O(context),          dirty_hook },
 	{"%d",  1, "mged_rotate_view_around_eye",           MV_O(eyerot),          refresh_hook },
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
-	{"%f",	1, "perspective",	MV_O(perspective),	refresh_hook },
+	{"%f",	1, "perspective",	MV_O(perspective),	dirty_hook },
 	{"%f",  1, "nmg_eu_dist",	MV_O(nmg_eu_dist),	nmg_eu_dist_set },
 	{"%f",  1, "eye_sep_dist",	MV_O(eye_sep_dist),	reattach },
 	{"%s",  MAXLINE, "union_op",	MV_O(union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
@@ -428,10 +435,6 @@ set_scroll()
     Tcl_Eval(interp, "sliders on");
   else
     Tcl_Eval(interp, "sliders off");
-
-#if 0
-  dmaflag = 1;
-#endif
 }
 
 
@@ -450,4 +453,20 @@ set_adcflag()
   (void)Tcl_SetVar(interp, "adcflag", mged_variables.adcflag ? "1" : "0",
 		   TCL_GLOBAL_ONLY);
   set_scroll();
+}
+
+static void
+set_v_axes()
+{
+  dirty = 1;
+
+  if(mged_variables.v_axes == 0)
+    return;
+
+  if(mged_variables.v_axes == 1){
+    mged_variables.v_axes = last_v_axes;
+    return;
+  }
+
+  last_v_axes = mged_variables.v_axes;
 }
