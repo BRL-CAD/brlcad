@@ -140,6 +140,11 @@ struct mfuncs xxx_mfuncs[] = {
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
  *	Any shader-specific initialization should be done here.
+ * 
+ * 	Returns:
+ *	1	success
+ *	0	success, but delete region
+ *	-1	failure
  */
 HIDDEN int
 xxx_setup( rp, matparm, dpp, mfp, rtip)
