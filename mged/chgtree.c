@@ -513,7 +513,7 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( (id = rt_db_get_internal( &internal, dp, dbip, (mat_t *)NULL )) < 0 )  {
+	if( (id = rt_db_get_internal( &internal, proto, dbip, (mat_t *)NULL )) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	/* make sure it is a TGC */
