@@ -14,11 +14,14 @@
 #define	MSG_FBCURSOR	6
 #define	MSG_FBWINDOW	7
 #define	MSG_FBZOOM	8
+#define	MSG_FBSCURSOR	9
 #define	MSG_FBRMAP	12
 #define	MSG_FBWMAP	13
 #define	MSG_FBHELP	14
 #define	MSG_FBREADRECT	15
 #define	MSG_FBWRITERECT	16
+#define	MSG_FBFLUSH	17
+#define	MSG_FBFREE	18
 
 #define	MSG_DATA	20
 #define	MSG_RETURN	21
