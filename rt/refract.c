@@ -28,7 +28,7 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 
 int	max_ireflect = 5;	/* Maximum internal reflection level */
-int	max_bounces = 6;	/* Maximum recursion level */
+int	max_bounces = 3;	/* Maximum recursion level */
 
 #define MSG_PROLOGUE	20		/* # initial messages to see */
 #define MSG_INTERVAL	4000		/* message interval thereafter */
@@ -108,7 +108,6 @@ char		*dp;
 	    ap->a_refrac_index == swp->sw_refrac_index )  {
 	    	transmit += reflect;
 	    	reflect = 0;
-/*rt_log("no reflect, ri=%g, lvl=%d\n", ap->a_refrac_index, ap->a_level);*/
 	}
 
 	/*
@@ -160,7 +159,6 @@ char		*dp;
 		/* If there is an air gap, reset ray's RI to air */
 		if( pp->pt_inhit->hit_dist > AIR_GAP_TOL )
 			sub_ap.a_refrac_index = RI_AIR;
-/*else rt_log("%d,%d no air gap, ri=%g,%g\n", sub_ap.a_x, sub_ap.a_y, sub_ap.a_refrac_index, swp->sw_refrac_index);*/
 
 		if( sub_ap.a_refrac_index != swp->sw_refrac_index &&
 		    !rr_refract( incident_dir,		/* input direction */
@@ -187,7 +185,7 @@ do_inside:
 		sub_ap.a_onehit = 0;	/* need 1st EXIT, not just 1st HIT */
 		switch( rt_shootray( &sub_ap ) )  {
 		case 2:
-			/* All is well */
+			/* All is well, implicit returns stored in sub_ap */
 			break;
 		case 1:
 			/* Treat as escaping ray */
@@ -200,7 +198,8 @@ do_inside:
 		}
 
 		/* NOTE: rr_hit returns EXIT Point in sub_ap.a_uvec,
-		 *  and returns EXIT Normal in sub_ap.a_vvec.
+		 *  and returns EXIT Normal in sub_ap.a_vvec,
+		 *  and returns next RI in sub_ap.a_refrac_index
 		 */
 		if( rdebug&RDEBUG_RAYWRITE )  {
 			wraypts( sub_ap.a_ray.r_pt, sub_ap.a_uvec,
@@ -217,14 +216,12 @@ do_inside:
 
 		/*
 		 *  Calculate refraction at exit.
-		 *  XXX We really should "look ahead" to "sense" the
-		 *  RI of the next material.  Just using RI_AIR is
-		 *  excessively simplistic.
+		 *  Use "look ahead" RI value from rr_hit.
 		 */
 		if( !rr_refract( incident_dir,		/* input direction */
 			sub_ap.a_vvec,			/* exit normal */
-			swp->sw_refrac_index,
-			RI_AIR,
+			swp->sw_refrac_index,		/* current RI */
+			sub_ap.a_refrac_index,		/* next RI */
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
 			static long count = 0;		/* not PARALLEL, should be OK */
@@ -325,8 +322,9 @@ struct partition *PartHeadp;
  *	0	dreadful internal error
  *	1	treat as escaping ray & reshoot
  *	2	Proper exit point determined, with Implicit Returns:
- *		a_uvec	exit Point
- *		a_vvec	exit Normal (inward pointing)
+ *			a_uvec		exit Point
+ *			a_vvec		exit Normal (inward pointing)
+ *			a_refrac_index	RI of *next* material
  */
 HIDDEN int
 rr_hit( ap, PartHeadp )
@@ -408,7 +406,7 @@ struct partition *PartHeadp;
 	while( pp->pt_forw != PartHeadp )  {
 		register fastf_t d;
 		d = pp->pt_forw->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
-		if( !NEAR_ZERO( d, 1.0e-3 ) )	/* XXX absolute tolerance */
+		if( !NEAR_ZERO( d, AIR_GAP_TOL ) )
 			break;
 		if( pp->pt_forw->pt_regionp != pp->pt_regionp )
 			break;
@@ -432,6 +430,32 @@ struct partition *PartHeadp;
 	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
 	if( pp->pt_outflip )  {
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+	}
+
+	/*
+	 *  Look ahead, and see if there is more glass to come.
+	 *  If so, obtain its refractive index, to enable correct
+	 *  calculation of the departing refraction angle.
+	 */
+	ap->a_refrac_index = RI_AIR;			/* Default medium: air */
+	if( pp->pt_forw != PartHeadp )  {
+		register fastf_t	d;
+		d = pp->pt_forw->pt_inhit->hit_dist - hitp->hit_dist;
+		if( NEAR_ZERO( d, AIR_GAP_TOL ) )  {
+			struct shadework	sw;
+			struct application	ap2;
+
+			ap2 = *ap;			/* struct copy -- avoids accidents */
+			sw.sw_transmit = sw.sw_reflect = 0.0;
+			sw.sw_refrac_index = 1.0;
+			sw.sw_xmitonly = 1;		/* want XMIT data only */
+			sw.sw_inputs = 0;		/* no fields filled yet */
+			VSETALL( sw.sw_color, 1 );
+			VSETALL( sw.sw_basecolor, 1 );
+
+			(void)viewshade( ap2, pp->pt_forw, &sw );
+			ap->a_refrac_index = sw.sw_refrac_index;
+		}
 	}
 
 	/* For refraction, want exit normal to point inward. */
