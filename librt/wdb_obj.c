@@ -47,8 +47,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 #include "db.h"
 #include "mater.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 #include "./debug.h"
@@ -104,10 +104,17 @@ you should exit now, and resolve the I/O problem, before continuing.\n", (char *
 	WDB_READ_ERR; \
 	return;  }
 
+#define WDB_WRITE_ERR { \
+	bu_log("Database write error, aborting.\n"); \
+	WDB_ERROR_RECOVERY_SUGGESTION; }	
+
+#define WDB_WRITE_ERR_return { \
+	WDB_WRITE_ERR; \
+	return;  }
+
 /* For errors from db_diradd() or db_alloc() */
 #define WDB_ALLOC_ERR { \
-	bu_log("\
-An error has occured while adding a new object to the database.\n"); \
+	bu_log("\nAn error has occured while adding a new object to the database.\n"); \
 	WDB_ERROR_RECOVERY_SUGGESTION; }
 
 #define WDB_ALLOC_ERR_return { \
@@ -145,15 +152,13 @@ struct wdb_trace_data {
 	int			wtd_flag;
 };
 
+/* defined in libbn/bn_tcl.c */
+BU_EXTERN(void		bn_tcl_mat_print, (Tcl_Interp *interp, const char *title, const mat_t m));
+
 /* from librt/tcl.c */
 extern int rt_tcl_rt();
 extern int rt_tcl_import_from_path();
 extern void rt_generic_make();
-
-/* from librt/dg_obj.c */
-extern void dgo_eraseobjall_callback();	/* called when killing database object's */
-extern void dgo_impending_wdb_close();	/* called in wdb_deleteProc */
-extern void dgo_zapall();		/* called in wdb_reopen_tcl */
 
 /* from librt/wdb_comb_std.c */
 extern int wdb_comb_std_tcl();
@@ -224,6 +229,7 @@ static int wdb_showmats_tcl();
 static int wdb_nmg_collapse_tcl();
 static int wdb_nmg_simplify_tcl();
 static int wdb_summary_tcl();
+static int wdb_pathlist_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -243,6 +249,7 @@ struct directory *wdb_combadd();
 void wdb_identitize();
 static void wdb_dir_summary();
 static struct directory ** wdb_dir_getspace();
+static union tree *wdb_pathlist_leaf_func();
 
 static struct bu_cmdtab wdb_cmds[] = {
 	{"adjust",	wdb_adjust_tcl},
@@ -282,6 +289,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"nmg_simplify",	wdb_nmg_simplify_tcl},
 	{"observer",	wdb_observer_tcl},
 	{"open",	wdb_reopen_tcl},
+	{"pathlist",	wdb_pathlist_tcl},
 	{"paths",	wdb_pathsum_tcl},
 	{"prcolor",	wdb_prcolor_tcl},
 	{"push",	wdb_push_tcl},
@@ -306,7 +314,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	/* Commands to be added */
 	{"comb_color",	wdb_comb_color_tcl},
 	{"copymat",	wdb_copymat_tcl},
-	{"pathlist",	wdb_pathlist_tcl},
 	{"getmat",	wdb_getmat_tcl},
 	{"putmat",	wdb_putmat_tcl},
 	{"which_shader",	wdb_which_shader_tcl},
@@ -365,7 +372,7 @@ wdb_deleteProc(clientData)
 	bu_observer_free(&wdbp->wdb_observers);
 
 	/* notify drawable geometry objects of the impending close */
-	dgo_impending_wdb_close(wdbp, wdb_obj_interp);
+	dgo_impending_wdb_close(wdbp, wdbp->wdb_interp);
 
 	RT_CK_WDB(wdbp);
 	BU_LIST_DEQUEUE(&wdbp->l);
@@ -421,6 +428,7 @@ wdb_init_obj(Tcl_Interp		*interp,
 	wdbp->wdb_resp = &rt_uniresource;
 
 	BU_LIST_INIT(&wdbp->wdb_observers.l);
+	wdbp->wdb_interp = interp;
 
 	/* append to list of rt_wdb's */
 	BU_LIST_APPEND(&rt_g.rtg_headwdb.l,&wdbp->l);
@@ -1663,8 +1671,8 @@ wdb_list_cmd(struct rt_wdb	*wdbp,
 		recurse = 1;
 
 		/* skip past used args */
-		argc -= 1;
-		argv += 1;
+		--argc;
+		++argv;
 	}
 
 	/* skip past used args */
@@ -1686,10 +1694,10 @@ wdb_list_cmd(struct rt_wdb	*wdbp,
 			struct db_tree_state ts;
 			struct db_full_path path;
 
-			bzero( (char *)&ts, sizeof( ts ) );
 			db_full_path_init( &path );
-
+			ts = wdbp->wdb_initial_tree_state;     /* struct copy */
 			ts.ts_dbip = wdbp->dbip;
+			ts.ts_resp = &rt_uniresource;
 			MAT_IDN(ts.ts_mat);
 
 			if (db_follow_path_for_state(&ts, &path, argv[arg], 1))
@@ -3134,6 +3142,8 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 	int			endpos;
 	struct wdb_trace_data	wtd;
 
+	WDB_TCL_CHECK_READ_ONLY;
+
 	if (argc < 3 || 27 < argc) {
 		struct bu_vls vls;
 
@@ -3505,7 +3515,7 @@ wdb_group_cmd(struct rt_wdb	*wdbp,
 	/* get objects to add to group */
 	for (i = 2; i < argc; i++) {
 		if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
-			if (wdb_combadd(interp, wdbp->dbip, dp, argv[2], 0,
+			if (wdb_combadd(interp, wdbp->dbip, dp, argv[1], 0,
 					WMOP_UNION, 0, 0, wdbp) == DIR_NULL)
 				return TCL_ERROR;
 		}  else
@@ -3516,7 +3526,7 @@ wdb_group_cmd(struct rt_wdb	*wdbp,
 
 /*
  * Usage:
- *        procname group groupname object(s)
+ *        procname g groupname object1 object2 .... objectn
  */
 static int
 wdb_group_tcl(ClientData	clientData,
@@ -5646,28 +5656,20 @@ struct wdb_node_data {
 void
 wdb_node_write(struct db_i		*dbip,
 	       register struct directory *dp,
-	       genptr_t			client_data)
+	       genptr_t			ptr)
 {
+	struct rt_wdb	*keepfp = (struct rt_wdb *)ptr;
 	struct bu_external	ext;
-	struct wdb_node_data *wndp = (struct wdb_node_data *)client_data;
-	
+
+	RT_CK_WDB(keepfp);
 
 	if (dp->d_nref++ > 0)
 		return;		/* already written */
 
-	/* Use db_get_external() and db_fwrite_external().  Faster. */
-	if (db_get_external(&ext, dp, dbip) < 0) {
-		Tcl_AppendResult(wndp->interp, "Input database read error on ",
-				 dp->d_namep, ", aborting", (char *)NULL);
-		return;
-	}
-
-	if (db_fwrite_external(wndp->fp, dp->d_namep, &ext) < 0) {
-		Tcl_AppendResult(wndp->interp,
-				 "Output database write error on ",
-				 dp->d_namep, ", aborting", (char *)NULL);
-	}
-	bu_free_external(&ext);
+	if (db_get_external(&ext, dp, dbip) < 0)
+		WDB_READ_ERR_return;
+	if (wdb_export_external(keepfp, &ext, dp->d_namep, dp->d_flags, dp->d_minor_type) < 0)
+		WDB_WRITE_ERR_return;
 }
 
 int
@@ -5676,11 +5678,11 @@ wdb_keep_cmd(struct rt_wdb	*wdbp,
 	     int		argc,
 	     char 		**argv)
 {
-	FILE			*keepfp;
+	struct rt_wdb		*keepfp;
 	register struct directory *dp;
 	struct bu_vls		title;
 	register int		i;
-	struct wdb_node_data	wnd;
+	struct db_i		*new_dbip;
 
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -5699,44 +5701,39 @@ wdb_keep_cmd(struct rt_wdb	*wdbp,
 	}
 
 	/* Alert user if named file already exists */
-	if ((keepfp = fopen(argv[1], "r")) != NULL) {
+	if ((new_dbip = db_open(argv[1], "w")) !=  DBI_NULL  &&
+	    (keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) != NULL) {
 		Tcl_AppendResult(interp, "keep:  appending to '", argv[1],
 				 "'\n", (char *)NULL);
-		fclose(keepfp);
-	}
-
-	if ((keepfp = fopen(argv[1], "a")) == NULL) {
-		perror(argv[1]);
-		return TCL_ERROR;
+	} else {
+		/* Create a new database */
+		if ((keepfp = wdb_fopen(argv[1])) == NULL) {
+			perror(argv[1]);
+			return TCL_ERROR;
+		}
 	}
 	
-	/* All databases must start with an ident record */
+	/* ident record */
 	bu_vls_init(&title);
 	bu_vls_strcat(&title, "Parts of: ");
 	bu_vls_strcat(&title, wdbp->dbip->dbi_title);
 
-	/* use same editing preference */
-	if( db_fwrite_ident( keepfp, bu_vls_addr(&title), wdbp->dbip->dbi_local2base ) )  {
+	if (db_update_ident(keepfp->dbip, bu_vls_addr(&title), wdbp->dbip->dbi_local2base) < 0) {
 		perror("fwrite");
-		Tcl_AppendResult(interp, "db_fwrite_ident(", argv[1],
-			") failed\n", (char *)NULL);
-		fclose(keepfp);
+		Tcl_AppendResult(interp, "db_update_ident() failed\n", (char *)NULL);
+		wdb_close(keepfp);
 		bu_vls_free(&title);
 		return TCL_ERROR;
 	}
-
-	wnd.fp = keepfp;
-	wnd.interp = interp;
+	bu_vls_free(&title);
 
 	for (i = 2; i < argc; i++) {
 		if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 			continue;
-		db_functree(wdbp->dbip, dp, wdb_node_write, wdb_node_write, wdbp->wdb_resp, (genptr_t)&wnd);
+		db_functree(wdbp->dbip, dp, wdb_node_write, wdb_node_write, &rt_uniresource, (genptr_t)keepfp);
 	}
 
-	fclose(keepfp);
-	bu_vls_free(&title);
-
+	wdb_close(keepfp);
 	return TCL_OK;
 }
 
@@ -5921,6 +5918,8 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	struct rt_db_internal	new_intern;
 	struct region		*regp;
 	char			*new_name;
+
+	WDB_TCL_CHECK_READ_ONLY;
 
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -6206,9 +6205,9 @@ wdb_units_cmd(struct rt_wdb	*wdbp,
 	      char 		**argv)
 {
 	double		loc2mm;
-	int		new_unit = 0;
 	struct bu_vls 	vls;
 	const char	*str;
+	fastf_t		sf;
 	int 		sflag = 0;
 
 	bu_vls_init(&vls);
@@ -6241,6 +6240,8 @@ wdb_units_cmd(struct rt_wdb	*wdbp,
 		return TCL_OK;
 	}
 
+	sf = wdbp->dbip->dbi_base2local;
+
 	/* Allow inputs of the form "25cm" or "3ft" */
 	if ((loc2mm = bu_mm_value(argv[1]) ) <= 0) {
 		Tcl_AppendResult(interp, argv[1], ": unrecognized unit\n",
@@ -6249,24 +6250,12 @@ wdb_units_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	/* See if this is a known v4 database unit */
-	if ((new_unit = db_v4_get_units_code(bu_units_string(loc2mm))) >= 0) {
-		/* One of the recognized db.h units */
-		/* change database to remember the new local unit */
-		if (wdbp->dbip->dbi_read_only ||
-		    db_update_ident(wdbp->dbip, wdbp->dbip->dbi_title, new_unit) < 0)
-			Tcl_AppendResult(interp,
-					 "Warning: unable to stash working units into database\n",
-					 (char *)NULL);
-	} else {
-		/*
-		 *  Can't stash requested units into the database for next session,
-		 *  but there is no problem with the user editing in these units.
-		 */
-		Tcl_AppendResult(interp, "\
-Due to a database restriction in the current format of .g files,\n\
-this choice of units will not be remembered on your next editing session.\n", (char *)NULL);
-	}
+        if (db_update_ident(wdbp->dbip, wdbp->dbip->dbi_title, loc2mm) < 0) {
+		Tcl_AppendResult(interp,
+				 "Warning: unable to stash working units into database\n",
+				 (char *)NULL);
+        }
+
 	wdbp->dbip->dbi_local2base = loc2mm;
 	wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
 
@@ -6309,6 +6298,8 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 	struct bu_external		tmp;
 	struct db5_raw_internal		raw;
 	int				i;
+
+	WDB_TCL_CHECK_READ_ONLY;
 
 	if( argc < 2 ) {
 		struct bu_vls vls;
@@ -6401,6 +6392,8 @@ wdb_unhide_cmd(struct rt_wdb	*wdbp,
 	struct bu_external		tmp;
 	struct db5_raw_internal		raw;
 	int				i;
+
+	WDB_TCL_CHECK_READ_ONLY;
 
 	if( argc < 2 ) {
 		struct bu_vls vls;
@@ -7053,6 +7046,47 @@ wdb_summary_tcl(ClientData	clientData,
 	return wdb_summary_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+int
+wdb_pathlist_cmd(struct rt_wdb	*wdbp,
+		 Tcl_Interp	*interp,
+		 int		argc,
+		 char 		**argv)
+{
+	if (argc < 2) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_pathlist");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (db_walk_tree(wdbp->dbip, argc-1, (const char **)argv+1, 1,
+			 &wdbp->wdb_initial_tree_state,
+			 0, 0, wdb_pathlist_leaf_func, (genptr_t)interp) < 0) {
+		Tcl_AppendResult(interp, "wdb_pathlist: db_walk_tree() error", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname 
+ */
+static int
+wdb_pathlist_tcl(ClientData	clientData,
+		 Tcl_Interp	*interp,
+		 int		argc,
+		 char		**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_pathlist_cmd(wdbp, interp, argc-1, argv+1);
+}
+
 #if 0
 /* skeleton functions for wdb_obj methods */
 int
@@ -7513,9 +7547,6 @@ wdb_combadd(Tcl_Interp			*interp,
 	int node_count;
 	int actual_count;
 
-	if (dbip == DBI_NULL)
-		return DIR_NULL;
-
 	/*
 	 * Check to see if we have to create a new combination
 	 */
@@ -7573,9 +7604,12 @@ wdb_combadd(Tcl_Interp			*interp,
 
 		if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 			Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL );
-			return( DIR_NULL );
+			return DIR_NULL;
 		}
-		return( dp );
+		return dp;
+	} else if (!(dp->d_flags & DIR_COMB)) {
+		Tcl_AppendResult(interp, combname, " exists, but is not a combination\n", (char *)NULL);
+		return DIR_NULL;
 	}
 
 	/* combination exists, add a new member */
@@ -7807,4 +7841,27 @@ wdb_dir_getspace(struct db_i	*dbip,
 	dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
 						    "dir_getspace *dir[]");
 	return dir_basep;
+}
+
+/*
+ *			P A T H L I S T _ L E A F _ F U N C
+ */
+static union tree *
+wdb_pathlist_leaf_func(struct db_tree_state	*tsp,
+		       struct db_full_path	*pathp,
+		       struct rt_db_internal	*ip,
+		       genptr_t			client_data)
+{
+	Tcl_Interp	*interp = (Tcl_Interp *)client_data;
+	char		*str;
+
+	RT_CK_FULL_PATH(pathp);
+	RT_CK_DB_INTERNAL(ip);
+
+	str = db_path_to_string(pathp);
+
+	Tcl_AppendElement(interp, str);
+
+	bu_free((genptr_t)str, "path string");
+	return TREE_NULL;
 }
