@@ -1213,56 +1213,6 @@ set -S2 "/bin/sh"
  *  then a second directory is made for every source directory,
  *  with the machine name appended to the source directory name.
  */
-/**GAK, no string compares in #if */
-
-#if 0
-
-#if !NFS
-/*	Local style, binaries in source directories */
-#	define	LIBFB	../libfb/libfb.ARCH_SUF
-#	define	LIBRT	../librt/librt.ARCH_SUF
-#	define	LIBPLOT	../libplot3/libplot3.ARCH_SUF
-#	define	LIBORLE	../liborle/liborle.ARCH_SUF
-#	define	LIBRLE	../librle/librle.ARCH_SUF
-#	define  LIBFFT	../libfft/libfft.ARCH_SUF
-#	define	LIBWDB	../libwdb/libwdb.ARCH_SUF
-#	define	LIBNURB	../libnurb/libnurb.ARCH_SUF
-#	define	LIBMSR	../libmsr/libmsr.ARCH_SUF
-#	define	LIBRAD	../librad/librad.ARCH_SUF
-#	define	LIBTERMIO	../libtermio/libtermio.ARCH_SUF
-#	define	LIBCURSOR	../libcursor/libcursor.ARCH_SUF
-#	define	LIBFONT	../libfont/libfont.ARCH_SUF
-#	define	LIBSYSV	../libsysv/libsysv.ARCH_SUF
-#	if HAS_TCP
-#		define	LIBPKG	../libpkg/libpkg.ARCH_SUF
-#	else
-#		define	LIBPKG	/**/
-#	endif
-
-#else
-/*	NFS style, append machine name */
-#	define	LIBFB	../.libfb.MTYPE/libfb.ARCH_SUF
-#	define	LIBRT	../.librt.MTYPE/librt.ARCH_SUF
-#	define	LIBPLOT	../.libplot3.MTYPE/libplot3.ARCH_SUF
-#	define	LIBORLE	../.liborle.MTYPE/liborle.ARCH_SUF
-#	define	LIBRLE	../.librle.MTYPE/librle.ARCH_SUF
-#	define	LIBFFT	../.libfft.MTYPE/libfft.ARCH_SUF
-#	define	LIBWDB	../.libwdb.MTYPE/libwdb.ARCH_SUF
-#	define	LIBNURB	../.libnurb.MTYPE/libnurb.ARCH_SUF
-#	define	LIBMSR	../.libmsr.MTYPE/libmsr.ARCH_SUF
-#	define	LIBRAD	../.librad.MTYPE/librad.ARCH_SUF
-#	define	LIBTERMIO	../.libtermio.MTYPE/libtermio.ARCH_SUF
-#	define	LIBCURSOR	../.libcursor.MTYPE/libcursor.ARCH_SUF
-#	define	LIBFONT	../.libfont.MTYPE/libfont.ARCH_SUF
-#	define	LIBSYSV	../.libsysv.MTYPE/libsysv.ARCH_SUF
-#	if HAS_TCP
-#		define	LIBPKG	../.libpkg.MTYPE/libpkg.ARCH_SUF
-#	else
-#		define	LIBPKG	/**/
-#	endif
-#endif
-
-#else /* ---- */
 
 #if !NFS
 /*	Local style, binaries in source directories */
@@ -1340,7 +1290,6 @@ set -S2 "/bin/sh"
 #		define	LIBPKG_DEP	/**/
 #	endif
 #endif
-#endif /* ---- */
 
 #if !defined(LIBTERMLIB)
 #	define	LIBTERMLIB	-ltermlib
