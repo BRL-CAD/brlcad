@@ -35,7 +35,7 @@ char **argv;
 	return TCL_ERROR;
     }
 
-    if (pix_common_file_size(&width, &height, argv[1], 3) > 0) {
+    if (bn_common_file_size(&width, &height, argv[1], 3) > 0) {
 	sprintf(interp->result, "%d %d", width, height);
 	return TCL_OK;
     }
