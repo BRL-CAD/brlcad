@@ -2303,7 +2303,7 @@ char *buf;
 
 	/* Consider the next assignment to have been sent "now" */
 	(void)gettimeofday( &sp->sr_sendtime, (struct timezone *)0 );
-	rt_struct_buf(&ext, (genptr_t) buf, pc->pkc_len);
+	rt_struct_buf(&ext, (genptr_t) buf);
 
 	i = rt_struct_import( (genptr_t)&info, desc_line_info, &ext );
 	if( i < 0 )  {
@@ -4150,39 +4150,3 @@ struct timezone	*tzp;
 	tvp->tv_usec = 0;
 }
 #endif
-/* XXX ---  This should be part of inout.c */
-
-#define	RT_GETPUT_MAGIC_1	0x15cb
-#define RT_GETPUT_MAGIC_2	0xbc51
-int
-rt_struct_buf( ext, buf )
-struct rt_external *ext;
-genptr_t buf;
-{
-	register long i, len;
-
-	RT_INIT_EXTERNAL(ext);
-	ext->ext_buf = buf;
-	i = (((unsigned char *)(ext->ext_buf))[0] << 8) |
-	     ((unsigned char *)(ext->ext_buf))[1];
-	len = (((unsigned char *)(ext->ext_buf))[2] << 24) |
-	      (((unsigned char *)(ext->ext_buf))[3] << 16) |
-	      (((unsigned char *)(ext->ext_buf))[4] <<  8) |
-	       ((unsigned char *)(ext->ext_buf))[5];
-	if ( i != RT_GETPUT_MAGIC_1) {
-		rt_log("ERROR: bad getput buffer header x%x, s/b x%x, was %s(x%x), file %s, line %d\n",
-		    ext->ext_buf, RT_GETPUT_MAGIC_1,
-		    rt_identify_magic( i), i, __FILE__, __LINE__);
-		rt_bomb("bad getput buffer");
-	}
-	ext->ext_nbytes = len;
-	i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) | 
-	     ((unsigned char *)(ext->ext_buf))[len-1];
-	if ( i != RT_GETPUT_MAGIC_2) {
-		rt_log("ERROR: bad getput buffer x%x, s/b x%x, was %s(x%x), file %s, line %s\n",
-		    ext->ext_buf, RT_GETPUT_MAGIC_2,
-		    rt_identify_magic( i), i, __FILE__, __LINE__);
-		rt_bomb("Bad getput buffer");
-	}
-	return(1);
-}
