@@ -11,6 +11,7 @@ set mged_helpdevel_data(get_comb)	{{comb_name}	{get information about combinatio
 set mged_helpdevel_data(get_dm_list)	{{}	{returns a list of all display managers}}
 set mged_helpdevel_data(get_edit_solid)	{{[-c]}	{get the solid parameters for the solid currently
         being edited}}
+set mged_helpdevel_data(get_solid_keypoint) {{} {set the solid keypoint using the default rules}}
 set mged_helpdevel_data(get_more_default)	{{}	{get the current default input value}}
 set mged_helpdevel_data(grid2model_lu)	{{gx gy}	{given a point in grid coordinates (local units),
         convert it to model coordinates (local units).}}

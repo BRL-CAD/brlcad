@@ -28,6 +28,9 @@ set mged_help_data(attach)	{{[-d display_string] [-i init_script] [-n name]
 	      [-S square_size] win_type}	{attach to a display manager}}
 set mged_help_data(B)		{{-C#/#/# <objects>}	{clear screen, edit objects}}
 set mged_help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{boolean evaluation of objects via NMG's}}
+set mged_help_data(bot_condense) {{new_bot_solid old_bot_solid} {remove unreferenced vertices in a BOT solid}}
+set mged_help_data(bot_face_fuse) {{new_bot_solid old_bot_solid} {eliminate duplicate faces in a BOT solid}}
+set mged_help_data(bot_vertex_fuse) {{new_bot_solid old_bot_solid} {fuse duplicate vertices in a BOT solid}}
 set mged_help_data(c)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
 set mged_help_data(cat)		{{<objects>}	{list attributes (brief)}}
 set mged_help_data(center)	{{x y z}	{set view center}}
