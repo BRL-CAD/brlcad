@@ -205,6 +205,9 @@ char **argv;
 		/* NOTREACHED */
 	}
 
+	/* Reset the lights */
+	dmp->dmr_light( LIGHT_RESET, 0 );
+
 	/* Caught interrupts take us here */
 	if( setjmp( jmp_env ) == 0 )  {
 		/* First pass through */
@@ -543,6 +546,7 @@ int	exitcode;
 
 	(void)sprintf( place, "exit_status=%d", exitcode );
 	log_event( "CEASE", place );
+	dmp->dmr_light( LIGHT_RESET, 0 );	/* turn off the lights */
 	dmp->dmr_close();
 	exit( exitcode );
 }
