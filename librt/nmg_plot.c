@@ -1434,7 +1434,7 @@ CONST struct rt_tol	*tol;
 
 	vbp = rt_vlblock_init();
 
-	rt_log("Plotting to \"%s\"\n", filename);
+	rt_log("overlay %s\n", filename);
 	if( s->sa_p )  {
 		NMG_CK_SHELL_A( s->sa_p );
 #if 0
@@ -1509,7 +1509,7 @@ CONST struct faceuse	*fu1;
 			(void)perror(name);
 			return;
 		}
-		rt_log("Plotting %s\n", name);
+		rt_log("overlay %s\n", name);
 
 		rt_plot_vlblock(fp, vbp);
 
@@ -1572,7 +1572,7 @@ int			show_mates;
 
 	if( rt_g.NMG_debug & DEBUG_PLOTEM )  {
 		(void)sprintf(name, str, num++);
-		rt_log("plotting to %s\n", name);
+		rt_log("overlay %s\n", name);
 		if ((fp=fopen(name, "w")) == (FILE *)NULL)  {
 			perror(name);
 			return;
@@ -2079,7 +2079,7 @@ CONST char	*a_string;
 		if( fp = fopen(buf, "w") )  {
 			rt_plot_vlblock(fp, vbp);
 			fclose(fp);
-			rt_log("Wrote %s for %s\n", buf, a_string);
+			rt_log("overlay %s for %s\n", buf, a_string);
 		}
 
 		rt_vlblock_free(vbp);
@@ -2124,7 +2124,7 @@ CONST struct faceuse	*fu;
 
 	if( rt_g.NMG_debug & DEBUG_PLOTEM )  {
 		(void)sprintf(name, "face%d.pl", num++);
-		rt_log("plotting to %s\n", name);
+		rt_log("overlay %s\n", name);
 		if ((fp=fopen(name, "w")) == (FILE *)NULL)  {
 			perror(name);
 			return;
@@ -2243,7 +2243,7 @@ CONST struct vertexuse		*vu1, *vu2;
 	pdv_3line(fp, vu2->v_p->vg_p->coord, p2 );
 
 	fclose(fp);
-	rt_log("wrote %s\n", buf);
+	rt_log("overlay %s\n", buf);
 	rt_free( (char *)b, "nmg_face_lu_plot flag[]" );
 }
 
@@ -2301,7 +2301,7 @@ CONST vect_t			left;
 	pdv_3line(fp, p1, p2);
 
 	fclose(fp);
-	rt_log("wrote %s\n", buf);
+	rt_log("overlay %s\n", buf);
 	rt_free( (char *)b, "nmg_plot_lu_ray flag[]" );
 }
 
@@ -2341,6 +2341,7 @@ CONST struct faceuse *fu;
 	VADD2(pp, pt, pp);
 	pdv_3line( fd, pt, pp );
 	(void)fclose(fd);
+	rt_log("overlay %s\n", name);
 }
 
 /*
@@ -2368,7 +2369,7 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 	sprintf(file, "%s%0d.pl", prefix, num++);
-	rt_log("plotting to %s\n", file);
+	rt_log("overlay %s\n", file);
 	if ((fp = fopen(file, "w")) == (FILE *)NULL) {
 		rt_log("plot_lu_around_eu() cannot open %s", file);
 		return;
