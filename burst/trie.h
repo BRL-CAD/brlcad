@@ -9,28 +9,33 @@
  */
 #ifndef INCL_TRIE
 #define INCL_TRIE
-#define FUNC_NULL	(Func *) NULL
-#define TRIE_NULL	(Trie *) NULL
+
+#ifdef FUNC_NULL
+#undef FUNC_NULL
+#endif
+
+#define FUNC_NULL	((Func *) NULL)
+#define TRIE_NULL	((Trie *) NULL)
 
 /* Datum for trie leaves.  */
-typedef void		Func();
+typedef void Func();
 
 /* Trie tree node.  */
-typedef union trie	Trie;
+typedef union trie Trie;
 union trie
         { 
         struct  /* Internal nodes: datum is current letter. */
                 {
-                int     t_char;  /* Current letter.  */
-                Trie    *t_altr; /* Alternate letter node link.  */
-                Trie    *t_next; /* Next letter node link.  */
+                int t_char;   /* Current letter.  */
+                Trie *t_altr; /* Alternate letter node link.  */
+                Trie *t_next; /* Next letter node link.  */
                 }
         n;
         struct  /* Leaf nodes: datum is function ptr.  */
                 {
-                Func	*t_func; /* Function pointer.  */
-                Trie    *t_altr; /* Alternate letter node link.  */
-                Trie    *t_next; /* Next letter node link.  */
+                Func *t_func; /* Function pointer.  */
+                Trie *t_altr; /* Alternate letter node link.  */
+                Trie *t_next; /* Next letter node link.  */
                 }
         l;
         };
@@ -40,5 +45,5 @@ union trie
 			Malloc_Bomb(sizeof(Trie));\
 			return	TRIE_NULL;\
 			}
-extern Trie	*cmd_trie;
+extern Trie *cmd_trie;
 #endif /* INCL_TRIE */

@@ -107,7 +107,8 @@ FILE	*fp;
 				break;
 			else
 				{
-				rt_log( "readColors(): only %d items read\n", items );
+				rt_log( "readColors(): only %d items read\n",
+					items );
 				continue;
 				}
 			}

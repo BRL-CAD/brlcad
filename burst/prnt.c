@@ -8,20 +8,36 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+#ifndef DEBUG
+#define NDEBUG
+#define STATIC static
+#else
+#define STATIC
+#endif
+
+#include <assert.h>
+
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
-#include <assert.h>
+
 #include <Sc/Sc.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 #include "./vecmath.h"
 #include "./ascii.h"
 #include "./extern.h"
+
+
 #define MAX_COLS	128
 
 #define PHANTOM_ARMOR	111
+
+STATIC fastf_t getNormThickness();
 
 int
 doMore( linesp )
@@ -54,11 +70,12 @@ int	*linesp;
 	return	ret;
 	}
 
-_LOCAL_ int
+STATIC int
 f_Nerror( ap )
 struct application	*ap;
 	{
-	rt_log( "Couldn't compute thickness or exit point along normal direction.\n" );
+	rt_log( "Couldn't compute thickness or exit point%s.\n",
+		"along normal direction" );
 	V_Print( "\tpnt", ap->a_ray.r_pt, rt_log );
 	V_Print( "\tdir", ap->a_ray.r_dir, rt_log );
 	ap->a_rbeam = 0.0;
@@ -72,7 +89,7 @@ struct application	*ap;
 	compute exit point along normal direction and normal thickness.
 	Exit point returned in "a_vvec", thickness returned in "a_rbeam".
  */
-_LOCAL_ int
+STATIC int
 f_Normal( ap, pt_headp )
 struct application	*ap;
 struct partition	*pt_headp;
@@ -88,6 +105,10 @@ struct partition	*pt_headp;
 	ohitp = cp->pt_back->pt_outhit;
 	ap->a_rbeam = ohitp->hit_dist - pp->pt_inhit->hit_dist;
 	VJOIN1( ap->a_vvec, rp->r_pt, ohitp->hit_dist, rp->r_dir );
+#ifdef DEBUG
+	rt_log( "f_Normal: thickness=%g dout=%g din=%g\n",
+		ap->a_rbeam*unitconv, ohitp->hit_dist, pp->pt_inhit->hit_dist );
+#endif
 	return	1;
 	}
 
@@ -158,109 +179,460 @@ int	mode;
 	return	true;
 	}
 
+/*
+	void prntAspectInit( void )
+
+	Burst Point Library and Shotline file: header record for each view.
+	Ref. Figure 20., Line Number 1 and Figure 19., Line Number 1 of ICD.
+ */
 void
 prntAspectInit()
 	{
-	if( outfile[0] == NUL )
-		return;
-	if(	fprintf( outfp,
-			"%c % 7.2f% 7.2f% 9.3f% 9.3f% 9.3f% 7.1f% 9.6f\n",
-			P_ASPECT_INIT,
-			viewazim*DEGRAD,
-			viewelev*DEGRAD,
-			modlcntr[X]*unitconv,
-			modlcntr[Y]*unitconv,
-			modlcntr[Z]*unitconv,
-			cellsz*unitconv,
-			raysolidangle
+	if(	outfile[0] != NUL
+	    &&	fprintf(outfp,
+			"%c % 8.4f % 8.4f\n",
+			PB_ASPECT_INIT,
+			viewazim*DEGRAD, /* attack azimuth in degrees */
+			viewelev*DEGRAD	 /* attack elevation in degrees */
 			) < 0
 		)
 		{
-		rt_log( "prntAspectInit: Write failed to data file!\n" );
+		rt_log( "Write failed to file (%s)!\n", outfile );
+		locPerror( "fprintf" );
+		exitCleanly( 1 );
+		}
+	if(	shotlnfile[0] != NUL
+	    &&	fprintf(shotlnfp,
+			"%c % 8.4f % 8.4f % 7.2f % 7.2f %7.2f %7.2f %7.2f\n",
+			PS_ASPECT_INIT,
+			viewazim*DEGRAD, /* attack azimuth in degrees */
+			viewelev*DEGRAD, /* attack elevation in degrees */
+			cellsz*unitconv, /* shotline separation */
+			gridrt*unitconv, /* maximum Y'-coordinate of target */
+			gridlf*unitconv, /* minimum Y'-coordinate of target */
+			gridup*unitconv, /* maximum Z'-coordinate of target */
+			griddn*unitconv  /* minimum Z'-coordinate of target */
+			) < 0
+		)
+		{
+		rt_log( "Write failed to file (%s)!\n", shotlnfile );
 		locPerror( "fprintf" );
 		exitCleanly( 1 );
 		}
 	return;
 	}
 
-/*	prntBurstHdr()
+/*
+	void prntCellIdent( struct application *ap, struct partition *pt_headp )
 
-	Report info about burst point.
+	Burst Point Library and Shotline file: information about shotline.
+	Ref. Figure 20., Line Number 2 and Figure 19., Line Number 2 of ICD.
  */
-void
-prntBurstHdr( ap, cpp, app, bpt )
-struct application	*ap;
-struct partition	*cpp, *app;
-fastf_t			*bpt;
-	{	FILE			*fp = outfp;
-	if( outfile[0] == NUL )
-		return;
-	if(	fprintf( fp,
-			"%c % 8.2f% 8.2f% 8.2f% 8.2f% 8.2f% 8.2f% 8.2f% 8.2f% 8.2f\n",
-			P_BURST_HEADER,
-			/* entry point to spalling component */
-			cpp->pt_inhit->hit_point[X]*unitconv,
-			cpp->pt_inhit->hit_point[Y]*unitconv,
-			cpp->pt_inhit->hit_point[Z]*unitconv,
-			bpt[X]*unitconv, /* burst point */
-			bpt[Y]*unitconv,
-			bpt[Z]*unitconv,
-			/* exit point along normal of component */
-			ap->a_vvec[X]*unitconv,
-			ap->a_vvec[Y]*unitconv,
-			ap->a_vvec[Z]*unitconv
-			) < 0
-		)
-		{
-		rt_log( "prntBurst_Header: Write failed to data file!\n" );
-		locPerror( "fprintf" );
-		exitCleanly( 1 );
-		}
-	return;
-	}
-
 void
 prntCellIdent( ap, pt_headp )
 register struct application	*ap;
 struct partition		*pt_headp;
-	{	FILE	*fp = outfp;
-	if( outfile[0] == NUL )
-		return;
-	if( fprintf(	fp,
-			"%c % 8.1f% 8.1f%3d% 8.2f% 8.2f% 9.3f% 9.3f\n",
-			P_CELL_IDENT,
-			ap->a_x*cellsz*unitconv,
-				/* Horizontal center of cell.	*/
-			ap->a_y*cellsz*unitconv,
-				/* Vertical center of cell.	*/
-			ap->a_user, /* Two-digit random number.	*/
-			(standoff-pt_headp->pt_forw->pt_inhit->hit_dist)*
-				unitconv,
-			 /* Distance 1st contact to grid plane.	*/
-			(standoff-pt_headp->pt_back->pt_outhit->hit_dist)*
-				unitconv,
-			 /* Distance last contact to grid plane.*/
+	{	fastf_t projarea;	/* projected area */
+	/* Convert to user units before squaring cell size. */
+	projarea = cellsz*unitconv;
+	projarea *= projarea;
+
+	if(	outfile[0] != NUL
+	    &&	fprintf(outfp,
+			"%c % 7.2f % 7.2f % 4.1f % 10.2f\n",
+			PB_CELL_IDENT,
 			ap->a_uvec[X]*unitconv,
-			 /* Actual horizontal coord. in cell.	*/
-			ap->a_uvec[Y]*unitconv
-			 /* Actual vertical coordinate in cell.	*/
+			 	/* horizontal coordinate of shotline (Y') */
+			ap->a_uvec[Y]*unitconv,
+			 	/* vertical coordinate of shotline (Z') */
+			bdist*unitconv, /* BDIST */
+			/* projected area associated with burst point */
+			projarea
 			) < 0
 		)
 		{
-		rt_log( "prntCellIdent: Write failed to data file!\n" );
+		rt_log( "Write failed to file (%s)!\n", outfile );
+		locPerror( "fprintf" );
+		exitCleanly( 1 );
+		}
+	if(	shotlnfile[0] != NUL
+	    &&	fprintf(shotlnfp,
+			"%c % 8.2f % 8.2f\n",
+			PS_CELL_IDENT,
+			ap->a_uvec[X]*unitconv,
+			 	/* horizontal coordinate of shotline (Y') */
+			ap->a_uvec[Y]*unitconv
+			 	/* vertical coordinate of shotline (Z') */
+			) < 0
+		)
+		{
+		rt_log( "Write failed to file (%s)!\n", shotlnfile );
 		locPerror( "fprintf" );
 		exitCleanly( 1 );
 		}
 	return;
 	}
 
+/*
+	void prntSeg( struct application *ap, struct partition *cpp, int space )
+
+	Burst Point Library and Shotline file: information about each component
+	hit along path of main penetrator (shotline).
+	Ref. Figure 20., Line Number 3 and Figure 19., Line Number 2 of ICD.
+ */
+void
+prntSeg( ap, cpp, space )
+register struct application *ap;
+register struct partition *cpp;		/* component partition */
+int space;
+	{	fastf_t cosobliquity;	/* cosine of obliquity at entry */
+		fastf_t	cosrotation;	/* cosine of rotation angle */
+		fastf_t	entryangle;	/* obliquity angle at entry */
+		fastf_t exitangle;	/* obliquity angle at exit */
+		fastf_t los;		/* line-of-sight thickness */
+		fastf_t normthickness;	/* normal thickness */
+		fastf_t	rotangle;	/* rotation angle */
+		fastf_t sinfbangle;	/* sine of fall back angle */
+		register struct hit *ihitp;
+		register struct hit *ohitp;
+		register struct soltab *stp;
+
+	/* fill in entry hit point and normal */
+	stp = cpp->pt_inseg->seg_stp;
+	ihitp = cpp->pt_inhit;
+	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
+	
+	/* check for flipped normal and fix */
+	if( cpp->pt_inflip )
+		{
+		ScaleVec( ihitp->hit_normal, -1.0 );
+		cpp->pt_inflip = 0;
+		}
+fixed_entry_normal:
+	/* This *should* give negative of desired result, but make sure. */
+	cosobliquity = Dot( ap->a_ray.r_dir, ihitp->hit_normal );
+	if( cosobliquity < 0.0 )
+		cosobliquity = -cosobliquity;
+	else 
+		{ 
+#ifdef DEBUG 
+		rt_log( "prntSeg: fixed flipped entry normal.\n" );
+		rt_log( "cosine of angle of obliquity is %12.9f\n",
+			cosobliquity );
+		rt_log( "\tregion name '%s' solid name '%s'\n",
+			cpp->pt_regionp->reg_name,
+			stp->st_name );
+#endif
+		ScaleVec( ihitp->hit_normal, -1.0 );
+		goto fixed_entry_normal;
+		}
+	cosrotation = Dot( ihitp->hit_normal, xaxis );
+	sinfbangle = Dot( ihitp->hit_normal, zaxis );
+	rotangle = AproxEq( cosrotation, 1.0, COS_TOL ) ?
+			0.0 : acos( cosrotation ) * DEGRAD;
+	los = (cpp->pt_outhit->hit_dist-ihitp->hit_dist)*unitconv;
+#ifdef DEBUG
+	rt_log( "prntSeg: los=%g dout=%g din=%g\n",
+		los, cpp->pt_outhit->hit_dist, ihitp->hit_dist );
+#endif
+
+	if(	outfile[0] != NUL
+	    &&	fprintf( outfp,
+			"%c % 8.2f % 8.2f %4d % 7.3f % 7.3f % 7.3f\n",
+			PB_RAY_INTERSECT,
+			ihitp->hit_dist*unitconv,
+					/* X'-coordinate of intersection */
+			los,		/* LOS thickness of component */
+			cpp->pt_regionp->reg_regionid,
+					/* component code number */
+			sinfbangle,	/* sine of fallback angle */
+			rotangle,	/* rotation angle in degrees */
+			cosobliquity	/* cosine of obliquity angle at entry */
+			) < 0
+		)
+		{
+		rt_log( "Write failed to file (%s)!\n", outfile );
+		locPerror( "fprintf" );
+		exitCleanly( 1 );
+		}
+	if( shotlnfile[0] == NUL )
+		return;
+	entryangle = AproxEq( cosobliquity, 1.0, COS_TOL ) ?
+			0.0 : acos( cosobliquity ) * DEGRAD;
+	if(	(normthickness =
+		 getNormThickness( ap, cpp, cosobliquity )) <= 0.0
+	    &&	fatalerror )
+		{
+		rt_log( "Couldn't compute normal thickness.\n" );
+		rt_log( "\tshotline coordinates <%g,%g>\n",
+			ap->a_uvec[X]*unitconv,
+			ap->a_uvec[Y]*unitconv
+			);
+		rt_log( "\tregion name '%s' solid name '%s'\n",
+			cpp->pt_regionp->reg_name,
+			stp->st_name );
+		return;
+		}
+	/* fill in exit hit point and normal */
+	stp = cpp->pt_outseg->seg_stp;
+	ohitp = cpp->pt_outhit;
+	RT_HIT_NORM( ohitp, stp, &(ap->a_ray) );
+	
+	/* check for flipped normal and fix */
+	if( cpp->pt_outflip )
+		{
+		ScaleVec( ohitp->hit_normal, -1.0 );
+		cpp->pt_outflip = 0;
+		}
+fixed_exit_normal:
+	/* This *should* give negative of desired result, but make sure. */
+	cosobliquity = Dot( ap->a_ray.r_dir, ohitp->hit_normal );
+	if( cosobliquity < 0.0 )
+		cosobliquity = -cosobliquity;
+	else 
+		{ 
+#ifdef DEBUG 
+		rt_log( "prntSeg: fixed flipped exit normal.\n" );
+		rt_log( "cosine of angle of obliquity is %12.9f\n",
+			cosobliquity );
+		rt_log( "\tregion name '%s' solid name '%s'\n",
+			cpp->pt_regionp->reg_name,
+			stp->st_name );
+#endif
+		ScaleVec( ohitp->hit_normal, -1.0 );
+		goto fixed_exit_normal;
+		}
+	exitangle = AproxEq( cosobliquity, 1.0, COS_TOL ) ?
+			0.0 : acos( cosobliquity ) * DEGRAD;
+	if( fprintf( shotlnfp,
+	       "%c % 8.2f % 7.3f % 7.3f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
+			PS_SHOT_INTERSECT,
+			ihitp->hit_dist*unitconv,
+					/* X'-coordinate of intersection */
+			sinfbangle,	/* sine of fallback angle */
+			rotangle,	/* rotation angle in degrees */
+			cpp->pt_regionp->reg_regionid,
+					/* component code number */
+			normthickness*unitconv,
+					/* normal thickness of component */
+			los,		/* LOS thickness of component */
+			space,		/* space code */
+			entryangle,	/* entry obliquity angle in degrees */
+			exitangle	/* exit obliquity angle in degrees */
+			) < 0
+		)
+		{
+		rt_log( "Write failed to file (%s)!\n", shotlnfile );
+		locPerror( "fprintf" );
+		exitCleanly( 1 );
+		}
+	return;
+	}
+
+/*
+	void prntRayHeader( fastf_t *raydir, fastf_t *shotdir, unsigned rayno )
+
+	Burst Point Library: information about burst ray.  All angles are
+	WRT the shotline coordinate system, represented by X', Y' and Z'.
+	Ref. Figure 20., Line Number 19 of ICD.
+ */
+void
+prntRayHeader( raydir, shotdir, rayno )
+fastf_t	*raydir;	/* burst ray direction vector */
+fastf_t *shotdir;	/* shotline direction vector */
+unsigned rayno;		/* ray number for this burst point */
+	{	double cosxr;	 /* cosine of angle between X' and raydir */
+		double cosyr;	 /* cosine of angle between Y' and raydir */
+		fastf_t azim;	 /* ray azim in radians */
+		fastf_t sinelev; /* sine of ray elevation */
+	if( outfile[0] == NUL )
+		return;
+	cosxr = -Dot( shotdir, raydir ); /* shotdir is reverse of X' */
+	cosyr = Dot( gridhor, raydir );
+	azim = atan2( cosyr, cosxr );
+	sinelev = Dot( gridver, raydir );
+	if(	fprintf( outfp,
+			"%c % 6.3f % 6.3f % 6u\n",
+			PB_RAY_HEADER,
+			azim,   /* ray azimuth angle WRT shotline (radians). */
+			sinelev, /* sine of ray elevation angle WRT shotline. */
+			rayno
+			) < 0
+		)
+		{
+		rt_log( "Write failed to file (%s)!\n", outfile );
+		locPerror( "fprintf" );
+		exitCleanly( 1 );
+		}
+	return;
+	}
+
+/*
+	void prntRegionHdr( struct application *ap, struct partition *pt_headp,
+				struct partition *pp )
+
+	Burst Point Libary: intersection along burst ray.
+	Ref. Figure 20., Line Number 20 of ICD.
+ */
+void
+prntRegionHdr( ap, pt_headp, pp )
+struct application *ap;
+struct partition *pt_headp;
+struct partition *pp;
+	{	fastf_t	cosobliquity;
+		fastf_t normthickness;
+		register struct hit *ihitp = pp->pt_inhit;
+		register struct hit *ohitp = pp->pt_outhit;
+		register struct region *regp = pp->pt_regionp;
+		register struct soltab	*stp = pp->pt_inseg->seg_stp;
+		register struct xray *rayp = &ap->a_ray;
+	/* fill in entry/exit normals and hit points */
+	RT_HIT_NORM( ihitp, stp, rayp );
+	Check_Iflip( pp, ihitp->hit_normal, rayp->r_dir );
+	stp = pp->pt_outseg->seg_stp;
+	RT_HIT_NORM( ohitp, stp, rayp );
+	Check_Oflip( pp, ohitp->hit_normal, rayp->r_dir );
+
+	/* calculate cosine of obliquity angle */
+fixed_normal:
+	cosobliquity = Dot( ap->a_ray.r_dir, ihitp->hit_normal );
+	if( cosobliquity < 0.0 )
+		cosobliquity = -cosobliquity;
+	else
+		{
+#if DEBUG
+		rt_log( "prntRegionHdr: fixed flipped entry normal.\n" );
+		rt_log( "region name '%s'\n", regp->reg_name );
+#endif
+		ScaleVec( ihitp->hit_normal, -1.0 );
+		goto    fixed_normal;
+		}
+#if DEBUG
+	if( cosobliquity - COS_TOL > 1.0 )
+		{
+		rt_log( "cosobliquity=%12.8f\n", cosobliquity );
+		rt_log( "normal=<%g,%g,%g>\n",
+			ihitp->hit_normal[X],
+			ihitp->hit_normal[Y],
+			ihitp->hit_normal[Z]
+			);
+		rt_log( "ray direction=<%g,%g,%g>\n",
+			ap->a_ray.r_dir[X],
+			ap->a_ray.r_dir[Y],
+			ap->a_ray.r_dir[Z]
+			);
+		rt_log( "region name '%s'\n", regp->reg_name );
+		}
+#endif
+	if( outfile[0] == NUL )
+		return;
+
+	
+	/* Now we must find normal thickness through component. */
+	normthickness = getNormThickness( ap, pp, cosobliquity );
+ 	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	if(	fprintf( outfp,
+			"%c % 10.3f % 9.3f % 9.3f %4d %4d % 6.3f\n",
+			PB_REGION_HEADER,
+			ihitp->hit_dist*unitconv, /* distance from burst pt. */
+			(ohitp->hit_dist - ihitp->hit_dist)*unitconv, /* LOS */
+			normthickness*unitconv,	  /* normal thickness */
+			pp->pt_forw == pt_headp ?
+				EXIT_AIR : pp->pt_forw->pt_regionp->reg_aircode,
+			regp->reg_regionid,
+			cosobliquity
+			) < 0
+		)
+		{
+		RES_RELEASE( &rt_g.res_syscall );	/* unlock */
+		rt_log( "Write failed to file (%s)!\n", outfile );
+		locPerror( "fprintf" );
+		exitCleanly( 1 );
+		}
+	RES_RELEASE( &rt_g.res_syscall );	/* unlock */
+	return;
+	}
+
+/*
+	fastf_t getNormThickness( struct application *ap, struct partition *pp,
+					fast_t cosobliquity )
+
+	Given a partition structure with entry hit point and normal filled in,
+	the current application structure and the cosine of the obliquity at
+	entry to the component, return the normal thickness through the
+	component at the given hit point.
+
+ */
+STATIC fastf_t
+getNormThickness( ap, pp, cosobliquity )
+register struct application *ap;
+register struct partition *pp;
+fastf_t cosobliquity;
+	{	struct application a_thick;
+		register struct hit *ihitp = pp->pt_inhit;
+		register struct region *regp = pp->pt_regionp;
+	a_thick = *ap;
+	a_thick.a_hit = f_Normal;
+	a_thick.a_miss = f_Nerror;
+	a_thick.a_level++;     
+	a_thick.a_uptr = regp->reg_name;
+	a_thick.a_user = regp->reg_regionid;
+	CopyVec( a_thick.a_ray.r_pt, ihitp->hit_point );
+	if( AproxEq( cosobliquity, 1.0, COS_TOL ) )
+		{ /* Trajectory was normal to surface, so no need
+			to shoot another ray.  We will use the
+			f_Normal routine to make sure we are
+			consistant in our calculations, even
+			though it requires some unnecessary vector
+			math. */
+		CopyVec( a_thick.a_ray.r_dir, ap->a_ray.r_dir );
+#ifdef DEBUG
+		rt_log( "getNormThickness: using existing partitions.\n" );
+#endif
+		(void) f_Normal( &a_thick, pp->pt_back );
+		} 
+	else     
+		{ /* need to shoot ray */
+#ifdef DEBUG
+		rt_log( "getNormThickness: ray tracing.\n" );
+#endif
+		Scale2Vec( ihitp->hit_normal, -1.0, a_thick.a_ray.r_dir );
+		if( rt_shootray( &a_thick ) == -1 && fatalerror )
+			{ /* Fatal error in application routine. */
+			rt_log( "Fatal error: raytracing aborted.\n" );
+			return	0.0;
+			}
+		}
+	return	a_thick.a_rbeam;
+	}
+
+/*
+	void prntShieldComp( struct application *ap, struct partition *pt_headp,
+				Pt_Queue *qp )
+ */
+void
+prntShieldComp( ap, pt_headp, qp )
+struct application *ap;
+struct partition *pt_headp;
+register Pt_Queue *qp;
+	{
+	if( outfile[0] == NUL )
+		return;
+	if( qp == PT_Q_NULL )
+		return;
+	prntShieldComp( ap, pt_headp, qp->q_next );
+	prntRegionHdr( ap, pt_headp, qp->q_part );
+	return;
+	}
 void
 prntColors( colorp, str )
 register Colors	*colorp;
 char	*str;
 	{
 	rt_log( "%s:\n", str );
-	for( colorp = colorp->c_next ; colorp != COLORS_NULL; colorp = colorp->c_next )
+	for(	colorp = colorp->c_next;
+		colorp != COLORS_NULL;
+		colorp = colorp->c_next )
 		{
 		rt_log( "\t%d..%d\t%d,%d,%d\n",
 			(int)colorp->c_lower,
@@ -289,7 +661,7 @@ register fastf_t *vec;
 	if( fprintf( gridfp, "%7.2f %7.2f\n", vec[X]*unitconv, vec[Y]*unitconv )
 		< 0 )
 		{
-		rt_log( "prntFiringCoords: Write failed to data file!\n" );
+		rt_log( "Write failed to file (%s)!\n", gridfile );
 		locPerror( "fprintf" );
 		exitCleanly( 1 );
 		}
@@ -307,28 +679,6 @@ int	x, y;
 			x, gridxfin, y, gridyfin
 			);
 	(void) fflush( stdout );
-	return;
-	}
-
-void
-prntHeaderInit()
-	{	long	clock;
-		char	*date;
-	if( outfile[0] == NUL )
-		return;
-	clock = time( (long *) 0 );
-	date = strtok( asctime( localtime( &clock ) ), "\n" );
-	if(	fprintf( outfp, "%c %-26s    %s\n",
-			P_HEADER_INIT,
-			date,
-			title
-			) < 0
-		)
-		{
-		rt_log( "prntHeaderInit: Write failed to data file!\n" );
-		locPerror( "fprintf" );
-		exitCleanly( 1 );
-		}
 	return;
 	}
 
@@ -375,71 +725,59 @@ register char	**menu;
 	return;
 	}
 
-/*	prntPhantom()
+/*
+	void prntPhantom( struct hit *hitp, int space, fastf_t los )
 
-	Output "phantom armor" pseudo component.
+	Output "phantom armor" pseudo component.  This component has no
+	surface normal or thickness, so many zero fields are used for
+	conformity with the normal component output formats.
  */
+/*ARGSUSED*/
 void
-prntPhantom( ap, space, los, ct )
-struct application		*ap;
-int				space;/* Space code behind phantom.	*/
-fastf_t				los;  /* LOS of space behind phantom.	*/
-int				ct;   /* Count of components hit.	*/
-	{	FILE	*fp = outfp;
-	if( outfile[0] == NUL )
-		return;
-	if(	fprintf( fp,
-			"%c %4d% 8.2f% 8.2f% 6.1f%3d% 8.2f%5d\n",
-			P_RAY_INTERSECT,
-			PHANTOM_ARMOR,	/* Special item code.		*/
-			0.0,		/* LOS through item.		*/
-			0.0,		/* Normal at entrance.		*/
-			0.0,		/* Obliquity.			*/
-			space,		/* Space code.			*/
-			los*unitconv,	/* LOS through space.		*/
-			ct		/* Cumulative count of items.	*/
+prntPhantom( hitp, space, los )
+struct hit *hitp;	/* ptr. to phantom's intersection information */
+int space;		/* space code behind phantom */
+fastf_t	los;		/* LOS of space */
+	{
+	if(	outfile[0] != NUL
+	    &&	fprintf( outfp,
+			"%c % 8.2f % 8.2f %4d % 7.3f % 7.3f % 7.3f\n",
+			PB_RAY_INTERSECT,
+			hitp->hit_dist*unitconv,
+				/* X' coordinate of intersection */
+			0.0,	/* LOS thickness of component */
+			PHANTOM_ARMOR, /* component code number */
+			0.0,	/* sine of fallback angle */
+			0.0,	/* rotation angle (degrees) */
+			0.0 /* cosine of obliquity angle at entry */
 			) < 0
 		)
 		{
-		rt_log( "prntPhantom: Write failed to data file!\n" );
+		rt_log( "Write failed to file!\n", outfile );
 		locPerror( "fprintf" );
 		exitCleanly( 1 );
 		}
-	return;
-	}
-
-void
-prntRegionHdr( ap, hitp, regp, nbar )
-register struct application	*ap;
-register struct hit		*hitp;
-struct region			*regp;
-int				nbar;
-	{	FILE	*fp = outfp;
-		fastf_t	sqrconvdist;
-	if( outfile[0] == NUL )
-		return;
-	sqrconvdist = hitp->hit_dist * unitconv;
-	sqrconvdist = Sqr( sqrconvdist );
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
-	if(	fprintf( fp,
-			"%c %4d% 10.3f% 10.3f% 10.3f% 10.3f%5d%6d\n",
-			P_REGION_HEADER,
-			regp->reg_regionid,
-			hitp->hit_point[X]*unitconv,
-			hitp->hit_point[Y]*unitconv,
-			hitp->hit_point[Z]*unitconv,
-			raysolidangle*sqrconvdist,
-			nbar,
-			ap->a_user /* Ray number.			*/
+	if(	shotlnfile[0] != NUL
+	    &&	fprintf( shotlnfp,
+	       "%c % 8.2f % 7.3f % 7.3f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
+			PS_SHOT_INTERSECT,
+			hitp->hit_dist*unitconv,
+					/* X'-coordinate of intersection */
+			0.0,		/* sine of fallback angle */
+			0.0,		/* rotation angle in degrees */
+			PHANTOM_ARMOR,	/* component code number */
+			0.0,		/* normal thickness of component */
+			0.0,		/* LOS thickness of component */
+			space,		/* space code */
+			0.0,		/* entry obliquity angle in degrees */
+			0.0		/* exit obliquity angle in degrees */
 			) < 0
 		)
 		{
-		RES_RELEASE( &rt_g.res_syscall );	/* unlock */
-		rt_log( "prntRegion_Header: Write failed to data file!\n" );
+		rt_log( "Write failed to file (%s)!\n", shotlnfile );
 		locPerror( "fprintf" );
 		exitCleanly( 1 );
 		}
-	RES_RELEASE( &rt_g.res_syscall );	/* unlock */
 	return;
 	}
 
@@ -486,147 +824,7 @@ va_dcl
 	return;
 	}
 
-/*	prntSeg()
 
-	Report info about each component hit along path of main
-	penetrator.
- */
-void
-prntSeg( ap, cpp, burst, space, los, ct )
-register struct application	*ap;
-register struct partition	*cpp; /* Component partition.		*/
-int				burst;/* Boolean - is this a burst pt.	*/
-int				space;
-fastf_t				los;
-int				ct;   /* Count of components hit.	*/
-	{	FILE			*fp = outfp;
-		fastf_t			cosobliquity;
-		register struct hit	*ihitp;
-		register struct soltab	*stp;
-		struct application	a_thick;
-
-	/* Fill in hit point and normal.				*/
-	stp = cpp->pt_inseg->seg_stp;
-	ihitp = cpp->pt_inhit;
-	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
-	
-	/* Check for flipped normal and fix.				*/
-	if( cpp->pt_inflip )
-		{
-		ScaleVec( ihitp->hit_normal, -1.0 );
-		cpp->pt_inflip = 0;
-		}
-	cosobliquity = Dot( ap->a_ray.r_dir, ihitp->hit_normal );
-	if( cosobliquity < 0.0 )
-		cosobliquity = -cosobliquity;
-#ifdef DEBUG
-	else
-		rt_log( "Entry normal backwards.\n" );
-#endif
-
-	if( outfile[0] == NUL )
-		return;
-
-	if( burst )
-		{
-		/* Now we must find normal thickness through component.	*/
-		a_thick = *ap;
-		a_thick.a_hit = f_Normal;
-		a_thick.a_miss = f_Nerror;
-		a_thick.a_level++;
-		CopyVec( a_thick.a_ray.r_pt, ihitp->hit_point );
-		Scale2Vec( ihitp->hit_normal, -1.0, a_thick.a_ray.r_dir );
-		if( rt_shootray( &a_thick ) == -1 && fatalerror )
-			{
-			/* Fatal error in application routine.	*/
-			rt_log( "Fatal error: raytracing aborted.\n" );
-			return;
-			}
-		CopyVec( ap->a_vvec,  a_thick.a_vvec );
-		}
-	else
-		a_thick.a_rbeam = 0.0;
-	if(	fprintf( fp,
-			"%c %4d% 8.2f% 8.2f% 6.1f%3d% 8.2f%5d\n",
-			P_RAY_INTERSECT,
-			cpp->pt_regionp->reg_regionid,
-				/* Item code.				*/
-			(cpp->pt_outhit->hit_dist-ihitp->hit_dist)*unitconv,
-				/* LOS through item.			*/
-			a_thick.a_rbeam*unitconv, /* Normal thickness.	*/
-			AproxEq( cosobliquity, 1.0, 0.01 ) ? 0.0 :
-				acos( cosobliquity )*DEGRAD,
-				/* Obliquity angle at entrance.		*/
-			space,		/* Space code.			*/
-			los*unitconv,	/* LOS through space.		*/
-			ct		/* Cumulative count of items.	*/
-			) < 0
-		)
-		{
-		rt_log( "prntSeg: Write failed to data file!\n" );
-		locPerror( "fprintf" );
-		exitCleanly( 1 );
-		}
-	return;
-	}
-
-void
-prntShieldComp( ap, rayp, qp )
-struct application	*ap;
-register struct xray	*rayp;
-register Pt_Queue	*qp;
-	{	FILE			*fp = outfp;
-		fastf_t			cosobliquity;
-		register struct hit	*ihitp;
-		register struct soltab	*stp;
-	if( outfile[0] == NUL )
-		return;
-	if( qp == PT_Q_NULL )
-		return;
-	prntShieldComp( ap, rayp, qp->q_next );
-
-	/* Fill in hit point and normal.				*/
-	stp = qp->q_part->pt_inseg->seg_stp;
-	ihitp = qp->q_part->pt_inhit;
-	RT_HIT_NORM( ihitp, stp, rayp );
-	
-	/* Check for flipped normal and fix.				*/
-	if( qp->q_part->pt_inflip )
-		{
-		ScaleVec( ihitp->hit_normal, -1.0 );
-		qp->q_part->pt_inflip = 0;
-		}
-	/* This SHOULD give negative of desired result, but make sure.	*/
-	cosobliquity = Dot( rayp->r_dir, ihitp->hit_normal );
-	if( cosobliquity < 0.0 )
-		cosobliquity = -cosobliquity;
-#ifdef DEBUG
-	else
-		rt_log( "Entry normal backwards.\n" );
-#endif
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
-	if(	fprintf( fp,
-			"%c %4d% 8.2f% 6.1f%4d\n",
-			P_SHIELD_COMP,
-			qp->q_part->pt_regionp->reg_regionid,
-				/* Region ident of shielding component.	*/
-			(qp->q_part->pt_outhit->hit_dist-ihitp->hit_dist)*unitconv,
-				/* Line-of-sight thickness of shield.	*/
-			AproxEq( cosobliquity, 1.0, 0.01 ) ? 0.0 :
-				acos( cosobliquity )*DEGRAD,
-				/* Obliquity angle of spall ray.	*/
-			qp->q_space
-			) < 0
-		)
-		{
-		RES_RELEASE( &rt_g.res_syscall );	/* unlock */
-		rt_log( "prntShieldComp: Write failed to data file!\n" );
-		locPerror( "fprintf" );
-		exitCleanly( 1 );
-		}
-	RES_RELEASE( &rt_g.res_syscall );	/* unlock */
-	return;
-	}
 
 /*
 	void	prntTimer( char *str )
@@ -706,7 +904,6 @@ Pt_Queue		**qpp;
 	RES_RELEASE( &rt_g.res_syscall );
 	newq->q_next = *qpp;
 	newq->q_part = pp;
-	newq->q_space = pp->pt_forw->pt_regionp->reg_aircode;
 	*qpp = newq;
 	return	1;
 	}

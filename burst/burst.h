@@ -9,37 +9,85 @@
  */
 #ifndef INCL_BURST
 #define INCL_BURST
-/* boolean types */
-typedef int	bool;
-#define true		1
-#define false		0
-#define success		0
-#define failure		1
+
+/* Some useful stuff from Doug Gwyn's std.h. */
+/* Extended data types */
+typedef int bool;			/* Boolean data */
+#define false	0
+#define true	1
+/* ANSI C definitions */
+/* Defense against some silly systems defining __STDC__ to random things. */
+#ifdef STD_C
+#undef STD_C
+#endif
+#ifdef __STDC__
+#if __STDC__ > 0
+#define STD_C   __STDC__                /* use this instead of __STDC__ */
+#endif
+#endif
+#if STD_C
+typedef void *pointer;			/* generic pointer */
+#else
+typedef char *pointer;			/* generic pointer */
+#define const		/* nothing */	/* ANSI C type qualifier */
+/* There really is no substitute for the following, but these might work: */
+#define signed          /* nothing */   /* ANSI C type specifier */
+#define volatile        /* nothing */   /* ANSI C type qualifier */
+#endif
+#ifndef EXIT_SUCCESS
+#define EXIT_SUCCESS	0
+#endif
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE	1
+#endif
+#define DEGRAD	57.2957795130823208767981548141051703324054724665642
+
 /* allow for SGI screw-up, the single-precision math libraries */
 #if defined( sgi ) && ! defined( mips )
-#define SINGLE_PRECISION true
+#define SINGLE_PRECISION 1
 #else
-#define SINGLE_PRECISION false
+#define SINGLE_PRECISION 0
 #endif
+
+/* allow for SGI screw-up, winclose() dumps core on some systems */
+#if defined(SGI4D_Rel2)
+#define SGI_WINCLOSE_BUG 1
+#else
+#define SGI_WINCLOSE_BUG 0
+#endif
+
+/* allow for BSD screw-up, declaring signal handlers as 'int' functions */
+#if STD_C || (defined(SYSV) && ! defined(cray))
+#define STD_SIGNAL_DECLS 1
+#else
+#define STD_SIGNAL_DECLS 0
+#endif
+
 /* menu configuration */
 #define MENU_LFT	1
 #define MENU_TOP	2
 #define MENU_MAXVISITEMS	10
+
 /* prompt line configuration */
 #define PROMPT_X	HmXPROMPT
 #define PROMPT_Y	HmYPROMPT
+
 /* banner (border) configuration */
 #define BORDER_CHR	'_'
 #define BORDER_Y	(PROMPT_Y+1)
+
 /* grid offset printing window */
 #define GRID_X		55	/* where grid indices are printed */
 #define GRID_Y		BORDER_Y
+
 /* scroll region configuration */
 #define SCROLL_TOP	(BORDER_Y+1)
 #define SCROLL_BTM	(ScLI-1) /* bottom line causes scroll */
+
 /* timer (cpu statistics) window configuration */
 #define TIMER_X		1
 #define TIMER_Y		1
+
 /* buffer sizes */
 #define LNBUFSZ		133	/* buffer for one-line messages */
 #define MAXDEVWID	1024	/* maximum width of frame buffer */
@@ -51,7 +99,7 @@ typedef int	bool;
 #define DFL_BARRIERS	100
 #define DFL_BDIST	0.0
 #define DFL_CELLSIZE	1.0
-#define DFL_CONEANGLE	90.0
+#define DFL_CONEANGLE	(45.0/DEGRAD)
 #define DFL_DEFLECT	false
 #define DFL_DITHER	false
 #define DFL_ELEVATION	0.0
@@ -61,6 +109,10 @@ typedef int	bool;
 #define DFL_UNITS	U_MILLIMETERS
 
 /* firing mode bit definitions */
+#define ASNBIT(w,b)	(w = (b))
+#define SETBIT(w,b)	(w |= (b))
+#define CLRBIT(w,b)	(w &= ~(b))
+#define TSTBIT(w,b)	((w)&(b))	
 #define FM_GRID  0	/* generate grid of shotlines */
 #define FM_DFLT	 FM_GRID
 #define FM_PART  (1)	/* bit 0: ON = partial envelope, OFF = full */
@@ -76,13 +128,15 @@ typedef int	bool;
 
 #define NOTIFY_DELIM	':'
 
-#define P_HEADER_INIT	'1'
-#define P_ASPECT_INIT	'2'
-#define P_CELL_IDENT	'3'
-#define P_RAY_INTERSECT	'4'
-#define P_BURST_HEADER	'5'
-#define P_REGION_HEADER	'6'
-#define P_SHIELD_COMP	'7'
+#define PB_ASPECT_INIT		'1'
+#define PB_CELL_IDENT		'2'
+#define PB_RAY_INTERSECT	'3'
+#define PB_RAY_HEADER		'4'
+#define PB_REGION_HEADER	'5'
+
+#define PS_ASPECT_INIT		'1'
+#define PS_CELL_IDENT		'2'
+#define PS_SHOT_INTERSECT	'3'
 
 #define TITLE_LEN	72
 #define TIMER_LEN	72
@@ -125,8 +179,9 @@ typedef int	bool;
 
 #define TWO_PI		6.28318530717958647692528676655900576839433879875022
 
-#define Epsilon		0.001
+#define COS_TOL		0.01
 #define LOS_TOL		0.1
+#define VEC_TOL		0.001
 #define OVERLAP_TOL	0.25	/* thinner overlaps not reported */
 #define EXIT_AIR	9	/* exit air is called 09 air */
 #define OUTSIDE_AIR	1	/* outside air is called 01 air */
@@ -178,9 +233,6 @@ typedef int	bool;
 		}
 #define Toggle(f)	(f) = !(f)
 
-/* stolen from Doug Gwyn's /vld/include/std.h */
-#define DEGRAD	57.2957795130823208767981548141051703324054724665642
-
 typedef struct ids	Ids;
 struct ids
 	{
@@ -203,7 +255,6 @@ struct colors
 typedef struct pt_queue	Pt_Queue;
 struct pt_queue
 	{
-	int			q_space;
 	struct partition	*q_part;
 	Pt_Queue		*q_next;
 	};

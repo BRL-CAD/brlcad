@@ -21,10 +21,11 @@ FBIO *fbiop = NULL;	/* frame buffer specific access from libfb */
 FILE *burstfp = NULL;	/* input stream for burst point locations */
 FILE *gridfp = NULL;	/* grid file output stream (2-d shots) */
 FILE *histfp = NULL;	/* histogram output stream (statistics) */
-FILE *outfp = NULL;	/* output stream */
+FILE *outfp = NULL;	/* burst point library output stream */
 FILE *plotfp = NULL;	/* 3-D UNIX plot stream (debugging) */
 FILE *shotfp = NULL;	/* input stream for shot positions */
-FILE *tmpfp = NULL;	/* temporary file for logging input */
+FILE *shotlnfp = NULL;	/* shotline file output stream */
+FILE *tmpfp = NULL;	/* temporary file output stream for logging input */
 HmMenu	*mainhmenu;
 Ids	airids;		/* burst air idents */
 Ids	armorids;	/* burst armor idents */
@@ -65,11 +66,12 @@ char gedfile[LNBUFSZ]={0};	/* MGED data base file name */
 char gridfile[LNBUFSZ]={0};	/* saved grid (2-d shots) file name */
 char histfile[LNBUFSZ]={0};	/* histogram file name (statistics) */
 char objects[LNBUFSZ]={0};	/* list of objects from MGED file */
-char outfile[LNBUFSZ]={0};	/* burst output file name */
+char outfile[LNBUFSZ]={0};	/* burst point library output file name */
 char plotfile[LNBUFSZ]={0};	/* 3-D UNIX plot file name (debugging) */
 char scrbuf[LNBUFSZ];		/* scratch buffer for temporary use */
 char scriptfile[LNBUFSZ]={0};	/* shell script file name */
 char shotfile[LNBUFSZ];		/* input file of firing coordinates */
+char shotlnfile[LNBUFSZ]={0};	/* shotline output file name */
 char title[TITLE_LEN];		/* title of MGED target description */
 char timer[TIMER_LEN];		/* CPU usage statistics */
 char tmpfname[TIMER_LEN];	/* temporary file for logging input */
@@ -112,6 +114,11 @@ fastf_t	viewelev = DFL_ELEVATION;
 fastf_t	pitch = 0.0;	/* elevation above path of main penetrator */
 fastf_t	yaw = 0.0;	/* deviation right of path of main penetrator */
 
+/* useful vectors */
+fastf_t xaxis[3] = { 1.0, 0.0, 0.0 };
+fastf_t zaxis[3] = { 0.0, 0.0, 1.0 };
+fastf_t negzaxis[3] = { 0.0, 0.0, -1.0 };
+
 int co;			/* columns of text displayable on video screen */
 int devwid;		/* width in pixels of frame buffer window */
 int devhgt;		/* height in pixels of frame buffer window */
@@ -138,7 +145,7 @@ int zoom = 1;		/* magnification factor on frame buffer */
 struct rt_i *rtip = RTI_NULL; /* model specific access from librt */
 
 /* signal handlers */
-#if defined( SYSV )
+#if STD_SIGNAL_DECLS
 void	(*norml_sig)();	/* active during interactive operation */
 void	(*abort_sig)(); /* active during ray tracing only */
 #else

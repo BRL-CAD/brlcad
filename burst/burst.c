@@ -8,30 +8,50 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+#ifndef DEBUG
+#define NDEBUG
+#define STATIC static
+#else
+#define STATIC
+#endif
+
+#include <assert.h>
+
 #include <stdio.h>
 #include <signal.h>
-#include <assert.h>
+
 #include "./burst.h"
 #include "./trie.h"
 #include "./ascii.h"
 #include "./extern.h"
-#define DEBUG_BURST	false
+
+#define DEBUG_BURST	0	/* 1 enables debugging for this module */
 
 /*
 	bool getCommand( char *name, char *buf, int len, FILE *fp )
 
-	Read next command line into 'buf' and stuff the command name
-	into 'name' from input stream 'fp'.
-	RETURN CODES: false for end-of-file, true for success.
+	Read next command line into buf and stuff the command name into name
+	from input stream fp.  buf must be at least len bytes long.
+
+	RETURN:	true for success
+
+		false for end of file 
  */
-_LOCAL_ bool
+STATIC bool
+#if STD_C
+getCommand( char *name, char *buf, int len, FILE *fp )
+#else
 getCommand( name, buf, len, fp )
 char *name;
 char *buf;
 int len;
 FILE *fp;
+#endif
 	{
-	assert( fp != (FILE *) NULL );
+	assert( name != NULL );
+	assert( buf != NULL );
+	assert( fp != NULL );
 	while( fgets( buf, len, fp ) != NULL )
 		if(	buf[0] != CHAR_COMMENT
 		     &&	sscanf( buf, "%s", name ) == 1
@@ -50,9 +70,13 @@ FILE *fp;
 
 	Initialize all signal handlers.
  */
-_LOCAL_ void
+STATIC void
+#if STD_C
+setupSigs( void )
+#else
 setupSigs()
-	{	register int	i;
+#endif
+	{	register int i;
 	for( i = 0; i < NSIG; i++ )
 		switch( i )
 			{
@@ -71,7 +95,7 @@ setupSigs()
 #else
 		case SIGCLD :
 #endif
-			break; /* Leave SIGCLD alone.			*/
+			break; /* leave SIGCLD alone */
 		case SIGPIPE :
 			(void) signal( i, SIG_IGN );
 			break;
@@ -94,13 +118,17 @@ setupSigs()
 
 	Parse program command line.
  */
-_LOCAL_ int
+STATIC int
+#if STD_C
+parsArgv( int argc, char **argv )
+#else
 parsArgv( argc, argv )
 int argc;
 char **argv;
-	{	register int	c;
-		extern int	optind;
-		extern char	*optarg;
+#endif
+	{	register int c;
+		extern int optind;
+		extern char *optarg;
 	/* Parse options.						*/
 	while( (c = getopt( argc, argv, "b" )) != EOF )
 		{
@@ -119,18 +147,22 @@ char **argv;
 /*
 	void readBatchInput( FILE *fp )
 
-	Read and execute commands from input stream 'fp'.
+	Read and execute commands from input stream fp.
  */
 void
+#if STD_C
+readBatchInput( FILE *fp )
+#else
 readBatchInput( fp )
-FILE	*fp;
+FILE *fp;
+#endif
 	{
 	assert( fp != (FILE *) NULL );
 	batchmode = true;
 	while( getCommand( cmdname, cmdbuf, LNBUFSZ, fp ) )
 		{	Func	*cmdfunc;
 		if( (cmdfunc = getTrie( cmdname, cmdtrie )) == NULL )
-			{	register int	i, len = strlen( cmdname );
+			{	register int i, len = strlen( cmdname );
 			rt_log( "ERROR -- command syntax:\n" );
 			rt_log( "\t%s\n", cmdbuf );
 			rt_log( "\t" );
@@ -152,10 +184,14 @@ FILE	*fp;
 /*
 	int main( int argc, char *argv[] )
  */
-_LOCAL_ int
+STATIC int
+#if STD_C
+main( int argc, char *argv[] )
+#else
 main( argc, argv )
 int argc;
 char *argv[];
+#endif
 	{
 #if ! defined( BSD ) && ! defined( sgi )
 	setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
@@ -168,21 +204,18 @@ char *argv[];
 		(void) fprintf( stderr,
 				"Write access denied for file (%s).\n",
 				tmpfname );
-		return	failure;
+		goto	death;
 		}
 	if( ! parsArgv( argc, argv ) )
 		{
 		prntUsage();
-		(void) unlink( tmpfname );
-		return	failure;
+		goto	clean;
 		}
 
 	setupSigs();
 	if( ! initUi() ) /* must be called before any output is produced */
-		{
-		(void) unlink( tmpfname );
-		return	failure;
-		}
+		goto	clean;
+
 #if DEBUG_BURST
 	prntTrie( cmdtrie, 0 );
 #endif
@@ -190,23 +223,28 @@ char *argv[];
 		readBatchInput( stdin );
 	if( tty )
 		(void) HmHit( mainhmenu );
-	exitCleanly( 0 );
-	return	success;
+	exitCleanly( EXIT_SUCCESS );
+clean:	(void) unlink( tmpfname );
+death:	return	EXIT_FAILURE;
 	}
 
 /*
-	void exitCleanly( int sig )
+	void exitCleanly( int code )
 
-	Should be only exit from program after success of 'initUi()'.
+	Should be only exit from program after success of initUi().
  */
 void
-exitCleanly( sig )
-int	sig;
+#if STD_C
+exitCleanly( int code )
+#else
+exitCleanly( code )
+int code;
+#endif
 	{
 	if( tty )
 		closeUi(); /* keep screen straight */
 	(void) fclose( tmpfp );
 	if( unlink( tmpfname ) == -1 )
 		locPerror( tmpfname );
-	exit( sig );
+	exit( code );
 	}

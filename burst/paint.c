@@ -9,16 +9,27 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define DEBUG_CELLFB	false
-#define DEBUG_SPALLFB	true
+#ifndef DEBUG
+#define NDEBUG
+#define STATIC static
+#else
+#define STATIC
+#endif
+
+#include <assert.h>
 
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./vecmath.h"
 #include "./extern.h"
+
+#define DEBUG_CELLFB	0
+#define DEBUG_SPALLFB	0
 
 /* Offset frame buffer coordinates to center of cell from grid lines. */
 #define CenterCell(b)	(b += round( (fastf_t) zoom / 2.0 ))
@@ -38,7 +49,7 @@ static int	gridymargin;
 	Returns the absolute value of 'a'.  Useful when a macro would
 	cause side-effects or redundant computation.
  */
-_LOCAL_ fastf_t
+STATIC fastf_t
 abs( a )
 fastf_t	a;
 	{

@@ -8,13 +8,24 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+#ifndef DEBUG
+#define NDEBUG
+#define STATIC static
+#else
+#define STATIC
+#endif
+
+#include <assert.h>
+
 #include <stdio.h>
+
 #include "./burst.h"
 #include "./trie.h"
 #include "./ascii.h"
 #include "./extern.h"
 
-_LOCAL_ Func	*matchTrie();
+STATIC Func *matchTrie();
 
 /*
 	Trie *addTrie( char *name, Trie **triepp )
@@ -25,9 +36,9 @@ _LOCAL_ Func	*matchTrie();
  */
 Trie	*
 addTrie( name, triepp )
-register char	*name;
-register Trie	**triepp;
-	{	register Trie	*curp;
+register char *name;
+register Trie **triepp;
+	{	register Trie *curp;
 	if( *name == NUL )
 		{ /* End of name, see if name already exists. */
 		if( *triepp == TRIE_NULL )
@@ -115,7 +126,7 @@ register Trie	*triep;
 
 #define MAX_TRIE_LEVEL	(32*16)
 
-_LOCAL_ Func	*
+STATIC Func	*
 matchTrie( triep )
 register Trie	*triep;
 	{	Func	*func;

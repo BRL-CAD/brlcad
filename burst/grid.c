@@ -9,20 +9,31 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define DEBUG_GRID	false
+#ifndef DEBUG
+#define NDEBUG
+#define STATIC static
+#else
+#define STATIC
+#endif
+
+#include <assert.h>
 
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <math.h>
-#include <assert.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./vecmath.h"
 #include "./ascii.h"
 #include "./extern.h"
+
+#define DEBUG_GRID	0
+#define DEBUG_SHOT	1
 
 /* local communication with multitasking process */
 static int currshot;	/* current shot index */
@@ -34,40 +45,37 @@ static fastf_t comphi;		/* angle between ring and cone axis */
 static fastf_t phiinc;		/* angle between concentric rings */
 
 static fastf_t cantdelta[3];	/* delta ray specified by yaw and pitch */
-static fastf_t xaxis[3] = { 1.0, 0.0, 0.0 };
-static fastf_t zaxis[3] = { 0.0, 0.0, 1.0 };
-static fastf_t negzaxis[3] = { 0.0, 0.0, -1.0 };
 	
-static struct application ag; /* global application structure */
+static struct application ag;	/* global application structure (zeroed out) */
 
 /* functions local to this module */
-_LOCAL_ bool doBursts();
-_LOCAL_ bool burstPoint();
-_LOCAL_ bool burstRay();
-_LOCAL_ bool gridShot();
-_LOCAL_ fastf_t	max();
-_LOCAL_ fastf_t	min();
-_LOCAL_ int f_BurstHit();
-_LOCAL_ int f_BurstMiss();
-_LOCAL_ int f_HushOverlap();
-_LOCAL_ int f_Overlap();
-_LOCAL_ int f_ShotHit();
-_LOCAL_ int f_ShotMiss();
-_LOCAL_ int getRayOrigin();
-_LOCAL_ int readBurst();
-_LOCAL_ int readShot();
-_LOCAL_ void consVector();
-_LOCAL_ void lgtModel();
-_LOCAL_ void view_end();
-_LOCAL_ void view_pix();
-_LOCAL_ void spallVec();
+STATIC bool doBursts();
+STATIC bool burstPoint();
+STATIC bool burstRay();
+STATIC bool gridShot();
+STATIC fastf_t	max();
+STATIC fastf_t	min();
+STATIC int f_BurstHit();
+STATIC int f_BurstMiss();
+STATIC int f_HushOverlap();
+STATIC int f_Overlap();
+STATIC int f_ShotHit();
+STATIC int f_ShotMiss();
+STATIC int getRayOrigin();
+STATIC int readBurst();
+STATIC int readShot();
+STATIC void consVector();
+STATIC void lgtModel();
+STATIC void view_end();
+STATIC void view_pix();
+STATIC void spallVec();
 
 /*
 	void colorPartition( register struct region *regp, int type )
 
 	If user has asked for a UNIX plot write a color command to
-	the output stream 'plotfp' which represents the region specified
-	by 'regp'.
+	the output stream plotfp which represents the region specified
+	by regp.
  */
 void
 colorPartition( regp, type )
@@ -129,10 +137,10 @@ int type;
 	This routine gets called when explicit burst points are being
 	input.  Crank through all burst points.  Return code of false
 	would indicate a failure in the application routine given to
-	'rt_shootray' or an error or EOF in getting the next set of
+	rt_shootray() or an error or EOF in getting the next set of
 	burst point coordinates.
  */
-_LOCAL_ bool
+STATIC bool
 doBursts()
 	{	bool			status = true;
 	noverlaps = 0;
@@ -140,7 +148,7 @@ doBursts()
 						gridModel() */
 	for( ; ! userinterrupt; view_pix( &ag ) )
 		{
-		if(	firemode & FM_FILE
+		if(	TSTBIT(firemode,FM_FILE)
 		    &&	(!(status = readBurst( burstpoint )) || status == EOF)
 			)
 			break;
@@ -152,7 +160,7 @@ doBursts()
 			rt_log( "Fatal error: raytracing aborted.\n" );
 			return	false;
 			}
-		if( !(firemode & FM_FILE) )
+		if( ! TSTBIT(firemode,FM_FILE) )
 			{
 			view_pix( &ag );
 			break;
@@ -168,7 +176,7 @@ doBursts()
 	Enforce the line-of-sight tolerance by deleting partitions that are
 	too thin.
  */
-_LOCAL_ void
+STATIC void
 enforceLOS( ap, pt_headp )
 register struct application	*ap;
 register struct partition	*pt_headp;
@@ -191,12 +199,12 @@ register struct partition	*pt_headp;
 
 	This routine handles all output associated with burst ray intersections.
 
-	RETURN CODES: -1 indicates a fatal error, and 'fatalerror' will be
+	RETURN CODES: -1 indicates a fatal error, and fatalerror will be
 	set to true.  A positive number is interpreted as the count of critical
 	component intersections.  A value of false would indicate that zero
 	critical components were encountered.
  */
-_LOCAL_ int
+STATIC int
 f_BurstHit( ap, pt_headp )
 struct application *ap;
 struct partition *pt_headp;
@@ -215,48 +223,33 @@ struct partition *pt_headp;
 		cpp != pt_headp && nbar <= nbarriers;
 		cpp = cpp->pt_forw
 		) 
-		{	register struct region	*regp = cpp->pt_regionp;
+		{	register struct region *regp = cpp->pt_regionp;
+			struct xray *rayp = &ap->a_ray;
 		if( Air( regp ) )
 			continue; /* Air doesn't matter here. */
 		if( findIdents( regp->reg_regionid, &critids ) )
-			{	register struct xray	*rayp = &ap->a_ray;
-				register struct hit	*hitp;
-			hitp = cpp->pt_inhit;
-			if( fbfile[0] != NUL && ncrit == 0 )
-				{	register struct soltab	*stp;
-				stp = cpp->pt_inseg->seg_stp;
-				RT_HIT_NORM( hitp, stp, rayp );
-				Check_Iflip( cpp, hitp->hit_normal,
-						rayp->r_dir );
-				rt_log( "f_BurstHit: pt=<%g,%g,%g> dir=<%g,%g,%g>\n",
-					ap->a_ray.r_pt[X],
-					ap->a_ray.r_pt[Y],
-					ap->a_ray.r_pt[Z],
-					ap->a_ray.r_dir[X],
-					ap->a_ray.r_dir[Y],
-					ap->a_ray.r_dir[Z] );
-				rt_log( "f_BurstHit: hit pt <%g,%g,%g> dist %g\n",
-					hitp->hit_point[X],
-					hitp->hit_point[Y],
-					hitp->hit_point[Z],
-					hitp->hit_dist );
-				lgtModel( ap, cpp, hitp, rayp );
-				}
-			else
-				{
-				VJOIN1( hitp->hit_point, rayp->r_pt,
-					hitp->hit_dist, rayp->r_dir );
-				}
-			prntRegionHdr( ap, hitp, regp, nbar );
-			hitp = cpp->pt_outhit;
-			VJOIN1( hitp->hit_point, rayp->r_pt,
-				hitp->hit_dist, rayp->r_dir );
+			{
+			if( ncrit == 0 )
+				prntRayHeader( ap->a_ray.r_dir, viewdir,
+						ap->a_user );
+			/* Output queued non-critical components. */
+			prntShieldComp( ap, pt_headp, qshield );
+			qFree( qshield );
+			qshield = PT_Q_NULL; /* queue empty */
+
+			/* Output critical component intersection;
+			   prntRegionHdr fills in hit entry/exit normals. */
+			prntRegionHdr( ap, pt_headp, cpp );
 			colorPartition( regp, C_CRIT );
-			plotPartition( cpp->pt_inhit, hitp, rayp, regp );
-			prntShieldComp( ap, rayp, qshield );
+			plotPartition( cpp->pt_inhit, cpp->pt_outhit,
+					rayp, regp );
+			if( fbfile[0] != NUL && ncrit == 0 )
+				/* first hit on critical component */
+				lgtModel( ap, cpp, cpp->pt_inhit, rayp );
 			ncrit++;
 			}
-		/* Add all components to list of shielding components. */
+		else
+		/* Queue up shielding components until we hit a critical one. */
 		if( cpp->pt_forw != pt_headp )
 			{
 			if( ! qAdd( cpp, &qshield ) )
@@ -282,7 +275,7 @@ struct partition *pt_headp;
 	of significant ones (at least as thick as OVERLAP_TOL).
  */
 /*ARGSUSED*/
-_LOCAL_ int
+STATIC int
 f_HushOverlap( ap, pp, reg1, reg2 )
 struct application	*ap;
 struct partition	*pp;
@@ -303,7 +296,7 @@ struct region		*reg1, *reg2;
 	that are at least as thick as OVERLAP_TOL.
  */
 /*ARGSUSED*/
-_LOCAL_ int
+STATIC int
 f_Overlap( ap, pp, reg1, reg2 )
 struct application	*ap;
 struct partition	*pp;
@@ -337,18 +330,17 @@ struct region		*reg1, *reg2;
 	This routine is called when a shotline hits the model.  All output
 	associated with the main penetrator path is printed here.  If line-
 	of-sight bursting is requested, burst point gridding is spawned by
-	a call to 'burstPoint' which dispatches the burst ray task 'burstRay',
+	a call to burstPoint() which dispatches the burst ray task burstRay(),
 	a recursive call to the ray tracer.
 
 	RETURN CODES: false would indicate a failure in an application routine
-	handed to 'rt_shootray' by 'burstRay'.  Otherwise, true is returned.
+	handed to rt_shootray() by burstRay().  Otherwise, true is returned.
  */
-_LOCAL_ int
+STATIC int
 f_ShotHit( ap, pt_headp )
 struct application *ap;
 struct partition *pt_headp;
 	{	register struct partition *pp;
-		register int		ct = 0; /* Cumulative count. */
 		struct partition	*bp = PT_NULL;
 #if DEBUG_GRID
 	rt_log( "f_ShotHit\n" );
@@ -479,9 +471,8 @@ struct partition *pt_headp;
 			rt_log( "\tphantom armor before internal air\n" );
 #endif
 
-			slos = pp->pt_outhit->hit_dist -
-					pp->pt_inhit->hit_dist;
-			prntPhantom( ap, regp->reg_aircode, slos, ++ct );
+			slos = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+			prntPhantom( pp->pt_inhit, regp->reg_aircode, slos );
 			}				
 		else
 		/* If we have a component, output it. */
@@ -496,8 +487,7 @@ struct partition *pt_headp;
 #if DEBUG_GRID
 				rt_log( "\t\tthere is a void, so outputting 01 air\n" );
 #endif
-				prntSeg( ap, pp, false,
-						OUTSIDE_AIR, los, ++ct );
+				prntSeg( ap, pp, OUTSIDE_AIR );
 				}
 			else
 			/* If air expicitly follows, output space code. */
@@ -514,26 +504,17 @@ struct partition *pt_headp;
 				    &&	findIdents( nregp->reg_aircode,
 							&airids )
 					)
-					{
 					bp = pp;
-					prntSeg( ap, pp, true,
-						 nregp->reg_aircode,
-						 slos, ++ct );
-					}
-				else
-					prntSeg( ap, pp, false,
-						 nregp->reg_aircode,
-						 slos, ++ct );
+				prntSeg( ap, pp, nregp->reg_aircode );
 				}
 			else
 			if( np == pt_headp )
 				{
 				/* Last component gets 09 air. */
 #if DEBUG_GRID
-				rt_log( "\t\tlast component, so outputting 09 air\n" );
+				rt_log( "\t\tlast component\n" );
 #endif
-				prntSeg( ap, pp, false,
-					 EXIT_AIR, 0.0, ++ct );
+				prntSeg( ap, pp, EXIT_AIR );
 				}
 			else
 			/* No air follows component. */
@@ -544,8 +525,9 @@ struct partition *pt_headp;
 #endif
 				/* Merge adjacent components with same
 					idents. */
-				np->pt_inhit->hit_dist =
-					pp->pt_inhit->hit_dist;
+				*np->pt_inhit = *pp->pt_inhit;
+				np->pt_inseg = pp->pt_inseg;
+				np->pt_inflip = pp->pt_inflip;
 				continue;
 				}
 			else
@@ -553,7 +535,7 @@ struct partition *pt_headp;
 #if DEBUG_GRID
 				rt_log( "\t\tdifferent component follows\n" );
 #endif
-				prntSeg( ap, pp, false, 0, 0.0, ++ct );
+				prntSeg( ap, pp, 0 ); /* component follows */
 				}
 			}
 		/* Check for adjacency of differing airs, implicit or
@@ -565,7 +547,7 @@ struct partition *pt_headp;
 #endif
 			/* Inside air followed by implicit outside air. */
 			if( voidflag )
-				prntPhantom( ap, OUTSIDE_AIR, los, ++ct );
+				prntPhantom( pp->pt_outhit, OUTSIDE_AIR, los );
 			}
 		/* Check next partition for adjacency problems. */
 		if( np != pt_headp )
@@ -581,8 +563,8 @@ struct partition *pt_headp;
 #if DEBUG_GRID
 				rt_log( "\t\tinside air follows impl. outside air\n" );
 #endif
-				prntPhantom( ap, nregp->reg_aircode,
-						slos, ++ct );
+				prntPhantom( np->pt_inhit, nregp->reg_aircode,
+						slos );
 				}
 			else
 			/* See if differing airs are adjacent. */
@@ -596,8 +578,8 @@ struct partition *pt_headp;
 #if DEBUG_GRID
 				rt_log( "\t\tdiffering airs are adjacent\n" );
 #endif
-				prntPhantom( ap, nregp->reg_aircode,
-						slos, ++ct );
+				prntPhantom( np->pt_inhit, nregp->reg_aircode,
+						slos );
 				}
 			}
 		/* Output phantom armor if internal air is last hit. */
@@ -606,7 +588,7 @@ struct partition *pt_headp;
 #if DEBUG_GRID
 			rt_log( "\tinternal air last hit\n" );
 #endif
-			prntPhantom( ap, EXIT_AIR, 0.0, ++ct );
+			prntPhantom( pp->pt_outhit, EXIT_AIR, 0.0 );
 			}
 		}
 	if( nriplevels == 0 )
@@ -620,7 +602,7 @@ struct partition *pt_headp;
 		if( bdist > 0.0 )
 			{ /* Exterior burst point (i.e. case-fragmenting
 				munition with contact-fuzed set-back device):
-				location is 'bdist' prior to entry point. */
+				location is bdist prior to entry point. */
 			VJOIN1( burstpt, bp->pt_inhit->hit_point, -bdist,
 				ap->a_ray.r_dir );
 			}
@@ -628,7 +610,7 @@ struct partition *pt_headp;
 		if( bdist < 0.0 )
 			{ /* Interior burst point (i.e. case-fragment
 				munition with delayed fuzing): location is
-				the magnitude of 'bdist' beyond the exit
+				the magnitude of bdist beyond the exit
 				point. */
 			VJOIN1( burstpt, bp->pt_outhit->hit_point, -bdist,
 				ap->a_ray.r_dir );
@@ -636,9 +618,7 @@ struct partition *pt_headp;
 		else	  /* Interior burst point: no fuzing offset. */
 			CopyVec( burstpt, bp->pt_outhit->hit_point );
 
-		prntBurstHdr( ap, bp, bp->pt_forw, burstpt );
-
-		/* only generate burst rays if 'nspallrays' is greater then
+		/* only generate burst rays if nspallrays is greater then
 			zero */
 		if( nspallrays < 1 )
 			return	true;
@@ -660,7 +640,7 @@ struct partition *pt_headp;
 	ground plane, else just arrange for appropriate background color for
 	debugging.
  */	
-_LOCAL_ int
+STATIC int
 f_ShotMiss( ap )
 register struct application *ap;
 	{
@@ -675,10 +655,14 @@ register struct application *ap;
 		if( ap->a_ray.r_pt[Z] <= -grndht )
 			/* Must be above ground to hit it from above. */
 			goto	missed_ground;
+		/* ground plane is grndht distance below the target origin */
 		hitpoint[Z] = -grndht;
-		dist = (ap->a_ray.r_pt[Z] + hitpoint[Z]) / ap->a_ray.r_dir[Z];
+		/* distance along ray from ray origin to ground plane */
+		dist = (hitpoint[Z] - ap->a_ray.r_pt[Z]) / ap->a_ray.r_dir[Z];
+		/* solve for X and Y intersection coordinates */
 		hitpoint[X] = ap->a_ray.r_pt[X] + ap->a_ray.r_dir[X]*dist;
 		hitpoint[Y] = ap->a_ray.r_pt[Y] + ap->a_ray.r_dir[Y]*dist;
+		/* check for limits of ground plane */
 		if(	hitpoint[X] <= grndfr && hitpoint[X] >= -grndbk
 		    &&	hitpoint[Y] <= grndlf && hitpoint[Y] >= -grndrt
 			) /* We have a hit. */
@@ -694,12 +678,15 @@ register struct application *ap;
 			else
 			if( bdist < 0.0 )
 				{ /* interior burst not implemented in ground */
-				rt_log( "User error: negative burst distance can not be specified with ground plane bursting.\n" );
+				rt_log( "User error: %s %s.\n",
+					"negative burst distance can not be",
+					"specified with ground plane bursting"
+					);
 				fatalerror = true;
 				return	-1;
 				}
 			/* else bdist == 0.0, no adjustment necessary */
-			/* only burst if 'nspallrays' greater than zero */
+			/* only burst if nspallrays greater than zero */
 			if( nspallrays > 0 )
 				return	burstPoint( ap, zaxis, hitpoint );
 			else
@@ -718,7 +705,7 @@ missed_ground :
 
 	Burst ray missed the model, so do nothing.
  */	
-_LOCAL_ int
+STATIC int
 f_BurstMiss( ap )
 register struct application *ap;
 	{
@@ -729,23 +716,23 @@ register struct application *ap;
 /*
 	int getRayOrigin( register struct application *ap )
 
-	This routine fills in the ray origin 'ap->a_ray.r_pt' by folding
+	This routine fills in the ray origin ap->a_ray.r_pt by folding
 	together firing mode and dithering options. By-products of this
-	routine include the grid offsets which are stored in 'ap->a_uvec',
-	2-digit random numbers (when opted) which are stored in 'ap->a_user',
-	and grid indices are stored in 'ap->a_x' and 'ap->a_y'.  Return
+	routine include the grid offsets which are stored in ap->a_uvec,
+	2-digit random numbers (when opted) which are stored in ap->a_user,
+	and grid indices are stored in ap->a_x and ap->a_y.  Return
 	codes are: false for failure to read new firing coordinates, or
 	true for success. 
  */
-_LOCAL_ int
+STATIC int
 getRayOrigin( ap )
 register struct application	*ap;
 	{	register fastf_t	*vec = ap->a_uvec;
 		fastf_t			gridyinc[3], gridxinc[3];
 		fastf_t			scalecx, scalecy;
-	if( firemode & FM_SHOT )
+	if( TSTBIT(firemode,FM_SHOT) )
 		{
-		if( firemode & FM_FILE )
+		if( TSTBIT(firemode,FM_FILE) )
 			{
 			switch( readShot( vec ) )
 				{
@@ -756,7 +743,7 @@ register struct application	*ap;
 			}
 		else	/* Single shot specified. */
 			CopyVec( vec, fire );
-		if( firemode & FM_3DIM )
+		if( TSTBIT(firemode,FM_3DIM) )
 			{	fastf_t	hitpoint[3];
 			/* Project 3-d hit-point back into grid space. */
 			CopyVec( hitpoint, vec );
@@ -812,6 +799,29 @@ gridInit()
 	notify( "Initializing grid", NOTIFY_APPEND );
 	rt_prep_timer();
 
+#if DEBUG_SHOT
+	if( TSTBIT(firemode,FM_BURST) )
+		rt_log( "gridInit: reading burst points.\n" );
+	else	{
+		if( TSTBIT(firemode,FM_SHOT) )
+			rt_log( "gridInit: shooting discrete shots.\n" );
+		else
+			rt_log( "gridInit: shooting %s.\n",
+				TSTBIT(firemode,FM_PART) ?
+				"partial envelope" : "full envelope" );
+		}
+	if( TSTBIT(firemode,FM_BURST) || TSTBIT(firemode,FM_SHOT) )
+		{
+		rt_log( "gridInit: reading %s coordinates from %s.\n",
+			TSTBIT(firemode,FM_3DIM) ? "3-d" : "2-d",
+			TSTBIT(firemode,FM_FILE) ? "file" : "command stream" );
+		
+		}
+	else
+	if( TSTBIT(firemode,FM_FILE) || TSTBIT(firemode,FM_3DIM) )
+		rt_log( "BUG: insane combination of fire mode bits:0x%x\n",
+			firemode );
+#endif
 	/* compute grid unit vectors */
 	gridRotate( viewazim, viewelev, 0.0, gridhor, gridver );
 
@@ -819,6 +829,9 @@ gridInit()
 		{	fastf_t	negsinyaw = -sin( yaw );
 			fastf_t	sinpitch = sin( pitch );
 			fastf_t	xdeltavec[3], ydeltavec[3];
+#if DEBUG_SHOT
+		rt_log( "gridInit: canting warhead\n" );
+#endif
 		cantwarhead = true;
 		Scale2Vec( gridhor,  negsinyaw, xdeltavec );
 		Scale2Vec( gridver,  sinpitch,  ydeltavec );
@@ -828,25 +841,32 @@ gridInit()
 	/* unit vector from origin of model toward eye */
 	consVector( viewdir, viewazim, viewelev );
 
+	/* reposition file pointers if necessary */
+	if( TSTBIT(firemode,FM_SHOT) && TSTBIT(firemode,FM_FILE) )
+		rewind( shotfp );
+	else
+	if( TSTBIT(firemode,FM_BURST) && TSTBIT(firemode,FM_FILE) )
+		rewind( burstfp );
+
 	/* Compute distances from grid origin (model origin) to each
 		border of grid, and grid indices at borders of grid.
 	 */
-	if( firemode & FM_SHOT && firemode & FM_FILE )
-		rewind( shotfp );
-	else
-	if( firemode & FM_BURST && firemode & FM_FILE )
-		rewind( burstfp );
-	if( ! (firemode & FM_PART) && ! (firemode & FM_BURST) )
+	if( ! TSTBIT(firemode,FM_PART) )
 		{	fastf_t modelmin[3];
 			fastf_t modelmax[3];
 		if( groundburst )
-			{
+			{ /* extend grid to include ground platform */
 			modelmax[X] = Max( rtip->mdl_max[X], grndfr );
 			modelmin[X] = Min( rtip->mdl_min[X], -grndbk );
 			modelmax[Y] = Max( rtip->mdl_max[Y], grndlf );
 			modelmin[Y] = Min( rtip->mdl_min[Y], -grndrt );
 			modelmax[Z] = rtip->mdl_max[Z];
 			modelmin[Z] = Min( rtip->mdl_min[Z], -grndht );
+			}
+		else
+			{ /* size grid by model RPP */
+			CopyVec( modelmin, rtip->mdl_min );
+			CopyVec( modelmax, rtip->mdl_max );
 			}
 		gridrt = max(	gridhor[X] * modelmax[X],
 				gridhor[X] * modelmin[X]
@@ -898,6 +918,12 @@ gridInit()
 		gridyorg--;
 		gridyfin++;
 		}
+#if DEBUG_SHOT
+	rt_log( "gridInit: xorg,xfin,yorg,yfin=%d,%d,%d,%d\n",
+		gridxorg, gridxfin, gridyorg, gridyfin );
+	rt_log( "gridInit: left,right,down,up=%g,%g,%g,%g\n",
+		gridlf, gridrt, griddn, gridup );
+#endif
 
 	/* compute stand-off distance */
 	standoff = max(	viewdir[X] * rtip->mdl_max[X],
@@ -937,7 +963,7 @@ gridModel()
 	ag.a_onehit = false;
 	ag.a_overlap = reportoverlaps ? f_Overlap : f_HushOverlap;
 	ag.a_rt_i = rtip;
-	if( ! (firemode & FM_BURST) )
+	if( ! TSTBIT(firemode,FM_BURST) )
 		{ /* set up for shot lines */
 		ag.a_hit = f_ShotHit;
 		ag.a_miss = f_ShotMiss;
@@ -959,7 +985,7 @@ gridModel()
 	rt_prep_timer();
 	notify( "Raytracing", NOTIFY_ERASE );
 
-	if( firemode & FM_BURST )
+	if( TSTBIT(firemode,FM_BURST) )
 		if( ! doBursts() )
 			return;
 		else
@@ -981,26 +1007,28 @@ endvu:	view_end();
 
 	This routine is the grid-level raytracing task; suitable for a
 	multi-tasking process.  Return code of false would indicate a
-	failure in the application routine given to 'rt_shootray' or an
+	failure in the application routine given to rt_shootray() or an
 	error or EOF in getting the next set of firing coordinates.
  */
-_LOCAL_ bool
+STATIC bool
 gridShot()
-	{	bool			status = true;
-		struct application	a;
+	{	bool status = true;
+		struct application a;
+	a = ag;
 	a.a_resource = RESOURCE_NULL;
-	a.a_hit = ag.a_hit;
-	a.a_miss = ag.a_miss;
-	a.a_overlap = ag.a_overlap;
-	a.a_rt_i = ag.a_rt_i;
-	a.a_onehit = ag.a_onehit;
+
+	assert( a.a_hit == ag.a_hit );
+	assert( a.a_miss == ag.a_miss );
+	assert( a.a_overlap == ag.a_overlap );
+	assert( a.a_rt_i == ag.a_rt_i );
+	assert( a.a_onehit == ag.a_onehit );
 	a.a_user = 0;
 	a.a_purpose = "shot line";
 	prntGridOffsets( gridxorg, gridyorg );
 	noverlaps = 0;
 	for( ; ! userinterrupt; view_pix( &a ) )
 		{
-		if( !(firemode & FM_SHOT) && currshot > lastshot )
+		if( ! TSTBIT(firemode,FM_SHOT) && currshot > lastshot )
 			break;
 		if( ! (status = getRayOrigin( &a )) || status == EOF )
 			break;
@@ -1015,7 +1043,7 @@ gridShot()
 			rt_log( "Fatal error: raytracing aborted.\n" );
 			return	false;
 			}
-		if( !(firemode & FM_FILE) && (firemode & FM_SHOT) )
+		if( ! TSTBIT(firemode,FM_FILE) && TSTBIT(firemode,FM_SHOT) )
 			{
 			view_pix( &a );
 			break;
@@ -1029,13 +1057,13 @@ gridShot()
 			struct hit *hitp, struct xray *rayp )
 
 	This routine is a simple lighting model which places RGB coefficients
-	(0 to 1) in 'ap->a_color' based on the cosine of the angle between
+	(0 to 1) in ap->a_color based on the cosine of the angle between
 	the surface normal and viewing direction and the color associated with
 	the component.  Also, the distance to the surface is placed in
-	'ap->a_cumlen' so that the impact location can be projected into grid
+	ap->a_cumlen so that the impact location can be projected into grid
 	space.
  */
-_LOCAL_ void
+STATIC void
 lgtModel( ap, pp, hitp, rayp )
 register struct application *ap;
 struct partition *pp;
@@ -1067,10 +1095,10 @@ struct xray *rayp;
 /*
 	fastf_t max( fastf_t a, fastf_t b )
 
-	Returns the maximum of 'a' and 'b'.  Useful when a macro would
+	Returns the maximum of a and b.  Useful when a macro would
 	cause side-effects or redundant computation.
  */
-_LOCAL_ fastf_t
+STATIC fastf_t
 max( a, b )
 fastf_t	a, b;
 	{
@@ -1080,10 +1108,10 @@ fastf_t	a, b;
 /*
 	fastf_t min( fastf_t a, fastf_t b )
 
-	Returns the minimum of 'a' and 'b'.  Useful when a macro would
+	Returns the minimum of a and b.  Useful when a macro would
 	cause side-effects or redundant computation.
  */
-_LOCAL_ fastf_t
+STATIC fastf_t
 min( a, b )
 fastf_t	a, b;
 	{
@@ -1094,11 +1122,11 @@ fastf_t	a, b;
 	int readBurst( register fastf_t *vec )
 
 	This routine reads the next set of burst point coordinates from the
-	input stream 'burstfp'.  Returns true for success, false for a format
+	input stream burstfp.  Returns true for success, false for a format
 	error and EOF for normal end-of-file.  If false is returned,
-	'fatalerror' will be set to true.
+	fatalerror will be set to true.
  */
-_LOCAL_ int
+STATIC int
 readBurst( vec )
 register fastf_t	*vec;
 	{	int	items;
@@ -1134,17 +1162,17 @@ register fastf_t	*vec;
 	int readShot( register fastf_t *vec )
 
 	This routine reads the next set of firing coordinates from the
-	input stream 'shotfp', using the format selected by the 'firemode'
+	input stream shotfp, using the format selected by the firemode
 	bitflag.  Returns true for success, false for a format error and EOF
-	for normal end-of-file.  If false is returned, 'fatalerror' will be
+	for normal end-of-file.  If false is returned, fatalerror will be
 	set to true.
  */
-_LOCAL_ int
+STATIC int
 readShot( vec )
 register fastf_t	*vec;
 	{
 	assert( shotfp != (FILE *) NULL );
-	if( !(firemode & FM_3DIM) ) /* absence of 3D flag means 2D */
+	if( ! TSTBIT(firemode,FM_3DIM) ) /* absence of 3D flag means 2D */
 		{	int	items;
 		/* read 2D firing coordinates from input stream */
 		if( (items =
@@ -1170,7 +1198,7 @@ register fastf_t	*vec;
 			}
 		}
 	else
-	if( firemode & FM_3DIM ) /* 3D coordinates */
+	if( TSTBIT(firemode,FM_3DIM) ) /* 3D coordinates */
 		{	int	items;
 		/* read 3D firing coordinates from input stream */
 		if( (items =
@@ -1208,7 +1236,7 @@ register fastf_t	*vec;
 /*
 	int round( fastf_t f )
 
-	RETURN CODES: the nearest integer to 'f'.
+	RETURN CODES: the nearest integer to f.
  */
 int
 round( f )
@@ -1279,9 +1307,9 @@ spallInit()
 	}
 
 /* To facilitate one-time per burst point initialization of the spall
-	ray application structure while leaving 'burstRay' with the
-	capability of being used as a multitasking process, 'a_burst' must
-	be accessible by both the 'burstPoint' and 'burstRay' routines, but
+	ray application structure while leaving burstRay() with the
+	capability of being used as a multitasking process, a_burst must
+	be accessible by both the burstPoint() and burstRay() routines, but
 	can be local to this module. */
 static struct application	a_burst; /* prototype spall ray */
 
@@ -1289,10 +1317,10 @@ static struct application	a_burst; /* prototype spall ray */
 	int burstPoint( register struct application *ap,
 			register fastf_t *normal, register fastf_t *bpt )
 
-	This routine dispatches the burst point ray tracing task 'burstRay'.
+	This routine dispatches the burst point ray tracing task burstRay().
 	RETURN CODES:	false for fatal ray tracing error, true otherwise.
  */
-_LOCAL_ bool
+STATIC bool
 burstPoint( ap, normal, bpt )
 register struct application *ap;
 register fastf_t *normal;
@@ -1301,10 +1329,10 @@ register fastf_t *bpt; /* burst point coordinates */
 	a_burst = *ap;
 	a_burst.a_miss = f_BurstMiss;
 	a_burst.a_hit = f_BurstHit;
-	a_burst.a_overlap = ap->a_overlap; /* shouldn't need this */
 	a_burst.a_level++;
 	a_burst.a_user = 0; /* ray number */
 	a_burst.a_purpose = "spall ray";
+	assert( a_burst.a_overlap == ap->a_overlap );
 	
 	/* If pitch or yaw is specified, cant the main penetrator
 		axis. */
@@ -1324,13 +1352,15 @@ register fastf_t *bpt; /* burst point coordinates */
 		}
 	CopyVec( a_burst.a_ray.r_pt, bpt );
 
+	/* prntBurstHdr( bpt ); XXX print something about burst point? */
+
 	comphi = 0.0; /* Initialize global for concurrent access. */
 		
 	/* SERIAL case -- one CPU does all the work. */
 	return	burstRay();
 	}
 
-_LOCAL_ bool
+STATIC bool
 burstRay()
 	{ /* Need local copy of all but readonly variables for concurrent
 		threads of execution. */
@@ -1395,7 +1425,7 @@ burstRay()
 	return	true;
 	}
 
-_LOCAL_ void
+STATIC void
 spallVec( dvec, s_rdir, phi, gamma )
 register fastf_t	*dvec, *s_rdir;
 fastf_t			phi, gamma;
@@ -1408,8 +1438,8 @@ fastf_t			phi, gamma;
 		fastf_t			fvec[3];
 		fastf_t			evec[3];
 
-	if(	AproxEqVec( dvec, zaxis, Epsilon )
-	    ||	AproxEqVec( dvec, negzaxis, Epsilon )
+	if(	AproxEqVec( dvec, zaxis, VEC_TOL )
+	    ||	AproxEqVec( dvec, negzaxis, VEC_TOL )
 		)
 		{
 		CopyVec( evec, xaxis );
@@ -1431,7 +1461,7 @@ fastf_t			phi, gamma;
 	Construct a direction vector out of azimuth and elevation angles
 	in radians, allocating storage for it and returning its address.
  */
-_LOCAL_ void
+STATIC void
 consVector( vec, azim, elev )
 register fastf_t	*vec;
 fastf_t	azim, elev;
@@ -1444,7 +1474,7 @@ fastf_t	azim, elev;
 	return;
 	}
 
-#if defined( SYSV )
+#if STD_SIGNAL_DECLS
 /*ARGSUSED*/
 void
 #else
@@ -1455,7 +1485,7 @@ int	sig;
 	{
 	(void) signal( SIGINT, abort_RT );
 	userinterrupt = 1;
-#if defined( SYSV )
+#if STD_SIGNAL_DECLS
 	return;
 #else
 	return	sig;
@@ -1464,9 +1494,9 @@ int	sig;
 
 /*	i p o w ( )
 	Integer exponent pow() function.
-	Returns 'd' to the 'n'th power.
+	Returns d to the nth power.
  */
-_LOCAL_ fastf_t
+STATIC fastf_t
 ipow( d, n )
 register fastf_t	d;
 register int	n;
@@ -1479,12 +1509,12 @@ register int	n;
 	}
 
 /*	v i e w _ p i x ( ) */
-_LOCAL_ void
+STATIC void
 view_pix( ap )
 register struct application	*ap;
 	{
 	RES_ACQUIRE( &rt_g.res_syscall );
-	if( ! (firemode & FM_BURST) )
+	if( ! TSTBIT(firemode,FM_BURST) )
 		prntGridOffsets( ap->a_x, ap->a_y );
 	if( tty )
 		prntTimer( NULL );
@@ -1493,7 +1523,7 @@ register struct application	*ap;
 	}
 
 /*	v i e w _ e n d ( ) */
-_LOCAL_ void
+STATIC void
 view_end()
 	{
 	if( gridfile[0] != NUL )
@@ -1504,13 +1534,8 @@ view_end()
 		(void) fflush( plotfp );
 	if( outfile[0] != NUL )
 		(void) fflush( outfp );
-	if(	fbfile[0] != NUL
-	     &&	(!(firemode & FM_SHOT) || (firemode & FM_FILE))
-		)
-		{
-		if( closFbDevice() )
-			fbiop = FBIO_NULL;
-		}
+	if( shotlnfile[0] != NUL )
+		(void) fflush( shotlnfp );
 	prntTimer( "view" );
 	if( noverlaps > 0 )
 		rt_log( "%d overlaps detected over %g mm thick.\n",
