@@ -114,14 +114,14 @@ extern char	*realloc();
 
 /* Acquire storage for a given struct, eg, BU_GETSTRUCT(ptr,structname); */
 #if __STDC__
-# define BU_GETSTRUCT(_p,_str) \
+#  define BU_GETSTRUCT(_p,_str) \
 	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), #_str " (getstruct)" )
-# define BU_GETUNION(_p,_unn) \
+#  define BU_GETUNION(_p,_unn) \
 	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), #_unn " (getunion)")
 #else
-# define BU_GETSTRUCT(_p,_str) \
+#  define BU_GETSTRUCT(_p,_str) \
 	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), "_str (getstruct)")
-# define BU_GETUNION(_p,_unn) \
+#  define BU_GETUNION(_p,_unn) \
 	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), "_unn (getunion)")
 #endif
 
@@ -132,17 +132,22 @@ extern char	*realloc();
  *  Macros to check and validate a structure pointer, given that
  *  the first entry in the structure is a magic number.
  */
-#define BU_CKMAG(_ptr, _magic, _str)	\
+#ifdef NO_BOMBING_MACROS
+#  define BU_CKMAG(_ptr, _magic, _str)
+#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)
+#else
+#  define BU_CKMAG(_ptr, _magic, _str)	\
 	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
 	    *((long *)(_ptr)) != (_magic) )  { \
 		bu_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 	}
-#define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
+#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
 	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
 	     *((long *)(_ptr)) != (_magic) )  { \
 		bu_badmagic_tcl( (_interp), (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 		return TCL_ERROR; \
 	}
+#endif
 
 /*
  *			B U _ A S S E R T
@@ -152,74 +157,92 @@ extern char	*realloc();
  *
  *  Example:		BU_ASSERT_LONG( j+7, <, 42 );
  */
-#ifdef __STDC__
-#define BU_ASSERT(_equation)	\
+#ifdef NO_BOMBING_MACROS
+#  define BU_ASSERT(_equation)
+#else
+#  ifdef __STDC__
+#    define BU_ASSERT(_equation)	\
 	if( !(_equation) )  { \
 		bu_log("BU_ASSERT( " #_equation " ) failed, file %s, line %d\n", \
 			__FILE__, __LINE__ ); \
 		bu_bomb("assertion failure\n"); \
 	}
-#else
-#define BU_ASSERT(_equation)	\
+#  else
+#    define BU_ASSERT(_equation)	\
 	if( !(_equation) )  { \
 		bu_log("BU_ASSERT( _equation ) failed, file %s, line %d\n", \
 			__FILE__, __LINE__ ); \
 		bu_bomb("assertion failure\n"); \
 	}
+#  endif
 #endif
 
-#ifdef __STDC__
-#define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
+#ifdef NO_BOMBING_MACROS
+#  define BU_ASSERT_PTR(_lhs,_relation,_rhs)
+#else
+#  ifdef __STDC__
+#    define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
 	if( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_PTR( " #_lhs #_relation #_rhs " ) failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs),\
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_PTR failure\n"); \
 	}
-#else
-#define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
+#  else
+#    define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
 	if( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_PTR( _lhs _relation _rhs ) failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs),\
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_PTR failure\n"); \
 	}
+#  endif
 #endif
 
-#ifdef __STDC__
-#define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
+
+#ifdef NO_BOMBING_MACROS
+#  define BU_ASSERT_LONG(_lhs,_relation,_rhs)
+#else
+#  ifdef __STDC__
+#    define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
 	if( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_LONG( " #_lhs #_relation #_rhs " ) failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs),\
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_LONG failure\n"); \
 	}
-#else
-#define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
+#  else
+#    define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
 	if( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_LONG( _lhs _relation _rhs ) failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs),\
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_LONG failure\n"); \
 	}
+#  endif
 #endif
 
-#ifdef __STDC__
-#define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
+
+#ifdef NO_BOMBING_MACROS
+#  define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)
+#else
+#  ifdef __STDC__
+#    define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
 	if( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_DOUBLE( " #_lhs #_relation #_rhs " ) failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
 			(double)(_lhs), (double)(_rhs),\
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_DOUBLE failure\n"); \
 	}
-#else
-#define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
+#  else
+#    define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
 	if( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_DOUBLE( _lhs _relation _rhs ) failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs),\
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_DOUBLE failure\n"); \
 	}
+#  endif
 #endif
 
 /*----------------------------------------------------------------------*/
@@ -616,29 +639,51 @@ struct bu_bitv {
 #define BU_BITS2WORDS(_nb)	(((_nb)+BITV_MASK)>>BITV_SHIFT)
 #define BU_WORDS2BITS(_nw)	((_nw)*sizeof(bitv_t)*8)
 
+#if 1
 #define BU_BITTEST(_bv,bit)	\
-	(((_bv)->bits[(bit)>>BITV_SHIFT] & (((bitv_t)1)<<((bit)&BITV_MASK)))?1:0)
+	(((_bv)->bits[(bit)>>BITV_SHIFT] & (((bitv_t)1)<<((bit)&BITV_MASK)))!=0)
+#else
+static __inline__ int BU_BITTEST(volatile void * addr, int nr)
+{
+        int oldbit;
+
+        __asm__ __volatile__(
+                "btl %2,%1\n\tsbbl %0,%0"
+                :"=r" (oldbit)
+                :"m" (addr),"Ir" (nr));
+        return oldbit;
+}
+#endif
+
 #define BU_BITSET(_bv,bit)	\
 	((_bv)->bits[(bit)>>BITV_SHIFT] |= (((bitv_t)1)<<((bit)&BITV_MASK)))
 #define BU_BITCLR(_bv,bit)	\
 	((_bv)->bits[(bit)>>BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BITV_MASK)))
 #define BU_BITV_ZEROALL(_bv)	\
-	{ bzero( (char *)((_bv)->bits), BU_BITS2BYTES( (_bv)->nbits ) ); }
+	{ memset( (char *)((_bv)->bits), 0, BU_BITS2BYTES( (_bv)->nbits ) ); }
 
 /* This is not done by default for performance reasons */
-#define BU_BITV_BITNUM_CHECK(_bv,_bit)	/* Validate bit number */ \
+#ifdef NO_BOMBING_MACROS
+#  define BU_BITV_BITNUM_CHECK(_bv,_bit)
+#else
+#  define BU_BITV_BITNUM_CHECK(_bv,_bit)	/* Validate bit number */ \
 	if( ((unsigned)(_bit)) >= (_bv)->nbits )  {\
 		bu_log("BU_BITV_BITNUM_CHECK bit number (%u) out of range (0..%u)\n", \
 			((unsigned)(_bit)), (_bv)->nbits); \
 		bu_bomb("process self-terminating\n");\
 	}
+#endif
 
-#define BU_BITV_NBITS_CHECK(_bv,_nbits)	/* Validate number of bits */ \
+#ifdef NO_BOMBING_MACROS
+#  define BU_BITV_NBITS_CHECK(_bv,_nbits)
+#else
+#  define BU_BITV_NBITS_CHECK(_bv,_nbits)	/* Validate number of bits */ \
 	if( ((unsigned)(_nbits)) > (_bv)->nbits )  {\
 		bu_log("BU_BITV_NBITS_CHECK number of bits (%u) out of range (> %u)", \
 			((unsigned)(_nbits)), (_bv)->nbits ); \
 		bu_bomb("process self-terminating"); \
 		}
+#endif
 
 
 /*

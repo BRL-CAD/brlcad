@@ -10,6 +10,21 @@
  * Right now, this include file has predetermined answers for every define.
  * Someday, it will be automatically generated.
  *
+ *	PRODUCTION
+ *		When defined with -D build option, this will enable mods to
+ *		parts of code that are gratuitous in a production 
+ *		environment.  For example, magic number checking is removed
+ *		as well as other macros that bu_bomb on a fatal error.  Note
+ *		that this option should not be used if remote debugging is
+ *		potentially desired.
+ *		
+ *		If defined, other flags are defined to do specific
+ *		optimizations.
+ *		
+ *		Another note, this assumes a bug-free build and should not
+ *		be set unless bug-free confidence is high.
+ *		
+ *
  *	USE_PROTOTYPES -
  *		When defined, this compiler will accept ANSI-C function
  *		prototypes, even if it isn't a full ANSI compiler.
@@ -186,7 +201,7 @@
 #	define HAVE_STDLIB_H	1
 #	define HAVE_STDARG_H	1
 #	define HAVE_STRING_H	1
-#	define bzero(str,n)		memset( str, '\0', n )
+#	define bzero(str,n)		memset( str, 0, n )
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
@@ -279,7 +294,7 @@
 #	define HAVE_TERMCAP_H	1
 #	define HAVE_SYS_MMAN_H	1
 #	define HAVE_LIMITS_H	1
-#	define HAVE_BZERO	1
+/*#	define HAVE_BZERO	1 -- faster to use memcpy */
 #	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
 
 #endif
@@ -482,6 +497,32 @@
 #if !defined(TK_FILE_COUNT) && !defined(TK_FILE_GPTR) && !defined(TK_FILE_READ_PTR) && !defined(TK_READ_DATA_PENDING)
 # define TK_FILE_COUNT _cnt
 #endif
+
+/*
+ * This section is intended to allow for a compile that trims off all non-critical
+ * runtime actions in order to give performance a boost.  The PRODUCTION flag should
+ * normally be passed in during compilation (e.g. -DPRODUCTION=1) on the command line, 
+ * though it could be hard-coded as desired here for any given platform.
+ * 
+ * Any combination of the different optimizations listed below may individually be 
+ * optionally turned off by commenting out the unwanted defines.
+ *
+ * NO_BOMBING_MACROS
+ *	turns off many macros in h/bu.h and h/bn.h that check a condition (such as a
+ *	magic number) and bu_bomb on failure.
+ * NO_MAGIC_CHECKING
+ *	turns off allocation of (some) variables and calls to check magic numbers
+ * NO_BADRAY_CHECKING
+ *	is a risky optimization to turn off checking in librt/shoot.c for bad rays 
+ *	passed in to the expensive shootray() routine.
+ ****************/
+#ifdef PRODUCTION
+#  define NO_BOMBING_MACROS	1	/* Don't do anything for macros that only bomb on a fatal error */
+#  define NO_MAGIC_CHECKING	1	/* Don't perform magic number checking */
+#  define NO_BADRAY_CHECKING	1	/* Don't check for divide by zero in rt (shoot.c/shootray())*/
+#  define NO_DEBUG_CHECKING	1	/* Don't use the rt_g.debug (h/raytrace.h) facilities */
+#endif
+
 
 #endif /* CONF_H */
 

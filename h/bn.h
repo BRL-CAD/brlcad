@@ -691,7 +691,7 @@ extern void bn_mathtab_constant();
 		bu_log("%s:%d value %d should be power of 2 (2^%d)\n", \
 			__FILE__, __LINE__, dimen, j); \
 		bu_bomb("CK_POW_2"); \
-	} \
+		}\
 }
 
 BU_EXTERN(void	bn_wlt_haar_1d_double_decompose, (double *tbuf, double *buf, \
@@ -894,14 +894,22 @@ struct bn_table {
 #define BN_TABLE_NULL	((struct bn_table *)NULL)
 
 /* Gets an bn_table, with x[] having size _nx+1 */
-#define BN_GET_TABLE(_table, _nx)  { \
+#ifndef NO_BOMBING_MACROS
+#  define BN_GET_TABLE(_table, _nx)  { \
 	if( (_nx) < 1 )  bu_bomb("RT_GET_TABLE() _nx < 1\n"); \
 	_table = (struct bn_table *)bu_calloc( 1, \
 		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
 		"struct bn_table" ); \
 	_table->magic = BN_TABLE_MAGIC; \
 	_table->nx = (_nx);  }
-
+#else
+#  define BN_GET_TABLE(_table, _nx)  { \
+	_table = (struct bn_table *)bu_calloc( 1, \
+		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
+		"struct bn_table" ); \
+	_table->magic = BN_TABLE_MAGIC; \
+	_table->nx = (_nx);  }
+#endif
 
 struct bn_tabdata {
 	long		magic;

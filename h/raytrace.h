@@ -620,14 +620,14 @@ struct partition {
 
 #define RT_DUP_PT(ip,new,old,res)	{ \
 	GET_PT(ip,new,res); \
-	bcopy((char *)(&(old)->RT_PT_MIDDLE_START), (char *)(&(new)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old) ); \
+	memcpy((char *)(&(new)->RT_PT_MIDDLE_START), (char *)(&(old)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old) ); \
 	(new)->pt_overlap_reg = NULL; \
 	bu_ptbl_cat( &(new)->pt_seglist, &(old)->pt_seglist );  }
 
 /* Clear out the pointers, empty the hit list */
 #define GET_PT_INIT(ip,p,res)	{\
 	GET_PT(ip,p,res); \
-	bzero( ((char *) &(p)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(p) ); }
+	memset( ((char *) &(p)->RT_PT_MIDDLE_START), 0, RT_PT_MIDDLE_LEN(p) ); }
 
 #define GET_PT(ip,p,res)   { \
 	if( BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
@@ -1462,7 +1462,7 @@ struct pixel_ext {
  *			A P P L I C A T I O N
  *
  *  This structure is the only parameter to rt_shootray().
- *  The entire structure should be zeroed (e.g. by bzero() ) before it
+ *  The entire structure should be zeroed (e.g. by memset(,0,) ) before it
  *  is used the first time.
  *
  *  When calling rt_shootray(), these fields are mandatory:
@@ -1501,7 +1501,7 @@ struct pixel_ext {
  *  you should create a zeroed-out structure, and then assign the intended
  *  values at runtime.  A zeroed structure can be obtained at compile
  *  time with "static const struct application zero_ap;", or at run time
- *  by using "bzero( (char *)ap, sizeof(struct application) );" or
+ *  by using "memset( (char *)ap, 0, sizeof(struct application) );" or
  *  bu_calloc( 1, sizeof(struct application), "application" );
  *  While this practice may not work on machines where "all bits off"
  *  does not signify a floating point zero, BRL-CAD does not support any
@@ -1560,13 +1560,18 @@ struct application  {
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
 #define RT_CK_AP_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,RT_AP_MAGIC,"struct application")
 #define RT_APPLICATION_INIT(_p)	{ \
-		bzero( (char *)(_p), sizeof(struct application) ); \
+		memset( (char *)(_p), 0, sizeof(struct application) ); \
 		(_p)->a_magic = RT_AP_MAGIC; \
 	}
 
-#define RT_AP_CHECK(_ap)	\
+
+#ifdef NO_BOMBING_MACROS
+#  define RT_AP_CHECK(_ap)
+#else
+#  define RT_AP_CHECK(_ap)	\
 	{if((_ap)->a_zero1||(_ap)->a_zero2) \
 		rt_bomb("corrupt application struct"); }
+#endif
 
 /*
  *			R T _ G
@@ -2252,7 +2257,10 @@ struct ray_data {
 #define MISS 0	/* a miss on the face */
 
 
-#define nmg_rt_bomb(rd, str) { \
+#ifdef NO_BOMBING_MACROS
+#  define nmg_rt_bomb(rd, str)
+#else
+#  define nmg_rt_bomb(rd, str) { \
 	bu_log("%s", str); \
 	if (rt_g.NMG_debug & DEBUG_NMGRT) rt_bomb("End of diagnostics"); \
 	BU_LIST_INIT(&rd->rd_hit); \
@@ -2261,6 +2269,8 @@ struct ray_data {
 	nmg_isect_ray_model(rd); \
 	(void) nmg_ray_segs(rd); \
 	rt_bomb("Should have bombed before this\n"); }
+#endif
+
 
 struct nmg_radial {
 	struct bu_list	l;
