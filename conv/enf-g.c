@@ -340,13 +340,17 @@ Make_brlcad_names( struct obj_info *part )
 	bu_vls_init( &vls );
 
 	/* make a copy of object name, then make it a legal BRL-CAD name */
-	tmp_name = bu_strdup( part->obj_name );
-	ptr = tmp_name;
-	while( *ptr != '\0' ) {
-		if( !isalnum( *ptr ) ) {
-			*ptr = '_';
+	if( strlen( part->obj_name ) < 1 ) {
+		tmp_name = bu_strdup( "s.1" );
+	} else {
+		tmp_name = bu_strdup( part->obj_name );
+		ptr = tmp_name;
+		while( *ptr != '\0' ) {
+			if( !isalnum( *ptr ) ) {
+				*ptr = '_';
+			}
+			ptr++;
 		}
-		ptr++;
 	}
 
 	if( part->obj_type == PART_TYPE ) {
@@ -661,9 +665,13 @@ main( int argc, char *argv[] )
 		} else if( !strncmp( line, "TopAssemblies", 13 ) ) {
 			bu_log( "Top level assemblies: %s", &line[14] );
 			top_level_assem_count = atoi( &line[14] );
-			top_level_assems = (struct obj_info **)bu_calloc( top_level_assem_count,
+			if( top_level_assem_count < 1 ) {
+				top_level_assems = (struct obj_info **)NULL;
+			} else {
+				top_level_assems = (struct obj_info **)bu_calloc( top_level_assem_count,
 									 sizeof( struct obj_info * ),
 									 "top_level_assems" );
+			}
 		} else if( !strncmp( line, "PartCount", 9 ) ) {
 			bu_log( "Part count: %s", &line[10] );
 		} else if( !strncmp( line, "AssemblyId", 10 ) ) {
