@@ -294,7 +294,7 @@ CONST struct rt_tol	*tol;
     			rt_log("\t\tThe point is ON the edge, calling joint_hitmiss2()\n");
     		}
    		joint_hitmiss2(closest, eu, pt, code);
-    		goto out;
+		return;
     	} else {
     		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 			rt_log("\t\tThe point is not on the edge\n");
@@ -316,18 +316,16 @@ CONST struct rt_tol	*tol;
 	VUNITIZE(euvect);
 
     	/* Get vector which lies on the plane, and points
-    	 * left, towards the interior of the CCW loop.
+    	 * left, towards the interior of the loop, regardless of
+	 * whether it's an interior (OT_OPPOSITE) or exterior (OT_SAME) loop.
     	 */
     	VCROSS( left, norm, euvect );	/* left vector */
-	if(eu->up.lu_p->orientation == OT_OPPOSITE )  {
-		if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("\t\tReversing left vec\n");
-		VREVERSE(left, left);
-	} else if(eu->up.lu_p->orientation != OT_SAME )  {
-		rt_bomb("nmg_class_pt_e() bad lu orientation\n");
-	}
 
 	VSUB2(ptvec, pt, pca);		/* pt - pca */
-    	if (rt_g.NMG_debug & DEBUG_CLASSIFY) VPRINT("\t\tptvec unnorm", ptvec);
+    	if (rt_g.NMG_debug & DEBUG_CLASSIFY)  {
+		VPRINT("\t\tptvec unnorm", ptvec);
+    		VPRINT("\t\tleft", left);
+    	}
 	VUNITIZE( ptvec );
 
 	dot = VDOT(left, ptvec);
@@ -418,6 +416,10 @@ CONST struct rt_tol	*tol;
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 			rt_log("\tPoint is outside loop RPP\n");
 		return;
+	}
+	if( lu->orientation != OT_SAME )  {
+		/* Now what? */
+		rt_log("nmg_class_pt_l(lu=x%x) WARNING orientation=%s\n", lu, nmg_orientation(lu->orientation) );
 	}
 	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -919,21 +921,29 @@ CONST struct rt_tol	*tol;
 	 */
 	for(RT_LIST_FOR(vup, vertexuse, &vu->v_p->vu_hd)) {
 
-		if (*vup->up.magic_p == NMG_LOOPUSE_MAGIC &&
-		    nmg_find_s_of_lu(vup->up.lu_p) == sB) {
+		if (*vup->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+			if( nmg_find_s_of_lu(vup->up.lu_p) != sB) continue;
 		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], 
 		    		vu->v_p );
-		    	reason = "other loopuse of vertex is on shell";
+		    	reason = "a loopuse of vertex is on shell";
 		    	status = ON_SURF;
 			goto out;
-		}
-		else if (*vup->up.magic_p == NMG_EDGEUSE_MAGIC &&
-		    nmg_find_s_of_eu(vup->up.eu_p) == sB) {
+		} else if (*vup->up.magic_p == NMG_EDGEUSE_MAGIC )  {
+			if( nmg_find_s_of_eu(vup->up.eu_p) != sB) continue;
 		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 		    		vu->v_p );
-		    	reason = "other edgeuse of vertex is on shell";
+		    	reason = "an edgeuse of vertex is on shell";
 		    	status = ON_SURF;
 			goto out;
+		} else if( *vup->up.magic_p == NMG_SHELL_MAGIC )  {
+			if( vup->up.s_p != sB ) continue;
+		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
+		    		vu->v_p );
+		    	reason = "vertex is shell's lone vertex";
+		    	status = ON_SURF;
+			goto out;
+		} else {
+			rt_bomb("class_vu_vs_s() bad vertex UP pointer\n");
 		}
 	}
 
@@ -969,7 +979,6 @@ CONST struct rt_tol	*tol;
 		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], vu->v_p);
 		status = INSIDE;
 	}  else if( class == NMG_CLASS_AonBshared )  {
-		/* XXX what about corner of a cube touching inside the face of another cube? */
 		rt_bomb("class_vu_vs_s:  classifier found point ON, vertex topology should have been shared\n");
 	}  else  {
 		rt_log("class=%s\n", nmg_class_name(class) );
