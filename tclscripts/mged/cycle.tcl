@@ -54,9 +54,13 @@ proc check_cycle { ancestors comb } {
 
 	# recurse for each combination referred to by this combination
 	foreach desc [get_refs "" [bu_get_value_by_keyword tree $comb_all]] {
-		if { [string compare [lindex [db get $desc] 0] "comb"] == 0 } {
-			if { [check_cycle $ancestors $desc] == 1 } {
-				return 1
+		# if this reference does not support the "db get" interface,
+		# then it is not a combination
+		if { [catch {db get $desc} tcl_desc] == 0 } {
+		if { [string compare [lindex $tcl_desc 0] "comb"] == 0 } {
+				if { [check_cycle $ancestors $desc] == 1 } {
+					return 1
+				}
 			}
 		}
 	}
