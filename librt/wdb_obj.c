@@ -7016,6 +7016,77 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 
 		/* avs is freed by db5_replace_attributes() */
 		return TCL_OK;
+	} else if( strcmp( argv[1], "show" ) == 0 ) {
+		struct bu_vls vls;
+		int max_attr_name_len=0;
+		int tabs1=0;
+
+		/* pretty print */
+		bu_vls_init( &vls );
+		if( dp->d_flags & DIR_COMB ) {
+			if( dp->d_flags & DIR_REGION ) {
+				bu_vls_printf( &vls, "%s region:\n", argv[2] );
+			} else {
+				bu_vls_printf( &vls, "%s combination:\n", argv[2] );
+			}
+		} else if( dp->d_flags & DIR_SOLID ) {
+			bu_vls_printf( &vls, "%s %s:\n", argv[2],
+				       rt_functab[dp->d_minor_type].ft_label );
+		} else {
+		    switch( dp->d_major_type ) {
+			case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
+				bu_vls_printf( &vls, "%s global:\n", argv[2] );
+				break;
+			case DB5_MAJORTYPE_BINARY_EXPM:
+				bu_vls_printf( &vls, "%s binary(expm):\n", argv[2] );
+				break;
+			case DB5_MAJORTYPE_BINARY_MIME:
+				bu_vls_printf( &vls, "%s binary(mime):\n", argv[2] );
+				break;	
+			case DB5_MAJORTYPE_BINARY_UNIF:
+				bu_vls_printf( &vls, "%s %s:\n", argv[2],
+					       binu_types[dp->d_minor_type] );
+				break;	
+			}
+		}
+		avpp = avs.avp;
+		for( i=0 ; i < avs.count ; i++, avpp++ ) {
+			int len;
+
+			len = strlen( avpp->name );
+			if( len > max_attr_name_len ) {
+				max_attr_name_len = len;
+			}
+		}
+		tabs1 = 2 + max_attr_name_len/8;
+		avpp = avs.avp;
+		for( i=0 ; i < avs.count ; i++, avpp++ ) {
+			const char *c;
+			int tabs2;
+			int k;
+			int len;
+
+			bu_vls_printf( &vls, "\t%s", avpp->name );
+			len = strlen( avpp->name );
+			tabs2 = tabs1 - 1 - len/8;
+			for( k=0 ; k<tabs2 ; k++ ) {
+				bu_vls_putc( &vls, '\t' );
+			}
+			c = avpp->value;
+			while( *c ) {
+				bu_vls_putc( &vls, *c );
+				if( *c == '\n' ) {
+					for( k=0 ; k<tabs1 ; k++ ) {
+						bu_vls_putc( &vls, '\t' );
+					}
+				}
+				c++;
+			}
+			bu_vls_putc( &vls, '\n' );
+		}
+		Tcl_AppendResult(interp, bu_vls_addr( &vls ), (char *)NULL );
+		bu_vls_free( &vls );
+		return TCL_OK;
 	} else {
 		struct bu_vls vls;
 
