@@ -173,7 +173,7 @@ set mged_help_data(qorot)	{{x y z dx dy dz theta}	{rotate object being edited ab
 set mged_help_data(qvrot)	{{dx dy dz theta}	{set view from direction vector and twist angle}}
 set mged_help_data(r)		$helplib_data(wdb_region)
 set mged_help_data(rcc-blend)	{{rccname newname thickness [b|t]}	{create a blend at an end of an rcc}}
-set mged_help_data(rcc-cap)     {{rccname newname [height] [b|t]}      {create a cap at an end of an rcc}}
+set mged_help_data(rcc-cap)     {{rccname newname [height] [b|t]}      {create a cap (ell) at an end of an rcc}}
 set mged_help_data(rcc-tgc)     {{rccname newname x y z [b|t]}     {create a tgc with the specified apex at an end of an rcc}}
 set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc}}
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
