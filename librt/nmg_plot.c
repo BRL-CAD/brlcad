@@ -2175,20 +2175,86 @@ CONST struct vertexuse		*vu1, *vu2;
 	m = nmg_find_model((long *)lu);
 	sprintf(buf, "loop%d.pl", num++ );
 
-	fp = fopen(buf, "w");
+	if( (fp = fopen(buf, "w")) == NULL )  {
+		perror(buf);
+		return;
+	}
 	b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]" );
 	nmg_pl_lu(fp, lu, b, 255, 0, 0);
 
-	/* A yellow line for the ray.  Overshoot edge by +/-10%, for visibility. */
+	/*
+	 *  Two yellow lines for the ray.
+	 *  Overshoot edge by +/-10%, for visibility.
+	 *  Don't draw over top of the actual edge, it might hide verts.
+	 */
 	pl_color(fp, 255, 255, 0);
 	VSUB2( dir, vu2->v_p->vg_p->coord, vu1->v_p->vg_p->coord );
 	VJOIN1( p1, vu1->v_p->vg_p->coord, -0.1, dir );
+	pdv_3line(fp, p1, vu1->v_p->vg_p->coord );
 	VJOIN1( p2, vu1->v_p->vg_p->coord,  1.1, dir );
-	pdv_3line(fp, p1, p2 );
+	pdv_3line(fp, vu2->v_p->vg_p->coord, p2 );
 
 	fclose(fp);
 	rt_log("wrote %s\n", buf);
 	rt_free( (char *)b, "nmg_face_lu_plot flag[]" );
+}
+
+/*
+ *			N M G _ P L O T _ L U _ R A Y
+ *
+ *  Plot the loop, a ray from vu1 to vu2, and the left vector.
+ */
+void
+nmg_plot_lu_ray( lu, vu1, vu2, left )
+CONST struct loopuse		*lu;
+CONST struct vertexuse		*vu1, *vu2;
+CONST vect_t			left;
+{
+	FILE	*fp;
+	struct model	*m;
+	long		*b;
+	char		buf[128];
+	static int	num = 0;
+	vect_t		dir;
+	point_t		p1, p2;
+	fastf_t		left_mag;
+
+	if(!(rt_g.NMG_debug&DEBUG_PLOTEM)) return;
+
+	NMG_CK_LOOPUSE(lu);
+	NMG_CK_VERTEXUSE(vu1);
+	NMG_CK_VERTEXUSE(vu2);
+
+	m = nmg_find_model((long *)lu);
+	sprintf(buf, "loop%d.pl", num++ );
+
+	if( (fp = fopen(buf, "w")) == NULL )  {
+		perror(buf);
+		return;
+	}
+	b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_plot_lu_ray flag[]" );
+	nmg_pl_lu(fp, lu, b, 255, 0, 0);
+
+	/*
+	 *  Two yellow lines for the ray, and a third for the left vector.
+	 *  Overshoot edge by +/-10%, for visibility.
+	 *  Don't draw over top of the actual edge, it might hide verts.
+	 */
+	pl_color(fp, 255, 255, 0);
+	VSUB2( dir, vu2->v_p->vg_p->coord, vu1->v_p->vg_p->coord );
+	VJOIN1( p1, vu1->v_p->vg_p->coord, -0.1, dir );
+	pdv_3line(fp, p1, vu1->v_p->vg_p->coord );
+	VJOIN1( p2, vu1->v_p->vg_p->coord,  1.1, dir );
+	pdv_3line(fp, vu2->v_p->vg_p->coord, p2 );
+
+	/* The left vector */
+	left_mag = 0.1 * MAGNITUDE(dir);
+	VJOIN1( p2, p1, left_mag, left );
+	pdv_3line(fp, p1, p2);
+
+	fclose(fp);
+	rt_log("wrote %s\n", buf);
+	rt_free( (char *)b, "nmg_plot_lu_ray flag[]" );
 }
 
 /*
