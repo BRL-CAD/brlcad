@@ -43,7 +43,7 @@
 export PATH || (sh $0 $*; kill $$)
 
 # A major efficiency for machines running Doug Gwyn's SysV-under-BSD software.
-PATH=$PATH:/usr/5bin
+PATH=/bin:/usr/bin:/usr/5bin:$PATH
 
 ARG="$1"
 
