@@ -1,16 +1,13 @@
 BRL-CAD Bugs
 ============
 
-Bugs should be reported to the bug tracker on SourceForge at
-http://sourceforge.net/tracker/?atid=640802&group_id=105292
-
 The bugs and issues listed in here may or may not be the same as or
 related to the bugs reported to the bug tracker.  In general, users
 should not look to this file for information regarding the status of
-bugs -- the SourceForge bug tracker should be used.  Informal
-bug-related information that is intended for developers will generally
-be found herein.  This may include short term issues that are in
-active development as well as long term and on-going issues.
+bugs.  Informal bug-related information that is intended for
+developers will generally be found herein.  This may include short
+term issues that are in active development as well as long term and
+on-going issues.
 
 Recent Bugs
 -----------
