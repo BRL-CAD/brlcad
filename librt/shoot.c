@@ -47,6 +47,8 @@ char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991 by the United States 
 
 struct resource rt_uniresource;		/* Resources for uniprocessor */
 
+extern void	rt_plot_cell();		/* at end of file */
+
 #ifdef CRAY
 #define AUTO register
 #else
@@ -680,7 +682,7 @@ register struct application *ap;
 	RT_RESOURCE_CHECK(resp);
 	ss.resp = resp;
 
-	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
+	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
 		bu_log_indent_delta(2);
 		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			resp->re_cpu,
@@ -1063,6 +1065,7 @@ hitit:
 	 *  finished_segs is only used by special hit routines
 	 *  which don't follow the traditional solid modeling paradigm.
 	 */
+	if(rt_g.debug&DEBUG_ALLHITS)  rt_pr_partitions(rtip,&FinalPart,"Partition list passed to a_hit() routine");
 	ap->a_return = ap->a_hit( ap, &FinalPart, &finished_segs );
 	status = "HIT";
 
@@ -1451,7 +1454,7 @@ double		dist;
 /*
 		rt_plot_cell( cutp, &ss, &(waiting_segs.l), rtip);
  */
-/*void*/
+void
 rt_plot_cell( cutp, ssp, waiting_segs_hd, rtip )
 union cutter		*cutp;
 struct shootray_status	*ssp;
