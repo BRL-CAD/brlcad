@@ -17,7 +17,7 @@
  *  Distribution Status -
  *      Public Domain, Distribution Unlimitied.
  */
-static char RCSrtstring[] = "@(#)$Header$ (BRL)";
+static char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
