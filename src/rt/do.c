@@ -55,9 +55,6 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "rtprivate.h"
-#include "../librt/debug.h"
-
-extern int	rdebug;			/* RT program debugging (not library) */
 
 /***** Variables shared with viewing model *** */
 extern FILE	*outfp;			/* optional pixel output file */
@@ -105,19 +102,9 @@ extern int	interactive;		/* human is watching results */
 extern int	save_overlaps;		/* flag for setting rti_save_overlaps */
 /***** end variables shared with rt.c *****/
 
-/***** variables shared with refract.c *****/
-extern int	max_bounces;		/* max reflection/recursion level */
-extern int	max_ireflect;		/* max internal reflection level */
-/***** end variables shared with refract.c *****/
-
-
 /***** variables shared with viewg3.c *****/
 struct bu_vls   ray_data_file;  /* file name for ray data output */
 /***** end variables shared with viewg3.c *****/
-
-/***** variables shared with g_cline.c ******/
-extern fastf_t rt_cline_radius;
-/***** end variables shared with g_cline.c ******/
 
 /***** variables for frame buffer black pixel rendering *****/
 unsigned char *pixmap = NULL; /* Pixel Map for rerendering of black pixels */
@@ -426,9 +413,11 @@ int cm_closedb(int argc, char **argv)
 /* viewing module specific variables */
 extern struct bu_structparse view_parse[];
 
+#if 0
 /* from librt/g_bot.c */
 extern int rt_bot_minpieces;
 extern int rt_bot_tri_per_piece;
+#endif
 
 /*
  *  Generic settable parameters.
@@ -460,7 +449,8 @@ extern int rt_bot_tri_per_piece;
 #  endif
 #endif
 struct bu_structparse set_parse[] = {
-#if !defined(__alpha)	/* XXX Alpha does not support this initialization! */
+/*XXX need to investigate why this doesn't work on Windows */
+#if !defined(__alpha) && !defined(WIN32) /* XXX Alpha does not support this initialization! */
 	{"%d",	1, "width",	byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "height",	byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "save_overlaps", byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },

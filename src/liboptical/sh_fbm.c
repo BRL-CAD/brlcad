@@ -39,8 +39,6 @@ static char RCSsh_fbm[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 
 #if !defined(M_PI)

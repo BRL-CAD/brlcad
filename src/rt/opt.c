@@ -57,8 +57,6 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "rtprivate.h"
 #include "../librt/debug.h"
 
-extern int	rdebug;			/* RT program debugging */
-
 int		rpt_dist = 0;		/* report distance to each pixel */
 int		width = 0;			/* # of pixels in X */
 int		height = 0;			/* # of lines in Y */

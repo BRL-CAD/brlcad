@@ -219,6 +219,8 @@ static void choose_color (RGBpixel col, struct cell *me,
 #endif
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
+/*XXX need to investigate why this doesn't work on Windows */
+#if !defined(__alpha) && !defined(WIN32) /* XXX Alpha does not support this initialization! */
   {"%d", 1, "detect_regions", byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "dr", byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "detect_distance", byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
@@ -245,6 +247,7 @@ struct bu_structparse view_parse[] = {
   {"%d", 1, "occlusion_mode", byteoffset(occlusion_mode), 
    BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "om", byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
+#endif
   {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 

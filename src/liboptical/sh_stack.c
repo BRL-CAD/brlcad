@@ -46,8 +46,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 
 HIDDEN int	stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp), stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);

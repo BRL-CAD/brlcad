@@ -56,9 +56,7 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "bu.h"
 #include "vmath.h"
-#include "bn.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "./ext.h"
@@ -71,9 +69,6 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 
 
 extern char	usage[];
-
-extern int	rdebug;			/* RT program debugging */
-int		rt_verbosity = -1;	/* blather incesantly by default */
 
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */

@@ -47,8 +47,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 #include "light.h"
 #if RT_MULTISPECTRAL

@@ -63,8 +63,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 
 extern int rr_render(struct application	*ap,

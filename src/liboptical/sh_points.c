@@ -57,8 +57,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "spm.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 
 #define PT_NAME_LEN 128

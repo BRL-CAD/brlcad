@@ -29,6 +29,18 @@
 #ifndef SHADEFUNCS 
 #define SHADEFUNCS
 
+#ifndef OPTICAL_EXPORT
+#   if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#      ifdef OPTICAL_EXPORT_DLL
+#         define OPTICAL_EXPORT __declspec(dllexport)
+#      else
+#         define OPTICAL_EXPORT __declspec(dllimport)
+#      endif
+#   else
+#      define OPTICAL_EXPORT
+#   endif
+#endif
+
 /*
  *			M F U N C S
  *
@@ -65,12 +77,23 @@ struct mfuncs {
 /* mf_flags lists important details about individual shaders */
 #define MFF_PROC	0x01		/* shader is procedural, computes tr/re/hits */
 
-BU_EXTERN(void		mlib_add_shader, (struct mfuncs **headp,
-				struct mfuncs *mfp1));
-BU_EXTERN(int		mlib_setup, (struct mfuncs **headp,
-				struct region *rp,
-				struct rt_i *rtip));
-BU_EXTERN(void		mlib_free, (struct region *rp));
+/* defined in material.c */
+OPTICAL_EXPORT BU_EXTERN(void mlib_add_shader,
+			 (struct mfuncs **headp,
+			  struct mfuncs *mfp1));
+
+OPTICAL_EXPORT BU_EXTERN(int mlib_setup,
+			 (struct mfuncs **headp,
+			  struct region *rp,
+			  struct rt_i *rtip));
+
+OPTICAL_EXPORT BU_EXTERN(void mlib_free,
+			 (struct region *rp));
+
+OPTICAL_EXPORT BU_EXTERN(struct mfuncs *load_dynamic_shader,
+			 (const char *material,
+			  const int mlen));
+
 #endif
 
 /*

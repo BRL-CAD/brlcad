@@ -32,8 +32,6 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 #include "rtgeom.h"
 

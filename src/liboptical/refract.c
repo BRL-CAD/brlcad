@@ -45,8 +45,6 @@ static const char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 #include "raytrace.h"
 #include "rtprivate.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "plot3.h"
 
 extern int viewshade(struct application *ap,

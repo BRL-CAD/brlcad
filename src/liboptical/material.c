@@ -54,7 +54,6 @@ static const char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
 #include "rtprivate.h"
 
 #ifdef HAVE_DLOPEN

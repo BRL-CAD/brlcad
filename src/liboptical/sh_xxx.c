@@ -64,13 +64,8 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 
-extern int rr_render(struct application	*ap,
-		     struct partition	*pp,
-		     struct shadework   *swp);
 #define xxx_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_xxx_SP(_p) BU_CKMAG(_p, xxx_MAGIC, "xxx_specific")
 

@@ -33,8 +33,6 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 
 extern int rr_render(struct application	*ap,

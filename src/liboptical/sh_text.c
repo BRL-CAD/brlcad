@@ -45,10 +45,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
-/*#include "../rt/mathtab.h"*/
 #include "rtprivate.h"
+/*#include "../rt/mathtab.h"*/
 
 #define TXT_NAME_LEN 128
 struct txt_specific {
@@ -77,7 +75,6 @@ extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
 		     struct shadework   *swp);
 
-HIDDEN void rt_binunif_free();
 HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
 HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p);
 HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const long unsigned int size);

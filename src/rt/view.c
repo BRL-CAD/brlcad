@@ -71,11 +71,8 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "shadefuncs.h"
-#include "shadework.h"
-#include "./ext.h"
 #include "rtprivate.h"
-#include "light.h"
+#include "./ext.h"
 #include "plot3.h"
 #include "photonmap.h"
 
@@ -103,8 +100,6 @@ int		use_air = 0;		/* Handling of air in librt */
 
 extern FBIO	*fbp;			/* Framebuffer handle */
 
-extern int	max_bounces;		/* from refract.c */
-extern int	max_ireflect;		/* from refract.c */
 extern int	curframe;		/* from main.c */
 extern fastf_t	frame_delta_t;		/* from main.c */
 extern double	airdensity;		/* from opt.c */
@@ -112,17 +107,9 @@ extern double	haze[3];		/* from opt.c */
 
 extern struct floatpixel	*curr_float_frame;	/* buffer of full frame */
 
-extern int viewshade(struct application *ap,
-		     register const struct partition *pp,
-		     register struct shadework *swp);
-
-
-
-extern struct region	env_region;		/* environment map region */
 
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
-extern vect_t	background;
 int	ibackground[3] = {0};			/* integer 0..255 version */
 int	inonbackground[3] = {0};		/* integer non-background */
 
@@ -169,7 +156,8 @@ static int overlay = 0;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-#if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
+/*XXX need to investigate why this doesn't work on Windows */
+#if !defined(__alpha) && !defined(WIN32) /* XXX Alpha does not support this initialization! */
 	{"%f",	1, "gamma",	bu_byteoffset(gamma_corr),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL },
@@ -1100,8 +1088,6 @@ free_scanlines(void)
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-	extern char	liboptical_version[];
-
 	if (rt_verbosity & VERBOSE_LIBVERSIONS)
 		bu_log("%s", liboptical_version+5);
 

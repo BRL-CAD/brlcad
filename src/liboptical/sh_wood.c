@@ -76,10 +76,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
-/*#include "../rt/mathtab.h"*/
 #include "rtprivate.h"
+/*#include "../rt/mathtab.h"*/
 
 /*
  *	Sundry external references

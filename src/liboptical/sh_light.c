@@ -45,23 +45,15 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "bu.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
-#include "plot3.h"
 #include "rtprivate.h"
+#include "plot3.h"
 #include "light.h"
 #include "photonmap.h"
 
 #if RT_MULTISPECTRAL
 #include "spectrum.h"
 #endif
-
-extern int
-viewshade(struct application *ap,
-	  register const struct partition *pp,
-	  register struct shadework *swp);
 
 
 #if !defined(M_PI)
@@ -184,8 +176,6 @@ struct bu_structparse light_parse[] = {
 
 
 struct light_specific	LightHead;	/* Heads linked list of lights */
-
-extern double AmbientIntensity;
 
 #if RT_MULTISPECTRAL
 extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */

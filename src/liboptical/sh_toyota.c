@@ -57,8 +57,6 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 #include "plot3.h"
 #include "light.h"

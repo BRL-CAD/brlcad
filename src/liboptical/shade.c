@@ -50,8 +50,6 @@ static const char RCSview[] = "@(#)$Header";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 #include "light.h"
 #include "plot3.h"

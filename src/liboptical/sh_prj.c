@@ -42,14 +42,9 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
-#include "../rt/ext.h"
 #include "rtprivate.h"
+#include "../rt/ext.h"
 #include "plot3.h"
-
-/* not in a header, but provided by librt */
-HIDDEN void rt_binunif_free();
 
 #define prj_MAGIC 0x70726a00	/* "prj" */
 #define CK_prj_SP(_p) BU_CKMAG(_p, prj_MAGIC, "prj_specific")

@@ -40,20 +40,21 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "rtprivate.h"
 
+int		rt_verbosity = -1;	/* blather incesantly by default */
 int		rdebug;			/* RT program debugging */
 double		AmbientIntensity = 0.4;	/* Ambient light intensity */
-vect_t		background = { 0.0, 0.0, 0.0 }; /* Black */
+#ifdef RT_MULTISPECTRAL
+struct bn_tabdata	*background; 		/* radiant emittance of bg */
+#else
+vect_t			background = { 0.0, 0.0, 0.0 }; /* Black */
+#endif
 
 #define MFUNCS(_name)	\
 	{ extern struct mfuncs _name[]; mlib_add_shader( headp, _name ); }

@@ -29,6 +29,14 @@
  *
  *  @(#)$Header$ (BRL)
  */
+
+#ifndef SEEN_LIGHT_H
+#define SEEN_LIGHT_H seen
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct light_pt {
 	point_t	lp_pt;
 	vect_t	lp_norm;
@@ -70,16 +78,22 @@ struct light_specific {
 #define LIGHT_MAGIC	0xdbddbdb7
 #define RT_CK_LIGHT(_p)	BU_CKMAG((_p), LIGHT_MAGIC, "light_specific")
 
-extern struct light_specific	LightHead;
+/* defined in sh_light.c */
+OPTICAL_EXPORT extern struct light_specific	LightHead;
 
-extern void light_cleanup(void);
-extern void light_maker(int num, mat_t v2m);
-extern int light_init(struct application *ap);
+OPTICAL_EXPORT extern void light_cleanup(void);
+OPTICAL_EXPORT extern void light_maker(int num, mat_t v2m);
+OPTICAL_EXPORT extern int light_init(struct application *ap);
 
-RT_EXTERN(void light_obs, (struct application *ap,
-				  struct shadework *swp, int have) );
+OPTICAL_EXPORT BU_EXTERN(void light_obs,
+			 (struct application *ap,
+			  struct shadework *swp,
+			  int have));
 
-
+#ifdef __cplusplus
+}
+#endif
+#endif /* SEEN_LIGHT_H */
 
 /*
  * Local Variables:
