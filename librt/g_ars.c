@@ -361,15 +361,12 @@ struct application	*ap;
 
 		/*  If dn < 0, we should be entering the solid.
 		 *  However, we just assume in/out sorting later will work.
-		 *  Really should mark and check this!
+		 *  It will be verified in ars_norm().
 		 */
 		hp->hit_dist = k;
 		hp->hit_private = (char *)trip;
 		hp->hit_vpriv[X] = dn;
-#ifdef never
-		VJOIN1( hp->hit_point, rp->r_pt, k, rp->r_dir );
-		VMOVE( hp->hit_normal, trip->tri_N );
-#endif
+
 		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: hit dist=%f, dn=%f\n", hp->hit_dist, dn );
 		if( nhits++ >= MAXHITS )  {
 			rt_log("ars(%s): too many hits\n", stp->st_name);
@@ -400,18 +397,32 @@ struct application	*ap;
 	/* nhits is even, build segments */
 	{
 		register struct seg *segp;
+		register int	i;
 
 		segp = SEG_NULL;
-		while( nhits > 0 )  {
+		for( i=nhits; i > 0; i -= 2 )  {
 			register struct seg *newseg;
 
 			GET_SEG(newseg, ap->a_resource);
 			newseg->seg_next = segp;
 			segp = newseg;
 			segp->seg_stp = stp;
-			segp->seg_in = hits[nhits-2];	/* struct copy */
-			segp->seg_out = hits[nhits-1];	/* struct copy */
-			nhits -= 2;
+			segp->seg_in = hits[i-2];	/* struct copy */
+			segp->seg_out = hits[i-1];	/* struct copy */
+
+			/* Check in/out properties */
+			if( segp->seg_in.hit_vpriv[X] > 0  ||
+			   segp->seg_out.hit_vpriv[X] < 0 )  {
+			   	rt_log("ars(%s): in/out error\n", stp->st_name );
+			   	for( i=0; i<nhits; i++ )  {
+			   		rt_log("%d:  dist=%g, %s\n",
+			   			i,
+				   		hits[i].hit_dist,
+						(hits[i].hit_vpriv[X] < 0) ?
+			   				"In" : "Out" );
+			   	}
+			   	return(SEG_NULL);
+			}
 		}
 		return(segp);			/* HIT */
 	}
@@ -448,9 +459,16 @@ register struct xray *rp;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)hitp->hit_private;
+	register fastf_t	dot, dn;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	VMOVE( hitp->hit_normal, trip->tri_N );
+
+	/* If these are < 0, it implies an inward direction */
+	dn = hitp->hit_vpriv[X];
+	if( dn > 0 )  rt_log("ars_norm, dn=%g?\n", dn);
+	dot = VDOT( hitp->hit_normal, rp->r_dir );
+	if( dot > 0 )  rt_log("ars_norm:  flipped N, dn=%g, dot=%g\n", dn, dot);
 }
 
 /*
