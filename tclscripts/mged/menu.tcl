@@ -154,7 +154,9 @@ proc do_arb_edit_menu { type menu1 menu2 menu3 } {
 		-command "press reject"
 	.$id.menubar.edit insert 10 command -label "Accept" -underline 0 \
 		-command "press accept"
-	.$id.menubar.edit insert 11 separator
+	.$id.menubar.edit insert 11 command -label "Reset" -underline 0 \
+		-command "reset_edit_solid"
+	.$id.menubar.edit insert 12 separator
 
 	menu .$id.menubar.edit.mvedges -tearoff $mged_default(tearoff_menus)
 	foreach item $menu1 {
@@ -231,6 +233,8 @@ proc do_edit_menu { type menu1 } {
 	}
 
 	if {$mged_display(state) == "SOL EDIT"} {
+	    set reset_cmd "reset_edit_solid"
+
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Rotate" -underline 0 -command "press srot; \
 		    set mged_gui($id,transform) e; set_transform $id"
@@ -250,6 +254,8 @@ proc do_edit_menu { type menu1 } {
 	    .$id.menubar.edit insert $i separator
 	    incr i
 	} else {
+	    set reset_cmd "reset_edit_matrix"
+
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
 		    -label "Scale" -command "press \"Scale\"; \
 		    set mged_gui($id,transform) e; set_transform $id"
@@ -292,10 +298,12 @@ proc do_edit_menu { type menu1 } {
 
 	.$id.menubar.edit insert $i command -label "Reject" -underline 0 \
 		-command "press reject"
-
 	incr i
 	.$id.menubar.edit insert $i command -label "Accept" -underline 0 \
 		-command "press accept"
+	incr i
+	.$id.menubar.edit insert $i command -label "Reset" -underline 0 \
+		-command $reset_cmd
 
 	incr i
 	.$id.menubar.edit insert $i separator
