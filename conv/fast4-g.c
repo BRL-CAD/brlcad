@@ -55,7 +55,7 @@ static char	line[LINELEN+1];		/* Space for input line */
 static FILE	*fdin;			/* Input FASTGEN4 file pointer */
 static FILE	*fdout;			/* Output BRL-CAD file pointer */
 static FILE	*fd_plot=NULL;		/* file for plot output */
-static FILE	*fd_muves=NULL;		/* file for MUVES data, output CBAR and CBACKING data */
+static FILE	*fd_muves=NULL;		/* file for MUVES data, output CHGCOMP and CBACKING data */
 static int	grid_size;		/* Number of points that will fit in current grid_pts array */
 static int	max_grid_no=0;		/* Maximum grid number used */
 static int	mode=0;			/* Plate mode (1) or volume mode (2) */
@@ -99,7 +99,7 @@ static char	*usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file]
 	q - quiet mode (don't say anyhing except error messages\n\
 	w - print warnings about creating default names\n\
 	c - process only the listed region ids, may be a list (3001,4082,5347) or a range (2314-3527)\n\
-	m - create a MUVES input file containing CBAR and CBACKING elements\n\
+	m - create a MUVES input file containing CHGCOMP and CBACKING elements\n\
 	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n\
 	b - set LIBBU debug flag\n\
 	x - set RT debug flag\n";
@@ -3090,6 +3090,20 @@ Process_hole_wall()
 }
 
 void
+do_chgcomp()
+{
+	int id1 id2 id3;
+
+	if( !pass )
+		return;
+
+	if( !fd_muves )
+		return;
+
+	fprintf( fd_muves, "%s", line );
+}
+
+void
 do_cbacking()
 {
 	int gr1, co1, gr2, co2, material;
@@ -3157,6 +3171,8 @@ int pass_number;
 			;
 		else if( !strncmp( line, "CBACKING", 8 ) )
 			do_cbacking();
+		else if( !strncmp( line, "CHGCOMP", 7 ) )
+			do_chgcomp();
 		else if( !strncmp( line , "SECTION" , 7 ) )
 			do_section( 0 );
 		else if( !strncmp( line , "$NAME" , 5 ) )
