@@ -186,6 +186,7 @@ char	**argv;
 	}
 
 	postlog( ofp );
+	exit( 0 );
 }
 
 prolog( fp, name, width, height )
