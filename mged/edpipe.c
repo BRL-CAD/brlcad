@@ -392,13 +392,50 @@ fastf_t angle;
 }
 
 static void
+make_bend_lt_180( ps, normal )
+struct wdb_pipeseg *ps;
+vect_t normal;	/* unit normal */
+{
+	struct wdb_pipeseg *next;
+	vect_t to_start;
+	vect_t to_end;
+	vect_t v2;
+	fastf_t angle;
+
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+
+	if( ps->ps_type != WDB_PIPESEG_TYPE_BEND )
+		rt_bomb( "make_bend_lt_180 called with non-bend pipe segment\n" );
+
+	next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+
+	VSUB2( to_start, ps->ps_start, ps->ps_bendcenter );
+	VSUB2( to_end, next->ps_start, ps->ps_bendcenter );
+	VCROSS( v2, normal, to_start );
+
+	angle = atan2( VDOT( to_end, v2 ), VDOT( to_end, to_start ) );
+	if( angle < 0.0 )
+		angle += 2.0*rt_pi;
+
+	if( angle > rt_pi-RT_DOT_TOL )
+	{
+		VUNITIZE( to_start );
+		VUNITIZE( v2 );
+		break_bend( ps, to_start, v2, angle/2.0 );
+	}
+}
+
+static void
 get_bend_start_line( ps, pt, dir )
 CONST struct wdb_pipeseg *ps;
 point_t pt;
 vect_t dir;
 {
-	struct wdb_pipeseg *prev;
 	struct wdb_pipeseg *next;
+	struct wdb_pipeseg *prev;
+	vect_t to_start;
+	vect_t to_end;
+	vect_t normal;
 
 	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
@@ -408,31 +445,32 @@ vect_t dir;
 	VMOVE( pt, ps->ps_start );
 
 	prev = RT_LIST_PREV( wdb_pipeseg, &ps->l );
-	if( prev->l.magic != RT_LIST_HEAD_MAGIC )
+	if( prev->l.magic != RT_LIST_HEAD_MAGIC && prev->ps_type == WDB_PIPESEG_TYPE_LINEAR )
 	{
-		if( prev->ps_type == WDB_PIPESEG_TYPE_LINEAR )
-		{
-			VSUB2( dir, pt, prev->ps_start );
-			VUNITIZE( dir );
-			return;
-		}
-	}
+		struct wdb_pipeseg *pprev;
 
-	next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+		pprev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
+		while( pprev->l.magic != RT_LIST_HEAD_MAGIC && pprev->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+		{
+			prev = pprev;
+			pprev = RT_LIST_PREV( wdb_pipeseg, &pprev->l );
+		}
+		VSUB2( dir, pt, prev->ps_start )
+	}
+	else
 	{
-		vect_t to_start;
-		vect_t to_end;
-		vect_t normal;
+		next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
 
 		VSUB2( to_start, ps->ps_start, ps->ps_bendcenter );
 		VSUB2( to_end, next->ps_start, ps->ps_bendcenter );
 		VCROSS( normal, to_start, to_end );
 		VCROSS( dir, normal, to_start );
-		VUNITIZE( dir );
-		return;
 	}
 
-	rt_bomb( "get_bend_start_line: Cannot get a start line for pipe bend segment\n" );
+	if( VNEAR_ZERO( dir, SQRT_SMALL_FASTF ) )
+		VSETALL( dir, 0.0 )
+	else
+		VUNITIZE( dir )
 }
 
 static void
@@ -442,6 +480,9 @@ point_t pt;
 vect_t dir;
 {
 	struct wdb_pipeseg *next;
+	vect_t to_start;
+	vect_t to_end;
+	vect_t normal;
 
 	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
@@ -450,30 +491,26 @@ vect_t dir;
 
 	next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
 	VMOVE( pt, next->ps_start );
+
 	if( next->ps_type == WDB_PIPESEG_TYPE_LINEAR )
 	{
-		struct wdb_pipeseg *nnext;
+		while( next->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+			next = RT_LIST_NEXT( wdb_pipeseg, &next->l );
 
-		nnext = RT_LIST_NEXT( wdb_pipeseg, &next->l );
-		VSUB2( dir, pt, nnext->ps_start );
-		VUNITIZE( dir );
-		return;
+		VSUB2( dir, pt, next->ps_start );
 	}
-	if( next->ps_type == WDB_PIPESEG_TYPE_BEND || next->ps_type == WDB_PIPESEG_TYPE_END )
+	else
 	{
-		vect_t to_start;
-		vect_t to_end;
-		vect_t normal;
-
 		VSUB2( to_start, ps->ps_start, ps->ps_bendcenter );
 		VSUB2( to_end, next->ps_start, ps->ps_bendcenter );
 		VCROSS( normal, to_start, to_end );
 		VCROSS( dir, to_end, normal );
-		VUNITIZE( dir );
-		return;
 	}
 
-	rt_bomb( "get_bend_end_line: Cannot get a end line for pipe bend segment\n" );
+	if( VNEAR_ZERO( dir, SQRT_SMALL_FASTF ) )
+		VSETALL( dir, 0.0 )
+	else
+		VUNITIZE( dir )
 }
 
 static fastf_t
@@ -1427,4 +1464,386 @@ struct wdb_pipeseg *ps;
 		break_bend( bend2, to_start, v2, angle/2.0 );
 
 	return( linear );
+}
+
+void
+move_bend( pipe, ps, new_pt )
+struct rt_pipe_internal *pipe;
+struct wdb_pipeseg *ps;
+point_t new_pt;
+{
+	struct wdb_pipeseg *next_bend;
+	vect_t next_norm;
+	struct wdb_pipeseg *prev_bend;
+	vect_t prev_norm;
+	struct wdb_pipeseg *bend1;
+	struct wdb_pipeseg *bend2;
+	struct wdb_pipeseg *linear;
+	struct wdb_pipeseg *pprev;
+	struct wdb_pipeseg *nnext;
+	point_t tmp_pt;
+	vect_t cent_to_cent;
+	vect_t start1,end1,normal1;
+	vect_t start2,end2,normal2;
+	vect_t d1,d1_rot;
+	vect_t d2,d2_rot;
+	vect_t linear_dir;
+	mat_t mat1_plus,mat1_minus;
+	mat_t mat2_plus,mat2_minus;
+	fastf_t bend_radius1,bend_radius2;
+	fastf_t angle;
+	vect_t trans;
+
+	RT_PIPE_CK_MAGIC( pipe );
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+
+	if( ps->ps_type != WDB_PIPESEG_TYPE_BEND )
+	{
+		rt_log( "move_bend called with non-bend pipe segment\n" );
+		return;
+	}
+
+	next_bend = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+	while( next_bend->ps_type == WDB_PIPESEG_TYPE_BEND )
+		next_bend = RT_LIST_NEXT( wdb_pipeseg, &next_bend->l );
+	while( next_bend->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+		next_bend = RT_LIST_NEXT( wdb_pipeseg, &next_bend->l );
+	if( next_bend->ps_type != WDB_PIPESEG_TYPE_END )
+	{
+		get_bend_end_line( next_bend, tmp_pt, end1 );
+		get_bend_start_line( next_bend, tmp_pt, start1 );
+		VCROSS( next_norm, end1, start1 );
+	}
+
+	prev_bend = RT_LIST_PREV( wdb_pipeseg, &ps->l );
+	while( prev_bend->l.magic != RT_LIST_HEAD_MAGIC && prev_bend->ps_type == WDB_PIPESEG_TYPE_BEND )
+		prev_bend = RT_LIST_PREV( wdb_pipeseg, &prev_bend->l );
+	while( prev_bend->l.magic != RT_LIST_HEAD_MAGIC && prev_bend->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+		prev_bend = RT_LIST_PREV( wdb_pipeseg, &prev_bend->l );
+	if( prev_bend->l.magic != RT_LIST_HEAD_MAGIC )
+	{
+		get_bend_end_line( prev_bend, tmp_pt, end1 );
+		get_bend_start_line( prev_bend, tmp_pt, start1 );
+		VCROSS( prev_norm, end1, start1 );
+	}
+
+	/* get translation vector for move */
+	VSUB2( trans, new_pt, ps->ps_bendcenter );
+
+	/* move this bend */
+	VMOVE( ps->ps_bendcenter, new_pt );
+	VADD2( ps->ps_start, ps->ps_start, trans );
+
+	/* move all adjacent bends also */
+	bend1 = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+	while( bend1->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		VADD2( bend1->ps_bendcenter, bend1->ps_bendcenter, trans );
+		VADD2( bend1->ps_start, bend1->ps_start, trans );
+		bend1 = RT_LIST_NEXT( wdb_pipeseg, &bend1->l );
+	}
+	bend1 = RT_LIST_PREV( wdb_pipeseg, &ps->l );
+	while( bend1->l.magic != RT_LIST_HEAD_MAGIC && bend1->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		VADD2( bend1->ps_bendcenter, bend1->ps_bendcenter, trans );
+		VADD2( bend1->ps_start, bend1->ps_start, trans );
+		bend1 = RT_LIST_PREV( wdb_pipeseg, &bend1->l );
+	}
+
+	/* find next section consisting of possibly a bend, linear section and another bend */
+	linear = ps;
+	while( linear->ps_type != WDB_PIPESEG_TYPE_LINEAR && linear->ps_type != WDB_PIPESEG_TYPE_END )
+		linear = RT_LIST_NEXT( wdb_pipeseg, &linear->l );
+
+	/* if a linear segment is found, an adjustment is necessary */
+	if( linear->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+	{
+		/* found a linear section that must be adjusted */
+
+		/* move the start point of the linear section to get good
+		 * end line for bend1 and a good start line for bend2
+		 */
+		VADD2( linear->ps_start, linear->ps_start, trans );
+		bend1 = RT_LIST_PREV( wdb_pipeseg, &linear->l );
+
+		/* look for a bend that follows the linear section */
+		bend2 = linear;
+		while( bend2->ps_type != WDB_PIPESEG_TYPE_BEND && bend2->ps_type != WDB_PIPESEG_TYPE_END )
+			bend2 = RT_LIST_NEXT( wdb_pipeseg, &bend2->l );
+		if( bend2->ps_type != WDB_PIPESEG_TYPE_BEND )
+			bend2 = (struct wdb_pipeseg *)NULL;
+
+		/* Get center to center lines between bends */
+		if( bend2 )
+			VSUB2( cent_to_cent, bend2->ps_bendcenter, bend1->ps_bendcenter )
+		else
+		{
+			nnext = RT_LIST_NEXT( wdb_pipeseg, &linear->l );
+			while( nnext->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+				nnext = RT_LIST_NEXT( wdb_pipeseg, &nnext->l );
+			VSUB2( cent_to_cent, nnext->ps_start, bend1->ps_bendcenter )
+		}
+
+		/* get normal and vector normal to center-to-center line for bend1 */
+		bend_radius1 = get_bend_radius( bend1 );
+		get_bend_start_line( bend1, tmp_pt, start1 );
+		get_bend_end_line( bend1, tmp_pt, end1 );
+		VCROSS( normal1, end1, start1 );
+		VUNITIZE( normal1 );
+		VCROSS( d1, cent_to_cent, normal1 );
+
+		if( bend2 )
+		{
+			/* get normal and vector normal to center-to-center line for bend2 */
+			bend_radius2 = get_bend_radius( bend2 );
+			get_bend_start_line( bend2, tmp_pt, start2 );
+			get_bend_end_line( bend2, tmp_pt, end2 );
+			VCROSS( normal2, end2, start2 );
+			VUNITIZE( normal2 );
+			VCROSS( d2, cent_to_cent, normal2 );
+
+			if( VDOT( normal2, next_norm ) < 0.0 )
+			{
+				struct wdb_pipeseg *next;
+				vect_t to_center;
+
+				/* bendcenter needs to be switched */
+				next = RT_LIST_NEXT( wdb_pipeseg, &bend2->l );
+				VSUB2( to_center, bend2->ps_bendcenter, next->ps_start );
+				VSUB2( bend2->ps_bendcenter, next->ps_start, to_center );
+			}
+		}
+
+		/* calculate angle that d1 and d2 must rotate about bend centers */
+		if( bend2 )
+		{
+			if( VDOT( d1, d2 ) < 0.0 )
+				angle = asin( (bend_radius1+bend_radius2)/MAGNITUDE( cent_to_cent ) );
+			else
+				angle = asin( (bend_radius1-bend_radius2)/MAGNITUDE( cent_to_cent ) );
+		}
+		else
+			angle = asin( bend_radius1/MAGNITUDE( cent_to_cent ) );
+
+		/* rotate d1 */
+		mat_arb_rot( mat1_plus, bend1->ps_bendcenter, normal1, angle );
+		mat_arb_rot( mat1_minus, bend1->ps_bendcenter, normal1, -angle );
+		if( bend2 )
+		{
+			mat_arb_rot( mat2_plus, bend2->ps_bendcenter, normal2, angle );
+			mat_arb_rot( mat2_minus, bend2->ps_bendcenter, normal2, -angle );
+		}
+		MAT4X3VEC( d1_rot, mat1_plus, d1 );
+		VUNITIZE( d1_rot );
+		/* calculate new start point for linear segment */
+		VJOIN1( linear->ps_start, bend1->ps_bendcenter, bend_radius1, d1_rot );
+
+		if( bend2 )
+		{
+			/* rotate d2 */
+			if( VDOT( d1, d2 ) < 0.0 )
+				MAT4X3VEC( d2_rot, mat2_minus, d2 )
+			else
+				MAT4X3VEC( d2_rot, mat2_plus, d2 )
+			VUNITIZE( d2_rot );
+			/* calculate new start point for bend2 */
+			VJOIN1( bend2->ps_start, bend2->ps_bendcenter, bend_radius2, d2_rot );
+		}
+
+		/* adjust any linear segments between "linear" and bend2 */
+		if( bend2 )
+			VSUB2( linear_dir, bend2->ps_start, linear->ps_start )
+		else
+		{
+			nnext = RT_LIST_NEXT( wdb_pipeseg, &linear->l );
+			while( nnext->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+				nnext = RT_LIST_NEXT( wdb_pipeseg, &nnext->l );
+			VSUB2( linear_dir, nnext->ps_start, linear->ps_start );
+		}
+		VUNITIZE( linear_dir );
+		nnext = RT_LIST_NEXT( wdb_pipeseg, &linear->l );
+		while( nnext->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+		{
+			vect_t old_vec;
+
+			VSUB2( old_vec, nnext->ps_start, linear->ps_start );
+			VJOIN1( nnext->ps_start, linear->ps_start, VDOT( linear_dir, old_vec ), linear_dir );
+			nnext = RT_LIST_NEXT( wdb_pipeseg, &nnext->l );
+		}
+
+		/* make sure bend2 is less than 180 degrees */
+		if( bend2 )
+			make_bend_lt_180( bend2, normal2 );
+	}
+
+	/* search the previous sections (prior to "ps") for a bend, linear, bend arrangement */
+	linear = ps;
+	while( linear->l.magic != RT_LIST_HEAD_MAGIC && linear->ps_type != WDB_PIPESEG_TYPE_LINEAR )
+		linear = RT_LIST_PREV( wdb_pipeseg, &linear->l );
+
+	/* if a linear segment is found, an adjustment is necessary */
+	if( linear->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+	{
+		/* found a linear section that must be adjusted */
+		bend2 = RT_LIST_NEXT( wdb_pipeseg, &linear->l );
+
+		/* look for a bend that precedes the linear section */
+		bend1 = linear;
+		while( bend1->l.magic != RT_LIST_HEAD_MAGIC && bend1->ps_type != WDB_PIPESEG_TYPE_BEND )
+			bend1 = RT_LIST_PREV( wdb_pipeseg, &bend1->l );
+		if( bend1->l.magic == RT_LIST_HEAD_MAGIC )
+			bend1 = (struct wdb_pipeseg *)NULL;
+
+		/* Get center to center lines between bends */
+		if( bend1 )
+			VSUB2( cent_to_cent, bend2->ps_bendcenter, bend1->ps_bendcenter )
+		else
+		{
+			struct wdb_pipeseg *prev=(struct wdb_pipeseg *)NULL;
+
+			pprev = RT_LIST_PREV( wdb_pipeseg, &linear->l );
+			while( pprev->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+			{
+				prev = pprev;
+				pprev = RT_LIST_PREV( wdb_pipeseg, &pprev->l );
+			}
+			if( prev )
+				VSUB2( cent_to_cent, bend2->ps_bendcenter, prev->ps_start )
+			else
+				VSUB2( cent_to_cent, bend2->ps_bendcenter, linear->ps_start )
+		}
+
+		if( bend1 )
+		{
+			/* get normal and vector normal to center to center line for bend1 */
+			bend_radius1 = get_bend_radius( bend1 );
+			get_bend_start_line( bend1, tmp_pt, start1 );
+			get_bend_end_line( bend1, tmp_pt, end1 );
+			VCROSS( normal1, end1, start1 );
+			VUNITIZE( normal1 );
+			VCROSS( d1, cent_to_cent, normal1 );
+		}
+
+		/* get normal and vector normal to center to center line for bend2 */
+		bend_radius2 = get_bend_radius( bend2 );
+		get_bend_start_line( bend2, tmp_pt, start2 );
+		get_bend_end_line( bend2, tmp_pt, end2 );
+		VCROSS( normal2, end2, start2 );
+		VUNITIZE( normal2 );
+		VCROSS( d2, cent_to_cent, normal2 );
+
+		/* calculate angle that d1 and d2 must rotate about bend centers */
+		if( bend1 )
+		{
+			if( VDOT( d1, d2 ) < 0.0 )
+				angle = asin( (bend_radius1+bend_radius2)/MAGNITUDE( cent_to_cent ) );
+			else
+				angle = asin( (bend_radius1-bend_radius2)/MAGNITUDE( cent_to_cent ) );
+		}
+		else
+			angle = asin( bend_radius2/MAGNITUDE( cent_to_cent ) );
+
+		mat_arb_rot( mat2_plus, bend2->ps_bendcenter, normal2, angle );
+		mat_arb_rot( mat2_minus, bend2->ps_bendcenter, normal2, -angle );
+		if( bend1 )
+		{
+			mat_arb_rot( mat1_plus, bend1->ps_bendcenter, normal1, angle );
+			mat_arb_rot( mat1_minus, bend1->ps_bendcenter, normal1, -angle );
+		}
+		if( bend1 )
+		{
+			/* rotate d1 */
+			MAT4X3VEC( d1_rot, mat1_plus, d1 );
+			VUNITIZE( d1_rot );
+			/* calculate new start point for linear segment */
+			VJOIN1( linear->ps_start, bend1->ps_bendcenter, bend_radius1, d1_rot );
+		}
+
+		/* rotate d2 */
+		if( bend1 )
+		{
+			if( VDOT( d1, d2 ) < 0.0 )
+				MAT4X3VEC( d2_rot, mat2_minus, d2 )
+			else
+				MAT4X3VEC( d2_rot, mat2_plus, d2 )
+		}
+		else
+			MAT4X3VEC( d2_rot, mat2_minus, d2 )
+
+		VUNITIZE( d2_rot );
+		/* calculate new start point for bend2 */
+		VJOIN1( bend2->ps_start, bend2->ps_bendcenter, bend_radius2, d2_rot );
+
+		/* adjust any linear segments between "linear" and bend2 */
+		VSUB2( linear_dir, bend2->ps_start, linear->ps_start )
+		VUNITIZE( linear_dir );
+		nnext = RT_LIST_NEXT( wdb_pipeseg, &linear->l );
+		while( nnext->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+		{
+			vect_t old_vec;
+
+			VSUB2( old_vec, nnext->ps_start, linear->ps_start );
+			VJOIN1( nnext->ps_start, linear->ps_start, VDOT( linear_dir, old_vec ), linear_dir );
+			nnext = RT_LIST_NEXT( wdb_pipeseg, &nnext->l );
+		}
+		/* make sure bend1 is less than 180 degrees */
+		if( bend1 )
+			make_bend_lt_180( bend1, normal1 );
+	}
+
+	/* make sure ps is less than 180 degrees */
+	get_bend_start_line( ps, tmp_pt, start2 );
+	get_bend_end_line( ps, tmp_pt, end2 );
+	VCROSS( normal2, end2, start2 );
+	VUNITIZE( normal2 );
+	make_bend_lt_180( ps, normal2 );
+}
+
+void
+move_linear( pipe, ps, new_pt )
+struct rt_pipe_internal *pipe;
+struct wdb_pipeseg *ps;
+point_t new_pt;
+{
+
+	RT_PIPE_CK_MAGIC( pipe );
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+}
+
+void
+move_end( pipe, ps, new_pt )
+struct rt_pipe_internal *pipe;
+struct wdb_pipeseg *ps;
+point_t new_pt;
+{
+
+	RT_PIPE_CK_MAGIC( pipe );
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+}
+
+void
+move_pipeseg( pipe, ps, new_pt )
+struct rt_pipe_internal *pipe;
+struct wdb_pipeseg *ps;
+point_t new_pt;
+{
+
+	RT_PIPE_CK_MAGIC( pipe );
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+
+	switch( ps->ps_type )
+	{
+		case WDB_PIPESEG_TYPE_BEND:
+			move_bend( pipe, ps, new_pt );
+			break;
+		case WDB_PIPESEG_TYPE_LINEAR:
+			move_linear( pipe, ps, new_pt );
+			break;
+		case WDB_PIPESEG_TYPE_END:
+			move_end( pipe, ps, new_pt );
+			break;
+		default:
+			rt_log( "move_pipeseg: Unrecognized PIPE segment type (%d)\n", ps->ps_type );
+			break;
+	}
 }
