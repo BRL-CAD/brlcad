@@ -705,6 +705,9 @@ extern int		nmg_demote_eu(struct edgeuse *eu);
 extern int		nmg_demote_lu(struct loopuse *lu);
 extern void		nmg_region_a(struct nmgregion *r);
 extern void		nmg_ck_lueu(struct loopuse *cklu, char *s);
+extern void		nmg_jl(struct loopuse *lu, struct edgeuse *eu);
+extern void		nmg_simplify_loop(struct loopuse *lu);
+extern void		nmg_simplify_face(struct faceuse *fu);
 
 #else
 extern struct model	*nmg_mmr();
@@ -778,6 +781,9 @@ extern int		nmg_demote_eu();
 extern int		nmg_demote_lu();
 extern void		nmg_region_a();
 extern void		nmg_ck_lueu();
+extern void		nmg_jl();
+extern void		nmg_simplify_loop();
+extern void		nmg_simplify_face();
 
 #endif
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
