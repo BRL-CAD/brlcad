@@ -75,6 +75,7 @@ static long	curr_offset=0;		/* Offset into input file for current element */
 static long	curr_sect=0;		/* Offset into input file for current section card */
 static long	prev_sect=0;		/* Offset into input file for previous section card */
 static int	try_count=0;		/* Counter for number of tries to build currect section */
+static int	arb6_worked=0;		/* flag notifying of Make_arb6_obj() success */
 static struct cline    *cline_last_ptr; /* Pointer to last element in linked list of clines */
 static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct nmg_ptbl stack;		/* Stack for traversing name_tree */
@@ -172,8 +173,18 @@ struct cline
 	struct cline *next;
 } *cline_root;
 
+#define	NAME_TREE_MAGIC	0x55555555
+#define CK_TREE_MAGIC( ptr )	\
+	{\
+		if( !ptr )\
+			rt_log( "ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__ );\
+		else if( ptr->magic != NAME_TREE_MAGIC )\
+			rt_log( "ERROR: bad name_tree pointer (x%x), file=%s, line=%d\n", ptr, __FILE__, __LINE__ );\
+	}
+
 struct name_tree
 {
+	long magic;
 	int region_id;
 	int element_id;		/* > 0  -> normal fastgen4 element id
 				 * < 0  -> CLINE element (-pt1)
@@ -228,6 +239,54 @@ struct adjacent_faces
 } *adj_root;
 
 void
+Check_names()
+{
+	struct name_tree *ptr;
+
+	if( !name_root )
+		return;
+
+	nmg_tbl( &stack , TBL_RST , (long *)NULL );
+
+	CK_TREE_MAGIC( name_root )
+	/* ident order */
+	ptr = name_root;
+	while( 1 )
+	{
+		while( ptr )
+		{
+			PUSH( ptr );
+			ptr = ptr->rleft;
+		}
+		POP( name_tree , ptr );
+		if( !ptr )
+			break;
+
+		/* visit node */
+		CK_TREE_MAGIC( ptr )
+		ptr = ptr->rright;
+	}
+
+	/* alpabetical order */
+	ptr = name_root;
+	while( 1 )
+	{
+		while( ptr )
+		{
+			PUSH( ptr );
+			ptr = ptr->nleft;
+		}
+		POP( name_tree , ptr );
+		if( !ptr )
+			break;
+
+		/* visit node */
+		CK_TREE_MAGIC( ptr )
+		ptr = ptr->nright;
+	}
+}
+
+void
 insert_int( in )
 int in;
 {
@@ -241,12 +300,18 @@ int in;
 
 	if( int_list_count == int_list_length )
 	{
-		int_list = (int *)rt_realloc( (char *)int_list , (int_list_length + INT_LIST_BLOCK)*sizeof( int ) , "insert_id: int_list" );
+		if( int_list_length == 0 )
+			int_list = (int *)rt_malloc( INT_LIST_BLOCK*sizeof( int ) , "insert_id: int_list" );
+		else
+			int_list = (int *)rt_realloc( (char *)int_list , (int_list_length + INT_LIST_BLOCK)*sizeof( int ) , "insert_id: int_list" );
 		int_list_length += INT_LIST_BLOCK;
 	}
 
 	int_list[int_list_count] = in;
 	int_list_count++;
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in insert_int\n" );
 }
 
 void
@@ -379,6 +444,8 @@ CONST int		simplify;
 		rt_log("tmp_shell_coplanar_face_merge(s=x%x, tol=x%x, simplify=%d)\n",
 			s, tmp_tol, simplify);
 	}
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in tmp_shell_coplanar_face_merge\n" );
 }
 
 void
@@ -448,6 +515,8 @@ int group_id;
 		}
 		hole_ptr = hole_ptr->next;
 	}
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in subtract_holes\n" );
 }
 
 void
@@ -554,6 +623,56 @@ int *found;
 	}
 }
 
+char *
+find_nmg_region_name( g_id, c_id )
+int g_id;
+int c_id;
+{
+	int reg_id;
+	struct name_tree *ptr;
+
+	reg_id = g_id*1000 + c_id;
+
+	ptr = name_root;
+	if( !ptr )
+		return( (char *)NULL );
+
+	while( 1 )
+	{
+		int diff;
+
+		diff = reg_id - ptr->region_id;
+		if( diff == 0 )
+		{
+			int len;
+
+			len = strlen( ptr->name );
+			if( !strcmp( &ptr->name[len-4] , ".n.r" ) )
+				return( ptr->name );
+			else
+			{
+				if( ptr->rright )
+					ptr = ptr->rright;
+				else
+					return( (char *)NULL );
+			}
+		}
+		else if( diff > 0 )
+		{
+			if( ptr->rright )
+				ptr = ptr->rright;
+			else
+				return( (char *)NULL );
+		}
+		else if( diff < 0 )
+		{
+			if( ptr->rleft )
+				ptr = ptr->rleft;
+			else
+				return( (char *)NULL );
+		}
+	}
+}
 
 struct name_tree *
 Search_ident( root , reg_id , el_id , found )
@@ -602,7 +721,7 @@ int *found;
 
 void
 Delete_name( root , name )
-struct name_tree *root;
+struct name_tree **root;
 char *name;
 {
 	struct name_tree *ptr,*parent,*ptr2;
@@ -611,7 +730,7 @@ char *name;
 	int diff;
 
 	/* first delete from name portion of tree */
-	ptr = root;
+	ptr = *root;
 	parent = (struct name_tree *)NULL;
 	found = 0;
 
@@ -655,33 +774,38 @@ char *name;
 	{
 		if( ptr->nright )
 		{
-			root = ptr->nright;
-			ptr2 = root;
+			*root = ptr->nright;
+			ptr2 = *root;
 			while( ptr2->nleft )
 				ptr2 = ptr2->nleft;
 			ptr2->nleft = ptr->nleft;
 
-			ptr2 = root;
+			ptr2 = *root;
 			while( ptr2->rleft )
 				ptr2 = ptr2->rleft;
 			ptr2->rleft = ptr->rleft;
 		}
-		else
+		else if( ptr->nleft )
 		{
-			root = ptr->nleft;
-			ptr2 = root;
+			*root = ptr->nleft;
+			ptr2 = *root;
 			while( ptr2->nright )
 				ptr2 = ptr2->nright;
 			ptr2->nright = ptr->nright;
-			ptr2 = root;
+			ptr2 = *root;
 			while( ptr2->rright )
 				ptr2 = ptr2->rright;
 			ptr2->rright = ptr->rright;
 		}
-
+		else
+		{
+			/* This was the only name in the tree */
+			*root = (struct name_tree *)NULL;
+		}
 		rt_free( (char *)ptr , "Delete_name: ptr" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in Delete_name\n" );
 		return;
-
 	}
 	else
 	{
@@ -715,7 +839,7 @@ char *name;
 
 
 	/* now delete from ident prtion of tree */
-	ptr = root;
+	ptr = *root;
 	parent = (struct name_tree *)NULL;
 	found = 0;
 
@@ -791,6 +915,10 @@ char *name;
 		else
 			parent->rleft = ptr->rleft;
 	}
+	rt_free( (char *)ptr , "Delete_name: ptr" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Delete_name\n" );
+	Check_names();
 }
 
 void
@@ -821,6 +949,7 @@ char *name;
 	new_ptr->region_id = (-region_id);
 	new_ptr->in_comp_group = 0;
 	new_ptr->element_id = 0;
+	new_ptr->magic = NAME_TREE_MAGIC;
 
 	if( !*root )
 	{
@@ -847,6 +976,8 @@ char *name;
 		}
 		ptr->nleft = new_ptr;
 	}
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Insert_name\n" );
 }
 
 void
@@ -887,6 +1018,7 @@ int el_id;
 	new_ptr->element_id = el_id;
 	new_ptr->in_comp_group = 0;
 	strncpy( new_ptr->name , name , NAMESIZE+1 );
+	new_ptr->magic = NAME_TREE_MAGIC;
 
 	if( !name_root )
 		name_root = new_ptr;
@@ -938,6 +1070,9 @@ int el_id;
 			rptr_model->rleft = new_ptr;
 		}
 	}
+	Check_names();
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Insert_region_name\n" );
 }
 
 char *
@@ -983,13 +1118,18 @@ char *name;
 		name_count++;
 		append_len = strlen( append );
 
-		if( len + append_len <= NAMESIZE )
+		if( len + append_len < NAMESIZE )
 			strcat( name , append );
 		else
+		{
 			strcpy( &name[NAMESIZE-append_len] , append );
+			name[NAMESIZE] = '\0';
+		}
 
 		(void)Search_names( name_root , name , &found );
 	}
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_unique_name\n" );
 }
 
 void
@@ -1014,6 +1154,9 @@ make_comp_group()
 	struct wmember g_head;
 	struct name_tree *ptr;
 	char name[NAMESIZE+1];
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_comp_group\n" );
 
 	RT_LIST_INIT( &g_head.l );
 
@@ -1155,15 +1298,18 @@ do_name()
 
 	len = strlen( tmp_name );
 	if( len <= NAMESIZE )
-		strncpy( name_name , tmp_name , NAMESIZE+1 );
+		strncpy( name_name , tmp_name , NAMESIZE );
 	else
-		strncpy( name_name , &tmp_name[len-NAMESIZE] , NAMESIZE+1 );
+		strncpy( name_name , &tmp_name[len-NAMESIZE] , NAMESIZE );
+	name_name[NAMESIZE] = '\0';
 
 	/* reserve this name for group name */
 	make_unique_name( name_name );
 	Insert_region_name( name_name , region_id , 0 );
 
 	name_count = 0;
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in do_name\n" );
 }
 
 void
@@ -1241,6 +1387,9 @@ do_grid()
 	if( !pass )	/* not doing geometry yet */
 		return;
 
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed at start of do_grid\n" );
+
 	strncpy( field , &line[8] , 8 );
 	grid_no = atoi( field );
 
@@ -1270,6 +1419,8 @@ do_grid()
 
 	if( grid_no > max_grid_no )
 		max_grid_no = grid_no;
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed at end of do_grid\n" );
 }
 
 void
@@ -1297,7 +1448,7 @@ make_cline_regions()
 	}
 
 	/* Now build cline objects */
-	for( sph_no=0 ; sph_no < int_list_length ; sph_no++ )
+	for( sph_no=0 ; sph_no < int_list_count ; sph_no++ )
 	{
 		int pt_no;
 		int line_no;
@@ -1392,7 +1543,7 @@ make_cline_regions()
 			 */
 			bad_name = find_region_name( group_id , comp_id , -pt_no );
 			if( bad_name )
-				Delete_name( name_root , bad_name );
+				Delete_name( &name_root , bad_name );
 		}
 
 		/* make regions for all CLINE elements that start at this pt_no */
@@ -1453,7 +1604,7 @@ make_cline_regions()
 		nmg_tbl( &lines , TBL_FREE , (long *)NULL );
 	}
 
-	int_list_length = 0;
+	int_list_count = 0;
 
 	/* free the linked list of cline pointers */
 	cline_ptr = cline_root;
@@ -1469,6 +1620,9 @@ make_cline_regions()
 
 	cline_root = (struct cline *)NULL;
 	cline_last_ptr = (struct cline *)NULL;
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_cline_regions\n" );
 
 }
 
@@ -1720,6 +1874,9 @@ Sort_fus_by_thickness()
 		fus = fus->next;
 	}
 
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in sort_fus_by_thickness\n" );
+
 	return( num_thicks );
 }
 
@@ -1767,6 +1924,9 @@ struct shell * new_s;
 	rt_free( (char *)flags , "Recalc_edge_g: flags" );
 
 	nmg_tbl( &list , TBL_FREE , (long *)NULL );
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Recalc_edge_g\n" );
 }
 
 void
@@ -1798,6 +1958,9 @@ struct shell *new_s;
 	}
 
 	rt_free( (char *)flags , "Recalc_face_g: flags" );
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Recalc_face_g\n" );
 }
 
 int
@@ -1870,6 +2033,9 @@ CONST fastf_t thick;
 
 	/* and recalculate edge geometry */
 	Recalc_edge_g( new_s );
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Adjust_vertices\n" );
 
 	return( failures );
 }
@@ -1966,6 +2132,9 @@ struct shell *new_s;
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Glue_shell_faces\n" );
 }
 
 struct shell *
@@ -2095,6 +2264,9 @@ CONST int center;
 		Glue_shell_faces( new_s );
 	}
 
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Get_shell\n" );
+
 	return( new_s );
 }
 
@@ -2171,7 +2343,8 @@ struct shell *s1;
 			nmg_loop_g( lu->l_p , &tol );
 		}
 	}
-
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Build_connecting_face\n" );
 }
 
 void
@@ -2229,6 +2402,8 @@ CONST long **tbl;
 
 		adj = adj->next;
 	}
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Reunite_face\n" );
 }
 
 int
@@ -2380,6 +2555,9 @@ Extrude_faces()
 	s = s1;
 	Glue_shell_faces( s );
 
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Extrude_faces\n" );
+
 	return( 0 );
 }
 
@@ -2502,9 +2680,191 @@ Make_arb6_obj()
 	Subtract_holes( &head , comp_id , group_id );
 
 	MK_REGION( fdout , &head , group_id , comp_id , nmgs , NMG )
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_arb6_obj\n" );
 }
 
-void
+int
+Check_radials( s_p )
+struct shell *s_p;
+{
+	struct nmg_ptbl edgeuses;
+	struct nmg_ptbl uses;
+	struct edgeuse *eu1;
+	int i;
+	int radials_ok=1;
+	int *flags;
+	int use_count;
+
+	NMG_CK_SHELL( s_p );
+
+	nmg_edgeuse_tabulate( &edgeuses , &s_p->l.magic );
+	flags = (int *)rt_calloc( NMG_TBL_END( &edgeuses ) , sizeof( int ) , "Check_radials: flags" );
+
+	nmg_tbl( &uses , TBL_INIT , (long *)NULL );
+
+	for( i=0 ; i<NMG_TBL_END( &edgeuses ) ; i++ )
+	{
+		int j;
+		struct faceuse *fu;
+
+		if( flags[i] )
+			continue;
+
+		eu1 = (struct edgeuse *)NMG_TBL_GET( &edgeuses , i );
+		NMG_CK_EDGEUSE( eu1 );
+
+		fu = nmg_find_fu_of_eu( eu1 );
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation != OT_SAME )
+		{
+			flags[i] = 1;
+			continue;
+		}
+
+		use_count = 1;
+		nmg_tbl( &uses , TBL_RST , (long *)NULL );
+		nmg_tbl( &uses , TBL_INS , (long *)eu1 );
+
+		flags[i] = 1;
+
+		for( j=i+1 ; j<NMG_TBL_END( &edgeuses ) ; j++ )
+		{
+			struct edgeuse *eu2;
+
+			if( flags[j] )
+				continue;
+
+			eu2 = (struct edgeuse *)NMG_TBL_GET( &edgeuses , j );
+			NMG_CK_EDGEUSE( eu2 );
+
+			fu = nmg_find_fu_of_eu( eu2 );
+			NMG_CK_FACEUSE( fu );
+			if( fu->orientation != OT_SAME )
+			{
+				flags[j] = 1;
+				continue;
+			}
+
+			if( eu2->e_p == eu1->e_p )
+				flags[j] = 1;
+			else if( eu1->vu_p->v_p == eu2->vu_p->v_p &&
+			    eu1->eumate_p->vu_p->v_p == eu2->eumate_p->vu_p->v_p )
+				flags[j] = 1;
+			else if( eu1->vu_p->v_p == eu2->eumate_p->vu_p->v_p &&
+			    eu1->eumate_p->vu_p->v_p == eu2->vu_p->v_p )
+				flags[j] = 1;
+
+
+			if( flags[j] )
+			{
+				use_count++;
+				nmg_tbl( &uses , TBL_INS , (long *)eu2 );
+			}
+		}
+
+		if( use_count%2 )
+		{
+			radials_ok = 0;
+			break;
+		}
+		if( use_count != 2 )
+		{
+			struct edgeuse *eu,*prev_eu;
+			vect_t xvec,yvec,zvec;
+			vect_t eu_dir,prev_eu_dir;
+			double *angles;
+			double ang;
+			int done=0;
+			int use_no=0;
+
+			radials_ok = 0;
+			angles = (double *)rt_calloc( use_count , sizeof( double ) , "Check_radials: angles" );
+			/* Check if radial orientation is O.K. */
+			eu = (struct edgeuse *)NMG_TBL_GET( &uses , 0 );
+			NMG_CK_EDGEUSE( eu );
+			fu = nmg_find_fu_of_eu( eu );
+			NMG_CK_FACEUSE( fu );
+			if( fu->orientation != OT_SAME )
+				rt_bomb( "Check_radials: fu not OT_SAME\n" );
+			
+			nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, &tol );
+
+			for( use_no=0 ; use_no<use_count ; use_no++ )
+			{
+				eu = (struct edgeuse *)NMG_TBL_GET( &uses , use_no );
+				NMG_CK_EDGEUSE( eu );
+				angles[use_no] = nmg_measure_fu_angle( eu, xvec, yvec, zvec );
+			}
+
+			ang = (-MAX_FASTF);
+			prev_eu = (struct edgeuse *)NULL;
+
+			while( !done )
+			{
+				double tmp_ang;
+				int tmp_use;
+
+				tmp_use = (-1);
+				tmp_ang = MAX_FASTF;
+				for( use_no=0 ; use_no<use_count ; use_no++ )
+				{
+					if( angles[use_no] > ang && angles[use_no] < tmp_ang )
+					{
+						tmp_use = use_no;
+						tmp_ang = angles[use_no];
+					}
+				}
+
+				if( tmp_use == (-1) )
+				{
+					done = 1;
+					radials_ok = 1;
+				}
+
+				if( !done )
+				{
+					use_no = tmp_use;
+
+					if( !prev_eu )
+					{
+						prev_eu = (struct edgeuse *)NMG_TBL_GET( &uses , use_no );
+						ang = angles[use_no];
+						VSUB2( prev_eu_dir , prev_eu->vu_p->v_p->vg_p->coord , prev_eu->eumate_p->vu_p->v_p->vg_p->coord );
+					}
+					else
+					{
+						eu = (struct edgeuse *)NMG_TBL_GET( &uses , use_no );
+						VSUB2( eu_dir , eu->vu_p->v_p->vg_p->coord , eu->eumate_p->vu_p->v_p->vg_p->coord );
+						if( VDOT( eu_dir, prev_eu_dir ) > 0.0 )
+							break;
+
+						ang = angles[use_no];
+						prev_eu = eu;
+						VMOVE( prev_eu_dir , eu_dir );
+					}
+				}
+			}
+			rt_free( (char *)angles , "Check_radials: angles" );
+		}
+	}
+
+	nmg_tbl( &edgeuses , TBL_FREE , (long *)NULL );
+	nmg_tbl( &uses , TBL_FREE , (long *)NULL );
+	rt_free( (char *)flags , "Check_radials: flags" );
+
+	if( !radials_ok )
+	{
+		rt_log( "Check_radials: bad radials at edge from ( %g %g %g ) to ( %g %g %g )\n",
+			V3ARGS( eu1->vu_p->v_p->vg_p->coord ), V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) );
+		rt_log( "\tUse count = %d\n" , use_count );
+	}
+
+	return( !radials_ok );
+}
+
+int
 make_nmg_objects()
 {
 	struct faceuse *fu;
@@ -2515,8 +2875,26 @@ make_nmg_objects()
 	int failed=0;
 	char name[NAMESIZE+1];
 
-	if( !m )
-		return;
+	if( !m ||  RT_LIST_IS_EMPTY( &s->fu_hd ) )
+	{
+		char *bad_name;
+
+		if( m )
+		{
+			nmg_km( m );
+			m = (struct model *)NULL;
+			r = (struct nmgregion *)NULL;
+			s = (struct shell *)NULL;
+		}
+
+		rt_log( "***********component %s, group #%d, component #%d is empty, skipping\n",
+			name_name, group_id , comp_id );
+
+		while( (bad_name = find_nmg_region_name( group_id , comp_id ) ) )
+			Delete_name( &name_root , bad_name );
+
+		return(0);
+	}
 
 	/* FASTGEN modellers don't always put vertices in the middle of edges where
 	 * another edge ends
@@ -2548,7 +2926,8 @@ make_nmg_objects()
 	if( mode == PLATE_MODE && try_count )
 	{
 		Make_arb6_obj();
-		return;
+		arb6_worked = 1;
+		return(0);
 	}
 	else if( mode == PLATE_MODE )
 	{
@@ -2562,10 +2941,17 @@ make_nmg_objects()
 			mk_nmg( fdout , name , m );
 			fflush( fdout );
 		}
+
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (before triangulation)\n" );
+
 		/* make all faces triangular
 		 * nmg_break_long_edges may have made non-triangular faces
 		 */
 		nmg_triangulate_model( m , &tol );
+
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after triangulation)\n" );
 
 		if( debug )
 			rt_log( "extrude faces\n" );
@@ -2577,6 +2963,9 @@ make_nmg_objects()
 			failed = 1;
 			goto out;
 		}
+
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after extrusion)\n" );
 
 		nmg_tbl( &faces , TBL_RST , (long *)NULL );
 
@@ -2590,17 +2979,33 @@ make_nmg_objects()
 			nmg_tbl( &faces , TBL_INS , (long *)fu );
 		}
 
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after making table of faceuses)\n" );
+
 		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after gluefaces)\n" );
 
 		if( debug )
 			rt_log( "Fix normals\n" );
 
 		nmg_fix_normals( s , &tol );
+
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after fix_normals)\n" );
+
 	}
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after TBL_FREE of faces)\n" );
+
 	/* recompute the bounding boxes */
 	nmg_rebound( m , &tol );
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after rebound)\n" );
 
 	if( debug && mode != PLATE_MODE )
 	{
@@ -2615,14 +3020,35 @@ make_nmg_objects()
 		rt_log( "Coplanar face merge\n" );
 
 	tmp_shell_coplanar_face_merge( s , &tol , 0 );
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after tmp_shell_coplanar_face_merge)\n" );
+
 	Recalc_face_g( s );
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after Recalc_face_g)\n" );
+
+	/* Check if a valid closed shell has been produced */
+	if( nmg_ck_closed_surf( s , &tol ) )
+		return( 1 );
+
+	/* Check radial orientation around all edges */
+	if( mode == PLATE_MODE && Check_radials( s ) )
+		return( 1 );
 
 	if( debug )
 		rt_log( "model fuse\n" );
 
 	nmg_model_fuse( m , &tol );
 
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after model_fuse)\n" );
+
 	make_nmg_name( name , region_id );
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after make_nmg_name)\n" );
 
 	if( polysolids )
 	{
@@ -2635,8 +3061,14 @@ make_nmg_objects()
 	{
 		nmg_simplify_shell( s );
 
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (before mk_nmg)\n" );
+
 		mk_nmg( fdout , name , m );
 		fflush( fdout );
+
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after mk_nmg)\n" );
 	}
 
 	try_count = 0;
@@ -2670,7 +3102,7 @@ out:	nmg_km( m );
 	adj_root = (struct adjacent_faces *)NULL;
 
 	if( failed )
-		return;
+		return(1);
 
 	/* make region containing nmg object */
 	RT_LIST_INIT( &head.l );
@@ -2686,6 +3118,10 @@ out:	nmg_km( m );
 
 	MK_REGION( fdout , &head , group_id , comp_id , nmgs , NMG )
 
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_obj\n" );
+
+	return( 0 );
 }
 
 void
@@ -2724,6 +3160,9 @@ fastf_t radius;
 		cline_last_ptr->next = cline_ptr;
 
 	cline_last_ptr = cline_ptr;
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Add_to_clines\n" );
 }
 
 void
@@ -3337,6 +3776,8 @@ int pos;
 		fus->thick = thick;
 		fus->pos = pos;
 	}
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_fast_fu\n" );
 }
 
 void
@@ -3495,27 +3936,30 @@ int final;
 				comp_count++;
 			rt_log( "Making component %s, group #%d, component #%d\n",
 					name_name, group_id , comp_id );
-			if( RT_SETJUMP )
+			if( nmgs && make_nmg_objects() )
 			{
 				struct fast_fus *fus;
 				struct cline *cline_ptr;
 				struct shell_list *shell_ptr;
 				struct adjacent_faces *adj;
 
-				RT_UNSETJUMP;
 				rt_log( "***********component %s, group #%d, component #%d failed\n",
 					name_name, group_id , comp_id );
+
 				if( m )
 				{
 					nmg_km( m );
+
+					if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+						rt_log( "ERROR: rt_mem_barriercheck failed in Do_section after nmg_km()\n" );
+
 					m = (struct model *)NULL;
 					r = (struct nmgregion *)NULL;
 					s = (struct shell *)NULL;
 				}
 
-				/* reset debug flags to what the user requested */
-				rt_g.NMG_debug = nmg_debug;
-				rt_g.debug = rt_debug;
+				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing fus list\n" );
 
 				/* clear lists */
 				fus = fus_root;
@@ -3529,16 +3973,11 @@ int final;
 				}
 				fus_root = (struct fast_fus *)NULL;
 
-				cline_ptr = cline_root;
-				while( cline_ptr )
-				{
-					struct cline *tmp;
+				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing cline list\n" );
 
-					tmp = cline_ptr;
-					cline_ptr = cline_ptr->next;
-					rt_free( (char *)tmp , "Do_section: cline_ptr" );
-				}
-				cline_root = (struct cline *)NULL;
+				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing shell list\n" );
 
 				shell_ptr = shell_root;
 				while( shell_ptr )
@@ -3551,6 +3990,9 @@ int final;
 				}
 				shell_root = (struct shell_list *)NULL;
 
+				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing adj_face list\n" );
+
 				adj = adj_root;
 				while( adj )
 				{
@@ -3561,6 +4003,9 @@ int final;
 					rt_free( (char *)tmp , "Do_section: adj" );
 				}
 				adj_root = (struct adjacent_faces *)NULL;
+
+				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section after freeing adj_face list\n" );
 
 				/* If a plate-mode component failed, try again using arb6's */
 				if( mode == PLATE_MODE )
@@ -3579,28 +4024,23 @@ int final;
 						{
 							rt_log( "Retrying group %d, component %d\n",
 								group_id , comp_id );
-							if( !final )
-								(void)getline();
+							(void)getline();
 						}
 					}
 				}
+
+			}
+			make_cline_regions();
+			make_comp_group();
+			if( arb6_worked )
+			{
+				second_chance++;
+				try_count = 0;
+				arb6_worked = 0;
 			}
 			else
-			{
-				make_nmg_objects();
-				make_cline_regions();
-				make_comp_group();
+				conv_count++;
 
-				if( try_count )
-				{
-					second_chance++;
-					try_count = 0;
-				}
-				else
-					conv_count++;
-
-				RT_UNSETJUMP;
-			}
 		}
 		if( final && debug ) /* The ENDATA card has been found */
 			List_names();
@@ -3879,6 +4319,9 @@ do_hex1()
 
 	}
 	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Do_hex1\n" );
 }
 
 void
@@ -3956,6 +4399,9 @@ do_hex2()
 		rt_bomb( "CHEX2: mk_addmember failed\n" );
 
 	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in Do_hex2\n" );
 }
 
 int
@@ -3963,7 +4409,7 @@ Process_input( pass_number )
 int pass_number;
 {
 
-/*	if( debug ) */
+	if( debug )
 		rt_log( "\n\nProcess_input( pass = %d ), try = %d\n" , pass_number , try_count );
 /*	rt_prmem( "At start of Process_input:" );	*/
 
@@ -4098,6 +4544,17 @@ char *argv[];
 		rt_log( "Cannot open file for output (%s)\n" , argv[optind+1] );
 		perror( "fast4-g" );
 		exit( 1 );
+	}
+
+	if( rt_g.debug )
+	{
+		rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+		rt_log("\n");
+	}
+	if( rt_g.NMG_debug )
+	{
+		rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		rt_log("\n");
 	}
 
 	grid_size = GRID_BLOCK;
