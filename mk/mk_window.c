@@ -264,50 +264,50 @@ char *argv[];
 	BU_LIST_INIT(&comb.l);
 
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l,WMOP_INTERSECT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[5] = 97 + i;
 	regnam[6] = '1';
 	mk_lfcomb(fpw,regnam,&comb,1);
 
-	(void)mk_addmember(solnam,&comb.l,WMOP_INTERSECT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
 	regnam[6] = '2';
 	mk_lfcomb(fpw,regnam,&comb,1);
 
 	solnam[6] = '3';
-	(void)mk_addmember(solnam,&comb.l,WMOP_INTERSECT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '3';
 	mk_lfcomb(fpw,regnam,&comb,1);
 
 	solnam[6] = '4';
-	(void)mk_addmember(solnam,&comb.l,WMOP_INTERSECT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '4';
 	mk_lfcomb(fpw,regnam,&comb,1);
 
 	solnam[6] = '5';
-	(void)mk_addmember(solnam,&comb.l,WMOP_INTERSECT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '5';
 	mk_lfcomb(fpw,regnam,&comb,1);
 
 	solnam[6] = '6';
-	(void)mk_addmember(solnam,&comb.l,WMOP_INTERSECT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '1';
-	(void)mk_addmember(solnam,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	solnam[6] = '2';
-	(void)mk_addmember(solnam,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '6';
 	mk_lfcomb(fpw,regnam,&comb,1);
 
@@ -317,17 +317,17 @@ char *argv[];
 	BU_LIST_INIT(&comb1.l);
 
 	regnam[6] = '1';
-	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '2';
-	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '3';
-	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '4';
-	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '5';
-	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
 	regnam[6] = '6';
-	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
 
 	grpnam[3] = 97 + i;
 	mk_lfcomb(fpw,grpnam,&comb1,0);

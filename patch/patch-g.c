@@ -513,7 +513,7 @@ char	*argv[];
 			if( done ) {
 				sprintf(name,"%dxxx_series",in[0].cc/1000);
 				mk_lcomb(outfp,name,&headd,0,"","",rgb,0);
-				(void) mk_addmember(name,&heade.l,WMOP_UNION);
+				(void) mk_addmember(name,&heade.l,NULL, WMOP_UNION);
 			}
 
 			/* We have already read the first record of the
@@ -1047,14 +1047,14 @@ struct rt_tol *tol;
 				VMOVE( &pts[7*3], &pts[6*3] );
 				sprintf( tmp_name, "%s_%d", name, k );
 				mk_arb8( outfp, tmp_name, pts );
-				mk_addmember( tmp_name, &tmp_head.l, WMOP_UNION );
+				mk_addmember( tmp_name, &tmp_head.l, NULL, WMOP_UNION );
 				if( mirror_name[0] )
 				{
 					for( i=0 ; i<8 ; i++ )
 						pts[i*3 + 1] = -pts[i*3 + 1];
 					sprintf( tmp_name, "%s_%dm", name, k );
 					mk_arb8( outfp, tmp_name, pts );
-					mk_addmember( tmp_name, &mir_head.l, WMOP_UNION );
+					mk_addmember( tmp_name, &mir_head.l, NULL, WMOP_UNION );
 				}
 			}
 		}
@@ -1750,10 +1750,10 @@ char *name1;
 	}
 
 	if ( cc == in[0].cc){
-		(void) mk_addmember(cname,&heada.l,WMOP_UNION);
+		(void) mk_addmember(cname,&heada.l,NULL, WMOP_UNION);
 	}
 	else{
-		(void) mk_addmember(cname,&headb.l,WMOP_UNION);
+		(void) mk_addmember(cname,&headb.l,NULL, WMOP_UNION);
 	}
 
 	last_cc = in[0].cc;
@@ -1870,11 +1870,11 @@ int cnt;
 	else
 	{
 		count++;
-		(void) mk_addmember(name,&head.l,WMOP_UNION);
+		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 		proc_region( name );
 		if( mirror_name[0] )
 		{
-			(void) mk_addmember(mirror_name,&head.l,WMOP_UNION);
+			(void) mk_addmember(mirror_name,&head.l,NULL, WMOP_UNION);
 			mir_count++;
 			proc_region( mirror_name );
 		}
@@ -2205,11 +2205,11 @@ int cnt;
 			else
 			{
 				count++;
-				(void) mk_addmember(name,&head.l,WMOP_UNION);
+				(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 				proc_region( name );
 				if( mirror_name[0] )
 				{
-					(void) mk_addmember(mirror_name,&head.l,WMOP_UNION);
+					(void) mk_addmember(mirror_name,&head.l,NULL, WMOP_UNION);
 					mir_count++;
 					proc_region( mirror_name );
 				}
@@ -2287,7 +2287,7 @@ int cnt;
 		mk_arb8( outfp, name, &pt8[0][X] );
 		count++;
 
-		(void) mk_addmember(name,&head.l,WMOP_UNION);
+		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 
 		if( in[k].surf_mode == '-' ){
 			point_t interior;
@@ -2353,11 +2353,11 @@ int cnt;
 			if( ret == 0 ) { /* valid record */
 				
 				mk_arb8( outfp, name, &inpt8[0][X] );
-				(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				(void)mk_addmember(name,&headf.l,WMOP_UNION);
+				(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 			}
 		}
 
@@ -2399,7 +2399,7 @@ int cnt;
 		mk_arb8( outfp, name, &pt8[0][X] );
 		mir_count++;
 
-		(void) mk_addmember(name,&head.l,WMOP_UNION);
+		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 		if( in[k].surf_mode == '-' ){
 			point_t interior;
 			vect_t diff;
@@ -2464,11 +2464,11 @@ int cnt;
 			if( ret == 0 ) { /* valid record */
 
 				mk_arb8( outfp, name, &inpt8[0][X] );
-				(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				(void)mk_addmember(name,&headf.l,WMOP_UNION);
+				(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 			}
 		}
 
@@ -2521,7 +2521,7 @@ int cnt;
 
 			mk_sph(outfp,name,center,in[i+1].x);
 
-			(void) mk_addmember(name,&head.l,WMOP_UNION);
+			(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 
 
 			/* Check if hollow (i.e. plate mode) subract sphere with
@@ -2538,11 +2538,11 @@ int cnt;
 
 				if( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
 					mk_sph(outfp,name,center,rad);
-					(void)mk_addmember(name, &head.l,WMOP_SUBTRACT);
+					(void)mk_addmember(name, &head.l,NULL, WMOP_SUBTRACT);
 				}
 				else {
 					/* add to check group */
-					(void)mk_addmember(name, &headf.l,WMOP_UNION);
+					(void)mk_addmember(name, &headf.l,NULL, WMOP_UNION);
 				}
 			}
 
@@ -2574,7 +2574,7 @@ int cnt;
 			mk_sph(outfp,name,center,in[i+1].x);
 			mir_count++;
 
-			(void) mk_addmember(name,&head.l,WMOP_UNION);
+			(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 
 			/* Check if mirrored surface is hollow (i.e. plate mode) subract
 				sphere with radius R1 - thickness */
@@ -2586,11 +2586,11 @@ int cnt;
 
 				if( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
 					mk_sph(outfp,name,center,rad);
-					(void)mk_addmember(name, &head.l,WMOP_SUBTRACT);
+					(void)mk_addmember(name, &head.l,NULL, WMOP_SUBTRACT);
 				}
 				else {
 					/* add to check group */
-					(void)mk_addmember(name, &headf.l,WMOP_UNION);
+					(void)mk_addmember(name, &headf.l,NULL, WMOP_UNION);
 				}
 			}
 
@@ -2661,7 +2661,7 @@ int cnt;
 		mk_arb8( outfp, name, &pt8[0][X] );
 		count++;
 
-		(void) mk_addmember(name,&head.l,WMOP_UNION);
+		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 
 		if( in[k].surf_mode == '-' ){
 
@@ -2708,11 +2708,11 @@ int cnt;
 				VADD4(pt8[6],abi,aci,adi,pt8[0]);
 
 				mk_arb8( outfp, name, &pt8[0][X] );
-				(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				(void)mk_addmember(name,&headf.l,WMOP_UNION);
+				(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 			}
 		}
 
@@ -2752,7 +2752,7 @@ int cnt;
 		mk_arb8( outfp, name, &pt8[0][X] );
 		mir_count++;
 
-		(void) mk_addmember(name,&head.l,WMOP_UNION);
+		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 
 		if( in[k].surf_mode == '-' ){
 
@@ -2799,11 +2799,11 @@ int cnt;
 				VADD4(pt8[6],abi,aci,adi,pt8[0]);
 
 				mk_arb8( outfp, name, &pt8[0][X] );
-				(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				(void)mk_addmember(name,&headf.l,WMOP_UNION);
+				(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 			}
 		}
 
@@ -2988,38 +2988,38 @@ int cnt;
 				if( dot3 > 0.0 && dot4 < 0.0 )
 				{
 					/* union in both ends */
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name3, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name4, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
 				}
 				else if( dot3 < 0.0 && dot4 > 0.0 )
 				{
 					/* subtract both ends */
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name3, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name4, &donut_head.l, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head.l, NULL, WMOP_SUBTRACT );
 				}
 				else if( dot3 > 0.0 && dot4 > 0.0 )
 				{
 					/* union #3 subtract #4 */
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name4, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name3, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
 				}
 				else
 				{
 					/* union #4 subtract #3 */
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name3, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name4, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
 				}
 			}
 			else if( magh3 > 0.0 )
@@ -3027,16 +3027,16 @@ int cnt;
 				/* only first end has a TRC */
 				if( dot3 > 0.0 )
 				{
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name3, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
 				}
 				else
 				{
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name3, &donut_head.l, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head.l, NULL, WMOP_SUBTRACT );
 				}
 			}
 			else if( magh4 > 0.0 )
@@ -3044,29 +3044,29 @@ int cnt;
 				/* only second end has a TRC */
 				if( dot4 < 0.0 )
 				{
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name4, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
 				}
 				else
 				{
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
-					(void)mk_addmember( scratch_name4, &donut_head.l, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head.l, NULL, WMOP_SUBTRACT );
 				}
 			}
 			else
 			{
 				/* no end TRC's */
-				(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-				(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_SUBTRACT );
+				(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+				(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_SUBTRACT );
 			}
 
 			if( BU_LIST_NON_EMPTY( &donut_head.l ) )
 			{
 				mk_lfcomb( outfp, name, &donut_head, 0 );
-				(void)mk_addmember( name, &head.l, WMOP_UNION );
+				(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 			}
 
 			continue;
@@ -3091,8 +3091,8 @@ int cnt;
 				sprintf( scratch_name1_in, "tmp.%d", scratch_num );
 				scratch_num++;
 				mk_trc_top(outfp,scratch_name1_in,base1_in,top1_in,rbase1_in,rtop1_in);
-				(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-				(void)mk_addmember(scratch_name1_in,&donut_head.l,WMOP_SUBTRACT);
+				(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+				(void)mk_addmember(scratch_name1_in,&donut_head.l,NULL, WMOP_SUBTRACT);
 
 				if( make_inside_trc( base2, top2, rbase2, rtop2, base2_in, top2_in, &rbase2_in, &rtop2_in, 0, 0, 1, in[k+4].rsurf_thick ) )
 				{
@@ -3104,8 +3104,8 @@ int cnt;
 				sprintf( scratch_name2_in, "tmp.%d", scratch_num );
 				scratch_num++;
 				mk_trc_top(outfp,scratch_name2_in,base2_in,top2_in,rbase2_in,rtop2_in);
-				(void)mk_addmember( scratch_name2, &donut_head.l, WMOP_UNION );
-				(void)mk_addmember(scratch_name2_in,&donut_head.l,WMOP_SUBTRACT);
+				(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_UNION );
+				(void)mk_addmember(scratch_name2_in,&donut_head.l,NULL, WMOP_SUBTRACT);
 			}
 
 			if( end_code == 1 || end_code == 3 || end_code == 5 || end_code == 6 )
@@ -3125,8 +3125,8 @@ int cnt;
 					sprintf( scratch_name4_in, "tmp.%d", scratch_num );
 					scratch_num++;
 					mk_trc_top(outfp,scratch_name4_in,base_in,top_in,rbase_in,rtop_in);
-					(void)mk_addmember( scratch_name4, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember(scratch_name4_in,&donut_head.l,WMOP_SUBTRACT);
+					(void)mk_addmember( scratch_name4, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember(scratch_name4_in,&donut_head.l,NULL, WMOP_SUBTRACT);
 				}
 				else
 				{
@@ -3139,9 +3139,9 @@ int cnt;
 					sprintf( scratch_name4_in, "tmp.%d", scratch_num );
 					scratch_num++;
 					mk_trc_top(outfp,scratch_name4_in,base_in,top_in,rbase_in,rtop_in);
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember(scratch_name4_in,&donut_head.l,WMOP_SUBTRACT);
-					(void)mk_addmember(scratch_name2,&donut_head.l,WMOP_SUBTRACT);
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember(scratch_name4_in,&donut_head.l,NULL, WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name2,&donut_head.l,NULL, WMOP_SUBTRACT);
 				}
 			}
 			if( end_code == 2 || end_code == 3 || end_code == 4 || end_code == 6 )
@@ -3161,8 +3161,8 @@ int cnt;
 					sprintf( scratch_name3_in, "tmp.%d", scratch_num );
 					scratch_num++;
 					mk_trc_top(outfp,scratch_name3_in,base_in,top_in,rbase_in,rtop_in);
-					(void)mk_addmember( scratch_name3, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember(scratch_name3_in,&donut_head.l,WMOP_SUBTRACT);
+					(void)mk_addmember( scratch_name3, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember(scratch_name3_in,&donut_head.l,NULL, WMOP_SUBTRACT);
 				}
 				else
 				{
@@ -3175,16 +3175,16 @@ int cnt;
 					sprintf( scratch_name3_in, "tmp.%d", scratch_num );
 					scratch_num++;
 					mk_trc_top(outfp,scratch_name3_in,base_in,top_in,rbase_in,rtop_in);
-					(void)mk_addmember( scratch_name1, &donut_head.l, WMOP_UNION );
-					(void)mk_addmember(scratch_name3_in,&donut_head.l,WMOP_SUBTRACT);
-					(void)mk_addmember(scratch_name2,&donut_head.l,WMOP_SUBTRACT);
+					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
+					(void)mk_addmember(scratch_name3_in,&donut_head.l,NULL, WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name2,&donut_head.l,NULL, WMOP_SUBTRACT);
 				}
 			}
 
 			if( BU_LIST_NON_EMPTY( &donut_head.l ) )
 			{
 				mk_lfcomb( outfp, name, &donut_head, 0 );
-				(void)mk_addmember( name, &head.l, WMOP_UNION );
+				(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 			}
 
 			continue;
@@ -3306,7 +3306,7 @@ int cnt;
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,WMOP_UNION);
+						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_h_factor;
@@ -3320,7 +3320,7 @@ int cnt;
 						/* base radius should really be zero, get close */
 						srad1 = .00001;
 						mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					else if( srad2 <= 0.0 )
 					{
@@ -3335,12 +3335,12 @@ int cnt;
 						/* top radius should really be zero, get close */
 						srad2 = .00001;
 						mk_trc_top(outfp,name,base,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					else
 					{
 						mk_trc_top(outfp,name,base,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3364,20 +3364,20 @@ int cnt;
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,WMOP_UNION);
+						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick - rad1)/(rad2-rad1);
 						if( new_ht >= ht )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, base, new_ht, unit_h );
 							srad1 = 0.00001;
 							mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3386,19 +3386,19 @@ int cnt;
 
 						new_ht = sht + ht*srad2/(rad1-rad2);
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, sbase, new_ht, unit_h );
 							srad2 = 0.00001;
 							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					break;
 				case 2: /* Base open, top closed */
@@ -3421,20 +3421,20 @@ int cnt;
 					srad2 = srad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,WMOP_UNION);
+						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = sht + ht*srad1/(rad2-rad1);
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, stop, new_ht, unit_h )
 							srad1 = 0.00001;
 							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3443,19 +3443,19 @@ int cnt;
 
 						new_ht = ht*(thick - rad2)/(rad1-rad2);
 						if( new_ht >= ht )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, top, new_ht, unit_h )
 							srad2 = 0.00001;
 							mk_trc_top(outfp,name,base,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(outfp,name,base,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3484,20 +3484,20 @@ int cnt;
 					srad2 = rad2_tmp - thick;
 
 					if( (srad1 <= 0.0 && srad2 <= 0.0) || sht <= 0.0)
-						(void)mk_addmember(name,&headf.l,WMOP_UNION);
+						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 					else if( srad1 < 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick-rad1_tmp)/(rad2_tmp-rad1_tmp);
 						if( new_ht >= sht )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, sbase, new_ht, unit_h )
 							srad1 = 0.00001;
 							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3508,20 +3508,20 @@ int cnt;
 
 						new_ht = (-ht*srad2/(rad1-rad2));
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VREVERSE( rev_h, unit_h )
 							VJOIN1( stop, stop, new_ht, rev_h )
 							srad2 = 0.00001;
 							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3607,7 +3607,7 @@ int cnt;
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,WMOP_UNION);
+						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_h_factor;
@@ -3621,7 +3621,7 @@ int cnt;
 						/* base radius should really be zero, get close */
 						srad1 = .00001;
 						mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					else if( srad2 <= 0.0 )
 					{
@@ -3636,12 +3636,12 @@ int cnt;
 						/* top radius should really be zero, get close */
 						srad2 = .00001;
 						mk_trc_top(outfp,name,base,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					else
 					{
 						mk_trc_top(outfp,name,base,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3665,20 +3665,20 @@ int cnt;
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,WMOP_UNION);
+						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick - rad1)/(rad2-rad1);
 						if( new_ht >= ht )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, base, new_ht, unit_h );
 							srad1 = 0.00001;
 							mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3687,19 +3687,19 @@ int cnt;
 
 						new_ht = sht + ht*srad2/(rad1-rad2);
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, sbase, new_ht, unit_h );
 							srad2 = 0.00001;
 							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					break;
 				case 2: /* Base open, top closed */
@@ -3722,20 +3722,20 @@ int cnt;
 					srad2 = srad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,WMOP_UNION);
+						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = sht + ht*srad1/(rad2-rad1);
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, stop, new_ht, unit_h )
 							srad1 = 0.00001;
 							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3744,19 +3744,19 @@ int cnt;
 
 						new_ht = ht*(thick - rad2)/(rad1-rad2);
 						if( new_ht >= ht )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, top, new_ht, unit_h )
 							srad2 = 0.00001;
 							mk_trc_top(outfp,name,base,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(outfp,name,base,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3785,20 +3785,20 @@ int cnt;
 					srad2 = rad2_tmp - thick;
 
 					if( (srad1 <= 0.0 && srad2 <= 0.0) || sht <= 0.0)
-						(void)mk_addmember(name,&headf.l,WMOP_UNION);
+						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 					else if( srad1 < 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick-rad1_tmp)/(rad2_tmp-rad1_tmp);
 						if( new_ht >= sht )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, sbase, new_ht, unit_h )
 							srad1 = 0.00001;
 							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3809,20 +3809,20 @@ int cnt;
 
 						new_ht = (-ht*srad2/(rad1-rad2));
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,WMOP_UNION);
+							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
 						else
 						{
 							VREVERSE( rev_h, unit_h )
 							VJOIN1( stop, stop, new_ht, rev_h )
 							srad2 = 0.00001;
 							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3952,11 +3952,11 @@ int cnt;
 		}
 
 		if( count > 1 && (count % num_unions) == 0 ){
-			(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+			(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 			proc_region( name );
-			(void)mk_addmember(name,&head.l,WMOP_UNION);
+			(void)mk_addmember(name,&head.l,NULL, WMOP_UNION);
 		} else {
-			(void) mk_addmember(name,&head.l,WMOP_UNION);
+			(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 		}
 	}
 	/* catch leftover solids */
@@ -3998,12 +3998,12 @@ int cnt;
 		}
 
 		if( mir_count > 1 && (mir_count % num_unions) == 0 ) {
-			(void)mk_addmember(name,&head.l,WMOP_SUBTRACT);
+			(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 			proc_region( name );
-			(void)mk_addmember(name,&head.l,WMOP_UNION);
+			(void)mk_addmember(name,&head.l,NULL, WMOP_UNION);
 		}
 		else {
-			(void) mk_addmember(name,&head.l,WMOP_UNION);
+			(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
 		}
 
 	} /* for */
@@ -4094,18 +4094,18 @@ char *labelfile;
 		if( RT_LIST_NON_EMPTY( &heada.l ) )
 		{
 			mk_lcomb(outfp,gname,&heada,0,"","",0,0);
-			(void) mk_addmember(gname,&headd.l,WMOP_UNION);
+			(void) mk_addmember(gname,&headd.l,NULL, WMOP_UNION);
 		}
 		if( RT_LIST_NON_EMPTY( &headb.l ) )
 		{
 			mk_lcomb(outfp,mgname,&headb,0,"","",0,0);
-			(void) mk_addmember(mgname,&headd.l,WMOP_UNION);
+			(void) mk_addmember(mgname,&headd.l,NULL, WMOP_UNION);
 		}
 	}
 	else {
 		sprintf(gname,"%dxxx_series",cur_series);
 		mk_lcomb(outfp,gname,&headd,0,"","",rgb,0);
-		(void) mk_addmember(gname,&heade.l,WMOP_UNION);
+		(void) mk_addmember(gname,&heade.l,NULL, WMOP_UNION);
 
 		cur_series = in[0].cc/1000 ;
 		set_color( cur_series );
@@ -4321,7 +4321,7 @@ int mirflag;
 	struct subtract_list	*hold;
 
 	if( !slist ) {
-		(void)mk_addmember( name1, &(head->l), WMOP_UNION );
+		(void)mk_addmember( name1, &(head->l), NULL, WMOP_UNION );
 		return;
 	}
 
@@ -4336,12 +4336,12 @@ int mirflag;
 	if( slist->insolid == solnum )
 		return;
 
-	(void)mk_addmember( name1, &(head->l), WMOP_UNION );
+	(void)mk_addmember( name1, &(head->l), NULL, WMOP_UNION );
 
 	for( slist = hold; slist; slist = slist->next ) {
 		if( slist->outsolid == solnum ){
 			sprintf(tmpname,"c.%.4d.s%.2d",cc,slist->insolid );
-			(void)mk_addmember( tmpname, &(head->l), WMOP_SUBTRACT );
+			(void)mk_addmember( tmpname, &(head->l), NULL, WMOP_SUBTRACT );
 		}
 	}
 }

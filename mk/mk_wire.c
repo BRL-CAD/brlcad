@@ -355,11 +355,11 @@ char *argv[];
 	   (void)fflush(stdout);
 	}						/*  END # 37  */
 
-	(void)mk_addmember(solcyl,&comb.l,WMOP_INTERSECT);
+	(void)mk_addmember(solcyl,&comb.l, NULL, WMOP_INTERSECT);
 
 	if(i < (numseg - 1) )
 	{						/*  START # 38  */
-	   (void)mk_addmember(solsub1,&comb.l,WMOP_SUBTRACT);
+	   (void)mk_addmember(solsub1,&comb.l, NULL, WMOP_SUBTRACT);
 	}						/*  END # 38  */
 
 	mk_lfcomb(fpw,regcyl,&comb,1);
@@ -402,9 +402,9 @@ char *argv[];
 	   (void)fflush(stdout);
 	}						/*  END # 43  */
 
-	(void)mk_addmember(solsph,&comb.l,WMOP_INTERSECT);
-	(void)mk_addmember(solsub1,&comb.l,WMOP_SUBTRACT);
-	(void)mk_addmember(solsub2,&comb.l,WMOP_SUBTRACT);
+	(void)mk_addmember(solsph,&comb.l, NULL, WMOP_INTERSECT);
+	(void)mk_addmember(solsub1,&comb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(solsub2,&comb.l, NULL, WMOP_SUBTRACT);
 
 	mk_lfcomb(fpw,regsph,&comb,1);
    }							/*  END # 40  */
@@ -443,8 +443,8 @@ char *argv[];
 	   (void)fflush(stdout);
 	}						/*  END # 54  */
 
-	(void)mk_addmember(regcyl,&comb1.l,WMOP_UNION);
-	if(i != 0)(void)mk_addmember(regsph,&comb1.l,WMOP_UNION);
+	(void)mk_addmember(regcyl,&comb1.l, NULL, WMOP_UNION);
+	if(i != 0)(void)mk_addmember(regsph,&comb1.l, NULL, WMOP_UNION);
    }							/*  END # 50  */
 
    mk_lfcomb(fpw,group,&comb1,0);

@@ -514,7 +514,7 @@ tryagain:	/* sent here to try next set of names */
 				   regname, "\n", (char *)NULL);
 		  continue;
 		}
-		mk_addmember( regname, &head, WMOP_UNION );
+		mk_addmember( regname, &head, NULL, WMOP_UNION );
 	}
 
 	/* Add them all at once */
@@ -900,7 +900,7 @@ int members[], number;
 		       solidname, "\n", (char *)NULL);
       continue;
     }
-    mk_addmember( solidname, &head, op[i] );
+    mk_addmember( solidname, &head, NULL, op[i] );
   }
   (void)mk_comb( wdbp, region, &head,
 	    1, NULL, NULL, NULL,
