@@ -69,7 +69,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define NET_LONG_LEN	4	/* # bytes to network long */
 
 extern	char	*malloc();
-extern	int	_disk_enable;
+extern	int	_fb_disk_enable;
 
 static	void	comm_error();
 static	void	do1();
@@ -178,7 +178,7 @@ int argc; char **argv;
 
 
 	/* No disk files on remote machine */
-	_disk_enable = 0;
+	_fb_disk_enable = 0;
 
 	(void)signal( SIGPIPE, SIG_IGN );
 
