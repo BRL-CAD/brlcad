@@ -60,7 +60,7 @@ main()
 	}
 
 	/* Create temporary file to hold data, get r/w file descriptor */
-	(void)mktemp( template );
+	(void)mkstemp( template );
 	if( (tfd = creat( template, 0600 )) < 0 )  {
 		perror(template);
 		exit(1);
