@@ -236,7 +236,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 		bn_tabdata_constval( lp->lt_spectrum, 1.0 );
 	}
 	/* XXX Need to convert units of lumens (candela-sr) to ?? mw/sr?  Use any old numbers to get started. */
-	bn_tabdata_scale( lp->lt_spectrum, lp->lt_spectrum, lp->lt_intensity );
+	bn_tabdata_scale( lp->lt_spectrum, lp->lt_spectrum, lp->lt_intensity * 0.001 ); /* XXX */
 #else
 	if( rp->reg_mater.ma_color_valid )  {
 		VMOVE( lp->lt_color, rp->reg_mater.ma_color );
