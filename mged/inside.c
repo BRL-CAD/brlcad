@@ -1307,7 +1307,9 @@ fastf_t thick;
 
 			next_s = BU_LIST_PNEXT( shell , &s->l );
 
-			(void)nmg_extrude_shell( s , thick , 0 , 0 , &mged_tol );
+			nmg_shell_coplanar_face_merge( s, &mged_tol, 1 );
+			if( !nmg_kill_cracks( s ) )
+				(void)nmg_extrude_shell( s , thick , 0 , 0 , &mged_tol );
 
 			s = next_s;
 		}
