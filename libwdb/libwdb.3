@@ -175,14 +175,14 @@ normal vector ``norm''.
 .PP
 .I mk_rpp\^
 makes an ARB8 called ``name''
-specified as a right rectangular parallelpiped in
+specified as a right rectangular parallelepiped in
 terms of a minimum point ``min'' and a maximum point ``max''.
 .PP
 .I mk_wedge\^
 makes a right angular wedge called ``name'' specified by
 a starting vertex located in the lower left corner of the solid, an x-direction
-vector, a z-direction vector, an x-lenghth, a y-lenghth, a z-lenghth, and
-a top x-lenghth.  The y-direction vector is the result of x-direction vector
+vector, a z-direction vector, an x-length, a y-length, a z-length, and
+a top x-length.  The y-direction vector is the result of x-direction vector
 cross z-direction vector.
 All vertices are make in the counterclockwise direction,
 bottom face first.  The top face is made by extruding the bottom face in
@@ -248,7 +248,7 @@ the top plate.
 The radius given as ``radius'' defines the size of the end plates.
 .PP
 .I mk_comb\^
-defines a conbination of name ``name'', with material properties
+defines a combination of name ``name'', with material properties
 information included.
 ``len'' indicated the number of
 .I mk_memb\^
@@ -307,7 +307,7 @@ will no longer be supported.
 .I mk_lfcomb\^
 is the linked list equivalent of
 .I mk_fcomb\^.
-Note that the linked list heads must be initizlized by an
+Note that the linked list heads must be initialized by an
 invocation of RT_LIST_INIT( &head.l );
 .PP
 .I mk_polysolid\^
@@ -332,7 +332,7 @@ is like
 except no normals are given.  It is a ``fast'' or ``flat'' form
 of the poly routine.  This function computes normals for you from
 the given vertices by assuming a counter clockwise ordering of the
-verticies as viewed from the top (outside).
+vertices as viewed from the top (outside).
 .PP
 The routine
 .I mk_bsolid\^
