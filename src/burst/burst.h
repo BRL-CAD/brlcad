@@ -16,7 +16,10 @@
 
 /* Some useful stuff from Doug Gwyn's std.h. */
 /* Extended data types */
+#if !defined(NCURSES_BOOL) && !defined(bool)
 typedef int bool;			/* Boolean data */
+#endif
+
 #define false	0
 #define true	1
 /* ANSI C definitions */
