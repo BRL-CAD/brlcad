@@ -135,11 +135,11 @@ register CONST double	mm;
  */
 double
 rt_mm_value(s)
-const char *s;
+CONST char *s;
 {
 	double v;
 	char *ptr;	
-	register const struct cvt_tab	*tp;
+	register CONST struct cvt_tab	*tp;
 
 	v = strtod(s, &ptr);
 
