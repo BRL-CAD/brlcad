@@ -289,7 +289,7 @@ struct rt_i			*rtip;
 	ACQUIRE_SEMAPHORE_TREE(hash);
 
 	/* If solid has not been referenced yet, the search can be skipped */
-	if( dp->d_uses > 0 )  {
+	if( dp->d_uses > 0 && rtip->rti_dont_instance == 0 )  {
 		struct bu_list	*mid;
 
 		/* Search dp->d_use_hd list for other instances */
