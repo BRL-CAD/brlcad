@@ -544,6 +544,9 @@ rt_comb_export4(
 
 /*
  *			D B _ T R E E _ F L A T T E N _ D E S C R I B E
+ *
+ *  Produce a GIFT-compatible listing, one "member" per line,
+ *  regardless of the structure of the tree we've been given.
  */
 void
 db_tree_flatten_describe(
@@ -555,7 +558,9 @@ db_tree_flatten_describe(
 {
 	int node_count;
 	struct rt_tree_array	*rt_tree_array;
-	
+	int i;
+	char op = OP_NOP;
+	int status;
 
 	BU_CK_VLS(vls);
 
@@ -568,72 +573,69 @@ db_tree_flatten_describe(
 	RT_CK_TREE(tp);
 
 	node_count = db_tree_nleaves( tp );
-	if( node_count > 0 )
-	{
-		int i;
-		char op = OP_NOP;
-		int status;
-
-		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
-		/* We cast away the const here, knowing that the arg
-		 * free=0 means that it won't actually be modified.
-		 */
-		(void)db_flatten_tree( rt_tree_array, (union tree *)tp, OP_UNION, 0 );
-		for( i=0 ; i<node_count ; i++ )
-		{
-			switch (rt_tree_array[i].tl_op)
-			{
-				case OP_INTERSECT:
-					op = '+';
-					break;
-				case OP_SUBTRACT:
-					op = '-';
-					break;
-				case OP_UNION:
-					op = 'u';
-					break;
-				default:
-					bu_bomb("db_tree_flatten_describe() corrupt rt_tree_array");
-			}
-
-			status = mat_categorize( rt_tree_array[i].tl_tree->tr_l.tl_mat );
-			if( !indented )  bu_vls_spaces( vls, 2*lvl );
-			bu_vls_printf( vls, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name );
-			if( status & STAT_ROT ) {
-				fastf_t	az, el;
-				bn_ae_vec( &az, &el, rt_tree_array[i].tl_tree->tr_l.tl_mat ?
-					rt_tree_array[i].tl_tree->tr_l.tl_mat : bn_mat_identity );
-				bu_vls_printf( vls, 
-					" az=%g, el=%g, ",
-					az, el );
-			}
-			if( status & STAT_XLATE ) {
-				bu_vls_printf( vls, " [%g,%g,%g]",
-					rt_tree_array[i].tl_tree->tr_l.tl_mat[MDX]*mm2local,
-					rt_tree_array[i].tl_tree->tr_l.tl_mat[MDY]*mm2local,
-					rt_tree_array[i].tl_tree->tr_l.tl_mat[MDZ]*mm2local);
-			}
-			if( status & STAT_SCALE ) {
-				bu_vls_printf( vls, " scale %g",
-					1.0/rt_tree_array[i].tl_tree->tr_l.tl_mat[15] );
-			}
-			if( status & STAT_PERSP ) {
-				bu_vls_printf( vls, 
-					" Perspective=[%g,%g,%g]??",
-					rt_tree_array[i].tl_tree->tr_l.tl_mat[12],
-					rt_tree_array[i].tl_tree->tr_l.tl_mat[13],
-					rt_tree_array[i].tl_tree->tr_l.tl_mat[14] );
-			}
-			bu_vls_printf( vls, "\n" );
-		}
-
-		if( rt_tree_array ) bu_free( (genptr_t)rt_tree_array, "rt_tree_array" );
-	}
-	else
-	{
+	if( node_count <= 0 )  {
 		if( !indented )  bu_vls_spaces( vls, 2*lvl );
 		bu_vls_strcat( vls, "-empty-\n" );
+		return;
 	}
+
+
+	rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
+
+	/* We cast away the const here, knowing that the arg
+	 * free=0 means that it won't actually be modified.
+	 */
+	(void)db_flatten_tree( rt_tree_array, (union tree *)tp, OP_UNION, 0 );
+
+	for( i=0 ; i<node_count ; i++ )
+	{
+		switch (rt_tree_array[i].tl_op)
+		{
+			case OP_INTERSECT:
+				op = '+';
+				break;
+			case OP_SUBTRACT:
+				op = '-';
+				break;
+			case OP_UNION:
+				op = 'u';
+				break;
+			default:
+				bu_bomb("db_tree_flatten_describe() corrupt rt_tree_array");
+		}
+
+		status = mat_categorize( rt_tree_array[i].tl_tree->tr_l.tl_mat );
+		if( !indented )  bu_vls_spaces( vls, 2*lvl );
+		bu_vls_printf( vls, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name );
+		if( status & STAT_ROT ) {
+			fastf_t	az, el;
+			bn_ae_vec( &az, &el, rt_tree_array[i].tl_tree->tr_l.tl_mat ?
+				rt_tree_array[i].tl_tree->tr_l.tl_mat : bn_mat_identity );
+			bu_vls_printf( vls, 
+				" az=%g, el=%g, ",
+				az, el );
+		}
+		if( status & STAT_XLATE ) {
+			bu_vls_printf( vls, " [%g,%g,%g]",
+				rt_tree_array[i].tl_tree->tr_l.tl_mat[MDX]*mm2local,
+				rt_tree_array[i].tl_tree->tr_l.tl_mat[MDY]*mm2local,
+				rt_tree_array[i].tl_tree->tr_l.tl_mat[MDZ]*mm2local);
+		}
+		if( status & STAT_SCALE ) {
+			bu_vls_printf( vls, " scale %g",
+				1.0/rt_tree_array[i].tl_tree->tr_l.tl_mat[15] );
+		}
+		if( status & STAT_PERSP ) {
+			bu_vls_printf( vls, 
+				" Perspective=[%g,%g,%g]??",
+				rt_tree_array[i].tl_tree->tr_l.tl_mat[12],
+				rt_tree_array[i].tl_tree->tr_l.tl_mat[13],
+				rt_tree_array[i].tl_tree->tr_l.tl_mat[14] );
+		}
+		bu_vls_printf( vls, "\n" );
+	}
+
+	if( rt_tree_array ) bu_free( (genptr_t)rt_tree_array, "rt_tree_array" );
 }
 
 /*
