@@ -55,6 +55,7 @@
 #define DEBUG_ADVANCE	0x00800000	/* 24 Cell-to-cell space partitioning */
 #define DEBUG_MATH	0x01000000	/* 25 Fundamental math routines (plane.c, mat.c) */
 #define DEBUG_EBM	0x02000000	/* 26 Extruded bit-map solids */
+#define DEBUG_HF	0x04000000	/* 27 Height Field solids */
 
 /* These will cause binary debugging output */
 #define DEBUG_PLOTBOX	0x80000000	/* 32 Plot(3) bounding boxes and cuts */
@@ -62,7 +63,7 @@
 /* Format string for rt_printb() */
 #define DEBUG_FORMAT	\
 "\020\040PLOTBOX\
-\032EBM\031MATH\030ADVANCE\
+\033HF\032EBM\031MATH\030ADVANCE\
 \027TESTING\026TREEWALK\025CUTDETAIL\024PARALLEL\023FDIFF\022MEM_FULL\
 \021MEM\020BOXING\017CUTING\016PARTITION\015ROOTS\014VOL\
 \013ANIM_FULL\012ANIM\011SPLINE\010ARB8\7REGIONS\6SOLIDS\5DB\
