@@ -36,11 +36,11 @@ proc create_listbox { top screen type items abort_cmd } {
     wm title $top "$type Selection Menu"
 }
 
-proc bind_listbox { top event action } {
+proc bind_listbox {top event action} {
     bind $top.listbox $event "$action"
 }
 
-proc get_listbox_entry { w x y } {
+proc get_listbox_entry {w x y} {
     if ![winfo exists $w] {
 	return
     }
@@ -115,17 +115,7 @@ proc lbdcHack {w x y t id type path} {
     } else {
 	switch $type {
 	    s1 {
-		if {[catch {[db get $item]} sol_data]} {
-		    set sol_type ""
-		} else {
-		    set sol_type [lindex $sol_data 0]
-		}
-
-		if {$sol_type == "sketch"} {
-		    Sketch_editor .#auto $item
-		} else {
-		    _mged_sed -i 1 $item
-		}
+		_mged_sed -i 1 $item
 	    }
 	    s2 {
 		set mged_gui($id,mgs_path) $item
@@ -133,6 +123,8 @@ proc lbdcHack {w x y t id type path} {
 	    o {
 		bind $w <ButtonRelease-1> \
 			"destroy [winfo parent $w]; build_matrix_menu $id $item; break"
+		set mged_gui($id,lastButtonPress) $t
+		set mged_gui($id,lastItem) $item
 		return
 	    }
 	    c1 {
@@ -166,4 +158,5 @@ proc lbdcHack {w x y t id type path} {
 
     set mged_gui($id,lastButtonPress) $t
     set mged_gui($id,lastItem) $item
+    return
 }
