@@ -176,9 +176,9 @@ ____________________________________________________________
 					Internet E-mail Address
 
 4. Please indicate the type of your organization:
- [ ] Academic ........ Students should register as individuals.
  [ ] Government: [ ] Air Force  [ ] Army  [ ] Navy  [ ] Other ___________
- [ ] Industry ........ Governement contractors should register as Industry
+ [ ] Academic ........ (Students should register as Individuals).
+ [ ] Industry ........ (Government contractors should register as Industry).
  [ ] Private Individual
 
 5. Number of people in work group _________
@@ -230,10 +230,10 @@ BRL-CAD on (check all that are appropriate):
 
 12. Please specify which edition of BRL-CAD you desire:
 
- [ ]	5.0 Binary executable edition (versions exist for SGI-IRIX,
+ [ ]	5.0 Binary executable edition (versions exist for SGI-IRIX-6,
 	RedHat Linux-86, and FreeBSD-86 architectures).
- [ ]	5.0 Source code edition (answer question 13 below).
- [ ]	4.5 Source code edition (answer question 13 below).
+ [ ]	5.0 Source code edition (please answer question 13 below).
+ [ ]	4.5 Source code edition.
 
 13. If you desire the source code edition, please indicate briefly your
 reasons and the ways you envision using the source code:
@@ -262,7 +262,7 @@ For record-keeping purposes, the five (5) pages of the completed and
 signed form must be returned either (a) printed on paper, or (b)
 transmitted via facsimile machine (FAX).
 
-*) If you are requesting a "Free distribution with no support privileges"
+*) If you are requesting a "FREE distribution with no support privileges"
 from ARL for FTP file transfer over the InterNet, please transmit the
 completed form via FAX to USA telephone +1.410.278.9177, or send via
 postal mail to:
@@ -275,9 +275,9 @@ Download instructions and the decryption key will be returned to you
 by FAX or US Mail. ARL and SURVIAC regret that they cannot accept
 inquiries about the free distribution by telephone.
 
-*) If you are purchasing a "Full-service distribution" from SURVIAC,
+*) If you are purchasing a $500 "Full-service distribution" from SURVIAC,
 please transmit the completed form and your purchase order via FAX to
-USA telephone +1.410.272.6763, or send via postal mail to:
+USA telephone +1.410.272.6763, or send your check via postal mail to:
 
 	BRL-CAD Distribution
 	SURVIAC Aberdeen Satellite Office
@@ -285,8 +285,8 @@ USA telephone +1.410.272.6763, or send via postal mail to:
 	Suite 103
 	Aberdeen MD  21001  USA
 
-For further details on the "Full-service distribution", please call Mr.
-Jeffrey W. Foulk at USA telephone +1.410.273.7794 or send E-mail to
+For further details on the $500 "Full-service distribution", please call
+BRL-CAD Distribution at USA telephone +1.410.273.7794 or send E-mail to
 <cad-dist@arl.mil>.
 
 
