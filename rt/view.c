@@ -197,6 +197,8 @@ register struct application *ap;
 			fp->ff_color[0] = r;
 			fp->ff_color[1] = g;
 			fp->ff_color[2] = b;
+			fp->ff_x = ap->a_x;
+			fp->ff_y = ap->a_y;
 			if( ap->a_user == 0 )  {
 				fp->ff_dist = -INFINITY;	/* shot missed model */
 				fp->ff_frame = -1;		/* Don't cache misses */
@@ -967,6 +969,8 @@ char *file, *obj;
  *
  *  May be run in parallel.
  */
+int	rt_scr_lim_dist_sq = 100;	/* dist**2 pixels allowed to move */
+
 int
 reproject_splat( ix, iy, ip, new_view_pt )
 int	ix;
@@ -1006,11 +1010,18 @@ CONST point_t			new_view_pt;
 			count = 0;	/* Already reproj, don't double-count */
 	}
 
-	/* Don't reproject too many frame-times */
+	/* If not in reproject-only mode, apply heuristics */
 	if( reproject_mode != 2 )  {
+		register int dx, dy;
+		/* Don't reproject if too pixel moved too far on the screen */
+		dx = ix - op->ff_x;
+		dy = iy - op->ff_y;
+		if( dx*dx + dy*dy > rt_scr_lim_dist_sq )  return 0;
+
+		/* Don't reproject for too many frame-times */
 		/* See if old pixel is more then N frames old */
 		/* Temporal load-spreading: Don't have 'em all die at the same age! */
-		agelim = ((iy+ix)&03)+2;
+		agelim = ((iy+ix)&03)+4;
 		if( curframe - ip->ff_frame >= agelim )
 			return 0;
 	}
