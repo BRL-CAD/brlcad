@@ -48,6 +48,7 @@ double		AmbientIntensity = 0.4;	/* Ambient light intensity */
 double		azimuth, elevation;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 0;	/* report overlapping region names */
+int		rpt_dist = 0;		/* report distance to each pixel */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
@@ -117,7 +118,7 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"a:b:c:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
+	"a:b:c:d:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -346,6 +347,9 @@ register char **argv;
 		case 'R':
 			/* DON'T report overlapping region names */
 			rpt_overlap = 0;
+			break;
+		case 'd':
+			rpt_dist = atoi( optarg );
 			break;
 		default:		/* '?' */
 			fprintf(stderr,"unknown option %c\n", c);
