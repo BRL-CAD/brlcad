@@ -165,6 +165,7 @@ BDIRS="bench \
 	librt \
 	libredblack \
 	libtermio \
+	libtcl \
 	conv \
 	db \
 	rt \
@@ -199,9 +200,10 @@ BDIRS="bench \
 	jove \
 	canon \
 	burst \
+	tcl \
 	dhrystone"
 
-TDIRS="libtcl libtk tcl tmged"
+TDIRS="libtk"
 
 # If there is no TCP networking, eliminate network-only directories.
 if test "${HAS_TCP}" = "0"
