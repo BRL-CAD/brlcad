@@ -502,10 +502,6 @@ static struct funtab funtab[] = {
 	f_tables, 3, MAXARGS,FALSE,
 "solids_on_ray", "h v", "List all displayed solids along a ray",
         cmd_solids_on_ray, 1, 3, TRUE,
-#ifdef XMGED
-"source", "[beh] filename", "reads in and records and/or executes a file of commands",
-	f_source, 2, MAXARGS,FALSE,
-#endif
 "status", "", "get view status",
 	f_status, 1,1,FALSE,
 "summary", "[s r g]", "count/list solid/reg/groups",
