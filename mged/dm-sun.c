@@ -1,8 +1,7 @@
 /*
  *			D M - S U N . C
  *
- * Driver for SUN using SunView pixwins library.
- * This will use a GP if present, but will not do shaded stuff.
+ *  Driver for SUN using SunView pixwins library.
  *
  *  Prerequisites -
  *	SUN 3.2.  Will not compile on 3.0 and below.
@@ -32,15 +31,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <fcntl.h>
 #include <signal.h>
-#include <sunwindow/window_hs.h>
 #include <sunwindow/cms.h>
 #include <sunwindow/cms_rgb.h>
 #include <suntool/sunview.h>
+#include <suntool/canvas.h>
 #include <suntool/gfxsw.h>
 
 extern void     perror();
-
-/* typedef unsigned char u_char; */
 
 /* Display Manager package interface */
 
@@ -76,41 +73,49 @@ struct dm       dm_SunPw = {
 			 "sun", "SunView 1.0/Sun release 3.x pixwin library"
 };
 
+void		input_eater();
 extern struct device_values dm_values;	/* values read from devices */
+static int	peripheral_input;	/* !0 => unprocessed input */
 
 static vect_t   clipmin, clipmax;	/* for vector clipping */
-/* static char     ttybuf[BUFSIZ]; */
+static int	height, width;
 
-Pixwin         *sun_master_pw;		/* area of screen available */
+Window          frame;
+Canvas		canvas;
 Pixwin		*sun_pw;		/* sub-area of screen being used */
 int		sun_depth;
 int             sun_cmap_color = 7;	/* for default colormap */
 struct pixfont *sun_font_ptr;
 Pr_texture     *sun_get_texP();
-Rect            sun_master_rect;
 Rect            sun_win_rect;
 int             sun_win_fd;
-int             sun_damaged;
 int             sun_debug = 0;
-Inputmask       sun_input_mask;
 
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
- *  and we define (for the moment) window coordinates to be 0...512
- *
- *  NOTE that the Sun is 4th quadrant, so the user of these macros
- *  has to flip his Y values.
+ *  We use 0..width, height..0.
  */
-#define	GED_TO_SUNPW(x)	((((int)(x))+2048)>>3)
-#define SUNPW_TO_GED(x)	((((int)(x))<<3)-2048)
+#define	GED_TO_SUNPWx(x) ((int)(((x)/4096.0+0.5)*width))
+#define	GED_TO_SUNPWy(x) ((int)((0.5-(x)/4096.0)*height))
+#define	SUNPWx_TO_GED(x) (((x)/(double)width-0.5)*4095)
+#define	SUNPWy_TO_GED(x) (((x)/(double)height-0.5)*4095)
+
 #define LABELING_FONT   "/usr/lib/fonts/fixedwidthfonts/sail.r.6"
 
-Notify_value    sun_sigwinch()
+static int doing_close;
+
+static Notify_value
+my_real_destroy(frame, status)
+Frame	frame;
+Destroy_status	status;
 {
-                    pw_damaged(sun_pw);
-    pw_donedamaged(sun_pw);
-    sun_damaged = 1;
+	if( status != DESTROY_CHECKING && !doing_close ) {
+		doing_close++;
+		quit();		/* Exit MGED */
+	}
+	/* Let frame get destroy event */
+	return( notify_next_destroy_func(frame, status) );
 }
 
 /*
@@ -121,120 +126,82 @@ Notify_value    sun_sigwinch()
  */
 SunPw_open()
 {
-	Rect            rect;
 	char unsigned   red[256], grn[256], blu[256];
 	struct pr_subregion bound;
+	char	gfxwinname[128];
 
-#ifdef	DISABLED
-	struct gfxsubwindow *mine;
+	width = height = 512;
+	doing_close = 0;
 
 	/*
-	 * Get graphics subwindow, get its size, and trap alarm clock and interrupt
-	 * signals. 
+	 * Make sure we are running under suntools.
+	 * Gets the name of our parent.
+	 * We could then open it, size it, create a subwindow within it,
+	 * etc. but who cares.  We will make our own window.
 	 */
-	mine = gfxsw_init(0, 0);
-	sun_pw = mine->gfx_pixwin;
-	win_getsize(sun_pw->pw_clipdata->pwcd_windowfd, &rect);
-	sun_win_rect = rect;
-#endif	DISABLED
-#ifdef	DISABLED
-	Window          frame;
-
-	frame = window_create(NULL, FRAME,
-	    WIN_WIDTH, 600,
-	    WIN_HEIGHT, 600,
-	    0);
-	sun_pw = window_get(frame, WIN_PIXWIN);
-#endif	DISABLED
-
-	{
-		int             gfxfd;
-		char            gfxwinname[128];
-		int		width, height;
-		int		size;
-
-		sun_win_fd = win_getnewwindow();
-		we_getgfxwindow(gfxwinname);
-		gfxfd = open(gfxwinname, 2);
-		win_insertblanket(sun_win_fd, gfxfd);
-
-		if( (sun_master_pw = pw_open(sun_win_fd)) == (Pixwin *)0 )  {
-			fprintf(stderr,"sun: pw_open failed\n");
-			return(-1);
-		}
-		win_getsize(sun_win_fd, &sun_master_rect);
-		width = sun_master_rect.r_width;
-		height = sun_master_rect.r_height;
-		if( width > height )  size = height;
-		else  size = width;
-
-		if( size < 512 ) printf("screen is not 512x512 pixels!\n");
-		/* XXX should be size, not 512 */
-		sun_pw = pw_region(sun_master_pw, 0, 0, 512, 512);
-		win_getsize(sun_win_fd, &rect);
-		sun_win_rect = rect;
-		sun_depth = sun_pw->pw_pixrect->pr_depth;
-
-		input_imnull(&sun_input_mask);
-		sun_input_mask.im_flags |= IM_NEGEVENT;
-		win_setinputcodebit(&sun_input_mask, MS_LEFT);
-		win_setinputcodebit(&sun_input_mask, MS_MIDDLE);
-		win_setinputcodebit(&sun_input_mask, MS_RIGHT);
-		win_setinputcodebit(&sun_input_mask, KEY_TOP(1));
-		win_setinputcodebit(&sun_input_mask, KEY_TOP(2));
-		win_setinputcodebit(&sun_input_mask, KEY_TOP(3));
-		win_setinputcodebit(&sun_input_mask, KEY_TOP(4));
-		win_setinputcodebit(&sun_input_mask, KEY_TOP(5));
-		win_setinputcodebit(&sun_input_mask, KEY_TOP(6));
-		win_setinputcodebit(&sun_input_mask, KEY_TOP(7));
-		win_setinputcodebit(&sun_input_mask, KEY_TOP(8));
-		win_setinputcodebit(&sun_input_mask, KEY_TOP(9));
-		win_set_pick_mask(sun_win_fd, &sun_input_mask);
-		fcntl(sun_win_fd, F_SETFL, FNDELAY);
+	if( we_getgfxwindow(gfxwinname) ) {
+		fprintf( stderr, "dm-sun: Must be running suntools\n" );
+		return(-1);
 	}
 
+	/* Make a frame and a canvas to go in it */
+	frame = window_create(NULL, FRAME,
+			      FRAME_LABEL, "MGED Display", 0);
+	/* XXX - "command line" args? pg.51 */
+	canvas = window_create(frame, CANVAS,
+			      WIN_WIDTH, width,
+			      WIN_HEIGHT, height, 0);
+	/* Fit window to canvas (width+20, height+20) */
+	window_fit(frame);
+
+	/* get the canvas pixwin to draw in */
+	sun_pw = canvas_pixwin(canvas);
+	sun_win_rect = *((Rect *)window_get(canvas, WIN_RECT));
+	sun_depth = sun_pw->pw_pixrect->pr_depth;
+	sun_win_fd = sun_pw->pw_clipdata->pwcd_windowfd;
+/*printf("left,top,width,height=(%d %d %d %d)\n",
+sun_win_rect.r_left, sun_win_rect.r_top,
+sun_win_rect.r_width, sun_win_rect.r_height );*/
+
+	/* Set up Canvas input */
+	window_set( canvas, WIN_CONSUME_KBD_EVENT,
+		WIN_TOP_KEYS, 0 );
+	window_set( canvas, WIN_CONSUME_PICK_EVENT,
+		WIN_MOUSE_BUTTONS, 0 );
+	window_set( canvas, WIN_EVENT_PROC, input_eater, 0 );
+
+	/*fcntl(sun_win_fd, F_SETFL, FNDELAY);*/
+
+	/* Set up our Colormap */
 	if( sun_depth >= 8 )  {
 		/* set a new cms name; initialize it */
 		pw_setcmsname(sun_pw, "mged");
 		/* default colormap, real one is set by SunPw_colorchange */
-		red[0] = 0;
-		grn[0] = 0;
-		blu[0] = 0;
-		red[1] = 255;
-		grn[1] = 0;
-		blu[1] = 0;
-		red[2] = 0;
-		grn[2] = 255;
-		blu[2] = 0;
-		red[3] = 255;
-		grn[3] = 255;
-		blu[3] = 0;
-		red[4] = 0;
-		grn[4] = 0;
-		blu[4] = 255;
-		red[5] = 255;
-		grn[5] = 0;
-		blu[5] = 255;
-		red[6] = 0;
-		grn[6] = 255;
-		blu[6] = 255;
-		red[7] = 255;
-		grn[7] = 255;
-		blu[7] = 255;
+		red[0] =   0; grn[0] =   0; blu[0] =   0;	/* Black */
+		red[1] = 255; grn[1] =   0; blu[1] =   0;	/* Red */
+		red[2] =   0; grn[2] = 255; blu[2] =   0;	/* Green */
+		red[3] = 255; grn[3] = 255; blu[3] =   0;	/* Yellow */
+		red[4] =   0; grn[4] =   0; blu[4] = 255;	/* Blue */
+		red[5] = 255; grn[5] =   0; blu[5] = 255;	/* Magenta */
+		red[6] =   0; grn[6] = 255; blu[6] = 255;	/* Cyan */
+		red[7] = 255; grn[7] = 255; blu[7] = 255;	/* White */
 		pw_putcolormap(sun_pw, 0, 8, red, grn, blu);
 	} else {
-		pr_blackonwhite( sun_pw->pw_pixrect, 0, 1 );
+		pw_blackonwhite( sun_pw, 0, 1 );
 	}
 
 	sun_clear_win();
 	sun_font_ptr = pf_open(LABELING_FONT);
-	if (sun_font_ptr == (struct pixfont *) 0)
-	{
+	if (sun_font_ptr == (struct pixfont *) 0) {
 		perror(LABELING_FONT);
 		return(-1);
 	}
 	pf_textbound(&bound, 1, sun_font_ptr, "X");
-	notify_set_signal_func(SunPw_open, sun_sigwinch, SIGWINCH, NOTIFY_ASYNC);
+
+	notify_interpose_destroy_func(frame,my_real_destroy);
+
+	window_set(frame, WIN_SHOW, TRUE, 0);	/* display it! */
+
 	return (0);			/* OK */
 }
 
@@ -242,24 +209,33 @@ SunPw_open()
  *  			S U N P W _ C L O S E
  *  
  *  Gracefully release the display.
+ *  Called on either a quit or release.
  */
-void	SunPw_close()
+void
+SunPw_close()
 {
-	/* Disable the asynchronous notifications before closing FDs */
-	notify_set_signal_func(SunPw_open,
-		NOTIFY_FUNC_NULL, SIGWINCH, NOTIFY_ASYNC);
-
-	pw_close(sun_pw);
-	pw_close(sun_master_pw);
-	(void)close(sun_win_fd);
-	sun_win_fd = -1;
+	/*
+	 * The window_destroy() call posts a destroy event, the same
+	 * as if the user selected quit from the title bar.  We can
+	 * interpose a destroy function to do an MGED release() or
+	 * quit() in response to a title bar Quit, but both will
+	 * result in calling this function, which will cause another
+	 * destroy event, etc.!  There doesn't appear to be any way
+	 * to REMOVE an interposed function.  So, we make this function
+	 * do nothing if we have already been here or in destroy.
+	 */
+	if( !doing_close ) {
+		doing_close++;
+		window_set(frame, FRAME_NO_CONFIRM, TRUE, 0);
+		window_destroy(frame);
+	}
 }
 
 /*
  *			S U N _ C O L O R
  */
 sun_color(color)
-int             color;
+int	color;
 {
 	/* Note that DM_BLACK is only used for clearing to background */
 	if( sun_depth < 8 )  {
@@ -277,8 +253,7 @@ int             color;
 		 * according to pg 14 of Pixrect Ref Man (V.A or 17-Feb-86) */
 		return;
 	}
-	switch (color)
-	{
+	switch (color) {
 	case DM_BLACK:
 		sun_cmap_color = 0;
 		break;
@@ -305,7 +280,8 @@ int             color;
  *
  * There are global variables which are parameters to this routine.
  */
-void            SunPw_prolog()
+void
+SunPw_prolog()
 {
 	if(!dmaflag)
 		return;
@@ -315,15 +291,16 @@ void            SunPw_prolog()
 
 	/* Put the center point up, in foreground */
 	sun_color(DM_WHITE);
-	pw_put(sun_pw, GED_TO_SUNPW(0), GED_TO_SUNPW(0), 1);
+	pw_put(sun_pw, GED_TO_SUNPWx(0), GED_TO_SUNPWy(0), 1);
 }
 
 /*
  *			S U N P W _ E P I L O G
  */
-void            SunPw_epilog()
+void
+SunPw_epilog()
 {
-                    return;
+	return;
 }
 
 /*
@@ -331,10 +308,11 @@ void            SunPw_epilog()
  *  Stub.
  */
 /* ARGSUSED */
-void            SunPw_newrot(mat)
-mat_t           mat;
+void
+SunPw_newrot(mat)
+mat_t	mat;
 {
-    return;
+	return;
 }
 
 static Pr_brush sun_whitebrush = { 4 };
@@ -349,10 +327,11 @@ static Pr_brush sun_whitebrush = { 4 };
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
 /* ARGSUSED */
-int             SunPw_object(sp, mat, ratio, white)
+int
+SunPw_object(sp, mat, ratio, white)
 register struct solid *sp;
-mat_t           mat;
-double          ratio;
+mat_t	mat;
+double	ratio;
 {
 	register struct pr_pos *ptP;
 	u_char         *mvP;
@@ -360,7 +339,6 @@ double          ratio;
 	register struct vlist *vp;
 	struct mater   *mp;
 	int             nvec, totalvec;
-	int             useful = 0;
 	struct pr_pos   polylist[1024+1];
 	u_char          mvlist[1024+1];
 	Pr_texture     *texP;
@@ -380,7 +358,7 @@ double          ratio;
 		(void) fprintf(stderr, "SunPw_object: nvec %d clipped to 1024\n", nvec);
 		nvec = 1024;
 	}
-	totalvec = nvec;
+	totalvec = 0;
 	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		MAT4X3PNT(pt, mat, vp->vl_pnt);
 		/* Visible range is +/- 1.0 */
@@ -390,14 +368,14 @@ double          ratio;
 		    pt[1] < -1e6 || pt[1] > 1e6 )
 			continue;		/* omit this point (ugh) */
 		/* Integerize and let the Sun library do the clipping */
-		ptP->x = GED_TO_SUNPW( 2048*pt[0]);
-		ptP->y = GED_TO_SUNPW(-2048*pt[1]);
+		ptP->x = GED_TO_SUNPWx(2048*pt[0]);
+		ptP->y = GED_TO_SUNPWy(2048*pt[1]);
 		ptP++;
 		if (vp->vl_draw == 0)
 			*mvP++ = 1;
 		else
 			*mvP++ = 0;
-		useful++;
+		totalvec++;
 	}
 	mvlist[0] = 0;
 	if( sun_depth < 8 )  {
@@ -407,7 +385,7 @@ double          ratio;
 		color = PIX_COLOR(mp->mt_dm_int);
 	pw_polyline(sun_pw, 0, 0, totalvec, polylist, mvlist, brush,
 	    texP, PIX_SRC | color );
-	return(useful);
+	return(totalvec);	/* non-zero means it did something */
 }
 
 /*
@@ -417,9 +395,10 @@ double          ratio;
  * (ie, not scaled, rotated, displaced, etc).
  * Turns off windowing.
  */
-void            SunPw_normal()
+void
+SunPw_normal()
 {
-                    return;
+	return;
 }
 
 /*
@@ -427,9 +406,10 @@ void            SunPw_normal()
  *
  * Transmit accumulated displaylist to the display processor.
  */
-void            SunPw_update()
+void
+SunPw_update()
 {
-                    return;
+	return;
 }
 
 /*
@@ -439,11 +419,12 @@ void            SunPw_update()
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-void            SunPw_puts(str, x, y, size, color)
+void
+SunPw_puts(str, x, y, size, color)
 register u_char *str;
 {
 	sun_color(color);
-	pw_text(sun_pw, GED_TO_SUNPW(x), GED_TO_SUNPW(-y),
+	pw_text(sun_pw, GED_TO_SUNPWx(x), GED_TO_SUNPWy(y),
 		(PIX_NOT(PIX_SRC)) | PIX_COLOR(sun_cmap_color),
 		sun_font_ptr, str);
 }
@@ -452,17 +433,18 @@ register u_char *str;
  *			S U N P W _ 2 D _ L I N E
  *
  */
-void            SunPw_2d_line(x1, y1, x2, y2, dashed)
-int             x1, y1;
-int             x2, y2;
-int             dashed;
+void
+SunPw_2d_line(x1, y1, x2, y2, dashed)
+int	x1, y1;
+int	x2, y2;
+int	dashed;
 {
-    Pr_texture     *texP;
+	Pr_texture     *texP;
 
-    sun_color(DM_YELLOW);
-    texP = sun_get_texP(dashed);
-    pw_line(sun_pw, GED_TO_SUNPW(x1), GED_TO_SUNPW(-y1),
-	    GED_TO_SUNPW(x2), GED_TO_SUNPW(-y2), (Pr_brush *) 0, texP,
+	sun_color(DM_YELLOW);
+	texP = sun_get_texP(dashed);
+	pw_line(sun_pw, GED_TO_SUNPWx(x1), GED_TO_SUNPWy(y1),
+	    GED_TO_SUNPWx(x2), GED_TO_SUNPWy(y2), (Pr_brush *) 0, texP,
 	    PIX_SRC | PIX_COLOR(sun_cmap_color));
 }
 
@@ -485,221 +467,280 @@ int             dashed;
 #define	XZ_ROT_BUTTON	5
 int	sun_buttons[NBUTTONS];
 
+/*
+ *			S U N P W _ I N P U T
+ *
+ * Execution must suspend in this routine until a significant event
+ * has occured on either the command stream, or a device event has
+ * occured, unless "noblock" is set.
+ *
+ * We need to call notify_dispatch() regularly so that window events
+ * such as say title-bar actions can be processed.  Button and mouse
+ * events actually get sent to input_eater() via the notifier.  We
+ * use a flag peripheral_input, for input_eater() to tell this module
+ * when there had been window input to return.
+ *
+ * We might be able to replace the short select timeout polling by
+ * notify_do_dispatch() coupled with notify_stop() in input_eater().
+ * XXX Try this. See pg 266.
+ *
+ * Returns:
+ *	0 if no command waiting to be read,
+ *	1 if command is waiting to be read.
+ */
 SunPw_input(cmd_fd, noblock)
+int	cmd_fd;
+int	noblock;	/* !0 => poll */
 {
-    long            readfds;
-    struct timeval  timeout;
-    int             numfds;
-    int             ret;
-    int             id;
-    int             button;
-    float           xval;
-    float           yval;
-    Event           event;
+	long            readfds;
+	struct timeval  timeout;
+	int             numfds;
 
-    /*
-     * Check for input on the keyboard or on the polled registers. 
-     *
-     * Suspend execution until either 1)  User types a full line 2)  The timelimit
-     * on SELECT has expired 
-     *
-     * If a RATE operation is in progress (zoom, rotate, slew) in which we still
-     * have to update the display, do not suspend execution. 
-     */
-    readfds = (1 << cmd_fd) | (1 << sun_win_fd);
-    if (noblock)
-    {
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
-	numfds = select(32, &readfds, (long *) 0, (long *) 0, &timeout);
-    }
-    else
-    {
-	timeout.tv_sec = 30 * 60;	/* 30 mins */
-	timeout.tv_usec = 0;
-	numfds = select(32, &readfds, (long *) 0, (long *) 0, &timeout);
-    }
-
-    dm_values.dv_penpress = 0;
-    if ((ret = input_readevent(sun_win_fd, &event)) != -1)
-    {
-	id = event_id(&event);
-	dm_values.dv_xpen = SUNPW_TO_GED(event_x(&event));
-	dm_values.dv_ypen = -SUNPW_TO_GED(event_y(&event));
-	switch(id)
-	{
-	case MS_LEFT:
-	    if (event_is_down(&event))
-		dm_values.dv_penpress = DV_OUTZOOM;
-	    break;
-	case MS_MIDDLE:
-	    if (event_is_down(&event))
-		dm_values.dv_penpress = DV_PICK;
-	    break;
-	case MS_RIGHT:
-	    if (event_is_down(&event))
-		dm_values.dv_penpress = DV_INZOOM;
-	    break;
-	case LOC_DRAG:
-	    break;
-	case LOC_MOVE:
-	    xval = (float) dm_values.dv_xpen / 2048.;
-	    if (xval < -1.0)
-		xval = -1.0;
-	    if (xval > 1.0)
-		xval = 1.0;
-	    yval = (float) dm_values.dv_ypen / 2048.;
-	    if (yval < -1.0)
-		yval = -1.0;
-	    if (yval > 1.0)
-		yval = 1.0;
-	    for (button = 0; button < NBUTTONS; button++)
-	    {
-		if (sun_buttons[button])
-		{
-		    switch(button)
-		    {
-		    case ZOOM_BUTTON:
-			dm_values.dv_zoom = ((xval*xval) + (yval*yval)) / 2;
-			if (xval < 0)
-			    dm_values.dv_zoom = -dm_values.dv_zoom;
-			break;
-		    case SLEW_BUTTON:
-			dm_values.dv_xslew = xval;
-			dm_values.dv_yslew = yval;
-			break;
-		    case XY_ROT_BUTTON:
-			dm_values.dv_xjoy = xval;
-			dm_values.dv_yjoy = yval;
-		    	break;
-		    case YZ_ROT_BUTTON:
-			dm_values.dv_yjoy = yval;
-			dm_values.dv_zjoy = xval;
-		    	break;
-		    case XZ_ROT_BUTTON:
-			dm_values.dv_xjoy = xval;
-			dm_values.dv_zjoy = yval;
-			break;
-		    }
+	/*
+	 * Check for input on the keyboard or on the polled registers. 
+	 *
+	 * Suspend execution until either
+	 *  1)  User types a full line
+	 *  2)	A change in peripheral status occurs
+	 *  3)  The timelimit on SELECT has expired 
+	 *
+	 * If a RATE operation is in progress (zoom, rotate, slew)
+	 * in which the peripherals (rate setting) may not have changed,
+	 * but we still have to update the display,
+	 * do not suspend execution.
+	 */
+	if (noblock) {
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 0;
+	} else {
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 250000;	/* 1/4 second */
+	}
+	for( ;; ) {
+		readfds = (1 << cmd_fd) | (1 << sun_win_fd);
+		numfds = select(32, &readfds, (long *)0, (long *)0, &timeout);
+/*printf("num = %d, val = %d (cmd %d, win %d)\n",
+	numfds, readfds, 1<<cmd_fd, 1<<sun_win_fd );*/
+		(void) notify_dispatch();
+		if( readfds & (1 << cmd_fd) ) {
+/*printf("Returning command\n");*/
+			return (1);		/* command awaits */
+		} else if( peripheral_input ) {
+			peripheral_input = 0;
+/*printf("Returning peripherals\n");*/
+			return (0);		/* just peripheral stuff */
 		}
-	    }
-	    break;
+		if( noblock )
+			return (0);
+	}
+}
+
+/*
+ *  This gets called by the notifier whenever device input that
+ *  we asked for comes in (and some that we didn't ask for).
+ */
+void
+input_eater( win, event, arg )
+Window	win;
+Event	*event;
+caddr_t	*arg;
+{
+	int             id;
+	int             button;
+	float           xval;
+	float           yval;
+
+	dm_values.dv_penpress = 0;
+	id = event_id(event);
+	dm_values.dv_xpen = SUNPWx_TO_GED(event_x(event));
+	dm_values.dv_ypen = -SUNPWy_TO_GED(event_y(event));
+/*printf( "Event %d at (%d %d)\n", id, event_x(event), event_y(event));*/
+	switch(id) {
+	case MS_LEFT:
+		if (event_is_down(event))
+			dm_values.dv_penpress = DV_OUTZOOM;
+		break;
+	case MS_MIDDLE:
+		if (event_is_down(event))
+			dm_values.dv_penpress = DV_PICK;
+		break;
+	case MS_RIGHT:
+		if (event_is_down(event))
+			dm_values.dv_penpress = DV_INZOOM;
+		break;
+	case LOC_DRAG:
+		break;
+	case LOC_MOVE:
+		xval = (float) dm_values.dv_xpen / 2048.;
+		if (xval < -1.0)
+			xval = -1.0;
+		if (xval > 1.0)
+			xval = 1.0;
+		yval = (float) dm_values.dv_ypen / 2048.;
+		if (yval < -1.0)
+			yval = -1.0;
+	    	if (yval > 1.0)
+			yval = 1.0;
+		for (button = 0; button < NBUTTONS; button++) {
+			if (sun_buttons[button]) {
+				switch(button) {
+				case ZOOM_BUTTON:
+					dm_values.dv_zoom = ((xval*xval) + (yval*yval)) / 2;
+					if (xval < 0)
+					    dm_values.dv_zoom = -dm_values.dv_zoom;
+					break;
+				case SLEW_BUTTON:
+					dm_values.dv_xslew = xval;
+					dm_values.dv_yslew = yval;
+					break;
+				case XY_ROT_BUTTON:
+					dm_values.dv_xjoy = xval;
+					dm_values.dv_yjoy = yval;
+					break;
+				case YZ_ROT_BUTTON:
+					dm_values.dv_yjoy = yval;
+					dm_values.dv_zjoy = xval;
+					break;
+				case XZ_ROT_BUTTON:
+					dm_values.dv_xjoy = xval;
+					dm_values.dv_zjoy = yval;
+					break;
+				}
+			}
+		}
+		break;
 	case KEY_TOP(ZOOM_BUTTON):
-	    sun_key(&event, ZOOM_BUTTON);
-	    dm_values.dv_zoom = 0.0;
-	    break;
+		sun_key(event, ZOOM_BUTTON);
+		dm_values.dv_zoom = 0.0;
+		break;
 	case KEY_TOP(SLEW_BUTTON):
-	    sun_key(&event, SLEW_BUTTON);
-	    dm_values.dv_xslew = 0.0;
-	    dm_values.dv_yslew = 0.0;
-	    break;
+		sun_key(event, SLEW_BUTTON);
+		dm_values.dv_xslew = 0.0;
+		dm_values.dv_yslew = 0.0;
+		break;
 	case KEY_TOP(XY_ROT_BUTTON):
-	    sun_key(&event, XY_ROT_BUTTON);
-	    dm_values.dv_xjoy = 0.0;
-	    dm_values.dv_yjoy = 0.0;
-	    dm_values.dv_zjoy = 0.0;
-	    break;
+		sun_key(event, XY_ROT_BUTTON);
+		dm_values.dv_xjoy = 0.0;
+		dm_values.dv_yjoy = 0.0;
+		dm_values.dv_zjoy = 0.0;
+		break;
 	case KEY_TOP(YZ_ROT_BUTTON):
-	    sun_key(&event, YZ_ROT_BUTTON);
-	    dm_values.dv_xjoy = 0.0;
-	    dm_values.dv_yjoy = 0.0;
-	    dm_values.dv_zjoy = 0.0;
-	    break;
+		sun_key(event, YZ_ROT_BUTTON);
+		dm_values.dv_xjoy = 0.0;
+		dm_values.dv_yjoy = 0.0;
+		dm_values.dv_zjoy = 0.0;
+		break;
 	case KEY_TOP(XZ_ROT_BUTTON):
-	    sun_key(&event, XZ_ROT_BUTTON);
-	    dm_values.dv_xjoy = 0.0;
-	    dm_values.dv_yjoy = 0.0;
-	    dm_values.dv_zjoy = 0.0;
-	    break;
+		sun_key(event, XZ_ROT_BUTTON);
+		dm_values.dv_xjoy = 0.0;
+		dm_values.dv_yjoy = 0.0;
+		dm_values.dv_zjoy = 0.0;
+		break;
 	case KEY_TOP(6):
-	    break;
+		break;
 	case KEY_TOP(7):
-	    break;
+		break;
 	case KEY_TOP(8):
-	    break;
+		break;
 	case KEY_TOP(9):
-	    break;
-	}
-    }
-
-	if( sun_damaged )  {
+		break;
+	/*
+	 * Gratuitous Input Events - supposed to be good for you
+	 */
+	case WIN_REPAINT:
 		dmaflag = 1;	/* causes refresh */
-		sun_damaged = 0;
+		break;
+	case WIN_RESIZE:
+		height = (int)window_get(canvas,CANVAS_HEIGHT);
+		width = (int)window_get(canvas,CANVAS_WIDTH);
+		sun_pw = canvas_pixwin(canvas);
+		sun_win_rect = *((Rect *)window_get(canvas, WIN_RECT));
+		window_default_event_proc( win, event, arg );
+		break;
+	case LOC_WINENTER:
+	case LOC_WINEXIT:
+	case LOC_RGNENTER:
+	case LOC_RGNEXIT:
+	case KBD_USE:
+	case KBD_DONE:
+		/* pass them on */
+		/*printf("*** Gratuity ***\n");*/
+		window_default_event_proc( win, event, arg );
+		break;
+	default:
+		printf("*** Default event ***\n");
+		window_default_event_proc( win, event, arg );
+		break;
 	}
 
-    if (readfds & (1 << cmd_fd))
-	return (1);		/* command awaits */
-    else
-	return (0);		/* just peripheral stuff */
+	peripheral_input++;
 }
 
 sun_key(eventP, button)
 Event	*eventP;
 int	button;
 {
-    if (event_is_down(eventP))
-    {
-	sun_buttons[button] = 1;
-	win_setinputcodebit(&sun_input_mask, LOC_MOVE);
-	win_set_pick_mask(sun_win_fd, &sun_input_mask);
-    }
-    else
-    {
-	sun_buttons[button] = 0;
-	win_unsetinputcodebit(&sun_input_mask, LOC_MOVE);
-	win_set_pick_mask(sun_win_fd, &sun_input_mask);
-    }
+	if (event_is_down(eventP)) {
+		sun_buttons[button] = 1;
+		window_set(frame,WIN_CONSUME_PICK_EVENT,LOC_MOVE,0);
+	} else {
+		sun_buttons[button] = 0;
+		/*window_set(frame,WIN_IGNORE_PICK_EVENT,LOC_MOVE,0);*/
+	}
 }
 
 /* 
  *			S U N P W _ L I G H T
  */
 /* ARGSUSED */
-void            SunPw_light(cmd, func)
-int             cmd;
-int             func;		/* BE_ or BV_ function */
+void
+SunPw_light(cmd, func)
+int	cmd;
+int	func;		/* BE_ or BV_ function */
 {
-    return;
+	return;
 }
 
 /* ARGSUSED */
-unsigned        SunPw_cvtvecs(sp)
+unsigned
+SunPw_cvtvecs(sp)
 struct solid   *sp;
 {
-    return (0);
+	return (0);
 }
 
 /*
  * Loads displaylist
  */
-unsigned        SunPw_load(addr, count)
-unsigned        addr, count;
+unsigned
+SunPw_load(addr, count)
+unsigned	addr, count;
 {
-    (void) printf("SunPw_load(x%x, %d.)\n", addr, count);
-    return (0);
+	(void) printf("SunPw_load(x%x, %d.)\n", addr, count);
+	return (0);
 }
 
-void            SunPw_statechange()
-{
-}
-
-void            SunPw_viewchange()
+void
+SunPw_statechange()
 {
 }
 
+void
+SunPw_viewchange()
+{
+}
 
 /*
  * Color Map table
  */
-#define NSLOTS		256
+#define NSLOTS	256
 static int      sun_nslots = 0;	/* how many we have, <= NSLOTS */
 static int      slotsused;	/* how many actually used */
-static struct rgbtab
-{
-    unsigned char   r;
-    unsigned char   g;
-    unsigned char   b;
-}               sun_rgbtab[NSLOTS];
+static struct rgbtab {
+	unsigned char   r;
+	unsigned char   g;
+	unsigned char   b;
+} sun_rgbtab[NSLOTS];
 
 /*
  *  			S U N P W _ C O L O R C H A N G E
@@ -708,7 +749,8 @@ static struct rgbtab
  *	8 bit system gives 4 or 8,
  *	24 bit system gives 12 or 24.
  */
-void            SunPw_colorchange()
+void
+SunPw_colorchange()
 {
     register struct mater *mp;
     register int    i;
@@ -796,50 +838,44 @@ struct mater   *mp;
 }
 
 /* ARGSUSED */
-void            SunPw_debug(lvl)
+void
+SunPw_debug(lvl)
 {
 	sun_debug = lvl;
 	return;
 }
 
-void            SunPw_window(w)
+void
+SunPw_window(w)
 register int    w[];
 {
-    /* Compute the clipping bounds */
-    clipmin[0] = w[1] / 2048.;
-    clipmin[1] = w[3] / 2048.;
-    clipmin[2] = w[5] / 2048.;
-    clipmax[0] = w[0] / 2047.;
-    clipmax[1] = w[2] / 2047.;
-    clipmax[2] = w[4] / 2047.;
+	/* Compute the clipping bounds */
+	clipmin[0] = w[1] / 2048.;
+	clipmin[1] = w[3] / 2048.;
+	clipmin[2] = w[5] / 2048.;
+	clipmax[0] = w[0] / 2047.;
+	clipmax[1] = w[2] / 2047.;
+	clipmax[2] = w[4] / 2047.;
 }
 
 sun_clear_win()
 {
 	sun_color(DM_BLACK);
 	/* Clear entire window, regardless of how much is being used */
-	/* XXX oddly, using sun_master_pw here does not work! */
-	pw_rop(sun_pw, 0, 0,
-		sun_master_rect.r_width, sun_master_rect.r_height,
-		PIX_SRC | PIX_COLOR(sun_cmap_color), (Pixrect *) 0, 0, 0);
+	pw_writebackground(sun_pw, 0, 0,
+		sun_win_rect.r_width, sun_win_rect.r_height,
+		PIX_SRC | PIX_COLOR(sun_cmap_color) );
 }
 
-Pr_texture     *sun_get_texP(dashed)
-int             dashed;
+Pr_texture
+*sun_get_texP(dashed)
+int	dashed;
 {
-    static Pr_texture dotdashed = {
-				   pr_tex_dashdot,
-				   0,
-				   {
-				    1,
-				    1,
-				    0,
-				    0,
-				    }
-    };
+	static Pr_texture dotdashed = {
+		pr_tex_dashdot, 0, { 1, 1, 0, 0, } };
 
-    if (dashed)
-	return (&dotdashed);
-    else
-	return ((Pr_texture *) 0);
+	if (dashed)
+		return (&dotdashed);
+	else
+		return ((Pr_texture *) 0);
 }
