@@ -26,11 +26,13 @@
  *	01 Aug 88		Began initial coding
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 
 #include "machine.h"
@@ -41,11 +43,8 @@
 #include "./dm.h"
 #include "./ged.h"
 
-#ifdef gould
-#define MAXOBJECTS	1000
-#else
 #define MAXOBJECTS	3000
-#endif /* gould */
+
 #define VIEWSIZE	(2*Viewscale)
 #define TRUE	1
 #define FALSE	0
