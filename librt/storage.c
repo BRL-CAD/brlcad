@@ -125,7 +125,7 @@ char		*str;
 		ip = (long *)(ptr+mp->mdb_len-sizeof(long));
 		mp->mdb_len = 0;	/* successful free */
 		if( *ip != MDB_MAGIC )  {
-			rt_log("ERROR rt_memdebug_delete(x%x, %s) corrupted! was=x%x s/b=x%x\n",
+			rt_log("ERROR rt_memdebug_delete(x%x, %s) barrier word corrupted! was=x%x s/b=x%x\n",
 				ptr, str, *ip, MDB_MAGIC);
 			return(-2);
 		}
@@ -205,7 +205,8 @@ char	*str;
 	if( rt_g.debug&DEBUG_MEM_FULL )  {
 		rt_memdebug_add( ptr, cnt, str );
 
-		/* This depends on 'cnt' being rounded up, above */
+		/* Install a barrier word at the end of the dynamic arena */
+		/* Correct location depends on 'cnt' being rounded up, above */
 		*((long *)(ptr+cnt-sizeof(long))) = MDB_MAGIC;
 	}
 	return(ptr);
@@ -226,7 +227,7 @@ char	*str;
 	}
 	if( rt_g.debug&DEBUG_MEM_FULL )  {
 		if( rt_memdebug_delete( ptr, str ) < 0 )  {
-			rt_log("ERROR rt_free(x%x, %s) bad pointer!\n",
+			rt_log("ERROR rt_free(x%x, %s) pointer bad, or not allocated with rt_malloc!\n",
 				ptr, str);
 		}
 	}
@@ -273,10 +274,11 @@ char *str;
 		rt_bomb("rt_realloc: malloc failure");
 	}
 	if( ptr != original_ptr && rt_g.debug&DEBUG_MEM_FULL )  {
-		register long *ip = (long *)(ptr+cnt-sizeof(long));
-
 		rt_memdebug_move( original_ptr, ptr, cnt, str );
-		*ip = MDB_MAGIC;
+
+		/* Install a barrier word at the end of the dynamic arena */
+		/* Correct location depends on 'cnt' being rounded up, above */
+		*((long *)(ptr+cnt-sizeof(long))) = MDB_MAGIC;
 	}
 	return(ptr);
 }
