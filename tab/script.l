@@ -8,8 +8,8 @@ L	[a-zA-Z0-9_\/\.\(\)\[\]\{\}]
 -?0[Xx]{D}+	return INT;
 -?0{D}+		return INT;
 -?{D}+		return INT;
-^!.*$		return SHELL;
-#.*$		return COMMENT;
+^!.*		return SHELL;
+#.*		return COMMENT;
 start		return START;
 viewsize	return VIEWSIZE;
 eye_pt		return EYEPT;
