@@ -10511,6 +10511,69 @@ CONST struct rt_tol *tol;
 	return( 1 );
 }
 
+
+/*		N M G _ L U _ I S _ C O N V E X
+ *
+ *	Checks if lu is convex
+ *
+ * Returns:
+ *	1 - is loop is convex, or lu is a loop of a single vertex
+ *	0 - otherwise
+ */
+int
+nmg_lu_is_convex( lu, tol )
+struct loopuse *lu;
+CONST struct rt_tol *tol;
+{
+	struct edgeuse *eu1,*eu2,*eu3,*eu_start;
+
+	NMG_CK_LOOPUSE( lu );
+	RT_CK_TOL( tol );
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return( 1 );
+
+	if( !lu->l_p->lg_p )
+		nmg_loop_g( lu->l_p, tol );
+
+	eu1 = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+	eu_start = eu1;
+	eu2 = RT_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+	eu3 = RT_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
+
+	if( eu1->vu_p->v_p == eu3->eumate_p->vu_p->v_p )
+		return( 1 );		/* triangle */
+
+	while( eu3 != eu_start )
+	{
+		int class;
+		struct vertex_g *vg1,*vg3;
+		point_t mid_pt;
+
+		vg1 = eu1->vu_p->v_p->vg_p;
+		NMG_CK_VERTEX_G( vg1 );
+
+		vg3 = eu3->vu_p->v_p->vg_p;
+		NMG_CK_VERTEX_G( vg3 );
+
+		VBLEND2( mid_pt, 0.5, vg1->coord, 0.5, vg3->coord );
+
+		class = nmg_class_pt_lu_except( mid_pt, lu, NULL, tol );
+
+		if( (class == NMG_CLASS_AoutB && lu->orientation == OT_SAME) ||
+		    (class == NMG_CLASS_AinB  && lu->orientation == OT_OPPOSITE) )
+				return( 0 );
+		else
+		{
+			eu1 = RT_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+			eu2 = RT_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+			eu3 = RT_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
+		}
+	}
+
+	return( 1 );
+}
+
 int
 nmg_to_poly( m, poly_int, tol )
 CONST struct model *m;
@@ -10590,10 +10653,17 @@ CONST struct rt_tol *tol;
 				}
 
 				/* if any loop has more than 5 vertices, triangulate the face */
-				if( max_count > 5 ) {
+				if( max_count > 5 )
+				{
 					if( rt_g.NMG_debug & DEBUG_BASIC )
 						rt_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
-						nmg_triangulate_fu( fu, tol );
+					nmg_triangulate_fu( fu, tol );
+				}
+				else if( !nmg_loop_is_convex( lu, tol ) )
+				{
+					if( rt_g.NMG_debug & DEBUG_BASIC )
+						rt_log( "write_shell_as_polysolid: triangulating non-convex fu x%x\n", fu );
+					nmg_triangulate_fu( fu, tol );
 				}
 
 				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
