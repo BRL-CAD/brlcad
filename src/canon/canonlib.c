@@ -43,7 +43,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 int ipu_debug = 0;
 
-extern int dsdebug;		/* from libds.a */
+	/* this is from some imaginary libds.so ?
+	 * was extern'd, but without that lib, it failed... so we punt.
+	 */
+int dsdebug = 0;
 
 static void
 toshort(dest, src)
