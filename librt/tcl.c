@@ -1211,6 +1211,21 @@ char **argv;
 }
 
 /*
+ *			R T _ T C L _ D E L E T E P R O C _ W D B
+ *
+ *  Called when the named proc created by wdb_open() is destroyed.
+ */
+void
+rt_tcl_deleteproc_wdb(clientData)
+ClientData clientData;
+{
+	struct rt_wdb	*wdbp = (struct rt_wdb *)clientData;
+	RT_CK_WDB(wdbp);
+
+	wdb_close(wdbp);
+}
+
+/*
  *			W D B _ O P E N
  *
  *  A TCL interface to wdb_fopen() and wdb_dbopen().
@@ -1283,7 +1298,7 @@ Usage: wdb_open widget_command file filename\n\
 	/* XXX Should provide CmdDeleteProc also, to free up wdb */
 	/* Beware, returns a "token", not TCL_OK. */
 	(void)Tcl_CreateCommand( interp, argv[1], rt_db,
-				 (ClientData)wdb, (Tcl_CmdDeleteProc *)NULL );
+				 (ClientData)wdb, rt_tcl_deleteproc_wdb );
 
 	/* Return new function name as result */
 	Tcl_AppendResult( interp, argv[1], (char *)NULL );
