@@ -1200,6 +1200,44 @@ CONST struct partition	*InputHdp;
 }
 
 /*
+ *			R T _ O V E R L A P _ T A B L E S _ E Q U A L
+ *
+ *  Overlap tables are NULL terminated arrays of region pointers.
+ *  The order of entries may be different between the two.
+ *
+ *  Returns -
+ *	1	The tables match
+ *	0	The tables do not match
+ */
+int
+rt_overlap_tables_equal( struct region *const*a, struct region *const*b )
+{
+	int alen=0, blen=0;
+	register struct region *const*app;
+	register struct region *const*bpp;
+
+	if( a == NULL || b == NULL )  bu_bomb("rt_overlap_tables_equal() NULL pointer\n");
+
+	/* First step, compare lengths */
+	for( app = a; *app != NULL; app++ )  alen++;
+	for( bpp = b; *bpp != NULL; bpp++ )  blen++;
+	if( alen != blen )  return 0;
+
+	/* Second step, compare contents */
+	for( app = a; *app != NULL; app++ )  {
+		register const struct region *t = *app;
+		for( bpp = b; *bpp != NULL; bpp++ )  {
+			if( *bpp == t )  goto b_ok;
+		}
+		/* 't' not found in b table, no match */
+		return 0;
+b_ok:		;
+	}
+	/* Everything matches */
+	return 1;
+}
+
+/*
  *			R T _ B O O L F I N A L
  *
  *
@@ -1624,7 +1662,9 @@ CONST struct bu_bitv	*solidbits;
 				lastpp->pt_outhit->hit_dist,
 				ap->a_rt_i->rti_tol.dist ) &&
 			    ( ap->a_rt_i->rti_save_overlaps == 0 ||
-			      lastpp->pt_overlap_reg == newpp->pt_overlap_reg )
+				rt_overlap_tables_equal(
+					lastpp->pt_overlap_reg,
+					newpp->pt_overlap_reg ) )
 			)  {
 				/* same region, merge by extending last final partition */
 				if(rt_g.debug&DEBUG_PARTITION)bu_log("rt_boolfinal 'exact match', extending last partition, discarding x%x\n", newpp);
