@@ -238,6 +238,25 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* Echo back the command line arugments as given, in 3 Tcl commands */
+	if (rt_verbosity & VERBOSE_MODELTITLE) {
+		struct bu_vls str;
+		bu_vls_init(&str);
+		bu_vls_from_argv( &str, bu_optind, argv );
+		bu_vls_strcat( &str, "\nopendb "  );
+		bu_vls_strcat( &str, title_file );
+		bu_vls_strcat( &str, ";\ntree " );
+		bu_vls_from_argv( &str,
+			nobjs <= 16 ? nobjs : 16,
+			argv+bu_optind+1 );
+		if( nobjs > 16 )
+			bu_vls_strcat( &str, " ...");
+		else
+			bu_vls_putc( &str, ';' );
+		bu_log("%s\n", bu_vls_addr(&str) );
+		bu_vls_free(&str);
+	}
+
 	/* Build directory of GED database */
 	bu_vls_init( &times );
 	rt_prep_timer();
