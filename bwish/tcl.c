@@ -1,7 +1,7 @@
 /*
  *				T C L . C
  *
- *  The supporting Tcl routines for BWISH.
+ *  The supporting Tcl routines for BWISH and BTCLSH.
  *
  *  Author -
  *	  Robert G. Parker
@@ -42,10 +42,19 @@ extern void quit();
 /* defined in input.c */
 extern void initInput();
 
+#ifdef BWISH
 /* defined in libtk/(unix|win|mac)/tk(Unix|Win|Mac)Init.c */
 void TkpDisplayWarning();
+#endif
 
-#define BWISH_RCFILENAME ".bwishrc"
+void Cad_MainLoop();
+void Cad_Exit();
+
+#ifdef BWISH
+#	define CAD_RCFILENAME "~/.bwishrc"
+#else
+#	define CAD_RCFILENAME "~/.btclshrc"
+#endif
 
 /*
  * Main program for wish-like applications that desire command
@@ -104,8 +113,12 @@ Cad_Main(argc, argv, appInitProc, interp)
 	 * Invoke application-specific initialization.
 	 */
 	if ((*appInitProc)(interp) != TCL_OK) {
+#ifdef BWISH
 	  TkpDisplayWarning(Tcl_GetStringResult(interp),
 			    "Application initialization failed");
+#else
+	  bu_log( "Application initialization failed: %s", Tcl_GetStringResult(interp));
+#endif
 	}
 
 	if (filename != NULL) {
@@ -116,8 +129,12 @@ Cad_Main(argc, argv, appInitProc, interp)
 		status = Tcl_EvalFile(interp, filename);
 		if (status != TCL_OK) {
 			Tcl_AddErrorInfo(interp, "");
+#ifdef BWISH
 			TkpDisplayWarning(Tcl_GetVar(interp, "errorInfo",
 						     TCL_GLOBAL_ONLY), "Error in startup script");
+#else
+			bu_log("Error in startup script: %s", Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY));
+#endif
 			quit(status);
 		}
 	} else { /* We're running interactively. */
@@ -126,14 +143,33 @@ Cad_Main(argc, argv, appInitProc, interp)
 		initInput();
 
 		/* Set the name of the startup file. */
-		Tcl_SetVar(interp, "tcl_rcFileName", BWISH_RCFILENAME, TCL_GLOBAL_ONLY);
+		Tcl_SetVar(interp, "tcl_rcFileName", CAD_RCFILENAME, TCL_GLOBAL_ONLY);
 
 		/* Source the startup file if it exists. */
 		Tcl_SourceRCFile(interp);
 	}
 	Tcl_DStringFree(&argString);
 
-	Tk_MainLoop();
+	Cad_MainLoop();
+	Cad_Exit();
+}
+
+void
+Cad_MainLoop()
+{
+#ifdef BWISH
+	while (Tk_GetNumMainWindows() > 0) {
+#else
+	while (1) {
+#endif
+		Tcl_DoOneEvent(0);
+	}
+}
+
+void
+Cad_Exit(Tcl_Interp *interp)
+{
+	reset_Tty(fileno(stdin)); 
 	Tcl_DeleteInterp(interp);
 	Tcl_Exit(0);
 }

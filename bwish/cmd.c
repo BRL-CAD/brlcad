@@ -62,7 +62,9 @@ HIDDEN struct bu_cmdtab bwish_cmds[] =
 	{(char *)NULL,		CMD_NULL}
 };
 
+#ifdef BWISH
 extern Tk_PhotoImageFormat tkImgFmtPIX;
+#endif
 
 int
 cmdInit(interp)
@@ -71,8 +73,10 @@ cmdInit(interp)
 	/* Register bwish commands */
 	bu_register_cmds(interp, bwish_cmds);
 
+#ifdef BWISH
 	/* Add pix format for images */
 	Tk_CreatePhotoImageFormat(&tkImgFmtPIX);
+#endif
 
 	/* initialize command history */
 	historyInit();
