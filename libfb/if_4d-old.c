@@ -495,6 +495,9 @@ int	width, height;
 
 	if(((f = fork()) != 0 ) && ( f != -1)) 
 	{
+		int k;
+		for(k=0; k< 20; k++)
+			(void) close(k);
 		pause();		/* pause until killed */
 		exit(0);
 	}
@@ -519,7 +522,9 @@ int	width, height;
 			mips_zapmem();
 			return(-1);
 		}
-	}
+	} else
+		ifp->if_mode = MODE_SHARED;
+	
 
 	if( (MIPSL(ifp) = (char *)calloc( 1, sizeof(struct mipsinfo) )) == NULL )  {
 		fb_log("mips_dopen:  mipsinfo malloc failed\n");
