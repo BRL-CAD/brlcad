@@ -5,16 +5,11 @@ Included below is a list of things that are scheduled or desireable to
 be done at some point.  More important, easy, and most recently added
 items are on top, older topics are on the bottom.
 
-THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
-
-
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * Update libpng to address CERT Technical Cyber Security Alert
   TA04-217A
   http://www.us-cert.gov/cas/techalerts/TA04-217A.html
-
-* ensure successful build on windows 
 
 * write up the history of brlcad
 
@@ -23,15 +18,19 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * ensure successful build on solaris with gcc and sunwpro compiler
 
+* update the Utah Raster Toolkit
+
+
+THESE ARE LOWER PRIORITY
+
+* ensure successful build on windows 
+
 * handle multiple threading models (irix) via configure
 
 * obliterate compilation warnings
 
 * add checks for system libs and optionally build our libs only if
   they don't have suitable system libs (namely, libtcl)
-
-
-THESE ARE LOWER PRIORITY
 
 * add support for subgeometry support to the geometry syndicator
 
