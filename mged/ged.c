@@ -192,8 +192,6 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	extern char *bu_optarg;
-	extern int bu_optind, bu_opterr, bu_optopt;
 	int	rateflag = 0;
 	int	c;
 	int	read_only_flag=0;
