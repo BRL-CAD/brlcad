@@ -919,7 +919,7 @@ extern int	bu_debug;
 "\020\
 \025TABDATA\
 \015?\
-\013AVS\012PTBL\011MATH\010?\7?\6?\5PARALLEL\
+\014MAPPED_FILE\013AVS\012PTBL\011MATH\010?\7?\6?\5PARALLEL\
 \4?\3MEM_LOG\2MEM_CHECK\1COREDUMP"
 
 /*----------------------------------------------------------------------*/
