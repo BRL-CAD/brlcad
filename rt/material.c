@@ -96,6 +96,8 @@ struct rt_i		*rtip;
 		if( endp )  {
 			mlen = endp - material;
 			rt_vls_strcpy( &param, rp->reg_mater.ma_shader+mlen+1 );
+		} else {
+			mlen = strlen(material);
 		}
 	}
 retry:
