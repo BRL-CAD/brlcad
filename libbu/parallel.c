@@ -241,6 +241,112 @@ bu_avail_cpus()
 	return( ret );
 }
 
+/*
+ *			B U _ G E T _ L O A D _ A V E R A G E
+ *
+ *  A generally portable method for obtaining the 1-minute load average.
+ *  Vendor-specific methods which don't involve a fork/exec sequence
+ *  would be preferable.
+ */
+fastf_t
+bu_get_load_average()
+{
+	FILE	*fp;
+	double	load = -1.0;
+
+	fp = popen("PATH=/bin:/usr/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
+	if( !fp )
+		return -1.0;
+
+	fscanf( fp, "%lf", &load );
+	fclose(fp);
+
+	while( wait(NULL) != -1 )  ;	/* NIL */
+	return load;
+}
+
+/*
+ *			B U _ G E T _ P U B L I C _ C P U S
+ *
+ *  A general mechanism for non-privleged users of a server system to control
+ *  how many processors of their server get consumed by multi-thread
+ *  cruncher processes, by leaving a world-writable file.
+ *
+ *  If the number in the file is negative, it means "all but that many."
+ *
+ *  Returns the number of processors presently available for "public" use.
+ */
+#define PUBLIC_CPUS1	"/var/tmp/public_cpus"
+#define PUBLIC_CPUS2	"/usr/tmp/public_cpus"
+int
+bu_get_public_cpus()
+{
+	FILE	*fp;
+	int	avail_cpus;
+	int	public_cpus = 1;
+
+	avail_cpus = bu_avail_cpus();
+
+	if( (fp = fopen(PUBLIC_CPUS1, "r")) != NULL ||
+	    (fp = fopen(PUBLIC_CPUS2, "r")) != NULL
+	)  {
+		(void)fscanf( fp, "%d", &public_cpus );
+		fclose(fp);
+		if( public_cpus < 0 )  public_cpus = avail_cpus + public_cpus;
+		if( public_cpus > avail_cpus )  public_cpus = avail_cpus;
+		return public_cpus;
+	}
+
+	(void)unlink(PUBLIC_CPUS1);
+	(void)unlink(PUBLIC_CPUS2);
+	if( (fp = fopen(PUBLIC_CPUS1, "w")) != NULL ||
+	    (fp = fopen(PUBLIC_CPUS2, "w")) != NULL
+	)  {
+		fprintf(fp, "%d\n", avail_cpus);
+		fclose(fp);
+		(void)chmod(PUBLIC_CPUS1, 0666);
+		(void)chmod(PUBLIC_CPUS2, 0666);
+	}
+	return avail_cpus;
+}
+
+/*
+ *			B U _ S E T _ R E A L T I M E
+ *
+ *  If possible, mark this process for real-time scheduler priority.
+ *  Will often need root privs to succeed.
+ *
+ *  Returns -
+ *	1	realtime priority obtained
+ *	0	running with non-realtime scheduler behavior
+ */
+int
+bu_set_realtime()
+{
+#	if IRIX >= 6
+	{
+		int	policy;
+
+		if( (policy = sched_getscheduler(0)) >= 0 )  {
+			if( policy == SCHED_RR )
+				return 1;
+		}
+
+		sched_getparam( 0, &param );
+
+		if ( sched_setscheduler( 0,
+			SCHED_RR,		/* policy */
+			&param
+		    ) >= 0 )  {
+		    	return 1;		/* realtime */
+		}
+	 	perror("bu_set_realtime(): sched_setscheduler");
+		/* Fall through to return 0 */
+	}
+#	endif
+	return 0;
+}
+
 /**********************************************************************/
 
 #if defined(unix) || defined(__unix)
