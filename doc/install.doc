@@ -84,13 +84,16 @@ l l l l l.
 MTYPE	Hardware	Software	Framebuffer	MGED
 _
 fx	Alliant FX/8, /80	Concentrix 3.0, 4.0	net	-
+c1	Convex C1	UNIX 6.2.32.2	net	-
 xmp	Cray X-MP	UNICOS 3.0.10	net	-
 cr2	Cray-2	UNICOS 3.0, 4.0	net	-
 vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	mg, vg
 sel	Gould PN6080, PN9080	UTX/32 Rel 2.0	net	-
 pyr	Pyramid 9820	OSx Version 4.1	-	-
 3d	SGI 3030	Version 3.5, 3.6	sgi, net	sgi
-4d	SGI 4D	Version 2	sgi, net	sgi
+4d2	SGI 4D	Version 2+MEX	sgi, net	sgi
+4d	SGI 4D	Version 3.1+4Sight	sgi, net	sgi
+4gt	SGI 4D/GT	Version 3.1+4Sight	sgi, net	sgi
 sun3	Sun-3/*	SunOS 3.4	sun, net	sun
 .TE
 .IP b)
@@ -106,7 +109,6 @@ MTYPE	Hardware	Software
 _
 vax	DEC VAX-11	Berkeley 4.1 BSD
 3d	SGI 3030	Version 3.4 (TCP or XNS)
-4d	SGI 4D/GT	Version 3.1 + 4Sight
 .TE
 .IP c)
 Porting this software to a machine which is not
@@ -150,7 +152,6 @@ center box;
 l l.
 dm-ir	SGI 2400, 3030
 dm-4d	SGI 4-D
-dm-gt	SGI 4-D/GT
 dm-sun	SUN 3.2 Pixwin
 dm-vg	Vector General 3300
 dm-mg	Megatek 7250
@@ -479,6 +480,9 @@ Using the full path name of your "bin" directory,
 update the definitions for BINDIR,
 LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
 "cray.sh", "cake/Makefile", and "cakeaux/Makefile".
+The shell script "newbindir.sh" can be used to simplify this process
+for you;  just run it with the first argument being
+the full path name of the new BINDIR.
 .NH 2
 INSTALLATION DIRECTORIES \(em PRODUCTION USE
 .PP
@@ -792,7 +796,7 @@ it is necessary to modify
 certain kernel limits in the binary image of your kernel to be able to
 use a large block of shared memory.  Follow the directions in
 libfb/if_sgi.c, and then reboot your workstation to allow the changes to
-take effect.  There are claims that on some SGI machines with only
+take effect.  There are claims that on some SGI 3-D machines with only
 4 Mbytes of memory, this may
 cause unreliable operation, so be certain to keep a backup kernel.
 .NH 1
@@ -818,8 +822,9 @@ The documentation for the C Compiler \fBcc\fR(1)
 will often mention the vendor-specific symbol to test for.
 If not, a little playful experimentation with the vendor's name
 and the machine model name/number will usually suffice.
-Sometimes two symbols need to be checked (eg, on the Cray and SGI machines)
+Sometimes two symbols need to be checked (eg, on the SGI machines)
 to tell certain incompatible models apart.
+Sometimes it is worse than that.
 .PP
 Update \fBmachinetype.sh\fR first;  it is easier to experiment with
 than the full \fBCakefile.defs\fR file.
@@ -1289,49 +1294,31 @@ workaround:
 .NH 2
 SGI 4-D/GT, Version 3.0
 .PP
-Note that in this release there is no support for a non-GT
-4-D running Version 3.0 of the software.
-The switch to the 4Sight window system required more changes than
-could be managed for this release.
-.PP
 Silicon Graphics Iris 4-D systems with the ``Graphics Turbo'' (GT)
 hardware require a completely different set of vendor-specific
-support code, due to the significant changes in the underlying hardware.
-In the section of \fBCakefile.defs\fR, change the LIBFB_OBJS and
-MGED_OBJS definitions from:
+support code for the framebuffer library,
+due to the significant changes in the underlying hardware.
+In addition, there is support for multi-processors.
+In \fBCakefile.defs\fR,
+the shell script \fBsetup.sh\fR should correctly
+select from configuration 1, 2, or 3, and
+update the definition for SGI_TYPE.
+For example:
 .sp .5
 .nf
 .ft B
-#	define	LIBFB_OBJS	if_remote pkg if_4d
-#	define	MGED_OBJS	dm-4d
+#	define	SGI_TYPE	3
 .ft R
 .fi
 .sp .5
-to the alternate, GT versions:
-.sp .5
-.nf
-.ft B
-#	define	LIBFB_OBJS	if_remote pkg if_gt
-#	define	MGED_OBJS	dm-gt
-.ft R
-.fi
-.sp .5
-We regret that we were unable to determine a way to detect if a 4-D
-contained a GT boardset, either at compile time, or at runtime.
-Because the 4-D and 4-D/GT are incompatible, this configuration
-change is required.
+would be set if you were on a 4-D non-GT running SGI software Release 2.
+The three choices are:
+1)  [4gt] 4D-GT hw on SGI sw Release 3.1,
+2)  [4d] non-GT hw on SGI sw Release 3.1, and
+3)  [4d] non-GT hw on SGI sw Release 2.
 .PP
-Note that if you have a 4-D with the GTX or MP (multi-processor)
-hardware, the parallel support is already included in \fBlibrt\fR;
-merely add this line:
-.sp .5
-.nf
-.ft B
-	#	define	CC_DEFS	-DPARALLEL
-.ft R
-.fi
-.sp .5
-(A search of a vendor library may need to be added to RT_CONFIG).
+You may wish to verify that \fBsetup.sh\fR make the correct selection.
+Note that selection #2 has not been tested at BRL.
 .NH 1
 DIFFICULTIES
 .PP
@@ -1387,12 +1374,12 @@ find roots, or being unable to perform a "box push". Unfortunately, the
 "star.pix" \fBrt\fR benchmark will will fail due to lack of floating point
 precision, and generate lots of diagnostics, filling your disk.
 .PP
-SGI software release version 3.3.1, 3.4, and 3.5 have a defective
+SGI 3-D software release version 3.3.1, 3.4, and 3.5 have a defective
 library version of hypot();  be aware of the (slower) substitute in
 "rt/machine.c".
 .PP
 Operations of the form "*fp += incr;" are known to compile incorrectly
-on release 3.5 when "fp" is declared as "\fBregister double\fR *fp"
+on SGI 3-D release 3.5 when "fp" is declared as "\fBregister double\fR *fp"
 (or \fBregister float\fR).  The one known instance of this in
 util/bwmod.c has been "fixed" with a #\fBifdef\fR sgi.
 .PP
@@ -1403,6 +1390,19 @@ a hard loop polling the workstation keyboard.  Second, it seems to
 have an interaction with control-S/control-Q flow control -- if you
 suspend output, most of it will be discarded.  However, MGED is
 still somewhat usable in this configuraition.
+.PP
+On an SGI 4-D, warning messages from the compiler of the form:
+.sp .5
+.nf
+.ft B
+ccom: Warning: ../lgt/./vecmath.h, line 18: inconsistent prototypes for function sqrt
+      extern double     sqrt();
+.sp
+uopt: Warning: main: parts of procedure have no exit point
+.ft R
+.fi
+.sp .5
+represent an error on SGI's part, and should be ignored.
 .PP
 Currently there are no good solutions to these problems.  Voice your
 opinions to the vendor.
