@@ -54,9 +54,11 @@ clobber&: Makefile.MTYPE
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
+	(cd BASEDIR/lib; AFTER_MAKE)
 
 install-nobak&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
+	(cd BASEDIR/lib; AFTER_MAKE)
 
 tktest: Makefile.MTYPE
 	make -f Makefile.MTYPE tktest
