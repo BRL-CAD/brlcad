@@ -202,14 +202,14 @@ db_create( const char *name, int version )
 	default:
 	case 5:
 		/* Create a v5 database */
-		if( db5_fwrite_ident(fp,"Untitled v5 BRL-CAD Database",1.0)<0){
+		if( db5_fwrite_ident(fp,"Untitled BRL-CAD Database",1.0)<0){
 			(void)fclose(fp);
 			return DBI_NULL;
 		}
 		break;
 	case 4:
 		/* Create a v4 database */
-		if(db_fwrite_ident(fp,"Untitled v4 BRL-CAD Database",1.0)<0) {
+		if(db_fwrite_ident(fp,"Untitled BRL-CAD Database",1.0)<0) {
 			(void)fclose(fp);
 			return DBI_NULL;
 		}
