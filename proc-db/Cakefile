@@ -21,31 +21,25 @@
 /* Explicit composition of each product */
 
 tube:	tube.o 
-	CC LDFLAGS  tube.o LIBWDB \
-		LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o tube
+	CC LDFLAGS  tube.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG RT_LIBES LIBES -o tube
 
 room:	room.o common.o
-	CC LDFLAGS  room.o common.o LIBWDB \
-		LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o room
+	CC LDFLAGS  room.o common.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG RT_LIBES LIBES -o room
 
 clutter:	clutter.o common.o mathtab.o
-	CC LDFLAGS  clutter.o common.o LIBWDB \
-		LIBRT RT_CONFIG RT_LIBES mathtab.o LIBSYSV LIBES -o clutter
+	CC LDFLAGS  clutter.o common.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG RT_LIBES mathtab.o LIBES -o clutter
 
 kurt:		kurt.o
-	CC LDFLAGS  kurt.o LIBWDB LIBRT RT_CONFIG RT_LIBES \
-		LIBSYSV LIBES -o kurt
+	CC LDFLAGS  kurt.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG RT_LIBES LIBES -o kurt
 
 pyramid:	pyramid.o
-	CC LDFLAGS  pyramid.o LIBWDB \
-		LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o pyramid
+	CC LDFLAGS  pyramid.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG RT_LIBES LIBES -o pyramid
 
 molecule:	molecule.o 
-	CC LDFLAGS  molecule.o LIBWDB \
-		LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o molecule
+	CC LDFLAGS  molecule.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG RT_LIBES LIBES -o molecule
 
 teapot:		tea.o
-	CC LDFLAGS tea.o LIBWDB LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o teapot
+	CC LDFLAGS tea.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG RT_LIBES LIBES -o teapot
 
 /*
  *  Special rules for additions from other directories

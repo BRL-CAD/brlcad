@@ -8,14 +8,12 @@
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
-#define	SHFILES	newvers.sh newvers5.sh newversVLD.sh
-
-#define FILES	ged dodraw dozoom titles \
-			usepen dir columns path mover tedit \
+#define FILES	ged dodraw dozoom titles scroll \
+			usepen dir columns mover tedit \
 			cmd chgview chgmodel chgtree \
 			rtif anal typein \
 			buttons clip menu adc edsol edarb \
-			ars proc_reg memalloc \
+			ars proc_reg hideline \
 			spline mater plot overlay inside \
 			utility1 utility2 track arbs \
 			facedef arb ell half tgc torus \
@@ -25,11 +23,12 @@
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-mged:	OBJ
+#define COMPLETE_LIBES	LIB_PRE''LIBRT RT_LIBES LIBMALLOC MGED_LIBES LIBES
+
+mged:	OBJ LIBRT
 	-rm -f vers.c
 	sh ../SRCDIR/newvers.sh
 	CC CFLAGS -c vers.c
-	CC -o mged LDFLAGS OBJ MGED_LIBES \
-		LIBRT RT_LIBES LIBMALLOC LIBES vers.o
+	CC -o mged LDFLAGS OBJ COMPLETE_LIBES vers.o
 
 #include "../Cakefile.rules"
