@@ -144,6 +144,54 @@ used for this execution.  The default is 1.
 The ``benchmark'' flag.  When specified, all intentional random effects
 such as ray dither, color dither, etc, are turned off, to allow
 benchmark timing comparison and benchmark result comparison.
+.TP
+.B \-E#
+Set distance of eye from center.
+.TP
+.B \-S
+Turns on stereo viewing.
+.TP
+.B \-J 
+The "jitter" flag, randomizes the point from which the ray is fired, 
+to eliminate systemic
+errors.  This could be useful in obtaining more accurate results 
+in a volume-calculating raytrace, for example.  
+.B \-H#
+The "hypersample" flag, specifies number of extra rays to fire for 
+more accurate results.
+.TP
+.B \-F\ framebuffer
+.TP
+.B \-D#
+The "desired frame" flag, specifies frame number to start with.
+.TP
+.B \-x#\ (hexidecimal)
+Turns on the 
+.IR librt(3)
+debugging flag specified.
+.TP
+.B \-X#\ (hexidecimal)
+Turns on the
+.I rt 
+program debugging flag specified.
+.TP
+.B \A#
+Sets the ambient light intensity.
+.TP
+.B \-p#
+Sets the perspective, in degrees ranging  0 <= p < 180.
+.TP
+.B \-i
+Sets the "increment mode" flag, calling for incremental resolution.
+.TP
+.B \-I
+Turns on interactive mode.
+.TP
+.B \-U#
+Sets the "use_air" value.
+.TP
+.B \-V#
+Sets the view aspect.
 .LP
 The
 .B rt
@@ -154,7 +202,7 @@ which can be invoked directly, or via the
 command in
 .IR mged (1).
 .SH "SEE ALSO"
-brlcad(1), mged(1), lgt(1), rtray(1), pix-fb(1), rtray(1), rtpp(1),
+brlcad(1), mged(1), lgt(1), pix-fb(1), rtray(1), rtpp(1),
 librt(3), ray(5V), pix(5).
 .SH DIAGNOSTICS
 Numerous error conditions are possible.
