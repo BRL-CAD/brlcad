@@ -24,13 +24,14 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "rtlist.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "./debug.h"
 
 struct pipe_internal {
 	int		pipe_count;
-	struct wdb_pipeseg *pipe_segs;
+	struct wdb_pipeseg pipe_segs;
 };
 
 struct pipe_specific {
@@ -223,6 +224,7 @@ double		rel_tol;
 double		norm_tol;
 {
 	register struct wdb_pipeseg	*psp;
+	register struct wdb_pipeseg	*np;
 	struct pipe_internal	pi;
 	vect_t		head, tail;
 	point_t		pt;
@@ -233,18 +235,21 @@ double		norm_tol;
 		return(-1);
 	}
 
-	ADD_VL( vhead, pi.pipe_segs->ps_start, 0 );
-	for( psp = pi.pipe_segs; psp != WDB_PIPESEG_NULL; psp = psp->ps_next )  {
+	np = RT_LIST_FIRST(wdb_pipeseg, &pi.pipe_segs.l);
+	ADD_VL( vhead, np->ps_start, 0 );
+	for( RT_LIST( psp, wdb_pipeseg, &pi.pipe_segs.l ) )  {
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
 			/* Previous segment aleady connected to end plate */
 			break;
 		case WDB_PIPESEG_TYPE_LINEAR:
-			ADD_VL( vhead, psp->ps_next->ps_start, 1 );
+			np = RT_LIST_PNEXT(wdb_pipeseg, &psp->l);
+			ADD_VL( vhead, np->ps_start, 1 );
 			break;
 		case WDB_PIPESEG_TYPE_BEND:
 			VSUB2( head, psp->ps_start, psp->ps_bendcenter );
-			VSUB2( tail, psp->ps_next->ps_start, psp->ps_bendcenter );
+			np = RT_LIST_PNEXT(wdb_pipeseg, &psp->l);
+			VSUB2( tail, np->ps_start, psp->ps_bendcenter );
 			for( i=0; i <= 4; i++ )  {
 				double	ang;
 				double	cos_ang, sin_ang;
@@ -325,7 +330,7 @@ done:	;
 	 *  allocating a linked list of segments in internal format,
 	 *  using exactly the same structures as libwdb.
 	 */
-	pipe->pipe_segs = WDB_PIPESEG_NULL;
+	RT_LIST_INIT( &pipe->pipe_segs.l );
 	for( ep = &rp->pw.pw_data[pipe->pipe_count-1]; ep >= &rp->pw.pw_data[0]; ep-- )  {
 		tmp.ps_type = (int)ep->eps_type[0];
 		ntohd( tmp.ps_start, ep->eps_start, 3 );
@@ -344,8 +349,7 @@ done:	;
 		}
 		psp->ps_id = tmp.ps_id / mat[15];
 		psp->ps_od = tmp.ps_od / mat[15];
-		psp->ps_next = pipe->pipe_segs;
-		pipe->pipe_segs = psp;
+		RT_LIST_APPEND( &pipe->pipe_segs.l, &psp->l );
 	}
 
 	return(0);			/* OK */
