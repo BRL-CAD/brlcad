@@ -691,6 +691,8 @@ proc text_op_begin { w x y } {
     global mged_gui
 
     set mged_gui($w,moveView) 0
+    set mged_gui($w,omx) $x
+    set mged_gui($w,omy) $y
     $w scan mark $x $y
 }
 
@@ -710,8 +712,11 @@ proc text_paste { w } {
 proc text_scroll { w x y } {
     global mged_gui
 
-    set mged_gui($w,moveView) 1
-    $w scan dragto $x $y
+    if [expr {abs($mged_gui($w,omx) - $x) > 4 ||
+              abs($mged_gui($w,omy) - $y) > 4}] {
+	set mged_gui($w,moveView) 1
+	$w scan dragto $x $y
+    }
 }
 
 proc selection_begin { w x y } {
