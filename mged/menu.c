@@ -171,12 +171,12 @@ int y;
       dmp->dm_setColor(dmp, DM_WHITE, 1);
       dmp->dm_drawString2D( dmp, "Rate", MENUX, y-15 );
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawString2D( dmp, "/Abs", MENUX+4*35, y-15 );
+      dmp->dm_drawString2D( dmp, "/Abs", MENUX+4*40, y-15 );
     }else{
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
       dmp->dm_drawString2D( dmp, "Rate/", MENUX, y-15 );
       dmp->dm_setColor(dmp, DM_WHITE, 1);
-      dmp->dm_drawString2D( dmp, "Abs", MENUX+5*35, y-15 );
+      dmp->dm_drawString2D( dmp, "Abs", MENUX+5*40, y-15 );
     }
     break;
   case BV_EDIT_TOGGLE:
@@ -184,12 +184,12 @@ int y;
       dmp->dm_setColor(dmp, DM_WHITE, 1);
       dmp->dm_drawString2D( dmp, "Edit", MENUX, y-15 );
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawString2D( dmp, "/View", MENUX+4*35, y-15 );
+      dmp->dm_drawString2D( dmp, "/View", MENUX+4*40, y-15 );
     }else{
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
       dmp->dm_drawString2D( dmp, "Edit/", MENUX, y-15 );
       dmp->dm_setColor(dmp, DM_WHITE, 1);
-      dmp->dm_drawString2D( dmp, "View", MENUX+5*35, y-15 );
+      dmp->dm_drawString2D( dmp, "View", MENUX+5*40, y-15 );
     }
     break;
 #if 0
