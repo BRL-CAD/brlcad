@@ -2317,6 +2317,7 @@ char *buf;
 	 *  If the reply deviates in any way from the assignment,
 	 *  then the server is dropped.
 	 */
+	lp = RT_LIST_FIRST( list, &sp->sr_work );
 	fr = lp->li_frame;
 	CHECK_FRAME(fr);
 
