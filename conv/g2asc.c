@@ -322,7 +322,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	fp = vp;
 	(void)bzero( (char *)fp, nbytes );
 	count = fread( (char *)fp, 1, nbytes, stdin );
-	if( count != 1 )  {
+	if( count != nbytes )  {
 		(void)fprintf(stderr, "g2asc: spline knot read failure\n");
 		exit(1);
 	}
