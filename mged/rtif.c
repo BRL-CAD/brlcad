@@ -28,9 +28,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
+#include <sys/time.h>		/* For struct timeval */
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -1290,9 +1294,14 @@ int	argc;
 	refresh();	/* Draw new display */
 	dmaflag = 1;
 	if( rtif_delay > 0 )  {
-		int	sec = (int)rtif_delay;
-		int	us = (int)((rtif_delay - sec) * 1000000);
-		(void)bsdselect( 1<<fileno(stdin), sec, us );
+		struct timeval tv;
+		fd_set readfds;
+	
+		FD_ZERO(&readfds);
+		FD_SET(fileno(stdin), &readfds);
+		tv.tv_sec = (long)rtif_delay;
+		tv.tv_usec = (long)((rtif_delay - sec) * 1000000);
+		select( 1, &readfds, (fd_set *)0, (fd_set *)0, &tv );
 	}
 	return(0);
 }
