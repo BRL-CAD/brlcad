@@ -294,7 +294,77 @@ struct line_list{
 };
 
 struct line_list HeadLines;
-static char newline[] = "\n";
+
+HIDDEN int
+count_nodes(line)
+char *line;
+{
+  char *ptr;
+  char name[NAMESIZE+1];
+  char relation;
+  int done=0;
+  int node_count=0;
+  int j;
+
+  ptr = strtok(line , delims);
+
+  while (!done) {
+    /* First non-white is the relation operator */
+    relation = (*ptr);
+    if (relation == '\0')
+      break;
+
+    /* Next must be the member name */
+    ptr = strtok((char *)NULL, delims);
+    strncpy(name, ptr, NAMESIZE);
+    name[NAMESIZE] = '\0';
+
+    /* Eliminate trailing white space from name */
+    j = NAMESIZE;
+    while (isspace(name[--j]))
+      name[j] = '\0';
+
+    if (relation != '+' && relation != 'u' & relation != '-') {
+      struct bu_vls tmp_vls;
+
+      bu_vls_init(&tmp_vls);
+      bu_vls_printf(&tmp_vls, " %c is not a legal operator\n" , relation );
+      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+      bu_vls_free(&tmp_vls);
+      return( -1 );
+    }
+
+    if (name[0] == '\0') {
+      Tcl_AppendResult(interp, " operand name missing\n", (char *)NULL);
+      return( -1 );
+    }
+
+    ptr = strtok( (char *)NULL, delims );
+    if (!ptr)
+      done = 1;
+    else if (*ptr != 'u' &&
+	     (*ptr != '-' || *(ptr+1) != '\0') &&
+	     (*ptr != '+' || *(ptr+1) != '\0')) {
+      int k;
+
+      /* skip past matrix */
+      for (k=1 ; k<16 ; k++) {
+	ptr = strtok( (char *)NULL, delims );
+	if (!ptr) {
+	  Tcl_AppendResult(interp, "expecting a matrix\n", (char *)NULL);
+	  return( -1 );
+	}
+      }
+
+      /* get the next relational operator on the current line */
+      ptr = strtok( (char *)NULL, delims );
+    }
+
+    node_count++;
+  }
+
+  return node_count;
+}
 
 HIDDEN int
 put_tree_into_comb(comb, dp, old_name, new_name, str)
@@ -305,6 +375,7 @@ char *new_name;
 char *str;
 {
   int i;
+  int done;
   char *line;
   char *ptr;
   char relation;
@@ -318,6 +389,7 @@ char *str;
   union tree *final_tree;
   struct rt_db_internal intern;
   matp_t matrix;
+  struct bu_vls vls;
 
   if(str == (char *)NULL)
     return TCL_ERROR;
@@ -325,104 +397,132 @@ char *str;
   BU_LIST_INIT(&HeadLines.l);
 
   /* break str into lines */
-  line = strtok(str, newline);
-  while(line != (char *)NULL){
+  line = str;
+  ptr = strchr(str, '\n');
+  if (ptr != NULL)
+    *ptr = '\0';
+  bu_vls_init(&vls);
+  while (line != (char *)NULL) {
+    int n;
+    bu_vls_strcpy(&vls, line);
     BU_GETSTRUCT(llp, line_list);
     BU_LIST_INSERT(&HeadLines.l, &llp->l);
     llp->line = line;
-    line = strtok((char *)NULL, newline);
-    ++node_count;
+
+    if ((n = count_nodes(bu_vls_addr(&vls))) < 0) {
+      bu_vls_free(&vls);
+      bu_list_free(&HeadLines.l);
+      return TCL_ERROR;
+    } else
+      node_count += n;
+
+    if (ptr != NULL && *(ptr+1) != '\0') {
+      line = ptr + 1;
+      ptr = strchr(line, '\n');
+      if (ptr != NULL)
+	*ptr = '\0';
+    } else {
+      line = NULL;
+    }
   }
+  bu_vls_free(&vls);
 
   /* build tree list */
-  if( node_count )
+  if (node_count)
     rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list" );
   else
     rt_tree_array = (struct rt_tree_array *)NULL;
 
   for(BU_LIST_FOR(llp, line_list, &HeadLines.l)){
+    done = 0;
     ptr = strtok(llp->line, delims);
+    while (!done) {
+      /* First non-white is the relation operator */
+      relation = (*ptr);
+      if (relation == '\0')
+	break;
 
-    /* First non-white is the relation operator */
-    relation = (*ptr);
-    if( relation == '\0' ){
-      bu_list_free(&HeadLines.l);
-      if( rt_tree_array )
-	bu_free( (char *)rt_tree_array, "red: tree list" );
-      bu_log("no relational operator\n");
-      return TCL_ERROR;
-    }
+      /* Next must be the member name */
+      ptr = strtok((char *)NULL, delims);
+      if (ptr == (char *)NULL) {
+	bu_list_free(&HeadLines.l);
+	if(rt_tree_array)
+	  bu_free( (char *)rt_tree_array, "red: tree list" );
+	bu_log("no name specified\n");
+	return TCL_ERROR;
+      }
+      strncpy(name , ptr, NAMESIZE);
+      name[NAMESIZE] = '\0';
 
-    /* Next must be the member name */
-    ptr = strtok( (char *)NULL, delims );
-    if(ptr == (char *)NULL){
-      bu_list_free(&HeadLines.l);
-      if( rt_tree_array )
-	bu_free( (char *)rt_tree_array, "red: tree list" );
-      bu_log("no name specified\n");
-      return TCL_ERROR;
-    }
-    strncpy( name , ptr, NAMESIZE );
-    name[NAMESIZE] = '\0';
-
-    /* Eliminate trailing white space from name */
-    i = NAMESIZE;
-    while( isspace( name[--i] ) )
+      /* Eliminate trailing white space from name */
+      i = NAMESIZE;
+      while(isspace(name[--i]))
       name[i] = '\0';
 
-    /* Check for existence of member */
-    if( (dp1=db_lookup( dbip , name , LOOKUP_QUIET )) == DIR_NULL )
+      /* Check for existence of member */
+      if ((dp1=db_lookup(dbip , name , LOOKUP_QUIET)) == DIR_NULL)
       bu_log("\tWARNING: ' %s ' does not exist\n", name);
 
-    /* get matrix */
-    ptr = strtok( (char *)NULL, delims );
-    if(ptr == (char *)NULL)
-      matrix = (matp_t)NULL;
-    else{
-      int k;
-
-      matrix = (matp_t)bu_calloc( 16, sizeof( fastf_t ), "red: matrix" );
-      matrix[0] = atof( ptr );
-      for( k=1 ; k<16 ; k++ ){
-	ptr = strtok( (char *)NULL, delims );
-	if( !ptr ){
-	  bu_log("incomplete matrix for member %s - No changes made\n", name);
-	  bu_free( (char *)matrix, "red: matrix" );
-	  if( rt_tree_array )
-	    bu_free( (char *)rt_tree_array, "red: tree list" );
-	  bu_list_free(&HeadLines.l);
-	  return TCL_ERROR;
-	}
-	matrix[k] = atof( ptr );
-      }
-      if( bn_mat_is_identity( matrix ) ){
-	bu_free( (char *)matrix, "red: matrix" );
+      /* get matrix */
+      ptr = strtok((char *)NULL, delims);
+      if (ptr == (char *)NULL) {
 	matrix = (matp_t)NULL;
+	done = 1;
+      }else if(*ptr == 'u' ||
+	       (*ptr == '-' && *(ptr+1) == '\0') ||
+	       (*ptr == '+' && *(ptr+1) == '\0')) {
+	/* assume another relational operator */
+	matrix = (matp_t)NULL;
+      } else {
+	int k;
+
+	matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
+	matrix[0] = atof(ptr);
+	for (k=1 ; k<16 ; k++) {
+	  ptr = strtok((char *)NULL, delims);
+	  if (!ptr) {
+	    bu_log("incomplete matrix for member %s - No changes made\n", name);
+	    bu_free( (char *)matrix, "red: matrix" );
+	    if(rt_tree_array)
+	      bu_free((char *)rt_tree_array, "red: tree list");
+	    bu_list_free(&HeadLines.l);
+	    return TCL_ERROR;
+	  }
+	  matrix[k] = atof( ptr );
+	}
+	if (bn_mat_is_identity( matrix )) {
+	  bu_free((char *)matrix, "red: matrix");
+	  matrix = (matp_t)NULL;
+	}
+
+	ptr = strtok((char *)NULL, delims);
+	if (ptr == (char *)NULL)
+	  done = 1;
       }
-    }
 
-    /* Add it to the combination */
-    switch( relation ){
-    case '+':
-      rt_tree_array[tree_index].tl_op = OP_INTERSECT;
-      break;
-    case '-':
-      rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
-      break;
-    default:
-      bu_log("unrecognized relation (assume UNION)\n");
-    case 'u':
-      rt_tree_array[tree_index].tl_op = OP_UNION;
-      break;
-    }
+      /* Add it to the combination */
+      switch (relation) {
+      case '+':
+	rt_tree_array[tree_index].tl_op = OP_INTERSECT;
+	break;
+      case '-':
+	rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
+	break;
+      default:
+	bu_log("unrecognized relation (assume UNION)\n");
+      case 'u':
+	rt_tree_array[tree_index].tl_op = OP_UNION;
+	break;
+      }
 
-    BU_GETUNION( tp, tree );
-    rt_tree_array[tree_index].tl_tree = tp;
-    tp->tr_l.magic = RT_TREE_MAGIC;
-    tp->tr_l.tl_op = OP_DB_LEAF;
-    tp->tr_l.tl_name = bu_strdup( name );
-    tp->tr_l.tl_mat = matrix;
-    tree_index++;
+      BU_GETUNION(tp, tree);
+      rt_tree_array[tree_index].tl_tree = tp;
+      tp->tr_l.magic = RT_TREE_MAGIC;
+      tp->tr_l.tl_op = OP_DB_LEAF;
+      tp->tr_l.tl_name = bu_strdup( name );
+      tp->tr_l.tl_mat = matrix;
+      tree_index++;
+    }
   }
 
   bu_list_free(&HeadLines.l);
@@ -931,6 +1031,7 @@ checkcomb()
 	int node_count=0;
 	int nonsubs=0;
 	int i,j,done,ch;
+	int done2,first;
 	char relation;
 	char name[NAMESIZE+1];
 	char line[MAXLINE];
@@ -1082,47 +1183,80 @@ checkcomb()
 			continue;
 		}
 
+		done2=0;
+		first=1;
 		ptr = strtok( line , delims );
-		/* First non-white is the relation operator */
-		relation = (*ptr);
-		if( relation == '\0' )
-		{
-			done = 1;
-			break;
+
+		while (!done2) {
+			/* First non-white is the relation operator */
+			relation = (*ptr);
+			if( relation == '\0' )
+			{
+				if (first)
+					done = 1;
+
+				done2 = 1;
+				break;
+			}
+			first = 0;
+
+			/* Next must be the member name */
+			ptr = strtok( (char *)NULL, delims );
+			strncpy( name , ptr , NAMESIZE );
+			name[NAMESIZE] = '\0';
+
+			/* Eliminate trailing white space from name */
+			j = NAMESIZE;
+			while( isspace( name[--j] ) )
+				name[j] = '\0';
+
+			if( relation != '+' && relation != 'u' & relation != '-' )
+			{
+			  struct bu_vls tmp_vls;
+
+			  bu_vls_init(&tmp_vls);
+			  bu_vls_printf(&tmp_vls, " %c is not a legal operator\n" , relation );
+			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			  bu_vls_free(&tmp_vls);
+			  fclose( fp );
+			  return( -1 );
+			}
+			if( relation != '-' )
+				nonsubs++;
+
+			if( name[0] == '\0' )
+			{
+				Tcl_AppendResult(interp, " operand name missing\n", (char *)NULL);
+				fclose( fp );
+				return( -1 );
+			}
+
+			ptr = strtok( (char *)NULL, delims );
+			if( !ptr )
+				done2 = 1;
+			else if(*ptr != 'u' &&
+				(*ptr != '-' || *(ptr+1) != '\0') &&
+				(*ptr != '+' || *(ptr+1) != '\0')) {
+				int k;
+
+				/* skip past matrix */
+				for( k=1 ; k<16 ; k++ )
+				{
+					ptr = strtok( (char *)NULL, delims );
+					if( !ptr)
+					{
+						Tcl_AppendResult(interp, "expecting a matrix\n", (char *)NULL);
+						fclose( fp );
+						return( -1 );
+					}
+				}
+
+				/* get the next relational operator on the current line */
+				ptr = strtok( (char *)NULL, delims );
+			}
+
+			node_count++;
 		}
-
-		/* Next must be the member name */
-		ptr = strtok( (char *)NULL, delims );
-		strncpy( name , ptr , NAMESIZE );
-		name[NAMESIZE] = '\0';
-
-		/* Eliminate trailing white space from name */
-		j = NAMESIZE;
-		while( isspace( name[--j] ) )
-			name[j] = '\0';
-
-		if( relation != '+' && relation != 'u' & relation != '-' )
-		{
-		  struct bu_vls tmp_vls;
-
-		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, " %c is not a legal operator\n" , relation );
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
-		  fclose( fp );
-		  return( -1 );
-		}
-		if( relation != '-' )
-			nonsubs++;
-
-		if( name[0] == '\0' )
-		{
-		  Tcl_AppendResult(interp, " operand name missing\n", (char *)NULL);
-		  fclose( fp );
-		  return( -1 );
-		}
-
-		node_count++;
 	}
 
 	fclose( fp );
@@ -1155,6 +1289,7 @@ char *old_name;
 	int i;
 	int done=0;
 	int region;
+	int done2, first;
 	struct directory *dp1;
 	struct rt_tree_array *rt_tree_array;
 	int tree_index=0;
@@ -1351,88 +1486,99 @@ char *old_name;
 		else if( !strncmp( &line[i], "COMBINATION:", 12 ) )
 			continue;
 
+		done2=0;
+		first=1;
 		ptr = strtok( line, delims );
+		while (!done2) {
+			/* First non-white is the relation operator */
+			relation = (*ptr);
+			if( relation == '\0' )
+				break;
+			first = 0;
 
-		/* First non-white is the relation operator */
-		relation = (*ptr);
-		if( relation == '\0' )
-		{
-			done = 1;
-			break;
-		}
+			/* Next must be the member name */
+			ptr = strtok( (char *)NULL, delims );
+			strncpy( name , ptr, NAMESIZE );
+			name[NAMESIZE] = '\0';
+	
+			/* Eliminate trailing white space from name */
+			i = NAMESIZE;
+			while( isspace( name[--i] ) )
+				name[i] = '\0';
 
-		/* Next must be the member name */
-		ptr = strtok( (char *)NULL, delims );
-		strncpy( name , ptr, NAMESIZE );
-		name[NAMESIZE] = '\0';
-
-		/* Eliminate trailing white space from name */
-		i = NAMESIZE;
-		while( isspace( name[--i] ) )
-			name[i] = '\0';
-
-		/* Check for existence of member */
-		if( (dp1=db_lookup( dbip , name , LOOKUP_QUIET )) == DIR_NULL )
-		  Tcl_AppendResult(interp, "\tWARNING: '", name, "' does not exist\n", (char *)NULL);
-
-		/* get matrix */
-		ptr = strtok( (char *)NULL, delims );
-		if( !ptr )
-			matrix = (matp_t)NULL;
-		else
-		{
-			int k;
-
-			matrix = (matp_t)bu_calloc( 16, sizeof( fastf_t ), "red: matrix" );
-			matrix[0] = atof( ptr );
-			for( k=1 ; k<16 ; k++ )
-			{
-				ptr = strtok( (char *)NULL, delims );
-				if( !ptr )
-				{
-					Tcl_AppendResult(interp, "incomplete matrix for member ",
-						name, " No changes made\n", (char *)NULL );
-					bu_free( (char *)matrix, "red: matrix" );
-					if( rt_tree_array )
-						bu_free( (char *)rt_tree_array, "red: tree list" );
-					fclose( fp );
-					return( 1 );
-				}
-				matrix[k] = atof( ptr );
-			}
-			if( bn_mat_is_identity( matrix ) )
-			{
-				bu_free( (char *)matrix, "red: matrix" );
+			/* Check for existence of member */
+			if( (dp1=db_lookup( dbip , name , LOOKUP_QUIET )) == DIR_NULL )
+			  Tcl_AppendResult(interp, "\tWARNING: '", name, "' does not exist\n", (char *)NULL);
+			/* get matrix */
+			ptr = strtok( (char *)NULL, delims );
+			if( !ptr ){
 				matrix = (matp_t)NULL;
-			}
-		}
+				done2 = 1;
+			}else if(*ptr == 'u' ||
+				(*ptr == '-' && *(ptr+1) == '\0') ||
+				(*ptr == '+' && *(ptr+1) == '\0')) {
+				/* assume another relational operator */
+				matrix = (matp_t)NULL;
+			}else
+			{
+				int k;
 
-		/* Add it to the combination */
-		switch( relation )
-		{
-			case '+':
-				rt_tree_array[tree_index].tl_op = OP_INTERSECT;
-				break;
-			case '-':
-				rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
-				break;
-			default:
-				Tcl_AppendResult(interp, "unrecognized relation (assume UNION)\n",
-					(char *)NULL );
-			case 'u':
-				rt_tree_array[tree_index].tl_op = OP_UNION;
-				break;
+				matrix = (matp_t)bu_calloc( 16, sizeof( fastf_t ), "red: matrix" );
+				matrix[0] = atof( ptr );
+				for( k=1 ; k<16 ; k++ )
+				{
+					ptr = strtok( (char *)NULL, delims );
+					if( !ptr )
+					{
+						Tcl_AppendResult(interp, "incomplete matrix for member ",
+							name, " No changes made\n", (char *)NULL );
+						bu_free( (char *)matrix, "red: matrix" );
+						if( rt_tree_array )
+							bu_free( (char *)rt_tree_array, "red: tree list" );
+						fclose( fp );
+						return( 1 );
+					}
+					matrix[k] = atof( ptr );
+				}
+				if( bn_mat_is_identity( matrix ) )
+				{
+					bu_free( (char *)matrix, "red: matrix" );
+					matrix = (matp_t)NULL;
+				}
+
+				ptr = strtok( (char *)NULL, delims );
+				if (ptr == (char *)NULL)
+					done2 = 1;
+			}
+
+			/* Add it to the combination */
+			switch( relation )
+			{
+				case '+':
+					rt_tree_array[tree_index].tl_op = OP_INTERSECT;
+					break;
+				case '-':
+					rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
+					break;
+				default:
+					Tcl_AppendResult(interp, "unrecognized relation (assume UNION)\n",
+						(char *)NULL );
+				case 'u':
+					rt_tree_array[tree_index].tl_op = OP_UNION;
+					break;
+			}
+			BU_GETUNION( tp, tree );
+			rt_tree_array[tree_index].tl_tree = tp;
+			tp->tr_l.magic = RT_TREE_MAGIC;
+			tp->tr_l.tl_op = OP_DB_LEAF;
+			tp->tr_l.tl_name = bu_strdup( name );
+			tp->tr_l.tl_mat = matrix;
+			tree_index++;
 		}
-		BU_GETUNION( tp, tree );
-		rt_tree_array[tree_index].tl_tree = tp;
-		tp->tr_l.magic = RT_TREE_MAGIC;
-		tp->tr_l.tl_op = OP_DB_LEAF;
-		tp->tr_l.tl_name = bu_strdup( name );
-		tp->tr_l.tl_mat = matrix;
-		tree_index++;
 	}
 
 	fclose( fp );
+
 
 	if( tree_index )
 		final_tree = (union tree *)db_mkgift_tree( rt_tree_array, node_count, (struct db_tree_state *)NULL );
