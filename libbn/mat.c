@@ -858,6 +858,9 @@ double	sinz, cosz;
  *  product a matrix which rotates that vector D onto the -Z axis.
  *  This matrix will be suitable for use as a "model2view" matrix.
  *
+ *  XXX This routine will fail if the vector is already more or less aligned
+ *  with the Z axis.
+ *
  *  This is done in several steps.
  *	1)  Rotate D about Z to match +X axis.  Azimuth adjustment.
  *	2)  Rotate D about Y to match -Y axis.  Elevation adjustment.
