@@ -1437,9 +1437,9 @@ CONST struct bu_bitv	*solidbits;
 		if( diff > ap->a_rt_i->rti_tol.dist )  {
 			if(rt_g.debug&DEBUG_PARTITION)bu_log(
 				"partition ends beyond current box end\n");
-			if( ap->a_onehit == 0 )  {
+			if( ap->a_onehit != 1 )  {
 				ret = 0;
-				reason = "a_onehit=0, trace remaining boxes";
+				reason = "a_onehit != 1, trace remaining boxes";
 				goto out;
 			}
 			/* pt_outhit may not be correct */
@@ -1460,6 +1460,9 @@ CONST struct bu_bitv	*solidbits;
 		 */
 		{
 			struct seg **segpp;
+
+			if(rt_g.debug&DEBUG_PARTITION)
+				bu_log( "Building region table:\n" );
 			for( BU_PTBL_FOR(segpp, (struct seg **), &pp->pt_seglist) )  {
 				struct soltab	*stp = (*segpp)->seg_stp;
 				RT_CK_SOLTAB(stp);
@@ -1532,8 +1535,8 @@ CONST struct bu_bitv	*solidbits;
 				lastregion = regp;
 			}
 		}
-		if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  claiming_regions=%d\n",
-			claiming_regions);
+		if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  claiming_regions=%d (%g <-> %g)\n",
+			claiming_regions, pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
 		if( claiming_regions == 0 )  {
 			if(rt_g.debug&DEBUG_PARTITION)bu_log("rt_boolfinal moving past partition x%x\n", pp);
 			pp = pp->pt_forw;		/* onwards! */
@@ -1545,7 +1548,8 @@ CONST struct bu_bitv	*solidbits;
 			 *  There is an overlap between two or more regions,
 			 *  invoke multi-overlap handler.
 			 */
-			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  invoking a_multioverlap() pp=x%x\n", pp);
+			if(rt_g.debug&DEBUG_PARTITION)
+bu_log("rt_boolfinal:  invoking a_multioverlap() pp=x%x\n", pp);
 			bu_ptbl_rm( regiontable, (long *)NULL );
 			ap->a_logoverlap( ap, pp, regiontable, InputHdp );
 			ap->a_multioverlap( ap, pp, regiontable, InputHdp );
@@ -1593,7 +1597,9 @@ CONST struct bu_bitv	*solidbits;
 		{
 			register struct partition	*newpp;
 			register struct partition	*lastpp;
-
+			if(rt_g.debug&DEBUG_PARTITION )
+				bu_log( "Appending partition to result queue: %g, %g\n",
+					pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
 			newpp = pp;
 			pp=pp->pt_forw;				/* onwards! */
 			DEQUEUE_PT( newpp );
