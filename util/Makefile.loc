@@ -125,7 +125,7 @@ fbgamma:	fbgamma.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 fbscanplot:	fbscanplot.o ${LIBFB}
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 fbzoom:		fbzoom.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
