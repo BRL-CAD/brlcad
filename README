@@ -246,6 +246,7 @@ For System V, select instead:
 .sp
 	LIBRT_TIMER	= timerunix
 .sp
+.ne 2i
 The full range of choices are:
 .TS
 center box;
@@ -674,7 +675,26 @@ hardware that you have.  Even if your system has no display hardware,
 this library is necessary, as the debug and disk-file interfaces are
 always useful.  (Lacking any displays at all, you may be able to utilize
 the bw-impress(1) program to produce pictures on an Imagen
-laser-printer). In the case of no display hardware at all, the
+laser-printer).
+.sp
+.TS
+center box;
+l l.
+	STANDARD
+_
+file	Manipulate disk image
+debug	Print library calls
+_
+	OPTIONAL
+_
+remote	Network access to remote display
+adage	Adage RDS-3000 ("Ikonas")
+sgi	SGI Iris display
+sun	SunView interface
+ptty	AT&T 5620 w/special Moss layer
+.TE
+.sp
+In the case of no display hardware at all, the
 LIBFB_CFILES, LIBFB_OBJS, and LIBFB_CONFIG lines should be null lists,
 ie:
 .sp
@@ -683,6 +703,15 @@ ie:
 	LIBFB_CFILES	=
 	LIBFB_OBJS	=
 	LIBFB_CONFIG	=
+.fi
+.sp
+If this is a SUN system of release 3.2 or higher, the display is
+configured by:
+.sp
+.nf
+	LIBFB_CFILES	= if_remote.c if_sun.c
+	LIBFB_OBJS	= if_remote.o ../libpkg/pkg.o if_sun.o
+	LIBFB_CONFIG	= -DIF_REMOTE -DIF_SUN
 .fi
 .sp
 If this is an SGI system of release 3.5, the display is configured by:
