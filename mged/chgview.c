@@ -439,7 +439,7 @@ size_reset()
 /*
  *			E D I T _ C O M
  *
- * B, e, and E commands uses this area as common
+ * B, e, and E commands use this area as common
  */
 int
 edit_com(argc, argv, kind, catch_sigint)
@@ -491,10 +491,16 @@ int	catch_sigint;
   {
     register struct dm_list *p;
     struct dm_list *save_dm_list;
+    struct cmd_list *save_cmd_list;
 
     save_dm_list = curr_dm_list;
+    save_cmd_list = curr_cmd_list;
     for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
       curr_dm_list = p;
+      if(curr_dm_list->aim)
+	curr_cmd_list = curr_dm_list->aim;
+      else
+	curr_cmd_list = &head_cmd_list;
 
       /* If we went from blank screen to non-blank, resize */
       if (mged_variables.autosize  && initial_blank_screen &&
@@ -511,6 +517,7 @@ int	catch_sigint;
     }
 
     curr_dm_list = save_dm_list;
+    curr_cmd_list = save_cmd_list;
   }
 
   bu_vls_free(&vls);
