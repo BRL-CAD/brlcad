@@ -315,9 +315,9 @@ char	**argv;
 #define npsw 1		/* XXXXXXXXX Temp. disable parallel prep, it may be buggy XXXXX -M */
 	rt_prep_timer();
 	if( rt_gettrees(rtip, argc, argv, npsw) < 0 )
-		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[0]);
+		rt_log("rt_gettrees(%s) FAILED\n", argv[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	fprintf(stderr,"GETTREE: %s\n", outbuf);
+	rt_log("GETTREE: %s\n", outbuf);
 	return(0);
 }
 
@@ -486,9 +486,9 @@ register struct rt_i	*rtip;
 
 	rt_prep_timer();
 	if( rt_gettrees(rtip, nobjs, objtab, npsw) < 0 )
-		fprintf(stderr,"rt_gettrees(%s) FAILED\n", objtab[0]);
+		rt_log("rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	fprintf(stderr,"GETTREE: %s\n", outbuf);
+	rt_log("GETTREE: %s\n", outbuf);
 }
 #undef npsw 		/* XXXXXXXXX end Temp. disable parallel prep, it may be buggy XXXXX -M */
 
@@ -548,9 +548,9 @@ struct rt_i	*rtip;
 		rt_prep(rtip);
 
 		(void)rt_read_timer( outbuf, sizeof(outbuf) );
-		fprintf(stderr, "PREP: %s\n", outbuf );
+		rt_log( "PREP: %s\n", outbuf );
 	}
-	fprintf(stderr,"Additional dynamic memory used=%d. bytes\n",
+	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
 	beginptr = sbrk(0);
 }
@@ -573,19 +573,19 @@ int framenumber;
 	int	lim;
 	vect_t	work, temp;
 
-	fprintf(stderr, "\n...................Frame %5d...................\n",
+	rt_log( "\n...................Frame %5d...................\n",
 		framenumber);
 
 	/* Compute model RPP, etc */
 	do_prep( rtip );
 
-	fprintf(stderr,"Tree: %d solids in %d regions\n",
+	rt_log("Tree: %d solids in %d regions\n",
 		rtip->nsolids, rtip->nregions );
 	if( RT_LIST_IS_EMPTY( &rtip->rti_headsolid ) )  {
-		fprintf(stderr,"rt ERROR: No solids\n");
+		rt_log("rt ERROR: No solids\n");
 		exit(3);
 	}
-	fprintf(stderr,"Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
+	rt_log("Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
 		rtip->mdl_min[X], rtip->mdl_max[X],
 		rtip->mdl_min[Y], rtip->mdl_max[Y],
 		rtip->mdl_min[Z], rtip->mdl_max[Z] );
@@ -599,14 +599,14 @@ int framenumber;
 	VSET( work, 0, 0, 1 );
 	MAT3X3VEC( temp, view2model, work );
 	ae_vec( &azimuth, &elevation, temp );
-	fprintf(stderr,
+	rt_log(
 		"View: %g azimuth, %g elevation off of front view\n",
 		azimuth, elevation);
-	fprintf(stderr,"Size: %gmm\n", viewsize);
-	fprintf(stderr,"Grid: (%g, %g) mm, (%d, %d) pixels\n",
+	rt_log("Size: %gmm\n", viewsize);
+	rt_log("Grid: (%g, %g) mm, (%d, %d) pixels\n",
 		cell_width, cell_height,
 		width, height );
-	fprintf(stderr,"Beam: radius=%g mm, divergence=%g mm/1mm\n",
+	rt_log("Beam: radius=%g mm, divergence=%g mm/1mm\n",
 		ap.a_rbeam, ap.a_diverge );
 
 	if( pix_start == -1 )  {
@@ -705,7 +705,7 @@ int framenumber;
 			return(-1);			/* Bad */
 		}
 #endif /* CRAY_COS */
-		fprintf(stderr,"Output file is '%s'\n", framename);
+		rt_log("Output file is '%s'\n", framename);
 	}
 
 	/* initialize lighting, may update pix_start */
@@ -723,7 +723,7 @@ int framenumber;
 	rtip->nhits = 0;
 	rtip->rti_nrays = 0;
 
-	fprintf(stderr,"\n");
+	rt_log("\n");
 	fflush(stdout);
 	fflush(stderr);
 
@@ -776,20 +776,20 @@ int framenumber;
 	/*
 	 *  All done.  Display run statistics.
 	 */
-	fprintf(stderr,"SHOT: %s\n", outbuf );
-	fprintf(stderr,"Additional dynamic memory used=%d. bytes\n",
+	rt_log("SHOT: %s\n", outbuf );
+	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
 		beginptr = sbrk(0);
-	fprintf(stderr,"%ld solid/ray intersections: %ld hits + %ld miss\n",
+	rt_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
 		rtip->nshots, rtip->nhits, rtip->nmiss );
-	fprintf(stderr,"pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
+	rt_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
 		rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
 		rtip->nmiss_model, rtip->nmiss_tree, rtip->nmiss_solid );
-	fprintf(stderr,
+	rt_log(
 		"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
 		framenumber,
 		width*height, utime, (double)(width*height)/utime );
-	fprintf(stderr,
+	rt_log(
 		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (RTFM)\n",
 		framenumber,
 		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
@@ -815,7 +815,7 @@ int framenumber;
 			"%s Dispose,dn='%s',text='%s'.  stat=0%o",
 			(status==0) ? "Good" : "---BAD---",
 			dn, framename, status );
-		fprintf(stderr, "%s\n", message);
+		rt_log( "%s\n", message);
 		remark(message);	/* Send to log files */
 #else
 		/* Protect finished product */
@@ -830,7 +830,7 @@ int framenumber;
 		res_pr();
 	}
 
-	fprintf(stderr,"\n");
+	rt_log("\n");
 	return(0);		/* OK */
 }
 
