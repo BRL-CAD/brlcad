@@ -477,9 +477,10 @@ point_t hit1, hit2;
 }
 
 static int
-shrink_hit( ap, PartHeadp )
+shrink_hit( ap, PartHeadp, segs )
 register struct application *ap;
 struct partition *PartHeadp;
+struct seg *segs;
 {
 	point_t hit1, hit2;
 	point_t mhit1, mhit2;
@@ -1169,9 +1170,10 @@ struct shell *s;
 }
 
 static int
-refine_hit( ap, PartHeadp )
+refine_hit( ap, PartHeadp, segs )
 register struct application *ap;
 struct partition *PartHeadp;
+struct seg *segs;
 {
 	struct partition *pp;
 	struct refine_data *ref_data;
@@ -1705,9 +1707,10 @@ Make_shell()
 }
 
 static int
-hit( ap, PartHeadp )
+hit( ap, PartHeadp, segs )
 register struct application *ap;
 struct partition *PartHeadp;
+struct seg *segs;
 {
 	register struct partition *first_pp;
 	register struct partition *last_pp;
