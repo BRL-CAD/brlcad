@@ -344,7 +344,6 @@ bu_set_realtime()
 		    ) >= 0 )  {
 		    	return 1;		/* realtime */
 		}
-	 	perror("bu_set_realtime(): sched_setscheduler");
 		/* Fall through to return 0 */
 	}
 #	endif
