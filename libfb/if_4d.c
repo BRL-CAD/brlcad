@@ -1361,6 +1361,10 @@ FBIO	*ifp;
 		dev = qread( &val );
 		switch( dev )  {
 
+		case NULLDEV:
+			/* don't process a null device */
+			break;
+
 		case RIGHTMOUSE:
 			menuval = dopup( menu );
 			if (menuval == 1 )
