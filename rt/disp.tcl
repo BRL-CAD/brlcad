@@ -55,7 +55,9 @@ label .max1 -text "Max:"
 label .max2 -textvariable maxval
 checkbutton .cursor_on -text "FB cursor" -variable cursor_on -command {update}
 checkbutton .atmosphere_on -text "Atmosphere" -variable use_atmosphere -command {update}
-pack .min1 .min2 .max1 .max2 .cursor_on .atmosphere_on -side left -in .entry_line1
+checkbutton .cie_on -text "CIE" -variable use_cie_xyz -command {update}
+pack .min1 .min2 .max1 .max2 .cursor_on .atmosphere_on .cie_on \
+	-side left -in .entry_line1
 
 label .wl1 -text "Wavelength of Framebuffer = "
 label .wl3 -textvariable lambda -width 8
@@ -74,7 +76,7 @@ proc update { {foo 0} } {
 
 	# Points to lower left corner of selected pixel, bump up one.
 	fb_cursor -42 $cursor_on [expr $pixel_num + 1] [expr $line_num + 1]
-	### puts [fb_readpixel -42 $pixel_num $line_num]
+	puts [fb_readpixel -42 $pixel_num $line_num]
 }
 
 proc scalechange {var value} {
