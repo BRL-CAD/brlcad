@@ -268,7 +268,7 @@ struct seg		*seghead;
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, trip->tri_N );
 		if( ++nhits >= MAXHITS )  {
-			rt_log("rt_pg_shot(%s): too many hits\n", stp->st_name);
+			rt_log("rt_pg_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
 			break;
 		}
 		hp++;
@@ -291,6 +291,29 @@ struct seg		*seghead;
 			}
 		}
 	}
+
+	/* remove duplicate hits */
+	{
+		register int i, j;
+		LOCAL struct hit temp;
+
+		for( i=0 ; i<nhits-1 ; i++ )
+		{
+			fastf_t dist;
+
+			dist = hits[i].hit_dist - hits[i+1].hit_dist;
+			if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) )
+			{
+				for( j=i ; j<nhits-1 ; j++ )
+					hits[j] = hits[j+1];
+				nhits--;
+				i--;
+			}
+		}
+	}
+
+	if( nhits == 1 )
+		nhits = 0;
 
 	if( nhits&1 )  {
 		register int i;
@@ -341,7 +364,7 @@ struct seg		*seghead;
 					VREVERSE( hits[i].hit_normal, hits[i].hit_normal );
 					dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
 					nhits++;
-					rt_log( "\t\tadding fictitious entry at %f\n", hits[i].hit_dist );
+					rt_log( "\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name );
 				}
 				else if( dot1 < 0.0 && dot2 < 0.0 )
 				{
@@ -356,7 +379,7 @@ struct seg		*seghead;
 					VREVERSE( hits[i].hit_normal, hits[i-1].hit_normal );
 					dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
 					nhits++;
-					rt_log( "\t\tadding fictitious exit at %f\n", hits[i].hit_dist );
+					rt_log( "\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name );
 				}
 				i++;
 			}
