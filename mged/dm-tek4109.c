@@ -481,7 +481,9 @@ int		noblock;
 	int		width;
 	int		cnt;
 
+#if defined(_SC_OPEN_MAX)
 	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
+#endif
 		width = 32;
 
 	if( second_fd )  FD_SET( second_fd, input );
