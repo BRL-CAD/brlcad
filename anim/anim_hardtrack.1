@@ -1,10 +1,10 @@
 .TH ANIM_HARDTRACK 1 BRL/CAD
 .SH NAME
-anim_hardtrack - make an animation script for the links and wheels of a
+anim_hardtrack - make an animation script for the links and/or wheels of a
 tracked vehicle with rigid axles.
 .SH SYNOPSIS
 .B 
-anim_hardtrack [options] linkname trackfile < in.table > out.script
+anim_hardtrack [-l num_links linkname] [-w wheelname] [options] wheelfile < in.table > out.script
 .SH DESCRIPTION
 .I Anim_hardtrack 
 is designed to produce an animation script for the
@@ -32,27 +32,11 @@ option should be used.
 .PP
 The track's
 geometry is defined by 
-.BR trackfile , 
-which has the following format:
-.nf
-
-num_wheels num_links
-x   y   z   (radius)		
-x   y   z   (radius)
-x   y   z   (radius)
-etc.
-
-.fi
-The number of wheels and number of links are specified on the first line.
-The remaining lines of
-.B trackfile 
-indicate the centerpoint and radius of each wheel.
-If all the wheels have the same radius,
-the radius can be specified with the 
-.B \-r#
-option, in
-which case the radii should not appear in 
-.BR trackfile . 
+.BR wheelfile , 
+a table which contains one row for each wheel defining the track. The
+first three columns of the table specify the x, y, and z coordinates of
+the wheel centers. The fourth column specifies the radius of each wheel.
+.PP
 The order in which the wheels are listed should be the order in which a 
 link of the track would move around the wheels when the vehicle is moving
 forward. (clockwise, when looking from the right of the vehicle).
@@ -66,55 +50,51 @@ other orientation, this must be specified with the
 .B -b 
 option.
 .PP
-The 
-.B linkname 
-is the base name shared by all of the track's links. The
-output script will contain animation commands for a series of objects,
-linkname.0, linkname.1, and so on. A typical example of a linkname might
-be "tank/track_rt/links/link". The full pathname must be specified,
+By default, it is
+assumed that 
+all of the link objects are modeled at the model origin,
+with the wheel-contacting surface centered on the origin and the
+ground-contacting surface facing up. The sides of each link which
+connect to other links should face the positive and negative x-axes.
+.I Anim_hardtrack 
+prints the appropriate
+commands to move the links from 
+the origin to the correct place around the wheels.
+.PP
+If the links are modeled in place around the wheels to begin with, the
+the 
+.B -p 
+and 
+.B -i 
+options are needed.
+
+.SH
+OPTIONS:
+.PP
+One or both of the first two options should always be specified.
+.TP
+.B \-l num linkname
+Print animation scripts to animate the links of the track. Animation
+commands will be printed for
+.I num 
+different links 
+named 
+.IR linkname .0, linkname .1, 
+up through 
+.IR linkname .( num -1). 
+A typical example of a linkname might
+be "tank/righttrack/links/link". The full pathname must be specified,
 because anim_hardtrack's method is to roll the links around within
 the vehicle's tree structure so that when the whole vehicle "tank" is
 animated, the complete combination of rolling around and translating is
 achieved. 
-.SH
-OPTIONS:
 .TP
-.B \-l
-.I Track 
-can handle two different types of models. By default, it is
-assumed that 
-.B num_links 
-copies of the link are stored at the model's
-origin. The program prints the appropriate commands to move them from
-the origin to the correct place on the track. The other possibility is
-that the links are already in position around the wheels of the model
-vehicle. This is indicated by the 
-.B -l 
-option. It is assumed that the
-center of the first link, linkname.0, is at the beginning of the
-straight track segment between wheel.(n-1) and wheel.0 . If this is
-not the case, the position of the first link must be identified with the
-.B \-i#
-option.
-.TP
-.B \-i#
-Specify the initial offset of the first link. If this option is
-not used, the initial position of linkname.0 is assumed to be the
-beginning of the straight track segment between wheel.(n-1) and wheel.0.
-If it is used, the argument specifies the distance clockwise around the
-track from the default position to the actual desired offset. If the
-links are modeled at the origin, the user can choose any offset. The
-option can be useful for lining up the links with gears of a drive
-wheel, for example. If the links are actually in position in the model
-to begin with 
-(see the 
-.B \-l 
-option), then the user must specify the actual offset of
-linkname.0, in order for the program to work correctly.
-.TP
-.B \-f#
-Specify the integer with which to begin numbering frames.
-Default is zero.
+.B \-w wheelname
+Print animation
+scripts to rotate each wheel. The wheels are named wheelname.0, wheelname.1, 
+and so on, where wheelname.0 is the first wheel listed in 
+.BR wheelfile . 
+As with the links, the full pathname for the wheels should be specified.
 .TP
 .B \-b # # #
 Specify the yaw, pitch, and roll of the vehicle's axes
@@ -138,19 +118,9 @@ to those used for
 .IR anim_hardtrack .
 .TP
 .B \-r #
-Specify the common radius of all wheels - otherwise the radii
-must be provided in 
-.BR infofile .
-.TP
-.B \-w wname
-Along with scripts to animate the links, print animation
-scripts to rotate each wheel. The wheels are named wname.0, wname.1, and
-so on, where wname.0 is the first wheel listed in 
-.BR trackfile .
-If only the wheels are to be animated, the 
-.B num_links 
-should be set to zero in 
-.BR trackfile .
+Specify the common radius of all wheels. In this case the fourth column
+should be omitted from the
+.BR wheelfile .
 .TP
 .B \-s
 Automatic steering. In this case, 
@@ -164,10 +134,40 @@ option is used by
 .I anim_script
 to animate the vehicle.
 .PP
-.PP
+.TP
+.B \-f#
+Specify the integer with which to begin numbering frames.
+Default is zero.
+.TP
+.B \-p
+Animate placed links, rather than links stored at the origin.
+In order for placed links to be animated, they must be equally spaced
+around the wheels defining the track. The track must be formed of arcs
+around the wheels and straight lines between the wheels, and the links
+must be numbered clockwise as seen from the right.
+By default, it is assumed that the
+center of the first link, linkname.0, is at the beginning of the
+straight track segment between wheel.(n-1) and wheel.0 . If this is
+not the case, the position of the first link must be identified with the
+.B \-i#
+option.
+.TP
+.B \-i#
+Specify the initial offset of the first link. If this option is
+not used, the initial position of linkname.0 is assumed to be the
+beginning of the straight track segment between wheel.(n-1) and wheel.0.
+If it is used, the argument specifies the distance clockwise around the
+track from the default position to the actual desired offset. If the
+links are modeled at the origin, the user can choose any offset. This
+can be useful for lining up the links with gears of a drive wheel, for
+example.
+If the 
+.B -p 
+option is being used to animated pre-placed links, then it is essential
+that the actual offset of the first pre-placed link be specified.
 .SS Output:
 .PP
-	The output is a script containing as many frames as there
+The output is a script containing as many frames as there
 are positions in 
 .BR in.table . 
 If there are 
@@ -175,15 +175,15 @@ If there are
 links and 
 .I k 
 wheels, each
-frame contain 
-.I n+k 
+frame contains up to 
+.IR  n + k 
 anim commands, either:
 .nf
 
 anim linkname.i matrix lmul
 [... matrix ...] ;
 				or
-anim wname.j matrix lmul		(see -w option)
+anim wheelname.j matrix lmul
 [... matrix ...] ;
  
 for 0<=i<n and 0<=j<k. 
@@ -200,50 +200,46 @@ tank itself is created as follows:
 .PP
 anim_script -s -d 0 0 1000 -b 90 0 0 /tank < in.table > tank.script
 .PP
-Now, a file called
-.B rtrackfile 
-is created, using the following information: There are eighty
-links which make up the track (tank/rtrack/link.i, 0<=i<80).
-There are two
+Suppose that there are two
 roadwheels and a drivewheel (tank/rwheel/wheel.i, 0<=i<3) which define
 the shape of the right track. 
 A file called 
-.B rtrackfile 
+.B rwheelfile 
 is created:
 .nf
 
-3      80
 1500   -2000    30      30
 1500   0        1000    35
 1500   2000     30      30
 
 .fi
 This 
-.B rtrackfile 
-shows that there are three wheels, 80 links, and lists the position and
+.B rwheelfile 
+lists the position and
 radius of each of the three wheels.
 .PP
-The links of the right track are all
-stored at the origin. The outer, ground contacting surface should be
-facing up and the inner, wheel-contacting surface should be facing down,
-with the center of the surface facing the origin. 
+There are eighty links which make up the right track 
+(tank/rtrack/link.i, 0<=i<80).
+The links of the right track are all modeled
+at the origin with the outer, ground-contacting surface
+facing up and the inner, wheel-contacting surface centered at the
+origin.
 .PP
 The appropriate call to 
 .I anim_hardtrack 
-would now be:
+is now:
 .sp
-anim_hardtrack -w tank/rwheel -d 0 0 1000 -b 90 0 0 tank/rtrack/link rtrackfile 
-< in.table > rtrack.script
+anim_hardtrack -d 0 0 1000 -b 90 0 0 -w tank/rwheel -l 80 tank/rtrack/link 
+	rwheelfile < in.table > rtrack.script
 .sp
 Suppose that the left track is similar to the right track,
 except that all the wheels are of radius 30 units, and the links, rather
 than being stored at the origin, are actually placed in position around
 the left wheels to begin with. The 
-.B ltrackfile 
+.B lwheelfile 
 would be:
 .nf
 
-3       80
 -1500   -2000   30
 -1500   0       1000
 -1500   2000    30
@@ -251,8 +247,8 @@ would be:
 .fi
 and the call would be:
 .sp
-anim_hardtrack -l -r 30 -w tank/lwheel -d 0 0 1000 -b 90 0 0 tank/ltrack/link 
-ltrackfile <in.table > ltrack.script
+anim_hardtrack -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel 
+	-l 80 tank/ltrack/link lwheelfile <in.table > ltrack.script
 .sp
 Here, it is assumed that tank/ltrack/link.0 is initially at the
 beginning of the straight track segment between lwheel.2 and lwheel.0,
@@ -263,8 +259,8 @@ two roadwheels, this must be specified with the
 option. If the link's
 actual position is 2000 units farther around the track than expected:
 .sp
-anim_hardtrack -i 2000 -l -r 30 -w tank/lwheel -d 0 0 1000 -b 90 0 0 tank/ltrack/link 
-ltrackfile <in.table > ltrack.script
+anim_hardtrack -i 2000 -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel 
+	-l 80 tank/ltrack/link lwheelfile <in.table > ltrack.script
 .sp
 One final step may remain. The above procedure produces a script with rigid
 naming conventions, in order to make input simple. This may mean that
