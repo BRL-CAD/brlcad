@@ -88,6 +88,7 @@ int knob_tran();
 int mged_tran();
 int mged_vrot();
 int mged_zoom();
+void mged_center();
 static void abs_zoom();
 void usejoy();
 
@@ -262,6 +263,8 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  point_t center;
+
   if(dbip == DBI_NULL)
     return TCL_OK;
 
@@ -275,10 +278,24 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  /* must convert from the local unit to the base unit */
-  toViewcenter[MDX] = -atof( argv[1] ) * local2base;
-  toViewcenter[MDY] = -atof( argv[2] ) * local2base;
-  toViewcenter[MDZ] = -atof( argv[3] ) * local2base;
+  /* center assumed to be in local units */
+  VSET(center, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+
+  /* must convert to base units */
+  VSCALE(center, center, local2base);
+  mged_center(center);
+
+  return TCL_OK;
+}
+
+/*
+ * Center assumed to be in local units.
+ */
+void
+mged_center(center)
+point_t center;
+{
+  MAT_DELTAS_VEC_NEG(toViewcenter, center);
   new_mats();
 
   (void)mged_svbase();
@@ -286,8 +303,6 @@ char	**argv;
 #ifdef DO_SCROLL_UPDATES
   set_scroll();
 #endif
-
-  return TCL_OK;
 }
 
 /* DEBUG -- force viewsize */
@@ -1172,7 +1187,7 @@ char	**argv;
 {
   int iflag = 0;
   struct bu_vls vls;
-  fastf_t twist = 0.0;
+  fastf_t twist = 0.0;  /* assumed to be 0.0 ---- unless supplied by user */
 
   if(argc < 3 || 5 < argc){
     struct bu_vls vls;
@@ -1189,8 +1204,7 @@ char	**argv;
     iflag = 1;  /* treat arguments as incremental values */
     ++argv;
     --argc;
-  }else
-    twist = curr_dm_list->s_info->twist;
+  }
 
   if(argc == 4) /* twist angle supplied */
     twist = atof(argv[3]);
@@ -4019,6 +4033,9 @@ char	**argv;
   /* save current Viewrot */
   bn_mat_copy(current_view->vrot_mat, Viewrot);
 
+  /* save current toViewcenter */
+  bn_mat_copy(current_view->tvc_mat, toViewcenter);
+
   /* save current Viewscale */
   current_view->vscale = Viewscale;
 
@@ -4090,6 +4107,7 @@ char	**argv;
       current_view = last_view;
 
     bn_mat_copy(Viewrot, current_view->vrot_mat);
+    bn_mat_copy(toViewcenter, current_view->tvc_mat);
     Viewscale = current_view->vscale;
     new_mats();
     (void)mged_svbase();
@@ -4193,12 +4211,16 @@ char	**argv;
   /* save current Viewrot */
   bn_mat_copy(current_view->vrot_mat, Viewrot);
 
+  /* save current toViewcenter */
+  bn_mat_copy(current_view->tvc_mat, toViewcenter);
+
   /* save current Viewscale */
   current_view->vscale = Viewscale;
 
   last_view = current_view;
   current_view = vlp;
   bn_mat_copy(Viewrot, current_view->vrot_mat);
+  bn_mat_copy(toViewcenter, current_view->tvc_mat);
   Viewscale = current_view->vscale;
 
   new_mats();
@@ -4237,6 +4259,9 @@ char	**argv;
   /* save current Viewrot */
   bn_mat_copy(current_view->vrot_mat, Viewrot);
 
+  /* save current toViewcenter */
+  bn_mat_copy(current_view->tvc_mat, toViewcenter);
+
   /* save current Viewscale */
   current_view->vscale = Viewscale;
 
@@ -4245,6 +4270,7 @@ char	**argv;
   if(BU_LIST_IS_HEAD(current_view, &headView.l))
     current_view = BU_LIST_FIRST(view_list, &headView.l);
   bn_mat_copy(Viewrot, current_view->vrot_mat);
+  bn_mat_copy(toViewcenter, current_view->tvc_mat);
   Viewscale = current_view->vscale;
 
   new_mats();
@@ -4283,6 +4309,9 @@ char	**argv;
   /* save current Viewrot */
   bn_mat_copy(current_view->vrot_mat, Viewrot);
 
+  /* save current toViewcenter */
+  bn_mat_copy(current_view->tvc_mat, toViewcenter);
+
   /* save current Viewscale */
   current_view->vscale = Viewscale;
 
@@ -4291,6 +4320,7 @@ char	**argv;
   if(BU_LIST_IS_HEAD(current_view, &headView.l))
     current_view = BU_LIST_LAST(view_list, &headView.l);
   bn_mat_copy(Viewrot, current_view->vrot_mat);
+  bn_mat_copy(toViewcenter, current_view->tvc_mat);
   Viewscale = current_view->vscale;
 
   new_mats();
@@ -4325,6 +4355,9 @@ char	**argv;
   /* save current Viewrot */
   bn_mat_copy(current_view->vrot_mat, Viewrot);
 
+  /* save current toViewcenter */
+  bn_mat_copy(current_view->tvc_mat, toViewcenter);
+
   /* save current Viewscale */
   current_view->vscale = Viewscale;
 
@@ -4332,6 +4365,7 @@ char	**argv;
   last_view = current_view;
   current_view = save_last_view;
   bn_mat_copy(Viewrot, current_view->vrot_mat);
+  bn_mat_copy(toViewcenter, current_view->tvc_mat);
   Viewscale = current_view->vscale;
 
   new_mats();
