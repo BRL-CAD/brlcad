@@ -32,8 +32,8 @@
 			rm -f libitcl.ARCH_SUF libitk.ARCH_SUF ; \
 			cp [[pwd]]/itcl/libitcl3.2.[[echo ARCH_SUF]] [[pwd]] ; \
 			cp [[pwd]]/itk/libitk3.2.[[echo ARCH_SUF]] [[pwd]] ; \
-			ln -s libitk3.2.[[echo ARCH_SUF]] libitk.ARCH_SUF ; \
-			ln -s libitcl3.2.[[echo ARCH_SUF]] libitcl.ARCH_SUF
+			ln -s libitcl3.2.[[echo ARCH_SUF]] libitcl.ARCH_SUF ; \
+			ln -s libitk3.2.[[echo ARCH_SUF]] libitk.ARCH_SUF
 #endif
 
 /* Rule to see if cake is running with -s flag */
