@@ -6539,8 +6539,8 @@ CONST struct rt_tol *tol;
 	else
 	{
 		VSUB2( e_dir , v2->vg_p->coord , v1->vg_p->coord );
-		VUNITIZE( e_dir );
 	}
+	VUNITIZE( e_dir );
 
 	eu = mv_eu;
 	fu1 = nmg_find_fu_of_eu( eu );
