@@ -641,7 +641,6 @@ int arg;
 void
 init_sedit()
 {
-	struct solidrec temprec;	/* copy of solid to determine type */
 	register int i, type, p1, p2, p3;
 	int			id;
 
@@ -670,55 +669,50 @@ init_sedit()
 	}
 	RT_CK_DB_INTERNAL( &es_int );
 
-
-	bcopy( (char *)es_ext.ext_buf, (char *)&es_orig, sizeof(es_orig) );
-	es_rec = es_orig;		/* struct copy */
-
-	if( es_orig.u_id != ID_SOLID )  {
-		(void)printf(
-"Unable to Solid_Edit %c record;  select a primitive instead\n");
-		return;
-	}
-
 	es_menu = 0;
 
-	temprec = es_rec.s;		/* struct copy */
+	bcopy( (char *)es_ext.ext_buf, (char *)&es_orig, sizeof(es_orig) );
+	if( es_orig.u_id == ID_SOLID )  {
+		struct solidrec temprec;	/* copy of solid to determine type */
 
-	if( (type = es_rec.s.s_cgtype) < 0 )
-		type *= -1;
-	if(type == BOX || type == RPP)
-		type = ARB8;
-	if(type == RAW) {
-		/* rearrange vectors to correspond to the
-		 *  	"standard" ARB6
-		 */
-		register struct solidrec *trp = &temprec;
-		VMOVE(&trp->s_values[3], &es_rec.s.s_values[9]);
-		VMOVE(&trp->s_values[6], &es_rec.s.s_values[21]);
-		VMOVE(&trp->s_values[9], &es_rec.s.s_values[12]);
-		VMOVE(&trp->s_values[12], &es_rec.s.s_values[3]);
-		VMOVE(&trp->s_values[15], &es_rec.s.s_values[6]);
-		VMOVE(&trp->s_values[18], &es_rec.s.s_values[18]);
-		VMOVE(&trp->s_values[21], &es_rec.s.s_values[15]);
-		es_rec.s = *trp;	/* struct copy */
-		type = ARB6;
-	}
-	es_rec.s.s_cgtype = type;
+		es_rec = es_orig;		/* struct copy */
+		temprec = es_rec.s;		/* struct copy */
 
-	if( es_rec.s.s_type == GENARB8 ) {
-		/* find the comgeom arb type */
-		if( (type = type_arb( &es_rec )) == 0 ) {
-			(void)printf("%s: BAD ARB\n",es_rec.s.s_name);
-			return;
+		if( (type = es_rec.s.s_cgtype) < 0 )
+			type *= -1;
+		if(type == BOX || type == RPP)
+			type = ARB8;
+		if(type == RAW) {
+			/* rearrange vectors to correspond to the
+			 *  	"standard" ARB6
+			 */
+			register struct solidrec *trp = &temprec;
+			VMOVE(&trp->s_values[3], &es_rec.s.s_values[9]);
+			VMOVE(&trp->s_values[6], &es_rec.s.s_values[21]);
+			VMOVE(&trp->s_values[9], &es_rec.s.s_values[12]);
+			VMOVE(&trp->s_values[12], &es_rec.s.s_values[3]);
+			VMOVE(&trp->s_values[15], &es_rec.s.s_values[6]);
+			VMOVE(&trp->s_values[18], &es_rec.s.s_values[18]);
+			VMOVE(&trp->s_values[21], &es_rec.s.s_values[15]);
+			es_rec.s = *trp;	/* struct copy */
+			type = ARB6;
 		}
-
-		temprec = es_rec.s;
 		es_rec.s.s_cgtype = type;
 
-		/* find the plane equations */
-		calc_planes( &es_rec.s, type );
-	}
+		if( es_rec.s.s_type == GENARB8 ) {
+			/* find the comgeom arb type */
+			if( (type = type_arb( &es_rec )) == 0 ) {
+				(void)printf("%s: BAD ARB\n",es_rec.s.s_name);
+				return;
+			}
 
+			temprec = es_rec.s;
+			es_rec.s.s_cgtype = type;
+
+			/* find the plane equations */
+			calc_planes( &es_rec.s, type );
+		}
+	}
 
 	/* Save aggregate path matrix */
 	pathHmat( illump, es_mat, illump->s_last-1 );
@@ -1286,9 +1280,6 @@ CONST vect_t	mousevec;
 		return;
 	case EARB:
 		/* move arb edge, through indicated point */
-		mousevec[X] = mousevec[X];
-		mousevec[Y] = mousevec[Y];
-		mousevec[Z] = 0;
 		MAT4X3PNT( temp, view2model, mousevec );
 		/* apply inverse of es_mat */
 		MAT4X3PNT( pos_model, es_invmat, temp );
@@ -1297,9 +1288,6 @@ CONST vect_t	mousevec;
 		return;
 	case ECMD_ARB_MOVE_FACE:
 		/* move arb face, through  indicated  point */
-		mousevec[X] = mousevec[X];
-		mousevec[Y] = mousevec[Y];
-		mousevec[Z] = 0;
 		MAT4X3PNT( temp, view2model, mousevec );
 		/* apply inverse of es_mat */
 		MAT4X3PNT( pos_model, es_invmat, temp );
@@ -1927,7 +1915,6 @@ void
 sedit_accept()
 {
 	union record		*rec;
-	int			ngran;
 	struct directory	*dp;
 	int	id;
 
@@ -1950,19 +1937,6 @@ sedit_accept()
 	/* Depends on solid names always being in the same place */
 	rec = (union record *)es_ext.ext_buf;
 	NAMEMOVE( dp->d_namep, rec->s.s_name );
-
-	ngran = (es_ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
-	if( ngran != dp->d_len )  {
-		if( ngran < dp->d_len )  {
-			if( db_trunc( dbip, dp, dp->d_len - ngran ) < 0 )
-			    	ALLOC_ERR_return;
-		} else if( ngran > dp->d_len )  {
-			if( db_delete( dbip, dp ) < 0 || 
-			    db_alloc( dbip, dp, ngran ) < 0 )  {
-			    	ALLOC_ERR_return;
-			}
-		}
-	}
 
 	if( db_put_external( &es_ext, dp, dbip ) < 0 )  {
 		db_free_external( &es_ext );
