@@ -814,15 +814,10 @@ BU_EXTERN(void			bu_pr_bitv, (CONST char *str,
 BU_EXTERN(void			bu_bomb, (CONST char *str) );
 
 /* getopt.c */
-#define opterr			bu_opterr	/* libsysv compat */
-#define optind			bu_optind
-#define optopt			bu_optopt
-#define optarg			bu_optarg
 extern int			bu_opterr;
 extern int			bu_optind;
 extern int			bu_optopt;
 extern char *			bu_optarg;
-#define getopt			bu_getopt
 BU_EXTERN(int			bu_getopt, (int nargc, char * CONST nargv[],
 				CONST char *ostr) );
 
