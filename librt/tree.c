@@ -114,8 +114,8 @@ CONST struct db_tree_state	rt_initial_tree_state = {
  */
 /* ARGSUSED */
 HIDDEN int rt_gettree_region_start( tsp, pathp, combp, client_data )
-CONST struct db_tree_state	*tsp;
-CONST struct db_full_path	*pathp;
+/*CONST*/ struct db_tree_state	*tsp;
+/*CONST*/ struct db_full_path	*pathp;
 CONST struct rt_comb_internal	*combp;
 genptr_t			client_data;
 {
@@ -144,8 +144,8 @@ genptr_t			client_data;
  *  out into the serial section.  (rt_tree_region_assign, rt_bound_tree)
  */
 HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree, client_data )
-register CONST struct db_tree_state	*tsp;
-CONST struct db_full_path	*pathp;
+register /*CONST*/ struct db_tree_state	*tsp;
+/*CONST*/ struct db_full_path	*pathp;
 union tree			*curtree;
 genptr_t			client_data;
 {
@@ -409,9 +409,9 @@ more_checks:
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *rt_gettree_leaf( tsp, pathp, ep, id, client_data )
-CONST struct db_tree_state	*tsp;
+/*CONST*/ struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
-CONST struct bu_external	*ep;
+/*CONST*/ struct bu_external	*ep;
 int				id;
 genptr_t			client_data;
 {
