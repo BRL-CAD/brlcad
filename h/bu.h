@@ -1663,10 +1663,10 @@ BU_EXTERN(void			bu_struct_wrap_buf,
 				(struct bu_external *ext, genptr_t buf));
 BU_EXTERN(int			bu_struct_parse, (const struct bu_vls *in_vls,
 				const struct bu_structparse *desc, 
-				char *base));
+				const char *base));
 BU_EXTERN(void			bu_struct_print, ( const char *title,
-				const struct bu_structparse	*parsetab,
-				const char			*base));
+				const struct bu_structparse *parsetab,
+				const char *base));
 BU_EXTERN(void			bu_vls_struct_print, (struct bu_vls *vls,
 				const struct bu_structparse *sdp,
 				const char *base));

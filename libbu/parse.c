@@ -595,7 +595,7 @@ bu_parse_double(const char *str, long int count, double *loc)
  *	 0	entry found and processed
  */
 HIDDEN int
-bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, char *base, const char *const value)
+bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
                                     	     	/* structure description */
                    			      	/* struct member name */
     					      	/* begining of structure */
@@ -769,7 +769,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
  *	 0	OK
  */
 int
-bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, char *base)
+bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, const char *base)
                    		        	/* string to parse through */
                            	      		/* structure description */
     				      		/* base addr of users struct */
