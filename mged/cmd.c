@@ -1564,6 +1564,7 @@ f_quit(
 
 	quit();			/* Exiting time */
 	/* NOTREACHED */
+	return TCL_OK;
 }
 
 /* wrapper for sync() */
@@ -2185,7 +2186,7 @@ f_bot_face_fuse( clientData, interp, argc, argv)
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC( bot );
 
-	(void) bot_face_fuse( bot );
+	(void) rt_bot_face_fuse( bot );
 
 	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
@@ -2239,9 +2240,9 @@ f_bot_fuse(clientData, interp, argc, argv)
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC( bot );
 
-	count1 = bot_vertex_fuse( bot );
+	count1 = rt_bot_vertex_fuse( bot );
 	if( count1 )
-		(void)bot_condense( bot );
+		(void)rt_bot_condense( bot );
 
 	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
@@ -2296,7 +2297,7 @@ f_bot_condense(clientData, interp, argc, argv)
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC( bot );
 
-	count2 = bot_condense( bot );
+	count2 = rt_bot_condense( bot );
 	sprintf( count_str, "%d", count2 );
 	Tcl_AppendResult(interp, count_str, " dead vertices eliminated\n", (char *)NULL );
 
