@@ -1,4 +1,7 @@
 /*	DIST_DEF.C	*/
+#ifndef lint
+static char RCSid[] = "$Header$";
+#endif
 
 /*	INCLUDES	*/
 #include	<stdio.h>
