@@ -935,6 +935,7 @@ AC_CONFIG_FILES([
 	src/other/libitcl/itk/library/Makefile
 	src/other/liborle/Makefile
 	src/other/libpng/Makefile
+	src/other/libregex/Makefile
 	src/other/libtcl/Makefile
 	src/other/libtk/Makefile
 	src/other/libtkGLX/Makefile
