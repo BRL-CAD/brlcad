@@ -11,7 +11,11 @@ rcs_id[] = "$Header$";
 #include	<ctype.h>
 
 #ifdef	CAKEDEBUG
-#define	ret(x)	if (lexdebug) printf("lex: x\n"); return x
+#  if __STDC__ || defined(__convex__)
+#	define	ret(x)	if (lexdebug) printf("lex: " #x "\n"); return x
+#  else
+#	define	ret(x)	if (lexdebug) printf("lex: x\n"); return x
+#  endif
 #else
 #define	ret(x)	return x
 #endif
