@@ -133,6 +133,7 @@ CONST int		simplify;
 				 */
 				dist = VDOT( n1, n2 );
 				if( !(dist >= tol->para) ) continue;
+
 			}
 
 			/*
@@ -152,10 +153,6 @@ CONST int		simplify;
 
 				fu2 = prev_fu;
 			}
-#if 0
-			/* recalculate face geometry */
-			nmg_calc_face_g( fu1 );
-#endif
 
 			/* There is now the option of simplifying the face,
 			 * by removing unnecessary edges.
@@ -225,15 +222,18 @@ struct shell *s;
  *  match vertices in a face loop, wire loop, or wire edge.
  */
 void
-nmg_rm_redundancies(s)
+nmg_rm_redundancies(s, tol)
 struct shell	*s;
+CONST struct rt_tol *tol;
 {
+	struct faceuse	*fu;
 	struct loopuse	*lu;
 	struct edgeuse	*eu;
 	struct vertexuse	*vu;
 	long		magic1;
 
 	NMG_CK_SHELL(s);
+	RT_CK_TOL( tol );
 
 	if( RT_LIST_NON_EMPTY( &s->fu_hd ) )  {
 		/* Compare wire loops -vs- loops in faces */
@@ -316,6 +316,87 @@ struct shell	*s;
 
 	/* There really shouldn't be a lone vertex by now */
 	if( s->vu_p )  rt_log("nmg_rm_redundancies() lone vertex?\n");
+
+	/* get rid of redundant loops in same fu OT_SAME within an OT_SAME, etc. */
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct loopuse *lu1;
+
+			NMG_CK_LOOPUSE( lu );
+
+			/* look for another loop with same orientation */
+			lu1 = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+			while( RT_LIST_NOT_HEAD( &lu1->l, &fu->lu_hd ) )
+			{
+				struct loopuse *next_lu;
+				struct loopuse *lu2;
+				int found;
+
+				NMG_CK_LOOPUSE( lu1 );
+
+				next_lu = RT_LIST_PNEXT( loopuse, &lu1->l );
+
+				if( lu1 == lu )
+				{
+					lu1 = next_lu;
+					continue;
+				}
+
+				if( lu1->orientation != lu->orientation )
+				{
+					lu1 = next_lu;
+					continue;
+				}
+
+				if( nmg_classify_lu_lu( lu1, lu, tol ) != NMG_CLASS_AinB )
+				{
+					lu1 = next_lu;
+					continue;
+				}
+
+				/* lu1 is within lu and has same orientation.
+				 * Check if there is a loop with opposite
+				 * orientation beyween them.
+				 */
+				found = 0;
+				for( RT_LIST_FOR( lu2, loopuse, &fu->lu_hd ) )
+				{
+					int class1,class2;
+
+					NMG_CK_LOOPUSE( lu2 );
+
+					if( lu2 == lu || lu2 == lu1 )
+						continue;
+
+					if( lu2->orientation == lu->orientation )
+						continue;
+
+					class1 = nmg_classify_lu_lu( lu2, lu, tol );
+					class2 = nmg_classify_lu_lu( lu1, lu2, tol );
+
+					if( class1 == NMG_CLASS_AinB &&
+					    class2 == NMG_CLASS_AinB )
+					{
+						found = 1;
+						break;
+					}
+				}
+				if( !found )
+				{
+					/* lu1 is a redundant loop */
+					(void) nmg_klu( lu1 );
+				}
+				lu1 = next_lu;
+			}
+		}
+	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_rm_redundancies(s=x%x)\n", s);
@@ -1703,6 +1784,7 @@ struct shell *s;
 	struct faceuse *new_fu = (struct faceuse *)NULL;
 	struct model	*m;
 	struct model	*m_f;
+	plane_t		pl;
 	long		**trans_tbl;
 	long		tbl_size;
 
@@ -1756,7 +1838,8 @@ struct shell *s;
 	/* Create duplicate, independently modifiable face geometry */
 	switch (*fu->f_p->g.magic_p) {
 	case NMG_FACE_G_PLANE_MAGIC:
-		nmg_face_g(new_fu, fu->f_p->g.plane_p->N);
+		NMG_GET_FU_PLANE( pl, fu );
+		nmg_face_g(new_fu, pl);
 		break;
 	case NMG_FACE_G_SNURB_MAGIC:
 		{
@@ -2831,6 +2914,75 @@ CONST int which_loop;
 	return;
 }
 
+void
+nmg_kill_accordions( lu )
+struct loopuse *lu;
+{
+	struct edgeuse *eu;
+	struct edgeuse *jaunt_eu1;
+	struct edgeuse *jaunt_eu2;
+	struct edgeuse *jaunt_eu3;
+
+	NMG_CK_LOOPUSE( lu );
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return;
+top:
+	/* first look for a jaunt */
+	jaunt_eu1 = (struct edgeuse *)NULL;
+	jaunt_eu3 = (struct edgeuse *)NULL;
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct edgeuse *eu2;
+
+		eu2 = RT_LIST_PPREV_CIRC( edgeuse, &eu->l );
+		if( (eu2->vu_p->v_p == eu->eumate_p->vu_p->v_p) && (eu != eu2) )
+		{
+			struct edgeuse *eu3;
+
+			/* found a jaunt */
+			jaunt_eu1 = eu;
+			jaunt_eu2 = eu2;
+
+			/* look for a third eu between the same vertices */
+			jaunt_eu3 = (struct edgeuse *)NULL;
+			for( RT_LIST_FOR( eu3, edgeuse, &lu->down_hd ) )
+			{
+				if( eu3 == jaunt_eu1 || eu3 == jaunt_eu2 )
+					continue;
+
+				if( NMG_ARE_EUS_ADJACENT( eu3, jaunt_eu1 ) )
+				{
+					jaunt_eu3 = eu3;
+					break;
+				}
+			}
+		}
+		if( jaunt_eu3 )
+			break;
+	}
+
+	if( !jaunt_eu3 )
+		return;
+
+	if( jaunt_eu2 != jaunt_eu1->eumate_p )
+	{
+		if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))
+			rt_log( "Killing jaunt in accordion eu's x%x and x%x\n", jaunt_eu1, jaunt_eu2 );
+		(void)nmg_keu( jaunt_eu1 );
+		(void)nmg_keu( jaunt_eu2 );
+	}
+	else
+	{
+		if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))
+			rt_log( "Killing jaunt in accordion eu x%x\n", jaunt_eu1 );
+		(void)nmg_keu( jaunt_eu1 );
+	}
+
+	goto top;
+
+}
+
 /*
  *			N M G _ L O O P _ S P L I T _ A T _ T O U C H I N G _ J A U N T
  *
@@ -2866,7 +3018,11 @@ CONST struct rt_tol	*tol;
 
 	if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))  {
 		rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) START\n", lu);
+		nmg_pr_lu_briefly( lu, "" );
 	}
+
+	/* first kill any accordion pleats */
+	nmg_kill_accordions( lu );
 
 	visit_count = (int *)NULL;
 	jaunt_status = (int *)NULL;
@@ -3558,6 +3714,7 @@ CONST struct rt_tol	*tol;
 	int	ccw;
 	int	geom_orient;
 	plane_t	norm;
+	plane_t lu_pl;
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
@@ -3590,88 +3747,16 @@ CONST struct rt_tol	*tol;
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		PLPRINT("\tfu peqn", norm);
 	}
-	ccw = nmg_loop_is_ccw( lu, norm, tol );
-	if( ccw == 0 )  {
-		int	class;
-		/* Loop does not have 3 linearly independent vertices, can't tell. */
-		if (rt_g.NMG_debug & DEBUG_BASIC)
-		{
-			rt_log("nmg_lu_reorient:  unable to determine orientation from geometry\n");
-			nmg_pr_lu_briefly( lu , "\t" );
-		}
-		class = nmg_class_lu_fu( lu, tol );
-		switch( class )  {
-		case NMG_CLASS_AinB:
-			/* An interior "hole crack" */
-			geom_orient = OT_OPPOSITE;
-			break;
-		case NMG_CLASS_AoutB:
-			/* An exterior "solid crack" */
-			geom_orient = OT_SAME;
-			break;
-		case NMG_CLASS_AonBshared:
-			/* ALL vu's touch other loops in face. */
-			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
-				/* Lone vertex that touches lu.  Call it solid. */
-				geom_orient = OT_SAME;
-			} else {
-				/* Decide by calculating midpoint */
-				point_t		mid;
-				struct edgeuse	*eu;
-				struct vertex	*v1, *v2;
 
-				eu = RT_LIST_NEXT(edgeuse, &lu->down_hd);
-				NMG_CK_EDGEUSE(eu);
-				v1 = eu->vu_p->v_p;
-				NMG_CK_VERTEX(v1);
-
-				while( RT_LIST_NOT_HEAD(&eu->l, &lu->down_hd) )  {
-					v2 = eu->vu_p->v_p;
-					NMG_CK_VERTEX(v2);
-					if( v2 != v1 )  goto found;
-					eu = RT_LIST_NEXT(edgeuse, &eu->l);
-				}
-				rt_bomb("nmg_lu_reorient() no 2nd vertex?\n");
-found:
-				VADD2SCALE( mid, v1->vg_p->coord, v2->vg_p->coord, 0.5 );
-				class = nmg_class_pt_fu_except( mid, fu, lu,
-					NULL, NULL, NULL, 0, tol );
-#if 0
-rt_log("nmg_lu_reorient() eu midpoint=(%g, %g, %g), class=%s\n", V3ARGS(mid), nmg_class_name(class) );
-#endif
-				switch( class )  {
-				case NMG_CLASS_AinB:
-					/* An interior point, must be a hole */
-					geom_orient = OT_OPPOSITE;
-					break;
-				case NMG_CLASS_AoutB:
-					/* An exterior "solid point" */
-					geom_orient = OT_SAME;
-					break;
-				case NMG_CLASS_AonBshared:
-					rt_log("nmg_lu_reorient() bad luck, midpoint didn't break edge, but is ON an edge.  Assume OT_UNSPEC\n");
-					geom_orient = OT_UNSPEC;
-					break;
-				default:
-					rt_bomb("nmg_lu_reorient() bad class from nmg_class_pt_f\n");
-				}
-			}
-			break;
-		default:
-			rt_bomb("nmg_lu_reorient() bad class from nmg_class_lu_fu()\n");
-		}
-		if( rt_g.NMG_debug & DEBUG_BASIC )  {
-			rt_log("nmg_lu_reorient() class=%s, orient=%s\n",
-				nmg_class_name(class),
-				nmg_orientation(geom_orient) );
-		}
-	} else {
-		if( ccw > 0 )  {
-			geom_orient = OT_SAME;	/* same as face (OT_SAME faceuse) */
-		} else {
-			geom_orient = OT_OPPOSITE;
-		}
+	nmg_loop_plane_newell( lu, lu_pl );
+	if( lu_pl[X] == 0.0 && lu_pl[Y] == 0.0 && lu_pl[Z] == 0.0 )
+	{
+		rt_log( "Loop is a crack\n" );
 	}
+	if( VDOT( lu_pl, norm ) < 0.0 )
+		geom_orient = OT_OPPOSITE;
+	else
+		geom_orient = OT_SAME;
 
 	if( lu->orientation == geom_orient )  return;
 	if( rt_g.NMG_debug & DEBUG_BASIC )  {
