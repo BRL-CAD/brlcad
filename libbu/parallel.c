@@ -402,7 +402,8 @@ extern int	bu_pid_of_initiating_thread;	/* From ispar.c */
 
 static int	bu_nthreads_started = 0;	/* # threads started */
 static int	bu_nthreads_finished = 0;	/* # threads properly finished */
-static void	(*bu_parallel_func) BU_ARGS((int));	/* user function to run in parallel */
+static void	(*bu_parallel_func) BU_ARGS((int,genptr_t));	/* user function to run in parallel */
+static genptr_t	bu_parallel_arg;		/* User's arg to his threads */
 
 /*
  *			B U _ P A R A L L E L _ I N T E R F A C E
@@ -428,7 +429,7 @@ bu_parallel_interface()
 	cpu = bu_nthreads_started++;
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	(*bu_parallel_func)(cpu);
+	(*bu_parallel_func)(cpu, bu_parallel_arg);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	bu_nthreads_finished++;
@@ -487,9 +488,10 @@ FILE	*fp;
  *  The registers are not shared.
  */
 void
-bu_parallel( func, ncpu )
-void	(*func) BU_ARGS((int));
-int	ncpu;
+bu_parallel( func, ncpu, arg )
+void		(*func) BU_ARGS((int, genptr_t));
+int		ncpu;
+genptr_t	arg;
 {
 #if defined(PARALLEL)
 
@@ -520,7 +522,7 @@ int	ncpu;
 #endif	/* SUNOS */
 
 	if( bu_debug & BU_DEBUG_PARALLEL )
-		bu_log("bu_parallel(0x%x, %d)\n", func, ncpu );
+		bu_log("bu_parallel(0x%lx, %d, x%lx)\n", (long)func, ncpu, (long)arg );
 
 	if( bu_pid_of_initiating_thread )
 		bu_bomb("bu_parallel() called from within parallel section\n");
@@ -534,6 +536,7 @@ int	ncpu;
 	bu_nthreads_started = 0;
 	bu_nthreads_finished = 0;
 	bu_parallel_func = func;
+	bu_parallel_arg = arg;
 
 #ifdef HEP
 	bu_nthreads_started = 1;
@@ -542,7 +545,7 @@ int	ncpu;
 		/* This is more expensive when GEMINUS>1 */
 		Dcreate( bu_parallel_interface );
 	}
-	(*func)(0);	/* avoid wasting this task */
+	(*func)(0,arg);	/* avoid wasting this task */
 #endif /* HEP */
 
 #ifdef CRAY
@@ -560,7 +563,7 @@ int	ncpu;
 		bu_taskcontrol[x].tsk_value = x;
 		TSKSTART( &bu_taskcontrol[x], bu_parallel_interface );
 	}
-	(*func)(0);	/* avoid wasting this task */
+	(*func)(0,arg);	/* avoid wasting this task */
 
 	/* Wait for them to finish */
 	for( x=1; x<ncpu; x++ )  {
@@ -641,7 +644,7 @@ int	ncpu;
 		}
 		
 	}
-	(*func)(0);	/* don't waste this thread */
+	(*func)(0,arg);	/* don't waste this thread */
 	{
 		int	pid;
 		int	pstat;
@@ -849,8 +852,8 @@ int	ncpu;
 #endif
 	bu_pid_of_initiating_thread = 0;	/* No threads any more */
 #else	/* PARALLEL */
-	bu_log("bu_parallel( x%x, %d. ):  Not compiled for PARALLEL machine\n",
-		func, ncpu );
+	bu_log("bu_parallel( x%lx, %d., x%lx ):  Not compiled for PARALLEL machine\n",
+		(long)func, ncpu, (long)arg );
 #endif	/* PARALLEL */
 }
 
