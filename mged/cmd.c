@@ -2054,7 +2054,6 @@ f_ps(clientData, interp, argc, argv)
 	scroll_top = dml->_scroll_top;
 	scroll_active = dml->_scroll_active;
 	scroll_y = dml->_scroll_y;
-	scroll_edit = dml->_scroll_edit;
 	bcopy((void *)dml->_scroll_array, (void *)scroll_array,
 	      sizeof(struct scroll_item *) * 6);
 
@@ -2119,7 +2118,6 @@ f_pl(clientData, interp, argc, argv)
 	scroll_top = dml->_scroll_top;
 	scroll_active = dml->_scroll_active;
 	scroll_y = dml->_scroll_y;
-	scroll_edit = dml->_scroll_edit;
 	bcopy( (void *)dml->_scroll_array, (void *)scroll_array,
 	       sizeof(struct scroll_item *) * 6);
 
