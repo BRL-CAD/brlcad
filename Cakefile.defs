@@ -1207,7 +1207,6 @@ set -S2 "/bin/sh"
 /* -Wmissing-prototypes -Wstrict-prototypes  -Wmissing-declarations -W -pedantic -ansi*/
 #	if BUILD_SHARED	
 #		error "ERROR: Building with shared libraries is not supported via cake"
-#		error "       (use ProjectBuilder)"
 /*		Shared library version support.  */
 /*		PowerPC code is position-independant by default (and by design) (i.e. no nee d for -fPIC) */
 /* #		define	ARCH_SUF	so */
