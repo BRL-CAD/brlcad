@@ -61,7 +61,6 @@ double		viewsize = 42;
 int		rdebug;			/* program debugging (not library) */
 
 int		npsw = 1;		/* Run serially */
-int		parallel = 0;
 int		interactive = 0;	/* human is watching results */
 
 struct resource		resource;

@@ -68,7 +68,6 @@ extern FILE	*outfp;			/* optional output file */
 extern int	rt_perspective;
 extern int	width;
 extern int	height;
-extern int	parallel;		/* Trying to use multi CPUs */
 
 extern int	lightmodel;		/* lighting model # to use */
 extern mat_t	view2model;
@@ -161,7 +160,7 @@ register struct application *ap;
 	/*
 	 *  Handle file output
 	 */
-	if( !parallel && outfp != NULL )  {
+	if( !rt_g.rtg_parallel && outfp != NULL )  {
 		if( hex_out )  {
 			fprintf(outfp, "%2.2x%2.2x%2.2x\n", r, g, b);
 		} else {
@@ -280,7 +279,7 @@ struct application *ap;
 		if( incr_level < incr_nlevel )
 			return(0);		 /* more res to come */
 	}
-	if( parallel )  {
+	if( rt_g.rtg_parallel )  {
 		if( (outfp != NULL) &&
 		    fwrite( scanbuf, sizeof(char), width*height*3, outfp ) != width*height*3 )  {
 			fprintf(stderr,"view_end:  fwrite failure\n");
@@ -846,7 +845,7 @@ char *file, *obj;
 #ifndef RTSRV
 	if( incr_mode )  {
 		buf_mode = 3;		/* Frame buffering, dump at end */
-	} else if( parallel )  {
+	} else if( rt_g.rtg_parallel )  {
 		buf_mode = 2;		/* frame buffering */
 	} else if( width <= 96 )  {
 		buf_mode = 0;		/* single-pixel I/O */

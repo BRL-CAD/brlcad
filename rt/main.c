@@ -75,7 +75,6 @@ char		*scanbuf;		/* For optional output buffering */
 int		incr_mode;		/* !0 for incremental resolution */
 int		incr_level;		/* current incremental level */
 int		incr_nlevel;		/* number of levels */
-int		parallel=0;		/* Trying to use multi CPUs */
 int		npsw = MAX_PSW;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() *****/
@@ -299,10 +298,11 @@ char **argv;
 #ifndef PARALLEL
 	npsw = 1;			/* force serial */
 #endif
-	if( npsw > 1 )
-		parallel = 1;
-	if( parallel )
+	if( npsw > 1 )  {
+		rt_g.rtg_parallel = 1;
 		fprintf(stderr,"rt:  running with %d processors\n", npsw );
+	} else
+		rt_g.rtg_parallel = 0;
 	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
