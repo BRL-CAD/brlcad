@@ -15,13 +15,13 @@
 
 #if !defined(BUILD_LIBRARY)
 #define TK_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --cache-file cache.MTYPE \
-			 --exec-prefix=/usr/brlcad --prefix=/usr/brlcad \
+			 --exec-prefix=BINDIR --prefix=BINDIR \
 			 --with-tcl=../TCL_DIR
 #define PRODUCTS	libtk.a wish
 #define	AFTER_MAKE	/**/
 #else
 #define TK_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --enable-shared \
-			 --cache-file cache.MTYPE --exec-prefix=/usr/brlcad --prefix=/usr/brlcad \
+			 --cache-file cache.MTYPE --exec-prefix=BINDIR --prefix=BINDIR \
 			 --with-tcl=../TCL_DIR
 #define PRODUCTS	libtk.so wish
 #define	SHARED_PRODUCT  libtk.so''[[LIBVERS]]
