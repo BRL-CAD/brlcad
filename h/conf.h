@@ -124,7 +124,7 @@
 #	define HAVE_GETOPT	1
 #endif
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(CRAY1)
 #	define HAVE_GETOPT_DECL	1
 #endif
 
