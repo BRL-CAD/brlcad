@@ -778,6 +778,21 @@ int framenumber;
 		rt_g.debug &= ~DEBUG_MEM;	/* Stop until next frame */
 
 	/*
+	 *  Certain parallel systems (eg, Alliant) count the entire 
+	 *  multi-processor complex as one computer, and charge only once.
+	 *  This matches the desired behavior here.
+	 *  Other vendors (eg, SGI) count each processor separately,
+	 *  and charge for all of them.  These results need to be normalized.
+	 *  Otherwise, all we would know is that a given workload takes about
+	 *  the same amount of CPU time, regardless of the number of CPUs.
+	 */
+#if !defined(alliant)
+	if( npsw > 1 )  {
+		utime /= npsw;			/* compensate */
+	}
+#endif
+
+	/*
 	 *  All done.  Display run statistics.
 	 */
 	fprintf(stderr,"SHOT: %s\n", outbuf );
