@@ -39,6 +39,7 @@ char		*yyfile = "no input file";
 bool		afterifdef = FALSE;
 %}
 
+/* Lee had these commented out, for some reason */
 %a	2500
 %o	5000
 
@@ -175,11 +176,15 @@ yyinit()
 	BEGIN edge;
 }
 
+#if !defined(__bsdi__)
+extern int yylineno;
 yywrap()
 {
 	return 1;
 }
-
+#else
+int yylineno=1;
+#endif
 yyset(text)
 reg	char	text[];
 {
