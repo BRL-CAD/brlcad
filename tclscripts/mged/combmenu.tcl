@@ -5,7 +5,8 @@
 #
 #	Description -
 #		Tcl routines to specify a combination for editing
-#		from among those currently being displayed.
+#		from among all combinations in the database or from
+#		among those currently being displayed.
 #
 #
 
@@ -25,7 +26,7 @@ if ![info exists mged_gui(mged,screen)] {
 #	are provided by the calling application
 check_externs "_mged_x _mged_press"
 
-proc build_comb_menu_all {} {
+proc build_comb_menu_all_displayed {} {
     global mged_players
     global mged_gui
     global mouse_behavior
@@ -107,18 +108,71 @@ proc build_comb_menu { id combs } {
     create_listbox $top $screen Combination $combs "destroy $top"
     set mged_gui($id,edit_menu) $top
 
+    bind_listbox $top "<B1-Motion>"\
+	    "set comb \[%W get @%x,%y\];\
+	    set spath \[comb_get_solid_path \$comb\];\
+	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
+	    matrix_illum \$spath \$path_pos"
     bind_listbox $top "<ButtonPress-1>"\
 	    "set comb \[%W get @%x,%y\];\
 	    set spath \[comb_get_solid_path \$comb\];\
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
-	    matrix_illum \$spath \$path_pos; break"
+	    matrix_illum \$spath \$path_pos"
     bind_listbox $top "<Double-1>"\
 	    "set comb_control($id,name) \[%W get @%x,%y\];\
 	    comb_reset $id;\
-	    destroy $top; break"
+	    destroy $top"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
-	    _mged_press reject; break"
+	    _mged_press reject"
+}
+
+proc build_comb_menu_all_regions {} {
+    set win [winset]
+    set id [get_player_id_dm $win]
+
+    set combs [_mged_ls -r]
+    build_comb_menu2 $id $combs
+}
+
+proc build_comb_menu_all {} {
+    set win [winset]
+    set id [get_player_id_dm $win]
+
+    set combs [_mged_ls -c]
+    build_comb_menu2 $id $combs
+}
+
+proc build_comb_menu2 { id combs } {
+    global comb_control
+    global mged_gui
+
+    if {[info exists mged_gui($id,edit_menu)] && \
+	    [winfo exists $mged_gui($id,edit_menu)]} {
+	destroy $mged_gui($id,edit_menu)
+    }
+
+    set top .cm$id
+    if [winfo exists $top] {
+	destroy $top
+    }
+
+    if [info exists mged_gui($id,screen)] {
+	set screen $mged_gui($id,screen)
+    } else {
+	set win [winset]
+	set screen [winfo screen $win]
+    }
+
+    create_listbox $top $screen Combination $combs "destroy $top"
+    set mged_gui($id,edit_menu) $top
+
+    bind_listbox $top "<Double-1>"\
+	    "set comb_control($id,name) \[%W get @%x,%y\];\
+	    comb_reset $id;\
+	    destroy $top"
+    bind_listbox $top "<ButtonRelease-1>"\
+	    "%W selection clear 0 end"
 }
 
 proc build_comb_list { paths } {
@@ -126,10 +180,11 @@ proc build_comb_list { paths } {
     set combs {}
 
     foreach path $paths {
+	# remove leading /'s
 	regexp "\[^/\].*" $path match
 	set path_components [split $match /]
 
-# Append all path components except the last which is a solid
+	# Append all path components except the last which is a solid
 	set n [expr [llength $path_components] - 1]
 	for { set i 0 } { $i < $n } { incr i } {
 	    lappend all_combs [lindex $path_components $i]
@@ -137,7 +192,7 @@ proc build_comb_list { paths } {
     }
 
     foreach comb $all_combs {
-# Put $comb into combs if not already there
+	# Put $comb into combs if not already there
 	if { [lsearch -exact $combs $comb] == -1 } {
 	    lappend combs $comb
 	}
