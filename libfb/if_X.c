@@ -176,7 +176,7 @@ static unsigned short greyvec[16] = {
 0, 246, 247, 43, 248, 249, 86, 250, 251, 129, 252, 253, 172, 254, 255, 215
 };
 
-unsigned char convRGB();
+static unsigned char convRGB();
 unsigned long 	* x_pixel_table;
 XColor 			*color_defs; 
 
@@ -248,7 +248,7 @@ int	width, height;
 
 	/* round width up to a multiple of eight bits */
 	if( (width%8) != 0 )
-		width = (width + 7)/8;
+		width = ((width + 7)/8)*8;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
@@ -262,14 +262,6 @@ int	width, height;
 	if( xsetup( ifp, width, height ) < 0 ) {
 		return(-1);
 	}
-
-#ifdef notes
-	/* monochrome */
-        colormap = XDefaultColormap(dpy,screen);
-	/* color */
-        colormap = GetColormap(colors, ncolors, &newmap_flag, buffer,
-            buffer_size);
-#endif
 
 	/* an image data buffer */
 	if( (bytebuf = (unsigned char *)calloc( 1, width*height )) == NULL ) {
@@ -310,7 +302,8 @@ int	width, height;
 			close(fd);
 			X_cmwrite( ifp, &(XI(ifp)->rgb_cmap) );
 		} else {
-			perror(TMP_FILE);
+			/* use linear map */
+			X_cmwrite( ifp, (ColorMap *)NULL );
 		}
 	}
 
@@ -540,13 +533,21 @@ int	count;
 		goto done;
 	}
 
+	/* MONOCHROME Follows */
+
 	/* save the 8bit black and white version of it */
 	cp = &bytebuf[y*ifp->if_width + x];
-	for( i = 0; i < count; i++ ) {
-		/* Best possible 8-bit NTSC weights */
-		/* Use three tables if this gets to be a bottleneck */
-		
-		cp[i] =(unsigned char)  x_pixel_table[convRGB(pixelp[i])];
+	if( (XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT )  {
+		for( i = 0; i < count; i++ ) {
+			cp[i] = pixelp[i][RED];
+		}
+	} else {
+		for( i = 0; i < count; i++ ) {
+			/* Best possible 8-bit NTSC weights */
+			/* Use three tables if this gets to be a bottleneck */
+			cp[i] = (77*pixelp[i][RED] + 150*pixelp[i][GRN]
+				+ 29*pixelp[i][BLU]) >> 8;
+		}
 	}
 
 	/* Convert the monochrome data to a bitmap */
@@ -609,13 +610,37 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
+is_linear_cmap( cmp )
+ColorMap *cmp;
+{
+	int	i;
+	for( i = 0; i < 256; i++ ) {
+		if( cmp->cm_red[i]>>8 != i
+		 || cmp->cm_green[i]>>8 != i
+		 || cmp->cm_blue[i]>>8 != i )
+			return	0;
+	}
+	return	1;
+}
+
+_LOCAL_ int
 X_cmwrite( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
 	register int i;
 
-	XI(ifp)->rgb_cmap = *cmp;	/* struct copy */
+	if( cmp == (ColorMap *)NULL ) {
+		/* Linear map */
+		cmp = &(XI(ifp)->rgb_cmap);
+		for( i = 0; i < 256; i++ ) {
+			cmp->cm_red[i] = i<<8;
+			cmp->cm_green[i] = i<<8;
+			cmp->cm_blue[i] = i<<8;
+		}
+	} else {
+		XI(ifp)->rgb_cmap = *cmp;	/* struct copy */
+	}
 
 	/* This really only works for MODE_2_8BIT */
 	for( i=0; i<256; i++ )  {
@@ -628,12 +653,19 @@ ColorMap	*cmp;
 
 	XStoreColors ( XI(ifp)->dpy, XI(ifp)->cmap, color_defs, 256);
 
-	i=creat(TMP_FILE, 0664);
-	if( i >= 0 )  {
-		write( i, cmp, sizeof(*cmp) );
-		close(i);
+	if( is_linear_cmap(cmp) ) {
+		/* no file => linear map */
+		(void) unlink( TMP_FILE );
 	} else {
-		perror(TMP_FILE);
+		/* save map for later */
+		i=creat(TMP_FILE, 0666);
+		if( i >= 0 )  {
+			write( i, cmp, sizeof(*cmp) );
+			close(i);
+		} else {
+			fprintf(stderr, "if_X: couldn't save color map\n");
+			perror(TMP_FILE);
+		}
 	}
 }
 
@@ -713,8 +745,6 @@ int	width, height;
 	GC	gc;			/* local copy */
 	XSetWindowAttributes	xswa;
 
-	width = height = 512;
-
 	/* Open the display - use the env variable DISPLAY */
 	if( (dpy = XOpenDisplay(NULL)) == NULL ) {
 		fb_log( "if_X: Can't open X display \"%s\"\n",
@@ -729,40 +759,36 @@ int	width, height;
 	XI(ifp)->visual = visual;
 	XI(ifp)->depth = DisplayPlanes(dpy,screen);
 
-	XI(ifp)->cmap = XCreateColormap( dpy, RootWindow(dpy,screen),
-		visual, None);
-	XInstallColormap( dpy, XI(ifp)->cmap );
-
-	if( XI(ifp)->depth == 8 ) {
-		x_make_colormap(ifp);
-	}
-
 #ifdef DEBUGX
 printf("%d DisplayPlanes\n", DisplayPlanes(dpy,screen) );
+printf("%d DisplayCells\n", DisplayCells(dpy,screen) );
+printf("BlackPixel = %d\n", BlackPixel(dpy,screen) );
+printf("WhitePixel = %d\n", WhitePixel(dpy,screen) );
 switch(DefaultVisual(dpy,screen)->class) {
 case DirectColor:
-	printf("DirectColor: Full Color changeable map\n");
+	printf("DirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
 	break;
 case TrueColor:
-	printf("TrueColor: Full Color, no map\n");
+	printf("TrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
 	break;
 case PseudoColor:
-	printf("PseudoColor: Some Color, changeable map\n");
+	printf("PseudoColor: Alterable RGB maps, single index\n");
 	break;
 case StaticColor:
-	printf("StaticColor: Some Color, fixed map\n");
+	printf("StaticColor: Fixed RGB maps, single index\n");
 	break;
 case GrayScale:
-	printf("GrayScale: gray scale, changeable map\n");
+	printf("GrayScale: Alterable map (R=G=B), single index\n");
 	break;
 case StaticGray:
-	printf("StaticGray: gray scale, fixed map\n");
+	printf("StaticGray: Fixed map (R=G=B), single index\n");
 	break;
 default:
 	printf("Unknown visual class %d\n",
 		DefaultVisual(dpy,screen)->class);
 	break;
 }
+visinfo(ifp);
 #endif
 
 	/*
@@ -789,7 +815,6 @@ default:
 	xswa.event_mask = ExposureMask;
 		/* |ButtonPressMask |LeaveWindowMask | EnterWindowMask; */
 		/* |ColormapChangeMask */
-	xswa.colormap = XI(ifp)->cmap;
 	xswa.background_pixel = BlackPixel(dpy, screen);
 	xswa.border_pixel = WhitePixel(dpy, screen);
 #ifdef CURSOR
@@ -808,8 +833,8 @@ printf("Creating window\n");
 		0, 0, xsh.width, xsh.height,
 		3, XDefaultDepth(dpy, screen),
 		InputOutput, visual,
-		CWBackPixel |CWEventMask |CWBorderPixel
-		|CWColormap, /* |CWCursor, */
+		CWBackPixel |CWEventMask |CWBorderPixel,
+		/* |CWCursor, */
 		&xswa );
 
 	XI(ifp)->win = win;
@@ -818,10 +843,13 @@ printf("Creating window\n");
 		return	-1;
 	}
 
-	XMapWindow( dpy, win);
-	XClearWindow(dpy, win);
+	/* get or set a colormap for our window */
+	if( XI(ifp)->depth == 8 ) {
+		x_make_colormap(ifp);
+	} else {
+		XI(ifp)->cmap = XDefaultColormap(dpy,screen);
+	}
 
-	XSetWindowColormap( dpy, win, XI(ifp)->cmap);
 	/* Set standard properties for Window Managers */
 #ifdef DEBUGX
 printf("Setting properties\n");
@@ -840,13 +868,12 @@ printf("Setting Hints\n");
 #ifdef DEBUGX
 printf("Making graphics context\n");
 #endif
-	gc = XCreateGC( dpy, win, (GCPlaneMask|GCForeground|GCBackground), &gcv );
+	gc = XCreateGC( dpy, win, (GCForeground|GCBackground), &gcv );
 	XI(ifp)->gc = gc;
-
-	XFlush(dpy);
 
 	XSelectInput( dpy, win, ExposureMask );
 	XMapWindow( dpy, win );
+	XFlush(dpy);
 
 	while( 1 ) {
 		XNextEvent( dpy, &event );
@@ -898,10 +925,10 @@ FBIO	*ifp;
 		case ButtonPress:
 			switch( (int)event.xbutton.button ) {
 			case Button1:
-				Monochrome(bitbuf,bytebuf,512,512);
+				Monochrome(bitbuf,bytebuf,ifp->if_width,ifp->if_height);
 				XPutImage(XI(ifp)->dpy, XI(ifp)->win, XI(ifp)->gc, XI(ifp)->image,
 					0, 0, 0, 0,
-					512, 512 );
+					ifp->if_width, ifp->if_height );
 				break;
 			case Button2:
 				{
@@ -1018,7 +1045,7 @@ FBIO	*ifp;
  *	convert a single RGBpixel to its corresponding entry in the Sun
  *	colormap.
  */
-unsigned char convRGB(v)
+static unsigned char convRGB(v)
 register RGBpixel *v;
 {
 	register int r, g, b;
@@ -1027,8 +1054,7 @@ register RGBpixel *v;
 	g = ( (*v)[GRN]+26 ) / 51;
 	b = ( (*v)[BLU]+26 ) / 51;
 
-#ifdef never
-	printf("Pixel r = %d, g = %d, b = %d\n",(*v)[RED],(*v)[GRN],(*v)[BLU]);
+	/*printf("Pixel r = %d, g = %d, b = %d\n",(*v)[RED],(*v)[GRN],(*v)[BLU]);*/
 	if ( r == g )  {
 		if( r == b )  {
 			/* all grey, take average */
@@ -1049,8 +1075,7 @@ register RGBpixel *v;
 		return grnvec[((*v)[GRN])/16];
 	}
 	else
-#endif 
-	return r + g * 6 + b * 36 + 16;
+		return r + g * 6 + b * 36;
 }
 
 
@@ -1059,7 +1084,7 @@ register RGBpixel *v;
  *
  *	initialize the Sun harware colormap
  */
-void genmap(rmap, gmap, bmap)
+static void genmap(rmap, gmap, bmap)
 unsigned char rmap[], gmap[], bmap[];
 {
 	register r, g, b;
@@ -1102,9 +1127,15 @@ FBIO *ifp;
 	int 			i;
 	Colormap		color_map;
 
-	tot_levels = 216+16;
+	tot_levels = 256;
 
+#ifdef DEBUGX
 	printf("make_colormap\n");
+#endif
+#ifdef notes
+        colormap = GetColormap(colors, ncolors, &newmap_flag,
+		buffer, buffer_size);
+#endif
 
 	genmap(redmap, grnmap, blumap); /* generate hardware color_map */
 
@@ -1113,33 +1144,43 @@ FBIO *ifp;
 			malloc( tot_levels * sizeof( unsigned long) );
 
 	color_map = XCreateColormap( XI(ifp)->dpy, 
-		RootWindow( XI(ifp)->dpy, XI(ifp)->screen),
-		XI(ifp)->visual, None);
+		XI(ifp)->win, XI(ifp)->visual, AllocNone);
 
 	if( color_map == NULL)
-		printf("Warning: color map missing\n");
-
-	XInstallColormap( XI(ifp)->dpy, color_map);
+		fprintf(stderr,"Warning: color map missing\n");
 
 	XI(ifp)->cmap = color_map;
 
 	/* Allocate the colors cells */
-
 	if( (XAllocColorCells( XI(ifp)->dpy, color_map, 0, NULL, 0,
-		    x_pixel_table, tot_levels )) == 0)
-	{
-		printf("XAllockCOlorCelss died\n");
+	      x_pixel_table, tot_levels )) == 0) {
+		fprintf(stderr,"XAllocColorCells died\n");
 	}
 
-	/* initialize table */
-
-	for (i = 16; i < tot_levels; i++) {
+	/* put our colors into those cells */
+	for (i = 0; i < tot_levels; i++) {
         	color_defs[i].pixel = x_pixel_table[i];
-	        color_defs[i].red   = redmap[i-16]<<8;
-	        color_defs[i].green = grnmap[i-16]<<8;
-	        color_defs[i].blue  = blumap[i-16]<<8;
+	        color_defs[i].red   = redmap[i]<<8;
+	        color_defs[i].green = grnmap[i]<<8;
+	        color_defs[i].blue  = blumap[i]<<8;
 	        color_defs[i].flags = DoRed | DoGreen | DoBlue;
 	}
-
 	XStoreColors ( XI(ifp)->dpy, color_map, color_defs, tot_levels);
+
+	/* assign this colormap to our window */
+	XSetWindowColormap( XI(ifp)->dpy, XI(ifp)->win, XI(ifp)->cmap);
+
+	/* If you are real anti-social, install it.
+	 * This should be left to the window managers though. */
+	/* XInstallColormap( XI(ifp)->dpy, color_map ); */
+}
+
+visinfo(ifp)
+FBIO *ifp;
+{
+	XVisualInfo	*vp;
+	int	num;
+
+	vp = XGetVisualInfo(XI(ifp)->dpy, VisualNoMask, NULL, &num );
+	printf("%d Visuals returned\n", num);
 }
