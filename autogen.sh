@@ -24,10 +24,9 @@ AUTOMAKE_MAJOR_VERSION=1
 AUTOMAKE_MINOR_VERSION=6
 AUTOMAKE_PATCH_VERSION=0
 
-# unused for now but informative
 LIBTOOL_MAJOR_VERSION=1
-LIBTOOL_MINOR_VERSION=5
-LIBTOOL_PATCH_VERSION=0
+LIBTOOL_MINOR_VERSION=4
+LIBTOOL_PATCH_VERSION=3
 
 
 ##################
@@ -46,11 +45,6 @@ VERBOSE=no
 #####################
 # environment check #
 #####################
-_have_sed="`echo no | sed 's/no/yes/'`"
-HAVE_SED=no
-if [ $? = 0 ] ; then
-  [ "x$_have_sed" = "xyes" ] && HAVE_SED=yes
-fi
 case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
   *c*,-n*) ECHO_N= ECHO_C='
 ' ECHO_T='	' ;;
@@ -75,6 +69,16 @@ else
     echo "Verbose output enabled"
     VERBOSE_ECHO=echo
   fi
+fi
+
+_have_sed="`$ECHO no | sed 's/no/yes/'`"
+HAVE_SED=no
+if [ $? = 0 ] ; then
+  [ "x$_have_sed" = "xyes" ] && HAVE_SED=yes
+fi
+if [ "x$HAVE_SED" = "xno" ] ; then
+  $ECHO "Warning:  sed does not appear to be available."
+  $ECHO "GNU Autotools version checks are disabled."
 fi
 
 
@@ -109,12 +113,10 @@ else
       fi
     fi
     $ECHO "Found GNU Autoconf version $_maj_version.$_min_version"
-  else
-    $ECHO "Warning:  sed is not available to properly detect version of GNU Autoconf"
   fi
-  $ECHO
 fi
 if [ "x$_report_error" = "xyes" ] ; then
+  $ECHO
   $ECHO "ERROR:  To prepare the ${SUITE} build system from scratch,"
   $ECHO "        at least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION.$AUTOCONF_PATCH_VERSION of GNU Autoconf must be installed."
   $ECHO 
@@ -141,6 +143,7 @@ done
 
 _report_error=no
 if [ ! "x$_amfound" = "xyes" ] ; then
+  $ECHO
   $ECHO "ERROR: Unable to locate GNU Automake."
   _report_error=yes
 else
@@ -159,12 +162,10 @@ else
       fi
     fi
     $ECHO "Found GNU Automake version $_maj_version.$_min_version.$_pat_version"
-  else
-    $ECHO "Warning:  sed is not available to properly detect version of GNU Automake"
   fi
-  $ECHO
 fi
 if [ "x$_report_error" = "xyes" ] ; then
+  $ECHO
   $ECHO "ERROR:  To prepare the ${SUITE} build system from scratch,"
   $ECHO "        at least version $AUTOMAKE_MAJOR_VERSION.$AUTOMAKE_MINOR_VERSION.$AUTOMAKE_PATCH_VERSION of GNU Automake must be installed."
   $ECHO 
@@ -190,24 +191,13 @@ for AUTORECONF in autoreconf ; do
 done
 
 
-#####################
-# check for aclocal #
-#####################
-for ACLOCAL in aclocal ; do
-  $VERBOSE_ECHO "Checking aclocal version: $ACLOCAL --version"
-  $ACLOCAL --version > /dev/null 2>&1
-  if [ $? = 0 ] ; then
-    break
-  fi
-done
-
-
 ########################
 # check for libtoolize #
 ########################
 HAVE_LIBTOOLIZE=yes
 HAVE_ALTLIBTOOLIZE=no
 LIBTOOLIZE=libtoolize
+_ltfound=no
 $VERBOSE_ECHO "Checking libtoolize version: $LIBTOOLIZE --version"
 $LIBTOOLIZE --version > /dev/null 2>&1
 if [ ! $? = 0 ] ; then
@@ -242,11 +232,60 @@ if [ ! $? = 0 ] ; then
 	$ECHO 
 	$ECHO "Run that as root or with proper permissions to the $_gltidir directory"
       fi
-      $ECHO
+      _ltfound=yes
       break
     fi
   done
+else
+  _ltfound=yes
 fi
+
+_report_error=no
+if [ ! "x$_ltfound" = "xyes" ] ; then
+  $ECHO
+  $ECHO "ERROR: Unable to locate GNU Libtool."
+  _report_error=yes
+else
+  _version_line="`$LIBTOOLIZE --version | head -${TAIL_N}1`"
+  if [ "x$HAVE_SED" = "xyes" ] ; then
+    _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\.[0-9]\.[0-9].*/\1/'`"
+    _min_version="`echo $_version_line | sed 's/.*[0-9]\.\([0-9]\)\.[0-9].*/\1/'`"
+    _pat_version="`echo $_version_line | sed 's/.*[0-9]\.[0-9]\.\([0-9]\).*/\1/'`"
+    if [ $? = 0 ] ; then
+      if [ $_maj_version -lt $LIBTOOL_MAJOR_VERSION ] ; then
+	_report_error=yes
+      elif [ $_min_version -lt $LIBTOOL_MINOR_VERSION ] ; then
+	_report_error=yes
+      elif [ $_pat_version -lt $LIBTOOL_PATCH_VERSION ] ; then
+	_report_error=yes
+      fi
+    fi
+    $ECHO "Found GNU Libtool version $_maj_version.$_min_version.$_pat_version"
+  fi
+fi
+if [ "x$_report_error" = "xyes" ] ; then
+  $ECHO
+  $ECHO "ERROR:  To prepare the ${SUITE} build system from scratch,"
+  $ECHO "        at least version $LIBTOOL_MAJOR_VERSION.$LIBTOOL_MINOR_VERSION.$LIBTOOL_PATCH_VERSION of GNU Libtool must be installed."
+  $ECHO 
+  $ECHO "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
+  $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
+  $ECHO "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
+  $ECHO "code on another system and then transferred to here. -- Cheers!"
+  exit 1
+fi
+
+
+#####################
+# check for aclocal #
+#####################
+for ACLOCAL in aclocal ; do
+  $VERBOSE_ECHO "Checking aclocal version: $ACLOCAL --version"
+  $ACLOCAL --version > /dev/null 2>&1
+  if [ $? = 0 ] ; then
+    break
+  fi
+done
 
 
 ########################
@@ -341,6 +380,7 @@ done
 ############################################
 reconfigure_manually=no
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
+  $ECHO
   $ECHO $ECHO_N "Automatically preparing build ... $ECHO_C"
 
   if [ "x$VERBOSE" = "xyes" ] ; then
