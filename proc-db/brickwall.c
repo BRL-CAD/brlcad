@@ -52,6 +52,9 @@ int ac;
 char *av[];
 {
 	int  c;
+#if defined(BSD) && BSD < 43
+#define strrchr rindex
+#endif
 	char *strrchr();
 	double d;
 	int red, grn, blu;
