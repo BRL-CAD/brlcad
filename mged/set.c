@@ -200,7 +200,7 @@ int flags;
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
-    char *newvalue;
+    const char *newvalue;
 
     newvalue = Tcl_GetVar(interp, sp->sp_name,
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
@@ -236,11 +236,14 @@ int flags;
 	return NULL;
 
     Tcl_AppendResult(interp, "mged variables cannot be unset\n", (char *)NULL);
-    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS, read_var,
+    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS,
+		  (Tcl_VarTraceProc *)read_var,
 		  (ClientData)sp );
-    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES, write_var,
+    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES,
+		  (Tcl_VarTraceProc *)write_var,
 		  (ClientData)sp );
-    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS, unset_var,
+    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS,
+		  (Tcl_VarTraceProc *)unset_var,
  		  (ClientData)sp );
     read_var(clientData, interp, name1, name2,
 	     (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
@@ -264,11 +267,11 @@ mged_variable_setup(Tcl_Interp *interp)
   for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
     read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
     Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
-		  read_var, (ClientData)sp );
+		  (Tcl_VarTraceProc *)read_var, (ClientData)sp );
     Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
-		  write_var, (ClientData)sp );
+		  (Tcl_VarTraceProc *)write_var, (ClientData)sp );
     Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
-		  unset_var, (ClientData)sp );
+		  (Tcl_VarTraceProc *)unset_var, (ClientData)sp );
   }
 }
 

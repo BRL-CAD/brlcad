@@ -156,7 +156,8 @@ f_wait(ClientData	clientData,	/* Main window associated with interpreter. */
 	    && (length >= 2)) {
 		if (Tcl_TraceVar(interp, argv[2],
 				 TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-				 WaitVariableProc, (ClientData) &done) != TCL_OK) {
+				 (Tcl_VarTraceProc *)WaitVariableProc,
+				 (ClientData) &done) != TCL_OK) {
 			return TCL_ERROR;
 		}
 		done = 0;
@@ -165,7 +166,8 @@ f_wait(ClientData	clientData,	/* Main window associated with interpreter. */
 		}
 		Tcl_UntraceVar(interp, argv[2],
 			       TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-			       WaitVariableProc, (ClientData) &done);
+			       (Tcl_VarTraceProc *)WaitVariableProc,
+			       (ClientData) &done);
 	} else if ((c == 'v') && (strncmp(argv[1], "visibility", length) == 0)
 		   && (length >= 2)) {
 		Tk_Window window;
