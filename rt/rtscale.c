@@ -47,6 +47,7 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "wdb.h"
+#include "raytrace.h"
 #include "plot3.h"
 
 #define NAMELEN 40
@@ -124,11 +125,11 @@ char	**argv;
 
 	intervals = atof(argv[3]);
 
-	m_len = atof(argv[1]) * mk_cvt_factor(argv[2]);
+	m_len = atof(argv[1]) * rt_units_conversion(argv[2]);
 
 	/* Check to make sure there has been a valid conversion. */
 	if(m_len <= 0)  {
-		fprintf(stderr, "Invalid length =%d\n", m_len);
+		fprintf(stderr, "Invalid length =%.6f\n", m_len);
 		fputs(usage, stderr);
 		exit(-1);
 	}
@@ -258,7 +259,7 @@ fastf_t	m_len;
 	m_tick_hgt = v_tick_hgt / v2mod[15];		/* scale tick_hgt */
 
 	if(verbose)  {
-		fprintf(stderr, "layout: m_tick_hgt=%g, v_tick_hgt=%g\n", 
+		fprintf(stderr, "layout: m_tick_hgt=%.6f, v_tick_hgt=%.6f\n", 
 			m_tick_hgt, v_tick_hgt);
 	}
 
@@ -328,7 +329,7 @@ fastf_t	m_len;
 	}
 	
 	if(verbose)  {
-		fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %g, %g, %g, m_char_width=%g\n",
+		fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
 		        label, V3ARGS(m_label_st), m_char_width);
 		mat_print("v2symbol", v2symbol);
 	}
