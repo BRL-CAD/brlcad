@@ -959,7 +959,7 @@ if { $use_grid_gm } {
 set mged_multi_view($id) $mged_default_mvmode
 
 if { $use_grid_gm } {
-    if { !$comb || ($comb && $mged_show_dm($id)) } {
+    if { $comb } {
 	grid $mged_dmc($id) -sticky nsew -row 0 -column 0
     }
 
@@ -968,9 +968,8 @@ if { $use_grid_gm } {
     grid columnconfigure .$id.tf 1 -weight 0
     grid rowconfigure .$id.tf 0 -weight 1
 
-    if { !$comb || ($comb && $mged_show_cmd($id)) } {
-	grid .$id.tf -sticky "nsew" -row 1 -column 0
-    }
+
+    grid .$id.tf -sticky "nsew" -row 1 -column 0
 
     grid .$id.status.cent .$id.status.size .$id.status.units .$id.status.aet\
 	    .$id.status.ang x -in .$id.status.dpy -sticky "ew"
@@ -991,10 +990,7 @@ if { $use_grid_gm } {
     grid rowconfigure .$id.status 0 -weight 0
     grid rowconfigure .$id.status 1 -weight 0
     grid rowconfigure .$id.status 2 -weight 0
-
-    if { !$comb || ($comb && $mged_show_status($id)) } {
-	grid .$id.status -sticky "ew" -row 2 -column 0
-    }
+    grid .$id.status -sticky "ew" -row 2 -column 0
 
     grid columnconfigure .$id 0 -weight 1
     if { $comb } {
