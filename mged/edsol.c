@@ -76,6 +76,7 @@ static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
 static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
 static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 
+static int sedit_apply();
 int get_edit_solid_menus();
 void pscale();
 void update_edit_absolute_tran();
@@ -7510,80 +7511,7 @@ sedit_accept()
 	if( sedraw > 0)
 	  sedit();
 
-	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
-	bot_verts[0] = -1;
-	bot_verts[1] = -1;
-	bot_verts[2] = -1;
-	if( lu_copy )
-	{
-		struct model *m;
-
-		m = nmg_find_model( &lu_copy->l.magic );
-		nmg_km( m );
-		lu_copy = (struct loopuse *)NULL;
-	}
-
-	/* write editing changes out to disc */
-	dp = illump->s_path[illump->s_last];
-
-	/* make sure that any BOT solid is minimally legal */
-	if( es_int.idb_type == ID_BOT )
-	  {
-	    struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
-
-	    RT_BOT_CK_MAGIC( bot );
-	    if( bot->mode == RT_BOT_SURFACE || bot->mode == RT_BOT_SOLID )
-	      {
-		/* make sure facemodes and thicknesses have been freed */
-		if( bot->thickness )
-		  {
-		    bu_free( (char *)bot->thickness, "BOT thickness" );
-		    bot->thickness = NULL;
-		  }
-		if( bot->face_mode )
-		  {
-		    bu_free( (char *)bot->face_mode, "BOT face_mode" );
-		    bot->face_mode = NULL;
-		  }
-	      }
-	    else
-	      {
-		/* make sure face_modes and thicknesses exist */
-		if( !bot->thickness )
-		  bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ), "BOT thickness" );
-		if( !bot->face_mode )
-		  {
-		    bot->face_mode = bu_bitv_new( bot->num_faces );
-		    bu_bitv_clear( bot->face_mode );
-		  }
-	      }
-	  }
-
-	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0, dbip ) < 0 )  {
-	  Tcl_AppendResult(interp, "sedit_accept(", dp->d_namep,
-			   "):  solid export failure\n", (char *)NULL);
-	  if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-	  db_free_external( &es_ext );
-	  return;				/* FAIL */
-	}
-    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-
-	if( db_put_external( &es_ext, dp, dbip ) < 0 )  {
-		db_free_external( &es_ext );
-		TCL_WRITE_ERR;
-		return;
-	}
-
-	menu_state->ms_flag = 0;
-	movedir = 0;
-	es_edflag = -1;
-	es_edclass = EDIT_CLASS_NULL;
-
-    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-	es_int.idb_ptr = (genptr_t)NULL;
-	db_free_external( &es_ext );
+	(void)sedit_apply(1);
 }
 
 void
@@ -9104,6 +9032,114 @@ char **argv;
   bu_vls_free(&vls);
 
   return TCL_OK;
+}
+
+/*
+ * Copied from sedit_accept - modified to optionally leave
+ *                            solid edit state.
+ */
+static int
+sedit_apply(accept_flag)
+     int	accept_flag;
+{
+	struct directory	*dp;
+
+	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+	bot_verts[0] = -1;
+	bot_verts[1] = -1;
+	bot_verts[2] = -1;
+	
+	if (lu_copy) {
+		struct model *m;
+
+		m = nmg_find_model(&lu_copy->l.magic);
+		nmg_km(m);
+		lu_copy = (struct loopuse *)NULL;
+	}
+
+	/* write editing changes out to disc */
+	dp = illump->s_path[illump->s_last];
+
+	/* make sure that any BOT solid is minimally legal */
+	if (es_int.idb_type == ID_BOT) {
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+
+		RT_BOT_CK_MAGIC(bot);
+		if (bot->mode == RT_BOT_SURFACE || bot->mode == RT_BOT_SOLID) {
+			/* make sure facemodes and thicknesses have been freed */
+			if (bot->thickness) {
+				bu_free( (char *)bot->thickness, "BOT thickness" );
+				bot->thickness = NULL;
+			}
+			if (bot->face_mode) {
+				bu_free( (char *)bot->face_mode, "BOT face_mode" );
+				bot->face_mode = NULL;
+			}
+		} else {
+			/* make sure face_modes and thicknesses exist */
+			if (!bot->thickness)
+				bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ), "BOT thickness" );
+			if (!bot->face_mode) {
+				bot->face_mode = bu_bitv_new( bot->num_faces );
+				bu_bitv_clear( bot->face_mode );
+			}
+		}
+	}
+
+	/* Scale change on export is 1.0 -- no change */
+	if (rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0, dbip) < 0)  {
+		Tcl_AppendResult(interp, "sedit_apply(", dp->d_namep,
+				 "):  solid export failure\n", (char *)NULL);
+		if (accept_flag) {
+			if (es_int.idb_ptr)
+				rt_functab[es_int.idb_type].ft_ifree(&es_int);
+			db_free_external(&es_ext);
+		}
+		return TCL_ERROR;				/* FAIL */
+	}
+
+    	if (es_int.idb_ptr && accept_flag)
+		rt_functab[es_int.idb_type].ft_ifree(&es_int);
+
+	if (db_put_external(&es_ext, dp, dbip) < 0) {
+		if (accept_flag)
+			db_free_external(&es_ext);
+		TCL_WRITE_ERR_return;
+	}
+
+	if (accept_flag) {
+		menu_state->ms_flag = 0;
+		movedir = 0;
+		es_edflag = -1;
+		es_edclass = EDIT_CLASS_NULL;
+
+		if (es_int.idb_ptr)
+			rt_functab[es_int.idb_type].ft_ifree(&es_int);
+		es_int.idb_ptr = (genptr_t)NULL;
+		db_free_external(&es_ext);
+	}
+
+	return TCL_OK;
+}
+
+int
+f_sedit_apply(clientData, interp, argc, argv)
+     ClientData	clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	if (dbip == DBI_NULL)
+		return;
+
+	if (not_state(ST_S_EDIT, "Solid edit accept"))
+		return;
+
+	if (sedraw > 0)
+		sedit();
+
+	return sedit_apply(0);
 }
 
 int
