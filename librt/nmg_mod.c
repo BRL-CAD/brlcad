@@ -411,11 +411,11 @@ CONST struct rt_tol	*tol;
 	/* First, handle any splitting */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-			nmg_split_touchingloops( lu );
+			nmg_split_touchingloops( lu, tol );
 		}
 	}
 	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
-		nmg_split_touchingloops( lu );
+		nmg_split_touchingloops( lu, tol );
 	}
 
 	/* Second, reorient any split loop fragments */
@@ -427,7 +427,7 @@ CONST struct rt_tol	*tol;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_split_touching_loops(s=x%x, tol=x%x)\n", s, tol);
+		rt_log("nmg_s_split_touching_loops(s=x%x, tol=x%x)\n", s, tol);
 	}
 }
 
@@ -2164,13 +2164,16 @@ out:
  *  loopuses to be marked OT_UNSPEC.
  */
 void
-nmg_split_touchingloops( lu )
-struct loopuse	*lu;
+nmg_split_touchingloops( lu, tol )
+struct loopuse		*lu;
+CONST struct rt_tol	*tol;
 {
 	struct edgeuse		*eu;
 	struct vertexuse	*vu;
 	struct vertex		*v;
 
+	NMG_CK_LOOPUSE(lu);
+	RT_CK_TOL(tol);
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_split_touchingloops( lu=x%x )\n", lu);
 	}
@@ -2214,9 +2217,11 @@ top:
 			 */
 			newlu = nmg_split_lu_at_vu( lu, vu );
 			NMG_CK_LOOPUSE(newlu);
+			NMG_CK_LOOP(newlu->l_p);
+			nmg_loop_g(newlu->l_p, tol);
 
 			/* Ensure there are no duplications in new loop */
-			nmg_split_touchingloops(newlu);
+			nmg_split_touchingloops(newlu, tol);
 
 			/* There is no telling where we will be in the
 			 * remainder of original loop, check 'em all.
@@ -2226,9 +2231,91 @@ top:
 	}
 }
 
+/*
+ *			N M G _ J O I N _ T O U C H I N G L O O P S
+ *
+ *  Search through all the vertices in a loopuse that belongs to a faceuse.
+ *  Whenever another loopuse in the same faceuse refers to one of this
+ *  loop's vertices, the two loops touch at (at least) that vertex.
+ *  Join them together.
+ */
+int
+nmg_join_touchingloops( lu )
+struct loopuse	*lu;
+{
+	struct faceuse		*fu;
+	struct edgeuse		*eu;
+	struct vertexuse	*vu;
+	struct vertex		*v;
+	int			count = 0;
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_join_touchingloops( lu=x%x )\n", lu);
+	}
+	NMG_CK_LOOPUSE(lu);
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+
+top:
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return count;
+
+	/* For each edgeuse, get vertexuse and vertex */
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		struct vertexuse	*tvu;
+
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+
+		/*
+		 *  For each vertexuse on vertex list,
+		 *  check to see if it points up to an edgeuse in a
+		 *  different loopuse in the same faceuse.
+		 *  If so, we touch.
+		 */
+		for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
+			struct edgeuse		*teu;
+			struct loopuse		*tlu;
+			struct loopuse		*newlu;
+
+			if( tvu == vu )  continue;
+			if( *tvu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+			teu = tvu->up.eu_p;
+			NMG_CK_EDGEUSE(teu);
+			if( *teu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+			tlu = teu->up.lu_p;
+			NMG_CK_LOOPUSE(tlu);
+			if( tlu == lu )  {
+				/* We touch ourselves at another vu? */
+				rt_log("INFO: nmg_join_touchingloops() lu=x%x touches itself at vu1=x%x, vu2=x%x, skipping\n",
+					lu, vu, tvu );
+				continue;
+			}
+			if( *tlu->up.magic_p != NMG_FACEUSE_MAGIC )  continue;
+			if( tlu->up.fu_p != fu )  continue;	/* wrong faceuse */
+			/*
+			 *  Loop 'lu' touches loop 'tlu' at this vertex,
+			 *  join them.
+			 *  XXX Is there any advantage to searching for
+			 *  XXX a potential shared edge at this point?
+			 *  XXX Call nmg_simplify_loop()?
+			 */
+rt_log("nmg_join_touchingloops(): lu=x%x, vu=x%x, tvu=x%x\n", lu, vu, tvu);
+			tvu = nmg_join_2loops( vu, tvu );
+			NMG_CK_VERTEXUSE(tvu);
+			count++;
+			goto top;
+		}
+	}
+	return count;
+}
+
 /*			N M G _ S I M P L I F Y _ L O O P
  *
- *	combine adjacent loops within the same parent
+ *	combine adjacent loops within the same parent that touch along
+ *	a common edge into a single loop, with the edge eliminated.
  */
 void
 nmg_simplify_loop(lu)
@@ -2680,14 +2767,32 @@ CONST struct rt_tol	*tol;
 
 	ccw = nmg_loop_is_ccw( lu, norm, tol );
 	if( ccw == 0 )  {
+		int	class;
 		/* Loop does not have 3 linearly independent vertices, can't tell. */
 		rt_log("nmg_lu_reorient:  unable to determine orientation from geometry\n");
-		return;
-	}
-	if( ccw > 0 )  {
-		geom_orient = OT_SAME;	/* same as face (OT_SAME faceuse) */
+		class = nmg_class_lu_fu( lu, tol );
+		switch( class )  {
+		case NMG_CLASS_AinB:
+			/* An interior "hole crack" */
+			geom_orient = OT_OPPOSITE;
+			break;
+		case NMG_CLASS_AoutB:
+			/* An exterior "solid crack" */
+			geom_orient = OT_SAME;
+			break;
+		case NMG_CLASS_AonBshared:
+			/* ALL vu's touch other loops in face, should have been joined. */
+			rt_bomb("nmg_lu_reorient() lu is ON another lu, should have been joined\n");
+		default:
+			rt_bomb("nmg_lu_reorient() bad class from nmg_class_lu_fu()\n");
+		}
+rt_log("nmg_lu_reorient() class=%s, orient=%s\n", nmg_class_name(class), nmg_orientation(geom_orient) );
 	} else {
-		geom_orient = OT_OPPOSITE;
+		if( ccw > 0 )  {
+			geom_orient = OT_SAME;	/* same as face (OT_SAME faceuse) */
+		} else {
+			geom_orient = OT_OPPOSITE;
+		}
 	}
 
 	if( lu->orientation == geom_orient )  return;
