@@ -34,7 +34,7 @@ extern struct device_values dm_values;
 struct mem_map {
 	struct mem_map	*m_nxtp;	/* Linking pointer to next element */
 	unsigned	 m_size;	/* Size of this free element */
-	unsigned	 m_addr;	/* Address of start of this element */
+	unsigned long	 m_addr;	/* Address of start of this element */
 };
 #define MAP_NULL	((struct mem_map *) 0)
 

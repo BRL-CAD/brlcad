@@ -1,5 +1,5 @@
 /*
- *			3 D . H
+ *			D B . H
  *
  *		GED Database Format
  *
@@ -15,7 +15,7 @@ extern char *strncpy();
 /*
  *		FILE FORMAT
  *
- * All records are 128 bytes long, and are composed of one of several formats:
+ * All records are of fixed length, and are composed of one of several formats:
  *	An ID record
  *	A SOLID description
  *	A COMBINATION description (1 header, 1 member)
