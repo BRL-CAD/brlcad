@@ -1808,6 +1808,7 @@ int void_ok;
 	NMG_CK_LOOPUSE(new_lu);
 	NMG_CK_LOOP(new_lu->l_p);
 	nmg_loop_g(new_lu->l_p, tol);
+	nmg_loop_g(old_lu->l_p, tol);
 
 	/* XXX Does anyone care about loopuse orientations at this stage?
 	nmg_lu_reorient( old_lu, tol );
