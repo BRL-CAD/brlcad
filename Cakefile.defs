@@ -341,14 +341,13 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-G 16
 #	if 1
 /*		Normal way */
-#		define  CC_OPTS		GFLAG
+#		define  CC_OPTS		GFLAG -prototypes
 #	else
-/*		For prototype checking only -- won't compile everything right */
-#		define  CC_OPTS		GFLAG -prototypes -D__STDC__=1
+/*		To bypass prototype checking */
+#		define  CC_OPTS		GFLAG
 #	endif
 #	define	STANDARD_LIBES	-lm -lc''SHARED
 #	define	LIBRT_LIBES	-lmpc
-#	define	MGED_LIBES	-lbsd -lgl''SHARED
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
 #	if 1
@@ -363,13 +362,19 @@ set -S2 "/bin/sh"
 #if	0
 /*		Non-X11 Configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_4d
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D SGI_AUTO
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 SGI_AUTO
 #		define	LIBFB_LIBES	LIBPKG -lbsd -lgl''SHARED
+#		define	MGED_OBJS	dm-4d
+#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D
+#		define	MGED_LIBES	-lbsd -lgl''SHARED
 #else
 /*		X11 Configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_4d if_X
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D SGI_AUTO -I/usr/X11/include -DIF_X
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 SGI_AUTO -I/usr/X11/include -DIF_X
 #		define	LIBFB_LIBES	-L/usr/X11/lib -lX11 LIBPKG -lbsd -lgl''SHARED
+#		define	MGED_OBJS	dm-4d dm-X
+#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
+#		define	MGED_LIBES	-L/usr/X11/lib -lX11 -lbsd -lgl''SHARED
 #endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
@@ -379,8 +384,6 @@ set -S2 "/bin/sh"
 #	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	LIBRT_TIMER	timerunix
-#	define	MGED_OBJS	dm-4d
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D
 #endif
 
 #if defined(sun) && !defined(sparc)
@@ -852,6 +855,7 @@ set -S2 "/bin/sh"
 #	define	LIBPLOT	../libplot3/libplot3.ARCH_SUF
 #	define	LIBORLE	../liborle/liborle.ARCH_SUF
 #	define	LIBRLE	../librle/librle.ARCH_SUF
+#	define  LIBFFT	../libfft/libfft.ARCH_SUF
 #	define	LIBWDB	../libwdb/libwdb.ARCH_SUF
 #	define	LIBSPL	../libspl/libspl.ARCH_SUF
 #	define	LIBRAD	../librad/librad.ARCH_SUF
@@ -875,6 +879,7 @@ set -S2 "/bin/sh"
 #	define	LIBPLOT	../.libplot3.MTYPE/libplot3.ARCH_SUF
 #	define	LIBORLE	../.liborle.MTYPE/liborle.ARCH_SUF
 #	define	LIBRLE	../.librle.MTYPE/librle.ARCH_SUF
+#	define	LIBFFT	../.libfft.MTYPE/libfft.ARCH_SUF
 #	define	LIBWDB	../.libwdb.MTYPE/libwdb.ARCH_SUF
 #	define	LIBSPL	../.libspl.MTYPE/libspl.ARCH_SUF
 #	define	LIBRAD	../.librad.MTYPE/librad.ARCH_SUF
