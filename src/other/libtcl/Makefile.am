@@ -88,6 +88,7 @@ libtcl_la_LIBADD = \
 	unix/tclUnixThrd.lo \
 	unix/tclUnixTime.lo \
 	${LIBSOCKET} \
+	${LIBNSL} \
 	${LIBZ} \
 	${LIBM} 
 
