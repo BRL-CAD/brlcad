@@ -223,22 +223,27 @@ register complex	root[];
 	LOCAL fastf_t	discrim, denom, rad;
 
 	discrim = quad->cf[1]*quad->cf[1] - 4.0* quad->cf[0]*quad->cf[2];
-	denom = 2.0* quad->cf[0];
+	denom = 0.5 / quad->cf[0];
 	if ( discrim >= 0.0 ){
 		rad = sqrt( discrim );
-		root[0].re = ( -quad->cf[1] + rad )/ denom;
+		root[0].re = ( -quad->cf[1] + rad ) * denom;
 		root[0].im = 0.0;
-		root[1].re = ( -quad->cf[1] - rad )/ denom;
+		root[1].re = ( -quad->cf[1] - rad ) * denom;
 		root[1].im = 0.0;
 	} else {
 		rad = sqrt( -discrim );
-		root[0].re = -quad->cf[1] / denom;
-		root[0].im =  rad / denom;
-		root[1].re = -quad->cf[1] / denom;
-		root[1].im = -rad / denom;
+		root[0].re = -quad->cf[1] * denom;
+		root[0].im =  rad * denom;
+		root[1].re = -quad->cf[1] * denom;
+		root[1].im = -rad * denom;
 	}
 }
 
+
+#define SQRT3			1.732050808
+#define THIRD			0.333333333333333333333333333
+#define INV_TWENTYSEVEN		0.037037037037037037037037037
+#define	CUBEROOT( a )	( a >= 0.0 ) ? pow( a, THIRD ) : -pow( -a, THIRD )
 
 /*	>>>  c u b i c ( )  <<<
  *
@@ -303,55 +308,55 @@ register complex	root[];
 
 	c1 = eqn->cf[1];
 
-	a = eqn->cf[2] - c1*c1/3.0;
-	b = ( 2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3] )/27.0;
+	a = eqn->cf[2] - c1*c1*THIRD;
+	b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*INV_TWENTYSEVEN;
 
-	delta = b*b/4.0 + a*a*a/27.0;
-
-#define SQRT3			1.732050808
-
-#define third			.3333333333333333333333333
-#define	CubeRoot( a )	( a >= 0.0 ) ? pow( a, third ) : -pow( -a, third )
+	delta = b*b*0.25 + a*a*a*INV_TWENTYSEVEN;
 
 	if ( delta > 0.0 ){
 		LOCAL fastf_t		r_delta, A, B;
 
 		r_delta = sqrt( delta );
-		A = -b*0.5 + r_delta;
-		B = -b*0.5 - r_delta;
+		A = -0.5 * b + r_delta;
+		B = -0.5 * b - r_delta;
 
-		A = CubeRoot( A );
-		B = CubeRoot( B );
+		A = CUBEROOT( A );
+		B = CUBEROOT( B );
 
-		root[2].re = root[1].re = -( root[0].re = A + B )*0.5;
+		root[2].re = root[1].re = -0.5 * ( root[0].re = A + B );
 
 		root[0].im = 0.0;
 		root[2].im = -( root[1].im = (A - B)*SQRT3*0.5 );
 	} else if ( delta == 0.0 ){
 		LOCAL fastf_t	b_2;
-		b_2 = -b*0.5;
+		b_2 = -0.5 * b;
 
-		root[0].re = 2.0* CubeRoot( b_2 );
-		root[2].re = root[1].re = -root[0].re*0.5;
+		root[0].re = 2.0* CUBEROOT( b_2 );
+		root[2].re = root[1].re = -0.5 * root[0].re;
 		root[2].im = root[1].im = root[0].im = 0.0;
 	} else {
-		LOCAL fastf_t		cs_3phi, phi, fact;
+		LOCAL fastf_t		phi, fact;
 		LOCAL fastf_t		cs_phi, sn_phi;
 
-		fact = sqrt( -a/3.0 );
-		cs_3phi = ( -b*0.5 )/( fact*fact*fact );
-		phi = acos( cs_3phi )/3.0;
+		if( (fact = -THIRD * a) < 0.0 )  {
+			fprintf(stderr,"cubic: sqrt(%f)\n", fact);
+			fact = 0.0;
+			phi = 0.0;
+		} else {
+			fact = sqrt( fact );
+			phi = acos( b * (-0.5) / (fact*fact*fact) ) * THIRD;
+		}
 		cs_phi = cos( phi );
 		sn_phi = sin( phi );
 
 		root[0].re = 2.0*fact*cs_phi; 
-		root[1].re = fact*( -cs_phi + SQRT3*sn_phi );
-		root[2].re = fact*( -cs_phi - SQRT3*sn_phi );
+		root[1].re = fact*(  SQRT3*sn_phi - cs_phi);
+		root[2].re = fact*( -SQRT3*sn_phi - cs_phi);
 
 		root[2].im = root[1].im = root[0].im = 0.0;
 	}
 	for ( i=0; i < 3; ++i ){
-		root[i].re -= c1/3.0;
+		root[i].re -= c1 * THIRD;
 	}
 	expecting_fpe = 0;
 	return(1);		/* OK */
@@ -393,8 +398,8 @@ register complex	root[];
 	}
 
 #define NearZero( a )		{ if ( a < 0.0 && a > -SMALL ) a = 0.0; }
-	p = eqn->cf[1]*eqn->cf[1]/4.0 + U - eqn->cf[2];
-	q = U*U/4.0 - eqn->cf[4];
+	p = eqn->cf[1]*eqn->cf[1]*0.25 + U - eqn->cf[2];
+	q = U*U*0.25 - eqn->cf[4];
 	NearZero( p );
 	NearZero( q );
 	if ( p < 0 || q < 0 ){
@@ -410,14 +415,18 @@ register complex	root[];
 	quad2.cf[1] = eqn->cf[1]*0.5 + p;
 	q1 = U*0.5 - q;
 	q2 = U*0.5 + q;
-	if ( Abs( quad1.cf[1]*q2 + quad2.cf[1]*q1 - eqn->cf[3] ) < SMALL){
+
+	p = quad1.cf[1]*q2 + quad2.cf[1]*q1 - eqn->cf[3];
+	if( Abs( p ) < SMALL){
 		quad1.cf[2] = q1;
 		quad2.cf[2] = q2;
-	} else if ( Abs( quad1.cf[1]*q1 + quad2.cf[1]*q2 - eqn->cf[3]) < SMALL ){
-		quad1.cf[2] = q2;
-		quad2.cf[2] = q1;
 	} else {
-		return(0);	/* FAIL */
+		p = quad1.cf[1]*q1 + quad2.cf[1]*q2 - eqn->cf[3];
+		if( Abs( p ) < SMALL ){
+			quad1.cf[2] = q2;
+			quad2.cf[2] = q1;
+		} else
+			return(0);	/* FAIL */
 	}
 
 	quadratic( &quad1, root );
