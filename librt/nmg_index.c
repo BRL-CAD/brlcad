@@ -41,7 +41,7 @@ static char RCSnmg_index[] = "@(#)$Header$ (BRL)";
  */
 int
 nmg_index_of_struct( p )
-register long	*p;
+register CONST long	*p;
 {
 	switch(*p)  {
 	case NMG_MODEL_MAGIC:
@@ -730,8 +730,8 @@ CONST struct model			*m;
  */
 void
 nmg_struct_counts( m, str )
-/*CONST*/ struct model	*m;
-/*CONST*/ char		*str;
+CONST struct model	*m;
+CONST char		*str;
 {
 	struct nmg_struct_counts	cnts;
 	long	**tab;
@@ -805,6 +805,10 @@ struct model *m2;
 		CHECK_INDEX(v); \
 		if(v->vg_p) CHECK_INDEX(v->vg_p); \
 	}
+
+/*
+ *			N M G _ F I N D _ M A X _ I N D E X
+ */
 long
 nmg_find_max_index( m )
 CONST struct model *m;

@@ -3130,7 +3130,8 @@ BU_EXTERN(void			nmg_ck_vs_in_region, (CONST struct nmgregion *r,
 BU_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct bn_tol *tol) );
 
 /* From nmg_index.c */
-BU_EXTERN(int			nmg_index_of_struct, (long *p) );
+BU_EXTERN(int			nmg_index_of_struct, (CONST long *p) );
+BU_EXTERN(void			nmg_m_set_high_bit, (struct model *m));
 BU_EXTERN(void			nmg_m_reindex, (struct model *m, long newindex) );
 BU_EXTERN(void			nmg_vls_struct_counts, (struct bu_vls *str,
 				CONST struct nmg_struct_counts *ctr));
@@ -3140,8 +3141,13 @@ BU_EXTERN(void			nmg_pr_struct_counts,
 BU_EXTERN(long			**nmg_m_struct_count,
 				(struct nmg_struct_counts *ctr,
 				CONST struct model *m) );
+BU_EXTERN(void			nmg_struct_counts,
+				(CONST struct model	*m,
+				CONST char		*str));
 BU_EXTERN(void			nmg_merge_models, (struct model *m1,
 							struct model *m2) );
+BU_EXTERN(long			nmg_find_max_index, (CONST struct model *m));
+
 /* From nmg_rt.c */
 
 /* From rt_dspline.c */
