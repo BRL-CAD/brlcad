@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  93/10/26  06:33:01  mike
+ * Changed printf() to jprintf() so that all modules could safely
+ * use stdio.h
+ * 
  * Revision 10.2  93/10/26  05:30:25  mike
  * ANSI C
  * 

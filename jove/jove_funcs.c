@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.4  94/09/17  04:57:35  butler
+ * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
+ * 
  * Revision 10.3  1993/12/10  04:25:54  mike
  * Added FindCursorTag(), bound to M-t.
  *

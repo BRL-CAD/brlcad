@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.5  95/01/03  21:35:28  butler
+ * lseek takes an off_t as its second arg under BSDI and NetBSD
+ * 
  * Revision 10.4  1994/09/17  04:57:35  butler
  * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
  *

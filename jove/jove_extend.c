@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  93/10/26  06:06:44  mike
+ * Changed getchar() to jgetchar() to avoid stdio.h conflict.
+ * 
  * Revision 10.2  93/10/26  03:45:31  mike
  * ANSI C
  * 

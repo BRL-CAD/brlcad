@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.6  94/09/17  04:57:35  butler
+ * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
+ * 
  * Revision 10.5  1993/12/10  05:37:01  mike
  * ANSI lint
  *

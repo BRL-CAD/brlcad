@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/10/26  06:07:55  mike
+ * ANSI C
+ * 
  * Revision 10.1  91/10/12  06:54:01  mike
  * Release_4.0
  * 

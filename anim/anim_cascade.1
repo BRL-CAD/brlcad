@@ -1,0 +1,35 @@
+.TH ANIM_CASCADE 1 BRL/CAD
+.SH NAME
+anim_cascade - evaluate movement of one object relative to another
+.SH SYNOPSIS
+.B anim_cascade
+.B world.table <
+.B relative.table >
+.B absolute.table
+.SH DESCRIPTION
+Given the position and orientation of one object and the position and
+orientation of another object relative to the first,
+.I anim_cascade
+produces the absolute position and orientation of the second object.
+Both input tables and the output table are animation tables in the format:
+
+time x y z yaw pitch roll
+
+.SH EXAMPLES
+Cascaded object movement can usually be achieved by exploiting the
+hierarchal grouping of BRLCAD models; however, camera movement requires that
+movement and orientation be specified in one step. To
+create an animation table for a camera which is examining a moving
+vehicle, one table is created for the vehicle motion, and another for
+the camera motion relative to the still vehicle. They can be combined with 
+.I anim_cascade 
+to get an
+animation table for the combined movement of the camera.
+.SH AUTHOR
+Carl J. Nuzman
+.SH COPYRIGHT
+	This software is Copyright (C) 1993 by the United States Army
+in all countries except the USA.  All rights reserved.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.MIL>.

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:54:07  mike
+ * Release_4.0
+ * 
  * Revision 2.1  88/03/10  05:24:49  phil
  * ignore ll if li != winsize
  * 

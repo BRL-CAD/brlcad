@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  94/12/21  22:04:46  mike
+ * Eliminated "statement not reached" warning.
+ * 
  * Revision 10.2  93/10/26  05:57:41  mike
  * ANSI C
  * 

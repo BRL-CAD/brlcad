@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.4  95/01/04  08:43:58  mike
+ * "../jove/jove_misc.c", line 234: value of void expression used
+ * on VAX
+ * 
  * Revision 10.3  93/10/26  06:05:57  mike
  * ANSI C
  * 

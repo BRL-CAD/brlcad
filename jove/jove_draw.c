@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.4  93/10/26  06:33:04  mike
+ * Changed printf() to jprintf() so that all modules could safely
+ * use stdio.h
+ * 
  * Revision 10.3  93/10/26  06:01:39  mike
  * Changed getchar() to jgetchar() to prevent stdio.h conflict
  * 

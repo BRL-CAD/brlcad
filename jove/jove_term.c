@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  93/12/10  06:43:37  mike
+ * More POSIX foolishness, this time with the baud rate.
+ * Can only use symbolic values like B9600, not numbers.
+ * 
  * Revision 10.2  93/10/26  05:43:27  mike
  * POSIX and termios
  * 

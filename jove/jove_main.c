@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.13  94/12/29  23:02:59  mike
+ * Bug #158.  Eliminated ^V doubling on DEC Alpha, and Solaris.
+ * 
  * Revision 10.12  94/12/14  15:33:54  jra
  * Cray also needs file.h included.
  * 
