@@ -164,6 +164,8 @@ int main(int argc, char **argv)
 	elevation = 25.0;
 
 	AmbientIntensity=0.4;
+	background[0] = background[1] = 0.0;
+	background[2] = 1.0/255.0; /* slightly non-black */
 
 	/* Before option processing, get default number of processors */
 	npsw = bu_avail_cpus();		/* Use all that are present */

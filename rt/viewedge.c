@@ -77,7 +77,6 @@ fastf_t		maxangle; /* Value of the cosine of the angle between
 
 typedef int color[3];
 color	foreground = { 255, 255, 255};
-color	background = { 0, 0, 1};
 
 /*
  * Flags that set which edges are detected.
