@@ -1,7 +1,7 @@
 /*			A P P L I C A T I O N . C
  *
  *	A toy application to test libredblack
-
+ *
  *	Author:	Paul Tanenbaum
  *
  */
