@@ -130,7 +130,7 @@ TAG NAMING CONVENTIONS
 	<comment>
 		
 		For branches the comment is "branch", for patches the comment
-		is "patch".  For releases, it is left blank.  For other
+		is "patches".  For releases, it is left blank.  For other
 		miscellaneous tags, the comment is up to the person tagging.
 
 
@@ -169,7 +169,7 @@ NON-BRANCH TAG NAMING SCHEME
 
     FORMAT FOR MAKING A PATCH RELEASE:
 
-        rel-<revision>-<date>-patch
+        rel-<revision>-<date>-patches
 
 
     FORMAT FOR MERGES:
@@ -207,8 +207,8 @@ HOW TO PATCH A RELEASE
 
 	0) Create a patch branch off of the release tag to work with:
 
-            cvs rtag -b -r rel-<revision>-<date> rel-<revision>-<date>-patch brlcad
-            cvs checkout -b rel-<revision>-<date>-patch brlcad
+            cvs rtag -b -r rel-<revision>-<date> rel-<revision>-<date>-patches brlcad
+            cvs checkout -b rel-<revision>-<date>-patches brlcad
 
 	1) Make source modifications and patches as needed.  Test, fix,
        and retest as needed.
