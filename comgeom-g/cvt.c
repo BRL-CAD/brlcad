@@ -22,33 +22,11 @@ March 81  CAS	Added processing for ARS
 #include "./ged_types.h"
 #include "./3d.h"
 
+int	version;	/* v4 or v5 ? */
+
 char name_it[16];	/* stores argv if it exists and appends it
 			to each name generated.*/
 long tell();
-
-char *titles[] = {
-	"holder",
-	"RPP",		/* 1 */
-	"BOX",
-	"RAW",
-	"ARB4",
-	"ARB5",
-	"ARB6",
-	"ARB7",
-	"ARB8",
-	"ELL",
-	"ELL1",
-	"SPH",
-	"RCC",
-	"REC",
-	"TRC",
-	"TEC",
-	"TOR",
-	"TGC",
-	"CONE",
-	"ELLG",
-	"8888",		/* 20 */
-};
 
 #define NUMPERCOL 8
 
@@ -62,8 +40,6 @@ union record record;
 long regionpos;
 long endpos;
 
-int digits;
-
 main( argc, argv )
 char **argv;
 {
@@ -73,10 +49,12 @@ char **argv;
 
 	if( ! (argc == 3 || argc == 4) )
 	{
-		printf(	"Usage:  comg-g [opts] input_file output_file" );
-		printf(		" [ name_postfix ]\n");
+		printf(	"Usage:  comg-g [opts] input_file output_file [name_suffix]\n" );
 		exit(10);
 	}
+
+	version = 5;	/* XXX should be -v option */
+
 		/* get postfix, else use it as a null string.*/
 	if( argc == 4 )		strncpy( name_it, argv[3], 16 );
 	else			strncpy( name_it, "", 16 );
@@ -99,11 +77,10 @@ char **argv;
 	}
 	updfd = open( argv[2], 2 );
 
-#ifdef GIFT5
-	printf("\n**** CVT5: 12Jun84 ****\n\n");
-#else
-	printf("\n**** CVT4: 12Jun84 ****\n\n");
-#endif
+	if( version == 5 )
+		printf("\n**** CVT5: 12Jun84 ****\n\n");
+	else
+		printf("\n**** CVT4: 12Jun84 ****\n\n");
 
 	printf("COMGEOM input file must have this format:\n");
 	printf("     1.  title card\n");
@@ -111,9 +88,8 @@ char **argv;
 	printf("     3.  solid table\n");
 	printf("     4.  region table\n");
 	printf("     5.  -1\n");
-#ifndef GIFT4
-	printf("     6.  blank\n");
-#endif
+	if( version == 4 )
+		printf("     6.  blank\n");
    	printf("     7.  region ident table\n\n");
 
 	/* read title */
@@ -178,10 +154,10 @@ char **argv;
 	/* REGION IDENT TABLE */
 	lseek( updfd, regionpos, 0 );
 
-#ifndef GIFT5
-	/* read the blank card (line) */
-	getline( &record );
-#endif
+	if( version == 4 )  {
+		/* read the blank card (line) */
+		getline( &record );
+	}
 
 	printf("\nprocessing region ident table\n");
 

@@ -24,7 +24,7 @@
 #include "./ged_types.h"
 #include "./3d.h"
 
- double sqrt();
+extern int	version;
 
 #define PI	3.14159265358979323846264	/* Approx */
 
@@ -227,31 +227,32 @@ struct solids *in;
 		return;
 
 	case ELL:
-#ifdef GIFT5
-		/* NO ELL's in gift5  -  fall through to ELL1 */
-#else
-		/*
-		 * For simplicity, we convert ELL to ELL1, then
-		 * fall through to ELL1 code.  Format of ELL is
-		 * F1, F2, l
-		 * ELL1 format is V, A, r
-		 */
-		r1 = iv[6];		/* length */
-		VADD2( O1, F1, F2 );
-		VSCALE( O1, O1, 0.5 );	/* O1 holds V */
+		if( version == 4 )  {
+			/*
+			 * For simplicity, we convert ELL to ELL1, then
+			 * fall through to ELL1 code.  Format of ELL is
+			 * F1, F2, l
+			 * ELL1 format is V, A, r
+			 */
+			r1 = iv[6];		/* length */
+			VADD2( O1, F1, F2 );
+			VSCALE( O1, O1, 0.5 );	/* O1 holds V */
 
-		VSUB2( O3, F2, F1 );	/* O3 holds F2 -  F1 */
-		m1 = MAGNITUDE( O3 );
-		r2 = 0.5 * r1 / m1;
-		VSCALE( O2, O3, r2 );	/* O2 holds A */
+			VSUB2( O3, F2, F1 );	/* O3 holds F2 -  F1 */
+			m1 = MAGNITUDE( O3 );
+			r2 = 0.5 * r1 / m1;
+			VSCALE( O2, O3, r2 );	/* O2 holds A */
 
-		iv[6] = sqrt( MAGSQ( O2 ) - (m1 * 0.5)*(m1 * 0.5) );	/* r */
-		VMOVE( F1, O1 );	/* Move V */
-		VMOVE( F2, O2 );	/* Move A */
+			iv[6] = sqrt( MAGSQ( O2 ) - (m1 * 0.5)*(m1 * 0.5) );	/* r */
+			VMOVE( F1, O1 );	/* Move V */
+			VMOVE( F2, O2 );	/* Move A */
+		} else {
+			/* NO ELL's in gift5  -  fall through to ELL1 */
+		}
 		/* fall through */
-#endif
 
-	case ELL1:
+	case ELL1:		/* GIFT4 name */
+	case GENELL:		/* GIFT5 name */
 		/* GENELL is V, A, B, C */
 		r1 = iv[6];		/* R */
 		VMOVE( work, F1 );

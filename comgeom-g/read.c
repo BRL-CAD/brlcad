@@ -9,6 +9,7 @@ extern double atof();
 extern char *malloc();
 
 #include <stdio.h>
+#include <ctype.h>
 #include "./ged_types.h"
 #include "./3d.h"
 
@@ -18,15 +19,10 @@ extern char *malloc();
 
 extern union record record;
 extern int sol_total, sol_work;
+extern int	version;
 
 struct scard {
-#ifdef GIFT5
-	char	sc_num[5];
-	char	sc_type[5];
-#else
-	char	sc_num[3];
-	char	sc_type[7];
-#endif
+	char	sc_num_and_type[10];
 	char	sc_fields[6][10];
 	char	sc_remark[16];
 } 
@@ -46,6 +42,8 @@ struct rcard  {
 rcard;
 
 struct idcard  {
+	char	id_foo[80];
+#if 0
 #ifdef GIFT5
 	char	id_region[5];
 	char	id_rid[5];
@@ -60,6 +58,7 @@ struct idcard  {
 	char	id_waste[44];
 	char	id_mat[3];	/* use any existing material code */
 	char	id_los[3];	/* use any existing los percentage */
+#endif
 #endif
 } 
 idcard;
@@ -90,6 +89,17 @@ int ncards[] =  {
 int outfd;		/* Output only fd */
 int updfd;		/* Update fd */
 
+trim_trail_spaces( cp )
+register char	*cp;
+{
+	register char	*ep;
+
+	ep = cp + strlen(cp) - 1;
+	while( ep >= cp )  {
+		if( *ep != ' ' )  break;
+		*ep-- = '\0';
+	}
+}
 
 /*
  *			G E T S O L I D
@@ -107,6 +117,8 @@ register struct solids *solidp;
 	static float jbuf[10];
 	struct ars_rec *arsap;
 	union record *b;
+	char	cur_solid_num[16];
+	char	solid_type[16];
 
 
 	if( sol_work == sol_total )	/* processed all solids */
@@ -115,18 +127,35 @@ register struct solids *solidp;
 	if( (i = getline( &scard )) == EOF )
 		return( 0 );	/* end of file */
 
-	/* another solid - increment solid counter */
-	sol_work++;
+	if( version == 5 )  {
+		strncpy( cur_solid_num, ((char *)&scard)+0, 5 );
+		cur_solid_num[5] = '\0';
+		strncpy( solid_type, ((char *)&scard)+5, 5 );
+		solid_type[5] = '\0';
+	} else {
+		strncpy( cur_solid_num, ((char *)&scard)+0, 3 );
+		cur_solid_num[3] = '\0';
+		strncpy( solid_type, ((char *)&scard)+3, 7 );
+		solid_type[7] = '\0';
+	}
+	/* Trim trailing spaces */
+	trim_trail_spaces( cur_solid_num );
+	trim_trail_spaces( solid_type );
+printf("cur_solid_num='%s', solid_type='%s'\n", cur_solid_num, solid_type );
 
-	scard.sc_type[4] = '\0';
+	/* another solid - increment solid counter
+	 * rather than using number from the card, which may go into
+	 * pseudo-hex format in version 4 models (due to 3 column limit).
+	 */
+	sol_work++;
 
 	/*
 	 * PROCESS ARS SOLID
 	 */
-	if( lookup(scard.sc_type) == ARS){
+	if( lookup(solid_type) == ARS){
 		arsap = (struct ars_rec *) solidp;
 		arsap->a_id = ARS_A;
-		arsap -> a_type = lookup(scard.sc_type);
+		arsap -> a_type = ARS;
 		namecvt( sol_work, arsap -> a_name, 's');
 		printf("%s \t",arsap->a_name);
 
@@ -202,7 +231,7 @@ register struct solids *solidp;
 			for(n=1; n <(cdcx+1); n++)  {
 				if( getline(&scard) == EOF)
 					{
-					printf("read of granule failed\n");
+					printf("read of ARS granule failed\n");
 					return	0;
 					}
 				cds++;
@@ -312,7 +341,7 @@ register struct solids *solidp;
 
 
 		solidp->s_id = SOLID;
-		solidp->s_type = lookup( scard.sc_type );
+		solidp->s_type = lookup( solid_type );
 		solidp->s_num = sol_work;
 
 		namecvt( solidp->s_num, solidp->s_name, 's' );
@@ -321,15 +350,18 @@ register struct solids *solidp;
 			if( cd != 1 )  {
 				if( getline( &scard ) == EOF )
 					{
-					printf("too few cards for solid %d\n",solidp->s_num);
+					printf("too few cards for solid %d\n",
+						solidp->s_num);
 					return	0;
 					}
 				/* continuation card
 				 * solid type should be blank 
 				 */
-				if(scard.sc_type[0] != ' ') {
-					printf("too few cards for solid %d\n",solidp->s_num);
-					exit(10);
+				if( (version==5 && ((char *)&scard)[5] != ' ' ) ||
+				    (version==4 && ((char *)&scard)[3] != ' ' ) )  {
+					printf("solid %d continuation card solid type non-blank, ='%s'\n",
+						solidp->s_num, solid_type);
+					return 0;
 				}
 			}
 
@@ -429,46 +461,48 @@ register union record *rp;
 			}
 
 			mp = &(mem[count++].M);
-#ifdef GIFT5
-			if(rcard.rc_fields[i].rcf_or == 'g' ||
-			   rcard.rc_fields[i].rcf_or == 'G')
-				reg_reg_flag = 1;
+			if( version == 5 )  {
+				/* Region references region in Gift5 */
+				if(rcard.rc_fields[i].rcf_or == 'g' ||
+				   rcard.rc_fields[i].rcf_or == 'G')
+					reg_reg_flag = 1;
 
-			if( cp[1] == 'R' || cp[1] == 'r' ) 
-				mp->m_relation = UNION;
-			else {
-				if( n < 0 )  {
-					mp->m_relation = SUBTRACT;
-					n = -n;
+				if( cp[1] == 'R' || cp[1] == 'r' ) 
+					mp->m_relation = UNION;
+				else {
+					if( n < 0 )  {
+						mp->m_relation = SUBTRACT;
+						n = -n;
+					}  else  {
+						mp->m_relation = INTERSECT;
+					}
+				}
+			} else {
+				/* XXX this may actually be an old piece of code,
+				 * rather than the V4 way of doing it. */
+				if( cp[1] != ' ' )  {
+					mp->m_relation = UNION;
 				}  else  {
-					mp->m_relation = INTERSECT;
+					if( n < 0 )  {
+						mp->m_relation = SUBTRACT;
+						n = -n;
+					}  else  {
+						mp->m_relation = INTERSECT;
+					}
 				}
 			}
-#else
-			if( cp[1] != ' ' )  {
-				mp->m_relation = UNION;
-			}  else  {
-				if( n < 0 )  {
-					mp->m_relation = SUBTRACT;
-					n = -n;
-				}  else  {
-					mp->m_relation = INTERSECT;
-				}
-			}
-#endif
+
 			mp->m_id = MEMB;
 			mp->m_num = n;
 			mat_idn( mp->m_mat );
 
-#ifdef GIFT5
+			/* In Gift5, regions can reference regions */
 			if( reg_reg_flag )
 				namecvt(n, mp->m_instname, 'r');
 			else
 				namecvt( n, mp->m_instname, 's' );
 			reg_reg_flag = 0;
-#else
-			namecvt( n, mp->m_instname, 's' );
-#endif
+
 			cp += 7;
 		}
 	}
@@ -509,46 +543,57 @@ register union record *rp;
 	int mat;
 	int los;
 	char buff[11];
+	int	buflen;
 
 	if( getline( (char *) &idcard ) == EOF ||
 	    ((char *) &idcard)[0] == '\n' )
 		return( 0 );
 
-#ifdef GIFT5
-#	define BUFLEN	5
-#else
-#	define BUFLEN	10
-#endif
-	buff[BUFLEN] = '\0';
+	if( version == 5 )  {
+		sscanf( idcard, "%5d%5d%5d%5d%5d",
+			&reg, &id, &air, &mat, &los );
+	} else {
+		sscanf( idcard, "%10d%10d%10d%*44s%3d%3d",
+			&reg, &id, &air, &mat, &los );
+	}
+printf("reg=%d,id=%d,air=%d,mat=%d,los=%d\n", reg,id,air,mat,los);
 
-	for(i=0; i<BUFLEN; i++)
+#if 0
+	if( version == 5 )
+		buflen = 5;
+	else
+		buflen = 10;
+	buff[buflen] = '\0';
+
+	for(i=0; i<buflen; i++)
 		buff[i] = idcard.id_region[i];
 	reg = atoi( buff );
 
-	for(i=0; i<BUFLEN; i++)
+	for(i=0; i<buflen; i++)
 		buff[i] = idcard.id_rid[i];
 	id = atoi( buff );
 
-	for(i=0; i<BUFLEN; i++)
+	for(i=0; i<buflen; i++)
 		buff[i] = idcard.id_air[i];
 	air = atoi( buff );
 
-#ifdef GIFT5
-	for(i=0; i<5; i++)
-		buff[i] = idcard.id_mat[i];
-	mat = atoi( buff );
+	if( version == 5 )  {
+		for(i=0; i<5; i++)
+			buff[i] = idcard.id_mat[i];
+		mat = atoi( buff );
 
-	for(i=0; i<5; i++)
-		buff[i] = idcard.id_los[i];
-	los = atoi( buff );
-#else
-	idcard.id_mat[2] = '\0';
-	mat = atoi( idcard.id_mat );
+		for(i=0; i<5; i++)
+			buff[i] = idcard.id_los[i];
+		los = atoi( buff );
+	} else {
+		idcard.id_mat[2] = '\0';
+		mat = atoi( idcard.id_mat );
 
-	for( i=0; i<3; i++ )
-		buff[i] = idcard.id_los[i];
-	buff[3] = '\0';
-	los = atoi( buff );
+		for( i=0; i<3; i++ )
+			buff[i] = idcard.id_los[i];
+		buff[3] = '\0';
+		los = atoi( buff );
+	}
 #endif
 
 	if( (i = read( updfd, (char *) rp, sizeof(union record) ))
@@ -606,45 +651,26 @@ struct table  {
 	char	t_name[6];
 }  
 table[] =  {
-	RPP,	"rpp ",
-	BOX,	"box ",
-	RAW,	"raw ",
+	RPP,	"rpp",
+	BOX,	"box",
+	RAW,	"raw",
 	ARB8,	"arb8",
 	ARB7,	"arb7",
 	ARB6,	"arb6",
 	ARB5,	"arb5",
 	ARB4,	"arb4",
-	ELL,	"ell ",
-	ELL1,	"ell1",
-	SPH,	"sph ",
-	RCC,	"rcc ",
-	REC,	"rec ",
-	TRC,	"trc ",
-	TEC,	"tec ",
-	TOR,	"tor ",
-	TGC,	"tgc ",
 	GENELL,	"ellg",
-	GENTGC,	"CONE",
-	ARS,  "ars ",
-	RPP,	"RPP ",	/* sometimes COMGEOM files are uppercase */
-	BOX,	"BOX ",
-	RAW,	"RAW ",
-	ARB8,	"ARB8",
-	ARB7,	"ARB7",
-	ARB6,	"ARB6",
-	ARB5,	"ARB5",
-	ARB4,	"ARB4",
-	ELL,	"ELL ",
-	ELL1,	"ELL1",
-	SPH,	"SPH ",
-	RCC,	"RCC ",
-	REC,	"REC ",
-	TRC,	"TRC ",
-	TEC,	"TEC ",
-	TOR,	"TOR ",
-	TGC,	"TGC ",
-	GENELL,	"ELLG",
-	ARS,  "ARS ",
+	ELL1,	"ell1",
+	ELL,	"ell",		/* After longer ell entries */
+	SPH,	"sph",
+	RCC,	"rcc",
+	REC,	"rec",
+	TRC,	"trc",
+	TEC,	"tec",
+	TOR,	"tor",
+	TGC,	"tgc",
+	GENTGC,	"cone",
+	ARS,	"ars",
 	0,	""
 };
 
@@ -652,28 +678,47 @@ table[] =  {
  *			L O O K U P
  */
 int
-lookup( cp )  {
+lookup( cp )
+register char	*cp;
+{
 	register struct table *tp;
+	register char	*lp;
+	register char	c;
+	char	low[32];
+	
+
+	/* Reduce input to lower case */
+	lp = low;
+	while( (c = *cp++) != '\0' )  {
+		if( !isascii(c) )  {
+			*lp++ = '?';
+		} else if( isupper(c) )  {
+			*lp++ = tolower(c);
+		} else {
+			*lp++ = c;
+		}
+	}
+	*lp = '\0';
 
 	tp = &table[0];
-
 	while( tp->t_value != 0 )  {
-		if( strcmp( cp, tp->t_name ) == 0 )
+		if( strcmp( low, tp->t_name ) == 0 )
 			return( tp->t_value );
 		tp++;
 	}
 
-	printf("ERROR:  bad solid type '%s'\n", cp );
+	printf("ERROR:  bad solid type '%s'\n", low );
 	return(0);
 }
 
 /*
  *			G E T L I N E
  */
+int
 getline( cp )
 register char *cp;
 {
-	register char	c;
+	register int	c;
 	register int	count = 80;
 
 	while( (c = getchar()) == '\n' ) /* Skip blank lines.		*/
@@ -681,6 +726,10 @@ register char *cp;
 	while( c != EOF && c != '\n' )  {
 		*cp++ = c;
 		count--;
+		if( count <= 0 )  {
+			printf("input buffer (80) overflow\n");
+			break;
+		}
 		c = getchar();
 	}
 	if( c == EOF )
@@ -697,11 +746,15 @@ register char *cp;
 register int n;
 { static char str[16], s[16];
   extern char name_it[16];		/* argv[3] */
+#if 0
 	str[0] = c;			/* record type letter.*/
 	str[1] = '\0';			/* terminate string.*/
 	f2a( (float)n, s, 12, 0 );	/* get string for 'n'.*/
 	strcat( str, s );		/* append 'n'string.*/
 	strcat( str, name_it );	/* append argv[3].*/
+#else
+	sprintf( str, "%c%d%s", c, n, name_it );
+#endif
 	strncpy( cp, str, 16 );		/* truncate str to 16 chars.*/
 }
 
@@ -740,12 +793,12 @@ get_control()
 		exit(10);
 	}
 
-#ifdef GIFT5
-	sscanf( ch, "%5d%5d", &sol_total, &reg_total );
-#else
-	ch[20] = 0;
-	sol_total = atoi( ch+10 );
-#endif
+	if( version == 5 )  {
+		sscanf( ch, "%5d%5d", &sol_total, &reg_total );
+	} else {
+		ch[20] = 0;
+		sol_total = atoi( ch+10 );
+	}
 
 	printf("Expecting %d solids, %d regions\n", sol_total, reg_total);
 }
