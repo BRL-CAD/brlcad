@@ -7,7 +7,7 @@
 .SH NAME
 nirt \- interactively ray trace an MGED model
 .SH SYNOPSIS
-.BR "nirt  [ -u " n " ] [ -x " f " ] " "model.g objects ..."
+.BR "nirt  [ -u " n " ] [ -x " v " ] " "model.g objects ..."
 .SH DESCRIPTION
 .I Nirt
 operates on the specified
@@ -37,10 +37,13 @@ See the discussion of the
 .I useair
 command below.
 The
-.BI -x " f"
+.BI -x " v"
 option sets the
 .IR librt (3)
-debug flags to the hexadecimal bit vector \fIf\fR.
+debug flags to the hexadecimal bit vector \fIv\fR.
+See the discussion of the
+.I libdebug
+command below.
 
 If there is a file called .nirtrc in the current directory,
 otherwise in the user's home directory,
@@ -51,7 +54,6 @@ commands
 and is useful for loading predefined states
 or initializing actions for output statements.
 .SS Commands
-The commands and their meanings are given below.
 .TP 12
 .BI "xyz [" "x y z" "]"
 Sets the ray origination point to
@@ -103,11 +105,8 @@ Changing azimuth and elevation will change the direction vector.
 Fires a ray from the current origination point in the current direction.
 .TP 12
 .BI "useair [" n "]"
-Sets the
-.I useair
-member of the
-.I rt_i
-structure to the integer \fIn\fR.
+Sets the \fIuseair\fR member
+of the \fIrt_i\fR structure to the integer \fIn\fR.
 If \fIn\fR is 0, then
 .I nirt
 ignores any air in the geometry.
@@ -180,6 +179,23 @@ commands.
 .BI print " item"
 Prints the current value of the output item \fIitem\fR.
 See the discussion of output statements below.
+.TP 12
+.BI libdebug " v"
+Sets the
+.IR librt (3)
+debug flags
+(the \fIdebug\fR member of the \fIrt_g\fR structure)
+to the hexadecimal bit vector \fIv\fR.
+These flags control the amount and kind of diagnostic print statements
+.IR librt (3)
+executes.
+If \fIv\fR is 0,
+then no diagnostics are produced.
+If this command is invoked with no arguments,
+.I nirt
+prints the current value of \fIv\fR
+and the names of any of its bits that are set.
+Default is 0.
 .TP 12
 .BI "! [" command "]"
 Executes the shell pipeline
