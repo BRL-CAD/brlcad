@@ -35,6 +35,8 @@ struct partition 	*part_head;
     fastf_t		los;
     int			i;
     overlap		*ovp;	/* the overlap record for this partition */
+    point_t		inormal;
+    point_t		onormal;
 
     fastf_t		get_obliq();
 
@@ -43,8 +45,10 @@ struct partition 	*part_head;
     report(FMT_HEAD);
     for (part = part_head -> pt_forw; part != part_head; part = part -> pt_forw)
     {
-	RT_HIT_NORM( part->pt_inhit, part->pt_inseg->seg_stp, &ap->a_ray );
-	RT_HIT_NORM( part->pt_outhit, part->pt_outseg->seg_stp, &ap->a_ray );
+	RT_HIT_NORMAL( inormal, part->pt_inhit, part->pt_inseg->seg_stp,
+		&ap->a_ray, part->pt_inflip );
+	RT_HIT_NORMAL( onormal, part->pt_outhit, part->pt_outseg->seg_stp,
+		&ap->a_ray, part->pt_outflip );
 
 	/* Update the output values */
 	/*
@@ -57,8 +61,8 @@ struct partition 	*part_head;
 	{
 	    r_entry(i) = part-> pt_inhit -> hit_point[i];
 	    r_exit(i) = part-> pt_outhit -> hit_point[i];
-	    n_entry(i) = part -> pt_inhit -> hit_normal[i];
-	    n_exit(i) = part -> pt_outhit -> hit_normal[i];
+	    n_entry(i) = inormal[i];
+	    n_exit(i) = onormal[i];
 	}
 	r_entry(D) = r_entry(X) * cos(er) * cos(ar)
 		    + r_entry(Y) * cos(er) * sin(ar)
@@ -93,9 +97,9 @@ struct partition 	*part_head;
 	ValTab[VTI_SURF_NUM_IN].value.ival = part -> pt_inhit -> hit_surfno;
 	ValTab[VTI_SURF_NUM_OUT].value.ival = part -> pt_outhit -> hit_surfno;
 	ValTab[VTI_OBLIQ_IN].value.fval =
-	    get_obliq(ap -> a_ray.r_dir, part -> pt_inhit -> hit_normal);
+	    get_obliq(ap -> a_ray.r_dir, inormal);
 	ValTab[VTI_OBLIQ_OUT].value.fval =
-	    get_obliq(ap -> a_ray.r_dir, part -> pt_outhit -> hit_normal);
+	    get_obliq(ap -> a_ray.r_dir, onormal);
 
 	/* Do the printing for this partition */
 	report(FMT_PART);
@@ -200,7 +204,6 @@ struct partition 	*part_head;
 	bu_log("if_bhit() got empty partition list.  Shouldn't happen\n");
 	exit (1);
     }
-    RT_HIT_NORM( part->pt_outhit, part->pt_outseg->seg_stp, &ap->a_ray );
 
     if (nirt_debug & DEBUG_BACKOUT)
     {
