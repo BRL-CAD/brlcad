@@ -96,10 +96,10 @@ typedef struct  {
 	RGBpixel *if_pcurp;	/* Current pointer into page buffer.	*/
 	RGBpixel *if_pendp;	/* End of page buffer.			*/
 	int	if_pno;		/* Current "page" in memory.		*/
-	int	if_pref;	/* Page "referenced" flag.		*/
+	int	if_pdirty;	/* Page modified flag.			*/
 	long	if_pixcur;	/* Current pixel number in framebuffer. */
-	long	if_pbytes;	/* Sizeof page buffer (bytes).		*/
 	long	if_ppixels;	/* Sizeof page buffer (pixels).		*/
+	int	if_debug;	/* Buffered IO debug flag.		*/
 	union	{		/* State variables for interface modules */
 		char	*p;
 		long	l;
@@ -138,11 +138,23 @@ typedef struct  {
 /* Library entry points which are true functions.			*/
 extern FBIO	*fb_open();
 extern int	fb_close();
+extern int	fb_ioinit();
+extern int	fb_seek();
+extern int	fb_tell();
+extern int	fb_rpixel();
+extern int	fb_wpixel();
+extern int	fb_flush();
 extern void	fb_log();
 extern int	fb_null();
 
 #define	COPYRGB(to,from) { (to)[RED]=(from)[RED];\
 			   (to)[GRN]=(from)[GRN];\
 			   (to)[BLU]=(from)[BLU]; }
+
+/* Debug Bitvector Definition */
+#define	FB_DEBUG_BIO	1	/* Buffered io calls (less r/wpixel) */
+#define	FB_DEBUG_CMAP	2	/* Contents of colormaps */
+#define	FB_DEBUG_RW	4	/* Contents of reads and writes */
+#define	FB_DEBUG_BRW	8	/* Buffered IO rpixel and wpixel */
 
 #endif INCL_FB
