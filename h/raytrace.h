@@ -76,6 +76,7 @@ struct hit {
  *  particular direction indicates that the surface bends AWAY
  *  from the (outward pointing) normal vector.  (Thanks to GIFT).
  *  c1 and c2 are inverse radii.
+ *  XXX this information needs to be changed, it is out of date!!
  */
 struct curvature {
 	vect_t		crv_pdir;	/* Principle direction */
@@ -561,6 +562,7 @@ struct rt_g {
 	int		res_results;	/* lock on result buffer */
 	int		res_model;	/* lock on model growth (splines) */
 	struct vlist	*rtg_vlFree;	/* vlist freelist */
+	int		rtg_logindent;	/* rt_log() indentation level */
 };
 extern struct rt_g rt_g;
 
@@ -684,6 +686,8 @@ extern void rt_pr_seg(struct seg *segp);
 extern void rt_pr_partitions(struct rt_i *rtip,
 	struct partition *phead, char *title);
 					/* Find solid by leaf name */
+extern void rt_printb(char *s, long v, char *bits);
+					/* Print a bit vector */
 extern struct soltab *rt_find_solid(struct rt_t *rtip, char *name);
 					/* Start the timer */
 extern void rt_prep_timer(void);
@@ -702,6 +706,7 @@ extern int rt_shootray();		/* Shoot a ray */
 extern int rt_gettree();		/* Get expr tree for object */
 extern void rt_pr_seg();		/* Print seg struct */
 extern void rt_pr_partitions();		/* Print the partitions */
+extern void rt_printb();		/* Print a bit vector */
 extern struct soltab *rt_find_solid();	/* Find solid by leaf name */
 
 extern void rt_prep_timer();		/* Start the timer */
