@@ -1,11 +1,13 @@
 /*
- *			G - V R M L . C
+ *			G - V R M L 2 . C
  *
- *  Program to convert a BRL-CAD model (in a .g file) to a VRML  facetted model
+ *  Program to convert a BRL-CAD model (in a .g file) to a VRML (2.0)  facetted model
  *  by calling on the NMG booleans.
  *
  *  Author -
  *	John R. Anderson
+ *  Modified -
+ *	July 1999 by John P. Williams, QUADRA Enterprises to output VRML2 format
  *  
  *  Source -
  *	The U. S. Army Research Laboratory
@@ -69,7 +71,7 @@ struct vrml_mat {
 };
 
 #define PL_O(_m)	offsetof(struct vrml_mat, _m)
-#define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
+#define PL_OA(_m)	offsetofarray(struct vrml_mat, _m)
 
 struct bu_structparse vrml_mat_parse[]={
 	{"%s", TXT_NAME_LEN, "ma_shader", PL_OA(shader), 	FUNC_NULL },
@@ -80,8 +82,8 @@ struct bu_structparse vrml_mat_parse[]={
 	{"%f",	1, "angle",		PL_O(lt_angle),		FUNC_NULL },
 	{"%f",	1, "fract",		PL_O(lt_fraction),	FUNC_NULL },
 	{"%f",	3, "aim",		PL_OA(lt_dir),		FUNC_NULL },
-	{"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "w",         	PL_O(tx_w),             FUNC_NULL },
+	{"%d",  1, "n",         	PL_O(tx_n),             FUNC_NULL },
 	{"%s",  TXT_NAME_LEN, "file",	PL_OA(tx_file), 	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
@@ -100,7 +102,7 @@ static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
-static struct bn_tol		tol;
+static struct rt_tol		tol;
 static struct model		*the_model;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
@@ -134,7 +136,7 @@ union tree			*curtree;
 	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
 	if( id < 0 )
 	{
-		bu_log( "Cannot internal form of %s\n", dp->d_namep );
+		rt_log( "Cannot internal form of %s\n", dp->d_namep );
 		return( -1 );
 	}
 
@@ -199,7 +201,7 @@ char	*argv[];
 	ttol.norm = 0.0;
 
 	/* XXX These need to be improved */
-	tol.magic = BN_TOL_MAGIC;
+	tol.magic = RT_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -212,7 +214,7 @@ char	*argv[];
 		nmg_eue_dist = 2.0;
 	}
 
-	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
 	while ((c = getopt(argc, argv, "d:a:n:o:r:vx:P:X:")) != EOF) {
@@ -264,7 +266,7 @@ char	*argv[];
 	/* Open brl-cad database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
-		bu_log( "Cannot open %s\n" , argv[optind] );
+		rt_log( "Cannot open %s\n" , argv[optind] );
 		perror(argv[0]);
 		exit(1);
 	}
@@ -276,17 +278,29 @@ char	*argv[];
 	{
 		if ((fp_out = fopen( out_file , "w")) == NULL)
 		{
-			bu_log( "Cannot open %s\n" , out_file );
+			rt_log( "Cannot open %s\n" , out_file );
 			perror( argv[0] );
 			return 2;
 		}
 	}
 
-	fprintf( fp_out, "#VRML V1.0 ascii\n" );
-	fprintf( fp_out, "ShapeHints {\n" );
-	fprintf( fp_out, "\tvertexOrdering	COUNTERCLOCKWISE\n" );
-	fprintf( fp_out, "\tshapeType		SOLID\n" );
-	fprintf( fp_out, "\tfaceType		UNKNOWN_FACE_TYPE\n\t}\n" );
+	fprintf( fp_out, "#VRML V2.0 utf8\n" );
+	fprintf( fp_out, "#Original Database Units were %s, VRML units are meters\n",rt_units_string(dbip->dbi_local2base));
+	/* Note we may want to inquire about bounding boxes for the various groups and add Viewpoints nodes that
+	 * point the camera to the center and orient for Top, Side, etc Views
+	 *
+	 * We will add some default Material Color definitions (for thousands groups) before we start defining the geometry 
+	 */
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_999 Material { diffuseColor 0.78 0.78 0.78 } } }\n");
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_1999 Material { diffuseColor 0.88 0.29 0.29 } } }\n");
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_2999 Material { diffuseColor 0.82 0.53 0.54 } } }\n");
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_3999 Material { diffuseColor 0.39 0.89 0.00 } } }\n");
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_4999 Material { diffuseColor 1.00 0.00 0.00 } } }\n");
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_5999 Material { diffuseColor 0.82 0.00 0.82 } } }\n");
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_6999 Material { diffuseColor 0.62 0.62 0.62 } } }\n");
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_7999 Material { diffuseColor 0.49 0.49 0.49 } } }\n");
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_8999 Material { diffuseColor 0.18 0.31 0.31 } } }\n");
+	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_9999 Material { diffuseColor 0.00 0.41 0.82 } } }\n");
 
 	optind++;
 
@@ -297,9 +311,11 @@ char	*argv[];
 		dp = db_lookup( dbip, argv[i], LOOKUP_QUIET );
 		if( dp == DIR_NULL )
 		{
-			bu_log( "Cannot find %s\n", argv[i] );
+			rt_log( "Cannot find %s\n", argv[i] );
 			continue;
 		}
+
+		fprintf ( fp_out, "#Includes group %s\n", argv[i]);
 
 		/* light source must be a combibation */
 		if( !(dp->d_flags & DIR_COMB) )
@@ -315,6 +331,14 @@ char	*argv[];
 
 
 	}
+
+	/* I had hoped to create a separate sub-tree (using the Transform node) for each group name argument
+	 * however, it appears they are all handled at the same time so I will only have one Transform for the
+	 * complete conversion
+	 * Later on switch nodes may be added to turn on and off the groups (via ROUTE nodes) */
+	fprintf ( fp_out, "Transform {\n");
+	fprintf ( fp_out, "\tchildren [\n");
+
 	/* Walk indicated tree(s).  Each non-light-source region will be output separately */
 	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 		1,				/* ncpu */
@@ -326,11 +350,14 @@ char	*argv[];
 	/* Release dynamic storage */
 	nmg_km(the_model);
 
-	bn_vlist_cleanup();
+	rt_vlist_cleanup();
 	db_close(dbip);
 
+		/* Now we need to close each group set */
+		fprintf ( fp_out, "\t]\n}\n");
+
 #if MEMORY_LEAK_CHECKING
-	bu_prmem("After complete G-NMG conversion");
+	rt_prmem("After complete G-NMG conversion");
 #endif
 
 	return 0;
@@ -344,7 +371,7 @@ struct model *m;
 struct mater_info *mater;
 {
 	struct nmgregion *reg;
-	struct bu_ptbl verts;
+	struct nmg_ptbl verts;
 	struct vrml_mat mat;
 	struct bu_vls vls;
 	char *tok;
@@ -355,10 +382,46 @@ struct mater_info *mater;
 	point_t ave_pt;
 	fastf_t pt_count=0.0;
 	char *full_path;
+	/*There may be a better way to capture the region_id, than getting the rt_comb_internal structure, 
+	 * (and may be a better way to capture the rt_comb_internal struct), but for now I just copied the
+	 * method used in select_lights/select_non_lights above, could have used a global variable but I noticed
+	 * none other were used, so I didn't want to be the first
+	 */
+	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	int id;
 
 	NMG_CK_MODEL( m );
 
 	full_path = db_path_to_string( pathp );
+
+	RT_CK_FULL_PATH( pathp );
+	dp = DB_FULL_PATH_CUR_DIR( pathp );
+
+	if( !(dp->d_flags & DIR_COMB) )
+		return;
+
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
+	if( id < 0 )
+	{
+		rt_log( "Cannot internal form of %s\n", dp->d_namep );
+		return;
+	}
+
+	if( id != ID_COMBINATION )
+	{
+		bu_log( "Directory/database mismatch!!\n\t is '%s' a combination or not???\n",
+			dp->d_namep );
+		return;
+	}
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB( comb );
+
+	fprintf( fp, "\t\tShape { \n");
+	fprintf( fp, "\t\t\t# Component_ID: %d   %s\n",comb->region_id,full_path);
+	fprintf( fp, "\t\t\tappearance Appearance { \n");
 
 	if( mater->ma_color_valid )
 	{
@@ -402,14 +465,13 @@ struct mater_info *mater;
 		if( mat.transparency < 0.0 )
 			mat.transparency = 0.0;
 
-		fprintf( fp, "Separator { # start of %s\n", full_path );
-		fprintf( fp, "\tMaterial {\n" );
-		fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\tambientColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
+		fprintf( fp, "\t\t\t\tmaterial Material {\n" );
+		fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\t\t\t\temissiveColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
 		if( mat.transparency > 0.0 )
-			fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
-		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
+			fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
+		fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
 	}
 	else if( strncmp( "glass", mat.shader, 5 ) == 0 )
 	{
@@ -418,14 +480,13 @@ struct mater_info *mater;
 		if( mat.transparency < 0.0 )
 			mat.transparency = 0.8;
 
-		fprintf( fp, "Separator { # start of %s\n", full_path );
-		fprintf( fp, "\tMaterial {\n" );
-		fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\tambientColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
+		fprintf( fp, "\t\t\t\tmaterial Material {\n" );
+		fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\t\t\t\temissiveColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
 		if( mat.transparency > 0.0 )
-			fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
-		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
+			fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
+		fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
 	}
 	else if( strncmp( "texture", mat.shader, 7 ) == 0 )
 	{
@@ -434,7 +495,6 @@ struct mater_info *mater;
 		if( mat.tx_n < 0 )
 			mat.tx_n = 512;
 
-		fprintf( fp, "Separator { # start of %s\n", full_path );
 		if( strlen( mat.tx_file ) )
 		{
 			int tex_fd;
@@ -446,18 +506,18 @@ struct mater_info *mater;
 
 			if( (tex_fd = open( mat.tx_file, O_RDONLY )) == (-1) )
 			{
-				bu_log( "Cannot open texture file (%s)\n", mat.tx_file );
+				rt_log( "Cannot open texture file (%s)\n", mat.tx_file );
 				perror( "g-vrml: " );
 			}
 			else
 			{
-				fprintf( fp, "\tTexture2Transform {\n" );
-				fprintf( fp, "\t\tscaleFactor 1.33333 1.33333\n" );
-				fprintf( fp, "\t\t}\n" );
-				fprintf( fp, "\tTexture2 {\n" );
-				fprintf( fp, "\t\twrapS REPEAT\n" );
-				fprintf( fp, "\t\twrapT REPEAT\n" );
-				fprintf( fp, "\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3 );
+				/* Johns note - need to check (test) the texture stuff */
+				fprintf( fp, "\t\t\t\ttextureTransform TextureTransform {\n");
+				fprintf( fp, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");
+				fprintf( fp, "\t\t\t\ttexture PixelTexture {\n");
+				fprintf( fp, "\t\t\t\t\trepeatS TRUE\n");
+				fprintf( fp, "\t\t\t\t\trepeatT TRUE\n");
+				fprintf( fp, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3 );
 				tex_len = mat.tx_w*mat.tx_n*3;
 				while( bytes_read < tex_len )
 				{
@@ -478,37 +538,50 @@ struct mater_info *mater;
 							tex_buf[i+1],
 							tex_buf[i+2] );
 				}
-				fprintf( fp, "\t}\n" );
+				fprintf( fp, "\t\t\t\t}\n" );
 			}
 		}
 	}
 	else
 	{
-		fprintf( fp, "Separator { # start of %s\n", full_path );
-		fprintf( fp, "\tMaterial {\n" );
-		fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\tambientColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
+		/* If no color was defined set the colors according to the thousands groups */
+		int thou = comb->region_id/1000;
+		thou == 0 ? fprintf( fp, "\t\t\tmaterial USE Material_999\n")
+		: thou == 1 ? fprintf( fp, "\t\t\tmaterial USE Material_1999\n")
+		: thou == 2 ? fprintf( fp, "\t\t\tmaterial USE Material_2999\n")
+		: thou == 3 ? fprintf( fp, "\t\t\tmaterial USE Material_3999\n")
+		: thou == 4 ? fprintf( fp, "\t\t\tmaterial USE Material_4999\n")
+		: thou == 5 ? fprintf( fp, "\t\t\tmaterial USE Material_5999\n")
+		: thou == 6 ? fprintf( fp, "\t\t\tmaterial USE Material_6999\n")
+		: thou == 7 ? fprintf( fp, "\t\t\tmaterial USE Material_7999\n")
+		: thou == 8 ? fprintf( fp, "\t\t\tmaterial USE Material_8999\n")
+		: fprintf( fp, "\t\t\tmaterial USE Material_9999\n");
+
+/*		fprintf( fp, "\t\t\t\tmaterial Material {\n" );
+ *		fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
+ *		fprintf( fp, "\t\t\t\t\temissiveColor %g %g %g \n", r, g, b );
+ *		fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
+*/
 	}
 
 	if( !is_light )
 	{
 		/* triangulate any faceuses with holes */
-		for( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+		for( RT_LIST_FOR( reg, nmgregion, &m->r_hd ) )
 		{
 			struct shell *s;
 
 			NMG_CK_REGION( reg );
-			s = BU_LIST_FIRST( shell, &reg->s_hd );
-			while( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
+			s = RT_LIST_FIRST( shell, &reg->s_hd );
+			while( RT_LIST_NOT_HEAD( s, &reg->s_hd ) )
 			{
 				struct shell *next_s;
 				struct faceuse *fu;
 
 				NMG_CK_SHELL( s );
-				next_s = BU_LIST_PNEXT( shell, &s->l );
-				fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-				while( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
+				next_s = RT_LIST_PNEXT( shell, &s->l );
+				fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+				while( RT_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
 				{
 					struct faceuse *next_fu;
 					struct loopuse *lu;
@@ -517,7 +590,7 @@ struct mater_info *mater;
 
 					NMG_CK_FACEUSE( fu );
 
-					next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
+					next_fu = RT_LIST_PNEXT( faceuse, &fu->l );
 
 					if( fu->orientation != OT_SAME )
 					{
@@ -526,7 +599,7 @@ struct mater_info *mater;
 					}
 
 					/* check if this faceuse has any holes */
-					for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+					for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 					{
 						NMG_CK_LOOPUSE( lu );
 						if( lu->orientation == OT_OPPOSITE )
@@ -534,12 +607,12 @@ struct mater_info *mater;
 							/* this is a hole, so
 							 * triangulate the faceuse
 							 */
-							if( BU_SETJUMP )
+							if( RT_SETJUMP )
 							{
-								BU_UNSETJUMP;
-								bu_log( "A face has failed triangulation!!!!\n" );
+								RT_UNSETJUMP;
+								rt_log( "A face has failed triangulation!!!!\n" );
 								if( next_fu == fu->fumate_p )
-									next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
+									next_fu = RT_LIST_PNEXT( faceuse, &next_fu->l );
 								if( nmg_kfu( fu ) )
 								{
 									(void) nmg_ks( s );
@@ -549,7 +622,7 @@ struct mater_info *mater;
 							}
 							if( !face_is_dead )
 								nmg_triangulate_fu( fu, &tol );
-							BU_UNSETJUMP;
+							RT_UNSETJUMP;
 							break;
 						}
 
@@ -563,22 +636,26 @@ struct mater_info *mater;
 		}
 	}
 
+	fprintf( fp, "\t\t\t} \n");
+	fprintf( fp, "\t\t\tgeometry IndexedFaceSet { \n");
+	fprintf( fp, "\t\t\t\tcoord Coordinate { \n");
+
 	/* get list of vertices */
 	nmg_vertex_tabulate( &verts, &m->magic );
 	if( !is_light )
-		fprintf( fp, "\tCoordinate3 {\n\t\tpoint [" );
+		fprintf( fp, "\t\t\t\t\tpoint [");
 	else
 	{
 		VSETALL( ave_pt, 0.0 );
 	}
 
-	for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
+	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
 	{
 		struct vertex *v;
 		struct vertex_g *vg;
 		point_t pt_meters;
 
-		v = (struct vertex *)BU_PTBL_GET( &verts, i );
+		v = (struct vertex *)NMG_TBL_GET( &verts, i );
 		NMG_CK_VERTEX( v );
 		vg = v->vg_p;
 		NMG_CK_VERTEX_G( vg );
@@ -596,33 +673,33 @@ struct mater_info *mater;
 		}
 		else
 			if( !is_light )
-				fprintf( fp, "\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt_meters ), i );
+				fprintf( fp, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt_meters ), i );
 	}
 	if( !is_light )
-		fprintf( fp, "\t\t\t]\n\t\t}\n" );
+		fprintf( fp, "\t\t\t\t\t]\n\t\t\t\t}\n" );
 	else
 	{
 		fastf_t one_over_count;
 
-		one_over_count = 1.0/(fastf_t)BU_PTBL_END( &verts );
+		one_over_count = 1.0/(fastf_t)NMG_TBL_END( &verts );
 		VSCALE( ave_pt, ave_pt, one_over_count );
 	}
 
 	first = 1;
 	if( !is_light )
 	{
-		fprintf( fp, "\tIndexedFaceSet {\n\t\tcoordIndex [\n" );
-		for( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+		fprintf( fp, "\t\t\t\tcoordIndex [\n");
+		for( RT_LIST_FOR( reg, nmgregion, &m->r_hd ) )
 		{
 			struct shell *s;
 
 			NMG_CK_REGION( reg );
-			for( BU_LIST_FOR( s, shell, &reg->s_hd ) )
+			for( RT_LIST_FOR( s, shell, &reg->s_hd ) )
 			{
 				struct faceuse *fu;
 
 				NMG_CK_SHELL( s );
-				for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+				for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 				{
 					struct loopuse *lu;
 
@@ -631,13 +708,13 @@ struct mater_info *mater;
 					if( fu->orientation != OT_SAME )
 						continue;
 
-					for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+					for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 					{
 						struct edgeuse *eu;
 
 						NMG_CK_LOOPUSE( lu );
 
-						if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 							continue;
 
 						if( !first )
@@ -645,8 +722,8 @@ struct mater_info *mater;
 						else
 							first = 0;
 
-						fprintf( fp, "\t\t\t" );
-						for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+						fprintf( fp, "\t\t\t\t\t" );
+						for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 						{
 							struct vertex *v;
 
@@ -654,14 +731,17 @@ struct mater_info *mater;
 
 							v = eu->vu_p->v_p;
 							NMG_CK_VERTEX( v );
-							fprintf( fp, " %d,", bu_ptbl_locate( &verts, (long *)v ) );
+							fprintf( fp, " %d,", nmg_tbl( &verts, TBL_LOC, (long *)v ) );
 						}
 						fprintf( fp, "-1" );
 					}
 				}
 			}
 		}
-		fprintf( fp, " ]\n\t}\n}\n" );
+		fprintf( fp, "\n\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
+		fprintf( fp, "\t\t\t\tconvex FALSE\n");
+		fprintf( fp, "\t\t\t\tcreaseAngle 0.5\n");
+		fprintf( fp, "\t\t\t}\n\t\t}\n");
 	}
 	else
 	{
@@ -699,22 +779,22 @@ union tree		*curtree;
 {
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;
-	struct bu_list		vhead;
+	struct rt_list		vhead;
 	union tree		*ret_tree;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
-	BN_CK_TOL(tsp->ts_tol);
+	RT_CK_TOL(tsp->ts_tol);
 	NMG_CK_MODEL(*tsp->ts_m);
 
-	BU_LIST_INIT(&vhead);
+	RT_LIST_INIT(&vhead);
 
 	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
 		char	*sofar = db_path_to_string(pathp);
-		bu_log("\ndo_region_end(%d %d%%) %s\n",
+		rt_log("\ndo_region_end(%d %d%%) %s\n",
 			regions_tried,
 			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 			sofar);
-		bu_free(sofar, "path string");
+		rt_free(sofar, "path string");
 	}
 
 	if (curtree->tr_op == OP_NOP)
@@ -724,10 +804,10 @@ union tree		*curtree;
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
-	if( BU_SETJUMP )
+	if( RT_SETJUMP )
 	{
 		/* Error, bail out */
-		BU_UNSETJUMP;		/* Relinquish the protection */
+		RT_UNSETJUMP;		/* Relinquish the protection */
 
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before rt_bomb().
@@ -747,7 +827,7 @@ union tree		*curtree;
 		}
 		else
 		{
-			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 		}
 	
 		/* Now, make a new, clean model structure for next pass. */
@@ -761,7 +841,7 @@ union tree		*curtree;
 	else
 		r = (struct nmgregion *)NULL;
 
-	BU_UNSETJUMP;		/* Relinquish the protection */
+	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 	if (r != 0)
 	{
@@ -773,12 +853,12 @@ union tree		*curtree;
 		int empty_model=0;
 
 		/* Kill cracks */
-		s = BU_LIST_FIRST( shell, &r->s_hd );
-		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		s = RT_LIST_FIRST( shell, &r->s_hd );
+		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
-			next_s = BU_LIST_PNEXT( shell, &s->l );
+			next_s = RT_LIST_PNEXT( shell, &s->l );
 			if( nmg_kill_cracks( s ) )
 			{
 				if( nmg_ks( s ) )
@@ -820,7 +900,7 @@ union tree		*curtree;
 	db_free_tree(curtree);		/* Does an nmg_kr() */
 
 out:
-	BU_GETUNION(curtree, tree);
+	GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return(curtree);
