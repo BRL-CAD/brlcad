@@ -143,7 +143,6 @@ char *argv[];
 	int vert_no;
 	int no_of_verts;
 	int comp_code;
-	int shell_count;
 	int array_size=START_ARRAY_SIZE;		/* size of "tankill_verts" array */
 	int surr_code;	/* not useful */
 	float x,y,z;
@@ -152,7 +151,6 @@ char *argv[];
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
-	struct shell *s2;
 	struct faceuse *fu;
 	struct bu_ptbl faces;
 	struct bn_tol tol;

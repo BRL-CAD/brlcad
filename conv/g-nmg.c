@@ -52,7 +52,7 @@ static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n no
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	ncpu = 1;		/* Number of processors */
+/* static int	ncpu = 1; */		/* Number of processors */
 static int	nmg_count=0;		/* Count of nmgregions written to output */
 static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
@@ -284,9 +284,7 @@ genptr_t	ptr;
 	struct rt_tree_array *tree_list;
 	int node_count;
 	int actual_count;
-	int comb_len;
-	int i,j;
-	int region_flag;
+	int i;
 	struct wmember headp;
 	struct wmember *wm;
 	unsigned char *color;
@@ -486,7 +484,7 @@ char	*argv[];
 			verbose++;
 			break;
 		case 'P':
-			ncpu = atoi( optarg );
+/*			ncpu = atoi( optarg ); */
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':

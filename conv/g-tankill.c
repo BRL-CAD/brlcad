@@ -60,7 +60,7 @@ static char	usage[] = "Usage:\n\
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	ncpu = 1;		/* Number of processors */
+/* static int	ncpu = 1; */		/* Number of processors */
 static int	surr_code = 1000;	/* Surroundings code */
 static int	curr_id;		/* Current region ident code */
 static int	id_counter;		/* Ident counter */
@@ -214,7 +214,6 @@ struct nmgregion *r;
 long *flags;
 CONST struct bn_tol *ttol;
 {
-	struct model *m;
 	struct shell *s;
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -222,8 +221,6 @@ CONST struct bn_tol *ttol;
 	int ext_shell_id=1;
 
 	NMG_CK_REGION( r );
-
-	m = r->m_p;
 
 	if( !r->ra_p )
 		nmg_region_a( r , ttol );
@@ -238,13 +235,9 @@ CONST struct bn_tol *ttol;
 		if( NMG_INDEX_GET( flags , s ) == 1 )
 		{
 			struct shell *void_s;
-			struct face *ext_f;
-			int dir;
 
 			/* identify this external shell */
 			NMG_INDEX_ASSIGN( flags , s , ++ext_shell_id );
-
-			ext_f = nmg_find_top_face( s, &dir, flags );
 
 			/* found an external shell, look for voids */
 			for( BU_LIST_FOR( void_s , shell , &r->s_hd ) )
@@ -336,7 +329,6 @@ struct db_full_path *pathp;
 {
 	struct model *m;
 	struct shell *s;
-	struct bu_ptbl shells;		/* list of shells to be decomposed */
 	struct bu_ptbl vertices;	/* vertex list in TANKILL order */
 	long *flags;			/* array to insure that no loops are missed */
 	int i;
@@ -728,7 +720,7 @@ char	*argv[];
 			verbose++;
 			break;
 		case 'P':
-			ncpu = atoi( optarg );
+/*			ncpu = atoi( optarg ); */
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':
