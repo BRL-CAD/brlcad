@@ -4,6 +4,9 @@
 #  Mike Muuss & Susan Muuss, 11-Sept-88.
 #  @(#)$Header$ (BRL)
 
+# Ensure /bin/sh
+export PATH || (echo "This isn't sh.  Feeding myself to sh."; sh $0 $*; kill $$)
+
 if test x$3 = x
 then
 	echo "Usage:  $0 hostname note1 note2"
