@@ -51,6 +51,7 @@ int	root;
 
 	/* Could validate an_type here */
 
+	RT_CK_ANIMATE(anp);
 	anp->an_forw = ANIM_NULL;
 	if( root )  {
 		if( rt_g.debug&DEBUG_ANIM )
@@ -65,8 +66,10 @@ int	root;
 	}
 
 	/* Append to list */
-	while( *headp != ANIM_NULL )
+	while( *headp != ANIM_NULL ) {
+		RT_CK_ANIMATE(*headp);
 		headp = &((*headp)->an_forw);
+	}
 	*headp = anp;
 	return(0);			/* OK */
 }
@@ -98,6 +101,7 @@ struct mater_info	*materp;
 
 	if( rt_g.debug&DEBUG_ANIM )
 		rt_log("db_do_anim(x%x) ", anp);
+	RT_CK_ANIMATE(anp);
 	switch( anp->an_type )  {
 	case RT_AN_MATRIX:
 		if( rt_g.debug&DEBUG_ANIM )  {
@@ -169,7 +173,9 @@ register struct db_i *dbip;
 
 	/* Rooted animations */
 	for( anp = dbip->dbi_anroot; anp != ANIM_NULL; )  {
-		register struct animate *nextanp = anp->an_forw;
+		register struct animate *nextanp;
+		RT_CK_ANIMATE(anp);
+		nextanp = anp->an_forw;
 
 		db_free_full_path( &anp->an_path );
 		rt_free( (char *)anp, "struct animate");
@@ -182,7 +188,9 @@ register struct db_i *dbip;
 		dp = dbip->dbi_Head[i];
 		for( ; dp != DIR_NULL; dp = dp->d_forw )  {
 			for( anp = dp->d_animate; anp != ANIM_NULL; )  {
-				register struct animate *nextanp = anp->an_forw;
+				register struct animate *nextanp;
+				RT_CK_ANIMATE(anp);
+				nextanp = anp->an_forw;
 
 				db_free_full_path( &anp->an_path );
 				rt_free( (char *)anp, "struct animate");
@@ -211,6 +219,7 @@ char		**argv;
 	int	at_root = 0;
 
 	GETSTRUCT( anp, animate );
+	anp->magic = ANIMATE_MAGIC;
 
 	if( argv[1][0] == '/' )
 		at_root = 1;
