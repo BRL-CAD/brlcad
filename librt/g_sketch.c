@@ -2349,11 +2349,7 @@ char			**argv;
 			crv->segments = (genptr_t)NULL;
 
 			if( (ret=get_tcl_curve( interp, crv, tmp )) != TCL_OK )
-			{
-				Tcl_DecrRefCount( tmp );
 				return( ret );
-			}
-			Tcl_DecrRefCount( tmp );
 		}
 		else if( *argv[0] == 'V' && isdigit( *(argv[0]+1) )  )
 		{
