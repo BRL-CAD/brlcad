@@ -224,7 +224,7 @@ struct rt_tol		*tol;
 
 	np = RT_LIST_FIRST(wdb_pipeseg, &pip->pipe_segs_head);
 	RT_ADD_VLIST( vhead, np->ps_start, RT_VLIST_LINE_MOVE );
-	for( RT_LIST( psp, wdb_pipeseg, &pip->pipe_segs_head ) )  {
+	for( RT_LIST_FOR( psp, wdb_pipeseg, &pip->pipe_segs_head ) )  {
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
 			/* Previous segment aleady connected to end plate */
@@ -378,7 +378,7 @@ double				local2mm;
 
 	/* Count number of segments, verify that last seg is an END seg */
 	count = 0;
-	for( RT_LIST( psp, wdb_pipeseg, headp ) )  {
+	for( RT_LIST_FOR( psp, wdb_pipeseg, headp ) )  {
 		count++;
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
@@ -412,7 +412,7 @@ double				local2mm;
 
 	/* Convert the pipe segments to external form */
 	eps = &rec->pw.pw_data[0];
-	for( RT_LIST( psp, wdb_pipeseg, headp ), eps++ )  {
+	for( RT_LIST_FOR( psp, wdb_pipeseg, headp ), eps++ )  {
 		/* Avoid need for htonl() here */
 		eps->eps_type[0] = (char)psp->ps_type;
 		/* Convert from user units to mm */
