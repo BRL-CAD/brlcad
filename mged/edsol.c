@@ -70,7 +70,6 @@ struct rt_db_internal	es_int;
 struct rt_db_internal	es_int_orig;
 
 union record es_rec;		/* current solid record */
-union record es_orig;		/* original solid record */
 int     es_edflag;		/* type of editing for this solid */
 fastf_t	es_scale;		/* scale factor */
 fastf_t	es_para[3];		/* keyboard input parameter changes */
@@ -736,12 +735,11 @@ init_sedit()
 
 	es_menu = 0;
 	new_way = 0;
+	bcopy( (char *)es_ext.ext_buf, (char *)&es_rec, sizeof(es_rec) );
 
-	bcopy( (char *)es_ext.ext_buf, (char *)&es_orig, sizeof(es_orig) );
-	if( es_orig.u_id == ID_SOLID )  {
+	if( es_rec.u_id == ID_SOLID )  {
 		struct solidrec temprec;	/* copy of solid to determine type */
 
-		es_rec = es_orig;		/* struct copy */
 		temprec = es_rec.s;		/* struct copy */
 		VMOVE( es_keypoint, es_rec.s.s_values );
 
@@ -1250,9 +1248,8 @@ sedit()
 
 		/* check for zero H vector */
 		if( MAGNITUDE( &es_rec.s.s_tgc_H ) == 0.0 ) {
-			(void)printf("Zero H vector not allowed\n");
-			/* Replace with original H */
-			VMOVE(&es_rec.s.s_tgc_H, &es_orig.s.s_tgc_H);
+			(void)printf("Zero H vector not allowed, resetting to +Z\n");
+			VSET( &es_rec.s.s_tgc_H, 0, 0, 1 );
 			break;
 		}
 
@@ -1313,9 +1310,8 @@ sedit()
 
 		/* check for zero H vector */
 		if( MAGNITUDE( &es_rec.s.s_tgc_H ) == 0.0 ) {
-			(void)printf("Zero H vector not allowed\n");
-			/* Replace with original H */
-			VMOVE(&es_rec.s.s_tgc_H, &es_orig.s.s_tgc_H);
+			(void)printf("Zero H vector not allowed, resetting to +Z\n");
+			VSET( &es_rec.s.s_tgc_H, 0, 0, 1 );
 			break;
 		}
 		}
