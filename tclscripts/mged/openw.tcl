@@ -819,13 +819,13 @@ the same as MGED 4.5 and earlier. See the table below.\n\n
 	-label "Pick edit-solid" -underline 10\
 	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Pick edit-solid" "Pick edit-solid"\
-	{ { synopsis "Enter solid edit ray mode." }
+	{ { synopsis "Enter pick edit-solid mode." }
           { description "In this mode, the mouse is used to fire rays for selecting
 a solid to edit. If more than one solid is hit, a listbox of the hit
 solids is presented. The user then selects a solid to edit from
 this listbox. If a single solid is hit, it is selected for editing.
 If no solids were hit, a dialog is popped up saying that nothing
-is hit. The user must then fire another ray to continue selecting
+was hit. The user must then fire another ray to continue selecting
 a solid. When a solid is finally selected, solid edit mode is
 entered. When this happens, the mouse behavior mode is set to
 default mode. Note - When selecting items from a listbox, a left
@@ -833,19 +833,19 @@ buttonpress highlights the solid in question until the button is
 released. To select a solid, double click with the left mouse button.\n
 \tMouse Button\t\t\tBehavior
 \t\t1\t\tZoom out by a factor of 2
-\t\t2\t\tFire solid edit ray
+\t\t2\t\tFire edit-solid ray
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "nirt, qray, rset, sed, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value m -variable mged_gui($id,mouse_behavior)\
 	-label "Pick edit-matrix" -underline 10\
 	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Pick edit-matrix" "Pick edit-matrix"\
-	{ { synopsis "Enter matrix edit ray mode." }
+	{ { synopsis "Enter pick edit-matrix mode." }
           { description "In this mode, the mouse is used to fire rays for selecting
 a matrix to edit. If more than one solid is hit, a listbox of the
 hit solids is presented. The user then selects a solid
 from this listbox. If a single solid is hit, that solid is selected.
-If no solids were hit, a dialog is popped up saying that nothing is hit.
+If no solids were hit, a dialog is popped up saying that nothing was hit.
 The user must then fire another ray to continue selecting a matrix to edit.
 When a solid is finally selected, the user is presented with a listbox consisting
 of the path components of the selected solid. From this lisbox, the
@@ -858,19 +858,19 @@ until the button is released. To select a solid/matrix, double click with
 the left mouse button.\n
 \tMouse Button\t\t\tBehavior
 \t\t1\t\tZoom out by a factor of 2
-\t\t2\t\tFire matrix edit ray
+\t\t2\t\tFire edit-matrix ray
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value c -variable mged_gui($id,mouse_behavior)\
 	-label "Pick edit-combination" -underline 10\
 	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Pick edit-combination" "Pick edit-combination"\
-	{ { synopsis "Enter combination edit ray mode." }
+	{ { synopsis "Enter pick edit-combination mode." }
         { description "In this mode, the mouse is used to fire rays for selecting
 a combination to edit. If more than one combination is hit, a listbox of the
 hit combinations is presented. The user then selects a combination
 from this menu. If a single combination is hit, that combination is selected.
-If no combinations were hit, a dialog is popped up saying that nothing is hit.
+If no combinations were hit, a dialog is popped up saying that nothing was hit.
 The user must then fire another ray to continue selecting a combination to edit.
 When a combination is finally selected, the combination edit tool is presented
 and initialized with the values of the selected combination. When this happens,
@@ -880,7 +880,7 @@ until the button is released. To select a combination, double click with
 the left mouse button.\n
 \tMouse Button\t\t\tBehavior
 \t\t1\t\tZoom out by a factor of 2
-\t\t2\t\tFire combination edit ray
+\t\t2\t\tFire edit-combination ray
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add separator
@@ -888,22 +888,22 @@ the left mouse button.\n
 	-label "Sweep raytrace-rectangle" -underline 6\
 	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Sweep raytrace-rectangle" "Sweep raytrace-rectangle"\
-	{ { synopsis "Enter raytrace rectangle mode." }
+	{ { synopsis "Enter sweep raytrace-rectangle mode." }
           { description "If the framebuffer is active, the rectangular area as
 specified by the user is raytraced. The rectangular area is
-also painted with the contents of the framebuffer. Otherwise,
+also painted with the current contents of the framebuffer. Otherwise,
 only the rectangle is drawn.\n
 \tMouse Button\t\t\tBehavior
 \t\t1\t\tZoom out by a factor of 2
-\t\t2\t\tDraw raytrace rectangle
+\t\t2\t\tDraw raytrace-rectangle
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value o -variable mged_gui($id,mouse_behavior)\
 	-label "Pick raytrace-object(s)" -underline 14\
 	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Pick raytrace-object(s)" "Pick raytrace-object(s)"\
-	{ { synopsis "Enter raytrace-object mode." }
-          { description "Pick an object for raytracing or for adding to the\
+	{ { synopsis "Enter pick raytrace-object mode." }
+          { description "Pick an object for raytracing or for adding to the
 list of objects to be raytraced." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add separator
@@ -924,9 +924,9 @@ or both.\n
 	-label "Sweep paint-rectangle" -underline 6\
 	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Sweep paint-rectangle" "Sweep paint-rectangle"\
-	{ { synopsis "Enter paint rectangle mode." }
+	{ { synopsis "Enter sweep paint-rectangle mode." }
           { description "If the framebuffer is active, the rectangular area
-as specified by the user is painted with the contents of the
+as specified by the user is painted with the current contents of the
 framebuffer. Otherwise, only the rectangle is drawn.\n
 \tMouse Button\t\t\tBehavior
 \t\t1\t\tZoom out by a factor of 2
@@ -937,9 +937,9 @@ framebuffer. Otherwise, only the rectangle is drawn.\n
 	-label "Sweep zoom-rectangle" -underline 6\
 	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Sweep zoom-rectangle" "Sweep zoom-rectangle"\
-	{ { synopsis "Enter zoom rectangle mode." }
+	{ { synopsis "Enter sweep zoom-rectangle mode." }
           { description "The rectangular area as specified by the user is used
-to zoom the view. Note - as the user stretches out the rubber band
+to zoom the view. Note - as the user stretches out the zoom
 rectangle, the rectangle is constrained to be the same shape as the
 window. This insures that the user gets what he or she sees.\n
 \tMouse Button\t\t\tBehavior
@@ -1337,9 +1337,9 @@ mode." }
 .$id.menubar.settings.transform add radiobutton -value e -variable mged_gui($id,transform)\
 	-label "Model Params" -underline 0\
 	-command "set_transform $id" -state disabled
-hoc_register_menu_data "Transform" "Object Params" "Transform - Object Params"\
-	{ { summary "Set the transform mode to OBJECT PARAMS. When in OBJECT PARAMS
-mode, the mouse can be used to transform the object parameters." }
+hoc_register_menu_data "Transform" "Model Params" "Transform - Model Params"\
+	{ { summary "Set the transform mode to Model Params. When in Model Params
+mode, the mouse can be used to transform the model parameters." }
           { see_also "rset, vars" } }
 
 menu .$id.menubar.modes -title "Modes" -tearoff $mged_default(tearoff_menus)
@@ -1640,7 +1640,7 @@ hoc_register_menu_data "Help" "Getting Started Document" "Getting Started"\
 	{ { synopsis "mged \[-c\] \[-d display\] \[-h\] \[-r\] \[-x#\] \[-X#\]\
 \[database \[command\]\]" }
 { description "The -c (Classic MGED) option causes MGED to start in the style of
-previous versions of MGED, that is by prompting the user to select
+previous versions of MGED, that is, by prompting the user to select
 a display manager to attach and by remaining attached to the tty.
 Without this option MGED will detach itself from the tty and bring
 up the new GUI. The -d option provides a way to specify a display
@@ -1672,24 +1672,25 @@ up an MGED menu in the pane will cause the active pane to move to the pane
 wherein this action occurred. For example, alt-f will pop up the file menu
 and make this pane the active pane. Similarly, alt-Button1 will pop up the
 \"Settings\" menu and alt-Button2 will pop up the \"Modes\" menu.
-        The new GUI also provides \"Help on Context\". This is always available
-via the right mouse button (i.e. button 3). The user can right mouse click on
-some feature of the GUI and a message window pops up with information about the
-feature. This behavior works everywhere except in the drawing panes (i.e. display
-manager windows) where a right mouse button is bound to \"zoom 2.0\".
+        The new GUI also provides \"Help on Context\". This is always
+available via the right mouse button (i.e. button 3). The user can right
+mouse click on some feature of the GUI and a message window pops up with
+information about the feature. This behavior works everywhere except in the
+drawing panes (i.e. display manager windows) where a right mouse click is
+bound to \"zoom 2.0\".
         There are many new features and improvements in MGED providing greater
-access to its underlying power. The single greatest improvement to MGED was
-adopting the use of Tcl/Tk. Tcl (tool command language) is an interpreted command
-language that can be imbedded into an application providing the application with
-an interpreter as well as a built-in command language. Tk is an extension to Tcl
-for building GUI's. Incorporating Tcl/Tk into MGED gives the user the ability to
-develop their own commands and GUI's. Other new features are: command line editing
-similar to tcsh, multiple display managers opened simultaneously, shareable
-resources among display managers, view axes, model axes, edit axes, rubber banding
-for zoom or raytracing, support for color schemes, frame buffer support for display
-managers, snap to grid for accuracy with the mouse, query rays for interrogating the
-geometry, and improved solid/object/combination selection from among displayed
-geometry." } }
+access to its underlying power. The single greatest improvement to MGED is
+the incorporation of Tcl/Tk. Tcl (tool command language) is an interpreted
+command language that can be imbedded into an application providing the
+application with an interpreter as well as a built-in command language. Tk is
+an extension to Tcl for building GUI's. Incorporating Tcl/Tk into MGED gives
+the user the ability to develop their own commands and GUI's. Other new
+features are: command line editing similar to tcsh, multiple display managers
+opened simultaneously, shareable resources among display managers, view axes,
+model axes, edit axes, rubber banding for zoom or raytracing, support for
+color schemes, frame buffer support for display managers, snap to grid for
+accuracy with the mouse, query rays for interrogating the geometry, and
+improved solid/object/combination selection from among displayed geometry." } }
 .$id.menubar.help add command -label "Shift Grips" -underline 0\
 	-command "hoc_dialog .$id.menubar.help \"Help,Shift Grips\""
 hoc_register_menu_data "Help" "Shift Grips" "Shift Grips"\
@@ -1880,7 +1881,7 @@ Preferences/Command_Line_Edit to change the edit mode.
 
 There are also two command interpretation modes. One
 is where MGED performs object name matching (i.e. globbing
-against the database) before passing the line to MGED's
+against the database) before passing the command line to MGED's
 built-in Tcl interpreter. This is the same behavior seen
 in previous releases. The other command interpretation
 mode (Tcl Evaluation) passes the command line directly to
@@ -1888,11 +1889,12 @@ the Tcl interpreter. Look under File/Preferences/
 Special_Characters to change the interpetation mode.
 
 The command window also supports cut and paste as well
-as text scrolling. The default bindings are similar to
-those found in typical X Window applications such as xterm.
-For example:
+as text scrolling. The default bindings for these operations
+are similar to those found in typical X Window applications
+such as xterm. For example:
 
 ButtonPress-1           begin text selection
+ButtonRelease-1         end text selection
 Button1-Motion         add to text selection
 Shift-Button1            modify text selection
 Double-Button-1        select word
