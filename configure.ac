@@ -1646,13 +1646,13 @@ fi
 # make sure ECHO and ECHO_N got defined and substituted
 if test "x$ECHO" = "x" ; then
 	ECHO=echo
-	AC_SUBST(ECHO)
 	AC_MSG_NOTICE([ECHO was not defined by configure so defining manually])
 fi
+AC_SUBST(ECHO)
 if test "x$ECHO_N" = "x" ; then
 	ECHO_N=
-	AC_SUBST(ECHO_N)
 fi
+AC_SUBST(ECHO_N)
 
 
 dnl ***************************
