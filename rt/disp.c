@@ -150,6 +150,50 @@ char		*argv[];
 }
 
 /*
+ *			G E T S P E C T X Y
+ *
+ *  Given the x,y coordinates of a pixel in the multi-spectral image,
+ *  return the spectral data found there in Tcl string form.
+ */
+int
+getspectxy( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	struct rt_tabdata	*sp;
+	int	x, y;
+	char	*cp;
+	struct bu_vls	str;
+
+	if( argc != 3 )  {
+		interp->result = "Usage: getspectxy x y";
+		return TCL_ERROR;
+	}
+	x = atoi(argv[1]);
+	y = atoi(argv[2]);
+
+	RT_CK_TABLE(spectrum);
+
+	if( x < 0 || x > width || y < 0 || y > height )  {
+		interp->result = "x or y out of range";
+		return TCL_ERROR;
+	}
+	cp = (char *)data;
+	cp = cp + (y * width + x) * RT_SIZEOF_TABDATA(spectrum);
+	sp = (struct rt_tabdata *)cp;
+	RT_CK_TABDATA(sp);
+
+	bu_vls_init(&str);
+	rt_tabdata_to_tcl( &str, sp );
+	Tcl_SetResult( interp, bu_vls_addr(&str), TCL_VOLATILE);
+	bu_vls_free(&str);
+
+	return TCL_OK;
+}
+
+/*
  *  TCL interface to LIBFB.
  *  Points at lower left corner of selected pixel.
  */
@@ -235,6 +279,7 @@ Tcl_Interp	*inter;
 
 	Tcl_CreateCommand(interp, "getspectval", getspectval, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateCommand(interp, "getspectrum", getspectrum, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "getspectxy", getspectxy, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_LinkVar( interp, "minval", (char *)&minval, TCL_LINK_DOUBLE );
 	Tcl_LinkVar( interp, "maxval", (char *)&maxval, TCL_LINK_DOUBLE );
@@ -277,7 +322,7 @@ double x, y, z;
 #else
 	MAT3X3VEC( rgb, xyz2rgb, xyz );
 	VPRINT( "rgb", rgb );
-	rt_spect_rgb_to_curve( tabp, rgb, ntsc_r, ntsc_g, ntsc_b );
+	rt_spect_reflectance_rgb( tabp, rgb );
 #endif
 	rt_pr_table_and_tabdata( "/dev/tty", tabp );
 	tab_area = rt_tabdata_area2( tabp );
@@ -307,7 +352,7 @@ char	**argv;
 struct rt_tabdata	*flat;
 vect_t			xyz;
 /* Code for testing library routines */
-spectrum = rt_table_make_uniform( 10, 380.0, 770.0 );
+spectrum = rt_table_make_uniform( 20, 380.0, 770.0 );
 rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
 bu_log("X:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_x );
 bu_log("Y:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_y );
@@ -317,6 +362,13 @@ rt_spect_make_NTSC_RGB( &ntsc_r, &ntsc_g, &ntsc_b, spectrum );
 bu_log("R:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_r );
 bu_log("G:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_g );
 bu_log("B:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_b );
+	{
+		struct bu_vls str;
+		bu_vls_init(&str);
+		rt_tabdata_to_tcl( &str, ntsc_r );
+		bu_log("ntsc_r tcl:  %s\n", bu_vls_addr(&str) );
+		bu_vls_free(&str);
+	}
 
 /* "A flat spectral curve is represente by equal XYZ values".  Hall pg 52 */
 flat = rt_tabdata_get_constval( 42.0, spectrum );
@@ -325,6 +377,11 @@ rt_spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z );
 VPRINT("flat xyz?", xyz);
 
 /* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
+check( 0.313,     0.329,      0.358);	/* D6500 white */
+check( 0.670,     0.330,      0.000);	/* NTSC red primary */
+check( 0.210,     0.710,      0.080);	/* NTSC green primary */
+check( 0.140,     0.080,      0.780);	/* NTSC blue primary */
+check( .5, .5, .5 );
 check( 1, 0, 0 );
 check( 0, 1, 0 );
 check( 0, 0, 1 );
@@ -332,7 +389,6 @@ check( 1, 1, 1 );
 check( 1, 1, 0 );
 check( 1, 0, 1 );
 check( 0, 1, 1 );
-check( .5, .5, .5 );
 exit(1);
 }
 #endif
