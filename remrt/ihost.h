@@ -47,9 +47,9 @@ extern struct rt_list	HostHead;
 
 #define IHOST_NULL	((struct ihost *)0)
 
-extern struct ihost	*host_lookup_by_name();
-extern struct ihost	*host_lookup_by_addr();
-extern struct ihost	*host_lookup_by_hostent();
-extern struct ihost	*make_default_host();
-extern char		*get_our_hostname();
-extern struct ihost	*host_lookup_of_fd();
+extern struct ihost	*host_lookup_by_name(char *name, int enter);
+extern struct ihost	*host_lookup_by_addr(struct sockaddr_in *from, int enter);
+extern struct ihost	*host_lookup_by_hostent(struct hostent *addr, int enter);
+extern struct ihost	*make_default_host(char *name);
+extern char		*get_our_hostname(void);
+extern struct ihost	*host_lookup_of_fd(int fd);

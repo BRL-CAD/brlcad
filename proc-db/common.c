@@ -71,14 +71,14 @@ get_rgb( unsigned char *rgb )
 }
 
 void
-do_light( name, pos, dir_at, da_flag, r, rgb, headp )
-char	*name;
-point_t	pos;
-vect_t	dir_at;		/* direction or aim point */
-int	da_flag;	/* 0 = direction, !0 = aim point */
-double	r;		/* radius of light */
-unsigned char	*rgb;
-struct wmember	*headp;
+do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp)
+    	      
+       	    
+      	       		/* direction or aim point */
+   	        	/* 0 = direction, !0 = aim point */
+      	  		/* radius of light */
+             	     
+              	       
 {
 	char	nbuf[64];
 	vect_t	center;

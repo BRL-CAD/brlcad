@@ -49,14 +49,12 @@ static rle_pixel **scan;
 static gif_pixel **scanbuf;  /* needed to read all scanlines before
 				converting to gif (rle is upside down) */
 
-int get_scanlines();
-int get_color_bits();
-void GIFEncode();
+int get_scanlines(void);
+int get_color_bits(const char **comments);
+void GIFEncode(char *FName, int GWidth, int GHeight, int GInterlace, int Background, int BitsPerPixel, unsigned short int *Red, unsigned short int *Green, unsigned short int *Blue, ifunptr GetPixel);
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
     char 	*outfname = NULL,
     		*infname = NULL;
@@ -97,7 +95,7 @@ char *argv[];
  * necessary because of RLE stores images bottom to top and GIF stores
  * them top to bottom.
  */
-int get_scanlines()
+int get_scanlines(void)
 {
     int i;
     rle_pixel *save_scan_0;
@@ -125,8 +123,7 @@ int get_scanlines()
  * file.  If it is found, it sets color_bits to the ceiling of log 2
  * color_map_length.  Otherwise it returns the default value 8.
  ********************************************************************/
-int get_color_bits(comments)
-char **comments;
+int get_color_bits(const char **comments)
 {
     int i, color_bits, num_colors;
 
@@ -145,14 +142,12 @@ char **comments;
     return (color_bits);
 }
 
-int getpixel( x, y )
-int x, y;
+int getpixel(int x, int y)
 {
     return (int)scanbuf[y][x];
 }
 
-void error(s)
-char *s;
+void error(char *s)
 {
     fprintf(stderr,"%s\n", s);
     exit(2);

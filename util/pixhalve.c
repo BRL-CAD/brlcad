@@ -50,11 +50,14 @@ static char usage[] = "\
 Usage: pixhalve [-h] [-a]\n\
 	[-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
 
-void separate(), combine(), ripple(), filter5(), filter3();
+void separate(register int *rop, register int *gop, register int *bop, register unsigned char *cp, int num);
+void combine(register unsigned char *cp, register int *rip, register int *gip, register int *bip, int num);
+void ripple(int **array, int num);
+void filter3(int *op, int **lines, int num);
+void filter5(int *op, int **lines, int num);
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -117,9 +120,7 @@ int	*blines[5];
  *			M A I N
  */
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	char	*inbuf;
 	char	*outbuf;
@@ -232,12 +233,12 @@ char	**argv;
  *  Updated version:  the outputs are Y U V values, not R G B.
  */
 void
-separate( rop, gop, bop, cp, num )
-register int	*rop;			/* Y */
-register int	*gop;			/* U */
-register int	*bop;			/* V */
-register unsigned char	*cp;
-int		num;
+separate(register int *rop, register int *gop, register int *bop, register unsigned char *cp, int num)
+            	     			/* Y */
+            	     			/* U */
+            	     			/* V */
+                      	    
+   		    
 {
 	register int 	i;
 	register int	r, g, b;
@@ -284,12 +285,7 @@ int		num;
  *  RGB byte tripples
  */
 void
-combine( cp, rip, gip, bip, num )
-register unsigned char	*cp;
-register int		*rip;
-register int		*gip;
-register int		*bip;
-int			num;
+combine(register unsigned char *cp, register int *rip, register int *gip, register int *bip, int num)
 {
 	register int 	i;
 
@@ -325,9 +321,7 @@ int			num;
  *  Barrel shift all the pointers down, with [0] going back to the top.
  */
 void
-ripple( array, num )
-int	*array[];
-int	num;
+ripple(int **array, int num)
 {
 	register int	i;
 	int		*temp;
@@ -347,10 +341,7 @@ int	num;
  *  Code is arranged so as to vectorize, on machines that can.
  */
 void
-filter5( op, lines, num )
-int	*op;
-int	*lines[];
-int	num;
+filter5(int *op, int **lines, int num)
 {
 	register int	i;
 	register int	*a, *b, *c, *d, *e;
@@ -404,10 +395,7 @@ int	num;
  *  of the filter with the same center used in filter5().
  */
 void
-filter3( op, lines, num )
-int	*op;
-int	*lines[];
-int	num;
+filter3(int *op, int **lines, int num)
 {
 	register int	i;
 	register int	*b, *c, *d;

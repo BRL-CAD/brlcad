@@ -17,8 +17,7 @@ int	nflag = 0;
 static char usage[] = "\
 Usage: d-a [-n] < doubles > ascii\n";
 
-int main( argc, argv )
-int argc; char **argv;
+int main(int argc, char **argv)
 {
 	double	d;
 

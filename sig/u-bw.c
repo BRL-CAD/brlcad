@@ -6,9 +6,7 @@
 unsigned short ibuf[512];
 unsigned char obuf[512];
 
-int main(ac, av)
-int ac;
-char *av[];
+int main(int ac, char **av)
 {
 	int num, i;
 

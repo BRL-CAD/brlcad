@@ -115,7 +115,7 @@ extern int	srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 extern char	*scanbuf;		/* scanline(s) buffer */
 #endif
 
-void		free_scanlines();
+void		free_scanlines(void);
 
 static int	buf_mode=0;
 #define BUFMODE_UNBUF	1		/* No output buffering */
@@ -171,8 +171,7 @@ struct bu_structparse view_parse[] = {
  *  a_uptr has region pointer, for reference.
  */
 void
-view_pixel(ap)
-register struct application *ap;
+view_pixel(register struct application *ap)
 {
 	register int	r,g,b;
 	register char	*pixelp;
@@ -523,8 +522,7 @@ register struct application *ap;
  *  pixel of a scanline is really done, for parallel considerations.
  */
 void
-view_eol(ap)
-register struct application *ap;
+view_eol(register struct application *ap)
 {
 	return;
 }
@@ -555,8 +553,7 @@ view_end(struct application *ap)
  *  Called before rt_prep() in do.c
  */
 void
-view_setup(rtip)
-struct rt_i	*rtip;
+view_setup(struct rt_i *rtip)
 {
 	register struct region *regp;
 
@@ -669,8 +666,7 @@ void view_cleanup(struct rt_i	*rtip)
  *  Background texture mapping could be done here.
  *  For now, return a pleasant dark blue.
  */
-static int hit_nothing( ap )
-register struct application *ap;
+static int hit_nothing(register struct application *ap)
 {
 	if( R_DEBUG&RDEBUG_MISSPLOT )  {
 		vect_t	out;
@@ -750,10 +746,7 @@ register struct application *ap;
  *  This can be a recursive procedure.
  */
 int
-colorview( ap, PartHeadp, finished_segs )
-register struct application *ap;
-struct partition *PartHeadp;
-struct seg *finished_segs;
+colorview(register struct application *ap, struct partition *PartHeadp, struct seg *finished_segs)
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -1068,7 +1061,7 @@ int viewit(register struct application *ap,
 }
 
 void
-free_scanlines()
+free_scanlines(void)
 {
 	register int	y;
 
@@ -1088,10 +1081,7 @@ free_scanlines()
  *  Called once, early on in RT setup, before view size is set.
  */
 int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
-int minus_o;
+view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 	extern char	liboptical_version[];
 
@@ -1126,11 +1116,7 @@ int minus_o;
 int	rt_scr_lim_dist_sq = 100;	/* dist**2 pixels allowed to move */
 
 int
-reproject_splat( ix, iy, ip, new_view_pt )
-int	ix;
-int	iy;
-register struct floatpixel	*ip;
-const point_t			new_view_pt;
+reproject_splat(int ix, int iy, register struct floatpixel *ip, const fastf_t *new_view_pt)
 {
 	register struct floatpixel	*op;
 	int	count = 1;
@@ -1178,9 +1164,7 @@ extern int last_pixel;		/* last pixel number */
  *			R E P R O J E C T _ W O R K E R
  */
 void
-reproject_worker(cpu, arg)
-int		cpu;
-genptr_t	arg;
+reproject_worker(int cpu, genptr_t arg)
 {
 	int	pixel_start;
 	int	pixelnum;
@@ -1288,9 +1272,7 @@ collect_soltabs( struct bu_ptbl *stp_list, union tree *tr )
  *  Called each time a new image is about to be done.
  */
 void
-view_2init( ap, framename )
-register struct application *ap;
-char	*framename;
+view_2init(register struct application *ap, char *framename)
 {
 	register int i;
 	struct bu_ptbl stps;
@@ -1616,7 +1598,7 @@ bu_log("mallocing curr_float_frame\n");
  *  Called once, very early on in RT setup, even before command line
  *	is processed.
  */
-void application_init ()
+void application_init (void)
 {
   /*    rpt_overlap = 1; */
 }

@@ -106,9 +106,7 @@ struct lineseg {
  */
 
 void
-cross_dissolve(morph, wa, wb, dissolvefrac, numpixels)
-unsigned char *morph, *wa, *wb;
-int dissolvefrac, numpixels;
+cross_dissolve(unsigned char *morph, unsigned char *wa, unsigned char *wb, int dissolvefrac, int numpixels)
 {
     register int i;
 
@@ -129,11 +127,7 @@ int dissolvefrac, numpixels;
  */
 
 void
-warp_image(dest, src, lines, which, width, height, numlines, a, b, p)
-unsigned char *dest, *src;
-struct lineseg *lines;
-int which, width, height, numlines;
-double a, b, p;
+warp_image(unsigned char *dest, unsigned char *src, struct lineseg *lines, int which, int width, int height, int numlines, double a, double b, double p)
 {
     register int i, j, k, width3;
     struct lineseg *tlines;
@@ -273,11 +267,7 @@ double a, b, p;
  
 
 int
-lines_read(fp, numlines, lines, width, height, warpfrac, pb)
-FILE *fp;
-int numlines, width, height;
-struct lineseg *lines;
-double warpfrac, pb;
+lines_read(FILE *fp, int numlines, struct lineseg *lines, int width, int height, double warpfrac, double pb)
 {
     register int i, j;
     double x1, y1, x2, y2, x3, y3, x4, y4;
@@ -337,8 +327,7 @@ double warpfrac, pb;
  */
 
 void
-lines_headerinfo(fp, ap, bp, pp, np)
-FILE *fp; double *ap; double *bp; double *pp; int *np;
+lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, int *np)
 {
     if (fscanf(fp, "%lf %lf %lf %d ", ap, bp, pp, np) < 4) {
 	fprintf(stderr, "pixmorph: cannot read header info in lines file\n");
@@ -347,13 +336,7 @@ FILE *fp; double *ap; double *bp; double *pp; int *np;
 }
 
 int
-get_args(argc, argv, picAnamep, picBnamep, linesfilenamep, warpfracp,
-	 dissolvefracp, autosizep, widthp, heightp)
-int argc;
-char **argv;
-char **picAnamep, **picBnamep, **linesfilenamep;
-double *warpfracp;
-int *dissolvefracp, *autosizep, *widthp, *heightp;
+get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep, double *warpfracp, int *dissolvefracp, int *autosizep, int *widthp, int *heightp)
 {
     register int c;
 
@@ -388,26 +371,19 @@ int *dissolvefracp, *autosizep, *widthp, *heightp;
 }
 
 int
-pix_readpixels(fp, numpix, pixarray)
-FILE *fp;
-int numpix;
-unsigned char *pixarray;
+pix_readpixels(FILE *fp, int numpix, unsigned char *pixarray)
 {
     return fread(pixarray, 3, numpix, fp);
 }
 
 int
-pix_writepixels(numpix, pixarray)
-int numpix;
-unsigned char *pixarray;
+pix_writepixels(int numpix, unsigned char *pixarray)
 {
     return fwrite(pixarray, 3, numpix, stdout);
 }
     
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     char *picAname, *picBname, *linesfilename;
     FILE *picA, *picB, *linesfile;

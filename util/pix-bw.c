@@ -52,8 +52,7 @@ static char usage[] = "\
 Usage: pix-bw [-ntsc -crt -R[#] -G[#] -B[#]] [in.pix] > out.bw\n";
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	in, out, num;
 	int	multiple_colors, num_color_planes;

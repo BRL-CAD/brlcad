@@ -55,10 +55,7 @@ Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]\n\
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
  */
 int
-mread(fd, bufp, n)
-int	fd;
-register char	*bufp;
-int	n;
+mread(int fd, register char *bufp, int n)
 {
 	register int	count = 0;
 	register int	nread;
@@ -82,8 +79,7 @@ int	n;
  *			G E T _ A R G S
  */
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -133,8 +129,7 @@ register char **argv;
 }
 
 int
-main( argc, argv )
-char **argv;
+main(int argc, char **argv)
 {
 	register int i;
 	char *obuf;

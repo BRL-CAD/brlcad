@@ -64,14 +64,13 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
   or   bwrot -a angle [-s squaresize]\n\
 	[-w width] [-n height] [file.bw] > file.bw\n";
 
-void	fill_buffer(), reverse_buffer(), arbrot();
+void	fill_buffer(void), reverse_buffer(void), arbrot(double a);
 
 static char	*file_name;
 FILE	*ifp, *ofp;
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -142,8 +141,7 @@ register char **argv;
 }
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	x, y;
 	long	outbyte, outplace;
@@ -261,7 +259,7 @@ int argc; char **argv;
 }
 
 void
-fill_buffer()
+fill_buffer(void)
 {
 	buflines = fread( buffer, scanbytes, buflines, ifp );
 
@@ -270,7 +268,7 @@ fill_buffer()
 }
 
 void
-reverse_buffer()
+reverse_buffer(void)
 {
 	int	i;
 	unsigned char *p1, *p2, temp;
@@ -314,8 +312,8 @@ reverse_buffer()
 #define	DtoR(x)	((x)*PI/180.0)
 
 void
-arbrot( a )
-double	a;	/* rotation angle */
+arbrot(double a)
+      	  	/* rotation angle */
 {
 	int	x, y;				/* working coord */
 	double	x2, y2;				/* its rotated position */

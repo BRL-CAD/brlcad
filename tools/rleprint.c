@@ -37,9 +37,7 @@
                             cmd_name( argv ));exit(-2);}
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
     char *infname = NULL;
     int         i, j;

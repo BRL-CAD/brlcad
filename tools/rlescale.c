@@ -28,9 +28,7 @@
 #include "rle_raw.h"
 
 int
-main( argc, argv )
-int argc;
-char ** argv;
+main(int argc, char **argv)
 {
     int xsize = 512, ysize = 480, nsteps = 16, cflag = 0, oflag = 0;
     int y, i, * nscan;

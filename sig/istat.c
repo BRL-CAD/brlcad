@@ -23,7 +23,7 @@ char *progname = "(noname)";
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage()
+void usage(void)
 {
 	(void) fprintf(stderr, "Usage: %s [ file ]\n", progname);
 	exit(1);
@@ -32,9 +32,7 @@ void usage()
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(ac, av)
-int ac;
-char *av[];
+int parse_args(int ac, char **av)
 {
 	int  c;
 
@@ -55,12 +53,11 @@ char *av[];
 	return(optind);
 }
 
-void comp_stats(fd)
-FILE *fd;
+void comp_stats(FILE *fd)
 {
 	short *buffer=(short *)NULL;
 	short min, max;
-	double stdev, sum, sum_sq, num, sqrt();
+	double stdev, sum, sum_sq, num, sqrt(double);
 	int count;
 	int i;
 
@@ -100,9 +97,7 @@ FILE *fd;
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(ac,av)
-int ac;
-char *av[];
+int main(int ac, char **av)
 {
 	int arg_index;
 

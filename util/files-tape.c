@@ -61,7 +61,7 @@ long	byteswritten = 0;	/* Number of bytes written */
 int	bufsize = 24*1024;	/* Default buffer size */
 char	*buf;
 
-void	fileout();
+void	fileout(register int fd, char *name);
 
 int mread(int fd, char *bufp, int n );
 
@@ -69,8 +69,7 @@ static char usage[] = "\
 Usage: files-tape [-b bytes] [-k Kbytes] [files]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -98,8 +97,7 @@ register char **argv;
  *			M A I N
  */
 int
-main(argc, argv)
-char	**argv;
+main(int argc, char **argv)
 {
 	register int	fd;
 
@@ -145,9 +143,7 @@ char	**argv;
  *			F I L E O U T
  */
 void
-fileout( fd, name )
-register int	fd;
-char		*name;
+fileout(register int fd, char *name)
 {
 	register int	count, out;
 
@@ -182,10 +178,7 @@ char		*name;
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
  */
 int
-mread(fd, bufp, n)
-int	fd;
-register char	*bufp;
-int	n;
+mread(int fd, register char *bufp, int n)
 {
 	register int	count = 0;
 	register int	nread;

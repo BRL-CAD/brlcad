@@ -46,13 +46,13 @@ static struct shell *s;
 static struct model *m;
 static struct bn_tol tol;
 
-void dump_patch();
+void dump_patch(int (*patch)[4]);
 
 struct rt_wdb *outfp;
 
 int
-main(argc, argv) 			/* really has no arguments */
-int argc; char *argv[];
+main(int argc, char **argv) 			/* really has no arguments */
+                       
 {
 	struct nmgregion *r;
 	char * id_name = "BRL-CAD t-NURBS NMG Example";
@@ -130,8 +130,7 @@ int argc; char *argv[];
  * and output it to a BRLCAD binary format.
  */
 void
-dump_patch( patch )
-pt patch;
+dump_patch(int (*patch)[4])
 {
 	struct vertex *verts[4];
 	struct faceuse *fu;

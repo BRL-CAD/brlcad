@@ -37,9 +37,7 @@ static const char rcs_ident[] = "$Id$";
 #define MAXCHAN 10
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
     FILE *outfile = stdout;
     int i, j, bflag=0, cflag=0, tflag=0, oflag=0;

@@ -66,9 +66,7 @@ pixpaste: Usage: pixpaste [-v] [-h] [-H] [-a] [-A] [-# num_bytes]\n\
 	A '-' can be used to indicate stdin for orig_file or paste_file\n";
 
 int
-get_args( argc, argv)
-register int argc;
-register char **argv;
+get_args(register int argc, register char **argv)
 {
 	register int c;
 
@@ -174,8 +172,7 @@ register char **argv;
 
 			
 int
-main(argc, argv)
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	unsigned char *origbuf, *pastebuf;
 	unsigned char *buffer;

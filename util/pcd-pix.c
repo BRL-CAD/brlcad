@@ -89,17 +89,17 @@ typedef struct _implane implane;
 #define nullplane ((implane *) 0)
 
 
-static enum ERRORS readplain();
-static void interpolate();
-static void halve();
-static void ycctorgb();
+static enum ERRORS readplain(dim w, dim h, implane *l, implane *c1, implane *c2);
+static void interpolate(implane *p);
+static void halve(implane *p);
+static void ycctorgb(dim w, dim h, implane *l, implane *c1, implane *c2);
 #if 0
 static void readlpt();
 #endif
-static void readhqt();
-static void decode();
-static void druckeid();
-static long Skip4Base();
+static void readhqt(dim w, dim h, int n);
+static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autosync);
+static void druckeid(void);
+static long Skip4Base(void);
 
 static FILE *fin=0,*fout=0;
 static char *pcdname=0;
@@ -146,8 +146,7 @@ static int clipped_high=0;
 
 static double lum_mul = 1.0;
 
-static void error(e)
-enum ERRORS e;
+static void error(enum ERRORS e)
 {
 
 	switch(e)
@@ -242,9 +241,7 @@ enum ERRORS e;
  *
  *  Allocate memory for one YCC color plane.
  */
-static void planealloc(p,width,height)
-implane *p;
-dim width,height;
+static void planealloc(implane *p, dim width, dim height)
 {
 	p->iwidth=p->iheight=0;
 	p->mwidth=width;
@@ -258,9 +255,9 @@ dim width,height;
  *			M A I N
  */
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
+         
+            
 #define ASKIP { argc--; argv ++;}
 {
 	int bildnr;
@@ -689,9 +686,7 @@ char **argv;
 /*
  *			R E A D P L A I N
  */
-static enum ERRORS readplain(w,h,l,c1,c2)
-dim w,h;
-implane *l,*c1,*c2;
+static enum ERRORS readplain(dim w, dim h, implane *l, implane *c1, implane *c2)
 {
 	dim i;
 	uBYTE *pl=0,*pc1=0,*pc2=0;
@@ -759,8 +754,7 @@ implane *l,*c1,*c2;
  *  Take in image where iwidth is half of mwidth,
  *  output image where iwidth has been doubled.  (Height too).
  */
-static void interpolate(p)
-implane *p;
+static void interpolate(implane *p)
 {
 	dim w,h,x,y,yi;
 	uBYTE *optr,*nptr,*uptr;
@@ -827,8 +821,7 @@ implane *p;
  *
  *  Image is shrunk by half, by discarding data values.
  */
-static void halve(p)
-implane *p;
+static void halve(implane *p)
 {
 	dim w,h,x,y;
 	uBYTE *optr,*nptr;
@@ -867,9 +860,7 @@ implane *p;
  *  Convert and output.
  *  If "do_bw" flag is set, just output luminance channel.
  */
-static void ycctorgb(w,h,l,c1,c2)
-dim w,h;
-implane *l,*c1,*c2;
+static void ycctorgb(dim w, dim h, implane *l, implane *c1, implane *c2)
 {
 	int x,y;		/* not dim! */
 	uBYTE *pl,*pc1,*pc2;
@@ -952,7 +943,7 @@ struct ph1
 };
 
 
-static void druckeid()
+static void druckeid(void)
 {
 	struct ph1 *d;
 	char ss[100];
@@ -1032,10 +1023,7 @@ struct myhqt {
 #define E ((unsigned long) 1)
 
 
-static void readhqtsub(source,ziel,anzahl)
-struct pcdhqt *source;
-struct myhqt *ziel;
-int *anzahl;
+static void readhqtsub(struct pcdhqt *source, struct myhqt *ziel, int *anzahl)
 {
 	int i;
 	struct pcdquad *sub;
@@ -1079,9 +1067,7 @@ int *anzahl;
 static struct myhqt myhuff0[256],myhuff1[256],myhuff2[256];
 static int          myhufflen0=0,myhufflen1=0,myhufflen2=0;
 
-static void readhqt(w,h,n)
-dim w,h;
-int n;
+static void readhqt(dim w, dim h, int n)
 {
 	uBYTE *ptr;
 
@@ -1105,10 +1091,7 @@ int n;
  *
  *  Read the input stream, decoding into the given buffer(s).
  */
-static void decode(w,h,f,f1,f2,autosync)
-dim w,h;
-implane *f,*f1,*f2;
-int autosync;
+static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autosync)
 {
 	int i,htlen,sum;
 	unsigned long maxwidth;
@@ -1249,7 +1232,7 @@ int autosync;
 
 }
 
-static int testbegin()
+static int testbegin(void)
 {
 	int i,j;
 	for(i=j=0;i<32;i++)
@@ -1259,7 +1242,7 @@ static int testbegin()
 
 }
 
-static long Skip4Base()
+static long Skip4Base(void)
 {
 	long cd_offset,cd_offhelp;
 

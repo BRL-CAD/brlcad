@@ -37,9 +37,7 @@
 #include "rle_raw.h"
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
     rle_op backrundata[4], *rows[4];
     char * outfilename = NULL;

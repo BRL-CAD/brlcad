@@ -1,19 +1,12 @@
 TODO LIST
 =========
 
-Build with aquatk
-Finish integrating Geometry Browser
-Work on regression suite
-Update tcl/tk to latest 8.4
-ANSIfy the source code (test branch, finish script)
 Investigate and fix benchmark summary bug
 Write system identifier tool
 Make benchmarks nfs/multiuser friendly
 Convert documentation to DocBook
 Optimize raytrace pipeline
-Research high-speed triangle raytracer
 Work on minimal rt
-Remaster build architecture with autotools
 
 
 FILES 

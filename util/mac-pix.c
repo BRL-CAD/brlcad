@@ -80,8 +80,7 @@ Usage: mac-pix [-c -l -b]\n\
 	[-C r/g/b] [file.mac]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -181,8 +180,7 @@ register char **argv;
 }
 
 int
-getbits(fp)
-register FILE *fp;
+getbits(register FILE *fp)
 {
 	static int count, rep, chr;
 	register int c;
@@ -209,9 +207,7 @@ register FILE *fp;
 }
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	register int c;
 	register int x, y;

@@ -41,7 +41,7 @@ mat_t	identity;
 double	degtorad = 0.0174532925199433;
 double	inches2mm = 25.4;
 
-void	build_spline(), read_pos(), build_cyl(), xfinddir();
+void	build_spline(char *name, int npts, double radius), read_pos(FILE *fp), build_cyl(char *cname, int npts, double radius), xfinddir(fastf_t *dir, double x, fastf_t *loc);
 int	read_frame( FILE *fp );
 
 #define N_CIRCLE_KNOTS	12
@@ -108,8 +108,7 @@ double	cur_time;
 struct rt_wdb	*outfp;
 
 int
-main(argc, argv)
-char	**argv;
+main(int argc, char **argv)
 {
 	int	frame;
 	char	name[128];
@@ -233,10 +232,7 @@ char	**argv;
 #undef build_spline
 
 void
-build_spline( name, npts, radius )
-char	*name;
-int	npts;
-double	radius;
+build_spline(char *name, int npts, double radius)
 {
 	struct face_g_snurb *bp;
 	register int i;
@@ -436,8 +432,7 @@ read_frame( FILE *fp )
 }
 
 void
-read_pos(fp)
-FILE	*fp;
+read_pos(FILE *fp)
 {
 	static float	last_read_time = -5;
 	static float	pos = 0;
@@ -457,10 +452,7 @@ FILE	*fp;
 }
 
 void
-build_cyl( cname, npts, radius )
-char	*cname;
-int	npts;
-double	radius;
+build_cyl(char *cname, int npts, double radius)
 {
 	register int i;
 	vect_t	v, h, a, b;
@@ -487,10 +479,7 @@ double	radius;
  * direction the tube is headed in then.
  */
 void
-xfinddir( dir, x, loc)
-vect_t	dir;
-double	x;
-point_t	loc;
+xfinddir(fastf_t *dir, double x, fastf_t *loc)
 {
 	register int i;
 	fastf_t	ratio;

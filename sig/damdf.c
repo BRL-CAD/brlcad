@@ -25,9 +25,7 @@ double	r[BSIZE];
 static char usage[] = "\
 Usage: damdf [window_size (512)] < doubles\n";
 
-int main( argc, argv )
-int	argc;
-char	**argv;
+int main(int argc, char **argv)
 {
 	int	i, j, n, L;
 	register double *dp1, *dp2;

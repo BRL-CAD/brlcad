@@ -37,14 +37,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 unsigned char	obuf[3*1024];
 unsigned char	red[1024], green[1024], blue[1024];
 
-void	open_file();
+void	open_file(FILE **fp, char *name);
 
 char *Usage = "usage: bw3-pix redin greenin bluein > file.pix (- stdin, . skip)\n";
 
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int	i;
 	int	nr, ng, nb, num;
@@ -89,9 +87,7 @@ char **argv;
 }
 
 void
-open_file( fp, name )
-FILE **fp;
-char *name;
+open_file(FILE **fp, char *name)
 {
 	/* check for special names */
 	if( strcmp( name, "-" ) == 0 ) {

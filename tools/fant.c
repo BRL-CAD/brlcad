@@ -123,9 +123,13 @@ int vpassonlyflag;		/* If true, we only need the vertical pass */
 
 
 /* Forward declarations */
-void fant_interp_row();
-void painter_interp_row();
-void getraster(), xform_image(), putraster(), clear_raster(), xform_points();
+void fant_interp_row(double sizefac, int ras_strt, double real_outpos, int inmax, int outmax);
+void painter_interp_row(double sizefac, int ras_strt, double real_outpos, int inmax, int outmax);
+void getraster(rle_pixel **ras_ptrs);
+void xform_image(point *p);
+void putraster(rle_pixel **ras_ptrs);
+void clear_raster(rle_pixel **ras_ptr);
+void xform_points(point *p, double xscale, double yscale, double angle);
 
 #ifdef DEBUG
 rle_pixel * arr_index(ptr,x,y)
@@ -156,9 +160,7 @@ rle_pixel * ptr;
 #endif /* DEBUG */
 
 int
-main(argc,argv)
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
     char 	       *infilename = NULL,
     		       *out_fname = NULL;
@@ -320,8 +322,7 @@ char *argv[];
  * interpolation per scanline.
  */
 void
-xform_image(p)
-point *p;
+xform_image(point *p)
 {
     double real_outpos, sizefac, delta;
     rle_pixel * tmprast;
@@ -412,9 +413,7 @@ point *p;
  * resulting transform degrades sharply if the angle is > 45 degrees.
  */
 void
-xform_points(p, xscale, yscale, angle)
-point *p;
-double xscale, yscale, angle;
+xform_points(point *p, double xscale, double yscale, double angle)
 {
     double s, c, xoff, yoff;		
     double tmp;
@@ -542,11 +541,7 @@ static unsigned long _result;
  * 
  */
 void
-painter_interp_row (sizefac, ras_strt, real_outpos, inmax, outmax)
-     double sizefac;
-     int ras_strt;
-     double real_outpos;
-     int inmax, outmax;
+painter_interp_row (double sizefac, int ras_strt, double real_outpos, int inmax, int outmax)
 {
     double inoff;
     /*
@@ -679,11 +674,7 @@ painter_interp_row (sizefac, ras_strt, real_outpos, inmax, outmax)
  * pixel wide lines in the input image.
  */
 void
-fant_interp_row (sizefac, ras_strt, real_outpos, inmax, outmax)
-     double sizefac;
-     int ras_strt;
-     double real_outpos;
-     int inmax, outmax;
+fant_interp_row (double sizefac, int ras_strt, double real_outpos, int inmax, int outmax)
 {
     double inoff;
     /*
@@ -756,8 +747,7 @@ fant_interp_row (sizefac, ras_strt, real_outpos, inmax, outmax)
  * into a separate array.
  */
 void
-getraster(ras_ptrs)
-rle_pixel *ras_ptrs[];
+getraster(rle_pixel **ras_ptrs)
 {
     int i, chan;
     rle_pixel *ptrs[MAXCHAN];
@@ -780,8 +770,7 @@ rle_pixel *ras_ptrs[];
 
 /* Write out the rasters */
 void
-putraster(ras_ptrs)
-rle_pixel *ras_ptrs[];
+putraster(rle_pixel **ras_ptrs)
 {
     int i, chan;
     rle_pixel *ptrs[MAXCHAN];
@@ -814,8 +803,7 @@ rle_pixel *ras_ptrs[];
 
 /* Clear the raster's cur_chan channel */
 void
-clear_raster(ras_ptr)
-rle_pixel *ras_ptr[];
+clear_raster(rle_pixel **ras_ptr)
 {
     bzero( (char *)ras_ptr[cur_chan], array_width * array_lines );
 }
@@ -824,8 +812,7 @@ rle_pixel *ras_ptr[];
  * Dump out a raster (used for debugging).
  */
 void
-dumpraster(ras_ptrs)
-rle_pixel *ras_ptrs[];
+dumpraster(rle_pixel **ras_ptrs)
 {
     int j, i, chan;
     for (i = in_hdr.ymin; i <= in_hdr.ymax; i++)

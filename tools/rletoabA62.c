@@ -85,21 +85,19 @@ typedef struct {
     char            y, i, q;
 } yiq_t;
 
-void	filterY();
-void	filterIQ();
-void	dump1();
-void	dump2();
+void	filterY(float *yVal, float c0, float c1, float c2);
+void	filterIQ(float *iqVal, float c0, float c1, float c2, int start, int stride);
+void	dump1(register yiq_t **raster, int start);
+void	dump2(register yiq_t **raster, int start);
 
-extern void rasterInit();
-extern void rasterRowGet();
+extern void rasterInit(int fd, int width, int height, int BkgRed, int BkgGreen, int BkgBlue);
+extern void rasterRowGet(unsigned char *red, unsigned char *green, unsigned char *blue);
 
 /*
  * Main entry...
  */
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     register int    i, j;
     int             errors, c, file;
@@ -299,8 +297,7 @@ char **argv;
  * point multiplications and to allow the filtering to occur in place.
  */
 void 
-filterY(yVal, c0, c1, c2)
-float *yVal, c0, c1, c2;
+filterY(float *yVal, float c0, float c1, float c2)
 {
     static float   *m0 = NULL;
     static float   *m1 = NULL;
@@ -337,9 +334,7 @@ float *yVal, c0, c1, c2;
  * pixels, rather than every other pixel.  This may be a problem...
  */
 void 
-filterIQ(iqVal, c0, c1, c2, start, stride)
-float *iqVal, c0, c1, c2;
-int start, stride;
+filterIQ(float *iqVal, float c0, float c1, float c2, int start, int stride)
 {
     static float   *m0 = NULL;
     static float   *m1 = NULL;
@@ -372,9 +367,7 @@ int start, stride;
 
 #define OUT(y, OP, iq) putc((char) (raster[i][j + 0].y OP raster[i][j + 0].iq + 60), stdout);
 void
-dump1(raster, start)
-register yiq_t **raster;
-int start;
+dump1(register yiq_t **raster, int start)
 {
     register int    i, j;
 
@@ -403,9 +396,7 @@ int start;
  * This routine also adds 60 to put the data in the 60 .. 200 range.
  */
 void
-dump2(raster, start)
-register yiq_t **raster;
-int start;
+dump2(register yiq_t **raster, int start)
 {
     register int    i, j;
 

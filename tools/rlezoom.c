@@ -37,8 +37,11 @@
 
 #define ROUND(x) ((int)((x) + 0.5))
 
-static void integer_zoom(), expand_raw(), float_zoom(), build_row();
-static int advance_fp();
+static void integer_zoom(rle_hdr *in_hdr, int xfact, int yfact, rle_hdr *out_hdr);
+static void expand_raw(rle_hdr *the_hdr, rle_op **in_raw, int *in_nraw, int xfact, rle_op **out_raw, int *out_nraw);
+static void float_zoom(rle_hdr *in_hdr, float xfact, float yfact, rle_hdr *out_hdr);
+static void build_row(rle_hdr *hdr, float fact, rle_pixel **in_scan, rle_pixel **out_scan);
+static int advance_fp(rle_hdr *hdr, int des_row, rle_pixel **in_scan);
 
 /*****************************************************************
  * TAG( main )
@@ -68,9 +71,7 @@ static int advance_fp();
  *      factor. 
  */
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     float xfact, yfact = 0;
     rle_hdr in_hdr, out_hdr;
@@ -187,11 +188,7 @@ char **argv;
  * 	expands to an output run.
  */
 static void
-integer_zoom( in_hdr, xfact, yfact, out_hdr )
-rle_hdr *in_hdr;
-int xfact;
-int yfact;
-rle_hdr *out_hdr;
+integer_zoom(rle_hdr *in_hdr, int xfact, int yfact, rle_hdr *out_hdr)
 {
     int y, ynext, i;
     rle_op ** in_raw, ** out_raw;
@@ -239,13 +236,7 @@ rle_hdr *out_hdr;
  * 	runs.
  */
 static void
-expand_raw( the_hdr, in_raw, in_nraw, xfact, out_raw, out_nraw )
-rle_hdr * the_hdr;
-rle_op **in_raw;
-int xfact;
-int *in_nraw;
-rle_op **out_raw;
-int *out_nraw;
+expand_raw(rle_hdr *the_hdr, rle_op **in_raw, int *in_nraw, int xfact, rle_op **out_raw, int *out_nraw)
 {
     register rle_op * inp, * outp;
     register rle_pixel * inc, * outc;
@@ -320,11 +311,7 @@ int *out_nraw;
  * 	Simple sub/super-sampling based on DDA line drawing algorithm.
  */
 static void
-float_zoom( in_hdr, xfact, yfact, out_hdr )
-rle_hdr *in_hdr;
-float xfact;
-float yfact;
-rle_hdr *out_hdr;
+float_zoom(rle_hdr *in_hdr, float xfact, float yfact, rle_hdr *out_hdr)
 {
     rle_pixel **in_scan, **out_scan;
     rle_pixel **out_rows;
@@ -385,10 +372,7 @@ rle_hdr *out_hdr;
  * 	number of row last read (should = des_row).
  */
 static int
-advance_fp( hdr, des_row, in_scan )
-rle_hdr *hdr;
-int des_row;
-rle_pixel **in_scan;
+advance_fp(rle_hdr *hdr, int des_row, rle_pixel **in_scan)
 {
     int row;
 
@@ -414,11 +398,7 @@ rle_pixel **in_scan;
  *	by a trivial mapping.
  */
 static void
-build_row( hdr, fact, in_scan, out_scan )
-rle_hdr *hdr;
-float fact;
-rle_pixel **in_scan;
-rle_pixel **out_scan;
+build_row(rle_hdr *hdr, float fact, rle_pixel **in_scan, rle_pixel **out_scan)
 {
     register rle_pixel *is, *os;
     register int i;

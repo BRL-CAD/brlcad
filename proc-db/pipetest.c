@@ -30,8 +30,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
-void do_bending();
-void pr_pipe();
+void do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend, double od);
+void pr_pipe(char *name, struct wdb_pipept *head);
 
 struct wdb_pipept  pipe1[] = {
 	{
@@ -99,8 +99,7 @@ int	pipe2_npts = sizeof(pipe2)/sizeof(point_t);
 struct rt_wdb	*outfp;
 
 int
-main(argc, argv)
-char	**argv;
+main(int argc, char **argv)
 {
 	point_t	vert;
 	vect_t	h;
@@ -140,13 +139,7 @@ char	**argv;
 }
 
 void
-do_bending( fp, name, pts, npts, bend, od )
-struct rt_wdb	*fp;
-char	*name;
-point_t	pts[];
-int	npts;
-double	bend;
-double	od;
+do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend, double od)
 {
 	struct bu_list	head;
 	int			i;
@@ -168,9 +161,7 @@ double	od;
 }
 
 void
-pr_pipe( name, head )
-char	*name;
-struct wdb_pipept *head;
+pr_pipe(char *name, struct wdb_pipept *head)
 {
 	register struct wdb_pipept	*psp;
 

@@ -49,9 +49,7 @@ genptr_t	ibuf;
 genptr_t	obuf;
 
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	int	m;
 	int	n;

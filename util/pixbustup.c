@@ -41,9 +41,7 @@ char usage[] =
 int infd;
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int image_offset;
 	int framenumber;

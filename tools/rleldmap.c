@@ -40,8 +40,13 @@
 #include "externs.h"		/* For malloc, calloc, and free */
 #include "rle.h"
 
-void get_rle_map(), linmap(), gammap(), filemap(), mfilemap();
-void applymap(), shiftmap();
+void get_rle_map(rle_hdr *the_hdr, char *fname);
+void linmap(double factor, int nchan, int length, int range, rle_map **amap);
+void gammap(double gamma, int nchan, int length, int range, rle_map **amap);
+void filemap(int tflag, char *mapfname, int nchan, int length, rle_map **amap);
+void mfilemap(char **mfnames, int nchan, int length, rle_map **amap);
+void applymap(rle_map **map, int nchan, int length, int bits, rle_map **submap, int subchan, int sublen, int subbits, rle_map **omap);
+void shiftmap(rle_map **map, int nchan, int length, int bits);
 
 /*****************************************************************
  * TAG( main )
@@ -141,21 +146,47 @@ void applymap(), shiftmap();
  *	all, an output RLE file with just a color map will be generated).
  */
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
-    int apply = 0, nflag = 0, nchan = 3, length = 256, range, lbits,
-	sflag = 0, bits = 8, lflag = 0, gflag = 0,
-	tflag = 0, mflag = 0, rflag = 0, oflag = 0, nmfiles = 0;
-    int ochan, olength, olbits;	/* output map parameters */
-    double factor = 1.0, gamma = 1.0;
-    char * mapfname = NULL, ** mfnames = NULL, * rlefname = NULL,
-	* outputfname = NULL, * inputfname = NULL;
+    int apply = 0;
+    int nflag = 0;
+    int nchan = 3;
+    int length = 256;
+    int range;
+    int lbits;
+    int sflag = 0;
+    int bits = 8;
+    int lflag = 0;
+    int gflag = 0;
+    int tflag = 0;
+    int mflag = 0;
+    int rflag = 0;
+    int oflag = 0;
+    int nmfiles = 0;
+
+    /* output map parameters */
+    int ochan;
+    int olength;
+    int olbits;
+
+    double factor = 1.0;
+    double gamma = 1.0;
+    char * mapfname = NULL;
+    char ** mfnames = NULL;
+    char * rlefname = NULL;
+    char * outputfname = NULL;
+    char * inputfname = NULL;
+
     FILE *outfile = stdout;
-    rle_map ** imap = NULL, ** omap, ** amap, ** allocmap();
-    rle_hdr in_hdr, out_hdr, rle_f_hdr;
-    int rle_cnt, rle_err;
+    rle_map ** imap = NULL;
+    rle_map ** omap;
+    rle_map ** amap;
+    rle_map ** allocmap(int nchan, int length, rle_map *cmap);
+    rle_hdr in_hdr;
+    rle_hdr out_hdr;
+    rle_hdr rle_f_hdr;
+    int rle_cnt;
+    int rle_err;
 
     if ( scanargs( argc, argv,
 	"% ab%- n%-nchan!dlength!d s%-bits!d l%-factor%F g%-gamma!F \n\
@@ -349,10 +380,7 @@ char **argv;
  *	[None]
  */
 rle_map **
-allocmap( nchan, length, cmap )
-int nchan;
-int length;
-rle_map * cmap;
+allocmap(int nchan, int length, rle_map *cmap)
 {
     rle_map ** map;
     register int i;
@@ -385,9 +413,7 @@ rle_map * cmap;
  *	[None]
  */
 void
-shiftmap( map, nchan, length, bits )
-rle_map **map;
-int nchan, length, bits;
+shiftmap(rle_map **map, int nchan, int length, int bits)
 {
     register rle_map * e;
     register int i;
@@ -428,11 +454,7 @@ int nchan, length, bits;
  *	the output map.
  */
 void
-applymap( map, nchan, length, bits, submap, subchan, sublen, subbits, omap )
-int nchan, length, bits, subchan, sublen, subbits;
-rle_map **submap;
-rle_map **map;
-rle_map **omap;
+applymap(rle_map **map, int nchan, int length, int bits, rle_map **submap, int subchan, int sublen, int subbits, rle_map **omap)
 {
     register rle_map * s;		/* pointer into submap */
     register rle_map * o;		/* pointer into omap */
@@ -489,10 +511,7 @@ rle_map **omap;
  *	[None]
  */
 void
-linmap( factor, nchan, length, range, amap )
-double factor;
-int nchan, length, range;
-rle_map **amap;
+linmap(double factor, int nchan, int length, int range, rle_map **amap)
 {
     register int i;
     double l = length - 1, m;
@@ -534,10 +553,7 @@ rle_map **amap;
  *	[None]
  */
 void
-gammap( gamma, nchan, length, range, amap )
-double gamma;
-int nchan, length, range;
-rle_map **amap;
+gammap(double gamma, int nchan, int length, int range, rle_map **amap)
 {
     register int i;
     double l = length - 1;
@@ -571,10 +587,7 @@ rle_map **amap;
  *	[None]
  */
 void
-filemap( tflag, mapfname, nchan, length, amap )
-int tflag, nchan, length;
-char *mapfname;
-rle_map **amap;
+filemap(int tflag, char *mapfname, int nchan, int length, rle_map **amap)
 {
     FILE * mapfile;
     register int c, i;
@@ -658,10 +671,7 @@ rle_map **amap;
  *	[None]
  */
 void
-mfilemap( mfnames, nchan, length, amap )
-char **mfnames;
-int nchan, length;
-rle_map **amap;
+mfilemap(char **mfnames, int nchan, int length, rle_map **amap)
 {
     FILE * mapfile;
     register int c, i;
@@ -716,9 +726,7 @@ rle_map **amap;
  *	[None]
  */
 void
-get_rle_map( the_hdr, fname )
-rle_hdr *the_hdr;
-char *fname;
+get_rle_map(rle_hdr *the_hdr, char *fname)
 {
     FILE * infile;
 

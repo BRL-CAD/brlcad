@@ -58,9 +58,7 @@
  *	[None]
  */
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     register int i, c, j;
     char * infname = NULL, * outfname = NULL;

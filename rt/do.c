@@ -49,8 +49,8 @@ extern mat_t	view2model;
 extern mat_t	model2view;
 /***** end of sharing with viewing model *****/
 
-extern void	grid_setup();
-extern void	worker();
+extern void	grid_setup(void);
+extern void	worker(int cpu, genptr_t arg);
 
 /***** variables shared with worker() ******/
 extern struct application ap;
@@ -106,9 +106,9 @@ extern fastf_t rt_cline_radius;
 unsigned char *pixmap = NULL; /* Pixel Map for rerendering of black pixels */
 
 
-void		def_tree();
-void		do_ae();
-void		res_pr();
+void		def_tree(register struct rt_i *rtip);
+void		do_ae(double azim, double elev);
+void		res_pr(void);
 void		memory_summary(void);
 
 /*
@@ -118,8 +118,7 @@ void		memory_summary(void);
  *  Returns -1 if unable to acquire info, 0 if successful.
  */
 int
-old_frame( fp )
-FILE *fp;
+old_frame(FILE *fp)
 {
 	register int i;
 	char number[128];
@@ -150,8 +149,7 @@ FILE *fp;
  *  Note that the rewind() will fail on ttys, pipes, and sockets (sigh).
  */
 int
-old_way( fp )
-FILE *fp;
+old_way(FILE *fp)
 {
 	int	c;
 
@@ -515,8 +513,7 @@ int cm_opt(int argc, char **argv)
  *  Load default tree list, from command line.
  */
 void
-def_tree( rtip )
-register struct rt_i	*rtip;
+def_tree(register struct rt_i *rtip)
 {
 	struct bu_vls	times;
 
@@ -540,8 +537,7 @@ register struct rt_i	*rtip;
  *  This is a separate function primarily as a service to REMRT.
  */
 void
-do_prep( rtip )
-struct rt_i	*rtip;
+do_prep(struct rt_i *rtip)
 {
 	struct bu_vls	times;
 
@@ -583,8 +579,7 @@ rt_pr_cut_info( rtip, "main" );
  *  Returns -1 on error, 0 if OK.
  */
 int
-do_frame( framenumber )
-int framenumber;
+do_frame(int framenumber)
 {
 	struct bu_vls	times;
 	char framename[128];		/* File name to hold current frame */
@@ -981,8 +976,7 @@ int framenumber;
  *  X axis, or, rotating the *model* in -X.
  */
 void
-do_ae( azim, elev )
-double azim, elev;
+do_ae(double azim, double elev)
 {
 	vect_t	temp;
 	vect_t	diag;
@@ -1039,7 +1033,7 @@ double azim, elev;
  *			R E S _ P R
  */
 void
-res_pr()
+res_pr(void)
 {
 	register struct resource *res;
 	register int i;

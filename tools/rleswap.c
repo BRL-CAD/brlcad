@@ -93,9 +93,7 @@ extern void scan_usage();
  *	[None]
  */
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     int nspec, * specs;
     int tflag = 0, fflag = 0, oflag = 0, dflag = 0, pflag = 0, verbose = 0;

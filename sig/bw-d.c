@@ -29,9 +29,7 @@ double	obuf[512];
 static char usage[] = "\
 Usage: bw-d [-n || scale] < unsigned_chars > doubles\n";
 
-int main( argc, argv )
-int	argc;
-char	**argv;
+int main(int argc, char **argv)
 {
 	int	i, num;
 	double	scale;

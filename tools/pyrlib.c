@@ -21,19 +21,12 @@ static const char rcs_ident[] = "$Id$";
 #include "rle.h"
 #include "pyramid.h"
 
-void extrap_level(), extrap_int_level();
-void alloc_pyramid(), gauss_level(), band_level(), expand_level();
-void dump_level_line(), band_to_int_level(), add_int_level();
+void extrap_level(int level, pyramid *pyr), extrap_int_level(int level, int **corners, int xlen, int ylen, int nchan);
+void alloc_pyramid(pyramid *pyr), gauss_level(int level, pyramid *pyr, float *mask_mult_table), band_level(int level, pyramid *bandpyr, pyramid *gausspyr, float *mask_mult_table), expand_level(int level, pyramid *gausspyr, rle_pixel **corner, float *mask_mult_table);
+void dump_level_line(rle_pixel **scanout, int y, int level, rle_pixel **corners, int xlen, int nchan), band_to_int_level(int level, rle_pixel **bandcorners, int **intcorners, int xlen, int ylen, int nchan), add_int_level(int level, int **intcorners, int xlen, int ylen, int nchan, float *mask_mult_table);
 
 int
-rle_to_pyramids(infile, gausspyr, bandpyr,
-		in_hdr, levellimit, mask_mult_table)
-FILE * infile;
-pyramid * gausspyr;
-pyramid * bandpyr;
-rle_hdr * in_hdr;
-int levellimit;
-float * mask_mult_table;
+rle_to_pyramids(FILE *infile, pyramid *gausspyr, pyramid *bandpyr, rle_hdr *in_hdr, int levellimit, float *mask_mult_table)
 {
     rle_pixel *rastptr, *rasterbase;
     rle_pixel *firstbase, *outbase;
@@ -236,8 +229,7 @@ float * mask_mult_table;
  * space has been set aside for the corners to be returned to.
  */
 void
-alloc_pyramid(pyr)
-pyramid * pyr;
+alloc_pyramid(pyramid *pyr)
 {
     int i, xsize = pyr->xlen[0], ysize = pyr->ylen[0];
 
@@ -268,9 +260,7 @@ pyramid * pyr;
  * known neighbors. 
  */
 void
-extrap_level(level,pyr)
-int level;
-pyramid * pyr;
+extrap_level(int level, pyramid *pyr)
 {
     int chan, x, y, i, newvalue, xsize, ysize;
     int xlinewidth, nchan;
@@ -349,8 +339,7 @@ pyramid * pyr;
  * is returned.
  */
 float *
-gauss_mask(siz)
-int siz;
+gauss_mask(int siz)
 {
     int i,j;
     float w[5];
@@ -388,10 +377,7 @@ int siz;
  * level - 1.
  */
 void
-gauss_level(level,pyr,mask_mult_table)
-int level;
-pyramid * pyr;
-float *mask_mult_table;
+gauss_level(int level, pyramid *pyr, float *mask_mult_table)
 {
     int xsize, ysize, x, y, xlinewidth, lilxlinewidth;
     int chan,i,j,nchan;
@@ -459,11 +445,7 @@ float *mask_mult_table;
  * Hence, a band pyramid has nchan + 1 channels in it.
  */
 void
-band_level(level, bandpyr, gausspyr, mask_mult_table)
-int level;
-pyramid * bandpyr;
-pyramid * gausspyr;
-float *mask_mult_table;
+band_level(int level, pyramid *bandpyr, pyramid *gausspyr, float *mask_mult_table)
 {
     int xsize, ysize, x, y, xlinewidth;
     int chan,subtractval,nchan;
@@ -533,11 +515,7 @@ float *mask_mult_table;
  * might even, be slightly wrong, but don't tell anyone, K?
  */
 void
-expand_level(level, gausspyr, corner, mask_mult_table)
-int level;
-pyramid * gausspyr;
-rle_pixel ** corner;
-float *mask_mult_table;
+expand_level(int level, pyramid *gausspyr, rle_pixel **corner, float *mask_mult_table)
 {
     int xsize, ysize, x, y, xlinewidth, lilxlinewidth;
     int chan,i,j,nchan;
@@ -627,12 +605,7 @@ float *mask_mult_table;
  * of "channels" channels.
  */
 void
-dump_pyramid(outfile,levels,corners,xlen,ylen,channels,in_hdr)
-FILE * outfile;
-int levels;
-rle_pixel **corners;
-int xlen,ylen,channels;
-rle_hdr in_hdr;
+dump_pyramid(FILE *outfile, int levels, rle_pixel **corners, int xlen, int ylen, int channels, rle_hdr in_hdr)
 {
     rle_hdr out_hdr;
     int chan, level, x, y, activelevels, adjust_alpha = 0;
@@ -699,11 +672,7 @@ rle_hdr in_hdr;
 }
 
 void
-dump_level_line(scanout,y,level,corners,xlen,nchan)
-rle_pixel ** scanout;
-int y, level;
-rle_pixel ** corners;
-int xlen,nchan;
+dump_level_line(rle_pixel **scanout, int y, int level, rle_pixel **corners, int xlen, int nchan)
 {
     int xsize, x, chan, xlinewidth;
     rle_pixel * outpxl, * outrastptr, *outbase, *scanoutptr;
@@ -730,10 +699,7 @@ int xlen,nchan;
 }
 
 void
-rebuild_image(imgcorner, bandpyr, mask_mult_table)
-rle_pixel ** imgcorner;
-pyramid * bandpyr;
-float *mask_mult_table;
+rebuild_image(rle_pixel **imgcorner, pyramid *bandpyr, float *mask_mult_table)
 {
     int i, xsize, ysize, level, nchan, xlen, ylen;
     int x, y, chan, xlinewidth,levels;
@@ -844,11 +810,7 @@ float *mask_mult_table;
 }
 
 void
-band_to_int_level(level,bandcorners,intcorners,	xlen,ylen,nchan)
-int level;
-rle_pixel ** bandcorners;
-int ** intcorners;
-int xlen,ylen,nchan;
+band_to_int_level(int level, rle_pixel **bandcorners, int **intcorners, int xlen, int ylen, int nchan)
 {
     int xsize, ysize, x, y, chan, xlinewidth, sign;
     rle_pixel *firstbase, *firstrastptr, *firstpxl, *signpxl;
@@ -886,10 +848,7 @@ int xlen,ylen,nchan;
 }
 
 void
-extrap_int_level(level,corners,xlen,ylen,nchan)
-int level;
-int **corners;
-int xlen,ylen,nchan;
+extrap_int_level(int level, int **corners, int xlen, int ylen, int nchan)
 {
     int chan, x, y, i, newvalue, xsize, ysize;
     int xlinewidth;
@@ -959,11 +918,7 @@ int xlen,ylen,nchan;
 }
 
 void
-add_int_level(level,intcorners,xlen,ylen,nchan,mask_mult_table)
-int level;
-int **intcorners;
-int xlen,ylen,nchan;
-float *mask_mult_table;
+add_int_level(int level, int **intcorners, int xlen, int ylen, int nchan, float *mask_mult_table)
 {
     int xsize, ysize, x, y, xlinewidth, lilxlinewidth;
     int chan,i,j;

@@ -56,9 +56,7 @@ static char buf[MAXPATHLEN+1];
 short forceflg;				/* overwrite an unwritable file? */
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     char *cp;
     int c;

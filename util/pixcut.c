@@ -68,9 +68,7 @@ pixcut: Usage:	[-v] [-h] [-H] [-a] [-# num_bytes] [-C red/green/blue]\n\
 		[-x horizontal] [-y vertical] [file_in]\n";
 
 void
-parse_color(bak, s)
-unsigned char *bak;
-char * s;
+parse_color(unsigned char *bak, char *s)
 {
 	int red,green,blue;
 	int result;
@@ -83,9 +81,7 @@ char * s;
 }
 
 int
-get_args( argc, argv)
-register int argc;
-register char **argv;
+get_args(register int argc, register char **argv)
 {
 	register int c;
 
@@ -169,8 +165,7 @@ register char **argv;
 
 			
 int
-main(argc, argv)
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	unsigned char *inbuf, *outbuf;
 	unsigned char *buffer;

@@ -54,16 +54,15 @@ static int	autosize = 0;		/* !0 to autosize input */
 static int	file_width = 720;	/* default input width */
 static int	file_height = 485;	/* default input height */
 
-static int	mread();
-void		ab_rgb_to_yuv(), ab_yuv_to_rgb();
+static int	mread(int fd, register char *bufp, int n);
+void		ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len), ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len);
 
 static char usage[] = "\
 Usage: yuv-pix [-h] [-a]\n\
 	[-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -123,9 +122,7 @@ register char **argv;
  *			M A I N
  */
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	char	*inbuf;
 	char	*outbuf;
@@ -182,10 +179,7 @@ char	**argv;
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
  */
 static int
-mread(fd, bufp, n)
-int	fd;
-register char	*bufp;
-int	n;
+mread(int fd, register char *bufp, int n)
 {
 	register int	count = 0;
 	register int	nread;
@@ -246,10 +240,7 @@ static double	vbuf[724*4];
 
 /* RGB to YUV */
 void
-ab_rgb_to_yuv( yuv_buf, rgb_buf, len )
-unsigned char *yuv_buf;
-unsigned char *rgb_buf;
-int	len;
+ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len)
 {
 	register unsigned char *cp;
 	register double	*yp, *up, *vp;
@@ -297,9 +288,7 @@ int	len;
 
 /* YUV to RGB */
 void
-ab_yuv_to_rgb( rgb_buf, yuv_buf, len )
-unsigned char *rgb_buf;
-unsigned char *yuv_buf;
+ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len)
 {
 	register unsigned char *rgbp;
 	register unsigned char *yuvp;

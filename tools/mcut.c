@@ -171,11 +171,19 @@ struct _color_box
 /*
  * Forward decls.
  */
-void subdivide(), sum_hist(), average_colors(), calc_inverse_map();
-void make_rle_map(), re_expand_map(), quantize_dither_rle();
-void quantize_rle(), free_hist(), bound_rgb(), set_size_axis();
-int break_box();
-void radix_sort();
+void subdivide(void);
+void sum_hist(void);
+void average_colors(void);
+void calc_inverse_map(void);
+void make_rle_map(void);
+void re_expand_map(void);
+void quantize_dither_rle(rle_pixel **scan);
+void quantize_rle(rle_pixel **scan);
+void free_hist(void);
+void bound_rgb(register color_box_t *box);
+void set_size_axis(color_box_t *cb);
+int break_box(void);
+void radix_sort(color_box_t *bbox, int start_bit, int num_bits);
 
 /*
  * Globals
@@ -258,9 +266,7 @@ char		  *cmd_nm;	/* Command name for error messages */
  * only once.
  */
 int
-main( argc, argv )
-int argc;
-char ** argv;
+main(int argc, char **argv)
 {
     register rle_pixel *rptr, *gptr, *bptr;
     int tmp, dither = 0, oflag = 0;
@@ -394,7 +400,7 @@ char ** argv;
  * compacts the histogram.
  */
 void
-sum_hist ()
+sum_hist (void)
 {
     register int oldh, newh, i, total;
 
@@ -434,7 +440,7 @@ sum_hist ()
  * Break up bounding boxes until the desired number of colors is reached.
  */
 void
-subdivide ()
+subdivide (void)
 {
     while ( cb_list_size < max_colors )
 	if ( break_box() )
@@ -451,9 +457,9 @@ subdivide ()
  * the box into two boxes with "contiguous" colors.
  */
 int
-break_box ()
+break_box (void)
 {
-    color_box_t *newb, *box = cb_list, *split_box(), *insert_elt();
+    color_box_t *newb, *box = cb_list, *split_box(color_box_t *box), *insert_elt(color_box_t *list, color_box_t *elt);
 
     cb_list = N(cb_list);
     if ( cb_list ) P(cb_list) = NULL;
@@ -498,8 +504,7 @@ break_box ()
  * (sorted) whenever the color_box_t is split.  
  */
 color_box_t *
-split_box ( box )
-color_box_t *box;
+split_box (color_box_t *box)
 {
     int t, i;
     color_box_t *newbox;
@@ -545,7 +550,7 @@ color_box_t *box;
  * Walk the list of bounding boxes calculating the average colors.
  */
 void
-average_colors ()
+average_colors (void)
 {
     color_box_t *cp;
     int i;
@@ -583,7 +588,7 @@ average_colors ()
  * back pointer from the histogram entry to the color_box_t.
  */
 void
-calc_inverse_map ()
+calc_inverse_map (void)
 {
     register color_box_t *cp, *tmp;
     int i, dist;
@@ -620,7 +625,7 @@ calc_inverse_map ()
  * Generate the RLE color map entries from the color box list.
  */
 void
-make_rle_map()
+make_rle_map(void)
 {
     register int index;
     color_box_t * cp;
@@ -644,10 +649,10 @@ make_rle_map()
  * is first sorted, so we can walk backwards without trashing anything.
  */
 void
-re_expand_map()
+re_expand_map(void)
 {
     register int i;
-    int resort_compare();
+    int resort_compare(histogram_t **c1, histogram_t **c2);
     histogram_t *tmp, **hist_ptr;
 
     qsort( hist, hist_size, sizeof( histogram_t * ), resort_compare );
@@ -671,8 +676,7 @@ re_expand_map()
  * Read the RLE file and quantize to the reduced color set.
  */
 void
-quantize_rle(scan)
-rle_pixel **scan;
+quantize_rle(rle_pixel **scan)
 {
     register rle_pixel *rptr, *gptr, *bptr, *optr;
     register int i;
@@ -704,8 +708,7 @@ rle_pixel **scan;
  * Use Floyd/Steinberg dither to hide contouring.
  */
 void
-quantize_dither_rle(scan)
-rle_pixel **scan;
+quantize_dither_rle(rle_pixel **scan)
 {
     register rle_pixel *rptr, *gptr, *bptr, *optr;
     register int i, j;
@@ -873,8 +876,7 @@ rle_pixel **scan;
  * Extract the color for resorting the structure of the histogram.
  */
 int
-resort_compare( c1, c2 )
-histogram_t **c1, **c2;
+resort_compare(histogram_t **c1, histogram_t **c2)
 {
     return ( (*c1)->color > (*c2)->color );
 }
@@ -886,8 +888,7 @@ histogram_t **c1, **c2;
  * Determine the largest axis and its dimension.
  */
 void
-set_size_axis ( cb )
-color_box_t *cb;
+set_size_axis (color_box_t *cb)
 {
     int rsize = cb->r.max - cb->r.min,
 	gsize = cb->g.max - cb->g.min,
@@ -928,8 +929,7 @@ color_box_t *cb;
  * Calcluate the rgb bounding box for the color_box_t.
  */
 void
-bound_rgb ( box )
-register color_box_t *box;
+bound_rgb (register color_box_t *box)
 {
     register int i;
     register histogram_t **hp = box->hist;
@@ -962,11 +962,9 @@ register color_box_t *box;
  * Simulate a radix sort with qsort.
  */
 void
-radix_sort ( bbox, start_bit, num_bits )
-color_box_t *bbox;
-int start_bit, num_bits;
+radix_sort (color_box_t *bbox, int start_bit, int num_bits)
 {
-    int cmp_radices();
+    int cmp_radices(histogram_t **h1, histogram_t **h2);
 
     mask = ~(~0 << num_bits) << start_bit;
 
@@ -981,8 +979,7 @@ int start_bit, num_bits;
  * The comparison function for qsort.
  */
 int
-cmp_radices ( h1, h2 )
-histogram_t **h1, **h2;
+cmp_radices (histogram_t **h1, histogram_t **h2)
 {
     register int c1 = -1, c2 = -1;
 
@@ -1001,8 +998,7 @@ histogram_t **h1, **h2;
  * Insert an element into a linked list decreasing order.
  */
 color_box_t *
-insert_elt ( list, elt )
-color_box_t *list, *elt;
+insert_elt (color_box_t *list, color_box_t *elt)
 {
     color_box_t *lp, *ll;
 
@@ -1056,7 +1052,7 @@ color_box_t *list, *elt;
  * free_hist -- free all histogram and color box storage.
  */
 void
-free_hist()
+free_hist(void)
 {
     register color_box_t *tmp_cb, *next_cb;
     register int i;

@@ -117,19 +117,19 @@ int	save_overlaps=0;
 /*
  * Package Handlers.
  */
-void	ph_unexp();	/* foobar message handler */
-void	ph_enqueue();	/* Addes message to linked list */
-void	ph_dirbuild();
-void	ph_gettrees();
-void	ph_matrix();
-void	ph_options();
-void	ph_lines();
-void	ph_end();
-void	ph_restart();
-void	ph_loglvl();
-void	ph_cd();
+void	ph_unexp(register struct pkg_conn *pc, char *buf);	/* foobar message handler */
+void	ph_enqueue(register struct pkg_conn *pc, char *buf);	/* Addes message to linked list */
+void	ph_dirbuild(register struct pkg_conn *pc, char *buf);
+void	ph_gettrees(register struct pkg_conn *pc, char *buf);
+void	ph_matrix(register struct pkg_conn *pc, char *buf);
+void	ph_options(register struct pkg_conn *pc, char *buf);
+void	ph_lines(struct pkg_conn *pc, char *buf);
+void	ph_end(register struct pkg_conn *pc, char *buf);
+void	ph_restart(register struct pkg_conn *pc, char *buf);
+void	ph_loglvl(register struct pkg_conn *pc, char *buf);
+void	ph_cd(register struct pkg_conn *pc, char *buf);
 
-void	prepare();
+void	prepare(void);
 
 struct pkg_switch pkgswitch[] = {
 	{ MSG_DIRBUILD,	ph_dirbuild,	"DirBuild" },
@@ -157,9 +157,7 @@ char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port [cmd]\n";
  *			M A I N
  */
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	register int	n;
 
@@ -398,9 +396,7 @@ char **argv;
  *  Presently used for MATRIX and LINES messages.
  */
 void
-ph_enqueue(pc, buf)
-register struct pkg_conn *pc;
-char	*buf;
+ph_enqueue(register struct pkg_conn *pc, char *buf)
 {
 	register struct pkg_queue	*lp;
 
@@ -413,9 +409,7 @@ char	*buf;
 }
 
 void
-ph_cd(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_cd(register struct pkg_conn *pc, char *buf)
 {
 	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
 	if( chdir( buf ) < 0 )  {
@@ -426,9 +420,7 @@ char *buf;
 }
 
 void
-ph_restart(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_restart(register struct pkg_conn *pc, char *buf)
 {
 
 	if(debug)fprintf(stderr,"ph_restart %s\n", buf);
@@ -445,9 +437,7 @@ char *buf;
  *  The only argument is the name of the database file.
  */
 void
-ph_dirbuild(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_dirbuild(register struct pkg_conn *pc, char *buf)
 {
 #define MAXARGS 1024
 	char	*argv[MAXARGS+1];
@@ -498,9 +488,7 @@ char *buf;
  *  Each word in the command buffer is the name of a treetop.
  */
 void
-ph_gettrees(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_gettrees(register struct pkg_conn *pc, char *buf)
 {
 #define MAXARGS 1024
 	char	*argv[MAXARGS+1];
@@ -566,8 +554,7 @@ char *buf;
  *			P R O C E S S _ C M D
  */
 void
-process_cmd( buf )
-char	*buf;
+process_cmd(char *buf)
 {
 	register char	*cp;
 	register char	*sp;
@@ -595,9 +582,7 @@ char	*buf;
 }
 
 void
-ph_options( pc, buf )
-register struct pkg_conn *pc;
-char	*buf;
+ph_options(register struct pkg_conn *pc, char *buf)
 {
 
 	if( debug )  fprintf(stderr, "ph_options: %s\n", buf );
@@ -619,9 +604,7 @@ char	*buf;
 }
 
 void
-ph_matrix(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_matrix(register struct pkg_conn *pc, char *buf)
 {
 #ifndef NO_MAGIC_CHECKING
 	register struct rt_i *rtip = ap.a_rt_i;
@@ -654,7 +637,7 @@ char *buf;
 }
 
 void
-prepare()
+prepare(void)
 {
 	register struct rt_i *rtip = ap.a_rt_i;
 
@@ -700,9 +683,7 @@ prepare()
  *  because that is the size of the buffer (for now).
  */
 void
-ph_lines(pc, buf)
-struct pkg_conn *pc;
-char *buf;
+ph_lines(struct pkg_conn *pc, char *buf)
 {
 	auto int		a,b, fr;
 	struct line_info	info;
@@ -765,9 +746,7 @@ char *buf;
 int print_on = 1;
 
 void
-ph_loglvl(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_loglvl(register struct pkg_conn *pc, char *buf)
 {
 	if(debug) fprintf(stderr, "ph_loglvl %s\n", buf);
 	if( buf[0] == '0' )
@@ -785,8 +764,7 @@ int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
  *  Call with a large negative number to cancel all indentation.
  */
 void
-bu_log_indent_delta( delta )
-int	delta;
+bu_log_indent_delta(int delta)
 {
 	if( (bu_log_indent_cur_level += delta) < 0 )
 		bu_log_indent_cur_level = 0;
@@ -800,8 +778,7 @@ int	delta;
  *  Should be called at the front of each new line.
  */
 void
-bu_log_indent_vls( v )
-struct bu_vls	*v;
+bu_log_indent_vls(struct bu_vls *v)
 {
 	bu_vls_spaces( v, bu_log_indent_cur_level );
 }
@@ -936,8 +913,7 @@ int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
 jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
 
 void
-bu_bomb(str)
-const char *str;
+bu_bomb(const char *str)
 {
 	char	*bomb = "RTSRV terminated by rt_bomb()\n";
 
@@ -956,9 +932,7 @@ const char *str;
 }
 
 void
-ph_unexp(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_unexp(register struct pkg_conn *pc, char *buf)
 {
 	register int i;
 
@@ -977,9 +951,7 @@ char *buf;
  *			P H _ E N D
  */
 void
-ph_end(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_end(register struct pkg_conn *pc, char *buf)
 {
 	if( debug )  fprintf(stderr, "ph_end\n");
 	pkg_close(pcsrv);
@@ -990,9 +962,7 @@ char *buf;
  *			P H _ P R I N T
  */
 void
-ph_print(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_print(register struct pkg_conn *pc, char *buf)
 {
 	fprintf(stderr,"msg: %s\n", buf);
 	(void)free(buf);
@@ -1000,6 +970,6 @@ char *buf;
 
 /* Stub for do.c */
 void
-memory_summary()
+memory_summary(void)
 {
 }

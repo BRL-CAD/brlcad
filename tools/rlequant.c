@@ -53,8 +53,12 @@
  */
 typedef enum { NORMAL=0, INIT_HIST, USE_HIST, PROCESS_HIST, OUTPUT } state_t;
 
-static void mem_alloc(), read_input(), copy_hdr();
-static void setup_output(), write_output(), free_mem();
+static void mem_alloc(rle_hdr *hdr, long unsigned int entries, int dflag, rle_pixel ***rows, rle_pixel **red, rle_pixel **green, rle_pixel **blue, rle_pixel **alpha, rle_pixel **img_red, rle_pixel **img_green, rle_pixel **img_blue);
+static void read_input(rle_hdr *hdr, int width, int shift, int dflag, rle_pixel *red, rle_pixel *green, rle_pixel *blue, rle_pixel *alpha, rle_pixel *img_red, rle_pixel *img_green, rle_pixel *img_blue, rle_pixel **rows);
+static void copy_hdr(char **argv, rle_hdr *in_hdr, rle_hdr *out_hdr, FILE *outfile, int cflag);
+static void setup_output(rle_hdr *hdr, int colors, rle_pixel **colormap);
+static void write_output(rle_hdr *hdr, int width, int height, int bits, int dflag, rle_pixel *red, rle_pixel *green, rle_pixel *blue, rle_pixel *alpha, rle_pixel *img_red, rle_pixel *img_green, rle_pixel *img_blue, rle_pixel *rgbmap, rle_pixel **colormap, rle_pixel **outrows);
+static void free_mem(rle_hdr *hdr, int dflag, rle_pixel *red, rle_pixel *green, rle_pixel *blue, rle_pixel *alpha, rle_pixel *img_red, rle_pixel *img_green, rle_pixel *img_blue, rle_pixel **rows, rle_pixel **outrows);
 
 static const char *MY_NAME = "rlequant";
 
@@ -101,9 +105,7 @@ static const char *MY_NAME = "rlequant";
  * 	Read image, call colorquant, write image with new colormap.
  */
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     char       *infname = NULL,
     	       *outfname = NULL;
@@ -321,10 +323,7 @@ char **argv;
  * 	out_hdr:	Updated from in_hdr.
  */
 static void
-copy_hdr( argv, in_hdr, out_hdr, outfile, cflag )
-char **argv;
-FILE *outfile;
-rle_hdr *in_hdr, *out_hdr;
+copy_hdr(char **argv, rle_hdr *in_hdr, rle_hdr *out_hdr, FILE *outfile, int cflag)
 {
     static int		zero = 0;
 
@@ -359,14 +358,7 @@ rle_hdr *in_hdr, *out_hdr;
 }
 
 static void
-mem_alloc( hdr, entries, dflag, rows, red, green, blue, alpha,
-	   img_red, img_green, img_blue )
-rle_hdr *hdr;
-unsigned long entries;
-int dflag;
-rle_pixel ***rows;
-rle_pixel **red, **green, **blue, **alpha;
-rle_pixel **img_red, **img_green, **img_blue;
+mem_alloc(rle_hdr *hdr, long unsigned int entries, int dflag, rle_pixel ***rows, rle_pixel **red, rle_pixel **green, rle_pixel **blue, rle_pixel **alpha, rle_pixel **img_red, rle_pixel **img_green, rle_pixel **img_blue)
 {
     /* Allocate memory into which the image scanlines can be read.
      * This should happen after the above adjustment, to minimize
@@ -396,13 +388,7 @@ rle_pixel **img_red, **img_green, **img_blue;
 }
 
 static void
-read_input( hdr, width, shift, dflag, red, green, blue, alpha,
-	    img_red, img_green, img_blue, rows )
-rle_hdr *hdr;
-int width, shift, dflag;
-rle_pixel *red, *green, *blue, *alpha;
-rle_pixel *img_red, *img_green, *img_blue;
-rle_pixel **rows;
+read_input(rle_hdr *hdr, int width, int shift, int dflag, rle_pixel *red, rle_pixel *green, rle_pixel *blue, rle_pixel *alpha, rle_pixel *img_red, rle_pixel *img_green, rle_pixel *img_blue, rle_pixel **rows)
 {
     register rle_pixel *rp, *gp, *bp, *ap;
     register rle_pixel *irp = NULL, *igp = NULL, *ibp = NULL;
@@ -443,10 +429,7 @@ rle_pixel **rows;
 }
 
 static void
-setup_output( hdr, colors, colormap )
-rle_hdr *hdr;
-int colors;
-rle_pixel *colormap[3];
+setup_output(rle_hdr *hdr, int colors, rle_pixel **colormap)
 {
     char *buf;
     int x, y;
@@ -476,15 +459,7 @@ rle_pixel *colormap[3];
 }
 
 static void
-write_output( hdr, width, height, bits, dflag, red, green, blue, alpha,
-	      img_red, img_green, img_blue, rgbmap, colormap, outrows )
-rle_hdr *hdr;
-int width, height, bits, dflag;
-rle_pixel *red, *green, *blue, *alpha;
-rle_pixel *img_red, *img_green, *img_blue;
-rle_pixel *rgbmap;
-rle_pixel *colormap[3];
-rle_pixel *outrows[2];
+write_output(rle_hdr *hdr, int width, int height, int bits, int dflag, rle_pixel *red, rle_pixel *green, rle_pixel *blue, rle_pixel *alpha, rle_pixel *img_red, rle_pixel *img_green, rle_pixel *img_blue, rle_pixel *rgbmap, rle_pixel **colormap, rle_pixel **outrows)
 {
     int shift = 8 - bits;
     register rle_pixel *rp, *gp, *bp, *ap;
@@ -632,14 +607,7 @@ rle_pixel *outrows[2];
 
 
 static void
-free_mem( hdr, dflag, red, green, blue, alpha,
-	  img_red, img_green, img_blue, rows, outrows )
-rle_hdr *hdr;
-int dflag;
-rle_pixel *red, *green, *blue, *alpha;
-rle_pixel *img_red, *img_green, *img_blue;
-rle_pixel **rows;
-rle_pixel *outrows[2];
+free_mem(rle_hdr *hdr, int dflag, rle_pixel *red, rle_pixel *green, rle_pixel *blue, rle_pixel *alpha, rle_pixel *img_red, rle_pixel *img_green, rle_pixel *img_blue, rle_pixel **rows, rle_pixel **outrows)
 {
     /* Free image store. */
     free( red );

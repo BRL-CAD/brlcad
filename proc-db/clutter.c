@@ -52,20 +52,23 @@ int	nmtab = sizeof(mtab)/sizeof(struct mtab);
 
 #define PICK_MAT	((rand() % nmtab) )
 
-double	ball_stack(), prim_stack(), crystal_stack(), crystal_layer();
-void	do_plate(), do_rings();
+double ball_stack(char *bname, double xc, double yc, double size);
+double prim_stack(char *pname, double xc, double yc, double size);
+double crystal_stack(char *cname, double xc, double yc, double size);
+double crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_t *min, double var, double ratio, int nsolids);
+
+void	do_plate(char *name, double xc, double yc, double size);
+void	do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int n);
 
 void	get_rgb(unsigned char *rgb);
-void	do_light(char *name, point_t pos, vect_t dir_at, int da_flag,
-		double r, unsigned char *rgb, struct wmember *headp);
+void	do_light(char *name, point_t pos, vect_t dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp);
 
 struct bn_unif	*rbuf;
 
 struct rt_wdb	*outfp;
 
 int
-main(argc, argv)
-char	**argv;
+main(int argc, char **argv)
 {
 	vect_t	norm;
 	unsigned char	rgb[3];
@@ -166,10 +169,10 @@ char	**argv;
 }
 
 double
-crystal_stack( cname, xc, yc, size )
-char	*cname;
-double	xc, yc;		/* center coordinates, z=0+ */
-double	size;
+crystal_stack(char *cname, double xc, double yc, double size)
+    	       
+      	       		/* center coordinates, z=0+ */
+      	     
 {
 	int	i;
 	point_t	center;
@@ -231,15 +234,15 @@ double	size;
 }
 
 double
-crystal_layer( crname, center, radius, maj, min, var, ratio, nsolids )
-char	*crname;
-point_t	center;		/* center coordinates, (min Z) */
-double	radius;		/* cell radius */
-vect_t	maj;		/* main axis of growth */
-vect_t	min;		/* minor axis of growth */
-double	var;		/* max degrees of variation off axis (0..90) */
-double	ratio;		/* len/width ratio */
-int	nsolids;	/* number of solids for this layer */
+crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_t *min, double var, double ratio, int nsolids)
+    	        
+       	       		/* center coordinates, (min Z) */
+      	       		/* cell radius */
+      	    		/* main axis of growth */
+      	    		/* minor axis of growth */
+      	    		/* max degrees of variation off axis (0..90) */
+      	      		/* len/width ratio */
+   	        	/* number of solids for this layer */
 {
 	int	todo;
 	double	height = center[Z];
@@ -317,10 +320,10 @@ int	nsolids;	/* number of solids for this layer */
 }
 
 void
-do_plate( name, xc, yc, size )
-char	*name;
-double	xc, yc;		/* center coordinates, z=0+ */
-double	size;
+do_plate(char *name, double xc, double yc, double size)
+    	      
+      	       		/* center coordinates, z=0+ */
+      	     
 {
 	double	esz;
 	vect_t	minpt, maxpt;
@@ -343,10 +346,10 @@ double	size;
 }
 
 double
-ball_stack( bname, xc, yc, size )
-char	*bname;
-double	xc, yc;		/* center coordinates, z=0+ */
-double	size;
+ball_stack(char *bname, double xc, double yc, double size)
+    	       
+      	       		/* center coordinates, z=0+ */
+      	     
 {
 	point_t	center;
 	double	esz;
@@ -376,10 +379,10 @@ double	size;
 }
 
 double
-prim_stack( pname, xc, yc, size )
-char	*pname;
-double	xc, yc;		/* center coordinates, z=0+ */
-double	size;
+prim_stack(char *pname, double xc, double yc, double size)
+    	       
+      	       		/* center coordinates, z=0+ */
+      	     
 {
 	point_t	pt[8];
 	vect_t	min, max;
@@ -456,13 +459,7 @@ double	size;
 }
 
 void
-do_rings( ringname, center, r1, r2, incr, n )
-char	*ringname;
-point_t	center;
-double	r1;
-double	r2;
-double	incr;
-int	n;
+do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int n)
 {
 	int	i;
 	vect_t	normal;

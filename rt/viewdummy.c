@@ -62,8 +62,8 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit();
-int	raymiss();
+int	rayhit(register struct application *ap, struct partition *PartHeadp);
+int	raymiss(register struct application *ap);
 
 /*
  *  			V I E W _ I N I T
@@ -71,11 +71,7 @@ int	raymiss();
  *  Called by main() at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char	*file;
-char	*obj;
-int	minus_o;
+view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 	return(0);		/* no framebuffer needed */
 }
@@ -87,8 +83,7 @@ int	minus_o;
  *  Called by do_frame() just before raytracing starts.
  */
 void
-view_2init( ap )
-struct application *ap;
+view_2init(struct application *ap)
 {
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
@@ -101,8 +96,7 @@ struct application *ap;
  *  Called by worker() after the end of proccessing for each pixel.
  */
 void
-view_pixel( ap )
-register struct application *ap;
+view_pixel(register struct application *ap)
 {
 }
 
@@ -113,8 +107,7 @@ register struct application *ap;
  *  Any end-of-line processing should be done in view_pixel().
  */
 void
-view_eol( ap )
-register struct application *ap;
+view_eol(register struct application *ap)
 {
 }
 
@@ -125,8 +118,7 @@ register struct application *ap;
  *  just after raytracing completes.
  */
 void
-view_end( ap )
-register struct application	*ap;
+view_end(register struct application *ap)
 {
 }
 
@@ -138,8 +130,7 @@ register struct application	*ap;
  *  e.g., generate lights, associate materials routines, etc.
  */
 void
-view_setup( rtip )
-struct rt_i	*rtip;
+view_setup(struct rt_i *rtip)
 {
 }
 
@@ -149,8 +140,7 @@ struct rt_i	*rtip;
  *  Called by "clean" command, just before rt_clean() is called, in do.c
  */
 void
-view_cleanup( rtip )
-struct rt_i	*rtip;
+view_cleanup(struct rt_i *rtip)
 {
 }
 
@@ -160,9 +150,7 @@ struct rt_i	*rtip;
  *  Called via a_hit linkage from rt_shootray() when ray hits.
  */
 int
-rayhit( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
+rayhit(register struct application *ap, struct partition *PartHeadp)
 {
 	bu_log("hit: 0x%x\n", ap->a_resource);
 
@@ -175,12 +163,11 @@ struct partition *PartHeadp;
  *  Called via a_miss linkage from rt_shootray() when ray misses.
  */
 int
-raymiss( ap )
-register struct application *ap;
+raymiss(register struct application *ap)
 {
 	bu_log("miss: 0x%x\n", ap->a_resource);
 
 	return(0);
 }
 
-void application_init () {}
+void application_init (void) {}

@@ -97,14 +97,12 @@ char *tub_reg="%02d.tube",*tub_flu="%02d.tubflu";
 char *elb_reg="%02d.elbow",*elb_flu="%02d.elbflu";
 char *arb="%02d.arb";
 
-void Usage();
+void Usage(void);
 
 struct rt_wdb *fdout;	/* file for libwdb writes */
 
 void
-Make_name( ptr , form , base , number )
-char *ptr,*form,*base;
-int number;
+Make_name(char *ptr, char *form, char *base, int number)
 {
 
 	char scrat[NAMESIZE];
@@ -119,7 +117,7 @@ int number;
 }
 
 void
-Readpoints()
+Readpoints(void)
 {
 	struct points *ptr,*prev;
 	fastf_t x,y,z;
@@ -155,7 +153,7 @@ Readpoints()
 }
 
 void
-Names()
+Names(void)
 {
 	struct points *ptr;
 	char *inform=NULL,*outform=NULL,*cutform=NULL;
@@ -226,7 +224,7 @@ Names()
 }
 
 void
-Normals()
+Normals(void)
 {
 	struct points *ptr;
 
@@ -260,7 +258,7 @@ Normals()
 }
 
 void
-Adjust()
+Adjust(void)
 {
 	fastf_t beta,d,len;
 	struct points *ptr;
@@ -315,7 +313,7 @@ Adjust()
 }
 
 void
-Pipes()
+Pipes(void)
 {
 	vect_t ht;
 	struct points *ptr;
@@ -490,7 +488,7 @@ Pipes()
 }
 
 void
-Elbows()	/* make a tubing elbow and fluid elbow */
+Elbows(void)	/* make a tubing elbow and fluid elbow */
 {
 	vect_t RN1,RN2;
 	point_t pts[8];
@@ -586,7 +584,7 @@ Elbows()	/* make a tubing elbow and fluid elbow */
 }
 
 void
-Groups()
+Groups(void)
 {
 	struct points *ptr;
 	char tag[NAMESIZE];
@@ -651,9 +649,7 @@ Groups()
 }
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	int done;
 	char units[16],fname[80];
@@ -813,7 +809,7 @@ char *argv[];
 }
 
 void
-Usage()
+Usage(void)
 {
 	fprintf( stderr , "Usage: pipe [-tsmnc] tag filename\n");
 	fprintf( stderr , "   where 'tag' is the name of the piping run\n");

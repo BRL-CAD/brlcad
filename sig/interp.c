@@ -15,9 +15,7 @@
 #define	MAX	1024
 
 void
-LintoLog( in, out, num )
-double in[], out[];
-int num;
+LintoLog(double *in, double *out, int num)
 {
 	int	i;
 	double	place, step;

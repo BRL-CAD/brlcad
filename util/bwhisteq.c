@@ -46,8 +46,7 @@ char usage[] = "Usage: bwhisteq [-v] file.bw > file.equalized\n";
 int	verbose = 0;
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	n, i;
 	unsigned char buf[512];

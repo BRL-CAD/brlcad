@@ -26,9 +26,7 @@ double	r[BSIZE];
 static char usage[] = "\
 Usage: dauto2 [window_size (512)] < doubles\n";
 
-int main( argc, argv )
-int	argc;
-char	**argv;
+int main(int argc, char **argv)
 {
 	int	i, j, n, L;
 	register int *dp1, *dp2;

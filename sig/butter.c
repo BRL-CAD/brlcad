@@ -19,8 +19,8 @@ void cdiv();
  *  frequency.
  */
 double
-butter( w )
-double	w;	/* relative frequency (1.0 = center freq) */
+butter(double w)
+      	  	/* relative frequency (1.0 = center freq) */
 {
 	COMPLEX	denom, num, H;
 	double	gamma, k1, k2, k3, k4;
@@ -51,10 +51,10 @@ double	w;	/* relative frequency (1.0 = center freq) */
  * Compute weights for a log point spaces critical band filter.
  */
 void
-cbweights( filter, window, points )
-double	filter[];
-int	window;		/* Length of FFT to compute relative freq for */
-int	points;		/* Length of filter kernel wanted */
+cbweights(double *filter, int window, int points)
+      	         
+   	       		/* Length of FFT to compute relative freq for */
+   	       		/* Length of filter kernel wanted */
 {
 	int	i, center;
 	double	step, w;

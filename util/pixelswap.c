@@ -28,8 +28,7 @@ unsigned char obuf[32767 * 3];
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(s)
-char *s;
+void usage(char *s)
 {
 	if (s) (void)fputs(s, stderr);
 
@@ -41,9 +40,7 @@ char *s;
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(ac, av)
-int ac;
-char *av[];
+int parse_args(int ac, char **av)
 {
 	int  c;
 
@@ -76,9 +73,7 @@ char *av[];
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(ac,av)
-int ac;
-char *av[];
+int main(int ac, char **av)
 {
 	int i, pixels;
 	unsigned char r, g, b, R, G, B;

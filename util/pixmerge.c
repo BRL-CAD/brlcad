@@ -68,8 +68,7 @@ Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]\n\
 	foreground.pix background.pix > out.pix\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -148,9 +147,7 @@ register char **argv;
 }
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {

@@ -33,7 +33,7 @@
 #include "externs.h"		/* For malloc, realloc and free */
 #include "rle.h"
 
-static void insert();
+static void insert(int **sorted_list_p, int i, int n);
 
 static const char *my_name = "rleselect";
 
@@ -78,9 +78,7 @@ static const char *my_name = "rleselect";
  * 	list, and copying if they are.
  */
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     char       *infname = NULL,
     	       *outfname = NULL;
@@ -259,9 +257,7 @@ char **argv;
 
 
 static void 
-insert( sorted_list_p, i, n )
-int **sorted_list_p;
-int i, n;
+insert(int **sorted_list_p, int i, int n)
 {
     register int *sorted_list = *sorted_list_p;
     register int j;

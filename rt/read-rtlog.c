@@ -57,10 +57,7 @@ extern int	verbose;
  */
 
 int
-read_rt_file(infp, name, model2view)
-FILE	*infp;
-char	*name;
-mat_t 	model2view;
+read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 {
 	FILE		*fp;
 	fastf_t		azimuth;		/* part of the view */

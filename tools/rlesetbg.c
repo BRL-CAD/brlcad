@@ -40,9 +40,7 @@ static const char rcs_ident[] = "$Id$";
 char buffer[4096];
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
     int *new_back = NULL, nback = 0;
     int overlay_flag = 0, backcolor_flag = 0, oflag = 0;

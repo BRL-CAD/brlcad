@@ -38,15 +38,15 @@ static	int	upper[HSCREEN], lower[HSCREEN];
 
 FBIO	*fbp;	/* XXX - debug */
 
-void	Efill();
-void	Horizon();
-void	Intersect();
-void	Draw();
-int	fhvis();
-int	sign();
+void	Efill(void);
+void	Horizon(int x1, int y1, int x2, int y2);
+void	Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi);
+void	Draw(int x1, int y1, int x2, int y2);
+int	fhvis(int x, int y);
+int	sign(int i);
 
 void
-fhinit()
+fhinit(void)
 {
 	int	i;
 
@@ -62,8 +62,7 @@ fhinit()
  *  This one goes "behind" the last one.
  */
 void
-fhnewz( f, num )
-int	f[], num;
+fhnewz(int *f, int num)
 {
 	int	x, y, Xprev, Yprev, Xi, Yi;
 	int	Previously, Currently;
@@ -163,8 +162,7 @@ int	f[], num;
  *	   -1 if visible below lower horizon.
  */
 int
-fhvis( x, y )
-int x, y;
+fhvis(int x, int y)
 {
 	/* See if hidden behind horizons */
 	if( y < upper[x] && y > lower[x] )
@@ -181,7 +179,7 @@ int x, y;
  * NOT DONE YET.
  */
 void
-Efill()
+Efill(void)
 {
 }
 
@@ -190,8 +188,7 @@ Efill()
  *  with a line spanning (x1,y1) to (x2,y2).
  */
 void
-Horizon( x1, y1, x2, y2 )
-int	x1, y1, x2, y2;
+Horizon(int x1, int y1, int x2, int y2)
 {
 	int	xinc, x, y;
 	double	slope;
@@ -216,10 +213,7 @@ int	x1, y1, x2, y2;
  *  and the horizon hor[].
  */
 void
-Intersect( x1, y1, x2, y2, hor, xi, yi )
-int	x1, y1, x2, y2;
-int	hor[];
-int	*xi, *yi;
+Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi)
 {
 	int	xinc, ysign;
 	int	slope;
@@ -272,8 +266,7 @@ fflush( stdout );
 }
 
 int
-sign( i )
-int	i;
+sign(int i)
 {
 	if( i > 0 )
 		return( 1 );
@@ -288,8 +281,7 @@ int	i;
  *  An integer Bresenham algorithm for any quadrant.
  */
 void
-Draw( x1, y1, x2, y2 )
-int	x1, y1, x2, y2;
+Draw(int x1, int y1, int x2, int y2)
 {
 	int	x, y, deltx, delty, error, i;
 	int	temp, s1, s2, interchange;
@@ -366,9 +358,7 @@ int main()
 static char usage[] = "\
 Usage: fhor [width] < doubles\n";
 
-int main( argc, argv )
-int	argc;
-char	**argv;
+int main(int argc, char **argv)
 {
 	double	inbuf[512];
 	int	f[512];

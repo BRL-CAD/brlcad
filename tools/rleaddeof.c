@@ -36,9 +36,7 @@
  *	[None]
  */
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     char * infname = NULL, *outfname = NULL;
     int oflag = 0;

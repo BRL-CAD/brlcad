@@ -46,9 +46,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 char	buf[3*16*1024];
 
 int
-main(argc, argv)
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	double	sat;			/* saturation */
 	int	bw;			/* monochrome intensity */

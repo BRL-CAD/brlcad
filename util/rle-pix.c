@@ -62,8 +62,7 @@ Usage: rle-pix [-c -d -h -H] [-C r/g/b]\n\
  *			G E T _ A R G S
  */
 static int
-get_args( argc, argv )
-register char	**argv;
+get_args(int argc, register char **argv)
 {
 	register int	c;
 
@@ -148,9 +147,7 @@ register char	**argv;
  *			M A I N
  */
 int
-main( argc, argv)
-int argc;
-char ** argv;
+main(int argc, char **argv)
 {
 	register int i;
 	int	file_width;		/* unclipped width of rectangle */
@@ -262,7 +259,7 @@ char ** argv;
 	}
 
 	for( i=0; i < ncolors; i++ )
-		rows[i] = (unsigned char *)malloc(file_width);
+		rows[i] = (unsigned char *)malloc((size_t)file_width);
 	for( ; i < 3; i++ )
 		rows[i] = rows[0];	/* handle monochrome images */
 
@@ -302,7 +299,7 @@ char ** argv;
 
 	/* Background-fill any lines above 0, below ymin */
 	for( i=0; i < rle_dflt_hdr.ymin; i++ )
-		fwrite( (char *)bg_buf, sizeof(RGBpixel), screen_xlen, outfp );
+		fwrite( (char *)bg_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp );
 
 	for( ; i <= rle_dflt_hdr.ymax; i++)  {
 		register unsigned char	*pp = (unsigned char *)scan_buf;
@@ -327,12 +324,12 @@ char ** argv;
 				*pp++ = cmap.cm_blue[*bp++]>>8;
 			}
 		}
-		fwrite( (char *)scan_buf, sizeof(RGBpixel), screen_xlen, outfp );
+		fwrite( (char *)scan_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp );
 	}
 
 	/* Background-fill any lines above ymax, below screen_height */
 	for( ; i < screen_height; i++ )
-		fwrite( (char *)bg_buf, sizeof(RGBpixel), screen_xlen, outfp );
+		fwrite( (char *)bg_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp );
 done:
 	fclose( outfp );
 	exit(0);

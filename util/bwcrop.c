@@ -48,7 +48,7 @@ float	ulx,uly,urx,ury,lrx,lry,llx,lly;	/* Corners of original file */
 
 #define	round(x) ((int)(x+0.5))
 
-void	init_buffer(), fill_buffer();
+void	init_buffer(int scanlen), fill_buffer(int y);
 
 FILE	*ifp, *ofp;
 
@@ -58,8 +58,7 @@ Usage: bwcrop in.bw out.bw (I prompt!)\n\
         ulx uly urx ury lrx lry llx lly\n";
 
 int
-main(argc, argv)
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	float	row, col, x1, y1, x2, y2, x, y;
 	int	yindex;
@@ -155,8 +154,7 @@ int argc; char **argv;
  *  XXX - CHECK FILE SIZE
  */
 void
-init_buffer( scanlen )
-int scanlen;
+init_buffer(int scanlen)
 {
 	int	max;
 
@@ -179,8 +177,7 @@ int scanlen;
  * the given y coordinate.
  */
 void
-fill_buffer( y )
-int y;
+fill_buffer(int y)
 {
 	buf_start = y - buflines/2;
 	if( buf_start < 0 ) buf_start = 0;

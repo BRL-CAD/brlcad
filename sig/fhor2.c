@@ -35,7 +35,7 @@ static	int	Xleft, Yleft, Xright, Yright;		/* XXX */
 
 FBIO	*fbp;	/* XXX - debug */
 
-fhinit()
+fhinit(void)
 {
 	int	i;
 
@@ -52,8 +52,7 @@ fhinit()
  * Add another Z cut to the display.
  *  This one goes "behind" the last one.
  */
-fhnewz( f, num )
-int	f[], num;
+fhnewz(int *f, int num)
 {
 	int	x, y, Xprev, Yprev, Xi, Yi;
 
@@ -82,8 +81,7 @@ int	f[], num;
  *	    1 if visible above upper horizon.
  *	   -1 if visible below lower horizon.
  */
-fhvis( x, y )
-int x, y;
+fhvis(int x, int y)
 {
 	/* See if hidden behind horizons */
 	if( y < upper[x] && y > lower[x] )
@@ -99,23 +97,21 @@ int x, y;
  * INTERNAL Edge fill routine.
  * NOT DONE YET.
  */
-Efill()
+Efill(void)
 {
 }
 
 /*
  * Fill the upper and lower horizon arrays
  */
-Horizon( x, y )
-int	x, y;
+Horizon(int x, int y)
 {
 	/* Vertical line */
 	upper[x] = MAX( upper[x], y );
 	lower[x] = MIN( lower[x], y );
 }
 
-sign( i )
-int	i;
+sign(int i)
 {
 	if( i > 0 )
 		return( 1 );
@@ -125,8 +121,7 @@ int	i;
 		return( 0 );
 }
 
-Point( x, y )
-int	x, y;
+Point(int x, int y)
 {
 	static	RGBpixel white = { 255, 255, 255 };
 	fb_write( fbp, x, y, white, 1 );
@@ -136,8 +131,7 @@ int	x, y;
  * DRAW - plot a line from (x1,y1) to (x2,y2)
  *  An integer Bresenham algorithm for any quadrant.
  */
-Draw( x1, y1, x2, y2 )
-int	x1, y1, x2, y2;
+Draw(int x1, int y1, int x2, int y2)
 {
 	int	x, y, deltx, delty, error, i;
 	int	temp, s1, s2, interchange;
@@ -212,9 +206,7 @@ main()
 static char usage[] = "\
 Usage: fhor [width] < doubles\n";
 
-int main( argc, argv )
-int	argc;
-char	**argv;
+int main(int argc, char **argv)
 {
 	double	inbuf[512];
 	int	f[512];

@@ -70,7 +70,7 @@
      }\
 }
 
-void usage() {
+void usage(void) {
     fprintf(stderr, "-a [value] add a blank alpha channel to the rle file\n");
     fprintf(stderr, "-s input data is in scanline interleaved order\n");
     fprintf(stderr, "-N input is in non-interleaved order (eg. cat pic.r pic.g pic.b | rawtorle)\n");
@@ -80,9 +80,7 @@ void usage() {
 }
 
 int
-main(argc,argv) 
-int argc;
-char *argv[];
+main(int argc, char **argv)
 { 
     int i;
     char *header_bytes = NULL, *trailer_bytes = NULL;

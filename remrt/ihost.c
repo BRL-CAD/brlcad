@@ -62,7 +62,7 @@ struct bu_list	HostHead;
  * Therefore the following piece of code.
  */
 char *
-get_our_hostname()
+get_our_hostname(void)
 {
 	char temp[512];
 	struct hostent *hp;
@@ -86,9 +86,7 @@ get_our_hostname()
  *  Used by host_lookup_by_addr, too.
  */
 struct ihost *
-host_lookup_by_hostent( addr, enter )
-struct hostent	*addr;
-int		enter;
+host_lookup_by_hostent(struct hostent *addr, int enter)
 {
 	register struct ihost	*ihp;
 	struct hostent	*addr2;
@@ -133,8 +131,7 @@ int		enter;
  *  This routine is used to handle unexpected volunteers.
  */
 struct ihost *
-make_default_host( name )
-char	*name;
+make_default_host(char *name)
 {
 	register struct ihost	*ihp;
 
@@ -160,9 +157,7 @@ char	*name;
  *			H O S T _ L O O K U P _ B Y _ A D D R
  */
 struct ihost *
-host_lookup_by_addr( from, enter )
-struct sockaddr_in	*from;
-int	enter;
+host_lookup_by_addr(struct sockaddr_in *from, int enter)
 {
 	register struct ihost	*ihp;
 	struct hostent	*addr;
@@ -204,9 +199,7 @@ int	enter;
  *			H O S T _ L O O K U P _ B Y _ N A M E
  */
 struct ihost *
-host_lookup_by_name( name, enter )
-char	*name;
-int	enter;
+host_lookup_by_name(char *name, int enter)
 {
 	struct sockaddr_in	sockhim;
 	struct hostent		*addr;
@@ -231,8 +224,7 @@ int	enter;
  *			H O S T _ L O O K U P _ O F _ F D
  */
 struct ihost *
-host_lookup_of_fd(fd)
-int	fd;
+host_lookup_of_fd(int fd)
 {
 	auto int	fromlen;
 	struct sockaddr_in from;

@@ -64,8 +64,7 @@ and the .rle file is written to stdout\n";
  *			G E T _ A R G S
  */
 static int
-get_args( argc, argv )
-register char	**argv;
+get_args(int argc, register char **argv)
 {
 	register int	c;
 
@@ -135,9 +134,7 @@ register char	**argv;
  *			M A I N
  */
 int
-main( argc, argv )
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	register unsigned char *scan_buf;
 	register int	y;
@@ -189,7 +186,7 @@ char	*argv[];
 
 	/* Read image a scanline at a time, and encode it */
 	for( y = 0; y < file_height; y++ )  {
-		if( fread( (char *)scan_buf, sizeof(unsigned char), file_width, infp ) != file_width)  {
+		if( fread( (char *)scan_buf, sizeof(unsigned char), (size_t)file_width, infp ) != file_width)  {
 			(void) fprintf(	stderr,
 				"pix-rle: read of %d pixels on line %d failed!\n",
 				file_width, y );

@@ -44,7 +44,7 @@ struct bu_mapped_file *image;
 /* procedure variable end */
 
 
-void usage()
+void usage(void)
 {
 	fprintf(stderr, "Usage: %s image_file.pix db_file.g [pixelWidth [pixelHeight [cellSize [objectSize]]]\n", progname);
 	exit(-1);

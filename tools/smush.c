@@ -24,33 +24,71 @@ static const char rcs_ident[] = "$Header$";
 char *progname;
 
 int
-main(argc, argv)
-int  argc;
-char *argv[];
+main(int argc, char **argv)
 {
-    char * infname = NULL, * outfname = NULL, * maskfname = NULL;
+    char * infname = NULL;
+    char * outfname = NULL;
+    char * maskfname = NULL;
     FILE * outfile = stdout;
-    int oflag = 0, mflag = 0, no_norm = 0;
-    int xlinewidth, xlen, ylen, x, y;
-    int i, j, k, chan, nchan, level, levels = 1;
-    int maskskip, origmasksize;
-    int maxmaskskip, maxmasksize, maxmaskbelow;
-    int masksize, maskbelow, maskabove; /*number of maskels below and above */
-					/* the center maskel. */
+    int oflag = 0;
+    int mflag = 0;
+    int no_norm = 0;
+    int xlinewidth;
+    int xlen;
+    int ylen;
+    int x;
+    int y;
+    int i;
+    int j;
+    int k;
+    int chan;
+    int nchan;
+    int level;
+    int levels = 1;
+    int maskskip;
+    int origmasksize;
+    int maxmaskskip;
+    int maxmasksize;
+    int maxmaskbelow;
+    int masksize;
+
+    /*number of maskels below and above */
+    int maskbelow;
+    int maskabove;
+    /* the center maskel. */
+
     float *maskmult;
     float *mask_mult_table;
     rle_hdr out_hdr;
-    float total, *mask, *gauss_mask(), *read_mask();
+    float total;
+    float *mask;
+    float *gauss_mask(int siz);
+    float *read_mask(int *size, char *fname, int no_norm);
     int newvalue;
-    rle_pixel *rastptr, *rasterbase, *centerpxl, *calcpxl;
-    rle_pixel *outrastptr, *outrasterbase, *outpxl, *tempbase;
-    rle_pixel *bot_edge_pxl, *bot_data_pxl, *bot_extrap_pxl;
-    rle_pixel *top_edge_pxl, *top_data_pxl, *top_extrap_pxl;
-    rle_pixel *left_edge_pxl, *left_data_pxl, *left_extrap_pxl;
-    rle_pixel *right_edge_pxl, *right_data_pxl, *right_extrap_pxl;
+    rle_pixel *rastptr;
+    rle_pixel *rasterbase;
+    rle_pixel *centerpxl;
+    rle_pixel *calcpxl;
+    rle_pixel *outrastptr;
+    rle_pixel *outrasterbase;
+    rle_pixel *outpxl;
+    rle_pixel *tempbase;
+    rle_pixel *bot_edge_pxl;
+    rle_pixel *bot_data_pxl;
+    rle_pixel *bot_extrap_pxl;
+    rle_pixel *top_edge_pxl;
+    rle_pixel *top_data_pxl;
+    rle_pixel *top_extrap_pxl;
+    rle_pixel *left_edge_pxl;
+    rle_pixel *left_data_pxl;
+    rle_pixel *left_extrap_pxl;
+    rle_pixel *right_edge_pxl;
+    rle_pixel *right_data_pxl;
+    rle_pixel *right_extrap_pxl;
     rle_pixel **scanout;
     rle_pixel **rows;
-    int rle_cnt, rle_err;
+    int rle_cnt;
+    int rle_err;
 
     progname = cmd_name( argv );
 
@@ -325,8 +363,7 @@ char *argv[];
 }
 
 float *
-gauss_mask(siz)
-int siz;
+gauss_mask(int siz)
 {
     int i,j;
     float w[5];
@@ -357,10 +394,7 @@ int siz;
 }
 
 float *
-read_mask(size, fname, no_norm)
-int * size;
-char * fname;
-int no_norm;
+read_mask(int *size, char *fname, int no_norm)
 {
     FILE * maskfile;
     int i,j,masksize;

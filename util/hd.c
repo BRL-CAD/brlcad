@@ -40,8 +40,7 @@ static long offset=0;	 /* offset from begining of file from which to start */
 /*
  *    D U M P --- Dump file in hex
  */
-void dump(fd)
-FILE *fd;
+void dump(FILE *fd)
 {
 	register int	i;
 	register char	*p;
@@ -99,7 +98,7 @@ FILE *fd;
 /*
  *	U S A G E --- Print helpful message and bail out
  */
-void usage()
+void usage(void)
 {
 	(void) fprintf(stderr,"Usage: %s [-o offset] [file...]\n", progname);
 	exit(1);
@@ -110,9 +109,7 @@ void usage()
  *    Parse arguemnts and  call 'dump' to perform primary task.
  */
 int
-main(ac,av)
-int ac;
-char *av[];
+main(int ac, char **av)
 {
 	int  c, optlen, files;
 	FILE *fd;

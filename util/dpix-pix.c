@@ -38,9 +38,7 @@ static double		doub[NUM];
 static unsigned char	cha[NUM];
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	int		count;			/* count of items */
 	int		got;			/* count of bytes */

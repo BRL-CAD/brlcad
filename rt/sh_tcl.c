@@ -58,11 +58,7 @@ extern struct mfuncs	*mfHead;	/* rt/view.c */
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
-sh_directchange_rgb( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct rt_i	*rtip;
 	struct region	*regp;
@@ -126,11 +122,7 @@ bu_log("sh_directchange_rgb() changing %s\n", regp->reg_name);
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
-sh_directchange_shader( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct rt_i	*rtip;
 	struct region	*regp;
@@ -193,11 +185,7 @@ bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
  *
  *  Process RT-style command-line options.
  */
-sh_opt( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+sh_opt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct rt_i	*rtip;
 	struct region	*regp;
@@ -221,8 +209,7 @@ char **argv;
  *  the list of commands known by the given interpreter.
  */
 void
-sh_tcl_setup(interp)
-Tcl_Interp *interp;
+sh_tcl_setup(Tcl_Interp *interp)
 {
 	(void)Tcl_CreateCommand(interp, "sh_directchange_rgb", sh_directchange_rgb,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);

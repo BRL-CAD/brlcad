@@ -20,9 +20,7 @@
 #include "rle_raw.h"
 
 void
-rle_box( the_hdr, xminp, xmaxp, yminp, ymaxp )
-rle_hdr *the_hdr;
-int *xminp, *xmaxp, *yminp, *ymaxp;
+rle_box(rle_hdr *the_hdr, int *xminp, int *xmaxp, int *yminp, int *ymaxp)
 {
     rle_op ** raw;
     register rle_op ** rawp;

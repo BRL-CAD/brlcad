@@ -102,7 +102,7 @@ struct uplot letters[] = {
 /*z*/	{ 0, 0, 0 }
 };
 
-double	getieee();
+double	getieee(void);
 int	verbose;
 double	cx, cy, cz;		/* current x, y, z, point */
 double	arg[6];			/* parsed plot command arguments */
@@ -119,9 +119,7 @@ GC	gc;
 XFontStruct *fontstruct;
 
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	register int	c;
 	struct	uplot *up;
@@ -232,8 +230,7 @@ char	**argv;
 	sleep( 3 );
 }
 
-getargs( up )
-struct uplot *up;
+getargs(struct uplot *up)
 {
 	int	i;
 
@@ -259,7 +256,7 @@ struct uplot *up;
 	}
 }
 
-getstring()
+getstring(void)
 {
 	int	c;
 	char	*cp;
@@ -270,7 +267,7 @@ getstring()
 	*cp = 0;
 }
 
-getshort()
+getshort(void)
 {
 	register long	v, w;
 
@@ -285,7 +282,7 @@ getshort()
 }
 
 double
-getieee()
+getieee(void)
 {
 	char	in[8];
 	double	d;
@@ -295,9 +292,9 @@ getieee()
 	return	d;
 }
 
-draw( x1, y1, z1, x2, y2, z2 )
-double	x1, y1, z1;	/* from point */
-double	x2, y2, z2;	/* to point */
+draw(double x1, double y1, double z1, double x2, double y2, double z2)
+      	           	/* from point */
+      	           	/* to point */
 {
 	int	sx1, sy1, sx2, sy2;
 
@@ -316,9 +313,7 @@ double	x2, y2, z2;	/* to point */
 	cz = z2;
 }
 
-label( x, y, str )
-double	x, y;
-char	*str;
+label(double x, double y, char *str)
 {
 	int	sx, sy;
 
@@ -342,9 +337,7 @@ XWMHints xwmh = {
 	0				/* Window group */
 };
 
-xsetup( argc, argv )
-int	argc;
-char	**argv;
+xsetup(int argc, char **argv)
 {
 	char	hostname[80];
 	char	display[80];

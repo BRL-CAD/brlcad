@@ -111,8 +111,14 @@ struct uplot letters[] = {
 /*z*/	{ 0, 0, 0 }
 };
 
-void	getargs(), getstring(), draw(), label(), prolog(), scaleinfo(), postlog();
-double	getieee();
+void	getargs(struct uplot *up);
+void	getstring(void);
+void	draw(double x1, double y1, double z1, double x2, double y2, double z2);
+void	label(double x, double y, char *str);
+void	prolog(FILE *fp, char *name, int width, int height);
+void	scaleinfo(FILE *fp, int width, int height), postlog(FILE *fp);
+double	getieee(void);
+
 int	verbose;
 double	cx, cy, cz;		/* current x, y, z, point */
 double	arg[6];			/* parsed plot command arguments */
@@ -121,7 +127,6 @@ char	strarg[512];		/* string buffer */
 
 #define	DEFAULT_SIZE	6.75	/* default output size in inches */
 
-extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
@@ -143,8 +148,7 @@ Usage: pl-ps [-e] [-c] [-S inches_square]\n\
         [-W width_inches] [-N height_inches] [file.pl]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -199,9 +203,7 @@ register char **argv;
 }
 
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	register int	c;
 	struct	uplot *up;
@@ -339,7 +341,7 @@ char	**argv;
 }
 
 int
-getshort()
+getshort(void)
 {
 	register long	v, w;
 
@@ -354,8 +356,7 @@ getshort()
 }
 
 void
-getargs( up )
-struct uplot *up;
+getargs(struct uplot *up)
 {
 	int	i;
 
@@ -382,7 +383,7 @@ struct uplot *up;
 }
 
 void
-getstring()
+getstring(void)
 {
 	int	c;
 	char	*cp;
@@ -395,7 +396,7 @@ getstring()
 
 
 double
-getieee()
+getieee(void)
 {
 	unsigned char	in[8];
 	double	d;
@@ -406,9 +407,9 @@ getieee()
 }
 
 void
-draw( x1, y1, z1, x2, y2, z2 )
-double	x1, y1, z1;	/* from point */
-double	x2, y2, z2;	/* to point */
+draw(double x1, double y1, double z1, double x2, double y2, double z2)
+      	           	/* from point */
+      	           	/* to point */
 {
 	int	sx1, sy1, sx2, sy2;
 
@@ -433,9 +434,7 @@ double	x2, y2, z2;	/* to point */
 }
 
 void
-label( x, y, str )
-double	x, y;
-char	*str;
+label(double x, double y, char *str)
 {
 	int	sx, sy;
 	static int lastx = -1;
@@ -483,10 +482,10 @@ NV\n\
 ";
 
 void
-prolog( fp, name, width, height )
-FILE	*fp;
-char	*name;
-int	width, height;		/* in points */
+prolog(FILE *fp, char *name, int width, int height)
+    	    
+    	      
+   	              		/* in points */
 {
 	time_t	ltime;
 
@@ -514,9 +513,9 @@ int	width, height;		/* in points */
 }
 
 void
-scaleinfo( fp, width, height )
-FILE	*fp;
-int	width, height;		/* in points */
+scaleinfo(FILE *fp, int width, int height)
+    	    
+   	              		/* in points */
 {
 	/*
 	 * About this PostScript scaling issue...
@@ -538,8 +537,7 @@ int	width, height;		/* in points */
 }
 
 void
-postlog( fp )
-FILE	*fp;
+postlog(FILE *fp)
 {
 	fputs( "\n", fp );
 	if( !encapsulated )

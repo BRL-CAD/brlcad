@@ -41,8 +41,7 @@ int	bytes_in_buf, copies_per_buf;
 unsigned char	buf[MAX_BYTES];
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	i, len, times;
 	register long	count;

@@ -47,8 +47,8 @@ static int	pageheight = 792;	/* 11 inches */
 static char	*file_name;
 static FILE	*infp;
 
-void prolog();
-void postlog();
+void prolog(FILE *fp, char *name, int width, int height);
+void postlog(FILE *fp);
 
 static char usage[] = "\
 Usage: bw-ps [-e] [-c] [-L] [-h]\n\
@@ -56,8 +56,7 @@ Usage: bw-ps [-e] [-c] [-L] [-h]\n\
         [-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -126,9 +125,7 @@ register char **argv;
 }
 
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	FILE	*ofp = stdout;
 	int	num = 0;
@@ -182,10 +179,10 @@ char	**argv;
 }
 
 void
-prolog( fp, name, width, height )
-FILE	*fp;
-char	*name;
-int	width, height;		/* in points */
+prolog(FILE *fp, char *name, int width, int height)
+    	    
+    	      
+   	              		/* in points */
 {
 	time_t	ltime;
 
@@ -225,8 +222,7 @@ int	width, height;		/* in points */
 }
 
 void
-postlog( fp )
-FILE	*fp;
+postlog(FILE *fp)
 {
 	if( !encapsulated )
 		fputs( "%end(plot)\n", fp );

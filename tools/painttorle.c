@@ -56,12 +56,10 @@ rle_pixel **outrows;
 int  xlat[256];
 int invert_flag = 0, oflag = 0;
 
-void init(), read_scan(), write_scan();
+void init(void), read_scan(FILE *infile), write_scan(void);
 
 int
-main(argc,argv) 
-int argc;
-char *argv[];
+main(int argc, char **argv)
 { 
     char 	       *in_fname = NULL,
     		       *out_fname = NULL;
@@ -114,8 +112,7 @@ char *argv[];
  * Read a line from the MacPaint file, uncompressing the data into in_line 
  */
 void
-read_scan( infile )
-FILE *infile;
+read_scan(FILE *infile)
 {
     int in_pos, count, data_byte;
 
@@ -144,7 +141,7 @@ FILE *infile;
  * Write out a scanline
  */
 void
-write_scan()
+write_scan(void)
 {
     register int i, j;
     register int bit;
@@ -179,7 +176,7 @@ write_scan()
 
 /* Set up some tables for converting bits to bytes */
 void
-init() 
+init(void)
 {
     int bits[8], i, j;
 

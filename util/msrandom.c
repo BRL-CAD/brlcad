@@ -29,9 +29,7 @@ struct bn_gauss *gp;
 struct bn_unif *up;
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	extern int optind;
 	extern char *optarg;

@@ -90,7 +90,7 @@ int		rays_per_ring = 0;
 int		num_rings = 0;
 fastf_t		bundle_radius = 0.0;
 
-extern int hit(), miss();
+extern int hit(struct application *ap, struct partition *PartHeadp), miss(register struct application *ap);
 extern int rt_bot_tri_per_piece;
 extern int rt_bot_minpieces;
 
@@ -98,9 +98,7 @@ extern int rt_bot_minpieces;
  *			M A I N
  */
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	static struct rt_i *rtip;
 	char *title_file;
@@ -387,9 +385,7 @@ err:
 	return(0);
 }
 
-int hit( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
+int hit(register struct application *ap, struct partition *PartHeadp)
 {
 	register struct partition *pp;
 	register struct soltab *stp;
@@ -522,8 +518,7 @@ struct partition *PartHeadp;
 	return(1);
 }
 
-int miss( ap )
-register struct application *ap;
+int miss(register struct application *ap)
 {
 	bu_log("missed\n");
 	if( R_DEBUG&RDEBUG_RAYPLOT )  {

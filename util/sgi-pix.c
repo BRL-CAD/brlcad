@@ -51,9 +51,7 @@ struct cmap {
 
 #if !HAS_SGIGL
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	fprintf(stderr, "sgi-pix:  This program only works on SGI machines\n");
 	exit(1);

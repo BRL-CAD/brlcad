@@ -53,15 +53,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define		OPT_STRING	"a:c:e:ipr?"	/* For getopt(3) */
 #define		fpeek(f)	ungetc(fgetc(f), f)
 
-void	PrintUsage();
-void	GetCoord();
+void	PrintUsage(void);
+void	GetCoord(FILE *Whence, double *Coord, char Label, int LineNm, char *FileName);
 
 int
-main (argc, argv)
-
-int     argc;
-char    **argv;
-
+main (int argc, char **argv)
 {
     char            *inFname = "stdin"; /* Name of input source */
     char            *outFname = "stdout";  /* Name of output destination */
@@ -252,19 +248,19 @@ char    **argv;
 }
 /* ======================================================================== */
 void
-PrintUsage ()
+PrintUsage (void)
 {
     fputs("Usage:  'azel [-a azim] [-e elev] [-c celsiz] [-{ip}r] [infile [outfile]]'\n", stderr);
 }
 /* ======================================================================== */
 void
-GetCoord (Whence, Coord, Label, LineNm, FileName)
+GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
 
-FILE    *Whence;        /* File from which to read */
-double  *Coord;         /* Where to store coordinate */
-char    Label;          /* Name of coordinate */
-int     LineNm;         /* How far in input? */
-char    *FileName;      /* What input stream? */
+                        /* File from which to read */
+                        /* Where to store coordinate */
+                        /* Name of coordinate */
+                        /* How far in input? */
+                        /* What input stream? */
 
 {
     int     Ch;

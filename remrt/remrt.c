@@ -30,15 +30,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 #include <math.h>
 
-#ifdef BSD
-#  define __BSDbackup BSD
-#  undef BSD
-#endif
 #include <netdb.h>
-#ifdef __BSDbackup
-#  define BSD __BSDbackup
-#  undef __BSDbackup
-#endif
 
 #ifdef USE_STRING_H
 # include <string.h>
@@ -99,36 +91,140 @@ struct command_tab rt_cmdtab[] = {
 		0,		0, 0}	/* END */
 };
 
-void		read_rc_file();
-void		check_input();
-void		addclient();
-void		start_servers();
-void		eat_script();
-void		interactive_cmd();
-void		prep_frame();
-void		frame_is_done();
-void		destroy_frame();
-void		schedule();
-void		list_remove();
-void		write_fb();
-void		repaint_fb();
-void		size_display();
-void		send_dirbuild();
-void		send_gettrees();
-void		send_restart();
-void		send_loglvl();
-void		send_matrix();
+struct frame {
+	struct frame	*fr_forw;
+	struct frame	*fr_back;
+	int		fr_magic;	/* magic number */
+	long		fr_number;	/* frame number */
+	long		fr_server;	/* server number assigned. */
+	char		*fr_filename;	/* name of output file */
+	int		fr_tempfile;	/* if !0, output file is temporary */
+	/* options */
+	int		fr_width;	/* frame width (pixels) */
+	int		fr_height;	/* frame height (pixels) */
+	struct bu_list	fr_todo;	/* work still to be done */
+	/* Timings */
+	struct timeval	fr_start;	/* start time */
+	struct timeval	fr_end;		/* end time */
+	long		fr_nrays;	/* rays fired so far */
+	double		fr_cpu;		/* CPU seconds used so far */
+	/* Current view */
+	struct bu_vls	fr_cmd;		/* RT options & command string */
+	int		fr_needgettree; /* Do we need a gettree message */
+	struct bu_vls	fr_after_cmd;	/* local commands, after frame done */
+};
+
+/*
+ *  In order to preserve asynchrony, each server is marched through
+ *  a series of state transitions.
+ *  Each transition is triggered by some event being satisfied.
+ *  The valid state transition sequences are:
+ *
+ *  If a "transient" server shows up, just to send in one command:
+ *
+ *	Original	New		Event
+ *	--------	-----		-----
+ *	UNUSED		NEW		connection rcvd
+ *	NEW		CLOSING		ph_cmd pkg rcvd.
+ *	CLOSING		UNUSED		next schedule() pass closes conn.
+ *
+ *  If a "permanent" server shows up:
+ *
+ *	Original	New		Event
+ *	--------	-----		-----
+ *	UNUSED		NEW		connection rcvd
+ *	NEW		VERSOK		ph_version pkg rcvd.
+ *					Optionally send loglvl & "cd" cmds.
+ *	VERSOK		DOING_DIRBUILD	MSG_DIRBUILD sent
+ *	DOING_DIRBUILD	READY		MSG_DIRBUILD_REPLY rcvd
+ *
+ * --	READY		DOING_GETTREES	new frame:  send_gettrees(), send_matrix()
+ *	DOING_GETTREES	READY		MSG_GETTREES_REPLY rcvd
+ *
+ * --	READY		READY		call send_do_lines(),
+ *					receive ph_pixels pkg.
+ *
+ * --	READY		CLOSING		drop_server called.  Requeue work.
+ *	CLOSING		UNUSED		next schedule() pass closes conn.
+ *
+ * XXX need to split sending of db name & the treetops.
+ * XXX treetops need to be resent at start of each frame.
+ * XXX should probably re-vamp send_matrix routine.
+ */
+#define NFD 32
+#ifdef FD_SETSIZE
+#define MAXSERVERS	FD_SETSIZE
+#else
+#define MAXSERVERS	NFD		/* No relay function yet */
+#endif
+
+
+struct servers {
+	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
+	struct bu_list	sr_work;
+	struct ihost	*sr_host;	/* description of this host */
+	int		sr_lump;	/* # lines to send at once */
+	int		sr_state;	/* Server state, SRST_xxx */
+#define SRST_UNUSED		0	/* unused slot */
+#define SRST_NEW		1	/* connected, awaiting vers check */
+#define SRST_VERSOK		2	/* version OK, no model loaded yet */
+#define SRST_DOING_DIRBUILD	3	/* doing dirbuild, awaiting response */
+#define SRST_NEED_TREE		4	/* need our first gettree */
+#define SRST_READY		5	/* loaded, ready */
+#define SRST_RESTART		6	/* about to restart */
+#define SRST_CLOSING		7	/* Needs to be closed */
+#define SRST_DOING_GETTREES	8	/* doing gettrees */
+	struct frame	*sr_curframe;	/* ptr to current frame */
+	/* Timings */
+	struct timeval	sr_sendtime;	/* time of last sending */
+	double		sr_l_elapsed;	/* last: elapsed_sec */
+	double		sr_l_el_rate;	/* last: pix/elapsed_sec */
+	double		sr_w_elapsed;	/* weighted avg: pix/elapsed_sec */
+	double		sr_w_rays;	/* weighted avg: rays/elapsed_sec */
+	double		sr_s_elapsed;	/* sum of pix/elapsed_sec */
+	double		sr_sq_elapsed;	/* sum of pix/elapsed_sec squared */
+	double		sr_l_cpu;	/* cpu_sec for last scanline */
+	double		sr_s_cpu;	/* sum of all cpu times */
+	double		sr_s_pix;	/* sum of all pixels */
+	double		sr_s_e;		/* sum of all elapsed seconds */
+	double		sr_s_sq_cpu;	/* sum of cpu times squared */
+	double		sr_s_sq_pix;	/* sum of pixels squared */
+	double		sr_s_sq_e;	/* sum of all elapsed seceonds squared */
+	int		sr_nsamp;	/* number of samples summed over */
+	double		sr_prep_cpu;	/* sum of cpu time for preps */
+	double		sr_l_percent;	/* last: percent of CPU */
+} servers[MAXSERVERS];
+
+void		read_rc_file(void);
+void		check_input(int waittime);
+void		addclient(struct pkg_conn *pc);
+void		start_servers(struct timeval *nowp);
+void		eat_script(FILE *fp);
+void		interactive_cmd(FILE *fp);
+void		prep_frame(register struct frame *fr);
+void		frame_is_done(register struct frame *fr);
+void		destroy_frame(register struct frame *fr);
+void		schedule(struct timeval *nowp);
+void		list_remove(register struct bu_list *lhp, int a, int b);
+void		write_fb(unsigned char *pp, struct frame *fr, int a, int b);
+void		repaint_fb(register struct frame *fr);
+void		size_display(register struct frame *fr);
+void		send_dirbuild(register struct servers *sp);
+void		send_gettrees(struct servers *sp, register struct frame *fr);
+void		send_restart(register struct servers *sp);
+void		send_loglvl(register struct servers *sp);
+void		send_matrix(struct servers *sp, register struct frame *fr);
 void		send_to_lines();
-void		pr_list();
-void		mathtab_constant();
-void		add_host();
-void		host_helper();
-void		start_helper();
-void		build_start_cmd();
-void		drop_server();
-void		send_do_lines();
-void		do_work();
-void		source();
+void		pr_list(register struct bu_list *lhp);
+void		mathtab_constant(void);
+void		add_host(struct ihost *ihp);
+void		host_helper(FILE *fp);
+void		start_helper(void);
+void		build_start_cmd(int argc, char **argv, int startc);
+void		drop_server(register struct servers *sp, char *why);
+void		send_do_lines(register struct servers *sp, int start, int stop, int framenum);
+void		do_work(int auto_start);
+void		source(FILE *fp);
 
 
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
@@ -142,13 +238,13 @@ int detached = 0;		/* continue after EOF */
 /*
  * Package Handlers.
  */
-void	ph_default();	/* foobar message handler */
-void	ph_pixels();
-void	ph_print();
-void	ph_dirbuild_reply();
-void	ph_gettrees_reply();
-void	ph_version();
-void	ph_cmd();
+void	ph_default(register struct pkg_conn *pc, char *buf);	/* foobar message handler */
+void	ph_pixels(register struct pkg_conn *pc, char *buf);
+void	ph_print(register struct pkg_conn *pc, char *buf);
+void	ph_dirbuild_reply(register struct pkg_conn *pc, char *buf);
+void	ph_gettrees_reply(register struct pkg_conn *pc, char *buf);
+void	ph_version(register struct pkg_conn *pc, char *buf);
+void	ph_cmd(register struct pkg_conn *pc, char *buf);
 struct pkg_switch pkgswitch[] = {
 	{ MSG_DIRBUILD_REPLY,	ph_dirbuild_reply,	"Dirbuild ACK" },
 	{ MSG_GETTREES_REPLY,	ph_gettrees_reply,	"gettrees ACK" },
@@ -167,13 +263,6 @@ int print_on = 1;
 char *frame_script = NULL;
 
 int save_overlaps=0;
-
-#define NFD 32
-#ifdef FD_SETSIZE
-#define MAXSERVERS	FD_SETSIZE
-#else
-#define MAXSERVERS	NFD		/* No relay function yet */
-#endif
 
 /* -- */
 
@@ -207,28 +296,6 @@ struct bu_list 		FreeList;
 
 /* -- */
 
-struct frame {
-	struct frame	*fr_forw;
-	struct frame	*fr_back;
-	int		fr_magic;	/* magic number */
-	long		fr_number;	/* frame number */
-	long		fr_server;	/* server number assigned. */
-	char		*fr_filename;	/* name of output file */
-	int		fr_tempfile;	/* if !0, output file is temporary */
-	/* options */
-	int		fr_width;	/* frame width (pixels) */
-	int		fr_height;	/* frame height (pixels) */
-	struct bu_list	fr_todo;	/* work still to be done */
-	/* Timings */
-	struct timeval	fr_start;	/* start time */
-	struct timeval	fr_end;		/* end time */
-	long		fr_nrays;	/* rays fired so far */
-	double		fr_cpu;		/* CPU seconds used so far */
-	/* Current view */
-	struct bu_vls	fr_cmd;		/* RT options & command string */
-	int		fr_needgettree; /* Do we need a gettree message */
-	struct bu_vls	fr_after_cmd;	/* local commands, after frame done */
-};
 struct frame FrameHead;
 struct frame *FreeFrame;
 #define FRAME_NULL	((struct frame *)0)
@@ -287,80 +354,6 @@ struct frame *FreeFrame;
 	(cur)->fr_back->fr_forw = (cur)->fr_forw;  }
 
 /* --- */
-
-/*
- *  In order to preserve asynchrony, each server is marched through
- *  a series of state transitions.
- *  Each transition is triggered by some event being satisfied.
- *  The valid state transition sequences are:
- *
- *  If a "transient" server shows up, just to send in one command:
- *
- *	Original	New		Event
- *	--------	-----		-----
- *	UNUSED		NEW		connection rcvd
- *	NEW		CLOSING		ph_cmd pkg rcvd.
- *	CLOSING		UNUSED		next schedule() pass closes conn.
- *
- *  If a "permanent" server shows up:
- *
- *	Original	New		Event
- *	--------	-----		-----
- *	UNUSED		NEW		connection rcvd
- *	NEW		VERSOK		ph_version pkg rcvd.
- *					Optionally send loglvl & "cd" cmds.
- *	VERSOK		DOING_DIRBUILD	MSG_DIRBUILD sent
- *	DOING_DIRBUILD	READY		MSG_DIRBUILD_REPLY rcvd
- *
- * --	READY		DOING_GETTREES	new frame:  send_gettrees(), send_matrix()
- *	DOING_GETTREES	READY		MSG_GETTREES_REPLY rcvd
- *
- * --	READY		READY		call send_do_lines(),
- *					receive ph_pixels pkg.
- *
- * --	READY		CLOSING		drop_server called.  Requeue work.
- *	CLOSING		UNUSED		next schedule() pass closes conn.
- *
- * XXX need to split sending of db name & the treetops.
- * XXX treetops need to be resent at start of each frame.
- * XXX should probably re-vamp send_matrix routine.
- */
-
-struct servers {
-	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
-	struct bu_list	sr_work;
-	struct ihost	*sr_host;	/* description of this host */
-	int		sr_lump;	/* # lines to send at once */
-	int		sr_state;	/* Server state, SRST_xxx */
-#define SRST_UNUSED		0	/* unused slot */
-#define SRST_NEW		1	/* connected, awaiting vers check */
-#define SRST_VERSOK		2	/* version OK, no model loaded yet */
-#define SRST_DOING_DIRBUILD	3	/* doing dirbuild, awaiting response */
-#define SRST_NEED_TREE		4	/* need our first gettree */
-#define SRST_READY		5	/* loaded, ready */
-#define SRST_RESTART		6	/* about to restart */
-#define SRST_CLOSING		7	/* Needs to be closed */
-#define SRST_DOING_GETTREES	8	/* doing gettrees */
-	struct frame	*sr_curframe;	/* ptr to current frame */
-	/* Timings */
-	struct timeval	sr_sendtime;	/* time of last sending */
-	double		sr_l_elapsed;	/* last: elapsed_sec */
-	double		sr_l_el_rate;	/* last: pix/elapsed_sec */
-	double		sr_w_elapsed;	/* weighted avg: pix/elapsed_sec */
-	double		sr_w_rays;	/* weighted avg: rays/elapsed_sec */
-	double		sr_s_elapsed;	/* sum of pix/elapsed_sec */
-	double		sr_sq_elapsed;	/* sum of pix/elapsed_sec squared */
-	double		sr_l_cpu;	/* cpu_sec for last scanline */
-	double		sr_s_cpu;	/* sum of all cpu times */
-	double		sr_s_pix;	/* sum of all pixels */
-	double		sr_s_e;		/* sum of all elapsed seconds */
-	double		sr_s_sq_cpu;	/* sum of cpu times squared */
-	double		sr_s_sq_pix;	/* sum of pixels squared */
-	double		sr_s_sq_e;	/* sum of all elapsed seceonds squared */
-	int		sr_nsamp;	/* number of samples summed over */
-	double		sr_prep_cpu;	/* sum of cpu time for preps */
-	double		sr_l_percent;	/* last: percent of CPU */
-} servers[MAXSERVERS];
 #define SERVERS_NULL	((struct servers *)0)
 
 /* variables shared with viewing model */
@@ -434,8 +427,7 @@ int cd_stop( int argc, char **argv );
  *			T V S U B
  */
 void
-tvsub(tdiff, t1, t0)
-struct timeval *tdiff, *t1, *t0;
+tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 {
 
 	tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
@@ -450,8 +442,7 @@ struct timeval *tdiff, *t1, *t0;
  *  Return t1 - t0, as a floating-point number of seconds.
  */
 double
-tvdiff(t1, t0)
-struct timeval	*t1, *t0;
+tvdiff(struct timeval *t1, struct timeval *t0)
 {
 	return( (t1->tv_sec - t0->tv_sec) +
 		(t1->tv_usec - t0->tv_usec) / 1000000. );
@@ -464,7 +455,7 @@ struct timeval	*t1, *t0;
  *  Mostly for stamping log messages with.
  */
 char *
-stamp()
+stamp(void)
 {
 	static char	buf[128];
 	time_t		now;
@@ -486,8 +477,7 @@ stamp()
  *  that describes this state.
  */
 char *
-state_to_string( state )
-int	state;
+state_to_string(int state)
 {
 	static char	buf[128];
 
@@ -519,9 +509,7 @@ int	state;
  *			S T A T E C H A N G E
  */
 void
-statechange( sp, newstate )
-register struct servers *sp;
-int	newstate;
+statechange(register struct servers *sp, int newstate)
 {
 	if( rem_debug )  {
 		bu_log("%s %s %s --> %s\n",
@@ -537,9 +525,7 @@ int	newstate;
  *			M A I N
  */
 int
-main(argc, argv)
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	register struct servers *sp;
 	register int i, done;
@@ -668,8 +654,7 @@ char	**argv;
  *			D O _ W O R K
  */
 void
-do_work(auto_start)
-int	auto_start;
+do_work(int auto_start)
 {
 	struct timeval	now;
 	int		prev_serv;	/* previous # of connected servers */
@@ -722,7 +707,7 @@ int	auto_start;
  *  server hosts via "host" commands.
  */
 void
-read_rc_file()
+read_rc_file(void)
 {
 	FILE	*fp;
 	char	*home;
@@ -748,8 +733,7 @@ read_rc_file()
  *			C H E C K _ I N P U T
  */
 void
-check_input(waittime)
-int waittime;
+check_input(int waittime)
 {
 	static fd_set	ifdset;
 	register int	i;
@@ -827,8 +811,7 @@ int waittime;
  *			A D D C L I E N T
  */
 void
-addclient(pc)
-struct pkg_conn *pc;
+addclient(struct pkg_conn *pc)
 {
 	register struct servers *sp;
 	register struct frame	*fr;
@@ -883,9 +866,7 @@ struct pkg_conn *pc;
  *  to prevent recursion problems.
  */
 void
-drop_server(sp, why)
-register struct servers	*sp;
-char	*why;
+drop_server(register struct servers *sp, char *why)
 {
 	register struct list	*lp;
 	register struct pkg_conn *pc;
@@ -949,8 +930,7 @@ char	*why;
 struct timeval	last_server_check_time;
 
 void
-start_servers( nowp )
-struct timeval	*nowp;
+start_servers(struct timeval *nowp)
 {
 	register struct ihost	*ihp;
 	register struct servers	*sp;
@@ -1098,8 +1078,7 @@ is_hackers_night( struct timeval *tv )
  *  The caller is responsible for fopen()ing and fclose()ing the file.
  */
 void
-eat_script( fp )
-FILE	*fp;
+eat_script(FILE *fp)
 {
 	char		*buf;
 	char		*ebuf;
@@ -1220,8 +1199,7 @@ out:
  *  For general conversion, this is pretty feeble.  Is more needed?
  */
 int
-string2int(str)
-register char *str;
+string2int(register char *str)
 {
 	auto int ret;
 	int cnt;
@@ -1240,8 +1218,7 @@ register char *str;
  *			G E T _ S E R V E R _ B Y _ N A M E
  */
 struct servers *
-get_server_by_name( str )
-char *str;
+get_server_by_name(char *str)
 {
 	register struct servers *sp;
 	struct ihost	*ihp;
@@ -1267,8 +1244,7 @@ char *str;
  *			I N T E R A C T I V E _ C M D
  */
 void
-interactive_cmd(fp)
-FILE *fp;
+interactive_cmd(FILE *fp)
 {
 	char buf[BUFSIZ];
 	register char *pos;
@@ -1324,8 +1300,7 @@ FILE *fp;
  *  fr_number must have been set by caller.
  */
 void
-prep_frame(fr)
-register struct frame *fr;
+prep_frame(register struct frame *fr)
 {
 	register struct list *lp;
 	char buf[BUFSIZ];
@@ -1373,7 +1348,7 @@ register struct frame *fr;
  *			D O _ A _ F R A M E
  */
 void
-do_a_frame()
+do_a_frame(void)
 {
 	register struct frame *fr;
 	if( running )  {
@@ -1411,8 +1386,7 @@ do_a_frame()
  *	 0	on success
  */
 int
-scan_frame_for_finished_pixels( fr )
-register struct frame	*fr;
+scan_frame_for_finished_pixels(register struct frame *fr)
 {
 	register FILE	*fp;
 	char		pbuf[8];
@@ -1535,8 +1509,7 @@ create_outputfilename( struct frame *fr )
  *			F R A M E _ I S _ D O N E
  */
 void
-frame_is_done(fr)
-register struct frame *fr;
+frame_is_done(register struct frame *fr)
 {
 	double	delta;
 
@@ -1595,8 +1568,7 @@ register struct frame *fr;
  *			D E S T R O Y _ F R A M E
  */
 void
-destroy_frame( fr )
-register struct frame	*fr;
+destroy_frame(register struct frame *fr)
 {
 	register struct list	*lp;
 	register struct servers	*sp;
@@ -1637,8 +1609,7 @@ register struct frame	*fr;
  *	!0	all done
  */
 int
-this_frame_done( fr )
-register struct frame	*fr;
+this_frame_done(register struct frame *fr)
 {
 	register struct servers	*sp;
 	register struct list	*lp;
@@ -1666,7 +1637,7 @@ register struct frame	*fr;
  *	 0	Some servers still busy
  */
 int
-all_servers_idle()
+all_servers_idle(void)
 {
 	register struct servers	*sp;
 
@@ -1691,7 +1662,7 @@ all_servers_idle()
  *	!0	all done
  */
 int
-all_done()
+all_done(void)
 {
 	register struct frame	*fr;
 
@@ -1728,8 +1699,7 @@ all_done()
  *  When done, we leave the last finished frame around for attach/release.
  */
 void
-schedule( nowp )
-struct timeval	*nowp;
+schedule(struct timeval *nowp)
 {
 	register struct servers *sp;
 	register struct frame *fr;
@@ -1861,7 +1831,7 @@ out:
  *  computing frames.
  */
 int
-number_of_ready_servers()
+number_of_ready_servers(void)
 {
 	register struct servers	*sp;
 	register int		count = 0;
@@ -1887,7 +1857,7 @@ number_of_ready_servers()
  *  results to the disk and/or framebuffer, etc.
  */
 int
-assignment_time()
+assignment_time(void)
 {
 	int	sec;
 
@@ -2089,9 +2059,7 @@ server_q_len( struct servers *sp )
  *	-1	error, unable to read matrix.
  */
 int
-read_matrix( fp, fr )
-register FILE *fp;
-register struct frame *fr;
+read_matrix(register FILE *fp, register struct frame *fr)
 {
 	register int i;
 	char number[128];
@@ -2135,9 +2103,7 @@ out:
  *			P H _ D E F A U L T
  */
 void
-ph_default(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_default(register struct pkg_conn *pc, char *buf)
 {
 	register int i;
 
@@ -2158,9 +2124,7 @@ char *buf;
  *  that he is ready to accept work now.
  */
 void
-ph_dirbuild_reply(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_dirbuild_reply(register struct pkg_conn *pc, char *buf)
 {
 	register struct servers *sp;
 
@@ -2190,9 +2154,7 @@ char *buf;
  *  that he is ready to accept work now.
  */
 void
-ph_gettrees_reply(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_gettrees_reply(register struct pkg_conn *pc, char *buf)
 {
 	register struct servers *sp;
 
@@ -2219,9 +2181,7 @@ char *buf;
  *			P H _ P R I N T
  */
 void
-ph_print(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_print(register struct pkg_conn *pc, char *buf)
 {
 	if(print_on)  {
 		bu_log("%s %s: %s",
@@ -2238,9 +2198,7 @@ char *buf;
  *			P H _ V E R S I O N
  */
 void
-ph_version(pc, buf)
-register struct pkg_conn *pc;
-char	*buf;
+ph_version(register struct pkg_conn *pc, char *buf)
 {
 	register struct servers	*sp;
 
@@ -2265,9 +2223,7 @@ char	*buf;
  *			P H _ C M D
  */
 void
-ph_cmd(pc, buf)
-register struct pkg_conn *pc;
-char	*buf;
+ph_cmd(register struct pkg_conn *pc, char *buf)
 {
 	register struct servers	*sp;
 
@@ -2284,9 +2240,7 @@ char	*buf;
  *  When a scanline is received from a server, file it away.
  */
 void
-ph_pixels(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
+ph_pixels(register struct pkg_conn *pc, char *buf)
 {
 	register int		i;
 	register struct servers	*sp;
@@ -2505,9 +2459,7 @@ out:
  * Given pointer to head of list of ranges, remove the range that's done
  */
 void
-list_remove( lhp, a, b )
-register struct bu_list *lhp;
-int		a, b;
+list_remove(register struct bu_list *lhp, int a, int b)
 {
 	register struct list *lp;
 
@@ -2552,11 +2504,7 @@ int		a, b;
  *  Write them out, clipping them to the current screen.
  */
 void
-write_fb( pp, fr, a, b )
-unsigned char 	*pp;
-struct frame	*fr;
-int		a;
-int		b;
+write_fb(unsigned char *pp, struct frame *fr, int a, int b)
 {
 	register int	x, y;	/* screen coordinates of pixel 'a' */
 	int	offset;		/* pixel offset beyond 'pp' */
@@ -2613,8 +2561,7 @@ int		b;
  *  Sort of a cheap "pix-fb", built in.
  */
 void
-repaint_fb( fr )
-register struct frame *fr;
+repaint_fb(register struct frame *fr)
 {
 	register int	y;
 	unsigned char	*line;
@@ -2686,8 +2633,7 @@ init_fb(char *name)
  *			S I Z E _ D I S P L A Y
  */
 void
-size_display(fr)
-register struct frame	*fr;
+size_display(register struct frame *fr)
 {
 	CHECK_FRAME(fr);
 	if( cur_fbwidth == fr->fr_width )
@@ -2713,8 +2659,7 @@ register struct frame	*fr;
  *			S E N D _ D I R B U I L D
  */
 void
-send_dirbuild(sp)
-register struct servers *sp;
+send_dirbuild(register struct servers *sp)
 {
 	register struct ihost	*ihp;
 
@@ -2751,8 +2696,7 @@ register struct servers *sp;
  *			S E N D _ R E S T A R T
  */
 void
-send_restart(sp)
-register struct servers *sp;
+send_restart(register struct servers *sp)
 {
 	if( sp->sr_pc == PKC_NULL )  return;
 
@@ -2765,8 +2709,7 @@ register struct servers *sp;
  *			S E N D _ L O G L V L
  */
 void
-send_loglvl(sp)
-register struct servers *sp;
+send_loglvl(register struct servers *sp)
 {
 	if( sp->sr_pc == PKC_NULL )  return;
 
@@ -2780,9 +2723,7 @@ register struct servers *sp;
  *  Send current options, and the view matrix information.
  */
 void
-send_matrix(sp, fr)
-struct servers *sp;
-register struct frame *fr;
+send_matrix(struct servers *sp, register struct frame *fr)
 {
 	CHECK_FRAME(fr);
 	if( sp->sr_pc == PKC_NULL )  return;
@@ -2798,9 +2739,7 @@ register struct frame *fr;
  *  Send args for rt_gettrees.
  */
 void
-send_gettrees(sp, fr)
-struct servers		*sp;
-register struct frame	*fr;
+send_gettrees(struct servers *sp, register struct frame *fr)
 {
 	CHECK_FRAME(fr);
 	if( sp->sr_pc == PKC_NULL )  return;
@@ -2817,11 +2756,7 @@ register struct frame	*fr;
  *			S E N D _ D O _ L I N E S
  */
 void
-send_do_lines( sp, start, stop, framenum )
-register struct servers *sp;
-int		start;
-int		stop;
-int		framenum;
+send_do_lines(register struct servers *sp, int start, int stop, int framenum)
 {
 	char obuf[128];
 
@@ -2838,8 +2773,7 @@ int		framenum;
  *			P R _ L I S T
  */
 void
-pr_list( lhp )
-register struct bu_list *lhp;
+pr_list(register struct bu_list *lhp)
 {
 	register struct list *lp;
 
@@ -2856,7 +2790,7 @@ register struct bu_list *lhp;
 }
 
 void
-mathtab_constant()
+mathtab_constant(void)
 {
 	/* Called on -B (benchmark) flag, by get_args() */
 }
@@ -2869,8 +2803,7 @@ mathtab_constant()
  *	HT_CONVERT	host, port, rem_dir, loc_db, rem_db
  */
 void
-add_host( ihp )
-struct ihost	*ihp;
+add_host(struct ihost *ihp)
 {
 	if (ihp->ht_flags & HT_HOLD) return;	/* Not allowed to use */
 	/* Send message to helper process */
@@ -2928,8 +2861,7 @@ struct ihost	*ihp;
  *  not be a problem, but this could be changed later.
  */
 void
-host_helper(fp)
-FILE	*fp;
+host_helper(FILE *fp)
 {
 	char	line[512];
 	char	cmd[128];
@@ -3033,7 +2965,7 @@ FILE	*fp;
  *			S T A R T _ H E L P E R
  */
 void
-start_helper()
+start_helper(void)
 {
 	int	fds[2];
 	int	pid;
@@ -3072,10 +3004,7 @@ start_helper()
  *			B U I L D _ S T A R T _ C M D
  */
 void
-build_start_cmd( argc, argv, startc )
-int	argc;
-char	**argv;
-int	startc;
+build_start_cmd(int argc, char **argv, int startc)
 {
 	register char	*cp;
 	register int	i;
@@ -3110,9 +3039,7 @@ int	startc;
 /*** Commands ***/
 
 int
-cd_load( argc, argv )
-int	argc;
-char	**argv;
+cd_load(int argc, char **argv)
 {
 	register struct servers *sp;
 
@@ -3140,9 +3067,7 @@ char	**argv;
  *  Set/toggle the local (dispatcher) debugging flag
  */
 int
-cd_debug( argc, argv )
-int	argc;
-char	**argv;
+cd_debug(int argc, char **argv)
 {
 	if( argc <= 1 )  {
 		rem_debug = !rem_debug;
@@ -3160,9 +3085,7 @@ char	**argv;
  *  Typically this would be of the form "opt -x42;"
  */
 int
-cd_rdebug( argc, argv )
-int	argc;
-char	**argv;
+cd_rdebug(int argc, char **argv)
 {
 	register struct servers *sp;
 	int		len;
@@ -3181,9 +3104,7 @@ char	**argv;
 }
 
 int
-cd_f( argc, argv )
-int	argc;
-char	**argv;
+cd_f(int argc, char **argv)
 {
 
 	width = height = atoi( argv[1] );
@@ -3195,9 +3116,7 @@ char	**argv;
 }
 
 int
-cd_S( argc, argv )
-int	argc;
-char	**argv;
+cd_S(int argc, char **argv)
 {
 	fbwidth = fbheight = atoi( argv[1] );
 	if( fbwidth < 4 || fbwidth > 16*1024 )
@@ -3210,9 +3129,7 @@ char	**argv;
 }
 
 int
-cd_N( argc, argv )
-int	argc;
-char	**argv;
+cd_N(int argc, char **argv)
 {
 	fbheight = atoi( argv[1] );
 	if( fbheight < 4 || fbheight > 16*1024 )
@@ -3223,9 +3140,7 @@ char	**argv;
 }
 
 int
-cd_hyper( argc, argv )
-int	argc;
-char	**argv;
+cd_hyper(int argc, char **argv)
 {
 	hypersample = atoi( argv[1] );
 	bu_log("hypersample=%d, takes effect after next MAT\n", hypersample);
@@ -3233,9 +3148,7 @@ char	**argv;
 }
 
 int
-cd_bench( argc, argv )
-int	argc;
-char	**argv;
+cd_bench(int argc, char **argv)
 {
 	benchmark = atoi( argv[1] );
 	bu_log("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
@@ -3243,9 +3156,7 @@ char	**argv;
 }
 
 int
-cd_persp( argc, argv )
-int	argc;
-char	**argv;
+cd_persp(int argc, char **argv)
 {
 	rt_perspective = atof( argv[1] );
 	if( rt_perspective < 0.0 )  rt_perspective = 0.0;
@@ -3254,9 +3165,7 @@ char	**argv;
 }
 
 int
-cd_read( argc, argv )
-int	argc;
-char	**argv;
+cd_read(int argc, char **argv)
 {
 	register FILE *fp;
 
@@ -3271,8 +3180,7 @@ char	**argv;
 }
 
 void
-source(fp)
-FILE	*fp;
+source(FILE *fp)
 {
 	while( !feof(fp) )  {
 		/* do one command from file */
@@ -3283,9 +3191,7 @@ FILE	*fp;
 }
 
 int
-cd_detach( argc, argv )
-int	argc;
-char	**argv;
+cd_detach(int argc, char **argv)
 {
 	detached = 1;
 	FD_CLR( fileno(stdin), &clients);	/* drop stdin */
@@ -3294,9 +3200,7 @@ char	**argv;
 }
 
 int
-cd_file( argc, argv )
-int	argc;
-char	**argv;
+cd_file(int argc, char **argv)
 {
 	if(outputfile)  rt_free(outputfile, "outputfile");
 	outputfile = bu_strdup( argv[1] );
@@ -3309,9 +3213,7 @@ char	**argv;
  *  Read one specific matrix from an old-format eyepoint file.
  */
 int
-cd_mat( argc, argv )
-int	argc;
-char	**argv;
+cd_mat(int argc, char **argv)
 {
 	register FILE *fp;
 	register struct frame *fr;
@@ -3349,9 +3251,7 @@ char	**argv;
 }
 
 int
-cd_movie( argc, argv )
-int	argc;
-char	**argv;
+cd_movie(int argc, char **argv)
 {
 	register FILE	*fp;
 	register struct frame	*fr;
@@ -3405,9 +3305,7 @@ char	**argv;
 }
 
 int
-cd_add( argc, argv )
-int	argc;
-char	**argv;
+cd_add(int argc, char **argv)
 {
 	register int i;
 	struct ihost	*ihp;
@@ -3421,9 +3319,7 @@ char	**argv;
 }
 
 int
-cd_drop( argc, argv )
-int	argc;
-char	**argv;
+cd_drop(int argc, char **argv)
 {
 	register struct servers *sp;
 
@@ -3434,9 +3330,7 @@ char	**argv;
 }
 
 int
-cd_hold( argc, argv )
-int	argc;
-char	**argv;
+cd_hold(int argc, char **argv)
 {
 	register struct servers *sp;
 	register struct ihost *ihp;
@@ -3452,9 +3346,7 @@ char	**argv;
 }
 
 int
-cd_resume( argc, argv )
-int	argc;
-char	**argv;
+cd_resume(int argc, char **argv)
 {
 	struct ihost	*ihp;
 
@@ -3466,9 +3358,7 @@ char	**argv;
 }
 
 int
-cd_allocate( argc, argv )
-int argc;
-char **argv;
+cd_allocate(int argc, char **argv)
 {
 	if (strcmp(argv[1], "frame") == 0) {
 		work_allocate_method = OPT_FRAME;
@@ -3485,9 +3375,7 @@ char **argv;
 }
 		
 int
-cd_restart( argc, argv )
-int	argc;
-char	**argv;
+cd_restart(int argc, char **argv)
 {
 	register struct servers *sp;
 
@@ -3516,9 +3404,7 @@ cd_stop( int argc, char **argv )
 }
 
 int
-cd_reset( argc, argv )
-int	argc;
-char	**argv;
+cd_reset(int argc, char **argv)
 {
 	register struct frame *fr;
 
@@ -3535,9 +3421,7 @@ char	**argv;
 }
 
 int
-cd_attach( argc, argv )
-int	argc;
-char	**argv;
+cd_attach(int argc, char **argv)
 {
 	register struct frame *fr;
 	char		*name;
@@ -3557,9 +3441,7 @@ char	**argv;
 }
 
 int
-cd_release( argc, argv )
-int	argc;
-char	**argv;
+cd_release(int argc, char **argv)
 {
 	if(fbp != FBIO_NULL) fb_close(fbp);
 	fbp = FBIO_NULL;
@@ -3600,9 +3482,7 @@ cd_frames( int argc, char **argv )
 }
 
 int
-cd_memprint( argc, argv)
-int	argc;
-char	**argv;
+cd_memprint(int argc, char **argv)
 {
 	if (strcmp(argv[1],"on")==0) {
 		rt_g.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
@@ -3674,9 +3554,7 @@ cd_stat( int argc, char **argv )
  *  Full status version
  */
 int
-cd_status( argc, argv )
-int	argc;
-char	**argv;
+cd_status(int argc, char **argv)
 {
 	register struct servers *sp;
     	int	num;
@@ -3741,9 +3619,7 @@ char	**argv;
 }
 
 int
-cd_clear( argc, argv )
-int	argc;
-char	**argv;
+cd_clear(int argc, char **argv)
 {
 	if( fbp == FBIO_NULL )  return -1;
 	fb_clear( fbp, PIXEL_NULL );
@@ -3752,9 +3628,7 @@ char	**argv;
 }
 
 int
-cd_print( argc, argv )
-int	argc;
-char	**argv;
+cd_print(int argc, char **argv)
 {
 	register struct servers *sp;
 
@@ -3774,18 +3648,14 @@ char	**argv;
 }
 
 int
-cd_go( argc, argv )
-int	argc;
-char	**argv;
+cd_go(int argc, char **argv)
 {
 	do_a_frame();
 	return 0;
 }
 
 int
-cd_wait( argc, argv )
-int	argc;
-char	**argv;
+cd_wait(int argc, char **argv)
 {
 	struct timeval	now;
 
@@ -3821,9 +3691,7 @@ char	**argv;
 }
 
 int
-cd_help( argc, argv )
-int	argc;
-char	**argv;
+cd_help(int argc, char **argv)
 {
 	register struct command_tab	*tp;
 
@@ -3839,9 +3707,7 @@ char	**argv;
  * host name always|night|passive cd|convert path
  */
 int
-cd_host( argc, argv )
-int	argc;
-char	**argv;
+cd_host(int argc, char **argv)
 {
 	register struct ihost	*ihp;
 	int argpoint = 1;
@@ -3939,9 +3805,7 @@ char	**argv;
  *			C D _ E X I T
  */
 int
-cd_exit( argc, argv )
-int	argc;
-char	**argv;
+cd_exit(int argc, char **argv)
 {
 	exit(0);
 	/*NOTREACHED*/
@@ -3958,9 +3822,7 @@ char	**argv;
  *
  */
 int
-cd_EOFrame( argc, argv )
-int	argc;
-char	**argv;
+cd_EOFrame(int argc, char **argv)
 {
 	if (frame_script) {
 		(void) free(frame_script);

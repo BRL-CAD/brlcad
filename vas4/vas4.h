@@ -71,19 +71,19 @@
 #define TRUE 1
 #define FALSE 0
 
-extern void	vas_open();
-extern int	get_vas_status();
-extern int	vas_putc();
-extern int	vas_await();
-extern int	get_vtr_status();
-extern int	get_frame_code();
-extern int	str2frames();
-extern void	record_seq();
-extern int	search_frame();
-extern int	time0();
-extern int	reset_tape_time();
-extern void	vas_close();
-extern void	vas_putnum();
-extern int	vas_getc();
-extern void	vas_response();
-extern int	vas_rawputc();
+extern void	vas_open(void);
+extern int	get_vas_status(void);
+extern int	vas_putc(char c);
+extern int	vas_await(int c, int sec);
+extern int	get_vtr_status(int chatter);
+extern int	get_frame_code(void);
+extern int	str2frames(char *str);
+extern void	record_seq(int number_of_images, int number_of_frames, int start_seq_number);
+extern int	search_frame(int frame);
+extern int	time0(void);
+extern int	reset_tape_time(void);
+extern void	vas_close(void);
+extern void	vas_putnum(int n);
+extern int	vas_getc(void);
+extern void	vas_response(char c);
+extern int	vas_rawputc(char c);

@@ -48,8 +48,7 @@ Usage: pixbgstrip [-a -h] [-t thresh] [-x x_off for bg pixel]\n\
 	[file.pix]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -111,9 +110,7 @@ register char **argv;
 }
 
 int
-main(argc, argv)
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	register int	r,g,b;
 	register int	i;

@@ -41,7 +41,7 @@ char	template[] = "/usr/tmp/bufferXXXXXX";
 char	buf[SIZE];
 
 int
-main()
+main(void)
 {
 	register int	count;
 	register int	tfd;
@@ -122,10 +122,7 @@ err:
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
  */
 int
-mread(fd, bufp, n)
-int	fd;
-register char	*bufp;
-int	n;
+mread(int fd, register char *bufp, int n)
 {
 	register int	count = 0;
 	register int	nread;
