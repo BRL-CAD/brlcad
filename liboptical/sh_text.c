@@ -35,7 +35,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
-struct region	env_region;			/* share with view.c */
+extern struct region	env_region;		/* import from view.c */
 
 HIDDEN int	bwtxt_render();
 HIDDEN int	txt_setup(), txt_render();
