@@ -35,9 +35,10 @@ PRODUCTS: Makefile.MTYPE cache.MTYPE
 
 Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
 	( \C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER -DTK_NO_SECURITY\"; \
+		\A\F\T\E\R\_\M\A\K\E=\"AFTER_MAKE\"; \
 		\R\A\N\L\I\B=\"RANLIB\";\
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
-		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
+		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \A\F\T\E\R\_\M\A\K\E; \
 		 ../SRCDIR/"unix"/configure TK_OPTS; \
 		../SRCDIR/fix_makefile.sh > Makefile.MTYPE)
 
@@ -45,10 +46,10 @@ clean&:
 	make -f Makefile.MTYPE clean
 
 noprod&:
-	rm -rf *.so *.a
+	rm -rf *.so *.a wish
 
 clobber&: 
-	rm -f *.o *.a *.MTYPE tkConfig.sh config.log config.status Makefile
+	rm -f *.o libtk.* wish *.MTYPE tkConfig.sh config.log config.status Makefile 
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
