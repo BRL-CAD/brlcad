@@ -2876,7 +2876,6 @@ struct nmg_split_loops_state
 	struct rt_tol	*tol;
 	int		split;		/* count of faces split */
 };
-/* state for nmg_unbreak_edge */
 
 void
 nmg_split_loops_handler( fu_p , sl_state , after )
@@ -3613,20 +3612,18 @@ struct nmg_unbreak_state
 /*
  *			N M G _ U N B R E A K _ H A N D L E R
  *
- *	edge visit routine for nmg_unbreak_region_edges.
+ *	edgeuse visit routine for nmg_unbreak_region_edges.
  *
- *	checks if edge "e" is a candidate to unbroken,
- *	i.e., if it was brokem earlier by nmg_ebreak and
- *	now may be mended.
+ *	checks if edgeuse "eu" and its successor are candidates	to be unbroken.
  *	looks for two consectutive edgeuses sharing the same
  *	edge geometry. Checks that the middle vertex has no
- *	other uses, and,  if so, kills the second edge.
+ *	other uses, and,  if so, kills the second edgeuse.
  *	Also moves the vu of the first edgeuse mate to the vu
  *	of the killed edgeuse mate.
  */
 void
-nmg_unbreak_handler( ep , state , after )
-long	*ep;
+nmg_unbreak_handler( eup , state , after )
+long	*eup;
 genptr_t state;
 int	after;
 {
@@ -3637,16 +3634,22 @@ int	after;
 	struct vertex	*vb;
 	struct vertexuse *vu;
 
-	e = (struct edge *)ep;
-	NMG_CK_EDGE( e );
+	eu1 = (struct edgeuse *)eup;
+	NMG_CK_EDGEUSE( eu1 );
 
 	ub_state = (struct nmg_unbreak_state *)state;
 
-	/* make sure we only visit this edge once */
-	if( !NMG_INDEX_TEST_AND_SET( ub_state->flags , e ) )  return;
+	/* there is a temptation to do a NMG_INDEX_SET( ub_state->flags , eu1->eumate_p )
+	 * here to avoid looking at this edgeuse's mate, but since we are only looking
+	 * forward, we must look at ALL edgeuses
+	 */
 
-	eu1 = e->eu_p;
-	NMG_CK_EDGEUSE( eu1 );
+	/* make sure we only visit this edgeuse once */
+	if( !NMG_INDEX_TEST_AND_SET( ub_state->flags , eu1 ) )  return;
+
+	e = eu1->e_p;
+	NMG_CK_EDGE( e );
+
 	eg = eu1->g.lseg_p;
 	if( !eg )  {
 		rt_log( "nmg_unbreak_handler: no geomtry for edge x%x\n" , e );
@@ -3693,7 +3696,7 @@ int	after;
  *			N M G _ U N B R E A K _ R E G I O N _ E D G E S
  *
  *	Uses the visit handler to call nmg_unbreak_handler for
- *	each edge below the region (or any other NMG element).
+ *	each edgeuse below the region (or any other NMG element).
  *
  *	returns the number of edges mended
  */
@@ -3714,7 +3717,7 @@ long		*magic_p;
 	NMG_CK_MODEL( m );	
 
 	htab = nmg_visit_handlers_null;		/* struct copy */
-	htab.vis_edge = nmg_unbreak_handler;
+	htab.aft_edgeuse = nmg_unbreak_handler;
 
 	ub_state.unbroken = 0;
 	ub_state.flags = (long *)rt_calloc( m->maxindex+2 , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
