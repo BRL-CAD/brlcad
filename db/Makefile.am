@@ -1,14 +1,9 @@
 # $Id$
 
-	 
 A2G=$(top_builddir)/conv/asc2g
 G2A=$(top_builddir)/conv/g2asc
 
-#SUFFIXES: .g .asc
-
 .asc.g: ; $(A2G) $(builddir)$< $@
-
-UH = Makefile.dist db.php
 
 MODELS = \
 	axis.asc \
@@ -40,7 +35,11 @@ MODELS = \
 	world.asc \
 	xmp.asc
 
-EXTRA_DIST = ${UH} ${MODELS}
+EXTRA_DIST = \
+	${MODELS} \
+	db.php
+
+all: ${MODELS:asc=g}
 
 install-data-hook: ${MODELS:asc=g}
 	@$(NORMAL_INSTALL)
