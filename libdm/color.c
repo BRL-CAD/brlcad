@@ -16,7 +16,7 @@ static void get_color_slot();
 the color requested. */
 unsigned long
 dm_get_pixel(r, g, b, pixels, cd)
-short r, g, b;  /* value assumed to be [0,255] */
+unsigned char r, g, b;  /* values assumed to be [0,255] */
 unsigned long *pixels;
 int cd; /* cube dimension */
 {
@@ -27,7 +27,7 @@ int cd; /* cube dimension */
   if(r == 0 && g == 0 && b == 0)
     return pixels[0];
 
-  f = cd / 256.0;
+  f = cd >> 8;
   rf = r * f;
   gf = g * f;
   bf = b * f;
