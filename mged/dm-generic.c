@@ -602,13 +602,9 @@ end:
       struct bu_vls tmp_vls;
 
       bu_vls_init(&tmp_vls);
-      start_catching_output(&tmp_vls);
-
       /* Bare set command, print out current settings */
-      bu_struct_print("dm internal X variables", dm_xvars_vparse,
+      bu_vls_struct_print2(&tmp_vls, "dm internal X variables", dm_xvars_vparse,
 		      (const char *)dmp->dm_vars.pub_vars);
-
-      stop_catching_output(&tmp_vls);
       Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
       bu_vls_free(&tmp_vls);
     }else if(argc == 2){

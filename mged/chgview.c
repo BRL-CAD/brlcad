@@ -640,41 +640,36 @@ char	**argv;
  *  Provide user-level access to LIBBU debug bit vector.
  */
 int
-f_debugbu(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_debugbu(ClientData	clientData,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char		**argv)
 {
-  struct bu_vls vls;
+	struct bu_vls vls;
 
-  if(argc < 1 || 2 < argc){
-    struct bu_vls vls;
+	bu_vls_init(&vls);
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help debugbu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if (argc < 1 || 2 < argc) {
+		bu_vls_printf(&vls, "help debugbu");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  bu_vls_init(&vls);
-  start_catching_output(&vls);
 
-  if( argc >= 2 )  {
-    sscanf( argv[1], "%x", &bu_debug );
-  } else {
-    bu_printb( "Possible flags", 0xffffffffL, BU_DEBUG_FORMAT );
-    bu_log("\n");
-  }
-  bu_printb( "bu_debug", bu_debug, BU_DEBUG_FORMAT );
-  bu_log("\n");
+	if( argc >= 2 )  {
+		sscanf( argv[1], "%x", &bu_debug );
+	} else {
+		bu_vls_printb(&vls, "Possible flags", 0xffffffffL, BU_DEBUG_FORMAT );
+		bu_vls_printf(&vls, "\n");
+	}
+	bu_vls_printb(&vls, "bu_debug", bu_debug, BU_DEBUG_FORMAT );
+	bu_vls_printf(&vls, "\n");
 
-  stop_catching_output(&vls);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
-  return TCL_OK;
+	return TCL_OK;
 }
 
 /*
@@ -683,42 +678,36 @@ char	**argv;
  *  Provide user-level access to LIBRT debug bit vector
  */
 int
-f_debuglib(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_debuglib(ClientData	clientData,
+	   Tcl_Interp	*interp,
+	   int		argc,
+	   char		**argv)
 {
-  struct bu_vls vls;
+	struct bu_vls vls;
 
-  if(argc < 1 || 2 < argc){
-    struct bu_vls vls;
+	bu_vls_init(&vls);
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help debuglib");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if (argc < 1 || 2 < argc) {
+		bu_vls_printf(&vls, "help debuglib");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  bu_vls_init(&vls);
-  start_catching_output(&vls);
+	if (argc >= 2) {
+		sscanf(argv[1], "%x", &rt_g.debug);
+		if (RT_G_DEBUG) bu_debug |= BU_DEBUG_COREDUMP;
+	} else {
+		bu_vls_printb(&vls, "Possible flags", 0xffffffffL, DEBUG_FORMAT);
+		bu_vls_printf(&vls, "\n");
+	}
+	bu_vls_printb(&vls, "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+	bu_vls_printf(&vls, "\n");
 
-  if( argc >= 2 )  {
-    sscanf( argv[1], "%x", &rt_g.debug );
-    if( RT_G_DEBUG )  bu_debug |= BU_DEBUG_COREDUMP;
-  } else {
-    bu_printb( "Possible flags", 0xffffffffL, DEBUG_FORMAT );
-    bu_log("\n");
-  }
-  bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
-  bu_log("\n");
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
-  stop_catching_output(&vls);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-
-  return TCL_OK;
+	return TCL_OK;
 }
 
 /*
@@ -728,31 +717,30 @@ char	**argv;
  *  Must be used in concert with BU_DEBUG_MEM_CHECK flag.
  */
 int
-f_debugmem(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_debugmem(ClientData	clientData,
+	   Tcl_Interp	*interp,
+	   int		argc,
+	   char		**argv)
 {
-  if(argc < 1 || 1 < argc){
-    struct bu_vls vls;
+	if (argc < 1 || 1 < argc) {
+		struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help debugmem");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help debugmem");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  if( setjmp( jmp_env ) == 0 )
-    (void)signal( SIGINT, sig3 );	/* allow interupts */
-  else
-    return TCL_OK;
+	if( setjmp( jmp_env ) == 0 )
+		(void)signal( SIGINT, sig3 );	/* allow interupts */
+	else
+		return TCL_OK;
 
-  bu_prmem("Invoked via MGED command");
+	bu_prmem("Invoked via MGED command");
 
-  (void)signal(SIGINT, SIG_IGN);
-  return TCL_OK;
+	(void)signal(SIGINT, SIG_IGN);
+	return TCL_OK;
 }
 
 /*
@@ -761,41 +749,35 @@ char	**argv;
  *  Provide user-level access to LIBRT NMG_debug flags.
  */
 int
-f_debugnmg(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_debugnmg(ClientData	clientData,
+	   Tcl_Interp	*interp,
+	   int		argc,
+	   char		**argv)
 {
-  struct bu_vls vls;
+	struct bu_vls vls;
 
-  if(argc < 1 || 2 < argc){
-    struct bu_vls vls;
+	bu_vls_init(&vls);
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help debugnmg");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if (argc < 1 || 2 < argc) {
+		bu_vls_printf(&vls, "help debugnmg");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  bu_vls_init(&vls);
-  start_catching_output(&vls);
+	if (argc >= 2) {
+		sscanf(argv[1], "%x", &rt_g.NMG_debug);
+	} else {
+		bu_vls_printb(&vls, "possible flags", 0xffffffffL, NMG_DEBUG_FORMAT);
+		bu_vls_printf(&vls, "\n");
+	}
+	bu_vls_printb(&vls, "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
+	bu_vls_printf(&vls, "\n");
 
-  if( argc >= 2 )  {
-    sscanf( argv[1], "%x", &rt_g.NMG_debug );
-  } else {
-    bu_printb( "possible flags", 0xffffffffL, NMG_DEBUG_FORMAT );
-    bu_log("\n");
-  }
-  bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-  bu_log("\n");
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
-  stop_catching_output(&vls);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-
-  return TCL_OK;
+	return TCL_OK;
 }
 
 /*

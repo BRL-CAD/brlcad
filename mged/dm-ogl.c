@@ -84,94 +84,92 @@ struct bu_structparse Ogl_vparse[] = {
 };
 
 int
-Ogl_dm_init(o_dm_list, argc, argv)
-struct dm_list *o_dm_list;
-int argc;
-char *argv[];
+Ogl_dm_init(struct dm_list	*o_dm_list,
+	    int			argc,
+	    char		*argv[])
 {
-  struct bu_vls vls;
+	struct bu_vls vls;
 
-  dm_var_init(o_dm_list);
+	dm_var_init(o_dm_list);
 
-  /* register application provided routines */
-  cmd_hook = Ogl_dm;
+	/* register application provided routines */
+	cmd_hook = Ogl_dm;
 
-  Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+	Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 
-  if((dmp = dm_open(interp, DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
-    return TCL_ERROR;
+	if ((dmp = dm_open(interp, DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
+		return TCL_ERROR;
 
-  /*XXXX this eventually needs to move into Ogl's private structure */
-  dmp->dm_vp = &view_state->vs_vop->vo_scale;
-  dmp->dm_perspective = mged_variables->mv_perspective_mode;
+	/*XXXX this eventually needs to move into Ogl's private structure */
+	dmp->dm_vp = &view_state->vs_vop->vo_scale;
+	dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
-  eventHandler = Ogl_doevent;
-  Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-  (void)DM_CONFIGURE_WIN(dmp);
+	eventHandler = Ogl_doevent;
+	Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+	(void)DM_CONFIGURE_WIN(dmp);
 
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
-  return TCL_OK;
+	return TCL_OK;
 }
 
 void
 Ogl_fb_open()
 {
-  char *ogl_name = "/dev/ogl";
+	char *ogl_name = "/dev/ogl";
 
-  if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-    Tcl_AppendResult(interp, "Ogl_fb_open: failed to allocate framebuffer memory\n",
-		     (char *)NULL);
-    return;
-  }
+	if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+		Tcl_AppendResult(interp, "Ogl_fb_open: failed to allocate framebuffer memory\n",
+				 (char *)NULL);
+		return;
+	}
 
-  *fbp = ogl_interface; /* struct copy */
-  fbp->if_name = malloc((unsigned)strlen(ogl_name) + 1);
-  (void)strcpy(fbp->if_name, ogl_name);
+	*fbp = ogl_interface; /* struct copy */
+	fbp->if_name = malloc((unsigned)strlen(ogl_name) + 1);
+	(void)strcpy(fbp->if_name, ogl_name);
 
-  /* Mark OK by filling in magic number */
-  fbp->if_magic = FB_MAGIC;
-  _ogl_open_existing(fbp,
-		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-		     dmp->dm_width, dmp->dm_height,
-		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc,
-		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
+	/* Mark OK by filling in magic number */
+	fbp->if_magic = FB_MAGIC;
+	_ogl_open_existing(fbp,
+			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
+			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
+			   dmp->dm_width, dmp->dm_height,
+			   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc,
+			   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
 }
 
 /*
    This routine is being called from doEvent() to handle Expose events.
 */
 static int
-Ogl_doevent(clientData, eventPtr)
-ClientData clientData;
-XEvent *eventPtr;
+Ogl_doevent(ClientData	clientData,
+	    XEvent	*eventPtr)
 {
-  if(!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
-    /* allow further processing of this event */
-    return TCL_OK;
+	if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
+		/* allow further processing of this event */
+		return TCL_OK;
 
-  if(eventPtr->type == Expose && eventPtr->xexpose.count == 0){
+	if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 #if 0
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+		glClearColor(0.0, 0.0, 0.0, 0.0);
 #endif
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    dirty = 1;
+		dirty = 1;
 
-    /* no further processing of this event */
-    return TCL_RETURN;
-  }
+		/* no further processing of this event */
+		return TCL_RETURN;
+	}
 
-  /* allow further processing of this event */
-  return TCL_OK;
+	/* allow further processing of this event */
+	return TCL_OK;
 }
 
 /*
@@ -180,107 +178,112 @@ XEvent *eventPtr;
  *  Implement display-manager specific commands, from MGED "dm" command.
  */
 static int
-Ogl_dm(argc, argv)
-int argc;
-char **argv;
+Ogl_dm(int	argc,
+       char	**argv)
 {
-  struct bu_vls	vls;
+	  if (!strcmp(argv[0], "set")) {
+		  struct bu_vls	vls;
 
-  if( !strcmp( argv[0], "set" ) )  {
-    struct bu_vls tmp_vls;
+		  bu_vls_init(&vls);
 
-    bu_vls_init(&vls);
-    bu_vls_init(&tmp_vls);
-    start_catching_output(&tmp_vls);
+		  if (argc < 2) {
+			  /* Bare set command, print out current settings */
+			  bu_vls_struct_print2(&vls,
+					       "dm_ogl internal variables",
+					       Ogl_vparse,
+					       (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars);
+		  } else if (argc == 2) {
+			  bu_vls_struct_item_named(&vls,
+						   Ogl_vparse,
+						   argv[1],
+						   (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars,
+						   ',');
+		  } else {
+			  struct bu_vls tmp_vls;
 
-    if( argc < 2 )  {
-      /* Bare set command, print out current settings */
-      bu_struct_print("dm_ogl internal variables", Ogl_vparse, (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars );
-    } else if( argc == 2 ) {
-      bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
-      bu_log( "%s", bu_vls_addr(&vls) );
-    } else {
-      bu_vls_printf( &vls, "%s=\"", argv[1] );
-      bu_vls_from_argv( &vls, argc-2, argv+2 );
-      bu_vls_putc( &vls, '\"' );
-      bu_struct_parse( &vls, Ogl_vparse, (char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars );
-    }
+			  bu_vls_init(&tmp_vls);
+			  bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
+			  bu_vls_from_argv(&tmp_vls, argc-2, argv+2);
+			  bu_vls_putc(&tmp_vls, '\"');
+			  bu_struct_parse(&tmp_vls,
+					  Ogl_vparse,
+					  (char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars);
+			  bu_vls_free(&tmp_vls);
+		  }
 
-    bu_vls_free(&vls);
+		  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		  bu_vls_free(&vls);
 
-    stop_catching_output(&tmp_vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-    bu_vls_free(&tmp_vls);
-    return TCL_OK;
-  }
+		  return TCL_OK;
+	  }
 
-  return common_dm(argc, argv);
+	  return common_dm(argc, argv);
 }
 
 static void
 Ogl_colorchange()
 {
-  if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
-    glEnable(GL_FOG);
-  }else{
-    glDisable(GL_FOG);
-  }
+	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
+		glEnable(GL_FOG);
+	} else {
+		glDisable(GL_FOG);
+	}
 
-  view_state->vs_flag = 1;
+	view_state->vs_flag = 1;
 }
 
 static void
 establish_zbuffer()
 {
-  (void)DM_SET_ZBUFFER(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
-  view_state->vs_flag = 1;
+	(void)DM_SET_ZBUFFER(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
+	view_state->vs_flag = 1;
 }
 
 static void
 establish_lighting()
 {
-  (void)DM_SET_LIGHT(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
-  view_state->vs_flag = 1;
+	(void)DM_SET_LIGHT(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
+	view_state->vs_flag = 1;
 }
 
 static void
 do_fogHint()
 {
-  dm_fogHint(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog);
-  view_state->vs_flag = 1;
+	dm_fogHint(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog);
+	view_state->vs_flag = 1;
 }
 
 static void
 dirty_hook()
 {
-  dirty = 1;
+	dirty = 1;
 }
 
 static void
 zclip_hook()
 {
-  dmp->dm_zclip = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
-  dirty_hook();
+	dmp->dm_zclip = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
+	dirty_hook();
 }
 
 static void
 debug_hook()
 {
-  DM_DEBUG(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
+	DM_DEBUG(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
 }
 
 static void
 bound_hook()
 {
-  dmp->dm_bound =
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.bound;
-  dirty_hook();
+	dmp->dm_bound =
+		((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.bound;
+	dirty_hook();
 }
 
 static void
 boundFlag_hook()
 {
-  dmp->dm_boundFlag =
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag;
-  dirty_hook();
+	dmp->dm_boundFlag =
+		((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag;
+	dirty_hook();
 }

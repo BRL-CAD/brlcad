@@ -113,29 +113,26 @@ static struct funtab joint_tab[] = {
 	(_fp)->fp_len = (_fp)->fp_maxlen = 0; \
 	(_fp)->magic = DB_FULL_PATH_MAGIC; }	
 int
-f_jdebug(argc, argv)
-int argc;
-char **argv;
+f_jdebug(int	argc,
+	 char	**argv)
 {
-  struct bu_vls tmp_vls;
+	struct bu_vls vls;
 
-  bu_vls_init(&tmp_vls);
-  start_catching_output(&tmp_vls);
+	bu_vls_init(&vls);
 
-  if (argc >= 2) {
-    sscanf( argv[1], "%x", &joint_debug);
-  } else {
-    bu_printb( "possible flags", 0xffffffffL, JOINT_DEBUG_FORMAT );
-    bu_log("\n");
-  }
-  bu_printb( "joint_debug", joint_debug, JOINT_DEBUG_FORMAT );
-  bu_log("\n");
+	if (argc >= 2) {
+		sscanf(argv[1], "%x", &joint_debug);
+	} else {
+		bu_vls_printb(&vls, "possible flags", 0xffffffffL, JOINT_DEBUG_FORMAT );
+		bu_vls_printf(&vls, "\n");
+	}
+	bu_vls_printb(&vls, "joint_debug", joint_debug, JOINT_DEBUG_FORMAT);
+	bu_vls_printf(&vls, "\n");
 
-  stop_catching_output(&tmp_vls);
-  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-  bu_vls_free(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
-  return CMD_OK;
+	return CMD_OK;
 }
 int
 f_joint(clientData, interp, argc, argv)
