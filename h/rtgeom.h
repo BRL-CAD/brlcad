@@ -149,7 +149,14 @@ struct rt_nurb_internal {
 #define RT_NURB_CK_MAGIC( _p) RT_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");
 #endif
 
-/* ID_NMG */
+/*
+ *	ID_NMG
+ *
+ *  The internal form of the NMG is not rt_nmg_internal, but just
+ *  a "struct model", from nmg.h.  e.g.:
+ *	if( intern.idb_type == ID_NMG )
+ *		m = (struct model *)intern.idb_ptr;
+ */
 
 /*
  *	ID_EBM
