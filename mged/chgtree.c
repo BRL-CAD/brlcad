@@ -303,29 +303,20 @@ f_rm()
 
 	/* Examine all the Member records, one at a time */
 	num_deleted = 0;
+top:
 	for( rec = 1; rec < dp->d_len; rec++ )  {
 		db_getrec( dp, &record, rec );
-top:
 		/* Compare this member to each command arg */
 		for( i = 2; i < numargs; i++ )  {
 			if( strcmp( cmd_args[i], record.M.m_instname ) != 0 )
 				continue;
 			(void)printf("deleting member %s\n", cmd_args[i] );
 			num_deleted++;
-
-			/* If deleting last member, just truncate */
-			if( rec == dp->d_len-1 ) {
-				db_trunc(dp, 1);
-				continue;
-			}
-
-			db_getrec( dp, &record, dp->d_len-1 );	/* last one */
-			db_putrec( dp, &record, rec );		/* xch */
-			db_trunc( dp, 1 );
+			db_delrec( dp, rec );
 			goto top;
 		}
 	}
-	/* go back and undate the header record */
+	/* go back and update the header record */
 	if( num_deleted ) {
 		db_getrec(dp, &record, 0);
 		record.c.c_length -= num_deleted;
