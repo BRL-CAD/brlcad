@@ -713,10 +713,12 @@ extern int	bu_debug;
 #define BU_DEBUG_MATH		0x00000100	/* 011 Fundamental math routines (plane.c, mat.c) */
 #define BU_DEBUG_PTBL		0x00000200	/* 012 bu_ptbl_*() logging */
 
+#define BU_DEBUG_TABDATA	0x00010000	/* 025 LIBBN: tabdata */
 
 /* Format string for bu_printb() */
 #define BU_DEBUG_FORMAT	\
 "\020\
+\025TABDATA\
 \015?\
 \012PTBL\011MATH\010?\7?\6?\5PARALLEL\
 \4?\3MEM_LOG\2MEM_CHECK\1COREDUMP"

@@ -136,6 +136,9 @@ typedef struct bn_complex {
 	(ap)->re = (cp)->re * (bp)->re - (cp)->im * (bp)->im; \
 	(ap)->im = (cp)->re * (bp)->im + (cp)->im * (bp)->re; }
 
+BU_EXTERN(void			bn_cx_div, (bn_complex_t *ap, CONST bn_complex_t *bp) );
+BU_EXTERN(void			bn_cx_sqrt, (bn_complex_t *op, CONST bn_complex_t *ip) );
+
 /*----------------------------------------------------------------------*/
 /* mat.c */
 /*
@@ -420,6 +423,33 @@ typedef  struct bn_poly {
 #define BN_CK_POLY(_p)	BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
 #define BN_POLY_NULL	((struct bn_poly *)NULL)
 
+BU_EXTERN(struct bn_poly *	bn_poly_mul, (struct bn_poly *product,
+				CONST struct bn_poly *m1, CONST struct bn_poly *m2));
+BU_EXTERN(struct bn_poly *	bn_poly_scale, (struct bn_poly *eqn,
+				double factor));
+BU_EXTERN(struct bn_poly *	bn_poly_add, (struct bn_poly *sum,
+				CONST struct bn_poly *poly1, CONST struct bn_poly *poly2));
+BU_EXTERN(struct bn_poly *	bn_poly_sub, (struct bn_poly *diff,
+				CONST struct bn_poly	*poly1,
+				CONST struct bn_poly	*poly2));
+BU_EXTERN(void			bn_poly_synthetic_division, (
+				struct bn_poly *quo, struct bn_poly *rem,
+				CONST struct bn_poly	*dvdend,
+				CONST struct bn_poly	*dvsor));
+BU_EXTERN(int			bn_poly_quadratic_roots, (
+				struct bn_complex	roots[],
+				CONST struct bn_poly	*quadrat));
+BU_EXTERN(int			bn_poly_cubic_roots, (
+				struct bn_complex	roots[],
+				CONST struct bn_poly	*eqn));
+BU_EXTERN(int			bn_poly_quartic_roots, (
+				struct bn_complex	roots[],
+				CONST struct bn_poly	*eqn));
+BU_EXTERN(void			bn_pr_poly, (CONST char *title,
+				CONST struct bn_poly	*eqn));
+BU_EXTERN(void			bn_pr_roots, (CONST char *title,
+				CONST struct bn_complex	roots[], int n));
+
 /*----------------------------------------------------------------------*/
 /* qmath.c */
 /*
@@ -508,15 +538,6 @@ BU_EXTERN(void	bn_wlt_1d_long_reconstruct, (long *tbuf, long *buf,
 			unsigned long subimage_size, unsigned long limit ));
 
 /*----------------------------------------------------------------------*/
-/*
- *  Declarations of external functions in LIBBN.
- *  Source file names listed alphabetically.
- */
-
-/* complex.c */
-BU_EXTERN(void			bn_cx_div, (bn_complex_t *ap, CONST bn_complex_t *bp) );
-BU_EXTERN(void			bn_cx_sqrt, (bn_complex_t *op, CONST bn_complex_t *ip) );
-
 /* const.c */
 extern CONST double bn_pi;
 extern CONST double bn_twopi;
@@ -527,36 +548,162 @@ extern CONST double bn_inv255;
 extern CONST double bn_degtorad;
 extern CONST double bn_radtodeg;
 
-/* poly.c */
-BU_EXTERN(struct bn_poly *	bn_poly_mul, (struct bn_poly *product,
-				CONST struct bn_poly *m1, CONST struct bn_poly *m2));
-BU_EXTERN(struct bn_poly *	bn_poly_scale, (struct bn_poly *eqn,
-				double factor));
-BU_EXTERN(struct bn_poly *	bn_poly_add, (struct bn_poly *sum,
-				CONST struct bn_poly *poly1, CONST struct bn_poly *poly2));
-BU_EXTERN(struct bn_poly *	bn_poly_sub, (struct bn_poly *diff,
-				CONST struct bn_poly	*poly1,
-				CONST struct bn_poly	*poly2));
-BU_EXTERN(void			bn_poly_synthetic_division, (
-				struct bn_poly *quo, struct bn_poly *rem,
-				CONST struct bn_poly	*dvdend,
-				CONST struct bn_poly	*dvsor));
-BU_EXTERN(int			bn_poly_quadratic_roots, (
-				struct bn_complex	roots[],
-				CONST struct bn_poly	*quadrat));
-BU_EXTERN(int			bn_poly_cubic_roots, (
-				struct bn_complex	roots[],
-				CONST struct bn_poly	*eqn));
-BU_EXTERN(int			bn_poly_quartic_roots, (
-				struct bn_complex	roots[],
-				CONST struct bn_poly	*eqn));
-BU_EXTERN(void			bn_pr_poly, (CONST char *title,
-				CONST struct bn_poly	*eqn));
-BU_EXTERN(void			bn_pr_roots, (CONST char *title,
-				CONST struct bn_complex	roots[], int n));
+/*----------------------------------------------------------------------*/
+/* tabdata.c */
+/*
+ *			T A B D A T A
+ *
+ *  Data structures to assist with
+ *  recording many sets of data sampled along the same set of independent
+ *  variables.
+ *  The overall notion is that each sample should be
+ *  as compact as possible (an array of measurements),
+ *  with all the context stored in one place.
+ *
+ *  These structures and support routines apply to
+ *  any measured "curve" or "function" or "table" with one independent
+ *  variable and one or more scalar dependent variable(s).
+ *
+ *  The context is kept in an 'bn_table' structure, and
+ *  the data for one particular sample are kept in an 'bn_tabdata'
+ *  structure.
+ *
+ *  The contents of the sample in val[j] are interpreted
+ *  in the interval (wavel[j]..wavel[j+1]).
+ *  This value could be power, albedo, absorption, refractive index,
+ *  or any other wavelength-specific parameter.
+ *
+ *  For example, if the val[] array contains power values, then
+ *  val[j] contains the integral of the power from wavel[j] to wavel[j+1]
+ *
+ *  As an exmple, assume nwave=2, wavel[0]=500, wavel[1]=600, wavel[2]=700.
+ *  Then val[0] would contain data for the 500 to 600nm interval,
+ *  and val[1] would contain data for the 600 to 700nm interval.
+ *  There would be no storage allocated for val[2] -- don't use it!
+ *  There are several interpretations of this:
+ *	1)  val[j] stores the total (integral, area) value for the interval, or
+ *	2)  val[j] stores the average value across the interval.
+ *
+ *  The intervals need not be uniformly spaced; it is acceptable to
+ *  increase wavelength sampling density around "important" frequencies.
+ *
+ *  See Also -
+ *	h/spectrum.h, spectrum.c
+ */
+struct bn_table {
+	long		magic;
+	int		nx;
+	fastf_t		x[1];	/* array of nx+1 wavelengths, dynamically sized */
+};
+#define BN_TABLE_MAGIC	0x53706374
+#define BN_CK_TABLE(_p)	RT_CKMAG(_p, BN_TABLE_MAGIC, "bn_table")
+#define BN_TABLE_NULL	((struct bn_table *)NULL)
 
+/* Gets an bn_table, with x[] having size _nx+1 */
+#define BN_GET_TABLE(_table, _nx)  { \
+	if( (_nx) < 1 )  bn_bomb("RT_GET_TABLE() _nx < 1\n"); \
+	_table = (struct bn_table *)bu_calloc( 1, \
+		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
+		"struct bn_table" ); \
+	_table->magic = BN_TABLE_MAGIC; \
+	_table->nx = (_nx);  }
+
+
+struct bn_tabdata {
+	long		magic;
+	int		ny;
+	CONST struct bn_table *table;	/* Up pointer to definition of X axis */
+	fastf_t		y[1];		/* array of ny samples, dynamically sized */
+};
+#define BN_TABDATA_MAGIC	0x53736d70
+#define BN_CK_TABDATA(_p)	RT_CKMAG(_p, BN_TABDATA_MAGIC, "bn_tabdata")
+#define BN_TABDATA_NULL		((struct bn_tabdata *)NULL)
+
+#define BN_SIZEOF_TABDATA_Y(_tabdata)	sizeof(fastf_t)*((_tabdata)->ny)
+#define BN_SIZEOF_TABDATA(_table)	( sizeof(struct bn_tabdata) + \
+			sizeof(fastf_t)*((_table)->nx-1) )
+
+/* Gets an bn_tabdata, with y[] having size _ny */
+#define BN_GET_TABDATA(_data, _table)  { \
+	BN_CK_TABLE(_table);\
+	_data = (struct bn_tabdata *)bu_calloc( 1, \
+		BN_SIZEOF_TABDATA(_table), "struct bn_tabdata" ); \
+	_data->magic = BN_TABDATA_MAGIC; \
+	_data->ny = (_table)->nx; \
+	_data->table = (_table); }
+
+/*
+ * Routines
+ */
+
+BU_EXTERN( void			bn_table_free, (struct bn_table	*tabp));
+BU_EXTERN( void			bn_tabdata_free, (struct bn_tabdata *data));
+BU_EXTERN( void			bn_ck_table, (CONST struct bn_table *tabp));
+BU_EXTERN( struct bn_table	*bn_table_make_uniform, (int num, double first,
+					double last));
+BU_EXTERN( void			bn_tabdata_add, (struct bn_tabdata *out,
+					CONST struct bn_tabdata *in1,
+					CONST struct bn_tabdata *in2));
+BU_EXTERN( void			bn_tabdata_mul, (struct bn_tabdata *out,
+					CONST struct bn_tabdata *in1,
+					CONST struct bn_tabdata *in2));
+BU_EXTERN( void			bn_tabdata_scale, (struct bn_tabdata *out,
+					CONST struct bn_tabdata *in1,
+					double scale));
+BU_EXTERN( void			bn_table_scale, (struct bn_table *tabp,
+					double scale));
+BU_EXTERN( void			bn_tabdata_join1, (struct bn_tabdata *out,
+					CONST struct bn_tabdata *in1,
+					double scale,
+					CONST struct bn_tabdata *in2));
+BU_EXTERN( void			bn_tabdata_blend3, (struct bn_tabdata *out,
+					double scale1,
+					CONST struct bn_tabdata *in1,
+					double scale2,
+					CONST struct bn_tabdata *in2,
+					double scale3,
+					CONST struct bn_tabdata *in3));
+BU_EXTERN( double		bn_tabdata_area1, (CONST struct bn_tabdata *in));
+BU_EXTERN( double		bn_tabdata_area2, (CONST struct bn_tabdata *in));
+BU_EXTERN( double		bn_tabdata_mul_area1, (CONST struct bn_tabdata *in1,
+					CONST struct bn_tabdata	*in2));
+BU_EXTERN( double		bn_tabdata_mul_area2, (CONST struct bn_tabdata *in1,
+					CONST struct bn_tabdata	*in2));
+BU_EXTERN( fastf_t		bn_table_lin_interp, (CONST struct bn_tabdata *samp,
+					double wl));
+BU_EXTERN( struct bn_tabdata	*bn_tabdata_resample_max, (
+					CONST struct bn_table *newtable,
+					CONST struct bn_tabdata *olddata));
+BU_EXTERN( struct bn_tabdata	*bn_tabdata_resample_avg, (
+					CONST struct bn_table *newtable,
+					CONST struct bn_tabdata *olddata));
+BU_EXTERN( int			bn_table_write, (CONST char *filename,
+					CONST struct bn_table *tabp));
+BU_EXTERN( struct bn_table	*bn_table_read, (CONST char *filename));
+BU_EXTERN( int			bn_print_table_and_tabdata, (CONST char *filename,
+					CONST struct bn_tabdata *data));
+BU_EXTERN( struct bn_tabdata	*bn_read_table_and_tabdata, (
+					CONST char *filename));
+BU_EXTERN( struct bn_tabdata	*bn_tabdata_binary_read, (CONST char *filename,
+					int num,
+					CONST struct bn_table *tabp));
+BU_EXTERN( struct bn_tabdata	*bn_tabdata_malloc_array, (
+					CONST struct bn_table *tabp,
+					int num));
+BU_EXTERN( void			bn_tabdata_copy, (struct bn_tabdata *out,
+					CONST struct bn_tabdata *in));
+BU_EXTERN(struct bn_tabdata	*bn_tabdata_dup, (CONST struct bn_tabdata *in));
+BU_EXTERN(struct bn_tabdata	*bn_tabdata_get_constval, (double val,
+					CONST struct bn_table	*tabp));
+BU_EXTERN(void			bn_tabdata_constval, (struct bn_tabdata	*data, double val));
+BU_EXTERN(struct bn_tabdata	*bn_tabdata_from_array, (CONST double *array));
+BU_EXTERN(struct bn_table	*bn_table_merge2, (CONST struct bn_table *a,
+				CONST struct bn_table *b));
+
+/*----------------------------------------------------------------------*/
 /* vers.c (created by the Cakefile) */
 extern CONST char		bn_version[];
+/*----------------------------------------------------------------------*/
 
 #ifdef __cplusplus
 }
