@@ -1188,6 +1188,9 @@ struct view_obj {
 	fastf_t			vo_base2local;		/* scale base units (i.e. mm) to local units */
 	vect_t			vo_aet;
 	vect_t			vo_eye_pos;		/* eye position */
+	vect_t			vo_keypoint;
+	char			vo_coord;		/* coordinate system */
+	char			vo_rotate_about;	/* indicates what point rotations are about */
 	mat_t			vo_rotation;
 	mat_t			vo_center;
 	mat_t			vo_model2view;
