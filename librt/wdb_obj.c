@@ -121,10 +121,10 @@ static int wdb_num_dups;
 static struct directory	**wdb_dup_dirp;
 
 /* default region ident codes */
-static int wdb_item_default = 1000;	/* GIFT region ID */
-static int wdb_air_default = 0;
-static int wdb_mat_default = 1;		/* GIFT material code */
-static int wdb_los_default = 100;	/* Line-of-sight estimate */
+int wdb_item_default = 1000;	/* GIFT region ID */
+int wdb_air_default = 0;
+int wdb_mat_default = 1;		/* GIFT material code */
+int wdb_los_default = 100;	/* Line-of-sight estimate */
 
 /* input path */
 static struct directory *wdb_objects[WDB_MAX_LEVELS];
