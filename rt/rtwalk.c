@@ -36,12 +36,15 @@ extern char	*optarg;
 extern int	optind;
 
 char	usage[] = "\
-Usage:  rtwalk [options] model.g objects...\n\
+Usage:  rtwalk [options] startXYZ destXYZ model.g objects...\n\
+ -X #		Set debug flags\n\
+	1	plots on stdout\n\
+	2	plots, attempts in red\n\
+	3	all plots, plus printing\n\
  -x #		Set librt debug flags\n\
- -p # # #	Set starting point\n\
- -a # # #	Set shoot-at point (destination)\n\
  -n #		Number of steps\n\
  -v #		Viewsize\n\
+(output is rtwalk.mats)\n\
 ";
 
 extern double	atof();
@@ -64,8 +67,7 @@ int		interactive = 0;	/* human is watching results */
 struct resource		resource;
 struct application	ap;
 
-int		set_pt = 0;
-int		set_at = 0;
+point_t		start_point;
 point_t		goal_point;
 
 vect_t		dir_prev_step;		/* Dir used on last step */
@@ -87,6 +89,41 @@ FILE		*plotfp = stdout;
 FILE		*outfp = NULL;
 
 /*
+ *			G E T _ A R G S
+ */
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+	register int i;
+
+	while( (c=getopt( argc, argv, "x:X:n:v:" )) != EOF )  {
+		switch( c )  {
+		case 'x':
+			sscanf( optarg, "%x", &rt_g.debug );
+			fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
+			break;
+		case 'X':
+			sscanf( optarg, "%x", &rdebug );
+			fprintf(stderr,"rt rdebug=x%x\n", rdebug);
+			break;
+
+		case 'n':
+			nsteps = atoi( optarg );
+			break;
+		case 'v':
+			viewsize = atof( optarg );
+			break;
+
+		default:		/* '?' */
+			fprintf(stderr,"unknown option %c\n", c);
+			return(0);	/* BAD */
+		}
+	}
+	return(1);			/* OK */
+}
+
+/*
  *			M A I N
  */
 main(argc, argv)
@@ -99,83 +136,37 @@ char **argv;
 	char	idbuf[132];		/* First ID record info */
 	int	curstep;
 	vect_t	first_dir;		/* First dir chosen on a step */
+	int	i;
 
 	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
 
-	if( argc < 3 )  {
+
+	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
-	argc--;
-	argv++;
-
-	while( argv[0][0] == '-' ) switch( argv[0][1] )  {
-	case 'x':
-		sscanf( argv[1], "%x", &rt_g.debug );
-		fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
-		argc -= 2;
-		argv += 2;
-		break;
-
-	case 'X':
-		sscanf( argv[1], "%x", rdebug );
-		fprintf(stderr,"rdebug=x%x\n", rdebug);
-		argc -= 2;
-		argv += 2;
-		break;
-
-	case 'p':
-		if( argc < 4 )  goto err;
-		ap.a_ray.r_pt[X] = atof( argv[1] );
-		ap.a_ray.r_pt[Y] = atof( argv[2] );
-		ap.a_ray.r_pt[Z] = atof( argv[3] );
-		set_pt = 1;
-		argc -= 4;
-		argv += 4;
-		continue;
-
-	case 'a':
-		if( argc < 4 )  goto err;
-		goal_point[X] = atof( argv[1] );
-		goal_point[Y] = atof( argv[2] );
-		goal_point[Z] = atof( argv[3] );
-		set_at = 1;
-		argc -= 4;
-		argv += 4;
-		continue;
-
-	case 'n':
-		if( argc < 2 )  goto err;
-		nsteps = atoi( argv[1] );
-		argc -= 2;
-		argv += 2;
-		continue;
-
-	case 'v':
-		if( argc < 2 )  goto err;
-		viewsize = atof( argv[1] );
-		argc -= 2;
-		argv += 2;
-		continue;
-
-	default:
-err:
-		(void)fputs(usage, stderr);
-		exit(1);
-	}
-	if( argc < 2 )  {
-		fprintf(stderr,"rtwalk: MGED database not specified\n");
+	if( optind+7 >= argc )  {
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
 
-	if( set_pt + set_at != 2 )  goto err;
+	/* Start point */
+	start_point[X] = atof( argv[optind] );
+	start_point[Y] = atof( argv[optind+1] );
+	start_point[Z] = atof( argv[optind+2] );
 
-	VSUB2( first_dir, goal_point, ap.a_ray.r_pt );
+	/* Destination point */
+	goal_point[X] = atof( argv[optind+3] );
+	goal_point[Y] = atof( argv[optind+4] );
+	goal_point[Z] = atof( argv[optind+5] );
+	optind += 6;
+
+	VSUB2( first_dir, goal_point, start_point );
 	incr_dist = MAGNITUDE(first_dir) / nsteps;
+	VMOVE( ap.a_ray.r_pt, start_point );
 	VMOVE( ap.a_ray.r_dir, first_dir );
 	VUNITIZE( ap.a_ray.r_dir );	/* initial dir, for dir_prev_step */
 
@@ -183,9 +174,7 @@ err:
 	fprintf(stderr,"viewsize = %gmm\n", viewsize);
 
 	/* Load database */
-	title_file = argv[0];
-	argv++;
-	argc--;
+	title_file = argv[optind++];
 	if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 		fprintf(stderr,"rtwalk:  rt_dirbuild failure\n");
 		exit(2);
@@ -194,11 +183,10 @@ err:
 	fprintf(stderr, "db title:  %s\n", idbuf);
 
 	/* Walk trees */
-	while( argc > 0 )  {
-		if( rt_gettree(rtip, argv[0]) < 0 )
-			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[0]);
-		argc--;
-		argv++;
+	for( i=optind; i < argc; i++ )  {
+		if( rt_gettree(rtip, argv[optind]) < 0 )
+			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[optind]);
+		optind++;
 	}
 
 	/* Prep finds the model RPP, needed for the plotting step */
@@ -214,10 +202,12 @@ err:
 	}
 
 	/* Plot all of the solid RPPs in a light grey */
-	pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
-	pl_color( plotfp, 150, 150, 150 );
-	{
+	if( rdebug > 0 )  {
 		register struct soltab *stp;
+
+		pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
+		pl_color( plotfp, 150, 150, 150 );
+
 		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
 			if( stp->st_aradius >= INFINITY )
 				continue;
@@ -240,12 +230,14 @@ err:
 			VPRINT("pos", ap.a_ray.r_pt);
 		}
 		if( curstep > 0 )  {
-			if( curstep&1 )
-				pl_color( plotfp, 0, 255, 0 );
-			else
-				pl_color( plotfp, 0, 0, 255 );
-			rt_drawvec( plotfp, ap.a_rt_i,
-				pt_prev_step, ap.a_ray.r_pt );
+			if( rdebug > 0 )  {
+				if( curstep&1 )
+					pl_color( plotfp, 0, 255, 0 );
+				else
+					pl_color( plotfp, 0, 0, 255 );
+				rt_drawvec( plotfp, ap.a_rt_i,
+					pt_prev_step, ap.a_ray.r_pt );
+			}
 			write_matrix(curstep);
 		}
 		VMOVE( pt_prev_step, ap.a_ray.r_pt );
