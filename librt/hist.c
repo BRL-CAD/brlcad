@@ -39,10 +39,16 @@ void
 rt_hist_free( histp )
 struct histogram	*histp;
 {
+	/* The 'clean' command can be called before the first rt_prep(),
+	 * resulting in zero magic numbers in rtip->rti_hist_cellsize.
+	 */
+	if( histp && histp->magic == 0 )  return;
+	RT_CK_HISTOGRAM(histp);
 	if( histp->hg_bins )
 		rt_free( (char *)histp->hg_bins, "old histogram bins");
 	histp->hg_bins = (long *)0;
 	histp->hg_nbins = 0;
+	histp->magic = -1;	/* sanity */
 }
 
 /*
@@ -54,7 +60,7 @@ struct histogram	*histp;
 void
 rt_hist_init( histp, min, max, nbins )
 struct histogram	*histp;
-int			min, max;
+fastf_t			min, max;
 int			nbins;
 {
 
@@ -65,8 +71,8 @@ int			nbins;
 		nbins = 10000;
 	}
 
-	histp->hg_min = min;
-	histp->hg_max = max;
+	histp->hg_min = floor(min);
+	histp->hg_max = ceil(max);
 	histp->hg_nbins = nbins;
 
 	/* When max-min <= nbins, clumpsize should be 1 */
@@ -75,6 +81,7 @@ int			nbins;
 
 	histp->hg_nsamples = 0L;
 	histp->hg_bins = (long *)rt_calloc( nbins+1, sizeof(long), "histogram bins");
+	histp->magic = RT_HISTOGRAM_MAGIC;
 }
 
 /*
@@ -83,21 +90,23 @@ int			nbins;
 void
 rt_hist_range( hp, low, high )
 register struct histogram	*hp;
-int				low;
-int				high;
+fastf_t				low;
+fastf_t				high;
 {
-	int		a;
-	int		b;
+	long		a;
+	long		b;
 	register int	i;
 
+	RT_CK_HISTOGRAM(hp);
 	if( low <= hp->hg_min )
 		a = 0;
 	else
 		a = (low - hp->hg_min) / hp->hg_clumpsize;
 	if( high >= hp->hg_max )
-		b = hp->hg_nbins;
+		b = hp->hg_nbins-1;
 	else
 		b = (high - hp->hg_min) / hp->hg_clumpsize;
+	if( a < 0 || b >= hp->hg_nbins )  rt_bomb("rt_hist_range() out of range\n");
 	for( i=a; i <= b; i++ )  {
 		hp->hg_bins[i]++;
 	}
@@ -110,17 +119,19 @@ int				high;
 void
 rt_hist_pr( histp, title )
 register struct histogram	*histp;
-char			*title;
+CONST char			*title;
 {
 	register int	i;
 	long		maxcount;
-	static char	marks[] = "################################################################";
+	CONST static char	marks[] = "################################################################";
 #define	NMARKS	50
-	char		buf[128];
+	char		buf[256];
 	int		percent;
 	int		mark_count;
 	int		val;
 	int		nbins;
+
+	RT_CK_HISTOGRAM(histp);
 
 	/* Find entry with highest count */
 	maxcount = 0L;
@@ -135,7 +146,7 @@ char			*title;
 		if(histp->hg_bins[nbins] > 0)  break;
 
 	/* 12345678 12345678 123 .... */
-	rt_log("\nHistogram of %s\nmin=%d, max=%d, nbins=%d, clumpsize=%d\n%d samples collected, highest count was %d\n\n Value      Count Rel%%|  Bar Graph\n",
+	rt_log("\nHistogram of %s\nmin=%g, max=%g, nbins=%d, clumpsize=%g\n%d samples collected, highest count was %d\n\n Value      Count Rel%%|  Bar Graph\n",
 		title,
 		histp->hg_min, histp->hg_max,
 		histp->hg_nbins, histp->hg_clumpsize,
