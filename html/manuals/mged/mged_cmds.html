@@ -3098,12 +3098,12 @@ on the command line.
 
 <DT><a NAME="orot"><B>orot</B> [<I>-i</I>] <I>xdeg ydeg zdeg</I></DT>
 
-<DD>The ``orot'' command performs a rotation of an object during object edit.
+<DD>The ``orot'' command performs a rotation of an object during matrix edit.
 The rotation is performed, in order, <I>xdeg</I> degrees about the X-axis, then
 <I>ydeg</I> about the Y-axis, and finally <I>zdeg</I> about the Z-axis. If
 the <I>-i</I> flag is given, then the angles are interpreted as increments
 to the last object rotation. The <a href="#rotobj">rotobj</a> command is a synonym
-for <I>orot</I>.
+for <I>orot</I>. Note that this has no effect during primitive edit.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -3118,9 +3118,9 @@ for <I>orot</I>.
 <DT><a NAME="oscale"><B>oscale</B> <I>scale_factor</I></DT>
 
 <DD>The ``oscale'' command performs a uniform scale operation on
-the currently edited object. A <I>scale_factor</I> of 2 will double
+the currently edited matrix. A <I>scale_factor</I> of 2 will double
 the size of the object, and a <I>scale_factor</I> of 0.5 will halve
-its size.
+its size. Note that this has no effect during primitive edit.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -4969,7 +4969,7 @@ The <I>vdraw</I> <I>commands</I> are:
 		-- with an argument of ``color'', the curent color is returned.<br>
 		-- with an argument of ``length'', the number of commands in the current list is returned.<br>
 		-- with an argument of ``name'', the name of the current command list is returned.</li>
-	<li>show -- send the current command list to the <I>mged</I> display manager.</li>
+	<li>send -- send the current command list to the <I>mged</I> display manager.</li>
 	<li>vlist -- with an argument of ``list'', return a list of the names of all existing command lists.<br>
 		-- with an argument of <I>delete list_name</I>, delete the specified command list.</li>
 </ul>
@@ -4994,7 +4994,7 @@ All textual arguments may be abbreviated by their first letter.
 	-- draw line to (0 100 0)<br>
 	<kbd>mged></kbd> <b>vdraw write next 1 0 0 0</b><br>
 	-- draw line to (0 0 0)<br>
-	<kbd>mged></kbd> <b>vdraw show</b><br>
+	<kbd>mged></kbd> <b>vdraw send</b><br>
 	-- draw the square in the <I>mged</I> display<br>
 	</DD>
 	</DL>
