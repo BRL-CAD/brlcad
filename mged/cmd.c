@@ -329,6 +329,8 @@ static struct funtab funtab[] = {
 	f_labelvert, 2, MAXARGS, TRUE,
 "listeval", "", "lists 'evaluated' path solids",
 	f_pathsum, 1, MAXARGS, TRUE,
+"load_dv", "", "Initializes the view matrices",
+        f_load_dv, 1, 1, TRUE,
 "loadtk", "[DISPLAY]", "Initializes Tk window library",
         cmd_tk, 1, 2, TRUE,
 "ls", "", "table of contents",
@@ -1024,16 +1026,13 @@ gui_setup()
   int status;
   static int gui_initialized = 0;
 
+  /* initialize only once */
   if(gui_initialized)
     return;
 
   if((tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "MGED", "MGED")) == NULL){
     rt_log("gui_setup: Failed to create main window.\n");
-#if 1
     return;
-#else
-    exit(1);
-#endif
   }
 
   /* This runs the tk.tcl script */
@@ -2364,6 +2363,8 @@ char    **argv;
 
       if(curr_dm_list->aim)
 	curr_cmd_list = curr_dm_list->aim;
+      else
+	curr_cmd_list = &head_cmd_list;
 
       return TCL_OK;
     }
