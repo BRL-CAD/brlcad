@@ -871,7 +871,8 @@ struct rt_tol		*tol;
 				ASSOC_GEOM( 0, 0, 0 );
 				ASSOC_GEOM( 1, 0, 1 );
 				ASSOC_GEOM( 2, 1, 1 );
-				if( nmg_fu_planeeqn( fu, tol ) < 0 )  return -1;
+				if( nmg_calc_face_g( fu ) )
+					nmg_kfu(  fu );
 			}
 
 			/*
@@ -898,7 +899,8 @@ struct rt_tol		*tol;
 				ASSOC_GEOM( 0, 1, 0 );
 				ASSOC_GEOM( 1, 0, 0 );
 				ASSOC_GEOM( 2, 1, 1 );
-				if( nmg_fu_planeeqn( fu, tol ) < 0 )  return -1;
+				if( nmg_calc_face_g( fu ) )
+					nmg_kfu(  fu );
 			}
 		}
 	}
