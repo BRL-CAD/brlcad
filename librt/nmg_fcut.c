@@ -1348,10 +1348,23 @@ fastf_t			*mag2;
 		}
 	}
 
+	/*
+	 *  Here, one list is exhausted, but the other may not be.
+	 *  Press on until both are.
+	 */
+	for( ; cur1 < rs1->nvu; cur1 = nxt1 )  {
+		nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
+	}
+	for( ; cur2 < rs2->nvu; cur2 = nxt2 )  {
+		nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, rs1->state );
+	}
+
 	if( rs1->state != NMG_STATE_OUT || rs2->state != NMG_STATE_OUT )  {
 		rt_log("ERROR nmg_face_combine() ended in state '%s'/'%s'?\n",
 			nmg_state_names[rs1->state],
 			nmg_state_names[rs2->state] );
+		rt_log("cur1 = %d of %d, cur2 = %d of %d\n",
+			cur1, rs1->nvu, cur2, rs2->nvu );
 
 		if( rt_g.debug || rt_g.NMG_debug )  {
 			/* Drop a plot file */
@@ -1360,7 +1373,7 @@ fastf_t			*mag2;
 			nmg_pl_comb_fu( 0, 2, rs1->fu2 );
 		}
 
-		rt_log("nmg_face_combine() bad ending state\n");
+		rt_log("nmg_face_combine() bad ending state, pushing on\n");
 /*		rt_bomb("nmg_face_combine() bad ending state\n"); */
 	}
 }
