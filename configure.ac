@@ -1,6 +1,6 @@
-dnl **************************
-dnl ** BRL-CAD configure.ac **
-dnl **************************
+dnl ****************************
+dnl *** BRL-CAD configure.ac ***
+dnl ****************************
 dnl $Id$
 dnl
 dnl Herein lies the venerable GNU Autotools configure script for BRL-CAD.
@@ -32,15 +32,15 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
+AC_INIT(librt/bool.c)
+AC_PREREQ(2.50)
+
 MAJOR_VERSION=6
 MINOR_VERSION=1
 PATCH_VERSION=0
 CONFIG_DATE=`date +%Y%m%d`
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 echo "Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
-
-AC_INIT(librt/bool.c)
-AC_PREREQ(2.50)
 
 # necessary for proper file creation on nfs volumes
 umask 022
@@ -91,8 +91,129 @@ AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
 	]	
 )
 
-# XXX these flags are GCC-specific -- perhaps should set after the compiler check
-CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
+# use the jdk
+JAVA_CFLAGS=
+with_java=no
+AC_ARG_WITH(jdk, AC_HELP_STRING(--with-jdk=path, 
+		 [Specify location of Java Development Kit]),
+	[
+		JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
+		with_java=yes
+        ]
+)
+case "$target" in
+	*-*-darwin*)
+		JAVA_CFLAGS="-framework JavaVM"
+		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
+		with_java=yes
+		;;
+esac
+AC_SUBST(JAVA_CFLAGS)
+AC_SUBST(JAVA_LDFLAGS)
+
+
+# only build benchmark
+AC_MSG_CHECKING(whether to only build benchmark)
+only_benchmark=no
+AC_ARG_ENABLE(only-benchmark,
+	AC_HELP_STRING(--enable-only-benchmark,
+		[Only build the components necessary for the benchmark suite]),
+	[if ! test "x$enableval" = "xno" ; then
+		only_benchmark=yes
+	fi]
+)
+AC_MSG_RESULT($only_benchmark)
+AM_CONDITIONAL(ONLY_BENCHMARK, ! test "$only_benchmark" = "xno")
+
+# only build librtserver
+AC_MSG_CHECKING(whether to only build librtserver)
+only_rts=no
+warn_only_both=no
+AC_ARG_ENABLE(only-rts,
+	AC_HELP_STRING(--enable-only-rts,
+		[Only build the components necessary for librtserver]),
+	[if ! test "x$enableval" = "xno" ; then
+		only_rts=yes
+		if ! test "x$only_benchmark" = "xno" ; then
+			warn_only_both=yes
+		fi
+	fi]
+)
+AC_MSG_RESULT($only_rts)
+AM_CONDITIONAL(ONLY_RTS, ! test "$only_rts" = "xno")
+if ! test "x$warn_only_both" = "xno" ; then
+	AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+	AC_MSG_WARN(Requesting BOTH benchmark and librtserver "only"?)
+	AC_MSG_WARN(Building both benchmark and librtserver)
+	AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+fi
+
+
+# doxygen
+AC_MSG_CHECKING(whether to generate documentation with doxygen)
+use_doxygen=no
+AC_ARG_ENABLE(doxygen,
+	AC_HELP_STRING(--enable-doxygen,
+		[enable documentation generation with doxygen (default=no)]),
+	[if ! test "xenable_doxygen" = "xno" ; then
+		use_doxygen=yes
+	fi]
+)
+AC_MSG_RESULT($use_doxygen)
+
+# optimizations
+AC_MSG_CHECKING(whether to enable optimized compilation)
+use_optimizations=no
+AC_ARG_ENABLE(debug,
+	AC_HELP_STRING(--enable-debug,
+		[enable optimized compilation (default=no)]),
+	[if ! test "x$enable_optimizations" = "xno" ; then
+		use_optimizations=yes
+	fi]
+)
+AC_MSG_RESULT($use_optimizations)
+
+# warnings
+AC_MSG_CHECKING(whether to enable verbose compilation warnings)
+use_warnings=no
+AC_ARG_ENABLE(warnings,
+	AC_HELP_STRING(--enable-warnings,
+		[enable verbose compilation warnings (default=no)]),
+	[if ! test "x$enable_warnings" = "xno" ; then
+		use_warnings=yes
+	fi]
+)
+AC_MSG_RESULT($use_warnings)
+
+# debugging
+AC_MSG_CHECKING(whether to enable debug mode compilation)
+use_debug=no
+AC_ARG_ENABLE(debug,
+	AC_HELP_STRING(--enable-debug,
+		[enable debug mode compilation (default=no)]),
+	[if ! test "x$enable_debug" = "xno" ; then
+		use_debug=yes
+	fi]
+)
+AC_MSG_RESULT($use_debug)
+
+# profile
+AC_MSG_CHECKING(whether to enable profile mode compilation)
+use_profiling=no
+AC_ARG_ENABLE(profiling,
+	AC_HELP_STRING(--enable-profiling,
+		[enable profiling (default=no)]),
+	[if ! test "x$enable_profiling" = "xno" ; then
+		use_profiling=yes
+	fi]
+)
+AC_ARG_ENABLE(profile,,
+	[if ! test "x$enable_profile" = "xno" ; then
+		use_profiling=yes
+	fi]
+)
+AC_MSG_RESULT($use_profiling)
+
 
 # XXX pthread lib stuff should go away (and be made proper lib check)
 case "$target" in
@@ -110,27 +231,12 @@ AC_MSG_CHECKING([for fink])
 if test -d /sw ; then
 	AC_MSG_RESULT([found, adding /sw to search paths])
 	CFLAGS="$CFLAGS -I/sw/include"
+	CPPFLAGS="$CPPFLAGS -I/sw/include"
 	LDFLAGS="$LDFLAGS -L/sw/lib"
 else
 	AC_MSG_RESULT([not found])
 fi
 
-JAVA_CFLAGS=
-with_java=no
-AC_ARG_WITH(jdk,
-        [  --with-jdk=path         Specify location of Java Development Kit],[
-        JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
-        with_java=yes
-        ])
-case "$target" in
-	*-*-darwin*)
-		JAVA_CFLAGS="-framework JavaVM"
-		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
-		with_java=yes
-		;;
-esac
-AC_SUBST(JAVA_CFLAGS)
-AC_SUBST(JAVA_LDFLAGS)
 
 AC_DEFINE(DM_X,1,[Display for X])
 AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
@@ -143,63 +249,7 @@ AC_SUBST(GL_LIBS)
 LEX_CFLAGS="-Dyylex=cmd_nop"
 AC_SUBST(LEX_CFLAGS)
 
-AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), 
-	       AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique),
-	       AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-	       AC_MSG_ERROR([*** Don't know the endian of this machine! ***]) )
-
-AC_DEFINE(USE_PROTOTYPES,1,heh)
 AC_DEFINE(USE_REGCOMP,1,new regex stuff)
-
-# debugging
-AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug,
-		     [enable debug mode compilation [default=no]]))
-
-# profile
-AC_ARG_ENABLE(profile, AC_HELP_STRING(--enable-profile,
-		       [enable profiling [default=no]]))
-
-# warnings
-AC_ARG_ENABLE(warnings, AC_HELP_STRING(--enable-warnings,
-			[enable verbose compilation warnings [default=automatic]]))
-
-# doxygen
-AC_ARG_ENABLE(doxygen, AC_HELP_STRING(--enable-doxygen,
-		       [enable documentation generation with doxygen [default=automatic]]))
-
-# only build benchmark
-only_benchmark="no"
-AC_ARG_ENABLE(only-benchmark, AC_HELP_STRING(--enable-only-benchmark,
-		  [Only build the components necessary for benchmark]) ,
-	[
-		if ! test "x$enableval" = "xno" ; then
-			only_benchmark="yes"
-		fi
-	]
-)
-AC_MSG_CHECKING(whether to only build benchmark)
-AC_MSG_RESULT($only_benchmark)
-AM_CONDITIONAL(ONLY_BENCHMARK, test "x$only_benchmark" = "xyes")
-
-# only build librtserver
-only_rts="no"
-AC_ARG_ENABLE(only-rts, AC_HELP_STRING(--enable-only-rts,
-		  [Only build the components necessary for librtserver]) ,
-	[
-		if ! test "x$enableval" = "xno" ; then
-			only_rts="yes"
-			if test "x$only_benchmark" = "xyes" ; then
-				AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-				AC_MSG_WARN(Requesting BOTH benchmark and librtserver "only"?)
-				AC_MSG_WARN(Building both benchmark and librtserver)
-				AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
-			fi
-		fi
-	]
-)
-AC_MSG_CHECKING(whether to only build librtserver)
-AC_MSG_RESULT($only_rts)
-AM_CONDITIONAL(ONLY_RTS, test "x$only_rts" = "xyes")
 
 
 dnl **************************
@@ -211,38 +261,19 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AM_PROG_LEX
-
-AM_C_PROTOTYPES
-
-AC_DEFINE(HAS_POSIX_THREADS,1,[Posix Threading API])
+AM_PROG_CC_STDC
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
-if ! test "x$enable_doxygen" = "xno" ; then
+if test "x$use_doxygen" = "xyes" ; then
 	AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
 	if test "x$DOXYGEN" = "x" ; then
-		if test "x$enable_doxygen" = "xyes" ; then
-			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-			AC_MSG_ERROR([*** Unable to find doxygen ***])
-		fi
-		enable_doxygen=no
+		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_ERROR([*** Unable to find doxygen ***])
 	fi
 fi
 AC_MSG_CHECKING(whether to enable doxygen)
-AC_MSG_RESULT($enable_doxygen)
-
-AC_MSG_CHECKING(compiler and flags for sanity)
-AC_TRY_RUN([
-#include <stdio.h>
-int main(){exit(0);}
-	],
-	[	AC_MSG_RESULT(yes) ],
-	[
-		AC_MSG_RESULT(no)
-		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-		AC_MSG_ERROR([*** compiler cannot create working executables, check config.log ***])
-	]
-)
+AC_MSG_RESULT($use_doxygen)
 
 
 dnl ***************************
@@ -362,46 +393,54 @@ AC_CHECK_HEADER(JavaVM/jni.h,
 AC_CHECK_HEADER(jni.h,
 		AC_DEFINE(HAVE_JNI_H,1,[Define to 1 if you have the `<jni.h>' header file])
 		found_jni_h=yes )
-if ! test "x$found_jni_h" = "xyes" ; then
-	if test "x$with_java" = "xyes" ; then
+search_for_jni_h_more=no
+if test "x$found_jni_h" = "xno" ; then
+	if ! test "x$with_java" = "xno" ; then
 		with_java=no
-
-		# darwin systems may have a prior jni.h stashed away elsewhere
-		pre_cflags="$CFLAGS"
-		pre_cppflags="$CPPFLAGS"
-		macjvmdir=/System/Library/Frameworks/JavaVM.framework/Versions
-		if test -d "$macjvmdir"  ; then
-			for dir in `ls $macjvmdir` ; do
-				if test -d "$macjvmdir/$dir" ; then
-					CFLAGS="-I$macjvmdir/$dir/Headers $CFLAGS"
-					CPPFLAGS="-I$macjvmdir/$dir/Headers $CPPFLAGS"
-				fi
-			done
+		serach_for_jni_h_more=yes
+		if ! test "x$only_benchmark" = "xno" ; then
+			if test "x$only_rts" = "xno" ; then
+				search_for_jni_h_more=no
+			fi
 		fi
+	fi
+fi
+if ! test "x$search_for_jni_h_more" = "xno" ; then
+	# darwin systems may have a prior jni.h stashed away elsewhere
+	pre_cflags="$CFLAGS"
+	pre_cppflags="$CPPFLAGS"
+	macjvmdir=/System/Library/Frameworks/JavaVM.framework/Versions
+	if test -d "$macjvmdir"  ; then
+		for dir in `ls $macjvmdir` ; do
+			if test -d "$macjvmdir/$dir" ; then
+				CFLAGS="-I$macjvmdir/$dir/Headers $CFLAGS"
+				CPPFLAGS="-I$macjvmdir/$dir/Headers $CPPFLAGS"
+			fi
+		done
+	fi
 
-		# try one last time to find jni.h
-		unset ac_cv_header_jni_h
-		AC_CHECK_HEADER(jni.h,
-				AC_DEFINE(HAVE_JNI_H,
-					  1,
-					  [Define to 1 if you have the `<jni.h>' header file])
-				found_jni_h=yes )
+	# try one last time to find jni.h (must disable cached result)
+	unset ac_cv_header_jni_h
+	AC_CHECK_HEADER(jni.h,
+			AC_DEFINE(HAVE_JNI_H,
+				  1,
+				  [Define to 1 if you have the `<jni.h>' header file])
+			found_jni_h=yes )
 
-		if test "x$found_jni_h" = "xyes" ; then
-			with_java=yes
-			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-			AC_MSG_WARN([jni.h was found by hunting through the JavaVM framework])
-			AC_MSG_WARN([This means you probably need to install the latest Java SDK])
-			AC_MSG_WARN([Build will try to use what it found, but you should update])
-			AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
-			AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
-		else
-			CFLAGS="$pre_cflags"
-			CPPFLAGS="$pre_cppflags"
-			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-			AC_MSG_WARN([Code dependant upon java and jni.h will not be built])
-			AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
-		fi
+	if ! test "x$found_jni_h" = "xno" ; then
+		with_java=yes
+		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_WARN([jni.h was found by hunting through the JavaVM framework])
+		AC_MSG_WARN([This means you probably need to install the latest Java SDK])
+		AC_MSG_WARN([Build will try to use what it found, but you should update])
+		AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
+		AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+	else
+		CFLAGS="$pre_cflags"
+		CPPFLAGS="$pre_cppflags"
+		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_WARN([Code dependant upon java and jni.h will not be built])
+		AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
 	fi
 fi
 
@@ -410,8 +449,10 @@ dnl **********************************
 dnl *** Check for types/structures ***
 dnl **********************************
 
-AC_C_CONST
 AC_STRUCT_TM
+
+AC_DEFINE(HAS_POSIX_THREADS,1,[Posix Threading API])
+
 
 dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped?
 dnl ============================================================
@@ -442,7 +483,56 @@ dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
 
-# nothing to do compiler-wise yet
+# XXX these flags are presently GCC-specific
+CFLAGS="$CFLAGS -I$(top_srcdir)/h -fno-strict-aliasing"
+
+if ! test "x$use_optimizations" = "xno" ; then
+	CFLAGS="$CFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
+	LDFLAGS="$LDFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
+fi
+
+if ! test "x$use_debug" = "xno" ; then
+	CFLAGS="$CFLAGS -g"
+	LDFLAGS="$LDFLAGS -g"
+fi
+
+if ! test "x$use_profiling" = "xno" ; then
+	CFLAGS="$CFLAGS -pg"
+	LDFLAGS="$LDFLAGS -pg"
+fi
+
+if ! test "x$use_warnings" = "xno" ; then
+	CFLAGS="$CFLAGS -W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion"
+	# XXX also of interest
+	# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
+fi
+
+AC_C_CONST
+AC_C_VOLATILE
+AC_C_INLINE
+AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), 
+	       AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique),
+	       AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+	       AC_MSG_ERROR([*** Don't know the endian of this machine! ***]) )
+
+dnl AC_C_PROTOTYPES
+AM_C_PROTOTYPES
+
+AC_DEFINE(USE_PROTOTYPES,1,heh)
+
+dnl Last step is to make sure that we can actually compile
+AC_MSG_CHECKING(compiler and flags for sanity)
+AC_TRY_RUN([
+#include <stdio.h>
+int main(){exit(0);}
+	],
+	[	AC_MSG_RESULT(yes) ],
+	[
+		AC_MSG_RESULT(no)
+		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_ERROR([*** compiler cannot create working executables, check config.log ***])
+	]
+)
 
 
 dnl ***************************
@@ -489,14 +579,17 @@ dnl *********************************
 dnl *** Check for system services ***
 dnl *********************************
 
-if test "x$only_rts" = "xyes" ; then
-	if ! test "x$with_java" = "xyes" ; then
+AC_PATH_X
+AC_PATH_XTRA
+
+if ! test "x$enable_only_rts" = "xno" ; then
+	if test "x$with_java" = "xno" ; then
 		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
 fi
-AM_CONDITIONAL(JAVA, test "x$with_java" = "xyes")
+AM_CONDITIONAL(JAVA, ! test "x$with_java" = "xno")
 
 
 dnl ***************************
@@ -704,6 +797,11 @@ sysconfdir=`eval "echo $sysconfdir"`
 sysconfdir=`eval "echo $sysconfdir"`
 mandir=`eval "echo $mandir"`
 mandir=`eval "echo $mandir"`
+CC=`eval "echo $CC"`
+CFLAGS=`eval "echo $CFLAGS"`
+CPPFLAGS=`eval "echo $CPPFLAGS"`
+LDFLAGS=`eval "echo $LDFLAGS"`
+LIBS=`eval "echo $LIBS"`
 
 
 dnl **********************
@@ -737,16 +835,16 @@ echo X11 support ..........................: yes
 echo Open GL support ......................: yes
 echo Enable run-time debugging ............: yes
 echo
+echo Print verbose compilation warnings ...: $use_warnings
+echo Build debug release ..................: $use_debug
+echo Build profile release ................: $use_profiling
 echo Build static libraries ...............: $enable_static
 echo Build shared/dynamic libraries .......: $enable_shared
-echo Build debug release ..................: $enable_debug
-echo Build profile release ................: $enable_profile
-echo Print verbose compilation warnings ...: $enable_warnings
 echo
 echo Only build benchmark suite ...........: $only_benchmark
 echo Only build librtserver ...............: $only_rts
-echo Generate doxygen documentation .......: $enable_doxygen
+echo Generate doxygen documentation .......: $use_doxygen
 echo
 echo ---
-echo "$0 complete, type \'make\' to begin building"
+echo "$0 complete, type 'make' to begin building"
 echo
