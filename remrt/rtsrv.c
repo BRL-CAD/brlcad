@@ -58,17 +58,22 @@ struct application ap;
 int		stereo = 0;	/* stereo viewing */
 vect_t		left_eye_delta;
 int		hypersample=0;	/* number of extra rays to fire */
-int		perspective=0;	/* perspective view -vs- parallel view */
+int		rt_perspective=0;	/* perspective view -vs- parallel */
+fastf_t		persp_angle = 90;	/* prespective angle (degrees X) */
+fastf_t		aspect = 1;		/* aspect ratio Y/X */
 vect_t		dx_model;	/* view delta-X as model-space vector */
 vect_t		dy_model;	/* view delta-Y as model-space vector */
 point_t		eye_model;	/* model-space location of eye */
+fastf_t         eye_backoff = 1.414;	/* dist from eye to center */
 int		width;			/* # of pixels in X */
 int		height;			/* # of lines in Y */
 mat_t		Viewrotscale;
 fastf_t		viewsize=0;
 fastf_t		zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 char		*scanbuf;	/* For optional output buffering */
-int		parallel=0;		/* Trying to use multi CPUs */
+int		incr_mode;		/* !0 for incremental resolution */
+int		incr_level;		/* current incremental level */
+int		incr_nlevel;		/* number of levels */
 int		npsw = MAX_PSW;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() *****/
@@ -83,6 +88,7 @@ int		matflag = 0;		/* read matrix from stdin */
 int		desiredframe = 0;	/* frame to start at */
 int		curframe = 0;		/* current frame number */
 char		*outputfile = (char *)0;/* name of base of output file */
+int		interactive = 0;	/* human is watching results */
 /***** end variables shared with do.c *****/
 
 /* Variables shared within mainline pieces */
@@ -234,7 +240,10 @@ char *buf;
 	if( debug )  fprintf(stderr,"ph_options: %s\n", buf);
 	/* Start options in a known state */
 	hypersample = 0;
-	perspective = 0;
+	rt_perspective = 0;
+	persp_angle = 90;
+	eye_backoff = 1.414;
+	aspect = 1;
 	stereo = 0;
 	width = 0;
 	height = 0;
@@ -247,6 +256,9 @@ char *buf;
 		}
 
 		switch( cp[1] )  {
+		case 'I':
+			interactive = 1;
+			break;
 		case 'S':
 			stereo = 1;
 			break;
@@ -291,10 +303,13 @@ char *buf;
 			lightmodel = atoi( &cp[2] );
 			break;
 		case 'p':
-			perspective = 1;
-			if( cp[2] != '\0' )
-				zoomout = atof( &cp[2] );
-			if( zoomout <= 0 )  zoomout = 1;
+			rt_perspective = 1;
+			persp_angle = atof( &cp[2] );
+			if( persp_angle < 1 )  persp_angle = 90;
+			if( persp_angle > 179 )  persp_angle = 90;
+			break;
+		case 'E':
+			eye_backoff = atof( &cp[2] );
 			break;
 		case 'P':
 			/* Number of parallel workers */
@@ -311,7 +326,7 @@ char *buf;
 			mathtab_constant();
 			break;
 		default:
-			rt_log("Option '%c' unknown\n", cp[1]);
+			rt_log("rtsrv: Option '%c' unknown\n", cp[1]);
 			break;
 		}
 		while( *cp && *cp++ != ' ' )
@@ -362,10 +377,11 @@ char *buf;
 		(void)rt_gettree(rtip, cmd_args[i]);
 	}
 
-	if( npsw > 1 )
-		parallel = 1;
-	if( parallel )
-		rt_log("running with %d processors\n", npsw );
+	if( npsw > 1 )  {
+		rt_g.rtg_parallel = 1;
+		rt_log("rtsrv:  running with %d processors\n", npsw );
+	} else
+		rt_g.rtg_parallel = 0;
 
 	beginptr = sbrk(0);
 
@@ -427,7 +443,7 @@ char *buf;
 		rt_log( "PREP: %s\n", outbuf );
 	}
 
-	if( parallel && resource[0].re_seg == SEG_NULL )  {
+	if( rt_g.rtg_parallel && resource[0].re_seg == SEG_NULL )  {
 		register int x;
 		/* 
 		 *  Get dynamic memory to keep from having to call
