@@ -3,8 +3,8 @@
  */
 #include "../../../Cakefile.defs"
 
-#define PRODUCTS	*.html *.gif *.jpg mged_cmd_index.html
-#define STATIC_PRODUCTS	*.html *.gif *.jpg
+#define PRODUCTS	*.html *.gif *.jpg mged_cmd_index.html *.pdf
+#define STATIC_PRODUCTS	*.html *.gif *.jpg *.pdf
 #define SRCDIR	mged
 #undef BINDIR
 #define BINDIR	BASEDIR/html/manuals/mged
