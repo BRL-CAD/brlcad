@@ -72,10 +72,10 @@ HIDDEN int	camo_setup(), camo_render();
 HIDDEN void	camo_print(), camo_free();
 
 struct mfuncs camo_mfuncs[] = {
-	{"camo",	0,	0,		MFI_HIT,
+	{"camo",	0,		0,		MFI_HIT,	0,
 	camo_setup,	camo_render,	camo_print,	camo_free },
 
-	{(char *)0,	0,		0,		0,
+	{(char *)0,	0,		0,		0,		0,
 	0,		0,		0,		0 }
 };
 

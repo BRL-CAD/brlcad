@@ -57,10 +57,10 @@ HIDDEN int	Nfbm_setup(), Nfbm_render();
 HIDDEN void	Nfbm_print(), Nfbm_free();
 
 struct mfuncs Nfbm_mfuncs[] = {
-	{"Nfbm",	0,	0,		MFI_NORMAL,
+	{"Nfbm",	0,	0,		MFI_NORMAL,		0,
 	Nfbm_setup,	Nfbm_render,	Nfbm_print,	Nfbm_free },
 
-	{(char *)0,	0,		0,		0,
+	{(char *)0,	0,		0,		0,		0,
 	0,		0,		0,		0 }
 };
 
@@ -165,6 +165,7 @@ char	*dp;
 	double cos_angle;
 	double new_cos_angle;
 	double tmp;
+	double area;
 
 	RT_AP_CHECK(ap);
 	RT_CHECK_PT(pp);
@@ -172,6 +173,12 @@ char	*dp;
 
 	if( rdebug&RDEBUG_SHADE)
 		rt_structprint( "foo", Nfbm_parse, (char *)Nfbm_sp );
+
+	/* compute the footprint of the ray intersect point */
+	area = ap->a_rbeam + ap->a_diverge * swp->sw_hit.hit_dist;
+
+	/* get angle between ray and original surface normal */
+	cos_angle = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
 
 	/* transform hit point into "shader-space coordinates" */
 	MAT4X3PNT(pt, Nfbm_sp->xform, swp->sw_hit.hit_point);
@@ -186,9 +193,8 @@ char	*dp;
 		freq *= Nfbm_sp->lacunarity;
 	}
 
-	cos_angle = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
-
-	if ( MAGSQ(N) > .25) {
+	/* XXX This is bad */
+	while ( MAGSQ(N) > .125) {
 		VSCALE(N, N, 0.5);
 	}
 

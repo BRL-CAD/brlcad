@@ -23,8 +23,8 @@ struct scloud_specific {
 	double	lacunarity;
 	double	h_val;
 	double	octaves;
+	double	scale;	/* scale coordinate space */
 	vect_t	delta;	/* xlatd in noise space (where interesting noise is)*/
-	point_t	scale;	/* scale coordinate space */
 	double	max_d_p_mm;	/* maximum density per millimeter */
 	mat_t	xform;
 };
@@ -33,8 +33,8 @@ static struct scloud_specific scloud_defaults = {
 	2.1753974,	/* lacunarity */
 	1.0,		/* h_val */
 	4.0,		/* octaves */
+	1.0,		/* scale */
 	{ 0.0, 0.0, 0.0 },	/* delta */
-	{ 1.0, 1.0, 1.0 },	/* scale */
 	0.01			/* max_d_p_mm */
 	};
 
@@ -46,7 +46,7 @@ struct structparse scloud_pr[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  3, "scale",		SHDR_AO(scale),	FUNC_NULL },
+	{"%f",  1, "scale",		SHDR_O(scale),	FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
@@ -54,12 +54,12 @@ struct structparse scloud_parse[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  3, "scale",		SHDR_AO(scale),	FUNC_NULL },
+	{"%f",  1, "scale",		SHDR_O(scale),	FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(delta),	FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "m", 		SHDR_O(max_d_p_mm),	FUNC_NULL },
 	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  3, "s",			SHDR_AO(scale),	FUNC_NULL },
+	{"%f",  1, "s",			SHDR_O(scale),	FUNC_NULL },
 	{"%f",  3, "d",			SHDR_AO(delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
@@ -68,10 +68,10 @@ HIDDEN int	scloud_setup(), scloud_render();
 HIDDEN void	scloud_print(), scloud_free();
 
 struct mfuncs scloud_mfuncs[] = {
-	{"scloud",	0,		0,		MFI_NORMAL|MFI_HIT|MFI_UV,
+	{"scloud",	0,		0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
 	scloud_setup,	scloud_render,	scloud_print,	scloud_free },
 
-	{(char *)0,	0,		0,		0,
+	{(char *)0,	0,		0,		0, 0,
 	0,		0,		0,		0 }
 };
 
@@ -105,6 +105,8 @@ struct rt_i		*rtip;
 	if( rt_structparse( matparm, scloud_parse, (char *)scloud ) < 0 )
 		return(-1);
 
+	rt_structprint( rp->reg_name, scloud_pr, (char *)scloud );
+
 	if( rdebug&RDEBUG_SHADE)
 		rt_structprint( rp->reg_name, scloud_parse, (char *)scloud );
 
@@ -126,9 +128,9 @@ struct rt_i		*rtip;
 
 	/* add the noise-space scaling */
 	mat_idn(tmp);
-	tmp[0] = 1. / scloud->scale[0];
-	tmp[5] = 1. / scloud->scale[1];
-	tmp[10] =  1. / scloud->scale[2];
+	tmp[0] = 1. / scloud->scale;
+	tmp[5] = 1. / scloud->scale;
+	tmp[10] =  1. / scloud->scale;
 
 	mat_mul(scloud->xform, tmp, model_to_region);
 
@@ -201,15 +203,18 @@ char	*dp;
 /* 	VSET(swp->sw_color, val, val, val); */
 	return 1;
 #endif
-	VJOIN1(in_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	VJOIN1(out_pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+	/* compute the ray/solid in and out points,
+	 * and transform them into "shader space" coordinates 
+	 */
+	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	MAT4X3PNT(in_pt, scloud_sp->xform, pt);
 
-	/* transform points into "noise-space coordinates" */
-	MAT4X3PNT(in_pt, scloud_sp->xform, in_pt);
-	MAT4X3PNT(out_pt, scloud_sp->xform, out_pt);
+	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+	MAT4X3PNT(out_pt, scloud_sp->xform, pt);
 
-	/* get ray/solid intersection vector and compute thickness of
-	 * solid along ray path
+
+	/* get ray/solid intersection vector (in noise space)
+	 * and compute thickness of solid (in noise space) along ray path
 	 */
 	VSUB2(v_cloud, out_pt, in_pt);
 	thickness = MAGNITUDE(v_cloud);
@@ -221,11 +226,27 @@ char	*dp;
 	return 1;
 #endif
 
-	if (thickness < 3.0) steps = 3;
-	else steps = (int)thickness;
+	/* The noise field used by the noise_turb and noise_fbm routines
+	 * has a maximum frequency of about 1 cycle per integer step in
+	 * noise space.  Each octave increases this frequency by the
+	 * "lacunarity" factor.  To sample this space adequately we need 
+	 *
+	 *	4 samples per integer step for the first octave,
+	 *	lacunarity * 4 samples/step for the second octave,
+	 * 	lacunarity^2 * 4 samples/step for the third octave,
+	 * 	lacunarity^3 * 4 samples/step for the forth octave,
+	 *
+	 * so for a computation with 4 octaves we need something on the
+	 * order of lacunarity^3 * 4 samples per integer step in noise space.
+	 */
 
+	steps = pow(scloud_sp->lacunarity, scloud_sp->octaves-1) * 4;
 	step_delta = thickness / (double)steps;
 
+#ifdef LEELOG
+	rt_log("steps=%d  delta=%g  thickness=%g\n",
+		steps, step_delta, thickness);
+#endif
 	VUNITIZE(v_cloud);
 	VMOVE(pt, in_pt);
 	trans = 1.0;

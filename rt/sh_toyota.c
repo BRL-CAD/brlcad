@@ -106,16 +106,16 @@ fastf_t
 	zenith_luminance();
 
 struct mfuncs toyota_mfuncs[] = {
-	{"toyota",	0,		0,		MFI_NORMAL|MFI_LIGHT,
+	{"toyota",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
 	toyota_setup,	toyota_render,	toyota_print,	toyota_free },
 
-	{"tmirror",	0,		0,		MFI_NORMAL|MFI_LIGHT,
+	{"tmirror",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
 	tmirror_setup,	toyota_render,	toyota_print,	toyota_free },
 
-	{"tglass",	0,		0,		MFI_NORMAL|MFI_LIGHT,
+	{"tglass",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
 	tglass_setup,	toyota_render,	toyota_print,	toyota_free },
 
-	{(char *)0,	0,		0,		0,
+	{(char *)0,	0,		0,		0,	0,
 	0,		0,		0,		0 }
 };
 

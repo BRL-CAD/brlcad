@@ -59,10 +59,10 @@ HIDDEN int	points_setup(), points_render();
 HIDDEN void	points_print(), points_mfree();
 
 struct mfuncs points_mfuncs[] = {
-	{"points",	0,		0,		MFI_UV,
+	{"points",	0,		0,		MFI_UV,		0,
 	points_setup,	points_render,	points_print,	points_mfree },
 
-	{(char *)0,	0,		0,		0,
+	{(char *)0,	0,		0,		0,		0,
 	0,		0,		0,		0 }
 };
 

@@ -73,10 +73,10 @@ HIDDEN void	xxx_print(), xxx_free();
  * shader by defining more than one mfuncs struct in this array.
  */
 struct mfuncs xxx_mfuncs[] = {
-	{"xxx",	0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,
+	{"xxx",	0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	xxx_setup,	xxx_render,	xxx_print,	xxx_free },
 
-	{(char *)0,	0,		0,		0,
+	{(char *)0,	0,		0,		0,		0,
 	0,		0,		0,		0 }
 };
 

@@ -21,6 +21,9 @@ struct air_specific {
 	double	scale;
 	double	delta;
 	double	color[3];
+	int	noise_type;
+	double	octaves;
+	double	lacunarity;
 };
 #define CK_air_SP(_p) RT_CKMAG(_p, air_MAGIC, "air_specific")
 
@@ -49,16 +52,16 @@ HIDDEN int	air_setup(), air_render(), fog_render(), emist_render();
 HIDDEN void	air_print(), air_free();
 
 struct mfuncs air_mfuncs[] = {
-	{"air",	0,	0,		MFI_HIT,
+	{"air",		0,		0,		MFI_HIT,	0,
 	air_setup,	air_render,	air_print,	air_free },
 
-	{"fog",	0,	0,		MFI_HIT,
+	{"fog",		0,		0,		MFI_HIT,	0,
 	air_setup,	fog_render,	air_print,	air_free },
 
-	{"emist",0,	0,		MFI_HIT,
+	{"emist",	0,		0,		MFI_HIT,	0,
 	air_setup,	emist_render,	air_print,	air_free },
 
-	{(char *)0,	0,		0,		0,
+	{(char *)0,	0,		0,		0,		0,
 	0,		0,		0,		0 }
 };
 
@@ -263,7 +266,7 @@ char	*dp;
 	RT_CHECK_PT(pp);
 	CK_air_SP(air_sp);
 
-	/* comput hit point & length of ray */
+	/* compute hit point & length of ray */
 	if (pp->pt_inhit->hit_dist < 0.0) {
 		VMOVE(in_pt, ap->a_ray.r_pt);
 		te = pp->pt_outhit->hit_dist;
@@ -286,6 +289,10 @@ char	*dp;
 	else
 		tau = ((air_sp->d_p_mm * te) /  Zd) * ( exp(-Zo) - exp(-Ze) );
 
+/*	XXX future
+	tau *= noise_fbm(pt);
+*/
+
 	swp->sw_transmit = exp(-tau);
 
 	if (swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
@@ -293,6 +300,82 @@ char	*dp;
 
 	if( rdebug&RDEBUG_SHADE)
 		rt_log("emist transmit = %g\n", swp->sw_transmit);
+
+	return(1);
+}
+/*
+ *	F B M _ E M I S T _ R E N D E R
+ *
+ *
+ *
+ *
+ * te = dist from pt to end of ray (out hit point)
+ * Zo = elevation at ray start
+ * Ze = elevation at ray end
+ * Zd = Z component of normalized ray vector 
+ * d_p_mm = overall fog density
+ * B = density falloff with altitude
+ *
+ *
+ *	delta = height at which fog starts
+ *	scale = stretches exponential decay zone
+ *	d_p_mm = maximum density @ ground
+ *
+ *	This is called (from viewshade() in shade.c)
+ *	once for each hit point to be shaded.
+ */
+int
+emist_fbm_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
+{
+	register struct air_specific *air_sp =
+		(struct air_specific *)dp;
+	point_t in_pt, out_pt, curr_pt;
+	vect_t dist_v;
+	double dist, delta;
+	double tau;
+	double Zo, Ze, Zd, te;
+
+	RT_AP_CHECK(ap);
+	RT_CHECK_PT(pp);
+	CK_air_SP(air_sp);
+
+	/* compute hit point & length of ray */
+	if (pp->pt_inhit->hit_dist < 0.0) {
+		VMOVE(in_pt, ap->a_ray.r_pt);
+		te = pp->pt_outhit->hit_dist;
+	} else {
+		VJOIN1(in_pt, ap->a_ray.r_pt,
+			pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+		te = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	}
+
+	/* get exit point */
+	VJOIN1(out_pt,
+		ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+
+
+	/* we march along the ray, evaluating the atmospheric function
+	 * at each step.
+	 */
+
+	VSUB2(dist_v, out_pt, in_pt);
+	dist = MAGNITUDE(dist_v);
+
+	for (delta=0 ; delta < dist ; delta += 1.0 ) {
+		/* compute the current point in space */
+		VJOIN1(curr_pt, in_pt, delta, ap->a_ray.r_dir);
+
+		/* Shoot a ray down the -Z axis to find our current height 
+		 * above the local terrain.
+		 */
+
+	}
+
+
 
 	return(1);
 }

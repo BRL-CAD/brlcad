@@ -40,10 +40,10 @@ HIDDEN void	rtrans_print(), rtrans_free();
 double		drand48();
 
 struct mfuncs rtrans_mfuncs[] = {
-	{"rtrans",	0,	0,		0,
+	{"rtrans",	0,	0,		0,	0,
 	rtrans_setup,	rtrans_render,	rtrans_print,	rtrans_free },
 
-	{(char *)0,	0,		0,		0,
+	{(char *)0,	0,		0,		0,	0,
 	0,		0,		0,		0 }
 };
 

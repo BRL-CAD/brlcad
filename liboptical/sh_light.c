@@ -57,10 +57,10 @@ HIDDEN void	light_print();
 void		light_free();
 
 struct mfuncs light_mfuncs[] = {
-	{"light",	0,		0,		MFI_NORMAL,
+	{"light",	0,		0,		MFI_NORMAL,	0,
 	light_setup,	light_render,	light_print,	light_free },
 
-	{(char *)0,	0,		0,
+	{(char *)0,	0,		0,		0,		0,
 	0,		0,		0,		0 }
 };
 
