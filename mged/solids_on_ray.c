@@ -381,6 +381,13 @@ int		full_path;
     struct rt_i		*rtip;
     struct rt_list	sol_list;
     struct sol_name_dist	*sol;
+
+    if (argc <= 0) {
+	char **ptr;
+	ptr = (char **)rt_malloc(sizeof(char *), "empty solid list");
+	*ptr = 0;
+	return ptr;
+    }
 	
     if ((rtip = rt_dirbuild(dbip -> dbi_filename, (char *) 0, 0)) == RTI_NULL)
     {
@@ -393,8 +400,9 @@ int		full_path;
      *	XXX	I've hardwired in here to use a single CPU.
      *		Should that be rt_avail_cpus()?
      */
-    if (rt_gettrees(rtip, argc, argv, 1) == -1)
+    if (rt_gettrees(rtip, argc, argv, 1) == -1) {
 	return ((char **) 0);
+    }
     rt_prep(rtip);
 
     RT_LIST_INIT(&sol_list);
