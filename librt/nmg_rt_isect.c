@@ -239,9 +239,10 @@ struct hitmiss *myhit;
  *  this routine takes care of recording that fact.
  */
 static struct hitmiss *
-ray_hit_vertex(rd, vu_p)
+ray_hit_vertex(rd, vu_p, status)
 struct ray_data *rd;
 struct vertexuse *vu_p;
+int status;
 {
 	struct hitmiss *myhit;
 	vect_t v;
@@ -336,7 +337,7 @@ struct vertexuse *vu_p;
 	}
 
 	/* ray hits vertex */
-	ray_hit_vertex(rd, vu_p);
+	ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN);
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 		rt_log(" Ray hits vertex, dist %g (%d/%d)\n",
@@ -366,22 +367,27 @@ struct edgeuse *eu_p;
 {
 	struct hitmiss *vhit1, *vhit2, *myhit;
 
+
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		rt_log("\t - colinear_edge_ray\n");
-
-	ray_hit_vertex(rd, eu_p->vu_p);
-	ray_hit_vertex(rd, eu_p->eumate_p->vu_p);
-
 
 	vhit1 = NMG_INDEX_GET(rd->hitmiss, eu_p->vu_p->v_p);
 	vhit2 = NMG_INDEX_GET(rd->hitmiss, eu_p->eumate_p->vu_p->v_p);
 
-	/* let's remember that this should be an in/out segment */
+	/* record the hit on each vertex, and remember that these two hits
+	 * should be kept together.
+	 */
 	if (vhit1->hit.hit_dist > vhit2->hit.hit_dist) {
+		ray_hit_vertex(rd, eu_p->vu_p, NMG_VERT_ENTER);
 		vhit1->start_stop = NMG_HITMISS_SEG_OUT;
+
+		ray_hit_vertex(rd, eu_p->eumate_p->vu_p, NMG_VERT_LEAVE);
 		vhit2->start_stop = NMG_HITMISS_SEG_IN;
 	} else {
+		ray_hit_vertex(rd, eu_p->vu_p, NMG_VERT_LEAVE);
 		vhit1->start_stop = NMG_HITMISS_SEG_IN;
+
+		ray_hit_vertex(rd, eu_p->eumate_p->vu_p, NMG_VERT_ENTER);
 		vhit2->start_stop = NMG_HITMISS_SEG_OUT;
 	}
 	vhit1->other = vhit2;
@@ -400,7 +406,12 @@ struct edgeuse *eu_p;
  */
 #define HIT_EDGE_VERTEX(rd, eu_p, vu_p) {\
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) rt_log("hit_edge_vertex\n"); \
-	ray_hit_vertex(rd, vu_p); \
+	if (*eu_p->up.magic_p == NMG_SHELL_MAGIC || \
+	    (*eu_p->up.magic_p == NMG_LOOPUSE_MAGIC && \
+	     *eu_p->up.lu_p->up.magic_p == NMG_SHELL_MAGIC)) \
+		ray_hit_vertex(rd, vu_p, NMG_VERT_ENTER_LEAVE); \
+	else \
+		ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN); \
 	GET_HITMISS(myhit); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit); \
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
