@@ -545,6 +545,11 @@ do_more:
 
 	if( matflag )  goto do_more;
 out:
+	if( framenumber < desiredframe )  {
+		fprintf(stderr,
+			"rt:  Desired frame %d not reached, last was %d\n",
+			desiredframe, framenumber);
+	}
 #ifdef HEP
 	fprintf(stderr,"rt: killing workers\n");
 	for( x=0; x<npsw; x++ )
