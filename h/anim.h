@@ -18,10 +18,12 @@
  *      in all countries except the USA.  All rights reserved.
  */
 
-/* AMIM.H - Often used macros for animation programs by Carl Nuzman
+/* 
  	Be sure to include vmath.h before this file.
 */
 
+#define ANIM_STEER_NEW	0
+#define ANIM_STEER_END	1
 
 #define DTOR    M_PI/180.0
 #define RTOD	180.0/M_PI
