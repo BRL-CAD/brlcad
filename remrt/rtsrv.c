@@ -262,7 +262,7 @@ char **argv;
 
 	beginptr = sbrk(0);
 
-#define PUBLIC_CPUS	"/tmp/public_cpus"
+#define PUBLIC_CPUS	"/usr/tmp/public_cpus"
 	max_cpus = avail_cpus = rt_avail_cpus();
 	if( (fp = fopen(PUBLIC_CPUS, "r")) != NULL )  {
 		(void)fscanf( fp, "%d", &max_cpus );
