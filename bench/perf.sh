@@ -101,17 +101,44 @@ while test $# -lt 6 ; do
  set $CURVALS
 done
 
+_have_dc=yes
+echo "1 1 + p" | dc 2>&1 >/dev/null
+if test ! x$? = x0 ; then
+  _have_dc=no
+fi
+
 for ref in $VGRREF ; do
- cur=$1
- shift
- RATIO=`echo "2k $cur $ref / p" | dc`
-	# Note: append new value and a trail TAB to existing list.
- RATIO_LIST="${RATIO_LIST}$RATIO	"
+  cur=$1
+  shift
+
+  if test "x$_have_dc" = "xyes" ; then
+    RATIO=`echo "2k $cur $ref / p" | dc`
+  else
+    RATIO=`echo "scale=2; $cur / $ref" | bc`
+  fi
+        # Note: append new value and a trail TAB to existing list.
+ RATIO_LIST="${RATIO_LIST}$RATIO        "
 done
 
 # The number of plus signs must be one less than the number of elements.
-MEAN_ABS=`echo 2k $CURVALS +++++ 6/ p | dc`
-MEAN_REL=`echo 2k $RATIO_LIST +++++ 6/ p | dc`
+if test "x$_have_dc" = "xyes" ; then
+  MEAN_ABS=`echo 2k $CURVALS +++++ 6/ p | dc`
+  MEAN_REL=`echo 2k $RATIO_LIST +++++ 6/ p | dc`
+else
+  _expr="scale=2; ( 0"
+  for val in $CURVALS ; do
+    _expr="$_expr + $val"
+  done
+  _expr="$_expr ) / 6"
+  MEAN_ABS=`echo $_expr | bc`
+
+  _expr="scale=2; ( 0"
+  for val in $RATIO_LIST ; do
+    _expr="$_expr + $val"
+  done
+  _expr="$_expr ) / 6"
+  MEAN_REL=`echo $_expr | bc`
+fi
 
 # Note:  Both RATIO_LIST and CURVALS have an extra trailing tab.
 # The question mark is for the mean field
