@@ -1617,7 +1617,7 @@ RT_EXTERN(void db_free_tree, (union tree *tp));
 RT_EXTERN(void db_non_union_push, (union tree *tp));
 RT_EXTERN(int db_count_subtree_regions, (CONST union tree *tp));
 RT_EXTERN(int db_tally_subtree_regions, (union tree *tp,
-	union tree **reg_trees, int cur));
+	union tree **reg_trees, int cur, int lim));
 RT_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
 	int ncpu, CONST struct db_tree_state *init_state,
 	int (*reg_start_func)(), union tree * (*reg_end_func)(),
