@@ -2,7 +2,7 @@
 .SH NAME
 g-wave \- Wavefront Translator (BRL-CAD to Wavefront)
 .SH SYNOPSIS
-.B g-wave [-viu] [-xX lvl]
+.B g-wave [-mviu] [-xX lvl]
 [-e error_file] [-D calculation_tolerance ]
 [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o Wavefront_file] database.g object(s)
 .SH DESCRIPTION
@@ -43,6 +43,19 @@ The
 .I -o
 option specifies the mame of the file to receive the output
 (stdout is the default).
+The
+.I -m
+option will result in 'usemtl' statements in the output file. These statements are fictional
+(they do not refer to any material database). The materials named provide information about
+the material codes assigned to the objects in the BRL-CAD database. The material names will be
+of the form 'aircode_los_material', where
+.I aircode
+is the code number for the air represented by that region, if it does represent air,
+otherwise this will be zero. The
+.I los
+is the Line Of Sight thickness (0-100) assigned to the region, and the
+.I material
+is the material code number assigned.
 The
 .I -e
 option specifies a file for receiving the error messages.
