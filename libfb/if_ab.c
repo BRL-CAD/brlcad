@@ -1016,7 +1016,7 @@ static double	ubuf[724];
 static double	vbuf[724];
 
 /* RGB to YUV */
-void
+static void
 ab_rgb_to_yuv( yuv_buf, rgb_buf, len )
 unsigned char *yuv_buf;
 unsigned char *rgb_buf;
@@ -1067,7 +1067,7 @@ int	len;
 }
 
 /* YUV to RGB */
-void
+static void
 ab_yuv_to_rgb( rgb_buf, yuv_buf, len )
 unsigned char *rgb_buf;
 unsigned char *yuv_buf;
