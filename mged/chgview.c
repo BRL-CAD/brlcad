@@ -71,7 +71,7 @@ vect_t		rate_rotate;
 int		rateflag_zoom;
 fastf_t		rate_zoom;
 
-static void	eedit();
+RT_EXTERN(void	edit_com, (int argc, char **argv, int kind, int catch_sigint));
 void		f_zap();
 
 
@@ -158,7 +158,7 @@ char	**argv;
 		refresh();
 	}
 
-	eedit( argc, argv, 1 );
+	edit_com( argc, argv, 1, 1 );
 }
 
 /* Edit something (add to visible display) */
@@ -168,7 +168,7 @@ f_edit(argc, argv)
 int	argc;
 char	**argv;
 {
-	eedit( argc, argv, 1 );
+	edit_com( argc, argv, 1, 1 );
 }
 
 /* Format: ev objects	*/
@@ -177,7 +177,7 @@ f_ev(argc, argv)
 int	argc;
 char	**argv;
 {
-	eedit( argc, argv, 3 );
+	edit_com( argc, argv, 3, 1 );
 }
 
 #if 0
@@ -197,7 +197,7 @@ f_evedit(argc, argv)
 int	argc;
 char	**argv;
 {
-	eedit( argc, argv, 2 );
+	edit_com( argc, argv, 2, 1 );
 }
 #endif
 
@@ -247,15 +247,16 @@ size_reset()
 }
 
 /*
- *			E E D I T
+ *			E D I T _ C O M
  *
  * B, e, and E commands uses this area as common
  */
-static void
-eedit(argc, argv, kind)
+void
+edit_com(argc, argv, kind, catch_sigint)
 int	argc;
 char	**argv;
 int	kind;
+int	catch_sigint;
 {
 	register struct directory *dp;
 	register int	i;
@@ -281,7 +282,8 @@ int	kind;
 		refresh();
 	}
 
-	(void)signal( SIGINT, sig2 );	/* allow interupts after here */
+	if( catch_sigint )
+		(void)signal( SIGINT, sig2 );	/* allow interupts after here */
 
 	nvectors = 0;
 	rt_prep_timer();
