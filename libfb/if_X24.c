@@ -61,6 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/types.h>
 
 #if defined(USE_SYS_TIME_H)
