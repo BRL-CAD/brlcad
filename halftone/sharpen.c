@@ -39,6 +39,9 @@ extern double Beta;
  *	Christopher T. Johnson
  *
  * $Log$
+ * Revision 2.3  91/01/03  23:01:09  cjohnson
+ * Added range checking, to limit values to 0..255
+ * 
  * Revision 2.2  90/04/13  03:09:03  cjohnson
  * Back off code to reduce number of floating point multiblies.
  * 
@@ -166,17 +169,17 @@ unsigned char *Map;
 	if (!last) {
 		i=0;
 		value=next[i] + cur[i+1] - cur[i]*2;
-		newvalue = cur[i] - Beta*value*cur[i]/(255*2);
+		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*2);
 		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
 		    255: newvalue;
 		for (; i < linelen-1; i++) {
 			value = next[i] + cur[i-1] + cur[i+1] - cur[i]*3;
-			newvalue = cur[i] - Beta*value*cur[i]/(255*3);
+			newvalue = cur[i] - Beta*value*((int)cur[i])/(255*3);
 			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
 			    255: newvalue;
 		}
 		value=next[i] + cur[i-1] - cur[i]*2;
-		newvalue = cur[i] - Beta*value*cur[i]/(255*2);
+		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*2);
 		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
 		    255: newvalue;
 
@@ -191,17 +194,17 @@ unsigned char *Map;
 	} else if (!next) {
 		i=0;
 		value=last[i] + cur[i+1] - cur[i]*2;
-		newvalue = cur[i] - Beta*value*cur[i]/(255*2);
+		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*2);
 		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
 		    255: newvalue;
 		for (; i < linelen-1; i++) {
 			value = last[i] + cur[i-1] + cur[i+1] - cur[i]*3;
-			newvalue = cur[i] - Beta*value*cur[i]/(255*3);
+			newvalue = cur[i] - Beta*value*((int)cur[i])/(255*3);
 			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
 			    255: newvalue;
 		}
 		value=last[i] + cur[i-1] - cur[i]*2;
-		newvalue = cur[i] - Beta*value*cur[i]/(255*2);
+		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*2);
 		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
 		    255: newvalue;
 /*
@@ -210,18 +213,18 @@ unsigned char *Map;
 	} else {
 		i=0;
 		value=last[i] + next[i] + cur[i+1] - cur[i]*3;
-		newvalue = cur[i] - Beta*value*cur[i]/(255*3);
+		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*3);
 		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
 		    255: newvalue;
 		for (; i < linelen-1; i++) {
 			value = last[i] + next[i] + cur[i-1] + cur[i+1]
 			     - cur[i]*4;
-			newvalue = cur[i] - Beta*value*cur[i]/(255*4);
+			newvalue = cur[i] - Beta*value*((int)cur[i])/(255*4);
 			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
 			    255: newvalue;
 		}
 		value=last[i] + next[i] + cur[i-1] - cur[i]*3;
-		newvalue = cur[i] - Beta*value*cur[i]/(255*3);
+		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*3);
 		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
 		    255: newvalue;
 	}
