@@ -112,7 +112,6 @@ static FILE	*fp_param;	/* IGES parameter section */
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
-static mat_t			identity_mat;
 struct db_i		*dbip;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
@@ -194,8 +193,6 @@ char	*argv[];
 
 	bu_log( "%s", version+5);
 	bu_log( "Please direct bug reports to <acst@arl.army.mil>\n\n" );
-
-	MAT_IDN( identity_mat );
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state.ts_tol = &tol;
