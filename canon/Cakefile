@@ -5,10 +5,10 @@
 #define SRCDIR	canon
 #define PRODUCTS	canonize pix-ipu ipustat ipuscan
 
-#if defined(__sgi) || defined(sgi)
-#define DSLIB	-lds
+#if defined(__CAKE__irix4) || defined(__CAKE__irix5)
+#	define DSLIB	-lds
 #else
-#define DSLIB
+#	define DSLIB
 #endif
 
 #define	SRCSUFF	.c
@@ -20,9 +20,9 @@
  * The following is necessary because SGI's <sys/dsreq.h> won't pass the
  * -ansiposix flag on their own compiler under Irix 4.0.1 or 5.  Sigh.
  */
-#if defined(__sgi) || defined(sgi) || defined(mips)
-#undef CFLAGS
-#define CFLAGS -O -I../h -DHAVE_STDLIB_H -DHAVE_UNISTD_H
+#if defined(__CAKE__irix4) || defined(__CAKE__irix5)
+# undef CFLAGS
+# define CFLAGS -O -I../h -DHAVE_STDLIB_H -DHAVE_UNISTD_H
 #endif
 
 #include "../Cakefile.prog"
