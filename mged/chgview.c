@@ -620,6 +620,51 @@ edit_com(
 	return TCL_OK;
 }
 
+int
+f_autosize(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
+	register struct cmd_list *save_cmd_list;
+
+	if (argc != 1) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help autosize");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	save_dmlp = curr_dm_list;
+	save_cmd_list = curr_cmd_list;
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+		struct view_ring *vrp;
+
+		curr_dm_list = dmlp;
+		if (curr_dm_list->dml_tie)
+			curr_cmd_list = curr_dm_list->dml_tie;
+		else
+			curr_cmd_list = &head_cmd_list;
+
+		size_reset();
+		new_mats();
+		(void)mged_svbase();
+
+		for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
+			vrp->vr_scale = view_state->vs_Viewscale;
+	}
+	curr_dm_list = save_dmlp;
+	curr_cmd_list = save_cmd_list;
+
+	return TCL_OK;
+}
+
 void
 solid_list_callback()
 {
