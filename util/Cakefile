@@ -29,7 +29,7 @@
 	pl-pl pl-tek pl-ps pl-sgi \
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
-	pixborder
+	pixborder mst
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -327,6 +327,9 @@ bary:	bary.o
 
 pixdsplit:	pixdsplit.o
 	CC LDFLAGS -o pixdsplit pixdsplit.o LIBPLOT LIBBU LIBBU_LIBES LIBES
+
+mst:	mst.o
+	CC LDFLAGS -o mst mst.o LIBREDBLACK LIBBU LIBBU_LIBES LIBES
 
 double-asc:	double-asc.o
 	CC LDFLAGS -o double-asc double-asc.o LIBPLOT LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
