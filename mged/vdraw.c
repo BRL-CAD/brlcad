@@ -729,7 +729,7 @@ char **argv;
 			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
 			return TCL_ERROR;
 		}
-		VSCALE(temp, temp, 180.0/M_PI);	
+		VSCALE(temp, temp, 180.0/rt_pi);	
 		sprintf(result_string,"%.12g %.12g %.12g",temp[0],temp[1],temp[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
@@ -741,7 +741,7 @@ char **argv;
 			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
 			return TCL_ERROR;
 		}
-		VSCALE(temp, temp, 180.0/M_PI);	
+		VSCALE(temp, temp, 180.0/rt_pi);	
 		if (temp[0] >= 180.0 ) temp[0] -= 180;
 		if (temp[0] < 180.0 ) temp[0] += 180;
 		temp[1] = -temp[1];
