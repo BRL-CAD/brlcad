@@ -259,6 +259,9 @@ register struct xray *rp;
 		(struct half_specific *)stp->st_specific;
 	FAST fastf_t f;
 
+	RT_CK_SOLTAB(stp);
+	RT_CK_RAY(rp);
+
 	/*
 	 * At most one normal is really defined, but whichever one
 	 * it is, it has value half_eqn.
