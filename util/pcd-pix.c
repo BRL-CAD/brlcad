@@ -1266,7 +1266,7 @@ static long Skip4Base()
 	cd_offset = L_Head + L_Base16 + L_Base4 + L_Base ;
 	SEEK(cd_offset+3);
 	EREADBUF;
-	cd_offhelp = ( ((long)sbuffer[510]) << 8 ) | sbuffer[511] + 1;
+	cd_offhelp = ( ((long)sbuffer[510]) << 8 ) | (sbuffer[511] + 1);
 
 	cd_offset+=cd_offhelp;
 
