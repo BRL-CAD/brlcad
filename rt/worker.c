@@ -80,6 +80,8 @@ grid_setup()
 	vect_t temp;
 	mat_t toEye;
 
+	if( viewsize <= 0.0 )
+		rt_bomb("viewsize <= 0");
 	/* model2view takes us to eye_model location & orientation */
 	mat_idn( toEye );
 	toEye[MDX] = -eye_model[X];
