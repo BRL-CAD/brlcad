@@ -1,7 +1,7 @@
 /*
- *			F B - R L E . C
+ *			F B - O R L E . C
  *
- *  Encode a frame buffer image using the RLE library
+ *  Encode a frame buffer image using the old RLE library
  *
  *  Author -
  *	Gary S. Moss
@@ -16,16 +16,16 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include <stdio.h>
 #include "externs.h"
 #include "fb.h"
-#include "rle.h"
+#include "orle.h"
 
 static char	*usage[] = {
-"Usage: fb-rle [-CScdhvw] [-l X Y] [-p X Y] [file.rle]",
+"Usage: fb-rle [-CScdhvw] [-l X Y] [-F Frame_buffer] [-p X Y] [file.rle]",
 "",
 "If no RLE file is specifed, fb-rle will write to its standard output.",
 "If the environment variable FB_FILE is set, its value will be used",
@@ -44,6 +44,7 @@ static int	xpos = 0, ypos = 0, xlen = 0, ylen = 0;
 static int	parsArgv();
 static void	prntUsage();
 static int	width = 512;
+static char	*fb_file = (char *)NULL;
 
 extern void	cmap_crunch();
 
@@ -67,7 +68,7 @@ char	*argv[];
 	rle_wlen( xlen, ylen, 1 );
 	rle_wpos( xpos, ypos, 1 );
 
-	if( (fbp = fb_open( NULL, width, width )) == NULL )  {
+	if( (fbp = fb_open( fb_file, width, width )) == NULL )  {
 		fprintf(stderr,"fb_open failed\n");
 		exit(12);
 	}
@@ -144,7 +145,7 @@ register char	**argv;
 	extern char	*optarg;
 
 	/* Parse options.						*/
-	while( (c = getopt( argc, argv, "CScdhl:p:vw" )) != EOF )
+	while( (c = getopt( argc, argv, "CF:Scdhl:p:vw" )) != EOF )
 	{
 		switch( c )
 		{
@@ -191,6 +192,8 @@ register char	**argv;
 			break;
 		case 'w' : /* Monochrome (black & white) mode.		*/
 			ncolors = 1;
+			break;
+		case 'F' : fb_file = optarg;
 			break;
 		case '?' :
 			return	0;

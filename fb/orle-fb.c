@@ -1,7 +1,7 @@
 /*
- *			R L E - F B . C
+ *			O R L E - F B . C
  *
- *  Display an RLE image on a framebuffer
+ *  Display an old RLE format image on a framebuffer
  *
  *  Author -
  *	Gary S. Moss
@@ -16,17 +16,17 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include <stdio.h>
 #include "fb.h"
-#include "rle.h"
+#include "orle.h"
 
 typedef unsigned char	u_char;
 static char	*usage[] =
 	{
-"Usage: rle-fb [-Otdv] [-b (rgbwBG)] [-p X Y] [file.rle]",
+"Usage: rle-fb [-Otdv] [-b (rgbwBG)] [-F Frame_buffer] [-p X Y] [file.rle]",
 "",
 "If no rle file is specifed, rle-fb will read its standard input.",
 "If the environment variable FB_FILE is set, its value will be used",
@@ -49,6 +49,7 @@ static int	width = 512;
 static int	height = 512;
 static int	topdown = 0;
 static int	pixels_per_buffer;
+static char	*fb_file = (char *)NULL;
 
 void		fill_Buffer();
 
@@ -92,7 +93,7 @@ char	*argv[];
 		ylen = height - ypos;
 	rle_wlen( xlen, ylen, 0 );
 
-	if( (fbp = fb_open( NULL, width, height )) == NULL )  {
+	if( (fbp = fb_open( fb_file, width, height )) == NULL )  {
 		exit(12);
 	}
 
@@ -264,7 +265,7 @@ register char	**argv;
 		extern int	optind;
 		extern char	*optarg;
 	/* Parse options.						*/
-	while( (c = getopt( argc, argv, "tOb:dp:v" )) != EOF )
+	while( (c = getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
 		{
 		switch( c )
 			{
@@ -325,6 +326,8 @@ register char	**argv;
 			break;
 		case 'v' :
 			rle_verbose = 1;
+			break;
+		case 'F' : fb_file = optarg;
 			break;
 		case '?' :
 			return	0;
