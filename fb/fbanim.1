@@ -4,9 +4,12 @@ fbanim \- animate small images on framebuffer using hardware pan and zoom
 .SH SYNOPSIS
 .B fbanim
 .RB [ \-hirv ]
-.RB [ \-s\  squaresize]
-.RB [ \-w\  width]
-.RB [ \-n\  height]
+.RB [ \-S\  screen\ squaresize]
+.RB [ \-W\  screen\ width]
+.RB [ \-N\  screen\ height]
+.RB [ \-s\  file\ squaresize]
+.RB [ \-w\  file\ width]
+.RB [ \-n\  file\ height]
 .RB [ \-p\  npasses]
 width nframes [fps]
 .SH DESCRIPTION
@@ -38,7 +41,11 @@ By default, the framebuffer is assumed to be
 loaded with a 512x512 pixel image.
 Specifying the
 .B \-h
-flag, changes the default to 1024x1024.
+flag, changes the default to 1024x1024.  Alternatively, the
+.B \-SWN
+flags can be used in the normal way to specify the size of
+the screen (see
+.IR brlcad (1)).
 .PP
 By default, the sequence of tiles is considered to be a circular (repeating)
 sequence, ie, the first tile immediately follows the last one.
