@@ -68,12 +68,12 @@ else
 fi
 if [ "x$_report_error" = "xyes" ] ; then
   echo "ERROR:  To prepare the BRL-CAD build system from scratch,"
-  echo "        At least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION of GNU Autoconf must be installed."
+  echo "        at least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION of GNU Autoconf must be installed."
   echo 
   echo "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
   echo "run configure or make.  Either the GNU Autotools will need to be installed"
   echo "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
-  echo "code on another system and transferred to here. -- Cheers!"
+  echo "code on another system and then transferred to here. -- Cheers!"
   exit 1
 fi
 
