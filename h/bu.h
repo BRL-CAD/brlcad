@@ -1348,6 +1348,9 @@ BU_EXTERN(void			bu_putchar, (int c) );
 BU_EXTERN(CONST char *		bu_identify_magic, (long magic) );
 
 /* malloc.c */
+extern long		bu_n_malloc;
+extern long		bu_n_free;
+extern long		bu_n_realloc;
 BU_EXTERN(genptr_t		bu_malloc, (unsigned int cnt, CONST char *str));
 BU_EXTERN(void			bu_free, (genptr_t ptr, CONST char *str));
 BU_EXTERN(genptr_t		bu_realloc, (genptr_t ptr, unsigned int cnt,
