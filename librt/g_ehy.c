@@ -644,7 +644,7 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2;
-	fastf_t		**ellipses, theta_prev, theta_new, ell_ang();
+	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang();
 	int		*pts_dbl, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
@@ -825,7 +825,7 @@ struct rt_tol		*tol;
 		VJOIN1( V, xip->ehy_V, -pos_a->p[Z], Hu );
 
 		VSET( p1, 0., pos_b->p[Y], 0. );
-		theta_new = ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+		theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 		if (nseg == 0) {
 			nseg = (int)(rt_twopi / theta_new) + 1;
 			pts_dbl[i] = 0;
@@ -924,7 +924,7 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2, cprime;
-	fastf_t		**ellipses, theta_prev, theta_new, ell_ang();
+	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang();
 	int		*pts_dbl, face, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
@@ -1128,7 +1128,7 @@ struct rt_tol		*tol;
 		VJOIN1( V, xip->ehy_V, -pos_a->p[Z], Hu );
 
 		VSET( p1, 0., pos_b->p[Y], 0. );
-		theta_new = ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+		theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 		if (nseg == 0) {
 			nseg = (int)(rt_twopi / theta_new) + 1;
 			pts_dbl[i] = 0;

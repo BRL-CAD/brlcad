@@ -630,7 +630,7 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
-	fastf_t		**ellipses, theta_new, theta_prev, ell_ang();
+	fastf_t		**ellipses, theta_new, theta_prev, rt_ell_ang();
 	int		*pts_dbl, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
@@ -801,7 +801,7 @@ struct rt_tol		*tol;
 		VJOIN1( V, xip->epa_V, -pos_a->p[Z], Hu );
 
 		VSET( p1, 0., pos_b->p[Y], 0. );
-		theta_new = ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+		theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 		if (nseg == 0) {
 			nseg = (int)(rt_twopi / theta_new) + 1;
 			pts_dbl[i] = 0;
@@ -886,7 +886,7 @@ struct rt_tol		*tol;
 #define ELLOUT(n)	ov+(n-1)*3
 
 void
-ell_norms( ov, A, B, h_vec, t, sides )
+rt_ell_norms( ov, A, B, h_vec, t, sides )
 register fastf_t	*ov;
 fastf_t			*A, *B, *h_vec, t;
 int			sides;
@@ -897,7 +897,7 @@ int			sides;
 
 	sqrt_1mt = sqrt( 1.0 - t );
 	if( sqrt_1mt < SMALL_FASTF )
-		rt_bomb( "rt_epa_tess: ell_norms: sqrt( 1.0 -t ) is zero\n" );
+		rt_bomb( "rt_epa_tess: rt_ell_norms: sqrt( 1.0 -t ) is zero\n" );
 	theta = 2 * rt_pi / sides;
 	ang = 0.;
 
@@ -940,14 +940,14 @@ int			sides;
 }
 
 /*
- *	E L L _ A N G
+ *	R T _ E L L _ A N G
  *
  *	Return angle required for smallest side to fall within
  *	tolerances for ellipse.  Smallest side is a side with
  *	an endpoint at (a, 0, 0) where a is the semi-major axis.
  */
 fastf_t
-ell_ang( p1, a, b, dtol, ntol )
+rt_ell_ang( p1, a, b, dtol, ntol )
 fastf_t	a, b, dtol, ntol;
 point_t	p1;
 {
@@ -977,7 +977,7 @@ point_t	p1;
 	/* split segment at widest point if not within error tolerances */
 	if ( dist > dtol || theta0 > ntol || theta1 > ntol ) {
 		/* split segment */
-		return( ell_ang( mpt, a, b, dtol, ntol ) );
+		return( rt_ell_ang( mpt, a, b, dtol, ntol ) );
 	} else
 		return( acos( VDOT(p0, p1)
 			/ ( MAGNITUDE(p0) * MAGNITUDE(p1) ) ));
@@ -1193,7 +1193,7 @@ struct rt_tol		*tol;
 		VJOIN1( V, xip->epa_V, -pos_a->p[Z], Hu );
 
 		VSET( p1, 0., pos_b->p[Y], 0. );
-		theta_new = ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+		theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 		if (nseg == 0) {
 			nseg = (int)(rt_twopi / theta_new) + 1;
 			pts_dbl[i] = 0;
@@ -1214,7 +1214,7 @@ struct rt_tol		*tol;
 		segs_per_ell[i] = nseg;
 		normals[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t), "rt_epa_tess_ normals" );
 		rt_ell( ellipses[i], V, A, B, nseg );
-		ell_norms( normals[i], A_orig, B_orig, xip->epa_H, t, nseg );
+		rt_ell_norms( normals[i], A_orig, B_orig, xip->epa_H, t, nseg );
 
 		i++;
 		pos_a = pos_a->next;
