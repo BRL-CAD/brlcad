@@ -268,7 +268,6 @@ genptr_t		client_data;
 	union tree		*ret_tree;
 	struct rt_list		vhead;
 	struct nmgregion	*r;
-	int			failed;
 
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_TREE(curtree);
