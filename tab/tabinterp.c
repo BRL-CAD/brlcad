@@ -389,8 +389,16 @@ char	**argv;
 
 	if( strcmp( argv[1], "step" ) == 0 )  {
 		interp = INTERP_STEP;
+		periodic = 0;
+	} else if( strcmp( argv[1], "cstep" ) == 0 )  {
+		interp = INTERP_STEP;
+		periodic = 1;
 	} else if( strcmp( argv[1], "linear" ) == 0 )  {
 		interp = INTERP_LINEAR;
+		periodic = 0;
+	} else if( strcmp( argv[1], "clinear" ) == 0 )  {
+		interp = INTERP_LINEAR;
+		periodic = 1;
 	} else if( strcmp( argv[1], "spline" ) == 0 )  {
 		interp = INTERP_SPLINE;
 		periodic = 0;
@@ -425,24 +433,53 @@ go()
 {
 	int	ch;
 	struct chan	*chp;
+	fastf_t	*times;
+	register int	t;
+
+	times = (fastf_t *)rt_malloc( o_len*sizeof(fastf_t), "periodic times");
 
 	for( ch=0; ch < nchans; ch++ )  {
 		chp = &chan[ch];
 		if( chp->c_ilen <= 0 )
 			continue;
+
+		/*  As a service to interpolators, if this is a periodic
+		 *  interpolation, build the mapped time array.
+		 */
+		if( chp->c_periodic )  {
+			for( t=0; t < o_len; t++ )  {
+				register double	cur_t;
+
+				cur_t = o_time[t];
+
+				while( cur_t > chp->c_itime[chp->c_ilen-1] )  {
+					cur_t -= (chp->c_itime[chp->c_ilen-1] -
+					    chp->c_itime[0] );
+				}
+				while( cur_t < chp->c_itime[0] )  {
+					cur_t += (chp->c_itime[chp->c_ilen-1] -
+					    chp->c_itime[0] );
+				}
+				times[t] = cur_t;
+			}
+		} else {
+			for( t=0; t < o_len; t++ )  {
+				times[t] = o_time[t];
+			}
+		}
 again:
 		switch( chp->c_interp )  {
 		default:
 			fprintf(stderr,"unknown interpolation type %d\n", chp->c_interp);
 			/* FALL THROUGH */
 		case INTERP_LINEAR:
-			linear_interpolate( chp );
+			linear_interpolate( chp, times );
 			break;
 		case INTERP_STEP:
-			step_interpolate( chp );
+			step_interpolate( chp, times );
 			break;
 		case INTERP_SPLINE:
-			if( spline( chp ) <= 0 )  {
+			if( spline( chp, times ) <= 0 )  {
 				fprintf(stderr, "spline failure, switching to linear\n");
 				chp->c_interp = INTERP_LINEAR;
 				goto again;
@@ -450,6 +487,7 @@ again:
 			break;
 		}
 	}
+	rt_free( (char *)times, "loc times");
 }
 
 /*
@@ -462,8 +500,9 @@ again:
  *  This routine takes advantage of (and depends on) the fact that
  *  the input and output is sorted in increasing time values.
  */
-step_interpolate( chp )
+step_interpolate( chp, times )
 register struct chan	*chp;
+register fastf_t	*times;
 {
 	register int	t;		/* output time index */
 	register int	i;		/* input time index */
@@ -471,19 +510,19 @@ register struct chan	*chp;
 	i = 0;
 	for( t=0; t<o_len; t++ )  {
 		/* Check for below initial time */
-		if( o_time[t] < chp->c_itime[0] )  {
+		if( times[t] < chp->c_itime[0] )  {
 			chp->c_oval[t] = chp->c_ival[0];
 			continue;
 		}
 		/* Check for above final time */
-		if( o_time[t] > chp->c_itime[chp->c_ilen-1] )  {
+		if( times[t] > chp->c_itime[chp->c_ilen-1] )  {
 			chp->c_oval[t] = chp->c_ival[chp->c_ilen-1];
 			continue;
 		}
 		/* Find time range in input data.  Could range check? */
 		while( i < chp->c_ilen-1 )  {
-			if( o_time[t] >= chp->c_itime[i] && 
-			    o_time[t] <  chp->c_itime[i+1] )
+			if( times[t] >= chp->c_itime[i] && 
+			    times[t] <  chp->c_itime[i+1] )
 				break;
 			i++;
 		}
@@ -498,8 +537,9 @@ register struct chan	*chp;
  *  This routine takes advantage of (and depends on) the fact that
  *  the input and output is sorted in increasing time values.
  */
-linear_interpolate( chp )
+linear_interpolate( chp, times )
 register struct chan	*chp;
+register fastf_t	*times;
 {
 	register int	t;		/* output time index */
 	register int	i;		/* input time index */
@@ -507,25 +547,25 @@ register struct chan	*chp;
 	i = 0;
 	for( t=0; t<o_len; t++ )  {
 		/* Check for below initial time */
-		if( o_time[t] < chp->c_itime[0] )  {
+		if( times[t] < chp->c_itime[0] )  {
 			chp->c_oval[t] = chp->c_ival[0];
 			continue;
 		}
 		/* Check for above final time */
-		if( o_time[t] > chp->c_itime[chp->c_ilen-1] )  {
+		if( times[t] > chp->c_itime[chp->c_ilen-1] )  {
 			chp->c_oval[t] = chp->c_ival[chp->c_ilen-1];
 			continue;
 		}
 		/* Find time range in input data.  Could range check? */
 		while( i < chp->c_ilen-1 )  {
-			if( o_time[t] >= chp->c_itime[i] && 
-			    o_time[t] <  chp->c_itime[i+1] )
+			if( times[t] >= chp->c_itime[i] && 
+			    times[t] <  chp->c_itime[i+1] )
 				break;
 			i++;
 		}
 		/* Perform actual interpolation */
 		chp->c_oval[t] = chp->c_ival[i] +
-			(o_time[t] - chp->c_itime[i]) *
+			(times[t] - chp->c_itime[i]) *
 			(chp->c_ival[i+1] - chp->c_ival[i]) /
 			(chp->c_itime[i+1] - chp->c_itime[i]);
 	}
@@ -538,8 +578,9 @@ register struct chan	*chp;
  *  Time in the independent (x) variable, and the single channel
  *  of data values is the dependent (y) variable.
  */
-spline( chp )
+spline( chp, times )
 register struct chan	*chp;
+fastf_t			*times;
 {
 	double	d,s;
 	double	u,v;
@@ -554,7 +595,6 @@ register struct chan	*chp;
 	double	konst = 0.0;		/* derriv. at endpts, non-periodic */
 	double		*diag = (double *)0;
 	double		*rrr = (double *)0;
-	double		*times = (double *)0;
 	register int	i;
 	register int	t;
 
@@ -577,34 +617,10 @@ register struct chan	*chp;
 	i = (chp->c_ilen+1)*sizeof(double);
 	diag = (double *)rt_malloc((unsigned)i, "diag");
 	rrr = (double *)rt_malloc((unsigned)i, "rrr");
-	times = (double *)rt_malloc( o_len*sizeof(double), "local times");
-	if( !rrr || !diag || !times )  {
+	if( !rrr || !diag )  {
 		fprintf(stderr, "spline: malloc failure\n");
 		goto bad;
 	}
-
-	if( chp->c_periodic )  {
-		for( t=0; t < o_len; t++ )  {
-			register double	cur_t;
-
-			cur_t = o_time[t];
-
-			while( cur_t > chp->c_itime[chp->c_ilen-1] )  {
-				cur_t -= (chp->c_itime[chp->c_ilen-1] -
-				    chp->c_itime[0] );
-			}
-			while( cur_t < chp->c_itime[0] )  {
-				cur_t += (chp->c_itime[chp->c_ilen-1] -
-				    chp->c_itime[0] );
-			}
-			times[t] = cur_t;
-		}
-	} else {
-		for( t=0; t < o_len; t++ )  {
-			times[t] = o_time[t];
-		}
-	}
-		
 
 	if(chp->c_periodic) konst = 0;
 	d = 1;
@@ -700,11 +716,9 @@ register struct chan	*chp;
 	}
 	rt_free( (char *)diag, "diag");
 	rt_free( (char *)rrr, "rrr" );
-	rt_free( (char *)times, "loc times");
 	return(1);
 bad:
 	if(diag) rt_free( (char *)diag, "diag");
 	if(rrr) rt_free( (char *)rrr, "rrr" );
-	if(times) rt_free( (char *)times, "loc times");
 	return(0);
 }

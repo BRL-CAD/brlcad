@@ -94,16 +94,21 @@ char	*file;
 
 #define	NCHANS	1024
 char	linebuf[NCHANS*10];
+int	line;				/* input line number */
+
 char	**chanwords[NCHANS+1];
+int	nwords;				/* # words in chanwords[] */
+
+#define NTOKENWORDS	16
+char	**tokenwords[NTOKENWORDS+1];
 
 do_lines( fp )
 FILE	*fp;
 {
-	int	line;
 	char	token[128];
+	int	ntokenwords;
 	register char	*cp;
 	register char	*tp;
-	int	nwords;
 	int	chan;
 
 	for( line=0; /*NIL*/; line++ )  {
@@ -157,14 +162,8 @@ FILE	*fp;
 			}
 
 			if( isdigit( token[0] ) )  {
-				chan = atoi(token);
-				if( chan < 0 || chan > nwords-2 )  {
-					fprintf(stderr,"Line %d:  chan %d out of range 0..%d\n", line, chan, nwords-2 );
-					fprintf(stdout,"@(%d)", chan);
-					continue;
-				}
-				/* [0] has the time */
-				fputs( chanwords[chan+1], stdout );
+				fputs( chanwords[str2chan_index(token)],
+					stdout );
 				continue;
 			}
 			if( strcmp( token, "line" ) == 0 )  {
@@ -175,8 +174,61 @@ FILE	*fp;
 				fputs( chanwords[0], stdout );
 				continue;
 			}
+
+			/* Check here for multi-word tokens */
+			ntokenwords = rt_split_cmd( tokenwords, NTOKENWORDS+1, token );
+
+			if( strcmp( tokenwords[0], "rot" ) == 0 )  {
+				mat_t	mat;
+
+				mat_idn( mat );
+				mat_angles( mat, 
+				    atof( chanwords[str2chan_index(tokenwords[1])] ),
+				    atof( chanwords[str2chan_index(tokenwords[2])] ),
+				    atof( chanwords[str2chan_index(tokenwords[3])] ) );
+				out_mat( mat, stdout );
+				continue;
+			}
+
 			fprintf(stderr,"Line %d: keyword @(%s) unknown\n", line, token);
 			fprintf(stdout, "@(%s)", token );
 		}
+	}
+}
+
+/*
+ *			S T R 2 C H A N _ I N D E X
+ *
+ *  Convert an ascii string to a channel index.
+ *  Specifying channel 0 selects column (and thus subscript) 1,
+ *  because column 0 contains the current time.
+ *  Thus, valid channel values are 0 through nwords-2,
+ *  resulting in column numbers 1 through nwords-1.
+ *
+ *  To signal an error, 0 is returned;  this will index the time column.
+ */
+str2chan_index( s )
+char	*s;
+{
+	int	chan;
+
+	chan = atoi( s );
+	if( chan < 0 || chan > nwords-2 )  {
+		fprintf(stderr,"Line %d:  chan %d out of range 0..%d\n", line, chan, nwords-2 );
+		return(0);		/* Flag [0]:  time channel */
+	}
+	return(chan+1);
+}
+
+out_mat( m, fp )
+matp_t	m;
+FILE	*fp;
+{
+	register int	i;
+
+	for( i=0; i < 16; i++ )  {
+		(void)fprintf( fp, "%.9e ", m[i] );
+		if( (i%4) == 3 )
+			(void)fprintf(fp, "\n");
 	}
 }
