@@ -712,24 +712,28 @@ struct mem_map {
  *			D B _ I
  *
  *  One of these structures is used to describe each separate instance
- *  of a model database file.
+ *  of a BRL-CAD model database ".g" file.
  *
- *  The contents of this structure are intended to be "opaque" to
- *  application programmers.
+ *  dbi_filepath is a C-style argv array of places to search when
+ *  opening related files (such as data files for EBM solids or
+ *  texture-maps).  The array and strings are all dynamically allocated.
  */
 struct db_i  {
 	long			dbi_magic;	/* magic number */
+	/* THESE ELEMENTS ARE AVAILABLE FOR APPLICATIONS TO READ */
+	char			*dbi_filename;	/* file name */
+	int			dbi_read_only;	/* !0 => read only file */
+	double			dbi_local2base;	/* local2mm */
+	double			dbi_base2local;	/* unit conversion factors */
+	char			*dbi_title;	/* title from IDENT rec */
+	char			**dbi_filepath;	/* search path for aux file opens (convenience var) */
+	/* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 	struct directory	*dbi_Head[RT_DBNHASH];
 	int			dbi_fd;		/* UNIX file descriptor */
 	FILE			*dbi_fp;	/* STDIO file descriptor */
 	long			dbi_eof;	/* End+1 pos after db_scan() */
 	long			dbi_nrec;	/* # records after db_scan() */
 	int			dbi_uses;	/* # of uses of this struct */
-	double			dbi_local2base;	/* local2mm */
-	double			dbi_base2local;	/* unit conversion factors */
-	char			*dbi_title;	/* title from IDENT rec */
-	char			*dbi_filename;	/* file name */
-	int			dbi_read_only;	/* !0 => read only file */
 	struct mem_map		*dbi_freep;	/* map of free granules */
 	genptr_t		dbi_inmem;	/* ptr to in-memory copy */
 	struct animate		*dbi_anroot;	/* heads list of anim at root lvl */
