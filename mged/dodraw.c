@@ -329,11 +329,11 @@ union tree		*curtree;
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
 	if ( !mged_draw_nmg_only ) {
-		if( RT_SETJUMP )
+		if( BU_SETJUMP )
 		{
 			char  *sofar = db_path_to_string(pathp);
 
-			RT_UNSETJUMP;
+			BU_UNSETJUMP;
 
 			Tcl_AppendResult(interp, "WARNING: Boolean evaluation of ", sofar,
 				" failed!!!\n", (char *)NULL );
@@ -343,7 +343,7 @@ union tree		*curtree;
 			return (union tree *)NULL;
 		}
 		failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );
-		RT_UNSETJUMP;
+		BU_UNSETJUMP;
 		if( failed )  {
 			db_free_tree( curtree );
 			return (union tree *)NULL;
@@ -364,11 +364,11 @@ union tree		*curtree;
 	}
 
 	if (mged_nmg_triangulate) {
-		if( RT_SETJUMP )
+		if( BU_SETJUMP )
 		{
 			char  *sofar = db_path_to_string(pathp);
 
-			RT_UNSETJUMP;
+			BU_UNSETJUMP;
 
 			Tcl_AppendResult(interp, "WARNING: Triangulation of ", sofar,
 				" failed!!!\n", (char *)NULL );
@@ -378,7 +378,7 @@ union tree		*curtree;
 			return (union tree *)NULL;
 		}
 		nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
-		RT_UNSETJUMP;
+		BU_UNSETJUMP;
 	}
 
 	if( r != 0 )  {
@@ -760,9 +760,9 @@ struct solid		*existing_sp;
 	/* Solid is successfully drawn */
 	if( !existing_sp )  {
 		/* Add to linked list of solid structs */
-		bu_semaphore_acquire( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
+		bu_semaphore_acquire( (unsigned int)(RT_SEM_MODEL - BU_SEM_SYSCALL) );
 		BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
-		bu_semaphore_release( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
+		bu_semaphore_release( (unsigned int)(RT_SEM_MODEL - BU_SEM_SYSCALL) );
 	} else {
 		/* replacing existing solid -- struct already linked in */
 		sp->s_iflag = UP;
@@ -1153,7 +1153,7 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	bu_semaphore_acquire( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
+	bu_semaphore_acquire( (unsigned int)(RT_SEM_MODEL - BU_SEM_SYSCALL) );
 	if( mged_facetize_tree )  {
 		union tree	*tr;
 		tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
@@ -1166,7 +1166,7 @@ union tree		*curtree;
 	} else {
 		mged_facetize_tree = curtree;
 	}
-	bu_semaphore_release( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
+	bu_semaphore_release( (unsigned int)(RT_SEM_MODEL - BU_SEM_SYSCALL) );
 
 	/* Tree has been saved, and will be freed later */
 	return( TREE_NULL );
@@ -1304,9 +1304,9 @@ char	**argv;
 		/* Now, evaluate the boolean tree into ONE region */
 		Tcl_AppendResult(interp, "facetize:  evaluating boolean expressions\n", (char *)NULL);
 
-		if( RT_SETJUMP )
+		if( BU_SETJUMP )
 		{
-			RT_UNSETJUMP;
+			BU_UNSETJUMP;
 			Tcl_AppendResult(interp, "WARNING: facetization failed!!!\n", (char *)NULL );
 			if( mged_facetize_tree )
 				db_free_tree( mged_facetize_tree );
@@ -1317,7 +1317,7 @@ char	**argv;
 		}
 
 		failed = nmg_boolean( mged_facetize_tree, mged_nmg_model, &mged_tol );
-		RT_UNSETJUMP;
+		BU_UNSETJUMP;
 	}
 	else
 		failed = 1;
@@ -1340,9 +1340,9 @@ char	**argv;
 	if( triangulate )
 	{
 		Tcl_AppendResult(interp, "facetize:  triangulating resulting object\n", (char *)NULL);
-		if( RT_SETJUMP )
+		if( BU_SETJUMP )
 		{
-			RT_UNSETJUMP;
+			BU_UNSETJUMP;
 			Tcl_AppendResult(interp, "WARNING: triangulation failed!!!\n", (char *)NULL );
 			if( mged_facetize_tree )
 				db_free_tree( mged_facetize_tree );
@@ -1352,7 +1352,7 @@ char	**argv;
 			return TCL_ERROR;
 		}
 		nmg_triangulate_model( mged_nmg_model , &mged_tol );
-		RT_UNSETJUMP;
+		BU_UNSETJUMP;
 	}
 
 	Tcl_AppendResult(interp, "facetize:  converting NMG to database format\n", (char *)NULL);
@@ -1580,9 +1580,9 @@ char	**argv;
 		/* Now, evaluate the boolean tree into ONE region */
 		Tcl_AppendResult(interp, "bev:  evaluating boolean expressions\n", (char *)NULL);
 
-		if( RT_SETJUMP )
+		if( BU_SETJUMP )
 		{
-			RT_UNSETJUMP;
+			BU_UNSETJUMP;
 
 			Tcl_AppendResult(interp, "WARNING: Boolean evaluation failed!!!\n", (char *)NULL );
 			if( tmp_tree )
@@ -1594,7 +1594,7 @@ char	**argv;
 		}
 
 		failed = nmg_boolean( tmp_tree, mged_nmg_model, &mged_tol );
-		RT_UNSETJUMP;
+		BU_UNSETJUMP;
 	}
 	else
 		failed = 1;
@@ -1618,9 +1618,9 @@ char	**argv;
 	if( triangulate )
 	{
 		Tcl_AppendResult(interp, "bev:  triangulating resulting object\n", (char *)NULL);
-		if( RT_SETJUMP )
+		if( BU_SETJUMP )
 		{
-			RT_UNSETJUMP;
+			BU_UNSETJUMP;
 			Tcl_AppendResult(interp, "WARNING: Triangulation failed!!!\n", (char *)NULL );
 			if( tmp_tree )
 				db_free_tree( tmp_tree );
@@ -1630,7 +1630,7 @@ char	**argv;
 			return TCL_ERROR;
 		}
 		nmg_triangulate_model( mged_nmg_model , &mged_tol );
-		RT_UNSETJUMP;
+		BU_UNSETJUMP;
 	}
 
 	Tcl_AppendResult(interp, "bev:  converting NMG to database format\n", (char *)NULL);

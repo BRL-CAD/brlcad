@@ -662,7 +662,7 @@ int			id;
  *  for each tree walk.  If it is not, then d_uses is NOT a safe
  *  way to check and this method will always work.)
  */
-	bu_semaphore_acquire((unsigned int)(&rt_g.res_worker - &rt_g.res_syscall));
+	bu_semaphore_acquire((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
 	FOR_ALL_PUSH_SOLIDS(pip) {
 	  if (pip->pi_dir == dp ) {
 	    if (!bn_mat_is_equal(pip->pi_mat,
@@ -675,7 +675,7 @@ int			id;
 	      push_error = 1;
 	    }
 
-	    bu_semaphore_release((unsigned int)(&rt_g.res_worker - &rt_g.res_syscall));
+	    bu_semaphore_release((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
 	    BU_GETUNION(curtree, tree);
 	    curtree->magic = RT_TREE_MAGIC;
 	    curtree->tr_op = OP_NOP;
@@ -694,7 +694,7 @@ int			id;
 	pi_head.back = pip;
 	pip->forw = &pi_head;
 	pip->back->forw = pip;
-	bu_semaphore_release((unsigned int)(&rt_g.res_worker - &rt_g.res_syscall));
+	bu_semaphore_release((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
 	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
