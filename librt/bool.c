@@ -728,6 +728,8 @@ struct application *ap;
 	register int	claiming_regions;
 	int		hits_avail = 0;
 	int		hits_needed;
+	int		ret = 0;
+	char		*reason = (char *)NULL;
 	fastf_t		diff;
 
 #define HITS_TODO	(hits_needed - hits_avail)
@@ -737,8 +739,11 @@ struct application *ap;
 	BU_CK_PTBL(regiontable);
 	RT_CHECK_RTI(ap->a_rt_i);
 
-	if( enddist <= 0 )
-		return(0);		/* not done, behind start point! */
+	if( enddist <= 0 )  {
+		reason = "not done, behind start point";
+		ret = 0;
+		goto out;
+	}
 
 	if( ap->a_onehit < 0 )
 		hits_needed = -ap->a_onehit;
@@ -755,8 +760,11 @@ struct application *ap;
 				continue;	/* skip air hits */
 			hits_avail += 2;	/* both in and out listed */
 		}
-		if( hits_avail >= hits_needed )
-			return(1);		/* done */
+		if( hits_avail >= hits_needed )  {
+			reason = "a_onehit request satisfied at outset";
+			ret = 1;
+			goto out;
+		}
 	}
 
 	pp = InputHdp->pt_forw;
@@ -807,7 +815,9 @@ struct application *ap;
 					ap->a_x, ap->a_y, ap->a_level );
 				if( !(rt_g.debug & DEBUG_PARTITION) )
 					rt_pr_partitions( ap->a_rt_i, InputHdp, "With DEFECT" );
-				return(0);	/* give up */
+				ret = 0;
+				reason = "ERROR, sorting defect, give up";
+				goto out;
 			}
 		}
 
@@ -844,7 +854,9 @@ struct application *ap;
 		if( diff > ap->a_rt_i->rti_tol.dist )  {
 			if(rt_g.debug&DEBUG_PARTITION)bu_log(
 				"partition begins %g beyond current box end, returning\n", diff);
-			return(0);
+			reason = "partition begins beyond current box end";
+			ret = 0;
+			goto out;
 		}
 
 		/*
@@ -856,10 +868,16 @@ struct application *ap;
 		if( diff > ap->a_rt_i->rti_tol.dist )  {
 			if(rt_g.debug&DEBUG_PARTITION)bu_log(
 				"partition ends beyond current box end\n");
-			if( ap->a_onehit == 0 )
-				return(0);
-			if( HITS_TODO > 1 )
-				return(0);
+			if( ap->a_onehit == 0 )  {
+				ret = 0;
+				reason = "a_onehit=0, more partitions to go";
+				goto out;
+			}
+			if( HITS_TODO > 1 )  {
+				ret = 0;
+				reason = "a_onehit not satisfied yet";
+				goto out;
+			}
 			/*  In this case, proceed as if pt_outhit was correct,
 			 *  even though it probably is not.
 			 *  Application asked for this behavior, and it
@@ -984,11 +1002,10 @@ struct application *ap;
 		}
 
 		/*
+		 *  claiming_regions == 1
+		 *
 		 *  Remove this partition from the input queue, and
 		 *  append it to the result queue.
-		 *  XXX Could there be sorting trouble on final call to
-		 *  XXX boolfinal when a_onehit > 0??
-		 *  XXX No, because input queue shouldn't be interesting on 2nd visit.
 		 */
 		{
 			register struct partition	*newpp;
@@ -1033,20 +1050,35 @@ struct application *ap;
 				newpp = lastpp;
 			}  else  {
 				APPEND_PT( newpp, lastpp );
-				hits_avail += 2;
+				if( !(ap->a_onehit < 0 && newpp->pt_regionp->reg_aircode != 0) )
+					hits_avail += 2;
 			}
 
 			RT_CHECK_SEG(newpp->pt_inseg);		/* sanity */
 			RT_CHECK_SEG(newpp->pt_outseg);		/* sanity */
 		}
 
-		if( ap->a_onehit > 0 && HITS_TODO <= 0 )
-			return(1);		/* done */
+		/* See if it's worthwhile breaking out of partition loop early */
+		if( ap->a_onehit != 0 && HITS_TODO <= 0 )  {
+			ret = 1;
+			reason = "a_onehit satisfied early";
+			goto out;
+		}
 	}
-	if( rt_g.debug&DEBUG_PARTITION )
-		rt_pr_partitions( ap->a_rt_i, FinalHdp, "rt_boolfinal: Partitions returned" );
+	if( ap->a_onehit > 0 && HITS_TODO <= 0 )  {
+		ret = 1;
+		reason = "a_onehit satisfied at end";
+	} else {
+		ret = 0;
+		reason = "more partitions needed";
+	}
+out:
+	if( rt_g.debug&DEBUG_PARTITION )  {
+		rt_pr_partitions( ap->a_rt_i, FinalHdp, "rt_boolfinal: Final partition list at return:" );
+		bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
+	}
 
-	return(0);			/* not done */
+	return ret;
 }
 
 /*
