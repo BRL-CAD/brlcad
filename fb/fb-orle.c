@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fb-rle.c	1.7
-	Last edit: 	8/15/85 at 10:06:25
-	Retrieved: 	8/13/86 at 03:11:08
+	SCCS id:	@(#) fb-rle.c	1.8
+	Last edit: 	10/15/85 at 14:54:04
+	Retrieved: 	8/13/86 at 03:11:15
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fb-rle.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fb-rle.c	1.7	last edit 8/15/85 at 10:06:25";
+char	sccsTag[] = "@(#) fb-rle.c	1.8	last edit 10/15/85 at 14:54:04";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -27,7 +27,7 @@ char	sccsTag[] = "@(#) fb-rle.c	1.7	last edit 8/15/85 at 10:06:25";
 #define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
 static char	*usage[] = {
 "",
-"fb-rle (1.7)",
+"fb-rle (1.8)",
 "",
 "Usage: fb-rle [-CScdhvw][-l X Y][-p X Y][file.rle]",
 "",
@@ -198,6 +198,7 @@ register char	**argv;
 			}
 		}
 	if( argv[optind] != NULL )
+		{
 		if( access( argv[optind], 0 ) == 0 )
 			{
 			(void) fprintf( stderr,
@@ -227,6 +228,7 @@ register char	**argv;
 					);
 			return	0;
 			}
+		}
 	if( argc > ++optind )
 		{
 		(void) fprintf( stderr, "Too many arguments!\n" );
