@@ -521,7 +521,8 @@ set -S2 "/bin/sh"
 #	define	MTYPE	6d
 #	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
-#		define	OPTIMIZER	-O2
+/*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
+#		define	OPTIMIZER	-O2 -woff 658
 /*		Use shared libraries */
 #		define	SHARED	_s
 #	else
