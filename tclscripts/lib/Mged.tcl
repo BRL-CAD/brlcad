@@ -29,59 +29,59 @@ class Mged {
     destructor {}
 
     ######################### Commands related to the Database #########################
-    public method opendb {args}
-    public method match {args}
-    public method get {args}
-    public method put {args}
     public method adjust {args}
-    public method form {args}
-    public method tops {args}
-    public method rt_gettrees {args}
-    public method dump {args}
+    public method blast {args}
+    public method c {args}
+    public method cat {args}
+    public method clear {}
+    public method color {args}
+    public method comb {args}
+    public method concat {args}
+    public method cp {args}
     public method dbip {}
-    public method ls {args}
-    public method l {args}
-    public method listeval {args}
-    public method paths {args}
+    public method draw {args}
+    public method dump {args}
+    public method dup {args}
+    public method erase {args}
+    public method erase_all {args}
+    public method ev {args}
     public method expand {args}
+    public method find {args}
+    public method form {args}
+    public method g {args}
+    public method get {args}
+    public method i {args}
+    public method illum {obj}
+    public method keep {args}
     public method kill {args}
     public method killall {args}
     public method killtree {args}
-    public method cp {args}
+    public method l {args}
+    public method label {obj}
+    public method listeval {args}
+    public method ls {args}
+    public method match {args}
     public method mv {args}
     public method mvall {args}
-    public method concat {args}
-    public method dup {args}
-    public method g {args}
-    public method rm {args}
+    public method opendb {args}
+    public method overlay {args}
+    public method paths {args}
+    public method prcolor {args}
+    public method push {args}
+    public method put {args}
     public method r {args}
-    public method c {args}
-    public method comb {args}
-    public method find {args}
+    public method rm {args}
+    public method rt_gettrees {args}
+    public method title {args}
+    public method tol {args}
+    public method tops {args}
+    public method tree {args}
+    public method vdraw {args}
+    public method whatid {args}
     public method whichair {args}
     public method whichid {args}
-    public method title {args}
-    public method tree {args}
-    public method color {args}
-    public method prcolor {args}
-    public method tol {args}
-    public method push {args}
-    public method whatid {args}
-    public method keep {args}
-    public method cat {args}
-    public method i {args}
-    public method draw {args}
-    public method erase {args}
-    public method zap {}
     public method who {args}
-    public method blast {args}
-    public method clear {}
-    public method ev {args}
-    public method erase_all {args}
-    public method overlay {args}
-    public method vdraw {args}
-    public method illum {obj}
-    public method label {obj}
+    public method zap {}
 
     private variable db ""
     private variable dg ""

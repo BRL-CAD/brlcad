@@ -42,13 +42,11 @@ class QuadDisplay {
     public method aet {args}
     public method center {args}
     public method rot {args}
+    public method size {args}
     public method slew {args}
     public method tra {args}
-    public method size {args}
-if 0 {
-    public method scale {args}
-}
     public method zoom {sf}
+
     public method autoview {}
     public method autoviewall {}
 
@@ -58,18 +56,18 @@ if 0 {
     public method removeall {glist}
     public method contents {}
 
-    public method listen {args}
-    public method linewidth {args}
-    public method linestyle {args}
-    public method zclip {args}
-    public method zbuffer {args}
-    public method light {args}
-    public method perspective {args}
     public method bg {args}
     public method fb_active {args}
     public method fb_observe {args}
+    public method light {args}
+    public method linestyle {args}
+    public method linewidth {args}
+    public method listen {args}
+    public method perspective {args}
     public method rt {args}
     public method rtcheck {args}
+    public method zbuffer {args}
+    public method zclip {args}
 
     public method resetall {}
     public method default_views {}
@@ -336,12 +334,6 @@ body QuadDisplay::tra {args} {
 
 body QuadDisplay::size {args} {
     eval $itk_component($itk_option(-pane)) size $args
-}
-
-if 0 {
-body QuadDisplay::scale {args} {
-    eval $itk_component($itk_option(-pane)) scale $args
-}
 }
 
 body QuadDisplay::zoom {args} {

@@ -55,18 +55,18 @@ class Display {
 
     # methods for maintaining the list of geometry objects
     public method add {glist}
-    public method remove {glist}
     public method contents {}
+    public method remove {glist}
 
     # methods that override methods inherited from View
     public method slew {x y}
 
     # methods that override methods inherited from Dm
-    public method zclip {args}
-    public method zbuffer {args}
+    public method fb_active {args}
     public method light {args}
     public method perspective {args}
-    public method fb_active {args}
+    public method zbuffer {args}
+    public method zclip {args}
 
     protected method toggle_zclip {}
     protected method toggle_zbuffer {}
