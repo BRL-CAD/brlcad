@@ -1,6 +1,10 @@
 set mged_rotate_factor 1
 set mged_tran_factor .01
 
+if ![info exists mged_players] {
+    set mged_players {}
+}
+
 proc mged_bind_dm { w } {
     global hot_key
     global mged_rotate_factor
@@ -29,9 +33,12 @@ proc print_return_val str {
 
 proc default_key_bindings { w } {
     bind $w a "winset $w; adc; break"
-    bind $w e "update_axes_draw $w edit; break"
-    bind $w m "update_axes_draw $w model; break"
-    bind $w v "update_axes_draw $w view; break"
+    bind $w e "winset $w; rset ax edit_draw !;\
+	    update_gui $w edit_draw \[rset ax edit_draw\]; break"
+    bind $w m "winset $w; rset ax model_draw !;\
+	    update_gui $w model_draw \[rset ax model_draw\]; break"
+    bind $w v "winset $w; rset ax view_draw !;\
+	    update_gui $w view_draw \[rset ax view_draw\]; break"
     bind $w i "winset $w; aip f; break"
     bind $w I "winset $w; aip b; break"
     bind $w p "winset $w; M 1 0 0; break"
@@ -54,16 +61,16 @@ proc default_key_bindings { w } {
     bind $w o "winset $w; press oill; break"
     bind $w q "winset $w; press reject; break"
     bind $w u "winset $w; svb; break"
-    bind $w <F1> "winset $w; dm set depthcue !; break"
-    bind $w <F2> "winset $w; dm set zclip !; break"
-    bind $w <F3> "winset $w; set perspective_mode !; break"
-    bind $w <F4> "winset $w; dm set zbuffer !; break"
-    bind $w <F5> "winset $w; dm set lighting !; break"
+    bind $w <F1> "winset $w; dm set depthcue !; update_gui $w depthcue \[dm set depthcue\]; break"
+    bind $w <F2> "winset $w; dm set zclip !; update_gui $w zclip \[dm set zclip\]; break"
+    bind $w <F3> "winset $w; set perspective_mode !; update_gui $w perspective_mode \$perspective_mode; break"
+    bind $w <F4> "winset $w; dm set zbuffer !; update_gui $w zbuffer \[dm set zbuffer\]; break"
+    bind $w <F5> "winset $w; dm set lighting !; update_gui $w lighting \[dm set lighting\]; break"
     bind $w <F6> "winset $w; set toggle_perspective !; break"
-    bind $w <F7> "winset $w; set faceplate !; break"
-    bind $w <F8> "winset $w; set orig_gui !; break"
+    bind $w <F7> "winset $w; set faceplate !; update_gui $w faceplate \$faceplate; break"
+    bind $w <F8> "winset $w; set orig_gui !; update_gui $w orig_gui \$orig_gui; break"
 # KeySym for <F9> --> 0xffc6 --> 65478
-    bind $w <F9> "toggle_forward_key_bindings $w; break"
+    bind $w <F9> "toggle_forward_key_bindings $w; update_gui $w forward_keys \$forwarding_key($w); break"
     bind $w <F12> "winset $w; knob zero; break"
 
     bind $w <Left> "winset $w; knob -i ay -\$mged_rotate_factor; break"
@@ -86,6 +93,17 @@ proc default_key_bindings { w } {
     # Throw away other key events
     bind $w <KeyPress> {
 	break
+    }
+}
+
+proc set_forward_keys { w val } {
+    global forwarding_key
+
+    set forwarding_key($w) $val
+    if {$forwarding_key($w)} {
+	forward_key_bindings $w
+    } else {
+	default_key_bindings $w
     }
 }
 
@@ -169,7 +187,8 @@ proc forward_key_bindings { w } {
 	    set mged_gui(.$id.t,insert_char_flag) 1;\
 	    event generate .$id.t <KeyPress> -state %s -keysym %K;\
 	    set mged_gui(.$id.t,insert_char_flag) 0;\
-	    focus %W; break"
+	    focus %W;\
+	    break"
 }
 
 proc default_mouse_bindings { w } {
@@ -243,17 +262,14 @@ proc default_mouse_bindings { w } {
     }   
 }
 
-proc update_axes_draw { w type } {
+proc update_gui { w vname val } {
     global mged_players
     global mged_gui
 
-    winset $w;
-    rset ax $type\_draw !
-
     foreach id $mged_players {
 	if {$mged_gui($id,active_dm) == $w} {
-	    set mged_gui($id,$type\_draw) [rset ax $type\_draw]
-	    break
+	    set mged_gui($id,$vname) $val
+	    return
 	}
     }
 }
