@@ -389,8 +389,7 @@ body Display::constrain_tmode {coord _x _y} {
 body Display::handle_rotation {_x _y} {
     set dx [expr ($y - $_y) * $itk_option(-rscale)]
     set dy [expr ($x - $_x) * $itk_option(-rscale)]
-    rot "$dx $dy 0"
-    refresh
+    vrot $dx $dy 0
 
     #update instance variables x and y
     set x $_x
@@ -400,8 +399,7 @@ body Display::handle_rotation {_x _y} {
 body Display::handle_translation {_x _y} {
     set dx [expr ($x - $_x) * $invWidth * $View::size]
     set dy [expr ($_y - $y) * $invWidth * $View::size]
-    tra "$dx $dy 0"
-    refresh
+    vtra $dx $dy 0
 
     #update instance variables x and y
     set x $_x
@@ -419,7 +417,6 @@ body Display::handle_scale {_x _y} {
     }
 
     zoom $f
-    refresh
 
     #update instance variables x and y
     set x $_x
@@ -437,16 +434,15 @@ body Display::handle_constrain_rot {coord _x _y} {
     }
     switch $coord {
 	x {
-	    rot "$f 0 0"
+	    rot $f 0 0
 	}
 	y {
-	    rot "0 $f 0"
+	    rot 0 $f 0
 	}
 	z {
-	    rot "0 0 $f"
+	    rot 0 0 $f
 	}
     }
-    refresh
 
     #update instance variables x and y
     set x $_x
@@ -464,16 +460,15 @@ body Display::handle_constrain_tran {coord _x _y} {
     }
     switch $coord {
 	x {
-	    tra "$f 0 0"
+	    tra $f 0 0
 	}
 	y {
-	    tra "0 $f 0"
+	    tra 0 $f 0
 	}
 	z {
-	    tra "0 0 $f"
+	    tra 0 0 $f
 	}
     }
-    refresh
 
     #update instance variables x and y
     set x $_x
