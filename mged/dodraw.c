@@ -84,6 +84,7 @@ static int		mged_nmg_triangulate;
 static int		mged_draw_wireframes;
 static int		mged_draw_normals;
 static int		mged_draw_solid_lines_only=0;
+static int		mged_draw_no_surfaces = 0;
 static int		mged_shade_per_vertex_normals=0;
 static struct model	*mged_nmg_model;
 struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
@@ -370,6 +371,9 @@ union tree		*curtree;
 		if( mged_shade_per_vertex_normals )  {
 			style |= NMG_VLIST_STYLE_USE_VU_NORMALS;
 		}
+		if( mged_draw_no_surfaces )  {
+			style |= NMG_VLIST_STYLE_NO_SURFACES;
+		}
 		nmg_r_to_vlist( &vhead, r, style );
 
 		drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
@@ -426,10 +430,11 @@ int	kind;
 	mged_draw_edge_uses = 0;
 	mged_draw_solid_lines_only = 0;
 	mged_shade_per_vertex_normals = 0;
+	mged_draw_no_surfaces = 0;
 
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"dnqstuvwTP:")) != EOF )  {
+	while( (c=getopt(argc,argv,"dnqstuvwSTP:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
@@ -445,6 +450,9 @@ int	kind;
 			break;
 		case 'w':
 			mged_draw_wireframes = 1;
+			break;
+		case 'S':
+			mged_draw_no_surfaces = 1;
 			break;
 		case 'T':
 			mged_nmg_triangulate = 0;
@@ -463,7 +471,7 @@ int	kind;
 			break;
 		default:
 			rt_log("option '%c' unknown\n", c);
-			rt_log("Usage: ev [-dnqstuvwT] [-P ncpu] object(s)\n\
+			rt_log("Usage: ev [-dnqstuvwST] [-P ncpu] object(s)\n\
 	-d draw nmg without performing boolean operations\n\
 	-w draw wireframes (rather than polygons)\n\
 	-n draw surface normals as little 'hairs'\n\
@@ -471,6 +479,7 @@ int	kind;
 	-t Perform CSG-to-tNURBS conversion\n\
 	-v shade using per-vertex normals, when present.\n\
 	-u debug: draw edgeuses\n\
+	-S draw tNURBs with trimming curves only, no surfaces.\n\
 	-T debug: disable triangulator\n");
 			break;
 		}
