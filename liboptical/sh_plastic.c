@@ -23,7 +23,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -62,6 +62,7 @@ struct phong_specific {
 	double	reflect;	/* Moss "transmission" */
 	double	refrac_index;
 	double	extinction;
+	double	emission[3];
 	struct mfuncs *mfp;
 };
 #define PL_MAGIC	0xbeef00d
@@ -83,6 +84,8 @@ struct bu_structparse phong_parse[] = {
 	{"%f",	1, "extinction_per_meter", PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "extinction",	PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "ex",		PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	3, "emission",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	3, "em",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -94,6 +97,9 @@ HIDDEN void	phong_free();
 /* This can't be CONST, so the forward link can be written later */
 struct mfuncs phg_mfuncs[] = {
 	{MF_MAGIC,	"default",	0,		MFI_NORMAL,	0,
+	phong_setup,	phong_render,	phong_print,	phong_free },
+
+	{MF_MAGIC,	"phong",	0,		MFI_NORMAL,	0,
 	phong_setup,	phong_render,	phong_print,	phong_free },
 
 	{MF_MAGIC,	"plastic",	0,		MFI_NORMAL,	0,
@@ -313,7 +319,7 @@ char *cp;
 		a function of the angle of incidence, range 0.0 to 1.0,
 		for the material.
 	s	is the angle between the reflected ray and the observer.
-	n	'Shininess' of the material,  range 1 to 10.
+`	n	'Shininess' of the material,  range 1 to 10.
  */
 HIDDEN int
 phong_render( ap, pp, swp, dp )
@@ -386,6 +392,20 @@ char	*dp;
 		VSETALL( swp->sw_color, 0 );
 #endif
 	}
+
+	/* Emission.  0..1 is normal range, -1..0 sucks light out, like OpenGL */
+#if RT_MULTISPECTRAL
+	{
+		struct bn_tabdata	*ms_emission = BN_TABDATA_NULL;
+		/* XXX Really should get a curve at prep, not expand RGB samples */
+		BN_GET_TABDATA( ms_emission, spectrum );
+		rt_spect_reflectance_rgb( ms_emission, ps->emission );
+		bn_tabdata_add( swp->msw_color, swp->msw_color, ms_emission );
+		bn_tabdata_free( ms_emission );
+	}
+#else
+	VADD2( swp->sw_color, swp->sw_color, ps->emission );
+#endif
 
 	/* With the advent of procedural shaders, the caller can no longer
 	 * provide us reliable light visibility information.  The hit point
