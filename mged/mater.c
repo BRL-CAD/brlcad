@@ -63,10 +63,6 @@ register struct mater *mp;
 	col_item( buf );
 	(void)sprintf( buf, "%3d,%3d,%3d", mp->mt_r, mp->mt_g, mp->mt_b);
 	col_item( buf );
-	if( mp->mt_handle != NULL )
-		col_item( mp->mt_handle );
-	else
-		col_item( "(none)" );
 	(void)sprintf( buf, "dm%d", mp->mt_dm_int );
 	col_item( buf );
 	col_eol();
@@ -217,7 +213,6 @@ f_color()
 	newp->mt_r = atoi( cmd_args[3] );
 	newp->mt_g = atoi( cmd_args[4] );
 	newp->mt_b = atoi( cmd_args[5] );
-	newp->mt_handle = strdup( cmd_args[6] );
 	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
 	insert_color( newp );
 	color_putrec( newp );			/* write to database */
@@ -240,8 +235,7 @@ f_edcolor()
 	register struct mater *zot;
 	register FILE *fp;
 	char line[128];
-	char hbuf[128];			/* handle buffer for sscanf */
-	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\tHandle\n";
+	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
 
 	(void)mktemp(tempfile);
 	if( (fp = fopen( tempfile, "w" )) == NULL )  {
@@ -254,8 +248,6 @@ f_edcolor()
 		(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
 			mp->mt_low, mp->mt_high,
 			mp->mt_r, mp->mt_g, mp->mt_b );
-		if( mp->mt_handle != NULL )
-			(void)fprintf( fp, "\t%s", mp->mt_handle );
 		(void)fprintf( fp, "\n" );
 	}
 	(void)fclose(fp);
@@ -288,9 +280,9 @@ f_edcolor()
 		int cnt;
 		int low, hi, r, g, b;
 
-		cnt = sscanf( line, "%d %d %d %d %d %s",
-			&low, &hi, &r, &g, &b, hbuf );
-		if( cnt != 5 && cnt != 6 )  {
+		cnt = sscanf( line, "%d %d %d %d %d",
+			&low, &hi, &r, &g, &b );
+		if( cnt != 5 )  {
 			(void)printf("Discarding %s\n", line );
 			continue;
 		}
@@ -300,10 +292,6 @@ f_edcolor()
 		mp->mt_r = r;
 		mp->mt_g = g;
 		mp->mt_b = b;
-		if( cnt == 6 )
-			mp->mt_handle = strdup( hbuf );
-		else
-			mp->mt_handle = (char *)NULL;
 		mp->mt_daddr = MATER_NO_ADDR;
 		insert_color( mp );
 		color_putrec( mp );
@@ -394,7 +382,6 @@ static struct mater default_mater = {
 	0, 32767,
 	DM_RED,
 	255, 0, 0,
-	"{default mater}",
 	MATER_NO_ADDR, 0
 };
 

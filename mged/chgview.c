@@ -867,8 +867,7 @@ struct solid *startp;
 		if( sp->s_materp )  {
 			register struct mater *mp;
 			if( (mp = (struct mater *)sp->s_materp) != MATER_NULL)
-				(void)printf(" matrl=%s (dm%d)",
-					mp->mt_handle,
+				(void)printf(" dm%d",
 					mp->mt_dm_int );
 		}
 		(void)printf("\n");
