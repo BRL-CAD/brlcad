@@ -12,6 +12,7 @@ bin_PROGRAMS = \
 	kurt \
 	molecule \
 	nmgmodel \
+	nmgxplode \
 	picket_fence \
 	pipe \
 	pipetest \
@@ -71,8 +72,8 @@ molecule_LDADD = ${WDB}
 nmgmodel_SOURCES = nmgmodel.c 
 nmgmodel_LDADD = ${WDB}
 
-#nmgexplode_SOURCES = nmgexplode.c 
-#nmgexplode_LDADD = ${WDB}
+nmgxplode_SOURCES = nmgxplode.c 
+nmgxplode_LDADD = ${WDB}
 
 picket_fence_SOURCES = picket_fence.c 
 picket_fence_LDADD = ${WDB}
