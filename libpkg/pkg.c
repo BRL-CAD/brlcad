@@ -58,6 +58,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  endif
 #endif
 
+#ifdef n16
+/* Encore multimax */
+# include <sys/h/socket.h>
+# include <sys/ioctl.h>
+# include <sys/netinet/in.h>
+# include <sys/aux/netdb.h>
+# include <sys/netinet/tcp.h>
+# define BSD 42
+# undef SYSV
+#endif
+
 /*
  *  The situation with sys/time.h and time.h is crazy.
  *  We need sys/time.h for struct timeval,
@@ -72,15 +83,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #if BSD && !SYSV
 #  include <sys/time.h>		/* includes <time.h> */
 #else
-#  if CRAY1 && !__STDC__
+#    if CRAY1 && !__STDC__
 #	include <time.h>	/* includes <sys/time.h> */
-#  else
+#    else
 #	include <sys/time.h>
 #	include <time.h>
-#  endif
+#    endif
 #endif
 
-#if defined(BSD) && !defined(CRAY) && !defined(mips)
+#if defined(BSD) && !defined(CRAY) && !defined(mips) && !defined(n16)
 #define	HAS_WRITEV
 #endif
 
