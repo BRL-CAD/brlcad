@@ -51,7 +51,7 @@ extern int npsw;
 extern char scanbuf[];
 #else
 #ifdef PARALLEL
-char *scanbuf;		/*** Output buffering, for parallelism */
+extern char *scanbuf;		/*** Output buffering, for parallelism */
 #endif
 #endif
 
