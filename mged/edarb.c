@@ -1062,8 +1062,14 @@ char	**argv;
 	/* get it done */
 	newedge = 1;
 	editarb( slope );
+#if 1
+	sedit();
+	return TCL_OK;
+#else
 	sedraw++;
+
 	return TCL_ERROR;
+#endif
 }
 
 
