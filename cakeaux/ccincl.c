@@ -37,6 +37,18 @@ int	rflag = FALSE;
 int	fflag = FALSE;
 int	errorcount = 0;
 
+
+/*
+**	Tell the unfortunate user how to use ccincl.
+*/
+
+void
+usage()
+{
+	printf("Usage: ccincl [-rf] [-ifile] [-sfile] [-Cdir] [-Idir] ... file ...\n");
+	exit(1);
+}
+
 main(argc, argv)
 int	argc;
 char	**argv;
@@ -161,6 +173,7 @@ nextword:
 	exit(errorcount);
 }
 
+void
 process(line)
 register	char	*line;
 {
@@ -302,14 +315,4 @@ end:
 
 		search_list[filecount] = TRUE;
 	}
-}
-
-/*
-**	Tell the unfortunate user how to use ccincl.
-*/
-
-usage()
-{
-	printf("Usage: ccincl [-rf] [-ifile] [-sfile] [-Cdir] [-Idir] ... file ...\n");
-	exit(1);
 }

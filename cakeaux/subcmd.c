@@ -13,6 +13,17 @@ rcs_id[] = "$Header$";
 
 char	var_char = 'X';
 
+
+/*
+**	Tell the unfortunate user how to use subcmd.
+*/
+void
+usage()
+{
+	printf("Usage: subcmd [-fginz] [-vX] cmd oldpattern newpattern files ...\n");
+	exit(1);
+}
+
 main(argc, argv)
 int	argc;
 char	**argv;
@@ -124,16 +135,6 @@ nextword:
 		pclose(csh);
 
 	exit(ignore? 0: unmatched);
-}
-
-/*
-**	Tell the unfortunate user how to use subcmd.
-*/
-
-usage()
-{
-	printf("Usage: subcmd [-fginz] [-vX] cmd oldpattern newpattern files ...\n");
-	exit(1);
 }
 
 /*

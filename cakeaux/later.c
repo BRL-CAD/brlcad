@@ -14,6 +14,18 @@ typedef	struct	stat	Stat;
 
 char	scratchbuf[128];
 
+
+/*
+**	Tell the unfortunate user how to use later.
+*/
+
+void
+usage()
+{
+	printf("Usage: later [-cs] reffile file ...\n");
+	exit(1);
+}
+
 main(argc, argv)
 int	argc;
 char	**argv;
@@ -82,14 +94,4 @@ char	**argv;
 	}
 
 	exit(count? n: 0);
-}
-
-/*
-**	Tell the unfortunate user how to use later.
-*/
-
-usage()
-{
-	printf("Usage: later [-cs] reffile file ...\n");
-	exit(1);
 }
