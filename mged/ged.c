@@ -68,12 +68,6 @@ extern int	close(), dup(), execl(), fork(), getuid(), open(), pipe(),
 		unlink(), write();
 extern long	time();
 
-#ifdef BSD
-extern char	*sprintf();
-#else
-extern int	sprintf();
-#endif
-
 struct db_i	*dbip;			/* database instance pointer */
 
 struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */

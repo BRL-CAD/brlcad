@@ -75,7 +75,6 @@ static char *units_str[] = {
 void	conversions();
 void	killtree();
 
-static void file_put();
 static void printnode();
 
 extern int numargs, maxargs;		/* defined in cmd.c */
@@ -710,6 +709,9 @@ f_tree() {
 	}
 }
 
+/*
+ *			P R I N T N O D E
+ */
 static void
 printnode( dp, pathpos, cont )
 register struct directory *dp;
@@ -887,6 +889,9 @@ f_killtree()
 	}
 }
 
+/*
+ *			K I L L T R E E
+ */
 void
 killtree( dbip, dp )
 struct db_i	*dbip;
