@@ -1,37 +1,28 @@
-/******conv/dbupgrade.c
+/*                     D B U P G R A D E . C
+ * BRL-CAD
  *
- *	NAME
- *		dbupgrade: program to upgrade database files to the current version
+ * Copyright (c) 2004 United States Government as represented by the
+ * U.S. Army Research Laboratory.
  *
- *      COPYRIGHT
- *               Re-distribution of this software is restricted, as described in your
- *               "Statement of Terms and Conditions for the Release of The BRL-CAD
- *               Package" agreement.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
  *
- *               Portions of this software and the associated databases and images are
- *               Copyright (C) 1985, 1986, 1987, 1988, 1989, 1991, 1994, 1995, 2000, 2001
- *               by the United States Army in all countries except the USA. Unauthorized
- *               redistribution in any form is prohibited. Recipients of this
- *               distribution are authorized unlimited use within their corporation,
- *               organization, or agency.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  *
- *               The mark "BRL-CAD" is a Registered Trademark of the United States Army.
- *               All rights reserved.
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
  *
- *               There is no warranty or other guarantee of fitness for this software,
- *               it is provided solely "as is".  Bug reports or fixes must be sent
- *               to ARL, which may or may not act on them.
+ **//** @file dbupgrade.c
  *
- *               This software was developed by and is proprietary to the United States
- *               Government, and any use of the software without the written permission
- *               of the US Army Research Laboratory is strictly prohibited. Any
- *               unauthorized use of the software will be construed as an infringement of
- *               the Government's rights and will subject the unauthorized user to
- *               action(s) for infringement damages. (BRL MFR 380-15, Feb-88)
+ *	This is a program to upgrade database files to the current
+ *	version.
  *
- *               The software in the "contributed" directory is Public Domain, Distribution
- *               Unlimited.  In addition, certain other modules in the BRL-CAD package
- *               bear this designation.  Files so marked are available for unlimited use.
  *	USAGE
  *		dbupgrade input.g output.g
  *
