@@ -4132,6 +4132,18 @@ int		share_geom;
 			/* Make eu1 share geom with oldeu, eu2 with oldeumate */
 			nmg_use_edge_g( eu1, oldeu->g.magic_p );
 			nmg_use_edge_g( eu2, oldeumate->g.magic_p );
+		} else {
+			/* Make eu2 use same geometry as oldeu */
+			nmg_use_edge_g( eu2, oldeu->g.magic_p );
+			/* Now release geometry from oldeumate;  new edge has no geom */
+			BU_LIST_DEQUEUE( &oldeumate->l2 );
+			nmg_keg( oldeumate );
+			BU_LIST_DEQUEUE( &eu1->l2 );
+			nmg_keg( eu1 );
+			BU_LIST_INIT( &oldeumate->l2 );
+			BU_LIST_INIT( &eu1->l2 );
+			oldeumate->l2.magic = NMG_EDGEUSE2_MAGIC;
+			eu1->l2.magic = NMG_EDGEUSE2_MAGIC;
 		}
 		goto out;
 	}
@@ -4237,10 +4249,17 @@ int		share_geom;
 		/* Make eu2 share same geometry as oldeumate */
 		nmg_use_edge_g( eu2, oldeumate->g.magic_p );
 	} else {
-		/* Make eu2 use same geometry as oldeumate */
-		nmg_use_edge_g( eu2, oldeumate->g.magic_p );
+		/* Make eu2 use same geometry as oldeu */
+		nmg_use_edge_g( eu2, oldeu->g.magic_p );
 		/* Now release geometry from oldeumate;  new edge has no geom */
+		BU_LIST_DEQUEUE( &oldeumate->l2 );
 		nmg_keg( oldeumate );
+		BU_LIST_DEQUEUE( &eu1->l2 );
+		nmg_keg( eu1 );
+		BU_LIST_INIT( &oldeumate->l2 );
+		BU_LIST_INIT( &eu1->l2 );
+		oldeumate->l2.magic = NMG_EDGEUSE2_MAGIC;
+		eu1->l2.magic = NMG_EDGEUSE2_MAGIC;
 	}
 	if( oldeu->g.magic_p != oldeu->eumate_p->g.magic_p )  rt_bomb("nmg_eusplit() unshared geom\n");
 
