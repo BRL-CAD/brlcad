@@ -319,8 +319,8 @@ $c WITHOUT ANY WARRANTY; without even the implied warranty of
 $c MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 $c Library General Public License for more details.
 $c
-$c You should have received a copy of the GNU General Public License
-$c along with this file; see the file named COPYING for more
+$c You should have received a copy of the GNU Library General Public
+$c License along with this file; see the file named COPYING for more
 $c information.
 "
         ;;
@@ -349,8 +349,8 @@ $c Version 1.2 or any later version published by the Free Software
 $c Foundation; with no Invariant Sections, no Front-Cover Texts, and
 $c no Back-Cover Texts.
 $c
-$c You should have received a copy of the GNU General Public License
-$c along with this file; see the file named COPYING for more
+$c You should have received a copy of the GNU Free Documentation
+$c License along with this file; see the file named COPYING for more
 $c information.
 "
         ;;
@@ -560,6 +560,19 @@ case "$lineone" in
 	;;
     \#include*)
         echo "found code"
+	skip=0
+	closeit=1
+	;;
+    \#*${title})
+        echo "Found old file header"
+	skip=2
+	;;
+    \#*${titlesansext})
+        echo "Found old file header sans extension"
+	skip=2
+	;;
+    \#*)
+        echo "found comment line"
 	skip=0
 	closeit=1
 	;;
