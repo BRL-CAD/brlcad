@@ -40,6 +40,7 @@
 
 #define PLOT_OBJ	plot3.o htond.o
 
+/* Oddly, this line needs to be present to keep IBM AIX cpp happy. */
 #ifdef FAST_SQRT
 #	define	EXTRA_OBJ	FAST_SQRT PLOT_OBJ NURB_OBJ
 #else
