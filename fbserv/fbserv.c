@@ -1,5 +1,5 @@
 /*
- *	R L I B F B . C
+ *		R F B D . C
  *
  *  Remote libfb server.
  *
@@ -24,78 +24,43 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>		/* For htonl(), etc */
+/* #include <netinet/in.h>		/* For htonl(), etc XXX */
 #include <syslog.h>
-#include	"./pkg.h"
-#include	"./pkgtypes.h"
+
 #include "fb.h"
+#include "./pkg.h"
+#include "./pkgtypes.h"
 
-char	*malloc();
+extern	char	*malloc();
+extern	double	atof();
 
-/*
- * Package Handlers.
- */
-int pkgfoo();	/* foobar message handler */
-int rfbopen(), rfbclose(), rfbclear(), rfbread(), rfbwrite(), rfbcursor();
-int rfbwindow(), rfbzoom(), rfbgetsize(), rfbsetsize(), rfbsetbackground();
-int rfbrmap(), rfbwmap();
-int rfbioinit(), rfbwpixel();
-int rpagein(), rpageout();
-struct pkg_switch pkg_switch[] = {
-	{ MSG_FBOPEN,	rfbopen,	"Open Framebuffer" },
-	{ MSG_FBCLOSE,	rfbclose,	"" },
-	{ MSG_FBCLEAR,	rfbclear,	"Clear Framebuffer" },
-	{ MSG_FBREAD,	rfbread,	"Read Pixels" },
-	{ MSG_FBWRITE,	rfbwrite,	"Write Pixels" },
-	{ MSG_FBWRITE + MSG_NORETURN,	rfbwrite,	"Asynch write" },
-	{ MSG_FBCURSOR,	rfbcursor,	"" },
-	{ MSG_FBWINDOW,	rfbwindow,	"" },
-	{ MSG_FBZOOM,	rfbzoom,	"" },
-	{ MSG_FBGETSIZE,rfbgetsize,	"" },
-	{ MSG_FBSETSIZE,rfbsetsize,	"" },
-	{ MSG_FBSETBACKG,rfbsetbackground,"" },
-	{ MSG_FBRMAP,	rfbrmap,	"" },
-	{ MSG_FBWMAP,	rfbwmap,	"" },
-	{ MSG_FBIOINIT,	rfbioinit,	"" },
-	{ MSG_ERROR,	pkgfoo,		"Error Message" },
-	{ MSG_CLOSE,	pkgfoo,		"Close Connection" },
-	{ MSG_PAGEIN,	rpagein,	"Get buffer page" },
-	{ MSG_PAGEOUT,	rpageout,	"Put buffer page" }
-};
-int pkg_swlen = 19;
+static	FBIO	*fbp;
+static	int	netfd;
 
-static	int	cur_fd;
-
-#ifdef NEVER
-/* Buffered IO variables */
-extern	char	*_pagep;
-extern	int	_pagesz;
-extern	int	_pageno;
-#endif NEVER
-
-extern double atof();
-
-main(argc, argv)
+main( argc, argv )
 int argc; char **argv;
 {
-	register int i;
 	int on = 1;
 
 #ifdef NEVER
-	/* Listen for our PKG connections */
+	/*
+	 * Listen for PKG connections.
+	 * This is what we would do if we weren't being started
+	 * by inetd (plus some other code that's been removed...).
+	 */
 	if( (tcp_listen_fd = pkg_initserver("rlibfb", 0)) < 0 )
 		exit(1);
 #endif
-	if (setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof (on)) < 0) {
-		openlog(argv[0], LOG_PID, 0);
-		syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
+	if( setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
+		openlog( argv[0], LOG_PID, 0 );
+		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
 	}
 
 	(void)signal( SIGPIPE, SIG_IGN );
 
-	cur_fd = 0;
+	netfd = 0;
 
-	while( pkg_block(cur_fd) > 0 )
+	while( pkg_block(netfd) > 0 )
 		;
 
 	exit(0);
@@ -104,31 +69,35 @@ int argc; char **argv;
 /*
  *			E R R L O G
  *
- *  Log an error.  We supply the newline, and route to user.
+ *  Log an error.  Route it to user.
  */
-/* VARARGS */
-void
-errlog( str, a, b, c, d, e, f, g, h )
+static void
+errlog( str )
 char *str;
 {
-	char buf[256];		/* a generous output line */
-
 #ifdef TTY
-	(void)fprintf( stderr, str, a, b, c, d, e, f, g, h );
-#endif TTY
+	(void)fprintf( stderr, "%s\n", str );
+#else
+	pkg_send( MSG_ERROR, str, strlen(str), netfd );
+#endif
 }
 
+/*
+ * This is where we go for message types we don't understand.
+ */
 pkgfoo(type, buf, length)
 int type, length;
 char *buf;
 {
 	register int i;
+	char str[256];
 
 	for( i=0; i<pkg_swlen; i++ )  {
 		if( pkg_switch[i].pks_type == type )  break;
 	}
-	errlog("rlibfb: unable to handle %s message: len %d\n",
-		pkg_switch[i].pks_title, length);
+	sprintf( str, "rlibfb: unable to handle %s message: len %d\n",
+		pkg_switch[i].pks_title, length );
+	errlog( str );
 	*buf = '*';
 	(void)free(buf);
 }
@@ -139,48 +108,51 @@ rfbopen(type, buf, length)
 int type, length;
 char *buf;
 {
-	int	mode, size, ret;
-/*char s[50];*/
+	int	height, width;
+	long	ret;
 
-	mode = ntohl( *(long *)(&buf[0]) );
-	size = ntohl( *(long *)(&buf[4]) );
+	height = ntohl( *(long *)(&buf[0]) );
+	width = ntohl( *(long *)(&buf[4]) );
 
-	(void)fbsetsize( size );	/* XXX - should return any error */
-					/*       as an async message */
 	if( strlen(&buf[8]) == 0 )
-		ret = fbopen( 0L, mode );
+		fbp = fb_open( NULL, height, width );
 	else
-		ret = fbopen( &buf[8], mode );
+		fbp = fb_open( &buf[8], height, width );
 
-/*sprintf( s, "Device: \"%s\"", &buf[8] );*/
-/*pkg_send( MSG_ERROR, s, strlen(s), cur_fd );*/
+#if 0
+	{	char s[81];
+sprintf( s, "Device: \"%s\"", &buf[8] );
+errlog(s);
+	}
+#endif
+	ret = fbp == FBIO_NULL ? -1 : 0;
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
 }
 
-/* NB: This is supposed to take an fd arg! */
 rfbclose(type, buf, length)
 int type, length;
 char *buf;
 {
-	int	ret;
+	long	ret;
 
-	ret = fbclose( 0 );
+	ret = fb_close( fbp );
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
+	fbp = FBIO_NULL;
 }
 
 rfbclear(type, buf, length)
 int type, length;
 char *buf;
 {
-	int	ret;
+	long	ret;
 
-	ret = fbclear();
+	ret = fb_clear( fbp, PIXEL_NULL );
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
 }
 
@@ -188,25 +160,36 @@ rfbread(type, buf, length)
 int type, length;
 char *buf;
 {
-	int	x, y, num, ret;
-	char	dat[10000];
+	int	x, y, num;
+	long	ret;
+	static char	*rbuf = NULL;
+	static int	buflen = 0;
 
 	x =  ntohl( *(long *)(&buf[0]) );
 	y =  ntohl( *(long *)(&buf[4]) );
 	num =  ntohl( *(long *)(&buf[8]) );
 
-	if( num > 10000/4 ) {
-		pkg_send( MSG_ERROR, "fbread: too many bytes!", 24, cur_fd );
-		num = 10000/4;
+	if( num > buflen ) {
+		if( rbuf != NULL )
+			free( rbuf );
+		buflen = num*sizeof(Pixel);
+		if( buflen < 1024*sizeof(Pixel) )
+			buflen = 1024*sizeof(Pixel);
+		if( (rbuf = malloc( buflen )) == NULL ) {
+			errlog("fb_read: malloc failed!");
+			if( buf ) (void)free(buf);
+			buflen = 0;
+			return;
+		}
 	}
 
-	ret = fbread( x, y, &dat[0], num );
+	ret = fb_read( fbp, x, y, rbuf, num );
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 
 	/* Send back the data */
 	if( ret >= 0 )
-		pkg_send( MSG_DATA, &dat[0], num*4, cur_fd );
+		pkg_send( MSG_DATA, rbuf, num*sizeof(Pixel), netfd );
 	if( buf ) (void)free(buf);
 }
 
@@ -214,7 +197,8 @@ rfbwrite(type, buf, length)
 int type, length;
 char *buf;
 {
-	int	x, y, num, ret;
+	int	x, y, num;
+	long	ret;
 	char	*datap;
 
 	x =  ntohl( *(long *)(&buf[0]) );
@@ -223,12 +207,12 @@ char *buf;
 
 	/* Get space, fetch data into it, do write, free space. */
 	datap = malloc( num*4 );
-	pkg_waitfor( MSG_DATA, datap, num*4, cur_fd );
-	ret = fbwrite( x, y, datap, num );
+	pkg_waitfor( MSG_DATA, datap, num*4, netfd );
+	ret = fb_write( fbp, x, y, datap, num );
 
 	if( type < MSG_NORETURN ) {
 		ret = htonl( ret );
-		pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+		pkg_send( MSG_RETURN, &ret, 4, netfd );
 	}
 	free( datap );
 	if( buf ) (void)free(buf);
@@ -239,15 +223,15 @@ int type, length;
 char *buf;
 {
 	int	mode, x, y;
-	int	ret;
+	long	ret;
 
 	mode =  ntohl( *(long *)(&buf[0]) );
 	x =  ntohl( *(long *)(&buf[4]) );
 	y =  ntohl( *(long *)(&buf[8]) );
 
-	ret = fbcursor(mode, x, y);
+	ret = fb_cursor( fbp, mode, x, y );
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
 }
 
@@ -256,14 +240,14 @@ int type, length;
 char *buf;
 {
 	int	x, y;
-	int	ret;
+	long	ret;
 
 	x =  ntohl( *(long *)(&buf[0]) );
 	y =  ntohl( *(long *)(&buf[4]) );
 
-	ret = fbwindow(x, y);
+	ret = fb_window( fbp, x, y );
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
 }
 
@@ -272,17 +256,18 @@ int type, length;
 char *buf;
 {
 	int	x, y;
-	int	ret;
+	long	ret;
 
 	x =  ntohl( *(long *)(&buf[0]) );
 	y =  ntohl( *(long *)(&buf[4]) );
 
-	ret = fbzoom(x, y);
+	ret = fb_zoom( fbp, x, y );
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
 }
 
+#ifdef NEVER	XXX
 /* void */
 rfbsetsize(type, buf, length)
 int type, length;
@@ -292,7 +277,7 @@ char *buf;
 
 	size =  ntohl( *(long *)(&buf[0]) );
 
-	fbsetsize( size );
+	fb_setsize( size );
 	if( buf ) (void)free(buf);
 }
 
@@ -300,11 +285,11 @@ rfbgetsize(type, buf, length)
 int type, length;
 char *buf;
 {
-	int	ret;
+	long	ret;
 
-	ret = fbgetsize();
+	ret = fb_getsize( fbp );
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
 }
 
@@ -312,25 +297,26 @@ rfbsetbackground(type, buf, length)
 int type, length;
 char *buf;
 {
-	int	ret;
+	long	ret;
 
-	ret = fbsetbackground( buf );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	fb_setbackground( fbp, ((Pixel *) buf) );
+	ret = htonl( 0 );	/* Should NOT return value.	*/
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
 }
+#endif NEVER
 
 rfbrmap(type, buf, length)
 int type, length;
 char *buf;
 {
-	int	ret;
+	long	ret;
 	ColorMap map;
 
-	ret = fb_rmap( &map );
-	pkg_send( MSG_DATA, &map, sizeof(map), cur_fd );
+	ret = fb_rmap( fbp, &map );
+	pkg_send( MSG_DATA, &map, sizeof(map), netfd );
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
 }
 
@@ -338,65 +324,14 @@ rfbwmap(type, buf, length)
 int type, length;
 char *buf;
 {
-	int	ret;
+	long	ret;
 
 	if( length == 0 )
-		ret = fb_wmap( 0 );
+		ret = fb_wmap( fbp, COLORMAP_NULL );
 	else
-		ret = fb_wmap( buf );
+		ret = fb_wmap( fbp, buf );
 
 	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
+	pkg_send( MSG_RETURN, &ret, 4, netfd );
 	if( buf ) (void)free(buf);
-}
-
-/*
- * XXX - we eventually have to give PAGE_SIZE back to remote.
- */
-rfbioinit(type, buf, length)
-int type, length;
-char *buf;
-{
-	fbioinit();
-	if( buf ) (void)free(buf);
-}
-
-/*
- * We get _pageno from remote.
- */
-rpageout(type, buf, length)
-int type, length;
-char *buf;
-{
-	long	ret;
-
-	_pageno = ntohl( *(long *)(&buf[0]) );
-
-	/* Get page data */
-	pkg_waitfor( MSG_DATA, _pagep, _pagesz, cur_fd );
-
-	ret = _pageout();
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
-
-	if( buf ) (void)free(buf);
-}
-
-/*
- * We get pageno from remote.
- */
-rpagein(type, buf, length)
-int type, length;
-char *buf;
-{
-	long	ret;
-	int	pageno;
-
-	pageno = ntohl( *(long *)(&buf[0]) );
-	ret = _pagein( pageno );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, cur_fd );
-
-	if( ntohl(ret) >= 0 )
-		pkg_send( MSG_DATA, _pagep, _pagesz, cur_fd );
 }
