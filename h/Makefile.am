@@ -6,9 +6,11 @@ brlcadinclude_HEADERS = \
 	XtndRunsv.h \
 	anim.h \
 	bn.h \
+	brlregex.h \
 	bu.h \
 	cmd.h \
 	compat4.h \
+	config.h \
 	db.h \
 	db5.h \
 	dm-Null.h \
@@ -50,7 +52,6 @@ brlcadinclude_HEADERS = \
 	pyramid.h \
 	raytrace.h \
 	redblack.h \
-	brlregex.h \
 	rle.h \
 	rle_code.h \
 	rle_config.h \
@@ -82,6 +83,5 @@ brlcadinclude_HEADERS = \
 	vmath.h \
 	wdb.h \
 	zconf.h \
-	zlib.h \
-	config.h
+	zlib.h
 
