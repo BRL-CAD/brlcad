@@ -9,6 +9,7 @@
  * Authors -
  *	Keith Applin
  *	Gary Kuehl
+ *	Michael John Muuss
  *  
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -30,11 +31,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ged.h"
 #include "dm.h"
 
-static void	cpoint(), dwreg(), ellin(),
-		solin(), solpl(), tgcin(), tplane();
-static int	arbn_shot(), cgarbs(), gap(), region();
+HIDDEN void	cpoint(), dwreg(), ell_arbn(), tgc_arbn(), tplane();
+HIDDEN int	arbn_shot(), cgarbs(), gap(), region();
 
-static union record input;		/* Holds an object file record */
 
 /* following variables are used in processing regions
  *  for producing edge representations
@@ -56,8 +55,8 @@ static float	peq[NPLANES*4];		/* plane equations for EACH region */
 static float	solrpp[NMEMB*6];	/* enclosing RPPs for each member of the region */
 static float	regi[NMEMB], rego[NMEMB];	/* distances along ray where ray enters and leaves the region */
 static float	pcenter[3];		/* center (interior) point of a solid */
-static float	xb[3];			/* starting point of ray */
-static float	wb[3];			/* direction cosines of ray */
+static float	r_pt[3];			/* starting point of ray */
+static float	r_dir[3];			/* direction cosines of ray */
 static float	rin, rout;		/* location where ray enters and leaves a solid */
 static float	ri, ro;			/* location where ray enters and leaves a region */
 static float	tol;			/* tolerance */
@@ -87,11 +86,11 @@ int flag, more;
 	register float *op;	/* Used for scanning vectors */
 	static vect_t	work;		/* Vector addition work area */
 	static int length, type;
-	static int uvec[8], svec[11];
 	static int cgtype;
 	static int j;
 	static float	sol_min[3], sol_max[3];
 	static float a,b,c,d,v1,v2,vt,vb;
+	static union record input;	/* Holds an object file record */
 
 	input = *recordp;		/* struct copy */
 
@@ -126,17 +125,14 @@ int flag, more;
 	switch( cgtype )  {
 
 	case GENARB8:
-		length = 8;
-		/* common area for arbs */
 		MAT4X3PNT( work, xform, &input.s.s_values[0] );
 		VMOVE( &input.s.s_values[0], work );
 		VMOVE(&m_param[param_count], &input.s.s_values[0]);
 		param_count += 3;
 		op = &input.s.s_values[1*3];
-		for( i=1; i<length; i++ )  {
+		for( i=1; i<8; i++ )  {
 			MAT4X3VEC( work, xform, op );
-			VADD2(op, input.s.s_values, work);
-			VMOVE(&m_param[param_count], op);
+			VADD2(&m_param[param_count], input.s.s_values, work);
 			param_count += 3;
 			op += 3;
 		}
@@ -152,15 +148,13 @@ int flag, more;
 	case GENTGC:
 		op = &recordp->s.s_values[0*3];
 		MAT4X3PNT( work, xform, op );
-		VMOVE( op, work );
-		VMOVE(&m_param[param_count], op);
+		VMOVE(&m_param[param_count], work);
 		param_count += 3;
 		op += 3;
 
 		for( i=1; i<6; i++ )  {
 			MAT4X3VEC( work, xform, op );
-			VMOVE( op, work );
-			VMOVE(&m_param[param_count], op);
+			VMOVE(&m_param[param_count], work);
 			param_count += 3;
 			op += 3;
 		}
@@ -190,8 +184,7 @@ int flag, more;
 
 		for( i=1; i<4; i++ )  {
 			MAT4X3VEC( work, xform, op );
-			VMOVE( op, work );
-			VMOVE(&m_param[param_count], op);
+			VMOVE(&m_param[param_count], work);
 			param_count += 3;
 			op += 3;
 		}
@@ -264,12 +257,10 @@ int flag, more;
  *	  4. cpoint()	finds point of intersection of three planes
  *	  6. tplane()	tests if plane is inside enclosing rpp
  *	  7. arbn_shot()	finds intersection of ray with an arb
- *	  8. tgcin()	converts tgc to arbn
- *	  9. ellin()	converts ellg to arbn
- *	 12. solpl()	process solids to arbn's
- *
+ *	  8. tgc_arbn()	converts tgc to arbn
+ *	  9. ell_arbn()	converts ellg to arbn
  */
-static void
+HIDDEN void
 dwreg()
 {
 	register int i,j;
@@ -283,6 +274,9 @@ dwreg()
 	static int lmemb, umemb;/* lower and upper limit of members of region
 				 * from one OR to the next OR */
 	static float *savesp;
+	static float tt;
+	static int ls;
+	static float *pp;
 
 	lmemb = 0;
 	savesp = &m_param[0];
@@ -301,9 +295,56 @@ orregion:	/* sent here if region has or's */
 	}
 	tol=tol*0.00001;
 
-	/* find planes for each solid */
+	/* convert all solids to ARBNs */
 	sp = savesp;
-	solpl(lmemb,umemb);
+	lc=0;
+	tt=tol*10.;
+	for(id=lmemb;id<umemb;id++){
+		ls=lc;
+		switch( m_type[id] )  {
+		case GENARB8:
+			for(i=0;i<3;i++){
+				register float ppc;
+				register int k;
+				k=i;
+				ppc=0.0;
+				for(j=0; j<8; j++) {
+					ppc += *(sp+k);
+					k+=3;
+				}
+				pcenter[i]=ppc/8.;
+			}
+#define P(x)	(sp+3*x)
+			tplane( P(0),P(1),P(2),P(3) );
+			tplane( P(4),P(5),P(6),P(7) );
+			tplane( P(0),P(4),P(7),P(3) );
+			tplane( P(1),P(2),P(6),P(5) );
+			tplane( P(0),P(1),P(5),P(4) );
+			tplane( P(3),P(2),P(6),P(7) );
+#undef P
+			sp += 8*3;
+			break;
+		case GENTGC:
+			tgc_arbn();
+			sp+=18;
+			break;
+		case GENELL:
+			ell_arbn();
+			sp+=12;
+			break;
+		}
+
+		if(m_op[id]=='-'){
+			pp = &peq[4*ls]+3;
+			while(ls++ < lc) {
+				*pp-=tt;
+				pp+=4;
+			}
+		}
+
+		mlc[id]=lc-1;
+	}
+
 	/* save the parameter pointer in case region has ORs */
 	savesp = sp;
 
@@ -312,7 +353,7 @@ orregion:	/* sent here if region has or's */
 		c1[(i*4)+3]=reg_min[i];
 	l=0;
 
-	/* id loop processes all member to the next OR */
+	/* process all members until the next OR */
 	for(id=lmemb; id<umemb; id++) {
 		if(mlc[id] < l)
 			goto skipid;
@@ -363,21 +404,21 @@ noskip:
 					/* planes not parallel */
 					/* compute direction vector for ray
 					 * perpendicular to both plane normals */
-					VCROSS(wb,&peq[i*4],&peq[j*4]);
-					VUNITIZE( wb );
+					VCROSS(r_dir,&peq[i*4],&peq[j*4]);
+					VUNITIZE( r_dir );
 
 					k=0;
-					if(fabs(wb[1]) > fabs(wb[0])) k=1;
-					if(fabs(wb[2]) > fabs(wb[k])) k=2;
-					if(wb[k] < 0.0)  {
-						VREVERSE( wb, wb );
+					if(fabs(r_dir[1]) > fabs(r_dir[0])) k=1;
+					if(fabs(r_dir[2]) > fabs(r_dir[k])) k=2;
+					if(r_dir[k] < 0.0)  {
+						VREVERSE( r_dir, r_dir );
 					}
 
 					/* starting point for this ray:
 					 * intersection of two planes (line),
 					 * and closest min RPP bound plane.
 					 */
-					cpoint(xb,&c1[k*4],&peq[i*4],&peq[j*4]);
+					cpoint(r_pt,&c1[k*4],&peq[i*4],&peq[j*4]);
 
 					/* check if ray intersects region */
 					if( (k=region(lmemb,umemb))<=0)
@@ -387,8 +428,8 @@ noskip:
 					/* plot this ray  including gaps */
 					for(n=0; n<k; n++){
 						static float pi[3],po[3];
-						VJOIN1( pi, xb, regi[n], wb );
-						VJOIN1( po, xb, rego[n], wb );
+						VJOIN1( pi, r_pt, regi[n], r_dir );
+						VJOIN1( po, r_pt, rego[n], r_dir );
 						DM_GOTO( pi, PEN_UP);
 						DM_GOTO( po, PEN_DOWN);
 					}
@@ -408,12 +449,11 @@ skipid:
 		goto orregion;
 
 	nmemb = 0;
-	/* The finishing touches are done by drawHsolid() */
 }
 
 
 /* put gaps into region line */
-static int
+HIDDEN int
 gap(si,so)
 float si,so;
 {
@@ -503,27 +543,27 @@ back:		/* gap ends after end of ray */
  *   	returns ngaps+1	if intersection
  *	        0	if no intersection
  */
-static int
+HIDDEN int
 region(lmemb,umemb)
 {
 	register int	i, kd;
-	static float s1[3],s2[3];
-	static float a1, a2;
+	static double s1[3],s2[3];
+	static double a1, a2;
 
 	ngaps=0;
 	ri = -1.0 * pinf;
 	ro=pinf;
 
 	/* does ray intersect region rpp */
-	VSUB2( s1, reg_min, xb );
-	VSUB2( s2, reg_max, xb );
+	VSUB2( s1, reg_min, r_pt );
+	VSUB2( s2, reg_max, r_pt );
 
 	/* find start & end point of ray with enclosing rpp */
 	for(i=0;i<3;i++){
-		if(fabs(wb[i])>.001){
-			a1=s1[i]/wb[i];
-			a2=s2[i]/wb[i];
-			if(wb[i] <= 0.){
+		if(fabs(r_dir[i])>.001){
+			a1=s1[i]/r_dir[i];
+			a2=s2[i]/r_dir[i];
+			if(r_dir[i] <= 0.){
 				if(a1<tol) return(0);
 				MAX(ri,a2);
 				MIN(ro,a1);
@@ -587,12 +627,12 @@ region(lmemb,umemb)
  *  finds intersection of ray with an arbitrary convex polyhedron
  *  defined by enclosing half-spaces.
  */
-static int
+HIDDEN int
 arbn_shot()
 {
 	register float *pp;
 	static float *pend;
-	static float dxbdn,wbdn,te;
+	static double dxbdn,wbdn,te;
 
 	rin = ri;
 	rout = ro;
@@ -603,10 +643,10 @@ arbn_shot()
 
 	pend = &peq[lb*4];
 	for(pp = &peq[la*4]; pp <= pend; pp+=4){
-		dxbdn = pp[3]-VDOT(xb,pp);
-		wbdn=VDOT(wb,pp);
+		dxbdn = pp[3]-VDOT(r_pt,pp);
+		wbdn=VDOT(r_dir,pp);
 		if( wbdn < -0.001 || wbdn > 0.001 )  {
-			register float s;
+			static double s;
 
 			s=dxbdn/wbdn;
 			if(wbdn > 0.0) {
@@ -628,14 +668,14 @@ arbn_shot()
  *
  * computes point of intersection of three planes, answer in "point".
  */
-static void
+HIDDEN void
 cpoint(point,c1,c2,c3)
 float *point;
 register float *c1, *c2, *c3;
 {
-	static float v1[4], v2[4], v3[4];
+	static double v1[4], v2[4], v3[4];
 	register int i;
-	static float d;
+	static double d;
 
 	VCROSS(v1,c2,c3);
 	if((d=VDOT(c1,v1))==0)  {
@@ -656,7 +696,7 @@ static int arb_npts;
  *  Register a plane which contains the 4 specified points,
  *  unless they are degenerate, or lie outside the region RPP.
  */
-static void
+HIDDEN void
 tplane(p,q,r,s)
 float *p, *q, *r, *s;
 {
@@ -767,8 +807,8 @@ float *eqn, *point;
 }
 
 /* convert tgc to an arbn */
-static void
-tgcin()
+HIDDEN void
+tgc_arbn()
 {
 	static float vt[3], p[3], q[3], r[3], t[3];
 	static float s,sa,c,ca,sd=.38268343,cd=.92387953;
@@ -822,8 +862,8 @@ tgcin()
 
 
 /* convert ellg to an arbn */
-static void
-ellin()
+HIDDEN void
+ell_arbn()
 {
 	static float p[3], q[3], r[3], t[3];
 	static float s1,s2,sa,c1,c2,ca,sd=.5,cd=.8660254,sgn;
@@ -871,73 +911,5 @@ ellin()
 			s2=se;
 		}
 		sgn = -sgn;
-	}
-}
-
-/* converts all solids to ARBNs */
-static void
-solpl(lmemb,umemb)
-{
-	static float tt;
-	static int ls;
-	static float *pp,*p1,*p2,*p3,*p4;
-	register int i,j;
-	static int nfc[5]={4,5,5,6,6};
-	static int iv[5*24]={
-		 0,1,2,0, 3,0,1,0, 3,1,2,1, 3,2,0,0, 0,0,0,0, 0,0,0,0,
-		 0,1,2,3, 4,0,1,0, 4,1,2,1, 4,2,3,2, 4,3,0,0, 0,0,0,0,
-		 0,1,2,3, 1,2,5,4, 0,4,5,3, 4,0,1,0, 5,2,3,2, 0,0,0,0,
-		 0,1,2,3, 4,5,6,4, 0,3,4,0, 1,2,6,5, 0,1,5,4, 3,2,6,4,
-		 0,1,2,3, 4,5,6,7, 0,4,7,3, 1,2,6,5, 0,1,5,4, 3,2,6,7};
-
-	lc=0;
-	tt=tol*10.;
-	for(id=lmemb;id<umemb;id++){
-		ls=lc;
-		switch( m_type[id] )  {
-		case GENARB8:
-			{
-				register float ppc;
-				register int i,j,k;
-
-				for(i=0;i<3;i++){
-					k=i;
-					ppc=0.0;
-					for(j=0; j<8; j++) {
-						ppc += *(sp+k);
-						k+=3;
-					}
-					pcenter[i]=ppc/8.;
-				}
-			}
-			j=4*24;
-			for(i=0;i<nfc[4];i++){
-				p1=sp+iv[j++]*3;
-				p2=sp+iv[j++]*3;
-				p3=sp+iv[j++]*3;
-				p4=sp+iv[j++]*3;
-				tplane(p1,p2,p3,p4);
-			}
-			sp += 8*3;
-			break;
-		case GENTGC:
-			tgcin();
-			sp+=18;
-			break;
-		case GENELL:
-			ellin();
-			sp+=12;
-			break;
-		}
-
-		if(m_op[id]=='-'){
-			pp = &peq[4*ls]+3;
-			while(ls++ < lc) {
-				*pp-=tt;
-				pp+=4;
-			}
-		}
-
-		mlc[id]=lc-1;
 	}
 }
