@@ -108,8 +108,11 @@ struct partition *FinalHdp;	/* Heads final circ list */
 			APPEND_PT( pp, &PartHd );
 			goto done_weave;
 		}
-		if( fdiff(segp->seg_in.hit_dist, PartHd.pt_back->pt_outdist) > 0 )  {
-			/* Segment starts SIGNIFICANTLY beyond last partitions end */
+		if( segp->seg_in.hit_dist >= PartHd.pt_back->pt_outdist )  {
+			/*
+			 * Segment starts exactly at last partition's end,
+			 * or beyond last partitions end.  Make new partition.
+			 */
 			GET_PT_INIT( pp );
 			pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
 			pp->pt_inseg = segp;
@@ -126,26 +129,36 @@ struct partition *FinalHdp;	/* Heads final circ list */
 		for( pp=PartHd.pt_forw; pp != &PartHd; pp=pp->pt_forw ) {
 			register int i;		/* XXX */
 
-			if( fdiff(lasthit->hit_dist, pp->pt_outdist) > 0 )  {
-				/* Seg starts SIGNIFICANTLY after current
-				 * partition ends.
+			if( lasthit->hit_dist >= pp->pt_outdist )  {
+				/* Seg starts beyond the END of the
+				 * current partition.
 				 *	PPPP
-				 *	      SSSS
+				 *	        SSSS
+				 *
+				 * Or, Seg starts almost "precisely" at the
+				 * end of the current partition.
+				 *	PPPP
+				 *	    SSSS
+				 * Advance to next partition.
 				 */
-				continue;
+				 continue;
 			}
-			i = fdiff(lasthit->hit_dist, pp->pt_indist);
-			if( i == 0 )  {
+
+			/* Segment starts before current partition ends */
+			if( (i=fdiff(lasthit->hit_dist, pp->pt_indist)) == 0){
 equal_start:
 				/*
 				 * Segment and partition start at
 				 * (roughly) the same point.
+				 * When fuseing 2 points together
+				 * (ie, when fdiff()==0), the two
+				 * points MUST be forced to become
+				 * exactly equal!
 				 */
-				i = fdiff(segp->seg_out.hit_dist, pp->pt_outdist);
-				if( i == 0 )  {
+				if( (i = fdiff(segp->seg_out.hit_dist, pp->pt_outdist)) == 0 )  {
 					/*
-					 * Segment and partition end
-					 * (nearly) together
+					 * Segment and partition start & end
+					 * (nearly) together.
 					 *	PPPP
 					 *	SSSS
 					 */
@@ -154,7 +167,8 @@ equal_start:
 				}
 				if( i > 0 )  {
 					/*
-					 * Seg & partition start at same spot,
+					 * Seg & partition start at roughly
+					 * the same spot,
 					 * seg extends beyond partition end.
 					 *	PPPP
 					 *	SSSSSSSS
@@ -166,7 +180,9 @@ equal_start:
 					lastflip = 1;
 					continue;
 				}
-				/* Segment ends before partition ends
+				/*
+				 *  Segment + Partition start together,
+				 *  segment ends before partition ends.
 				 *	PPPPPPPPPP
 				 *	SSSSSS
 				 *	newpp| pp
@@ -197,14 +213,37 @@ equal_start:
 				newpp->pt_inseg = lastseg;
 				newpp->pt_inhit = lasthit;
 				newpp->pt_inflip = lastflip;
-				if( fdiff(segp->seg_out.hit_dist, pp->pt_indist) < 0 )  {
-					/* Seg ends SIGNIFICANTLY before partition starts */
+				if( segp->seg_out.hit_dist <= pp->pt_indist ){
+					/*
+					 * Seg starts and ends before current
+					 * partition, but after previous
+					 * partition ends (diff < 0).
+					 *		SSSS
+					 *	pppp		PPPPP...
+					 *		newpp	pp
+					 *
+					 * Seg starts before current
+					 * partition starts, and ends
+					 * at the start of the partition.
+					 * (diff == 0).
+					 *	SSSSSS
+					 *	     PPPPP
+					 *	newpp|pp
+					 */
 					newpp->pt_outseg = segp;
 					newpp->pt_outhit = &segp->seg_out;
 					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
 					goto done_weave;
 				}
+				/*
+				 *  Seg starts before current partition
+				 *  starts, and ends after the start of the
+				 *  partition.  (diff > 0).
+				 *	SSSSSSSSSS
+				 *	      PPPPPPP
+				 *	newpp| pp | ...
+				 */
 				newpp->pt_outseg = pp->pt_inseg;
 				newpp->pt_outhit = pp->pt_inhit;
 				newpp->pt_outflip = 1;
@@ -215,7 +254,9 @@ equal_start:
 				goto equal_start;
 			}
 			/*
-			 *	lasthit->hit_dist > pp->pt_indist
+			 * i > 0
+			 *
+			 * lasthit->hit_dist > pp->pt_indist
 			 *
 			 *  Segment starts after partition starts,
 			 *  but before the end of the partition.
