@@ -60,6 +60,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
+#include "./cmd.h"
 
 extern struct bn_tol mged_tol;
 

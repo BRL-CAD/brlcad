@@ -64,6 +64,7 @@ struct sol_name_dist
 };
 #define	SOL_NAME_DIST_MAGIC	0x736c6e64
 
+#if OLD_RPT
 /*
  *		S O L _  C O M P _ N A M E
  *
@@ -164,6 +165,8 @@ int	depth;
     Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
     bu_vls_free(&tmp_vls);
 }
+#endif /* OLD_RPT */
+
 
 /*
  *			    N O _ O P
@@ -194,7 +197,7 @@ struct solid	*sp;
     db_path_to_vls(vp, &sp->s_fullpath);
 }
 
-#if 0
+#if OLD_RPT
 /*
  *			R P T _ S O L I D S
  *

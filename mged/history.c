@@ -69,10 +69,11 @@ void history_journalize();
  */
 
 void
-history_record(cmdp, start, finish, status)
-struct bu_vls *cmdp;
-struct timeval *start, *finish;
-int status;   /* Either CMD_OK or CMD_BAD */
+history_record(
+	struct bu_vls *cmdp,
+	struct timeval *start,
+	struct timeval *finish,
+	int status)			   /* Either CMD_OK or CMD_BAD */
 {
     struct mged_hist *new_hist;
 
@@ -448,7 +449,7 @@ char **argv;
 }
 
 void
-history_setup()
+history_setup(void)
 {
     BU_LIST_INIT(&(mged_hist_head.l));
     curr_cmd_list->cl_cur_hist = &mged_hist_head;

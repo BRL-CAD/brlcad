@@ -46,9 +46,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "rtgeom.h"
 #include "wdb.h"
 
 #include "./ged.h"
@@ -2302,7 +2302,7 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
  *  Solid editing is completed only via sedit_accept() / sedit_reject().
  */
 void
-init_sedit()
+init_sedit(void)
 {
 	register int		type;
 	int			id;
@@ -2436,7 +2436,7 @@ init_sedit_vars()
  *  making a change to es_int or es_mat.
  */
 void
-replot_editing_solid()
+replot_editing_solid(void)
 {
   mat_t mat;
   register struct solid *sp;
@@ -2455,11 +2455,11 @@ replot_editing_solid()
  *
  */
 void
-transform_editing_solid(os, mat, is, free)
-struct rt_db_internal	*os;		/* output solid */
-CONST mat_t		mat;
-struct rt_db_internal	*is;		/* input solid */
-int			free;
+transform_editing_solid(
+	struct rt_db_internal	*os,		/* output solid */
+	const mat_t		mat,
+	struct rt_db_internal	*is,		/* input solid */
+	int			free)
 {
 	RT_CK_DB_INTERNAL( is );
 	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free, dbip, &rt_uniresource ) < 0 )
@@ -3352,7 +3352,7 @@ sedit()
 				tmp_ip.idb_type = ID_SKETCH;
 				tmp_ip.idb_ptr = (genptr_t)extr->skt;
 				tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
-				rt_sketch_ifree( &tmp_ip );
+				rt_db_free_internal( &tmp_ip, &rt_uniresource );
 			}
 
 			if( (dp=db_lookup( dbip, sketch_name, 0 )) == DIR_NULL )
@@ -5605,8 +5605,7 @@ sedit()
  *  to actually do the work.
  */
 void
-sedit_mouse( mousevec )
-CONST vect_t	mousevec;
+sedit_mouse( const vect_t mousevec )
 {
   vect_t pos_view;	 	/* Unrotated view space pos */
   vect_t pos_model;		/* Rotated screen space pos */
@@ -6221,7 +6220,7 @@ vect_t tvec;
 }
 
 void
-sedit_abs_scale()
+sedit_abs_scale(void)
 {
   fastf_t old_acc_sc_sol;
 
@@ -6250,8 +6249,7 @@ sedit_abs_scale()
  *  Object Edit
  */
 void
-objedit_mouse( mousevec )
-CONST vect_t	mousevec;
+objedit_mouse( const vect_t mousevec )
 {
   fastf_t			scale;
   vect_t	pos_view;	 	/* Unrotated view space pos */
@@ -6389,7 +6387,7 @@ point_t tvec;
 
 
 void
-oedit_abs_scale()
+oedit_abs_scale(void)
 {
   fastf_t scale;
   vect_t temp;
@@ -6459,10 +6457,7 @@ oedit_abs_scale()
  *			V L S _ S O L I D
  */
 void
-vls_solid( vp, ip, mat )
-register struct bu_vls		*vp;
-CONST struct rt_db_internal	*ip;
-CONST mat_t			mat;
+vls_solid( struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat )
 {
 	struct rt_db_internal	intern;
 	int			id;
@@ -6506,7 +6501,7 @@ CONST mat_t			mat;
 		}
 
 		if( ps == es_pipept )
-			vls_pipept( vp, seg_no, &intern, base2local );
+			rt_vls_pipept( vp, seg_no, &intern, base2local );
 	}
 
 	rt_db_free_internal( &intern, &rt_uniresource );
@@ -7388,7 +7383,7 @@ init_oedit_vars()
  *
  */
 void
-init_oedit()
+init_oedit(void)
 {
 	struct bu_vls		vls;
 
@@ -7465,7 +7460,7 @@ oedit_apply()
 }
 
 void
-oedit_accept()
+oedit_accept(void)
 {
 	register struct solid *sp;
 
@@ -7491,7 +7486,7 @@ oedit_accept()
 }
 
 void
-oedit_reject()
+oedit_reject(void)
 {
 	rt_db_free_internal(&es_int, &rt_uniresource);
 }
@@ -7565,7 +7560,6 @@ char	*argv[];
 }
 
 /* Hooks from buttons.c */
-void sedit_reject();
 
 /*
  * Copied from sedit_accept - modified to optionally leave
@@ -7643,7 +7637,7 @@ sedit_apply(accept_flag)
 }
 
 void
-sedit_accept()
+sedit_accept(void)
 {
 	if (dbip == DBI_NULL)
 		return;
@@ -7665,7 +7659,7 @@ sedit_accept()
 }
 
 void
-sedit_reject()
+sedit_reject(void)
 {
 	if( not_state( ST_S_EDIT, "Solid edit reject" ) )  return;
 
@@ -7927,13 +7921,13 @@ double	xangle, yangle, zangle;
  *  XXX This really should use import/export interface!!!  Or be part of it.
  */
 void
-label_edited_solid( num_lines, lines, pl, max_pl, xform, ip )
-int *num_lines;
-point_t *lines;
-struct rt_point_labels	pl[];
-int			max_pl;
-CONST mat_t		xform;
-struct rt_db_internal	*ip;
+label_edited_solid(
+	int *num_lines,
+	point_t *lines,
+	struct rt_point_labels	pl[],
+	int			max_pl,
+	const mat_t		xform,
+	struct rt_db_internal	*ip)
 {
 	register int	i;
 	point_t		work;
@@ -8445,11 +8439,11 @@ struct rt_db_internal	*ip;
  *	 0	OK
  */
 int
-rt_arb_calc_planes( planes, arb, type, tol )
-plane_t			planes[6];
-struct rt_arb_internal	*arb;
-int			type;
-CONST struct bn_tol	*tol;
+rt_arb_calc_planes(
+	plane_t			planes[6],
+	struct rt_arb_internal	*arb,
+	int			type,
+	const struct bn_tol	*tol)
 {
 	register int i, p1, p2, p3;
 
@@ -8481,8 +8475,7 @@ CONST struct bn_tol	*tol;
 
 /* -------------------------------- */
 void
-sedit_vpick( v_pos )
-point_t	v_pos;
+sedit_vpick( point_t v_pos )
 {
 	point_t	m_pos;
 	int	surfno, u, v;
@@ -8670,13 +8663,13 @@ CONST point_t			ref_pt;
  *	transformed into 2 space projection plane coordinates.
  */
 int
-nurb_closest2d(surface, uval, vval, spl, ref_pt, mat )
-int				*surface;
-int				*uval;
-int				*vval;
-CONST struct rt_nurb_internal	*spl;
-CONST point_t			ref_pt;
-CONST mat_t			mat;
+nurb_closest2d(
+	int				*surface,
+	int				*uval,
+	int				*vval,
+	const struct rt_nurb_internal	*spl,
+	const point_t			ref_pt,
+	const mat_t			mat)
 {
 	struct face_g_snurb	*srf;
 	point_t		ref_2d;

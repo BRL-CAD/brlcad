@@ -52,6 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 
 extern struct bn_tol		mged_tol;	/* from ged.c */
+
 void
 split_pipept( pipe_hd, ps, new_pt )
 struct bu_list *pipe_hd;
@@ -61,9 +62,7 @@ point_t new_pt;
 }
 
 void
-pipe_scale_od( db_int, scale )
-struct rt_db_internal *db_int;
-fastf_t scale;
+pipe_scale_od( struct rt_db_internal *db_int, fastf_t scale)
 {
 	struct wdb_pipept *ps;
 	struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -94,10 +93,9 @@ fastf_t scale;
 	for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 		ps->pp_od *= scale;
 }
+
 void
-pipe_scale_id( db_int, scale )
-struct rt_db_internal *db_int;
-fastf_t scale;
+pipe_scale_id( struct rt_db_internal *db_int, fastf_t scale )
 {
 	struct wdb_pipept *ps;
 	struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -134,9 +132,7 @@ fastf_t scale;
 }
 
 void
-pipe_seg_scale_od( ps, scale )
-struct wdb_pipept *ps;
-fastf_t scale;
+pipe_seg_scale_od( struct wdb_pipept *ps, fastf_t scale )
 {
 	fastf_t tmp_od;
 
@@ -165,10 +161,9 @@ fastf_t scale;
 	else
 		ps->pp_od = (-scale);
 }
+
 void
-pipe_seg_scale_id( ps, scale )
-struct wdb_pipept *ps;
-fastf_t scale;
+pipe_seg_scale_id( struct wdb_pipept *ps, fastf_t scale )
 {
 	fastf_t tmp_id;
 
@@ -197,9 +192,7 @@ fastf_t scale;
 }
 
 void
-pipe_seg_scale_radius( ps, scale )
-struct wdb_pipept *ps;
-fastf_t scale;
+pipe_seg_scale_radius( struct wdb_pipept *ps, fastf_t scale )
 {
 	fastf_t old_radius;
 	struct wdb_pipept *head;
@@ -234,9 +227,7 @@ fastf_t scale;
 }
 
 void
-pipe_scale_radius( db_int, scale )
-struct rt_db_internal *db_int;
-fastf_t scale;
+pipe_scale_radius( struct rt_db_internal *db_int, fastf_t scale )
 {
 	struct bu_list head;
 	struct wdb_pipept *old_ps,*new_ps;
@@ -318,9 +309,7 @@ fastf_t scale;
 
 
 struct wdb_pipept *
-find_pipept_nearest_pt( pipe_hd, pt )
-CONST struct bu_list *pipe_hd;
-CONST point_t pt;
+find_pipept_nearest_pt( const struct bu_list *pipe_hd, const point_t pt )
 {
 	struct wdb_pipept *ps;
 	struct wdb_pipept *nearest=(struct wdb_pipept *)NULL;
@@ -353,10 +342,7 @@ CONST point_t pt;
 }
 
 struct wdb_pipept *
-add_pipept( pipe, pp, new_pt )
-struct rt_pipe_internal *pipe;
-struct wdb_pipept *pp;
-CONST point_t new_pt;
+add_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt )
 {
 	struct wdb_pipept *last;
 	struct wdb_pipept *new;
@@ -410,10 +396,7 @@ CONST point_t new_pt;
 
 
 void
-ins_pipept( pipe, pp, new_pt )
-struct rt_pipe_internal *pipe;
-struct wdb_pipept *pp;
-CONST point_t new_pt;
+ins_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt )
 {
 	struct wdb_pipept *first;
 	struct wdb_pipept *new;
@@ -463,8 +446,7 @@ CONST point_t new_pt;
 }
 
 struct wdb_pipept *
-del_pipept( ps )
-struct wdb_pipept *ps;
+del_pipept( struct wdb_pipept *ps )
 {
 	struct wdb_pipept *next;
 	struct wdb_pipept *prev;
@@ -515,10 +497,7 @@ struct wdb_pipept *ps;
 }
 
 void
-move_pipept( pipe, ps, new_pt )
-struct rt_pipe_internal *pipe;
-struct wdb_pipept *ps;
-point_t new_pt;
+move_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *ps, const point_t new_pt )
 {
 	point_t old_pt;
 

@@ -1820,9 +1820,9 @@ char	**argv;
  *			A D D _ S O L I D _ P A T H _ T O _ R E S U L T
  */
 void
-add_solid_path_to_result( interp, sp )
-Tcl_Interp *interp;
-register struct solid	*sp;
+add_solid_path_to_result(
+	Tcl_Interp *interp,
+	struct solid *sp)
 {
 	struct bu_vls str;
 

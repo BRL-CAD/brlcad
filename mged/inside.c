@@ -544,12 +544,12 @@ end:
 
 /* finds inside arbs */
 int
-arbin(ip, thick, nface, cgtype, planes)
-struct rt_db_internal	*ip;
-fastf_t	thick[6];
-int	nface;
-int	cgtype;		/* # of points, 4..8 */
-plane_t	planes[6];
+arbin(
+	struct rt_db_internal	*ip,
+	fastf_t	thick[6],
+	int	nface,
+	int	cgtype,		/* # of points, 4..8 */
+	plane_t	planes[6])
 {
 	struct rt_arb_internal	*arb = (struct rt_arb_internal *)ip->idb_ptr;
 	point_t		center_pt;
@@ -812,9 +812,7 @@ plane_t	planes[6];
  * thick[2] is thickness for side
  */
 int
-tgcin(ip, thick)
-struct rt_db_internal	*ip;
-fastf_t	thick[6];
+tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 {
 	struct rt_tgc_internal	*tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 	vect_t norm;		/* unit vector normal to base */
@@ -1097,9 +1095,7 @@ fastf_t	thick[6];
 
 /* finds inside of torus */
 int
-torin(ip, thick)
-struct rt_db_internal	*ip;
-fastf_t			thick[6];
+torin(struct rt_db_internal *ip, fastf_t thick[6] )
 {
 	struct rt_tor_internal	*tor = (struct rt_tor_internal *)ip->idb_ptr;
 
@@ -1125,9 +1121,7 @@ fastf_t			thick[6];
 
 /* finds inside ellg */
 int
-ellgin(ip, thick)
-struct rt_db_internal	*ip;
-fastf_t	thick[6];
+ellgin(struct rt_db_internal *ip, fastf_t thick[6])
 {
 	struct rt_ell_internal	*ell = (struct rt_ell_internal *)ip->idb_ptr;
 	int i, j, k, order[3];
@@ -1178,9 +1172,7 @@ fastf_t	thick[6];
 
 /* find inside of particle solid */
 int
-partin(ip, thick)
-struct rt_db_internal	*ip;
-fastf_t	*thick;
+partin(struct rt_db_internal *ip, fastf_t *thick )
 {
 	struct rt_part_internal	*part = (struct rt_part_internal *)ip->idb_ptr;
 
@@ -1197,9 +1189,7 @@ fastf_t	*thick;
 
 /* finds inside of rpc, not quite right - r needs to be smaller */
 int
-rpcin(ip, thick)
-struct rt_db_internal	*ip;
-fastf_t	thick[4];
+rpcin(struct rt_db_internal *ip, fastf_t thick[4])
 {
 	struct rt_rpc_internal	*rpc = (struct rt_rpc_internal *)ip->idb_ptr;
 	fastf_t			b;
@@ -1238,9 +1228,7 @@ fastf_t	thick[4];
 
 /* XXX finds inside of rhc, not quite right */
 int
-rhcin(ip, thick)
-struct rt_db_internal	*ip;
-fastf_t	thick[4];
+rhcin(struct rt_db_internal *ip, fastf_t thick[4])
 {
 	struct rt_rhc_internal	*rhc = (struct rt_rhc_internal *)ip->idb_ptr;
 	vect_t			Bn, Hn, Bu, Hu, Ru;
@@ -1268,9 +1256,7 @@ fastf_t	thick[4];
 
 /* finds inside of epa, not quite right */
 int
-epain(ip, thick)
-struct rt_db_internal	*ip;
-fastf_t	thick[2];
+epain(struct rt_db_internal *ip, fastf_t thick[2])
 {
 	struct rt_epa_internal	*epa = (struct rt_epa_internal *)ip->idb_ptr;
 	vect_t			Hu;
@@ -1290,9 +1276,7 @@ fastf_t	thick[2];
 
 /* finds inside of ehy, not quite right, */
 int
-ehyin(ip, thick)
-struct rt_db_internal	*ip;
-fastf_t	thick[2];
+ehyin(struct rt_db_internal *ip, fastf_t thick[2])
 {
 	struct rt_ehy_internal	*ehy = (struct rt_ehy_internal *)ip->idb_ptr;
 	vect_t			Hu;
@@ -1312,9 +1296,7 @@ fastf_t	thick[2];
 
 /* finds inside of eto */
 int
-etoin(ip, thick)
-struct rt_db_internal	*ip;
-fastf_t	thick[1];
+etoin(struct rt_db_internal *ip, fastf_t thick[1])
 {
 	fastf_t			c;
 	struct rt_eto_internal	*eto = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1330,9 +1312,7 @@ fastf_t	thick[1];
 
 /* find inside for NMG */
 int
-nmgin( ip , thick )
-struct rt_db_internal	*ip;
-fastf_t thick;
+nmgin( struct rt_db_internal *ip, fastf_t thick )
 {
 	struct model *m;
 	struct nmgregion *r;

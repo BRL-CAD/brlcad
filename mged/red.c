@@ -832,9 +832,7 @@ char **argv;
 }
 
 int
-writecomb( comb, name )
-struct rt_comb_internal	*comb;
-char *name;
+writecomb( const struct rt_comb_internal *comb, const char *name )
 {
 /*	Writes the file for later editing */
 	struct rt_tree_array	*rt_tree_array;
@@ -965,7 +963,7 @@ char *name;
 }
 
 int
-checkcomb()
+checkcomb(void)
 {
 /*	Do some minor checking of the edited file */
 

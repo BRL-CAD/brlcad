@@ -37,14 +37,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>
 #include <time.h>
 
+#include "tcl.h"
 #include "tk.h"
+#include "itcl.h"
+/* #include "tclIntDecls.h" */
 
 #include "machine.h"
+#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"
+#include "bn.h"
 #include "rtgeom.h"
-#include "externs.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./cmd.h"
 #include "./mged_solid.h"

@@ -373,9 +373,7 @@ char    **argv;
  * probably on its way out (i.e. being destroyed).
  */
 void
-usurp_all_resources(dlp1, dlp2)
-struct dm_list *dlp1;
-struct dm_list *dlp2;
+usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
 {
   free_all_resources(dlp1);
   dlp1->dml_view_state = dlp2->dml_view_state;

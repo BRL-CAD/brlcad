@@ -48,6 +48,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "tcl.h"
+#include "wdb.h"
 
 /*	Stuff needed from db.h */
 #ifndef NAMESIZE
@@ -223,9 +224,12 @@ MGED_EXTERN(void state_err, (char *str) );
 MGED_EXTERN(void do_list, (struct bu_vls *outstrp, struct directory *dp, int verbose));
 
 /* history.c */
-
-extern int cmd_prev(), cmd_next();
-extern void history_record();
+void history_record(
+	struct bu_vls *cmdp,
+	struct timeval *start,
+	struct timeval *finish,
+	int status);			   /* Either CMD_OK or CMD_BAD */
+void history_setup(void);
 
 
 /* cmd.c */
@@ -672,6 +676,9 @@ int replot_modified_solid(
 	struct rt_db_internal		*ip,
 	const mat_t			mat);
 int replot_original_solid( struct solid *sp );
+void add_solid_path_to_result(
+	Tcl_Interp *interp,
+	struct solid *sp);
 
 /* dozoom.c */
 void createDList(struct solid *sp);
@@ -765,3 +772,112 @@ void screen_vls(
 	struct bu_vls	*vp);
 void dotitles(struct bu_vls *overlay_vls);
 
+/* rect.c */
+void zoom_rect_area(void);
+void paint_rect_area(void);
+void rt_rect_area(void);
+void draw_rect(void);
+void set_rect(void);
+void rect_view2image(void);
+void rect_image2view(void);
+void rb_set_dirty_flag(void);
+
+
+/* track.c */
+int wrobj( char name[], int flags );
+
+/* red.c */
+int writecomb( const struct rt_comb_internal *comb, const char *name );
+int checkcomb(void);
+
+/* edsol.c */
+void vls_solid( struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat );
+void transform_editing_solid(
+	struct rt_db_internal	*os,		/* output solid */
+	const mat_t		mat,
+	struct rt_db_internal	*is,		/* input solid */
+	int			free);
+void replot_editing_solid(void);
+void sedit_abs_scale(void);
+void sedit_accept(void);
+void sedit_mouse( const vect_t mousevec );
+void sedit_reject(void);
+void sedit_vpick( point_t v_pos );
+void oedit_abs_scale(void);
+void oedit_accept(void);
+void oedit_reject(void);
+void objedit_mouse( const vect_t mousevec );
+extern int nurb_closest2d();
+void label_edited_solid(
+	int *num_lines,
+	point_t *lines,
+	struct rt_point_labels	pl[],
+	int			max_pl,
+	const mat_t		xform,
+	struct rt_db_internal	*ip);
+void init_oedit(void);
+void init_sedit(void);
+int rt_arb_calc_planes(
+	plane_t			planes[6],
+	struct rt_arb_internal	*arb,
+	int			type,
+	const struct bn_tol	*tol);
+
+
+/* share.c */
+void usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2);
+
+/* inside.c */
+int torin(struct rt_db_internal *ip, fastf_t thick[6] );
+int tgcin(struct rt_db_internal *ip, fastf_t thick[6]);
+int rhcin(struct rt_db_internal *ip, fastf_t thick[4]);
+int rpcin(struct rt_db_internal *ip, fastf_t thick[4]);
+int partin(struct rt_db_internal *ip, fastf_t *thick );
+int nmgin( struct rt_db_internal *ip, fastf_t thick );
+int arbin(
+	struct rt_db_internal	*ip,
+	fastf_t	thick[6],
+	int	nface,
+	int	cgtype,		/* # of points, 4..8 */
+	plane_t	planes[6]);
+int ehyin(struct rt_db_internal *ip, fastf_t thick[2]);
+int ellgin(struct rt_db_internal *ip, fastf_t thick[6]);
+int epain(struct rt_db_internal *ip, fastf_t thick[2]);
+int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
+
+/* set.c */
+void set_scroll_private(void);
+void mged_variable_setup(Tcl_Interp *interp);
+
+/* scroll.c */
+void set_scroll(void);
+int scroll_select( int pen_x, int pen_y, int do_func );
+int scroll_display( int y_top );
+
+/* edpipe.c */
+void pipe_scale_od( struct rt_db_internal *db_int, fastf_t scale);
+void pipe_scale_id( struct rt_db_internal *db_int, fastf_t scale );
+void pipe_seg_scale_od( struct wdb_pipept *ps, fastf_t scale );
+void pipe_seg_scale_id( struct wdb_pipept *ps, fastf_t scale );
+void pipe_seg_scale_radius( struct wdb_pipept *ps, fastf_t scale );
+void pipe_scale_radius( struct rt_db_internal *db_int, fastf_t scale );
+struct wdb_pipept *find_pipept_nearest_pt( const struct bu_list *pipe_hd, const point_t pt );
+struct wdb_pipept *add_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt );
+void ins_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt );
+struct wdb_pipept *del_pipept( struct wdb_pipept *ps );
+void move_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *ps, const point_t new_pt );
+
+/* vparse.c */
+void mged_vls_struct_parse_old(
+	struct bu_vls *vls,
+	const char *title,
+	struct bu_structparse *how_to_parse,
+	char *structp,
+	int argc,
+	char *argv[]);
+
+/* rtif.c */
+int build_tops(char **start, char **end);
+
+/* mater.c */
+void color_soltab(void);

@@ -32,14 +32,6 @@ extern void mged_center(); /* from chgview.c */
 extern int mged_vscale();
 
 static void adjust_rect_for_zoom();
-void rb_set_dirty_flag();
-void draw_rect();
-void rect_view2image();
-void rect_image2view();
-void set_rect();
-void paint_rect_area();
-void rt_rect_area();
-void zoom_rect_area();
 
 struct _rubber_band default_rubber_band = {
 /* rb_rc */		1,
@@ -67,7 +59,7 @@ struct bu_structparse rubber_band_vparse[] = {
 };
 
 void
-rb_set_dirty_flag()
+rb_set_dirty_flag(void)
 {
   struct dm_list *dmlp;
 
@@ -81,7 +73,7 @@ rb_set_dirty_flag()
  * position and dimensions in image coordinates.
  */
 void
-rect_view2image()
+rect_view2image(void)
 {
   rubber_band->rb_pos[X] = dm_Normal2Xx(dmp, rubber_band->rb_x);
   rubber_band->rb_pos[Y] = dmp->dm_height - dm_Normal2Xy(dmp, rubber_band->rb_y, 1);
@@ -94,7 +86,7 @@ rect_view2image()
  * position and dimensions in normalized view coordinates.
  */
 void
-rect_image2view()
+rect_image2view(void)
 {
   rubber_band->rb_x = dm_Xx2Normal(dmp, rubber_band->rb_pos[X]);
   rubber_band->rb_y = dm_Xy2Normal(dmp, dmp->dm_height - rubber_band->rb_pos[Y], 1);
@@ -103,7 +95,7 @@ rect_image2view()
 }
 
 void
-set_rect()
+set_rect(void)
 {
   rect_image2view();
   rb_set_dirty_flag();
@@ -141,7 +133,7 @@ adjust_rect_for_zoom()
 }
 
 void
-draw_rect()
+draw_rect(void)
 {
   int line_style;
 
@@ -187,7 +179,7 @@ draw_rect()
 }
 
 void
-paint_rect_area()
+paint_rect_area(void)
 {
   if(!fbp)
     return;
@@ -197,7 +189,7 @@ paint_rect_area()
 }
 
 void
-rt_rect_area()
+rt_rect_area(void)
 {
   int xmin, xmax;
   int ymin, ymax;
@@ -246,7 +238,7 @@ rt_rect_area()
 }
 
 void
-zoom_rect_area()
+zoom_rect_area(void)
 {
   fastf_t width, height;
   fastf_t sf;

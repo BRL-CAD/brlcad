@@ -101,7 +101,7 @@ struct scroll_item sl_adc_menu[] = {
  * Set scroll_array.
  */
 void
-set_scroll()
+set_scroll(void)
 {
   if (mged_variables->mv_sliders) {
     if(mged_variables->mv_rateknobs)
@@ -301,8 +301,7 @@ double				val;
  *  position used.
  */
 int
-scroll_display( y_top )
-int y_top;
+scroll_display( int y_top )
 { 
   register int		y;
   struct scroll_item	*mptr;
@@ -720,10 +719,7 @@ int y_top;
  *		-1 if pen is ABOVE scroll	(error)
  */
 int
-scroll_select( pen_x, pen_y, do_func )
-int		pen_x;
-register int	pen_y;
-int do_func;
+scroll_select( int pen_x, int pen_y, int do_func )
 { 
 	register int		yy;
 	struct scroll_item	**m;

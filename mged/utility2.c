@@ -27,9 +27,9 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "rtgeom.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
 #include "wdb.h"
 #include "./ged.h"
 #include "./sedit.h"
@@ -400,7 +400,7 @@ char **argv;
 
 	/* create the new solid */
 	RT_INIT_DB_INTERNAL( &new_int );
-	if( rt_generic_xform( &new_int, xform , &internal , 0 ) )
+	if( rt_generic_xform( &new_int, xform , &internal , 0, dbip, &rt_uniresource ) )
 	{
 	  db_free_external( &external );
 	  Tcl_AppendResult(interp, "f_copyeval: rt_generic_xform failed\n", (char *)NULL);

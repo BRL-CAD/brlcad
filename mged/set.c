@@ -35,7 +35,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern void predictor_hook();		/* in ged.c */
 
 extern void set_port();
-extern void set_scroll();
 
 static void set_dirty_flag();
 static void nmg_eu_dist_set();
@@ -256,8 +255,7 @@ int flags;
  **/
 
 void
-mged_variable_setup(interp)
-Tcl_Interp *interp;    
+mged_variable_setup(Tcl_Interp *interp)
 {
   register struct bu_structparse *sp;
 
@@ -292,7 +290,7 @@ char *argv[];
   }
 
   mged_vls_struct_parse_old(&vls, "mged variables", mged_vparse,
-			    (CONST char *)mged_variables, argc, argv);
+			    (char *)&mged_variables, argc, argv);
   Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
   bu_vls_free(&vls);
 
@@ -300,7 +298,7 @@ char *argv[];
 }
 
 void
-set_scroll_private()
+set_scroll_private(void)
 {
   struct dm_list *dmlp;
   struct dm_list *save_dmlp;

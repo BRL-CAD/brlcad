@@ -39,6 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #include <sys/time.h>		/* For struct timeval */
+#include <sys/stat.h>		/* for chmod() */
 
 #include "tcl.h"
 
@@ -232,9 +233,7 @@ mat_t	mat;
  *  Build a command line vector of the tops of all objects in view.
  */
 int
-build_tops(start, end)
-char **start;
-register char **end;
+build_tops(char **start, char **end)
 {
 	register char **vp = start;
 	register struct solid *sp;

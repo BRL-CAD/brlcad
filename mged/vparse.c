@@ -62,13 +62,13 @@ char *argv[];
 }
 
 void
-mged_vls_struct_parse_old(vls, title, how_to_parse, structp, argc, argv)
-struct bu_vls *vls;
-char *title;
-struct bu_structparse *how_to_parse;
-char *structp;
-int argc;
-char *argv[];
+mged_vls_struct_parse_old(
+	struct bu_vls *vls,
+	const char *title,
+	struct bu_structparse *how_to_parse,
+	char *structp,
+	int argc,
+	char *argv[])
 {
   struct bu_vls tmp_vls;
 

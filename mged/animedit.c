@@ -3652,7 +3652,7 @@ char **argv;
 	struct artic_joints	*jp;
 	struct artic_grips	*gp, *gpp;
 	int i;
-	char			**topv[2000];
+	char			*topv[2000];
 	int			topc;
 
 	if(dbip == DBI_NULL)

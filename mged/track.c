@@ -569,9 +569,7 @@ int pos;
 }
 
 int
-wrobj( name, flags )
-char name[];
-int flags;
+wrobj( char name[], int flags )
 {
 	struct directory *tdp;
 	struct rt_db_internal intern;
