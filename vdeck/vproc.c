@@ -1,6 +1,6 @@
 /*
- *	@(#) vproc.c			retrieved: 8/13/86 at 08:23:30,
- *	@(#) version 1.5		last edit: 10/11/83 at 09:31:36.
+ *	@(#) vproc.c			retrieved: 8/13/86 at 08:23:47,
+ *	@(#) version 1.6		last edit: 10/11/83 at 10:02:55.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -22,7 +22,7 @@
 #include "./3d.h"
 #include "./vdeck.h"
 #include "./vextern.h"
-char		*addname();
+char		*addname(), getarg();
 Directory	*lookup(), *diradd();
 
 /*
@@ -835,8 +835,7 @@ register int		ct;
  *	Display menu stored at address 'addr'.
  */
 menu( addr )
-register
-char *addr;
+char **addr;
 {
 	register char	**sbuf = addr;
 	
