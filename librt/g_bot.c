@@ -1697,6 +1697,25 @@ static char *los[]={
 	"append"
 };
 
+/*
+ *			R T _ B O T _ T C L G E T
+ *
+ *  Examples -
+ *	db get name fm		get los facemode bit vector
+ *	db get name fm#		get los face mode of face # (center, append)
+ *	db get name V		get coords for all vertices
+ *	db get name V#		get coords for vertex #
+ *	db get name F		get vertex indices for all faces
+ *	db get name F#		get vertex indices for face #
+ *	db get name f		get list of coords for all faces
+ *	db get name f#		get list of 3 3tuple coords for face #
+ *	db get name T		get thickness for all faces
+ *	db get name T#		get thickness for face #
+ *	db get name nv		get num_vertices
+ *	db get name nt		get num_faces
+ *	db get name mode	get mode (surf, volume, plate, plane_nocos)
+ *	db get name orient	get orientation (no, rh, lh)
+ */
 int
 rt_bot_tclget( interp, intern, attr )
 Tcl_Interp			*interp;
