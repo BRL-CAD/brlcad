@@ -148,6 +148,9 @@ char *argv[];
   Display *tmp_dpy;
   struct dm *dmp;
 
+fprintf(stderr, "X_open: enter\n");
+fflush(stderr);
+
   BU_GETSTRUCT(dmp, dm);
   if(dmp == DM_NULL)
     return DM_NULL;
@@ -295,21 +298,22 @@ char *argv[];
 		     dmp->dm_height);
 
 #if 0
-  /*XXX*/
+  /*XXX For debugging purposes */
   XSynchronize(((struct x_vars *)dmp->dm_vars)->dpy, TRUE);
 #endif
 
   a_screen = Tk_ScreenNumber(((struct x_vars *)dmp->dm_vars)->top);
 
+  Tcl_AppendResult(interp, "X_open: begin synchronous execution\n", (char *)NULL);
+
   /* must do this before MakeExist */
-  if(X_set_visual(((struct x_vars *)dmp->dm_vars)->dpy,
-		  ((struct x_vars *)dmp->dm_vars)->xtkwin,
-		  &((struct x_vars *)dmp->dm_vars)->cmap,
-		  &((struct x_vars *)dmp->dm_vars)->depth) == 0){
+  if(X_set_visual(dmp) == 0){
     Tcl_AppendResult(interp, "X_open: Can't get an appropriate visual.\n", (char *)NULL);
     (void)X_close(dmp);
     return DM_NULL;
   }
+
+  Tcl_AppendResult(interp, "X_open: end synchronous execution\n", (char *)NULL);
 
   Tk_MakeWindowExist(((struct x_vars *)dmp->dm_vars)->xtkwin);
   ((struct x_vars *)dmp->dm_vars)->win =
@@ -322,19 +326,36 @@ char *argv[];
 		 dmp->dm_height,
 		 Tk_Depth(((struct x_vars *)dmp->dm_vars)->xtkwin));
 
-  dm_allocate_color_cube( ((struct x_vars *)dmp->dm_vars)->dpy,
-			  ((struct x_vars *)dmp->dm_vars)->cmap,
-			  ((struct x_vars *)dmp->dm_vars)->pixels,
-			  /* cube dimension, uses XStoreColor */
-			  6, CMAP_BASE, 1 );
+  if(((struct x_vars *)dmp->dm_vars)->is_trueColor){
+    XColor fg, bg;
 
-  ((struct x_vars *)dmp->dm_vars)->bg = dm_get_pixel(DM_BLACK,
-				     ((struct x_vars *)dmp->dm_vars)->pixels,
-						     CUBE_DIMENSION);
-  ((struct x_vars *)dmp->dm_vars)->fg = dm_get_pixel(DM_RED,
-				     ((struct x_vars *)dmp->dm_vars)->pixels,
-						     CUBE_DIMENSION);
-  
+    fg.red = 255 << 8;
+    fg.green = fg.blue = 0;
+    XAllocColor(((struct x_vars *)dmp->dm_vars)->dpy,
+		((struct x_vars *)dmp->dm_vars)->cmap,
+		&fg);
+    ((struct x_vars *)dmp->dm_vars)->fg = fg.pixel;
+
+    bg.red = bg.green = bg.blue = 0;
+    XAllocColor(((struct x_vars *)dmp->dm_vars)->dpy,
+		((struct x_vars *)dmp->dm_vars)->cmap,
+		&bg);
+    ((struct x_vars *)dmp->dm_vars)->bg = bg.pixel;
+  }else{
+    dm_allocate_color_cube( ((struct x_vars *)dmp->dm_vars)->dpy,
+			    ((struct x_vars *)dmp->dm_vars)->cmap,
+			    ((struct x_vars *)dmp->dm_vars)->pixels,
+			    /* cube dimension, uses XStoreColor */
+			    6, CMAP_BASE, 1 );
+
+    ((struct x_vars *)dmp->dm_vars)->bg = dm_get_pixel(DM_BLACK,
+						       ((struct x_vars *)dmp->dm_vars)->pixels,
+						       CUBE_DIMENSION);
+    ((struct x_vars *)dmp->dm_vars)->fg = dm_get_pixel(DM_RED,
+						       ((struct x_vars *)dmp->dm_vars)->pixels,
+						       CUBE_DIMENSION);
+  }  
+
   gcv.background = ((struct x_vars *)dmp->dm_vars)->bg;
   gcv.foreground = ((struct x_vars *)dmp->dm_vars)->fg;
   ((struct x_vars *)dmp->dm_vars)->gc = XCreateGC(((struct x_vars *)dmp->dm_vars)->dpy,
@@ -646,7 +667,6 @@ int x, y;
   return TCL_OK;
 }
 
-
 static int
 X_setColor(dmp, r, g, b, strict)
 struct dm *dmp;
@@ -655,8 +675,20 @@ int strict;
 {
   XGCValues gcv;
 
-  gcv.foreground = dm_get_pixel(r, g, b, ((struct x_vars *)dmp->dm_vars)->pixels,
-				CUBE_DIMENSION);
+  if(((struct x_vars *)dmp->dm_vars)->is_trueColor){
+    XColor color;
+
+    color.red = r << 8;
+    color.green = g << 8;
+    color.blue = b << 8;
+    XAllocColor(((struct x_vars *)dmp->dm_vars)->dpy,
+		((struct x_vars *)dmp->dm_vars)->cmap,
+		&color);
+    gcv.foreground = color.pixel;
+  }else
+    gcv.foreground = dm_get_pixel(r, g, b, ((struct x_vars *)dmp->dm_vars)->pixels,
+				  CUBE_DIMENSION);
+
   XChangeGC(((struct x_vars *)dmp->dm_vars)->dpy,
 	    ((struct x_vars *)dmp->dm_vars)->gc,
 	    GCForeground, &gcv);
@@ -880,61 +912,66 @@ struct dm *dmp;
 }
 
 static int
-X_set_visual(dpy, tkwin, cmap, depth)
-Display *dpy;
-Tk_Window tkwin;
-Colormap *cmap;
-int *depth;
+X_set_visual(dmp)
+struct dm *dmp;
 {
   XVisualInfo *vip, vitemp, *vibase, *maxvip;
   int good[40];
   int num, i, j;
   int tries, baddepth;
+  int desire_trueColor = 1;
 
-  vibase = XGetVisualInfo(dpy, 0, &vitemp, &num);
+  vibase = XGetVisualInfo(((struct x_vars *)dmp->dm_vars)->dpy, 0, &vitemp, &num);
 
-  for (i=0, j=0, vip=vibase; i<num; i++, vip++){
-#if 1
-    /* requirements */
-    if (vip->class != PseudoColor) {
-      /* if index mode, accept only read/write*/
-      continue;
-    }
-#endif
+  while(1){
+    for (i=0, j=0, vip=vibase; i<num; i++, vip++){
+      /* requirements */
+      if(desire_trueColor && vip->class != TrueColor)
+	continue;
+      else if (vip->class != PseudoColor)
+	continue;
 			
-    /* this visual meets criteria */
-    good[j++] = i;
-  }
+      /* this visual meets criteria */
+      good[j++] = i;
+    }
 
-  /* j = number of acceptable visuals under consideration */
-  if(j < 1)
-    return(0); /* failure */
+    baddepth = 1000;
+    for(tries = 0; tries < j; ++tries) {
+      maxvip = vibase + good[0];
+      for (i=1; i<j; i++) {
+	vip = vibase + good[i];
+	if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)){
+	  maxvip = vip;
+	}
+      }
 
-  baddepth = 1000;
-  for(tries = 0; tries < j; ++tries) {
-    maxvip = vibase + good[0];
-    for (i=1; i<j; i++) {
-      vip = vibase + good[i];
-      if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)){
-	maxvip = vip;
+      /* make sure Tk handles it */
+      if(desire_trueColor){
+	((struct x_vars *)dmp->dm_vars)->cmap = XCreateColormap(((struct x_vars *)dmp->dm_vars)->dpy, RootWindow(((struct x_vars *)dmp->dm_vars)->dpy, maxvip->screen),
+								maxvip->visual, AllocNone);
+	((struct x_vars *)dmp->dm_vars)->is_trueColor = 1;
+      }else{
+	((struct x_vars *)dmp->dm_vars)->cmap = XCreateColormap(((struct x_vars *)dmp->dm_vars)->dpy, RootWindow(((struct x_vars *)dmp->dm_vars)->dpy, maxvip->screen),
+								maxvip->visual, AllocAll);
+	((struct x_vars *)dmp->dm_vars)->is_trueColor = 0;
+      }
+
+      if (Tk_SetWindowVisual(((struct x_vars *)dmp->dm_vars)->xtkwin, maxvip->visual,
+			     maxvip->depth, ((struct x_vars *)dmp->dm_vars)->cmap)){
+	((struct x_vars *)dmp->dm_vars)->depth = maxvip->depth;
+	return 1; /* success */
+      } else { 
+	/* retry with lesser depth */
+	baddepth = maxvip->depth;
+	XFreeColormap(((struct x_vars *)dmp->dm_vars)->dpy, ((struct x_vars *)dmp->dm_vars)->cmap);
       }
     }
 
-    /* make sure Tk handles it */
-    *cmap = XCreateColormap(dpy, RootWindow(dpy, maxvip->screen),
-			    maxvip->visual, AllocAll);
-
-    if (Tk_SetWindowVisual(tkwin, maxvip->visual, maxvip->depth, *cmap)){
-      *depth = maxvip->depth;
-      return 1; /* success */
-    } else { 
-      /* retry with lesser depth */
-      baddepth = maxvip->depth;
-      XFreeColormap(dpy, *cmap);
-    }
+    if(desire_trueColor)
+      desire_trueColor = 0;
+    else
+      return(0); /* failure */
   }
-
-  return(0); /* failure */
 }
 
 
