@@ -669,16 +669,20 @@ int y_top;
 	xpos = 0;
 
       DM_DRAW_STRING_2D( dmp, mptr->scroll_string,
-			    xpos, y-SCROLL_DY/2, 0, 0 );
+			 GED2PM1(xpos), GED2PM1(y-SCROLL_DY/2), 0, 0 );
       DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-      DM_DRAW_LINE_2D(dmp, XMAX, y, MENUXLIM, y);
+      DM_DRAW_LINE_2D(dmp,
+		      GED2PM1(XMAX), GED2PM1(y),
+		      GED2PM1(MENUXLIM), GED2PM1(y));
     }
   }
 
   if( y != y_top )  {
     /* Sliders were drawn, so make left vert edge */
     DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-    DM_DRAW_LINE_2D(dmp, MENUXLIM, scroll_top-1, MENUXLIM, y);
+    DM_DRAW_LINE_2D(dmp,
+		    GED2PM1(MENUXLIM), GED2PM1(scroll_top-1),
+		    GED2PM1(MENUXLIM), GED2PM1(y));
   }
   return( y );
 }

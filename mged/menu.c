@@ -204,14 +204,18 @@ int y;
   case BV_RATE_TOGGLE:
     if(mged_variables->rateknobs){
       DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
-      DM_DRAW_STRING_2D( dmp, "Rate", MENUX, y-15, 0, 0 );
+      DM_DRAW_STRING_2D( dmp, "Rate",
+			 GED2PM1(MENUX), GED2PM1(y-15), 0, 0 );
       DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-      DM_DRAW_STRING_2D( dmp, "/Abs", MENUX+4*40, y-15, 0, 0 );
+      DM_DRAW_STRING_2D( dmp, "/Abs",
+			 GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0 );
     }else{
       DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-      DM_DRAW_STRING_2D( dmp, "Rate/", MENUX, y-15, 0, 0 );
+      DM_DRAW_STRING_2D( dmp, "Rate/",
+			 GED2PM1(MENUX), GED2PM1(y-15), 0, 0 );
       DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
-      DM_DRAW_STRING_2D( dmp, "Abs", MENUX+5*40, y-15, 0, 0 );
+      DM_DRAW_STRING_2D( dmp, "Abs",
+			 GED2PM1(MENUX+5*40), GED2PM1(y-15), 0, 0 );
     }
     break;
   default:
@@ -242,7 +246,9 @@ int y_top;
 #else
   DM_SET_LINE_ATTR(dmp, 1, 0);
 #endif
-  DM_DRAW_LINE_2D(dmp, MENUXLIM, menu_top, XMIN, menu_top);
+  DM_DRAW_LINE_2D(dmp,
+		  GED2PM1(MENUXLIM), GED2PM1(menu_top),
+		  GED2PM1(XMIN), GED2PM1(menu_top));
 
   for( menu=0, m = menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
     if( *m == MENU_NULL )  continue;
@@ -265,15 +271,18 @@ int y_top;
 	  DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	else
 	  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-	DM_DRAW_STRING_2D( dmp, mptr->menu_string, MENUX, y-15, 0, 0 );
+	DM_DRAW_STRING_2D( dmp, mptr->menu_string,
+			   GED2PM1(MENUX), GED2PM1(y-15), 0, 0 );
       }
       DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-      DM_DRAW_LINE_2D(dmp, MENUXLIM, y+(MENU_DY/2), XMIN,
-			 y+(MENU_DY/2));
+      DM_DRAW_LINE_2D(dmp,
+		      GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
+		      GED2PM1(XMIN), GED2PM1(y+(MENU_DY/2)));
       if( cur_item == item && cur_menu == menu && menuflag )  {
 	/* prefix item selected with "==>" */
 	DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
-	DM_DRAW_STRING_2D(dmp, "==>", XMIN, y-15, 0, 0);
+	DM_DRAW_STRING_2D(dmp, "==>",
+			  GED2PM1(XMIN), GED2PM1(y-15), 0, 0);
       }
     }
   }
@@ -287,7 +296,9 @@ int y_top;
 #else
   DM_SET_LINE_ATTR(dmp, 1, 0);
 #endif
-  DM_DRAW_LINE_2D( dmp, MENUXLIM, menu_top-1, MENUXLIM, y-(MENU_DY/2) );
+  DM_DRAW_LINE_2D( dmp,
+		   GED2PM1(MENUXLIM), GED2PM1(menu_top-1),
+		   GED2PM1(MENUXLIM), GED2PM1(y-(MENU_DY/2)) );
 }
 
 /*
