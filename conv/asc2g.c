@@ -228,7 +228,6 @@ after_read:
 void
 strsolbld()
 {
-	register char *cp;
 	char	*type;
 	char	*name;
 	char	*args;
@@ -758,7 +757,7 @@ solbld()
 int
 combbld()
 {
-	struct wmember	head;
+	struct bu_list	head;
 	register char 	*cp;
 	register char 	*np;
 	int 		temp_nflag, temp_pflag;
@@ -776,7 +775,7 @@ combbld()
 	char		inherit;	/* Inheritance property */
 
 	/* Set all flags initially. */
-	BU_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head );
 
 	override = 0;
 	temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
@@ -865,11 +864,11 @@ combbld()
 	}
 
 	/* Spit them out, all at once */
-	if( mk_lrcomb(ofp, name, &head, is_reg,
+	if( mk_comb(ofp, name, &head, is_reg,
 		temp_nflag ? matname : (char *)0,
 		temp_pflag ? matparm : (char *)0,
 		override ? (unsigned char *)rgb : (unsigned char *)0,
-		regionid, aircode, material, los, inherit) < 0 )  {
+		regionid, aircode, material, los, inherit, 0, 0) < 0 )  {
 			fprintf(stderr,"asc2g: mk_lrcomb fail\n");
 			abort();
 	}
@@ -886,7 +885,7 @@ combbld()
  */
 void
 membbld( headp )
-struct wmember	*headp;
+struct bu_list	*headp;
 {
 	register char 	*cp;
 	register char 	*np;
@@ -1138,7 +1137,6 @@ polyhbld()
 	long	startpos;
 	long	nlines;
 	struct rt_pg_internal	*pg;
-	struct rt_pg_face_internal	*face;
 	struct rt_db_internal	intern;
 
 	(void)strtok( buf, " " );	/* skip the ident character */
