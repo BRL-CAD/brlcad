@@ -1925,3 +1925,161 @@ char **argv;
 	  return f_edit( clientData, interp, 2, av );
 	}
 }
+
+int
+f_whatid(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct directory *dp;
+	union record rec;
+	char id[10];
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+		return TCL_ERROR;
+
+	if( (dp=db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
+		return TCL_ERROR;
+
+	if( !( dp->d_flags & DIR_REGION ) )
+	{
+		Tcl_AppendResult(interp, argv[1], " is not a region\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( db_get( dbip, dp, &rec, 0, 1 ) )
+	{
+		Tcl_AppendResult(interp, "Cannot get database record for ",
+			argv[1], "\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	sprintf( id, "%d\n", rec.c.c_regionid );
+	Tcl_AppendResult(interp, id, (char *)NULL );
+
+	return TCL_OK;
+}
+
+int
+f_eid(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int i,j;
+	int item;
+	struct directory *dp;
+	union record rec;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+		return TCL_ERROR;
+
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
+
+	for( j=1; j<argc; j++)
+	{
+		item = atoi( argv[j] );
+
+		for( i = 0; i < RT_DBNHASH; i++ )
+		{
+			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
+			{
+				char *av[3];
+
+				if( (dp->d_flags & DIR_COMB|DIR_REGION) !=
+				    (DIR_COMB|DIR_REGION) )
+					continue;
+				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 ) {
+				  TCL_READ_ERR_return;
+				}
+				if( rec.c.c_regionid != item )
+					continue;
+
+				av[0] = "e";
+				av[1] = dp->d_namep;
+				av[2] = (char *)NULL;
+
+				(void) f_edit( clientData, interp, 2, av );
+			}
+		}
+	}
+	return TCL_OK;
+}
+
+int
+f_eac(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int i,j;
+	int item;
+	struct directory *dp;
+	union record rec;
+	struct rt_vls v;
+	int new_argc;
+	int lim;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+		return TCL_ERROR;
+
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
+
+	rt_vls_init( &v );
+
+	rt_vls_strcat( &v, "e" );
+	lim = 1;
+
+	for( j=1; j<argc; j++)
+	{
+		item = atoi( argv[j] );
+
+		for( i = 0; i < RT_DBNHASH; i++ )
+		{
+			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
+			{
+				if( (dp->d_flags & DIR_COMB|DIR_REGION) !=
+				    (DIR_COMB|DIR_REGION) )
+					continue;
+				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 ) {
+				  TCL_READ_ERR_return;
+				}
+				if( rec.c.c_regionid != 0 ||
+					rec.c.c_aircode != item )
+						continue;
+
+				rt_vls_strcat( &v, " " );
+				rt_vls_strcat( &v, dp->d_namep );
+				lim++;
+			}
+		}
+	}
+
+	if( lim > 1 )
+	{
+		int retval;
+		char **new_argv;
+
+		new_argv = (char **)rt_calloc( lim+1, sizeof( char *), "f_eac: new_argv" );
+		new_argc = rt_split_cmd( new_argv, lim+1, rt_vls_addr( &v ) );
+		retval = f_edit( clientData, interp, new_argc, new_argv );
+		rt_vls_free( &v );
+		rt_free( (char *)new_argv, "f_eac: new_argv" );
+		return retval;
+	}
+	else
+	{
+		rt_vls_free( &v );
+		return TCL_OK;
+	}
+}

@@ -68,7 +68,10 @@ extern mat_t    ModelDelta;
 extern int cmd_stuff_str();
 extern int f_nmg_simplify();
 extern int f_make_bb();
+extern int f_whatid();
 extern int f_which_air();
+extern int f_eid();
+extern int f_eac();
 
 extern short earb4[5][18];
 extern short earb5[9][18];
@@ -244,6 +247,10 @@ static struct funtab funtab[] = {
 	f_edcomb,6,7,TRUE,
 "edgedir", "[delta_x delta_y delta_z]|[rot fb]", "define direction of ARB edge being moved",
 	f_edgedir, 3, 4, TRUE,
+"eac", "Air_code(s)", "display all regions with given air code",
+	f_eac, 2, MAXARGS,TRUE,
+"eid", "ident(s)", "display all regions with given ident code",
+	f_eid, 2, MAXARGS,TRUE,
 "ev",	"[-dnqstuvwT] [-P #] <objects>", "evaluate objects via NMG tessellation",
 	f_ev, 2, MAXARGS, TRUE,
 "eqn", "A B C", "planar equation coefficients",
@@ -525,6 +532,8 @@ static struct funtab funtab[] = {
 	f_vrot_center, 5, 5,TRUE,
 "wcodes", "filename object(s)", "write region ident codes to filename",
         f_wcodes, 3, MAXARGS, TRUE,
+"whatid", "region_name", "display ident number for region",
+	f_whatid, 2, MAXARGS,TRUE,
 "whichair", "air_codes(s)", "lists all regions with given air code",
 	f_which_air, 2, MAXARGS,TRUE,
 "whichid", "ident(s)", "lists all regions with given ident code",
