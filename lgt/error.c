@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./lgt.h"
 #include "./screen.h"
 #include "./extern.h"
-
+extern int	_doprnt();
 /*
  *  		R T _ B O M B
  *  
@@ -55,12 +55,12 @@ char *str;
 	exit(12);
 	}
 
-#ifdef cray
+#if defined( cray ) && ! defined( CRAY2 )
 /* VARARGS */
 void
 rt_log(fmt, a,b,c,d,e,f,g,h,i)
 char *fmt;
-{
+	{
 	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
 		{ /* Only move cursor and scroll if newline is output.	*/
@@ -93,11 +93,12 @@ char *fmt;
 		(void) fflush( stdout );
 		/* End of line detected by existance of a newline.	*/
 		newline = fmt[strlen( fmt )-1] == '\n';
+		hmredraw();
 		}
 	else
 		(void) fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
-}
+	}
 #else
 /*
  *  		R T _  L O G
@@ -144,6 +145,7 @@ va_dcl
 		(void) fflush( stdout );
 		/* End of line detected by existance of a newline.	*/
 		newline = fmt[strlen( fmt )-1] == '\n';
+		hmredraw();
 		}
 	else
 		(void) _doprnt( fmt, ap, stderr );
@@ -153,16 +155,17 @@ va_dcl
 	}
 #endif
 
-#ifdef cray
+#if defined( cray ) && ! defined( CRAY2 )
 /* VARARGS */
 void
 fb_log(fmt, a,b,c,d,e,f,g,h,i)
 char *fmt;
-{
+	{
 	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	fprintf(stderr, fmt, a,b,c,d,e,f,g,h,i );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
-}
+	hmredraw();
+	}
 #else
 /*
  *		F B _ L O G
@@ -208,6 +211,7 @@ va_dcl
 			(void) _doprnt( fmt, ap, stdout );
 		/* End of line detected by existance of a newline.	*/
 		newline = fmt[strlen( fmt )-1] == '\n';
+		hmredraw();
 		}
 	else
 		(void) _doprnt( fmt, ap, stderr );
