@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "fb.h"
 #include "pkg.h"
+
 #include "../libfb/pkgtypes.h"
 #include "./rfbd.h"
 
@@ -52,23 +53,32 @@ int argc; char **argv;
 	/* No disk files on remote machine */
 	_disk_enable = 0;
 
-#ifdef NEVER
+	(void)signal( SIGPIPE, SIG_IGN );
+
+#ifdef BSD
+	/* Started by /etc/inetd, network fd=0 */
+	netfd = 0;
+	pcp = pkg_makeconn( netfd, pkg_switch, comm_error );
+#else
 	/*
 	 * Listen for PKG connections.
 	 * This is what we would do if we weren't being started
-	 * by inetd (plus some other code that's been removed...).
+	 * by inetd
+	 * XXXXX needs loop to restart afterwards, or something !
 	 */
-	if( (netfd = pkg_initserver("rlibfb", 0)) < 0 )
+	if( (netfd = pkg_initserver("mfb", 0, comm_error)) < 0 )
 		exit(1);
+	pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
+	if( pcp == PKC_ERROR )
+		exit(2);
 #endif
-	netfd = 0;
+
+#ifdef BSD
 	if( setsockopt( netfd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
 		openlog( argv[0], LOG_PID, 0 );
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
 	}
-	(void)signal( SIGPIPE, SIG_IGN );
-
-	pcp = pkg_makeconn( netfd, pkg_switch, comm_error );
+#endif
 
 	while( pkg_block(pcp) > 0 )
 		;
@@ -181,10 +191,10 @@ char *buf;
 {
 	int	height, width;
 	long	ret;
-	long	rbuf[5];
+	char	rbuf[5*4+1];
 
-	width = ntohl( *(long *)(&buf[0]) );
-	height = ntohl( *(long *)(&buf[4]) );
+	width = fbgetlong( &buf[0*4] );
+	height = fbgetlong( &buf[1*4] );
 
 	if( strlen(&buf[8]) == 0 )
 		fbp = fb_open( NULL, width, height );
@@ -198,12 +208,13 @@ fb_log(s);
 	}
 #endif
 	ret = fbp == FBIO_NULL ? -1 : 0;
-	rbuf[0] = htonl( ret );
-	rbuf[1] = htonl( fbp->if_max_width );
-	rbuf[2] = htonl( fbp->if_max_height );
-	rbuf[3] = htonl( fbp->if_width );
-	rbuf[4] = htonl( fbp->if_height );
-	pkg_send( MSG_RETURN, &rbuf[0], 20, pcp );
+	(void)putlong( ret, &rbuf[0*4] );
+	(void)putlong( fbp->if_max_width, &rbuf[1*4] );
+	(void)putlong( fbp->if_max_height, &rbuf[2*4] );
+	(void)putlong( fbp->if_width, &rbuf[3*4] );
+	(void)putlong( fbp->if_height, &rbuf[4*4] );
+
+	pkg_send( MSG_RETURN, rbuf, 5*4, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -211,11 +222,10 @@ rfbclose(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	long	ret;
+	char	rbuf[4+1];
 
-	ret = fb_close( fbp );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
+	(void)fbputlong( fb_close( fbp ), &rbuf[0] );
+	pkg_send( MSG_RETURN, rbuf, 4, pcp );
 	if( buf ) (void)free(buf);
 	fbp = FBIO_NULL;
 }
@@ -225,15 +235,14 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	Pixel	bg;
-	long	ret;
+	char	rbuf[4+1];
 
 	bg.red = buf[0];
 	bg.green = buf[1];
 	bg.blue = buf[2];
 	bg.spare = 0;
-	ret = fb_clear( fbp, &bg );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
+	(void)fbputlong( fb_clear( fbp, &bg ), rbuf );
+	pkg_send( MSG_RETURN, rbuf, 4, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -242,21 +251,22 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	x, y, num;
-	long	ret;
-	static char	*rbuf = NULL;
+	int	ret;
+	char	rbuf[4+1];
+	static char	*scanbuf = NULL;
 	static int	buflen = 0;
 
-	x =  ntohl( *(long *)(&buf[0]) );
-	y =  ntohl( *(long *)(&buf[4]) );
-	num =  ntohl( *(long *)(&buf[8]) );
+	x = fbgetlong( &buf[0*4] );
+	y = fbgetlong( &buf[1*4] );
+	num = fbgetlong( &buf[2*4] );
 
 	if( num > buflen ) {
-		if( rbuf != NULL )
-			free( rbuf );
+		if( scanbuf != NULL )
+			free( scanbuf );
 		buflen = num*sizeof(Pixel);
 		if( buflen < 1024*sizeof(Pixel) )
 			buflen = 1024*sizeof(Pixel);
-		if( (rbuf = malloc( buflen )) == NULL ) {
+		if( (scanbuf = malloc( buflen )) == NULL ) {
 			fb_log("fb_read: malloc failed!");
 			if( buf ) (void)free(buf);
 			buflen = 0;
@@ -264,13 +274,13 @@ char *buf;
 		}
 	}
 
-	ret = fb_read( fbp, x, y, rbuf, num );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
+	ret = fb_read( fbp, x, y, scanbuf, num );
+	(void)fbputlong( ret, &rbuf[0] );
+	pkg_send( MSG_RETURN, rbuf, 4, pcp );
 
 	/* Send back the data */
 	if( ret >= 0 )
-		pkg_send( MSG_DATA, rbuf, num*sizeof(Pixel), pcp );
+		pkg_send( MSG_DATA, scanbuf, num*sizeof(Pixel), pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -279,13 +289,14 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	x, y, num;
+	char	rbuf[4+1];
 	long	ret;
 	char	*datap;
 	int	type;
 
-	x =  ntohl( *(long *)(&buf[0]) );
-	y =  ntohl( *(long *)(&buf[4]) );
-	num =  ntohl( *(long *)(&buf[8]) );
+	x = fbgetlong( &buf[0*4] );
+	y = fbgetlong( &buf[1*4] );
+	num = fbgetlong( &buf[2*4] );
 	type = pcp->pkc_type;
 
 	/* Get space, fetch data into it, do write, free space. */
@@ -294,8 +305,8 @@ char *buf;
 	ret = fb_write( fbp, x, y, datap, num );
 
 	if( type < MSG_NORETURN ) {
-		ret = htonl( ret );
-		pkg_send( MSG_RETURN, &ret, 4, pcp );
+		(void)fbputlong( ret, &rbuf[0] );
+		pkg_send( MSG_RETURN, rbuf, 4, pcp );
 	}
 	free( datap );
 	if( buf ) (void)free(buf);
@@ -306,15 +317,14 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	mode, x, y;
-	long	ret;
+	char	rbuf[4+1];
 
-	mode =  ntohl( *(long *)(&buf[0]) );
-	x =  ntohl( *(long *)(&buf[4]) );
-	y =  ntohl( *(long *)(&buf[8]) );
+	mode = fbgetlong( &buf[0*4] );
+	x = fbgetlong( &buf[1*4] );
+	y = fbgetlong( &buf[2*4] );
 
-	ret = fb_cursor( fbp, mode, x, y );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
+	(void)fbputlong( fb_cursor( fbp, mode, x, y ), &rbuf[0] );
+	pkg_send( MSG_RETURN, rbuf, 4, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -323,14 +333,13 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	x, y;
-	long	ret;
+	char	rbuf[4+1];
 
-	x =  ntohl( *(long *)(&buf[0]) );
-	y =  ntohl( *(long *)(&buf[4]) );
+	x = fbgetlong( &buf[0*4] );
+	y = fbgetlong( &buf[1*4] );
 
-	ret = fb_window( fbp, x, y );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
+	(void)fbputlong( fb_window( fbp, x, y ), &rbuf[0] );
+	pkg_send( MSG_RETURN, rbuf, 4, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -339,67 +348,26 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	x, y;
-	long	ret;
+	char	rbuf[4+1];
 
-	x =  ntohl( *(long *)(&buf[0]) );
-	y =  ntohl( *(long *)(&buf[4]) );
+	x = fbgetlong( &buf[0*4] );
+	y = fbgetlong( &buf[1*4] );
 
-	ret = fb_zoom( fbp, x, y );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
+	(void)fbputlong( fb_zoom( fbp, x, y ), &rbuf[0] );
+	pkg_send( MSG_RETURN, rbuf, 4, pcp );
 	if( buf ) (void)free(buf);
 }
-
-#ifdef NEVER	XXX
-/* void */
-rfbsetsize(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
-{
-	int	size;
-
-	size =  ntohl( *(long *)(&buf[0]) );
-
-	fb_setsize( size );
-	if( buf ) (void)free(buf);
-}
-
-rfbgetsize(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
-{
-	long	ret;
-
-	ret = fb_getsize( fbp );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
-	if( buf ) (void)free(buf);
-}
-
-rfbsetbackground(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
-{
-	long	ret;
-
-	fb_setbackground( fbp, ((Pixel *) buf) );
-	ret = htonl( 0 );	/* Should NOT return value.	*/
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
-	if( buf ) (void)free(buf);
-}
-#endif NEVER
 
 rfbrmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	long	ret;
+	char	rbuf[4+1];
 	ColorMap map;
 
-	ret = fb_rmap( fbp, &map );
+	(void)fbputlong( fb_rmap( fbp, &map ), &rbuf[0] );
 	pkg_send( MSG_DATA, &map, sizeof(map), pcp );
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
+	pkg_send( MSG_RETURN, rbuf, 4, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -407,6 +375,7 @@ rfbwmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
+	char	rbuf[4+1];
 	long	ret;
 
 	if( pcp->pkc_len == 0 )
@@ -414,7 +383,7 @@ char *buf;
 	else
 		ret = fb_wmap( fbp, buf );
 
-	ret = htonl( ret );
-	pkg_send( MSG_RETURN, &ret, 4, pcp );
+	(void)fbputlong( ret, &rbuf[0] );
+	pkg_send( MSG_RETURN, rbuf, 4, pcp );
 	if( buf ) (void)free(buf);
 }
