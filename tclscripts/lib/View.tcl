@@ -21,7 +21,6 @@
 #
 class View {
     public variable size 1000
-    public variable scale 500
     public variable center {0 0 0}
     public variable aet "0 90 0"
     public variable perspective_angle 90
@@ -29,29 +28,24 @@ class View {
     constructor {args} {}
     destructor {}
 
-    public method get_name {}
-    public method observer {args}
     public method aet {args}
     public method center {args}
+    public method get_viewname {}
+    public method model2view {}
+    public method observer {args}
+    public method perspective {args}
+    public method pmodel2view {}
     public method rot {args}
+    public method size {args}
     public method slew {x y}
     public method tra {args}
-    public method size {args}
-    public method scale {args}
     public method zoom {sf}
-    public method model2view {}
-    public method pmodel2view {}
-    public method perspective {args}
 
     private variable view ""
 }
 
 configbody View::size {
     View::size $size
-}
-
-configbody View::scale {
-    View::scale $scale
 }
 
 configbody View::center {
@@ -83,7 +77,7 @@ body View::destructor {} {
     $view close
 }
 
-body View::get_name {} {
+body View::get_viewname {} {
     return $view
 }
 
@@ -143,28 +137,13 @@ body View::size {args} {
     # set size
     $view size $args
 
-    set scale [$view scale]
     set size $args
-}
-
-body View::scale {args} {
-    # get scale
-    if {$args == ""} {
-	return $scale
-    }
-
-    # set scale
-    $view scale $args
-
-    set size [$view size]
-    set scale $args
 }
 
 body View::zoom {sf} {
     $view zoom $sf
 
     set size [$view size]
-    set scale [$view scale]
 }
 
 body View::model2view {} {
