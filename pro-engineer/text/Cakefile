@@ -5,7 +5,7 @@
 
 #define PRODUCTS		usermsg.txt
 #define STATIC_PRODUCTS		usermsg.txt
-#define SRCDIR			../text
+#define SRCDIR			text
 #undef BINDIR
 #define BINDIR			BASEDIR/pro-engineer/text/usascii
 #undef BINPERM
