@@ -53,7 +53,20 @@
  * important implications for FORTRAN users.  These variables must
  * be declared of type DOUBLE PRECISION to reserve enough space.
  *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
 
 #include <stdio.h>
