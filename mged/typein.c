@@ -79,6 +79,47 @@ char *p_half[] = {
 	"Enter the distance from the origin: "
 };
 
+char *p_hf[] = {
+	"Enter name of control file (or '""' for none): ",
+	"Enter name of data file (containing heights): ",
+	"Enter 'cv' style format of data [h|n][s|u]c|s|i|l|d|8|16|32|64: ",
+	"Enter number of values in 'x' direction: ",
+	"Enter number of values in 'y' direction: ",
+	"Enter '1' if data can be stored as 'short' in memory, or 0: ",
+	"Enter factor to convert file data to mm: ",
+	"Enter coordinates to position HF solid (mm): ",
+	"Enter Y coordinate: ",
+	"Enter Z coordinate: ",
+	"Enter direction vector for 'x' direction: ",
+	"Enter Y coordinate: ",
+	"Enter Z coordinate: ",
+	"Enter direction vector for 'y' direction: ",
+	"Enter Y coordinate: ",
+	"Enter Z coordinate: ",
+	"Enter length of HF in 'x' direction (mm): ",
+	"Enter width of HF in 'y' direction (mm): ",
+	"Enter scale factor for height (after conversion to mm): "
+};
+
+char *p_ebm[] = {
+	"Enter name of bit-map file: ",
+	"Enter width of bit-map (number of cells): ",
+	"Enter height of bit-map (number of cells): ",
+	"Enter extrusion distance (mm): "
+};
+
+char *p_vol[] = {
+	"Enter name of file containing voxel data: ",
+	"Enter X, Y, Z dimensions of file (number of cells): ",
+	"Enter Y dimension of file (number of cells): ",
+	"Enter Z dimension of file (number of cells): ",
+	"Enter lower threshold value: ",
+	"Enter upper threshold value: ",
+	"Enter X, Y, Z dimensions of a cell (mm)",
+	"Enter Y dimension of a cell (mm)",
+	"Enter Z dimension of a cell (mm)",
+};
+
 char *p_ars[] = {
 	"Enter number of points per waterline, and number of waterlines: ",
 	"Enter number of waterlines: ",
@@ -356,7 +397,7 @@ char **argv;
 				epa_in(), eto_in(), half_in(), rec_in(),
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(),
-				trc_in();
+				trc_in(), ebm_in(), vol_in(), hf_in();
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -423,32 +464,17 @@ char **argv;
 			rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto>
 	 */
 	if( strcmp( argv[2], "ebm" ) == 0 )  {
-		switch( strsol_in( &external, "ebm", argc, argv ) ) {
-		case CMD_BAD:
-		  Tcl_AppendResult(interp, "ERROR, EBM solid not made!\n", (char *)NULL);
-		  return TCL_ERROR;
-		case CMD_MORE:
-		  return TCL_ERROR;
-		}
-		goto do_extern_update;
+		nvals = 4;
+		menu = p_ebm;
+		fn_in = ebm_in;
 	} else if( strcmp( argv[2], "vol" ) == 0 )  {
-		switch( strsol_in( &external, "vol", argc, argv ) )  {
-		case CMD_BAD:
-		  Tcl_AppendResult(interp, "ERROR, VOL solid not made!\n", (char *)NULL);
-		  return TCL_ERROR;
-		case CMD_MORE:
-		  return TCL_ERROR;
-		}
-		goto do_extern_update;
+		nvals = 9;
+		menu = p_vol;
+		fn_in = vol_in;
 	} else if( strcmp( argv[2], "hf" ) == 0 )  {
-		switch( strsol_in( &external, "hf", argc, argv ) )  {
-		case CMD_BAD:
-		  Tcl_AppendResult(interp, "ERROR, HF solid not made!\n", (char *)NULL);
-		  return TCL_ERROR;
-		case CMD_MORE:
-		  return TCL_ERROR;
-		}
-		goto do_extern_update;
+		nvals = 19;
+		menu = p_hf;
+		fn_in = hf_in;
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
 		switch( ars_in(argc, argv, &internal, &p_ars[0]) ) {
 		case CMD_BAD:
@@ -557,27 +583,17 @@ char **argv;
 	}
 
 do_new_update:
-	RT_CK_DB_INTERNAL( &internal );
-	id = internal.idb_type;
-	if( rt_functab[id].ft_export( &external, &internal, local2base ) < 0 )  {
-	  Tcl_AppendResult(interp, "export failure\n", (char *)NULL);
-	  rt_functab[id].ft_ifree( &internal );
-	  return TCL_ERROR;
+	if( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	{
+		rt_db_free_internal( &internal );
+		Tcl_AppendResult(interp, "Cannot add '", name, "' to directory\n", (char *)NULL );
+		return TCL_ERROR;
 	}
-	rt_functab[id].ft_ifree( &internal );	/* free internal rep */
-
-do_extern_update:
-	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
-	if ((dp=db_diradd(dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-	     db_alloc(dbip, dp, ngran ) < 0) {
-		db_free_external( &external );
-	    	TCL_ALLOC_ERR_return;
-	}
-	if (db_put_external( &external, dp, dbip ) < 0 )  {
-		db_free_external( &external );
+	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+	{
+		rt_db_free_internal( &internal );
 		TCL_WRITE_ERR_return;
 	}
-	db_free_external( &external );
 
 	if( dont_draw )  return TCL_OK;
 
@@ -597,42 +613,124 @@ do_extern_update:
 	return TCL_OK;
 }
 
-/*
- *			S T R S O L _ I N
+/*			E B M _ I N
  *
- *  Read string solid info from keyboard
- *  "in" name ebm|vol arg(s)
+ *	Read EBM solid from keyboard
+ *
  */
 int
-strsol_in( ep, sol, argc, argv )
-struct bu_external	*ep;
-char			*sol;
-int 			 argc;
-char 		       **argv;
+ebm_in( cmd_argvs, intern )
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
 {
-	struct bu_vls	str;
-	union record	*rec;
+	struct rt_ebm_internal	*ebm;
 
-	/* Read at least one "arg(s)" */
-	if( argc < 3+1 ) {
-	  Tcl_AppendResult(interp, MORE_ARGS_STR, sol, " Arg? ", (char *)NULL);
-	  return CMD_MORE;
+	BU_GETSTRUCT( ebm, rt_ebm_internal );
+	intern->idb_type = ID_EBM;
+	intern->idb_ptr = ebm;
+	ebm->magic = RT_EBM_INTERNAL_MAGIC;
+
+	strcpy( ebm->file, cmd_argvs[3] );
+	ebm->xdim = atoi( cmd_argvs[4] );
+	ebm->ydim = atoi( cmd_argvs[5] );
+	ebm->tallness = atof( cmd_argvs[6] );
+	bn_mat_idn( ebm->mat );
+
+	return( 0 );
+}
+
+/*			H F _ I N
+ *
+ *	Read HF solid from keyboard
+ *
+ */
+int
+hf_in( cmd_argvs, intern )
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	struct rt_hf_internal	*hf;
+	vect_t work;
+
+	BU_GETSTRUCT( hf, rt_hf_internal );
+	intern->idb_type = ID_HF;
+	intern->idb_ptr = (genptr_t)hf;
+	hf->magic = RT_HF_INTERNAL_MAGIC;
+
+	strcpy( hf->cfile, cmd_argvs[3] );
+	strcpy( hf->dfile, cmd_argvs[4] );
+	strncpy( hf->fmt, cmd_argvs[5], 7 );
+	hf->fmt[7] = '\0';
+	hf->w = atoi( cmd_argvs[6] );
+	hf->n = atoi( cmd_argvs[7] );
+	hf->shorts = atoi( cmd_argvs[8] );
+	hf->file2mm = atof( cmd_argvs[9] );
+	hf->v[0] = atof( cmd_argvs[10] );
+	hf->v[1] = atof( cmd_argvs[11] );
+	hf->v[2] = atof( cmd_argvs[12] );
+	hf->x[0] = atof( cmd_argvs[13] );
+	hf->x[1] = atof( cmd_argvs[14] );
+	hf->x[2] = atof( cmd_argvs[15] );
+	hf->y[0] = atof( cmd_argvs[16] );
+	hf->y[1] = atof( cmd_argvs[17] );
+	hf->y[2] = atof( cmd_argvs[18] );
+	hf->xlen = atof( cmd_argvs[19] );
+	hf->ylen = atof( cmd_argvs[20] );
+	hf->zscale = atof( cmd_argvs[21] );
+
+	if( hf->w < 2 || hf->n < 2 )
+	{
+		Tcl_AppendResult(interp, "ERROR: length or width of fta file is too small\n", (char *)NULL );
+		return( 1 );
 	}
 
-	BU_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ebm external");
-	rec = (union record *)ep->ext_buf;
+	if( hf->xlen <= 0 || hf->ylen <= 0 )
+	{
+		Tcl_AppendResult(interp, "ERROR: length and width of HF solid must be greater than 0\n", (char *)NULL );
+		return( 1 );
+	}
 
-	bu_vls_init( &str );
-	bu_vls_from_argv( &str, argc-3, &argv[3] );
+	/* XXXX should check for orthogonality of 'x' and 'y' vectors */
 
-	rec->ss.ss_id = DBID_STRSOL;
-	strncpy( rec->ss.ss_keyword, sol, NAMESIZE-1 );
-	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
-	bu_vls_free( &str );
+	if( !(hf->mp = bu_open_mapped_file( hf->dfile, "hf" )) )
+	{
+		Tcl_AppendResult(interp, "ERROR: cannot open data file\n", (char *)NULL );
+		hf->mp = (struct bu_mapped_file *)NULL;
+		return( 1 );
+	}
 
-	return CMD_OK;		/* OK */
+	return( 0 );
+}
+
+/*			V O L _ I N
+ *
+ *	Read VOL solid from keyboard
+ *
+ */
+int
+vol_in( cmd_argvs, intern )
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	struct rt_vol_internal	*vol;
+
+	BU_GETSTRUCT( vol, rt_vol_internal );
+	intern->idb_type = ID_VOL;
+	intern->idb_ptr = vol;
+	vol->magic = RT_VOL_INTERNAL_MAGIC;
+
+	strcpy( vol->file, cmd_argvs[3] );
+	vol->xdim = atoi( cmd_argvs[4] );
+	vol->ydim = atoi( cmd_argvs[5] );
+	vol->zdim = atoi( cmd_argvs[6] );
+	vol->lo = atoi( cmd_argvs[7] );
+	vol->hi = atoi( cmd_argvs[8] );
+	vol->cellsize[0] = atof( cmd_argvs[9] );
+	vol->cellsize[1] = atof( cmd_argvs[10] );
+	vol->cellsize[2] = atof( cmd_argvs[11] );
+	bn_mat_idn( vol->mat );
+
+	return( 0 );
 }
 
 /*
