@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.9  1994/09/17  04:57:35  butler
+ * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
+ *
  * Revision 10.8  1993/12/10  05:50:57  mike
  * tchars should be defined only on old-style BSD systems.
  *
@@ -116,6 +119,9 @@ static char RCSid[] = "@(#)$Header$";
 #  endif
 # include <termios.h>
 # include <fcntl.h>
+# if defined(sun) && defined(sparc)
+#   include <sys/file.h>  /* Solaris needs this */
+# endif
 #else
 # ifndef SYS5
 #  include <sgtty.h>
