@@ -33,7 +33,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "raytrace.h"
 #include "externs.h"
-#include "./sedit.h"
 #include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
@@ -48,7 +47,8 @@ char	*cmd_args[MAXARGS+2];	/* array of pointers to args */
 
 extern int	cmd_glob();
 
-static void	f_help(), f_fhelp(), f_param(), f_comm();
+static void	f_help(), f_fhelp(), f_comm();
+void	f_param();
 void	mged_cmd();
 void	f_center(), f_press(), f_view(), f_blast();
 void	f_edit(), f_evedit(), f_delobj(), f_hideline();
@@ -453,58 +453,6 @@ char	**argv;
 		return;
 	}
 	(void)printf("%s: no such command, type ? for help\n", argv[0] );
-}
-
-/* Input parameter editing changes from keyboard */
-/* Format: p dx [dy dz]		*/
-static void
-f_param( argc, argv )
-int	argc;
-char	**argv;
-{
-	register int i;
-
-	if( es_edflag <= 0 )  {
-		(void)printf("A solid editor option not selected\n");
-		return;
-	}
-	if( es_edflag == PROT ) {
-		(void)printf("\"p\" command not defined for this option\n");
-		return;
-	}
-
-	inpara = 1;
-	sedraw++;
-	for( i = 1; i < argc; i++ )  {
-		es_para[ i - 1 ] = atof( argv[i] );
-		if( es_edflag == PSCALE ||
-					es_edflag == SSCALE )  {
-			if(es_para[0] <= 0.0) {
-				(void)printf("ERROR: SCALE FACTOR <= 0\n");
-				inpara = 0;
-				sedraw = 0;
-				return;
-			}
-		}
-	}
-	/* check if need to convert to the base unit */
-	switch( es_edflag ) {
-
-		case STRANS:
-		case PSCALE:
-		case EARB:
-		case MVFACE:
-		case MOVEH:
-		case MOVEHH:
-		case PTARB:
-			/* must convert to base units */
-			es_para[0] *= local2base;
-			es_para[1] *= local2base;
-			es_para[2] *= local2base;
-
-		default:
-			return;
-	}
 }
 
 /* Let the user temporarily escape from the editor */

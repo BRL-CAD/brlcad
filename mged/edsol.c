@@ -1966,3 +1966,55 @@ sedit_reject()
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	db_free_external( &es_ext );
 }
+
+/* Input parameter editing changes from keyboard */
+/* Format: p dx [dy dz]		*/
+void
+f_param( argc, argv )
+int	argc;
+char	**argv;
+{
+	register int i;
+
+	if( es_edflag <= 0 )  {
+		(void)printf("A solid editor option not selected\n");
+		return;
+	}
+	if( es_edflag == PROT ) {
+		(void)printf("\"p\" command not defined for this option\n");
+		return;
+	}
+
+	inpara = 1;
+	sedraw++;
+	for( i = 1; i < argc; i++ )  {
+		es_para[ i - 1 ] = atof( argv[i] );
+		if( es_edflag == PSCALE ||
+					es_edflag == SSCALE )  {
+			if(es_para[0] <= 0.0) {
+				(void)printf("ERROR: SCALE FACTOR <= 0\n");
+				inpara = 0;
+				sedraw = 0;
+				return;
+			}
+		}
+	}
+	/* check if need to convert to the base unit */
+	switch( es_edflag ) {
+
+		case STRANS:
+		case PSCALE:
+		case EARB:
+		case MVFACE:
+		case MOVEH:
+		case MOVEHH:
+		case PTARB:
+			/* must convert to base units */
+			es_para[0] *= local2base;
+			es_para[1] *= local2base;
+			es_para[2] *= local2base;
+
+		default:
+			return;
+	}
+}
