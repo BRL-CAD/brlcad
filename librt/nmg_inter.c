@@ -174,7 +174,10 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEXUSE(vu);
-	if(dualvu) NMG_CK_VERTEXUSE(dualvu);
+	if(dualvu)  {
+		NMG_CK_VERTEXUSE(dualvu);
+		if( vu == dualvu )  rt_bomb("nmg_enlist_vu() vu == dualvu\n");
+	}
 
 #if 0
 	/* Check the geometry */
@@ -207,16 +210,17 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
 			rt_bomb("nmg_enlist_vu() vu/fu2 mis-match\n");
 		}
 	} else {
-		rt_log("nmg_enlist_vu(vu=x%x) sv=x%x, s1=x%x, s2=x%x\n",
-			vu, sv, is->s1, is->s2 );
+		rt_log("nmg_enlist_vu(vu=x%x,dv=x%x) sv=x%x, s1=x%x, s2=x%x\n",
+			vu, dualvu, sv, is->s1, is->s2 );
 		rt_bomb("nmg_enlist_vu: vu is not in s1 or s2\n");
 	}
 
 	if( dualvu )  {
 		if( vu->v_p != dualvu->v_p )  rt_bomb("nmg_enlist_vu() dual vu has different vertex\n");
 		if( nmg_find_s_of_vu(dualvu) != duals )  {
-			rt_log("nmg_enlist_vu(vu=x%x) sv=x%x, s1=x%x, s2=x%x, sdual=x%x\n",
-				vu, sv, is->s1, is->s2, nmg_find_s_of_vu(dualvu) );
+			rt_log("nmg_enlist_vu(vu=x%x,dv=x%x) sv=x%x, s1=x%x, s2=x%x, sdual=x%x\n",
+				vu, dualvu,
+				sv, is->s1, is->s2, nmg_find_s_of_vu(dualvu) );
 			rt_bomb("nmg_enlist_vu() dual vu shell mis-match\n");
 		}
 		if( dualfu && nmg_find_fu_of_vu(dualvu) != dualfu) rt_bomb("nmg_enlist_vu() dual vu has wrong fu\n");
@@ -233,8 +237,8 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
 			dualvu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 		} else {
 			if( rt_g.NMG_debug & DEBUG_POLYSECT )  {
-				rt_log("nmg_enlist_vu(vu=x%x) re-using dualvu=x%x from dualfu=x%x\n",
-					vu,
+				rt_log("nmg_enlist_vu(vu=x%x,dv=x%x) re-using dualvu=x%x from dualfu=x%x\n",
+					vu, dualvu,
 					dualvu, dualfu);
 			}
 		}
@@ -265,9 +269,10 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
 	}
 
 	if( rt_g.NMG_debug & DEBUG_POLYSECT )  {
-		rt_log("nmg_enlist_vu(vu=x%x) v=x%x, dualvu=x%x (%s)\n",
-			vu, vu->v_p, dualvu,
-			(sv == is->s1) ? "shell 1" : "shell 2" );
+		rt_log("nmg_enlist_vu(vu=x%x,dv=x%x) v=x%x (%s) ret=x%x\n",
+			vu, dualvu, vu->v_p,
+			(sv == is->s1) ? "shell 1" : "shell 2",
+			dualvu );
 	}
 
 	/* Some (expensive) centralized sanity checking */
@@ -1098,6 +1103,10 @@ CONST struct rt_tol	*tol;
  *  broken.
  *  Brute force, but *certain* not to miss anything.
  *
+ *  There is nothing to prevent eu1 and eu2 from being edgeuses in the same
+ *  loop.  This creates interesting patterns if one is NEXT of the other,
+ *  such as vu[1] == vu[2].  Just handle it gracefully.
+ *
  *  Returns the number of edgeuses that resulted,
  *  which is always at least the original 2.
  *
@@ -1116,6 +1125,11 @@ struct nmg_ptbl		*l2;	/* optional: list of new eu2 pieces */
 	register int	i;
 	register int	j;
 	int		neu;	/* Number of edgeuses */
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("nmg_isect_2colinear_edge2p(eu1=x%x, eu2=x%x) START\n",
+			eu1, eu2);
+	}
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
@@ -1147,6 +1161,8 @@ struct nmg_ptbl		*l2;	/* optional: list of new eu2 pieces */
 	}
 
 	/* Now join 'em up */
+	/*  This step should no longer be necessary, as nmg_ebreaker()
+	 *  from nmg_break_eu_on_v() should have already handled this. */
 	for( i=0; i < neu-1; i++ )  {
 		for( j=i+1; j < neu; j++ )  {
 			if( !NMG_ARE_EUS_ADJACENT(eu[i],eu[j]) )  continue;
@@ -1158,6 +1174,7 @@ struct nmg_ptbl		*l2;	/* optional: list of new eu2 pieces */
 	for( i=0; i < 4; i++ )  {
 		for( j=0; j < 4; j++ )  {
 			if( i==j )  continue;
+			if( vu[i] == vu[j] ) continue;	/* Happens if eu2 follows eu1 in loop */
 			if( vu[i]->v_p == vu[j]->v_p )  {
 				nmg_enlist_vu( is, vu[i], vu[j] );
 				goto next_i;
@@ -1169,7 +1186,7 @@ next_i:		;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		rt_log("nmg_isect_2colinear_edge2p(eu1=x%x, eu2=x%x) #eu=%d\n",
+		rt_log("nmg_isect_2colinear_edge2p(eu1=x%x, eu2=x%x) ret #eu=%d\n",
 			eu1, eu2, neu);
 	}
 	return neu;
