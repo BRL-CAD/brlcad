@@ -1973,8 +1973,10 @@ CONST char		*str;
 
 		for( j=0; j < 4; j++ )  {
 			for( k=0; k < 4; k++ )  {
-				if( cp >= endp )  break;
-				fprintf(fp, "%2.2x ", *cp++ );
+				if( cp >= endp )
+					fprintf(fp, "   ");
+				else
+					fprintf(fp, "%2.2x ", *cp++ );
 			}
 			fprintf(fp, " ");
 		}
