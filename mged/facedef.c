@@ -61,8 +61,10 @@ char *p_nupnt[] = {
 };
 
 void	f_facedef();
-void	get_pleqn(), get_rotfb(), get_nupnt(), calc_pnts();
-int	get_3pnts();
+
+static void	get_pleqn(), get_rotfb(), get_nupnt();
+void	calc_pnts();
+static int	get_3pts();
 
 /*			F _ F A C E D E F ( )
  * Redefines one of the defining planes for a GENARB8. Finds
@@ -74,6 +76,14 @@ f_facedef()
 {
 	short int 	i,face,prod,plane;
 	static vect_t 	tempvec;	/* because MAT4X3PNT,MAT4X3VEC corrupts the vector */
+	struct rt_tol	tol;
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 	if( state != ST_S_EDIT ){
@@ -182,7 +192,7 @@ f_facedef()
 				}
 				args += argcnt;
 			}
-			get_pleqn(3,plane);
+			get_pleqn( es_peqn[plane], &cmd_args[3] );
 			break;
 		case 'b': 
 			/* special case for arb7, because of 2 4-pt planes meeting */
@@ -199,7 +209,7 @@ f_facedef()
 				}
 				args += argcnt;
 			}
-			if( get_3pts(3,plane) ){
+			if( get_3pts( es_peqn[plane], &cmd_args[3], &tol) ){
 				/* clean up array es_peqn for anyone else */
 				calc_planes( &es_rec.s, es_rec.s.s_cgtype );
 				return;				/* failure */
@@ -229,7 +239,7 @@ f_facedef()
 				}
 				args += argcnt;
 			}
-			get_rotfb(3,plane,&es_rec.s);
+			get_rotfb(es_peqn[plane], &cmd_args[3], &es_rec.s);
 			break;
 		case 'd': 
 			/* special case for arb7, because of 2 4-pt planes meeting */
@@ -246,7 +256,7 @@ f_facedef()
 				}
 				args += argcnt;
 			}
-			get_nupnt(3,plane);
+			get_nupnt(es_peqn[plane], &cmd_args[3]);
 			break;
 		case 'q': 
 			return;
@@ -277,106 +287,121 @@ f_facedef()
 }
 
 
-/* 			G E T _ P L E Q N ( )
- * Gets the planar equation from the array cmd_args[] starting at the position 'arr_loc'
- * and puts the result at 'loc' of the array es_peqn.
+/*
+ * 			G E T _ P L E Q N
+ *
+ * Gets the planar equation from the array argv[]
+ * and puts the result into 'plane'.
  */
-void
-get_pleqn(arr_loc,loc)
-int arr_loc;
-int loc;
+static void
+get_pleqn( plane, argv )
+plane_t	plane;
+char	*argv[];
 {
 	int i;
 
 	for(i=0; i<4; i++)
-		es_peqn[loc][i]= atof(cmd_args[arr_loc+i]);
-	VUNITIZE( &es_peqn[loc][0] );
-	es_peqn[loc][3] *= local2base;
+		plane[i]= atof(argv[i]);
+	VUNITIZE( &plane[0] );
+	plane[3] *= local2base;
 	return;	
 }
 
 
-/* 			G E T _ 3 P T S (  )
- * Gets three definite points from the array cmd_args[] starting at the position
- * 'arr_loc' and finds the planar equation from these points.  The result is stored
- * at 'loc' in the array es_peqn.
+/*
+ * 			G E T _ 3 P T S
+ *
+ *  Gets three definite points from the array cmd_args[]
+ *  and finds the planar equation from these points.
+ *  The resulting plane equation is stored in 'plane'.
+ *
+ *  Returns -
+ *	 0	success
+ *	-1	failure
  */
-int
-get_3pts(arr_loc,loc)
-int arr_loc;
-int loc;
+static int
+get_3pts( plane, argv, tol)
+plane_t		plane;
+char		*argv[];
+struct rt_tol	*tol;
 {
 	int i;
-	struct solidrec plane_pts;
+	point_t	a,b,c;
 
-	for(i=0; i<9; i++)
-		plane_pts.s_values[i]=atof(cmd_args[arr_loc+i]) * local2base;
-	if( planeqn(loc,0,1,2,&plane_pts) ){
-		(void)printf("Facedef: not a plane\n");
-		return(1);		/* failure */
+	for(i=0; i<3; i++)
+		a[i] = atof(argv[0+i]) * local2base;
+	for(i=0; i<3; i++)
+		b[i] = atof(argv[3+i]) * local2base;
+	for(i=0; i<3; i++)
+		c[i] = atof(argv[6+i]) * local2base;
+
+	if( rt_mk_plane_3pts( plane, a, b, c, tol ) < 0 )  {
+		rt_log("Facedef: not a plane\n");
+		return(-1);		/* failure */
 	}
 	return(0);			/* success */
 }
 	
-/* 			G E T _ R O T F B (  )
+/*
+ * 			G E T _ R O T F B
  *
- * Gets information from the array cmd_args[] starting at the position
- * 'arr_loc'.
+ * Gets information from the array argv[].
  * Finds the planar equation given rotation and fallback angles, plus a
- * fixed point. Result is stored in 'loc' of array es_peqn. The values
+ * fixed point. Result is stored in 'plane'. The vertices
  * pointed to by 's_recp' are used if a vertex is chosen as fixed point.
  */
-void
-get_rotfb(arr_loc,loc,s_recp)
-int arr_loc;
-int loc;	
+static void
+get_rotfb(plane, argv, s_recp)
+plane_t	plane;
+char	*argv[];
 struct solidrec *s_recp;
 {
 	fastf_t rota, fb;
 	short int i,temp;
-	struct solidrec plane_pts;
+	point_t		pt;
 
-	rota= atof(cmd_args[arr_loc++]) * degtorad;
-	fb  = atof(cmd_args[arr_loc++]) * degtorad;
+	rota= atof(argv[0]) * degtorad;
+	fb  = atof(argv[1]) * degtorad;
 	
 	/* calculate normal vector (length=1) from rot,fb */
-	es_peqn[loc][0] = cos(fb) * cos(rota);
-	es_peqn[loc][1] = cos(fb) * sin(rota);
-	es_peqn[loc][2] = sin(fb);
+	plane[0] = cos(fb) * cos(rota);
+	plane[1] = cos(fb) * sin(rota);
+	plane[2] = sin(fb);
 
-	if( cmd_args[arr_loc][0] == 'v' ){     	/* vertex given */
-
-		temp = atoi(++cmd_args[arr_loc]) - 1;	/* strip off 'v', subtract 1 */
+	if( argv[2][0] == 'v' ){     	/* vertex given */
+		/* strip off 'v', subtract 1 */
+		temp = atoi(argv[2]+1) - 1;
 		if(temp > 0){
-			VADD2( &plane_pts.s_values[0], &s_recp->s_values[0], &s_recp->s_values[temp*3] );
-			es_peqn[loc][3]= VDOT(&es_peqn[loc][0],&plane_pts.s_values[0]);
+			VADD2( &pt[0], &s_recp->s_values[0], &s_recp->s_values[temp*3] );
+			plane[3]= VDOT(&plane[0], pt);
 		} else {
-			es_peqn[loc][3]= VDOT(&es_peqn[loc][0],&s_recp->s_values[0]);
+			plane[3]= VDOT(&plane[0],&s_recp->s_values[0]);
 		}
-	}
-	else{				         /* definite point given */
+	} else {				         /* definite point given */
 		for(i=0; i<3; i++)
-			plane_pts.s_values[i]=atof(cmd_args[arr_loc+i]) * local2base;
-		es_peqn[loc][3]=VDOT(&es_peqn[loc][0], &plane_pts.s_values[0]);
+			pt[i]=atof(argv[2+i]) * local2base;
+		plane[3]=VDOT(&plane[0], pt);
 	}
 }
 
-/* 			G E T _ N U P N T ( )
- * Gets a point from the array cmd_arg[] starting at the  position 'arr_loc'.
- * The value of D at 'loc' in the array es_peqn is changed such that the plane
+/*
+ * 			G E T _ N U P N T
+ *
+ * Gets a point from the three strings in the 'argv' array.
+ * The value of D of 'plane' is changed such that the plane
  * passes through the input point.
  */
 void
-get_nupnt(arr_loc,loc)
-int arr_loc;
-int loc;
+static get_nupnt(plane, argv)
+plane_t	plane;
+char	*argv[];
 {
-	short int i;
-	struct solidrec plane_pts;
+	int	i;
+	point_t	pt;
 
 	for(i=0; i<3; i++)
-		plane_pts.s_values[i]= atof(cmd_args[arr_loc+i]) * local2base;
-	es_peqn[loc][3]=VDOT(&es_peqn[loc][0], &plane_pts.s_values[0]);
+		pt[i] = atof(argv[i]) * local2base;
+	plane[3] = VDOT(&plane[0], pt);
 }
 
 /* 			C A L C _ P N T S (  )
