@@ -40,7 +40,7 @@ struct dm {
   int	(*dmr_object)();	/* Invoke an object subroutine */
   unsigned (*dmr_cvtvecs)();	/* returns size requirement of subr */
   unsigned (*dmr_load)();	/* DMA the subr to device */
-  void	(*dmr_statechange)();	/* called on editor state change */
+  void	(*dmr_statechange)();	/* application provided -- called on editor state change */
   void	(*dmr_viewchange)();	/* add/drop solids from view */
   void	(*dmr_colorchange)();	/* called when color table changes */
   void	(*dmr_window)();	/* Change window boundry */
@@ -56,6 +56,9 @@ struct dm {
   genptr_t dmr_vars;		/* pointer to display manager dependant variables */
   struct bu_vls dmr_pathName;	/* full Tcl/Tk name of drawing window */
   char	dmr_dname[80];		/* Display name */
+  fastf_t *dmr_vp;              /* Viewscale pointer */
+  void (*dmr_cfunc)();          /* XXX application provided color function */
+  struct solid *dmr_hp;         /* XXX - Temporary */
 };
 
 extern void Nu_void();
