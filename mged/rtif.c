@@ -666,6 +666,45 @@ f_savekey()
 	(void)fclose( fp );
 }
 
+extern int	cm_start();
+extern int	cm_vsize();
+extern int	cm_eyept();
+extern int	cm_lookat_pt();
+extern int	cm_vrot();
+extern int	cm_end();
+extern int	cm_multiview();
+extern int	cm_anim();
+extern int	cm_tree();
+extern int	cm_clean();
+extern int	cm_set();
+
+static struct command_tab cmdtab[] = {
+	"start", "frame number", "start a new frame",
+		cm_start,	2, 2,
+	"viewsize", "size in mm", "set view size",
+		cm_vsize,	2, 2,
+	"eye_pt", "xyz of eye", "set eye point",
+		cm_eyept,	4, 4,
+	"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
+		cm_lookat_pt,	4, 5,
+	"viewrot", "4x4 matrix", "set view direction from matrix",
+		cm_vrot,	17,17,
+	"end", 	"", "end of frame setup, begin raytrace",
+		cm_end,		1, 1,
+	"multiview", "", "produce stock set of views",
+		cm_multiview,	1, 1,
+	"anim", 	"path type args", "specify articulation animation",
+		cm_anim,	4, 999,
+	"tree", 	"treetop(s)", "specify alternate list of tree tops",
+		cm_tree,	1, 999,
+	"clean", "", "clean articulation from previous frame",
+		cm_clean,	1, 1,
+	"set", 	"", "show or set parameters",
+		cm_set,		1, 999,
+	(char *)0, (char *)0, (char *)0,
+		0,		0, 0	/* END */
+};
+
 /*
  *			F _ P R E V I E W
  *
@@ -679,7 +718,6 @@ f_savekey()
  *  moving the eyepoint as directed.
  *  However, as a bonus, the eye path is left behind as a vector plot.
  */
-#include "../rt/cmd.c"
 static vect_t	rtif_eye_model;
 static mat_t	rtif_viewrot;
 static struct vlhead rtif_vhead;
@@ -687,8 +725,8 @@ static struct vlhead rtif_vhead;
 void
 f_preview()
 {
-	register FILE *fp;
-	char	buf[512];
+	register FILE	*fp;
+	char		*cmd;
 
 	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
 		return;
@@ -704,9 +742,10 @@ f_preview()
 
 	rtif_vhead.vh_first = rtif_vhead.vh_last = VL_NULL;
 
-	while( read_cmd( fp, buf, sizeof(buf) ) >= 0 )  {
-		if( do_cmd( buf ) < 0 )
-			rt_log("command failed: %s\n", buf);
+	while( ( cmd = rt_read_cmd( fp )) != NULL )  {
+		if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
+			rt_log("command failed: %s\n", cmd);
+		rt_free( cmd, "preview cmd" );
 	}
 
 	invent_solid( "EYE_PATH", &rtif_vhead );
@@ -748,6 +787,31 @@ int	argc;
 	return(0);
 }
 
+cm_lookat_pt(argc, argv)
+int	argc;
+char	**argv;
+{
+	point_t	pt;
+	vect_t	dir;
+	int	yflip = 0;
+
+	if( argc < 4 )
+		return(-1);
+	pt[X] = atof(argv[1]);
+	pt[Y] = atof(argv[2]);
+	pt[Z] = atof(argv[3]);
+	if( argc > 4 )
+		yflip = atoi(argv[4]);
+
+	VSUB2( dir, pt, rtif_eye_model );
+	VUNITIZE( dir );
+	mat_lookat( rtif_viewrot, dir, yflip );
+	/*  Final processing is deferred until cm_end(), but eye_pt
+	 *  must have been specified before here (for now)
+	 */
+	return(0);
+}
+
 cm_vrot(argc, argv)
 char	**argv;
 int	argc;
@@ -770,9 +834,11 @@ int	argc;
 	vect_t	new_cent;
 	vect_t	xv, yv;			/* view x, y */
 	vect_t	xm, ym;			/* model x, y */
+	int	move;
 
 	/* Record eye path as a polyline.  Move, then draws */
-	ADD_VL( &rtif_vhead, rtif_eye_model, rtif_vhead.vh_first != VL_NULL );
+	move = rtif_vhead.vh_first != VL_NULL;
+	ADD_VL( &rtif_vhead, rtif_eye_model, move );
 	
 	/* First step:  put eye at view center (view 0,0,0) */
        	mat_copy( Viewrot, rtif_viewrot );
@@ -781,6 +847,20 @@ int	argc;
 		-rtif_eye_model[Y],
 		-rtif_eye_model[Z] );
 	new_mats();
+
+	/*
+	 * Compute camera orientation notch to right (+X) and up (+Y)
+	 * Done here, with eye in center of view.
+	 */
+	VSET( xv, 0.05, 0, 0 );
+	VSET( yv, 0, 0.05, 0 );
+	MAT4X3PNT( xm, view2model, xv );
+	MAT4X3PNT( ym, view2model, yv );
+	ADD_VL( &rtif_vhead, xm, 1 );
+	ADD_VL( &rtif_vhead, rtif_eye_model, 0 );
+	ADD_VL( &rtif_vhead, ym, 1 );
+	ADD_VL( &rtif_vhead, rtif_eye_model, 0 );
+
 	/*  Second step:  put eye at view 0,0,1.
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
 	 */
@@ -792,19 +872,9 @@ int	argc;
 		-new_cent[Z] );
 	new_mats();
 
-#if 1
-	/* Draw camera orientation notch to right (+X) and up (+Y) */
-	VSET( xv, 0.05, 0, 0 );
-	VSET( yv, 0, 0.05, 0 );
-	MAT4X3PNT( xm, view2model, xv );
-	MAT4X3PNT( ym, view2model, yv );
-	ADD_VL( &rtif_vhead, xm, 1 );
-	ADD_VL( &rtif_vhead, ym, 1 );
-	ADD_VL( &rtif_vhead, rtif_eye_model, 1 );
-#endif
-
 	dmaflag = 1;
 	refresh();	/* Draw new display */
+	dmaflag = 1;
 	return(0);
 }
 
