@@ -69,12 +69,16 @@ clobber&: Makefile.MTYPE
 install&: Makefile.MTYPE
 	cp ../SRCDIR/zlib.h .
 	cp ../SRCDIR/zconf.h .
+	rm -f INCLUDE_DIR/zlib.h INCLUDE_DIR/zconf.h
+	rm -f LIBDIR/libz.*
 	make -f Makefile.MTYPE install prefix=BASEDIR
 	AFTER_INSTALL
 
 install-nobak&: Makefile.MTYPE
 	cp ../SRCDIR/zlib.h .
 	cp ../SRCDIR/zconf.h .
+	rm -f INCLUDE_DIR/zlib.h INCLUDE_DIR/zconf.h
+	rm -f LIBDIR/libz.*
 	make -f Makefile.MTYPE install prefix=BASEDIR
 	AFTER_INSTALL
 
