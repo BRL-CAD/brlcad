@@ -1,8 +1,10 @@
 /*
  *		P I X F I E L D S . C
  *
- *  pixfields takes to input pixures and extracts field 1 from the first
+ *  pixfields takes two input pictures and extracts field 1 from the first
  *  pix file and field 2 comes from the second pix file.
+ *  This is useful for creating field-by-field animation for
+ *  NTSC video display.
  *
  *  Author -
  *	Christopher T. Johnson - 05 December 1989
@@ -12,9 +14,8 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
- *	All rights reserved.
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -39,10 +40,8 @@ int	width = DEFAULT_WIDTH;
 int	height = DEFAULT_WIDTH;
 int	verbose = 0;
 
-char *file_name;
-FILE *fldonefp,*fldtwofp;
-
-void	dousage();
+char	*file_name;
+FILE	*fldonefp,*fldtwofp;
 
 char	usage[] = "\
 Usage: pixfields [-v]\n\
@@ -107,36 +106,38 @@ register char **argv;
 main( argc, argv )
 int argc; char **argv;
 {
-	char *line;
-	int line_number;
+	char	*line1;
+	char	*line2;
+	int	line_number;
 
 	if ( !get_args( argc, argv ) )  {
-		dousage();
+		fputs( usage, stderr );
 		exit( 1 );
 	}
 	
-	line = (char *) malloc(width*3+1);
+	line1 = (char *) malloc(width*3+1);
+	line2 = (char *) malloc(width*3+1);
 
-	line_number = height-1;
-	while(line_number >= 0) {
-		if (line_number & 1) {
-			fread(line, sizeof(char), 3*width, fldtwofp);
-			fread(line, sizeof(char), 3*width,fldonefp);
-		} else {
-			fread(line, sizeof(char), 3*width,fldonefp);
-			fread(line, sizeof(char), 3*width, fldtwofp);
+	line_number = 0;
+	for(;;)  {
+		if( fread( line1, 3*sizeof(char), width, fldonefp ) != width )
+			break;
+		if( fread( line2, 3*sizeof(char), width, fldtwofp ) != width )  {
+			fprintf(stderr,"pixfields: premature EOF on 2nd file?\n");
+			exit(2);
 		}
-
-		fwrite( line, sizeof( char ), 3*width, stdout );
-		--line_number;
+		if ( (line_number & 1) == 0 )  {
+			if( fwrite( line1, 3*sizeof(char), width, stdout ) != width )  {
+				perror("fwrite line1");
+				exit(1);
+			}
+		} else {
+			if( fwrite( line2, 3*sizeof(char), width, stdout ) != width )  {
+				perror("fwrite line2");
+				exit(1);
+			}
+		}
+		line_number++;
 	}
 	exit( 0 );
-}
-
-void
-dousage()
-{
-	int	i;
-
-	fputs( usage, stderr );
 }
