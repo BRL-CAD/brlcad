@@ -1,4 +1,7 @@
 #!/bin/sh
+echo "checking d-a"
+echo "------------"
+
 if [ -f d-a.log ] ; then
   rm d-a.log
 fi

@@ -1,4 +1,6 @@
 #!/bin/sh
+echo "checking a-d"
+echo "------------"
 if [ -f a-d.log ] ; then
   rm a-d.log
 fi
