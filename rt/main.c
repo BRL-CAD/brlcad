@@ -82,6 +82,7 @@ extern char	*framebuffer;		/* desired framebuffer */
 extern struct command_tab	rt_cmdtab[];
 
 extern char	version[];		/* From vers.c */
+extern char	rt_version[];		/* From librt/vers.c */
 
 /*
  *			M A I N
@@ -98,6 +99,7 @@ char **argv;
 	port_setlinebuf( stderr );
 
 	(void)fprintf(stderr, "%s\n", version+5);	/* skip @(#) */
+	(void)fprintf(stderr, "Using librt version:\n%s\n", rt_version+5);
 
 #ifdef HAVE_SBRK
 	beginptr = (char *) sbrk(0);
