@@ -1110,6 +1110,74 @@ char	      **argv;
 	return TCL_OK;
 }
 
+int
+rt_db_report( interp, intern, attr )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+char			*attr;
+{
+	register struct bu_structparse         *sp = NULL;
+	register struct rt_solid_type_lookup   *stlp;
+	int                     id, status;
+	Tcl_DString             ds;
+	struct bu_vls           str;
+
+	RT_CK_DB_INTERNAL( intern );
+
+       /* Find out what type of object we are dealing with and report on it. */
+	id = intern->idb_type;
+	switch( id ) {
+	case ID_COMBINATION:
+		status = db_tcl_comb_describe( interp,
+			       (struct rt_comb_internal *)intern->idb_ptr,
+					       attr );
+		break;
+	default:
+		if( (stlp=rt_get_parsetab_by_id(id)) == NULL ) {
+			Tcl_AppendResult( interp,
+ "invalid {an output routine for this data type has not yet been implemented}",
+				  (char *)NULL );
+			return TCL_OK;
+		}
+
+		bu_vls_init( &str );
+		Tcl_DStringInit( &ds );
+
+		sp = stlp->parsetab;
+		if( attr == (char *)0 ) {
+			/* Print out solid type and all attributes */
+			Tcl_DStringAppendElement( &ds, stlp->label );
+			while( sp->sp_name != NULL ) {
+				Tcl_DStringAppendElement( &ds, sp->sp_name );
+				bu_vls_trunc( &str, 0 );
+				bu_vls_struct_item( &str, sp,
+						 (char *)intern->idb_ptr, ' ' );
+				Tcl_DStringAppendElement( &ds,
+							  bu_vls_addr(&str) );
+				++sp;
+			}
+			status = TCL_OK;
+		} else {
+			if( bu_vls_struct_item_named( &str, sp, attr,
+					   (char *)intern->idb_ptr, ' ') < 0 ) {
+				Tcl_DStringAppend( &ds, "no such attribute",
+						   17 );
+				status = TCL_ERROR;
+			} else {
+				Tcl_DStringAppendElement( &ds,
+							  bu_vls_addr(&str) );
+				status = TCL_OK;
+			}
+		}
+
+		Tcl_DStringResult( interp, &ds );
+		Tcl_DStringFree( &ds );
+		bu_vls_free( &str );
+	}
+
+	return status;
+}
+
 /*
  *			R T _ D B _ G E T
  *
@@ -1232,60 +1300,9 @@ char	      **argv;
 		}
 	}
 #endif
-	RT_CK_DB_INTERNAL( &intern );
+	status = rt_db_report( interp, &intern, argv[2] );
 
-       /* Find out what type of object we are dealing with and report on it. */
-	id = intern.idb_type;
-	switch( id ) {
-	case ID_COMBINATION:
-		status = db_tcl_comb_describe( interp,
-			       (struct rt_comb_internal *)intern.idb_ptr,
-					       argv[2] );
-		break;
-	default:
-		if( (stlp=rt_get_parsetab_by_id(id)) == NULL ) {
-			Tcl_AppendResult( interp,
- "invalid {an output routine for this data type has not yet been implemented}",
-				  (char *)NULL );
-			return TCL_OK;
-		}
-
-		bu_vls_init( &str );
-		Tcl_DStringInit( &ds );
-
-		sp = stlp->parsetab;
-		if( argc == 2 ) {
-			/* Print out solid type and all attributes */
-			Tcl_DStringAppendElement( &ds, stlp->label );
-			while( sp->sp_name != NULL ) {
-				Tcl_DStringAppendElement( &ds, sp->sp_name );
-				bu_vls_trunc( &str, 0 );
-				bu_vls_struct_item( &str, sp,
-						 (char *)intern.idb_ptr, ' ' );
-				Tcl_DStringAppendElement( &ds,
-							  bu_vls_addr(&str) );
-				++sp;
-			}
-			status = TCL_OK;
-		} else {
-			if( bu_vls_struct_item_named( &str, sp, argv[2],
-					   (char *)intern.idb_ptr, ' ') < 0 ) {
-				Tcl_DStringAppend( &ds, "no such attribute",
-						   17 );
-				status = TCL_ERROR;
-			} else {
-				Tcl_DStringAppendElement( &ds,
-							  bu_vls_addr(&str) );
-				status = TCL_OK;
-			}
-		}
-
-		Tcl_DStringResult( interp, &ds );
-		Tcl_DStringFree( &ds );
-		bu_vls_free( &str );
-	}
-
-	rt_functab[id].ft_ifree( &intern );
+	rt_functab[intern.idb_type].ft_ifree( &intern );
 	return status;
 }
 
