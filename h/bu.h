@@ -222,6 +222,7 @@ extern char	*realloc();
 	}
 #endif
 
+
 /*----------------------------------------------------------------------*/
 /* list.c */
 /*
@@ -1136,6 +1137,12 @@ BU_EXTERN(int		bu_color_of_hsv_floats,	(struct bu_color *cp,
 						    fastf_t *hsv) );
 BU_EXTERN(int		bu_color_to_hsv_floats,	(struct bu_color *cp,
 						    fastf_t *hsv) );
+
+/* convert.c*/
+BU_EXTERN(int bu_cv_cookie, (char *in));
+BU_EXTERN(int bu_cv_optimize, (int cookie));
+BU_EXTERN(int bu_cv_w_cookie, (genptr_t out, int outcookie, int size,
+			     genptr_t in,  int incookie,  int count));
 
 /* file.c */
 BU_EXTERN(struct bu_file	*bu_fopen, (char *fname, char *type) );
