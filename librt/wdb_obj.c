@@ -79,6 +79,8 @@ HIDDEN int wdb_killall_tcl();
 HIDDEN int wdb_killtree_tcl();
 HIDDEN void wdb_killtree_callback();
 HIDDEN int wdb_copy_tcl();
+HIDDEN int wdb_move_tcl();
+HIDDEN int wdb_move_all_tcl();
 
 HIDDEN void wdb_deleteProc();
 HIDDEN void wdb_deleteProc_rt();
@@ -127,6 +129,8 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"killall",	wdb_killall_tcl,
 	"killtree",	wdb_killtree_tcl,
 	"cp",		wdb_copy_tcl,
+	"mv",		wdb_move_tcl,
+	"mvall",	wdb_move_all_tcl,
 #if 0
 	"c",		wdb_comb_std_tcl,
 	"cat",		wdb_cat_tcl,
@@ -143,8 +147,6 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"i",		wdb_instance_tcl,
 	"inside",	wdb_inside_tcl,
 	"keep",		wdb_keep_tcl,
-	"mv",		wdb_move_tcl,
-	"mvall",	wdb_move_all_tcl,
 	"pathlist",	wdb_pathlist_tcl,
 	"push",		wdb_push_tcl,
 	"getmat",	wdb_getmat_tcl,
@@ -1500,13 +1502,13 @@ wdb_kill_tcl(clientData, interp, argc, argv)
 	}
 
 	if (argc < 3 || MAXARGS < argc) {
-	  struct bu_vls vls;
+		struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "helplib wdb_kill");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_kill");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
 	}
 
 	/* skip past procname */
@@ -1591,7 +1593,7 @@ wdb_killall_tcl(clientData, interp, argc, argv)
 
 			if (rt_db_get_internal(&intern, dp, wdbop->wdb_wp->dbip, (fastf_t *)NULL) < 0) {
 				Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-					") failure", (char *)NULL );
+						 ") failure", (char *)NULL );
 				ret = TCL_ERROR;
 				continue;
 			}
@@ -1608,13 +1610,13 @@ wdb_killall_tcl(clientData, interp, argc, argv)
 					continue;	/* empty tree */
 				if (code < 0) {
 					Tcl_AppendResult(interp, "  ERROR_deleting ",
-						dp->d_namep, "/", argv[k],
-						"\n", (char *)NULL);
+							 dp->d_namep, "/", argv[k],
+							 "\n", (char *)NULL);
 					ret = TCL_ERROR;
 				} else {
 					Tcl_AppendResult(interp, "deleted ",
-						dp->d_namep, "/", argv[k],
-						"\n", (char *)NULL);
+							 dp->d_namep, "/", argv[k],
+							 "\n", (char *)NULL);
 				}
 			}
 
@@ -1693,8 +1695,8 @@ wdb_killtree_tcl(clientData, interp, argc, argv)
  */
 HIDDEN void
 wdb_killtree_callback(dbip, dp)
-struct db_i	*dbip;
-register struct directory *dp;
+     struct db_i	*dbip;
+     register struct directory *dp;
 {
 	if (dbip == DBI_NULL)
 		return;
@@ -1737,7 +1739,7 @@ wdb_copy_tcl(clientData, interp, argc, argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_cp");
+		bu_vls_printf(&vls, "helplib wdb_copy");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1752,7 +1754,7 @@ wdb_copy_tcl(clientData, interp, argc, argv)
 	}
 
 	if (db_get_external(&external , proto , wdbop->wdb_wp->dbip)) {
-		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);\
+		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1760,17 +1762,214 @@ wdb_copy_tcl(clientData, interp, argc, argv)
 	    db_alloc(wdbop->wdb_wp->dbip, dp, proto->d_len) < 0) {
 		Tcl_AppendResult(interp,
 				 "An error has occured while adding a new object to the database.\n",
-				 (char *)NULL); \
+				 (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if (db_put_external(&external, dp, wdbop->wdb_wp->dbip) < 0) {
 		db_free_external(&external);
-		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);\
+		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 	db_free_external(&external);
 
+	return TCL_OK;
+}
+
+/*
+ * Rename an object.
+ *
+ * Usage:
+ *        procname mv from to
+ */
+HIDDEN int
+wdb_move_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register struct directory *dp;
+	struct rt_db_internal	intern;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc != 4) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_move");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if ((dp = db_lookup(wdbop->wdb_wp->dbip,  argv[2], LOOKUP_NOISY)) == DIR_NULL)
+		return TCL_ERROR;
+
+	if (db_lookup(wdbop->wdb_wp->dbip, argv[3], LOOKUP_QUIET) != DIR_NULL) {
+		Tcl_AppendResult(interp, argv[3], ":  already exists\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (rt_db_get_internal(&intern, dp, wdbop->wdb_wp->dbip, (fastf_t *)NULL) < 0) {
+		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/*  Change object name in the in-memory directory. */
+	if (db_rename(wdbop->wdb_wp->dbip, dp, argv[3]) < 0) {
+		rt_db_free_internal(&intern);
+		Tcl_AppendResult(interp, "error in db_rename to ", argv[3],
+				 ", aborting\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/* Re-write to the database.  New name is applied on the way out. */
+	if (rt_db_put_internal(dp, wdbop->wdb_wp->dbip, &intern) < 0) {
+		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	return TCL_OK;
+}
+
+/*
+ * Rename all occurences of an object
+ *
+ * Usage:
+ *        procname mvall from to
+ */
+HIDDEN int
+wdb_move_all_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register int	i,j,k;	
+	register struct directory *dp;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal *comb;
+	struct bu_ptbl		stack;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc != 4) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_move_all");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if ((int)strlen(argv[3]) > RT_NAMESIZE) {
+		struct bu_vls tmp_vls;
+
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "ERROR: name length limited to %d characters\n", RT_NAMESIZE);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+		return TCL_ERROR;
+	}
+
+	/* rename the record itself */
+	if ((dp = db_lookup(wdbop->wdb_wp->dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL)
+		return TCL_ERROR;
+
+	if (db_lookup(wdbop->wdb_wp->dbip, argv[3], LOOKUP_QUIET) != DIR_NULL) {
+		Tcl_AppendResult(interp, argv[3], ":  already exists\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/*  Change object name in the directory. */
+	if (db_rename(wdbop->wdb_wp->dbip, dp, argv[3]) < 0) {
+		Tcl_AppendResult(interp, "error in rename to ", argv[3],
+				 ", aborting\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/* Change name in the file */
+	if (rt_db_get_internal(&intern, dp, wdbop->wdb_wp->dbip, (fastf_t *)NULL) < 0) {
+		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (rt_db_put_internal(dp, wdbop->wdb_wp->dbip, &intern) < 0) {
+		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	bu_ptbl_init( &stack, 64, "combination stack for f_mvall" );
+
+	/* Examine all COMB nodes */
+	for (i = 0; i < RT_DBNHASH; i++) {
+		for (dp = wdbop->wdb_wp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+			union tree	*comb_leaf;
+			int		done=0;
+			int		changed=0;
+
+			if (!(dp->d_flags & DIR_COMB))
+				continue;
+
+			if (rt_db_get_internal(&intern, dp, wdbop->wdb_wp->dbip, (fastf_t *)NULL) < 0)
+				continue;
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+			bu_ptbl_reset(&stack);
+			/* visit each leaf in the combination */
+			comb_leaf = comb->tree;
+			if (comb_leaf) {
+				while (!done) {
+					while(comb_leaf->tr_op != OP_DB_LEAF) {
+						bu_ptbl_ins(&stack, (long *)comb_leaf);
+						comb_leaf = comb_leaf->tr_b.tb_left;
+					}
+
+					if (!strncmp(comb_leaf->tr_l.tl_name, argv[2], RT_NAMESIZE)) {
+						bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
+						comb_leaf->tr_l.tl_name = bu_strdup(argv[3]);
+						changed = 1;
+					}
+
+					if (BU_PTBL_END(&stack) < 1) {
+						done = 1;
+						break;
+					}
+					comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1);
+					if (comb_leaf->tr_op != OP_DB_LEAF) {
+						bu_ptbl_rm( &stack, (long *)comb_leaf );
+						comb_leaf = comb_leaf->tr_b.tb_right;
+					}
+				}
+			}
+
+			if (changed) {
+				if (rt_db_put_internal(dp, wdbop->wdb_wp->dbip, &intern)) {
+					bu_ptbl_free( &stack );
+					rt_comb_ifree( &intern );
+					Tcl_AppendResult(interp,
+							 "Database write error, aborting\n",
+							 (char *)NULL);
+					return TCL_ERROR;
+				}
+			}
+			else
+				rt_comb_ifree(&intern);
+		}
+	}
+
+	bu_ptbl_free(&stack);
 	return TCL_OK;
 }
 
