@@ -39,7 +39,8 @@ _LOCAL_ int	dsk_dopen(),
 		dsk_bread(),
 		dsk_bwrite(),
 		dsk_cmread(),
-		dsk_cmwrite();
+		dsk_cmwrite(),
+		dsk_help();
 
 FBIO disk_interface =
 		{
@@ -57,10 +58,11 @@ FBIO disk_interface =
 		fb_null,		/* curs_set */
 		fb_null,		/* cmemory_addr */
 		fb_null,		/* cscreen_addr */
+		dsk_help,
 		"Disk File Interface",
 		16*1024,		/* the sky's really the limit here */
 		16*1024,
-		"*disk*",
+		"filename",		/* not in list so name is safe */
 		512,
 		512,
 		-1,
@@ -299,4 +301,22 @@ register RGBpixel	*bpp;
 	}
 
 	return	0;
+}
+
+_LOCAL_ int
+dsk_help( ifp )
+FBIO	*ifp;
+{
+	fb_log( "Description: %s\n", disk_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width/height: %d %d\n",
+		disk_interface.if_max_width,
+		disk_interface.if_max_height );
+	fb_log( "Default width/height: %d %d\n",
+		disk_interface.if_width,
+		disk_interface.if_height );
+	fb_log( "Note: you may have just created a disk file\n" );
+	fb_log( "called \"%s\" by running this.\n", ifp->if_name );
+
+	return(0);
 }

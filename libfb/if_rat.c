@@ -64,7 +64,8 @@ _LOCAL_ int	rat_dopen(),
 		rat_zoom_set(),
 		rat_curs_set(),
 		rat_cmemory_addr(),
-		rat_cscreen_addr();
+		rat_cscreen_addr(),
+		rat_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO rat_interface =  {
@@ -82,6 +83,7 @@ FBIO rat_interface =  {
 	rat_curs_set,			/* curs_set		*/
 	rat_cmemory_addr,		/* cursor_move_memory_addr */
 	rat_cscreen_addr,		/* cursor_move_screen_addr */
+	rat_help,			/* help function	*/
 	"Raster Technology One/80",	/* device description	*/
 	1024,				/* max width		*/
 	1024,				/* max height		*/
@@ -924,3 +926,17 @@ int	factor;
 	return	1;
 	}
 
+_LOCAL_ int
+rat_help( ifp )
+FBIO	*ifp;
+{
+	fb_log( "Description: %s\n", rat_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width/height: %d %d\n",
+		rat_interface.if_max_width,
+		rat_interface.if_max_height );
+	fb_log( "Default width/height: %d %d\n",
+		rat_interface.if_width,
+		rat_interface.if_height );
+	return(0);
+}
