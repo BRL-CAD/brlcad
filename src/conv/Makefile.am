@@ -11,6 +11,7 @@ bin_PROGRAMS = \
 	asc-nmg \
 	asc2g \
 	asc2pix \
+	bot-bldxf \
 	bot_shell-vtk \
 	conv-vg2g \
 	cy-g \
@@ -49,6 +50,7 @@ endif
 asc2g_LDADD = ${WDB} ${RT} ${TCL}
 asc_nmg_LDADD = ${WDB} ${RT} 
 bot_shell_vtk_LDADD = ${RT} ${SYSV} 
+bot_bldxf_LDADD = ${RT}
 cy_g_LDADD = ${WDB} ${RT} 
 dbupgrade_LDADD = ${WDB} ${RT} 
 dxf_g_LDADD = ${WDB} ${RT} 
@@ -82,6 +84,7 @@ viewpoint_g_LDADD = ${WDB} ${RT}
 asc2g_SOURCES = asc2g.c 
 asc2pix_SOURCES = asc2pix.c
 asc_nmg_SOURCES = asc-nmg.c 
+bot_bldxf_SOURCES = bot-bldxf.c
 bot_shell_vtk_SOURCES = bot_shell-vtk.c 
 conv_vg2g_SOURCES = conv-vg2g.c
 cy_g_SOURCES = cy-g.c 
