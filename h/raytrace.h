@@ -852,6 +852,7 @@ struct vd_curve {
 
 #define RT_MAXARGS		9000
 #define RT_MAXLINE		10240
+#define RT_NAMESIZE		16
 
 /*
  *			D G _ O B J
