@@ -41,7 +41,8 @@ register complex	roots[];	/* space to put roots found	*/
 		for ( n=0; n <= eqn->dgr; n++ ){
 			eqn->cf[n] = eqn->cf[n+1];
 		}
-		--eqn->dgr;
+		if ( --eqn->dgr <= 0 )
+			return 0;
 	}
 
 	/* Factor the polynomial so the first coefficient is one
@@ -103,7 +104,7 @@ register complex	roots[];	/* space to put roots found	*/
 		roots[n].re = -(eqn->cf[1]);
 		roots[n].im = 0.0;
 		++n;
-	} else {
+	} else if ( eqn->dgr == 2 ){
 		quadratic( eqn, &roots[n] );
 		n += 2;
 	}
@@ -273,7 +274,7 @@ register int		nroots;
 	static complex	epoly;
 	register int	n, m;
 
-	for ( m=0; m < nroots; m+=2 ){
+	for ( m=0; m < nroots; ++m ){
 		CxCons( &epoly, eqn->cf[0], 0.0 );
 
 		for ( n=1; n <= eqn->dgr; ++n){
