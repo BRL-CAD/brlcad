@@ -45,7 +45,7 @@
 #define DEBUG_PLOTEM	0x00000040	/* 7 combine() */
 #define DEBUG_BOOL	0x00000080	/* 8 combine() */
 #define DEBUG_CLASSIFY	0x00000100	/* 9 combine() */
-#define DEBUG_SUBTRACT	0x00000200	/* 10 combine() */
+#define DEBUG_BOOLEVAL	0x00000200	/* 10 boolean evaluation steps */
 #define DEBUG_GRAZING	0x00000400	/* 11 combine() */
 #define DEBUG_MESH	0x00000800	/* 12 combine() */
 #define DEBUG_MESH_EU	0x00001000	/* 13 combine() */
@@ -54,7 +54,7 @@
 
 #define NMG_DEBUG_FORMAT \
 "\020\017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\013GRAZING\
-\012SUBTRACT\011CLASSIFY\
+\012BOOLEVAL\011CLASSIFY\
 \010BOOL\7PLOTEM\6POLYSECT\5CUTLOOP\4COMBINE\3CMFACE\2FINDEU\1TBL_INS"
 
 /* Boolean operations */

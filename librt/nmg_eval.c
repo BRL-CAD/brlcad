@@ -440,7 +440,7 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 	}
 
 	/* Plot the result */
-	if (rt_g.NMG_debug & DEBUG_SUBTRACT) {
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM) {
 		FILE *fp, *fopen();
 
 		if ((fp=fopen("bool_ans.pl", "w")) == (FILE *)NULL) {
@@ -543,7 +543,7 @@ struct nmg_ptbl class_table[];
 	int		i;
 	struct nmg_bool_state	bool_state;
 
-	if (rt_g.NMG_debug & DEBUG_SUBTRACT) {
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
 		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d)\n",
 			sA, sB, op );
 		for( i=0; i<8; i++ )  {
@@ -580,7 +580,7 @@ struct nmg_ptbl class_table[];
 	nmg_eval_shell( sB, &bool_state );
 
 	/* Plot the result */
-	if (rt_g.NMG_debug & DEBUG_SUBTRACT) {
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
 		FILE *fp, *fopen();
 
 		if ((fp=fopen("bool_ans.pl", "w")) == (FILE *)NULL) {
@@ -671,7 +671,7 @@ faceloop_again:
 		if( ((lu = fu->lu_p) == (struct loopuse *)0) )  {
 			/* faceuse is empty, it dies */
 			register struct faceuse	*nextfu = fu->next;
-			if (rt_g.NMG_debug & DEBUG_SUBTRACT)
+			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x empty, kill\n", fu);
 		    	NMG_CK_FACEUSE(nextfu);
 		    	if( fu->fumate_p == nextfu ) nextfu = nextfu->next;
@@ -684,7 +684,7 @@ faceloop_again:
 		    	continue;
 		}
 
-		if (rt_g.NMG_debug & DEBUG_SUBTRACT)
+		if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 	    		rt_log("faceuse x%x retained\n", fu);
 
 #if 0
@@ -912,7 +912,7 @@ register struct nmg_bool_state	*bs;
 		ptr, nmg_identify_magic( *((long *)ptr) ) );
 	ret = BACTION_RETAIN;
 out:
-	if (rt_g.NMG_debug & DEBUG_SUBTRACT) {
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
 		rt_log("nmg_eval_action(ptr=x%x) %s %s %s action=%s\n",
 			ptr, bs->bs_isA ? "A" : "B",
 			nmg_identify_magic( *((long *)ptr) ),
