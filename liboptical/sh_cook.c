@@ -91,8 +91,6 @@ struct mfuncs cook_mfuncs[] = {
 	0,		0,		0,		0
 };
 
-extern double ipow();
-
 #define RI_AIR		1.0    /* Refractive index of air.		*/
 
 /*
