@@ -1,5 +1,5 @@
 /*
- *			T I R I S . C
+ *			P L - S G I . C
  *
  *  SGI Iris 3-D Unix Plot display program.
  *
@@ -41,7 +41,7 @@ Coord	viewsize;
 int	axis = 0;	/* display coord axis */
 
 static char usage[] = "\
-Usage: tiris [-a] < unixplot\n";
+Usage: pl-sgi [-a] < unixplot\n";
 #endif sgi
 
 main( argc, argv )
@@ -109,7 +109,7 @@ char	**argv;
 
 	view_loop();
 #else
-	printf( "tiris: this is an SGI Iris specific program\n" );
+	printf( "pl-sgi: this is an SGI Iris specific program\n" );
 #endif
 }
 
@@ -583,7 +583,7 @@ Coord max[3], min[3];
 			xp = d[0]; yp = d[1]; zp = d[2];
 			break;
 		default:
-			fprintf( stderr, "tiris: bad command '%c' (0x%02x)\n", c, c );
+			fprintf( stderr, "pl-sgi: bad command '%c' (0x%02x)\n", c, c );
 			break;
 		}
 	}
