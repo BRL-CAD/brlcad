@@ -464,7 +464,7 @@ LZW()
 			}
 		else	{
 			if ( c > next_code )
-				Fatal( "LZW code too large" );
+				Fatal( "LZW code impossibly large" );
 
 			if ( c == next_code )
 				{	/* KwKwK special case */
@@ -672,6 +672,7 @@ main( argc, argv )
 	if ( M_bit )
 		{
 		register int	i;
+		register double	expand;	/* dynamic range expansion factor */
 
 		/* Read in global color map. */
 
@@ -681,15 +682,20 @@ main( argc, argv )
 		if ( fread( g_cmap, 3, entries, gfp ) != entries )
 			Fatal( "Error reading global color map" );
 
-		/* Mask off low-order "noise" bits found in some GIF files. */
+		/* Mask off low-order "noise" bits found in some GIF files,
+		   and expand dynamic range to support pure white and black. */
 
 		cr_mask = ~0 << 8 - cr;
+		expand = 255.0 / (double)(0xFF & cr_mask);
 
 		for ( i = 0; i < entries; ++i )
 			{
-			g_cmap[i][RED] &= cr_mask;
-			g_cmap[i][GRN] &= cr_mask;
-			g_cmap[i][BLU] &= cr_mask;
+			g_cmap[i][RED] = (g_cmap[i][RED] & cr_mask) * expand
+				       + 0.5;
+			g_cmap[i][GRN] = (g_cmap[i][GRN] & cr_mask) * expand
+				       + 0.5;
+			g_cmap[i][BLU] = (g_cmap[i][BLU] & cr_mask) * expand
+				       + 0.5;
 			}
 		}
 	else	{
@@ -706,7 +712,7 @@ main( argc, argv )
 		for ( i = 0; i < entries; ++i )
 			g_cmap[i][RED] =
 			g_cmap[i][GRN] =
-			g_cmap[i][BLU] = i * 256.0 / entries + 0.5;
+			g_cmap[i][BLU] = i * 255.0 / (entries - 1) + 0.5;
 		}
 
 	/* Open frame buffer for unbuffered output. */
@@ -856,6 +862,7 @@ main( argc, argv )
 			if ( M_bit )
 				{
 				register int	i;
+				register double	expand;	/* range expansion */
 
 				/* Read in local color map. */
 
@@ -869,13 +876,19 @@ main( argc, argv )
 					Fatal( "Error reading local color map"
 					     );
 
-				/* Mask off low-order "noise" bits. */
+				/* Mask off low-order "noise" bits,
+				   and expand dynamic range. */
+
+				expand = 255.0 / (double)(0xFF & cr_mask);
 
 				for ( i = 0; i < entries; ++i )
 					{
-					cmap[i][RED] &= cr_mask;
-					cmap[i][GRN] &= cr_mask;
-					cmap[i][BLU] &= cr_mask;
+					cmap[i][RED] = (cmap[i][RED] & cr_mask)
+						     * expand + 0.5;
+					cmap[i][GRN] = (cmap[i][GRN] & cr_mask)
+						     * expand + 0.5;
+					cmap[i][BLU] = (cmap[i][BLU] & cr_mask)
+						     * expand + 0.5;
 					}
 				}
 			else	{
