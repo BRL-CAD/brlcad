@@ -851,4 +851,6 @@ struct nmg_visit_handlers {
 	void	(*vis_vertex_g) NMG_ARGS((long *, genptr_t, int));
 };
 
+extern CONST struct nmg_visit_handlers nmg_visit_handlers_null;
+
 #endif
