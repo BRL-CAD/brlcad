@@ -30,7 +30,7 @@ static char RCSid[] = "@(#) $Header$";
 #include <stdio.h>
 #include <math.h>
 #include "redblack.h"
-#include "rb_internals.h"
+#include "./rb_internals.h"
 
 /*		        P R E W A L K N O D E S ( )
  *

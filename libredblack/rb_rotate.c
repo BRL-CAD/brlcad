@@ -13,7 +13,7 @@ static char RCSid[] = "@(#) $Header$";
 #include <stdio.h>
 #include <math.h>
 #include "redblack.h"
-#include "rb_internals.h"
+#include "./rb_internals.h"
 
 /*		    _ R B _ R O T _ L E F T ( )
  *

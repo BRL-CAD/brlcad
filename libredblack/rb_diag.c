@@ -13,7 +13,7 @@ static char RCSid[] = "@(#) $Header$";
 #include <stdio.h>
 #include <math.h>
 #include "redblack.h"
-#include "rb_internals.h"
+#include "./rb_internals.h"
 
 static int d_order;	/* Used by describe_node() */
 

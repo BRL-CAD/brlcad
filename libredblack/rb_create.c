@@ -16,7 +16,7 @@ static char RCSid[] = "@(#) $Header$";
 #include "vmath.h"
 #include "raytrace.h"
 #include "redblack.h"
-#include "rb_internals.h"
+#include "./rb_internals.h"
 
 /*		    R B _ C R E A T E ( )
  *
