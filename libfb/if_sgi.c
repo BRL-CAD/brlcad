@@ -111,7 +111,7 @@ int	width, height;
 	noport();
 	gbegin();		/* not ginit() */
 	if( ismex() )  {
-		fb_log("libfb can't run under MEX\n");
+		fb_log("libfb/if_sgi can't run under MEX\n");
 		(void)sgi_dclose(ifp);
 		return(-1);
 	}
@@ -123,6 +123,8 @@ int	width, height;
 		return(-1);
 	}
 	tpoff();		/* Turn off textport */
+
+	blanktime( 67 * 60 * 60L );	/* 1 hour blanking when fb open */
 
 	/* Build a linear "colormap" in case he wants to read it */
 	sgi_cmwrite( ifp, COLORMAP_NULL );
@@ -160,6 +162,7 @@ _LOCAL_ int
 sgi_dclose( ifp )
 FBIO	*ifp;
 {
+	blanktime( 67 * 60 * 20L );	/* 20 minute blanking when fb closed */
 #ifdef Ruins_Images
 	tpon();			/* Turn on textport */
 	greset();
