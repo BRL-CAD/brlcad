@@ -119,6 +119,7 @@ register struct application *ap;
 FILE *fp;
 {
 	LOCAL struct vldray vldray;
+	vect_t	norm;
 	register struct hit *hitp= pp->pt_inhit;
 
 	VMOVE( &(vldray.ox), hitp->hit_point );
@@ -126,10 +127,11 @@ FILE *fp;
 		hitp->hit_point );
 
 	if( pp->pt_inflip )  {
-		VREVERSE( hitp->hit_normal, hitp->hit_normal );
-		pp->pt_inflip = 0;
+		VREVERSE( norm, hitp->hit_normal );
+	} else {
+		VMOVE( norm, hitp->hit_normal );
 	}
-	WRAY_NORMAL( vldray, hitp->hit_normal );
+	WRAY_NORMAL( vldray, norm );
 
 	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
