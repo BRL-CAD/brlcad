@@ -183,6 +183,7 @@ char	**argv;
 	    strcpy( record.c.c_matparm, argv[3]);
 	}else{
 	  /* Parameters */
+	  curr_cmd_list->quote_string = 1;
 	  Tcl_AppendResult(interp, "Param = ", record.c.c_matparm, "\n", MORE_ARGS_STR,
 			   "Parameter string? ('del' to delete, CR to skip) ", (char *)NULL);
 
