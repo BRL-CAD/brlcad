@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fb-rle.c	1.2
-	Last edit: 	3/21/85 at 16:21:49
-	Retrieved: 	8/13/86 at 03:10:33
+	SCCS id:	@(#) fb-rle.c	1.3
+	Last edit: 	3/26/85 at 17:45:44
+	Retrieved: 	8/13/86 at 03:10:39
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fb-rle.c
 
 	Author:		Gary S. Moss
@@ -12,16 +12,16 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fb-rle.c	1.2	last edit 3/21/85 at 16:21:49";
+char	sccsTag[] = "@(#) fb-rle.c	1.3	last edit 3/26/85 at 17:45:44";
 #endif
 #include <stdio.h>
 #include <fb.h>
-
+#include <rle.h>
 static char	*usage[] = {
 "",
-"fb-rle (1.2)",
+"fb-rle (1.3)",
 "",
-"Usage: fb-rle [-BCdhvw] [file.rle]",
+"Usage: fb-rle [-CScdhvw] [file.rle]",
 "",
 "If no rle file is specifed, fb-rle will write to its standard output.",
 "If the environment variable FB_FILE is set, its value will be used",
@@ -30,13 +30,10 @@ static char	*usage[] = {
 };
 static FILE	*fp = stdout;
 static Pixel	bgpixel = { 0, 0, 0, 0 };
-int		debug = 0;
-int		verbose = 0;
-static int	bgflag = 2;
-static int	bwflag = 0;
+static int	bgflag = 1;
+static int	ncolors = 3;
 static int	cmflag = 1;
 static int	crunch = 0;
-static int	bbw = 0;		/* black/white background color */
 static int	fbsz;
 static int	parsArgv();
 static void	prntUsage();
@@ -56,17 +53,12 @@ char	*argv[];
 		}
 	setbuf( fp, malloc( BUFSIZ ) );
 	fbsz = getfbsize();
-	if( verbose )
+	if( rle_verbose )
 		(void) fprintf( stderr,
 				"Background is %d %d %d\n",
 				bgpixel.red, bgpixel.green, bgpixel.blue
 				);
-	if( bwflag )
-		bbw =	0.35 * bgpixel.red +
-			0.55 * bgpixel.green +
-			0.10 * bgpixel.blue;
-
-	if(	rle_whdr( fp, bwflag, bgflag, cmflag, bbw, &bgpixel )
+	if(	rle_whdr( fp, ncolors, bgflag, cmflag, &bgpixel )
 	    ==	-1
 		)
 		return	1;
@@ -76,17 +68,26 @@ char	*argv[];
 
 	if( cmflag )
 		{
-		if(	fb_rmap( &cmap ) == -1
-		     ||	rle_wmap( fp, &cmap ) == -1
-			)
-			return	1;
+		if( fb_rmap( &cmap ) == -1 )
+			{ /* No map saved, assume standard map.		*/
+			if( rle_wmap( fp, (ColorMap *) NULL ) == -1 )
+				return	1;
+			}
 		else
-			if( debug )
-				(void) fprintf( stderr,
+			{
+			if( rle_wmap( fp, &cmap ) == -1 )
+				return	1;
+			}
+		if( rle_debug )
+			(void) fprintf( stderr,
 					"Color map saved.\n"
-						);
+					);
 		}
-
+	if( ncolors == 0 )
+		{ /* Only save colormap, so we are finished.		*/
+		return	0;
+		}
+	/* Save image.							*/
 	for( scan_ln = fbsz-1; scan_ln >= 0; --scan_ln )
 		{
 		if( fbread( 0, scan_ln, scan_buf, fbsz ) == -1 )
@@ -107,29 +108,32 @@ register char	**argv;
 	extern int	optind;
 	extern char	*optarg;
 
-	/* Parse options.					*/
-	while( (c = getopt( argc, argv, "BCdhvw" )) != EOF )
+	/* Parse options.						*/
+	while( (c = getopt( argc, argv, "CScdhvw" )) != EOF )
 		{
 		switch( c )
 			{
-			case 'B' :
-				bgflag = 2;
-				break;
-			case 'C' :
+			case 'C' : /* Crunch color map.			*/
 				crunch = 1;
 				cmflag = 0;
 				break;
-			case 'd' :
-				debug = 1;
+			case 'S' : /* 'Box' save, store entire image.	*/
+				bgflag = 0;
 				break;
-			case 'h' :
+			case 'c' : /* Only save color map.		*/
+				ncolors = 0;
+				break;
+			case 'd' : /* For debugging.			*/
+				rle_debug = 1;
+				break;
+			case 'h' : /* High resolution.			*/
 				setfbsize( 1024 );
 				break;
-			case 'v' :
-				verbose = 1;
+			case 'v' : /* Verbose on.			*/
+				rle_verbose = 1;
 				break;
-			case 'w' :
-				bwflag = 1;
+			case 'w' : /* Monochrome (black & white) mode.	*/
+				ncolors = 1;
 				break;
 			case '?' :
 				return	0;
