@@ -75,7 +75,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	(defined(sgi) && defined(mips)) || \
 	(defined(__sgi) && defined(__mips)) || \
 	defined(pyr) || defined(apollo) || defined(aux) || \
-	defined(_AIX) || defined(NeXT)
+	defined(_AIX) || defined(NeXT) || \
+	defined(i386) || (defined(i860) && !defined(alliant))
 
 	/*  These systems already operate in
 	 *  IEEE format internally, using big-endian order.
