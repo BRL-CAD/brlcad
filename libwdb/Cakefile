@@ -1,5 +1,7 @@
 /*
  *			libwdb/Cakefile
+ *
+ *  $Header$
  */
 #define PRODUCTS	libwdb.ARCH_SUF
 #define SRCDIR	libwdb
