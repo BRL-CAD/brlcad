@@ -5,8 +5,6 @@
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
 #define NSLOTS		4080	/* The mostest possible - may be fewer */
-#define NOISE 32		/* Size of dead spot on knob */
-#define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
 #define Glx_MV_O(_m) offsetof(struct modifiable_glx_vars, _m)
 
 struct modifiable_glx_vars {
