@@ -90,9 +90,19 @@ usepen()
 	if( dm_values.dv_xpen < MENUXLIM &&
 		dm_values.dv_penpress
 	)  {
-		if( menu_select( dm_values.dv_ypen ) < 0 )
+		register int i;
+		if( (i = menu_select( dm_values.dv_ypen )) < 0 )  {
 			(void)printf("pen press outside valid menu\n");
-		return;
+			return;
+		}
+		if( i > 0 )  {
+			/* Menu claimed button press */
+			/* change solid edit menu if necessary */
+			if( es_edflag == CONTROL || es_edflag == CHGMENU || es_edflag == SETUP_ROTFACE ) 
+				sedraw = 1;
+			return;
+		}
+		/* Otherwise, fall through */
 	}
 
 	/*
@@ -227,6 +237,21 @@ usepen()
 			editarb( pos_model );
 			sedraw = 1;
 			return;
+		case MVFACE:
+			/* move arb face, through  indicated  point */
+			tabvec[X] = dm_values.dv_xpen / 2047.0;
+			tabvec[Y] = dm_values.dv_ypen / 2047.0;
+			tabvec[Z] = 0;
+			MAT4X3PNT( temp, view2model, tabvec );
+			/* apply inverse of es_mat */
+			MAT4X3PNT( pos_model, es_invmat, temp );
+			/* change D of planar equation */
+			es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
+			/* calculate new vertices, put in record as vectors */
+			calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
+			sedraw = 1;
+			return;
+			
 		default:
 			(void)printf("Pen press undefined in this solid edit mode\n");
 			break;
