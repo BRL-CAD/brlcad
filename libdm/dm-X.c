@@ -72,7 +72,7 @@ HIDDEN int      X_drawPoint2D();
 HIDDEN int	X_drawVList();
 HIDDEN int      X_setFGColor(), X_setBGColor();
 HIDDEN int	X_setLineAttr();
-HIDDEN int	_X_configureWin();
+HIDDEN int	X_configureWin_guts();
 HIDDEN int	X_configureWin();
 HIDDEN int	X_setLight();
 HIDDEN int	X_setZBuffer();
@@ -421,7 +421,7 @@ Done:
 
 Skip_dials:
 #ifndef CRAY2
-  (void)_X_configureWin(dmp, 1);
+  (void)X_configureWin_guts(dmp, 1);
 #endif
 
   Tk_SetWindowBackground(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
@@ -1038,7 +1038,7 @@ register int w[6];
 }
 
 HIDDEN int
-_X_configureWin(dmp, force)
+X_configureWin_guts(dmp, force)
 struct dm *dmp;
 int force;
 {
@@ -1060,7 +1060,7 @@ int force;
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
   if (dmp->dm_debugLevel) {
-    bu_log("_X_configureWin()\n");
+    bu_log("X_configureWin_guts()\n");
     bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
   }
 
@@ -1163,7 +1163,7 @@ X_configureWin(dmp)
 struct dm *dmp;
 {
   /* don't force */
-  return _X_configureWin(dmp, 0);
+  return X_configureWin_guts(dmp, 0);
 }
 
 HIDDEN int
