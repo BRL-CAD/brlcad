@@ -508,6 +508,10 @@ register union tree *tp;
 {
 
 	switch( tp->tr_op )  {
+	case OP_NOP:
+		tp->tr_op = 0;
+		rt_free( (char *)tp, "NOP union tree");
+		return;
 	case OP_SOLID:
 		rt_free( tp->tr_a.tu_name, "leaf name" );
 		tp->tr_a.tu_name = (char *)0;
@@ -555,6 +559,8 @@ struct resource		*resp;
 	*sp++ = treep;
 	while( (treep = *--sp) != TREE_NULL ) {
 		switch( treep->tr_op )  {
+		case OP_NOP:
+			break;
 		case OP_SOLID:
 			stp = treep->tr_a.tu_stp;
 			BITSET( stp->st_regions, regbit );
