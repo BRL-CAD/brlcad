@@ -28,7 +28,7 @@
 		fbfade fbstretch gif-fb \
 		pix-sun pix-alias alias-pix pixcolors hd sgi-pix \
 		pixsaturate query pixshrink bwshrink pixhalve \
-		pix-ps plstat pl-asc xyz-pl
+		pix-ps plstat pl-asc asc-pl xyz-pl azel bwthresh
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -375,6 +375,9 @@ plstat: plstat.o
 pl-asc: pl-asc.o
 	CC LDFLAGS -o pl-asc pl-asc.o LIB_PRE''LIBPLOT LIBES
 
+asc-pl: asc-pl.o
+	CC LDFLAGS -o asc-pl asc-pl.o LIB_PRE''LIBPLOT LIBES
+
 pl-hpgl: pl-hpgl.o
 	CC LDFLAGS -o pl-hpgl pl-hpgl.o LIB_PRE''LIBPLOT LIBES
 
@@ -386,5 +389,11 @@ polar-fb:		polar-fb.o LIBFB
 
 cell-fb:		cell-fb.o LIBFB
 	CC LDFLAGS -o cell-fb cell-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRT LIBRT_LIBES LIBES
+
+azel:	azel.o
+	CC LDFLAGS -o azel azel.o LIBES
+
+bwthresh: bwthresh.o
+	CC LDFLAGS -o bwthresh bwthresh.o LIBES
 
 #include "../Cakefile.rules"
