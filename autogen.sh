@@ -65,13 +65,24 @@ LIBTOOL_PATCH_VERSION=3
 # argument check #
 ##################
 HELP=no
-[ "x$ARGS" = "x--help" ] && HELP=yes
 QUIET=no
-[ "x$ARGS" = "x--quiet" ] && QUIET=yes
-[ "x$ARGS" = "x-Q" ] && QUIET=yes
 VERBOSE=no
-[ "x$ARGS" = "x--verbose" ] && VERBOSE=yes
-[ "x$ARGS" = "x-V" ] && VERBOSE=yes
+VERSION_ONLY=no
+for arg in $ARGS ; do
+  case "x$arg" in
+    x--help) HELP=yes ;;
+    x-[hH]) HELP=yes ;;
+    x--quiet) QUIET=yes ;;
+    x-[qQ]) QUIET=yes ;;
+    x--verbose) VERBOSE=yes ;;
+    x-[vV]) VERBOSE=yes ;;
+    x--version) VERSION_ONLY=yes ;;
+    *)
+      echo "Unknown option: $arg"
+      exit 1
+      ;;
+  esac
+done
 
 
 #####################
@@ -359,6 +370,15 @@ for AUTOHEADER in autoheader ; do
 done
 
 
+#########################
+# check if version only #
+#########################
+$VERBOSE_ECHO "Checking whether to only output version information"
+if [ "x$VERSION_ONLY" = "xyes" ] ; then
+  exit 0
+fi
+
+
 ##############
 # stash path #
 ##############
@@ -421,15 +441,14 @@ for file in config.guess config.sub ltmain.sh ; do
 done
 
 
-#########################################
-# list common misconfigured search dirs #
-#########################################
+############################
+# search alternate m4 dirs #
+############################
 SEARCH_DIRS=""
 for dir in m4 ; do
-# /usr/local/share/aclocal /sw/share/aclocal m4 ; do
   if [ -d $dir ] ; then
     $VERBOSE_ECHO "Found extra aclocal search directory: $dir"
-    SEARCH_DIRS="$SEARCH_DIRS -B $dir"
+    SEARCH_DIRS="$SEARCH_DIRS -I $dir"
   fi
 done
 
