@@ -364,8 +364,7 @@ do_cmd()
 			ftp->ft_func(numargs);	/* finally! */
 			return;
 		}
-		(void)printf("%s: error in number of args\n", ftp->ft_name);
-		(void)printf("%s: %s\n", ftp->ft_name, ftp->ft_parms);
+		(void)printf("Usage: %s %s\n", ftp->ft_name, ftp->ft_parms);
 		(void)printf("\t(%s)\n", ftp->ft_comment);
 		return;
 	}
