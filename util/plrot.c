@@ -28,7 +28,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"			/* For getopt() */
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 
 #define	UPPER_CASE(c)	((c)-32)
 #define	COPY(n)	{fread(cbuf,1,n,fp); fwrite(cbuf,1,n,stdout);}
