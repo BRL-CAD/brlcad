@@ -684,7 +684,6 @@ found_it:
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
-	curtree->tr_a.tu_name = db_path_to_string( pathp );
 	curtree->tr_a.tu_regionp = (struct region *)0;
 
 	return(curtree);
