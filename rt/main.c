@@ -45,6 +45,7 @@ double azimuth, elevation;
 int lightmodel;		/* Select lighting model */
 mat_t view2model;
 mat_t model2view;
+int hex_out = 0;	/* Binary or Hex .pix output file */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() */
@@ -139,8 +140,14 @@ char **argv;
 			/* Select lighting model # */
 			lightmodel = atoi( &argv[0][2] );
 			break;
+		case 'O':
+			/* Output pixel file name, Hex format */
+			outputfile = argv[1];
+			hex_out = 1;
+			argc--; argv++;
+			break;
 		case 'o':
-			/* Output pixel file name */
+			/* Output pixel file name, binary format */
 			outputfile = argv[1];
 			argc--; argv++;
 			break;
@@ -305,7 +312,8 @@ do_more:
 			sprintf( framename, "%s.%d", outputfile, framenumber-1 );
 		if( (outfp = fopen( framename, "w" )) == NULL )  {
 			perror( framename );
-			goto do_more;
+			if( matflag )  goto do_more;
+			exit(22);
 		}
 		chmod( framename, 0444 );
 		fprintf(stderr,"Output file is %s\n", framename);
