@@ -88,6 +88,10 @@ register struct db_tree_state	*tsp;
 
 /*
  *			D B _ I N I T _ D B _ T R E E _ S T A T E
+ *
+ *  In most cases, you don't want to use this routine, you want to
+ *  struct copy mged_initial_tree_state or rt_initial_tree_state,
+ *  and then set ts_dbip in your copy.
  */
 void
 db_init_db_tree_state( tsp, dbip )
@@ -314,7 +318,13 @@ CONST union tree	*tp;
 	db_add_node_to_full_path( pathp, mdp );
 
 	bn_mat_copy( old_xlate, tsp->ts_mat );
-	db_apply_anims( pathp, mdp, xmat, tp->tr_l.tl_mat, &tsp->ts_mater );
+	if( tp->tr_l.tl_mat )
+		bn_mat_copy( xmat, tp->tr_l.tl_mat );
+	else
+		bn_mat_idn( xmat );
+
+	db_apply_anims( pathp, mdp, old_xlate, xmat, &tsp->ts_mater );
+
 	bn_mat_mul(tsp->ts_mat, old_xlate, xmat);
 
 	return(0);		/* Success */
@@ -781,6 +791,7 @@ int				depth;		/* # arcs in new_path to use */
 			}
 		}
 
+		/* Put first element on output path, either way */
 		db_add_node_to_full_path( total_path, dp );
 
 		if( (dp->d_flags & DIR_COMB) == 0 )  goto is_leaf;
@@ -822,7 +833,9 @@ int				depth;		/* # arcs in new_path to use */
 			bu_log("db_follow_path() ERROR: unable to apply member %s state\n", dp->d_namep);
 			goto fail;
 		}
-		/* Found it, state has been applied, sofar applied, directory entry pushed onto total_path */
+		/* Found it, state has been applied, sofar applied,
+		 * member's directory entry pushed onto total_path
+		 */
 		rt_comb_ifree( &intern );
 
 		/* If member is a leaf, handle leaf processing too. */
@@ -1015,12 +1028,12 @@ struct combined_tree_state	**region_start_statepp;
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
-
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x, tsp->ts_sofar=%d\n",
 			sofar, tsp,
 			*region_start_statepp, tsp->ts_sofar );
 		bu_free(sofar, "path string");
+		bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat);
 	}
 
 	/*
@@ -1124,8 +1137,6 @@ region_end:
 		if(curtree) RT_CK_TREE(curtree);
 	} else if( dp->d_flags & DIR_SOLID )  {
 		int	id;
-		vect_t	A, B, C;
-		fastf_t	fx, fy, fz;
 
 		/* Get solid ID */
 		if( (id = rt_id_solid( &ext )) == ID_NULL )  {
@@ -1136,22 +1147,9 @@ region_end:
 			goto out;
 		}
 
-		/*
-		 * Validate that matrix preserves perpendicularity of axis
-		 * by checking that A.B == 0, B.C == 0, A.C == 0
-		 * XXX these vectors should just be grabbed out of the matrix
-		 */
-		MAT4X3VEC( A, tsp->ts_mat, xaxis );
-		MAT4X3VEC( B, tsp->ts_mat, yaxis );
-		MAT4X3VEC( C, tsp->ts_mat, zaxis );
-		fx = VDOT( A, B );
-		fy = VDOT( B, C );
-		fz = VDOT( A, C );
-		if( ! NEAR_ZERO(fx, 0.0001) ||
-		    ! NEAR_ZERO(fy, 0.0001) ||
-		    ! NEAR_ZERO(fz, 0.0001) )  {
-			bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
-				dp->d_namep, fx, fy, fz );
+		if( bn_mat_ck( dp->d_namep, tsp->ts_mat ) < 0 )  {
+			bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",
+				dp->d_namep );
 			bn_mat_print("bad matrix", tsp->ts_mat);
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
@@ -2104,6 +2102,12 @@ union tree *	(*leaf_func)();
 /*
  *			D B _ P A T H _ T O _ M A T
  *  XXX should be able to just call db_follow_path().
+ *
+ *  Returns -
+ *	1	OK, updated matrix is in 'mat'.
+ *	0	FAIL
+ *
+ *  Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
  */
 int
 db_path_to_mat( dbip, pathp, mat, depth)
@@ -2112,6 +2116,29 @@ struct db_full_path *pathp;
 mat_t mat;
 int depth;			/* number of arcs */
 {
+	struct db_tree_state	ts;
+	struct db_full_path	null_path;
+	int			ret;
+
+	RT_CHECK_DBI(dbip);
+	RT_CK_FULL_PATH(pathp);
+	if( !mat ) rt_bomb("db_path_to_mat() NULL matrix pointer\n");
+
+	db_full_path_init( &null_path );
+	db_init_db_tree_state( &ts );
+	bn_mat_copy( ts.ts_mat, mat );
+
+	ret = db_follow_path( &ts, &null_path, pathp, LOOKUP_NOISY, depth );
+	db_free_full_path( &null_path );
+	bn_mat_copy( mat, ts.ts_mat );	/* implicit return */
+	db_free_db_tree_state( &ts );
+
+	if( ret < 0 )  {
+		return 0;	/* FAIL */
+	}
+	return 1;		/* OK */
+
+#if 0
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	union tree		*tp;
@@ -2120,11 +2147,6 @@ int depth;			/* number of arcs */
 	int			i,j;
 	mat_t			tmat;
 	int			holdlength;
-
-	RT_CHECK_DBI(dbip);
-	RT_CK_FULL_PATH(pathp);
-
-
 	/* XXX case where depth == 0 and pathp->fp_len=2 */
 
 
@@ -2181,10 +2203,13 @@ int depth;			/* number of arcs */
 		rt_comb_ifree( &intern );
 	}
 	return 1;
+#endif
 }
 
 /*
  *			D B _ A P P L Y _ A N I M S
+ *
+ *  Note that 'arc' may be a null pointer.
  */
 void
 db_apply_anims(pathp, dp, stack, arc, materp)
