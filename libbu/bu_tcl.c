@@ -400,7 +400,7 @@ char				*base;		/* base addr of users struct */
 		
 		if( sdp->sp_name == NULL ) {
 			bu_vls_trunc( &str, 0 );
-			bu_vls_printf( &str, "invalid attribute %s", argv[0] );
+			bu_vls_printf( &str, "invalid attribute %s\n", argv[0] );
 			Tcl_AppendResult( interp, bu_vls_addr(&str),
 					  (char *)NULL );
 			bu_vls_free( &str );
