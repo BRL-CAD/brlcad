@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.9
-	Last edit: 	6/6/85 at 17:30:53	G S M
-	Retrieved: 	8/13/86 at 10:28:38
+	SCCS id:	@(#) librle.c	1.10
+	Last edit: 	10/15/85 at 15:27:36	G S M
+	Retrieved: 	8/13/86 at 10:28:57
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -15,7 +15,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.9	last edit 6/6/85 at 17:30:53";
+char	sccsTag[] = "@(#) librle.c	1.10	last edit 10/15/85 at 15:27:36";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -202,7 +202,7 @@ register Pixel	*bgpixel;
 		NULL
 		};
 
-	if( fseek( fp, 0L, 0 ) == -1 )
+	if( fp != stdin && fseek( fp, 0L, 0 ) == -1 )
 		{
 		(void) fprintf( stderr, "Seek to RLE header failed!\n" );
 		return	-1;
@@ -351,7 +351,7 @@ Pixel		*bgpixel;
 	w_setup.h_background[1] = ncolors == 0 ? bbw : bgpixel->green;
 	w_setup.h_background[2] = ncolors == 0 ? bbw : bgpixel->blue;
 
-	if( fseek( fp, 0L, 0 ) == -1 )
+	if( fp != stdout && fseek( fp, 0L, 0 ) == -1 )
 		{
 		(void) fprintf( stderr, "Seek to RLE header failed!\n" );
 		return	-1;
