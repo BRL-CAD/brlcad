@@ -48,6 +48,8 @@ cmd_overlay(ClientData	clientData,
 	int		ac;
 	char		*av[5];
 
+	CHECK_DBI_NULL;
+
 	ac = argc + 1;
 	bu_vls_init(&char_size);
 	bu_vls_printf(&char_size, "%lf", view_state->vs_vop->vo_scale * 0.01);
