@@ -262,6 +262,7 @@
 #	define HAVE_GETOPT_H	1
 #	define HAVE_XOSDEFS_H	1
 #	define HAVE_STRING_H	1
+#	define USE_STRING_H	1
 #	define HAVE_POSIX_REGEXEC	1
 #	define HAVE_STRCHR	1
 #	define HAVE_VFORK	1
