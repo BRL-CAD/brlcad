@@ -558,7 +558,7 @@ set -S2 "/bin/sh"
 #	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	LIBRT_TIMER	timer42
-#	if 0	/* PRODUCTION=0 */
+#	if 1
 /*		Under Irix 4.0.5, the SGI-provided LEX and YACC don't work */
 #		define	LEX	/usr/gnu/bin/flex
 #		define	YACC	/usr/gnu/bin/bison
