@@ -25,6 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"		/* For getopt(), etc. */
 #include "bu.h"
+#include "vmath.h"
 
 #define	RED			0
 #define	GRN			1
@@ -68,11 +69,9 @@ static void print_debug_usage (void)
 	bu_log("0x%04x	%s\n", 1 << (i-1), flag_denotation[i]);
 }
 
-static void add_to_table (red, grn, blu)
+static void add_to_table (rgb)
 
-int	red;
-int	grn;
-int	blu;
+unsigned char	*rgb;
 
 {
     /*
@@ -86,9 +85,7 @@ int	blu;
 			color_tbl_size * 3 * sizeof(unsigned char),
 			"color table");
     }
-    color_tbl[next_color][RED] = red;
-    color_tbl[next_color][GRN] = grn;
-    color_tbl[next_color][BLU] = blu;
+    VMOVE(color_tbl[next_color], rgb);
     ++next_color;
 }
 
@@ -100,9 +97,7 @@ char	*f_name;
     char		*bp;
     FILE		*fp;
     int			line_nm;
-    int 		red;
-    int			grn;
-    int			blu;
+    unsigned char	rgb[3];
     int			len;
     struct bu_vls	v;
 
@@ -120,20 +115,13 @@ char	*f_name;
 	    ;
 	if ((*bp == '#') || (*bp == '\0'))
 	    continue;
-	if (sscanf(bp, "%d%d%d", &red, &grn, &blu) != 3)
+	if (! bu_str_to_rgb(bp, rgb))
 	{
-	    bu_log("Invalid color: '%s' on line %d of file '%s'\n",
+	    bu_log("Illegal color: '%s' on line %d of file '%s'\n",
 		bp, line_nm, f_name);
 	    exit (1);
 	}
-	if ((red <   0) || (grn <   0) || (blu <   0)
-	 || (red > 255) || (grn > 255) || (blu > 255))
-	{
-	    bu_log("Illegal color: %d %d %d on line %d of file '%s'\n",
-		red, grn, blu, line_nm, f_name);
-	    exit (1);
-	}
-	add_to_table(red, grn, blu);
+	add_to_table(rgb);
     }
 }
 
@@ -187,7 +175,7 @@ char	*argv[];
     FILE		*outfp = NULL;	/* output   "   */
     int			ch;		/* current char in command line */
     int			i, j;		/* dummy loop indices */
-    int			red, grn, blu;	/* Specified color */
+    unsigned char	rgb[3];		/* Specified color */
     int			best_color;	/* index of best match to pixbuf */
     int			best_diff;	/* error in best match */
     int			this_diff;	/* pixel-color_tbl difference */
@@ -210,20 +198,13 @@ char	*argv[];
 	switch (ch)
 	{
 	    case 'c':
-		if (sscanf(optarg, "%d/%d/%d", &red, &grn, &blu) != 3)
-		{
-		    bu_log("Invalid color: '%s'\n", optarg);
-		    print_usage();
-		    exit (1);
-		}
-		if ((red <   0) || (grn <   0) || (blu <   0)
-		 || (red > 255) || (grn > 255) || (blu > 255))
+		if (! bu_str_to_rgb(optarg, rgb))
 		{
 		    bu_log("Illegal color: '%s'\n", optarg);
 		    print_usage();
 		    exit (1);
 		}
-		add_to_table(red, grn, blu);
+		add_to_table(rgb);
 		cf_name = 0;
 		break;
 	    case 'f':
