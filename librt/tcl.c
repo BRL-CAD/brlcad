@@ -1563,6 +1563,18 @@ Rt_Init(Tcl_Interp *interp)
 {
 	char *version_number;
 
+	/*XXX how much will this break? */
+	if (BU_LIST_UNINITIALIZED(&rt_g.rtg_vlfree)) {
+		if (bu_avail_cpus() > 1) {
+			rt_g.rtg_parallel = 1;
+			bu_semaphore_init(RT_SEM_LAST);
+		}
+
+		/* initialize RT's global state */
+		BU_LIST_INIT(&rt_g.rtg_vlfree);
+		BU_LIST_INIT(&rt_g.rtg_headwdb.l);
+	}
+
 	rt_tcl_setup(interp);
 	Tcl_Eval(interp, "lindex $rt_version 2");
 	version_number = Tcl_GetStringResult(interp);
