@@ -1234,24 +1234,21 @@ register CONST struct rt_i *rtip;
 	RT_CHECK_SOLTAB(stp);
 	if( rt_g.debug&DEBUG_BOXING )  {
 		bu_log("rt_ck_overlap(%s)\n",stp->st_name);
-		VPRINT("box min", min);
-		VPRINT("sol min", stp->st_min);
-		VPRINT("box max", max);
-		VPRINT("sol max", stp->st_max);
+		VPRINT(" box min", min);
+		VPRINT(" sol min", stp->st_min);
+		VPRINT(" box max", max);
+		VPRINT(" sol max", stp->st_max);
 	}
 	/* Ignore "dead" solids in the list.  (They failed prep) */
 	if( stp->st_aradius <= 0 )  return(0);
-	if( stp->st_aradius >= INFINITY )  {
-		if( rt_functab[stp->st_id].ft_classify( stp, min, max,
-				&rtip->rti_tol ) == RT_CLASSIFY_OUTSIDE )
-			goto fail;
-		if( rt_g.debug&DEBUG_BOXING )  bu_log("rt_ck_overlap:  TRUE (inf)\n");
-		return(1);
-	}
-	if( stp->st_min[X] >= max[X]  || stp->st_max[X] <= min[X] )  goto fail;
-	if( stp->st_min[Y] >= max[Y]  || stp->st_max[Y] <= min[Y] )  goto fail;
-	if( stp->st_min[Z] >= max[Z]  || stp->st_max[Z] <= min[Z] )  goto fail;
 
+	/* Only check RPP on finite solids */
+	if( stp->st_aradius < INFINITY )  {
+		if( V3RPP_DISJOINT( stp->st_min, stp->st_max, min, max ) )
+			goto fail;
+	}
+
+	/* RPP overlaps, invoke per-solid method for detailed check */
 	if( rt_functab[stp->st_id].ft_classify( stp, min, max,
 			  &rtip->rti_tol ) == RT_CLASSIFY_OUTSIDE )  goto fail;
 
