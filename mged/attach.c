@@ -452,6 +452,7 @@ char *argv[];
 
   color_soltab();
   ++dirty;
+  grid_auto_size = 1;
   DM_SET_WIN_BOUNDS(dmp, windowbounds);
 
   return TCL_OK;
