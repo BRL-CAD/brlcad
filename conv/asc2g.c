@@ -85,7 +85,7 @@ bu_log("Hello cold cruel world!\n");
 (void)fprintf(stderr, "About to begin\n");
 #endif
 
-	if( strcmp( argv[1], "-d" ) == 0 )  {
+	if( argc > 1 && strcmp( argv[1], "-d" ) == 0 )  {
 		argc--; argv++;
 		debug = 1;
 	}
@@ -1166,7 +1166,6 @@ void
 materbld()
 {
 	register char *cp;
-	int	flags;			/* unused */
 	int	low, hi;
 	int	r,g,b;
 
@@ -1174,7 +1173,7 @@ materbld()
 	cp++;				/* skip ID_MATERIAL */
 	cp = nxt_spc( cp );		/* skip the space */
 
-	flags = (char)atoi( cp );
+	/* flags = (char)atoi( cp ); */
 	cp = nxt_spc( cp );
 	low = (short)atoi( cp );
 	cp = nxt_spc( cp );
