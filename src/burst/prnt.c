@@ -43,6 +43,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <assert.h>
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -144,10 +145,6 @@ struct seg *segp;
 #include <errno.h>
 /* These aren't defined in BSD errno.h.					*/
 extern int	errno;
-#if !HAVE_SYS_ERRLIST_DECL
-extern int	sys_nerr;
-extern char	*sys_errlist[];
-#endif
 
 void
 locPerror( msg )

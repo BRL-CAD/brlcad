@@ -12,8 +12,6 @@ bin_PROGRAMS = \
 
 dist_bin_SCRIPTS = ssampview.tcl
 
-LDADD = ${LIBRT} ${FB} ${OPTICAL} ${TCL}
-
 man_MANS = \
 	rttherm.1 \
 	ssamp-bw.1
@@ -28,7 +26,10 @@ rttherm_SOURCES = \
 	viewtherm.c
 
 rttherm_CFLAGS = -DRT_MULTISPECTRAL
-rttherm_LDADD = $(top_builddir)/src/rt/librttherm.a $(MULTISPECTRAL) $(LDADD) 
+rttherm_LDADD = \
+	$(top_builddir)/src/rt/librttherm.a \
+	${MULTISPECTRAL} \
+	${OPTICAL}
 
 ssampview_SOURCES = \
 	spectrum.c \
@@ -36,8 +37,12 @@ ssampview_SOURCES = \
 
 ssampview_CFLAGS = @X_CFLAGS@
 ssampview_LDADD = \
-	$(TK) \
-	$(LDADD)
+	${FB} \
+	${LIBRT} \
+	${OPTICAL} \
+	${TCL} \
+	$(TK)
+
 
 ssamp_bw_SOURCES = \
 	ssamp-bw.c

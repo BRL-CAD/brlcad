@@ -58,7 +58,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
@@ -125,12 +124,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	((((x)>>24)&0xFF)    )   )
 #endif
 
-#if !HAVE_SYS_ERRLIST_DECL
-#ifndef WIN32
-extern int      sys_nerr;
-extern char     *sys_errlist[];
-#endif
-#endif
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */

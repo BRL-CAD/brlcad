@@ -26,6 +26,7 @@
  */
 
 #include "rle_config.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -41,9 +42,6 @@ static char buf[MAXPATHLEN+1];
 short forceflg;				/* overwrite an unwritable file? */
 
 extern int errno;
-#ifndef HAVE_SYS_ERRLIST_DECL
-extern char *sys_errlist[];
-#endif
 
 int
 main(argc, argv)
