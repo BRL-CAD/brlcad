@@ -261,13 +261,6 @@ struct _view_state {
 
   /* Virtual trackball stuff */
   point_t	vs_orig_pos;
-
-  /* Tcl variable names for display info */
-  struct bu_vls	vs_aet_name;
-  struct bu_vls	vs_ang_name;
-  struct bu_vls	vs_center_name;
-  struct bu_vls	vs_size_name;
-  struct bu_vls	vs_adc_name;
 };
 
 struct _color_scheme {
@@ -393,10 +386,17 @@ struct dm_list {
   int dml_ndrawn;
   int dml_perspective_angle;
   int *dml_zclip_ptr;
-  struct bu_vls dml_fps_name;
   struct bu_list dml_p_vlist;		/* predictor vlist */
   struct trail dml_trails[NUM_TRAILS];
   struct cmd_list *dml_tie;
+
+  /* Tcl variable names for display info */
+  struct bu_vls dml_fps_name;
+  struct bu_vls	dml_aet_name;
+  struct bu_vls	dml_ang_name;
+  struct bu_vls	dml_center_name;
+  struct bu_vls	dml_size_name;
+  struct bu_vls	dml_adc_name;
 
   int dml_adc_auto;
   int dml_grid_auto_size;
@@ -450,7 +450,6 @@ struct dm_char_queue {
 #define ndrawn curr_dm_list->dml_ndrawn
 #define perspective_angle curr_dm_list->dml_perspective_angle
 #define zclip_ptr curr_dm_list->dml_zclip_ptr
-#define fps_name curr_dm_list->dml_fps_name
 
 #define view_state curr_dm_list->dml_view_state
 #define adc_state curr_dm_list->dml_adc_state
