@@ -52,6 +52,8 @@ struct nmg_inter_struct {
 	long		magic;
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
 	struct nmg_ptbl *l2;		/* intersection between planes */
+	struct shell	*s1;
+	struct shell	*s2;
 	struct rt_tol	tol;
 	point_t		pt;		/* 3D line of intersection */
 	vect_t		dir;
@@ -83,46 +85,56 @@ static int	nmg_isect_edge2p_face2p RT_ARGS((struct nmg_inter_struct *is,
 
 
 /*
- *		N M G _ I N S E R T _ O T H E R _ F U _ V _ I N _ L I S T
+ *		N M G _ I N S E R T _ F U _ V U _ I N _ O T H E R _ L I S T
  *
- *  Insert the vu from fu2 that corresponds to v1 onto
- *  the OTHER face's (fu2's) intersect list.
- *  If such a vu does not exist, make a self-loop in fu2.
+ *  Insert vu2 from fu2 that corresponds to v onto
+ *  the OTHER face's (fu2's) intersect list (list2).
+ *  If such a vu2 does not exist, create one as a self-loop in fu2.
+ *
+ *  NOTE that "list1" is fu1's list.  list2 is found via the "is" arg.
+ *
+ *  Returns -
+ *	vu2		vertexuse in fu2 that was added to list2.
  */
 struct vertexuse *
-nmg_insert_other_fu_v_in_list( is, list, v1, fu2 )
+nmg_insert_fu_vu_in_other_list( is, list1, v, fu2 )
 struct nmg_inter_struct	*is;
-struct nmg_ptbl		*list;
-struct vertex		*v1;
+struct nmg_ptbl		*list1;
+struct vertex		*v;
 struct faceuse		*fu2;
 {
 	struct vertexuse	*vu2;
 	struct nmg_ptbl		*lp;
 	struct loopuse		*plu;		/* point loopuse */
+	struct shell		*s;
 
 	NMG_CK_INTER_STRUCT(is);
-	NMG_CK_PTBL(list);
-	NMG_CK_VERTEX(v1);
+	NMG_CK_PTBL(list1);
+	NMG_CK_VERTEX(v);
 	NMG_CK_FACEUSE(fu2);
 
-	if( is->l1 == list )
+	if( is->l1 == list1 )  {
 		lp = is->l2;
-	else
+		s = is->s2;
+	}  else  {
 		lp = is->l1;
-	if( vu2 = nmg_find_v_in_face( v1, fu2 ) )  {
+		s = is->s1;
+	}
+	if( fu2->s_p != s )  rt_bomb("nmg_insert_fu_vu_in_other_list() fu in wrong shell\n");
+	if( vu2 = nmg_find_v_in_face( v, fu2 ) )  {
 		(void)nmg_tbl(lp, TBL_INS_UNIQUE, &vu2->l.magic);
 		return vu2;
 	}
 	/* Insert copy of this vertex into other face, as self-loop. */
-	plu = nmg_mlv(&fu2->l.magic, v1, OT_UNSPEC);
+	plu = nmg_mlv(&fu2->l.magic, v, OT_UNSPEC);
 	nmg_loop_g(plu->l_p);
 	vu2 = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 	NMG_CK_VERTEXUSE(vu2);
 	(void)nmg_tbl(lp, TBL_INS_UNIQUE, &vu2->l.magic);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("nmg_insert_other_fu_v_in_list: v1=x%x, made self-loop for fu2: vu2=x%x\n",
-			v1, vu2);
+		rt_log("nmg_insert_fu_vu_in_other_list: v=x%x, made self-loop for fu2: vu2=x%x\n",
+			v, vu2);
 	}
 	return vu2;
 }
@@ -584,7 +596,7 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 
 		eu1forw = nmg_ebreak(v2, eu1);
 		vu1_final = eu1forw->vu_p;
-		vu2_final = nmg_insert_other_fu_v_in_list( is, is->l2, v2, fu2 );
+		vu2_final = nmg_insert_fu_vu_in_other_list( is, is->l2, v2, fu2 );
 	} else {
 		/* The other face has no vertex in this vicinity */
 		/* If hit_pt falls outside all the loops in fu2,
@@ -1111,18 +1123,20 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		} else if( dist[1] > 0 && dist[1] < 1 )  {
 			/* Break eu2 somewhere in the middle */
 			struct vertexuse	*new_vu2;
+			struct vertex		*new_v2;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
-			new_vu2 = nmg_ebreak( NULL, eu2 )->vu_p;
-			nmg_vertex_gv( new_vu2->v_p, hit_pt );	/* 3d geom */
+			new_v2 = nmg_find_pt_in_shell(fu2->s_p, hit_pt, &(is->tol) );
+			new_vu2 = nmg_ebreak( new_v2, eu2 )->vu_p;
+			if( !new_v2 )  {
+				/* A new vertex was created, assign geom */
+				nmg_vertex_gv( new_vu2->v_p, hit_pt );	/* 3d geom */
+			}
 
-			plu = nmg_mlv(&fu1->l.magic, new_vu2->v_p, OT_UNSPEC);
-			nmg_loop_g(plu->l_p);
-			vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
-			NMG_CK_VERTEXUSE(vu);
-
-			(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu->l.magic);
+			/* The "other" list of this call will be l1 */
+			(void)nmg_insert_fu_vu_in_other_list( is, is->l2, new_vu2->v_p, fu1 );
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &new_vu2->l.magic);
+
 			nmg_ck_face_worthless_edges( fu1 );
 			nmg_ck_face_worthless_edges( fu2 );
 			return 0;		/* eu1 was not broken */
@@ -1492,7 +1506,7 @@ struct faceuse		*fu2;
 #endif
 			/* Combine the two vertices */
 			nmg_jv(v1a, v2);
-			vu2_final = nmg_insert_other_fu_v_in_list( is, is->l2, v1a, fu2 );
+			vu2_final = nmg_insert_fu_vu_in_other_list( is, is->l1, v1a, fu2 );
 			nmg_ck_v_in_2fus(v1a, fu1, fu2, &is->tol);
 		} else {
 			/* Insert copy of this vertex into face */
@@ -1549,7 +1563,7 @@ struct faceuse		*fu2;
 #endif
 			/* Combine the two vertices */
 			nmg_jv(v1b, vu2_final->v_p);
-			vu2_final = nmg_insert_other_fu_v_in_list( is, is->l2, v1b, fu2 );
+			vu2_final = nmg_insert_fu_vu_in_other_list( is, is->l1, v1b, fu2 );
 			nmg_ck_v_in_2fus(v1b, fu1, fu2, &is->tol);
 		} else {
 			/* Insert copy of this vertex into face */
@@ -1812,6 +1826,8 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 
     	is->l1 = &vert_list1;
     	is->l2 = &vert_list2;
+	is->s1 = fu1->s_p;
+	is->s2 = fu2->s_p;
 
     	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
@@ -2103,6 +2119,8 @@ nmg_fu_touchingloops(fu2);
 
 	    	is->l1 = &vert_list1;
 	    	is->l2 = &vert_list2;
+		is->s1 = fu1->s_p;
+		is->s2 = fu2->s_p;
 
 	    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
 	    	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
@@ -2137,6 +2155,9 @@ nmg_fu_touchingloops(fu2);
 
 	    	is->l2 = &vert_list1;
 	    	is->l1 = &vert_list2;
+		is->s2 = fu1->s_p;
+		is->s1 = fu2->s_p;
+
 		if( nmg_isect_face3p_face3p(is, fu2, fu1) )  {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("nmg_isect_two_generic_faces(): re-building intersection line B\n");
@@ -2293,8 +2314,8 @@ struct faceuse		*fu2;
 			rt_log("\t\tedge colinear with isect line.  Listing vu1a, vu1b\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
-		nmg_insert_other_fu_v_in_list( is, list, vu1a->v_p, fu2 );
-		nmg_insert_other_fu_v_in_list( is, list, vu1b->v_p, fu2 );
+		nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
+		nmg_insert_fu_vu_in_other_list( is, list, vu1b->v_p, fu2 );
 		goto out;
 	}
 
@@ -2309,13 +2330,13 @@ struct faceuse		*fu2;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu1a\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
-		nmg_insert_other_fu_v_in_list( is, list, vu1a->v_p, fu2 );
+		nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
 		nmg_ck_face_worthless_edges( fu1 );
 	} else if( dist[1] == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu1b\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
-		nmg_insert_other_fu_v_in_list( is, list, vu1b->v_p, fu2 );
+		nmg_insert_fu_vu_in_other_list( is, list, vu1b->v_p, fu2 );
 		nmg_ck_face_worthless_edges( fu1 );
 	} else {
 		/* Intersection is in the middle of eu1, split edge */
@@ -2341,14 +2362,14 @@ struct faceuse		*fu2;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("\t\tre-using vertex v=x%x from face, vu=x%x\n", new_v, vu1_final);
 		}
-		nmg_insert_other_fu_v_in_list( is, list, vu1_final->v_p, fu2 );
+		nmg_insert_fu_vu_in_other_list( is, list, vu1_final->v_p, fu2 );
 
 		nmg_ck_face_worthless_edges( fu1 );
 	}
 
 out:
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_line2_edge2p(eu1=x%x, fu1=x%x) END%d\n", eu1, fu1);
+		rt_log("nmg_isect_line2_edge2p(eu1=x%x, fu1=x%x) END\n", eu1, fu1);
 }
 
 /*
@@ -2474,6 +2495,8 @@ nmg_fu_touchingloops(fu2);
 
     	is->l1 = &vert_list1;
     	is->l2 = &vert_list2;
+	is->s1 = fu1->s_p;
+	is->s2 = fu2->s_p;
 
     	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
@@ -2505,6 +2528,8 @@ nmg_fu_touchingloops(fu2);
 
     	is->l2 = &vert_list1;
     	is->l1 = &vert_list2;
+	is->s2 = fu1->s_p;
+	is->s1 = fu2->s_p;
 	nmg_isect_line2_face2p(is, &vert_list2, fu2, fu1);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
@@ -2895,6 +2920,8 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 	is.tol = *tol;		/* struct copy */
 	is.l1 = &vert_list1;
 	is.l2 = &vert_list2;
+	is.s1 = s1;
+	is.s2 = s2;
 	(void)nmg_tbl(&vert_list1, TBL_INIT, (long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT, (long *)NULL);
 
