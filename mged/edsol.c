@@ -4112,14 +4112,17 @@ CONST mat_t			mat;
 
 	return(0);				/* success */
 }
-void f_keypoint (argc, argv)
+
+
+int
+f_keypoint (argc, argv)
 int	argc;
 char	**argv;
 {
 	if ((state != ST_S_EDIT) && (state != ST_O_EDIT))
 	{
 	    state_err("keypoint assignment");
-	    return;
+	    return CMD_BAD;
 	}
 
 	switch (--argc)
@@ -4146,8 +4149,9 @@ char	**argv;
 		}
 	    default:
 		(void) printf("Usage: 'keypoint [<x y z> | reset]'\n");
-		break;
+		return CMD_BAD;
 	}
 
 	dmaflag = 1;
+	return CMD_OK;
 }
