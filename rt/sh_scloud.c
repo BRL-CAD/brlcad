@@ -68,7 +68,7 @@ HIDDEN int	scloud_setup(), scloud_render();
 HIDDEN void	scloud_print(), scloud_free();
 
 struct mfuncs scloud_mfuncs[] = {
-	{"scloud",	0,		0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
+	{"scloud",	0,		0,	MFI_HIT, MFF_PROC,
 	scloud_setup,	scloud_render,	scloud_print,	scloud_free },
 
 	{(char *)0,	0,		0,		0, 0,
