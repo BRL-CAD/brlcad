@@ -478,9 +478,13 @@ struct faceuse *fup;
 #endif
 
 	for (i=0 ; i < ELEMENTS_PER_PT ; ++i)
-		if (f->min_pt[i] >= f->max_pt[i])
-			rt_bomb("nmg_vface() face min_pt greater than max_pt\n");
-	
+		if (f->min_pt[i] >= f->max_pt[i]) {
+			rt_log("nmg_vface() face min_pt[%d]:%g greater than max_pt[%d]:%g\n",
+				i, f->min_pt[i], i, f->max_pt[i]);
+			rt_log("min_pt(%g %g %g)  ", V3ARGS(f->min_pt));
+			rt_log("max_pt(%g %g %g)\n", V3ARGS(f->max_pt));
+			rt_bomb("Invalid NMG\n");
+		}
 	if (f->g.plane_p) nmg_vfg(f->g.plane_p);
 }
 
