@@ -237,7 +237,7 @@ int			flags;
 	/* Update the name, and any references */
 	if( flags & DIR_SOLID )  {
 		printf("adding solid '%s'\n", local );
-		if ((ncharadd + strlen(name)) >= NAMESIZE)
+		if ((ncharadd + strlen(name)) >= (unsigned)NAMESIZE)
 			printf("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
 				prestr,name, local);
 
