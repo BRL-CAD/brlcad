@@ -30,13 +30,11 @@
 /* External functions from C library. */
 #if (__STDC__ && ! apollo) || (sgi && mips && BRLCAD4_0)
 #include <stdlib.h>
-extern pointer sbrk( int );
 #else
 extern char *fgets();
 extern char *getenv();
 extern char *malloc();
 extern char *tmpnam();
-extern pointer sbrk();
 #endif
 #ifdef SYSV
 extern long	lrand48();
