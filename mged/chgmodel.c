@@ -198,21 +198,40 @@ char	**argv;
 	if( argc >= 3 )  {
 	  if( strncmp( argv[2], "del", 3 ) != 0 )  {
 		/* Material */
-	  	bu_vls_strcpy( &comb->shader, argv[2] );
+	  	bu_vls_trunc( &comb->shader, 0 );
+	  	if( bu_shader_to_tcl_list( argv[2], &comb->shader ))
+	  	{
+	  		Tcl_AppendResult(interp, "Problem with shader string: ", argv[2], (char *)NULL );
+	  		return TCL_ERROR;
+	  	}
 	  }else{
 	  	bu_vls_free( &comb->shader );
 	  }
 	}else{
 	  /* Shader */
+	  struct bu_vls tmp_vls;
+
+	  bu_vls_init( &tmp_vls );
+	  if( bu_vls_strlen( &comb->shader ) )
+	  {
+	  	if( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
+	  	{
+	  		Tcl_AppendResult(interp, "Problem with on disk shader string: ", bu_vls_addr(&comb->shader), (char *)NULL );
+	  		bu_vls_free( &tmp_vls );
+	  		return TCL_ERROR;
+	  	}
+	  }
 	  curr_cmd_list->cl_quote_string = 1;
-	  Tcl_AppendResult(interp, "Shader = ", bu_vls_addr(&comb->shader),
+	  Tcl_AppendResult(interp, "Shader = ", bu_vls_addr(&tmp_vls),
 			"\n", MORE_ARGS_STR,
 			"Shader?  ('del' to delete, CR to skip) ", (char *)NULL);
 
 	  if( bu_vls_strlen( &comb->shader ) == 0 )
 	    bu_vls_printf(&curr_cmd_list->cl_more_default, "del");
 	  else
-	    bu_vls_printf(&curr_cmd_list->cl_more_default, "\"%S\"", &comb->shader);
+	    bu_vls_printf(&curr_cmd_list->cl_more_default, "\"%S\"", &tmp_vls );
+
+	  bu_vls_free( &tmp_vls );
 
 	  goto fail;
 	}
