@@ -1126,4 +1126,5 @@ struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
 	rt_free( ip->idb_ptr, "particle ifree" );
+	ip->idb_ptr = GENPTR_NULL;
 }

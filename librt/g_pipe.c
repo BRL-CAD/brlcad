@@ -522,4 +522,5 @@ struct rt_db_internal	*ip;
 		rt_free( (char *)psp, "wdb_pipeseg" );
 	}
 	rt_free( ip->idb_ptr, "pipe ifree" );
+	ip->idb_ptr = GENPTR_NULL;
 }

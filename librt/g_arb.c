@@ -1054,6 +1054,7 @@ struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
 	rt_free( ip->idb_ptr, "arb ifree" );
+	ip->idb_ptr = (genptr_t)NULL;
 }
 
 /*
