@@ -681,7 +681,7 @@ struct soltab	*stp;
  *  User-called function to add a set of tree hierarchies to the active set.
  *
  *  Includes getting the indicated list of attributes and a Tcl_HashTable
- *  for use with the ORCA man regions.
+ *  for use with the ORCA man regions. (stashed in the rt_i structure).
  *
  *  This function may run in parallel, but is not multiply re-entrant itself,
  *  because db_walk_tree() isn't multiply re-entrant.
@@ -697,8 +697,6 @@ struct soltab	*stp;
  *	attrs	- array of pointers (NULL terminated) to strings (attribute names). A corresponding
  *		  array of "bu_mro" objects containing the attribute values will be attached to region
  *		  structures ("attr_values")
- *	tbl	- Uninitialized Tcl_HashTable to hold matrices for transforming hits
- *		  on regions with a non-NULL "ORCA_Comp" attribute to the standard ORCA standing man
  *	argc	- number of trees to get
  *	argv	- array of char pointers to the names of the tree tops
  *	ncpus	- number of cpus to use
@@ -708,16 +706,16 @@ struct soltab	*stp;
  *	-1	On major error
  */
 int
-rt_gettrees_muves( rtip, attrs, tbl, argc, argv, ncpus )
+rt_gettrees_muves( rtip, attrs, argc, argv, ncpus )
 struct rt_i	*rtip;
 const char	**attrs;
-Tcl_HashTable	*tbl;
 int		argc;
 const char	**argv;
 int		ncpus;
 {
 	register struct soltab	*stp;
 	register struct region	*regp;
+	Tcl_HashTable		*tbl;
 	int			prev_sol_count;
 	int			i;
 	int			num_attrs=0;
@@ -733,8 +731,9 @@ int		ncpus;
 
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
-	if( tbl )
-		Tcl_InitHashTable( tbl, TCL_ONE_WORD_KEYS );
+	tbl = (Tcl_HashTable *)bu_malloc( sizeof( Tcl_HashTable ), "rtip->Orca_hash_tbl" );
+	Tcl_InitHashTable( tbl, TCL_ONE_WORD_KEYS );
+	rtip->Orca_hash_tbl = (genptr_t)tbl;
 
 	prev_sol_count = rtip->nsolids;
 
@@ -759,11 +758,9 @@ int		ncpus;
 			tree_state.ts_attrs.count = num_attrs;
 		}
 
-		if( tbl ) {
-			if( num_attrs == 0 )
-				bu_avs_init( &tree_state.ts_attrs, 1, "tree_state" );
-			bu_avs_add( &tree_state.ts_attrs, "ORCA_Comp", (char *)NULL );
-		}
+		if( num_attrs == 0 )
+			bu_avs_init( &tree_state.ts_attrs, 1, "tree_state" );
+		bu_avs_add( &tree_state.ts_attrs, "ORCA_Comp", (char *)NULL );
 
 		i = db_walk_tree( rtip->rti_dbip, argc, argv, ncpus,
 				  &tree_state,
@@ -882,7 +879,7 @@ int		argc;
 const char	**argv;
 int		ncpus;
 {
-	return( rt_gettrees_muves( rtip, attrs, NULL, argc, argv, ncpus ) );
+	return( rt_gettrees_muves( rtip, attrs, argc, argv, ncpus ) );
 }
 
 /*
