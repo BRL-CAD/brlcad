@@ -1447,6 +1447,19 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ T O R _ I M P O R T 5
+ */
+int
+rt_tor_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	struct rt_tor_internal	*tip;
+	LOCAL fastf_t		vec[2*3+2];
+}
+/*
  *			R T _ T O R _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
