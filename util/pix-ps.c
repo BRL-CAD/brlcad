@@ -32,7 +32,7 @@ extern int	optind;
 
 static int	encapsulated = 0;	/* encapsulated postscript */
 static int	inverse = 0;		/* inverse video (RFU) */
-static int	center = 0;		/* center output on 8.5 x 11 page */
+static int	center = 1;		/* center output on 8.5 x 11 page */
 static int	landscape = 0;		/* landscape mode */
 
 static int	width = 512;		/* input size in pixels */
@@ -48,7 +48,7 @@ static char	*file_name;
 static FILE	*infp;
 
 static char usage[] = "\
-Usage: pix-ps [-e] [-c] [-L] [-h]\n\
+Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
         [-s input_squaresize] [-w input_width] [-n input_height]\n\
         [-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
 
@@ -57,7 +57,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ehicLs:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "ehiclLs:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'e':
 			/* Encapsulated PostScript */
@@ -72,6 +72,9 @@ register char **argv;
 			break;
 		case 'c':
 			center = 1;
+			break;
+		case 'l':
+			center = 0;	/* lower left */
 			break;
 		case 'L':
 			landscape = 1;
@@ -155,6 +158,11 @@ char	**argv;
 	bytes_per_patch = scans_per_patch * (width*3);
 
 	for( y = 0; y < height; y += scans_per_patch ) {
+		if (y + scans_per_patch > height) {
+			scans_per_patch = height-y;
+			bytes_per_patch = scans_per_patch * (width*3);
+		}
+
 		/* start a patch */
 		fprintf(ofp, "save\n");
 		fprintf(ofp, "%d %d 8 [%d 0 0 %d 0 %d] {<\n ",
@@ -165,7 +173,8 @@ char	**argv;
 		/* data */
 		num = 0;
 		while( num < bytes_per_patch ) {
-			fprintf( ofp, "%02x", getc(infp) );
+			/*fprintf( ofp, "%02x", getc(infp) );*/
+			hexout(ofp,getc(infp));
 			if( (++num % 32) == 0 )
 				fprintf( ofp, "\n " );
 		}
@@ -228,4 +237,22 @@ FILE	*fp;
 		fputs( "%end(plot)\n", fp );
 
 	fputs( "\nshowpage\n", fp );
+}
+
+/*
+ * Print a byte in 2-character hexadecimal.
+ */
+hexout(fp,byte)
+FILE *fp;
+int byte;		/* 0 <= byte <= 255 */
+{
+	int high, low;
+	static int symbol[16] = { '0', '1', '2', '3', '4', '5', '6',
+		'7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
+	high = (byte>>4) & 0xf;
+	low = byte & 0xf;
+
+	putc(symbol[high], fp);
+	putc(symbol[low], fp);
 }
