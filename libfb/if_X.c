@@ -708,7 +708,7 @@ int	save;
 	}
 
 	{
-	int	row, col, bit, val;
+	int	row, col, bit;
     	int	byte, rem;
 	unsigned char	mvalue;
 	unsigned char	*mbuffer;	/* = &buffer[(sy*ifp->if_width + x)/8]; */
@@ -1049,7 +1049,6 @@ printf("Making graphics context\n");
 		XNextEvent( dpy, &event );
 		if( event.type == Expose && event.xexpose.count == 0 ) {
 			XWindowAttributes xwa;
-			int	x, y;
 
 			/* remove other exposure events */
 			while( XCheckTypedEvent(dpy, Expose, &event) ) ;
@@ -1082,6 +1081,7 @@ FBIO	*ifp;
 	while( alive ) {
 		do_event(ifp);
 	}
+	return 0;
 }
 
 static int
@@ -1090,7 +1090,6 @@ FBIO	*ifp;
 {
 	XEvent	event;
 	XExposeEvent	*expose;
-	XCrossingEvent	*xcrossing;
 	int	button;
 	unsigned char *bitbuf = XI(ifp)->bitbuf;
 	unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -1198,8 +1197,11 @@ int method;
 	register unsigned char *mbuffer, mvalue;   /* monochrome bitmap buffer */
 	register unsigned char *mpbuffer;          /* monochrome byte buffer */
 	register row, col, bit;
+#if 1
 	static unsigned char MSB[8] = { 0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1 };
+#else
 	static unsigned char LSB[8] = { 1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80 };
+#endif
 	register unsigned char *bits = MSB;	/*XXX - for RT, Sun, etc.  */
 
 	error1 = (int *)malloc((unsigned)(width+1) * sizeof(int));
@@ -1440,6 +1442,7 @@ FBIO *ifp;
 	if( (XI(ifp)->mode&MODE_5MASK) == MODE_5INSTCMAP ) {
 		XInstallColormap( XI(ifp)->dpy, color_map );
 	}
+	return 0;
 }
 
 static int
@@ -1453,6 +1456,7 @@ FBIO *ifp;
 		ifp->if_xcenter, ifp->if_ycenter, 1, 1, 3,
 		CopyFromParent, InputOutput, CopyFromParent,
 		CWSaveUnder, &xswa );
+	return 0;
 }
 
 /*
@@ -1589,9 +1593,6 @@ FBIO	*ifp;
 	/* screen pixel coordinates corresponding to above */
 	int	sleft, sright;
 	int	sbottom, stop;
-	/* screen pixels of padding (i.e. window overlap) around image */
-	int	spad_left, spad_right;
-	int	spad_bottom, spad_top;
 	/* window height, width, and center */
 	struct	{
 		int	width;
@@ -1710,12 +1711,12 @@ FBIO *ifp;
 int xmin, xmax;	/* image bounds */
 int ymin, ymax;
 {
-	int	sxmin, sxmax;	/* screen versions of above */
-	int	symin, symax;
+	int	sxmin;		/* screen versions of above */
+	int	symin;
 	int	xlen, ylen;	/* number of image pixels in x,y */
 	int	sxlen, sylen;	/* screen pixels in x,y */
 	int	ix, iy;		/* image x, y */
-	int	sx, sy;		/* screen x, y */
+	int	sy;		/* screen x, y */
 	int	x, y;		/* dummys */
 	/* window height, width, and center */
 	struct	{
@@ -1751,9 +1752,11 @@ int ymin, ymax;
 		sy = symin + y;
 		iy = ymin + y/ifp->if_yzoom; 
 		for( x = 0; x < sxlen; x++ ) {
-			sx = sxmin + x;
 			ix = xmin + x/ifp->if_xzoom;
-			/*printf("S(%3d,%3d) <- I(%3d,%3d)\n", sx, sy, ix, iy);*/
+#if 0
+			sx = sxmin + x;
+			printf("S(%3d,%3d) <- I(%3d,%3d)\n", sx, sy, ix, iy);
+#endif
 			pp = (RGBpixel *)&(XI(ifp)->mem[(iy*ifp->if_width+ix)*3]);
 			scanbuf[x][RED] = (*pp)[RED];
 			scanbuf[x][GRN] = (*pp)[GRN];
