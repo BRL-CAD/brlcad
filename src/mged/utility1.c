@@ -44,6 +44,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 #include <stdio.h>
+#ifdef WIN32
+#include <io.h>
+#endif
 #ifndef WIN32
 #include <pwd.h>
 #endif
@@ -211,7 +214,11 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   av[i] = NULL;
 
   if( f_wcodes(clientData, interp, argc + 1, av) == TCL_ERROR ){
+#ifdef WIN32
+    (void)remove(tmpfil);
+#else
     (void)unlink(tmpfil);
+#endif
     bu_free((genptr_t)av, "f_edcodes: av");
     return TCL_ERROR;
   }
@@ -219,7 +226,11 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if( regflag == ABORTED )
 	{
 		Tcl_AppendResult(interp, "f_edcodes: nesting is too deep\n", (char *)NULL );
+#ifdef WIN32
+		(void)remove(tmpfil);
+#else
 		(void)unlink(tmpfil);
+#endif
 		return TCL_ERROR;
 	}
 
@@ -233,7 +244,11 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		if( (f_srt=fopen( tmpfil, "r+" ) ) == NULL ) {
 			Tcl_AppendResult(interp, "edcodes: Failed to open temp file for sorting\n",
 					 (char *)NULL );
+#ifdef WIN32
+			(void)remove(tmpfil);
+#else
 			unlink( tmpfil );
+#endif
 			return TCL_ERROR;
 		}
 
@@ -284,7 +299,11 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }else
 	  status = TCL_ERROR;
 
+#ifdef WIN32
+  (void)remove(tmpfil);
+#else
   (void)unlink(tmpfil);
+#endif
   bu_free((genptr_t)av, "f_edcodes: av");
   return status;
 }
@@ -817,7 +836,11 @@ sol_number(matp_t matrix, char *name, int *old)
 
 	for( i=0 ; i<numsol ; i++ )
 	{
+#ifdef WIN32
+		(void)_lseek(rd_idfd, i*(long)sizeof identt, 0);
+#else
 		(void)lseek(rd_idfd, i*(long)sizeof identt, 0);
+#endif
 		(void)read(rd_idfd, &idbuf2, sizeof identt);
 
 		idbuf1.i_index = i + 1;
@@ -831,7 +854,11 @@ sol_number(matp_t matrix, char *name, int *old)
 	numsol++;
 	idbuf1.i_index = numsol;
 
+#ifdef WIN32
+	(void)_lseek(idfd, 0L, 2);
+#else
 	(void)lseek(idfd, (off_t)0L, 2);
+#endif
 	(void)write(idfd, &idbuf1, sizeof identt);
 
 	*old = 0;
@@ -1163,7 +1190,11 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendResult(interp, "Summary written in: ", argv[1], "\n", (char *)NULL);
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
+#ifdef WIN32
+		(void)remove( "/tmp/mged_discr\0" );
+#else
 		(void)unlink( "/tmp/mged_discr\0" );
+#endif
 		(void)fprintf(tabptr,"\n\nNumber Primitives = %d  Number Regions = %d\n",
 				numsol,numreg);
 
@@ -1193,7 +1224,11 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, bu_vls_addr(&cmd), "\n", (char *)NULL);
 		(void)system( bu_vls_addr(&cmd) );
 
+#ifdef WIN32
+		(void)remove( "/tmp/ord_id\0" );
+#else
 		(void)unlink( "/tmp/ord_id\0" );
+#endif
 	}
 
 end:
