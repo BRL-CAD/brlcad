@@ -113,6 +113,7 @@ char	**argv;
 	int	*rout, *gout, *bout;
 	int	out_width;
 	int	i;
+	int	eof_seen;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -148,8 +149,20 @@ char	**argv;
 	gout = (int *)malloc( out_width * sizeof(long) + 8 );
 	bout = (int *)malloc( out_width * sizeof(long) + 8 );
 
-	/* Prime the pumps with the bottom 5 lines */
-	for( i=0; i<5; i++ )  {
+	/*
+	 *  Prime the pumps with 5 lines of image.
+	 *  Repeat the bottom most line three times to generate a "fill"
+	 *  line on the bottom.  This will have to be matched on the top.
+	 */
+	if( fread( inbuf, 3, file_width, infp ) != file_width )  {
+		perror(file_name);
+		fprintf(stderr, "pixhalve:  fread error\n");
+		exit(1);
+	}
+	separate( &rlines[0][2], &glines[0][2], &blines[0][2], inbuf, file_width );
+	separate( &rlines[1][2], &glines[1][2], &blines[1][2], inbuf, file_width );
+	separate( &rlines[2][2], &glines[2][2], &blines[2][2], inbuf, file_width );
+	for( i=3; i<5; i++ )  {
 		if( fread( inbuf, 3, file_width, infp ) != file_width )  {
 			perror(file_name);
 			fprintf(stderr, "pixhalve:  fread error\n");
@@ -159,6 +172,7 @@ char	**argv;
 			inbuf, file_width );
 	}
 
+	eof_seen = 0;
 	for(;;)  {
 		filter( rout, rlines, out_width );
 		filter( gout, glines, out_width );
@@ -171,7 +185,10 @@ char	**argv;
 
 		/* Ripple down two scanlines, and acquire two more */
 		if( fread( inbuf, 3, file_width, infp ) != file_width )  {
-			break;
+			if( eof_seen >= 2 )  break;
+			/* EOF, repeat last line 2x for final output line */
+			eof_seen++;
+			/* Fall through */
 		}
 		ripple( rlines, 5 );
 		ripple( glines, 5 );
@@ -180,14 +197,16 @@ char	**argv;
 			inbuf, file_width );
 
 		if( fread( inbuf, 3, file_width, infp ) != file_width )  {
-			break;
+			if( eof_seen >= 2 )  break;
+			/* EOF, repeat last line 2x for final output line */
+			eof_seen++;
+			/* Fall through */
 		}
 		ripple( rlines, 5 );
 		ripple( glines, 5 );
 		ripple( blines, 5 );
 		separate( &rlines[4][2], &glines[4][2], &blines[4][2],
 			inbuf, file_width );
-
 	}
 	exit(0);
 }
