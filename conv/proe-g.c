@@ -522,7 +522,7 @@ char line[MAX_LINE_LEN];
 
 }
 
-static int
+static void
 do_modifiers( line1, start, head, name, min, max )
 char *line1;
 int *start;
