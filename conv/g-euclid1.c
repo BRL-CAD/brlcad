@@ -77,10 +77,8 @@ struct facets
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
 void
-handler( sig, code, sc)
-int sig;
+handler( code)
 int code;
-struct sigcontext *sc;
 {
 	rt_bomb( "ALARM boolean evaluation aborted\n" );
 }
