@@ -135,17 +135,18 @@ char **argv;
 	if( !info_p )
 		bu_bomb( "Could not create PNG info structure\n" );
 
-	scanpix = screen_width;
-	scanbytes = scanpix * sizeof(RGBpixel);
-	scanline = (unsigned char *)bu_malloc( scanbytes, "scanline" );
-
 	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
 		exit(12);
 
+	/* If actual screen is smaller than requested size, trim down */
 	if( screen_height > fb_getheight(fbp) )
 		screen_height = fb_getheight(fbp);
 	if( screen_width > fb_getwidth(fbp) )
 		screen_width = fb_getwidth(fbp);
+
+	scanpix = screen_width;
+	scanbytes = scanpix * sizeof(RGBpixel);
+	scanline = (unsigned char *)bu_malloc( scanbytes, "scanline" );
 
 	if( crunch )  {
 		if( fb_rmap( fbp, &cmap ) == -1 )  {
