@@ -55,10 +55,10 @@ char *ptr;
 	extern void free();
 
 	RES_ACQUIRE( &res_malloc );		/* lock */
+	*((int *)ptr) = -1;	/* zappo! */
 	free(ptr);
 	RES_RELEASE( &res_malloc );		/* unlock */
 	if(debug&DEBUG_MEM) rtlog("%x freed %s\n", ptr, str);
-	*((int *)ptr) = -1;	/* zappo! */
 }
 
 /*
