@@ -4,6 +4,7 @@
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
+#include "vmath.h"
 #include "dm.h"
 
 int

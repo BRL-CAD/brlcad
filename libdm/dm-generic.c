@@ -8,6 +8,7 @@
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
+#include "vmath.h"
 #include "dm.h"
 
 extern struct dm *Nu_open();
@@ -49,7 +50,8 @@ char *argv[];
   default:
     break;
   }
-  return( (struct dm *)NULL );
+
+  return DM_NULL;
 }
 
 /*
@@ -61,7 +63,7 @@ dm_share_dlist(dmp1, dmp2)
 struct dm *dmp1;
 struct dm *dmp2;
 {
-  if(dmp1 == (struct dm *)NULL)
+  if(dmp1 == DM_NULL)
     return TCL_ERROR;
 
   /*
@@ -70,7 +72,7 @@ struct dm *dmp2;
    *
    * XXX - need a better way to check if using the same OGL server.
    */
-  if(dmp2 != (struct dm *)NULL)
+  if(dmp2 != DM_NULL)
     if(dmp1->dm_type != dmp2->dm_type ||
        strcmp(bu_vls_addr(&dmp1->dm_dName), bu_vls_addr(&dmp2->dm_dName)))
       return TCL_ERROR;

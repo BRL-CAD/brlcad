@@ -20,6 +20,7 @@
 #include "tcl.h"
 #include "machine.h"
 #include "bu.h"
+#include "vmath.h"
 #include "dm.h"
 
 int dm_limit();  /* provides knob dead spot */
