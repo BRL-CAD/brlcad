@@ -77,7 +77,7 @@ RGBpixel *menu_border; /* Menu outline color, if NULL, do filtering. */
 		if( currx + width > fb_getwidth(fbp) - 1 )
 			break;		/* won't fit on screen */
 
-		if( menu_border == RGBPIXEL_NULL )
+		if( menu_border == (RGBpixel *)RGBPIXEL_NULL )
 			do_Char( char_id, currx, ypos,
 				SignedChar(dir[char_id].down)%2 );
 		else
@@ -135,7 +135,7 @@ int xpos, ypos, odd;
 			resbuf,
 			totwid + 4
 			);
-		fb_read( fbp, xpos, ypos - down + i, fbline, totwid+3);
+		fb_read( fbp, xpos, ypos - down + i, (unsigned char *)fbline, totwid+3);
 		for (j = 0; j < (totwid + 3) - 1; j++)
 			{	register int tmp;
 			/* EDITOR'S NOTE : do not rearrange this code,
@@ -154,7 +154,7 @@ int xpos, ypos, odd;
 				(int)(paint[BLU]*resbuf[j]+(1-resbuf[j])*tmp);
 			fbline[j][BLU] &= 0377;
 			}
-		fb_write( fbp, xpos, ypos - down + i, fbline,  totwid+3 );
+		fb_write( fbp, xpos, ypos - down + i, (unsigned char *)fbline,  totwid+3 );
 		}
 	return;
 	}

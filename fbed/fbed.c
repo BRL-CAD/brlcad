@@ -400,7 +400,7 @@ char *argv[];
 STATIC bool
 drawRectangle( rectp, pixelp )
 Rectangle *rectp;
-RGBpixel *pixelp;
+unsigned char *pixelp;
 	{	register int x, y;
 	y = rectp->r_origin.p_y;
 	x = rectp->r_origin.p_x;
@@ -435,7 +435,7 @@ register RGBpixel *pixelp;
 				{	register int x;
 				for( x = lft; x <= rgt; x++ )
 					(void) fb_write( fbp, x, btm,
-							pixelp, 1 );
+						(unsigned char *)pixelp, 1 );
 				}
 			}
 		}
@@ -459,7 +459,7 @@ Point *pt;
 	if(	pt->p_x < 0 || pt->p_x > fb_getwidth(fbp)
 	    ||	pt->p_y < 0 || pt->p_y > fb_getheight(fbp) )
 		return false; /* outside frame buffer memory */
-	if( fb_read( fbp, pt->p_x, pt->p_y, (RGBpixel *) currentpix, 1 ) == -1 )
+	if( fb_read( fbp, pt->p_x, pt->p_y, (unsigned char *) currentpix, 1 ) == -1 )
 		return false; /* read error */
 	if( EqPixel( currentpix, borderpix ) )
 		return false; /* hit border */
@@ -467,7 +467,7 @@ Point *pt;
 	if( EqPixel( currentpix, paint ) )
 		return false; /* already painted */
 	else
-	if( fb_write( fbp, pt->p_x, pt->p_y, (RGBpixel *) paint, 1 ) == -1 )
+	if( fb_write( fbp, pt->p_x, pt->p_y, (unsigned char *) paint, 1 ) == -1 )
 		return false; /* write error */
 	else
 		return true;
@@ -481,12 +481,12 @@ Point *pt;
 	if(	pt->p_x < 0 || pt->p_x > fb_getwidth(fbp)
 	    ||	pt->p_y < 0 || pt->p_y > fb_getheight(fbp) )
 		return false; /* outside frame buffer memory */
-	if( fb_read( fbp, pt->p_x, pt->p_y, (RGBpixel *) currentpix, 1 ) == -1 )
+	if( fb_read( fbp, pt->p_x, pt->p_y, (unsigned char *) currentpix, 1 ) == -1 )
 		return false; /* read error */
 	if( ! AproxPixel( currentpix, regionpix, tolerance ) )
 		return false; /* hit border */
 	else
-	if( fb_write( fbp, pt->p_x, pt->p_y, (RGBpixel *) paint, 1 ) == -1 )
+	if( fb_write( fbp, pt->p_x, pt->p_y, (unsigned char *) paint, 1 ) == -1 )
 		return false; /* write error */
 	else
 		return true;
@@ -659,7 +659,7 @@ char *buf;
 
 	/* Grab pixel color under cursor. */
 	if( fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y,
-			(RGBpixel *) currentpix, 1 ) == -1 )
+			(unsigned char *) currentpix, 1 ) == -1 )
 		return 0; /* read error */
 	pushPoint( &cursor_pos, &regionsp );
 	if( ! paintSolidRegion( currentpix, &cursor_pos ) )
@@ -1155,21 +1155,21 @@ char *buf;
 	if( answer[0] == 'n' )
 		return 1;
 	if( (p1 = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) ))
-		== RGBPIXEL_NULL
+		== (RGBpixel *)RGBPIXEL_NULL
 		)
 		{
 		Malloc_Bomb();
 		}
 	if( (p2 = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) ))
-		== RGBPIXEL_NULL
+		== (RGBpixel *)RGBPIXEL_NULL
 		)
 		{
 		Malloc_Bomb();
 		}
 	for( y = 0; y < fb_getheight(fbp); y += 2 )
 		{	register RGBpixel *p_avg;
-		fb_read( fbp, 0, y, p1, fb_getwidth(fbp));
-		fb_read( fbp, 0, y+1, p2, fb_getwidth(fbp) );
+		fb_read( fbp, 0, y, (unsigned char *)p1, fb_getwidth(fbp));
+		fb_read( fbp, 0, y+1, (unsigned char *)p2, fb_getwidth(fbp) );
 		for( x = 0; x < fb_getwidth(fbp); x +=2 )
 			{
 			p_avg = pixel_Avg(	p1+x,
@@ -1179,7 +1179,7 @@ char *buf;
 						);
 			COPYRGB( p1[x/2], *p_avg );
 			}
-		fb_write( fbp, 0, y/2, p1, fb_getwidth(fbp)/2 );
+		fb_write( fbp, 0, y/2, (unsigned char *)p1, fb_getwidth(fbp)/2 );
 		}
 	free( (char *) p1 );
 	free( (char *) p2 );
@@ -1234,7 +1234,7 @@ char *buf;
 		{
 		(void) fb_write(	fbp,
 					x, lineseg.r_origin.p_y, 
-					(RGBpixel *) paint,
+					(unsigned char *) paint,
 					1
 					);
 		if( majdelta-- == 0 ) /* Done! */
@@ -1262,7 +1262,7 @@ STATIC int
 f_DrawRectangle( buf ) /* Draw current rectangle with "paint" color. */
 char *buf;
 	{
-	return drawRectangle( &current, (RGBpixel *) paint ) ? 1 : 0;
+	return drawRectangle( &current, (unsigned char *) paint ) ? 1 : 0;
 	}
 
 STATIC int
@@ -1270,7 +1270,7 @@ STATIC int
 f_Fill_Panel( buf ) /* Fill current rectangle with "paint" color. */
 char *buf;
 	{
-	fillRectangle( &current, (RGBpixel *) paint );
+	fillRectangle( &current, (unsigned char *) paint );
 	return 1;
 	}
 
@@ -1562,7 +1562,7 @@ char *buf;
 		(void) fb_seek( fbp, x, y );
 		for( ; x <= rgt; x++ )
 			{
-			(void) fb_rpixel( fbp, (RGBpixel *) cur );
+			(void) fb_rpixel( fbp, (unsigned char *) cur );
 			if( AproxPixel( cur, old, tolerance ) )
 				{
 				(void) fb_seek( fbp, x, y );
@@ -1818,8 +1818,14 @@ char *buf;
 	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
 	reposition_cursor = true;
 	{	register int y;
+	unsigned char *scanbuf;
+	if( (scanbuf = (unsigned char *)malloc(fb_getwidth(imp)*3)) == RGBPIXEL_NULL )
+		{
+		fb_log(	"malloc failure\n");
+		return 0;
+		}
 	for( y = 0; y < fb_getheight( imp ); y++ )
-		{	RGBpixel scanbuf[1024];
+		{
 		if( fb_read( imp, 0, y, scanbuf, fb_getwidth( imp ) ) == -1 )
 			{
 			prnt_Scroll( "Read from <0,%d> failed.\n" );
@@ -1831,6 +1837,7 @@ char *buf;
 			return 0;
 			}
 		}
+	(void)free( (char *)scanbuf );
 	}
 	(void) fb_close( imp );
 	return 1;
@@ -1844,7 +1851,7 @@ char *buf;
 	if( ! get_Input( label, MAX_LN, "Enter text string : " ) )
 		return 0;
 	prnt_Event( "Drawing \"%s\".", label );
-	do_line( cursor_pos.p_x, cursor_pos.p_y, label, (RGBpixel *)NULL );
+	do_line( cursor_pos.p_x, cursor_pos.p_y, label, (unsigned char *)NULL );
 	return 1;
 	}
 
@@ -1868,7 +1875,7 @@ char *buf;
 	else
 		fb_Paint( cursor_pos.p_x - rectwid, cursor_pos.p_y - rectwid,
 			  cursor_pos.p_x + rectwid, cursor_pos.p_y + rectwid,
-			  (RGBpixel *) paint
+			  (unsigned char *) paint
 			  );
 	return 1;
 	}
@@ -2046,16 +2053,20 @@ int sig;
 		restore_Tty();
 		abort();
 		/*NOTREACHED*/
+#if defined(SIGIOT)
 	case SIGIOT :
 		prnt_Event( "IOT trap (core dumped)." );
 		restore_Tty();
 		abort();
 		/*NOTREACHED*/
+#endif
+#if defined(SIGBUS)
 	case SIGBUS :
 		prnt_Event( "Bus error (core dumped)." );
 		restore_Tty();
 		abort();
 		/*NOTREACHED*/
+#endif
 	case SIGSEGV :
 		prnt_Event( "Segmentation violation (core dumped)." );
 		restore_Tty();
@@ -2067,10 +2078,11 @@ int sig;
 	case SIGWINCH :
 		break;
 #endif
-#ifdef SYSV
+#if defined(SIGCLD)
 	case SIGCLD :
 		break;
-#else
+#endif
+#if defined(SIGCHLD)
 	case SIGCHLD :
 		break;
 #endif
@@ -2146,7 +2158,7 @@ RGBpixel pixel;
 	else
 		{
 		(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
-		(void) fb_rpixel( fbp, (RGBpixel *) pixel );
+		(void) fb_rpixel( fbp, (unsigned char *) pixel );
 		}
 	return;
 	}
@@ -2178,7 +2190,7 @@ register Rectangle *rectp;
 	rectwid = rgt-lft + 1;
 	recthgt = top-btm + 1;
 	u = (rectwid*recthgt) * sizeof(RGBpixel);
-	if( (panel = (RGBpixel *) malloc( u )) == RGBPIXEL_NULL )
+	if( (panel = (RGBpixel *) malloc( u )) == (RGBpixel *)RGBPIXEL_NULL )
 		fb_log(	"\"%s\" (%d), get_Fb_Panel() : malloc %d (%d*%d) failed.\n",
 			__FILE__, __LINE__,
 			u, rectwid, recthgt
@@ -2188,7 +2200,7 @@ register Rectangle *rectp;
 			RGBpixel *pixelp = panel;
 		for( ; y <= top; y++, pixelp += rectwid )
 			{
-			if( fb_read( fbp, lft, y, pixelp, rectwid ) == -1 )
+			if( fb_read( fbp, lft, y, (unsigned char *)pixelp, rectwid ) == -1 )
 				{
 				fb_log( "Read of %d pixels from <%d,%d> failed.\n",
 					rectwid, lft, y
@@ -2215,7 +2227,7 @@ register RGBpixel *panel;
 	top = rectp->r_corner.p_y;
 	for( y = btm; y <= top; y++, panel += rectwid )
 		{
-		if( fb_write( fbp, lft, y, panel, rgt-lft+1 ) == -1 )
+		if( fb_write( fbp, lft, y, (unsigned char *)panel, rgt-lft+1 ) == -1 )
 			{
 			fb_log( "Write of %d pixels to <%d,%d> failed.\n",
 				rectwid, lft, btm
