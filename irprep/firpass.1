@@ -92,6 +92,10 @@ Enter type of file to be written.
 0
 Enter name of facet file to be created. (15 char max)  veh.f.fac
 Which release of PRISM is being used, 2.0 (2) or 3.0 (3)?  3
+Should there be 3 sets of orthogonal rays fired (0) or 1 set
+of rays fired (1)?
+	0
+3 sets of orthogonal rays will be fired.
 File Used:  test.veh.g
 Material ID File:  prp
 Database Title:  test vehicle for use with irprep programs
@@ -111,7 +115,11 @@ Model minimum & maximum.
 Enter grid spacing (mm) for fired rays.
 10
 
-SHOOTING DOWN X-AXIS
+SHOOTING DOWN THE 1st AXIS
+
+SHOOTING DOWN THE 2nd AXIS
+
+SHOOTING DOWN THE 3rd AXIS.
 There are no exterior surfaces on region 19.  Setting exterior surface area
 	to total surface area 31.014883
 There are no exterior surfaces on region 20.  Setting exterior surface area
@@ -166,6 +174,10 @@ PRISM.
 the total surface area is written out in the exterior surface
 area field in the PRISM facet file.  PRISM will not accept zero in
 this field.
+.sp
+.sp -1
+8.  The user is given a choice of firing one set of rays or three
+sets of orthogonal rays.
 .sp
 .SH SEE ALSO
 secpass(1), shapefact(1), display(1), see(1), see2(1), pictx(1),
