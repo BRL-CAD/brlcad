@@ -17,7 +17,11 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#ifdef BSD
 #include <strings.h>
+#else
+#include <string.h>
+#endif
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #include "wdb.h"
