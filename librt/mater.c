@@ -50,8 +50,8 @@ static void
 rt_pr_mater( mp )
 register struct mater *mp;
 {
-	(void)rt_log( "%5d..%d\t", mp->mt_low, mp->mt_high );
-	(void)rt_log( "%d,%d,%d\t", mp->mt_r, mp->mt_g, mp->mt_b);
+	(void)bu_log( "%5d..%d\t", mp->mt_low, mp->mt_high );
+	(void)bu_log( "%d,%d,%d\t", mp->mt_r, mp->mt_g, mp->mt_b);
 }
 
 /*
@@ -66,13 +66,13 @@ long addr;
 {
 	register struct mater *mp;
 
-	GETSTRUCT( mp, mater );
+	BU_GETSTRUCT( mp, mater );
 	mp->mt_low = recp->md.md_low;
 	mp->mt_high = recp->md.md_hi;
 	mp->mt_r = recp->md.md_r;
 	mp->mt_g = recp->md.md_g;
 	mp->mt_b = recp->md.md_b;
-/*	mp->mt_handle = rt_strdup( recp->md.md_material ); */
+/*	mp->mt_handle = bu_strdup( recp->md.md_material ); */
 	mp->mt_daddr = addr;
 	rt_insert_color( mp );
 }
@@ -105,19 +105,19 @@ register struct mater *newp;
 	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 		if( mp->mt_low == newp->mt_low  &&
 		    mp->mt_high <= newp->mt_high )  {
-			rt_log("dropping overwritten region-id based material property entry:\n");
+			bu_log("dropping overwritten region-id based material property entry:\n");
 			newp->mt_forw = mp->mt_forw;
 			rt_pr_mater( mp );
 			*mp = *newp;		/* struct copy */
-			rt_free( (char *)newp, "getstruct mater" );
+			bu_free( (char *)newp, "getstruct mater" );
 			newp = mp;
 			goto check_overlap;
 		}
 		if( mp->mt_low  < newp->mt_low  &&
 		    mp->mt_high > newp->mt_high )  {
 			/* New range entirely contained in old range; split */
-			rt_log("Splitting region-id based material property entry into 3 ranges\n");
-			GETSTRUCT( zot, mater );
+			bu_log("Splitting region-id based material property entry into 3 ranges\n");
+			BU_GETSTRUCT( zot, mater );
 			*zot = *mp;		/* struct copy */
 			zot->mt_daddr = MATER_NO_ADDR;
 			/* zot->mt_high = mp->mt_high; */
@@ -134,9 +134,9 @@ register struct mater *newp;
 		}
 		if( mp->mt_high > newp->mt_low )  {
 			/* Overlap to the left: Shorten preceeding entry */
-			rt_log("Shortening region-id based material property entry lhs range, from:\n");
+			bu_log("Shortening region-id based material property entry lhs range, from:\n");
 			rt_pr_mater( mp );
-			rt_log("to:\n");
+			bu_log("to:\n");
 			mp->mt_high = newp->mt_low-1;
 			rt_pr_mater( mp );
 			/* Now append */
@@ -152,7 +152,7 @@ register struct mater *newp;
 			goto check_overlap;
 		}
 	}
-	rt_log("fell out of rt_insert_color loop, append region-id based material property entry to end of list\n");
+	bu_log("fell out of rt_insert_color loop, append region-id based material property entry to end of list\n");
 	/* Append at end */
 	newp->mt_forw = MATER_NULL;
 	mp->mt_forw = newp;
@@ -166,16 +166,16 @@ check_overlap:
 			/* Drop this mater struct */
 			zot = newp->mt_forw;
 			newp->mt_forw = zot->mt_forw;
-			rt_log("dropping overlaping region-id based material property entry:\n");
+			bu_log("dropping overlaping region-id based material property entry:\n");
 			rt_pr_mater( zot );
-			rt_free( (char *)zot, "getstruct mater" );
+			bu_free( (char *)zot, "getstruct mater" );
 			continue;
 		}
 		if( newp->mt_high >= newp->mt_forw->mt_low )  {
 			/* Shorten this mater struct, then done */
-			rt_log("Shortening region-id based material property entry rhs range, from:\n");
+			bu_log("Shortening region-id based material property entry rhs range, from:\n");
 			rt_pr_mater( newp->mt_forw );
-			rt_log("to:\n");
+			bu_log("to:\n");
 			newp->mt_forw->mt_low = newp->mt_high+1;
 			rt_pr_mater( newp->mt_forw );
 			continue;	/* more conservative than returning */
@@ -196,7 +196,7 @@ register struct region *regp;
 	register struct mater *mp;
 
 	if( regp == REGION_NULL )  {
-		rt_log("color_map(NULL)\n");
+		bu_log("color_map(NULL)\n");
 		return;
 	}
 	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
@@ -204,11 +204,11 @@ register struct region *regp;
 		    regp->reg_regionid >= mp->mt_low ) {
 		    	regp->reg_mater.ma_override = 1;
 			regp->reg_mater.ma_color[0] =
-				(((double)mp->mt_r)+0.5)*rt_inv255;
+				(((double)mp->mt_r)+0.5)*bn_inv255;
 			regp->reg_mater.ma_color[1] =
-				(((double)mp->mt_g)+0.5)*rt_inv255;
+				(((double)mp->mt_g)+0.5)*bn_inv255;
 			regp->reg_mater.ma_color[2] =
-				(((double)mp->mt_b)+0.5)*rt_inv255;
+				(((double)mp->mt_b)+0.5)*bn_inv255;
 			return;
 		}
 	}
@@ -228,6 +228,6 @@ rt_color_free()
 	while( (mp = rt_material_head) != MATER_NULL )  {
 		rt_material_head = mp->mt_forw;	/* Dequeue 'mp' */
 		/* mt_handle? */
-		rt_free( (char *)mp, "getstruct mater" );
+		bu_free( (char *)mp, "getstruct mater" );
 	}
 }
