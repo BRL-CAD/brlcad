@@ -750,7 +750,7 @@ CONST struct rt_tol *ttol;
 					{
 						int class;
 
-						class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord , outer_shell , ttol );
+						class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord , outer_shell, 0 , ttol );
 
 						if( class == NMG_CLASS_AoutB )
 						{
@@ -10736,4 +10736,135 @@ CONST struct rt_tol *tol;
 	nmg_km( dup_m );
 
 	return( 1 );
+}
+
+int
+nmg_simplify_shell_edges( s, tol )
+struct shell *s;
+struct rt_tol *tol;
+{
+	struct faceuse *fu;
+	int count=0;
+
+	NMG_CK_SHELL( s );
+	RT_CK_TOL( tol );
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edge *ep1,*ep2;
+			struct edgeuse *eu;
+			struct edgeuse *eu_next;
+			vect_t dir_eu;
+			vect_t dir_next;
+
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+			while( RT_LIST_NOT_HEAD( &eu->l, &lu->down_hd ) )
+			{
+				struct vertex *v1,*v2,*v3;
+				struct vertex_g *vg1,*vg2,*vg3;
+				struct vertexuse *vu;
+				struct edgeuse *eu_tmp;
+				point_t pca;
+				fastf_t dist;
+				int skip;
+
+				ep1 = eu->e_p;
+				eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				ep2 = eu_next->e_p;
+				v2 = eu_next->vu_p->v_p;
+
+				if( v1 == v2 )
+				{
+					/* this is a crack */
+					eu = RT_LIST_PNEXT( edgeuse, &eu->l );
+					continue;
+				}
+
+				/* make sure there are no uses of v2 outside this shell,
+				 * and that all uses are for either ep1 or ep2 */
+				skip = 0;
+				for( RT_LIST_FOR( vu, vertexuse, &v2->vu_hd ) )
+				{
+					if( nmg_find_s_of_vu( vu ) != s )
+					{
+						skip = 1;
+						break;
+					}
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					if( vu->up.eu_p->e_p != ep1 &&
+					    vu->up.eu_p->e_p != ep2 )
+					{
+						skip = 1;
+						break;
+					}
+				}
+
+				if( skip )
+				{
+					/* can't kill eu_next */
+					eu = RT_LIST_PNEXT( edgeuse, &eu->l );
+					continue;
+				}
+
+				vg2 = v2->vg_p;
+
+				v1 = eu->vu_p->v_p;
+				vg1 = v1->vg_p;
+				v3 = eu_next->eumate_p->vu_p->v_p;
+				vg3 = v3->vg_p;
+
+				VSUB2( dir_eu, vg2->coord, vg1->coord );
+				VSUB2( dir_next, vg3->coord, vg2->coord );
+
+				skip = 1;
+				if( rt_dist_pt3_line3( &dist, pca, vg1->coord, dir_eu, vg3->coord, tol ) < 2 )
+					skip = 0;
+				else if( rt_dist_pt3_line3( &dist, pca, vg2->coord, dir_next, vg1->coord, tol ) < 2 )
+					skip = 0;
+
+				if( skip )
+				{
+					/* can't kill eu_next */
+					eu = RT_LIST_PNEXT( edgeuse, &eu->l );
+					continue;
+				}
+
+				count++;
+				/* kill all uses of eu_next edge */
+				eu_tmp = eu_next->radial_p;
+				while( eu_tmp != eu_next->eumate_p )
+				{
+					nmg_keu( eu_tmp );
+					eu_tmp = eu_next->radial_p;
+				}
+				nmg_keu( eu_next );
+
+				/* move all uses of eu to vertex v3 */
+				eu_tmp = eu->eumate_p;
+				do
+				{
+					nmg_movevu( eu_tmp->vu_p, v3 );
+					eu_tmp = eu_tmp->radial_p->eumate_p;
+				} while( eu_tmp != eu->eumate_p );
+
+			}
+		}
+	}
+	return( count );
 }
