@@ -101,9 +101,9 @@ extern void	arbn_vshot();
 extern void	rt_vstub();	/* XXX vshoot.c */
 
 extern void	nul_tess();
-#if 0
 extern void	ell_tess();
 extern void	sph_tess();
+#if 0
 extern void	hlf_tess();
 extern void	rec_tess();
 #endif
@@ -135,7 +135,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_ELL",	1,
 		ell_prep,	ell_shot,	ell_print,	ell_norm,
 		ell_uv,		ell_curve,	ell_class,	ell_free,
-		ell_plot,	ell_vshot,	nul_tess,
+		ell_plot,	ell_vshot,	ell_tess,
 
 	"ID_ARB8",	0,
 		arb_prep,	arb_shot,	arb_print,	arb_norm,
@@ -170,7 +170,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_SPH",	1,
 		sph_prep,	sph_shot,	sph_print,	sph_norm,
 		sph_uv,		sph_curve,	sph_class,	sph_free,
-		ell_plot,	sph_vshot,	nul_tess,
+		ell_plot,	sph_vshot,	sph_tess,
 
 	"ID_STRINGSOL",	0,
 		nul_prep,	nul_shot,	nul_print,	nul_norm,
