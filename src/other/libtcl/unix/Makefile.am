@@ -3,7 +3,6 @@
 noinst_LTLIBRARIES = libtclunix.la
 
 libtclunix_la_SOURCES = \
-	tclAppInit.c \
 	tclLoadDl.c \
 	tclUnixChan.c \
 	tclUnixEvent.c \

@@ -2,6 +2,15 @@
 
 noinst_LTLIBRARIES = libtkgeneric.la
 
+lib_LTLIBRARIES = libtkstub.la libtkstub@TK_VERSION@.la
+
+libtkstub_la_SOURCES = \
+	tkStubLib.c \
+	tkStubImg.c
+
+libtkstub@TK_VERSION@_la_SOURCES = \
+	$(libtkstub_la_SOURCES)
+
 libtkgeneric_la_SOURCES = \
 	tk3d.c \
 	tkArgv.c \
@@ -62,11 +71,9 @@ libtkgeneric_la_SOURCES = \
 	tkScrollbar.c \
 	tkSelect.c \
 	tkSquare.c \
-	tkStubImg.c \
 	tkStubInit.c \
 	tkStubLib.c \
 	tkStyle.c \
-	tkTest.c \
 	tkText.c \
 	tkTextBTree.c \
 	tkTextDisp.c \

@@ -28,3 +28,8 @@ libtcl@TCL_VERSION@_la_LIBADD = \
 	${LIBZ} \
 	${LIBM}
 
+bin_PROGRAMS = tclsh
+
+tclsh_SOURCES = unix/tclAppInit.c
+
+tclsh_LDADD = $(lib_LTLIBRARIES) @TCL@

@@ -1883,9 +1883,9 @@ int main() {
 }], tcl_cv_api_serial=sgtty, tcl_cv_api_serial=none, tcl_cv_api_serial=none)
     fi])
     case $tcl_cv_api_serial in
-	termios) AC_DEFINE(USE_TERMIOS);;
-	termio)  AC_DEFINE(USE_TERMIO);;
-	sgtty)   AC_DEFINE(USE_SGTTY);;
+	termios) AC_DEFINE(USE_TERMIOS,1,From Tcl -- termios);;
+	termio)  AC_DEFINE(USE_TERMIO,1,From Tcl -- termio);;
+	sgtty)   AC_DEFINE(USE_SGTTY,1,From Tcl -- sgtty);;
     esac
     AC_MSG_RESULT($tcl_cv_api_serial)
 ])
@@ -2424,10 +2424,10 @@ AC_DEFUN(SC_TCL_64BIT_FLAGS, [
 	    int main() {exit(!(sizeof(]${tcl_type_64bit}[) > sizeof(long)));}
 	    ], tcl_cv_type_64bit=${tcl_type_64bit},:,:)])
     if test "${tcl_cv_type_64bit}" = none ; then
-	AC_DEFINE(TCL_WIDE_INT_IS_LONG)
+	AC_DEFINE(TCL_WIDE_INT_IS_LONG,1,From Tcl)
 	AC_MSG_RESULT(using long)
     else
-	AC_DEFINE_UNQUOTED(TCL_WIDE_INT_TYPE,${tcl_cv_type_64bit})
+	AC_DEFINE_UNQUOTED(TCL_WIDE_INT_TYPE,${tcl_cv_type_64bit},From Tcl)
 	AC_MSG_RESULT(${tcl_cv_type_64bit})
 
 	# Now check for auxiliary declarations
@@ -2437,7 +2437,7 @@ AC_DEFUN(SC_TCL_64BIT_FLAGS, [
 #include <sys/dirent.h>],[struct dirent64 p;],
 		tcl_cv_struct_dirent64=yes,tcl_cv_struct_dirent64=no)])
 	if test "x${tcl_cv_struct_dirent64}" = "xyes" ; then
-	    AC_DEFINE(HAVE_STRUCT_DIRENT64)
+	    AC_DEFINE(HAVE_STRUCT_DIRENT64,1,From Tcl)
 	fi
 	AC_MSG_RESULT(${tcl_cv_struct_dirent64})
 
@@ -2447,7 +2447,7 @@ AC_DEFUN(SC_TCL_64BIT_FLAGS, [
 ],
 		tcl_cv_struct_stat64=yes,tcl_cv_struct_stat64=no)])
 	if test "x${tcl_cv_struct_stat64}" = "xyes" ; then
-	    AC_DEFINE(HAVE_STRUCT_STAT64)
+	    AC_DEFINE(HAVE_STRUCT_STAT64,1,From Tcl)
 	fi
 	AC_MSG_RESULT(${tcl_cv_struct_stat64})
 
@@ -2457,7 +2457,7 @@ AC_DEFUN(SC_TCL_64BIT_FLAGS, [
 ],
 		tcl_cv_type_off64_t=yes,tcl_cv_type_off64_t=no)])
 	if test "x${tcl_cv_type_off64_t}" = "xyes" ; then
-	    AC_DEFINE(HAVE_TYPE_OFF64_T)
+	    AC_DEFINE(HAVE_TYPE_OFF64_T,1,From Tcl)
 	fi
 	AC_MSG_RESULT(${tcl_cv_type_off64_t})
     fi])

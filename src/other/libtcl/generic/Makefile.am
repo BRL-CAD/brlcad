@@ -2,10 +2,13 @@
 
 noinst_LTLIBRARIES = libtclgeneric.la
 
-lib_LTLIBRARIES = libtclstub.la
+lib_LTLIBRARIES = libtclstub.la libtclstub@TCL_VERSION@.la
 
 libtclstub_la_SOURCES = \
 	tclStubLib.c
+
+libtclstub@TCL_VERSION@_la_SOURCES = \
+	$(libtclstub_la_SOURCES)
 
 libtclgeneric_la_SOURCES = \
 	regcomp.c \

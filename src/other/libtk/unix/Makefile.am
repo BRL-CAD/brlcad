@@ -3,7 +3,6 @@
 noinst_LTLIBRARIES = libtkunix.la
 
 libtkunix_la_SOURCES = \
-	tkAppInit.c \
 	tkUnix.c \
 	tkUnix3d.c \
 	tkUnixButton.c \
