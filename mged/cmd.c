@@ -121,6 +121,7 @@ int tran_set = 0;
 extern int (*knob_hook)();
 extern int (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
 extern int (*light_hook)(), (*perspective_hook)();
+extern int f_nmg_simplify();
 
 extern short earb4[5][18];
 extern short earb5[9][18];
@@ -413,6 +414,8 @@ static struct funtab funtab[] = {
 	f_mvall, 3, 3,FALSE,
 "nirt", "", "trace a single ray from current view",
 	f_nirt,1,MAXARGS,FALSE,
+"nmg_simplify", "[arb|tgc|ell|poly] new_solid nmg_solid", "simplify nmg_solid, if possible",
+	f_nmg_simplify, 3,4,FALSE,
 "comb_color", "comb R G B", "assign a color to a combination (like 'mater')",
 	f_comb_color, 5,5,FALSE,
 "oed", "path_lhs path_rhs", "Go from view to object_edit of path_lhs/path_rhs",
