@@ -42,15 +42,17 @@ option, a transformation matrix may be provided on standard input
 which maps model-space to view-space.
 In this case, the grid ranges from -1.0 <= X,Y <= +1.0 in view space,
 with the size of the grid (number of rays fired) specified with
-.B \-s
+.BR \-s .
 This option is most useful when
 .B rtg3
 is being invoked from a shell script created by an
 .IR mged (1)
-\fIsaveview\fR command.  Note that it conflicts with the use of
+\fIsaveview\fR command.  Note that it conflicts with
 .B \-G#
 and
-.B \-g#: negative hit distances have been seen as a result.
+.BR \-g# ;
+negative hit distances have been seen when this
+conflict was not avoided.
 .LP
 The following options are recognized.
 .TP
@@ -62,29 +64,29 @@ Default is 512 (512x512).
 Select azimuth in degrees.  Used with
 .B \-e
 and conflicts with
-.B \-M
+.BR \-M .
 .TP
 .B \-e#
 Select elevation in degrees.  Used with
 .B \-a
 and conflicts with
-.B \-M
+.BR \-M .
 .TP
 .B \-M
 Read model2view matrix from standard input.
 Conflicts with
 .B \-a
 and
-.B \-e
+.BR \-e .
 .TP
 .B \-g#
-Select grid cell width.  Do not use with the 
+Select grid cell width.  Do not use with the
 .B \-s#
 option.
 .TP
 .B \-G#
 Select grid cell height.  If \fInot\fR specified, cell height equals
-cell width.  Do not use with the 
+cell width.  Do not use with the
 .B \-s#
 option.
 .TP
@@ -94,7 +96,7 @@ sets the Boolean variable
 to the given value.
 The default for
 .IR rtg3 (1)
-is on, ie
+is on, i.e.
 .BR \-U1 ,
 but the effect of air regions may be disabled with
 .BR \-U0 .
@@ -137,7 +139,7 @@ The
 .B GIFT-3
 shotline format has a different convention for the location of
 the start point (and thus the location of parametric distance zero)
-along the ray.  This difference is handled automaticly in
+along the ray.  This difference is handled automatically in
 .I rtg3
 by translating the ray's zero distance to the plane containing the
 model origin, by adding a distance correction factor.
@@ -189,7 +191,7 @@ to compute the color rays use
  \fIrtg3 -s32 -X80000000 model.g\fR
 .fi
 
-The results will be automaticaly stored in \fIrtg3.pl\fR.  The rays
+The results will be automatically stored in \fIrtg3.pl\fR.  The rays
 will be colored green where they traverse solids in the model, and blue
 where they traverse air within the model.
 .LP
@@ -222,7 +224,7 @@ list individually.  The general overlap message takes the following form:
 .fi
 
 This means that OVERLAP1 and OVERLAP2 share a common space (depth) of
-#millimeters starting at the point x, y, z in model coordinates, and 
+#millimeters starting at the point x, y, z in model coordinates, and
 at the ray coordinates (screen coordinates) sx and sy.  Level refers to the
 level of recursion, and will typically be zero unless glass or mirror
 objects are present.
