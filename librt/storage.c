@@ -128,8 +128,10 @@ CONST char	*str;
 		if( mp->mdb_addr != ptr )  continue;
 		ip = (long *)(ptr+mp->mdb_len-sizeof(long));
 		if( *ip != MDB_MAGIC )  {
-			rt_log("ERROR rt_memdebug_check(x%x, %s) barrier word corrupted!\nbarrier at x%x was=x%x s/b=x%x, len=%d\n",
-				ptr, str, ip, *ip, MDB_MAGIC, mp->mdb_len);
+			rt_log("ERROR rt_memdebug_check(x%x, %s) %s, barrier word corrupted!\nbarrier at x%x was=x%x s/b=x%x, len=%d\n",
+				ptr, str, mp->mdb_str,
+				ip, *ip, MDB_MAGIC, mp->mdb_len);
+			rt_bomb("rt_memdebug_check() memory corruption\n");
 		}
 		return(mp);		/* OK */
 	}
@@ -233,7 +235,7 @@ CONST char	*str;
 	}
 
 	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )
-		rt_log("%7x malloc%6d %s\n", ptr, cnt, str);
+		rt_log("%8x malloc%6d %s\n", ptr, cnt, str);
 	if( ptr==(char *)0 )  {
 		rt_log("rt_malloc: Insufficient memory available, sbrk(0)=x%x\n", sbrk(0));
 		rt_bomb("rt_malloc: malloc failure");
@@ -257,9 +259,9 @@ rt_free(ptr,str)
 char		*ptr;
 CONST char	*str;
 {
-	if(rt_g.debug&DEBUG_MEM) rt_log("%7x free %s\n", ptr, str);
+	if(rt_g.debug&DEBUG_MEM) rt_log("%8x free %s\n", ptr, str);
 	if(ptr == (char *)0 || (int)ptr == -1)  {
-		rt_log("%7x free ERROR %s\n", ptr, str);
+		rt_log("%8x free ERROR %s\n", ptr, str);
 		return;
 	}
 	if( rt_g.debug&DEBUG_MEM_FULL )  {
@@ -295,7 +297,7 @@ CONST char	*str;
 
 	if( rt_g.debug&DEBUG_MEM_FULL )  {
 		if( rt_memdebug_check( ptr, str ) == MEMDEBUG_NULL )  {
-			rt_log("%7x realloc%6d %s ** barrier check failure\n",
+			rt_log("%8x realloc%6d %s ** barrier check failure\n",
 				ptr, cnt, str );
 		}
 		/* Pad, plus full int for magic number */
@@ -311,7 +313,7 @@ CONST char	*str;
 	}
 
 	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )  {
-		rt_log("%7x realloc%6d %s %s\n", ptr, cnt, str,
+		rt_log("%8x realloc%6d %s %s\n", ptr, cnt, str,
 			ptr == original_ptr ? "[grew in place]" : "[moved]" );
 	}
 	if( ptr==(char *)0 )  {
@@ -366,14 +368,15 @@ char *str;
 	if( (rt_g.debug&DEBUG_MEM_FULL) == 0 )  {
 		rt_log("\tMemory debugging is now OFF\n");
 	}
-	rt_log("\t%d elements in memdebug table\n", rt_memdebug_len);
+	rt_log("\t%d elements in memdebug table\n Address Length Purpose\n",
+		rt_memdebug_len);
 	if( rt_memdebug_len <= 0 )  return;
 
 	mp = &rt_memdebug[rt_memdebug_len-1];
 	for( ; mp >= rt_memdebug; mp-- )  {
 		if( mp->mdb_len <= 0 )  continue;
 		ip = (int *)(mp->mdb_addr+mp->mdb_len-sizeof(int));
-		rt_log("%7x %5x %s %s\n",
+		rt_log("%8x %6x %s %s\n",
 			mp->mdb_addr, mp->mdb_len, mp->mdb_str,
 			*ip!=MDB_MAGIC ? "-BAD-" : "" );
 		if( *ip != MDB_MAGIC )
@@ -595,12 +598,12 @@ char	*str;
 		if( *ip != MDB_MAGIC )  {
 			rt_log("ERROR rt_ck_malloc_ptr(x%x, %s) barrier word corrupted! was=x%x s/b=x%x\n",
 				ptr, str, *ip, MDB_MAGIC);
-			rt_bomb("Goodbye");
+			rt_bomb("rt_ck_malloc_ptr\n");
 		}
 		return;		/* OK */
 	}
 	rt_log("ERROR rt_ck_malloc_ptr(x%x, %s)\n\
 	pointer not in table of allocated memory.\n", ptr, str);
 
-	rt_bomb("Goodbye");
+	rt_bomb("rt_ck_malloc_ptr\n");
 }
