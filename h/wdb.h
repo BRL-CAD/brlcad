@@ -215,6 +215,28 @@ mk_bot(
 	struct bu_bitv	*face_mode );	/* a flag for each face indicating thickness is appended to hit point,
 					 * otherwise thickness is centered about hit point
 					 */
+int
+mk_bot_w_normals(
+	struct rt_wdb *fp,
+	const char *name,
+	unsigned char	mode,
+	unsigned char	orientation,
+	unsigned char	flags,
+	int		num_vertices,
+	int		num_faces,
+	fastf_t		*vertices,	/* array of floats for vertices [num_vertices*3] */
+	int		*faces,		/* array of ints for faces [num_faces*3] */
+	fastf_t		*thickness,	/* array of plate mode thicknesses (corresponds to array of faces)
+					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
+					 */
+	struct bu_bitv	*face_mode,	/* a flag for each face indicating thickness is appended to hit point,
+					 * otherwise thickness is centered about hit point
+					 */
+	int		num_normals,	/* number of unit normals in normals array */
+	fastf_t		*normals,	/* array of floats for normals [num_normals*3] */
+	int		*face_normals );	/* array of ints (indices into normals array), must have 3*num_faces entries */
+
+
 /* nurb.c */
 int mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs );
 
