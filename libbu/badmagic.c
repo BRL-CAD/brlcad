@@ -40,7 +40,7 @@ CONST char	*str;
 CONST char	*file;
 int		line;
 {
-	char	buf[256];
+	char	buf[512];
 
 	if( !(ptr) )  { 
 		sprintf(buf, "ERROR: NULL %s pointer, file %s, line %d\n", 
