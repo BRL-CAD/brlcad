@@ -644,8 +644,8 @@ char	*str;
 #define FONT2	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
 
 static XWMHints xwmh = {
-	(InputHint|StateHint),		/* flags */
-	False,				/* input */
+        StateHint,		        /* flags */
+	0,				/* input */
 	NormalState,			/* initial_state */
 	0,				/* icon pixmap */
 	0,				/* icon window */
