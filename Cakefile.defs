@@ -1134,3 +1134,4 @@ set -S2 "/bin/sh"
 #define	OBJ	[[SUB X X''OBJSUFF BASE_FILES]]
 #define	OBJSUFF .o
 #define	HDR_DEP	[[cakeinclude -i INCDIR -s ../SRCDIR ../SRCDIR/%.c]]
+#define	HDR_DEP9 [[cakeinclude -i INCDIR -s ../%9 ../%9/%.c]]
