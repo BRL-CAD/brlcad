@@ -43,12 +43,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include <stdio.h>
+#include <string.h>
+#if defined(__sgi) || defined(sgi)
 #include <sys/types.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#ifdef __sgi
 #include "./canon.h"
 
 /*

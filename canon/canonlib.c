@@ -2,7 +2,10 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <stdio.h>
+#if defined(__sgi) || defined(sgi)
 #include <stdlib.h>
+#endif
+#include <ctype.h>
 #include <string.h>
 #include "./canon.h"
 
@@ -10,7 +13,7 @@
 
 
 int ipu_debug = 0;
-#ifndef __sgi
+#if !defined(__sgi) && !defined(sgi)
 int dsdebug = 0;
 #endif
 
@@ -32,7 +35,7 @@ int	src;
 	dest[2] = (u_char)(src >> 8);
 	dest[3] = (u_char)src;
 }
-#ifdef __sgi
+#if defined(__sgi) || defined(sgi)
 /*	I P U _ A C Q U I R E
  *
  *	Wait for the IPU to finish what it was doing.  Exit program if IPU
@@ -984,7 +987,7 @@ extern char *optarg;
 extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
-char *scsi_device = "/dev/scsi/sc0d6l3";
+char scsi_device[1024] = "/dev/scsi/sc2d6l3";
 char gamma = IPU_GAMMA_CG;
 char tray = IPU_UPPER_CASSETTE;
 char conv = IPU_AUTOSCALE;
@@ -1019,7 +1022,7 @@ char *s;
 {
 	if (s) (void)fputs(s, stderr);
 
-	(void) fprintf(stderr, "Usage: %s [options] [file]\n%s", progname, 
+	(void) fprintf(stderr, "Usage: %s [options] [pixfile]\nOptions:\n%s", progname, 
 "	[-h] [-n scanlines] [-w width] [-s squareimagesize]\n\
 	[-N outputheight] [-W outputwidth] [-S outputsquaresize]\n\
 	[-X PageXOffset] [-Y PageYOffset]\n\
@@ -1081,9 +1084,10 @@ char *av[];
 		switch (c) {
 		case 'a'	: autosize = !autosize; break;
 		case 'c'	: clear = !clear; break;
-		case 'd'	: if (isprint(*optarg))
-					scsi_device = optarg;
-				  else
+		case 'd'	: if (isprint(*optarg)) {
+					memset(scsi_device, 0, sizeof(scsi_device));
+					strncpy(scsi_device,optarg,sizeof(scsi_device)-1);
+				  } else
 				  	usage("-d scsi_device_name\n");
 				break;
 		case 'g'	: if (*optarg == 's')

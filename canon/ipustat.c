@@ -3,13 +3,14 @@
  *	Options
  *	h	help
  */
+#include <stdio.h>
+#include <string.h>
+#if defined(__sgi) || defined(sgi)
 #include <sys/types.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "./canon.h"
-
+#endif
 /*
  *	M A I N
  *
@@ -20,19 +21,21 @@ int main(ac,av)
 int ac;
 char *av[];
 {
-#if __sgi
+#if defined(__sgi) || defined(sgi)
 	int i;
 	struct dsreq *dsp;
-	static char *scsi_device = "/dev/scsi/sc0d6l3";
 	char *p;
 
-	if ((i=parse_args(ac, av)) < ac) {
-		scsi_device = av[i];
-	}
+	if ((i=parse_args(ac, av)) < ac)
+		fprintf(stderr,
+			"%s: Excess command line arguments ignored\n",
+			progname);
+
 	
 	if ((dsp = dsopen(scsi_device, O_RDWR)) == NULL) {
-		perror(av[i]);
-		usage("Cannot open device\n");
+		perror(scsi_device);
+		fprintf(stderr, "%s: Cannot open device \"%s\"\n", progname, scsi_device);
+		usage(NULL);
 	}
 
 	
