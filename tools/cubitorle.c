@@ -85,7 +85,7 @@ char	*argv[];
 	read_cubi_row( cubifiles, rows );
 	rle_putrow( rows, xlen, &rle_dflt_hdr);
     }
-
+    return 0;
 }
 
 void

@@ -106,6 +106,7 @@ char	**argv;
 
     while ( nfname-- > 0 )
 	(void)ReadGIF( *infname++ );
+    return 0;
 }
 
 int

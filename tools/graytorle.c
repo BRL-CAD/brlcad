@@ -138,5 +138,6 @@ char *argv[];
 	    fread( outrow[i], 1, xsize, inpfil[i+aflag] );
 	rle_putrow( outrow, xsize, &rle_dflt_hdr );
     }
+    return 0;
 }
 

@@ -161,4 +161,5 @@ char *argv[];
 	for ( i = -aflag; i<files-aflag; i++ )
 	    fwrite( inprow[i], 1, rasts, outfil[i+aflag] );
     }
+    return 0;
 }

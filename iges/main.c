@@ -98,19 +98,19 @@ Suggestions()
 	 */
 	for( i=0 ; i<NTYPES ; i++ )
 	{
-		if( typecount[i].type >= 150 && typecount[i].type <= 184 ||
+		if( (typecount[i].type >= 150 && typecount[i].type <= 184) ||
 		    typecount[i].type == 430 )
 			csg += typecount[i].count;
 		else if( typecount[i].type == 186 ||
-			 typecount[i].type >= 502 && typecount[i].type <=514 )
+			 (typecount[i].type >= 502 && typecount[i].type <=514) )
 			brep += typecount[i].count;
 		else if( typecount[i].type == 128 )
 			splines += typecount[i].count;
 		else if( typecount[i].type == 144 )
 			tsurfs += typecount[i].count;
-		else if( typecount[i].type >= 100 && typecount[i].type <= 112 ||
+		else if( (typecount[i].type >= 100 && typecount[i].type <= 112) ||
 			 typecount[i].type == 126 ||
-			 typecount[i].type >= 202 && typecount[i].type <= 230 ||
+			 (typecount[i].type >= 202 && typecount[i].type <= 230) ||
 			 typecount[i].type == 404 || typecount[i].type == 410 )
 			drawing += typecount[i].count;
 	}
@@ -128,6 +128,7 @@ Suggestions()
 		bu_log( msg4 , iges_file );
 }
 
+int
 main( argc , argv )
 int argc;
 char *argv[];
@@ -326,4 +327,5 @@ char *argv[];
 
 	iges_file = argv[0];
 	Suggestions();
+	return 0;
 }
