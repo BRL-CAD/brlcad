@@ -2212,7 +2212,7 @@ char *buf;
 	 *  was probably waiting in either the kernel's or libraries
 	 *  input buffer.  Don't use these statistics.
 	 */
-#define MIN_ELAPSED_TIME	0.1
+#define MIN_ELAPSED_TIME	0.02
 	if( (sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime )) < MIN_ELAPSED_TIME )
 		sp->sr_l_elapsed = MIN_ELAPSED_TIME;
 
