@@ -26,11 +26,8 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "fb.h"
 #include "./mathtab.h"
-
-#ifdef PARALLEL
-# include "fb.h"
-#endif
 
 #ifdef HEP
 # include <synch.h>
@@ -39,48 +36,141 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 # define PARALLEL 1
 #endif
 
-extern char usage[];
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
 
-extern void wray(), wraypts();
-extern double atof();
-extern char *sbrk();
+extern char	usage[];
+
+extern void	wray(), wraypts();
+
+extern double	atof();
+extern char	*sbrk();
 
 /***** Variables shared with viewing model *** */
-double AmbientIntensity = 0.4;	/* Ambient light intensity */
-double azimuth, elevation;
-int lightmodel;		/* Select lighting model */
-mat_t view2model;
-mat_t model2view;
-int hex_out = 0;	/* Binary or Hex .pix output file */
+FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
+double		AmbientIntensity = 0.4;	/* Ambient light intensity */
+double		azimuth, elevation;
+int		lightmodel;		/* Select lighting model */
+mat_t		view2model;
+mat_t		model2view;
+int		hex_out = 0;	/* Binary or Hex .pix output file */
 /***** end of sharing with viewing model *****/
 
-extern void grid_setup();
-extern void worker();
+extern void	grid_setup();
+extern void	worker();
 /***** variables shared with worker() ******/
 struct application ap;
-int	stereo = 0;	/* stereo viewing */
-vect_t left_eye_delta;
-int	hypersample=0;	/* number of extra rays to fire */
-int	perspective=0;	/* perspective view -vs- parallel view */
-vect_t	dx_model;	/* view delta-X as model-space vector */
-vect_t	dy_model;	/* view delta-Y as model-space vector */
-point_t	eye_model;	/* model-space location of eye */
-point_t	viewbase_model;	/* model-space location of viewplane corner */
-int npts;	/* # of points to shoot: x,y */
-mat_t Viewrotscale;
-mat_t toEye;
-fastf_t viewsize;
-fastf_t	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
+int		stereo = 0;	/* stereo viewing */
+vect_t		left_eye_delta;
+int		hypersample=0;	/* number of extra rays to fire */
+int		perspective=0;	/* perspective view -vs- parallel view */
+vect_t		dx_model;	/* view delta-X as model-space vector */
+vect_t		dy_model;	/* view delta-Y as model-space vector */
+point_t		eye_model;	/* model-space location of eye */
+point_t		viewbase_model;	/* model-space location of viewplane corner */
+int		npts;		/* # of points to shoot: x,y */
+mat_t		Viewrotscale;
+fastf_t		viewsize;
+fastf_t		zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 
 #ifdef PARALLEL
-char *scanbuf;		/*** Output buffering, for parallelism */
+char		*scanbuf;	/*** Output buffering, for parallelism */
 #endif
 
 /* Eventually, npsw = MAX_PSW by default */
-int npsw = 1;		/* number of worker PSWs to run */
+int		npsw = 1;		/* number of worker PSWs to run */
 /***** end variables shared with worker() */
 
-static char *beginptr;	/* sbrk() at start of program */
+static char	*beginptr;		/* sbrk() at start of program */
+static int	matflag = 0;		/* read matrix from stdin */
+static int	desiredframe = 0;
+static char	*outputfile = (char *)0;/* name of base of output file */
+static char	*framebuffer = NULL;	/* Name of framebuffer */
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while( (c=getopt( argc, argv, "SH:F:D:MA:s:f:a:e:l:O:o:p:P:" )) != EOF )  {
+		switch( c )  {
+		case 'S':
+			stereo = 1;
+			break;
+		case 'H':
+			hypersample = atoi( optarg );
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 'D':
+			desiredframe = atoi( optarg );
+			break;
+		case 'M':
+			matflag = 1;
+			break;
+		case 'A':
+			AmbientIntensity = atof( optarg );
+			break;
+		case 'x':
+			sscanf( optarg, "%x", &rt_g.debug );
+			fprintf(stderr,"rt_g.debug=x%x\n", rt_g.debug);
+			break;
+		case 's':
+			/* Square size -- fall through */
+		case 'f':
+			/* "Fast" -- arg's worth of pixels */
+			npts = atoi( optarg );
+			if( npts < 2 || npts > (1024*8) )  {
+				fprintf(stderr,"npts=%d out of range\n", npts);
+				npts = 50;
+			}
+			break;
+		case 'a':
+			/* Set azimuth */
+			azimuth = atof( optarg );
+			matflag = 0;
+			break;
+		case 'e':
+			/* Set elevation */
+			elevation = atof( optarg );
+			matflag = 0;
+			break;
+		case 'l':
+			/* Select lighting model # */
+			lightmodel = atoi( optarg );
+			break;
+		case 'O':
+			/* Output pixel file name, Hex format */
+			outputfile = optarg;
+			hex_out = 1;
+			break;
+		case 'o':
+			/* Output pixel file name, binary format */
+			outputfile = optarg;
+			hex_out = 0;
+			break;
+		case 'p':
+			perspective = 1;
+			zoomout = atof( optarg );
+			if( zoomout <= 0 )  zoomout = 1;
+			break;
+		case 'P':
+			/* Number of parallel workers */
+			npsw = atoi( optarg );
+			if( npsw < 1 || npsw > MAX_PSW )  {
+				fprintf(stderr,"npsw out of range 1..%d\n", MAX_PSW);
+				npsw = 1;
+			}
+			break;
+		default:		/* '?' */
+			fprintf(stderr,"unknown option %c\n", c);
+			return(0);	/* BAD */
+		}
+	}
+	return(1);			/* OK */
+}
 
 /*
  *			M A I N
@@ -91,17 +181,14 @@ char **argv;
 {
 	static struct rt_i *rtip;
 	static vect_t temp;
-	static int matflag = 0;		/* read matrix from stdin */
 	static double utime;
 	char *title_file, *title_obj;	/* name of file and first object */
-	char *outputfile = (char *)0;	/* name of base of output file */
 	static FILE *outfp = NULL;	/* optional pixel output file */
 	register int x,y;
 	char framename[128];		/* File name to hold current frame */
 	char outbuf[132];
 	char idbuf[132];		/* First ID record info */
 	int framenumber = 0;
-	int desiredframe = 0;
 	static struct region *regp;
 
 	beginptr = sbrk(0);
@@ -109,89 +196,16 @@ char **argv;
 	azimuth = -35.0;			/* GIFT defaults */
 	elevation = -25.0;
 
-	if( argc <= 1 )  {
-		fprintf(stderr, usage);
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit(1);
+	}
+	if( optind+1 >= argc )  {
+		fprintf(stderr,"database & object(s) list missing\n");
+		(void)fputs(usage, stderr);
 		exit(1);
 	}
 
-	argc--; argv++;
-	while( argc > 0 && argv[0][0] == '-' )  {
-		switch( argv[0][1] )  {
-		case 'S':
-			stereo = 1;
-			break;
-		case 'h':
-			hypersample = atoi( &argv[0][2] );
-			break;
-		case 'F':
-			desiredframe = atoi( &argv[0][2] );
-			break;
-		case 'M':
-			matflag = 1;
-			break;
-		case 'A':
-			AmbientIntensity = atof( &argv[0][2] );
-			break;
-		case 'x':
-			sscanf( &argv[0][2], "%x", &rt_g.debug );
-			fprintf(stderr,"rt_g.debug=x%x\n", rt_g.debug);
-			break;
-		case 'f':
-			/* "Fast" -- just a few pixels.  Or, arg's worth */
-			npts = atoi( &argv[0][2] );
-			if( npts < 2 || npts > (1024*8) )  {
-				npts = 50;
-			}
-			break;
-		case 'a':
-			/* Set azimuth */
-			azimuth = atof( &argv[0][2] );
-			matflag = 0;
-			break;
-		case 'e':
-			/* Set elevation */
-			elevation = atof( &argv[0][2] );
-			matflag = 0;
-			break;
-		case 'l':
-			/* Select lighting model # */
-			lightmodel = atoi( &argv[0][2] );
-			break;
-		case 'O':
-			/* Output pixel file name, Hex format */
-			outputfile = argv[1];
-			hex_out = 1;
-			argc--; argv++;
-			break;
-		case 'o':
-			/* Output pixel file name, binary format */
-			outputfile = argv[1];
-			argc--; argv++;
-			break;
-		case 'p':
-			perspective = 1;
-			if( argv[0][2] != '\0' )
-				zoomout = atof( &argv[0][2] );
-			if( zoomout <= 0 )  zoomout = 1;
-			break;
-		case 'P':
-			/* Number of parallel workers */
-			npsw = atoi( &argv[0][2] );
-			if( npsw < 1 || npsw > MAX_PSW )
-				npsw = 1;
-			break;
-		default:
-			fprintf(stderr,"rt:  Option '%c' unknown\n", argv[0][1]);
-			fprintf(stderr, usage);
-			break;
-		}
-		argc--; argv++;
-	}
-
-	if( argc < 2 )  {
-		fprintf(stderr, usage);
-		exit(2);
-	}
 	RES_INIT( &rt_g.res_pt );
 	RES_INIT( &rt_g.res_seg );
 	RES_INIT( &rt_g.res_malloc );
@@ -203,29 +217,27 @@ char **argv;
 	scanbuf = rt_malloc( npts*npts*3 + sizeof(long), "scanbuf" );
 #endif
 
-	title_file = argv[0];
-	title_obj = argv[1];
+	title_file = argv[optind];
+	title_obj = argv[optind+1];
 
 	rt_prep_timer();		/* Start timing preparations */
 
 	/* Build directory of GED database */
-	if( (rtip=rt_dirbuild(argv[0], idbuf, sizeof(idbuf))) == RTI_NULL ) {
+	if( (rtip=rt_dirbuild(argv[optind++], idbuf, sizeof(idbuf))) == RTI_NULL ) {
 		fprintf(stderr,"rt:  rt_dirbuild failure\n");
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
 	fprintf(stderr, "db title:  %s\n", idbuf);
-	argc--; argv++;
 
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"DB TOC: %s\n", outbuf);
 	rt_prep_timer();
 
 	/* Load the desired portion of the model */
-	while( argc > 0 )  {
-		if( rt_gettree(rtip, argv[0]) < 0 )
-			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[0]);
-		argc--; argv++;
+	for( ; optind < argc; optind++ )  {
+		if( rt_gettree(rtip, argv[optind]) < 0 )
+			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[optind]);
 	}
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"DB WALK: %s\n", outbuf);
@@ -241,8 +253,24 @@ char **argv;
 		}
 	}
 
-	/* initialize application */
-	view_init( &ap, title_file, title_obj, npts, outputfile!=(char *)0 );
+	/* 
+	 *  Initialize application.
+	 */
+	if( view_init( &ap, title_file, title_obj, npts, outputfile!=(char *)0 ) != 0 )  {
+		/* Framebuffer is desired */
+		register int sz = 512;
+		while( sz < npts )
+			sz <<= 1;
+		if( (fbp = fb_open( framebuffer, sz, sz )) == FBIO_NULL )  {
+			rt_log("rt:  can't open frame buffer\n");
+			exit(12);
+		}
+		fb_clear( fbp, PIXEL_NULL );
+		fb_wmap( fbp, COLORMAP_NULL );
+		/* KLUDGE ALERT:  The library want zoom before window! */
+		fb_zoom( fbp, fb_getwidth(fbp)/npts, fb_getheight(fbp)/npts );
+		fb_window( fbp, npts/2, npts/2 );
+	}
 
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr, "PREP: %s\n", outbuf );
@@ -284,9 +312,10 @@ char **argv;
 
 do_more:
 	if( !matflag )  {
-		vect_t view_min;		/* view position of rtip->mdl_min */
-		vect_t view_max;		/* view position of rtip->mdl_max */
-		fastf_t f;
+		vect_t	view_min;	/* view position of rtip->mdl_min */
+		vect_t	view_max;	/* view position of rtip->mdl_max */
+		mat_t	toEye;
+		fastf_t	f;
 
 		mat_idn( Viewrotscale );
 		mat_angles( Viewrotscale, 270.0-elevation, 0.0, 270.0+azimuth );
@@ -384,7 +413,6 @@ do_more:
 		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
 #ifdef PARALLEL
 	{
-		extern FBIO *fbp;
 	if( outfp != NULL &&
 	    write( fileno(outfp), scanbuf, npts*npts*3 ) != npts*npts*3 )  {
 		perror("pixel output write");
