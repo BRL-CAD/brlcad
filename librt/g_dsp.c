@@ -2738,8 +2738,9 @@ CONST struct db_i		*dbip;
 	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
 	/* get file */
-	mf = dsp_ip->dsp_mp = bu_open_mapped_file(dsp_ip->dsp_file, "dsp");
-
+	mf = dsp_ip->dsp_mp = 
+		bu_open_mapped_file_with_path(dsp_ip->dsp_file, "dsp",
+					      dbip->dbi_filepath);
 	if (!mf) {
 		IMPORT_FAIL("unable to open");
 	}
@@ -2755,8 +2756,6 @@ CONST struct db_i		*dbip;
 		/* if we're on a little-endian machine we convert the
 		 * input file from network to host format
 		 */
-		bu_log("doing net-host conversion\n");
-#if 1
 		count = dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt;
 		mf->apbuflen = count * sizeof(unsigned short);
 		mf->apbuf = bu_malloc(mf->apbuflen, "apbuf");
@@ -2767,7 +2766,6 @@ CONST struct db_i		*dbip;
 			bu_log("got %d != count %d", got, count);
 			bu_bomb("\n");
 		}
-#endif
 		dsp_ip->dsp_buf = dsp_ip->dsp_mp->apbuf;
 	} else {
 		dsp_ip->dsp_buf = dsp_ip->dsp_mp->buf;
