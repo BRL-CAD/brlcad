@@ -21,7 +21,6 @@
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
-#define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
 #define INFINITY	(1.0e20)
 
 /*
