@@ -435,6 +435,22 @@ extern "C" {
 #define rt_units_string bu_units_string
 #define rt_mm_value bu_mm_value
 
+/* vlist.c */
+#define RT_VLIST_CHUNK	BN_VLIST_CHUNK
+#define rt_vlist	bn_vlist
+#define RT_VLIST_NULL	BN_VLIST_NULL
+#define RT_VLIST_MAGIC	BN_VLIST_MAGIC
+#define RT_CK_VLIST(_p) BN_CK_VLIST(_p)
+#define RT_VLIST_LINE_MOVE	BN_VLIST_LINE_MOVE
+#define RT_VLIST_LINE_DRAW	BN_VLIST_LINE_DRAW
+#define RT_VLIST_POLY_START	BN_VLIST_POLY_START
+#define RT_VLIST_POLY_MOVE	BN_VLIST_POLY_MOVE
+#define RT_VLIST_POLY_DRAW	BN_VLIST_POLY_DRAW
+#define RT_VLIST_POLY_END	BN_VLIST_POLY_END
+#define RT_VLIST_POLY_VERTNORM	BN_VLIST_POLY_VERTNORM
+#define rt_vlblock	bn_vlblock
+#define RT_VLBLOCK_MAGIC	BN_VLBLOCK_MAGIC
+#define RT_CK_VLBLOCK(_p)	BN_CK_VLBLOCK(_p)
 
 
 #ifdef __cplusplus

@@ -1261,97 +1261,21 @@ struct rt_i {
 #define RT_VISIT_ALL_SOLTABS_END	} }
 
 /*
- *			R T _ V L I S T
- *
- *  Definitions for handling lists of vectors (really verticies, or points)
- *  and polygons in 3-space.
- *  Intented for common handling of wireframe display information,
- *  in the full resolution that is calculated in.
- *
- *  On 32-bit machines, RT_VLIST_CHUNK of 35 results in rt_vlist structures
- *  just less than 1k bytes.
- *
- *  The head of the doubly linked list can be just a "struct bu_list" head.
- *
- *  To visit all the elements in the vlist:
- *	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
- *		register int	i;
- *		register int	nused = vp->nused;
- *		register int	*cmd = vp->cmd;
- *		register point_t *pt = vp->pt;
- *		for( i = 0; i < nused; i++,cmd++,pt++ )  {
- *			access( *cmd, *pt );
- *			access( vp->cmd[i], vp->pt[i] );
- *		}
- *	}
- */
-#define RT_VLIST_CHUNK	35		/* 32-bit mach => just less than 1k */
-struct rt_vlist  {
-	struct bu_list	l;			/* magic, forw, back */
-	int		nused;			/* elements 0..nused active */
-	int		cmd[RT_VLIST_CHUNK];	/* VL_CMD_* */
-	point_t		pt[RT_VLIST_CHUNK];	/* associated 3-point/vect */
-};
-#define RT_VLIST_NULL	((struct rt_vlist *)0)
-#define RT_VLIST_MAGIC	0x98237474
-#define RT_CK_VLIST(_p) BU_CKMAG((_p), RT_VLIST_MAGIC, "rt_vlist")
-
-/* Values for cmd[] */
-#define RT_VLIST_LINE_MOVE	0
-#define RT_VLIST_LINE_DRAW	1
-#define RT_VLIST_POLY_START	2	/* pt[] has surface normal */
-#define RT_VLIST_POLY_MOVE	3	/* move to first poly vertex */
-#define RT_VLIST_POLY_DRAW	4	/* subsequent poly vertex */
-#define RT_VLIST_POLY_END	5	/* last vert (repeats 1st), draw poly */
-#define RT_VLIST_POLY_VERTNORM	6	/* per-vertex normal, for interpoloation */
-
-/* XXX Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL */
-/*
  *  Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
  *  are required to execute this macro once, first:
  *		BU_LIST_INIT( &rt_g.rtg_vlfree );
+ *
+ * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
  */
-#define RT_GET_VLIST(p) {\
-		(p) = BU_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree ); \
-		if( BU_LIST_IS_HEAD( (p), &rt_g.rtg_vlfree ) )  { \
-			(p) = (struct rt_vlist *)rt_malloc(sizeof(struct rt_vlist), "rt_vlist"); \
-			(p)->l.magic = RT_VLIST_MAGIC; \
-		} else { \
-			BU_LIST_DEQUEUE( &((p)->l) ); \
-		} \
-		(p)->nused = 0; \
-	}
+#define RT_GET_VLIST(p)		BN_GET_VLIST(&rt_g.rtg_vlfree, p)
 
-/* Place an entire chain of rt_vlist structs on the global freelist */
-#define RT_FREE_VLIST(hd)	{ \
-	BU_CK_LIST_HEAD( (hd) ); \
-	BU_LIST_APPEND_LIST( &rt_g.rtg_vlfree, (hd) ); \
-	}
+/* Place an entire chain of bn_vlist structs on the freelist */
+#define RT_FREE_VLIST(hd)	BN_FREE_VLIST(&rt_g.rtg_vlfree, hd)
 
-#define RT_ADD_VLIST(hd,pnt,draw)  { \
-	register struct rt_vlist *_vp; \
-	BU_CK_LIST_HEAD( hd ); \
-	_vp = BU_LIST_LAST( rt_vlist, (hd) ); \
-	if( BU_LIST_IS_HEAD( _vp, (hd) ) || _vp->nused >= RT_VLIST_CHUNK )  { \
-		RT_GET_VLIST(_vp); \
-		BU_LIST_INSERT( (hd), &(_vp->l) ); \
-	} \
-	VMOVE( _vp->pt[_vp->nused], (pnt) ); \
-	_vp->cmd[_vp->nused++] = (draw); \
-	}
+#define RT_ADD_VLIST(hd,pnt,draw)  BN_ADD_VLIST(&rt_g.rtg_vlfree,hd,pnt,draw)
 
-/* Macro BU_CK_LIST_HEAD() is defined in rtlist.h */
 
-/* For NMG plotting, a way of separating vlists into colorer parts */
-struct rt_vlblock {
-	long		magic;
-	int		nused;
-	int		max;
-	long		*rgb;		/* rgb[max] */
-	struct bu_list	*head;		/* head[max] */
-};
-#define RT_VLBLOCK_MAGIC	0x981bd112
-#define RT_CK_VLBLOCK(_p)	BU_CKMAG((_p), RT_VLBLOCK_MAGIC, "rt_vlblock")
+
 /*
  *  Replacements for definitions from ../h/vmath.h
  */
@@ -2009,9 +1933,9 @@ RT_EXTERN(void rt_mempurge, (struct mem_map **pp) );
 RT_EXTERN(void rt_memprint, (struct mem_map **pp) );
 RT_EXTERN(void rt_memclose,() );
 
-RT_EXTERN(struct rt_vlblock *rt_vlblock_init, () );
-RT_EXTERN(void rt_vlblock_free, (struct rt_vlblock *vbp) );
-RT_EXTERN(struct bu_list *rt_vlblock_find, (struct rt_vlblock *vbp,
+RT_EXTERN(struct bn_vlblock *rt_vlblock_init, () );
+RT_EXTERN(void rt_vlblock_free, (struct bn_vlblock *vbp) );
+RT_EXTERN(struct bu_list *rt_vlblock_find, (struct bn_vlblock *vbp,
 	int r, int g, int b) );
 
 /* rtassoc.c */
@@ -2037,9 +1961,9 @@ RT_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
 RT_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
 
 /* vlist.c */
-RT_EXTERN(struct rt_vlblock *	rt_vlblock_init, () );
-RT_EXTERN(void			rt_vlblock_free, (struct rt_vlblock *vbp) );
-RT_EXTERN(struct bu_list *	rt_vlblock_find, (struct rt_vlblock *vbp,
+RT_EXTERN(struct bn_vlblock *	rt_vlblock_init, () );
+RT_EXTERN(void			rt_vlblock_free, (struct bn_vlblock *vbp) );
+RT_EXTERN(struct bu_list *	rt_vlblock_find, (struct bn_vlblock *vbp,
 				int r, int g, int b) );
 RT_EXTERN(void			rt_vlist_cleanup, () );
 RT_EXTERN(void			rt_vlist_export, (struct bu_vls *vls,
@@ -2049,12 +1973,12 @@ RT_EXTERN(void			rt_vlist_import, (struct bu_list *hp,
 				struct bu_vls *namevls,
 				CONST unsigned char *buf));
 RT_EXTERN(void			rt_plot_vlblock, (FILE *fp,
-				CONST struct rt_vlblock	*vbp) );
+				CONST struct bn_vlblock	*vbp) );
 RT_EXTERN(void			rt_vlist_to_uplot, (FILE *fp,
 				CONST struct bu_list *vhead));
-RT_EXTERN(int			rt_uplot_to_vlist, (struct rt_vlblock *vbp,
+RT_EXTERN(int			rt_uplot_to_vlist, (struct bn_vlblock *vbp,
 				FILE *fp, double char_size) );
-RT_EXTERN(void			rt_label_vlist_verts, (struct rt_vlblock *vbp,
+RT_EXTERN(void			rt_label_vlist_verts, (struct bn_vlblock *vbp,
 				struct bu_list *src, mat_t mat,
 				double sz, double mm2local) );
 
@@ -2344,26 +2268,26 @@ RT_EXTERN(void			nmg_pl_fu, (FILE *fp, CONST struct faceuse *fu,
 RT_EXTERN(void			nmg_pl_s, (FILE *fp, CONST struct shell *s) );
 RT_EXTERN(void			nmg_pl_r, (FILE *fp, CONST struct nmgregion *r) );
 RT_EXTERN(void			nmg_pl_m, (FILE *fp, CONST struct model *m) );
-RT_EXTERN(void			nmg_vlblock_v, (struct rt_vlblock *vbp,
+RT_EXTERN(void			nmg_vlblock_v, (struct bn_vlblock *vbp,
 				CONST struct vertex *v, long *tab) );
-RT_EXTERN(void			nmg_vlblock_e, (struct rt_vlblock *vbp,
+RT_EXTERN(void			nmg_vlblock_e, (struct bn_vlblock *vbp,
 				CONST struct edge *e, long *tab,
 				int red, int green, int blue, int fancy) );
-RT_EXTERN(void			nmg_vlblock_eu, (struct rt_vlblock *vbp,
+RT_EXTERN(void			nmg_vlblock_eu, (struct bn_vlblock *vbp,
 				CONST struct edgeuse *eu, long *tab,
 				int red, int green, int blue,
 				int fancy, int loopnum) );
-RT_EXTERN(void			nmg_vlblock_lu, (struct rt_vlblock *vbp,
+RT_EXTERN(void			nmg_vlblock_lu, (struct bn_vlblock *vbp,
 				CONST struct loopuse *lu, long *tab,
 				int red, int green, int blue,
 				int fancy, int loopnum) );
-RT_EXTERN(void			nmg_vlblock_fu, (struct rt_vlblock *vbp,
+RT_EXTERN(void			nmg_vlblock_fu, (struct bn_vlblock *vbp,
 				CONST struct faceuse *fu, long *tab, int fancy) );
-RT_EXTERN(void			nmg_vlblock_s, (struct rt_vlblock *vbp,
+RT_EXTERN(void			nmg_vlblock_s, (struct bn_vlblock *vbp,
 				CONST struct shell *s, int fancy) );
-RT_EXTERN(void			nmg_vlblock_r, (struct rt_vlblock *vbp,
+RT_EXTERN(void			nmg_vlblock_r, (struct bn_vlblock *vbp,
 				CONST struct nmgregion *r, int fancy) );
-RT_EXTERN(void			nmg_vlblock_m, (struct rt_vlblock *vbp,
+RT_EXTERN(void			nmg_vlblock_m, (struct bn_vlblock *vbp,
 				CONST struct model *m, int fancy) );
 RT_EXTERN(void			nmg_pl_around_edge, (FILE *fd,
 				long *b, CONST struct edgeuse *eu) );

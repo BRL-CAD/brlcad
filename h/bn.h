@@ -809,6 +809,106 @@ BU_EXTERN(struct bn_table	*bn_table_merge2, (CONST struct bn_table *a,
 				CONST struct bn_table *b));
 
 /*----------------------------------------------------------------------*/
+/* vlist.c */
+/*
+ *			B N _ V L I S T
+ *
+ *  Definitions for handling lists of vectors (really verticies, or points)
+ *  and polygons in 3-space.
+ *  Intented for common handling of wireframe display information,
+ *  in the full resolution that is calculated in.
+ *
+ *  On 32-bit machines, BN_VLIST_CHUNK of 35 results in bn_vlist structures
+ *  just less than 1k bytes.
+ *
+ *  The head of the doubly linked list can be just a "struct bu_list" head.
+ *
+ *  To visit all the elements in the vlist:
+ *	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
+ *		register int	i;
+ *		register int	nused = vp->nused;
+ *		register int	*cmd = vp->cmd;
+ *		register point_t *pt = vp->pt;
+ *		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+ *			access( *cmd, *pt );
+ *			access( vp->cmd[i], vp->pt[i] );
+ *		}
+ *	}
+ */
+#define BN_VLIST_CHUNK	35		/* 32-bit mach => just less than 1k */
+struct bn_vlist  {
+	struct bu_list	l;			/* magic, forw, back */
+	int		nused;			/* elements 0..nused active */
+	int		cmd[RT_VLIST_CHUNK];	/* VL_CMD_* */
+	point_t		pt[RT_VLIST_CHUNK];	/* associated 3-point/vect */
+};
+#define BN_VLIST_NULL	((struct bn_vlist *)0)
+#define BN_VLIST_MAGIC	0x98237474
+#define BN_CK_VLIST(_p) BU_CKMAG((_p), BN_VLIST_MAGIC, "bn_vlist")
+
+/* Values for cmd[] */
+#define BN_VLIST_LINE_MOVE	0
+#define BN_VLIST_LINE_DRAW	1
+#define BN_VLIST_POLY_START	2	/* pt[] has surface normal */
+#define BN_VLIST_POLY_MOVE	3	/* move to first poly vertex */
+#define BN_VLIST_POLY_DRAW	4	/* subsequent poly vertex */
+#define BN_VLIST_POLY_END	5	/* last vert (repeats 1st), draw poly */
+#define BN_VLIST_POLY_VERTNORM	6	/* per-vertex normal, for interpoloation */
+
+/*
+ *  Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST
+ *  are required to execute this macro once, on their _free_hd:
+ *		BU_LIST_INIT( &_free_hd );
+ *
+ * Note that BN_GET_VLIST and BN_FREE_VLIST are non-PARALLEL.
+ */
+#define BN_GET_VLIST(_free_hd,p) {\
+		(p) = BU_LIST_FIRST( bn_vlist, (_free_hd) ); \
+		if( BU_LIST_IS_HEAD( (p), (_free_hd) ) )  { \
+			(p) = (struct bn_vlist *)bu_malloc(sizeof(struct bn_vlist), "bn_vlist"); \
+			(p)->l.magic = RT_VLIST_MAGIC; \
+		} else { \
+			BU_LIST_DEQUEUE( &((p)->l) ); \
+		} \
+		(p)->nused = 0; \
+	}
+
+/* Place an entire chain of bn_vlist structs on the freelist _free_hd */
+#define BN_FREE_VLIST(_free_hd,hd)	{ \
+	BU_CK_LIST_HEAD( (hd) ); \
+	BU_LIST_APPEND_LIST( (_free_hd), (hd) ); \
+	}
+
+#define BN_ADD_VLIST(_free_hd,_dest_hd,pnt,draw)  { \
+	register struct bn_vlist *_vp; \
+	BU_CK_LIST_HEAD( _dest_hd ); \
+	_vp = BU_LIST_LAST( bn_vlist, (_dest_hd) ); \
+	if( BU_LIST_IS_HEAD( _vp, (_dest_hd) ) || _vp->nused >= RT_VLIST_CHUNK )  { \
+		BN_GET_VLIST(_free_hd, _vp); \
+		BU_LIST_INSERT( (_dest_hd), &(_vp->l) ); \
+	} \
+	VMOVE( _vp->pt[_vp->nused], (pnt) ); \
+	_vp->cmd[_vp->nused++] = (draw); \
+	}
+
+/*
+ *			B N _ V L B L O C K
+ *
+ *  For plotting, a way of separating plots into separate color vlists:
+ *  blocks of vlists, each with an associated color.
+ */
+struct bn_vlblock {
+	long		magic;
+	int		nused;
+	int		max;
+	long		*rgb;		/* rgb[max] variable size array */
+	struct bu_list	*head;		/* head[max] variable size array */
+};
+#define BN_VLBLOCK_MAGIC	0x981bd112
+#define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
+
+
+/*----------------------------------------------------------------------*/
 /* vers.c (created by the Cakefile) */
 extern CONST char		bn_version[];
 /*----------------------------------------------------------------------*/

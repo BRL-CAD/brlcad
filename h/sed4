@@ -129,7 +129,7 @@ g/rt_structparse/s//bu_struct_parse/g
 g/rt_structprint/s//bu_struct_print/g
 g/rt_vls_structprint/s//bu_vls_struct_print/g
 g/offsetofarray/s//bu_offsetofarray/g
-g/FUNC_NULL/s//BU_STRUCTPARSE_FUNC_NULL/g
+g/ FUNC_NULL/s// BU_STRUCTPARSE_FUNC_NULL/g
 g/rt_external/s//bu_external/g
 g/RT_EXTERNAL_MAGIC/s//BU_EXTERNAL_MAGIC/g
 g/RT_INIT_EXTERNAL/s//BU_INIT_EXTERNAL/g
@@ -294,6 +294,21 @@ g/rb_search1/s//bu_rb_search1/g
 g/rb_summarize_tree/s//bu_rb_summarize_tree/g
 g/rb_walk/s//bu_rb_walk/g
 g/rb_walk1/s//bu_rb_walk1/g
+g/RT_VLIST_CHUNK/s//BN_VLIST_CHUNK/g
+g/rt_vlist/s//bn_vlist/g
+g/RT_VLIST_NULL/s//BN_VLIST_NULL/g
+g/RT_VLIST_MAGIC/s//BN_VLIST_MAGIC/g
+g/RT_CK_VLIST/s//BN_CK_VLIST/g
+g/RT_VLIST_LINE_MOVE/s//BN_VLIST_LINE_MOVE/g
+g/RT_VLIST_LINE_DRAW/s//BN_VLIST_LINE_DRAW/g
+g/RT_VLIST_POLY_START/s//BN_VLIST_POLY_START/g
+g/RT_VLIST_POLY_MOVE/s//BN_VLIST_POLY_MOVE/g
+g/RT_VLIST_POLY_DRAW/s//BN_VLIST_POLY_DRAW/g
+g/RT_VLIST_POLY_END/s//BN_VLIST_POLY_END/g
+g/RT_VLIST_POLY_VERTNORM/s//BN_VLIST_POLY_VERTNORM/g
+g/rt_vlblock/s//bn_vlblock/g
+g/RT_VLBLOCK_MAGIC/s//BN_VLBLOCK_MAGIC/g
+g/RT_CK_VLBLOCK/s//BN_CK_VLBLOCK/g
 g/BU_BU_/s//BU_/g
 g/bu_bu_/s//bu_/g
 g/bn_bn_/s//bn_/g
