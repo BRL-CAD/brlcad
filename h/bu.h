@@ -938,9 +938,7 @@ struct bu_mro {
 
 #define BU_MRO_INVALIDATE(_p ) {\
 	_p->long_rep_is_valid = '\0';\
-	_p->long_rep = 0;\
 	_p->double_rep_is_valid = '\0';\
-	_p->double_rep = 0.0;\
 }
 
 #define BU_MRO_GETDOUBLE( _p ) ( _p->double_rep_is_valid ? _p->double_rep : \
@@ -1314,6 +1312,7 @@ struct bu_observer {
 /* avs.c */
 BU_EXTERN(void			bu_avs_init, (struct bu_attribute_value_set *avp,
 				int len, const char *str));
+BU_EXTERN(void			bu_avs_init_empty, (struct bu_attribute_value_set *avp ));
 BU_EXTERN(struct bu_attribute_value_set	*bu_avs_new, (int len, const char *str));
 BU_EXTERN(int			bu_avs_add, (struct bu_attribute_value_set *avp,
 				const char *attribute,
