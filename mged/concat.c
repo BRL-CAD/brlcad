@@ -288,9 +288,7 @@ genptr_t		ptr;
 		return(-1);
 
 	/* Then, register a new object in the main database */
-	if( (dp = db_diradd( dbip, local, -1L, len, flags, ptr)) == DIR_NULL )
-		return(-1);
-	if( db_alloc( dbip, dp, len ) < 0 )
+	if( (dp = db_diradd( dbip, local, -1L, 0, flags, ptr)) == DIR_NULL )
 		return(-1);
 
 	if( rt_db_get_internal( &intern, input_dp, input_dbip, (fastf_t *)NULL ) < 0 )

@@ -417,9 +417,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( (dp=db_diradd( dbip, argv[1], -1, obj[endpos-1]->d_len, obj[endpos-1]->d_flags, NULL)) == DIR_NULL ||
-	    db_alloc( dbip, dp, obj[endpos-1]->d_len ) < 0 )
-	{
+	if( (dp=db_diradd( dbip, argv[1], -1L, 0, obj[endpos-1]->d_flags, NULL)) == DIR_NULL )  {
 	  db_free_external( &new_ext );
 	  db_free_external( &external );
 	  (void)signal( SIGINT, SIG_IGN );
