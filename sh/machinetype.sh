@@ -73,8 +73,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	HAS_TCP=1;
 #endif
 
-#ifdef sun
-/*	Need some way to discriminate sun3 and sun4/sparc */
+#if defined(sun) && !defined(sparc)
 #	undef	sun
 #	undef	sun3
 	MACHINE=sun3;
@@ -82,7 +81,15 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	HAS_TCP=1;
 #endif
 
-#if defined(CRAY) && !defined(CRAY2)
+#if defined(sparc)
+#	undef	sun
+#	undef	sun4
+	MACHINE=sun4;
+	UNIXTYPE=BSD;
+	HAS_TCP=1;
+#endif
+
+#if defined(CRAY1)
 /*	Cray X-M/P running UNICOS. */
 #	undef	xmp
 	MACHINE=xmp;
@@ -90,11 +97,43 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	HAS_TCP=1;
 #endif
 
-#ifdef CRAY2
+#if defined(CRAY2)
 #	undef	cr2
 	MACHINE=cr2;
 	UNIXTYPE=SYSV;
 	HAS_TCP=1;
+#endif
+
+#ifdef convex
+#	undef	c1
+	MACHINE=c1;
+	UNIXTYPE=BSD;
+	HAS_TCP=1;
+#endif
+
+#ifdef ardent
+#	undef	ard
+/*	The network code is not tested yet */
+	MACHINE=ard;
+	UNIXTYPE=SYSV;
+	HAS_TCP=0;
+#endif
+
+#ifdef stellar
+#	undef	stl
+/*	The network code is not tested yet */
+	MACHINE=stl;
+	UNIXTYPE=SYSV;
+	HAS_TCP=0;
+#endif
+
+#ifdef eta10
+/*	ETA-10 running UNIX System V. */
+/*	The network support is different enough that is isn't supported yet */
+#	undef	eta
+	MACHINE=eta;
+	UNIXTYPE=SYSV;
+	HAS_TCP=0;
 #endif
 
 #ifdef pyramid
@@ -132,11 +171,11 @@ case x$1 in
 x|x-m)
 	echo ${MACHINE}; exit 0;;
 x-s)
-	echo ${SYSTEM}; exit 0;;
+	echo ${UNIXTYPE}; exit 0;;
 x-n)
 	echo ${HAS_TCP}; exit 0;;
 x-a)
-	if test ${SYSTEM} = BSD
+	if test ${UNIXTYPE} = BSD
 	then	echo BSD
 	else	echo ATT
 	fi
