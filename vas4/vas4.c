@@ -25,8 +25,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "./vas4.h"
 
-extern int	debug;
+int	debug;
 
+/*
+ *			M A I N
+ */
 main(argc, argv)
 int argc;
 char **argv;
@@ -56,16 +59,16 @@ char **argv;
 		vas_open();
 		if( get_vas_status() < 0 )
 			exit(1);
-		vas_putc_wait(C_INIT, R_INIT);
-		if( get_vtr_status() < 0 )
+		vas_putc(C_INIT);
+		vas_await(R_INIT);
+		if( get_vtr_status(0) < 0 )
 			exit_code = 1;
-		fprintf(stderr,"VAS Initialized\n");
 		goto done;
 	}
 	else if (strcmp(argv[1],"status") == 0) {
 		vas_open();
 		(void)get_vas_status();
-		(void)get_vtr_status();
+		(void)get_vtr_status(1);
 		(void)get_tape_position();
 		(void)get_frame_code();
 		goto done;
@@ -113,23 +116,18 @@ char **argv;
 
 	if (strcmp(argv[1],"rewind") == 0) {
 		vas_putc(C_REWIND);
-		fprintf(stderr,"VTR Rewinding\n");
 		goto done;
 	}
 	else if (strcmp(argv[1],"play") == 0) {
 		vas_putc(C_PLAY);
-		fprintf(stderr,"VTR Playing\n");
 		goto done;
 	}
 	else if (strcmp(argv[1],"stop") == 0) {
 		vas_putc(C_STOP);
-/**		vas_await(0, 5);	/* XXX */
-		fprintf(stderr,"VTR STOPPED\n");
 		goto done;
 	}
 	else if (strcmp(argv[1],"fforward") == 0) {
 		vas_putc(C_FFORWARD);
-		fprintf(stderr,"VTR Fast Forward\n");
 		goto done;
 	}
 
@@ -138,7 +136,7 @@ char **argv;
 	 *  VAS IV is opened and checked above,
 	 *  and VTR status is checked here.
 	 */
-	if( get_vtr_status() < 0 )
+	if( get_vtr_status(0) < 0 )
 		exit(1);
 	if( strcmp(argv[1], "search") == 0 )  {
 		if( argc >= 3 )
@@ -274,7 +272,8 @@ int	start_frame;
 	int number_of_frames = 1;
 
 	/* Enter VAS IV program mode */	
-	vas_putc_wait(C_PROGRAM, R_PROGRAM);
+	vas_putc(C_PROGRAM);
+	vas_await(R_PROGRAM);
 
 	vas_putnum(number_of_frames);
 	vas_putc(C_ENTER);
@@ -303,12 +302,12 @@ int	start_frame;
 	vas_await(R_SEARCH, 120);
 
 	/* E/E light should now be flashing, Press E/E */
-	vas_putc_wait(C_EE, R_RECORD);
+	vas_putc(C_EE);
+	vas_await(R_RECORD, 30);
 
 	/* New scene only records 4 sec matte */
-	fprintf(stderr,"Record built-in title matte\n");
-	vas_putc(C_RECORD);
-	vas_await(R_RECORD, 30);
+	fprintf(stderr,"Recording built-in title matte\n");
+	do_record(1);
 }
 
 /*
@@ -317,31 +316,72 @@ int	start_frame;
 record_add_to_scene(number_of_frames)
 int number_of_frames;
 {
-	char str[100],c,send;
-	int retry;
-
 	vas_putc(C_FRAME_CHANGE);
 	vas_putnum(number_of_frames);
 	vas_putc(C_ENTER);
 
 	fprintf(stderr,"Recording %d frames, %g seconds\n",
 		number_of_frames, (double)number_of_frames/30.);
-	for( retry=0; retry<4; retry++ )  {
-		vas_putc(C_RECORD);
-		for(;;)  {
-			c = vas_getc();
-			if( c == R_RECORD)
-				goto done;
-			vas_response(c);
-			if (c == R_MISSED) {
-				fprintf(stderr,"Preroll failed (typ. due to timer), backspacing for retry\n");
-				vas_await(R_RECORD,99);
+	do_record(0);
+}
+
+/*
+ *			D O _ R E C O R D
+ *
+ *  Handle the actual mechanics of starting a record operation,
+ *  given that everything has been set up.
+ *  If tape-head-unload timer has gone off, also handle retry
+ *  operations, until frames are actually recorded.
+ *
+ *  NOTE:  at the present time, use of no-wait operation
+ *  may result in deadlocks, if a subsequent invocation of
+ *  this program is started before the backup operation has finished,
+ *  because that will result in an unsolicited 'R' (ready for Record)
+ *  command.  get_vtr_status() could be extended or supplemented
+ *  so that most commands would wait until the VTR stops moving,
+ *  but this added complexity is unwelcome.  Therefore, even though
+ *  this feature is "implemented", it may cause problems.
+ *  So far, this has not proven to be troublesome, but nearly all
+ *  experience so far has been with frame-load time much greater than
+ *  the tape backspace time.
+ */
+do_record(wait)
+{
+	register int c;
+
+	vas_putc(C_RECORD);
+	for(;;)  {
+		c = vas_getc();
+		if(debug) vas_response(c);
+		switch( c )  {
+		case R_RECORD:
+			/* Completely done, ready to record next frame */
+			break;
+		case R_DONE:
+			if( wait )  {
+				continue;
+			} else {
+				/* Don't wait for tape backspacing */
 				break;
 			}
+		case R_MISSED:
+			/*
+			 * Preroll failed (typ. due to timer),
+			 * VAS is backspacing for retry, wait for GO.
+			 */
+			vas_await(R_RECORD,99);
+			vas_putc(C_RECORD);
+			continue;
+		case R_CUT_IN:
+		case R_CUT_OUT:
+			/* These are for info only */
+			continue;
+		default:
+			if(!debug) vas_response(c);
+			continue;
 		}
+		break;
 	}
-done:
-	get_tape_position();
 	return;
 }
 
@@ -371,24 +411,20 @@ int	frame;
  * 
  *  Reset tape time to 00:00:00:00
  *
- *  It is unclear what modes this is safe in
+ *  This is only safe when the tape is playing or not moving.
  */
 reset_tape_time()
 {
 	int	reply;
 
 	vas_putc(C_RESET_TAPETIME);
-	reply = vas_getc();
-	if( reply == 'L' )
-		return(0);	/* OK */
-	vas_response(reply);
-	return(-1);		/* fail */
+	return(0);
 }
 
 /*
  *			T I M E 0
  * 
- *  Seek to time timer value 00:00:00:00, as set by INIT or
+ *  Seek to time timer value 00:00:00:00, as set by ?INIT? or
  *  reset_tape_time(), above.
  *
  *  It is unclear what modes this is safe in
@@ -427,12 +463,16 @@ get_vas_status()
 /*
  *			G E T _ V T R _ S T A T U S
  *
+ *  If 'chatter' is 0, only errors are logged to stderr,
+ *  otherwise all conditions are logged.
+ *
  *  Returns -
  *	1	all is well, VTR is ready to roll
  *	0	all is well
  *	-1	problems (with description)
  */
-get_vtr_status()
+get_vtr_status(chatter)
+int	chatter;
 {
 	char	buf[4];
 
@@ -455,10 +495,10 @@ get_vtr_status()
 		return(-1);
 	}
 	if( buf[2] == 'R' )  {
-		fprintf(stderr,"VTR is online and ready to roll\n");
+		if(chatter) fprintf(stderr,"VTR is online and ready to roll\n");
 		return(1);	/* very OK */
 	} else if(  buf[2] == 'N' )  {
-		fprintf(stderr,"VTR is online and stopped\n");
+		if(chatter) fprintf(stderr,"VTR is online and stopped\n");
 		return(0);	/* OK */
 	} else {
 		fprintf(stderr,"VTR is online and has unknown ready status\n");
