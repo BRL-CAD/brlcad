@@ -161,8 +161,13 @@ to the GUI." } }
     $top.srcMB.menu add checkbutton -offvalue 0 -onvalue 1\
 	    -variable rt_control($id,fixedSrc)\
 	    -label "Fixed"
+    hoc_register_menu_data "Source" "Fixed" "Source - Fixed"\
+	    { { summary "By default, when the mouse_behavior is in the mode
+to pick raytrace objects, the source will change
+to the window wherein the object is selected. To
+prevent the source from changing while selecting
+objects, check the fixed button." } }
 
-    
     set hoc_data { { summary "
 Enter the desired destination. This is the place where
 the pixels will be sent and can be the pathname of any internal
@@ -225,6 +230,12 @@ tied to the GUI." } }
     $top.destMB.menu add checkbutton -offvalue 0 -onvalue 1\
 	    -variable rt_control($id,fixedDest)\
 	    -label "Fixed"
+    hoc_register_menu_data "Destination" "Fixed" "Destination - Fixed"\
+	    { { summary "By default, when the mouse_behavior is in the mode
+to pick raytrace objects, the destination will change
+to the window wherein the object is selected. To
+prevent the destination from changing while selecting
+objects, check the fixed button." } }
 
     label $top.sizeL -text "Size" -anchor e
     hoc_register_data $top.sizeL "Size"\
@@ -669,7 +680,7 @@ showing the inverse radius of curvature." } }
 showing the principal direction vector." } }
 
     set hoc_data { { summary "A place to specify other rt options." } }
-    label $top.otherL -text "Other" -anchor e
+    label $top.otherL -text "Other options" -anchor e
     hoc_register_data $top.otherL "Other" $hoc_data
     entry $top.otherE -relief sunken -bd 2 -width 2 -textvar rt_control($id,other)
     hoc_register_data $top.otherE "Other" $hoc_data
@@ -689,6 +700,7 @@ showing the principal direction vector." } }
     grid rowconfigure $top.gridF1 1 -weight 1
     grid rowconfigure $top.gridF1 2 -weight 1
     grid rowconfigure $top.gridF1 3 -weight 1
+    grid rowconfigure $top.gridF1 4 -weight 1
 
     grid $top.gridF1 -sticky nsew -padx 8 -pady 8 -in $top.gridF2
     grid columnconfigure $top.gridF2 0 -weight 1
@@ -1064,7 +1076,7 @@ proc rt_cook_dest { id raw_dest } {
     }
 
     set fb 1
-    set fb_all 1
+#    set fb_all 1
     set listen 1
     set rt_control($id,cooked_dest) $port
     set rt_control($id,fb) 1
