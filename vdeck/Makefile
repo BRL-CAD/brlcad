@@ -1,8 +1,8 @@
 #	Makefile -- for vdeck
 
-#	last edit:	85/02/27	G S Moss
+#	last edit:	85/08/06	G S Moss
 
-#	SCCSID	@(#)Makefile	2.3
+#	SCCSID	@(#)Makefile	2.4
 
 PRODUCT = vdeck
 HEADERS = ${PRODUCT}.h ged_types.h 3d.h vextern.h
@@ -21,6 +21,7 @@ TESTDIR = .
 INS	= cp
 RM	= /bin/rm
 GET	= get
+SHELL	= /usr/5bin/sh
 
 .DEFAULT:
 	$(GET) $(GFLAGS) -p s.$@ > ${TESTDIR}/$@
