@@ -822,8 +822,10 @@ struct nmgregion *r;
 	struct loopuse	*lu;
 	struct edgeuse *eu;
 	plane_t plane;
+	struct model	*m;
 
 	s = nmg_msv(r);
+	m = s->r_p->m_p;
 	nmg_kvu(s->vu_p);
 
 	/* get number of points & number of facets in file */
@@ -840,7 +842,7 @@ struct nmgregion *r;
 
 	/* build the vertices */ 
 	for (i = 0 ; i < num_pts ; ++i) {
-		GET_VERTEX(v[i]);
+		GET_VERTEX(v[i], m);
 		v[i]->magic = NMG_VERTEX_MAGIC;
 	}
 

@@ -55,7 +55,71 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nmg.h"
 
-/*	N M G _ M M
+/*
+ *			N M G _ F I N D _ M O D E L
+ *
+ *  Given a pointer to the magic number in any NMG data structure,
+ *  return a pointer to the model structure that contains that NMG item.
+ *
+ *  The reason for the register variable is to leave the argument variable
+ *  unmodified;  this may aid debugging in event of a core dump.
+ */
+struct model *nmg_find_model( magic_p_arg )
+long	*magic_p_arg;
+{
+	register long	*magic_p = magic_p_arg;
+
+top:
+	if( magic_p == (long *)0 )  {
+		rt_log("nmg_find_model(x%x) enountered null pointer\n",
+			magic_p_arg );
+		rt_bomb("nmg_find_model() null pointer\n");
+		/* NOTREACHED */
+	}
+
+	switch( *magic_p )  {
+	case NMG_MODEL_MAGIC:
+		return( (struct model *)magic_p );
+	case NMG_REGION_MAGIC:
+		return( ((struct nmgregion *)magic_p)->m_p );
+	case NMG_SHELL_MAGIC:
+		return( ((struct shell *)magic_p)->r_p->m_p );
+	case NMG_FACEUSE_MAGIC:
+		magic_p = &((struct faceuse *)magic_p)->s_p->l.magic;
+		goto top;
+	case NMG_FACE_MAGIC:
+		magic_p = &((struct face *)magic_p)->fu_p->l.magic;
+		goto top;
+	case NMG_LOOP_MAGIC:
+		magic_p = ((struct loop *)magic_p)->lu_p->up.magic_p;
+		goto top;
+	case NMG_LOOPUSE_MAGIC:
+		magic_p = ((struct loopuse *)magic_p)->up.magic_p;
+		goto top;
+	case NMG_EDGE_MAGIC:
+		magic_p = ((struct edge *)magic_p)->eu_p->up.magic_p;
+		goto top;
+	case NMG_EDGEUSE_MAGIC:
+		magic_p = ((struct edgeuse *)magic_p)->up.magic_p;
+		goto top;
+	case NMG_VERTEX_MAGIC:
+		magic_p = &(NMG_LIST_FIRST(vertexuse,
+			&((struct vertex *)magic_p)->vu_hd)->l.magic);
+		goto top;
+	case NMG_VERTEXUSE_MAGIC:
+		magic_p = ((struct vertexuse *)magic_p)->up.magic_p;
+		goto top;
+
+	default:
+		rt_log("can't get model for magic=x%x (%s)\n",
+			*magic_p, nmg_identify_magic( *magic_p ) );
+		rt_bomb("nmg_find_model() failure\n");
+	}
+	return( (struct model *)NULL );
+}
+
+/*
+ *			N M G _ M M
  *
  *	Make Model
  *	Create a new model Essentially
@@ -65,17 +129,21 @@ struct model *nmg_mm()
 {
 	struct model *m;
 
-	GET_MODEL(m);
+	NMG_GETSTRUCT( m, model );
 
 	m->magic = NMG_MODEL_MAGIC;
 	m->ma_p = (struct model_a *)NULL;
 	NMG_LIST_INIT( &m->r_hd );
+	m->index = 0;
+	m->maxindex = 1;
 
 	return(m);
 }
-/*	N M G _ M M R
+
+/*
+ *			N M G _ M M R
  *
- *	Make Model, Region
+ *	Make Model and Region
  *	Create a new model, and an "empty" region to go with it.  Essentially
  *	this creates a minimal model system.
  */
@@ -85,7 +153,7 @@ struct model *nmg_mmr()
 	struct nmgregion *r;
 
 	m = nmg_mm();
-	GET_REGION(r);
+	GET_REGION(r, m);
 	r->l.magic = NMG_REGION_MAGIC;
 
 	r->m_p = m;
@@ -112,7 +180,7 @@ struct model *m;
 
 	NMG_CK_MODEL(m);
 
-	GET_REGION(r);
+	GET_REGION(r, m);
 	r->l.magic = NMG_REGION_MAGIC;
 	r->m_p = m;
 
@@ -141,7 +209,7 @@ struct nmgregion	*r_p;
 	NMG_CK_REGION(r_p);
 
 	/* set up shell */
-	GET_SHELL(s);
+	GET_SHELL(s, r_p->m_p);
 	s->l.magic = NMG_SHELL_MAGIC;
 
 	s->r_p = r_p;
@@ -165,6 +233,7 @@ struct vertex *v;
 long *upptr;		/* pointer to parent struct */
 {
 	struct vertexuse *vu;
+	struct model	*m;
 
 	NMG_CK_VERTEX(v);
 
@@ -176,7 +245,8 @@ long *upptr;		/* pointer to parent struct */
 		rt_bomb("nmg_mvu() Cannot build vertexuse without parent");
 	}
 
-	GET_VERTEXUSE(vu);
+	m = nmg_find_model( upptr );
+	GET_VERTEXUSE(vu, m);
 	vu->l.magic = NMG_VERTEXUSE_MAGIC;
 
 	vu->v_p = v;
@@ -193,9 +263,11 @@ long *upptr;		/* pointer to parent struct */
 struct vertexuse *nmg_mvvu(upptr)
 long *upptr;
 {
-	struct vertex *v;
+	struct vertex	*v;
+	struct model	*m;
 
-	GET_VERTEX(v);
+	m = nmg_find_model( upptr );
+	GET_VERTEX(v, m);
 	v->magic = NMG_VERTEX_MAGIC;
 	NMG_LIST_INIT( &v->vu_hd );
 	v->vg_p = (struct vertex_g *)NULL;
@@ -229,20 +301,23 @@ struct edgeuse *nmg_me(v1, v2, s)
 struct vertex *v1, *v2;
 struct shell *s;
 {
-	struct edge *e;
-	struct edgeuse *eu1, *eu2;
+	struct edge		*e;
+	struct edgeuse		*eu1;
+	struct edgeuse		*eu2;
 	struct vertexuse	*vu;
+	struct model		*m;
 
 	if (v1) NMG_CK_VERTEX(v1);
 	if (v2) NMG_CK_VERTEX(v2);
 	NMG_CK_SHELL(s);
 
-	GET_EDGE(e);
+	m = nmg_find_model( &s->l.magic );
+	GET_EDGE(e, m);
 	e->magic = NMG_EDGE_MAGIC;
 	e->eg_p = (struct edge_g *)NULL;
 
-	GET_EDGEUSE(eu1);
-	GET_EDGEUSE(eu2);
+	GET_EDGEUSE(eu1, m);
+	GET_EDGEUSE(eu2, m);
 	eu1->l.magic = eu2->l.magic = NMG_EDGEUSE_MAGIC;
 
 	e->eu_p = eu1;
@@ -252,6 +327,9 @@ struct shell *s;
 
 	eu1->e_p = eu2->e_p = e;
 	eu1->eua_p = eu2->eua_p = (struct edgeuse_a *)NULL;
+
+	/* link the edgeuses to the parent shell */
+	eu1->up.s_p = eu2->up.s_p = s;
 
 	if (v1)
 		eu1->vu_p = nmg_mvu(v1, &eu1->l.magic);
@@ -283,9 +361,6 @@ struct shell *s;
 		nmg_kvu( s->vu_p );
 		s->vu_p = (struct vertexuse *)NULL;
 	}
-
-	/* link the edgeuses to the parent shell */
-	eu1->up.s_p = eu2->up.s_p = s;
 
 	/* shell's eu_head, eu1, eu2, ... */
 	NMG_LIST_APPEND( &s->eu_hd, &eu1->l );
@@ -340,6 +415,7 @@ struct vertexuse *vu;
 {
 	struct edge *e;
 	struct edgeuse *eu1, *eu2;
+	struct model	*m;
 
 	NMG_CK_VERTEXUSE(vu);
 	if (*vu->up.magic_p != NMG_SHELL_MAGIC &&
@@ -349,12 +425,13 @@ struct vertexuse *vu;
 		rt_bomb("nmg_meonvu() cannot make edge, vertexuse not sole element of object");
 	}
 
-	GET_EDGE(e);
+	m = nmg_find_model( vu->up.magic_p );
+	GET_EDGE(e, m);
 	e->magic = NMG_EDGE_MAGIC;
 	e->eg_p = (struct edge_g *)NULL;
 
-	GET_EDGEUSE(eu1);
-	GET_EDGEUSE(eu2);
+	GET_EDGEUSE(eu1, m);
+	GET_EDGEUSE(eu2, m);
 	eu1->l.magic = eu2->l.magic = NMG_EDGEUSE_MAGIC;
 
 	e->eu_p = eu1;
@@ -448,18 +525,20 @@ struct shell *s;
 	struct edgeuse	*p1;
 	struct edgeuse	*p2;
 	struct edgeuse	*feu;
+	struct model	*m;
 
 	NMG_CK_SHELL(s);
 
-	GET_LOOP(l);
+	m = nmg_find_model( &s->l.magic );
+	GET_LOOP(l, m);
 	l->magic = NMG_LOOP_MAGIC;
 	l->lg_p = (struct loop_g *)NULL;
 
-	GET_LOOPUSE(lu1);
+	GET_LOOPUSE(lu1, m);
 	lu1->l.magic = NMG_LOOPUSE_MAGIC;
 	NMG_LIST_INIT( &lu1->down_hd );
 
-	GET_LOOPUSE(lu2);
+	GET_LOOPUSE(lu2, m);
 	lu2->l.magic = NMG_LOOPUSE_MAGIC;
 	NMG_LIST_INIT( &lu2->down_hd );
 
@@ -774,7 +853,8 @@ struct loopuse *lu1;
 	struct face *f;
 	struct faceuse *fu1, *fu2;
 	struct loopuse *lu2;
-	struct shell *s;
+	struct shell	*s;
+	struct model	*m;
 
 	NMG_CK_LOOPUSE(lu1);
 	if (*lu1->up.magic_p != NMG_SHELL_MAGIC) {
@@ -789,9 +869,10 @@ struct loopuse *lu1;
 	s = lu1->up.s_p;
 	NMG_CK_SHELL(s);
 
-	GET_FACE(f);
-	GET_FACEUSE(fu1);
-	GET_FACEUSE(fu2);
+	m = nmg_find_model( &s->l.magic );
+	GET_FACE(f, m);
+	GET_FACEUSE(fu1, m);
+	GET_FACEUSE(fu2, m);
 
 	f->fu_p = fu1;
 	f->fg_p = (struct face_g *)NULL;
@@ -1012,6 +1093,7 @@ struct vertex *v;
 pointp_t	pt;
 {
 	struct vertex_g *vg;
+	struct model	*m;
 
 	NMG_CK_VERTEX(v);
 
@@ -1019,7 +1101,9 @@ pointp_t	pt;
 		NMG_CK_VERTEX_G(v->vg_p);
 	}
 	else {
-		GET_VERTEX_G(vg);
+		m = nmg_find_model(
+			&NMG_LIST_NEXT(vertexuse, &v->vu_hd)->l.magic );
+		GET_VERTEX_G(vg, m);
 
 		vg->magic = NMG_VERTEX_G_MAGIC;
 		v->vg_p = vg;
@@ -1036,30 +1120,35 @@ struct loop *l;
 	struct edgeuse	*eu;
 	struct vertex_g	*vg;
 	struct loop_g	*lg;
+	struct loopuse	*lu;
+	struct model	*m;
 	long		magic1;
 
-	NMG_CK_LOOPUSE(l->lu_p);
+	NMG_CK_LOOP(l);
+	lu = l->lu_p;
+	NMG_CK_LOOPUSE(lu);
 
 	if (lg = l->lg_p) {
 		NMG_CK_LOOP_G(lg);
 	} else {
-		GET_LOOP_G(l->lg_p);
+		m = nmg_find_model( lu->up.magic_p );
+		GET_LOOP_G(l->lg_p, m);
 		lg = l->lg_p;
 		lg->magic = NMG_LOOP_G_MAGIC;
 	}
 	VSETALL( lg->max_pt, -INFINITY );
 	VSETALL( lg->min_pt,  INFINITY );
 
-	magic1 = NMG_LIST_FIRST_MAGIC( &l->lu_p->down_hd );
+	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_EDGEUSE_MAGIC) {
-		for( NMG_LIST( eu, edgeuse, &l->lu_p->down_hd ) )  {
+		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
 			VMINMAX(lg->min_pt, lg->max_pt, vg->coord);
 		}
 	} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 		struct vertexuse	*vu;
-		vu = NMG_LIST_FIRST(vertexuse, &l->lu_p->down_hd);
+		vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd);
 		NMG_CK_VERTEXUSE(vu);
 		NMG_CK_VERTEX(vu->v_p);
 		vg = vu->v_p->vg_p;
@@ -1078,27 +1167,31 @@ struct faceuse *fu;
 plane_t p;
 {
 	int i;
-	struct face_g *fg;
+	struct face_g	*fg;
+	struct face	*f;
+	struct model	*m;
 
 	NMG_CK_FACEUSE(fu);
-	NMG_CK_FACE(fu->f_p);
+	f = fu->f_p;
+	NMG_CK_FACE(f);
 
 	fu->orientation = OT_SAME;
 	fu->fumate_p->orientation = OT_OPPOSITE;
 
-	fg = fu->f_p->fg_p;
+	fg = f->fg_p;
 	if (fg) {
-		NMG_CK_FACE_G(fu->f_p->fg_p);
+		NMG_CK_FACE_G(f->fg_p);
 	} else {
-		GET_FACE_G(fu->f_p->fg_p);
-		fg = fu->f_p->fg_p;
+		m = nmg_find_model( &fu->l.magic );
+		GET_FACE_G(f->fg_p, m);
+		fg = f->fg_p;
 		fg->magic = NMG_FACE_G_MAGIC;
 	}
 
 	for (i=0 ; i < ELEMENTS_PER_PLANE ; i++)
 		fg->N[i] = p[i];
 
-	nmg_face_bb(fu->f_p);
+	nmg_face_bb(f);
 }
 
 /*	N M G _ F A C E _ B B
@@ -1110,25 +1203,28 @@ struct face *f;
 	struct face_g	*fg;
 	struct loopuse	*lu;
 	struct faceuse	*fu;
+	struct model	*m;
 
 	NMG_CK_FACE(f);
+	fu = f->fu_p;
+	NMG_CK_FACEUSE(fu);
 
-	if (f->fg_p ) {
-		NMG_CK_FACE_G(f->fg_p);
+	if ( fg = f->fg_p ) {
+		NMG_CK_FACE_G(fg);
 	}
 	else {
-		GET_FACE_G(f->fg_p);
-		f->fg_p->magic = NMG_FACE_G_MAGIC;
+		m = nmg_find_model( &fu->l.magic );
+		GET_FACE_G(fg, m);
+		fg->magic = NMG_FACE_G_MAGIC;
+		f->fg_p = fg;
 	}
 
-	fg = f->fg_p;
 	fg->max_pt[X] = fg->max_pt[Y] = fg->max_pt[Z] = -MAX_FASTF;
 	fg->min_pt[X] = fg->min_pt[Y] = fg->min_pt[Z] = MAX_FASTF;
 
 	/* we compute the extent of the face by looking at the extent of
 	 * each of the loop children.
 	 */
-	fu = f->fu_p;
 	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_loop_g(lu->l_p);
 
@@ -1151,12 +1247,15 @@ struct shell *s;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
+	struct model	*m;
+
 	NMG_CK_SHELL(s);
 
 	if (s->sa_p) {
 		NMG_CK_SHELL_A(s->sa_p);
 	} else {
-		GET_SHELL_A(s->sa_p);
+		m = nmg_find_model( &s->l.magic );
+		GET_SHELL_A(s->sa_p, m);
 		s->sa_p->magic = NMG_SHELL_A_MAGIC;
 	}
 	sa = s->sa_p;
@@ -1223,7 +1322,7 @@ struct nmgregion *r;
 		ra = r->ra_p;
 		NMG_CK_REGION_A(ra);
 	} else {
-		GET_REGION_A(ra);
+		GET_REGION_A(ra, r->m_p);
 		r->ra_p = ra;
 	}
 
@@ -1542,7 +1641,8 @@ struct edgeuse *eu;
 	struct vertex *v1, *v2;
 	struct vertex_g *vg1, *vg2;
 #endif
-	struct edge *e;
+	struct edge	*e;
+	struct model	*m;
 
 	NMG_CK_EDGEUSE(eu);
 
@@ -1550,16 +1650,17 @@ struct edgeuse *eu;
 	if (eu->radial_p == eu->eumate_p)
 		return;
 
-	GET_EDGE(e);
+	m = nmg_find_model( &eu->l.magic );
+	GET_EDGE(e, m);
 
 	e->magic = NMG_EDGE_MAGIC;
 	e->eg_p = (struct edge_g *)NULL;
 	e->eu_p = eu;
 #if UNGLUE_MAKES_VERTICES
-	GET_VERTEX(v1);
-	GET_VERTEX(v2);
-	GET_VERTEX_G(vg1);
-	GET_VERTEX_G(vg2);
+	GET_VERTEX(v1, m);
+	GET_VERTEX(v2, m);
+	GET_VERTEX_G(vg1, m);
+	GET_VERTEX_G(vg2, m);
 
 	/* we want a pair of new vertices that are identical to the old
 	 * ones for the newly separated edge.
@@ -1661,8 +1762,9 @@ long		*magic;
 struct vertex	*v;
 int		orientation;
 {
-	struct loop *l;
-	struct loopuse *lu1, *lu2;
+	struct loop	*l;
+	struct loopuse	*lu1, *lu2;
+	struct model	*m;
 	union {
 		struct shell *s;
 		struct faceuse *fu;
@@ -1675,15 +1777,16 @@ int		orientation;
 		NMG_CK_VERTEX(v);
 	}
 
-	GET_LOOP(l);
+	m = nmg_find_model( magic );
+	GET_LOOP(l, m);
 	l->magic = NMG_LOOP_MAGIC;
 	l->lg_p = (struct loop_g *)NULL;
 
-	GET_LOOPUSE(lu1);
+	GET_LOOPUSE(lu1, m);
 	lu1->l.magic = NMG_LOOPUSE_MAGIC;
 	NMG_LIST_INIT( &lu1->down_hd );
 
-	GET_LOOPUSE(lu2);
+	GET_LOOPUSE(lu2, m);
 	lu2->l.magic = NMG_LOOPUSE_MAGIC;
 	NMG_LIST_INIT( &lu2->down_hd );
 
@@ -1696,6 +1799,17 @@ int		orientation;
 		struct vertexuse	*vu1, *vu2;
 
 		s = p.s;
+
+		/* First, finish setting up the loopuses */
+		lu1->up.s_p = lu2->up.s_p = s;
+
+		lu1->lumate_p = lu2;
+		lu2->lumate_p = lu1;
+
+		NMG_LIST_INSERT( &s->lu_hd, &lu1->l );
+		NMG_LIST_INSERT( &lu1->l, &lu2->l );
+
+		/* Second, build the vertices */
 		if ( vu1 = s->vu_p ) {
 			/* Use shell's lone vertex */
 			s->vu_p = (struct vertexuse *)NULL;
@@ -1708,29 +1822,16 @@ int		orientation;
 		}
 		NMG_CK_VERTEXUSE(vu1);
 		NMG_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
+		/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
 		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
 		NMG_CK_VERTEXUSE(vu2);
 		NMG_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
-		lu1->up.s_p = lu2->up.s_p = s;
-
-		lu1->lumate_p = lu2;
-		lu2->lumate_p = lu1;
-
-		NMG_LIST_INSERT( &s->lu_hd, &lu1->l );
-		NMG_LIST_INSERT( &lu1->l, &lu2->l );
+		/* vu2->up.lu_p = lu2; done by nmg_mvu() */
 	} else if (*p.magic_p == NMG_FACEUSE_MAGIC) {
 		struct vertexuse	*vu1, *vu2;
 
-		if (v) vu1 = nmg_mvu(v, &lu1->l.magic);
-		else vu1 = nmg_mvvu(&lu1->l.magic);
-		NMG_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
-		/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
-
-		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
-		NMG_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
-		/* vu2->up.lu_p = lu2; done by nmg_mvu() */
-
+		/* First, finish setting up the loopuses */
 		lu1->up.fu_p = p.fu;
 		lu2->up.fu_p = p.fu->fumate_p;
 
@@ -1739,6 +1840,16 @@ int		orientation;
 
 		NMG_LIST_INSERT( &p.fu->fumate_p->lu_hd, &lu2->l );
 		NMG_LIST_INSERT( &p.fu->lu_hd, &lu1->l );
+
+		/* Second, build the vertices */
+		if (v) vu1 = nmg_mvu(v, &lu1->l.magic);
+		else vu1 = nmg_mvvu(&lu1->l.magic);
+		NMG_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
+		/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
+
+		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
+		NMG_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
+		/* vu2->up.lu_p = lu2; done by nmg_mvu() */
 	} else {
 		rt_bomb("nmg_mlv() unknown parent for loopuse!\n");
 	}

@@ -28,6 +28,7 @@ static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 struct nmg_counter {
+	long	max_structs;
 	long	regions;
 	long	shells;
 	long	faces;
@@ -1020,6 +1021,7 @@ struct nmg_counter	*ctr;
 char			*str;
 {
 	rt_log("nmg_pr_count(%s)\n", str);
+	rt_log("\t%6d max_structs\n", ctr->max_structs);
 	rt_log("\t%6d regions\n", ctr->regions);
 	rt_log("\t%6d shells\n", ctr->shells);
 	rt_log("\t%6d faces\n", ctr->faces);
@@ -1043,6 +1045,7 @@ struct nmg_counter	*ctr;
 	struct edgeuse		*eu;
 
 	NMG_CK_MODEL(m);
+	ctr->max_structs = m->maxindex;
 	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
 		ctr->regions++;
