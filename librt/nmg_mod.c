@@ -152,9 +152,10 @@ CONST int		simplify;
 
 				fu2 = prev_fu;
 			}
-
+#if 0
 			/* recalculate face geometry */
 			nmg_calc_face_g( fu1 );
+#endif
 
 			/* There is now the option of simplifying the face,
 			 * by removing unnecessary edges.
