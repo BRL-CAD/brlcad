@@ -96,7 +96,7 @@ Plot_open()
 {
 	char line[64];
 
-	(void)printf("UNIX-Plot filter [ikplot]? ");
+	(void)printf("UNIX-Plot filter [plot-fb]? ");
 	(void)gets( line );		/* Null terminated */
 	if( feof(stdin) )  quit();
 	if( line[0] != '\0' )  {
@@ -105,8 +105,8 @@ Plot_open()
 			return(1);		/* BAD */
 		}
 	} else {
-		if( (up_fp = popen("ikplot", "w")) == NULL )  {
-			perror("ikplot");
+		if( (up_fp = popen("plot-fb", "w")) == NULL )  {
+			perror("plot-fb");
 			return(1);	/* BAD */
 		}
 	}
