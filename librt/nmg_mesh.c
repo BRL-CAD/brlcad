@@ -109,6 +109,7 @@ CONST struct rt_tol	*tol;
 	struct edgeuse	*eur;
 	struct faceuse	*fu1;
 	struct faceuse	*fu2;
+	struct edge_g_lseg	*best_eg;
 	int		iteration1, iteration2;
 	vect_t		xvec, yvec, zvec;
 	fastf_t		abs1;
@@ -165,6 +166,90 @@ CONST struct rt_tol	*tol;
 		nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
 		rt_log( "Faces around eu2:\n" );
 		nmg_pr_fu_around_eu_vecs( eu2, xvec, yvec, zvec, tol );
+	}
+
+	/*
+	 *  Select the proper edge geometry to associate with.
+	 *
+	 *  Really, there are 3 geometries to be compared here:
+	 *  the vector between the two endpoints of this edge,
+	 *  and the two edge_g structures.
+	 *  Rather than always taking eu2 or eu1,
+	 *  select the one that best fits this one edge.
+	 *
+	 *  Consider fu1:
+	 *		         B
+	 *		         *
+	 *		        /|
+	 *		    eg2/ |
+	 *		      /  |
+	 *		    D/   |
+	 *		    *    |
+	 *		   /     |
+	 *		A *-*----* C
+	 *		    E eg1
+	 *
+	 *  At the start of a face/face intersection, eg1 runs from A to C,
+	 *  and eg2 runs ADB.  The line of intersection with the other face
+	 *  (fu2, not drawn) lies along eg1.
+	 *  Assume that edge AC needs to be broken at E,
+	 *  where E is just a little more than tol->dist away from A.
+	 *  Existing point D is found because it *is* within tol->dist of E,
+	 *  thanks to the cosine of angle BAC.
+	 *  So, edge AC is broken on vertex D, and the intersection list
+	 *  contains vertexuses A, E, and C.
+	 *
+	 *  Because D and E are the same point, fu1 has become a triangle with
+	 *  a little "spike" on the end.  If this is handled simply by re-homing
+	 *  edge AE to eg2, it may cause trouble, because eg1 now runs EC,
+	 *  but the geometry for eg1 runs AC.  If there are other vertices on
+	 *  edge eg1, the problem can not be resolved simply by recomputing the
+	 *  geometry of eg1.
+	 *  Since E (D) is within tolerance of eg1, it is not unreasonable
+	 *  just to leave eg1 alone.
+	 *
+	 *  The issue boils down to selecting whether the existing eg1 or eg2
+	 *  best represents the direction of the little stub edge AD (shared with AE).
+	 *  In this case, eg2 is the correct choice, as AD (and AE) lie on line AB.
+	 *
+	 *  It would be disasterous to force *all* of eg1 to use the edge geometry
+	 *  of eg2, as the two lines are very different.
+	 */
+	NMG_CK_EDGE_G_LSEG(eu1->g.lseg_p);
+	NMG_CK_EDGE_G_LSEG(eu2->g.lseg_p);
+	if( eu2->g.lseg_p != eu1->g.lseg_p )  {
+		vect_t		dir;
+		vect_t		dir_2;
+		vect_t		dir_1;
+		fastf_t		dot_2;
+		fastf_t		dot_1;
+
+		VSUB2( dir, eu1->vu_p->v_p->vg_p->coord, eu1->eumate_p->vu_p->v_p->vg_p->coord );
+		VUNITIZE(dir);
+		VMOVE( dir_2, eu2->g.lseg_p->e_dir );
+		VUNITIZE( dir_2 );
+		VMOVE( dir_1, eu1->g.lseg_p->e_dir );
+		VUNITIZE( dir_1 );
+
+		dot_2 = fabs(VDOT( dir, dir_2 ));
+		dot_1 = fabs(VDOT( dir, dir_1 ));
+
+		/* Dot product of 1 means colinear.  Take largest dot. */
+		if( dot_2 > dot_1 )  {
+			if (rt_g.NMG_debug & DEBUG_BASIC)
+				rt_log("nmg_radial_join_eu() Make eu1 use geometry of eu2, s.d=%g, d.d=%g\n",
+					acos(dot_2)*rt_radtodeg,
+					acos(dot_1)*rt_radtodeg );
+			best_eg = eu2->g.lseg_p;
+		} else {
+			if (rt_g.NMG_debug & DEBUG_BASIC)
+				rt_log("nmg_radial_join_eu() Make eu2 use geometry of eu1, s.d=%g, d.d=%g\n",
+					acos(dot_2)*rt_radtodeg,
+					acos(dot_1)*rt_radtodeg );
+			best_eg = eu1->g.lseg_p;
+		}
+	} else {
+		best_eg = eu1->g.lseg_p;	/* both the same */
 	}
 
 	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
@@ -326,6 +411,7 @@ insert:
 		 *  Make eu2 radial to eu1.
 		 *  This should insert eu2 between eu1 and eu1->radial_p
 		 *  (which may be less far around than eur, but thats OK).
+		 *  This does NOT change the edge geometry pointer.
 		 */
 		nmg_je(eu1, eu2);
 
@@ -340,6 +426,20 @@ insert:
 	if( iteration1 >= 10000 )  rt_bomb("nmg_radial_join_eu:  infinite loop (1)\n");
 
 	NMG_CK_EDGEUSE(original_eu1);
+
+	/*
+	 *  Make another pass, ensuring that all edgeuses are using the
+	 *  "best_eg" line.
+	 */
+	eu1 = original_eu1;
+	for(;;)  {
+		if( eu1->g.lseg_p != best_eg )  {
+			nmg_use_edge_g( eu1, &best_eg->magic );
+		}
+
+		eu1 = eu1->eumate_p->radial_p;
+		if( eu1 == original_eu1 )  break;
+	}
 
 	if (rt_g.NMG_debug & DEBUG_MESH_EU)  rt_log("nmg_radial_join_eu: END\n");
 }
