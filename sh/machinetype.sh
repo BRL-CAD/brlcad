@@ -10,10 +10,17 @@
 # incompatible binary program files, and to drive proper tailoring
 # of some of the Makefiles.
 #
+# The old way of operating is described here:
 # Note that this Shell script uses the same mechanism (ie, CPP)
 # to determine the system type as the main Cakefile (Cakefile.defs)
 # uses.  To support a new type of machine, the same #ifdef construction
 # will be required both here and in Cakefile.defs
+#
+# The new way of operating is this:
+# If /bin/uname exists, run it, and base all decisions on it's output.
+# In either case, when CAKE is built it's Makefile includes
+# `machinetype.sh -d` to define __MACHINETYPE__foo,
+# and cake/conf.h makes all it's decisions based upon that string now.
 #
 # Command args:
 #	[none]	Print only machine type
@@ -22,17 +29,45 @@
 #	-s	Print only system type, BRL style: (BSD, SYSV)
 #	-a	Print only system type, ATT style: (BSD, ATT)
 #	-n	Print only HAS_TCP variable
-#	-b -v	Print all, in Bourne-Shell legible form
+#	-b | -v	Print all, in Bourne-Shell legible form
 #
 # Info note:  On a VAX-11/780, this script takes about 1.3 CPU seconds to run
 #
 # Mike Muuss, BRL, 10-May-1988
-# With thanks to Terry Slattery and Bob Reschly for assistance
+# With thanks to Terry Slattery and Bob Reschly for assistance.
+# With thanks to Timmothy Smith for the /bin/uname idea.
 #
 #  $Header$
 
 # Ensure /bin/sh.  Make no remarks here, just do it.
 export PATH || (sh $0 $*; kill $$)
+
+ARG="$1"
+
+if test -x /bin/uname -o -x /usr/bin/uname
+then
+	OS_TYPE=`uname -s`
+	HARDWARE_TYPE=`uname -m`
+	SAVE_IFS="$IFS"
+	IFS=".$IFS"		# Add dot (.) as a separator
+	set -- `uname -r`
+	IFS="$SAVE_IFS"		# Restore normal field separators.
+	# Now $1, $2, and $3 have OS revision levels.
+	OS_REVISION="$1"
+
+	case "$HARDWARE_TYPE" in
+	sun3*)  MACHINE=sun3; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
+	sun4*)  HAS_TCP=1; HAS_SYMLINKS=1;
+		case "$OS_REVISION" in
+		4)  UNIXTYPE=BSD; MACHINE=sun4;;
+		5)  UNIXTYPE=SYSV; MACHINE=sun5;;
+		esac;;
+	esac
+fi
+
+if test "$MACHINE" = ""
+then
+#	If we didn't learn anything, fall back to old way.
 
 IN_FILE=/tmp/machty$$.c
 OUT_FILE=/tmp/machty$$
@@ -355,6 +390,8 @@ fi
 . ${OUT_FILE}
 /bin/rm -f ${IN_FILE} ${OUT_FILE}
 
+fi	# End of $MACHINE if-then-else.
+
 # See if we learned anything by all this
 if test x${MACHINE} = x
 then
@@ -372,7 +409,7 @@ then
 fi
 
 # Now, look at first arg to determine output behavior
-case x$1 in
+case x"$ARG" in
 
 x|x-m)
 	echo ${MACHINE}; exit 0;;
@@ -399,6 +436,6 @@ x-d)
 	echo "-D__MACHINETYPE__${MACHINE}"
 	exit 0;;
 *)
-	echo "$0:  Unknown argument $1" 1>&2; break;;
+	echo "$0:  Unknown argument /$ARG/" 1>&2; break;;
 esac
 exit 1
