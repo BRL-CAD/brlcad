@@ -344,8 +344,18 @@ FBIO	*ifp;
 	/* send a close package to remote */
 	if( pkg_send( MSG_FBCLOSE, (char *)0, 0, PCP(ifp) ) < 0 )
 		return	-2;
-	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
-		return	-3;
+	/*
+	 *  When if_4d with a "linger mode" window gets it's fb_close()
+	 *  call here, it closes down the network file descriptor,
+	 *  and so the PKG connection is terminated at this point.
+	 *  If there was no transmission error noted in the pkg_send() above,
+	 *  but the pkg_waitfor() here gets an error, clean up and
+	 *  declare this a successful close() operation.
+	 */
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )  {
+		pkg_close( PCP(ifp) );
+		return	0;
+	}
 	pkg_close( PCP(ifp) );
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
