@@ -636,7 +636,7 @@ CONST struct rt_tol	*tol;
 	fastf_t		region_diameter;
 	int		class;
 	vect_t		projection_dir;
-	int		try;
+	int		try=0;
 	struct xray	rp;
 
 	NMG_CK_SHELL(s);
@@ -1156,6 +1156,8 @@ CONST struct edgeuse	*eu2;
 	fu2 = lu2->up.fu_p;
 
 	if( fu1->f_p->g.plane_p != fu2->f_p->g.plane_p )  {
+		vect_t fu1_norm,fu2_norm;
+
 		rt_log("nmg_2lu_identical() loops lu1=x%x lu2=x%x are shared, face geometry is not? fg1=x%x, fg2=x%x\n",
 			lu1, lu2, fu1->f_p->g.plane_p, fu2->f_p->g.plane_p);
 		rt_log("---- fu1, f=x%x, flip=%d\n", fu1->f_p, fu1->f_p->flip);
@@ -1167,7 +1169,13 @@ CONST struct edgeuse	*eu2;
 		nmg_pr_fu_briefly(fu2, 0);
 
 		/* Drop back to using a geometric calculation */
-		if( VDOT( fu1->f_p->g.plane_p->N, fu2->f_p->g.plane_p->N ) < 0 )
+		if( fu1->orientation != fu2->orientation )
+			NMG_GET_FU_NORMAL( fu2_norm, fu2->fumate_p )
+		else
+			NMG_GET_FU_NORMAL( fu2_norm, fu2 )
+
+		NMG_GET_FU_NORMAL( fu1_norm, fu1 );
+		if( VDOT( fu1_norm, fu2_norm ) < 0.0 )
 			ret = 2;	/* ON anti-shared */
 		else
 			ret = 1;	/* ON shared */
@@ -1902,8 +1910,18 @@ CONST struct rt_tol *tol;
 		NMG_CK_VERTEX_G( vg );
 
 		class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol);
-		if( class != NMG_CLASS_AonBshared )
-			return( class );
+		if( class != NMG_CLASS_AonBshared && class != NMG_CLASS_AonBanti )
+		{
+			if( lu2->orientation == OT_SAME )
+				return( class );
+			else
+			{
+				if( class == NMG_CLASS_AinB )
+					return( NMG_CLASS_AoutB );
+				if( class == NMG_CLASS_AoutB )
+					return( NMG_CLASS_AinB );
+			}
+		}
 	}
 
 	return( NMG_CLASS_AonBshared );
