@@ -2306,3 +2306,92 @@ CONST struct rt_tol	*tol;
 
 	rt_free( (char *)st.visited, "visited[]");
 }
+
+/* XXX Move to nmg_info.c */
+struct e_and_v_state  {
+	char		*visited;
+	struct nmg_ptbl	*edges;
+	struct nmg_ptbl	*verts;
+};
+
+/*
+ *			N M G _ E _ H A N D L E R
+ *
+ *  A private support routine for nmg_e_and_v_tabulate().
+ *
+ *  Note that an edgeUSE is put on the list, to save one memory dereference
+ *  in the eventual application.
+ */
+static void
+nmg_e_handler( longp, state, first )
+long		*longp;
+genptr_t	state;
+int		first;
+{
+	register struct e_and_v_state	*sp = (struct e_and_v_state *)state;
+	register struct edge		*e  = (struct edge *)longp;
+
+	NMG_CK_EDGE(e);
+	/* If this edge has been processed before, do nothing more */
+	if( !NMG_INDEX_FIRST_TIME(sp->visited, e) )  return;
+
+	/* Add to list */
+	nmg_tbl( sp->edges, TBL_INS, (long *)e->eu_p );
+}
+
+/*
+ *			N M G _ V _ H A N D L E R
+ *
+ *  A private support routine for nmg_e_and_v_tabulate().
+ */
+static void
+nmg_v_handler( longp, state, first )
+long		*longp;
+genptr_t	state;
+int		first;
+{
+	register struct e_and_v_state	*sp = (struct e_and_v_state *)state;
+	register struct vertex		*v  = (struct vertex *)longp;
+
+	NMG_CK_VERTEX(v);
+	/* If this vertex has been processed before, do nothing more */
+	if( !NMG_INDEX_FIRST_TIME(sp->visited, v) )  return;
+
+	/* Add to list */
+	nmg_tbl( sp->verts, TBL_INS, longp );
+}
+
+/*
+ *			N M G _ E _ A N D _ V _ T A B U L A T E
+ *
+ *  Build lists of all edges (represented by one edgeuse on that edge)
+ *  and all vertices found underneath the
+ *  NMG entity indicated by magic_p.
+ */
+void
+nmg_e_and_v_tabulate( eutab, vtab, magic_p )
+struct nmg_ptbl		*eutab;
+struct nmg_ptbl		*vtab;
+CONST long		*magic_p;
+{
+	struct model			*m;
+	struct e_and_v_state		st;
+	struct nmg_visit_handlers	handlers;
+
+	m = nmg_find_model( magic_p );
+	NMG_CK_MODEL(m);
+
+	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.edges = eutab;
+	st.verts = vtab;
+
+	(void)nmg_tbl( eutab, TBL_INIT, 0 );
+	(void)nmg_tbl( vtab, TBL_INIT, 0 );
+
+	handlers = nmg_visit_handlers_null;		/* struct copy */
+	handlers.vis_edge = nmg_e_handler;
+	handlers.vis_vertex = nmg_v_handler;
+	nmg_visit( magic_p, &handlers, (genptr_t)&st );
+
+	rt_free( (char *)st.visited, "visited[]");
+}
