@@ -1834,7 +1834,7 @@ sedit()
 		/* put up control (main) menu for GENARB8s */
 		menuflag = 0;
 		es_edflag = IDLE;
-		menu_array[MENU_L1] = cntrl_menu;
+		menu_set( MENU_L1, cntrl_menu );
 		break;
 
 	case ECMD_ARB_SPECIFIC_MENU:
@@ -1843,13 +1843,13 @@ sedit()
 		es_edflag = IDLE;
 		switch( es_menu ){
 			case MENU_ARB_MV_EDGE:  
-				menu_array[MENU_L1] = which_menu[es_type-4];
+				menu_set( MENU_L1, which_menu[es_type-4] );
 				break;
 			case MENU_ARB_MV_FACE:
-				menu_array[MENU_L1] = which_menu[es_type+1];
+				menu_set( MENU_L1, which_menu[es_type+1] );
 				break;
 			case MENU_ARB_ROT_FACE:
-				menu_array[MENU_L1] = which_menu[es_type+6];
+				menu_set( MENU_L1, which_menu[es_type+6] );
 				break;
 			default:
 				rt_log("Bad menu item.\n");
