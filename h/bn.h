@@ -55,6 +55,10 @@ extern "C" {
 
 #define BN_H_VERSION	"@(#)$Header$ (BRL)"
 
+#define BN_AZIMUTH 0
+#define BN_ELEVATION 1
+#define BN_TWIST 2
+
 /*			B N _ T O L
  *
  *  A handy way of passing around the tolerance information needed to
@@ -164,6 +168,7 @@ void bn_encode_hvect(struct bu_vls *vp, const hvect_t v);
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 extern void bn_tcl_setup();
 extern int Bn_Init();
+extern void bn_tcl_mat_print();
 
 
 /*----------------------------------------------------------------------*/
@@ -215,6 +220,7 @@ BU_EXTERN(void			bn_cx_sqrt, (bn_complex_t *op, const bn_complex_t *ip) );
 extern const mat_t 	bn_mat_identity;
 
 BU_EXTERN(void		bn_mat_print, (const char *title, const mat_t m));
+BU_EXTERN(void		bn_mat_print_guts, (const char *title, const mat_t m, char *buf));
 BU_EXTERN(double	bn_atan2, (double x, double y));
 
 #if 0 /* deprecated for macros below (which were deprecated for vmath.h) */
@@ -297,6 +303,8 @@ BU_EXTERN(void 		bn_aet_vec, ( fastf_t *az, fastf_t *el,
 
 BU_EXTERN(void		bn_mat_angles, (register mat_t mat, double alpha,
 					double beta, double ggamma ));
+BU_EXTERN(void		bn_mat_angles_rad, (register mat_t mat, double alpha,
+					    double beta, double ggamma ));
 
 BU_EXTERN(void		bn_eigen2x2, ( fastf_t	*val1, fastf_t *val2,
 					vect_t	vec1, vect_t vec2, fastf_t a,
