@@ -101,11 +101,12 @@ void		(*leaf_func)();
  *
  */
 void
-comb_functree( dbip, comb_tree, leaf_func, user_ptr )
+comb_functree( dbip, comb, comb_tree, leaf_func, user_ptr1, user_ptr2 )
 struct db_i		*dbip;
+struct rt_comb_internal	*comb;
 union tree		*comb_tree;
 void			(*leaf_func)();
-genptr_t		user_ptr;
+genptr_t		user_ptr1,user_ptr2;
 {
 	RT_CK_DBI( dbip );
 
@@ -117,14 +118,14 @@ genptr_t		user_ptr;
 	switch( comb_tree->tr_op )
 	{
 		case OP_DB_LEAF:
-			(*leaf_func)( dbip, comb_tree, user_ptr );
+			(*leaf_func)( dbip, comb, comb_tree, user_ptr1, user_ptr2 );
 			break;
 		case OP_UNION:
 		case OP_INTERSECT:
 		case OP_SUBTRACT:
 		case OP_XOR:
-			comb_functree( dbip, comb_tree->tr_b.tb_left, leaf_func, user_ptr );
-			comb_functree( dbip, comb_tree->tr_b.tb_right, leaf_func, user_ptr );
+			comb_functree( dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1, user_ptr2 );
+			comb_functree( dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1, user_ptr2 );
 			break;
 		default:
 			bu_log( "comb_functree: bad op %d\n", comb_tree->tr_op );
