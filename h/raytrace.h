@@ -839,7 +839,6 @@ union tree {
 		int		tu_op;		/* leaf, OP_SOLID */
 		struct region	*tu_regionp;	/* ptr to containing region */
 		struct soltab	*tu_stp;
-		char		*tu_name;	/* full path name of leaf */
 	} tr_a;
 	struct tree_cts {
 		int		tc_op;		/* leaf, OP_REGION */
