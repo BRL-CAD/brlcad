@@ -1163,6 +1163,7 @@ struct application  {
 	int		(*a_hit)();	/* called when shot hits model */
 	int		(*a_miss)();	/* called when shot misses */
 	int		a_onehit;	/* flag to stop on first hit */
+	fastf_t		a_ray_length;	/* distance from ray start to end intersections */
 	struct rt_i	*a_rt_i;	/* this librt instance */
 	int		a_zero1;	/* must be zero (sanity check) */
 	/* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
