@@ -271,3 +271,21 @@ CONST char *str;
 
 	return( bv );
 }
+
+/*
+ *			B U _ B I T V _ D U P
+ *
+ *	Make a copy of a bit vector
+ */
+struct bu_bitv *
+bu_bitv_dup( bv )
+register CONST struct bu_bitv	*bv;
+{
+	struct bu_bitv *bv2;
+
+	bv2 = bu_bitv_new( bv->nbits );
+	bu_bitv_clear( bv2 );
+	bu_bitv_or( bv2, bv );
+
+	return( bv2 );
+}
