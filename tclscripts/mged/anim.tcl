@@ -3120,8 +3120,7 @@ proc sketch_popup_track_anim { p } {
 
 	focus $root.f0.e0
 	bind $root.f0.e0 <Key-Return> "focus $root.f1.e0"
-	bind $root.f1.e0 <Key-Return> "focus $root.f1a.e0"
-	bind $root.f1a.e0 <Key-Return> "focus $root.f3.e0"
+	bind $root.f1.e0 <Key-Return> "focus $root.f2.e0"
 	bind $root.f2.e0 <Key-Return> "focus $root.fw.e0"
 	bind $root.fw.e0 <Key-Return> "focus $root.f4.e0"
 	bind $root.f4.e0 <Key-Return> "focus $root.f5.e0"
@@ -3130,7 +3129,7 @@ proc sketch_popup_track_anim { p } {
 	bind $root.f6.e0 <Key-Return> "focus $root.f7.e0"
 	bind $root.f7.e0 <Key-Return> "focus $root.f8.e0"
 	bind $root.f8.e0 <Key-Return> "focus $root.fa.e0"
-	bind $root.fa.e0 <Key-Return> "$root.f9.b0 invoke"
+	bind $root.fa.e0 <Key-Return> "$root.f9.b0 invoke; focus $root"
 
 
 }
@@ -3190,9 +3189,21 @@ proc sketch_do_track { } {
 		"-s" {set needcol 4}
 		"-y" {set needcol 7}
 	}
-	set vtext \
-	  [sketch_text_from_table $mged_sketch_track_vsrc $needcol]
-	if { $vtext == "" } { return -1 }
+
+	
+	if { ($mged_sketch_track_vsrc == "") && $mged_sketch_track_geom && ($mged_sketch_track_arced == "0") } {
+		set g_except 1
+		set vtext ._sketch_track_vtext
+		catch {destroy ._sketch_track_vtext}
+		text $vtext
+		$vtext insert 1.0 "0 0 0 0 0 0 0"
+	} else {
+		set g_except 0
+		set vtext \
+		  [sketch_text_from_table $mged_sketch_track_vsrc $needcol]
+		if { $vtext == "" } { return -1 }
+	}
+
 
 	set numwheels [sketch_text_rows $wtext]
 	if { $numwheels < 2 } {
@@ -3239,7 +3250,7 @@ proc sketch_do_track { } {
 	switch $mged_sketch_track_type {
 		Minimize { set lencmd "-lm" }
 		Elastic { set lencmd "-le $tlen" }
-		Fixed { set lencmd "-lf $tlen" }
+		Rigid { set lencmd "-lf $tlen" }
 	}
 
 	if { $mged_sketch_objframe != ""} {
@@ -3257,6 +3268,9 @@ proc sketch_do_track { } {
 	sketch_text_to_fd $vtext $fd all
 	close $fd
 	exec rm $mged_sketch_temp1
+	if { $g_except } {
+		destroy $vtext
+	}
 }
 
 
