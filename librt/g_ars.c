@@ -498,7 +498,7 @@ struct seg		*seghead;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
-#define RT_ARS_MAXHITS 32		/* # surfaces hit, must be even */
+#define RT_ARS_MAXHITS 128		/* # surfaces hit, must be even */
 	LOCAL struct hit hits[RT_ARS_MAXHITS];
 	register struct hit *hp;
 	LOCAL int	nhits;
@@ -600,6 +600,24 @@ struct seg		*seghead;
 				continue;		/* seg_in */
 			if( hits[i-1].hit_vpriv[X] <= 0 )
 				continue;		/* seg_out */
+
+#ifndef CONSERVATIVE
+			/* if this segment is small enough, just swap the in/out hits */
+			if( (hits[i-1].hit_dist - hits[i-2].hit_dist) < 200.0*RT_LEN_TOL )
+			{
+				struct hit temp;
+				fastf_t temp_dist;
+
+				temp_dist = hits[i-1].hit_dist;
+				hits[i-1].hit_dist = hits[i-2].hit_dist;
+				hits[i-2].hit_dist = temp_dist;
+
+				temp = hits[i-1];	/* struct copy */
+				hits[i-1] = hits[i-2];	/* struct copy */
+				hits[i-2] = temp;	/* struct copy */
+				continue;
+			}
+#endif
 		   	rt_log("ars(%s): in/out error\n", stp->st_name );
 			for( j=nhits-1; j >= 0; j-- )  {
 		   		rt_log("%d %s dist=%g dn=%g\n",
@@ -608,6 +626,8 @@ struct seg		*seghead;
 		   				" In" : "Out" ),
 			   		hits[j].hit_dist,
 					hits[j].hit_vpriv[X] );
+				if( j>0 )
+					rt_log( "\tseg length = %g\n", hits[j].hit_dist - hits[j-1].hit_dist );
 		   	}
 #ifdef CONSERVATIVE
 		   	return(0);
