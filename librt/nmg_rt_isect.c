@@ -2698,12 +2698,12 @@ struct bn_tol *tol;
 	BU_LIST_INIT(&rd.rd_miss);
 
 	nmg_isect_ray_shell( &rd, s);
-
+#ifndef FAST_NMG
 	while (BU_LIST_WHILE(a_hit, hitmiss, &rd.rd_miss)) {
 		BU_LIST_DEQUEUE( &a_hit->l );
 		rt_free( (char *)a_hit, "Miss list hitmiss struct" );
 	}
-
+#endif
 	/* count the number of hits */
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
 		bu_log("%s[%d]: shell Hits:\n", __FILE__, __LINE__);
@@ -2787,11 +2787,12 @@ struct bn_tol *tol;
 out:
 #endif
 
+#ifndef FAST_NMG
 	while (BU_LIST_WHILE(a_hit, hitmiss, &rd.rd_hit)) {
 		BU_LIST_DEQUEUE( &a_hit->l );
 		rt_free( (char *)a_hit, "hit list hitmiss struct" );
 	}
-
+#endif
 	/* free the hitmiss table */
 	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
 
