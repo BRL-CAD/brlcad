@@ -1255,7 +1255,7 @@ struct vf_state {
 /*
  *			N M G _ 2 R V F _ H A N D L E R
  *
- *  A private support routine for nmg_region_vertex_list().
+ *  A private support routine for nmg_vertex_tabulate().
  *  Having just visited a vertex, if this is the first time,
  *  add it to the nmg_ptbl array.
  */
@@ -1276,50 +1276,22 @@ int		first;
 }
 
 /*
- *			N M G _ R E G I O N _ V E R T E X _ L I S T
+ *			N M G _ V E R T E X _ T A B U L A T E
  *
- *  Given an nmgregion, build an nmg_ptbl list which has each vertex
- *  pointer in the region listed exactly once.
+ *  Given a pointer to any nmg data structure,
+ *  build an nmg_ptbl list which has every vertex
+ *  pointer from there on "down" in the model, each one listed exactly once.
  */
 void
-nmg_region_vertex_list( tab, r )
+nmg_vertex_tabulate( tab, magic_p )
 struct nmg_ptbl		*tab;
-struct nmgregion	*r;
+CONST long		*magic_p;
 {
-	struct model	*m;
-	struct vf_state	st;
+	struct model		*m;
+	struct vf_state		st;
 	struct nmg_visit_handlers	handlers;
 
-	NMG_CK_REGION(r);
-	m = r->m_p;
-	NMG_CK_MODEL(m);
-
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
-	st.tabl = tab;
-
-	(void)nmg_tbl( tab, TBL_INIT, 0 );
-
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.vis_vertex = nmg_2rvf_handler;
-	nmg_visit( &r->l.magic, &handlers, (genptr_t)&st );
-
-	rt_free( (char *)st.visited, "visited[]");
-}
-
-/*
- *			N M G _ M O D E L _ V E R T E X _ L I S T
- *
- *  Given an nmgmodel, build an nmg_ptbl list which has each vertex
- *  pointer in the model listed exactly once.
- */
-void
-nmg_model_vertex_list( tab, m )
-struct nmg_ptbl		*tab;
-struct model		*m;
-{
-	struct vf_state	st;
-	struct nmg_visit_handlers	handlers;
-
+	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
 
 	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
