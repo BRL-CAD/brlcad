@@ -70,7 +70,7 @@ struct directory *dp;
 	if( db_read( dbip, (char *)where,
 	    (long)dp->d_len * sizeof(union record),
 	    dp->d_addr ) < 0 )  {
-		rt_free( (char *)where, dp->d_namep );
+		rt_free( (char *)where, "db_getmrec record[]" );
 		return( (union record *)0 );	/* VERY BAD */
 	}
 	return( where );
