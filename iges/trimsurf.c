@@ -251,7 +251,7 @@ printf( "Setting edge vertices in parameter space: (vert_count=%d)\n" , *vert_co
 			break;
 		case 100:
 			{
-				fastf_t kv[8]={0.0,0.0,0.0,1.0,2.0,3.0,3.0,3.0};
+				fastf_t kv[8];
 				fastf_t pts[5*4];
 				fastf_t pts1[5*4];
 				fastf_t radius;
@@ -260,6 +260,16 @@ printf( "Setting edge vertices in parameter space: (vert_count=%d)\n" , *vert_co
 				fastf_t fact1=1.048816;
 				vect_t tangent;
 				int pt_type;
+
+				/* don't use automatic aggregate initialization (Ultrix) */
+				kv[0] = 0.0;
+				kv[1] = 0.0;
+				kv[2] = 0.0;
+				kv[3] = 1.0;
+				kv[4] = 2.0;
+				kv[5] = 3.0;
+				kv[6] = 3.0;
+				kv[7] = 3.0;
 
 				pt_type = RT_NURB_MAKE_PT_TYPE( 4 , 2 , 1 );
 
