@@ -179,6 +179,7 @@ struct db_full_path {
  */
 struct xray {
 	long		magic;
+	int		index;		/* Which ray of a bundle */
 	point_t		r_pt;		/* Point at which ray starts */
 	vect_t		r_dir;		/* Direction of ray (UNIT Length) */
 	fastf_t		r_min;		/* entry dist to bounding sphere */
