@@ -43,6 +43,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/types.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
 
+#if defined(sgi) && !defined(mips)
+# define IP2			/* Bypass horrible bug in netinet/tcp.h */
+#endif
+
 #ifdef BSD
 /* 4.2BSD, 4.3BSD network stuff */
 #include <sys/socket.h>
