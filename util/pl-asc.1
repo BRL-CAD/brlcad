@@ -1,19 +1,23 @@
 .TH PL-ASC 1 BRL/CAD
 .SH NAME
-pl-asc \- output a Plot3 stream in ascii
+pl-asc \- convert a Plot3 stream to ASCII
 .SH SYNOPSIS
 .B pl-asc
 .RB [ \-v ]
 [unix_plot]
 .SH DESCRIPTION
-Outputs a Plot3 (see
-.IR plot3 (5))
-stream in ascii.  If the
+Reads a stream in
+.IR plot3 (5)
+format and converts it to an ASCII representation.
+Standard input is read if a file name is not supplied.
+If the
 .B \-v
-option is given, a summary of plot command usage is given at the
-end of the file.  Standard input is read if a file name is not supplied.
+option is given,
+the single-character command names
+are replaced with mnemonic strings
+and a summary of plot command usage is written to standard error.
 .SH "SEE ALSO"
-pl-pl(1), plrot(1), pl-fb(1), libplot3(3), plot(5)
+asc-pl(1), pl-pl(1), plrot(1), pl-fb(1), libplot3(3), plot3(5)
 .SH AUTHORS
 Phillip Dykstra
 .SH SOURCE
