@@ -154,47 +154,35 @@ fi
 # make sure certain required files exist #
 ##########################################
 
-if test ! -f AUTHORS ; then
-  touch AUTHORS
-fi
-if test ! -f ChangeLog ; then
-  touch ChangeLog
-fi
-if test ! -f INSTALL ; then
-  touch INSTALL
-fi
-if test ! -f NEWS ; then
-  touch NEWS
-fi
+for file in AUTHORS COPYING ChangeLog INSTALL NEWS README ; do
+  if test ! -f $file ; then
+    touch $file
+  fi
+done
 
 
-##################################
-# protect COPYING from overwrite #
-##################################
-if test -f COPYING ; then
-  if test -d "${_aux_dir}" ; then
-    if test ! -f "${_aux_dir}/COPYING.backup" ; then
-      cp -pf COPYING "${_aux_dir}/COPYING.backup"
+############################################
+# protect COPYING & INSTALL from overwrite #
+############################################
+for file in COPYING INSTALL ; do
+  if test -f $file ; then
+    if test -d "${_aux_dir}" ; then
+      if test ! -f "${_aux_dir}/${file}.backup" ; then
+	cp -pf ${file} "${_aux_dir}/${file}.backup"
+      fi
     fi
   fi
-fi
+done
 
 
 ##################################################
 # make sure certain generated files do not exist #
 ##################################################
-
-if test -d "${_aux_dir}" ; then
-  if test -f "${_aux_dir}/config.guess" ; then
-    mv -f "${_aux_dir}/config.guess" "${_aux_dir}/config.guess.backup"
+for file in config.guess config.sub ltmain.sh ; do
+  if test -f "${_aux_dir}/${file}" ; then
+    mv -f "${_aux_dir}/${file}" "${_aux_dir}/${file}.backup"
   fi
-  if test -f "${_aux_dir}/config.sub" ; then
-    mv -f "${_aux_dir}/config.sub" "${_aux_dir}/config.sub.backup"
-  fi
-  if test -f "${_aux_dir}/ltmain.sh" ; then
-    mv -f "${_aux_dir}/ltmain.sh" "${_aux_dir}/ltmain.sh.backup"
-  fi
-fi
+done
 
 
 ############################################
@@ -252,14 +240,17 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 fi
 
 
-###############################
-# restore COPYING from backup #
-###############################
-if test -d "${_aux_dir}" ; then
-  if test -f "${_aux_dir}/COPYING.backup" ; then
-    cp -pf "${_aux_dir}/COPYING.backup" COPYING
+#########################################
+# restore COPYING & INSTALL from backup #
+#########################################
+for file in COPYING INSTALL ; do
+  if test -f $file ; then
+    if test -f "${_aux_dir}/${file}.backup" ; then
+      cp -pf "${_aux_dir}/${file}.backup" ${file}
+    fi
   fi
-fi
+done
+
 
 ################
 # restore path #
