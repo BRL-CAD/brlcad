@@ -59,7 +59,7 @@ static void		copy_Tio();
 	Clear CBREAK mode, for file descriptor "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcClrCbreak( int fd )
 #else
 TcClrCbreak( fd )
@@ -85,7 +85,7 @@ int	fd;
 	Set CBREAK mode, "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcSetCbreak( int fd )
 #else
 TcSetCbreak( fd )
@@ -134,7 +134,7 @@ int	fd;
 	Set raw mode, "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcSetRaw( int fd )
 #else
 TcSetRaw( fd )
@@ -161,7 +161,7 @@ int	fd;
 	Set echo mode, "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcSetEcho( int fd )
 #else
 TcSetEcho( fd )
@@ -183,7 +183,7 @@ int	fd;
 	Clear echo mode, "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcClrEcho( int fd )
 #else
 TcClrEcho( fd )
@@ -205,7 +205,7 @@ int	fd;
 	Turn on tab expansion, "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcSetTabs( int fd )
 #else
 TcSetTabs( fd )
@@ -229,7 +229,7 @@ int	fd;
 	Turn off tab expansion, "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcClrTabs( int fd )
 #else
 TcClrTabs( fd )
@@ -253,7 +253,7 @@ int	fd;
 	Turn on "Hang up on last close", "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcSetHUPCL( int fd )
 #else
 TcSetHUPCL( fd )
@@ -277,7 +277,7 @@ int	fd;
 	Turn off CR/LF mapping, "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcClrCRNL( int fd )
 #else
 TcClrCRNL( fd )
@@ -300,7 +300,7 @@ TcClrCRNL( fd )
 	Get and save terminal parameters, "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcSaveTty( int fd )
 #else
 TcSaveTty( fd )
@@ -319,7 +319,7 @@ int	fd;
 	TcSaveTty() was called for "fd".
  */
 void
-#if _STDC_
+#if __STDC__
 TcResetTty( int fd )
 #else
 TcResetTty( fd )

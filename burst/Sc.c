@@ -29,7 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./Sc.h"
 
 /* Externals from termlib(3). */
-#if _STDC_
+#if __STDC__
 extern char	*tgoto( char *cm, int destcol, int destline );
 extern char	*tgetstr( char *id, char **area );
 extern int	tgetent( char *bp, char *name );
@@ -40,9 +40,8 @@ extern int	tgetent();
 #endif
 
 /* Externals from the C library. */
-#if _STDC_
+#if __STDC__
 extern char	*getenv( char *s );
-extern char	*strncpy( char *a, char *b, int n );
 #else
 extern char	*getenv();
 extern char	*strncpy();
@@ -87,7 +86,7 @@ int		ScLI, /* Number of lines on screen.		*/
 
  */
 static void
-#if _STDC_
+#if __STDC__
 ScLoadTP( void )
 #else
 ScLoadTP()
@@ -119,7 +118,7 @@ ScLoadTP()
 	Get the terminal control strings.
  */
 static void
-#if _STDC_
+#if __STDC__
 ScLoadTCS( void )
 #else
 ScLoadTCS()
@@ -154,7 +153,7 @@ ScLoadTCS()
 	
  */
 int
-#if _STDC_
+#if __STDC__
 PutChr( char c )
 #else
 PutChr( c )
@@ -181,7 +180,7 @@ char	c;
 	there is a problem in retrieving the corresponding termcap entry.
  */
 bool
-#if _STDC_
+#if __STDC__
 ScInit( FILE *fp )
 #else
 ScInit( fp )
@@ -225,7 +224,7 @@ FILE	*fp;
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScClrEOL( void )
 #else
 ScClrEOL()
@@ -244,7 +243,7 @@ ScClrEOL()
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScClrScrlReg( void )
 #else
 ScClrScrlReg()
@@ -263,7 +262,7 @@ ScClrScrlReg()
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScClrStandout( void )
 #else
 ScClrStandout()
@@ -281,7 +280,7 @@ ScClrStandout()
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScClrText( void )
 #else
 ScClrText()
@@ -300,7 +299,7 @@ ScClrText()
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScInsertLn( void )
 #else
 ScInsertLn()
@@ -319,7 +318,7 @@ ScInsertLn()
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScDeleteLn( void )
 #else
 ScDeleteLn()
@@ -338,7 +337,7 @@ ScDeleteLn()
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScDnScroll( void )
 #else
 ScDnScroll()
@@ -357,7 +356,7 @@ ScDnScroll()
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScHmCursor( void )
 #else
 ScHmCursor()
@@ -377,7 +376,7 @@ ScHmCursor()
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScMvCursor( int x, int y )
 #else
 ScMvCursor( x, y )
@@ -400,7 +399,7 @@ int	x, y;
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScSetScrlReg( int top, int btm )
 #else
 ScSetScrlReg( top, btm )
@@ -420,7 +419,7 @@ int	top, btm;
 
  */
 bool
-#if _STDC_
+#if __STDC__
 ScSetStandout( void )
 #else
 ScSetStandout()
@@ -439,7 +438,7 @@ ScSetStandout()
 	
  */
 bool
-#if _STDC_
+#if __STDC__
 ScUpScroll( void )
 #else
 ScUpScroll()
