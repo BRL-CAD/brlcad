@@ -681,6 +681,7 @@ struct rt_nurb_uv_hit * h;
 	return (struct nurb_hit *) hit;
 }
 
+void
 rt_nurb_add_hit( head, hit, tol )
 struct nurb_hit * head;
 struct nurb_hit * hit;
