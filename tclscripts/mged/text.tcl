@@ -194,7 +194,7 @@ proc next_command { w } {
 
     set id [get_player_id_t $w]
     cmd_win set $id
-    set result [catch hist_next msg]
+    set result [catch {hist next} msg]
 
     if {$result==0} {
 	$w delete promptEnd {end - 2c}
@@ -221,7 +221,7 @@ proc prev_command { w } {
 
     set id [get_player_id_t $w]
     cmd_win set $id
-    set result [catch hist_prev msg]
+    set result [catch {hist prev} msg]
 
     if {$result==0} {
 	if {$mged_gui($w,freshline)} {

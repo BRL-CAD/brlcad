@@ -295,7 +295,7 @@ proc ia_invoke { w } {
 	if { ![winfo exists $w] } {
 	    distribute_text $w $hcmd $ia_msg
 	    stuff_str "\nmged:$id> $hcmd\n$ia_msg"
-	    hist_add $hcmd
+	    hist add $hcmd
 	    return 
 	}
 
@@ -326,7 +326,7 @@ proc ia_invoke { w } {
 	    stuff_str "\nmged:$id> $hcmd\n$ia_msg"
 	}
 
-	hist_add $hcmd
+	hist add $hcmd
 	set mged_gui($id,cmd_prefix) ""
 	mged_print_prompt $w "mged> "
     }
