@@ -1772,7 +1772,7 @@ CONST struct rt_tol	*tol;
 	}
 	nmg_tbl( &vtab, TBL_FREE, 0 );
 
-	if ( count != 0 || rt_g.NMG_debug & DEBUG_BASIC)  {
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_ck_fu_verts(fu1=x%x, f2=x%x, tol=%g) f1=x%x, ret=%d, worst=%gmm (%e)\n",
 			fu1, f2, tol->dist, fu1->f_p,
 			count, worst, worst );
