@@ -36,7 +36,6 @@
 	    (_s), (p), (m), *((long *)(p)), __FILE__, __LINE__);\
 	exit (0);						\
     }
-#define	RB_TREE_MAGIC		0x72627472
 #define	RB_NODE_MAGIC		0x72626e6f
 #define	RB_PKG_MAGIC		0x7262504b
 
