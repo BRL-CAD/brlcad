@@ -1078,7 +1078,7 @@ struct directory *dp;
 		}
 
 		/* Add new directory pointer to use list for this object */
-		RT_LIST_APPEND( &dp->d_use_hd, &use->l );
+		RT_LIST_INSERT( &dp->d_use_hd, &use->l );
 	}
 }
 
@@ -1122,6 +1122,7 @@ mat_t xform;
 
 		found = use->dp;
 		use->used = 1;
+		mat_copy( use->xform, xform );
 		break;
 	}
 
@@ -1238,6 +1239,7 @@ mat_t xform;
 			continue;	/* already used */
 		found = use->dp;
 		use->used = 1;
+		mat_copy( use->xform, xform );
 		break;
 	}
 
