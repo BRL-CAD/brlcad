@@ -71,6 +71,8 @@ struct xxx_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
 	double	xxx_val;	/* variables for shader ... */
 	vect_t	xxx_delta;
+	point_t xxx_min;
+	point_t xxx_max;
 	mat_t	xxx_m_to_sh;	/* model to shader space matrix */
 };
 
@@ -98,6 +100,8 @@ struct xxx_specific xxx_defaults = {
 struct bu_structparse xxx_print_tab[] = {
 	{"%f",  1, "val",		SHDR_O(xxx_val),	FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(xxx_delta),	FUNC_NULL },
+	{"%f",  3, "max",		SHDR_AO(xxx_max),	FUNC_NULL },
+	{"%f",  3, "min",		SHDR_AO(xxx_min),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
@@ -179,7 +183,8 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * region is used to establish a mapping to the unit cube
 	 */
 
-	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp);
+	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp, xxx_sp->xxx_min,
+		xxx_sp->xxx_max);
 
 
 	if( rdebug&RDEBUG_SHADE) {
