@@ -36,7 +36,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 #include "rtgeom.h"
 #include "externs.h"
 
@@ -69,7 +71,6 @@ struct rt_db_internal	es_int_orig;
 union record es_rec;		/* current solid record */
 int     es_edflag;		/* type of editing for this solid */
 fastf_t	es_scale;		/* scale factor */
-fastf_t	es_para[3];		/* keyboard input parameter changes */
 fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t	es_m[3];		/* edge(line) slope */
 mat_t	es_mat;			/* accumulated matrix of path */ 
@@ -77,6 +78,17 @@ mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 
 point_t	es_keypoint;		/* center of editing xforms */
 char	*es_keytag;		/* string identifying the keypoint */
+
+vect_t		es_para;	/* keyboard input param. Only when inpara set.  */
+extern int	inpara;		/* es_para valid.  es_mvalid mus = 0 */
+static vect_t	es_mparam;	/* mouse input param.  Only when es_mvalid set */
+static int	es_mvalid;	/* es_mparam valid.  inpara must = 0 */
+
+static int	spl_surfno;	/* What surf & ctl pt to edit on spline */
+static int	spl_ui;
+static int	spl_vi;
+/* XXX This belongs in sedit.h */
+#define ECMD_VTRANS		17
 
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
@@ -308,7 +320,7 @@ struct menu_item  ars_menu[] = {
 
 struct menu_item  spline_menu[] = {
 	{ "SPLINE MENU", (void (*)())NULL, 0 },
-	{ "not implemented", spline_ed, 1 },
+	{ "move vertex", spline_ed, ECMD_VTRANS },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -788,12 +800,15 @@ int arg;
 	(void)printf("NOT IMPLEMENTED YET\n");
 }
 
+
 /*ARGSUSED*/
 static void
 spline_ed( arg )
 int arg;
 {
-	(void)printf("NOT IMPLEMENTED YET\n");
+	/* For example, this will set es_edflag = ECMD_VTRANS */
+	es_edflag = arg;
+	sedraw = 1;
 }
 
 /*
@@ -907,6 +922,24 @@ mat_t		mat;
 			/* Default */
 			VMOVE( mpt, tgc->v );
 			*strp = "V";
+			break;
+		}
+	case ID_BSPLINE:
+		{
+			register struct rt_nurb_internal *sip =
+				(struct rt_nurb_internal *) es_int.idb_ptr;
+			register struct snurb	*surf;
+			register fastf_t	*fp;
+			static char		buf[128];
+
+			RT_NURB_CK_MAGIC(sip);
+			surf = sip->srfs[spl_surfno];
+			NMG_CK_SNURB(surf);
+			fp = &surf->ctl_points[(spl_vi*surf->s_size[1]+spl_ui)*RT_NURB_EXTRACT_COORDS(surf->pt_type)];
+			VMOVE( mpt, fp );
+			sprintf(buf, "Surf %d, index %d,%d",
+				spl_surfno, spl_ui, spl_vi );
+			*strp = buf;
 			break;
 		}
 	default:
@@ -1046,9 +1079,28 @@ init_sedit()
 	case ID_TGC:
 	case ID_TOR:
 	case ID_ETO:
+	case ID_BSPLINE:
 		rt_log("Experimental:  new_way=1\n");
 		new_way = 1;
 
+	}
+	switch( id )  {
+	case ID_BSPLINE:
+		{
+			register struct rt_nurb_internal *sip =
+				(struct rt_nurb_internal *) es_int.idb_ptr;
+			register struct snurb	*surf;
+			RT_NURB_CK_MAGIC(sip);
+			spl_surfno = sip->nsrf/2;
+			surf = sip->srfs[spl_surfno];
+			NMG_CK_SNURB(surf);
+			spl_ui = surf->s_size[0]/2;
+			spl_vi = surf->s_size[1]/2;
+rt_log("Spline edit.  Surface %d, ctl point %d,%d out of %d,%d\n",
+			spl_surfno, spl_ui, spl_vi,
+			surf->s_size[0], surf->s_size[1] );
+		}
+		break;
 	}
 #endif
 
@@ -1095,7 +1147,7 @@ replot_editing_solid()
 
 	dp = illump->s_path[illump->s_last];
 
-	if( new_way )  {
+		if( new_way )  {
 		ip = &es_int;
 	} else {
 		/* Fake up an external representation */
@@ -1144,7 +1196,12 @@ int			free;
 		rt_bomb("transform_editing_solid");		/* FAIL */
 }
 
-/* put up menu header */
+/*
+ *			S E D I T _ M E N U
+ *
+ *
+ *  Put up menu header
+ */
 void
 sedit_menu()  {
 
@@ -1475,7 +1532,8 @@ sedit()
 			/* Keyboard parameter.
 			 * Apply inverse of es_mat to these
 			 * model coordinates first, because sedit_mouse()
-			 * as already applied es_mat to them.
+			 * has already applied es_mat to them.
+			 * XXX this does not make sense.
 			 */
 			MAT4X3PNT( work, es_invmat, es_para );
 			if( new_way )  {
@@ -1492,6 +1550,30 @@ sedit()
 			} else {
 				VMOVE(es_rec.s.s_values, work);
 			}
+		}
+		break;
+	case ECMD_VTRANS:
+		/* translate a vertex */
+		if( es_mvalid )  {
+			/* Mouse parameter:  new position in model space */
+			VMOVE( es_para, es_mparam );
+			inpara = 1;
+		}
+		if(inpara) {
+			/* Keyboard parameter:  new position in model space.
+			/* XXX for now, splines only here */
+			register struct rt_nurb_internal *sip =
+				(struct rt_nurb_internal *) es_int.idb_ptr;
+			register struct snurb	*surf;
+			register fastf_t	*fp;
+
+			RT_NURB_CK_MAGIC(sip);
+			surf = sip->srfs[spl_surfno];
+			NMG_CK_SNURB(surf);
+			fp = &surf->ctl_points[spl_vi*surf->s_size[1]+spl_ui];
+			VPRINT("old ctl point value", fp);
+			VMOVE( fp, es_para );
+			VPRINT("new ctl point value", fp);
 		}
 		break;
 
@@ -1739,6 +1821,7 @@ sedit()
 	replot_editing_solid();
 
 	inpara = 0;
+	es_mvalid = 0;
 	return;
 }
 
@@ -1808,6 +1891,28 @@ CONST vect_t	mousevec;
 			MAT4X3PNT( temp, view2model, pos_view );
 			MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
 		}
+		sedraw = 1;
+		return;
+	case ECMD_VTRANS:
+		/* 
+		 * Use mouse to change a vertex location.
+		 * Project vertex (in solid keypoint) into view space,
+		 * replace X,Y (but NOT Z) components, and
+		 * project result back to model space.
+		 * Leave desired location in es_mparam.
+		 */
+		MAT4X3PNT( temp, es_mat, es_keypoint );
+		MAT4X3PNT( pos_view, model2view, temp );
+VPRINT("keypoint_view", pos_view);
+VPRINT("mousevec", mousevec);
+		pos_view[X] = mousevec[X];
+		pos_view[Y] = mousevec[Y];
+VPRINT("'3d' mouse position", pos_view);
+		MAT4X3PNT( temp, view2model, pos_view );
+VPRINT("model mouse pos", temp);
+		MAT4X3PNT( es_mparam, es_invmat, temp );
+		es_mvalid = 1;	/* es_mparam is valid */
+		/* Leave the rest to code in sedit() */
 		sedraw = 1;
 		return;
 	case ECMD_TGC_MV_H:
@@ -3087,6 +3192,7 @@ char	**argv;
 	switch( es_edflag ) {
 
 		case STRANS:
+		case ECMD_VTRANS:
 		case PSCALE:
 		case EARB:
 		case ECMD_ARB_MOVE_FACE:
@@ -3505,6 +3611,24 @@ struct rt_db_internal	*ip;
 		MAT4X3PNT(pos_view, xform, es_rec.s.s_values);
 		POINT_LABEL( pos_view, 'V' );
 		break;
+
+	case ID_BSPLINE:
+		/* New way only */
+		{
+			register struct rt_nurb_internal *sip =
+				(struct rt_nurb_internal *) es_int.idb_ptr;
+			register struct snurb	*surf;
+			register fastf_t	*fp;
+
+			RT_NURB_CK_MAGIC(sip);
+			spl_surfno = sip->nsrf/2;
+			surf = sip->srfs[spl_surfno];
+			NMG_CK_SNURB(surf);
+			fp = &surf->ctl_points[spl_vi*surf->s_size[1]+spl_ui];
+			MAT4X3PNT(pos_view, xform, fp);
+			POINT_LABEL( pos_view, 'V' );
+		}
+		break;
 	}
 
 	pl[npl].str[0] = '\0';	/* Mark ending */
@@ -3582,8 +3706,8 @@ char			*name;
 	RT_INIT_EXTERNAL(&ext);
 	/* Scale change on export is 1.0 -- no change */
 	if( rt_functab[id].ft_export( &ext, is, 1.0 ) < 0 )  {
-		rt_log("rt_db_xform_internal(%s):  solid export failure\n",
-			name);
+		rt_log("rt_db_xform_internal(%s):  %s export failure\n",
+			name, rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	}
 	if( (free || os == is) && is->idb_ptr )  {
@@ -3600,3 +3724,10 @@ char			*name;
 	return 0;				/* OK */
 }
 
+
+/* -------------------------------- */
+void
+sedit_vpick( pos )
+point_t	pos;
+{
+}
