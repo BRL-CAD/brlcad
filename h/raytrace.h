@@ -54,6 +54,7 @@
 #include "bu.h"
 #include "compat4.h"
 #include "bn.h"
+#include "solid.h"
 
 #ifndef NMG_H
 #include "nmg.h"
@@ -821,11 +822,81 @@ struct rt_wdb  {
 #define RT_WDB_TYPE_DB_INMEM			4
 #define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	5
 
+/*
+ *			W D B _ O B J
+ *
+ * A database object is used to interact with a Brl-Cad database.
+ */
 struct wdb_obj {
   struct bu_list	l;
-  struct bu_vls		wdb_name;	/* database name */
+  struct bu_vls		wdb_name;	/* database object name */
   struct rt_wdb		*wdb_wp;
 };
+extern struct wdb_obj HeadWDBObj;		/* head of BRLCAD database object list */
+#define RT_WDBO_NULL		((struct wdb_obj *)NULL)
+
+/*
+ * Carl's vdraw stuff.
+ */
+#define RT_VDRW_PREFIX		"_VDRW"
+#define RT_VDRW_PREFIX_LEN	6
+#define RT_VDRW_MAXNAME	31
+#define RT_VDRW_DEF_COLOR	0xffff00
+struct vd_curve {
+	struct bu_list	l;
+	char		vdc_name[RT_VDRW_MAXNAME+1]; 	/* name array */
+	long		vdc_rgb;	/* color */
+	struct bu_list	vdc_vhd;	/* head of list of vertices */
+};
+#define VD_CURVE_NULL		((struct vd_curve *)NULL)
+
+#define RT_MAXARGS		9000
+#define RT_MAXLINE		10240
+
+/*
+ *			D G _ O B J
+ *
+ * A drawable geometry object is associated with a database object
+ * and is used to maintain lists of geometry that are ready for display.
+ * This geometry can come from a Brl-Cad database or from vdraw commands.
+ * The drawable geometry object is also capabable of raytracing geometry
+ * that comes from a Brl-Cad database.
+ */
+struct dg_obj {
+	struct bu_list	l;
+	struct bu_vls		dgo_name;	/* drawable geometry object name */
+	struct wdb_obj		*dgo_wdbop;	/* associated database */
+	struct solid		dgo_headSolid;	/* head of solid list */
+	struct bu_list		dgo_headVDraw;	/* head of vdraw list */
+	struct vd_curve		*dgo_currVHead;	/* current vdraw head */
+	char			*dgo_rt_cmd[RT_MAXARGS];
+	int			dgo_rt_cmd_len;
+};
+extern struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
+#define RT_DGO_NULL		((struct dg_obj *)NULL)
+
+/*
+ *			V I E W _ O B J
+ *
+ * A view object maintains state for controlling a view.
+ */
+struct view_obj {
+  struct bu_list	l;
+  struct bu_vls		vo_name;		/* view object name/cmd */
+  fastf_t		vo_scale;
+  fastf_t		vo_size;		/* 2.0 * scale */
+  fastf_t		vo_invSize;		/* 1.0 / size */
+  fastf_t 		vo_perspective;		/* perspective angle */
+  vect_t		vo_aet;
+  mat_t			vo_rotation;
+  mat_t			vo_center;
+  mat_t			vo_model2view;
+  mat_t			vo_pmodel2view;
+  mat_t			vo_view2model;
+  mat_t			vo_pmat;		/* perspective matrix */
+};
+extern struct view_obj HeadViewObj;		/* head of view object list */
+#define RT_VIEW_OBJ_NULL		((struct view_obj *)NULL)
 
 /*
  *			D B _ T R E E _ S T A T E
