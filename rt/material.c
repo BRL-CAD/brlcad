@@ -221,6 +221,7 @@ register struct shadework *swp;
 	VPRINT( " sw_color", swp->sw_color );
 	VPRINT( " sw_basecolor", swp->sw_basecolor );
 	rt_log( " sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v );
+	rt_log( " sw_dudv  %f %f\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
 	rt_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
 	rt_printb( " sw_inputs", swp->sw_inputs,
 		"\020\4HIT\3LIGHT\2UV\1NORMAL" );
