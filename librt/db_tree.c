@@ -228,24 +228,21 @@ struct member		*mp;
 	 *  Comparison is performed right-to-left (from leafward to rootward).
 	 */
 	for( anp = mdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
-		register int i = anp->an_pathlen-1;
+		register int i = anp->an_path.fp_len-1;
 		register int j = pathp->fp_len-1;
 
 		if (rt_g.debug & DEBUG_ANIM) {
-			struct db_full_path	path;
 			char	*str;
 
-			path.fp_len = anp->an_pathlen;
-			path.fp_names = anp->an_path;
-			str = db_path_to_string( &path );
+			str = db_path_to_string( &(anp->an_path) );
 			rt_log( "\t%s\t", str );
 			rt_free( str, "path string" );
 		}
 		for( ; i>=0 && j>=0; i--, j-- )  {
-			if( anp->an_path[i] != pathp->fp_names[j] )  {
+			if( anp->an_path.fp_names[i] != pathp->fp_names[j] )  {
 				if (rt_g.debug & DEBUG_ANIM) {
 					rt_log("%s != %s\n",
-					     anp->an_path[i]->d_namep,
+					     anp->an_path.fp_names[i]->d_namep,
 					     pathp->fp_names[j]->d_namep);
 				}
 				goto next_one;
@@ -329,7 +326,7 @@ int			noisy;
 				mat_t	old_xlate, xmat;
 
 				for( anp=tsp->ts_dbip->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
-					if( dp != anp->an_path[0] )
+					if( dp != anp->an_path.fp_names[0] )
 						continue;
 					mat_copy( old_xlate, tsp->ts_mat );
 					mat_idn( xmat );
