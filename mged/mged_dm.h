@@ -515,7 +515,6 @@ struct dm_list {
 #define BE_ACCEPT	1+16
 #define BE_REJECT	0+16
 
-#define BV_SLICEMODE	15
 #define BE_S_EDIT	14
 #define BE_S_ROTATE	13
 #define BE_S_TRANS	12

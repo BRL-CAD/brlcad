@@ -130,7 +130,6 @@ struct buttons  {
 	{BV_VSAVE,		"save",		bv_vsave},
 	{BE_S_EDIT,		"sedit",	be_s_edit},
 	{BE_S_ILLUMINATE,	"sill",		be_s_illuminate},
-	{BV_SLICEMODE,		"slice",	bv_slicemode},
 	{BE_S_ROTATE,		"srot",		be_s_rotate},
 	{BE_S_SCALE,		"sscale",	be_s_scale},
 	{BE_S_TRANS,		"sxy",		be_s_trans},
@@ -764,11 +763,6 @@ be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	  bu_vls_free(&vls);
 	}
 	return TCL_OK;
-}
-
-int
-bv_slicemode(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
-	return TCL_ERROR;
 }
 
 int
