@@ -2233,6 +2233,8 @@ CONST struct edge_g_lseg	*eg;
 	NMG_CK_MODEL(m);
 	NMG_CK_EDGE_G_LSEG(eg);
 
+	/* XXX Need to re-write this to use eg->eu_hd list instead */
+
 	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.tabl = tab;
 	st.eg = eg;
