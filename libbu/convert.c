@@ -93,8 +93,8 @@ char *in;			/* input format */
 	int collector;
 	int result = 0x0000;	/* zero/one channel, Net, unsigned, char, clip */
 
-	if (!in) return(NULL);
-	if (!*in) return(NULL);
+	if (!in) return 0;
+	if (!*in) return 0;
 
 
 	collector = 0;
@@ -106,7 +106,7 @@ char *in;			/* input format */
 	}
 	result = collector;	/* number of channels set '|=' */
 
-	if (!*p) return(NULL);
+	if (!*p) return 0;
 
 	if (*p == 'h') {
 		result |= CV_HOST_MASK;
@@ -115,7 +115,7 @@ char *in;			/* input format */
 		++p;
 	}
 
-	if (!*p) return(NULL);
+	if (!*p) return 0;
 	if (*p == 'u') {
 		++p;
 	} else if (*p == 's') {	/* could be 'signed' or 'short' */
@@ -127,7 +127,7 @@ char *in;			/* input format */
 		}
 	}
 
-	if (!*p) return(NULL);
+	if (!*p) return 0;
 	switch (*p) {
 	case 'c':
 	case '8':
@@ -135,21 +135,21 @@ char *in;			/* input format */
 		break;
 	case '1':
 		p++;
-		if (*p != '6') return(NULL);
+		if (*p != '6') return 0;
 		/* fall through */
 	case 's':
 		result |= CV_16;
 		break;
 	case '3':
 		p++;
-		if (*p != '2') return(NULL);
+		if (*p != '2') return 0;
 		/* fall through */
 	case 'i':
 		result |= CV_32;
 		break;
 	case '6':
 		p++;
-		if (*p != '4') return(NULL);
+		if (*p != '4') return 0;
 		/* fall through */
 	case 'l':
 		result |= CV_64;
@@ -158,7 +158,7 @@ char *in;			/* input format */
 		result |= CV_D;
 		break;
 	default:
-		return(NULL);
+		return 0;
 	}
 	p++;
 
@@ -170,7 +170,7 @@ char *in;			/* input format */
 	} else if (*p == 'L') {
 		result |= CV_LIT;
 	} else {
-		return(NULL);
+		return 0;
 	}
 	return(result);
 }
