@@ -67,41 +67,6 @@ double		mged_nrm_tol;			/* normal ang tol, radians */
 static void	eedit();
 void		f_zap();
 
-/* autosize: boolean - do auto-size & auto-center when bringing up geometry
- * on a blank display.
- */
-static int	autosize = 1;
-
-/* Turn On/Off automatic re-center/re-size of display when
- * bringing up geometry on a blank display
- */
-void
-f_autosize(argc, argv)
-int	argc;
-char	**argv;
-{
-	register char *p;
-
-	if (argc <= 1) {
-		/* toggle */
-		autosize = !autosize;
-	} else {
-		p = argv[1];
-		if (*p == '0') autosize = 0;
-		else if (*p == '1') autosize = 1;
-		else {
-		    (void)printf(
-			"autosize: No parameter toggles autosize,\n");
-		    (void)printf(
-			"valid parameters: '0' = disable, '1' = enable\n");
-		}
-	}
-	if (autosize) {
-		(void)fputs("Auto-size/center On\n", stdout );
-	} else {
-		(void)fputs("Auto-size/center Off\n", stdout );
-	}
-}
 
 
 /* Delete an object or several objects from the display */
@@ -318,7 +283,7 @@ int	kind;
 	(void)printf("%ld vectors in %ld sec\n", nvectors, etime - stime );
 	
 	/* If we went from blank screen to non-blank, resize */
-	if (autosize && initial_blank_screen &&
+	if (mged_variables.autosize  && initial_blank_screen &&
 	    HeadSolid.s_forw != &HeadSolid)  {
 		size_reset();
 		new_mats();
