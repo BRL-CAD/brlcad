@@ -260,7 +260,7 @@ CONST char		*str;
 			fprintf(stderr,"%8lx realloc%6d %s ** barrier check failure\n",
 				(long)ptr, cnt, str );
 		}
-		/* Pad, plus full int for magic number */
+		/* Pad, plus full long for magic number */
 		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
 	}
 
@@ -334,12 +334,13 @@ CONST char *str;
 		if( !mp->magic )  continue;
 		if( mp->magic != MDB_MAGIC )  bu_bomb("bu_memdebug_check() malloc tracing table corrupted!\n");
 		if( mp->mdb_len <= 0 )  continue;
-		ip = (long *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(int));
-		fprintf(stderr,"%8lx %6d %s %s\n",
-			(long)(mp->mdb_addr), mp->mdb_len, mp->mdb_str,
-			*ip!=MDB_MAGIC ? "-BAD-" : "" );
-		if( *ip != MDB_MAGIC )
-			fprintf(stderr,"\t%lx\t%x\n", *ip, MDB_MAGIC);
+		ip = (long *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(long));
+		fprintf(stderr,"%8lx %6d %s\n",
+			(long)(mp->mdb_addr), mp->mdb_len, mp->mdb_str);
+		if( *ip != MDB_MAGIC )  {
+			fprintf(stderr,"\tCorrupted end marker was=x%lx\ts/b=x%x\n",
+				*ip, MDB_MAGIC);
+		}
 	}
 }
 
