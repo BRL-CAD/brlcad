@@ -1,0 +1,117 @@
+/* 
+ *      N U R B _ T O _P O L Y . C
+ *
+ * Function -
+ *     Returns two polygons from a NURB surface.
+ *     Asumes that the surface is flat.
+ * 
+ * Author -
+ *     Paul R. Stay
+ *
+ * Source -
+ *     SECAD/VLD Computing Consortium, Bldg 394
+ *     The U.S. Army Ballistic Research Laboratory
+ *     Aberdeen Proving Ground, Maryland 21005
+ *
+ * Copyright Notice -
+ *     This software is Copyright (C) 1990 by the United States Army.
+ *     All rights reserved.
+ */
+
+#include "machine.h"
+#include "vmath.h"
+#include "./nurb.h"
+
+/* Algorithm -
+ * From the four corners of the surface, return the two parts split by the
+ * diagonal from the first and thrid corner point making sure Homogeneous
+ * points are divided. 
+ */
+
+struct rt_nurb_poly *rt_nurb_mk_poly();
+
+struct rt_nurb_poly *
+rt_nurb_to_poly( srf )
+struct snurb *srf;
+{
+	int	coords = srf->mesh->pt_type;
+	fastf_t 	 * p1, *p2, *p3, *p4;
+	fastf_t 	uv1[2], uv2[2], uv3[2], uv4[2];
+	struct rt_nurb_poly *p, *p_head, *rt_nurb_mk_poly();
+
+	/* Extract the four corners from the mesh */
+
+	p1 = srf->mesh->ctl_points;
+	p2 = srf->mesh->ctl_points + coords * srf->mesh->s_size[1];
+	p3 = srf->mesh->ctl_points + (coords * srf->mesh->s_size[1] * 
+	    (srf->mesh->s_size[0] - 1)) + 
+	    ((srf->mesh->s_size[1] - 1) * coords);
+	p4 = srf->mesh->ctl_points + (coords * srf->mesh->s_size[1] * 
+	    (srf->mesh->s_size[0] - 1));
+
+	/* If the point is rational then divide out the w component */
+	if ( EXTRACT_RAT(srf->mesh->pt_type)) {
+		int	w_index;
+
+		if ( EXTRACT_PT_TYPE( srf->mesh->pt_type) == PT_XY)
+			w_index = 2;
+		else if ( EXTRACT_PT_TYPE( srf->mesh->pt_type) == PT_UV)
+			w_index = 2;
+		else if ( EXTRACT_PT_TYPE( srf->mesh->pt_type) == PT_XYZ)
+			w_index = 3;
+		else /* assume the forth coordinate */
+			w_index = 3;
+
+		p1[0] = p1[0] / p1[w_index];
+		p2[0] = p2[0] / p1[w_index];
+		p3[0] = p3[0] / p1[w_index];
+		p4[0] = p4[0] / p1[w_index];
+	}
+
+	uv1[0] = srf->u_knots->knots[0];
+	uv1[1] = srf->v_knots->knots[0];
+
+	uv2[0] = srf->u_knots->knots[srf->u_knots->k_size -1];
+	uv2[1] = srf->v_knots->knots[0];
+
+	uv3[0] = srf->u_knots->knots[srf->u_knots->k_size -1];
+	uv3[1] = srf->v_knots->knots[srf->v_knots->k_size -1];
+
+	uv4[0] = srf->u_knots->knots[0];
+	uv4[1] = srf->v_knots->knots[srf->v_knots->k_size -1];
+
+	p = rt_nurb_mk_poly(p1, p2, p3, uv1, uv2, uv3 ); 
+	p_head = p;
+	p = rt_nurb_mk_poly(p3, p4, p1, uv3, uv4, uv1 ); 
+	p->next = p_head; 
+	p_head = p;
+
+	return p_head;
+}
+
+
+struct rt_nurb_poly *
+rt_nurb_mk_poly( v1, v2, v3, uv1, uv2, uv3 )
+fastf_t * v1, *v2, *v3;
+fastf_t uv1[2], uv2[2], uv3[2];
+{
+	struct rt_nurb_poly *p;
+
+	p = (struct rt_nurb_poly *) rt_malloc( sizeof( struct rt_nurb_poly ),
+	    "rt_nurb_mk_poly: rt_nurb_poly struct" );
+
+	p->next = (struct rt_nurb_poly *) 0;
+
+	VMOVE( p->ply[0], v1);
+	VMOVE( p->ply[1], v2);
+	VMOVE( p->ply[2], v3);
+
+	p->uv[0][0] = uv1[0];
+	p->uv[0][1] = uv1[1];
+	p->uv[1][0] = uv2[0];
+	p->uv[1][1] = uv2[1];
+	p->uv[2][0] = uv3[0];
+	p->uv[2][1] = uv3[1];
+
+	return p;
+}
