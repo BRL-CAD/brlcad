@@ -456,3 +456,13 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	/* return the index into the vertex array */
 	return( new_leaf->vleaf.index );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

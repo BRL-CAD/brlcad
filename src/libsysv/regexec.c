@@ -184,3 +184,13 @@ regexec(const regex_t *preg, const char *string, size_t nmatch, regmatch_t *pmat
 	else
 		return(lmatcher(g, (char *)string, nmatch, pmatch, eflags));
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -1371,3 +1371,13 @@ rt_generic_xform(
 	RT_CK_DB_INTERNAL( op );
 	return 0;				/* OK */
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

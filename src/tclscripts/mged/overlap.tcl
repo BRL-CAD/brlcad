@@ -690,3 +690,12 @@ proc overlap_tool { id } {
 	set over_cont($id,overlap_count) 0
 	set over_cont($id,dialog_window) $::tk::Priv(cad_dialog)
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

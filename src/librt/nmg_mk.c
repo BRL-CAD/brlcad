@@ -3076,3 +3076,13 @@ nmg_jeg(struct edge_g_lseg *dest_eg, struct edge_g_lseg *src_eg)
 			break;		/* src_eg destroyed */
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

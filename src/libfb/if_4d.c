@@ -2278,3 +2278,13 @@ register struct sgi_pixel * pixels;
 		writeRGB( n, Red_pixels, Green_pixels, Blue_pixels);
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

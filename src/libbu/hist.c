@@ -190,3 +190,13 @@ bu_hist_pr(register const struct bu_hist *histp, const char *title)
 {
 	bu_hist_pr_suppress( histp, title, 1 );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -16,3 +16,13 @@ typedef struct {
 /* Degree <-> Radian conversions */
 #define	RtoD(x)	((x)*57.29577951308232157827)
 #define	DtoR(x) ((x)*0.01745329251994329555)
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

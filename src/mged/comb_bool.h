@@ -105,3 +105,13 @@ extern int cvt_to_gift_bool();
 				}				\
 				else				\
 				    show_tree_infix((t), 0)
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -494,3 +494,13 @@ set_rotate_about(void)
 {
 	view_state->vs_vop->vo_rotate_about = mged_variables->mv_rotate_about;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

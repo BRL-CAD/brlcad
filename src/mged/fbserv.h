@@ -47,3 +47,13 @@ static struct pkg_switch pkg_switch[] = {
 	{ MSG_FBSETCURSOR + MSG_NORETURN, rfbsetcursor, "Set Cursor Shape" },
 	{ 0,			NULL,		NULL }
 };
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -45,3 +45,12 @@ proc expand_int_ranges {spec} {
     }
     return $result
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

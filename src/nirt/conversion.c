@@ -71,3 +71,13 @@ void ae2dir(void)
     for (i = 0; i < 3; ++i)
 	direct(i) = dir[i];
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

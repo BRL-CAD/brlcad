@@ -368,3 +368,13 @@ mmenu_pntr(int menu, int item)
 	if( menu_state->ms_cur_menu >= 0 )
 		menu_state->ms_flag = 1;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

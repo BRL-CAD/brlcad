@@ -1687,3 +1687,13 @@ nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
 
         bu_free( (char *)st.visited, "visited[]");
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

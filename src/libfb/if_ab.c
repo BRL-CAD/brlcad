@@ -1083,3 +1083,13 @@ ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len)
 		CLIP( *rgbp++, y + 1.7730 * u);			/* B */
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

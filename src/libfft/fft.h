@@ -19,3 +19,13 @@ extern void ditsplit(
 	double x[],
 	int	n,	/* length */
 	int	m);	/* n = 2^m */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -51,3 +51,13 @@ void	spm_dump();
 /* sphmap.c */
 extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int ny);
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

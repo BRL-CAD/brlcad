@@ -81,3 +81,13 @@ bu_printb(const char *s, register long unsigned int v, register const char *bits
 	bu_log("%s", bu_vls_addr(&str) );
 	bu_vls_free(&str);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -171,6 +171,9 @@ char_type magic_header[] = { "\037\235" };	/* 1F 9D */
  *
  * $Header$
  * $Log$
+ * Revision 1.1  2004/05/20 15:19:40  morrison
+ * Vast reorganization begins.  Sources moved from top-level directories into src/.
+ *
  * Revision 11.1  1995/01/04 09:52:26  mike
  * Release_4.4
  *
@@ -1235,3 +1238,13 @@ version()
 #endif
 	fprintf(stderr, "BITS = %d\n", BITS);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -58,3 +58,12 @@ proc ray_get_info { ray key1 key2 } {
 
     return $items
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -355,3 +355,13 @@ put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp)
 	(void) fprintf( fp, "%u\n", (unsigned) entry->mode_flag );
 	return	1;
 	}
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -361,3 +361,13 @@ copy_mask_bands(int level, pyramid *leftbandpyr, pyramid *rightbandpyr, pyramid 
 	}
     }
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -64,3 +64,13 @@ extern int offset;		/* Offset to data in the file. */
 extern struct header hdr;	/* Header for font file. */
 extern struct dispatch dir[256];/* Directory for character font. */
 extern int width, height;	/* Width and height of current char. */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

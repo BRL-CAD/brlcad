@@ -16,3 +16,12 @@ foreach name [array names mged_display] {
     pack .titles.l.$name -side top -fill y -expand yes -anchor w
     pack .titles.r.$name -side top -fill x -expand yes -anchor w
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

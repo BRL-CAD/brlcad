@@ -2096,3 +2096,13 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 	fclose(fp);
 	bu_log("wrote %s\n", buf);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

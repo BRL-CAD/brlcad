@@ -48,3 +48,13 @@ struct mater {
 RT_EXPORT extern struct mater *rt_material_head; /* defined in mater.c */
 RT_EXPORT BU_EXTERN(void rt_insert_color,
 		       (struct mater *newp));
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

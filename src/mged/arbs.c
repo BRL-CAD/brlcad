@@ -559,3 +559,13 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /*  rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
  *  moved to librt/g_arb.c
  */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

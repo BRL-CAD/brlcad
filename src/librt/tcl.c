@@ -1689,3 +1689,13 @@ tcl_list_to_fastf_array(Tcl_Interp *interp, char *char_list, fastf_t **array, in
 
 	return( ret );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

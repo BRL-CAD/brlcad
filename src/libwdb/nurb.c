@@ -61,3 +61,13 @@ mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs )
 
 	return wdb_export( wdbp, name, (genptr_t)ni, ID_BSPLINE, mk_conv2mm );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

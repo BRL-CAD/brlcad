@@ -100,3 +100,12 @@ proc collab_quit { id } {
     set mged_gui($id,collaborate) 0
     set mged_collaborators [lreplace $mged_collaborators $i $i]
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

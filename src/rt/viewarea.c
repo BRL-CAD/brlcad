@@ -178,3 +178,13 @@ view_end()
 void view_setup() {}
 void view_cleanup() {}
 void application_init () {}
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -579,3 +579,13 @@ pdv_3ray(FILE *fp, const fastf_t *pt, const fastf_t *dir, double t)
 	pdv_3move( fp, pt );
 	pdv_3cont( fp, tip );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

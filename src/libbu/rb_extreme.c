@@ -202,3 +202,13 @@ void *bu_rb_curr (bu_rb_tree *tree, int order)
     else
 	return (bu_rb_data(bu_rb_current(tree), order));
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

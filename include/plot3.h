@@ -467,3 +467,13 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
 #endif /* VMATH_H */
 
 #endif /* PLOT3_H */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

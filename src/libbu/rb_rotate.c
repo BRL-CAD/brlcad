@@ -130,3 +130,13 @@ void _rb_rot_right (struct bu_rb_node *y, int order)
 	bu_log("After rotation, size(%x, %d)=%d, size(%x, %d)=%d\n",
 	    x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

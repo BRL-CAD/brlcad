@@ -294,3 +294,13 @@ temp_free(char *cp)
 	if( tp->mp )  bu_close_mapped_file( tp->mp );
 	bu_free( cp, "temp_specific" );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

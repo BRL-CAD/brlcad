@@ -68,3 +68,13 @@ mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct shell *s )
 
 	return wdb_export( ofp, name, (genptr_t)botp, ID_BOT, mk_conv2mm );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -186,3 +186,13 @@ open_with_ext(char *basename, char *ext)
     return( f );
 }
     
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

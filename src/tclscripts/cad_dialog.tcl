@@ -325,3 +325,12 @@ proc cad_list_buts { my_widget_name screen list_of_results cur_settings title te
     catch " destroy $w "
 }
 
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

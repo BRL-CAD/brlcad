@@ -224432,3 +224432,12 @@ else
 	fi
 fi
 rm -f   ebm.bw ebm.bw shaders.rt shaders.g shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
+
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

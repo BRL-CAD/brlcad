@@ -1766,3 +1766,13 @@ rt_part_ifree(struct rt_db_internal *ip)
 	bu_free( ip->idb_ptr, "particle ifree" );
 	ip->idb_ptr = GENPTR_NULL;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -16,3 +16,13 @@ struct x_vars {
   unsigned long pixels[NUM_PIXELS];
 };
 #endif /* SEEN_DM_X */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

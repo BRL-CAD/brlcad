@@ -220,3 +220,13 @@ register char *cp;
 	*cp++ = ':';
 	sprintf(cp,"%d%d", i / 10, i % 10);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

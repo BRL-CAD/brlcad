@@ -118,3 +118,13 @@ typedef fastf_t  mat3_t[9];
 	(m)[6] = -(b)[1]; (m)[7] = -(b)[2]; (m)[8]=  (a)[2];}
 
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

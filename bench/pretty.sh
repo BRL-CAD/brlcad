@@ -39,11 +39,11 @@ $RT -p90 -f1024 -H3 -M $*\
 0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 
 EOF
 
-# Local Variables: ***
-# mode: sh ***
-# tab-width: 8 ***
-# sh-indentation: 2 ***
-# sh-basic-offset: 2 ***
-# indent-tabs-mode: t ***
-# End: ***
-# ex: shiftwidth=2 tabstop=8
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

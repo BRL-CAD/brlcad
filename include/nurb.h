@@ -294,3 +294,13 @@ BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_list *bezi
 							fastf_t epsilon, int depth) );
 #endif
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

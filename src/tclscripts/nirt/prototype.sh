@@ -384,3 +384,12 @@ frame .result -relief raised -bd 2
     pack .rslt_y -side right -fill y -in .result
 pack .result -side top
 
+
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

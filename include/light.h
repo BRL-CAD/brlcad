@@ -65,3 +65,13 @@ RT_EXTERN(void light_obs, (struct application *ap,
 				  struct shadework *swp, int have) );
 
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

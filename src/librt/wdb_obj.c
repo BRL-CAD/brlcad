@@ -10141,3 +10141,13 @@ wdb_rotate_arb_face_tcl(ClientData	clientData,
 
     return wdb_rotate_arb_face_cmd(wdbp, interp, argc-1, argv+1);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

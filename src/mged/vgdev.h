@@ -158,3 +158,13 @@ struct vgregb  {
 	short	vg_d8;		/* Dial 8 */
 	short	vg_d9;		/* Dial 9 */
 };
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

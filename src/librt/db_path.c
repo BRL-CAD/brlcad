@@ -467,3 +467,13 @@ db_full_path_search( const struct db_full_path *a, const struct directory *dp )
 	}
 	return 0;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -326,3 +326,13 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 	BU_LIST_APPEND( split_hd, &crv2->l );
 	BU_LIST_APPEND( split_hd, &crv1->l );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

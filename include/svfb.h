@@ -73,3 +73,13 @@ extern struct sv_dispatch_tab sv_DTable[];
 #define RUN3	2
 #define	RUN4	3
 #define	INRUN	-1
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -58,3 +58,12 @@ arced pads/lpad.56 matrix rarc 0.9956444742 0 -0.09323133027 2037.371187 0 1 0 1
 arced pads/lpad.57 matrix rarc 0.9946157032 0 -0.103632056 2268.326357 0 1 0 1231.900024 0.103632056 0 0.9946157032 -415.7042361 0 0 0 1 
 arced pads/lpad.58 matrix rarc 0.9934808762 0 -0.1139988971 2499.030438 0 1 0 1231.900024 0.1139988971 0 0.9934808762 -390.4492909 0 0 0 1 
 arced pads/lpad.59 matrix rarc 0.9922410951 0 -0.1243286337 2729.458944 0 1 0 1231.900024 0.1243286337 0 0.9922410951 -362.7926186 0 0 0 1 
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -264,3 +264,13 @@ rep_file(rle_hdr *in_hdr, rle_hdr *out_hdr, int rep_cnt)
 
     rewind( in_hdr->rle_file );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

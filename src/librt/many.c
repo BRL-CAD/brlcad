@@ -177,3 +177,13 @@ rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct a
 		bu_parallel( rt_shoot_many_rays_worker, ncpus, (genptr_t)&rmi );
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

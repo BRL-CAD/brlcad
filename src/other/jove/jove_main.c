@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  2004/06/07 17:05:49  morrison
+ * fix irix gcc compilation problem -- convert HAVE_TERMIOS_H checks to be defined or not defined
+ *
  * Revision 1.1  2004/05/20 14:50:00  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *

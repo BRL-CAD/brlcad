@@ -346,3 +346,13 @@ show_gift_bool (struct bool_tree_node *rp, int new_line)
   if (new_line)
     Tcl_AppendResult(interp, "\n", (char *)NULL);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -58,3 +58,12 @@ $BIN/asc2pix < $2/regress/spdipix.asc > spdi_ref.pix
 $BIN/pixdiff spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
 /bin/echo -n spdi.pix
 tr , '\012' < spdi.log | grep many
+
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

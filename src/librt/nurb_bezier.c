@@ -173,3 +173,13 @@ nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
 		BU_LIST_APPEND( clist, &crv1->l );
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

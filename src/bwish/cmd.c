@@ -496,3 +496,13 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendResult(interp, "hist command\n\troutine for maintaining command history", (char *)0);
 	return TCL_ERROR;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -15,3 +15,13 @@ int getpixel(int x, int y);
 int GIFNextPixel(ifunptr getpixel);
 
 extern const char *MY_NAME;
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

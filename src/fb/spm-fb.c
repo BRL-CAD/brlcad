@@ -177,3 +177,13 @@ spm_square(register spm_map_t *mapp)
 		if( fb_write( fbp, 0, y, scanline, scr_width ) != scr_width )  break;
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -46,3 +46,13 @@ extern struct menu_item *menu_array[NMENU];
 extern int cur_menu, cur_item, menuflag;
 #endif
 #endif /* SEEN_MENU_H */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -452,3 +452,13 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
 	bu_vls_free( &str );
 	return (struct bu_mapped_file *)NULL;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

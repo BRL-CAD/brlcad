@@ -21,3 +21,13 @@ struct phong_specific {
 
 extern struct bu_structparse phong_parse[];
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -136,3 +136,13 @@ rfft_adds += 12;
 	for( i = N/2+1; i < N; i++ )
 		X[i] = -X[i];
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

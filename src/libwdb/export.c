@@ -33,3 +33,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 int	mk_version = 5;		/* which version of the database to write */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

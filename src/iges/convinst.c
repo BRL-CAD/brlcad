@@ -146,3 +146,13 @@ Convinst()
 
 	bu_log( "\nConverted %d solid instances out of %d total instances\n" , conv , totinst );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

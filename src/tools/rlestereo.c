@@ -267,3 +267,13 @@ convert_line(rle_pixel **out, rle_pixel **left, rle_pixel **right)
 				right[rchan1][i], right[rchan2][i], rmap);
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

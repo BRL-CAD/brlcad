@@ -102,3 +102,13 @@
 #define MGP_PLOT	0x09		/*   "  Plot */
 #define MGP_SPEC	0x0A		/*   "  Special Function */
 #define MGP_COPY	0x0B		/*   "  Screen Copy Function */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -110,3 +110,12 @@ proc garbage_collect {} {
 	    puts "was $old_size bytes, is now $new_size bytes (difference is [expr $new_size - $old_size] bytes)"
 	}
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

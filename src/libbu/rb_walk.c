@@ -213,3 +213,13 @@ void bu_rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int tra
 
     _rb_walk(tree, order, visit, WALK_DATA, trav_type);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

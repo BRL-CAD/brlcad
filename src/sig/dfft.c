@@ -252,3 +252,13 @@ fftphase(double *dat, int N)
 
 	fwrite( out, sizeof(*out), N/2, stdout );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

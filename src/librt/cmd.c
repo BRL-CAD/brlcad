@@ -204,3 +204,13 @@ rt_do_cmd(struct rt_i *rtip, register char *lp, register const struct command_ta
 	bu_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
 	return(-1);			/* ERROR */
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

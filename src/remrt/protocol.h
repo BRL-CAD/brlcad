@@ -64,3 +64,13 @@ struct bu_structparse desc_line_info[] =  {
 	{"%f", 1, "li_percent",	LINE_O(li_percent),	FUNC_NULL },
 	{"",	0,			0 }
 };
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

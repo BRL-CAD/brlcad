@@ -19,3 +19,13 @@ init_ik(void)
 	pclose(pipe);
 	fprintf(stderr,"Ikonas set for RS170 and External SYNC\n");
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

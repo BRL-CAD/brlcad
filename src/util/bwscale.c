@@ -416,3 +416,13 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
 		(void) fwrite( outbuf, 1, ox, ofp );
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

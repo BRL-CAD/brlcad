@@ -36,3 +36,13 @@ f2a(float f, char *s, int w, int d)
 		i++,	j-- )
 	{	c    = s[i];	s[i] = s[j];	s[j] =    c;	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

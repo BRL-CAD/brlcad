@@ -83,11 +83,11 @@ MEAN_REL=`echo 2k $RATIO_LIST +++++ 6/ p | dc`
 echo "Abs	${HOST}	${CURVALS}${MEAN_ABS}	$NOTE1"
 echo "*vgr	${HOST}	${RATIO_LIST}${MEAN_REL}	$NOTE2"
 
-# Local Variables: ***
-# mode: sh ***
-# tab-width: 8 ***
-# sh-indentation: 2 ***
-# sh-basic-offset: 2 ***
-# indent-tabs-mode: t ***
-# End: ***
-# ex: shiftwidth=2 tabstop=8
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

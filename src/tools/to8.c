@@ -242,3 +242,13 @@ map_scanline(unsigned char **rgb, int n, int y, unsigned char *line)
 			  DMAP(in_cmap[2][*b], col, row) * 36;
 }
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -642,3 +642,12 @@ if {$tcl_platform(os) != "Windows NT"} {
 
     $help add png		{{file} {Dump contents of window to a png file}}
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -246,3 +246,13 @@ dump_patch(int (*patch)[4])
 	}
 	nmg_face_bb( fu->f_p , &tol );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

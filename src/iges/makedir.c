@@ -172,3 +172,13 @@ out:
 		bu_log( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
 }
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

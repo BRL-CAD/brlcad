@@ -1549,3 +1549,13 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
   free(Search.List);
 /*  bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f,%.4f,%.4f], Pos: [%.3f,%.3f,%.3f]\n",sqrt(NP.RadSq), NP.Max,NP.Found,irrad[0],irrad[1],irrad[2],pos[0],pos[1],pos[2]);*/
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

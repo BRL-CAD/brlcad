@@ -185,3 +185,13 @@ vclip(fastf_t *a, fastf_t *b, register fastf_t *min, register fastf_t *max)
 	VJOIN1( a, a, mindist, diff );
 	return(1);		/* HIT */
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -251,3 +251,13 @@ _fb_pgin(register FBIO *ifp, int pageno)
 				scans * ifp->if_width
 				);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

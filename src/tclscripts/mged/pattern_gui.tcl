@@ -1857,3 +1857,11 @@ body pattern_control::switch_states { frame_on frame_off } {
     frame_enable $frame_on
     frame_disable $frame_off
 }
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

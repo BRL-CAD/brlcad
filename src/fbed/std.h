@@ -71,3 +71,13 @@ typedef char *pointer;		/* generic pointer (void *) */
 #define todigit( n )	((n) + '0')	/* convt digit number to char */
 
 #endif	/* _VLD_STD_H_ */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

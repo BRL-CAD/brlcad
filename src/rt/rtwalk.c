@@ -443,3 +443,13 @@ write_matrix(int frame)
 	fprintf(outfp, "lookat_pt %g %g %g  0;\n", V3ARGS(goal_point) );
 	fprintf(outfp, "end;\n\n" );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

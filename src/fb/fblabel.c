@@ -394,3 +394,13 @@ fill_buf(register int wid, register int *buf, register char *bitrow)
 	 */
 	buf[0] = buf[1] = buf[wid + 2] = buf[wid + 3] = 0;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -109,3 +109,13 @@ namecvt(register int n, register char **cp, int c)
 	sprintf( str, "%c%d%.13s", (char)c, n, name_it );
 	*cp = bu_strdup( str );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

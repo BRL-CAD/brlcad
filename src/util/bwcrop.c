@@ -186,3 +186,13 @@ fill_buffer(int y)
 	fseek( ifp, buf_start * scanlen, 0 );
 	fread( buffer, scanlen, buflines, ifp );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

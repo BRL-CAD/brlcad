@@ -224,3 +224,13 @@ extern int win_active;
 #define	SGI_XCVT( v_ ) (v_)
 #define SGI_YCVT( v_ ) (v_)
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

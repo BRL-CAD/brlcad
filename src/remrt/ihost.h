@@ -53,3 +53,13 @@ extern struct ihost	*host_lookup_by_hostent(struct hostent *addr, int enter);
 extern struct ihost	*make_default_host(char *name);
 extern char		*get_our_hostname(void);
 extern struct ihost	*host_lookup_of_fd(int fd);
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -344,11 +344,11 @@ echo "The ${SUITE} build system is now prepared.  To build here, run:"
 echo "  $PATH_TO_AUTOGEN/configure"
 echo "  make"
 
-# Local Variables: ***
-# mode: sh ***
-# tab-width: 8 ***
-# sh-basic-offset: 2 ***
-# sh-indentation: 2 ***
-# indent-tabs-mode: t ***
-# End: ***
-# ex: shiftwidth=2 tabstop=8
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-basic-offset: 4
+# sh-indentation: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -468,3 +468,13 @@ db_free_external(register struct bu_external *ep)
 	BU_CK_EXTERNAL(ep);
 	bu_free_external(ep);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

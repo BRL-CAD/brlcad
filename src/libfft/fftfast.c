@@ -309,3 +309,13 @@ cdiv(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
 	result->re = (val1->re*val2->re + val1->im*val2->im)/denom;
 	result->im = (val1->im*val2->re - val1->re*val2->im)/denom;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

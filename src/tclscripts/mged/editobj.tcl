@@ -183,3 +183,12 @@ proc eodec { oname entryfield } {
     $entryfield delete 0 end
     $entryfield insert insert [format $eoformat_string [expr $eodec_operation]]
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

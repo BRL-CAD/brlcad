@@ -60,3 +60,13 @@ Convsurfs()
 	if( convsurf )
 		bu_log( "\tCaution: All NURBS are assumed to be part of the same solid\n" );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

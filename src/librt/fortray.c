@@ -369,3 +369,13 @@ BU_FORTRAN(frname,FRNAME)(char		*fbuf,
 	sprintf(fbuf, "Unable to find region %d", *region_num );
 	fr_string_c2f( fbuf, buf, fbuflen );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -48,3 +48,13 @@ int reposition_cursor = true;
 int tty = true;
 int tty_fd = 0;	/* Keyboard file descriptor. */
 int zoom_factor = 1;
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -109,3 +109,13 @@ bu_log("curve:\n");rt_pr_table_and_tabdata( "/dev/tty", curve );
 		fwrite( rgb, 1, 3, stdout );
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

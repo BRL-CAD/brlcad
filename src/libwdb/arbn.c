@@ -56,3 +56,13 @@ mk_arbn(struct rt_wdb *filep, const char *name, int neqn, plane_t (*eqn))
 
 	return wdb_export( filep, name, (genptr_t)arbn, ID_ARBN, mk_conv2mm );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

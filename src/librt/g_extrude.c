@@ -2640,3 +2640,13 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 
 
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

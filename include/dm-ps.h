@@ -27,3 +27,13 @@ struct ps_vars {
 extern struct ps_vars head_ps_vars;
 
 #endif /* SEEN_DM_PS */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -299,3 +299,13 @@ BU_EXTERN( int brep, ( int entityno ) );
 BU_EXTERN( void Readtime, ( char *id ) );
 BU_EXTERN( void Readcols, ( char *id, int cols ) );
 BU_EXTERN( void Readmatrix, ( int xform, mat_t rot ) );
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

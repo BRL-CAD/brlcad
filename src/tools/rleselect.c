@@ -290,3 +290,13 @@ insert(int **sorted_list_p, int i, int n)
     *sorted_list_p = sorted_list;
 }
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

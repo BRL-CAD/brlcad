@@ -704,3 +704,13 @@ extern void set_browser_font();
 extern OBJECT *add_free();
 extern void set_free();
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

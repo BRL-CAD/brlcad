@@ -295,3 +295,13 @@ zoom_rect_area(void)
   rect_view2image();
   rb_set_dirty_flag();
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -1616,3 +1616,13 @@ typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 #endif
     
 #endif /* _TK */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

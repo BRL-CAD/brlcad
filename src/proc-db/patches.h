@@ -32,3 +32,13 @@ pt patches[PATCH_COUNT] = {
 {{270,270,270,270},{291,298,299,300},{288,295,296,297},{285,292,293,294}},
 {{270,270,270,270},{300,305,306,279},{297,303,304,275},{294,301,302,271}}
 };
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

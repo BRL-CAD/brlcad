@@ -39,3 +39,13 @@ extern char *solid_name;
 extern struct file_list *curr_file;
 extern struct file_list iges_list;
 extern struct name_list *name_root;
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

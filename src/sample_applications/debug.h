@@ -69,3 +69,13 @@
 \021MEM\020BOXING\017CUTTING\016PARTITION\015ROOTS\014VOL\
 \013ANIM_FULL\012ANIM\011SPLINE\010ARB8\7REGIONS\6SOLIDS\5DB\
 \4INSTANCE\3SHOOT\2ALLHITS\1ALLRAYS"
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -767,3 +767,13 @@ rt_pr_uvcoord(const struct uvcoord *uvp)
 		uvp->uv_u, uvp->uv_v,
 		uvp->uv_du, uvp->uv_dv );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

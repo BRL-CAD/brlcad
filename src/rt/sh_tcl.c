@@ -218,3 +218,13 @@ sh_tcl_setup(Tcl_Interp *interp)
 	(void)Tcl_CreateCommand(interp, "sh_opt", sh_opt,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -214,3 +214,13 @@ int main(int argc, char *argv[])
   sprintf(name, "%sfence.c", prefix);
   mk_lcomb(fp_db, name, &fwm, 0, "plastic", "", "50 50 20", 0);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

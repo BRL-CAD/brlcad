@@ -237,3 +237,13 @@ BU_EXTERN(void rb_walk,		(rb_tree	*tree,
 #define		rb_walk1(t,v,d)	rb_walk((t), 0, (v), (d))
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

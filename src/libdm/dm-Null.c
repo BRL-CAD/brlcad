@@ -102,3 +102,13 @@ static int Nu_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char
 static int Nu_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b) {
   return TCL_OK;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

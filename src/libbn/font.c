@@ -139,3 +139,13 @@ bn_vlist_2string(struct bu_list *vhead, struct bu_list *free_hd, const char *str
 	VSET( p, x, y, 0 );
 	bn_vlist_3string( vhead, free_hd, string, p, mat, scale );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

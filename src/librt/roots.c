@@ -370,3 +370,13 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 	 */
 	rt_poly_synthetic_division( oldP, &div, oldP, &rem );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

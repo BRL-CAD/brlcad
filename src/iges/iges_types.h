@@ -82,3 +82,13 @@ struct types typecount[NTYPES+1]={
 	{ 600 , "MACRO Instance" , 0 },
 	{ 700 , "Transformation Matrix (4X4)" , 0 }
 };
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

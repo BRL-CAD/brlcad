@@ -20,3 +20,13 @@ extern char	*strcpy();
 #define MmVFree( ct, typ, ptr )	free( (char *) ptr )
 #define MmStrDup( str )		strcpy( malloc( strlen(str)+1 ), str )
 #define MmStrFree( str )	free( str )
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -3152,3 +3152,12 @@ proc mged_draw_grid {id} {
 	#				 is not currently open (i.e. dbip == DBI_NULL).
 	set mged_gui($id,grid_draw) [rset grid draw]
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -34,3 +34,13 @@
 #define SOLID_YBASE	( 1920)		/* pixel pos of first solid line */
 #define TEXT0_DY	(  -60)		/* #pixels per line, Size 0 */
 #define TEXT1_DY	(  -90)		/* #pixels per line, Size 1 */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -43,3 +43,13 @@ extern void glx_clearToBlack();
 extern struct glx_vars head_glx_vars;
 
 #endif /* SEEN_DM_GLX */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

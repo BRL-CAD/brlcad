@@ -339,3 +339,13 @@ rt_spect_black_body_points(struct bn_tabdata *data, double temp)
 		data->y[j] = PLANCK( (tabp->x[j]*0.001), temp );
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -140,3 +140,13 @@ fastf_t	verts[][3];
 	}
 	return( mk_poly(fp, npts, verts, norms) );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -76,3 +76,13 @@ extern void	hmredraw(void);	/* Application signals need for redraw.	*/
 #define MAXLINE 	132
 #define MAXVISABLE	10
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

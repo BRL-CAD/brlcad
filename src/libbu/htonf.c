@@ -115,3 +115,13 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 # include "ntohf.c:  ERROR, no NtoHD conversion for this machine type"
 #endif
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

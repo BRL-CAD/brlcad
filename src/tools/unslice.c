@@ -290,3 +290,13 @@ copy_scanline(int ypos, int copy_flag)
 	rle_putraw( out_raw, out_nraw, &out_hdr );
     rle_freeraw( &out_hdr, out_raw, out_nraw );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

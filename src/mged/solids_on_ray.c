@@ -572,3 +572,13 @@ char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *r
 
     return ((char **) ap.a_uptr);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -58,7 +58,7 @@ proc apply_lgt_mat { args } {
     set mode 0
     set mdb_file ""
 
-    # mode:
+    # mode: Tcl
     #    0 - initially apply lgt material database to model
     #    1 - reapply lgt material database (using info stored in attributes)
     #    2 - undo (revert to old shader parameters using saved attributes)
@@ -200,3 +200,11 @@ proc make_lgt_light { args } {
 	press accept
     }
 }
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

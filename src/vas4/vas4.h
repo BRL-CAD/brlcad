@@ -87,3 +87,13 @@ extern void	vas_putnum(int n);
 extern int	vas_getc(void);
 extern void	vas_response(char c);
 extern int	vas_rawputc(char c);
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

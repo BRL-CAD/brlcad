@@ -150,3 +150,13 @@ void bu_rb_free_package (struct bu_rb_package *package)
     bu_free((genptr_t) package -> rbp_list_pos, "red-black list element");
     bu_free((genptr_t) package, "red-black package");
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

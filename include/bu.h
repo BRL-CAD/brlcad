@@ -2495,3 +2495,13 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 }
 #endif
 #endif /* SEEN_BU_H */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -150,3 +150,13 @@ void rt_nurb_s_plot(const struct face_g_snurb *srf)
 {
 	rt_nurb_plot_snurb( stdout, srf );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

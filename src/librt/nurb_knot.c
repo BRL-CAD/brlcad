@@ -302,3 +302,13 @@ rt_nurb_gen_knot_vector(register struct knot_vector *new_knots, int order, fastf
     for ( i = order; i < total; i++)
         new_knots->knots[i] = upper;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -34,3 +34,12 @@ awk 'BEGIN { ind=0; count=0;pr = 0
 	   if ( i%4 != 0 ) printf("\n");
 	   print "};"
 	 }'
+
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -39,3 +39,13 @@ const double bn_inv255 = 1.0/255.0;
 
 const double bn_degtorad =  0.0174532925199433;		/* (pi*2)/360 */
 const double bn_radtodeg = 57.29577951308230698802;	/* 360/(pi*2) */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

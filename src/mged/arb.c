@@ -66,3 +66,13 @@ dbpr_arb(struct solidrec *sp, register struct directory *dp)
 
 	/* more in edsol.c/pr_solid, called from do_list */
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

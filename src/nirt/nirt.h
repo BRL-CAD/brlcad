@@ -128,3 +128,13 @@ extern int		check_conv_spec(outitem *oip);
 extern void             do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
 extern void		bot_minpieces();
 extern int		need_prep;
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

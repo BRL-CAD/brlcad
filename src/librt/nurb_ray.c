@@ -529,3 +529,13 @@ rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
 		ptr += coords;
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -67,3 +67,13 @@ grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, r
 		}
 	return;
 	}
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

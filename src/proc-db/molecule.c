@@ -235,3 +235,13 @@ make_bond( int sp1, int sp2 )
 
 	return(0);		/* OK */
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

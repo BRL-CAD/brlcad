@@ -460,3 +460,13 @@ extern "C" {
 #endif /* SEEN_COMPAT4_H */
 
 #endif /* DONT_USE_COMPAT4_H */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

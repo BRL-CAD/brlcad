@@ -553,3 +553,13 @@ find_closest(rle_map **map, int nchan, int maplen, rle_pixel *pixel, int *index)
     }
     *index = closest;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

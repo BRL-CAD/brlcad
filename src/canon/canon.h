@@ -105,3 +105,13 @@ extern union ipu_prsc_param param;
 extern char *arg_v[];
 extern int arg_c;
 extern char *print_queue;
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -59,3 +59,13 @@ mk_ars(struct rt_wdb *filep, const char *name, int ncurves, int pts_per_curve, f
 
 	return wdb_export( filep, name, (genptr_t)ars, ID_ARS, mk_conv2mm );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

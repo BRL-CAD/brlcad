@@ -888,3 +888,13 @@ Bn_Init(Tcl_Interp *interp)
 
 double bn_noise_fbm(point_t point,double h_val,double lacunarity,double octaves);
 double bn_noise_turb(point_t point,double h_val,double lacunarity,double octaves);
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

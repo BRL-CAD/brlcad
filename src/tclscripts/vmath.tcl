@@ -810,3 +810,12 @@ proc mat_fmt {m} {
 		[lindex $m 12] [lindex $m 13] [lindex $m 14] [lindex $m 15]]
 	return $str
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

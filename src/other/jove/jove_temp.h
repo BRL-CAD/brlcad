@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.1  2004/05/20 14:50:00  morrison
+ * Sources that are external to BRL-CAD are moved from the top level to src/other/.
+ *
  * Revision 11.2  1995/06/21 03:45:11  gwyn
  * Eliminated trailing blanks.
  * Eliminated blank line at EOF.

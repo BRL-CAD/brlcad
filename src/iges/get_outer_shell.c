@@ -69,3 +69,13 @@ int shell_orient;
 	bu_free( (char *)face_orient , "Get_outer_shell: face orients" );
 	return( s );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

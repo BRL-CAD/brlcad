@@ -419,3 +419,13 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     bu_free_external( &ext );
     return TCL_OK;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

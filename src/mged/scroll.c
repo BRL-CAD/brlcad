@@ -757,3 +757,13 @@ scroll_select( int pen_x, int pen_y, int do_func )
 	}
 	return( 0 );		/* pen below scroll area */
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

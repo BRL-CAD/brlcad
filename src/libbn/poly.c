@@ -527,3 +527,13 @@ bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
 		bu_log("%4d %e + i * %e\n", i, roots[i].re, roots[i].im );
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

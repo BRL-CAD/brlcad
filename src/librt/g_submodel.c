@@ -1017,3 +1017,13 @@ rt_submodel_ifree(struct rt_db_internal *ip)
 	bu_free( (genptr_t)sip, "submodel ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -160,3 +160,13 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
         cvp->crv_pdir[2] = evec[0] * ue[2] + evec[1] * ve[2];
 	VUNITIZE( cvp->crv_pdir);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

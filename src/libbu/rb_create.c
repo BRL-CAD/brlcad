@@ -136,3 +136,13 @@ bu_rb_tree *bu_rb_create1 (char *description, int (*order_func) (/* ??? */))
     *ofp = order_func;
     return (bu_rb_create(description, 1, ofp));
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

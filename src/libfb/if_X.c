@@ -1728,3 +1728,13 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
 		X_scanwrite( ifp, sxmin, sy, &scanbuf[0][0], sxlen, 0 );
 	}
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -141,3 +141,12 @@ pack .cal.modelabel .cal.modemenu -side left -in .cal.modeline
 
 pack .cal.mbar .cal.leg1line .cal.leg2line .cal.distline .cal.modeline -side top -in .cal
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

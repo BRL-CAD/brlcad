@@ -38,3 +38,13 @@ int save_Fil_Stat( int fd );
 int reset_Fil_Stat( int	fd );
 int set_O_NDELAY( int fd );
 void prnt_Tio();	/* misc. types of args */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -2530,3 +2530,13 @@ bu_log("rgb = (%g  %g  %g)\n",swp->sw_color[0], swp->sw_color[1], swp->sw_color[
 	swp->sw_transmit = 0;
 	return(1);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

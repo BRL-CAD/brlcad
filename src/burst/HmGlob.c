@@ -17,3 +17,13 @@ int	HmTopMenu = 1;
 int	HmMaxVis = 10;	   /* default maximum menu items displayed */
 int	HmLastMaxVis = 10; /* track changes in above parameter */
 int	HmTtyFd; 	   /* read keyboard, not stdin */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

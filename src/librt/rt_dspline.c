@@ -250,3 +250,13 @@ rt_dspline_n(double *r, const fastf_t *m, const double *knots, const int nknots,
 	rt_dspline4v(r, m, a, b, c, d, depth, x);
 
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

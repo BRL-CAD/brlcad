@@ -489,3 +489,13 @@ do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int
 	/* Build the group that holds all the regions */
 	mk_lfcomb( outfp, ringname, &head, 0 );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -2695,3 +2695,13 @@ int cmd_smooth_bot( ClientData	clientData,
 
 	return wdb_smooth_bot_cmd( wdbp, interp, argc, argv );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -53,3 +53,13 @@ BU_EXTERN(int		mlib_setup, (struct mfuncs **headp,
 				struct rt_i *rtip));
 BU_EXTERN(void		mlib_free, (struct region *rp));
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -314,3 +314,13 @@ make_carpet(char *rname, fastf_t *min, fastf_t *max, char *file, struct wmember 
 
 	(void)mk_addmember( rname, &(headp->l), NULL, WMOP_UNION );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

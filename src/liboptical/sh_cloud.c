@@ -184,3 +184,13 @@ cloud_render(struct application *ap, struct partition *pp, struct shadework *swp
 	swp->sw_color[2] = ((1-TR) * intensity + (TR * .78));	/* Blue */
 	return(1);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

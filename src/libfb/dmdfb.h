@@ -44,3 +44,13 @@
 #define LAYER_BORDER	4
 #define SMALL_LAYER_SZ	51
 #define MIN_LAYER_SZ	80
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -132,3 +132,13 @@ struct iges_edge *edge;
 
 	return( v_list->i_verts[edge->end_vert_index-1].v );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

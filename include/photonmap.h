@@ -119,3 +119,13 @@ extern	int	PM_Visualize;	/* Photon Mapping Visualization of Irradiance Cache */
 
 BU_EXTERN(void BuildPhotonMap, (struct application *ap, point_t eye_pos, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double LightIntensity, char pmfile[255]));
 BU_EXTERN(void IrradianceEstimate, (struct application *ap, vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np));
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

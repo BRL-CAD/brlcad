@@ -602,3 +602,13 @@ void makeFlake(int depth, mat_t (*trans), fastf_t *center, fastf_t radius, doubl
     makeFlake(depth+1, &temp, pcent, newRadius, delta, maxDepth);
   }
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

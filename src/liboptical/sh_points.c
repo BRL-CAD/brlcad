@@ -235,3 +235,13 @@ points_mfree(char *cp)
 	/* XXX - free linked lists in every bin! */
 	spm_free( (spm_map_t *)cp );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

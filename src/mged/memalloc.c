@@ -305,3 +305,13 @@ struct mem_map **pp;
 	for( curp = *pp; curp; curp = curp->m_nxtp )
 		(void)printf(" %ld, len=%d\n", curp->m_addr, curp->m_size );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

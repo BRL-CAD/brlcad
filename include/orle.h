@@ -117,3 +117,13 @@ extern int	rle_verbose;
 void	rle_rlen(), rle_wlen(), rle_rpos(), rle_wpos();
 int	rle_rhdr(), rle_whdr(), rle_rmap(), rle_wmap();
 int	rle_decode_ln(), rle_encode_ln();
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

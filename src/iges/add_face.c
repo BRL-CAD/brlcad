@@ -110,3 +110,13 @@ NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
 	bu_free( (char *)loop_de , "Add_face_to_shell: loop DE's" );
 	return( fu );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -71,3 +71,12 @@ proc init_solclick { id } {
     button $w.s0 -text "PRIMITIVE CLICK" -command "solclick"
     pack $w.s0 -side top -fill x -fill y -expand yes
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

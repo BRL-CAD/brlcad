@@ -2414,3 +2414,13 @@ dgo_E_tcl(ClientData	clientData,
 
 	return dgo_E_cmd(dgop, interp, argc-1, argv+1);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

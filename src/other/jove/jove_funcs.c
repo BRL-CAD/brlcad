@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.1  2004/05/20 14:49:59  morrison
+ * Sources that are external to BRL-CAD are moved from the top level to src/other/.
+ *
  * Revision 11.5  2000/08/24 23:12:23  mike
  *
  * lint, RCSid

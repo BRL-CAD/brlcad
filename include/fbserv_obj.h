@@ -34,3 +34,13 @@ struct fbserv_obj {
 
 extern int fbs_open();
 extern int fbs_close();
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

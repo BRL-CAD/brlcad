@@ -203,3 +203,13 @@ Convassem()
 	}
 	bu_log( "Converted %d solid assemblies successfully out of %d total assemblies\n" , conv , totass );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

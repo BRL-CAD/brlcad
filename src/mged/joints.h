@@ -137,3 +137,13 @@ struct hold {
  *	GRIPs, JOINTs or FIXED POINTs
  */
 #define	MAGIC_HOLD_STRUCT	0x684f4c63	/* 1750027363 */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

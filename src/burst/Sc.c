@@ -322,3 +322,13 @@ ScUpScroll( void ) {
   tputs( ScSF, 1, (int (*)(int))PutChr );
   return	true;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

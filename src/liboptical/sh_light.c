@@ -1878,3 +1878,13 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     if (rdebug & RDEBUG_LIGHT ) bu_log("computing Light obscruration: end\n");
 }
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

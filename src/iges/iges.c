@@ -3200,3 +3200,13 @@ FILE *fp_dir,*fp_param;
 	else
 		return( tree_to_iges( comb , length , dependent , props , de_pointers , fp_dir , fp_param ) );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

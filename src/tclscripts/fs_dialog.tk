@@ -401,3 +401,12 @@ proc fs_dialog_test {} {
 	text .msg -width 40 -height 2
 	pack .msg -side bottom -expand 1 -fill x
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

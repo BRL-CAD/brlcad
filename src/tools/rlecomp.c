@@ -568,3 +568,13 @@ copy_scanline(rle_hdr *in_hdr, rle_hdr *out_hdr, int ypos, int *num_skip, rle_op
     rle_freeraw( out_hdr, out_raw, out_nraw );
 }
 
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

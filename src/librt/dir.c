@@ -283,3 +283,13 @@ rt_db_lookup_internal (
     *dpp = dp;
     return (ip -> idb_type);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

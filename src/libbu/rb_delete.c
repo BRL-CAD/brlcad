@@ -206,3 +206,13 @@ void bu_rb_delete (bu_rb_tree *tree, int order)
     bu_rb_free_package(package);
     bu_free((genptr_t) node, "node list");
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

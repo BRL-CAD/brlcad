@@ -270,3 +270,13 @@ rt_nurb_c_xsplit(struct edge_g_cnurb *crv, fastf_t param)
 	BU_LIST_APPEND( &crv1->l, &crv2->l );
 	return crv1;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.1  2004/05/20 14:50:01  morrison
+ * Sources that are external to BRL-CAD are moved from the top level to src/other/.
+ *
  * Revision 11.2  1995/06/21 03:46:46  gwyn
  * Eliminated trailing blanks.
  * ospeed was no longer being used.

@@ -1235,3 +1235,12 @@ proc comb_handle_trace {id name1 name2 op} {
 #proc load_material { id } {
 #    global comb_control
 #}
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

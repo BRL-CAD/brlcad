@@ -458,3 +458,13 @@ f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   return TCL_OK;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

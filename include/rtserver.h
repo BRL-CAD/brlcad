@@ -92,3 +92,13 @@ extern struct rtserver_job *rts_get_rtserver_job();
 extern struct xray *rts_get_xray();
 
 extern int get_max_working_threads();
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

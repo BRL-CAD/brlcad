@@ -100,3 +100,13 @@ interpolate_data()
 	pl_color( stdout, 200, 200, 50 );
 	rt_nurb_plot_snurb( stdout, srf3 );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -407,3 +407,13 @@ bu_hash_tbl_next( struct bu_hash_record *rec )
 	/* no more entries, return NULL */
 	return( (struct bu_hash_entry *)NULL );
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -3064,3 +3064,12 @@ Boston, MA 02111-1307, USA.
 
 cvs(1)
 
+
+# Local Variables:
+# mode: Perl
+# tab-width: 8
+# c-basic-offset: 4
+# perl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -771,3 +771,13 @@ fb_server_fb_help(struct pkg_conn *pcp, char *buf)
 	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -538,3 +538,12 @@ proc esolint_destroy { id } {
     set mged_gui($id,edit_info_pos) $match
     destroy .$id.edit_solid_int
 }
+
+# Local Variables:
+# mode: Tcl
+# tab-width: 8
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

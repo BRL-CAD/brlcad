@@ -86,3 +86,13 @@ struct solid  {
 	BU_LIST_NOT_HEAD(p1,hp);\
 	(p1)=BU_LIST_PNEXT(structure,p1)
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

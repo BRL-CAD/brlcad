@@ -1244,3 +1244,13 @@ track_mk_comb(
 	/* The internal representation will be freed */
 	return wdb_put_internal( wdbp, combname, &intern, 1.0);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

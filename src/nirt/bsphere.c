@@ -26,3 +26,13 @@ void set_diameter(struct rt_i *rtip)
     VSUB2(diag, rtip -> mdl_max, rtip -> mdl_min);
     bsphere_diameter = MAGNITUDE(diag);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

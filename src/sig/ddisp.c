@@ -359,3 +359,13 @@ printf("(%6.3f,%6.3f): angle = %7.3f (%6.2f), mag = %d\n",
 	fb_write( fbp, size/2, 255, mcolor, 1 );
 }
 #endif /* OLDANDCRUFTY */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

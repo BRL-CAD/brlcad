@@ -225,3 +225,13 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 	bu_free( (char *)crv, "crv[]");
 	bu_free( (char *)tmp, "tmp[]");
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

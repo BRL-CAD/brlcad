@@ -1174,3 +1174,13 @@ EXTERN int		TkUnsupported1Cmd _ANSI_ARGS_((ClientData clientData,
 # define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif  /* _TKINT */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
