@@ -55,7 +55,7 @@ int len;
 	static long	addr;
 
 	bzero( (char *)&rt_i, sizeof(rt_i) );
-	if( (rt_i.fd = open(filename, 0)) < 0 )  {
+	if( (rt_i.fp = fopen(filename, "r")) == NULL )  {
 		perror(filename);
 		return(-1);
 	}
@@ -63,17 +63,17 @@ int len;
 	rt_i.file = rt_strdup( filename );
 	buf[0] = '\0';
 
-	(void)lseek( rt_i.fd, 0L, 0 );
-	(void)read( rt_i.fd, (char *)&record, sizeof record );
+	addr = ftell(rt_i.fp);
+	(void)fread( (char *)&record, sizeof record, 1, rt_i.fp );
 	if( record.u_id != ID_IDENT )  {
 		rt_log("WARNING:  File is not a proper GED database\n");
 		rt_log("This database should be converted before further use.\n");
 	}
-	(void)lseek( rt_i.fd, 0L, 0 );
+	(void)fseek( rt_i.fp, addr, 0 );
 	while(1)  {
-		addr = lseek( rt_i.fd, 0L, 1 );
-		if( (unsigned)read( rt_i.fd, (char *)&record, sizeof record )
-				!= sizeof record )
+		addr = ftell(rt_i.fp);
+		if( fread( (char *)&record, sizeof record, 1, rt_i.fp ) != 1
+		    || feof(rt_i.fp) )
 			break;
 
 		if( record.u_id == ID_IDENT )  {
@@ -92,7 +92,7 @@ int len;
 			rt_dir_add( record.a.a_name, addr );
 
 			/* Skip remaining B type records.	*/
-			(void)lseek( rt_i.fd,
+			(void)fseek( rt_i.fp,
 				(long)(record.a.a_totlen) *
 				(long)(sizeof record),
 				1 );
@@ -110,14 +110,16 @@ int len;
 		if( record.u_id == ID_P_HEAD )  {
 			union record rec;
 			register int nrec;
-			register int j;
+
 			nrec = 1;
 			while(1) {
-				j = read( rt_i.fd, (char *)&rec, sizeof(rec) );
-				if( j != sizeof(rec) )
+				register int here;
+				here = ftell( rt_i.fp );
+				if( fread( (char *)&rec, sizeof(rec), 1,
+				    rt_i.fp ) != 1 )
 					break;
 				if( rec.u_id != ID_P_DATA )  {
-					lseek( rt_i.fd, -(sizeof(rec)), 1 );
+					fseek( rt_i.fp, here, 0 );
 					break;
 				}
 				nrec++;
@@ -134,7 +136,7 @@ int len;
 			/* Just skip over knots and control mesh */
 			j = (record.d.d_nknots + record.d.d_nctls) *
 				sizeof(union record);
-			lseek( rt_i.fd, j, 1 );
+			fseek( rt_i.fp, j, 1 );
 			rt_dir_add( record.p.p_name, addr );
 			continue;
 		}
@@ -147,7 +149,7 @@ int len;
 
 		rt_dir_add( record.c.c_name, addr );
 		/* Skip over member records */
-		(void)lseek( rt_i.fd,
+		(void)fseek( rt_i.fp,
 			(long)record.c.c_length * (long)sizeof record,
 			1 );
 	}

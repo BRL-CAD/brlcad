@@ -95,9 +95,9 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		register struct surf *spl;
 
 /***		db_getrec( dp, &rec, cur_gran++ ); ***/
-		i = read( rt_i.fd, (char *) &rec, sizeof(rec) );
-		if( i==0 )  break;
-		if( i != sizeof(rec) )
+		i = fread( (char *)&rec, sizeof(rec), 1, rt_i.fp );
+		if( feof(rt_i.fp) )  break;
+		if( i != 1 )
 			rt_bomb("spl_prep:  read error");
 		cur_gran++;
 
@@ -126,8 +126,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		}
 		fp = vp;
 /***		db_getmany( dp, (char *)vp, cur_gran, rec.d.d_nknots ); ***/
-		i = read( rt_i.fd, (char *)vp, nby );
-		if( i != nby )  rt_bomb("spl_prep:  knot read");
+		i = read( (char *)vp, nby, 1, rt_i.fp );
+		if( i != 1 )  rt_bomb("spl_prep:  knot read");
 		cur_gran += rec.d.d_nknots;
 
 		spl->spl_ku = (int *)malloc( spl->spl_kv_size[0]*sizeof(int) );
@@ -145,8 +145,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 			return;
 		}
 /***		db_getmany( dp, (char *)spl->spl_mesh, cur_gran, rec.d.d_nctls ); ***/
-		i = read( rt_i.fd, (char *)spl->spl_mesh, nby );
-		if( i != nby )  rt_bomb("spl_prep:  knot read");
+		i = fread( (char *)spl->spl_mesh, nby, 1, rt_i.fp );
+		if( i != 1 )  rt_bomb("spl_prep:  knot read");
 		cur_gran += rec.d.d_nctls;
 
 		/* Transform all the control points */

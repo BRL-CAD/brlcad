@@ -340,8 +340,8 @@ struct mater_info *materp;
 	/*
 	 * Load the first record of the object into local record buffer
 	 */
-	if( lseek( rt_i.fd, dp->d_addr, 0 ) < 0 ||
-	    read( rt_i.fd, (char *)&rec, sizeof rec ) != sizeof rec )  {
+	if( fseek( rt_i.fp, dp->d_addr, 0 ) < 0 ||
+	    fread( (char *)&rec, sizeof rec, 1, rt_i.fp ) != 1 )  {
 		rt_log("rt_drawobj: %s record read error\n",
 			rt_path_str(pathpos) );
 		return(TREE_NULL);
@@ -443,7 +443,8 @@ struct mater_info *materp;
 	    (struct tree_list *)0 )
 		rt_bomb("rt_drawobj:  malloc failure\n");
 
-	if( read( rt_i.fd, (char *)members, i ) != i )  {
+	if( fread( (char *)members, sizeof(union record), rec.c.c_length,
+	    rt_i.fp ) != rec.c.c_length )  {
 		rt_log("rt_drawobj:  %s member read error\n",
 			rt_path_str(pathpos) );
 		return(TREE_NULL);

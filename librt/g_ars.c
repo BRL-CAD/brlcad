@@ -197,7 +197,7 @@ int npts;
 	base = fp;
 
 	while( npts > 0 )  {
-		if( read( rt_i.fd, (char *) &r, sizeof(r) ) != sizeof(r) )
+		if( fread( (char *)&r, sizeof(r), 1, rt_i.fp ) != 1 )
 			rt_bomb("ars.c/rd_curve():  read error");
 
 		if( r.b.b_id != ID_ARS_B )  {

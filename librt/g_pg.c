@@ -63,9 +63,10 @@ struct solidrec *sp;
 	register int	i;
 
 	for( ;; )  {
-		i = read( rt_i.fd, (char *) &rec, sizeof(rec) );
-		if( i == 0 )  break;
-		if( i != sizeof(rec) )
+		i = fread( (char *)&rec, sizeof(rec), 1, rt_i.fp );
+		if( feof(rt_i.fp) )
+			break;
+		if( i != 1 )
 			rt_bomb("pg_prep():  read error");
 		if( rec.u_id != ID_P_DATA )  break;
 		if( rec.q.q_count != 3 )  {
