@@ -276,12 +276,12 @@ struct bu_vls *overlay_vls;
 	sprintf(cent_x, "%.3f", -toViewcenter[MDX]*base2local);
 	sprintf(cent_y, "%.3f", -toViewcenter[MDY]*base2local);
 	sprintf(cent_z, "%.3f", -toViewcenter[MDZ]*base2local);
-	bu_vls_printf(&vls, "%s %s %s", cent_x, cent_y, cent_z);
+	bu_vls_printf(&vls, "cent=(%s %s %s)", cent_x, cent_y, cent_z);
 	Tcl_SetVar(interp, bu_vls_addr(&center_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 
-	sprintf(size, "%.3f", VIEWSIZE*base2local);
+	sprintf(size, "sz=%.3f", VIEWSIZE*base2local);
 	Tcl_SetVar(interp, bu_vls_addr(&size_name),
 		    size, TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
@@ -290,7 +290,7 @@ struct bu_vls *overlay_vls;
 		    (char *)rt_units_string(dbip->dbi_local2base),
 		    TCL_GLOBAL_ONLY);
 
-	bu_vls_printf(&vls, "Azim: %3.2f  Elev: %3.2f  Twist: %3.2f",
+	bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f",
 		      curr_dm_list->s_info->azimuth,
 		      curr_dm_list->s_info->elevation,
 		      curr_dm_list->s_info->twist);
@@ -302,7 +302,7 @@ struct bu_vls *overlay_vls;
 	sprintf(ang_y, "%.2f", rate_rotate[Y]);
 	sprintf(ang_z, "%.2f", rate_rotate[Z]);
 
-	bu_vls_printf(&vls, "ang(%s %s %s)", ang_x, ang_y, ang_z);
+	bu_vls_printf(&vls, "ang=(%s %s %s)", ang_x, ang_y, ang_z);
 	Tcl_SetVar(interp, bu_vls_addr(&ang_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
