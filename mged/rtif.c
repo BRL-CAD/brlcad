@@ -469,6 +469,7 @@ char	**argv;
 	*vp++ = "rt";
 	*vp++ = "-s50";
 	*vp++ = "-M";
+	*vp++ = "-v60";		/* Reduced RT logging when run interactively */
 	if( mged_variables->mv_perspective > 0 )  {
 		(void)sprintf(pstring, "-p%g", mged_variables->mv_perspective);
 		*vp++ = pstring;
@@ -751,6 +752,10 @@ register char *p1, *suff;
 
 /*
  *			F _ S A V E V I E W
+ *
+ *  Create a shell script to ray-trace this view.
+ *  Any arguments to this command are passed as arguments to RT
+ *  in the generated shell script
  */
 int
 f_saveview(clientData, interp, argc, argv)
@@ -783,7 +788,8 @@ char	**argv;
 
 	base = basename( argv[1], ".sh" );
 	(void)chmod( argv[1], 0755 );	/* executable */
-	(void)fprintf(fp, "#!/bin/sh\nrt -M -v60 ");
+	/* Do not specify -v option to rt; batch jobs must print everything. -Mike */
+	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
 	if( mged_variables->mv_perspective > 0 )
 		(void)fprintf(fp, "-p%g", mged_variables->mv_perspective);
 	for( i=2; i < argc; i++ )
