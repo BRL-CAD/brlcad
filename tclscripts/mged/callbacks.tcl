@@ -81,7 +81,11 @@ proc begin_edit_callback {} {
 # to the solid/object being edited.
 #
 proc active_edit_callback {} {
-    esolint_update
+    global mged_display
+
+    if {$mged_display(state) == "SOL EDIT"} {
+	esolint_update
+    }
 }
 
 ## - end_edit_callback
