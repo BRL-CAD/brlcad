@@ -14,7 +14,7 @@
 static
 char	sccsTag[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/moss/src/fbed/s.empty.c";
 #endif
-#if defined( BSD ) || defined( cray )
+#if defined( BSD ) || defined( cray ) || defined( sun )
 #include <sys/types.h>
 #include <sys/time.h>
 #endif
