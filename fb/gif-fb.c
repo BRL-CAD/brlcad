@@ -258,7 +258,7 @@ static int	step[5] = { 8, 8, 4, 2, 1 };
 static int	row, col;		/* current pixel coordinates */
 static int	pass;			/* current pass */
 static int	stop;			/* final pass + 1 */
-static RGBpixel	*pixbuf;		/* malloc()ed scan line buffer */
+static unsigned char	*pixbuf;		/* malloc()ed scan line buffer */
 
 
 static void
@@ -271,9 +271,9 @@ PutPixel( value )
 	if ( value > entries )
 		Fatal( "Decoded color index %d exceeds color map size", value );
 
-	pixbuf[col][RED] = cmap[value][RED];	/* stuff pixel */
-	pixbuf[col][GRN] = cmap[value][GRN];
-	pixbuf[col][BLU] = cmap[value][BLU];
+	pixbuf[col*3+RED] = cmap[value][RED];	/* stuff pixel */
+	pixbuf[col*3+GRN] = cmap[value][GRN];
+	pixbuf[col*3+BLU] = cmap[value][BLU];
 
 	if ( ++col == right )
 		{
@@ -779,7 +779,7 @@ main( argc, argv )
 
 	/* Open frame buffer for unbuffered output. */
 
-	if ( (pixbuf = (RGBpixel *)malloc( width * sizeof(RGBpixel) )) == NULL )
+	if ( (pixbuf = (unsigned char *)malloc( width * sizeof(RGBpixel) )) == NULL )
 		Fatal( "Insufficient memory for scan line buffer" );
 
 	if ( (fbp = fb_open( fb_file, width, height )) == FBIO_NULL )
@@ -829,7 +829,7 @@ main( argc, argv )
 	{
 		register int i;
 		for( i=0 ; i < width; i++ )  {
-			COPYRGB(pixbuf[i], g_cmap[background]);
+			COPYRGB(&pixbuf[i*3], g_cmap[background]);
 		}
 	}
 

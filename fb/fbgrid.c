@@ -21,14 +21,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-extern char	*malloc();
-
-static RGBpixel	*white_line, *grey_line, *dark_line;
+static unsigned char	*white_line, *grey_line, *dark_line;
 static FBIO	*fbp;
 static char	*framebuffer = NULL;
 
@@ -118,13 +115,13 @@ int argc; char **argv;
 	fbheight = fb_getheight( fbp );
 
 	/* Initialize the color lines */
-	white_line = (RGBpixel *)malloc( fbwidth * sizeof(RGBpixel) );
-	grey_line  = (RGBpixel *)malloc( fbwidth * sizeof(RGBpixel) );
-	dark_line  = (RGBpixel *)malloc( fbwidth * sizeof(RGBpixel) );
+	white_line = (unsigned char *)malloc( fbwidth * sizeof(RGBpixel) );
+	grey_line  = (unsigned char *)malloc( fbwidth * sizeof(RGBpixel) );
+	dark_line  = (unsigned char *)malloc( fbwidth * sizeof(RGBpixel) );
 	for( i = 0; i < fbwidth; i++ ) {
-		white_line[i][RED] = white_line[i][GRN] = white_line[i][BLU] = 255;
-		grey_line[i][RED] = grey_line[i][GRN] = grey_line[i][BLU] = 128;
-		dark_line[i][RED] = dark_line[i][GRN] = dark_line[i][BLU] = 64;
+		white_line[3*i+RED] = white_line[3*i+GRN] = white_line[3*i+BLU] = 255;
+		grey_line[3*i+RED] = grey_line[3*i+GRN] = grey_line[3*i+BLU] = 128;
+		dark_line[3*i+RED] = dark_line[3*i+GRN] = dark_line[3*i+BLU] = 64;
 	}
 
 	if( clear )
@@ -152,7 +149,7 @@ int argc; char **argv;
 void
 grid( fbp, line, spacing )
 FBIO *fbp;
-RGBpixel line[];
+unsigned char line[];
 int	spacing;
 {
 	int	x, y;
@@ -160,12 +157,7 @@ int	spacing;
 	for( y = 0; y < fbheight; y += spacing )
 		fb_write( fbp, 0, y, line, fbwidth );
 	for( x = 0; x < fbwidth; x += spacing ) {
-#if 0
-		for( y = 0; y < fbheight; y++ )
-			fb_write( fbp, x, y, line[0], 1 );
-#else
 		fb_writerect( fbp, x, 0, 1, fbheight, line );
-#endif
 	}
 }
 

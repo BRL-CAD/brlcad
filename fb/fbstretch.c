@@ -128,8 +128,8 @@ static int	src_width = 0,
 static int	dst_width = 0,
 		dst_height = 0;		/* destination image size */
 static RGBpixel	bg = { 0, 0, 0 };	/* background */
-static RGBpixel	*src_buf;		/* calloc()ed input scan line buffer */
-static RGBpixel	*dst_buf;		/* calloc()ed output scan line buffer */
+static unsigned char	*src_buf;		/* calloc()ed input scan line buffer */
+static unsigned char	*dst_buf;		/* calloc()ed output scan line buffer */
 
 
 static char *
@@ -461,13 +461,13 @@ main( argc, argv )
 	   at some future time offsets are supported, that would no longer hold.
 	   calloc is used instead of malloc just to avoid integer overflow. */
 
-	if ( (src_buf = (RGBpixel *)calloc(
+	if ( (src_buf = (unsigned char *)calloc(
 		       y_compress ? (int)(1 / y_scale + 1 - EPSILON) * src_width
 				  : src_width,
 					    sizeof(RGBpixel)
 					  )
 	     ) == NULL
-	  || (dst_buf = (RGBpixel *)calloc(
+	  || (dst_buf = (unsigned char *)calloc(
 		       y_compress ? dst_width
 				  : (int)(y_scale + 1 - EPSILON) * dst_width,
 					    sizeof(RGBpixel)
@@ -476,8 +476,8 @@ main( argc, argv )
 	   )
 		Fatal( "Insufficient memory for scan line buffers." );
 
-#define	Src( x, y )	src_buf[(x) + src_width * (y)]
-#define	Dst( x, y )	dst_buf[(x) + dst_width * (y)]
+#define	Src( x, y )	(&src_buf[(x) + src_width * (y) * sizeof(RGBpixel)])
+#define	Dst( x, y )	(&dst_buf[(x) + dst_width * (y) * sizeof(RGBpixel)])
 
 	/* Do the horizontal/vertical expansion/compression.  I wanted to merge
 	   these but didn't like the extra bookkeeping overhead in the loops. */
@@ -539,13 +539,13 @@ main( argc, argv )
 			for ( ; dst_y < dst_height; ++dst_y )
 #if __STDC__
 				if ( fb_write( dst_fbp, 0, dst_y,
-					       &Dst( 0, 0 ),
+					       Dst( 0, 0 ),
 					       dst_width
 					     ) == -1
 				   )
 #else
 				if ( fb_write( dst_fbp, 0, dst_y,
-					       (RGBpixel *)Dst( 0, 0 ),
+					       (unsigned char *)Dst( 0, 0 ),
 					       dst_width
 					     ) == -1
 				   )
@@ -564,13 +564,13 @@ main( argc, argv )
 		for ( src_y = bot_y; src_y < top_y; ++src_y )
 #if __STDC__
 			if ( fb_read( src_fbp, 0, src_y,
-				      &Src( 0, src_y - bot_y ),
+				      Src( 0, src_y - bot_y ),
 				      src_width
 				    ) == -1
 			   )
 #else
 			if ( fb_read( src_fbp, 0, src_y,
-				      (RGBpixel *)Src( 0, src_y - bot_y ),
+				      (unsigned char *)Src( 0, src_y - bot_y ),
 				      src_width
 				    ) == -1
 			   )
@@ -593,13 +593,13 @@ main( argc, argv )
 
 #if __STDC__
 			if ( fb_write( dst_fbp, 0, dst_y,
-				       &Dst( 0, 0 ),
+				       Dst( 0, 0 ),
 				       dst_width
 				     ) == -1
 			   )
 #else
 			if ( fb_write( dst_fbp, 0, dst_y,
-				       (RGBpixel *)Dst( 0, 0 ),
+				       (unsigned char *)Dst( 0, 0 ),
 				       dst_width
 				     ) == -1
 			   )
@@ -691,12 +691,12 @@ main( argc, argv )
 		/* Fill input scan line buffer. */
 
 #if __STDC__
-		if ( fb_read( src_fbp, 0, src_y, &Src( 0, 0 ),
+		if ( fb_read( src_fbp, 0, src_y, Src( 0, 0 ),
 			      src_width
 			    ) == -1
 		   )
 #else
-		if ( fb_read( src_fbp, 0, src_y, (RGBpixel *)Src( 0, 0 ),
+		if ( fb_read( src_fbp, 0, src_y, (unsigned char *)Src( 0, 0 ),
 			      src_width
 			    ) == -1
 		   )
@@ -720,13 +720,13 @@ main( argc, argv )
 			for ( dst_y = top_y; --dst_y >= bot_y; )
 #if __STDC__
 				if ( fb_write( dst_fbp, 0, dst_y,
-					       &Dst( 0, dst_y - bot_y ),
+					       Dst( 0, dst_y - bot_y ),
 					       dst_width
 					     ) == -1
 				   )
 #else
 				if ( fb_write( dst_fbp, 0, dst_y,
-					       (RGBpixel *)Dst( 0, dst_y - bot_y
+					       (unsigned char *)Dst( 0, dst_y - bot_y
 							      ),
 					       dst_width
 					     ) == -1
@@ -822,13 +822,13 @@ main( argc, argv )
 			for ( ; dst_y < dst_height; ++dst_y )
 #if __STDC__
 				if ( fb_write( dst_fbp, 0, dst_y,
-					       &Dst( 0, 0 ),
+					       Dst( 0, 0 ),
 					       dst_width
 					     ) == -1
 				   )
 #else
 				if ( fb_write( dst_fbp, 0, dst_y,
-					       (RGBpixel *)Dst( 0, 0 ),
+					       (unsigned char *)Dst( 0, 0 ),
 					       dst_width
 					     ) == -1
 				   )
@@ -847,13 +847,13 @@ main( argc, argv )
 		for ( src_y = bot_y; src_y < top_y; ++src_y )
 #if __STDC__
 			if ( fb_read( src_fbp, 0, src_y,
-				      &Src( 0, src_y - bot_y ),
+				      Src( 0, src_y - bot_y ),
 				      src_width
 				    ) == -1
 			   )
 #else
 			if ( fb_read( src_fbp, 0, src_y,
-				      (RGBpixel *)Src( 0, src_y - bot_y ),
+				      (unsigned char *)Src( 0, src_y - bot_y ),
 				      src_width
 				    ) == -1
 			   )
@@ -868,13 +868,13 @@ main( argc, argv )
 
 #if __STDC__
 			if ( fb_write( dst_fbp, 0, dst_y,
-				       &Dst( 0, 0 ),
+				       Dst( 0, 0 ),
 				       dst_width
 				     ) == -1
 			   )
 #else
 			if ( fb_write( dst_fbp, 0, dst_y,
-				       (RGBpixel *)Dst( 0, 0 ),
+				       (unsigned char *)Dst( 0, 0 ),
 				       dst_width
 				     ) == -1
 			   )
@@ -963,12 +963,12 @@ main( argc, argv )
 		/* Fill input scan line buffer. */
 
 #if __STDC__
-		if ( fb_read( src_fbp, 0, src_y, &Src( 0, 0 ),
+		if ( fb_read( src_fbp, 0, src_y, Src( 0, 0 ),
 			      src_width
 			    ) == -1
 		   )
 #else
-		if ( fb_read( src_fbp, 0, src_y, (RGBpixel *)Src( 0, 0 ),
+		if ( fb_read( src_fbp, 0, src_y, (unsigned char *)Src( 0, 0 ),
 			      src_width
 			    ) == -1
 		   )
@@ -984,13 +984,13 @@ main( argc, argv )
 			for ( dst_y = top_y; --dst_y >= bot_y; )
 #if __STDC__
 				if ( fb_write( dst_fbp, 0, dst_y,
-					       &Dst( 0, dst_y - bot_y ),
+					       Dst( 0, dst_y - bot_y ),
 					       dst_width
 					     ) == -1
 				   )
 #else
 				if ( fb_write( dst_fbp, 0, dst_y,
-					       (RGBpixel *)Dst( 0, dst_y - bot_y
+					       (unsigned char *)Dst( 0, dst_y - bot_y
 							      ),
 					       dst_width
 					     ) == -1

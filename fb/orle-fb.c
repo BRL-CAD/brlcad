@@ -58,8 +58,8 @@ int	argc;
 char	*argv[];
 	{	register int	y;
 		register int	lines_per_buffer;
-		register RGBpixel *scanbuf;
-		static RGBpixel	bg_scan[1025];
+		register unsigned char *scanbuf;
+		static RGBpixel	bg_scan[8192+1];
 		static ColorMap	cmap;
 		int		get_flags;
 
@@ -103,7 +103,7 @@ char	*argv[];
 		pixels_per_buffer = width * 64;
 	scanbuf = RGBPIXEL_NULL;
 	while( scanbuf == RGBPIXEL_NULL && pixels_per_buffer > 0 )  {
-		scanbuf = (RGBpixel *)malloc(pixels_per_buffer*sizeof(RGBpixel));
+		scanbuf = (unsigned char *)malloc(pixels_per_buffer*sizeof(RGBpixel));
 		if( scanbuf == RGBPIXEL_NULL )  {
 			pixels_per_buffer >>= 1;
 			continue;
@@ -190,7 +190,7 @@ char	*argv[];
 		}
 		if( y >= ypos && y <= ymax )  {
 			if( rle_decode_ln( fp,
-			    scanbuf[(y%lines_per_buffer)*width] ) == -1 )
+			    scanbuf[(y%lines_per_buffer)*width*sizeof(RGBpixel)] ) == -1 )
 				break;		/* not return */
 			dirty_flag = 1;
 		}

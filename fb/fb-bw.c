@@ -32,8 +32,10 @@ extern int	optind;
 
 FBIO	*fbp;
 
-static RGBpixel		inbuf[2048];
-static unsigned char	obuf[2048];
+#define LINELEN		8192
+
+static unsigned char	inbuf[LINELEN*3];
+static unsigned char	obuf[LINELEN];
 
 int	height;
 int	width;
@@ -139,8 +141,8 @@ int argc; char **argv;
 		else
 			fb_read( fbp, scr_xoff, y, inbuf, xin );
 		for( x = 0; x < xin; x++ ) {
-			obuf[x] = (((int)inbuf[x][RED]) + ((int)inbuf[x][GRN])
-				+ ((int)inbuf[x][BLU])) / 3;
+			obuf[x] = (((int)inbuf[3*x+RED]) + ((int)inbuf[3*x+GRN])
+				+ ((int)inbuf[3*x+BLU])) / 3;
 		}
 		fwrite( &obuf[0], sizeof( char ), xin, outfp );
 	}

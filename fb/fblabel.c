@@ -21,19 +21,11 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #include "vfont-if.h"
 
 #define FONTBUFSZ 200
-
-extern char	*malloc();
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
-#define MAX_LINE	2048		/* Max pixels/line */
-static RGBpixel scanline[MAX_LINE];	/* 1 scanline pixel buffer */
-static int scanbytes;			/* # of bytes of scanline */
 
 static char	*framebuffer = NULL;
 static char	*font1 = NULL;
@@ -280,7 +272,7 @@ int x, y;
 			 resbuf,
 			 totwid + 4
 		     );
-		 fb_read( fbp, x, y - vdp->vd_down + i, fbline, totwid+3);
+		 fb_read( fbp, x, y - vdp->vd_down + i, (unsigned char *)fbline, totwid+3);
 		 for (j = 0; j < (totwid + 3) - 1; j++)  {
 			 register int	tmp;
 			 /* EDITOR'S NOTE : do not rearrange this code,
@@ -301,7 +293,7 @@ int x, y;
 			     (int)(pixcolor[BLU]*resbuf[j]+(1-resbuf[j])*tmp);
 			 fbline[j][BLU] &= 0377;
 		}
-		if( fb_write( fbp, x, y-vdp->vd_down+i, fbline, totwid+3 ) < totwid+3 )  {
+		if( fb_write( fbp, x, y-vdp->vd_down+i, (unsigned char *)fbline, totwid+3 ) < totwid+3 )  {
 			fprintf(stderr, "fblabel: pixel write error\n");
 			exit(1);
 		}

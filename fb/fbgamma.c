@@ -32,7 +32,8 @@ void	checkgamma();
 
 unsigned char rampval[10] = { 255, 128, 64, 32, 16, 8, 4, 2, 1, 0 };
 int x, y, scr_width, scr_height, patch_width, patch_height;
-char *altline, *line;
+unsigned char	*altline;
+unsigned char	*line;
 char *framebuffer = (char *)NULL;
 int image = 0;
 
@@ -81,11 +82,11 @@ FBIO *fb;
 	patch_width = scr_width / 8;
 	patch_height = scr_height / 14;
 
-	if ((line = malloc(scr_width*3)) == (char *)NULL) {
+	if ((line = (unsigned char *) malloc(scr_width*3)) == (unsigned char *)NULL) {
 		exit(-1);
 	}
 
-	if ((altline = malloc(scr_width*3)) == (char *)NULL) {
+	if ((altline = (unsigned char *) malloc(scr_width*3)) == (unsigned char *)NULL) {
 		exit(-1);
 	} else {
 		bzero(altline, scr_width*3);

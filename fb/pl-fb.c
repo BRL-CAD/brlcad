@@ -263,7 +263,7 @@ struct band  {
 STATIC struct band	*band;		/* array of descriptor lists */
 STATIC struct band	*bandEnd;
 
-STATIC RGBpixel	*buffer;		/* ptr to active band buffer */
+STATIC unsigned char	*buffer;		/* ptr to active band buffer */
 STATIC long	buffersize;		/* active band buffer bytes */
 STATIC short	ystart = 0;		/* active band starting scan */
 STATIC int	debug  = 0;
@@ -490,7 +490,7 @@ char	**argv;
 	deltao2 = Nscanlines/2;
 
 	buffersize = lines_per_band*Npixels*sizeof(RGBpixel);
-	if( (buffer = (RGBpixel *)malloc(buffersize)) == RGBPIXEL_NULL)  {
+	if( (buffer = (unsigned char *)malloc(buffersize)) == RGBPIXEL_NULL)  {
 		fprintf(stderr,"pl-fb:  malloc error\n");
 		exit(1);
 	}
@@ -1337,10 +1337,10 @@ register struct band *np;	/* *np -> next band 1st descr */
 		if( immediate )  {
 			fb_write( fbp, vp->pixel.x, dy, vp->col, 1 );
 		}  else  {
-			register RGBpixel *pp;
+			register unsigned char *pp;
 
-			pp = (RGBpixel *)buffer[(dy*Npixels) + vp->pixel.x];
-			COPYRGB( *pp, vp->col );
+			pp = (unsigned char *)&buffer[(dy*Npixels) + vp->pixel.x];
+			COPYRGB( pp, vp->col );
 		}
 
 		if ( vp->major-- == 0 ) { /* done! */

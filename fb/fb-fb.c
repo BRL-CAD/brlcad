@@ -26,7 +26,7 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
-static RGBpixel *scanline;		/* 1 scanline pixel buffer */
+static unsigned char *scanline;		/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
 static int	scanpix;		/* # of pixels of scanline */
 static int	streamline;		/* # scanlines to do at once */
@@ -108,7 +108,7 @@ char **argv;
 	scanpix = scr_width;			/* # pixels on scanline */
 	streamline = 8;
 	scanbytes = scanpix * streamline * sizeof(RGBpixel);
-	if( (scanline = (RGBpixel *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
+	if( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
 		fprintf(stderr,
 			"fb-fb:  malloc(%d) failure for scanline buffer\n",
 			scanbytes);

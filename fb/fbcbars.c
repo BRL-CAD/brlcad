@@ -60,7 +60,7 @@ extern char	*optarg;
 extern int	optind;
 
 #define MAX_LINE	(8*1024)	/* Max pixels/line */
-static RGBpixel scanline[MAX_LINE];	/* 1 scanline pixel buffer */
+static unsigned char scanline[3*MAX_LINE];	/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 
 static char	*framebuffer = NULL;
@@ -224,7 +224,7 @@ char **argv;
 	switch(mode)  {
 	case M_FCC:
 		for( x=0; x<scr_width; x++) {
-			COPYRGB( scanline[x], fcc_all[x*8/scr_width] );
+			COPYRGB( &scanline[3*x], fcc_all[x*8/scr_width] );
 		}
 		for( y=0; y<scr_height; y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
@@ -236,13 +236,13 @@ char **argv;
 		 *  then build the top line, and fill the rest of the screen.
 		 */
 		for( x=0; x<scr_width; x++) {
-			COPYRGB( scanline[x], botpart[x*5/scr_width] );
+			COPYRGB( &scanline[3*x], botpart[x*5/scr_width] );
 		}
 		for( y=0; y<(scr_height/4); y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
 
 		for( x=0; x<scr_width; x++)  {
-			COPYRGB( scanline[x], eia_top[x*7/scr_width] );
+			COPYRGB( &scanline[3*x], eia_top[x*7/scr_width] );
 		}
 		for( ; y<scr_height; y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
@@ -256,19 +256,19 @@ char **argv;
 		 *  (Convert upper 1/4 of EIA -I white Q black to smpte)
 		 */
 		for( x=0; x<scr_width; x++) {
-			COPYRGB( scanline[x], botpart[x*5/scr_width] );
+			COPYRGB( &scanline[3*x], botpart[x*5/scr_width] );
 		}
 		for( y=0; y<(scr_height*3/16); y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
 
 		for( x=0; x<scr_width; x++) {
-			COPYRGB( scanline[x], smpte_middle[x*7/scr_width] );
+			COPYRGB( &scanline[3*x], smpte_middle[x*7/scr_width] );
 		}
 		for( ; y<(scr_height*4/16); y++)
 			fb_write( fbp, 0, y, scanline, scr_width );
 
 		for( x=0; x<scr_width; x++)  {
-			COPYRGB( scanline[x], eia_top[x*7/scr_width] );
+			COPYRGB( &scanline[3*x], eia_top[x*7/scr_width] );
 		}
 		for( ; y<scr_height; y++)
 			fb_write( fbp, 0, y, scanline, scr_width );

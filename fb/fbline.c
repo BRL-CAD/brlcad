@@ -66,6 +66,7 @@ void		edgelimit(), BuildStr(), Raster();
 
 static char usage[] = "\
 Usage: fbline [-h -c ] [-F framebuffer]\n\
+	[-W screen_width] [-N screen_height]\n\
 	[-r red] [-g green] [-b blue] x1 y1 x2 y2\n";
 
 /*
@@ -77,11 +78,19 @@ register char **argv;
 
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hcF:r:g:b:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hW:w:N:n:cF:r:g:b:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
 			screen_height = screen_width = 1024;
+			break;
+		case 'W':
+		case 'w':
+			screen_width = atoi(optarg);
+			break;
+		case 'N':
+		case 'n':
+			screen_height = atoi(optarg);
 			break;
 		case 'c':
 			clear = 1;

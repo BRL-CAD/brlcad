@@ -21,14 +21,10 @@ static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #include "rle.h"
-
-extern int	optind;
-extern char	*optarg;
-extern char	*getenv();
-
-extern char	*malloc();
 
 static FILE	*infp;
 static char	*infile;
@@ -38,7 +34,7 @@ static int	override_background;
 
 unsigned char	*rows[4];		/* Character pointers for rle_getrow */
 	
-static RGBpixel	*scan_buf;		/* single scanline buffer */
+static unsigned char	*scan_buf;		/* single scanline buffer */
 static ColorMap	cmap;
 
 static char	*framebuffer = (char *)0;
@@ -257,7 +253,7 @@ char ** argv;
 		goto done;
 	}
 
-	scan_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * screen_width );
+	scan_buf = (unsigned char *)malloc( sizeof(RGBpixel) * screen_width );
 
 	for( i=0; i < ncolors; i++ )
 		rows[i] = (unsigned char *)malloc(file_width);
@@ -338,7 +334,7 @@ char ** argv;
 				*pp++ = cmap.cm_blue[*bp++]>>8;
 			}
 		}
-		fb_write( fbp, screen_xbase, i, scan_buf, screen_xlen );
+		if( fb_write( fbp, screen_xbase, i, scan_buf, screen_xlen ) != screen_xlen )  break;
 	}
 done:
 	fb_close( fbp );

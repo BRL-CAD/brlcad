@@ -21,10 +21,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 char *Usage="[-h] [-F framebuffer]\n\
 	[-s squareframesize] [-w frame_width] [-n frame_height]\n";
@@ -41,7 +40,7 @@ char **argv;
 	int	xsize, ysize;
 	int		 len;
 	char	*framebuffer = (char *)NULL;
-	register RGBpixel *line;
+	register unsigned char *line;
 	static RGBpixel white = { 255, 255, 255 };
 	static RGBpixel red = { 255, 0, 0 };
 	static RGBpixel green = { 0, 255, 0 };
@@ -96,12 +95,12 @@ char **argv;
 
 	/* malloc buffer for pixel lines */
 	len = (xsize > ysize) ? xsize : ysize;
-	if( (line = (RGBpixel *)malloc(len*sizeof(RGBpixel))) == (RGBpixel *)0 )  {
+	if( (line = (unsigned char *)malloc(len*sizeof(RGBpixel))) == RGBPIXEL_NULL )  {
 		fprintf(stderr, "fbframe:  malloc failure\n");
 		return(1);
 	}
 
-#define FLOOD(col)	{ for( x=len-1; x >= 0; x-- ) {COPYRGB(line[x], col);} }
+#define FLOOD(col)	{ for( x=len-1; x >= 0; x-- ) {COPYRGB(&line[3*x], col);} }
 
 	/*
 	 * Red:		(   0 -> 510,   0	 )

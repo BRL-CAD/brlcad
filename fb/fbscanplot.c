@@ -20,15 +20,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
-RGBpixel	*scan;		/* Scanline to be examined */
-RGBpixel	*outline;	/* output line buffer */
-RGBpixel	*backgnd;	/* copy of line to be overlaid */
+unsigned char	*scan;		/* Scanline to be examined */
+unsigned char	*outline;	/* output line buffer */
+unsigned char	*backgnd;	/* copy of line to be overlaid */
 
 int	yline;			/* line to plot */
 int	scr_width = 0;		/* framebuffer width */
@@ -109,21 +107,21 @@ int argc; char **argv;
 		fboutp = fbp;
 
 	/* Allocate the buffers */
-	scan = (RGBpixel *)malloc( (scr_width+2) * sizeof(RGBpixel) );
-	outline = (RGBpixel *)malloc( (scr_width+2) * sizeof(RGBpixel) );
-	backgnd = (RGBpixel *)malloc( (scr_width+2) * sizeof(RGBpixel) );
+	scan = (unsigned char *)malloc( (scr_width+2) * sizeof(RGBpixel) );
+	outline = (unsigned char *)malloc( (scr_width+2) * sizeof(RGBpixel) );
+	backgnd = (unsigned char *)malloc( (scr_width+2) * sizeof(RGBpixel) );
 
 	/* Read the scanline to be examined */
-	if( fb_read( fbp, 0, yline, &scan[1][RED], scr_width ) != scr_width )
+	if( fb_read( fbp, 0, yline, scan+3, scr_width ) != scr_width )
 		exit(4);
 
 	/* extend the edges with one duplicate pixel each way */
-	scan[0][RED] = scan[1][RED];
-	scan[0][GRN] = scan[1][GRN];
-	scan[0][BLU] = scan[1][BLU];
-	scan[scr_width+1][RED] = scan[scr_width][RED];
-	scan[scr_width+1][GRN] = scan[scr_width][GRN];
-	scan[scr_width+1][BLU] = scan[scr_width][BLU];
+	scan[0*3+RED] = scan[1*3+RED];
+	scan[0*3+GRN] = scan[1*3+GRN];
+	scan[0*3+BLU] = scan[1*3+BLU];
+	scan[(scr_width+1)*3+RED] = scan[scr_width*3+RED];
+	scan[(scr_width+1)*3+GRN] = scan[scr_width*3+GRN];
+	scan[(scr_width+1)*3+BLU] = scan[scr_width*3+BLU];
 
 	/* figure out where to put it on the screen */
 	if( fb_overlay == 0 && fboutp == fbp && yline < scr_height/2 ) {
@@ -136,9 +134,9 @@ int argc; char **argv;
 	if( reverse ) {
 		/* Output the negative of the chosen line */
 		for( x = 0; x < scr_width; x++ ) {
-			outline[x][RED] = 255 - scan[x+1][RED];
-			outline[x][GRN] = 255 - scan[x+1][GRN];
-			outline[x][BLU] = 255 - scan[x+1][BLU];
+			outline[x*3+RED] = 255 - scan[(x+1)*3+RED];
+			outline[x*3+GRN] = 255 - scan[(x+1)*3+GRN];
+			outline[x*3+BLU] = 255 - scan[(x+1)*3+BLU];
 		}
 		fb_write( fbp, 0, yline, outline, scr_width );
 	}
@@ -148,8 +146,8 @@ int argc; char **argv;
 		if( fb_overlay )
 			fb_read( fboutp, 0, y+yoffset, backgnd, scr_width );
 
-		ip = &scan[1][RED];
-		op = &outline[0][RED];
+		ip = &scan[1*3+RED];
+		op = &outline[0*3+RED];
 		for( x = 0; x < scr_width; x++, op += 3, ip += 3 ) {
 			if( y > (int)ip[RED] ) {
 				op[RED] = 0;
@@ -181,9 +179,9 @@ int argc; char **argv;
 			if( fb_overlay ) {
 				/* background */
 				if( op[RED] == 0 && op[GRN] == 0 && op[BLU] == 0 ) {
-					op[RED] = backgnd[x][RED];
-					op[GRN] = backgnd[x][GRN];
-					op[BLU] = backgnd[x][BLU];
+					op[RED] = backgnd[x*3+RED];
+					op[GRN] = backgnd[x*3+GRN];
+					op[BLU] = backgnd[x*3+BLU];
 				}
 			} else {
 				/* Grid lines */
@@ -207,7 +205,7 @@ int argc; char **argv;
 	if( verbose ) {
 		for( x = 0; x < scr_width; x++ )
 			printf( "%3d: %3d %3d %3d\n", x,
-			   scan[x+1][RED], scan[x+1][GRN], scan[x+1][BLU] );
+			   scan[(x+1)*3+RED], scan[(x+1)*3+GRN], scan[(x+1)*3+BLU] );
 	}
 
 	fb_close( fbp );

@@ -147,8 +147,8 @@ char	*argv[];
     int		x, y;		/* Cartesian coordinates of current pixel */
     int		X, Y;		/* Translated pixel */
     FBIO	*fbPtr;		/* Pointer to the frame-buffer file */
-    RGBpixel	*fbb;		/* Buffer for current line of frame buffer */
-    RGBpixel	*fbbPtr;	/* Pointer to within fbb */
+    unsigned char *fbb;		/* Buffer for current line of frame buffer */
+    unsigned char *fbbPtr;	/* Pointer to within fbb */
 
     int		(*Fill_Func)();
     int		Fill_Empty();
@@ -602,7 +602,7 @@ char	*argv[];
 	    break;
     }
 
-    if ((fbb = (RGBpixel *) malloc(fb_width * sizeof(RGBpixel))) == NULL)
+    if ((fbb = (unsigned char *) malloc(fb_width * sizeof(RGBpixel))) == NULL)
     {
 	(void) fputs("Ran out of memory\n", stderr);
 	(void) exit (1);
@@ -615,7 +615,7 @@ char	*argv[];
 	    fb_read(fbPtr, fb_x_loc, fb_y_loc + y, fbb, LineLength);
 
 	Y = y - unit_r;
-	for (x = 0, fbbPtr = fbb; x <  LineLength; x++, fbbPtr++)
+	for (x = 0, fbbPtr = fbb; x <  LineLength; x++, fbbPtr+=sizeof(RGBpixel))
 	{
 	    X = x + fb_x_loc - ctr_x;
 
@@ -623,7 +623,7 @@ char	*argv[];
 	    if ((rho = sqrt((double) (X * X) + (double) (Y * Y))) >  unit_r)
 	    {
 		if (! merge)
-		    COPYRGB(*fbbPtr, Color[C_BKGRND])
+		    COPYRGB(fbbPtr, Color[C_BKGRND])
 		continue;
 	    }
 
@@ -648,7 +648,7 @@ char	*argv[];
 	    if ((theta < arc_min) || (theta > arc_max))
 	    {
 		if (! merge)
-		    COPYRGB(*fbbPtr, Color[C_BKGRND])
+		    COPYRGB(fbbPtr, Color[C_BKGRND])
 		continue;
 	    }
 
@@ -664,18 +664,18 @@ char	*argv[];
 	    if (rho > npf_rho * unit_r)
 	    {
 		if (! merge)
-		    COPYRGB(*fbbPtr, Color[C_BKGRND])
+		    COPYRGB(fbbPtr, Color[C_BKGRND])
 	    }
 	    else
 	    {
 		(*Fill_Func)(fbbPtr, rho, npf_rho, unit_r, merge);
 
 		if (perimeter && (npf_rho - rho / unit_r < .02))
-		    COPYRGB(*fbbPtr, Color[C_PERIM])
+		    COPYRGB(fbbPtr, Color[C_PERIM])
 	    }
 
 	    if (draw_grid && OnGrid(theta, rho/unit_r))
-		COPYRGB(*fbbPtr, Color[C_BLACK])
+		COPYRGB(fbbPtr, Color[C_BLACK])
 	}
 	fb_write(fbPtr, fb_x_loc, fb_y_loc + y, fbb, LineLength);
     }
@@ -851,7 +851,7 @@ ArgCompat (Interior)
 
 Fill_Empty (fbbPtr, rho, npf_rho, unit_r, merge)
 
-RGBpixel	*fbbPtr;	/* Pointer to within fbb */
+unsigned char	*fbbPtr;	/* Pointer to within fbb */
 double		rho;		/* Radius of current pixel */
 double		npf_rho;	/* Value of function at this theta */
 int		unit_r;		/* Unit radius (in pixels) */
@@ -859,24 +859,24 @@ bool		merge;		/* Overlay onto current FB contents? */
 
 {
     if (! merge)
-	COPYRGB(*fbbPtr, Color[C_BKGRND])
+	COPYRGB(fbbPtr, Color[C_BKGRND])
 }
 
 Fill_Constant (fbbPtr, rho, npf_rho, unit_r, merge)
 
-RGBpixel	*fbbPtr;	/* Pointer to within fbb */
+unsigned char	*fbbPtr;	/* Pointer to within fbb */
 double		rho;		/* Radius of current pixel */
 double		npf_rho;	/* Value of function at this theta */
 int		unit_r;		/* Unit radius (in pixels) */
 bool		merge;		/* Overlay onto current FB contents? */
 
 {
-    COPYRGB(*fbbPtr, Color[C_INTERIOR])
+    COPYRGB(fbbPtr, Color[C_INTERIOR])
 }
 
 Fill_Ramp (fbbPtr, rho, npf_rho, unit_r, merge)
 
-RGBpixel	*fbbPtr;	/* Pointer to within fbb */
+unsigned char	*fbbPtr;	/* Pointer to within fbb */
 double		rho;		/* Radius of current pixel */
 double		npf_rho;	/* Value of function at this theta */
 int		unit_r;		/* Unit radius (in pixels) */
@@ -891,12 +891,12 @@ bool		merge;		/* Overlay onto current FB contents? */
 	255 * (1 - rho / unit_r);
     ThisPix[BLU] = ((double)Color[C_RAMP][BLU]) * rho / unit_r +
 	255 * (1 - rho / unit_r);
-    COPYRGB(*fbbPtr, ThisPix)
+    COPYRGB(fbbPtr, ThisPix)
 }
 
 Fill_Wedges (fbbPtr, rho, npf_rho, unit_r, merge)
 
-RGBpixel	*fbbPtr;	/* Pointer to within fbb */
+unsigned char	*fbbPtr;	/* Pointer to within fbb */
 double		rho;		/* Radius of current pixel */
 double		npf_rho;	/* Value of function at this theta */
 int		unit_r;		/* Unit radius (in pixels) */
@@ -904,20 +904,20 @@ bool		merge;		/* Overlay onto current FB contents? */
 
 {
     if (npf_rho > .8)
-	COPYRGB(*fbbPtr, Color[C_RED])
+	COPYRGB(fbbPtr, Color[C_RED])
     else if (npf_rho > .6)
-	COPYRGB(*fbbPtr, Color[C_ORANGE])
+	COPYRGB(fbbPtr, Color[C_ORANGE])
     else if (npf_rho > .4)
-	COPYRGB(*fbbPtr, Color[C_YELLOW])
+	COPYRGB(fbbPtr, Color[C_YELLOW])
     else if (npf_rho > .2)
-	COPYRGB(*fbbPtr, Color[C_GREEN])
+	COPYRGB(fbbPtr, Color[C_GREEN])
     else
-	COPYRGB(*fbbPtr, Color[C_BLUE])
+	COPYRGB(fbbPtr, Color[C_BLUE])
 }
 
 Fill_Rings (fbbPtr, rho, npf_rho, unit_r, merge)
 
-RGBpixel	*fbbPtr;	/* Pointer to within fbb */
+unsigned char	*fbbPtr;	/* Pointer to within fbb */
 double		rho;		/* Radius of current pixel */
 double		npf_rho;	/* Value of function at this theta */
 int		unit_r;		/* Unit radius (in pixels) */
@@ -925,13 +925,13 @@ bool		merge;		/* Overlay onto current FB contents? */
 
 {
     if (rho / unit_r > .8)
-	COPYRGB(*fbbPtr, Color[C_RED])
+	COPYRGB(fbbPtr, Color[C_RED])
     else if (rho / unit_r > .6)
-	COPYRGB(*fbbPtr, Color[C_ORANGE])
+	COPYRGB(fbbPtr, Color[C_ORANGE])
     else if (rho / unit_r > .4)
-	COPYRGB(*fbbPtr, Color[C_YELLOW])
+	COPYRGB(fbbPtr, Color[C_YELLOW])
     else if (rho / unit_r > .2)
-	COPYRGB(*fbbPtr, Color[C_GREEN])
+	COPYRGB(fbbPtr, Color[C_GREEN])
     else
-	COPYRGB(*fbbPtr, Color[C_BLUE])
+	COPYRGB(fbbPtr, Color[C_BLUE])
 }

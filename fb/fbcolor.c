@@ -23,17 +23,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>	
 #include "machine.h"
+#include "externs.h"
 #include "fb.h"
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 int curchan = 0;	/* 0=r, 1=g, 2=b */
 
 int col[6] = {128,128,128};		/* r,g,b h,s,v */
 
-RGBpixel buf[512];
+unsigned char buf[3*2048];
 ColorMap old_map;
 ColorMap cm;
 
@@ -75,9 +72,9 @@ char **argv;
 	/* Note that color 0,0,0 is special;  use 1,1,1 for black */
 	/* Red */
 	for( i=0; i<255; i++)  {
-		buf[i][RED] = i;
-		buf[i][GRN] = 1;
-		buf[i][BLU] = 1;
+		buf[3*i+RED] = i;
+		buf[3*i+GRN] = 1;
+		buf[3*i+BLU] = 1;
 	}
 	for( i=0; i<99; i++ )
 		fb_write( fbp, 0, i, buf, 256 );
@@ -85,9 +82,9 @@ char **argv;
 	/* Green */
 	bzero( (char *)buf, sizeof(buf) );
 	for( i=0; i<255; i++) {
-		buf[i][RED] = 1;
-		buf[i][GRN] = i;
-		buf[i][BLU] = 1;
+		buf[3*i+RED] = 1;
+		buf[3*i+GRN] = i;
+		buf[3*i+BLU] = 1;
 	}
 	for( i=100; i<199; i++ )
 		fb_write( fbp, 0, i, buf, 256 );
@@ -95,9 +92,9 @@ char **argv;
 	/* Blue */
 	bzero( (char *)buf, sizeof(buf) );
 	for( i=0; i<255; i++)  {
-		buf[i][RED] = 1;
-		buf[i][GRN] = 1;
-		buf[i][BLU] = i;
+		buf[3*i+RED] = 1;
+		buf[3*i+GRN] = 1;
+		buf[3*i+BLU] = i;
 	}
 	for( i=200; i<299; i++ )
 		fb_write( fbp, 0, i, buf, 256 );

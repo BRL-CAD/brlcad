@@ -242,9 +242,9 @@ int argc; char **argv;
 		if( redflag == 0 || greenflag == 0 || blueflag == 0 ) {
 			if( inverse )
 				n = fb_read( fbp, scr_xoff, scr_height-1-y,
-					obuf, xout );
+					(unsigned char *)obuf, xout );
 			else
-				n = fb_read( fbp, scr_xoff, y, obuf, xout );
+				n = fb_read( fbp, scr_xoff, y, (unsigned char *)obuf, xout );
 			if( n < 0 )  break;
 		}
 		for( x = 0; x < xout; x++ ) {
@@ -256,9 +256,9 @@ int argc; char **argv;
 				obuf[x][BLU] = ibuf[x];
 		}
 		if( inverse )
-			fb_write( fbp, scr_xoff, scr_height-1-y, obuf, xout );
+			fb_write( fbp, scr_xoff, scr_height-1-y, (unsigned char *)obuf, xout );
 		else
-			fb_write( fbp, scr_xoff, y, obuf, xout );
+			fb_write( fbp, scr_xoff, y, (unsigned char *)obuf, xout );
 
 		/* slop at the end of the line? */
 		if( xout < file_width-file_xoff )

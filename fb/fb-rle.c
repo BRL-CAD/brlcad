@@ -22,11 +22,10 @@ static char RCSid[] = "@(#)$Id$ (BRL)";
 #include <stdio.h>
 #include <time.h>
 
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #include "rle.h"
-
-extern char	*malloc();
-extern char	*getenv();
 
 static rle_hdr	outrle;
 #define		outfp		outrle.rle_file
@@ -181,7 +180,7 @@ int	argc;
 char	*argv[];
 {
 	register FBIO	*fbp;
-	register RGBpixel *scan_buf;
+	register unsigned char *scan_buf;
 	register int	y;
 	int		cm_save_needed;
 
@@ -250,7 +249,7 @@ char	*argv[];
 		rlemap[y+2*256] = cmap.cm_blue[y];
 	}
 
-	scan_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * screen_width );
+	scan_buf = (unsigned char *)malloc( sizeof(RGBpixel) * screen_width );
 
 	/* Build RLE header */
 	outrle.ncolors = 3;

@@ -46,7 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define RECONVERT(n)		((n)*(432./200.))
 
 
-RGBpixel	*scanline;
+unsigned char	*scanline;
 FBIO		*fbp;
 
 RGBpixel	writing_color = {255, 255, 255};
@@ -454,7 +454,7 @@ main(argc, argv)
 	}
 	if( (cp = malloc(scr_width*sizeof(RGBpixel))) == (char *)0 )
 		exit(42);
-	scanline = (RGBpixel *)cp;
+	scanline = (unsigned char *)cp;
 	bytes_per_line = (scr_width+7)/8;
 
 	cur_fb_line = scr_height-1;	/* start at top of screen */
@@ -909,7 +909,7 @@ writelines(nlines, buf)
 	int	nlines;		/*  Number of scan lines to put out.  */
 	register char	*buf;	/*  Pointer to buffer location.  */
 {
-	register RGBpixel *pp;
+	register unsigned char *pp;
 	register int	bit;
 	register int	bufval;
 	register int	lpos;
@@ -934,15 +934,15 @@ writelines(nlines, buf)
 		pp = scanline;
 		for( lpos = 0; lpos < bytes_per_line; lpos++)  {
 			if( (bufval = *buf) == 0 )  {
-				pp += 8;
+				pp += 8*sizeof(RGBpixel);
 				buf++;
 				continue;
 			}
 			for(bit = 0x80; bit; bit >>= 1)  {
 				if(bufval & bit)  {
-					COPYRGB( *pp, writing_color );
+					COPYRGB( pp, writing_color );
 				}
-				pp++;
+				pp += sizeof(RGBpixel);
 			}
 			buf++;
 		}

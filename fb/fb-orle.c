@@ -120,7 +120,7 @@ char	*argv[];
 
 	for( y = ypos; y < y_end; y++ )  {
 		if(rle_debug)fprintf(stderr,"line %d\n", y);
-		if( fb_read( fbp, xpos, y, scan_buf, xlen ) == -1)  {
+		if( fb_read( fbp, xpos, y, (unsigned char *)scan_buf, xlen ) == -1)  {
 			(void) fprintf(	stderr,
 				"read of %d pixels from (%d,%d) failed!\n",
 				xlen, xpos, y );

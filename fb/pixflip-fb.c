@@ -23,18 +23,10 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifdef SYSV
-#define bzero(p,cnt)	memset(p,'\0',cnt);
-#endif
-
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
-extern char	*malloc();
 
 int	file_width = 512;	/* width of input sub-images in pixels */
 int	file_height = 512;	/* height of input sub-images in scanlines */
@@ -53,7 +45,7 @@ int	passes = 100;		/* limit on number of passes */
 int	zoom = 1;
 
 #define MAXFRAMES	1000
-char	*frames[MAXFRAMES];	/* Pointers to pixel arrays */
+unsigned char	*frames[MAXFRAMES];	/* Pointers to pixel arrays */
 int	maxframe = 0;		/* Index of first unused slot in frames[] */
 
 char usage[] = "\
@@ -129,7 +121,7 @@ main( argc, argv )
 char **argv;
 {
 	register int i;
-	char	*obuf;
+	unsigned char	*obuf;
 	int	scanbytes;		/* bytes per input image */
 	int	islist = 0;		/* set if a list, zero if basename */
 	char	name[256];
@@ -182,7 +174,7 @@ char **argv;
 
 	for( maxframe = 0; maxframe < MAXFRAMES;  )  {
 
-		if( (obuf = (char *)malloc( scanbytes )) == (char *)0 )  {
+		if( (obuf = (unsigned char *)malloc( scanbytes )) == (unsigned char *)0 )  {
 			(void)fprintf(stderr,"pixflip-fb:  malloc %d failure\n", scanbytes );
 			break;
 		}

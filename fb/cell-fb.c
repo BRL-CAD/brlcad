@@ -392,7 +392,7 @@ long	ncells;
 {	
     register Cell	*gp, *ep = &grid[ncells];
     static int		zoom;
-    static RGBpixel	*buf = 0;
+    static unsigned char *buf = 0;
     static RGBpixel	pixel;
     double		lasty = NEG_INFINITY;
     double		dx, dy;
@@ -436,7 +436,7 @@ long	ncells;
     if (erase_flag && fb_clear(fbiop, BACKGROUND) == -1)
 	fb_log("Cannot clear frame buffer\n");
 
-    if ((buf = (RGBpixel *) malloc(sizeof(RGBpixel) * fb_width)) == NULL)
+    if ((buf = (unsigned char *) malloc(sizeof(RGBpixel) * fb_width)) == NULL)
     {
 	fb_log("cell-fb: couldn't allocate space for %d pixels\n", fb_width);
 	exit (1);
@@ -472,7 +472,7 @@ long	ncells;
 	    /* Clear buffer. */
 	    for (x0 = 0; x0 < fb_width; x0++)
 	    {
-		COPYRGB(buf[x0], BACKGROUND);
+		COPYRGB(&buf[3*x0], BACKGROUND);
 	    }
 
 	     /* Draw grid line between rows of cells. */
@@ -498,7 +498,7 @@ long	ncells;
     	if( x0 >= 0 && x0 < fb_width )  {
 		for (x1 = x0 + wid; x0 < x1;  x0++)
 		{
-		    COPYRGB(buf[x0], pixel);
+		    COPYRGB(&buf[3*x0], pixel);
 		}
     	}
     }
@@ -524,7 +524,7 @@ long	ncells;
 	/* Clear buffer. */
 	for (i = 0; i < fb_width; i++)
 	{
-	    COPYRGB(buf[i], BACKGROUND);
+	    COPYRGB(&buf[3*i], BACKGROUND);
 	}
     	/*  Center the color key from side-to-side in the viewport.
     	 *  Find screen coords of min and max vals, clip to (0,fb_width).
@@ -551,7 +551,7 @@ long	ncells;
 	    for (j = 0; j < wid; j++)
 	    {	
 		register int index = base + j;
-		COPYRGB(buf[index], pixel);
+		COPYRGB(&buf[3*index], pixel);
 	    }
 	}
 

@@ -19,12 +19,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #include "spm.h"
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 static FBIO	*fbp;
 
@@ -145,7 +143,7 @@ spm_map_t *mapp;
 			rgb[RED] = mapp->xbin[j][i*3];
 			rgb[GRN] = mapp->xbin[j][i*3+1];
 			rgb[BLU] = mapp->xbin[j][i*3+2];
-			fb_write( fbp, i, j, rgb, 1 );
+			fb_write( fbp, i, j, (unsigned char *)rgb, 1 );
 		}
 #endif
 	}
@@ -160,9 +158,9 @@ spm_square( mapp )
 register spm_map_t *mapp;
 {
 	register int	x, y;
-	register RGBpixel	*scanline;
+	register unsigned char	*scanline;
 
-	scanline = (RGBpixel *)malloc( scr_width * sizeof(RGBpixel) );
+	scanline = (unsigned char *)malloc( scr_width * sizeof(RGBpixel) );
 
 	for( y = 0; y < scr_height; y++ ) {
 		for( x = 0; x < scr_width; x++ ) {
@@ -170,6 +168,6 @@ register spm_map_t *mapp;
 				(double)x/(double)scr_width,
 				(double)y/(double)scr_height );
 		}
-		(void)fb_write( fbp, 0, y, scanline, scr_width );
+		if( fb_write( fbp, 0, y, scanline, scr_width ) != scr_width )  break;
 	}
 }
