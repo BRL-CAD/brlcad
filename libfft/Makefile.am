@@ -45,5 +45,5 @@ irfft256.c:	ifftc
 CFLAGS=-I$(top_srcdir)/h
 libfft_la_LDFLAGS = -version-info 19:1
 
-vers.c: $(SRCS) $(BUILT_SOURCES)
+vers.c: $(SRCS)
 	$(top_srcdir)/sh/newvers.sh fft_version "BRL-CAD FFT Library"
