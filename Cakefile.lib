@@ -53,12 +53,16 @@ PRODUCTS::	EXTRA_OBJ OBJ
 	rm -f PRODUCTS; EXTRA_SETUP
 	AR r PRODUCTS OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY vers.o
 	RANLIB PRODUCTS
+
+	/* If RANLIB is specified, be sure it is run when installing libraries */
+#	define AFTERINSTALL	RANLIB
 #else
 	/* Shared library support.
 	 * Can't list SHARED_PRODUCT in 'rm' command, or will get wrong version number.
 	 * (Cake won't re-run the LIBVERS shell script)
 	 * If non-null, LIBVERS will start with a leading dot.
 	 * Note that the RM command zaps anything starting with PRODUCTS.
+	 * Note that if you have shared libraries, you better have symlinks.
 	 */
 #	define	SHARED_PRODUCT	PRODUCTS''[[LIBVERS]]
 PRODUCTS&::	EXTRA_OBJ OBJ
@@ -66,6 +70,10 @@ PRODUCTS&::	EXTRA_OBJ OBJ
 	CC CFLAGS -c vers.c
 	rm -f PRODUCTS*; EXTRA_SETUP
 	BUILD_LIBRARY SHARED_PRODUCT OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY vers.o
+	../sharedliblink.sh SHARED_PRODUCT
+
+	/* Use this opportunity to build the symlink on install */
+#	define AFTERINSTALL	../sharedliblink.sh
 #endif
 
 %.o&:	SRCDIR,,%,o			if exist ../SRCDIR/%.c
@@ -78,6 +86,3 @@ PRODUCTS&::	EXTRA_OBJ OBJ
 #undef	BINPERM
 #define	BINDIR	LIBDIR
 #define	BINPERM	LIBPERM
-
-/* If RANLIB is specified, be sure it is run when installing libraries */
-#define AFTERINSTALL	RANLIB

@@ -786,6 +786,7 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	SYSV
 /*	For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #	define	CC		/opt/SUNWspro/bin/cc
+#	define	CC_OPTS		-K PIC
 
 #	define	HAS_TCP		1
 
@@ -798,10 +799,9 @@ set -S2 "/bin/sh"
 
 /*	Shared library support */
 #	define	ARCH_SUF	so
-/*	LIBVERS should be ../sharedlibvers.sh, but LD doesn't grok the version numbers! */
-#	define	LIBVERS		echo
-#	define	BUILD_LIBRARY	ld -Bdynamic -G -o
-#	define	RANLIB		/**/
+#	define	LIBVERS		../sharedlibvers.sh
+#	define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
+#	define	RANLIB		true
 #	define	STANDARD_LIBES	-L/usr/ucblib -lucb -lm -R /usr/lib:/usr/ucblib:LIBDIR
 
 #	define	XINCDIR		/usr/openwin/include

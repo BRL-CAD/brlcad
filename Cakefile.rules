@@ -118,14 +118,21 @@ install&:  inst-dist
 install-nobak&: inst-dist
 #endif
 
-#if defined(PRODUCTS)
+#if defined(SHARED_PRODUCT)
+install-prod&: [[SUB X X.iprod SHARED_PRODUCT]]
+
+install-prod-nobak&: [[SUB X X.iprod-nobak SHARED_PRODUCT]]
+
+#else
+#  if defined(PRODUCTS)
 install-prod&: [[SUB X X.iprod PRODUCTS]]
 
 install-prod-nobak&: [[SUB X X.iprod-nobak PRODUCTS]]
-#else
+#  else
 install-prod&:
 
 install-prod-nobak&:
+#  endif
 #endif
 
 /* Here is where we depend on having /bin/sh as the shell */
@@ -232,8 +239,13 @@ clobber&:	clean noprod
 clean&:
 	-rm -f core *~ *.o EXTRA_CLEAN SRCDIR.out SRCDIR.err SRCDIR.xref SRCDIR.flow SRCDIR.lint
 
+/*
+ * The asterisk is to glob all the variations of library names.
+ * Hopefully we don't have any programs called short things like 'a'.
+ * Something more general for dealing with libraries might be appropriate.
+ */
 noprod&:
-	-rm -f PRODUCTS
+	-rm -f PRODUCTS*
 
 #ifdef never
 /*
