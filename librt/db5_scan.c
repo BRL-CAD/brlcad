@@ -119,41 +119,19 @@ fatal:
 	return -1;			/* fatal error */
 }
 
-/*
- *			D B 5 _ D I R A D D _ H A N D L E R
- *
- * In support of db5_scan, add a named entry to the directory.
- */
-HIDDEN void
-db5_diradd_handler(
-	struct db_i		*dbip,
-	const struct db5_raw_internal *rip,
-	long			laddr,
-	genptr_t		client_data )	/* unused client_data from db5_scan() */
+struct directory *
+db5_diradd(
+	   struct db_i			*dbip,
+	   const struct db5_raw_internal *rip,
+	   long				laddr,
+	   genptr_t			client_data )
 {
 	register struct directory **headp;
 	register struct directory *dp;
-	struct bu_vls	local;
-	char		*cp = NULL;
+	char *cp=NULL;
+	struct bu_vls local;
 
-	RT_CK_DBI(dbip);
-
-	if( rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT )  return;
-	if( rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE )  {
-		/* Record available free storage */
-		rt_memfree( &(dbip->dbi_freep), rip->object_length, laddr );
-		return;
-	}
-	
-	/* If somehow it doesn't have a name, ignore it */
-	if( rip->name.ext_buf == NULL )  return;
-
-	if(rt_g.debug&DEBUG_DB)  {
-		bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
-			dbip, rip->name, laddr, rip->object_length );
-	}
-
-	/* XXX Extend db_diradd() to do this, and then call it! */
+	RT_CK_DBI( dbip );
 
 	if( db_lookup( dbip, rip->name.ext_buf, LOOKUP_QUIET ) != DIR_NULL )  {
 		register int	c;
@@ -172,7 +150,7 @@ db5_diradd_handler(
 			bu_log("db5_diradd_handler: Duplicate of name '%s', ignored\n",
 				cp );
 			bu_vls_free(&local);
-			return;
+			return( DIR_NULL );
 		}
 		bu_log("db5_diradd_handler: Duplicate of '%s', given temporary name '%s'\n",
 			rip->name.ext_buf, cp );
@@ -230,6 +208,40 @@ db5_diradd_handler(
 	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
 	dp->d_forw = *headp;
 	*headp = dp;
+
+	return( dp );
+}
+
+/*
+ *			D B 5 _ D I R A D D _ H A N D L E R
+ *
+ * In support of db5_scan, add a named entry to the directory.
+ */
+HIDDEN void
+db5_diradd_handler(
+	struct db_i		*dbip,
+	const struct db5_raw_internal *rip,
+	long			laddr,
+	genptr_t		client_data )	/* unused client_data from db5_scan() */
+{
+	RT_CK_DBI(dbip);
+
+	if( rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT )  return;
+	if( rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE )  {
+		/* Record available free storage */
+		rt_memfree( &(dbip->dbi_freep), rip->object_length, laddr );
+		return;
+	}
+	
+	/* If somehow it doesn't have a name, ignore it */
+	if( rip->name.ext_buf == NULL )  return;
+
+	if(rt_g.debug&DEBUG_DB)  {
+		bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
+			dbip, rip->name, laddr, rip->object_length );
+	}
+
+	db5_diradd( dbip, rip, laddr, client_data );
 
 	return;
 }
@@ -350,4 +362,26 @@ bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 	bu_log("db_dirbuild(%s) ERROR, file is not in BRL-CAD geometry database format\n",
 		dbip->dbi_filename);
 	return -1;
+}
+
+int
+db_get_version( dbip )
+struct db_i *dbip;
+{
+	unsigned char	header[8];
+
+	rewind(dbip->dbi_fp);
+	if( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  )  {
+		bu_log("db_get_version ERROR, file (%s) too short to be BRL-CAD database\n",
+			dbip->dbi_filename);
+		return -1;
+	}
+
+	if( db5_header_is_valid( header ) )
+		return( 5 );
+	else if( header[0] == 'I' )
+		return( 4 );
+	else
+		return( -1 );
+	
 }

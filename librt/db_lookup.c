@@ -222,29 +222,25 @@ genptr_t		ptr;		/* unused client_data from db_scan() */
 				strcmp( name, this ) == 0
 			)  {
 				/* Name exists in directory already */
-				char		local[NAMESIZE+2+2];
+				struct bu_vls	local;
 				register int	c;
 
-				/* Shift right two characters */
-				/* Don't truncate to NAMESIZE, name is just internal */
-				strncpy( local+2, name, NAMESIZE );
-				local[1] = '_';			/* distinctive separater */
-				local[NAMESIZE+2] = '\0';	/* ensure null termination */
-
+				bu_vls_init( &local );
 				for( c = 'A'; c <= 'Z'; c++ )  {
-					local[0] = c;
-					if( db_lookup( dbip, local, 0 ) == DIR_NULL )
+					bu_vls_printf( &local, "%c_%s", c, this );
+					if( db_lookup( dbip, bu_vls_addr( &local ), 0 ) == DIR_NULL )
 						break;
 				}
 				if( c > 'Z' )  {
 					bu_log("db_diradd: Duplicate of name '%s', ignored\n",
-						local );
+						bu_vls_addr( &local ) );
 					return( DIR_NULL );
 				}
 				bu_log("db_diradd: Duplicate of '%s', given temporary name '%s'\n",
-					name, local );
+					name, bu_vls_addr( &local ) );
 				/* Use recursion to simplify the code */
-				return db_diradd( dbip, local, laddr, len, flags, ptr );
+				return db_diradd( dbip, bu_vls_addr( &local ), laddr, len, flags, ptr );
+				bu_vls_free( &local );
 			}
 		}
 	}

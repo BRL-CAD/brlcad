@@ -2028,7 +2028,9 @@ wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
      union tree		*comb_leaf;
      genptr_t		user_ptr1, user_ptr2, user_ptr3;
 {
-	char	mref[RT_NAMESIZE+2];
+	char	*mref;
+	char	mref4[RT_NAMESIZE+2];
+	struct bu_vls mref5;
 	char	*prestr;
 	int	*ncharadd;
 
@@ -2041,12 +2043,23 @@ wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 	ncharadd = (int *)user_ptr1;
 	prestr = (char *)user_ptr2;
 
-	(void)strncpy(mref, prestr, *ncharadd);
-	(void)strncpy(mref+(*ncharadd),
-		      comb_leaf->tr_l.tl_name,
-		      RT_NAMESIZE-(*ncharadd) );
+	if( dbip->dbi_version < 5 ) {
+		mref = mref4;
+		(void)strncpy(mref, prestr, *ncharadd);
+		(void)strncpy(mref+(*ncharadd),
+			      comb_leaf->tr_l.tl_name,
+			      RT_NAMESIZE-(*ncharadd) );
+	} else {
+		bu_vls_init( &mref5 );
+		bu_vls_strncpy( &mref5, prestr, *ncharadd); 
+		bu_vls_strcat( &mref5, comb_leaf->tr_l.tl_name );
+		mref = bu_vls_addr( &mref5 );
+	}
 	bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
 	comb_leaf->tr_l.tl_name = bu_strdup(mref);
+
+	if( dbip->dbi_version >= 5 )
+		bu_vls_free( &mref5 );
 }
 
 static int wdb_dir_add BU_ARGS((struct db_i *input_dbip, CONST char
@@ -2057,6 +2070,185 @@ struct dir_add_stuff {
 	struct db_i	*main_dbip;		/* the main database */
 	struct rt_wdb	*wdbp;
 };
+
+/*
+ *			W D B _ D I R _ A D D 5
+ * V5 version of wdb_dir_add
+ */
+static void
+wdb_dir_add5(
+	struct db_i		*dbip,		/* db_i to add this object to */
+	const struct db5_raw_internal *rip,
+	long			laddr,
+	genptr_t		client_data )
+{
+	struct bu_vls 		local5;
+	char			*local;
+	struct bu_external	ext;
+	struct dir_add_stuff	*dasp = (struct dir_add_stuff *)client_data;
+	struct db5_raw_internal	raw;
+	struct directory	*dp;
+
+	RT_CK_DBI( dbip );
+
+	if( rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT )  return;
+	if( rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE ) {
+		/* Record available free storage */
+		rt_memfree( &(dbip->dbi_freep), rip->object_length, laddr );
+		return;
+	}
+	
+	/* If somehow it doesn't have a name, ignore it */
+	if( rip->name.ext_buf == NULL )  return;
+
+	if(rt_g.debug&DEBUG_DB) {
+		bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
+			dbip, (char *)rip->name.ext_buf, rip->object_length );
+	}
+
+	/* add to its own directory first */
+	(void)db5_diradd( dbip, rip, laddr, NULL );
+
+	/* do not concat GLOBAL object */
+	if( rip->major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
+	    rip->minor_type == 0 )
+		return;
+
+	/* now add this object to the current database */
+	bu_vls_init( &local5 );
+
+	/* Add the prefix, if any */
+	bu_vls_strncpy( &local5, dasp->wdbp->wdb_prestr, dasp->wdbp->wdb_ncharadd);
+	bu_vls_strcat( &local5, rip->name.ext_buf );
+	local = bu_vls_addr( &local5 );
+
+	if( rip->minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION ) {
+
+		/* export object */
+		db5_export_object3( &ext, rip->h_dli, local, &rip->attributes,
+			    &rip->body, rip->major_type, rip->minor_type,
+			    rip->a_zzz, rip->b_zzz );
+
+		if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) == NULL ) {
+			Tcl_AppendResult(dasp->interp,
+					 "db5_get_raw_internal_ptr() failed for ",
+					 local,
+					 ". This object ignored.\n",
+					 (char *)NULL );
+			bu_vls_free( &local5 );
+			bu_free( ext.ext_buf, "ext.ext_buf" );
+			return;
+		}
+
+		/* add to the main directory */
+		dp = (struct directory *)db5_diradd( dasp->main_dbip, &raw, -1L, NULL );
+		dp->d_len = 0;
+
+		/* write to main database */
+		if( db_put_external5( &ext, dp, dasp->main_dbip ) ) {
+			Tcl_AppendResult(dasp->interp,
+					 "db_put_external5() failed for ",
+					 rip->name.ext_buf,
+					 ". This object ignored.\n",
+					 (char *)NULL );
+			bu_vls_free( &local5 );
+			bu_free( ext.ext_buf, "ext.ext_buf" );
+			return;
+		}
+
+		Tcl_AppendResult(dasp->interp,
+				 "Added ",
+				 local,
+				 "\n",
+				 (char *)NULL );
+
+		bu_vls_free( &local5 );
+		bu_free( ext.ext_buf, "ext.ext_buf" );
+	} else if( rip->major_type == DB5_MAJORTYPE_BRLCAD &&
+		   rip->minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION ) { 
+		struct rt_db_internal in;
+		struct rt_comb_internal *comb;
+
+		/* export object */
+		db5_export_object3( &ext, rip->h_dli, local, &rip->attributes,
+			    &rip->body, rip->major_type, rip->minor_type,
+			    rip->a_zzz, rip->b_zzz );
+
+		if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) == NULL ) {
+			Tcl_AppendResult(dasp->interp,
+					 "db5_get_raw_internal_ptr() failed for ",
+					 local,
+					 ". This object ignored.\n",
+					 (char *)NULL );
+			bu_vls_free( &local5 );
+			bu_free( ext.ext_buf, "ext.ext_buf" );
+			return;
+		}
+
+		RT_INIT_DB_INTERNAL( &in );
+		if( rip->attributes.ext_nbytes > 0 ) {
+			if( db5_import_attributes( &in.idb_avs, &rip->attributes ) < 0 )  {
+				Tcl_AppendResult(dasp->interp,
+						 "db5_import_attributes() failed for ",
+						 local,
+						 " (combination), this object will be missing attributes.\n",
+						 (char *)NULL );
+			}
+		} else {
+			in.idb_avs.magic = BU_AVS_MAGIC;
+			in.idb_avs.count = 0;
+		}
+
+		if( rt_comb_import5( &in, &rip->body, NULL, dasp->main_dbip, dasp->wdbp->wdb_resp ) ) {
+			Tcl_AppendResult(dasp->interp,
+					 "rt_comb_import5() Failed for ",
+					 local,
+					 ". Skipping this combination.\n",
+					 (char *)NULL );
+			bu_vls_free( &local5 );
+			bu_free( ext.ext_buf, "ext.ext_buf" );
+			return;
+		}
+		comb = (struct rt_comb_internal *)in.idb_ptr;
+		RT_CHECK_COMB( comb );
+		if (dasp->wdbp->wdb_ncharadd && comb->tree) {
+			db_tree_funcleaf(dasp->main_dbip, comb, comb->tree, wdb_do_update,
+			 (genptr_t)&(dasp->wdbp->wdb_ncharadd),
+			 (genptr_t)dasp->wdbp->wdb_prestr, (genptr_t)NULL);
+		}
+
+		/* add to the main directory */
+		dp = (struct directory *)db5_diradd( dasp->main_dbip, &raw, -1L, NULL );
+		dp->d_len = 0;
+
+		if (rt_db_put_internal(dp, dasp->main_dbip, &in, dasp->wdbp->wdb_resp ) < 0) {
+			Tcl_AppendResult(dasp->interp,
+				 "Failed writing ",
+				 dp->d_namep, " to database\n", (char *)NULL);
+			bu_vls_free( &local5 );
+			bu_free( ext.ext_buf, "ext.ext_buf" );
+			rt_db_free_internal( &in, dasp->wdbp->wdb_resp );
+			return;
+		}
+		Tcl_AppendResult(dasp->interp,
+				 "Added combination ",
+				 local,
+				 "\n",
+				 (char *)NULL );
+		bu_vls_free( &local5 );
+		rt_db_free_internal( &in, dasp->wdbp->wdb_resp );
+		bu_free( ext.ext_buf, "ext.ext_buf" );
+	} else {
+		Tcl_AppendResult(dasp->interp,
+				 "Skipping non-BRLCAD object ",
+				 local,
+				 ", not yet supported\n",
+				 (char *)NULL );
+			bu_vls_free( &local5 );
+			bu_free( ext.ext_buf, "ext.ext_buf" );
+			return;
+	}
+}
 
 /*
  *			W D B _ D I R _ A D D
@@ -2077,58 +2269,92 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 	register struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	char			local[RT_NAMESIZE+2+2];
+	struct bu_vls		local5;
+	char			*local;
+	char			local4[RT_NAMESIZE+2+2];
 	struct dir_add_stuff	*dasp = (struct dir_add_stuff *)ptr;
 
 	RT_CK_DBI(input_dbip);
 
 	/* Add the prefix, if any */
-	if (dasp->wdbp->wdb_ncharadd > 0) {
-		(void)strncpy(local, dasp->wdbp->wdb_prestr, dasp->wdbp->wdb_ncharadd);
-		(void)strncpy(local+dasp->wdbp->wdb_ncharadd, name, RT_NAMESIZE-dasp->wdbp->wdb_ncharadd);
+	if( dasp->main_dbip->dbi_version < 5 ) {
+		local = local4;
+		if (dasp->wdbp->wdb_ncharadd > 0) {
+			(void)strncpy(local, dasp->wdbp->wdb_prestr, dasp->wdbp->wdb_ncharadd);
+			(void)strncpy(local+dasp->wdbp->wdb_ncharadd, name, RT_NAMESIZE-dasp->wdbp->wdb_ncharadd);
+		} else {
+			(void)strncpy(local, name, RT_NAMESIZE);
+		}
+		local[RT_NAMESIZE] = '\0';
 	} else {
-		(void)strncpy(local, name, RT_NAMESIZE);
+		bu_vls_init( &local5 );
+		bu_vls_strncpy( &local5, dasp->wdbp->wdb_prestr, dasp->wdbp->wdb_ncharadd);
+		bu_vls_strcat( &local5, name );
+		local = bu_vls_addr( &local5 );
 	}
-	local[RT_NAMESIZE] = '\0';
 		
 	/* Look up this new name in the existing (main) database */
 	if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
 		register int	c;
-		char		loc2[RT_NAMESIZE+2+2];
+		char		*loc2;
+		char		loc2_4[RT_NAMESIZE+2+2];
 
 		/* This object already exists under the (prefixed) name */
 		/* Protect the database against duplicate names! */
 		/* Change object names, but NOT any references made by combinations. */
-		(void)strncpy( loc2, local, RT_NAMESIZE );
-		/* Shift name right two characters, and further prefix */
-		strncpy(local+2, loc2, RT_NAMESIZE-2);
-		local[1] = '_';			/* distinctive separater */
-		local[RT_NAMESIZE] = '\0';	/* ensure null termination */
+		if( dasp->main_dbip->dbi_version < 5 ) {
+			loc2 = loc2_4;
+			(void)strncpy( loc2, local, RT_NAMESIZE );
+			/* Shift name right two characters, and further prefix */
+			strncpy(local+2, loc2, RT_NAMESIZE-2);
+			local[1] = '_';			/* distinctive separater */
+			local[RT_NAMESIZE] = '\0';	/* ensure null termination */
 
-		for (c = 'A'; c <= 'Z'; c++) {
-			local[0] = c;
-			if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) == DIR_NULL)
-				break;
+			for (c = 'A'; c <= 'Z'; c++) {
+				local[0] = c;
+				if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) == DIR_NULL)
+					break;
+			}
+		} else {
+			for( c = 'A' ; c <= 'Z' ; c++ ) {
+				bu_vls_trunc( &local5, 0 );
+				bu_vls_putc( &local5, c );
+				bu_vls_putc( &local5, '_' );
+				bu_vls_strncat( &local5, dasp->wdbp->wdb_prestr, dasp->wdbp->wdb_ncharadd);
+				bu_vls_strcat( &local5, name );
+				local = bu_vls_addr( &local5 );
+				if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) == DIR_NULL)
+					break;
+			}
+			loc2 = bu_vls_addr( &local5 ) + 2;
 		}
 		if (c > 'Z') {
 			Tcl_AppendResult(dasp->interp,
 					 "wdb_dir_add: Duplicate of name '",
 					 local, "', ignored\n", (char *)NULL);
+			if( dasp->main_dbip->dbi_version >= 5 )
+				bu_vls_free( &local5 );
 			return 0;
 		}
 		Tcl_AppendResult(dasp->interp,
 				 "mged_dir_add: Duplicate of '",
 				 loc2, "' given new name '",
-				 local, "'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'concat' command.\n");
+				 local, "'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'dbconcat' command.\n");
 	}
 
 	/* First, register this object in input database */
-	if ((input_dp = db_diradd(input_dbip, name, laddr, len, flags, NULL)) == DIR_NULL)
+	if ((input_dp = db_diradd(input_dbip, name, laddr, len, flags, NULL)) == DIR_NULL) {
+		if( dasp->main_dbip->dbi_version >= 5 )
+			bu_vls_free( &local5 );
 		return(-1);
+	}
 
 	/* Then, register a new object in the main database */
-	if ((dp = db_diradd(dasp->main_dbip, local, -1L, 0, flags, NULL)) == DIR_NULL)
+	if ((dp = db_diradd(dasp->main_dbip, local, -1L, 0, flags, NULL)) == DIR_NULL) {
+		if( dasp->main_dbip->dbi_version >= 5 )
+			bu_vls_free( &local5 );
 		return(-1);
+	}
 
 	if (rt_db_get_internal(&intern, input_dp, input_dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		Tcl_AppendResult(dasp->interp, "Database read error, aborting\n", (char *)NULL);
@@ -2136,6 +2362,8 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 		    db_dirdelete(dasp->main_dbip, dp) < 0) {
 			Tcl_AppendResult(dasp->interp, "Database write error, aborting\n", (char *)NULL);
 		}
+		if( dasp->main_dbip->dbi_version >= 5 )
+			bu_vls_free( &local5 );
 	    	/* Abort processing on first error */
 		return -1;
 	}
@@ -2145,7 +2373,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 		Tcl_AppendResult(dasp->interp,
 				 "adding solid '",
 				 local, "'\n", (char *)NULL);
-		if ((dasp->wdbp->wdb_ncharadd + strlen(name)) > (unsigned)RT_NAMESIZE)
+		if (dasp->main_dbip->dbi_version < 5 && (dasp->wdbp->wdb_ncharadd + strlen(name)) > (unsigned)RT_NAMESIZE)
 			Tcl_AppendResult(dasp->interp,
 					 "WARNING: solid name \"",
 					 dasp->wdbp->wdb_prestr, name,
@@ -2176,9 +2404,13 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 		Tcl_AppendResult(dasp->interp,
 				 "Failed writing ",
 				 dp->d_namep, " to database\n", (char *)NULL);
+		if( dasp->main_dbip->dbi_version >= 5 )
+			bu_vls_free( &local5 );
 		return( -1 );
 	}
 
+	if( dasp->main_dbip->dbi_version >= 5 )
+		bu_vls_free( &local5 );
 	return 0;
 }
 
@@ -2199,6 +2431,7 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	struct db_i		*newdbp;
 	int bad = 0;
 	struct dir_add_stuff	das;
+	int version;
 
 	if (wdbp->dbip->dbi_read_only) {
 		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
@@ -2236,14 +2469,29 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	}
 
 	/* Scan new database, adding everything encountered. */
-/* XXX Need to use db_dirbuild() or equivalent. */
+	version = db_get_version( newdbp );
+	if( version > 4 && wdbp->dbip->dbi_version < 5 ) {
+		Tcl_AppendResult(interp, "concat: databases are incompatible, convert ",
+				 wdbp->dbip->dbi_filename, " to version 5 first",
+				 (char *)NULL );
+		return TCL_ERROR;
+	}
+
 	das.interp = interp;
 	das.main_dbip = wdbp->dbip;
 	das.wdbp = wdbp;
-	if (db_scan(newdbp, wdb_dir_add, 1, (genptr_t)&das) < 0) {
-		Tcl_AppendResult(interp, "concat: db_scan failure", (char *)NULL);
-		bad = 1;	
-		/* Fall through, to close off database */
+	if( version < 5 ) {
+		if (db_scan(newdbp, wdb_dir_add, 1, (genptr_t)&das) < 0) {
+			Tcl_AppendResult(interp, "concat: db_scan failure", (char *)NULL);
+			bad = 1;	
+			/* Fall through, to close off database */
+		}
+	} else {
+		if (db5_scan(newdbp, wdb_dir_add5, (genptr_t)&das) < 0) {
+			Tcl_AppendResult(interp, "concat: db_scan failure", (char *)NULL);
+			bad = 1;	
+			/* Fall through, to close off database */
+		}
 	}
 	rt_mempurge( &(newdbp->dbi_freep) );        /* didn't really build a directory */
 
@@ -2333,10 +2581,12 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
+
 	if( argc == 4 )
 		(void)strcpy(wdbp->wdb_prestr, argv[3]);
 	else
 		wdbp->wdb_prestr[0] = '\0';
+
 	wdbp->wdb_num_dups = 0;
 	if ((wdbp->wdb_ncharadd = strlen(wdbp->wdb_prestr)) > 12) {
 		wdbp->wdb_ncharadd = 12;
