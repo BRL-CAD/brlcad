@@ -18,7 +18,6 @@ for PRIM in $PRIMITIVES ; do
     # Torus (tor) Arguments
     #
     # in args => name type xvertex yvertex zvertex xnormal ynormal znormal radius1 radius2
-    # db args => 
     #
     set tor_IN_ARGS "0 0 0 0 0 1 30 20"
     set tor_DB_ARGS "V { 0 0 0 } H { 1 0 0 } r_a 50 r_h 25"
@@ -29,7 +28,6 @@ for PRIM in $PRIMITIVES ; do
     # Note that the sph is really an ell with all radii equal.
     # 
     # in args => name type xvertex yvertex zvertex radius1
-    # db args =>  
     #
     set sph_IN_ARGS "0 0 0 45"
     set sph_DB_ARGS "V { 0 0 0 } A {45 0 0} B {0 45 0} C {0 0 45}"
@@ -38,7 +36,6 @@ for PRIM in $PRIMITIVES ; do
     # Ellipsoid (ell) Arguments
     #
     # in args => name type xvertex yvertex zvertex radius1 radius2 radius3
-    # db args =>  
     #
     set ell_IN_ARGS "0 0 0  45 0 0  0 30 0  0 0 15"
     set ell_DB_ARGS "V { 0 0 0 } A {45 0 0} B {0 30 0} C {0 0 15}"
@@ -47,7 +44,6 @@ for PRIM in $PRIMITIVES ; do
     # (arb) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set arb_IN_ARGS ""
     set arb_DB_ARGS ""
@@ -56,7 +52,6 @@ for PRIM in $PRIMITIVES ; do
     # (arbn) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set arbn_IN_ARGS ""
     set arbn_DB_ARGS ""
@@ -65,7 +60,6 @@ for PRIM in $PRIMITIVES ; do
     # (arg) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set arg_IN_ARGS ""
     set arg_DB_ARGS ""
@@ -74,7 +68,6 @@ for PRIM in $PRIMITIVES ; do
     # (bot) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set bot_IN_ARGS ""
     set bot_DB_ARGS ""
@@ -83,7 +76,6 @@ for PRIM in $PRIMITIVES ; do
     # (cline) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set cline_IN_ARGS ""
     set cline_DB_ARGS ""
