@@ -867,7 +867,7 @@ STATIC void log_Run()
     tempus = localtime(&clock);
 
     (void) printf("# Log information produced by cell-fb %s\n",
-	ctime((const int *)&clock) );
+	ctime((CONST long *)&clock) );
     (void) printf("az_el: %f %f\n", az, el);
     (void) printf("view_extrema: %f %f %f %f\n",
 	SCRX2H(0), SCRX2H(fb_width), SCRY2V(0), SCRY2V(fb_height));
