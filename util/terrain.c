@@ -547,6 +547,7 @@ func_lunar(unsigned short *buf)
 }
 
  
+/* function to call to generate the terrain.  Default noise pattern is fBm */
 void (*terrain_func)() = func_fbm;
 
 /*
