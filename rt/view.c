@@ -79,6 +79,8 @@ extern int	incr_mode;		/* !0 for incremental resolution */
 extern int	incr_level;		/* current incremental level */
 extern int	incr_nlevel;		/* number of levels */
 
+extern int	max_bounces;		/* from refract.c */
+
 extern int light_hit(), light_miss();	/* in light.c */
 extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
@@ -86,9 +88,6 @@ extern double AmbientIntensity;
 
 vect_t	background = { 0.25, 0, 0.5 };	/* Dark Blue Background */
 int	ibackground[3];			/* integer 0..255 version */
-
-#define MAX_IREFLECT	9	/* Maximum internal reflection level */
-#define MAX_BOUNCE	4	/* Maximum recursion level */
 
 static int	buf_mode=0;	/* 0=pixel, 1=line, 2=frame */
 static int	*npix_left;	/* only used in buf_mode=2 */
@@ -369,7 +368,7 @@ struct partition *PartHeadp;
 		FAST fastf_t f;
 
 		if( pp->pt_outhit->hit_dist >= INFINITY ||
-		    ap->a_level > MAX_BOUNCE )  {
+		    ap->a_level > max_bounces )  {
 		    	if( rdebug&RDEBUG_SHOWERR )  {
 				VSET( ap->a_color, 9, 0, 0 );	/* RED */
 				rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
@@ -901,6 +900,8 @@ register struct application *ap;
 	register int i;
 	extern int hit_nothing();
 
+	ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
+	ap->a_cumlen = 0.0;
 	ap->a_miss = hit_nothing;
 	ap->a_onehit = 1;
 
