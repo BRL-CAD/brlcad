@@ -36,6 +36,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
+/* XXX for raytrace.h */
+#define OP_REGION	MKOP(9)		/* Leaf: tr_stp -> combined_tree_state */
+
 struct full_path {
 	int		fp_len;
 	int		fp_maxlen;
@@ -509,7 +512,10 @@ struct tree_state	*tsp;
 	/* Build tree representing boolean expression in Member records */
 	if( rt_pure_boolean_expressions )  {
 		curtree = rt_mkbool_tree( trees, subtreecount, regionp );
-		if(rt_g.debug&DEBUG_REGIONS) rt_pr_tree(curtree, 0);
+		if(rt_g.debug&DEBUG_REGIONS)  {
+			rt_log("rt_mkgift_tree returns pure tree:\n");
+			rt_pr_tree(curtree, 0);
+		}
 		return( curtree );
 	}
 
@@ -538,14 +544,20 @@ struct tree_state	*tsp;
 		tstart->tl_op = OP_UNION;
 		tstart->tl_tree = curtree;
 
-		if(rt_g.debug&DEBUG_REGIONS) rt_pr_tree(tstart->tl_tree, 0);
+		if(rt_g.debug&DEBUG_REGIONS) {
+			rt_log("rt_mkgift_tree() intermediate term:\n");
+			rt_pr_tree(tstart->tl_tree, 0);
+		}
 
 		/* tstart here at union */
 		tstart = tnext;
 	}
 
 	curtree = rt_mkbool_tree( trees, subtreecount, regionp );
-	if(rt_g.debug&DEBUG_REGIONS) rt_pr_tree(curtree, 0);
+	if(rt_g.debug&DEBUG_REGIONS)  {
+		rt_log("rt_mkgift_tree() returns:\n");
+		rt_pr_tree(curtree, 0);
+	}
 	return( curtree );
 }
 
@@ -741,6 +753,215 @@ fail:
 	return( (union tree *)0 );	/* FAIL */
 }
 
+/*
+ *			D B _ D U P _ S U B T R E E
+ */
+union tree *
+db_dup_subtree( tp )
+union tree	*tp;
+{
+	union tree	*new;
+
+	new = (union tree *)rt_malloc( sizeof(union tree), "db_dup_subtree");
+	*new = *tp;		/* struct copy */
+
+	switch( tp->tr_op )  {
+	case OP_SOLID:
+	case OP_REGION:
+		/* If this is a leaf, done */
+		return(new);
+
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		new->tr_b.tb_left = db_dup_subtree( tp->tr_b.tb_left );
+		return(new);
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		/* This node is known to be a binary op */
+		new->tr_b.tb_left = db_dup_subtree( tp->tr_b.tb_left );
+		new->tr_b.tb_right = db_dup_subtree( tp->tr_b.tb_right );
+		return(new);
+
+	default:
+		rt_bomb("db_dup_subtree: bad op");
+	}
+	return( TREE_NULL );
+}
+
+/*
+ *			D B _ N O N _ U N I O N _ P U S H
+ */
+void
+db_non_union_push( tp )
+union tree	*tp;
+{
+	union tree	*lhs;
+
+top:
+	/* If this is a leaf, done */
+	if( tp->tr_op == OP_REGION || tp->tr_op == OP_SOLID )  return;
+
+	/* This node is known to be a binary op */
+	if( tp->tr_op == OP_UNION )  {
+		/* Recurse both left and right */
+		db_non_union_push( tp->tr_b.tb_left );
+		db_non_union_push( tp->tr_b.tb_right );
+		return;
+	}
+
+	if( tp->tr_op == OP_INTERSECT || tp->tr_op == OP_SUBTRACT )  {
+		union tree	*lhs = tp->tr_b.tb_left;
+	    	union tree	*rhs;
+
+		if( lhs->tr_op != OP_UNION )  {
+			/* Recurse left only */
+			db_non_union_push( lhs );
+			if( (lhs=tp->tr_b.tb_left)->tr_op != OP_UNION )
+				return;
+			/* lhs rewrite turned up a union here, do rewrite */
+		}
+
+		/*  Rewrite intersect and subtraction nodes, such that
+		 *  (A u B) - C  becomes (A - C) u (B - C)
+		 *
+		 * tp->	     -
+		 *	   /   \
+		 * lhs->  u     C
+		 *	 / \
+		 *	A   B
+		 */
+		rhs = (union tree *)rt_malloc( sizeof(union tree),
+			"non_union_push new rhs" );
+
+		/* duplicate top node into rhs */
+		*rhs = *tp;		/* struct copy */
+		tp->tr_b.tb_right = rhs;
+		/* rhs->tr_b.tb_right remains unchanged:
+		 *
+		 * tp->	     -
+		 *	   /   \
+		 * lhs->  u     -   <-rhs
+		 *	 / \   / \
+		 *	A   B ?   C
+		 */
+
+		rhs->tr_b.tb_left = lhs->tr_b.tb_right;
+		/*
+		 * tp->	     -
+		 *	   /   \
+		 * lhs->  u     -   <-rhs
+		 *	 / \   / \
+		 *	A   B B   C
+		 */
+
+		/* exchange left and top operators */
+		tp->tr_op = lhs->tr_op;
+		lhs->tr_op = rhs->tr_op;
+		/*
+		 * tp->	     u
+		 *	   /   \
+		 * lhs->  -     -   <-rhs
+		 *	 / \   / \
+		 *	A   B B   C
+		 */
+
+		/* Make a duplicate of rhs->tr_b.tb_right */
+		lhs->tr_b.tb_right = db_dup_subtree( rhs->tr_b.tb_right );
+		/*
+		 * tp->	     u
+		 *	   /   \
+		 * lhs->  -     -   <-rhs
+		 *	 / \   / \
+		 *	A  C' B   C
+		 */
+
+		/* Now reconsider whole tree again */
+		goto top;
+	}
+    	rt_log("db_non_union_push() ERROR tree op=%d.?\n", tp->tr_op );
+}
+
+/*
+ *			D B _ C O U N T _ S U B T R E E _ R E G I O N S
+ */
+int
+db_count_subtree_regions( tp )
+union tree	*tp;
+{
+	int	cnt;
+
+	switch( tp->tr_op )  {
+	case OP_SOLID:
+		/* This lone solid will become a region */
+		return(1);
+	case OP_REGION:
+		return(1);
+
+	case OP_UNION:
+		/* This node is known to be a binary op */
+		cnt = db_count_subtree_regions( tp->tr_b.tb_left );
+		cnt += db_count_subtree_regions( tp->tr_b.tb_right );
+		return(cnt);
+
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		/* This is as far down as we go -- this is a region top */
+		return(1);
+
+	default:
+		rt_bomb("db_count_subtree_regions: bad op");
+	}
+	return( 0 );
+}
+
+/*
+ *			D B _ T A L L Y _ S U B T R E E _ R E G I O N S
+ */
+int
+db_tally_subtree_regions( tp, reg_trees, cur )
+union tree	*tp;
+union tree	**reg_trees;
+int		cur;
+{
+
+	switch( tp->tr_op )  {
+	case OP_SOLID:
+	case OP_REGION:
+		reg_trees[cur++] = tp;
+		return(cur);
+
+	case OP_UNION:
+		/* This node is known to be a binary op */
+		cur = db_tally_subtree_regions( tp->tr_b.tb_left, reg_trees, cur );
+		cur = db_tally_subtree_regions( tp->tr_b.tb_right, reg_trees, cur );
+		return(cur);
+
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		/* This is as far down as we go -- this is a region top */
+		reg_trees[cur++] = tp;
+		return(cur);
+
+	default:
+		rt_bomb("db_tally_subtree_regions: bad op");
+	}
+	return( cur );
+}
+
+/* ============================== */
+
 static struct tree_state	rt_initial_tree_state = {
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
@@ -786,7 +1007,8 @@ union tree		*curtree;
 
 	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
 	bzero( (char *)curtree, sizeof(union tree) );
-	curtree->tr_op = OP_SOLID;		/* XXX OP_REGION? */
+	/* XXX */
+	curtree->tr_op = OP_REGION;
 	curtree->tr_a.tu_stp = (struct soltab *)cts;
 	curtree->tr_a.tu_name = (char *)0;
 	curtree->tr_regionp = (struct region *)0;
@@ -810,7 +1032,7 @@ int			id;
 
 	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
 	bzero( (char *)curtree, sizeof(union tree) );
-	curtree->tr_op = OP_SOLID;		/* XXX OP_REGION? */
+	curtree->tr_op = OP_REGION;
 	curtree->tr_a.tu_stp = (struct soltab *)cts;
 	curtree->tr_a.tu_name = (char *)0;
 	curtree->tr_regionp = (struct region *)0;
@@ -837,6 +1059,9 @@ char		*node;
 	struct tree_state	ts;
 	struct full_path	path;
 	int			prev_sol_count;
+	int			new_reg_count;
+	int			i;
+	union tree		**reg_trees;	/* (*reg_trees)[] */
 
 	RT_CHECK_RTI(rtip);
 
@@ -865,11 +1090,29 @@ char		*node;
 	curtree = db_recurse( &ts, &path );
 	if( curtree == (union tree *)0 )  return(-1);
 
+	rt_log("tree after db_recurse():\n");
 	rt_pr_tree( curtree, 0 );
 
 	/*
-	 *  Third, push all non-union booleans down
+	 *  Third, push all non-union booleans down.
 	 */
+	db_non_union_push( curtree );
+	rt_log("tree after db_non_union_push():\n");
+	rt_pr_tree( curtree, 0 );
+
+	/*
+	 *  Build array of tree pointers, one per leaf, for processing below.
+	 */
+	new_reg_count = db_count_subtree_regions( curtree );
+rt_log("new region count=%d\n", new_reg_count);
+	reg_trees = (union tree **)rt_malloc( sizeof(union tree *) * new_reg_count,
+		"*reg_trees[]" );
+	i = db_tally_subtree_regions( curtree, reg_trees, 0 );
+	rt_log(" count1=%d, count2=%d\n", new_reg_count, i );
+	for( i=0; i<new_reg_count; i++ )  {
+		rt_log("tree %d =\n", i);
+		rt_pr_tree( reg_trees[i], 0 );
+	}
 
 	/*
 	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
