@@ -138,7 +138,6 @@
 
 #if defined(__NetBSD__)
 #	define HAVE_REGEX_DECL	1
-co -l conf.h
 #endif
 
 #if !defined(SYSV)
