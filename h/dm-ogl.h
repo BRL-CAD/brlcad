@@ -10,13 +10,14 @@
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 
 struct modifiable_ogl_vars {
+  int linewidth;
+  int linestyle;
   int cueing_on;
   int zclipping_on;
   int zbuffer_on;
   int lighting_on;
   int perspective_mode;
   int dummy_perspective;
-  int linewidth;
   int fastfog;
   double fogdensity;
   int zbuf;
