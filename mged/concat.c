@@ -41,10 +41,6 @@ static char RCSconcat[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 
-extern int	args;		/* total number of args available */
-extern int	argcnt;		/* holder for number of args added later */
-extern char	*cmd_args[];	/* array of pointers to args */
-
 int			num_dups;
 struct directory	**dup_dirp;
 
@@ -98,7 +94,7 @@ int			flags;
  *
  *  Usage:  dup file.g [prefix]
  */
-void
+int
 f_dup( argc, argv )
 int	argc;
 char	**argv;
@@ -124,7 +120,7 @@ char	**argv;
 	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
 		perror( argv[1] );
 		(void)fprintf(stderr, "dup: Can't open %s\n", argv[1]);
-		return;
+		return CMD_BAD;
 	}
 
 	(void)printf("\n*** Comparing %s with %s for duplicate names\n",
@@ -137,14 +133,14 @@ char	**argv;
 	/* Get array to hold names of duplicates */
 	if( (dup_dirp = dir_getspace(0)) == (struct directory **) 0) {
 		(void) printf( "f_dup: unable to get memory\n");
-		return;
+		return CMD_BAD;
 	}
 	dirp0 = dup_dirp;
 
 	/* Scan new database for overlaps */
 	if( db_scan( newdbp, mged_dir_check, 0 ) < 0 )  {
 		(void)fprintf(stderr, "dup: db_scan failure\n");
-		return;
+		return CMD_BAD;
 	}
 
 	col_pr4v( dirp0, (int)(dup_dirp - dirp0));
@@ -152,6 +148,8 @@ char	**argv;
 	(void)printf("\n -----  %d duplicate names found  -----\n",num_dups);
 
 	db_close( newdbp );
+
+	return CMD_OK;
 }
 
 
@@ -273,28 +271,19 @@ int			flags;
  *  then the users insist that they be prompted for the prefix,
  *  to prevent inadvertently sucking in a non-prefixed file.
  */
-void
+int
 f_concat( argc, argv )
 int	argc;
 char	**argv;
 {
 	struct db_i		*newdbp;
-
-	/* save number of args entered initially */
-	args = argc;
-	argcnt = 0;
+	int bad = 0;
 
 	/* get any prefix */
-	if( argc < 3 ) {
-		(void)printf("Enter prefix string or CR: ");
-		argcnt = getcmd(args);
-		/* add any new args entered */
-		args += argcnt;
-		/* no prefix is acceptable */
-		if(args == 2)
-			cmd_args[2][0] = '\0';
-	}
-	(void)strcpy(prestr, cmd_args[2]);
+	if( argc < 3 )
+		(void)strcpy(prestr, "\0");
+	else
+		(void)strcpy(prestr, argv[2]);
 
 	if( (ncharadd = strlen( prestr )) > 12 )  {
 		ncharadd = 12;
@@ -302,15 +291,16 @@ char	**argv;
 	}
 
 	/* open the input file */
-	if( (newdbp = db_open( cmd_args[1], "r" )) == DBI_NULL )  {
-		perror( cmd_args[1] );
-		(void)fprintf(stderr, "concat: Can't open %s\n", cmd_args[1]);
-		return;
+	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
+		perror( argv[1] );
+		(void)fprintf(stderr, "concat: Can't open %s\n", argv[1]);
+		return CMD_BAD;
 	}
 
 	/* Scan new database, adding everything encountered. */
 	if( db_scan( newdbp, mged_dir_add, 1 ) < 0 )  {
 		(void)fprintf(stderr, "concat: db_scan failure\n");
+		bad = 1;	
 		/* Fall through, to close off database */
 	}
 
@@ -318,4 +308,6 @@ char	**argv;
 	db_close( newdbp );
 
 	sync();		/* just in case... */
+
+	return bad ? CMD_BAD : CMD_OK;
 }
