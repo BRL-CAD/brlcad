@@ -42,7 +42,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "externs.h"
-#include "db.h"
 #include "mater.h"
 #include "./sedit.h"
 #include "./ged.h"
@@ -633,7 +632,6 @@ char	**argv;
 	register FILE *fp;
 	register struct directory *dp;
 	register struct solid *sp = SOLID_NULL;
-	union record	rec;
 	vect_t	eye_model;
 	vect_t	xlate;
 	vect_t	sav_center;
@@ -662,7 +660,6 @@ char	**argv;
 			mode = -1;
 			break;
 		}
-		db_get( dbip,  dp, &rec, 0 , 1);
 		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 			if( sp->s_path[sp->s_last] != dp )  continue;
 			if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
