@@ -5,12 +5,13 @@
  *  	Intersect a ray with an Arbitrary Regular Polyhedron with
  *  	as many as 8 vertices.
  *  
- *  Authors -
- *	Edwin O. Davisson	(Analysis)
- *	Michael John Muuss	(Programming)
+ *  Contributors -
+ *	Edwin O. Davisson	(Triangle & Intercept Analysis)
+ *	Michael John Muuss	(Programming, Generalization)
+ *	Douglas A. Gwyn		("Inside" routine)
  *
  * U. S. Army Ballistic Research Laboratory
- * March 29, 1984.
+ * April 18, 1984.
  *
  * $Revision$
  */
@@ -26,25 +27,25 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* Describe algorithm here */
 
-struct triangle_specific  {
-	struct triangle_specific *tri_forw;	/* Forward link */
-	vect_t	tri_A;		/* A, temp */
-	vect_t	tri_B;		/* B, temp */
-	vect_t	tri_C;		/* C, temp */
-	vect_t	tri_AxB;	/* VCROSS( A, B ) */
-	vect_t	tri_BxC;	/* VCROSS( B, C ) */
-	vect_t	tri_CxA;	/* VCROSS( C, A ) */
-	vect_t	tri_Q;		/* (B-A) cross (C-A) */
-	vect_t	tri_N;		/* Unit-length Normal (from Q) */
-	float	tri_vol;	/* Q dot A */
-	char	tri_code[4];	/* face code string.  Decorative. */
+#define MAXPTS	4			/* All we need are 4 points */
+#define pl_A	pl_points[0]		/* Synonym for A point */
+
+struct plane_specific  {
+	int	pl_npts;		/* number of points on plane */
+	point_t	pl_points[MAXPTS];	/* Actual points on plane */
+	vect_t	pl_Xbasis;		/* X (B-A) vector (for 2d coords) */
+	vect_t	pl_Ybasis;		/* Y (C-A) vector (for 2d coords) */
+	vect_t	pl_N;			/* Unit-length Normal (outward) */
+	float	pl_NdotA;		/* Normal dot A */
+	float	pl_2d_x[MAXPTS];	/* X 2d-projection of points */
+	float	pl_2d_y[MAXPTS];	/* Y 2d-projection of points */
+	struct plane_specific *pl_forw;	/* Forward link */
+	char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
 };
 
 #define MINMAX(a,b,c)	{ register float ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
-
-static struct triangle_specific *facet();
 
 arb8_prep( sp, stp, mat )
 struct solidrec *sp;
@@ -57,13 +58,13 @@ matp_t mat;
 	static float dx, dy, dz;	/* For finding the bounding spheres */
 	static vect_t	work;		/* Vector addition work area */
 	static vect_t	homog;		/* Vect/Homog.Vect conversion buf */
-	static int	facets;		/* # of facets produced */
+	static int	faces;		/* # of faces produced */
 	static float	scale;		/* width across widest axis */
 	static int	i;
 
 	/* init maxima and minima */
-	xmax = ymax = zmax = -100000000.0;
-	xmin = ymin = zmin =  100000000.0;
+	xmax = ymax = zmax = -INFINITY;
+	xmin = ymin = zmin =  INFINITY;
 
 	/*
 	 * Process an ARB8, which is represented as a vector
@@ -101,142 +102,174 @@ matp_t mat;
 	dy = (ymax - ymin)/2;
 	dz = (zmax - zmin)/2;
 	stp->st_radsq = dx*dx + dy*dy + dz*dz;
+	stp->st_specific = (int *) 0;
 
-	facets = 0;
-	facets += face( sp->s_values, stp, 3, 2, 1, 0 );	/* 1234 */
-	facets += face( sp->s_values, stp, 4, 5, 6, 7 );	/* 8765 */
-	facets += face( sp->s_values, stp, 4, 7, 3, 0 );	/* 1485 */
-	facets += face( sp->s_values, stp, 2, 6, 5, 1 );	/* 2673 */
-	facets += face( sp->s_values, stp, 1, 5, 4, 0 );	/* 1562 */
-	facets += face( sp->s_values, stp, 7, 6, 2, 3 );	/* 4378 */
+	faces = 0;
+	faces += face( sp->s_values, stp, 3, 2, 1, 0 );	/* 1234 */
+	faces += face( sp->s_values, stp, 4, 5, 6, 7 );	/* 8765 */
+	faces += face( sp->s_values, stp, 4, 7, 3, 0 );	/* 1485 */
+	faces += face( sp->s_values, stp, 2, 6, 5, 1 );	/* 2673 */
+	faces += face( sp->s_values, stp, 1, 5, 4, 0 );	/* 1562 */
+	faces += face( sp->s_values, stp, 7, 6, 2, 3 );	/* 4378 */
 #ifdef reversed
-	facets += face( sp->s_values, stp, 0, 1, 2, 3 );	/* 1234 */
-	facets += face( sp->s_values, stp, 7, 6, 5, 4 );	/* 8765 */
-	facets += face( sp->s_values, stp, 0, 3, 7, 4 );	/* 1485 */
-	facets += face( sp->s_values, stp, 1, 5, 6, 2 );	/* 2673 */
-	facets += face( sp->s_values, stp, 0, 4, 5, 1 );	/* 1562 */
-	facets += face( sp->s_values, stp, 3, 2, 6, 7 );	/* 4378 */
+	faces += face( sp->s_values, stp, 0, 1, 2, 3 );	/* 1234 */
+	faces += face( sp->s_values, stp, 7, 6, 5, 4 );	/* 8765 */
+	faces += face( sp->s_values, stp, 0, 3, 7, 4 );	/* 1485 */
+	faces += face( sp->s_values, stp, 1, 5, 6, 2 );	/* 2673 */
+	faces += face( sp->s_values, stp, 0, 4, 5, 1 );	/* 1562 */
+	faces += face( sp->s_values, stp, 3, 2, 6, 7 );	/* 4378 */
 #endif
-	if( facets >= 4  && facets <= 12 )
+	if( faces >= 4  && faces <= 6 )
 		return(0);		/* OK */
 
-	printf("arb8(%s):  only %d facets present\n", stp->st_name, facets);
-	/* Should free storage for good facets */
+	printf("arb8(%s):  only %d faces present\n", stp->st_name, faces);
+	/* Should free storage for good faces */
 	return(1);			/* Error */
 }
 
-#define VERT(x)	(&vects[(x)*3])
-
-static
+/*static */
 face( vects, stp, a, b, c, d )
 register float vects[];
 struct soltab *stp;
 int a, b, c, d;
 {
-	register struct triangle_specific *trip1;
-	register struct triangle_specific *trip2;
-	static vect_t X_A;
-	static float f;
+	register struct plane_specific *plp;
+	register int pts;
 
-if(debug&DEBUG_ARB8)printf("face %d%d%d%d\n", a, b, c, d );
-	trip1 = facet( vects, stp, a, b, c );
-	trip2 = facet( vects, stp, a, c, d );
+	GETSTRUCT( plp, plane_specific );
+	plp->pl_npts = 0;
+	pts = add_pt( vects, stp, plp, a );
+	pts += add_pt( vects, stp, plp, b );
+	pts += add_pt( vects, stp, plp, c );
+	pts += add_pt( vects, stp, plp, d );
 
-if(debug&DEBUG_ARB8)printf("face values x%x x%x\n", trip1, trip2);
-	if( trip1 && trip2 )  {
-		/*
-		 *  If both facets exist, check to see if face is planar.
-		 *  Check [ (B-A)x(C-A) ] dot (D-A) == 0
-		 */
-		VSUB2( X_A, VERT(d), VERT(a) );
-		f = VDOT( trip1->tri_Q, X_A );
-		if( NEAR_ZERO(f) )
-			return(2);		/* OK */
-		printf("arb8(%s):  face %d,%d,%d,%d non-planar (dot=%f)\n",
-			stp->st_name, a,b,c,d, f);
-		return(0);			/* BAD */
+	if( pts < 3 )  {
+		free(plp);
+		return(0);				/* BAD */
 	}
-	if( trip1 || trip2 )
-		return(1);			/* OK */
-	return(0);				/* BAD */
+	/* Make the 2d-point list contain the origin as start+end */
+	plp->pl_2d_x[plp->pl_npts] = plp->pl_2d_y[plp->pl_npts] = 0.0;
+
+	/* Add this face onto the linked list for this solid */
+	plp->pl_forw = (struct plane_specific *)stp->st_specific;
+	stp->st_specific = (int *)plp;
+	return(1);					/* OK */
 }
 
-static struct triangle_specific *
-facet( vects, stp, a, b, c )
-register float *vects;
+#define VERT(x)	(&vects[(x)*3])
+
+/*static */
+add_pt( vects, stp, plp, a )
+float *vects;
 struct soltab *stp;
-int a, b, c;
+register struct plane_specific *plp;
+int a;
 {
-	register struct triangle_specific *trip;
-	static vect_t B_A;		/* B - A */
-	static vect_t C_A;		/* C - A */
-	static vect_t B_C;		/* B - C */
-	static float scale;		/* for scaling normal vector */
+	register int i;
+	register pointp_t point;
+	static vect_t work;
+	static vect_t P_A;		/* new point - A */
+	static float f;
 
-	VSUB2( B_A, VERT(b), VERT(a) );
-	VSUB2( C_A, VERT(c), VERT(a) );
-	VSUB2( B_C, VERT(b), VERT(c) );
+	point = VERT(a);
 
-	/* If points are coincident, ignore facet */
-	if( MAGSQ( B_A ) < EPSILON )  return(0);
-	if( MAGSQ( C_A ) < EPSILON )  return(0);
-	if( MAGSQ( B_C ) < EPSILON )  return(0);
-
-	GETSTRUCT( trip, triangle_specific );
-
-	VMOVE( trip->tri_A, VERT(a) );	/* Temp */
-	VMOVE( trip->tri_B, VERT(b) );
-	VMOVE( trip->tri_C, VERT(c) );
-	trip->tri_code[0] = '0'+a;
-	trip->tri_code[1] = '0'+b;
-	trip->tri_code[2] = '0'+c;
-	trip->tri_code[3] = '\0';
-
-	VCROSS( trip->tri_AxB, VERT(a), VERT(b) );
-	VCROSS( trip->tri_BxC, VERT(b), VERT(c) );
-	VCROSS( trip->tri_CxA, VERT(c), VERT(a) );
-	VCROSS( trip->tri_Q, B_A, C_A );
-	trip->tri_vol = VDOT( trip->tri_Q, VERT(a) );
-	if( NEAR_ZERO(trip->tri_vol) )  {
-		printf("arb8(%s): Zero volume (%f), facet %s dropped\n",
-			stp->st_name, trip->tri_vol, trip->tri_code );
-		free(trip);
-		return(0);		/* FAIL */
+	/* Verify that this point is not the same as an earlier point */
+	for( i=0; i < plp->pl_npts; i++ )  {
+		VSUB2( work, point, plp->pl_points[i] );
+		if( MAGSQ( work ) < EPSILON )
+			return(0);			/* BAD */
 	}
+	i = plp->pl_npts++;		/* Current point number */
+	VMOVE( plp->pl_points[i], point );
+	plp->pl_code[i] = '0'+a;
+	plp->pl_code[i+1] = '\0';
 
-	/* Compute Normal with unit length, and outward direction */
-	scale = 1.0 / MAGNITUDE( trip->tri_Q );
-	VSCALE( trip->tri_N, trip->tri_Q, scale );
+	/* The first 3 points are treated differently */
+	switch( i )  {
+	case 0:
+		plp->pl_2d_x[0] = plp->pl_2d_y[0] = 0.0;
+		return(1);				/* OK */
+	case 1:
+		VSUB2( plp->pl_Xbasis, point, plp->pl_A );	/* B-A */
+		plp->pl_2d_x[1] = VDOT( plp->pl_Xbasis, plp->pl_Xbasis );
+		plp->pl_2d_y[1] = 0.0;
+		return(1);				/* OK */
+	case 2:
+		VSUB2( P_A, point, plp->pl_A );	/* C-A */
+		f = VDOT( plp->pl_Xbasis, P_A ) -
+			( MAGNITUDE(P_A) * MAGNITUDE(plp->pl_Xbasis) );
+		if( NEAR_ZERO(f) )  {
+			plp->pl_npts--;
+			plp->pl_code[2] = '\0';
+			return(0);			/* BAD */
+		}
+		VCROSS( plp->pl_N, plp->pl_Xbasis, P_A );
+		VUNITIZE( plp->pl_N );
 
-	/* Add to linked list */
-	trip->tri_forw = (struct triangle_specific *)stp->st_specific;
-	stp->st_specific = (int *)trip;
-
-	return(trip);
+		/* Extra checking:  test for outward normal direction */
+		VSUB2( work, plp->pl_A, stp->st_center );
+		f = VDOT( work, plp->pl_N );
+		if( f < 0.0 )  {
+			printf("WARNING: arb8(%s) face %s has bad normal!  (A-cent).N=%f\n", stp->st_name, plp->pl_code, f);
+			VPRINT("(A-cent)", work);
+			VPRINT("N", plp->pl_N);
+			/* HACK HACK HACK -- "fix" normal */
+			plp->pl_N[0] = - plp->pl_N[0];
+			plp->pl_N[1] = - plp->pl_N[1];
+			plp->pl_N[2] = - plp->pl_N[2];
+		}
+		/* Generate an arbitrary Y basis perp to Xbasis & Normal */
+		VCROSS( plp->pl_Ybasis, plp->pl_N, plp->pl_Xbasis );
+		plp->pl_NdotA = VDOT( plp->pl_N, plp->pl_A );
+		plp->pl_2d_x[2] = VDOT( P_A, plp->pl_Xbasis );
+		plp->pl_2d_y[2] = VDOT( P_A, plp->pl_Ybasis );
+		return(1);				/* OK */
+	default:
+		/* Merely validate 4th and subsequent points */
+		VSUB2( P_A, point, plp->pl_A );
+		f = VDOT( plp->pl_N, P_A );
+		if( NEAR_ZERO(f) )  {
+			plp->pl_2d_x[i] = VDOT( P_A, plp->pl_Xbasis );
+			plp->pl_2d_y[i] = VDOT( P_A, plp->pl_Ybasis );
+			return(1);			/* OK */
+		}
+		printf("ERROR: arb8(%s) face %s non-planar\n",
+			stp->st_name, plp->pl_code );
+		plp->pl_npts--;
+		plp->pl_code[i] = '\0';
+		return(0);				/* BAD */
+	}
 }
 
 arb8_print( stp )
 register struct soltab *stp;
 {
-	register struct triangle_specific *trip =
-		(struct triangle_specific *)stp->st_specific;
+	register struct plane_specific *plp =
+		(struct plane_specific *)stp->st_specific;
+	register int i;
 
-	if( trip == (struct triangle_specific *)0 )  {
-		printf("arb8(%s):  no facets\n", stp->st_name);
+	if( plp == (struct plane_specific *)0 )  {
+		printf("arb8(%s):  no faces\n", stp->st_name);
 		return;
 	}
 	do {
-		printf( "......Facet %s\n", trip->tri_code );
-		VPRINT( "A", trip->tri_A );
-		VPRINT( "B", trip->tri_B );
-		VPRINT( "C", trip->tri_C );
-		VPRINT( "AxB", trip->tri_AxB );
-		VPRINT( "BxC", trip->tri_BxC );
-		VPRINT( "CxA", trip->tri_CxA );
-		VPRINT( "Q", trip->tri_Q );
-		printf( "Vol=Q.A=%f\n", trip->tri_vol );
-		VPRINT( "Normal", trip->tri_N );
-	} while( trip = trip->tri_forw );
+		printf( "......Face %s\n", plp->pl_code );
+		printf( "%d vertices:\n", plp->pl_npts );
+		for( i=0; i < plp->pl_npts; i++ )  {
+			VPRINT( "", plp->pl_points[i] );
+		}
+		VPRINT( "Xbasis", plp->pl_Xbasis );
+		VPRINT( "Ybasis", plp->pl_Ybasis );
+		VPRINT( "Normal", plp->pl_N );
+		printf( "N.A = %f\n", plp->pl_NdotA );
+		printf( "2-d projection of vertices:\n");
+		for( i=0; i < plp->pl_npts; i++ )  {
+			printf( "(%f,%f), ",
+				plp->pl_2d_x[i],
+				plp->pl_2d_y[i] );
+		}
+		putchar('\n');
+	} while( plp = plp->pl_forw );
 }
 
 /*
@@ -254,39 +287,40 @@ arb8_shot( stp, rp )
 struct soltab *stp;
 struct ray *rp;
 {
-	register struct triangle_specific *trip =
-		(struct triangle_specific *)stp->st_specific;
+	register struct plane_specific *plp =
+		(struct plane_specific *)stp->st_specific;
 	register struct seg *segp;
 	static struct hit in, out;
 	static int flags;
 
-	in.hit_dist = out.hit_dist = -1000000;	/* 'way back behind eye */
+	in.hit_dist = out.hit_dist = -INFINITY;	/* 'way back behind eye */
 
 	flags = 0;
-	for( ; trip; trip = trip->tri_forw )  {
-		register float dq;	/* D dot Q */
-		static float k;		/* (vol - (Q dot P))/ (Q dot D) */
+	/* consider each face */
+	for( ; plp; plp = plp->pl_forw )  {
+		register float dn;	/* Direction dot Normal */
+		static float k;		/* (NdotA - (N dot P))/ (N dot D) */
 		/*
-		 *  Ray Direction dot Q.  (Q is outward-pointing normal)
+		 *  Ray Direction dot N.  (N is outward-pointing normal)
 		 */
-		dq = VDOT( trip->tri_Q, rp->r_dir );
+		dn = VDOT( plp->pl_N, rp->r_dir );
 		if( debug & DEBUG_ARB8 )
-			printf("Shooting at face %s.  Q.D=%f\n", trip->tri_code, dq );
-		if( NEAR_ZERO(dq) )
+			printf("Shooting at face %s.  N.Dir=%f\n", plp->pl_code, dn );
+		if( NEAR_ZERO(dn) )
 			continue;
 
 		/* Compute distance along ray of intersection */
-		k = (trip->tri_vol - VDOT(trip->tri_Q, rp->r_pt)) / dq;
+		k = (plp->pl_NdotA - VDOT(plp->pl_N, rp->r_pt)) / dn;
 
-		if( dq < 0 )  {
+		if( dn < 0 )  {
 			/* Entering solid */
 			if( NEAR_ZERO( k - in.hit_dist ) )  {
 				if( debug & DEBUG_ARB8)printf("skipping nearby entry surface, k=%f\n", k);
 				continue;
 			}
-			if( tri_shot( trip, rp, &in, k ) != 0 )
+			if( pl_shot( plp, rp, &in, k ) != 0 )
 				continue;
-			if(debug&DEBUG_ARB8) printf("arb8: entry dist=%f, dq=%f, k=%f\n", in.hit_dist, dq, k );
+			if(debug&DEBUG_ARB8) printf("arb8: entry dist=%f, dn=%f, k=%f\n", in.hit_dist, dn, k );
 			flags |= SEG_IN;
 		} else {
 			/* Exiting solid */
@@ -294,15 +328,23 @@ struct ray *rp;
 				if( debug & DEBUG_ARB8)printf("skipping nearby exit surface, k=%f\n", k);
 				continue;
 			}
-			if( tri_shot( trip, rp, &out, k ) != 0 )
+			if( pl_shot( plp, rp, &out, k ) != 0 )
 				continue;
-			if(debug&DEBUG_ARB8) printf("arb8: exit dist=%f, dq=%f, k=%f\n", out.hit_dist, dq, k );
+			if(debug&DEBUG_ARB8) printf("arb8: exit dist=%f, dn=%f, k=%f\n", out.hit_dist, dn, k );
 			flags |= SEG_OUT;
 		}
 	}
 	if( flags == 0 )
 		return(SEG_NULL);		/* MISS */
 
+	if( flags == SEG_IN )  {
+		/* it may start inside, but it can always leave */
+		printf("Error: arb8(%s) ray never exited solid!\n",
+			stp->st_name);
+		return(SEG_NULL);		/* MISS */
+	}
+
+	/* SEG_OUT, or SEG_IN|SEG_OUT */
 	GETSTRUCT(segp, seg);
 	segp->seg_stp = stp;
 	segp->seg_flag = flags;
@@ -311,53 +353,80 @@ struct ray *rp;
 	return(segp);			/* HIT */
 }
 
-tri_shot( trip, rp, hitp, k )
-register struct triangle_specific *trip;
+pl_shot( plp, rp, hitp, k )
+register struct plane_specific *plp;
 register struct ray *rp;
 register struct hit *hitp;
-register float	k;			/* (v - (Q dot P))/ (Q dot D) */
+register float	k;			/* dist along ray */
 {
-	static float	av, bv, cv;	/* coeff's of linear combination */
 	static vect_t	hit_pt;		/* ray hits solid here */
+	static vect_t	work;
+	static float	xt, yt;
 
 	VCOMPOSE1( hit_pt, rp->r_pt, k, rp->r_dir );
+	VSUB2( work, hit_pt, plp->pl_A );
+	xt = VDOT( work, plp->pl_Xbasis );
+	yt = VDOT( work, plp->pl_Ybasis );
 
-	av = VDOT( hit_pt, trip->tri_BxC );
-	bv = VDOT( hit_pt, trip->tri_CxA );
-	cv = VDOT( hit_pt, trip->tri_AxB );
 	if( debug & DEBUG_ARB8 )  {
-		printf("k = %f,  ", k );
+		printf("k = %f, xt,yt=(%f,%f), ", k, xt, yt );
 		VPRINT("hit_pt", hit_pt);
-		printf("av=%f, bv=%f, cv=%f\n", av, bv, cv);
 	}
+	if( !inside( xt, yt, plp->pl_2d_x, plp->pl_2d_y, plp->pl_npts ) )
+		return(1);			/* MISS */
 
-	{
-		register float f;		/* XXX */
-		f = av + bv + cv - trip->tri_vol;
-		if( !NEAR_ZERO(f) )
-			return(1);		/* MISS */
-	}
-	if( av < 0.0 )  {
-		if( bv > 0.0 || cv > 0.0 )
-			return(1);		/* MISS */
-	} else if( av > 0.0 )  {
-		if( bv < 0.0 || cv < 0.0 )
-			return(1);		/* MISS */
-	} else {
-		/* av == 0.0 */
-		if( bv < 0.0 )  {
-			if( cv > 0.0 )
-				return(1);	/* MISS */
-		} else if( bv > 0.0 )  {
-			if( cv < 0.0 )
-				return(1);	/* MISS */
-		} /* av == bv == 0.0 */
-	}
-
-	/* Hit is within the triangle */
+	/* Hit is within planar face */
 	hitp->hit_dist = k;
 	VMOVE( hitp->hit_point, hit_pt );
-	VMOVE( hitp->hit_normal, trip->tri_N );
+	VMOVE( hitp->hit_normal, plp->pl_N );
 	if( debug & DEBUG_ARB8 )  printf("\t[Above was a hit]\n");
 	return(0);				/* HIT */
+}
+
+/*
+ *  			I N S I D E
+ *  
+ * Function -
+ *  	Determines whether test point (xt,yt) is inside the polygon
+ *  	whose vertices have coordinates (in cyclic order) of
+ *  	(x[i],y[i]) for i = 0 to n-1.
+ *  
+ * Returns -
+ *  	1	iff test point is inside polygon
+ *  	0	iff test point is outside polygon
+ *  
+ * Method -
+ *  	A horizontal line through the test point intersects an even
+ *  	number of the polygon's sides to the right of the point
+ *  	IFF the point is exterior to the polygon (Jordan Curve Theorem).
+ *  
+ * Note -
+ *  	For speed, we assume that x[n] == x[0], y[n] == y[0],
+ *  	ie, that the starting point is repeated as the ending point.
+ *
+ * Credit -
+ *	Douglas A. Gwyn (Algorithm, original FORTRAN subroutine)
+ *	Michael Muuss (This "C" routine)
+ */
+inside( xt, yt, x, y, n )
+register float xt, yt;
+register float *x, *y;
+int n;
+{
+	register float *xend = &x[n];
+	static int ret;
+
+	/*
+	 * Starts with 0 intersections, an even number ==> outside.
+	 * Proceed around the polygon, testing each side for intersection.
+	 */
+	for( ret=0; x < xend; x++,y++ )  {
+		/* See if edge is crossed by horiz line through test point */
+		if( (yt  > *y || yt <= y[1])  &&  (yt <= *y || yt >  y[1]) )
+			continue;
+		/* Yes.  See if intersection is to the right of test point */
+		if( (xt - *x - (yt - *y) * (x[1] - *x) / (y[1] - *y)) < 0.0 )
+			ret = !ret;
+	}
+	return(ret);
 }
