@@ -11,6 +11,13 @@
 #include "shadework.h"
 extern void optical_shader_init(struct mfuncs	**headp);
 
+/* refract.c */
+int
+rr_render(register struct application *ap,
+	  struct partition	*pp,
+	  struct shadework	*swp);
+
+
 /* do.c */
 extern void do_ae(double azim, double elev);
 extern int do_frame( int framenumber );
