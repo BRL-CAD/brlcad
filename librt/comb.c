@@ -55,17 +55,15 @@ Print_tree(union tree *tree)
 		printf( "NULL Tree\n" );
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	struct db_i		*dbip;
 	struct directory	*dp;
-	struct bu_external	ep;
 	struct rt_db_internal	ip;
 	struct rt_comb_internal	*comb;
 	mat_t			identity_mat;
 	int			i;
 	struct bu_vls		file;
-	FILE			*fp;
 
 	bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_COREDUMP;
 
@@ -92,7 +90,6 @@ main(int argc, char **argv)
 
 	for( i=2 ; i<argc ; i++ )
 	{
-		int j;
 
 		printf( "%s\n" , argv[i] );
 
@@ -150,4 +147,6 @@ main(int argc, char **argv)
 		rt_db_free_internal( &ip, &rt_uniresource );
 
 	}
+
+    return 0;
 }
