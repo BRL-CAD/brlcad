@@ -597,13 +597,13 @@ successfully performed:
 
 0) All code is commited to CVS.
 
-1) Changelog and NEWS include a comment for all relevant and
-significant items added since the previous release.
+1) Verify that NEWS and the Changelog include a comment for all
+relevant and significant items added since the previous release.
 
 2) All existing manpages are updated with the latest changes.
 
-3) Version numbers (minimally in configure.ac and README) are updated
-appropriately (see VERSION NUMBERS & COMPATIBILITY section).
+3) Version numbers (minimally in configure.ac, NEWS, and README) are
+set appropriately (see VERSION NUMBERS & COMPATIBILITY section).
 
 4) A "./configure && make" completes successfully on all platforms.
 
@@ -615,25 +615,29 @@ System tools (autoconf, automake, etc).
 6) Tag the release using the format "rel-MAJOR-MINOR-PATCH".  See the
 doc/cvspolicy.txt document for details.  e.g. cvs tag rel-7-2-4
 
-7) Export the tagged release "cvs export -r rel-MAJOR-MINOR-PATCH" to
-obtain exactly the tagged version of the sources.
+7) Export the tagged release "cvs export -r rel-MAJOR-MINOR-PATCH" or
+alternatively "cvs update -r rel-MAJOR-MINOR-PATCH" to obtain exactly
+the tagged version of the sources;
 
-8) Perform a "make dist" on the exported sources to generate a
-distributable source tarball.
+8) Perform a "make dist" on the exported/updated sources to generate
+the distributable compressed source tarballs.
 
-9) Verify that the source tarball may be expanded; and that it builds,
-runs, and that the file permissions are correct.
+9) Verify that the source distribution tarballs may be expanded; and
+that they build, run, and that the file permissions are correct.
 
-10) Use the source tarball to generate platform-specific builds.  Test
-the build.
+10) Use one of the source distribution tarballs to generate
+platform-specific builds.  Test the build.
 
-11) Post the source and platform-specific binaries to the SourceForge
-file tracker (i.e. upload the archives via ftp to http://cvs.sf.net).
+11) Post the source and platform-specific binary distributions to
+SourceForge (i.e. upload them via ftp to upload.sf.net's incoming
+directory and select them on the sf.net File Release System).
 
-12) Increment and commit the BRL-CAD release number in CVS in the
-configure.ac file immediately to a developer version (odd number).
+12) Increment and commit the next BRL-CAD release numbers to CVS;
+update the configure.ac, README, and NEWS immediately to a developer
+version (odd minor or patch version number, e.g. 7.4.1).
 
-13) Notify and/or update the following:
+13) If appropriate, notify and/or update the following information
+outlets with the details of the new release:
 
       BRL-CAD News mailing list
       brlcad-news@lists.sourceforge.net
@@ -650,11 +654,11 @@ configure.ac file immediately to a developer version (odd number).
       Freshmeat
       http://freshmeat.net/projects/brl-cad/
 
-      Slashdot
-      http://slashdot.org
-
       CAD on Linux mailing list
       cad-linux@freelists.org
+
+      Slashdot
+      http://slashdot.org
 
 14) Sit back and enjoy a beverage for a job well done.
 
