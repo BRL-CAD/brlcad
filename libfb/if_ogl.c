@@ -117,7 +117,11 @@ _LOCAL_ XVisualInfo *	ogl_choose_visual();
 static int		is_linear_cmap();
 
 static Widget 	popup;
-static int	ogl_nwindows = 0; 	/* track of open windows */
+static int	ogl_nwindows = 0; 	/* number of open windows*/
+static int	multiple_windows = 0;	/* someone wants to be ready
+					 * for multiple windows, at the
+					 * expense of speed.
+					 */
 _LOCAL_	XColor	color_cell[256];		/* used to set colormap */
 
 
@@ -198,15 +202,17 @@ struct ogl_cmap {
 
 /* 
  *  This defines the format of the in-memory framebuffer copy.
+ *  The alpha component and reverse order are maintained for
+ *  compatibility with /dev/sgi
  */
 struct ogl_pixel {
-	unsigned char red;
-	unsigned char green;
-	unsigned char blue;
 	unsigned char alpha;
+	unsigned char blue;
+	unsigned char green;
+	unsigned char red;
 };
 
-/* Clipping structure, for zoom/pan operations on non-GT systems */
+/* Clipping structure for zoom/pan operations */
 struct ogl_clip {
 	int	xpixmin;	/* view clipping planes clipped to pixel memory space*/
 	int	xpixmax;
@@ -309,6 +315,10 @@ struct oglinfo {
 #define MODE_4NORMAL	(0<<3)		/* dither if it seems necessary */
 #define MODE_4NODITH	(1<<3)		/* suppress any dithering */
 
+#define MODE_5MASK	(1<<4)
+#define MODE_5NORMAL	(1<<4)		/* fast - assume no multiple windows */
+#define MODE_5MULTI	(1<<4)		/* be ready for multiple windows */
+
 #define MODE_7MASK	(1<<6)
 #define MODE_7NORMAL	(0<<6)		/* install colormap in hardware if possible*/
 #define MODE_7SWCMAP	(1<<6)		/* use software colormapping */
@@ -339,6 +349,8 @@ static struct modeflags {
 		"Full centered screen - else windowed" },
 	{ 'd',  MODE_4MASK, MODE_4NODITH,
 		"Suppress dithering - else dither if not 24-bit buffer" },
+	{ 'm',  MODE_5MASK, MODE_5MULTI,
+		"Be ready for multiple windows - else optimize for single windows" },
 	{ 'c',	MODE_7MASK, MODE_7SWCMAP,
 		"Perform software colormap - else use hardware colormap if possible" },
 	{ 's',	MODE_9MASK, MODE_9SINGLEBUF,
@@ -537,7 +549,8 @@ static void sigkid()
 
 
 
-/* OGL_XMIT_SCANLINES
+/* 			O G L _ X M I T _ S C A N L I N E S
+ *
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
  */
@@ -558,7 +571,7 @@ int		npix;
 	int 		xcoord,ycoord, i, j;
 	struct ogl_clip	*clp;
 
-	/* Caller is expected handle attaching context, etc. */
+	/* Caller is expected to handle attaching context, etc. */
 
 	clp = &(OGL(ifp)->clip);
 
@@ -653,7 +666,7 @@ int		npix;
 			
 			glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
 			glRasterPos2i(xbase,y);
-			glDrawPixels(npix,1,GL_RGBA,GL_UNSIGNED_BYTE,
+			glDrawPixels(npix,1,GL_ABGR_EXT,GL_UNSIGNED_BYTE,
 					(unsigned long *) op);
 
 		}
@@ -666,7 +679,7 @@ int		npix;
 		glPixelStorei(GL_UNPACK_SKIP_ROWS,ybase);
 		
 		glRasterPos2i(xbase,ybase);
-		glDrawPixels(npix,nlines,GL_RGBA,GL_UNSIGNED_BYTE,
+		glDrawPixels(npix,nlines,GL_ABGR_EXT,GL_UNSIGNED_BYTE,
 				(unsigned long *) ifp->if_mem);
 
 if (CJDEBUG) {
@@ -778,6 +791,14 @@ int	width, height;
 
 	SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
+	if (ogl_nwindows && !multiple_windows){
+		fb_log("Warning - ogl_open: Multiple windows opened. Use /dev/oglm for first window!");
+	}
+
+	/* Anyone can turn this on; no one can turn it off */
+	if( (ifp->if_mode & MODE_5MASK) == MODE_5MULTI )
+		multiple_windows = 1;
+
 	/* the Silicon Graphics Library Window management routines
 	 * use shared memory. This causes lots of problems when you
 	 * want to pass a window structure to a child process.
@@ -788,6 +809,7 @@ int	width, height;
 	 * as well as allow the frame buffer window to remain around
 	 * until killed by the menu subsystem.
     	 */
+
 	if( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
 		/* save parent pid for later signalling */
 		SGI(ifp)->mi_parent = getpid();
@@ -818,7 +840,6 @@ int	width, height;
 		/* Child Process falls through */
 	}
 
-
 	if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
 		/* Bump default size up to full screen, since we have it all */
 		ifp->if_width = XMAXSCREEN+1;		/* 1280 */
@@ -848,7 +869,6 @@ int	width, height;
 		SGI(ifp)->mi_curs_on = 1;
 	}  else  {
 		/* MODE_3MASK == MODE_3FULLSCR */
-/*		noborder();*/
 		xpos = 0;
 		ypos = YMAXSCREEN;
 		win_width = XMAXSCREEN+1;
@@ -859,7 +879,7 @@ int	width, height;
 	/* Build a descriptive window title bar */
 	(void)sprintf( title, "BRL libfb /dev/ogl %s, %s",
 		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
-			"Transient Win" :
+			"Transient Win":
 			"Lingering Win",
 		((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
 			"Private Mem" :
@@ -960,8 +980,9 @@ int	width, height;
 
 	/* realize window on the screen */
 	XtRealizeWidget(OGL(ifp)->toplevel);
-	ogl_nwindows++;		
 	OGL(ifp)->wind = XtWindow(OGL(ifp)->glw);
+	/* count windows */
+	ogl_nwindows++;
 
 	/* 
 	 * Cursor set-up:
@@ -1187,8 +1208,10 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 		XtDispatchEvent(&event);
 	}
 
+	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_clear: glXMakeCurrent unsuccessful.\n");
+	}
 	}
 
 	/* Set clear colors */
@@ -1237,8 +1260,10 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 		}
 	}
 
+	if (multiple_windows) {
 	/* unattach context for other threads to use */
 	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
 
 	return(0);
 }
@@ -1286,8 +1311,10 @@ int	xzoom, yzoom;
 	else	ifp->if_zoomflag = 0;
 
 
+	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_view: glXMakeCurrent unsuccessful.\n");
+	}
 	}
 
 	/* Set clipping matrix  and zoom level */
@@ -1315,8 +1342,10 @@ int	xzoom, yzoom;
 		}
 	}
 
+	if (multiple_windows) {
 	/* unattach context for other threads to use */
 	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
 
 	return(0);
 }
@@ -1502,10 +1531,11 @@ int	count;
 	}
 
 
+	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
 	}
-
+	}
 
 	if( xstart + count <= ifp->if_width  )  {
 		/* "Fast path" case for writes of less than one scanline.
@@ -1536,8 +1566,10 @@ int	count;
 		}
 	}
 
+	if (multiple_windows) {
 	/* unattach context for other threads to use */
 	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
 
 	return(ret);
 
@@ -1595,8 +1627,11 @@ CONST unsigned char	*pp;
 		XtDispatchEvent(&event);
 	}
 
+
+	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
+	}
 	}
 
 	if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
@@ -1610,8 +1645,10 @@ CONST unsigned char	*pp;
 		}
 	}
 
+	if (multiple_windows) {
 	/* unattach context for other threads to use */
 	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
 
 	return(width*height);
 }
@@ -1715,8 +1752,10 @@ register CONST ColorMap	*cmp;
 
 		/* Software color mapping, trigger a repaint */
 
+		if (multiple_windows) {
 		if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 			fb_log("Warning, ogl_wmap: glXMakeCurrent unsuccessful.\n");
+		}
 		}
 
 		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
@@ -1724,6 +1763,10 @@ register CONST ColorMap	*cmp;
 			glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
 		} else if (OGL(ifp)->copy_flag) {
 			backbuffer_to_screen(ifp,-1);
+		}
+		if (multiple_windows) {
+		/* unattach context for other threads to use, also flushes */
+		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
 		}
 	} else {
 		/* Send color map to hardware */
@@ -1739,8 +1782,6 @@ register CONST ColorMap	*cmp;
     		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
 	}
 
-	/* unattach context for other threads to use, also flushes */
-	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
 
 	return(0);
 }
@@ -1988,17 +2029,23 @@ input(Widget w, XtPointer client_data,    XtPointer call)
 static void 
 init_window(Widget w, XtPointer client_data, XtPointer call) 
 {
-	int dbb;
-	Arg args[1];
-        XVisualInfo *vi;
-	int use, rgba, red, green, blue, alpha, dbfr, stereo;
+	int direct;
 	FBIO *ifp;
 
 	if(CJDEBUG) printf("entering init_window\n");
 
 	ifp = (FBIO *) client_data;
 
-	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,OGL(ifp)->vip, 0, GL_FALSE);
+	if (multiple_windows){
+		OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,OGL(ifp)->vip, 0, GL_FALSE);
+	} else {
+		OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,OGL(ifp)->vip, 0, GL_TRUE);
+	}
+
+	if (CJDEBUG){
+		direct = glXIsDirect(OGL(ifp)->dispp,OGL(ifp)->glxc);
+		printf("Context is %s.\n", direct ? "direct" : "indirect");
+	}
 
 }
   
@@ -2015,8 +2062,10 @@ expose_callback (Widget w, XtPointer client_data, XtPointer call)
 
 	call_data = (GLwDrawingAreaCallbackStruct *) call;    
 
+	if (multiple_windows || OGL(ifp)->firstTime) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, libfb/expose_callback: glXMakeCurrent unsuccessful.\n");
+	}
 	}
 
 	if (OGL(ifp)->firstTime){
@@ -2121,9 +2170,10 @@ if(CJDEBUG) {
 	printf("double %d, stereo %d, aux %d\n",dbb,getster,getaux);
 }
 
+	if (multiple_windows) {
 	/* unattach context for other threads to use */
 	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
-
+	}
 
 }  
 
