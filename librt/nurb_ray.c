@@ -109,7 +109,7 @@ CONST struct snurb *srf;
 int	dir;
 fastf_t *min, *max;
 {
-	register struct internal_convex_hull ch[20]; /* max order is 10 */
+	struct internal_convex_hull ch[20]; /* max order is 10 */
 	register fastf_t * mp1;
 	fastf_t * p1, *p2, *p3, *p4;	/* corner points of the mesh */
 	fastf_t v1[2], v2[2], v3[2];		/* vectors from corneres */
