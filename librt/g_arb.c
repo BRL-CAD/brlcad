@@ -1155,6 +1155,15 @@ struct rt_tol		*tol;
 	return(0);
 }
 
+static CONST fastf_t rt_arb_uvw[5*3] = {
+	0, 0, 0,
+	1, 0, 0,
+	1, 1, 0,
+	0, 1, 0,
+	0, 0, 0
+};
+static CONST int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
+
 /*
  *			R T _ A R B _ T N U R B
  *
@@ -1186,7 +1195,6 @@ struct rt_tol		*tol;
 	struct vertex		**vertp[4];
 	struct edgeuse		*eu;
 	struct loopuse		*lu;
-	point_t			uvw;
 
 	RT_CK_DB_INTERNAL(ip);
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
@@ -1241,23 +1249,23 @@ struct rt_tol		*tol;
 		NMG_CK_EDGEUSE(eu);
 
 		/* Loop always has Counter-Clockwise orientation (CCW) */
-		VSET( uvw, 0, 0, 0 );
-		nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
+		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_arb_uvw[0*3] );
+		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_arb_uvw[1*3] );
 		eu = RT_LIST_NEXT( edgeuse, &eu->l );
 
-		VSET( uvw, 1, 0, 0 );
-		nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
+		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_arb_uvw[1*3] );
+		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_arb_uvw[2*3] );
 		eu = RT_LIST_NEXT( edgeuse, &eu->l );
 
-		VSET( uvw, 1, 1, 0 );
-		nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
-		eu = RT_LIST_NEXT( edgeuse, &eu->l );
-
+		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_arb_uvw[2*3] );
 		if( pa.pa_npts[i] > 3 ) {
-			VSET( uvw, 0, 1, 0 );
-			nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
+			nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_arb_uvw[3*3] );
+
 			eu = RT_LIST_NEXT( edgeuse, &eu->l );
+			nmg_vertexuse_a_cnurb( eu->vu_p, &rt_arb_uvw[3*3] );
 		}
+		/* Final eu must end back at the beginning */
+		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_arb_uvw[0*3] );
 	}
 
 	/* Associate vertex geometry */
@@ -1283,9 +1291,9 @@ struct rt_tol		*tol;
 
 		/* Assign surface knot vectors as 0, 0, 1, 1 */
 		fg->u.knots[0] = fg->u.knots[1] = 0;
-		fg->u.knots[2] = fg->u.knots[2] = 1;
+		fg->u.knots[2] = fg->u.knots[3] = 1;
 		fg->v.knots[0] = fg->v.knots[1] = 0;
-		fg->v.knots[2] = fg->v.knots[2] = 1;
+		fg->v.knots[2] = fg->v.knots[3] = 1;
 
 		/* Assign surface control points from the corners */
 		lu = RT_LIST_FIRST( loopuse, &fu[i]->lu_hd );
@@ -1293,21 +1301,27 @@ struct rt_tol		*tol;
 		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
 		NMG_CK_EDGEUSE(eu);
 
+		/* For ctl_points, need 4 verts in order 0, 1, 3, 2 */
 		for( j=0; j < pa.pa_npts[i]; j++ )  {
-			VMOVE( &fg->ctl_points[j*3], eu->vu_p->v_p->vg_p->coord );
-			eu = RT_LIST_NEXT( edgeuse, &eu->l );
+			VMOVE( &fg->ctl_points[rt_arb_vert_index_scramble[j]*3],
+				eu->vu_p->v_p->vg_p->coord );
 
 			/* Also associate edge geometry (trimming curve) */
 			nmg_edge_g_cnurb_plinear(eu);
+			eu = RT_LIST_NEXT( edgeuse, &eu->l );
 		}
-		if( pa.pa_npts[i] > 3 ) {
+		if( pa.pa_npts[i] == 3 ) {
 			vect_t	c_b;
 			/*  Trimming curve describes a triangle ABC on face,
 			 *  generate a phantom fourth corner at A + (C-B)
 			 *  [3] = [0] + [2] - [1]
 			 */
-			VSUB2( c_b, &fg->ctl_points[2*3], &fg->ctl_points[1*3] );
-			VADD2( &fg->ctl_points[3*3], &fg->ctl_points[0*3], c_b );
+			VSUB2( c_b,
+				&fg->ctl_points[rt_arb_vert_index_scramble[2]*3],
+				&fg->ctl_points[rt_arb_vert_index_scramble[1]*3] );
+			VADD2( &fg->ctl_points[rt_arb_vert_index_scramble[3]*3],
+				&fg->ctl_points[rt_arb_vert_index_scramble[0]*3],
+				c_b );
 		}
 	}
 
