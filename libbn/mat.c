@@ -1273,3 +1273,58 @@ CONST mat_t	in;
 	bcopy( (CONST char *)in, (char *)out, sizeof(mat_t) );
 	return out;
 }
+
+/*
+ *			B N _ M A T _ C K
+ *
+ *  Check to ensure that a rotation matrix preserves axis perpendicularily.
+ *  Note that not all matricies are rotation matricies.
+ *
+ *  Returns -
+ *	-1	FAIL
+ *	 0	OK
+ */
+int
+bn_mat_ck( title, m )
+CONST char *title;
+CONST mat_t m;
+{
+	vect_t	A, B, C;
+	fastf_t	fx, fy, fz;
+
+	if( !m )  return 0;		/* implies identity matrix */
+
+	/*
+	 * Validate that matrix preserves perpendicularity of axis
+	 * by checking that A.B == 0, B.C == 0, A.C == 0
+	 * XXX these vectors should just be grabbed out of the matrix
+	 */
+#if 0
+	MAT4X3VEC( A, m, xaxis );
+	MAT4X3VEC( B, m, yaxis );
+	MAT4X3VEC( C, m, zaxis );
+#else
+	VMOVE( A, &m[0] );
+	VMOVE( B, &m[4] );
+	VMOVE( C, &m[8] );
+#endif
+	fx = VDOT( A, B );
+	fy = VDOT( B, C );
+	fz = VDOT( A, C );
+	if( ! NEAR_ZERO(fx, 0.0001) ||
+	    ! NEAR_ZERO(fy, 0.0001) ||
+	    ! NEAR_ZERO(fz, 0.0001) ||
+	    NEAR_ZERO( m[15], VDIVIDE_TOL )
+	)  {
+		bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n",
+			title, fx, fy, fz, m[15] );
+		bn_mat_print("bn_mat_ck() bad matrix", m);
+
+		if( bu_debug & (BU_DEBUG_MATH | BU_DEBUG_COREDUMP) )  {
+			bu_debug |= BU_DEBUG_COREDUMP;
+			bu_bomb("bn_mat_ck() bad matrix\n");
+		}
+	    	return -1;	/* FAIL */
+	}
+	return 0;		/* OK */
+}
