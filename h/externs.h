@@ -194,15 +194,13 @@ extern char *	sbrk();
 extern int	brk();
 #endif
 
-   /* IRIX 5 string.h is unwilling to define strdup */
-#if (IRIX >= 5)
-extern char *	strdup(const char *s);
-#endif
-
-/* Even POSIX does not define these, they are UNIX-specific. But we need them. */
+/* Neither ANSI nor POSIX define these, they are UNIX-specific.
+ * But we need them, and all UNIX systems provide them.
+ */
 #if __STDC__
 extern FILE	*fdopen( int filedes, const char *type );
 extern FILE	*popen( const char *command, const char *type );
+extern char	*strdup(const char *s);
 #endif
 
 #endif /* EXTERNS_H */
