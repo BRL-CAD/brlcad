@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <rle.h>
+#include <math.h>
 
 #ifdef USE_STDLIB_H
 #include <stdlib.h>
@@ -35,9 +36,9 @@ extern void free();
 
 #endif /* USE_STDLIB_H */
 
-/* Change this according the value on your system.  This is a crock. */
+/* Change this according the value on your system.  This is a crock.
 #define	RANDOM_MAX	((double)(int)(((unsigned int)~0)>>1))
-
+ */
 #define MALLOC_ERR {fprintf(stderr, "%s: ran out of heap space\n",\
 			    cmd_name(argv));exit(-2);}
 
@@ -76,7 +77,7 @@ char ** argv;
 		   &noise_amount, &noise_amount, &oflag, &out_fname, &in_fname) == 0 )
 	exit( 1 );
 
-    rand_mult = noise_amount / RANDOM_MAX;
+    rand_mult = noise_amount / HUGE;
     noise_amount /= 2;
 
     in_hdr.rle_file = rle_open_f(cmd_name( argv ), in_fname, "r");
