@@ -1268,7 +1268,7 @@ CONST struct bn_tol	*tol;
 	htab = nmg_visit_handlers_null;		/* struct copy */
 	htab.vis_edge = nmg_find_e_pt2_handler;
 
-	nmg_visit( magic_p, &htab, &st );
+	nmg_visit( magic_p, &htab, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]" );
 
