@@ -34,7 +34,11 @@ char	*fmt;
 va_dcl
 	{	va_list		ap;
 	va_start( ap );
+#if defined(alliant) && defined(i860)
+	(void) vfprintf( stderr, fmt, ap);
+#else
 	(void) _doprnt( fmt, ap, stderr );
+#endif
 	va_end( ap );
 	return;
 	}
