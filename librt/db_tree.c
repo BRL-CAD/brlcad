@@ -1081,6 +1081,7 @@ genptr_t	client_data;
 
 	/*
 	 * Load the entire object into contiguous memory.
+	 * Note that this code depends on the d_flags being set properly.
 	 */
 	if( dp->d_addr == RT_DIR_PHONY_ADDR )  return TREE_NULL;
 
@@ -1184,6 +1185,9 @@ region_end:
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
+
+		if(rt_g.debug&DEBUG_TREEWALK)
+			bu_log("db_recurse() rt_db_get_internal(%s) solid\n", dp->d_namep);
 
 	    	RT_INIT_DB_INTERNAL(&intern);
 		if( rt_db_get_internal( &intern, dp, tsp->ts_dbip, tsp->ts_mat ) < 0 )  {
@@ -1827,17 +1831,17 @@ genptr_t		client_data;
 	return(curtree);
 }
 
-HIDDEN union tree *db_gettree_leaf( tsp, pathp, ext, id, client_data )
+HIDDEN union tree *db_gettree_leaf( tsp, pathp, ip, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct bu_external	*ext;
-int			id;
+struct rt_db_internal	*ip;
 genptr_t		client_data;
 {
 	register union tree	*curtree;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
+	RT_CK_DB_INTERNAL(ip);
 
 	BU_GETUNION( curtree, tree );
 	curtree->magic = RT_TREE_MAGIC;
