@@ -6,7 +6,6 @@
 #
 #  e.g.:
 #	data-w123-n456.pix
-#	data-123x456.pix
 #	stuff.rle
 #
 #  The output of this script is one line, suitable for use in a
@@ -34,7 +33,6 @@ BASE=
 case "$SUFFIX" in
 pix|bw)
 	eval `echo $LHS|sed \
--e 's/\\(.*\\)-\\([0-9]*\\)x\\([0-9]*\\)/;BASE=\\1;WIDTH=\\2;HEIGHT=\\3;/'   \
 -e 's/\\(.*\\)-w\\([0-9]*\\)-n\\([0-9]*\\)/;BASE=\\1;WIDTH=\\2;HEIGHT=\\3;/' \
 -e 's/^/GOOP=/' `
 	# if BASE is not set, then the file name is not of this form,
@@ -42,16 +40,13 @@ pix|bw)
 	;;
 esac
 
-# if that was enough, print and quit, else work some more.
-if test "$BASE" != ""
+if test "$BASE" = ""
 then
-	echo "BASE=$BASE; SUFFIX=$SUFFIX; WIDTH=$WIDTH; HEIGHT=$HEIGHT"
-	exit 0
+	BASE="$LHS"
 fi
 
 # Second, see if some program can tell us more about this file,
 # usually giving -w -n style info.
-BASE=$LHS
 ARGS=""
 case "$SUFFIX" in
 pix)
