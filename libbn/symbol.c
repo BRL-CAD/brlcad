@@ -39,35 +39,39 @@
 #define TINY	char		/* must be signed */
 #endif
 
-static TINY	*ppindex[256];	/* index to stroke tokens */
-extern TINY	pptable[];	/* table of strokes */
+static TINY	*tp_cindex[256];	/* index to stroke tokens */
+extern TINY	tp_ctable[];	/* table of strokes */
+
+void		tp_3symbol();
 
 /*
  *  Once-only setup routine
  */
-static tp_setup()
+static void
+tp_setup()
 {
 	register TINY	*p;	/* pointer to stroke table */
 	register int i;
 
-	p = pptable;		/* pointer to stroke list */
+	p = tp_ctable;		/* pointer to stroke list */
 
 	/* Store start addrs of each stroke list */
 	for( i=040-5; i<128; i++)  {
-		ppindex[i+128] = ppindex[i] = p;
+		tp_cindex[i+128] = tp_cindex[i] = p;
 		while( (*p++ & 0377) != LAST );
 	}
 	for( i=6; i<040; i++ )  {
-		ppindex[i+128] = ppindex[i] = ppindex['?'];
+		tp_cindex[i+128] = tp_cindex[i] = tp_cindex['?'];
 	}
 	for( i=1; i<6; i++ )  {
-		ppindex[i+128] = ppindex[i] = ppindex[040-1+i];
+		tp_cindex[i+128] = tp_cindex[i] = tp_cindex[040-1+i];
 	}
 }
 
 /*
  *			T P _ S Y M B O L
  */
+void
 tp_2symbol( fp, string, x, y, scale, theta )
 char	*string;		/* string of chars to be plotted */
 double	x, y;			/* x,y of lower left corner of 1st char */
@@ -82,6 +86,7 @@ double	theta;			/* degrees ccw from X-axis */
 	tp_3symbol( fp, string, p, mat, scale );
 }
 
+void
 tp_3symbol( fp, string, origin, rot, scale )
 char	*string;		/* string of chars to be plotted */
 vect_t	origin;			/* lower left corner of 1st char */
@@ -115,7 +120,7 @@ double	scale;			/* scale factor to change 1x1 char sz */
 	mat_mul( mat, xlate_to_origin, rot );
 
 	/* Check to see if initialization is needed */
-	if( ppindex[040] == 0 )  tp_setup();
+	if( tp_cindex[040] == 0 )  tp_setup();
 
 	/* Draw each character in the input string */
 	offset = 0;
@@ -127,7 +132,7 @@ double	scale;			/* scale factor to change 1x1 char sz */
 		MAT4X3PNT( loc, mat, temp );
 		pdv_3move( fp, loc );
 
-		for( p = ppindex[*cp]; ((stroke= *p)&0xFF) != LAST; p++ )  {
+		for( p = tp_cindex[*cp]; ((stroke= *p)&0xFF) != LAST; p++ )  {
 			int	draw;
 
 			if( (stroke&0xFF)==NEGY )  {
@@ -158,7 +163,7 @@ double	scale;			/* scale factor to change 1x1 char sz */
 
 /*	tables for markers	*/
 
-static TINY	pptable[] = {
+TINY	tp_ctable[] = {
 
 /*	+	*/
 	drk(0, 5),
@@ -1143,6 +1148,7 @@ static TINY	pptable[] = {
 /*
  *  This FORTRAN interface expects REAL args (single precision).
  */
+void
 F2SYMB( fp, string, x, y, scale, theta )
 FILE	**fp;
 char	*string;

@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+void
 tp_2number( fp, input, x, y, cscale, theta, digits )
 FILE	*fp;
 double	input;		/* number to be plotted */
@@ -40,6 +41,7 @@ int	digits;		/* # digits wide */
 	tp_2symbol( fp, buf, x, y, cscale, theta );
 }
 
+void
 F2NUMB( fp, input, x, y, cscale, theta, digits )
 FILE	**fp;
 float	*input;

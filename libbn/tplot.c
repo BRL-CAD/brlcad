@@ -44,6 +44,11 @@
 #define NUM_DISTANCE	250
 #define LAB_LNGTH	860
 
+/* XXX These should probably either be static, or get different names */
+void	fixsc(), sep();
+float	pwr();
+
+void
 tp_plot( fp, xp, yp, xl, yl, xtitle, ytitle, x, y, n, cscale )
 FILE	*fp;
 int	xp, yp;		/* page point desired to be (0,0) for plot */
@@ -170,17 +175,18 @@ loop:
  * of ascii characters of the form "sX.XXXesXX". The string is
  * null terminated.
  */
+void
 ftoa(x, s)
 float x;
 char *s;
 {
-	int exp,tmp;
+	int ex,tmp;
 	float coef;
 	char esgn, nsgn;
 	char i;
-	sep(x, &coef, &exp);
-	if( exp < -15 ){
-		exp = 0;
+	sep(x, &coef, &ex);
+	if( ex < -15 ){
+		ex = 0;
 		*s++ = '0';
 		*s++ = '.';
 		*s++ = '0';
@@ -193,9 +199,9 @@ char *s;
 		*s   =  0 ;
 		return;
 	}
-	if(exp < 0){
+	if(ex < 0){
 		esgn = '-';
-		exp = -exp;
+		ex = -ex;
 	}
 	else
 		esgn = '+';
@@ -223,17 +229,17 @@ char *s;
 	*s++ = esgn;
 
 	/* and the exponent */
-	if( exp < 0)
-		exp = -exp;
-	if( exp < 10 ){
+	if( ex < 0)
+		ex = -ex;
+	if( ex < 10 ){
 		*s++ = '0';
-		*s++ = exp + '0';
+		*s++ = ex + '0';
 	}
 	else{
-		tmp = exp/10;
+		tmp = ex/10;
 		*s++ = tmp + '0';
-		exp = exp - tmp*10;
-		*s++ = exp +'0';
+		ex = ex - tmp*10;
+		*s++ = ex +'0';
 	}
 	/* add a null byte terminator */
 	*s = 0;
@@ -267,13 +273,13 @@ char *s;
  *			value)
  *
  */
+void
 fixsc(x,npts,size,xs,xmin,xmax,dx)
 int npts;
 float x[], size, *xs, *xmin, *xmax, *dx ;
 {
 	float txmi, txma, coef, delta, diff;
-	float pwr(), tabs();
-	int i, exp;
+	int i, ex;
 	txmi=txma=x[0];
 	i = 0;
 	while( i <= npts ) {
@@ -286,7 +292,7 @@ float x[], size, *xs, *xmin, *xmax, *dx ;
 	diff = txma - txmi;
 	if( diff < .000001 )
 		diff = .000001;
-	sep (diff, &coef, &exp);
+	sep (diff, &coef, &ex);
 	if( coef < 2.0 )
 		delta = .1;
 	else if ( coef < 4.0 )
@@ -294,19 +300,19 @@ float x[], size, *xs, *xmin, *xmax, *dx ;
 	else
 	    delta = .5;
 	i = 0;
-	if(exp < 0 ){
-		exp = -exp;
+	if(ex < 0 ){
+		ex = -ex;
 		i=12;
 	}
-	delta *= pwr(10.0,exp);
+	delta *= pwr(10.0,ex);
 	if(i == 12)
 		delta = 1.0/delta;
 	*dx = delta;
-	i = (tabs(txmi)/delta);
+	i = (fabs(txmi)/delta);
 	*xmin = i*delta;
 	if( txmi < 0.0 )
 		*xmin = -(*xmin+delta);
-	i = (tabs(txma)/delta);
+	i = (fabs(txma)/delta);
 	*xmax = i*delta;
 	if( txma < 0.0)
 		*xmax = - *xmax;
@@ -314,13 +320,15 @@ float x[], size, *xs, *xmin, *xmax, *dx ;
 	    *xmax = *xmax+delta;
 	*xs = 1000.*size/(*xmax - *xmin);
 }
-sep( x, coef, exp )
+
+void
+sep( x, coef, ex )
 /*
  *  sep() divides a floating point number into a coefficient
  *  and an exponent. works in base ten.
  */
 float x, *coef;
-int *exp;
+int *ex;
 {
 	int i, isv;
 	float xx;
@@ -331,14 +339,14 @@ int *exp;
 	}
 	if( x > 1.0 ){
 		xx = x;
-		*exp = 0;
+		*ex = 0;
 		*coef = 0.0;
 		if ( xx < 10.0){
 			*coef = xx*isv;
 			return;
 		}
 		for ( i=1 ; i < 39 ; ++i){
-			*exp += 1;
+			*ex += 1;
 			xx = xx/10.0;
 			if( xx < 10.0 )
 				break;
@@ -348,10 +356,10 @@ int *exp;
 	}
 	else{
 		xx = x;
-		*exp = 0;
+		*ex = 0;
 		*coef = 0.0;
 		for ( i=1 ; i<39 ; ++i){
-			*exp -= 1;
+			*ex -= 1;
 			xx *= 10.0;
 			if( xx >= 1.0 )
 				break;
@@ -360,31 +368,23 @@ int *exp;
 		return;
 	}
 }
-float pwr (x, n)
+
 /*
  *  pwr() raises a floating point number to a positve integer
  *  power.
  */
+float pwr (x, n)
 float x;
 int n;
 {
 	return(n>0?x*pwr(x,n-1):1);
-}
-float tabs(x)
-/*
- *  This routine returns the absolute value of a floating
- *  point number.
- */
-float x;
-{
-	return(x>0.0?x:-x);
 }
 
 
 /*
  *	CULC FORTRAN-IV Interface Entry
  */
-
+void
 FPLOT(xp, yp, xl, yl, xtitle, ytitle, x, y, n )
 char *xtitle, *ytitle;
 int *xp, *yp, *xl, *yl, *n;

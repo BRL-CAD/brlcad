@@ -33,6 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  Positive points towards the "to" point, negative points towards "from".
  *  Upon return, the virtual pen is left at the "to" position.
  */
+void
 tp_3vector( plotfp, from, to, fromheadfract, toheadfract )
 FILE	*plotfp;
 point_t	from, to;
@@ -87,6 +88,7 @@ double	fromheadfract, toheadfract;
 
 }
 
+void
 F3VECT(fp, fx, fy, fz, tx, ty, tz, fl, tl )
 FILE	**fp;
 float	*fx;

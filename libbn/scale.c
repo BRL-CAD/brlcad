@@ -57,6 +57,7 @@
 #include <stdio.h>
 #include <math.h>
 
+void
 tp_scale( idata, elements, mode, length, odata, min, dx )
 int idata[];
 int elements;
@@ -159,6 +160,7 @@ double *dx;
  *	FORTRAN-FOUR PLUS User Interface
  */
 
+void
 FSCALE( idata, elements, mode, length, odata, min, dx )
 int idata[];
 int *elements;

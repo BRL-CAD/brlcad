@@ -35,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 
+void
 tp_2marker( fp, c, x, y, scale )
 FILE	*fp;
 register int c;
@@ -52,6 +53,7 @@ double	scale;
 		scale, 0.0 );
 }
 
+void
 F2MARK( fp, c, x, y, scale )
 FILE	**fp;
 int	*c;
@@ -61,7 +63,7 @@ float	*scale;
 	tp_2marker( *fp, *c, *x, *y, *scale );
 }
 
-
+void
 tp_3marker( fp, c, x, y, z, scale )
 FILE	*fp;
 register int c;
@@ -79,6 +81,7 @@ double	scale;
 	tp_3symbol( fp, mark_str, p, mat, scale );
 }
 
+void
 F3MARK( fp, c, x, y, z, scale )
 FILE	**fp;
 int	*c;
