@@ -300,7 +300,7 @@ extern rle_hdr rle_dflt_hdr;
      * TAG( bwdithermap )
      * Create a color map for ordered dithering in grays.
      */
-    extern void bwdithermap( int levels, double gamma, int bwmap[],
+    extern void bwdithermap( int levels, double _gamma, int bwmap[],
 			     int divN[256], int modN[256], int magic[16][16] );
     /*****************************************************************
      * TAG( ditherbw )
@@ -318,7 +318,7 @@ extern rle_hdr rle_dflt_hdr;
      * TAG( dithermap )
      * Create a color map for ordered dithering in color.
      */
-    extern void dithermap( int levels, double gamma, int rgbmap[][3],
+    extern void dithermap( int levels, double _gamma, int rgbmap[][3],
 			   int divN[256], int modN[256], int magic[16][16] );
     /*****************************************************************
      * TAG( make_square )

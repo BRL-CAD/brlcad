@@ -42,9 +42,9 @@ vax_gshort(char *msgp)
  *			V A X _ P S H O R T
  */
 char *
-vax_pshort(register char *msgp, register short unsigned int s)
+vax_pshort(char *msgp, unsigned int r)
 {
-
+	unsigned short int s = (unsigned short int)r;
 	msgp[0] = s & 0xFF;
 	msgp[1] = s >> 8;
 	return(msgp+2);

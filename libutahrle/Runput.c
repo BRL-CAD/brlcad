@@ -165,7 +165,7 @@
 #define     REOF		    mk_inst_1(REOFOp,0)
 					/* Really opcode only */
 
-extern char *vax_pshort(register char *msgp, register short unsigned int s);
+extern char *vax_pshort(register char *msgp, register unsigned int s);
 
 /*****************************************************************
  * TAG( RunSetup )
@@ -201,10 +201,10 @@ RunSetup(register rle_hdr *the_hdr)
     }
     setup.h_cmaplen = the_hdr->cmaplen;	/* log2 of color map size */
     setup.h_ncmap = the_hdr->ncmap;	/* no of color channels */
-    vax_pshort(setup.hc_xpos,the_hdr->xmin);
-    vax_pshort(setup.hc_ypos,the_hdr->ymin);
-    vax_pshort(setup.hc_xlen,the_hdr->xmax - the_hdr->xmin + 1);
-    vax_pshort(setup.hc_ylen,the_hdr->ymax - the_hdr->ymin + 1);
+    vax_pshort(setup.hc_xpos, (unsigned int)the_hdr->xmin);
+    vax_pshort(setup.hc_ypos, (unsigned int)the_hdr->ymin);
+    vax_pshort(setup.hc_xlen, (unsigned int)(the_hdr->xmax - the_hdr->xmin + 1));
+    vax_pshort(setup.hc_ylen, (unsigned int)(the_hdr->ymax - the_hdr->ymin + 1));
     fwrite((char *)&setup, SETUPSIZE, 1, rle_fd);
     if ( the_hdr->background != 0 )
     {
@@ -221,7 +221,7 @@ RunSetup(register rle_hdr *the_hdr)
 	    background[i] =  *bg_color++;
 	/* Extra byte, if written, should be 0. */
 	background[i] = 0;
-	fwrite((char *)background, (the_hdr->ncolors / 2) * 2 + 1, 1, rle_fd);
+	fwrite((char *)background, (unsigned)((the_hdr->ncolors / 2) * 2 + 1), 1, rle_fd);
 	free( background );
     }
     else
@@ -231,7 +231,7 @@ RunSetup(register rle_hdr *the_hdr)
 	/* Big-endian machines are harder */
 	register int i, nmap = (1 << the_hdr->cmaplen) *
 			       the_hdr->ncmap;
-	register char *h_cmap = (char *)malloc( nmap * 2 );
+	register char *h_cmap = (char *)malloc( (unsigned)nmap * 2 );
 	if ( h_cmap == NULL )
 	{
 	    fprintf( stderr, "Malloc failed for color map of size %d\n",
@@ -239,9 +239,9 @@ RunSetup(register rle_hdr *the_hdr)
 	    exit( 1 );
 	}
 	for ( i = 0; i < nmap; i++ )
-	    vax_pshort( &h_cmap[i*2], the_hdr->cmap[i] );
+	    vax_pshort( &h_cmap[i*2], (unsigned int)the_hdr->cmap[i] );
 
-	fwrite( h_cmap, nmap, 2, rle_fd );
+	fwrite( h_cmap, (unsigned)nmap, 2, rle_fd );
 	free( h_cmap );
     }
 
@@ -298,6 +298,7 @@ void
 RunSkipPixels(int nskip, int last, int wasrun, register rle_hdr *the_hdr)
 {
     register FILE * rle_fd = the_hdr->rle_file;
+    if (0) wasrun=wasrun;
     if (! last && nskip > 0)
     {
 	RSkipPixels(nskip);
@@ -331,7 +332,7 @@ Runputdata(rle_pixel *buf, int n, register rle_hdr *the_hdr)
 	return;
 
     RByteData(n-1);
-    fwrite((char *)buf, n, 1, rle_fd);
+    fwrite((char *)buf, (unsigned)n, 1, rle_fd);
     if ( n & 1 )
 	putc( 0, rle_fd );
 }
@@ -346,6 +347,7 @@ void
 Runputrun(int color, int n, int last, register rle_hdr *the_hdr)
 {
     register FILE * rle_fd = the_hdr->rle_file;
+    if (0) last=last;
     RRunData(n-1,color);
 }
 

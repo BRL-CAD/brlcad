@@ -62,7 +62,7 @@ rle_pixel **
 buildmap(rle_hdr *the_hdr, int minmap, double orig_gamma, double new_gamma)
 {
     rle_pixel ** cmap, * gammap;
-    double gamma;
+    double gamma2;
     register int i, j;
     int maplen, cmaplen, nmap;
 
@@ -139,15 +139,15 @@ buildmap(rle_hdr *the_hdr, int minmap, double orig_gamma, double new_gamma)
 
     /* Now, compensate for the gamma of the new display, too. */
     if ( new_gamma != 0.0 )
-	gamma = orig_gamma / new_gamma;
+	gamma2 = orig_gamma / new_gamma;
     else
-	gamma = orig_gamma;
+	gamma2 = orig_gamma;
 
-    if ( gamma != 1.0 )
+    if ( gamma2 != 1.0 )
     {
 	gammap = (rle_pixel *)malloc( 256 * sizeof(rle_pixel) );
 	for ( i = 0; i < 256; i++ )
-	    gammap[i] = (int)(0.5 + 255.0 * pow( i / 255.0, gamma ));
+	    gammap[i] = (int)(0.5 + 255.0 * pow( i / 255.0, gamma2 ));
 	for ( i = 0; i < nmap; i++ )
 	    for ( j = 0; j < maplen; j++ )
 		cmap[i][j] = gammap[cmap[i][j]];
