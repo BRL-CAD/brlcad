@@ -261,6 +261,23 @@ Ir_open()
 
 	winattach( );
 
+	/*
+	 * Establish GL library operating modes
+	 */
+	/* Don't draw polygon edges */
+	glcompat( GLC_OLDPOLYGON, 0 );
+	/* Z-range mapping */
+#if 0
+	/* Optional:  Z from 0 to 0x007fffff */
+	glcompat( GLC_ZRANGEMAP, 1 );
+#else
+	/* Z range from getgdesc(GD_ZMIN)
+	 * to getgdesc(GD_ZMAX).
+	 * Hardware specific.  This is the default mode.
+	 */
+	glcompat( GLC_ZRANGEMAP, 0 );
+#endif
+
 	if( ir_has_zbuf && zbuffer_on ) 
 	{
 		zbuffer(1);
@@ -586,56 +603,51 @@ double ratio;
 	/* Viewing region is from -1.0 to +1.0 */
 	if( ir_is_gt )  {
 
-		if( sp->s_vlist != VL_NULL && sp->s_vlist->vl_draw == 2 )  {
-			/* Draw as polygons, with header markers */
-			first = 1;
-			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-				float	norm[3];
-				switch( vp->vl_draw )  {
-				case 2:
-					/* Start poly marker & normal */
-					if( first )
-						first = 0;
-					else
-						endpolygon();
-					/* concave(TRUE); */
-					bgnpolygon();
-					/* Set surface normal (vl_pnt points outward) */
-					norm[X] = vp->vl_pnt[X];
-					norm[Y] = vp->vl_pnt[Y];
-					norm[Z] = vp->vl_pnt[Z];
-					n3f(norm);
-					break;
-				case 0:
-					/* Move, not draw */
-					first = 0;
-					v3d( vp->vl_pnt );
-					break;
-				case 1:
-					/* Draw */
-					first = 0;
-					v3d( vp->vl_pnt );
-					break;
-				}
-			}
-			if( !first ) endpolygon();
-		} else {
-			/* Draw with vectors */
-			first = 1;
-			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-				if( vp->vl_draw == 0 )  {
-					/* Move, not draw */
-					if ( first )
-						first = 0;
-					else
-						endline();
-					bgnline();
-				}
+		first = 1;
+		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+			float	norm[3];
+			switch( vp->vl_draw )  {
+			case 0:
+				/* Move, start line */
+				if( first == 0 )
+					endline();
+				first = 0;
+				bgnline();
 				v3d( vp->vl_pnt );
+				break;
+			case 1:
+				/* Draw line */
+				v3d( vp->vl_pnt );
+				break;
+			case 2:
+				/* Start poly marker & normal */
+				if( first == 0 )
+					endline();
+				/* concave(TRUE); */
+				bgnpolygon();
+				/* Set surface normal (vl_pnt points outward) */
+				norm[X] = vp->vl_pnt[X];
+				norm[Y] = vp->vl_pnt[Y];
+				norm[Z] = vp->vl_pnt[Z];
+				n3f(norm);
+				break;
+			case 3:
+				/* Polygon Move */
+				v3d( vp->vl_pnt );
+				break;
+			case 4:
+				/* Polygon Draw */
+				v3d( vp->vl_pnt );
+				break;
+			case 5:
+				/* Draw, End Polygon */
+				v3d( vp->vl_pnt );
+				endpolygon();
+				first = 1;
+				break;
 			}
-			if( !first )  endline();
 		}
-
+		if( first == 0 ) endline();
 
 		if( lighting_on )  {
 			/* Return to no-lighting mode */
@@ -972,23 +984,6 @@ checkevents()  {
 						Ir_colorchange();
 					}
 
-					/*
-					 * Establish GL library operating modes
-					 */
-					/* Don't draw polygon edges */
-					glcompat( GLC_OLDPOLYGON, 0 );
-					/* Z-range mapping */
-#if 0
-					/* Optional:  Z from 0 to 0x007fffff */
-					glcompat( GLC_ZRANGEMAP, 1 );
-#else
-					/* Z range from getgdesc(GD_ZMIN)
-					 * to getgdesc(GD_ZMAX).
-					 * Hardware specific.
-					 */
-					glcompat( GLC_ZRANGEMAP, 0 );	/* default */
-#endif
-
 					/* Define material properties */
 					make_materials();
 
@@ -1000,7 +995,7 @@ checkevents()  {
 					lmbind(LIGHT5,5);
 
 					/* RGB color commands & lighting */
-#if 0
+#if 1
 					/* Good for debugging */
 					/* Material color does not apply,
 					 * when lighting is on */
