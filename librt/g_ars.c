@@ -297,7 +297,6 @@ struct rt_i		*rtip;
 {
 	LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
 	register int	i, j;
-	register fastf_t **curves;	/* array of curve base addresses */
 	LOCAL fastf_t	f;
 	struct rt_ars_internal	*arip;
 
@@ -682,9 +681,9 @@ register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
 {
-	register struct tri_specific *trip =
-		(struct tri_specific *)hitp->hit_private;
-
+/*	register struct tri_specific *trip =
+ *		(struct tri_specific *)hitp->hit_private;
+ */
 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
