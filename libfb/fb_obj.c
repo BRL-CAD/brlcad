@@ -39,7 +39,7 @@
 /* defined in libfb/tcl.c */
 extern int fb_refresh();
 
-static int fbo_open_tcl();
+static int fbo_open_tcl(ClientData clientData,Tcl_Interp *interp,int argc,char **argv);
 static int fbo_cell_tcl();
 static int fbo_clear_tcl();
 static int fbo_close_tcl();
@@ -96,12 +96,21 @@ static struct bu_cmdtab fbo_cmds[] = {
  *
  * Returns: result of FB command.
  */
+#ifndef WIN32
 static int
 fbo_cmd(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int     argc;
 char    **argv;
+#else
+static int
+fbo_cmd(
+ClientData clientData,
+Tcl_Interp *interp,
+int     argc,
+char    **argv)
+#endif
 {
 	return bu_cmd(clientData, interp, argc, argv, fbo_cmds, 1);
 }
@@ -120,9 +129,13 @@ Tcl_Interp *interp;
 /*
  * Called by Tcl when the object is destroyed.
  */
+#ifndef WIN32
 static void
 fbo_deleteProc(clientData)
      ClientData clientData;
+#else
+static void fbo_deleteProc(ClientData clientData)
+#endif
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 
@@ -170,12 +183,21 @@ char    **argv;
  * Usage:
  *	  fb_open [name device [args]]
  */
+#ifndef WIN32
 static int
 fbo_open_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
 char **argv;
+#else
+static int
+fbo_open_tcl(
+ClientData clientData,
+Tcl_Interp *interp,
+int argc,
+char **argv)
+#endif
 {
 	struct fb_obj *fbop;
 	FBIO *ifp;
