@@ -36,9 +36,6 @@ then
 	CMP=/tmp/pixcmp
 fi
 
-# Run the tests
-set -x
-
 # This test of LGT assumes a "live" framebuffer here.
 if test x$FB_FILE = x
 then
@@ -46,6 +43,8 @@ then
 	echo "for this test of LGT to operate correctly."
 	exit 1
 fi
+
+# Run the first set of tests
 
 ${LGT} ${DB}/lgt-test.g all.g << EOF
 # read light source data base
@@ -130,9 +129,10 @@ then	:;
 else	echo "Abnormal lgt exit"; exit 1
 fi
 
+# Run the second set of tests.  The scripts were created above.
  ./script1 < /dev/null &&
  ./script2 < /dev/null &&
- ./script3 < /dev/null || { echo "Test failed."; exit 1; }
+ ./script3 < /dev/null || { echo "Script test failed."; exit 1; }
 
 for i in 1 2 3
 do
