@@ -959,12 +959,6 @@ unsigned char r, g, b;
   dmp->dm_bg[1] = g;
   dmp->dm_bg[2] = b;
 
-#if 0
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->r = r / 255.0;
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
-#endif
-
   if(((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor){
     XColor color;
 
@@ -1052,13 +1046,19 @@ struct dm *dmp;
 
   XGetWindowAttributes( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa );
+
+  /* nothing to do */
+  if (dmp->dm_height == xwa.height &&
+      dmp->dm_width == xwa.width)
+    return TCL_OK;
+    
   dmp->dm_height = xwa.height;
   dmp->dm_width = xwa.width;
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
   if (dmp->dm_debugLevel) {
     bu_log("X_configureWin()\n");
-    bu_log("width = %d, height = %d", dmp->dm_width, dmp->dm_height);
+    bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
   }
 
   Tk_FreePixmap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
