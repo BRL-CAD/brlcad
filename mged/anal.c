@@ -27,13 +27,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "./sedit.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./ged.h"
 #include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
 
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
 extern void	arb_center();
 
 static void	do_anal();
@@ -59,7 +58,7 @@ rt_db_get_internal( ip, dp, dbip, mat )
 struct rt_db_internal	*ip;
 struct directory	*dp;
 struct db_i		*dbip;
-mat_t			mat;
+CONST mat_t		mat;
 {
 	struct rt_external	ext;
 	register int		id;
@@ -123,6 +122,16 @@ struct db_i		*dbip;
 	db_free_external( &ext );
 	return 0;			/* OK */
 }
+
+void
+rt_db_free_internal( ip )
+struct rt_db_internal	*ip;
+{
+	RT_CK_DB_INTERNAL( ip );
+    	if( ip->idb_ptr )  rt_functab[ip->idb_type].ft_ifree( ip );
+	RT_INIT_DB_INTERNAL(ip);
+}
+
 /****************************************************************/
 
 /*	Analyze command - prints loads of info about a solid
@@ -135,19 +144,24 @@ fastf_t	tot_vol, tot_area;
 int type;	/* comgeom type */
 
 void
-f_analyze()
+f_analyze(argc, argv)
+int	argc;
+char	*argv[];
 {
 	register struct directory *ndp;
 	mat_t new_mat;
 	register int i;
-	struct rt_vls	v;
+	struct rt_vls		v;
+	struct rt_db_internal	intern;
 
 	RT_VLS_INIT(&v);
 
-	if( numargs == 1 ) {
+	if( argc == 1 ) {
 		/* use the solid being edited */
+		ndp = illump->s_path[illump->s_last];
 		if(illump->s_Eflag) {
-			(void)printf("Analyze: cannot analyze evaluated region\n");
+			(void)printf("analyze: cannot analyze evaluated region containing %s\n",
+				ndp->d_namep);
 			return;
 		}
 		switch( state ) {
@@ -163,82 +177,83 @@ f_analyze()
 			state_err( "Default SOLID Analyze" );
 			return;
 		}
-		temp_rec = es_rec;	/* XXX old:  ARB only */
 		mat_mul(new_mat, modelchanges, es_mat);
+
+		/* XXX start old:  ARB only */
+		temp_rec = es_rec;		/* struct copy */
 		MAT4X3PNT(temp_rec.s.s_values, new_mat, es_rec.s.s_values);
 		for(i=1; i<8; i++) {
 			MAT4X3VEC( &temp_rec.s.s_values[i*3], new_mat,
 					&es_rec.s.s_values[i*3] );
 		}
-		do_anal(&v);
+		/* XXX end old way */
+
+		if( rt_db_get_internal( &intern, ndp, dbip, new_mat ) < 0 )  {
+			(void)printf("rt_db_get_internal() error\n");
+			return;
+		}
+
+		do_anal(&v, &intern);
 		fputs( rt_vls_addr(&v), stdout );
+		rt_db_free_internal( &intern );
 		return;
 	}
 
 	/* use the names that were input */
-	for( i = 1; i < numargs; i++ )  {
-		if( (ndp = db_lookup( dbip,  cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
+	for( i = 1; i < argc; i++ )  {
+		if( (ndp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
+		/* XXX old way */
 		if( db_get( dbip, ndp, &temp_rec, 0, 1) < 0 )  READ_ERR_return;
 
-		if(temp_rec.u_id == ID_P_HEAD) {
-			(void)printf("Analyze cannot handle polygons\n");
+		if( rt_db_get_internal( &intern, ndp, dbip, rt_identity ) < 0 )  {
+			(void)printf("rt_db_get_internal() error\n");
 			return;
-		}
-		if(temp_rec.u_id != ID_SOLID && 
-		   temp_rec.u_id != ID_ARS_A) {
-			(void)printf("%s: not a solid \n",cmd_args[i]);
-			return;
-		}
-		if(temp_rec.s.s_cgtype < 0)
-			temp_rec.s.s_cgtype *= -1;
-
-		if( temp_rec.s.s_type == GENARB8 ) {
-			/* find the specific arb type */
-			if( (type = type_arb( &temp_rec )) == 0 ) {
-				(void)printf("%s: BAD ARB\n",temp_rec.s.s_name);
-				return;
-			}
-			temp_rec.s.s_cgtype = type;
 		}
 
 		do_list( stdout, ndp, 1 );
-		do_anal(&v);
+		do_anal(&v, &intern);
 		fputs( rt_vls_addr(&v), stdout );
+		rt_vls_free(&v);
+		rt_db_free_internal( &intern );
 	}
 }
 
 
-/* Analyze solid in temp_rec */
+/* Analyze solid in internal form */
 static void
-do_anal(vp)
-struct rt_vls	*vp;
+do_anal(vp, ip)
+struct rt_vls		*vp;
+struct rt_db_internal	*ip;
 {
-	switch( temp_rec.s.s_type ) {
+	/* XXX Could give solid name, and current units, here */
 
-	case ARS:
-		ars_anal(vp);
+	switch( ip->idb_type ) {
+
+	case ID_ARS:
+		ars_anal(vp, ip);
 		break;
 
-	case GENARB8:
-		arb_anal(vp);
+	case ID_ARB8:
+		arb_anal(vp, ip);
 		break;
 
-	case GENTGC:
-		tgc_anal(vp);
+	case ID_TGC:
+		tgc_anal(vp, ip);
 		break;
 
-	case GENELL:
-		ell_anal(vp);
+	case ID_ELL:
+		ell_anal(vp, ip);
 		break;
 
-	case TOR:
-		tor_anal(vp);
+	case ID_TOR:
+		tor_anal(vp, ip);
 		break;
 
 	default:
-		rt_vls_printf(vp,"Analyze: unknown solid type\n");
+		rt_vls_printf(vp,"analyze: unable to process %s solid\n",
+			rt_functab[ip->idb_type].ft_name );
 		break;
 	}
 }
@@ -261,6 +276,12 @@ struct rt_vls	*vp;
 	register int i;
 	static vect_t cpt;
 
+	/* find the specific arb type, in GIFT order. */
+	if( (type = type_arb( &temp_rec )) == 0 ) {
+		rt_vls_printf(vp,"arb_anal: bad ARB\n");
+		return;
+	}
+
 	/* got the arb - convert to point notation */
 	for(i=3; i<24; i+=3) {
 		VADD2( &temp_rec.s.s_values[i], &temp_rec.s.s_values[i], temp_rec.s.s_values );
@@ -268,8 +289,6 @@ struct rt_vls	*vp;
 
 	tot_area = tot_vol = 0.0;
 
-	/* XXX compute cgtype of ARB */
-	type = temp_rec.s.s_cgtype;
 	if( type < 0 )
 		type *= -1;
 	if(type == RPP || type == BOX)
@@ -501,20 +520,25 @@ static double pi = 3.1415926535898;
 
 /*	analyze a torus	*/
 static void
-tor_anal(vp)
+tor_anal(vp, ip)
 struct rt_vls	*vp;
+struct rt_db_internal	*ip;
 {
+	struct rt_tor_internal	*tor = (struct rt_tor_internal *)ip->idb_ptr;
 	fastf_t r1, r2, vol, sur_area;
 
-	r1 = MAGNITUDE( &temp_rec.s.s_values[6] );
-	r2 = MAGNITUDE( &temp_rec.s.s_values[3] );
+	RT_TOR_CK_MAGIC( tor );
+
+	r1 = tor->r_a;
+	r2 = tor->r_h;
 
 	vol = 2.0 * pi * pi * r1 * r2 * r2;
 	sur_area = 4.0 * pi * pi * r1 * r2;
 
-	rt_vls_printf(vp,"Vol = %.4f (%.4f gal)   Surface Area = %.4f\n",
-			vol*base2local*base2local*base2local,vol/3787878.79,
-			sur_area*base2local*base2local);
+	rt_vls_printf(vp,"TOR Vol = %.4f (%.4f gal)   Surface Area = %.4f\n",
+		vol*base2local*base2local*base2local,
+		vol/3787878.79,
+		sur_area*base2local*base2local);
 
 	return;
 }
@@ -524,21 +548,27 @@ struct rt_vls	*vp;
 
 /*	analyze an ell	*/
 static void
-ell_anal(vp)
+ell_anal(vp, ip)
 struct rt_vls	*vp;
+struct rt_db_internal	*ip;
 {
+	struct rt_ell_internal	*ell = (struct rt_ell_internal *)ip->idb_ptr;
 	fastf_t ma, mb, mc;
 	fastf_t ecc, major, minor;
 	fastf_t vol, sur_area;
 
-	ma = MAGNITUDE( &temp_rec.s.s_values[3] );
-	mb = MAGNITUDE( &temp_rec.s.s_values[6] );
-	mc = MAGNITUDE( &temp_rec.s.s_values[9] );
+	RT_ELL_CK_MAGIC( ell );
+
+	ma = MAGNITUDE( ell->a );
+	mb = MAGNITUDE( ell->b );
+	mc = MAGNITUDE( ell->c );
 
 	type = 0;
 
 	vol = 4.0 * pi * ma * mb * mc / 3.0;
-	rt_vls_printf(vp,"Volume = %.4f (%.4f gal)",vol*base2local*base2local*base2local,vol/3787878.79);
+	rt_vls_printf(vp,"ELL Volume = %.4f (%.4f gal)",
+		vol*base2local*base2local*base2local,
+		vol/3787878.79);
 
 	if( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 		/* have a sphere */
@@ -616,24 +646,28 @@ struct rt_vls	*vp;
 
 /*	analyze tgc */
 static void
-tgc_anal(vp)
+tgc_anal(vp, ip)
 struct rt_vls	*vp;
+struct rt_db_internal	*ip;
 {
+	struct rt_tgc_internal	*tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 	fastf_t maxb, ma, mb, mc, md, mh;
 	fastf_t area_base, area_top, area_side, vol;
 	vect_t axb;
 	int cgtype = 0;
 
-	VCROSS(axb, &temp_rec.s.s_values[6], &temp_rec.s.s_values[9]);
+	RT_TGC_CK_MAGIC( tgc );
+
+	VCROSS(axb, tgc->a, tgc->b);
 	maxb = MAGNITUDE(axb);
-	ma = MAGNITUDE( &temp_rec.s.s_values[6] );
-	mb = MAGNITUDE( &temp_rec.s.s_values[9] );
-	mc = MAGNITUDE( &temp_rec.s.s_values[12] );
-	md = MAGNITUDE( &temp_rec.s.s_values[15] );
-	mh = MAGNITUDE( &temp_rec.s.s_values[3] );
+	ma = MAGNITUDE( tgc->a );
+	mb = MAGNITUDE( tgc->b );
+	mc = MAGNITUDE( tgc->c );
+	md = MAGNITUDE( tgc->d );
+	mh = MAGNITUDE( tgc->h );
 
 	/* check for right cylinder */
-	if( fabs(fabs(VDOT(&temp_rec.s.s_values[3],axb)) - (mh*maxb)) < .00001 ) {
+	if( fabs(fabs(VDOT(tgc->h,axb)) - (mh*maxb)) < .00001 ) {
 		/* have a right cylinder */
 		if(fabs(ma-mb) < .00001) {
 			/* have a circular base */
@@ -705,16 +739,18 @@ struct rt_vls	*vp;
 
 /*	anaylze ars */
 static void
-ars_anal(vp)
+ars_anal(vp, ip)
 struct rt_vls	*vp;
+struct rt_db_internal	*ip;
 {
 	rt_vls_printf(vp,"ARS analyze not implimented\n");
 }
 
 /*	anaylze spline */
 static void
-spline_anal(vp)
+spline_anal(vp, ip)
 struct rt_vls	*vp;
+struct rt_db_internal	*ip;
 {
 	rt_vls_printf(vp,"SPLINE analyze not implimented\n");
 }
