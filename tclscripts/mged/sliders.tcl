@@ -28,6 +28,7 @@ proc sliders args {
     global adcflag
     
     set result [eval _mged_sliders $args]
+    set sliders_on [_mged_sliders]
 
     # get a list of the id's associated with the current command window
     set id_list [cmd_get]
@@ -38,7 +39,7 @@ proc sliders args {
 	}
 
         set w .sliders$id
-	if { [llength $args]>0 && [_mged_sliders] } then {
+	if { [llength $args]>0 && $sliders_on } then {
 
 	    if [winfo exists $w] {
 		destroy $w
@@ -251,7 +252,6 @@ proc sliders_zero { id w } {
 
 ## knob
 ##   To replace the regular knob function.
-
 proc knob args {
     global sliders
     global rateknobs
@@ -287,14 +287,11 @@ proc knob args {
 	    }
 	}
     }
-
-#    return
 }
 
 
 ## iknob
 ##   To replace the regular iknob function.
-
 proc iknob args {
     global sliders
     global rateknobs
@@ -330,9 +327,5 @@ proc iknob args {
 	    }
 	}
     }
-
-#    return
 }
-
-
 
