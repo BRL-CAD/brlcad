@@ -577,7 +577,6 @@ CONST struct rt_tol *tol;
 		/* count how many vertices in lu2 are inside lu1 and outside lu1 */
 		for( RT_LIST_FOR( eu , edgeuse , &lu2->down_hd ) )
 		{
-			struct edgeuse *eu1;
 			struct vertexuse *vu;
 
 			NMG_CK_EDGEUSE( eu );
@@ -604,6 +603,71 @@ CONST struct rt_tol *tol;
 			continue;
 
 		/* the loops overlap, now fix it */
+
+		/* first, split the edges where the two loops cross each other */
+		for( RT_LIST_FOR( eu1 , edgeuse , &lu1->down_hd ) )
+		{
+			vect_t v1;
+			struct edgeuse *eu2;
+
+			VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
+			for( RT_LIST_FOR( eu2 , edgeuse , &lu2->down_hd ) )
+			{
+				vect_t v2;
+				fastf_t dist[2];
+				struct vertex *v=(struct vertex *)NULL;
+
+				VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord ,
+						eu2->vu_p->v_p->vg_p->coord );
+
+				if( rt_isect_lseg3_lseg3( dist , eu1->vu_p->v_p->vg_p->coord , v1 ,
+					eu2->vu_p->v_p->vg_p->coord , v2 , tol ) >= 0 )
+				{
+					struct edgeuse *new_eu;
+
+					if( dist[0]>0.0 && dist[0]<1.0 && dist[1]>=0.0 && dist[2]<=1.0 )
+					{
+						point_t pt;
+
+						if( dist[1] == 0.0 )
+							v = eu2->vu_p->v_p;
+						else if( dist[1] == 1.0 )
+							v = eu2->eumate_p->vu_p->v_p;
+						else
+						{
+							VJOIN1( pt , eu1->vu_p->v_p->vg_p->coord , dist[0] , v1 );
+							new_eu = nmg_esplit( v , eu1 );
+							v = new_eu->vu_p->v_p;
+							if( !v->vg_p )
+								nmg_vertex_gv( v , pt );
+						}
+
+						VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord ,
+								eu1->vu_p->v_p->vg_p->coord );
+					}
+					if( dist[1]>0.0 && dist[1]<1.0 && dist[0]>=0.0 && dist[0]<=1.0 )
+					{
+						point_t pt;
+
+						if( dist[0] == 0.0 )
+							v = eu1->vu_p->v_p;
+						else if( dist[0] == 1.0 )
+							v = eu2->eumate_p->vu_p->v_p;
+						else
+						{
+							VJOIN1( pt , eu2->vu_p->v_p->vg_p->coord , dist[1] , v2 );
+							new_eu = nmg_esplit( v , eu2 );
+							v = new_eu->vu_p->v_p;
+							if( !v->vg_p )
+								nmg_vertex_gv( v , pt );
+						}
+
+						VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord ,
+								eu2->vu_p->v_p->vg_p->coord );
+					}
+				}
+			}
+		}
 
 		/* find a vertex that lu1 and lu2 share, where eu1 is outside lu2
 		 * this will be a starting edgeuse for a new loopuse
@@ -636,6 +700,8 @@ CONST struct rt_tol *tol;
 		if( !start_eu )
 		{
 			rt_log( "nmg_fix_overlapping_loops: cannot find start point for new loops\n" );
+			rt_log( "lu1=x%x, lu2=x%x\n" , lu1 , lu2 );
+			nmg_pr_fu_briefly( fu , (char *)NULL );
 			continue;;
 		}
 
@@ -752,14 +818,16 @@ CONST struct rt_tol *tol;
 
 			for( RT_LIST_FOR( eu1 , edgeuse , &lu->down_hd ) )
 			{
-				VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
+				VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord ,
+						eu1->vu_p->v_p->vg_p->coord );
 
 				eu2 = RT_LIST_PNEXT( edgeuse , eu1 );
 				while( RT_LIST_NOT_HEAD( eu2 , &lu->down_hd ) )
 				{
 					fastf_t dist[2];
 
-					VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord , eu2->vu_p->v_p->vg_p->coord );
+					VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord ,
+							eu2->vu_p->v_p->vg_p->coord );
 
 					if( rt_isect_lseg3_lseg3( dist , eu1->vu_p->v_p->vg_p->coord , v1 ,
 						eu2->vu_p->v_p->vg_p->coord , v2 , tol ) >= 0 )
@@ -768,20 +836,41 @@ CONST struct rt_tol *tol;
 						struct edgeuse *new_eu;
 						struct vertex *v=(struct vertex *)NULL;
 
-						if( dist[0] > 0.0 && dist[0] < 1.0 )
+						if( dist[0]>0.0 && dist[0]<1.0 &&
+							dist[1]>=0.0 && dist[1]<=1.0 )
 						{
-							VJOIN1( pt , eu1->vu_p->v_p->vg_p->coord , dist[0] , v1 );
-							v = nmg_find_pt_in_shell( is , pt , tol );
+							if( dist[1] == 0.0 )
+								v = eu2->vu_p->v_p;
+							else if( dist[1] == 1.0 )
+								v = eu2->eumate_p->vu_p->v_p;
+							else
+							{
+								VJOIN1( pt , eu1->vu_p->v_p->vg_p->coord ,
+									dist[0] , v1 );
+								v = nmg_find_pt_in_shell( is , pt , tol );
+							}
+
 							new_eu = nmg_esplit( v , eu1 );
 							v = new_eu->vu_p->v_p;
 							if( !v->vg_p )
 								nmg_vertex_gv( v , pt );
-							VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
+
+							VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord ,
+								eu1->vu_p->v_p->vg_p->coord );
 						}
-						if( dist[1] > 0.0 && dist[1] < 1.0 )
+						if( dist[1] > 0.0 && dist[1] < 1.0 &&
+							dist[0]>=0.0 && dist[0]<=1.0 )
 						{
-							VJOIN1( pt , eu2->vu_p->v_p->vg_p->coord , dist[1] , v2 );
-							v = nmg_find_pt_in_shell( is , pt , tol );
+							if( dist[0] == 0.0 )
+								v = eu1->vu_p->v_p;
+							else if( dist[0] == 1.0 )
+								v = eu1->eumate_p->vu_p->v_p;
+							else
+							{
+								VJOIN1( pt , eu2->vu_p->v_p->vg_p->coord , dist[1] , v2 );
+								v = nmg_find_pt_in_shell( is , pt , tol );
+							}
+
 							new_eu = nmg_esplit( v , eu2 );
 							v = new_eu->vu_p->v_p;
 							if( !v->vg_p )
