@@ -825,7 +825,7 @@ dgo_overlay_cmd(struct dg_obj	*dgop,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help dgo_overlay");
+		bu_vls_printf(&vls, "helplib_alias dgo_overlay %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
