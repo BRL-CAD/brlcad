@@ -21,68 +21,64 @@
 #
 class Db {
     protected variable db ""
-    private variable initializing 1
-    public variable name ""
+    public variable dbfile ""
 
     constructor {filename} {}
     destructor {}
 
-    public method open {args}
-    public method observer {args}
-    public method match {args}
-    public method get {args}
-    public method put {args}
     public method adjust {args}
-    public method form {args}
-    public method tops {args}
-    public method rt_gettrees {args}
-    public method dump {args}
+    public method c {args}
+    public method cat {args}
+    public method color {args}
+    public method comb {args}
+    public method concat {args}
+    public method cp {args}
     public method dbip {}
-    public method ls {args}
-    public method l {args}
-    public method listeval {args}
-    public method paths {args}
+    public method dump {args}
+    public method dup {args}
     public method expand {args}
+    public method find {args}
+    public method form {args}
+    public method g {args}
+    public method get {args}
+    public method get_dbname {}
+    public method i {args}
+    public method keep {args}
     public method kill {args}
     public method killall {args}
     public method killtree {args}
-    public method cp {args}
+    public method l {args}
+    public method listeval {args}
+    public method ls {args}
+    public method match {args}
     public method mv {args}
     public method mvall {args}
-    public method concat {args}
-    public method dup {args}
-    public method g {args}
-    public method rm {args}
+    public method open {args}
+    public method observer {args}
+    public method paths {args}
+    public method prcolor {args}
+    public method push {args}
+    public method put {args}
     public method r {args}
-    public method c {args}
-    public method comb {args}
-    public method find {args}
+    public method rm {args}
+    public method rt_gettrees {args}
+    public method title {args}
+    public method tol {args}
+    public method tops {args}
+    public method tree {args}
+    public method whatid {args}
     public method whichair {args}
     public method whichid {args}
-    public method title {args}
-    public method tree {args}
-    public method color {args}
-    public method prcolor {args}
-    public method tol {args}
-    public method push {args}
-    public method whatid {args}
-    public method keep {args}
-    public method cat {args}
-    public method i {args}
-    public method get_name {}
 }
 
-configbody Db::name {
-    if {!$initializing} {
-	Db::open $name
-    }
+configbody Db::dbfile {
+    Db::open $dbfile
 }
 
 body Db::constructor {filename} {
-    set name $filename
+    set dbfile $filename
     set db [subst $this]_db
-    wdb_open $db db $name
-    set initializing 0
+    wdb_open $db db $dbfile
 }
 
 body Db::destructor {} {
@@ -90,7 +86,7 @@ body Db::destructor {} {
 }
 
 body Db::open {args} {
-    set name [eval $db open $args]
+    set dbfile [eval $db open $args]
 }
 
 body Db::observer {args} {
@@ -257,6 +253,6 @@ body Db::i {args} {
     eval $db i $args
 }
 
-body Db::get_name {} {
+body Db::get_dbname {} {
     return $db
 }
