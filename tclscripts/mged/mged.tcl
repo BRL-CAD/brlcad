@@ -167,7 +167,7 @@ while { [file exists $mged_html_dir/index.html]==0 } {
 	    mged_html_dir $mged_html_dir 0 OK
 }
 
-catch { source [lindex $auto_path 0]/new_sliders.tcl }
+catch { source [lindex $auto_path 0]/sliders.tcl }
 
 proc ia_help { parent screen cmds } {
     set w $parent.help
