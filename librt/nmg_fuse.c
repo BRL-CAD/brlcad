@@ -146,7 +146,6 @@ nmg_region_v_unique( r1, tol )
 struct nmgregion	*r1;
 CONST struct rt_tol	*tol;
 {
-	int	count = 0;
 	int	i;
 	int	j;
 	struct nmg_ptbl	t;
@@ -423,7 +422,6 @@ CONST struct rt_tol	*tol;
 {
 	struct edge_g_lseg	*eg1;
 	struct edge_g_lseg	*eg2;
-	fastf_t		t, u;
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
@@ -512,7 +510,6 @@ CONST struct rt_tol	*tol;
 		for( j = i-1; j >= 0; j-- )  {
 			struct edge_g_lseg	*eg2;
 			struct edgeuse		*eu2;
-			register struct edge	**ep;
 
 			eg2 = (struct edge_g_lseg *)NMG_TBL_GET(&etab,j);
 			NMG_CK_EDGE_G_EITHER(eg2);

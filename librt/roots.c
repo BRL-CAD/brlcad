@@ -26,6 +26,7 @@ static char RCSroots[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "./polyno.h"
 #include "./complex.h"
 
