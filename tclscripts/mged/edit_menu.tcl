@@ -355,7 +355,13 @@ proc init_solid_edit_menu_hoc { stype } {
 	    {{summary "Reset"}}
 
     # Solid specific edit operations
-    switch $stype {
+    if { [llength $stype] > 1 } {
+	set the_type [lindex $stype 0]
+    } else {
+	set the_type $stype
+    }
+
+    switch $the_type {
 	ARB8 {
 	    # ARB8 EDGES
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 12" \
@@ -952,6 +958,33 @@ proc init_solid_edit_menu_hoc { stype } {
 		    {{summary "The mode determines whether the plate thickness is centered\n\
 			about the hit points of the underlying solid, or extended in the\n\
 			ray direction from the hit points of the underlying solid"}}
+	}
+	bot {
+		# BOT
+	    hoc_register_menu_data "Edit" "pick vertex" \
+		    "Solid Edit - pick vertex" \
+		    {{summary "Use mouse to select vertex to edit"}}
+	    hoc_register_menu_data "Edit" "pick edge" \
+		    "Solid Edit - pick edge" \
+		    {{summary "Use mouse to select edge to edit"}}
+	    hoc_register_menu_data "Edit" "pick triangle" \
+		    "Solid Edit - pick triangle" \
+		    {{summary "Use mouse to select triangle to edit"}}
+	    hoc_register_menu_data "Edit" "move vertex" \
+		    "Solid Edit - move vertex" \
+		    {{summary "Move selected vertex"}}
+	    hoc_register_menu_data "Edit" "move edge" \
+		    "Solid Edit - move edge" \
+		    {{summary "Move selected edge"}}
+	    hoc_register_menu_data "Edit" "move triangle" \
+		    "Solid Edit - move triangle" \
+		    {{summary "Move selected triangle"}}
+	    hoc_register_menu_data "Edit" "select mode" \
+		    "Solid Edit - select mode" \
+		    {{summary "Select mode for this BOT"}}
+	    hoc_register_menu_data "Edit" "select orientation" \
+		    "Solid Edit - select orientation" \
+		    {{summary "Select orientation for BOT faces"}}
 	}
     }
 }
