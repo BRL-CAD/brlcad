@@ -15,9 +15,7 @@
  *  @(#)$Header
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #ifdef USE_STRING_H     /* OPTIONAL, for strcmp() etc. */
 #  include <string.h>

@@ -1,8 +1,6 @@
 #ifndef CONF_H
 #define CONF_H seen
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #endif /* CONF_H */

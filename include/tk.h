@@ -15,9 +15,7 @@
  * RCS: @(#) $Id$
  */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
+#include "common.h"
 
 #ifndef _TK
 #define _TK
