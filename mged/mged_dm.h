@@ -30,11 +30,11 @@ extern FILE *ps_fp;
 
 #define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
 
-#define ALT_MOUSE_MODE_OFF 0
-#define ALT_MOUSE_MODE_ON 1
-#define ALT_MOUSE_MODE_ROTATE 2 
-#define ALT_MOUSE_MODE_TRANSLATE 3
-#define ALT_MOUSE_MODE_ZOOM 4
+#define ALT_MOUSE_MODE_IDLE 0
+#define ALT_MOUSE_MODE_ROTATE 1 
+#define ALT_MOUSE_MODE_TRANSLATE 2
+#define ALT_MOUSE_MODE_ZOOM 3
+
 #define VIEW_TABLE_SIZE 5    /* enough to hold the view selections in the menu */
 
 /* Interface to a specific Display Manager */
@@ -135,6 +135,7 @@ struct dm_list {
   struct bu_vls _pathName; /* full name of drawing window */
   int _dirty;      /* true if received an expose or configuration event */
   int _owner;      /* true if owner of the shared info */
+  int _am_mode;    /* alternate mouse mode */
   struct cmd_list *aim;
   char _dname[80];  /* Display name */
   void (*_knob_hook)();
@@ -151,6 +152,7 @@ extern struct dm_list *curr_dm_list;
 #define pathName curr_dm_list->_pathName
 #define dirty curr_dm_list->_dirty
 #define owner curr_dm_list->_owner
+#define am_mode curr_dm_list->_am_mode
 #define dname curr_dm_list->_dname
 #define knob_hook curr_dm_list->_knob_hook
 #define axes_color_hook curr_dm_list->_axes_color_hook
