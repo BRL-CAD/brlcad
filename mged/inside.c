@@ -368,6 +368,7 @@ f_inside()
 	db_put( dbip, dp, &newrec, 0, 1 );
 	/* draw the "inside" solid */
 	drawtree( dp );
+	dmp->dmr_colorchange();
 	dmaflag = 1;
 }
 

@@ -234,6 +234,7 @@ struct vlhead	*vhead;
 	/* Solid successfully drawn, add to linked list of solid structs */
 	APPEND_SOLID( sp, HeadSolid.s_back );
 	dmp->dmr_viewchange( DM_CHGV_ADD, sp );
+	dmp->dmr_colorchange();
 	return(0);		/* OK */
 }
 

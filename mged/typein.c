@@ -423,6 +423,7 @@ f_in()
 	db_put( dbip, dp, &record, 0, 1 );
 	/* draw the "typed-in" solid */
 	drawtree( dp );
+	dmp->dmr_colorchange();
 	dmaflag = 1;
 }
 
