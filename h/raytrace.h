@@ -1243,13 +1243,11 @@ struct rt_functab {
 	int	ft_use_rpp;
 	int	(*ft_prep) RT_ARGS((struct soltab * /*stp*/,
 			struct rt_db_internal * /*ip*/,
-			struct rt_i * /*rtip*/,
-			CONST struct rt_tol * /*tol*/));
+			struct rt_i * /*rtip*/ ));
 	int 	(*ft_shot) RT_ARGS((struct soltab * /*stp*/,
 			struct xray * /*rp*/,
 			struct application * /*ap*/,
-			struct seg * /*seghead*/,
-			CONST struct rt_tol * /*tol*/));
+			struct seg * /*seghead*/ ));
 	void	(*ft_print) RT_ARGS((struct soltab * /*stp*/));
 	void	(*ft_norm) RT_ARGS((struct hit * /*hitp*/,
 			struct soltab * /*stp*/,
