@@ -1051,6 +1051,7 @@ BU_EXTERN(void bu_mm_cvt, (register CONST struct bu_structparse	*sdp,
 /* color.c */
 BU_EXTERN(void			bu_rgb_to_hsv, (unsigned char *rgb, fastf_t *hsv) );
 BU_EXTERN(int			bu_hsv_to_rgb, (fastf_t *hsv, unsigned char *rgb) );
+BU_EXTERN(int			bu_str_to_rgb, (char *str, unsigned char *rgb) );
 
 
 
