@@ -13,6 +13,12 @@ proc init_comb { id } {
     global comb_control
     global shader_params
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     set top .$id.comb
 
     if [winfo exists $top] {
@@ -520,7 +526,7 @@ proc comb_reset { id } {
 	set comb_control($id,comb) [lindex $comb_defs 5]
     }
 
-    color_entry_update $top color $comb_control($id,color)
+    color_entry_update $top color comb_control($id,color) $comb_control($id,color)
     $top.combT delete 0.0 end
     $top.combT insert end $comb_control($id,comb)
 
