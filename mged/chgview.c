@@ -4850,7 +4850,7 @@ char	**argv;
   /* check to see if this is the last view in the list */
   if(BU_LIST_IS_HEAD(vlp->l.forw, &headView.l) &&
      BU_LIST_IS_HEAD(vlp->l.back, &headView.l)){
-    Tcl_AppendResult(interp, "delete_view: cannot delete last view\n", (char *)NULL);
+    Tcl_AppendResult(interp, "delete_view: Cannot delete the only remaining view!\n", (char *)NULL);
     return TCL_ERROR;
   }
 
