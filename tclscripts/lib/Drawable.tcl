@@ -95,7 +95,7 @@ body Drawable::blast {args} {
 }
 
 body Drawable::clear {} {
-    eval $dg clear
+    $dg clear
 }
 
 body Drawable::ev {args} {
@@ -127,7 +127,7 @@ body Drawable::vdraw {args} {
 }
 
 body Drawable::get_autoview {} {
-    eval $dg get_autoview
+    $dg get_autoview
 }
 
 body Drawable::get_dgname {} {
