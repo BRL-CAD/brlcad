@@ -64,7 +64,7 @@ Options:\n\
  -x #		Set librt debug flags\n\
  -X #		Set rt debug flags\n\
  -p #		Perspective viewing, in degrees side to side\n\
- -P #		Set number of processors (default 1)\n\
+ -P #		Set number of processors\n\
 ";
 
 extern FBIO	*fbp;			/* Framebuffer handle */
