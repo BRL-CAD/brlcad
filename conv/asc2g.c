@@ -1112,7 +1112,8 @@ void
 botbld()
 {
 	char			my_name[NAME_LEN];
-	int			type, mode, orientation, error_mode, num_vertices, num_faces;
+	char			type;
+	int			mode, orientation, error_mode, num_vertices, num_faces;
 	int			i,j;
 	double			a[3];
 	fastf_t			*vertices;
