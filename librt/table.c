@@ -1095,10 +1095,7 @@ struct db_i		*dbip;
 			rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	}
-	if( (free || op == ip) && ip->idb_ptr )  {
-		rt_functab[id].ft_ifree( ip );
-    		ip->idb_ptr = (genptr_t)0;
-    	}
+	if( (free || op == ip) )  rt_db_free_internal(ip);
 
 	if( rt_functab[id].ft_import( op, &ext, mat, dbip ) < 0 )  {
 		bu_log("rt_generic_xform():  solid import failure\n");
