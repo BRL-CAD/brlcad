@@ -242,6 +242,7 @@ struct seg		*finished_segs;
     struct sol_name_dist	*sol;
     struct soltab		*stp;
     struct bu_vls		sol_path_name;
+    int				index;
 
     full_path = ap -> a_user;
 
@@ -283,10 +284,10 @@ struct seg		*finished_segs;
 	    pp, pp -> pt_regionp -> reg_name);
 	
 	printf("\n--- Solids hit on this partition ---\n");
-	for (i = 0; i < (pp -> pt_solids_hit).end; ++i)
+	for (i = 0; i < (pp -> pt_seglist).end; ++i)
 	{
-	    stp = (struct soltab *) ((pp -> pt_solids_hit).buffer[i]);
-	    BU_CKMAG(stp, RT_SOLTAB_MAGIC, "soltab");
+	    stp = ((struct seg *)BU_PTBL_GET(&pp->pt_seglist, i))->seg_stp;
+	    RT_CK_SOLTAB(stp);
 	    bu_vls_trunc(&sol_path_name, 0);
 	    fp = &(stp -> st_path);
 	    if (fp -> magic != 0)
@@ -307,42 +308,30 @@ struct seg		*finished_segs;
 	printf("------------------------------------\n");
 
     /*
-     *	Look at each segment that participated in the ray partition(s)
+     *	Look at each segment that participated in this ray partition.
      */
-    for (RT_LIST_FOR(segp, seg, &finished_segs->l))
-    {
-	int	index;
-
+    for( index = 0; index < BU_PTBL_END(&pp->pt_seglist); index++ )  {
+        segp = (struct seg *)BU_PTBL_GET(&pp->pt_seglist, index);
 	RT_CK_SEG(segp);
 	RT_CK_SOLTAB(segp -> seg_stp);
 
-	/*
-	 *	Check to see if the seg/solid is in this partition
-	 */
-	if ((index = bu_ptbl_locate(&pp -> pt_solids_hit,
-			    (long *) segp -> seg_stp)) != -1)
+	printf("Solid #%d in this partition is ", index);fflush(stdout);
+	bu_vls_trunc(&sol_path_name, 0);
+	fp = &(segp -> seg_stp -> st_path);
+	if (fp -> magic != 0)
 	{
-	    printf("Solid #%d in this partition is ", index);fflush(stdout);
-	    BU_CKMAG(segp -> seg_stp, RT_SOLTAB_MAGIC, "soltab");
-	    bu_vls_trunc(&sol_path_name, 0);
-	    fp = &(segp -> seg_stp -> st_path);
-	    if (fp -> magic != 0)
-	    {
 		printf(" full path... ");fflush(stdout);
 		RT_CK_FULL_PATH(fp);
 		bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
-	    }
-	    else
-	    {
+	}
+	else
+	{
 		printf(" dir-entry name... ");fflush(stdout);
 		BU_CKMAG(segp -> seg_stp -> st_dp, RT_DIR_MAGIC,
 		    "directory");
 		bu_vls_strcpy(&sol_path_name, segp -> seg_stp -> st_name);
-	    }
-	    printf("'%s'\n", bu_vls_addr(&sol_path_name));
 	}
-	else
-	    printf("No, this seg isn't in this partition\n");
+	printf("'%s'\n", bu_vls_addr(&sol_path_name));
 
 	/*
 	 *	Attempt to record the new solid.
