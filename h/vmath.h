@@ -78,17 +78,18 @@
 #	define VDIVIDE_TOL	(1.0e-20)
 #endif
 
-/*
- * Types for matrixes and vectors.
- */
-typedef	fastf_t	mat_t[4*4];
-typedef	fastf_t	*matp_t;
-
 #define ELEMENTS_PER_VECT	3	/* # of fastf_t's per vect_t */
 #define ELEMENTS_PER_PT         3
 #define HVECT_LEN		4	/* # of fastf_t's per hvect_t */
 #define HPT_LEN			4
 #define ELEMENTS_PER_PLANE	4
+#define ELEMENTS_PER_MAT	(4*4)
+
+/*
+ * Types for matrixes and vectors.
+ */
+typedef	fastf_t	mat_t[ELEMENTS_PER_MAT];
+typedef	fastf_t	*matp_t;
 
 typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
 typedef	fastf_t	*vectp_t;
