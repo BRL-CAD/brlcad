@@ -403,7 +403,6 @@ int	catch_sigint;
 	size_reset();
 	new_mats();
 
-	(void)f_load_dv((ClientData)NULL, interp, 0, NULL);
 	MAT_DELTAS_GET(orig_pos, toViewcenter);
 	absolute_zoom = 0.0;
 	VSETALL( absolute_rotate, 0.0 );
