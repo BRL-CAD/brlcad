@@ -268,7 +268,7 @@ worker()
 		for( pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++ )  {
 
 			if( pixelnum > last_pixel )
-				break;
+				goto out;
 
 			/* Obtain fresh copy of application struct */
 			a = ap;				/* struct copy */
@@ -350,6 +350,7 @@ worker()
 				view_eol( &a );		/* End of scan line */
 		}
 	}
+out:
 	RES_ACQUIRE( &rt_g.res_worker );
 	nworkers_finished++;
 	RES_RELEASE( &rt_g.res_worker );
