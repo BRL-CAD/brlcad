@@ -260,6 +260,7 @@ char **argv;
     ocname[OVLP_REBUILD_FASTGEN] = "rebuild_fastgen";
     ocname[OVLP_REBUILD_ALL] = "rebuild_all";
     ocname[OVLP_RETAIN] = "retain";
+    *ocastring = '\0';
 
     /* Handle command-line options */
     while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
@@ -384,7 +385,6 @@ char **argv;
 		"Illegal overlap_claims specification: '%s'\n", ocastring);
 	    exit (1);
     }
-    printf("... overlap_claims = %d ...\n", overlap_claims);
 
     db_name = argv[optind];
 
