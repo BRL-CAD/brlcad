@@ -1,0 +1,181 @@
+=======================================================================
+ Following is a list of notes describing things which might be
+ fixed or changed in a future release of [incr Tcl]
+=======================================================================
+
+Handle this case more elegantly:
+
+class Foo {
+    constructor {args} {
+        _init
+    }
+    proc _init {} {
+        puts "once!"
+        proc _init {} {}
+    }
+}
+Foo #auto
+Foo #auto
+
+
+itcl "wish" list
+------------------------------------------------------------------
+- add virtual inheritance
+- add "border" type to canvas widget
+- add "validate" and "valid" commands for type validation
+- add "unknownvar" and provide access to object data members: "obj.var"
+- check namespace [info class] {...} as a replacement for "virtual"
+- fix "auto_load_all" problem in Tcl-DP
+  (Their implementation uses "info commands" to verify that a command
+  has been successfully autoloaded, but absolute command names like
+  "::iwidgets::fileselectiondialog" don't show up.)
+- fix "auto_load" mechanism to be extensible like "unknown"
+- fix Itcl_RegisterC() to support ClientData
+- core dump with "cmdtrace" (tclX thing?)
+
+- ideas from Nelson Macy:
+  - add "delegate" keyword for inheritance via composition?
+  - add "forward" keyword for implementing error handlers
+  - add "get" code to public variables for "cget" access
+
+- equivalent of constructor/destructor for classes
+- protected/private recognized for constructor/destructor
+- add something like Tk_CreateWidgetCommand() for widget developers
+
+
+itcl documentation cleanup
+------------------------------------------------------------------
+- add "Finance: Trading Systems" to commercial uses of Itcl (Deshaw)
+- update doc:  "config" code also gets invoked on startup for itk widgets
+- update doc:  add to FAQ:  class with common array interacts with Tk widget
+
+itcl "to do" list
+------------------------------------------------------------------
+
+- write "auto_load_all" proc for Tcl-DP
+
+- bad errorInfo:
+  > More specifically, the constructor for the class did the following:
+  >
+  >         set hull [info namespace tail $this]
+  >         ::frame $hull
+  >
+  > One of the class variables had a configuration script:
+  >
+  >     public variable textvariable "" {
+  >         if { $textvariable != "" } {
+  >             regsub "\\(.*\\)" $textvariable "" global
+  >             global ::$global
+  >             trace variable $textvariable w "$hull adjust"
+  >         }
+  >     }
+
+- add "@body" in as many places as possible to support Tcl compiler
+
+- check out itcl with Tix:
+     lappend auto_path $env(TIX_LIBRARY)
+     source "$env(IWIDGETS_LIBRARY)/init.iwidgets"
+
+     iwidgets::Dialog ._Arcattributes -title "Code: Arc Annotations"
+     -modality application
+
+     set attrframe [._Arcattributes childsite]
+
+     tixScrolledHList $attrframe.ports
+     [$attrframe.ports subwidget hlist] configure -selectmode browse
+
+     pack $attrframe.ports -expand yes -fill both -padx 10 -pady 10
+
+     ._Arcattributes activate
+
+
+------------------------------------------------------------------
+
+To: ig4!att!cas.org!lvirden (Larry W. Virden) (lvirden@cas.org)
+cc: michael.mclennan@att.com
+Subject: Re: Question concerning the Japanese patches for Tcl 7.4 
+In-reply-to: Your message of "Fri, 05 Jan 1996 06:43:46 EST."
+             <9601051143.AA15368@cas.org> 
+--------
+Your message dated: Fri, 05 Jan 1996 06:43:46 EST
+> 
+> The following instructions refer to the software which enables one to
+> build a KANJI supporting version of Tcl/Tk.  Perhaps a note in the itcl
+> instructions letting folk know this package is also compatible would be
+> useful.
+> 
+> 
+> ----- Begin Included Message -----
+> 
+> >From nisinaka@sra.co.jp  Thu Jan  4 00:09:52 1996
+> Received: from srv07s4m by srv99dr.cas.org (5.65/CAS-1.23)
+> 	id AA29886; Thu, 4 Jan 1996 00:09:52 -0500
+> Received: from srv01s4.cas.org by srv07s4m.cas.org (5.0/CAS-1.23)
+> 	id AA11865; Thu, 4 Jan 1996 00:09:50 +0500
+> Received: from sraigw.sra.co.jp by srv01s4.cas.org (4.1/CAS-1.23)
+> 	id AA25691; Thu, 4 Jan 96 00:09:39 EST
+> Received: from sranhe.sra.co.jp by sraigw.sra.co.jp
+> (8.6.12+2.4W3/3.4W-2.1)
+> 	id OAA06131; Thu, 4 Jan 1996 14:09:32 +0900
+> Received: from srashc.sra.co.jp (srashc [133.137.44.5]) by
+> sranhe.sra.co.jp (8.6.12+2.4W3/3.4W-srambox) with ESMTP id OAA00935;
+> Thu, 4 Jan 1996 14:06:26 +0900
+> Received: from srashc.sra.co.jp (localhost [127.0.0.1]) by
+> srashc.sra.co.jp (8.6.12+2.4W3/3.4W-sra) with ESMTP id OAA25546; Thu, 4
+> Jan 1996 14:09:30 +0900
+> To: lvirden (Larry W. Virden, x2487)
+> Cc: tcl-jp-bugs@sra.co.jp
+> Reply-To: nisinaka@sra.co.jp
+> Subject: Re: Question concerning the Japanese patches for Tcl 7.4
+> In-Reply-To: Your message of Tue, 02 Jan 1996 10:32:32 EST.
+> 	     <9601021032.AA2226@cas.org>
+> Date: Thu, 04 Jan 1996 14:09:29 +0900
+> Message-Id: <25544.820732169@srashc.sra.co.jp>
+> From: NISHINAKA Yoshiyuki <nisinaka@sra.co.jp>
+> Status: RO
+> X-Lines: 31
+> 
+> > I notice that incr tcl 2.0 has been released with it's own,
+> customized,
+> > version of Tcl 7.4/Tk 4.0.  Do any of you use itcl?  If so, I
+> wondered if you
+> > had thought of constructing a specialized set of patches which could
+> be
+> > used with itcl.
+> 
+>     I have just got itcl2.0 and tried it with our Japanization
+> patches.  Seems it works fine.
+> 
+>     What I really did was as follows:
+> 
+> (1) Unpack itcl2.0.tar.gz.
+> 
+> (2) Run `configure' at the directory `itcl2.0'.
+> 
+> (3) Apply `tcl7.4p3jp-patch' at the directory `itcl2.0/tcl7.4'.
+>     `Makefile.in.rej' was the only rejected file, so apply it
+>     manually.
+> 
+> (4) Apply `tk4.0p3jp-patch' at the directory `itcl2.0/tk4.0'.
+>     There was no rejected file.
+> 
+> (5) Make symbolic link from `tcl7.4' to `tcl7.4jp'.
+> 
+> (6) Make all.
+> 
+> 
+>     I haven't seriously tested yet though, `make test' was passed
+> and the Japanese translation of `demos/widgets' works fine.
+> 
+> 
+> 			    Yosh Nishinaka (nisinaka@sra.co.jp)
+> 
+> 
+> ----- End Included Message -----
+> 
+> 
+> -- 
+> :s Larry W. Virden                 INET: lvirden@cas.org
+> :s <URL:http://www.teraform.com/%7Elvirden/> <*>
+> :s Unless explicitly stated to the contrary, nothing in this posting should 
+> :s be construed as representing my employer's opinions.
