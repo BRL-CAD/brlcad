@@ -1,0 +1,71 @@
+.TH G-STL 1 BRL-CAD
+.SH NAME
+g-stl \- Stereolithography Translator (BRL-CAD to STL)
+.SH SYNOPSIS
+.B g-stl [-b][-v][-i] [-xX lvl]
+[-D calculation_tolerance ]
+[-a abs_tol] [-r rel_tol] [-n norm_tol] [-o STL_file | -m directory_name] database.g object(s)
+.SH DESCRIPTION
+.I g-stl\^
+converts the specified
+.I object(s)
+from a BRL-CAD
+.I database.g
+file to the
+.I stereolithography
+file format.
+The
+.I -x
+option specifies an RT debug flag and the
+.I -X
+option specifies an NMG debug flag. The
+.I -a
+,
+.I -r
+, and
+.I -n
+options specifiy tesselation tolerances.
+The
+.I -D
+option specifies a calculational distance tolerance (mm). Any two vertices
+that are less than this distance apart will be treated as the same vertex.
+The
+.I -v
+option requests verbose output.
+The
+.I -i
+option requests the output file units to be inches (the default is mm).
+The
+.I -b
+option requests binary output (the default in ASCII).
+In the case of ASCII output, the region name is specified
+on the "solid" line of the STL file. In the case of binary output, all the regions are output
+as a single STL part.
+.I -o
+option specifies the name of the file to receive the output
+(stdout is the default).
+The
+.I -m
+option specifies the name of a directory where the output files will be placed.
+In this case each region converted is written to a separate file (named according to the
+region name) and placed in this directory. If this option is not specified, then all the
+regions are written to the same file.
+.SH EXAMPLE
+.RS
+$ \|\fIg-stl \|-o sample.stl \|sample.g \|sample_object\fP
+.RE
+.SH DIAGNOSTICS
+Error messages are intended to be self-explanatory.
+.SH AUTHORS
+John Anderson
+.br
+Charles M. Kennedy
+.SH SOURCE
+SLAD/BND/EAB Advanced Computer Systems Team
+.br
+The U. S. Army Research Laboratory
+.br
+Aberdeen Proving Ground, MD  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@ARL.ARMY.MIL>.
