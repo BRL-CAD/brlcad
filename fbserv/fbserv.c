@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <signal.h>
 #include <errno.h>
 #include <varargs.h>
@@ -44,6 +45,10 @@ extern	char	*malloc();
 extern	int	_disk_enable;
 
 static	void	comm_error();
+void		fb_log();
+#ifdef cray
+void		rfbd_log();
+#endif
 
 static	struct	pkg_conn *rem_pcp;
 static	FBIO	*fbp;
@@ -128,82 +133,6 @@ char *str;
 	fprintf( stderr, "%s\n", str );
 #endif
 /**	(void)pkg_send( MSG_ERROR, str, strlen(str)+1, rem_pcp ); **/
-}
-
-/*
- *			F B _ L O G
- *
- *  Errors from the framebuffer library.  We route these back to
- *  our client in an ERROR packet.  Note that this is a replacement
- *  for the default fb_log function in libfb (which just writes
- *  to stderr).
- */
-/* VARARGS */
-void
-#ifdef cray
-/* Segloader can't handle the multiple defines */
-rfbd_log( va_alist )
-#else
-fb_log( va_alist )
-#endif
-va_dcl
-{
-	va_list	ap;
-	char *fmt;
-	int a=0,b=0,c=0,d=0,e=0,f=0,g=0,h=0,i=0;
-	int cnt=0;
-	register char *cp;
-	static char errbuf[80];
-
-	va_start( ap );
-	fmt = va_arg(ap,char *);
-	cp = fmt;
-	while( *cp )  if( *cp++ == '%' )  {
-		cnt++;
-		/* WARNING:  This assumes no fancy format specs like %.1f */
-		switch( *cp )  {
-		case 'e':
-		case 'f':
-		case 'g':
-			cnt++;		/* Doubles are bigger! */
-		}
-	}
-	if( cnt > 0 )  {
-		a = va_arg(ap,int);
-	}
-	if( cnt > 1 )  {
-		b = va_arg(ap,int);
-	}
-	if( cnt > 2 )  {
-		c = va_arg(ap,int);
-	}
-	if( cnt > 3 )  {
-		d = va_arg(ap,int);
-	}
-	if( cnt > 4 )  {
-		e = va_arg(ap,int);
-	}
-	if( cnt > 5 )  {
-		f = va_arg(ap,int);
-	}
-	if( cnt > 6 )  {
-		g = va_arg(ap,int);
-	}
-	if( cnt > 7 )  {
-		h = va_arg(ap,int);
-	}
-	if( cnt > 8 )  {
-		i = va_arg(ap,int);
-	}
-	if( cnt > 9 )  {
-		a = (int)fmt;
-		fmt = "Max args exceeded on: %s\n";
-	}
-	va_end( ap );
-	
-	(void) sprintf( errbuf, fmt, a,b,c,d,e,f,g,h,i );
-	pkg_send( MSG_ERROR, errbuf, strlen(errbuf)+1, rem_pcp );
-	return;
 }
 
 /*
@@ -457,4 +386,145 @@ char *buf;
 	(void)pkg_plong( &rbuf[0], ret );
 	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
+}
+
+/*
+ *  At one time at least we couldn't send a zero length PKG
+ *  message back and forth, so we receive a dummy long here.
+ */
+void
+rfbhelp(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	x;	/* dummy */
+	long	ret;
+	char	rbuf[NET_LONG_LEN+1];
+
+	x = pkg_glong( &buf[0*NET_LONG_LEN] );
+
+	ret = fb_help(fbp);
+	(void)pkg_plong( &rbuf[0], ret );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+/**************************************************************/
+/*
+ *			F B _ L O G
+ *
+ *  Handles error or log messages from the frame buffer library.
+ *  We route these back to our client in an ERROR packet.  Note that
+ *  this is a replacement for the default fb_log function in libfb
+ *  (which just writes to stderr).
+ *
+ *  Log an FB library event, when _doprnt() is not available.
+ *  This version should work on practically any machine, but
+ *  it serves to highlight the the grossness of the varargs package
+ *  requiring the size of a parameter to be known at compile time.
+ */
+/* VARARGS */
+void
+#ifdef cray
+/* Segloader can't handle the multiple defines */
+rfbd_log( va_alist )
+#else
+fb_log( va_alist )
+#endif
+va_dcl
+{
+	va_list ap;
+	register char	*sp;			/* start pointer */
+	register char	*ep;			/* end pointer */
+	int	longify;
+	char	fbuf[64];			/* % format buffer */
+	char	nfmt[256];
+	char	outbuf[4096];			/* final output string */
+	char	*op;				/* output buf pointer */
+
+	/* prefix all messages with "hostname: " */
+	gethostname( outbuf, sizeof(outbuf) );
+	op = &outbuf[strlen(outbuf)];
+	*op++ = ':';
+	*op++ = ' ';
+
+	va_start(ap);
+	sp = va_arg(ap,char *);
+	while( *sp )  {
+		/* Initial state:  just printing chars */
+		if( *sp != '%' )  {
+			*op++ = *sp;
+			if( *sp == '\n' ) {
+				/* newline, put out the hostname again */
+				gethostname( op, sizeof(outbuf) );
+				op += strlen(op);
+				*op++ = ':';
+				*op++ = ' ';
+			}
+			sp++;
+			continue;
+		}
+
+		/* Saw a percent sign, find end of fmt specifier */
+		longify = 0;
+		ep = sp+1;
+		while( *ep )  {
+			if( isalpha(*ep) )
+				break;
+			ep++;
+		}
+
+		/* Check for digraphs, eg "%ld" */
+		if( *ep == 'l' )  {
+			ep++;
+			longify = 1;
+		}
+
+		/* Copy off the format string */
+		{
+			register int len;
+			len = ep-sp+1;
+			strncpy( fbuf, sp, len );
+			fbuf[len] = '\0';
+		}
+		
+		/* Grab parameter from arg list, and print it */
+		switch( *ep )  {
+		case 'e':
+		case 'E':
+		case 'f':
+		case 'g':
+		case 'G':
+			/* All floating point ==> "double" */
+			{
+				register double d;
+				d = va_arg(ap, double);
+				sprintf( op, fbuf, d );
+				op = &outbuf[strlen(outbuf)];
+			}
+			break;
+
+		default:
+			if( longify )  {
+				register long ll;
+				/* Long int */
+				ll = va_arg(ap, long);
+				sprintf( op, fbuf, ll );
+				op = &outbuf[strlen(outbuf)];
+			} else {
+				register int i;
+				/* Regular int */
+				i = va_arg(ap, int);
+				sprintf( op, fbuf, i );
+				op = &outbuf[strlen(outbuf)];
+			}
+			break;
+		}
+		sp = ep+1;
+	}
+	va_end(ap);
+
+	*op = NULL;
+	pkg_send( MSG_ERROR, outbuf, strlen(outbuf)+1, rem_pcp );
+	return;
 }
