@@ -42,6 +42,9 @@
 extern int optind;
 extern char *optarg;
 
+int estimate_f = 0;
+fastf_t max_bank = 0;
+fastf_t max_cross = 0;
 int loop = 1;
 int print_int = 1;
 fastf_t magic_factor = 1.0;
@@ -96,6 +99,7 @@ char **argv;
 		exit(0);
 	}
 
+	max_cross = 0;
 	count = 0;
 	status = START;
 	while (status != STOP) {
@@ -115,7 +119,7 @@ char **argv;
 		/* The first n points  - yaw pitch and roll will be constant*/
 		if (status==START) { 
 			get_orientation(points,points+(4*(enn-1)),points+(4*(2*enn-2)), f_prm_0, &yaw, &pch, &rll);
-			if (!(count%print_int)) {
+			if (!(count%print_int)&&!estimate_f) {
 				printf("%f %f %f %f %f %f %f\n",points[4*count+0],points[4*count+1],points[4*count+2],points[4*count+3],yaw,pch,rll);
 			}
 			if (count>=enn-1)
@@ -124,14 +128,14 @@ char **argv;
 		/* all interior points */
 		else if (status==MIDDLE) {/*do calculations for all middle points*/
 			get_orientation(points,points+(4*(enn-1)),points+(4*(2*enn-2)), f_prm_1, &yaw, &pch, &rll);
-			if (!(count%print_int)) {
+			if (!(count%print_int)&&!estimate_f) {
 				printf("%f %f %f %f %f %f %f\n",points[4*(enn-1)+0],points[4*(enn-1)+1],points[4*(enn-1)+2],points[4*(enn-1)+3],yaw,pch,rll);
 			}
 		}
 		/* last n-1 points - yaw pitch and roll will be constant */
 		else if (status==END) { /*do calculations for the last point*/
 			get_orientation(points,points+(4*(enn-1)),points+(4*(2*enn-2)), f_prm_2, &yaw, &pch, &rll);
-			if (!(count%print_int)) {
+			if (!(count%print_int)&&!estimate_f) {
 				printf("%f %f %f %f %f %f %f\n",points[4*endcount+0],points[4*endcount+1],points[4*endcount+2],points[4*endcount+3],yaw,pch,rll);
 			}
 			if (endcount>=2*enn-2)
@@ -141,6 +145,15 @@ char **argv;
 		count++;
 
 
+	}
+
+	/* Return the factor needed to achieve the requested max_bank */
+	if (estimate_f){
+		if (max_cross < VDIVIDE_TOL) {
+			printf("%f\n",0.0);
+		} else {
+			printf("%f\n", 1000.0 * max_bank/max_cross);
+		}
 	}
 }
 
@@ -213,7 +226,13 @@ fastf_t acc[3],vel[3];
 	fastf_t cross;
 
 	cross = vel[1]*acc[0] - vel[0]*acc[1];
+
+	if (estimate_f) {
+		max_cross = ( fabs(cross) > max_cross) ? fabs(cross) : max_cross;
+	}
+
 	cross *= magic_factor;
+
 	if (cross > 90) cross = 90;
 	if (cross < -90) cross = -90;
 	return cross;
@@ -250,14 +269,20 @@ fastf_t x0,x1,x2,h;
 
 
 /* code to read command line arguments*/
-#define OPT_STR "f:p:s:r"
+#define OPT_STR "b:f:p:s:r"
 int get_args(argc,argv)
 int argc;
 char **argv;
 {
 	int c;
+
+	estimate_f = 0;
 	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
+		case 'b':
+			sscanf(optarg,"%lf",&max_bank);
+			estimate_f = 1;
+			break;
 		case 'f':
 			sscanf(optarg,"%lf",&magic_factor);
 			magic_factor *= 0.001; /* to put factors in a more reasonable range */
