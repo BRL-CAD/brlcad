@@ -84,8 +84,8 @@ CONST struct vertexuse	*vu;
 	if( vg )  {
 		/* Only thing in this shell is a point */
 		NMG_CK_VERTEX_G(vg);
-		RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, vg->coord, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, vg->coord, BN_VLIST_LINE_DRAW );
 	}
 }
 
@@ -129,15 +129,15 @@ CONST struct bu_list	*eu_hd;
 		NMG_CK_VERTEX_G(vg);
 		NMG_CK_VERTEX_G(vgmate);
 
-		RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vhead, vgmate->coord, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, vg->coord, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, vgmate->coord, BN_VLIST_LINE_DRAW );
 	}
 }
 
 /*
  *			N M G _ L U _ T O _ V L I S T
  *
- *  Plot a single loopuse into a rt_vlist chain headed by vhead.
+ *  Plot a single loopuse into a bn_vlist chain headed by vhead.
  *
  *  Needs to be able to handle both linear edges and cnurb edges.
  */
@@ -192,17 +192,17 @@ CONST vectp_t		normal;
 		if (isfirst) {
 			if( poly_markers & NMG_VLIST_STYLE_POLYGON ) {
 				/* Insert a "start polygon, normal" marker */
-				RT_ADD_VLIST( vhead, normal, RT_VLIST_POLY_START );
+				RT_ADD_VLIST( vhead, normal, BN_VLIST_POLY_START );
 				if( poly_markers & NMG_VLIST_STYLE_USE_VU_NORMALS
 				    && vu->a.magic_p ) {
 					RT_ADD_VLIST( vhead,
 						vu->a.plane_p->N,
-						RT_VLIST_POLY_VERTNORM );
+						BN_VLIST_POLY_VERTNORM );
 				}
-				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_MOVE );
+				RT_ADD_VLIST( vhead, vg->coord, BN_VLIST_POLY_MOVE );
 			} else {
 				/* move */
-				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
+				RT_ADD_VLIST( vhead, vg->coord, BN_VLIST_LINE_MOVE );
 			}
 			isfirst = 0;
 			first_vg = vg;
@@ -213,12 +213,12 @@ CONST vectp_t		normal;
 				    && vu->a.magic_p ) {
 					RT_ADD_VLIST( vhead,
 						vu->a.plane_p->N,
-						RT_VLIST_POLY_VERTNORM );
+						BN_VLIST_POLY_VERTNORM );
 				}
-				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_DRAW );
+				RT_ADD_VLIST( vhead, vg->coord, BN_VLIST_POLY_DRAW );
 			} else {
 				/* Draw */
-				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_DRAW );
+				RT_ADD_VLIST( vhead, vg->coord, BN_VLIST_LINE_DRAW );
 			}
 		}
 
@@ -231,7 +231,7 @@ CONST vectp_t		normal;
 		/* XXX only use poly markers when face is planar, not snurb */
 		nmg_cnurb_to_vlist( vhead, eu, 10,
 			(poly_markers & NMG_VLIST_STYLE_POLYGON ) ?
-				RT_VLIST_POLY_DRAW : RT_VLIST_LINE_DRAW );
+				BN_VLIST_POLY_DRAW : BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw back to the first vertex used */
@@ -242,12 +242,12 @@ CONST vectp_t		normal;
 			    && first_vu->a.magic_p ) {
 				RT_ADD_VLIST( vhead,
 					first_vu->a.plane_p->N,
-					RT_VLIST_POLY_VERTNORM );
+					BN_VLIST_POLY_VERTNORM );
 			}
-			RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_POLY_END );
+			RT_ADD_VLIST( vhead, first_vg->coord, BN_VLIST_POLY_END );
 		} else {
 			/* Draw */
-			RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, first_vg->coord, BN_VLIST_LINE_DRAW );
 		}
 	}
 	if( (poly_markers  & NMG_VLIST_STYLE_VISUALIZE_NORMALS) && npoints > 2 )  {
@@ -275,9 +275,9 @@ CONST vectp_t		normal;
 		if( *fp->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
 		{
 			/* snurb normals are plotted in nmg_snurb_fu_to_vlist() */
-			RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, centroid, BN_VLIST_LINE_MOVE );
 			VJOIN1( tip, centroid, f, normal );
-			RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, tip, BN_VLIST_LINE_DRAW );
 		}
 
 		/* For any vertexuse attributes with normals, draw them too */
@@ -291,9 +291,9 @@ CONST vectp_t		normal;
 			vg = v->vg_p;
 			if( !vg )  continue;
 			NMG_CK_VERTEX_G(vg);
-			RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, vg->coord, BN_VLIST_LINE_MOVE );
 			VJOIN1( tip, vg->coord, f, vua->N );
-			RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, tip, BN_VLIST_LINE_DRAW );
 		}
 	}
 }
@@ -340,9 +340,9 @@ int			poly_markers;
 		VSUB2( tocent, corner, mid_srf );
 		f = MAGNITUDE( tocent ) * 0.5;
 
-		RT_ADD_VLIST( vhead, mid_srf, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, mid_srf, BN_VLIST_LINE_MOVE );
 		VJOIN1( tip, mid_srf, f, fu_norm );
-		RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, tip, BN_VLIST_LINE_DRAW );
 	}
 }
 
@@ -809,12 +809,12 @@ CONST struct loopuse	*lu;
 long			*b;
 int			red, green, blue;
 {
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	vbp = rt_vlblock_init();
 	nmg_vlblock_lu(vbp, lu, b, red, green, blue, 0, 0);
 	rt_plot_vlblock(fp, vbp);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 }
 
 /*
@@ -828,7 +828,7 @@ long			*b;
 int			red, green, blue;
 {
 	struct loopuse		*lu;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 	int 		loopnum = 0;
 
 	NMG_CK_FACEUSE(fu);
@@ -841,7 +841,7 @@ int			red, green, blue;
 	}
 
 	rt_plot_vlblock(fp, vbp);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 }
 
 /*
@@ -855,12 +855,12 @@ nmg_pl_s(fp, s)
 FILE			*fp;
 CONST struct shell	*s;
 {
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	vbp = rt_vlblock_init();
 	nmg_vlblock_s(vbp, s, 0);
 	rt_plot_vlblock(fp, vbp);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 }
 
 void
@@ -869,12 +869,12 @@ FILE			*fp;
 CONST struct shell	*s;
 int			fancy;
 {
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	vbp = rt_vlblock_init();
 	nmg_vlblock_s(vbp, s, fancy);
 	rt_plot_vlblock(fp, vbp);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 }
 
 /*
@@ -885,12 +885,12 @@ nmg_pl_r(fp, r)
 FILE			*fp;
 CONST struct nmgregion	*r;
 {
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	vbp = rt_vlblock_init();
 	nmg_vlblock_r(vbp, r, 0);
 	rt_plot_vlblock(fp, vbp);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 }
 
 /*
@@ -901,12 +901,12 @@ nmg_pl_m(fp, m)
 FILE			*fp;
 CONST struct model	*m;
 {
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	vbp = rt_vlblock_init();
 	nmg_vlblock_m(vbp, m, 0);
 	rt_plot_vlblock(fp, vbp);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 }
 
 /************************************************************************
@@ -922,14 +922,14 @@ CONST struct model	*m;
  */
 void
 nmg_vlblock_v(vbp, v, tab)
-struct rt_vlblock		*vbp;
+struct bn_vlblock		*vbp;
 CONST struct vertex		*v;
 long				*tab;
 {
 	pointp_t p;
 	struct bu_list	*vh;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	NMG_CK_VERTEX(v);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, v->index );
 
@@ -941,14 +941,14 @@ long				*tab;
 	if (rt_g.NMG_debug & DEBUG_LABEL_PTS) {
 		static char label[128];
 		mat_t	mat;
-		mat_idn(mat);
+		bn_mat_idn(mat);
 		(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
 		/* XXX What size characters to use? */
 		bn_vlist_3string( vh, vbp->free_vlist_hd, label, p, mat, scale );
 	}
 #endif
-	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vh, p, BN_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, p, BN_VLIST_LINE_DRAW );
 }
 
 /*
@@ -956,7 +956,7 @@ long				*tab;
  */
 void
 nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 CONST struct edge	*e;
 long			*tab;
 int			red, green, blue;
@@ -967,7 +967,7 @@ int			fancy;
 	vect_t v;
 	struct bu_list	*vh;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	NMG_CK_EDGE(e);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, e->index );
 	
@@ -991,8 +991,8 @@ int			fancy;
 	VSUB2(end1, p1, v);
 
 	vh = rt_vlblock_find( vbp, red, green, blue );
-	RT_ADD_VLIST( vh, end0, RT_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vh, end1, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vh, end0, BN_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, end1, BN_VLIST_LINE_DRAW );
 
 	nmg_vlblock_v(vbp, e->eu_p->vu_p->v_p, tab);
 	nmg_vlblock_v(vbp, e->eu_p->eumate_p->vu_p->v_p, tab);
@@ -1003,7 +1003,7 @@ int			fancy;
  */
 void
 nmg_vlblock_eu(vbp, eu, tab, red, green, blue, fancy, loopnum)
-struct rt_vlblock		*vbp;
+struct bn_vlblock		*vbp;
 CONST struct edgeuse		*eu;
 long				*tab;
 int				red, green, blue;
@@ -1015,7 +1015,7 @@ int				loopnum;
 	point_t	next_base;
 	struct bu_list	*vh;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	NMG_CK_EDGEUSE(eu);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, eu->index );
 
@@ -1089,8 +1089,8 @@ int				loopnum;
 	    	 * midway point to represent the edgeuse
 	    	 */
 		vh = rt_vlblock_find( vbp, red, green, blue );
-		RT_ADD_VLIST( vh, base, RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vh, base, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_DRAW );
 
 	    	/* draw a line from the tip of the edgeuse part to a point
 	    	 * behind the tip of the radial edgeuse.  This provides 2
@@ -1101,8 +1101,8 @@ int				loopnum;
 	    	 */
 	    	nmg_eu_radial( eu, radial_tip );
 		vh = rt_vlblock_find( vbp, red, green-20, blue );
-		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vh, radial_tip, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, radial_tip, BN_VLIST_LINE_DRAW );
 
 	    	/* we draw a line from the tip of the edgeuse line
 	    	 * to the vertexuse/start of the next edgeuse in the loop.
@@ -1115,8 +1115,8 @@ int				loopnum;
 	    	green *= 0.5;
 	    	blue *= 0.5;
 		vh = rt_vlblock_find( vbp, red, green, blue );
-		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vh, next_base, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, next_base, BN_VLIST_LINE_DRAW );
 	}
 }
 
@@ -1155,8 +1155,8 @@ CONST struct bn_tol		*tol;
 	fan_len = len * 0.2;
 	VJOIN1( tip, center, fan_len, left );
 
-	RT_ADD_VLIST( vh, center, RT_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vh, center, BN_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_DRAW );
 
 	ang = bn_angle_measure( left, xvec, yvec ) * bn_radtodeg;
 	sprintf( str, "%g", ang );
@@ -1178,7 +1178,7 @@ CONST struct bn_tol		*tol;
  */
 void
 nmg_vlblock_around_eu(vbp, arg_eu, tab, fancy, tol )
-struct rt_vlblock		*vbp;
+struct bn_vlblock		*vbp;
 CONST struct edgeuse		*arg_eu;
 long				*tab;
 int				fancy;
@@ -1192,7 +1192,7 @@ CONST struct bn_tol		*tol;
 	struct bu_list		*vh;
 	fastf_t			len;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	NMG_CK_EDGEUSE(arg_eu);
 	BN_CK_TOL(tol);
 
@@ -1207,7 +1207,7 @@ CONST struct bn_tol		*tol;
 		/*  Construct matrix to rotate characters from 2D drawing space
 		 *  into model coordinates, oriented in plane perpendicular to eu.
 		 */
-		mat_zero( mat );
+		bn_mat_zero( mat );
 		mat[0] = xvec[X];
 		mat[4] = xvec[Y];
 		mat[8] = xvec[Z];
@@ -1250,7 +1250,7 @@ CONST struct bn_tol		*tol;
  */
 void
 nmg_vlblock_lu(vbp, lu, tab, red, green, blue, fancy, loopnum)
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 CONST struct loopuse	*lu;
 long			*tab;
 int			red, green, blue;
@@ -1261,7 +1261,7 @@ int	 		loopnum;
 	long		magic1;
 	struct vertexuse *vu;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	NMG_CK_LOOPUSE(lu);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, lu->index );
 
@@ -1284,7 +1284,7 @@ int	 		loopnum;
  */
 void
 nmg_vlblock_fu(vbp, fu, tab, fancy)
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 CONST struct faceuse	*fu;
 long			*tab;
 int			fancy;
@@ -1292,7 +1292,7 @@ int			fancy;
 	struct loopuse *lu;
 	int 		loopnum = 0;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	NMG_CK_FACEUSE(fu);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, fu->index );
 
@@ -1312,7 +1312,7 @@ int			fancy;
  */
 void
 nmg_vlblock_s(vbp, s, fancy)
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 CONST struct shell	*s;
 int			fancy;
 {
@@ -1322,14 +1322,14 @@ int			fancy;
 	struct model	*m;
 	long		*tab;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	NMG_CK_SHELL(s);
 	NMG_CK_REGION(s->r_p);
 	m = s->r_p->m_p;
 	NMG_CK_MODEL(m);
 
 	/* get space for list of items processed */
-	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+	tab = (long *)bu_calloc( m->maxindex+1, sizeof(long),
 		"nmg_vlblock_s tab[]");
 
 	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
@@ -1362,7 +1362,7 @@ int			fancy;
 		nmg_vlblock_v(vbp, s->vu_p->v_p, tab );
 	}
 
-	rt_free( (char *)tab, "nmg_vlblock_s tab[]" );
+	bu_free( (char *)tab, "nmg_vlblock_s tab[]" );
 }
 
 /*
@@ -1370,13 +1370,13 @@ int			fancy;
  */
 void
 nmg_vlblock_r(vbp, r, fancy)
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 CONST struct nmgregion	*r;
 int			fancy;
 {
 	struct shell *s;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	NMG_CK_REGION(r);
 
 	for( BU_LIST_FOR( s, shell, &r->s_hd ) )  {
@@ -1389,13 +1389,13 @@ int			fancy;
  */
 void
 nmg_vlblock_m(vbp, m, fancy)
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 CONST struct model	*m;
 int			fancy;
 {
 	struct nmgregion *r;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	NMG_CK_MODEL(m);
 
 	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
@@ -1415,7 +1415,7 @@ int			fancy;
  */
 void
 nmg_pl_edges_in_2_shells(vbp, b, eu, fancy, tol)
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 long			*b;
 CONST struct edgeuse	*eu;
 int			fancy;
@@ -1463,7 +1463,7 @@ CONST struct bn_tol	*tol;
 	long			*b;
 	FILE			*fp;
 	long			magic1;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	NMG_CK_SHELL(s);
 	BN_CK_TOL(tol);
@@ -1473,7 +1473,7 @@ CONST struct bn_tol	*tol;
 		exit(-1);
 	}
 
-	b = (long *)rt_calloc( s->r_p->m_p->maxindex+1, sizeof(long),
+	b = (long *)bu_calloc( s->r_p->m_p->maxindex+1, sizeof(long),
 		"nmg_pl_isect flags[]" );
 
 	vbp = rt_vlblock_init();
@@ -1505,9 +1505,9 @@ CONST struct bn_tol	*tol;
 	}
 
 	rt_plot_vlblock(fp, vbp);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 
-	rt_free( (char *)b, "nmg_pl_isect flags[]" );
+	bu_free( (char *)b, "nmg_pl_isect flags[]" );
 
 	(void)fclose(fp);
 }
@@ -1529,7 +1529,7 @@ CONST struct faceuse	*fu1;
 	int			do_anim = 0;
 	struct model		*m;
 	long			*tab;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	if(rt_g.NMG_debug & DEBUG_PLOTEM &&
 	   rt_g.NMG_debug & DEBUG_FCUT ) do_plot = 1;
@@ -1540,7 +1540,7 @@ CONST struct faceuse	*fu1;
 	m = nmg_find_model( &fu1->l.magic );
 	NMG_CK_MODEL(m);
 	/* get space for list of items processed */
-	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+	tab = (long *)bu_calloc( m->maxindex+1, sizeof(long),
 		"nmg_pl_comb_fu tab[]");
 
 	vbp = rt_vlblock_init();
@@ -1569,8 +1569,8 @@ CONST struct faceuse	*fu1;
 			bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
 	}
-	rt_vlblock_free(vbp);
-	rt_free( (char *)tab, "nmg_pl_comb_fu tab[]" );
+	bn_vlblock_free(vbp);
+	bu_free( (char *)tab, "nmg_pl_comb_fu tab[]" );
 }
 
 /*
@@ -1593,14 +1593,14 @@ int			show_mates;
 	struct model	*m;
 	long		*tab;
 	static int	num = 1;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	if( rt_g.NMG_debug & (DEBUG_PLOTEM|DEBUG_PL_ANIM) == 0 )  return;
 
 	m = nmg_find_model( &fu1->l.magic );
 	NMG_CK_MODEL(m);
 	/* get space for list of items processed */
-	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+	tab = (long *)bu_calloc( m->maxindex+1, sizeof(long),
 		"nmg_pl_comb_fu tab[]");
 
 	/* Create the vlblock */
@@ -1634,8 +1634,8 @@ int			show_mates;
 		}
 	}
 
-	rt_vlblock_free(vbp);
-	rt_free( (char *)tab, "nmg_pl_2fu tab[]" );
+	bn_vlblock_free(vbp);
+	bu_free( (char *)tab, "nmg_pl_2fu tab[]" );
 }
 
 /************************************************************************
@@ -1676,7 +1676,7 @@ static unsigned char broken_colors[][3] = {
  */
 static void
 show_broken_vu(vbp, vu, fancy)
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 int fancy;
 CONST struct vertexuse *vu;
 {
@@ -1704,37 +1704,37 @@ CONST struct vertexuse *vu;
 	vh = rt_vlblock_find( vbp, 
 		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
 
-	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vh, p, BN_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, p, BN_VLIST_LINE_DRAW );
 
 
 	VMOVE(pt, p);
 	pt[0] += 0.05;
-	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, pt, BN_VLIST_LINE_MOVE );
 	VMOVE(pt, p);
 	pt[0] -= 0.05;
-	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vh, pt, BN_VLIST_LINE_DRAW );
 
 	VMOVE(pt, p);
 	pt[1] += 0.05;
-	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, pt, BN_VLIST_LINE_MOVE );
 	VMOVE(pt, p);
 	pt[1] -= 0.05;
-	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vh, pt, BN_VLIST_LINE_DRAW );
 
 	VMOVE(pt, p);
 	pt[2] += 0.05;
-	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, pt, BN_VLIST_LINE_MOVE );
 	VMOVE(pt, p);
 	pt[2] -= 0.05;
-	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vh, pt, BN_VLIST_LINE_DRAW );
 
-	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, p, BN_VLIST_LINE_MOVE );
 }
 
 static void
 show_broken_e(vbp, eu, fancy)
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 int fancy;
 CONST struct edgeuse *eu;
 {
@@ -1774,8 +1774,8 @@ CONST struct edgeuse *eu;
 	vh = rt_vlblock_find( vbp, 
 		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
 
-	RT_ADD_VLIST( vh, end0, RT_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vh, end1, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vh, end0, BN_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, end1, BN_VLIST_LINE_DRAW );
 
 	show_broken_vu(vbp, eu->vu_p, fancy);
 	show_broken_vu(vbp, eu->eumate_p->vu_p, fancy);
@@ -1785,7 +1785,7 @@ CONST struct edgeuse *eu;
 
 static void
 show_broken_eu(vbp, eu, fancy)
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 int fancy;
 CONST struct edgeuse *eu;
 {
@@ -1819,25 +1819,25 @@ CONST struct edgeuse *eu;
 	    		red = green = blue = 255;
 
 		vh = rt_vlblock_find( vbp, red, green, blue );
-		RT_ADD_VLIST( vh, base, RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vh, base, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_DRAW );
 
 	    	nmg_eu_radial( eu, radial_tip );
 		vh = rt_vlblock_find( vbp, red, green-20, blue );
-		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vh, radial_tip, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, radial_tip, BN_VLIST_LINE_DRAW );
 
 	    	nmg_eu_next_base( eu, next_base );
 		vh = rt_vlblock_find( vbp, 0, 100, 0 );
-		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vh, next_base, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, next_base, BN_VLIST_LINE_DRAW );
 	}
 
 }
 
 static void
 show_broken_lu(vbp, lu, fancy)
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 int fancy;
 CONST struct loopuse *lu;
 {
@@ -1888,7 +1888,7 @@ CONST struct loopuse *lu;
 
 static void
 show_broken_fu(vbp, fu, fancy)
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 int fancy;
 CONST struct faceuse *fu;
 {
@@ -1902,7 +1902,7 @@ CONST struct faceuse *fu;
 
 static void
 show_broken_s(vbp, s, fancy)
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 CONST struct shell *s;
 int fancy;
 {
@@ -1922,7 +1922,7 @@ int fancy;
 }
 static void
 show_broken_r(vbp, r, fancy)
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 CONST struct nmgregion *r;
 int fancy;
 {
@@ -1935,7 +1935,7 @@ int fancy;
 
 static void
 show_broken_m(vbp, m, fancy)
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 CONST struct model *m;
 int fancy;
 {
@@ -1946,7 +1946,7 @@ int fancy;
 		show_broken_r(vbp, r, fancy);
 }
 
-static struct rt_vlblock *vbp = (struct rt_vlblock *)NULL;
+static struct bn_vlblock *vbp = (struct bn_vlblock *)NULL;
 static int stepalong = 0;
 
 void
@@ -1980,15 +1980,15 @@ CONST char	*a_string;
 	if (!vbp)
 		vbp = rt_vlblock_init();
 	else if (all_new) {
-		rt_vlblock_free(vbp);
-		vbp = (struct rt_vlblock *)NULL;
+		bn_vlblock_free(vbp);
+		vbp = (struct bn_vlblock *)NULL;
 		vbp = rt_vlblock_init();
 	}
 
 	m = nmg_find_model(p);
 	/* get space for list of items processed */
 	if (!broken_tab) {
-		broken_tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+		broken_tab = (long *)bu_calloc( m->maxindex+1, sizeof(long),
 			"nmg_vlblock_s tab[]");
 		broken_tab_len = m->maxindex+1;
 	} else {
@@ -2023,7 +2023,7 @@ CONST char	*a_string;
 		show_broken_fu( vbp, (struct faceuse *)p, fancy);
 #if 0
 		{
-			struct rt_vlblock *vbp2 = vbp;
+			struct bn_vlblock *vbp2 = vbp;
 			register struct loopuse *lu;
 			struct faceuse *fu = (struct faceuse *)p;
 			int i;
@@ -2094,9 +2094,9 @@ CONST char	*a_string;
 			bu_log("overlay %s for %s\n", buf, a_string);
 		}
 
-		rt_vlblock_free(vbp);
-		vbp = (struct rt_vlblock *)NULL;
-		rt_free((char *)broken_tab, "broken_tab");
+		bn_vlblock_free(vbp);
+		vbp = (struct bn_vlblock *)NULL;
+		bu_free((char *)broken_tab, "broken_tab");
 		broken_tab = (long *)NULL;
 		broken_tab_len = 0;
 	}
@@ -2113,7 +2113,7 @@ CONST struct faceuse	*fu;
 	char		name[32];
 	extern void (*nmg_vlblock_anim_upcall)();
 	struct model		*m;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 	long		*tab;
 	int		fancy;
 	static int	num = 1;
@@ -2126,7 +2126,7 @@ CONST struct faceuse	*fu;
 	NMG_CK_MODEL(m);
 
 	/* get space for list of items processed */
-	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+	tab = (long *)bu_calloc( m->maxindex+1, sizeof(long),
 		"nmg_face_plot tab[]");
 
 	vbp = rt_vlblock_init();
@@ -2156,8 +2156,8 @@ CONST struct faceuse	*fu;
 			bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
 	}
-	rt_vlblock_free(vbp);
-	rt_free( (char *)tab, "nmg_face_plot tab[]" );
+	bn_vlblock_free(vbp);
+	bu_free( (char *)tab, "nmg_face_plot tab[]" );
 
 }
 
@@ -2172,7 +2172,7 @@ CONST struct faceuse	*fu1, *fu2;
 {
 	extern void (*nmg_vlblock_anim_upcall)();
 	struct model		*m;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 	long		*tab;
 	int		fancy;
 
@@ -2185,7 +2185,7 @@ CONST struct faceuse	*fu1, *fu2;
 	NMG_CK_MODEL(m);
 
 	/* get space for list of items processed */
-	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+	tab = (long *)bu_calloc( m->maxindex+1, sizeof(long),
 		"nmg_2face_plot tab[]");
 
 	vbp = rt_vlblock_init();
@@ -2203,8 +2203,8 @@ CONST struct faceuse	*fu1, *fu2;
 	} else {
 		bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}
-	rt_vlblock_free(vbp);
-	rt_free( (char *)tab, "nmg_2face_plot tab[]" );
+	bn_vlblock_free(vbp);
+	bu_free( (char *)tab, "nmg_2face_plot tab[]" );
 
 }
 
@@ -2239,7 +2239,7 @@ CONST struct vertexuse		*vu1, *vu2;
 		perror(buf);
 		return;
 	}
-	b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]" );
+	b = (long *)bu_calloc( m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]" );
 	nmg_pl_lu(fp, lu, b, 255, 0, 0);
 
 	/*
@@ -2256,7 +2256,7 @@ CONST struct vertexuse		*vu1, *vu2;
 
 	fclose(fp);
 	bu_log("overlay %s\n", buf);
-	rt_free( (char *)b, "nmg_face_lu_plot flag[]" );
+	bu_free( (char *)b, "nmg_face_lu_plot flag[]" );
 }
 
 /*
@@ -2292,7 +2292,7 @@ CONST vect_t			left;
 		perror(buf);
 		return;
 	}
-	b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_plot_lu_ray flag[]" );
+	b = (long *)bu_calloc( m->maxindex, sizeof(long), "nmg_plot_lu_ray flag[]" );
 	nmg_pl_lu(fp, lu, b, 255, 0, 0);
 
 	/*
@@ -2314,7 +2314,7 @@ CONST vect_t			left;
 
 	fclose(fp);
 	bu_log("overlay %s\n", buf);
-	rt_free( (char *)b, "nmg_plot_lu_ray flag[]" );
+	bu_free( (char *)b, "nmg_plot_lu_ray flag[]" );
 }
 
 /*
@@ -2343,11 +2343,11 @@ CONST struct faceuse *fu;
 		rt_bomb("aborting");
 	}
 
-	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex, sizeof(long), "bit vec");
+	b = (long *)bu_calloc( fu->s_p->r_p->m_p->maxindex, sizeof(long), "bit vec");
 
 	nmg_pl_fu(fd, fu, b, 200, 200, 200);
 
-	rt_free((char *)b, "bit vec");
+	bu_free((char *)b, "bit vec");
 
 	VSCALE(pp, dir, 1000.0);
 	VADD2(pp, pt, pp);
@@ -2372,7 +2372,7 @@ CONST struct bn_tol	*tol;
 	char			file[256];
 	static int		num=0;
 	struct model		*m;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 	long			*tab;
 	CONST struct edgeuse	*eur;
 	FILE			*fp;
@@ -2389,7 +2389,7 @@ CONST struct bn_tol	*tol;
 
 	m = nmg_find_model( (long *)eu );
 	NMG_CK_MODEL(m);
-	tab = (long *)rt_calloc( m->maxindex, sizeof(long), "bit vec");
+	tab = (long *)bu_calloc( m->maxindex, sizeof(long), "bit vec");
 
 	vbp = rt_vlblock_init();
 
@@ -2409,8 +2409,8 @@ CONST struct bn_tol	*tol;
 
 	rt_plot_vlblock( fp, vbp );
 	(void)fclose(fp);
-	rt_vlblock_free(vbp);
-	rt_free((char *)tab, "bit vec");
+	bn_vlblock_free(vbp);
+	bu_free((char *)tab, "bit vec");
 }
 
 /*
@@ -2477,11 +2477,11 @@ int				n_interior;	/* typ. 10 */
 	vp = c->ctl_points;
 	for( i = 0; i < c->s_size[0]; i++)
 	{
-		RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_MOVE );
 		vp += coords;
 		for( j = 1; j < c->s_size[1]; j++)
 		{
-			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_DRAW );
 			vp += coords;
 		}
 	}
@@ -2492,21 +2492,21 @@ int				n_interior;	/* typ. 10 */
 			
 		stride = c->s_size[1] * coords;
 		vp = &c->ctl_points[j * coords];
-		RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_MOVE );
 		vp += stride;
 		for( i = 1; i < c->s_size[0]; i++)
 		{
-			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_DRAW );
 			vp += stride;
 		}
 	}
 	rt_nurb_free_snurb(c, (struct resource *)NULL);
 	rt_nurb_free_snurb(r, (struct resource *)NULL);
 
-	rt_free( (char *) tau1.knots, "rt_nurb_plot:tau1.knots");
-	rt_free( (char *) tau2.knots, "rt_nurb_plot:tau2.knots");
-	rt_free( (char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
-	rt_free( (char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
+	bu_free( (char *) tau1.knots, "rt_nurb_plot:tau1.knots");
+	bu_free( (char *) tau2.knots, "rt_nurb_plot:tau2.knots");
+	bu_free( (char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
+	bu_free( (char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
 
 	return(0);
 }
@@ -2528,7 +2528,7 @@ nmg_cnurb_to_vlist( vhead, eu, n_interior, cmd )
 struct bu_list			*vhead;
 CONST struct edgeuse		*eu;
 int				n_interior;	/* typ. 10 */
-int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
+int				cmd;		/* BN_VLIST_LINE_DRAW, etc */
 {
 	CONST struct edge_g_cnurb	*eg;
 	CONST struct faceuse	*fu;
@@ -2561,7 +2561,7 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		rt_nurb_gen_knot_vector( &n.k, n.order, 0.0, 1.0, (struct resource *)NULL );
 		n.c_size = 2;
 		n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT );
-		n.ctl_points = (fastf_t *)rt_malloc(
+		n.ctl_points = (fastf_t *)bu_malloc(
 			sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(n.pt_type) *
 			n.c_size, "nmg_cnurb_to_vlist() order0 ctl_points[]");
 		/* Set ctl points to parametric values */
@@ -2638,7 +2638,7 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 	}
 
 	if( eg->order <= 0 )  {
-		rt_free( (char *)n.k.knots, "nmg_cnurb_to_vlist() n.knot.knots");
-		rt_free( (char *)n.ctl_points, "nmg_cnurb_to_vlist() ctl_points");
+		bu_free( (char *)n.k.knots, "nmg_cnurb_to_vlist() n.knot.knots");
+		bu_free( (char *)n.ctl_points, "nmg_cnurb_to_vlist() ctl_points");
 	}
 }

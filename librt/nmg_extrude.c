@@ -118,7 +118,7 @@ struct bn_tol	*tol;
 	cur = 0;
 	cnt = verts_in_nmg_face(fu);
 	verts = (struct vertex **)
-		rt_malloc(cnt * sizeof(struct vertex *), "verts");
+		bu_malloc(cnt * sizeof(struct vertex *), "verts");
 	for (i = 0; i < cnt; i++)
 		verts[i] = NULL;
 
@@ -179,7 +179,7 @@ struct bn_tol	*tol;
 		rt_bomb( "nmg_translate_face: Cannot calculate plane equation for face\n" );
 	}
 	nmg_face_g( fu_tmp , pl );
-	rt_free((char *)verts, "verts");
+	bu_free((char *)verts, "verts");
 }
 
 /*
@@ -223,7 +223,7 @@ CONST struct bn_tol	*tol;	/* NMG tolerances. */
 		nmg_translate_face(fu2->fumate_p, Vec, tol);
 
 	nfaces = verts_in_nmg_face( fu );
-	outfaces = (struct faceuse **)rt_calloc( nfaces+2 , sizeof( struct faceuse *) ,
+	outfaces = (struct faceuse **)bu_calloc( nfaces+2 , sizeof( struct faceuse *) ,
 		"nmg_extrude_face: outfaces" );
 
 	outfaces[0] = fu;
@@ -267,7 +267,7 @@ CONST struct bn_tol	*tol;	/* NMG tolerances. */
 
 	nmg_gluefaces( outfaces , face_count, tol );
 
-	rt_free( (char *)outfaces , "nmg_extrude_face: outfaces" );
+	bu_free( (char *)outfaces , "nmg_extrude_face: outfaces" );
 
 	return( 0 );
 }
@@ -341,7 +341,7 @@ struct bu_ptbl *loops;
 	NMG_CK_LOOPUSE( lu2 );
 
 	/* create a table to hold eu pointers for a new loop */
-	new_lu_tab = (struct bu_ptbl *)rt_malloc( sizeof( struct bu_ptbl ) , "nmg_start_new_loop: new_lu_tab" );
+	new_lu_tab = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ) , "nmg_start_new_loop: new_lu_tab" );
 	bu_ptbl_init( new_lu_tab , 64, " new_lu_tab ");
 
 	/* add this table to the list of loops */
@@ -715,7 +715,7 @@ CONST struct bn_tol *tol;
 				}
 
 				bu_ptbl_free( loop_tab );
-				rt_free( (char *)loop_tab , "nmg_fix_overlapping_loops: loop_tab" );
+				bu_free( (char *)loop_tab , "nmg_fix_overlapping_loops: loop_tab" );
 			}
 		}
 
@@ -1120,7 +1120,7 @@ CONST struct bn_tol *tol;
 		is = nmg_dup_shell( s_tmp , &copy_tbl, tol );
 
 		/* make a translation table for this model */
-		flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_extrude_shell flags" );
+		flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "nmg_extrude_shell flags" );
 
 		/* now adjust all the planes, first move them inward by distance "thick" */
 		for( BU_LIST_FOR( fu , faceuse , &is->fu_hd ) )
@@ -1232,8 +1232,8 @@ CONST struct bn_tol *tol;
 		nmg_region_a( s_tmp->r_p , tol );
 
 		/* free memory */
-		rt_free( (char *)flags , "nmg_extrude_shell: flags" );
-		rt_free( (char *)copy_tbl , "nmg_extrude_shell: copy_tbl" );
+		bu_free( (char *)flags , "nmg_extrude_shell: flags" );
+		bu_free( (char *)copy_tbl , "nmg_extrude_shell: copy_tbl" );
 	}
 
 	/* put it all back together */
@@ -1342,7 +1342,7 @@ CONST struct bn_tol *tol;
 		is_void = nmg_shell_is_void( s_tmp );
 
 		/* make a translation table for this model */
-		flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_extrude_shell flags" );
+		flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "nmg_extrude_shell flags" );
 
 		/* now adjust all the planes, first move them by distance "thick" */
 		for( BU_LIST_FOR( fu , faceuse , &s_tmp->fu_hd ) )
@@ -1364,7 +1364,7 @@ CONST struct bn_tol *tol;
 			}
 		}
 
-		rt_free( (char *)flags , "nmg_extrude_shell flags" );
+		bu_free( (char *)flags , "nmg_extrude_shell flags" );
 
 		/* get table of vertices in this shell */
 		nmg_vertex_tabulate( &verts , &s_tmp->l.magic );

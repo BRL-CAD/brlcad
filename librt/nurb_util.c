@@ -67,11 +67,11 @@ struct resource *res;
 	}
 	else
 	{
-		srf->u.knots = (fastf_t *) rt_malloc ( 
+		srf->u.knots = (fastf_t *) bu_malloc ( 
 			n_u * sizeof (fastf_t ), "rt_nurb_new_snurb: u kv knot values");
-		srf->v.knots = (fastf_t *) rt_malloc ( 
+		srf->v.knots = (fastf_t *) bu_malloc ( 
 			n_v * sizeof (fastf_t ), "rt_nurb_new_snurb: v kv knot values");
-		srf->ctl_points = ( fastf_t *) rt_malloc( 
+		srf->ctl_points = ( fastf_t *) bu_malloc( 
 			pnum, "rt_nurb_new_snurb: control mesh points");
 	}
 
@@ -90,14 +90,14 @@ int order, n_knots, n_pts, pt_type;
 
 	crv->k.k_size = n_knots;
 	crv->k.knots = (fastf_t *)
-		rt_malloc(n_knots * sizeof(fastf_t),
+		bu_malloc(n_knots * sizeof(fastf_t),
 			"rt_nurb_new_cnurb: knot values");
 
 	crv->c_size = n_pts;
 	crv->pt_type = pt_type;
 
 	crv->ctl_points = (fastf_t *)
-		rt_malloc( sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
+		bu_malloc( sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
 			n_pts, 
 			"rt_nurb_new_cnurb: mesh point values");
 
@@ -126,9 +126,9 @@ struct resource *res;
 	}
 	else
 	{
-		rt_free( (char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots" );
-		rt_free( (char *)srf->v.knots, "rt_nurb_free_snurb() v.knots" );
-		rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb() ctl_points");
+		bu_free( (char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots" );
+		bu_free( (char *)srf->v.knots, "rt_nurb_free_snurb() v.knots" );
+		bu_free( (char *)srf->ctl_points, "rt_nurb_free_snurb() ctl_points");
 	}
 	/* Invalidate the structure */
 	srf->u.knots = (fastf_t *)NULL;
@@ -159,13 +159,13 @@ struct resource *res;
 	else
 	{
 
-		rt_free( (char *)srf->u.knots, "rt_nurb_free_snurb: u kv knots" );
-		rt_free( (char *)srf->v.knots, "rt_nurb_free_snurb: v kv knots" );
-		rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
+		bu_free( (char *)srf->u.knots, "rt_nurb_free_snurb: u kv knots" );
+		bu_free( (char *)srf->v.knots, "rt_nurb_free_snurb: v kv knots" );
+		bu_free( (char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
 	}
 
 	srf->l.magic = 0;
-	rt_free( (char *)srf, "rt_nurb_free_snurb: snurb struct" );
+	bu_free( (char *)srf, "rt_nurb_free_snurb: snurb struct" );
 }
 
 
@@ -181,8 +181,8 @@ rt_nurb_clean_cnurb( crv )
 struct edge_g_cnurb * crv;
 {
 	NMG_CK_CNURB(crv);
-	rt_free( (char*)crv->k.knots, "rt_nurb_free_cnurb: knots");
-	rt_free( (char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
+	bu_free( (char*)crv->k.knots, "rt_nurb_free_cnurb: knots");
+	bu_free( (char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
 	/* Invalidate the structure */
 	crv->k.knots = (fastf_t *)NULL;
 	crv->ctl_points = (fastf_t *)NULL;
@@ -201,10 +201,10 @@ rt_nurb_free_cnurb( crv)
 struct edge_g_cnurb * crv;
 {
 	NMG_CK_CNURB(crv);
-	rt_free( (char*)crv->k.knots, "rt_nurb_free_cnurb: knots");
-	rt_free( (char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
+	bu_free( (char*)crv->k.knots, "rt_nurb_free_cnurb: knots");
+	bu_free( (char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
 	crv->l.magic = 0;		/* sanity */
-	rt_free( (char*)crv, "rt_nurb_free_cnurb: cnurb struct");
+	bu_free( (char*)crv, "rt_nurb_free_cnurb: cnurb struct");
 }
 
 void

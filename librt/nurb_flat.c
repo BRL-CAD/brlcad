@@ -54,7 +54,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 
 	max_row_dist = max_col_dist = -INFINITY;
 
-	crv = (fastf_t * ) rt_malloc( sizeof(fastf_t) * 
+	crv = (fastf_t * ) bu_malloc( sizeof(fastf_t) * 
 	    RT_NURB_EXTRACT_COORDS(srf->pt_type) * srf->s_size[1], 
 	    "rt_nurb_s_flat: crv");
 
@@ -76,9 +76,9 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 		max_row_dist = MAX(max_row_dist, rdist);
 	}
 
-	rt_free( (char *)crv, "rt_nurb_s_flat: crv" );
+	bu_free( (char *)crv, "rt_nurb_s_flat: crv" );
 
-	crv = (fastf_t * ) rt_malloc(sizeof(fastf_t) * 
+	crv = (fastf_t * ) bu_malloc(sizeof(fastf_t) * 
 	    RT_NURB_EXTRACT_COORDS(srf->pt_type) *  
 	    srf->s_size[0], 	"rt_nurb_s_flat: crv");
 
@@ -100,7 +100,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 		max_col_dist = MAX( max_col_dist, rdist);
 	}
 
-	rt_free((char *)crv, "rt_nurb_s_flat: crv");
+	bu_free((char *)crv, "rt_nurb_s_flat: crv");
 
 	max_dist = MAX( max_row_dist, max_col_dist);
 

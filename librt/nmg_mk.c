@@ -228,8 +228,8 @@ static struct vertexuse *nmg_mvvu RT_ARGS( (long *upptr, struct model *m) );
  *	(struct model *)
  *
  *  Method:
- *	Use NMG_GETSTRUCT to allocate memory and then set all components.
- *	NMG_GETSTRUCT is used instead of the standard GET_name because
+ *	Use NMG_BU_GETSTRUCT to allocate memory and then set all components.
+ *	NMG_BU_GETSTRUCT is used instead of the standard GET_name because
  *	all of the GET_name macros expect a model pointer to get the
  *	maxindex from.  So here we use NMG_BU_GETSTRUCT so that we can
  *	set the maxindex and index by hand.
@@ -1187,9 +1187,9 @@ long	*magic_p;
 			struct face_g_snurb *sp;
 			sp = (struct face_g_snurb *)magic_p;
 			if( BU_LIST_NON_EMPTY( &(sp->f_hd) ) )  return;
-			rt_free( (char *)sp->u.knots, "nmg_kfg snurb u knots[]");
-			rt_free( (char *)sp->v.knots, "nmg_kfg snurb v knots[]");
-			rt_free( (char *)sp->ctl_points, "nmg_kfg snurb ctl_points[]");
+			bu_free( (char *)sp->u.knots, "nmg_kfg snurb u knots[]");
+			bu_free( (char *)sp->v.knots, "nmg_kfg snurb v knots[]");
+			bu_free( (char *)sp->ctl_points, "nmg_kfg snurb ctl_points[]");
 			FREE_FACE_G_SNURB(sp);
 		}
 		break;
@@ -1385,8 +1385,8 @@ struct edgeuse	*eu;
 			eu->g.magic_p = (long *)NULL;
 			if( BU_LIST_NON_EMPTY( &eg->eu_hd2 ) )  return 0;
 			if( eg->order != 0 )  {
-				rt_free( (char *)eg->k.knots, "nmg_keg cnurb knots[]");
-				rt_free( (char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
+				bu_free( (char *)eg->k.knots, "nmg_keg cnurb knots[]");
+				bu_free( (char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
 			}
 			FREE_EDGE_G_CNURB(eg);
 		}
@@ -1945,7 +1945,7 @@ fastf_t		*points;
 	} else {
 		int	ncoord = RT_NURB_EXTRACT_COORDS(pt_type);
 
-		eg->ctl_points = (fastf_t *)rt_calloc(
+		eg->ctl_points = (fastf_t *)bu_calloc(
 			ncoord * n_pts,
 			sizeof(fastf_t),
 			"cnurb ctl_points[]" );
@@ -2376,7 +2376,7 @@ CONST plane_t pl;
  *
  *  If either of the knot vector arrays or the ctl_points arrays are
  *  given as non-null, then simply swipe the caller's arrays.
- *  The caller must have allocated them with rt_malloc() or malloc().
+ *  The caller must have allocated them with bu_malloc() or malloc().
  *  If the pointers are NULL, then the necessary storage is allocated here.
  *
  *  This is the NMG parallel to rt_nurb_new_snurb().
@@ -2426,13 +2426,13 @@ fastf_t		*mesh;
 	if( ukv )  {
 		fg->u.knots = ukv;
 	} else {
-		fg->u.knots = (fastf_t *)rt_calloc(
+		fg->u.knots = (fastf_t *)bu_calloc(
 			n_u_knots, sizeof(fastf_t), "u.knots[]" );
 	}
 	if( vkv )  {
 		fg->v.knots = vkv;
 	} else {
-		fg->v.knots = (fastf_t *)rt_calloc(
+		fg->v.knots = (fastf_t *)bu_calloc(
 			n_v_knots, sizeof(fastf_t), "v.knots[]" );
 	}
 
@@ -2445,7 +2445,7 @@ fastf_t		*mesh;
 	} else {
 		int	nwords;
 		nwords = n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
-		fg->ctl_points = (fastf_t *)rt_calloc(
+		fg->ctl_points = (fastf_t *)bu_calloc(
 			nwords, sizeof(fastf_t), "snurb ctl_points[]" );
 	}
 

@@ -100,7 +100,7 @@ fastf_t uv1[2], uv2[2], uv3[2];
 {
 	struct rt_nurb_poly *p;
 
-	p = (struct rt_nurb_poly *) rt_malloc( sizeof( struct rt_nurb_poly ),
+	p = (struct rt_nurb_poly *) bu_malloc( sizeof( struct rt_nurb_poly ),
 	    "rt_nurb_mk_poly: rt_nurb_poly struct" );
 
 	p->next = (struct rt_nurb_poly *) 0;

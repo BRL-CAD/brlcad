@@ -49,13 +49,13 @@ int	coords;		/* Number of coordsinates for mat_2 and solution */
 	fastf_t * b;
 	fastf_t * s;
 
-	y = (fastf_t *) rt_malloc(sizeof (fastf_t) * dim,
+	y = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
 	    "rt_nurb_solve: y");/* Create temp array */
 
-	b = (fastf_t *) rt_malloc(sizeof (fastf_t) * dim,
+	b = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
 	    "rt_nurb_solve: b");/* Create temp array */
 
-	s = (fastf_t *) rt_malloc(sizeof (fastf_t) * dim,
+	s = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
 	    "rt_nurb_solve: s");/* Create temp array */
 
 	rt_nurb_doolittle (mat_1,mat_2, dim, coords);/* Create LU decomosition */
@@ -87,9 +87,9 @@ int	coords;		/* Number of coordsinates for mat_2 and solution */
 		}
 	}
 
-	rt_free ((char *)y,"rt_nurb_solve: y");			/* Free up storage */
-	rt_free ((char *)b,"rt_nurb_solve: b");			/* Free up storage */
-	rt_free ((char *)s,"rt_nurb_solve: s");			/* Free up storage */
+	bu_free ((char *)y,"rt_nurb_solve: y");			/* Free up storage */
+	bu_free ((char *)b,"rt_nurb_solve: b");			/* Free up storage */
+	bu_free ((char *)s,"rt_nurb_solve: s");			/* Free up storage */
 }
 
 /*
@@ -115,11 +115,11 @@ int coords;
 
 	int     max_pivot;
 
-	d = (fastf_t * ) rt_malloc( sizeof (fastf_t) * row,
+	d = (fastf_t * ) bu_malloc( sizeof (fastf_t) * row,
 	    "rt_nurb_doolittle:d");	/* scale factor */
-	s = (fastf_t * ) rt_malloc( sizeof (fastf_t) * row * row,
+	s = (fastf_t * ) bu_malloc( sizeof (fastf_t) * row * row,
 	    "rt_nurb_doolittle:s");	/* vector to check */
-	ds = (fastf_t *) rt_malloc( sizeof (fastf_t) * row,
+	ds = (fastf_t *) bu_malloc( sizeof (fastf_t) * row,
 	    "rt_nurb_doolittle:ds");	/* if rows need to be swaped */
 
 	for ( i = 0; i < row; i++)		/* calculate the scaling factors */
@@ -187,9 +187,9 @@ int coords;
 		}
 
 	}
-	rt_free( (char *)d,"rt_nurb_doolittle:d");		/* Free up the storage. */
-	rt_free( (char *)s,"rt_nurb_doolittle:s");
-	rt_free( (char *)ds,"rt_nurb_doolittle:ds" );
+	bu_free( (char *)d,"rt_nurb_doolittle:d");		/* Free up the storage. */
+	bu_free( (char *)s,"rt_nurb_doolittle:s");
+	bu_free( (char *)ds,"rt_nurb_doolittle:ds" );
 }
 
 void

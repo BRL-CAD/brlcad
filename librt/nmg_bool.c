@@ -90,7 +90,7 @@ CONST char	*manifolds;
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.manifolds = manifolds;
 	st.count = 0;
 
@@ -98,7 +98,7 @@ CONST char	*manifolds;
 	handlers.bef_faceuse = nmg_dangling_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
-	rt_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 	return st.count;
 }
 
@@ -742,7 +742,7 @@ nmg_s_radial_check( sB, tol );
 	 *  XXX not a long*.
 	 */
 	nelem = (m->maxindex)*4+1;		/* includes extra space */
-	classlist[0] = (long *)rt_calloc( 8 * nelem + 1,
+	classlist[0] = (long *)bu_calloc( 8 * nelem + 1,
 		sizeof(long), "nmg_bool classlist[8]" );
 	for( i = 1; i < 8; i++ )  {
 		classlist[i] = classlist[0] + i * nelem;
@@ -928,7 +928,7 @@ nmg_s_radial_check( sB, tol );
 	 *  XXX not a long*.
 	 */
 	nelem = (m->maxindex)*4+1;		/* includes extra space */
-	classlist[0] = (long *)rt_calloc( 8 * nelem + 1,
+	classlist[0] = (long *)bu_calloc( 8 * nelem + 1,
 		sizeof(long), "nmg_bool classlist[8]" );
 	for( i = 1; i < 8; i++ )  {
 		classlist[i] = classlist[0] + i * nelem;
@@ -1065,7 +1065,7 @@ nmg_s_radial_check( sA, tol );
 		}
 	}
 
-	rt_free( (char *)classlist[0], "nmg_bool classlist[8]" );
+	bu_free( (char *)classlist[0], "nmg_bool classlist[8]" );
 
 	if (rt_g.NMG_debug & DEBUG_BOOL) {
 		bu_log("Returning from NMG_BOOL\n");
@@ -1410,7 +1410,7 @@ nmg_r_radial_check( tl->tr_d.td_r, tol );
 	}
 
 	/* Build string of result name */
-	name = (char *)rt_malloc( strlen(tl->tr_d.td_name)+3+strlen(tr->tr_d.td_name)+2+1,
+	name = (char *)bu_malloc( strlen(tl->tr_d.td_name)+3+strlen(tr->tr_d.td_name)+2+1,
 		"nmg_booltree_evaluate name");
 	name[0] = '(';
 	strcpy( name+1, tl->tr_d.td_name );

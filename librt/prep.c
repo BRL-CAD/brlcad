@@ -133,7 +133,7 @@ struct db_i	*dbip;
  *  Note that the rt_g structure needs to be cleaned separately.
  */
 void
-rt_free_rti( rtip )
+bu_free_rti( rtip )
 struct rt_i	*rtip;
 {
 	RT_CK_RTI(rtip);
@@ -145,7 +145,7 @@ struct rt_i	*rtip;
 
 	bu_ptbl_free( &rtip->rti_resources );
 
-	rt_free( (char *)rtip, "struct rt_i" );
+	bu_free( (char *)rtip, "struct rt_i" );
 }
 
 /*
@@ -221,7 +221,7 @@ int			ncpu;
 	 *  Set this region's bit in the bit vector of every solid
 	 *  contained in the subtree.
 	 */
-	rtip->Regions = (struct region **)rt_malloc(
+	rtip->Regions = (struct region **)bu_malloc(
 		rtip->nregions * sizeof(struct region *),
 		"rtip->Regions[]" );
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
@@ -244,7 +244,7 @@ int			ncpu;
 	 *  Include enough extra space for an extra bitv_t's worth of bits,
 	 *  to handle round-up.
 	 */
-	rtip->rti_Solids = (struct soltab **)rt_calloc(
+	rtip->rti_Solids = (struct soltab **)bu_calloc(
 		rtip->nsolids + (1<<BITV_SHIFT), sizeof(struct soltab *),
 		"rtip->rti_Solids[]" );
 	/*
@@ -266,7 +266,7 @@ int			ncpu;
 	/* Malloc the storage and zero the counts */
 	for( i=0; i <= ID_MAXIMUM; i++ )  {
 		if( rtip->rti_nsol_by_type[i] <= 0 )  continue;
-		rtip->rti_sol_by_type[i] = (struct soltab **)rt_calloc(
+		rtip->rti_sol_by_type[i] = (struct soltab **)bu_calloc(
 			rtip->rti_nsol_by_type[i],
 			sizeof(struct soltab *),
 			"rti_sol_by_type[]" );
@@ -395,7 +395,7 @@ struct rt_i	*rtip;
  *	 0	OK
  */
 int
-rt_vlist_solid( vhead, rtip, stp )
+bn_vlist_solid( vhead, rtip, stp )
 struct rt_i		*rtip;
 struct soltab		*stp;
 struct bu_list		*vhead;
@@ -403,7 +403,7 @@ struct bu_list		*vhead;
 	struct rt_db_internal		intern;
 
 	if( rt_db_get_internal( &intern, stp->st_dp, rtip->rti_dbip, stp->st_matp ) < 0 )  {
-		bu_log("rt_vlist_solid(%s): rt_db_get_internal() failed\n",
+		bu_log("bn_vlist_solid(%s): rt_db_get_internal() failed\n",
 			stp->st_name);
 		return(-1);			/* FAIL */
 	}
@@ -415,7 +415,7 @@ struct bu_list		*vhead;
 		&rtip->rti_ttol,
 		&rtip->rti_tol
 	    ) < 0 )  {
-		bu_log("rt_vlist_solid(%s): ft_plot() failure\n",
+		bu_log("bn_vlist_solid(%s): ft_plot() failure\n",
 			stp->st_name);
 		rt_db_free_internal( &intern );
 	    	return(-2);
@@ -449,8 +449,8 @@ struct soltab		*stp;
 
 	BU_LIST_INIT( &vhead );
 
-	if( rt_vlist_solid( &vhead, rtip, stp ) < 0 )  {
-		bu_log("rt_plot_solid(%s): rt_vlist_solid() failed\n",
+	if( bn_vlist_solid( &vhead, rtip, stp ) < 0 )  {
+		bu_log("rt_plot_solid(%s): bn_vlist_solid() failed\n",
 			stp->st_name);
 		return(-1);			/* FAIL */
 	}
@@ -469,7 +469,7 @@ struct soltab		*stp;
 			(int)(255*regp->reg_mater.ma_color[2]) );
 	}
 
-	rt_vlist_to_uplot( fp, &vhead );
+	bn_vlist_to_uplot( fp, &vhead );
 
 	RT_FREE_VLIST( &vhead );
 	return(0);			/* OK */
@@ -680,14 +680,14 @@ register struct rt_i *rtip;
 	for( ; head < &(rtip->rti_solidheads[RT_DBNHASH]); head++ )  {
 		while( BU_LIST_WHILE( stp, soltab, head ) )  {
 			RT_CHECK_SOLTAB(stp);
-			rt_free_soltab(stp);
+			bu_free_soltab(stp);
 		}
 	}
 	rtip->nsolids = 0;
 
 	/* Clean out the array of pointers to regions, if any */
 	if( rtip->Regions )  {
-		rt_free( (char *)rtip->Regions, "rtip->Regions[]" );
+		bu_free( (char *)rtip->Regions, "rtip->Regions[]" );
 		rtip->Regions = (struct region **)0;
 
 		/* Free space partitions */
@@ -705,11 +705,11 @@ register struct rt_i *rtip;
 	/* Free array of solid table pointers indexed by solid ID */
 	for( i=0; i <= ID_MAXIMUM; i++ )  {
 		if( rtip->rti_nsol_by_type[i] <= 0 )  continue;
-		rt_free( (char *)rtip->rti_sol_by_type[i], "sol_by_type" );
+		bu_free( (char *)rtip->rti_sol_by_type[i], "sol_by_type" );
 		rtip->rti_sol_by_type[i] = (struct soltab **)0;
 	}
 	if( rtip->rti_Solids )  {
-		rt_free( (char *)rtip->rti_Solids, "rtip->rti_Solids[]" );
+		bu_free( (char *)rtip->rti_Solids, "rtip->rti_Solids[]" );
 		rtip->rti_Solids = (struct soltab **)0;
 	}
 
@@ -794,9 +794,9 @@ register struct region *delregp;
 zot:
 	db_free_tree( delregp->reg_treetop );
 	delregp->reg_treetop = TREE_NULL;
-	rt_free( (char *)delregp->reg_name, "region name str");
+	bu_free( (char *)delregp->reg_name, "region name str");
 	delregp->reg_name = (char *)0;
-	rt_free( (char *)delregp, "struct region");
+	bu_free( (char *)delregp, "struct region");
 	return(0);
 }
 

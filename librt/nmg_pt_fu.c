@@ -226,7 +226,7 @@ struct vertexuse *vu;
 	 */
 	VSUB2(delta, vu->v_p->vg_p->coord, fpi->pt);
 
-	ved = (struct ve_dist *) rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
+	ved = (struct ve_dist *) bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
 	ved->magic_p = &vu->v_p->magic;
 	ved->dist = MAGNITUDE(delta);
 	if (ved->dist < fpi->tol->dist_sq ) {
@@ -274,7 +274,7 @@ struct edge_info *ei;
 	}
 
 	bu_log("\toverlay %s\n", name);
-	b = (long *)rt_calloc( fpi->fu_p->s_p->r_p->m_p->maxindex,
+	b = (long *)bu_calloc( fpi->fu_p->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
 	pl_erase(fd);
@@ -288,7 +288,7 @@ struct edge_info *ei;
 	
 	nmg_pl_eu(fd, ei->eu_p, b, 255, 255, 255);
 
-        tmp_tol.magic = RT_TOL_MAGIC;
+        tmp_tol.magic = BN_TOL_MAGIC;
         tmp_tol.dist = 0.005;
         tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
         tmp_tol.perp = 1e-6;
@@ -299,7 +299,7 @@ struct edge_info *ei;
 	pl_color(fd, 255, 255, 50);
 	pdv_3line(fd, pca, fpi->pt);
 
-	rt_free((char *)b, "bit vec");
+	bu_free((char *)b, "bit vec");
 	fclose(fd);
 }
 
@@ -679,7 +679,7 @@ CONST int		in_or_out_only;
 		tmp_tol.dist_sq = 0.0;
 	}
 
-	ved = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
+	ved = (struct ve_dist *)bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
 	ved->magic_p = &eu->e_p->magic;
 	ved->status = bn_distsq_pt3_lseg3(&ved->dist,
 					eu->vu_p->v_p->vg_p->coord,
@@ -706,7 +706,7 @@ found:
 	/* Add a struct for this edgeuse to the loop's list of dist-sorted
 	 * edgeuses.
 	 */
-	ei = (struct edge_info *)rt_malloc(sizeof(struct edge_info), "struct edge_info");
+	ei = (struct edge_info *)bu_malloc(sizeof(struct edge_info), "struct edge_info");
 	ei->ved_p = ved;
 	ei->eu_p = eu;
 	BU_LIST_MAGIC_SET(&ei->l, NMG_EDGE_INFO_MAGIC);
@@ -728,7 +728,7 @@ found:
 		 * other uses of this vertex will claim the point is within
 		 * tolerance without re-computing
 		 */
-		ed = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
+		ed = (struct ve_dist *)bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
 		ed->magic_p = &ved->v1->magic;
 		ed->status = ved->status;
 		ed->v1 = ed->v2 = ved->v1;
@@ -749,7 +749,7 @@ found:
 		 * other uses of this vertex will claim the point is within
 		 * tolerance without re-computing
 		 */
-		ed = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
+		ed = (struct ve_dist *)bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
 		ed->magic_p = &ved->v2->magic;
 		ed->status = ved->status;
 		ed->v1 = ed->v2 = ved->v2;
@@ -863,11 +863,11 @@ struct bu_list *near;
 			    	tmp = ei_p;
 			    	ei_p = BU_LIST_PLAST(edge_info, &ei_p->l);
 				BU_LIST_DEQUEUE(&tmp->l);
-				rt_free((char *)tmp, "edge info struct");
+				bu_free((char *)tmp, "edge info struct");
 			    	tmp = ei;
 			    	ei = BU_LIST_PLAST(edge_info, &ei->l);
 				BU_LIST_DEQUEUE(&tmp->l);
-				rt_free((char *)tmp, "edge info struct");
+				bu_free((char *)tmp, "edge info struct");
 			    	break;
 			}
 			ei_p = BU_LIST_PNEXT( edge_info, &ei_p->l );
@@ -944,7 +944,7 @@ struct edge_info *ei;
 	}
 
 	bu_log("\toverlay %s\n", name);
-	b = (long *)rt_calloc( fpi->fu_p->s_p->r_p->m_p->maxindex,
+	b = (long *)bu_calloc( fpi->fu_p->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
 	pl_erase(fd);
@@ -958,7 +958,7 @@ struct edge_info *ei;
 	
 	nmg_pl_lu(fd, lu, b, 255, 255, 255);
 
-        tmp_tol.magic = RT_TOL_MAGIC;
+        tmp_tol.magic = BN_TOL_MAGIC;
         tmp_tol.dist = 0.005;
         tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
         tmp_tol.perp = 1e-6;
@@ -981,7 +981,7 @@ struct edge_info *ei;
 		pdv_3line(fd, p1, p2);
 	}
 
-	rt_free((char *)b, "bit vec");
+	bu_free((char *)b, "bit vec");
 	fclose(fd);
 }
 
@@ -1099,7 +1099,7 @@ departure:
 	 */
 	while (BU_LIST_WHILE(ei, edge_info, &near)) {
 		BU_LIST_DEQUEUE( &ei->l );
-		rt_free( (char *)ei, "edge_info struct");
+		bu_free( (char *)ei, "edge_info struct");
 	}
 	
 	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
@@ -1227,7 +1227,7 @@ CONST int	in_or_out_only;
 		/* free up the edge_list elements */
 		while ( BU_LIST_WHILE(ei, edge_info, &edge_list.l) ) {
 			BU_LIST_DEQUEUE( &ei->l );
-			rt_free( (char *)ei, "edge info struct");
+			bu_free( (char *)ei, "edge info struct");
 		}
 	} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		register struct vertexuse *vu;
@@ -1290,7 +1290,7 @@ point_t pt;
 
 	bu_log("overlay pt_fu_parity_error.pl\n");
 
-	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex,
+	b = (long *)bu_calloc( fu->s_p->r_p->m_p->maxindex,
 			      sizeof(long), "bit vec"),
 
 
@@ -1315,7 +1315,7 @@ point_t pt;
 		pdv_3line(fp, p1, p2);
 	}
 
-	rt_free((char *)b, "plot table");
+	bu_free((char *)b, "plot table");
 	fclose(fp);
 
 }
@@ -1496,7 +1496,7 @@ CONST struct bn_tol     *tol;
 
 	while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 		BU_LIST_DEQUEUE( &ved_p->l );
-		rt_free( (char *)ved_p, "ve_dist struct");
+		bu_free( (char *)ved_p, "ve_dist struct");
 	}
 
 
@@ -1616,12 +1616,12 @@ struct bn_tol	*tol;
 	/* free up the edge_list elements */
 	while ( BU_LIST_WHILE(ei, edge_info, &edge_list.l) ) {
 		BU_LIST_DEQUEUE( &ei->l );
-		rt_free( (char *)ei, "edge info struct");
+		bu_free( (char *)ei, "edge info struct");
 	}
 
 	while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 		BU_LIST_DEQUEUE( &ved_p->l );
-		rt_free( (char *)ved_p, "ve_dist struct");
+		bu_free( (char *)ved_p, "ve_dist struct");
 	}
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU )

@@ -50,8 +50,8 @@ struct bu_list *groups;
 	struct loopgroup *lg;
 	struct groupie *groupie;
 
-	lg = (struct loopgroup *)rt_calloc(sizeof(struct loopgroup), "loopgroup");
-	groupie = (struct groupie *)rt_calloc(sizeof(struct groupie), "groupie");
+	lg = (struct loopgroup *)bu_calloc(sizeof(struct loopgroup), "loopgroup");
+	groupie = (struct groupie *)bu_calloc(sizeof(struct groupie), "groupie");
 	groupie->lu = lu;
 
 	BU_LIST_INIT(&lg->groupies);
@@ -70,7 +70,7 @@ struct loopgroup *lg1, *lg2;
 		BU_LIST_APPEND(&(lg1->groupies), &(groupie->l))
 	}
 	RT_DEQUEUE(&(lg2->l));
-	rt_free((char *)lg2, "free loopgroup 2 of merge");
+	bu_free((char *)lg2, "free loopgroup 2 of merge");
 }
 void
 free_groups(head)
@@ -190,7 +190,7 @@ CONST struct bn_tol	*tol;
 				num_pts, num_facets);
 
 
-	v = (struct vertex **) rt_calloc(num_pts, sizeof (struct vertex *),
+	v = (struct vertex **) bu_calloc(num_pts, sizeof (struct vertex *),
 			"vertices");
 
 	/* build the vertices */ 
@@ -211,7 +211,7 @@ CONST struct bn_tol	*tol;
 		nmg_vertex_gv(v[i], p);
 	}
 
-	vl = (struct vertex **)rt_calloc(vl_len=8, sizeof (struct vertex *),
+	vl = (struct vertex **)bu_calloc(vl_len=8, sizeof (struct vertex *),
 		"vertex parameter list");
 
 	for (facet = 0 ; facet < num_facets ; ++facet) {
@@ -254,7 +254,7 @@ CONST struct bn_tol	*tol;
 		if( BU_LIST_IS_EMPTY( &v[i]->vu_hd ) )  continue;
 		FREE_VERTEX(v[i]);
 	}
-	rt_free( (char *)v, "vertex array");
+	bu_free( (char *)v, "vertex array");
 	return(s);
 }
 
@@ -286,7 +286,7 @@ int	n;
 
 	heap_cur_sz = 1;
 	heap = (struct vertex **)
-		rt_malloc(1 + n*sizeof(struct vertex *), "heap");
+		bu_malloc(1 + n*sizeof(struct vertex *), "heap");
 	if (heap == (struct vertex **)NULL) {
 		bu_log("init_heap: no mem\n");
 		rt_bomb("");
@@ -308,13 +308,13 @@ int	*n;
 	int	i;
 
 	big_heap = (struct vertex **)
-		rt_malloc(1 + 3 * (*n) * sizeof(struct vertex *), "heap");
+		bu_malloc(1 + 3 * (*n) * sizeof(struct vertex *), "heap");
 	if (big_heap == (struct vertex **)NULL)
 		rt_bomb("heap_increase: no mem\n");
 	for (i = 1; i <= *n; i++)
 		big_heap[i] = h[0][i];
 	*n *= 3;
-	rt_free((char *)h[0], "heap");
+	bu_free((char *)h[0], "heap");
 	h[0] = big_heap;
 }
 

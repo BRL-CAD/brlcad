@@ -488,7 +488,7 @@ CONST struct bn_tol *tol;
 	}
 
 	/* build matrix */
-	mat_zero( matrix );
+	bn_mat_zero( matrix );
 	VSET( vsum , 0.0 , 0.0 , 0.0 );
 
 	one_over_vertex_count = 1.0/(double)(srf->s_size[0]*srf->s_size[1]);
@@ -525,7 +525,7 @@ CONST struct bn_tol *tol;
 		fastf_t inv_len_pl;
 
 		/* invert matrix */
-		mat_inv( inverse , matrix );
+		bn_mat_inv( inverse , matrix );
 
 		/* get normal vector */
 		MAT4X3PNT( pl , inverse , vsum );
@@ -726,7 +726,7 @@ CONST struct bn_tol *tol;
 		bu_log( "nmg_split_trim( cnrb=x%x, snrb=x%x, t=%g, pt0=x%x, pt1=x%x )START\n",
 			cnrb, snrb, t, pt0, pt1 );
 #endif
-	pt_new = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "g_split_trim: pt_new" );
+	pt_new = (struct pt_list *)bu_malloc( sizeof( struct pt_list ), "g_split_trim: pt_new" );
 	pt_new->t = t;
 
 	if( pt_new->t < pt0->t || pt_new->t > pt1->t )
@@ -792,12 +792,12 @@ CONST struct bn_tol *tol;
 		bu_log( "nmg_eval_trim_to_tol( cnrb=x%x, snrb=x%x, t0=%g, t1=%g ) START\n",
 				cnrb, snrb, t0, t1 );
 
-	pt0 = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "nmg_eval_trim_to_tol: pt0 " );
+	pt0 = (struct pt_list *)bu_malloc( sizeof( struct pt_list ), "nmg_eval_trim_to_tol: pt0 " );
 	pt0->t = t0;
 	nmg_eval_trim_curve( cnrb, snrb, pt0->t, pt0->xyz );
 	BU_LIST_INSERT( head, &pt0->l );
 
-	pt1 = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "nmg_eval_trim_to_tol: pt1 " );
+	pt1 = (struct pt_list *)bu_malloc( sizeof( struct pt_list ), "nmg_eval_trim_to_tol: pt1 " );
 	pt1->t = t1;
 	nmg_eval_trim_curve( cnrb, snrb, pt1->t, pt1->xyz );
 	BU_LIST_INSERT( head, &pt1->l );
@@ -833,7 +833,7 @@ CONST struct bn_tol *tol;
 		bu_log( "nmg_split_linear_trim( snrb=x%x, pt0=x%x, pt1=x%x )START\n",
 			snrb, pt0, pt1 );
 #endif
-	pt_new = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "g_split_trim: pt_new" );
+	pt_new = (struct pt_list *)bu_malloc( sizeof( struct pt_list ), "g_split_trim: pt_new" );
 	pt_new->t = 0.5*(pt0->t + pt1->t);
 
 	VBLEND2( uvw_sub, 1.0 - pt_new->t, uvw1, pt_new->t, uvw2 );
@@ -906,12 +906,12 @@ CONST struct bn_tol *tol;
 		bu_log( "nmg_eval_linear_trim_to_tol( cnrb=x%x, snrb=x%x, uvw1=( %g %g %g), uvw2=( %g %g %g ) ) START\n",
 				cnrb, snrb, V3ARGS( uvw1 ), V3ARGS( uvw2 ) );
 
-	pt0 = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "nmg_eval_linear_trim_to_tol: pt0 " );
+	pt0 = (struct pt_list *)bu_malloc( sizeof( struct pt_list ), "nmg_eval_linear_trim_to_tol: pt0 " );
 	pt0->t = 0.0;
 	nmg_eval_linear_trim_curve( snrb, uvw1, pt0->xyz );
 	BU_LIST_INSERT( head, &pt0->l );
 
-	pt1 = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "nmg_eval_linear_trim_to_tol: pt1 " );
+	pt1 = (struct pt_list *)bu_malloc( sizeof( struct pt_list ), "nmg_eval_linear_trim_to_tol: pt1 " );
 	pt1->t = 1.0;
 	nmg_eval_linear_trim_curve( snrb, uvw2, pt1->xyz );
 	BU_LIST_INSERT( head, &pt1->l );
@@ -3661,7 +3661,7 @@ CONST struct bn_tol	*tol;
 	bu_ptbl_free( &shell_tbl);
 	while( BU_LIST_WHILE( rad, nmg_radial, &list1 ) )  {
 		BU_LIST_DEQUEUE( &rad->l );
-		rt_free( (char *)rad, "nmg_radial" );
+		bu_free( (char *)rad, "nmg_radial" );
 	}
 	return;
 #else
@@ -3800,7 +3800,7 @@ CONST struct bn_tol	*tol;
 		/* Release the storage */
 		while( BU_LIST_WHILE( rad, nmg_radial, &list ) )  {
 			BU_LIST_DEQUEUE( &rad->l );
-			rt_free( (char *)rad, "nmg_radial" );
+			bu_free( (char *)rad, "nmg_radial" );
 		}
 	}
 
@@ -3878,7 +3878,7 @@ CONST struct bn_tol	*tol;
 	/* Release the storage */
 	while( BU_LIST_WHILE( rad, nmg_radial, &list ) )  {
 		BU_LIST_DEQUEUE( &rad->l );
-		rt_free( (char *)rad, "nmg_radial" );
+		bu_free( (char *)rad, "nmg_radial" );
 	}
 	return nflip;
 #endif

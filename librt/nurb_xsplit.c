@@ -76,7 +76,7 @@ int dir;
 			srf1->order[0];
 
 		srf1->ctl_points = (fastf_t *)
-			rt_malloc( sizeof(fastf_t) * srf1->s_size[0] *
+			bu_malloc( sizeof(fastf_t) * srf1->s_size[0] *
 				srf1->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_s_xsplit: srf1 row mesh control points");
@@ -95,7 +95,7 @@ int dir;
 			srf2->order[0];
 
 		srf2->ctl_points = (fastf_t *)
-			rt_malloc( sizeof(fastf_t) * srf2->s_size[0] *
+			bu_malloc( sizeof(fastf_t) * srf2->s_size[0] *
 				srf2->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_xsplit: srf2 row mesh control points");
@@ -148,7 +148,7 @@ int dir;
 			srf1->order[0];
 
 		srf1->ctl_points = (fastf_t *)
-			rt_malloc( sizeof(fastf_t) * srf1->s_size[0] *
+			bu_malloc( sizeof(fastf_t) * srf1->s_size[0] *
 				srf1->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_split: srf1 row mesh control points");
@@ -167,7 +167,7 @@ int dir;
 			srf2->order[0];
 
 		srf2->ctl_points = (fastf_t *)
-			rt_malloc( sizeof(fastf_t) * srf2->s_size[0] *
+			bu_malloc( sizeof(fastf_t) * srf2->s_size[0] *
 				srf2->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_xsplit: srf2 row mesh control points");
@@ -201,7 +201,7 @@ int dir;
 	
 	BU_LIST_APPEND( &srf1->l, &srf2->l );
 
-	rt_free( (char *) new_kv.knots, "rt_nurb_s_xsplit: new_kv.knots");
+	bu_free( (char *) new_kv.knots, "rt_nurb_s_xsplit: new_kv.knots");
 
 	rt_nurb_free_oslo(oslo, (struct resource *)NULL);
 
@@ -245,7 +245,7 @@ fastf_t param;
 	crv1->pt_type = crv->pt_type;
 	crv1->c_size = crv1->k.k_size - crv1->order;
 	crv1->ctl_points = (fastf_t *)
-		rt_malloc( sizeof(fastf_t) * crv1->c_size *
+		bu_malloc( sizeof(fastf_t) * crv1->c_size *
 			RT_NURB_EXTRACT_COORDS( crv1->pt_type),
 			"rt_nurb_c_xsplit: crv1 control points");
 
@@ -255,7 +255,7 @@ fastf_t param;
 	crv2->pt_type = crv->pt_type;
 	crv2->c_size = crv2->k.k_size - crv2->order;
 	crv2->ctl_points = (fastf_t *)
-		rt_malloc( sizeof(fastf_t) * crv2->c_size *
+		bu_malloc( sizeof(fastf_t) * crv2->c_size *
 			RT_NURB_EXTRACT_COORDS( crv2->pt_type),
 			"rt_nurb_c_xsplit: crv2 row mesh control points");
 
@@ -268,7 +268,7 @@ fastf_t param;
 
 	rt_nurb_free_oslo( oslo, (struct resource *)NULL );
 
-	rt_free( (char *) new_kv.knots, "rt_nurb_c_xsplit: new_kv.knots");
+	bu_free( (char *) new_kv.knots, "rt_nurb_c_xsplit: new_kv.knots");
 
 	BU_LIST_APPEND( &crv1->l, &crv2->l );
 	return crv1;

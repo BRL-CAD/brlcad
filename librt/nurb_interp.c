@@ -98,13 +98,13 @@ int		n;
 
 	/* Create Data memory and fill in curve structs */
 
-	interp_mat = (fastf_t *) rt_malloc( n * n * sizeof(fastf_t),
+	interp_mat = (fastf_t *) bu_malloc( n * n * sizeof(fastf_t),
 		"rt_nurb_interp: interp_mat");
 
-	nodes = (fastf_t *) rt_malloc( n * sizeof(fastf_t),"rt_nurb_interp:nodes");
-	local_data = (fastf_t *)rt_malloc( n * 3 * sizeof(fastf_t), "rt_nurb_interp() local_data[]");
+	nodes = (fastf_t *) bu_malloc( n * sizeof(fastf_t),"rt_nurb_interp:nodes");
+	local_data = (fastf_t *)bu_malloc( n * 3 * sizeof(fastf_t), "rt_nurb_interp() local_data[]");
 
-	crv->ctl_points = (fastf_t *) rt_malloc( n * 3 * sizeof(fastf_t),
+	crv->ctl_points = (fastf_t *) bu_malloc( n * 3 * sizeof(fastf_t),
 		"solution");
 
 	crv->order = order;
@@ -139,9 +139,9 @@ int		n;
 
 	/* Free up node and interp_mat storage */	
 
-	rt_free( (char *) interp_mat, "rt_nurb_cinterp: interp_mat");
-	rt_free( (char *) nodes, "rt_nurb_cinterp: nodes");
-	rt_free( (char *) local_data, "rt_nurb_cinterp() local_data[]");
+	bu_free( (char *) interp_mat, "rt_nurb_cinterp: interp_mat");
+	bu_free( (char *) nodes, "rt_nurb_cinterp: nodes");
+	bu_free( (char *) local_data, "rt_nurb_cinterp() local_data[]");
 
 	/* All done, The resulting crv now interpolates the data */
 }
@@ -189,7 +189,7 @@ int		xmax;		/* ncol = max X */
 	rt_nurb_kvknot(&srf->u, order, 0.0, 1.0, ymax - order, (struct resource *)NULL);
 	rt_nurb_kvknot(&srf->v, order, 0.0, 1.0, xmax - order, (struct resource *)NULL);
 
-	srf->ctl_points = (fastf_t *) rt_malloc(
+	srf->ctl_points = (fastf_t *) bu_malloc(
 		sizeof(fastf_t) * xmax * ymax * 3,
 		"rt_nurb_sinterp() surface ctl_points[]");
 	cpt = &srf->ctl_points[0];
@@ -197,7 +197,7 @@ int		xmax;		/* ncol = max X */
 /* _col is X, _row is Y */
 #define NVAL(_col,_row)	data[((_row)*xmax+(_col))*3]
 
-	crv = (struct edge_g_cnurb *)rt_calloc( sizeof(struct edge_g_cnurb), ymax,
+	crv = (struct edge_g_cnurb *)bu_calloc( sizeof(struct edge_g_cnurb), ymax,
 		"rt_nurb_sinterp() crv[]");
 
 	/* Interpolate the data across the rows, fitting a curve to each. */
@@ -208,7 +208,7 @@ int		xmax;		/* ncol = max X */
 	}
 #undef NVAL
 
-	tmp = (fastf_t *)rt_malloc( sizeof(fastf_t)*3 * ymax,
+	tmp = (fastf_t *)bu_malloc( sizeof(fastf_t)*3 * ymax,
 		"rt_nurb_sinterp() tmp[]");
 	for( x = 0; x < xmax; x++)  {
 		struct edge_g_cnurb	ncrv;
@@ -231,6 +231,6 @@ int		xmax;		/* ncol = max X */
 	for( y = 0; y < ymax; y++)  {
 		rt_nurb_clean_cnurb( &crv[y] );
 	}
-	rt_free( (char *)crv, "crv[]");
-	rt_free( (char *)tmp, "tmp[]");
+	bu_free( (char *)crv, "crv[]");
+	bu_free( (char *)tmp, "tmp[]");
 }

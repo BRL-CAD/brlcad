@@ -298,8 +298,8 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 			else
 			{
 				is->mag_len = 2*(BU_PTBL_END( is->l1 ) + BU_PTBL_END( is->l2 ));
-				is->mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
-				is->mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
+				is->mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
+				is->mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
 			}
 			
 		}
@@ -329,8 +329,8 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 			else
 			{
 				is->mag_len = 2*(BU_PTBL_END( is->l1 ) + BU_PTBL_END( is->l2 ));
-				is->mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
-				is->mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
+				is->mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
+				is->mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
 			}
 			
 		}
@@ -410,8 +410,8 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 			else
 			{
 				is->mag_len = 2*(BU_PTBL_END( is->l1 ) + BU_PTBL_END( is->l2 ));
-				is->mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
-				is->mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
+				is->mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
+				is->mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
 			}
 			
 		}
@@ -433,8 +433,8 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 			else
 			{
 				is->mag_len = 2*(BU_PTBL_END( is->l1 ) + BU_PTBL_END( is->l2 ));
-				is->mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
-				is->mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
+				is->mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
+				is->mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
 			}
 			
 		}
@@ -636,7 +636,7 @@ CONST long		*assoc_use;
 	m = nmg_find_model( assoc_use );
 
 	is->maxindex = ( 2 * m->maxindex );
-	is->vert2d = (fastf_t *)rt_malloc( is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
+	is->vert2d = (fastf_t *)bu_malloc( is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
 
 	if( *assoc_use == NMG_FACEUSE_MAGIC )  {
 		struct faceuse	*fu1 = (struct faceuse *)assoc_use;
@@ -667,7 +667,7 @@ CONST long		*assoc_use;
 		 *  by centering calculations around it.
 		 */
 		VSET( to, 0, 0, 1 );
-		mat_fromto( is->proj, n, to );
+		bn_mat_fromto( is->proj, n, to );
 		VADD2SCALE( centroid, f1->max_pt, f1->min_pt, 0.5 );
 		MAT4X3PNT( centroid_proj, is->proj, centroid );
 		centroid_proj[Z] = n[3];	/* pull dist from origin off newZ */
@@ -691,7 +691,7 @@ CONST long		*assoc_use;
 		 *  Translate the edge start point to the origin.
 		 */
 		VSET( to, 1, 0, 0 );
-		mat_fromto( is->proj, eg->e_dir, to );
+		bn_mat_fromto( is->proj, eg->e_dir, to );
 		MAT_DELTAS_VEC_NEG( is->proj, eg->e_pt );
 	} else {
 		rt_bomb("nmg_isect2d_prep() bad assoc_use magic\n");
@@ -717,7 +717,7 @@ struct nmg_inter_struct	*is;
 	nmg_hack_last_is = (struct nmg_inter_struct *)NULL;
 
 	if( !is->vert2d )  return;
-	rt_free( (char *)is->vert2d, "vert2d");
+	bu_free( (char *)is->vert2d, "vert2d");
 	is->vert2d = (fastf_t *)NULL;
 	is->twod = (long *)NULL;
 }
@@ -2341,8 +2341,8 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	nmg_edgeuse_tabulate( &eu2_list, &fu2->l.magic );
 
 	is->mag_len = 2 * (BU_PTBL_END( &eu1_list ) + BU_PTBL_END( &eu2_list ) );
-	mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "mag1" );
-	mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "mag2" );
+	mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "mag1" );
+	mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "mag2" );
 
 	is->mag1 = mag1;
 	is->mag2 = mag2;
@@ -2388,9 +2388,9 @@ out:
 	(void)bu_ptbl_free(&eu1_list);
 	(void)bu_ptbl_free(&eu2_list);
 	if( mag1 )
-		rt_free( (char *)mag1, "nmg_isect_edge2p_face2p: mag1" );
+		bu_free( (char *)mag1, "nmg_isect_edge2p_face2p: mag1" );
 	if( mag2 )
-		rt_free( (char *)mag2, "nmg_isect_edge2p_face2p: mag2" );
+		bu_free( (char *)mag2, "nmg_isect_edge2p_face2p: mag2" );
 
 do_ret:
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
@@ -2439,8 +2439,8 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 			else
 			{
 				is->mag_len = 2*(BU_PTBL_END( is->l1 ) + BU_PTBL_END( is->l2 ));
-				is->mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
-				is->mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
+				is->mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
+				is->mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
 			}
 			
 		}
@@ -2462,8 +2462,8 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 			else
 			{
 				is->mag_len = 2*(BU_PTBL_END( is->l1 ) + BU_PTBL_END( is->l2 ));
-				is->mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
-				is->mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
+				is->mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag1" );
+				is->mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "is->mag2" );
 			}
 			
 		}
@@ -2575,8 +2575,8 @@ struct faceuse		*fu1, *fu2;
 	nmg_edgeuse_tabulate( &eu2_list, &fu2->l.magic );
 
 	is->mag_len = 2 * (BU_PTBL_END( &eu1_list ) + BU_PTBL_END( &eu2_list ) );
-	mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "mag1" );
-	mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "mag2" );
+	mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "mag1" );
+	mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "mag2" );
 
 	for( i=0 ; i<is->mag_len ; i++ )
 	{
@@ -2940,9 +2940,9 @@ struct faceuse		*fu1, *fu2;
 		}
 	}
 	if( mag1 )
-		rt_free( (char *)mag1, "mag1" );
+		bu_free( (char *)mag1, "mag1" );
 	if( mag2 )
-		rt_free( (char *)mag2, "mag2" );
+		bu_free( (char *)mag2, "mag2" );
 
 	bu_ptbl_free( is->l1);
 	bu_ptbl_free( is->l2);
@@ -3001,7 +3001,7 @@ struct faceuse		*fu1, *fu2;
 
 	/* Allocate map of edgegeom's visited */
 	tagsize = 4 * m->maxindex+1;
-	tags = (unsigned char *)rt_calloc( tagsize, 1, "nmg_isect_two_face2p() tags[]" );
+	tags = (unsigned char *)bu_calloc( tagsize, 1, "nmg_isect_two_face2p() tags[]" );
 
 /* XXX A vastly better strategy would be to build a list of vu's and eu's,
  * XXX and then intersect them with the other face.
@@ -3088,7 +3088,7 @@ f2_again:
 		nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 		nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 	}
-	rt_free( (char *)tags, "tags[]" );
+	bu_free( (char *)tags, "tags[]" );
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("nmg_isect_two_face2p(fu1=x%x, fu2=x%x) END\n", fu1, fu2);
 }
@@ -4172,7 +4172,7 @@ struct edgeuse		*eu;
 	}
 
 	/* must do them in order from furthest to nearest */
-	inter_dist = (fastf_t *)rt_calloc( BU_PTBL_END( &inters ), sizeof( fastf_t ),
+	inter_dist = (fastf_t *)bu_calloc( BU_PTBL_END( &inters ), sizeof( fastf_t ),
 		"nmg_isect_eu_fu: inter_dist" );
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -4237,7 +4237,7 @@ struct edgeuse		*eu;
 		inter_dist[index_at_max] = (-10.0);
 	}
 
-	rt_free( (char *)inter_dist, "nmg_isect_eu_fu: inter_dist" );
+	bu_free( (char *)inter_dist, "nmg_isect_eu_fu: inter_dist" );
 
 out:
 	bu_ptbl_free( &inters);
@@ -5506,8 +5506,8 @@ struct faceuse		*fu1, *fu2;
 	nmg_edgeuse_tabulate( &eu2_list, &fu2->l.magic );
 
 	is->mag_len = 2 * (BU_PTBL_END( &eu1_list ) + BU_PTBL_END( &eu2_list ) );
-	mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "mag1" );
-	mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "mag2" );
+	mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "mag1" );
+	mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "mag2" );
 
 	for( i=0 ; i<is->mag_len ; i++ )
 	{
@@ -5619,9 +5619,9 @@ out:
 	(void)bu_ptbl_free(&eu1_list);
 	(void)bu_ptbl_free(&eu2_list);
 	if( mag1 )
-		rt_free( (char *)mag1, "nmg_isect_two_face3p: mag1" );
+		bu_free( (char *)mag1, "nmg_isect_two_face3p: mag1" );
 	if( mag2 )
-		rt_free( (char *)mag2, "nmg_isect_two_face3p: mag2" );
+		bu_free( (char *)mag2, "nmg_isect_two_face3p: mag2" );
 
 outfast:
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
@@ -6762,8 +6762,8 @@ struct faceuse *fu1,*fu2;
 	nmg_edgeuse_tabulate( &eu2_list, &fu2->l.magic );
 
 	is->mag_len = 2 * (BU_PTBL_END( &eu1_list ) + BU_PTBL_END( &eu2_list ) );
-	mag1 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "mag1" );
-	mag2 = (fastf_t *)rt_calloc( is->mag_len, sizeof( fastf_t ), "mag2" );
+	mag1 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "mag1" );
+	mag2 = (fastf_t *)bu_calloc( is->mag_len, sizeof( fastf_t ), "mag2" );
 
 	for( i=0 ; i<is->mag_len ; i++ )
 	{
@@ -7177,9 +7177,9 @@ struct faceuse *fu1,*fu2;
 	nmg_isect_coplanar_edges( is, &eu1_list, &eu2_list );
 
 	if( mag1 )
-		rt_free( (char *)mag1, "mag1" );
+		bu_free( (char *)mag1, "mag1" );
 	if( mag2 )
-		rt_free( (char *)mag2, "mag2" );
+		bu_free( (char *)mag2, "mag2" );
 
 	bu_ptbl_free( is->l1);
 	bu_ptbl_free( is->l2);
@@ -8172,7 +8172,7 @@ CONST struct bn_tol	*tol;
 
 	/* XXX This is dangerous:  maxindex will grow rapidly! */
 	flag_len = s1->r_p->m_p->maxindex * 10;
-	flags = (char *)rt_calloc( flag_len, sizeof(char),
+	flags = (char *)bu_calloc( flag_len, sizeof(char),
 		"nmg_crackshells flags[]" );
 
 	/*
@@ -8304,7 +8304,7 @@ CONST struct bn_tol	*tol;
 	(void)bu_ptbl_free(&vert_list1);
 	(void)bu_ptbl_free(&vert_list2);
 
-	rt_free( (char *)flags, "nmg_crackshells flags[]" );
+	bu_free( (char *)flags, "nmg_crackshells flags[]" );
 
 	/* Eliminate stray vertices that were added along edges in this step */
 	(void)nmg_unbreak_region_edges( &s1->l.magic );

@@ -32,7 +32,7 @@ static int rt_lex_reading_comment = 0;
 static char *
 rt_getone(used, rtstr)
 int *used;
-struct rt_vls *rtstr;
+struct bu_vls *rtstr;
 {
 	register char *cp;
 	register char *sp;
@@ -42,8 +42,8 @@ struct rt_vls *rtstr;
 	number = 1;
 	*used = 0;
 
-	RT_VLS_CHECK(rtstr);
-	cp = rt_vls_addr(rtstr);
+	BU_CK_VLS(rtstr);
+	cp = bu_vls_addr(rtstr);
 top:
 	if (rt_lex_reading_comment) {
 		for(;;) {
@@ -137,10 +137,10 @@ top:
 	 */
 	*used = cp - sp -1;
 	if (*used == 0) *used = 1;
-	unit = (char *)rt_malloc(*used+1, "unit token");
+	unit = (char *)bu_malloc(*used+1, "unit token");
 	strncpy(unit,sp,*used);
 	unit[*used] = '\0';
-	*used = sp-rt_vls_addr(rtstr) + *used;
+	*used = sp-bu_vls_addr(rtstr) + *used;
 	if (*used == 0) *used = 1;
 	return unit;
 }
@@ -151,7 +151,7 @@ top:
 int
 rt_lex(token, rtstr, keywords, symbols)
 union rt_lex_token *token;
-struct rt_vls *rtstr;
+struct bu_vls *rtstr;
 struct rt_lex_key *keywords;
 struct rt_lex_key *symbols;
 {
@@ -192,7 +192,7 @@ struct rt_lex_key *symbols;
 			if (!*cp) {	/* We have an octal value */
 				token->type = RT_LEX_INT;
 				sscanf(unit,"%o",&token->t_int.value);
-				rt_free(unit,"unit token");
+				bu_free(unit,"unit token");
 				return used;
 			}
 			/*
@@ -206,7 +206,7 @@ struct rt_lex_key *symbols;
 				if (!*cp) {
 					token->type = RT_LEX_INT;
 					sscanf(unit,"%x",&token->t_int.value);
-					rt_free(unit, "unit token");
+					bu_free(unit, "unit token");
 					return used;
 				}
 			}
@@ -219,7 +219,7 @@ struct rt_lex_key *symbols;
 		if (!*cp) {
 			token->type = RT_LEX_INT;
 			sscanf(unit,"%d", &token->t_int.value);
-			rt_free(unit, "unit token");
+			bu_free(unit, "unit token");
 			return used;
 		}
 		/*
@@ -237,7 +237,7 @@ struct rt_lex_key *symbols;
 			if (!*cp) {
 				token->type = RT_LEX_DOUBLE;
 				sscanf(unit, "%lg", &token->t_dbl.value);
-				rt_free(unit, "unit token");
+				bu_free(unit, "unit token");
 				return used;
 			}
 		}
@@ -256,7 +256,7 @@ struct rt_lex_key *symbols;
 				if (*sp->string == *unit) {
 					token->type = RT_LEX_SYMBOL;
 					token->t_key.value = sp->tok_val;
-					rt_free(unit, "unit token");
+					bu_free(unit, "unit token");
 					return used;
 				}
 			}
@@ -268,7 +268,7 @@ struct rt_lex_key *symbols;
 			if (strcmp(kp->string, unit) == 0) {
 				token->type = RT_LEX_KEYWORD;
 				token->t_key.value = kp->tok_val;
-				rt_free(unit, "unit token");
+				bu_free(unit, "unit token");
 				return used;
 			}
 		}

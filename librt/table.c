@@ -305,7 +305,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 
 	"ID_PARTICLE",	0,		/* 16 */
 		rt_part_prep,	rt_part_shot,	rt_part_print,	rt_part_norm,
-		rt_part_uv,	rt_part_curve,	rt_part_class,	rt_pabu_free,
+		rt_part_uv,	rt_part_curve,	rt_part_class,	rt_part_free,
 		rt_part_plot,	rt_part_vshot,	rt_part_tess,	rt_nul_tnurb,
 		rt_part_import,	rt_part_export,	rt_part_ifree,
 		rt_part_describe,rt_part_xform,

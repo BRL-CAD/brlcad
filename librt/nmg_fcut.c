@@ -1570,7 +1570,7 @@ CONST struct bn_tol	*tol;
 		FILE			*fp;
 		struct model		*m;
 		long			*b;
-		struct rt_vlblock	*vbp;
+		struct bn_vlblock	*vbp;
 		static int		num = 0;
 
 		bu_log("nmg_special_wedge_processing(start=%d,end=%d, lo=%g, hi=%g, wclass=%s)\n",
@@ -1580,7 +1580,7 @@ CONST struct bn_tol	*tol;
 
 		/* Plot all the loops that touch here. */
 		m = nmg_find_model((long *)vs[start].vu);
-		b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]" );
+		b = (long *)bu_calloc( m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]" );
 		vbp = rt_vlblock_init();
 		for( i=start; i < end; i++ )  {
 			struct loopuse	*lu;
@@ -1598,8 +1598,8 @@ CONST struct bn_tol	*tol;
 		rt_plot_vlblock( fp, vbp );
 		fclose(fp);
 		bu_log("wrote %s\n", buf);
-		rt_free( (char *)b, "nmg_special_wedge_processing flag[]" );
-		rt_vlblock_free(vbp);
+		bu_free( (char *)b, "nmg_special_wedge_processing flag[]" );
+		bn_vlblock_free(vbp);
 	}
 
 	if( end-start >= 128 )  rt_bomb("nmg_special_wedge_processing: array overflow\n");
@@ -1735,9 +1735,9 @@ int			end;		/* last index + 1 */
 	NMG_CK_RAYSTATE(rs);
 
 	num = end - start;
-	vs = (struct nmg_vu_stuff *)rt_malloc( sizeof(struct nmg_vu_stuff)*num,
+	vs = (struct nmg_vu_stuff *)bu_malloc( sizeof(struct nmg_vu_stuff)*num,
 		"nmg_vu_stuff" );
-	ls = (struct nmg_loop_stuff *)rt_malloc( sizeof(struct nmg_loop_stuff)*num,
+	ls = (struct nmg_loop_stuff *)bu_malloc( sizeof(struct nmg_loop_stuff)*num,
 		"nmg_loop_stuff" );
 
 top:
@@ -1920,8 +1920,8 @@ got_loop:
 		}
 	}
 
-	rt_free( (char *)vs, "nmg_vu_stuff");
-	rt_free( (char *)ls, "nmg_loop_stuff");
+	bu_free( (char *)vs, "nmg_vu_stuff");
+	bu_free( (char *)ls, "nmg_loop_stuff");
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 		bu_log("nmg_face_coincident_vu_sort(, %d, %d) END, ret=%d\n", start, end, start+nvu);
@@ -2295,9 +2295,9 @@ struct nmg_ray_state *rs;
 					if( !match_lu )
 					{
 						match_lu = next_lu;
-						cuts = (struct bu_ptbl *)rt_malloc( sizeof( struct bu_ptbl ), "cuts" );
+						cuts = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "cuts" );
 						bu_ptbl_init( cuts, 64, " cuts");
-						lcut = (struct loop_cuts *)rt_malloc( sizeof( struct loop_cuts ), "lcut" );
+						lcut = (struct loop_cuts *)bu_malloc( sizeof( struct loop_cuts ), "lcut" );
 						lcut->lu = match_lu;
 						bu_ptbl_ins( cuts, (long *)lcut );
 						continue;
@@ -2338,7 +2338,7 @@ struct nmg_ray_state *rs;
 						if( !found )
 						{
 							done = 0;
-							lcut = (struct loop_cuts *)rt_malloc( sizeof( struct loop_cuts ), "lcut" );
+							lcut = (struct loop_cuts *)bu_malloc( sizeof( struct loop_cuts ), "lcut" );
 							lcut->lu = match_lu;
 							bu_ptbl_ins( cuts, (long *)lcut );
 						}
@@ -3046,7 +3046,7 @@ struct nmg_ray_state *rs;
 				rs->vu[prior_end-1-cut_no] = eu_tmp->vu_p;
 			}
 			bu_ptbl_free( cuts);
-			rt_free( (char *)cuts, "cuts" );
+			bu_free( (char *)cuts, "cuts" );
 
 			continue;
 		}
@@ -3515,7 +3515,7 @@ CONST struct bn_tol *tol;
 	if( BU_PTBL_END( tbl ) < 3 )
 		return;
 
-	matching_lus = (struct loopuse **)rt_calloc( BU_PTBL_END( tbl ), 
+	matching_lus = (struct loopuse **)bu_calloc( BU_PTBL_END( tbl ), 
 		sizeof( struct loopuse *), "nmg_sort_coincident_vus: matching_lus" );
 
 	/* look for coincident vu's */

@@ -59,7 +59,7 @@ fastf_t * final_value;
 	 */
 
 	diff_curve = (fastf_t * )
-	rt_malloc(row_size * sizeof(fastf_t) * coords,
+	bu_malloc(row_size * sizeof(fastf_t) * coords,
 	    "rt_nurb_s__eval: diff_curve");
 
 	c_ptr = diff_curve;
@@ -73,7 +73,7 @@ fastf_t * final_value;
 		rt_bomb( "rt_nurb_s_eval: u value outside parameter range\n");
 	}
 
-	curves = (fastf_t * ) rt_malloc( col_size * sizeof(fastf_t) * coords,
+	curves = (fastf_t * ) bu_malloc( col_size * sizeof(fastf_t) * coords,
 	    "rt_nurb_s_eval:crv_ptr");
 
 	for ( i = 0; i < row_size; i++) {
@@ -94,7 +94,7 @@ fastf_t * final_value;
 		c_ptr += coords;
 	}
 
-	rt_free( (char *)curves, "rt_nurb_s_eval: curves" );
+	bu_free( (char *)curves, "rt_nurb_s_eval: curves" );
 
 	k_index = rt_nurb_knot_index( &srf->v, v, srf->order[RT_NURB_SPLIT_COL] );
 
@@ -104,7 +104,7 @@ fastf_t * final_value;
 	for ( k = 0; k < coords; k++)
 		final_value[k] = ev_pt[k];
 
-	rt_free ( (char *)diff_curve, "rt_nurb_s_eval: diff curve" );
+	bu_free ( (char *)diff_curve, "rt_nurb_s_eval: diff curve" );
 }
 
 
@@ -125,7 +125,7 @@ fastf_t * final_value;
 
 	k_index = rt_nurb_knot_index( &crv->k, param, crv->order);
 
-	pnts = (fastf_t * ) rt_malloc( coords * sizeof( fastf_t) * 
+	pnts = (fastf_t * ) bu_malloc( coords * sizeof( fastf_t) * 
 	    crv->c_size, "diff: rt_nurb_c_eval");
 
 	for ( i = 0; i < coords * crv->c_size; i++)
@@ -137,7 +137,7 @@ fastf_t * final_value;
 	for ( i = 0; i < coords; i++)
 		final_value[i] = ev_pt[i];
 
-	rt_free( (char *) pnts, "rt_nurb_c_eval");
+	bu_free( (char *) pnts, "rt_nurb_c_eval");
 }
 
 
