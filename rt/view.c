@@ -239,22 +239,41 @@ register struct application *ap;
 	} else {
 		/*
 		 *  To prevent bad color aliasing, add some color dither.
-		 *  Be certain to NOT output the background color here;
-		 *  dither away from it.
+		 *  Be certain to NOT output the background color here.
 		 */
-		do {
-			r = ap->a_color[0]*255.+rand_half();
-			g = ap->a_color[1]*255.+rand_half();
-			b = ap->a_color[2]*255.+rand_half();
-			if( r > 255 ) r = 255;
-			else if( r < 0 )  r = 0;
-			if( g > 255 ) g = 255;
-			else if( g < 0 )  g = 0;
-			if( b > 255 ) b = 255;
-			else if( b < 0 )  b = 0;
-		} while( r == ibackground[0] &&
-			 g == ibackground[1] &&
-			 b == ibackground[2] );
+		r = ap->a_color[0]*255.+rand_half();
+		g = ap->a_color[1]*255.+rand_half();
+		b = ap->a_color[2]*255.+rand_half();
+		if( r > 255 ) r = 255;
+		else if( r < 0 )  r = 0;
+		if( g > 255 ) g = 255;
+		else if( g < 0 )  g = 0;
+		if( b > 255 ) b = 255;
+		else if( b < 0 )  b = 0;
+		if( r == ibackground[0] && g == ibackground[1] &&
+		    b == ibackground[2] )  {
+		    	register int i;
+		    	int newcolor[3];
+		    	/*  Find largest color channel to perterb.
+		    	 *  It should happen infrequently.
+		    	 *  If you have a faster algorithm, tell me.
+		    	 */
+		    	if( r > g )  {
+		    		if( r > b )  i = 0;
+		    		else i = 2;
+		    	} else {
+		    		if( g > b ) i = 1;
+		    		else i = 2;
+		    	}
+		    	newcolor[0] = r;
+		    	newcolor[1] = g;
+		    	newcolor[2] = b;
+			if( newcolor[i] < 127 ) newcolor[i]++;
+		    	else newcolor[i]--;
+		    	r = newcolor[0];
+		    	g = newcolor[1];
+		    	b = newcolor[2];
+		}
 	}
 
 #if !defined(PARALLEL) && !defined(RTSRV)
