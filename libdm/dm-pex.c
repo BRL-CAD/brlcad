@@ -907,10 +907,10 @@ int	x2, y2;		/* to point */
 {
   int	sx1, sy1, sx2, sy2;
 
-  sx1 = GED_TO_Xx( x1 );
-  sy1 = GED_TO_Xy( y1 );
-  sx2 = GED_TO_Xx( x2 );
-  sy2 = GED_TO_Xy( y2 );
+  sx1 = GED_TO_Xx( dmp, x1 );
+  sy1 = GED_TO_Xy( dmp, y1 );
+  sx2 = GED_TO_Xx( dmp, x2 );
+  sy2 = GED_TO_Xy( dmp, y2 );
 
   if( sx1 == sx2 && sy1 == sy2 )
     XDrawPoint( ((struct pex_vars *)dmp->dmr_vars)->dpy,
@@ -938,8 +938,8 @@ char	*str;
 {
   int	sx, sy;
 
-  sx = GED_TO_Xx( x );
-  sy = GED_TO_Xy( y );
+  sx = GED_TO_Xx( dmp, x );
+  sy = GED_TO_Xy( dmp, y );
   /* point is center of text? - seems like what MGED wants... */
   /* The following makes the menu look good, the rest bad */
   /*sy += ((struct pex_vars *)dmp->dmr_vars)->fontstruct->maPex_bounds.ascent + ((struct pex_vars *)dmp->dmr_vars)->fontstruct->maPex_bounds.descent/2);*/
