@@ -28,11 +28,20 @@ extern int ikfd;		/* defined in iklib.o */
 extern int ikhires;		/* defined in iklib.o */
 
 extern int outfd;		/* defined in rt.c */
+extern FILE *outfp;		/* defined in rt.c */
+extern int lightmodel;		/* lighting model # to use */
 
 #define MAX_LINE	1024	/* Max pixels/line */
 static long scanline[MAX_LINE];	/* 1 scanline pixel buffer */
 static long *pixelp;		/* pointer to first empty pixel */
 static int scanbytes;		/* # of bytes of scanline to be written */
+
+/* Stuff for pretty-picture output format */
+static struct soltab *last_solidp;	/* pointer to last solid hit */
+static int last_item;			/* item number of last region hit */
+static int last_ihigh;			/* last inten_high */
+static int ntomiss;			/* number of pixels to miss */
+static int col;				/* column; for PP 75 char/line crap */
 
 #define BACKGROUND	0x00404040		/* Grey */
 vect_t l0color = {  28,  28, 255 };		/* R, G, B */
@@ -65,50 +74,94 @@ int xscreen, yscreen;
 	}
 	hitp = pp->pt_inhit;
 
+	/* Support for pretty-picture files */
+	if( lightmodel == 3 )  {
+		register int i,j;
+
+#define pchar(c) {putc(c,outfp);if(col++==74){putc('\n',outfp);col=0;}}
+		if( (cosI0 = -VDOT(hitp->hit_normal, rayp->r_dir)) <= 0.0 )  {
+			ntomiss++;
+			return;
+		}
+		if( ntomiss > 0 )  {
+			pchar(' ');	/* miss target cmd */
+			pknum( ntomiss );
+			ntomiss = 0;
+			last_solidp = SOLTAB_NULL;
+		}
+		if( last_item != pp->pt_regionp->reg_regionid )  {
+			last_item = pp->pt_regionp->reg_regionid;
+			pchar( '#' );	/* new item cmd */
+			pknum( last_item );
+			last_solidp = SOLTAB_NULL;
+		}
+		if( last_solidp != pp->pt_instp )  {
+			last_solidp = pp->pt_instp;
+			pchar( '!' );		/* new solid cmd */
+		}
+		i = cosI0 * 255.0;		/* integer angle */
+		j = (i>>5) & 07;
+		if( j != last_ihigh )  {
+			last_ihigh = j;
+			pchar( '0'+j );		/* new inten high */
+		}
+		j = i & 037;
+		pchar( '@'+j );			/* low bits of pixel */
+		return;		
+	}
+
 	/*
 	 * Diffuse reflectance from each light source
 	 */
-#ifdef ONE_LIGHT
-	/* Light from the "eye" (ray source).  Note sign change */
-	diffuse0 = 0;
-	if( (cosI0 = -VDOT(hitp->hit_normal, rayp->r_dir)) >= 0.0 )
-		diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
-	VSCALE( work0, l0color, diffuse0 );
-#else
-	/* Crude attempt at a 3-light model.  It works, but... */
-	diffuse0 = 0;
-	if( (cosI0 = VDOT(hitp->hit_normal, l0vec)) >= 0.0 )
-		diffuse0 = cosI0 * 0.5;		/* % from this src */
-	diffuse1 = 0;
-	if( (cosI1 = VDOT(hitp->hit_normal, l1vec)) >= 0.0 )
-		diffuse1 = cosI1 * 0.5;		/* % from this src */
-	diffuse2 = 0;
-	if( (cosI2 = VDOT(hitp->hit_normal, l2vec)) >= 0.0 )
-		diffuse2 = cosI2 * 0.2;		/* % from this src */
+	if( lightmodel == 1 )  {
+		/* Light from the "eye" (ray source).  Note sign change */
+		diffuse0 = 0;
+		if( (cosI0 = -VDOT(hitp->hit_normal, rayp->r_dir)) >= 0.0 )
+			diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
+		VSCALE( work0, l0color, diffuse0 );
+
+		/* Add in contribution from ambient light */
+		VSCALE( work1, ambient_color, AmbientIntensity );
+		VADD2( work0, work0, work1 );
+	}  else if( lightmodel == 0 )  {
+		/* Simple attempt at a 3-light model. */
+		diffuse0 = 0;
+		if( (cosI0 = VDOT(hitp->hit_normal, l0vec)) >= 0.0 )
+			diffuse0 = cosI0 * 0.5;		/* % from this src */
+		diffuse1 = 0;
+		if( (cosI1 = VDOT(hitp->hit_normal, l1vec)) >= 0.0 )
+			diffuse1 = cosI1 * 0.5;		/* % from this src */
+		diffuse2 = 0;
+		if( (cosI2 = VDOT(hitp->hit_normal, l2vec)) >= 0.0 )
+			diffuse2 = cosI2 * 0.2;		/* % from this src */
 
 #ifdef notyet
-	/* Specular reflectance from first light source */
-	/* reflection = (2 * cos(i) * NormalVec) - IncidentVec */
-	/* cos(s) = -VDOT(reflection, r_dir) = cosI0 */
-	f = 2 * cosI1;
-	VSCALE( work, hitp->hit_normal, f );
-	VSUB2( reflection, work, l1vec );
-	if( not_shadowed && cosI0 > cosAcceptAngle )
-		/* Do specular return */;
+		/* Specular reflectance from first light source */
+		/* reflection = (2 * cos(i) * NormalVec) - IncidentVec */
+		/* cos(s) = -VDOT(reflection, r_dir) = cosI0 */
+		f = 2 * cosI1;
+		VSCALE( work, hitp->hit_normal, f );
+		VSUB2( reflection, work, l1vec );
+		if( not_shadowed && cosI0 > cosAcceptAngle )
+			/* Do specular return */;
 #endif notyet
 
-	VSCALE( work0, l0color, diffuse0 );
-	VSCALE( work1, l1color, diffuse1 );
-	VADD2( work0, work0, work1 );
-	VSCALE( work1, l2color, diffuse2 );
-	VADD2( work0, work0, work1 );
-#endif ONE_LIGHT
+		VSCALE( work0, l0color, diffuse0 );
+		VSCALE( work1, l1color, diffuse1 );
+		VADD2( work0, work0, work1 );
+		VSCALE( work1, l2color, diffuse2 );
+		VADD2( work0, work0, work1 );
 
-	/*
-	 *  Add in contribution from ambient light
-	 */
-	VSCALE( work1, ambient_color, AmbientIntensity );
-	VADD2( work0, work0, work1 );
+		/* Add in contribution from ambient light */
+		VSCALE( work1, ambient_color, AmbientIntensity );
+		VADD2( work0, work0, work1 );
+	} else if( lightmodel == 2 )  {
+		/* Store surface normals pointing inwards */
+		/* (For Spencer's moving light program */
+		work0[0] = (hitp->hit_normal[0] * (-127)) + 128;
+		work0[1] = (hitp->hit_normal[1] * (-127)) + 128;
+		work0[2] = (hitp->hit_normal[2] * (-127)) + 128;
+	}
 
 	if(debug&DEBUG_HITS)  {
 		hit_print( " In", hitp );
@@ -140,10 +193,22 @@ int xscreen, yscreen;
 wbackground( x, y )
 int x, y;
 {
+	register int bg;
+
+	if( lightmodel == 3 )  {
+		last_solidp = SOLTAB_NULL;
+		ntomiss++;
+		return;
+	}
+	if( lightmodel == 2 )
+		bg = 0;
+	else
+		bg = BACKGROUND;
+		
 	if( ikfd > 0 )
-		ikwpixel( x, y, BACKGROUND );
+		ikwpixel( x, y, bg );
 	if( outfd > 0 )
-		*pixelp++ = BACKGROUND;
+		*pixelp++ = bg;
 }
 
 /*
@@ -208,9 +273,44 @@ int npts;
 dev_eol( y )
 int y;
 {
+	if( lightmodel == 3 )  {
+		pchar( '.' );		/* End of scanline */
+		last_solidp = SOLTAB_NULL;
+		ntomiss = 0;
+		return;
+	}
 	if( outfd > 0 )  {
 		write( outfd, (char *)scanline, scanbytes );
 		bzero( (char *)scanline, scanbytes );
 		pixelp = &scanline[0];
 	}
+}
+
+/*
+ *  			D E V _ E N D
+ *  
+ *  Called when the picture is finally done.
+ */
+dev_end()
+{
+	if( lightmodel == 3 )  {
+		fprintf( outfp, "/\n" );	/* end of view */
+		fflush( outfp );
+	}
+}
+
+/*
+ *  			P K N U M
+ *  
+ *  Oddball 5-bits in a char ('@', 'A', ... on up) number packing.
+ *  Number is written 5 bits at a time, right to left (low to high)
+ *  until there are no more non-zero bits remaining.
+ */
+pknum( i )
+register long i;
+{
+	do {
+		pchar( '@'+(i & 037) );
+		i >>= 5;
+	} while( i > 0 );
 }
