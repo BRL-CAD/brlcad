@@ -17,7 +17,7 @@ typedef struct
     char		*rbt_description; /* Comment for diagnostics */
     int		 	rbt_nm_orders;	  /* Number of simultaneous orders */
     int			(**rbt_order)();  /* Comparison functions */
-    struct rb_node	*rbt_root;	  /* The actual tree */
+    struct rb_node	**rbt_root;	  /* The actual trees */
 }	rb_tree;
 #define	RB_TREE_NULL	((rb_tree *) 0)
 
