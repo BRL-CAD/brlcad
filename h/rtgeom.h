@@ -359,13 +359,10 @@ struct rt_eto_internal {
 #define DSP_NAME_LEN 128
 struct rt_dsp_internal{
 	long		magic;
-	char		dsp_file[DSP_NAME_LEN];	/* name of data file */
-	unsigned	dsp_xcnt;		/* # samples in row of data */
-	unsigned	dsp_ycnt;		/* # of columns in data */
-	int		dsp_smooth;		/* bool: surf normal interp */
-	double		dsp_xs;
-	double		dsp_ys;
-	double		dsp_zs;
+	struct bu_vls	dsp_file;		/* name of data file */
+	unsigned int	dsp_xcnt;		/* # samples in row of data */
+	unsigned int	dsp_ycnt;		/* # of columns in data */
+	unsigned short	dsp_smooth;		/* bool: surf normal interp */
 	mat_t		dsp_mtos;		/* model to solid space */
 	/* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
 	mat_t		dsp_stom;		/* solid to model space */
