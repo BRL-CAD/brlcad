@@ -184,9 +184,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	}
 
 	/* Validate that |A| == |B| (for now) */
-	f = magsq_a - magsq_b;
+	f = sqrt(magsq_a) - sqrt(magsq_b);
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"tor(%s):  |A| != |B|\n", stp->st_name);
+		fprintf(stderr,"tor(%s):  (|A|=%f) != (|B|=%f) \n",
+			stp->st_name, sqrt(magsq_a), sqrt(magsq_b) );
 		return(1);		/* BAD */
 	}
 
