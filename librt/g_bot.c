@@ -3282,6 +3282,50 @@ decimate_edge( int v1, int v2, int *faces, int num_faces )
 	return deleted_faces;
 }
 
+static int
+bot_face_free_edge_count( int face, int *faces, int num_faces )
+{
+	int v[3];
+	int edge_count[3];
+	int i, j, k;
+	int free_edges=0;
+
+	VSETALL( edge_count, 0 );
+	VMOVE( v, &faces[face] );
+
+	for( i=0 ; i<num_faces*3 ; i += 3 ) {
+		int c[3];
+
+		VSETALL( c, 0 );
+
+		if( i == face )
+			continue;
+		for( k=0 ; k<3 ; k++ ) {
+			for( j=0 ; j<3 ; j++ ) {
+				if( faces[i+k] == v[j] ) {
+					c[j]++;
+				}
+			}
+		}
+		if( (c[0] + c[1] + c[2]) < 2 )
+			continue;
+
+		if( c[0] && c[1] )
+			edge_count[0]++;
+		if( c[1] && c[2] )
+			edge_count[1]++;
+		if( c[2] && c[0] )
+			edge_count[2]++;
+	}
+
+	for( i=0 ; i<3 ; i++ ) {
+		if( !edge_count[i] )
+			free_edges++;
+	}
+
+	return( free_edges );
+}
+
 /*
  *				E D G E _ C A N _ B E _ D E C I M A T E D
  *
@@ -3357,6 +3401,21 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 	 */
 	if( face_del2 < 0 ) {
 	  return 0;
+	}
+
+	/* another  easy test to avoid moving free edges */
+	if( affected_count < 1 ) {
+		return 0;
+	}
+
+	/* for BOTs that are expected to have free edges, do a rigorous check for free edges */
+	if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_SURFACE ) {
+		if( bot_face_free_edge_count( face_del1, faces, bot->num_faces ) ) {
+			return 0;
+		}
+		if( bot_face_free_edge_count( face_del2, faces, bot->num_faces ) ) {
+			return 0;
+		}
 	}
 
 	/* calculate edge vector */
