@@ -129,6 +129,7 @@ pr_prompt()  {
 /* 
  *			M A I N
  */
+
 int
 main(argc,argv)
 int argc;
@@ -138,14 +139,16 @@ char **argv;
 
 	/* Check for proper invocation */
 	if( argc < 2 )  {
-		rt_log("Usage:  %s database [command]\n", argv[0]);
+		fprintf(stdout, "Usage:  %s database [command]\n", argv[0]);
+		fflush(stdout);
 		return(1);		/* NOT finish() */
 	}
 
 	/* Identify ourselves if interactive */
 	if( argc == 2 )  {
 		interactive = 1;
-		rt_log("%s\n", version+5);	/* skip @(#) */
+		fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
+		fflush(stdout);
 	}
 
 	(void)signal( SIGPIPE, SIG_IGN );
@@ -222,7 +225,7 @@ char **argv;
 	dmaflag = 1;
 
 	/* Perform any necessary initializations for the command parser */
-	cmd_setup();
+	cmd_setup(interactive);
 
 	/* --- Now safe to process commands.  BUT, no geometry yet. --- */
 	if( interactive )  {
@@ -305,6 +308,8 @@ int	non_blocking;
 {
 	fd_set		input;
 	vect_t		knobvec;	/* knob slew */
+	int		i;
+	int		len;
 	int		formerly_non_blocking = non_blocking;
 	static int	need_penup = 0;
 	static struct device_values	old_values;
@@ -318,12 +323,21 @@ int	non_blocking;
 	if( extrapoll_fd )  FD_SET( extrapoll_fd, &input );
 	FD_SET( fileno(stdin), &input );
 
+#ifdef MGED_TCL
+	if( mged_tk_dontwait() )  non_blocking = 1;
+#endif
+
 	/* await an input event. Bits will be set in 'input' as appropriate */
 	dmp->dmr_input( &input, non_blocking );
 
 	if(extrapoll_fd && FD_ISSET(extrapoll_fd,&input) && extrapoll_hook)  {
 		(*extrapoll_hook)();
 	}
+#ifdef MGED_TCL
+	else {
+		mged_tk_idle(non_blocking);
+	}
+#endif
 
 	/* Acquire anything present on stdin */
 	if( FD_ISSET( fileno(stdin), &input ) )  {
@@ -333,7 +347,10 @@ int	non_blocking;
 		/* Read input line */
 		if( rt_vls_gets( &str, stdin ) >= 0 )  {
 			rt_vls_strcat( &str, "\n" );
-if( cmdline_hook )  {if( (*cmdline_hook)(&str)) pr_prompt();} else
+		if( cmdline_hook ) {
+			if( (*cmdline_hook)(&str)) 
+				pr_prompt();
+		} else
 			if( cmdline( &str ) )
 				pr_prompt();
 		} else {
@@ -460,20 +477,21 @@ if( cmdline_hook )  {if( (*cmdline_hook)(&str)) pr_prompt();} else
 	 *  (Or "invented" here, for compatability with old dm's).
 	 *  Each one is expected to be newline terminated.
 	 */
-	if( cmdline_hook )  {
-		(*cmdline_hook)(&dm_values.dv_string);
-	} else {
+	if( cmdline_hook )  
+		(*cmdline_hook)(&dm_values.dv_string); 
+	else {
 		/* Some commands (e.g. mouse events) queue further events. */
-		int	oldlen;
+		int oldlen;
 again:
 		oldlen = rt_vls_strlen( &dm_values.dv_string );
 		(void)cmdline( &dm_values.dv_string );
-		if( rt_vls_strlen( &dm_values.dv_string ) > oldlen )  {
+		if( rt_vls_strlen( &dm_values.dv_string ) > oldlen ) {
 			/* Remove cmds already done, and go again */
 			rt_vls_nibble( &dm_values.dv_string, oldlen );
 			goto again;
 		}
 	}
+
 	rt_vls_trunc( &dm_values.dv_string, 0 );
 
 	/*
@@ -907,7 +925,6 @@ char	**argv;
 		char line[128];
 
 		if( isatty(0) ) {
-
 		    perror( argv[1] );
 		    rt_log("Create new database (y|n)[n]? ");
 		    (void)fgets(line, sizeof(line), stdin);
@@ -990,18 +1007,16 @@ char	**argv;
     if ((pipe && ((fp = popen(path, "r")) == NULL))
      || (!pipe && ((fp = fopen(path, "r")) == NULL)))
     {
-	(void) rt_log(
-	    "f_source: Cannot open %s '%s'\n",
-	    pipe ? "pipe" : "command file", path);
-	return(CMD_BAD);
+	rt_log( "f_source: Cannot open %s '%s'\n", 
+		pipe ? "pipe" : "command file", path );
+	return( CMD_BAD );
     }
     mged_source_file(fp);
     if (pipe)
     {
 	rt_vls_free(&str);
 	if (status = pclose(fp))
-	    (void) rt_log(
-		"f_source: Exit status of pipe: %d\n", status);
+	    rt_log("f_source: Exit status of pipe: %d\n", status);
     }
     else
 	(void) fclose(fp);
