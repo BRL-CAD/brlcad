@@ -60,5 +60,5 @@ void *rb_search (rb_tree *tree, int order, void *datum)
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
     compare = rb_order_func(tree, order);
-    return(_rb_search(tree -> rbt_root, order, compare, datum));
+    return(_rb_search(rb_root(tree, order), order, compare, datum));
 }

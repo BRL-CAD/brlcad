@@ -38,7 +38,7 @@ void *_rb_extreme (rb_tree *tree, int order_nm, int sense)
 	exit (0);
     }
 
-    node = tree -> rbt_root;
+    node = rb_root(tree, order_nm);
     while (1)
     {
 	RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");

@@ -44,5 +44,5 @@ void rb_walk (rb_tree *tree, int order, void (*visit)())
 {
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
-    _rb_walk(tree -> rbt_root, order, visit);
+    _rb_walk(rb_root(tree, order), order, visit);
 }
