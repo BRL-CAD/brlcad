@@ -2056,7 +2056,7 @@ struct ray_data {
 	struct application	*ap;
 	struct seg		*seghead;
 	struct soltab 		*stp;
-	struct bn_tol		*tol;
+	const struct bn_tol	*tol;
 	struct hitmiss	**hitmiss;	/* 1 struct hitmiss ptr per elem. */
 	struct bu_list	rd_hit;		/* list of hit elements */
 	struct bu_list	rd_miss;	/* list of missed/sub-hit elements */
