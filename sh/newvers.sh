@@ -43,8 +43,7 @@ then
 	rm -f version; echo 0 > version; chmod 664 version
 fi
 
-awk '	{	version = $1 + 1; }\
-END	{	printf "%d\n", version > "version"; }' < version
+awk '{version = $1 + 1; };END{printf "%d\n", version > "version"; }' < version
 
 VERSION=`cat version`
 DATE=`date`
