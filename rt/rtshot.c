@@ -45,15 +45,10 @@ Usage:  rtshot [options] model.g objects...\n\
  -a # # #	Set shoot-at point\n";
 
 extern double	atof();
-extern char	*sbrk();
 
 int		rdebug;			/* RT program debugging (not library) */
 static FILE	*plotfp;		/* For plotting into */
 
-int		npsw = 1;		/* Run serially */
-int		interactive = 0;	/* human is watching results */
-
-struct resource		resource;
 struct application	ap;
 
 int		set_dir = 0;
@@ -72,14 +67,8 @@ int argc;
 char **argv;
 {
 	static struct rt_i *rtip;
-	static vect_t temp;
 	char *title_file;
 	char idbuf[132];		/* First ID record info */
-
-	RES_INIT( &rt_g.res_syscall );
-	RES_INIT( &rt_g.res_worker );
-	RES_INIT( &rt_g.res_stats );
-	RES_INIT( &rt_g.res_results );
 
 	if( argc < 3 )  {
 		(void)fputs(usage, stderr);
@@ -201,7 +190,6 @@ err:
 	/* Shoot Ray */
 	ap.a_hit = hit;
 	ap.a_miss = miss;
-	ap.a_resource = &resource;
 	(void)rt_shootray( &ap );
 
 	return(0);
@@ -228,26 +216,33 @@ struct partition *PartHeadp;
 		}
 	}
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
-		stp = pp->pt_inseg->seg_stp;
-		rt_log("\n--- Hit %s of region %s\n",
-			stp->st_name, pp->pt_regionp->reg_name );
+		rt_log("\n--- Hit region %s (in %s, out %s)\n",
+			pp->pt_regionp->reg_name,
+			pp->pt_inseg->seg_stp->st_name,
+			pp->pt_outseg->seg_stp->st_name );
 
+		/* inhit info */
 		hitp = pp->pt_inhit;
+		stp = pp->pt_inseg->seg_stp;
 		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
-		if( pp->pt_inflip )
+		if( pp->pt_inflip ) {
 			VREVERSE( hitp->hit_normal, hitp->hit_normal );
+			pp->pt_inflip = 0;
+		}
 		rt_pr_hit( "  In", hitp );
 		RT_CURVE( &cur, hitp, stp );
 		VPRINT("PDir", cur.crv_pdir );
 		rt_log(" c1=%g\n", cur.crv_c1);
 		rt_log(" c2=%g\n", cur.crv_c2);
 
-		/* outhit - no solid name, no curvature? */
-		stp = pp->pt_outseg->seg_stp;
+		/* outhit info - out curvature? */
 		hitp = pp->pt_outhit;
+		stp = pp->pt_outseg->seg_stp;
 		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
-		if( pp->pt_outflip )
+		if( pp->pt_outflip ) {
 			VREVERSE( hitp->hit_normal, hitp->hit_normal );
+			pp->pt_outflip = 0;
+		}
 		rt_pr_hit( " Out", hitp );
 
 		/* Plot inhit to outhit */
@@ -264,7 +259,7 @@ struct partition *PartHeadp;
 			pdv_3line( plotfp, inhit, outhit );
 		}
 	}
-	return(0);
+	return(1);
 }
 
 miss( ap )
@@ -281,18 +276,3 @@ register struct application *ap;
 	}
 	return(0);
 }
-
-#if defined(SYSV)
-#if !defined(bcopy)
-bcopy(from,to,count)
-{
-	memcpy( to, from, count );
-}
-#endif
-#if !defined(bzero)
-bzero(str,n)
-{
-	memset( str, '\0', n );
-}
-#endif
-#endif
