@@ -444,9 +444,20 @@ FILE *fp;
 	/* Chop up line */
 	if( parse_cmd( buf ) > 0 ) return;	/* was nop */
 
+	if( strcmp( cmd_args[0], "debug" ) == 0 )  {
+		register struct servers *sp;
+		char rbuf[64];
+
+		sprintf(rbuf, "-x%s", cmd_args[1] );
+		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+			if( sp->sr_pc == PKC_NULL )  continue;
+			(void)pkg_send( MSG_OPTIONS, rbuf, strlen(buf)+1, sp->sr_pc);
+		}
+		return;
+	}
 	if( strcmp( cmd_args[0], "f" ) == 0 )  {
 		npts = atoi( cmd_args[1] );
-		if( npts < 1 || npts > 1024 )
+		if( npts < 4 || npts > 8*1024 )
 			npts = 64;
 		printf("npts=%d, takes effect after next MAT\n", npts);
 		return;
@@ -559,16 +570,16 @@ FILE *fp;
 			sprintf(cmd,
 				"rsh %s 'hostname; cd cad/remrt; rtsrv %s;uptime'",
 				cmd_args[i], ourname );
-			if( fork() == 0 )  {
+			if( vfork() == 0 )  {
 				/* 1st level child */
 				(void)close(0);
 				for(i=3; i<40; i++)  (void)close(i);
-				if( fork() == 0 )  {
+				if( vfork() == 0 )  {
 					/* worker Child */
 					system( cmd );
-					exit(0);
+					_exit(0);
 				}
-				exit(0);
+				_exit(0);
 			} else {
 				(void)wait(0);
 			}
@@ -922,30 +933,25 @@ read_matrix( fp, fr )
 register FILE *fp;
 register struct frame *fr;
 {
+	register int i;
+	char number[128];
+
 	/* Visible part is from -1 to +1 in view space */
-	fscanf(fp, "%f %f %f %f", &(fr->fr_viewsize),
-		&(fr->fr_eye_model[0]),
-		&(fr->fr_eye_model[1]),
-		&(fr->fr_eye_model[2]) );
-	fscanf(fp,
-		"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
-		&(fr->fr_mat[0]),
-		&(fr->fr_mat[1]),
-		&(fr->fr_mat[2]),
-		&(fr->fr_mat[3]),
-		&(fr->fr_mat[4]),
-		&(fr->fr_mat[5]),
-		&(fr->fr_mat[6]),
-		&(fr->fr_mat[7]),
-		&(fr->fr_mat[8]),
-		&(fr->fr_mat[9]),
-		&(fr->fr_mat[10]),
-		&(fr->fr_mat[11]),
-		&(fr->fr_mat[12]),
-		&(fr->fr_mat[13]),
-		&(fr->fr_mat[14]),
-		&(fr->fr_mat[15]) );
+	if( fscanf( fp, "%s", number ) != 1 )  goto out;
+	fr->fr_viewsize = atof(number);
+	if( fscanf( fp, "%s", number ) != 1 )  goto out;
+	fr->fr_eye_model[0] = atof(number);
+	if( fscanf( fp, "%s", number ) != 1 )  goto out;
+	fr->fr_eye_model[1] = atof(number);
+	if( fscanf( fp, "%s", number ) != 1 )  goto out;
+	fr->fr_eye_model[2] = atof(number);
+	for( i=0; i < 16; i++ )  {
+		if( fscanf( fp, "%s", number ) != 1 )
+			goto out;
+		fr->fr_mat[i] = atof(number);
+	}
 	if( feof(fp) ) {
+out:
 		printf("EOF on frame file.\n");
 		return(-1);
 	}
@@ -1067,8 +1073,8 @@ char *buf;
 		i = fr->fr_size*fr->fr_size*3+3;
 		fr->fr_picture = malloc( i );
 		if( fr->fr_picture == (char *)0 )  {
-			fprintf(stdout,"ph_pixels: malloc error\n");
-			fprintf(stderr,"ph_pixels: malloc error\n");
+			fprintf(stdout, "ph_pixels: malloc(%d) error\n",i);
+			fprintf(stderr, "ph_pixels: malloc(%d) error\n",i);
 			abort();
 			exit(19);
 		}
