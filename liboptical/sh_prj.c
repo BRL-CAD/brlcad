@@ -380,6 +380,8 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	/* set defaults on img_specific struct */
 	prj_sp->prj_images.i_width = prj_sp->prj_images.i_height = 512;
 	prj_sp->prj_images.i_antialias = '1';
+	prj_sp->prj_images.i_through = '0';
+	prj_sp->prj_images.i_behind = '0';
 
 
 	if(bu_struct_parse( &parameter_data, img_parse_tab, 
