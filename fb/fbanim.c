@@ -30,6 +30,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct timeval tv;
 #endif
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
 FBIO *fbp;
 int pix_line;		/* Number of pixels/line */
 int zoom;		/* Zoom Factor.			*/
@@ -44,30 +48,26 @@ int fps;			/* frames/sec */
 int passes = 100;		/* limit on number of passes */
 int inverse;			/* for old 4th quadrant sequences */
 
-char Usage[] = "Usage: fbanim [-h] [-i] [-r] [-p#pass] width nframes [fps]\n";
+char Usage[] = "\
+Usage: fbanim [-h -i -r -v] [-p passes] width nframes [fps]\n";
 
-main(argc, argv )
-char **argv;
+get_args( argc, argv )
+register char **argv;
 {
-	register int i;
+	register int c;
 
-	if( argc < 3 )  {
-		printf(Usage);
-		exit(12);
-	}
-
-	pix_line = 512;
-	while( argc > 1 && argv[1][0] == '-' )  {
-		switch( argv[1][1] )  {
+	while ( (c = getopt( argc, argv, "hirvp:" )) != EOF )  {
+		switch( c )  {
 		case 'h':
+			/* high-res */
 			pix_line = 1024;
-			break;
-		case 'p':
-			passes = atoi(&argv[1][2]);
-			if(passes<1)  passes=1;
 			break;
 		case 'i':
 			inverse = 1;
+			break;
+		case 'p':
+			passes = atoi(optarg);
+			if(passes<1)  passes=1;
 			break;
 		case 'r':
 			rocking = 1;
@@ -75,24 +75,39 @@ char **argv;
 		case 'v':
 			verbose = 1;
 			break;
-		default:
-			printf(Usage);
-			exit(12);
+
+		default:		/* '?' */
+			return(0);
 		}
-		argc--;
-		argv++;
 	}
 
-	w = atoi(argv[1]);
+	if( optind+1 >= argc )	/* two mandatory positional args */
+		return(0);
+	return(1);		/* OK */
+}
+
+main(argc, argv )
+char **argv;
+{
+	register int i;
+
+	pix_line = 512;
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(Usage, stderr);
+		exit( 1 );
+	}
+
+	w = atoi(argv[optind]);
 	if( w < 4 || w > 512 )  {
 		printf("w=%d out of range\n");
 		exit(12);
 	}
-	n = atoi(argv[2]);
-	if( argc == 4 )
-		fps = atoi(argv[3]);
-	else
+	n = atoi(argv[optind+1]);
+	if( optind+2 >= argc )
 		fps = 8;
+	else
+		fps = atoi(argv[optind+2]);
+
 #ifdef BSD
 	if( fps <= 1 )  {
 		tv.tv_sec = fps ? 1 : 4;
