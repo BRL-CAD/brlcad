@@ -484,33 +484,6 @@ int	width, height;
 	static char	title[128];
 	int	mode;
 
-	g_status = ps_open_PostScript();
-
-	if( !g_status )
-	{
-		int f;
-		char * grcond = "/etc/gl/grcond";
-		char * newshome = "/usr/brlcad/etc";
-
-		if(((f = fork()) != 0) && ( f != -1))
-		{
-			goto news_out;			
-		} else
-		{
-			chdir( newshome );
-			execl( grcond, (char *) 0 );
-		}
-news_out:
-		g_status = ps_open_PostScript();
-
-		while( !g_status )
-		{
-			sleep(3);
-			g_status = ps_open_PostScript();
-		}
-	}
-
-
 	/*
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number" or flags.
@@ -570,6 +543,33 @@ news_out:
 			MODE_5MASK | MODE_6MASK);
 	}
 	ifp->if_mode = mode;
+
+	/*
+	 *  Now that the mode has been determined,
+	 *  ensure that the graphics system is running.
+	 */
+	if( !(g_status = ps_open_PostScript()) )  {
+		char * grcond = "/etc/gl/grcond";
+		char * newshome = "/usr/brlcad/etc";		/* XXX */
+
+		f = fork();
+		if( f < 0 )  {
+			perror("fork");
+			return(-1);		/* error */
+		}
+		if( f == 0 )  {
+			/* Child */
+			chdir( newshome );
+			execl( grcond, (char *) 0 );
+			perror( grcond );
+			_exit(1);
+			/* NOTREACHED */
+		}
+		/* Parent */
+		while( !(g_status = ps_open_PostScript()) )  {
+			sleep(1);
+		}
+	}
 
 	/* the Silicon Graphics Library Window management routines
 	 * use shared memory. This causes lots of problems when you
