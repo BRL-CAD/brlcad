@@ -23,9 +23,14 @@
 extern int		use_air;		/* Handling of air in librt */
 /***** end of sharing with viewing model *****/
 
-/***** Variables declared in liboptical *****/
-extern vect_t		background;		/* background color */
+/***** Variables declared in liboptical or multispectral *****/
 extern double		AmbientIntensity;	/* Ambient light intensity */
+#ifdef RT_MULTISPECTRAL
+extern const struct bn_table		*spectrum;
+extern struct bn_tabdata		*background; 		/* radiant emittance of bg */
+#else  /* !RT_MULTISPECTRAL */
+extern vect_t		background;		/* background color */
+#endif  /* RT_MULTISPECTRAL */
 
 /***** Variables declared in opt.c *****/
 extern char		*framebuffer;		/* desired framebuffer */
