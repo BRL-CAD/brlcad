@@ -294,10 +294,10 @@ getsolid()
 		vect_t	v;
 
 		/*
-		 * For simplicity, we convert ELL to ELLG, then
-		 * fall through to ELLG code.
+		 * For simplicity, we convert ELL to ELL1, then
+		 * fall through to ELL1 code.
 		 * Format of ELL is F1, F2, len
-		 * ELLG format is V, A, r
+		 * ELL1 format is V, A, r
 		 */
 		if( getsoldata( dd, 2*3+1, sol_work ) < 0 )
 			return(-1);
@@ -314,8 +314,8 @@ getsolid()
 		goto ell1;
 	}
 
-	if( (version <= 4 && strcmp( solid_type, "ell1" ) == 0) ||
-	    (version == 5 && strcmp( solid_type, "ell" ) == 0) )  {
+	if( (version == 5 && strcmp( solid_type, "ell" ) == 0)  ||
+	    strcmp( solid_type, "ell1" ) == 0 )  {
 		/* V, A, r */
 	    	/* GIFT4 name is "ell1", GIFT5 name is "ell" */
 		if( getsoldata( dd, 2*3+1, sol_work ) < 0 )
