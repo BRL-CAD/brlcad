@@ -333,6 +333,9 @@ struct rt_i		*rtip;
 		vect_t n1,n2;
 		vect_t norm;
 		vect_t v1,v2;
+		vect_t diff;
+		fastf_t dot;
+		fastf_t dotm1;
 		fastf_t angle;
 		fastf_t dist_to_bend;
 		point_t bend_start, bend_end, bend_center;
@@ -353,7 +356,11 @@ struct rt_i		*rtip;
 
 		VSUB2( n2, pp3->pp_coord, pp2->pp_coord );
 		VCROSS( norm, n1, n2 );
-		if( VNEAR_ZERO( norm, SQRT_SMALL_FASTF ) )
+		VUNITIZE( n1 );
+		VUNITIZE( n2 );
+		angle = bn_pi - acos( VDOT( n1, n2 ) );
+		dist_to_bend = pp2->pp_bendradius * tan( angle/2.0 );
+		if( isnan( dist_to_bend ) || VNEAR_ZERO( norm, SQRT_SMALL_FASTF) || NEAR_ZERO( dist_to_bend, SQRT_SMALL_FASTF) )
 		{
 			/* points are colinear, treat as a linear segment */
 			rt_linear_pipe_prep( stp, head, curr_pt, curr_id, curr_od,
@@ -361,20 +368,15 @@ struct rt_i		*rtip;
 			VMOVE( curr_pt, pp2->pp_coord );
 			goto next_pt;
 		}
-
-		VUNITIZE( n1 );
-		VUNITIZE( n2 );
+		VJOIN1( bend_start, pp2->pp_coord, dist_to_bend, n1 );
+		VJOIN1( bend_end, pp2->pp_coord, dist_to_bend, n2 );
 		VUNITIZE( norm );
 
 		/* linear section */
-		angle = bn_pi - acos( VDOT( n1, n2 ) );
-		dist_to_bend = pp2->pp_bendradius * tan( angle/2.0 );
-		VJOIN1( bend_start, pp2->pp_coord, dist_to_bend, n1 );
 		rt_linear_pipe_prep( stp, head, curr_pt, curr_id, curr_od,
 				bend_start, pp2->pp_id, pp2->pp_od );
 
 		/* and bend section */
-		VJOIN1( bend_end, pp2->pp_coord, dist_to_bend, n2 );
 		VCROSS( v1, n1, norm );
 		VCROSS( v2, v1, norm );
 		VJOIN1( bend_center, bend_start, -pp2->pp_bendradius, v1 );
@@ -1276,14 +1278,15 @@ struct seg		*seghead;
 	LOCAL struct hit_list		hit_head;
 	LOCAL struct hit_list		*hitp;
 	LOCAL int			hit_count;
-	LOCAL int			total_hits=0;
-	LOCAL int			seg_no=0;
+	LOCAL int			total_hits;
+	LOCAL int			seg_no;
 	LOCAL int			i;
 
 	BU_LIST_INIT( &hit_head.l );
 
 	pipe_start_shot( stp, rp, ap, seghead, BU_LIST_FIRST( id_pipe, head ),
 		&hit_head, &total_hits, 1 );
+	seg_no = 0;
 	for( BU_LIST_FOR( pipe_id, id_pipe, head ) )
 		seg_no++;
 	pipe_end_shot( stp, rp, ap, seghead, BU_LIST_LAST( id_pipe, head ),
@@ -1698,6 +1701,8 @@ CONST struct bn_tol		*tol;
 	{
 		LOCAL vect_t n1,n2;
 		LOCAL vect_t norm;
+		LOCAL fastf_t angle;
+		LOCAL fastf_t dist_to_bend;
 
 		if( BU_LIST_IS_HEAD( &nextp->l, &pip->pipe_segs_head ) )
 		{
@@ -1715,7 +1720,11 @@ CONST struct bn_tol		*tol;
 		}
 		VSUB2( n2, nextp->pp_coord, curp->pp_coord );
 		VCROSS( norm, n1, n2 );
-		if( VNEAR_ZERO( norm, SQRT_SMALL_FASTF ) )
+		VUNITIZE( n1 );
+		VUNITIZE( n2 );
+		angle = bn_pi - acos( VDOT( n1, n2 ) );
+		dist_to_bend = curp->pp_bendradius * tan( angle/2.0 );
+		if( isnan( dist_to_bend ) || VNEAR_ZERO( norm, SQRT_SMALL_FASTF) || NEAR_ZERO( dist_to_bend, SQRT_SMALL_FASTF) )
 		{
 			/* points are colinear, draw linear segment */
 			draw_linear_seg( vhead, current_point, prevp->pp_od/2.0, prevp->pp_id/2.0,
@@ -1725,18 +1734,11 @@ CONST struct bn_tol		*tol;
 		else
 		{
 			LOCAL point_t bend_center;
-			LOCAL fastf_t angle;
-			LOCAL fastf_t dist_to_bend;
 			LOCAL point_t bend_start;
 			LOCAL point_t bend_end;
 			LOCAL vect_t v1,v2;
 
-			VUNITIZE( n1 );
-			VUNITIZE( n2 );
 			VUNITIZE( norm );
-
-			angle = bn_pi - acos( VDOT( n1, n2 ) );
-			dist_to_bend = curp->pp_bendradius * tan( angle/2.0 );
 
 			/* draw linear segment to start of bend */
 			VJOIN1( bend_start, curp->pp_coord, dist_to_bend, n1 );
