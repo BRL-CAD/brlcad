@@ -47,8 +47,8 @@ int	reg_pathpos;	/* pathpos of a processed region */
 struct directory	*cur_path[MAX_PATH];	/* Record of current path */
 
 static struct mater_info mged_no_mater = {
-	/* RT default is white.  This is grey, to stay clear of illuminate mode */
-	0.78, 0.78, 0.78,	/* white/grey, "200". */
+	/* RT default is white.  This is red, to stay clear of illuminate mode */
+	1.0, 0, 0,		/* */
 	0,			/* override */
 	DB_INH_LOWER,		/* color inherit */
 	DB_INH_LOWER		/* mater inherit */
