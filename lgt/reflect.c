@@ -29,10 +29,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define RI_AIR		1.0  /* refractive index of air */
 
 /* These are used by the hidden-line drawing routines. */
-#define COSTOL		0.91
+#define COSTOL		0.91	/* normals differ if dot product < COSTOL */
+#define OBLTOL		0.1	/* high obliquity if cosine of angle < OBLTOL */
 #define is_Odd(_a)	((_a)&01)
 #define ARCTAN_87	19.08
-
 
 #ifndef FLIPPED_NORMALS_BUG
 #define FLIPPED_NORMALS_BUG	0 /* Keep an eye out for dark spots. */
@@ -184,6 +184,8 @@ static unsigned short *hl_dstmap = NULL;
 		}\
 	}
 
+STATIC bool hi_Obliq();
+
 STATIC fastf_t myIpow();
 STATIC fastf_t correct_Lgt();
 STATIC fastf_t *mirror_Reflect();
@@ -197,6 +199,7 @@ STATIC int f_Overlap(), f_NulOverlap();
 
 STATIC int refract();
 
+STATIC void hl_Postprocess();
 STATIC void model_Reflectance();
 STATIC void glass_Refract();
 STATIC void view_pix(), view_bol(), view_eol(), view_end();
@@ -1806,6 +1809,23 @@ int x, y;
 	return;
 	}
 
+STATIC bool
+hi_Obliq( pix )
+RGBpixel *pix;
+	{	fastf_t	dir[3];
+		static fastf_t conv = 2.0/255.0;
+	if( ZeroPixel( *pix ) )
+		return false;
+	dir[X] = (*pix)[RED] * conv;
+	dir[Y] = (*pix)[GRN] * conv;
+	dir[Z] = (*pix)[BLU] * conv;
+	dir[X] -= 1.0;
+	dir[Y] -= 1.0;
+	dir[Z] -= 1.0;
+	return Dot( dir, lgts[0].dir ) < OBLTOL;
+	}
+
+STATIC void
 hl_Postprocess()
 	{	register int yc; /* frame buffer space indices */
 		register int xi, yi; /* bitmap/array space indices */
@@ -1833,13 +1853,14 @@ hl_Postprocess()
 			if(  (hl_regmap != NULL &&
 				(hl_Reg_Diff( xi, yi, xi-1, yi )
 			     ||	 hl_Reg_Diff( xi, yi, xi, yi-1 )))
-			  || (hl_dstmap != NULL &&
-				(hl_Dst_Diff( xi, yi, xi-1, yi, maxdist )
-			     ||	 hl_Dst_Diff( xi, yi, xi, yi-1, maxdist )))
 			  ||	hl_Norm_Diff( hl_normap[yi*a_gridsz+xi],
 						hl_normap[yi*a_gridsz+(xi-1)] )
 			  ||	hl_Norm_Diff( hl_normap[yi*a_gridsz+xi],
 						hl_normap[(yi-1)*a_gridsz+xi] )
+			  || (	hl_dstmap != NULL
+			     && ! hi_Obliq( hl_normap[yi*a_gridsz+xi] )
+			     && (hl_Dst_Diff( xi, yi, xi-1, yi, maxdist )
+			     ||	 hl_Dst_Diff( xi, yi, xi, yi-1, maxdist )))
 				)
 				HL_SETBIT( xi, yi );
 			else
@@ -1896,7 +1917,6 @@ hl_Postprocess()
 			}
 		}
 	(void) fb_flush( fbiop );
-	return;
 	}
 
 /*
