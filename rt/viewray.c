@@ -36,7 +36,7 @@ static char RCSrayview[] = "@(#)$Header$ (BRL)";
 char usage[] = "\
 Usage:  rtray [options] model.g objects... >file.ray\n\
 Options:\n\
- -f #		Grid size in pixels, default 512, max 1024\n\
+ -f #		Grid size in pixels, default 512\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
