@@ -14,7 +14,7 @@
 
 #include "./burst.h"
 #include "./trie.h"
-#include "Hm/Hm.h"
+#include "./Hm.h"
 
 /* External functions from C library. */
 #ifdef __STDC__
@@ -87,12 +87,10 @@ extern void warning();
 extern void (*norml_sig)(), (*abort_sig)();
 extern void abort_RT();
 extern void intr_sig();
-extern void stop_sig();
 #else
 extern int (*norml_sig)(), (*abort_sig)();
 extern int abort_RT();
 extern int intr_sig();
-extern int stop_sig();
 #endif
 
 extern Colors colorids;
