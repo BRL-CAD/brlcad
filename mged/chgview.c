@@ -2080,7 +2080,6 @@ Tcl_Interp *interp;
 int view_flag;
 int edit_flag;
 {
-  point_t old_pos;
   point_t new_pos;
   point_t diff;
   point_t model_pos;
