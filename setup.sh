@@ -239,8 +239,8 @@ if test x$1 != x-f
 then
 	if [ ! -d .cake.$MACHINE ] ; then
 		mkdir .cake.$MACHINE
-		cp cake/*.[chyl1] cake/Makefile .cake.$MACHINE
 	fi
+	cp cake/*.[chyl1] cake/Makefile .cake.$MACHINE
 
 	cd .cake.$MACHINE
 	make ${SILENT} clobber
@@ -254,8 +254,8 @@ then
 
 	if [ ! -d .cakeaux.$MACHINE ] ; then
 		mkdir .cakeaux.$MACHINE
-		cp cakeaux/*.[chyl1] cakeaux/Makefile .cakeaux.$MACHINE
 	fi
+	cp cakeaux/*.[chyl1] cakeaux/Makefile .cakeaux.$MACHINE
 	cd .cakeaux.$MACHINE
 	make ${SILENT} clobber
 	for i in cakesub cakeinclude

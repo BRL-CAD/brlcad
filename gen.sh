@@ -356,7 +356,11 @@ clean|noprod|clobber|lint)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
 		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${SILENT} ${TARGET} )
-	done;;
+	done
+	( cd ${DIRPRE}cake${DIRSUF} && make -k ${TARGET} )
+	( cd ${DIRPRE}cakeaux${DIRSUF} && make -k ${TARGET} )
+	;;
+	
 
 # Listing of source directories
 ls)
