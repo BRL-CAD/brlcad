@@ -323,6 +323,10 @@ register struct rt_i *rtip;
 		rt_fr_cut( &(rtip->rti_inf_box) );
 		bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
 	}
+	/* rt_g.rtg_CutFree list could be freed, but is bulk allocated, XXX
+	 * so cutter structures will hang around.  XXX
+	 */
+	/* XXX same thing is true for struct partition and struct seg XXX */
 
 	/* Reset instancing counters in database directory */
 	for( i=0; i < RT_DBNHASH; i++ )  {
@@ -335,6 +339,14 @@ register struct rt_i *rtip;
 
 	/* Free animation structures */
 	db_free_anim(rtip->rti_dbip);
+
+	/* Free array of solid table pointers indexed by solid ID */
+	for( i=0; i <= ID_MAXIMUM; i++ )  {
+		rt_free( (char *)rtip->rti_sol_by_type[i], "sol_by_type" );
+		rtip->rti_sol_by_type[i] = (struct soltab **)0;
+	}
+	rt_free( (char *)rtip->rti_Solids, "rtip->rti_Solids[]" );
+	rtip->rti_Solids = (struct soltab **)0;
 
 	/*
 	 *  Re-initialize everything important.
@@ -409,6 +421,7 @@ register union tree *tp;
 
 	switch( tp->tr_op )  {
 	case OP_SOLID:
+		rt_free( tp->tr_a.tu_name );
 		rt_free( (char *)tp, "leaf tree union");
 		return;
 	case OP_SUBTRACT:
@@ -417,7 +430,7 @@ register union tree *tp;
 	case OP_XOR:
 		rt_fr_tree( tp->tr_b.tb_left );
 		rt_fr_tree( tp->tr_b.tb_right );
-		/*rt_free( (char *)tp, "binary tree union"); XXX*/
+		rt_free( (char *)tp, "binary tree union");
 		return;
 	default:
 		rt_log("rt_fr_tree: bad op x%x\n", tp->tr_op);
