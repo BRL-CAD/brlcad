@@ -1,5 +1,9 @@
 # $Id$
 
+if ONLY_BENCHMARK
+bin_PROGRAMS = \
+	rt
+else
 bin_PROGRAMS = \
 	rt \
 	rt_bot_faces \
@@ -22,6 +26,7 @@ bin_PROGRAMS = \
 	rtwalk \
 	rtweight \
 	rtxray
+endif
 
 ALLSRCS = \
 	do.c \
