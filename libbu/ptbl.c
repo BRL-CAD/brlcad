@@ -35,18 +35,18 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *  Initialize struct & get storage for table
  */
 void
-bu_ptbl_init(b, len)
+bu_ptbl_init(b, len, str)
 struct bu_ptbl	*b;
 int		len;		/* initial len.  Recommend 8 or 64 */
+CONST char	*str;
 {
 	if (bu_debug & BU_DEBUG_PTBL)
-		bu_log("bu_ptbl_init(%8x, len=%d)\n", b, len);
+		bu_log("bu_ptbl_init(%8x, len=%d, %s)\n", b, len, str);
 	RT_LIST_INIT(&b->l);
 	b->l.magic = BU_PTBL_MAGIC;
 	if( len <= 0 )  len = 64;
 	b->blen = len;
-	b->buffer = (long **)bu_calloc(b->blen, sizeof(long *),
-		"bu_ptbl.buffer[]");
+	b->buffer = (long **)bu_calloc(b->blen, sizeof(long *), str);
 	b->end = 0;
 }
 
@@ -84,7 +84,7 @@ long		*p;
 
 	BU_CK_PTBL(b);
 
-	if (b->blen == 0) bu_ptbl_init(b, 8);
+	if (b->blen == 0) bu_ptbl_init(b, 8, "bu_ptbl_ins() buffer");
 	if (b->end >= b->blen)  {
 		b->buffer = (long **)bu_realloc( (char *)b->buffer,
 		    sizeof(p)*(b->blen *= 4),
@@ -321,7 +321,7 @@ int		func;
 long		*p;
 {
 	if (func == BU_PTBL_INIT) {
-		bu_ptbl_init(b, 64);
+		bu_ptbl_init(b, 64, "bu_ptbl() buffer[]");
 		return 0;
 	} else if (func == BU_PTBL_RST) {
 		bu_ptbl_reset(b);
