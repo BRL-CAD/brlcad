@@ -1,13 +1,14 @@
 #!/bin/sh
 # A Shell script to extract the 4 benchmark statistics, and build an
 # entry for the tables in doc/benchmark.doc.
+# Note well that the args may have embedded spaces.
 #  Mike Muuss & Susan Muuss, 11-Sept-88.
 #  @(#)$Header$ (BRL)
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh.  Feeding myself to sh."; sh $0 $*; kill $$)
 
-if test x$3 = x
+if test "x$3" = x
 then
 	echo "Usage:  $0 hostname note1 note2"
 	exit 1
