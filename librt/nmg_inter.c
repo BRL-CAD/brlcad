@@ -2085,8 +2085,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 
     	if ( fu1 && rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
-    		static int fno=1;
-    	    	nmg_pl_2fu( "Isect_2d_faces%d.pl", fno++, fu2, fu1, 0 );
+    	    	nmg_pl_2fu( "Iface%d.pl", 0, fu2, fu1, 0 );
     	}
 
 	/*
@@ -2386,8 +2385,7 @@ nmg_fu_touchingloops(fu2);
 
 	    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
 	    	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
-	    		static int fno=1;
-	    	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu1, fu2, 0 );
+	    	    	nmg_pl_2fu( "Iface%d.pl", 0, fu1, fu2, 0 );
 	    	}
 
 		if( nmg_isect_face3p_face3p(is, fu1, fu2) )  {
@@ -2803,8 +2801,7 @@ nmg_fu_touchingloops(fu2);
 
     	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
-    		static int fno=1;
-    	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu1, fu2, 0 );
+    	    	nmg_pl_2fu( "Iface%d.pl", 0, fu1, fu2, 0 );
     	}
 
 	/* XXX Is an optimization based upon the return code here possible? */
@@ -3029,6 +3026,39 @@ coplanar:
 	/* Eliminate stray vertices that were added along edges in this step */
 	(void)nmg_unbreak_region_edges( &fu1->l.magic );
 	(void)nmg_unbreak_region_edges( &fu2->l.magic );
+
+    	if ( fu1 && rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
+    	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
+    	    	static int nshell = 1;
+    	    	char	name[32];
+    	    	FILE	*fp;
+    	    	struct model	*m = nmg_find_model( &fu1->l.magic );
+
+    	    	/* Both at once */
+    	    	nmg_pl_2fu( "Iface%d.pl", 0, fu2, fu1, 0 );
+
+		/* Each in it's own file */
+    	    	nmg_face_plot( fu1 );
+    	    	nmg_face_plot( fu2 );
+
+    	    	sprintf(name, "shellA%d.pl", nshell);
+    	    	if( (fp = fopen(name, "w")) != NULL )  {
+    	    		rt_log("Plotting to %s\n", name);
+    	    		nmg_pl_s( fp, fu1->s_p );
+    	    		fclose(fp);
+    	    	}
+
+    	    	sprintf(name, "shellB%d.pl", nshell);
+    	    	if( (fp = fopen(name, "w")) != NULL )  {
+    	    		rt_log("Plotting to %s\n", name);
+    	    		nmg_pl_s( fp, fu2->s_p );
+    	    		fclose(fp);
+    	    	}
+
+    	    	sprintf(name, "model%d.g", nshell);
+		nmg_stash_model_to_file( name, m, "After 2d isect" );
+    	    	nshell++;
+    	}
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_region_v_unique( fu1->s_p->r_p, &bs.tol );
