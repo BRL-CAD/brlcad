@@ -276,6 +276,9 @@ g/mat_xrot/s//bn_mat_xrot/g
 g/mat_yrot/s//bn_mat_yrot/g
 g/mat_zrot/s//bn_mat_zrot/g
 g/mat_zero/s//bn_mat_zero/g
+g/BU_BU_/s//BU_/g
+g/bu_bu_/s//bu_/g
+g/bn_bn_/s//bn_/g
 f
 w
 q
