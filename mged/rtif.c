@@ -135,8 +135,6 @@ vect_t eye_model;
 	register struct solid *sp;
 
 	(void)fprintf(fp, "viewsize %.15e;\n", VIEWSIZE );
-	(void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
-		eye_model[X], eye_model[Y], eye_model[Z] );
 #if 0
 	(void)fprintf(fp, "viewrot ");
 	for( i=0; i < 16; i++ )  {
@@ -150,7 +148,10 @@ vect_t eye_model;
 	(void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n",
 		V4ARGS( quat ) );
 #endif
-#define DIR_USED	0x80
+	(void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
+		eye_model[X], eye_model[Y], eye_model[Z] );
+
+#define DIR_USED	0x80	/* XXX move to raytrace.h */
 	(void)fprintf(fp, "start 0; clean;\n");
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
 		for (i=0;i<=sp->s_last;i++) {
@@ -1321,10 +1322,7 @@ int	argc;
 	
 	/* First step:  put eye at view center (view 0,0,0) */
        	bn_mat_copy( Viewrot, rtif_viewrot );
-	MAT_DELTAS( toViewcenter,
-		-rtif_eye_model[X],
-		-rtif_eye_model[Y],
-		-rtif_eye_model[Z] );
+	MAT_DELTAS_VEC_NEG( toViewcenter, rtif_eye_model );
 	new_mats();
 
 	/*
@@ -1345,10 +1343,7 @@ int	argc;
 	 */
 	VSET( xlate, 0, 0, -1 );	/* correction factor */
 	MAT4X3PNT( new_cent, view2model, xlate );
-	MAT_DELTAS( toViewcenter,
-		-new_cent[X],
-		-new_cent[Y],
-		-new_cent[Z] );
+	MAT_DELTAS_VEC_NEG( toViewcenter, new_cent );
 	new_mats();
 
 	/* If new treewalk is needed, get new objects into view. */
