@@ -1,7 +1,7 @@
 /*
- *			P I X - R L E . C
+ *			P I X - O R L E . C
  *
- *  Encode a .pix file using the RLE library
+ *  Encode a .pix file using the old ORLE library
  *
  *  Author -
  *	Michael John Muuss
@@ -21,20 +21,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "fb.h"
+
 #include "rle.h"
 
-static FILE	*outfp = stdout;
+static FILE	*outfp;
+
+extern char	*malloc();
+
 static FILE	*infp = stdin;
+static char	*infile;
+
+static int	background[3];
 
 static int	file_width = 512;
 static int	file_height = 512;
 
 static char	usage[] = "\
-Usage: pix-rle [-h -d -v] [-s squarefilesize]\n\
+Usage: pix-rle [-h -d -v] [-s squarefilesize]  [-C r/g/b]\n\
 	[-w file_width] [-n file_height] [file.pix] [file.rle]\n\
 \n\
 If omitted, the .pix file is taken from stdin\n\
 and the .rle file is written to stdout\n";
+
 
 /*
  *			G E T _ A R G S
@@ -47,11 +55,15 @@ register char	**argv;
 	extern int	optind;
 	extern char	*optarg;
 
-	while( (c = getopt( argc, argv, "dhs:w:n:v" )) != EOF )  {
+	while( (c = getopt( argc, argv, "dhs:w:n:vC:" )) != EOF )  {
 		switch( c )  {
 		case 'd':
 			/* For debugging RLE library */
 			rle_debug = 1;
+			break;
+		case 'v':
+			/* Verbose */
+			rle_verbose = 1;
 			break;
 		case 'h':
 			/* high-res */
@@ -67,20 +79,30 @@ register char	**argv;
 		case 'n':
 			file_height = atoi(optarg);
 			break;
-		case 'v':
-			/* Verbose */
-			rle_verbose = 1;
+		case 'C':
+			{
+				register char *cp = optarg;
+				register int *conp = background;
+
+				/* premature null => atoi gives zeros */
+				for( c=0; c < 3; c++ )  {
+					*conp++ = atoi(cp);
+					while( *cp && *cp++ != '/' ) ;
+				}
+			}
 			break;
 		case '?':
 			return	0;
 		}
 	}
 	if( argv[optind] != NULL )  {
-		if( (infp = fopen( argv[optind], "r" )) == NULL )  {
-			perror(argv[optind]);
+		if( (infp = fopen( (infile=argv[optind]), "r" )) == NULL )  {
+			perror(infile);
 			return	0;
 		}
 		optind++;
+	} else {
+		infile = "-";
 	}
 	if( argv[optind] != NULL )  {
 		if( access( argv[optind], 0 ) == 0 )  {
@@ -112,6 +134,8 @@ char	*argv[];
 	register RGBpixel *scan_buf;
 	register int	y;
 
+	infp = stdin;
+	outfp = stdout;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
@@ -138,6 +162,7 @@ char	*argv[];
 		if( rle_encode_ln( outfp, scan_buf ) == -1 )
 			return	1;
 	}
+
 	fclose( infp );
 	fclose( outfp );
 	return	0;
