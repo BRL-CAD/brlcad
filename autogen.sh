@@ -25,6 +25,11 @@ AUTOMAKE_MAJOR_VERSION=1
 AUTOMAKE_MINOR_VERSION=6
 AUTOMAKE_PATCH_VERSION=0
 
+# unused for now but informative
+LIBTOOL_MAJOR_VERSION=1
+LIBTOOL_MINOR_VERSION=5
+LIBTOOL_PATCH_VERSION=0
+
 
 #####################
 # environment check #
@@ -50,24 +55,24 @@ fi
 ##########################
 # autoconf version check #
 ##########################
-_autofound=no
+_acfound=no
 for AUTOCONF in autoconf ; do
   $AUTOCONF --version > /dev/null 2>&1
   if [ $? = 0 ] ; then
-    _autofound=yes
+    _acfound=yes
     break
   fi
 done
 
 _report_error=no
-if [ ! "x$_autofound" = "xyes" ] ; then
+if [ ! "x$_acfound" = "xyes" ] ; then
   echo "ERROR:  Unable to locate GNU Autoconf."
   _report_error=yes
 else
   _version_line="`$AUTOCONF --version | head -${TAIL_N}1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
-    _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\..*/\1/'`"
-    _min_version="`echo $_version_line | sed 's/.*\.\([0-9][0-9]\).*/\1/'`"
+    _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\.[0-9][0-9].*/\1/'`"
+    _min_version="`echo $_version_line | sed 's/.*[0-9]\.\([0-9][0-9]\).*/\1/'`"
 
     if [ $? = 0 ] ; then
       if [ $_maj_version -lt $AUTOCONF_MAJOR_VERSION ] ; then
@@ -84,7 +89,56 @@ else
 fi
 if [ "x$_report_error" = "xyes" ] ; then
   echo "ERROR:  To prepare the ${SUITE} build system from scratch,"
-  echo "        at least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION of GNU Autoconf must be installed."
+  echo "        at least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION.$AUTOCONF_PATCH_VERSION of GNU Autoconf must be installed."
+  echo 
+  echo "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
+  echo "run configure or make.  Either the GNU Autotools will need to be installed"
+  echo "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
+  echo "code on another system and then transferred to here. -- Cheers!"
+  exit 1
+fi
+
+
+##########################
+# automake version check #
+##########################
+_amfound=no
+for AUTOMAKE in automake ; do
+  $AUTOMAKE --version > /dev/null 2>&1
+  if [ $? = 0 ] ; then
+    _amfound=yes
+    break
+  fi
+done
+
+_report_error=no
+if [ ! "x$_amfound" = "xyes" ] ; then
+  echo "ERROR: Unable to locate GNU Automake."
+  _report_error=yes
+else
+  _version_line="`$AUTOMAKE --version | head -${TAIL_N}1`"
+  if [ "x$HAVE_SED" = "xyes" ] ; then
+    _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\.[0-9]\.[0-9].*/\1/'`"
+    _min_version="`echo $_version_line | sed 's/.*[0-9]\.\([0-9]\)\.[0-9].*/\1/'`"
+    _pat_version="`echo $_version_line | sed 's/.*[0-9]\.[0-9]\.\([0-9]\).*/\1/'`"
+    if [ $? = 0 ] ; then
+      if [ $_maj_version -lt $AUTOMAKE_MAJOR_VERSION ] ; then
+	_report_error=yes
+      elif [ $_min_version -lt $AUTOMAKE_MINOR_VERSION ] ; then
+	_report_error=yes
+      elif [ $_pat_version -lt $AUTOMAKE_PATCH_VERSION ] ; then
+	_report_error=yes
+      fi
+    fi
+    echo "Found GNU Automake version $_maj_version.$_min_version.$_pat_version"
+  else
+    echo "Warning:  sed is not available to properly detect version of GNU Automake"
+  fi
+  echo
+fi
+if [ "x$_report_error" = "xyes" ] ; then
+  echo "ERROR:  To prepare the ${SUITE} build system from scratch,"
+  echo "        at least version $AUTOMAKE_MAJOR_VERSION.$AUTOMAKE_MINOR_VERSION.$AUTOMAKE_PATCH_VERSION of GNU Automake must be installed."
   echo 
   echo "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
   echo "run configure or make.  Either the GNU Autotools will need to be installed"
@@ -174,17 +228,6 @@ for AUTOHEADER in autoheader ; do
 done
 
 
-######################
-# check for automake #
-######################
-for AUTOMAKE in automake ; do
-  $AUTOMAKE --version > /dev/null 2>&1
-  if [ $? = 0 ] ; then
-    break
-  fi
-done
-
-
 ##############
 # stash path #
 ##############
@@ -243,13 +286,26 @@ for file in config.guess config.sub ltmain.sh ; do
 done
 
 
+#########################################
+# list common misconfigured search dirs #
+#########################################
+SEARCH_DIRS=""
+for dir in m4 ; do
+# /usr/local/share/aclocal /sw/share/aclocal m4 ; do
+  if [ -d $dir ] ; then
+    SEARCH_DIRS="$SEARCH_DIRS -B $dir"
+  fi
+done
+
+
 ############################################
 # prepare build via autoreconf or manually #
 ############################################
 reconfigure_manually=no
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
   echo $ECHO_N "Automatically preparing build ... $ECHO_C"
-  $AUTORECONF -i -f > /dev/null 2>&1
+
+  $AUTORECONF $SEARCH_DIRS -i -f > /dev/null 2>&1
   if [ ! $? = 0 ] ; then
     echo "Warning: $AUTORECONF failed"
 
@@ -276,7 +332,7 @@ fi
 if [ "x$reconfigure_manually" = "xyes" ] ; then
   echo $ECHO_N "Preparing build ... $ECHO_C"
 
-  $ACLOCAL
+  $ACLOCAL $SEARCH_DIRS
 
   [ ! $? = 0 ] && echo "ERROR: $ACLOCAL failed" && exit 2
   if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then 
