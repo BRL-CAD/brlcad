@@ -2726,6 +2726,14 @@ BU_EXTERN(void db_functree, (struct db_i *dbip, struct directory *dp,
 	void (*leaf_func)(struct db_i *, struct directory *, genptr_t),
 	genptr_t client_data));
 
+/* g_arb.c */
+int rt_arb_calc_points();		/* needs wdb.h for arg list */
+int rt_arb_3face_intersect(
+	point_t			point,
+	const plane_t		planes[6],
+	int			type,		/* 4..8 */
+	int			loc);
+
 /* g_epa.c */
 BU_EXTERN(void rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
 			CONST fastf_t *B, int sides) );
