@@ -401,6 +401,11 @@ Part_import( int id_start )
 			bu_log( "Found Part %s\n", part->obj_name );
 		} else if( !strncmp( line, "FaceCount", 9 ) ) {
 			surf_count = atoi( &line[10] );
+			if( surf_count == 0 ) {
+				/* bug in the Elysium tessellator when no faces */
+				bu_free( (char *)part, "part" );
+				return( (struct obj_info *) NULL );
+			}
 		} else if( !strncmp( line, "EndPartId", 9 ) ) {
 			/* found end of part, check id */
 			id_end = atoi( &line[10] );
@@ -529,6 +534,8 @@ Assembly_import( int id_start )
 			/* found a member part */
 			member_id = atoi( &line[7] );
 			member = Part_import( member_id );
+			if( !member )
+				continue;
 			this_assem->part_count++;
 			this_assem->members = (struct obj_info **)bu_realloc(
 			      this_assem->members,
