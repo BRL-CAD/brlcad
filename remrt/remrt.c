@@ -658,7 +658,7 @@ FILE *fp;
 			maxx = fb_getwidth(fbp);
 		for( i=0; i<fr->fr_size; i++ )  {
 			fb_write( fbp, 0, i%fb_getwidth(fbp),
-				fr->fr_picture + (fr->fr_size-i-1)*fr->fr_size*3,
+				fr->fr_picture + i*fr->fr_size*3,
 				maxx );
 		}
 		return;
