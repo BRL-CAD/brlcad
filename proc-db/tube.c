@@ -61,13 +61,17 @@ fastf_t poly[NCOLS*4] = {
 	0,	1,	0,	1
 };
 
+double	projectile_pos;
 point_t	sample[1024];
 int	nsamples;
 
 double	length;
 double	spacing;
 
-int	nframes = 300;
+int	nframes = 64;
+double	delta_t = 0.15;		/* ms/step */
+FILE	*pos_fp;
+double	cur_time;
 
 main(argc, argv)
 char	**argv;
@@ -82,17 +86,25 @@ char	**argv;
 	matp_t	matp;
 	mat_t	xlate, prod;
 	mat_t	rot1, rot2, rot3;
-	fastf_t	pos;
 	vect_t	from, to;
 	vect_t	offset;
 
 	head.wm_forw = head.wm_back = &head;
 	ghead.wm_forw = ghead.wm_back = &ghead;
 
-	mk_id( stdout, "Spline Tube" );
+	if( (pos_fp = fopen( "pos.dat", "r" )) == NULL )
+		perror( "pos.dat" );	/* Just warn */
+
+	mk_id( stdout, "Procedural Gun Tube with Projectile" );
 
 	VSET( normal, 0, -1, 0 );
-	mk_half( stdout, "cut", 0, normal );
+	mk_half( stdout, "cut", 0.0, normal );
+	VSET( normal, 0, 1, 0 );
+	mk_half( stdout, "bg.s", -1000.0, normal );
+	(void)mk_addmember( "bg.s", &head );	/* temp use of "head" */
+	mk_lcomb( stdout, "bg.r", 1,
+		"texture", "file=movie128bw.pix w=128",
+		0, (char *)0, &head );
 
 #ifdef never
 	/* Numbers for a 105-mm M68 gun */
@@ -114,6 +126,7 @@ char	**argv;
 #endif
 
 	for( frame=0;; frame++ )  {
+		cur_time = frame * delta_t;
 #ifdef never
 		/* Generate some dummy sample data */
 		if( frame < 16 ) break;
@@ -124,8 +137,12 @@ char	**argv;
 				((double)i*i)/nsamples * 2 * 3.14159265358979323 +
 				frame * 3.141592 * 2 / 8 );
 		}
+		projectile_pos = ((double)frame)/nframes *
+			(sample[nsamples-1][X] - sample[0][X]); /* length */
+#else
+		if( read_frame(stdin) < 0 )  break;
+		if( pos_fp != NULL )  read_pos(pos_fp);
 #endif
-		if( read_frame() < 0 )  break;
 
 #define build_spline build_cyl
 		sprintf( name, "tube%do", frame);
@@ -149,15 +166,13 @@ char	**argv;
 		 */
 		mk_addmember( name, &ghead );
 		matp = mk_addmember( "ke", &ghead )->wm_mat;
-		pos = ((double)frame)/nframes *
-			(sample[nsamples-1][X] - sample[0][X]); /* length */
 
 		VSET( from, 0, -1, 0 );
 		VSET( to, 1, 0, 0 );		/* to X axis */
 		mat_fromto( rot1, from, to );
 
 		VSET( from, 1, 0, 0 );
-		xfinddir( to, pos, offset );
+		xfinddir( to, projectile_pos, offset );
 		mat_fromto( rot2, from, to );
 
 		mat_idn( xlate );
@@ -166,6 +181,8 @@ char	**argv;
 		mat_mul( matp, xlate, rot3 );
 
 		(void)mk_addmember( "light.r", &ghead );
+		(void)mk_addmember( "bg.r", &ghead );
+
 		sprintf( gname, "g%d", frame);
 		mk_lcomb( stdout, gname, 0,
 			(char *)0, "",
@@ -267,16 +284,17 @@ double	radius;
 }
 
 /* Returns -1 if done, 0 if something to draw */
-read_frame()
+read_frame(fp)
+FILE	*fp;
 {
 	char	buf[256];
 	int	i;
 
-	if( feof(stdin) )
+	if( feof(fp) )
 		return(-1);
 
 	for( nsamples=0;;nsamples++)  {
-		if( fgets( buf, sizeof(buf), stdin ) == NULL )  break;
+		if( fgets( buf, sizeof(buf), fp ) == NULL )  break;
 		if( buf[0] == '\0' )  {
 			/* Blank line, marks break in implicit connection */
 			fprintf(stderr,"implicit break unimplemented\n");
@@ -302,6 +320,24 @@ read_frame()
 	if( nsamples <= 0 )
 		return(-1);
 	return(0);
+}
+
+read_pos(fp)
+FILE	*fp;
+{
+	static float	last_read_time = -5;
+	static float	pos = 0;
+
+	/* Skip over needless intermediate time steps */
+	while( last_read_time < cur_time )  {
+		if( feof(fp) )
+			break;
+		fscanf( fp, "%f %f", &last_read_time, &pos );
+	}
+fprintf(stderr,"t=%g, p=%g\n", last_read_time, projectile_pos);
+
+	/* Kurt's data is in inches */
+	projectile_pos = pos * inches2mm;
 }
 
 build_cyl( cname, npts, radius )
