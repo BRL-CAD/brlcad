@@ -349,6 +349,21 @@ CONST char	**argv;
 		    		atof( argv[5+0] ),
 		    		atof( argv[5+1] ),
 		    		atof( argv[5+2] ) );
+		} else if( strcmp( argv[4], "scale" ) == 0 )  {
+			fastf_t	scale;
+			if( argc < 5+0 )  {
+		    		bu_log("db_parse_1anim:  matrix %s scale does not have enough arguments, only %d\n",
+		    			argv[3], argc );
+		    		goto bad;
+		    	}
+			scale = atof( argv[5+3] );
+			if( NEAR_ZERO( scale, SMALL ) )  {
+				bu_log("db_parse_1anim:  matrix %s scale factor is zero\n",
+		    			argv[3] );
+				goto bad;
+			}
+		    	bn_mat_idn( anp->an_u.anu_m.anm_mat );
+			anp->an_u.anu_m.anm_mat[15] = 1/scale;
 		} else if( strcmp( argv[4], "scale_about" ) == 0 )  {
 			point_t	pt;
 			fastf_t	scale;
