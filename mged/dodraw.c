@@ -84,6 +84,7 @@ static struct db_tree_state	mged_initial_tree_state = {
 	0.0, 0.0, 0.0, 1.0,
 };
 
+static int		mged_nmg_triangulate;
 static int		mged_draw_wireframes;
 static int		mged_draw_normals;
 static struct model	*mged_nmg_model;
@@ -315,6 +316,10 @@ union tree		*curtree;
 		return curtree;
 	}
 
+	if (mged_nmg_triangulate) {
+		nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
+	}
+
 	if( r != 0 )  {
 		int	style;
 		/* Convert NMG to vlist */
@@ -375,19 +380,23 @@ int	kind;
 
 	/* Initial vaues for options, must be reset each time */
 	ncpu = 1;
+	mged_nmg_triangulate = 1;
 	mged_draw_wireframes = 0;
 	mged_draw_normals = 0;
 	mged_draw_edge_uses = 0;
 
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"quwnP:")) != EOF )  {
+	while( (c=getopt(argc,argv,"quwnTP:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
 			break;
 		case 'w':
 			mged_draw_wireframes = 1;
+			break;
+		case 'T':
+			mged_nmg_triangulate = 0;
 			break;
 		case 'n':
 			mged_draw_normals = 1;
