@@ -6,6 +6,8 @@
  *	Lee A. Butler
  *
  */
+#include "conf.h"
+
 #include <stdio.h>
 char *progname = "(noname)";
 void usage()
