@@ -48,6 +48,7 @@ AM_CFLAGS = @X_CFLAGS@ -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
 libfb_la_LIBADD = @PKG@ @X_LIBS@
 
 BUILT_SOURCES = vers.c
+
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh fb_version "The BRL-CAD Framebuffer Library" > $@
 
