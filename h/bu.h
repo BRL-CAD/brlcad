@@ -516,6 +516,7 @@ struct bu_hist  {
 };
 #define BU_HIST_MAGIC	0x48697374	/* Hist */
 #define BU_CK_HIST(_p)	BU_CKMAG(_p, BU_HIST_MAGIC, "struct bu_hist")
+
 #define BU_HIST_TALLY( _hp, _val )	{ \
 	if( (_val) <= (_hp)->hg_min )  { \
 		(_hp)->hg_bins[0]++; \
@@ -525,6 +526,17 @@ struct bu_hist  {
 		(_hp)->hg_bins[(int)(((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize)]++; \
 	} \
 	(_hp)->hg_nsamples++;  }
+
+#define BU_HIST_TALLY_MULTIPLE( _hp, _val, _count )	{ \
+	register int	__count = (_count); \
+	if( (_val) <= (_hp)->hg_min )  { \
+		(_hp)->hg_bins[0] += __count; \
+	} else if( (_val) >= (_hp)->hg_max )  { \
+		(_hp)->hg_bins[(_hp)->hg_nbins] += __count; \
+	} else { \
+		(_hp)->hg_bins[(int)(((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize)] += __count; \
+	} \
+	(_hp)->hg_nsamples += __count;  }
 
 
 /*----------------------------------------------------------------------*/
