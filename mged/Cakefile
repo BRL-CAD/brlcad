@@ -4,7 +4,7 @@
 #define	CONFIGDEFS	MGED_CONFIG
 
 #define SRCDIR	mged
-#define PRODUCTS	mged
+#define PRODUCTS	mged cad_boundp cad_parea
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -30,5 +30,11 @@ mged:	OBJ LIBRT
 	sh ../newvers.sh version "Graphics Editor (MGED)"
 	CC CFLAGS -c vers.c
 	CC -o mged LDFLAGS OBJ COMPLETE_LIBES vers.o
+
+cad_boundp: cad_boundp.o
+	CC -o cad_boundp cad_boundp.o LIBMALLOC LIBES
+
+cad_parea: cad_parea.o
+	CC -o cad_parea cad_parea.o LIBMALLOC LIBES
 
 #include "../Cakefile.rules"
