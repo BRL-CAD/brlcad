@@ -1525,7 +1525,7 @@ struct timeval		*nowp;
 	lp->li_frame = fr;
 	lp->li_start = a;
 	lp->li_stop = b;
-	APPEND_LIST( lp, &(sp->sr_work) );
+	APPEND_LIST( lp, sp->sr_work.li_back );
 	send_do_lines( sp, a, b, fr->fr_number );
 
 	/* See if server will need more assignments */
@@ -1555,6 +1555,13 @@ register struct servers	*sp;
 
 /*
  *			R E A D _ M A T R I X
+ *
+ *  Read an old-style matrix.
+ *
+ *  Returns -
+ *	 1	OK
+ *	 0	EOF, no matrix read.
+ *	-1	error, unable to read matrix.
  */
 int
 read_matrix( fp, fr )
@@ -1568,7 +1575,7 @@ register struct frame *fr;
 	CHECK_FRAME(fr);
 
 	/* Visible part is from -1 to +1 in view space */
-	if( fscanf( fp, "%s", number ) != 1 )  goto out;
+	if( fscanf( fp, "%s", number ) != 1 )  goto eof;
 	sprintf( cmd, "viewsize %s; eye_pt ", number );
 	vls_cat( &(fr->fr_cmd), cmd );
 
@@ -1589,11 +1596,14 @@ register struct frame *fr;
 	vls_cat( &fr->fr_cmd, "; ");
 
 	if( feof(fp) ) {
-out:
-		rt_log("EOF on frame file.\n");
+eof:
+		rt_log("read_matrix: EOF on old style frame file.\n");
 		return(-1);
 	}
 	return(0);			/* OK */
+out:
+	rt_log("read_matrix:  unable to parse old style entry\n");
+	return(-1);
 }
 
 /*
@@ -1722,6 +1732,7 @@ char *buf;
 	register int		i;
 	register struct servers	*sp;
 	register struct frame	*fr;
+	register struct list	*lp;
 	struct line_info	info;
 	struct timeval		tvnow;
 	int			npix;
@@ -1742,6 +1753,7 @@ char *buf;
 	i = struct_import( (char *)&info, desc_line_info, buf );
 	if( i < 0 || i != info.li_len )  {
 		rt_log("struct_import error, %d, %d\n", i, info.li_len);
+		drop_server( sp, "struct_import error" );
 		goto out;
 	}
 	if( debug )  {
@@ -1751,21 +1763,39 @@ char *buf;
 			info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
 	}
 
-	/* XXX this is bogus -- assignments may have moved on to subsequent
-	 * frames.  Need to search frame list */
-	if( (fr = sp->sr_curframe) == FRAME_NULL )  {
-		rt_log("%s: no current frame, discarding\n");
+	if( (lp = sp->sr_work.li_forw) == &(sp->sr_work) )  {
+		rt_log("%s responded with pixels when none were assigned!\n",
+			sp->sr_host->ht_name );
+		drop_server( sp, "server responded, no assignment" );
 		goto out;
 	}
+
+	/*
+	 *  Here we require that the server return results in the
+	 *  same order that they were assigned.
+	 *  If the reply deviates in any way from the assignment,
+	 *  then the server is dropped.
+	 */
+	fr = lp->li_frame;
 	CHECK_FRAME(fr);
 
-	/* Don't be so trusting... */
 	if( info.li_frame != fr->fr_number )  {
-		rt_log("frame number mismatch, claimed=%d, actual=%d\n",
+		rt_log("%s: frame number mismatch, got=%d, assigned=%d\n",
+			sp->sr_host->ht_name,
 			info.li_frame, fr->fr_number );
 		drop_server( sp, "frame number mismatch" );
 		goto out;
 	}
+	if( info.li_startpix != lp->li_start ||
+	    info.li_endpix != lp->li_stop )  {
+		rt_log("%s:  assignment mismatch, sent %d..%d, got %d..%d\n",
+			sp->sr_host->ht_name,
+	    		lp->li_start, lp->li_stop,
+	    		info.li_startpix, info.li_endpix );
+	    	drop_server( sp, "pixel assignment mismatch");
+	    	goto out;
+	}
+
 	if( info.li_startpix < 0 ||
 	    info.li_endpix >= fr->fr_width*fr->fr_height )  {
 		rt_log("pixel numbers out of range\n");
@@ -1787,7 +1817,7 @@ char *buf;
 	/* Later, can implement FD cache here */
 	if( (fd = open( fr->fr_filename, 2 )) < 0 )  {
 		perror( fr->fr_filename );
-		/* Now what? Drop frame? */
+		/* XXX Now what? Drop frame? */
 	}
 	if( lseek( fd, info.li_startpix*3L, 0 ) < 0 )  {
 		perror( fr->fr_filename );
@@ -2705,7 +2735,11 @@ char	**argv;
 
 	/* Find the one desired frame */
 	for( i=fr->fr_number; i>=0; i-- )  {
-		if(read_matrix( fp, fr ) < 0 ) break;
+		if(read_matrix( fp, fr ) <= 0 )  {
+			rt_log("mat: failure\n");
+			fclose(fp);
+			return;
+		}
 	}
 	fclose(fp);
 
@@ -2743,13 +2777,23 @@ char	**argv;
 	}
 	/* Skip over unwanted beginning frames */
 	for( i=0; i<a; i++ )  {
-		if(read_matrix( fp, &dummy_frame ) < 0 ) break;
+		if(read_matrix( fp, &dummy_frame ) <= 0 )  {
+			rt_log("movie:  error in old style frame list\n");
+			fclose(fp);
+			return;
+		}
 	}
 	for( i=a; i<b; i++ )  {
+		int	ret;
 		GET_FRAME(fr);
 		fr->fr_number = i;
 		prep_frame(fr);
-		if(read_matrix( fp, fr ) < 0 ) break;
+		if( (ret=read_matrix( fp, fr )) < 0 )  {
+			rt_log("movie:  frame %d bad\n", i);
+			fclose(fp);
+			return;
+		}
+		if( ret == 0 )  break;			/* EOF */
 		if( create_outputfilename( fr ) < 0 )  {
 			FREE_FRAME(fr);
 		} else {
@@ -2825,8 +2869,8 @@ char	**argv;
 		return;
 	}
 	do {
-		CHECK_FRAME(fr);
 		fr = FrameHead.fr_forw;
+		CHECK_FRAME(fr);
 		destroy_frame( fr );
 	} while( FrameHead.fr_forw != &FrameHead );
 }
