@@ -617,6 +617,9 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	MTYPE	sun5
 #	define	HAS_TCP		1
 
+#	define	XINCDIR		/usr/openwin/include
+#	define	XLIBDIR		/usr/openwin/lib
+
 #	if defined( __GNUC__ )
 #		define	CC		gcc
 #		if 0	/* PRODUCTION=1 */
@@ -625,6 +628,7 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #			define	OPTIMIZER	-g -fwritable-strings
 #		endif
 #		define	CC_DEFS		-D_REENTRANT -DSUNOS=53
+#		define	CC_OPTS		-I''XINCDIR
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #		define	CC		/opt/SUNWspro/bin/cc
@@ -633,7 +637,7 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #		else
 #			define	OPTIMIZER	-g
 #		endif
-#		define	CC_OPTS		-Xc -K PIC
+#		define	CC_OPTS		-Xc -K PIC -I''XINCDIR
 /*		SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
 #		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=53
 #	endif
@@ -642,19 +646,11 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	if 1	/* shared libraries */
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sharedlibvers.sh
-#		if defined( __GNUC__ )
-#			define	CC_OPTS		-shared
-#			define	BUILD_LIBRARY	ar -sq
-#		else
-#			define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
-#		endif
+#		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
 #	endif
 #	define	RANLIB		true
 
 #	define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR
-
-#	define	XINCDIR		/usr/openwin/include
-#	define	XLIBDIR		/usr/openwin/lib
 
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
 #	define	LIBPKG_LIBES	-lnsl -lsocket
@@ -850,6 +846,7 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	XLIBDIR	/usr/X11/lib
 
 #	define	LIBRT_TIMER	timer42
+/*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux) */
 #	define	LIBTERMLIB	-lcurses -ltermcap
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
