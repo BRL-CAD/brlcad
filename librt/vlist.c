@@ -538,6 +538,158 @@ FILE	*fp;
 	return( w | v );
 }
 
+static void
+rt_uplot_get_args( fp, up, carg, arg )
+FILE			*fp;
+CONST struct uplot	*up;
+char			*carg;
+fastf_t			*arg;
+{
+	int	i, j;
+	int	cc;
+	char	inbuf[8];
+
+	for( i = 0; i < up->narg; i++ ) {
+	switch( up->targ ){
+		case TSHORT:
+			arg[i] = getshort( fp );
+			break;
+		case TIEEE:
+			fread( inbuf, 8, 1, fp );
+			ntohd( (unsigned char *)&arg[i],
+			       (unsigned char *)inbuf, 1 );
+	       		break;
+		case TSTRING:
+			j = 0;
+			while( (cc = getc(fp)) != '\n'
+			    && cc != EOF )
+				carg[j++] = cc;
+			carg[j] = '\0';
+			break;
+		case TCHAR:
+			carg[i] = getc(fp);
+			arg[i] = 0;
+			break;
+		case TNONE:
+		default:
+			arg[i] = 0;	/* ? */
+			break;
+		}
+	}
+}
+
+int
+rt_process_uplot_value( vhead, vbp, fp, c, char_size )
+register struct bu_list	*vhead;
+struct bn_vlblock	*vbp;
+FILE			*fp;
+register int		c;		/* the value to process */
+double			char_size;
+{
+	mat_t	mat;
+	CONST struct uplot	*up;
+	char	carg[256];
+	fastf_t	arg[6];
+	vect_t	a,b;
+	point_t	last_pos;
+
+	/* look it up */
+	if( c < 'A' || c > 'z' ) {
+		up = &rt_uplot_error;
+	} else {
+		up = &rt_uplot_letters[ c - 'A' ];
+	}
+
+	if( up->targ == TBAD ) {
+		fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
+		return(-1);
+	}
+
+	if( up->narg > 0 )  {
+		rt_uplot_get_args( fp, up, carg, arg );
+	}
+
+	switch( c ) {
+	case 's':
+	case 'w':
+	case 'S':
+	case 'W':
+		/* Space commands, do nothing. */
+		break;
+	case 'm':
+	case 'o':
+		/* 2-D move */
+		arg[Z] = 0;
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
+		break;
+	case 'M':
+	case 'O':
+		/* 3-D move */
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
+		break;
+	case 'n':
+	case 'q':
+		/* 2-D draw */
+		arg[Z] = 0;
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
+		break;
+	case 'N':
+	case 'Q':
+		/* 3-D draw */
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
+		break;
+	case 'l':
+	case 'v':
+		/* 2-D line */
+		VSET( a, arg[0], arg[1], 0.0 );
+		VSET( b, arg[2], arg[3], 0.0 );
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE );
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW );
+		break;
+	case 'L':
+	case 'V':
+		/* 3-D line */
+		VSET( a, arg[0], arg[1], arg[2] );
+		VSET( b, arg[3], arg[4], arg[5] );
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE );
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW );
+		break;
+	case 'p':
+	case 'x':
+		/* 2-D point */
+		arg[Z] = 0;
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
+		break;
+	case 'P':
+	case 'X':
+		/* 3-D point */
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
+		BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
+		break;
+	case 'C':
+		/* Color */
+		vhead = rt_vlblock_find( vbp,
+			carg[0], carg[1], carg[2] );
+		break;
+	case 't':
+		/* Text string */
+		bn_mat_idn(mat);
+		if( BU_LIST_NON_EMPTY( vhead ) )  {
+			struct bn_vlist *vlp;
+			/* Use coordinates of last op */
+			vlp = BU_LIST_LAST( bn_vlist, vhead );
+			VMOVE( last_pos, vlp->pt[vlp->nused-1] );
+		} else {
+			VSETALL( last_pos, 0 );
+		}
+		bn_vlist_3string( vhead, vbp->free_vlist_hd, carg, last_pos, mat, char_size );
+		break;
+	}
+
+	return(0);
+}
+
 /*
  *			R T _ U P L O T _ T O _ V L I S T
  *
@@ -553,140 +705,21 @@ double			char_size;
 {
 	register struct bu_list	*vhead;
 	register int	c;
-	mat_t	mat;
-	CONST struct uplot	*up;
-	char	carg[256];
-	fastf_t	arg[6];
-	char	inbuf[8];
-	vect_t	a,b;
-	point_t	last_pos;
-	int	cc;
-	int	i;
-	int	j;
 
 	vhead = rt_vlblock_find( vbp, 0xFF, 0xFF, 0x00 );	/* Yellow */
 
 	while( (c = getc(fp)) != EOF ) {
-		/* look it up */
-		if( c < 'A' || c > 'z' ) {
-			up = &rt_uplot_error;
-		} else {
-			up = &rt_uplot_letters[ c - 'A' ];
-		}
+	       int ret;
 
-		if( up->targ == TBAD ) {
-			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
-			return(-1);
-		}
-
-		if( up->narg > 0 )  {
-			for( i = 0; i < up->narg; i++ ) {
-			switch( up->targ ){
-				case TSHORT:
-					arg[i] = getshort(fp);
-					break;
-				case TIEEE:
-					fread( inbuf, 8, 1, fp );
-					ntohd( (unsigned char *)&arg[i],
-					    (unsigned char *)inbuf, 1 );
-					break;
-				case TSTRING:
-					j = 0;
-					while( (cc = getc(fp)) != '\n'
-					    && cc != EOF )
-						carg[j++] = cc;
-					carg[j] = '\0';
-					break;
-				case TCHAR:
-					carg[i] = getc(fp);
-					arg[i] = 0;
-					break;
-				case TNONE:
-				default:
-					arg[i] = 0;	/* ? */
-					break;
-				}
-			}
-		}
-
-		switch( c ) {
-		case 's':
-		case 'w':
-		case 'S':
-		case 'W':
-			/* Space commands, do nothing. */
-			break;
-		case 'm':
-		case 'o':
-			/* 2-D move */
-			arg[Z] = 0;
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
-			break;
-		case 'M':
-		case 'O':
-			/* 3-D move */
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
-			break;
-		case 'n':
-		case 'q':
-			/* 2-D draw */
-			arg[Z] = 0;
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
-			break;
-		case 'N':
-		case 'Q':
-			/* 3-D draw */
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
-			break;
-		case 'l':
-		case 'v':
-			/* 2-D line */
-			VSET( a, arg[0], arg[1], 0.0 );
-			VSET( b, arg[2], arg[3], 0.0 );
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE );
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW );
-			break;
-		case 'L':
-		case 'V':
-			/* 3-D line */
-			VSET( a, arg[0], arg[1], arg[2] );
-			VSET( b, arg[3], arg[4], arg[5] );
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE );
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW );
-			break;
-		case 'p':
-		case 'x':
-			/* 2-D point */
-			arg[Z] = 0;
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
-			break;
-		case 'P':
-		case 'X':
-			/* 3-D point */
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
-			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
-			break;
-		case 'C':
-			/* Color */
-			vhead = rt_vlblock_find( vbp,
-				carg[0], carg[1], carg[2] );
-			break;
-		case 't':
-			/* Text string */
-			bn_mat_idn(mat);
-			if( BU_LIST_NON_EMPTY( vhead ) )  {
-				struct bn_vlist *vlp;
-				/* Use coordinates of last op */
-				vlp = BU_LIST_LAST( bn_vlist, vhead );
-				VMOVE( last_pos, vlp->pt[vlp->nused-1] );
-			} else {
-				VSETALL( last_pos, 0 );
-			}
-			bn_vlist_3string( vhead, vbp->free_vlist_hd, carg, last_pos, mat, char_size );
-			break;
-		}
+	       ret = rt_process_uplot_value( vhead,
+					     vbp,
+					     fp,
+					     c,
+					     char_size );
+	       if ( ret )
+		  return(ret);
 	}
+
 	return(0);
 }
 
