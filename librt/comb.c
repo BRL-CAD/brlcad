@@ -31,7 +31,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "db.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -94,7 +96,7 @@ union tree *tree;
 		return( return_str );
 	}
 	else if( tree->tr_op == OP_DB_LEAF ) {
-		return tree->tr_l.tl_name ;
+		return bu_strdup(tree->tr_l.tl_name) ;
 	}
 }
 
@@ -125,6 +127,10 @@ char *argv[];
 	struct rt_comb_internal	*comb;
 	mat_t			identity_mat;
 	int			i;
+	struct bu_vls		file;
+	FILE			*fp;
+
+	bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_COREDUMP;
 
 	if( argc < 3 )
 	{
@@ -133,6 +139,7 @@ char *argv[];
 	}
 
 	mat_idn( identity_mat );
+	bu_vls_init( &file );
 
 	if( (dbip = db_open( argv[1] , "r" ) ) == NULL )
 	{
@@ -162,6 +169,7 @@ char *argv[];
 		}
 
 		RT_CK_DB_INTERNAL( &ip );
+		bu_mem_barriercheck();
 
 		if( ip.idb_type != ID_COMBINATION )
 		{
@@ -202,7 +210,36 @@ char *argv[];
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )
 			rt_log("ERROR: db_ck_v4gift_tree is unhappy\n");
 
+		/* write original external form into a file */
+		bu_vls_printf( &file, "/tmp/%s.a", argv[i] );
+		if( (fp = fopen(bu_vls_addr(&file), "w")) != NULL )  {
+			fwrite( ep.ext_buf, ep.ext_nbytes, 1, fp );
+			fclose(fp);
+		}
+		db_free_external( &ep );
+		bu_vls_free( &file );
+
+		/* Convert internal back to external, and write both to files */
+		bu_vls_printf( &file, "/tmp/%s.b", argv[i] );
+		bu_mem_barriercheck();
+
+		rt_comb_v4_export( &ep, &ip, 1.0 );
+		bu_mem_barriercheck();
+		{
+			union record *rec;
+			rec = (union record *)ep.ext_buf;
+			NAMEMOVE( dp->d_namep, rec->s.s_name );
+		}
+
+		if( (fp = fopen(bu_vls_addr(&file), "w")) != NULL )  {
+			fwrite( ep.ext_buf, ep.ext_nbytes, 1, fp );
+			fclose(fp);
+		}
+		db_free_external( &ep );
+		bu_vls_free( &file );
+
 		/* Test the lumberjacks */
 		rt_comb_ifree( &ip );
+
 	}
 }
