@@ -47,7 +47,7 @@ char	**argv;
 	char		*name;
 	FILE		*fp;
 	int		ret;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	if(argc < 2 || 3 < argc){
 	  struct bu_vls vls;
