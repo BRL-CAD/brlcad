@@ -76,7 +76,7 @@ int argc; char **argv;
 	/* Select Default Filter (low pass) */
 	select_filter( "low" );
 
-	while( argv[1][0] == '-' )  {
+	while( argc > 1 && argv[1][0] == '-' )  {
 		switch( argv[1][1] )  {
 		case 'f':
 			select_filter( argv[2] );

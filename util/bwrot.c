@@ -57,7 +57,7 @@ int argc; char **argv;
 	int	plus90, minus90, reverse, invert;
 
 	/* Check for flags */
-	while( argv[1][0] == '-' )  {
+	while( argc > 1 && argv[1][0] == '-' )  {
 		switch( argv[1][1] )  {
 		case 'f':
 			minus90++;

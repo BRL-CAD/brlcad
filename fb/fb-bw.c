@@ -43,7 +43,7 @@ int argc; char **argv;
 	default_size = 512;
 
 	/* Check for flags */
-	while( argv[1][0] == '-' )  {
+	while( argc > 1 && argv[1][0] == '-' )  {
 		switch( argv[1][1] )  {
 		case 'h':
 			default_size = 1024;
