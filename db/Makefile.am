@@ -8,7 +8,12 @@ G2A=$(top_builddir)/src/conv/g2asc
 # the shell script fu is to cope with gmake vs irix make weirdness...
 # gmake seems to prefix the src with the appropriate srcdir automagically...
 .asc.g:
-	if test -x $(A2G) ; then $(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@ ; else echo "$(A2G) does not exist, no action taken" ; touch $@ ; fi
+	@if test -x $(A2G) ; then \
+		echo $(A2G) $< $@ ; \
+		$(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@ ; \
+	else \
+		echo "$(A2G) does not exist" ; touch $@ ; \
+	fi
 
 MODELS = \
 	axis.asc \
@@ -40,15 +45,13 @@ MODELS = \
 	xmp.asc
 
 EXTRA_DIST = \
-	${DISTCLEANFILES} \
+	${MODELS:asc=g} \
 	${MODELS} \
 	db.php
 
 EXTRA_DATA = ${MODELS:asc=g}
 BUILT_SOURCES = ${MODELS:asc=g}
 
-all-local: ${MODELS:asc=g}
-
-DISTCLEANFILES = ${MODELS:asc=g}
+MOSTLYCLEANFILES = ${MODELS:asc=g}
 
 MAINTAINERCLEANFILES = Makefile.am
