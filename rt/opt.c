@@ -236,6 +236,8 @@ int get_args( int argc, register char **argv )
 							rt_perp_tol = f;
 					}
 				}
+				bu_log("Using tolerance %lg", f);
+				break;
 			}
 		case 'U':
 			use_air = atoi( bu_optarg );
