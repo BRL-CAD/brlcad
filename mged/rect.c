@@ -193,6 +193,9 @@ paint_rect_area()
   int x, y;
   int width, height;
 
+  if(!fbp)
+    return;
+
   get_rect(&x, &y, &width, &height);
 
 #ifdef USE_FRAMEBUFFER
@@ -203,7 +206,13 @@ paint_rect_area()
 void
 rt_rect_area()
 {
+  int xmin, xmax;
+  int ymin, ymax;
+  int width, height;
   struct bu_vls vls;
+
+  if(!fbp)
+    return;
 
   if(NEAR_ZERO(rect_width, (fastf_t)SMALL_FASTF) &&
      NEAR_ZERO(rect_height, (fastf_t)SMALL_FASTF))
@@ -214,13 +223,26 @@ rt_rect_area()
     return;
   }
 
-  bu_vls_init(&vls);
+  get_rect(&xmin, &ymin, &width, &height);
 
-  /*XXX
-   * For now, assume square windows --- eventually want to have rt
-   * raytrace only the specified rectangle.
-   */
-  bu_vls_printf(&vls, "rt -s %d -F %d", dmp->dm_width, mged_variables->port);
+  if(width >= 0){
+    xmax = xmin + width;
+  }else{
+    xmax = xmin;
+    xmin += width;
+  }
+
+  if(height >= 0){
+    ymax = ymin + height;
+  }else{
+    ymax = ymin;
+    ymin += height;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "rt -s %d -F %d -j %d,%d,%d,%d",
+		dmp->dm_width, mged_variables->port,
+		xmin, ymin, xmax, ymax);
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 }
