@@ -2117,181 +2117,176 @@ set_e_axes_pos(both)
 int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
 	      set e_axes_pos and curr_e_axes_pos */
 {
-  int	i;
-  register struct dm_list *dmlp;
+	int	i;
+	register struct dm_list *dmlp;
 
-  update_views = 1;
+	update_views = 1;
 #if 0
-  VMOVE(curr_e_axes_pos, es_keypoint);
+	VMOVE(curr_e_axes_pos, es_keypoint);
 #else
-  switch(es_int.idb_type){
-  case	ID_ARB8:
-  case	ID_ARBN:
-    if(state == ST_O_EDIT)
-      i = 0;
-    else
-      switch(es_edflag){
-      case	STRANS:
-	i = 0;
-	break;
-      case	EARB:
-	switch(es_type){
-	case	ARB5:
-	  i = earb5[es_menu][0];
-	  break;
-	case	ARB6:
-	  i = earb6[es_menu][0];
-	  break;
-	case	ARB7:
-	  i = earb7[es_menu][0];
-	  break;
-	case	ARB8:
-	  i = earb8[es_menu][0];
-	  break;
+	switch (es_int.idb_type) {
+	case	ID_ARB8:
+		if (state == ST_O_EDIT)
+			i = 0;
+		else
+			switch (es_edflag) {
+			case STRANS:
+				i = 0;
+				break;
+			case EARB:
+				switch (es_type) {
+				case ARB5:
+					i = earb5[es_menu][0];
+					break;
+				case ARB6:
+					i = earb6[es_menu][0];
+					break;
+				case ARB7:
+					i = earb7[es_menu][0];
+					break;
+				case ARB8:
+					i = earb8[es_menu][0];
+					break;
+				default:
+					i = 0;
+					break;
+				}
+				break;
+			case PTARB:
+				switch (es_type) {
+				case ARB4:
+					i = es_menu;	/* index for point 1,2,3 or 4 */
+					break;
+				case ARB5:
+				case ARB7:
+					i = 4;	/* index for point 5 */
+					break;
+				case ARB6:
+					i = es_menu;	/* index for point 5 or 6 */
+					break;
+				default:
+					i = 0;
+					break;
+				}
+				break;
+			case ECMD_ARB_MOVE_FACE:
+				switch (es_type) {
+				case ARB4:
+					i = arb_faces[0][es_menu * 4];
+					break;
+				case ARB5:
+					i = arb_faces[1][es_menu * 4];  		
+					break;
+				case ARB6:
+					i = arb_faces[2][es_menu * 4];  		
+					break;
+				case ARB7:
+					i = arb_faces[3][es_menu * 4];  		
+					break;
+				case ARB8:
+					i = arb_faces[4][es_menu * 4];  		
+					break;
+				default:
+					i = 0;
+					break;
+				}
+				break;
+			case ECMD_ARB_ROTATE_FACE:
+				i = fixv;
+				break;
+			default:
+				i = 0;
+				break;
+			}
+
+		MAT4X3PNT(curr_e_axes_pos, es_mat,
+			  ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+		break;
+	case ID_TGC:
+	case ID_REC:
+		if (es_edflag == ECMD_TGC_MV_H ||
+		    es_edflag == ECMD_TGC_MV_HH) {
+			struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
+			point_t tgc_v;
+			vect_t tgc_h;
+
+			MAT4X3PNT(tgc_v, es_mat, tgc->v);
+			MAT4X3VEC(tgc_h, es_mat, tgc->h);
+			VADD2(curr_e_axes_pos, tgc_h, tgc_v);
+		} else
+			VMOVE(curr_e_axes_pos, es_keypoint)
+
+				break;
+	case ID_EXTRUDE:
+		if (es_edflag == ECMD_EXTR_MOV_H) {
+			struct rt_extrude_internal *extr = (struct rt_extrude_internal *)es_int.idb_ptr;
+			point_t extr_v;
+			vect_t extr_h;
+
+			RT_EXTRUDE_CK_MAGIC(extr);
+
+			MAT4X3PNT(extr_v, es_mat, extr->V);
+			MAT4X3VEC(extr_h, es_mat, extr->h);
+			VADD2(curr_e_axes_pos, extr_h, extr_v);
+		} else
+			VMOVE(curr_e_axes_pos, es_keypoint)
+
+				break;
+	case ID_CLINE:
+		if (es_edflag == ECMD_CLINE_MOVE_H) {
+			struct rt_cline_internal *cli = 
+				(struct rt_cline_internal *)es_int.idb_ptr;
+			point_t cli_v;
+			vect_t cli_h;
+
+			RT_CLINE_CK_MAGIC(cli);
+
+			MAT4X3PNT(cli_v, es_mat, cli->v);
+			MAT4X3VEC(cli_h, es_mat, cli->h);
+			VADD2(curr_e_axes_pos, cli_h, cli_v);
+		} else
+			VMOVE(curr_e_axes_pos, es_keypoint)
+				break;
 	default:
-	  i = 0;
-	  break;
+		VMOVE(curr_e_axes_pos, es_keypoint);
+		break;
 	}
-	break;
-      case	PTARB:
-	switch(es_type){
-	case    ARB4:
-	  i = es_menu;	/* index for point 1,2,3 or 4 */
-	  break;
-	case    ARB5:
-	case	ARB7:
-	  i = 4;	/* index for point 5 */
-	  break;
-	case    ARB6:
-	  i = es_menu;	/* index for point 5 or 6 */
-	  break;
-	default:
-	  i = 0;
-	  break;
-	}
-	break;
-      case ECMD_ARB_MOVE_FACE:
-	switch(es_type){
-	case	ARB4:
-	  i = arb_faces[0][es_menu * 4];
-	  break;
-	case	ARB5:
-	  i = arb_faces[1][es_menu * 4];  		
-	  break;
-	case	ARB6:
-	  i = arb_faces[2][es_menu * 4];  		
-	  break;
-	case	ARB7:
-	  i = arb_faces[3][es_menu * 4];  		
-	  break;
-	case	ARB8:
-	  i = arb_faces[4][es_menu * 4];  		
-	  break;
-	default:
-	  i = 0;
-	  break;
-	}
-	break;
-      case ECMD_ARB_ROTATE_FACE:
-	i = fixv;
-	break;
-      default:
-	i = 0;
-	break;
-      }
-
-    MAT4X3PNT(curr_e_axes_pos, es_mat,
-	      ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
-    break;
-  case ID_TGC:
-  case ID_REC:
-    if(es_edflag == ECMD_TGC_MV_H ||
-       es_edflag == ECMD_TGC_MV_HH){
-      struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
-      point_t tgc_v;
-      vect_t tgc_h;
-
-      MAT4X3PNT(tgc_v, es_mat, tgc->v);
-      MAT4X3VEC(tgc_h, es_mat, tgc->h);
-      VADD2(curr_e_axes_pos, tgc_h, tgc_v);
-    }else
-      VMOVE(curr_e_axes_pos, es_keypoint)
-
-    break;
-  case ID_EXTRUDE:
-  	if( es_edflag == ECMD_EXTR_MOV_H )
-  	{
-  		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)es_int.idb_ptr;
-  		point_t extr_v;
-  		vect_t extr_h;
-
-  		RT_EXTRUDE_CK_MAGIC( extr );
-
-  		MAT4X3PNT(extr_v, es_mat, extr->V);
-  		MAT4X3VEC(extr_h, es_mat, extr->h);
-  		VADD2(curr_e_axes_pos, extr_h, extr_v);
-  	}
-  	else
-  		VMOVE(curr_e_axes_pos, es_keypoint)
-
-    break;
-  case ID_CLINE:
-  	if( es_edflag == ECMD_CLINE_MOVE_H )
-  	{
-  		struct rt_cline_internal *cli = 
-  			(struct rt_cline_internal *)es_int.idb_ptr;
-  		point_t cli_v;
-  		vect_t cli_h;
-
-  		RT_CLINE_CK_MAGIC( cli );
-
-  		MAT4X3PNT(cli_v, es_mat, cli->v);
-  		MAT4X3VEC(cli_h, es_mat, cli->h);
-  		VADD2(curr_e_axes_pos, cli_h, cli_v);
-  	}
-  	else
-  		VMOVE(curr_e_axes_pos, es_keypoint)
-    break;
-  default:
-    VMOVE(curr_e_axes_pos, es_keypoint);
-    break;
-  }
 #endif
 
-  if(both){
-    VMOVE(e_axes_pos, curr_e_axes_pos);
+	if (both) {
+		VMOVE(e_axes_pos, curr_e_axes_pos);
 
-    if(EDIT_ROTATE){
-      es_edclass = EDIT_CLASS_ROTATE;
-      VSETALL( edit_absolute_model_rotate, 0.0 );
-      VSETALL( edit_absolute_object_rotate, 0.0 );
-      VSETALL( edit_absolute_view_rotate, 0.0 );
-      VSETALL( last_edit_absolute_model_rotate, 0.0 );
-      VSETALL( last_edit_absolute_object_rotate, 0.0 );
-      VSETALL( last_edit_absolute_view_rotate, 0.0 );
-    }else if(EDIT_TRAN){
-      es_edclass = EDIT_CLASS_TRAN;
-      VSETALL( edit_absolute_model_tran, 0.0 );
-      VSETALL( edit_absolute_view_tran, 0.0 );
-      VSETALL( last_edit_absolute_model_tran, 0.0 );
-      VSETALL( last_edit_absolute_view_tran, 0.0 );
-    }else if(EDIT_SCALE){
-      es_edclass = EDIT_CLASS_SCALE;
+		if (EDIT_ROTATE) {
+			es_edclass = EDIT_CLASS_ROTATE;
+			VSETALL( edit_absolute_model_rotate, 0.0 );
+			VSETALL( edit_absolute_object_rotate, 0.0 );
+			VSETALL( edit_absolute_view_rotate, 0.0 );
+			VSETALL( last_edit_absolute_model_rotate, 0.0 );
+			VSETALL( last_edit_absolute_object_rotate, 0.0 );
+			VSETALL( last_edit_absolute_view_rotate, 0.0 );
+		} else if (EDIT_TRAN) {
+			es_edclass = EDIT_CLASS_TRAN;
+			VSETALL( edit_absolute_model_tran, 0.0 );
+			VSETALL( edit_absolute_view_tran, 0.0 );
+			VSETALL( last_edit_absolute_model_tran, 0.0 );
+			VSETALL( last_edit_absolute_view_tran, 0.0 );
+		} else if (EDIT_SCALE) {
+			es_edclass = EDIT_CLASS_SCALE;
 
-      if(SEDIT_SCALE){
-	edit_absolute_scale = 0.0;
-	acc_sc_sol = 1.0;
-      }
-    }else
-      es_edclass = EDIT_CLASS_NULL;
+			if (SEDIT_SCALE) {
+				edit_absolute_scale = 0.0;
+				acc_sc_sol = 1.0;
+			}
+		} else
+			es_edclass = EDIT_CLASS_NULL;
 
 #if 1
-    MAT_IDN(acc_rot_sol);
+		MAT_IDN(acc_rot_sol);
 #endif
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-      dmlp->dml_mged_variables->mv_transform = 'e';
-  }
+		FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+			dmlp->dml_mged_variables->mv_transform = 'e';
+	}
 }
 
 /*
