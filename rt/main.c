@@ -189,7 +189,7 @@ char **argv;
 
 	/* before view_init */
 	if( outfp == NULL )  outfp = stdout;
-	if( strcmp( outputfile, "-") == 0 )
+	if( outputfile && strcmp( outputfile, "-") == 0 )
 		outputfile = (char *)0;
 
 	/* 
