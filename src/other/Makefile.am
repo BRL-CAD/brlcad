@@ -18,13 +18,6 @@ else !BUILD_PNG
 PNG=
 endif
 
-# this seems to have serious breakage for linux and fbsd
-if IRIX
-TKGLX=libtkGLX
-else !IRIX
-TKGLX=
-endif
-
 if BUILD_JOVE
 JOVEDIR=jove
 else !BUILD_JOVE
