@@ -59,7 +59,8 @@ do
 		echo " "
 		echo "$0 ERROR: Different version of BRL-CAD detected in ${PREFIX},"
 		echo " which is earlier in your search path than ${BINDIR}."
-		echo " Please place ${BINDIR} earlier in your PATH."
+		echo " Please place ${BINDIR} earlier in your PATH,"
+		echo " or change the setting of BRLCAD_ROOT"
 		exit 2
 	fi
 done
