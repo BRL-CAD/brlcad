@@ -737,7 +737,13 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		goto topo;
 	}
 
-	/* This needs to be done every pass:  it changes as edges are cut */
+	/*
+	 *  Construct the ray which contains the line of intersection.
+	 *  This needs to be done every pass:  it changes as edges are cut
+XXX which edge to use?  Or at least, which direction?
+	 *  This needs to be done BEFORE any topology checking,
+	 *  to establish is->pt for later use.
+	 */
 	VMOVE( is->pt, vu1a->v_p->vg_p->coord );		/* 3D line */
 	VSUB2( is->dir, vu1b->v_p->vg_p->coord, is->pt );
 
@@ -1122,6 +1128,8 @@ struct faceuse *fu;
 	NMG_CK_VERTEX(v1mate);
 	NMG_CK_VERTEX_G(v1mate->vg_p);
 
+	if( fu->orientation != OT_SAME )  rt_bomb("nmg_isect_3edge_3face() fu not OT_SAME\n");
+
 	/*
 	 *  Starting vertex does not lie on the face according to topology.
 	 *  Form a ray that starts at one vertex of the edgeuse
@@ -1415,6 +1423,9 @@ struct faceuse	*fu2;
 	NMG_CK_FACE_G(fu2->f_p->fg_p);
 	NMG_CK_FACE_G(fu1->f_p->fg_p);
 
+	if( fu1->orientation != OT_SAME )  rt_bomb("nmg_isect_face3p_face3p() fu1 not OT_SAME\n");
+	if( fu2->orientation != OT_SAME )  rt_bomb("nmg_isect_face3p_face3p() fu2 not OT_SAME\n");
+
 	/* process each face loop in face 1 */
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
@@ -1455,11 +1466,13 @@ struct faceuse	*fu2;
  *  This edge represents a line of intersection, and so a
  *  cutjoin/mesh pass will be needed for each one.
  *
- *  Note that nmg_isect_edge2p_edge2p() completely conducts the
+ *  Note that this routine completely conducts the
  *  intersection operation, so that edges may come and go, loops
  *  may join or split, each time it is called.
  *  This imposes special requirements on handling the march through
  *  the linked lists in this routine.
+ *
+ *  This also means that much of argument "is" is changed each call.
  */
 static void
 nmg_isect_edge2p_face2p( is, eu, fu, eu_fu )
@@ -1481,6 +1494,9 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_edge2p_face2p(eu=x%x, fu=x%x)\n", eu, fu);
+
+	if( fu->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() fu not OT_SAME\n");
+	if( eu_fu->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() eu_fu not OT_SAME\n");
 
 	/*  See if an edge exists in other face that connects these 2 verts */
 	/* XXX This searches whole other shell.  Should be shared w/fu, but... */
@@ -1825,7 +1841,12 @@ nmg_fu_touchingloops(fu2);
 	if ( !V3RPP_OVERLAP_TOL(f2->fg_p->min_pt, f2->fg_p->max_pt,
 	    f1->fg_p->min_pt, f1->fg_p->max_pt, &bs.tol) )  return;
 
-	/* Extents of face1 overlap face2 */
+	/*
+	 *  The extents of face1 overlap the extents of face2.
+	 *  Construct a ray which contains the line of intersection.
+	 *  The start point will be at the edge, and direction isn't
+	 *  important, as the positive part of the ray will cross the faces.
+	 */
 	VMOVE(min_pt, f1->fg_p->min_pt);
 	VMIN(min_pt, f2->fg_p->min_pt);
 	status = rt_isect_2planes( bs.pt, bs.dir, f1->fg_p->N, f2->fg_p->N,
