@@ -372,7 +372,6 @@ namespace eval RtWizard {
 	#
 	# Set up a callback for readable events, and wait!
 	#
-#	fileevent $pipe readable [ itcl::code $this testRead $pipe 
 	fileevent $pipe readable [ list testRead $pipe ]
 	fileevent $pipe writable [ list testWrite $pipe ]
 	vwait ::waiting
@@ -401,7 +400,7 @@ proc testRead {pipe} {
 # TestWrite - pipe fileevent callback
 #
 proc testWrite {pipe} {
-    if [eof $pip] {
+    if [eof $pipe] {
 	set ::waiting "Done"
     }
 }

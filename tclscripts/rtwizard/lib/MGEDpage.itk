@@ -202,7 +202,7 @@ namespace eval RtWizard {
 	    #
 	    # nonlinecolor stuff
 	    #
-	    variable nonLineColor "#666666"
+	    variable nonLineColor "#ffffff"
 	    
 	    # Background Color stuff
 	    variable backgroundColor "#ffffff"
