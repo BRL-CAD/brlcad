@@ -342,7 +342,7 @@ short	count;
 
 		count -= scan_count;
 		xpos = 0;
-		ypos--;		/* LEFTOVER from 1st quadrant days */
+		ypos++;		/* 1st quadrant */
 	}
 	return(ret);
 }
