@@ -111,7 +111,6 @@ struct partition *pp;
 	int dx, dy;
 	int x,y;
 	register long r,g,b;
-	fastf_t f;
 
 	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
 		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
@@ -124,7 +123,7 @@ struct partition *pp;
 	 */
 	if( tp->tx_file[0] == '\0'  ||
 	    ( tp->tx_pixels == (char *)0 && txt_read(tp) == 0 ) )  {
-		VSET( ap->a_color, uv.uv_u*255, 0, uv.uv_v*255 );
+		VSET( ap->a_color, uv.uv_u, 0, uv.uv_v );
 		return(1);
 	}
 	/* u is left->right index, v is line number bottom->top */
@@ -187,6 +186,7 @@ struct partition *pp;
 	    r != (tp->tx_transp[0]) ||
 	    g != (tp->tx_transp[1]) ||
 	    b != (tp->tx_transp[2]) )  {
+		FAST fastf_t f;
 		f = 1.0 / 255.0;
 		VSET( ap->a_color, r * f, g * f, b * f );
 		return(1);
@@ -239,8 +239,8 @@ register struct region *rp;
 }
 
 struct ckr_specific  {
-	char	ckr_a[8];	/* first RGB */
-	char	ckr_b[8];	/* second RGB */
+	unsigned char	ckr_a[8];	/* first RGB */
+	unsigned char	ckr_b[8];	/* second RGB */
 };
 #define CKR_NULL ((struct ckr_specific *)0)
 
@@ -266,7 +266,8 @@ register struct partition *pp;
 	register struct ckr_specific *ckp =
 		(struct ckr_specific *)pp->pt_regionp->reg_udata;
 	auto struct uvcoord uv;
-	register char *cp;
+	register unsigned char *cp;
+	FAST fastf_t f;
 
 	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
 		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
@@ -279,7 +280,8 @@ register struct partition *pp;
 	} else {
 		cp = ckp->ckr_b;
 	}
-	VSET( ap->a_color, cp[0]*255, cp[1]*255, cp[2]*255 );
+	f = 1.0/255.;
+	VSET( ap->a_color, cp[0]*f, cp[1]*f, cp[2]*f );
 }
 
 /*
