@@ -1,0 +1,34 @@
+db title:  Gary Moss's "World on a Platter"         $Header$
+Buffering single scanlines
+initial dynamic memory use=15576.
+GETTREE: 0.1user 0.2sys 0:00real 50% 274i+217d 292maxrss 11+36pf 11+107csw
+
+...................Frame     0...................
+/all.g/light.r{{0}} at (20.1576, -13.526, 5.03474), aimed at (0, 0, -1), angle=180
+PREP: 0.1user 0.0sys 0:00real 86% 369i+249d 313maxrss 1+6pf 1+58csw
+Tree: 6 solids in 6 regions
+Model: X(-50,90), Y(-70,70), Z(-24,63)
+View: 35 azimuth, 25 elevation off of front view
+Size: 157.203mm
+Grid: (0.307036, 0.307036) mm, (512, 512) pixels
+Beam: radius=0.153518 mm, divergence=0 mm/1mm
+Priority changed from 0 to 10
+Output file is 'moss.pix'
+
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+SHOT: 2666.6user 150.2sys 49:59real 93% 392i+312d 359maxrss 1+36pf 42+348587csw
+Additional dynamic memory used=49288. bytes
+519021 solid/ray intersections: 334538 hits + 184483 miss
+pruned 64.5%:  51533 model RPP, 447815 dups skipped, 225454 solid RPP
+Frame     0:   262144 pixels in    2666.64 sec =      98.30 pixels/sec
+Frame     0:   343042 rays   in    2666.64 sec =     128.64 rays/sec (RTFM)
+
+     3001.9 real      2667.1 user       151.0 sys  

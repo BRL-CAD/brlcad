@@ -1,0 +1,39 @@
+db title:  Colorful version of the Moss World 
+Buffering single scanlines
+initial dynamic memory use=16576.
+GETTREE: 0.1user 0.1sys 0:00real 80% 106i+223d 191maxrss 2+47pf 2+111csw
+
+...................Frame     0...................
+/all.g/light.r{{0}} at (20.1576, -13.526, 5.03474), aimed at (0, 0, -1), angle=180
+PREP: 0.2user 0.1sys 0:00real 100% 157i+264d 216maxrss 0+9pf 0+145csw
+Tree: 8 solids in 7 regions
+Model: X(-500,500), Y(-500,500), Z(-500,500)
+View: 35 azimuth, 25 elevation off of front view
+Size: 157.203mm
+Grid: (0.307036, 0.307036) mm, (512, 512) pixels
+Beam: radius=0.153518 mm, divergence=0 mm/1mm
+Priority changed from 0 to 10
+Output file is 'world.pix'
+
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+rt: cubic() Floating Point Error
+SHOT: 8049.6user 402.4sys 2:37:11real 89% 250i+339d 303maxrss 3+48pf 181+519101csw
+Additional dynamic memory used=57712. bytes
+1513279 solid/ray intersections: 1331126 hits + 182153 miss
+pruned 88.0%:  0 model RPP, 4417762 dups skipped, 200838 solid RPP
+Frame     0:   262144 pixels in    8049.60 sec =      32.57 pixels/sec
+Frame     0:   438451 rays   in    8049.60 sec =      54.47 rays/sec (RTFM)
+
+     9433.5 real      8050.2 user       403.1 sys  

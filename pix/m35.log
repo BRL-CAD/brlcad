@@ -1,0 +1,36 @@
+db title:  M35   2 1/2 ton truck
+Buffering single scanlines
+initial dynamic memory use=907424.
+Warning:  region /all.g/component/bed/r906{{1}}/r916{{0}} below region /all.g/component/bed/r906{{0}}, ignored
+Warning:  region /all.g/component/bed/r908{{1}}/r916{{0}} below region /all.g/component/bed/r908{{0}}, ignored
+Warning:  region /all.g/component/bed/r908{{1}}/r914{{0}} below region /all.g/component/bed/r908{{0}}, ignored
+Warning:  region /all.g/component/bed/r908{{1}}/r914{{0}}/r906{{1}} below region /all.g/component/bed/r908{{0}}, ignored
+Warning:  region /all.g/component/bed/r908{{1}}/r914{{0}}/r906{{1}}/r916{{0}} below region /all.g/component/bed/r908{{0}}, ignored
+Warning:  region /all.g/component/bed/r914{{1}}/r906{{1}} below region /all.g/component/bed/r914{{0}}, ignored
+Warning:  region /all.g/component/bed/r914{{1}}/r906{{1}}/r916{{0}} below region /all.g/component/bed/r914{{0}}, ignored
+Warning:  region /all.g/component/frame/r532{{1}}/r506{{0}} below region /all.g/component/frame/r532{{0}}, ignored
+Warning:  region /all.g/component/frame/r532{{1}}/r506{{0}}/r567{{0}} below region /all.g/component/frame/r532{{0}}, ignored
+Warning:  region /all.g/component/frame/r506{{1}}/r567{{0}} below region /all.g/component/frame/r506{{0}}, ignored
+GETTREE: 65.8user 13.8sys 1:27real 91% 134i+3424d 2335maxrss 3+51pf 3+13940csw
+
+...................Frame     0...................
+/all.g/light2{{0}} at (-1088.72, -2291.44, 5223.76), aimed at (0, 0, -1), angle=45
+/all.g/light1{{0}} at (4800, 1300, 2600), aimed at (-0.855372, -0.231663, -0.463326), angle=180
+PREP: 14.4user 4.7sys 0:20real 92% 170i+5245d 2962maxrss 0+8pf 0+5076csw
+Tree: 1126 solids in 893 regions
+Model: X(-1828,4893), Y(-2302,1311), Z(-48,5234)
+View: 33.0779 azimuth, 35.7436 elevation off of front view
+Size: 6787.39mm
+Grid: (13.2566, 13.2566) mm, (512, 512) pixels
+Beam: radius=6.62831 mm, divergence=0 mm/1mm
+Priority changed from 0 to 10
+Output file is 'm35.pix'
+
+SHOT: 13362.6user 206.4sys 3:46:31real 99% 260i+-486d 3054maxrss 0+40pf 145+394708csw
+Additional dynamic memory used=1985264. bytes
+6387133 solid/ray intersections: 2000300 hits + 4386833 miss
+pruned 31.3%:  0 model RPP, 3435359 dups skipped, 963693 solid RPP
+Frame     0:   262144 pixels in   13362.68 sec =      19.62 pixels/sec
+Frame     0:   654979 rays   in   13362.68 sec =      49.02 rays/sec (RTFM)
+
+    13728.7 real     13456.5 user       236.6 sys  

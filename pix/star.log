@@ -1,0 +1,37 @@
+db title:  The Enterprise and Shuttlecraft 
+Buffering single scanlines
+initial dynamic memory use=94160.
+GETTREE: 3.5user 1.0sys 0:05real 80% 228i+498d 424maxrss 1+12pf 1+1231csw
+
+...................Frame     0...................
+/all/light.r{{0}} at (275000, 150000, 15000), aimed at (0, 0, -1), angle=180
+PREP: 0.5user 0.2sys 0:00real 87% 228i+647d 448maxrss 0+1pf 0+288csw
+Tree: 113 solids in 72 regions
+Model: X(-1e+07,1e+07), Y(-1e+07,1e+07), Z(-1e+07,1e+07)
+View: 58.1641 azimuth, -21.8449 elevation off of front view
+Size: 250000mm
+Grid: (488.281, 488.281) mm, (512, 512) pixels
+Beam: radius=244.141 mm, divergence=0 mm/1mm
+Priority changed from 19 to 19
+Output file is 'star.pix'
+
+OVERLAP1: reg=/all/ncc1701/secondary_hull/r30{{0}} isol=s29
+OVERLAP2: reg=/all/ncc1701/secondary_hull/r29{{0}} osol=s30
+OVERLAP depth 0.0107686mm at (177196,8470.39,49342.8) x223 y245 lvl0
+OVERLAP1: reg=/all/ncc1701/secondary_hull/r30{{0}} isol=s29
+OVERLAP2: reg=/all/ncc1701/secondary_hull/r29{{0}} osol=s30
+OVERLAP depth 0.0107686mm at (177196,8470.39,49342.8) x223 y245 lvl0
+OVERLAP1: reg=/all/ncc1701/primary_hull/r52{{0}} isol=s52
+OVERLAP2: reg=/all/ncc1701/primary_hull/r51{{0}} osol=s51
+OVERLAP depth 0.00388968mm at (282371,-19884.5,70186.9) x60 y397 lvl0
+OVERLAP1: reg=/all/ncc1701/primary_hull/r52{{0}} isol=s52
+OVERLAP2: reg=/all/ncc1701/primary_hull/r51{{0}} osol=s51
+OVERLAP depth 0.00388968mm at (282371,-19884.5,70186.9) x60 y397 lvl0
+SHOT: 6907.9user 67.3sys 1:55:47real 100% 248i+731d 491maxrss 0+15pf 151+63182csw
+Additional dynamic memory used=183040. bytes
+2403457 solid/ray intersections: 915442 hits + 1488015 miss
+pruned 38.1%:  0 model RPP, 3781269 dups skipped, 3015188 solid RPP
+Frame     0:   262144 pixels in    6907.90 sec =      37.95 pixels/sec
+Frame     0:   312052 rays   in    6907.90 sec =      45.17 rays/sec (RTFM)
+
+     6960.1 real      6913.2 user        69.9 sys  

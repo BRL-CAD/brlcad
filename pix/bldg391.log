@@ -1,0 +1,25 @@
+db title:  Building 391, with mirrored floors
+Buffering single scanlines
+initial dynamic memory use=159168.
+GETTREE: 5.3user 1.7sys 0:08real 83% 98i+680d 485maxrss 1+31pf 1+1717csw
+
+...................Frame     0...................
+/all.g/light.r{{0}} at (170.411, 474.302, 731.39), aimed at (0, 0, -1), angle=180
+PREP: 1.4user 0.6sys 0:03real 63% 137i+908d 550maxrss 0+10pf 0+626csw
+Tree: 203 solids in 68 regions
+Model: X(-2100,1900), Y(-1600,2400), Z(-2000,2000)
+View: 35 azimuth, 25 elevation off of front view
+Size: 1800mm
+Grid: (3.51563, 3.51563) mm, (512, 512) pixels
+Beam: radius=1.75781 mm, divergence=0 mm/1mm
+Priority changed from 0 to 10
+Output file is 'bldg391.pix'
+
+SHOT: 8472.0user 115.8sys 2:27:03real 97% 210i+1017d 615maxrss 0+34pf 148+72451csw
+Additional dynamic memory used=267632. bytes
+3236237 solid/ray intersections: 1352451 hits + 1883786 miss
+pruned 41.8%:  0 model RPP, 8065373 dups skipped, 176569 solid RPP
+Frame     0:   262144 pixels in    8472.03 sec =      30.94 pixels/sec
+Frame     0:   341874 rays   in    8472.03 sec =      40.35 rays/sec (RTFM)
+
+     8841.3 real      8481.3 user       120.2 sys  
