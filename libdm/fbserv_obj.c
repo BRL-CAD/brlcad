@@ -249,7 +249,6 @@ int mask;
   struct fbserv_client *fbscp = (struct fbserv_client *)clientData;
   struct fbserv_obj *fbsp = fbscp->fbsc_fbsp;
   int fd = fbscp->fbsc_fd;
-  int npp;			/* number of processed packages */
 
   curr_fbp = fbsp->fbs_fbp;
 
@@ -257,7 +256,7 @@ int mask;
     if (fbsp->fbs_clients[i].fbsc_fd == 0)
       continue;
 
-    if ((npp = pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
+    if ((pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
       bu_log("pkg_process error encountered (1)\n");
 
 #if 0
@@ -275,7 +274,7 @@ int mask;
       continue;
     }
 
-    if ((npp = pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
+    if ((pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
       bu_log("pkg_process error encountered (2)\n");
 
 #if 0

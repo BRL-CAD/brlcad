@@ -94,7 +94,6 @@ int store;
   int i;
   int r, g, b;
   int incr;  /* increment */
-  int cs; /* cube size */
 
   /*
    * Copy default colors below cmap_base to private colormap to help
