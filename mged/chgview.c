@@ -946,6 +946,53 @@ char	**argv;
     return TCL_ERROR;
 
   setview( 270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]) );
+
+  return TCL_OK;
+}
+
+/* set view using azimuth, elevation and twist angles */
+int
+f_aetview(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  int iflag = 0;
+  fastf_t o_twist;
+  fastf_t twist;
+  char *av[5];
+  struct bu_vls vls;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  /* Check for -i option */
+  if(argv[1][0] == '-' && argv[1][1] == 'i'){
+    iflag = 1;  /* treat arguments as incremental values */
+    ++argv;
+  }
+
+  bu_vls_init(&vls);
+  o_twist = curr_dm_list->s_info->twist;
+  twist = atof(argv[3]);
+  av[0] = "vrot";
+  av[1] = "0.0";
+  av[2] = "0.0";
+
+  if(iflag){
+    setview( 270.0 + atof(argv[2]) + curr_dm_list->s_info->elevation,
+	     0.0,
+	     270.0 - atof(argv[1]) - curr_dm_list->s_info->azimuth);
+    bu_vls_printf(&vls, "%f", -o_twist - twist);
+  }else{
+    setview( 270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]) );
+    bu_vls_printf(&vls, "%f", -twist);
+  }
+
+  av[3] = bu_vls_addr(&vls);
+  (void)f_vrot(clientData, interp, 4, av);
+  bu_vls_free(&vls);
   return TCL_OK;
 }
 
@@ -1294,8 +1341,8 @@ char	**argv;
   int iknob = 0;
   int do_tran = 0;
 
-  if(strstr(argv[0], "iknob"))
-    iknob = 1;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
   /* print the current values */
   if(argc == 1){
@@ -1336,7 +1383,14 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  for(argc -= 1, ++argv; argc; --argc, ++argv){
+  /* Check for -i option */
+  if(argv[1][0] == '-' && argv[1][1] == 'i'){
+    iknob = 1;  /* treat arguments as incremental values */
+    ++argv;
+    --argc;
+  }
+
+  for(--argc, ++argv; argc; --argc, ++argv){
     cmd = *argv;
     
     if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
@@ -1434,13 +1488,14 @@ char	**argv;
 		    }
 		  }else{
 		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      absolute_rotate[X] = f;
 		      (void)irot((absolute_rotate[X])*180.0,
 				 absolute_rotate[Y]*180.0,
 				 absolute_rotate[Z]*180.0);
 		    }else {
-		    (void)irot((f - absolute_rotate[X])*180.0, 0.0, 0.0);
+		      (void)irot((f - absolute_rotate[X])*180.0, 0.0, 0.0);
+		      absolute_rotate[X] = f;
 		    }
-		    absolute_rotate[X] = f;
 		  }
 
 		  /* wrap around */
@@ -1463,13 +1518,14 @@ char	**argv;
 		    }
 		  }else{
 		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      absolute_rotate[Y] = f;
 		      (void)irot(absolute_rotate[X]*180.0,
 				 (absolute_rotate[Y])*180.0,
 				 absolute_rotate[Z]*180.0);
 		    }else {
 		      (void)irot(0.0, (f - absolute_rotate[Y])*180.0, 0.0);
+		      absolute_rotate[Y] = f;
 		    }
-		    absolute_rotate[Y] = f;
 		  }
 
 		  /* wrap around */
@@ -1492,13 +1548,14 @@ char	**argv;
 		    }
 		  }else{
 		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      absolute_rotate[Z] = f;
 		      (void)irot(absolute_rotate[X]*180.0,
 				 absolute_rotate[Y]*180.0,
 				 (absolute_rotate[Z])*180.0);
 		    }else {
 		      (void)irot(0.0, 0.0, (f - absolute_rotate[Z])*180.0);
+		      absolute_rotate[Z] = f;
 		    }
-		    absolute_rotate[Z] = f;
 		  }
 
 		  /* wrap around */
