@@ -37,11 +37,11 @@ initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
 
 start ( ) {
     
-
+#
 # these should be the brlcad "database" names that are used to create geometry in a geometry editor
+#
 PRIMITIVES="arb arbn arg bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc tor vol xxx"
 VER="4 5"
-
 
 #
 # Start of Primitive Arguments
