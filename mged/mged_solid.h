@@ -23,7 +23,7 @@ struct solid  {
 	fastf_t	s_size;		/* Distance across solid, in model space */
 	fastf_t	s_csize;	/* Dist across clipped solid (model space) */
 	vect_t	s_center;	/* Center point of solid, in model space */
-	unsigned s_addr;	/* Display processor's core address */
+	unsigned long s_addr;	/* Display processor's core address */
 	unsigned s_bytes;	/* Display processor's core length */
 	struct vlist *s_vlist;/* Pointer to unclipped vector list */
 	int	s_vlen;		/* Len of unclipped vector list (structs) */
@@ -49,12 +49,7 @@ extern int		ndrawn;
 
 #define GET_SOLID(p)    {  \
 	if( ((p)=FreeSolid) == SOLID_NULL )  { \
-		if( (p = (struct solid *)malloc(sizeof(struct solid))) == SOLID_NULL )  {\
-			(void)printf("GET_SOLID( p ): malloc failed\n"); \
-			no_memory = 2; \
-		} else { \
-			bzero( (char *)p, sizeof(struct solid) ); \
-		} \
+		p = (struct solid *)rt_calloc(1,sizeof(struct solid),"struct solid"); \
 	} else { \
 		FreeSolid = (p)->s_forw; \
 	} }
