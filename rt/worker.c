@@ -36,6 +36,14 @@ static const char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "rtprivate.h"
 #include "fb.h"					/* Added because RGBpixel is now needed in do_pixel() */
 
+/* for fork/pipe linux timing hack */
+#if defined(linux)
+#  include <sys/select.h>
+#  include <sys/types.h>
+#  include <sys/wait.h>
+#  include <unistd.h>
+#endif
+
 
 int		per_processor_chunk = 0;	/* how many pixels to do at once */
 
@@ -204,6 +212,7 @@ grid_setup()
 	}
 }
 
+
 /*
  *			D O _ R U N
  *
@@ -218,6 +227,23 @@ void do_run( int a, int b )
 	cur_pixel = a;
 	last_pixel = b;
 
+#  if defined(linux)
+	int pid, wpid;
+	int waitret;
+	int p[2];
+	void *buffer;
+
+	buffer = calloc(npsw, sizeof(resource[0]));
+	if (buffer == NULL) {
+		perror("calloc failed");
+		bu_bomb("Unable to allocate memory");
+	}
+	if (pipe(p) == -1) {
+		perror("pipe failed");
+	}
+#  endif
+
+
 	if( !rt_g.rtg_parallel )  {
 		/*
 		 * SERIAL case -- one CPU does all the work.
@@ -228,12 +254,61 @@ void do_run( int a, int b )
 		/*
 		 *  Parallel case.
 		 */
-		bu_parallel( worker, npsw, NULL );
-	}
+
+		/* hack to bypass a bug in the Linux 2.4 kernel pthreads
+		 * implementation. cpu statistics are only traceable on a
+		 * process level and the timers will report effectively no
+		 * elapsed cpu time.  this allows the stats of all threads
+		 * to be gathered up by an encompassing process that may
+		 * be timed.
+		 *
+		 * XXX this should somehow only apply to a build on a 2.4
+		 * linux kernel.
+		 */
+#  if defined(linux)
+		pid = fork();
+		if (pid < 0) {
+			perror("fork failed");
+			exit(1);
+		} else if (pid == 0) {
+#  endif
+
+			bu_parallel( worker, npsw, NULL );
+
+#  if defined(linux)
+			/* send raytrace instance data back to the parent */
+			if (write(p[1], resource, sizeof(resource[0]) * npsw) == -1) {
+				perror("Unable to write to the communication pipe");
+				exit(1);
+			}
+			/* flush the pipe */
+			if (close(p[1]) == -1) {
+			  	perror("Unable to close the communication pipe");
+			  	sleep(1); /* give the parent time to read */
+			}
+			exit(0); 
+		} else {
+			if (read(p[0], buffer, sizeof(resource[0]) * npsw) == -1) {
+				perror("Unable to read from the communication pipe");
+			}
+			/* obliterate the raytrace instance pointer with what
+			 * the child left us with.
+			 */
+			memcpy(resource, buffer, sizeof(resource[0]) * npsw);
+			/* parent ends up waiting on his child (and his child's threads) to
+			 * terminate.  we can get valid usage statistics on a child process.
+			 */
+			while ((wpid = wait(&waitret)) != pid && wpid != -1)
+				; /* do nothing */
+		} /* end fork() */
+#  endif
+
+	} /* end parallel case */
+
 
 	/* Tally up the statistics */
-	for( cpu=0; cpu < npsw; cpu++ )  {
-		if( resource[cpu].re_magic != RESOURCE_MAGIC )  {
+	for ( cpu=0; cpu < npsw; cpu++ ) {
+		if ( resource[cpu].re_magic != RESOURCE_MAGIC )  {
 			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 			continue;
 		}
