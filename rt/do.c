@@ -359,55 +359,12 @@ cm_anim( argc, argv )
 int	argc;
 char	**argv;
 {
-	struct rt_i *rtip = ap.a_rt_i;
-	struct animate *anp;
-	struct directory **dir;
-	int i;
-	int	at_root = 0;
 
-	if( argv[1][0] == '/' )
-		at_root = 1;
-	if( (i = rt_plookup( rtip, &dir, argv[1], LOOKUP_NOISY )) <= 0 )
-		return(-1);		/* error */
-	if( i > 1 )
-		at_root = 0;
-
-	GETSTRUCT( anp, animate );
-	anp->an_path = dir;
-	anp->an_pathlen = i;
-
-	if( strcmp( argv[2], "matrix" ) == 0 )  {
-		anp->an_type = AN_MATRIX;
-		if( strcmp( argv[3], "rstack" ) == 0 )
-			anp->an_u.anu_m.anm_op = ANM_RSTACK;
-		else if( strcmp( argv[3], "rarc" ) == 0 )
-			anp->an_u.anu_m.anm_op = ANM_RARC;
-		else if( strcmp( argv[3], "lmul" ) == 0 )
-			anp->an_u.anu_m.anm_op = ANM_LMUL;
-		else if( strcmp( argv[3], "rmul" ) == 0 )
-			anp->an_u.anu_m.anm_op = ANM_RMUL;
-		else if( strcmp( argv[3], "rboth" ) == 0 )
-			anp->an_u.anu_m.anm_op = ANM_RBOTH;
-		else  {
-			fprintf(stderr,"cm_anim:  Matrix op %s unknown\n",
-				argv[3]);
-			goto bad;
-		}
-		for( i=0; i<16; i++ )
-			anp->an_u.anu_m.anm_mat[i] = atof( argv[i+4] );
-	} else {
-		fprintf(stderr,"cm_anim:  type %s unknown\n", argv[2]);
-		goto bad;
-	}
-	if( db_add_anim( rtip->rti_dbip, anp, at_root ) < 0 )  {
-		fprintf(stderr,"cm_anim:  %s %s failed\n", argv[1], argv[2]);
-		goto bad;
+	if( db_parse_anim( ap.a_rt_i->rti_dbip, argc, argv ) < 0 )  {
+		rt_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
+		return(-1);		/* BAD */
 	}
 	return(0);
-bad:
-	rt_free( (char *)dir, "directory []");
-	rt_free( (char *)anp, "animate");
-	return(-1);		/* BAD */
 }
 
 /*
