@@ -1693,6 +1693,49 @@ extern int bu_tcl_units_conversion();
 extern void bu_tcl_setup();
 extern int Bu_Init();
 
+/* lex.c */
+#define BU_LEX_ANY	0	/* pseudo type */
+struct bu_lex_t_int {
+	int type;
+	int value;
+};
+#define BU_LEX_INT	1
+struct bu_lex_t_dbl {
+	int	type;
+	double	value;
+};
+#define BU_LEX_DOUBLE	2
+struct bu_lex_t_key {
+	int	type;
+	int	value;
+};
+#define BU_LEX_SYMBOL	3
+#define BU_LEX_KEYWORD	4
+struct bu_lex_t_id {
+	int	type;
+	char 	*value;
+};
+#define BU_LEX_IDENT	5
+#define BU_LEX_NUMBER	6	/* Pseudo type */
+union bu_lex_token {
+	int			type;
+	struct	bu_lex_t_int	t_int;
+	struct	bu_lex_t_dbl	t_dbl;
+	struct	bu_lex_t_key	t_key;
+	struct	bu_lex_t_id	t_id;
+};
+struct bu_lex_key {
+	int	tok_val;
+	char	*string;
+};
+#define BU_LEX_NEED_MORE	0
+
+int bu_lex(
+	union bu_lex_token *token,
+	struct bu_vls *rtstr,
+	struct bu_lex_key *keywords,
+	struct bu_lex_key *symbols);
+
 
 #ifdef __cplusplus
 }

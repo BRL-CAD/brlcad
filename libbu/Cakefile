@@ -19,7 +19,7 @@
 	rb_create rb_delete rb_diag rb_extreme	\
 	rb_free rb_insert rb_order_stats	\
 	rb_rotate rb_search rb_walk		\
-	vfont brlcad_path xdr \
+	vfont brlcad_path xdr lex \
 	vls htond htonf units bu_tcl color cmd \
 	cmdhist cmdhist_obj observer avs hook
 
