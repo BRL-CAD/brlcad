@@ -1050,7 +1050,11 @@ int	non_blocking;
 	
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     } else {
+      /* Wait for an event, then handle it */
       Tcl_DoOneEvent(TCL_ALL_EVENTS);
+
+      /* Handle any other events in the queue */
+      while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     }
     
     non_blocking = 0;
