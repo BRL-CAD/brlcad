@@ -517,7 +517,7 @@ leave:
 		return 1;
 	}
 #if 0
-	if (abs(k1st) < abs(k2nd)) {
+	if (fabs(k1st) < fabs(k2nd)) {
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1st;
 		VMOVE(hitp->hit_normal, tri_wn1st);
@@ -539,6 +539,8 @@ leave:
 	VUNITIZE(hitp->hit_normal);
 	hitp->hit_surfno = yCell*hfp->hf_w+xCell;
 	hitp++;
+
+	if (fabs(k1st-k2nd) < SMALL_FASTF) return 1;
 
 	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k2nd;
@@ -776,31 +778,41 @@ bzero(hits,sizeof(hits));
 /*		allDist[allIndex] = s = dxbdn/dn; */
 		if (rt_g.debug & DEBUG_HF) {
 			VPRINT("hf: Plane Equation", peqn);
-			bu_log("hf: dn=%g, dxbdn=%g, s=%g\n", dn, dxbdn, dxbdn/dn);
+			bu_log("hf: dn=%g, dxbdn=%g, ", dn, dxbdn);
 		}
 
 		if (dn < -SQRT_SMALL_FASTF) {		/* Leaving */
-			s = dxbdn/dn;
+			allDist[allIndex] = s = dxbdn/dn;
+			if (rt_g.debug & DEBUG_HF) {
+				bu_log("s=%g\n", s);
+			}
 			if ( out > s ) {
-				allDist[allIndex] = out = s;
+				out = s;
 				oplane = j;
 			}
 		} else if (dn > SQRT_SMALL_FASTF) {	/* entering */
-			s = dxbdn/dn;
+			allDist[allIndex] = s = dxbdn/dn;
+			if (rt_g.debug & DEBUG_HF) {
+				bu_log("s=%g\n", s);
+			}
 			if ( in < s ) {
-				allDist[allIndex] = in = s;
+				in = s;
 				iplane = j;
 			}
-		} else {				/* Parallel */
+		} else {
 			/*
 			 * if the ray is outside the solid, then this
 			 * is a miss.
 			 */
+			if (rt_g.debug & DEBUG_HF) {
+				bu_log("s=DIVIDE_BY_ZERO\n");
+			}
 			if ( dxbdn > SQRT_SMALL_FASTF) {
 				return 0; /* MISS */
 			}
+			allDist[allIndex] = INFINITY;
 		}
-		if ( in > out ) {
+		if ( in > out) {
 			if (rt_g.debug & DEBUG_HF) {
 				bu_log("rt_hf_shoot(%s): in(%g) > out(%g)\n",
 				    stp->st_name, in, out);
@@ -815,7 +827,7 @@ bzero(hits,sizeof(hits));
 		return 0;	/* MISS */
 	}
 
-	if ( in >= out || out >= INFINITY ) {
+	if ( fabs(in-out) < SMALL_FASTF  || out >= INFINITY ) {
 		if (rt_g.debug & DEBUG_HF) {
 			bu_log("rt_hf_shoot(%s): in(%g) >= out(%g) || out >= INFINITY\n",
 			    stp->st_name, in, out);
@@ -834,7 +846,8 @@ bzero(hits,sizeof(hits));
 	yWidth = hf->hf_Ylen/((double)(hf->hf_n-1));
 
 	if (rt_g.debug & DEBUG_HF) {
-		bu_log("hf: xWidth=%g, yWidth=%g\n", xWidth, yWidth);
+		bu_log("hf: xWidth=%g, yWidth=%g, in=%g, out=%g\n", xWidth,
+		       yWidth, in, out);
 	}
 
 
@@ -865,9 +878,12 @@ bzero(hits,sizeof(hits));
 		VUNITIZE(tmp);
 		cosine = VDOT(tmp, hf->hf_X);
 	}
-	if (abs(cosine) < SMALL_FASTF) {	/* near enough to Z */
+	if (fabs(cosine) < SMALL_FASTF) {	/* near enough to Z */
 		vect_t tmp;
 		int xCell, yCell, r;
+		if (rt_g.debug & DEBUG_HF) {
+			bu_log("hf: Vertical shoot\n");
+		}
 		VSUB2(tmp, rp->r_pt, hf->hf_V);
 		xCell = tmp[X]/hf->hf_Xlen*hf->hf_w;
 		yCell = tmp[Y]/hf->hf_Ylen*hf->hf_n;
@@ -1424,8 +1440,8 @@ skip_2nd:
 		hits[nhits] = hits[nhits-1];	/* struct copy*/
 		VREVERSE(hits[nhits].hit_normal, hits[nhits-1].hit_normal);
 		nhits++;
-		if (nerrors++ < 6 ) {
-			bu_log("rt_hf_shot(%s): %d hits: ", stp->st_name, nhits-1);
+		if (nerrors++ < 300 ) {
+			bu_log("rt_hf_shot(%s): %d hit(s)@ %d %d: ", stp->st_name, nhits-1,ap->a_x, ap->a_y);
 			for(i=0; i< nhits; i++) {
 				bu_log("%f(%d), ",hits[i].hit_dist,hits[i].hit_surfno);
 			}
