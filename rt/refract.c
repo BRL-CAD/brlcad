@@ -88,6 +88,7 @@ char		*dp;
 		 * but something better might be done.
 		 */
 		VMOVE( swp->sw_color, swp->sw_basecolor );
+		ap->a_cumlen += pp->pt_inhit->hit_dist;
 		goto finish;
 	}
 	VMOVE( filter_color, swp->sw_basecolor );
