@@ -1542,6 +1542,8 @@ int free;
 		eop = (struct rt_extrude_internal *)bu_malloc( sizeof( struct rt_extrude_internal ), "eop" );
 		eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 		op->idb_ptr = (genptr_t)eop;
+		op->idb_meth = &rt_functab[ID_EXTRUDE];
+		op->idb_type = ID_EXTRUDE;
 	}
 	else
 		eop = (struct rt_extrude_internal *)ip->idb_ptr;
