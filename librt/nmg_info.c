@@ -446,12 +446,12 @@ CONST struct rt_list	*fu_hd;
 }
 
 /*
- *			N M G _ E U _ W I T H _ V U _ I N _ L U
+ *			N M G _ F I N D _ E U _ W I T H _ V U _ I N _ L U
  *
  *  Find an edgeuse starting at a given vertexuse within a loop(use).
  */
 struct edgeuse *
-nmg_eu_with_vu_in_lu( lu, vu )
+nmg_find_eu_with_vu_in_lu( lu, vu )
 CONST struct loopuse		*lu;
 CONST struct vertexuse	*vu;
 {
@@ -460,12 +460,12 @@ CONST struct vertexuse	*vu;
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_VERTEXUSE(vu);
 	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
-		rt_bomb("nmg_eu_with_vu_in_lu: loop has no edges!\n");
+		rt_bomb("nmg_find_eu_with_vu_in_lu: loop has no edges!\n");
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 		NMG_CK_EDGEUSE(eu);
 		if( eu->vu_p == vu )  return eu;
 	}
-	rt_bomb("nmg_eu_with_vu_in_lu:  Unable to find vu!\n");
+	rt_bomb("nmg_find_eu_with_vu_in_lu:  Unable to find vu!\n");
 	/* NOTREACHED */
 	return((struct edgeuse *)NULL);
 }

@@ -321,7 +321,7 @@ int			in;	/* 1 = inbound edge, 0 = outbound edge */
 	 *  Compute the angle
 	 */
 	lu = nmg_lu_of_vu(vu);
-	this_eu = nmg_eu_with_vu_in_lu( lu, vu );
+	this_eu = nmg_find_eu_with_vu_in_lu( lu, vu );
 	prev_eu = this_eu;
 	do {
 		prev_eu = in ? RT_LIST_PLAST_CIRC( edgeuse, prev_eu ) :
@@ -504,7 +504,7 @@ int			pos;
 	}
 	if( (lu = nmg_lu_of_vu(vu)) == (struct loopuse *)0 )
 		rt_bomb("nmg_assess_vu: no lu\n");
-	this_eu = nmg_eu_with_vu_in_lu( lu, vu );
+	this_eu = nmg_find_eu_with_vu_in_lu( lu, vu );
 	prev_ass = nmg_assess_eu( this_eu, 0, rs, pos );
 	next_ass = nmg_assess_eu( this_eu, 1, rs, pos );
 	ass = NMG_V_COMB( prev_ass, next_ass );
@@ -952,7 +952,7 @@ int				ass;
 	vu = vsp->vu;
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_LOOPUSE(lu);
-	this_eu = nmg_eu_with_vu_in_lu( lu, vu );
+	this_eu = nmg_find_eu_with_vu_in_lu( lu, vu );
 
 	/* First, consider the edge inbound into this vertex */
 	this = NMG_V_ASSESSMENT_PREV(ass);
@@ -1145,7 +1145,7 @@ got_loop:
 
 		if( ls[l].n_vu_in_loop <= 1 )  continue;
 
-		first_eu = nmg_eu_with_vu_in_lu( ls[l].lu, ls[l].min_vu );
+		first_eu = nmg_find_eu_with_vu_in_lu( ls[l].lu, ls[l].min_vu );
 		eu = first_eu;
 		do {
 			register struct vertexuse *vu = eu->vu_p;
@@ -1818,7 +1818,7 @@ int			other_rs_state;
 	 *  to use the edge_g structure of the intersection line (ray).
 	 */
 	if( NMG_V_ASSESSMENT_PREV(assessment) == NMG_E_ASSESSMENT_ON_REV )  {
-		eu = nmg_eu_with_vu_in_lu( nmg_lu_of_vu(vu), vu );
+		eu = nmg_find_eu_with_vu_in_lu( nmg_lu_of_vu(vu), vu );
 		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
 		NMG_CK_EDGEUSE(eu);
 		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
@@ -1827,7 +1827,7 @@ rt_log("force prev eu to ray\n");
 		}
 	}
 	if( NMG_V_ASSESSMENT_NEXT(assessment) == NMG_E_ASSESSMENT_ON_FORW )  {
-		eu = nmg_eu_with_vu_in_lu( nmg_lu_of_vu(vu), vu );
+		eu = nmg_find_eu_with_vu_in_lu( nmg_lu_of_vu(vu), vu );
 		NMG_CK_EDGEUSE(eu);
 		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
 rt_log("force next eu to ray\n");
