@@ -629,7 +629,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 /*		Static linked executables */
 #		define	CC	gcc
 #		define	RANLIB	ar -s
@@ -645,8 +645,8 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,/usr/lib:LIBDIR
 #	endif
-#	define	XINCDIR	/usr/X11/include
-#	define	XLIBDIR	/usr/X11/lib
+#	define	XINCDIR	/usr/X11R6/include
+#	define	XLIBDIR	/usr/X11R6/lib
 
 #	define	LIBRT_TIMER	timer42
 /*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux) */
@@ -655,12 +655,13 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBDM_OBJS	dm-X
-#	define	LIBDM_CONFIG	-DDM_X
+#	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #	define 	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 
+#	define	TK_DEFS		OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DTK_PACKAGE_PATH='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #endif
 
 #if defined(__CAKE__bsdi)
