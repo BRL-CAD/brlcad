@@ -237,6 +237,12 @@ CONST struct rt_tol	*tol;
 	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
 		rt_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
 
+	/* XXX It would be nice if there was a convention for where to include these guys, but... */
+	if( *eu1->up.magic_p != NMG_LOOPUSE_MAGIC )
+		rt_bomb("nmg_radial_join_eu() eu1 not part of a loopuse\n");
+	if( *eu2->up.magic_p != NMG_LOOPUSE_MAGIC )
+		rt_bomb("nmg_radial_join_eu() eu2 not part of a loopuse\n");
+
 	/*  Construct local coordinate system for this edge,
 	 *  so all angles can be measured relative to a common reference.
 	 */
