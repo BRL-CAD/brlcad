@@ -24,10 +24,17 @@ SHELL=/bin/sh
 export SHELL
 
 #
-# Existence check -- make sure that all the necessary programs
-# have made it into the search path (including "dot").  Otherwise, 
-# they can't be checked for validity.
+# SCRIPTS
+# FRAMEBUFFER_COMMANDS
+# DATACONVERSION_COMMANDS
+# ANIMATION_COMMANDS
+# PIX_COMMANDS
+# RLE_COMMANDS
+# KITCHEN_SINK
 #
+# COMMANDS includes everything
+#
+
 SCRIPTS="\
 any-png.sh \
 brlcad-check.sh \
@@ -45,7 +52,7 @@ ranlib5.sh \
 sgisnap.sh \
 sharedliblink.sh \
 sharedlibvers.sh \
-show.sh
+show.sh \
 "
 
 FRAMEBUFFER_COMMANDS="\
@@ -69,7 +76,7 @@ fbpoint \
 fbscanplot \
 fbserv \
 fbstretch \
-fbzoom
+fbzoom \
 "
 
 DATACONVERSION_COMMANDS="
@@ -201,7 +208,7 @@ rletogif \
 rletogray \
 rletopaint \
 rletops \
-rletoraw
+rletoraw \
 "
 
 ANIMATION_COMMANDS="
@@ -216,7 +223,7 @@ anim_script \
 anim_sort \
 anim_time \
 anim_track \
-anim_turn
+anim_turn \
 "
 
 PIX_COMMANDS="
@@ -256,7 +263,7 @@ pixshrink \
 pixstat \
 pixsubst \
 pixtile \
-pixuntile
+pixuntile \
 "
 
 RLE_COMMANDS="
@@ -284,16 +291,10 @@ rlesplice \
 rlesplit \
 rlestereo \
 rleswap \
-rlezoom
+rlezoom \
 "
 
-COMMANDS=" \
- \
-FRAMEBUFFER_COMMANDS \
-DATACONVERSION_COMMANDS \
-PIX_COMMANDS \
-RLE_COMMANDS \
- \
+KITCHEN_SINK=" \
 all_sf \
 applymap \
 avg4 \
@@ -430,8 +431,17 @@ vas4 \
 vdeck \
 wasatchrle \
 wavelet \
-wish
+wish \
 "
+
+COMMANDS=" \
+${FRAMEBUFFER_COMMANDS} \
+${DATACONVERSION_COMMANDS} \
+${PIX_COMMANDS} \
+${RLE_COMMANDS} \
+${KITCHEN_SINK} \
+"
+
 
 # search the path for the tool
 # also search the current directory
@@ -443,6 +453,11 @@ PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:/ /g'`
 PATH_ELEMENTS="${PATH_ELEMENTS} ."
 
+#
+# Existence check -- make sure that all the necessary programs
+# have made it into the search path (including "dot").  Otherwise, 
+# they can't be checked for validity.
+#
 for CMD in ${COMMANDS}
 do
 	not_found=1		# Assume cmd not found
@@ -462,8 +477,20 @@ do
 	done
 	if test ${not_found} -ne 0
 	then
-		echo "$0 ERROR:  ${CMD} is not in your Shell search path!"
+		echo "$0 ERROR:  ${CMD} is not in your search path or current directory!"
 		exit 1		# Die
 	fi
 done
+
+
+
+for CMD in ${COMMANDS}
+do
+	if [ -f ${CMD}.log ]
+	then
+		echo "$0 ERROR: the log file ${CMD}.log must be removed before
+	fi
+done
+
+
 
