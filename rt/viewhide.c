@@ -324,8 +324,12 @@ register struct partition *PartHeadp;
 	 * by giving RT_HIT_NORM() the address of the hit partition so it
 	 * can fill this in.  From there the hit point and the hit normal
 	 * can be extracted.
+	 *
+	 *  Note:  In addition to giving the surface normal, it also
+	 *  computes:
+	 *  VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
+	 *	pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 	 */
-
 	RT_HIT_NORM(pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray));
 
 
