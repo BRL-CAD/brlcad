@@ -554,7 +554,8 @@ dnl **********************
 echo
 echo BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE
 echo
-echo            Binaries: ${prefix}
+echo              Prefix: ${prefix}
+echo            Binaries: ${bindir}
 echo Configuration files: ${sysconfdir}
 echo        Manual pages: ${mandir}
 echo
