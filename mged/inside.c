@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 
 RT_EXTERN( void nmg_invert_shell , ( struct shell *s , struct rt_tol *tol ) );
-RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , struct rt_tol *tol ) );
+RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , int approximate , struct rt_tol *tol ) );
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct rt_tol		mged_tol;	/* from ged.c */
@@ -673,7 +673,7 @@ plane_t	planes[6];
 			v = (struct vertex *)NMG_TBL_GET( &vert_tab , i );
 			NMG_CK_VERTEX( v );
 
-			if( nmg_in_vert( v , &mged_tol ) )
+			if( nmg_in_vert( v , 0 , &mged_tol ) )
 			{
 				(void)printf( "Could not find coordinates for inside arb7\n" );
 				nmg_km( m );
@@ -682,6 +682,11 @@ plane_t	planes[6];
 			}
 		}
 		nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
+
+		/* rebound model */
+		nmg_rebound( m , &mged_tol );
+
+		nmg_extrude_cleanup( s , 0 , &mged_tol );
 
 		/* free old ip pointer */
 		rt_db_free_internal( ip );
@@ -1024,7 +1029,7 @@ fastf_t thick;
 
 			next_s = RT_LIST_PNEXT( shell , &s->l );
 
-			(void)nmg_extrude_shell( s , thick , 0 , &mged_tol );
+			(void)nmg_extrude_shell( s , thick , 0 , 0 , &mged_tol );
 
 			s = next_s;
 		}
