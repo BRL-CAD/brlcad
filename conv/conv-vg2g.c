@@ -37,33 +37,56 @@ char *argv[];
 		exit(13);
 	}
 
-	/* units are inportant now because:
-	 *	The ged data records will be stored in a constant BASE unit
-	 *	of MiliMeters (MM).
-	 *	At any time the ged user can change his local units.
-	 *    	Hence cv must know the original units of the ".vg" file so
-	 *	that they can be converted to BASE units.
-	 */
-	(void)printf("* *  V E R Y    I M P O R T A N T    N O T I C E  * *\n");
-	(void)printf("    You must KNOW the units of the %s file\n",argv[1]);
-	(void)printf("    If you don't know, DON'T guess....find out\n");
-	(void)putchar( 7 );
+	/* check for conversion from version 3 to version 4 */
+	read(ifd, &rec, sizeof rec);
+	if(rec.u_id == ID_IDENT) {
+		/* have an mged type file - check its version */
+		if( strcmp(rec.i.i_version, ID_VERSION) == 0 ) {
+			(void)printf("%s: NO conversion necessary\n", argv[1]);
+			(void)putchar(7);
+			return;
+		}
 
-	rec.i.i_id = ID_IDENT;
-	strcpy( rec.i.i_version, ID_VERSION );
-	rec.i.i_units = 100;
-	while( rec.i.i_units < ID_MM_UNIT || rec.i.i_units > ID_FT_UNIT )  {
-		printf("Units: 1=mm, 2=cm, 3=meters, 4=inches, 5=feet\nUnits? ");
-		gets( line );
-		sscanf( line, "%d", &units );
-		rec.i.i_units = units;
-		printf("units=%d\n", rec.i.i_units);
+		else {
+			/* convert from version 3 to version 4 */
+			(void)printf("convert from ver 3 to ver 4\n");
+			units = ID_IN_UNIT;
+			rec.i.i_version[0] = '\0';
+			strcpy(rec.i.i_version, ID_VERSION);
+		}
 	}
-	printf("Title? "); fflush(stdout);
-	gets( line );
-	strncpy( rec.i.i_title, line, 71 );
-	rec.i.i_title[71] = '\0';
-	printf("Title=%s\n", rec.i.i_title );
+	else {
+		/* have an old vged file to convert */
+
+		/* units are inportant now because:
+		 *	The ged data records will be stored in a constant BASE unit
+		 *	of MiliMeters (MM).
+		 *	At any time the ged user can change his local units.
+		 *    	Hence cv must know the original units of the ".vg" file so
+		 *	that they can be converted to BASE units.
+		 */
+		(void)printf("* *  V E R Y    I M P O R T A N T    N O T I C E  * *\n");
+		(void)printf("    You must KNOW the units of the %s file\n",argv[1]);
+		(void)printf("    If you don't know, DON'T guess....find out\n");
+		(void)putchar( 7 );
+
+		rec.i.i_id = ID_IDENT;
+		strcpy( rec.i.i_version, ID_VERSION );
+		rec.i.i_units = 100;
+		while( rec.i.i_units < ID_MM_UNIT || rec.i.i_units > ID_FT_UNIT )  {
+			printf("Units: 1=mm, 2=cm, 3=meters, 4=inches, 5=feet\nUnits? ");
+			gets( line );
+			sscanf( line, "%d", &units );
+			rec.i.i_units = units;
+			printf("units=%d\n", rec.i.i_units);
+		}
+		printf("Title? "); fflush(stdout);
+		gets( line );
+		strncpy( rec.i.i_title, line, 71 );
+		rec.i.i_title[71] = '\0';
+		printf("Title=%s\n", rec.i.i_title );
+	}
+
 	write( ofd, &rec, sizeof rec );
 	count = 1;
 
