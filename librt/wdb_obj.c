@@ -222,6 +222,7 @@ static int wdb_xpush_tcl();
 static int wdb_showmats_tcl();
 static int wdb_nmg_collapse_tcl();
 static int wdb_nmg_simplify_tcl();
+static int wdb_summary_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -233,15 +234,14 @@ int wdb_cmpdirname();
 void wdb_vls_col_item();
 void wdb_vls_col_eol();
 void wdb_vls_col_pr4v();
+void wdb_vls_long_dpp();
 void wdb_vls_line_dpp();
 void wdb_do_list();
 struct directory ** wdb_getspace();
 struct directory *wdb_combadd();
 void wdb_identitize();
-
-static void wdb_output_catch();
-static void wdb_start_catching_output();
-static void wdb_stop_catching_output();
+static void wdb_dir_summary();
+static struct directory ** wdb_dir_getspace();
 
 static struct bu_cmdtab wdb_cmds[] = {
 	{"adjust",	wdb_adjust_tcl},
@@ -289,6 +289,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"rt_gettrees",	wdb_rt_gettrees_tcl},
 	{"shells",	wdb_shells_tcl},
 	{"showmats",	wdb_showmats_tcl},
+	{"summary",	wdb_summary_tcl},
 	{"title",	wdb_title_tcl},
 	{"tol",		wdb_tol_tcl},
 	{"tops",	wdb_tops_tcl},
@@ -306,7 +307,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"pathlist",	wdb_pathlist_tcl},
 	{"getmat",	wdb_getmat_tcl},
 	{"putmat",	wdb_putmat_tcl},
-	{"summary",	wdb_summary_tcl},
 	{"which_shader",	wdb_which_shader_tcl},
 	{"rcodes",	wdb_rcodes_tcl},
 	{"wcodes",	wdb_wcodes_tcl},
@@ -1533,6 +1533,7 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 	int cflag = 0;		/* print combinations */
 	int rflag = 0;		/* print regions */
 	int sflag = 0;		/* print solids */
+	int lflag = 0;		/* use long format */
 	struct directory **dirp;
 	struct directory **dirp0 = (struct directory **)NULL;
 
@@ -1546,7 +1547,7 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 	}
 
 	bu_optind = 1;	/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, argv, "acgrs")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "acrsl")) != EOF) {
 		switch (c) {
 		case 'a':
 			aflag = 1;
@@ -1559,6 +1560,9 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 			break;
 		case 's':
 			sflag = 1;
+			break;
+		case 'l':
+			lflag = 1;
 			break;
 		default:
 			bu_vls_printf(&vls, "Unrecognized option - %c", c);
@@ -1579,8 +1583,7 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 		 * Verify the names, and add pointers to them to the array.
 		 */
 		for (i = 1; i < argc; i++) {
-			if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) ==
-			    DIR_NULL)
+			if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 				continue;
 			*dirp++ = dp;
 		}
@@ -1597,7 +1600,10 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 				*dirp++ = dp;
 	}
 
-	if (aflag || cflag || rflag || sflag)
+	if (lflag)
+		wdb_vls_long_dpp(&vls, dirp0, (int)(dirp - dirp0),
+				 aflag, cflag, rflag, sflag);
+	else if (aflag || cflag || rflag || sflag)
 		wdb_vls_line_dpp(&vls, dirp0, (int)(dirp - dirp0),
 				 aflag, cflag, rflag, sflag);
 	else
@@ -1605,7 +1611,7 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	bu_free( (genptr_t)dirp0, "wdb_getspace dp[]" );
+	bu_free((genptr_t)dirp0, "wdb_getspace dp[]");
 
 	return TCL_OK;
 }
@@ -4339,10 +4345,7 @@ wdb_color_putrec(register struct mater	*mp,
 	struct directory dir;
 	union record rec;
 
-	if (dbip->dbi_read_only)
-		return;
-
-	BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
+	/* we get here only if database is NOT read-only */
 
 	rec.md.md_id = ID_MATERIAL;
 	rec.md.md_low = mp->mt_low;
@@ -4390,9 +4393,8 @@ wdb_color_zaprec(register struct mater	*mp,
 {
 	struct directory dir;
 
-	BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
-
-	if (dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR)
+	/* we get here only if database is NOT read-only */
+	if (mp->mt_daddr == MATER_NO_ADDR)
 		return;
 
 	dir.d_magic = RT_DIR_MAGIC;
@@ -4419,6 +4421,13 @@ wdb_color_cmd(struct rt_wdb	*wdbp,
 	register struct mater *newp,*next_mater;
 
 	WDB_TCL_CHECK_READ_ONLY;
+
+	if (wdbp->dbip->dbi_version != 4) {
+		Tcl_AppendResult(interp,
+				 "Database is not version 4!",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
 
 	if (argc != 6) {
 		struct bu_vls vls;
@@ -6914,6 +6923,68 @@ wdb_nmg_collapse_tcl(ClientData	clientData,
 	return wdb_nmg_collapse_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+int
+wdb_summary_cmd(struct rt_wdb	*wdbp,
+		Tcl_Interp	*interp,
+		int		argc,
+		char 		**argv)
+{
+	register char *cp;
+	int flags = 0;
+	int bad = 0;
+
+	if (argc < 1 || 2 < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_summary");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (argc <= 1) {
+		wdb_dir_summary(wdbp->dbip, interp, 0);
+		return TCL_OK;
+	}
+
+	cp = argv[1];
+	while (*cp)  switch(*cp++) {
+	case 's':
+		flags |= DIR_SOLID;
+		break;
+	case 'r':
+		flags |= DIR_REGION;
+		break;
+	case 'g':
+		flags |= DIR_COMB;
+		break;
+	default:
+		Tcl_AppendResult(interp, "summary:  S R or G are only valid parmaters\n",
+				 (char *)NULL);
+		bad = 1;
+		break;
+	}
+
+	wdb_dir_summary(wdbp->dbip, interp, flags);
+	return bad ? TCL_ERROR : TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname 
+ */
+static int
+wdb_summary_tcl(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int		argc,
+		char		**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_summary_cmd(wdbp, interp, argc-1, argv+1);
+}
+
 #if 0
 /* skeleton functions for wdb_obj methods */
 int
@@ -7019,6 +7090,7 @@ wdb_vls_col_pr4v(struct bu_vls		*vls,
 		 struct directory	**list_of_names,
 		 int			num_in_list)
 {
+#if 0
 	int lines, i, j, namelen, this_one;
 
 	qsort((genptr_t)list_of_names,
@@ -7069,6 +7141,168 @@ wdb_vls_col_pr4v(struct bu_vls		*vls,
 				while (namelen++ < 20)
 					bu_vls_putc(vls, ' ');
 			}
+		}
+	}
+#else
+	int lines, i, j, k, namelen, this_one;
+	int	maxnamelen;	/* longest name in list */
+	int	cwidth;		/* column width */
+	int	numcol;		/* number of columns */
+
+	qsort((genptr_t)list_of_names,
+	      (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	      (int (*)())wdb_cmpdirname);
+
+	/* 
+	 * Traverse the list of names, find the longest name and set the
+	 * the column width and number of columns accordingly.
+	 * If the longest name is greater than 80 characters, the number of columns
+	 * will be one.
+	 */
+	maxnamelen = 0;
+	for (k=0; k < num_in_list; k++) {
+		namelen = strlen(list_of_names[k]->d_namep);
+		if (namelen > maxnamelen)
+			maxnamelen = namelen;
+	}
+
+	if (maxnamelen <= 16) 
+		maxnamelen = 16;
+	cwidth = maxnamelen + 4;
+
+	if (cwidth > 80)
+		cwidth = 80;
+	numcol = RT_TERMINAL_WIDTH / cwidth;
+     
+	/*
+	 * For the number of (full and partial) lines that will be needed,
+	 * print in vertical format.
+	 */
+	lines = (num_in_list + (numcol - 1)) / numcol;
+	for (i=0; i < lines; i++) {
+		for (j=0; j < numcol; j++) {
+			this_one = j * lines + i;
+			bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
+			namelen = strlen( list_of_names[this_one]->d_namep);
+
+			/*
+			 * Region and ident checks here....  Since the code
+			 * has been modified to push and sort on pointers,
+			 * the printing of the region and ident flags must
+			 * be delayed until now.  There is no way to make the
+			 * decision on where to place them before now.
+			 */
+			if (list_of_names[this_one]->d_flags & DIR_COMB) {
+				bu_vls_putc(vls, '/');
+				namelen++;
+			}
+
+			if (list_of_names[this_one]->d_flags & DIR_REGION) {
+				bu_vls_putc(vls, 'R');
+				namelen++;
+			}
+
+			/*
+			 * Size check (partial lines), and line termination.
+			 * Note that this will catch the end of the lines
+			 * that are full too.
+			 */
+			if (this_one + lines >= num_in_list) {
+				bu_vls_putc(vls, '\n');
+				break;
+			} else {
+				/*
+				 * Pad to next boundary as there will be
+				 * another entry to the right of this one. 
+				 */
+				while( namelen++ < cwidth)
+					bu_vls_putc(vls, ' ');
+			}
+		}
+	}
+#endif
+}
+
+void
+wdb_vls_long_dpp(struct bu_vls		*vls,
+		 struct directory	**list_of_names,
+		 int			num_in_list,
+		 int			aflag,		/* print all objects */
+		 int			cflag,		/* print combinations */
+		 int			rflag,		/* print regions */
+		 int			sflag)		/* print solids */
+{
+	int i;
+	int isComb, isRegion;
+	int isSolid;
+	const char *type;
+	int max_nam_len = 0;
+	int max_type_len = 0;
+	struct directory *dp;
+
+	qsort((genptr_t)list_of_names,
+	      (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	      (int (*)())wdb_cmpdirname);
+
+	for (i=0 ; i < num_in_list ; i++) {
+		int len;
+
+		dp = list_of_names[i];
+		len = strlen(dp->d_namep);
+		if (len > max_nam_len)
+			max_nam_len = len;
+
+		if (dp->d_flags & DIR_REGION)
+			len = 6;
+		else if (dp->d_flags & DIR_COMB)
+			len = 4;
+		else if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
+			len = 6;
+		else
+			len = strlen(rt_functab[dp->d_minor_type].ft_label);
+
+		if (len > max_type_len)
+			max_type_len = len;
+	}
+
+	/*
+	 * i - tracks the list item
+	 */
+	for (i=0; i < num_in_list; ++i) {
+		if (list_of_names[i]->d_flags & DIR_COMB) {
+			isComb = 1;
+			isSolid = 0;
+			type = "comb";
+
+			if (list_of_names[i]->d_flags & DIR_REGION) {
+				isRegion = 1;
+				type = "region";
+			} else
+				isRegion = 0;
+		} else {
+			isComb = isRegion = 0;
+			isSolid = 1;
+			type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
+		}
+
+		if (list_of_names[i]->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+			isSolid = 0;
+			type = "global";
+		}
+
+		/* print list item i */
+		dp = list_of_names[i];
+		if (aflag ||
+		    (!cflag && !rflag && !sflag) ||
+		    (cflag && isComb) ||
+		    (rflag && isRegion) ||
+		    (sflag && isSolid)) {
+			bu_vls_printf(vls, "%s", dp->d_namep );
+			bu_vls_spaces(vls, max_nam_len - strlen( dp->d_namep ) );
+			bu_vls_printf(vls, " %s", type );
+			bu_vls_spaces(vls, max_type_len - strlen( type ) );
+			bu_vls_printf(vls,  " %2d %2d %d\n",
+				      dp->d_major_type, dp->d_minor_type, dp->d_len);
 		}
 	}
 }
@@ -7405,4 +7639,104 @@ wdb_identitize(struct directory	*dp,
 			return;
 		}
 	}
+}
+
+/*
+ *  			W D B _ D I R _ S U M M A R Y
+ *
+ * Summarize the contents of the directory by categories
+ * (solid, comb, region).  If flag is != 0, it is interpreted
+ * as a request to print all the names in that category (eg, DIR_SOLID).
+ */
+static void
+wdb_dir_summary(struct db_i	*dbip,
+		Tcl_Interp	*interp,
+		int		flag)
+{
+	register struct directory *dp;
+	register int i;
+	static int sol, comb, reg;
+	struct directory **dirp;
+	struct directory **dirp0 = (struct directory **)NULL;
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+
+	sol = comb = reg = 0;
+	for (i = 0; i < RT_DBNHASH; i++)  {
+		for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+			if (dp->d_flags & DIR_SOLID)
+				sol++;
+			if (dp->d_flags & DIR_COMB) {
+				if (dp->d_flags & DIR_REGION)
+					reg++;
+				else
+					comb++;
+			}
+		}
+	}
+
+	bu_vls_printf(&vls, "Summary:\n");
+	bu_vls_printf(&vls, "  %5d solids\n", sol);
+	bu_vls_printf(&vls, "  %5d region; %d non-region combinations\n", reg, comb);
+	bu_vls_printf(&vls, "  %5d total objects\n\n", sol+reg+comb );
+
+	if (flag == 0) {
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+		return;
+	}
+
+	/* Print all names matching the flags parameter */
+	/* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
+	
+	dirp = wdb_dir_getspace(dbip, 0);
+	dirp0 = dirp;
+	/*
+	 * Walk the directory list adding pointers (to the directory entries
+	 * of interest) to the array
+	 */
+	for (i = 0; i < RT_DBNHASH; i++)
+		for(dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+			if (dp->d_flags & flag)
+				*dirp++ = dp;
+
+	wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	bu_free((genptr_t)dirp0, "dir_getspace");
+}
+
+/*
+ *			W D B _ D I R _ G E T S P A C E
+ *
+ * This routine walks through the directory entry list and mallocs enough
+ * space for pointers to hold:
+ *  a) all of the entries if called with an argument of 0, or
+ *  b) the number of entries specified by the argument if > 0.
+ */
+static struct directory **
+wdb_dir_getspace(struct db_i	*dbip,
+		 register int	num_entries)
+{
+	register struct directory *dp;
+	register int i;
+	register struct directory **dir_basep;
+
+	if (num_entries < 0) {
+		bu_log( "dir_getspace: was passed %d, used 0\n",
+			num_entries);
+		num_entries = 0;
+	}
+	if (num_entries == 0) {
+		/* Set num_entries to the number of entries */
+		for (i = 0; i < RT_DBNHASH; i++)
+			for(dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+				num_entries++;
+	}
+
+	/* Allocate and cast num_entries worth of pointers */
+	dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
+						    "dir_getspace *dir[]");
+	return dir_basep;
 }

@@ -469,23 +469,12 @@ wdb_check_syntax(interp, dbip, hp, comb_name, dp)
 	return( 0 );
 }
 
-
-/*
- * Input a combination in standard set-theoretic notation.
- *
- * Usage:
- *        procname c [-gr] comb_name boolean_expr
- *
- * NON-PARALLEL because of rt_uniresource
- */
 int
-wdb_comb_std_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+wdb_comb_std_cmd(struct rt_wdb	*wdbp,
+		Tcl_Interp	*interp,
+		int		argc,
+		char 		**argv)
 {
-	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 	char				*comb_name;
 	int				ch;
 	int				region_flag = -1;
@@ -503,7 +492,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if (argc < 4 || RT_MAXARGS < argc){
+	if (argc < 3 || RT_MAXARGS < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -514,7 +503,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 	}
 
 	/* Parse options */
-	bu_optind = 2;	/* re-init bu_getopt() */
+	bu_optind = 1;	/* re-init bu_getopt() */
 	while ((ch = bu_getopt(argc, argv, "gr?")) != EOF) {
 		switch (ch) {
 		case 'g':
@@ -765,4 +754,23 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 	}
 
 	return TCL_OK;
+}
+
+/*
+ * Input a combination in standard set-theoretic notation.
+ *
+ * Usage:
+ *        procname c [-gr] comb_name boolean_expr
+ *
+ * NON-PARALLEL because of rt_uniresource
+ */
+int
+wdb_comb_std_tcl(ClientData	clientData,
+		 Tcl_Interp	*interp,
+		 int     	argc,
+		 char    	**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_comb_std_cmd(wdbp, interp, argc-1, argv+1);
 }
