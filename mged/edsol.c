@@ -770,9 +770,11 @@ sedit()
 
 	case SETUP_ROTFACE:
 		/* check if point 5 is in the face */
-		for(i=pnt5=0; i<4; i++)
+		pnt5 = 0;
+		for(i=0; i<4; i++)  {
 			if( arb_vertices[es_rec.s.s_cgtype-4][es_menu*4+i]==5 )
 				pnt5=1;
+		}
 		
 		/* special case for arb7 */
 		if( es_rec.s.s_cgtype == ARB7  && pnt5 ){
@@ -782,16 +784,17 @@ sedit()
 		else{
 			/* find fixed vertex for ROTFACE */
 			fixv=0;
-			while( !( fixv > 0   &&   fixv <= es_rec.s.s_cgtype ) ){
-				static short int type,loc,valid;
-				char line[20];
+			do  {
+				int	type,loc,valid;
+				char	line[128];
 				
 				type = es_rec.s.s_cgtype - 4;
 				(void)printf("\nEnter fixed vertex number( ");
+				loc = es_menu*4;
 				for(i=0; i<4; i++){
-					loc = es_menu*4;
 					if( arb_vertices[type][loc+i] )
-						printf("%d ",arb_vertices[type][loc+i]);
+						printf("%d ",
+						    arb_vertices[type][loc+i]);
 				}
 				printf(") [%d]: ",arb_vertices[type][loc]);
 
@@ -803,12 +806,14 @@ sedit()
 					fixv = atoi( line );
 				
 				/* check whether nimble fingers entered valid vertex */
-				for(j=valid=0; j<4; j++)
+				valid = 0;
+				for(j=0; j<4; j++)  {
 					if( fixv==arb_vertices[type][loc+j] )
 						valid=1;
+				}
 				if( !valid )
 					fixv=0;
-			}
+			} while( fixv <= 0 || fixv > es_rec.s.s_cgtype );
 		}
 		
 		pr_prompt();
