@@ -63,6 +63,7 @@ SRCS = \
 	g_vol.c \
 	global.c \
 	htbl.c \
+	importFg4Section.c \
 	many.c \
 	mater.c \
 	memalloc.c \
