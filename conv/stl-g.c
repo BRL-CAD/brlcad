@@ -2,6 +2,7 @@
  *		S T L - G
  *
  * Code to convert Stereolithography format files to BRL-CAD
+ *	Note that binary STL format is Little-endian (bytes at lower addresses have lower significance)
  *
  *  Author -
  *	John R. Anderson
@@ -450,18 +451,27 @@ Convert_part_binary()
 	bu_log( "\tUsing solid name: %s\n" , solid_name );
 
 	fread( buf, 4, 1, fd_in );
+
+	/* swap bytes to convert from Little-endian to network order (big-endian) */
 	lswap( (unsigned int *)buf );
+
+	/* now use our network to native host format conversion tools */
 	num_facets = bu_glong( buf );
+
 	bu_log( "\t%d facets\n", num_facets );
-	while( fread( buf, 48, 1, fd_in ) ) {
+ 	while( fread( buf, 48, 1, fd_in ) ) {
 		int i;
 		double pt[3];
 
+		/* swap bytes to convert from Little-endian to network order (big-endian) */
 		for( i=0 ; i<12 ; i++ ) {
 			lswap( (unsigned int *)&buf[i*4] );
 		}
+
+		/* now use our network to native host format conversion tools */
 		ntohf( (unsigned char *)flts, buf, 12 );
 
+		/* unused attribute byte count */
 		fread( buf, 2, 1, fd_in );
 
 		VMOVE( normal, flts );
