@@ -79,6 +79,7 @@ char **argv;
 	register int x,y;
 	char framename[128];		/* File name to hold current frame */
 	char outbuf[132];
+	char idbuf[132];		/* First ID record info */
 	mat_t Viewrotscale;
 	mat_t toEye;
 	fastf_t viewsize;
@@ -172,10 +173,11 @@ char **argv;
 	prep_timer();		/* Start timing preparations */
 
 	/* Build directory of GED database */
-	if( dir_build( argv[0], 1 ) < 0 )  {
+	if( dir_build( argv[0], idbuf, sizeof(idbuf) ) < 0 )  {
 		fprintf(stderr,"rt:  dir_build failure\n");
 		exit(2);
 	}
+	fprintf(stderr, "db title:  %s\n", idbuf);
 	argc--; argv++;
 
 	(void)read_timer( outbuf, sizeof(outbuf) );
