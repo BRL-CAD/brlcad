@@ -55,6 +55,10 @@ static char initScript[] = "if {[info proc tclInit]==\"\"} {\n\
 	}\n\
         set dirs [concat $dirs $tcl_libPath]\n\
     }\n\
+    lappend dirs [file join src other libtcl library]\n\
+    lappend dirs [file join .. src other libtcl library]\n\
+    lappend dirs [file join .. .. src other libtcl library]\n\
+    lappend dirs [file join .. .. .. src other libtcl library]\n\
     foreach i $dirs {\n\
 	set tcl_library $i\n\
 	set tclfile [file join $i init.tcl]\n\
