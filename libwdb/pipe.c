@@ -106,7 +106,7 @@ struct bu_list	*headp;
 	/* "borrow" linked list from caller */
 	BU_LIST_APPEND_LIST( &pipe->pipe_segs_head, headp );
 
-	ret = wdb_export( fp, name, (genptr_t)&pipe, ID_PIPE, mk_conv2mm );
+	ret = wdb_export( fp, name, (genptr_t)pipe, ID_PIPE, mk_conv2mm );
 
 	/* "return" linked list to caller */
 	BU_LIST_APPEND_LIST( headp, &pipe->pipe_segs_head );
