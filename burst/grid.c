@@ -1256,6 +1256,7 @@ gridModel()
 	{
 	ag.a_onehit = false;
 	ag.a_overlap = reportoverlaps ? f_Overlap : f_HushOverlap;
+	ag.a_logoverlap = rt_silent_logoverlap;
 	ag.a_rt_i = rtip;
 	if( ! TSTBIT(firemode,FM_BURST) )
 		{ /* set up for shotlines */
