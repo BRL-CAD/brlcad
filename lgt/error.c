@@ -48,7 +48,7 @@ char *str;
 	exit(12);
 	}
 
-#if defined( cray ) && ! defined( CRAY2 )
+#if defined( CRAY1 )
 /* VARARGS */
 void
 rt_log(fmt, a,b,c,d,e,f,g,h,i)
@@ -153,7 +153,7 @@ va_dcl
 	}
 #endif
 
-#if defined( cray ) && ! defined( CRAY2 )
+#if defined( CRAY1 )
 /* VARARGS */
 void
 fb_log(fmt, a,b,c,d,e,f,g,h,i)
