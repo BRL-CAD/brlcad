@@ -1320,8 +1320,16 @@ int		other_rs_state;
 	}
 
 	/* Find range of vertexuses at this distance */
+	v = rs->vu[cur]->v_p;
 	for( j = cur+1; j < rs->nvu; j++ )  {
+		/* If distance along the ray changes, start a new interval */
 		if( mag[j] != mag[cur] )  break;
+#if 0
+		/* If vertex changes, it starts a new interval */
+		/* XXX Note that they will be sorted by pointer addres. */
+		/* XXX This might cause inconsistencies later */
+		if( rs->vu[j]->v_p != v )  break;
+#endif
 	}
 
 	/* vu Interval runs from [cur] to [j-1] inclusive */
@@ -1329,9 +1337,19 @@ int		other_rs_state;
 		rt_log("fu x%x vu's on list interval [%d] to [%d] equal\n", rs->fu1, cur, j-1 );
 
 	/* Ensure that all vu's point to same vertex */
-	v = rs->vu[cur]->v_p;
 	for( k = cur+1; k < j; k++ )  {
-		if( rs->vu[k]->v_p != v )  rt_bomb("nmg_face_combine: vu block with differing vertices\n");
+		if( rs->vu[k]->v_p == v )  continue;
+		/* Trouble.  Print out the interval and die */
+		rt_log("At k=%d, vertex changed from v=x%x!\n", k, v);
+		rt_log("pt_equality=%d\n", rt_pt3_pt3_equal(v->vg_p->coord,
+			rs->vu[k]->v_p->vg_p->coord, rs->tol ) );
+		for( k = cur; k < j; k++ )  {
+			rt_log("  %d vu=%8x v=%8x mag=%g\n", k,
+				rs->vu[k], rs->vu[k]->v_p, mag[k] );
+			NMG_CK_VERTEX_G(rs->vu[k]->v_p->vg_p);
+			VPRINT("\tpt", rs->vu[k]->v_p->vg_p->coord);
+		}
+		rt_bomb("nmg_face_combine: vu block with differing vertices\n");
 	}
 	/* All vu's point to the same vertex, sort them */
 	m = nmg_face_coincident_vu_sort( rs, cur, j );
