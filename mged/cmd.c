@@ -924,7 +924,7 @@ char **argv;
   struct bu_vls vls;
 
   if(!curr_cmd_list->aim){
-    Tcl_AppendElement(interp, bu_vls_addr(&tkName));
+    Tcl_AppendElement(interp, bu_vls_addr(&pathName));
     Tcl_AppendElement(interp, bu_vls_addr(curr_dm_list->s_info->opp));
     if(curr_dm_list->aim)
       Tcl_AppendElement(interp, bu_vls_addr(&curr_dm_list->aim->name));
@@ -934,7 +934,7 @@ char **argv;
     return TCL_OK;
   }
 
-  Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->aim->_dmp->dm_tkName));
+  Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->aim->_dmp->dm_pathName));
   Tcl_AppendElement(interp, bu_vls_addr(curr_cmd_list->aim->s_info->opp));
   bu_vls_init(&vls);
 
