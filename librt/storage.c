@@ -6,6 +6,7 @@
  *  Functions -
  *	rt_malloc	Allocate storage, with visibility & checking
  *	rt_free		Similarly, free storage
+ *	rt_realloc	Reallocate storage, with visibility & checking
  *	rt_prmem	When debugging, print memory map
  *	rt_strdup	Duplicate a string in dynamic memory
  *	rt_get_seg	Invoked by GET_SEG() macro
@@ -126,6 +127,56 @@ ok:	;
 	*((int *)ptr) = -1;	/* zappo! */
 	free(ptr);
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+}
+
+/*
+ *			R T _ R E A L L O C
+ */
+char *
+rt_realloc(ptr, cnt, str)
+register char *ptr;
+unsigned int cnt;
+char *str;
+{
+	extern char *realloc();
+
+#ifdef MEMDEBUG
+	register char *savedptr;
+	savedptr = ptr;
+	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
+#endif MEMDEBUG
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	ptr = realloc(ptr,cnt);
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+
+	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )
+		rt_log("%7x realloc%5d %s\n", ptr, cnt, str);
+	if( ptr==(char *)0 )  {
+		rt_log("rt_realloc: Insufficient memory available, using %d\n", sbrk(0));
+		rt_bomb("rt_realloc: malloc failure");
+	}
+#ifdef MEMDEBUG
+	if( ptr != savedptr )
+	{
+		/* replace old entry with new one */
+		register struct memdebug *mp = rt_mdb;
+		for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
+			if( mp->mdb_len > 0 && (mp->mdb_addr == savedptr) ) {
+				mp->mdb_addr = ptr;
+				mp->mdb_len = cnt;
+				mp->mdb_str = str;
+				goto ok;
+			}
+		}
+		rt_log("rt_realloc: old entry not found!\n");
+	}
+ok:	;
+	{
+		register int *ip = (int *)(ptr+cnt-sizeof(int));
+		*ip = MDB_MAGIC;
+	}
+#endif MEMDEBUG
+	return(ptr);
 }
 
 /*
