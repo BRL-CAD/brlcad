@@ -44,6 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "mater.h"
 
 
 #define BUFSIZE			(8*1024)	/* input line buffer size */
@@ -200,6 +201,13 @@ after_read:
 			continue;
 		}
 	}
+
+	/* Now, at the end of the database, dump out the entire
+	 * region-id-based color table.
+	 */
+	mk_write_color_table( ofp );
+	fclose(ofp);
+
 	exit(0);
 }
 
@@ -1135,27 +1143,29 @@ polydbld()
 void
 materbld()
 {
-
 	register char *cp;
+	int	flags;			/* unused */
+	int	low, hi;
+	int	r,g,b;
 
 	cp = buf;
-	record.md.md_id = *cp++;
+	cp++;				/* skip ID_MATERIAL */
 	cp = nxt_spc( cp );		/* skip the space */
 
-	record.md.md_flags = (char)atoi( cp );
+	flags = (char)atoi( cp );
 	cp = nxt_spc( cp );
-	record.md.md_low = (short)atoi( cp );
+	low = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.md.md_hi = (short)atoi( cp );
+	hi = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.md.md_r = (unsigned char)atoi( cp);
+	r = (unsigned char)atoi( cp);
 	cp = nxt_spc( cp );
-	record.md.md_g = (unsigned char)atoi( cp);
+	g = (unsigned char)atoi( cp);
 	cp = nxt_spc( cp );
-	record.md.md_b = (unsigned char)atoi( cp);
+	b = (unsigned char)atoi( cp);
 
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
+	/* Put it on a linked list for output later */
+	rt_color_addrec( low, hi, r, g, b, -1L );
 }
 
 /*		B S P L B L D
@@ -1616,6 +1626,7 @@ register char *cp;
 	return( cp );
 }
 
+int
 ngran( nfloat )
 {
 	register int gran;
