@@ -607,6 +607,7 @@ char	**argv;
 {
 	register struct directory *dp;
 	struct rt_vls		title;
+	struct rt_vls		units;
 	register int		i;
 
 	/* First, clear any existing counts */
@@ -624,11 +625,33 @@ char	**argv;
 	rt_vls_init( &title );
 	rt_vls_strcat( &title, "Parts of: " );
 	rt_vls_strcat( &title, dbip->dbi_title );
-	if( mk_id_units( keepfp, rt_vls_addr(&title), localunit ) < 0 )  {
+
+	rt_vls_init( &units);
+	
+	if( localunit == ID_NO_UNIT)
+		rt_vls_strcat( &units, "none");
+
+	if( localunit == ID_MM_UNIT)
+		rt_vls_strcat( &units, "mm");
+
+	if( localunit == ID_CM_UNIT)
+		rt_vls_strcat( &units, "cm");
+
+	if( localunit == ID_M_UNIT)
+		rt_vls_strcat( &units, "m");
+
+	if( localunit == ID_IN_UNIT)
+		rt_vls_strcat( &units, "in");
+
+	if( localunit == ID_FT_UNIT)
+		rt_vls_strcat( &units, "ft");
+
+	if( mk_id_units( keepfp, rt_vls_addr(&title), rt_vls_addr(&units) ) < 0 )  {
 		perror("fwrite");
 		(void)printf("mk_id_units() failed\n");
 		fclose(keepfp);
 		rt_vls_free( &title );
+		rt_vls_free( &units );
 		return;
 	}
 
@@ -637,8 +660,11 @@ char	**argv;
 			continue;
 		db_functree( dbip, dp, node_write, node_write );
 	}
+
 	fclose(keepfp);
 	rt_vls_free( &title );
+	rt_vls_free( &units );
+
 }
 
 #ifdef OLD
