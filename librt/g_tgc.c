@@ -2104,7 +2104,7 @@ struct rt_tol		*tol;
 		fu = (struct faceuse *)NMG_TBL_GET( &faces , i );
 		NMG_CK_FACEUSE( fu );
 
-		if( nmg_fu_planeeqn( fu , tol ) )
+		if( nmg_calc_face_g( fu ) )
 		{
 			rt_log( "rt_tess_tgc: failed to calculate plane equation\n" );
 			return( -1 );
