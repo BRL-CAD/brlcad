@@ -581,7 +581,7 @@ default:
 	win = XCreateSimpleWindow( dpy, DefaultRootWindow(dpy),
 		xsh.x, xsh.y, xsh.width, xsh.height,
 		bw, bd, bg );
-#endif OLD
+#endif /* OLD */
 
 	/*
 	 *  Note: all Windows, Colormaps and XImages have
