@@ -2004,3 +2004,17 @@ bu_free_external( register struct bu_external *ep)
 		ep->ext_buf = GENPTR_NULL;
 	}
 }
+
+/*
+ *			B U _ C O P Y _ E X T E R N A L
+ */
+void
+bu_copy_external(struct bu_external *op, const struct bu_external *ip)
+{
+	BU_CK_EXTERNAL(ip);
+	BU_INIT_EXTERNAL(op);
+
+	op->ext_nbytes = ip->ext_nbytes;
+	op->ext_buf = bu_malloc( ip->ext_nbytes, "bu_copy_external" );
+	bcopy( ip->ext_buf, op->ext_buf, ip->ext_nbytes );
+}

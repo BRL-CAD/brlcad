@@ -1370,6 +1370,7 @@ BU_EXTERN( int                  bu_shader_to_key_eq, (char *in, struct bu_vls *v
 int				bu_fwrite_external( FILE *fp, const struct bu_external *ep );
 void				bu_hexdump_external( FILE *fp, CONST struct bu_external *ep, CONST char *str);
 void				bu_free_external(struct bu_external *ep);
+void				bu_copy_external(struct bu_external *op, const struct bu_external *ip);
 				
 /* printb.c */
 BU_EXTERN(void			bu_vls_printb, (struct bu_vls *vls,
