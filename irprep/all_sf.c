@@ -275,11 +275,11 @@ char **argv;
 	(void)fflush(fpw1);
 
         /*  Put region names into structure.  */
-        pr = rtip->HeadRegion;
+        pr = BU_LIST_FIRST(region, &rtip->HeadRegion);
         for(i=0; i<numreg; i++)
         {
            info[(int)(pr->reg_bit)].name = pr->reg_name;
-           pr = pr->reg_forw;
+           pr = BU_LIST_FORW(region, &(pr->l) );
         }
 
 	(void)printf("Region names in structure.\n");
