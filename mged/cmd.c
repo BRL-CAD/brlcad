@@ -950,6 +950,7 @@ cmd_get(clientData, interp, argc, argv)
 
 	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->aim->_dmp->dm_pathName));
 	Tcl_AppendElement(interp, bu_vls_addr(curr_cmd_list->aim->s_info->opp));
+	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->name));
 	bu_vls_init(&vls);
 
 	/* return all ids associated with the current command window */
@@ -976,23 +977,17 @@ cmd_set(clientData, interp, argc, argv)
 	int argc;
 	char **argv;
 {
-	struct cmd_list *p;
-
 	if(argc != 2){
 		Tcl_AppendResult(interp, "Usage: cmd_set id", (char *)NULL);
 		return TCL_ERROR;
 	}
 
-	for( BU_LIST_FOR(p, cmd_list, &head_cmd_list.l) ){
-		if(strcmp(bu_vls_addr(&p->name), argv[1]))
+	for( BU_LIST_FOR(curr_cmd_list, cmd_list, &head_cmd_list.l) ){
+		if(strcmp(bu_vls_addr(&curr_cmd_list->name), argv[1]))
 			continue;
 
-		curr_cmd_list = p;
 		break;
 	}
-
-	if(p == &head_cmd_list)
-		curr_cmd_list = &head_cmd_list;
 
 	if(curr_cmd_list->aim)
 		curr_dm_list = curr_cmd_list->aim;
