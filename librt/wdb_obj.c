@@ -43,6 +43,7 @@
 #include "db.h"
 #include "mater.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "wdb.h"
 
 #include "./debug.h"
@@ -111,6 +112,7 @@ static int wdb_cat_tcl();
 static int wdb_instance_tcl();
 static int wdb_observer_tcl();
 static int wdb_reopen_tcl();
+static int wdb_make_bb_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -152,6 +154,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"l",		wdb_list_tcl,
 	"listeval",	wdb_pathsum_tcl,
 	"ls",		wdb_ls_tcl,
+	"make_bb",	wdb_make_bb_tcl,
 	"match",	wdb_match_tcl,
 	"mv",		wdb_move_tcl,
 	"mvall",	wdb_move_all_tcl,
@@ -4105,6 +4108,204 @@ wdb_observer_tcl(clientData, interp, argc, argv)
 
 	return bu_cmd((ClientData)&wdbp->wdb_observers,
 		      interp, argc - 2, argv + 2, bu_observer_cmds, 0);
+}
+
+/*
+ *	Build an RPP bounding box for the list of objects
+ *	and/or paths passed to this routine
+ *
+ *	Usage:
+ *		dbobjname make_bb bbname obj(s)
+ */
+static int
+wdb_make_bb_tcl(clientData, interp, argc, argv)
+     ClientData	clientData;
+     Tcl_Interp	*interp;
+     int	argc;
+     char	**argv;
+{
+	struct rt_i		*rtip;
+	int			i;
+	point_t			rpp_min,rpp_max;
+	struct db_full_path	path;
+	struct directory	*dp;
+	struct rt_arb_internal	*arb;
+	struct rt_db_internal	new_intern;
+	struct region		*regp;
+	char			*new_name;
+	struct rt_wdb		*wdbp = (struct rt_wdb *)clientData;
+
+	if (argc < 4 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_make_bb");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* Since arguments may be paths, make sure first argument isn't */
+	if (strchr( argv[2], '/')) {
+		Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[2], "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	new_name = argv[2];
+	if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
+		Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/* Make a new rt_i instance from the existing db_i sructure */
+	if ((rtip=rt_new_rti(wdbp->dbip)) == RTI_NULL) {
+		Tcl_AppendResult(interp, "rt_new_rti failure for ", wdbp->dbip->dbi_filename,
+				 "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/* Get trees for list of objects/paths */
+	for (i = 3 ; i < argc ; i++) {
+		int gottree;
+
+		/* Get full_path structure for argument */
+		db_full_path_init(&path);
+		if (db_string_to_path(&path,  rtip->rti_dbip, argv[i])) {
+			Tcl_AppendResult(interp, "db_string_to_path failed for ",
+					 argv[i], "\n", (char *)NULL );
+			rt_clean(rtip);
+			bu_free((genptr_t)rtip, "f_make_bb: rtip");
+			return TCL_ERROR;
+		}
+
+		/* check if we alerady got this tree */
+		gottree = 0;
+		for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+			struct db_full_path tmp_path;
+
+			db_full_path_init(&tmp_path);
+			if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
+				Tcl_AppendResult(interp, "db_string_to_path failed for ",
+						 regp->reg_name, "\n", (char *)NULL);
+				rt_clean(rtip);
+				bu_free((genptr_t)rtip, "f_make_bb: rtip");
+				return TCL_ERROR;
+			}
+			if (path.fp_names[0] == tmp_path.fp_names[0])
+				gottree = 1;
+			db_free_full_path(&tmp_path);
+			if (gottree)
+				break;
+		}
+
+		/* if we don't already have it, get it */
+		if (!gottree && rt_gettree(rtip, path.fp_names[0]->d_namep)) {
+			Tcl_AppendResult(interp, "rt_gettree failed for ",
+					 argv[i], "\n", (char *)NULL );
+			rt_clean(rtip);
+			bu_free((genptr_t)rtip, "f_make_bb: rtip");
+			return TCL_ERROR;
+		}
+		db_free_full_path(&path);
+	}
+
+	/* prep calculates bounding boxes of solids */
+	rt_prep(rtip);
+
+	/* initialize RPP bounds */
+	VSETALL(rpp_min, MAX_FASTF);
+	VREVERSE(rpp_max, rpp_min);
+	for (i = 3 ; i < argc ; i++) {
+		vect_t reg_min, reg_max;
+		struct region *regp;
+		CONST char *reg_name;
+
+		/* check if input name is a region */
+		for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+			reg_name = regp->reg_name;
+			if (*argv[i] != '/' && *reg_name == '/')
+				reg_name++;
+
+			if (!strcmp( reg_name, argv[i]))
+				goto found;
+				
+		}
+		goto not_found;
+
+		if (regp != REGION_NULL) {
+found:
+			/* input name was a region  */
+			if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
+				Tcl_AppendResult(interp, "rt_bound_tree failed for ",
+						 regp->reg_name, "\n", (char *)NULL);
+				rt_clean(rtip);
+				bu_free((genptr_t)rtip, "f_make_bb: rtip");
+				return TCL_ERROR;
+			}
+			VMINMAX(rpp_min, rpp_max, reg_min);
+			VMINMAX(rpp_min, rpp_max, reg_max);
+		} else {
+			int name_len;
+not_found:
+
+			/* input name may be a group, need to check all regions under
+			 * that group
+			 */
+			name_len = strlen( argv[i] );
+			for (BU_LIST_FOR( regp, region, &(rtip->HeadRegion))) {
+				reg_name = regp->reg_name;
+				if (*argv[i] != '/' && *reg_name == '/')
+					reg_name++;
+
+				if (strncmp(argv[i], reg_name, name_len))
+					continue;
+
+				/* This is part of the group */
+				if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
+					Tcl_AppendResult(interp, "rt_bound_tree failed for ",
+							 regp->reg_name, "\n", (char *)NULL);
+					rt_clean(rtip);
+					bu_free((genptr_t)rtip, "f_make_bb: rtip");
+					return TCL_ERROR;
+				}
+				VMINMAX(rpp_min, rpp_max, reg_min);
+				VMINMAX(rpp_min, rpp_max, reg_max);
+			}
+		}
+	}
+
+	/* build bounding RPP */
+	arb = (struct rt_arb_internal *)bu_malloc(sizeof(struct rt_arb_internal), "arb");
+	VMOVE(arb->pt[0], rpp_min);
+	VSET(arb->pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z]);
+	VSET(arb->pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z]);
+	VSET(arb->pt[3], rpp_min[X], rpp_max[Y], rpp_min[Z]);
+	VSET(arb->pt[4], rpp_max[X], rpp_min[Y], rpp_min[Z]);
+	VSET(arb->pt[5], rpp_max[X], rpp_min[Y], rpp_max[Z]);
+	VMOVE(arb->pt[6], rpp_max);
+	VSET(arb->pt[7], rpp_max[X], rpp_max[Y], rpp_min[Z]);
+	arb->magic = RT_ARB_INTERNAL_MAGIC;
+
+	/* set up internal structure */
+	RT_INIT_DB_INTERNAL(&new_intern);
+	new_intern.idb_type = ID_ARB8;
+	new_intern.idb_meth = &rt_functab[ID_ARB8];
+	new_intern.idb_ptr = (genptr_t)arb;
+
+	if ((dp=db_diradd( wdbp->dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL) {
+		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (rt_db_put_internal(dp, wdbp->dbip, &new_intern) < 0) {
+		rt_db_free_internal(&new_intern);
+		Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	rt_clean(rtip);
+	bu_free((genptr_t)rtip, "f_make_bb: rtip");
+	return TCL_OK;
 }
 
 #if 0

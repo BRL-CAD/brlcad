@@ -50,6 +50,7 @@ class Db {
     public method l {args}
     public method listeval {args}
     public method ls {args}
+    public method make_bb {name args}
     public method match {args}
     public method mv {args}
     public method mvall {args}
@@ -140,16 +141,16 @@ body Db::dbip {} {
     $db dbip
 }
 
-body Db::ls {args} {
-    eval $db ls $args
-}
-
 body Db::l {args} {
     eval $db l $args
 }
 
 body Db::listeval {args} {
     eval $db listeval $args
+}
+
+body Db::ls {args} {
+    eval $db ls $args
 }
 
 body Db::paths {args} {
@@ -266,6 +267,10 @@ body Db::i {args} {
 
 body Db::get_dbname {} {
     return $db
+}
+
+body Db::make_bb {name args} {
+    eval $db make_bb $name $args
 }
 
 body Db::help {args} {
