@@ -3215,12 +3215,14 @@ CONST struct bn_tol	*tol;
 	}
 
 	if( count & 1 )  {
+#if 0
 		bu_log("nmg_radial_mark_flips() NOTICE dangling fu=x%x detected at eu=x%x in shell=x%x, proceeding.\n  %g %g %g --- %g %g %g\n",
 			orig->fu, orig->eu, s,
 			V3ARGS(orig->eu->vu_p->v_p->vg_p->coord),
 			V3ARGS(orig->eu->eumate_p->vu_p->v_p->vg_p->coord)
 		);
 		nmg_pr_radial_list( hd, tol );
+#endif
 		return count;
 	}
 
