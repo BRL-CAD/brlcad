@@ -39,6 +39,10 @@
 # include "bu.h"
 #endif
 
+#ifndef SEEN_BN_H
+# include "bn.h"
+#endif
+
 #ifndef WDB_H
 #define WDB_H seen
 /*
