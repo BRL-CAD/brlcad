@@ -256,7 +256,8 @@ XEvent *eventPtr;
       break;
     case ALT_MOUSE_MODE_ROTATE:
       bu_vls_printf( &cmd, "iknob ax %f ay %f\n",
-		     (my - ((struct glx_vars *)dm_vars)->omy)/512.0, (mx - ((struct glx_vars *)dm_vars)->omx)/512.0 );
+		     (my - ((struct glx_vars *)dm_vars)->omy)/512.0,
+		     (mx - ((struct glx_vars *)dm_vars)->omx)/512.0 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
       {
@@ -268,14 +269,17 @@ XEvent *eventPtr;
 	  fy = (0.5 - my/(fastf_t)((struct glx_vars *)dm_vars)->height) * 2;
 	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
 	}else{
-	  fx = (mx - ((struct glx_vars *)dm_vars)->omx)/(fastf_t)((struct glx_vars *)dm_vars)->width * 2.0;
-	  fy = (((struct glx_vars *)dm_vars)->omy - my)/(fastf_t)((struct glx_vars *)dm_vars)->height * 2.0;
+	  fx = (mx - ((struct glx_vars *)dm_vars)->omx)/
+	    (fastf_t)((struct glx_vars *)dm_vars)->width * 2.0;
+	  fy = (((struct glx_vars *)dm_vars)->omy - my)/
+	    (fastf_t)((struct glx_vars *)dm_vars)->height * 2.0;
 	  bu_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
 	}
       }	     
       break;
     case ALT_MOUSE_MODE_ZOOM:
-      bu_vls_printf( &cmd, "iknob aS %f\n", (((struct glx_vars *)dm_vars)->omy - my)/(fastf_t)((struct glx_vars *)dm_vars)->height);
+      bu_vls_printf( &cmd, "iknob aS %f\n", (((struct glx_vars *)dm_vars)->omy - my)/
+		     (fastf_t)((struct glx_vars *)dm_vars)->height);
       break;
     }
 
@@ -286,6 +290,7 @@ XEvent *eventPtr;
   else if( eventPtr->type == ((struct glx_vars *)dm_vars)->devmotionnotify ){
     XDeviceMotionEvent *M;
     int setting;
+    fastf_t f;
 
     M = (XDeviceMotionEvent * ) eventPtr;
 
@@ -298,114 +303,128 @@ XEvent *eventPtr;
     switch(DIAL0 + M->first_axis){
     case DIAL0:
       if(mged_variables.adcflag) {
-	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	                !dv_1adc )
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !dv_1adc )
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    knob_values[M->first_axis];
 	else
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol(dv_1adc) +
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_1adc) +
 	                  M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob ang1 %d\n",
 		      setting );
       }
       break;
     case DIAL1:
       if(mged_variables.rateknobs){
-	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !rate_zoom )
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !rate_zoom )
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    knob_values[M->first_axis];
 	else
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_zoom)) +
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * rate_zoom)) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob S %f\n",
 		       setting / 512.0 );
       }else{
-	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !absolute_zoom )
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !absolute_zoom )
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    knob_values[M->first_axis];
 	else
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_zoom)) +
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * absolute_zoom)) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob aS %f\n",
 		       setting / 512.0 );
       }
       break;
     case DIAL2:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	                !dv_2adc )
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !dv_2adc )
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    knob_values[M->first_axis];
 	else
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol(dv_2adc) +
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_2adc) +
 	                  M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob ang2 %d\n",
 		      setting );
       }else {
 	if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_rotate[Z] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !rate_rotate[Z] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_rotate[Z])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * rate_rotate[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob z %f\n",
 		      setting / 512.0 );
 	}else{
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_rotate[Z] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !absolute_rotate[Z] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_rotate[Z])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * absolute_rotate[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob az %f\n",
-			 setting / 512.0 );
+	  f = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd , "knob az %f\n", dm_wrap(f));
 	}
       }
       break;
     case DIAL3:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !dv_distadc)
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !dv_distadc)
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    knob_values[M->first_axis];
 	else
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol(dv_distadc) +
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_distadc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob distadc %d\n",
 		      setting );
       }else {
 	if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_slew[Z] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !rate_slew[Z] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_slew[Z])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * rate_slew[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob Z %f\n",
 			 setting / 512.0 );
 	}else{
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_slew[Z] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !absolute_slew[Z] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_slew[Z])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * absolute_slew[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob aZ %f\n",
 			 setting / 512.0 );
 	}
@@ -413,126 +432,142 @@ XEvent *eventPtr;
       break;
     case DIAL4:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !dv_yadc)
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !dv_yadc)
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    knob_values[M->first_axis];
 	else
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol(dv_yadc) +
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_yadc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob yadc %d\n",
 		      setting );
       }else{
 	if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_rotate[Y] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !rate_rotate[Y] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_rotate[Y])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * rate_rotate[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob y %f\n",
 			 setting / 512.0 );
 	}else{
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_rotate[Y] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !absolute_rotate[Y] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_rotate[Y])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * absolute_rotate[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob ay %f\n",
-			 setting / 512.0 );
+	  f = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd , "knob ay %f\n", dm_wrap(f));
 	}
       }
       break;
     case DIAL5:
       if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_slew[Y] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !rate_slew[Y] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_slew[Y])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * rate_slew[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob Y %f\n",
 		       setting / 512.0 );
       }else{
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_slew[Y] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !absolute_slew[Y] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_slew[Y])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * absolute_slew[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob aY %f\n",
 		       setting / 512.0 );
       }
       break;
     case DIAL6:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !dv_xadc)
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !dv_xadc)
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    knob_values[M->first_axis];
 	else
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol(dv_xadc) +
-	    M->axis_data[0] - knob_values[M->first_axis];
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit(dv_xadc) + M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob xadc %d\n",
 		      setting );
       }else{
 	if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !rate_rotate[X] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !rate_rotate[X] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_rotate[X])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * rate_rotate[X])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob x %f\n",
 			 setting / 512.0 );
 	}else{
-	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	     !absolute_rotate[X] )
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !absolute_rotate[X] )
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	      knob_values[M->first_axis];
 	  else
-	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_rotate[X])) +
+	    ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * absolute_rotate[X])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob ax %f\n",
-			 setting / 512.0 );
+	  f = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd , "knob ax %f\n", dm_wrap(f));
 	}
       }
       break;
     case DIAL7:
       if(mged_variables.rateknobs){
-	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !rate_slew[X] )
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !rate_slew[X] )
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    knob_values[M->first_axis];
 	else
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_slew[X])) +
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * rate_slew[X])) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob X %f\n",
 		       setting / 512.0 );
       }else{
-	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] && ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
-	   !absolute_slew[X] )
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	if(-NOISE < ((struct glx_vars *)dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dm_vars)->knobs[M->first_axis] < NOISE && !absolute_slew[X] )
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    knob_values[M->first_axis];
 	else
-	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_slew[X])) +
+	  ((struct glx_vars *)dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * absolute_slew[X])) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Glx_irlimit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct glx_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob aX %f\n",
 		       setting / 512.0 );
       }
