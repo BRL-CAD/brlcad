@@ -93,6 +93,16 @@ struct wdb_pipept *headp;
 mk_pipe_free( headp )
 struct wdb_pipept	*headp;
 .sp
+mk_pipe_init( headp, coord, od, id, bendradius )
+struct wdb_pipept *headp;
+point_t coord;
+fastf_t od, id, bendradius;
+.sp
+mk_add_pipe_pt( headp, coord, od, id, bendradius )
+struct wdb_pipept *headp;
+point_t coord;
+fastf_t od, id, bendradius;
+.sp
 mk_comb( fp, name, len, region, matname, matparm, rgb, inherit )
 FILE	*fp;
 char	*name;
@@ -270,7 +280,15 @@ is responsible for freeing the memory used by the list of pipe segments (see
 below.
 .PP
 .I mk_pipe_free
-will free the memory used by a linked list of pipe segments.
+will free the memory used by a linked list of pipe segments. This does not free the list head.
+.PP
+.I mk_pipe_init
+initializes a linked list of pipe segments with the initial point,
+inside diameter, outside diameter, and bend radius.
+.PP
+.I mk_add_pipe_pt
+adds another pipe segment to the list with the indicated point,
+outside radius, inside radius, and bend radius.
 .PP
 .I mk_comb\^
 defines a combination of name ``name'', with material properties
