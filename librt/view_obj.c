@@ -294,7 +294,7 @@ vo_size_tcl(clientData, interp, argc, argv)
 	/* set view size */
 	if (argc == 3) {
 		if (sscanf(argv[2], "%lf", &size) != 1) {
-			Tcl_AppendResult(interp, "bad size value - ",
+			Tcl_AppendResult(interp, "bad size - ",
 					 argv[2], (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -1054,6 +1054,8 @@ vo_zoom_tcl(clientData, interp, argc, argv)
 	}
 
 	vop->vo_scale /= sf;
+	vop->vo_size = 2.0 * vop->vo_scale;
+	vop->vo_invSize = 1.0 / vop->vo_size;
 	vo_update(vop);
 
 	return TCL_OK;
