@@ -33,9 +33,8 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
- *	All rights reserved.
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
