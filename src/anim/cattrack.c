@@ -56,15 +56,15 @@
  * Left to calling routine to avoid dividing by zero.
  */
 fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
-              	/* curve parameters */
-          		/* arclength value  */
+     /* curve parameters */
+     /* arclength value  */
 {
-	fastf_t arg, asinh_arg;
+    fastf_t arg, asinh_arg;
 
-	arg = a*s - sinh(a*c);
-	asinh_arg = log(arg + sqrt(arg*arg + 1.0));
+    arg = a*s - sinh(a*c);
+    asinh_arg = log(arg + sqrt(arg*arg + 1.0));
 
-	return(asinh_arg/a + c);
+    return(asinh_arg/a + c);
 }
 
 /* HYPER_GET_S - calculate the arclength parameter of a caternary
@@ -74,7 +74,7 @@ fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
  */
 fastf_t hyper_get_s(fastf_t a, fastf_t c, fastf_t x)
 {
-		return((sinh(a*(x-c))+sinh(a*c))/a);
+    return((sinh(a*(x-c))+sinh(a*c))/a);
 }
 
 /* HYPER_GET_Z - calculate point on the caternary curve:
@@ -83,14 +83,14 @@ fastf_t hyper_get_s(fastf_t a, fastf_t c, fastf_t x)
  */
 fastf_t hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x)
 {
-	fastf_t z;
+    fastf_t z;
 
-	if (fabs(a)>VDIVIDE_TOL){
-		z = cosh(a*(x-c))/a + b;
-	} else {
-		z = b;
-	}
-	return(z);
+    if (fabs(a)>VDIVIDE_TOL){
+	z = cosh(a*(x-c))/a + b;
+    } else {
+	z = b;
+    }
+    return(z);
 }
 
 /* HYPER_GET_ANG - calculate angle corresponding to the slope of 
@@ -99,10 +99,10 @@ fastf_t hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x)
  */
 fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x)
 {
-	fastf_t slope;
+    fastf_t slope;
 
-	slope = sinh(a*(x-c));
-	return( atan2(slope, 1.0));
+    slope = sinh(a*(x-c));
+    return( atan2(slope, 1.0));
 }
 
 /* GET_CURVE - Find the constants a, b, and c such that the curve
@@ -114,88 +114,88 @@ fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x)
  * It uses the values of a,b, and c from the last call as a start.
  */
 int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one, fastf_t r_zero, fastf_t r_one)
-       	              	/* curve parameters */
-                     	/* angle where curve contacts circle0,circle1 */
-                	/* desired arclength */
-                        /* radii of circle0 and circle1 */
-                     	/* center of circle0 and circle1 */
+     /* curve parameters */
+     /* angle where curve contacts circle0,circle1 */
+     /* desired arclength */
+     /* radii of circle0 and circle1 */
+     /* center of circle0 and circle1 */
 {
 
-	int status, i, solved;
-	int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one);
-	fastf_t theta_one, theta_zero, new_theta_zero, new_theta_one;
-	fastf_t avg_theta_zero, avg_theta_one, arc_dist;
-	fastf_t tang_ang, costheta;
-	double stmp;
-	vect_t q_zero, q_one, diff; 
-	static fastf_t last_a, last_c, last_theta_one, last_theta_zero;
-	static int called_before = 0;
+    int status, i, solved;
+    int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one);
+    fastf_t theta_one, theta_zero, new_theta_zero, new_theta_one;
+    fastf_t avg_theta_zero, avg_theta_one, arc_dist;
+    fastf_t tang_ang, costheta;
+    double stmp;
+    vect_t q_zero, q_one, diff; 
+    static fastf_t last_a, last_c, last_theta_one, last_theta_zero;
+    static int called_before = 0;
 
-	/*first calculate angle at which tangent line would contact circles*/
-	VSUB2(diff,p_one,p_zero);
-	tang_ang = atan2(diff[Z],diff[X]);
-	costheta = (r_zero-r_one)/MAGNITUDE(diff);
-	tang_ang += acos(costheta);
+    /*first calculate angle at which tangent line would contact circles*/
+    VSUB2(diff,p_one,p_zero);
+    tang_ang = atan2(diff[Z],diff[X]);
+    costheta = (r_zero-r_one)/MAGNITUDE(diff);
+    tang_ang += acos(costheta);
 
-	if (!called_before){
-		theta_one = tang_ang;
-		theta_zero = tang_ang;
-		(*pa) = 1.0;
-		*pc = 0.5*(p_one[X]+p_zero[X]);
-		called_before = 1;
+    if (!called_before){
+	theta_one = tang_ang;
+	theta_zero = tang_ang;
+	(*pa) = 1.0;
+	*pc = 0.5*(p_one[X]+p_zero[X]);
+	called_before = 1;
+    }
+    else {
+	theta_zero = last_theta_zero;
+	theta_one = last_theta_one;
+	*pa = last_a;
+	*pc = last_c;
+    }
+
+    status = MAX_REACHED;
+    for (i=0;i<T_MAX_ITS;i++){
+	q_zero[X] = p_zero[X] + r_zero * cos(theta_zero);
+	q_zero[Z] = p_zero[Z] + r_zero * sin(theta_zero);
+	q_one[X] = p_one[X] + r_one * cos(theta_one);
+	q_one[Z] = p_one[Z] + r_one * sin(theta_one);
+
+	/* determine distance taken by arc*/
+	arc_dist = r_zero * (tang_ang - theta_zero);
+	arc_dist += r_one * (theta_one - tang_ang);
+
+	ingetcurve(pa,pb,pc, delta_s-arc_dist, q_zero, q_one);
+
+	solved = 0;
+	/* refine theta_one */
+	stmp = sinh( (*pa)*(q_zero[X]-(*pc)) );
+	new_theta_zero = atan2(1.0,-stmp);
+	avg_theta_zero = 0.5 * (theta_zero + new_theta_zero);
+	if (fabs(theta_zero-avg_theta_zero)<T_TOL){
+	    solved++;
 	}
-	else {
-		theta_zero = last_theta_zero;
-		theta_one = last_theta_one;
-		*pa = last_a;
-		*pc = last_c;
+	theta_zero = avg_theta_zero;
+
+	/* refine theta_two */
+	stmp = sinh( (*pa)*(q_one[X]-(*pc)) );
+	new_theta_one = atan2(1.0,-stmp);
+	avg_theta_one = 0.5 * (theta_one + new_theta_one);
+	if (fabs(theta_one-avg_theta_one)<T_TOL){
+	    solved++;
 	}
+	theta_one = avg_theta_one;
 
-	status = MAX_REACHED;
-	for (i=0;i<T_MAX_ITS;i++){
-		q_zero[X] = p_zero[X] + r_zero * cos(theta_zero);
-		q_zero[Z] = p_zero[Z] + r_zero * sin(theta_zero);
-		q_one[X] = p_one[X] + r_one * cos(theta_one);
-		q_one[Z] = p_one[Z] + r_one * sin(theta_one);
-
-		/* determine distance taken by arc*/
-		arc_dist = r_zero * (tang_ang - theta_zero);
-		arc_dist += r_one * (theta_one - tang_ang);
-
-		ingetcurve(pa,pb,pc, delta_s-arc_dist, q_zero, q_one);
-
-		solved = 0;
-		/* refine theta_one */
-		stmp = sinh( (*pa)*(q_zero[X]-(*pc)) );
-		new_theta_zero = atan2(1.0,-stmp);
-		avg_theta_zero = 0.5 * (theta_zero + new_theta_zero);
-		if (fabs(theta_zero-avg_theta_zero)<T_TOL){
-			solved++;
-		}
-		theta_zero = avg_theta_zero;
-
-		/* refine theta_two */
-		stmp = sinh( (*pa)*(q_one[X]-(*pc)) );
-		new_theta_one = atan2(1.0,-stmp);
-		avg_theta_one = 0.5 * (theta_one + new_theta_one);
-		if (fabs(theta_one-avg_theta_one)<T_TOL){
-			solved++;
-		}
-		theta_one = avg_theta_one;
-
-		if (solved == 2){
-			status = SOLVED;
-			break;
-		}
+	if (solved == 2){
+	    status = SOLVED;
+	    break;
+	}
 		
-	}
-	last_theta_zero = theta_zero;
-	last_theta_one = theta_one;
-	last_a = *pa;
-	last_c = *pc;
-	*pth0 = theta_zero;
-	*pth1 = theta_one;
-	return(status);
+    }
+    last_theta_zero = theta_zero;
+    last_theta_one = theta_one;
+    last_a = *pa;
+    last_c = *pc;
+    *pth0 = theta_zero;
+    *pth1 = theta_one;
+    return(status);
 			
 }
 
@@ -206,87 +206,87 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
  */
 int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one)
 {
-	int status, i, j, k;
-	fastf_t adjust;
-	fastf_t eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s),gee(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_z);
+    int status, i, j, k;
+    fastf_t adjust;
+    fastf_t eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s),gee(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_z);
 
-	status = MAX_REACHED;
-	i=0;
-	while (i++<MAX_OUT_ITS){
-		for (j=0;j<MAX_ITS;j++){
-			adjust = eff(*pa,*pc,p_zero[X],p_one[X],delta_s);
-			if ((*pa-adjust)<=0.0){
-				*pa *= 0.5;
-			}
-			else {
-				*pa -= adjust;
-			}
-			if (adjust<F_TOL){
-				break;
-			}
-		}
-		
-		for (k=0;k<MAX_ITS;k++){
-			adjust = gee(*pa,*pc,p_zero[X],p_one[X],(p_one[Z]-p_zero[Z]));
-			*pc -= adjust;
-			if (adjust<G_TOL){
-				break;
-			}
-		}
-
-		if ((j==0)&&(k==0)){
-			status = SOLVED;
-			break;
-		}
+    status = MAX_REACHED;
+    i=0;
+    while (i++<MAX_OUT_ITS){
+	for (j=0;j<MAX_ITS;j++){
+	    adjust = eff(*pa,*pc,p_zero[X],p_one[X],delta_s);
+	    if ((*pa-adjust)<=0.0){
+		*pa *= 0.5;
+	    }
+	    else {
+		*pa -= adjust;
+	    }
+	    if (adjust<F_TOL){
+		break;
+	    }
 	}
-	*pb = p_zero[Z] - cosh( (*pa)*(p_zero[X]-(*pc)) )/(*pa);
+		
+	for (k=0;k<MAX_ITS;k++){
+	    adjust = gee(*pa,*pc,p_zero[X],p_one[X],(p_one[Z]-p_zero[Z]));
+	    *pc -= adjust;
+	    if (adjust<G_TOL){
+		break;
+	    }
+	}
+
+	if ((j==0)&&(k==0)){
+	    status = SOLVED;
+	    break;
+	}
+    }
+    *pb = p_zero[Z] - cosh( (*pa)*(p_zero[X]-(*pc)) )/(*pa);
 	
-	return(status);
+    return(status);
 
 }
 
 /* find Newtonian adjustment for 'a', assuming 'c' fixed*/
 fastf_t eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s)
 {
-	double f,fprime;
-	double arg0, arg1, sarg0, sarg1;
+    double f,fprime;
+    double arg0, arg1, sarg0, sarg1;
 
-	arg0 = a*(x0-c);
-	arg1 = a*(x1-c);
+    arg0 = a*(x0-c);
+    arg1 = a*(x1-c);
 
-	sarg0 = sinh(arg0);
-	sarg1 = sinh(arg1);
+    sarg0 = sinh(arg0);
+    sarg1 = sinh(arg1);
 
-	f = a*(sarg1-sarg0 - a*delta_s);
-	fprime = sarg0 - sarg1 - arg0*cosh(arg0) + arg1*cosh(arg1);
+    f = a*(sarg1-sarg0 - a*delta_s);
+    fprime = sarg0 - sarg1 - arg0*cosh(arg0) + arg1*cosh(arg1);
 
-	if (fabs(fprime) > VDIVIDE_TOL)
-		return(f/fprime);
-	else if ((a*a) > VDIVIDE_TOL)
-		return(f/(a*a));
-	else if (fabs(a) > VDIVIDE_TOL)
-		return(f/a);
-	else
-		return(f);
+    if (fabs(fprime) > VDIVIDE_TOL)
+	return(f/fprime);
+    else if ((a*a) > VDIVIDE_TOL)
+	return(f/(a*a));
+    else if (fabs(a) > VDIVIDE_TOL)
+	return(f/a);
+    else
+	return(f);
 }
 
 /* find Newtonian adjustment for c, assuming 'a' fixed*/
 fastf_t gee(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_z)
 {
-	double g, gprime, arg0, arg1;
+    double g, gprime, arg0, arg1;
 
-	arg0 = a*(x0-c);
-	arg1 = a*(x1-c);
+    arg0 = a*(x0-c);
+    arg1 = a*(x1-c);
 
-	g = cosh(arg1)-cosh(arg0) - a*delta_z;
-	gprime = a*(sinh(arg0) - sinh(arg1));
+    g = cosh(arg1)-cosh(arg0) - a*delta_z;
+    gprime = a*(sinh(arg0) - sinh(arg1));
 
-	if (fabs(gprime) > VDIVIDE_TOL)
-		return(g/gprime);
-	else if (fabs(a) > VDIVIDE_TOL)
-		return(g/a);
-	else
-		return(g);
+    if (fabs(gprime) > VDIVIDE_TOL)
+	return(g/gprime);
+    else if (fabs(a) > VDIVIDE_TOL)
+	return(g/a);
+    else
+	return(g);
 }
 
 

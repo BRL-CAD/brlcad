@@ -37,43 +37,43 @@
 int
 main(int argc, char **argv)
 {
-	double addend, temp;
-	int i,j,doit, of, count, val, *col_list;
+    double addend, temp;
+    int i,j,doit, of, count, val, *col_list;
 
 
-	if (argc < 3) {
-		fprintf(stderr,"Usage: chan_add value num_columns column [column ...] < in.file > out.file\n");
-		return(-1);
+    if (argc < 3) {
+	fprintf(stderr,"Usage: chan_add value num_columns column [column ...] < in.file > out.file\n");
+	return(-1);
+    }
+
+    sscanf(*(argv+1),"%lf",&addend);
+    sscanf(*(argv+2),"%d",&of);
+    col_list = (int *) calloc(argc-2,sizeof(int));
+    for (i=3;i<argc;i++){
+	sscanf(*(argv+i),"%d",col_list+(i-3));
+    }
+
+    count = 0;
+    while (!feof(stdin)){
+	val = scanf("%lf",&temp);
+	if (val<1) 
+	    ;
+	else {
+	    doit = 0;
+	    for (j=0;j<argc-3;j++){
+		if (col_list[j]==count)
+		    doit = 1;
+	    }
+	    if (doit)
+		printf("%.10g\t",temp + addend);
+	    else
+		printf("%.10g\t",temp);
 	}
-
-	sscanf(*(argv+1),"%lf",&addend);
-	sscanf(*(argv+2),"%d",&of);
-	col_list = (int *) calloc(argc-2,sizeof(int));
-	for (i=3;i<argc;i++){
-		sscanf(*(argv+i),"%d",col_list+(i-3));
-	}
-
-	count = 0;
-	while (!feof(stdin)){
-		val = scanf("%lf",&temp);
-		if (val<1) 
-			;
-		else {
-			doit = 0;
-			for (j=0;j<argc-3;j++){
-				if (col_list[j]==count)
-					doit = 1;
-			}
-			if (doit)
-				printf("%.10g\t",temp + addend);
-			else
-				printf("%.10g\t",temp);
-		}
-		if ( count == (of-1))
-			printf("\n");
-		count = (count+1)%of;
-	}
-	return( 0 );
+	if ( count == (of-1))
+	    printf("\n");
+	count = (count+1)%of;
+    }
+    return( 0 );
 }
 
 /*

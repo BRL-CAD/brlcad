@@ -82,58 +82,58 @@ extern void anim_v_unpermute(fastf_t *);
 int
 main(int argc, char **argv)
 {
-	int c;
-	fastf_t time, viewsize;
+    int c;
+    fastf_t time, viewsize;
 
-	fastf_t eyept[3], viewrot[16], angle[3], quat[4];
-	int anim_mat2ypr(fastf_t *, fastf_t *), anim_mat2zyx(const fastf_t *, fastf_t *), anim_mat2quat(fastf_t *, const fastf_t *);
+    fastf_t eyept[3], viewrot[16], angle[3], quat[4];
+    int anim_mat2ypr(fastf_t *, fastf_t *), anim_mat2zyx(const fastf_t *, fastf_t *), anim_mat2quat(fastf_t *, const fastf_t *);
 
-	if (!get_args(argc,argv))
-		fprintf(stderr,"anim_keyread: get_args error");
+    if (!get_args(argc,argv))
+	fprintf(stderr,"anim_keyread: get_args error");
 
-	while (!feof(stdin)){  /* read one keyframe */
-		scanf("%lf", &time);
-		scanf("%lf", &viewsize);
-		scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
-		/* read in transposed matrix */
-		scanf("%lf %lf %lf %lf", viewrot+0, viewrot+4, viewrot+8, viewrot+12);
-		scanf("%lf %lf %lf %lf", viewrot+1, viewrot+5, viewrot+9, viewrot+13);
-		scanf("%lf %lf %lf %lf", viewrot+2, viewrot+6, viewrot+10, viewrot+14);
-		scanf("%lf %lf %lf %lf", viewrot+3, viewrot+7, viewrot+11, viewrot+15);
+    while (!feof(stdin)){  /* read one keyframe */
+	scanf("%lf", &time);
+	scanf("%lf", &viewsize);
+	scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
+	/* read in transposed matrix */
+	scanf("%lf %lf %lf %lf", viewrot+0, viewrot+4, viewrot+8, viewrot+12);
+	scanf("%lf %lf %lf %lf", viewrot+1, viewrot+5, viewrot+9, viewrot+13);
+	scanf("%lf %lf %lf %lf", viewrot+2, viewrot+6, viewrot+10, viewrot+14);
+	scanf("%lf %lf %lf %lf", viewrot+3, viewrot+7, viewrot+11, viewrot+15);
 
-		if (feof(stdin)) break;
+	if (feof(stdin)) break;
 
-		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t", time, viewsize,
-					 eyept[0], eyept[1], eyept[2]);
+	printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t", time, viewsize,
+	       eyept[0], eyept[1], eyept[2]);
 
 
-		if (mode==YPR) {
-			anim_v_unpermute(viewrot);
-			c = anim_mat2ypr(angle,viewrot);
-			if (c==ERROR1)
-				fprintf(stderr,"Warning: yaw and roll arbitrarily defined at time = %f.\n",time);
-			else if (c==ERROR2)
-				fprintf(stderr,"Keyread: can't interpret matrix at time = %f.\n",time);
-			if (units == DEGREES)
-				VSCALE(angle,angle,RTOD);
-			printf("%.10g\t%.10g\t%.10g\n",angle[0],angle[1],angle[2]);
-		}
-		else if (mode==XYZ) {
-			c = anim_mat2zyx(angle,viewrot);
-			if (c==ERROR1)
-				fprintf(stderr,"Warning: x and z rotations arbitrarily defined at time = %f.\n",time);
-			else if (c==ERROR2)
-				fprintf(stderr,"Keyread: can't interpret matrix at time = %f\n.",time);
-			if (units == DEGREES)
-				VSCALE(angle,angle,RTOD);
-			printf("%.10g\t%.10g\t%.10g\n",angle[X],angle[Y],angle[Z]);
-		}
-		else if (mode==QUATERNION){
-			anim_mat2quat(quat,viewrot);
-			printf("%.10g\t%.10g\t%.10g\t%.10g\n",quat[X],quat[Y],quat[Z],quat[W]);
-		}
+	if (mode==YPR) {
+	    anim_v_unpermute(viewrot);
+	    c = anim_mat2ypr(angle,viewrot);
+	    if (c==ERROR1)
+		fprintf(stderr,"Warning: yaw and roll arbitrarily defined at time = %f.\n",time);
+	    else if (c==ERROR2)
+		fprintf(stderr,"Keyread: can't interpret matrix at time = %f.\n",time);
+	    if (units == DEGREES)
+		VSCALE(angle,angle,RTOD);
+	    printf("%.10g\t%.10g\t%.10g\n",angle[0],angle[1],angle[2]);
 	}
-	return( 0 );
+	else if (mode==XYZ) {
+	    c = anim_mat2zyx(angle,viewrot);
+	    if (c==ERROR1)
+		fprintf(stderr,"Warning: x and z rotations arbitrarily defined at time = %f.\n",time);
+	    else if (c==ERROR2)
+		fprintf(stderr,"Keyread: can't interpret matrix at time = %f\n.",time);
+	    if (units == DEGREES)
+		VSCALE(angle,angle,RTOD);
+	    printf("%.10g\t%.10g\t%.10g\n",angle[X],angle[Y],angle[Z]);
+	}
+	else if (mode==QUATERNION){
+	    anim_mat2quat(quat,viewrot);
+	    printf("%.10g\t%.10g\t%.10g\t%.10g\n",quat[X],quat[Y],quat[Z],quat[W]);
+	}
+    }
+    return( 0 );
 }
 
 
@@ -142,31 +142,31 @@ main(int argc, char **argv)
 int get_args(int argc, char **argv)
 {
 
-	int c;
+    int c;
 
-	mode = QUATERNION; /* default */
-	units = DEGREES;
+    mode = QUATERNION; /* default */
+    units = DEGREES;
 
-	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
-		switch(c){
-		case 'y':
-			mode = YPR;
-			break;
-		case 'z':
-			mode = XYZ;
-			break;
-		case 'q':
-			mode = QUATERNION;
-			break;
-		case 'r':
-			units = RADIANS;
-			break;
-		default:
-			fprintf(stderr,"Unknown option: -%c\n",c);
-			return(0);
-		}
+    while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+	switch(c){
+	case 'y':
+	    mode = YPR;
+	    break;
+	case 'z':
+	    mode = XYZ;
+	    break;
+	case 'q':
+	    mode = QUATERNION;
+	    break;
+	case 'r':
+	    units = RADIANS;
+	    break;
+	default:
+	    fprintf(stderr,"Unknown option: -%c\n",c);
+	    return(0);
 	}
-	return(1);
+    }
+    return(1);
 }
 
 
