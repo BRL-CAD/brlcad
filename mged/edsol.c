@@ -3753,6 +3753,9 @@ struct rt_tol		*tol;
 {
 	register int i, p1, p2, p3;
 
+	RT_ARB_CK_MAGIC( arb);
+	RT_CK_TOL( tol );
+
 	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
 
 	for(i=0; i<6; i++) {
