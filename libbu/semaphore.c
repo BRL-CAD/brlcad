@@ -364,7 +364,7 @@ unsigned int	i;
 		return;
 	}
 	if( i >= bu_nsemaphores )  {
-		fprintf(stderr, "bu_semaphore_acquire(%d): semaphore # exceeds max of %d\n",
+		fprintf(stderr, "bu_semaphore_release(%d): semaphore # exceeds max of %d\n",
 			i, bu_nsemaphores);
 		exit(3);
 	}
