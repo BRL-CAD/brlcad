@@ -49,7 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./solid.h"
 #include "./sedit.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 #include "./menu.h"
 
 extern struct rt_tol		mged_tol;	/* from ged.c */

@@ -55,7 +55,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 #include "./mgedtcl.h"
 
 #define BAD_EOF	(-1L)			/* eof_addr not set yet */

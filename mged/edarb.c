@@ -48,7 +48,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 void	ext4to6(),old_ext4to6();
 
