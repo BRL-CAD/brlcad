@@ -270,6 +270,12 @@ struct seg **HeadSegp;
 			newseg->seg_out = temp;		/* struct copy */
 		}
 
+		/* Discard seg entirely behind the start point of the ray */
+		if( newseg->seg_out.hit_dist < 0 )  {
+			FREE_SEG( newseg );
+			return( FALSE );	/* MISS */
+		}
+
 		/* Add segment chain to list */
 		{
 			register struct seg *seg2 = newseg;
