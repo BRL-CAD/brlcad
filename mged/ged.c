@@ -293,6 +293,14 @@ char **argv;
 	es_edflag = -1;		/* no solid editing just now */
 
 	rt_vls_init( &dm_values.dv_string );
+	rt_vls_init(&input_str);
+	rt_vls_init(&input_str_prefix);
+	rt_vls_init(&scratchline);
+	rt_vls_init(&mged_prompt);
+	input_str_index = 0;
+
+	/* Perform any necessary initializations for the command parser */
+	cmd_setup(interactive);
 
 	/* Initialize the menu mechanism to be off, but ready. */
 	mmenu_init();
@@ -306,9 +314,6 @@ char **argv;
 	windowbounds[5] = -2048;	/* ZLR */
 
 	dmaflag = 1;
-
-	/* Perform any necessary initializations for the command parser */
-	cmd_setup(interactive);
 
 	/* Open the database, attach a display manager */
 	f_opendb( argc, argv );
@@ -335,12 +340,6 @@ char **argv;
 	/* Reset the lights */
 	dmp->dmr_light( LIGHT_RESET, 0 );
 
-	rt_vls_init(&input_str);
-	rt_vls_init(&input_str_prefix);
-	rt_vls_init(&scratchline);
-	rt_vls_init(&mged_prompt);
-	input_str_index = 0;
-	
 	Tk_CreateFileHandler(fileno(stdin), TK_READABLE, stdin_input,
 			     (ClientData)NULL);
 
@@ -491,9 +490,7 @@ int mask;
 	    input_str_index = 0;
 	    freshline = 1;
 	} else {
-	    rt_vls_trunc(&input_str_prefix, 0);
-	    rt_vls_vlscat(&input_str_prefix, &temp); /* Restore initial
-							command */
+	    rt_vls_trunc(&input_str, 0);
 	    /* Allow the user to hit ^C. */
 	    cmdline_sig = sig2;
 	}
@@ -517,6 +514,7 @@ int mask;
 #define CTRL_L      12
 #define CTRL_N      14
 #define CTRL_P      16
+#define CTRL_T      20
 #define CTRL_U      21
 #define ESC         27
 #define BACKSPACE   '\b'
@@ -580,19 +578,18 @@ int mask;
 		    rt_vls_trunc(&input_str, 0);
 		    /* All done; clear all strings. */
 		}
-		pr_prompt(); /* Print prompt for more input */
 		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
 		clr_Echo(fileno(stdin));
 	    }
-	    input_str_index = 0;
-	    freshline = 1;
 	} else {
-	    rt_vls_trunc(&input_str_prefix, 0);
-	    rt_vls_vlscat(&input_str_prefix, &temp); /* Restore initial
-							command */
+	    rt_vls_trunc(&input_str, 0);
+	    rt_vls_strcpy(&mged_prompt, "? ");
 	    /* Allow the user to hit ^C */
 	    cmdline_sig = sig2;
 	}
+	pr_prompt(); /* Print prompt for more input */
+	input_str_index = 0;
+	freshline = 1;
 	escaped = bracketed = 0;
 	rt_vls_free(&temp);
 	break;
@@ -646,7 +643,7 @@ int mask;
 	rt_vls_free(&temp);
 	escaped = bracketed = 0;
 	break;
-    case CTRL_U:
+    case CTRL_U:                   /* Delete whole line */
 	pr_prompt();
 	rt_log("%*s", rt_vls_strlen(&input_str), SPACES);
 	pr_prompt();
@@ -687,6 +684,23 @@ int mask;
 	}
 
 	rt_log("%c", rt_vls_addr(&input_str)[input_str_index]);
+	++input_str_index;
+	escaped = bracketed = 0;
+	break;
+    case CTRL_T:                  /* Transpose characters */
+	if (input_str_index == 0) {
+	    pr_beep();
+	    break;
+	}
+	if (input_str_index == rt_vls_strlen(&input_str)) {
+	    rt_log("\b");
+	    --input_str_index;
+	}
+	ch = rt_vls_addr(&input_str)[input_str_index];
+	rt_vls_addr(&input_str)[input_str_index] =
+	    rt_vls_addr(&input_str)[input_str_index - 1];
+	rt_vls_addr(&input_str)[input_str_index - 1] = ch;
+	rt_log("\b%*s", 2, rt_vls_addr(&input_str)+input_str_index-1);
 	++input_str_index;
 	escaped = bracketed = 0;
 	break;
@@ -921,9 +935,8 @@ refresh()
 			adcursor();
 
 		/* Display titles, etc., if desired */
-		if( mged_variables.faceplate > 0 )
-			dotitles();
-
+		dotitles(mged_variables.faceplate);
+		
 		dmp->dmr_epilog();
 
 		(void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
