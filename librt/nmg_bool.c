@@ -930,9 +930,9 @@ nmg_s_radial_check( sB, tol );
 #endif
 	nmg_class_nothing_broken = 1;
 	if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
-		nmg_show_broken_classifier_stuff(sA, &classlist[0],
+		nmg_show_broken_classifier_stuff((long *)sA, &classlist[0],
 			nmg_class_nothing_broken, 1, "unclassed sA");
-		nmg_show_broken_classifier_stuff(sB, &classlist[4], 1, 1, "unclassed sB");
+		nmg_show_broken_classifier_stuff((long *)sB, &classlist[4], 1, 1, "unclassed sB");
 	}
 
 	/*
@@ -959,8 +959,8 @@ nmg_s_radial_check( sB, tol );
 		nmg_show_each_loop(sB, &classlist[4], 1, 0, "sB lu");
 
 		/* Show each shell as a whole */
-		nmg_show_broken_classifier_stuff(sA, &classlist[0], 1, 0, "sA classed");
-		nmg_show_broken_classifier_stuff(sB, &classlist[4], 1, 0, "sB classed");
+		nmg_show_broken_classifier_stuff((long *)sA, &classlist[0], 1, 0, "sA classed");
+		nmg_show_broken_classifier_stuff((long *)sB, &classlist[4], 1, 0, "sB classed");
 	}
 #if 1
 	if( rt_g.NMG_debug & DEBUG_BOOL )
@@ -1018,7 +1018,7 @@ nmg_s_radial_check( sA, tol );
 			nmg_class_nothing_broken = 1;
 
 			/* Show final result of the boolean */
-			nmg_show_broken_classifier_stuff(sA, &classlist[0], 1, 0, "sA result");
+			nmg_show_broken_classifier_stuff((long *)sA, &classlist[0], 1, 0, "sA result");
 		}
 
 		/*  Go back and combine loops
