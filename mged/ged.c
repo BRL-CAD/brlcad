@@ -83,6 +83,7 @@ void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2();
 void		new_mats();
 void		usejoy();
+static int	do_rc();
 static void	log_event();
 extern char	version[];		/* from vers.c */
 
@@ -129,6 +130,8 @@ char **argv;
 	if( argc == 2 )
 		(void)fprintf(outfile, "%s\n", version+5);	/* skip @(#) */
 
+	(void)signal( SIGPIPE, SIG_IGN );
+
 	/* Get input file */
 	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
 	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
@@ -158,7 +161,9 @@ char **argv;
 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
 
-	/* If multiple processors might be used, initialize for it */
+	/* If multiple processors might be used, initialize for it.
+	 * Do not run any commands before here.
+	 */
 	if( rt_avail_cpus() > 1 )  {
 		rt_g.rtg_parallel = 1;
 		RES_INIT( &rt_g.res_syscall );
@@ -192,6 +197,26 @@ char **argv;
 	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
 
+	rt_vls_init( &dm_values.dv_string );
+
+	/* Initialize the menu mechanism to be off, but ready. */
+	mmenu_init();
+	btn_head_menu(0,0,0);		/* unlabeled menu */
+
+	dmaflag = 1;
+
+	/* --- Now safe to process commands.  BUT, no geometry yet. --- */
+
+	if( argc == 2 )  {
+		/* This is an interactive mged */
+
+		/* Process any .mgedrc file, before attaching */
+		do_rc();
+
+		/* Ask which one, and fire up the display manager */
+		get_attached();
+	}
+
 	windowbounds[0] = XMAX;		/* XHR */
 	windowbounds[1] = XMIN;		/* XLR */
 	windowbounds[2] = YMAX;		/* YHR */
@@ -200,17 +225,7 @@ char **argv;
 	windowbounds[5] = -2048;	/* ZLR */
 	dmp->dmr_window(windowbounds);
 
-	rt_vls_init( &dm_values.dv_string );
-
-	dmaflag = 1;
-
-	/* Fire up the display manager, and the display processor */
-	if( argc == 2 )
-		get_attached();		/* interactive */
-
-	/* Here we should print out a "message of the day" file */
-
-	/*	 Scan input file and build the directory	 */
+	/* --- Scan geometry database and build in-memory directory --- */
 	db_scan( dbip, (int (*)())db_diradd, 1);
 	/* XXX - save local units */
 	localunit = dbip->dbi_localunit;
@@ -222,12 +237,6 @@ char **argv;
 		(void)printf("%s (units=%s)\n", dbip->dbi_title,
 			units_str[dbip->dbi_localunit] );
 
-	/* Initialize the menu mechanism to be off, but ready. */
-	mmenu_init();
-	btn_head_menu(0,0,0);		/* unlabeled menu */
-
-	refresh();			/* Put up faceplate */
-
 	/* If this is an argv[] invocation, do it now */
 	if( argc > 2 )  {
 		mged_cmd( argc-2, argv+2 );
@@ -235,12 +244,14 @@ char **argv;
 		/* NOTREACHED */
 	}
 
+	refresh();			/* Put up faceplate */
+
 	/* Reset the lights */
 	dmp->dmr_light( LIGHT_RESET, 0 );
 
-	/* Caught interrupts take us here */
+	/* Caught interrupts take us back here, via longjmp() */
 	if( setjmp( jmp_env ) == 0 )  {
-		/* First pass through */
+		/* First pass, determine SIGINT handler for interruptable cmds */
 		if( signal( SIGINT, SIG_IGN ) == SIG_IGN )
 			cur_sigint = (void (*)())SIG_IGN; /* detached? */
 		else
@@ -253,7 +264,6 @@ char **argv;
 		RES_RELEASE( &rt_g.res_stats );
 		RES_RELEASE( &rt_g.res_results );
 	}
-	(void)signal( SIGPIPE, SIG_IGN );
 	pr_prompt();
 
 	/****************  M A I N   L O O P   *********************/
@@ -693,6 +703,75 @@ new_mats()
 		mat_inv( objview2model, model2objview );
 	}
 	dmaflag = 1;
+}
+
+/*
+ *			S O U R C E _ F I L E
+ *
+ *  XXX This should probably move to mged/cmd.c
+ */
+static void
+source_file(fp)
+register FILE	*fp;
+{
+	struct rt_vls	str;
+	int		len;
+
+	rt_vls_init(&str);
+
+	while( (len = rt_vls_gets( &str, fp )) >= 0 )  {
+		rt_vls_strcat( &str, "\n" );
+		if( len > 0 )  cmdline( rt_vls_addr( &str ) );
+		rt_vls_trunc( &str, 0 );
+	}
+
+	rt_vls_free(&str);
+}
+
+
+/*
+ *			D O _ R C
+ *
+ *  If an mgedrc file exists, open it and process the commands within.
+ *  Look first for a Shell environment variable, then for a file in
+ *  the user's home directory, and finally in the current directory.
+ *
+ *  Returns -
+ *	-1	FAIL
+ *	 0	OK
+ */
+static int
+do_rc()
+{
+	FILE	*fp;
+	char	*path;
+
+	if( (path = getenv("MGED_RCFILE")) != (char *)NULL )  {
+		if( (fp = fopen(path, "r")) != NULL )  {
+			source_file( fp );
+			fclose(fp);
+			return(0);
+		}
+	}
+	if( (path = getenv("HOME")) != (char *)NULL )  {
+		struct rt_vls	str;
+		rt_vls_init(&str);
+		rt_vls_strcpy( &str, path );
+		rt_vls_strcat( &str, "/.mgedrc" );
+		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )  {
+			source_file( fp );
+			fclose(fp);
+			rt_vls_free(&str);
+			return(0);
+		}
+		rt_vls_free(&str);
+	}
+	if( (fp = fopen( ".mgedrc", "r" )) != NULL )  {
+		source_file( fp );
+		fclose(fp);
+		return(0);
+	}
+	return(-1);
 }
 
 #ifdef BSD
