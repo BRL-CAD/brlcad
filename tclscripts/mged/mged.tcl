@@ -769,7 +769,7 @@ set help_data(untie)		{{pathName}	{untie display manager pathName}}
 set help_data(mged_update)	{{}	{handle outstanding events and refresh}}
 set help_data(vars)		{{[var=opt]}	{assign/display mged variables}}
 set help_data(vdraw)		{{write|insert|delete|read|length|show [args]}	{Expermental drawing (cnuzman)}}
-set help_data(viewget)		{{center|size|eye|ypr|quat}	{Experimental - return high-precision view parameters.}}
+set help_data(viewget)		{{center|size|eye|ypr|quat|aet}	{Experimental - return high-precision view parameters.}}
 set help_data(viewset)		{{center|eye|size|ypr|quat|aet}	{Experimental - set several view parameters at once.}}
 set help_data(view2model)	{{mx my mz}	{convert point in view coords to model coords (mm)}}
 set help_data(vrmgr)		{{host {master|slave|overview}}	{link with Virtual Reality manager}}
