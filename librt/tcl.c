@@ -1615,7 +1615,7 @@ char	      **argv;
 			argv++;
 			continue;
 		}
-		if( strcmp( argv[3], "-i" ) == 0 )  {
+		if( strcmp( argv[3], "-u" ) == 0 )  {
 			rtip->useair = 1;
 			argc--;
 			argv++;
