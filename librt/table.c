@@ -259,6 +259,25 @@ BU_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
 BU_EXTERN(int rt_comb_describe, (struct bu_vls *str,
 		CONST struct rt_db_internal *ip, int verbose,
 		double mm2local));
+
+/* from db5_bin.c */
+BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal *ip,
+		CONST unsigned char minor_type,
+		CONST struct bu_external *ep, CONST struct db_i *dbip ));
+BU_EXTERN(int rt_binunif_import5, (struct rt_db_internal *ip,
+		CONST unsigned char minor_type,
+		CONST struct bu_external *ep, CONST struct db_i *dbip ));
+BU_EXTERN(int rt_binmime_import5, (struct rt_db_internal *ip,
+		CONST unsigned char minor_type,
+		CONST struct bu_external *ep, CONST struct db_i *dbip ));
+BU_EXTERN(int rt_binunif_export5, (struct bu_external *ep,
+		CONST struct rt_db_internal *ip,
+		CONST struct db_i *dbip ));
+BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip));
+BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
+		CONST struct rt_db_internal *ip, int verbose,
+		double mm2local));
+
 /* from tcl.c */
 BU_EXTERN(int rt_comb_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char	*item));
@@ -362,7 +381,7 @@ double diameter;
 }
 #endif
 
-CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
+CONST struct rt_functab rt_functab[] = {
 	{RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
 		0,		/* 0: unused, for sanity checking. */
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print, 	rt_nul_norm,
@@ -797,7 +816,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		NULL,
 	},
 
-	/* ID_MAXIMUM.  Add new solids _above_ this point */
+	/* ID_MAX_SOLID.  Add new solids _above_ this point */
 
 	{RT_FUNCTAB_MAGIC, "ID_COMBINATION", "comb",
 		0,
@@ -811,6 +830,20 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		0,				0,
 		rt_comb_tclget,	rt_comb_tcladjust, rt_comb_tclform,
 		rt_comb_make,
+	},
+
+	{RT_FUNCTAB_MAGIC, "ID_BINUNIF", "binunif",
+		0,
+		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
+		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
+		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
+		rt_binunif_import5, rt_binunif_export5,
+		rt_nul_import,	rt_nul_export,	rt_binunif_ifree,
+		rt_binunif_describe,rt_generic_xform, NULL,
+		0,				0,
+		rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
+		rt_nul_make,
 	},
 
 
@@ -1033,7 +1066,7 @@ struct bu_external	*ep;
 		id = ID_NULL;		/* BAD */
 		break;
 	}
-	if( id < ID_NULL || id > ID_MAXIMUM )  {
+	if( id < ID_NULL || id > ID_MAX_SOLID )  {
 		bu_log("rt_id_solid: internal error, id=%d?\n", id);
 		id = ID_NULL;		/* very BAD */
 	}
