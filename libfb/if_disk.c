@@ -24,30 +24,30 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define FILE_CMAP_ADDR	((long) ifp->if_width*ifp->if_height\
 			*sizeof(Pixel))
 
-_LOCAL_ int	disk_device_open(),
-		disk_device_close(),
-		disk_device_clear(),
-		disk_buffer_read(),
-		disk_buffer_write(),
-		disk_colormap_read(),
-		disk_colormap_write();
+_LOCAL_ int	disk_dopen(),
+		disk_dclose(),
+		disk_dclear(),
+		disk_bread(),
+		disk_bwrite(),
+		disk_cmread(),
+		disk_cmwrite();
 
 FBIO disk_interface =
 		{
-		disk_device_open,
-		disk_device_close,
-		fb_null,		/* device_reset */
-		disk_device_clear,
-		disk_buffer_read,
-		disk_buffer_write,
-		disk_colormap_read,
-		disk_colormap_write,
-		fb_null,
-		fb_null,
-		fb_null,
-		fb_null,
-		fb_null,
-		fb_null,
+		disk_dopen,
+		disk_dclose,
+		fb_null,		/* dreset */
+		disk_dclear,
+		disk_bread,
+		disk_bwrite,
+		disk_cmread,
+		disk_cmwrite,
+		fb_null,		/* viewport_set */
+		fb_null,		/* window_set */
+		fb_null,		/* zoom_set */
+		fb_null,		/* cinit_bitmap */
+		fb_null,		/* cmemory_addr */
+		fb_null,		/* cscreen_addr */
 		"Disk File Interface",
 		8*1024,		/* the sky's really the limit here... */
 		8*1024,
@@ -66,7 +66,7 @@ FBIO disk_interface =
 		};
 
 _LOCAL_ int
-disk_device_open( ifp, file, width, height )
+disk_dopen( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -101,14 +101,14 @@ int	width, height;
 	}
 
 _LOCAL_ int
-disk_device_close( ifp )
+disk_dclose( ifp )
 FBIO	*ifp;
 	{
 	return	close( ifp->if_fd );
 	}
 
 _LOCAL_ int
-disk_device_clear( ifp, bgpp )
+disk_dclear( ifp, bgpp )
 FBIO	*ifp;
 Pixel	*bgpp;
 	{
@@ -116,7 +116,7 @@ Pixel	*bgpp;
 	}
 
 _LOCAL_ int
-disk_buffer_read( ifp, x, y, pixelp, count )
+disk_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int		x,  y;
 Pixel		*pixelp;
@@ -149,7 +149,7 @@ int		count;
 	}
 
 _LOCAL_ int
-disk_buffer_write( ifp, x, y, pixelp, count )
+disk_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 Pixel	*pixelp;
@@ -182,7 +182,7 @@ long	count;
 	}
 
 _LOCAL_ int
-disk_colormap_read( ifp, cmap )
+disk_cmread( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 	{
@@ -206,7 +206,7 @@ ColorMap	*cmap;
 	}
 
 _LOCAL_ int
-disk_colormap_write( ifp, cmap )
+disk_cmwrite( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 	{
