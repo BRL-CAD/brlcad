@@ -24,6 +24,7 @@ struct iges_directory
 {
 	int type; /* IGES entity type */
 	int form; /* IGES form number */
+	int view; /* View field from DE, indicates which views this entity is in */
 	int param; /* record number for parameter entry */
 	int paramlines; /* number of lines for this entity in parameter section */
 	int direct; /* directory entry sequence number */
