@@ -248,15 +248,23 @@ struct region  {
 };
 #define REGION_NULL	((struct region *)0)
 
-
 /*
  *  			P A R T I T I O N
  *
- *  Partitions of a ray
+ *  Partitions of a ray.  Passed from rt_shootray() into user's
+ *  a_hit() function.
+ *
+ *  Only the hit_dist field of pt_inhit and pt_outhit are valid
+ *  when a_hit() is called;  to compute both hit_point and hit_normal,
+ *  use RT_HIT_NORM() macro;  to compute just hit_point, use
+ *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
  *
  *  NOTE:  rt_get_pt allows enough storage at the end of the partition
  *  for a bit vector of "rt_i.nsolids" bits in length.
  */
+#define RT_HIT_NORM( hitp, stp, rayp ) \
+	rt_functab[(stp)->st_id].ft_norm(hitp, stp, rayp)
+
 struct partition {
 	struct seg	*pt_inseg;		/* IN seg ptr (gives stp) */
 	struct hit	*pt_inhit;		/* IN hit pointer */
