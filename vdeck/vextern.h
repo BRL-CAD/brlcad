@@ -1,14 +1,20 @@
 /*
- *	@(#) vextern.h			retrieved: 8/13/86 at 08:18:58,
- *	@(#) version 1.5		last edit: 10/11/83 at 09:31:55.
+ *	@(#) vextern.h			retrieved: 8/13/86 at 08:19:03,
+ *	@(#) version 1.6		last edit: 10/11/83 at 10:57:41.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
  */
+#include <math.h>
+#include "./ged_types.h"
+#include "./3d.h"
+#include "./vdeck.h"
+
+extern int	debug;
 extern char	*usage[], *cmd[];
 extern mat_t	xform, notrans, identity;
 
-extern Directory	directory[], *dp, *lookup();
+extern Directory	directory[], *dp;
 extern Record record;
 extern struct findrr findrr[];
 
@@ -16,9 +22,9 @@ extern char	dir_names[], *dir_last;
 
 extern int	discr[];
 
-extern long	lseek();
-extern int	abort(), quit();
-extern double	atof();
+extern long		lseek();
+extern int		abort(), quit();
+extern Directory	*lookup(), *diradd();
 
 extern char	*toc_list[];
 extern int	toc_ct;
@@ -44,5 +50,8 @@ extern int		isave;
 extern char		buff[],	name[];
 extern char		operate;
 extern long		savsol;
-extern jmp_buf		env;
 extern struct		ident ident, idbuf;
+
+#include <setjmp.h>
+extern jmp_buf		env;
+
