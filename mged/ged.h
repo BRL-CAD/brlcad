@@ -152,9 +152,11 @@ extern void		db_getrec(), db_putrec(), db_delete(), db_alloc(),
 			mat_inv(), mat_mul(), mat_zero(), matXvec(),
 			menu_init(), moveHinstance(), moveHobj(), pr_solid(),
 			quit(), refresh(), rej_sedit(), sedit(),
-			sig3(), dir_print(),
+			sig2(), dir_print(),
 			usepen(), vtoh_move(), setview(),
-			adcursor(), menu_display();
+			adcursor(), menu_display(),
+			col_item(), col_putchar(), col_eol();
+extern void		(*cur_sigint)();	/* Current SIGINT status */
 extern char		*addname(), *strdup();
 extern int		clip(), getname(), use_pen(), drawHsolid();
 extern struct directory	*combadd(), *dir_add(), *lookup();
