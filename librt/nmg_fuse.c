@@ -2085,6 +2085,7 @@ CONST struct rt_tol *tol;
 			continue;
 		}
 		/* Break edge on vertex, but don't fuse yet. */
+rt_log( "nmg_model_break_all_es_on_v(): breaking eu x%x(mate=x%x, e=x%x) at vertex x%x\n", eu, eu->eumate_p, eu->e_p, v );
 		(void)nmg_ebreak( v, eu );
 		count++;
 	}
@@ -2741,7 +2742,7 @@ CONST struct rt_tol	*tol;
 	/* Ensure edge is long enough so midpoint is not within tol of verts */
 	VSUB2( diff, a, b );
 	diff_len = MAGNITUDE(diff);
-	if( diff_len < 3 * tol->dist )  {
+	{
 #if 1
 		/* all we want here is a classification of the midpoint,
 		 * so let's create a temporary tolerance that will work!!! */
@@ -2752,7 +2753,6 @@ CONST struct rt_tol	*tol;
 		fastf_t			dist;
 
 		tmp_tol = (*tol);
-		tmp_tol.dist = diff_len/3.0;
 		if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
 			rt_bomb( "Nmg_is_crack_outie called with non-face loop" );
 
@@ -2760,11 +2760,17 @@ CONST struct rt_tol	*tol;
 		NMG_CK_FACEUSE( fu );
 		NMG_GET_FU_PLANE( pl, fu );
 		dist = DIST_PT_PLANE( midpt, pl );
-		if( !NEAR_ZERO( dist, tmp_tol.dist ) )
+		VJOIN1( midpt, midpt , -dist, pl )
+		dist = fabs( DIST_PT_PLANE( midpt, pl ) );
+		if( dist > SQRT_SMALL_FASTF )
 		{
-			/* our midpt is not within tolerance of face */
-			/* Let's move it */
-			VJOIN1( midpt, midpt , -dist, pl )
+			tmp_tol.dist = dist*2.0;
+			tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+		}
+		else
+		{
+			tmp_tol.dist = SQRT_SMALL_FASTF;
+			tmp_tol.dist_sq = SMALL_FASTF;
 		}
 		class = nmg_class_pt_lu_except( midpt, lu, e, &tmp_tol );
 #else
@@ -2773,9 +2779,6 @@ CONST struct rt_tol	*tol;
 		rt_bomb("nmg_is_crack_outie() edge is too short to bisect.  Increase tolerance and re-run.\n");
 #endif
 	}
-	else
-		class = nmg_class_pt_lu_except( midpt, lu, e, tol );
-
 	if( rt_g.NMG_debug & DEBUG_BASIC )  {
 		rt_log("nmg_is_crack_outie(eu=x%x) lu=x%x, e=x%x, class=%s\n",
 			eu, lu, e, nmg_class_name(class) );
@@ -3458,7 +3461,11 @@ CONST struct rt_tol	*tol;
 	count2 = nmg_radial_check_parity( &list2, &shell_tbl, tol );
 	if( count1 || count2 ) rt_log("nmg_radial_join_eu_NEW() bad parity at the outset, %d, %d\n", count1, count2);
 
+#if 0
 	best_eg = nmg_pick_best_edge_g( eu1, eu2, tol );
+#else
+	best_eg = eu1->g.lseg_p;
+#endif
 
 	/* Merge the two lists, sorting by angles */
 	nmg_radial_merge_lists( &list1, &list2, tol );
@@ -3676,7 +3683,6 @@ if (rt_g.NMG_debug)
 	nmg_stash_model_to_file( "radial_check.g", nmg_find_model( &eu->l.magic ), "error" );
 	for( RT_LIST_FOR( rad, nmg_radial, &list ) )
 		nmg_pr_fu_briefly( rad->fu, "" );
-	rt_bomb("nmg_eu_radial_check\n");
 }
 	}
 
