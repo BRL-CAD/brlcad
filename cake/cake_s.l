@@ -188,6 +188,10 @@ yywrap()
 }
 #else
 int yylineno=1;
+yywrap()
+{
+	return 1;
+}
 #endif
 yyset(text)
 reg	char	text[];
