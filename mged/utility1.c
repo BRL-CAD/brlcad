@@ -16,20 +16,19 @@
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 #ifdef BSD
-#include <sys/time.h>	/* for struct timeval.  Includes <time.h> */
 #include <strings.h>
 #else
-#include <time.h>
 #include <string.h>
 #endif
 
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./sedit.h"
-#include "./objdir.h"
 
 extern void f_quit();
 
@@ -43,9 +42,6 @@ extern void	exit(), perror();
 extern char	 *strcpy(), *strncat();
 extern long	time();
 extern struct passwd *getpwuid();
-
-extern int	objfd;
-extern char	*filename;		/* data file name */
 
 void		tables(), edcodes(), changes(), prfield(), prename();
 
@@ -145,7 +141,7 @@ f_tables()
 	timep = ctime( &now );
 	timep[24] = '\0';
 	(void)fprintf(tabptr,"1 -8    Summary Table {%s}  (written: %s)\n",cmd_args[0],timep);
-	(void)fprintf(tabptr,"2 -7         file name    : %s\n",filename);    
+	(void)fprintf(tabptr,"2 -7         file name    : %s\n",dbip->dbi_filename);    
 	(void)fprintf(tabptr,"3 -6         \n");
 	(void)fprintf(tabptr,"4 -5         \n");
 	(void)fprintf(tabptr,"5 -4         user         : %s\n",getpwuid(getuid())->pw_gecos);
@@ -162,7 +158,7 @@ f_tables()
 	/* make table of the objects */
 	mat_idn( identity );
 	for(i=2; i<numargs; i++) {
-		if( (dp=lookup(cmd_args[i],LOOKUP_NOISY)) != DIR_NULL )
+		if( (dp = db_lookup( dbip, cmd_args[i],LOOKUP_NOISY)) != DIR_NULL )
 			tables(dp, 0, identity, flag);
 		else
 			(void)printf(" skip this object\n");
@@ -229,7 +225,7 @@ f_edcodes( )
 	(void)system( "stty raw -echo" );
 
 	for(i=1; i<numargs; i++) {
-		if( (dp=lookup(cmd_args[i], LOOKUP_NOISY)) != DIR_NULL )
+		if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY)) != DIR_NULL )
 			edcodes(dp, 0);
 		else
 			(void)printf(" skip this object\n");
@@ -306,7 +302,8 @@ f_dup( )
 		return;
 	}
 
-	(void)printf("\n*** Comparing %s with %s for duplicate names\n",filename,cmd_args[1]);
+	(void)printf("\n*** Comparing %s with %s for duplicate names\n",
+		dbip->dbi_filename,cmd_args[1]);
 	if( ncharadd ) {
 		(void)printf("  For comparison, all names in %s prefixed with:  %s\n",
 				cmd_args[1],prestr);
@@ -336,10 +333,10 @@ f_dup( )
 					break;
 				if( ncharadd ) {
 					prename(record.s.s_name);
-					tmpdp = lookup(new_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
 				}
 				else
-					tmpdp = lookup(record.s.s_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, record.s.s_name, LOOKUP_QUIET);
 				break;
 
 			case ID_ARS_A:
@@ -347,10 +344,10 @@ f_dup( )
 					break;
 				if( ncharadd ) {
 					prename(record.a.a_name);
-					tmpdp = lookup(new_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
 				}
 				else
-					tmpdp = lookup(record.a.a_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, record.a.a_name, LOOKUP_QUIET);
 				break;
 
 			case ID_COMB:
@@ -358,10 +355,10 @@ f_dup( )
 					break;
 				if( ncharadd ) {
 					prename(record.c.c_name);
-					tmpdp = lookup(new_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
 				}
 				else
-					tmpdp = lookup(record.c.c_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, record.c.c_name, LOOKUP_QUIET);
 				break;
 
 			case ID_BSOLID:
@@ -369,10 +366,10 @@ f_dup( )
 					break;
 				if( ncharadd ) {
 					prename(record.B.B_name);
-					tmpdp = lookup(new_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
 				}
 				else
-					tmpdp = lookup(record.B.B_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, record.B.B_name, LOOKUP_QUIET);
 				break;
 
 			case ID_BSURF:
@@ -388,10 +385,10 @@ f_dup( )
 					break;
 				if( ncharadd ) {
 					prename(record.p.p_name);
-					tmpdp = lookup(new_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
 				}
 				else
-					tmpdp = lookup(record.p.p_name, LOOKUP_QUIET);
+					tmpdp = db_lookup( dbip, record.p.p_name, LOOKUP_QUIET);
 				break;
 
 			default:
@@ -487,7 +484,7 @@ f_cat( )
 				break;
 
 			case ID_MATERIAL:
-				color_addrec( &record, -1 );
+				rt_color_addrec( &record, -1 );
 				break;
 
 			case ID_SOLID:
@@ -497,18 +494,18 @@ f_cat( )
 					prename(record.s.s_name);
 					NAMEMOVE(new_name, record.s.s_name);
 				}
-				if( lookup(record.s.s_name, LOOKUP_QUIET) != DIR_NULL ) {
+				if( db_lookup( dbip, record.s.s_name, LOOKUP_QUIET) != DIR_NULL ) {
 					nskipped++;
 					(void)printf("SOLID (%s) already exists in %s....will skip\n",
-							record.s.s_name, filename);
+						record.s.s_name, dbip->dbi_filename);
 					break;
 				}
 				/* add to the directory */
-				if( (dp = dir_add(record.s.s_name, -1, DIR_SOLID, 1)) == DIR_NULL )
+				if( (dp = db_diradd( dbip, record.s.s_name, -1, DIR_SOLID, 1)) == DIR_NULL )
 					return;
 				/* add the record to the data base file */
-				db_alloc( dp, 1 );
-				db_putrec(dp, &record, 0);
+				db_alloc( dbip, dp, 1 );
+				db_put( dbip, dp, &record, 0, 1 );
 				break;
 
 			case ID_ARS_A:
@@ -516,23 +513,23 @@ f_cat( )
 					prename(record.a.a_name);
 					NAMEMOVE(new_name, record.a.a_name);
 				}
-				if( lookup(record.a.a_name, LOOKUP_QUIET) != DIR_NULL ) {
+				if( db_lookup( dbip, record.a.a_name, LOOKUP_QUIET) != DIR_NULL ) {
 					nskipped++;
 					(void)printf("ARS (%s) already exists in %s....will skip\n",
-							record.a.a_name, filename);
+							record.a.a_name, dbip->dbi_filename);
 					break;
 				}
 				/* add to the directory */
 				length = record.a.a_totlen;
-				if( (dp = dir_add(record.a.a_name, -1, DIR_SOLID, length+1)) == DIR_NULL )
+				if( (dp = db_diradd( dbip, record.a.a_name, -1, DIR_SOLID, length+1)) == DIR_NULL )
 					return;
 				/* add the record to the data base file */
-				db_alloc( dp, length+1 );
-				db_putrec(dp, &record, 0);
+				db_alloc( dbip, dp, length+1 );
+				db_put( dbip, dp, &record, 0, 1 );
 				/* get the b_records */
 				for(i=1; i<=length; i++) {
 					(void)fread( (char *)&record, sizeof record, 1, catfp );
-					db_putrec(dp, &record, i);
+					db_put( dbip, dp, &record, i, 1 );
 				}
 				break;
 
@@ -541,22 +538,22 @@ f_cat( )
 					prename(record.c.c_name);
 					NAMEMOVE(new_name, record.c.c_name);
 				}
-				if( lookup(record.c.c_name, LOOKUP_QUIET) != DIR_NULL ) {
+				if( db_lookup( dbip, record.c.c_name, LOOKUP_QUIET) != DIR_NULL ) {
 					nskipped++;
 					(void)printf("COMB (%s) already exists in %s....will skip\n",
-							record.c.c_name, filename);
+							record.c.c_name, dbip->dbi_filename);
 					break;
 				}
 				/* add to the directory */
 				length = record.c.c_length;
-				if( (dp = dir_add( record.c.c_name, -1,
+				if( (dp = db_diradd( dbip,  record.c.c_name, -1,
 						record.c.c_flags == 'R' ?
 						DIR_COMB|DIR_REGION : DIR_COMB,
 						length+1) ) == DIR_NULL )
 					return;
 				/* add the record to the data base file */
-				db_alloc( dp, length+1 );
-				db_putrec(dp, &record, 0);
+				db_alloc( dbip, dp, length+1 );
+				db_put( dbip, dp, &record, 0, 1 );
 				/* get the member records */
 				for(i=1; i<=length; i++) {
 					(void)fread( (char *)&record, sizeof record, 1, catfp );
@@ -568,7 +565,7 @@ f_cat( )
 						prename(record.M.m_instname);
 						NAMEMOVE(new_name, record.M.m_instname);
 					}
-					db_putrec(dp, &record, i);
+					db_put( dbip, dp, &record, i, 1 );
 				}
 				break;
 
@@ -577,10 +574,10 @@ f_cat( )
 					prename(record.B.B_name);
 					NAMEMOVE(new_name, record.B.B_name);
 				}
-				if( lookup(record.B.B_name, LOOKUP_QUIET) != DIR_NULL ) {
+				if( db_lookup( dbip, record.B.B_name, LOOKUP_QUIET) != DIR_NULL ) {
 					nskipped++;
 					(void)printf("SPLINE (%s) already exists in %s....will skip\n",
-							record.B.B_name, filename);
+							record.B.B_name, dbip->dbi_filename);
 					break;
 				}
 	printf("SPLINE not implemented yet, aborting!\n");
@@ -594,10 +591,10 @@ f_cat( )
 					prename(record.p.p_name);
 					NAMEMOVE(new_name, record.p.p_name);
 				}
-				if( lookup(record.p.p_name, LOOKUP_QUIET) != DIR_NULL ) {
+				if( db_lookup( dbip, record.p.p_name, LOOKUP_QUIET) != DIR_NULL ) {
 					nskipped++;
 					(void)printf("POLYGON (%s) already exists in %s....will skip\n",
-							record.p.p_name, filename);
+							record.p.p_name, dbip->dbi_filename);
 					break;
 				}
 printf("POLYGONS not implemented yet.....SKIP %s\n",record.p.p_name);
@@ -651,7 +648,7 @@ int flag;
 		return;
 	}
 
-	db_getrec(dp, (char *)&record, 0);
+	db_get( dbip, dp, &record, 0, 1);
 	if( record.u_id == ID_COMB ) {
 		if(regflag > 0) {
 			/* this comb record is part of a region */
@@ -696,14 +693,14 @@ int flag;
 
 			if(i == nparts)
 				lastmemb = 1;
-			db_getrec(dp, (char *)&record, i);
+			db_get( dbip, dp, &record, i, 1);
 			operate = record.M.m_relation;
 
 			if(regflag && operate != SUBTRACT)
 				oper_ok++;
 
 			path[pathpos] = dp;
-			if( (nextdp = lookup(record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
+			if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
 				continue;
 
 			rt_mat_dbmat( xmat, record.M.m_mat );
@@ -883,7 +880,7 @@ int flag;
 		(void)fprintf(tabptr," ARS %7d curves%7d points/curve",record.a.a_m,n);
 		arslen = record.a.a_totlen;
 		for(i=1; i<=arslen; i++) {
-			db_getrec(dp, (char *)&record, i);
+			db_get( dbip, dp, &record, i, 1);
 			if( (npt = (n - ((record.b.b_ngranule-1)*8))) > 8 )
 				npt = 8;
 			if(i == 1) {
@@ -953,7 +950,7 @@ int pathpos;
 		return;
 	}
 
-	db_getrec(dp, (char *)&record, 0);
+	db_get( dbip, dp, &record, 0, 1);
 	if( record.u_id == ID_COMB ) {
 		if(regflag > 0) {
 			/* this comb record is part of a region */
@@ -999,14 +996,14 @@ int pathpos;
 		for(i=1; i<=nparts; i++) {
 			if(i == nparts)
 				lastmemb = 1;
-			db_getrec(dp, (char *)&record, i);
+			db_get( dbip, dp, &record, i, 1);
 			operate = record.M.m_relation;
 
 			if(regflag && operate != SUBTRACT)
 				oper_ok++;
 
 			path[pathpos] = dp;
-			if( (nextdp = lookup(record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
+			if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
 				continue;
 			/* Recursive call */
 			edcodes(nextdp, pathpos+1);
@@ -1152,8 +1149,8 @@ editline()
 					record.c.c_material = mat;
 					record.c.c_los = los;
 					/* write out all changes */
-					(void)lseek(objfd, -(long)sizeof record, 1);
-					(void)write(objfd, (char *)&record, sizeof record);
+					(void)lseek(dbip->dbi_fd, -(long)sizeof record, 1);
+					(void)write(dbip->dbi_fd, (char *)&record, sizeof record);
 				}
 				/* get out of loop */
 				return(0);
@@ -1295,46 +1292,42 @@ char old_name[NAMESIZE];
 void
 f_which_id( )
 {
-
-	int item, i;
-	FILE *fp;
+	union record	rec;
+	register int	i,j;
+	register struct directory *dp;
+	int		item;
 
 	args = numargs;
 	argcnt = 0;
 
-	/* interupts */
+	/* allow interupts */
 	(void)signal( SIGINT, sig2 );
 
 	/* get the ident code number(s) */
 	while( args < 2 ) {
-		(void)printf("Enter the region item code(s): ");
+		(void)printf("Enter the region item code(s) sought: ");
 		argcnt = getcmd(args);
 		args += argcnt;
 	}
 
-	if( (fp = fopen( filename, "r" )) == NULL ) {
-		(void)printf("f_which_id: fopen failed\n");
-		return;
-	}
-
-
-	for(i=0; i<(args-1); i++) {
-		item = atoi( cmd_args[i+1] );
+	for( j=1; j<args; j++) {
+		item = atoi( cmd_args[j] );
 		(void)printf("Region[s] with ident %d:\n",item);
 
-		while(fread( (char *)&record, sizeof record, 1, fp ) == 1 &&
-			!feof(fp)) {
-
-			if(record.u_id == ID_COMB && record.c.c_flags == 'R' &&
-				record.c.c_regionid == item ) {
-
+		/* Examine all COMB nodes */
+		for( i = 0; i < RT_DBNHASH; i++ )  {
+			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+				if( (dp->d_flags & DIR_COMB|DIR_REGION) !=
+				    (DIR_COMB|DIR_REGION) )
+					continue;
+				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 )
+					continue;
+				if( rec.c.c_regionid != item )
+					continue;
 				(void)printf("   %s\n",record.c.c_name);
 			}
-
 		}
-		fseek(fp, 0, 0);	/* rewind */
 	}
-	(void)fclose( fp );
 }
 
 

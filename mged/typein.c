@@ -50,8 +50,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 
 void	aexists();
 extern void f_quit();
@@ -210,7 +210,7 @@ f_in()
 		/* Add any new args slurped up */
 		args += argcnt;
 	}
-	if( lookup( cmd_args[1], LOOKUP_QUIET ) != DIR_NULL )  {
+	if( db_lookup( dbip,  cmd_args[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( cmd_args[1] );
 		return;
 	}
@@ -416,13 +416,13 @@ f_in()
 	(void)signal( SIGINT, SIG_IGN);
  
 	/* Add to in-core directory */
-	if( (dp = dir_add( record.s.s_name, -1, DIR_SOLID, 0 )) == DIR_NULL )  {
+	if( (dp = db_diradd( dbip,  record.s.s_name, -1, DIR_SOLID, 0 )) == DIR_NULL )  {
 		(void)printf("ERROR, dir_add failure, database not updated!\n");
 		return;		/* failure */
 	}
-	db_alloc( dp, 1 );
+	db_alloc( dbip, dp, 1 );
 
-	db_putrec( dp, &record, 0 );
+	db_put( dbip, dp, &record, 0, 1 );
 	/* draw the "typed-in" solid */
 	drawHobj(dp, ROOT, 0, identity);
 	dmaflag = 1;

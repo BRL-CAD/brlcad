@@ -18,8 +18,8 @@
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./dm.h"
 
 extern void aexists();
@@ -201,8 +201,8 @@ tryagain:	/* sent here to try next set of names */
 	for(i=0; i<11; i++) {
 		crname(solname, i);
 		crname(regname, i);
-		if(	(lookup(solname, LOOKUP_QUIET) != DIR_NULL)	||
-			(lookup(regname, LOOKUP_QUIET) != DIR_NULL)	) {
+		if(	(db_lookup( dbip, solname, LOOKUP_QUIET) != DIR_NULL)	||
+			(db_lookup( dbip, regname, LOOKUP_QUIET) != DIR_NULL)	) {
 			/* name already exists */
 			solname[8] = regname[8] = '\0';
 			if( (Trackpos += 10) > 500 ) {
@@ -424,7 +424,7 @@ tryagain:	/* sent here to try next set of names */
 	for(i=1; i<11; i++) {
 		regname[8] = '\0';
 		crname(regname, i);
-		if( (dp=lookup(regname, LOOKUP_QUIET)) == DIR_NULL ) {
+		if( (dp = db_lookup( dbip, regname, LOOKUP_QUIET)) == DIR_NULL ) {
 			(void)printf("group: %s will skip member: %s\n",grpname,regname);
 			continue;
 		}
@@ -434,7 +434,7 @@ tryagain:	/* sent here to try next set of names */
 	(void)printf("The track regions are in group %s\n",grpname);
 
 	/* draw this track */
-	dp = lookup(grpname, LOOKUP_QUIET);
+	dp = db_lookup( dbip, grpname, LOOKUP_QUIET);
 	drawHobj( dp, ROOT, 0, identity, 0 );
 	dmp->dmr_colorchange();
 	dmaflag = 1;
@@ -473,14 +473,14 @@ char name[];
 {
 	struct directory *tdp;
 
-	if( lookup(name, LOOKUP_QUIET) != DIR_NULL ) {
+	if( db_lookup( dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
 		(void)printf("amtrack naming error: %s already exists\n",name);
 		return(-1);
 	}
-	if( (tdp = dir_add(name, -1, DIR_SOLID, 1)) == DIR_NULL )
+	if( (tdp = db_diradd( dbip, name, -1, DIR_SOLID, 1)) == DIR_NULL )
 		return( -1 );
-	db_alloc(tdp, 1);
-	db_putrec(tdp, &record, 0);
+	db_alloc( dbip, tdp, 1);
+	db_put( dbip, tdp, &record, 0, 1 );
 	return(0);
 }
 
@@ -719,7 +719,7 @@ int members[], number;
 	for(i=0; i<number; i++) {
 		solidname[8] = '\0';
 		crname(solidname, members[i]);
-		if( (dp = lookup(solidname, LOOKUP_QUIET)) == DIR_NULL ) {
+		if( (dp = db_lookup( dbip, solidname, LOOKUP_QUIET)) == DIR_NULL ) {
 			(void)printf("region: %s will skip member: %s\n",region,solidname);
 			continue;
 		}
