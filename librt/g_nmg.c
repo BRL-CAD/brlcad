@@ -1938,6 +1938,7 @@ register CONST mat_t		mat;
 {
 	struct model			*m;
 	union record			*rp;
+	struct rt_tol			tol;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -1947,7 +1948,18 @@ register CONST mat_t		mat;
 		return(-1);
 	}
 
-	if( rt_nmg_import_internal( ip, ep, mat, 1 ) < 0 )
+	/* XXX The bounding box routines need a tolerance.
+	 * XXX This is sheer guesswork here.
+	 * As long as this NMG is going to be turned into vlist, or
+	 * handed off to the boolean evaluator, any non-zero numbers are fine.
+	 */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
+	if( rt_nmg_import_internal( ip, ep, mat, 1, &tol ) < 0 )
 		return(-1);
 
 	m = (struct model *)ip->idb_ptr;
