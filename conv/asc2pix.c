@@ -37,4 +37,5 @@ main()
 			write( 1, line, sizeof(line) );
 		}
 	}
+	exit(0);
 }

@@ -29,4 +29,5 @@ main()
 		for( ip = line; ip < &line[512*3]; ip+=3 )
 			printf("%2.2x %2.2x %2.2x\n", ip[0], ip[1], ip[2]);
 	}
+	exit(0);
 }
