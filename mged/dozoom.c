@@ -386,17 +386,9 @@ mat_print("pmat", pmat);
 	  }
 
 	  if(sp==illump){
-#if 0
-	    if(!DM_SAME_COLOR(r,g,b,DM_WHITE)){
-#else
-	      if(!DM_SAME_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B)){
-#endif
+	    if(!DM_SAME_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B)){
 	      dmp->dm_setColor(dmp, DM_WHITE, 1);
-#if 0
-	      DM_SET_COLOR(r,g,b,DM_WHITE);
-#else
 	      DM_SET_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B);
-#endif
 	    }
 	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat )){
 	      sp->s_flag = UP;
@@ -605,7 +597,7 @@ int axes;
     }else{  /* create edit axes */
       if(state == ST_S_EDIT || state == ST_O_EDIT){
 	/* build edit axes in model coordinates */
-#if 1
+
 	/* apply rotations */
 	MAT4X3PNT(m1, acc_rot_sol, a1);
 	MAT4X3PNT(m2, acc_rot_sol, a2);
@@ -623,37 +615,6 @@ int axes;
 	m4[X] = Viewscale*a2[X] + e_axes_pos[X];
 	m4[Y] = Viewscale*a2[Y] + e_axes_pos[Y];
 	m4[Z] = Viewscale*a2[Z] + e_axes_pos[Z];
-#else
-	{
-	  mat_t es_rot_mat;   /* rotations in es_mat */
-	  mat_t tmat2;        /* rotations in es_mat and acc_rot_sol */
-
-	  mat_copy(es_rot_mat, es_mat);
-	  MAT_DELTAS(es_rot_mat, 0.0, 0.0, 0.0);
-	  MAT_SCALE(es_rot_mat, 1.0, 1.0, 1.0);
-	  MAT_SCALE_ALL(es_rot_mat, 1.0);
-	  mat_mul(tmat2, es_rot_mat, acc_rot_sol);
-
-	  /* apply rotations */
-	  MAT4X3PNT(r_m3, es_rot_mat, a1);
-	  MAT4X3PNT(r_m4, es_rot_mat, a2);
-	  MAT4X3PNT(m1, tmat2, a1);
-	  MAT4X3PNT(m2, tmat2, a2);
-	}
-
-	m1[X] = Viewscale*m1[X] + curr_e_axes_pos[X];
-	m1[Y] = Viewscale*m1[Y] + curr_e_axes_pos[Y];
-	m1[Z] = Viewscale*m1[Z] + curr_e_axes_pos[Z];
-	m2[X] = Viewscale*m2[X] + curr_e_axes_pos[X];
-	m2[Y] = Viewscale*m2[Y] + curr_e_axes_pos[Y];
-	m2[Z] = Viewscale*m2[Z] + curr_e_axes_pos[Z];
-	m3[X] = Viewscale*r_m3[X] + e_axes_pos[X];
-	m3[Y] = Viewscale*r_m3[Y] + e_axes_pos[Y];
-	m3[Z] = Viewscale*r_m3[Z] + e_axes_pos[Z];
-	m4[X] = Viewscale*r_m4[X] + e_axes_pos[X];
-	m4[Y] = Viewscale*r_m4[Y] + e_axes_pos[Y];
-	m4[Z] = Viewscale*r_m4[Z] + e_axes_pos[Z];
-#endif
 
 	if(OEDIT_TRAN){
 	  vect_t delta;
