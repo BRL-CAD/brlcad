@@ -58,6 +58,10 @@ static void	X_statechange();
 static int     X_dm();
 static void     establish_perspective();
 static void     set_perspective();
+static void     set_linewidth();
+static void     set_linestyle();
+static void     set_knob_offset();
+
 #ifdef USE_PROTOTYPES
 static Tk_GenericProc X_doevent;
 #else
@@ -69,6 +73,8 @@ extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
 struct bu_structparse X_vparse[] = {
+  {"%d",  1, "linewidth",	  X_MV_O(linewidth),	set_linewidth },
+  {"%d",  1, "linestyle",	  X_MV_O(linestyle),	set_linestyle },
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
   {"%d",  1, "debug",             X_MV_O(debug),            BU_STRUCTPARSE_FUNC_NULL },
@@ -111,7 +117,7 @@ char *argv[];
 
   bu_free(av, "X_dm_init: av");
   dmp->dm_eventHandler = X_doevent;
-  curr_dm_list->s_info->opp = &tkName;
+  curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(X_doevent, (ClientData)DM_TYPE_X);
   X_configure_window_shape(dmp);
 
@@ -505,5 +511,22 @@ static void
 set_perspective()
 {
   X_set_perspective(dmp);
+  ++dmaflag;
+}
+
+static void
+set_linewidth()
+{
+  dmp->dm_setLineAttr(dmp,
+		      ((struct x_vars *)dmp->dm_vars)->mvars.linewidth,
+		      dmp->dm_lineStyle);
+  ++dmaflag;
+}
+
+static void
+set_linestyle()
+{
+  dmp->dm_setLineAttr(dmp, dmp->dm_lineWidth,
+		      ((struct x_vars *)dmp->dm_vars)->mvars.linestyle);
   ++dmaflag;
 }
