@@ -542,6 +542,25 @@ int			pos;
 	prev_ass = nmg_assess_eu( this_eu, 0, rs, pos );
 	next_ass = nmg_assess_eu( this_eu, 1, rs, pos );
 	ass = NMG_V_COMB( prev_ass, next_ass );
+
+	/*
+	 *  If the vu assessment is
+	 *  NMG_ON_REV_ON_FORW or NMG_ON_FORW_ON_REV,
+	 *  ensure that other end of both eu's is same vertex.
+	 *  If not, it's an intersector error, and will confuse our caller.
+	 */
+	if( ass==NMG_ON_REV_ON_FORW || ass==NMG_ON_FORW_ON_REV )  {
+		struct edgeuse	*prev;
+		struct edgeuse	*next;
+		prev = RT_LIST_PLAST_CIRC( edgeuse, this_eu );
+		next = RT_LIST_PNEXT_CIRC( edgeuse, this_eu );
+		if( prev->vu_p->v_p != next->vu_p->v_p )  {
+			rt_log("nmg_assess_vu() %s, prev_v=x%x, next_v=x%x\n",
+				nmg_v_assessment_names[ass],
+				prev->vu_p->v_p, next->vu_p->v_p );
+			rt_bomb("nmg_assess_vu() ON/ON edgeuse ends on different vertices.\n");
+		}
+	}
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("nmg_assess_vu() vu[%d]=x%x, v=x%x: %s\n",
 			pos, vu, vu->v_p, nmg_v_assessment_names[ass] );
