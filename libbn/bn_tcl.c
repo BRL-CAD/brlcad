@@ -168,12 +168,21 @@ mat_t m;
 
 static void
 bn_hdivide(o, i)
-hvect_t i;
+CONST hvect_t i;
 vect_t o;
 {
 	HDIVIDE(o, i);
 }
 
+static void
+bn_vjoin1(o, pnt, scale, dir )
+point_t o;
+CONST point_t pnt;
+double scale;
+CONST vect_t dir;
+{
+	VJOIN1( o, pnt, scale, dir );
+}
 
 /*
  *			B N _ M A T H _ C M D
@@ -253,6 +262,21 @@ char **argv;
 			goto error;
 		}
 		bn_hdivide(o, i);
+		bn_encode_vect(&result, o);
+	} else if (math_func == bn_vjoin1) {
+		point_t o;
+		point_t b, d;
+		fastf_t c;
+
+		if (argc < 4) {
+			bu_vls_printf(&result, "usage: %s pnt scale dir", argv[0]);
+			goto error;
+		}
+		if( bn_decode_vect(b, argv[1]) < 3) goto error;
+		if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
+		if( bn_decode_vect(d, argv[3]) < 3) goto error;
+
+		VJOIN1( o, b, c, d );	/* bn_vjoin1( o, b, c, d ) */
 		bn_encode_vect(&result, o);
 	} else if (math_func == bn_mat_ae) {
 		mat_t o;
@@ -525,6 +549,7 @@ static struct math_func_link {
 	"mat4x3vec",          bn_mat4x3vec,
 	"mat4x3pnt",          bn_mat4x3pnt,
 	"hdivide",            bn_hdivide,
+	"vjoin1",	      bn_vjoin1,
 	"mat_ae",             bn_mat_ae,
 	"mat_ae_vec",         bn_ae_vec,
 	"mat_aet_vec",        bn_aet_vec,
