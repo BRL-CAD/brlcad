@@ -390,12 +390,15 @@ struct bu_list {
 
 typedef struct bu_list bu_list_t;
 
+struct bu_list *bu_list_new();
+struct bu_list *bu_list_pop( struct bu_list *hp );
+
 #define BU_LIST_CLOSE( hp ) { \
 	assert( (hp) != NULL ); \
 	if( (hp) == NULL ) \
 		return; \
 	assert( BU_LIST_IS_EMPTY( (hp) ) ); \
-	BU_LIST_FREE( (hp) ); \
+	bu_list_free( (hp) ); \
 	bu_free( (char *)(hp), "bu_list head" ); \
 }
 
@@ -431,10 +434,11 @@ typedef struct bu_list bu_list_t;
 /* This version of BU_LIST_DEQUEUE uses the comma operator
  * inorder to return a typecast version of the dequeued pointer
  */
-#define BU_LIST_DEQUEUE_T( cur, type ) ((cur)->forw->back = (cur)->back, \
+#define BU_LIST_DEQUEUE_T( cur, type ) (\
+	(cur)->forw->back = (cur)->back, \
 	(cur)->back->forw = (cur)->forw, \
 	(cur)->forw = (cur)->back = BU_LIST_NULL, \
-	(type *)cur )
+	(type *)(cur) )
 
 
 /*
@@ -448,19 +452,19 @@ typedef struct bu_list bu_list_t;
 	BU_LIST_APPEND(hp, (struct bu_list *)(p))
 
 #define BU_LIST_POP(structure,hp,p)				\
-	{ 							\
-	    if BU_LIST_NON_EMPTY(hp))				\
+	{							\
+	    if( BU_LIST_NON_EMPTY(hp))				\
 	    {							\
 	        (p) = ((struct structure *)((hp)->forw));	\
 	        BU_LIST_DEQUEUE((struct bu_list *)(p));		\
 	    }							\
-	    else {						\
+	    else						\
 	     (p) = (struct structure *) 0;			\
-	    }							\
 	}
 
+
 #define BU_LIST_POP_T(hp, type )				\
-	((type *)bu_list_pop( hp )
+	(type *)bu_list_pop( hp )
 
 /*
  *  "Bulk transfer" all elements from the list headed by src_hd
@@ -547,19 +551,19 @@ typedef struct bu_list bu_list_t;
 	(((struct bu_list *)(p))->forw != (hp))
 
 #define BU_LIST_EACH( hp, p, type ) \
-	 for( (p)=((type) *)BU_LIST_FIRST(bu_list,hp); \
+	 for( (p)=(type *)BU_LIST_FIRST(bu_list,hp); \
 	      BU_LIST_NOT_HEAD(p,hp); \
-	      (p)=((type) *)BU_LIST_PNEXT(bu_list,p) ) \
+	      (p)=(type *)BU_LIST_PNEXT(bu_list,p) ) \
 
 #define BU_LIST_REVEACH( hp, p, type ) \
-	 for( (p)=((type) *)BU_LIST_LAST(bu_list,hp); \
+	 for( (p)=(type *)BU_LIST_LAST(bu_list,hp); \
 	      BU_LIST_NOT_HEAD(p,hp); \
-	      (p)=((type) *)BU_LIST_PPREV(bu_list,(p)) ) \
+	      (p)=(type *)BU_LIST_PREV(bu_list,((struct bu_list *)(p))) ) \
 
 #define BU_LIST_TAIL( hp, start, p, type ) \
-	 for( (p)=((type) *)start ; \
+	 for( (p)=(type *)start ; \
 	      BU_LIST_NOT_HEAD(p,hp); \
-	      (p)=((type) *)BU_LIST_PNEXT(bu_list,(p)) )
+	      (p)=(type *)BU_LIST_PNEXT(bu_list,(p)) )
 
 /*
  *  Intended as innards for a for() loop to visit all nodes on list, e.g.:
