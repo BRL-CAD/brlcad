@@ -11,7 +11,7 @@
 #				The BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#				This software is Copyright (C) 1998 by the United States Army
+#				This software is Copyright (C) 1998-2004 by the United States Army
 #				in all countries except the USA.	All rights reserved.
 #
 # Description -
