@@ -471,7 +471,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 		{
 			if( pieces_flag )  return 1;	/* save hit for later */
 
-			bu_log( "rt_bot_shot(%s): WARNING: odd number of hits (%d), last hit ignored\n",
+			bu_log( "rt_bot_makesegs(%s): WARNING: odd number of hits (%d), last hit ignored\n",
 				stp->st_name, nhits );
 			nhits--;
 		}
@@ -531,7 +531,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 		 */
 
 		if( nerrors++ < 6 )  {
-			bu_log("rt_bot_shot(%s): WARNING %d hits:\n", stp->st_name, nhits);
+			bu_log("rt_bot_makesegs(%s): WARNING %d hits:\n", stp->st_name, nhits);
 			bu_log( "\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
 				V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
 			for(i=0; i < nhits; i++ )
@@ -737,6 +737,7 @@ struct resource		*resp;
 	register struct hit *hp = hits;
 	LOCAL int	nhits = 0;
 	struct bot_specific *bot;
+	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
 
 	RT_CK_PIECELIST(plp);
 	RT_CK_PIECESTATE(psp);
@@ -744,14 +745,6 @@ struct resource		*resp;
 	RT_CK_SOLTAB(stp);
 	RT_CK_RESOURCE(resp);
 	bot = (struct bot_specific *)stp->st_specific;
-
-	/* Restore left-over hit from previous invocation */
-	if( psp->oddhit.hit_dist < INFINITY )  {
-		hits[0] = psp->oddhit;		/* struct copy */
-		psp->oddhit.hit_dist = INFINITY;
-		nhits = 1;
-		hp++;
-	}
 
 	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
 	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
@@ -766,15 +759,18 @@ struct resource		*resp;
 		piecenum = *sol_piece_subscr_p;
 
 		if( BU_BITTEST( psp->shot, piecenum ) )  {
+			if(debug_shoot) bu_log("%s piece %d already shot\n", stp->st_name, piecenum);
 			resp->re_piece_ndup++;
 			continue;	/* this piece already shot */
 		}
 
 		/* Shoot a ray */
 		BU_BITSET( psp->shot, piecenum );
+			if(debug_shoot) bu_log("%s piece %d ...\n", stp->st_name, piecenum);
 
 		/* Now intersect with each piece */
 		trip = bot->bot_facearray[piecenum];
+		BU_ASSERT_LONG(trip->tri_surfno, ==, piecenum);
 
 		/*
 		 *  Ray Direction dot N.  (N is outward-pointing normal)
@@ -808,6 +804,7 @@ struct resource		*resp;
 		k = VDOT( wxb, trip->tri_wn ) / dn;
 
 		/* HIT is within planar face */
+		if(debug_shoot) bu_log("%s piece %d ... HIT %g\n", stp->st_name, piecenum, k);
 		hp->hit_magic = RT_HIT_MAGIC;
 		hp->hit_dist = k;
 		hp->hit_private = (genptr_t)trip;
@@ -823,6 +820,15 @@ struct resource		*resp;
 	if( nhits == 0 )
 		return(0);		/* MISS */
 
+	/* Restore left-over hit from previous invocation */
+	if( psp->oddhit.hit_dist < INFINITY )  {
+		if(debug_shoot) bu_log("%s piece %d ... HIT %g retrieved from oddhit\n",
+			stp->st_name, psp->oddhit.hit_surfno, psp->oddhit.hit_dist);
+		*hp++ = psp->oddhit;		/* struct copy */
+		psp->oddhit.hit_dist = INFINITY;
+		nhits++;
+	}
+
 	/* Sort hits, Near to Far */
 	rt_hitsort( hits, nhits );
 
@@ -834,7 +840,8 @@ struct resource		*resp;
 		if( ret&1 )  {
 			/* Save odd hit up for next entry */
 			psp->oddhit = hits[ret-1];	/* struct copy */
-			return ret-1;
+			if(debug_shoot) bu_log("%s piece %d ... HIT %g saved in oddhit\n",
+				stp->st_name, psp->oddhit.hit_surfno, psp->oddhit.hit_dist);
 		}
 		return ret;
 	}
