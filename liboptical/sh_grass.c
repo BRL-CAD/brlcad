@@ -24,7 +24,7 @@
  */
 struct grass_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
-	double	grass_cell[2];	/* size of a cell in Region coordinates */
+	double	cell[2];	/* size of a cell in Region coordinates */
 	double	lacunarity;
 	double	h_val;
 	double	octaves;
@@ -32,14 +32,13 @@ struct grass_specific {
 	point_t	vscale;	/* size of noise coordinate space */
 	vect_t	delta;
 	mat_t	m_to_sh;	/* model to shader space matrix */
-/*	mat_t	sh_to_m;	/* shader to model space matrix */
 };
 
 /* The default values for the variables in the shader specific structure */
 CONST static
 struct grass_specific grass_defaults = {
 	grass_MAGIC,
-	{1.0, 1.0},			/* grass_cell */
+	{1.0, 1.0},			/* cell */
 	2.1753974,			/* lacunarity */
 	1.0,				/* h_val */
 	4.0,				/* octaves */
@@ -56,13 +55,12 @@ struct grass_specific grass_defaults = {
 #define SHDR_O(m)	offsetof(struct grass_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct grass_specific, m)
 
-
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse grass_print_tab[] = {
-	{"%f",  2, "cell",		SHDR_AO(grass_cell),	FUNC_NULL },
+	{"%f",  2, "cell",		SHDR_AO(cell),	FUNC_NULL },
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
@@ -72,7 +70,7 @@ struct bu_structparse grass_print_tab[] = {
 };
 struct bu_structparse grass_parse_tab[] = {
 	{"i",	bu_byteoffset(grass_print_tab[0]), "grass_print_tab", 0, FUNC_NULL },
-	{"%f",  2, "c",			SHDR_AO(grass_cell),	FUNC_NULL },
+	{"%f",  2, "c",			SHDR_AO(cell),	FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(size),	FUNC_NULL },
@@ -114,8 +112,6 @@ struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct grass_specific	*grass_sp;
-	mat_t	tmp;
-	vect_t	bb_min, bb_max, v_tmp;
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
@@ -179,48 +175,89 @@ char *cp;
 	rt_free( cp, "grass_specific" );
 }
 
-/*  Process a grid cell and any unprocessed adjoining neighbors.
+/*	I S E C T _ C E L L
+ *
+ *  Intersects a region-space ray with a grid cell of grass.
  *
  *  Return:
  *	0	continue grid marching
  *	~0	abort grid marching
  */
 static int
-process(curr_pt, flags)
-point_t curr_pt;
-short flags;
+isect_cell(cell, r, swp, out_dist, grass_sp)
+long			cell[3];
+struct xray		*r;
+double 			out_dist;
+struct shadework	*swp;
+struct grass_specific	*grass_sp;
 {
-	point_t grid_loc;
+	if( rdebug&RDEBUG_SHADE)
+		bu_log("isect_cell(%ld,%ld)\n", V2ARGS(cell));
 
 	return 0;
 }
 
-/* The flags argument indicates which cells (relative to the central one)
- * have already been processed.  The bits in the flag word are assigned
- * as follows: ABCDEFGHI.  and represent the relative grid positions:
+
+
+/*  Process a grid cell and any unprocessed adjoining neighbors.
  *
- *	G H I
- *	D E F
- *	A B C
+ * The flags argument indicates which cells (relative to the central
+ * one) need to be processed.  The bit values for the relative
+ * positions are:
  *
- * So to move one row in the positive Y direction, we shift the bits
- * as follows: DEFGHI000 while to move in the negative Y we shift the
- * bits as in: 000ABCDEF.
- * Moving in X is slightly more tricky.  To move one row in the positive X
- * direction, a bit pattern ABCDEFGHI becomes BC0EF0HI0 and negative X move
- * results in 0AB0DE0GH.
+ *  pos   bit	 pos  bit   pos  bit
+ *------------------------------------
+ * -1, 1  0100	0, 1 0200  1, 1 0400
+ * -1, 0  0010  0, 0 0020  1, 0 0040
+ * -1,-1  0001  0,-1 0002  1,-1 0004
  *
- * To hide the gory details, we have some macros to do the work.
+ *
+ *  Return:
+ *	0	continue grid marching
+ *	~0	abort grid marching
  */
-#define FLAGS_X_MOVE(f, s) \
-	if (s < 0) f = 0333;	/* ABC DEF GHI -> 0AB 0DE 0GH */\
-	else f = 0666		/* ABC DEF GHI -> BC0 EF0 HI0 */
+static int
+do_cells(cell_num, r, flags, swp, out_dist, grass_sp)
+long			cell_num[3];
+struct xray		*r;
+short 			flags;
+double 			out_dist;
+struct shadework	*swp;	/* defined in material.h */
+struct grass_specific	*grass_sp;
+{
+	int x, y;
+	long cell[3];
 
-#define	FLAGS_Y_MOVE(f, s) \
-	if (s < 0) f = 0077;	/* ABC DEF GHI -> 000 ABC DEF */\
-	else f = 0770		/* ABC DEF GHI -> DEF GHI 000 */
+#define FLAG(x,y) ((1 << ((y+1)*3)) << (x+1))
+#define ISDONE(x,y,flags) ( ! (FLAG(x,y) & flags))
 
+	if( rdebug&RDEBUG_SHADE)
+		bu_log("do_cells(%ld,%ld)\n", V2ARGS(cell_num));
 
+	for (y=-1; y < 2 ; y++) {
+		for (x=-1; x < 2 ; x++) {
+#if 0
+			short f;
+			f = FLAG(x,y);
+			if( rdebug&RDEBUG_SHADE)
+				bu_log("\n0%03o &\n0%03o = %d ",
+					flags, f, (flags & f) != 0 );
+#endif
+			if ( ISDONE(x,y,flags) ) continue;
+
+			cell[X] = cell_num[X] + x;
+			cell[Y] = cell_num[Y] + y;
+
+			if( rdebug&RDEBUG_SHADE)
+				bu_log("checking relative cell %2d,%2d at(%d,%d)\n",
+					x, y, V2ARGS(cell));
+			if (isect_cell(cell, r, swp, out_dist, grass_sp))
+				return 1;
+
+		}
+	}
+	return 0;
+}
 
 /*
  *	G R A S S _ R E N D E R
@@ -242,10 +279,16 @@ char			*dp;	/* ptr to the shader-specific struct */
 	vect_t		v;
 	vect_t		in_rad, out_rad;
 	point_t 	in_pt, out_pt, curr_pt;
-	double		tX, tDX, tY, tDY;
 	double		curr_dist, out_dist;
 	double		radius;
 	short		flags;
+	double		t[2], tD[2];
+	int		n;
+	double		t_orig[2];
+	long		tD_iter[2];
+	long		cell_num[3];	/* cell number */
+
+
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
@@ -254,13 +297,16 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	if( rdebug&RDEBUG_SHADE)
 		bu_struct_print( "grass_render Parameters:", grass_print_tab, (char *)grass_sp );
-	/* figure out the in/out points, and the radius of the beam in
-	 * "region" space.
+
+	/* Convert everything over to "Region" space.
+	 * First the ray and its radius then
+	 * the in/out points
 	 */
 	MAT4X3PNT(r.r_pt, grass_sp->m_to_sh, ap->a_ray.r_pt);
 	MAT4X3VEC(r.r_dir, grass_sp->m_to_sh, ap->a_ray.r_dir);
 	VUNITIZE(r.r_dir);
 
+	/* In Hit point */
 	MAT4X3PNT(in_pt, grass_sp->m_to_sh, swp->sw_hit.hit_point);
 
 	/* The only thing we can really do is get (possibly 3 different)
@@ -270,78 +316,158 @@ char			*dp;	/* ptr to the shader-specific struct */
 	VSETALL(v, radius);
 	MAT4X3VEC(in_rad, grass_sp->m_to_sh, v);
 
+	/* Out point */
 	VJOIN1(v, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 	MAT4X3VEC(out_pt, grass_sp->m_to_sh, v);
 	radius = ap->a_rbeam + pp->pt_outhit->hit_dist * ap->a_diverge;
 	VSETALL(v, radius);
 	MAT4X3VEC(out_rad, grass_sp->m_to_sh, v);
 
-
+	/* set up a DDA grid to march through. */
 	VSUB2(v, in_pt, r.r_pt);
 	curr_dist = MAGNITUDE(v);
-	VSUB2(v, out_pt, in_pt);
-	out_dist = curr_dist + MAGNITUDE(v);
+	VSUB2(v, out_pt, r.r_pt);
+	out_dist = MAGNITUDE(v);
+
+	if( rdebug&RDEBUG_SHADE) {
+		bu_log("Pt: (%g %g %g)\nRPt:(%g %g %g)\n", V3ARGS(ap->a_ray.r_pt),
+			V3ARGS(r.r_pt));
+		bu_log("Dir: (%g %g %g)\nRDir:(%g %g %g)\n", V3ARGS(ap->a_ray.r_dir),
+			V3ARGS(r.r_dir));
+
+		bu_log("Hit Pt:(%g %g %g) d:%g r:  %g\nRegHPt:(%g %g %g) d:%g Rr:(%g %g %g)\n",
+			V3ARGS(swp->sw_hit.hit_point), swp->sw_hit.hit_dist,
+			ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge,
+			V3ARGS(in_pt), curr_dist, V3ARGS(in_rad));
+
+		VJOIN1(v, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+		bu_log("Out Pt:(%g %g %g) d:%g r:   %g\nRegOPt:(%g %g %g) d:%g ROr:(%g %g %g)\n",
+			V3ARGS(v), pp->pt_outhit->hit_dist, radius,
+			V3ARGS(out_pt), out_dist, V3ARGS(out_rad));
+	}
 
 
-	/* tDX is the distance along the ray we have to travel
+	/* tD[X] is the distance along the ray we have to travel
 	 * to traverse a cell (travel a unit distance) along the
 	 * X axis of the grid.
 	 *
-	 * tX is the distance along the ray to the first cell boundary
+	 * t[X] is the distance along the ray to the first cell boundary
 	 * beyond the hit point in the X direction.
+	 *
+	 * t_orig[X] is the same as t[X] but won't get changed as we
+	 * march across the grid.  At each X grid line crossing, we recompute
+	 * a new t[X] from t_orig[X], tD[X], tD_iter[X].  The tD_iter[X] is 
+	 * the number of times we've made a full step in the X direction.
 	 */
-	tX = in_pt[X] - 
-		floor(in_pt[X]/grass_sp->grass_cell[X]) *
-			       grass_sp->grass_cell[X];
-	if (r.r_dir[X] < 0.0) {
-		tDX = -grass_sp->grass_cell[X] / r.r_dir[X];
-		tX += curr_dist;
-	} else if (r.r_dir[X] > 0.0) {
-		tDX = grass_sp->grass_cell[X] / r.r_dir[X];
-		tX = grass_sp->grass_cell[X] - tX;
-		tX += curr_dist;
-	} else {
-		tDX = tX = MAX_FASTF;
-	}
-	if (tX > out_dist) tX = out_dist;
+	for (n=X ; n < Z ; n++) {
+		char *s;
+		if (n == X) s="X";
+		else s="Y";
 
-	/* tDY and tY are for Y as tDX and tX are for X */
-	tY = in_pt[Y] - 
-		floor(in_pt[Y]/grass_sp->grass_cell[Y]) *
-		               grass_sp->grass_cell[Y];
-	if (r.r_dir[Y] < 0.0) {
-		tDY = -grass_sp->grass_cell[Y] / r.r_dir[Y];
-		tY += curr_dist;
-	} else if (r.r_dir[Y] > 0.0) {
-		tDY = grass_sp->grass_cell[Y] / r.r_dir[Y];
-		tY = grass_sp->grass_cell[Y] - tY;
-		tY += curr_dist;
-	} else {
-		tDY = tY = MAX_FASTF;
+		/* compute distance from cell origin to in_pt */
+		t[n] = in_pt[n] - 
+			floor(in_pt[n]/grass_sp->cell[n]) *
+				       grass_sp->cell[n];
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("t[%s]:%g = in_pt[%s]:%g - floor():%g * cell[%s]%g\n",
+				s, t[n], s, in_pt[n],
+				floor(in_pt[n]/grass_sp->cell[n]),
+				s, grass_sp->cell[n]);
+
+		if (r.r_dir[n] < -SMALL_FASTF) {
+			tD[n] = -grass_sp->cell[n] / r.r_dir[n];
+			t[n] = t[n] / -r.r_dir[n];
+			t[n] += curr_dist;
+		} else if (r.r_dir[n] > SMALL_FASTF) {
+			tD[n] = grass_sp->cell[n] / r.r_dir[n];
+			t[n] = grass_sp->cell[n] - t[n];
+			t[n] = t[n] / r.r_dir[n];
+			t[n] += curr_dist;
+		} else {
+			tD[n] = t[n] = MAX_FASTF;
+		}
+		if (t[n] > out_dist) t[n] = out_dist;
+		t_orig[n] = t[n];
+		tD_iter[n] = 0;
 	}
-	if (tY > out_dist) tY = out_dist;
+	
+
+	if( rdebug&RDEBUG_SHADE) {
+		bu_log("t[X]:%g tD[X]:%g\n", t[X], tD[X]);
+		bu_log("t[Y]:%g tD[Y]:%g\n\n", t[Y], tD[Y]);
+	}
+
+	/* The flags argument indicates which cells (relative to the central
+	 * one) have already been processed.  The bit values for the relative
+	 * positions are:
+	 *
+	 *  pos   bit	 pos  bit   pos  bit
+	 *------------------------------------
+	 * -1, 1  0100	0, 1 0200  1, 1 0400
+	 * -1, 0  0010  0, 0 0020  1, 0 0040
+	 * -1,-1  0001  0,-1 0002  1,-1 0004
+	 *
+	 */
+	flags = 0777;
+	VMOVE(curr_pt, in_pt);
+	cell_num[X] = (long)(in_pt[X] / grass_sp->cell[X]);
+	cell_num[Y] = (long)(in_pt[Y] / grass_sp->cell[Y]);
+	cell_num[Z] = 0.0;
 
 	/* Time to go marching across the grid */
-	flags = 0;
-	VMOVE(curr_pt, in_pt);
 	while (curr_dist < out_dist) {
 
-		/* XXX need to get/pass cell #'s and cell widths */
-		if (process(curr_pt, flags))
+
+		if( rdebug&RDEBUG_SHADE) {
+			point_t	cell_pos; /* cell origin position */
+
+			if( rdebug&RDEBUG_SHADE) {
+				bu_log("dist:%g (%g %g %g)\n", curr_dist,
+					V3ARGS(curr_pt));
+				bu_log("cell num: %d %d\n", V2ARGS(cell_num));
+			}
+			cell_pos[X] = cell_num[X] * grass_sp->cell[X];
+			cell_pos[Y] = cell_num[Y] * grass_sp->cell[Y];
+
+			if( rdebug&RDEBUG_SHADE)
+				bu_log("cell pos: %g %g\n", V2ARGS(cell_pos));
+		}
+
+		if (do_cells(cell_num, &r, flags,
+		    swp, out_dist, grass_sp))
 			goto done;
 
-		if (tX < tY) {
-			FLAGS_X_MOVE(flags, r.r_dir[X]);
-			curr_dist = tX;
-			tX += tDX;
-			if (tX > out_dist) tX = out_dist; 
+		if (t[X] < t[Y]) {
+			if( rdebug&RDEBUG_SHADE)
+				bu_log("stepping X %le\n", t[X]);
+			if (r.r_dir[X] < 0.0) {
+				flags = 0111;
+				cell_num[X]--;
+			} else {
+				flags = 0444;
+				cell_num[X]++;
+			}
+			n = X;
 		} else {
-			FLAGS_Y_MOVE(flags, r.r_dir[Y]);
-			curr_dist = tY;
-			tY += tDY;
-			if (tY > out_dist) tY = out_dist; 
+			if( rdebug&RDEBUG_SHADE)
+				bu_log("stepping Y %le\n", t[Y]);
+			if (r.r_dir[Y] < 0.0) {
+				flags = 0007;
+				cell_num[Y]--;
+			} else {
+				flags = 0700;
+				cell_num[Y]++;
+			}
+			n = Y;
 		}
-		VJOIN1(curr_pt, in_pt, curr_dist, r.r_dir);
+		curr_dist = t[n];
+		t[n] = t_orig[n] + tD[n] * ++tD_iter[n];
+
+		if (t[n] > out_dist) t[n] = out_dist; 
+
+		VJOIN1(curr_pt, r.r_pt, curr_dist, r.r_dir);
+		curr_pt[n] = ((long) ((curr_pt[n] / grass_sp->cell[n]) + .1))
+			 * grass_sp->cell[n];
 	}
 
 
