@@ -562,7 +562,8 @@ static RGBpixel	rgb_table[MAP_SIZE];
  *			g e t _ C o l o r _ I n d e x
  */
 Colorindex
-get_Color_Index( pixelp )
+get_Color_Index( ifp, pixelp )
+register FBIO		*ifp;
 register RGBpixel	*pixelp;
 {
 	register int		i;
@@ -733,7 +734,7 @@ FBIO	*ifp;
 RGBpixel	*pp;
 {
 	if ( pp != RGBPIXEL_NULL)
-		color( get_Color_Index( pp ) );
+		color( get_Color_Index( ifp, pp ) );
 	else
 		color( BLACK );
 	writemask( 0x3FF );
@@ -843,7 +844,7 @@ int	count;
 						colori += ((*pixelp)[BLU]/26) * 100;
 						}
 					else
-						colori = get_Color_Index( pixelp );
+						colori = get_Color_Index( ifp, pixelp );
 					hole->s = colori;
 					}
 				}
@@ -863,7 +864,7 @@ int	count;
 					col += ((*pixelp)[BLU]/26) * 100;
 					}
 				else
-					col = get_Color_Index( pixelp );
+					col = get_Color_Index( ifp, pixelp );
 
 				color( col );
 				im_rectf( (Coord)x, (Coord)ypos, r, t );
