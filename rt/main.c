@@ -69,6 +69,7 @@ int argc;
 char **argv;
 {
 	static struct application ap;
+	static struct rt_i *rtip;
 	static vect_t temp;
 	static int matflag = 0;		/* read matrix from stdin */
 	static double utime;
@@ -173,10 +174,11 @@ char **argv;
 	rt_prep_timer();		/* Start timing preparations */
 
 	/* Build directory of GED database */
-	if( rt_dirbuild( argv[0], idbuf, sizeof(idbuf) ) < 0 )  {
+	if( (rtip=rt_dirbuild(argv[0], idbuf, sizeof(idbuf))) == RTI_NULL ) {
 		fprintf(stderr,"rt:  rt_dirbuild failure\n");
 		exit(2);
 	}
+	ap.a_rt_i = rtip;
 	fprintf(stderr, "db title:  %s\n", idbuf);
 	argc--; argv++;
 
@@ -186,7 +188,7 @@ char **argv;
 
 	/* Load the desired portion of the model */
 	while( argc > 0 )  {
-		if( rt_gettree(argv[0]) < 0 )
+		if( rt_gettree(rtip, argv[0]) < 0 )
 			fprintf("rt_gettree(%s) FAILED\n", argv[0]);
 		argc--; argv++;
 	}
@@ -195,7 +197,7 @@ char **argv;
 	rt_prep_timer();
 
 	/* Allow library to prepare itself */
-	rt_prep();
+	rt_prep(rtip);
 
 	/* initialize application */
 	view_init( &ap, title_file, title_obj, npts, outputfile!=(char *)0 );
@@ -203,17 +205,17 @@ char **argv;
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr, "PREP: %s\n", outbuf );
 
-	if( rt_i.HeadSolid == SOLTAB_NULL )  {
+	if( rtip->HeadSolid == SOLTAB_NULL )  {
 		fprintf(stderr,"rt: No solids remain after prep.\n");
 		exit(3);
 	}
 	fprintf(stderr,"shooting at %d solids in %d regions\n",
-		rt_i.nsolids, rt_i.nregions );
+		rtip->nsolids, rtip->nregions );
 
 	fprintf(stderr,"model X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
-		rt_i.mdl_min[X], rt_i.mdl_max[X],
-		rt_i.mdl_min[Y], rt_i.mdl_max[Y],
-		rt_i.mdl_min[Z], rt_i.mdl_max[Z] );
+		rtip->mdl_min[X], rtip->mdl_max[X],
+		rtip->mdl_min[Y], rtip->mdl_max[Y],
+		rtip->mdl_min[Z], rtip->mdl_max[Z] );
 
 #ifdef HEP
 	(void)Disete( &work_word );
@@ -236,8 +238,8 @@ char **argv;
 
 do_more:
 	if( !matflag )  {
-		vect_t view_min;		/* view position of rt_i.mdl_min */
-		vect_t view_max;		/* view position of rt_i.mdl_max */
+		vect_t view_min;		/* view position of rtip->mdl_min */
+		vect_t view_max;		/* view position of rtip->mdl_max */
 		fastf_t f;
 
 		mat_idn( Viewrotscale );
@@ -357,13 +359,15 @@ do_more:
 	 */
 	fprintf(stderr, "SHOT: %s\n", outbuf );
 	fprintf(stderr,"%ld solid/ray intersections: %ld hits + %ld miss\n",
-		rt_i.nshots, rt_i.nhits, rt_i.nmiss );
+		rtip->nshots, rtip->nhits, rtip->nmiss );
 	fprintf(stderr,"pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
-		rt_i.nshots>0?((double)rt_i.nhits*100.0)/rt_i.nshots:100.0,
-		rt_i.nmiss_model, rt_i.nmiss_tree, rt_i.nmiss_solid );
-	fprintf(stderr,"Frame %d: %d output rays in %f sec = %f rays/sec\n",
+		rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
+		rtip->nmiss_model, rtip->nmiss_tree, rtip->nmiss_solid );
+	fprintf(stderr,"%d pixels in %.2f sec = %.2f pixels/sec\n",
+		npts*npts, utime, (double)(npts*npts)/utime );
+	fprintf(stderr,"Frame %d: %d rays in %.2f sec = %.2f rays/sec\n",
 		framenumber-1,
-		npts*npts, utime, (double)(npts*npts/utime) );
+		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
 #ifdef HEP
 	if( write( fileno(outfp), scanbuf, npts*npts*3 ) != npts*npts*3 )  {
 		perror("pixel output write");
@@ -413,6 +417,7 @@ register struct application *ap;
 		a.a_y = (com&0xFFFF);
 		a.a_hit = ap->a_hit;
 		a.a_miss = ap->a_miss;
+		a.a_rt_i = ap->a_rt_i;
 		VJOIN2( a.a_ray.r_pt, viewbase_model,
 			a.a_x, dx_model, 
 			(npts-a.a_y-1), dy_model );
