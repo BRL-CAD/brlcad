@@ -492,6 +492,23 @@ int			in;	/* 1 = inbound edge, 0 = outbound edge */
 }
 
 /*
+ *			N M G _ I S _ V _ O N _ R S _ L I S T
+ */
+int
+nmg_is_v_on_rs_list( rs, v )
+CONST struct nmg_ray_state	*rs;
+CONST struct vertex		*v;
+{
+	register int	i;
+
+	NMG_CK_VERTEX(v);
+	for( i=rs->nvu-1; i >= 0; i-- )  {
+		if( rs->vu[i]->v_p == v )  return i;
+	}
+	return -1;
+}
+
+/*
  *			N M G _ A S S E S S _ E U
  *
  *  The current vertex (eu->vu_p) is on the line of intersection.
@@ -544,15 +561,42 @@ int			pos;
 	 *  Match against vertex (rather than vertexuse) because cut/join
 	 *  operations may have changed the particular vertexuse pointer.
 	 */
-	for( i=rs->nvu-1; i >= 0; i-- )  {
-		if( rs->vu[i]->v_p != otherv )  continue;
-		/* Edge is on the ray.  Which way does it go? */
-/* XXX How to detect leaving the current vertex groups? */
+	if( (i = nmg_is_v_on_rs_list(rs, otherv)) > -1 )  {
+		struct vertex	*farv;
+
+again:
+		/* Edge's far end is ON the ray.  Which way does it go? */
 		if(rt_g.NMG_debug&DEBUG_FCUT)
 			rt_log("eu ON ray: vu[%d]=x%x, other:vu[%d]=x%x\n",
 				pos, rs->vu[pos], i, otherv );
 
+		/*
+		 *  As an attempt at fixing the ON/ON vertexuse problem,
+		 *  look further forw/back along the edgeuse list,
+		 *  as long as it shares the same edge geometry.
+		 *  If not on list, use *that* vertex to assess left/right.
+		 */
+		if( forw )  {
+			othereu = RT_LIST_PNEXT_CIRC( edgeuse, othereu );
+		} else {
+			othereu = RT_LIST_PLAST_CIRC( edgeuse, othereu );
+		}
+		if( othereu == eu )  goto really_on;	/* All eu's are ON! */
+		if( othereu->e_p->eg_p != eu->e_p->eg_p )  goto really_on;
+		farv = othereu->vu_p->v_p;
+rt_log("farv = x%x, on_index=%d\n", farv, nmg_is_v_on_rs_list(rs, farv) );
+		if( nmg_is_v_on_rs_list(rs, farv) > -1 )  {
+			/* farv is ON list, try going further back */
+			goto again;
+		}
+		/* farv is not ON list, assess _it_ */
+		/* XXX Need to remove othervu from the list! */
+		otherv = farv;
+rt_log("assessing farv\n");
+		goto left_right;
+
 		/* Compute edge vector, for purposes of orienting answer */
+really_on:
 		if( forw )  {
 			/* Edge goes from v to otherv */
 			VSUB2( heading, otherv->vg_p->coord, v->vg_p->coord );
@@ -599,6 +643,7 @@ int			pos;
 	 *  the edge must lie to one side or the other of the ray.
 	 *  Check vector from v to otherv against "left" vector.
 	 */
+left_right:
 	VSUB2( heading, otherv->vg_p->coord, v->vg_p->coord );
 	if( MAGSQ(heading) < SMALL_FASTF )  rt_bomb("nmg_assess_eu() null heading 2\n");
 	if( VDOT( heading, rs->left ) < 0 )  {
@@ -671,8 +716,11 @@ rt_log("vu dist=%e, next dist=%e, tol=%e\n",
 rt_dist_line_point( rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord ),
 rt_dist_line_point( rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord ),
 rs->tol->dist );
+#if 0
+			/* It's too late for this now. */
 			if( nmg_break_long_edges( nmg_find_s_of_eu(this_eu), rs->tol ) > 0 )
 				rt_log("\tnmg_break_long_edges succeeded\n");
+#endif
 			rt_bomb("nmg_assess_vu() ON/ON edgeuse ends on different vertices.\n");
 		}
 	}
