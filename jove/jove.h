@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  87/09/09  22:49:11  mike
+ * Added missing definitions for CRAY-2 to make things compile.
+ * This is the same strategy that Cray used to get VI to work, so...
+ * 
  * Revision 2.3  87/04/14  21:27:52  dpk
  * SYSV to SYS5.
  * 
@@ -40,12 +44,12 @@
 typedef	long	disk_line;
 #define BSIZ	4096
 
-#else VMUNIX
+#else
 
 typedef	short	disk_line;
 #define BSIZ	512
 
-#endif VMUNIX
+#endif
 
 #define EOF	-1
 #define NULL	0
@@ -80,8 +84,8 @@ typedef	short	disk_line;
 #define flusho()	flushout(-1, &termout)
 #define Placur(l, c)	if (l != CapLine || c != CapCol) DoPlacur(l, c) 
 
-#define CTL(c)		('c' & 037)
-#define META(c)		('c' | 0200)
+#define CTL(c)		(   c & 037)
+#define META(c)		(   c | 0200)
 
 #define	rbell()		(RingBell++)
 #define	eolp()		(linebuf[curchar] == '\0')
@@ -443,4 +447,4 @@ extern BUFFER
 
 #define	ISIG	0000001		/* line disc. 0 modes */
 #define TCSETAW TCSETA
-#endif CRAY2
+#endif
