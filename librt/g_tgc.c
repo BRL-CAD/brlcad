@@ -1791,7 +1791,7 @@ double			norm_tol;
 	rt_ell_16pts( top, work, tip->c, tip->d );
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
+	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
 
 	for( i=0; i<16; i++ )  {
 		vtop[i] = vtemp[i] = (struct vertex *)0;

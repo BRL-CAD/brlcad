@@ -1129,7 +1129,7 @@ double			norm_tol;
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
+	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
 
 	verts = (struct vertex **)rt_calloc( nw*nlen, sizeof(struct vertex *),
 		"rt_tor_tess *verts[]" );

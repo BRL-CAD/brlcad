@@ -132,7 +132,7 @@ struct faceuse *fu;
 
 	NMG_CK_VERTEX(v);
 
-	for( NMG_LIST( vu, vertexuse, &v->vu_hd ) )  {
+	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
 		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
 			eu = vu->up.eu_p;
@@ -186,7 +186,7 @@ struct faceuse *fu;
 		plu = nmg_mlv(&fu->l.magic, vu->v_p, OT_UNSPEC);
 	    	/* XXX should this be TBL_INS_UNIQUE? */
 	    	(void)nmg_tbl(bs->l2, TBL_INS,
-			&NMG_LIST_FIRST_MAGIC(&plu->down_hd) );
+			&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
 	}
 }
 
@@ -218,8 +218,8 @@ struct faceuse *fu;
 		struct edgeuse	*eunext;
 		struct edgeuse	*eulast;
 		/* some edge sanity checking */
-		eunext = NMG_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-		eulast = NMG_LIST_PLAST_CIRC(edgeuse, &eu->l);
+		eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+		eulast = RT_LIST_PLAST_CIRC(edgeuse, &eu->l);
 		NMG_CK_EDGEUSE(eunext);
 		NMG_CK_EDGEUSE(eulast);
 		if (eu->vu_p->v_p != eulast->eumate_p->vu_p->v_p) {
@@ -383,7 +383,7 @@ struct faceuse *fu;
 			 */
 			/* Should this be TBL_INS_UNIQUE? */
 			(void)nmg_tbl(bs->l2, TBL_INS,
-				&NMG_LIST_FIRST_MAGIC(&plu->down_hd) );
+				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
 		}
 		return;
 	}
@@ -428,7 +428,7 @@ struct faceuse *fu;
 			 * from eu CAN'T (in a working [as opposed to broken]
 			 * system) be the list head.  
 			 */
-			euforw = NMG_LIST_PNEXT(edgeuse, eu);
+			euforw = RT_LIST_PNEXT(edgeuse, eu);
 
 			NMG_CK_EDGEUSE(euforw);
 			NMG_CK_EDGEUSE(euforw->eumate_p);
@@ -482,21 +482,21 @@ struct faceuse *fu;
 
 			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			    	VPRINT("Making vertexloop",
-				NMG_LIST_PNEXT(vertexuse,&plu->down_hd)->
+				RT_LIST_PNEXT(vertexuse,&plu->down_hd)->
 					v_p->vg_p->coord);
-				if (NMG_LIST_FIRST_MAGIC(&plu->down_hd) !=
+				if (RT_LIST_FIRST_MAGIC(&plu->down_hd) !=
 					NMG_VERTEXUSE_MAGIC)
 					rt_bomb("bad plu\n");
-				if (NMG_LIST_FIRST_MAGIC(&plu->lumate_p->down_hd) !=
+				if (RT_LIST_FIRST_MAGIC(&plu->lumate_p->down_hd) !=
 					NMG_VERTEXUSE_MAGIC)
 					rt_bomb("bad plumate\n");
 
 			}
 			(void)nmg_tbl(bs->l2, TBL_INS,
-				&NMG_LIST_FIRST_MAGIC(&plu->down_hd) );
+				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
 		}
 
-		euforw = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
+		euforw = RT_LIST_PNEXT_CIRC(edgeuse, eu);
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			p1 = eu->vu_p->v_p->vg_p->coord;
 			p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
@@ -519,7 +519,7 @@ struct faceuse *fu;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge ends at plane intersect\n");
 
-		if( NMG_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p->v_p !=
+		if( RT_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p->v_p !=
 		    eu->eumate_p->vu_p->v_p )
 			rt_bomb("isect_edge_face: discontinuous eu loop\n");
 
@@ -562,13 +562,13 @@ struct faceuse *fu;
 	NMG_CK_FACEUSE(fu);
 
 	/* loop overlaps intersection face? */
-	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
 		/* this is most likely a loop inserted when we split
 		 * up fu2 wrt fu1 (we're now splitting fu1 wrt fu2)
 		 */
 		isect_vertex_face(bs,
-			NMG_LIST_FIRST(vertexuse,&lu->down_hd), fu);
+			RT_LIST_FIRST(vertexuse,&lu->down_hd), fu);
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 		/*
 		 *  Process a loop consisting of a list of edgeuses.
@@ -580,9 +580,9 @@ struct faceuse *fu;
 		 * them is split, it inserts a new edge AHEAD or
 		 * "nextward" of the current edgeuse.
 		 */ 
-		for( eu = NMG_LIST_LAST(edgeuse, &lu->down_hd );
-		     NMG_LIST_MORE(eu,edgeuse,&lu->down_hd);
-		     eu = NMG_LIST_PLAST(edgeuse,eu) )  {
+		for( eu = RT_LIST_LAST(edgeuse, &lu->down_hd );
+		     RT_LIST_NOT_HEAD(eu,&lu->down_hd);
+		     eu = RT_LIST_PLAST(edgeuse,eu) )  {
 			NMG_CK_EDGEUSE(eu);
 
 			if (eu->up.magic_p != &lu->l.magic) {
@@ -613,7 +613,7 @@ struct faceuse	*fu2;
 	NMG_CK_FACE_G(fu1->f_p->fg_p);
 
 	/* process each loop in face 1 */
-	for( NMG_LIST( lu, loopuse, &fu1->lu_hd ) )  {
+	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
 
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\nLoop %8x\n", lu);
@@ -793,8 +793,8 @@ fastf_t tol;
 	NMG_CK_SHELL_A(s1->sa_p);
 
 	/* XXX this isn't true for non-manifold geometry! */
-	if( NMG_LIST_IS_EMPTY( &s1->fu_hd ) ||
-	    NMG_LIST_IS_EMPTY( &s2->fu_hd ) )  {
+	if( RT_LIST_IS_EMPTY( &s1->fu_hd ) ||
+	    RT_LIST_IS_EMPTY( &s2->fu_hd ) )  {
 		rt_log("ERROR:shells must contain faces for boolean operations.");
 		return;
 	}
@@ -806,7 +806,7 @@ fastf_t tol;
 	(void)nmg_tbl(&faces, TBL_INIT, (long *)NULL);
 
 	/* shells overlap */
-	for( NMG_LIST( fu1, faceuse, &s1->fu_hd ) )  {
+	for( RT_LIST_FOR( fu1, faceuse, &s1->fu_hd ) )  {
 		/* check each of the faces in shell 1 to see
 		 * if they overlap the extent of shell 2
 		 */
@@ -820,7 +820,7 @@ fastf_t tol;
 		    fu1->f_p->fg_p->max_pt) ) {
 
 			/* poly1 overlaps shell2 */
-		    	for( NMG_LIST( fu2, faceuse, &s2->fu_hd ) )  {
+		    	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
 		    		NMG_CK_FACEUSE(fu2);
 		    		NMG_CK_FACE(fu2->f_p);
 				/* now check the face of shell 1
@@ -829,9 +829,9 @@ fastf_t tol;
 				nmg_isect_2faces(fu1, fu2, tol);
 
 				/* try not to process redundant faceuses (mates) */
-				if( NMG_LIST_MORE( fu2, faceuse, &s2->fu_hd ) )  {
+				if( RT_LIST_NOT_HEAD( fu2, &s2->fu_hd ) )  {
 					register struct faceuse	*nextfu;
-					nextfu = NMG_LIST_PNEXT(faceuse, fu2 );
+					nextfu = RT_LIST_PNEXT(faceuse, fu2 );
 					if( nextfu->f_p == fu2->f_p )
 						fu2 = nextfu;
 				}
@@ -840,9 +840,9 @@ fastf_t tol;
 		}
 
 		/* try not to process redundant faceuses (mates) */
-		if( NMG_LIST_MORE( fu1, faceuse, &s1->fu_hd ) )  {
+		if( RT_LIST_NOT_HEAD( fu1, &s1->fu_hd ) )  {
 			register struct faceuse	*nextfu;
-			nextfu = NMG_LIST_PNEXT(faceuse, fu1 );
+			nextfu = RT_LIST_PNEXT(faceuse, fu1 );
 			if( nextfu->f_p == fu1->f_p )
 				fu1 = nextfu;
 		}

@@ -39,70 +39,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* #define DEBUG_PLEU */
 
 
-/*
- *			N M G _ I D E N T I F Y _ M A G I C
- *
- *  Given a number which has been found in the magic number field of
- *  a structure (which is typically the first entry),
- *  determine what kind of structure this magic number pertains to.
- *  This is called by the macro NMG_CK_MAGIC() to provide a "hint"
- *  as to what sort of pointer error might have been made.
- */
-char *nmg_identify_magic( magic )
-long	magic;
-{
-	switch(magic)  {
-	default:
-		return("Unknown");
-	case NMG_MODEL_MAGIC:
-		return("model");
-	case NMG_MODEL_A_MAGIC:
-		return("model_a");
-	case NMG_REGION_MAGIC:
-		return("region");
-	case NMG_REGION_A_MAGIC:
-		return("region_a");
-	case NMG_SHELL_MAGIC:
-		return("shell");
-	case NMG_SHELL_A_MAGIC:
-		return("shell_a");
-	case NMG_FACE_MAGIC:
-		return("face");
-	case NMG_FACE_G_MAGIC:
-		return("face_g");
-	case NMG_FACEUSE_MAGIC:
-		return("faceuse");
-	case NMG_FACEUSE_A_MAGIC:
-		return("faceuse_a");
-	case NMG_LOOP_MAGIC:
-		return("loop");
-	case NMG_LOOP_G_MAGIC:
-		return("loop_g");
-	case NMG_LOOPUSE_MAGIC:
-		return("loopuse");
-	case NMG_LOOPUSE_A_MAGIC:
-		return("loopuse_a");
-	case NMG_EDGE_MAGIC:
-		return("edge");
-	case NMG_EDGE_G_MAGIC:
-		return("edge_g");
-	case NMG_EDGEUSE_MAGIC:
-		return("edgeuse");
-	case NMG_EDGEUSE_A_MAGIC:
-		return("edgeuse_a");
-	case NMG_VERTEX_MAGIC:
-		return("vertex");
-	case NMG_VERTEX_G_MAGIC:
-		return("vertex_g");
-	case NMG_VERTEXUSE_MAGIC:
-		return("vertexuse");
-	case NMG_VERTEXUSE_A_MAGIC:
-		return("vertexuse_a");
-	case NMG_LIST_MAGIC:
-		return("nmg_list");
-	}
-}
-
 /*	N M G _ T B L
  *	maintain a table of pointers (to magic numbers/structs)
  */
@@ -288,7 +224,7 @@ struct model *m;
 	}
 	rt_log("%8x ma_p\n", m->ma_p);
 
-	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		nmg_pr_r(r, (char *)NULL);
 	}
 }
@@ -320,7 +256,7 @@ char *h;
 	rt_log("%8x l.back\n", r->l.back);
 	rt_log("%8x ra_p\n", r->ra_p);
 
-	for( NMG_LIST( s, shell, &r->s_hd ) )  {
+	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
 		nmg_pr_s(s, h);
 	}
 	Return;
@@ -405,15 +341,15 @@ char *h;
 	if (s->sa_p)
 		nmg_pr_sa(s->sa_p, h);
 	
-	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		nmg_pr_fu(fu, h);
 	}
 
-	for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 		nmg_pr_lu(lu, h);
 	}
 
-	for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+	for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 		nmg_pr_eu(eu, h);
 	}
 	if (s->vu_p)
@@ -462,7 +398,7 @@ char *h;
 
 	rt_log("%s%8x f_p\n", h, fu->f_p);
 
-	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pr_lu(lu, h);
 	}
 	Return;
@@ -527,14 +463,14 @@ char *h;
 	rt_log("%s%8x down_hd.forw\n", h, lu->down_hd.forw);
 	rt_log("%s%8x down_hd.back\n", h, lu->down_hd.back);
 
-	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
-		vu = NMG_LIST_PNEXT( vertexuse, &lu->down_hd );
+		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
 		rt_log("%s%8x down_hd->forw (vu)\n", h, vu);
 		nmg_pr_vu(vu, h);
 	}
 	else if (magic1 == NMG_EDGEUSE_MAGIC) {
-		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_pr_eu(eu, h);
 		}
 	}
@@ -776,19 +712,19 @@ struct shell *s;
 	long		magic1;
 
 	NMG_CK_SHELL(s);
-	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 			NMG_CK_LOOPUSE(lu);
-			magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+			magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 			if (magic1 == NMG_EDGEUSE_MAGIC) {
-				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					if (status=nmg_check_radial(eu))
 						return(status);
 				}
 			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 				register struct vertexuse	*vu;
-				vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+				vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 				NMG_CK_VERTEXUSE(vu);
 				NMG_CK_VERTEX(vu->v_p);
 			}
@@ -814,7 +750,7 @@ struct nmgregion	*r;
 	int		ret;
 
 	NMG_CK_REGION(r);
-	for( NMG_LIST( s, shell, &r->s_hd ) )  {
+	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
 		ret = nmg_ck_closed_surf( s );
 		if( ret != 0 )  return(ret);
 	}
@@ -915,13 +851,13 @@ struct nmgregion *r;
 		}
 
 		fu = nmg_cface(s, vl, pts_this_face);
-		lu = NMG_LIST_FIRST( loopuse, &fu->lu_hd );
+		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
 		/* XXX should check for vertex-loop */
-		eu = NMG_LIST_FIRST( edgeuse, &lu->down_hd );
+		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
 		NMG_CK_EDGEUSE(eu);
 		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
-		    NMG_LIST_PNEXT(edgeuse,eu)->vu_p->v_p->vg_p->coord,
-		    NMG_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord,
+		    RT_LIST_PNEXT(edgeuse,eu)->vu_p->v_p->vg_p->coord,
+		    RT_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord,
 		    1.0e-6 ) )  {
 			rt_log("At %d in %s\n", __LINE__, __FILE__);
 			rt_bomb("polytonmg() cannot make plane equation\n");
@@ -930,7 +866,7 @@ struct nmgregion *r;
 	}
 
 	for (i=0 ; i < num_pts ; ++i) {
-		if( NMG_LIST_IS_EMPTY( &v[i]->vu_hd ) )  continue;
+		if( RT_LIST_IS_EMPTY( &v[i]->vu_hd ) )  continue;
 		FREE_VERTEX(v[i]);
 	}
 	rt_free( (char *)v, "vertex array");
@@ -1024,17 +960,17 @@ struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu, *eur;
 
-	for(NMG_LIST(lu, loopuse, &fu->lu_hd)) {
+	for(RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	    NMG_CK_LOOPUSE(lu);
 
-	    if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+	    if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 	        /* go looking around each edge for a face of the same
 	         * shell which isn't us and isn't our mate.  If we
 	         * find us or our mate before another face of this
 	         * shell, we are non-manifold.
 	         */
 
-	    	for (NMG_LIST(eu, edgeuse, &lu->down_hd)) {
+	    	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 
 	            eur = eu->radial_p;
 	            if ( eur == eu->eumate_p) return(0);

@@ -285,14 +285,14 @@ struct nmg_ptbl *novote;
 		return;
 
 	
-	if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-		for (NMG_LIST(eu, edgeuse, &lu->down_hd)) {
+	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			pt_hitmis_e(pt, eu, closest, tol, novote);
 		}
 
-	} else if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+	} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		register struct vertexuse *vu;
-		vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd);
+		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 
 		lu_pt = vu->v_p->vg_p->coord;
 		VSUB2(delta, pt, lu_pt);
@@ -362,7 +362,7 @@ struct nmg_ptbl *novote;
 	closest.dist = MAX_FASTF;
 	closest.p.eu = (struct edgeuse *)NULL;
 
-	for (NMG_LIST(lu, loopuse, &fu->lu_hd)) {
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		pt_hitmis_l(pt, lu, &closest, tol, novote);
 	}
 
@@ -402,8 +402,8 @@ fastf_t tol;
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		VPRINT("\tFiring vector:", projection_dir);
 
-	fu = NMG_LIST_FIRST(faceuse, &s->fu_hd);
-	while (NMG_LIST_MORE(fu, faceuse, &s->fu_hd)) {
+	fu = RT_LIST_FIRST(faceuse, &s->fu_hd);
+	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 
 		/* catch some (but not all) non-voters before they reach
 		 * the polling booth
@@ -411,10 +411,10 @@ fastf_t tol;
 		if (!nmg_manifold_face(fu)) {
 			(void)nmg_tbl(&novote, TBL_INS, &fu->f_p->magic);
 
-			if (NMG_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-				fu = NMG_LIST_PNEXT_PNEXT(faceuse, fu);
+			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+				fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
 			else
-				fu = NMG_LIST_PNEXT(faceuse, fu);
+				fu = RT_LIST_PNEXT(faceuse, fu);
 
 			continue;
 		}
@@ -423,10 +423,10 @@ fastf_t tol;
 		 * faces get put in the list, we need this here too
 		 */
 		if (nmg_tbl(&novote, TBL_LOC, &fu->f_p->magic) >= 0) {
-			if (NMG_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-				fu = NMG_LIST_PNEXT_PNEXT(faceuse, fu);
+			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+				fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
 			else
-				fu = NMG_LIST_PNEXT(faceuse, fu);
+				fu = RT_LIST_PNEXT(faceuse, fu);
 
 			continue;
 		}
@@ -456,10 +456,10 @@ fastf_t tol;
 
 		}
 
-		if (NMG_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-			fu = NMG_LIST_PNEXT_PNEXT(faceuse, fu);
+		if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+			fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
 		else
-			fu = NMG_LIST_PNEXT(faceuse, fu);
+			fu = RT_LIST_PNEXT(faceuse, fu);
 	}
 
 	(void)nmg_tbl(&novote, TBL_FREE, (long *)NULL);
@@ -515,7 +515,7 @@ struct nmg_ptbl classlist[4];
 	/* we use topology to determing if the vertex is "ON" the
 	 * other shell.
 	 */
-	for(NMG_LIST(vup, vertexuse, &vu->v_p->vu_hd)) {
+	for(RT_LIST_FOR(vup, vertexuse, &vu->v_p->vu_hd)) {
 
 		if (*vup->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		    nmg_lups(vup->up.lu_p) == sB) {
@@ -688,9 +688,9 @@ struct nmg_ptbl classlist[4];
 	if (nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_LOC, &lu->l_p->magic) >= 0)
 		return(OUTSIDE);
 
-	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
-		vu = NMG_LIST_PNEXT( vertexuse, &lu->down_hd );
+		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
 		class = class_vu_vs_s(vu, s, classlist);
 		switch (class) {
@@ -709,7 +709,7 @@ struct nmg_ptbl classlist[4];
 
 	/* loop is collection of edgeuses */
 	in = out = on = 0;
-	for (NMG_LIST(eu, edgeuse, &lu->down_hd)) {
+	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 
 		class = class_eu_vs_s(eu, s, classlist);
 		switch (class) {
@@ -734,7 +734,7 @@ struct nmg_ptbl classlist[4];
 
 	if (in > 0 && out > 0) {
 		rt_log("Loopuse edges in:%d on:%d out:%d\n", in, on, out);
-		for(NMG_LIST(eu, edgeuse, &lu->down_hd)) {
+		for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			EUPRINT("edgeuse", eu);
 		}
 
@@ -777,7 +777,7 @@ struct nmg_ptbl classlist[4];
 
 	NMG_CK_FACEUSE(lu->up.fu_p);
 
-	eu = NMG_LIST_FIRST(edgeuse, &lu->down_hd);
+	eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
 	eu = eu->radial_p->eumate_p;
 	do {
 		/* if the radial edge is a part of a loop which is part of
@@ -787,7 +787,7 @@ struct nmg_ptbl classlist[4];
 		    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC && 
 		    eu->up.lu_p->up.fu_p->s_p == s ) {
 
-			p = NMG_LIST_FIRST(edgeuse, &lu->down_hd);
+			p = RT_LIST_FIRST(edgeuse, &lu->down_hd);
 			q = eu;
 			q_lu = q->up.lu_p;
 
@@ -806,12 +806,12 @@ struct nmg_ptbl classlist[4];
 		    	 */
 		    	while (p->vu_p->v_p == q->vu_p->v_p &&
 			    q->up.lu_p == q_lu && /* sanity check */
-		    	    NMG_LIST_MORE(p, edgeuse, &lu->down_hd) ) {
-				q = NMG_LIST_PNEXT_CIRC(edgeuse, &q->l);
-				p = NMG_LIST_PNEXT(edgeuse, p);
+		    	    RT_LIST_NOT_HEAD(p, &lu->down_hd) ) {
+				q = RT_LIST_PNEXT_CIRC(edgeuse, &q->l);
+				p = RT_LIST_PNEXT(edgeuse, p);
 			}
 
-			if (!NMG_LIST_MORE(p, edgeuse, &lu->down_hd)) {
+			if (!RT_LIST_NOT_HEAD(p, &lu->down_hd)) {
 
 				/* the two loops are "on" each other.  All
 				 * that remains is to determine
@@ -836,7 +836,7 @@ struct nmg_ptbl classlist[4];
 
 		}
 		eu = eu->radial_p->eumate_p;
-	} while (eu != NMG_LIST_FIRST(edgeuse, &lu->down_hd) );
+	} while (eu != RT_LIST_FIRST(edgeuse, &lu->down_hd) );
 
 
 
@@ -849,7 +849,7 @@ struct nmg_ptbl classlist[4];
 	 * if the faceuse normal is pointing into the shell, we are inside.
 	 */
 
-	for (NMG_LIST(eu, edgeuse, &lu->down_hd)) {
+	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 
 		p = eu->radial_p;
 		do {
@@ -903,7 +903,7 @@ struct nmg_ptbl classlist[4];
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
         	PLPRINT("\nclass_fu_vs_s plane equation:", fu->f_p->fg_p->N);
 
-	for (NMG_LIST(lu, loopuse, &fu->lu_hd))
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
 		(void)class_lu_vs_s(lu, s, classlist);
 
 }
@@ -924,48 +924,48 @@ struct nmg_ptbl classlist[4];
 
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
-	    NMG_LIST_NON_EMPTY(&sA->fu_hd))
+	    RT_LIST_NON_EMPTY(&sA->fu_hd))
 		rt_log("class_shells - doing faces\n");
 
-	fu = NMG_LIST_FIRST(faceuse, &sA->fu_hd);
-	while (NMG_LIST_MORE(fu, faceuse, &sA->fu_hd)) {
+	fu = RT_LIST_FIRST(faceuse, &sA->fu_hd);
+	while (RT_LIST_NOT_HEAD(fu, &sA->fu_hd)) {
 
 		class_fu_vs_s(fu, sB, classlist);
 
-		if (NMG_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-			fu = NMG_LIST_PNEXT_PNEXT(faceuse, fu);
+		if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+			fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
 		else
-			fu = NMG_LIST_PNEXT(faceuse, fu);
+			fu = RT_LIST_PNEXT(faceuse, fu);
 	}
 	
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
-	    NMG_LIST_NON_EMPTY(&sA->lu_hd))
+	    RT_LIST_NON_EMPTY(&sA->lu_hd))
 		rt_log("class_shells - doing loops\n");
 
-	lu = NMG_LIST_FIRST(loopuse, &sA->lu_hd);
-	while (NMG_LIST_MORE(lu, loopuse, &sA->lu_hd)) {
+	lu = RT_LIST_FIRST(loopuse, &sA->lu_hd);
+	while (RT_LIST_NOT_HEAD(lu, &sA->lu_hd)) {
 
 		(void)class_lu_vs_s(lu, sB, classlist);
 
-		if (NMG_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
-			lu = NMG_LIST_PNEXT_PNEXT(loopuse, lu);
+		if (RT_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
+			lu = RT_LIST_PNEXT_PNEXT(loopuse, lu);
 		else
-			lu = NMG_LIST_PNEXT(loopuse, lu);
+			lu = RT_LIST_PNEXT(loopuse, lu);
 	}
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
-	    NMG_LIST_NON_EMPTY(&sA->eu_hd))
+	    RT_LIST_NON_EMPTY(&sA->eu_hd))
 		rt_log("class_shells - doing edges\n");
 
-	eu = NMG_LIST_FIRST(edgeuse, &sA->eu_hd);
-	while (NMG_LIST_MORE(eu, edgeuse, &sA->eu_hd)) {
+	eu = RT_LIST_FIRST(edgeuse, &sA->eu_hd);
+	while (RT_LIST_NOT_HEAD(eu, &sA->eu_hd)) {
 
 		(void)class_eu_vs_s(eu, sB, classlist);
 
-		if (NMG_LIST_PNEXT(edgeuse, eu) == eu->eumate_p)
-			eu = NMG_LIST_PNEXT_PNEXT(edgeuse, eu);
+		if (RT_LIST_PNEXT(edgeuse, eu) == eu->eumate_p)
+			eu = RT_LIST_PNEXT_PNEXT(edgeuse, eu);
 		else
-			eu = NMG_LIST_PNEXT(edgeuse, eu);
+			eu = RT_LIST_PNEXT(edgeuse, eu);
 	}
 
 	if (sA->vu_p) {

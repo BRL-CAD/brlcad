@@ -1072,7 +1072,7 @@ double		norm_tol;
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
+	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
 
 	/* Process each face */
 	for( i=0; i < pa.pa_faces; i++ )  {
@@ -1154,14 +1154,14 @@ double		tol_sq;
 		rt_bomb("rt_mk_nmg_planeeqn(): null faceuse\n");
 	}
 
-	lu = NMG_LIST_FIRST(loopuse, &fu->lu_hd);
+	lu = RT_LIST_FIRST(loopuse, &fu->lu_hd);
 	NMG_CK_LOOPUSE(lu);
 
-	eu = NMG_LIST_FIRST(edgeuse, &lu->down_hd);
+	eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
-	eu_last = NMG_LIST_PLAST_CIRC(edgeuse, eu);
-	eu_next = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
+	eu_last = RT_LIST_PLAST_CIRC(edgeuse, eu);
+	eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu);
 	NMG_CK_EDGEUSE(eu_last);
 	NMG_CK_EDGEUSE(eu_next);
 

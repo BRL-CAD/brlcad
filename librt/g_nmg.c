@@ -332,6 +332,7 @@ double			local2mm;
 	union record			*rp;
 	struct nmg_struct_counts	cntbuf;
 	struct rt_external		count_ext;
+	long				**ptrs;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_NMG )  return(-1);
@@ -339,7 +340,7 @@ double			local2mm;
 	NMG_CK_MODEL(m);
 
 	bzero( (char *)&cntbuf, sizeof(cntbuf) );
-	nmg_m_struct_count( &cntbuf, m );
+	ptrs = nmg_m_struct_count( &cntbuf, m );
 	nmg_pr_struct_counts( &cntbuf, "Counts in rt_nmg_export" );
 
 	RT_INIT_EXTERNAL(ep);

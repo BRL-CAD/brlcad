@@ -40,15 +40,15 @@ char *s;
 {
 	struct edgeuse *eu;
 
-	if (NMG_LIST_FIRST_MAGIC(&cklu->down_hd) == NMG_VERTEXUSE_MAGIC)
+	if (RT_LIST_FIRST_MAGIC(&cklu->down_hd) == NMG_VERTEXUSE_MAGIC)
 		rt_bomb("NMG nmg_ck_lueu.  I got a vertex loop!\n");
 
-	eu = NMG_LIST_FIRST(edgeuse, &cklu->down_hd);
+	eu = RT_LIST_FIRST(edgeuse, &cklu->down_hd);
 	if (eu->l.back != &cklu->down_hd) {
 		rt_bomb("nmg_ck_lueu first element in list doesn't point back to head\n");
 	}
 
-	for (NMG_LIST(eu, edgeuse, &cklu->down_hd)) {
+	for (RT_LIST_FOR(eu, edgeuse, &cklu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		if (eu->up.lu_p != cklu) {
 			rt_log("edgeuse of %s (going next) has lost proper parent\n", s);
@@ -66,12 +66,12 @@ char *s;
 
 	cklu = cklu->lumate_p;
 
-	eu = NMG_LIST_FIRST(edgeuse, &cklu->down_hd);
+	eu = RT_LIST_FIRST(edgeuse, &cklu->down_hd);
 	if (eu->l.back != &cklu->down_hd) {
 		rt_bomb("nmg_ck_lueu first element in lumate list doesn't point back to head\n");
 	}
 
-	for (NMG_LIST(eu, edgeuse, &cklu->down_hd)) {
+	for (RT_LIST_FOR(eu, edgeuse, &cklu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		if (eu->up.lu_p != cklu) {
 			rt_log("edgeuse of %s (lumate going next) has lost proper parent\n", s);
@@ -172,17 +172,17 @@ struct vertexuse *vu1, *vu2;
 	lu = nmg_mlv(oldlu->up.magic_p, (struct vertex *)NULL,
 		oldlu->orientation);
 
-	nmg_kvu(NMG_LIST_FIRST(vertexuse, &lu->down_hd));
-	nmg_kvu(NMG_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
+	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->down_hd));
+	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
 
 	/* move the edges into one of the uses of the new loop */
 	for (eu = eu2 ; eu != eu1 ; eu = eunext) {
-		eunext = NMG_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+		eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
-		NMG_LIST_DEQUEUE(&eu->l);
-		NMG_LIST_INSERT(&lu->down_hd, &eu->l);
-		NMG_LIST_DEQUEUE(&eu->eumate_p->l);
-		NMG_LIST_APPEND(&lu->lumate_p->down_hd, &eu->eumate_p->l);
+		RT_LIST_DEQUEUE(&eu->l);
+		RT_LIST_INSERT(&lu->down_hd, &eu->l);
+		RT_LIST_DEQUEUE(&eu->eumate_p->l);
+		RT_LIST_APPEND(&lu->lumate_p->down_hd, &eu->eumate_p->l);
 		eu->up.lu_p = lu;
 		eu->eumate_p->up.lu_p = lu->lumate_p;
 	}
@@ -192,13 +192,13 @@ struct vertexuse *vu1, *vu2;
 	neweu = nmg_me(eu1->vu_p->v_p, eu2->vu_p->v_p, nmg_eups(eu1));
 
 	/* move the new edgeuse into the new loopuse */
-	NMG_LIST_DEQUEUE(&neweu->l);
-	NMG_LIST_INSERT(&lu->down_hd, &neweu->l);
+	RT_LIST_DEQUEUE(&neweu->l);
+	RT_LIST_INSERT(&lu->down_hd, &neweu->l);
 	neweu->up.lu_p = lu;
 
 	/* move the new edgeuse mate into the new loopuse mate */
-	NMG_LIST_DEQUEUE(&neweu->eumate_p->l);
-	NMG_LIST_APPEND(&lu->lumate_p->down_hd, &neweu->eumate_p->l);
+	RT_LIST_DEQUEUE(&neweu->eumate_p->l);
+	RT_LIST_APPEND(&lu->lumate_p->down_hd, &neweu->eumate_p->l);
 	neweu->eumate_p->up.lu_p = lu->lumate_p;
 
 	nmg_ck_lueu(lu, "lu check2");	/*LABLABLAB*/
@@ -207,10 +207,10 @@ struct vertexuse *vu1, *vu2;
 	/* now we go back and close up the loop we just ripped open */
 	eunext = nmg_me(eu2->vu_p->v_p, eu1->vu_p->v_p, nmg_eups(eu1));
 
-	NMG_LIST_DEQUEUE(&eunext->l);
-	NMG_LIST_INSERT(&eu1->l, &eunext->l);
-	NMG_LIST_DEQUEUE(&eunext->eumate_p->l);
-	NMG_LIST_APPEND(&eu1->eumate_p->l, &eunext->eumate_p->l);
+	RT_LIST_DEQUEUE(&eunext->l);
+	RT_LIST_INSERT(&eu1->l, &eunext->l);
+	RT_LIST_DEQUEUE(&eunext->eumate_p->l);
+	RT_LIST_APPEND(&eu1->eumate_p->l, &eunext->eumate_p->l);
 	eunext->up.lu_p = eu1->up.lu_p;
 	eunext->eumate_p->up.lu_p = eu1->eumate_p->up.lu_p;
 
@@ -295,9 +295,9 @@ struct nmg_ptbl *b;
 	 * the given plane
 	 */
 	next_class = 0.0;
-	eun = NMG_LIST_PNEXT_CIRC(edgeuse, &vu->up.eu_p->l);
+	eun = RT_LIST_PNEXT_CIRC(edgeuse, &vu->up.eu_p->l);
 	while (nmg_in_or_ref(eun->vu_p, b) && eun != vu->up.eu_p) {
-		eun = NMG_LIST_PNEXT_CIRC(edgeuse, &eun->l);
+		eun = RT_LIST_PNEXT_CIRC(edgeuse, &eun->l);
 	}
 
 	if (eun == vu->up.eu_p) return (1);
@@ -308,7 +308,7 @@ struct nmg_ptbl *b;
 	VMOVE(pt, eun->vu_p->v_p->vg_p->coord);
 	next_class = NMG_DIST_PT_PLANE(pt, pl);
 	while (NEAR_ZERO(next_class, VDIVIDE_TOL) && eun != vu->up.eu_p) {
-		eun = NMG_LIST_PNEXT_CIRC(edgeuse, &eun->l);
+		eun = RT_LIST_PNEXT_CIRC(edgeuse, &eun->l);
 
 		VMOVE(pt, eun->vu_p->v_p->vg_p->coord);
 		next_class = NMG_DIST_PT_PLANE(pt, pl);
@@ -325,17 +325,17 @@ struct nmg_ptbl *b;
 	/* We look at successively "last" edgeuses looking for one whose
 	 * vertex does not lie on the given plane.
 	 */
-	eul = NMG_LIST_PLAST_CIRC(edgeuse, &vu->up.eu_p->l);
+	eul = RT_LIST_PLAST_CIRC(edgeuse, &vu->up.eu_p->l);
 	NMG_CK_EDGEUSE(eul);
 	last_class = 0.0;
 	while (nmg_in_or_ref(eul->vu_p, b) && eul != vu->up.eu_p)
-		eul = NMG_LIST_PLAST_CIRC(edgeuse, eul);
+		eul = RT_LIST_PLAST_CIRC(edgeuse, eul);
 
 	if (eul == vu->up.eu_p) return (1);
 	VMOVE(pt, eul->vu_p->v_p->vg_p->coord);
 	last_class = NMG_DIST_PT_PLANE(pt, pl);
 	while (NEAR_ZERO(last_class, VDIVIDE_TOL) && eul != vu->up.eu_p) {
-		eul = NMG_LIST_PLAST_CIRC(edgeuse, eul);
+		eul = RT_LIST_PLAST_CIRC(edgeuse, eul);
 		VMOVE(pt, eul->vu_p->v_p->vg_p->coord);
 		last_class = NMG_DIST_PT_PLANE(pt, pl);
 	}
@@ -421,10 +421,10 @@ plane_t plane_eq;
 			 *     /
 			 *    *---------
 			 */
-			eu_forw = NMG_LIST_PNEXT_CIRC(edgeuse,
+			eu_forw = RT_LIST_PNEXT_CIRC(edgeuse,
 				&vu.v[i]->up.eu_p->l);
 
-			eu_back = NMG_LIST_PNEXT_CIRC(edgeuse,
+			eu_back = RT_LIST_PNEXT_CIRC(edgeuse,
 				&vu.v[i]->up.eu_p->l);
 
 			if (nmg_in_or_ref(eu_back->vu_p, b) || 
@@ -460,8 +460,8 @@ plane_t plane_eq;
 		rt_log("nitz\n");
 
 	eu = vu[*i]->up.eu_p;
-	eu_next = NMG_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	eu_last = NMG_LIST_PLAST_CIRC(edgeuse, &eu->l);
+	eu_next = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+	eu_last = RT_LIST_PLAST_CIRC(edgeuse, &eu->l);
 
 	if (vu[j] == eu_next->vu_p 
 	    || vu[j] == eu_last->vu_p
@@ -612,8 +612,8 @@ struct faceuse *fu2;
 	 * the edge runs along the plane of intersection
 	 */
 	eu = vu[*i]->up.eu_p;
-	eu_next = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
-	eu_last = NMG_LIST_PLAST_CIRC(edgeuse, eu);
+	eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu);
+	eu_last = RT_LIST_PLAST_CIRC(edgeuse, eu);
 
 	if (nmg_tbl(b, TBL_LOC, &eu_next->vu_p->l.magic) >= j ) {
 		/* splitting in the "next" direction */
@@ -623,7 +623,7 @@ struct faceuse *fu2;
 		 * with the one we just created.
 		 */
 		nmg_klu(vu[j]->up.lu_p);
-		eu_next = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
+		eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu);
 		vu[j] = eu_next->vu_p;
 	}
 	else if (nmg_tbl(b, TBL_LOC, &eu_last->vu_p->l.magic) >= j) {
@@ -634,7 +634,7 @@ struct faceuse *fu2;
 		 * with the one we just created. 
 		 */
 		nmg_klu(vu[j]->up.lu_p);
-		eu_last = NMG_LIST_PLAST_CIRC(edgeuse, eu);
+		eu_last = RT_LIST_PLAST_CIRC(edgeuse, eu);
 		vu[j] = eu_last->vu_p;
 	}
 	else if (!justgrazing(pl, vu[*i], b)) {
@@ -650,7 +650,7 @@ struct faceuse *fu2;
 
 		eu = nmg_eusplit(vu[j]->v_p, eu); /* split it to new point */
 
-		eu_last = NMG_LIST_PLAST_CIRC(edgeuse, eu);
+		eu_last = RT_LIST_PLAST_CIRC(edgeuse, eu);
 		/* make uses share edge */
 		nmg_moveeu(eu, eu_last);
 
@@ -737,8 +737,8 @@ struct nmg_ptbl *b;
 	vul.l = b->buffer;
 	j = (i = *i_p) +1;
 
-	eu_jnext = NMG_LIST_PNEXT_CIRC(edgeuse, &vul.v[j]->up.eu_p->l);
-	eu_inext = NMG_LIST_PNEXT_CIRC(edgeuse, &vul.v[i]->up.eu_p->l);
+	eu_jnext = RT_LIST_PNEXT_CIRC(edgeuse, &vul.v[j]->up.eu_p->l);
+	eu_inext = RT_LIST_PNEXT_CIRC(edgeuse, &vul.v[i]->up.eu_p->l);
 
 	/* if the "j" vertexuse is for edgeuse and the vertexuse at the
 	 * other end of the edgeuse is in the list "after" j, then we toss
@@ -814,7 +814,7 @@ struct nmg_ptbl *b;
 		    	lu_k = nmg_lu_of_vu(vul.v[k]);
 			if (lu_k == lu_i || lu_k == lu_j) break;
 			else if (lu_k != lu_i && lu_k != lu_j &&
-			    NMG_LIST_FIRST_MAGIC(&lu_k->down_hd) != NMG_VERTEXUSE_MAGIC) {
+			    RT_LIST_FIRST_MAGIC(&lu_k->down_hd) != NMG_VERTEXUSE_MAGIC) {
 				rt_bomb("ought to be restarting edge joins on new loop\n");
 			}
 	    	}

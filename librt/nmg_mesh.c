@@ -68,7 +68,7 @@ struct edgeuse *eu1, *eu2;
 		NMG_CK_VERTEX_G(eu1->eumate_p->vu_p->v_p->vg_p);
 		ptmate = eu1->eumate_p->vu_p->v_p->vg_p->coord;
 
-		eutmp = NMG_LIST_PLAST_CIRC(edgeuse, eu1);
+		eutmp = RT_LIST_PLAST_CIRC(edgeuse, eu1);
 		NMG_CK_EDGEUSE(eutmp);
 		NMG_CK_VERTEXUSE(eutmp->vu_p);
 		NMG_CK_VERTEX(eutmp->vu_p->v_p);
@@ -89,7 +89,7 @@ struct edgeuse *eu1, *eu2;
 		NMG_CK_VERTEX_G(eu2->vu_p->v_p->vg_p);
 		ptmate = eu2->eumate_p->vu_p->v_p->vg_p->coord;
 
-		eutmp = NMG_LIST_PLAST_CIRC(edgeuse, eu2);
+		eutmp = RT_LIST_PLAST_CIRC(edgeuse, eu2);
 		NMG_CK_EDGEUSE(eutmp);
 		NMG_CK_VERTEXUSE(eutmp->vu_p);
 		NMG_CK_VERTEX(eutmp->vu_p->v_p);
@@ -252,7 +252,7 @@ struct edgeuse *eu1, *eu2;
  */
 static cmp_mesh_eu(eu1, hd)
 struct edgeuse *eu1;
-struct nmg_list *hd;
+struct rt_list *hd;
 {
 	struct edgeuse *eu;
 
@@ -267,7 +267,7 @@ struct nmg_list *hd;
 		rt_log("meshing against %g, %g, %g -> %g, %g, %g (edge %8x)\n",
 		pt1[X], pt1[Y], pt1[Z], pt2[X], pt2[Y], pt2[Z], eu1->e_p);
 
-	for (NMG_LIST(eu, edgeuse, hd)) {
+	for (RT_LIST_FOR(eu, edgeuse, hd)) {
 		NMG_CK_EDGEUSE(eu);
 		if (rt_g.NMG_debug & DEBUG_MESH_EU) {
 			pt1 = eu->vu_p->v_p->vg_p->coord;
@@ -310,18 +310,18 @@ struct faceuse *fu1, *fu2;
 	if (rt_g.NMG_debug & DEBUG_MESH)
 		rt_log("meshing self (fu %8x)\n", fu1);
 
-	for (NMG_LIST(lu1, loopuse, &fu1->lu_hd)) {
+	for (RT_LIST_FOR(lu1, loopuse, &fu1->lu_hd)) {
 
 		NMG_CK_LOOPUSE(lu1);
-		if (NMG_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_EDGEUSE_MAGIC){
-			for(NMG_LIST(eu, edgeuse, &lu1->down_hd)) {
+		if (RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_EDGEUSE_MAGIC){
+			for(RT_LIST_FOR(eu, edgeuse, &lu1->down_hd)) {
 
 				NMG_CK_EDGEUSE(eu);
-				for (lu2 = NMG_LIST_PNEXT(loopuse, lu1);
-				    NMG_LIST_MORE(lu2, loopuse, &fu1->lu_hd) ;
-				    lu2 = NMG_LIST_PNEXT(loopuse, lu2) ) {
+				for (lu2 = RT_LIST_PNEXT(loopuse, lu1);
+				    RT_LIST_NOT_HEAD(lu2, &fu1->lu_hd) ;
+				    lu2 = RT_LIST_PNEXT(loopuse, lu2) ) {
 
-				    	if (NMG_LIST_FIRST_MAGIC(&lu2->down_hd)
+				    	if (RT_LIST_FIRST_MAGIC(&lu2->down_hd)
 				    	    == NMG_EDGEUSE_MAGIC)
 				    	        cmp_mesh_eu(eu, &lu2->down_hd);
 				}
@@ -336,16 +336,16 @@ struct faceuse *fu1, *fu2;
 	/* now make sure that all edges of fu2 that could be shared with
 	 * an edge of fu1 are indeed shared
 	 */
-	for (NMG_LIST(lu1, loopuse, &fu1->lu_hd)) {
+	for (RT_LIST_FOR(lu1, loopuse, &fu1->lu_hd)) {
 
 		NMG_CK_LOOPUSE(lu1);
-		if (NMG_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_EDGEUSE_MAGIC){
-			for(NMG_LIST(eu, edgeuse, &lu1->down_hd)) {
+		if (RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_EDGEUSE_MAGIC){
+			for(RT_LIST_FOR(eu, edgeuse, &lu1->down_hd)) {
 
 				NMG_CK_EDGEUSE(eu);
-				for (NMG_LIST(lu2, loopuse, &fu2->lu_hd)) {
+				for (RT_LIST_FOR(lu2, loopuse, &fu2->lu_hd)) {
 
-				    	if(NMG_LIST_FIRST_MAGIC(&lu2->down_hd)
+				    	if(RT_LIST_FIRST_MAGIC(&lu2->down_hd)
 				    	    == NMG_EDGEUSE_MAGIC)
 						cmp_mesh_eu(eu, &lu2->down_hd);
 				}

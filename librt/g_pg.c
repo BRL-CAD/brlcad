@@ -513,23 +513,23 @@ double		tol_sq;
 
 	NMG_CK_SHELL(s);
 
-	fu = NMG_LIST_FIRST(faceuse, &s->fu_hd);
-	while (NMG_LIST_MORE(fu, faceuse, &s->fu_hd) ) {
+	fu = RT_LIST_FIRST(faceuse, &s->fu_hd);
+	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
 		/* Shell has faces */
 		NMG_CK_FACEUSE(fu);
 			if( (vu = nmg_find_vu_in_face( pt, fu, tol_sq )) )
 				return(vu->v_p);
 
-			if (NMG_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-				fu = NMG_LIST_PNEXT_PNEXT(faceuse, fu);
+			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+				fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
 			else
-				fu = NMG_LIST_PNEXT(faceuse, fu);
+				fu = RT_LIST_PNEXT(faceuse, fu);
 	}
 
-	for (NMG_LIST(lu, loopuse, &s->lu_hd)) {
+	for (RT_LIST_FOR(lu, loopuse, &s->lu_hd)) {
 		NMG_CK_LOOPUSE(lu);
-		if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-			vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd);
+		if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 			NMG_CK_VERTEX(vu->v_p);
 			if (vg = vu->v_p->vg_p) {
 				NMG_CK_VERTEX_G(vg);
@@ -537,12 +537,12 @@ double		tol_sq;
 				if( MAGSQ(delta) < tol_sq )
 					return(vu->v_p);
 			}
-		} else if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
 			rt_log("in %s at %d ", __FILE__, __LINE__);
 			rt_bomb("loopuse has bad child\n");
 		} else {
 			/* loopuse made of edgeuses */
-			for (NMG_LIST(eu, edgeuse, &lu->down_hd)) {
+			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				
 				NMG_CK_EDGEUSE(eu);
 				NMG_CK_VERTEXUSE(eu->vu_p);
@@ -560,20 +560,20 @@ double		tol_sq;
 
 
 
-	lu = NMG_LIST_FIRST(loopuse, &s->lu_hd);
-	while (NMG_LIST_MORE(lu, loopuse, &s->lu_hd) ) {
+	lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
+	while (RT_LIST_NOT_HEAD(lu, &s->lu_hd) ) {
 
 			NMG_CK_LOOPUSE(lu);
 			/* XXX what to do here? */
 			rt_log("nmg_find_vu_in_face(): lu?\n");
 
-			if (NMG_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
-				lu = NMG_LIST_PNEXT_PNEXT(loopuse, lu);
+			if (RT_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
+				lu = RT_LIST_PNEXT_PNEXT(loopuse, lu);
 			else
-				lu = NMG_LIST_PNEXT(loopuse, lu);
+				lu = RT_LIST_PNEXT(loopuse, lu);
 	}
 
-	for (NMG_LIST(eu, edgeuse, &s->eu_hd)) {
+	for (RT_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		NMG_CK_VERTEXUSE(eu->vu_p);
 		v = eu->vu_p->v_p;
@@ -628,7 +628,7 @@ double			norm_tol;
 	RT_PG_CK_MAGIC(pgp);
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
+	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
 
 
 	/* rel_tol is hard to deal with, given we don't know the RPP yet */

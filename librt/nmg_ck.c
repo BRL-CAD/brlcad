@@ -61,7 +61,7 @@ struct vertexuse *vup;
 
 	NMG_CK_VERTEX(v);
 
-	for( NMG_LIST( vu, vertexuse, &v->vu_hd ) )  {
+	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
 		if (vu->v_p != v)
 			rt_bomb("nmg_vvertex() a vertexuse in my list doesn't share my vertex\n");
@@ -92,10 +92,10 @@ long		*up_magic_p;
 	if (!vu->l.forw)
 		rt_bomb("nmg_vvu() vertexuse has null forw pointer\n");
 
-	if( NMG_LIST_FIRST_MAGIC( &vu->l ) != NMG_VERTEXUSE_MAGIC)
+	if( RT_LIST_FIRST_MAGIC( &vu->l ) != NMG_VERTEXUSE_MAGIC)
 		rt_bomb("vertexuse forw is bad vertexuse\n");
 
-	if (NMG_LIST_PNEXT_PLAST(vertexuse,vu) != vu )
+	if (RT_LIST_PNEXT_PLAST(vertexuse,vu) != vu )
 		rt_bomb("vertexuse not back of next vertexuse\n");
 
 	nmg_vvertex(vu->v_p, vu);
@@ -172,13 +172,13 @@ struct edgeuse *eup;
  *  Verify edgeuse
  */
 void nmg_veu(hp, up_magic_p)
-struct nmg_list	*hp;
+struct rt_list	*hp;
 long	*up_magic_p;
 {
 	struct edgeuse	*eu;
 	struct edgeuse	*eunext;
 	
-	for( NMG_LIST( eu, edgeuse, hp ) )  {
+	for( RT_LIST_FOR( eu, edgeuse, hp ) )  {
 		NMG_CK_EDGEUSE(eu);
 
 		if (eu->up.magic_p != up_magic_p)
@@ -186,10 +186,10 @@ long	*up_magic_p;
 
 		if (!eu->l.forw)
 			rt_bomb("edgeuse has Null \"forw\" pointer\n");
-		eunext = NMG_LIST_PNEXT_CIRC( edgeuse, eu );
+		eunext = RT_LIST_PNEXT_CIRC( edgeuse, eu );
 		if (eunext->l.magic != NMG_EDGEUSE_MAGIC)
 			rt_bomb("edgeuse forw is bad edgeuse\n");
-		if (NMG_LIST_PLAST_CIRC(edgeuse,eunext) != eu )  {
+		if (RT_LIST_PLAST_CIRC(edgeuse,eunext) != eu )  {
 		    if (eunext->l.back)
 			rt_bomb("next edgeuse has back that points elsewhere\n");
 		    else
@@ -280,11 +280,11 @@ struct loopuse_a *lua;
  *  Verify loopuse
  */
 void nmg_vlu(hp, up)
-struct nmg_list	*hp;
+struct rt_list	*hp;
 {
 	struct loopuse *lu;
 
-	for( NMG_LIST( lu, loopuse, hp ) )  {
+	for( RT_LIST_FOR( lu, loopuse, hp ) )  {
 		NMG_CK_LOOPUSE(lu);
 
 		if (*lu->up.magic_p != hp->magic)
@@ -292,7 +292,7 @@ struct nmg_list	*hp;
 
 		if (!lu->l.forw)
 			rt_bomb("loopuse has null forw pointer\n");
-		else if (NMG_LIST_PNEXT_PLAST(loopuse,lu) != lu )
+		else if (RT_LIST_PNEXT_PLAST(loopuse,lu) != lu )
 			rt_bomb("forw loopuse has back pointing somewhere else\n");
 
 		if (!lu->lumate_p)
@@ -323,10 +323,10 @@ struct nmg_list	*hp;
 
 		if (lu->lua_p) nmg_vlua(lu->lua_p);
 
-		if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
+		if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
 			nmg_veu( &lu->down_hd, lu);
-		else if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC)
-			nmg_vvu(NMG_LIST_FIRST(vertexuse,&lu->down_hd), lu);
+		else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC)
+			nmg_vvu(RT_LIST_FIRST(vertexuse,&lu->down_hd), lu);
 		else
 			rt_bomb("nmg_vlu bad magic\n");
 	}
@@ -395,12 +395,12 @@ struct faceuse_a *fua;
  *	Validate a list of faceuses
  */
 void nmg_vfu(hp, s)
-struct nmg_list	*hp;
+struct rt_list	*hp;
 struct shell *s;
 {
 	struct faceuse *fu;
 
-	for( NMG_LIST( fu, faceuse, hp ) )  {
+	for( RT_LIST_FOR( fu, faceuse, hp ) )  {
 		NMG_CK_FACEUSE(fu);
 		if (fu->s_p != s) {
 			rt_log("faceuse claims shell parent (%8x) instead of (%8x)\n",
@@ -410,7 +410,7 @@ struct shell *s;
 
 		if (!fu->l.forw) {
 			rt_bomb("faceuse forw is NULL\n");
-		} else if (fu->l.forw->back != (struct nmg_list *)fu) {
+		} else if (fu->l.forw->back != (struct rt_list *)fu) {
 			rt_bomb("faceuse->forw->back != faceuse\n");
 		}
 
@@ -451,13 +451,13 @@ struct shell *s;
  *	validate a list of shells and all elements under them
  */
 void nmg_vshell(hp, r)
-struct nmg_list	*hp;
+struct rt_list	*hp;
 struct nmgregion *r;
 {
 	struct shell *s;
 	pointp_t lpt, hpt;
 
-	for( NMG_LIST( s, shell, hp ) )  {
+	for( RT_LIST_FOR( s, shell, hp ) )  {
 		NMG_CK_SHELL(s);
 		if (s->r_p != r) {
 			rt_log("shell's r_p (%8x) doesn't point to parent (%8x)\n",
@@ -467,7 +467,7 @@ struct nmgregion *r;
 
 		if (!s->l.forw) {
 			rt_bomb("nmg_vshell: Shell's forw ptr is null\n");
-		} else if (s->l.forw->back != (struct nmg_list *)s) {
+		} else if (s->l.forw->back != (struct rt_list *)s) {
 			rt_log("forw shell's back(%8x) is not me (%8x)\n",
 				s->l.forw->back, s);
 			rt_bomb("nmg_vshell\n");
@@ -494,9 +494,9 @@ struct nmgregion *r;
 		 */
 
 		if (s->vu_p) {
-			if( NMG_LIST_NON_EMPTY( &s->fu_hd ) ||
-			    NMG_LIST_NON_EMPTY( &s->lu_hd ) ||
-			    NMG_LIST_NON_EMPTY( &s->eu_hd ) )  {
+			if( RT_LIST_NON_EMPTY( &s->fu_hd ) ||
+			    RT_LIST_NON_EMPTY( &s->lu_hd ) ||
+			    RT_LIST_NON_EMPTY( &s->eu_hd ) )  {
 				rt_log("shell (%8x) with vertexuse (%8x) has other children\n",
 					s, s->vu_p);
 				rt_bomb("");
@@ -517,12 +517,12 @@ struct nmgregion *r;
  *	validate a list of nmgregions and all elements under them
  */
 void nmg_vregion(hp, m)
-struct nmg_list	*hp;
+struct rt_list	*hp;
 struct model *m;
 {
 	struct nmgregion *r;
 
-	for( NMG_LIST( r, nmgregion, hp ) )  {
+	for( RT_LIST_FOR( r, nmgregion, hp ) )  {
 		NMG_CK_REGION(r);
 		if (r->m_p != m) {
 			rt_log("nmgregion pointer m_p %8x should be %8x\n",
@@ -535,7 +535,7 @@ struct model *m;
 
 		nmg_vshell( &r->s_hd, r);
 
-		if( NMG_LIST_PNEXT_PLAST(nmgregion, r) != r )  {
+		if( RT_LIST_PNEXT_PLAST(nmgregion, r) != r )  {
 			rt_bomb("forw nmgregion's back is not me\n");
 		}
 	}
@@ -660,11 +660,11 @@ char *str;
 		else if (eur == eu) rt_bomb(
 			strcat(errstr, "Never saw eumate\n"));
 
-		eu_next = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
+		eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu);
 		if (eu_next->vu_p->v_p != eu->eumate_p->vu_p->v_p)
 			rt_bomb("nmg_ck_eu: next and mate don't share vertex\n");
 
-		eu_last = NMG_LIST_PLAST_CIRC(edgeuse, eu);
+		eu_last = RT_LIST_PLAST_CIRC(edgeuse, eu);
 		if (eu_last->eumate_p->vu_p->v_p != eu->vu_p->v_p)
 			rt_bomb("nmg_ck_eu: edge and last-mate don't share vertex\n");
 
@@ -764,14 +764,14 @@ char *str;
 	nmg_ck_l(lu, lu->l_p, errstr);
 
 	/* check the children of the loopuse */
-	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
-		vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+		vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
 		nmg_ck_vu(&lu->l.magic, vu, errstr);
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 		l = strlen(errstr);
-		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			NMG_CK_EDGEUSE(eu);
 			(void)sprintf(&errstr[l], "%sedgeuse #%d (%8x)\n",
 				errstr, edgeuse_num++, eu);
@@ -851,10 +851,10 @@ char *str;
 	if (fu->s_p != s) rt_bomb(
 		strcat(errstr, "faceuse child denies shell parentage\n") );
 
-	if( NMG_LIST_PNEXT_PLAST( faceuse, fu ) )
+	if( RT_LIST_PNEXT_PLAST( faceuse, fu ) )
 		rt_bomb( strcat(errstr, "Faceuse not lastward of next faceuse\n") );
 
-	if( NMG_LIST_PLAST_PNEXT( faceuse, fu ) )
+	if( RT_LIST_PLAST_PNEXT( faceuse, fu ) )
 		rt_bomb( strcat(errstr, "Faceuse not nextward from last faceuse\n") );
 
 	NMG_CK_FACEUSE(fu->fumate_p);
@@ -867,7 +867,7 @@ char *str;
 	nmg_ck_f(fu, fu->f_p, errstr);
 
 	l = strlen(errstr);
-	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		(void)sprintf(&errstr[l] , "%sloopuse #%d (%8x)\n", 
 			errstr, loop_number++, lu);

@@ -68,14 +68,14 @@ struct model	*m;
 
 	NMG_MARK_INDEX(m);
 	if( m->ma_p )  NMG_MARK_INDEX(m->ma_p);
-	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
 		NMG_MARK_INDEX(r);
 		if( r->ra_p )  {
 			NMG_CK_REGION_A(r->ra_p);
 			NMG_MARK_INDEX(r->ra_p);
 		}
-		for( NMG_LIST( s, shell, &r->s_hd ) )  {
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
 			NMG_CK_SHELL(s);
 			NMG_MARK_INDEX(s);
 			if( s->sa_p )  {
@@ -83,7 +83,7 @@ struct model	*m;
 				NMG_MARK_INDEX(s->sa_p);
 			}
 			/* Faces in shell */
-			for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 				NMG_CK_FACEUSE(fu);
 				NMG_MARK_INDEX(fu);
 				if( fu->fua_p )  {
@@ -98,7 +98,7 @@ struct model	*m;
 					NMG_MARK_INDEX(f->fg_p);
 				}
 				/* Loops in face */
-				for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 					NMG_CK_LOOPUSE(lu);
 					NMG_MARK_INDEX(lu);
 					if( lu->lua_p )  {
@@ -112,9 +112,9 @@ struct model	*m;
 						NMG_CK_LOOP_G(l->lg_p);
 						NMG_MARK_INDEX(l->lg_p);
 					}
-					if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+					if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 						/* Loop of Lone vertex */
-						vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+						vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 						NMG_CK_VERTEXUSE(vu);
 						NMG_MARK_INDEX(vu);
 						if(vu->vua_p)  {
@@ -130,7 +130,7 @@ struct model	*m;
 						}
 						continue;
 					}
-					for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 						NMG_CK_EDGEUSE(eu);
 						NMG_MARK_INDEX(eu);
 						if(eu->eua_p)  {
@@ -158,7 +158,7 @@ struct model	*m;
 				}
 			}
 			/* Wire loops in shell */
-			for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+			for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 				NMG_CK_LOOPUSE(lu);
 				NMG_MARK_INDEX(lu);
 				if( lu->lua_p )  {
@@ -172,9 +172,9 @@ struct model	*m;
 					NMG_CK_LOOP_G(l->lg_p);
 					NMG_MARK_INDEX(l->lg_p);
 				}
-				if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+				if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 					/* Wire loop of Lone vertex */
-					vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 					NMG_CK_VERTEXUSE(vu);
 					NMG_MARK_INDEX(vu);
 					if(vu->vua_p)  {
@@ -190,7 +190,7 @@ struct model	*m;
 					}
 					continue;
 				}
-				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
 					NMG_MARK_INDEX(eu);
 					if(eu->eua_p)  {
@@ -217,7 +217,7 @@ struct model	*m;
 				}
 			}
 			/* Wire edges in shell */
-			for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+			for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 				NMG_CK_EDGEUSE(eu);
 				NMG_MARK_INDEX(eu);
 				if(eu->eua_p)  {
@@ -264,16 +264,16 @@ struct model	*m;
 
 	NMG_ASSIGN_NEW_INDEX(m);
 	if( m->ma_p )  NMG_ASSIGN_NEW_INDEX(m->ma_p);
-	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
 		NMG_ASSIGN_NEW_INDEX(r);
 		if( r->ra_p )  NMG_ASSIGN_NEW_INDEX(r->ra_p);
-		for( NMG_LIST( s, shell, &r->s_hd ) )  {
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
 			NMG_CK_SHELL(s);
 			NMG_ASSIGN_NEW_INDEX(s);
 			if( s->sa_p )  NMG_ASSIGN_NEW_INDEX(s->sa_p);
 			/* Faces in shell */
-			for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 				NMG_CK_FACEUSE(fu);
 				NMG_ASSIGN_NEW_INDEX(fu);
 				if( fu->fua_p )  NMG_ASSIGN_NEW_INDEX(fu->fua_p);
@@ -282,7 +282,7 @@ struct model	*m;
 				NMG_ASSIGN_NEW_INDEX(f);
 				if( f->fg_p )  NMG_ASSIGN_NEW_INDEX(f->fg_p);
 				/* Loops in face */
-				for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 					NMG_CK_LOOPUSE(lu);
 					NMG_ASSIGN_NEW_INDEX(lu);
 					if( lu->lua_p )  NMG_ASSIGN_NEW_INDEX(lu->lua_p);
@@ -290,9 +290,9 @@ struct model	*m;
 					NMG_CK_LOOP(l);
 					NMG_ASSIGN_NEW_INDEX(l);
 					if( l->lg_p )  NMG_ASSIGN_NEW_INDEX(l->lg_p);
-					if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+					if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 						/* Loop of Lone vertex */
-						vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+						vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 						NMG_CK_VERTEXUSE(vu);
 						NMG_ASSIGN_NEW_INDEX(vu);
 						if(vu->vua_p)  NMG_ASSIGN_NEW_INDEX(vu->vua_p);
@@ -302,7 +302,7 @@ struct model	*m;
 						if(v->vg_p) NMG_ASSIGN_NEW_INDEX(v->vg_p);
 						continue;
 					}
-					for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 						NMG_CK_EDGEUSE(eu);
 						NMG_ASSIGN_NEW_INDEX(eu);
 						if(eu->eua_p) NMG_ASSIGN_NEW_INDEX(eu->eua_p);
@@ -321,7 +321,7 @@ struct model	*m;
 				}
 			}
 			/* Wire loops in shell */
-			for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+			for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 				NMG_CK_LOOPUSE(lu);
 				NMG_ASSIGN_NEW_INDEX(lu);
 				if( lu->lua_p )  NMG_ASSIGN_NEW_INDEX(lu->lua_p);
@@ -329,9 +329,9 @@ struct model	*m;
 				NMG_CK_LOOP(l);
 				NMG_ASSIGN_NEW_INDEX(l);
 				if( l->lg_p )  NMG_ASSIGN_NEW_INDEX(l->lg_p);
-				if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+				if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 					/* Wire loop of Lone vertex */
-					vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 					NMG_CK_VERTEXUSE(vu);
 					NMG_ASSIGN_NEW_INDEX(vu);
 					if(vu->vua_p)  NMG_ASSIGN_NEW_INDEX(vu->vua_p);
@@ -341,7 +341,7 @@ struct model	*m;
 					if(v->vg_p) NMG_ASSIGN_NEW_INDEX(v->vg_p);
 					continue;
 				}
-				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
 					NMG_ASSIGN_NEW_INDEX(eu);
 					if(eu->eua_p) NMG_ASSIGN_NEW_INDEX(eu->eua_p);
@@ -359,7 +359,7 @@ struct model	*m;
 				}
 			}
 			/* Wire edges in shell */
-			for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+			for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 				NMG_CK_EDGEUSE(eu);
 				NMG_ASSIGN_NEW_INDEX(eu);
 				if(eu->eua_p) NMG_ASSIGN_NEW_INDEX(eu->eua_p);
@@ -477,14 +477,14 @@ struct model				*m;
 		NMG_UNIQ_INDEX(m->ma_p, model_a);
 	}
 	ctr->max_structs = m->maxindex;
-	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
 		NMG_UNIQ_INDEX(r, region);
 		if(r->ra_p)  {
 			NMG_CK_REGION_A(r->ra_p);
 			NMG_UNIQ_INDEX(r->ra_p, region_a);
 		}
-		for( NMG_LIST( s, shell, &r->s_hd ) )  {
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
 			NMG_CK_SHELL(s);
 			NMG_UNIQ_INDEX(s, shell);
 			if(s->sa_p)  {
@@ -492,7 +492,7 @@ struct model				*m;
 				NMG_UNIQ_INDEX(s->sa_p, shell_a);
 			}
 			/* Faces in shell */
-			for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 				NMG_CK_FACEUSE(fu);
 				NMG_UNIQ_INDEX(fu, faceuse);
 				if( fu->fua_p )  {
@@ -507,7 +507,7 @@ struct model				*m;
 					NMG_UNIQ_INDEX(f->fg_p, face_g);
 				}
 				/* Loops in face */
-				for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 					NMG_CK_LOOPUSE(lu);
 					NMG_UNIQ_INDEX(lu, loopuse);
 					if( lu->lua_p )  {
@@ -521,7 +521,7 @@ struct model				*m;
 						NMG_CK_LOOP_G(l->lg_p);
 						NMG_UNIQ_INDEX(l->lg_p, loop_g);
 					}
-					if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+					if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 						/* Loop of Lone vertex */
 						ctr->face_lone_verts++;
 						NMG_CK_VERTEXUSE(vu);
@@ -540,7 +540,7 @@ struct model				*m;
 						continue;
 					}
 					ctr->face_loops++;
-					for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 						ctr->face_edges++;
 						NMG_CK_EDGEUSE(eu);
 						NMG_UNIQ_INDEX(eu, edgeuse);
@@ -569,7 +569,7 @@ struct model				*m;
 				}
 			}
 			/* Wire loops in shell */
-			for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+			for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 				NMG_CK_LOOPUSE(lu);
 				NMG_UNIQ_INDEX(lu, loopuse);
 				if( lu->lua_p )  {
@@ -583,10 +583,10 @@ struct model				*m;
 					NMG_CK_LOOP_G(l->lg_p);
 					NMG_UNIQ_INDEX(l->lg_p, loop_g);
 				}
-				if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+				if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 					ctr->wire_lone_verts++;
 					/* Wire loop of Lone vertex */
-					vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 					NMG_CK_VERTEXUSE(vu);
 					NMG_UNIQ_INDEX(vu, vertexuse);
 					if(vu->vua_p)  {
@@ -603,7 +603,7 @@ struct model				*m;
 					continue;
 				}
 				ctr->wire_loops++;
-				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
 					NMG_UNIQ_INDEX(eu, edgeuse);
 					if(eu->eua_p)  {
@@ -631,7 +631,7 @@ struct model				*m;
 				}
 			}
 			/* Wire edges in shell */
-			for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+			for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 				NMG_CK_EDGEUSE(eu);
 				ctr->wire_edges++;
 				NMG_UNIQ_INDEX(eu, edgeuse);

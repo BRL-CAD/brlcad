@@ -839,7 +839,7 @@ double		norm_tol;
 	/* Build the topology of the ARS.  Start by allocating storage */
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
+	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
 
 	verts = (struct vertex **)rt_calloc( arip->ncurves * (arip->pts_per_curve+1),
 		sizeof(struct vertex *),

@@ -872,7 +872,7 @@ double		norm_tol;
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	state.s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
+	state.s = RT_LIST_FIRST(shell, &(*r)->s_hd);
 
 	/* Find the number of segments to divide 90 degrees worth into */
 	nsegs = rt_halfpi / state.theta_tol + 0.999;
