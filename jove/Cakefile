@@ -47,11 +47,7 @@ tune.o:	tune.c
 	CC -c CFLAGS -I../SRCDIR tune.c
 
 jove:	JOVE_OBJ
-	if test ! -f version.number ; then echo 0 > version.number; fi
-	c=`cat version.number`; rm -f version.number; echo $c | \\
-	  awk '{version = \$1 + 1; };END{printf "\%d\\\\n", version > "version.number"; }'
-	c=`cat version.number`; \\
-	echo "char	version[] = \\\\"2.$c\\\\";" > version.c
+	sh ../SRCDIR/mkversion.sh
 	CC -c CFLAGS version.c
 	CC LDFLAGS -o jove JOVE_OBJ version.o LIBTERMLIB
 	rm -f version.c version.o
