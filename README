@@ -379,7 +379,7 @@ FILE:  "bench/moss.log"	Release 1.20
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
-  12.3			nrtc-gremlin
+  12.3	   17.6	  0.16	nrtc-gremlin
   56.4	   80.5	  0.72	tek4132
   57.2	   81.6	  0.73	brl-vat
   75.4	  107.7	  0.96	violet
@@ -387,7 +387,7 @@ _
   81.2	  115.9	  1.03	indigo
   81.5	  116.4	  1.04	brl-vista
   83.3	  119.0	  1.06	violet w/fast_sqrt
-  86.7			nrtc-785
+  86.7	  123.8	  1.10	nrtc-785
   89.2	  127.3	  1.14	brl-virus
  103.8	  148.2	  1.32	vortac
  134.3	  191.8	  1.71	utah-gr
@@ -408,16 +408,16 @@ _
  679.8	  904.9	  8.07	brl-vector, 2 CEs, no vectors (1.84X)
 1018.2	 1375.5	 12.27	brl-vector, 3 CEs, no vectors (2.79X)
 1309.5	 1813.5	 16.17	brl-vector, 4 CEs, no vectors (3.68X)
-1396.6			nrl-xmp, no vectors, no optim
+1396.6	 1994.3	 17.79	nrl-xmp, no vectors, no optim
 1722.5	 2364.1	 21.08	brl-vector, 5 CEs, no vectors (4.80X)
 1745.0	 2492.9	 22.24	snm2, no vectors, no optim
-1752.1	  	 22.32	hep, 1 PEM, npsw=10
+1752.1	 2502.0	 22.32	hep, 1 PEM, npsw=10
 2040.8	 2811.4	 25.08	brl-vector, 6 CEs, no vectors (5.7X)
 2330.7	 3248.8	 28.98	brl-vector, 7 CEs, no vectors (6.5X)
 2418.3	 3453.3	 30.81	brl-patton, 1 CPU, no vectors, no optim (1.00X)
 2632.2	 3677.3	 32.80	brl-vector, 8 CEs, no vecotrs (7.46X)
 2786.0	 3972.9	 35.44	alliant, 8 CEs, no vectors
-2840.3	  	 36.18	hep, 1 PEM, npsw=40
+2840.3	 4055.9	 36.18	hep, 1 PEM, npsw=40
 4802.1	 6856.5	 61.16	brl-patton, 2 CPUs, no vectors, no optim (1.99X)
 7148.1	10205.1	 91.04	brl-patton, 3 CPUs, no vectors, no optim (2.96X)
 9331.8	13320.2	118.82	brl-patton, 4 CPUs, no vectors, no optim (3.86X)
