@@ -504,17 +504,18 @@ colorit:
 	sub_ap.a_y = ap->a_y;
 	VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 	if( l0stp )  {
+		/* An actual light solid exists */
 		/* Dither light pos for penumbra by +/- 0.5 light radius */
 		FAST fastf_t f;
 		f = l0stp->st_aradius * 0.9;
 		sub_ap.a_ray.r_dir[X] =  l0pos[X] + rand_half()*f - hitp->hit_point[X];
 		sub_ap.a_ray.r_dir[Y] =  l0pos[Y] + rand_half()*f - hitp->hit_point[Y];
 		sub_ap.a_ray.r_dir[Z] =  l0pos[Z] + rand_half()*f - hitp->hit_point[Z];
+		VUNITIZE( sub_ap.a_ray.r_dir );
+		light_visible = shootray( &sub_ap );
 	} else {
-		VSUB2( sub_ap.a_ray.r_dir, l0pos, hitp->hit_point );
+		light_visible = 1;
 	}
-	VUNITIZE( sub_ap.a_ray.r_dir );
-	light_visible = shootray( &sub_ap );
 	
 	/* If not shadowed add primary lighting. */
 	if( light_visible )  {
@@ -737,9 +738,13 @@ register vect_t	v_2;
  */
 view_eol()
 {
+	register int i;
 	if( pixfd > 0 )  {
-		write( pixfd, (char *)scanline, scanbytes );
-		bzero( (char *)scanline, scanbytes );
+		i = write( pixfd, (char *)scanline, scanbytes );
+		if( i != scanbytes )  {
+			rtlog("view_eol: wrote %d, got %d\n", scanbytes, i);
+			rtbomb("write error");
+		}			
 		pixelp = &scanline[0];
 	}
 }
