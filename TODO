@@ -7,14 +7,19 @@ items are on top, older topics are on the bottom.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-* add checks for termcap and curses to skip building those components
-
-* write up the history of brlcad
-
-* update the Utah Raster Toolkit
-
+* verify debian build
 
 THESE ARE LOWER PRIORITY
+
+* make opengl optional via configure without editing files
+
+* add checks for termcap and curses to skip building those components
+
+* add checks for urt to skip building it
+
+* add checks for libtool to autogen.sh
+
+* write up the history of brlcad
 
 * ensure successful build on windows 
 
