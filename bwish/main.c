@@ -41,6 +41,13 @@
 #include "dm.h"
 #endif
 
+/* XXX -- it's probably a bad idea to import itcl/itk/iwidgets into
+ * the global namespace..  allow for easy means to disable the import.
+ */
+#define IMPORT_ITCL	1
+#define IMPORT_ITK	1
+#define IMPORT_IWIDGETS	1
+
 extern int cmdInit(Tcl_Interp *interp);
 extern void Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp);
 extern void Tk_CreateCanvasBezierType();
@@ -51,6 +58,7 @@ Tk_Window tkwin;
 #endif
 
 Tcl_Interp *interp;
+
 
 int
 main(int argc, char **argv)
@@ -99,20 +107,25 @@ Cad_AppInit(Tcl_Interp *interp)
 	Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
 #endif
 
+#ifdef IMPORT_TCL
 	/* Import [incr Tcl] commands into the global namespace. */
 	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		       "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
 		bu_log("Tcl_Import error %s\n", interp->result);
 		return TCL_ERROR;
 	}
+#endif
 
 #ifdef BWISH
+
+#  ifdef IMPORT_ITK
 	/* Import [incr Tk] commands into the global namespace */
 	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		       "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
 		bu_log("Tcl_Import error %s\n", interp->result);
 		return TCL_ERROR;
 	}
+#  endif  /* IMPORT_ITK */
 
 	/* Initialize the Iwidgets package */
 	if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
@@ -120,13 +133,16 @@ Cad_AppInit(Tcl_Interp *interp)
 		return TCL_ERROR;
 	}
 
+#  ifdef IMPORT_IWIDGETS
 	/* Import iwidgets into the global namespace */
 	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		       "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
 		bu_log("Tcl_Import error %s\n", interp->result);
 		return TCL_ERROR;
 	}
-#endif
+#  endif  /* IMPORT_IWIDGETS */
+
+#endif  /* BWISH */
 
 	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
 	  return TCL_ERROR;
