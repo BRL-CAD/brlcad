@@ -68,6 +68,7 @@ int		windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
 void		quit(), sig3();
 static void	log_event();
+extern char	version[];		/* from vers.c */
 
 /* 
  *			M A I N
@@ -86,6 +87,9 @@ char **argv;
 
 	/* Get input file */
 	db_open( argv[1] );
+
+	/* Identify ourselves */
+	printf("%s", version);
 
 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
