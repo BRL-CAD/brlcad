@@ -45,12 +45,18 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>		/* DEBUG need stderr for now... */
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
 
+#ifdef M_PI
+#define PI M_PI
+#else
 #define PI	3.14159265358979323264
+#endif
 #define	RTODEG	(180.0/PI)
 
 /*
