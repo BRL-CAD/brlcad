@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  91/08/30  17:54:38  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.1  91/08/30  17:49:14  mike
  * Paul Stay mods for ANSI C
  * 
@@ -412,12 +416,12 @@ compile(aeof, magic)
 		}
 		if (c != '*')
 			lastep = ep;
-		if (!magic && index("*[.", c))
+		if (!magic && strchr("*[.", c))
 			goto defchar;
 		switch (c) {
 		case '\\':
 			c = nextc();
-			if (!magic && index("()0123456789|wWbB", c))
+			if (!magic && strchr("()0123456789|wWbB", c))
 				goto defchar;
 			switch (c) {
 			case 'w':
@@ -942,17 +946,17 @@ char	*sstr,
 			char	*endp,
 				*newp;
 
-			if (cp = index(line, '\t'))
+			if (cp = strchr(line, '\t'))
 				cp++;
 			else
 tagerr:				complain("Bad tag file format");
-			if (endp = index(cp, '\t'))
+			if (endp = strchr(cp, '\t'))
 				*endp = 0;
 			else
 				goto tagerr;
 			strcpy(filebuf, cp);
-			if ((newp = index(endp + 1, '/')) ||
-					(newp = index(endp + 1, '?')))
+			if ((newp = strchr(endp + 1, '/')) ||
+					(newp = strchr(endp + 1, '?')))
 				newp++;
 			else
 				goto tagerr;

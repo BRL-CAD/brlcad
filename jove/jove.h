@@ -1,45 +1,44 @@
 /*
  *			J O V E . H 
  *
- * $Revision$
+ * $Header$
  *
- * $Log$
- * Revision 2.4  87/09/09  22:49:11  mike
- * Added missing definitions for CRAY-2 to make things compile.
- * This is the same strategy that Cray used to get VI to work, so...
- * 
- * Revision 2.3  87/04/14  21:27:52  dpk
- * SYSV to SYS5.
- * 
- * Revision 2.2  87/04/14  20:47:47  dpk
- * Changes for CRAY compatability.
- * 
- * Revision 2.1  86/09/23  22:28:20  mike
- * Externs now declared properly.
- * I/O fixes for SysV
- * 
- * Revision 2.1  86/09/23  22:26:10  mike
- * Externs now declared properly.
- * I/O fixes for SysV
- * 
- * Revision 2.0  84/12/26  16:49:52  dpk
- * System as distributed to Berkeley 26 Dec 84
- * 
- * Revision 1.2  83/12/16  00:10:14  dpk
- * Added distinctive RCS header
- * 
- */
 
 /* jove.h header file to be included by EVERYONE */
 
+#ifdef SYSV
+#	define	USE_STRING_H	1	/* use <string.h>, not <strings.h> */
+#endif
+
+/*
+ *  Some very common BSD --> SYSV conversion aids
+ */
+#if defined(SYSV) && !defined(bzero)
+#	define bzero(str,n)		memset( str, '\0', n )
+#	define bcopy(from,to,count)	memcpy( to, from, count )
+#endif
+
+#if defined(BSD) && !defined(SYSV) && (BSD <= 43)
+#	define strchr(sp,c)	index(sp,c)
+#	define strrchr(sp,c)	rindex(sp,c)
+	extern char *index();
+	extern char *rindex();
+#endif
+
 #include <setjmp.h>
 
-#ifdef SYS5
-#define	bcopy(f, t, c)	memcpy((t), (f), (c))
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
+
+#ifdef SYSV
+# define SYS5	1
 #endif
 
 /* The following is tailorable */
-#if defined(VMUNIX) || defined(CRAY)
+#if !defined(pdp11)
 
 typedef	long	disk_line;
 #define BSIZ	4096

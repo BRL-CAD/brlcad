@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.5  91/08/30  18:11:04  mike
+ * Made explicit that termcap.h to be used is the local version
+ * 
  * Revision 2.4  91/08/30  17:54:34  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -269,7 +272,7 @@ BUFFER	*bp;
 	if (*cp == '.')
 		++cp;
 	strcpy(tmp, cp);
-	cp = rindex(tmp, '/');
+	cp = strrchr(tmp, '/');
 	if (cp)
 		strncpy(tmp, &cp[1], sizeof tmp);
 
@@ -463,7 +466,7 @@ char *fname;
 	register char *cp;
 
 #ifndef V4_2BSD
-	if (cp = rindex(fname, '/'))
+	if (cp = strrchr(fname, '/'))
 		cp++;
 	else
 		cp = fname;

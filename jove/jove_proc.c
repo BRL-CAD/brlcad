@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/08/30  17:54:37  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.3  91/08/30  17:49:13  mike
  * Paul Stay mods for ANSI C
  * 
@@ -330,7 +334,7 @@ char	*command;
 		*cp++ = c;
 	while ((c = *command++) && (c != ' ' && c != '\t'));
 	*cp = 0;
-	cp = rindex(bufname, '/');
+	cp = strrchr(bufname, '/');
 	if (cp)
 		strcpy(bufname, cp + 1);
 	return bufname;

@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  91/08/30  17:54:29  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.0  84/12/26  16:45:11  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -41,7 +45,7 @@ LINE	*stop;
 	int	c_char = curchar;
 	static BUFLOC	ret;
 
-	which = index(origs, orig) - origs;
+	which = strchr(origs, orig) - origs;
 	forward = (which % 2) == 0;
 	matcher = matches[which];
 
@@ -112,7 +116,7 @@ FindMatch(dir)
 	if (dir > 0)
 		BackChar();
 	c = linebuf[curchar];
-	if (c == '\0' || index("){}(", c) == 0)
+	if (c == '\0' || strchr("){}(", c) == 0)
 		complain((char *) 0);
 	if (!NotInQuotes(linebuf, curchar))	/* If in quotes */
 		complain("In quotes");
@@ -145,7 +149,7 @@ char	*buf;
 			i++;
 			continue;
 		}
-		if (!index(quots, c))
+		if (!strchr(quots, c))
 			continue;
 		if (quotchar == 0)
 			quotchar = c;
