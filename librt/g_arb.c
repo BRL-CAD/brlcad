@@ -843,18 +843,19 @@ register matp_t		matp;
  *  into another.
  */
 void
-arb_tess( s, rp, matp, dp )
+arb_tess( s, rp, mat, dp )
 struct shell		*s;
 register union record	*rp;
-register matp_t		matp;
+register mat_t		mat;
 struct directory	*dp;
 {
+#if 0
 	struct arb_internal	ai;
 	struct edgeuse		*eu;
 	struct vertex		*verts[8];
 	register int		i;
 
-	if( arb_import( &ai, rp, matp ) < 0 )  {
+	if( arb_import( &ai, rp, mat ) < 0 )  {
 		rt_log("arb_tess(%s): import failure\n", dp->d_namep);
 		return;
 	}
@@ -888,8 +889,12 @@ struct directory	*dp;
 		}
 	}
 	return;
+#else
+	nul_tess( s, rp, mat, dp );
+#endif
 }
 
+#if 0
 /*
  *			A R B _ T 2
  *
@@ -902,6 +907,7 @@ struct vertex	*verts[];
 int		a, b, c, d;
 {
 
+	nmg_mf( nmg_mlv(s) );
 	if( verts[a] == 0 )  {
 		/* First vertex better exist on all but 1st call! */
 		if( nmg_mkface1(s) ) goto fail;
@@ -935,3 +941,4 @@ int		a, b, c, d;
 fail:
 	return(-1);
 }
+#endif
