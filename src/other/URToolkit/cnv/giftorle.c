@@ -278,7 +278,7 @@ int		input_code_size;
 	max_code_size = 2*clear_code;
 	max_code = clear_code+2;
 
-	GetCode(fd,NULL,TRUE);
+	GetCode(fd, 0,TRUE);
 		
 	fresh=TRUE;
 

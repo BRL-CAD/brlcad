@@ -87,7 +87,6 @@ void WriteVICARHeader(fd, width, height, BandsPerPixel)
 FILE *fd;
 int width, height, BandsPerPixel;
 {
-    int pad;
     char *buffer, *bp;
 
     /*

@@ -34,7 +34,7 @@ static char rcs_ident[] = "$Header$";
 #include <stdio.h>
 #include "rle.h"
 
-static bit_count[16] = {0, 63, 63, 127, 63, 127, 127,
+static int bit_count[16] = {0, 63, 63, 127, 63, 127, 127,
     192, 63, 127, 127, 192, 127, 192, 192, 255};
 
 void

@@ -79,7 +79,7 @@ char ** argv;
 	    {
 		fprintf( stderr,
 		 "%s: Images %d and %d are both from the standard input\n",
-			 stdin_used, i );
+			 argv[0], stdin_used, i );
 		exit( -1 );
 	    }
     }

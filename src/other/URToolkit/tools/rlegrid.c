@@ -65,7 +65,7 @@ char **argv;
     rle_op **scanraw[2];	/* space for two raw scanline buffers */
     rle_op *p, *q;
     int    *nrawp[2];
-    unsigned char fg, bg;
+    unsigned char fg;
 
     out_hdr = *rle_hdr_init( NULL );
 
@@ -81,7 +81,6 @@ char **argv;
        exit( 1 );
 
     fg = fg_color;
-    bg = bg_color;
 
     outfile = rle_open_f( cmd_name( argv ), outfname, "w" );
     
