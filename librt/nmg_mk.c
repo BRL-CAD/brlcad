@@ -56,6 +56,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 
 static struct vertexuse *nmg_mvu RT_ARGS( (struct vertex *v, long *upptr,
 					 struct model *m) );
@@ -1897,7 +1898,7 @@ fastf_t		*points;
 		eg->k.knots = kv;
 	} else {
 		/* Give a default curve of order 4, no interior knots */
-		rt_nurb_kvknot( &eg->k.knots, 4, 0.0, 1.0, 0 );
+		rt_nurb_kvknot( &eg->k, 4, 0.0, 1.0, 0 );
 	}
 
 	if( n_pts < 2 )  rt_bomb("nmg_edge_g_cnurb() n_pts < 2\n");
@@ -1909,8 +1910,8 @@ fastf_t		*points;
 		int	ncoord = RT_NURB_EXTRACT_COORDS(pt_type);
 
 		eg->ctl_points = (fastf_t *)rt_calloc(
-			sizeof(fastf_t),
 			ncoord * n_pts,
+			sizeof(fastf_t),
 			"cnurb ctl_points[]" );
 
 		/*
