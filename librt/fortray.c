@@ -298,12 +298,15 @@ double		*dir;
 {
 	register struct context	*ctp;
 	struct hit	hit;
+#if 0
 	struct xray	ray;
+#endif
 	struct soltab	*stp;
 	register int	i;
 	
 	i = *index-1;		/* Selects which inhit is used */
 
+#if 0
 	/* Reconstruct the ray structure */
 	ray.r_pt[X] = pt[0];
 	ray.r_pt[Y] = pt[1];
@@ -312,6 +315,7 @@ double		*dir;
 	ray.r_dir[Y] = dir[1];
 	ray.r_dir[Z] = dir[2];
 	/* Unitize r_dir? */
+#endif
 
 	/* Reconstruct the hit structure */
 	hit.hit_dist = indist[i];
@@ -320,7 +324,12 @@ double		*dir;
 	VMOVE( hit.hit_vpriv, ctp->co_vpriv );
 	hit.hit_private = ctp->co_priv;
 	
+#if 0
 	RT_HIT_NORMAL( normal, &hit, stp, &ray, ctp->co_inflip );
+#else
+	/* The new macro doesn't use ray argument */
+	RT_HIT_NORMAL( normal, &hit, stp, NULL, ctp->co_inflip );
+#endif
 }
 
 /*
