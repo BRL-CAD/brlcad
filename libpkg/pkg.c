@@ -48,8 +48,18 @@ extern char *malloc();
 extern void perror();
 extern int errno;
 
+/* Internal Functions */
+static void pkg_errlog();
+static void pkg_perror();
+static int pkg_mread();
+static int pkg_dispatch();
+static int pkg_gethdr();
+
+static char errbuf[80];
+
 #define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
-			fprintf(stderr,"pkg: bad pointer x%x\n",p);abort();}}
+			sprintf(errbuf,"pkg: bad pointer x%x\n",p);\
+			(p->pkc_errlog)(errbuf);abort();}}
 
 /*
  *			P K G _ O P E N
@@ -59,10 +69,11 @@ extern int errno;
  *  Returns PKC_NULL on error.
  */
 struct pkg_conn *
-pkg_open( host, service, switchp )
+pkg_open( host, service, switchp, errlog )
 char *host;
 char *service;
 struct pkg_switch *switchp;
+void (*errlog)();
 {
 	struct sockaddr_in sinme;		/* Client */
 	struct sockaddr_in sinhim;		/* Server */
@@ -70,17 +81,22 @@ struct pkg_switch *switchp;
 	register int netfd;
 	register struct pkg_conn *pc;
 
+	/* Check for default error handler */
+	if( errlog == NULL )
+		errlog = pkg_errlog;
+
 	bzero((char *)&sinhim, sizeof(sinhim));
 	bzero((char *)&sinme, sizeof(sinme));
 
 	/* Determine port for service */
-	if( (sinhim.sin_port = atoi(service)) > 0 )  {
-		sinhim.sin_port = htons(sinhim.sin_port);
+	if( atoi(service) > 0 )  {
+		sinhim.sin_port = htons((unsigned short)atoi(service));
 	} else {
 		register struct servent *sp;
 		if( (sp = getservbyname( service, "tcp" )) == NULL )  {
-			fprintf(stderr,"pkg_open(%s,%s): unknown service\n",
+			sprintf(errbuf,"pkg_open(%s,%s): unknown service\n",
 				host, service );
+			errlog(errbuf);
 			return(PKC_NULL);
 		}
 		sinhim.sin_port = sp->s_port;
@@ -93,8 +109,9 @@ struct pkg_switch *switchp;
 		sinhim.sin_addr.s_addr = inet_addr(host);
 	} else {
 		if( (hp = gethostbyname(host)) == NULL )  {
-			fprintf(stderr,"pkg_open(%s,%s): unknown host\n",
+			sprintf(errbuf,"pkg_open(%s,%s): unknown host\n",
 				host, service );
+			errlog(errbuf);
 			return(PKC_NULL);
 		}
 		sinhim.sin_family = hp->h_addrtype;
@@ -102,27 +119,28 @@ struct pkg_switch *switchp;
 	}
 
 	if( (netfd = socket(sinhim.sin_family, SOCK_STREAM, 0)) < 0 )  {
-		perror("pkg_open:  client socket");
+		pkg_perror( errlog, "pkg_open:  client socket" );
 		return(PKC_NULL);
 	}
 	sinme.sin_port = 0;		/* let kernel pick it */
 
 	if( bind(netfd, (char *)&sinme, sizeof(sinme)) < 0 )  {
-		perror("pkg_open: bind");
+		pkg_perror( errlog, "pkg_open: bind" );
 		return(PKC_NULL);
 	}
 
-	if( connect(netfd, (char *)&sinhim, sizeof(sinhim), 0) < 0 )  {
-		perror("pkg_open: client connect");
+	if( connect(netfd, (char *)&sinhim, sizeof(sinhim)) < 0 )  {
+		pkg_perror( errlog, "pkg_open: client connect" );
 		return(PKC_NULL);
 	}
 	if( (pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn)))==PKC_NULL )  {
-		fprintf(stderr,"pkg_open: malloc failure\n");
+		errlog( "pkg_open: malloc failure\n" );
 		return(PKC_NULL);
 	}
 	pc->pkc_magic = PKG_MAGIC;
 	pc->pkc_fd = netfd;
 	pc->pkc_switch = switchp;
+	pc->pkc_errlog = errlog;
 	pc->pkc_left = -1;
 	pc->pkc_buf = (char *)0;
 	pc->pkc_curpos = (char *)0;
@@ -140,37 +158,43 @@ struct pkg_switch *switchp;
  *  Returns fd to listen on (>=0), -1 on error.
  */
 int
-pkg_initserver( service, backlog )
+pkg_initserver( service, backlog, errlog )
 char *service;
 int backlog;
+void (*errlog)();
 {
 	struct sockaddr_in sinme;
 	register struct servent *sp;
 	int pkg_listenfd;
 
+	/* Check for default error handler */
+	if( errlog == NULL )
+		errlog = pkg_errlog;
+
 	bzero((char *)&sinme, sizeof(sinme));
 
 	/* Determine port for service */
 	if( (sp = getservbyname( service, "tcp" )) == NULL )  {
-		fprintf(stderr,"pkg_initserver(%s,%d): unknown service\n",
+		sprintf(errbuf,"pkg_initserver(%s,%d): unknown service\n",
 			service, backlog );
+		errlog(errbuf);
 		return(-1);
 	}
 
 	sinme.sin_port = sp->s_port;
 	if( (pkg_listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 )  {
-		perror("pkg_initserver:  socket");
+		pkg_perror( errlog, "pkg_initserver:  socket" );
 		return(-1);
 	}
 
 	if( bind(pkg_listenfd, &sinme, sizeof(sinme)) < 0 )  {
-		perror("pkg_initserver: bind");
+		pkg_perror( errlog, "pkg_initserver: bind" );
 		return(-1);
 	}
 
 	if( backlog > 5 )  backlog = 5;
 	if( listen(pkg_listenfd, backlog) < 0 )  {
-		perror("pkg_initserver:  listen");
+		pkg_perror( errlog, "pkg_initserver:  listen" );
 		return(-1);
 	}
 	return(pkg_listenfd);
@@ -189,8 +213,9 @@ int backlog;
  *	PKC_ERROR	fatal error
  */
 struct pkg_conn *
-pkg_getclient(fd, switchp, nodelay)
+pkg_getclient(fd, switchp, errlog, nodelay)
 struct pkg_switch *switchp;
+void (*errlog)();
 {
 	struct sockaddr_in from;
 	register int s2;
@@ -198,10 +223,14 @@ struct pkg_switch *switchp;
 	auto int onoff;
 	register struct pkg_conn *pc;
 
+	/* Check for default error handler */
+	if( errlog == NULL )
+		errlog = pkg_errlog;
+
 	if(nodelay)  {
 		onoff = 1;
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
-			perror("pkg_getclient: FIONBIO 1");
+			pkg_perror( errlog, "pkg_getclient: FIONBIO 1" );
 	}
 	do  {
 		s2 = accept(fd, (char *)&from, &fromlen);
@@ -210,24 +239,25 @@ struct pkg_switch *switchp;
 				continue;
 			if(errno == EWOULDBLOCK)
 				return(PKC_NULL);
-			perror("pkg_getclient: accept");
+			pkg_perror( errlog, "pkg_getclient: accept" );
 			return(PKC_ERROR);
 		}
 	}  while( s2 < 0);
 	if(nodelay)  {		
 		onoff = 0;
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
-			perror("pkg_getclient: FIONBIO 2");
+			pkg_perror( errlog, "pkg_getclient: FIONBIO 2" );
 		if( ioctl(s2, FIONBIO, &onoff) < 0 )
-			perror("pkg_getclient: FIONBIO 3");
+			pkg_perror( errlog, "pkg_getclient: FIONBIO 3");
 	}
 	if( (pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn)))==PKC_NULL )  {
-		fprintf(stderr,"pkg_getclient: malloc failure\n");
+		errlog( "pkg_getclient: malloc failure\n" );
 		return(PKC_ERROR);
 	}
 	pc->pkc_magic = PKG_MAGIC;
 	pc->pkc_fd = s2;
 	pc->pkc_switch = switchp;
+	pc->pkc_errlog = errlog;
 	pc->pkc_left = -1;
 	pc->pkc_buf = (char *)0;
 	pc->pkc_curpos = (char *)0;
@@ -255,25 +285,28 @@ register struct pkg_conn *pc;
 /*
  *			P K G _ M R E A D
  *
+ * Internal.
  * This function performs the function of a read(II) but will
  * call read(II) multiple times in order to get the requested
  * number of characters.  This can be necessary because pipes
  * and network connections don't deliver data with the same
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
  */
-int
-pkg_mread(fd, bufp, n)
-int fd;
+static int
+pkg_mread(pc, bufp, n)
+struct pkg_conn *pc;
 register char	*bufp;
 int	n;
 {
+	int fd;
 	register int	count = 0;
 	register int	nread;
 
+	fd = pc->pkc_fd;
 	do {
 		nread = read(fd, bufp, (unsigned)n-count);
 		if(nread < 0)  {
-			perror("pkg_mread");
+			pkg_perror(pc->pkc_errlog, "pkg_mread");
 			return(-1);
 		}
 		if(nread == 0)
@@ -306,9 +339,11 @@ register struct pkg_conn *pc;
 {
 	static struct iovec cmdvec[2];
 	static struct pkg_header hdr;
+	register int i;
+#ifdef never
 	struct timeval tv;
 	long bits;
-	register int i;
+#endif
 
 	PKG_CK(pc);
 	if( len < 0 )  len=0;
@@ -349,8 +384,9 @@ register struct pkg_conn *pc;
 			perror("pkg_send: write");
 			return(-1);
 		}
-		fprintf(stderr,"pkg_send of %d+%d, wrote %d\n",
+		sprintf(errbuf,"pkg_send of %d+%d, wrote %d\n",
 			sizeof(hdr), len, i);
+		(pc->pkc_errlog)(errbuf);
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}
 	return(len);
@@ -397,20 +433,23 @@ again:
 	if( pc->pkc_hdr.pkg_len > len )  {
 		register char *bp;
 		int excess;
-		fprintf(stderr,
+		sprintf(errbuf,
 			"pkg_waitfor:  message %d exceeds buffer %d\n",
 			pc->pkc_hdr.pkg_len, len );
-		if( (i = pkg_mread( pc->pkc_fd, buf, len )) != len )  {
-			fprintf(stderr,
+		(pc->pkc_errlog)(errbuf);
+		if( (i = pkg_mread( pc, buf, len )) != len )  {
+			sprintf(errbuf,
 				"pkg_waitfor:  pkg_mread %d gave %d\n", len, i );
+			(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
 		excess = pc->pkc_hdr.pkg_len - len;	/* size of excess message */
 		bp = malloc(excess);
-		if( (i = pkg_mread( pc->pkc_fd, bp, excess )) != excess )  {
-			fprintf(stderr,
+		if( (i = pkg_mread( pc, bp, excess )) != excess )  {
+			sprintf(errbuf,
 				"pkg_waitfor: pkg_mread of excess, %d gave %d\n",
 				excess, i );
+			(pc->pkc_errlog)(errbuf);
 			(void)free(bp);
 			return(-1);
 		}
@@ -419,9 +458,10 @@ again:
 	}
 
 	/* Read the whole message into the users buffer */
-	if( (i = pkg_mread( pc->pkc_fd, buf, pc->pkc_hdr.pkg_len )) != pc->pkc_hdr.pkg_len )  {
-		fprintf(stderr,
+	if( (i = pkg_mread( pc, buf, pc->pkc_hdr.pkg_len )) != pc->pkc_hdr.pkg_len )  {
+		sprintf(errbuf,
 			"pkg_waitfor:  pkg_mread %d gave %d\n", pc->pkc_hdr.pkg_len, i );
+		(pc->pkc_errlog)(errbuf);
 		return(-1);
 	}
 	return( pc->pkc_hdr.pkg_len );
@@ -461,9 +501,10 @@ register struct pkg_conn *pc;
 		return((char *)0);
 
 	/* Read the whole message into the dynamic buffer */
-	if( (i = pkg_mread( pc->pkc_fd, pc->pkc_buf, pc->pkc_hdr.pkg_len )) != pc->pkc_hdr.pkg_len )  {
-		fprintf(stderr,
+	if( (i = pkg_mread( pc, pc->pkc_buf, pc->pkc_hdr.pkg_len )) != pc->pkc_hdr.pkg_len )  {
+		sprintf(errbuf,
 			"pkg_bwaitfor:  pkg_mread %d gave %d\n", pc->pkc_hdr.pkg_len, i );
+		(pc->pkc_errlog)(errbuf);
 	}
 	return( pc->pkc_buf );
 }
@@ -527,11 +568,12 @@ register struct pkg_conn *pc;
 /*
  *			P K G _ D I S P A T C H
  *
+ *  Internal.
  *  Given that a whole message has arrived, send it to the appropriate
  *  User Handler, or else grouse.
  *  Returns -1 on fatal error, 0 on no handler, 1 if all's well.
  */
-int
+static int
 pkg_dispatch(pc)
 register struct pkg_conn *pc;
 {
@@ -559,8 +601,9 @@ register struct pkg_conn *pc;
 		pc->pkc_switch[i].pks_handler(pc, tempbuf);
 		return(1);
 	}
-	fprintf(stderr,"pkg_get:  no handler for message type %d, len %d\n",
+	sprintf(errbuf,"pkg_get:  no handler for message type %d, len %d\n",
 		pc->pkc_hdr.pkg_type, pc->pkc_hdr.pkg_len );
+	(pc->pkc_errlog)(errbuf);
 	(void)free(pc->pkc_buf);
 	pc->pkc_buf = (char *)0;
 	pc->pkc_curpos = (char *)0;
@@ -570,12 +613,13 @@ register struct pkg_conn *pc;
 /*
  *			P K G _ G E T H D R
  *
+ *  Internal.
  *  Get header from a new message.
  *  Returns:
  *	1	when there is some message to go look at
  *	-1	on fatal errors
  */
-int
+static int
 pkg_gethdr( pc, buf )
 register struct pkg_conn *pc;
 char *buf;
@@ -589,22 +633,26 @@ char *buf;
 	 *  At message boundary, read new header.
 	 *  This will block until the new header arrives (feature).
 	 */
-	if( (i = pkg_mread( pc->pkc_fd, &(pc->pkc_hdr),
+	if( (i = pkg_mread( pc, &(pc->pkc_hdr),
 	    sizeof(struct pkg_header) )) != sizeof(struct pkg_header) )  {
-		if(i > 0)
-			fprintf(stderr,"pkg_gethdr: header read of %d?\n", i);
+		if(i > 0) {
+			sprintf(errbuf,"pkg_gethdr: header read of %d?\n", i);
+			(pc->pkc_errlog)(errbuf);
+		}
 		return(-1);
 	}
 	while( pc->pkc_hdr.pkg_magic != htons(PKG_MAGIC ) )  {
-		fprintf(stderr,"pkg_gethdr: skipping noise x%x %c\n",
+		sprintf(errbuf,"pkg_gethdr: skipping noise x%x %c\n",
 			*((unsigned char *)&pc->pkc_hdr),
 			*((unsigned char *)&pc->pkc_hdr) );
+		(pc->pkc_errlog)(errbuf);
 		/* Slide over one byte and try again */
 		bcopy( ((char *)&pc->pkc_hdr)+1, (char *)&pc->pkc_hdr, sizeof(struct pkg_header)-1);
 		if( (i=read( pc->pkc_fd,
 		    ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
 		    1 )) != 1 )  {
-			fprintf(stderr,"pkg_gethdr: hdr read=%d?\n",i);
+			sprintf(errbuf,"pkg_gethdr: hdr read=%d?\n",i);
+		    	(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
 	}
@@ -643,8 +691,6 @@ int
 pkg_block(pc)
 register struct pkg_conn *pc;
 {
-	register int i;
-
 	PKG_CK(pc);
 	if( pc->pkc_left == 0 )  return( pkg_dispatch(pc) );
 
@@ -655,10 +701,48 @@ register struct pkg_conn *pc;
 	}
 
 	/* Read the rest of the message, blocking in read() */
-	if( pc->pkc_left > 0 && pkg_mread( pc->pkc_fd, pc->pkc_curpos, pc->pkc_left ) != pc->pkc_left )  {
+	if( pc->pkc_left > 0 && pkg_mread( pc, pc->pkc_curpos, pc->pkc_left ) != pc->pkc_left )  {
 		pc->pkc_left = -1;
 		return(-1);
 	}
 	pc->pkc_left = 0;
 	return( pkg_dispatch(pc) );
+}
+
+#ifdef BSD
+extern int sys_nerr;
+extern char *sys_errlist[];
+#endif
+
+/*
+ *			P K G _ P E R R O R
+ *
+ *  Produce a perror on the error logging output.
+ */
+static void
+pkg_perror( errlog, s )
+void (*errlog)();
+char *s;
+{
+#ifdef BSD
+	if( errno >= 0 && errno < sys_nerr ) {
+		sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
+		errlog( errbuf );
+	} else
+		errlog( s );
+#else
+	errlog( s );
+#endif BSD
+}
+
+/*
+ *			P K G _ E R R L O G
+ *
+ *  Default error logger.  Writes to stderr.
+ */
+static void
+pkg_errlog( s )
+char *s;
+{
+	fputs( s, stderr );
 }
