@@ -319,14 +319,15 @@ register RGBpixel *v;
 			return bluvec[((*v)[BLU])/16];
 		}
 	}
-	else if (g == b && g == 0)	/* all red */
+	else if (g == b && g == 0)  {
+		/* all red */
 		return redvec[((*v)[RED])/16];
-		
-	else if (r == b && r == 0)	/* all green */
+	}
+	else if (r == b && r == 0)  {
+		/* all green */
 		return grnvec[((*v)[GRN])/16];
-
-	else				/* color cube val */
-		return 215 - (r + g * 6 + b * 36);
+	}
+	return 215 - (r + g * 6 + b * 36);
 }
 
 
