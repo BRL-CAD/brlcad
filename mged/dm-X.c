@@ -487,6 +487,22 @@ end:
     return status;
   }
 
+  if( !strcmp( argv[0], "size" )){
+    int width, height;
+
+    if( argc < 3 ){
+      Tcl_AppendResult(interp, "Usage: dm size width height\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    width = atoi( argv[1] );
+    height = atoi( argv[2] );
+
+    Tk_GeometryRequest(((struct x_vars *)dmp->dm_vars)->xtkwin, width, height);
+
+    return TCL_OK;
+  }
+
   Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
   return TCL_ERROR;
 }
