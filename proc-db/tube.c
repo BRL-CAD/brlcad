@@ -247,22 +247,22 @@ double	radius;
 	bp = rt_nurb_new_snurb( 3,	4,		/* u,v order */
 		N_CIRCLE_KNOTS,	npts+6,		/* u,v knot vector size */
 		npts+2,		NCOLS,		/* nrows, ncols */
-		MAKE_PT_TYPE(4,2,1));
+		RT_NURB_MAKE_PT_TYPE(4,2,1));
 
 	/*  Build the U knots */
 	for( i=0; i<N_CIRCLE_KNOTS; i++ )
-		bp->u_knots->knots[i] = circle_knots[i];
+		bp->u_knots.knots[i] = circle_knots[i];
 
 	/* Build the V knots */
 	cur_kv = 0;		/* current knot value */
 	nv = 0;			/* current knot subscript */
 	for( i=0; i<4; i++ )
-		bp->v_knots->knots[nv++] = cur_kv;
+		bp->v_knots.knots[nv++] = cur_kv;
 	cur_kv++;
 	for( i=4; i<(npts+4-2); i++ )
-		bp->v_knots->knots[nv++] = cur_kv++;
+		bp->v_knots.knots[nv++] = cur_kv++;
 	for( i=0; i<4; i++ )
-		bp->v_knots->knots[nv++] = cur_kv;
+		bp->v_knots.knots[nv++] = cur_kv;
 
 	/*
 	 *  The control mesh is stored in row-major order,
@@ -272,7 +272,7 @@ double	radius;
 	 *  The first and last "slice" are the center points that
 	 *  create the end caps.
 	 */
-	meshp = bp->mesh->ctl_points;
+	meshp = bp->mesh.ctl_points;
 
 	/* Row 0 */
 	for( col=0; col<9; col++ )  {

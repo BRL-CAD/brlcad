@@ -89,7 +89,7 @@ pt patch;
 	 * point size is 3
 	 */
 
-	pt_type = MAKE_PT_TYPE(3, 2,0); /* see nurb.h for details */
+	pt_type = RT_NURB_MAKE_PT_TYPE(3, 2,0); /* see nurb.h for details */
 
 	b_patch = (struct snurb *) rt_nurb_new_snurb( 4, 4, 8, 8, 4, 4, pt_type);
 	
@@ -101,30 +101,23 @@ pt patch;
  	 */
 	
 
-	rt_free((char *)b_patch->u_knots->knots, "dumping u_knots knots I'm about to realloc");
-	rt_free((char *)b_patch->u_knots, "dumping u_knots I'm about to realloc");
-	b_patch->u_knots = 
-	    (struct knot_vector *) rt_nurb_kvknot( 4, 0.0, 1.0, 0);
+	rt_free((char *)b_patch->u_knots.knots, "dumping u_knots knots I'm about to realloc");
+	rt_nurb_kvknot( &b_patch->u_knots, 4, 0.0, 1.0, 0);
 
-	rt_free((char *)b_patch->v_knots->knots, "dumping v_kv knots I'm about to realloc");
-	rt_free((char *)b_patch->v_knots, "dumping v_kv I'm about to realloc");
-
-	b_patch->v_knots = 
-	    (struct knot_vector *) rt_nurb_kvknot( 4, 0.0, 1.0, 0);
+	rt_free((char *)b_patch->v_knots.knots, "dumping v_kv knots I'm about to realloc");
+	rt_nurb_kvknot( &b_patch->v_knots, 4, 0.0, 1.0, 0);
 
 	if (rt_g.debug) {
 		rt_ck_malloc_ptr(b_patch, "b_patch");
-		rt_ck_malloc_ptr(b_patch->u_knots, "b_patch->u_knots");
-		rt_ck_malloc_ptr(b_patch->u_knots->knots,
-			"b_patch->u_knots->knots");
-		rt_ck_malloc_ptr(b_patch->v_knots, "b_patch->v_knots");
-		rt_ck_malloc_ptr(b_patch->v_knots->knots,
-			"b_patch->v_knots->knots");
+		rt_ck_malloc_ptr(b_patch->u_knots.knots,
+			"b_patch->u_knots.knots");
+		rt_ck_malloc_ptr(b_patch->v_knots.knots,
+			"b_patch->v_knots.knots");
 	}
 
 	/* Copy the control points */
 
-	mesh_pointer = b_patch->mesh->ctl_points;
+	mesh_pointer = b_patch->mesh.ctl_points;
 
 	for( i = 0; i< 4; i++)
 	for( j = 0; j < 4; j++)
