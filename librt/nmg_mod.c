@@ -28,12 +28,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nurb.h"
 
-/* XXX move to raytrace.h */
-RT_EXTERN(struct edgeuse	*nmg_find_e, (CONST struct vertex *v1,
-				CONST struct vertex *v2,
-				CONST struct shell *s,
-				CONST struct edge *ep));
-
+/*
+ *			N M G _ M E R G E _ R E G I O N S
+ */
 void
 nmg_merge_regions( r1, r2, tol )
 struct nmgregion *r1;
