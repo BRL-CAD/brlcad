@@ -23,24 +23,39 @@ SUBDIRS=\
 	libutahrle\
 	libwdb\
 	anim\
+	bench\
 	brlman\
 	burst\
 	bwish\
+	comgeom-g\
 	conv\
 	doc\
 	fb\
 	fbed\
 	fbserv\
 	gtools\
+	halftone\
 	html\
+	iges\
 	irprep\
+	jack\
+	jove\
 	lgt\
 	mged\
+	mk\
 	nirt\
+	off\
+	patch\
+	pro-engineer\
+	remrt\
 	rt\
+	sample_applications\
 	sh\
 	sig\
+	tab\
 	tclscripts\
 	tools\
 	util\
+	vas4\
+	vdeck\
 	vfont

@@ -11,6 +11,7 @@ bin_PROGRAMS = applymap avg4 crop fant into mcut mergechan pyrmask \
 	rletoabA60 rletoascii rletogray rletopaint \
 	rletops rletoraw targatorle wasatchrle \
 	rletogif rletoabA62
+bin_SCRIPTS = font.c
 BUILT_SOURCES = font.c
 
 LDADD = @RLE@

@@ -14,7 +14,7 @@ dnl progs
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
-dnl AM_PROG_LEX
+AM_PROG_LEX
 dnl AC_PROG_YACC
 
 AM_C_PROTOTYPES
@@ -92,8 +92,8 @@ AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 
 dnl tk
-TK_LIBS='${top_builddir}/libtk8.4/libtk.la'
-TK=
+TK_LIBS='${top_builddir}/libtk8.4/libtk.la ${TCL_LIBS} ${X_LIBS}'
+TK
 TK_LIBRARY="$prefix/tk8.4"
 AC_SUBST(TK)
 AC_SUBST(TK_LIBS)
@@ -220,9 +220,11 @@ dnl BSDGETTIMEOFDAY
 AC_OUTPUT([
 	Makefile
 	anim/Makefile
+	bench/Makefile
 	brlman/Makefile
 	burst/Makefile
 	bwish/Makefile
+	comgeom-g/Makefile
 	conv/Makefile
 	doc/Makefile
 	fb/Makefile
@@ -230,6 +232,7 @@ AC_OUTPUT([
 	fbserv/Makefile
 	gtools/Makefile
 	h/Makefile
+	halftone/Makefile
 	html/Makefile
 	html/ReleaseNotes/Makefile
 	html/ReleaseNotes/Rel5.0/Makefile
@@ -245,11 +248,14 @@ AC_OUTPUT([
 	html/manuals/mged/Makefile
 	html/manuals/mged/animmate/Makefile
 	html/manuals/shaders/Makefile
+	iges/Makefile
 	irprep/Makefile
 	iwidgets4.0.1/Makefile
 	iwidgets4.0.1/generic/Makefile
 	iwidgets4.0.1/iwidgets.tcl
 	iwidgets4.0.1/pkgIndex.tcl
+	jack/Makefile
+	jove/Makefile
 	lgt/Makefile
 	libbn/Makefile
 	libbu/Makefile
@@ -301,10 +307,20 @@ AC_OUTPUT([
 	libwdb/Makefile
 	libz/Makefile
 	mged/Makefile
+	mk/Makefile
 	nirt/Makefile
+	off/Makefile
+	patch/Makefile
+	pro-engineer/Makefile
+	pro-engineer/sgi_mips4/Makefile
+	pro-engineer/text/Makefile
+	pro-engineer/text/resource/Makefile
+	remrt/Makefile
 	rt/Makefile
+	sample_applications/Makefile
 	sh/Makefile
 	sig/Makefile
+	tab/Makefile
 	tclscripts/Makefile
 	tclscripts/geometree/Makefile
 	tclscripts/lib/Makefile
@@ -323,5 +339,7 @@ AC_OUTPUT([
 	tclscripts/util/Makefile
 	tools/Makefile
 	util/Makefile
+	vas4/Makefile
+	vdeck/Makefile
 	vfont/Makefile
 ])
