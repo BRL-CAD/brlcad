@@ -348,7 +348,7 @@ install|install-nobak|uninstall)
 		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${TARGET} )
 	done
 	for dir in ${TSDIRS}; do
-		echo -------------------------------- ${dir};
+		echo -------------------------------- tclscripts/${dir};
 		( cd tclscripts/${dir} && cake -k ${TARGET} )
 	done;;
 #  These directives operate in the source directory
