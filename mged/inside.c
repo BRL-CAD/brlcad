@@ -56,11 +56,6 @@ RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
-extern int	args;		/* total number of args available */
-extern int	argcnt;		/* holder for number of args added later */
-extern int	newargs;	/* number of args from getcmd() */
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
 extern char	**promp;	/* pointer to a pointer to a char */
 
 static char *p_arb4[] = {
@@ -144,8 +139,10 @@ static char *p_nmgin[] = {
 
 /*	F _ I N S I D E ( ) :	control routine...reads all data
  */
-void
-f_inside()
+int
+f_inside(argc, argv)
+int argc;
+char **argv;
 {
 	register int i;
 	struct directory	*dp;
@@ -160,6 +157,8 @@ f_inside()
 	char	*newname;
 	struct rt_tol	tol;
 
+	int arg = 1;
+
 	/* XXX These need to be improved */
 	tol.magic = RT_TOL_MAGIC;
 	tol.dist = 0.005;
@@ -168,12 +167,6 @@ f_inside()
 	tol.para = 1 - tol.perp;
 
 	(void)signal( SIGINT, sig2);	/* allow interrupts */
-
-	/* don't use any arguments entered initially 
-	 * will explicitly ask for data as needed
-	 */
-	args = numargs;
-	argcnt = 0;
 
 	/* SCHEME:
 	 *	if in solid edit, use "edited" solid
@@ -196,7 +189,7 @@ f_inside()
 		/* object edit mode */
 		if( illump->s_Eflag ) {
 			(void)printf("Cannot find inside of a processed (E'd) region\n");
-			return;
+			return CMD_BAD;
 		}
 		/* use the solid at bottom of path (key solid) */
 		/* apply es_mat and modelchanges editing to parameters */
@@ -211,50 +204,54 @@ f_inside()
 		(void)printf("\n");
 	} else {
 		/* Not doing any editing....ask for outside solid */
-		(void)printf("Enter name of outside solid: ");
-		argcnt = getcmd(args);
-		if( (outdp = db_lookup( dbip,  cmd_args[args], LOOKUP_NOISY )) == DIR_NULL )  
-			return;
-		args += argcnt;
-		if( rt_db_get_internal( &intern, outdp, dbip, rt_identity ) < 0 )
-			READ_ERR_return;
+		if( argc < arg+1 ) {
+			(void)printf("Enter name of outside solid: ");
+			return CMD_MORE;
+		}
+		if( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL )  
+			return CMD_BAD;
+		++arg;
+
+		if( rt_db_get_internal( &intern, outdp, dbip, rt_identity ) < 0 ) {
+			READ_ERR;
+			return CMD_BAD;
+		}
 	}
+
 	if( intern.idb_type == ID_ARB8 )  {
 		/* find the comgeom arb type, & reorganize */
 		int uvec[8],svec[8];
 
 		if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &tol , uvec , svec ) == 0 ) {
 			rt_log("%s: BAD ARB\n",outdp->d_namep);
-			return;
+			return CMD_BAD;
 		}
 
 		/* must find new plane equations to account for
 		 * any editing in the es_mat matrix or path to this solid.
 		 */
 		if( rt_arb_calc_planes( planes, intern.idb_ptr, cgtype, &tol ) < 0 )  {
-			rt_log("rt_arb_calc_planes(%s): failued\n", outdp->d_namep);
-			return;
+			rt_log("rt_arb_calc_planes(%s): failed\n", outdp->d_namep);
+			return CMD_BAD;
 		}
 	}
 	/* "intern" is now loaded with the outside solid data */
 
 	/* get the inside solid name */
-	argcnt=0;
-	while( !argcnt ){		/* no command yet */
+	if( argc < arg+1 ) {
 		(void)printf("Enter name of the inside solid: ");
-		argcnt = getcmd(args);
+		return CMD_MORE;
 	}
-	if( db_lookup( dbip,  cmd_args[args], LOOKUP_QUIET ) != DIR_NULL ) {
-		aexists( cmd_args[args] );
-		return;
+	if( db_lookup( dbip, argv[arg], LOOKUP_QUIET ) != DIR_NULL ) {
+		aexists( argv[arg] );
+		return CMD_BAD;
 	}
-	if( (int)strlen(cmd_args[args]) >= NAMESIZE )  {
+	if( (int)strlen(argv[arg]) >= NAMESIZE )  {
 		(void)printf("Names are limited to %d characters\n", NAMESIZE-1);
-		return;
+		return CMD_BAD;
 	}
-	newname = cmd_args[args];
-
-	args += argcnt;
+	newname = argv[arg];
+	++arg;
 
 	/* get thicknesses and calculate parameters for newrec */
 	switch( intern.idb_type )  {
@@ -294,136 +291,149 @@ f_inside()
 		}
 
 		for(i=0; i<nface; i++) {
-			(void)printf("%s",promp[i]);
-			if( (argcnt = getcmd( args )) < 0 )
-				return;
-			thick[i] = atof(cmd_args[args]) * local2base;
-			args += argcnt;
+			if( argc < arg+1 ) {
+				(void)printf("%s",promp[i]);
+				return CMD_MORE;
+			}
+			thick[i] = atof(argv[arg]) * local2base;
+			++arg;
 		}
 
 		if( arbin(&intern, thick, nface, cgtype, planes) )
-			return;
+			return CMD_BAD;
 		break;
 	    }
 
 	case ID_TGC:
 		promp = p_tgcin;
 		for(i=0; i<3; i++) {
-			(void)printf("%s",promp[i]);
-			if( (argcnt = getcmd(args)) < 0 )
-				return;
-			thick[i] = atof( cmd_args[args] ) * local2base;
-			args += argcnt;
+			if( argc < arg+1 ) {
+				(void)printf("%s",promp[i]);
+				return CMD_MORE;
+			}
+			thick[i] = atof( argv[arg] ) * local2base;
+			++arg;
 		}
 
 		if( tgcin(&intern, thick) )
-			return;
+			return CMD_BAD;
 		break;
 
 	case ID_ELL:
-		(void)printf("Enter desired thickness: ");
-		if( (argcnt = getcmd(args)) < 0 )
-			return;
-		thick[0] = atof( cmd_args[args] ) * local2base;
+		if( argc < arg+1 ) {
+			(void)printf("Enter desired thickness: ");
+			return CMD_MORE;
+		}
+		thick[0] = atof( argv[arg] ) * local2base;
+		++arg;
 
 		if( ellgin(&intern, thick) )
-			return;
+			return CMD_BAD;
 		break;
 
 	case ID_TOR:
-		(void)printf("Enter desired thickness: ");
-		if( (argcnt = getcmd(args)) < 0 )
-			return;
-		thick[0] = atof( cmd_args[args] ) * local2base;
+		if( argc < arg+1 ) {
+			(void)printf("Enter desired thickness: ");
+			return CMD_MORE;
+		}
+		thick[0] = atof( argv[arg] ) * local2base;
+		++arg;
 
 		if( torin(&intern, thick) )
-			return;
+			return CMD_BAD;
 		break;
 
 	case ID_RPC:
 		promp = p_rpcin;
 		for (i = 0; i < 4; i++) {
-			(void)printf("%s",promp[i]);
-			if( (argcnt = getcmd(args)) < 0 )
-				return;
-			thick[i] = atof( cmd_args[args] ) * local2base;
-			args += argcnt;
+			if( argc < arg+1 ) {
+				(void)printf("%s",promp[i]);
+				return CMD_MORE;
+			}
+			thick[i] = atof( argv[arg] ) * local2base;
+			++arg;
 		}
 
 		if( rpcin(&intern, thick) )
-			return;
+			return CMD_BAD;
 		break;
 
 	case ID_RHC:
 		promp = p_rhcin;
 		for (i = 0; i < 4; i++) {
-			(void)printf("%s",promp[i]);
-			if( (argcnt = getcmd(args)) < 0 )
-				return;
-			thick[i] = atof( cmd_args[args] ) * local2base;
-			args += argcnt;
+			if( argc < arg+1 ) {
+				(void)printf("%s",promp[i]);
+				return CMD_MORE;
+			}
+			thick[i] = atof( argv[arg] ) * local2base;
+			++arg;
 		}
 
 		if( rhcin(&intern, thick) )
-			return;
+			return CMD_BAD;
 		break;
 
 	case ID_EPA:
 		promp = p_epain;
 		for (i = 0; i < 2; i++) {
-			(void)printf("%s",promp[i]);
-			if( (argcnt = getcmd(args)) < 0 )
-				return;
-			thick[i] = atof( cmd_args[args] ) * local2base;
-			args += argcnt;
+			if( argc < arg+1 ) {
+				(void)printf("%s",promp[i]);
+				return CMD_MORE;
+			}
+			thick[i] = atof( argv[arg] ) * local2base;
+			++arg;
 		}
 
 		if( epain(&intern, thick) )
-			return;
+			return CMD_BAD;
 		break;
 
 	case ID_EHY:
 		promp = p_ehyin;
 		for (i = 0; i < 2; i++) {
-			(void)printf("%s",promp[i]);
-			if( (argcnt = getcmd(args)) < 0 )
-				return;
-			thick[i] = atof( cmd_args[args] ) * local2base;
-			args += argcnt;
+			if( argc < arg+1 ) {
+				(void)printf("%s",promp[i]);
+				return CMD_MORE;
+			}
+			thick[i] = atof( argv[arg] ) * local2base;
+			++arg;
 		}
 
 		if( ehyin(&intern, thick) )
-			return;
+			return CMD_BAD;
 		break;
 
 	case ID_ETO:
 		promp = p_etoin;
 		for (i = 0; i < 1; i++) {
-			(void)printf("%s",promp[i]);
-			if( (argcnt = getcmd(args)) < 0 )
-				return;
-			thick[i] = atof( cmd_args[args] ) * local2base;
-			args += argcnt;
+			if( argc < arg+1 ) {
+				(void)printf("%s",promp[i]);
+				return CMD_MORE;
+			}
+			thick[i] = atof( argv[arg] ) * local2base;
+			++arg;
 		}
 
 		if( etoin(&intern, thick) )
-			return;
+			return CMD_BAD;
 		break;
 
 	case ID_NMG:
 		promp = p_nmgin;
-		(void)printf( "%s" , promp[0] );
-		if( (argcnt = getcmd(args)) < 0 )
-			return;
-		thick[0] = atof( cmd_args[args] ) * local2base;
+		if( argc < arg+1 ) {
+			(void)printf( "%s" , promp[0] );
+			return CMD_MORE;
+		}
+		thick[0] = atof( argv[arg] ) * local2base;
+		++arg;
 		if( nmgin( &intern , thick[0] ) )
-			return;
+			return CMD_BAD;
 		break;
 
 	default:
 		(void)printf("Cannot find inside for '%s' solid\n",
 			rt_functab[intern.idb_type].ft_name );
-		return;
+		return CMD_BAD;
 	}
 
 	/* don't allow interrupts while we update the database! */
@@ -431,17 +441,20 @@ f_inside()
  
 	/* Add to in-core directory */
 	if( (dp = db_diradd( dbip,  newname, -1, 0, DIR_SOLID )) == DIR_NULL )  {
-	    	ALLOC_ERR_return;
+	    	ALLOC_ERR;
+		return CMD_BAD;
 	}
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
-		WRITE_ERR_return;
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 ) {
+		WRITE_ERR;
+		return CMD_BAD;
+	}
 
 	/* Draw the new solid */
 	{
 		char	*arglist[3];
 		arglist[0] = "e";
 		arglist[1] = newname;
-		f_edit( 2, arglist );
+		return f_edit( 2, arglist );
 	}
 }
 
