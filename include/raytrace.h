@@ -6734,6 +6734,39 @@ RT_EXPORT BU_EXTERN(int	vo_sca_cmd,
 		     char **argv,
 		     int (*func)()));
 
+/* defined in binary_obj.c */
+RT_EXPORT BU_EXTERN(int mk_binunif,
+		    (struct rt_wdb *wdbp,
+		     const char *obj_name,
+		     const char *file_name,
+		     unsigned int minor_type));
+
+#ifdef WIN32
+/* defined in g_dsp.c */
+RT_EXPORT BU_EXTERN(void rt_dsp_ifree,
+		    (struct rt_db_internal *ip));
+
+/* defined in g_ebm.c */
+RT_EXPORT BU_EXTERN(void rt_ebm_ifree,
+		    (struct rt_db_internal *ip));
+
+/* defined in g_vol.c */
+RT_EXPORT BU_EXTERN(void rt_vol_ifree,
+		    (struct rt_db_internal *ip));
+#endif
+
+/* defined in db5_bin.c */
+RT_EXPORT BU_EXTERN(void rt_binunif_free,
+		    (struct rt_binunif_internal *bip));
+
+/* defined in g_cline.c */
+RT_EXPORT extern fastf_t rt_cline_radius;
+
+/* defined in g_bot.c */
+RT_EXPORT extern int rt_bot_minpieces;
+RT_EXPORT extern int rt_bot_tri_per_piece;
+
+
 /*
  *  Constants provided and used by the RT library.
  */
@@ -6741,7 +6774,7 @@ RT_EXPORT extern const struct db_tree_state rt_initial_tree_state;
 RT_EXPORT extern const char *rt_vlist_cmd_descriptions[];
 
 /* vers.c (created by librt/Cakefile) */
-RT_EXPORT extern const char   rt_version[];
+RT_EXPORT extern const char rt_version[];
 
 #ifdef __cplusplus
 }
