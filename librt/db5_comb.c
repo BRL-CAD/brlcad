@@ -247,6 +247,8 @@ CONST struct db_i		*dbip;
 	int	wid;
 	unsigned char	*cp;
 	unsigned char	*leafp_end;
+	struct bu_attribute_value_set avs;
+	struct bu_vls	value;
 
 	RT_CK_DB_INTERNAL( ip );
 
@@ -338,8 +340,51 @@ bu_hexdump_external( stderr, ep, "v5comb" );
 	if( rpn_len )
 		BU_ASSERT_PTR( ss.exprp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes );
 
-	/* How to encode all the other stuff as attributes??? */
+	/* Encode all the other stuff as attributes. */
+	bu_vls_init( &value );
+	bu_avs_init( &avs, 32, "rt_comb v5 attributes" );
+	if( comb->region_flag )  {
+		/* Presence of this attribute means this comb is a region. */
+		/* Current code values are 0, 1, and 2; all are regions. */
+		bu_vls_trunc( &value, 0 );
+		bu_vls_printf( &value, "%d", comb->is_fastgen );
+		bu_avs_add_vls( &avs, "region", &value );
+	}
+	if( comb->inherit )
+		bu_avs_add( &avs, "inherit", "1" );
+	if( comb->rgb_valid )  {
+		bu_vls_trunc( &value, 0 );
+		bu_vls_printf( &value, "%d/%d/%d", V3ARGS(comb->rgb) );
+		bu_avs_add_vls( &avs, "rgb", &value );
+	}
+	/* optical shader string goes out in Tcl format */
+	if( bu_vls_strlen( &comb->shader ) > 0 )
+		bu_avs_add_vls( &avs, "oshader", &comb->shader );
+	if( bu_vls_strlen( &comb->material ) > 0 )
+		bu_avs_add_vls( &avs, "material", &comb->material );
+	if( comb->temperature > 0 )  {
+		bu_vls_trunc( &value, 0 );
+		bu_vls_printf( &value, "%f", comb->temperature );
+		bu_avs_add_vls( &avs, "temp", &value );
+	}
+	if( comb->region_id != 0 )  {
+		bu_vls_trunc( &value, 0 );
+		bu_vls_printf( &value, "%d", comb->region_id );
+		bu_avs_add_vls( &avs, "region_id", &value );
+	}
+	if( comb->los != 0 )  {
+		bu_vls_trunc( &value, 0 );
+		bu_vls_printf( &value, "%d", comb->los );
+		bu_avs_add_vls( &avs, "los", &value );
+	}
 
+	/* XXX THere are more still to be converted */
+	/* aircode, GIFTmater */
+
+	/* XXX Where do the attributes get put??? */
+bu_avs_print( &avs, "comb v5 attributes");
+
+	bu_vls_free( &value );
 	return 0;	/* OK */
 }
 
