@@ -32,30 +32,53 @@ struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
  *  			S H O O T R A Y
  *  
  *  Given a ray, shoot it at all the relevant parts of the model,
- *  building the HeadSeg chain, and calling the appropriate application
- *  routine (a_hit, a_miss).
+ *  (building the HeadSeg chain), and then call bool_regions()
+ *  to build and evaluate the partition chain.
+ *  If the ray actually hit anything, call the application's
+ *  a_hit() routine with a pointer to the partition chain,
+ *  otherwise, call the application's a_miss() routine.
  *
- *  This is where higher-level pruning should be done.
- *  This code is executed more often than any other part of the RT library.
+ *  It is important to note that rays extend infinitely only in the
+ *  positive direction.  The ray is composed of all points P, where
  *
- *  WARNING:  The appliction functions may call shootray() recursively.
+ *	P = r_pt + K * r_dir
+ *
+ *  for K ranging from 0 to +infinity.  There is no looking backwards.
+ *
+ *  It is also important to note that the direction vector r_dir
+ *  must have unit length;  this is mandatory, and is not checked
+ *  in the name of efficiency.
+ *
+ *  Input:  Pointer to an application structure, with these mandatory fields:
+ *	a_ray.r_pt	Starting point of ray to be fired
+ *	a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
+ *	a_hit		Routine to call when something is hit
+ *	a_miss		Routine to call when ray misses everything
+ *
+ *  Returns: whatever the application function returns (an int).
+ *
+ *  NOTE:  The appliction functions may call shootray() recursively.
  */
-void
+int
 shootray( ap )
 register struct application *ap;
 {
-	LOCAL vect_t diff;	/* diff between shot base & solid center */
-	FAST fastf_t distsq;	/* distance**2 */
-	auto struct seg *HeadSeg; /* must NOT be static (recursion ) */
-	LOCAL fastf_t inout[2];	/* entry_dist, exit_dist for bounding RPP */
+	extern struct region *HeadRegion;
+	register struct region *rp;
+	auto struct seg *HeadSeg;	/* must NOT be static (recursion) */
+	register int ret;
 
-
-	/* If ray does not enter the model RPP, skip on */
-	if( !in_rpp( &ap->a_ray, model_min, model_max, inout )  ||
-	    inout[1] < 0.0 )  {
+	/*
+	 *  If ray does not enter the model RPP, skip on.
+	 *  For models with non-cubical shape, this test
+	 *  actually trims off a substantial number of rays,
+	 *  and is well worth it.  When the model fills the view,
+	 *  then this is just wasted time;  perhaps a flag is needed?
+	 */
+	if( !in_rpp( &ap->a_ray, model_min, model_max )  ||
+	    ap->a_ray.r_max <= 0.0 )  {
 		nmiss++;
-		ap->a_miss( ap );
-		return;
+		return( ap->a_miss( ap ) );
 	}
 
 	if(debug&DEBUG_ALLRAYS) {
@@ -66,96 +89,26 @@ register struct application *ap;
 
 	HeadSeg = SEG_NULL;
 
-#ifndef Tree_Method
-  {
-	register struct region *rp;
-	extern struct region *HeadRegion;
-
+	/* For now, consider every region in the model */
 	for( rp=HeadRegion; rp != REGION_NULL; rp = rp->reg_forw )  {
 		
 		/* Check region bounding RPP */
 		if( !in_rpp(
 			&ap->a_ray, rp->reg_treetop->tr_min,
-			rp->reg_treetop->tr_max, inout )  ||
-		    inout[1] < 0.0 )  {
+			rp->reg_treetop->tr_max )  ||
+		    ap->a_ray.r_max <= 0.0 )  {
 			nmiss++;
 			continue;
 		}
 
 		/* Boolean TRUE signals hit of 1 or more solids in tree */
 		/* At leaf node, it will calll ft_shot & add to chain */
-		if( !shoot_tree( ap, rp->reg_treetop, &HeadSeg ) )
-			continue;
-		/* If any solid hit, add this region to active chain */
+		(void)shoot_tree( ap, rp->reg_treetop, &HeadSeg );
 	}
- }
-#else
- {
-	register struct soltab *stp;
-
-	/*
-	 * For now, shoot at all solids in model.
-	 */
-	for( stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw ) {
-		register struct seg *newseg;		/* XXX */
-
-#	ifndef never
-		/* Consider bounding sphere */
-		VSUB2( diff, stp->st_center, ap->a_ray.r_pt );
-		distsq = VDOT(ap->a_ray.r_dir, diff);
-		if( (MAGSQ(diff) - distsq*distsq) > stp->st_radsq ) {
-			nmiss++;
-			continue;
-		}
-#	endif
-
-		/* If ray does not strike the bounding RPP, skip on */
-		if( !in_rpp( &ap->a_ray, stp->st_min, stp->st_max, inout ) ) {
-			nmiss++;
-			continue;
-		}
-
-		/*
-		 * Rays have direction.  If ray enters and exits this
-		 * solid entirely behind the start point, skip on.
-		 */
-		if( inout[1] < 0.0 )  {
-			nmiss++;
-			continue;	/* enters & exits behind eye */
-		}
-
-		nshots++;
-		newseg = functab[stp->st_id].ft_shot( stp, &ap->a_ray );
-		if( newseg == SEG_NULL )
-			continue;
-
-		/* First, some checking */
-		if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
-			LOCAL struct hit temp;		/* XXX */
-			fprintf(stderr,"ERROR %s %s: in/out reversal (%f,%f)\n",
-				functab[stp->st_id].ft_name,
-				newseg->seg_stp->st_name,
-				newseg->seg_in.hit_dist,
-				newseg->seg_out.hit_dist );
-			temp = newseg->seg_in;		/* struct copy */
-			newseg->seg_in = newseg->seg_out; /* struct copy */
-			newseg->seg_out = temp;		/* struct copy */
-		}
-		/* Add segment chain to list */
-		{
-			register struct seg *seg2 = newseg;
-			while( seg2->seg_next != SEG_NULL )
-				seg2 = seg2->seg_next;
-			seg2->seg_next = HeadSeg;
-			HeadSeg = newseg;
-		}
-	}
- }
-#endif
 
 	/* HeadSeg chain now has all segments hit by this ray */
 	if( HeadSeg == SEG_NULL )  {
-		ap->a_miss( ap );
+		ret = ap->a_miss( ap );
 	}  else  {
 		auto struct partition PartHead;
 		/*
@@ -165,14 +118,14 @@ register struct application *ap;
 		bool_regions( HeadSeg, &PartHead );
 
 		if( PartHead.pt_forw == &PartHead )  {
-			ap->a_miss( ap );
+			ret = ap->a_miss( ap );
 		}  else  {
 			register struct partition *pp;
 			/*
 			 * Hand final partitioned intersection list
 			 * to the application.
 			 */
-			ap->a_hit( ap, &PartHead );
+			ret = ap->a_hit( ap, &PartHead );
 
 			/* Free up partition list */
 			for( pp = PartHead.pt_forw; pp != &PartHead;  )  {
@@ -195,6 +148,7 @@ register struct application *ap;
 		}
 	}
 	if( debug )  fflush(stderr);
+	return( ret );
 }
 
 /*
@@ -215,13 +169,14 @@ register struct application *ap;
  *  Returns -
  *	 0  if ray does not hit RPP,
  *	!0  if ray hits RPP.
- *	bounds[0] = dist from start of ray to point at which ray ENTERS solid
- *	bounds[1] = dist from start of ray to point at which ray LEAVES solid
+ *
+ *  Implicit return -
+ *	rp->r_min = dist from start of ray to point at which ray ENTERS solid
+ *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
  */
-in_rpp( rp, min, max, bounds )
-struct xray *rp;
+in_rpp( rp, min, max )
+register struct xray *rp;
 register fastf_t *min, *max;
-register fastf_t *bounds;
 {
 	LOCAL fastf_t sv;
 	LOCAL fastf_t st;
@@ -229,8 +184,8 @@ register fastf_t *bounds;
 	register fastf_t *dir = &rp->r_dir[0];
 	register int i;
 
-	*bounds = -INFINITY;
-	bounds[1] = INFINITY;
+	rp->r_min = -INFINITY;
+	rp->r_max = INFINITY;
 
 	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
 		if( NEAR_ZERO( *dir ) )  {
@@ -247,20 +202,20 @@ register fastf_t *bounds;
 		if( *dir < 0.0 )  {
 			if( (sv = (*min - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
-			if(bounds[1] > sv)
-				bounds[1] = sv;
-			if( *bounds < (st = (*max - *pt) / *dir) )
-				*bounds = st;
+			if(rp->r_max > sv)
+				rp->r_max = sv;
+			if( rp->r_min < (st = (*max - *pt) / *dir) )
+				rp->r_min = st;
 		}  else  {
 			if( (st = (*max - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
-			if(bounds[1] > st)
-				bounds[1] = st;
-			if( *bounds < ((sv = (*min - *pt) / *dir)) )
-				*bounds = sv;
+			if(rp->r_max > st)
+				rp->r_max = st;
+			if( rp->r_min < ((sv = (*min - *pt) / *dir)) )
+				rp->r_min = sv;
 		}
 	}
-	if( *bounds >= bounds[1] )
+	if( rp->r_min >= rp->r_max )
 		return(0);	/* MISS */
 	return(1);		/* HIT */
 }
@@ -281,11 +236,10 @@ register struct application *ap;
 register struct tree *tp;
 struct seg **HeadSegp;
 {
-	LOCAL vect_t inout;
 
 	/* If ray does not strike the bounding RPP, skip on */
-	if( !in_rpp( &ap->a_ray, tp->tr_min, tp->tr_max, inout )  ||
-	    inout[1] < 0.0 )
+	if( !in_rpp( &ap->a_ray, tp->tr_min, tp->tr_max )  ||
+	    ap->a_ray.r_max <= 0.0 )
 		return( FALSE );	/* MISS subtree */
 
 	switch( tp->tr_op )  {
@@ -294,10 +248,32 @@ struct seg **HeadSegp;
 	    {
 		register struct seg *newseg;
 
+#	ifdef never
+		/* Consider bounding sphere */
+		VSUB2( diff, stp->st_center, ap->a_ray.r_pt );
+		distsq = VDOT(ap->a_ray.r_dir, diff);
+		if( (MAGSQ(diff) - distsq*distsq) > stp->st_radsq ) {
+			nmiss++;
+			continue;
+		}
+#	endif
+
 		nshots++;
 		newseg = functab[tp->tr_stp->st_id].ft_shot( tp->tr_stp, &ap->a_ray );
 		if( newseg == SEG_NULL )
 			return( FALSE );/* MISS subtree (solid) */
+
+		/* First, some checking */
+		if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
+			LOCAL struct hit temp;		/* XXX */
+			fprintf(stderr,"ERROR %s: in/out reversal (%f,%f)\n",
+				newseg->seg_stp->st_name,
+				newseg->seg_in.hit_dist,
+				newseg->seg_out.hit_dist );
+			temp = newseg->seg_in;		/* struct copy */
+			newseg->seg_in = newseg->seg_out; /* struct copy */
+			newseg->seg_out = temp;		/* struct copy */
+		}
 
 		/* Add segment chain to list */
 		{
