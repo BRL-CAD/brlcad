@@ -40,7 +40,7 @@ static int	file_height = 512;	/* default input height */
 static int	make_cells = 0;		/* Insert cell coords in output? */
 static int	d_per_l = 1;		/* doubles per line of output */
 
-void print_usage (void)
+void print_usage ()
 {
 #define OPT_STRING	"acf:hs:n:w#:?"
 
@@ -211,7 +211,7 @@ char	*argv[];
     }
     if (num < 0)
     {
-	bu_log("double-asc: %s\n", strerror(errno));
+	perror("double-asc");
 	exit (1);
     }
 }

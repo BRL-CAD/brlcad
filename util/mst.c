@@ -596,7 +596,7 @@ int	numeric;	/* Use indices instead of labels? */
 /*
  *			   P R I N T _ U S A G E ( )
  */
-void print_usage (void)
+void print_usage ()
 {
 #define OPT_STRING	"n?"
 

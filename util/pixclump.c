@@ -52,7 +52,7 @@ static void print_usage ()
     (void) bu_log("%s", usage);
 }
 
-static void print_debug_usage (void)
+static void print_debug_usage ()
 {
     static char	*flag_denotation[] =
 		{
@@ -314,7 +314,7 @@ char	*argv[];
 		    color_tbl[best_color][GRN],
 		    color_tbl[best_color][BLU]);
 	}
-	if (fwrite((const void *) color_tbl[best_color],
+	if (fwrite((genptr_t) color_tbl[best_color],
 		    3 * sizeof(unsigned char), 1, outfp) != 1)
 	{
 	    bu_log("pixclump:  Error writing pixel to file '%s'\n", outf_name);

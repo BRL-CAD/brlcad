@@ -334,7 +334,8 @@ double warpfrac, pb;
  */
 
 void
-lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, int *np)
+lines_headerinfo(fp, ap, bp, pp, np)
+FILE *fp; double *ap; double *bp; double *pp; int *np;
 {
     if (fscanf(fp, "%lf %lf %lf %d ", ap, bp, pp, np) < 4) {
 	fprintf(stderr, "pixmorph: cannot read header info in lines file\n");
