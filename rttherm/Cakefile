@@ -138,6 +138,6 @@ rtregis:	rtregis.o read-rtlog.o LIBRT_DEP
 	CC LDFLAGS rtregis.o read-rtlog.o LIBRT LIBRT_LIBES LIBES -o rtregis
 
 rtscale:	rtscale.o read-rtlog.o LIBRT_DEP
-	CC LDFLAGS rtscale.o read-rtlog.o LIBRT LIBRT_LIBES LIBWDB LIBPLOT LIBES -o rtscale
+	CC LDFLAGS rtscale.o read-rtlog.o LIBRT LIBRT_LIBES LIBWDB LIBES -o rtscale
 
 #include "../Cakefile.rules"
