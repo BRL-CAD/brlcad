@@ -51,7 +51,7 @@ is being invoked from a shell script created by an
 .LP
 A color vector display of ray-model intersections can be written to
 .I rtg3.pl
-and displayed with \fIpl_fb\fR or \fIpl_sgi\fR.
+and displayed with \fIpl-fb\fR or \fIpl-sgi\fR.
 .LP
 .B GIFT
 format required the translation of a ray's zero distance to the
@@ -162,15 +162,15 @@ A GIFT-3 output file is produced by giving the command:
 
 .nf
 .ce
-\fIrtg3 -s32 database.g all.g > file\fR
+\fIrtg3 -s32 model.g all.g > file\fR
 .fi
 
-This will a 32 by 32 ray file of the named database.  If a bounding-box
-plotfile is to be made as part of producing visual output, use
+This will a 32 by 32 ray file of the named model.  If a bounding-box
+plot file is to be made as part of producing visual output, use
 
 .nf
 .ce
- \fIrtg3 -s32 -x80000000 database.g\fR
+ \fIrtg3 -s32 -x80000000 model.g\fR
 .fi
 
 The bounding boxes for the objects in the database specified will
@@ -179,7 +179,7 @@ to compute the color rays use
 
 .nf
 .ce
- \fIrtg3 -s32 -X80000000 database.g\fR
+ \fIrtg3 -s32 -X80000000 model.g\fR
 .fi
 
 The results will be automaticaly stored in \fIrtg3.pl\fR.  The rays
