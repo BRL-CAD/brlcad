@@ -156,7 +156,7 @@ f_edcolor()
 		zot = MaterHead;
 		MaterHead = MaterHead->mt_forw;
 		color_zaprec( zot );
-		rt_free( zot, "mater rec" );
+		rt_free( (char *)zot, "mater rec" );
 	}
 
 	while( fgets(line, sizeof (line), fp) != NULL )  {
