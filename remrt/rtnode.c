@@ -365,6 +365,7 @@ bu_log("before Tcl_Init\n");
 		bu_bomb("rtnode: Unable to initialize TCL.  Run 'new_tk'?\n");
 	}
 bu_log("after Tcl_Init\n");
+	bu_tcl_setup(interp);
 	bn_tcl_setup(interp);
 	rt_tcl_setup(interp);
 	sh_tcl_setup(interp);

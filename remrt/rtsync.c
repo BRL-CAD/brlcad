@@ -784,6 +784,7 @@ char	*argv[];
 	/* This runs the init.tcl script */
 	if( Tcl_Init(interp) == TCL_ERROR )
 		bu_log("Tcl_Init error %s\n", interp->result);
+	bu_tcl_setup(interp);
 	bn_tcl_setup(interp);
 	rt_tcl_setup(interp);
 	Tcl_SetVar(interp, "cpu_count", "0", TCL_GLOBAL_ONLY );
