@@ -1,4 +1,8 @@
+#ifndef lint
+static char rcsid[] = "$Header$";
+#endif
 #include <stdio.h>
+#include <ctype.h>
 int Debug=0;
 /*	halftone	given a bw file, generate a ht file.
  *
@@ -14,13 +18,8 @@ int Debug=0;
  *			2 Floyd-Steinburg
  *		-S	Surpent flag.
  *		-I	number of intensities.
- *		-t	tonescale selector
- *			0 line
- *			1 cubic
- *		-x	first X parameter
- *		-X	second X parameter
- *		-y	first Y parameter
- *		-Y	second Y parametetr
+ *		-T	tonescale points
+ *
  * Exit:
  *	writes a ht(bw) file.
  *		an ht file is a bw file with a limited set of values
@@ -38,18 +37,33 @@ int Debug=0;
  * Author:
  *	Christopher T. Johnson	- 90/03/21
  *
- * $Header$
  * $Log$
+ * Revision 1.1  90/04/09  16:13:04  cjohnson
+ * Initial revision
+ * 
  */
-extern char	*optarg;
-extern int	optind;
+int width;	/* width of pixture */
+int height;	/* height of pixture */
+double Beta;	/* Beta for sharpening */
+#define	M_FLOYD	0
+#define	M_CLASSIC 1
+#define	M_THRESH 2
+#define	M_FOLLY 3
+int Method=M_FLOYD;	/* Method of halftoning */
+int Surpent=0;		/* use serpentine scan lines */
+int Levels=2;		/* Number of levels */
 main(argc,argv)
 int argc;
 char **argv;
 {
+	extern char	*optarg;
+	extern int	optind;
 	int c;
+	int i,j;
+	int *Xlist, *Ylist;
+	unsigned int pixel;
 
-	while ((c = getopt(argc, argv, "s:n:w:B:m:SI:t:x:X:y:Y:") != EOF)
+	while ((c = getopt(argc, argv, "s:n:w:B:m:SI:T:")) != EOF) {
 		switch(c) {
 		case 's':
 			width = height = atoi(optarg);
@@ -64,27 +78,48 @@ char **argv;
 			Beta = atof(optarg);
 		break;
 		case 'm':
-			method = atoi(optarg);
+			Method = atoi(optarg);
 		break;
 		case 'S':
-			surpent = 2;
+			Surpent = 1;
 		break;
 		case 'I':
-			levels = atoi(optarg);
+			Levels = atoi(optarg);
 		break;
 		case 't':
-			tone = atoi(optarg);
+			for(i=optind; i < argc && (isdigit(*argv[i]) || 
+			    (*argv[i] == '-' && isdigit(*(argv[i]+1)))) ; i++);
+			if ((c=i-optind) % 2) {
+				fprintf(stderr,"Missing Y coordent for tone map.\n");
+				exit(1);
+			}
+			Xlist = (int *) malloc((c+2)*sizeof(int));
+			Ylist = (int *) malloc((c+2)*sizeof(int));
+
+			for (j=0;optind <= i; optind++) {
+				Xlist[j] = atoi(argv[optind++]);
+				Ylist[j] = atoi(argv[optind++]);
+				j++;
+			}
+			Xlist[j] = 1024;
+			Ylist[j] = 1024;
+			(void) cubic_init(c,Xlist,Ylist);
+			free(Xlist);
+			free(Ylist);
 		break;
-		case 'x':
-			PX[0] = atof(optarg);
+		case '?':
+			fprintf(stderr,"Read the usage message.\n");
+			exit(1);
 		break;
-		case 'X':
-			PX[1] = atof(optarg);
-		break;
-		case 'y':
-			PY[0] = atof(optarg);
-		break;
-		case 'Y':
-			PY[1] = atof(optarg);
-		break;
-		
+		}
+	}
+
+	
+	while((pixel = (unsigned int) getchar()) != (unsigned) EOF) {
+		if (tone_simple(pixel,0,0,0,0,0)) {
+			putchar('\255');
+		} else {
+			putchar('\0');
+		}
+	}
+}
