@@ -116,6 +116,41 @@ BU_EXTERN(int			bn_common_image_size, (int *width,
 						      int num_pixels));
 
 /*----------------------------------------------------------------------*/
+/* anim.c */
+/* XXX These should all have bn_ prefixes */
+void anim_v_permute(mat_t m);
+void anim_v_unpermute(mat_t m);
+void anim_tran(mat_t m);
+int anim_mat2zyx(const mat_t viewrot, vect_t angle);
+int anim_mat2ypr(mat_t viewrot, vect_t angle);
+int anim_mat2quat(quat_t quat, const mat_t viewrot);
+void anim_ypr2mat(mat_t m, const vect_t a);
+void anim_ypr2vmat(mat_t m, const vect_t a);
+void anim_y_p_r2mat(mat_t m, double y, double p, double r);
+void anim_dy_p_r2mat(mat_t m, double y, double p, double r);
+void anim_dy_p_r2vmat(mat_t m, double yaw, double pch, double rll);
+void anim_x_y_z2mat(mat_t m, double x, double y, double z);
+void anim_dx_y_z2mat(mat_t m, double x, double y, double z);
+void anim_zyx2mat(mat_t m, const vect_t a);
+void anim_z_y_x2mat(mat_t m, double x, double y, double z);
+void anim_dz_y_x2mat(mat_t m, double x, double y, double z);
+void anim_quat2mat(mat_t m, const quat_t qq);
+void anim_dir2mat(mat_t m, const vect_t d, const vect_t d2);
+void anim_dirn2mat(mat_t m, const vect_t dx, const vect_t dn);
+int anim_steer_mat(mat_t  mat, vect_t point, int end);
+void anim_add_trans(mat_t m, const vect_t post, const vect_t pre);
+void anim_rotatez(fastf_t a, vect_t d);
+void anim_mat_print(FILE *fp, const mat_t m, int s_colon);
+void anim_mat_printf(
+	FILE *fp,
+	const mat_t m,
+	const char *formstr,
+	const char *linestr,
+	const char *endstr);
+void anim_view_rev(mat_t m);
+
+
+/*----------------------------------------------------------------------*/
 /* bn_tcl.c */
 int bn_decode_mat(mat_t m, const char *str);
 int bn_decode_quat(quat_t q, const char *str);
