@@ -40,7 +40,7 @@ static char RCSmater[] = "@(#)$Header$ (BRL)";
  */
 struct mater *MaterHead = MATER_NULL;
 
-static void rt_insert_color();
+void	rt_insert_color();
 
 static void
 rt_pr_mater( mp )
@@ -79,7 +79,7 @@ long addr;
  *  While any additional database records are created and written here,
  *  it is the responsibility of the caller to color_putrec(newp) if needed.
  */
-static void
+void
 rt_insert_color( newp )
 register struct mater *newp;
 {
