@@ -57,6 +57,7 @@ extern void rt_generic_make();
 
 /* from librt/dg_obj.c */
 extern void dgo_eraseobjall_callback();
+extern void dgo_impending_wdb_close();
 
 /* from librt/wdb_comb_std.c */
 extern int wdb_comb_std_tcl();
@@ -105,6 +106,7 @@ static int wdb_whatid_tcl();
 static int wdb_keep_tcl();
 static int wdb_cat_tcl();
 static int wdb_instance_tcl();
+static int wdb_observer_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -163,6 +165,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"cat",		wdb_cat_tcl,
 	"i",		wdb_instance_tcl,
 #if 0
+	/* Commands to be added */
 	"units",	wdb_units_tcl,
 	"comb_color",	wdb_comb_color_tcl,
 	"copymat",	wdb_copymat_tcl,
@@ -180,8 +183,12 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"inside",	wdb_inside_tcl,
 #endif
 	"close",	wdb_close_tcl,
+	"observer",	wdb_observer_tcl,
 	(char *)0,	(int (*)())0
 };
+
+/* This could go in struct rt_wdb */
+static Tcl_Interp *wdb_obj_interp;
 
 int
 Wdb_Init(interp)
@@ -221,6 +228,12 @@ wdb_deleteProc(clientData)
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
+	/* free observers */
+	bu_observer_free(&wdbp->wdb_observers);
+
+	/* notify drawable geometry objects of the impending close */
+	dgo_impending_wdb_close(wdbp, wdb_obj_interp);
+
 	RT_CK_WDB(wdbp);
 	BU_LIST_DEQUEUE(&wdbp->l);
 	bu_vls_free(&wdbp->wdb_name);
@@ -251,7 +264,17 @@ wdb_close_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	/* Among other things, this will call wdb_deleteProc. */
+	/*
+	 * Maybe this should go in "struct rt_wdb". For now,
+	 * use a global.
+	 */
+	wdb_obj_interp = interp;
+
+	/*
+	 * Among other things, this will call wdb_deleteProc.
+	 * Note - wdb_deleteProc is being passed clientdata.
+	 *        It ought to get interp as well.
+	 */
 	Tcl_DeleteCommand(interp, bu_vls_addr(&wdbp->wdb_name));
 
 	return TCL_OK;
@@ -382,6 +405,8 @@ Usage: wdb_open\n\
 	wdbp->wdb_air_default = 0;
 	wdbp->wdb_mat_default = 1;
 	wdbp->wdb_los_default = 100;
+
+	BU_LIST_INIT(&wdbp->wdb_observers.l);
 
 	/* append to list of rt_wdb's */
 	BU_LIST_APPEND(&rt_g.rtg_headwdb.l,&wdbp->l);
@@ -693,8 +718,11 @@ wdb_adjust_tcl( clientData, interp, argc, argv )
 		rt_db_free_internal(&intern);
 		return TCL_ERROR;
 	}
-
 	rt_db_free_internal(&intern);
+
+	/* notify observers */
+	bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
+
 	return status;
 }
 
@@ -1311,7 +1339,7 @@ err:
 
 
 static void
-dgo_scrape_escapes_AppendResult(interp, str)
+wdb_scrape_escapes_AppendResult(interp, str)
      Tcl_Interp *interp;
      char *str;
 {
@@ -1384,7 +1412,7 @@ wdb_expand_tcl(clientData, interp, argc, argv)
 		if (regexp == 0) {
 			if (nummatch > 0)
 				Tcl_AppendResult(interp, " ", NULL);
-			dgo_scrape_escapes_AppendResult(interp, argv[whicharg]);
+			wdb_scrape_escapes_AppendResult(interp, argv[whicharg]);
 			++nummatch;
 			continue;
 		}
@@ -1414,7 +1442,7 @@ wdb_expand_tcl(clientData, interp, argc, argv)
 		if (thismatch == 0) {
 			if (nummatch > 0)
 				Tcl_AppendResult(interp, " ", NULL);
-			dgo_scrape_escapes_AppendResult(interp, argv[whicharg]);
+			wdb_scrape_escapes_AppendResult(interp, argv[whicharg]);
 		}
 	}
 
@@ -1624,6 +1652,11 @@ wdb_killtree_tcl(clientData, interp, argc, argv)
 	for (i=1; i<argc; i++) {
 		if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 			continue;
+
+		/* ignore phony objects */
+		if (dp->d_addr == RT_DIR_PHONY_ADDR)
+			continue;
+
 		db_functree(wdbp->dbip, dp,
 			wdb_killtree_callback, wdb_killtree_callback,
 			(genptr_t)interp );
@@ -3978,6 +4011,37 @@ wdb_instance_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 
 	return TCL_OK;
+}
+
+/*
+ * Attach/detach observers to/from list.
+ *
+ * Usage:
+ *	  procname observer cmd [args]
+ *
+ */
+static int
+wdb_observer_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	if (argc < 3) {
+		struct bu_vls vls;
+
+		/* return help message */
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_observer");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	return bu_cmd((ClientData)&wdbp->wdb_observers,
+		      interp, argc - 2, argv + 2, bu_observer_cmds, 0);
 }
 
 #if 0
