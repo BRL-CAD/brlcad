@@ -63,7 +63,7 @@ FILE		*outfp = NULL;		/* optional pixel output file */
 mat_t		view2model;
 mat_t		model2view;
 int		srv_startpix;		/* offset for view_pixel */
-int		srv_scanlen = 8*1024;	/* max assignment */
+int		srv_scanlen = REMRT_MAX_PIXELS;	/* max assignment */
 char		*scanbuf;
 /***** end of sharing with viewing model *****/
 
@@ -154,28 +154,17 @@ char **argv;
 		exit(2);
 	}
 
-	beginptr = sbrk(0);
-
-	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
-	npsw = rt_avail_cpus();
-#ifdef CRAY
-	/* The Cray does not have any way to know how many CPUs it has */
-	npsw = MAX_PSW;
-#endif
-	if( npsw > 1 )  {
-		rt_g.rtg_parallel = 1;
-	} else
-		rt_g.rtg_parallel = 0;
-	RES_INIT( &rt_g.res_syscall );
-	RES_INIT( &rt_g.res_worker );
-	RES_INIT( &rt_g.res_stats );
-	RES_INIT( &rt_g.res_results );
-	RES_INIT( &rt_g.res_model );
-
 	control_host = argv[1];
 	tcp_port = argv[2];
+
+	/* Note that the LIBPKG error logger can not be
+	 * "rt_log", as that can cause rt_log to be entered recursively.
+	 * Given the special version of rt_log in use here,
+	 * that will result in a deadlock in RES_ACQUIRE(res_syscall)!
+	 *  libpkg will default to stderr via pkg_errlog(), which is fine.
+	 */
 	pcsrv = pkg_open( control_host, tcp_port, "tcp", "", "",
-		pkgswitch, rt_log );
+		pkgswitch, NULL );
 	if( pcsrv == PKC_ERROR )  {
 		fprintf(stderr, "rtsrv: unable to contact %s, port %s\n",
 			control_host, tcp_port);
@@ -260,6 +249,32 @@ char **argv;
 		exit(1);
 	}
 	if( debug )  fprintf(stderr, "PROTOCOL_VERSION='%s'\n", PROTOCOL_VERSION );
+
+	/*
+	 *  Now that the fork() has been done, it is safe to initialize
+	 *  the parallel processing support.
+	 */
+
+	beginptr = sbrk(0);
+
+	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
+	npsw = rt_avail_cpus();
+#ifdef CRAY
+	/* The Cray does not have any way to know how many CPUs it has */
+	npsw = MAX_PSW;
+#endif
+	if( npsw > 1 )  {
+		rt_g.rtg_parallel = 1;
+	} else
+		rt_g.rtg_parallel = 0;
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_model );
+	/* DO NOT USE rt_log() before this point! */
+
+	if( npsw > 1 )  rt_log("%d processors\n", npsw );
 
 	WorkHead.li_forw = WorkHead.li_back = &WorkHead;
 
@@ -455,10 +470,9 @@ char *buf;
 		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[0]);
 #undef npsw
 
-	/* In case it changed from startup time */
+	/* In case it changed from startup time via an OPT command */
 	if( npsw > 1 )  {
 		rt_g.rtg_parallel = 1;
-		rt_log("%d processors\n", npsw );
 	} else
 		rt_g.rtg_parallel = 0;
 
@@ -795,6 +809,32 @@ out:
 }
 #endif /* not BSD */
 #endif /* not __STDC__ */
+
+
+/*
+ *			R T _ B O M B
+ *  
+ *  Abort the RT library
+ */
+void
+rt_bomb(str)
+char *str;
+{
+	char	*bomb = "RTSRV terminated by rt_bomb()\n";
+
+	if( pkg_send( MSG_PRINT, str, strlen(str)+1, pcsrv ) < 0 )  {
+		fprintf(stderr,"rt_bomb MSG_PRINT failed\n");
+	}
+	if( pkg_send( MSG_PRINT, bomb, strlen(bomb)+1, pcsrv ) < 0 )  {
+		fprintf(stderr,"rt_bomb MSG_PRINT failed\n");
+	}
+
+	if(debug)  fprintf(stderr,"\n%s\n", str);
+	fflush(stderr);
+	if( rt_g.debug || rt_g.NMG_debug )
+		abort();	/* should dump */
+	exit(12);
+}
 
 void
 ph_unexp(pc, buf)
