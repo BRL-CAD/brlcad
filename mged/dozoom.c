@@ -70,14 +70,120 @@ fastf_t	fovy, aspect, near, far, backoff;
 	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
 	m2[0] = m2[5]/aspect;
 	m2[10] = (far+near) / (far-near);
-	m2[11] = 2*far*near / (far-near);
+	m2[11] = 2*far*near / (far-near);	/* This should be negative */
 
-	m2[14] = -1;
+	m2[14] = -1;		/* XXX This should be positive */
 	m2[15] = 0;
 
+	/* Move eye to origin, then apply perspective */
 	mat_idn( tran );
 	tran[11] = -backoff;
 	mat_mul( m, m2, tran );
+}
+
+/*
+ *
+ *  Create a perspective matrix that transforms the +/1 viewing cube,
+ *  with the acutal eye position (not at Z=+1) specified in viewing coords,
+ *  into a related space where the eye has been sheared onto the Z axis
+ *  and repositioned at Z=(0,0,1), with the same perspective field of view
+ *  as before.
+ *
+ *  The Zbuffer clips off stuff with negative Z values.
+ *
+ *  pmat = persp * xlate * shear
+ */
+static void
+mike_persp_mat( pmat, eye )
+mat_t		pmat;
+CONST point_t	eye;
+{
+	mat_t	shear;
+	mat_t	persp;
+	mat_t	xlate;
+	mat_t	t1, t2;
+	point_t	sheared_eye;
+	fastf_t	near, far;
+point_t	a,b;
+
+	if( eye[Z] < SMALL )  {
+		VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
+		return;
+	}
+
+	/* Shear "eye" to +Z axis */
+	mat_idn(shear);
+	shear[2] = -eye[X]/eye[Z];
+	shear[6] = -eye[Y]/eye[Z];
+
+	MAT4X3VEC( sheared_eye, shear, eye );
+	if( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
+		VPRINT("ERROR sheared_eye", sheared_eye);
+		return;
+	}
+#if 0
+VPRINT("sheared_eye", sheared_eye);
+#endif
+
+	/* Translate along +Z axis to put sheared_eye at (0,0,1). */
+	mat_idn(xlate);
+	/* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
+	MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
+
+	/* Build perspective matrix inline, substituting fov=2*atan(1,Z) */
+	mat_idn( persp );
+	/* From page 492 of Graphics Gems */
+	persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
+	persp[5] = sheared_eye[Z];	/* scaling: determines fov */
+
+	/* From page 158 of Rogers Mathematical Elements */
+	/* Z center of projection at Z=+1, r=-1/1 */
+	persp[14] = -1;
+
+	mat_mul( t1, xlate, shear );
+	mat_mul( t2, persp, t1 );
+#if 0
+	/* t2 has perspective matrix, with Z ranging from -1 to +1.
+	 * In order to control "near" and "far clipping planes,
+	 * need to scale and translate in Z.
+	 * For example, to get Z effective Z range of -1 to +11,
+	 * divide Z by 12/2, then xlate by (6-1).
+	 */
+	t2[10] /= 6;		/* near+far/2 */
+	MAT_DELTAS( xlate, 0, 0, -5 );
+#else
+	/* Now, move eye from Z=1 to Z=0, for clipping purposes */
+	MAT_DELTAS( xlate, 0, 0, -1 );
+#endif
+	mat_mul( pmat, xlate, t2 );
+#if 0
+mat_print("pmat",pmat);
+
+	/* Some quick checking */
+	VSET( a, 0, 0, -1 );
+	MAT4X3PNT( b, pmat, a );
+	VPRINT("0,0,-1 ->", b);
+
+	VSET( a, 1, 1, -1 );
+	MAT4X3PNT( b, pmat, a );
+	VPRINT("1,1,-1 ->", b);
+
+	VSET( a, 0, 0, 0 );
+	MAT4X3PNT( b, pmat, a );
+	VPRINT("0,0,0 ->", b);
+
+	VSET( a, 1, 1, 0 );
+	MAT4X3PNT( b, pmat, a );
+	VPRINT("1,1,0 ->", b);
+
+	VSET( a, 1, 1, 1 );
+	MAT4X3PNT( b, pmat, a );
+	VPRINT("1,1,1 ->", b);
+
+	VSET( a, 0, 0, 1 );
+	MAT4X3PNT( b, pmat, a );
+	VPRINT("0,0,1 ->", b);
+#endif
 }
 
 /*
@@ -203,6 +309,13 @@ VPRINT("h", h);
 		case 0:
 			/* Non-stereo case */
 			mat = model2view;
+/* XXX hack */
+#define HACK 0
+#if !HACK
+if( 1 ) {
+#else
+if( mged_variables.faceplate > 0 )  {
+#endif
 			if( eye_pos_scr[Z] == 1.0 )  {
 				/* This way works, with reasonable Z-clipping */
 				persp_mat( pmat, mged_variables.perspective,
@@ -213,6 +326,13 @@ VPRINT("h", h);
 				 */
 				deering_persp_mat( pmat, l, h, eye_pos_scr );
 			}
+} else {
+			/* New way, should handle all cases */
+			mike_persp_mat( pmat, eye_pos_scr );
+}
+#if HACK
+mat_print("pmat", pmat);
+#endif
 			break;
 		case 1:
 			/* R */
