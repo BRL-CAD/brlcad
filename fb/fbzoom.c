@@ -25,17 +25,21 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+/*
+	Conversion to generic frame buffer routine using 'libfb'.
+	Gary S. Moss, BRL. 03/13/85.
 
-#include <stdio.h>	
-#ifdef vax
-#include <sys/ioctl.h>
-#else
-#include <sgtty.h>
+	SCCS id:	@(#) fbzoom.c	1.3
+	Last edit: 	3/13/85 at 19:03:38
+	Retrieved: 	8/13/86 at 03:14:50
+	SCCS archive:	/m/cad/fb_utils/RCS/s.fbzoom.c
+*/
+#if ! defined( lint )
+static
+char	sccsTag[] = "@(#) fbzoom.c	1.3	last edit 3/13/85 at 19:03:38";
 #endif
-struct sgttyb ttyold, ttynew;
-
-int ikfd;	/* Ikonas FD */
-		
+#include <stdio.h>	
+#include <fb.h>
 #define	IKsize 512
 
 /* Zoom rate and limits.	*/
@@ -47,37 +51,36 @@ int ikfd;	/* Ikonas FD */
 #define MaxPan		( IKsize )
 #define MinPan		(0)
 
-int PanFactor;			/* Speed with whitch to pan.	*/
-int zoom;			/* Zoom Factor.			*/
-int xPan, yPan;			/* Pan Location.		*/
+static int PanFactor;			/* Speed with whitch to pan.	*/
+static int zoom;			/* Zoom Factor.			*/
+static int xPan, yPan;			/* Pan Location.		*/
 
 main(argc, argv )
 char **argv;
 {
-	ikopen();
-
+	if( fbopen( NULL, APPEND ) == -1 )
+		return	1;
 	zoom = 2;
 	xPan = yPan = 0;
 
 	/* Set RAW mode */
-	gtty( 0, &ttyold);
-	ttynew = ttyold;
-	ttynew.sg_flags |= RAW;
-	stty( 0, &ttynew);
+	save_Tty( 0 );
+	set_Raw( 0 );
+	clr_Echo( 0 );
 
 	do {
 		PanFactor = 128 / zoom;
-		ikzoom( zoom-1, zoom-1 );
-		ikwindow( (xPan-1) * 4, 4063+yPan );
+		(void) fbzoom( zoom-1, zoom-1 );
+		fbwindow( (xPan-1) * 4, 4063+yPan );
 		printf( "zoom=%d, Upper Left Pixel is %d,%d            \r",
 			zoom, xPan, yPan );
 		fflush( stdout );
 	} while( doKeyPad() );
 
-	stty( 0, &ttyold);
+	reset_Tty( 0 );
 	printf( "\n");		/* Move off of the output line.	*/
-	ikzoom( zoom-1, zoom-1 );
-	ikwindow( (xPan-1) * 4, 4063+yPan );
+	fbzoom( zoom-1, zoom-1 );
+	fbwindow( (xPan-1) * 4, 4063+yPan );
 }
 
 char help[] = "\r\n\
