@@ -40,7 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *				|
  *			       3.0
  */
-static fastf_t get_angle(eu1, eu2)
+static double get_angle(eu1, eu2)
 struct edgeuse *eu1, *eu2;
 {
 	double cosangle, dist;
@@ -48,6 +48,7 @@ struct edgeuse *eu1, *eu2;
 	pointp_t pt, ptmate;
 	point_t test_pt;
 	vect_t veu1, veu2, plvec1, plvec2;
+	vect_t ydir;
 	struct faceuse	*fu1, *fu2;
 	register struct edgeuse *eutmp;
 
@@ -145,9 +146,14 @@ struct edgeuse *eu1, *eu2;
 	 */
 	VCROSS(plvec1, Norm1, veu1);
 	VCROSS(plvec2, Norm2, veu2);
+	VCROSS(ydir, plvec1 , veu1 );
 
 	VUNITIZE(plvec1);
 	VUNITIZE(plvec2);
+	VUNITIZE(ydir);
+
+	/* calculate the angle between the two faces */
+	return( rt_angle_measure( plvec2 , plvec1 , ydir ) );
 
 	cosangle = VDOT(plvec1, plvec2);
 
@@ -224,6 +230,10 @@ struct edgeuse *eu1, *eu2;
 			eu1->e_p, eu2->e_p);
 		EUPRINT("\tJoining", eu1);
 		EUPRINT("\t     to", eu2);
+		rt_log( "Faces around eu1:\n" );
+		nmg_pr_fu_around_eu( eu1 );
+		rt_log( "Faces around eu2:\n" );
+		nmg_pr_fu_around_eu( eu2 );
 	}
 	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
 		struct edgeuse	*first_eu1 = eu1;
@@ -241,6 +251,10 @@ struct edgeuse *eu1, *eu2;
 		angle1 = get_angle(eu1, eu2);
 		angle2 = get_angle(eu1, eu1->radial_p);
 
+		if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) )
+			rt_log("  angle1=%g, angle2=%g\n" , angle1 , angle2 );
+
+
 		for ( iteration2=0; (angle1 > angle2) && iteration2 < 10000; iteration2++ ) {
 			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH;
 			/* If eu1 is only one pair of edgeuses, done */
@@ -252,6 +266,8 @@ struct edgeuse *eu1, *eu2;
 			}
 			angle1 = get_angle(eu1, eu2);
 			angle2 = get_angle(eu1, eu1->radial_p);
+			if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) )
+				rt_log("  angle1=%g, angle2=%g\n" , angle1 , angle2 );
 		}
 		if(iteration2 >= 10000)  {
 			rt_log("angle1=%e, angle2=%e\n", angle1, angle2);
