@@ -48,6 +48,10 @@ proc init_comb { id } {
     set comb_control($id,comb) ""
     set comb_control($id,shader) ""
     set comb_control($id,shader_gui) ""
+    set comb_control($id,dirty_name) 1
+
+    trace vdelete comb_control($id,name) w "comb_handle_trace $id"
+    trace variable comb_control($id,name) w "comb_handle_trace $id"
 
     toplevel $top -screen $mged_gui($id,screen)
 
@@ -420,12 +424,16 @@ from the combination." } }
     bind $top.nameE <Return> "comb_reset $id; break"
 
     place_near_mouse $top
+    wm protocol $top WM_DELETE_WINDOW "catch {comb_dismiss $id $top}"
     wm title $top "Combination Editor ($id)"
 }
 
-proc comb_ok { id top } {
-    comb_apply $id
-    comb_dismiss $id $top
+proc comb_ok {id top} {
+    set ret [comb_apply $id]
+
+    if {$ret == 0} {
+	comb_dismiss $id $top
+    }
 }
 
 proc comb_apply { id } {
@@ -435,10 +443,16 @@ proc comb_apply { id } {
     set top .$id.comb
     set comb_control($id,comb) [$top.combT get 0.0 end]
 
-# apply the parameters in the shader frame to the shader string
-#    if { $comb_control($id,shader) != "" } then {
-#	do_shader_apply comb_control($id,shader) $id
-#    }
+    if {$comb_control($id,dirty_name) && [db_exist $comb_control($id,name)]} {
+	set ret [cad_dialog .$id.combDialog $mged_gui($id,screen)\
+		"Warning!"\
+		"Warning: about to overwrite $comb_control($id,name)"\
+		"" 0 OK Cancel]
+
+	if {$ret} {
+	    return 1
+	}
+    }
 
     if {$comb_control($id,isRegion)} {
 	if {$comb_control($id,id) < 0} {
@@ -446,7 +460,7 @@ proc comb_apply { id } {
 		    "Bad region id!"\
 		    "Region id must be >= 0"\
 		    "" 0 OK
-	    return
+	    return 1
 	}
 
 	if {$comb_control($id,air) < 0} {
@@ -454,14 +468,19 @@ proc comb_apply { id } {
 		    "Bad air code!"\
 		    "Air code must be >= 0"\
 		    "" 0 OK
-	    return
+	    return 1
 	}
 
-	if {$comb_control($id,id) == 0 && $comb_control($id,air) == 0} {
-	    cad_dialog .$id.combDialog $mged_gui($id,screen)\
-		    "Warning: both region id and air code are 0"\
-		    "Warning: both region id and air code are 0"\
-		    "" 0 OK
+	if {$comb_control($id,id) == 0 && $comb_control($id,air) == 0 ||
+            $comb_control($id,id) != 0 && $comb_control($id,air) != 0} {
+	    set ret [cad_dialog .$id.combDialog $mged_gui($id,screen)\
+		    "Warning: both region id and air code are set/unset"\
+		    "Warning: both region id and air code are set/unset"\
+		    "" 0 OK Cancel]
+
+	    if {$ret} {
+		return 1
+	    }
 	}
 
 	if {$comb_control($id,color) == ""} {
@@ -469,16 +488,20 @@ proc comb_apply { id } {
 	} else {
 	    set color [getRGBorReset $top.colorMB comb_control($id,color) $comb_control($id,color)]
 	}
-	set result [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion) \
+
+	set ret [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion) \
 		$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) \
 		$comb_control($id,los) $color $comb_control($id,shader) \
 		$comb_control($id,inherit) $comb_control($id,comb)} comb_error]
 
-	if {$result} {
-	    return $comb_error
+	if {$ret} {
+	    cad_dialog .$id.combDialog $mged_gui($id,screen) \
+		    "comb_apply: Error"\
+		    $comb_error\
+		    "" 0 OK 
 	}
 
-	return
+	return $ret
     }
 
     if {$comb_control($id,color) == ""} {
@@ -486,13 +509,19 @@ proc comb_apply { id } {
     } else {
 	set color [getRGBorReset $top.colorMB comb_control($id,color) $comb_control($id,color)]
     }
-    set result [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
+
+    set ret [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
 	    $color $comb_control($id,shader) $comb_control($id,inherit)\
 	    $comb_control($id,comb)} comb_error]
 
-    if {$result} {
-	return $comb_error
+    if {$ret} {
+	cad_dialog .$id.combDialog $mged_gui($id,screen) \
+		"comb_apply: Error"\
+		$comb_error\
+		"" 0 OK 
     }
+    
+    return $ret
 }
 
 proc comb_reset { id } {
@@ -579,13 +608,16 @@ proc comb_reset { id } {
 	grid forget $comb_control($id,shader_frame)
 	catch { destroy $comb_control($id,shader_gui) }
     }
+
+    set comb_control($id,dirty_name) 0
 }
 
-proc comb_dismiss { id top } {
+proc comb_dismiss {id top} {
     global comb_control
 
-    catch { destroy $top }
-    catch { destroy $comb_control($id,shader_gui) }
+    catch {destroy $top}
+    catch {destroy $comb_control($id,shader_gui)}
+    trace vdelete comb_control($id,name) w "comb_handle_trace $id"
 }
 
 proc comb_toggle_isRegion { id } {
@@ -665,6 +697,21 @@ proc comb_shader_gui { id shader_type } {
 	    -in $top.gridF2 \
 	    -padx $comb_control($id,padx) \
 	    -pady $comb_control($id,pady)
+}
+
+proc db_exist {obj} {
+    set ret [catch {db get $obj}]
+    if {$ret} {
+	return 0
+    } else {
+	return 1
+    }
+}
+
+proc comb_handle_trace {id name1 name2 op} {
+    global comb_control
+
+    set comb_control($id,dirty_name) 1
 }
 
 #proc comb_select_material { id } {
