@@ -758,6 +758,9 @@ CONST struct rt_tol	*tol;
  *
  *	Also note that this routine uses one level more of indirection
  *	in the verts[] array than nmg_cface().
+ *
+ *  Recent improvement: the lu's list of eu's traverses the
+ *  verts[] array in order specified by the caller.  Imagine that.
  */
 struct faceuse *
 nmg_cmface(s, verts, n)
@@ -800,7 +803,7 @@ int		n;
 		}
 	}
 
-	lu = nmg_mlv(&s->l.magic, *verts[n-1], OT_SAME);
+	lu = nmg_mlv(&s->l.magic, *verts[0], OT_SAME);
 	fu = nmg_mf(lu);
 	fu->orientation = OT_SAME;
 	fu->fumate_p->orientation = OT_OPPOSITE;
@@ -808,15 +811,14 @@ int		n;
 	NMG_CK_VERTEXUSE(vu);
 	eu = nmg_meonvu(vu);
 	NMG_CK_EDGEUSE(eu);
-	euold = eu;
 
-	if (!(*verts[n-1]))  {
+	if (!(*verts[0]))  {
 		NMG_CK_VERTEXUSE(eu->vu_p);
 		NMG_CK_VERTEX(eu->vu_p->v_p);
-		*verts[n-1] = eu->vu_p->v_p;
+		*verts[0] = eu->vu_p->v_p;
 	}
 
-	for (i = n-2 ; i >= 0 ; i--) {
+	for (i = n-1 ; i > 0 ; i--) {
 		/* Get the edgeuse most recently created */
 		euold = RT_LIST_FIRST( edgeuse, &lu->down_hd );
 		NMG_CK_EDGEUSE(euold);
@@ -829,7 +831,7 @@ int		n;
 		 */
 		if (*verts[i]) {
 			/* look for an existing edge to share */
-			eur = nmg_findeu(*verts[i+1], *verts[i], s, euold, 1);
+			eur = nmg_findeu(*verts[(i+1)%n], *verts[i], s, euold, 1);
 			eu = nmg_eusplit(*verts[i], euold, 0);
 			if (eur) {
 				nmg_je(eur, eu);
@@ -853,13 +855,30 @@ int		n;
 		}
 	}
 
-	if (eur = nmg_findeu(*verts[n-1], *verts[0], s, euold, 1))  {
+	if (eur = nmg_findeu(*verts[0], *verts[1], s, euold, 1))  {
 		nmg_je(eur, euold);
 	} else  {
 	    if (rt_g.NMG_debug & DEBUG_CMFACE)
 		rt_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
-			n-1, *verts[n-1], 0, *verts[0]);
+			0, *verts[0], 1, *verts[1]);
 	}
+
+	if(rt_g.NMG_debug & DEBUG_BASIC)  {
+		/* Sanity check */
+		euold = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		NMG_CK_EDGEUSE(euold);
+		if( euold->vu_p->v_p != *verts[0] )  {
+			rt_log("ERROR nmg_cmface() lu first vert s/b x%x, was x%x\n",
+				*verts[0], euold->vu_p->v_p );
+			for( i=0; i < n; i++ )  {
+				rt_log("  *verts[%2d]=x%x, eu->vu_p->v_p=x%x\n",
+					i, *verts[i], euold->vu_p->v_p);
+				euold = RT_LIST_PNEXT_CIRC( edgeuse, &euold->l );
+			}
+			rt_bomb("nmg_cmface() bogus eu ordering\n");
+		}
+	}
+
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_cmface(s=x%x, verts[]=x%x, n=%d) fu=x%x\n",
 			s, verts, n, fu);
