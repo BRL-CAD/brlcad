@@ -110,6 +110,10 @@ int		order;
     RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(tree, order);
 
+    if (tree -> rbt_debug & RB_DEBUG_DELETE)
+	bu_log("_rb_delete(%x,%x,%d): data=x%x\n",
+	    tree, node, order, rb_data(node, order));
+
     if ((rb_left_child(node, order) == rb_null(tree))
      || (rb_right_child(node, order) == rb_null(tree)))
 	y = node;
