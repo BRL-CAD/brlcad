@@ -1,4 +1,0 @@
-This image type allows you to mix full-color images and line drawings. You may render some objects in full color, and other objects as line drawings.
-
-To produce this image, you will need to specify the objects you want to render in full color, the objects you want to render as line drawings, and the view information.
-
