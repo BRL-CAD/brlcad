@@ -888,8 +888,10 @@ double azim, elev;
 	mat_t	toEye;
 	struct rt_i *rtip = ap.a_rt_i;
 
+	if( rtip->nsolids <= 0 )
+		rt_bomb("do_ae: no solids active\n");
 	if( rtip->mdl_max[X] >= INFINITY || rtip->mdl_max[X] <= -INFINITY )
-		rt_bomb("do_ae called before rt_gettree");
+		rt_bomb("do_ae: infinite model bounds?\n");
 
 	/*
 	 *  Enlarge the model RPP just slightly, to avoid nasty
