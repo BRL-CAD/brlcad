@@ -28,28 +28,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 struct wdb_pipeseg  pipe1[] = {
 	{
-		(long)WDB_PIPESEG_MAGIC, 0, 0,
+		{(long)WDB_PIPESEG_MAGIC, 0, 0},
 		0, 1, 0,
 		0, 0, 0,
 		0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR
 	},
 
 	{
-		(long)WDB_PIPESEG_MAGIC, 0, 0,
+		{(long)WDB_PIPESEG_MAGIC, 0, 0},
 		0, 5, 0,
 		0, 0, 0,
 		0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR
 	},
 
 	{
-		(long)WDB_PIPESEG_MAGIC, 0, 0,
+		{(long)WDB_PIPESEG_MAGIC, 0, 0},
 		4, 5, 0,
 		0, 5, 0,
 		0.05, 0.1, WDB_PIPESEG_TYPE_BEND
 	},
 
 	{
-		(long)WDB_PIPESEG_MAGIC, 0, 0,
+		{(long)WDB_PIPESEG_MAGIC, 0, 0},
 		0, 1, 0,
 		0, 0, 0,
 		0.05, 0.1, WDB_PIPESEG_TYPE_END
