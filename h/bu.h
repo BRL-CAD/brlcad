@@ -963,6 +963,10 @@ BU_EXTERN(void			bu_parse_mm, (CONST struct bu_structparse *sdp,
 				CONST char *name,
 				char *base,
 				CONST char *value));
+BU_EXTERN( char *		bu_key_eq_to_key_val, (CONST char *in) );
+BU_EXTERN( char *		bu_shader_to_key_val, (CONST char *in) );
+BU_EXTERN( char *		bu_key_val_to_key_eq, (CONST char *in) );
+BU_EXTERN( char *		bu_shader_to_key_eq, (CONST char *in) );
 				
 
 
