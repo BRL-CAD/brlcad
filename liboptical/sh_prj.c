@@ -200,17 +200,17 @@ CONST char				*value;	/* string containing value */
 	mat_mul(img_new->i_sh_to_img, scale, tmp);
 
 
+	VSET(v_tmp, 0.0, 0.0, 1.0);
+
+	/* compute inverse */
+	mat_inv(img_new->i_mat_inv, img_new->i_mat);
+	mat_inv(xform, img_new->i_sh_to_img);
+
+	MAT4X3VEC(img_new->i_plane, xform, v_tmp);
 
 	if( rdebug&RDEBUG_SHADE) {
 		point_t pt;		
 
-		VSET(v_tmp, 0.0, 0.0, 1.0);
-
-		/* compute inverse */
-		mat_inv(img_new->i_mat_inv, img_new->i_mat);
-		mat_inv(xform, img_new->i_sh_to_img);
-
-		MAT4X3VEC(img_new->i_plane, xform, v_tmp);
 #if 0
 		VUNITIZE(img_new->i_plane);
 		img_new->i_plane[H] = 
