@@ -2248,7 +2248,7 @@ int			rebuild_fastgen_plates_only;
 							continue;
 
 					/* if the original partition is available, just use it */
-					if( !pp->pt_regionp )
+					if( !pp->pt_regionp || pp->pt_regionp == pp_reg )
 					{
 						pp->pt_regionp = pp_reg;
 						bu_ptbl_ins( &open_parts, (long *)pp );
