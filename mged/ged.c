@@ -618,7 +618,7 @@ new_mats()
 bsdselect( readfds, sec, us )
 long readfds;
 {
-#if defined(BSD) || defined(sgi) || defined(stellar)
+#if defined(BSD) || defined(sgi) || defined(stellar) || defined(CRAY)
 	struct timeval tv;
 
 	tv.tv_sec = sec;
