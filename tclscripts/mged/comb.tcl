@@ -188,8 +188,7 @@ GUI will automatically be updated." } }
     entry $top.shaderE -relief flat -width 12 -textvar comb_control($id,shader)
     hoc_register_data $top.shaderE "Shader" $hoc_data
 
-    bind $top.shaderE <KeyRelease> "set_shader_params comb_control($id,shader) $id; \
-	    comb_callback $id $top.gridF2"
+    bind $top.shaderE <KeyRelease> "set_shader_params comb_control($id,shader) $id"
 
     menubutton $top.shaderMB -relief raised -bd 2\
 	    -menu $top.shaderMB.m -indicatoron 1
@@ -248,6 +247,14 @@ the form of the selected shader type." } }
 	-command "comb_shader_gui $id envmap"
     hoc_register_menu_data "Shader" "envmap" "Shader - envmap" \
 	{ { summary "Apply an environment map using this region." } }
+    $top.shaderMB.m add command -label "projection" \
+	-command "comb_shader_gui $id prj"
+    hoc_register_menu_data "Shader" "projection" "Shader - prj" \
+	{ { summary "Project one or more images on this object." } }
+    $top.shaderMB.m add command -label "camouflage" \
+	-command "comb_shader_gui $id camo"
+    hoc_register_menu_data "Shader" "camouflage" "Shader - camo" \
+	{ { summary "Apply camouflage to this object." } }
     $top.shaderMB.m add command -label "Unknown" \
 	-command "comb_shader_gui $id unknown"
     hoc_register_menu_data "Shader" "Unknown" "Shader - unknown" \
@@ -616,36 +623,6 @@ proc comb_shader_gui { id shader_type } {
 	    -in $top.gridF2 \
 	    -padx $comb_control($id,padx) \
 	    -pady $comb_control($id,pady)
-}
-
-# This is being called after a call to set_shader_params, which
-# may build the shader GUI.
-proc comb_callback { id master } {
-    global comb_control
-
-    set err [catch "set material [lindex $comb_control($id,shader) 0]"]
-    if { $err != 0 } return
-
-    if [is_good_shader $material] {
-	# If not managing shader frame, then manage it.
-	if { [llength [grid slaves $master] ] <= 1 } {
-	    grid $comb_control($id,shader_frame) \
-		    -row 1 \
-		    -sticky "ew" \
-		    -in $master \
-		    -padx $comb_control($id,padx) \
-		    -pady $comb_control($id,pady)
-	}
-
-	return
-    }
-
-    # We have a bad material type. If managing
-    # the shader frame, then unmanage it.
-    if { [llength [grid slaves $master] ] == 2 } {
-	grid forget $comb_control($id,shader_frame)
-	catch { destroy $comb_control($id,shader_gui) }
-    }
 }
 
 #proc comb_select_material { id } {
