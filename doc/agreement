@@ -12,9 +12,9 @@ The U. S. Army Research Laboratory, hereinafter "ARL", an agency of THE
 GOVERNMENT, is the originator of The BRL-CAD Package.
 
 The BRL-CAD Package is a collection of computer programs, data files,
-and associated documentation provided in machine-readable form,
-hereinafter referred to as "BRL-CAD". BRL-CAD may be obtained in either
-"binary executable" or "source code" editions.
+and associated documentation, hereinafter "BRL-CAD". BRL-CAD is provided
+in machine-readable form and may be obtained in either "binary
+executable" or "source code" editions.
 
 BRL-CAD and the "BRL-CAD Eagle" are trademarks of the United States Army.
 
@@ -24,6 +24,9 @@ and information exchange programs on behalf of ARL.
 
 The corporation or private individual requesting BRL-CAD as identified
 on page two is hereinafter the "RECIPIENT".
+
+Changes to any files provided with BRL-CAD are hereinafter MODIFICATIONS.
+New files which are entirely created by RECIPIENT are hereinafter EXTENSIONS.
 
 1.  BRL-CAD is an unpublished work that is not generally available to
 the public, except through the terms of this limited distribution. ARL
@@ -40,13 +43,11 @@ thereof, will not be published for profit or in any manner offered
 for sale to THE GOVERNMENT. BRL-CAD may be used in contracts with THE
 GOVERNMENT but no development charge may be made as part of its use.
 
-4. If RECIPIENT elects the "source code" edition of BRL-CAD, and if
-RECIPIENT makes modifications to the BRL-CAD source code, then RECIPIENT
-agrees to transfer ownership of all such modifications to ARL so that
-they can be shared with the entire BRL-CAD user community.
+4. If RECIPIENT makes MODIFICATIONS to BRL-CAD, then RECIPIENT agrees to
+transfer ownership of all such MODIFICATIONS to ARL in source code form so
+that the MODIFICATIONS can be shared with the entire BRL-CAD user community.
 
-5.  RECIPIENT will own full rights to any layered products built on top
-of BRL-CAD.
+5.  RECIPIENT will own full rights to any EXTENSIONS to BRL-CAD they create.
 
 6.  RECIPIENT will own full rights to any data files, databases or
 images created using BRL-CAD.
