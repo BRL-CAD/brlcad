@@ -349,6 +349,7 @@ proc do_rt_script { id } {
 
 proc do_About_MGED { id } {
     global mged_gui
+    global mged_default
     global version
 
     cad_dialog .$id.about $mged_gui($id,screen) "About MGED..." \
@@ -356,7 +357,10 @@ proc do_About_MGED { id } {
 MGED (Multi-device Geometry EDitor) is part
 of the BRL-CAD(TM) package.
 Developed by the U. S. Army Research Laboratory
-Aberdeen Proving Ground, Maryland  21005-5068  USA" \
+Aberdeen Proving Ground, Maryland  21005-5068  USA
+
+Note - html documentation can be found in
+$mged_default(html_dir)" \
 	    {} 0 OK
 }
 
