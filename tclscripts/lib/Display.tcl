@@ -46,6 +46,7 @@ class Display {
     public method update {obj}
     public method refresh {}
     public method rt {args}
+    public method rtabort {{gi 0}}
     public method rtcheck {args}
     public method autoview {{g_index 0}}
     public method attach_view {}
@@ -134,9 +135,9 @@ body Display::refresh {} {
 }
 
 body Display::rt {args} {
-    if {$itk_option(-listen) < 0} {
-	return "rt: not listening"
-    }
+#    if {$itk_option(-listen) < 0} {
+#	return "rt: not listening"
+#    }
 
     set len [llength $args]
 
@@ -154,6 +155,16 @@ body Display::rt {args} {
 
     set v_obj [View::get_viewname]
     eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+}
+
+body Display::rtabort {{gi 0}} {
+    set geo [lindex $geolist $gi]
+
+    if {$geo == ""} {
+	return "rtabort: bad geometry index"
+    }
+
+    $geo rtabort
 }
 
 body Display::rtcheck {args} {

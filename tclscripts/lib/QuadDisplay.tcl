@@ -23,6 +23,8 @@
 #
 
 option add *Pane*margin 0 widgetDefault
+option add *QuadDisplay.width 400 widgetDefault
+option add *QuadDisplay.height 400 widgetDefault
 
 class QuadDisplay {
     inherit iwidgets::Panedwindow
@@ -65,6 +67,7 @@ class QuadDisplay {
     public method listen {args}
     public method perspective {args}
     public method rt {args}
+    public method rtabort {{gi 0}}
     public method rtcheck {args}
     public method zbuffer {args}
     public method zclip {args}
@@ -434,6 +437,10 @@ body QuadDisplay::fb_observe {args} {
 
 body QuadDisplay::rt {args} {
     eval $itk_component($itk_option(-pane)) rt $args
+}
+
+body QuadDisplay::rtabort {{gi 0}} {
+    $itk_component($itk_option(-pane)) rtabort $gi
 }
 
 body QuadDisplay::rtcheck {args} {
