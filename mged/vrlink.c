@@ -156,7 +156,7 @@ vr_viewpoint_hook()
  *  Process the "pov" command generated above.
  *  XXX this should move to chgview.c when finished.
  */
-void
+int
 f_pov( argc, argv )
 int	argc;
 char	*argv[];
@@ -165,7 +165,7 @@ char	*argv[];
 
 	if( argc < 1+3+4+1+3 )  {
 		printf("pov: insufficient args\n");
-		return;
+		return CMD_BAD;
 	}
 	toViewcenter[MDX] = -atof(argv[1]);
 	toViewcenter[MDY] = -atof(argv[2]);
@@ -180,6 +180,8 @@ char	*argv[];
 	eye_pos_scr[Y] = atof(argv[10]);
 	eye_pos_scr[Z] = atof(argv[11]);
 	new_mats();
+
+	return CMD_OK;
 }
 
 /*
@@ -189,7 +191,7 @@ char	*argv[];
  *
  *  Syntax:  vrmgr host role
  */
-void
+int
 f_vrmgr( argc, argv )
 int	argc;
 char	*argv[];
@@ -214,7 +216,7 @@ char	*argv[];
 	} else if( strcmp( role, "overview" ) == 0 )  {
 	} else {
 		fprintf(stderr,"role '%s' unknown, must be master/slave/overview\n", role);
-		return;
+		return CMD_BAD;
 	}
 
 	vrmgr = pkg_open( vr_host, tcp_port, "tcp", "", "",
@@ -223,7 +225,7 @@ char	*argv[];
 		fprintf(stderr, "mged/f_vrmgr: unable to contact %s, port %s\n",
 			vr_host, tcp_port);
 		vrmgr = PKC_NULL;
-		return;
+		return CMD_BAD;
 	}
 
 	rt_vls_from_argv( &str, argc-2, argv+2 );
@@ -233,7 +235,7 @@ char	*argv[];
 		printf("pkg_send VRMSG_ROLE failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = NULL;
-		return;
+		return CMD_BAD;
 	}
 
 	/* Establish appropriate hooks */
@@ -247,6 +249,8 @@ char	*argv[];
 	extrapoll_fd = vrmgr->pkc_fd;
 	extrapoll_hook = vr_input_hook;
 	rt_vls_free( &str );
+
+	return CMD_OK;
 }
 
 /*
