@@ -1,5 +1,5 @@
 /*
- *			V I E W R A D
+ *			V I E W S C A T . C
  *
  *  Ray Tracing program RTRAD bottom half.
  *
@@ -55,6 +55,13 @@ int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
 	"%d",	"maxreflect",	(int)&numreflect,	FUNC_NULL,
+	"%d",	"reflect",	(int)&r_reflections,	FUNC_NULL,
+	"%f",	"wavelength",	(int)&wavelength,	FUNC_NULL,
+	"%f",	"xhpol",	(int)&xhpol,		FUNC_NULL,
+	"%f",	"xvpol",	(int)&xvpol,		FUNC_NULL,
+	"%f",	"rhpol",	(int)&rhpol,		FUNC_NULL,
+	"%f",	"rvpol",	(int)&rvpol,		FUNC_NULL,
+	"%f",	"epsilon",	(int)&epsilon,		FUNC_NULL,
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
