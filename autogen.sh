@@ -1,15 +1,25 @@
 #!/bin/sh
+#                        a u t o g e n . s h
+#
 # script to prepare the sources
-###
+#
+######################################################################
 
 ARGS="$*"
 PATH_TO_AUTOGEN="`dirname $0`"
-MAJOR_VERSION=2
-MINOR_VERSION=50
+
+AUTOCONF_MAJOR_VERSION=2
+AUTOCONF_MINOR_VERSION=50
+AUTOCONF_PATCH_VERSION=0
+
+AUTOMAKE_MAJOR_VERSION=1
+AUTOMAKE_MINOR_VERSION=5
+AUTOMAKE_PATCH_VERSION=0
 
 
-# environment check
-###
+#####################
+# environment check #
+#####################
 _have_sed="`echo no | sed 's/no/yes/'`"
 HAVE_SED=no
 if [ $? = 0 ] ; then
@@ -17,8 +27,9 @@ if [ $? = 0 ] ; then
 fi
 
 
-# version check
-###
+#################
+# version check #
+#################
 autoconf -V > /dev/null 2>&1
 [ $? = 0 ] && _autofound=yes || _autofound=no
 _report_error=no
@@ -31,32 +42,33 @@ else
 	_maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\..*/\1/'`"
 	_min_version="`echo $_version_line | sed 's/.*\.\([0-9][0-9]\).*/\1/'`"
 	if [ $? = 0 ] ; then
-	    if [ $_maj_version -lt $MAJOR_VERSION ] ; then
+	    if [ $_maj_version -lt $AUTOCONF_MAJOR_VERSION ] ; then
 		_report_error=yes
-	    elif [ $_min_version -lt $MINOR_VERSION ] ; then
+	    elif [ $_min_version -lt $AUTOCONF_MINOR_VERSION ] ; then
 		_report_error=yes
 	    fi
 	fi
 	echo "Found GNU Autoconf version $_maj_version.$_min_version"
     else
-	echo "Warning:  sed is not available to properly detect version of GNU Autotools"
+	echo "Warning:  sed is not available to properly detect version of GNU Autoconf"
     fi
     echo
 fi
 if [ "x$_report_error" = "xyes" ] ; then
     echo "ERROR:  To prepare the BRL-CAD build system from scratch,"
-    echo "        At least version $MAJOR_VERSION.$MINOR_VERSION of the GNU Autotools must be installed."
+    echo "        At least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION of GNU Autoconf must be installed."
     echo 
     echo "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
-    echo "run configure or make.  Either GNU Autotools will need to be installed"
+    echo "run configure or make.  Either the GNU Autotools will need to be installed"
     echo "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
     echo "code on another system and transferred to here. -- Cheers!"
     exit 1
 fi
 
 
-# check for autoreconf
-###
+########################
+# check for autoreconf #
+########################
 HAVE_AUTORECONF=yes
 autoreconf -V > /dev/null 2>&1
 if [ ! $? = 0 ] ; then
@@ -64,8 +76,9 @@ if [ ! $? = 0 ] ; then
 fi
 
 
-# check for libtoolize
-###
+########################
+# check for libtoolize #
+########################
 HAVE_LIBTOOLIZE=yes
 HAVE_GLIBTOOLIZE=no
 libtoolize --version > /dev/null 2>&1
@@ -102,8 +115,9 @@ if [ ! $? = 0 ] ; then
 fi
 
 
-# prepare build via autoreconf or manually
-###
+############################################
+# prepare build via autoreconf or manually #
+############################################
 _prev_path="`pwd`"
 cd "$PATH_TO_AUTOGEN"
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
@@ -133,9 +147,9 @@ echo "done"
 echo
 
 
-
-# check for help arg, and bypass running make
-###
+###############################################
+# check for help arg, and bypass running make #
+###############################################
 _help=no
 [ "x$HAVE_SED" = "xyes" ] && [ "x`echo $ARGS | sed 's/.*help.*/help/'`" = "xhelp" ] && _help=yes
 [ "x$ARGS" = "x--help" ] && _help=yes
@@ -147,8 +161,9 @@ if [ "x$_help" = "xyes" ] ; then
 fi
 
 
-# summarize.  actually build if arg was provided.
-###
+##################################################
+# summarize.  actually build if arg was provided #
+##################################################
 if [ ! "x$ARGS" = "x" ] ; then
     echo "The BRL-CAD build system is now prepared.  Building here with:"
     echo "$PATH_TO_AUTOGEN/configure $ARGS"
