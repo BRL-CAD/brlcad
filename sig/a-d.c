@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <ctype.h>
+#include <unistd.h>
 #include "machine.h"
 #include "bu.h"
 
