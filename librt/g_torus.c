@@ -370,14 +370,14 @@ register struct xray *rp;
 	 *  		[0]                [1]           [2]    dgr=2
 	 */
 	X2_Y2.dgr = 2;
-	X2_Y2.cf[0] = pprime[X] * pprime[X] + pprime[Y] * pprime[Y];
-	X2_Y2.cf[1] = 2.0 * (pprime[X] * pprime[X] + pprime[Y] * pprime[Y]);
+	X2_Y2.cf[0] = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
+	X2_Y2.cf[1] = 2.0 * (dprime[X] * pprime[X] + dprime[Y] * pprime[Y]);
 	X2_Y2.cf[2] = pprime[X] * pprime[X] + pprime[Y] * pprime[Y];
 
 	/* A = X2_Y2 + Z2 */
 	A.dgr = 2;
-	A.cf[0] = X2_Y2.cf[0] + pprime[Z] * pprime[Z];
-	A.cf[1] = X2_Y2.cf[1] + 2.0 * pprime[Z] * pprime[Z];
+	A.cf[0] = X2_Y2.cf[0] + dprime[Z] * dprime[Z];
+	A.cf[1] = X2_Y2.cf[1] + 2.0 * dprime[Z] * pprime[Z];
 	A.cf[2] = X2_Y2.cf[2] + pprime[Z] * pprime[Z] +
 		  1.0 - tor->tor_alpha * tor->tor_alpha;
 
