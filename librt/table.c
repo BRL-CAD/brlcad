@@ -49,9 +49,13 @@ CONST struct bu_structparse rt_nul_parse[] = {
 	BU_EXTERN(int rt_##name##_piece_shot, (\
 			struct rt_piecestate *psp, \
 			struct rt_piecelist *plp, \
+			double dist_corr, \
 			register struct xray *rp, \
-			struct application *ap, struct seg *seghead, \
-			struct resource *resp )); \
+			struct application *ap )); \
+	BU_EXTERN(void rt_##name##_piece_hitsegs, (\
+			struct rt_piecestate *psp, \
+			struct seg *seghead, \
+			struct application *ap)); \
 	BU_EXTERN(void rt_##name##_print, (CONST struct soltab *stp)); \
 	BU_EXTERN(void rt_##name##_norm, (struct hit *hitp, \
 			struct soltab *stp, struct xray *rp)); \
@@ -99,8 +103,11 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			struct rt_piecestate *psp, \
 			struct rt_piecelist *plp, \
 			struct soltab *stp, struct xray *rp, \
-			struct application *ap, struct seg *seghead, \
-			struct resource *resp )); \
+			struct application *ap )); \
+	BU_EXTERN(void rt_/**/name/**/_piece_hitsegs, (\
+			struct rt_piecestate *psp, \
+			struct seg *seghead, \
+			struct application *ap)); \
 	BU_EXTERN(void rt_/**/name/**/_print, (CONST struct soltab *stp)); \
 	BU_EXTERN(void rt_/**/name/**/_norm, (struct hit *hitp, \
 			struct soltab *stp, struct xray *rp)); \
@@ -344,7 +351,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
 		0,		/* 0: unused, for sanity checking. */
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print, 	rt_nul_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 	 	rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
@@ -357,7 +364,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_TOR", "tor",
 		1,		/* 1 */
 		rt_tor_prep,	rt_tor_shot,	rt_tor_print,	rt_tor_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_tor_uv,	rt_tor_curve,	rt_tor_class,	rt_tor_free,
 		rt_tor_plot,	rt_tor_vshot,	rt_tor_tess,	rt_nul_tnurb,
 		rt_tor_import,	rt_tor_export,	rt_tor_ifree,
@@ -370,7 +377,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_TGC", "tgc",
 		1,		/* 2 */
 		rt_tgc_prep,	rt_tgc_shot,	rt_tgc_print,	rt_tgc_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_tgc_uv,	rt_tgc_curve,	rt_tgc_class,	rt_tgc_free,
 		rt_tgc_plot,	rt_tgc_vshot,	rt_tgc_tess,	rt_tgc_tnurb,
 		rt_tgc_import,	rt_tgc_export,	rt_tgc_ifree,
@@ -383,7 +390,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_ELL", "ell",
 		1,		/* 3 */
 		rt_ell_prep,	rt_ell_shot,	rt_ell_print,	rt_ell_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_ell_uv,	rt_ell_curve,	rt_ell_class,	rt_ell_free,
 		rt_ell_plot,	rt_ell_vshot,	rt_ell_tess,	rt_ell_tnurb,
 		rt_ell_import,	rt_ell_export,	rt_ell_ifree,
@@ -396,7 +403,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_ARB8", "arb8",
 		0,		/* 4 */
 		rt_arb_prep,	rt_arb_shot,	rt_arb_print,	rt_arb_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_arb_uv,	rt_arb_curve,	rt_arb_class,	rt_arb_free,
 		rt_arb_plot,	rt_arb_vshot,	rt_arb_tess,	rt_arb_tnurb,
 		rt_arb_import,	rt_arb_export,	rt_arb_ifree,
@@ -409,7 +416,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_ARS", "ars",
 		1,		/* 5 */
 		rt_ars_prep,	rt_ars_shot,	rt_ars_print,	rt_ars_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_ars_uv,	rt_ars_curve,	rt_ars_class,	rt_ars_free,
 		rt_ars_plot,	rt_vstub,	rt_ars_tess,	rt_nul_tnurb,
 		rt_ars_import,	rt_ars_export,	rt_ars_ifree,
@@ -422,7 +429,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_HALF", "half",
 		0,		/* 6 */
 		rt_hlf_prep,	rt_hlf_shot,	rt_hlf_print,	rt_hlf_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_hlf_uv,	rt_hlf_curve,	rt_hlf_class,	rt_hlf_free,
 		rt_hlf_plot,	rt_hlf_vshot,	rt_hlf_tess,	rt_nul_tnurb,
 		rt_hlf_import,	rt_hlf_export,	rt_hlf_ifree,
@@ -435,7 +442,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_REC", "rec",
 		1,		/* 7 */
 		rt_rec_prep,	rt_rec_shot,	rt_rec_print,	rt_rec_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_rec_uv,	rt_rec_curve,	rt_rec_class,	rt_rec_free,
 		rt_tgc_plot,	rt_rec_vshot,	rt_tgc_tess,	rt_nul_tnurb,
 		rt_tgc_import,	rt_tgc_export,	rt_tgc_ifree,
@@ -448,7 +455,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_POLY", "poly",
 		1,		/* 8 */
 		rt_pg_prep,	rt_pg_shot,	rt_pg_print,	rt_pg_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_pg_uv,	rt_pg_curve,	rt_pg_class,	rt_pg_free,
 		rt_pg_plot,	rt_vstub,	rt_pg_tess,	rt_nul_tnurb,
 		rt_pg_import,	rt_pg_export,	rt_pg_ifree,
@@ -461,7 +468,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_BSPLINE", "bspline",
 		1,		/* 9 */
 		rt_nurb_prep,	rt_nurb_shot,	rt_nurb_print,	rt_nurb_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nurb_uv,	rt_nurb_curve,	rt_nurb_class,	rt_nurb_free,
 		rt_nurb_plot,	rt_vstub,	rt_nurb_tess,	rt_nul_tnurb,
 		rt_nurb_import,	rt_nurb_export,	rt_nurb_ifree,
@@ -474,7 +481,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_SPH", "sph",
 		0,		/* 10 */
 		rt_sph_prep,	rt_sph_shot,	rt_sph_print,	rt_sph_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_sph_uv,	rt_sph_curve,	rt_sph_class,	rt_sph_free,
 		rt_ell_plot,	rt_sph_vshot,	rt_ell_tess,	rt_ell_tnurb,
 		rt_ell_import,	rt_ell_export,	rt_ell_ifree,
@@ -487,7 +494,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_NMG", "nmg",
 		1,		/* 11 */
 		rt_nmg_prep,	rt_nmg_shot,	rt_nmg_print,	rt_nmg_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nmg_uv,	rt_nmg_curve,	rt_nmg_class,	rt_nmg_free,
 		rt_nmg_plot,	rt_nmg_vshot,	rt_nmg_tess,	rt_nul_tnurb,
 		rt_nmg_import,	rt_nmg_export,	rt_nmg_ifree,
@@ -500,7 +507,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_EBM", "ebm",
 		1,		/* 12 */
 		rt_ebm_prep,	rt_ebm_shot,	rt_ebm_print,	rt_ebm_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_ebm_uv,	rt_ebm_curve,	rt_ebm_class,	rt_ebm_free,
 		rt_ebm_plot,	rt_vstub,	rt_ebm_tess,	rt_nul_tnurb,
 		rt_ebm_import,	rt_ebm_export,	rt_ebm_ifree,
@@ -513,7 +520,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_VOL", "vol",
 		1,		/* 13 */
 		rt_vol_prep,	rt_vol_shot,	rt_vol_print,	rt_vol_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_vol_uv,	rt_vol_curve,	rt_vol_class,	rt_vol_free,
 		rt_vol_plot,	rt_vstub,	rt_vol_tess,	rt_nul_tnurb,
 		rt_vol_import,	rt_vol_export,	rt_vol_ifree,
@@ -526,7 +533,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_ARBN", "arbn",
 		0,		/* 14 */
 		rt_arbn_prep,	rt_arbn_shot,	rt_arbn_print,	rt_arbn_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_arbn_uv,	rt_arbn_curve,	rt_arbn_class,	rt_arbn_free,
 		rt_arbn_plot,	rt_arbn_vshot,	rt_arbn_tess,	rt_nul_tnurb,
 		rt_arbn_import,	rt_arbn_export,	rt_arbn_ifree,
@@ -539,7 +546,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_PIPE", "pipe",
 		1,		/* 15 */
 		rt_pipe_prep,	rt_pipe_shot,	rt_pipe_print,	rt_pipe_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_pipe_uv,	rt_pipe_curve,	rt_pipe_class,	rt_pipe_free,
 		rt_pipe_plot,	rt_pipe_vshot,	rt_pipe_tess,	rt_nul_tnurb,
 		rt_pipe_import,	rt_pipe_export,	rt_pipe_ifree,
@@ -552,7 +559,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_PARTICLE", "part",
 		0,		/* 16 */
 		rt_part_prep,	rt_part_shot,	rt_part_print,	rt_part_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_part_uv,	rt_part_curve,	rt_part_class,	rt_part_free,
 		rt_part_plot,	rt_part_vshot,	rt_part_tess,	rt_nul_tnurb,
 		rt_part_import,	rt_part_export,	rt_part_ifree,
@@ -565,7 +572,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_RPC", "rpc",
 		0,		/* 17 */
 		rt_rpc_prep,	rt_rpc_shot,	rt_rpc_print,	rt_rpc_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_rpc_uv,	rt_rpc_curve,	rt_rpc_class,	rt_rpc_free,
 		rt_rpc_plot,	rt_rpc_vshot,	rt_rpc_tess,	rt_nul_tnurb,
 		rt_rpc_import,	rt_rpc_export,	rt_rpc_ifree,
@@ -578,7 +585,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_RHC", "rhc",
 		0,		/* 18 */
 		rt_rhc_prep,	rt_rhc_shot,	rt_rhc_print,	rt_rhc_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_rhc_uv,	rt_rhc_curve,	rt_rhc_class,	rt_rhc_free,
 		rt_rhc_plot,	rt_rhc_vshot,	rt_rhc_tess,	rt_nul_tnurb,
 		rt_rhc_import,	rt_rhc_export,	rt_rhc_ifree,
@@ -591,7 +598,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_EPA", "epa",
 		0,		/* 19 */
 		rt_epa_prep,	rt_epa_shot,	rt_epa_print,	rt_epa_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_epa_uv,	rt_epa_curve,	rt_epa_class,	rt_epa_free,
 		rt_epa_plot,	rt_epa_vshot,	rt_epa_tess,	rt_nul_tnurb,
 		rt_epa_import,	rt_epa_export,	rt_epa_ifree,
@@ -604,7 +611,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_EHY", "ehy",
 		0,		/* 20 */
 		rt_ehy_prep,	rt_ehy_shot,	rt_ehy_print,	rt_ehy_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_ehy_uv,	rt_ehy_curve,	rt_ehy_class,	rt_ehy_free,
 		rt_ehy_plot,	rt_ehy_vshot,	rt_ehy_tess,	rt_nul_tnurb,
 		rt_ehy_import,	rt_ehy_export,	rt_ehy_ifree,
@@ -617,7 +624,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_ETO", "eto",
 		1,		/* 21 */
 		rt_eto_prep,	rt_eto_shot,	rt_eto_print,	rt_eto_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_eto_uv,	rt_eto_curve,	rt_eto_class,	rt_eto_free,
 		rt_eto_plot,	rt_eto_vshot,	rt_eto_tess,	rt_nul_tnurb,
 		rt_eto_import,	rt_eto_export,	rt_eto_ifree,
@@ -630,7 +637,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_GRIP", "grip",
 		1,		/* 22 */
 		rt_grp_prep,	rt_grp_shot,	rt_grp_print,	rt_grp_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_grp_uv,	rt_grp_curve,	rt_grp_class,	rt_grp_free,
 		rt_grp_plot,	rt_grp_vshot,	rt_grp_tess,	rt_nul_tnurb,
 		rt_grp_import,	rt_grp_export,	rt_grp_ifree,
@@ -643,7 +650,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
 		0,		/* 23 -- XXX unimplemented */
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
@@ -656,7 +663,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_HF", "hf",
 		0,		/* 24 */
 		rt_hf_prep,	rt_hf_shot,	rt_hf_print,	rt_hf_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_hf_uv,	rt_hf_curve,	rt_hf_class,	rt_hf_free,
 		rt_hf_plot,	rt_vstub,	rt_hf_tess,	rt_nul_tnurb,
 		rt_hf_import,	rt_hf_export,	rt_hf_ifree,
@@ -669,7 +676,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_DSP", "dsp",
 		0,		/* 25 Displacement Map (alt. height field) */
 		rt_dsp_prep,	rt_dsp_shot,	rt_dsp_print,	rt_dsp_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_dsp_uv,	rt_dsp_curve,	rt_dsp_class,	rt_dsp_free,
 		rt_dsp_plot,	rt_vstub,	rt_nul_tess,	rt_nul_tnurb,
 		rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
@@ -682,7 +689,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_SKETCH", "sketch",
 		0,		/* 26 2D sketch */
 		rt_sketch_prep,	rt_sketch_shot,	rt_sketch_print, rt_sketch_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_sketch_uv,	rt_sketch_curve, rt_sketch_class,rt_sketch_free,
 		rt_sketch_plot,	rt_vstub,	rt_nul_tess,	rt_nul_tnurb,
 		rt_sketch_import, rt_sketch_export, rt_sketch_ifree,
@@ -695,7 +702,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_EXTRUDE", "extrude",
 		1,		/* 27 Solid of extrusion */
 		rt_extrude_prep,	rt_extrude_shot,	rt_extrude_print,	rt_extrude_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_extrude_uv,		rt_extrude_curve,	rt_extrude_class,	rt_extrude_free,
 		rt_extrude_plot,	rt_extrude_vshot,	rt_extrude_tess,	rt_nul_tnurb,
 		rt_extrude_import,	rt_extrude_export,	rt_extrude_ifree,
@@ -708,7 +715,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_SUBMODEL", "submodel",
 		1,		/* 28 Instanced submodel */
 		rt_submodel_prep,	rt_submodel_shot,	rt_submodel_print,	rt_submodel_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_submodel_uv,		rt_submodel_curve,	rt_submodel_class,	rt_submodel_free,
 		rt_submodel_plot,	rt_vstub,		rt_submodel_tess,	rt_nul_tnurb,
 		rt_submodel_import,	rt_submodel_export,	rt_submodel_ifree,
@@ -721,7 +728,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_CLINE", "cline",
 		0,		/* 29 Fastgen cline solid */
 		rt_cline_prep,	rt_cline_shot,	rt_cline_print,	rt_cline_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_cline_uv,	rt_cline_curve,	rt_cline_class,	rt_cline_free,
 		rt_cline_plot,	rt_cline_vshot,	rt_cline_tess,	rt_cline_tnurb,
 		rt_cline_import,	rt_cline_export,	rt_cline_ifree,
@@ -734,7 +741,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_BOT", "bot",
 		0,		/* 30  Bag o' Triangles */
 		rt_bot_prep,	rt_bot_shot,	rt_bot_print,	rt_bot_norm,
-		rt_bot_piece_shot,
+		rt_bot_piece_shot, rt_bot_piece_hitsegs,
 		rt_bot_uv,	rt_bot_curve,	rt_bot_class,	rt_bot_free,
 		rt_bot_plot,	rt_bot_vshot,	rt_bot_tess,	rt_bot_tnurb,
 		rt_bot_import,	rt_bot_export,	rt_bot_ifree,
@@ -749,7 +756,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_COMBINATION", "comb",
 		0,
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
 		rt_comb_import,	rt_comb_export,	rt_comb_ifree,
@@ -763,7 +770,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{0L, ">ID_MAXIMUM", ">id_max",
 		0,		/* this entry for sanity only */
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
-		rt_nul_piece_shot,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
@@ -803,10 +810,12 @@ int IDEF(rt_nul_shot,(struct soltab *stp,
 			struct seg *seghead))
 int IDEF(rt_nul_piece_shot,(struct rt_piecestate *psp,
 			struct rt_piecelist *plp,
+			double dist_corr,
 			struct xray *rp,
-			struct application *ap,
+			struct application *ap))
+void DEF(rt_nul_piece_hitsegs,(struct rt_piecestate *psp,
 			struct seg *seghead,
-			struct resource *resp))
+			struct application *ap))
 void DEF(rt_nul_print,(CONST struct soltab *stp))
 void DEF(rt_nul_norm,(struct hit *hitp,
 			struct soltab *stp,
