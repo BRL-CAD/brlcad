@@ -15,6 +15,8 @@
 
 /*	27 May 1992      - Allow pix file to be written if desired.  */
 
+#if defined(IRIX)
+
 /*  Include files needed.  */
 #include <stdio.h>
 #include <string.h>
@@ -549,3 +551,11 @@ main()
    (void)printf("THE END\n\n");
    (void)fflush(stdout);
 }
+
+#else	/* !defined(IRIX) */
+#include <stdio.h>
+main()
+{
+	fprintf(stderr,"see2: This program only works on an SGI workstation\n");
+}
+#endif	/* !defined(IRIX) */
