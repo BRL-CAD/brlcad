@@ -78,7 +78,7 @@ struct rt_i	*rtip;
 		psp->magic = RT_PIECESTATE_MAGIC;
 		psp->stp = stp;
 		psp->shot = bu_bitv_new(stp->st_npieces);
-		psp->oddhit.hit_dist = INFINITY;	/* mark unused */
+		rt_htbl_init( &psp->htab, 8, "psp->htab" );
 	} RT_VISIT_ALL_SOLTABS_END
 }
 
@@ -102,6 +102,7 @@ struct rt_i	*rtip;
 	for( i = rtip->rti_nsolids_with_pieces-1; i >= 0; i-- )  {
 		psp = &resp->re_pieces[i];
 		RT_CK_PIECESTATE(psp);
+		rt_htbl_free(&psp->htab);
 		bu_bitv_free(psp->shot);
 		psp->shot = NULL;	/* sanity */
 		psp->magic = 0;
@@ -170,6 +171,8 @@ register struct rt_shootray_status	*ssp;
 	int					push_flag = 0;
 	double					fraction;
 	int					exponent;
+
+	ssp->box_num++;
 
 	if( curcut == &ssp->ap->a_rt_i->rti_inf_box )  {
 		/* Last pass did the infinite solids, there is nothing more */
@@ -922,6 +925,7 @@ register struct application *ap;
 	ss.newray = ap->a_ray;		/* struct copy */
 	ss.odist_corr = ss.obox_start = ss.obox_end = -99;
 	ss.dist_corr = 0.0;
+	ss.box_num = 0;
 
 	/*
 	 *  While the ray remains inside model space,
@@ -933,7 +937,7 @@ register struct application *ap;
 	while( (cutp = rt_advance_to_next_cell( &ss )) != CUTTER_NULL )  {
 start_cell:
 		if(debug_shoot) {
-			bu_log("\tBOX interval is %g..%g\n", ss.box_start, ss.box_end);
+			bu_log("BOX #%d interval is %g..%g\n", ss.box_num, ss.box_start, ss.box_end);
 			rt_pr_cut( cutp, 0 );
 		}
 
@@ -945,7 +949,7 @@ start_cell:
 		}
 
 		/* Consider all "pieces" of all solids within the box */
-		pending_hit = INFINITY;
+		pending_hit = ss.box_end;
 		if( cutp->bn.bn_piecelen > 0 )  {
 			register struct rt_piecelist *plp;
 
@@ -955,7 +959,7 @@ start_cell:
 				struct soltab	*stp;
 				int piecenum;
 				int ret;
-				int started_with_oddhit;
+				int had_hits_before;
 
 				RT_CK_PIECELIST(plp);
 
@@ -969,82 +973,72 @@ start_cell:
 					/* state is from an earlier ray, scrub */
 					BU_BITV_ZEROALL(psp->shot);
 					psp->ray_seqno = resp->re_nshootray;
-					psp->oddhit.hit_dist = INFINITY;
-					started_with_oddhit = 0;
-				} else if( psp->oddhit.hit_dist < INFINITY )  {
-					/* Adjust to local distance for this cell */
-					psp->oddhit.hit_dist -= ss.dist_corr;
-					started_with_oddhit = 1;
+					rt_htbl_reset( &psp->htab );
+
+					/* Compute ray entry and exit */
+					if( !rt_in_rpp( &ss.newray, ss.inv_dir,
+					    stp->st_min, stp->st_max ) )  {
+						if(debug_shoot)bu_log("rpp miss %s (all pieces)\n", stp->st_name);
+						resp->re_prune_solrpp++;
+						BU_BITSET( solidbits, stp->st_bit );
+						continue;	/* MISS */
+					}
+					psp->mindist = ss.newray.r_min + ss.dist_corr;
+					psp->maxdist = ss.newray.r_max + ss.dist_corr;
+					if(debug_shoot) bu_log("%s mindist=%g, maxdist=%g\n", stp->st_name, psp->mindist, psp->maxdist);
+					had_hits_before = 0;
+				} else {
+					if( BU_BITTEST( solidbits, stp->st_bit ) )  {
+						/* we missed the solid RPP in an earlier cell */
+						resp->re_ndup++;
+						continue;	/* already shot */
+					}
+					had_hits_before = psp->htab.end;
 				}
 
-				/* Allow solid to shoot all pieces at once */
+				/* Allow solid to shoot all pieces in this cell at once */
 				resp->re_piece_shots++;
-				BU_LIST_INIT( &(new_segs.l) );
 
-				if( (ret = rt_functab[stp->st_id].ft_piece_shot(
-				    psp, plp,
-				    &ss.newray, ap, &new_segs, resp )) <= 0 )  {
+				if( (ret = stp->st_meth->ft_piece_shot(
+				    psp, plp, ss.dist_corr, &ss.newray, ap )) <= 0 )  {
 				    	/* No hits at all */
 					resp->re_piece_shot_miss++;
 				} else {
-					/* Add seg chain to list awaiting rt_boolweave() */
-					register struct seg *s2;
-					while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
-						BU_LIST_DEQUEUE( &(s2->l) );
-#if 0
-						/* This code catches NaNs */
-						if( !(s2->seg_in.hit_dist >= -INFINITY &&
-						    s2->seg_out.hit_dist <= INFINITY) )  {
-						    	bu_log("rt_shootray:  Defective %s segment %s (%.18e,%.18e) %d,%d\n",
-						    		rt_functab[s2->seg_stp->st_id].ft_name,
-								s2->seg_stp->st_name,
-								s2->seg_in.hit_dist,
-								s2->seg_out.hit_dist,
-								s2->seg_in.hit_surfno,
-								s2->seg_out.hit_surfno );
-						}
-#endif
-						/* Restore to original distance */
-						s2->seg_in.hit_dist += ss.dist_corr;
-						s2->seg_out.hit_dist += ss.dist_corr;
-						s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
-						BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
-					}
 					resp->re_piece_shot_hit++;
 				}
-				if(debug_shoot)bu_log("shooting %s pieces, hit %d\n", stp->st_name, ret);
-				/* There may still be an odd hit left over */
-				if( psp->oddhit.hit_dist < INFINITY )  {
-					/* Restore to proper (absolute) distance */
-					psp->oddhit.hit_dist += ss.dist_corr;
-					if(debug_shoot)bu_log("oddhit cached: %s piece %d, dist=%g\n",
-						stp->st_name,
-						psp->oddhit.hit_surfno,
-						psp->oddhit.hit_dist);
-					if( started_with_oddhit == 0 )  {
-						bu_ptbl_ins_unique( &resp->re_pieces_pending, (long *)psp );
-					} else {
-						/* Even if the oddhit changed, the psp is still listed */
-					}
+				if(debug_shoot)bu_log("shooting %s pieces, nhit=%d\n", stp->st_name, ret);
+
+				/*  See if this solid has been fully processed yet.
+				 *  If ray has passed through bounding volume, we're done.
+				 */
+				if( ss.box_end > psp->maxdist && psp->htab.end > 0 ) {
+					/* Convert hits into segs */
+					if(debug_shoot)bu_log("shooting %s pieces complete, making segs\n", stp->st_name);
+					/* Distance correction was handled in ft_piece_shot */
+					stp->st_meth->ft_piece_hitsegs( psp, &waiting_segs, ap );
+					rt_htbl_reset( &psp->htab );
+					BU_BITSET( solidbits, stp->st_bit );
+
+					if( had_hits_before )
+    						bu_ptbl_rm( &resp->re_pieces_pending, (long *)psp );
 				} else {
-					/* No hit cached any more */
-					if( started_with_oddhit )  {
-						bu_ptbl_rm( &resp->re_pieces_pending, (long *)psp );
-					}
+					if( !had_hits_before )
+						bu_ptbl_ins_unique( &resp->re_pieces_pending, (long *)psp );
 				}
 			}
-			if( BU_PTBL_LEN( &resp->re_pieces_pending ) > 0 )  {
-				/* Find the lowest pending hit, that's as far as boolfinal can progress to */
+			if( ap->a_onehit != 0 && BU_PTBL_LEN( &resp->re_pieces_pending ) > 0 )  {
+				/* Find the lowest pending mindist, that's as far as boolfinal can progress to */
 				struct rt_piecestate **psp;
 				for( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
 					FAST fastf_t dist;
 
-					dist = (*psp)->oddhit.hit_dist;
+					dist = (*psp)->mindist;
 					BU_ASSERT_DOUBLE( dist, <, INFINITY );
-					if( dist < pending_hit )
+					if( dist < pending_hit )  {
 						pending_hit = dist;
+						if(debug_shoot) bu_log("pending_hit lowered to %g by %s\n", pending_hit, (*psp)->stp->st_name);
+					}
 				}
-				if(debug_shoot) bu_log("pending_hit set to %g\n", pending_hit);
 			}
 		}
 
@@ -1063,7 +1057,7 @@ start_cell:
 				BU_BITSET( solidbits, stp->st_bit );
 
 				/* Check against bounding RPP, if desired by solid */
-				if( rt_functab[stp->st_id].ft_use_rpp )  {
+				if( stp->st_meth->ft_use_rpp )  {
 					if( !rt_in_rpp( &ss.newray, ss.inv_dir,
 					    stp->st_min, stp->st_max ) )  {
 						if(debug_shoot)bu_log("rpp miss %s\n", stp->st_name);
@@ -1080,7 +1074,7 @@ start_cell:
 				if(debug_shoot)bu_log("shooting %s\n", stp->st_name);
 				resp->re_shots++;
 				BU_LIST_INIT( &(new_segs.l) );
-				if( rt_functab[stp->st_id].ft_shot( 
+				if( stp->st_meth->ft_shot( 
 				    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
 					resp->re_shot_miss++;
 					continue;	/* MISS */
@@ -1167,14 +1161,12 @@ weave:
 	if( rtip->rti_nsolids_with_pieces > 0 )  {
 		struct rt_piecestate *psp;
 		for( psp = &(resp->re_pieces[rtip->rti_nsolids_with_pieces-1]);
-		     psp >= resp->re_pieces; psp-- )  {
-			if( psp->oddhit.hit_dist >= INFINITY )  continue;
-			bu_log("rt_shootray(%s) %d,%d odd hit, surf=%d dist=%g ignored\n",
-				psp->stp->st_name,
-				ap->a_x, ap->a_y,
-				psp->oddhit.hit_surfno,
-				psp->oddhit.hit_dist );
-			psp->oddhit.hit_dist = INFINITY;
+		     psp >= resp->re_pieces; psp-- )
+		{
+			if( psp->htab.end <= 0 )  continue;
+			/* Convert any pending hits into segs */
+			/* Distance correction was handled in ft_piece_shot */
+			psp->stp->st_meth->ft_piece_hitsegs( psp, &waiting_segs, ap );
 		}
 	}
 

@@ -305,16 +305,18 @@ register CONST struct soltab *stp;
 
 /*
  *			R T _ B O T _ M A K E S E G S
+ *
+ *  Given an array of hits, make segments out of them.
+ *  Exactly how this is to be done depends on the mode of the BoT.
  */
 HIDDEN int
-rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, pieces_flag )
+rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead )
 struct hit		*hits;
 int			nhits;
 struct soltab		*stp;
 struct xray		*rp;
 struct application	*ap;
 struct seg		*seghead;
-int			pieces_flag;	/* !0 if more pieces still to come */
 {
 	struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 	register struct seg *segp;
@@ -370,6 +372,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 				segp->seg_in.hit_vpriv[Z] = 1;
 				segp->seg_in.hit_private = hits[i].hit_private;
 				segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5 );
+				segp->seg_in.hit_rayp = &ap->a_ray;
 
 				/* set out hit */
 				segp->seg_out.hit_surfno = surfno;
@@ -378,6 +381,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 				segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
 				segp->seg_out.hit_vpriv[Z] = -1;
 				segp->seg_out.hit_private = hits[i].hit_private;
+				segp->seg_out.hit_rayp = &ap->a_ray;
 
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
@@ -415,8 +419,6 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 		 */
 		if( nhits == 1 )
 		{
-			if( pieces_flag )  return 1;	/* save hit for later */
-
 			/* make a zero length partition */
 			RT_GET_SEG( segp, ap->a_resource );
 			segp->seg_stp = stp;
@@ -469,8 +471,6 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 		}
 		if( nhits&1 )
 		{
-			if( pieces_flag )  return 1;	/* save hit for later */
-
 			bu_log( "rt_bot_makesegs(%s): WARNING: odd number of hits (%d), last hit ignored\n",
 				stp->st_name, nhits );
 			nhits--;
@@ -513,12 +513,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 		}
 	}
 
-	if( nhits == 1 )  {
-		if( pieces_flag )  return 1;	/* save hit for later */
-		return 0;
-	}
-
-	if( (nhits&1) && !pieces_flag )  {
+	if( (nhits&1) )  {
 		register int i;
 		static int nerrors = 0;		/* message counter */
 		/*
@@ -566,6 +561,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 					 * manufacture an entrance at same distance
 					 * as second exit.
 					 */
+					/* XXX This consumes an extra hit structure in the array */
 					for( j=nhits ; j>i ; j-- )
 						hits[j] = hits[j-1];	/* struct copy */
 
@@ -579,6 +575,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 					/* two consectutive entrances,
 					 * manufacture an exit between them.
 					 */
+					/* XXX This consumes an extra hit structure in the array */
 
 					for( j=nhits ; j>i ; j-- )
 						hits[j] = hits[j-1];	/* struct copy */
@@ -592,17 +589,17 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 				i++;
 			}
 		}
-		else
-		{
-			hits[nhits] = hits[nhits-1];	/* struct copy */
-			hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
-			bu_log( "\t\tadding fictitious hit at %f\n", hits[nhits].hit_dist );
-			nhits++;
-		}
+	}
+	if( (nhits&1) )  {
+		/* XXX This consumes an extra hit structure in the array */
+		hits[nhits] = hits[nhits-1];	/* struct copy */
+		hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
+		bu_log( "\t\tadding fictitious hit at %f (%s)\n", hits[nhits].hit_dist, stp->st_name );
+		nhits++;
 	}
 
 	/* nhits is even, build segments */
-	for( i=0; i < (nhits&~1); i += 2 )  {
+	for( i=0; i < nhits; i += 2 )  {
 		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 		segp->seg_in = hits[i];		/* struct copy */
@@ -611,6 +608,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 		segp->seg_out.hit_vpriv[Z] = -1;
 		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
+
 	return(nhits);			/* HIT */
 }
 
@@ -708,7 +706,7 @@ struct seg		*seghead;
 	rt_hitsort( hits, nhits );
 
 	/* build segments */
-	return rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, 0 );
+	return rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead );
 }
 
 /*
@@ -722,29 +720,30 @@ struct seg		*seghead;
  *  with possibly one left-over hit being stashed between invocations.
  */
 int
-rt_bot_piece_shot( psp, plp, rp, ap, seghead, resp )
+rt_bot_piece_shot( psp, plp, dist_corr, rp, ap )
 struct rt_piecestate	*psp;
 struct rt_piecelist	*plp;
+double			dist_corr;
 register struct xray	*rp;
 struct application	*ap;
-struct seg		*seghead;
-struct resource		*resp;
 {
+	struct resource		*resp;
 	long		*sol_piece_subscr_p;
 	struct soltab	*stp;
 	long		piecenum;
-	LOCAL struct hit hits[MAXHITS];
-	register struct hit *hp = hits;
-	LOCAL int	nhits = 0;
+	register struct hit *hp;
 	struct bot_specific *bot;
-	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	CONST int	debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	int		starting_hits;
 
 	RT_CK_PIECELIST(plp);
 	RT_CK_PIECESTATE(psp);
 	stp = plp->stp;
 	RT_CK_SOLTAB(stp);
+	resp = ap->a_resource;
 	RT_CK_RESOURCE(resp);
 	bot = (struct bot_specific *)stp->st_specific;
+	starting_hits = psp->htab.end;
 
 	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
 	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
@@ -804,47 +803,39 @@ struct resource		*resp;
 		k = VDOT( wxb, trip->tri_wn ) / dn;
 
 		/* HIT is within planar face */
-		if(debug_shoot) bu_log("%s piece %d ... HIT %g\n", stp->st_name, piecenum, k);
+		hp = rt_htbl_get( &psp->htab );
 		hp->hit_magic = RT_HIT_MAGIC;
-		hp->hit_dist = k;
+		hp->hit_dist = k + dist_corr;
 		hp->hit_private = (genptr_t)trip;
 		hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
 		hp->hit_vpriv[Y] = bot->bot_orientation;
 		hp->hit_surfno = trip->tri_surfno;
-		if( ++nhits >= MAXHITS )  {
-			bu_log("rt_bot_piece_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
-			break;
-		}
-		hp++;
+		hp->hit_rayp = &ap->a_ray;
+		if(debug_shoot) bu_log("%s piece %d ... HIT %g\n", stp->st_name, piecenum, hp->hit_dist);
 	}
-	if( nhits == 0 )
-		return(0);		/* MISS */
+	return psp->htab.end - starting_hits;
+}
 
-	/* Restore left-over hit from previous invocation */
-	if( psp->oddhit.hit_dist < INFINITY )  {
-		if(debug_shoot) bu_log("%s piece %d ... HIT %g retrieved from oddhit\n",
-			stp->st_name, psp->oddhit.hit_surfno, psp->oddhit.hit_dist);
-		*hp++ = psp->oddhit;		/* struct copy */
-		psp->oddhit.hit_dist = INFINITY;
-		nhits++;
-	}
+/*
+ *			R T _ B O T _ P I E C E _ H I T S E G S
+ */
+void
+rt_bot_piece_hitsegs( psp, seghead, ap )
+struct rt_piecestate	*psp;
+struct seg		*seghead;
+struct application	*ap;
+{
+	int ret;
+
+	RT_CK_PIECESTATE(psp);
+	RT_CK_AP(ap);
+	RT_CK_HTBL(&psp->htab);
 
 	/* Sort hits, Near to Far */
-	rt_hitsort( hits, nhits );
+	rt_hitsort( psp->htab.hits, psp->htab.end );
 
 	/* build segments */
-	{
-		int ret;
-		ret = rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, 1 );
-
-		if( ret&1 )  {
-			/* Save odd hit up for next entry */
-			psp->oddhit = hits[ret-1];	/* struct copy */
-			if(debug_shoot) bu_log("%s piece %d ... HIT %g saved in oddhit\n",
-				stp->st_name, psp->oddhit.hit_surfno, psp->oddhit.hit_dist);
-		}
-		return ret;
-	}
+	(void)rt_bot_makesegs( psp->htab.hits, psp->htab.end, psp->stp, &ap->a_ray, ap, seghead );
 }
 
 #define RT_BOT_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
