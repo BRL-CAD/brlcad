@@ -344,58 +344,94 @@ get_cursor()
 	register int i;
 	int hix, hiy, lox, loy;
 
-	/* ASSUMPTION:  Input is line buffered (tty cooked) */
-	i = read( second_fd, ibuf, sizeof(ibuf) );
-	/* The LAST 6 chars are the string from the tektronix */
-	if( i < 6 )  {
-		(void)printf("short read of %d\n", i);
-		return;		/* Fails if he hits RETURN */
+	if ( blit_emulator ) {
+		i = read( second_fd, ibuf, sizeof(ibuf) );
+		if (i < 4) {
+			register int j;
+			(void)printf("Short Blit read\n");
+			for (j=0 ; j < i ; ++j)
+				(void)printf("%c(%x)\n", ibuf[j], ibuf[j]);
+			return;
+		}
+		cp = &ibuf[i-6];
+		if ( i > 4 && (cp[4] != '\n' || cp[5] != 4 )) {
+			(void)printf("saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
+				cp[0], cp[0], cp[1], cp[1], cp[2], cp[2],
+				cp[3], cp[3], cp[4], cp[4], cp[5], cp[5] );
+			return;
+		}
+		hix = ((int)cp[0]&037)<<7;
+		lox = ((int)cp[1]&037)<<2;
+		hiy = ((int)cp[2]&037)<<7;
+		loy = ((int)cp[3]&037)<<2;
+/*		(void)printf("mouse: %d,%d\n",
+			TEK_TO_GED(hix|lox), TEK_TO_GED(hiy|loy)); */
 
-	}
-	cp = &ibuf[i-6];
-	if( cp[5] != '\n' )  {
-		(void)printf("cursor synch?\n");
-		(void)printf("saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
-			cp[0], cp[0], cp[1], cp[1], cp[2], cp[2],
-			cp[3], cp[3], cp[4], cp[4], cp[5], cp[5] );
+		dm_values.dv_xpen = TEK_TO_GED(hix|lox);
+		dm_values.dv_ypen = TEK_TO_GED(hiy|loy);
+		if( dm_values.dv_xpen < -2048 || dm_values.dv_xpen > 2048 )
+			dm_values.dv_xpen = 0;
+		if( dm_values.dv_ypen < -2048 || dm_values.dv_ypen > 2048 )
+			dm_values.dv_ypen = 0;
+
+		if (dm_values.dv_xpen < MENUXLIM )
+			dm_values.dv_penpress = DV_PICK;
+		else
+			dm_values.dv_penpress = DV_SLEW;
 		return;
-	}
+	} else {
+		/* ASSUMPTION:  Input is line buffered (tty cooked) */
+		i = read( second_fd, ibuf, sizeof(ibuf) );
+		/* The LAST 6 chars are the string from the tektronix */
+		if( i < 6 )  {
+			(void)printf("short read of %d\n", i);
+			return;		/* Fails if he hits RETURN */
+			
+		}
+		cp = &ibuf[i-6];
+		if( cp[5] != '\n' )  {
+			(void)printf("cursor synch?\n");
+			(void)printf("saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
+				cp[0], cp[0], cp[1], cp[1], cp[2], cp[2],
+				cp[3], cp[3], cp[4], cp[4], cp[5], cp[5] );
+			return;
+		}
 
-	/* cp[0] is what user typed, followed by 4pos + NL */
-	hix = ((int)cp[1]&037)<<7;
-	lox = ((int)cp[2]&037)<<2;
-	hiy = ((int)cp[3]&037)<<7;
-	loy = ((int)cp[4]&037)<<2;
-
-	/* Tek positioning is 0..4096,
-	 * The desired range is -2048 <= x,y <= +2048.
-	 */
-	dm_values.dv_xpen = TEK_TO_GED(hix|lox);
-	dm_values.dv_ypen = TEK_TO_GED(hiy|loy);
-	if( dm_values.dv_xpen < -2048 || dm_values.dv_xpen > 2048 )
-		dm_values.dv_xpen = 0;
-	if( dm_values.dv_ypen < -2048 || dm_values.dv_ypen > 2048 )
-		dm_values.dv_ypen = 0;
-
-	switch(cp[0])  {
-	case 'Z':
-		(void)printf("x=%d,y=%d\n", dm_values.dv_xpen, dm_values.dv_ypen);
-		break;		/* NOP */
-	case 'b':
-		dm_values.dv_penpress = DV_INZOOM;
-		break;
-	case 's':
-		dm_values.dv_penpress = DV_OUTZOOM;
-		break;
-	case '.':
-		dm_values.dv_penpress = DV_SLEW;
-		break;
-	default:
-		(void)printf("s=smaller, b=bigger, .=slew, space=pick/slew\n");
-		return;
-	case ' ':
-		dm_values.dv_penpress = DV_PICK;
-		break;
+		/* cp[0] is what user typed, followed by 4pos + NL */
+		hix = ((int)cp[1]&037)<<7;
+		lox = ((int)cp[2]&037)<<2;
+		hiy = ((int)cp[3]&037)<<7;
+		loy = ((int)cp[4]&037)<<2;
+		/* Tek positioning is 0..4096,
+		 * The desired range is -2048 <= x,y <= +2048.
+		 */
+		dm_values.dv_xpen = TEK_TO_GED(hix|lox);
+		dm_values.dv_ypen = TEK_TO_GED(hiy|loy);
+		if( dm_values.dv_xpen < -2048 || dm_values.dv_xpen > 2048 )
+			dm_values.dv_xpen = 0;
+		if( dm_values.dv_ypen < -2048 || dm_values.dv_ypen > 2048 )
+			dm_values.dv_ypen = 0;
+		
+		switch(cp[0])  {
+		case 'Z':
+			(void)printf("x=%d,y=%d\n", dm_values.dv_xpen, dm_values.dv_ypen);
+			break;		/* NOP */
+		case 'b':
+			dm_values.dv_penpress = DV_INZOOM;
+			break;
+		case 's':
+			dm_values.dv_penpress = DV_OUTZOOM;
+			break;
+		case '.':
+			dm_values.dv_penpress = DV_SLEW;
+			break;
+		default:
+			(void)printf("s=smaller, b=bigger, .=slew, space=pick/slew\n");
+			return;
+		case ' ':
+			dm_values.dv_penpress = DV_PICK;
+			break;
+		}
 	}
 }
 
