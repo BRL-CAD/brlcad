@@ -1,3 +1,7 @@
+/***
+****remaining bug:  when rolling from one frame to another,
+****a new matrix and options pkg need to be sent!
+****/
 /*
  *  			R E M R T . C
  *  
