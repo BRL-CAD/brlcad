@@ -39,6 +39,9 @@
 int suppressed;		/* flag: suppress printing of 'clean;' commands */
 int incremental;	/* flag: order for incremental time resolution */
 
+int get_args();
+
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -153,6 +156,7 @@ char **argv;
 			frame_number += 1;
 		}
 	}
+	return( 0 );
 }
 
 #define OPT_STR "ci"
