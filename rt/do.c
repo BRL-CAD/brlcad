@@ -496,8 +496,13 @@ int cm_ae( int argc, char **argv)
  */
 int cm_opt(int argc, char **argv)
 {
-	if( get_args( argc, argv ) <= 0 )
+	int old_bu_optind=bu_optind;	/* need to restore this value after calling get_args() */
+
+	if( get_args( argc, argv ) <= 0 ) {
+		bu_optind = old_bu_optind;
 		return(-1);
+	}
+	bu_optind = old_bu_optind;
 	return(0);
 }
 
