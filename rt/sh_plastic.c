@@ -302,7 +302,7 @@ char	*dp;
 	d_a = 0;
 	if( (cosAmb = VDOT( swp->sw_hit.hit_normal, to_eye )) > 0.0 )  {
 		if( cosAmb > 1.00001 )  {
-			rt_log("cosAmb=%g (x%d,y%d,lvl%d)\n", cosAmb,
+			rt_log("cosAmb=1+%g (x%d,y%d,lvl%d)\n", cosAmb-1,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosAmb = 1;
 		}
@@ -351,8 +351,8 @@ char	*dp;
 			if( (cosI = VDOT( swp->sw_hit.hit_normal, to_light )) > 0.0 )  {
 				fastf_t	Rd;
 				vect_t	cprod;	/* color product */
-				if( cosI > 1 )  {
-					rt_log("cosI=%g (x%d,y%d,lvl%d)\n", cosI,
+				if( cosI > 1.00001 )  {
+					rt_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosI-1,
 						ap->a_x, ap->a_y, ap->a_level);
 					cosI = 1;
 				}
@@ -373,8 +373,8 @@ char	*dp;
 			VSUB2( reflected, work, to_light );
 			if( (cosS = VDOT( reflected, to_eye )) > 0 )  {
 				fastf_t Rs;
-				if( cosS > 1 )  {
-					rt_log("cosS=%g (x%d,y%d,lvl%d)\n", cosS,
+				if( cosS > 1.00001 )  {
+					rt_log("cosS=1+%g (x%d,y%d,lvl%d)\n", cosS-1,
 						ap->a_x, ap->a_y, ap->a_level);
 					cosS = 1;
 				}
