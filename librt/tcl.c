@@ -1083,17 +1083,121 @@ char	      **argv;
 }
 
 /*
+ *			R T _ T C L _ I M P O R T _ F R O M _ P A T H
+ *
+ *  Given the name of a database object or a full path to a leaf object,
+ *  obtain the internal form of that leaf.
+ *  Packaged separately mainly to make available nice Tcl error handling.
+ *
+ *  Returns -
+ *	TCL_OK
+ *	TCL_ERROR
+ */
+int
+rt_tcl_import_from_path( interp, ip, path, wdb )
+Tcl_Interp		*interp;
+struct rt_db_internal	*ip;
+CONST char		*path;
+struct rt_wdb		*wdb;
+{
+	struct db_i	*dbip;
+	int		status;
+
+	/* Can't run RT_CK_DB_INTERNAL(ip), it hasn't been filled in yet */
+	RT_CK_WDB(wdb);
+	dbip = wdb->dbip;
+	RT_CK_DBI(dbip);
+
+#if 0
+	dp = db_lookup( dbip, path, LOOKUP_QUIET );
+	if( dp == NULL ) {
+		Tcl_AppendResult( interp, path, ": not found\n",
+				  (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	status = rt_db_get_internal( ip, dp, dbip, (matp_t)NULL );
+	if( status < 0 ) {
+		Tcl_AppendResult( interp, "rt_tcl_import_from_path failure: ",
+				  path, (char *)NULL );
+		return TCL_ERROR;
+	}
+#else
+	if( strchr( path, '/' ) )
+	{
+		/* This is a path */
+		struct db_tree_state	ts;
+		struct db_full_path	old_path;
+		struct db_full_path	new_path;
+		struct directory	*dp_curr;
+		int			ret;
+
+		db_init_db_tree_state( &ts, dbip );
+		db_full_path_init(&old_path);
+		db_full_path_init(&new_path);
+
+		if( db_string_to_path( &new_path, dbip, path ) < 0 )  {
+			Tcl_AppendResult(interp, "rt_tcl_import_from_path: '",
+				path, "' contains unknown object names\n", (char *)NULL);
+			return TCL_ERROR;
+		}
+
+		dp_curr = DB_FULL_PATH_CUR_DIR( &new_path );
+		ret = db_follow_path( &ts, &old_path, &new_path, LOOKUP_NOISY );
+		db_free_full_path( &old_path );
+		db_free_full_path( &new_path );
+
+		if( ret < 0 )  {
+			Tcl_AppendResult(interp, "rt_tcl_import_from_path: '",
+				path, "' is a bad path\n", (char *)NULL );
+			return TCL_ERROR;
+		}
+
+		status = wdb_import( wdb, ip, dp_curr->d_namep, ts.ts_mat );
+		if( status == -4 )  {
+			Tcl_AppendResult( interp, dp_curr->d_namep,
+					" not found in path ", path, "\n",
+					(char *)NULL );
+			return TCL_ERROR;
+		}
+		if( status < 0 ) {
+			Tcl_AppendResult( interp, "wdb_import failure: ",
+					  dp_curr->d_namep, (char *)NULL );
+			return TCL_ERROR;
+		}
+	}
+	else
+	{
+		status = wdb_import( wdb, ip, path, (matp_t)NULL );
+		if( status == -4 )  {
+			Tcl_AppendResult( interp, path, ": not found\n",
+					  (char *)NULL );
+			return TCL_ERROR;
+		}
+		if( status < 0 ) {
+			Tcl_AppendResult( interp, "wdb_import failure: ",
+					  path, (char *)NULL );
+			return TCL_ERROR;
+		}
+	}
+#endif
+	return TCL_OK;
+}
+
+/*
  *			R T _ D B _ R E P O R T
  *
  *  Report on a particular object from the database.
  *  Used to support "db get".
  *  Also used in MGED for get_edit_solid.
+ *  'attr' is specified to retrieve only one attribute, rather than all.
+ *  Example:  "db get ell.s B" to get only the B vector.
  */
 int
 rt_db_report( interp, intern, attr )
 Tcl_Interp		*interp;
 struct rt_db_internal	*intern;
-char			*attr;
+CONST char		*attr;
 {
 	register CONST struct bu_structparse	*sp = NULL;
 	register CONST struct rt_functab	*ftp;
@@ -1143,14 +1247,14 @@ char			*attr;
 		} else {
 			if( bu_vls_struct_item_named( &str, sp, attr,
 					   (char *)intern->idb_ptr, ' ') < 0 ) {
-				Tcl_DStringAppend( &ds, "no such attribute",
-						   17 );
+				bu_vls_printf(&str,
+					"Objects of type %s do not have a %s attribute.",
+					ftp->ft_label, attr);
 				status = TCL_ERROR;
 			} else {
-				Tcl_DStringAppendElement( &ds,
-							  bu_vls_addr(&str) );
 				status = TCL_OK;
 			}
+			Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
 		}
 
 		Tcl_DStringResult( interp, &ds );
@@ -1210,78 +1314,9 @@ char	      **argv;
 		return TCL_ERROR;
 	}
 
-#if 0
-	dp = db_lookup( wdb->dbip, argv[1], LOOKUP_QUIET );
-	if( dp == NULL ) {
-		Tcl_AppendResult( interp, argv[1], ": not found\n",
-				  (char *)NULL );
+	if( rt_tcl_import_from_path( interp, &intern, argv[1], wdb ) == TCL_ERROR )
 		return TCL_ERROR;
-	}
 
-	status = rt_db_get_internal( &intern, dp, wdb->dbip, (matp_t)NULL );
-	if( status < 0 ) {
-		Tcl_AppendResult( interp, "rt_db_get_internal failure: ",
-				  argv[1], (char *)NULL );
-		return TCL_ERROR;
-	}
-#else
-	if( strchr( argv[1], '/' ) )
-	{
-		/* This is a path */
-		struct db_tree_state	ts;
-		struct db_full_path	old_path;
-		struct db_full_path	new_path;
-		struct directory	*dp_curr;
-		int			ret;
-
-		db_init_db_tree_state( &ts, wdb->dbip );
-		db_full_path_init(&old_path);
-		db_full_path_init(&new_path);
-
-		if( db_string_to_path( &new_path, wdb->dbip, argv[1] ) < 0 )  {
-			Tcl_AppendResult(interp, "tcl_follow_path: '",
-				argv[1], "' contains unknown object names\n", (char *)NULL);
-			return TCL_ERROR;
-		}
-
-		dp_curr = DB_FULL_PATH_CUR_DIR( &new_path );
-		ret = db_follow_path( &ts, &old_path, &new_path, LOOKUP_NOISY );
-		db_free_full_path( &old_path );
-		db_free_full_path( &new_path );
-
-		if( ret < 0 )  {
-			Tcl_AppendResult(interp, "tcl_follow_path: '",
-				argv[1], "' is a bad path\n", (char *)NULL );
-			return TCL_ERROR;
-		}
-
-		status = wdb_import( wdb, &intern, dp_curr->d_namep, ts.ts_mat );
-		if( status == -4 )  {
-			Tcl_AppendResult( interp, dp_curr->d_namep, ": not found\n",
-					  (char *)NULL );
-			return TCL_ERROR;
-		}
-		if( status < 0 ) {
-			Tcl_AppendResult( interp, "wdb_import failure: ",
-					  dp_curr->d_namep, (char *)NULL );
-			return TCL_ERROR;
-		}
-	}
-	else
-	{
-		status = wdb_import( wdb, &intern, argv[1], (matp_t)NULL );
-		if( status == -4 )  {
-			Tcl_AppendResult( interp, argv[1], ": not found\n",
-					  (char *)NULL );
-			return TCL_ERROR;
-		}
-		if( status < 0 ) {
-			Tcl_AppendResult( interp, "wdb_import failure: ",
-					  argv[1], (char *)NULL );
-			return TCL_ERROR;
-		}
-	}
-#endif
 	status = rt_db_report( interp, &intern, argv[2] );
 
 	intern.idb_meth->ft_ifree( &intern );
