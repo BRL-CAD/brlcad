@@ -34,7 +34,8 @@ unsigned char vals[1L << (24-3)];
 /*
  *	D O I T --- Main function of program
  */
-void doit()
+void doit(fd)
+FILE *fd;
 {
 	unsigned long pixel, count;
 	int bytes;
@@ -43,7 +44,7 @@ void doit()
 
 
 	count = 0;
-	while ((bytes=fread(pixbuf, 3, PIXELS, stdin)) > 0) {
+	while ((bytes=fread(pixbuf, 3, PIXELS, fd)) > 0) {
 		for (i=(bytes-1)*3 ; i >= 0 ; i -= 3) {
 			pixel = pixbuf[i] + 
 				(pixbuf[i+1] << 8) +
@@ -83,9 +84,7 @@ int ac;
 char *av[];
 {
 	int  c, isatty();
-
 	progname = *av;
-	if (isatty(fileno(stdin))) usage();
 	
 	/* Get # of options & turn all the option flags off
 	 */
@@ -100,8 +99,19 @@ char *av[];
 		else usage();
 	}
 
-	if (optind < ac) usage();
 
-	doit();
+	if (optind < ac-1) {
+		usage();
+	} else if (optind == ac-1 ) {
+		FILE *fd;
+		if ((fd=fopen(av[optind], "r")) == (FILE *)NULL) {
+			perror(av[optind]);
+			exit(-1);
+		} else doit(fd);
+	} else if (optind >= ac) {
+		if (isatty(fileno(stdin))) usage();
+		doit(stdin);
+	}
+	
 	return(0);
 }
