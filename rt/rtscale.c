@@ -79,7 +79,9 @@ main(argc)
 int	argc;
 {
 
+
 	int		ret;		/* return code from functions */
+
 
 	/* Check to see that the correct format is given, else print
 	 * usage message.
@@ -93,7 +95,7 @@ int	argc;
 	/* Send pointer to stdin to read_rt_file, and send pointer to
 	 * to stdout to layout_n_plot. */
 
-	ret = read_rt_file();
+	ret = read_rt_file(&view2model[0]);
 	if(ret == ERROR)  {
 		exit(-1);
 	}
@@ -241,7 +243,8 @@ FILE	*outfp;
  */
 
 int
-read_rt_file()
+read_rt_file(matp)
+mat_t 	*matp;
 {
 
 	fastf_t		azimuth;		/* part of the view */
@@ -260,6 +263,8 @@ read_rt_file()
 	int		seen_eye_pos;
 	int		seen_size;
 
+	mat_t		rotate, xlate;
+	mat_t		tmp_mat;
 
 	/* Set all flags to ready state.  */
 
@@ -429,6 +434,24 @@ read_rt_file()
 	fprintf(stderr, "eye_pos= %g, %g, %g\n", eye_pos[0], eye_pos[1], eye_pos[2]);
 	fprintf(stderr, "size= %gmm\n", m_size);
 
-	/* Build the view2model matrix. */
+	/* Build the view2model matrix.  Variables used only for this
+	 * transaction are initialized here.
+	 */
+
+
+mat_print("view2model", view2model);
+
+	quat_quat2mat( rotate, orientation );
+	rotate[15] = 0.5 * m_size;
+	mat_idn( xlate );
+	MAT_DELTAS( xlate, -eye_pos[0], -eye_pos[1], -eye_pos[2] );
+	mat_mul( tmp_mat, rotate, xlate );
+
+mat_print("tmp_mat", tmp_mat);
+
+	mat_inv( matp, tmp_mat );
+
+mat_print("new view2model", view2model);
+	
 	return(SUCCESS);
 }
