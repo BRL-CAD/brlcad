@@ -241,7 +241,10 @@ char *buf;
 
 	cp = buf;
 	while( *cp )  {
-		if( *cp != '-' )  continue;
+		if( *cp != '-' )  {
+			cp++;
+			continue;
+		}
 
 		switch( cp[1] )  {
 		case 'S':
