@@ -26,8 +26,8 @@ static char RCSsph[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./debug.h"
 
 /*
@@ -58,14 +58,6 @@ struct sph_specific {
 	mat_t	sph_SoR;	/* Rotate and scale for UV mapping */
 };
 
-/* Should be in a header file to share betwee g_ell.c and g_sph.c */
-struct ell_internal  {
-	point_t	v;
-	vect_t	a;
-	vect_t	b;
-	vect_t	c;
-};
-
 /*
  *  			R T _ S P H _ P R E P
  *  
@@ -82,35 +74,27 @@ struct ell_internal  {
  *  	stp->st_specific for use by rt_sph_shot().
  *	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
+/* NEW_IF already */
 int
-rt_sph_prep( stp, rec, rtip )
+rt_sph_prep( stp, ip, rtip )
 struct soltab		*stp;
+struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-union record		*rec;
 {
 	register struct sph_specific *sph;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL fastf_t	f;
-	struct ell_internal ei;
+	struct ell_internal	*eip;
 	int		i;
 
-	if( rec == (union record *)0 )  {
-		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
-		i = rt_ell_import( &ei, rec, stp->st_pathmat );
-		rt_free( (char *)rec, "ell record" );
-	} else {
-		i = rt_ell_import( &ei, rec, stp->st_pathmat );
-	}
-	if( i < 0 )  {
-		rt_log("rt_sph_setup(%s): db import failure\n", stp->st_name);
-		return(-1);		/* BAD */
-	}
+	eip = (struct ell_internal *)ip->idb_ptr;
+	RT_ELL_CK_MAGIC(eip);
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( ei.a );
-	magsq_b = MAGSQ( ei.b );
-	magsq_c = MAGSQ( ei.c );
+	magsq_a = MAGSQ( eip->a );
+	magsq_b = MAGSQ( eip->b );
+	magsq_c = MAGSQ( eip->c );
 	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
 		rt_log("sph(%s):  zero length A, B, or C vector\n",
 			stp->st_name );
@@ -130,11 +114,11 @@ union record		*rec;
 
 	/* Create unit length versions of A,B,C */
 	f = 1.0/sqrt(magsq_a);
-	VSCALE( Au, ei.a, f );
+	VSCALE( Au, eip->a, f );
 	f = 1.0/sqrt(magsq_b);
-	VSCALE( Bu, ei.b, f );
+	VSCALE( Bu, eip->b, f );
 	f = 1.0/sqrt(magsq_c);
-	VSCALE( Cu, ei.c, f );
+	VSCALE( Cu, eip->c, f );
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
@@ -162,7 +146,7 @@ union record		*rec;
 	GETSTRUCT( sph, sph_specific );
 	stp->st_specific = (genptr_t)sph;
 
-	VMOVE( sph->sph_V, ei.v );
+	VMOVE( sph->sph_V, eip->v );
 
 	sph->sph_radsq = magsq_a;
 	sph->sph_rad = sqrt(sph->sph_radsq);
@@ -175,9 +159,9 @@ union record		*rec;
 	 * See ell.c for details.
 	 */
 	mat_idn( sph->sph_SoR );
-	VSCALE( &sph->sph_SoR[0], ei.a, 1.0/magsq_a );
-	VSCALE( &sph->sph_SoR[4], ei.b, 1.0/magsq_b );
-	VSCALE( &sph->sph_SoR[8], ei.c, 1.0/magsq_c );
+	VSCALE( &sph->sph_SoR[0], eip->a, 1.0/magsq_a );
+	VSCALE( &sph->sph_SoR[4], eip->b, 1.0/magsq_b );
+	VSCALE( &sph->sph_SoR[8], eip->c, 1.0/magsq_c );
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, sph->sph_V );
