@@ -1370,6 +1370,7 @@ register struct rt_i *rtip;
 {
 	register struct region *regp;
 	register struct soltab *stp;
+	register int		i;
 
 	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_prep:  bad rtip\n");
 
@@ -1438,6 +1439,44 @@ register struct rt_i *rtip;
 			rt_log("solid %s ", stp->st_name);
 			rt_pr_bitv( "regions ref", stp->st_regions,
 				stp->st_maxreg);
+		}
+	}
+
+	/*
+	 *  Build array of solid table pointers indexed by solid ID.
+	 *  Last element for each kind will be found in
+	 *	rti_sol_by_type[id][rti_nsol_by_type[id]-1]
+	 */
+	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+		rtip->rti_nsol_by_type[stp->st_id]++;
+	}
+	/* Find solid type with maximum length (for rt_shootray) */
+	rtip->rti_maxsol_by_type = 0;
+	for( i=0; i <= ID_MAXIMUM; i++ )  {
+		if( rtip->rti_nsol_by_type[i] > rtip->rti_maxsol_by_type )
+			rtip->rti_maxsol_by_type = rtip->rti_nsol_by_type[i];
+	}
+	/* Malloc the storage and zero the counts */
+	for( i=0; i <= ID_MAXIMUM; i++ )  {
+		if( rtip->rti_nsol_by_type[i] <= 0 )  continue;
+		rtip->rti_sol_by_type[i] = (struct soltab **)rt_calloc(
+			rtip->rti_nsol_by_type[i],
+			sizeof(struct soltab *),
+			"rti_sol_by_type[]" );
+		rtip->rti_nsol_by_type[i] = 0;
+	}
+	/* Fill in the array and rebuild the count (aka index) */
+	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+		register int	id;
+		id = stp->st_id;
+		rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
+	}
+	if( rt_g.debug & DEBUG_DB )  {
+		for( i=1; i <= ID_MAXIMUM; i++ )  {
+			rt_log("%5d %s (%d)\n",
+				rtip->rti_nsol_by_type[i],
+				rt_functab[i].ft_name,
+				i );
 		}
 	}
 
