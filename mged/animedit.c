@@ -3561,14 +3561,12 @@ struct db_full_path	*pathp;
 	return (struct joint *) 0;
 }
 
-HIDDEN union tree *mesh_leaf( tsp, pathp, ep, id, client_data)
+HIDDEN union tree *mesh_leaf( tsp, pathp, ip, client_data)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct bu_external	*ep;
-int			id;
+struct rt_db_internal	*ip;
 genptr_t		client_data;
 {
-	struct	rt_db_internal	internal;
 	struct rt_grip_internal *gip;
 	struct	artic_joints	*newJoint;
 	struct	artic_grips	*newGrip;
@@ -3576,8 +3574,10 @@ genptr_t		client_data;
 	union	tree		*curtree;
 	struct	directory	*dp;
 
+	RT_CK_FULL_PATH(pathp);
+	RT_CK_DB_INTERNAL(ip);
 
-	if (id != ID_GRIP) {
+	if (ip->idb_type != ID_GRIP) {
 		return TREE_NULL;
 	}
 
@@ -3589,13 +3589,7 @@ genptr_t		client_data;
 /*
  * get the grip information.
  */
-	RT_INIT_DB_INTERNAL(&internal);
-	if ( rt_functab[id].ft_import( &internal, ep, tsp->ts_mat, dbip) < 0 ) {
-	  Tcl_AppendResult(interp, dp->d_namep, ": solid import failure\n", (char *)NULL);
-	  if (internal.idb_ptr) rt_functab[id].ft_ifree(&internal);
-	  return curtree;
-	}
-	gip = (struct rt_grip_internal *) internal.idb_ptr;
+	gip = (struct rt_grip_internal *) ip->idb_ptr;
 /*
  * find the joint that this grip belongs to.
  */
@@ -3603,8 +3597,6 @@ genptr_t		client_data;
 /*
  * Get the grip structure.
  */
-	rt_functab[id].ft_ifree(&internal);
-
 	newGrip = (struct artic_grips *)bu_malloc(sizeof(struct artic_grips),
 	    "artic_grip");
 	newGrip->l.magic = MAGIC_A_GRIP;

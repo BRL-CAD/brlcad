@@ -625,11 +625,10 @@ static int push_error;
  * linked list could be handled by bu_list macros but it is simple
  * enough to do hear with out them.
  */
-HIDDEN union tree *push_leaf( tsp, pathp, ep, id, client_data)
+HIDDEN union tree *push_leaf( tsp, pathp, ip, client_data)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct bu_external	*ep;
-int			id;
+struct rt_db_internal	*ip;
 genptr_t		client_data;
 {
 	union tree	*curtree;
@@ -638,13 +637,14 @@ genptr_t		client_data;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
+	RT_CK_DB_INTERNAL(ip);
 
 	dp = pathp->fp_names[pathp->fp_len-1];
 
 	if (rt_g.debug&DEBUG_TREEWALK) {
 	  char *sofar = db_path_to_string(pathp);
 
-	  Tcl_AppendResult(interp, "push_leaf(", rt_functab[id].ft_name,
+	  Tcl_AppendResult(interp, "push_leaf(", ip->idb_meth->ft_name,
 			   ") path='", sofar, "'\n", (char *)NULL);
 	  bu_free((genptr_t)sofar, "path string");
 	}
