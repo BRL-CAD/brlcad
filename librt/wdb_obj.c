@@ -78,6 +78,7 @@ HIDDEN int wdb_kill_tcl();
 HIDDEN int wdb_killall_tcl();
 HIDDEN int wdb_killtree_tcl();
 HIDDEN void wdb_killtree_callback();
+HIDDEN int wdb_copy_tcl();
 
 HIDDEN void wdb_deleteProc();
 HIDDEN void wdb_deleteProc_rt();
@@ -125,6 +126,7 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"kill",		wdb_kill_tcl,
 	"killall",	wdb_killall_tcl,
 	"killtree",	wdb_killtree_tcl,
+	"cp",		wdb_copy_tcl,
 #if 0
 	"c",		wdb_comb_std_tcl,
 	"cat",		wdb_cat_tcl,
@@ -133,7 +135,6 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"prcolor",	wdb_prcolor_tcl,
 	"comb_color",	wdb_comb_color_tcl,
 	"concat",	wdb_concat_tcl,
-	"cp",		wdb_copy_tcl,
 	"copymat",	wdb_copymat_tcl,
 	"copyeval",	wdb_copyeval_tcl,
 	"dup",		wdb_dup_tcl,
@@ -1709,6 +1710,68 @@ register struct directory *dp;
 				 "an error occurred while deleting ",
 				 dp->d_namep, "\n", (char *)NULL);
 	}
+}
+
+/*
+ * Usage:
+ *        procname cp from to
+ */
+HIDDEN int
+wdb_copy_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register struct directory *proto;
+	register struct directory *dp;
+	struct bu_external external;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc != 4) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_cp");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if ((proto = db_lookup(wdbop->wdb_wp->dbip,  argv[2], LOOKUP_NOISY)) == DIR_NULL)
+		return TCL_ERROR;
+
+	if (db_lookup(wdbop->wdb_wp->dbip, argv[3], LOOKUP_QUIET) != DIR_NULL) {
+		Tcl_AppendResult(interp, argv[3], ":  already exists\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (db_get_external(&external , proto , wdbop->wdb_wp->dbip)) {
+		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);\
+		return TCL_ERROR;
+	}
+
+	if ((dp=db_diradd(wdbop->wdb_wp->dbip, argv[3], -1, proto->d_len, proto->d_flags)) == DIR_NULL ||
+	    db_alloc(wdbop->wdb_wp->dbip, dp, proto->d_len) < 0) {
+		Tcl_AppendResult(interp,
+				 "An error has occured while adding a new object to the database.\n",
+				 (char *)NULL); \
+		return TCL_ERROR;
+	}
+
+	if (db_put_external(&external, dp, wdbop->wdb_wp->dbip) < 0) {
+		db_free_external(&external);
+		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);\
+		return TCL_ERROR;
+	}
+	db_free_external(&external);
+
+	return TCL_OK;
 }
 
 #if 0
