@@ -3412,6 +3412,12 @@ CONST struct rt_tol	*tol;		/* for printing */
 	}
 }
 
+/*              N M G _ D O _ R A D I A L _ J O I N
+ *
+ *      Perform radial join of edges in list "hd" based on direction with respect
+ *      to "eu1ref"
+ */
+
 void
 nmg_do_radial_join( hd, eu1ref, xvec, yvec, zvec, tol )
 struct rt_list *hd;
