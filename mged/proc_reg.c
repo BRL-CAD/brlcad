@@ -157,8 +157,14 @@ union tree *tp;
 			}
 			if( id == ID_COMBINATION )
 			{
-				Tcl_AppendResult(interp, "Cannot handle regions containing combinations yet\n",
-					(char *)NULL );
+				struct rt_comb_internal *comb;
+
+				bu_free( (char *)eptr, "eptr" );
+
+				comb = (struct rt_comb_internal *)intern.idb_ptr;
+				RT_CK_COMB( comb );
+
+				eptr = build_etree( comb->tree );
 				rt_db_free_internal( &intern );
 				break;
 			}
@@ -292,8 +298,16 @@ int op;
 		if( !A )
 		{
 			RT_FREE_SEG_LIST( B, ap.a_resource );
-			return( (struct seg *)NULL );
+			return( B );
 		}
+
+		BU_GETSTRUCT( final, seg );
+		BU_LIST_INIT( &final->l );
+
+		if( A->seg_stp || B->seg_stp )
+			final->seg_stp = (struct soltab *)0x1;
+		else
+			final->seg_stp = (struct soltab *)NULL;
 
 		for( BU_LIST_FOR( sega, seg, &A->l ) )
 		{
@@ -304,16 +318,6 @@ int op;
 				if( segb->seg_in.hit_dist >= sega->seg_out.hit_dist )
 					continue;
 
-				if( !final )
-				{
-					BU_GETSTRUCT( final, seg );
-					BU_LIST_INIT( &final->l );
-
-					if( A->seg_stp || B->seg_stp )
-						final->seg_stp = (struct soltab *)0x1;
-					else
-						final->seg_stp = (struct soltab *)NULL;
-				}
 				RT_GET_SEG( ptr, ap.a_resource );
 				if( sega->seg_in.hit_dist > segb->seg_in.hit_dist )
 					ptr->seg_in.hit_dist = sega->seg_in.hit_dist;
@@ -330,7 +334,9 @@ int op;
 		}
 		RT_FREE_SEG_LIST( A, ap.a_resource );
 		RT_FREE_SEG_LIST( B, ap.a_resource );
-		return( final );
+		BU_LIST_INSERT_LIST( &A->l, &final->l );
+		bu_free( (char *)final, "final" );
+		return( A );
 	}
 
 	if( op == OP_SUBTRACT )
@@ -338,7 +344,7 @@ int op;
 		if( !A )
 		{
 			RT_FREE_SEG_LIST( B, ap.a_resource );
-			return( (struct seg *)NULL );
+			return( B );
 		}
 		if( !B )
 			return( A );
@@ -545,6 +551,12 @@ union E_tree *eptr;
 
 		shoot = (union E_tree *)BU_PTBL_GET( &leaf_list, shoot_leaf );
 
+		if( BU_LIST_NON_EMPTY( &shoot->l.seghead.l ) )
+		{
+			RT_FREE_SEG_LIST( &shoot->l.seghead, ap.a_resource );
+		}
+		BU_LIST_INIT( &shoot->l.seghead.l );
+
 		if( shoot_leaf == skip_leaf1 || shoot_leaf == skip_leaf2 )
 			dont_shoot = 1;
 		else
@@ -587,6 +599,8 @@ union E_tree *eptr;
 			BU_LIST_INSERT( &shoot->l.seghead.l, &seg->l );
 			if( shoot_leaf == skip_leaf1 || shoot_leaf == skip_leaf2 )
 				shoot->l.the_edge = 1;
+			else
+				shoot->l.the_edge = 0;
 			continue;
 		}
 
@@ -609,6 +623,7 @@ union E_tree *eptr;
 			{
 				struct seg *seg;
 
+				seg = BU_LIST_FIRST( seg, &rd.seghead->l );
 				/* put the segments in the lead solid structure */
 				BU_LIST_INSERT_LIST( &shoot->l.seghead.l, &rd.seghead->l );
 				shoot->l.seghead.seg_stp = shoot->l.stp;
@@ -629,7 +644,6 @@ union E_tree *eptr;
 		for( BU_LIST_FOR( seg, seg, &final_segs->l ) )
 		{
 			point_t pt;
-
 			nvectors++;
 			VJOIN1( pt, rp.r_pt, seg->seg_in.hit_dist, rp.r_dir )
 			RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
@@ -655,7 +669,6 @@ struct bu_list *vhead;
 	int leaf_no;
 	union E_tree *leaf_ptr;
 	struct ray_data rd;
-	time_t start_edges, start_inters;
 	int hit_count=0;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
@@ -679,8 +692,6 @@ struct bu_list *vhead;
 		else
 			bu_ptbl_init( &leaf_ptr->l.edge_list, 1, "edge_list" );
 	}
-
-	(void)time( &start_edges );
 
 	/* now plot appropriate parts of each solid */
 
@@ -728,8 +739,6 @@ struct bu_list *vhead;
 		}
 	}
 
-	(void)time( &start_inters );
-
 	/* Now draw solid intersection lines */
 
 	for( leaf_no=0 ; leaf_no < BU_PTBL_END( &leaf_list ) ; leaf_no++ )
@@ -773,6 +782,7 @@ struct bu_list *vhead;
 				for( BU_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )
 				{
 					fastf_t dist;
+					fastf_t old_dist;
 					fastf_t len,start_len;
 					point_t hits[4];
 					point_t start_pt;
@@ -797,6 +807,7 @@ struct bu_list *vhead;
 						continue;
 
 					hit_count=0;
+					old_dist = MAX_FASTF;
 					for( BU_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )
 					{
 						if( BU_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_EDGEUSE_MAGIC )
@@ -813,9 +824,13 @@ struct bu_list *vhead;
 							if( bn_isect_line3_plane( &dist, vg1a->coord, dir, pl2, &mged_tol ) < 1 )
 								continue;
 
-							if( dist < 0.0 || dist > 1.0 )
+							if( dist < 0.0 || dist >= 1.0 )
 								continue;
 
+							if( NEAR_ZERO( old_dist - dist, mged_tol.dist ) )
+								continue;
+
+							old_dist = dist;
 							VJOIN1( hits[hit_count], vg1a->coord, dist, dir )
 							hit_count++;
 							if( hit_count == 2 )
@@ -824,6 +839,7 @@ struct bu_list *vhead;
 						if( hit_count == 2 )
 							break;;
 					}
+					old_dist = MAX_FASTF;
 					for( BU_LIST_FOR( lu2, loopuse, &fu2->lu_hd ) )
 					{
 						if( BU_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
@@ -840,9 +856,13 @@ struct bu_list *vhead;
 							if( bn_isect_line3_plane( &dist, vg2a->coord, dir, pl1, &mged_tol ) < 1 )
 								continue;
 
-							if( dist < 0.0 || dist > 1.0 )
+							if( dist < 0.0 || dist >= 1.0 )
 								continue;
 
+							if( NEAR_ZERO( old_dist - dist, mged_tol.dist ) )
+								continue;
+
+							old_dist = dist;
 							VJOIN1( hits[hit_count], vg2a->coord, dist, dir )
 							hit_count++;
 							if( hit_count == 4 )
@@ -900,7 +920,6 @@ struct bu_list *vhead;
 			}
 		}
 	}
-	(void)time( &start_edges );
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
 		bu_log( "Error at end of Eplot()\n" );
@@ -1138,9 +1157,6 @@ char	**argv;
 
 	(void)time( &etime );
 
-	sprintf(perf_message, "E: %ld vectors in %ld sec\n", nvectors, etime - stime );
-	Tcl_AppendResult(interp, perf_message, (char *)NULL);
-
 	(void)signal( SIGINT, SIG_IGN );
 
 	/* free leaf_list */
@@ -1155,6 +1171,9 @@ char	**argv;
       }
 
 	color_soltab();
+
+	sprintf(perf_message, "E: %ld vectors in %ld sec\n", nvectors, etime - stime );
+	Tcl_AppendResult(interp, perf_message, (char *)NULL);
 
 	return TCL_OK;
 }
