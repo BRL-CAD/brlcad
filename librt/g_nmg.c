@@ -1269,9 +1269,9 @@ double		local2mm;
 			rt_plong( d->ctl_points,
 				rt_nmg_export_fastf( eg->ctl_points,
 					eg->c_size,
-					RT_NURB_EXTRACT_PT_TYPE(eg->pt_type) == RT_NURB_PT_UV ?
-						0 : eg->pt_type,
-					local2mm ) );
+					eg->pt_type,
+					RT_NURB_EXTRACT_PT_TYPE( eg->pt_type ) == RT_NURB_PT_UV ?
+						1.0 : local2mm ) );
 		}
 		return;
 	case NMG_KIND_VERTEXUSE:
