@@ -419,7 +419,22 @@ struct bu_list {
 /*----------------------------------------------------------------------*/
 /* bitv.c */
 /*
+ *			B U _ B I T V
+ *
  *  Bit vector data structure.
+ *
+ *  bu_bitv uses a little-endian encoding, placing bit 0 on the
+ *  right side of the 0th word.
+ *  This is done only because left-shifting a 1 can be done in an
+ *  efficient word-length-independent manner;
+ *  going the other way would require a compile-time constant with
+ *  only the sign bit set, and an unsigned right shift, which some
+ *  machines don't have in hardware, or an extra subtraction.
+ *
+ *  Application code should *never* peak at the bit-buffer; use the macros.
+ *
+ *  The external hex form should be big-endian hex, for MUVES compatability
+ *  and overall ease of reading: left-to-right, starting with bit 0.
  */
 struct bu_bitv {
 	struct bu_list	l;		/* linked list for caller's use */
