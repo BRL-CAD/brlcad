@@ -41,6 +41,18 @@ HIDDEN union cutter *rt_ct_get();
 
 HIDDEN void rt_plot_cut();
 
+/* XXX start temporary NUgrid hack  -- shared with shoot.c */
+#define RT_NUGRID_CELL(_array,_x,_y,_z)		(&(_array)[ \
+	((((_z)*nu_cells_per_axis[Y])+(_y))*nu_cells_per_axis[X])+(_x) ])
+struct nu_axis {
+	fastf_t	nu_pos;		/* cell start pos */
+	fastf_t	nu_width;	/* voxel size */
+};
+struct nu_axis	*nu_axis[3];
+int		nu_cells_per_axis[3];
+union cutter	*nu_grid;
+/* XXX end NUgrid hack */
+
 /*
  *  			R T _ C U T _ I T
  *  
@@ -63,14 +75,7 @@ register struct rt_i *rtip;
 	struct histogram end_hist[3];	/* where solid RPPs end */
 	int	nu_ncells;		/* # cells along one axis */
 	int	nu_sol_per_cell;	/* avg # solids per cell */
-	struct nu_axis {
-		fastf_t	nu_pos;		/* cell start pos */
-		fastf_t	nu_width;	/* voxel size */
-	};
-	struct nu_axis	*nu_axis[3];
-	int	nu_cells_per_axis[3];
 	int	nu_max_ncells;		/* hard limit on nu_ncells */
-	union cutter	*nu_grid;
 	struct boxnode	nu_xbox;
 	struct boxnode	nu_ybox;
 	struct boxnode	nu_zbox;
@@ -310,10 +315,8 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			/* Build each of the Z slices in this Y slice. */
 			/* Each of these will be a final cell */
 			for( zp = 0; zp < nu_cells_per_axis[Z]; zp++ )  {
-				register union cutter *cutp = &nu_grid[
-					(((zp*nu_cells_per_axis[Z]) +
-					   yp*nu_cells_per_axis[Y]) +
-					   zp*nu_cells_per_axis[X])];
+				register union cutter *cutp =
+					RT_NUGRID_CELL(nu_grid, xp, yp, zp);
 				VMOVE( zmin, ymin );
 				VMOVE( zmax, ymax );
 				zmin[Z] = nu_axis[Z][zp].nu_pos;
