@@ -62,9 +62,11 @@ int	fd;
 	curr_tio[fd].sg_flags &= ~RAW;		/* Raw mode OFF.	*/
 #else
 	curr_tio[fd].c_lflag |= ICANON;		/* Raw mode OFF.	*/
+#ifndef CRAY2
 	curr_tio[fd].c_lflag |= ISIG;		/* Signals ON.		*/
 	curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
 	curr_tio[fd].c_cc[VEOL] = 0;		/*   best we can do.... */
+#endif
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
@@ -81,9 +83,11 @@ int	fd;
 	curr_tio[fd].sg_flags |= RAW;		/* Raw mode ON.		*/
 #else
 	curr_tio[fd].c_lflag &= ~ICANON;	/* Raw mode ON.		*/
+#ifndef CRAY2
 	curr_tio[fd].c_lflag &= ~ISIG;		/* Signals OFF.		*/
 	curr_tio[fd].c_cc[VMIN] = 1;
 	curr_tio[fd].c_cc[VTIME] = 0;
+#endif
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
@@ -131,7 +135,9 @@ int	fd;
 #ifdef BSD
 	curr_tio[fd].sg_flags |= XTABS;		/* Tab expansion ON.	*/
 #else
+#ifndef CRAY2
 	curr_tio[fd].c_oflag |= TAB3;		/* Tab expansion ON.	*/
+#endif
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
@@ -147,7 +153,9 @@ int	fd;
 #ifdef BSD
 	curr_tio[fd].sg_flags &= ~XTABS;	/* Tab expans. OFF.	*/
 #else
+#ifndef CRAY2
 	curr_tio[fd].c_oflag &= ~TAB3;		/* Tab expans. OFF.	*/
+#endif
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
@@ -160,11 +168,13 @@ void
 set_HUPCL( fd )
 int	fd;
 	{
+#ifndef CRAY2
 #ifdef BSD
 	(void) ioctl( fd, TIOCHPCL, NULL );
 #else
 	curr_tio[fd].c_cflag |= HUPCL;
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
+#endif
 #endif
 	return;
 	}
@@ -178,8 +188,10 @@ clr_CRNL( fd )
 #ifdef BSD
 	curr_tio[fd].sg_flags &= ~CRMOD;
 #else
+#ifndef CRAY2
 	curr_tio[fd].c_oflag &= ~(ONLCR|OCRNL);
 	curr_tio[fd].c_iflag &= ~(ICRNL|INLCR);
+#endif
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	}
@@ -193,7 +205,9 @@ get_O_Speed( fd )
 #ifdef BSD
 	return	(unsigned short) save_tio[fd].sg_ospeed;
 #else
+#ifndef CRAY2
 	return	save_tio[fd].c_cflag & CBAUD;
+#endif
 #endif
 	}
 
