@@ -235,6 +235,7 @@ register matp_t output;
 
 		if( fabs(y) < 0.000001 )  {
 			rt_log("mat_inv:  error!\n");
+			abort();
 			return;		/* ERROR */
 		}
 		y = 1.0 / y;
@@ -481,6 +482,7 @@ double alpha, beta, ggamma;
  *  The eigenvalue with the smallest absolute value is
  *  returned in val1, with its eigenvector in vec1.
  */
+void
 eigen2x2( val1, val2, vec1, vec2, a, b, c )
 fastf_t	*val1, *val2;
 vect_t	vec1, vec2;
@@ -540,6 +542,7 @@ fastf_t	a, b, c;
  *
  *  MAT4X3VEC( to, m, from ) is the identity that is created.
  */
+void
 mat_fromto( m, from, to )
 mat_t	m;
 vect_t	from;
@@ -588,6 +591,7 @@ vect_t	to;
  *  plane, we must first find the transformation that maps
  *  D into the +X axis, and then rotate to the -Z axis.
  */
+void
 mat_lookat( rot, dir )
 mat_t rot;
 vect_t dir;
