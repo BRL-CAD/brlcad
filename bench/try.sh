@@ -122,7 +122,7 @@ EOF
 echo +++++ sphflake
 
 time $RT -B -M -s512 $* \
-	$DB/sphflake.g all.g \
+	$DB/sphflake.g scene.r \
 	<< EOF
 viewsize 2.556283261452611e+04;
 orientation 4.406810841785839e-01 4.005093234738861e-01 5.226451688385938e-01 6.101102288499644e-01;
