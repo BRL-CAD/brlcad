@@ -1,23 +1,19 @@
 /*
-	SCCS id:	@(#) squash.c	2.1
-	Modified: 	12/9/86 at 15:54:49
-	Retrieved: 	12/26/86 at 21:54:46
-	SCCS archive:	/vld/moss/src/fbed/s.squash.c
-
-	Author:		Paul R. Stay
+	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6640 or AV-298-6640
+			(301)278-6651 or AV-298-6651
 */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 /* 
  * squash.c - Filter super-sampled image for one scan line
  */
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) squash.c 2.1, modified 12/9/86 at 15:54:49, archive /vld/moss/src/fbed/s.squash.c";
-#endif
 #include <stdio.h>
+#include "./std.h"
+#define DEBUG_SQUASH	false
 /* Cone filtering weights. 
  * #define CNTR_WT 0.23971778
  * #define MID_WT  0.11985889
@@ -39,9 +35,11 @@ squash( buf0, buf1, buf2, ret_buf, n )
 register int	*buf0, *buf1, *buf2;	
 register float	*ret_buf;
 register int	n;
-	{
-	register int     j;
-
+	{	register int     j;
+#if DEBUG_SQUASH
+	fb_log( "squash: buf0=0x%x buf1=0x%x buf2=0x%x ret_buf=0x%x n=%d\n",
+		buf0, buf1, buf2, ret_buf, n );
+#endif
 	for( j = 1; j < n - 1; j++ )
 		{
 		ret_buf[j] =

@@ -2137,7 +2137,7 @@ register Point	*pointp;
 int
 get_Char()
 	{	int	c;
-#ifdef sgi		
+#if defined( sgi ) && 0
 	return	(c = sgi_Getchar()) == EOF ? EOF : toascii( c );
 #else
 	return	(c = getchar()) == EOF ? EOF : toascii( c );

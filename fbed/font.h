@@ -14,7 +14,7 @@
 */
 /*	font.h - Header file for putting fonts up.			*/
 #define INCL_FONT
-#if defined(sel) || defined(gould) || defined( sgi )
+#if defined(sel) || defined(gould) || defined(sgi)
 #define BIGENDIAN
 #endif
 #if defined(BIGENDIAN)
@@ -23,6 +23,17 @@
 #else
 #define	SWAB(shrt)
 #define SWABV(shrt)	(shrt)
+#endif
+#if defined(mips)
+#define CHARS_UNSIGNED_ONLY
+#endif
+#define SIGNBIT		(1<<7)
+#define SIGNMASK	~SIGNBIT
+#define TWOSCOMP(chr)	((~(chr)&0xff)+1)
+#ifdef CHARS_UNSIGNED_ONLY
+#define SignedChar(chr)	(((chr)&SIGNBIT) ? -TWOSCOMP(chr) : (chr))
+#else
+#define SignedChar(chr)	chr
 #endif
 
 /*	vfont.h	4.1	83/05/03 from 4.2 Berkley			*/

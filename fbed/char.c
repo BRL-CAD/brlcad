@@ -1,25 +1,19 @@
 /*
-	SCCS id:	@(#) char.c	2.3
-	Modified: 	12/31/86 at 16:09:47
-	Retrieved: 	12/31/86 at 16:09:54
-	SCCS archive:	/vld/moss/src/fbed/s.char.c
-
-	Authors:	Paul R. Stay
-			Gary S. Moss
-			Doug A. Gwyn
-
+	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or AV-298-6651
 */
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) char.c 2.3, modified 12/31/86 at 16:09:47, archive /vld/moss/src/fbed/s.char.c";
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-
 #include <stdio.h>
+#include "./std.h"
+#include "./font.h"
 #include "./extern.h"
+#define DEBUG_STRINGS	false
+
 /* 
 	char.c - routines for displaying a string on a frame buffer.
  */
@@ -34,13 +28,17 @@ void
 do_line( xpos, ypos, line, menu_border )
 int		xpos, ypos;
 register char	*line;
-RGBpixel		*menu_border; /* Menu outline color, if NULL, do filtering. */
+RGBpixel	*menu_border; /* Menu outline color, if NULL, do filtering. */
 	{	register int    currx;
 		register int    char_count, char_id;
 		register int	len = strlen( line );
+#if DEBUG_STRINGS
+	fb_log( "do_line: xpos=%d ypos=%d line=\"%s\" menu_border=0x%x\n",
+		xpos, ypos, line, (int) menu_border );
+#endif
 	if( ffdes == NULL )
 		{
-		fb_log( "ERROR: do_line() called before get_Font().\n" );
+		fb_log( "ERROR: must read font first.\n" );
 		return;
 		}
 	currx = xpos;
@@ -61,18 +59,31 @@ RGBpixel		*menu_border; /* Menu outline color, if NULL, do filtering. */
 			}
 
 		/* Read in the dimensions for the character */
-		width = dir[char_id].right + dir[char_id].left;
-		height = dir[char_id].up + dir[char_id].down;
+		width = SignedChar(dir[char_id].right) +
+				SignedChar(dir[char_id].left);
+		height = SignedChar(dir[char_id].up) +
+				SignedChar(dir[char_id].down);
+
+#if DEBUG_STRINGS
+		fb_log( "do_line: right=%d left=%d up=%d down=%d\n",
+			SignedChar(dir[char_id].right),
+			SignedChar(dir[char_id].left),
+			SignedChar(dir[char_id].up),
+			SignedChar(dir[char_id].down)
+			);
+		fb_log( "do_line: width=%d height=%d\n", width, height );
+#endif
 
 		if( currx + width > fb_getwidth(fbp) - 1 )
 			break;		/* won't fit on screen */
 
 		if( menu_border == RGBPIXEL_NULL )
-			do_Char( char_id, currx, ypos, dir[char_id].down%2 );
+			do_Char( char_id, currx, ypos,
+				SignedChar(dir[char_id].down)%2 );
 		else
 			menu_char(	currx,
 					ypos,
-					dir[char_id].down % 2,
+					SignedChar(dir[char_id].down) % 2,
 					menu_border
 					);
 		currx += SWABV(dir[char_id].width) + 2;
@@ -93,8 +104,12 @@ int xpos, ypos, odd;
 		int     	up, down;
 		static float	resbuf[FONTBUFSZ];
 		static RGBpixel	fbline[FONTBUFSZ];
+#if DEBUG_STRINGS
+	fb_log( "do_Char: c='%c' xpos=%d ypos=%d odd=%d\n",
+		c, xpos, ypos, odd );
+#endif
 
-	/* Read in the character bit map, with two blank lines on each end. */
+	/* read in character bit map, with two blank lines on each end */
 	for (i = 0; i < 2; i++)
 		clear_buf (totwid, filterbuf[i]);
 	for (i = height + 1; i >= 2; i--)
@@ -102,8 +117,8 @@ int xpos, ypos, odd;
 	for (i = height + 2; i < height + 4; i++)
 		clear_buf (totwid, filterbuf[i]);
 
-	up = dir[c].up;
-	down = dir[c].down;
+	up = SignedChar( dir[c].up );
+	down = SignedChar( dir[c].down );
 
 	/* Initial base line for filtering depends on odd flag. */
 	base = (odd ? 1 : 2);

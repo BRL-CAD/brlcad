@@ -58,7 +58,7 @@ int
 empty( fd )
 int	fd;
 	{
-#ifdef sgi
+#if defined( sgi ) && 0
 		extern FBIO	*fbp;
 	if( fbp != FBIO_NULL && strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0 )
 		return	sgi_Empty();
