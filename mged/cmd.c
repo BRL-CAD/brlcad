@@ -898,7 +898,7 @@ cmd_setup()
 	}
 	bu_vls_free(&temp);
 
-	(void)Tcl_CreateCommand(interp, "mged_glob", cmd_mged_glob,
+	(void)Tcl_CreateCommand(interp, "db_glob", cmd_mged_glob,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "cmd_init", cmd_init, (ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
@@ -1123,7 +1123,7 @@ cmd_mged_glob(clientData, interp, argc, argv)
 	bu_vls_init(&src);
 	bu_vls_init(&dest);
 	bu_vls_strcpy(&src, argv[1]);
-	mged_compat( &dest, &src );
+	mged_compat(&dest, &src, 1);
 	Tcl_AppendResult(interp, bu_vls_addr(&dest), (char *)NULL);
 	bu_vls_free(&src);
 	bu_vls_free(&dest);
@@ -1188,8 +1188,9 @@ backslash_specials( dest, src )
  */
 
 void
-mged_compat( dest, src )
+mged_compat( dest, src, use_first )
 	struct bu_vls *dest, *src;
+	int use_first;
 {
 	char *start, *end;          /* Start and ends of words */
 	int regexp;                 /* Set to TRUE when word is a regexp */
@@ -1246,7 +1247,7 @@ mged_compat( dest, src )
 			bu_vls_putc( &word, *end++ );
 		}
 
-		if( firstword )
+		if( firstword && !use_first )
 			regexp = 0;
 
 		/* Now, if the word was suspected of being a wildcard, try to match
@@ -1314,7 +1315,7 @@ cmdline(vp, record)
 	*/
 
 	if (glob_compat_mode)
-		mged_compat(&globbed, vp);
+		mged_compat(&globbed, vp, 0);
 	else
 		bu_vls_vlscat(&globbed, vp);
 
