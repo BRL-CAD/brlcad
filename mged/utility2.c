@@ -1311,7 +1311,7 @@ int argc;
 char **argv;
 {
 	struct directory *old_dp;
-	struct nmg_ptbl tops;
+	struct bu_ptbl tops;
 	mat_t xform;
 	int i,j;
 
@@ -1329,7 +1329,7 @@ char **argv;
 	db_functree( dbip, old_dp, increment_uses, increment_uses );
 
 	/* Get list of tree tops in this model */
-	nmg_tbl( &tops, TBL_INIT, (long *)NULL );
+	bu_ptbl( &tops, BU_PTBL_INIT, (long *)NULL );
 	for( i=0 ; i<RT_DBNHASH ; i++ )
 	{
 		struct directory *dp;
@@ -1372,30 +1372,30 @@ char **argv;
 				continue;
 
 			if( dp->d_nref == 0 )
-				nmg_tbl( &tops, TBL_INS, (long *)dp );
+				bu_ptbl( &tops, BU_PTBL_INS, (long *)dp );
 		}
 	}
 
 	/* zero nrefs in entire model */
-	for( i=0 ; i<NMG_TBL_END( &tops ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &tops ) ; i++ )
 	{
 		struct directory *dp;
 
-		dp = (struct directory *)NMG_TBL_GET( &tops, i );
+		dp = (struct directory *)BU_PTBL_GET( &tops, i );
 		db_functree( dbip, dp, zero_nrefs, zero_nrefs );
 	}
 
 	/* count references in entire model */
-	for( i=0 ; i<NMG_TBL_END( &tops ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &tops ) ; i++ )
 	{
 		struct directory *dp;
 
-		dp = (struct directory *)NMG_TBL_GET( &tops, i );
+		dp = (struct directory *)BU_PTBL_GET( &tops, i );
 		db_functree( dbip, dp, increment_nrefs, increment_nrefs );
 	}
 
 	/* Free list of tree-tops */
-	nmg_tbl( &tops, TBL_FREE, (long *)NULL );
+	bu_ptbl( &tops, BU_PTBL_FREE, (long *)NULL );
 
 	/* Make new names */
 	db_functree( dbip, old_dp, Make_new_name, Make_new_name );

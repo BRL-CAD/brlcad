@@ -620,7 +620,7 @@ plane_t	planes[6];
 		struct shell *s;
 		struct faceuse *fu;
 		struct rt_tess_tol ttol;
-		struct nmg_ptbl vert_tab;
+		struct bu_ptbl vert_tab;
 
 		ttol.magic = RT_TESS_TOL_MAGIC;
 		ttol.abs = mged_abs_tol;
@@ -688,13 +688,13 @@ plane_t	planes[6];
 		/* solve for new vertex geometry
 		 * This does all the vertices
 		 */
-		nmg_tbl( &vert_tab , TBL_INIT , (long *)NULL );
+		bu_ptbl( &vert_tab , BU_PTBL_INIT , (long *)NULL );
 		nmg_vertex_tabulate( &vert_tab , &m->magic );
-		for( i=0 ; i<NMG_TBL_END( &vert_tab ) ; i++ )
+		for( i=0 ; i<BU_PTBL_END( &vert_tab ) ; i++ )
 		{
 			struct vertex *v;
 
-			v = (struct vertex *)NMG_TBL_GET( &vert_tab , i );
+			v = (struct vertex *)BU_PTBL_GET( &vert_tab , i );
 			NMG_CK_VERTEX( v );
 
 			if( nmg_in_vert( v , 0 , &mged_tol ) )
@@ -702,11 +702,11 @@ plane_t	planes[6];
 			  Tcl_AppendResult(interp, "Could not find coordinates for inside arb7\n",
 					   (char *)NULL);
 			  nmg_km( m );
-			  nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
+			  bu_ptbl( &vert_tab , BU_PTBL_FREE , (long *)NULL );
 			  return( 1 );
 			}
 		}
-		nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
+		bu_ptbl( &vert_tab , BU_PTBL_FREE , (long *)NULL );
 
 		/* rebound model */
 		nmg_rebound( m , &mged_tol );

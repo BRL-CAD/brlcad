@@ -931,7 +931,7 @@ CONST struct rt_tol	*tol;
 	RT_CK_DB_INTERNAL(ip);
 	RT_CK_TOL(tol);
 
-	if( ip->idb_type != ID_ARB8 )  rt_bomb("rt_arb_std_type: not ARB!\n");
+	if( ip->idb_type != ID_ARB8 )  bu_bomb("rt_arb_std_type: not ARB!\n");
 
 	arb = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
