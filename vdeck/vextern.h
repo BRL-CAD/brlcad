@@ -70,8 +70,6 @@ extern jmp_buf		env;
 #define CONV_EPSILON	0.01
 
 #ifdef BSD
-#define strchr(a,b)	index(a,b)
-#define strrchr(a,b)	rindex(a,b)
 extern char *index(), *rindex();
 #endif
 
