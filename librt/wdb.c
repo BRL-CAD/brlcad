@@ -37,9 +37,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "wdb.h"
 
-/* XXX move to raytrace.h */
-#define RT_CK_WDB(_p)		BU_CKMAG( _p , RT_WDB_MAGIC , "rt_wdb" )
-
 /*
  *			W D B _ F O P E N
  *
@@ -67,8 +64,9 @@ CONST char *filename;
  *
  *  Create a libwdb output stream destined for an existing BRL-CAD database,
  *  already opened via a db_open() call.
- *	RT_WDB_TYPE_DB_DISK		Add to on-disk database
- *	RT_WDB_TYPE_DB_INMEM		Add to in-memory database only
+ *	RT_WDB_TYPE_DB_DISK			Add to on-disk database
+ *	RT_WDB_TYPE_DB_DISK_APPEND_ONLY		Add to on-disk database, don't clobber existing names, use prefix
+ *	RT_WDB_TYPE_DB_INMEM			Add to in-memory database only
  *	RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	Ditto, but give errors if name in use.
  */
 struct rt_wdb *
@@ -86,7 +84,8 @@ int		mode;
 		return RT_WDB_NULL;
 	}
 
-	if( mode == RT_WDB_TYPE_DB_DISK && dbip->dbi_read_only )  {
+	if( (mode == RT_WDB_TYPE_DB_DISK || mode == RT_WDB_TYPE_DB_DISK_APPEND_ONLY ) &&
+	    dbip->dbi_read_only )  {
 		/* In-mem updates happen regardless of disk read-only flag */
 		bu_log("wdb_dbopen(%s): read-only\n",
 			dbip->dbi_filename );
@@ -191,7 +190,29 @@ double		local2mm;
 			return -5;
 		}
 		flags = db_flags_internal( &intern );
-		/* If name already exists, temporary name will be generated */
+		/* If name already exists, that object will be updated. */
+		if( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL &&
+		    (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
+			bu_log("wdb_export(%s): db_diradd error\n",
+				name );
+			db_free_external( &ext );
+			return -3;
+		}
+		if( db_put_external( &ext, dp, wdbp->dbip ) < 0 )  {
+			bu_log("wdb_export(%s): db_put_external error\n",
+				name );
+			db_free_external( &ext );
+			return -3;
+		}
+		break;
+
+	case RT_WDB_TYPE_DB_DISK_APPEND_ONLY:
+		if( wdbp->dbip->dbi_read_only )  {
+			bu_log("wdb_export(%s): read-only database, write aborted\n");
+			return -5;
+		}
+		flags = db_flags_internal( &intern );
+		/* If name already exists, new non-conflicting name will be generated */
 		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
 			bu_log("wdb_export(%s): db_diradd error\n",
 				name );
@@ -283,4 +304,3 @@ struct rt_wdb	*wdbp;
 	}
 	bu_free( (genptr_t)wdbp, "struct rt_wdb");
 }
-
