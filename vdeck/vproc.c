@@ -51,23 +51,24 @@ void		blank_fill();
  */
 deck( prefix )
 register char *prefix;
-	{	register int	i, j;
-	
+{	
+	register int	i, j;
+
 	nns = nnr = 0;
-	
+
 	/* Create file for solid table.					*/
 	if( prefix != 0 )
-		{
+	{
 		(void) strncpy( st_file, prefix, 73 );
 		(void) strcat( st_file, ".st" );
-		}
+	}
 	else
 		(void) strncpy( st_file, "solids", 7 );
 	if( (solfd = creat( st_file, 0644 )) < 0 )
-		{
+	{
 		perror( st_file );
 		exit( 10 );
-		}
+	}
 
 
 	/* Target units (a2,3x)						*/
@@ -88,32 +89,32 @@ register char *prefix;
 
 	/* Create file for region table.				*/
 	if( prefix != 0 )
-		{
+	{
 		(void) strncpy( rt_file, prefix, 73 );
 		(void) strcat( rt_file, ".rt" );
-		}
+	}
 	else
 		(void) strncpy( rt_file, "regions", 8 );
 	if( (regfd = creat( rt_file, 0644 )) < 0 )
-		{
+	{
 		perror( rt_file );
 		exit( 10 );
-		}
+	}
 
 	/* create file for region ident table
 	 */
 	if( prefix != 0 )
-		{
+	{
 		(void) strncpy( id_file, prefix, 73 );
 		(void) strcat( id_file, ".id" );
-		}
+	}
 	else
 		(void) strncpy( id_file, "region_ids", 11 );
 	if( (ridfd = creat( id_file, 0644 )) < 0 )
-		{
+	{
 		perror( id_file );
 		exit( 10 );
-		}
+	}
 	itoa( -1, buff, 5 );
 	ewrite( ridfd, buff, 5 );
 	ewrite( ridfd, LF, 1 );
@@ -124,7 +125,8 @@ register char *prefix;
 
 	/* Check integrity of list against directory and build card deck.	*/
 	for( i = 0; i < curr_ct; i++ )
-		{	struct directory	*dirp;
+	{	
+		struct directory	*dirp;
 		if( (dirp = db_lookup( dbip, curr_list[i], LOOKUP_NOISY )) != DIR_NULL )  {
 #if 1
 			treewalk( curr_list[i] );
@@ -132,7 +134,7 @@ register char *prefix;
 			cgobj( dirp, 0, identity );
 #endif
 		}
-		}
+	}
 	/* Add number of solids and regions on second card.		*/
 	(void) lseek( solfd, savsol, 0 );
 	itoa( nns, buff, 5 );
@@ -156,7 +158,7 @@ register char *prefix;
 	 */
 	delsol = delreg = 0;
 	/* XXX should free soltab list */
-	}
+}
 
 /*	s h e l l ( )
 	Execute shell command.
@@ -194,7 +196,7 @@ char  *args[];
 		return( -1 );
 	} else	if( pid == 0 ) { /*
 				  * CHILD process - execs a shell command
-				  */
+					  */
 		(void) signal( SIGINT, SIG_DFL );
 		(void) execv( "/bin/sh", argv );
 		perror( "/bin/sh -c" );
@@ -202,7 +204,7 @@ char  *args[];
 	} else	/*
 		 * PARENT process - waits for shell command
 		 * to finish.
-		 */
+			 */
 		do {
 			if( (ret = wait( &status )) == -1 ) {
 				perror( "wait( /bin/sh -c )" );
@@ -248,22 +250,23 @@ toc()
 void
 list_toc( args )
 char	 *args[];
-	{	register int	i, j;
+{	
+	register int	i, j;
 	(void) fflush( stdout );
 	for( tmp_ct = 0, i = 1; args[i] != NULL; i++ )
-		{
+	{
 		for( j = 0; j < ndir; j++ )
-			{
+		{
 			if( match( args[i], toc_list[j] ) )
 				tmp_list[tmp_ct++] = toc_list[j];
-			}
 		}
+	}
 	if( i > 1 )
 		(void) col_prt( tmp_list, tmp_ct );
 	else
 		(void) col_prt( toc_list, ndir );
 	return;
-	}
+}
 
 #define NAMESIZE	16
 #define MAX_COL	(NAMESIZE*5)
@@ -279,18 +282,19 @@ char	 *args[];
 col_prt( list, ct )
 register char	*list[];
 register int	ct;
-	{	char		buf[MAX_COL+2];
-		register int	i, column, spaces;
+{	
+	char		buf[MAX_COL+2];
+	register int	i, column, spaces;
 
 	for( i = 0, column = 0; i < ct; i++ )
-		{
+	{
 		if( column + strlen( list[i] ) > MAX_COL )
-			{
+		{
 			SEND_LN();
 			i--;
-			}
+		}
 		else
-			{
+		{
 			(void) strcpy( &buf[column], list[i] );
 			column += strlen( list[i] );
 			spaces = NAMESIZE - (column % NAMESIZE );
@@ -299,11 +303,11 @@ register int	ct;
 					buf[column++] = ' ';
 			else
 				SEND_LN();
-			}
 		}
+	}
 	SEND_LN();
 	return	ct;
-	}
+}
 
 /*	i n s e r t ( )
 	Insert each member of the table of contents 'toc_list' which
@@ -312,28 +316,29 @@ register int	ct;
 insert(  args,	ct )
 char		*args[];
 register int	ct;
-	{	register int	i, j, nomatch;
-		unsigned	bytect;
+{	
+	register int	i, j, nomatch;
+	unsigned	bytect;
 
 	/* For each argument (does not include args[0]).			*/
 	for( i = 1; i < ct; i++ )
-		{ /* If object is in table of contents, insert in current list.	*/
+	{ /* If object is in table of contents, insert in current list.	*/
 		nomatch = YES;
 		for( j = 0; j < ndir; j++ )
-			{
+		{
 			if( match( args[i], toc_list[j] ) )
-				{
+			{
 				nomatch = NO;
 				/* Allocate storage for string.			*/
 				curr_list[curr_ct++] = rt_strdup(toc_list[j]);
-				}
 			}
+		}
 		if( nomatch )
 			(void) fprintf( stderr,
-				"Object \"%s\" not found.\n", args[i] );
-		}
-	return	curr_ct;
+			    "Object \"%s\" not found.\n", args[i] );
 	}
+	return	curr_ct;
+}
 
 /*	d e l e t e ( )
 	delete all members of current list 'curr_list' which match
@@ -344,17 +349,19 @@ char	*args[];
 {
 	register int	i;
 	register int	nomatch;
-	
+
 	/* for each object in arg list
 	 */
-	for( i = 1; i < arg_ct; i++ ) { register int	j;
+	for( i = 1; i < arg_ct; i++ ) { 
+		register int	j;
 		nomatch = YES;
 
 		/* traverse list to find string
 		 */
 		for( j = 0; j < curr_ct; )
 			if( match( args[i], curr_list[j] ) )
-			{	register int	k;			
+			{	
+				register int	k;
 
 				nomatch = NO;
 				rt_free( curr_list[j], "curr_list" );
@@ -365,12 +372,13 @@ char	*args[];
 				 */
 				for( k = j; k < curr_ct; k++ )
 					curr_list[k] = curr_list[k+1];
-			} else	++j;
+			} 
+			else	++j;
 		if( nomatch )
 			(void) fprintf( stderr,
-					"Object \"%s\" not found.\n",
-					args[i]
-					);
+			    "Object \"%s\" not found.\n",
+			    args[i]
+			    );
 	}
 	return( curr_ct );
 }
@@ -396,7 +404,9 @@ int   n,    w;
 
 	if( (sign = n) < 0 )	n = -n;
 	i = 0;
-	do	s[i++] = n % 10 + '0';	while( (n /= 10) > 0 );
+	do	
+		s[i++] = n % 10 + '0';	
+	while( (n /= 10) > 0 );
 	if( sign < 0 )	s[i++] = '-';
 
 	/* Blank fill array.					*/
@@ -421,16 +431,17 @@ ftoascii( f, s, w, d )
 register char	   *s;
 register int	w, d;
 float	  	f;
-	{	register int	c, i, j;
-		long	n, sign;
+{	
+	register int	c, i, j;
+	long	n, sign;
 
 	if( w <= d + 2 )
-		{
+	{
 		(void) fprintf( stderr,
-				"ftoascii: incorrect format  need w.df  stop"
-				);
+		    "ftoascii: incorrect format  need w.df  stop"
+		    );
 		exit( 10 );
-		}
+	}
 	for( i = 1; i <= d; i++ )
 		f = f * 10.0;
 
@@ -447,20 +458,19 @@ float	  	f;
 		s[i++] = n % 10 + '0';
 		if( i == d )
 			s[i++] = '.';
-		}
-	while( (n /= 10) > 0 );
+	}	while( (n /= 10) > 0 );
 
 	/* Zero fill the d field if necessary.				*/
 	if( i < d )
-		{	
+	{
 		for( j = i; j < d; j++ )
 			s[j] = '0';
 		s[j++] = '.';
 		i = j;
-		}
+	}
 	if( sign < 0 )
 		s[i++] = '-';
-	
+
 	/* Blank fill rest of field.					*/
 	for ( j = i; j < w; j++ )
 		s[j] = ' ';
@@ -470,19 +480,20 @@ float	  	f;
 
 	/* Reverse the array.						*/
 	for( i = 0, j = w - 1; i < j; i++, j-- )
-		{
+	{
 		c    = s[i];
 		s[i] = s[j];
 		s[j] =    c;
-		}
 	}
+}
 
 vls_blanks( v, n )
 struct rt_vls	*v;
 int		n;
 {
 	RT_VLS_CHECK(v);
-	rt_vls_strncat( v, "                                                                                                                                ", n);
+	rt_vls_strncat( v, "                                                                                                                                ",
+	    n);
 }
 
 /*
@@ -504,7 +515,9 @@ register int	w;
 
 	if( (sign = n) < 0 )	n = -n;
 	i = 0;
-	do	s[i++] = n % 10 + '0';	while( (n /= 10) > 0 );
+	do	
+		s[i++] = n % 10 + '0';	
+	while( (n /= 10) > 0 );
 	if( sign < 0 )	s[i++] = '-';
 
 	/* Blank fill array.					*/
@@ -571,12 +584,12 @@ register int	w, d;
 	s = rt_vls_addr(v)+rt_vls_strlen(v)-w;
 
 	if( w <= d + 2 )
-		{
+	{
 		(void) fprintf( stderr,
-				"ftoascii: incorrect format  need w.df  stop"
-				);
+		    "ftoascii: incorrect format  need w.df  stop"
+		    );
 		exit( 10 );
-		}
+	}
 	for( i = 1; i <= d; i++ )
 		f = f * 10.0;
 
@@ -593,20 +606,19 @@ register int	w, d;
 		s[i++] = n % 10 + '0';
 		if( i == d )
 			s[i++] = '.';
-		}
-	while( (n /= 10) > 0 );
+	}	while( (n /= 10) > 0 );
 
 	/* Zero fill the d field if necessary.				*/
 	if( i < d )
-		{	
+	{
 		for( j = i; j < d; j++ )
 			s[j] = '0';
 		s[j++] = '.';
 		i = j;
-		}
+	}
 	if( sign < 0 )
 		s[i++] = '-';
-	
+
 	/* Blank fill rest of field.					*/
 	for ( j = i; j < w; j++ )
 		s[j] = ' ';
@@ -616,11 +628,11 @@ register int	w, d;
 
 	/* Reverse the array.						*/
 	for( i = 0, j = w - 1; i < j; i++, j-- )
-		{
+	{
 		c    = s[i];
 		s[i] = s[j];
 		s[j] =    c;
-		}
+	}
 }
 
 /*
@@ -643,17 +655,17 @@ char
 getcmd( args, ct )
 char		*args[];
 register int	ct;
-	{
+{
 	/* Get arguments.						 */
 	if( ct == 0 )
 		while( --arg_ct >= 0 )
 			rt_free( args[arg_ct], "args[arg_ct]" );
 	for( arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct )
-		{
+	{
 		args[arg_ct] = rt_malloc( MAXLN, "getcmd buffer" );
 		if( ! getarg( args[arg_ct] ) )
 			break;
-		}
+	}
 	++arg_ct;
 	args[arg_ct] = 0;
 
@@ -664,7 +676,7 @@ register int	ct;
 	 */
 	(void) signal( SIGINT, abort_sig );
 	return	(args[0])[0];
-	}
+}
 
 /*	g e t a r g ( )
 	Get a word of input into 'str',
@@ -674,24 +686,23 @@ register int	ct;
 char
 getarg( str )
 register char	*str;
-	{
+{
 	do
-		{
+	{
 		*str = getchar();
 		if( (int)(*str) == ' ' )
-			{
+		{
 			*str = '\0';
 			return( 1 );
-			}
+		}
 		else
 			++str;
-		}
-	while( (int)(str[-1]) != EOF && (int)(str[-1]) != '\n' );
+	}	while( (int)(str[-1]) != EOF && (int)(str[-1]) != '\n' );
 	if( (int)(str[-1]) == '\n' )
 		--str;
 	*str = '\0';
 	return	0;
-	}
+}
 
 /*	m e n u ( )
 	Display menu stored at address 'addr'.
@@ -699,12 +710,13 @@ register char	*str;
 void
 menu( addr )
 char **addr;
-	{	register char	**sbuf = addr;
+{	
+	register char	**sbuf = addr;
 	while( *sbuf )
 		(void) printf( "%s\n", *sbuf++ );
 	(void) fflush( stdout );
 	return;
-	}
+}
 
 /*	b l a n k _ f i l l ( )
 	Write count blanks to fildes.
@@ -712,10 +724,11 @@ char **addr;
 void
 blank_fill( fildes, count )
 register int	fildes,	count;
-	{	register char	*blank_buf = BLANKS;
+{	
+	register char	*blank_buf = BLANKS;
 	ewrite( fildes, blank_buf, (unsigned) count );
 	return;
-	}
+}
 
 /*
 	Section 6:	I N T E R R U P T   H A N D L E R S
@@ -731,12 +744,12 @@ register int	fildes,	count;
 /*ARGSUSED*/
 void
 abort_sig( sig )
-	{
+{
 	(void) signal( SIGINT, quit );	/* reset trap */
 
 	/* goto command interpreter with environment restored.		*/
 	longjmp( env, sig );
-	}
+}
 
 /*	q u i t ( )
 	Terminate run.
@@ -744,7 +757,7 @@ abort_sig( sig )
 /*ARGSUSED*/
 void
 quit( sig )
-	{
+{
 	(void) fprintf( stdout, "quitting...\n" );
 	exit( 0 );
-	}
+}
