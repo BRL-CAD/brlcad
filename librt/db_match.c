@@ -195,6 +195,9 @@ struct db_i    *dbip;
 			if( rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0 )
 				continue;
 			if( intern.idb_type != ID_COMBINATION )  {
+				bu_log("NOTICE: %s was marked a combination, but isn't one?  Clearing flag\n",
+					dp->d_namep);
+				dp->d_flags &= ~DIR_COMB;
 				rt_db_free_internal( &intern );
 				continue;
 			}
