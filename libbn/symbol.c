@@ -75,9 +75,9 @@ double	scale;			/* scale factor to change 1x1 char sz */
 	 *  If the user provided translation or
 	 *  scaling in his matrix, it will *also* be applied.
 	 */
-	pl_mat_idn( xlate_to_origin );
+	bn_mat_idn( xlate_to_origin );
 	MAT_DELTAS( xlate_to_origin,	origin[X], origin[Y], origin[Z] );
-	pl_mat_mul( mat, xlate_to_origin, rot );
+	bn_mat_mul( mat, xlate_to_origin, rot );
 
 	/* Check to see if initialization is needed */
 	if( tp_cindex[040] == 0 )  tp_setup();
@@ -136,7 +136,7 @@ double	theta;			/* degrees ccw from X-axis */
 	mat_t	mat;
 	vect_t	p;
 
-	pl_mat_angles( mat, 0.0, 0.0, theta );
+	bn_mat_angles( mat, 0.0, 0.0, theta );
 	VSET( p, x, y, 0 );
 	tp_3symbol( fp, string, p, mat, scale );
 }
