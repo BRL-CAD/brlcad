@@ -56,7 +56,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm-pex.h"
 #include "./ged.h"
 #include "./mged_dm.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./sedit.h"
 
 int Pex_dm_init();
@@ -64,24 +64,20 @@ static void	Pex_statechange();
 static int     Pex_dm();
 static void     establish_perspective();
 static void     set_perspective();
+#if 0
 static struct dm_list *get_dm_list();
+#endif
 #ifdef USE_PROTOTYPES
 static Tk_GenericProc Pex_doevent;
 #else
 static int Pex_doevent();
 #endif
 
-extern void color_soltab();
 extern int dm_pipe[];
 extern struct device_values dm_values;	/* values read from devices */
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
-struct mged_pex_vars {
-  struct dm_list *dm_list;
-};
-
-#define PEX_APP_VARS ((struct mged_pex_vars *)(((struct pex_vars *)dm_vars)->app_vars))
 struct bu_structparse Pex_vparse[] = {
 #if TRY_DEPTHCUE
   {"%d",  1, "depthcue",	Pex_MV_O(cue),	Pex_colorchange },
@@ -100,7 +96,7 @@ Pex_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, color_soltab) == TCL_ERROR)
+  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
 
   /* register application provided routines */
@@ -110,13 +106,6 @@ char *argv[];
 #if 0
   dmp->dmr_app_close = Pex_close;
 #endif
-
-  /* Allocate space for application specific X variables */
-  ((struct pex_vars *)dm_vars)->app_vars = bu_malloc(sizeof(struct mged_pex_vars),
-						   "mged_pex_vars");
-  bzero((void *)((struct pex_vars *)dm_vars)->app_vars, sizeof(struct mged_pex_vars));
-
-  PEX_APP_VARS->dm_list = curr_dm_list;
 
   return dmp->dmr_open(dmp);
 }
@@ -150,7 +139,11 @@ XEvent *eventPtr;
 
   save_dm_list = curr_dm_list;
 
+#if 0
   curr_dm_list = get_dm_list(eventPtr->xany.window);
+#else
+  GET_DM_LIST(curr_dm_list, pex_vars, eventPtr->xany.window);
+#endif
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
@@ -474,6 +467,7 @@ set_perspective()
   Pex_set_perspective(dmp);
 }
 
+#if 0
 static struct dm_list *
 get_dm_list(window)
 Window window;
@@ -487,3 +481,4 @@ Window window;
 
   return DM_LIST_NULL;
 }
+#endif

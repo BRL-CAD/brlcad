@@ -55,10 +55,8 @@
 #include "dm-ogl.h"
 #include "./ged.h"
 #include "./mged_dm.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./sedit.h"
-
-extern void color_soltab();
 
 int      Ogl_dm_init();
 static void     set_knob_offset();
@@ -74,10 +72,9 @@ static void     set_perspective();
 static void     refresh_hook();
 static void     do_linewidth();
 static void     do_fog();
+#if 0
 static struct dm_list *get_dm_list();
-
-#define OGL_APP_VARS ((struct mged_ogl_vars *)((struct ogl_vars *)dm_vars)->app_vars)
-#define MVARS (OGL_APP_VARS->mvars)
+#endif
 
 #ifdef IR_BUTTONS
 /*
@@ -97,10 +94,6 @@ static unsigned char bmap[IR_BUTTONS] = {
 	BV_RIGHT,    BV_FRONT,    BV_LEFT,     BV_35_25
 };
 #endif
-
-struct mged_ogl_vars {
-  struct dm_list *dm_list;
-};
 
 struct bu_structparse Ogl_vparse[] = {
 	{"%d",	1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
@@ -145,7 +138,7 @@ Ogl_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, color_soltab) == TCL_ERROR)
+  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
 
   /* register application provided routines */
@@ -155,17 +148,6 @@ char *argv[];
 #if 0
   dmp->dmr_app_close = Ogl_close;
 #endif
-
-  /*XXX This gets screwed up when tieing ---- needs fixing --- see also f_tie() */
-  ((struct ogl_vars *)dmp->dmr_vars)->viewscale = &Viewscale;
-
-  /* Allocate space for application specific Ogl variables */
-  ((struct ogl_vars *)dm_vars)->app_vars =
-    bu_malloc(sizeof(struct mged_ogl_vars), "mged_ogl_vars");
-  bzero((void *)((struct ogl_vars *)dm_vars)->app_vars,
-	sizeof(struct mged_ogl_vars));
-
-  OGL_APP_VARS->dm_list = curr_dm_list;
 
   return dmp->dmr_open(dmp);
 }
@@ -198,9 +180,18 @@ XEvent *eventPtr;
   bu_vls_init(&cmd);
   save_dm_list = curr_dm_list;
 
+#if 0
   curr_dm_list = get_dm_list(eventPtr->xany.window);
+#else
+  GET_DM_LIST(curr_dm_list, ogl_vars, eventPtr->xany.window);
+#endif
 
   if(curr_dm_list == DM_LIST_NULL)
+    goto end;
+
+  if(!glXMakeCurrent(((struct ogl_vars *)dm_vars)->dpy,
+     ((struct ogl_vars *)dm_vars)->win,
+     ((struct ogl_vars *)dm_vars)->glxc))
     goto end;
 
   /* Forward key events to a command window */
@@ -881,6 +872,7 @@ set_knob_offset()
     ((struct ogl_vars *)dm_vars)->knobs[i] = 0;
 }
 
+#if 0
 static struct dm_list *
 get_dm_list(window)
 Window window;
@@ -898,3 +890,4 @@ Window window;
 
   return DM_LIST_NULL;
 }
+#endif

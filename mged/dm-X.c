@@ -48,17 +48,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./ged.h"
 #include "./mged_dm.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./sedit.h"
 
-extern void color_soltab();
-
 int     X_dm_init();
+#if 0
+struct dm_list *get_dm_list();
+#endif
+
 static void	X_statechange();
 static int     X_dm();
 static void     establish_perspective();
 static void     set_perspective();
-static struct dm_list *get_dm_list();
 #ifdef USE_PROTOTYPES
 static Tk_GenericProc X_doevent;
 #else
@@ -70,11 +71,6 @@ extern struct device_values dm_values;	/* values read from devices */
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
-struct mged_x_vars {
-  struct dm_list *dm_list;
-};
-
-#define X_APP_VARS ((struct mged_x_vars *)(((struct x_vars *)dm_vars)->app_vars))
 struct bu_structparse X_vparse[] = {
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
@@ -89,7 +85,7 @@ X_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, color_soltab, argc, argv) == TCL_ERROR)
+  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
 
   /* register application provided routines */
@@ -99,12 +95,6 @@ char *argv[];
 #if 0
   dmp->dmr_app_close = X_close;
 #endif
-
-  /* Allocate space for application specific X variables */
-  ((struct x_vars *)dm_vars)->app_vars = bu_malloc(sizeof(struct mged_x_vars), "mged_x_vars");
-  bzero((void *)((struct x_vars *)dm_vars)->app_vars, sizeof(struct mged_x_vars));
-
-  X_APP_VARS->dm_list = curr_dm_list;
 
   return dmp->dmr_open(dmp);
 }
@@ -137,7 +127,11 @@ XEvent *eventPtr;
     return TCL_OK;
 
   save_dm_list = curr_dm_list;
+#if 0
   curr_dm_list = get_dm_list(eventPtr->xany.window);
+#else
+  GET_DM_LIST(curr_dm_list, x_vars, eventPtr->xany.window);
+#endif
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
@@ -425,17 +419,19 @@ set_perspective()
   X_set_perspective(dmp);
 }
 
+#if 0
 static struct dm_list *
 get_dm_list(window)
 Window window;
 {
-  register struct x_vars *p;
+  register struct dm_list *p;
 
 /*XXXX*/
-  for( BU_LIST_FOR(p, x_vars, &head_x_vars.l) ){
+  for(BU_LIST_FOR(p, dm_list, &head_dm_list.l)){
     if(window == p->win)
 	return ((struct mged_x_vars *)p->app_vars)->dm_list;
   }
 
   return DM_LIST_NULL;
 }
+#endif

@@ -75,10 +75,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm-glx.h"
 #include "./ged.h"
 #include "./mged_dm.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./sedit.h"
-
-extern void color_soltab();
 
 int Glx_dm_init();
 #if 0
@@ -95,14 +93,9 @@ static void     establish_perspective();
 static void     set_perspective();
 static void     refresh_hook();
 static void     set_knob_offset();
+#if 0
 static struct dm_list *get_dm_list();
-
-#define GLX_APP_VARS ((struct mged_glx_vars *)((struct glx_vars *)dm_vars)->app_vars)
-#define MVARS (OGL_APP_VARS->mvars)
-
-struct mged_glx_vars {
-  struct dm_list *dm_list;
-};
+#endif
 
 struct bu_structparse Glx_vparse[] = {
 	{"%d",	1, "depthcue",		Glx_MV_O(cueing_on),	Glx_colorchange },
@@ -170,7 +163,7 @@ Glx_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, color_soltab) == TCL_ERROR)
+  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
 
   /* register application provided routines */
@@ -180,19 +173,6 @@ char *argv[];
 #if 0
   dmp->dmr_app_close = Glx_close;
 #endif
-
-#if 0
-  /*XXX This gets screwed up when tieing ---- needs fixing --- see also f_tie() */
-  ((struct glx_vars *)dm_vars)->viewscale = &Viewscale;
-#endif
-
-  /* Allocate space for application specific Glx variables */
-  ((struct glx_vars *)dm_vars)->app_vars =
-    bu_malloc(sizeof(struct mged_glx_vars), "mged_glx_vars");
-  bzero((void *)((struct glx_vars *)dm_vars)->app_vars,
-	sizeof(struct mged_glx_vars));
-
-  GLX_APP_VARS->dm_list = curr_dm_list;
 
   return dmp->dmr_open(dmp);
 }
@@ -233,10 +213,16 @@ XEvent *eventPtr;
   bu_vls_init(&cmd);
   save_dm_list = curr_dm_list;
 
+#if 0
   curr_dm_list = get_dm_list(eventPtr->xany.window);
+#else
+  GET_DM_LIST(curr_dm_list, glx_vars, eventPtr->xany.window);
+#endif
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
+
+  GLXwinset(eventPtr->xany.display, eventPtr->xany.window);
 
   if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
@@ -876,7 +862,7 @@ refresh_hook()
   dmaflag = 1;
 }
 
-
+#if 0
 static struct dm_list *
 get_dm_list(window)
 Window window;
@@ -892,3 +878,4 @@ Window window;
 
   return DM_LIST_NULL;
 }
+#endif
