@@ -129,7 +129,7 @@ CONST vect_t		zvec;
 	ret = rt_angle_measure( left, xvec, yvec );
 
 #if 0
-	if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
+	if (rt_g.NMG_debug & DEBUG_MESH)  {
 		rt_log("\tnmg_measure_fu_angle(x%x) = %g radians (%g deg)\n",
 			eu, ret, ret * rt_radtodeg);
 	}
@@ -224,7 +224,8 @@ CONST struct rt_tol	*tol;
 	} else if( eu1->vu_p->v_p == eu2->eumate_p->vu_p->v_p &&
 	    eu1->eumate_p->vu_p->v_p == eu2->vu_p->v_p )  {
 	    	/* Edgeuses are oriented in opposite directions */
-		rt_log("nmg_radial_join_eu() FLIP eu2\n");
+		if (rt_g.NMG_debug & DEBUG_MESH_EU)
+			rt_log("nmg_radial_join_eu() FLIP eu2\n");
 	    	eu2 = eu2->eumate_p;
 	} else {
 		rt_bomb("nmg_radial_join_eu(): edgeuses don't share both vertices\n");
@@ -232,7 +233,8 @@ CONST struct rt_tol	*tol;
 
 	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  rt_bomb("nmg_radial_join_eu(): 0 length edge (topology)\n");
 
-	if( rt_pt3_pt3_equal( eu1->vu_p->v_p->coord, eu1->eumate_p->vu_p->v_p->coord, tol ) )
+	if( rt_pt3_pt3_equal( eu1->vu_p->v_p->vg_p->coord,
+	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
 		rt_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
 
 	/*  Construct local coordinate system for this edge,
@@ -240,16 +242,16 @@ CONST struct rt_tol	*tol;
 	 */
 	nmg_eu_2vecs_perp( xvec, yvec, zvec, original_eu1, tol );
 
-	if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) ) {
+	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
 		rt_log("nmg_radial_join_eu(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
 			eu1, eu2,
 			eu1->e_p, eu2->e_p);
 		EUPRINT("\tJoining", eu1);
 		EUPRINT("\t     to", eu2);
 		rt_log( "Faces around eu1:\n" );
-		nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec );
+		nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
 		rt_log( "Faces around eu2:\n" );
-		nmg_pr_fu_around_eu_vecs( eu2, xvec, yvec, zvec );
+		nmg_pr_fu_around_eu_vecs( eu2, xvec, yvec, zvec, tol );
 	}
 
 	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
@@ -271,7 +273,7 @@ CONST struct rt_tol	*tol;
 			abs2 = nmg_measure_fu_angle( eu2, xvec, yvec, zvec );
 			absr = nmg_measure_fu_angle( eu1->radial_p, xvec, yvec, zvec );
 
-			if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) )  {
+			if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
 				rt_log("  abs1=%g, abs2=%g, absr=%g\n",
 					abs1*rt_radtodeg,
 					abs2*rt_radtodeg,
@@ -285,7 +287,7 @@ CONST struct rt_tol	*tol;
 			 *  Special handling if abs1==abs2 or abs2==absr.
 			 */
 			code = nmg_is_angle_in_wedge( abs1, absr, abs2 );
-			if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) )
+			if (rt_g.NMG_debug & DEBUG_MESH_EU )
 				rt_log("    code=%d %s\n", code, (code!=0)?"INSERT_HERE":"skip");
 			if( code != 0 )  break;
 
@@ -333,18 +335,18 @@ CONST struct rt_tol	*tol;
 
 		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
 			rt_log("After nmg_moveeu(), faces around original_eu1 are:\n");
-			nmg_pr_fu_around_eu_vecs( original_eu1, xvec, yvec, zvec );
+			nmg_pr_fu_around_eu_vecs( original_eu1, xvec, yvec, zvec, tol );
 		}
-		/* This will catch the errors, anyway */
-		if( nmg_check_radial(eu1) )
-			rt_bomb("nmg_radial_join_eu(): radial orientation ERROR 1\n");
-		if( nmg_check_radial(eu2) )
-			rt_bomb("nmg_radial_join_eu(): radial orientation ERROR 2\n");
 
 		/* Proceed to the next source edgeuse */
 		eu2 = nexteu;
 	}
 	if( iteration1 >= 10000 )  rt_bomb("nmg_radial_join_eu:  infinite loop (1)\n");
+
+	/* This should catch errors, anyway */
+	if( nmg_check_radial(original_eu1, tol) )
+		rt_bomb("nmg_radial_join_eu(): radial orientation ERROR\n");
+
 	if (rt_g.NMG_debug & DEBUG_MESH_EU)  rt_log("nmg_radial_join_eu: END\n");
 }
 
@@ -455,24 +457,24 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACEUSE(fu2);
 	RT_CK_TOL(tol);
 
-    	if (rt_g.NMG_debug & DEBUG_MESH && rt_g.NMG_debug & DEBUG_PLOTEM) {
+    	if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
     		static int fnum=1;
     	    	nmg_pl_2fu( "Before_mesh%d.pl", fnum++, fu1, fu2, 1 );
     	}
 
-	if (rt_g.NMG_debug & DEBUG_MESH)
+	if (rt_g.NMG_debug & DEBUG_MESH_EU)
 		rt_log("meshing self (fu1 %8x)\n", fu1);
 	count += nmg_mesh_two_faces( fu1, fu1, tol );
 
-	if (rt_g.NMG_debug & DEBUG_MESH)
+	if (rt_g.NMG_debug & DEBUG_MESH_EU)
 		rt_log("meshing self (fu2 %8x)\n", fu2);
 	count += nmg_mesh_two_faces( fu2, fu2, tol );
 
-	if (rt_g.NMG_debug & DEBUG_MESH)
+	if (rt_g.NMG_debug & DEBUG_MESH_EU)
 		rt_log("meshing to other (fu1:%8x fu2:%8x)\n", fu1, fu2);
 	count += nmg_mesh_two_faces( fu1, fu2, tol );
 
-    	if (rt_g.NMG_debug & DEBUG_MESH && rt_g.NMG_debug & DEBUG_PLOTEM) {
+    	if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
     		static int fno=1;
     	    	nmg_pl_2fu( "After_mesh%d.pl", fno++, fu1, fu2, 1 );
     	}
@@ -528,6 +530,9 @@ CONST struct rt_tol	*tol;
 	NMG_CK_SHELL(s1);
 	NMG_CK_SHELL(s2);
 	RT_CK_TOL(tol);
+
+nmg_region_v_unique( s1->r_p, tol );
+nmg_region_v_unique( s2->r_p, tol );
 
 	/* First, mesh all faces of shell 2 with themselves */
 	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
