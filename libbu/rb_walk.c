@@ -26,8 +26,10 @@ static void _rb_walk (struct rb_node *root, int order, void (*visit)())
     if (root != 0)
     {
 	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
+	if (root == rb_null(root -> rbn_tree))
+	    return;
 	_rb_walk (rb_left_child(root, order), order, visit);
-	visit(root -> rbn_data);
+	visit(rb_data(root, order));
 	_rb_walk (rb_right_child(root, order), order, visit);
     }
 }
