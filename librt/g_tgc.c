@@ -648,9 +648,21 @@ struct seg		*seghead;
 		return(0);			/* No hit */
 	}
 
-	/* Most distant to least distant	*/
-	rt_pt_sort( k, npts );
+	/* Sort Most distant to least distant: rt_pt_sort( k, npts ) */
+	{
+		register fastf_t	u;
+		register short		lim, n;
 
+		for( lim = npts-1; lim > 0; lim-- )  {
+			for( n = 0; n < lim; n++ )  {
+				if( (u=k[n]) < k[n+1] )  {
+					/* bubble larger towards [0] */
+					k[n] = k[n+1];
+					k[n+1] = u;
+				}
+			}
+		}
+	}
 	/* Now, k[0] > k[npts-1] */
 
 	/* General Cone may have 4 intersections, but	*
