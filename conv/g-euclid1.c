@@ -64,20 +64,6 @@ struct facets
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
-static int
-select_region( tsp, pathp, curtree )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-{
-	struct directory *dir;
-
-	dir = DB_FULL_PATH_CUR_DIR( pathp );
-	rt_log( "Processing region %s id = %d\n" , dir->d_namep , tsp->ts_regionid);
-
-	return( 0 );
-}
-
 static void
 Write_euclid_face( lu , facet_type , regionid , face_number , fp_out )
 CONST struct loopuse *lu;
@@ -140,6 +126,8 @@ FILE *fp_out;
 
 	if( verbose )
 		rt_log( "Write_euclid_region: r=x%x\n" , r );
+
+	face_count = 0;
 
 	/* if bounds haven't been calculated, do it now */
 	if( r->ra_p == NULL )
@@ -481,9 +469,7 @@ char	*argv[];
 		exit(1);
 	}
 	db_scan(dbip, (int (*)())db_diradd, 1);
-
-	/* Process regions */
-	face_count = 0;
+	optind++;
 
 	/* Walk indicated tree(s).  Each region will be output separately */
 
@@ -496,7 +482,7 @@ char	*argv[];
 	ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 		1,			/* ncpu */
 		&tree_state,
-		select_region,
+		0,
 		do_region_end,
 		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
 
@@ -576,6 +562,8 @@ union tree		*curtree;
 		rt_bomb( "g-euclid: Cannot open output file\n" );
 	}
 
+	rt_log( "\n\nProcessing region %s:\n" , dir->d_namep );
+
 	regions_tried++;
 	/* Begin rt_bomb() protection */
 	if( ncpu == 1 && RT_SETJUMP )
@@ -602,6 +590,8 @@ union tree		*curtree;
 
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
+
+		rt_log( "FAILED: %s\n" , dir->d_namep );
 	
 		goto out;
 	}
@@ -614,6 +604,8 @@ union tree		*curtree;
 	{
 		/* Write the region to the EUCLID file */
 		Write_euclid_region( r , tsp , fp_out );
+
+		rt_log( "Wrote region %s to file %s\n" , dir->d_namep , file_name );
 
 		nmg_kr( r );
 	}
