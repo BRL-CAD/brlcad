@@ -647,7 +647,7 @@ char **argv;
 		vect_t	out_dir;
 		int	ret;
 
-		if( argc != 4 ||
+		if( argc != 5 ||
 		    bn_decode_plane(a, argv[1]) < 4 ||
 		    bn_decode_plane(b, argv[2]) < 4 ||
 		    bn_decode_vect(rpp_min, argv[3]) < 3 ||
