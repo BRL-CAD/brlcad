@@ -336,7 +336,7 @@ bad:
 	rt_free( (char *)anp, "animate");
 	return(-1);		/* BAD */
 }
-int
+void
 db_write_anim(fop, anp)
 FILE *fop;
 struct animate *anp;
