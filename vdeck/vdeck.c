@@ -1,18 +1,12 @@
 /*
-	SCCS id:	@(#) vdeck.c	2.15
-	Last edit: 	8/12/86 at 08:58:59
-	Retrieved: 	8/13/86 at 08:15:47
-	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
-
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) vdeck.c	2.15	last edit 8/12/86 at 08:58:59";
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 /*
@@ -1120,6 +1114,8 @@ register Record *rec;
 	return;
 	}
 
+#define MAX_PSP	60
+
 /*	p s p ( )
 	Print solid parameters  -  npts points or vectors.
  */
@@ -1127,7 +1123,7 @@ psp( npts, rec )
 register int	npts;
 register Record *rec;
 	{	register int	i, j, k, jk;
-		char		buf[60];
+		char		buf[MAX_PSP+1];
 	j = jk = 0;
 	for( i = 0; i < npts*3; i += 3 )
 		{ /* Write 3 points.					*/
@@ -1140,7 +1136,7 @@ register Record *rec;
 
 		if( (++j & 01) == 0 )
 			{ /* End of line.				*/
-			ewrite( solfd, buf, 60 );
+			ewrite( solfd, buf, MAX_PSP );
 			jk = 0;
 			ewrite(	solfd,
 				rec->s.s_name,
@@ -1157,9 +1153,9 @@ register Record *rec;
 		}	
 	if( (j & 01) == 1 )
 		{ /* Finish off rest of line.				*/
-		for( k = 30; k <= 60; k++ )
+		for( k = 30; k <= MAX_PSP; k++ )
 			buf[k] = ' ';
-		ewrite( solfd, buf, 60 );
+		ewrite( solfd, buf, MAX_PSP );
 		ewrite(	solfd,
 			rec->s.s_name,
 			(unsigned) strlen( rec->s.s_name )
