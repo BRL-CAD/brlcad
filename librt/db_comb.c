@@ -703,47 +703,6 @@ CONST struct directory	*dp;
 	return 0;
 }
 
-/*
- *			R T _ V 4 _ E X P O R T
- *
- *  Soup-to-nuts v4 export, for combinations and geometry.
- *  XXX should be phased out in favor of rt_db_put_internal().
- *  The next step after this is probably to call db_put_external().
- *  (which needs to be changed to not do the NAMEMOVE.)
- */
-int
-rt_v4_export( ep, ip, local2mm, dp )
-struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
-double				local2mm;
-CONST struct directory		*dp;
-{
-	struct bu_external	temp;
-	int			ret;
-
-	RT_CK_DB_INTERNAL(ip);
-	RT_CK_DIR(dp);
-
-	if( ip->idb_type == ID_COMBINATION )  {
-		ret = rt_comb_v4_export( &temp, ip, local2mm );
-	} else {
-		ret = rt_functab[ip->idb_type].ft_export( &temp, ip, local2mm );
-	}
-	if( ret < 0 )  {
-		bu_log("rt_v4_export(%s): ft_export error %d\n",
-			dp->d_namep, ret );
-		return ret;
-	}
-
-	if( (ret = db_wrap_v4_external( ep, &temp, dp )) < 0 )  {
-		bu_log("rt_v4_export(%s): db_wrap_v4_external error %d\n",
-			dp->d_namep, ret );
-		return ret;
-	}
-	/* "temp" has been freed by db_wrap_v4_external() */
-	return 0;
-}
-
 /* Some export support routines */
 
 /*
