@@ -760,6 +760,7 @@ va_list ap;
 
 #define LONGINT  0x001
 #define FIELDLEN 0x002
+#define SHORTINT 0x003
 
     int flags;
     int fieldlen=-1;
@@ -795,6 +796,8 @@ va_list ap;
 		else if (*ep == '*') {
 			fieldlen = va_arg(ap, int);
 			flags |= FIELDLEN;
+		} else if (*ep == 'h') {
+		        flags |= SHORTINT;
 		} else
 			/* Anything else must be the end of the fmt specifier */
 			break;
@@ -932,6 +935,15 @@ va_list ap;
 				sprintf(buf, fbuf, fieldlen, ll);
 			else
 				sprintf(buf, fbuf, ll);
+			bu_vls_strcat(vls, buf);
+		} else if (flags & SHORTINT) {
+		    /* short int */
+		    register short int sh;
+		    sh = va_arg(ap, short);
+		    if (flags & FIELDLEN)
+				sprintf(buf, fbuf, fieldlen, sh);
+			else
+				sprintf(buf, fbuf, sh);
 			bu_vls_strcat(vls, buf);
 		} else {
 			/* Regular int */
