@@ -33,6 +33,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern void	predictor_hook();		/* in ged.c */
 
+#ifdef USE_FRAMEBUFFER
+extern void set_port();
+#endif
+
 struct _mged_variables default_mged_variables = {
 /* autosize */			1,
 /* rateknobs */			0,
@@ -53,9 +57,19 @@ struct _mged_variables default_mged_variables = {
 /* context */                   1,
 /* dlist */                     1,
 /* nirt_behavior */             0,
-/* mouse_nirt */                0,
 /* use_air */			0,
 /* echo_nirt_cmd */		0,
+#ifdef USE_FRAMEBUFFER
+/* listen */			0,
+/* port */			0,
+/* fb */			0,
+/* fb_all */			0,
+/* fb_overlay */		0,
+#endif
+#ifdef DO_RUBBER_BAND
+/* rubber_band */		0,
+#endif
+/* mouse_behavior */            'm',
 /* coords */                    'v',
 /* ecoords */                   'o',
 /* rotate_about */              'v',
@@ -140,9 +154,19 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "context",           MV_O(context),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "dlist",             MV_O(dlist),            set_dlist },
 	{"%d",  1, "nirt_behavior",     MV_O(nirt_behavior),    BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "mouse_nirt",        MV_O(mouse_nirt),       BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "use_air",		MV_O(use_air),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "echo_nirt_cmd",	MV_O(echo_nirt_cmd),	BU_STRUCTPARSE_FUNC_NULL },
+#ifdef USE_FRAMEBUFFER
+	{"%d",  1, "listen",		MV_O(listen),		set_port },
+	{"%d",  1, "port",		MV_O(port),		set_port },
+	{"%d",  1, "fb",		MV_O(fb),		set_dirty_flag },
+	{"%d",  1, "fb_all",		MV_O(fb_all),		set_dirty_flag },
+	{"%d",  1, "fb_overlay",	MV_O(fb_overlay),	set_dirty_flag },
+#endif
+#ifdef DO_RUBBER_BAND
+	{"%d",  1, "rubber_band",	MV_O(rubber_band),	set_dirty_flag },
+#endif
+	{"%c",  1, "mouse_behavior",	MV_O(mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "coords",            MV_O(coords),           BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "ecoords",           MV_O(ecoords),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "rotate_about",      MV_O(rotate_about),     BU_STRUCTPARSE_FUNC_NULL },
