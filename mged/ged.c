@@ -109,7 +109,6 @@ int    update_views = 0;
 int		(*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
 
-int bit_bucket();
 int             cmd_stuff_str();
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2(), sig3();
@@ -120,6 +119,7 @@ void            slewview();
 int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
 int		classic_mged=0;
+char		*dpy_string = (char *)NULL;
 
 struct bu_vls input_str, scratchline, input_str_prefix;
 int input_str_index = 0;
@@ -186,17 +186,20 @@ char **argv;
 	}
 #endif
 
-	while ((c = bu_getopt(argc, argv, "hinrx:X:")) != EOF)
+	while ((c = bu_getopt(argc, argv, "d:hicrx:X:")) != EOF)
 	{
 		switch( c )
 		{
+			case 'd':
+				dpy_string = bu_optarg;
+				break;
 			case 'i':
 				force_interactive = 1;
 				break;
 			case 'r':
 				read_only_flag = 1;
 				break;
-			case 'n':
+			case 'c':
 				classic_mged = 1;
 				break;
 			case 'x':
@@ -376,6 +379,26 @@ char **argv;
 
 	setview( 0.0, 0.0, 0.0 );
 
+	if(dpy_string == (char *)NULL)
+	  dpy_string = getenv("DISPLAY");
+
+	if(interactive && !classic_mged){
+	  int status;
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  if(dpy_string != (char *)NULL)
+	    bu_vls_printf(&vls, "loadtk %s", dpy_string);
+	  else
+	    bu_vls_strcpy(&vls, "loadtk");
+
+	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+
+	  if(status != TCL_OK)
+	    exit(1);
+	}
+
 	if(argc >= 2){
 	  /* Open the database, attach a display manager */
 	  /* Command line may have more than 2 args, opendb only wants 2 */
@@ -418,12 +441,9 @@ char **argv;
 	      (void)close(pipe_err[1]);
 
 	      bu_vls_init(&vls);
-	      bu_vls_strcpy(&vls, "openw");
+	      bu_vls_strcpy(&vls, "gui");
 	      (void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	      bu_vls_free(&vls);
-#if 0
-	      bu_add_hook(bit_bucket, (genptr_t)NULL);
-#endif
 	    }else{
 	      exit(0);
 	    }
@@ -1224,11 +1244,11 @@ int	non_blocking;
     save_dm_list = curr_dm_list;
     if( edit_rateflag_model_rotate ) {
       struct bu_vls vls;
-      char save_ecoords;
+      char save_coords;
 
       curr_dm_list = edit_rate_mr_dm_list;
-      save_ecoords = mged_variables->ecoords;
-      mged_variables->ecoords = 'm';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'm';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1250,7 +1270,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->ecoords = save_ecoords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1259,11 +1279,11 @@ int	non_blocking;
     }
     if( edit_rateflag_object_rotate ) {
       struct bu_vls vls;
-      char save_ecoords;
+      char save_coords;
 
       curr_dm_list = edit_rate_or_dm_list;
-      save_ecoords = mged_variables->ecoords;
-      mged_variables->ecoords = 'o';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'o';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1285,7 +1305,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->ecoords = save_ecoords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1294,11 +1314,11 @@ int	non_blocking;
     }
     if( edit_rateflag_view_rotate ) {
       struct bu_vls vls;
-      char save_ecoords;
+      char save_coords;
 
       curr_dm_list = edit_rate_vr_dm_list;
-      save_ecoords = mged_variables->ecoords;
-      mged_variables->ecoords = 'v';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1320,7 +1340,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->ecoords = save_ecoords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1328,12 +1348,12 @@ int	non_blocking;
 	edobj = save_edflag;
     }
     if( edit_rateflag_model_tran ) {
-      char save_ecoords;
+      char save_coords;
       struct bu_vls vls;
 
       curr_dm_list = edit_rate_mt_dm_list;
-      save_ecoords = mged_variables->ecoords;
-      mged_variables->ecoords = 'm';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'm';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1354,7 +1374,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->ecoords = save_ecoords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1362,12 +1382,12 @@ int	non_blocking;
 	edobj = save_edflag;
     }
     if( edit_rateflag_view_tran ) {
-      char save_ecoords;
+      char save_coords;
       struct bu_vls vls;
 
       curr_dm_list = edit_rate_vt_dm_list;
-      save_ecoords = mged_variables->ecoords;
-      mged_variables->ecoords = 'v';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1388,7 +1408,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->ecoords = save_ecoords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1982,12 +2002,34 @@ char	**argv;
     char line[128];
 
     if( isatty(0) ) {
-      if(first && classic_mged){
-	perror( argv[1] );
-	bu_log("Create new database (y|n)[n]? ");
-	(void)fgets(line, sizeof(line), stdin);
-	if( line[0] != 'y' && line[0] != 'Y' )
-	  exit(0);                /* NOT finish() */
+      if(first){
+	if(classic_mged){
+	  perror( argv[1] );
+	  bu_log("Create new database (y|n)[n]? ");
+	  (void)fgets(line, sizeof(line), stdin);
+	  if( line[0] != 'y' && line[0] != 'Y' )
+	    exit(0);                /* NOT finish() */
+	}else{
+	  int status;
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  if(dpy_string != (char *)NULL)
+	    bu_vls_printf(&vls, "mged_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
+			  dpy_string, argv[1]);
+	  else
+	    bu_vls_printf(&vls, "mged_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
+			  argv[1]);
+	    
+	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+
+	  if(status != TCL_OK)
+	    exit(0);
+
+	  if(interp->result[0] != '0')
+	    exit(0);
+	}
       } else {
 	if(argc == 2){
 	  /* need to reset this before returning */
@@ -2071,13 +2113,4 @@ char	**argv;
 		     units_str[dbip->dbi_localunit], ")\n", (char *)NULL);
 
   return TCL_OK;
-}
-
-int
-bit_bucket(clientdata, str)
-genptr_t clientdata;
-genptr_t str;
-{
-  /* do nothing */
-  return( 0 );
 }
