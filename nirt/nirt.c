@@ -293,7 +293,6 @@ int		save;		/* Add object_name to object_list? */
 	fflush(stdout);
 	fprintf (stderr, "rt_gettree() could not preprocess object '%s'\n", 
 	    object_name);
-	printusage();
 	exit(1);
     }
     if (save)
