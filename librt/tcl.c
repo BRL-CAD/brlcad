@@ -432,7 +432,7 @@ char **argv;
 	struct rt_i		*rtip;
 	struct bu_vls		str;
 
-	if( argc < 2 || argc > 5 )  {
+	if( argc < 2 || argc > 4 )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
 				argv[0], " ", argv[1],
@@ -454,7 +454,7 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	if( argc >= 3 )  rtip->rti_hasty_prep = atoi(argv[3]);
+	if( argc == 4 )  rtip->rti_hasty_prep = atoi(argv[3]);
 
 	/* If args were given, prep now. */
 	if( argc >= 3 )  rt_prep_parallel( rtip, 1 );
