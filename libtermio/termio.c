@@ -23,7 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <memory.h>
 
 static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
-#endif SYSV
+#endif /* SYSV */
 
 #ifdef BSD
 #include <sys/ioctl.h>
@@ -32,10 +32,10 @@ static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
 #define TCGETA	TIOCGETP
 #ifndef	XTABS
 #define	XTABS	(TAB1 | TAB2)
-#endif XTABS
+#endif /* XTABS */
 
 static struct sgttyb	save_tio[_NFILE], curr_tio[_NFILE];
-#endif BSD
+#endif /* BSD */
 
 static int		fileStatus[_NFILE];
 int			reset_Fil_Stat();

@@ -28,7 +28,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 
 extern void	exit();
-extern int	printf(), fprintf();
 
 char *name();
 char *strchop();
