@@ -55,6 +55,8 @@ int
 mk_comb( fp, name, len, region, matname, matparm, rgb, inherit )
 FILE	*fp;
 char	*name;
+int	len;
+int	region;
 char	*matname;
 char	*matparm;
 char	*rgb;
@@ -83,7 +85,8 @@ int	inherit;
 		rec.c.c_rgb[2] = rgb[2];
 	}
 	rec.c.c_inherit = inherit;
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -98,6 +101,8 @@ int
 mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit )
 FILE	*fp;
 char	*name;
+int	len;
+int	region;
 char	*matname;
 char	*matparm;
 char	*rgb;
@@ -136,7 +141,8 @@ int	inherit;
 		rec.c.c_rgb[2] = rgb[2];
 	}
 
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -151,6 +157,8 @@ int
 mk_fcomb( fp, name, len, region )
 FILE	*fp;
 char	*name;
+int	len;
+int	region;
 {
 	static union record rec;
 
@@ -162,7 +170,8 @@ char	*name;
 		rec.c.c_flags = ' ';
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_length = len;
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -195,7 +204,8 @@ int	op;
 		for( i=0; i<16; i++ )
 			rec.M.m_mat[i] = ident_mat[i];
 	}
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -250,11 +260,12 @@ int
 mk_lcomb( fp, name, headp, region, matname, matparm, rgb, inherit )
 FILE	*fp;
 char	*name;
+register struct wmember *headp;
+int	region;
 char	*matname;
 char	*matparm;
 char	*rgb;
 int	inherit;
-register struct wmember *headp;
 {
 	register struct wmember *wp;
 	register int len = 0;
@@ -270,8 +281,12 @@ register struct wmember *headp;
 
 	/* Output combination record and member records */
 	mk_comb( fp, name, len, region, matname, matparm, rgb, inherit );
-	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )
-		mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op );
+	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )  {
+		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
+			fprintf(stderr,"mk_wmcomb: mk_memb() failure\n");
+			return(-1);
+		}
+	}
 
 	/* Release the member structure dynamic storage */
 	for( wp = headp->wm_forw; wp != headp; )  {
@@ -302,6 +317,8 @@ int
 mk_lrcomb( fp, name, headp, region, matname, matparm, rgb, id, air, material, los, inherit )
 FILE	*fp;
 char	*name;
+register struct wmember *headp;
+int	region;
 char	*matname;
 char	*matparm;
 char	*rgb;
@@ -310,7 +327,6 @@ int	air;
 int	material;
 int	los;
 char	inherit;
-register struct wmember *headp;
 {
 	register struct wmember *wp;
 	register int len = 0;
@@ -327,8 +343,12 @@ register struct wmember *headp;
 	/* Output combination record and member records */
 
 	mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit );
-	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )
-		mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op );
+	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )  {
+		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
+			fprintf(stderr,"mk_lrcomb: mk_memb() failure\n");
+			return(-1);
+		}
+	}
 
 	/* Release the member structure dynamic storage */
 	for( wp = headp->wm_forw; wp != headp; )  {
