@@ -1656,18 +1656,25 @@ struct bu_vls *vls;
 	return( 0 );
 }
 
+/*
+ *			B U _ L I S T _ E L E M
+ *
+ *  Given a Tcl list, return a copy of the 'index'th entry,
+ *  which may itself be a list.
+ *
+ *
+ *  Note -- the caller is responsible for freeing the returned string.
+ */
 char *
-bu_list_elem( in, index )
-char *in;
-int index;
+bu_list_elem( const char *in, int index )
 {
 	int depth=0;
 	int count=0;
 	int len=0;
-	char *ptr=in;
-	char *prev=NULL;
-	char *start=NULL;
-	char *end=NULL;
+	const char *ptr=in;
+	const char *prev=NULL;
+	const char *start=NULL;
+	const char *end=NULL;
 	char *out=NULL;
 
 	while( *ptr )
@@ -1757,14 +1764,18 @@ int index;
 	return( out );
 }
 
+/*
+ *			B U _ T C L _ L I S T _ L E N G T H
+ *
+ *  Return number of items in a string, interpreted as a Tcl list.
+ */
 int
-bu_tcl_list_length( in )
-char *in;
+bu_tcl_list_length( const char *in )
 {
 	int count=0;
 	int depth=0;
-	char *ptr=in;
-	char *prev=NULL;
+	const char *ptr=in;
+	const char *prev=NULL;
 
 	while( *ptr )
 	{
@@ -1853,6 +1864,8 @@ char *params;
 		}
 		else
 			bu_vls_strcat( vls, value );
+		bu_free( keyword, "bu_key_val_to_vls() keyword");
+		bu_free( value, "bu_key_val_to_vls() value");
 	}
 	return( 0 );
 }
