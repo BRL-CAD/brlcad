@@ -74,7 +74,9 @@ static int last_ihigh;			/* last inten_high */
 static int ntomiss;			/* number of pixels to miss */
 static int col;				/* column; for PP 75 char/line crap */
 
-#define BACKGROUND	0x00404040		/* Grey */
+#define BACKGROUND	0x00800040		/* Blue/Green */
+#define GREY_BACKGROUND	0x00404040		/* Grey */
+
 vect_t l0color = {  28,  28, 255 };		/* R, G, B */
 vect_t l1color = { 255,  28,  28 };
 vect_t l2color = { 255, 255, 255 };		/* White */
@@ -82,7 +84,22 @@ vect_t ambient_color = { 255, 255, 255 };	/* Ambient white light */
 extern vect_t l0vec;
 extern vect_t l1vec;
 extern vect_t l2vec;
+extern vect_t l0pos;			/* pos of light0 (overrides l0vec) */
 extern double AmbientIntensity;
+
+/* These shadow functions return a boolean "light_visible" */
+func_hit(ap, PartHeadp)
+struct application *ap;
+struct partition *PartHeadp;
+{
+	register struct partition *pp = PartHeadp->pt_forw;
+
+	/* Check to see if we hit the light source */
+	if( strcmp( pp->pt_inseg->seg_stp->st_name, "/LIGHT" )==0 )
+		return(1);		/* light_visible = 1 */
+	return(0);	/* light_visible = 0 */
+}
+func_miss() {return(1);}
 
 /* Null function */
 nullf() { ; }
@@ -330,9 +347,10 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	register struct hit *hitp= pp->pt_inhit;
+	struct application shadow_ap;
 	static long inten;
 	static int r,g,b;
-	int inshadow = 0;	/* 1 => shadowed */
+	int light_visible;
 
 	double	Rd1, Rd2;
 	double	cosI1, cosI2;
@@ -343,6 +361,12 @@ struct partition *PartHeadp;
 	static vect_t	reflected;
 	static vect_t	to_eye;
 
+	/* Check to see if we hit the light source */
+	if( strcmp( pp->pt_inseg->seg_stp->st_name, "/LIGHT" )==0 )  {
+		inten = 0x00FFFFFF;	/* white */
+		goto done;
+	}
+
 	if( pp->pt_inflip )  {
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
 	}
@@ -351,9 +375,11 @@ struct partition *PartHeadp;
 	/* Diminish intensity of reflected light the as a function of
 	 * the distance from your eye.
 	 */
-/**	dist_gradient = kCons / (hitp->hit_dist + cCons);
+/**	dist_gradient = kCons / (hitp->hit_dist + cCons);  */
 
 	/* Diffuse reflectance from primary light source. */
+	VSUB2( l0vec, l0pos, hitp->hit_point );
+	VUNITIZE( l0vec );
 #define illum_pri_src	0.6
 	Rd1 = diffReflec( hitp->hit_normal, l0vec, illum_pri_src, &cosI1 );
 	Rd1 *= dist_gradient;
@@ -379,11 +405,19 @@ struct partition *PartHeadp;
 	g = (double) grn * Rd2;
 	b = (double) blu * Rd2;
 
+	/* Fire ray at light source to check for shadowing */
+	shadow_ap.a_hit = func_hit;
+	shadow_ap.a_miss = func_miss;
+	VMOVE( shadow_ap.a_ray.r_pt, hitp->hit_point );
+	VSUB2( shadow_ap.a_ray.r_dir, l0pos, hitp->hit_point );
+	VUNITIZE( shadow_ap.a_ray.r_dir );
+	light_visible = shootray( &shadow_ap );
+	
 	/* If not shadowed add primary lighting.			*/
 #define lgt1_red_coef	1
 #define lgt1_grn_coef	1
 #define lgt1_blu_coef	1
-	if( !inshadow )  {
+	if( light_visible )  {
 		red = r + (int)((double)red * Rd1 * lgt1_red_coef);
 		grn = g + (int)((double)grn * Rd1 * lgt1_grn_coef);
 		blu = b + (int)((double)blu * Rd1 * lgt1_blu_coef);
@@ -419,7 +453,7 @@ struct partition *PartHeadp;
 			(g <<  8) |		/* G */
 			(r);			/* R */
 	}
-
+done:
 	if( ikfd > 0 )
 		ikwpixel( ap->a_x, ap->a_y, inten);
 	if( outfd > 0 )
@@ -560,6 +594,8 @@ int arg;
 view_init( ap )
 register struct application *ap;
 {
+	struct soltab *stp;
+
 	/* Initialize the application selected */
 	ap->a_hit = ap->a_miss = nullf;	/* ?? */
 	ap->a_init = ap->a_eol = ap->a_end = nullf;
@@ -570,6 +606,9 @@ register struct application *ap;
 		ap->a_miss = wbackground;
 		ap->a_eol = dev_eol;
 		one_hit_flag = 1;
+		/* If present, use user-specified light solid */
+		(void)solid_pos( "LIGHT", l0pos );
+VPRINT("LIGHT0 at", l0pos);
 		break;
 	case 1:
 	case 2:
