@@ -265,7 +265,7 @@ esac
 
 if test X"$1" = X""
 then	TARGET=all
-else	TARGET=$1
+else	TARGET=$1; shift
 fi
 
 # For handline multiple machines in an NFS environment
@@ -312,8 +312,7 @@ help)
 	echo '	mkdir		NFS: create binary dirs'
 	echo '	relink		NFS: relink Cakefile'
 	echo '	rmdir		NFS: remove binary dirs'
-	echo '  tcl		compile experimental TCL dirs'
-	echo '  install-tcl	install experimental TCL dirs and mged-tcl'
+	echo '  command		run a command in each dir'
 	;;
 
 benchmark)
@@ -514,6 +513,13 @@ etags)
 shell)
 	for dir in ${BDIRS}; do
 		( cd ${dir}; echo ${dir}; /bin/sh )
+	done;;
+
+command)
+	# Particularly useful for finding things, like this:
+	# ./gen.sh command grep some_variable '*.c'
+	for dir in ${BDIRS}; do
+		( cd ${dir}; echo ${dir}; eval $* )
 	done;;
 
 rcs-lock)
