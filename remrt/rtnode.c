@@ -78,6 +78,18 @@ mat_t		view2model;
 mat_t		model2view;
 /***** end of sharing with viewing model *****/
 
+/* Variables imported from view.c */
+extern int	ibackground[3];			/* integer 0..255 version */
+extern int	inonbackground[3];		/* integer non-background */
+extern int	fullfloat_mode;
+struct floatpixel {
+	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
+	float	ff_hitpt[3];
+	char	ff_color[3];
+};
+extern struct floatpixel	*curr_float_frame;
+extern struct floatpixel	*prev_float_frame;
+
 extern void grid_setup();
 extern void worker();
 
@@ -784,6 +796,7 @@ char			*buf;
 	grid_setup();
 
 	/* initialize lighting, set buf_mode=BUFMODE_DYNAMIC */
+	fullfloat_mode = 1;	/* sets buf_mode=BUFMODE_FULLFLOAT */
 	print_on = 0;
 	view_2init( &ap );
 	print_on = saved_print_on;
@@ -824,6 +837,30 @@ char			*buf;
 		do_run( start_line*width, end_line*width+width-1 );
 		(void)rt_read_timer( (char *)0, 0 );
 		view_end(&ap);
+
+		if( fullfloat_mode )  {
+			unsigned char		*bigbuf;
+			register unsigned char	*op;
+			register struct floatpixel	*fp;
+			register int	npix;
+			int		nlines;
+
+			nlines = end_line-start_line+1;
+			npix = nlines*width;
+			bigbuf = (unsigned char *)bu_malloc( npix*3,
+				"bigbuf[] full image buffer");
+			op = bigbuf;
+			fp = &curr_float_frame[start_line*width];
+			for( ; npix > 0; fp++,npix-- )  {
+				*op++ = fp->ff_color[0];
+				*op++ = fp->ff_color[1];
+				*op++ = fp->ff_color[2];
+			}
+			npix = fb_writerect( fbp, 0, start_line,
+				width, nlines, bigbuf );
+			if( npix < 0 )  rt_bomb("rtnode: fb_writerect() error\n");
+			bu_free( (char *)bigbuf, "bigbuf[] full image buffer");
+		}
 	}
 
 	/*
