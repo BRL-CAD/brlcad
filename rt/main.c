@@ -21,32 +21,32 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "debug.h"
 
-extern int null_prep(),	null_print();
+extern int nul_prep(),	nul_print();
 extern int tor_prep(),	tor_print();
 extern int tgc_prep(),	tgc_print();
-extern int ellg_prep(),	ellg_print();
+extern int ell_prep(),	ell_print();
 extern int arb_prep(),	arb_print();
-extern int half_prep(),	half_print();
+extern int haf_prep(),	haf_print();
 extern int ars_prep();
 extern int rec_print();
 
-extern struct seg *null_shot();
+extern struct seg *nul_shot();
 extern struct seg *tor_shot();
 extern struct seg *tgc_shot();
-extern struct seg *ellg_shot();
+extern struct seg *ell_shot();
 extern struct seg *arb_shot();
-extern struct seg *half_shot();
+extern struct seg *haf_shot();
 extern struct seg *rec_shot();
 
 struct functab functab[] = {
-	null_prep,	null_shot,	null_print,	"ID_NULL",
+	nul_prep,	nul_shot,	nul_print,	"ID_NULL",
 	tor_prep,	tor_shot,	tor_print,	"ID_TOR",
 	tgc_prep,	tgc_shot,	tgc_print,	"ID_TGC",
-	ellg_prep,	ellg_shot,	ellg_print,	"ID_ELL",
+	ell_prep,	ell_shot,	ell_print,	"ID_ELL",
 	arb_prep,	arb_shot,	arb_print,	"ID_ARB8",
 	ars_prep,	arb_shot,	arb_print,	"ID_ARS",
-	half_prep,	half_shot,	half_print,	"ID_HALF",
-	null_prep,	null_shot,	null_print,	">ID_NULL"
+	haf_prep,	haf_shot,	haf_print,	"ID_HALF",
+	nul_prep,	nul_shot,	nul_print,	">ID_NULL"
 };
 
 /*
@@ -54,8 +54,8 @@ struct functab functab[] = {
  */
 #define DEF(func)	func() { printf("func unimplemented\n"); }
 
-DEF(half_prep); struct seg * DEF(half_shot); DEF(half_print);
-DEF(null_prep); struct seg * DEF(null_shot); DEF(null_print);
+DEF(haf_prep); struct seg * DEF(haf_shot); DEF(haf_print);
+DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print);
 
 double timer_print();
 

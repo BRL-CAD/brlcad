@@ -1,5 +1,5 @@
 /*
- *			E L L G . C
+ *			E L L . C
  *
  * Purpose -
  *	Intersect a ray with a Generalized Ellipsoid
@@ -107,7 +107,7 @@ struct ell_specific {
 };
 
 /*
- *  			E L L G _ P R E P
+ *  			E L L _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid ellipsoid, and if so, precompute various
@@ -119,9 +119,9 @@ struct ell_specific {
  *  
  *  Implicit return -
  *  	A struct ell_specific is created, and it's address is stored in
- *  	stp->st_specific for use by ellg_shot().
+ *  	stp->st_specific for use by ell_shot().
  */
-ellg_prep( vec, stp, mat )
+ell_prep( vec, stp, mat )
 register fastf_t *vec;
 struct soltab *stp;
 matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
@@ -244,7 +244,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	return(0);			/* OK */
 }
 
-ellg_print( stp )
+ell_print( stp )
 register struct soltab *stp;
 {
 	register struct ell_specific *ell =
@@ -256,10 +256,10 @@ register struct soltab *stp;
 }
 
 /*
- *  			E L L G _ S H O T
+ *  			E L L _ S H O T
  *  
  *  Intersect a ray with an ellipsoid, where all constant terms have
- *  been precomputed by ellg_prep().  If an intersection occurs,
+ *  been precomputed by ell_prep().  If an intersection occurs,
  *  a struct seg will be acquired and filled in.
  *  
  *  Returns -
@@ -267,7 +267,7 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-ellg_shot( stp, rp )
+ell_shot( stp, rp )
 struct soltab *stp;
 register struct xray *rp;
 {
