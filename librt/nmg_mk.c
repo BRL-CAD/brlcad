@@ -1623,6 +1623,7 @@ struct loopuse *lu1;
 
 		eu1->up.s_p = eu1->eumate_p->up.s_p = s;
 	}
+	/* lu1 is in an illegal state here, with a null edge list */
 
 	if (RT_LIST_NON_EMPTY(&lu1->lumate_p->down_hd))
 		rt_bomb("nmg_demote_lu: loopuse mates don't have same # of edges\n");
