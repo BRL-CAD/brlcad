@@ -1907,17 +1907,25 @@ struct rt_tol		*tol;
 	if( ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
 	{
 		/* no tolerances specified, use 10% relative tolerance */
-		alpha_tol = 2.0 * acos( 1.0 - 2.0 * min_radius * 0.1 / radius );
+		if( (radius * 0.2) < max_radius )
+			alpha_tol = 2.0 * acos( 1.0 - 2.0 * radius * 0.1 / max_radius );
+		else
+			alpha_tol = rt_halfpi;
 	}
 	else
 	{
 		if( ttol->abs > 0.0 )
-			abs = 2.0 * acos( 1.0 - ttol->abs/radius );
+			abs = 2.0 * acos( 1.0 - ttol->abs/max_radius );
 		else
 			abs = rt_halfpi;
 
 		if( ttol->rel > 0.0 )
-			rel = 2.0 * acos( 1.0 - ttol->rel * 2.0 * min_radius/radius );
+		{
+			if( ttol->rel * 2.0 * radius < max_radius )
+				rel = 2.0 * acos( 1.0 - ttol->rel * 2.0 * radius/max_radius );
+			else
+				rel = rt_halfpi;
+		}
 		else
 			rel = rt_halfpi;
 
@@ -1925,12 +1933,12 @@ struct rt_tol		*tol;
 		{
 			fastf_t norm_top,norm_bot;
 
-			if( a>b )
+			if( a<b )
 				norm_bot = 2.0 * atan( tan( ttol->norm ) * (a/b) );
 			else
 				norm_bot = 2.0 * atan( tan( ttol->norm ) * (b/a) );
 
-			if( c>d )
+			if( c<d )
 				norm_top = 2.0 * atan( tan( ttol->norm ) * (c/d) );
 			else
 				norm_top = 2.0 * atan( tan( ttol->norm ) * (d/c) );
@@ -2088,6 +2096,20 @@ struct rt_tol		*tol;
 		}
 	}
 
+	/* Associate face plane equations */
+	for( i=0 ; i<NMG_TBL_END( &faces ) ; i++ )
+	{
+		fu = (struct faceuse *)NMG_TBL_GET( &faces , i );
+		NMG_CK_FACEUSE( fu );
+
+		if( nmg_fu_planeeqn( fu , tol ) )
+		{
+			rt_log( "rt_tess_tgc: failed to calculate plane equation\n" );
+			return( -1 );
+		}
+	}
+
+
 	/* Calculate vertexuse normals */
 	for( i=0 ; i<nells ; i++ )
 	{
@@ -2133,19 +2155,6 @@ struct rt_tol		*tol;
 	for( i=0 ; i<nells ; i++ )
 		rt_free( (char *)pts[i] , "rt_tgc_tess: pts[i]" );
 	rt_free( (char *)pts , "rt_tgc_tess: pts" );
-
-	/* Associate face plane equations */
-	for( i=0 ; i<NMG_TBL_END( &faces ) ; i++ )
-	{
-		fu = (struct faceuse *)NMG_TBL_GET( &faces , i );
-		NMG_CK_FACEUSE( fu );
-
-		if( nmg_fu_planeeqn( fu , tol ) )
-		{
-			rt_log( "rt_tess_tgc: failed to calculate plane equation\n" );
-			return( -1 );
-		}
-	}
 
 	/* Normals for vertexuses in base and top faces are wrong, fix them here */
 	for( i=0 ; i<2 ; i++ )
