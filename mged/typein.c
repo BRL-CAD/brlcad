@@ -626,7 +626,7 @@ struct rt_db_internal	*intern;
 
 	BU_GETSTRUCT( ebm, rt_ebm_internal );
 	intern->idb_type = ID_EBM;
-	intern->idb_ptr = ebm;
+	intern->idb_ptr = (genptr_t)ebm;
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
 	strcpy( ebm->file, cmd_argvs[3] );
@@ -715,7 +715,7 @@ struct rt_db_internal	*intern;
 
 	BU_GETSTRUCT( vol, rt_vol_internal );
 	intern->idb_type = ID_VOL;
-	intern->idb_ptr = vol;
+	intern->idb_ptr = (genptr_t)vol;
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
 
 	strcpy( vol->file, cmd_argvs[3] );
