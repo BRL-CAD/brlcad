@@ -186,7 +186,7 @@ struct rt_list *tbl2d, *tlist;
 	rt_log("Trapezoid list end ----------\n");
 }
 
-static int flatten_debug=0;
+static int flatten_debug=1;
 
 static struct pt2d *
 find_pt2d(tbl2d, vu)
@@ -380,8 +380,8 @@ struct faceuse *fu;
 	MAT4X3PNT(np->coord, mat, vg->coord);
 
 
-	if (flatten_debug) rt_log(
-		"Transforming 0x%x old (%g, %g, %g) new (%g, %g, %g)\n",
+	if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug) rt_log(
+		"Transforming 0x%x 3D(%g, %g, %g) to 2D(%g, %g, %g)\n",
 		vu, V3ARGS(vg->coord), V3ARGS(np->coord) );
 
 	/* find location in scanline ordered list for vertex */
@@ -391,7 +391,7 @@ struct faceuse *fu;
 	}
 	RT_LIST_INSERT(&p->l, &np->l);
 
-	if (flatten_debug)
+	if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
 		rt_log("transforming other vertexuses...\n");
 
 	/* for all other uses of this vertex in this face, store the
@@ -405,21 +405,17 @@ struct faceuse *fu;
 
 		if (vu_p == vu) continue;
 
-		if (flatten_debug)
-			rt_log("transform 0x%x... ", vu_p);
-
 		fu_of_vu = nmg_find_fu_of_vu(vu_p);
 		if( !fu_of_vu )  continue;	/* skip vu's of wire edges */
 		NMG_CK_FACEUSE(fu_of_vu);
-		if (fu_of_vu != fu) {
-			if (flatten_debug)
-				rt_log("vertexuse not in faceuse (That's OK)\n");
-			continue;
-		}
+		if (fu_of_vu != fu) continue;
+
+		if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
+			rt_log("transform 0x%x... ", vu_p);
 
 		/* if vertexuse already transformed, skip it */
 		if (find_pt2d(tbl2d, vu_p)) {
-			if (flatten_debug) {
+			if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug) {
 				rt_log("vertexuse already transformed\n", vu);
 				nmg_pr_vu(vu, NULL);
 			}
@@ -434,10 +430,10 @@ struct faceuse *fu;
 
 		RT_LIST_APPEND(&np->l, &p->l);
 
-		if (flatten_debug)
+		if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
 			(void)rt_log( "vertexuse transformed\n");
 	}
-	if (flatten_debug)
+	if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
 		(void)rt_log( "Done.\n");
 }
 
@@ -485,7 +481,7 @@ mat_t		TformMat;
 	NMG_GET_FU_NORMAL(Normal, fu);
 	mat_fromto( TformMat, Normal, twoDspace );
 
-	if (flatten_debug)
+	if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
 		mat_print( "TformMat", TformMat );
 
 
@@ -503,11 +499,19 @@ mat_t		TformMat;
 		}
 		if (RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC) {
 			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+  			if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
+				rt_log("vertex loop\n");
 			map_vu_to_2d(vu, tbl2d, TformMat, fu);
 
 		} else if (RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC) {
+			if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
+				rt_log("edge loop\n");
 			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				vu = eu->vu_p;
+				if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
+					rt_log("(%g %g %g) -> (%g %g %g)\n",
+						V3ARGS(vu->v_p->vg_p->coord),
+						V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
 				map_vu_to_2d(vu, tbl2d, TformMat, fu);
 			}
 		} else rt_bomb("bad magic of loopuse child\n");
@@ -519,8 +523,9 @@ mat_t		TformMat;
 
 
 static int
-is_convex(a, b, c)
+is_convex(a, b, c, tol)
 struct pt2d *a, *b, *c;
+CONST struct rt_tol *tol;
 {
 	vect_t ab, bc, pv, N;
 	double angle;
@@ -529,20 +534,25 @@ struct pt2d *a, *b, *c;
 	NMG_CK_PT2D(b);
 	NMG_CK_PT2D(c);
 
+	/* invent surface normal */
 	VSET(N, 0.0, 0.0, 1.0);
 
+	/* form vector from a->b */
 	VSUB2(ab, b->coord, a->coord);
+
+	/* Form "left" vector */
 	VCROSS(pv, N, ab);
 
+	/* form vector from b->c */
 	VSUB2(bc, c->coord, b->coord);
 
+	/* find angle about normal in "pv" direction from a->b to b->c */
 	angle = rt_angle_measure( bc, ab, pv );
 
 	if (rt_g.NMG_debug & DEBUG_TRI)
-		rt_log("\tangle == %g\n", angle);
+		rt_log("\tangle == %g tol angle: %g\n", angle, tol->perp);
 
-	/* XXX this should be a toleranced comparison */
-	return (angle > SQRT_SMALL_FASTF && angle <= M_PI);
+	return (angle > tol->perp && angle <= M_PI-tol->perp);
 }
 
 #define POLY_SIDE 1
@@ -571,9 +581,10 @@ struct pt2d *a, *b, *c;
  *	         Hole Start    		Hole end   
  */
 static int
-vtype2d(v, tbl2d)
+vtype2d(v, tbl2d, tol)
 struct pt2d *v;
 struct rt_list *tbl2d;
+CONST struct rt_tol *tol;
 {
 	struct pt2d *p, *n;	/* previous/this edge endpoints */
 	struct loopuse *lu;
@@ -618,7 +629,7 @@ struct rt_list *tbl2d;
 			}
 		}
 
-		if (is_convex(p, v, n)) return(POLY_END);
+		if (is_convex(p, v, n, tol)) return(POLY_END);
 		else return(HOLE_END);
 		
 	}
@@ -644,7 +655,7 @@ struct rt_list *tbl2d;
 			}
 		}
 
-		if (is_convex(p, v, n))
+		if (is_convex(p, v, n, tol))
 			return(POLY_START);
 		else
 			return(HOLE_START);
@@ -1101,8 +1112,9 @@ gotem:
  *	2D points.
  */
 static void
-nmg_trap_face(tbl2d, tlist)
+nmg_trap_face(tbl2d, tlist, tol)
 struct rt_list *tbl2d, *tlist;
+CONST struct rt_tol *tol;
 {
 	struct pt2d *pt;
 
@@ -1110,7 +1122,7 @@ struct rt_list *tbl2d, *tlist;
 
 	for (RT_LIST_FOR(pt, pt2d, tbl2d)) {
 		NMG_CK_PT2D(pt);
-		switch(vtype2d(pt, tbl2d)) {
+		switch(vtype2d(pt, tbl2d, tol)) {
 		case POLY_SIDE:
 			poly_side_vertex(pt, (struct pt2d *)tbl2d, tlist);
 			break;
@@ -2279,7 +2291,9 @@ CONST struct rt_tol *tol;
 			max = new;
 	}
 
-	/* pick the pt which does NOT have the other as a "next" pt in loop */
+	/* pick the pt which does NOT have the other as a "next" pt in loop 
+	 * as the place from which we start marching around the uni-monotone
+	 */
 	if (PT2D_NEXT(tbl2d, max) == min)
 		first = min;
 	else if (PT2D_NEXT(tbl2d, min) == max)
@@ -2318,7 +2332,7 @@ CONST struct rt_tol *tol;
 				next->coord[X],
 				next->coord[Y]);
 
-		if (is_convex(prev, current, next)) {
+		if (is_convex(prev, current, next, tol)) {
 			struct pt2d *t;
 			/* cut a triangular piece off of the loop to
 			 * create a new loop.
@@ -2470,7 +2484,7 @@ CONST struct rt_tol	*tol;
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		if (lu->orientation != OT_SAME) {
 			if (rt_g.NMG_debug & DEBUG_TRI)
-				rt_log("faceus has non-OT_SAME orientation loop\n");
+				rt_log("faceuse has non-OT_SAME orientation loop\n");
 			goto triangulate;
 		}
 		vert_count = 0;
@@ -2497,7 +2511,7 @@ CONST struct rt_tol	*tol;
 	if (rt_g.NMG_debug & DEBUG_TRI) {
 		vect_t N;
 		NMG_GET_FU_NORMAL(N, fu);
-		rt_log("---------------- Triangulate face %g %g %g\n", N[0], N[1], N[2]);
+		rt_log("---------------- proceeding to triangulate face %g %g %g\n", N[0], N[1], N[2]);
 	}
 
 
@@ -2520,7 +2534,7 @@ CONST struct rt_tol	*tol;
 
 
 	RT_LIST_INIT(&tlist);
-	nmg_trap_face(tbl2d, &tlist);
+	nmg_trap_face(tbl2d, &tlist, tol);
 
 	if (rt_g.NMG_debug & DEBUG_TRI){
 		print_tlist(tbl2d, &tlist);
