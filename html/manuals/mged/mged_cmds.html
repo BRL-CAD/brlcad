@@ -726,6 +726,55 @@ whos name appears in <I>source</I>. The <I>type</I> may be one of:<br>
 </DD>
 <HR>
 
+<DT><a NAME="bot_condense"><B>bot_condense</B> <I>new_bot_solid old_bot_solid</I></DT>
+
+<DD> The ``bot_condense'' command is used to eliminate unused vertices from a <I>BOT</I> solid.
+It returns the number of vertices eliminated.
+
+<DL>
+<DT><big>Examples:</big></DT>
+<DD>
+<DT><kbd>mged></kbd> <b>bot_condense bot1_condensed bot1_original</b><br>
+-- eliminate any unused vertices from the solid named <I>bot1_original</I> and store the result<br>
+-- in the new <I>BOT</I> solid named <I>bot1_condensed</I><br>
+</DD>
+</DL>
+</DD>
+<HR>
+
+<DT><a NAME="bot_face_fuse"><B>bot_face_fuse</B> <I>new_bot_solid old_bot_solid</I></DT>
+
+<DD> The ``bot_face_fuse'' command is used to eliminate duplicate faces from a <I>BOT</I> solid.
+It returns the number of faces eliminated.
+
+<DL>
+<DT><big>Examples:</big></DT>
+<DD>
+<DT><kbd>mged></kbd> <b>bot_face_fuse bot1_fused bot1_original</b><br>
+-- eliminate any duplicate faces from the solid named <I>bot1_original</I> and store the result<br>
+-- in the new <I>BOT</I> solid named <I>bot1_fused</I><br>
+</DD>
+</DL>
+</DD>
+<HR>
+
+<DT><a NAME="bot_vertex_fuse"><B>bot_vertex_fuse</B> <I>new_bot_solid old_bot_solid</I></DT>
+
+<DD> The ``bot_vertex_fuse'' command is used to eliminate duplicate vertices from a <I>BOT</I> solid.
+It returns the number of vertices eliminated. No tolerance is used, so the vertices must match exactly
+to be considered duplicates.
+
+<DL>
+<DT><big>Examples:</big></DT>
+<DD>
+<DT><kbd>mged></kbd> <b>bot_vertex_fuse bot1_fused bot1_original</b><br>
+-- eliminate any duplicate vertices from the solid named <I>bot1_original</I> and store the result<br>
+-- in the new <I>BOT</I> solid named <I>bot1_fused</I><br>
+</DD>
+</DL>
+</DD>
+<HR>
+
 <DT><a NAME="build_region"><B>build_region</B> [<I>-a region_num</I>] <I>tag start_num end_num</I></DT>
 
 <DD> The ``build_region'' command builds a region from existing solids that have specifically
