@@ -252,8 +252,6 @@ struct bu_vls *overlay_vls;
 	
 	/* Set the Tcl variables to the appropriate values. */
 
-	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "state", state_str[state],
-		    TCL_GLOBAL_ONLY);
 	if (illump != SOLID_NULL) {
 	    struct bu_vls path_lhs, path_rhs;
 
