@@ -120,6 +120,27 @@ struct nmg_ray_state {
 RT_EXTERN(void			nmg_face_lu_plot, ( struct loopuse *lu, struct vertexuse *vu1, struct vertexuse *vu2) );
 
 /*
+ *			N M G _ S E T _ L U _ O R I E N T A T I O N
+ */
+void
+nmg_set_lu_orientation( lu, is_opposite )
+struct loopuse	*lu;
+int		is_opposite;
+{
+	NMG_CK_LOOPUSE(lu);
+	NMG_CK_LOOPUSE(lu->lumate_p);
+	if( is_opposite )  {
+		/* Interior (crack) loop */
+		lu->orientation = OT_OPPOSITE;
+		lu->lumate_p->orientation = OT_OPPOSITE;
+	} else {
+		/* Exterior loop */
+		lu->orientation = OT_SAME;
+		lu->lumate_p->orientation = OT_SAME;
+	}
+}
+
+/*
  *			P T B L _ V S O R T
  *
  *  Sort list of hit points (vertexuse's) in fu1 on plane of fu2,
@@ -845,7 +866,7 @@ int		other_rs_state;
 	if( cur == rs->nvu-1 || mag[cur+1] != mag[cur] )  {
 		/* Single vertexuse at this dist */
 		if(rt_g.NMG_debug&DEBUG_COMBINE)
-			rt_log("single vertexuse at index %d\n", cur);
+			rt_log("fu x%x, single vertexuse at index %d\n", rs->fu1, cur);
 		nmg_face_state_transition( rs, cur, 0, other_rs_state );
 #if PLOT_BOTH_FACES
 		nmg_2face_plot( rs->fu1, rs->fu2 );
@@ -862,7 +883,7 @@ int		other_rs_state;
 
 	/* vu Interval runs from [cur] to [j-1] inclusive */
 	if(rt_g.NMG_debug&DEBUG_COMBINE)
-		rt_log("vu's on list interval [%d] to [%d] equal\n", cur, j-1 );
+		rt_log("fu x%x vu's on list interval [%d] to [%d] equal\n", rs->fu1, cur, j-1 );
 
 	/* Ensure that all vu's point to same vertex */
 	v = rs->vu[cur]->v_p;
@@ -977,6 +998,12 @@ CONST struct rt_tol	*tol;
 
 	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 		rt_log("\nnmg_face_cutjoin(fu1=x%x, fu2=x%x)\n", fu1, fu2);
+	}
+	/* Perhaps this should only happen when debugging is on? */
+	if( b1->end <= 0 || b2->end <= 0 )  {
+		rt_log("nmg_face_cutjoin(fu1=x%x, fu2=x%x): WARNING empty list %d %d\n",
+			fu1, fu2, b1->end, b2->end );
+		return;
 	}
 
 	RT_CK_TOL(tol);
@@ -1374,7 +1401,7 @@ int			other_rs_state;
 			vu, pos,
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			nmg_state_names[new_state], action_names[action] );
-		rt_log("This loopuse, before action:\n");
+		rt_log("Plotting this loopuse, before action:\n");
 		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs->vu[0], rs->vu[rs->nvu-1] );
 	}
 
@@ -1514,14 +1541,8 @@ rt_log("force next eu to ray\n");
 			rs->vu[pos] = nmg_join_2singvu_loops( prev_vu, vu );
 		    	/* Set orientation */
 			lu = nmg_lu_of_vu(rs->vu[pos]);
-			NMG_CK_LOOPUSE(lu);
-			if( old_state == NMG_STATE_IN )  {
-				/* Interior (crack) loop */
-				lu->orientation = OT_OPPOSITE;
-			} else {
-				/* Exterior loop */
-				lu->orientation = OT_SAME;
-			}
+			/* If state is IN, this is a "crack" loop */
+			nmg_set_lu_orientation( lu, old_state==NMG_STATE_IN );
 		} else {
 			rs->vu[pos] = nmg_join_singvu_loop( prev_vu, vu );
 		}
@@ -1535,6 +1556,7 @@ rt_log("force next eu to ray\n");
 
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After LONE_V_JAUNT, the final loop:\n");
+			nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
 			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
 		}
 		break;
@@ -1608,17 +1630,7 @@ rt_log("force next eu to ray\n");
 				vu = rs->vu[pos] = nmg_join_2singvu_loops( prev_vu, vu );
 			    	/* Set orientation */
 				lu = nmg_lu_of_vu(vu);
-				NMG_CK_LOOPUSE(lu);
-				NMG_CK_LOOPUSE(lu->lumate_p);
-				if( old_state == NMG_STATE_IN )  {
-					/* Interior (crack) loop */
-					lu->orientation = OT_OPPOSITE;
-					lu->lumate_p->orientation = OT_OPPOSITE;
-				} else {
-					/* Exterior loop */
-					lu->orientation = OT_SAME;
-					lu->lumate_p->orientation = OT_SAME;
-				}
+				nmg_set_lu_orientation( lu, old_state==NMG_STATE_IN );
 			}
 		} else {
 			rs->vu[pos] = nmg_join_2loops( prev_vu, vu );
@@ -1644,6 +1656,7 @@ rt_log("force next eu to ray\n");
 
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After JOIN, the final loop:\n");
+			nmg_pr_lu_briefly(lu, (char *)0);
 			nmg_face_lu_plot( lu, rs->vu[0], rs->vu[rs->nvu-1] );
 		}
 		break;
