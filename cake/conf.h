@@ -23,6 +23,10 @@ typedef	int	Cast;
 #	define	CPP		"/lib/cpp"
 #	define	CPP_OPTIONS	"-D_AIX=1"
 #endif
+#if defined(convex) || defined(__convex__)
+	/* CPP is necessary on the Convex, cc -E needs .c suffix */
+#	define	CPP		"/lib/cpp"
+#endif
 #if !defined(CPP)
 #    if 1
 	/*
