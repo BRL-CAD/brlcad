@@ -72,6 +72,12 @@ register FILE	*fp;
 		} else if( !isascii(c) )  {
 			c = '?';
 		}
+		if( curpos == 0 && isspace(c) )  {
+			/*  Dispose of leading white space.
+			 *  Necessary to slurp up what newlines turn into.
+			 */
+			continue;
+		}
 		if( curpos >= curlen )  {
 			curlen *= 2;
 			buf = rt_realloc( buf, curlen, "rt_read_cmd buffer" );
