@@ -215,6 +215,7 @@ f_delobj()
 		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) != DIR_NULL )
 			eraseobj( dp );
 	}
+	no_memory = 0;
 	dmaflag = 1;
 }
 
@@ -336,6 +337,8 @@ f_zap()
 {
 	register struct solid *sp;
 	register struct solid *nsp;
+
+	no_memory = 0;
 
 	/* FIRST, reject any editing in progress */
 	if( state != ST_VIEW )
