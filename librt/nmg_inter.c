@@ -8059,8 +8059,10 @@ CONST struct bn_tol	*tol;
 	is.fu2 = (struct faceuse *)NULL;
 	for( BU_LIST_FOR( lu1, loopuse, &s1->lu_hd ) )  {
 		NMG_CK_LOOPUSE( lu1 );
+		/* XXX Can there be lone-vertex loops here? (yes, need an intersector) */
+		if( BU_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
 		/* Really, it's just a bunch of wire edges, in a loop. */
-		/* XXX Can there be lone-vertex loops here? */
 		for( BU_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
 			NMG_CK_EDGEUSE(eu1);
 			/* Check eu1 against all of shell 2 */
