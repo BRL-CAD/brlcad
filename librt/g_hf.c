@@ -114,6 +114,19 @@ struct hf_specific {
 };
 
 /*
+ *	Convert a HF internal to a DSP internal representation
+ */
+int
+hf_to_dsp(struct rt_db_internal *db_intern)
+{
+	struct rt_hf_internal *hip = (struct rt_hf_internal *)db_intern;
+	struct rt_dsp_internal *dsp;
+
+	return -1;
+}
+
+
+/*
  *  			R T _ H F _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -134,7 +147,7 @@ struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-	struct rt_hf_internal		*hip;
+
 	register struct hf_specific	*hf;
 	CONST struct bn_tol		*tol = &rtip->rti_tol;
 	double	dot;
