@@ -14,11 +14,11 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
-static char RCStree[] = "@(#)$Header$ (BRL)";
+static char RCSprep[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -77,10 +77,9 @@ register struct rt_i *rtip;
 	 *  Allocate space for a per-solid bit of rtip->nregions length.
 	 */
 	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
-		stp->st_regions = (bitv_t *)rt_malloc(
-			BITS2BYTES(rtip->nregions)+sizeof(bitv_t),
-			"st_regions bitv" );
-		BITZERO( stp->st_regions, rtip->nregions );
+		stp->st_regions = (bitv_t *)rt_calloc(
+			RT_BITV_BITS2WORDS(rtip->nregions),
+			sizeof(bitv_t), "st_regions bitv" );
 		stp->st_maxreg = 0;
 	}
 
