@@ -1986,16 +1986,21 @@ RT_EXTERN(void			nmg_class_shells, (struct shell *sA,
 				CONST struct rt_tol *tol) );
 
 /* from nmg_fcut.c */
+RT_EXTERN(void			nmg_set_lu_orientation, (struct loopuse	*lu,
+				int is_opposite) );
+/* static void ptbl_vsort */
+RT_EXTERN(double		nmg_vu_angle_measure, (struct vertexuse	*vu,
+				vect_t x_dir, vect_t y_dir, int assessment,
+				int in) );
 RT_EXTERN(void			nmg_face_cutjoin, (
 				struct nmg_ptbl *b1, struct nmg_ptbl *b2,
 				struct faceuse *fu1, struct faceuse *fu2,
 				point_t pt, vect_t dir,
 				CONST struct rt_tol *tol) );
-RT_EXTERN(void			nmg_face_plot, ( struct faceuse *fu) );
-#if 0
-/* Can't be here, because nmg_ray_state is defined in nmg_comb.c */
-RT_EXTERN(void			nmg_face_lu_plot, ( struct loopuse *lu, struct nmg_ray_state *rs) );
-#endif
+RT_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu,
+				CONST plane_t norm, CONST struct rt_tol *tol) );
+RT_EXTERN(void			nmg_stash_model_to_file, (char *filename,
+				struct model *m, CONST char *title) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
