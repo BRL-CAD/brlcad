@@ -369,7 +369,13 @@ extern int	CapLine,
 extern int	UpdModLine,	/* Whether we want to update the mode line */
 		UpdMesg;	/* Update the message line */
 
+/* Under BSDI's BSD/OS lseek returns an off_t
+ * which is a quad_t or "long long".  
+ * It is also delcared in <sys/types.h>
+ */
+#if !defined(__bsdi__) && !defined(__NetBSD__)
 extern long	lseek();
+#endif
 
 extern disk_line	putline();
 
