@@ -11285,6 +11285,13 @@ CONST struct bn_tol *tol;
 					if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 						continue;
 
+					if( lu->orientation != OT_SAME )
+					{
+						/* triangulate holes */
+						max_count = 6;
+						break;
+					}
+
 					count_npts = 0;
 					for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 						count_npts++;
@@ -11296,6 +11303,7 @@ CONST struct bn_tol *tol;
 					}
 					if( !nmg_lu_is_convex( lu, tol ) )
 					{
+						/* triangulate non-convex faces */
 						max_count = 6;
 						break;
 					}
