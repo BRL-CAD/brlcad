@@ -26,13 +26,13 @@
 	g_rpc g_rhc g_epa g_ehy g_eto g_grip g_hf g_dsp g_sketch g_extrude \
 	g_submodel \
 	cmd mater roots \
-	sphmap rtlex vlist regionfix \
+	rtlex vlist regionfix \
 	nmg_mk nmg_misc nmg_bool nmg_eval nmg_inter nmg_plot nmg_ck \
 	nmg_mesh nmg_fcut nmg_class nmg_mod nmg_index \
 	nmg_rt_isect nmg_rt_segs nmg_manif \
 	nmg_visit nmg_info nmg_pr \
 	nmg_extrude nmg_tri nmg_fuse nmg_pt_fu \
-	rtassoc wdb fortray tcl \
+	wdb fortray tcl \
 	pr LIBRT_TIMER storage global \
 	rt_dspline \
         nurb_basis nurb_bound nurb_diff nurb_eval nurb_flat \
