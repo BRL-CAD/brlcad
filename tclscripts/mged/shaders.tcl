@@ -112,11 +112,13 @@ proc do_checker { shade_var id } {
 	bind $shader_params($id,window).fr.color2_e <KeyRelease> "do_shader_apply $shade_var $id"
 
 	hoc_register_data $shader_params($id,window).fr.color1_e "First Color" {
-		{summary "Enter one of the colors to use in the checkerboard pattern"}
+		{summary "Enter one of the colors to use in the checkerboard pattern\n\
+			default here is '255 255 255'"}
 		{range "An RGB triple, each value from 0 to 255"}
 	}
 	hoc_register_data $shader_params($id,window).fr.color2_e "Second Color" {
-		{summary "Enter another color to use in the checkerboard pattern"}
+		{summary "Enter another color to use in the checkerboard pattern\n\
+			default here is '0 0 0'"}
 		{range "An RGB triple, each value from 0 to 255"}
 	}
 	hoc_register_data $shader_params($id,window).fr.color1 "First Color" {
@@ -159,14 +161,16 @@ proc set_checker_values { shader_str id } {
 			set value [lindex $params [expr $index + 1]]
 
 			switch $key {
-				a {
+				a { catch {
 					if { $value != $shader_params($id,def_ckr_a) } then {
 						set shader_params($id,ckr_a) $value }
+				    }
 				}
 
-				b {
+				b { catch {
 					if { $value != $shader_params($id,def_ckr_b) } then {
 						set shader_params($id,ckr_b) $value }
+				    }
 				}
 			}
 		}
@@ -181,14 +185,18 @@ proc do_checker_apply { shade_var id } {
 
 	# check each parameter to see if it's been set
 	# if set to the default, ignore it
-	if { [string length $shader_params($id,ckr_a) ] > 0 } then {
-		if { $shader_params($id,ckr_a) != $shader_params($id,def_ckr_a) } then {
-			lappend params a $shader_params($id,ckr_a)
+	catch {
+		if { [string length $shader_params($id,ckr_a) ] > 0 } then {
+			if { $shader_params($id,ckr_a) != $shader_params($id,def_ckr_a) } then {
+				lappend params a $shader_params($id,ckr_a)
+			}
 		}
 	}
-	if { [string length $shader_params($id,ckr_b) ] > 0 } then {
-		if { $shader_params($id,ckr_b) != $shader_params($id,def_ckr_b) } then {
-			lappend params b $shader_params($id,ckr_b)
+	catch {
+		if { [string length $shader_params($id,ckr_b) ] > 0 } then {
+			if { $shader_params($id,ckr_b) != $shader_params($id,def_ckr_b) } then {
+				lappend params b $shader_params($id,ckr_b)
+			}
 		}
 	}
 
@@ -450,46 +458,53 @@ proc set_phong_values { shader_str id } {
 			set value [lindex $params [expr $index + 1]]
 
 			switch $key {
-				ri {
+				ri { catch {
 					if { $value != $shader_params($id,def_ri) } then {
 						set shader_params($id,ri) $value }
+				     }
 				}
 
 				shine -
-				sh {
+				sh { catch {
 					if { $value != $shader_params($id,def_shine) } then {
 						set shader_params($id,shine) $value }
+				     }
 				}
 
 				specular -
-				sp {
+				sp { catch {
 					if { $value != $shader_params($id,def_spec) } then {
 						set shader_params($id,spec) $value }
+				     }
 				}
 
 				diffuse -
-				di {
+				di { catch {
 					if { $value != $shader_params($id,def_diff) } then {
 						set shader_params($id,diff) $value }
+				     }
 				}
 
 				transmit -
-				tr {
+				tr { catch {
 					if { $value != $shader_params($id,def_trans) } then {
 						set shader_params($id,trans) $value }
+				     }
 				}
 
 				reflect -
-				re {
+				re { catch {
 					if { $value != $shader_params($id,def_refl) } then {
 						set shader_params($id,refl) $value }
+				     }
 				}
 
 				extinction_per_meter -
 				extinction -
-				ex {
+				ex { catch {
 					if { $value != $shader_params($id,def_ext) } then {
 						set shader_params($id,ext) $value }
+				     }
 				}
 			}
 		}
@@ -529,26 +544,40 @@ proc do_phong_apply { id } {
 	# check each parameter to see if it's been set
 	# if set to the default, ignore it
 	if { [string length $shader_params($id,trans) ] > 0 } then {
+	    catch {
 		if { [expr $shader_params($id,trans) != $shader_params($id,def_trans)] } then {
 			lappend params tr $shader_params($id,trans) } }
+	    }
 	if { [string length $shader_params($id,refl) ] > 0 } then {
+	    catch {
 		if { [expr $shader_params($id,refl) != $shader_params($id,def_refl)] } then {
 			lappend params re $shader_params($id,refl) } }
+	    }
 	if { [string length $shader_params($id,spec) ] > 0 } then {
+	    catch {
 		if { [expr $shader_params($id,spec) != $shader_params($id,def_spec)] } then {
 			lappend params sp $shader_params($id,spec) } }
+	    }
 	if { [string length $shader_params($id,diff) ] > 0 } then {
+	    catch {
 		if { [expr $shader_params($id,diff) != $shader_params($id,def_diff)] } then {
 			lappend params di $shader_params($id,diff) } }
+	    }
 	if { [string length $shader_params($id,ri) ] > 0 } then {
+	    catch {
 		if { [expr compare $shader_params($id,ri) != $shader_params($id,def_ri)] } then {
 			lappend params ri $shader_params($id,ri) } }
+	    }
 	if { [string length $shader_params($id,shine)] > 0 } then {
+	    catch {
 		if { [expr $shader_params($id,shine) != $shader_params($id,def_shine)] } then {
 			lappend params sh $shader_params($id,shine) } }
+	    }
 	if { [string length $shader_params($id,ext)] > 0 } then {
+	    catch {
 		if { [expr $shader_params($id,ext) != $shader_params($id,def_ext)] } then {
 			lappend params ex $shader_params($id,ext) } }
+	    }
 
 	return "$params"
 }
@@ -638,15 +667,17 @@ proc set_texture_values { shader_str id } {
 			set value [lindex $params [expr $index + 1]]
 
 			switch $key {
-				w {
+				w { catch {
 					if { $value != $shader_params($id,def_width) } then {
 						set shader_params($id,width) $value }
+				    }
 				}
 
 				n -
-				l {
+				l { catch {
 					if { $value != $shader_params($id,def_height) } then {
 						set shader_params($id,height) $value }
+				    }
 				}
 
 				transp {
@@ -688,11 +719,15 @@ proc do_texture_apply { shade_var id } {
 	if { [string length $shader_params($id,file) ] > 0 } then {
 			lappend params file $shader_params($id,file) }
 	if { [string length $shader_params($id,width) ] > 0 } then {
-		if { [expr $shader_params($id,width) != $shader_params($id,def_width)] } then {
+	    catch {
+		if { $shader_params($id,width) != $shader_params($id,def_width) } then {
 			lappend params w $shader_params($id,width) } }
+	    }
 	if { [string length $shader_params($id,height) ] > 0 } then {
-		if { [expr $shader_params($id,height) != $shader_params($id,def_height)] } then {
+	    catch {
+		if { $shader_params($id,height) != $shader_params($id,def_height) } then {
 			lappend params n $shader_params($id,height) } }
+	    }
 	if { [string length $shader_params($id,transp) ] > 0 } then {
 			lappend params transp $shader_params($id,transp) }
 	if { $shader_params($id,trans_valid) != 0 } then {
@@ -967,7 +1002,7 @@ proc set_stack_values { shade_str id } {
 		} else {
 			set count -1
 			for { set i 0 } { $i < $shader_params($id,stack_len) } { incr i } {
-				if { $shader_params($id,stk_$i,shader_name) != "" } {
+				if { [string length $shader_params($id,stk_$i,shader_name)] } {
 					incr count
 					if { $count == $index } then {
 						if { [string compare $shader_params($id,stk_$i,shader_name) $shader] == 0 } then {
@@ -1047,12 +1082,18 @@ proc env_select { shader shade_var id } {
 	global shader_params
 
 	if { [is_good_shader $shader] == 0 } {return}
-	set err [catch "set tmp $shader_params($id,env,shader_name)"]
-	if { $err != 0 } {
-		set old_shader ""
+
+	if { [winfo exists $shader_params($id,window).fr.env] } {
+		set err [catch "set tmp $shader_params($id,env,shader_name)"]
+		if { $err != 0 } {
+			set old_shader ""
+		} else {
+			set old_shader $tmp
+		}
 	} else {
-		set old_shader $tmp
+		set old_shader ""
 	}
+
 	if { [string compare $old_shader $shader] == 0 } {return}
 	set shader_params($id,env,shader_name) $shader
 
@@ -1225,6 +1266,33 @@ proc do_cloud { shade_var id } {
 	entry $shader_params($id,window).fr.cl_range_e -width 5 -textvariable shader_params($id,cl_range)
 	bind $shader_params($id,window).fr.cl_range_e <KeyRelease> "do_shader_apply $shade_var $id"
 
+	hoc_register_data $shader_params($id,window).fr.cl_thresh Threshold {
+		{summary "A value (from 0 to 1) is calculated for each point in the texture\n\
+			and compared to the threshold. Values above the threshold are cloud\n\
+			otherwise it becomes blue sky. The default value is 0.35"}
+		{range "0.0 to 1.0"}
+	}
+	hoc_register_data $shader_params($id,window).fr.cl_thresh_e Threshold {
+		{summary "A value (from 0 to 1) is calculated for each point in the texture\n\
+			and compared to the threshold. Values above the threshold are cloud\n\
+			otherwise it becomes blue sky." The default value is 0.35}
+		{range "0.0 to 1.0"}
+	}
+	hoc_register_data $shader_params($id,window).fr.cl_range range {
+		{summary "A value (from 0 to 1) is calculated for each point in the texture.\n\
+			The range determines what range of values will be used for graduating\n\
+			between cloud and blue sky. A range of 0 produces clouds with sharp edges\n\
+			The default value is 0.3"}
+		{range "0.0 to 1.0"}
+	}
+	hoc_register_data $shader_params($id,window).fr.cl_range_e range {
+		{summary "A value (from 0 to 1) is calculated for each point in the texture.\n\
+			The range determines what range of values will be used for graduating\n\
+			between cloud and blue sky. A range of 0 produces clouds with sharp edges\n\
+			The default value is 0.3"}
+		{range "0.0 to 1.0"}
+	}
+
 	set_cloud_values $shader_str $id
 
 	grid $shader_params($id,window).fr.cl_thresh -row 0 -column 0 -sticky e
@@ -1253,13 +1321,15 @@ proc set_cloud_values { shader_str id } {
 			set key [lindex $params $index]
 			set value [lindex $params [expr $index + 1]]
 			switch $key {
-				thresh {
+				thresh { catch {
 					if { $value != $shader_params($id,def_cl_thresh) } then {
 						set shader_params($id,cl_thresh) $value }
+				    }
 				}
-				range {
+				range { catch {
 					if { $value != $shader_params($id,def_cl_range) } then {
 						set shader_params($id,cl_range) $value }
+				    }
 				}
 			}
 		}
@@ -1275,11 +1345,15 @@ proc do_cloud_apply { shade_var id } {
 	# check each parameter to see if it's been set
 	# if set to the default, ignore it
 	if { [string length $shader_params($id,cl_thresh) ] > 0 } then {
-		if { [expr $shader_params($id,cl_thresh) != $shader_params($id,def_cl_thresh)] } then {
+	    catch {
+		if { $shader_params($id,cl_thresh) != $shader_params($id,def_cl_thresh) } then {
 			lappend params thresh $shader_params($id,cl_thresh) } }
+	    }
 	if { [string length $shader_params($id,cl_range) ] > 0 } then {
-		if { [expr $shader_params($id,cl_range) != $shader_params($id,def_cl_range)] } then {
+	    catch {
+		if { $shader_params($id,cl_range) != $shader_params($id,def_cl_range) } then {
 			lappend params range $shader_params($id,cl_range) } }
+	    }
 
 	set shader [list cloud $params ]
 }
@@ -1299,7 +1373,7 @@ proc set_shader_params { shade_var id } {
 
 	if { $err != 0 } {return}
 
-	if { $shader != $shader_params($id,shader_name) } { 
+	if { [string compare $shader $shader_params($id,shader_name)] } { 
 		do_shader $shade_var $id $shader_params($id,window)
 		return
 	}
@@ -1330,7 +1404,7 @@ proc set_shader_params { shade_var id } {
 			set_testmap_values $shade_str $id
 		}
 		fakestar {
-			set_fakestar_values $shade_str $id
+				set_fakestar_values $shade_str $id
 		}
 		stack {
 			set_stack_values $shade_str $id
