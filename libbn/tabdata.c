@@ -199,6 +199,118 @@ CONST struct rt_tabdata	*in2;
 }
 
 /*
+ *			R T _ T A B D A T A _ M U L 3
+ *
+ *  Element-by-element multiply the values from three data tables.
+ */
+void
+rt_tabdata_mul3( out, in1, in2, in3 )
+struct rt_tabdata		*out;
+CONST struct rt_tabdata	*in1;
+CONST struct rt_tabdata	*in2;
+CONST struct rt_tabdata	*in3;
+{
+	register int		j;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1, *i2, *i3;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_mul3(x%x, x%x, x%x, x%x)\n", out, in1, in2, in3);
+
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in1 );
+	RT_CK_TABDATA( in2 );
+	RT_CK_TABDATA( in3 );
+
+	if( in1->table != in2->table || in1->table != out->table || in1->table != in2->table )
+		rt_bomb("rt_tabdata_mul(): samples drawn from different tables\n");
+	if( in1->ny != in2->ny || in1->ny != out->ny )
+		rt_bomb("rt_tabdata_mul(): different tabdata lengths?\n");
+
+	op = out->y;
+	i1 = in1->y;
+	i2 = in2->y;
+	i3 = in3->y;
+	for( j = in1->ny; j > 0; j-- )
+		*op++ = *i1++ * *i2++ * *i3++;
+	/* VELMUL3N( out->y, i1->y, i2->y, i3->y, in1->ny ); */
+}
+
+/*
+ *			R T _ T A B D A T A _ I N C R _ M U L 3 _ S C A L E
+ *
+ *  Element-by-element multiply the values from three data tables and a scalor.
+ *
+ *	out += in1 * in2 * in3 * scale
+ */
+void
+rt_tabdata_incr_mul3_scale( out, in1, in2, in3, scale )
+struct rt_tabdata	*out;
+CONST struct rt_tabdata	*in1;
+CONST struct rt_tabdata	*in2;
+CONST struct rt_tabdata	*in3;
+register double		scale;
+{
+	register int		j;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1, *i2, *i3;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_incr_mul3_scale(x%x, x%x, x%x, x%x, %g)\n", out, in1, in2, in3, scale);
+
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in1 );
+	RT_CK_TABDATA( in2 );
+	RT_CK_TABDATA( in3 );
+
+	if( in1->table != in2->table || in1->table != out->table || in1->table != in3->table )
+		rt_bomb("rt_tabdata_mul(): samples drawn from different tables\n");
+	if( in1->ny != in2->ny || in1->ny != out->ny )
+		rt_bomb("rt_tabdata_mul(): different tabdata lengths?\n");
+
+	op = out->y;
+	i1 = in1->y;
+	i2 = in2->y;
+	i3 = in3->y;
+	for( j = in1->ny; j > 0; j-- )
+		*op++ += *i1++ * *i2++ * *i3++ * scale;
+}
+
+/*
+ *			R T _ T A B D A T A _ I N C R _ M U L 2 _ S C A L E
+ *
+ *  Element-by-element multiply the values from two data tables and a scalor.
+ *
+ *	out += in1 * in2 * scale
+ */
+void
+rt_tabdata_incr_mul2_scale( out, in1, in2, scale )
+struct rt_tabdata	*out;
+CONST struct rt_tabdata	*in1;
+CONST struct rt_tabdata	*in2;
+register double		scale;
+{
+	register int		j;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1, *i2;
+
+	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_incr_mul2_scale(x%x, x%x, x%x, %g)\n", out, in1, in2, scale);
+
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in1 );
+	RT_CK_TABDATA( in2 );
+
+	if( in1->table != in2->table || in1->table != out->table )
+		rt_bomb("rt_tabdata_mul(): samples drawn from different tables\n");
+	if( in1->ny != in2->ny || in1->ny != out->ny )
+		rt_bomb("rt_tabdata_mul(): different tabdata lengths?\n");
+
+	op = out->y;
+	i1 = in1->y;
+	i2 = in2->y;
+	for( j = in1->ny; j > 0; j-- )
+		*op++ += *i1++ * *i2++ * scale;
+}
+
+/*
  *			R T _ T A B D A T A _ S C A L E
  *
  *  Multiply every element in a data table by a scalar value 'scale'.
