@@ -37,16 +37,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 /* XXX for raytrace.h */
-#define OP_REGION	MKOP(9)		/* Leaf: tr_stp -> combined_tree_state */
-#define OP_NOP		MKOP(10)	/* Leaf with no effect */
 
-struct full_path {
-	int		fp_len;
-	int		fp_maxlen;
-	struct directory **fp_names;	/* array of dir pointers */
-};
-#define DB_FULL_PATH_POP(_pp)	{(_pp)->fp_len--;}
-#define DB_FULL_PATH_CUR_DIR(_pp)	((_pp)->fp_names[(_pp)->fp_len-1])
 
 struct tree_list {
 	union tree *tl_tree;
@@ -79,7 +70,7 @@ struct tree_state {
 
 struct combined_tree_state {
 	struct tree_state	cts_s;
-	struct full_path	cts_p;
+	struct db_full_path	cts_p;
 };
 
 /*
@@ -87,20 +78,20 @@ struct combined_tree_state {
  */
 void
 db_add_node_to_full_path( pp, dp )
-struct full_path	*pp;
+struct db_full_path	*pp;
 struct directory	*dp;
 {
 	if( pp->fp_maxlen <= 0 )  {
 		pp->fp_maxlen = 32;
 		pp->fp_names = (struct directory **)rt_malloc(
 			pp->fp_maxlen * sizeof(struct directory *),
-			"full_path array");
+			"db_full_path array");
 	} else if( pp->fp_len >= pp->fp_maxlen )  {
 		pp->fp_maxlen *= 4;
 		pp->fp_names = (struct directory **)rt_realloc(
 			(char *)pp->fp_names,
 			pp->fp_maxlen * sizeof(struct directory *),
-			"enlarged full_path array");
+			"enlarged db_full_path array");
 	}
 	pp->fp_names[pp->fp_len++] = dp;
 }
@@ -110,8 +101,8 @@ struct directory	*dp;
  */
 void
 db_dup_full_path( newp, oldp )
-register struct full_path	*newp;
-register struct full_path	*oldp;
+register struct db_full_path	*newp;
+register struct db_full_path	*oldp;
 {
 	newp->fp_maxlen = oldp->fp_maxlen;
 	if( (newp->fp_len = oldp->fp_len) <= 0 )  {
@@ -133,7 +124,7 @@ register struct full_path	*oldp;
  */
 char *
 db_path_to_string( pp )
-struct full_path	*pp;
+struct db_full_path	*pp;
 {
 	int	len;
 	char	*buf;
@@ -168,10 +159,10 @@ struct full_path	*pp;
  */
 void
 db_free_full_path( pp )
-struct full_path	*pp;
+struct db_full_path	*pp;
 {
 	if( pp->fp_maxlen > 0 )  {
-		rt_free( (char *)pp->fp_names, "full_path array" );
+		rt_free( (char *)pp->fp_names, "db_full_path array" );
 		pp->fp_maxlen = pp->fp_len = 0;
 		pp->fp_names = (struct directory **)0;
 	}
@@ -268,7 +259,7 @@ register struct region	*regionp;
 int
 db_apply_state_from_comb( tsp, pathp, rp )
 struct tree_state	*tsp;
-struct full_path	*pathp;
+struct db_full_path	*pathp;
 union record		*rp;
 {
 	if( rp->u_id != ID_COMB )  {
@@ -346,7 +337,7 @@ union record		*rp;
 int
 db_apply_state_from_memb( tsp, pathp, mp )
 struct tree_state	*tsp;
-struct full_path	*pathp;
+struct db_full_path	*pathp;
 struct member		*mp;
 {
 	register struct directory *mdp;
@@ -429,7 +420,7 @@ next_one:	;
 int
 db_follow_path_for_state( tsp, pathp, orig_str, noisy )
 struct tree_state	*tsp;
-struct full_path	*pathp;
+struct db_full_path	*pathp;
 char			*orig_str;
 int			noisy;
 {
@@ -443,7 +434,7 @@ int			noisy;
 	struct directory	*comb_dp;	/* combination's dp */
 	struct directory	*dp;		/* element's dp */
 
-	if( tsp->ts_dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_follow_path_for_state:  bad dbip\n");
+	RT_CHECK_DBIP( tsp->ts_dbip );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
@@ -477,15 +468,13 @@ int			noisy;
 		if( pathp->fp_len <= 0 )  {
 			db_add_node_to_full_path( pathp, dp );
 
-#if 0
-			/* XXX should these be dbip->db_anroot ?? */
 			/* XXX rt_do_anim should perhaps be db_do_anim? */
 			/* Process animations located at the root */
-			if( rtip->rti_anroot )  {
+			if( tsp->ts_dbip->dbi_anroot )  {
 				register struct animate *anp;
 				mat_t	old_xlate, xmat;
 
-				for( anp=rtip->rti_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
+				for( anp=tsp->ts_dbip->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
 					if( dp != anp->an_path[0] )
 						continue;
 					mat_copy( old_xlate, tsp->ts_mat );
@@ -494,7 +483,6 @@ int			noisy;
 					mat_mul( tsp->ts_mat, old_xlate, xmat );
 				}
 			}
-#endif
 
 			/* Advance to next path element */
 			cp = ep+1;
@@ -680,7 +668,7 @@ static vect_t zaxis = { 0, 0, 1.0 };
 union tree *
 db_recurse( tsp, pathp, region_start_statepp )
 struct tree_state	*tsp;
-struct full_path	*pathp;
+struct db_full_path	*pathp;
 struct combined_tree_state	**region_start_statepp;
 {
 	struct directory	*dp;
@@ -690,7 +678,7 @@ struct combined_tree_state	**region_start_statepp;
 	struct tree_list	*trees = TREE_LIST_NULL;	/* array */
 	union tree		*curtree = TREE_NULL;
 
-	if( tsp->ts_dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_recurse:  bad dbip\n");
+	RT_CHECK_DBIP( tsp->ts_dbip );
 	if( pathp->fp_len <= 0 )  {
 		rt_log("db_recurse() null path?\n");
 		return(TREE_NULL);
@@ -1101,7 +1089,7 @@ int		cur;
 
 /* ============================== */
 
-static struct rt_i	*db_rtip;
+static struct db_i	*db_dbip;
 static union tree	**db_reg_trees;
 static int		db_reg_count;
 static int		db_reg_current;		/* semaphored when parallel */
@@ -1110,7 +1098,7 @@ static union tree *	(*db_reg_leaf_func)();
 
 HIDDEN union tree *db_gettree_region_end( tsp, pathp, curtree )
 register struct tree_state	*tsp;
-struct full_path	*pathp;
+struct db_full_path	*pathp;
 union tree		*curtree;
 {
 	register struct combined_tree_state	*cts;
@@ -1131,7 +1119,7 @@ union tree		*curtree;
 
 HIDDEN union tree *db_gettree_leaf( tsp, pathp, rp, id )
 struct tree_state	*tsp;
-struct full_path	*pathp;
+struct db_full_path	*pathp;
 union record		*rp;
 int			id;
 {
@@ -1165,7 +1153,7 @@ struct combined_tree_state	**region_start_statepp;
 	case OP_REGION:
 		/* Flesh out remainder of subtree */
 		ctsp = (struct combined_tree_state *)tp->tr_a.tu_stp;
-		ctsp->cts_s.ts_dbip = db_rtip->rti_dbip;
+		ctsp->cts_s.ts_dbip = db_dbip;
 		ctsp->cts_s.ts_stop_at_regions = 0;
 		/* All regions will be accepted, in this 2nd pass */
 		ctsp->cts_s.ts_region_start_func = 0;
@@ -1259,8 +1247,8 @@ db_walk_dispatcher()
 	}
 }
 
-db_walk_tree( rtip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func )
-struct rt_i	*rtip;
+db_walk_tree( dbip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func )
+struct db_i	*dbip;
 int		argc;
 char		**argv;
 int		ncpu;
@@ -1274,19 +1262,19 @@ union tree *	(*leaf_func)();
 	int			i;
 	union tree		**reg_trees;	/* (*reg_trees)[] */
 
-	RT_CHECK_RTI(rtip);
+	RT_CHECK_DBI(dbip);
 
-	db_rtip = rtip;			/* make global to this module */
+	db_dbip = dbip;			/* make global to this module */
 
 	/* Walk each of the given path strings */
 	for( i=0; i < argc; i++ )  {
 		register union tree	*curtree;
 		struct tree_state	ts;
-		struct full_path	path;
+		struct db_full_path	path;
 		struct combined_tree_state	*region_start_statep;
 
 		ts = *init_state;	/* struct copy */
-		ts.ts_dbip = rtip->rti_dbip;
+		ts.ts_dbip = dbip;
 		path.fp_len = path.fp_maxlen = 0;
 
 		/* First, establish context from given path */
@@ -1398,9 +1386,11 @@ static struct tree_state	rt_initial_tree_state = {
 	0.0, 0.0, 0.0, 1.0,
 };
 
+static struct rt_i	*db_rtip;
+
 HIDDEN int rt_gettree_region_start( tsp, pathp )
 struct tree_state	*tsp;
-struct full_path	*pathp;
+struct db_full_path	*pathp;
 {
 
 	/* Ignore "air" regions unless wanted */
@@ -1413,7 +1403,7 @@ struct full_path	*pathp;
 
 HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree )
 register struct tree_state	*tsp;
-struct full_path	*pathp;
+struct db_full_path	*pathp;
 union tree		*curtree;
 {
 	register struct combined_tree_state	*cts;
@@ -1446,7 +1436,7 @@ union tree		*curtree;
 
 HIDDEN union tree *rt_gettree_leaf( tsp, pathp, rp, id )
 struct tree_state	*tsp;
-struct full_path	*pathp;
+struct db_full_path	*pathp;
 union record		*rp;
 int			id;
 {
@@ -1484,31 +1474,11 @@ int			id;
  *	-1	On major error
  */
 int
-NEW_rt_gettree( rtip, node)
+NEW_rt_gettree( rtip, node )
 struct rt_i	*rtip;
 char		*node;
 {
-	int			prev_sol_count;
-	int			i;
-
-	RT_CHECK_RTI(rtip);
-
-	if(!rtip->needprep)
-		rt_bomb("rt_gettree called again after rt_prep!\n");
-
-	prev_sol_count = rtip->nsolids;
-
-	i = db_walk_tree( rtip, 1, &node, 1,
-		&rt_initial_tree_state,
-		rt_gettree_region_start,
-		rt_gettree_region_end,
-		rt_gettree_leaf );
-
-	if( i < 0 )  return(-1);
-
-	if( rtip->nsolids <= prev_sol_count )
-		rt_log("rt_gettree(%s) warning:  no solids found\n", node);
-	return(0);	/* OK */
+	return( rt_gettrees( rtip, 1, &node ) );
 }
 
 /*
@@ -1537,8 +1507,10 @@ char		**argv;
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
 	prev_sol_count = rtip->nsolids;
+	db_rtip = rtip;
 
-	i = db_walk_tree( rtip, argc, argv, 1,	/* # cpus */
+	i = db_walk_tree( rtip->rti_dbip, argc, argv,
+		1,	/* # cpus */
 		&rt_initial_tree_state,
 		rt_gettree_region_start,
 		rt_gettree_region_end,
