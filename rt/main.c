@@ -199,7 +199,7 @@ register char **argv;
 		case 'p':
 			rt_perspective = atof( optarg );
 			if( rt_perspective < 0 || rt_perspective > 179 ) {
-				fprintf(stderr,"persp=%d out of range\n", rt_perspective);
+				fprintf(stderr,"persp=%g out of range\n", rt_perspective);
 				rt_perspective = 0;
 			}
 			break;
