@@ -361,14 +361,6 @@ static unsigned long rlumtbl[256];
 static unsigned long glumtbl[256];
 static unsigned long blumtbl[256];
 
-static double dtime()
-{
-	struct timeval tv;
-
-	gettimeofday(&tv, NULL);
-	return ((double) tv.tv_sec + (double) tv.tv_usec / 1000000.0);
-}
-
 static int
 X24_open(ifp, file, width, height)
 FBIO	*ifp;
@@ -391,7 +383,7 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 	/*
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number" or flags.
-	 *  file = "/dev/X24###"
+	 *  file = "/dev/X###"
 	 *  The default mode is zero.
 	 */
 	if (file != NULL)  {
@@ -849,8 +841,6 @@ FBIO	*ifp;
 int	*xcenter, *ycenter;
 int	*xzoom, *yzoom;
 {
-	struct xinfo *xi = XI(ifp);
-
 
 #if X_DBG
 printf("X24_getview(ifp:0x%x, xcenter:0x%x, ycenter:0x%x, xzoom:0x%x, yzoom:0x%x) entered.\n",
@@ -873,7 +863,6 @@ CONST unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
-	struct xinfo *xi = XI(ifp);
 
 #if X_DBG
 printf("X24_setcursor(ifp:0x%x, bits:%u, xbits:%d, ybits:%d, xorig:%d, yorig:%d) entered.\n",
@@ -979,7 +968,6 @@ FBIO	*ifp;
 int	*mode;
 int	*x, *y;
 {
-	struct xinfo *xi = XI(ifp);
 
 #if X_DBG
 printf("X24_getcursor(ifp:0x%x, mode:%d, x:0x%x, y:0x%x) entered.\n",
@@ -1132,8 +1120,6 @@ static int
 X24_free(ifp)
 FBIO	*ifp;
 {
-	struct xinfo *xi = XI(ifp);
-
 
 #if X_DBG
 printf("X24_free(ifp:0x%x) entered\n", ifp);
@@ -1146,8 +1132,6 @@ static int
 X24_help(ifp)
 FBIO	*ifp;
 {
-	struct xinfo *xi = XI(ifp);
-
 	struct	modeflags *mfp;
 
 #if X_DBG
@@ -1162,7 +1146,7 @@ printf("X24_help(ifp:0x%x) entered\n", ifp);
 	fb_log("Default width/height: %d %d\n",
 		X24_interface.if_width,
 		X24_interface.if_height);
-	fb_log("Usage: /dev/X24[options]\n");
+	fb_log("Usage: /dev/X[options]\n");
 	for(mfp = modeflags; mfp->c != '\0'; mfp++) {
 		fb_log("   %c   %s\n", mfp->c, mfp->help);
 	}
@@ -1259,9 +1243,9 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 			break;
 		}
 		/*FALLTHROUGH*/
-	case -1:
 		fb_log("if_X24: Can't get supported Visual on X display \"%s\"\n",
 		       XDisplayName(NULL));
+		print_display_info(xi->xi_dpy);
 		return (-1);
 	}
 
