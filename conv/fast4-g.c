@@ -2909,9 +2909,10 @@ int pass_number;
 }
 
 void
-list_regions( dbip, dp )
+list_regions( dbip, dp, ptr )
 struct db_i *dbip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	struct directory	*dp2;
 	struct rt_db_internal   internal, internal2;
@@ -3012,7 +3013,7 @@ char *output_file;
 		db_close( dbip );
 		return;
 	}
-	db_functree( dbip, dp, list_regions, 0 );
+	db_functree( dbip, dp, list_regions, 0, NULL );
 }
 
 void

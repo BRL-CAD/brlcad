@@ -274,9 +274,10 @@ out:
 }
 
 void
-csg_comb_func( dbip , dp )
+csg_comb_func( dbip , dp, ptr )
 struct db_i *dbip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
@@ -550,7 +551,7 @@ char	*argv[];
 			bu_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
 			continue;
 		}
-		db_functree( dbip , dp , csg_comb_func , 0 );
+		db_functree( dbip , dp , csg_comb_func , 0 , NULL );
 	}
 
 	bn_vlist_cleanup();

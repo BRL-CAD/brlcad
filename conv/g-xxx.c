@@ -180,7 +180,7 @@ char	*argv[];
 			bu_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
 			continue;
 		}
-		db_functree( dbip , dp , comb_func , solid_func );
+		db_functree( dbip , dp , comb_func , solid_func , NULL );
 	}
 
 	bn_vlist_cleanup();
@@ -280,9 +280,10 @@ binary:				/* common for all binary nodes */
  * to output the combination in your format, or do it itself.
  */
 void
-comb_func( dbip, dp )
+comb_func( dbip, dp, ptr )
 struct db_i *dbip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	struct rt_db_internal itrn;
 	struct rt_comb_internal *comb;
@@ -332,9 +333,10 @@ struct directory *dp;
 /* This routine is called by the tree walker (db_functree)
  * for every solid encountered in the trees specified on the command line */
 void
-solid_func( dbip, dp )
+solid_func( dbip, dp, ptr )
 struct db_i *dbip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	struct rt_db_internal itrn;
 	int id;
