@@ -2659,6 +2659,7 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 	} else {
 		struct snurb	s;	/* XXX hack, don't free! */
 		fastf_t		final[4];
+		fastf_t		inv_homo;
 
 		/* cnurb on spline face -- ctl points are UV */
 		if( coords != 2 ) rt_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
@@ -2671,6 +2672,12 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 
 			/* convert 'vp' from UV coord to XYZ coord via surf! */
 			rt_nurb_s_eval( &s, vp[0], vp[1], final );
+			if( RT_NURB_IS_PT_RATIONAL( s.pt_type ) )
+			{
+				/* divide out homogeneous coordinate */
+				inv_homo = 1.0/final[3];
+				VSCALE( final, final, inv_homo );
+			}
 			RT_ADD_VLIST( vhead, final, cmd );
 			vp += coords;
 		}
