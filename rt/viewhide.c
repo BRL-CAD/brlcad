@@ -149,7 +149,7 @@ struct application	*ap;
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
 
-	regionfix( ap, "rtray.regexp" );		/* XXX */
+/***	regionfix( ap, "rtray.regexp" );		/* XXX */
 
 	/* malloc() two buffers that have room for as many struct cell 's
 	 * as the incoming file is wide (width), plus two for the border.
