@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.9  91/09/23  02:58:55  mike
+ * gldav() is not a BSD system call.
+ * 
  * Revision 2.8  91/08/30  19:41:59  mike
  * Added ^Xe to run cake, like ^X^E runs make.
  * 
@@ -501,28 +504,7 @@ char	*bufname,
 			ins_str(buff);
 			LineInsert();
 			if (ninbuf <= 0) {
-#ifdef VMUNIX			/* No easy way to find out */
 				mess = "Chugging along...";
-#else
-#ifdef 0
-				/* Needs gldav() to get load average */
-				{
-					short	avg[3];
-					double	theavg;
-
-					ignore(gldav(avg));
-					theavg = (double) avg[0] / 256;
-					if (theavg < 1.0)
-					    mess = "Screaming along...";
-					else if (theavg < 3.0)
-					    mess = "Chugging along...";
-					else
-					    mess = "Crawling along...";
-				}
-#else
-				mess = "Chugging along...";
-#endif
-#endif
 				message(mess);
 				redisplay();
 			}
@@ -534,6 +516,7 @@ char	*bufname,
 		ttyset(1);
 		return status;
 	}
+	return 0;
 }
 
 /* Send a region to shell.  Now we can beautify C and sort programs */
