@@ -1908,107 +1908,105 @@ struct nmg_unbreak_state
  */
 
 void
-nmg_unbreak_edge( e , state , after )
-long *e;
+nmg_unbreak_edge( ep , state , after )
+long *ep;
 genptr_t *state;
 int after;
 {
 	struct edgeuse *eu1,*eu2;
-	struct edge *e_p;
-	struct edge_g *eg_p;
+	struct edge *e;
+	struct edge_g *eg;
 	struct nmg_unbreak_state *ub_state;
 	long *flags;
+	struct vertexuse *vu;
+	struct vertex *vb;
 
-	e_p = (struct edge *)e;
-	NMG_CK_EDGE( e_p );
+	e = (struct edge *)ep;
+	NMG_CK_EDGE( e );
 
 	ub_state = (struct nmg_unbreak_state *)state;
 
 	flags = ub_state->flags;
 
 	/* make sure we only visit this edge once */
-	if( NMG_INDEX_TEST_AND_SET( flags , e_p ) )
+	if( !NMG_INDEX_TEST_AND_SET( flags , e ) )  return;
+
+	eg = e->eg_p;
+	if( !eg )
 	{
-		struct vertexuse *vu;
-		struct vertex *v_p;
+		rt_log( "nmg_unbreak_edge: no geomtry for edge x%x\n" , e );
+		return;
+	}
 
-		eg_p = e_p->eg_p;
-		if( !eg_p )
+
+	/* if the edge geometry doesn't have at least two uses, this
+	 * is not a candidate for unbreaking */		
+	if( eg->usage < 2 )
+		return;
+
+	/* find two consecutive uses */
+	eu1 = e->eu_p;
+	NMG_CK_EDGEUSE( eu1 );
+	eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
+	if( eu2->e_p->eg_p != eg )
+	{
+		struct edgeuse *eu_tmp;
+
+		eu2 = RT_LIST_PLAST_CIRC( edgeuse , eu1 );
+		if( eu2->e_p->eg_p != eg )
 		{
-			rt_log( "nmg_unbreak_edge: no geomtry for edge x%x\n" , e_p );
+			rt_log( "Cannot find second use of edge geometry for edge x%x\n" , e );
 			return;
 		}
 
+		eu_tmp = eu1;
+		eu1 = eu2;
+		eu2 = eu_tmp;
+	}
 
-		/* if the edge geometry doesn't have at least two uses, this
-		 * is not a candidate for unbreaking */		
-		if( eg_p->usage < 2 )
+	/* at this point, the situation is:
+
+		     eu1          eu2
+		*----------->*----------->*
+		A------------B------------C
+		*<-----------*<-----------*
+		    eu1mate      eu2mate
+	*/
+	/* get the middle vertex */
+	vb = eu2->vu_p->v_p;
+
+	/* all uses of this vertex must be for this edge geometry, otherwise
+	 * it is not a candidate for deletion */
+	for( RT_LIST_FOR( vu , vertexuse , &vb->vu_hd ) )
+	{
+		if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )
 			return;
+		if( vu->up.eu_p->e_p->eg_p != eg )
+			return;
+	}
 
-		/* find two consecutive uses */
-		eu1 = e_p->eu_p;
-		NMG_CK_EDGEUSE( eu1 );
-		eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
-		if( eu2->e_p->eg_p != eg_p )
+	/* first move eu1's mate start where to eu2's mate starts now */
+	nmg_movevu( eu1->eumate_p->vu_p , eu2->eumate_p->vu_p->v_p );
+	/* O.K. kill the edgeuse */
+	if( nmg_keu( eu2 ) )
+		rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
+
+	/* keep a count of unbroken edges */
+	ub_state->unbroken++;
+
+	/* look for a candidate radial edges for eu1 */
+	for( RT_LIST_FOR( vu , vertexuse , &eu1->vu_p->l ) )
+	{
+		struct edgeuse *eu;
+
+		if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		if( (eu = vu->up.eu_p) != eu1 )
 		{
-			struct edgeuse *eu_tmp;
-
-			eu2 = RT_LIST_PLAST_CIRC( edgeuse , eu1 );
-			if( eu2->e_p->eg_p != eg_p )
-			{
-				rt_log( "Cannot find second use of edge geometry for edge x%x\n" , e_p );
-				return;
-			}
-
-			eu_tmp = eu1;
-			eu1 = eu2;
-			eu2 = eu_tmp;
-		}
-
-		/* at this point, the situation is:
-
-			  eu1     eu2
-			*------>*------->
-
-		*/
-		/* get the middle vertex */
-		v_p = eu2->vu_p->v_p;
-
-		/* all uses of this vertex must be for this edge geometry, otherwise
-		 * it is not a candidate for deletion */
-		for( RT_LIST_FOR( vu , vertexuse , &v_p->vu_hd ) )
-		{
-			if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )
-				return;
-			if( vu->up.eu_p->e_p->eg_p != eg_p )
-				return;
-		}
-
-		/* first move eu1's mate start where to eu2's mate starts now */
-		nmg_movevu( eu1->eumate_p->vu_p , eu2->eumate_p->vu_p->v_p );
-		/* O.K. kill the edgeuse */
-		if( nmg_keu( eu2 ) )
-			rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
-		else
-		{
-			/* keep a count of unbroken edges */
-			ub_state->unbroken++;
-
-			/* look for a candidate radial edges for eu1 */
-			for( RT_LIST_FOR( vu , vertexuse , &eu1->vu_p->l ) )
-			{
-				struct edgeuse *eu;
-
-				if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )
-					continue;
-
-				if( (eu = vu->up.eu_p) != eu1 )
-				{
-					/* this is a candidate */
-					if( eu->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p )
-						nmg_radial_join_eu( eu1 , eu , ub_state->tol );
-				}
-			}
+			/* this is a candidate */
+			if( eu->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p )
+				nmg_radial_join_eu( eu1 , eu , ub_state->tol );
 		}
 	}
 }
