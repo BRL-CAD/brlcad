@@ -222,7 +222,10 @@ struct rt_list *tbl2d;
 	nmg_pl_fu(fd, fu, b, 255, 255, 255);
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC){
+		NMG_CK_LOOPUSE(lu);
+		if ( RT_LIST_IS_EMPTY(&lu->down_hd) ) {
+			rt_log("Empty child list for loopuse %s %d\n", __FILE__, __LINE__);
+		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC){
 			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 			pdv_3move(fd, vu->v_p->vg_p->coord);
 			if (p=find_pt2d(tbl2d, vu)) {
@@ -232,7 +235,10 @@ struct rt_list *tbl2d;
 			} else
 				pl_label(fd, "X, Y (no 2D coords)");
 
-		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC){
+		} else {
+			eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
+			NMG_CK_EDGEUSE( eu );
+
 			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				if (p=find_pt2d(tbl2d,eu->vu_p)) {
 					pdv_3move(fd, eu->vu_p->v_p->vg_p->coord);
@@ -243,8 +249,6 @@ struct rt_list *tbl2d;
 				} else
 					pl_label(fd, "X, Y (no 2D coords)");
 			}
-		} else {
-			rt_bomb("bogus loopuse child\n");
 		}
 	}
 
