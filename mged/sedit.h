@@ -115,6 +115,9 @@
 		      es_edflag == ECMD_VOL_THRESH_LO || \
 		      es_edflag == ECMD_VOL_THRESH_HI || \
 		      es_edflag == ECMD_VOL_CSIZE || \
+		      es_edflag == ECMD_DSP_SCALE_X || \
+		      es_edflag == ECMD_DSP_SCALE_Y || \
+		      es_edflag == ECMD_DSP_SCALE_ALT || \
 		      es_edflag == ECMD_EBM_HEIGHT ))
 #define OEDIT_SCALE (state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \

@@ -739,6 +739,7 @@ int arg;
 	set_e_axes_pos(1);
 }
 
+
 static void
 vol_ed( arg )
 int arg;
@@ -2383,6 +2384,35 @@ char *str;
 	}
 }
 
+static void 
+dsp_scale(dsp, idx)
+struct rt_dsp_internal *dsp;
+int idx;
+{
+	mat_t m, mat, mat2, scalemat;
+
+	RT_DSP_CK_MAGIC(dsp);
+
+	mat_idn(m);
+
+	if (es_mvalid) {
+		bu_log("es_mvalid %g %g %g\n", V3ARGS(es_mparam));
+	}
+
+	if (inpara > 0) {
+		m[idx] = es_para[0];
+		bu_log("Keyboard %g\n", es_para[0]);
+	} else if (es_scale != 0.0) {
+		m[idx] *= es_scale;
+		bu_log("es_scale %g\n", es_scale);
+		es_scale = 0.0;
+	}
+
+	bn_mat_xform_about_pt(scalemat, m, es_keypoint);
+	bn_mat_mul(mat2, scalemat, es_mat);
+	bn_mat_mul(mat, es_invmat, mat2);
+	transform_editing_solid(&es_int, mat, &es_int, 1);
+}
 /*
  * 			S E D I T
  * 
@@ -2422,34 +2452,14 @@ sedit()
 	  break;
 
 	case ECMD_DSP_SCALE_X:
-		{
-			break;
-		}
+		dsp_scale( (struct rt_dsp_internal *)es_int.idb_ptr, MSX);
+		break;
 	case ECMD_DSP_SCALE_Y:
-		{
-			break;
-		}
+		dsp_scale( (struct rt_dsp_internal *)es_int.idb_ptr, MSY);
+		break;
 	case ECMD_DSP_SCALE_ALT:
-		{
-			struct rt_dsp_internal *dsp =
-				(struct rt_dsp_internal *)es_int.idb_ptr;
-			mat_t m, mat1, mat2;
-			mat_t scalemat;
-
-			RT_DSP_CK_MAGIC(dsp);
-			
-			if ( inpara == 1) {
-				mat_idn(m);
-				m[MSZ] = es_para[0];
-			}
-			bn_mat_xform_about_pt(scalemat, m, es_keypoint);
-			bn_mat_mul(mat2, scalemat, es_mat);
-			bn_mat_mul(mat1, es_invmat, mat2);
-			transform_editing_solid(&es_int, mat, &es_int, 1);
-			
-
-			break;
-		}
+		dsp_scale( (struct rt_dsp_internal *)es_int.idb_ptr, MSZ);
+		break;
 	case ECMD_DSP_FSIZE:	/* set file size */
 		{
 			struct rt_dsp_internal *dsp =
@@ -3089,6 +3099,8 @@ sedit()
 			inpara = 1;
 		}
 		if(inpara) {
+
+
 			/* Keyboard parameter:  new position in model space.
 			 * XXX for now, splines only here */
 			register struct rt_nurb_internal *sip =
@@ -4625,6 +4637,9 @@ CONST vect_t	mousevec;
   switch( es_edflag )  {
   case SSCALE:
   case PSCALE:
+  case ECMD_DSP_SCALE_X:
+  case ECMD_DSP_SCALE_Y:
+  case ECMD_DSP_SCALE_ALT:
   case ECMD_VOL_CSIZE:
   case ECMD_VOL_THRESH_LO:
   case ECMD_VOL_THRESH_HI:
@@ -6540,6 +6555,9 @@ vect_t argvect;
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
   case ECMD_VOL_CSIZE:
+  case ECMD_DSP_SCALE_X:
+  case ECMD_DSP_SCALE_Y:
+  case ECMD_DSP_SCALE_ALT:
   case ECMD_EBM_HEIGHT:
     /* must convert to base units */
     es_para[0] *= local2base;
