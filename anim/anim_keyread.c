@@ -37,6 +37,7 @@
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
@@ -62,6 +63,10 @@ int units;
 extern int bu_optind;
 extern char *bu_optarg;
 
+int get_args();
+extern void anim_v_unpermute();
+
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -117,6 +122,7 @@ char **argv;
 			printf("%.10g\t%.10g\t%.10g\t%.10g\n",quat[X],quat[Y],quat[Z],quat[W]);
 		}
 	}
+	return( 0 );
 }
 
 

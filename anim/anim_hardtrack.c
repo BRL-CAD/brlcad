@@ -21,10 +21,21 @@
  */
 
 #include "conf.h"
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
+#include "bn.h"
 #include "anim.h"
 
 #ifndef M_PI
@@ -104,12 +115,15 @@ char link_cmd[10];		/* default is "rarc" */
 char wheel_cmd[10];		/* default is "lmul" */
 int get_circumf;	/* flag: just return circumference of track */
 
+int get_link();
+
+int
 main(argc,argv)
 int argc;
 char **argv;
 {
 	void anim_dir2mat(), anim_y_p_r2mat(), anim_add_trans(),anim_mat_print();
-	int get_args(), get_link(), track_prep(), val, frame, go, i, count;
+	int get_args(), track_prep(), val, frame, go, i, count;
 	fastf_t y_rot, distance, yaw, pitch, roll;
 	vect_t p1, p2, p3, dir, dir2, wheel_now, wheel_prev;
 	vect_t zero, position, vdelta, temp, to_track, to_front;
@@ -149,12 +163,12 @@ char **argv;
 	num_wheels = -1;
 	if (radius) {
 		while (!feof(stream)) {
-			fscanf(stream,"%*lf %*lf %*lf");
+			fscanf(stream,"%*f %*f %*f");
 			num_wheels++;
 		}
 	} else {
 		while (!feof(stream)) {
-			fscanf(stream,"%*lf %*lf %*lf %*lf");
+			fscanf(stream,"%*f %*f %*f %*f");
 			num_wheels++;
 		}
 	}
@@ -292,6 +306,7 @@ char **argv;
 		}
 		if (last_frame) break;
 	}
+	return( 0 );
 }
 
 
