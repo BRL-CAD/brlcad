@@ -1,3 +1,5 @@
+#undef _LOCAL_
+#define _LOCAL_ /**/
 /*
  *			I F _ S G I . C
  *
@@ -35,18 +37,27 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+#ifdef SYSV
+#define bzero(p,cnt)	memset(p,'\0',cnt)
+#endif
+
 /* Local state variables within the FBIO structure */
+extern char *malloc();
+
 /* If there are any more of these, they ought to go into a malloc()d struct */
 #define if_xzoom	u1.l
 #define if_yzoom	u2.l
 #define if_special_zoom	u3.l
 #define if_mode		u4.l
 #define if_rgb_ct	u5.l
+#define if_save		u6.p
 
 /*
  *  Defines for dealing with SGI Graphics Engine Pipeline
  */
 union gepipe {
+	unsigned char uc;
+	char	c;
 	short	s;
 	long	l;
 	float	f;
@@ -139,6 +150,7 @@ _LOCAL_ int	sgw_dclose(),
 		sgw_curs_set(),
 		sgw_cmemory_addr(),
 		sgw_cscreen_addr();
+_LOCAL_ void	sgw_inqueue();
 
 /* This one is not exported, but is used for roll-over to 12-bit mode */
 static FBIO sgiw_interface =
@@ -161,8 +173,8 @@ static FBIO sgiw_interface =
 		1024,			/* max width */
 		768,			/* max height */
 		"/dev/sgiw",
-		1024,			/* current/default width  */
-		768,			/* current/default height */
+		512,			/* current/default width  */
+		512,			/* current/default height */
 		-1,			/* file descriptor */
 		PIXEL_NULL,		/* page_base */
 		PIXEL_NULL,		/* page_curp */
@@ -199,10 +211,13 @@ int	width, height;
 	RGBmode();
 	gconfig();
 	if( getplanes() < 24 )  {
+		char *name;
+
 		singlebuffer();
 		gconfig();
-		gexit();
+		name = ifp->if_name;
 		*ifp = sgiw_interface;	/* struct copy */
+		ifp->if_name = name;
 		return( sgw_dopen( ifp, file, width, height ) );
 	}
 	tpoff();		/* Turn off textport */
@@ -213,6 +228,10 @@ int	width, height;
 	/* Build a linear "colormap" in case he wants to read it */
 	sgi_cmwrite( ifp, COLORMAP_NULL );
 
+	if( width <= 0 )
+		width = ifp->if_width;
+	if( height <= 0 )
+		height = ifp->if_height;
 	if ( width > ifp->if_max_width) 
 		width = ifp->if_max_width;
 
@@ -364,18 +383,20 @@ _LOCAL_ int
 sgi_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-register RGBpixel	*pixelp;
+RGBpixel *pixelp;
 int	count;
 {
 	register union gepipe *hole = GEPIPE;
 	register int scan_count;
 	int xpos, ypos;
 	register int i;
+	register unsigned char *cp;
 	int ret;
 
 	ret = count;	/* save count */
 	xpos = x;
 	ypos = y;
+	cp = (unsigned char *)(*pixelp);
 	while( count > 0 )  {
 		if( ypos >= ifp->if_max_width )  return(0);
 		if ( count >= ifp->if_width )  {
@@ -395,9 +416,9 @@ int	count;
 
 			if( ifp->if_xzoom > 1 )  {
 				Coord l, b;
-				RGBcolor( (short)((*pixelp)[RED]),
-					(short)((*pixelp)[GRN]),
-					(short)((*pixelp)[BLU]) );
+				RGBcolor( (short)(cp[RED]),
+					(short)(cp[GRN]),
+					(short)(cp[BLU]) );
 				l = xpos * ifp->if_xzoom;
 				b = ypos * ifp->if_yzoom;
 				/* left bottom right top */
@@ -405,7 +426,7 @@ int	count;
 					l+ifp->if_xzoom, b+ifp->if_yzoom);
 				i--;
 				xpos++;
-				pixelp++;
+				cp += 3;
 				continue;
 			}
 			if( i <= (127/3) )
@@ -416,16 +437,16 @@ int	count;
 			hole->s = 0xD;		/* FBCdrawpixels */
 			i -= chunk;
 			if ( _sgi_cmap_flag == FALSE )  {
-				for( ; chunk>0; chunk--,pixelp++ )  {
-					hole->s = (*pixelp)[RED];
-					hole->s = (*pixelp)[GRN];
-					hole->s = (*pixelp)[BLU];
+				for( ; chunk>0; chunk--)  {
+					hole->s = *cp++;
+					hole->s = *cp++;
+					hole->s = *cp++;
 				}
 			} else {
-				for( ; chunk>0; chunk--,pixelp++ )  {
-					hole->s = _sgi_cmap.cm_red[(*pixelp)[RED]];
-					hole->s = _sgi_cmap.cm_green[(*pixelp)[GRN]];
-					hole->s = _sgi_cmap.cm_blue[(*pixelp)[BLU]];
+				for( ; chunk>0; chunk-- )  {
+					hole->s = _sgi_cmap.cm_red[*cp++];
+					hole->s = _sgi_cmap.cm_green[*cp++];
+					hole->s = _sgi_cmap.cm_blue[*cp++];
 				}
 			}
 		}
@@ -552,11 +573,11 @@ int	x, y;
 #define WIN_T	(ifp->if_height+MARGIN)
 
 #define MAP_RESERVED	16		/* # slots reserved by MEX */
-#define MAP_SIZE	1024		/* # slots available, incl reserved */
 #define MAP_TOL		28		/* pixel delta across all channels */
 /* TOL of 28 gives good rendering of the dragon picture without running out */
+static int map_size;			/* # of color map slots available */
 
-static RGBpixel	rgb_table[MAP_SIZE];
+static RGBpixel	rgb_table[4096];
 
 /*
  *			g e t _ C o l o r _ I n d e x
@@ -601,7 +622,7 @@ register RGBpixel	*pixelp;
 		return	(Colorindex)best;
 
 	/* Allocate new entry in color table if there's room.		*/
-	if( i < MAP_SIZE )  {
+	if( i < map_size )  {
 		COPYRGB( rgb_table[ifp->if_rgb_ct], *pixelp);
 		mapcolor(	(Colorindex)ifp->if_rgb_ct,
 				(short) (*pixelp)[RED],
@@ -637,11 +658,15 @@ int	width, height;
 		register char *cp;
 		/* "/dev/sgiw###" gives optional mode */
 		for( cp = file; *cp != NULL && !isdigit(*cp); cp++ ) ;
-		sscanf( cp, "%d", &ifp->if_mode );
+		(void)sscanf( cp, "%d", &ifp->if_mode );
 	}
+
+	if( width <= 0 )
+		width = ifp->if_width;
+	if( height <= 0 )
+		height = ifp->if_height;
 	if ( width > ifp->if_max_width - 2 * MARGIN) 
 		width = ifp->if_max_width - 2 * MARGIN;
-
 	if ( height > ifp->if_max_height - 2 * MARGIN - BANNER)
 		height = ifp->if_max_height - 2 * MARGIN - BANNER;
 
@@ -651,20 +676,34 @@ int	width, height;
 	ifp->if_xzoom = 1;	/* for zoom fakeout */
 	ifp->if_yzoom = 1;	/* for zoom fakeout */
 	ifp->if_special_zoom = 0;
-	
-	if( ismex() )
-		{
+	if( (ifp->if_save = malloc( width*height*sizeof(Colorindex) )) == NULL )  {
+		fb_log("sgw_dopen:  unable to malloc pixel buffer\n");
+		return(-1);
+	}
+	bzero( ifp->if_save, width*height*sizeof(Colorindex) );
+
+	if( ismex() )  {
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
-		foreground();
+		foreground();		/* Direct focus here, don't detach */
 		if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
 			{
 			fb_log( "No more graphics ports available.\n" );
 			return	-1;
 			}
-		wintitle( "frame buffer" );
-		}
-	else
+		wintitle( "BRL libfb Frame Buffer" );
+		singlebuffer();
+		gconfig();	/* Must be called after singlebuffer().	*/
+		/* Need to clean out images from windows below */
+		/* This hack is necessary until windows persist from
+		 * process to process */
+		color(BLACK);
+		clear();
+	} else {
 		ginit();
+		singlebuffer();
+		gconfig();	/* Must be called after singlebuffer().	*/
+	}
+	map_size = 1<<getplanes();	/* 10 or 12, depending on ismex() */
 
 	/* The first 8 entries of the colormap are "known" colors */
 	SET( 0, 000, 000, 000 );	/* BLACK */
@@ -681,7 +720,7 @@ int	width, height;
 	if( ifp->if_mode )
 		{
 		/* Mode 1 uses fixed color map */
-		for( i = 0; i < MAP_SIZE-MAP_RESERVED; i++ )
+		for( i = 0; i < map_size-MAP_RESERVED; i++ )
 			mapcolor( 	i+MAP_RESERVED,
 					(short)((i % 10) + 1) * 25,
 					(short)(((i / 10) % 10) + 1) * 25,
@@ -689,8 +728,6 @@ int	width, height;
 					);
 		}
 
-	singlebuffer();
-	gconfig();	/* Must be called after singlebuffer().	*/
 
 	/* Build a linear "colormap" in case he wants to read it */
 	sgw_cmwrite( ifp, COLORMAP_NULL );
@@ -704,13 +741,18 @@ _LOCAL_ int
 sgw_dclose( ifp )
 FBIO	*ifp;
 {
-	if( ismex() )
+	free( ifp->if_save );
+	ifp->if_save = (char *)0;
+
+	setcursor( 0, 1, 0x2000 );
+	if( ismex() )  {
+		/* Leave mex's cursor on */
 		; /* winclose( ifp->if_fd ); */
-	else
-		{
+	}  else  {
+		cursoff();
 		greset();
 		gexit();
-		}
+	}
 /** 	fb_log( "%d color table entries used.\n", ifp->if_rgb_ct );  **/
 	return	0;	
 }
@@ -723,8 +765,11 @@ FBIO	*ifp;
 	singlebuffer();
 	gconfig();
 
+	if( qtest() )
+		sgw_inqueue(ifp);
 	color(BLACK);
 	clear();
+	bzero( ifp->if_save, ifp->if_width*ifp->if_height*sizeof(Colorindex) );
 	return	0;	
 }
 
@@ -733,10 +778,21 @@ sgw_dclear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 {
+	Colorindex i;
+	register Colorindex *p;
+	register int cnt;
+
+	if( qtest() )
+		sgw_inqueue(ifp);
 	if ( pp != RGBPIXEL_NULL)
-		color( get_Color_Index( ifp, pp ) );
+		i = get_Color_Index( ifp, pp );
 	else
-		color( BLACK );
+		i = BLACK;
+
+	color(i);
+	for( cnt = ifp->if_width * ifp->if_height-1; cnt > 0; cnt-- )
+		*p++ = i;
+
 	writemask( 0x3FF );
 	clear();
 	return	0;	
@@ -753,6 +809,8 @@ int	count;
 	Colorindex colors[1025];
 	register int i;
 
+	if( qtest() )
+		sgw_inqueue(ifp);
 	x *= ifp->if_xzoom;
 	while( count > 0 )
 		{	register short	ypos = y*ifp->if_yzoom;
@@ -807,26 +865,32 @@ int	count;
 _LOCAL_ int
 sgw_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
-register int	x, y;
+int	x, y;
 register RGBpixel	*pixelp;
 int	count;
 	{	register union gepipe *hole = GEPIPE;
 		int scan_count;
 		register int i;
 
+	if( qtest() )
+		sgw_inqueue(ifp);
 	writemask( 0x3FF );
-	x *= ifp->if_xzoom;
 	while( count > 0 )
-		{	register short	ypos = y*ifp->if_yzoom;
+		{
+			register short	ypos = y*ifp->if_yzoom;
+			register short	xpos = x*ifp->if_xzoom;
+			register Colorindex *sp;
+		sp = (Colorindex *)
+			&ifp->if_save[(y*ifp->if_width+x)*sizeof(Colorindex)];
 		if ( count >= ifp->if_width )
 			scan_count = ifp->if_width;
 		else
 			scan_count = count;
 		if( (ifp->if_xzoom == 1 && ifp->if_yzoom == 1) || ifp->if_special_zoom )
 			{	register Colorindex	colori;
-			CMOV2S( hole, x, ypos );
+			CMOV2S( hole, xpos, ypos );
 			for( i = scan_count; i > 0; )
-				{	register int	chunk;
+				{	register short	chunk;
 				if( i <= 127 )
 					chunk = i;
 				else
@@ -846,6 +910,7 @@ int	count;
 					else
 						colori = get_Color_Index( ifp, pixelp );
 					hole->s = colori;
+					*sp++ = colori;
 					}
 				}
 			GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
@@ -853,9 +918,9 @@ int	count;
 		else
 			for( i = 0; i < scan_count; i++, pixelp++ )
 				{	register Colorindex	col;
-					register Coord	r = x + ifp->if_xzoom - 1,
+					register Coord	r = xpos + ifp->if_xzoom - 1,
 							t = ypos + ifp->if_yzoom - 1;
-				CMOV2S( hole, x, ypos );
+				CMOV2S( hole, xpos, ypos );
 				if( ifp->if_mode )
 					{
 					col =  MAP_RESERVED +
@@ -867,8 +932,9 @@ int	count;
 					col = get_Color_Index( ifp, pixelp );
 
 				color( col );
-				im_rectf( (Coord)x, (Coord)ypos, r, t );
-				x += ifp->if_xzoom;
+				im_rectf( (Coord)xpos, (Coord)ypos, r, t );
+				xpos += ifp->if_xzoom;
+				*sp++ = col;
 				}
 		count -= scan_count;
 		x = 0;
@@ -882,6 +948,8 @@ sgw_viewport_set( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
+	if( qtest() )
+		sgw_inqueue(ifp);
 #if 0
 	viewport(	(Screencoord) left,
 			(Screencoord) right,
@@ -899,6 +967,8 @@ register ColorMap	*cmp;
 {
 	register int i;
 
+	if( qtest() )
+		sgw_inqueue(ifp);
 	/* Just parrot back the stored colormap */
 	for( i = 0; i < 255; i++)
 	{
@@ -916,6 +986,8 @@ register ColorMap	*cmp;
 {
 	register int i;
 
+	if( qtest() )
+		sgw_inqueue(ifp);
 	if ( cmp == COLORMAP_NULL)  {
 		for( i = 0; i < 255; i++)  {
 			_sgi_cmap.cm_red[i] = i;
@@ -941,6 +1013,8 @@ sgw_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 	{
+	if( qtest() )
+		sgw_inqueue(ifp);
 	if( x == 0 )  x = 1;
 	if( y == 0 )  y = 1;
 	if( x < 0 || y < 0 )
@@ -964,6 +1038,9 @@ int		xorig, yorig;
 	{	register int	y;
 		register int	xbytes;
 		Cursor		newcursor;
+
+	if( qtest() )
+		sgw_inqueue(ifp);
 	/* Check size of cursor.					*/
 	if( xbits < 0 )
 		return	-1;
@@ -993,6 +1070,8 @@ int	mode;
 int	x, y;
 	{	static Colorindex	cursor_color = YELLOW;
 			/* Color and bitmask ignored under MEX.	*/
+	if( qtest() )
+		sgw_inqueue(ifp);
 	if( ! mode )
 		{
 		cursoff();
@@ -1007,3 +1086,50 @@ int	x, y;
 	setvaluator( MOUSEY, y + WIN_B, 0, 1023 );
 	return	0;
 	}
+
+/*
+ *			S G W _ I N Q U E U E
+ *
+ *  Called when a qtest() indicates that there is a window event.
+ *  Process all events, so that we don't loop on recursion to sgw_bwrite.
+ */
+_LOCAL_ void
+sgw_inqueue(ifp)
+register FBIO *ifp;
+{
+	short val;
+	int redraw = 0;
+	register int ev;
+
+	while( qtest() )  {
+		switch( ev = qread(&val) )  {
+		case REDRAW:
+			redraw = 1;
+			break;
+		case INPUTCHANGE:
+			break;
+		case MODECHANGE:
+			/* This could be bad news.  Should we re-write
+			 * the color map? */
+			fb_log("sgw_inqueue:  modechange?\n");
+			break;
+		default:
+			fb_log("sgw_inqueue:  event %d unknown\n", ev);
+			break;
+		}
+	}
+	/*
+	 * Now that all the events have been removed from the input
+	 * queue, handle any actions that need to be done.
+	 */
+	if( redraw )  {
+		register int i;
+
+		/* Redraw whole window from save area */
+		for( i=0; i<ifp->if_height; i++ )  {
+			cmov2s( 0, i );
+			writepixels( ifp->if_width, (Colorindex *)
+				&ifp->if_save[i*ifp->if_width*sizeof(Colorindex)] );
+		}
+	}
+}
