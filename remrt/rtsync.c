@@ -644,14 +644,19 @@ char	*argv[];
 	if(Tk_Init(interp) == TCL_ERROR)  bu_bomb("Try setting TK_LIBRARY environment variable\n");
 	if((tkwin = Tk_MainWindow(interp)) == NULL)
 		bu_bomb("Tk_MainWindow failed\n");
+	/* Don't insist on a click to position the window, just make it */
+	(void)Tcl_Eval( interp, "wm geometry . =+1+1");
 
 	/* Let main window pop up before running script */
 	while( Tcl_DoOneEvent(TCL_DONT_WAIT) != 0 ) ;
 # if 0
 	(void)Tcl_Eval( interp, "wm withdraw .");
 # endif
-	if( Tcl_EvalFile( interp, "/m/cad/remrt/rtsync.tcl" ) != TCL_OK )
-		bu_log("ERROR %s\n*** Script aborted\n", interp->result);
+	if( Tcl_EvalFile( interp, "/m/cad/remrt/rtsync.tcl" ) != TCL_OK )  {
+		bu_log("%s\n",
+			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		bu_log("\n*** Startup Script Aborted ***\n\n");
+	}
 
 	/* Incorporate built-in commands */
 	(void)Tcl_CreateCommand(interp, "vrmgr_send", vrmgr_send,
