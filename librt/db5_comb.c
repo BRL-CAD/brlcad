@@ -115,6 +115,13 @@ db_tree_counter( CONST union tree *tp, struct db_tree_counter_state *tcsp )
 	}
 }
 
+#define DB5COMB_TOKEN_LEAF		1
+#define DB5COMB_TOKEN_UNION		2
+#define DB5COMB_TOKEN_INTERSECT		3
+#define DB5COMB_TOKEN_SUBTRACT		4
+#define DB5COMB_TOKEN_XOR		5
+#define DB5COMB_TOKEN_NOT		6
+
 struct rt_comb_v5_serialize_state  {
 	long		magic;
 	long		mat_num;
@@ -165,20 +172,46 @@ rt_comb_v5_serialize(
 				ELEMENTS_PER_MAT );
 			ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
 		}
+
+		/* Encoding of the "leaf" operator */
+		if( ssp->exprp )
+			*ssp->exprp++ = DB5COMB_TOKEN_LEAF;
 		return;
 
 	case OP_NOT:
 		/* Unary ops */
 		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
+		if( ssp->exprp )
+			*ssp->exprp++ = DB5COMB_TOKEN_NOT;
 		return;
 
 	case OP_UNION:
+		/* This node is known to be a binary op */
+		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
+		rt_comb_v5_serialize( tp->tr_b.tb_right, ssp );
+		if( ssp->exprp )
+			*ssp->exprp++ = DB5COMB_TOKEN_UNION;
+		return;
 	case OP_INTERSECT:
+		/* This node is known to be a binary op */
+		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
+		rt_comb_v5_serialize( tp->tr_b.tb_right, ssp );
+		if( ssp->exprp )
+			*ssp->exprp++ = DB5COMB_TOKEN_INTERSECT;
+		return;
 	case OP_SUBTRACT:
+		/* This node is known to be a binary op */
+		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
+		rt_comb_v5_serialize( tp->tr_b.tb_right, ssp );
+		if( ssp->exprp )
+			*ssp->exprp++ = DB5COMB_TOKEN_SUBTRACT;
+		return;
 	case OP_XOR:
 		/* This node is known to be a binary op */
 		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
 		rt_comb_v5_serialize( tp->tr_b.tb_right, ssp );
+		if( ssp->exprp )
+			*ssp->exprp++ = DB5COMB_TOKEN_XOR;
 		return;
 
 	default:
@@ -220,6 +253,7 @@ CONST struct db_i		*dbip;
 	max_stack_depth = db_tree_counter( comb->tree, &tcs );
 bu_log("n_max=%d, n_leaf=%d, n_oper=%d, namebytes=%d, non_union_seen=%d, max_stack_depth=%d\n",
 tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.namebytes, tcs.non_union_seen, max_stack_depth);
+rt_pr_tree( comb->tree, 1 );
 
 	if( tcs.non_union_seen )  {
 		/* RPN expression needs one byte for each leaf or operator node */
@@ -231,12 +265,14 @@ tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.namebytes, tcs.non_union_seen, max_stack_
 	}
 
 	wid = db5_select_length_encoding(
-		tcs.n_mat | tcs.n_leaf | rpn_len | max_stack_depth );
+		tcs.n_mat | tcs.n_leaf | tcs.namebytes |
+		rpn_len | max_stack_depth );
 
 	/* Second pass -- determine amount of on-disk storage needed */
 	need =  1 +			/* width code */
 		db5_enc_len[wid] + 	/* size for nmatricies */
 		db5_enc_len[wid] +	/* size for nleaves */
+		db5_enc_len[wid] +	/* size for namebytes */
 		db5_enc_len[wid] +	/* size for len of RPN */
 		db5_enc_len[wid] +	/* size for max_stack_depth */
 		tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) +	/* sizeof matrix array */
@@ -252,6 +288,7 @@ tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.namebytes, tcs.non_union_seen, max_stack_
 	*cp++ = wid;
 	cp = db5_encode_length( cp, tcs.n_mat, wid );
 	cp = db5_encode_length( cp, tcs.n_leaf, wid );
+	cp = db5_encode_length( cp, tcs.namebytes, wid );
 	cp = db5_encode_length( cp, rpn_len, wid );
 	cp = db5_encode_length( cp, max_stack_depth, wid );
 
@@ -304,8 +341,15 @@ const struct db_i	*dbip;
 	unsigned char	*cp;
 	int		wid;
 	long		nmat, nleaf, rpn_len, max_stack_depth;
+	long		namebytes;
 	unsigned char	*matp;
 	unsigned char	*leafp;
+	unsigned char	*leafp_end;
+	unsigned char	*exprp;
+#define MAX_V5_STACK	100
+	union tree	*stack[MAX_V5_STACK];
+	union tree	**sp;			/* stack pointer */
+	int		i;
 
 	BU_CK_EXTERNAL(ep);
 
@@ -323,13 +367,15 @@ const struct db_i	*dbip;
 	wid = *cp++;
 	cp += db5_decode_length( &nmat, cp, wid );
 	cp += db5_decode_length( &nleaf, cp, wid );
+	cp += db5_decode_length( &namebytes, cp, wid );
 	cp += db5_decode_length( &rpn_len, cp, wid );
 	cp += db5_decode_length( &max_stack_depth, cp, wid );
 	matp = cp;
 	leafp = cp + nmat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
+	exprp = leafp + namebytes;
+	leafp_end = exprp;
 bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_len, max_stack_depth);
 
-	cp = leafp;
 	if( rpn_len == 0 )  {
 		int	i;
 		for( i = nleaf-1; i >= 0; i-- )  {
@@ -339,12 +385,12 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 			BU_GETUNION( tp, tree );
 			tp->tr_l.magic = RT_TREE_MAGIC;
 			tp->tr_l.tl_op = OP_DB_LEAF;
-			tp->tr_l.tl_name = bu_strdup( cp );
-			cp += strlen(cp) + 1;
+			tp->tr_l.tl_name = bu_strdup( leafp );
+			leafp += strlen(leafp) + 1;
 
 			/* Get matrix index */
-			mi = bu_glong( cp );
-			cp += 4;
+			mi = bu_glong( leafp );
+			leafp += 4;
 
 			if( mi < 0 )  {
 				/* Signal identity matrix */
@@ -373,8 +419,103 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 		}
 		db_ck_tree( comb->tree );
 		rt_pr_tree( comb->tree, 1 );
+		BU_ASSERT_PTR( leafp, ==, leafp_end );
 		return 0;
 	}
 
-	return -1;
+	/*
+	 *  Bring the RPN expression back from the disk,
+	 *  populating leaves and matricies in the order they are encountered.
+	 */
+	if( max_stack_depth > MAX_V5_STACK )  {
+		bu_log("Combination needs stack depth %d, only have %d, aborted\n",
+			max_stack_depth, MAX_V5_STACK);
+		return -1;
+	}
+	sp = &stack[0];
+
+	for( i=0; i < rpn_len; i++,exprp++ )  {
+		union tree	*tp;
+		int		mi;
+
+		BU_GETUNION( tp, tree );
+		tp->tr_b.magic = RT_TREE_MAGIC;
+
+		switch( *exprp )  {
+		case DB5COMB_TOKEN_LEAF:
+			tp->tr_l.tl_op = OP_DB_LEAF;
+			tp->tr_l.tl_name = bu_strdup( leafp );
+			leafp += strlen(leafp) + 1;
+
+			/* Get matrix index */
+			mi = bu_glong( leafp );
+			leafp += 4;
+
+			if( mi < 0 )  {
+				/* Signal identity matrix */
+				tp->tr_l.tl_mat = NULL;
+			} else {
+				/* Unpack indicated matrix mi */
+				BU_ASSERT_LONG( mi, <, nmat );
+				tp->tr_l.tl_mat = (matp_t)bu_malloc(
+					sizeof(mat_t), "v5comb mat");
+				ntohd( (unsigned char *)tp->tr_l.tl_mat,
+					&matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
+					ELEMENTS_PER_MAT);
+			}
+			break;
+
+		case DB5COMB_TOKEN_UNION:
+		case DB5COMB_TOKEN_INTERSECT:
+		case DB5COMB_TOKEN_SUBTRACT:
+		case DB5COMB_TOKEN_XOR:
+			/* These are all binary operators */
+			tp->tr_b.tb_regionp = REGION_NULL;
+			tp->tr_b.tb_right = *--sp;
+			RT_CK_TREE(tp->tr_b.tb_right);
+			tp->tr_b.tb_left = *--sp;
+			RT_CK_TREE(tp->tr_b.tb_left);
+			switch( *exprp )  {
+			case DB5COMB_TOKEN_UNION:
+				tp->tr_b.tb_op = OP_UNION;
+				break;
+			case DB5COMB_TOKEN_INTERSECT:
+				tp->tr_b.tb_op = OP_INTERSECT;
+				break;
+			case DB5COMB_TOKEN_SUBTRACT:
+				tp->tr_b.tb_op = OP_SUBTRACT;
+				break;
+			case DB5COMB_TOKEN_XOR:
+				tp->tr_b.tb_op = OP_XOR;
+				break;
+			}
+			break;
+
+		case DB5COMB_TOKEN_NOT:
+			/* This is a unary operator */
+			tp->tr_b.tb_regionp = REGION_NULL;
+			tp->tr_b.tb_left = *--sp;
+			RT_CK_TREE(tp->tr_b.tb_left);
+			tp->tr_b.tb_right = TREE_NULL;
+			tp->tr_b.tb_op = OP_NOT;
+			break;
+		default:
+			bu_log("rt_comb_import5() unknown RPN expression token=%d, import aborted\n", *exprp);
+			return -1;
+		}
+
+		/* Push this node on the stack */
+		*sp++ = tp;
+	}
+	BU_ASSERT_PTR( leafp, ==, leafp_end );
+
+	/* There should only be one thing left on the stack, the result */
+	BU_ASSERT_PTR( sp, ==, &stack[1] );
+
+	comb->tree = stack[0];
+	RT_CK_TREE(comb->tree);
+	db_ck_tree( comb->tree );
+	rt_pr_tree( comb->tree, 1 );
+
+	return 0;			/* OK */
 }
