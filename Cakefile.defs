@@ -384,21 +384,37 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LIBRT_TIMER	timer42
 
-#	define	sun_no_opts	/* Production configuration */
+#	define	sun_openwin 1	/* PRODUCTION=1 */
 #	undef	sun_x11
-#	undef	sun_openwin
+#	undef	sun_no_opts
 #	undef	sun_x11_gds
 
-#	if !defined(sun_openwin)
-#		define	XINCDIR	/usr/X11/include
-#		define	XLIBDIR	/usr/X11/lib
-#	else
-#		define	XINCDIR	/usr/openwin/include
-#		define	XLIBDIR	/usr/openwin/lib
+#	ifdef sun_openwin
+/*		Sun with SunOS 4.1.1 and OpenWindows configuration */
+#		define	XINCDIR		/usr/openwin/include
+#		define	XLIBDIR		/usr/openwin/lib
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
+			-I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L''XLIBDIR -lX11
 #	endif
-
+#	ifdef sun_x11
+/*		Sun with site-provided MIT X11 configuration */
+#		define	XINCDIR		/usr/X11/include
+#		define	XLIBDIR		/usr/X11/lib
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
+			-I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L''XLIBDIR -lX11
+#	endif
 #	ifdef sun_no_opts
-/*		Normal Sun configuration */
+/*		Old SunOS 3 configuration -- no X or OpenWindows, only SunTools */
 #		define	LIBFB_OBJS	if_remote if_ab if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
@@ -406,28 +422,10 @@ set -S2 "/bin/sh"
 #		define	MGED_CONFIG	-DDM_SUNPW
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
 #	endif
-#	ifdef sun_x11
-/*		Sun with X11 configuration */
-#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-			-I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-X
-#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-L''XLIBDIR -lX11
-#	endif
-#	ifdef sun_openwin
-/*		Sun with SunOS 4.1.1 and OpenWindows configuration */
-#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-			-I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-X
-#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-L''XLIBDIR -lX11
-#	endif
 #	ifdef sun_x11_gds
 /*		Sun with X11 configuration and TekSource GDS hardware*/
+#		define	XINCDIR		/usr/X11/include
+#		define	XLIBDIR		/usr/X11/lib
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24 if_ts
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN -DIF_TS \
 			-I''XINCDIR -DIF_X
@@ -473,59 +471,40 @@ set -S2 "/bin/sh"
 #	define	STANDARD_LIBES	-L''LIBDIR -lm
 #	define	LIBRT_TIMER	timer42
 
-#	if 0	/* PRODUCTION=0 */
-/*		Bare Sun configuration */
-#		define	LIBFB_OBJS	if_remote if_sun
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
-#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
-#		define	LIBRT_TIMER	timer42
-#		define	MGED_OBJS	dm-sun
-#		define	MGED_CONFIG	-DDM_SUNPW
-#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
-#	else
+#	if 1	/* PRODUCTION=1 */
+/*		Sun with X11 (aka "openwin") Default for SunOS 4.1.1 */
 #		define	XINCDIR		/usr/openwin/include
 #		define	XLIBDIR		/usr/openwin/lib
-#		if 1	/* PRODUCTION=1 */
-/*			Sun with X11 (aka "openwin") Default for SunOS 4.1.1 */
-#			define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-				-I''XINCDIR -DIF_X
-#			define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#			if 1	/* PRODUCTION=1 */
-/*				Sun with X11 only */
-#				define	MGED_OBJS	dm-X
-#				define	MGED_CONFIG	-DDM_X -I/usr/openwin/include -I''XINCDIR
-#				define	MGED_LIBES	\
-					-L/usr/openwin/lib -L''XLIBDIR -lX11
-#			else
-/*				Sun with X11 and XGL (an unbundled product) */
-/*				Note that at MSIC, -lgks may also be needed */
-#				define	MGED_OBJS	dm-xgl dm-X
-#				define	MGED_CONFIG	-DDM_XGL -DDM_X -I/usr/openwin/include -I''XINCDIR
-#				define	MGED_LIBES	-lxgl -L/usr/openwin/lib -L''XLIBDIR -lX11
-#			endif
-#		else
-/*			Sun with MIT X11. No Suntools support. */
-#			define	XINCDIR		/usr/X11/include
-#			define	XLIBDIR		/usr/X11/lib
-#			define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-				-I''XINCDIR -DIF_X
-#			define	LIBFB_LIBES	LIBPKG \
-				-L''XLIBDIR -lX11
-#			define	MGED_OBJS	dm-X
-#			define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#			define	MGED_LIBES	-L''XLIBDIR -lX11
-#		endif
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
+			-I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L''XLIBDIR -lX11
+#	else
+/*		Sun with site-provided MIT X11. */
+#		define	XINCDIR		/usr/X11/include
+#		define	XLIBDIR		/usr/X11/lib
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
+			-I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L''XLIBDIR -lX11
+
 /*		XMGED requires a Motif license and include/X11/Xm/Xm.h */
-/***		XXX What about XLIBDIR and XINCDIR here?  */
-#		define  XMGED_ALLOCA
-#		define	XMGED_OBJS	dm-X
-#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS \
-					-I/usr/X11/include
-#		define	XMGED_LIBES	-L/usr/X11/lib -lXm -lXt -lXi \
-					-lXext -lX11 -ll
+#		if 0
+#			define  XMGED_ALLOCA
+#			define	XMGED_OBJS	dm-X
+#			define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS \
+						-I''XINCDIR
+#			define	XMGED_LIBES	-L''XLIBDIR -lXm -lXt -lXi \
+						-lXext -lX11 -ll
+#		endif
 #	endif
+
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
 #		define	CC	/usr/lang/cc
