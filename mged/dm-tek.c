@@ -433,13 +433,13 @@ get_cursor()
 			rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
 			break;
 		case '.':
-			rt_vls_strcat( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
+			rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
 			break;
 		default:
 			(void)printf("s=smaller, b=bigger, .=slew, space=pick/slew\n");
 			return;
 		case ' ':
-			rt_vls_strcat( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
+			rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
 			break;
 		}
 	}
