@@ -40,7 +40,12 @@
  */
 
 /* utility definitions */
+#if 0
 #define	DUPMAX		_POSIX2_RE_DUP_MAX	/* xxx is this right? */
+#else
+/* What's a good number? */
+#define DUPMAX 255
+#endif
 #define	INFINITY	(DUPMAX + 1)
 #define	NC		(CHAR_MAX - CHAR_MIN + 1)
 typedef unsigned char uch;
