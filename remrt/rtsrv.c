@@ -103,6 +103,7 @@ int numargs;
 struct pkg_conn *pcsrv;		/* PKG connection to server */
 char *control_host;	/* name of host running controller */
 
+char usage[] = "Usage: rtsrv [-d] control-host\n";
 
 /*
  *			M A I N
@@ -114,13 +115,17 @@ char **argv;
 	register int n;
 	int debug = 0;
 
-	if( argc < 2 || argc > 3 )  {
-		fprintf(stderr, "Usage: rtsrv [-d] control-host\n");
+	if( argc < 2 )  {
+		fprintf(stderr, usage);
 		exit(1);
 	}
 	if( strcmp( argv[1], "-d" ) == 0 )  {
 		argc--; argv++;
 		debug = 1;
+	}
+	if( argc != 2 )  {
+		fprintf(stderr, usage);
+		exit(2);
 	}
 
 	pkg_nochecking = 1;
@@ -260,7 +265,9 @@ char *buf;
 	RES_INIT( &rt_g.res_seg );
 	RES_INIT( &rt_g.res_malloc );
 	RES_INIT( &rt_g.res_bitv );
-	RES_INIT( &rt_g.res_printf );	/* HACK: used by worker */
+	RES_INIT( &rt_g.res_printf );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
 
 	rt_prep_timer();		/* Start timing preparations */
 
@@ -317,16 +324,12 @@ char *buf;
 	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
 #endif
 
-	rt_log("PARALLEL: %d workers\n", npsw );
-	for( i=0; i<npsw; i++ )  {
+	rt_log("PARALLEL: npsw=%d\n", npsw );
 #ifdef HEP
+	for( i=0; i<npsw; i++ )  {
 		Dcreate( worker );
-#endif
-#ifdef cray
-		taskcontrol[i].tsk_len = 3;
-		taskcontrol[i].tsk_value = i;
-#endif
 	}
+#endif
 	rt_log("initial memory use=%d.\n",sbrk(0) );
 #endif
 
@@ -357,6 +360,7 @@ char *buf;
 		Viewrotscale[i] = atof(cp);
 	}
 
+rt_log("npts=%d\n", npts);
 	grid_setup();
 
 	/* initialize lighting */
