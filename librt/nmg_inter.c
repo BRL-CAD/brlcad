@@ -3656,9 +3656,16 @@ colinear:
 			nmg_pr_eg(*eg1, 0);
 			nmg_pr_eg(is->on_eg, 0);
 			rt_log("nmg_isect_line2_face2pNEW() eg1 colinear to on_eg?\n");
+#if 0
 		    	/* XXX See if this helps. */
 		    	nmg_model_fuse( nmg_find_model(&fu1->l.magic), &(is->tol) );
 			rt_bomb("nmg_isect_line2_face2pNEW() eg1 colinear to on_eg?\n");
+#else
+		    	/* fuse eg1 with on_eg, handle as colinear */
+		    	rt_log("fusing with on_eg, handling as colinear\n");
+		    	nmg_move_eg( *eg1, is->on_eg, fu1->s_p );
+		    	goto colinear;
+#endif
 		}
 
 		/* If on_eg was specified, do a topology search */
