@@ -211,13 +211,16 @@ f_mirror()
 		mat_idn( mirmat );
 		mirmat[k*5] = -1.0;
 		for( i=1; i < proto->d_len; i++) {
+			mat_t	xmat;
+
 			db_getrec(proto, &record, i);
 			if(record.u_id != ID_MEMB) {
 				(void)printf("f_mirror: bad db record\n");
 				return;
 			}
-			mat_mul(temp, mirmat, record.M.m_mat);
-			mat_copy(record.M.m_mat, temp);
+			rt_mat_dbmat( xmat, record.M.m_mat );
+			mat_mul(temp, mirmat, xmat);
+			rt_dbmat_mat( record.M.m_mat, temp );
 			db_putrec(dp, &record, i);
 		}
 	} else {

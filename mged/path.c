@@ -133,6 +133,7 @@ matp_t old_xlate;
 	for( i=0; i < dp->d_len-1; i++ )  {
 		register struct member *mp;		/* XXX */
 		register struct directory *nextdp;	/* temporary */
+		static mat_t xmat;		/* temporary fastf_t matrix */
 
 		mp = &(members[i].M);
 		if( mp->m_id != ID_MEMB )  {
@@ -151,15 +152,10 @@ matp_t old_xlate;
 
 		/* s' = M3 . M2 . M1 . s
 		 * Here, we start at M3 and descend the tree.
+		 * convert matrix to fastf_t from disk format.
 		 */
-		/* convert matrix to fastf_t from disk format */
-		{
-			register int k;
-			static mat_t xmat;	/* temporary fastf_t matrix */
-			for( k=0; k<4*4; k++ )
-				xmat[k] = mp->m_mat[k];
-			mat_mul(new_xlate, old_xlate, xmat);
-		}
+		rt_mat_dbmat( xmat, mp->m_mat );
+		mat_mul(new_xlate, old_xlate, xmat);
 
 		/* Recursive call */
 		drawHobj(
@@ -196,7 +192,6 @@ matp_t matp;
 		parentp = sp->s_path[i];
 		kidp = sp->s_path[i+1];
 		for( j=1; j < parentp->d_len; j++ )  {
-			register int k;
 			static mat_t xmat;	/* temporary fastf_t matrix */
 
 			/* Examine Member records */
@@ -205,8 +200,7 @@ matp_t matp;
 				continue;
 
 			/* convert matrix to fastf_t from disk format */
-			for( k=0; k<4*4; k++ )
-				xmat[k] = rec.M.m_mat[k];
+			rt_mat_dbmat( xmat, rec.M.m_mat );
 			mat_mul( tmat, matp, xmat );
 			mat_copy( matp, tmat );
 			goto next_level;

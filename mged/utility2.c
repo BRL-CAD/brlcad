@@ -92,12 +92,15 @@ f_tabobj( )
 			record.c.c_material,record.c.c_los);
 			nmemb = record.c.c_length;
 			for(j=1; j<=nmemb; j++) {
+				mat_t	xmat;
+
 				db_getrec(dp, (char *)&record, j);
 				(void)printf("%c %c %s\n",
 					record.M.m_id,
 					record.M.m_relation,
 					record.M.m_instname);
-				matrix_print( record.M.m_mat );
+				rt_mat_dbmat( xmat, record.M.m_mat );
+				matrix_print( xmat );
 				(void)putchar('\n');
 			}
 		}
@@ -359,13 +362,17 @@ int flag;
 	if( record.u_id == ID_COMB ) {
 		nparts = record.c.c_length;
 		for(i=1; i<=nparts; i++) {
+			mat_t	xmat;
+
 			db_getrec(dp, (char *)&record, i);
 			path[pathpos] = dp;
 			if( (nextdp = lookup(record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
 				continue;
-			/* Recursive call */
-			mat_mul(new_xlate, old_xlate, record.M.m_mat);
 
+			rt_mat_dbmat( xmat, record.M.m_mat );
+			mat_mul(new_xlate, old_xlate, xmat);
+
+			/* Recursive call */
 			trace(nextdp, pathpos+1, new_xlate, flag);
 
 		}
@@ -689,12 +696,17 @@ mat_t	old_xlate;
 	if( record.u_id == ID_COMB ) {
 		nparts = record.c.c_length;
 		for(i=1; i<=nparts; i++) {
+			mat_t	xmat;
+
 			db_getrec(dp, (char *)&record, i);
 			path[pathpos] = dp;
 			if( (nextdp = lookup(record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
 				continue;
+
+			rt_mat_dbmat( xmat, record.M.m_mat );
+			mat_mul(new_xlate, old_xlate, xmat);
+
 			/* Recursive call */
-			mat_mul(new_xlate, old_xlate, record.M.m_mat);
 			push(nextdp, pathpos+1, new_xlate);
 		}
 		return;
@@ -787,15 +799,16 @@ struct directory *dp;
 
 	struct directory *nextdp;
 	int nparts, i;
+	mat_t	identity;
 
+	mat_idn( identity );
 	db_getrec(dp, (char *)&record, 0);
 	if( record.u_id == ID_COMB ) {
 		nparts = record.c.c_length;
 		for(i=1; i<=nparts; i++) {
 			db_getrec(dp, (char *)&record, i);
 
-			/* set member matrix to identity */
-			mat_idn( record.M.m_mat );
+			rt_dbmat_mat( record.M.m_mat, identity );
 			db_putrec(dp, (char *)&record, i);
 
 			if( (nextdp = lookup(record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )

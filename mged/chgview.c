@@ -336,28 +336,30 @@ register struct directory *dp;
 	}
 
 	for( i=1; i < dp->d_len; i++ )  {
+		mat_t	xmat;
+
 		db_getrec( dp, &record, i );
+		rt_mat_dbmat( xmat, record.M.m_mat );
+
 		(void)printf("  %c %s",
 			record.M.m_relation, record.M.m_instname );
 
-#define Mat record.M.m_mat
-		if( Mat[0] != 1.0 || Mat[5] != 1.0 || Mat[10] != 1.0 )
+		if( xmat[0] != 1.0 || xmat[5] != 1.0 || xmat[10] != 1.0 )
 			(void)printf(" (Rotated)");
-		if( Mat[MDX] != 0.0 ||
-		    Mat[MDY] != 0.0 ||
-		    Mat[MDZ] != 0.0 )
+		if( xmat[MDX] != 0.0 ||
+		    xmat[MDY] != 0.0 ||
+		    xmat[MDZ] != 0.0 )
 			(void)printf(" [%f,%f,%f]",
-				Mat[MDX]*base2local,
-				Mat[MDY]*base2local,
-				Mat[MDZ]*base2local);
-		if( Mat[12] != 0.0 ||
-		    Mat[13] != 0.0 ||
-		    Mat[14] != 0.0 )
+				xmat[MDX]*base2local,
+				xmat[MDY]*base2local,
+				xmat[MDZ]*base2local);
+		if( xmat[12] != 0.0 ||
+		    xmat[13] != 0.0 ||
+		    xmat[14] != 0.0 )
 			(void)printf(" ??Perspective=[%f,%f,%f]??",
-				Mat[12], Mat[13], Mat[14] );
+				xmat[12], xmat[13], xmat[14] );
 		(void)putchar('\n');
 	}
-#undef Mat
 }
 
 /* List object information */

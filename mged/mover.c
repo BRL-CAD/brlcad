@@ -152,11 +152,14 @@ matp_t xlate;
 		 * Move all the references within a combination
 		 */
 		for( i=1; i < dp->d_len; i++ )  {
-			static mat_t temp;
+			static mat_t temp, xmat;
 
 			db_getrec( dp, &record, i );
-			mat_mul( temp, xlate, record.M.m_mat );
-			mat_copy( record.M.m_mat, temp );
+			rt_mat_dbmat( xmat, record.M.m_mat );
+
+			mat_mul( temp, xlate, xmat );
+
+			rt_dbmat_mat( record.M.m_mat, temp );
 			db_putrec( dp, &record, i );
 		}
 	}
@@ -179,20 +182,21 @@ matp_t xlate;
 {
 	register int i;
 	union record record;
-	mat_t temp;			/* Temporary for mat_mul */
+	mat_t temp, xmat;		/* Temporary for mat_mul */
 
 	for( i=1; i < cdp->d_len; i++ )  {
 		db_getrec( cdp, &record, i );
 
 		/* Check for match */
-		if( strcmp( dp->d_namep, record.M.m_instname ) == 0 )  {
-			/* Apply the Homogeneous Transformation Matrix */
-			mat_mul(temp, xlate, record.M.m_mat);
-			mat_copy( record.M.m_mat, temp );
+		if( strcmp( dp->d_namep, record.M.m_instname ) != 0 )
+			continue;
 
-			db_putrec( cdp, &record, i );
-			return;
-		}
+		rt_mat_dbmat( xmat, record.M.m_mat );
+		mat_mul(temp, xlate, xmat);
+
+		rt_dbmat_mat( record.M.m_mat, temp );
+		db_putrec( cdp, &record, i );
+		return;
 	}
 	(void)printf( "moveinst:  couldn't find %s/%s\n",
 		cdp->d_namep, dp->d_namep );
@@ -217,6 +221,7 @@ int air;				/* Air code */
 {
 	register struct directory *dp;
 	union record record;
+	mat_t	identity;
 
 	/*
 	 * Check to see if we have to create a new combination
@@ -259,8 +264,8 @@ int air;				/* Air code */
 
 		record.M.m_id = ID_MEMB;
 		record.M.m_relation = relation;
-		mat_idn( record.M.m_mat );
-
+		mat_idn( identity );
+		rt_dbmat_mat( record.M.m_mat, identity );
 		db_putrec( dp, &record, 1 );
 		return( dp );
 	}
@@ -289,9 +294,10 @@ int air;				/* Air code */
 	db_getrec( dp, &record, dp->d_len-1);
 	record.M.m_id = ID_MEMB;
 	record.M.m_relation = relation;
-	mat_idn( record.M.m_mat );
 	(void)strcpy( record.M.m_instname, objp->d_namep );
 
+	mat_idn( identity );
+	rt_dbmat_mat( record.M.m_mat, identity );
 	db_putrec( dp, &record, dp->d_len-1 );
 	return( dp );
 }

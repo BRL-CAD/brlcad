@@ -686,6 +686,8 @@ int flag;
 		}
 		lastmemb = 0;
 		for(i=1; i<=nparts; i++) {
+			mat_t	xmat;
+
 			if(i == nparts)
 				lastmemb = 1;
 			db_getrec(dp, (char *)&record, i);
@@ -697,11 +699,12 @@ int flag;
 			path[pathpos] = dp;
 			if( (nextdp = lookup(record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
 				continue;
+
+			rt_mat_dbmat( xmat, record.M.m_mat );
+			mat_mul(new_xlate, old_xlate, xmat);
+
 			/* Recursive call */
-			mat_mul(new_xlate, old_xlate, record.M.m_mat);
-
 			tables(nextdp, pathpos+1, new_xlate, flag);
-
 		}
 		return;
 	}
