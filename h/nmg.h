@@ -321,6 +321,8 @@ struct nmg_list  {
 /*
  *			M O D E L
  */
+#if !defined(MODEL_DEFINED) || !defined(__STDC__)
+#define MODEL_DEFINED
 struct model {
 	long			magic;
 	struct model_a		*ma_p;
@@ -328,6 +330,7 @@ struct model {
 	long			index;	/* struct # in this model */
 	long			maxindex; /* # of structs so far */
 };
+#endif /* !MODEL_DEFINED || !__STDC__ */
 
 struct model_a {
 	long			magic;
@@ -337,6 +340,8 @@ struct model_a {
 /*
  *			R E G I O N
  */
+#if !defined(NMGREGION_DEFINED) || !defined(__STDC__)
+#define NMGREGION_DEFINED
 struct nmgregion {
 	struct nmg_list		l;	/* regions, in model's r_hd list */
 	struct model   		*m_p;	/* owning model */
@@ -344,6 +349,7 @@ struct nmgregion {
 	struct nmg_list		s_hd;	/* list of shells in region */
 	long			index;	/* struct # in this model */
 };
+#endif /* !NMGREGION_DEFINED || !__STDC__ */
 
 struct nmgregion_a {
 	long			magic;
