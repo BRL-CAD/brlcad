@@ -452,9 +452,19 @@ struct _mged_variables {
         int     context;
 	int	dlist;
 	int	nirt_behavior;
-	int	mouse_nirt;
 	int	use_air;
 	int	echo_nirt_cmd;
+#ifdef USE_FRAMEBUFFER
+	int	listen;		/* nonzero to listen on port */
+	int	port;		/* port to listen on */
+	int	fb;		/* toggle image on/off */
+	int	fb_all;		/* 0 - use part of image as defined by the rectangle     1 - use the entire image */
+	int	fb_overlay;	/* 0 - underlay     1 - overlay */
+#endif
+#ifdef DO_RUBBER_BAND
+	int	rubber_band;
+#endif
+	char	mouse_behavior;
 	char	coords;
 	char	ecoords;
 	char	rotate_about;
