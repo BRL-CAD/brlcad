@@ -172,16 +172,17 @@ register struct shootray_status	*ssp;
 /*
  *  This version uses Gigante's non-uniform 3-D space grid/mesh discretization.
  */
-			register CONST struct rt_i	*a_rt_i = ap->a_rt_i;
-			register CONST struct nu_axis  **nu_axis =
-			     (CONST struct nu_axis **)&curcut->nugn.nu_axis[0];
-			register CONST int		*nu_stepsize =
-			     &curcut->nugn.nu_stepsize[0];
-			register CONST int	        *nu_cells_per_axis =
-			     &curcut->nugn.nu_cells_per_axis[0];
-			register CONST union cutter	*nu_grid =
-			     curcut->nugn.nu_grid;
+			CONST struct rt_i	*a_rt_i = ap->a_rt_i;
 			register fastf_t t0, t1;
+			register int out_axis;
+			CONST struct nu_axis  **nu_axis =
+			     (CONST struct nu_axis **)&curcut->nugn.nu_axis[0];
+			CONST int		*nu_stepsize =
+			     &curcut->nugn.nu_stepsize[0];
+			CONST int	        *nu_cells_per_axis =
+			     &curcut->nugn.nu_cells_per_axis[0];
+			CONST union cutter	*nu_grid =
+			     curcut->nugn.nu_grid;
 
 			t0 = ssp->box_start;
 			if( ssp->lastcut == CUTTER_NULL ) {
@@ -226,22 +227,24 @@ register struct shootray_status	*ssp;
 				NUGRID_T_SETUP( Y, py, y );
 				NUGRID_T_SETUP( Z, pz, z );
 			} else {
-				register int out_axis = ssp->out_axis;
 				
 			/* Advance from previous cell to next cell */
 			/* Take next step, finding ray entry distance*/
-
-				if( ssp->rstep[out_axis] > 0 ) {
+				out_axis = ssp->out_axis;
+				cutp = ssp->lastcut;
+again:				if( ssp->rstep[out_axis] > 0 ) {
 					if( ++(ssp->igrid[out_axis]) >=
-					    nu_cells_per_axis[out_axis] )
+					    nu_cells_per_axis[out_axis] ) {
+						cutp = CUTTER_NULL;
 						break;
-					cutp = ssp->lastcut +
-						nu_stepsize[out_axis];
+					}
+					cutp += nu_stepsize[out_axis];
 				} else {
-					if( --(ssp->igrid[out_axis]) < 0 )
+					if( --(ssp->igrid[out_axis]) < 0 ) {
+						cutp = CUTTER_NULL;
 						break;
-					cutp = ssp->lastcut -
-						nu_stepsize[out_axis];
+					}
+					cutp -= nu_stepsize[out_axis];
 				}
 
 				NUGRID_T_ADV( out_axis, ssp->igrid[out_axis] );
@@ -250,21 +253,26 @@ register struct shootray_status	*ssp;
 			/* find minimum exit t value */
 			if( ssp->tv[X] < ssp->tv[Y] )  {
 				if( ssp->tv[Z] < ssp->tv[X] )  {
-					ssp->out_axis = Z;
-					t1 = ssp->tv[Z];
+					out_axis = Z;
 				} else {
-					ssp->out_axis = X;
-					t1 = ssp->tv[X];
+					out_axis = X;
 				}
 			} else {
 				if( ssp->tv[Z] < ssp->tv[Y] )  {
-					ssp->out_axis = Z;
-					t1 = ssp->tv[Z];
+					out_axis = Z;
 				} else {
-					ssp->out_axis = Y;
-					t1 = ssp->tv[Y];
+					out_axis = Y;
 				}
 			}
+
+			if( cutp->cut_type == CUT_BOXNODE &&
+			    cutp->bn.bn_len <= 0 ) {
+				++ssp->resp->re_nempty_cells;
+				goto again;
+			}
+
+			ssp->out_axis = out_axis;
+			t1 = ssp->tv[out_axis];
 #if 0
 			if( rt_g.debug&DEBUG_ADVANCE )
 				bu_log( "Exit axis is %c, t1=%g\n",
