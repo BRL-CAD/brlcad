@@ -1,5 +1,5 @@
 /*
- *			I K Z O O M . C
+ *			F B Z O O M . C
  *
  * Function -
  *	Dynamicly modify Ikonas Zoom and Window parameters,
@@ -27,20 +27,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 /*
 	Conversion to generic frame buffer routine using 'libfb'.
+	In the process, the name was changed to fbzoom from ikzoom.
 	Gary S. Moss, BRL. 03/13/85.
 
-	SCCS id:	@(#) fbzoom.c	1.3
-	Last edit: 	3/13/85 at 19:03:38
-	Retrieved: 	8/13/86 at 03:14:50
+	SCCS id:	@(#) fbzoom.c	1.4
+	Last edit: 	3/13/85 at 22:13:44
+	Retrieved: 	8/13/86 at 03:14:56
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbzoom.c
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbzoom.c	1.3	last edit 3/13/85 at 19:03:38";
+char	sccsTag[] = "@(#) fbzoom.c	1.4	last edit 3/13/85 at 22:13:44";
 #endif
 #include <stdio.h>	
 #include <fb.h>
-#define	IKsize 512
 
 /* Zoom rate and limits.	*/
 #define	Zfactor		(2)
@@ -48,7 +48,7 @@ char	sccsTag[] = "@(#) fbzoom.c	1.3	last edit 3/13/85 at 19:03:38";
 #define MinZoom		(1)
 
 /* Pan limits.	*/
-#define MaxPan		( IKsize )
+#define MaxPan		_fbsize
 #define MinPan		(0)
 
 static int PanFactor;			/* Speed with whitch to pan.	*/
@@ -58,6 +58,11 @@ static int xPan, yPan;			/* Pan Location.		*/
 main(argc, argv )
 char **argv;
 {
+	if( ! pars_Argv( argc, argv ) )
+		{
+		(void) fprintf( stderr, "Usage : fbzoom	[-h]\n" );
+		return	1;
+		}
 	if( fbopen( NULL, APPEND ) == -1 )
 		return	1;
 	zoom = 2;
@@ -194,3 +199,25 @@ doKeyPad()
 	}
 	return(1);		/* keep going */
 }
+
+/*	p a r s _ A r g v ( )
+ */
+int
+pars_Argv( argc, argv )
+register char	**argv;
+	{
+	register int	c;
+	while( (c = getopt( argc, argv, "h" )) != EOF )
+		{
+		switch( c )
+			{
+			case 'h' : /* High resolution frame buffer.	*/
+				setfbsize( 1024 );
+				break;
+			case '?' :
+				return	0;
+			}
+		}
+	return	1;
+	}
+
