@@ -83,9 +83,14 @@ int len;
 	}
 	rewind( rt_i.fp );
 
+	addr = -1;
 	while(1)  {
+#ifdef DB_MEM
+		addr++;		/* really, nrec;  ranges 0..n */
+#else
 		if( (addr = ftell(rt_i.fp)) == EOF )
 			rt_log("rt_dirbuild:  ftell() failure\n");
+#endif DB_MEM
 		if( fread( (char *)&record, sizeof record, 1, rt_i.fp ) != 1
 		    || feof(rt_i.fp) )
 			break;
@@ -141,13 +146,15 @@ int len;
 			continue;
 		case ID_BSURF:
 			{
+				union record rec;
 				register int j;
-				/* Just skip over knots and control mesh */
-				j = (record.d.d_nknots + record.d.d_nctls) *
-					sizeof(union record);
-				/****** NON-PORTABLE ******/
-				fseek( rt_i.fp, j, 1 );
+
 				rt_dir_add( record.p.p_name, addr );
+
+				/* Just skip over knots and control mesh */
+				j = (record.d.d_nknots + record.d.d_nctls);
+				while( j-- > 0 )
+					fread( (char *)&rec, sizeof(rec), 1, rt_i.fp );
 				continue;
 			}
 		case ID_MEMB:
@@ -163,6 +170,23 @@ int len;
 		}
 	}
 	rewind( rt_i.fp );
+
+#ifdef DB_MEM
+	/*
+	 * Obtain in-core copy of database, rather than doing lots of
+	 * random-access reads.  Here, "addr" is really "nrecords".
+	 */
+	if( (rt_i.rti_db = (union record *)rt_malloc(
+	    addr*sizeof(union record), "in-core database"))
+	    == (union record *)0 )
+	    	rt_bomb("in-core database malloc failure");
+	rewind(rt_i.fp);
+	if( fread( (char *)rt_i.rti_db, sizeof(union record), addr,
+	    rt_i.fp) != addr )  {
+	    	rt_log("rt_dirbuild:  problem reading db on 2nd pass\n");
+	    	return( RTI_NULL );	/* FAIL */
+	}
+#endif DB_MEM
 
 	/* Eventually, we will malloc() this on a per-db basis */
 	return( &rt_i );	/* OK */
