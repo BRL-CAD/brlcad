@@ -221,13 +221,9 @@ int cpu;
 		if( com > last_pixel )
 			break;
 		/* Note: ap.... may not be valid until first time here */
+		a = ap;				/* struct copy */
 		a.a_x = com%width;
 		a.a_y = com/width;
-		a.a_hit = ap.a_hit;
-		a.a_miss = ap.a_miss;
-		a.a_rt_i = ap.a_rt_i;
-		a.a_rbeam = ap.a_rbeam;
-		a.a_diverge = ap.a_diverge;
 		VSETALL( colorsum, 0 );
 		for( com=0; com<=hypersample; com++ )  {
 			if( hypersample )  {
