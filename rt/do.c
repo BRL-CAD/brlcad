@@ -106,7 +106,9 @@ FILE *fp;
 
 	curframe = 0;
 	do {
-		do_frame( curframe++ );
+		if( curframe >= desiredframe )
+			do_frame( curframe );
+		curframe++;
 	}  while( old_frame( fp ) >= 0 && viewsize > 0.0 );
 	return(1);			/* old way, all done */
 }
