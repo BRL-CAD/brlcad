@@ -172,7 +172,7 @@ do_run( a, b )
 	/* Ensure that all the workers are REALLY dead */
 	x = 0;
 	while( nworkers > 0 )  x++;
-	if( x > 0 )  rt_log("y=%d: termination took %d extra loops\n", y, x);
+	if( x > 0 )  rt_log("do_run(%d,%d): termination took %d extra loops\n", a, b, x);
 #else
 	/*
 	 * SERIAL case -- one CPU does all the work.
