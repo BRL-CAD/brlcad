@@ -735,6 +735,9 @@ AC_CONFIG_FILES([
 	misc/Makefile
 	misc/enigma/Makefile
 	misc/macosx/Makefile
+	misc/macosx/Resources/Makefile
+	misc/macosx/Resources/ReadMe.rtfd/Makefile
+	misc/macosx/Resources/Welcome.rtfd/Makefile
 	misc/pro-engineer/Makefile
 	misc/pro-engineer/resource/Makefile
 	misc/pro-engineer/sgi_mips4/Makefile
