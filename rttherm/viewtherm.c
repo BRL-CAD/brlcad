@@ -57,7 +57,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
 RT_EXTERN( double	rt_pixel_footprint, (CONST struct application *ap,
-				CONST struct hit *hitp));
+				CONST struct hit *hitp, CONST struct seg *segp));
 
 
 int		use_air = 0;		/* Handling of air in librt */
@@ -410,6 +410,7 @@ struct partition *PartHeadp;
 #endif
 	fastf_t		degK;
 	fastf_t		cm2;
+	fastf_t		cosine;
 	fastf_t		powerfrac;
 	struct rt_spect_sample	*pixelp;
 
@@ -545,12 +546,32 @@ struct partition *PartHeadp;
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
 		pp->pt_inflip = 0;	/* shouldnt be needed */
 	}
-	cm2 = rt_pixel_footprint(ap, hitp) * 0.01;	/* mm**2 to cm**2 */
+	cm2 = rt_pixel_footprint(ap, hitp, pp->pt_inseg) * 0.01;	/* mm**2 to cm**2 */
 
-	powerfrac = 0.2;		/* XXX from solid angle */
+	/* To convert slanted surface to equivalent perp area */
+	cosine = -VDOT( hitp->hit_normal, ap->a_ray.r_dir );
+	if( cosine < 0 )  rt_log("cosine = %g < 0\n", cosine);
+
+	/*  Fraction of a surrounding sphere which the pixel occupies,
+	 *  from point of view of the hit point.  (Solid angle)
+	 *  For long distances, this is ~= area of pixel / (4pi * r**2)
+	 *  Since surface only radiates on one side, use hemisphere (2pi).
+	 */
+	powerfrac = cell_width * cell_height /
+		(hitp->hit_dist * hitp->hit_dist * rt_twopi);
+	if( powerfrac > 1 )  {
+		rt_log("powerfrac = %g\n", powerfrac);
+		powerfrac = 1;
+	}
 
 	rt_spect_black_body( pixelp, degK, 3 );
-	rt_spect_scale( pixelp, pixelp, cm2 * powerfrac );
+#if 0
+if( cosine < 0.2 ) rt_log("@@@@@@\n");
+if( cm2 > 10 ) rt_log("****\n");
+rt_log("area=%g, cos = %g, a*c = %g, pfrac = %g\n", cm2, cosine, cm2*cosine, powerfrac );
+powerfrac = 1;
+#endif
+	rt_spect_scale( pixelp, pixelp, cm2 * cosine * powerfrac );
 
 	/* Spectrum is now in terms of Watts of power radiating
 	 * on the path to this pixel.
@@ -713,9 +734,10 @@ void application_init ()
  *	area of ray footprint, in mm**2 (square milimeters).
  */
 double
-rt_pixel_footprint(ap, hitp)
+rt_pixel_footprint(ap, hitp, segp)
 CONST struct application *ap;
 CONST struct hit	*hitp;
+CONST struct seg	*segp;
 {
 	plane_t	perp;
 	plane_t	surf_tan;
@@ -768,6 +790,11 @@ parallel:
 		vect_t		dir;
 		fastf_t		dist;
 
+		/* XXX sanity check */
+		dist = DIST_PT_PT( corners[i], segp->seg_stp->st_center );
+		if( dist > segp->seg_stp->st_bradius )
+			rt_log(" rt_pixel_footprint() dist = %g > radius = %g\n", dist, segp->seg_stp->st_bradius );
+
 		VSUB2( dir, corners[i], ap->a_ray.r_pt );
 		VUNITIZE(dir);
 		if( (slant_factor = -VDOT( surf_tan, dir )) < -1.0e-10 ||
@@ -784,6 +811,5 @@ parallel:
 	/* Find area of 012, and 230 triangles */
 	area = rt_area_of_triangle( corners[0], corners[1], corners[2] );
 	area += rt_area_of_triangle( corners[2], corners[3], corners[0] );
-rt_log("rt_pixel_footprint() area=%g mm**2\n", area);
 	return area;
 }
