@@ -1287,7 +1287,7 @@ region_end:
 		curtree = tsp->ts_leaf_func( tsp, pathp, &intern, client_data );
 		if(curtree) RT_CK_TREE(curtree);
 	} else {
-		bu_log("db_recurse:  %s is neither a combination nor a solid and is not drawable\n",
+		bu_log("%s is not a drawable database object\n",
 			dp->d_namep );
 		curtree = TREE_NULL;
 		return(curtree);
