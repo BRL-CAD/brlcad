@@ -335,11 +335,11 @@ CONST struct db_i		*dbip;
 	sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
 	sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 
-	ntohd( v, rp->skt.skt_V, 3 );
+	ntohd( (unsigned char *)v, rp->skt.skt_V, 3 );
 	MAT4X3PNT( sketch_ip->V, mat, v );
-	ntohd( v, rp->skt.skt_uvec, 3 );
+	ntohd( (unsigned char *)v, rp->skt.skt_uvec, 3 );
 	MAT4X3VEC( sketch_ip->u_vec, mat, v );
-	ntohd( v, rp->skt.skt_vvec, 3 );
+	ntohd( (unsigned char *)v, rp->skt.skt_vvec, 3 );
 	MAT4X3VEC( sketch_ip->v_vec, mat, v );
 	sketch_ip->vert_count = bu_glong( rp->skt.skt_vert_count );
 	sketch_ip->curve_count = bu_glong( rp->skt.skt_curve_count );
@@ -350,7 +350,7 @@ CONST struct db_i		*dbip;
 	sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->vert" );
 	for( vert_no=0 ; vert_no < sketch_ip->vert_count ; vert_no++ )
 	{
-		ntohd( &sketch_ip->verts[vert_no][0], ptr, 2 );
+		ntohd( (unsigned char *)&sketch_ip->verts[vert_no][0], ptr, 2 );
 		ptr += 16;
 	}
 
@@ -383,7 +383,7 @@ CONST struct db_i		*dbip;
 				ptr += 4;
 				csg->orientation = bu_glong( ptr );
 				ptr += 4;
-				ntohd( csg->radius, ptr );
+				ntohd( (unsigned char *)&csg->radius, ptr, 1 );
 				ptr += 8;
 				segs[seg_no] = (genptr_t)csg;
 				break;
@@ -509,11 +509,11 @@ CONST struct db_i		*dbip;
 	 * to database record format
 	 */
 	VSCALE( tmp_vec, sketch_ip->V, local2mm );
-	htond( rec->skt.skt_V, tmp_vec, 3 );
+	htond( rec->skt.skt_V, (unsigned char *)tmp_vec, 3 );
 	VSCALE( tmp_vec, sketch_ip->u_vec, local2mm );
-	htond( rec->skt.skt_uvec, tmp_vec, 3 );
+	htond( rec->skt.skt_uvec, (unsigned char *)tmp_vec, 3 );
 	VSCALE( tmp_vec, sketch_ip->v_vec, local2mm );
-	htond( rec->skt.skt_vvec, tmp_vec, 3 );
+	htond( rec->skt.skt_vvec, (unsigned char *)tmp_vec, 3 );
 	(void)rt_plong( rec->skt.skt_vert_count, sketch_ip->vert_count );
 	(void)rt_plong( rec->skt.skt_curve_count, sketch_ip->curve_count );
 	(void)rt_plong( rec->skt.skt_seg_count, BU_PTBL_END( &segs) );
@@ -525,7 +525,7 @@ CONST struct db_i		*dbip;
 	{
 		/* write 2D point coordinates */
 		V2MOVE( tmp, sketch_ip->verts[vert_no] )
-		htond( ptr, tmp, 2 );
+		htond( ptr, (unsigned char *)tmp, 2 );
 		ptr += 16;
 	}
 
@@ -558,7 +558,7 @@ CONST struct db_i		*dbip;
 				ptr += 4;
 				(void) bu_plong( ptr, cseg->orientation );
 				ptr += 4;
-				htond( ptr, cseg->radius, 1 );
+				htond( ptr, (unsigned char *)&cseg->radius, 1 );
 				ptr += 8;
 				break;
 			default:
