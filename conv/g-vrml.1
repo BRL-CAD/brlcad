@@ -4,7 +4,7 @@ g-vrml \- Perform Boolean evaluations to produce a VRML version 2.0 file
 .SH SYNOPSIS
 .B g-vrml
 [-v] [-d calc_dist_tol] [-a abs_tess_tol] [-n norm_tess_tol] [-r rel_tess_tol]
-[-x librt_debug_flag] [-X NMG_debug_flag] [-o outfile] infile.g object(s)
+[-x librt_debug_flag] [-X NMG_debug_flag] [-u units_name] [-o outfile] infile.g object(s)
 .SH DESCRIPTION
 .I g-vrml
 performs the Boolean operations specified in any regions in the specified
@@ -52,6 +52,10 @@ routines respectively. The definitions of these flags may be found in
 .I librt/debug.h
 and
 .I h/nmg.h.
+The
+.I -u
+option can be used to set the units for the resulting VRML file (the default is mm).
+Any units name that MGED accepts will work here.
 .SH EXAMPLE
 .RS
 $ \|\fIg-vrml \|-o shell.wrl \|sample.g \|sample_object\fP
