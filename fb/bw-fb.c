@@ -141,7 +141,7 @@ int argc; char **argv;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		return 1;
+		exit( 1 );
 	}
 
 	/* If no color planes were selected, load them all */
@@ -204,4 +204,5 @@ int argc; char **argv;
 	}
 
 	fb_close( fbp );
+	exit( 0 );
 }
