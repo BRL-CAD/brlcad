@@ -435,16 +435,9 @@ polyhbld()	/* Build Polyhead record */
 	cp = nxt_spc( cp );		/* skip the space */
 
 	np = record.p.p_name;
-	while( *cp != '\0' )  {
+	while( *cp != '\n' && *cp != '\0' )  {
 		*np++ = *cp++;
 	}
-
-#ifdef never
-	(void)sscanf( buf, "%c %s",
-		&record.p.p_id,
-		&record.p.p_name[0]
-	);
-#endif
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
