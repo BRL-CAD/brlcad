@@ -3084,7 +3084,6 @@ dgo_print_schain_vlcmds(dgop, interp)
      Tcl_Interp		*interp;
 {
 	register struct solid		*sp;
-	register int			i;
 	register struct bn_vlist	*vp;
 	struct bu_vls 		vls;
 
