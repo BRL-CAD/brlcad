@@ -96,6 +96,8 @@ union record  {
 #define DBID_PIPE	'w'	/* pipe (wire) solid */
 #define DBID_PARTICLE	'p'	/* a particle (lozenge) */
 #define DBID_NMG	'N'	/* NMG solid */
+#define	DBID_SKETCH	'd'	/* 2D sketch */
+#define	DBID_EXTR	'e'	/* solid of extrusion */
 
 	char	u_size[DB_MINREC];	/* Minimum record size */
 
@@ -349,6 +351,34 @@ union record  {
 		unsigned char	N_count[4];	/* # additional granules */
 		unsigned char	N_structs[26*4];/* # of structs needed */
 	} nmg;
+
+	/* Solid of extrusion */
+	struct extr_rec	{
+		char	ex_id;			/* DBID_EXTR */
+		char	ex_pad;
+		char	ex_name[NAMESIZE];
+		unsigned char	ex_V[8*3];	/* Vertex */
+		unsigned char	ex_h[8*3];	/* extrusion vector */
+		unsigned char	ex_uvec[8*3];	/* vector in U parameter direction */
+		unsigned char	ex_vvec[8*3];	/* vector in V parameter direction */
+		unsigned char	ex_key[4];	/* keypoint index */
+		unsigned char	ex_count[4];	/* number of additional granules
+						 * (for now, this will always be 1 ) */
+	} extr;
+
+	/* sketch */
+	struct sketch_rec	{
+		char	skt_id;			/* DBID_SKETCH */
+		char	skt_pad;
+		char	skt_name[NAMESIZE];
+		unsigned char	skt_V[8*3];	/* vertex */
+		unsigned char	skt_uvec[8*3];	/* vector in U parameter direction */
+		unsigned char	skt_vvec[8*3];	/* vector in V parameter direction */
+		unsigned char	skt_vert_count[4];	/* number of vertices in sketch */
+		unsigned char	skt_curve_count[4];	/* number of curves in sketch */
+		unsigned char	skt_seg_count[4];	/* number of segments in sketch */
+		unsigned char	skt_count[4];		/* number of additional granules */
+	} skt;
 };
 #endif /* !RECORD_DEFINED || !__STDC__ */
 #define DB_RECORD_NULL	((union record *)0)
