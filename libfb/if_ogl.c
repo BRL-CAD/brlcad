@@ -165,7 +165,7 @@ FBIO ogl_interface =
 	fb_cnull,		/* flush output		*/
 	ogl_free,		/* free resources	*/
 	ogl_help,		/* help message		*/
-	"Silicon Graphics Iris '5D'",	/* device description	*/
+	"Silicon Graphics OpenGL",	/* device description	*/
 	XMAXSCREEN+1,			/* max width		*/
 	YMAXSCREEN+1,			/* max height		*/
 	"/dev/ogl",		/* short device name	*/
