@@ -110,9 +110,9 @@ void
 sl_toggle_scroll()
 {
   if( mged_variables.scroll_enabled == 0 )
-    Tcl_Eval( interp, "sliders on");
+    Tcl_Eval(interp, "sliders on");
   else
-    Tcl_Eval( interp, "sliders off");
+    Tcl_Eval(interp, "sliders off");
 }
 
 /*
@@ -131,6 +131,8 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
+  struct dm_list *p;
+
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;
 

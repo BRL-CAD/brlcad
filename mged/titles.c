@@ -60,7 +60,6 @@ char	*state_str[] = {
 	"UNKNOWN",
 };
 
-extern double			frametime;	/* from ged.c */
 extern struct rt_db_internal	es_int;
 
 

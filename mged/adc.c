@@ -229,20 +229,11 @@ char	**argv;
 	  }
 
 	  if(mged_variables.scroll_enabled){
-#if 0
-	    char *av[3];
-
-	    av[0] = "sliders";
-	    av[1] = "on";
-	    av[2] = NULL;
-	    (void)cmd_sliders(clientData, interp, 2, av);
-#else
 	    /* 
 	     * We need to send this through the interpreter in case
 	     * the built-in "sliders" command has been redefined.
 	     */
 	    Tcl_Eval(interp, "sliders on");
-#endif
 	  }
 
 	  dmaflag = 1;
@@ -265,6 +256,9 @@ char	**argv;
 	      dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
 
 	    dmaflag = 1;
+	    adc_a1_deg = ((2047.0 + (fastf_t)-dv_1adc) * bn_pi) / (4.0 * 2047.0) * radtodeg;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang1_vls));
+
 	    return TCL_OK;
 	  }
 	  Tcl_AppendResult(interp, "The 'adc a1' command accepts only 1 argument\n", (char *)NULL);
@@ -278,6 +272,9 @@ char	**argv;
 	      dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
 
 	    dmaflag = 1;
+	    adc_a2_deg = ((2047.0 + (fastf_t)-dv_2adc) * bn_pi) / (4.0 * 2047.0) * radtodeg;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang2_vls));
+
 	    return TCL_OK;
 	  }
 	  Tcl_AppendResult(interp, "The 'adc a2' command accepts only 1 argument\n", (char *)NULL);
@@ -293,6 +290,8 @@ char	**argv;
 			    (Viewscale * base2local * M_SQRT2_DIV2) - 1.0) * 2047.0;
 
 	    dmaflag = 1;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&distadc_vls));
+
 	    return TCL_OK;
 	  }
 	  Tcl_AppendResult(interp, "The 'adc dst' command accepts only 1 argument\n", (char *)NULL);
@@ -385,6 +384,8 @@ char	**argv;
 	      dv_xadc = pt[0];
 
 	    dmaflag = 1;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&xadc_vls));
+
 	    return TCL_OK;
 	  }
 	  Tcl_AppendResult(interp, "The 'adc x' command requires one argument\n", (char *)NULL);
@@ -398,6 +399,7 @@ char	**argv;
 	      dv_yadc = pt[0];
 
 	    dmaflag = 1;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&yadc_vls));
 	    return TCL_OK;
 	  }
 	  Tcl_AppendResult(interp, "The 'adc y' command requires one argument\n", (char *)NULL);

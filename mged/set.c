@@ -310,5 +310,7 @@ static void
 set_scroll()
 {
   if( mged_variables.scroll_enabled )
-    Tcl_Eval( interp, "sliders on");
+    Tcl_Eval(interp, "sliders on");
+  else
+    Tcl_Eval(interp, "sliders off");
 }

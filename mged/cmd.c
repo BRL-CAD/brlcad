@@ -450,8 +450,13 @@ static struct funtab funtab[] = {
 "slider", "slider number, value", "adjust sliders using keyboard",
 	f_slider, 3,3,FALSE,
 #endif
+#if 1
 "sliders", "[{on|off}]", "turns the sliders on or off, or reads current state",
         cmd_sliders, 1, 2, TRUE,
+#else
+"sliders", "[{on|off}]", "turns the sliders on or off, or reads current state",
+        cmd_sliders, 1, 2, TRUE,
+#endif
 "solids", "file object(s)", "make ascii summary of solid parameters",
 	f_tables, 3, MAXARGS,TRUE,
 "solids_on_ray", "h v", "List all displayed solids along a ray",
@@ -847,6 +852,65 @@ mged_setup()
   history_setup();
   mged_variable_setup(interp);
 
+  bu_vls_init(&edit_rate_tran_vls[X]);
+  bu_vls_init(&edit_rate_tran_vls[Y]);
+  bu_vls_init(&edit_rate_tran_vls[Z]);
+  bu_vls_init(&edit_rate_rotate_vls[X]);
+  bu_vls_init(&edit_rate_rotate_vls[Y]);
+  bu_vls_init(&edit_rate_rotate_vls[Z]);
+  bu_vls_init(&edit_rate_scale_vls);
+  bu_vls_init(&edit_absolute_tran_vls[X]);
+  bu_vls_init(&edit_absolute_tran_vls[Y]);
+  bu_vls_init(&edit_absolute_tran_vls[Z]);
+  bu_vls_init(&edit_absolute_rotate_vls[X]);
+  bu_vls_init(&edit_absolute_rotate_vls[Y]);
+  bu_vls_init(&edit_absolute_rotate_vls[Z]);
+  bu_vls_init(&edit_absolute_scale_vls);
+
+  bu_vls_strcpy(&edit_rate_tran_vls[X], "edit_rate_tran(X)");
+  bu_vls_strcpy(&edit_rate_tran_vls[Y], "edit_rate_tran(Y)");
+  bu_vls_strcpy(&edit_rate_tran_vls[Z], "edit_rate_tran(Z)");
+  bu_vls_strcpy(&edit_rate_rotate_vls[X], "edit_rate_rotate(X)");
+  bu_vls_strcpy(&edit_rate_rotate_vls[Y], "edit_rate_rotate(Y)");
+  bu_vls_strcpy(&edit_rate_rotate_vls[Z], "edit_rate_rotate(Z)");
+  bu_vls_strcpy(&edit_rate_scale_vls, "edit_rate_scale");
+  bu_vls_strcpy(&edit_absolute_tran_vls[X], "edit_abs_tran(X)");
+  bu_vls_strcpy(&edit_absolute_tran_vls[Y], "edit_abs_tran(Y)");
+  bu_vls_strcpy(&edit_absolute_tran_vls[Z], "edit_abs_tran(Z)");
+  bu_vls_strcpy(&edit_absolute_rotate_vls[X], "edit_abs_rotate(X)");
+  bu_vls_strcpy(&edit_absolute_rotate_vls[Y], "edit_abs_rotate(Y)");
+  bu_vls_strcpy(&edit_absolute_rotate_vls[Z], "edit_abs_rotate(Z)");
+  bu_vls_strcpy(&edit_absolute_scale_vls, "edit_abs_scale");
+
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_tran_vls[X]),
+	      (char *)&edit_rate_tran[X], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_tran_vls[Y]),
+	      (char *)&edit_rate_tran[Y], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_tran_vls[Z]),
+	      (char *)&edit_rate_tran[Z], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_rotate_vls[X]),
+	      (char *)&edit_rate_rotate[X], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Y]),
+	      (char *)&edit_rate_rotate[Y], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Z]),
+	      (char *)&edit_rate_rotate[Z], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_scale_vls),
+	      (char *)&edit_rate_scale, TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]),
+	      (char *)&edit_absolute_tran[X], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]),
+	      (char *)&edit_absolute_tran[Y], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]),
+	      (char *)&edit_absolute_tran[Z], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[X]),
+	      (char *)&edit_absolute_rotate[X], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[Y]),
+	      (char *)&edit_absolute_rotate[Y], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[Z]),
+	      (char *)&edit_absolute_rotate[Z], TCL_LINK_DOUBLE);
+  Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_scale_vls),
+	      (char *)&edit_absolute_scale, TCL_LINK_DOUBLE);
+
   filename = getenv("MGED_TCL_LIBRARY");
 
   if(filename == NULL)
@@ -1008,7 +1072,34 @@ int argc;
 char **argv;
 {
   struct dm_list *p;
+#if 1
+  struct bu_vls vls;
 
+  bu_vls_init(&vls);
+
+  if(!curr_cmd_list->aim){
+    bu_vls_printf(&vls, "{%S} {%S}", curr_dm_list->s_info->opp,
+		  &curr_cmd_list->name);
+    Tcl_AppendElement(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  Tcl_AppendElement(interp, bu_vls_addr(curr_cmd_list->aim->s_info->opp));
+
+  /* return all ids associated with the current command window */
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    /* The display manager tied to the current command window shares
+       information with display manager p */
+    if(curr_cmd_list->aim->s_info == p->s_info)
+      /* This display manager is tied to a command window */
+      if(p->aim)
+	bu_vls_printf(&vls, "{%S} ", &p->aim->name);
+  }
+
+  Tcl_AppendElement(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+#else
   /* The current command window is not tied to a display manager so,
      simply return the id of the current command window */
   if(!curr_cmd_list->aim){
@@ -1025,7 +1116,7 @@ char **argv;
       if(p->aim)
 	Tcl_AppendElement(interp, bu_vls_addr(&p->aim->name));
   }
-
+#endif
   return TCL_OK;
 }
 
@@ -1961,6 +2052,13 @@ char *argv[];
     if(!strcmp(argv[2], bu_vls_addr(&p_dm->_dmp->dm_pathName)))
       break;
 
+#if 1
+  if(p_dm == &head_dm_list){
+    Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ", argv[2],
+		     "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+#else
   if(p_dm == &head_dm_list &&
      strcmp(argv[2], bu_vls_addr(&head_dm_list._dmp->dm_pathName))){
     Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ", argv[2],
@@ -1968,6 +2066,7 @@ char *argv[];
 
     return TCL_ERROR;
   }
+#endif
 
   /* already aiming */
   if(p_cmd->aim)

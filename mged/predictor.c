@@ -45,7 +45,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_dm.h"
 
-extern double	frametime;		/* time needed to draw last frame */
 extern mat_t	ModelDelta;		/* Changed to Viewrot this frame */
 
 #define MAX_TRAIL	32

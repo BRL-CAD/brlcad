@@ -81,8 +81,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "../librt/debug.h"	/* XXX */
 
-#define DO_KNOB_EXPERIMENT 1
-
 extern int mged_param();
 extern void color_soltab();
 
@@ -112,6 +110,11 @@ fastf_t ar_scale_factor = 2047.0 / ABS_ROT_FACTOR;
 fastf_t rr_scale_factor = 2047.0 / RATE_ROT_FACTOR;
 fastf_t adc_angle_scale_factor = 2047.0 / ADC_ANGLE_FACTOR;
 
+#if 1
+int edit_abs_tran[3];
+int abs_tran[3];
+#endif
+
 vect_t edit_absolute_rotate;
 vect_t edit_rate_rotate;
 int edit_rateflag_rotate;
@@ -123,6 +126,13 @@ int edit_rateflag_tran;
 fastf_t edit_absolute_scale;
 fastf_t edit_rate_scale;
 int edit_rateflag_scale;
+
+struct bu_vls edit_rate_tran_vls[3];
+struct bu_vls edit_rate_rotate_vls[3];
+struct bu_vls edit_rate_scale_vls;
+struct bu_vls edit_absolute_tran_vls[3];
+struct bu_vls edit_absolute_rotate_vls[3];
+struct bu_vls edit_absolute_scale_vls;
 
 double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
@@ -1639,6 +1649,7 @@ char	**argv;
   int incr_flag = 0;  /* interpret values as increments */
   int view_flag = 0;  /* force view interpretation */
   int edit_flag = 0;  /* force edit interpretation */
+  struct bu_vls vls;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -1722,157 +1733,143 @@ char	**argv;
       switch( cmd[0] )  {
       case 'x':
 	if(incr_flag){
-	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_rate_rotate[X] += f;
-	  else
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_rotate_vls[X]));
+	  }else{
 	    rate_rotate[X] += f;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[X]));
+	  }
 	}else{
-	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_rate_rotate[X] = f;
-	  else
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_rotate_vls[X]));
+	  }else{
 	    rate_rotate[X] = f;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[X]));
+	  }
 	}
 
-#if DO_KNOB_EXPERIMENT
-	if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
-	  (void)sprintf(knob_val_pair, "{x} {%d}",
-			dm_unlimit( (int)(edit_rate_rotate[X] * rr_scale_factor) ));
-	else
-	  (void)sprintf(knob_val_pair, "{x} {%d}",
-			dm_unlimit( (int)(rate_rotate[X] * rr_scale_factor) ));
-#endif
 	break;
       case 'y':
 	if(incr_flag){
-	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_rate_rotate[Y] += f;
-	  else
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Y]));
+	  }else{
 	    rate_rotate[Y] += f;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[Y]));
+	  }
 	}else{
-	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_rate_rotate[Y] = f;
-	  else
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Y]));
+	  }else{
 	    rate_rotate[Y] = f;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[Y]));
+	  }
 	}
 
-#if DO_KNOB_EXPERIMENT
-	if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
-	  (void)sprintf(knob_val_pair, "{y} {%d}",
-			dm_unlimit( (int)(edit_rate_rotate[Y] * rr_scale_factor) ));
-	else
-	  (void)sprintf(knob_val_pair, "{y} {%d}",
-			dm_unlimit( (int)(rate_rotate[Y] * rr_scale_factor) ));
-#endif
 	break;
       case 'z':
 	if(incr_flag){
-	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_rate_rotate[Z] += f;
-	  else
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Z]));
+	  }else{
 	    rate_rotate[Z] += f;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[Z]));
+	  }
 	}else{
-	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_rate_rotate[Z] = f;
-	  else
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Z]));
+	  }else{
 	    rate_rotate[Z] = f;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[Z]));
+	  }
 	}
 
-#if DO_KNOB_EXPERIMENT
-	if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
-	  (void)sprintf(knob_val_pair, "{z} {%d}",
-			dm_unlimit( (int)(edit_rate_rotate[Z] * rr_scale_factor) ));
-	else
-	  (void)sprintf(knob_val_pair, "{z} {%d}",
-			dm_unlimit( (int)(rate_rotate[Z] * rr_scale_factor) ));
-#endif
       break;
     case 'X':
       if(incr_flag){
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_rate_tran[X] += f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_tran_vls[X]));
+	}else{
 	  rate_slew[X] += f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_tran_vls[X]));
+	}
       }else{
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_rate_tran[X] = f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_tran_vls[X]));
+	}else{
 	  rate_slew[X] = f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_tran_vls[X]));
+	}
       }
 
-#if DO_KNOB_EXPERIMENT
-      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
-	(void)sprintf(knob_val_pair, "{X} {%d}",
-		      dm_unlimit( (int)(edit_rate_tran[X] * 2047.0) ));
-      else
-	(void)sprintf(knob_val_pair, "{X} {%d}",
-		      dm_unlimit( (int)(rate_slew[X] * 2047.0) ));
-#endif
       break;
     case 'Y':
       if(incr_flag){
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_rate_tran[Y] += f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_tran_vls[Y]));
+	}else{
 	  rate_slew[Y] += f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_tran_vls[Y]));
+	}
       }else{
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_rate_tran[Y] = f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_tran_vls[Y]));
+	}else{
 	  rate_slew[Y] = f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_tran_vls[Y]));
+	}
       }
 
-#if DO_KNOB_EXPERIMENT
-      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
-	(void)sprintf(knob_val_pair, "{Y} {%d}",
-		      dm_unlimit( (int)(edit_rate_tran[Y] * 2047.0) ));
-      else
-	(void)sprintf(knob_val_pair, "{Y} {%d}",
-		      dm_unlimit( (int)(rate_slew[Y] * 2047.0) ));
-#endif
       break;
     case 'Z':
       if(incr_flag){
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_rate_tran[Z] += f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_tran_vls[Z]));
+	}else{
 	  rate_slew[Z] += f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_tran_vls[Z]));
+	}
       }else{
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_rate_tran[Z] = f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_tran_vls[Z]));
+	}else{
 	  rate_slew[Z] = f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_tran_vls[Z]));
+	}
       }
 
-#if DO_KNOB_EXPERIMENT
-      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
-	(void)sprintf(knob_val_pair, "{Z} {%d}",
-		      dm_unlimit( (int)(edit_rate_tran[Z] * 2047.0) ));
-      else
-	(void)sprintf(knob_val_pair, "{Z} {%d}",
-		      dm_unlimit( (int)(rate_slew[Z] * 2047.0) ));
-#endif
       break;
     case 'S':
       if(incr_flag){
-	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_rate_scale += f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_scale_vls));
+	}else{
 	  rate_zoom += f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_scale_vls));
+	}
       }else{
-	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_rate_scale = f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_scale_vls));
+	}else{
 	  rate_zoom = f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_scale_vls));
+	}
       }
 
-#if DO_KNOB_EXPERIMENT
-      if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag))
-	(void)sprintf(knob_val_pair, "{S} {%d}",
-		      dm_unlimit( (int)(edit_rate_scale * 2047.0) ));
-      else
-	(void)sprintf(knob_val_pair, "{S} {%d}",
-		      dm_unlimit( (int)(rate_zoom * 2047.0) ));
-#endif
       break;
     default:
       goto usage;
@@ -1914,29 +1911,21 @@ char	**argv;
 	}
       }
 	  
-	  /* wrap around */
+      /* wrap around */
       if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	if(edit_absolute_rotate[X] < -180.0)
 	  edit_absolute_rotate[X] = edit_absolute_rotate[X] + 360.0;
 	else if(edit_absolute_rotate[X] > 180.0)
 	  edit_absolute_rotate[X] = edit_absolute_rotate[X] - 360.0;
 
-#if DO_KNOB_EXPERIMENT
-	(void)sprintf(knob_val_pair, "{ax} {%d}",
-		      dm_unlimit( (int)(edit_absolute_rotate[X] * ar_scale_factor) ));
-	Tcl_AppendElement(interp, knob_val_pair);
-#endif
+	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[X]));
       }else{
 	if(absolute_rotate[X] < -180.0)
 	  absolute_rotate[X] = absolute_rotate[X] + 360.0;
 	else if(absolute_rotate[X] > 180.0)
 	  absolute_rotate[X] = absolute_rotate[X] - 360.0;
 
-#if DO_KNOB_EXPERIMENT
-	(void)sprintf(knob_val_pair, "{ax} {%d}",
-		      dm_unlimit( (int)(absolute_rotate[X] * ar_scale_factor) ));
-	Tcl_AppendElement(interp, knob_val_pair);
-#endif
+	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[X]));
       }
 
       break;
@@ -1975,29 +1964,21 @@ char	**argv;
 	}
       }
 	  
-	  /* wrap around */
+      /* wrap around */
       if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	if(edit_absolute_rotate[Y] < -180.0)
 	  edit_absolute_rotate[Y] = edit_absolute_rotate[Y] + 360.0;
 	else if(edit_absolute_rotate[Y] > 180.0)
 	  edit_absolute_rotate[Y] = edit_absolute_rotate[Y] - 360.0;
 
-#if DO_KNOB_EXPERIMENT
-	(void)sprintf(knob_val_pair, "{ay} {%d}",
-		      dm_unlimit( (int)(edit_absolute_rotate[Y] * ar_scale_factor) ));
-	Tcl_AppendElement(interp, knob_val_pair);
-#endif
+	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[Y]));
       }else{
 	if(absolute_rotate[Y] < -180.0)
 	  absolute_rotate[Y] = absolute_rotate[Y] + 360.0;
 	else if(absolute_rotate[Y] > 180.0)
 	  absolute_rotate[Y] = absolute_rotate[Y] - 360.0;
 
-#if DO_KNOB_EXPERIMENT
-	(void)sprintf(knob_val_pair, "{ay} {%d}",
-		      dm_unlimit( (int)(absolute_rotate[Y] * ar_scale_factor) ));
-	Tcl_AppendElement(interp, knob_val_pair);
-#endif
+	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[Y]));
       }
 
       break;
@@ -2043,99 +2024,78 @@ char	**argv;
 	else if(edit_absolute_rotate[Z] > 180.0)
 	  edit_absolute_rotate[Z] = edit_absolute_rotate[Z] - 360.0;
 
-#if DO_KNOB_EXPERIMENT
-	(void)sprintf(knob_val_pair, "{az} {%d}",
-		      dm_unlimit( (int)(edit_absolute_rotate[Z] * ar_scale_factor) ));
-	Tcl_AppendElement(interp, knob_val_pair);
-#endif
+	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[Z]));
       }else{
 	if(absolute_rotate[Z] < -180.0)
 	  absolute_rotate[Z] = absolute_rotate[Z] + 360.0;
 	else if(absolute_rotate[Z] > 180.0)
 	  absolute_rotate[Z] = absolute_rotate[Z] - 360.0;
 
-#if DO_KNOB_EXPERIMENT
-	(void)sprintf(knob_val_pair, "{az} {%d}",
-		      dm_unlimit( (int)(absolute_rotate[Z] * ar_scale_factor) ));
-	Tcl_AppendElement(interp, knob_val_pair);
-#endif
+	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[Z]));
       }
 
       break;
     case 'X':
       if(incr_flag){
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_tran[X] += f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
+	}else{
 	  absolute_slew[X] += f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+	}
       }else{
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_tran[X] = f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
+	}else{
 	  absolute_slew[X] = f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+	}
       }
 
-#if DO_KNOB_EXPERIMENT
-      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
-	(void)sprintf(knob_val_pair, "{aX} {%d}",
-		      dm_unlimit( (int)(edit_absolute_tran[X] * 2047.0)));
-      else
-	(void)sprintf(knob_val_pair, "{aX} {%d}",
-		      dm_unlimit( (int)(absolute_slew[X] * 2047.0)));
-
-      Tcl_AppendElement(interp, knob_val_pair);
-#endif
-      
       do_tran = 1;
       break;
     case 'Y':
       if(incr_flag){
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_tran[Y] += f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
+	}else{
 	  absolute_slew[Y] += f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+	}
       }else{
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_tran[Y] = f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
+	}else{
 	  absolute_slew[Y] = f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+	}
       }
       
-#if DO_KNOB_EXPERIMENT
-      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
-	(void)sprintf(knob_val_pair, "{aY} {%d}",
-		      dm_unlimit( (int)(edit_absolute_tran[Y] * 2047.0)));
-      else
-	(void)sprintf(knob_val_pair, "{aY} {%d}",
-		      dm_unlimit( (int)(absolute_slew[Y] * 2047.0)));
-
-      Tcl_AppendElement(interp, knob_val_pair);
-#endif
       do_tran = 1;
       break;
     case 'Z':
       if(incr_flag){
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_tran[Z] += f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
+	}else{
 	  absolute_slew[Z] += f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
+	}
       }else{
-	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_tran[Z] = f;
-	else
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
+	}else{
 	  absolute_slew[Z] = f;
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
+	}
       }
-      
-#if DO_KNOB_EXPERIMENT
-      if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
-	(void)sprintf(knob_val_pair, "{aZ} {%d}",
-		      dm_unlimit( (int)(edit_absolute_tran[Z] * 2047.0)));
-      else
-	(void)sprintf(knob_val_pair, "{aZ} {%d}",
-		      dm_unlimit( (int)(absolute_slew[Z] * 2047.0)));
 
-      Tcl_AppendElement(interp, knob_val_pair);
-#endif
       do_tran = 1;
       break;
     case 'S':
@@ -2146,9 +2106,11 @@ char	**argv;
 	    sedit_abs_scale();
 	  else
 	    oedit_abs_scale();
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
 	}else{
 	  absolute_zoom += f;
 	  abs_zoom();
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_scale_vls));
 	}
       }else{
 	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag)){
@@ -2157,20 +2119,14 @@ char	**argv;
 	    sedit_abs_scale();
 	  else
 	    oedit_abs_scale();
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
 	}else{
 	  absolute_zoom = f;
 	  abs_zoom();
+	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_scale_vls));
 	}
       }
 
-#if DO_KNOB_EXPERIMENT
-      if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag))
-	(void)sprintf(knob_val_pair, "{S} {%d}",
-		      dm_unlimit( (int)(edit_absolute_scale * 2047.0) ));
-      else
-	(void)sprintf(knob_val_pair, "{S} {%d}",
-		      dm_unlimit( (int)(absolute_zoom * 2047.0) ));
-#endif
       break;
     default:
       goto usage;
@@ -2747,20 +2703,20 @@ char	*argv[];
   }
 
   if(sscanf(argv[1], "%d", &x) < 1){
-    Tcl_AppendResult(interp, "f_slewview: bad x value - ",
+    Tcl_AppendResult(interp, "f_tran: bad x value - ",
 		     argv[1], "\n", (char *)NULL);
     return TCL_ERROR;
   }
 
   if(sscanf(argv[2], "%d", &y) < 1){
-    Tcl_AppendResult(interp, "f_slewview: bad y value - ",
+    Tcl_AppendResult(interp, "f_tran: bad y value - ",
 		     argv[2], "\n", (char *)NULL);
     return TCL_ERROR;
   }
 
   if(argc == 4){
     if(sscanf(argv[3], "%d", &z) < 1){
-      Tcl_AppendResult(interp, "f_slewview: bad z value - ",
+      Tcl_AppendResult(interp, "f_tran: bad z value - ",
 		       argv[3], "\n", (char *)NULL);
       return TCL_ERROR;
     }

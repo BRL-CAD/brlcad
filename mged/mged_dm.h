@@ -68,21 +68,23 @@ struct shared_info {
   fastf_t _c_tdist;
   fastf_t _angle1;
   fastf_t _angle2;
+  fastf_t _adc_a1_deg;
+  fastf_t _adc_a2_deg;
 
 /* Rate stuff */
-  int	  _rateflag_slew;
-  vect_t  _rate_slew;
+  int	  _rateflag_tran;
+  vect_t  _rate_tran;
 
   int	  _rateflag_rotate;
   vect_t  _rate_rotate;
 	
-  int	  _rateflag_zoom;
-  fastf_t _rate_zoom;
+  int	  _rateflag_scale;
+  fastf_t _rate_scale;
 
 /* Absolute stuff */
-  vect_t  _absolute_slew;
+  vect_t  _absolute_tran;
   vect_t  _absolute_rotate;
-  fastf_t _absolute_zoom;
+  fastf_t _absolute_scale;
 
 /* Virtual trackball stuff */
   point_t _orig_pos;
@@ -93,10 +95,24 @@ struct shared_info {
   int _scroll_y;
   struct scroll_item *_scroll_array[6];
 
-  int _rot_set;
-  int _tran_set;
   int _dmaflag;
   int _rc;         /* reference count */
+
+  /* Tcl variable names for use with sliders */
+  struct bu_vls _rate_tran_vls[3];
+  struct bu_vls _rate_rotate_vls[3];
+  struct bu_vls _rate_scale_vls;
+  struct bu_vls _absolute_tran_vls[3];
+  struct bu_vls _absolute_rotate_vls[3];
+  struct bu_vls _absolute_scale_vls;
+  struct bu_vls _xadc_vls;
+  struct bu_vls _yadc_vls;
+  struct bu_vls _ang1_vls;
+  struct bu_vls _ang2_vls;
+  struct bu_vls _distadc_vls;
+
+  /* Convenient pointer to the owner's (of the shared_info) pathName */
+  struct bu_vls *opp;
 };
 
 
@@ -109,37 +125,35 @@ struct dm_list {
   int _dirty;      /* true if received an expose or configuration event */
   int _owner;      /* true if owner of the shared info */
   int _am_mode;    /* alternate mouse mode */
+  int _ndrawn;
+  double _frametime;/* time needed to draw last frame */
   struct cmd_list *aim;
   void (*_knob_hook)();
   void (*_axes_color_hook)();
   int (*_cmd_hook)();
   void (*_state_hook)();
+  void (*_viewpoint_hook)();
   int (*dm_init)();
 };
 
-extern int update_views;   /* from dm-X.h */
+extern int update_views;   /* from ged.c */
 extern struct dm_list head_dm_list;  /* list of active display managers */
 extern struct dm_list *curr_dm_list;
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define dmp curr_dm_list->_dmp
-#if 0
-#define dm_vars dmp->dm_vars
-#endif
 #define pathName dmp->dm_pathName
 #define dname dmp->dm_dname
 #define dirty curr_dm_list->_dirty
 #define owner curr_dm_list->_owner
 #define am_mode curr_dm_list->_am_mode
+#define ndrawn curr_dm_list->_ndrawn
+#define frametime curr_dm_list->_frametime
 #define knob_hook curr_dm_list->_knob_hook
 #define axes_color_hook curr_dm_list->_axes_color_hook
-#if 0
-#define dm_init curr_dm_list->_dm_init
-#endif
-#if 1
 #define cmd_hook curr_dm_list->_cmd_hook
 #define state_hook curr_dm_list->_state_hook
-#endif
+#define viewpoint_hook curr_dm_list->_viewpoint_hook
 
 #define mged_variables curr_dm_list->s_info->_mged_variables
 
@@ -148,21 +162,26 @@ extern struct dm_list *curr_dm_list;
 #define c_tdist curr_dm_list->s_info->_c_tdist
 #define angle1 curr_dm_list->s_info->_angle1
 #define angle2 curr_dm_list->s_info->_angle2
+#define adc_a1_deg curr_dm_list->s_info->_adc_a1_deg
+#define adc_a2_deg curr_dm_list->s_info->_adc_a2_deg
 #define dv_xadc curr_dm_list->s_info->_dv_xadc
 #define dv_yadc curr_dm_list->s_info->_dv_yadc
 #define dv_1adc curr_dm_list->s_info->_dv_1adc
 #define dv_2adc curr_dm_list->s_info->_dv_2adc
 #define dv_distadc curr_dm_list->s_info->_dv_distadc
 
-#define rateflag_slew curr_dm_list->s_info->_rateflag_slew
-#define rate_slew curr_dm_list->s_info->_rate_slew
-#define absolute_slew curr_dm_list->s_info->_absolute_slew
+#define rateflag_slew curr_dm_list->s_info->_rateflag_tran
+#define rateflag_tran curr_dm_list->s_info->_rateflag_tran
+#define rate_slew curr_dm_list->s_info->_rate_tran
+#define rate_tran curr_dm_list->s_info->_rate_tran
+#define absolute_slew curr_dm_list->s_info->_absolute_tran
+#define absolute_tran curr_dm_list->s_info->_absolute_tran
 #define rateflag_rotate curr_dm_list->s_info->_rateflag_rotate
 #define rate_rotate curr_dm_list->s_info->_rate_rotate
 #define absolute_rotate curr_dm_list->s_info->_absolute_rotate
-#define rateflag_zoom curr_dm_list->s_info->_rateflag_zoom
-#define rate_zoom curr_dm_list->s_info->_rate_zoom
-#define absolute_zoom curr_dm_list->s_info->_absolute_zoom
+#define rateflag_zoom curr_dm_list->s_info->_rateflag_scale
+#define rate_zoom curr_dm_list->s_info->_rate_scale
+#define absolute_zoom curr_dm_list->s_info->_absolute_scale
 
 #define Viewscale curr_dm_list->s_info->_Viewscale
 #define i_Viewscale curr_dm_list->s_info->_i_Viewscale
@@ -184,10 +203,20 @@ extern struct dm_list *curr_dm_list;
 #define tran_z curr_dm_list->s_info->_tran_z
 #define orig_pos curr_dm_list->s_info->_orig_pos
 
-#define rot_set curr_dm_list->s_info->_rot_set
-#define tran_set curr_dm_list->s_info->_tran_set
 #define dmaflag curr_dm_list->s_info->_dmaflag
 #define rc curr_dm_list->s_info->_rc
+
+#define rate_tran_vls curr_dm_list->s_info->_rate_tran_vls
+#define rate_rotate_vls curr_dm_list->s_info->_rate_rotate_vls
+#define rate_scale_vls curr_dm_list->s_info->_rate_scale_vls
+#define absolute_tran_vls curr_dm_list->s_info->_absolute_tran_vls
+#define absolute_rotate_vls curr_dm_list->s_info->_absolute_rotate_vls
+#define absolute_scale_vls curr_dm_list->s_info->_absolute_scale_vls
+#define xadc_vls curr_dm_list->s_info->_xadc_vls
+#define yadc_vls curr_dm_list->s_info->_yadc_vls
+#define ang1_vls curr_dm_list->s_info->_ang1_vls
+#define ang2_vls curr_dm_list->s_info->_ang2_vls
+#define distadc_vls curr_dm_list->s_info->_distadc_vls
 
 #define scroll_top curr_dm_list->s_info->_scroll_top
 #define scroll_active curr_dm_list->s_info->_scroll_active
@@ -195,7 +224,7 @@ extern struct dm_list *curr_dm_list;
 #define scroll_array curr_dm_list->s_info->_scroll_array
 
 #define MINVIEW		0.001				
-#define VIEWSIZE	(2*Viewscale)	/* Width of viewing cube */
+#define VIEWSIZE	(2.0*Viewscale)	/* Width of viewing cube */
 #define VIEWFACTOR	(1/Viewscale)	/* 2.0 / VIEWSIZE */
 
 #define RATE_ROT_FACTOR 6.0

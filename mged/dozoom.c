@@ -55,7 +55,6 @@ point_t	eye_pos_scr = { 0, 0, 1 };
 
 struct solid	FreeSolid;	/* Head of freelist */
 struct solid	HeadSolid;	/* Head of solid table */
-int		ndrawn;
 
 /*
  *			P E R S P _ M A T

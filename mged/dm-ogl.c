@@ -206,13 +206,11 @@ XEvent *eventPtr;
        glClear(GL_COLOR_BUFFER_BIT);
 
     dirty = 1;
-    refresh();
     goto end;
   } else if( eventPtr->type == ConfigureNotify ) {
     Ogl_configure_window_shape(curr_dm_list->_dmp);
 
     dirty = 1;
-    refresh();
     goto end;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;

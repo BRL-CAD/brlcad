@@ -337,9 +337,8 @@ bv_edit_toggle()
 {
   mged_variables.edit = !mged_variables.edit;
 
-  if(mged_variables.scroll_enabled){
+  if(mged_variables.scroll_enabled)
     Tcl_Eval(interp, "sliders on");
-  }
 
   dmaflag = 1;
 }
@@ -349,9 +348,8 @@ bv_rate_toggle()
 {
   mged_variables.rateknobs = !mged_variables.rateknobs;
 
-  if(mged_variables.scroll_enabled){
+  if(mged_variables.scroll_enabled)
     Tcl_Eval(interp, "sliders on");
-  }
 
   dmaflag = 1;
 }
@@ -361,107 +359,132 @@ be_s_context()
 {
   mged_variables.context = !mged_variables.context;
 
-  if(mged_variables.scroll_enabled){
+  if(mged_variables.scroll_enabled)
     Tcl_Eval(interp, "sliders on");
-  }
 
   dmaflag = 1;
 }
 
-static void bv_top()  {
-	/* Top view */
-	setview( 0.0, 0.0, 0.0 );
+static void
+bv_top()
+{
+  /* Top view */
+  setview( 0.0, 0.0, 0.0 );
 }
 
-static void bv_bottom()  {
-	/* Bottom view */
-	setview( 180.0, 0.0, 0.0 );
+static void
+bv_bottom()
+{
+  /* Bottom view */
+  setview( 180.0, 0.0, 0.0 );
 }
 
-static void bv_right()  {
-	/* Right view */
-	setview( 270.0, 0.0, 0.0 );
+static void
+bv_right()
+{
+  /* Right view */
+  setview( 270.0, 0.0, 0.0 );
 }
 
-static void bv_left()  {
-	/* Left view */
-	setview( 270.0, 0.0, 180.0 );
+static void
+bv_left()
+{
+  /* Left view */
+  setview( 270.0, 0.0, 180.0 );
 }
 
-static void bv_front()  {
-	/* Front view */
-	setview( 270.0, 0.0, 270.0 );
+static void
+bv_front()
+{
+  /* Front view */
+  setview( 270.0, 0.0, 270.0 );
 }
 
-static void bv_rear()  {
-	/* Rear view */
-	setview( 270.0, 0.0, 90.0 );
+static void
+bv_rear()
+{
+  /* Rear view */
+  setview( 270.0, 0.0, 90.0 );
 }
 
-static void bv_vrestore()  {
-	/* restore to saved view */
-	if ( vsaved )  {
-		Viewscale = sav_vscale;
-		bn_mat_copy( Viewrot, sav_viewrot );
-		bn_mat_copy( toViewcenter, sav_toviewcenter );
-		new_mats();
-	}
+static void
+bv_vrestore()
+{
+  /* restore to saved view */
+  if ( vsaved )  {
+    Viewscale = sav_vscale;
+    bn_mat_copy( Viewrot, sav_viewrot );
+    bn_mat_copy( toViewcenter, sav_toviewcenter );
+    new_mats();
+  }
 }
 
-static void bv_vsave()  {
-	/* save current view */
-	sav_vscale = Viewscale;
-	bn_mat_copy( sav_viewrot, Viewrot );
-	bn_mat_copy( sav_toviewcenter, toViewcenter );
-	vsaved = 1;
+static void
+bv_vsave()
+{
+  /* save current view */
+  sav_vscale = Viewscale;
+  bn_mat_copy( sav_viewrot, Viewrot );
+  bn_mat_copy( sav_toviewcenter, toViewcenter );
+  vsaved = 1;
 #if 0
-	dmp->dm_light( dmp, LIGHT_ON, BV_VRESTORE );
+  dmp->dm_light( dmp, LIGHT_ON, BV_VRESTORE );
 #endif
 }
 
-static void bv_adcursor()  {
-	if (mged_variables.adcflag)  {
-		/* Was on, turn off */
-		mged_variables.adcflag = 0;
+static void
+bv_adcursor()
+{
+  if (mged_variables.adcflag)  {
+    /* Was on, turn off */
+    mged_variables.adcflag = 0;
 #if 0
-		dmp->dm_light( dmp, LIGHT_OFF, BV_ADCURSOR );
+    dmp->dm_light( dmp, LIGHT_OFF, BV_ADCURSOR );
 #endif
-	}  else  {
-		/* Was off, turn on */
-		mged_variables.adcflag = 1;
+  }  else  {
+    /* Was off, turn on */
+    mged_variables.adcflag = 1;
 #if 0
-		dmp->dm_light( dmp, LIGHT_ON, BV_ADCURSOR );
+    dmp->dm_light( dmp, LIGHT_ON, BV_ADCURSOR );
 #endif
-	}
+  }
 
-	if(mged_variables.scroll_enabled){
-	  char *av[3];
+  if(mged_variables.scroll_enabled){
+#if 0
+    char *av[3];
 
-	  av[0] = "sliders";
-	  av[1] = "on";
-	  av[2] = NULL;
-	  (void)cmd_sliders((ClientData)NULL, interp, 2, av);
-	}
-
-	dmaflag = 1;
+    av[0] = "sliders";
+    av[1] = "on";
+    av[2] = NULL;
+    (void)cmd_sliders((ClientData)NULL, interp, 2, av);
+#else
+    Tcl_Eval(interp, "sliders on");
+#endif
+  }
+  
+  dmaflag = 1;
 }
 
-static void bv_reset()  {
-	/* Reset view such that all solids can be seen */
-	size_reset();
-	setview( 0.0, 0.0, 0.0 );
-	absolute_zoom = 0.0;
-	VSETALL( absolute_rotate, 0.0 );
-	VSETALL( absolute_slew, 0.0 );
+static void
+bv_reset()  {
+  /* Reset view such that all solids can be seen */
+  size_reset();
+  MAT_DELTAS_GET(orig_pos, toViewcenter);
+  setview( 0.0, 0.0, 0.0 );
+  absolute_zoom = 0.0;
+  VSETALL( absolute_rotate, 0.0 );
+  VSETALL( absolute_slew, 0.0 );
 }
 
-static void bv_45_45()  {
-	setview( 270.0+45.0, 0.0, 270.0-45.0 );
+static void
+bv_45_45()  {
+  setview( 270.0+45.0, 0.0, 270.0-45.0 );
 }
 
-static void bv_35_25()  {
-	/* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
-	setview( 270.0+25.0, 0.0, 270.0-35.0 );
+static void
+bv_35_25()  {
+  /* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
+  setview( 270.0+25.0, 0.0, 270.0-35.0 );
 }
 
 /* returns 0 if error, !0 if success */

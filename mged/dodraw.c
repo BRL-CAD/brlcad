@@ -49,7 +49,6 @@ void		drawH_part2();
 extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
 extern void	(*nmg_mged_debug_display_hack)();
-extern double       frametime;
 int	no_memory;	/* flag indicating memory for drawing is used up */
 long	nvectors;	/* number of vectors drawn so far */
 

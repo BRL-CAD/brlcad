@@ -66,6 +66,9 @@ in all countries except the USA.  All rights reserved.";
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
+/* defined in attach.c */
+extern int mged_slider_link_vars();
+
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -90,11 +93,9 @@ int    update_views;
 extern struct dm dm_Null;
 extern struct _mged_variables default_mged_variables;
 
-double		frametime = 1.0;	/* time needed to draw last frame */
 mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
 int		(*cmdline_hook)() = NULL;
-void		(*viewpoint_hook)() = NULL;
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
@@ -221,25 +222,25 @@ char **argv;
 
 	bzero((void *)&head_dm_list, sizeof(struct dm_list));
 	BU_LIST_INIT( &head_dm_list.l );
-	head_dm_list._dmp = &dm_Null;
-	curr_dm_list = &head_dm_list;
-	curr_dm_list->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
-							       "shared_info");
-	bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
-#if 1
-	bcopy((void *)&default_mged_variables, (void *)&mged_variables,
-	      sizeof(struct _mged_variables));
-#else
-	mged_variables = default_mged_variables;
-#endif
+	{
+	  struct dm_list *dlp;
+
+	  BU_GETSTRUCT(dlp, dm_list);
+	  BU_LIST_APPEND(&head_dm_list.l, &dlp->l);
+	  curr_dm_list = dlp;
+	}
+	BU_GETSTRUCT(dmp, dm);
+	*dmp = dm_Null;
 	bu_vls_init(&pathName);
 	bu_vls_strcpy(&pathName, "nu");
+	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
+	mged_variables = default_mged_variables;
+	am_mode = ALT_MOUSE_MODE_IDLE;
 	rc = 1;
 	owner = 1;
-
-	state = ST_VIEW;
-	es_edflag = -1;
-	inpara = newedge = 0;
+	frametime = 1;
+	adc_a1_deg = adc_a2_deg = 45.0;
+	curr_dm_list->s_info->opp = &pathName;
 
 	bn_mat_idn( identity );		/* Handy to have around */
 	/* init rotation matrix */
@@ -249,6 +250,13 @@ char **argv;
 	bn_mat_idn( modelchanges );
 	bn_mat_idn( ModelDelta );
 	bn_mat_idn( acc_rot_sol );
+
+	MAT_DELTAS_GET(orig_pos, toViewcenter);
+	i_Viewscale = Viewscale;
+
+	state = ST_VIEW;
+	es_edflag = -1;
+	inpara = newedge = 0;
 
 	/* These values match old GED.  Use 'tol' command to change them. */
 	mged_tol.magic = BN_TOL_MAGIC;
@@ -275,6 +283,7 @@ char **argv;
 
 	/* Get set up to use Tcl */
 	mged_setup();
+	mged_slider_link_vars(curr_dm_list);
 
 	windowbounds[0] = XMAX;		/* XHR */
 	windowbounds[1] = XMIN;		/* XLR */
@@ -1168,27 +1177,25 @@ refresh()
 {
   struct dm_list *p;
   struct dm_list *save_dm_list;
-  double	elapsed_time = 0;
-
-  if(update_views || dmaflag || dirty) {
-    /* XXX VR hack */
-    if( viewpoint_hook )  (*viewpoint_hook)();
-
-    rt_prep_timer();
-    elapsed_time = -1;		/* timer running */
-  }
 
   save_dm_list = curr_dm_list;
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    double	elapsed_time;
+
     /*
      * if something has changed, then go update the display.
      * Otherwise, we are happy with the view we have
      */
-
     curr_dm_list = p;
-    dmp->dm_setWinBounds(dmp, windowbounds);
-
     if(update_views || dmaflag || dirty) {
+
+      /* XXX VR hack */
+      if( viewpoint_hook )  (*viewpoint_hook)();
+
+      rt_prep_timer();
+      elapsed_time = -1;		/* timer running */
+
+      dmp->dm_setWinBounds(dmp, windowbounds);
 
       if( mged_variables.predictor )
 	predictor_frame();
@@ -1225,24 +1232,23 @@ refresh()
       dmp->dm_drawEnd(dmp);
 
       dirty = 0;
-    }
-  }
-  if (elapsed_time < 0)  {
-    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
-    /* Only use reasonable measurements */
-    if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
-      /* Smoothly transition to new speed */
-      frametime = 0.9 * frametime + 0.1 * elapsed_time;
+
+      if (elapsed_time < 0)  {
+	(void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
+	/* Only use reasonable measurements */
+	if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
+	  /* Smoothly transition to new speed */
+	  frametime = 0.9 * frametime + 0.1 * elapsed_time;
+	}
+      }
     }
   }
 
-  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-    curr_dm_list = p;
-  }
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) )
+    p->s_info->_dmaflag = 0;
 
   curr_dm_list = save_dm_list;
   update_views = 0;
-  dmaflag = 0;
 }
 
 /*

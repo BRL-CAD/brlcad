@@ -224,15 +224,13 @@ XEvent *eventPtr;
     Glx_configure_window_shape(dmp);
 
     dirty = 1;
-    refresh();
     goto end;
   }else if( eventPtr->type == ConfigureNotify ){
-      /* Window may have moved */
-      Glx_configure_window_shape(dmp);
+    /* Window may have moved */
+    Glx_configure_window_shape(dmp);
 
-      dirty = 1;
-      refresh();
-      goto end;
+    dirty = 1;
+    goto end;
   }else if( eventPtr->type == MotionNotify ) {
     int mx, my;
 

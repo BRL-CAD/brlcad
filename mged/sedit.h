@@ -150,6 +150,13 @@ extern fastf_t edit_absolute_scale;
 extern fastf_t edit_rate_scale;
 extern int edit_rateflag_scale;
 
+extern struct bu_vls edit_rate_tran_vls[3];
+extern struct bu_vls edit_rate_rotate_vls[3];
+extern struct bu_vls edit_rate_scale_vls;
+extern struct bu_vls edit_absolute_tran_vls[3];
+extern struct bu_vls edit_absolute_rotate_vls[3];
+extern struct bu_vls edit_absolute_scale_vls;
+
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
 extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */

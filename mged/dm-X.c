@@ -132,13 +132,11 @@ XEvent *eventPtr;
 
   if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
     dirty = 1;
-    refresh();
     goto end;
   }else if(eventPtr->type == ConfigureNotify){
     X_configure_window_shape(dmp);
 
     dirty = 1;
-    refresh();
     goto end;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;

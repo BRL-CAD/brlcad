@@ -35,7 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 
 extern int		(*cmdline_hook)();	/* cmd.c */
-extern void		(*viewpoint_hook)();	/* ged.c */
 
 extern point_t		eye_pos_scr;		/* dozoom.c */
 
