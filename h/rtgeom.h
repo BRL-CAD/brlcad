@@ -348,27 +348,5 @@ struct rt_eto_internal {
 #define RT_ETO_INTERNAL_MAGIC	0xaaccee92
 #define RT_ETO_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ETO_INTERNAL_MAGIC,"rt_eto_internal")
 
-/*
- *	ID_FBM
- */
-struct rt_fbm_internal {
-	long	magic;
-	/* mapping from model coordinates to solid coordinates */
-	point_t	fbm_V;	/* location of center of bounding sphere */
-	fastf_t fbm_radius;	/* radius of of bounding sphere */
-
-	/* fBm paramters */
-	fastf_t	fbm_octaves;	/* # octaves in noise */
-	fastf_t	fbm_lacunarity;
-	fastf_t	fbm_h;
-	fastf_t	fbm_thresh;
-
-	/* mapping from solid coordinates to noise coordinates */
-	mat_t	fbm_mat;
-
-};
-#define RT_FBM_INTERNAL_MAGIC	0xfb1
-#define RT_FBM_CK_MAGIC(_p)	RT_CKMAG(_p,RT_FBM_INTERNAL_MAGIC,"rt_fbm_internal")
-
 
 #endif /* SEEN_RTGEOM_H */
