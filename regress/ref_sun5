@@ -590,15 +590,11 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../liboptical/sh_treetherm.c", line 472: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to char : "../h/bu.h", line 1585
-	argument : pointer to struct thrm_seg {long magic, array[3] of float pt, array[3] of float dir, array[8] of array[3] of float node, arr...
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 -------------------------------- .libmultispectral.sun5
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -612,70 +608,34 @@ command line: warning: macro redefined: __STDC__
 -------------------------------- .libtclcad.sun5
 -------------------------------- .conv.sun5
 command line: warning: macro redefined: __STDC__
-"../conv/asc2g.c", line 455: warning: assignment type mismatch:
-	pointer to char "=" pointer to struct line_seg {long magic, int start, int end}
-"../conv/asc2g.c", line 463: warning: assignment type mismatch:
-	pointer to char "=" pointer to struct carc_seg {long magic, int start, int end, double radius, int center_is_left, int orientation, int center}
-"../conv/asc2g.c", line 516: warning: assignment type mismatch:
-	pointer to char "=" pointer to struct nurb_seg {long magic, int order, int pt_type, struct knot_vector {..} k, int c_size, pointer to int ctl_po...
-"../conv/asc2g.c", line 597: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to uchar : "../h/bu.h", line 1875
-	argument : pointer to char
-"../conv/asc2g.c", line 1278: warning: assignment type mismatch:
-	pointer to char "=" pointer to struct rt_pg_internal {long magic, int npoly, pointer to struct rt_pg_face_internal {..} bn_poly_t, int max_npts}
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-"../conv/fast4-g.c", line 2558: warning: assignment type mismatch:
-	pointer to int "=" pointer to char
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-"../conv/poly-bot.c", line 234: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to char : "../h/bu.h", line 1587
-	argument : pointer to union record {char u_id, array[128] of char u_size, struct ident {..} i, struct solidrec {..} s, struct combinati...
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
 -------------------------------- .db.sun5
 NOTICE:  boolean-ops.g is BRL-CAD v5 format.
 NOTICE:  bldg391.g is BRL-CAD v5 format.
@@ -707,10 +667,6 @@ NOTICE:  terra.g is BRL-CAD v5 format.
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../rt/do.c", line 775: warning: improper pointer/integer combination: op "="
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"../rt/view.c", line 718: warning: operands have incompatible pointer types: op "=="
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -746,10 +702,8 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../rt/viewedge.c", line 320: warning: assignment type mismatch:
-	pointer to pointer to struct application {long a_magic, struct xray {..} a_ray, pointer to function(pointer to struct applic... "=" pointer to char
-"../rt/viewedge.c", line 323: warning: assignment type mismatch:
-	pointer to struct application {long a_magic, struct xray {..} a_ray, pointer to function(pointer to struct application {..},... "=" pointer to char
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 -------------------------------- .mged.sun5
 command line: warning: macro redefined: __STDC__
@@ -762,71 +716,6 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"../mged/cmd.c", line 729: warning: assignment type mismatch:
-	pointer to char "=" pointer to struct _view_state {int vs_rc, int vs_flag, pointer to struct view_obj {..} vs_vop, double vs_i_Viewscale, array[...
-command line: warning: macro redefined: __STDC__
-"../mged/chgview.c", line 243: warning: assignment type mismatch:
-	pointer to pointer to struct directory {long d_magic, pointer to char d_namep, union {..} d_un, pointer to struct directory ... "=" pointer to char
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"../mged/chgtree.c", line 220: warning: argument #6 is incompatible with prototype:
-	prototype: pointer to char : "../h/raytrace.h", line 2806
-	argument : pointer to uchar
-command line: warning: macro redefined: __STDC__
-"../mged/rtif.c", line 454: warning: improper pointer/integer combination: op "="
-"../mged/rtif.c", line 1436: warning: improper pointer/integer combination: op "="
-"../mged/rtif.c", line 1440: warning: improper pointer/integer combination: op "="
-"../mged/rtif.c", line 1444: warning: improper pointer/integer combination: op "="
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"../mged/mater.c", line 110: warning: improper pointer/integer combination: op "="
-command line: warning: macro redefined: __STDC__
-"../mged/plot.c", line 122: warning: improper pointer/integer combination: op "="
-"../mged/plot.c", line 381: warning: improper pointer/integer combination: op "="
-"../mged/plot.c", line 382: warning: improper pointer/integer combination: op "="
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"../mged/inside.c", line 250: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to struct rt_arb_internal {long magic, array[8] of array[3] of double pt} : "../mged/./ged.h", line 826
-	argument : pointer to char
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"../mged/attach.c", line 631: warning: assignment type mismatch:
-	pointer to char "=" pointer to struct _view_state {int vs_rc, int vs_flag, pointer to struct view_obj {..} vs_vop, double vs_i_Viewscale, array[...
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"../mged/muves.c", line 544: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to char : "../h/bu.h", line 1585
-	argument : pointer to struct member_list {struct bu_list {..} l, int object_type, union muves_member {..} mem}
-"../mged/muves.c", line 571: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to char : "../h/bu.h", line 1587
-	argument : pointer to pointer to char
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -841,23 +730,50 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../mged/bodyio.c", line 200: warning: assignment type mismatch:
-	pointer to struct rt_binunif_internal {long magic, int type, long count, union {..} u} "=" pointer to char
-"../mged/bodyio.c", line 306: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to uchar : "../h/db5.h", line 183
-	argument : pointer to char
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 -------------------------------- .remrt.sun5
 command line: warning: macro redefined: __STDC__
-"../remrt/remrt.c", line 3042: warning: improper pointer/integer combination: op "="
-"../remrt/remrt.c", line 3054: warning: improper pointer/integer combination: op "="
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../rt/view.c", line 718: warning: operands have incompatible pointer types: op "=="
+command line: warning: macro redefined: __STDC__
 -------------------------------- .libcursor.sun5
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -880,8 +796,7 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../libutahrle/rle_open_f.c", line 82: warning: improper pointer/integer combination: op "="
-"../libutahrle/rle_open_f.c", line 106: warning: improper pointer/integer combination: op "="
+command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -928,14 +843,11 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-command line: warning: macro redefined: __STDC__
-command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -946,7 +858,6 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 -------------------------------- .jack.sun5
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 -------------------------------- .mk.sun5
 command line: warning: macro redefined: __STDC__
@@ -958,164 +869,83 @@ command line: warning: macro redefined: __STDC__
 -------------------------------- .comgeom-g.sun5
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 -------------------------------- .iges.sun5
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-"../iges/g-iges.c", line 321: warning: argument #6 is incompatible with prototype:
-	prototype: pointer to char : "../iges/g-iges.c", line 59
-	argument : pointer to const char
-"../iges/g-iges.c", line 321: warning: argument #7 is incompatible with prototype:
-	prototype: pointer to char : "../iges/g-iges.c", line 59
-	argument : pointer to const char
-"../iges/g-iges.c", line 615: warning: argument #6 is incompatible with prototype:
-	prototype: pointer to char : "../iges/g-iges.c", line 59
-	argument : pointer to const char
-"../iges/g-iges.c", line 615: warning: argument #7 is incompatible with prototype:
-	prototype: pointer to char : "../iges/g-iges.c", line 59
-	argument : pointer to const char
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 -------------------------------- .fb.sun5
 command line: warning: macro redefined: __STDC__
@@ -1277,139 +1107,10 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../util/wavelet.c", line 204: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to double : "../h/bn.h", line 708
-	argument : pointer to char
-"../util/wavelet.c", line 204: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to double : "../h/bn.h", line 708
-	argument : pointer to char
-"../util/wavelet.c", line 208: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to float : "../h/bn.h", line 715
-	argument : pointer to char
-"../util/wavelet.c", line 208: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to float : "../h/bn.h", line 715
-	argument : pointer to char
-"../util/wavelet.c", line 216: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to short : "../h/bn.h", line 729
-	argument : pointer to char
-"../util/wavelet.c", line 216: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to short : "../h/bn.h", line 729
-	argument : pointer to char
-"../util/wavelet.c", line 220: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to int : "../h/bn.h", line 736
-	argument : pointer to char
-"../util/wavelet.c", line 220: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to int : "../h/bn.h", line 736
-	argument : pointer to char
-"../util/wavelet.c", line 224: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to long : "../h/bn.h", line 743
-	argument : pointer to char
-"../util/wavelet.c", line 224: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to long : "../h/bn.h", line 743
-	argument : pointer to char
-"../util/wavelet.c", line 264: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to double : "../h/bn.h", line 752
-	argument : pointer to char
-"../util/wavelet.c", line 264: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to double : "../h/bn.h", line 752
-	argument : pointer to char
-"../util/wavelet.c", line 268: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to float : "../h/bn.h", line 759
-	argument : pointer to char
-"../util/wavelet.c", line 268: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to float : "../h/bn.h", line 759
-	argument : pointer to char
-"../util/wavelet.c", line 276: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to short : "../h/bn.h", line 773
-	argument : pointer to char
-"../util/wavelet.c", line 276: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to short : "../h/bn.h", line 773
-	argument : pointer to char
-"../util/wavelet.c", line 280: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to int : "../h/bn.h", line 780
-	argument : pointer to char
-"../util/wavelet.c", line 280: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to int : "../h/bn.h", line 780
-	argument : pointer to char
-"../util/wavelet.c", line 284: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to long : "../h/bn.h", line 787
-	argument : pointer to char
-"../util/wavelet.c", line 284: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to long : "../h/bn.h", line 787
-	argument : pointer to char
-"../util/wavelet.c", line 330: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to double : "../h/bn.h", line 711
-	argument : pointer to char
-"../util/wavelet.c", line 330: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to double : "../h/bn.h", line 711
-	argument : pointer to char
-"../util/wavelet.c", line 334: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to float : "../h/bn.h", line 718
-	argument : pointer to char
-"../util/wavelet.c", line 334: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to float : "../h/bn.h", line 718
-	argument : pointer to char
-"../util/wavelet.c", line 342: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to short : "../h/bn.h", line 732
-	argument : pointer to char
-"../util/wavelet.c", line 342: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to short : "../h/bn.h", line 732
-	argument : pointer to char
-"../util/wavelet.c", line 346: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to int : "../h/bn.h", line 739
-	argument : pointer to char
-"../util/wavelet.c", line 346: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to int : "../h/bn.h", line 739
-	argument : pointer to char
-"../util/wavelet.c", line 350: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to long : "../h/bn.h", line 746
-	argument : pointer to char
-"../util/wavelet.c", line 350: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to long : "../h/bn.h", line 746
-	argument : pointer to char
-"../util/wavelet.c", line 397: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to float : "../h/bn.h", line 762
-	argument : pointer to char
-"../util/wavelet.c", line 397: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to float : "../h/bn.h", line 762
-	argument : pointer to char
-"../util/wavelet.c", line 405: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to short : "../h/bn.h", line 776
-	argument : pointer to char
-"../util/wavelet.c", line 405: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to short : "../h/bn.h", line 776
-	argument : pointer to char
-"../util/wavelet.c", line 409: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to int : "../h/bn.h", line 783
-	argument : pointer to char
-"../util/wavelet.c", line 409: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to int : "../h/bn.h", line 783
-	argument : pointer to char
-"../util/wavelet.c", line 413: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to long : "../h/bn.h", line 790
-	argument : pointer to char
-"../util/wavelet.c", line 413: warning: argument #2 is incompatible with prototype:
-	prototype: pointer to long : "../h/bn.h", line 790
-	argument : pointer to char
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../util/terrain.c", line 676: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to char : "../h/bu.h", line 288
-	argument : pointer to ushort
-"../util/terrain.c", line 676: warning: argument #4 is incompatible with prototype:
-	prototype: pointer to char : "../h/bu.h", line 288
-	argument : pointer to ushort
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../util/dsp_add.c", line 93: warning: assignment type mismatch:
-	pointer to double "=" pointer to char
-"../util/dsp_add.c", line 115: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to char : "../h/bu.h", line 1585
-	argument : pointer to double
-"../util/dsp_add.c", line 180: warning: assignment type mismatch:
-	pointer to ushort "=" pointer to char
-"../util/dsp_add.c", line 193: warning: assignment type mismatch:
-	pointer to ushort "=" pointer to char
 -------------------------------- .fbed.sun5
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -1422,10 +1123,6 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../fbed/prnt.c", line 178: warning: identifier redeclared: fb_log
-	current : function() returning void
-	previous: function(pointer to char, ...) returning void : "../h/fb.h", line 182
-"../fbed/prnt.c", line 179: warning: parameter mismatch: 1 declared, 10 defined
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 -------------------------------- .lgt.sun5
@@ -1434,10 +1131,6 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../lgt/error.c", line 124: warning: identifier redeclared: fb_log
-	current : function() returning void
-	previous: function(pointer to char, ...) returning void : "../h/fb.h", line 182
-"../lgt/error.c", line 125: warning: parameter mismatch: 1 declared, 10 defined
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -1462,7 +1155,6 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 -------------------------------- .vdeck.sun5
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -1510,13 +1202,6 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
-"../tab/scriptsort.c", line 152: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to char : "../h/bu.h", line 1585
-	argument : pointer to struct frame {struct bu_list {..} l, int number, long flags, long location, long length, pointer to char text, in...
-"../tab/scriptsort.c", line 262: warning: argument #1 is incompatible with prototype:
-	prototype: pointer to char : "../h/bu.h", line 1585
-	argument : pointer to struct frame {struct bu_list {..} l, int number, long flags, long location, long length, pointer to char text, in...
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 -------------------------------- .tools.sun5
@@ -1585,7 +1270,6 @@ command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -1653,55 +1337,23 @@ command line: warning: macro redefined: __STDC__
 -------------------------------- .burst.sun5
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../burst/error.c", line 123: warning: identifier redeclared: fb_log
-	current : function() returning void
-	previous: function(pointer to char, ...) returning void : "../h/fb.h", line 182
-"../burst/error.c", line 125: warning: Prototype mismatch in arg 1 for function fb_log:
-	function : old style declaration int
-	prototype: pointer to char
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../burst/./extern.h", line 36: warning: identifier redeclared: malloc
-	current : function() returning pointer to char
-	previous: function() returning pointer to void : "/usr/include/iso/stdlib_iso.h", line 135
-command line: warning: macro redefined: __STDC__
-"../burst/./extern.h", line 36: warning: identifier redeclared: malloc
-	current : function() returning pointer to char
-	previous: function() returning pointer to void : "/usr/include/iso/stdlib_iso.h", line 135
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../burst/./extern.h", line 36: warning: identifier redeclared: malloc
-	current : function() returning pointer to char
-	previous: function() returning pointer to void : "/usr/include/iso/stdlib_iso.h", line 135
-command line: warning: macro redefined: __STDC__
-"../burst/./extern.h", line 36: warning: identifier redeclared: malloc
-	current : function() returning pointer to char
-	previous: function() returning pointer to void : "/usr/include/iso/stdlib_iso.h", line 135
-command line: warning: macro redefined: __STDC__
-"../burst/./extern.h", line 36: warning: identifier redeclared: malloc
-	current : function() returning pointer to char
-	previous: function() returning pointer to void : "/usr/include/iso/stdlib_iso.h", line 135
-command line: warning: macro redefined: __STDC__
-"../burst/./extern.h", line 36: warning: identifier redeclared: malloc
-	current : function() returning pointer to char
-	previous: function() returning pointer to void : "/usr/include/iso/stdlib_iso.h", line 135
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
-"../burst/./Mm.h", line 14: warning: identifier redeclared: malloc
-	current : function() returning pointer to char
-	previous: function() returning pointer to void : "/usr/include/iso/stdlib_iso.h", line 135
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
+command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
 -------------------------------- .gtools.sun5
 command line: warning: macro redefined: __STDC__
-"../gtools/g_lint.c", line 193: warning: assignment type mismatch:
-	pointer to struct g_lint_seg {long gls_magic, double gls_length, array[3] of double gls_origin, array[3] of double gls_entry... "=" pointer to char
-"../gtools/g_lint.c", line 238: warning: assignment type mismatch:
-	pointer to struct g_lint_ovlp {long glo_magic, pointer to struct region {..} glo_r1, pointer to struct region {..} glo_r2, p... "=" pointer to char
 command line: warning: macro redefined: __STDC__
-"/usr/include/iso/stddef_iso.h", line 73: warning: macro redefined: offsetof
 -------------------------------- .bwish.sun5
 command line: warning: macro redefined: __STDC__
 command line: warning: macro redefined: __STDC__
@@ -2200,6 +1852,8 @@ command line: warning: macro redefined: __STDC__
 ++++++INSTALLED /c/regress/brlcad.sun5/lib/liborle.so.15
 ++++++INSTALLED /c/regress/brlcad.sun5/man/man3/liborle.3
 -------------------------------- .libutahrle.sun5
+......checking libutahrle.so.15
+++++++INSTALLED /c/regress/brlcad.sun5/lib/libutahrle.so.15
 ++++++INSTALLED /c/regress/brlcad.sun5/man/man3/buildmap.3
 ++++++INSTALLED /c/regress/brlcad.sun5/man/man3/bwdithermap.3
 ++++++INSTALLED /c/regress/brlcad.sun5/man/man3/colorquant.3
@@ -2303,6 +1957,8 @@ cake: install is up to date
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/fb-orle
 ......checking fb-pix
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/fb-pix
+......checking fb-rle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/fb-rle
 ......checking fbanim
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/fbanim
 ......checking fbcbars
@@ -2355,6 +2011,8 @@ cake: install is up to date
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/polar-fb
 ......checking pp-fb
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/pp-fb
+......checking rle-fb
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rle-fb
 ......checking spm-fb
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/spm-fb
 ......checking pixautosize
@@ -2495,6 +2153,10 @@ cake: install is up to date
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/pix-orle
 ......checking pix-ps
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/pix-ps
+......checking pix-rle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/pix-rle
+......checking bw-rle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/bw-rle
 ......checking pix-spm
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/pix-spm
 ......checking pix-sun
@@ -2595,6 +2257,8 @@ cake: install is up to date
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/plstat
 ......checking query
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/query
+......checking rle-pix
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rle-pix
 ......checking sgi-pix
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/sgi-pix
 ......checking sun-pix
@@ -2839,8 +2503,116 @@ cake: install is up to date
 ++++++INSTALLED /c/regress/brlcad.sun5/man/man1/tabinterp.1
 ++++++INSTALLED /c/regress/brlcad.sun5/man/man1/tabsub.1
 -------------------------------- .tools.sun5
+......checking applymap
+++++++INSTALLED /c/regress/brlcad.sun5/bin/applymap
+......checking avg4
+++++++INSTALLED /c/regress/brlcad.sun5/bin/avg4
+......checking crop
+++++++INSTALLED /c/regress/brlcad.sun5/bin/crop
+......checking fant
+++++++INSTALLED /c/regress/brlcad.sun5/bin/fant
+......checking into
+++++++INSTALLED /c/regress/brlcad.sun5/bin/into
+......checking mcut
+++++++INSTALLED /c/regress/brlcad.sun5/bin/mcut
+......checking mergechan
+++++++INSTALLED /c/regress/brlcad.sun5/bin/mergechan
+......checking pyrmask
+++++++INSTALLED /c/regress/brlcad.sun5/bin/pyrmask
+......checking repos
+++++++INSTALLED /c/regress/brlcad.sun5/bin/repos
+......checking rleaddcom
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rleaddcom
+......checking rlebg
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlebg
+......checking rlebox
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlebox
+......checking rlecat
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlecat
+......checking rlecomp
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlecomp
+......checking rledither
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rledither
+......checking rleflip
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rleflip
+......checking rlehdr
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlehdr
+......checking rlehisto
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlehisto
+......checking rleldmap
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rleldmap
+......checking rlemandl
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlemandl
+......checking rlenoise
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlenoise
+......checking rlepatch
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlepatch
+......checking rleprint
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rleprint
+......checking rlequant
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlequant
+......checking rlescale
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlescale
+......checking rleselect
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rleselect
+......checking rlesetbg
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlesetbg
+......checking rlespiff
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlespiff
+......checking rlesplice
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlesplice
+......checking rlesplit
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlesplit
+......checking rlestereo
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlestereo
+......checking rleswap
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rleswap
+......checking rlezoom
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rlezoom
+......checking smush
+++++++INSTALLED /c/regress/brlcad.sun5/bin/smush
+......checking to8
+++++++INSTALLED /c/regress/brlcad.sun5/bin/to8
+......checking tobw
+++++++INSTALLED /c/regress/brlcad.sun5/bin/tobw
+......checking unexp
+++++++INSTALLED /c/regress/brlcad.sun5/bin/unexp
+......checking unslice
+++++++INSTALLED /c/regress/brlcad.sun5/bin/unslice
+......checking rleClock
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rleClock
 ......checking font.c
 ++++++INSTALLED /c/regress/brlcad.sun5/bin/font.c
+......checking cubitorle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/cubitorle
+......checking giftorle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/giftorle
+......checking graytorle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/graytorle
+......checking painttorle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/painttorle
+......checking rawtorle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rawtorle
+......checking rletoabA60
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rletoabA60
+......checking rletoascii
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rletoascii
+......checking rletogray
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rletogray
+......checking rletopaint
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rletopaint
+......checking rletops
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rletops
+......checking rletoraw
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rletoraw
+......checking targatorle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/targatorle
+......checking wasatchrle
+++++++INSTALLED /c/regress/brlcad.sun5/bin/wasatchrle
+......checking rletogif
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rletogif
+......checking rletoabA62
+++++++INSTALLED /c/regress/brlcad.sun5/bin/rletoabA62
 ++++++INSTALLED /c/regress/brlcad.sun5/man/man1/applymap.1
 ++++++INSTALLED /c/regress/brlcad.sun5/man/man1/avg4.1
 ++++++INSTALLED /c/regress/brlcad.sun5/man/man1/crop.1
