@@ -40,8 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-extern int	printf();
-
 static int	dbcompar();
 
 /* face definitions for each arb type */
