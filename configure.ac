@@ -1459,14 +1459,14 @@ AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
 AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
 AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
 
-AC_CHECK_FUNCS(socket, SOCKET="" ,
-	       [AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", 
+AC_CHECK_FUNCS(socket, LIBSOCKET="" ,
+	       [AC_CHECK_LIB(socket, socket, LIBSOCKET="-lsocket", 
 	       		BC_EXTRA_SEARCH_DIRS
 			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_ERROR([*** No internet socket found ***]))
 	       ])
-AC_SUBST(SOCKET)
+AC_SUBST(LIBSOCKET)
 
 
 dnl *********************************
