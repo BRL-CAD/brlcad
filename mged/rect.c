@@ -143,9 +143,6 @@ adjust_rect_for_zoom()
 void
 draw_rect()
 {
-  point_t view_pt;
-  point_t model_pt;
-  point_t first_pt;
   int line_style;
 
   if(NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&

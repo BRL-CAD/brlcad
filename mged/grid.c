@@ -124,12 +124,9 @@ draw_grid()
   point_t model_grid_anchor;
   point_t view_grid_anchor;
   point_t view_lleft_corner;
-  point_t grid_start_pt;
   point_t view_grid_anchor_local;
   point_t view_lleft_corner_local;
   point_t view_grid_start_pt_local;
-  point_t mpt1, mpt2;
-  point_t vpt1, vpt2;
   fastf_t inv_grid_res_h;
   fastf_t inv_grid_res_v;
   fastf_t inv_aspect;
@@ -303,7 +300,6 @@ fastf_t *view_dx, *view_dy;
 {
   fastf_t grid_units_h, grid_units_v;
   fastf_t sf, inv_sf;
-  fastf_t dx, dy;
   int nh, nv;
 
   if(NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||

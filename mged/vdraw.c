@@ -143,23 +143,17 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	char *str;
 	static struct rt_curve *curhead;
 	static int initialized = 0;
 	struct rt_curve *rcp, *rcp2;
 	struct rt_vlist *vp, *cp, *wp;
-	int i, index, uind, blocks, change;
+	int i, index, uind;
 	int length;
-	int found;
 	long rgb;
-	static long my_rgb;
 	struct bu_vls killstr;
-	struct solid *sp, *sp2;
 	struct directory *dp;
 	char result_string[90]; /* make sure there's room */
-	static char vdraw_name[VDRW_MAXNAME+1];
 	static char temp_name[VDRW_MAXNAME+1];
-	static char def_name[] = "_vdraw_sol_";
 	char solid_name [VDRW_MAXNAME+VDRW_PREFIX_LEN+1];
 	static int real_flag;
 
@@ -673,7 +667,6 @@ int argc;
 char **argv;
 {
 	char result_string[90];
-	point_t pos;
 
 	if(argc < 1 || 1 < argc){
 	  struct bu_vls vls;
