@@ -506,7 +506,9 @@ char *p_superell[] = {
 	"Enter Z: ",
 	"Enter X, Y, Z of vector C: ",
 	"Enter Y: ",
-	"Enter Z: "
+	"Enter Z: ",
+	"Enter n, e of north-south and east-west power: ",
+	"Enter e: "
 };
 
 /*	F _ I N ( ) :  	decides which solid reader to call
@@ -799,7 +801,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		menu = p_grip;
 		fn_in = grip_in;
 	} else if( strcmp( argv[2], "superell" ) == 0 )  {
-		nvals = 3*4;
+		nvals = 3*4 + 2;
 		menu = p_superell;
 		fn_in = superell_in;
 	} else if (strcmp(argv[2], "cline") == 0 ||
@@ -2547,17 +2549,13 @@ superell_in(cmd_argvs, intern)
 char			*cmd_argvs[];
 struct rt_db_internal	*intern;
 {
-	fastf_t			len, mag_b, r_rev, vals[12];
+	fastf_t			vals[14];
 	int			i, n;
 	struct rt_superell_internal	*eip;
 
 	CHECK_DBI_NULL;
 
-	n = 12;				/* SUPERELL has twelve params */
-	if (cmd_argvs[2][3] != '\0')	/* ELLG and ELL1 have seven */
-		n = 7;
-
-	/* need to handle special params to make sph and box objects */
+	n = 14;				/* SUPERELL has 12 (same as ELL) + 2 (for <n,e>) params */
 
 	intern->idb_type = ID_SUPERELL;
 	intern->idb_meth = &rt_functab[ID_SUPERELL];
@@ -2566,31 +2564,19 @@ struct rt_db_internal	*intern;
 	eip = (struct rt_superell_internal *)intern->idb_ptr;
 	eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
-	/* convert typed in args to reals */
-	for (i = 0; i < n; i++) {
+	/* convert typed in args to reals and convert to local units */
+	for (i = 0; i < n - 2; i++) {
 		vals[i] = atof(cmd_argvs[3+i]) * local2base;
 	}
+	vals[12] = atof(cmd_argvs[3 + 12]);
+	vals[13] = atof(cmd_argvs[3 + 13]);
 
-	if (!strcmp("superell", cmd_argvs[2])) {	/* everything's ok */
-		/* V, A, B, C */
-		VMOVE( eip->v, &vals[0] );
-		VMOVE( eip->a, &vals[3] );
-		VMOVE( eip->b, &vals[6] );
-		VMOVE( eip->c, &vals[9] );
-		return(0);
-	}
-	
-	r_rev = 0;
-	
-	/* convert ELL1 format into ELLG format */
-	/* calculate B vector */
-	bn_vec_ortho( eip->b, eip->a );
-	VUNITIZE( eip->b );
-	VSCALE( eip->b, eip->b, r_rev);
-
-	/* calculate C vector */
-	VCROSS( eip->c, eip->a, eip->b );
-	VUNITIZE( eip->c );
-	VSCALE( eip->c, eip->c, r_rev );
-	return(0);	/* success */
+	/* V, A, B, C */
+	VMOVE( eip->v, &vals[0] );
+	VMOVE( eip->a, &vals[3] );
+	VMOVE( eip->b, &vals[6] );
+	VMOVE( eip->c, &vals[9] );
+	eip->n = vals[12];
+	eip->e = vals[13];
+	return(0);
 }

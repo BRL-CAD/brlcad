@@ -15,6 +15,7 @@
  *	Utility routines
  */
 #define FILES	\
+	g_superell \
 	shoot \
 	cut bool \
 	bomb \
@@ -26,7 +27,7 @@
 	g_arb g_ars g_ebm g_ell g_half g_pg g_rec g_sph g_nurb \
 	g_tgc g_torus g_vol g_arbn g_part g_pipe g_nmg \
 	g_rpc g_rhc g_epa g_ehy g_eto g_grip g_hf g_dsp g_sketch g_extrude \
-	g_submodel g_cline g_bot g_superell \
+	g_submodel g_cline g_bot \
 	db5_types db5_bin \
 	cmd mater roots spectrum \
 	vlist regionfix htbl \

@@ -5,7 +5,8 @@
  *	Intersect a ray with a Superquadratic Ellipsoid
  *
  *  Authors -
- *      Christopher Sean Morrison
+ *      Christopher Sean Morrison (Programming)
+ *      Edwin O. Davisson (Mathmatics)
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -41,6 +42,8 @@ const struct bu_structparse rt_superell_parse[] = {
     { "%f", 3, "A", offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C", offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "n", offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "e", offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
@@ -143,9 +146,8 @@ struct superell_specific {
 	vect_t	superell_Au;		/* unit-length A vector */
 	vect_t	superell_Bu;
 	vect_t	superell_Cu;
-	vect_t	superell_invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
-	mat_t	superell_SoR;	/* Scale(Rot(vect)) */
-	mat_t	superell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
+  double superell_n; /* north-south curvature power */
+  double superell_e; /* east-west curvature power */
 };
 #define SUPERELL_NULL	((struct superell_specific *)0)
 
@@ -187,7 +189,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	magsq_c = MAGSQ( eip->c );
 
 	/* XXX this coded constant stuff will bite us someday soon */
-	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
+	if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
 		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 			stp->st_name, magsq_a, magsq_b, magsq_c );
 		return(1);		/* BAD */
@@ -203,55 +205,32 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("superell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("superell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("superell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
 	/* Solid is OK, compute constant terms now */
+
 	BU_GETSTRUCT( superell, superell_specific );
 	stp->st_specific = (genptr_t)superell;
 
 	VMOVE( superell->superell_V, eip->v );
 
-	VSET( superell->superell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
+	//	VSET( superell->superell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 	VMOVE( superell->superell_Au, Au );
 	VMOVE( superell->superell_Bu, Bu );
 	VMOVE( superell->superell_Cu, Cu );
-
-	MAT_IDN( superell->superell_SoR );
-	MAT_IDN( R );
-
-	/* Compute R and Rinv matrices */
-	VMOVE( &R[0], Au );
-	VMOVE( &R[4], Bu );
-	VMOVE( &R[8], Cu );
-	bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
-
-	/* Compute SoS (Affine transformation) */
-	MAT_IDN( SS );
-	SS[ 0] = superell->superell_invsq[0];
-	SS[ 5] = superell->superell_invsq[1];
-	SS[10] = superell->superell_invsq[2];
-
-	/* Compute invRSSR */
-	bn_mat_mul( mtemp, SS, R );
-	bn_mat_mul( superell->superell_invRSSR, Rinv, mtemp );
-
-	/* Compute SoR */
-	VSCALE( &superell->superell_SoR[0], eip->a, superell->superell_invsq[0] );
-	VSCALE( &superell->superell_SoR[4], eip->b, superell->superell_invsq[1] );
-	VSCALE( &superell->superell_SoR[8], eip->c, superell->superell_invsq[2] );
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, eip->v );
@@ -305,8 +284,6 @@ rt_superell_print(register const struct soltab *stp)
 		(struct superell_specific *)stp->st_specific;
 
 	VPRINT("V", superell->superell_V);
-	bn_mat_print("S o R", superell->superell_SoR );
-	bn_mat_print("invRSSR", superell->superell_invRSSR );
 }
 
 /*
@@ -323,44 +300,9 @@ rt_superell_print(register const struct soltab *stp)
 int
 rt_superell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-	register struct superell_specific *superell =
-		(struct superell_specific *)stp->st_specific;
-	register struct seg *segp;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL fastf_t	dp, dd;		/* D' dot P', D' dot D' */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
-	FAST fastf_t	root;		/* root of radical */
-
-	/* out, Mat, vect */
-	MAT4X3VEC( dprime, superell->superell_SoR, rp->r_dir );
-	VSUB2( xlated, rp->r_pt, superell->superell_V );
-	MAT4X3VEC( pprime, superell->superell_SoR, xlated );
-
-	dp = VDOT( dprime, pprime );
-	dd = VDOT( dprime, dprime );
-
-	if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 )
-		return(0);		/* No hit */
-	root = sqrt(root);
-
-	RT_GET_SEG(segp, ap->a_resource);
-	segp->seg_stp = stp;
-	if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
-		/* k1 is entry, k2 is exit */
-		segp->seg_in.hit_dist = k1;
-		segp->seg_out.hit_dist = k2;
-	} else {
-		/* k2 is entry, k1 is exit */
-		segp->seg_in.hit_dist = k2;
-		segp->seg_out.hit_dist = k1;
-	}
-	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-	return(2);			/* HIT */
+  return 0;
 }
 
-#define RT_SUPERELL_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
 /*
  *			R T _ S U P E R E L L _ V S H O T
@@ -375,50 +317,9 @@ rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
    		  	       /* Number of ray/object pairs */
                   	    
 {
-	register int    i;
-	register struct superell_specific *superell;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL fastf_t	dp, dd;		/* D' dot P', D' dot D' */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
-	FAST fastf_t	root;		/* root of radical */
-
-	/* for each ray/superellipse pair */
-#	include "noalias.h"
-	for(i = 0; i < n; i++){
-#if !CRAY /* XXX currently prevents vectorization on cray */
-	 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
-#endif
-		superell = (struct superell_specific *)stp[i]->st_specific;
-
-		MAT4X3VEC( dprime, superell->superell_SoR, rp[i]->r_dir );
-		VSUB2( xlated, rp[i]->r_pt, superell->superell_V );
-		MAT4X3VEC( pprime, superell->superell_SoR, xlated );
-
-		dp = VDOT( dprime, pprime );
-		dd = VDOT( dprime, dprime );
-
-		if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 ) {
-			RT_SUPERELL_SEG_MISS(segp[i]);		/* No hit */
-		}
-	        else {
-			root = sqrt(root);
-
-			segp[i].seg_stp = stp[i];
-
-			if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
-				/* k1 is entry, k2 is exit */
-				segp[i].seg_in.hit_dist = k1;
-				segp[i].seg_out.hit_dist = k2;
-			} else {
-				/* k2 is entry, k1 is exit */
-				segp[i].seg_in.hit_dist = k2;
-				segp[i].seg_out.hit_dist = k1;
-			}
-		}
-	}
+  return;
 }
+
 
 /*
  *  			R T _ S U P E R E L L _ N O R M
@@ -428,20 +329,9 @@ rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
 void
 rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-	register struct superell_specific *superell =
-		(struct superell_specific *)stp->st_specific;
-	LOCAL vect_t xlated;
-	LOCAL fastf_t scale;
-
-	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	VSUB2( xlated, hitp->hit_point, superell->superell_V );
-	MAT4X3VEC( hitp->hit_normal, superell->superell_invRSSR, xlated );
-	scale = 1.0 / MAGNITUDE( hitp->hit_normal );
-	VSCALE( hitp->hit_normal, hitp->hit_normal, scale );
-
-	/* tuck away this scale for the curvature routine */
-	hitp->hit_vpriv[X] = scale;
+  return;
 }
+
 
 /*
  *			R T _ S U P E R E L L _ C U R V E
@@ -451,34 +341,9 @@ rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct 
 void
 rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-	register struct superell_specific *superell =
-		(struct superell_specific *)stp->st_specific;
-	vect_t	u, v;			/* basis vectors (with normal) */
-	vect_t	vec1, vec2;		/* eigen vectors */
-	vect_t	tmp;
-	fastf_t	a, b, c, scale;
-
-	/*
-	 * choose a tangent plane coordinate system
-	 *  (u, v, normal) form a right-handed triple
-	 */
-	bn_vec_ortho( u, hitp->hit_normal );
-	VCROSS( v, hitp->hit_normal, u );
-
-	/* get the saved away scale factor */
-	scale = - hitp->hit_vpriv[X];
-
-	/* find the second fundamental form */
-	MAT4X3VEC( tmp, superell->superell_invRSSR, u );
-	a = VDOT(u, tmp) * scale;
-	b = VDOT(v, tmp) * scale;
-	MAT4X3VEC( tmp, superell->superell_invRSSR, v );
-	c = VDOT(v, tmp) * scale;
-
-	bn_eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
-	VCOMB2( cvp->crv_pdir, vec1[X], u, vec1[Y], v );
-	VUNITIZE( cvp->crv_pdir );
+  return 0;
 }
+
 
 /*
  *  			R T _ S U P E R E L L _ U V
@@ -491,36 +356,7 @@ rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, str
 void
 rt_superell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-	register struct superell_specific *superell =
-		(struct superell_specific *)stp->st_specific;
-	LOCAL vect_t work;
-	LOCAL vect_t pprime;
-	LOCAL fastf_t r;
-
-	/* hit_point is on surface;  project back to unit sphere,
-	 * creating a vector from vertex to hit point which always
-	 * has length=1.0
-	 */
-	VSUB2( work, hitp->hit_point, superell->superell_V );
-	MAT4X3VEC( pprime, superell->superell_SoR, work );
-	/* Assert that pprime has unit length */
-
-	/* U is azimuth, atan() range: -pi to +pi */
-	uvp->uv_u = bn_atan2( pprime[Y], pprime[X] ) * bn_inv2pi;
-	if( uvp->uv_u < 0 )
-		uvp->uv_u += 1.0;
-	/*
-	 *  V is elevation, atan() range: -pi/2 to +pi/2,
-	 *  because sqrt() ensures that X parameter is always >0
-	 */
-	uvp->uv_v = bn_atan2( pprime[Z],
-		sqrt( pprime[X] * pprime[X] + pprime[Y] * pprime[Y]) ) *
-		bn_invpi + 0.5;
-
-	/* approximation: r / (circumference, 2 * pi * aradius) */
-	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
-	uvp->uv_du = uvp->uv_dv =
-		bn_inv2pi * r / stp->st_aradius;
+  return;
 }
 
 /*
@@ -535,11 +371,13 @@ rt_superell_free(register struct soltab *stp)
 	bu_free( (char *)superell, "superell_specific" );
 }
 
+
 int
 rt_superell_class(void)
 {
 	return(0);
 }
+
 
 /*
  *			R T _ S U P E R E L L _ 1 6 P T S
@@ -710,365 +548,7 @@ struct superell_vert_strip {
 int
 rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL mat_t	R;
-	LOCAL mat_t	S;
-	LOCAL mat_t	invR;
-	LOCAL mat_t	invS;
-	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL fastf_t	Alen, Blen, Clen;
-	LOCAL fastf_t	invAlen, invBlen, invClen;
-	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
-	LOCAL fastf_t	f;
-	struct superell_state	state;
-	register int		i;
-	fastf_t		radius;
-	int		nsegs;
-	int		nstrips;
-	struct superell_vert_strip	*strips;
-	int		j;
-	struct vertex		**vertp[4];
-	int	faceno;
-	int	stripno;
-	int	boff;		/* base offset */
-	int	toff;		/* top offset */
-	int	blim;		/* base subscript limit */
-	int	tlim;		/* top subscrpit limit */
-	fastf_t	rel;		/* Absolutized relative tolerance */
-
-	RT_CK_DB_INTERNAL(ip);
-	state.eip = (struct rt_superell_internal *)ip->idb_ptr;
-	RT_SUPERELL_CK_MAGIC(state.eip);
-
-	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( state.eip->a );
-	magsq_b = MAGSQ( state.eip->b );
-	magsq_c = MAGSQ( state.eip->c );
-	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
-		bu_log("rt_superell_tess():  zero length A, B, or C vector\n");
-		return(-2);		/* BAD */
-	}
-
-	/* Create unit length versions of A,B,C */
-	invAlen = 1.0/(Alen = sqrt(magsq_a));
-	VSCALE( Au, state.eip->a, invAlen );
-	invBlen = 1.0/(Blen = sqrt(magsq_b));
-	VSCALE( Bu, state.eip->b, invBlen );
-	invClen = 1.0/(Clen = sqrt(magsq_c));
-	VSCALE( Cu, state.eip->c, invClen );
-
-	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
-	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
-		bu_log("superell():  A not perpendicular to B, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
-		bu_log("superell():  B not perpendicular to C, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
-		bu_log("superell():  A not perpendicular to C, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-
-	{
-		vect_t	axb;
-		VCROSS( axb, Au, Bu );
-		f = VDOT( axb, Cu );
-		if( f < 0 )  {
-			VREVERSE( Cu, Cu );
-			VREVERSE( state.eip->c, state.eip->c );
-		}
-	}
-
-	/* Compute R and Rinv matrices */
-	MAT_IDN( R );
-	VMOVE( &R[0], Au );
-	VMOVE( &R[4], Bu );
-	VMOVE( &R[8], Cu );
-	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
-
-	/* Compute S and invS matrices */
-	/* invS is just 1/diagonal elements */
-	MAT_IDN( S );
-	S[ 0] = invAlen;
-	S[ 5] = invBlen;
-	S[10] = invClen;
-	bn_mat_inv( invS, S );
-
-	/* invRinvS, for converting points from unit sphere to model */
-	bn_mat_mul( state.invRinvS, invR, invS );
-
-	/* invRoS, for converting normals from unit sphere to model */
-	bn_mat_mul( state.invRoS, invR, S );
-
-	/* Compute radius of bounding sphere */
-	radius = Alen;
-	if( Blen > radius )
-		radius = Blen;
-	if( Clen > radius )
-		radius = Clen;
-
-	/*
-	 *  Establish tolerances
-	 */
-	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
-		rel = 0.0;		/* none */
-	} else {
-		/* Convert rel to absolute by scaling by radius */
-		rel = ttol->rel * radius;
-	}
-	if( ttol->abs <= 0.0 )  {
-		if( rel <= 0.0 )  {
-			/* No tolerance given, use a default */
-			rel = 0.10 * radius;	/* 10% */
-		} else {
-			/* Use absolute-ized relative tolerance */
-		}
-	} else {
-		/* Absolute tolerance was given, pick smaller */
-		if( ttol->rel <= 0.0 || rel > ttol->abs )
-		{
-			rel = ttol->abs;
-			if( rel > radius )
-				rel = radius;
-		}
-	}
-
-	/*
-	 *  Converte distance tolerance into a maximum permissible
-	 *  angle tolerance.  'radius' is largest radius.
-	 */
-	state.theta_tol = 2 * acos( 1.0 - rel / radius );
-
-	/* To ensure normal tolerance, remain below this angle */
-	if( ttol->norm > 0.0 && ttol->norm < state.theta_tol )  {
-		state.theta_tol = ttol->norm;
-	}
-
-	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
-
-	/* Find the number of segments to divide 90 degrees worth into */
-	nsegs = (int)(bn_halfpi / state.theta_tol + 0.999);
-	if( nsegs < 2 )  nsegs = 2;
-
-	/*  Find total number of strips of vertices that will be needed.
-	 *  nsegs for each hemisphere, plus the equator.
-	 *  Note that faces are listed in the the stripe ABOVE, ie, toward
-	 *  the poles.  Thus, strips[0] will have 4 faces.
-	 */
-	nstrips = 2 * nsegs + 1;
-	strips = (struct superell_vert_strip *)bu_calloc( nstrips,
-		sizeof(struct superell_vert_strip), "strips[]" );
-
-	/* North pole */
-	strips[0].nverts = 1;
-	strips[0].nverts_per_strip = 0;
-	strips[0].nfaces = 4;
-	/* South pole */
-	strips[nstrips-1].nverts = 1;
-	strips[nstrips-1].nverts_per_strip = 0;
-	strips[nstrips-1].nfaces = 4;
-	/* equator */
-	strips[nsegs].nverts = nsegs * 4;
-	strips[nsegs].nverts_per_strip = nsegs;
-	strips[nsegs].nfaces = 0;
-
-	for( i=1; i<nsegs; i++ )  {
-		strips[i].nverts_per_strip =
-			strips[nstrips-1-i].nverts_per_strip = i;
-		strips[i].nverts =
-			strips[nstrips-1-i].nverts = i * 4;
-		strips[i].nfaces =
-			strips[nstrips-1-i].nfaces = (2 * i + 1)*4;
-	}
-	/* All strips have vertices and normals */
-	for( i=0; i<nstrips; i++ )  {
-		strips[i].vp = (struct vertex **)bu_calloc( strips[i].nverts,
-			sizeof(struct vertex *), "strip vertex[]" );
-		strips[i].norms = (vect_t *)bu_calloc( strips[i].nverts,
-			sizeof( vect_t ), "strip normals[]" );
-	}
-	/* All strips have faces, except for the equator */
-	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].nfaces <= 0 )  continue;
-		strips[i].fu = (struct faceuse **)bu_calloc( strips[i].nfaces,
-			sizeof(struct faceuse *), "strip faceuse[]" );
-	}
-
-	/* First, build the triangular mesh topology */
-	/* Do the top. "toff" in i-1 is UP, towards +B */
-	for( i = 1; i <= nsegs; i++ )  {
-		faceno = 0;
-		tlim = strips[i-1].nverts;
-		blim = strips[i].nverts;
-		for( stripno=0; stripno<4; stripno++ )  {
-			toff = stripno * strips[i-1].nverts_per_strip;
-			boff = stripno * strips[i].nverts_per_strip;
-
-			/* Connect this quarter strip */
-			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
-
-				/* "Right-side-up" triangle */
-				vertp[0] = &(strips[i].vp[j+boff]);
-				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
-				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
-				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					bu_log("rt_superell_tess() nmg_cmface failure\n");
-					goto fail;
-				}
-				if( j+1 >= strips[i].nverts_per_strip )  break;
-
-				/* Follow with interior "Up-side-down" triangle */
-				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
-				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
-				vertp[2] = &(strips[i-1].vp[(j+1+toff)%tlim]);
-				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					bu_log("rt_superell_tess() nmg_cmface failure\n");
-					goto fail;
-				}
-			}
-		}
-	}
-	/* Do the bottom.  Everything is upside down. "toff" in i+1 is DOWN */
-	for( i = nsegs; i < nstrips; i++ )  {
-		faceno = 0;
-		tlim = strips[i+1].nverts;
-		blim = strips[i].nverts;
-		for( stripno=0; stripno<4; stripno++ )  {
-			toff = stripno * strips[i+1].nverts_per_strip;
-			boff = stripno * strips[i].nverts_per_strip;
-
-			/* Connect this quarter strip */
-			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
-
-				/* "Right-side-up" triangle */
-				vertp[0] = &(strips[i].vp[j+boff]);
-				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
-				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
-				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					bu_log("rt_superell_tess() nmg_cmface failure\n");
-					goto fail;
-				}
-				if( j+1 >= strips[i].nverts_per_strip )  break;
-
-				/* Follow with interior "Up-side-down" triangle */
-				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
-				vertp[1] = &(strips[i+1].vp[(j+1+toff)%tlim]);
-				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
-				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					bu_log("rt_superell_tess() nmg_cmface failure\n");
-					goto fail;
-				}
-			}
-		}
-	}
-
-	/*  Compute the geometry of each vertex.
-	 *  Start with the location in the unit sphere, and project back.
-	 *  i=0 is "straight up" along +B.
-	 */
-	for( i=0; i < nstrips; i++ )  {
-		double	alpha;		/* decline down from B to A */
-		double	beta;		/* angle around equator (azimuth) */
-		fastf_t		cos_alpha, sin_alpha;
-		fastf_t		cos_beta, sin_beta;
-		point_t		sphere_pt;
-		point_t		model_pt;
-
-		alpha = (((double)i) / (nstrips-1));
-		cos_alpha = cos(alpha*bn_pi);
-		sin_alpha = sin(alpha*bn_pi);
-		for( j=0; j < strips[i].nverts; j++ )  {
-
-			beta = ((double)j) / strips[i].nverts;
-			cos_beta = cos(beta*bn_twopi);
-			sin_beta = sin(beta*bn_twopi);
-			VSET( sphere_pt,
-				cos_beta * sin_alpha,
-				cos_alpha,
-				sin_beta * sin_alpha );
-			/* Convert from ideal sphere coordinates */
-			MAT4X3PNT( model_pt, state.invRinvS, sphere_pt );
-			VADD2( model_pt, model_pt, state.eip->v );
-			/* Associate vertex geometry */
-			nmg_vertex_gv( strips[i].vp[j], model_pt );
-
-			/* Convert sphere normal to superellipsoid normal */
-			MAT4X3VEC( strips[i].norms[j], state.invRoS, sphere_pt );
-			/* May not be unit length anymore */
-			VUNITIZE( strips[i].norms[j] );
-		}
-	}
-
-	/* Associate face geometry.  Equator has no faces */
-	for( i=0; i < nstrips; i++ )  {
-		for( j=0; j < strips[i].nfaces; j++ )  {
-			if( nmg_fu_planeeqn( strips[i].fu[j], tol ) < 0 )
-				goto fail;
-		}
-	}
-
-	/* Associate normals with vertexuses */
-	for( i=0; i < nstrips; i++ )
-	{
-		for( j=0; j < strips[i].nverts; j++ )
-		{
-			struct faceuse *fu;
-			struct vertexuse *vu;
-			vect_t norm_opp;
-
-			NMG_CK_VERTEX( strips[i].vp[j] );
-			VREVERSE( norm_opp , strips[i].norms[j] )
-
-			for( BU_LIST_FOR( vu , vertexuse , &strips[i].vp[j]->vu_hd ) )
-			{
-				fu = nmg_find_fu_of_vu( vu );
-				NMG_CK_FACEUSE( fu );
-				/* get correct direction of normals depending on
-				 * faceuse orientation
-				 */
-				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , strips[i].norms[j] );
-				else if( fu->orientation == OT_OPPOSITE )
-					nmg_vertexuse_nv( vu , norm_opp );
-			}
-		}
-	}
-
-	/* Compute "geometry" for region and shell */
-	nmg_region_a( *r, tol );
-
-	/* Release memory */
-	/* All strips have vertices and normals */
-	for( i=0; i<nstrips; i++ )  {
-		bu_free( (char *)strips[i].vp, "strip vertex[]" );
-		bu_free( (char *)strips[i].norms, "strip norms[]" );
-	}
-	/* All strips have faces, except for equator */
-	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].fu == (struct faceuse **)0 )  continue;
-		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
-	}
-	bu_free( (char *)strips, "strips[]" );
-	return(0);
-fail:
-	/* Release memory */
-	/* All strips have vertices and normals */
-	for( i=0; i<nstrips; i++ )  {
-		bu_free( (char *)strips[i].vp, "strip vertex[]" );
-		bu_free( (char *)strips[i].norms, "strip norms[]" );
-	}
-	/* All strips have faces, except for equator */
-	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].fu == (struct faceuse **)0 )  continue;
-		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
-	}
-	bu_free( (char *)strips, "strips[]" );
-	return(-1);
+  return -1;
 }
 
 /*
@@ -1083,7 +563,7 @@ rt_superell_import(struct rt_db_internal *ip, const struct bu_external *ep, regi
 {
 	struct rt_superell_internal	*eip;
 	union record		*rp;
-	LOCAL fastf_t	vec[3*4];
+	LOCAL fastf_t	vec[3*4 + 2];
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -1109,6 +589,8 @@ rt_superell_import(struct rt_db_internal *ip, const struct bu_external *ep, regi
 	MAT4X3VEC( eip->a, mat, &vec[1*3] );
 	MAT4X3VEC( eip->b, mat, &vec[2*3] );
 	MAT4X3VEC( eip->c, mat, &vec[3*3] );
+	eip->n = rp->s.s_values[12];
+	eip->e = rp->s.s_values[13];
 
 	return(0);		/* OK */
 }
@@ -1141,6 +623,11 @@ rt_superell_export(struct bu_external *ep, const struct rt_db_internal *ip, doub
 	VSCALE( &rec->s.s_values[6], tip->b, local2mm );
 	VSCALE( &rec->s.s_values[9], tip->c, local2mm );
 
+	printf("SUPERELL: %g %g\n", tip->n, tip->e);
+
+	rec->s.s_values[12] = tip->n;
+	rec->s.s_values[13] = tip->e;
+
 	return(0);
 }
 
@@ -1155,12 +642,12 @@ int
 rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_superell_internal	*eip;
-	fastf_t			vec[ELEMENTS_PER_VECT*4];
+	fastf_t			vec[ELEMENTS_PER_VECT*4 + 2];
 
 	RT_CK_DB_INTERNAL( ip );
 	BU_CK_EXTERNAL( ep );
 
-	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4 );
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 2));
 
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_SUPERELL;
@@ -1171,13 +658,15 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
 	/* Convert from database (network) to internal (host) format */
-	ntohd( (unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 );
+	ntohd( (unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
 
 	/* Apply modeling transformations */
 	MAT4X3PNT( eip->v, mat, &vec[0*ELEMENTS_PER_VECT] );
 	MAT4X3VEC( eip->a, mat, &vec[1*ELEMENTS_PER_VECT] );
 	MAT4X3VEC( eip->b, mat, &vec[2*ELEMENTS_PER_VECT] );
 	MAT4X3VEC( eip->c, mat, &vec[3*ELEMENTS_PER_VECT] );
+	eip->n = vec[4*ELEMENTS_PER_VECT];
+	eip->e = vec[4*ELEMENTS_PER_VECT + 1];
 
 	return 0;		/* OK */
 }
@@ -1195,7 +684,7 @@ int
 rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_superell_internal	*eip;
-	fastf_t			vec[ELEMENTS_PER_VECT*4];
+	fastf_t			vec[ELEMENTS_PER_VECT*4 + 2];
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_SUPERELL )  return(-1);
@@ -1203,7 +692,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	RT_SUPERELL_CK_MAGIC(eip);
 
 	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4;
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 2);
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "superell external");
 
 	/* scale 'em into local buffer */
@@ -1212,8 +701,11 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	VSCALE( &vec[2*ELEMENTS_PER_VECT], eip->b, local2mm );
 	VSCALE( &vec[3*ELEMENTS_PER_VECT], eip->c, local2mm );
 
+	vec[4*ELEMENTS_PER_VECT] = eip->n;
+	vec[4*ELEMENTS_PER_VECT + 1] = eip->e;
+
 	/* Convert from internal (host) to database (network) format */
-	htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 );
+	htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 + 2 );
 
 	return 0;
 }
@@ -1269,6 +761,9 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 		mag_c * mm2local);
 	bu_vls_strcat( str, buf );
 
+	sprintf(buf, "\t<n,e> (%g, %g)\n", tip->n, tip->e);
+	bu_vls_strcat(str, buf);
+
 	if( !verbose )  return(0);
 
 	VSCALE( unitv, tip->a, 1/mag_a );
@@ -1317,179 +812,6 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
 int
 rt_superell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-	LOCAL mat_t	R;
-	LOCAL mat_t	S;
-	LOCAL mat_t	invR;
-	LOCAL mat_t	invS;
-	mat_t		invRinvS;
-	mat_t		invRoS;
-	LOCAL mat_t	unit2model;
-	LOCAL mat_t	xlate;
-	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL fastf_t	Alen, Blen, Clen;
-	LOCAL fastf_t	invAlen, invBlen, invClen;
-	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
-	LOCAL fastf_t	f;
-	register int		i;
-	fastf_t		radius;
-	struct rt_superell_internal	*eip;
-	struct vertex		*verts[8];
-	struct vertex		**vertp[4];
-	struct faceuse		*fu;
-	struct shell		*s;
-	struct loopuse		*lu;
-	struct edgeuse		*eu;
-	point_t			pole;
-
-	RT_CK_DB_INTERNAL(ip);
-	eip = (struct rt_superell_internal *)ip->idb_ptr;
-	RT_SUPERELL_CK_MAGIC(eip);
-
-	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( eip->a );
-	magsq_b = MAGSQ( eip->b );
-	magsq_c = MAGSQ( eip->c );
-	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
-		bu_log("rt_superell_tess():  zero length A, B, or C vector\n");
-		return(-2);		/* BAD */
-	}
-
-	/* Create unit length versions of A,B,C */
-	invAlen = 1.0/(Alen = sqrt(magsq_a));
-	VSCALE( Au, eip->a, invAlen );
-	invBlen = 1.0/(Blen = sqrt(magsq_b));
-	VSCALE( Bu, eip->b, invBlen );
-	invClen = 1.0/(Clen = sqrt(magsq_c));
-	VSCALE( Cu, eip->c, invClen );
-
-	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
-	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
-		bu_log("superell():  A not perpendicular to B, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
-		bu_log("superell():  B not perpendicular to C, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
-		bu_log("superell():  A not perpendicular to C, f=%f\n", f);
-		return(-3);		/* BAD */
-	}
-
-	{
-		vect_t	axb;
-		VCROSS( axb, Au, Bu );
-		f = VDOT( axb, Cu );
-		if( f < 0 )  {
-			VREVERSE( Cu, Cu );
-			VREVERSE( eip->c, eip->c );
-		}
-	}
-
-	/* Compute R and Rinv matrices */
-	MAT_IDN( R );
-	VMOVE( &R[0], Au );
-	VMOVE( &R[4], Bu );
-	VMOVE( &R[8], Cu );
-	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
-
-	/* Compute S and invS matrices */
-	/* invS is just 1/diagonal elements */
-	MAT_IDN( S );
-	S[ 0] = invAlen;
-	S[ 5] = invBlen;
-	S[10] = invClen;
-	bn_mat_inv( invS, S );
-
-	/* invRinvS, for converting points from unit sphere to model */
-	bn_mat_mul( invRinvS, invR, invS );
-
-	/* invRoS, for converting normals from unit sphere to model */
-	bn_mat_mul( invRoS, invR, S );
-
-	/* Compute radius of bounding sphere */
-	radius = Alen;
-	if( Blen > radius )
-		radius = Blen;
-	if( Clen > radius )
-		radius = Clen;
-
-	MAT_IDN( xlate );
-	MAT_DELTAS_VEC( xlate, eip->v );
-	bn_mat_mul( unit2model, xlate, invRinvS );
-
-	/*
-	 *  --- Build Topology ---
-	 *
-	 *  There is a vertex at either pole, and a single longitude line.
-	 *  There is a single face, an snurb with singularities.
-	 *  vert[0] is the south pole, and is the first row of the ctl_points.
-	 *  vert[1] is the north pole, and is the last row of the ctl_points.
-	 *
-	 *  Somewhat surprisingly, the U parameter runs from south to north.
-	 */
-	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
-
-	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
-
-	vertp[0] = &verts[0];
-	vertp[1] = &verts[0];
-	vertp[2] = &verts[1];
-	vertp[3] = &verts[1];
-
-	if( (fu = nmg_cmface( s, vertp, 4 )) == 0 )  {
-		bu_log("rt_superell_tnurb(%s): nmg_cmface() fail on face\n");
-		return -1;
-	}
-
-	/* March around the fu's loop assigning uv parameter values */
-	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
-	NMG_CK_LOOPUSE(lu);
-	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
-	NMG_CK_EDGEUSE(eu);
-
-	/* Loop always has Counter-Clockwise orientation (CCW) */
-	for( i=0; i < 4; i++ )  {
-		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_superell_uvw[i*ELEMENTS_PER_VECT] );
-		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_superell_uvw[(i+1)*ELEMENTS_PER_VECT] );
-		eu = BU_LIST_NEXT( edgeuse, &eu->l );
-	}
-
-	/* Associate vertex geometry */
-	VSUB2( pole, eip->v, eip->c );		/* south pole */
-	nmg_vertex_gv( verts[0], pole );
-	VADD2( pole, eip->v, eip->c );
-	nmg_vertex_gv( verts[1], pole );	/* north pole */
-
- 	/* Build snurb, transformed into final position */
-	/*nmg_sphere_face_snurb( fu, unit2model );*/
-
-	/* Associate edge geometry (trimming curve) -- linear in param space */
-	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
-	NMG_CK_EDGEUSE(eu);
-	for( i=0; i < 4; i++ )  {
-#if 0
-struct snurb sn;
-fastf_t	param[4];
-bu_log("\neu=x%x, vu=x%x, v=x%x  ", eu, eu->vu_p, eu->vu_p->v_p);
-VPRINT("xyz", eu->vu_p->v_p->vg_p->coord);
-nmg_hack_snurb( &sn, fu->f_p->g.snurb_p );
-VPRINT("uv", eu->vu_p->a.cnurb_p->param);
-rt_nurb_s_eval( &sn, V2ARGS(eu->vu_p->a.cnurb_p->param), param );
-VPRINT("surf(u,v)", param);
-#endif
-
-		nmg_edge_g_cnurb_plinear(eu);
-		eu = BU_LIST_NEXT( edgeuse, &eu->l );
-	}
-
-	/* Compute "geometry" for region and shell */
-	nmg_region_a( *r, tol );
-
 	return 0;
 }
 
@@ -1500,109 +822,5 @@ VPRINT("surf(u,v)", param);
 static void
 nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 {
-	struct face_g_snurb	*fg;
-	FAST fastf_t root2_2;
-	register fastf_t	*op;
-
-	NMG_CK_FACEUSE(fu);
-	root2_2 = sqrt(2.0)*0.5;
-
-	/* Let the library allocate all the storage */
-	/* The V direction runs from south to north pole */
-	nmg_face_g_snurb( fu,
-		3, 3,		/* u,v order */
-		8, 12,		/* Number of knots, u,v */
-		NULL, NULL,	/* initial u,v knot vectors */
-		9, 5,		/* n_rows, n_cols */
-		RT_NURB_MAKE_PT_TYPE( 4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL ),
-		NULL );		/* initial mesh */
-
-	fg = fu->f_p->g.snurb_p;
-	NMG_CK_FACE_G_SNURB(fg);
-
-	fg->v.knots[ 0] = 0;
-	fg->v.knots[ 1] = 0;
-	fg->v.knots[ 2] = 0;
-	fg->v.knots[ 3] = 0.25;
-	fg->v.knots[ 4] = 0.25;
-	fg->v.knots[ 5] = 0.5;
-	fg->v.knots[ 6] = 0.5;
-	fg->v.knots[ 7] = 0.75;
-	fg->v.knots[ 8] = 0.75;
-	fg->v.knots[ 9] = 1;
-	fg->v.knots[10] = 1;
-	fg->v.knots[11] = 1;
-
-	fg->u.knots[0] = 0;
-	fg->u.knots[1] = 0;
-	fg->u.knots[2] = 0;
-	fg->u.knots[3] = 0.5;
-	fg->u.knots[4] = 0.5;
-	fg->u.knots[5] = 1;
-	fg->u.knots[6] = 1;
-	fg->u.knots[7] = 1;
-
-	op = fg->ctl_points;
-
-/* Inspired by MAT4X4PNT */
-#define M(x,y,z,w)	{ \
-	*op++ = m[ 0]*(x) + m[ 1]*(y) + m[ 2]*(z) + m[ 3]*(w);\
-	*op++ = m[ 4]*(x) + m[ 5]*(y) + m[ 6]*(z) + m[ 7]*(w);\
-	*op++ = m[ 8]*(x) + m[ 9]*(y) + m[10]*(z) + m[11]*(w);\
-	*op++ = m[12]*(x) + m[13]*(y) + m[14]*(z) + m[15]*(w); }
-
-
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M( root2_2 ,   0     ,-root2_2 , root2_2 );
-	M( 1.0     ,   0     ,   0     , 1.0     );
-	M( root2_2 ,   0     , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
-
-	M(   0     ,   0     ,-root2_2 , root2_2 );
-	M( 0.5     ,-0.5     ,-0.5     , 0.5     );
-	M( root2_2 ,-root2_2 ,   0     , root2_2 );
-	M( 0.5     ,-0.5     , 0.5     , 0.5     );
-	M(   0     ,   0     , root2_2 , root2_2 );
-
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M(   0     ,-root2_2 ,-root2_2 , root2_2 );
-	M(   0     ,-1.0     ,   0     , 1.0     );
-	M(   0     ,-root2_2 , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
-
-	M(   0     ,   0     ,-root2_2 , root2_2 );
-	M(-0.5     ,-0.5     ,-0.5     , 0.5     );
-	M(-root2_2 ,-root2_2 ,   0     , root2_2 );
-	M(-0.5     ,-0.5     , 0.5     , 0.5     );
-	M(   0     ,   0     , root2_2 , root2_2 );
-
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M(-root2_2 ,   0     ,-root2_2 , root2_2 );
-	M(-1.0     ,   0     ,   0     , 1.0     );
-	M(-root2_2 ,   0     , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
-
-	M(   0     ,   0     ,-root2_2 , root2_2 );
-	M(-0.5     , 0.5     ,-0.5     , 0.5     );
-	M(-root2_2 , root2_2 ,   0     , root2_2 );
-	M(-0.5     , 0.5     , 0.5     , 0.5     );
-	M(   0     ,   0     , root2_2 , root2_2 );
-
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M(   0     , root2_2 ,-root2_2 , root2_2 );
-	M(   0     , 1.0     ,   0     , 1.0     );
-	M(   0     , root2_2 , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
-
-	M(   0     ,   0     ,-root2_2 , root2_2 );
-	M( 0.5     , 0.5     ,-0.5     , 0.5     );
-	M( root2_2 , root2_2 ,   0     , root2_2 );
-	M( 0.5     , 0.5     , 0.5     , 0.5     );
-	M(   0     ,   0     , root2_2 , root2_2 );
-
-	M(   0     ,   0     ,-1.0     , 1.0     );
-	M( root2_2 ,   0     ,-root2_2 , root2_2 );
-	M( 1.0     ,   0     ,   0     , 1.0     );
-	M( root2_2 ,   0     , root2_2 , root2_2 );
-	M(   0     ,   0     , 1.0     , 1.0     );
+  return;
 }

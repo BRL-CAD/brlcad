@@ -100,6 +100,8 @@ struct rt_superell_internal {
 	vect_t  a;
 	vect_t  b;
 	vect_t  c;
+  double n;
+  double e;
 };
 #define RT_SUPERELL_INTERNAL_MAGIC      0xff93bb23
 #define RT_SUPERELL_CK_MAGIC(_p)        BU_CKMAG(_p,RT_SUPERELL_INTERNAL_MAGIC,"rt_superell_internal")

@@ -243,6 +243,7 @@ writesolid(void)
 			(void)fprintf( fp , "A: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->a ) );
 			(void)fprintf( fp , "B: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->b ) );
 			(void)fprintf( fp , "C: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->c ) );
+			(void)fprintf( fp , "<n,e>: <%.9f, %.9f>\n", superell->n, superell->e);
 			break;
 	}
 	
@@ -406,6 +407,8 @@ readsolid(void)
 		case ID_ELL:
 		case ID_SPH:
 			ell = (struct rt_ell_internal *)es_int.idb_ptr;
+
+			fprintf(stderr, "ID_SPH\n");
 
 			if( (str=Get_next_line( fp )) == NULL )
 			{
@@ -754,6 +757,8 @@ readsolid(void)
 		case ID_SUPERELL:
 			superell = (struct rt_superell_internal *)es_int.idb_ptr;
 
+			fprintf(stderr, "ID_SUPERELL\n");
+
 			if( (str=Get_next_line( fp )) == NULL )
 			{
 				ret_val = 1;
@@ -789,7 +794,13 @@ readsolid(void)
 			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
 			VSET( superell->c , a , b , c );
 			VSCALE( superell->c , superell->c , local2base );
-			break;
+			
+			if ( (str=Get_next_line( fp )) == NULL ) {
+			  ret_val = 1;
+			  break;
+			}
+			(void) sscanf( str, "%lf %lf", &superell->n, &superell->e);
+			break;	
 	}
 
 	(void)fclose(fp);

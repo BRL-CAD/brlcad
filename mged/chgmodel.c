@@ -1189,6 +1189,8 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			superell->a[k] *= -1.0;
 			superell->b[k] *= -1.0;
 			superell->c[k] *= -1.0;
+			superell->n = 1.0;
+			superell->e = 1.0;
 
 			break;
 		}
@@ -1968,6 +1970,8 @@ f_make(ClientData	clientData,
 		csg->center_is_left = 1;
 		csg->orientation = 0;
 	} else if( strcmp( argv[2], "superell" ) == 0 )  {
+
+
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_SUPERELL;
 		internal.idb_meth = &rt_functab[ID_SUPERELL];
@@ -1978,6 +1982,10 @@ f_make(ClientData	clientData,
 		VSET( superell_ip->a, view_state->vs_vop->vo_scale, 0.0, 0.0 );		/* A */
 		VSET( superell_ip->b, 0.0, (0.5*view_state->vs_vop->vo_scale), 0.0 );	/* B */
 		VSET( superell_ip->c, 0.0, 0.0, (0.25*view_state->vs_vop->vo_scale) );	/* C */
+		superell_ip->n = 1.0;
+		superell_ip->e = 1.0;
+	  fprintf(stdout, "superell being made with %f and %f\n", superell_ip->n, superell_ip->e);
+
 	} else if (strcmp(argv[2], "hf") == 0) {
 		Tcl_AppendResult(interp, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n", (char *)NULL);
 		return TCL_ERROR;

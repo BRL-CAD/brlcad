@@ -194,6 +194,13 @@ union record  {
 #define s_ell_B s_values[6]
 #define s_ell_C s_values[9]
 
+#define s_superell_V s_values[0]
+#define s_superell_A s_values[3]
+#define s_superell_B s_values[6]
+#define s_superell_C s_values[9]
+#define s_superell_n s_values[12]
+#define s_superell_e s_values[13]
+
 #define s_half_N s_values[0]
 #define s_half_d s_values[3]
 
