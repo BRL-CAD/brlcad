@@ -4,6 +4,8 @@
 **	$Header$
 */
 
+#if 0
+
 /* too long names */
 #define	cake_abort	c_abort
 #define	cake_error	c_error
@@ -104,3 +106,5 @@
 #define	Lflag		llflag
 #define	Rflag		rrflag
 #define	Xflag		xxflag
+
+#endif
