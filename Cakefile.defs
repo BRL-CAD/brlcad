@@ -1846,6 +1846,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBOPTICAL_DIR	../liboptical
 #	define	LIBOPTICAL	-L''LIBOPTICAL_DIR -loptical
 #	define	LIBOPTICAL_DEP	[[LIBVERS ../liboptical/liboptical.ARCH_SUF]]
+#	define	LIBMULTISPECTRAL_DIR	../libmultispectral
+#	define	LIBMULTISPECTRAL	-L''LIBMULTISPECTRAL_DIR -lmultispectral
+#	define	LIBMULTISPECTRAL_DEP	[[LIBVERS ../libmultispectral/libmultispectral.ARCH_SUF]]
 #	define	LIBBU_DIR	../libbu
 #	define	LIBBU		-L''LIBBU_DIR -lbu
 #	define	LIBBU_DEP	[[LIBVERS ../libbu/libbu.ARCH_SUF]]
@@ -1931,6 +1934,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBOPTICAL_DIR	../.liboptical.MTYPE
 #	define	LIBOPTICAL	-L''LIBOPTICAL_DIR -loptical
 #	define	LIBOPTICAL_DEP	[[LIBVERS ../.liboptical.MTYPE/liboptical.ARCH_SUF]]
+#	define	LIBMULTISPECTRAL_DIR	../.libmultispectral.MTYPE
+#	define	LIBMULTISPECTRAL	-L''LIBMULTISPECTRAL_DIR -lmultispectral
+#	define	LIBMULTISPECTRAL_DEP	[[LIBVERS ../.libmultispectral.MTYPE/libmultispectral.ARCH_SUF]]
 #	define	LIBBU_DIR	../.libbu.MTYPE
 #	define	LIBBU		-L''LIBBU_DIR -lbu
 #	define	LIBBU_DEP	[[LIBVERS ../.libbu.MTYPE/libbu.ARCH_SUF]]

@@ -166,6 +166,7 @@ BDIRS="bench \
 	fbserv \
 	librt \
 	liboptical \
+	libmultispectral \
 	libredblack \
 	libtermio \
 	libtclcad \
