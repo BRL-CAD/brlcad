@@ -87,6 +87,8 @@ static struct db_tree_state	mged_initial_tree_state = {
 static int		mged_draw_wireframes;
 static int		mged_draw_normals;
 static struct model	*mged_nmg_model;
+struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
+struct rt_tol		mged_tol;
 
 /*
  *		R T _ C O P Y _ V L I S T
@@ -231,8 +233,9 @@ int			id;
 	union tree	*curtree;
 	int		dashflag;		/* draw with dashed lines */
 	struct rt_list	vhead;
-	struct rt_tess_tol	ttol;
-	struct rt_tol		tol;
+
+	RT_CK_TESS_TOL(tsp->ts_ttol);
+	RT_CK_TOL(tsp->ts_tol);
 
 	RT_LIST_INIT( &vhead );
 
@@ -254,22 +257,10 @@ int			id;
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
-	ttol.magic = RT_TESS_TOL_MAGIC;
-	ttol.abs = mged_abs_tol;
-	ttol.rel = mged_rel_tol;
-	ttol.norm = mged_nrm_tol;
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
 	if( rt_functab[id].ft_plot(
 	    &vhead,
 	    &intern,
-	    &ttol, &tol ) < 0 )  {
+	    tsp->ts_ttol, tsp->ts_tol ) < 0 )  {
 		printf("%s: plot failure\n",
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 		rt_functab[id].ft_ifree( &intern );
@@ -290,177 +281,6 @@ static int mged_do_not_draw_nmg_solids_during_debugging = 0;
 static int mged_draw_edge_uses=0;
 
 /*
- *			M G E D _ N M G _ L E A F
- *
- *  Tessellate Solid into NMG
- *
- *  This routine must be prepared to run in parallel.
- */
-HIDDEN union tree *mged_nmg_leaf( tsp, pathp, ep, id )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct rt_external	*ep;
-int			id;
-{
-	struct rt_db_internal	intern;
-	struct nmgregion	*r1;
-	union tree		*curtree;
-	struct directory	*dp;
-	struct rt_tess_tol	ttol;
-	struct rt_tol		tol;
-
-	dp = DB_FULL_PATH_CUR_DIR(pathp);
-
-    	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat ) < 0 )  {
-		rt_log("%s:  solid import failure\n",
-			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-	    	return(TREE_NULL);		/* ERROR */
-	}
-	RT_CK_DB_INTERNAL( &intern );
-
-	ttol.magic = RT_TESS_TOL_MAGIC;
-	ttol.abs = mged_abs_tol;
-	ttol.rel = mged_rel_tol;
-	ttol.norm = mged_nrm_tol;
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
-	if( rt_functab[id].ft_tessellate(
-	    &r1, mged_nmg_model, &intern,
-	    &ttol, &tol ) < 0 )  {
-		rt_log("%s: tessellation failure\n",
-			dp->d_namep);
-		rt_functab[id].ft_ifree( &intern );
-	    	return(TREE_NULL);
-	}
-	rt_functab[id].ft_ifree( &intern );
-
-	/* debug */
-	NMG_CK_REGION( r1 );
-	if( nmg_ck_closed_region( r1 ) != 0 )  {
-#if 0
-		nmg_kr( r1 );
-		return(TREE_NULL);
-#endif
-	}
-
-	GETUNION( curtree, tree );
-	curtree->tr_op = OP_NMG_TESS;
-	curtree->tr_d.td_r = r1;
-
-	if(rt_g.debug&DEBUG_TREEWALK)
-		rt_log("mged_nmg_leaf()\n");
-
-	return(curtree);
-}
-
-/*
- *			M G E D _ N M G _ D O I T
- */
-HIDDEN struct nmgregion *
-mged_nmg_doit( tp, ttol )
-register union tree	*tp;
-struct rt_tess_tol	*ttol;
-{
-	register struct nmgregion	*l;
-	register struct nmgregion	*r;
-	vect_t			diag;
-	fastf_t			rel;
-	int			op;
-	struct rt_tol		tol;
-
-	RT_CK_TESS_TOL(ttol);
-
-	switch( tp->tr_op )  {
-	case OP_NOP:
-		return( 0 );
-
-	case OP_NMG_TESS:
-		r = tp->tr_d.td_r;
-		tp->tr_d.td_r = (struct nmgregion *)NULL;	/* Disconnect */
-		tp->tr_op = OP_NOP;	/* Keep quiet */
-		return( r );
-
-	case OP_UNION:
-		op = NMG_BOOL_ADD;
-		goto com;
-	case OP_INTERSECT:
-		op = NMG_BOOL_ISECT;
-		goto com;
-	case OP_SUBTRACT:
-		op = NMG_BOOL_SUB;
-		goto com;
-
-	default:
-		rt_log("mged_nmg_doit: bad op %d\n", tp->tr_op);
-		return(0);
-	}
-com:
-	l = mged_nmg_doit( tp->tr_b.tb_left, ttol );
-	r = mged_nmg_doit( tp->tr_b.tb_right, ttol );
-	if( l == 0 )  {
-		if( r == 0 )
-			return( 0 );
-		return( r );
-	}
-	if( r == 0 )  {
-		if( l == 0 )
-			return(0);
-		return( l );
-	}
-	/* debug */
-	NMG_CK_REGION( r );
-	NMG_CK_REGION( l );
-	if( nmg_ck_closed_region( r ) != 0 )
-	    	rt_log("mged_nmg_doit:  WARNING, non-closed shell (r), barging ahead\n");
-	if( nmg_ck_closed_region( l ) != 0 )
-	    	rt_log("mged_nmg_doit:  WARNING, non-closed shell (l), barging ahead\n");
-
-	/*
-	 *  Compute appropriate tolerance for the boolean routine.
-	 *  This tolerance is an absolute distance metric.
-	 *  The geometry is guaranteed to contain no errors larger than
-	 *  this tolerance value.
-	 */
-	tol.dist = ttol->abs;
-	if( ttol->rel > 0.0 )  {
-		if( l->ra_p )  {
-			VSUB2( diag, l->ra_p->max_pt, l->ra_p->min_pt );
-			rel = MAGNITUDE(diag) * ttol->rel;
-			if( tol.dist <= 0.0 || rel < tol.dist )  tol.dist = rel;
-		}
-		if( r->ra_p )  {
-			VSUB2( diag, r->ra_p->max_pt, r->ra_p->min_pt );
-			rel = MAGNITUDE(diag) * ttol->rel;
-			if( tol.dist <= 0.0 || rel < tol.dist )  tol.dist = rel;
-		}
-	}
-	if( tol.dist <= 0.0 )  tol.dist = 0.1;		/* mm */
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist /= 128;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
-	/* input r1 and r2 are destroyed, output is new r1 */
-	r = nmg_do_bool( l, r, op, &tol );
-
-	/* debug */
-	NMG_CK_REGION( r );
-	(void)nmg_ck_closed_region( r );
-	return( r );
-}
-
-/*
  *			M G E D _ N M G _ R E G I O N _ E N D
  *
  *  This routine must be prepared to run in parallel.
@@ -472,7 +292,10 @@ union tree		*curtree;
 {
 	struct nmgregion	*r;
 	struct rt_list		vhead;
-	struct rt_tess_tol	ttol;
+
+	RT_CK_TESS_TOL(tsp->ts_ttol);
+	RT_CK_TOL(tsp->ts_tol);
+	NMG_CK_MODEL(*tsp->ts_m);
 
 	RT_LIST_INIT( &vhead );
 
@@ -485,12 +308,7 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	ttol.magic = RT_TESS_TOL_MAGIC;
-	ttol.abs = mged_abs_tol;
-	ttol.rel = mged_rel_tol;
-	ttol.norm = mged_nrm_tol;
-
-	r = mged_nmg_doit( curtree, &ttol );
+	r = nmg_booltree_evaluate( curtree, tsp->ts_tol );
 
 	if( mged_do_not_draw_nmg_solids_during_debugging && r )  {
 		nmg_kr(r);
@@ -593,6 +411,22 @@ int	kind;
 	nmg_vlblock_anim_upcall = mged_vlblock_anim_upcall_handler;
 	nmg_mged_debug_display_hack = hack_for_lee;
 
+	/* Establish tolerances */
+	mged_initial_tree_state.ts_ttol = &mged_ttol;
+	mged_initial_tree_state.ts_tol = &mged_tol;
+
+	mged_ttol.magic = RT_TESS_TOL_MAGIC;
+	mged_ttol.abs = mged_abs_tol;
+	mged_ttol.rel = mged_rel_tol;
+	mged_ttol.norm = mged_nrm_tol;
+
+	/* XXX These need to be improved */
+	mged_tol.magic = RT_TOL_MAGIC;
+	mged_tol.dist = 0.005;
+	mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
+	mged_tol.perp = 1e-6;
+	mged_tol.para = 1 - mged_tol.perp;
+
 	switch( kind )  {
 	default:
 		rt_log("ERROR, bad kind\n");
@@ -627,14 +461,14 @@ int	kind;
 Please note that the NMG library used by this command is experimental.\n\
 A production implementation will exist in the maintenance release.\n");
 	  	mged_nmg_model = nmg_mm();
-
+		mged_initial_tree_state.ts_m = &mged_nmg_model;
 
 		i = db_walk_tree( dbip, argc, (CONST char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_nmg_region_end,
-			mged_nmg_leaf );
+			nmg_booltree_leaf_tess );
 
 	  	if (mged_draw_edge_uses) {
 	  		struct rt_vlblock *vbp;
@@ -919,8 +753,6 @@ CONST mat_t			mat;
 	struct rt_db_internal	intern;
 	unsigned		addr, bytes;
 	struct rt_list		vhead;
-	struct rt_tess_tol	ttol;
-	struct rt_tol		tol;
 
 	RT_LIST_INIT( &vhead );
 
@@ -939,21 +771,21 @@ CONST mat_t			mat;
 	/* Draw (plot) a normal solid */
 	RT_CK_DB_INTERNAL( ip );
 
-	ttol.magic = RT_TESS_TOL_MAGIC;
-	ttol.abs = mged_abs_tol;
-	ttol.rel = mged_rel_tol;
-	ttol.norm = mged_nrm_tol;
+	mged_ttol.magic = RT_TESS_TOL_MAGIC;
+	mged_ttol.abs = mged_abs_tol;
+	mged_ttol.rel = mged_rel_tol;
+	mged_ttol.norm = mged_nrm_tol;
 
 	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
+	mged_tol.magic = RT_TOL_MAGIC;
+	mged_tol.dist = 0.005;
+	mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
+	mged_tol.perp = 1e-6;
+	mged_tol.para = 1 - mged_tol.perp;
 
 	transform_editing_solid( &intern, mat, ip, 0 );
 
-	if( rt_functab[ip->idb_type].ft_plot( &vhead, &intern, &ttol, &tol ) < 0 )  {
+	if( rt_functab[ip->idb_type].ft_plot( &vhead, &intern, &mged_ttol, &mged_tol ) < 0 )  {
 		(void)printf("%s: re-plot failure\n",
 			sp->s_path[sp->s_last]->d_namep );
 	    	return(-1);
@@ -1157,12 +989,27 @@ char	**argv;
 	struct directory	*dp;
 	struct nmgregion	*r;
 	int			ngran;
-	struct rt_tess_tol	ttol;
 
 	RT_CHECK_DBI(dbip);
 
 	rt_log("Please note that the NMG library used by this command is experimental.\n");
 	rt_log("A production implementation will exist in the maintenance release.\n");
+
+	/* Establish tolerances */
+	mged_initial_tree_state.ts_ttol = &mged_ttol;
+	mged_initial_tree_state.ts_tol = &mged_tol;
+
+	mged_ttol.magic = RT_TESS_TOL_MAGIC;
+	mged_ttol.abs = mged_abs_tol;
+	mged_ttol.rel = mged_rel_tol;
+	mged_ttol.norm = mged_nrm_tol;
+
+	/* XXX These need to be improved */
+	mged_tol.magic = RT_TOL_MAGIC;
+	mged_tol.dist = 0.005;
+	mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
+	mged_tol.perp = 1e-6;
+	mged_tol.para = 1 - mged_tol.perp;
 
 	/* Initial vaues for options, must be reset each time */
 	ncpu = 1;
@@ -1195,12 +1042,14 @@ char	**argv;
 		mged_abs_tol, mged_rel_tol, mged_nrm_tol );
 	mged_facetize_tree = (union tree *)0;
   	mged_nmg_model = nmg_mm();
+	mged_initial_tree_state.ts_m = &mged_nmg_model;
+
 	i = db_walk_tree( dbip, argc, (CONST char **)argv,
 		ncpu,
 		&mged_initial_tree_state,
 		0,			/* take all regions */
 		mged_facetize_region_end,
-		mged_nmg_leaf );
+		nmg_booltree_leaf_tess );
 
 	if( i < 0 )  {
 		rt_log("facetize: error in db_walk_tree()\n");
@@ -1212,12 +1061,7 @@ char	**argv;
 	/* Now, evaluate the boolean tree into ONE region */
 	rt_log("facetize:  evaluating boolean expressions\n");
 
-	ttol.magic = RT_TESS_TOL_MAGIC;
-	ttol.abs = mged_abs_tol;
-	ttol.rel = mged_rel_tol;
-	ttol.norm = mged_nrm_tol;
-
-	r = mged_nmg_doit( mged_facetize_tree, &ttol );
+	r = nmg_booltree_evaluate( mged_facetize_tree, &mged_tol );
 	if( r == 0 )  {
 		rt_log("facetize:  no resulting region, aborting\n");
 		nmg_km( mged_nmg_model );
