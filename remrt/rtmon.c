@@ -299,72 +299,6 @@ ok:
 	bu_vls_free(&path);
 }
 
-char *find_paths[] = {
-	"start_dir",		/* replaced at runtime */
-	"/m/cad",
-	"/n/vapor/m/cad",
-	"/vld/mike",
-	"/vld/butler",
-	"/r/mike",
-	"/home/army/mike/SGI/cad",
-	NULL
-};
-
-/*
- *			F I N D
- *
- *  Given a partial path specification (e.g. ../.db.6d/moss.g) of a file,
- *  rummage around and try to find it in likely places,
- *  and change into its directory, so that
- *  texture maps and stuff from the same directory will all be found.
- *  A nasty huristic, and fairly ARL-specific, but necessary.
- */
-void
-find(fd, argc, argv)
-int	fd;
-int	argc;
-char	**argv;
-{
-	char	**pp;
-	char	*slash;
-
-	if( argc != 2 )  {
-		fprintf(ofp, "FAIL Usage: find filename\n");
-		fflush(ofp);
-		return;
-	}
-
-	find_paths[0] = start_dir;
-
-	for( pp = find_paths; *pp != NULL; pp++ )  {
-		if( chdir(*pp) < 0 )  {
-			if(debug)  perror(*pp);
-			continue;
-		}
-		if( access( argv[1], R_OK ) )  continue;
-
-		/* OK, the path looks good, now get into the directory */
-		if( (slash = strrchr( argv[1], '/' )) != NULL )  {
-			*slash = '\0';
-			if( chdir( argv[1] ) < 0 )  {
-				perror(argv[1]);
-				fprintf(ofp, "FAIL Unable to cd %s after cd %s\n", argv[1], *pp);
-				fflush(ofp);
-				return;
-			}
-			fprintf(ofp, "OK %s/%s %s\n", *pp, argv[1], slash+1 );
-			fflush(ofp);
-			return;
-		}
-
-		fprintf(ofp, "OK %s %s\n", *pp, argv[1] );
-		fflush(ofp);
-		return;
-	}
-	fprintf(ofp, "FAIL Unable to locate file %s\n", argv[1]);
-	fflush(ofp);
-}
-
 /*
  *			S E R V E R _ P R O C E S S
  *
@@ -422,8 +356,8 @@ int	fd;
 			run_prog(fd, argc, argv, "rtnode");
 			continue;
 		}
-		if( strcmp( argv[0], "find" ) == 0 )  {
-			find(fd, argc, argv);
+		if( strcmp( argv[0], "rtsrv" ) == 0 )  {
+			run_prog(fd, argc, argv, "rtsrv");
 			continue;
 		}
 		if( strcmp( argv[0], "restart" ) == 0 )  {
