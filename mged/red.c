@@ -953,7 +953,8 @@ checkcomb()
 		if( ch == EOF )	/* We must be done */
 		{
 			done = 1;
-			break;
+			if( i < 0 )
+				break;
 		}
 		if( i == MAXLINE )
 		{
@@ -966,6 +967,9 @@ checkcomb()
 		/* skip leading white space */
 		i = (-1);
 		while( isspace( line[++i] ));
+
+		if( line[i] == '\0' )
+			continue;	/* blank line */
 
 		if( (ptr=find_keyword(i, line, "NAME" ) ) )
 		{
@@ -1207,7 +1211,8 @@ char *old_name;
 		if( ch == EOF )	/* We must be done */
 		{
 			done = 1;
-			break;
+			if( i < 0 )
+				break;
 		}
 
 		line[++i] = '\0';
