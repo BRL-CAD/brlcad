@@ -1882,3 +1882,176 @@ CONST char		*title;
 	fclose(fp);
 	rt_log("nmg_stash_model_to_file(): wrote '%s' in %d bytes\n", filename, ext.ext_nbytes);
 }
+
+/* state for nmg_unbreak_edge */
+struct nmg_unbreak_state
+{
+	struct rt_tol	*tol;		/* tolerance needed for nmg_radial_join_eu */
+	int		unbroken;	/* count of edges mended */
+	long		*flags;		/* index based array of flags for model */
+};
+
+/*	N M G _ U N B R E A K _ E D G E
+ *
+ *	edge visit routine for nmg_unbreak_region_edges.
+ *
+ *	checks if edge "e" is a candidate to unbroken,
+ *	i.e., if it was brokem earlier by nmg_ebreak and
+ *	now may be mended.
+ *	looks for two consectutive edgeuses sharing the same
+ *	edge geometry. Checks that the middle vertex has no
+ *	other uses, and,  if so, kills the second edge.
+ *	Also moves the vu of the first edgeuse mate to the vu
+ *	of the killed edgeuse mate.
+ *	After an edgeuse is killed, searches for possible
+ *	radials for the new edgeuse.
+ */
+
+void
+nmg_unbreak_edge( e , state , after )
+long *e;
+genptr_t *state;
+int after;
+{
+	struct edgeuse *eu1,*eu2;
+	struct edge *e_p;
+	struct edge_g *eg_p;
+	struct nmg_unbreak_state *ub_state;
+	long *flags;
+
+	e_p = (struct edge *)e;
+	NMG_CK_EDGE( e_p );
+
+	ub_state = (struct nmg_unbreak_state *)state;
+
+	flags = ub_state->flags;
+
+	/* make sure we only visit this edge once */
+	if( NMG_INDEX_TEST_AND_SET( flags , e_p ) )
+	{
+		struct vertexuse *vu;
+		struct vertex *v_p;
+
+		eg_p = e_p->eg_p;
+		if( !eg_p )
+		{
+			rt_log( "nmg_unbreak_edge: no geomtry for edge x%x\n" , e_p );
+			return;
+		}
+
+
+		/* if the edge geometry doesn't have at least two uses, this
+		 * is not a candidate for unbreaking */		
+		if( eg_p->usage < 2 )
+			return;
+
+		/* find two consecutive uses */
+		eu1 = e_p->eu_p;
+		NMG_CK_EDGEUSE( eu1 );
+		eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
+		if( eu2->e_p->eg_p != eg_p )
+		{
+			struct edgeuse *eu_tmp;
+
+			eu2 = RT_LIST_PLAST_CIRC( edgeuse , eu1 );
+			if( eu2->e_p->eg_p != eg_p )
+			{
+				rt_log( "Cannot find second use of edge geometry for edge x%x\n" , e_p );
+				return;
+			}
+
+			eu_tmp = eu1;
+			eu1 = eu2;
+			eu2 = eu_tmp;
+		}
+
+		/* at this point, the situation is:
+
+			  eu1     eu2
+			*------>*------->
+
+		*/
+		/* get the middle vertex */
+		v_p = eu2->vu_p->v_p;
+
+		/* all uses of this vertex must be for this edge geometry, otherwise
+		 * it is not a candidate for deletion */
+		for( RT_LIST_FOR( vu , vertexuse , &v_p->vu_hd ) )
+		{
+			if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )
+				return;
+			if( vu->up.eu_p->e_p->eg_p != eg_p )
+				return;
+		}
+
+		/* first move eu1's mate start where to eu2's mate starts now */
+		nmg_movevu( eu1->eumate_p->vu_p , eu2->eumate_p->vu_p->v_p );
+		/* O.K. kill the edgeuse */
+		if( nmg_keu( eu2 ) )
+			rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
+		else
+		{
+			/* keep a count of unbroken edges */
+			ub_state->unbroken++;
+
+			/* look for a candidate radial edges for eu1 */
+			for( RT_LIST_FOR( vu , vertexuse , &eu1->vu_p->l ) )
+			{
+				struct edgeuse *eu;
+
+				if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				if( (eu = vu->up.eu_p) != eu1 )
+				{
+					/* this is a candidate */
+					if( eu->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p )
+						nmg_radial_join_eu( eu1 , eu , ub_state->tol );
+				}
+			}
+		}
+	}
+}
+
+/*	N M G _ U N B R E A K _ R E G I O N _ E D G E S
+ *
+ *	Uses the visit handler to call nmg_unbreak_edge for
+ *	each edge in the region
+ *
+ *	returns the number of edges mended
+ */
+
+int
+nmg_unbreak_region_edges( r , tol )
+struct nmgregion *r;
+CONST struct rt_tol *tol;
+{
+	struct model *m;
+	struct nmg_visit_handlers *htab;
+	struct nmg_unbreak_state ub_state;
+	long *flags;
+	int count;
+
+	NMG_CK_REGION( r );
+	RT_CK_TOL( tol );
+
+	m = r->m_p;
+	NMG_CK_MODEL( m );	
+
+	htab = (struct nmg_visit_handlers *)rt_calloc( 1 , sizeof( struct nmg_visit_handlers ) ,
+			"nmg_unbreak_region_edges: nmg_visit_handlers" );
+	htab->vis_edge = nmg_unbreak_edge;
+
+	ub_state.unbroken = 0;
+	ub_state.flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
+	ub_state.tol = (struct rt_tol *)tol;
+
+	nmg_visit( (long *)&r->l , htab , (genptr_t *)&ub_state );
+
+	count = ub_state.unbroken;
+
+	rt_free( (char *)htab , "nmg_visit_handler" );
+	rt_free( (char *)ub_state.flags , "nmg_unbreak_region_edges: flags" );
+
+	return( count );
+}
