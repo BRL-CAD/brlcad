@@ -89,16 +89,16 @@ Convinst()
 			/* This is actually a region or a group with just one member */
 			struct wmember head;
 			struct wmember *wmem;
-			char *rgb;
+			unsigned char *rgb;
 
 			RT_LIST_INIT( &head.l );
 			wmem = mk_addmember( dir[pointer]->name , &head , WMOP_INTERSECT );
 
 			/* Make the object */
 			if( dir[i]->colorp != 0 )
-				rgb = (char*)dir[i]->rgb;
+				rgb = (unsigned char*)dir[i]->rgb;
 			else
-				rgb = (char *)0;
+				rgb = (unsigned char *)0;
 
 			mk_lrcomb( fdout , 
 				dir[i]->name,		/* name */

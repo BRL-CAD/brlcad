@@ -40,7 +40,7 @@ Convtree()
 	int			no_of_assoc;
 	int			no_of_props;
 	int			att_de;
-	char 			*rgb;
+	unsigned char 		*rgb;
 	struct brlcad_att	brl_att;
 	int			i,j,k;
 
@@ -111,9 +111,9 @@ Convtree()
 
 			/* Make the object */
 			if( dir[i]->colorp != 0 )
-				rgb = (char*)dir[i]->rgb;
+				rgb = (unsigned char*)dir[i]->rgb;
 			else
-				rgb = (char *)0;
+				rgb = (unsigned char *)0;
 
 			mk_lrcomb( fdout , 
 				dir[i]->name,		/* name */

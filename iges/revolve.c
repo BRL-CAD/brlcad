@@ -441,7 +441,8 @@ int entityno;
 	}
 
 	/* Make the object */
-	if( mk_lcomb( fdout , dir[entityno]->name , &head , 0 , (char *)0 , (char *)0 , (char *)0 , 0 ) < 0 )  {
+	if( mk_lcomb( fdout , dir[entityno]->name , &head , 0 ,
+	    (char *)0 , (char *)0 , (unsigned char *)0 , 0 ) < 0 )  {
 		printf( "Unable to make combination for entity D%07d (%s)\n" ,
 			dir[entityno]->direct , dir[entityno]->name );
 		return( 0 );
