@@ -1072,10 +1072,15 @@ double			mm2local;
 	{
 		for( i=0 ; i<bot_ip->num_faces ; i++ )
 		{
+			int j;
+			point_t pt[3];
+
+			for( j=0 ; j<3 ; j++ )
+				VSCALE( pt[j], &bot_ip->vertices[bot_ip->faces[i*3+j]*3], mm2local )
 			sprintf( buf, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g)\n", i,
-				V3ARGS( &bot_ip->vertices[bot_ip->faces[i*3]*3] ),
-				V3ARGS( &bot_ip->vertices[bot_ip->faces[i*3+1]*3] ),
-				V3ARGS( &bot_ip->vertices[bot_ip->faces[i*3+2]*3] ) );
+				V3ARGS( pt[0] ),
+				V3ARGS( pt[1] ),
+				V3ARGS( pt[2] ) );
 			bu_vls_strcat( str, buf );
 			if( bot_ip->mode == RT_BOT_PLATE )
 			{
@@ -1085,7 +1090,7 @@ double			mm2local;
 					face_mode = "appended to hit point";
 				else
 					face_mode = "centered about hit point";
-				sprintf( buf, "\t\tthickness = %g, %s\n", bot_ip->thickness[i], face_mode );
+				sprintf( buf, "\t\tthickness = %g, %s\n", mm2local*bot_ip->thickness[i], face_mode );
 				bu_vls_strcat( str, buf );
 			}
 		}
@@ -1113,10 +1118,11 @@ struct rt_db_internal	*ip;
 	bu_free( (char *)bot_ip->vertices, "BOT vertices" );
 	bu_free( (char *)bot_ip->faces, "BOT faces" );
 
-	if( bot_ip->thickness )
+	if( bot_ip->mode == RT_BOT_PLATE )
+	{
 		bu_free( (char *)bot_ip->thickness, "BOT thickness" );
-	if( bot_ip->face_mode )
 		bu_free( (char *)bot_ip->face_mode, "BOT face_mode" );
+	}
 
 	bu_free( (char *)bot_ip, "bot ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
