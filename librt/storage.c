@@ -45,7 +45,7 @@ struct memdebug {
 	char	*mdb_str;
 	int	mdb_len;
 } rt_mdb[MDB_SIZE];
-#endif MEMDEBUG
+#endif /* MEMDEBUG */
 
 /*
  *			R T _ M A L L O C
@@ -60,7 +60,7 @@ char *str;
 
 #ifdef MEMDEBUG
 	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
-#endif MEMDEBUG
+#endif /* MEMDEBUG */
 	if( rt_g.rtg_parallel )  {
 		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	}
@@ -92,7 +92,7 @@ ok:	;
 		register int *ip = (int *)(ptr+cnt-sizeof(int));
 		*ip = MDB_MAGIC;
 	}
-#endif MEMDEBUG
+#endif /* MEMDEBUG */
 	return(ptr);
 }
 
@@ -124,7 +124,7 @@ char	*str;
 		return;
 	}
 ok:	;
-#endif MEMDEBUG
+#endif /* MEMDEBUG */
 
 	if(rt_g.debug&DEBUG_MEM) rt_log("%7x free %s\n", ptr, str);
 	if( rt_g.rtg_parallel ) {
@@ -152,7 +152,7 @@ char *str;
 	register char *savedptr;
 	savedptr = ptr;
 	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
-#endif MEMDEBUG
+#endif /* MEMDEBUG */
 	if( rt_g.rtg_parallel ) {
 		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	}
@@ -187,7 +187,7 @@ ok:	;
 		register int *ip = (int *)(ptr+cnt-sizeof(int));
 		*ip = MDB_MAGIC;
 	}
-#endif MEMDEBUG
+#endif /* MEMDEBUG */
 	return(ptr);
 }
 
@@ -214,7 +214,7 @@ char *str;
 		if( *ip != MDB_MAGIC )
 			rt_log("\t%x\t%x\n", *ip, MDB_MAGIC);
 	}
-#endif MEMDEBUG
+#endif /* MEMDEBUG */
 }
 
 /*

@@ -97,7 +97,7 @@ register char **argv;
 
 static char usage[] = "\
 Usage: pl-sgi [-a -f] [-t thickness] [file.plot]\n";
-#endif sgi
+#endif /* sgi */
 
 main( argc, argv )
 int	argc;
@@ -495,7 +495,7 @@ init_display()
 		map_size = 1<<getplanes(); /* 10 or 12, depending on ismex() */
 #ifdef mips
 		map_size = 1<<10;	/*XXX*/
-#endif mips
+#endif /* mips */
 		map_size -= MAP_RESERVED;	/* MEX's share */
 
 		/* The first 8 entries of the colormap are "known" colors */
@@ -959,4 +959,4 @@ draw_axis()
 	charstr( "z" );
 	movei( 0, 0, 0 );	/* back to origin */
 }
-#endif sgi
+#endif /* sgi */

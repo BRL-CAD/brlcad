@@ -185,4 +185,4 @@ main()
 	fprintf( stderr, "op-bw: this is a vax specific program\n" );
 	exit( 1 );
 }
-#endif vax
+#endif /* Not vax */

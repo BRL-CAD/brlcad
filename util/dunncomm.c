@@ -32,7 +32,7 @@ struct	sgttyb	tty;
 #define TCGETA	TIOCGETP
 #ifndef	XTABS
 #define	XTABS	(TAB1 | TAB2)
-#endif XTABS
+#endif /* Not XTABS */
 #endif
 
 #ifdef SYSV
@@ -42,7 +42,7 @@ struct timeval {
 };
 # include <termio.h>
 struct	termio	tty;
-#endif SYSV
+#endif /* SYSV */
 
 int fd;
 char cmd;

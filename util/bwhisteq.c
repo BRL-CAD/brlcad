@@ -87,7 +87,7 @@ int argc; char **argv;
 		new[i] = right[i] - left[i];
 #else
 		new[i] = (left[i] + right[i]) / 2;
-#endif METHOD2
+#endif /* Not METHOD2 */
 	}
 
 	if( verbose ) {
@@ -105,7 +105,7 @@ int argc; char **argv;
 				obuf[i] = left[buf[i]] + new[buf[i]] * rand01();
 #else
 				obuf[i] = new[buf[i]];
-#endif
+#endif /* Not METHOD2 */
 			}
 		}
 		fwrite( obuf, 1, n, stdout );
