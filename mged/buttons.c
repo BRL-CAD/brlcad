@@ -323,12 +323,16 @@ static void bv_rate_toggle()
   mged_variables.rateknobs = !mged_variables.rateknobs;
 
   if(mged_variables.scroll_enabled){
+#if 0
     char *av[3];
 
     av[0] = "sliders";
     av[1] = "on";
     av[2] = NULL;
     (void)cmd_sliders((ClientData)NULL, interp, 2, av);
+#else
+    Tcl_Eval(interp, "sliders on");
+#endif
   }
 
   dmaflag = 1;
@@ -493,6 +497,7 @@ be_o_scale()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edobj );
 	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_SCALE );
 #endif
+	edobj = BE_O_SCALE;
 	movedir = SARROW;
 	update_views = 1;
 }
@@ -506,6 +511,7 @@ be_o_xscale()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edobj );
 	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_XSCALE );
 #endif
+	edobj = BE_O_XSCALE;
 	movedir = SARROW;
 	update_views = 1;
 }
@@ -519,6 +525,7 @@ be_o_yscale()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edobj );
 	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_YSCALE );
 #endif
+	edobj = BE_O_YSCALE;
 	movedir = SARROW;
 	update_views = 1;
 }
@@ -532,6 +539,7 @@ be_o_zscale()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edobj );
 	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_ZSCALE );
 #endif
+	edobj = BE_O_ZSCALE;
 	movedir = SARROW;
 	update_views = 1;
 }
@@ -545,8 +553,11 @@ be_o_x()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edobj );
 	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_X );
 #endif
+	edobj = BE_O_X;
 	movedir = RARROW;
 	update_views = 1;
+
+	set_e_axes_pos();
 }
 
 static void
@@ -558,8 +569,11 @@ be_o_y()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edobj );
 	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_Y );
 #endif
+	edobj = BE_O_Y;
 	movedir = UARROW;
 	update_views = 1;
+
+	set_e_axes_pos();
 }
 
 
@@ -572,8 +586,11 @@ be_o_xy()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edobj );
 	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_XY );
 #endif
+	edobj = BE_O_XY;
 	movedir = UARROW | RARROW;
 	update_views = 1;
+
+	set_e_axes_pos();
 }
 
 static void
@@ -585,8 +602,11 @@ be_o_rotate()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edobj );
 	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_ROTATE );
 #endif
+	edobj = BE_O_ROTATE;
 	movedir = ROTARROW;
 	update_views = 1;
+
+	set_e_axes_pos();
 }
 
 static void
@@ -734,7 +754,7 @@ be_s_edit()  {
 
 	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_EDIT );
 #endif
-
+	edsol = BE_S_EDIT;
 	sedit_menu();		/* Install appropriate menu */
 
 	set_e_axes_pos();
@@ -750,7 +770,7 @@ be_s_rotate()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edsol );
 	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_ROTATE );
 #endif
-
+	edsol = BE_S_ROTATE;
 	mmenu_set( MENU_L1, MENU_NULL );
 	es_edflag = SROT;
 	mat_idn(acc_rot_sol);
@@ -768,7 +788,7 @@ be_s_trans()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edsol );
 	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_TRANS );
 #endif
-
+	edsol = BE_S_TRANS;
 	es_edflag = STRANS;
 	movedir = UARROW | RARROW;
 	mmenu_set( MENU_L1, MENU_NULL );
@@ -785,7 +805,7 @@ be_s_scale()  {
 	dmp->dm_light( dmp, LIGHT_OFF, edsol );
 	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_SCALE );
 #endif
-
+	edsol = BE_S_SCALE;
 	es_edflag = SSCALE;
 	mmenu_set( MENU_L1, MENU_NULL );
 	acc_sc_sol = 1.0;
