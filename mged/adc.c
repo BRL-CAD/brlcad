@@ -352,7 +352,6 @@ char	**argv;
 		(void) printf("ADC: unrecognized command: '%s'\n", argv[1]);
 		(void) printf("Usage:\n");
 		(void) fputs(adc_syntax, stdout);
-		return CMD_BAD;
 	}
 	return CMD_BAD;
 }

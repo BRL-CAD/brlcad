@@ -3354,7 +3354,7 @@ char	**argv;
 			es_para[0] *= local2base;
 			es_para[1] *= local2base;
 			es_para[2] *= local2base;
-
+			/* fall through */
 		default:
 			return CMD_OK;
 	}
@@ -3363,8 +3363,6 @@ char	**argv;
 	 * XXX here, rather than littering the place with global variables
 	 * XXX for later interpretation.
 	 */
-
-	return CMD_OK;
 }
 
 /*
