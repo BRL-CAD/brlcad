@@ -47,113 +47,29 @@ int	los_default = 100;	/* Line-of-sight estimate */
  *			M O V E H O B J
  *
  * This routine is used when the object to be moved is
- * the top level in its reference path.  The object itself
- * is relocated.
- *
- * This routine really should just be a bunch of calls to
- * solid-specific routines.
+ * the top level in its reference path.
+ * The object itself (solid or "leaf" combination) is relocated.
  */
 void
 moveHobj( dp, xlate )
 register struct directory *dp;
 matp_t xlate;
 {
-	vect_t	work;
-	register int i;
-	register dbfloat_t *p;		/* -> to vector to be worked on */
-	static dbfloat_t *area_end;	/* End of area to be processed */
-	union record	*rec;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	register int		i;
+	union record		*rec;
+	int			id;
+	char			name[NAMESIZE+2];
 
-	if( (rec = db_getmrec( dbip, dp )) == (union record *)0 )
+	if( db_get_external( &ext, dp, dbip ) < 0 )
 		READ_ERR_return;
 
-	switch( rec->u_id )  {
-
-	case ID_ARS_A:
-		/*
-		 * 1st B type record is special:  Vertex point
-		 */
-		/* displace the base vector */
-		MAT4X3PNT( work, xlate, &rec[1].b.b_values[0] );
-		VMOVE( &rec[1].b.b_values[0], work );
-
-		/* Transform remaining vectors */
-		for( p = &rec[1].b.b_values[1*3]; p < &rec[1].b.b_values[8*3];
-								p += 3) {
-			MAT4X3VEC( work, xlate, p );
-			VMOVE( p, work );
-		}
-
-		/* Process all the remaining B records */
-		for( i = 2; i < dp->d_len; i++ )  {
-			/* Transform remaining vectors */
-			for( p = &rec[i].b.b_values[0*3];
-			     p < &rec[i].b.b_values[8*3]; p += 3) {
-				MAT4X3VEC( work, xlate, p );
-				VMOVE( p, work );
-			}
-		}
-		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )
-			WRITE_ERR_return;
-		rt_free( (char *)rec, "union record");
-		break;
-
-	case ID_BSOLID:
-		move_spline( rec, dp, xlate );
-		rt_free( (char *)rec, "union record");
-		break;
-
-	case ID_SOLID:
-		/* Displace the vertex (V) */
-		MAT4X3PNT( work, xlate, &rec[0].s.s_values[0] );
-		VMOVE( &rec[0].s.s_values[0], work );
-
-		switch( rec[0].s.s_type )  {
-
-		case GENARB8:
-			if(rec[0].s.s_cgtype < 0)
-				rec[0].s.s_cgtype = -rec[0].s.s_cgtype;
-			area_end = &rec[0].s.s_values[8*3];
-			goto common;
-
-		case GENTGC:
-			area_end = &rec[0].s.s_values[6*3];
-			goto common;
-
-		case GENELL:
-			area_end = &rec[0].s.s_values[4*3];
-			goto common;
-
-		case TOR:
-			area_end = &rec[0].s.s_values[8*3];
-			/* Fall into COMMON section */
-
-		common:
-			/* Transform all the vectors */
-			for( p = &rec[0].s.s_values[1*3]; p < area_end;
-			     p += 3) {
-				MAT4X3VEC( work, xlate, p );
-				VMOVE( p, work );
-			}
-			break;
-
-		default:
-			(void)printf("moveobj:  can't move obj type %d\n",
-				rec[0].s.s_type );
-			return;		/* ERROR */
-		}
-		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )
-			WRITE_ERR_return;
-		rt_free( (char *)rec, "union record");
-		break;
-
-	default:
-		(void)printf("MoveHobj -- bad disk record\n");
-		return;			/* ERROR */
-
-	case ID_COMB:
+	rec = (union record *)ext.ext_buf;
+	if( rec->u_id == ID_COMB )  {
 		/*
 		 * Move all the references within a combination
+		 * XXX should use combination import/export routines here too!
 		 */
 		for( i=1; i < dp->d_len; i++ )  {
 			static mat_t temp, xmat;
@@ -162,11 +78,58 @@ matp_t xlate;
 			mat_mul( temp, xlate, xmat );
 			rt_dbmat_mat( rec[i].M.m_mat, temp );
 		}
-		if( db_put( dbip,  dp, rec, 0, dp->d_len ) < 0 )
+		if( db_put_external( &ext, dp, dbip ) < 0 )  {
+			db_free_external( &ext );
+			ERROR_RECOVERY_SUGGESTION;
 			WRITE_ERR_return;
-		rt_free( (char *)rec, "union record");
+		}
+		db_free_external( &ext );
+		return;				/* OK */
 	}
-	return;
+
+	/*
+	 *  Import the solid, applying the transform on the way in.
+	 *  Then, export it, and re-write the database record.
+	 *  Will work on all solids.
+	 */
+	NAMEMOVE( rec->s.s_name, name );	/* pun for name location */
+	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
+		(void)printf("moveHobj(%s) unable to identify type\n",
+			dp->d_namep );
+		return;				/* FAIL */
+	}
+
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, &ext, xlate ) < 0 )  {
+		rt_log("moveHobj(%s):  solid import failure\n",
+			dp->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		db_free_external( &ext );
+		return;				/* FAIL */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+	db_free_external( &ext );
+
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[id].ft_export( &ext, &intern, 1.0 ) < 0 )  {
+		rt_log("moveHobj(%s):  solid export failure\n",
+			dp->d_namep );
+		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		db_free_external( &ext );
+		return;				/* FAIL */
+	}
+	rt_functab[id].ft_ifree( &intern );
+
+	rec = (union record *)ext.ext_buf;
+	NAMEMOVE( name, rec->s.s_name );
+
+	if( db_put_external( &ext, dp, dbip ) < 0 )  {
+		db_free_external( &ext );
+		ERROR_RECOVERY_SUGGESTION;
+		WRITE_ERR_return;
+	}
+	db_free_external( &ext );
+	return;					/* OK */
 }
 
 /*
