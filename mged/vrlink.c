@@ -33,6 +33,8 @@ extern void		(*viewpoint_hook)();	/* ged.c */
 extern void		(*extrapoll_hook)();	/* ged.c */
 extern int		extrapoll_fd;
 
+extern point_t		eye_pos_scr;		/* dozoom.c */
+
 static struct pkg_conn	*vrmgr;			/* PKG connection to VR mgr */
 static char		*vr_host = "None";	/* host running VR mgr */
 static char		*tcp_port = "5555";	/* "gedd", remote mged */
@@ -137,7 +139,7 @@ vr_viewpoint_hook()
 		-toViewcenter[MDZ],
 		V4ARGS(orient),
 		Viewscale,
-		V3ARGS(recip_vanishing_point) );
+		V3ARGS(eye_pos_scr) );
 
 	if( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
 		fprintf(stderr,"viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
@@ -174,9 +176,9 @@ char	*argv[];
 	orient[3] = atof(argv[7]);
 	quat_quat2mat( Viewrot, orient );
 	Viewscale = atof(argv[8]);
-	recip_vanishing_point[X] = atof(argv[9]);
-	recip_vanishing_point[Y] = atof(argv[10]);
-	recip_vanishing_point[Z] = atof(argv[11]);
+	eye_pos_scr[X] = atof(argv[9]);		/* interpreted in dozoom.c */
+	eye_pos_scr[Y] = atof(argv[10]);
+	eye_pos_scr[Z] = atof(argv[11]);
 	new_mats();
 }
 

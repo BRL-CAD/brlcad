@@ -41,8 +41,10 @@ mat_t	incr_change;
 mat_t	modelchanges;
 mat_t	identity;
 
-/* How should this be implemented????? */
-point_t	recip_vanishing_point = { 0, 0, -1 };
+/* Screen coords of actual eye position.  Usually it is at (0,0,+1),
+ * but in head-tracking and VR applications, it can move.
+ */
+point_t	eye_pos_scr = { 0, 0, 1 };
 
 struct solid	*FreeSolid;	/* Head of freelist */
 struct solid	HeadSolid;	/* Head of solid table */
@@ -188,9 +190,18 @@ VPRINT("h", h);
 
 		switch(which_eye)  {
 		case 0:
+			/* Non-stereo case */
 			mat = model2view;
+#if 0
+			/* This way works, with reasonable Z-clipping */
 			persp_mat( pmat, mged_variables.perspective,
 				1.0, 0.01, 1.0e10, 1.0 );
+#else
+			/* This way does not have reasonable Z-clipping,
+			 * but includes shear, for GDurf's testing.
+			 */
+			deering_persp_mat( pmat, l, h, eye_pos_scr );
+#endif
 			break;
 		case 1:
 			/* R */
