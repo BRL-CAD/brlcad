@@ -103,8 +103,12 @@ register struct application *ap;
 	int			exponent;
 
 	RT_AP_CHECK(ap);
-	if( ap->a_resource == RESOURCE_NULL )
+	if( ap->a_resource == RESOURCE_NULL )  {
 		ap->a_resource = &rt_uniresource;
+		rt_uniresource.re_magic = RESOURCE_MAGIC;
+rt_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
+	}
+	RT_RESOURCE_CHECK(ap->a_resource);
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		rt_g.rtg_logindent += 2;
@@ -289,6 +293,7 @@ register struct application *ap;
 	 *  It is vitally important to always stay within the model RPP, or
 	 *  the space partitoning tree will pick wrong boxes & miss them.
 	 */
+RT_RESOURCE_CHECK(ap->a_resource);	/* XXX */
 	for(;;)  {
 		/*
 		 * Move newray point (not box_start)
@@ -487,6 +492,7 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 		/* Special case for efficiency -- first hit only */
 		/* Only run this every three hits, to balance cost/benefit */
 		if( trybool>=3 && ap->a_onehit && waitsegs != SEG_NULL )  {
+RT_RESOURCE_CHECK(ap->a_resource);	/* XXX */
 			/* Weave these segments into partition list */
 			rt_boolweave( waitsegs, &InitialPart, ap );
 
@@ -569,6 +575,7 @@ weave:
 hitit:
 	if(rt_g.debug&DEBUG_SHOOT)  rt_pr_partitions(ap->a_rt_i,&FinalPart,"a_hit()");
 
+RT_RESOURCE_CHECK(ap->a_resource);	/* XXX */
 	ret = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
 
@@ -929,4 +936,37 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 miss:
 	rt_log("MISS\n");
 	return(0);		/* MISS */
+}
+
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+
+/* Stub function which will "similate" a call to a vector shot routine */
+/*void*/
+rt_vstub( stp, rp, segp, n, ap)
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application        *ap; /* pointer to an application */
+{
+	register int    i;
+	register struct seg *tmp_seg;
+
+	/* go through each ray/solid pair and call a scalar function */
+	for (i = 0; i < n; i++) {
+		if (stp[i] != 0){ /* skip call if solid table pointer is NULL */
+			/* do scalar call */
+			tmp_seg =
+			    rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap);
+
+			/* place results in segp array */
+			if ( tmp_seg == 0) {
+				SEG_MISS(segp[i]);
+			}
+			else {
+				segp[i] = *tmp_seg; /* structure copy */
+				FREE_SEG(tmp_seg, ap->a_resource);
+			}
+		}
+	}
 }
