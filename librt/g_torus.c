@@ -927,13 +927,6 @@ tor_class()
  *	ti.h	Radius Vector, Normal to plane of torus
  *	ti.a,ti.b	perpindicular, to CENTER of torus (for top, bottom)
  *
- * The inner and outer edge need to be constructed as well.
- *
- * The following ellipses have to be constructed:
- *	C1	top ellipse
- *	C2	bottom ellipse
- *	C3	inner ellipse
- *	C4	outer ellipse
  */
 int
 tor_plot( rp, matp, vhead, dp )
@@ -942,92 +935,84 @@ register matp_t matp;
 struct vlhead	*vhead;
 struct directory *dp;
 {
-	register int		i;
-	fastf_t		C1[16*3];
-	fastf_t 	C2[16*3];
-	fastf_t		C3[16*3];
-	fastf_t		C4[16*3];
-	point_t		top_center;
-	point_t		bottom_center;
-	vect_t		newA, newB;
-	fastf_t		magH, magA, magB;
-	fastf_t		f;
+	fastf_t		alpha;
+	fastf_t		beta;
+	fastf_t		cos_alpha, sin_alpha;
+	fastf_t		cos_beta, sin_beta;
+	fastf_t		dist_to_rim;
 	struct tor_internal	ti;
+	int		w;
+	int		nw = 8;
+	int		len;
+	int		nlen = 16;
+	fastf_t		*pts;
+	vect_t		G;
+	vect_t		radius;
+	vect_t		edge;
 
 	if( tor_import( &ti, rp, matp ) < 0 )
 		return(-1);		/* BAD */
 
-	VADD2(top_center,ti.v,ti.h);		/* center point of TOP */
-	ell_16pts(C1,top_center,ti.a,ti.b);	/* top */
+	dist_to_rim = MAGNITUDE(ti.h)/MAGNITUDE(ti.a);
 
-	VSUB2(bottom_center,ti.v,ti.h);
-	ell_16pts(C4,bottom_center,ti.a,ti.b);	/* bottom */
- 
-	magH = MAGNITUDE(ti.h);
-	magA = MAGNITUDE(ti.a);
-	magB = MAGNITUDE(ti.b);
+	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
+		"tor_plot pts[]" );
 
-	f = (magA - magH) / magA;
-	VSCALE( newA, ti.a, f );
-	f = (magB - magH) / magB;
-	VSCALE( newB, ti.b, f );
-	ell_16pts(C2, ti.v, newA, newB);	/* inner */
+#define VJOIN4(a,b,c,d,e,f,g,h,i,j)	\
+	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X] + (i)*(j)[X];\
+	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y] + (i)*(j)[Y];\
+	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z] + (i)*(j)[Z]
 
-	f = (magA + magH) / magA;
-	VSCALE( newA, ti.a, f );
-	f = (magB + magH) / magB;
-	VSCALE( newB, ti.b, f );
-	ell_16pts(C3, ti.v, newA, newB);	/* outer */
- 
-	ADD_VL( vhead, &C1[15*ELEMENTS_PER_VECT], 0 );
-	for( i=0; i<16; i++ )  {
-		ADD_VL( vhead, &C1[i*ELEMENTS_PER_VECT], 1 );
+#define PTA(ww,ll)	(&pts[ (((ww)*nlen) + (ll)) * 3])
+
+	for( len = 0; len < nlen; len++ )  {
+		beta = rt_twopi * len / nlen;
+		cos_beta = cos(beta);
+		sin_beta = sin(beta);
+		/* G always points out to rim, along radius vector */
+		VCOMB2( radius, cos_beta, ti.a, sin_beta, ti.b );
+		/* We assume that |radius| = |A|.  Circular */
+		VSCALE( G, radius, dist_to_rim );
+		for( w = 0; w < nw; w++ )  {
+			alpha = rt_twopi * w / nw;
+			cos_alpha = cos(alpha);
+			sin_alpha = sin(alpha);
+			VCOMB2( edge, cos_alpha, G, sin_alpha, ti.h );
+			VADD3( PTA(w,len), ti.v, edge, radius );
+		}
 	}
 
-	ADD_VL( vhead, &C2[15*ELEMENTS_PER_VECT], 0 );
-	for( i=0; i<16; i++ )  {
-		ADD_VL( vhead, &C2[i*ELEMENTS_PER_VECT], 1 );
+	/* Draw lengthwise (around outside rim) */
+	for( w = 0; w < nw; w++ )  {
+		len = nlen-1;
+		ADD_VL( vhead, PTA(w,len), 0 );
+		for( len = 0; len < nlen; len++ )  {
+			ADD_VL( vhead, PTA(w,len), 1 );
+		}
+	}
+	/* Draw around the "width" (1 cross section) */
+	for( len = 0; len < nlen; len++ )  {
+		w = nw-1;
+		ADD_VL( vhead, PTA(w,len), 0 );
+		for( w = 0; w < nw; w++ )  {
+			ADD_VL( vhead, PTA(w,len), 1 );
+		}
 	}
 
-	ADD_VL( vhead, &C3[15*ELEMENTS_PER_VECT], 0 );
-	for( i=0; i<16; i++ )  {
-		ADD_VL( vhead, &C3[i*ELEMENTS_PER_VECT], 1 );
-	}
-
-	ADD_VL( vhead, &C4[15*ELEMENTS_PER_VECT], 0 );
-	for( i=0; i<16; i++ )  {
-		ADD_VL( vhead, &C4[i*ELEMENTS_PER_VECT], 1 );
-	}
-
-	ADD_VL( vhead, &C1[0*3], 0);
-	ADD_VL( vhead, &C2[0*3], 1);
-	ADD_VL( vhead, &C4[0*3], 1);
-	ADD_VL( vhead, &C3[0*3], 1);
-	ADD_VL( vhead, &C1[0*3], 1);
- 
-	ADD_VL( vhead, &C1[4*3], 0);
-	ADD_VL( vhead, &C2[4*3], 1);
-	ADD_VL( vhead, &C4[4*3], 1);
-	ADD_VL( vhead, &C3[4*3], 1);
-	ADD_VL( vhead, &C1[4*3], 1);
-
-	ADD_VL( vhead, &C1[8*3], 0);
-	ADD_VL( vhead, &C2[8*3], 1);
-	ADD_VL( vhead, &C4[8*3], 1);
-	ADD_VL( vhead, &C3[8*3], 1);
-	ADD_VL( vhead, &C1[8*3], 1);
- 
-	ADD_VL( vhead, &C1[12*3], 0);
-	ADD_VL( vhead, &C2[12*3], 1);
-	ADD_VL( vhead, &C4[12*3], 1);
-	ADD_VL( vhead, &C3[12*3], 1);
-	ADD_VL( vhead, &C1[12*3], 1);
+	rt_free( (char *)pts, "tor_plot pts[]" );
 	return(0);
 }
 
 /*
+ *			T O R _ T E S S
  */
 int
-tor_tess()
+tor_tess( r, m, rp, mat, dp )
+struct nmgregion	**r;
+struct model		*m;
+register union record	*rp;
+register mat_t		mat;
+struct directory	*dp;
 {
+
 }
