@@ -343,9 +343,9 @@ no effect (i.e. the members of a region
 always take on the characteristics of the
 region)." } }
 
-    button $top.okB -relief raised -text "Ok"\
+    button $top.okB -relief raised -text "OK"\
 	    -command "comb_ok $id $top"
-    hoc_register_data $top.okB "Ok"\
+    hoc_register_data $top.okB "OK"\
 	    { { summary "Apply the data in the \"Combination Editor\"
 to the combination then close the
 \"Combination Editor\"." } }

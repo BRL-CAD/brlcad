@@ -97,7 +97,7 @@ proc do_extract { id } {
 	    set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "Append to $ex_control($id,file)?"\
 		    "Append to $ex_control($id,file)?"\
-		    "" 0 OK CANCEL]
+		    "" 0 OK Cancel]
 
 	    if {$result} {
 		return

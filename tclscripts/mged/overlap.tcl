@@ -489,7 +489,7 @@ proc overlap_tool { id } {
 		{summary "Enter a list of objects to be checked for overlapping regions\n\
 			This is normally a top level group."}
 	}
-	label $over_cont($id,top).ray_fr.ray -text "Ray Tracing Parameters:"
+	label $over_cont($id,top).ray_fr.ray -text "Raytracing Parameters:"
 	hoc_register_data $over_cont($id,top).ray_fr.ray "Ray Tracing Parameters" {
 		{summary "This is a list of parameters that will be passed to 'g_lint'\n\
 			to check the object list for overlapping regions."}

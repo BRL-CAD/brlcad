@@ -24,7 +24,7 @@ proc init_g2asc { id } {
     set ret [cad_input_dialog $top $mged_gui($id,screen) "Save as Ascii"\
 	    "Enter ascii filename:" ascii_filename\
 	    $default_name 0 {{ summary "Enter a filename to indicate where
-to put the acsii converted database."}} OK CANCEL]
+to put the acsii converted database."}} OK Cancel]
 
 
     if { $ascii_filename != "" } {
@@ -33,7 +33,7 @@ to put the acsii converted database."}} OK CANCEL]
 		set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 			"Overwrite $ascii_filename?"\
 			"Overwrite $ascii_filename?"\
-			"" 0 OK CANCEL]
+			"" 0 OK Cancel]
 
 		if { $result } {
 		    return

@@ -99,33 +99,33 @@ MGED's framebuffers." } }
 
     menu $top.menubar.obj -title "Objects" -tearoff 0
     $top.menubar.obj add radiobutton -value one -variable rt_control($id,omode)\
-	    -label "one" -underline 0\
+	    -label "One" -underline 0\
 	    -command "rt_set_mouse_behavior $id"
     hoc_register_menu_data "Objects" "one" "Objects - one"\
 	    { { summary "Raytrace only the selected object. Note - this will
 change the mouse behavior of the source window to
 \"o\" (i.e. raytrace object)." } }
     $top.menubar.obj add radiobutton -value several -variable rt_control($id,omode)\
-	    -label "several" -underline 0\
+	    -label "Several" -underline 0\
 	    -command "rt_set_mouse_behavior $id"
     hoc_register_menu_data "Objects" "several" "Objects - several"\
 	    { { summary "Add the selected object to the list of objects to be
 raytraced. Note - this will change the mouse behavior
 of the source window to \"o\" (i.e. pick raytrace objects)." } }
     $top.menubar.obj add radiobutton -value all -variable rt_control($id,omode)\
-	    -label "all" -underline 0\
+	    -label "All" -underline 0\
 	    -command "rt_set_mouse_behavior $id"
     hoc_register_menu_data "Objects" "all" "Objects - all"\
 	    { { summary "Raytrace all displayed objects. Note - this will
 change the mouse behavior of the source window to
 \"d\" (i.e. the default mouse behavior)." } }
     $top.menubar.obj add separator
-    $top.menubar.obj add command -label "edit list"\
+    $top.menubar.obj add command -label "Edit List"\
 	    -command "rt_olist_edit $id"
     hoc_register_menu_data "Objects" "edit list" "Edit List"\
 	    { { summary "Pop up a tool to edit the list
 of objects to be raytraced." } }
-    $top.menubar.obj add command -label "clear list"\
+    $top.menubar.obj add command -label "Clear List"\
 	    -command "rt_olist_clear $id"
     hoc_register_menu_data "Objects" "clear list" "Clear List"\
 	    { { summary "Clear the object list and the contents
@@ -312,7 +312,7 @@ that is used when clearing the framebuffer." } }
 	    -command "do_Advanced_Settings $id"
     hoc_register_data $top.advancedB "Advanced Settings"\
 	    { { summary "Pop up another GUI for advanced settings." } }
-    button $top.okB -relief raised -text "Ok"\
+    button $top.okB -relief raised -text "OK"\
 	    -command "rt_ok $id $top"
     hoc_register_data $top.okB "Raytrace"\
 	    { { summary "Begin raytracing the view of the source pane.

@@ -49,7 +49,7 @@ proc solclick { } {
 	    pack $w.s$i -side top -fill x -expand yes
 	    incr i
 	}
-	button $w.s$i -text "CANCEL" -command "destroy $w"
+	button $w.s$i -text "Cancel" -command "destroy $w"
 	pack $w.s$i -side top -fill x -expand yes
     }
 }

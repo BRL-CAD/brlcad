@@ -213,7 +213,7 @@ proc do_ps { id } {
 	    set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "Overwrite $ps_control($id,file)?"\
 		    "Overwrite $ps_control($id,file)?"\
-		    "" 0 OK CANCEL]
+		    "" 0 OK Cancel]
 
 	    if {$result} {
 		return

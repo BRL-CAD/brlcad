@@ -74,9 +74,9 @@ ticks are drawn." } }
 	return
     }
 
-    button $top.okB -relief raised -text "Ok"\
+    button $top.okB -relief raised -text "OK"\
 	    -command "grid_spacing_ok $id $spacing_type $top"
-    hoc_register_data $top.okB "Ok"\
+    hoc_register_data $top.okB "OK"\
 	    { { summary "Apply the grid spacing settings
 to the grid, then close the grid
 spacing control panel." } }
@@ -169,10 +169,10 @@ accuracy when snapping." } }
     entry $top.anchorE -relief sunken -bd 2 -width 12 -textvar grid_control_anchor($id)
     hoc_register_data $top.anchorE "Anchor Point" $hoc_data
 
-    button $top.okB -relief raised -text "Ok"\
+    button $top.okB -relief raised -text "OK"\
 	    -command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\";
                       catch { destroy $top }"
-    hoc_register_data $top.okB "Ok"\
+    hoc_register_data $top.okB "OK"\
 	    { { summary "Apply the grid anchor control panel
 settings to the grid, then close the
 control panel." } }
@@ -431,9 +431,9 @@ gives the user high accuracy with the mouse for
 transforming the view or editing solids/matrices." }
             { see_also "rset" } }
 
-    button $top.okB -relief raised -text "Ok"\
+    button $top.okB -relief raised -text "OK"\
 	    -command "grid_control_ok $id $top"
-    hoc_register_data $top.okB "Ok"\
+    hoc_register_data $top.okB "OK"\
 	    { { summary "Apply grid control panel settings to
 the grid, then close the control panel." } }
     button $top.applyB -relief raised -text "Apply"\

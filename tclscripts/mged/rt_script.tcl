@@ -96,7 +96,7 @@ proc do_rtScript { id } {
 	    set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "Append $rts_control($id,file)?"\
 		    "Append $rts_control($id,file)?"\
-		    "" 0 OK CANCEL]
+		    "" 0 OK Cancel]
 
 	    if {$result} {
 		return

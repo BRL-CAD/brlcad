@@ -1493,7 +1493,7 @@ data." }
           { see_also "rset, vars" } }
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rubber_band)\
-	-label "Persistent sweep rectangle" -underline 0\
+	-label "Persistent Sweep Rectangle" -underline 0\
 	-command "mged_apply $id \"rset rb draw \$mged_gui($id,rubber_band)\""
 hoc_register_menu_data "Modes" "Persistent sweep rectangle" "Persistent Rubber Band"\
 	{ { summary "Toggle drawing the rectangle while idle." }

@@ -234,9 +234,9 @@ control panel." } }
     grid $top.activeCB $top.use_airCB x $top.advB -in $top.gridF4 -padx $qray_control($id,padx)
 
     frame $top.gridF5
-    button $top.okB -relief raised -text "Ok"\
+    button $top.okB -relief raised -text "OK"\
 	    -command "qray_ok $id $top"
-    hoc_register_data $top.okB "Ok"\
+    hoc_register_data $top.okB "OK"\
 	    { { summary "Apply the query ray control panel settings
 to MGED's internal state, then close the
 query ray control panel." } }
@@ -487,9 +487,9 @@ bindings." }
               { see_also "nirt" } }
 
     frame $top.gridF2
-    button $top.okB -relief raised -text "Ok"\
+    button $top.okB -relief raised -text "OK"\
 	    -command "qray_ok_fmt $id $top"
-    hoc_register_data $top.okB "Ok"\
+    hoc_register_data $top.okB "OK"\
 	    { { summary "Apply the format string settings to
 MGED's internal state, then close the
 advanced settings control panel." } }

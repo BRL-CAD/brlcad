@@ -188,9 +188,9 @@ in the panes (geometry windows)." } }
     incr row
     set esol_control(buttons) $row
     frame $w._F$row -borderwidth 2
-    button $w.okB -text "Ok" \
+    button $w.okB -text "OK" \
 	    -command "esol_ok $id $w $w.sformF"
-    hoc_register_data $w.okB "Ok"\
+    hoc_register_data $w.okB "OK"\
 	    { { summary "Apply the control panel settings to the
 database primitive, then dismiss/close the
 control panel." } }

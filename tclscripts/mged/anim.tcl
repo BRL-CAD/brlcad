@@ -85,19 +85,19 @@ proc sketch_popup_main { {p .} } {
 	toplevel $root
 	place_near_mouse $root
 	wm title $root "MGED AnimMate"
-	button $root.b0 -text "CURVE EDITOR" -command "sketch_popup_draw $root"
-	button $root.b1 -text "VIEW EDITOR" -command "sketch_popup_view $root"
-	menubutton $root.b2 -text "TABLE EDITOR" -menu $root.b2.m0
+	button $root.b0 -text "Curve Editor" -command "sketch_popup_draw $root"
+	button $root.b1 -text "View Editor" -command "sketch_popup_view $root"
+	menubutton $root.b2 -text "Table Editor" -menu $root.b2.m0
 	menu $root.b2.m0 -tearoff 0 -postcommand "sketch_post_table_menu $root.b2.m0"
-	$root.b2.m0 add command -label "New editor" -command "incr mged_sketch_table_index; sketch_popup_table $root \$mged_sketch_table_index"
-	menubutton $root.b3 -text "CREATE SCRIPT" -menu $root.b3.m0
+	$root.b2.m0 add command -label "New Editor" -command "incr mged_sketch_table_index; sketch_popup_table $root \$mged_sketch_table_index"
+	menubutton $root.b3 -text "Create Script" -menu $root.b3.m0
 	menu $root.b3.m0 -tearoff 0
 	$root.b3.m0 add command -label "Object" -command "sketch_popup_objanim $root obj"
 	$root.b3.m0 add command -label "View" -command "sketch_popup_objanim $root view"
 	$root.b3.m0 add command -label "Articulated Track" -command "sketch_popup_track_anim $root"
-	button $root.b4 -text "COMBINE SCRIPTS" -command "sketch_popup_sort $root"
-	button $root.b5 -text "SHOW SCRIPT" -command "sketch_popup_preview $root"
-	button $root.b6 -text "QUIT" -command "sketch_quit $root"
+	button $root.b4 -text "Combine Scripts" -command "sketch_popup_sort $root"
+	button $root.b5 -text "Show Script" -command "sketch_popup_preview $root"
+	button $root.b6 -text "Quit" -command "sketch_quit $root"
 
 	pack $root.b0 $root.b2 $root.b1 $root.b3 $root.b4 \
 		$root.b5 $root.b6 \
@@ -160,10 +160,10 @@ proc sketch_popup_draw { p } {
 	toplevel $root
 	place_near_mouse $root
 	wm title $root "MGED AnimMate curve editor"
-	button $root.b0 -text "ADD" -command {sketch_add [viewget center] $mged_sketch_node}
-	button $root.b1 -text "INSERT" -command {sketch_insert [viewget center] $mged_sketch_node}
-	button $root.b2 -text "MOVE" -command {sketch_move [viewget center] $mged_sketch_node}
-	button $root.b3 -text "DELETE" -command {sketch_delete $mged_sketch_node}
+	button $root.b0 -text "Add" -command {sketch_add [viewget center] $mged_sketch_node}
+	button $root.b1 -text "Insert" -command {sketch_insert [viewget center] $mged_sketch_node}
+	button $root.b2 -text "Move" -command {sketch_move [viewget center] $mged_sketch_node}
+	button $root.b3 -text "Delete" -command {sketch_delete $mged_sketch_node}
 	frame  $root.f1
 	label  $root.f1.l0 -text "Node "
 	label  $root.f1.l1 -textvariable mged_sketch_node
@@ -175,8 +175,8 @@ proc sketch_popup_draw { p } {
 	button $root.f0.b50 -text "<-" -command {sketch_incr -1}
 	button $root.f0.b5 -text "<--" -command {sketch_incr -10}
 	frame  $root.f4
-	#label  $root.f4.l0 -text "Current curve:"
-	menubutton $root.f4.mb0 -text "Current curve:" -menu $root.f4.mb0.m
+	#label  $root.f4.l0 -text "Current Curve:"
+	menubutton $root.f4.mb0 -text "Current Curve:" -menu $root.f4.mb0.m
 	menu $root.f4.mb0.m -tearoff 0
 	$root.f4.mb0.m add command -label "New Curve" -command {sketch_popup_name new}
 	$root.f4.mb0.m add cascade -label "Open Curve" \
@@ -204,9 +204,9 @@ proc sketch_popup_draw { p } {
 	#label $root.f2.l0 -text "Color:"
 	menubutton $root.f2.mb0 -text "Color:" -menu $root.f2.mb0.m
 	menu $root.f2.mb0.m -tearoff 0
-	$root.f2.mb0.m add cascade -label "Current curve" \
+	$root.f2.mb0.m add cascade -label "Current Curve" \
 		-menu $root.f2.mb0.m.m0
-	$root.f2.mb0.m add cascade -label "Current spline" \
+	$root.f2.mb0.m add cascade -label "Current Spline" \
 		-menu $root.f2.mb0.m.m1
 	$root.f2.mb0.m add cascade -label "Other" \
 		-menu $root.f2.mb0.m.m2
@@ -222,10 +222,10 @@ proc sketch_popup_draw { p } {
 	button $root.f6.b0 -text "Spline Interpolate" -command {sketch_do_spline spline}
 	button $root.f6.b1 -text "Cspline Interpolate" -command {sketch_do_spline cspline}
 	frame $root.f6.f0
-	label $root.f6.f0.l0 -text "into curve:"
+	label $root.f6.f0.l0 -text "Into Curve:"
 	entry $root.f6.f0.e0 -width 15 -textvariable mged_sketch_splname
 	frame  $root.f6.f1
-	label $root.f6.f1.l0 -text "Frames per second:"
+	label $root.f6.f1.l0 -text "Frames Per Second:"
 	entry $root.f6.f1.e0 -width 4 -textvariable mged_sketch_fps
 	bind  $root.f6.f1.e0 <Key-Return> "focus $root "
 	frame $root.f8
@@ -234,9 +234,9 @@ proc sketch_popup_draw { p } {
 
 	menubutton $root.mb0 -text "Read/Write" -menu $root.mb0.m0
 	menu $root.mb0.m0
-	$root.mb0.m0 add command -label "Read Curve From File" -command {sketch_popup_load}
-	$root.mb0.m0 add command -label "Write Curve To File" -command {sketch_popup_save curve}
-	$root.mb0.m0 add command -label "Write Spline To File" -command {sketch_popup_save spline}
+	$root.mb0.m0 add command -label "Read Curve from File" -command {sketch_popup_load}
+	$root.mb0.m0 add command -label "Write Curve to File" -command {sketch_popup_save curve}
+	$root.mb0.m0 add command -label "Write Spline to File" -command {sketch_popup_save spline}
 	
 	pack \
 		$root.f4 $root.f5 $root.f1 $root.f0 \
@@ -899,16 +899,16 @@ proc sketch_popup_view { p } {
 	toplevel $root
 	place_near_mouse $root
 	wm title $root "MGED AnimMate view curve editor"
-	button $root.b0 -text "ADD" -command {sketch_vadd $mged_sketch_vnode}
-	button $root.b1 -text "INSERT" -command {sketch_vinsert $mged_sketch_vnode}
-	button $root.b2 -text "MOVE" -command {sketch_vmove $mged_sketch_vnode}
-	button $root.b3 -text "DELETE" -command {sketch_vdelete $mged_sketch_vnode}
+	button $root.b0 -text "Add" -command {sketch_vadd $mged_sketch_vnode}
+	button $root.b1 -text "Insert" -command {sketch_vinsert $mged_sketch_vnode}
+	button $root.b2 -text "Move" -command {sketch_vmove $mged_sketch_vnode}
+	button $root.b3 -text "Delete" -command {sketch_vdelete $mged_sketch_vnode}
 	frame  $root.f1
 	label  $root.f1.l0 -text "Node "
 	label  $root.f1.l1 -textvariable mged_sketch_vnode
 	label  $root.f1.l2 -text " of "
 	label  $root.f1.l3 -textvariable mged_sketch_vcount
-	checkbutton $root.cb0 -text "Apply current node to view" \
+	checkbutton $root.cb0 -text "Apply Current Node to View" \
 		-variable mged_sketch_vapply -command "sketch_vupdate"
 	$root.cb0 deselect
 	frame  $root.f0 
@@ -917,18 +917,18 @@ proc sketch_popup_view { p } {
 	button $root.f0.b50 -text "<-" -command {sketch_vincr -1}
 	button $root.f0.b5 -text "<--" -command {sketch_vincr -10}
 	frame  $root.f4
-	#label  $root.f4.l0 -text "Current v-curve:"
-	menubutton $root.f4.mb0 -text "Current v-curve:" -menu $root.f4.mb0.m
+	#label  $root.f4.l0 -text "Current V-Curve:"
+	menubutton $root.f4.mb0 -text "Current V-Curve:" -menu $root.f4.mb0.m
 	menu $root.f4.mb0.m -tearoff 0
-	$root.f4.mb0.m add command -label "New V-curve" \
+	$root.f4.mb0.m add command -label "New V-Curve" \
 		-command {sketch_popup_vname select}
-	$root.f4.mb0.m add cascade -label "Open V-curve" \
+	$root.f4.mb0.m add cascade -label "Open V-Curve" \
 		-menu $root.f4.mb0.m.m0
-	$root.f4.mb0.m add command -label "Rename V-curve" \
+	$root.f4.mb0.m add command -label "Rename V-Curve" \
 		-command {sketch_popup_vname rename}
 	$root.f4.mb0.m add command -label "Copy V-Curve" \
 		-command {sketch_popup_vname copy}
-	$root.f4.mb0.m add cascade -label "Delete V-curve" \
+	$root.f4.mb0.m add cascade -label "Delete V-Curve" \
 		-menu $root.f4.mb0.m.m1
 
 	menu $root.f4.mb0.m.m0 -tearoff 0 \
@@ -961,8 +961,8 @@ proc sketch_popup_view { p } {
 
 	menubutton $root.mb0 -text "Read/Write" -menu $root.mb0.m0
 	menu $root.mb0.m0
-	$root.mb0.m0 add command -label "Read V-curve From File" -command {sketch_popup_vload}
-	$root.mb0.m0 add command -label "Write V-curve To File" -command {sketch_popup_vsave curve}
+	$root.mb0.m0 add command -label "Read V-Curve from File" -command {sketch_popup_vload}
+	$root.mb0.m0 add command -label "Write V-Curve to File" -command {sketch_popup_vsave curve}
 	
 	pack \
 		$root.f4 $root.f3 $root.f5 $root.f1 $root.cb0 $root.f0 \
@@ -1892,14 +1892,14 @@ proc sketch_table_bar_reset { w } {
 
 proc sketch_post_write_menu { menu text } {
 	$menu delete 0 end
-	$menu add command -label "to File" \
+	$menu add command -label "To File" \
 		-command "sketch_popup_write $text file"
 	if { [info globals mged_sketch_init_draw] != "" } {
-		$menu add command -label "to Curve" \
+		$menu add command -label "To Curve" \
 			-command "sketch_popup_write $text curve"
 	}
 	if { [info globals mged_sketch_init_view] != "" } {
-		$menu add command -label "to V-curve" \
+		$menu add command -label "To V-Curve" \
 			-command "sketch_popup_write $text vcurve"
 	}
 }
@@ -1925,19 +1925,19 @@ proc sketch_table_get_label { ted } {
 
 proc sketch_post_read_menu { menu text } {
 	$menu delete 0 end
-	$menu add command -label "from File" \
+	$menu add command -label "From File" \
 		-command "sketch_popup_read $text file file"
 	if { [info globals mged_sketch_init_table] != "" } {
 		foreach ted [sketch_table_list] {
 			$menu add command \
-			 -label "from editor [sketch_table_get_label $ted]" \
+			 -label "From Editor [sketch_table_get_label $ted]" \
 			 -command "sketch_popup_read $text text $ted.t"
 		}
 	}
 	if { [info globals mged_sketch_init_draw] != "" } {
 		foreach curve [vdraw v l] {
 			if { [info globals "mged_sketch_time_$curve"] != ""} {
-			  $menu add command -label "from curve $curve" \
+			  $menu add command -label "From Curve $curve" \
 			    -command "sketch_popup_read $text curve $curve"
 			}
 		}
@@ -1945,7 +1945,7 @@ proc sketch_post_read_menu { menu text } {
 	if { [info globals mged_sketch_init_view] != "" } {
 		foreach ved [sketch_vcurve_list] {
 			$menu add command -label \
-			 "from v-curve [sketch_vcurve_get_label $ved]" \
+			 "From V-Curve [sketch_vcurve_get_label $ved]" \
 			 -command "sketch_popup_read $text text $ved.t"
 		}
 	}
@@ -2093,7 +2093,7 @@ proc sketch_popup_table_interp {w wbar}	{
 	wm title ._sketch_col "Column Interpolator"
 	frame ._sketch_col.fz
 	label ._sketch_col.fz.l0 -text "0:" 
-	label ._sketch_col.fz.l1 -text "time" -width 20
+	label ._sketch_col.fz.l1 -text "Time" -width 20
 	pack ._sketch_col.fz -side top -fill x -expand yes
 	pack ._sketch_col.fz.l0 ._sketch_col.fz.l1 -side left -fill x -expand yes
 	frame ._sketch_col.fa
@@ -2149,12 +2149,12 @@ proc sketch_popup_table_interp {w wbar}	{
 	._sketch_col.fe.mb0.m0 add command -label "Step (src)" -command {set mged_sketch_table_interp step }
 	._sketch_col.fe.mb0.m0 add command -label "Linear (src)" -command {set mged_sketch_table_interp linear }
 	._sketch_col.fe.mb0.m0 add command -label "Spline (src)" -command {set mged_sketch_table_interp spline }
-	._sketch_col.fe.mb0.m0 add command -label "Periodic spline (src)" -command {set mged_sketch_table_interp cspline }
+	._sketch_col.fe.mb0.m0 add command -label "Periodic Spline (src)" -command {set mged_sketch_table_interp cspline }
 	._sketch_col.fe.mb0.m0 add command -label "Quaternion (src)" -command {set mged_sketch_table_interp quat }
 	._sketch_col.fe.mb0.m0 add command -label "Rate (init) (incr/s)" -command {set mged_sketch_table_interp rate }
 	._sketch_col.fe.mb0.m0 add command -label "Accel (init) (incr/s)" -command {set mged_sketch_table_interp accel}
 	._sketch_col.fe.mb0.m0 add command -label "Next (src) (offset)" -command {set mged_sketch_table_interp next}
-	._sketch_col.fe.mb0.m0 add command -label "Delete column" -command {set mged_sketch_table_interp delete}
+	._sketch_col.fe.mb0.m0 add command -label "Delete Column" -command {set mged_sketch_table_interp delete}
 
 	if { $i > 1 } {
 		focus ._sketch_col.fr1.e0
@@ -2530,7 +2530,7 @@ proc sketch_popup_objanim { p {mode obj} } {
 	#create widget
 	toplevel $root
 	frame $root.f0
-	label $root.f0.l0 -text "Output file: "
+	label $root.f0.l0 -text "Output File: "
 	entry $root.f0.e0 -width 20 -textvariable mged_sketch_objscript
 	frame $root.f1
 	label $root.f1.l0 -text Source
@@ -2541,20 +2541,20 @@ proc sketch_popup_objanim { p {mode obj} } {
 	place_near_mouse $root
 	if {$mode == "view"} {
 		wm title $root "MGED AnimMate View Animation"
-		label $root.l$mode -text "CREATE VIEW ANIMATION"
-		button $root.f2.l0 -text "View size:" -command \
+		label $root.l$mode -text "Create View Animation"
+		button $root.f2.l0 -text "View Size:" -command \
 			{set mged_sketch_objvsize [viewget size]}
 		entry $root.f2.e0 -width 20 -textvariable mged_sketch_objvsize
 		frame $root.f9
-		button $root.f9.b0 -text "Eye point:" \
+		button $root.f9.b0 -text "Eye Point:" \
 			-command { set mged_sketch_eyecen [viewget eye] }
 		entry $root.f9.e0 -width 20 -textvariable mged_sketch_eyecen
 		frame $root.f10
-		button $root.f10.b0 -text "Eye yaw,pitch,roll: " \
+		button $root.f10.b0 -text "Eye Yaw,Pitch,Roll: " \
 			-command { set mged_sketch_eyeori [viewget ypr] }
 		entry $root.f10.e0 -width 20 -textvariable mged_sketch_eyeori
 		set if_view "$root.f9 $root.f10"
-		checkbutton $root.cb0 -text "Read viewsize from source" \
+		checkbutton $root.cb0 -text "Read View Size from Source" \
 			-variable mged_sketch_objrv -command "sketch_script_update $mode"
 		$root.cb0 deselect
 		uplevel #0 set mged_sketch_objdisp "-d"
@@ -2563,8 +2563,8 @@ proc sketch_popup_objanim { p {mode obj} } {
 	} else {
 		wm title $root "MGED AnimMate Object Animation"
 		set if_view ""
-		label $root.l$mode -text "CREATE OBJECT ANIMATION"
-		label $root.f2.l0 -text "Object name:"
+		label $root.l$mode -text "Create Object Animation"
+		label $root.f2.l0 -text "Object Name:"
 		entry $root.f2.e0 -width 20 -textvariable mged_sketch_objname
 		checkbutton $root.cb1 -text "Relative Displacement" \
 			-variable mged_sketch_objdisp -offvalue "-d" -onvalue "-c"
@@ -2576,18 +2576,18 @@ proc sketch_popup_objanim { p {mode obj} } {
 		set lookat_txt "Object path and look-at path"
 	}
 	frame $root.f3
-	button $root.f3.b0 -text "Object center:" \
+	button $root.f3.b0 -text "Object Center:" \
 		-command { set mged_sketch_objcen [viewget center] }
 	entry $root.f3.e0 -width 20 -textvariable mged_sketch_objcen
 	frame $root.f4
-	button $root.f4.b0 -text "Object yaw,pitch,roll: " \
+	button $root.f4.b0 -text "Object Yaw,Pitch,Roll: " \
 		-command { set mged_sketch_objori [viewget ypr] }
 	entry $root.f4.e0 -width 20 -textvariable mged_sketch_objori
 	checkbutton $root.cb3 -text "No Translation" \
 		-variable mged_sketch_objrotonly -command "sketch_script_update $mode"
 	$root.cb3 deselect
 	frame $root.f5
-	label $root.f5.l0 -text "First frame:"
+	label $root.f5.l0 -text "First Frame:"
 	entry $root.f5.e0 -width 20 -textvariable mged_sketch_objframe
 	frame $root.f6
 	button $root.f6.b0 -text "OK" -command "sketch_objanim $mode"
@@ -2598,22 +2598,22 @@ proc sketch_popup_objanim { p {mode obj} } {
 	label $root.l1 -text "Orientation Control: "
 	radiobutton $root.rb0 -text "No Rotation" \
 		-variable mged_sketch_objopt -value "none" -command "sketch_script_update $mode"
-	radiobutton $root.rb1 -text "Automatic steering" \
+	radiobutton $root.rb1 -text "Automatic Steering" \
 		-variable mged_sketch_objopt -value "steer" -command "sketch_script_update $mode"
-	radiobutton $root.rb2 -text "Automatic steering and banking" \
+	radiobutton $root.rb2 -text "Automatic Steering and Banking" \
 		-variable mged_sketch_objopt -value "bank" -command "sketch_script_update $mode"
 	frame $root.f7
-	label $root.f7.l0 -text "    maximum bank angle ="
+	label $root.f7.l0 -text "    Maximum Bank Angle ="
 	entry $root.f7.e0 -textvariable mged_sketch_objmang -width 4
-	radiobutton $root.rb3 -text "Rotation specified as ypr" \
+	radiobutton $root.rb3 -text "Rotation Specified as YPR" \
 		-variable mged_sketch_objopt -value "ypr" -command "sketch_script_update $mode"
-	radiobutton $root.rb4 -text "Rotation specified as quat" \
+	radiobutton $root.rb4 -text "Rotation Specified as Quat" \
 		-variable mged_sketch_objopt -value "quat" -command "sketch_script_update $mode"
 	radiobutton $root.rb5 -text $lookat_txt \
 		-variable mged_sketch_objopt -value "lookat" -command "sketch_script_update $mode"
 	frame $root.f8
 	label $root.f8.l0 -textvariable mged_sketch_objncols
-	label $root.f8.l1 -text "input columns needed:"
+	label $root.f8.l1 -text "Input Columns Needed:"
 	label $root.f8.l2 -textvariable mged_sketch_objcols
 
 
@@ -3072,52 +3072,52 @@ proc sketch_popup_track_anim { p } {
 
 	place_near_mouse $root
 	wm title $root "MGED AnimMate Track Animation"
-	label $root.l0 -text "CREATE TRACK ANIMATION"
+	label $root.l0 -text "Create Track Animation"
 	frame $root.f0
-	label $root.f0.l0 -text "Output file: "
+	label $root.f0.l0 -text "Output File: "
 	entry $root.f0.e0 -width 20 -textvariable mged_sketch_objscript
 	frame $root.f1
-	label $root.f1.l0 -text "Vehicle path from table: "
+	label $root.f1.l0 -text "Vehicle Path from Table: "
 	entry $root.f1.e0 -width 20 -textvariable mged_sketch_track_vsrc
 	frame $root.f1a
 	radiobutton $root.f1a.r0 -text "Distance" -variable mged_sketch_track_dist -value "-u"
 	radiobutton $root.f1a.r1 -text "Position" -variable mged_sketch_track_dist -value "-s"
-	radiobutton $root.f1a.r2 -text "Pos. and ypr" -variable mged_sketch_track_dist -value "-y"
+	radiobutton $root.f1a.r2 -text "Position and YPR" -variable mged_sketch_track_dist -value "-y"
 	frame $root.f2
-	label $root.f2.l0 -text "Wheel specs from table: "
+	label $root.f2.l0 -text "Wheel Specs from Table: "
 	entry $root.f2.e0 -width 20 -textvariable mged_sketch_track_wsrc
 	frame $root.fw
-	label $root.fw.l0 -text "Wheel base name:"
+	label $root.fw.l0 -text "Wheel Base Name:"
 	entry $root.fw.e0 -width 20 -textvariable mged_sketch_track_wname
 	frame $root.f4
-	label $root.f4.l0 -text "Pad base name:"
+	label $root.f4.l0 -text "Pad Base Name:"
 	entry $root.f4.e0 -width 20 -textvariable mged_sketch_track_pname
 	frame $root.f5
-	label $root.f5.l0 -text "Number of pads: "
+	label $root.f5.l0 -text "Number of Pads: "
 	entry $root.f5.e0 -textvariable mged_sketch_track_npads
 	frame $root.f3
 	tk_optionMenu $root.f3.om mged_sketch_track_type \
 		"Minimize" "Elastic" "Rigid"	
-	label $root.f3.l0 -text "track length:"
+	label $root.f3.l0 -text "Track Length:"
 	entry $root.f3.e0 -width 20 -textvariable mged_sketch_track_len
 	frame $root.f3a
-	button $root.f3a.b0 -text "Get track length from wheel specs" \
+	button $root.f3a.b0 -text "Get Track Length from Wheel Specs" \
 		-command "sketch_track_get_length \$mged_sketch_track_wsrc"
 	frame $root.f6
-	button $root.f6.b0 -text "Vehicle center:" \
+	button $root.f6.b0 -text "Vehicle Center:" \
 			-command { set mged_sketch_objcen [viewget center] }
 	entry $root.f6.e0 -width 20 -textvariable mged_sketch_objcen
 	frame $root.f7
-	button $root.f7.b0 -text "Vehicle yaw,pitch,roll: " \
+	button $root.f7.b0 -text "Vehicle Yaw,Pitch,Roll: " \
 			-command { set mged_sketch_objori [viewget ypr] }
 	entry $root.f7.e0 -width 20 -textvariable mged_sketch_objori
 	frame $root.f8
-	label $root.f8.l0 -text "First frame:"
+	label $root.f8.l0 -text "First Frame:"
 	entry $root.f8.e0 -width 20 -textvariable mged_sketch_objframe
 	frame $root.fa
-	checkbutton $root.fa.cb -text "Create geometry file from frame:" -variable mged_sketch_track_geom
+	checkbutton $root.fa.cb -text "Create Geometry File from Frame:" -variable mged_sketch_track_geom
 	entry $root.fa.e0 -width 3 -textvariable mged_sketch_track_arced
-	checkbutton $root.cb0 -text "Enable anti-strobing" -variable mged_sketch_track_antistr
+	checkbutton $root.cb0 -text "Enable Anti-Strobing" -variable mged_sketch_track_antistr
 	frame $root.f9
 	button $root.f9.b0 -text "OK" -command {sketch_do_track }
 	button $root.f9.b1 -text "Show Script" -command "sketch_popup_preview $p \$mged_sketch_objscript"
@@ -3356,7 +3356,7 @@ proc sketch_popup_sort { p } {
 	toplevel $root
 	place_near_mouse $root
 	wm title $root "MGED AnimMate Combine Scripts"
-	label $root.l0 -text "COMBINE SCRIPTS"
+	label $root.l0 -text "Combine Scripts"
 	frame $root.f0
 	label $root.f0.l0 -text "Combine Scripts:"
 	entry $root.f0.e0 -width 20 
@@ -3373,7 +3373,7 @@ proc sketch_popup_sort { p } {
 		-yscrollcommand "$root.f1.f1.s0 set"
 	scrollbar $root.f1.f1.s0 -command "$root.f1.f1.lb1 yview"
 	frame $root.f2
-	label $root.f2.l0 -text "Create script: "
+	label $root.f2.l0 -text "Create Script: "
 	entry $root.f2.e0 -width 20
 	frame $root.f3
 	button $root.f3.b0 -text "OK" -command "sketch_sort $root \
@@ -3524,21 +3524,21 @@ proc sketch_popup_preview { p {filename ""} } {
 	toplevel $root
 	place_near_mouse $root
 	wm title $root "MGED AnimMate Show Script"
-	label $root.l0 -text "SHOW SCRIPT"
+	label $root.l0 -text "Show Script"
 	frame $root.f0
-	label $root.f0.l0 -text "Script file: "
+	label $root.f0.l0 -text "Script File: "
 	entry $root.f0.e0 -width 20
 	frame $root.f1
-	label $root.f1.l0 -text "Max frames per second:"
+	label $root.f1.l0 -text "Max Frames Per Second:"
 	entry $root.f1.e0 -width 5 \
 		-textvariable mged_sketch_prev_fps
 	frame $root.f2
-	label $root.f2.l0 -text "Start frame: "
+	label $root.f2.l0 -text "Start Frame: "
 	entry $root.f2.e0 -width 5 -textvariable mged_sketch_prevs
 	frame $root.f3
-	label $root.f3.l0 -text "End frame: "
+	label $root.f3.l0 -text "End Frame: "
 	entry $root.f3.e0 -width 5 -textvariable mged_sketch_preve
-	checkbutton $root.cb0 -text "Polygon rendering" \
+	checkbutton $root.cb0 -text "Polygon Rendering" \
 		-variable mged_sketch_prevp -onvalue "-v" -offvalue ""
 	frame $root.f4
 	button $root.f4.b0 -text "Show" \
