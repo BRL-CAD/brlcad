@@ -569,7 +569,7 @@ char *buf;
 	info.li_percent = 42.0;	/* for now */
 
 	len = 0;
-	cp = struct_export( &len, (stroff_t)&info, desc_line_info );
+	cp = struct_export( &len, (char *)&info, desc_line_info );
 	if( cp == (char *)0 )  {
 		rt_log("struct_export failure\n");
 		exit(98);
