@@ -99,7 +99,6 @@ set help_data(killall)		{{<objects>}	{kill object[s] and all references}}
 set help_data(killtree)		{{<object>}	{kill complete tree[s] - BE CAREFUL}}
 set help_data(knob)		{{[-e -i -m -v] [id [val]]}	{emulate knob twist}}
 set help_data(l)		{{<objects>}	{list attributes (verbose)}}
-set help_data(L)		{{1|0 xpos ypos}	{handle a left mouse event}}
 set help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
 set help_data(listeval)		{{}	{lists 'evaluated' path solids}}
 set help_data(loadtk)		{{[DISPLAY]}	{Initializes the Tk window library}}
@@ -154,7 +153,6 @@ set help_data(quit)		{{}	{quit}}
 set help_data(qorot)		{{x y z dx dy dz theta}	{rotate object being edited about specified vector}}
 set help_data(qvrot)		{{dx dy dz theta}	{set view from direction vector and twist angle}}
 set help_data(r)		{{region <operation solid>}	{create or extend a Region combination}}
-set help_data(R)		{{1|0 xpos ypos}	{handle a right mouse event}}
 set help_data(rcodes)		{{filename}	{read region ident codes from filename}}
 set help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{read the MUVES region_map file and optionally the sysdef file}}
 set help_data(red)		{{object}	{edit a group or region using a text editor}}
