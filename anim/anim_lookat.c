@@ -88,7 +88,7 @@ char **argv;
 			printf("start %d;\n",frame++);
 			printf("clean;\n");
 			if (print_viewsize)
-				printf("viewsize %f;\n",vsize);
+				printf("viewsize %.10g;\n",vsize);
 	                printf("eye_pt %.10g %.10g %.10g;\n",eye[0],eye[1],eye[2]);
 			printf("viewrot %.10g\t%.10g\t%.10g\t0\n", -mat[1], -mat[5], -mat[9]);
 	                printf("%.10g\t%.10f\t%.10g\t0\n", mat[2], mat[6], mat[10]);

@@ -87,7 +87,7 @@ char **argv;
 
 		if (feof(stdin)) break;
 
-		printf("%f\t%f\t%f\t%f\t%f\t", time, viewsize,
+		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t", time, viewsize,
 					 eyept[0], eyept[1], eyept[2]);
 
 
@@ -100,7 +100,7 @@ char **argv;
 				fprintf(stderr,"Keyread: can't interpret matrix at time = %f.\n",time);
 			if (units == DEGREES)
 				VSCALE(angle,angle,RTOD);
-			printf("%f\t%f\t%f\n",angle[0],angle[1],angle[2]);
+			printf("%.10g\t%.10g\t%.10g\n",angle[0],angle[1],angle[2]);
 		}
 		else if (mode==XYZ) {
 			c = anim_mat2zyx(angle,viewrot);
@@ -110,11 +110,11 @@ char **argv;
 				fprintf(stderr,"Keyread: can't interpret matrix at time = %f\n.",time);
 			if (units == DEGREES)
 				VSCALE(angle,angle,RTOD);
-			printf("%f\t%f\t%f\n",angle[X],angle[Y],angle[Z]);
+			printf("%.10g\t%.10g\t%.10g\n",angle[X],angle[Y],angle[Z]);
 		}
 		else if (mode==QUATERNION){
 			anim_mat2quat(quat,viewrot);
-			printf("%f\t%f\t%f\t%f\n",quat[X],quat[Y],quat[Z],quat[W]);
+			printf("%.10g\t%.10g\t%.10g\t%.10g\n",quat[X],quat[Y],quat[Z],quat[W]);
 		}
 	}
 }

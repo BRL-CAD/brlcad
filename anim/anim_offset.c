@@ -66,9 +66,9 @@ char **argv;
 		anim_add_trans(mat,point,zero);
 		MAT4X3PNT(temp,mat,offset);
 		
-		printf("%f\t%f\t%f\t%f",time, temp[0], temp[1], temp[2]);
+		printf("%.10g\t%.10g\t%.10g\t%.10g",time, temp[0], temp[1], temp[2]);
 		if (full_print)
-			printf("\t%f\t%f\t%f", yaw, pitch, roll);
+			printf("\t%.10g\t%.10g\t%.10g", yaw, pitch, roll);
 		printf("\n");
 	}
 
