@@ -238,9 +238,6 @@ struct mfuncs marble_mfuncs[] = {
  */
 HIDDEN int marble_prep ()
 {
-	register int	i, j, k;
-	register double	a;
-
 	/*
 	 *	Initialize the marble region chain
 	 */
@@ -298,8 +295,7 @@ struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct marble_specific *mp, *mc;
-	register vect_t c_min, c_max;
-	register double d;
+	vect_t c_min, c_max;
 	extern struct resource		rt_uniresource;
 	register struct resource	*resp = &rt_uniresource;
 	int i;
@@ -597,13 +593,11 @@ char	*dp;
 {
 	register struct marble_specific *mp =
 		(struct marble_specific *)dp;
-	register struct light_specific *lp;
-	register struct lightwork *lw;
-	double	hi,newx,value;
-	fastf_t	cosine,x,y,z;
-	vect_t	color, min, max;
+	double	value;
+	fastf_t	x,y,z;
+	vect_t	color;
 	fastf_t xd,yd,zd;
-	int	j, i, lc;
+	int	i;
 
 	/*
 	 *	Normalize the hit point to [0..1]

@@ -401,11 +401,13 @@ static vect_t star_colors[] = {
 	{ 0.456978, 0.495116, 0.678378 },
 	{ 0.446728, 0.493157, 0.727269 },	/* 10000 */
 	{ 0.446728, 0.493157, 0.727269 },	/* fake 11000 */
-/***	{ 0.446728, 0.493157, 0.727269 },	/* fake 12000 */
-/***	{ 0.446728, 0.493157, 0.727269 },	/* fake 13000 */
-/***	{ 0.446728, 0.493157, 0.727269 },	/* fake 14000 */
-/***	{ 0.446728, 0.493157, 0.727269 }	/* fake 15000 */
-/***	{ 0.393433 0.488079 0.940423 },	/* 20000 */
+#if 0
+	{ 0.446728, 0.493157, 0.727269 },	/* fake 12000 */
+	{ 0.446728, 0.493157, 0.727269 },	/* fake 13000 */
+	{ 0.446728, 0.493157, 0.727269 },	/* fake 14000 */
+	{ 0.446728, 0.493157, 0.727269 },	/* fake 15000 */
+	{ 0.393433 0.488079 0.940423 }		/* 20000 */
+#endif
 };
 
 /*
@@ -455,10 +457,9 @@ char	*dp;
 		(struct txt_specific *)dp;
 	unsigned char *cp;
 	fastf_t	pertU, pertV;
-	vect_t	x, y;		/* world coordinate axis vectors */
+	vect_t	y;		/* world coordinate axis vectors */
 	vect_t	u, v;		/* surface coord system vectors */
 	int	i, j;		/* bump map pixel indicies */
-	char *save;
 
 	/*
 	 * If no texture file present, or if
@@ -479,7 +480,6 @@ char	*dp;
 	}
 
 	/* Find a local coordinate system */
-	VSET( x, 1, 0, 0 );
 	VSET( y, 0, 1, 0 );
 	VCROSS( u, y, swp->sw_hit.hit_normal );
 	VUNITIZE( u );

@@ -273,7 +273,6 @@ char	*dp;
 	register fastf_t cosine;
 	register fastf_t refl;
 	vect_t	work;
-	vect_t	reflected;
 	vect_t	cprod;			/* color product */
 	vect_t	h;
 	point_t	matcolor;		/* Material color */
@@ -281,8 +280,8 @@ char	*dp;
 		(struct cook_specific *)dp;
 	fastf_t	f, a;
 	fastf_t	n_dot_e, n_dot_l, n_dot_h, e_dot_h;
-	fastf_t	rs, rd, F, G, D;
-vect_t	Fv;
+	fastf_t	rd, G, D;
+	vect_t	Fv;
 
 	/* XXX - Reflection coefficients - hack until RR_ is changed */
 	f = ps->transmit + ps->reflect;
@@ -334,13 +333,17 @@ vect_t	Fv;
 		a = acos( n_dot_h );		/*XXXXXX*/
 		D = beckmann( a, ps->m2 );	/*XXX Sum k[i]*beck(a,m[i]) */
 		e_dot_h = -VDOT( ap->a_ray.r_dir, h );
+#if 0
 		F = fresnel( e_dot_h, ps->n[0] );
-	Fv[0] = fresnel( e_dot_h, ps->n[0] );
-	Fv[1] = fresnel( e_dot_h, ps->n[1] );
-	Fv[2] = fresnel( e_dot_h, ps->n[2] );
+#endif
+		Fv[0] = fresnel( e_dot_h, ps->n[0] );
+		Fv[1] = fresnel( e_dot_h, ps->n[1] );
+		Fv[2] = fresnel( e_dot_h, ps->n[2] );
 		G = 1.0;			/*XXXXXX*/
 
+#if 0
 		rs = F * G * D / n_dot_e;
+#endif
 		rd = n_dot_l;			/*XXX ? */
 
 		/* diffuse */
