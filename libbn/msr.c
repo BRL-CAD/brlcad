@@ -24,6 +24,9 @@ static char rcsid[] = "$Header$";
  *
  *
  * $Log$
+ * Revision 1.3  91/06/22  05:43:33  cjohnson
+ * Change to rt_malloc, add to many comments, add some NULL pointer tests.
+ * 
  * Revision 1.2  1991/06/22  02:23:36  cjohnson
  * Sync RCS to source code
  *
@@ -34,6 +37,9 @@ static char rcsid[] = "$Header$";
 
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "msr.h"
 
 /*	msr_unif_init	Initialize a random number structure.
@@ -79,6 +85,7 @@ int method;
 	p->msr_double_ptr = 0;
 
 	if (setseed&0x7fffffff) p->msr_seed=setseed&0x7fffffff;
+	p->magic = MSR_UNIF_MAGIC;
 	return(p);
 }
 
@@ -116,7 +123,7 @@ struct msr_unif *p;
 	register long test,work_seed;
 	register int i;
 
-	if (!p) return(1);
+	MSR_CK_UNIF(p);
 
 	work_seed = p->msr_seed;
 
@@ -167,7 +174,7 @@ struct msr_unif *p;
 	register long test,work_seed;
 	register int i;
 
-	if (!p) return(0.0);
+	MSR_CK_UNIF(p);
 
 	work_seed = p->msr_seed;
 
@@ -222,6 +229,7 @@ int method;
 	p->msr_gauss_dbl_ptr = 0;
 
 	if (setseed&0x7fffffff) p->msr_gauss_seed=setseed&0x7fffffff;
+	p->magic = MSR_GAUSS_MAGIC;
 	return(p);
 }
 
@@ -262,7 +270,7 @@ struct msr_gauss *p;
 	register int i;
 	/* register */ double v1,v2,r,fac;
 
-	if (!p) return(0.0);
+	MSR_CK_GAUSS(p);
 
 	if (p->msr_gausses) {
 		for (i=0; i< MSRMAXTBL-1; ) {
