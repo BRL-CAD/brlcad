@@ -140,8 +140,10 @@ char	*dp;
 	int line;
 	int dx, dy;
 	int x,y;
-	register long r,g,b;
+	register fastf_t r,g,b;
 
+	if( rdebug & RDEBUG_SHADE )
+		bu_log( "in txt_render(): du=%g, dv=%g\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
 	/*
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
@@ -164,6 +166,7 @@ char	*dp;
 			pp->pt_inseg->seg_stp->st_name );
 		swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
 	}
+
 	xmin = swp->sw_uv.uv_u - swp->sw_uv.uv_du;
 	xmax = swp->sw_uv.uv_u + swp->sw_uv.uv_du;
 	ymin = swp->sw_uv.uv_v - swp->sw_uv.uv_dv;
@@ -172,13 +175,111 @@ char	*dp;
 	if( ymin < 0 )  ymin = 0;
 	if( xmax > 1 )  xmax = 1;
 	if( ymax > 1 )  ymax = 1;
+#if 1
+	dx = (int)(xmax * (tp->tx_w-1)) - (int)(xmin * (tp->tx_w-1));
+	dy = (int)(ymax * (tp->tx_n-1)) - (int)(ymin * (tp->tx_n-1));
+
+	if( rdebug & RDEBUG_SHADE )
+		bu_log( "\tdx = %d, dy = %d\n", dx, dy );
+	if( dx == 0 && dy == 0 )
+	{
+		/* No averaging necessary */
+
+		register unsigned char *cp;
+
+		cp = ((unsigned char *)(tp->mp->buf)) +
+			(int)(ymin * (tp->tx_n-1)) * tp->tx_w * 3 +
+			(int)(xmin * (tp->tx_w-1)) * 3;
+		r = *cp++;
+		g = *cp++;
+		b = *cp;
+	}
+	else
+	{
+		/* Calculate weighted average of cells in footprint */
+
+		fastf_t tot_area=0.0;
+		fastf_t cell_area;
+		int start_line, stop_line, line;
+		int start_col, stop_col, col;
+		fastf_t xstart, xstop, ystart, ystop;
+		fastf_t u, v;
+
+		xstart = xmin * (tp->tx_w-1);
+		xstop = xmax * (tp->tx_w-1);
+		ystart = ymin * (tp->tx_n-1);
+		ystop = ymax * (tp->tx_n-1);
+
+		start_line = ystart;
+		stop_line = ystop;
+		start_col = xstart;
+		stop_col = xstop;
+
+		r = g = b = 0.0;
+
+		if( rdebug & RDEBUG_SHADE )
+		{
+			bu_log( "\thit in texture space = (%g %g)\n", swp->sw_uv.uv_u * (tp->tx_w-1), swp->sw_uv.uv_v * (tp->tx_n-1) );
+			bu_log( "\t averaging from  (%g %g) to (%g %g)\n", xstart, ystart, xstop, ystop );
+			bu_log( "\tcontributions to average:\n" );
+		}
+
+		for( line = start_line ; line <= stop_line ; line++ )
+		{
+			register unsigned char *cp;
+			register unsigned char *ep;
+			fastf_t line_factor;
+			fastf_t line_upper, line_lower;
+
+			line_upper = line + 1.0;
+			if( line_upper > ystop )
+				line_upper = ystop;
+			line_lower = line;
+			if( line_lower < ystart )
+				line_lower = ystart;
+			line_factor = line_upper - line_lower;
+			cp = ((unsigned char *)(tp->mp->buf)) +
+				line * tp->tx_w * 3 + (int)(xstart) * 3;
+
+			for( col = start_col ; col <= stop_col ; col++ )
+			{
+				fastf_t col_upper, col_lower;
+
+				col_upper = col + 1.0;
+				if( col_upper > xstop )
+					col_upper = xstop;
+				col_lower = col;
+				if( col_lower < xstart )
+					col_lower = xstart;
+				cell_area = line_factor * (col_upper - col_lower);
+				tot_area += cell_area;
+
+				if( rdebug & RDEBUG_SHADE )
+					bu_log( "\t %d %d %d weight=%g (from col=%d line=%d)\n", *cp, *(cp+1), *(cp+2), cell_area, col, line );
+
+				r += (*cp++) * cell_area;
+				g += (*cp++) * cell_area;
+				b += (*cp++) * cell_area;
+			}
+		}
+		r /= tot_area;
+		g /= tot_area;
+		b /= tot_area;
+	}
+	
+	if( rdebug & RDEBUG_SHADE )
+		bu_log( " average: %g %g %g\n", r, g, b );
+#else
 	x = xmin * (tp->tx_w-1);
 	y = ymin * (tp->tx_n-1);
 	dx = (xmax - xmin) * (tp->tx_w-1);
 	dy = (ymax - ymin) * (tp->tx_n-1);
 	if( dx < 1 )  dx = 1;
 	if( dy < 1 )  dy = 1;
-/** rt_log("x=%d y=%d, dx=%d, dy=%d\n", x, y, dx, dy); **/
+
+	if( rdebug & RDEBUG_SHADE )
+		bu_log(" in txt_render(): x=%d y=%d, dx=%d, dy=%d\n", x, y, dx, dy);
+
 	r = g = b = 0;
 	for( line=0; line<dy; line++ )  {
 		register unsigned char *cp;
@@ -187,14 +288,21 @@ char	*dp;
 		     (y+line) * tp->tx_w * 3  +  x * 3;
 		ep = cp + 3*dx;
 		while( cp < ep )  {
+			if( rdebug & RDEBUG_SHADE )
+				bu_log( "\tAdding %d %d %d\n", *cp, *(cp+1), *(cp+2) );
 			r += *cp++;
 			g += *cp++;
 			b += *cp++;
 		}
 	}
+	if( rdebug & RDEBUG_SHADE )
+		bu_log( "Totals: %d %d %d,", r, g, b );
 	r /= (dx*dy);
 	g /= (dx*dy);
 	b /= (dx*dy);
+	if( rdebug & RDEBUG_SHADE )
+		bu_log( " average: %d %d %d\n", r, g, b );
+#endif
 
 	if (!tp->tx_trans_valid) {
 opaque:
