@@ -345,7 +345,7 @@ void (*errlog)();
 	/* Determine port for service */
 #ifdef BSD
 	if( (sp = getservbyname( service, "tcp" )) == NULL )  {
-		sprintf(errbuf,"pkg_initserver(%s,%d): unknown service\n",
+		sprintf(errbuf,"pkg_permserver(%s,%d): unknown service\n",
 			service, backlog );
 		errlog(errbuf);
 		return(-1);
@@ -360,24 +360,24 @@ void (*errlog)();
 
 #ifdef BSD
 	if( (pkg_listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 )  {
-		pkg_perror( errlog, "pkg_initserver:  socket" );
+		pkg_perror( errlog, "pkg_permserver:  socket" );
 		return(-1);
 	}
 
 	if( bind(pkg_listenfd, &sinme, sizeof(sinme)) < 0 )  {
-		pkg_perror( errlog, "pkg_initserver: bind" );
+		pkg_perror( errlog, "pkg_permserver: bind" );
 		return(-1);
 	}
 
 	if( backlog > 5 )  backlog = 5;
 	if( listen(pkg_listenfd, backlog) < 0 )  {
-		pkg_perror( errlog, "pkg_initserver:  listen" );
+		pkg_perror( errlog, "pkg_permserver:  listen" );
 		return(-1);
 	}
 #endif
 #ifdef SGI_EXCELAN
 	if( (pkg_listenfd = socket(SOCK_STREAM,0,&sinme,SO_ACCEPTCONN|SO_KEEPALIVE)) < 0 )  {
-		pkg_perror( errlog, "pkg_initserver:  socket" );
+		pkg_perror( errlog, "pkg_permserver:  socket" );
 		return(-1);
 	}
 #endif
