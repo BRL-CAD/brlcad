@@ -380,8 +380,6 @@ FBIO	*ifp;
 	int	pixsize;
 	int	size;
 	int	i;
-	char	*old_brk;
-	char	*new_brk;
 	char	*sp;
 	int	new = 0;
 
@@ -544,10 +542,6 @@ int		npix;
 	register int	y;
 	register int	n;
 	int		sw_cmap;	/* !0 => needs software color map */
-	int		sw_zoom;	/* !0 => needs software zoom/pan */
-	unsigned long 	*ulong;
-	int		position[4];
-	int 		xcoord,ycoord, i, j;
 	struct ogl_clip	*clp;
 
 	/* Caller is expected to handle attaching context, etc. */
@@ -676,16 +670,8 @@ int	width, height;
 	int		status;
 	static char	title[128];
 	int		mode, i, direct;
-	int 		xpos, ypos, win_width, win_height;
-	Pixmap		src_bitmap, nil_bitmap;
-	int 		n;
-	int 		fake_argc = 0;
-	FBIO 		*client_data1;
-	GLXContext 	client_data2;
-	XEvent 		event;
 	long		valuemask;
 	XSetWindowAttributes swa;
-	int fargc = 0;
 
 	FB_CK_FBIO(ifp);
 
@@ -832,17 +818,9 @@ int	width, height;
 
 
 	if( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
-		xpos = WIN_L;
-		ypos = WIN_T;
-		win_width = ifp->if_width;
-		win_height = ifp->if_height;
 		SGI(ifp)->mi_curs_on = 1;
 	}  else  {
 		/* MODE_3MASK == MODE_3FULLSCR */
-		xpos = 0;
-		ypos = YMAXSCREEN;
-		win_width = XMAXSCREEN+1;
-		win_height = XMAXSCREEN+1;
 		SGI(ifp)->mi_curs_on = 0;
 	}
 
@@ -1068,7 +1046,6 @@ GLXContext glxc;
 int double_buffer;
 int soft_cmap;
 {
-  Pixmap src_bitmap, nil_bitmap;
 
   /*XXX for now use private memory */
   ifp->if_mode = MODE_1MALLOC;
@@ -1136,7 +1113,6 @@ _LOCAL_ int
 ogl_final_close( ifp )
 FBIO	*ifp;
 {
-  XEvent event;
 
   if( CJDEBUG ) {
     printf("ogl_final_close: All done...goodbye!\n");
@@ -1180,9 +1156,6 @@ _LOCAL_ int
 ogl_close( ifp )
 FBIO	*ifp;
 {
-
-	FILE *fp = NULL;
-	int n, scr;
 
 	ogl_flush( ifp );
 
@@ -1882,8 +1855,6 @@ register CONST ColorMap	*cmp;
 {
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
-	XVisualInfo *vi;
-    	int num;
 	
 	if(CJDEBUG) printf("entering ogl_wmap\n");
 
@@ -2409,8 +2380,6 @@ int width, height;
 _LOCAL_ void	
 reorder_cursor(char *dst,char *src, int xbits, int ybits)
 {
-	char scan1;
-	char scan2;
 	int xbytes;
 	int i,j,k;
 
@@ -2434,7 +2403,6 @@ backbuffer_to_screen(ifp, one_y)
 register FBIO	*ifp;
 int		one_y;
 {
-	int front;
 	struct ogl_clip *clp;
 
 	if (!(OGL(ifp)->front_flag)){
@@ -2635,7 +2603,6 @@ FBIO *ifp;
 int x, y, w, h;
 {
   int mm;
-  int dflag = 0;
 
   if(w < 0){
     w = -w;
