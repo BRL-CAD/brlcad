@@ -136,10 +136,13 @@ char *buf;
 	height = pkg_glong( &buf[1*NET_LONG_LEN] );
 
 	if( fb_server_fbp == FBIO_NULL ) {
+		/* Attempt to open new framebuffer */
 		if( strlen(&buf[8]) == 0 )
 			fb_server_fbp = fb_open( NULL, width, height );
 		else
 			fb_server_fbp = fb_open( &buf[8], width, height );
+	}  else  {
+		/* Use existing framebuffer */
 	}
 
 	if( fb_server_fbp == FBIO_NULL )  {
