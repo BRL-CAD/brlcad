@@ -30,6 +30,7 @@ proc build_comb_menu_all_displayed {} {
     global mged_players
     global mged_gui
     global mouse_behavior
+    global tkPriv
 
     set win [winset]
     set id [get_player_id_dm $win]
@@ -41,7 +42,7 @@ proc build_comb_menu_all_displayed {} {
 
     set paths [_mged_x -1]
     if {![llength $paths]} {
-	cad_dialog .$id.combDialog $mged_gui($id,screen)\
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		"No combinations are being displayed!"\
 		"No combinations are being displayed!"\
 		"" 0 OK

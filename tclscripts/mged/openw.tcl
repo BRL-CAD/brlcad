@@ -204,6 +204,13 @@ bind Frame <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Listbox <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Scale <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 
+# This causes cad_dialog to use mged_wait instead of tkwait
+set tkPriv(wait_cmd) mged_wait
+
+# Used throughout the GUI as the dialog window name.
+# This helps prevent window clutter.
+set tkPriv(cad_dialog) .mged_dialog
+
 proc gui { args } {
     global tmp_hoc
     global mged_gui
@@ -2850,7 +2857,7 @@ proc get_font_height { w } {
 	return 0
     }
 
-    set tmp_font [lindex [$w configure -font] 4]
+    set tmp_font [$w cget -font]
 
     return [font metrics $tmp_font -linespace]
 }

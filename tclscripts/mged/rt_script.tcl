@@ -11,9 +11,10 @@ check_externs "_mged_opendb _mged_saveview"
 proc init_rtScriptTool { id } {
     global mged_gui
     global rts_control
+    global tkPriv
 
     if {[opendb] == ""} {
-	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -85,13 +86,14 @@ the RT script."}}
 proc do_rtScript { id } {
     global mged_gui
     global rts_control
+    global tkPriv
 
     cmd_win set $id
     set rts_cmd "_mged_saveview"
 
     if {$rts_control($id,file) != ""} {
 	if [file exists $rts_control($id,file)] {
-	    set result [cad_dialog .$id.rtsDialog $mged_gui($id,screen)\
+	    set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "Append $rts_control($id,file)?"\
 		    "Append $rts_control($id,file)?"\
 		    "" 0 OK CANCEL]
@@ -101,7 +103,7 @@ proc do_rtScript { id } {
 	    }
 	}
     } else {
-	cad_dialog .$id.rtsDialog $mged_gui($id,screen)\
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		"No file name specified!"\
 		"No file name specified!"\
 		"" 0 OK

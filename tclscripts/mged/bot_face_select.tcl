@@ -18,7 +18,8 @@
 #
 
 proc bot_face_select { face_list } {
-	global bot_v1 bot_v2 bot_v3 mged_gui
+    global bot_v1 bot_v2 bot_v3 mged_gui
+    global tkPriv
 
 	set w .bot_face_select
 
@@ -38,7 +39,7 @@ proc bot_face_select { face_list } {
 			set bot_v1 -1
 			set bot_v2 -1
 			set bot_v3 -1
-			cad_dialog $w.error $mged_gui(mged,screen) "Internal Error"  "Face does not have 3 vertices" error 0 OK
+			cad_dialog $tkPriv(cad_dialog) $mged_gui(mged,screen) "Internal Error"  "Face does not have 3 vertices" error 0 OK
 			return
 		}
 		set bot_v1 [lindex $face 0]

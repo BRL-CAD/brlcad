@@ -21,6 +21,7 @@
 
 proc mouse_get_spath { x y } {
     global mged_gui
+    global tkPriv
 
     set win [winset]
     set id [get_player_id_dm $win]
@@ -38,7 +39,7 @@ proc mouse_get_spath { x y } {
     set paths [ray_get_info $ray in path]
 
     if {![llength $paths]} {
-	cad_dialog .$id.spathDialog $mged_gui($id,screen)\
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK
@@ -155,6 +156,7 @@ proc mouse_spath_and_pos_destroy { id top } {
 
 proc mouse_get_comb { x y } {
     global mged_gui
+    global tkPriv
 
     set win [winset]
     set id [get_player_id_dm $win]
@@ -171,7 +173,7 @@ proc mouse_get_comb { x y } {
     set ray [mouse_shoot_ray $x $y]
     set paths [ray_get_info $ray in path]
     if {![llength $paths]} {
-	cad_dialog .$id.combDialog $mged_gui($id,screen)\
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK

@@ -13,9 +13,10 @@ proc init_Raytrace { id } {
     global fb
     global rt_control
     global env
+    global tkPriv
 
     if {[opendb] == ""} {
-	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -391,6 +392,7 @@ proc do_Raytrace { id } {
     global port
     global fb_all
     global rt_control
+    global tkPriv
 
     if {$rt_control($id,cooked_src) == ""} {
 	return
@@ -422,7 +424,7 @@ proc do_Raytrace { id } {
 		append rt_cmd " -s $width"
 	    }
 	} else {
-	    cad_dialog .$id.rtDialog $mged_gui($id,screen)\
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "Improper size specification!"\
 		    "Improper size specification: $rt_control($id,size)"\
 		    "" 0 OK
@@ -503,6 +505,7 @@ proc do_Raytrace { id } {
 proc do_fbclear { id } {
     global mged_gui
     global rt_control
+    global tkPriv
 
     if {$rt_control($id,cooked_dest) == ""} {
 	return
@@ -512,7 +515,7 @@ proc do_fbclear { id } {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
 		$rt_control($id,color) cmatch red green blue]
 	if {!$result} {
-	    cad_dialog .$id.rtDialog $mged_gui($id,screen)\
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "Improper color specification!"\
 		    "Improper color specification: $rt_control($id,color)"\
 		    "" 0 OK
@@ -528,7 +531,7 @@ proc do_fbclear { id } {
 	    $red $green $blue & } rt_error]
 
     if {$result != 0} {
-	cad_dialog .$id.rtDialog $mged_gui($id,screen)\
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		"RT Error!" "Rt Error: $rt_error" "" 0 OK
     }
 }
