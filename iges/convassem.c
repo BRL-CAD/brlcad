@@ -148,10 +148,15 @@ Convassem()
 			ptr = ptr->next;
 		}
 
-		if( dir[i]->colorp != 0 )
-			mk_lcomb( fdout , dir[i]->name , &head , 0 , (char *)0 , (char *)0 , dir[i]->rgb , 0 );
-		else
-			mk_lcomb( fdout , dir[i]->name , &head , 0 , (char *)0 , (char *)0 , (char *)0 , 0 );
+		if( dir[i]->colorp != 0 )  {
+			mk_lcomb( fdout , dir[i]->name , &head , 0 ,
+				(char *)0 , (char *)0 ,
+				(char *)dir[i]->rgb , 0 );
+		}  else  {
+			mk_lcomb( fdout , dir[i]->name , &head , 0 ,
+				(char *)0 , (char *)0 ,
+				(char *)0 , 0 );
+		}
 
 		/* Increment the count of successful conversions */
 		conv++;

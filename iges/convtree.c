@@ -72,10 +72,15 @@ Convtree()
 			Makemembers( ptr , &head );
 
 			/* Make the object (Not using regions to take advantage of nesting) */
-			if( dir[i]->colorp != 0 )
-				mk_lcomb( fdout , dir[i]->name , &head , 0 , (char *)NULL , (char *)NULL , dir[i]->rgb , 1 );
-			else
-				mk_lcomb( fdout , dir[i]->name , &head , 0 , (char *)NULL , (char *)NULL , (char *)0 , 1 );
+			if( dir[i]->colorp != 0 )  {
+				mk_lcomb( fdout , dir[i]->name , &head , 0 ,
+					(char *)NULL , (char *)NULL ,
+					(char *)(dir[i]->rgb) , 1 );
+			}  else  {
+				mk_lcomb( fdout , dir[i]->name , &head , 0 ,
+					(char *)NULL , (char *)NULL ,
+					(char *)0 , 1 );
+			}
 
 			conv++;
 		}
