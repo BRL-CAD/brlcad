@@ -22,19 +22,30 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#ifdef SYSV
 #include <fcntl.h>
-#include <termio.h>
-#else
-#include <sgtty.h>
-#endif
 
-#define RW 2
+#if defined(_POSIX_SOURCE)
+#  if !defined(_XOPEN_SOURCE)
+#	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
+#  endif
+#  undef SYSV
+#  undef BSD
+#  include <termios.h>
+
+static struct termios	vtty;
+
+#else	/* !defined(_POSIX_SOURCE) */
+
 #ifdef SYSV
+#  include <termio.h>
 struct termio vtty;
-#else
+#endif
+#ifdef BSD
+#  include <sgtty.h>
 struct sgttyb vtty;
 #endif
+
+#endif /* _POSIX_SOURCE */
 
 #include "./vas4.h"
 
@@ -56,7 +67,7 @@ vas_open()
 {
 
 	/* Open VAS Port */
-	if((vas_fd=open(VAS_PORT,RW)) < 0){
+	if((vas_fd=open(VAS_PORT,O_RDWR)) < 0){
 		perror(VAS_PORT);
 		exit(1);
 	}
@@ -90,6 +101,37 @@ vas_open()
 	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
 
 	if( ioctl(vas_fd, TCSETA, &vtty) < 0 ) { 
+		perror(VAS_PORT);
+		exit(1);
+	}
+
+	/* Be certain the FNDELAY is off */
+	if( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
+		perror(VAS_PORT);
+		exit(2);
+	}
+#endif
+#ifdef _POSIX_SOURCE
+	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
+	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
+	vtty.c_cflag |= CREAD;           /* Enable the reader */
+	vtty.c_cflag &= ~PARENB;         /* Parity disable */
+	vtty.c_cflag &= ~HUPCL;          /* No hangup on close */
+	vtty.c_cflag |= CLOCAL;          /* Line has no modem control */
+ 
+	vtty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
+	vtty.c_iflag |= IGNBRK|IGNPAR;
+ 
+	vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processin!
+	vtty.c_oflag |= TAB3;		/* output tab expansion ON */
+	vtty.c_cc[VMIN] = 1;
+	vtty.c_cc[VTIME] = 0;
+
+	vtty.c_lflag &= ~ICANON;         /* Raw mode */
+	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
+	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
+
+	if( tcsetattr( vas_fd, TCSAFLUSH, &vtty ) < 0 )  {
 		perror(VAS_PORT);
 		exit(1);
 	}
