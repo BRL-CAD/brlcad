@@ -447,7 +447,7 @@ struct rt_fgp_internal
 	/* the following is used by import, ignored by export */
 	mat_t		xform;
 	struct directory *ref_dp;
-	struct db_i	*dbip;
+	CONST struct db_i	*dbip;
 };
 
 #define	RT_FGP_CENTER_MODE	1	/* thickness is centered about hit point */

@@ -458,7 +458,7 @@ rt_nurb_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	struct rt_nurb_internal *sip;
 	register int		i;
@@ -589,7 +589,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	return(-1);
 }
@@ -598,10 +598,11 @@ struct bn_tol		*tol;
  *			R T _ N U R B _ I M P O R T
  */
 int
-rt_nurb_import( ip, ep, mat )
+rt_nurb_import( ip, ep, mat, dbip )
 struct rt_db_internal	*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 
 	struct rt_nurb_internal * sip;
@@ -826,10 +827,11 @@ struct nurb_hit * head;
  *			R T _ N U R B _ E X P O R T
  */
 int
-rt_nurb_export( ep, ip, local2mm)
+rt_nurb_export( ep, ip, local2mm, dbip)
 struct bu_external	 	* ep;
 CONST struct rt_db_internal	* ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	register int		rec_ptr;
 	struct rt_nurb_internal	* sip;
@@ -967,7 +969,7 @@ struct rt_db_internal 	*ip;
 int
 rt_nurb_describe(str, ip, verbose, mm2local )
 struct bu_vls		* str;
-struct rt_db_internal	* ip;
+CONST struct rt_db_internal	* ip;
 int			verbose;
 double			mm2local;
 {

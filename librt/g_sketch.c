@@ -214,7 +214,7 @@ rt_sketch_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	struct curve			*crv;
@@ -287,7 +287,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	return(-1);
 }
@@ -614,7 +614,7 @@ CONST struct db_i		*dbip;
 int
 rt_sketch_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

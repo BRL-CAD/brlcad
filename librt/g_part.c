@@ -826,7 +826,7 @@ rt_part_plot( vhead, ip, ttol, tol )
 struct bu_list	*vhead;
 struct rt_db_internal *ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	struct rt_part_internal	*pip;
 	point_t		tail;
@@ -848,19 +848,19 @@ struct bn_tol		*tol;
 		VSET( b, 0, pip->part_vrad, 0 );
 		VSET( c, 0, 0, pip->part_vrad );
 
-		rt_ell_16pts( sphere_rim, pip->part_V, a, b );
+		rt_ell_16pts( &sphere_rim[0][X], pip->part_V, a, b );
 		RT_ADD_VLIST( vhead, sphere_rim[15], BN_VLIST_LINE_MOVE );
 		for( i=0; i<16; i++ )  {
 			RT_ADD_VLIST( vhead, sphere_rim[i], BN_VLIST_LINE_DRAW );
 		}
 
-		rt_ell_16pts( sphere_rim, pip->part_V, b, c );
+		rt_ell_16pts( &sphere_rim[0][X], pip->part_V, b, c );
 		RT_ADD_VLIST( vhead, sphere_rim[15], BN_VLIST_LINE_MOVE );
 		for( i=0; i<16; i++ )  {
 			RT_ADD_VLIST( vhead, sphere_rim[i], BN_VLIST_LINE_DRAW );
 		}
 
-		rt_ell_16pts( sphere_rim, pip->part_V, a, c );
+		rt_ell_16pts( &sphere_rim[0][X], pip->part_V, a, c );
 		RT_ADD_VLIST( vhead, sphere_rim[15], BN_VLIST_LINE_MOVE );
 		for( i=0; i<16; i++ )  {
 			RT_ADD_VLIST( vhead, sphere_rim[i], BN_VLIST_LINE_DRAW );
@@ -938,7 +938,7 @@ struct part_state {
 	fastf_t		theta_tol;
 };
 
-struct vert_strip {
+struct part_vert_strip {
 	int		nverts_per_strip;
 	int		nverts;
 	struct vertex	**vp;
@@ -963,7 +963,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	struct rt_part_internal	*pip;
 	LOCAL mat_t	R;
@@ -978,7 +978,7 @@ struct bn_tol		*tol;
 	fastf_t		radius;
 	int		nsegs;
 	int		nstrips;
-	struct vert_strip	*strips;
+	struct part_vert_strip	*strips;
 	int		j;
 	struct vertex		**vertp[5];
 	int	faceno;
@@ -1091,8 +1091,8 @@ struct bn_tol		*tol;
 	 *  the poles.  Thus, strips[0] will have 4 faces.
 	 */
 	nstrips = 2 * nsegs + 2;
-	strips = (struct vert_strip *)bu_calloc( nstrips,
-		sizeof(struct vert_strip), "strips[]" );
+	strips = (struct part_vert_strip *)bu_calloc( nstrips,
+		sizeof(struct part_vert_strip), "strips[]" );
 
 	/* North pole (Upper hemisphere, H end) */
 	strips[0].nverts = 1;
@@ -1347,10 +1347,11 @@ fail:
  *			R T _ P A R T _ I M P O R T
  */
 int
-rt_part_import( ip, ep, mat )
+rt_part_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	point_t		v;
 	vect_t		h;
@@ -1428,10 +1429,11 @@ register CONST mat_t		mat;
  *			R T _ P A R T _ E X P O R T
  */
 int
-rt_part_export( ep, ip, local2mm )
+rt_part_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_part_internal	*pip;
 	union record		*rec;
@@ -1476,7 +1478,7 @@ double				local2mm;
 int
 rt_part_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

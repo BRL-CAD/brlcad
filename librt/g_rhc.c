@@ -177,11 +177,6 @@ struct rhc_specific {
 	fastf_t	rhc_rsq;	/* r * r */
 };
 
-struct pt_node {
-	point_t		p;	/* a point */
-	struct pt_node	*next;	/* ptr to next pt */
-};
-
 CONST struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_rhc_internal, rhc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H", offsetof(struct rt_rhc_internal, rhc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -691,7 +686,7 @@ rt_rhc_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	int		i, n;
 	fastf_t		b, c, *back, f, *front, h, rh;
@@ -700,7 +695,7 @@ struct bn_tol		*tol;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_rhc_internal	*xip;
-	struct pt_node	*old, *pos, *pts, *rt_ptalloc();
+	struct rt_pt_node	*old, *pos, *pts, *rt_ptalloc();
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_rhc_internal *)ip->idb_ptr;
@@ -803,7 +798,7 @@ struct bn_tol		*tol;
 		i += 3;
 		old = pos;
 		pos = pos->next;
-		bu_free ( (char *)old, "pt_node" );
+		bu_free ( (char *)old, "rt_pt_node" );
 	}
 
 	/* Draw the front */
@@ -840,13 +835,13 @@ struct bn_tol		*tol;
 int
 rt_mk_hyperbola( pts, r, b, c, dtol, ntol )
 fastf_t	r, b, c, dtol, ntol;
-struct pt_node *pts;
+struct rt_pt_node *pts;
 {
 	fastf_t	A, B, C, discr, dist, intr, j, k, m, theta0, theta1, z0;
 	int	n;
 	point_t	mpt, p0, p1;
 	vect_t	norm_line, norm_hyperb;
-	struct pt_node *new, *rt_ptalloc();
+	struct rt_pt_node *new, *rt_ptalloc();
 	
 #define MIKE_TOL .0001
 	/* endpoints of segment approximating hyperbola */
@@ -918,7 +913,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	int		i, j, n;
 	fastf_t		b, c, *back, f, *front, h, rh;
@@ -927,7 +922,7 @@ struct bn_tol		*tol;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_rhc_internal	*xip;
-	struct pt_node	*old, *pos, *pts, *rt_ptalloc();
+	struct rt_pt_node	*old, *pos, *pts, *rt_ptalloc();
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
 	struct vertex	**vfront, **vback, **vtemp, *vertlist[4];
@@ -1061,7 +1056,7 @@ struct bn_tol		*tol;
 		j++;
 		old = pos;
 		pos = pos->next;
-		bu_free ( (char *)old, "pt_node" );
+		bu_free ( (char *)old, "rt_pt_node" );
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
@@ -1194,10 +1189,11 @@ fail:
  *  Apply modeling transformations as well.
  */
 int
-rt_rhc_import( ip, ep, mat )
+rt_rhc_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_rhc_internal	*xip;
 	union record			*rp;
@@ -1240,10 +1236,11 @@ register CONST mat_t		mat;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_rhc_export( ep, ip, local2mm )
+rt_rhc_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_rhc_internal	*xip;
 	union record		*rhc;
@@ -1294,7 +1291,7 @@ double				local2mm;
 int
 rt_rhc_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

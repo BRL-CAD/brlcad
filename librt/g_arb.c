@@ -1273,7 +1273,7 @@ CONST struct db_i		*dbip;
 int
 rt_arb_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

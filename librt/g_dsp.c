@@ -2431,7 +2431,7 @@ rt_dsp_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	struct rt_dsp_internal	*dsp_ip =
 		(struct rt_dsp_internal *)ip->idb_ptr;
@@ -2602,7 +2602,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_dsp_internal	*dsp_ip;
 
@@ -2623,10 +2623,11 @@ struct bn_tol		*tol;
  *  Apply modeling transformations as well.
  */
 int
-rt_dsp_import( ip, ep, mat )
+rt_dsp_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_dsp_internal	*dsp_ip;
 	union record			*rp;
@@ -2714,10 +2715,11 @@ register CONST mat_t		mat;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_dsp_export( ep, ip, local2mm )
+rt_dsp_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_dsp_internal	*dsp_ip;
 	struct rt_dsp_internal	dsp;
@@ -2769,7 +2771,7 @@ double				local2mm;
 int
 rt_dsp_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

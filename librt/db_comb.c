@@ -683,7 +683,7 @@ unary:
 void
 db_comb_describe(str, comb, verbose, mm2local)
 struct bu_vls	*str;
-struct rt_comb_internal	*comb;
+CONST struct rt_comb_internal	*comb;
 int		verbose;
 double		mm2local;
 {
@@ -795,11 +795,11 @@ struct rt_db_internal	*ip;
 int
 rt_comb_describe(str, ip, verbose, mm2local)
 struct bu_vls	*str;
-struct rt_db_internal *ip;
+CONST struct rt_db_internal *ip;
 int		verbose;
 double		mm2local;
 {
-	struct rt_comb_internal	*comb;
+	CONST struct rt_comb_internal	*comb;
 
 	RT_CK_DB_INTERNAL(ip);
 	comb = (struct rt_comb_internal *)ip->idb_ptr;

@@ -1578,7 +1578,7 @@ rt_hf_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
 	register unsigned short		*sp;
@@ -1747,7 +1747,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
 
@@ -1765,10 +1765,11 @@ struct bn_tol		*tol;
  *  Apply modeling transformations as well.
  */
 int
-rt_hf_import( ip, ep, mat )
+rt_hf_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_hf_internal	*xip;
 	union record			*rp;
@@ -1936,10 +1937,11 @@ err1:
  *  in the string solid (including the dfile name).
  */
 int
-rt_hf_export( ep, ip, local2mm )
+rt_hf_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_hf_internal	*xip;
 	union record		*rec;
@@ -1985,7 +1987,7 @@ double				local2mm;
 int
 rt_hf_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

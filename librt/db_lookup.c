@@ -84,7 +84,7 @@ CONST char *str;
  */
 struct directory *
 db_lookup( dbip, name, noisy )
-struct db_i		*dbip;
+CONST struct db_i	*dbip;
 register CONST char	*name;
 int			noisy;
 {

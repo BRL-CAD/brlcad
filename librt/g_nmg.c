@@ -2422,10 +2422,11 @@ bu_log("Mapping of old index to new index, and kind\n");
  *  Apply modeling transformations as well.
  */
 int
-rt_nmg_import( ip, ep, mat )
+rt_nmg_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	struct model			*m;
 	union record			*rp;
@@ -2469,10 +2470,11 @@ register CONST mat_t		mat;
  *
  */
 int
-rt_nmg_export( ep, ip, local2mm )
+rt_nmg_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct model			*m;
 
@@ -2498,7 +2500,7 @@ double				local2mm;
 int
 rt_nmg_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

@@ -173,11 +173,6 @@ struct rpc_specific {
 	mat_t	rpc_invRoS;	/* invRot(Scale(vect)) */
 };
 
-struct pt_node {
-	point_t		p;	/* a point */
-	struct pt_node	*next;	/* ptr to next pt */
-};
-
 CONST struct bu_structparse rt_rpc_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H", offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -652,7 +647,7 @@ rt_rpc_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	LOCAL struct rt_rpc_internal	*xip;
         fastf_t *front;
@@ -661,7 +656,7 @@ struct bn_tol		*tol;
 	int	i, n;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
-	struct pt_node	*old, *pos, *pts, *rt_ptalloc();
+	struct rt_pt_node	*old, *pos, *pts;
 	vect_t	Bu, Hu, Ru;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -765,7 +760,7 @@ struct bn_tol		*tol;
 		i += 3;
 		old = pos;
 		pos = pos->next;
-		bu_free( (char *)old, "pt_node" );
+		bu_free( (char *)old, "rt_pt_node" );
 	}
 #else
 	/* initial parabola approximation is a single segment */
@@ -796,7 +791,7 @@ struct bn_tol		*tol;
 		i += 3;
 		old = pos;
 		pos = pos->next;
-		bu_free( (char *)old, "pt_node" );
+		bu_free( (char *)old, "rt_pt_node" );
 	}
 	for (i = 3*n; i < 6*n-3; i+=3) {
 		VMOVE( &front[i], &front[6*n-i-6] );
@@ -843,14 +838,14 @@ struct bn_tol		*tol;
  */
 int
 rt_mk_parabola( pts, r, b, dtol, ntol )
+struct rt_pt_node *pts;
 fastf_t	r, b, dtol, ntol;
-struct pt_node *pts;
 {
 	fastf_t	dist, intr, m, theta0, theta1;
 	int	n;
 	point_t	mpt, p0, p1;
 	vect_t	norm_line, norm_parab;
-	struct pt_node *new, *rt_ptalloc();
+	struct rt_pt_node *new, *rt_ptalloc();
 	
 #define MIKE_TOL .0001
 	/* endpoints of segment approximating parabola */
@@ -896,12 +891,15 @@ struct pt_node *pts;
 	return( n );
 }
 
-struct pt_node *
+/*
+ *			R T _ P T A L L O C
+ */
+struct rt_pt_node *
 rt_ptalloc()
 {
-	struct pt_node *mem;
+	struct rt_pt_node *mem;
 	
-	mem = (struct pt_node *)bu_malloc(sizeof(struct pt_node), "pt_node");
+	mem = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	if (!mem) {
 		fprintf(stderr, "rt_ptalloc: no more memory!\n");
 		exit(-1);
@@ -931,7 +929,7 @@ CONST struct bn_tol	*tol;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_rpc_internal	*xip;
-	struct pt_node	*old, *pos, *pts;
+	struct rt_pt_node	*old, *pos, *pts;
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
 	struct vertex	**vfront, **vback, **vtemp, *vertlist[4];
@@ -1060,7 +1058,7 @@ CONST struct bn_tol	*tol;
 		j++;
 		old = pos;
 		pos = pos->next;
-		bu_free( (char *)old, "pt_node" );
+		bu_free( (char *)old, "rt_pt_node" );
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
@@ -1199,10 +1197,11 @@ CONST struct bn_tol	*tol;
  *  Apply modeling transformations as well.
  */
 int
-rt_rpc_import( ip, ep, mat )
+rt_rpc_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_rpc_internal	*xip;
 	union record			*rp;
@@ -1244,10 +1243,11 @@ register CONST mat_t		mat;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_rpc_export( ep, ip, local2mm )
+rt_rpc_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_rpc_internal	*xip;
 	union record		*rpc;
@@ -1299,7 +1299,7 @@ double				local2mm;
 int
 rt_rpc_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

@@ -77,7 +77,7 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			double local2mm, CONST struct db_i *dbip )); \
 	RT_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
 	RT_EXTERN(int rt_##name##_describe, (struct bu_vls *str, \
-			struct rt_db_internal *ip, int verbose, \
+			CONST struct rt_db_internal *ip, int verbose, \
 			double mm2local)); \
 	RT_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
@@ -120,7 +120,7 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			double local2mm, CONST struct db_i *dbip )); \
 	RT_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip)); \
 	RT_EXTERN(int rt_/**/name/**/_describe, (struct bu_vls *str, \
-			struct rt_db_internal *ip, int verbose, \
+			CONST struct rt_db_internal *ip, int verbose, \
 			double mm2local)); \
 	RT_EXTERN(int rt_/**/name/**/_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
@@ -222,7 +222,7 @@ RT_EXTERN(int rt_comb_export, (struct bu_external *ep,
 		double local2mm, CONST struct db_i *dbip ));
 RT_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
 RT_EXTERN(int rt_comb_describe, (struct bu_vls *str,
-		struct rt_db_internal *ip, int verbose,
+		CONST struct rt_db_internal *ip, int verbose,
 		double mm2local));
 /* from tcl.c */
 BU_EXTERN(int rt_comb_tclget, (Tcl_Interp *interp,
@@ -769,7 +769,7 @@ int NDEF(rt_nul_export,(struct bu_external *ep,
 			double local2mm, CONST struct db_i *dbip ))
 void DEF(rt_nul_ifree,(struct rt_db_internal *ip))
 int NDEF(rt_nul_describe,(struct bu_vls *str,
-			struct rt_db_internal *ip,
+			CONST struct rt_db_internal *ip,
 			int verbose, double mm2local))
 int NDEF(rt_nul_xform, (struct rt_db_internal *op,
 			CONST mat_t mat, struct rt_db_internal *ip,

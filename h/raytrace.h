@@ -1334,6 +1334,17 @@ struct rt_point_labels {
 };
 
 /*
+ *			R T _ P T _ N O D E
+ *
+ *  Used by g_rpc.c and others to contain forward-linked lists of points.
+ */
+struct rt_pt_node {
+	point_t			p;	/* a point */
+	struct rt_pt_node	*next;	/* ptr to next pt */
+};
+
+
+/*
  *			L I N E _ S E G
  *	used by the solid of extrusion
  */
@@ -1455,7 +1466,7 @@ struct rt_functab {
 			CONST struct db_i * /*dbip*/));
 	void	(*ft_ifree) BU_ARGS((struct rt_db_internal * /*ip*/));
 	int	(*ft_describe) BU_ARGS((struct bu_vls * /*str*/,
-			struct rt_db_internal * /*ip*/,
+			CONST struct rt_db_internal * /*ip*/,
 			int /*verbose*/,
 			double /*mm2local*/));
 	int	(*ft_xform) BU_ARGS((struct rt_db_internal * /*op*/,
@@ -1908,7 +1919,7 @@ BU_EXTERN(void db_conversions, ( struct db_i *, int units ) );
 /* db_lookup.c */
 BU_EXTERN(int db_dirhash, (CONST char *str) );
 					/* convert name to directory ptr */
-BU_EXTERN(struct directory *db_lookup,( struct db_i *, CONST char *name, int noisy ) );
+BU_EXTERN(struct directory *db_lookup,( CONST struct db_i *, CONST char *name, int noisy ) );
 					/* add entry to directory */
 BU_EXTERN(struct directory *db_diradd, ( struct db_i *, CONST char *name, long laddr,
 	int len, int flags ) );
@@ -1971,6 +1982,14 @@ BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct mater_info *materp));
 
 /* db_comb.c */
+
+/* g_epa.c */
+BU_EXTERN(void rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
+			CONST fastf_t *B, int sides) );
+
+/* g_rpc.c */
+BU_EXTERN(int rt_mk_parabola, (struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol));
+BU_EXTERN(struct rt_pt_node *rt_ptalloc, () );
 
 /* memalloc.c -- non PARALLEL routines */
 BU_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );

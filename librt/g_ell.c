@@ -624,7 +624,7 @@ rt_ell_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	register int		i;
 	struct rt_ell_internal	*eip;
@@ -700,7 +700,7 @@ struct ell_state {
 	fastf_t		theta_tol;
 };
 
-struct vert_strip {
+struct ell_vert_strip {
 	int		nverts_per_strip;
 	int		nverts;
 	struct vertex	**vp;
@@ -748,7 +748,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
@@ -764,7 +764,7 @@ struct bn_tol		*tol;
 	fastf_t		radius;
 	int		nsegs;
 	int		nstrips;
-	struct vert_strip	*strips;
+	struct ell_vert_strip	*strips;
 	int		j;
 	struct vertex		**vertp[4];
 	int	faceno;
@@ -901,8 +901,8 @@ struct bn_tol		*tol;
 	 *  the poles.  Thus, strips[0] will have 4 faces.
 	 */
 	nstrips = 2 * nsegs + 1;
-	strips = (struct vert_strip *)bu_calloc( nstrips,
-		sizeof(struct vert_strip), "strips[]" );
+	strips = (struct ell_vert_strip *)bu_calloc( nstrips,
+		sizeof(struct ell_vert_strip), "strips[]" );
 
 	/* North pole */
 	strips[0].nverts = 1;
@@ -1119,10 +1119,11 @@ fail:
  *  Apply modeling transformations as well.
  */
 int
-rt_ell_import( ip, ep, mat )
+rt_ell_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	struct rt_ell_internal	*eip;
 	union record		*rp;
@@ -1159,10 +1160,11 @@ register CONST mat_t		mat;
  *			R T _ E L L _ E X P O R T
  */
 int
-rt_ell_export( ep, ip, local2mm )
+rt_ell_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_ell_internal	*tip;
 	union record		*rec;
@@ -1199,7 +1201,7 @@ double				local2mm;
 int
 rt_ell_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -1295,7 +1297,7 @@ rt_ell_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
@@ -1314,7 +1316,7 @@ struct bn_tol		*tol;
 	fastf_t		radius;
 	int		nsegs;
 	int		nstrips;
-	struct vert_strip	*strips;
+	struct ell_vert_strip	*strips;
 	int		j;
 	int	faceno;
 	int	stripno;

@@ -163,15 +163,6 @@ struct ehy_specific {
 	fastf_t	ehy_cprime;	/* c / |H| */
 };
 
-struct pt_node {
-	point_t		p;	/* a point */
-	struct pt_node	*next;	/* ptr to next pt */
-};
-
-/* From g_epa.c */
-RT_EXTERN(void	rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
-			CONST fastf_t *B, int sides) );
-
 CONST struct bu_structparse rt_ehy_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_ehy_internal, ehy_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_ehy_internal, ehy_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
@@ -655,7 +646,7 @@ rt_ehy_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang();
@@ -664,7 +655,7 @@ struct bn_tol		*tol;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	point_t		p1;
-	struct pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	LOCAL struct rt_ehy_internal	*xip;
 	vect_t		A, Au, B, Bu, Hu, V, Work;
 
@@ -793,11 +784,11 @@ struct bn_tol		*tol;
 		/* free mem for old approximation of hyperbola */
 		pos_b = pts_b;
 		while ( pos_b ) {
-			struct pt_node *next;
+			struct rt_pt_node *next;
 
 			/* get next node before freeing */
 			next = pos_b->next;
-			bu_free( (char *)pos_b, "pt_node" );
+			bu_free( (char *)pos_b, "rt_pt_node" );
 			pos_b = next;
 		}
 		/* construct hyperbola along semi-major axis of ehy
@@ -952,7 +943,7 @@ CONST struct bn_tol	*tol;
 	LOCAL mat_t	SoR;
 	LOCAL struct rt_ehy_internal	*xip;
 	point_t		p1;
-	struct pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
 	struct faceuse	*fu_top;
@@ -1099,7 +1090,7 @@ CONST struct bn_tol	*tol;
 		/* free mem for old approximation of hyperbola */
 		pos_b = pts_b;
 		while ( pos_b ) {
-			bu_free( (char *)pos_b, "pt_node" );
+			bu_free( (char *)pos_b, "rt_pt_node" );
 			pos_b = pos_b->next;
 		}
 		/* construct hyperbola along semi-major axis of ehy
@@ -1421,10 +1412,11 @@ fail:
  *  Apply modeling transformations as well.
  */
 int
-rt_ehy_import( ip, ep, mat )
+rt_ehy_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_ehy_internal	*xip;
 	union record			*rp;
@@ -1469,10 +1461,11 @@ register CONST mat_t		mat;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_ehy_export( ep, ip, local2mm )
+rt_ehy_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_ehy_internal	*xip;
 	union record		*ehy;
@@ -1535,7 +1528,7 @@ double				local2mm;
 int
 rt_ehy_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

@@ -570,7 +570,7 @@ rt_fgp_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
-struct db_i			*dbip;
+CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_fgp_internal	*fgp_ip;
 	union record			*rp;

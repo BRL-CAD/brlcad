@@ -423,7 +423,7 @@ rt_hlf_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal 	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	struct rt_half_internal	*hip;
 	vect_t cent;		/* some point on the plane */
@@ -537,10 +537,11 @@ CONST int	free;
  *	 0	success
  */
 int
-rt_hlf_import( ip, ep, mat )
+rt_hlf_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 CONST mat_t			mat;
+CONST struct db_i		*dbip;
 {
 	struct rt_half_internal	*hip;
 	union record	*rp;
@@ -598,10 +599,11 @@ CONST mat_t			mat;
  *			R T _ H L F _ E X P O R T
  */
 int
-rt_hlf_export( ep, ip, local2mm )
+rt_hlf_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_half_internal	*hip;
 	union record		*rec;
@@ -634,7 +636,7 @@ double				local2mm;
 int
 rt_hlf_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -676,7 +678,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	struct rt_half_internal	*vip;
 #if 0

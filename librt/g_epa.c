@@ -163,14 +163,6 @@ struct epa_specific {
 	mat_t	epa_invRoS;	/* invRot(Scale(vect)) */
 };
 
-struct pt_node {
-	point_t		p;	/* a point */
-	struct pt_node	*next;	/* ptr to next pt */
-};
-
-RT_EXTERN(void	rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
-			CONST fastf_t *B, int sides) );
-
 CONST struct bu_structparse rt_epa_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
@@ -639,7 +631,7 @@ rt_epa_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, theta_new, theta_prev, rt_ell_ang();
@@ -649,7 +641,7 @@ struct bn_tol		*tol;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_epa_internal	*xip;
 	point_t		p1;
-	struct pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	vect_t		A, Au, B, Bu, Hu, V, Work;
 	
 	RT_CK_DB_INTERNAL(ip);
@@ -772,11 +764,11 @@ struct bn_tol		*tol;
 		/* free mem for old approximation of parabola */
 		pos_b = pts_b;
 		while ( pos_b ) {
-			struct pt_node *next;
+			struct rt_pt_node *next;
 
 			/* get next node before freeing */
 			next = pos_b->next;
-			bu_free( (char *)pos_b, "pt_node" );
+			bu_free( (char *)pos_b, "rt_pt_node" );
 			pos_b = next;
 		}
 		/* construct parabola along semi-major axis of epa
@@ -1023,7 +1015,7 @@ CONST struct bn_tol	*tol;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_epa_internal	*xip;
 	point_t		p1;
-	struct pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
 	struct vertex	*vertp[3];
@@ -1158,7 +1150,7 @@ CONST struct bn_tol	*tol;
 		/* free mem for old approximation of parabola */
 		pos_b = pts_b;
 		while ( pos_b ) {
-			bu_free( (char *)pos_b, "pt_node" );
+			bu_free( (char *)pos_b, "rt_pt_node" );
 			pos_b = pos_b->next;
 		}
 		/* construct parabola along semi-major axis of epa
@@ -1467,10 +1459,11 @@ fail:
  *  Apply modeling transformations as well.
  */
 int
-rt_epa_import( ip, ep, mat )
+rt_epa_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_epa_internal	*xip;
 	union record			*rp;
@@ -1514,10 +1507,11 @@ register CONST mat_t		mat;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_epa_export( ep, ip, local2mm )
+rt_epa_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_epa_internal	*xip;
 	union record		*epa;
@@ -1580,7 +1574,7 @@ double				local2mm;
 int
 rt_epa_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

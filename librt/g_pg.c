@@ -489,7 +489,7 @@ rt_pg_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	register int	i;
 	register int	p;	/* current polygon number */
@@ -535,7 +535,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	register int	i;
 	struct shell	*s;
@@ -617,10 +617,11 @@ struct bn_tol		*tol;
  *  (vid rt_pg_ifree).
  */
 int
-rt_pg_import( ip, ep, mat )
+rt_pg_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 CONST mat_t			mat;
+CONST struct db_i		*dbip;
 {
 	struct rt_pg_internal	*pgp;
 	union record		*rp;
@@ -692,10 +693,11 @@ CONST mat_t			mat;
  *  Generally, only libwdb will set conv2mm != 1.0
  */
 int
-rt_pg_export( ep, ip, local2mm )
+rt_pg_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_pg_internal	*pgp;
 	union record		*rec;
@@ -749,7 +751,7 @@ double				local2mm;
 int
 rt_pg_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

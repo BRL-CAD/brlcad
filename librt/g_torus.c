@@ -1010,9 +1010,9 @@ CONST struct bn_tol	*tol;
 	pts = (fastf_t *)bu_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_plot pts[]" );
 
-#define PT(www,lll)	((((www)%nw)*nlen)+((lll)%nlen))
-#define PTA(ww,ll)	(&pts[PT(ww,ll)*3])
-#define NORM_A(ww,ll)	(&norms[PT(ww,ll)*3])
+#define TOR_PT(www,lll)	((((www)%nw)*nlen)+((lll)%nlen))
+#define TOR_PTA(ww,ll)	(&pts[TOR_PT(ww,ll)*3])
+#define TOR_NORM_A(ww,ll)	(&norms[TOR_PT(ww,ll)*3])
 
 	for( len = 0; len < nlen; len++ )  {
 		beta = bn_twopi * len / nlen;
@@ -1027,24 +1027,24 @@ CONST struct bn_tol	*tol;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
-			VADD3( PTA(w,len), tip->v, edge, radius );
+			VADD3( TOR_PTA(w,len), tip->v, edge, radius );
 		}
 	}
 
 	/* Draw lengthwise (around outside rim) */
 	for( w = 0; w < nw; w++ )  {
 		len = nlen-1;
-		RT_ADD_VLIST( vhead, PTA(w,len), BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, TOR_PTA(w,len), BN_VLIST_LINE_MOVE );
 		for( len = 0; len < nlen; len++ )  {
-			RT_ADD_VLIST( vhead, PTA(w,len), BN_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, TOR_PTA(w,len), BN_VLIST_LINE_DRAW );
 		}
 	}
 	/* Draw around the "width" (1 cross section) */
 	for( len = 0; len < nlen; len++ )  {
 		w = nw-1;
-		RT_ADD_VLIST( vhead, PTA(w,len), BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, TOR_PTA(w,len), BN_VLIST_LINE_MOVE );
 		for( w = 0; w < nw; w++ )  {
-			RT_ADD_VLIST( vhead, PTA(w,len), BN_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, TOR_PTA(w,len), BN_VLIST_LINE_DRAW );
 		}
 	}
 
@@ -1151,10 +1151,10 @@ CONST struct bn_tol	*tol;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
-			VADD3( PTA(w,len), tip->v, edge, radius );
+			VADD3( TOR_PTA(w,len), tip->v, edge, radius );
 
-			VMOVE( NORM_A(w,len) , edge );
-			VUNITIZE( NORM_A(w,len) );
+			VMOVE( TOR_NORM_A(w,len) , edge );
+			VUNITIZE( TOR_NORM_A(w,len) );
 		}
 	}
 
@@ -1171,10 +1171,10 @@ CONST struct bn_tol	*tol;
 	nfaces = 0;
 	for( w = 0; w < nw; w++ )  {
 		for( len = 0; len < nlen; len++ )  {
-			vertp[0] = &verts[ PT(w+0,len+0) ];
-			vertp[1] = &verts[ PT(w+0,len+1) ];
-			vertp[2] = &verts[ PT(w+1,len+1) ];
-			vertp[3] = &verts[ PT(w+1,len+0) ];
+			vertp[0] = &verts[ TOR_PT(w+0,len+0) ];
+			vertp[1] = &verts[ TOR_PT(w+0,len+1) ];
+			vertp[2] = &verts[ TOR_PT(w+1,len+1) ];
+			vertp[3] = &verts[ TOR_PT(w+1,len+0) ];
 			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
 				bu_log("rt_tor_tess() nmg_cmface failed, w=%d/%d, len=%d/%d\n",
 					w, nw, len, nlen );
@@ -1186,7 +1186,7 @@ CONST struct bn_tol	*tol;
 	/* Associate vertex geometry */
 	for( w = 0; w < nw; w++ )  {
 		for( len = 0; len < nlen; len++ )  {
-			nmg_vertex_gv( verts[PT(w,len)], PTA(w,len) );
+			nmg_vertex_gv( verts[TOR_PT(w,len)], TOR_PTA(w,len) );
 		}
 	}
 
@@ -1204,9 +1204,9 @@ CONST struct bn_tol	*tol;
 			struct vertexuse *vu;
 			vect_t rev_norm;
 
-			VREVERSE( rev_norm , NORM_A(w,len) );
+			VREVERSE( rev_norm , TOR_NORM_A(w,len) );
 
-			for( BU_LIST_FOR( vu , vertexuse , &verts[PT(w,len)]->vu_hd ) )
+			for( BU_LIST_FOR( vu , vertexuse , &verts[TOR_PT(w,len)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1216,7 +1216,7 @@ CONST struct bn_tol	*tol;
 				NMG_CK_FACEUSE( fu );
 
 				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , NORM_A(w,len) );
+					nmg_vertexuse_nv( vu , TOR_NORM_A(w,len) );
 				else if( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu , rev_norm );
 			}
@@ -1299,10 +1299,11 @@ double	radius;
  *  Apply modeling transformations at the same time.
  */
 int
-rt_tor_import( ip, ep, mat )
+rt_tor_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	struct rt_tor_internal	*tip;
 	union record		*rp;
@@ -1362,10 +1363,11 @@ register CONST mat_t		mat;
  *  The name will be added by the caller.
  */
 int
-rt_tor_export( ep, ip, local2mm )
+rt_tor_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_tor_internal	*tip;
 	union record		*rec;

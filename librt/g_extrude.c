@@ -323,7 +323,7 @@ rt_extrude_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct curve			*crv=(struct curve *)NULL;
@@ -481,7 +481,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	return(-1);
 }
@@ -618,7 +618,7 @@ CONST struct db_i		*dbip;
 int
 rt_extrude_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

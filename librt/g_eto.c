@@ -129,11 +129,6 @@ struct eto_specific {
 	fastf_t	eu, ev, fu, fv;
 };
 
-struct pt_node {
-	point_t		p;	/* a point */
-	struct pt_node	*next;	/* ptr to next pt */
-};
-
 CONST struct bu_structparse rt_eto_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_eto_internal, eto_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "N",   offsetof(struct rt_eto_internal, eto_N[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -748,7 +743,7 @@ rt_eto_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	fastf_t		a, b;	/* axis lengths of ellipse */
 	fastf_t		ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -851,29 +846,29 @@ struct bn_tol		*tol;
 		VUNITIZE( Dp );
 
 /* convert 2D address to index into 1D array */
-#define PT(www,lll)	((((www)%nells)*npts)+((lll)%npts))
-#define PTA(ww,ll)	(&eto_ells[PT(ww,ll)*3])
-#define NMA(ww,ll)	(norms[PT(ww,ll)])
+#define ETO_PT(www,lll)	((((www)%nells)*npts)+((lll)%npts))
+#define ETO_PTA(ww,ll)	(&eto_ells[ETO_PT(ww,ll)*3])
+#define ETO_NMA(ww,ll)	(norms[ETO_PT(ww,ll)])
 
 		/* make ellipse */
 		for (j = 0; j < npts; j++) {
-			VJOIN2( PTA(i,j),
+			VJOIN2( ETO_PTA(i,j),
 				Ell_V, ell[j][X], Dp, ell[j][Y], Cp );
 		}
 	}
 	
 	/* draw ellipses */
 	for (i = 0; i < nells; i++) {
-		RT_ADD_VLIST( vhead, PTA(i,npts-1), BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, ETO_PTA(i,npts-1), BN_VLIST_LINE_MOVE );
 		for( j = 0; j < npts; j++ )
-			RT_ADD_VLIST( vhead, PTA(i,j), BN_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, ETO_PTA(i,j), BN_VLIST_LINE_DRAW );
 	}
 	
 	/* draw connecting circles */
 	for (i = 0; i < npts; i++) {
-		RT_ADD_VLIST( vhead, PTA(nells-1,i), BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, ETO_PTA(nells-1,i), BN_VLIST_LINE_MOVE );
 		for( j = 0; j < nells; j++ )
-			RT_ADD_VLIST( vhead, PTA(j,i), BN_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, ETO_PTA(j,i), BN_VLIST_LINE_DRAW );
 	}
 
 	bu_free( (char *)eto_ells, "ells[]" );
@@ -893,13 +888,13 @@ struct bn_tol		*tol;
 int
 rt_ell4( pts, a, b, dtol, ntol )
 fastf_t	a, b, dtol, ntol;
-struct pt_node	*pts;
+struct rt_pt_node	*pts;
 {
 	fastf_t	dist, intr, m, theta0, theta1;
 	int	n;
 	point_t	mpt, p0, p1;
 	vect_t	norm_line, norm_ell;
-	struct pt_node *new, *rt_ptalloc();
+	struct rt_pt_node *new, *rt_ptalloc();
 
 	/* endpoints of segment approximating ellipse */
 	VMOVE( p0, pts->p );
@@ -955,7 +950,7 @@ fastf_t	a, b, dtol, ntol;
 {
 	int		i;
 	point_t		*ell;
-	struct pt_node	*ell_quad, *oldpos, *pos, *rt_ptalloc();
+	struct rt_pt_node	*ell_quad, *oldpos, *pos, *rt_ptalloc();
 
 	ell_quad = rt_ptalloc();
 	VSET( ell_quad->p, b, 0., 0. );
@@ -972,7 +967,7 @@ fastf_t	a, b, dtol, ntol;
 		VMOVE( ell[i], pos->p );
 		oldpos = pos;
 		pos = pos->next;
-		bu_free( (char *)oldpos, "pt_node" );
+		bu_free( (char *)oldpos, "rt_pt_node" );
 	}
 	/* mirror 1st quad to make 2nd */
 	for (i = (*n+1)+1; i < 2*(*n+1); i++) {
@@ -1004,7 +999,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	fastf_t		a, b;	/* axis lengths of ellipse */
 	fastf_t		ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1116,11 +1111,11 @@ struct bn_tol		*tol;
 		VUNITIZE( Dp );
 		/* make ellipse */
 		for (j = 0; j < npts; j++) {
-			VJOIN2( PTA(i,j),
+			VJOIN2( ETO_PTA(i,j),
 				Ell_V, ell[j][X], Dp, ell[j][Y], Cp );
-			VBLEND2( NMA(i,j),
+			VBLEND2( ETO_NMA(i,j),
 				a*a*ell[j][X], Dp , b*b*ell[j][Y], Cp );
-			VUNITIZE( NMA(i,j) );
+			VUNITIZE( ETO_NMA(i,j) );
 		}
 	}
 
@@ -1136,10 +1131,10 @@ struct bn_tol		*tol;
 	nfaces = 0;
 	for( i = 0; i < nells; i++ )  {
 		for( j = 0; j < npts; j++ )  {
-			vertp[0] = &verts[ PT(i+0,j+0) ];
-			vertp[1] = &verts[ PT(i+0,j+1) ];
-			vertp[2] = &verts[ PT(i+1,j+1) ];
-			vertp[3] = &verts[ PT(i+1,j+0) ];
+			vertp[0] = &verts[ ETO_PT(i+0,j+0) ];
+			vertp[1] = &verts[ ETO_PT(i+0,j+1) ];
+			vertp[2] = &verts[ ETO_PT(i+1,j+1) ];
+			vertp[3] = &verts[ ETO_PT(i+1,j+0) ];
 			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
 				bu_log("rt_eto_tess() nmg_cmface failed, i=%d/%d, j=%d/%d\n",
 					i, nells, j, npts );
@@ -1151,7 +1146,7 @@ struct bn_tol		*tol;
 	/* Associate vertex geometry */
 	for( i = 0; i < nells; i++ )  {
 		for( j = 0; j < npts; j++ )  {
-			nmg_vertex_gv( verts[PT(i,j)], PTA(i,j) );
+			nmg_vertex_gv( verts[ETO_PT(i,j)], ETO_PTA(i,j) );
 		}
 	}
 
@@ -1172,11 +1167,11 @@ struct bn_tol		*tol;
 			struct vertexuse *vu;
 			vect_t rev_norm;
 
-			VREVERSE( rev_norm , NMA(i,j) );
+			VREVERSE( rev_norm , ETO_NMA(i,j) );
 
-			NMG_CK_VERTEX( verts[PT(i,j)] );
+			NMG_CK_VERTEX( verts[ETO_PT(i,j)] );
 
-			for( BU_LIST_FOR( vu , vertexuse , &verts[PT(i,j)]->vu_hd ) )
+			for( BU_LIST_FOR( vu , vertexuse , &verts[ETO_PT(i,j)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1186,7 +1181,7 @@ struct bn_tol		*tol;
 				NMG_CK_FACEUSE( fu );
 
 				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , NMA(i,j) );
+					nmg_vertexuse_nv( vu , ETO_NMA(i,j) );
 				else if( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu , rev_norm );
 			}
@@ -1213,10 +1208,11 @@ failure:
  *  Apply modeling transformations at the same time.
  */
 int
-rt_eto_import( ip, ep, mat )
+rt_eto_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	union record		*rp;
@@ -1257,10 +1253,11 @@ register CONST mat_t		mat;
  *  The name will be added by the caller.
  */
 int
-rt_eto_export( ep, ip, local2mm )
+rt_eto_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	union record		*eto;
@@ -1311,7 +1308,7 @@ double				local2mm;
 int
 rt_eto_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

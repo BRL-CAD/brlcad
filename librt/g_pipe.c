@@ -1677,7 +1677,7 @@ rt_pipe_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	register struct wdb_pipept		*prevp;
 	register struct wdb_pipept		*curp;
@@ -3253,7 +3253,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	struct wdb_pipept	*pp1;
 	struct wdb_pipept	*pp2;
@@ -3441,10 +3441,11 @@ next_pt:
  *			R T _ P I P E _ I M P O R T
  */
 int
-rt_pipe_import( ip, ep, mat )
+rt_pipe_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	register struct exported_pipept *exp;
 	register struct wdb_pipept	*ptp;
@@ -3498,10 +3499,11 @@ register CONST mat_t		mat;
  *			R T _ P I P E _ E X P O R T
  */
 int
-rt_pipe_export( ep, ip, local2mm )
+rt_pipe_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_pipe_internal	*pip;
 	struct bu_list		*headp;
@@ -3569,7 +3571,7 @@ double				local2mm;
 int
 rt_pipe_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
