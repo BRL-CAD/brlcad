@@ -1238,8 +1238,8 @@ CONST struct bn_tol	*tol;
 		VSUB2( a_to_p , p , a );
 		VCROSS( n , a_to_p , d );
 
-		/* if normal still has zero length, then lines are parallel and collinear
-		 * and the following code will work OK */
+		if( NEAR_ZERO( MAGSQ( n ) , SMALL_FASTF ) )
+			bn_vec_ortho( n, d );
 	}
 
 	/*
