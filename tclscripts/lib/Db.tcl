@@ -51,6 +51,7 @@ class Db {
     public method listeval {args}
     public method ls {args}
     public method make_bb {name args}
+    public method make_name {args}
     public method match {args}
     public method mv {args}
     public method mvall {args}
@@ -271,6 +272,10 @@ body Db::get_dbname {} {
 
 body Db::make_bb {name args} {
     eval $db make_bb $name $args
+}
+
+body Db::make_name {args} {
+    eval $db make_name $args
 }
 
 body Db::help {args} {

@@ -113,6 +113,7 @@ static int wdb_instance_tcl();
 static int wdb_observer_tcl();
 static int wdb_reopen_tcl();
 static int wdb_make_bb_tcl();
+static int wdb_make_name_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -155,6 +156,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"listeval",	wdb_pathsum_tcl,
 	"ls",		wdb_ls_tcl,
 	"make_bb",	wdb_make_bb_tcl,
+	"make_name",	wdb_make_name_tcl,
 	"match",	wdb_match_tcl,
 	"mv",		wdb_move_tcl,
 	"mvall",	wdb_move_all_tcl,
@@ -4174,7 +4176,7 @@ wdb_make_bb_tcl(clientData, interp, argc, argv)
 			Tcl_AppendResult(interp, "db_string_to_path failed for ",
 					 argv[i], "\n", (char *)NULL );
 			rt_clean(rtip);
-			bu_free((genptr_t)rtip, "f_make_bb: rtip");
+			bu_free((genptr_t)rtip, "wdb_make_bb_tcl: rtip");
 			return TCL_ERROR;
 		}
 
@@ -4188,7 +4190,7 @@ wdb_make_bb_tcl(clientData, interp, argc, argv)
 				Tcl_AppendResult(interp, "db_string_to_path failed for ",
 						 regp->reg_name, "\n", (char *)NULL);
 				rt_clean(rtip);
-				bu_free((genptr_t)rtip, "f_make_bb: rtip");
+				bu_free((genptr_t)rtip, "wdb_make_bb_tcl: rtip");
 				return TCL_ERROR;
 			}
 			if (path.fp_names[0] == tmp_path.fp_names[0])
@@ -4203,7 +4205,7 @@ wdb_make_bb_tcl(clientData, interp, argc, argv)
 			Tcl_AppendResult(interp, "rt_gettree failed for ",
 					 argv[i], "\n", (char *)NULL );
 			rt_clean(rtip);
-			bu_free((genptr_t)rtip, "f_make_bb: rtip");
+			bu_free((genptr_t)rtip, "wdb_make_bb_tcl: rtip");
 			return TCL_ERROR;
 		}
 		db_free_full_path(&path);
@@ -4239,7 +4241,7 @@ found:
 				Tcl_AppendResult(interp, "rt_bound_tree failed for ",
 						 regp->reg_name, "\n", (char *)NULL);
 				rt_clean(rtip);
-				bu_free((genptr_t)rtip, "f_make_bb: rtip");
+				bu_free((genptr_t)rtip, "wdb_make_bb_tcl: rtip");
 				return TCL_ERROR;
 			}
 			VMINMAX(rpp_min, rpp_max, reg_min);
@@ -4265,7 +4267,7 @@ not_found:
 					Tcl_AppendResult(interp, "rt_bound_tree failed for ",
 							 regp->reg_name, "\n", (char *)NULL);
 					rt_clean(rtip);
-					bu_free((genptr_t)rtip, "f_make_bb: rtip");
+					bu_free((genptr_t)rtip, "wdb_make_bb_tcl: rtip");
 					return TCL_ERROR;
 				}
 				VMINMAX(rpp_min, rpp_max, reg_min);
@@ -4304,7 +4306,83 @@ not_found:
 	}
 
 	rt_clean(rtip);
-	bu_free((genptr_t)rtip, "f_make_bb: rtip");
+	bu_free((genptr_t)rtip, "wdb_make_bb_tcl: rtip");
+	return TCL_OK;
+}
+
+/*
+ *
+ * Generate an identifier that is guaranteed not to be the name
+ * of any object currently in the database.
+ *
+ * Usage:
+ *	dbobjname make_name (template | -s [num])
+ *
+ */
+static int
+wdb_make_name_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+
+{
+	struct bu_vls	obj_name;
+	char		*cp, *tp;
+	static int	i = 0;
+	int		len;
+	struct rt_wdb	*wdbp = (struct rt_wdb *)clientData;
+
+	switch (argc) {
+	case 3:
+		if (strcmp(argv[2], "-s") != 0)
+			break;
+		else {
+			i = 0;
+			return TCL_OK;
+		}
+	case 4:
+		{
+			int	new_i;
+
+			if ((strcmp(argv[2], "-s") == 0)
+			    && (sscanf(argv[3], "%d", &new_i) == 1)) {
+				i = new_i;
+				return TCL_OK;
+			}
+		}
+	default:
+		{
+			struct bu_vls	vls;
+
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "helplib make_name");
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
+			return TCL_ERROR;
+		}
+	}
+
+	bu_vls_init(&obj_name);
+	for (cp = argv[2], len = 0; *cp != '\0'; ++cp, ++len) {
+		if (*cp == '@')
+			if (*(cp + 1) == '@')
+				++cp;
+			else
+				break;
+		bu_vls_putc(&obj_name, *cp);
+	}
+	bu_vls_putc(&obj_name, '\0');
+	tp = (*cp == '\0') ? "" : cp + 1;
+
+	do {
+		bu_vls_trunc(&obj_name, len);
+		bu_vls_printf(&obj_name, "%d", i++);
+		bu_vls_strcat(&obj_name, tp);
+	}
+	while (db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
+	Tcl_AppendResult(interp, bu_vls_addr(&obj_name), (char *) NULL);
+	bu_vls_free(&obj_name);
 	return TCL_OK;
 }
 
@@ -4317,8 +4395,8 @@ static int
 wdb__tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+     int	argc;
+     char	**argv;
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 }
