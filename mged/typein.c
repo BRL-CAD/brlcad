@@ -64,8 +64,6 @@ extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 char		**promp;	/* pointer to a pointer to a char */
 
-#define MAXLINE		512	/* Maximum number of chars per line */
-
 char *p_half[] = {
 	"Enter X, Y, Z of outward pointing normal vector: ",
 	"Enter Y: ",
@@ -858,7 +856,6 @@ int
 getcmd(pos)
 int pos;
 {
-#define MAXARGS		200	/* Maximum number of args per line */
 	register char *lp;
 	register char *lp1;
 
