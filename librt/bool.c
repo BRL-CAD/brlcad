@@ -942,6 +942,7 @@ register struct resource	*resp;
  *		in little-endian order, eg:
  *		"\010\2Bit_one\1BIT_zero"
  */
+void
 rt_printb(s, v, bits)
 char *s;
 register unsigned long v;
