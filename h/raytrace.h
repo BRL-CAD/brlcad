@@ -2200,7 +2200,7 @@ RT_EXTERN(int			nmg_class_pt_s, (CONST point_t pt,
 				CONST struct rt_tol *tol) );
 
 /* From nmg_pt_fu.c */
-RT_EXTERN(int			nmg_class_pt_fu_except, (point_t pt,
+RT_EXTERN(int			nmg_class_pt_fu_except, (CONST point_t pt,
 				CONST struct faceuse *fu,
 				CONST struct loopuse *ignore_lu,
 				void (*eu_func)(), void (*vu_func)(),
