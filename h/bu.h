@@ -819,30 +819,6 @@ struct bu_external  {
 #define BU_CK_EXTERNAL(_p)	RT_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
 /*----------------------------------------------------------------------*/
-/* file.c */
-/*
- *	General I/O for ASCII files: bu_file support
- */
-struct bu_file  {
-	long		file_magic;
-	FILE		*file_ptr;	/* the actual file */
-	char		*file_name;
-	struct bu_vls	file_buf;	/* contents of current line */
-	char		*file_bp;	/* pointer into current line */
-	int		file_needline;	/* time to grab another line? */
-	int		file_linenm;
-	int		file_comment;	/* the comment character */
-	int		file_buflen;	/* length of intact buffer */
-};
-typedef struct bu_file		BU_FILE;
-#define BU_FILE_MAGIC		0x6275666c
-#define BU_CK_FILE(_fp)		BU_CKMAG(_fp, BU_FILE_MAGIC, "bu_file")
-
-#define bu_stdin		(&bu_iob[0])
-extern BU_FILE			bu_iob[1];
-#define BU_FILE_NO_COMMENT	-1
-
-/*----------------------------------------------------------------------*/
 /* color.c */
 #define	HUE		0
 #define	SAT		1
@@ -872,14 +848,14 @@ struct bu_color
  */
 
 /*
- *			    R B _ L I S T
+ *			    B U _ R B _ L I S T
  *
  *		    List of nodes or packages
  *
- *	LIBREDBLACK(3) uses this structure to maintain lists of
- *	all the nodes and all the packages in the tree.  Applications
- *	should not muck with these things.  They are maintained only
- *	to facilitate freeing bu_rb_trees.
+ *	The red-black tree package uses this structure to maintain lists
+ *	of all the nodes and all the packages in the tree.  Applications
+ *	should not muck with these things.  They are maintained only to
+ *	facilitate freeing bu_rb_trees.
  */
 struct bu_rb_list
 {
@@ -897,11 +873,10 @@ struct bu_rb_list
 
 
 /*
- *			R B _ T R E E
+ *			B U _ R B _ T R E E
  *
- *	This is the only data structure used in LIBREDBLACK
- *	to which application software need make any explicit
- *	reference.
+ *	This is the only data structure used in the red-black tree package
+ *	to which application software need make any explicit reference.
  *
  *	The members of this structure are grouped into three
  *	classes:
@@ -910,7 +885,7 @@ struct bu_rb_list
  *	    Class II:	Reading and modifying are both appropriate,
  *			when necessary.
  *	    Class III:	All access should be through routines
- *			provided in LIBREDBLACK.  Touch these
+ *			provided in the package.  Touch these
  *			at your own risk!
  */
 typedef struct
@@ -945,7 +920,7 @@ typedef struct
 #define BU_RB_DEBUG_DELETE	0x00000010	/* Deletion process */
 
 /*
- *			R B _ P A C K A G E
+ *			B U _ R B _ P A C K A G E
  *
  *		    Wrapper for application data
  *
@@ -967,7 +942,7 @@ struct bu_rb_package
 #define	BU_RB_PKG_NULL	((struct bu_rb_package *) 0)
 
 /*
- *			    R B _ N O D E
+ *			    B U _ R B _ N O D E
  *
  *	For the most part, there is a one-to-one correspondence
  *	between nodes and chunks of application data.  When a

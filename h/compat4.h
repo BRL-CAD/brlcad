@@ -254,6 +254,26 @@ extern "C" {
 #define RT_INIT_EXTERNAL	BU_INIT_EXTERNAL
 #define RT_CK_EXTERNAL		BU_CK_EXTERNAL
 
+/* Red-black tree package */
+#define	rb_tree			bu_rb_tree
+#define	RB_TREE_NULL		BU_RB_TREE_NULL
+#define	rb_min			bu_rb_min
+#define	rb_max			bu_rb_max
+#define	rb_pred			bu_rb_pred
+#define	rb_succ			bu_rb_succ
+#define	rb_create		bu_rb_create
+#define	rb_create1		bu_rb_create1
+#define	rb_delete		bu_rb_delete
+#define	rb_diagnose_tree	bu_rb_diagnose_tree
+#define	rb_extreme		bu_rb_extreme
+#define	rb_insert		bu_rb_insert
+#define	rb_neighbor		bu_rb_neighbor
+#define	rb_search		bu_rb_search
+#define	rb_search1		bu_rb_search1
+#define	rb_summarize_tree	bu_rb_summarize_tree
+#define	rb_walk			bu_rb_walk
+#define	rb_walk1		bu_rb_walk1
+
 /* plane.c */
 #define rt_dist_pt3_lseg3	bn_dist_pt3_lseg3
 #define rt_3pts_collinear	bn_3pts_collinear
