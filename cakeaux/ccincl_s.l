@@ -24,15 +24,13 @@ nonl	[^\n\f]
 
 %%
 
-#if !defined(__bsdi__) && !defined(__GNUC__)
-
-extern int yylineno;
-
-#else
-
-/* GNU lex (flex) does not define yylineno */
+/* GNU lex (flex) does not define yylineno, may need to add a check
+ * for __bsdi__ -- need to verify later 
+ */
+#if (defined(YY_FLEX_MAJOR_VERSION) && !defined(YY_FLEX_LEX_COMPAT)
 int yylineno=1;
-
+#else
+extern int yylineno;
 #endif
 
 yywrap()
