@@ -15,7 +15,6 @@
  *	quit		General Exit routine
  *	sig2		user interrupt catcher
  *	new_mats	derive inverse and editing matrices, as required
- *	f_source	Open a file and process the commands within
  *
  *  Authors -
  *	Michael John Muuss
@@ -67,18 +66,6 @@ in all countries except the USA.  All rights reserved.";
 #	undef VMIN	/* also used in vmath.h */
 #endif
 
-#include "machine.h"
-#include "externs.h"
-#include "vmath.h"
-#include "db.h"
-#include "rtstring.h"
-#include "raytrace.h"
-#include "./ged.h"
-#include "./titles.h"
-#include "./solid.h"
-#include "./sedit.h"
-#include "./dm.h"
-
 #ifndef XMGED
 #  define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #  include "tcl.h"
@@ -88,6 +75,19 @@ in all countries except the USA.  All rights reserved.";
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 #endif
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "db.h"
+#include "rtlist.h"
+#include "rtstring.h"
+#include "raytrace.h"
+#include "./ged.h"
+#include "./titles.h"
+#include "./solid.h"
+#include "./sedit.h"
+#include "./dm.h"
 
 #ifdef XMGED
 void	slewview();
@@ -135,17 +135,18 @@ mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
 int		(*cmdline_hook)() = NULL;
 void		(*viewpoint_hook)() = NULL;
-void		(*extrapoll_hook)() = NULL;
-int		extrapoll_fd;		/* XXX Ultra hack XXX */
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
 static jmp_buf	jmp_env;		/* For non-local gotos */
 void		(*cur_sigint)();	/* Current SIGINT status */
+void            (*cmdline_sig)();
 void		sig2();
 void		new_mats();
 void		usejoy();
-int		interactive = 0;	/* !0 means interactive */
+int		interactive = 0;	/* >0 means interactive */
+int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
+
 static int	do_rc();
 static void	log_event();
 extern char	version[];		/* from vers.c */
@@ -167,10 +168,9 @@ static char *units_str[] = {
 	"extra"
 };
 
-void
-pr_prompt()  {
-	rt_log("mged> ");
-}
+
+void pr_prompt();
+Tk_FileProc stdin_input;
 
 /* 
  *			M A I N
@@ -223,8 +223,21 @@ char **argv;
 		interactive = 1;
 		fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
 		fflush(stdout);
-	}
+		
+		if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+#if 0
+		    cbreak_mode = 1;
+#else
+		    ;
+#endif
+		}
 
+	    }
+
+	/* Set up for character-at-a-time terminal IO. */
+	if (cbreak_mode) 
+	    save_Tty(fileno(stdin));
+	
 	(void)signal( SIGPIPE, SIG_IGN );
 
 	/*
@@ -326,6 +339,9 @@ char **argv;
 	/* Reset the lights */
 	dmp->dmr_light( LIGHT_RESET, 0 );
 
+	Tk_CreateFileHandler(fileno(stdin), TK_READABLE, stdin_input,
+			     (ClientData)NULL);
+
 	/* Caught interrupts take us back here, via longjmp() */
 	if( setjmp( jmp_env ) == 0 )  {
 		/* First pass, determine SIGINT handler for interruptable cmds */
@@ -344,8 +360,16 @@ char **argv;
 	pr_prompt();
 
 	/****************  M A I N   L O O P   *********************/
+
+	if (cbreak_mode) {
+	    set_Cbreak(fileno(stdin));
+	    clr_Echo(fileno(stdin));
+	}
+
+	cmdline_sig = SIG_IGN;
+
 	while(1) {
-		(void)signal( SIGINT, SIG_IGN );
+		(void)signal( SIGINT, cmdline_sig );
 
 		/* This test stops optimizers from complaining about an infinite loop */
 		if( (rateflag = event_check( rateflag )) < 0 )  break;
@@ -370,151 +394,168 @@ char **argv;
 	return(0);
 }
 
+void
+pr_prompt()
+{
+    rt_log("mged> ");
+}
+
+/*
+ * standard input handling
+ *
+ * When the Tk event handler sees input on standard input, it calls the
+ * routine "stdin_input" (registered with the Tk_CreateFileHandler call).
+ * This routine simply appends the new input to a growing string until the
+ * command is complete (it is assumed that the routine gets a fill line.)
+ *
+ * If the command is incomplete, then allow the user to hit ^C to start over,
+ * by setting up the multi_line_sig routine as the SIGINT handler.
+ */
+
+static struct rt_vls input_str;
+static int input_str_init = 0;
+
+void
+multi_line_sig()
+{
+    if (input_str_init)
+	rt_vls_trunc(&input_str, 0);
+
+    longjmp( jmp_env, 1 );
+    /* NOTREACHED */
+}
+
+void
+stdin_input(clientData, mask)
+ClientData clientData;
+int mask;
+{
+    int count;
+
+    if (!input_str_init) {
+	rt_vls_init(&input_str);
+	input_str_init = 1;
+    }
+
+    /* Get additional input and append a newline */
+    count = rt_vls_gets(&input_str, stdin);
+    rt_vls_strcat(&input_str, "\n");
+
+    if (count <= 0 && feof(stdin))
+	f_quit(0, NULL);
+
+    if (Tcl_CommandComplete(rt_vls_addr(&input_str))) {
+	cmdline_sig = SIG_IGN;
+	if (cmdline_hook) {
+	    if ((*cmdline_hook)(&input_str))
+		pr_prompt();
+	} else {
+	    if (cmdline(&input_str))
+		pr_prompt();
+	}
+	rt_vls_trunc(&input_str, 0);
+    } else {
+	/* Allow the user to hit ^C */
+	cmdline_sig = multi_line_sig;
+    }
+}
+
 /*
  *			E V E N T _ C H E C K
  *
  *  Check for events, and dispatch them.
  *  Eventually, this will be done entirely by generating commands
  *
- *  Returns -
- *	 0	no events detected
- *	>0	number of events detected
+ *  Returns - recommended new value for non_blocking
  */
+
 int
 event_check( non_blocking )
 int	non_blocking;
 {
-	fd_set		input;
-	vect_t		knobvec;	/* knob slew */
+    vect_t		knobvec;	/* knob slew */
 
-	/*
-	 * dmr_input() will suspend until some change has occured,
-	 * either on the device peripherals, or a command has been
-	 * entered on the keyboard, unless the non-blocking flag is set.
-	 */
-	FD_ZERO( &input );
-	if( extrapoll_fd )  FD_SET( extrapoll_fd, &input );
-	FD_SET( fileno(stdin), &input );
+    Tk_DoOneEvent(TK_ALL_EVENTS | (non_blocking ? TK_DONT_WAIT : 0));
+    non_blocking = 0;
 
-#ifndef XMGED
-	if( mged_tk_dontwait() )  non_blocking = 1;
-#endif
+    /*
+     *  Process any "string commands" sent to us by the display manager.
+     *  (Or "invented" here, for compatability with old dm's).
+     *  Each one is expected to be newline terminated.
+     */
 
-	/* await an input event. Bits will be set in 'input' as appropriate */
-	dmp->dmr_input( &input, non_blocking );
-
-	if(extrapoll_fd && FD_ISSET(extrapoll_fd,&input) && extrapoll_hook)  {
-		(*extrapoll_hook)();
-	}
-#ifndef XMGED
-	else {
-		mged_tk_idle(non_blocking);
-	}
-#endif
-
-	/* Acquire anything present on stdin */
-	if( FD_ISSET( fileno(stdin), &input ) )  {
-		struct rt_vls	str;
-		rt_vls_init(&str);
-
-		/* Read input line */
-		if( rt_vls_gets( &str, stdin ) >= 0 )  {
-			rt_vls_strcat( &str, "\n" );
-		if( cmdline_hook ) {
-			if( (*cmdline_hook)(&str)) 
-				pr_prompt();
-		} else
-			if( cmdline( &str ) )
-				pr_prompt();
-		} else {
-			/* Check for Control-D (EOF) */
-			if( feof( stdin ) )  {
-				/* EOF, let's hit the road */
-				f_quit(0, NULL);
-				/* NOTREACHED */
-			}
-		}
-		rt_vls_free(&str);
-	}
-	non_blocking = 0;
-
-	/*
-	 *  Process any "string commands" sent to us by the display manager.
-	 *  (Or "invented" here, for compatability with old dm's).
-	 *  Each one is expected to be newline terminated.
-	 */
-	if( cmdline_hook )  
-		(*cmdline_hook)(&dm_values.dv_string); 
-	else {
-		/* Some commands (e.g. mouse events) queue further events. */
-		int oldlen;
+    if( cmdline_hook )  
+	(*cmdline_hook)(&dm_values.dv_string); 
+    else {
+	/* Some commands (e.g. mouse events) queue further events. */
+	int oldlen;
 again:
-		oldlen = rt_vls_strlen( &dm_values.dv_string );
-		(void)cmdline( &dm_values.dv_string );
-		if( rt_vls_strlen( &dm_values.dv_string ) > oldlen ) {
-			/* Remove cmds already done, and go again */
-			rt_vls_nibble( &dm_values.dv_string, oldlen );
-			goto again;
-		}
+	oldlen = rt_vls_strlen( &dm_values.dv_string );
+	(void)cmdline( &dm_values.dv_string );
+	if( rt_vls_strlen( &dm_values.dv_string ) > oldlen ) {
+	    /* Remove cmds already done, and go again */
+	    rt_vls_nibble( &dm_values.dv_string, oldlen );
+	    goto again;
 	}
+    }
 
-	rt_vls_trunc( &dm_values.dv_string, 0 );
+    rt_vls_trunc( &dm_values.dv_string, 0 );
+    
+    /*
+     * Set up window so that drawing does not run over into the
+     * status line area, and menu area (if present).
+     */
 
-	/*
-	 * Set up window so that drawing does not run over into the
-	 * status line area, and menu area (if present).
-	 */
-	windowbounds[1] = XMIN;		/* XLR */
-	if( illump != SOLID_NULL )
-		windowbounds[1] = MENUXLIM;
-	windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
-	dmp->dmr_window(windowbounds);	/* hack */
+    windowbounds[1] = XMIN;		/* XLR */
+    if( illump != SOLID_NULL )
+	windowbounds[1] = MENUXLIM;
+    windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
+    dmp->dmr_window(windowbounds);	/* hack */
 
-	/*********************************
-	 *  Handle rate-based processing *
-	 *********************************/
-	if( rateflag_rotate )  {
-		non_blocking++;
+    /*********************************
+     *  Handle rate-based processing *
+     *********************************/
+    if( rateflag_rotate )  {
+	non_blocking++;
 
-		/* Compute delta x,y,z parameters */
-		usejoy( rate_rotate[X] * 6 * degtorad,
-			rate_rotate[Y] * 6 * degtorad,
-			rate_rotate[Z] * 6 * degtorad );
-	}
-	if( rateflag_slew )  {
-		non_blocking++;
+	/* Compute delta x,y,z parameters */
+	usejoy( rate_rotate[X] * 6 * degtorad,
+	        rate_rotate[Y] * 6 * degtorad,
+	        rate_rotate[Z] * 6 * degtorad );
+    }
+    if( rateflag_slew )  {
+	non_blocking++;
 
-		/* slew 1/10th of the view per update */
-		knobvec[X] = -rate_slew[X] / 10;
-		knobvec[Y] = -rate_slew[Y] / 10;
-		knobvec[Z] = -rate_slew[Z] / 10;
-		slewview( knobvec );
-	}
-	if( rateflag_zoom )  {
-		fastf_t	factor;
+	/* slew 1/10th of the view per update */
+	knobvec[X] = -rate_slew[X] / 10;
+	knobvec[Y] = -rate_slew[Y] / 10;
+	knobvec[Z] = -rate_slew[Z] / 10;
+	slewview( knobvec );
+    }
+    if( rateflag_zoom )  {
+	fastf_t	factor;
+	mat_t scale_mat;
+
 #define MINVIEW		0.001	/* smallest view.  Prevents runaway zoom */
 
-		factor = 1.0 - (rate_zoom / 10);
-		Viewscale *= factor;
-		if( Viewscale < MINVIEW )
-			Viewscale = MINVIEW;
-		else  {
-			non_blocking++;
-		}
-		{
-			/* Scaling (zooming) takes place around view center */
-			mat_t	scale_mat;
-
-			mat_idn( scale_mat );
-			scale_mat[15] = 1/factor;
-
-			wrt_view( ModelDelta, scale_mat, ModelDelta );
-		}
-		dmaflag = 1;
-		new_mats();
+	factor = 1.0 - (rate_zoom / 10);
+	Viewscale *= factor;
+	if( Viewscale < MINVIEW )
+	    Viewscale = MINVIEW;
+	else  {
+	    non_blocking++;
 	}
 
-	return( non_blocking );
+	/* Scaling (zooming) takes place around view center */
+	mat_idn( scale_mat );
+	scale_mat[15] = 1/factor;
+
+	wrt_view( ModelDelta, scale_mat, ModelDelta );
+	dmaflag = 1;
+	new_mats();
+    }
+
+    return( non_blocking );
 }
 
 /*			R E F R E S H
@@ -808,6 +849,10 @@ int	exitcode;
 	log_event( "CEASE", place );
 	dmp->dmr_light( LIGHT_RESET, 0 );	/* turn off the lights */
 	dmp->dmr_close();
+
+	if (cbreak_mode > 0)
+	    reset_Tty(fileno(stdin)); 
+	    
 	exit( exitcode );
 }
 
@@ -919,11 +964,6 @@ do_rc()
 
 	    /* Get beginning of line */
 	    fgets( buf, 80, fp );
-	    /* Discard rest of line */
-	    while( !feof(fp) && fgetc(fp)!='\n' )
-		;
-	    while( !feof(fp) && fgetc(fp)!='\n' )
-		;
     /* If the user has a set command with an equal sign, remember to warn */
 	    if( strstr(buf, "set") != NULL )
 		if( strchr(buf, '=') != NULL )
