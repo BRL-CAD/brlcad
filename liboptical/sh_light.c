@@ -832,6 +832,7 @@ light_maker(int num, mat_t v2m)
 		sprintf(name, "Implicit light %d", i);
 		lsp->lt_name = bu_strdup(name);
 
+		/* XXX Is it bogus to set lt_aim? */
 		VSET( lsp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
 		lsp->lt_intensity = 1000.0;
 		lsp->lt_radius = 0.1;		/* mm, "point" source */
@@ -1395,6 +1396,8 @@ char flags[MAX_LIGHT_SAMPLES];
 	int k = 0;
 	struct light_pt *lpt;
 	int tryagain = 0;
+	double VisRayvsLightN;
+	double VisRayvsSurfN;
 
 	if (rdebug & RDEBUG_LIGHT ) bu_log("light_vis\n");
 
@@ -1446,10 +1449,27 @@ retry:
 			 * If the light point has no surface normal, then
 			 * this is a general point usable from any angle
 			 * so again we can shoot at this point
+			 *
+			 * We tolerance this down so that light points which
+			 * are in the plane of the hit point are not candidates
+			 * (since the light on the surface from such would be
+			 * very small).  We also tolerance the normal on the
+			 * light to the visibility ray so that points on the
+			 * perimiter of the presented area of the light source
+			 * are not chosen.  This helps avoid shooting at points
+			 * on the light source which machine floating-point
+			 * inaccuracies would cause the ray to miss.
 			 */
-			if ( VDOT(los->swp->sw_hit.hit_normal, dir) > 0.0 &&
-			     ( VEQUAL(lpt->lp_norm, zero) || 
-			       VDOT(lpt->lp_norm, rdir) > 0.0 )		) {
+#define COSINE89_99DEG 0.0001745329
+
+			VisRayvsSurfN
+			    = VDOT(los->swp->sw_hit.hit_normal, dir);
+			VisRayvsLightN
+			    = VDOT(lpt->lp_norm, rdir);
+
+			if ( VisRayvsLightN > COSINE89_99DEG &&
+			     ( VEQUAL(lpt->lp_norm, zero) ||
+			       VisRayvsSurfN > COSINE89_99DEG ) ) {
 
 				/* ok, we can shoot at this sample point */
 				if (rdebug & RDEBUG_LIGHT ) 
@@ -1460,6 +1480,7 @@ retry:
 
 				goto done;
 			}
+#undef COSINE89DEG
 			if (rdebug & RDEBUG_LIGHT ) 
 				bu_log("\tbackfacing\n");
 			/* the sample point is backfacing to the location
@@ -1775,13 +1796,14 @@ int have;
 		visibility = 0;
 		memset(flags, 0, sizeof(flags));
 		for (vis_ray = 0 ; vis_ray < tot_vis_rays ; vis_ray ++) {
+			int lv;
 			los.iter = vis_ray;
 
 			if (rdebug & RDEBUG_LIGHT)
 				bu_log("----------vis_ray %d---------\n",
 				       vis_ray);
 
-			switch (light_vis(&los, flags)) {
+			switch (lv = light_vis(&los, flags)) {
 			case 1:
 				/* remember the last ray that hit */
 				VMOVE(tl_p, los.to_light_center);
@@ -1799,6 +1821,11 @@ int have;
 				visibility = 0;
 				vis_ray = tot_vis_rays;
 				break;
+			case 0:	/* light not visible */
+			    bu_log("light not visible\n");
+			    break;
+			default:
+			    bu_log("light_vis = %d\n", lv);
 			}
 		}
 		if (visibility) {
