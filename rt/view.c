@@ -76,6 +76,8 @@ Options:\n\
  -p #		Perspective, degrees side to side\n\
  -P #		Set number of processors\n\
  -T #/#		Tolerance: distance/angular\n\
+ -r		Report overlaps\n\
+ -R		Do not report overlaps\n\
 ";
 
 extern FBIO	*fbp;			/* Framebuffer handle */
@@ -420,7 +422,7 @@ struct rt_i	*rtip;
  *  Background texture mapping could be done here.
  *  For now, return a pleasant dark blue.
  */
-hit_nothing( ap, PartHeadp )
+static hit_nothing( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
@@ -813,7 +815,6 @@ register struct application *ap;
 char	*framename;
 {
 	register int i;
-	extern int hit_nothing();
 #ifdef HAVE_UNIX_IO
 	struct stat sb;
 #endif
@@ -821,6 +822,10 @@ char	*framename;
 	ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
 	ap->a_cumlen = 0.0;
 	ap->a_miss = hit_nothing;
+	if (rpt_overlap)
+		ap->a_overlap = RT_AFN_NULL;
+	else
+		ap->a_overlap = rt_overlap_quietly;
 	if (use_air)
 		ap->a_onehit = 3;
 	else
@@ -984,4 +989,15 @@ char	*framename;
 	if( inonbackground[i] < 127 ) inonbackground[i]++;
     	else inonbackground[i]--;
 
+}
+
+/*
+ *  		A P P L I C A T I O N _ I N I T
+ *
+ *  Called once, very early on in RT setup, even before command line
+ *	is processed.
+ */
+void application_init ()
+{
+    rpt_overlap = 1;
 }
