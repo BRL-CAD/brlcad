@@ -63,7 +63,7 @@ extern "C" {
 #endif
 
 /* === regerror.c === */
-static char *regatoi __P((const regex_t *preg, char *localbuf));
+static char *regatoi(const regex_t *preg, char *localbuf);
 
 #ifdef __cplusplus
 }
@@ -137,7 +137,7 @@ size_t errbuf_size;
 		for (r = rerrs; r->code != 0; r++)
 			if (r->code == target)
 				break;
-	
+
 		if (errcode&REG_ITOA) {
 			if (r->code != 0)
 				(void) strcpy(convbuf, r->name);

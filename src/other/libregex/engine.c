@@ -92,12 +92,12 @@ extern "C" {
 #endif
 
 /* === engine.c === */
-static int matcher __P((struct re_guts *g, char *string, size_t nmatch, regmatch_t pmatch[], int eflags));
-static char *dissect __P((struct match *m, char *start, char *stop, sopno startst, sopno stopst));
-static char *backref __P((struct match *m, char *start, char *stop, sopno startst, sopno stopst, sopno lev));
-static char *fast __P((struct match *m, char *start, char *stop, sopno startst, sopno stopst));
-static char *slow __P((struct match *m, char *start, char *stop, sopno startst, sopno stopst));
-static states step __P((struct re_guts *g, sopno start, sopno stop, states bef, int ch, states aft));
+static int matcher (struct re_guts *g, char *string, size_t nmatch, regmatch_t pmatch[], int eflags);
+static char *dissect (struct match *m, char *start, char *stop, sopno startst, sopno stopst);
+static char *backref (struct match *m, char *start, char *stop, sopno startst, sopno stopst, sopno lev);
+static char *fast (struct match *m, char *start, char *stop, sopno startst, sopno stopst);
+static char *slow (struct match *m, char *start, char *stop, sopno startst, sopno stopst);
+static states step (struct re_guts *g, sopno start, sopno stop, states bef, int ch, states aft);
 #define	BOL	(OUT+1)
 #define	EOL	(BOL+1)
 #define	BOLEOL	(BOL+2)
@@ -1024,7 +1024,7 @@ FILE *d;
 	fprintf(d, "\n");
 }
 
-/* 
+/*
  - at - print current situation
  == #ifdef REDEBUG
  == static void at(struct match *m, char *title, char *start, char *stop, \
