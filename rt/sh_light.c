@@ -380,9 +380,8 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("light_hit:  no hit out front?\n");
-		light_visible = 0;
-		goto out;
+		rt_log("light_hit:  ERROR, nothing hit, vis=0\n");
+		return(0);		/* light_visible = 0 */
 	}
 	regp = pp->pt_regionp;
 
