@@ -126,6 +126,8 @@ struct snurb {
 	int		s_size[2];	/* mesh size, u,v */
 	int		pt_type;	/* surface point type */
 	fastf_t		* ctl_points; 	/* array [size[0]*size[1]] */
+	point_t		min_pt;		/* minimums of bounding box */
+	point_t		max_pt;		/* maximums of bounding box */
 	long		index;		/* struct # in this model */
 };
 
