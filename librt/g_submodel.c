@@ -117,7 +117,6 @@ struct rt_i		*rtip;
 
 		if( !db_is_directory_non_empty(sub_dbip) )  {
 			/* This is first open of db, build directory */
-bu_log("rt_submodel_prep(%s) doing db_scan\n", stp->st_name);
 			if( db_scan( sub_dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
 				db_close( sub_dbip );
 				bu_semaphore_release(RT_SEM_MODEL);
@@ -125,7 +124,6 @@ bu_log("rt_submodel_prep(%s) doing db_scan\n", stp->st_name);
 			}
 		}
 	}
-if(sub_dbip == rtip->rti_dbip) bu_log("rt_submodel_prep(%s): re-attached to parent's database %s\n", stp->st_name, sub_dbip->dbi_filename);
 
 	/*
 	 *  Search for a previous exact use of this file and treetop,
@@ -162,8 +160,6 @@ if(sub_dbip == rtip->rti_dbip) bu_log("rt_submodel_prep(%s): re-attached to pare
 
 	bu_semaphore_release(RT_SEM_MODEL);
 
-bu_log("rt_submodel_prep(%s) rtip=x%x, sub_rtip=x%x\n", stp->st_name, rtip, sub_rtip);
-
 	if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
 		bu_log("rt_submodel_prep(%s): Opened database %s\n",
 			stp->st_dp->d_namep, sub_dbip->dbi_filename );
@@ -184,13 +180,11 @@ bu_log("rt_submodel_prep(%s) rtip=x%x, sub_rtip=x%x\n", stp->st_name, rtip, sub_
 
 	argv[0] = sip->treetop;
 	argv[1] = NULL;
-bu_log("submodel(%s) starting rt_gettrees %s\n", stp->st_name, argv[0]);
 	if( rt_gettrees( sub_rtip, 1, (CONST char **)argv, 1 ) < 0 )  {
 		bu_log("submodel(%s) rt_gettrees(%s) failed\n", stp->st_name, argv[0]);
 		rt_free_rti( sub_rtip );
 		return -2;
 	}
-bu_log("submodel(%s) finished rt_gettrees\n", stp->st_name);
 
 	if( sub_rtip->nsolids <= 0 )  {
 		bu_log("rt_submodel_prep(%s): %s No solids found\n",
@@ -208,7 +202,7 @@ bu_log("submodel(%s) finished rt_gettrees\n", stp->st_name);
 		BU_PTBL_LEN(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
 	}
 
-rt_pr_cut_info( sub_rtip, stp->st_name );
+if(rt_g.debug) rt_pr_cut_info( sub_rtip, stp->st_name );
 
 done:	
 	BU_GETSTRUCT( submodel, submodel_specific );
@@ -367,74 +361,14 @@ struct seg		*segHeadp;
 			&inseg->seg_in,
 			inseg->seg_stp,
 			inseg->seg_in.hit_rayp );
-if(BN_VEC_NON_UNIT_LEN(inseg->seg_in.hit_normal) ) {
-bu_log("submodel(%s) bad inseg normal, %d\n",
-inseg->seg_stp->st_name, count);
-VPRINT("inseg->seg_in.hit_normal", inseg->seg_in.hit_normal);
-		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
-			99,
-			ap->a_x, ap->a_y,
-			ap->a_level,
-			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
-		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
-			V3ARGS(ap->a_ray.r_pt),
-			ap->a_onehit );
-		VPRINT("Dir", ap->a_ray.r_dir);
-mat_print("subm2m", submodel->subm2m);
-rt_pr_pt(ap->a_rt_i, pp);}
 		outseg->seg_stp->st_meth->ft_norm(
 			&outseg->seg_out,
 			outseg->seg_stp,
 			outseg->seg_out.hit_rayp );
-if(BN_VEC_NON_UNIT_LEN(outseg->seg_out.hit_normal) ) {
-bu_log("submodel(%s) bad outseg normal, %d\n",
-outseg->seg_stp->st_name,count);
-VPRINT("outseg->seg_in.hit_normal", outseg->seg_out.hit_normal);
-		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
-			99,
-			ap->a_x, ap->a_y,
-			ap->a_level,
-			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
-		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
-			V3ARGS(ap->a_ray.r_pt),
-			ap->a_onehit );
-		VPRINT("Dir", ap->a_ray.r_dir);
-mat_print("subm2m", submodel->subm2m);
-rt_pr_pt(ap->a_rt_i, pp);}
 		MAT3X3VEC( up_segp->seg_in.hit_normal, submodel->subm2m,
 			inseg->seg_in.hit_normal );
-if(BN_VEC_NON_UNIT_LEN(up_segp->seg_in.hit_normal) ) {
-bu_log("submodel(%s) bad up_seg in normal, %d\n",
-inseg->seg_stp->st_name,count);
-VPRINT("up_segp->seg_in.hit_normal", up_segp->seg_in.hit_normal);
-		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
-			99,
-			ap->a_x, ap->a_y,
-			ap->a_level,
-			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
-		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
-			V3ARGS(ap->a_ray.r_pt),
-			ap->a_onehit );
-		VPRINT("Dir", ap->a_ray.r_dir);
-mat_print("subm2m", submodel->subm2m);
-rt_pr_pt(ap->a_rt_i, pp);}
 		MAT3X3VEC( up_segp->seg_out.hit_normal, submodel->subm2m,
 			outseg->seg_out.hit_normal );
-if(BN_VEC_NON_UNIT_LEN(up_segp->seg_out.hit_normal) ) {
-bu_log("submodel(%s) bad up_seg out normal, %d\n",
-outseg->seg_stp->st_name,count);
-VPRINT("up_segp->seg_out.hit_normal", up_segp->seg_out.hit_normal);
-		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
-			99,
-			ap->a_x, ap->a_y,
-			ap->a_level,
-			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
-		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
-			V3ARGS(ap->a_ray.r_pt),
-			ap->a_onehit );
-		VPRINT("Dir", ap->a_ray.r_dir);
-mat_print("subm2m", submodel->subm2m);
-rt_pr_pt(ap->a_rt_i, pp);}
 
 		/* RT_HIT_UV */
 		{
