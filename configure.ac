@@ -657,9 +657,10 @@ AC_CHECK_LIB(z, deflate, zlib_link_works=yes)
 
 dnl detect a useable system png library
 png_link_works=no
-AC_CHECK_LIB(png, png_check_sig, png_link_works=yes)
-
-dnl check whether there is a useable math library
+dnl AC_CHECK_LIB(png, png_check_sig, png_link_works=yes)
+AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes)
+AC_MSG_RESULT($png_link_works)
+ dnl check whether there is a useable math library
 m_link_works=no
 AC_CHECK_LIB(m, cos, m_link_works=yes)
 
@@ -1145,15 +1146,22 @@ dnl *** libpng ***
 dnl See if png library support works
 png_works=no
 AC_MSG_CHECKING(for portable network graphics functionality)
+if test "x$png_link_works" = "xyes" ; then
+  PRELDFLAGS="$LDFLAGS"
+  LDFLAGS="$LDFLAGS -lpng"
+fi
 AC_TRY_RUN([
 #include <png.h>
-int main () {
-  char *pngver = PNG_LIBPNG_VER_STRING;
-  return 0;
+main() {
+	int i = png_access_version_number();
+	return 0;
 }
 	],
 	[png_works=yes]
 )
+if test "x$png_link_works" = "xyes" ; then
+  LDFLAGS="$PRELDFLAGS"
+fi
 AC_MSG_RESULT($png_works)
 
 dnl figure out whether we need to build libpng
@@ -1170,6 +1178,8 @@ else
 	else
 		dnl automatic detection
 		if test "x$png_works" = "xno" ; then
+			build_brlcad_png=yes
+		elif test "x$png_link_works" = "xno" ; then
 			build_brlcad_png=yes
 		fi
 	fi
