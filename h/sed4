@@ -180,7 +180,14 @@ g/RT_RANDSEED/s//BN_RANDSEED/g
 g/RT_RANDOM/s//BN_RANDOM/g
 g/rt_rand_table/s//bn_rand_table/g
 g/rt_tol/s//bn_tol/g
-g/RES_INIT(.*) /s//bu_semaphore_init(5)/g
+g/RES_ACQUIRE(/s//bu_semaphore_acquire(/
+g/RES_RELEASE(/s//bu_semaphore_release(/
+g/&rt_g.res_syscall/s//BU_SEM_SYSCALL/
+g/&rt_g.res_worker/s//RT_SEM_WORKER/
+g/&rt_g.res_stats/s//RT_SEM_STATS/
+g/&rt_g.res_results/s//RT_SEM_RESULTS/
+g/&rt_g.res_model/s//RT_SEM_MODEL/
+g/RES_INIT(/s/RES_INIT.*;/bu_semaphore_init( BU_SEM_LAST );/p
 g/RT_VLS_CHECK/s//BU_CK_VLS/g
 g/RT_VLS_ADDR/s//bu_vls_addr/g
 g/RT_VLS_INIT/s//bu_vls_init/g
