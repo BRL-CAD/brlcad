@@ -45,6 +45,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-X.h"
@@ -71,7 +72,6 @@ static int	X_drawLine2D();
 static int      X_drawVertex2D();
 static int	X_drawVList();
 static int      X_setColor(), X_setLineAttr();
-static unsigned X_cvtvecs(), X_load();
 static int	X_setWinBounds(), X_debug();
 
 struct dm dm_X = {
@@ -86,12 +86,15 @@ struct dm dm_X = {
   X_drawVList,
   X_setColor,
   X_setLineAttr,
-  X_cvtvecs,
-  X_load,
   X_setWinBounds,
   X_debug,
   Nu_int0,
+  Nu_int0,
+  Nu_int0,
+  Nu_int0,
+  Nu_int0,
   0,				/* no displaylist */
+  0,                            /* no stereo */
   PLOTBOUND,
   "X",
   "X Window System (X11)",
@@ -102,7 +105,6 @@ struct dm dm_X = {
   0,
   0,
   1.0, /* aspect ratio */
-  0,
   0,
   0,
   0,
@@ -118,6 +120,7 @@ extern Tk_Window tkwin;
 
 struct x_vars head_x_vars;
 static int perspective_table[] = { 30, 45, 60, 90 };
+static mat_t xmat;
 
 /*
  *			X _ O P E N
@@ -346,6 +349,8 @@ char *argv[];
 			 ((struct x_vars *)dmp->dm_vars)->bg);
   Tk_MapWindow(((struct x_vars *)dmp->dm_vars)->xtkwin);
 
+  bn_mat_idn(xmat);
+
   return dmp;
 }
 
@@ -440,10 +445,12 @@ struct dm *dmp;
  */
 /* ARGSUSED */
 static int
-X_newrot(dmp, mat)
+X_newrot(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t mat;
+int which_eye;
 {
+  bn_mat_copy(xmat, mat);
   return TCL_OK;
 }
 
@@ -455,10 +462,9 @@ mat_t mat;
 
 /* ARGSUSED */
 static int
-X_drawVList( dmp, vp, mat )
+X_drawVList( dmp, vp )
 struct dm *dmp;
 register struct rt_vlist *vp;
-mat_t mat;
 {
     static vect_t spnt, lpnt, pnt;
     register struct rt_vlist *tvp;
@@ -487,7 +493,7 @@ mat_t mat;
 	    case RT_VLIST_POLY_MOVE:
 	    case RT_VLIST_LINE_MOVE:
 		/* Move, not draw */
-		MAT4X3PNT( lpnt, mat, *pt );
+		MAT4X3PNT( lpnt, xmat, *pt );
 		if( lpnt[0] < -1e6 || lpnt[0] > 1e6 ||
 		   lpnt[1] < -1e6 || lpnt[1] > 1e6 )
 		    continue; /* omit this point (ugh) */
@@ -498,7 +504,7 @@ mat_t mat;
 	    case RT_VLIST_POLY_END:
 	    case RT_VLIST_LINE_DRAW:
 		/* draw */
-		MAT4X3PNT( pnt, mat, *pt );
+		MAT4X3PNT( pnt, xmat, *pt );
 		if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
 		   pnt[1] < -1e6 || pnt[1] > 1e6 )
 		    continue; /* omit this point (ugh) */
@@ -682,27 +688,6 @@ int style;
 		      width, linestyle, CapButt, JoinMiter );
 
   return TCL_OK;
-}
-
-
-/* ARGSUSED */
-static unsigned
-X_cvtvecs( dmp, sp )
-struct dm *dmp;
-struct solid *sp;
-{
-  return 0;
-}
-
-/*
- * Loads displaylist
- */
-static unsigned
-X_load( dmp, addr, count )
-struct dm *dmp;
-unsigned addr, count;
-{
-  return 0;
 }
 
 /* ARGSUSED */
