@@ -41,6 +41,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
+#ifdef MULTI_ATTACH
+#include "./dm.h"
+#endif
 
 extern double	frametime;		/* time needed to draw last frame */
 extern mat_t	ModelDelta;		/* Changed to Viewrot this frame */

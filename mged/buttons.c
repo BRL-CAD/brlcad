@@ -44,7 +44,10 @@ extern int	update_views;
 extern mat_t	ModelDelta;
 void (*adc_hook)();
 #endif
+
+#ifndef MULTI_ATTACH
 int	adcflag;	/* angle/distance cursor in use */
+#endif
 
 /* This flag indicates that SOLID editing is in effect.
  * edobj may not be set at the same time.

@@ -43,7 +43,6 @@ static char RCSid[] = "@(#)$Header$";
 #include "./dm.h"	/* ??? */
 #include "./joints.h"
 
-extern int	dmaflag;
 extern struct db_i	*dbip;	/* database instance pointer */
 
 static joint_debug = 0;
