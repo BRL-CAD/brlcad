@@ -813,17 +813,19 @@ set -S2 "/bin/sh"
 
 #	define	LIBFB_OBJS	if_remote if_ab if_X
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lnsl -lsocket
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
 
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11 -lnsl -lsocket
+#	define	MGED_LIBES	-L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
 
 /*	XMGED requires a Motif license and include/X11/Xm/Xm.h */
+/*	/usr/dt is where Motif lives, starting with SunOS 5.4 */
 #	define  XMGED_ALLOCA
 #	define	XMGED_OBJS	dm-X
-#	define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I/usr/X11/include
-#	define	XMGED_LIBES	-L/usr/X11/lib -lXm -lXt -lXi -lXext -lX11 -ll
+#	define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I''XINCDIR -I/usr/dt/include
+#	define	XMGED_LIBES	-L/usr/dt/lib -R/usr/dt/lib -lXm \
+				-L''XLIBDIR -R''XLIBDIR -lXt -lXi -lXext -lX11 -ll
 
 #endif
 
