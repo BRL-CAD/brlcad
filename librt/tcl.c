@@ -180,17 +180,17 @@ struct seg		*segHeadp;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 		RT_CK_PT(pp);
-		Tcl_AppendResult( interp, " {in ", (char *)NULL );
+		Tcl_AppendResult( interp, "{in", (char *)NULL );
 		rt_tcl_pr_hit( interp, pp->pt_inhit, pp->pt_inseg,
 			&ap->a_ray, pp->pt_inflip );
-		Tcl_AppendResult( interp, " out ", (char *)NULL );
+		Tcl_AppendResult( interp, "\nout", (char *)NULL );
 		rt_tcl_pr_hit( interp, pp->pt_outhit, pp->pt_outseg,
 			&ap->a_ray, pp->pt_outflip );
 		Tcl_AppendResult( interp,
-			" region ",
+			"\nregion ",
 			pp->pt_regionp->reg_name,
 			(char *)NULL );
-		Tcl_AppendResult( interp, "}", (char *)NULL );
+		Tcl_AppendResult( interp, "}\n", (char *)NULL );
 	}
 
 	return 1;
@@ -221,7 +221,7 @@ struct application	*ap;
  *	.rt shootray {0 0 0} dir {0 0 -1}
  *
  *	set tgt [bu_get_value_by_keyword V [concat type [.inmem get LIGHT]]]
- *	.rt shootray {0 0 0} at $tgt
+ *	.rt shootray {20 -13.5 20} at $tgt
  *		
  *
  *  Returns -
