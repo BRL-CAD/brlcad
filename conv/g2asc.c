@@ -30,9 +30,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "wdb.h"
-#include "rtlist.h"
 #include "raytrace.h"
-#include "externs.h"
+#include "rtlist.h"
 
 #define RT_PARTICLE_TYPE_SPHERE		1
 #define RT_PARTICLE_TYPE_CYLINDER	2
@@ -51,23 +50,32 @@ struct	part_internal {
 	int		part_type;
 };
 
+struct	arbn_internal {
+	int		neqn;
+	plane_t		*eqn;
+};
+
+
 mat_t	id_mat = {
 	1.0, 0.0, 0.0, 0.0,
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0};	/* identity matrix for pipes */
 
+extern void	exit();
 
 char *name();
 char *strchop();
 #define CH(x)	strchop(x,sizeof(x))
 
+int	rt_pipe_import(), rt_part_import(), rt_arbn_import();
 void	combdump();
 void	idendump(), polyhead(), polydata();
 void	soldump();
 void	membdump(), arsadump(), arsbdump();
 void	materdump(), bspldump(), bsurfdump();
 void	pipe_dump(), particle_dump(), dump_pipe_segs();
+void	arbn_dump();
 
 union record	record;		/* GED database record */
 
@@ -113,6 +121,9 @@ char **argv;
 	    		continue;
 	    	case DBID_PARTICLE:
 	    		particle_dump();
+	    		continue;
+	    	case DBID_ARBN:
+	    		arbn_dump();
 	    		continue;
 	    	case ID_BSOLID:
 			bspldump();
@@ -260,21 +271,21 @@ struct wdb_pipeseg	*headp;
 	for( RT_LIST( sp, wdb_pipeseg, &(headp->l) ) )  {
 		switch(sp->ps_type)  {
 		case WDB_PIPESEG_TYPE_END:
-			printf("end %e %e %e %e %e\n",
+			printf("end %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 				sp->ps_id, sp->ps_od,
 				sp->ps_start[X],
 				sp->ps_start[Y],
 				sp->ps_start[Z] );
 			break;
 		case WDB_PIPESEG_TYPE_LINEAR:
-			printf("linear %e %e %e %e %e\n",
+			printf("linear %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 				sp->ps_id, sp->ps_od,
 				sp->ps_start[X],
 				sp->ps_start[Y],
 				sp->ps_start[Z] );
 			break;
 		case WDB_PIPESEG_TYPE_BEND:
-			printf("bend %e %e %e %e %e %e %e %e\n",
+			printf("bend %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 				sp->ps_id, sp->ps_od,
 				sp->ps_start[X],
 				sp->ps_start[Y],
@@ -325,7 +336,7 @@ particle_dump()	/* Print out Particle record information */
 		exit(-1);
 	}
 
-	printf("%c %.16s %e %e %e %e %e %e %e %e\n",
+	printf("%c %.16s %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 		record.part.p_id, record.part.p_name,
 		part.part_V[X],
 		part.part_V[Y],
@@ -336,6 +347,61 @@ particle_dump()	/* Print out Particle record information */
 		part.part_vrad, part.part_hrad);
 }
 
+
+/*			A R B N _ D U M P
+ *
+ *  Print out arbn information.
+ *
+ */
+void
+arbn_dump()
+{
+
+	int		ngranules;	/* number of granules to be read */
+	int		count;
+	int		neqn;		/* number of plane equations */
+	int		ret;		/* return code catcher */
+	int		i;		/* a counter */
+	char		*name;
+	char		id;
+	union record	*rp;
+	struct arbn_internal	arbn;
+
+	ngranules = record.n.n_grans;
+	name = record.n.n_name;
+	id = record.n.n_id;
+	neqn = record.n.n_neqn;
+
+	/* malloc space for ngranules + 1 */
+	if( (rp = (union record *) malloc( (ngranules + 1) * sizeof(union record)) ) == 0)  {
+		fprintf( stderr, "g2asc: malloc failure\n");
+		exit(-1);
+	}
+
+	/* Copy the freebie (first) record into the array of records.  Then
+	 * copy ngranules more. 
+	 */
+	bcopy( (char *)&record, (char *)rp, sizeof(union record) );
+	if( (count = fread( (char *)&rp[1], sizeof(union record), ngranules, stdin) ) != ngranules )  {
+		fprintf(stderr, "g2asc: arbn read failure\n");
+	}
+
+	/* Hand off the rt's arbn_import() routine */
+	if( ret = (rt_arbn_import(&arbn, rp, id_mat) ) != 0)  {
+		fprintf(stderr, "g2asc: arbn import failure\n");
+		exit(-1);
+	}
+
+	fprintf(stdout, "%c %.16s %d\n", id, name, neqn);
+	for( i = 0; i < arbn.neqn; i++ )  {
+		printf("n %26.20e %20.26e %26.20e %26.20e\n", arbn.eqn[i][X], arbn.eqn[i][Y],
+			arbn.eqn[i][Z], arbn.eqn[i][3]);
+	}
+
+	free( (char *)rp );
+}
+
+	
 /*
  *			C O M B D U M P
  *
@@ -767,4 +833,57 @@ register mat_t		  mat;
 	part->part_type = RT_PARTICLE_TYPE_CONE;
 	return(0);		 /* OK */
 
+}
+
+/*		R T _ A R B N _ I M P O R T
+ *
+ * Cannabalized from the rt library.  For temporary use only, pending
+ * the arrival of a formal import library.
+ *
+ */
+
+int
+rt_arbn_import( aip, rp, mat )
+struct arbn_internal	*aip;
+union record		*rp;
+register mat_t		mat;
+{
+
+	register int	i;
+
+	if( rp->u_id != DBID_ARBN )  {
+		rt_log("rt_arbn_import: defective record, id=x%x\n", rp->u_id);
+		return(-1);
+	}
+
+	aip->neqn = rp->n.n_neqn;
+	if( aip->neqn <= 0 )
+		return( -1 );
+	aip->eqn = (plane_t *)rt_malloc( aip->neqn * sizeof(plane_t), "rt_arbn_import() planes");
+	
+
+	ntohd( (char *)aip->eqn, (char *)(&rp[1]), aip->neqn*4 );
+
+	/* Transform by the matrix */
+#	include "noalias.h"
+	for( i = 0; i < aip->neqn; i++ )  {
+		point_t	orig_pt;
+		point_t	pt;
+		vect_t	norm;
+
+
+		/* Pick a point on the original halfspace */
+		VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][3] );
+
+		/* Transform the point and the normal */
+		MAT4X3VEC( norm, mat, aip->eqn[i] );
+		MAT4X3PNT( pt, mat, orig_pt );
+
+		/* Measure new distance from origin to new point */
+		VMOVE( aip->eqn[i], norm );
+		aip->eqn[i][3] = VDOT( pt, norm );
+
+	}
+
+	return(0);
 }

@@ -39,7 +39,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define NAMELEN			20
 
 void		identbld(), polyhbld(), polydbld(), pipebld(), particlebld();
-void		solbld();
+void		solbld(), arbnbld();
 int		combbld();
 void		membbld(), arsabld(), arsbbld();
 void		materbld(), bsplbld(), bsurfbld(), zap_nl();
@@ -117,6 +117,10 @@ after_read:
 
 		case DBID_PARTICLE:
 			particlebld();
+			continue;
+
+		case DBID_ARBN:
+			arbnbld();
 			continue;
 
 		default:
@@ -925,6 +929,71 @@ particlebld()
 	mk_particle( stdout, name, vertex, height, vrad, hrad);
 }
 
+
+/*			A R B N B L D
+ *
+ *  This routine reads arbn data from standard in and sendss it to
+ *  mk_arbn().
+ */
+
+void
+arbnbld()
+{
+
+	char		name[NAMELEN];
+	char		ident;
+	char		type[TYPELEN];
+	int		ret;
+	int		i;
+	int		neqn;			/* number of eqn expected */
+	plane_t		*eqn;			/* pointer to plane equations for faces */
+	register char	*cp;
+	register char	*np;
+
+	/* Process the first buffer */
+
+	cp = buf;
+	ident = *cp++;				/* not used later */
+	cp = nxt_spc(cp);			/* skip spaces */
+
+	np = name;
+	while( *cp != ' ')  {
+		*np++ = *cp++;
+	}
+	*np = '\0';				/* null terminate the string */
+
+	cp = nxt_spc(cp);
+
+	neqn = atoi(cp);			/* find number of eqns */
+/*fprintf(stderr, "neqn = %d\n", neqn);
+ */
+	/* Check to make sure plane equations actually came in. */
+	if( neqn <= 0 )  {
+		fprintf(stderr, "asc2g: warning: %d equations counted for arbn %s\n", neqn, name);
+	}
+
+/*fprintf(stderr, "mallocing space for eqns\n");
+ */
+	/* Malloc space for the in-coming plane equations */
+	if( (eqn = (plane_t *)malloc( sizeof( plane_t ) * neqn ) ) == NULL)  {
+		printf("asc2g: malloc failure for arbn\n");
+		exit(-1);
+	}
+
+	/* Now, read the plane equations and put in appropriate place */
+
+/*fprintf(stderr, "starting to dump eqns\n");
+ */
+	for( i = 0; i < neqn; i++ )  {
+		fgets( buf, BUFSIZE, stdin);
+		(void)sscanf( buf, "%s %le %le %le %le", type,
+			&eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][3]);
+	}
+
+/*fprintf(stderr, "sending info to mk_arbn\n");
+ */
+	mk_arbn( stdout, name, neqn, eqn);
+}
 
 char *
 nxt_spc( cp)
