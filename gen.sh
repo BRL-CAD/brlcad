@@ -23,13 +23,13 @@
 SHELL=/bin/sh
 export SHELL
 
-# Set to 0 for non-NFS environment
+# Set to 0 for non-NFS environment (default)
 NFS=1
 
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=2.8;	RCS_REVISION=8;		REL_DATE=20-Sep-88	# internal
+RELEASE=2.8;	RCS_REVISION=8;		REL_DATE=21-Sep-88	# internal
 #RELEASE=2.7;	RCS_REVISION=8;		REL_DATE=12-Sep-88	# internal
 #RELEASE=2.6;	RCS_REVISION=8;		REL_DATE=09-Sep-88	# internal
 #RELEASE=2.5;	RCS_REVISION=8;		REL_DATE=08-Sep-88	# internal
@@ -303,7 +303,7 @@ dist)
 	done
 	cp ${TOP_FILES} ${DISTDIR}/.
 	echo "Preparing the 'bench' directory"
-	echo "End of BRL-CAD Release $RELEASE tape, `date`" > ${DISTDIR}/zzzzEND
+	(cd bench; cake clobber; cake install)
 	echo "End of BRL-CAD Release $RELEASE tape, `date`" > ${DISTDIR}/zzzEND
 	cd ${DISTDIR}; du -a > Contents
 	;;
@@ -314,7 +314,7 @@ arch)
 	# pad to 200K byte boundary for SGI cartridge tapes.
 	PADBYTES=`echo "204800 $4 204800 %-p" | dc`
 	PADBYTES=`echo "204800 $5 204800 %-p" | dc`
-	then 
+	if test ${PADBYTES} -lt 204800
 	then
 		gencolor -r${PADBYTES} 0 >> ${ARCHIVE}
 	fi
