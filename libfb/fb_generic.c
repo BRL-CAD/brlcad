@@ -31,7 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 
 extern char *getenv();
-static int totally_numeric();
+static int fb_totally_numeric();
 
 /*
  * Disk interface enable flag.  Used so the the remote daemon
@@ -165,7 +165,7 @@ int	width, height;
 		return	FBIO_NULL;
 	}
 #ifdef IF_REMOTE
-	if( totally_numeric(file) || strchr( file, ':' ) != NULL ) {
+	if( fb_totally_numeric(file) || strchr( file, ':' ) != NULL ) {
 		/* We have a remote file name of the form <host>:<file>
 		 * or a port number (which assumes localhost) */
 		*ifp = remote_interface;
@@ -252,7 +252,7 @@ fb_genhelp()
 
 /* True if the non-null string s is all digits */
 static int
-totally_numeric( s )
+fb_totally_numeric( s )
 register char *s;
 {
 	if( s == (char *)0 || *s == 0 )
@@ -265,4 +265,42 @@ register char *s;
 	}
 
 	return 1;
+}
+
+/*
+ *			F B _ I S _ L I N E A R _ C M A P
+ *
+ *  Check for a color map being linear in the upper 8 bits of
+ *  R, G, and B.
+ *  Returns 1 for linear map, 0 for non-linear map
+ *  (ie, non-identity map).
+ */
+int
+fb_is_linear_cmap(cmap)
+register ColorMap	*cmap;
+{
+	register int i;
+
+	for( i=0; i<256; i++ )  {
+		if( cmap->cm_red[i]>>8 != i )  return(0);
+		if( cmap->cm_green[i]>>8 != i )  return(0);
+		if( cmap->cm_blue[i]>>8 != i )  return(0);
+	}
+	return(1);
+}
+
+/*
+ *			F B _ M A K E _ L I N E A R _ C O L O R M A P
+ */
+void
+fb_make_linear_colormap(cmap)
+register ColorMap	*cmap;
+{
+	register int i;
+
+	for( i=0; i<256; i++ )  {
+		cmap->cm_red[i] = i<<8;
+		cmap->cm_green[i] = i<<8;
+		cmap->cm_blue[i] = i<<8;
+	}
 }
