@@ -88,7 +88,7 @@ within a database." } }
     hoc_register_data $w.typeL "Solid Type"\
 	    { { summary "The supported solid types are: arb8, sph,
 ell, tor, rec, half, rpc, rhc, epa, ehy, eto
-and part." } }
+part, dsp, ebm and vol." } }
     menubutton $w.typeMB -relief raised -bd 2 -textvariable esol_control($id,type)\
 	    -menu $w.typeMB.m -indicatoron 1
     hoc_register_data $w.typeMB "Solid Type"\
@@ -266,12 +266,12 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
     set form [db form $type]
     set len [llength $form]
 
-    for { set i 0; set row 0 } { $i<$len } { incr i; incr row } {
+    for { set i 0; set row 0 } { $i < $len } { incr i; incr row } {
 	set attr [lindex $form $i]
 	incr i
 
 	if $do_cmd {
-	    set esol_control($id,cmd) [eval concat \[set esol_control($id,cmd)\] $attr \\\"]
+	    set esol_control($id,cmd) "$esol_control($id,cmd) $attr \""
 	}
 
 	if $do_gui {
@@ -285,38 +285,93 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	
 	set field [lindex $form $i]
 	set fieldlen [llength $field]
-	for { set num 0 } { $num<$fieldlen } { incr num } {
-	    if { [string first "%f" $field]>-1 } {
-		if $do_gui {
-		    button $sform._$attr\decB$num -text \- -command \
-			    "esol_dec $id $sform._$attr\E$num"
-		    button $sform._$attr\incB$num -text \+ -command \
-			    "esol_inc $id $sform._$attr\E$num"
-		    entry $sform._$attr\E$num -width 6 -relief sunken
+	for { set num 0 } { $num < $fieldlen } { incr num } {
+	    set fe_type [lindex $field $num]
+	    set tnum [expr $num % 4]
 
-		    grid $sform._$attr\decB$num -row $row -column [expr $num * 3 + 1] -sticky nsew
-		    grid $sform._$attr\E$num -row $row -column [expr $num * 3 + 2] -sticky nsew
-		    grid $sform._$attr\incB$num -row $row -column [expr $num * 3 + 3] -sticky nsew
-		    grid columnconfigure $sform [expr $num * 3 + 1] -weight 0
-		    grid columnconfigure $sform [expr $num * 3 + 2] -weight 1
-		    grid columnconfigure $sform [expr $num * 3 + 3] -weight 0
+	    # increment row if more than 4 field elements
+	    if {$num && $tnum == 0} {
+		incr row
+	    }
+
+	    # configure each row
+	    if {$tnum == 0 && $do_gui} {
+		grid rowconfigure $sform $row -weight 1
+	    }
+
+	    switch -glob $fe_type {
+		%*s {
+		    if $do_gui {
+			entry $sform._$attr\E$num -relief sunken
+			grid $sform._$attr\E$num - - -row $row -column 1 -sticky nsew
+			grid columnconfigure $sform 1 -weight 1
+		    }
+
+		    if $do_entries {
+			$sform._$attr\E$num delete 0 end
+			$sform._$attr\E$num insert insert \
+				[lindex [lindex $vals $i] $num]
+		    }
+
+		    if $do_cmd {
+			set esol_control($id,cmd) "$esol_control($id,cmd)\[$sform._$attr\E$num get\]"
+		    }
 		}
+		%*d {
+		    if $do_gui {
+			button $sform._$attr\decB$num -text \- -command \
+				"esol_dec_int $id $sform._$attr\E$num"
+			button $sform._$attr\incB$num -text \+ -command \
+				"esol_inc_int $id $sform._$attr\E$num"
+			entry $sform._$attr\E$num -width 6 -relief sunken
+			
+			grid $sform._$attr\decB$num -row $row -column [expr $tnum * 3 + 1] -sticky nsew
+			grid $sform._$attr\E$num -row $row -column [expr $tnum * 3 + 2] -sticky nsew
+			grid $sform._$attr\incB$num -row $row -column [expr $tnum * 3 + 3] -sticky nsew
+			grid columnconfigure $sform [expr $tnum * 3 + 1] -weight 0
+			grid columnconfigure $sform [expr $tnum * 3 + 2] -weight 1
+			grid columnconfigure $sform [expr $tnum * 3 + 3] -weight 0
+		    }
 
+		    if $do_entries {
+			$sform._$attr\E$num delete 0 end
+			$sform._$attr\E$num insert insert [lindex [lindex $vals $i] $num]
+		    }
 
-		if $do_entries {
-		    $sform._$attr\E$num delete 0 end
-		    $sform._$attr\E$num insert insert \
-			    [format $esol_control($id,format_string) [expr [lindex \
-			    [lindex $vals $i] $num] * $base2local]]
+		    if $do_cmd {
+			set esol_control($id,cmd) "$esol_control($id,cmd) \[$sform._$attr\E$num get\]"
+		    }
 		}
+		%*f {
+		    if $do_gui {
+			button $sform._$attr\decB$num -text \- -command \
+				"esol_dec $id $sform._$attr\E$num"
+			button $sform._$attr\incB$num -text \+ -command \
+				"esol_inc $id $sform._$attr\E$num"
+			entry $sform._$attr\E$num -width 6 -relief sunken
 
-		if $do_cmd {
-		    set esol_control($id,cmd) [eval concat \[set esol_control($id,cmd)\] \
-			    \\\[expr \\\[$sform._$attr\E$num get\\\] * $local2base\\\]]
+			grid $sform._$attr\decB$num -row $row -column [expr $tnum * 3 + 1] -sticky nsew
+			grid $sform._$attr\E$num -row $row -column [expr $tnum * 3 + 2] -sticky nsew
+			grid $sform._$attr\incB$num -row $row -column [expr $tnum * 3 + 3] -sticky nsew
+			grid columnconfigure $sform [expr $tnum * 3 + 1] -weight 0
+			grid columnconfigure $sform [expr $tnum * 3 + 2] -weight 1
+			grid columnconfigure $sform [expr $tnum * 3 + 3] -weight 0
+		    }
+
+		    if $do_entries {
+			$sform._$attr\E$num delete 0 end
+			$sform._$attr\E$num insert insert \
+				[format $esol_control($id,format_string) [expr [lindex \
+				[lindex $vals $i] $num] * $base2local]]
+		    }
+
+		    if $do_cmd {
+			set esol_control($id,cmd) "$esol_control($id,cmd) \[expr \[$sform._$attr\E$num get\] * $local2base\]"
+		    }
 		}
-	    } else {
-		# XXXX Temporary debugging
-		puts "esol_build_form: skipping field"
+		default {
+		    puts "esolint_build_form: skipping, attr - $attr, field - $fe_type"
+		}
 	    }
 	}
 
@@ -325,7 +380,7 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	}
 
 	if $do_cmd {
-	    set esol_control($id,cmd) [eval concat \[set esol_control($id,cmd)\] \\\"]
+	    set esol_control($id,cmd) "$esol_control($id,cmd)\""
 	}
     }
 
@@ -410,6 +465,30 @@ proc esol_isdrawn { sol } {
     }
 
     return 0
+}
+
+## - esol_inc_int
+#
+proc esol_inc_int { id entryfield } {
+    global esol_control
+
+    set val [expr int([$entryfield get])]
+    incr val
+
+    $entryfield delete 0 end
+    $entryfield insert insert $val
+}
+
+## - esol_dec_int
+#
+proc esol_dec_int { id entryfield } {
+    global esol_control
+
+    set val [expr int([$entryfield get])]
+    incr val -1
+
+    $entryfield delete 0 end
+    $entryfield insert insert $val
 }
 
 ## - esol_inc
