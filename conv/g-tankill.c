@@ -83,12 +83,6 @@ static int	regions_tried = 0;
 static int	regions_converted = 0;
 static int	regions_written = 0;
 
-/* macro to determine if one bounding box is within another */
-#define V3RPP1_IN_RPP2( _lo1 , _hi1 , _lo2 , _hi2 )	( \
-	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
-	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
-	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
-
 void
 insert_id( id )
 int id;

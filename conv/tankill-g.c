@@ -65,14 +65,6 @@ struct comp_idents		/* structure for linked list of components */
 	struct comp_idents *next;
 } *id_root;
 
-/* macro to determine if one bounding box in entirely within another
- * also returns true if the boxes are the same
- */
-#define V3RPP1_IN_RPP2( _lo1 , _hi1 , _lo2 , _hi2 )	( \
-	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
-	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
-	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
-
 
 /*	Adds another solid to the list of solids for each component code number.
  *	Returns the number of solids in this component (including the one just added)
