@@ -1,7 +1,3 @@
-#ifndef CONF_H
-#include "conf.h"  /* Horrible but temporary hack to get things to compile */
-#endif
-
 /*
  *			M A C H I N E . H
  *
