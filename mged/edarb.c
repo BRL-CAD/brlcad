@@ -114,7 +114,7 @@ int arb_faces[5][24] = {
 */
 
 /* edit array for arb8's */
-#ifdef XMGED
+#if 1
 short earb8[12][18] = {
 #else
 static short earb8[12][18] = {
@@ -134,7 +134,7 @@ static short earb8[12][18] = {
 };
 
 /* edit array for arb7's */
-#ifdef XMGED
+#if 1
 short earb7[12][18] = {
 #else
 static short earb7[12][18] = {
@@ -154,7 +154,7 @@ static short earb7[12][18] = {
 };
 
 /* edit array for arb6's */
-#ifdef XMGED
+#if 1
 short earb6[10][18] = {
 #else
 static short earb6[10][18] = {
@@ -172,7 +172,7 @@ static short earb6[10][18] = {
 };
 
 /* edit array for arb5's */
-#ifdef XMGED
+#if 1
 short earb5[9][18] = {
 #else
 static short earb5[9][18] = {
@@ -189,7 +189,7 @@ static short earb5[9][18] = {
 };
 
 /* edit array for arb4's */
-#ifdef XMGED
+#if 1
 short earb4[5][18] = {
 #else
 static short earb4[5][18] = {

@@ -55,8 +55,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
-#ifdef XMGED
 extern void set_e_axis_pos();
+#ifdef XMGED
 extern void (*tran_hook)();
 extern void (*rot_hook)();
 extern int irot_set;
@@ -84,7 +84,7 @@ static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 void pscale();
 void	calc_planes();
 
-#ifdef XMGED
+#if 1
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 #else
 static short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
@@ -542,9 +542,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -563,9 +561,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -589,9 +585,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -610,9 +604,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -626,9 +618,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -725,9 +715,7 @@ int arg;
 			es_edflag = ECMD_PIPE_PT_DEL;
 		break;
 	}
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -745,9 +733,7 @@ int arg;
 	if(arg == MENU_TGC_MV_HH)
 		es_edflag = ECMD_TGC_MV_HH;
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 
@@ -758,9 +744,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -773,9 +757,7 @@ int arg;
 	else
 		es_edflag = PSCALE;
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -785,9 +767,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -797,9 +777,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -809,9 +787,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -821,9 +797,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -833,9 +807,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -849,9 +821,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -865,9 +835,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }		
 
 static void
@@ -881,9 +849,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -897,9 +863,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -913,9 +877,7 @@ int arg;
 		sedraw = 1;
 	}
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void
@@ -1016,9 +978,7 @@ int arg;
 	es_edflag = arg;
 	sedraw = 1;
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 /*
  *			N M G _ E D
@@ -2183,9 +2143,7 @@ sedit()
 		es_edflag = ECMD_ARB_ROTATE_FACE;
 		mat_idn( acc_rot_sol );
 		dmaflag = 1;	/* draw arrow, etc */
-#ifdef XMGED
 		set_e_axis_pos();
-#endif
 		break;
 
 	case ECMD_ARB_ROTATE_FACE:
@@ -4093,9 +4051,7 @@ init_objedit()
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );
 
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 void

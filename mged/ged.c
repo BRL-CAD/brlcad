@@ -85,7 +85,6 @@ extern Tk_Window tkwin;
 
 #ifdef XMGED
 
-extern void     (*axis_color_hook)();
 extern int      (*editline_hook)();
 extern int	(*fgetc_hook)();
 extern int	(*fputc_hook)();
@@ -97,12 +96,10 @@ extern int	(*button_hook)();
 extern int	(*slider_hook)();
 extern int	(*openw_hook)();
 extern int	(*closew_hook)();
-extern int	(*knob_hook)();
 extern int	(*adc_hook)();
 extern void	(*wait_hook)();
 extern void	(*dotitles_hook)();
-extern int     (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
-extern int     (*light_hook)(), (*perspective_hook)(), (*tran_hook)();
+extern int     (*tran_hook)();
 extern int     (*rot_hook)(), (*set_tran_hook)();
 extern void set_tran();
 extern point_t orig_pos;
@@ -125,9 +122,15 @@ int		dmaflag;		/* Set to 1 to force new screen DMA */
 double		frametime = 1.0;	/* time needed to draw last frame */
 mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
-int             (*bindkey_hook)() = NULL;
+int             (*knob_hook)() = NULL;
+int             (*cue_hook)() = NULL;
+int             (*zclip_hook)() = NULL;
+int             (*zbuffer_hook)() = NULL;
+int             (*light_hook)() = NULL;
+int             (*perspective_hook)() = NULL;
 int		(*cmdline_hook)() = NULL;
 void		(*viewpoint_hook)() = NULL;
+void            (*axis_color_hook)() = NULL;
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
@@ -186,7 +189,6 @@ char **argv;
 	int	rateflag = 0;
 
 #ifdef XMGED
-	axis_color_hook = NULL;
 	editline_hook = NULL;
 	fputc_hook = NULL;
 	fputs_hook = NULL;
@@ -198,15 +200,9 @@ char **argv;
 	slider_hook = NULL;
 	openw_hook = NULL;
 	closew_hook = NULL;
-	knob_hook = NULL;
 	adc_hook = NULL;
 	dotitles_hook = NULL;
 	wait_hook = NULL;
-	cue_hook = NULL;
-	zclip_hook = NULL;
-	zbuffer_hook = NULL;
-	light_hook = NULL;
-	perspective_hook = NULL;
 	tran_hook = NULL;
 	rot_hook = NULL;
 	set_tran_hook = NULL;

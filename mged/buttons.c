@@ -1030,9 +1030,7 @@ static void be_s_edit()  {
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_EDIT );
 	sedit_menu();		/* Install appropriate menu */
 	dmaflag++;
-#ifdef XMGED
 	set_e_axis_pos();
-#endif
 }
 
 static void be_s_rotate()  {
@@ -1046,9 +1044,7 @@ static void be_s_rotate()  {
 	es_edflag = SROT;
 	mat_idn(acc_rot_sol);
 	dmaflag++;
-#ifdef XMGED
         set_e_axis_pos();
-#endif
 }
 
 static void be_s_trans()  {
@@ -1062,9 +1058,7 @@ static void be_s_trans()  {
 	movedir = UARROW | RARROW;
 	mmenu_set( MENU_L1, MENU_NULL );
 	dmaflag++;
-#ifdef XMGED
         set_e_axis_pos();
-#endif
 }
 
 static void be_s_scale()  {
@@ -1078,9 +1072,7 @@ static void be_s_scale()  {
 	mmenu_set( MENU_L1, MENU_NULL );
 	acc_sc_sol = 1.0;
 	dmaflag++;
-#ifdef XMGED
         set_e_axis_pos();
-#endif
 }
 
 /*
