@@ -642,8 +642,10 @@ CONST mat_t			mat;
 
 	pgp->npoly = (ep->ext_nbytes - sizeof(union record)) /
 		sizeof(union record);
-	if( pgp->npoly < 0 )
-		pgp->npoly = 0;
+	if( pgp->npoly <= 0 )  {
+		bu_log("rt_pg_import: polysolid with no polygons!\n");
+		return -1;
+	}
 	if( pgp->npoly )
 		pgp->poly = (struct rt_pg_face_internal *)rt_malloc(
 			pgp->npoly * sizeof(struct rt_pg_face_internal), "rt_pg_face_internal");
@@ -672,6 +674,11 @@ CONST mat_t			mat;
 				rp[rno].q.q_norms[i] );
 		}
 		if( pp->npts > pgp->max_npts )  pgp->max_npts = pp->npts;
+	}
+	if( pgp->max_npts < 3 )  {
+		bu_log("rt_pg_import: polysolid with all polygons of less than %d vertices!\n", pgp->max_npts);
+		/* XXX free storage */
+		return -1;
 	}
 	return( 0 );
 }
