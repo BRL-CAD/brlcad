@@ -5,11 +5,8 @@ fblabel \- display a text string on a framebuffer
 .B fblabel
 .RB [ \-hc ]
 .RB [ \-F\  framebuffer]
-.RB [ \-f\  fontname ]
-.RB [ \-C\  r/g/b ]
-.RB [ \-r\  red]
-.RB [ \-g\  green]
-.RB [ \-b\  blue]
+.RB [ \-f\  fontname]
+.RB [ \-C\  r/g/b]
 .RB x_position 
 .RB y_position 
 .RB text_string
@@ -45,13 +42,8 @@ The default behavior is to label the current image
 without clearing the screen.
 .PP
 The
-.B \-r red
-.B \-g green
-.B \-b blue
-flags specify alternate red, green, and blue rgb values for the
-label color.  Otherwise,
 .B \-C r/g/b
-will specify red, green, and blue rgb values all at once.
+specifies red, green, and blue rgb values [0..255] for the text.
 The default color is white.
 .PP
 The
@@ -78,4 +70,4 @@ The U. S. Army Ballistic Research Laboratory
 Aberdeen Proving Ground, Maryland  21005
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.ARPA>.
+mail to <CAD@BRL.MIL>.

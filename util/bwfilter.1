@@ -9,7 +9,7 @@ bwfilter \- apply a 3x3 filter to a black and white bw file
 .RB [ \-o\  offset]
 .RB [ \-s\  squaresize]
 .RB [ \-w\  width]
-.RB [ \-n\ height]
+.RB [ \-n\  height]
 \<\ file.bw
 \>\ newfile.bw
 .SH DESCRIPTION
@@ -20,12 +20,12 @@ format file.
 It will take a file name or else read from standard input.
 The input file size will be assumed to be 512x512 
 pixels unless the
-.B \-s\,
-.B \-w\, or
-.B \-n\ 
+.BR \-s ,
+.BR \-w ,
+or
+.B \-n
 flags are used to tell it otherwise (see 
-.IR brlcad(1)
-).
+.IR brlcad (1)).
 By default a low pass filter is used.  The
 .BI \-f\  type
 flag can be used to specify a different type of filter.
@@ -81,4 +81,4 @@ The U. S. Army Ballistic Research Laboratory
 Aberdeen Proving Ground, Maryland  21005
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.ARPA>.
+mail to <CAD@BRL.MIL>.
