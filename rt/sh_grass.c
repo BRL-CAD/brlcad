@@ -28,9 +28,11 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
+#include "./light.h"
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+/* #define SHADOWS 0*/
 #define RI_AIR		1.0		/* Refractive index of air */
 
 #define grass_MAGIC 0x9    /* make this a unique number for each shader */
@@ -48,12 +50,16 @@ struct grass_specific {
 	double	size;
 	point_t	vscale;	/* size of noise coordinate space */
 	vect_t	delta;
+	double	grass_ls;	/* lean/tilt scaling */
+	double	grass_radius;
+	double	grass_norm;	/* variables for shader ... */
 	double	grass_thresh;	/* variables for shader ... */
 	vect_t	grass_delta;	/* offset into noise space */
 	point_t grass_min;
 	point_t grass_max;
 	mat_t	m_to_r;	/* model to region space matrix */
 	mat_t	r_to_m;	/* region to model space matrix */
+	double	inv_size;
 };
 
 /* The default values for the variables in the shader specific structure */
@@ -66,7 +72,10 @@ struct grass_specific grass_defaults = {
 	1.0,		/* size */
 	{ 1.0, 1.0, 1.0 },	/* vscale */
 	{ 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
-	0.75,				/* grass_thresh */
+	3.141592653,			/* grass_ls */
+	1.0,				/* grass_radius */
+	0.0,				/* grass_norm */
+	1.0,				/* grass_thresh */
 	{ 1.0, 1.0, 1.0 },		/* grass_delta */
 	{ 0.0, 0.0, 0.0 },		/* grass_min */
 	{ 0.0, 0.0, 0.0 },		/* grass_max */
@@ -90,6 +99,10 @@ struct bu_structparse grass_print_tab[] = {
 	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
 	{"%f",  1, "size",		SHDR_O(size),	FUNC_NULL },
+	{"%f",  1, "1/size",		SHDR_O(inv_size),	FUNC_NULL },
+	{"%f",  1, "lean",		SHDR_O(grass_ls),	FUNC_NULL },
+	{"%f",  1, "radius",		SHDR_O(grass_radius),	FUNC_NULL },
+	{"%f",  1, "norm",		SHDR_O(grass_norm),	FUNC_NULL },
 	{"%f",  1, "thresh",		SHDR_O(grass_thresh),	FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(grass_delta),	FUNC_NULL },
 	{"%f",  3, "max",		SHDR_AO(grass_max),	FUNC_NULL },
@@ -104,6 +117,9 @@ struct bu_structparse grass_parse_tab[] = {
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(size),	FUNC_NULL },
+	{"%f",  1, "ls",		SHDR_O(grass_ls),	FUNC_NULL },
+	{"%f",  1, "r",			SHDR_O(grass_radius),	FUNC_NULL },
+	{"%f",  1, "n",			SHDR_O(grass_norm),	FUNC_NULL },
 	{"%f",  1, "t",			SHDR_O(grass_thresh),	FUNC_NULL },
 	{"%f",  3, "d",			SHDR_AO(grass_delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
@@ -203,6 +219,8 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_mul2(tmp, grass_sp->m_to_r);
 #else
 	mat_copy(grass_sp->m_to_r, mtr);
+
+	grass_sp->inv_size = 1.0 / grass_sp->size;
 #endif
 
 	mat_inv(grass_sp->r_to_m, grass_sp->m_to_r);
@@ -236,76 +254,216 @@ char *cp;
 	rt_free( cp, "grass_specific" );
 }
 
+/*
+ *	Actual ray/blade intersection
+ *
+ */
 static int
-frob(in, dir, p2, d2, ap, swp, grass_sp, radius, t, out_dist)
-point_t in, p2;
-vect_t dir, d2;
+frob(in, dir, p2, ap, swp, grass_sp, radius, t, out_dist)
+point_t in; /* in point in the solid */
+vect_t dir; /* ray direction */
+point_t p2; /* grid point to test for grass */
 struct application *ap;
 struct shadework *swp;
 struct grass_specific *grass_sp;
-double radius;
-double t;
-double out_dist;
+double radius;	/* radius of ray at "in" */
+double t;	/* distance from "in" along "dir" to curr grid pt */
+double out_dist;/* distance to solid exit */
 {
-	point_t PCA1, PCA2;
+	point_t PCA1, PCA2;	/* point of closest approach for each line */
+	double ldist[2];	/* dist along each line to PCA */
 	vect_t v;
+	vect_t stalk;
 	double val;
-	double ldist[2];
+	double alt;
+	double radius_at_PCA;
 	point_t npt;
-
 	double dist;
+	double grass_diameter;
+	point_t tmp;
+	CONST static vect_t d2 = { 0.0, 0.0, 1.0};
+	register struct light_specific *lp;
+	extern struct light_specific LightHead;
+	vect_t	tolight;	
 
-	if (rt_dist_line3_line3(ldist, in, dir, p2, d2, &ap->a_rt_i->rti_tol) < 0)
+	grass_diameter = grass_sp->grass_radius /* mm */ * grass_sp->size;
+
+	/* Tilt the vertical stalk by a (repeatable) random amount.  Make sure
+	 * that the Z value is the largest.
+	 */
+	VSCALE(tmp, p2, grass_sp->grass_ls);
+	bn_noise_vec(tmp, stalk);
+	if( rdebug&RDEBUG_SHADE) {
+		bu_log("frob: %g %g %g scaled to %g %g %g\n",
+			V3ARGS(p2), V3ARGS(tmp));
+		bu_log("became %g %g %g\n", V3ARGS(stalk));
+	}
+
+	if (stalk[X] > stalk[Z]) { val = stalk[Z]; stalk[Z] = stalk[X]; stalk[X] = val; }
+	if (stalk[Y] > stalk[Z]) { val = stalk[Z]; stalk[Z] = stalk[Y]; stalk[Y] = val; }
+
+	/* The following assures we can make unit vector,
+	 * and that the grass doesn't lean over too much
+	 */
+	stalk[Z] += 2.0;
+	VUNITIZE(stalk);
+
+
+	/*
+	 * intersect ray with vertical stalk
+	 */
+	if (rt_dist_line3_line3(ldist, in, dir, p2, stalk,
+	    &ap->a_rt_i->rti_tol) < 0)
 		rt_bomb("line/line isect error\n");
 
-	val = bn_noise_fbm(p2, grass_sp->h_val,
+#if 1
+	/* Noise function to define height of grass blades */
+	VSCALE(tmp, p2, grass_sp->grass_thresh);
+	val = bn_noise_fbm(tmp, grass_sp->h_val,
 		grass_sp->lacunarity, grass_sp->octaves);
 
-	val *=  500.0 /* XXX hack.  Known height of solid */
-		* grass_sp->size;
+#else
+	val = .4;
+#endif
 
 
+#define SOLID_HEIGHT 500.0 /* XXX hack.  Known height of solid in mm */
+	alt = val * (SOLID_HEIGHT * grass_sp->size);
+
+	/* compute Pt of closest approach along ray */
 	VJOIN1(PCA1, in, ldist[0], dir);
+	radius_at_PCA = radius + ldist[0] * ap->a_diverge;
+
 	if( rdebug&RDEBUG_SHADE) {
-		bu_log("\tp2=%g,%g,%g d2=%g,%g,%g\n", V3ARGS(p2), V3ARGS(d2));
-		bu_log("\tval %g %g\n", val, val * 500.0 * grass_sp->size);
-		bu_log("\tldist[0]=%g PCA1 %g %g %g\n", ldist[0], V3ARGS(PCA1));
+		bu_log("\tgrass_dia: %g (%g)\n", grass_diameter);
+		bu_log("\tval:%g  alt:%g\n", val, alt);
+		bu_log("\tdist to ray PCA=%g PCA1 %g %g %g radius@PCA:%g\n",
+			ldist[0], V3ARGS(PCA1), radius_at_PCA);
 	}
-	if (PCA1[Z] >= val) return 0;
-	if (PCA1[Z] < 0.0) return -1;
 
 
+	/* if the grass is too short, we miss and march onward */
+	if ( (PCA1[Z] - radius_at_PCA) >= alt) {
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("\tPCA1(%g) > alt(%g) of grass + r@PCA\n", PCA1[Z], alt);
+		return 0;
+	}
 
-	VJOIN1(PCA2, p2, ldist[1], d2);
+	/* if we hit the grass below the ground, forget it and 
+	 * signal caller to quit cell-marching
+	 */
+	if ( (PCA1[Z] + radius_at_PCA) < 0.0) {
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("\tPCA1(%g) < ground\n", PCA1[Z]);
+		return -1;
+	}
+
+
+	/* compute dist between Points of closest approach */
+	VJOIN1(PCA2, p2, ldist[1], stalk);
 	VSUB2(v, PCA1, PCA2);
 	dist = MAGNITUDE(v);
-	if( rdebug&RDEBUG_SHADE) {
-		bu_log("\tldist[1]=%g PCA2 %g %g %g\n", ldist[1], V3ARGS(PCA2));
-		bu_log("\tdelta PCA %g  beam radius %g\n", dist, radius);
-	}
-	if (dist > radius) return 0;
 
-	VMOVE(swp->sw_color, swp->sw_basecolor);
+	if( rdebug&RDEBUG_SHADE) {
+		bu_log("\tdist to grass PCA=%g PCA2 %g %g %g\n",
+			ldist[1], V3ARGS(PCA2));
+		bu_log("\tdelta btw PCA pts:%g  beam radius:%g\n",
+			dist, radius);
+	}
+
+
+	/* if the ray radius isn't greater than the distance to the blade then
+	 *  we've missed, march onward
+	 */
+	if (dist > (radius_at_PCA + grass_diameter)  &&
+	    (radius_at_PCA + grass_diameter) < .75 )
+		return 0;
+
+	/* Ray overlaps blade of grass 
+	 * XXX The ray might overlap several blades of grass.  We should do
+	 * more here.  Perhaps based upon the area of overlap vs ray footprint
+	 * area?
+	 */
 	swp->sw_transmit = 0.0;
 
-	PCA2[Z] = 0.0;
-#if 0
-	VSCALE(PCA2, PCA2, 0.01);
+	/* if this is a shadow ray, then just register opacity and quit.
+	 * XXX Once again some indication of partial transmittance might be
+	 * nice to add.  Grass tends to be translucent at short distances.
+	 */
+ 	if( swp->sw_xmitonly ) return -1;
 
-	do {
-		VSCALE(PCA2, PCA2, 2.36398);
-		bn_noise_vec(PCA2, v);
-	} while (VDOT(v, dir) >= -0.1736);
+	/* set the color
+	 * We scale the color based upon the height of the hitpoint to
+	 * approximate basic shadowing.  Gross hack XXX
+	 */
+	val = (PCA1[Z]/alt) * 0.5 + 0.5;
 
-#else
-	bn_noise_vec(PCA2, v);
-	if (VDOT(v, dir) > 0.0) {
-		VREVERSE(swp->sw_hit.hit_normal, v);
-	} else {
-		VMOVE(swp->sw_hit.hit_normal, v);
+	VSCALE(swp->sw_color, swp->sw_basecolor, val );
+
+#if 1
+	/* compute normal for stalk */
+
+	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		RT_CK_LIGHT(lp);
+		/* compute the light direction */
+		if( lp->lt_infinite ) {
+			/* Infinite lights are point sources, no fuzzy penumbra */
+			VMOVE( tolight, lp->lt_vec );
+		} else {
+			/* convert light position into shader space */
+			VSCALE(tmp, lp->lt_pos, grass_sp->size);
+
+			VSUB2(tolight, tmp, 
+				swp->sw_hit.hit_point);
+		}
+		if (lp->lt_fraction > 0.6) break;
 	}
-#endif
+
+	VCROSS(tmp, stalk, d2);
+	VCROSS(v, tmp, stalk);
+	VUNITIZE(v);	/* tentative normal for stalk */
+	VUNITIZE(tolight);
+	if (VDOT(v, tolight)  > 0.0) {
+		VMOVE(swp->sw_hit.hit_normal, v);
+	} else {
+		VREVERSE(swp->sw_hit.hit_normal, v);
+	}
+#else
+	/* Compute a normal for the blade of grass based upon
+	 * the blade's 2D position
+	 */
+	PCA2[Z] = 0.0;
+
+	if (grass_sp->grass_norm != 0.0) {
+		/* hack for manipulating grass normal */
+		VSCALE(PCA2, PCA2, grass_sp->grass_norm);
+
+		do {
+			VSCALE(PCA2, PCA2, grass_sp->lacunarity);
+			bn_noise_vec(PCA2, v);
+		} while (VDOT(v, dir) >= -0.2);
+
+		VUNITIZE(v);
+
+		VSCALE(PCA2, PCA2, grass_sp->lacunarity);
+		bn_noise_vec(PCA2, tmp);
+
+		VUNITIZE(tmp);
+		VSCALE(tmp, tmp, 0.1736);
+		VADD2(v, v, tmp);
+
+		VUNITIZE(v);
+		VMOVE(swp->sw_hit.hit_normal, v);
+	} else {
+		bn_noise_vec(PCA2, v);
+		if (VDOT(v, dir) > 0.0) {
+			VREVERSE(swp->sw_hit.hit_normal, v);
+		} else {
+			VMOVE(swp->sw_hit.hit_normal, v);
+		}
+	}
 	VUNITIZE(swp->sw_hit.hit_normal);
+#endif
 
 	return 1;
 }
@@ -333,7 +491,8 @@ char			*dp;	/* ptr to the shader-specific struct */
 		(struct grass_specific *)dp;
 	point_t in_pt, out_pt;	/* model space in/out points */
 	point_t in, out, next_pt;
-	double in_radius, out_radius;	/* beam radius, model space */
+	double in_pt_radius, out_pt_radius;	/* beam radius, model space */
+	double in_radius, out_radius;	/* beam radius, shader space */
 	double radius;
 	double out_dist;
 	double	tDX;		/* dist along ray to span 1 cell in X dir */
@@ -347,7 +506,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 	double	which_y;
 	double	ldist[2];
 	vect_t	dir;
-	static CONST vect_t d2 = {0.0, 0.0, 1.0};
 	point_t	p2;
 	int i;
 	double	dist;
@@ -359,44 +517,66 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CHECK_PT(pp);
 	CK_grass_SP(grass_sp);
 
-	if( rdebug&RDEBUG_SHADE) {
-		bu_struct_print( "grass_render Parameters:", grass_print_tab, (char *)grass_sp );
-	}
-
-	/* XXX for now, all light rays pass through */
- 	if( swp->sw_xmitonly )  {
- 		bu_log("xmitonly\n");
- 		swp->sw_transmit = 1.0;
- 		return 0;
- 	}
+	/* set some fast constants */
 	VMOVE(dir, ap->a_ray.r_dir);
 	p2[Z] = 0.0;
 
+
+	if( rdebug&RDEBUG_SHADE) bu_log("grass_render\n");
+
+#if !defined(SHADOWS)
+	if (swp->sw_xmitonly) {
+		/* XXX hack, cast no shadows */
+		VSETALL(swp->sw_basecolor, 1.0); 
+		swp->sw_transmit = 1.0;
+
+		if( rdebug&RDEBUG_SHADE) bu_log("XXX HACK no grass shadows\n");
+
+		return 0;	/* don't do phong shading on light vis rays */
+	}
+#endif
 	/* figure out the in/out points, and the radius of the beam
 	 * We can work in model space since grass isn't likely to be moving
 	 * around the scene.
 	 */
-	VJOIN1(in_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, dir);
-	in_radius = ap->a_rbeam + pp->pt_inhit->hit_dist * ap->a_diverge;
+	VJOIN1(in_pt, ap->a_ray.r_pt, swp->sw_hit.hit_dist, dir);
+	in_pt_radius = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 
 	VJOIN1(out_pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, dir);
-	out_radius = ap->a_rbeam + pp->pt_outhit->hit_dist * ap->a_diverge;
+	out_pt_radius = ap->a_rbeam + pp->pt_outhit->hit_dist * ap->a_diverge;
 
-	/* scale mm to centimeters */
+	/* We usually can't afford to evaluate the shader every mm so we allow
+	 * the user to scale space by a constant to reduce the density of
+	 * the grass and the number of computations needed.
+	 *
+	 * We get a new "in" and "out points and a new radius at the "in"
+	 * point in this new coordiante system.
+	 */
 	VSCALE(in, in_pt, grass_sp->size);
 	VSCALE(out, out_pt, grass_sp->size);
- 	in_radius *= grass_sp->size;
-	/* out distance computed from in hit point */
-	out_dist = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist) * grass_sp->size;
-	
+ 	in_radius = in_pt_radius * grass_sp->size;
+
+	/* out distance computed from "in" hit point */
+	out_dist = (pp->pt_outhit->hit_dist - swp->sw_hit.hit_dist) *
+			 grass_sp->size;
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_log(" in_pt: %g %g %g  radius: %g\n", V3ARGS(in_pt), in_radius);
-		bu_log("out_pt: %g %g %g  radius: %g\n", V3ARGS(out_pt), out_radius);
-		bu_log(" in: %g %g %g\n", V3ARGS(in));
-		bu_log("out: %g %g %g\n", V3ARGS(out));
-		bu_log("out_dist: %g\n", out_dist);
-		VPRINT("dir", dir);
+		bu_log("\tPnt: %g %g %g\n", V3ARGS(ap->a_ray.r_pt));
+		bu_log("\tDir: %g %g %g (diverge:%g)\n", V3ARGS(ap->a_ray.r_dir), ap->a_diverge);
+		bu_log("\tHit: %g %g %g  (dist:%g) (radius:%g)\n",
+			V3ARGS(swp->sw_hit.hit_point), swp->sw_hit.hit_dist,
+			in_pt_radius);
+		bu_log("\tOut: %g %g %g  (dist:%g) (radius:%g)\n",
+			V3ARGS(out_pt), pp->pt_outhit->hit_dist,
+			out_pt_radius);
+		bu_log("\t in: %g %g %g (dist:%g) r:%g\n", V3ARGS(in), 
+			swp->sw_hit.hit_dist * grass_sp->size, in_radius);
+
+		bu_log("\tout: %g %g %g (dist%g)\n", V3ARGS(out), out_dist);
+
+		bu_struct_print("Parameters:", grass_print_tab, (char *)grass_sp );
+	 	if( swp->sw_xmitonly ) bu_log("xmit only\n");
+
 	}
 
 
@@ -444,7 +624,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if (tY > out_dist) tY = out_dist;
 
 	/* time to go marching through the noise space */
-
 	if( rdebug&RDEBUG_SHADE) {
 		bu_log("tX %g  tDX %g\n", tX, tDX);
 		bu_log("tY %g  tDY %g\n", tY, tDY);
@@ -456,55 +635,122 @@ char			*dp;	/* ptr to the shader-specific struct */
 		if (tX < tY) {
 			/* one step in X direction */
 			VJOIN1(next_pt, in, tX, dir);
-			radius = in_radius + tX *ap->a_diverge;
+			p2[X] = floor(next_pt[X]);
 
-			if( rdebug&RDEBUG_SHADE)
-				bu_log("tX(%g) pt %g %g %g r=%g\n",
-					tX, V3ARGS(next_pt), radius);
-			
 			if (step_prev != PREV_Y) {
-				/* check (int)y and (int)y+1.0 */
-				p2[X] = (fastf_t)((int)(next_pt[X]));
-				p2[Y] = (fastf_t)((int)(next_pt[Y]));
+				/* check (int)y and (int)y+1.0 XXX use floor()*/
+				p2[Y] = floor(next_pt[Y]);
 
-				hit = frob(in, dir, p2, d2, ap, swp, grass_sp, radius, tX, out_dist);
+				if( rdebug&RDEBUG_SHADE)
+					bu_log("tX(%g) pt %g %g %g (check 2)\n\tp2=%g,%g,%g\n",
+						tX, V3ARGS(next_pt), V3ARGS(p2));
 
+				hit = frob(in, dir, p2, ap, swp, 
+					grass_sp, in_radius, tX, out_dist);
+				if (hit) { 
+					swp->sw_hit.hit_dist += 
+						tX * grass_sp->inv_size;
+					VMOVE(swp->sw_hit.hit_point, next_pt);
+					break;
+				}
 
 				p2[Y] += 1.0;
-				hit = frob(in, dir, p2, d2, ap, swp, grass_sp, radius, tX, out_dist);
+				if( rdebug&RDEBUG_SHADE)
+					bu_log("\tp2=%g,%g,%g\n", V3ARGS(p2));
+
+				hit = frob(in, dir, p2, ap, swp,
+					grass_sp, in_radius, tX, out_dist);
+				if (hit) { 
+					swp->sw_hit.hit_dist += 
+						tX * grass_sp->inv_size;
+					VMOVE(swp->sw_hit.hit_point, next_pt);
+					break;
+				}
 			} else {
 				/* check only the rayward one */
+				p2[Y] = floor(next_pt[Y]+which_y);
 
-				p2[X] = (fastf_t)((int)(next_pt[X]));
-				p2[Y] = (fastf_t)((int)(next_pt[Y]+which_y));
+				if( rdebug&RDEBUG_SHADE)
+					bu_log("tX(%g) pt %g %g %g (check 1)\n\tp2=%g,%g,%g\n",
+						tX, V3ARGS(next_pt), V3ARGS(p2));
 
-				hit = frob(in, dir, p2, d2, ap, swp, grass_sp, radius, tX, out_dist);
+				hit = frob(in, dir, p2, ap, swp,
+					grass_sp, in_radius, tX, out_dist);
+				if (hit) { 
+					swp->sw_hit.hit_dist += 
+						tX * grass_sp->inv_size;
+					VMOVE(swp->sw_hit.hit_point, next_pt);
+					break;
+				}
 			}
 			step_prev = PREV_X;
 			tX += tDX;
 		} else {
 			/* one step in Y direction */
 			VJOIN1(next_pt, in, tY, dir);
-			radius = in_radius + tY *ap->a_diverge;
-
-			if( rdebug&RDEBUG_SHADE)
-				bu_log("tY(%g) pt %g %g %g r=%g\n",
-					tY, V3ARGS(next_pt), radius);
+			p2[Y] = floor(next_pt[Y]);
 
 			if (step_prev != PREV_X) {
 				/* check (int)x and (int)x+1.0 */
-				p2[X] = (fastf_t)((int)(next_pt[X]));
-				p2[Y] = (fastf_t)((int)(next_pt[Y]));
-				hit = frob(in, dir, p2, d2, ap, swp, grass_sp, radius, tY, out_dist);
+				p2[X] = floor(next_pt[X]);
 
+				if( rdebug&RDEBUG_SHADE)
+					bu_log("tY(%g) pt %g %g %g (check 2)\n\tp2=%g,%g,%g\n",
+						tY, V3ARGS(next_pt),
+						V3ARGS(p2));
+
+				hit = frob(in, dir, p2, ap, swp, 
+					grass_sp, in_radius, tY, out_dist);
+				if (hit) { 
+					if( rdebug&RDEBUG_SHADE)
+						bu_log("A d:%g tY:%g inv:%g\n",
+							swp->sw_hit.hit_dist,
+							tY, grass_sp->inv_size);
+					swp->sw_hit.hit_dist += 
+						tY * grass_sp->inv_size;
+					VMOVE(swp->sw_hit.hit_point, next_pt);
+					break;
+				}
 				p2[X] += 1.0;
-				hit = frob(in, dir, p2, d2, ap, swp, grass_sp, radius, tY, out_dist);
+				if( rdebug&RDEBUG_SHADE)
+					bu_log("\tp2=%g,%g,%g\n", V3ARGS(p2));
+
+				hit = frob(in, dir, p2, ap, swp, 
+					grass_sp, in_radius, tY, out_dist);
+				if (hit) { 
+					if( rdebug&RDEBUG_SHADE)
+						bu_log("B d:%g tY:%g inv:%g\n",
+							swp->sw_hit.hit_dist,
+							tY, grass_sp->inv_size);
+					swp->sw_hit.hit_dist += 
+						tY * grass_sp->inv_size;
+					VMOVE(swp->sw_hit.hit_point, next_pt);
+					break;
+				}
 			} else {
 				/* check only the rayward one */
+				p2[X] = floor(next_pt[X]+which_x);
 
-				p2[X] = (fastf_t)((int)(next_pt[X]+which_x));
-				p2[Y] = (fastf_t)((int)(next_pt[Y]));
-				hit = frob(in, dir, p2, d2, ap, swp, grass_sp, radius, tY, out_dist);
+				if( rdebug&RDEBUG_SHADE)
+					bu_log("tY(%g) pt %g %g %g (check 1)\n\tp2=%g,%g,%g\n",
+						tY, V3ARGS(next_pt), V3ARGS(p2));
+
+				hit = frob(in, dir, p2, ap, swp, 
+					grass_sp, in_radius, tY, out_dist);
+				if (hit) { 
+					if( rdebug&RDEBUG_SHADE)
+						bu_log("d:%g tY:%g inv:%g\n",
+							swp->sw_hit.hit_dist,
+							tY, grass_sp->inv_size);
+					swp->sw_hit.hit_dist += 
+						tY * grass_sp->inv_size;
+					if( rdebug&RDEBUG_SHADE)
+						bu_log("new d:%g\n",
+							swp->sw_hit.hit_dist);
+
+					VMOVE(swp->sw_hit.hit_point, next_pt);
+					break;
+				}
 			}
 			step_prev = PREV_Y;
 			tY += tDY;
@@ -513,15 +759,37 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 
 	if (hit > 0) {
-		VMOVE(pp->pt_inhit->hit_normal, swp->sw_hit.hit_normal);
-		swp->sw_transmit = 0.0;
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("Hit grass blade\n");
+
+		/* RE-SCALE shader hit point and distance back into model
+		 * coordinate system.
+		 */
+		VJOIN1(swp->sw_hit.hit_point, ap->a_ray.r_pt, 
+			swp->sw_hit.hit_dist, ap->a_ray.r_dir);
+
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("new hit point: %g %g %g (dist:%g)\n",
+				V3ARGS(swp->sw_hit.hit_point),
+				swp->sw_hit.hit_dist);
+
 		return 1;
 	}
 
-
-
+#if defined(SHADOWS)
+	/* XXX here is where we should do the procedural shadows */
+	/* seems to have something to do with shadow rays through grass */
+	if (hit < 0) {
+		/* hit grass, xmitonly case */
+		return 1;
+	}
+#endif
 
 	/* If we missed everything, then it's time to trace on through */
+
+	if( rdebug&RDEBUG_SHADE)
+		bu_log("Missed grass blades\n");
+
 
 	/* setting basecolor to 1.0 prevents "filterglass" effect */
 	VSETALL(swp->sw_basecolor, 1.0); 
