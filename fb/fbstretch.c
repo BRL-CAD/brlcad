@@ -544,13 +544,18 @@ main( argc, argv )
 
 			for ( ; dst_y < dst_height; ++dst_y )
 #if __STDC__
-				if ( fb_write( dst_fbp, 0, dst_y, &Dst( 0, 0 ),
-#else
-				if ( fb_write( dst_fbp, 0, dst_y, Dst( 0, 0 ),
-#endif
+				if ( fb_write( dst_fbp, 0, dst_y,
+					       &Dst( 0, 0 ),
 					       dst_width
 					     ) == -1
 				   )
+#else
+				if ( fb_write( dst_fbp, 0, dst_y,
+					       (RGBpixel *)Dst( 0, 0 ),
+					       dst_width
+					     ) == -1
+				   )
+#endif
 					Fatal( "Error writing top margin" );
 
 			goto done;	/* that's all folks */
@@ -563,14 +568,19 @@ main( argc, argv )
 		/* Fill input scan line buffer. */
 
 		for ( src_y = bot_y; src_y < top_y; ++src_y )
-			if ( fb_read( src_fbp, 0, src_y,
 #if __STDC__
-				      &Src( 0, src_y - bot_y ), src_width
-#else
-				      Src( 0, src_y - bot_y ), src_width
-#endif
+			if ( fb_read( src_fbp, 0, src_y,
+				      &Src( 0, src_y - bot_y ),
+				      src_width
 				    ) == -1
 			   )
+#else
+			if ( fb_read( src_fbp, 0, src_y,
+				      (RGBpixel *)Src( 0, src_y - bot_y ),
+				      src_width
+				    ) == -1
+			   )
+#endif
 				Fatal( "Error reading scan line" );
 
 		dst_x = 0;
@@ -588,13 +598,18 @@ main( argc, argv )
     ccflush:		/* End of band; flush buffer. */
 
 #if __STDC__
-			if ( fb_write( dst_fbp, 0, dst_y, &Dst( 0, 0 ),
-#else
-			if ( fb_write( dst_fbp, 0, dst_y, Dst( 0, 0 ),
-#endif
+			if ( fb_write( dst_fbp, 0, dst_y,
+				       &Dst( 0, 0 ),
 				       dst_width
 				     ) == -1
 			   )
+#else
+			if ( fb_write( dst_fbp, 0, dst_y,
+				       (RGBpixel *)Dst( 0, 0 ),
+				       dst_width
+				     ) == -1
+			   )
+#endif
 				Fatal( "Error writing scan line" );
 
 			++dst_y;
@@ -682,11 +697,16 @@ main( argc, argv )
 		/* Fill input scan line buffer. */
 
 #if __STDC__
-		if ( fb_read( src_fbp, 0, src_y, &Src( 0, 0 ), src_width ) == -1
-#else
-		if ( fb_read( src_fbp, 0, src_y, Src( 0, 0 ), src_width ) == -1
-#endif
+		if ( fb_read( src_fbp, 0, src_y, &Src( 0, 0 ),
+			      src_width
+			    ) == -1
 		   )
+#else
+		if ( fb_read( src_fbp, 0, src_y, (RGBpixel *)Src( 0, 0 ),
+			      src_width
+			    ) == -1
+		   )
+#endif
 			Fatal( "Error reading scan line" );
 
 		dst_x = 0;
@@ -704,15 +724,20 @@ main( argc, argv )
     ceflush:		/* End of band; flush buffer. */
 
 			for ( dst_y = top_y; --dst_y >= bot_y; )
-				if ( fb_write( dst_fbp, 0, dst_y,
 #if __STDC__
+				if ( fb_write( dst_fbp, 0, dst_y,
 					       &Dst( 0, dst_y - bot_y ),
-#else
-					       Dst( 0, dst_y - bot_y ),
-#endif
 					       dst_width
 					     ) == -1
 				   )
+#else
+				if ( fb_write( dst_fbp, 0, dst_y,
+					       (RGBpixel *)Dst( 0, dst_y - bot_y
+							      ),
+					       dst_width
+					     ) == -1
+				   )
+#endif
 					Fatal( "Error writing scan line" );
 
 			--src_y;
@@ -802,13 +827,18 @@ main( argc, argv )
 
 			for ( ; dst_y < dst_height; ++dst_y )
 #if __STDC__
-				if ( fb_write( dst_fbp, 0, dst_y, &Dst( 0, 0 ),
-#else
-				if ( fb_write( dst_fbp, 0, dst_y, Dst( 0, 0 ),
-#endif
+				if ( fb_write( dst_fbp, 0, dst_y,
+					       &Dst( 0, 0 ),
 					       dst_width
 					     ) == -1
 				   )
+#else
+				if ( fb_write( dst_fbp, 0, dst_y,
+					       (RGBpixel *)Dst( 0, 0 ),
+					       dst_width
+					     ) == -1
+				   )
+#endif
 					Fatal( "Error writing top margin" );
 
 			goto done;	/* that's all folks */
@@ -821,14 +851,19 @@ main( argc, argv )
 		/* Fill input scan line buffer. */
 
 		for ( src_y = bot_y; src_y < top_y; ++src_y )
-			if ( fb_read( src_fbp, 0, src_y,
 #if __STDC__
-				      &Src( 0, src_y - bot_y ), src_width
-#else
-				      Src( 0, src_y - bot_y ), src_width
-#endif
+			if ( fb_read( src_fbp, 0, src_y,
+				      &Src( 0, src_y - bot_y ),
+				      src_width
 				    ) == -1
 			   )
+#else
+			if ( fb_read( src_fbp, 0, src_y,
+				      (RGBpixel *)Src( 0, src_y - bot_y ),
+				      src_width
+				    ) == -1
+			   )
+#endif
 				Fatal( "Error reading scan line" );
 
 		src_x = (dst_width - 1) / x_scale + EPSILON;
@@ -838,13 +873,18 @@ main( argc, argv )
 			/* End of band; flush buffer. */
 
 #if __STDC__
-			if ( fb_write( dst_fbp, 0, dst_y, &Dst( 0, 0 ),
-#else
-			if ( fb_write( dst_fbp, 0, dst_y, Dst( 0, 0 ),
-#endif
+			if ( fb_write( dst_fbp, 0, dst_y,
+				       &Dst( 0, 0 ),
 				       dst_width
 				     ) == -1
 			   )
+#else
+			if ( fb_write( dst_fbp, 0, dst_y,
+				       (RGBpixel *)Dst( 0, 0 ),
+				       dst_width
+				     ) == -1
+			   )
+#endif
 				Fatal( "Error writing scan line" );
 
 			++dst_y;
@@ -929,11 +969,16 @@ main( argc, argv )
 		/* Fill input scan line buffer. */
 
 #if __STDC__
-		if ( fb_read( src_fbp, 0, src_y, &Src( 0, 0 ), src_width ) == -1
-#else
-		if ( fb_read( src_fbp, 0, src_y, Src( 0, 0 ), src_width ) == -1
-#endif
+		if ( fb_read( src_fbp, 0, src_y, &Src( 0, 0 ),
+			      src_width
+			    ) == -1
 		   )
+#else
+		if ( fb_read( src_fbp, 0, src_y, (RGBpixel *)Src( 0, 0 ),
+			      src_width
+			    ) == -1
+		   )
+#endif
 			Fatal( "Error reading scan line" );
 
 		src_x = (dst_width - 1) / x_scale + EPSILON;
@@ -943,15 +988,20 @@ main( argc, argv )
 			/* End of band; flush buffer. */
 
 			for ( dst_y = top_y; --dst_y >= bot_y; )
-				if ( fb_write( dst_fbp, 0, dst_y,
 #if __STDC__
+				if ( fb_write( dst_fbp, 0, dst_y,
 					       &Dst( 0, dst_y - bot_y ),
-#else
-					       Dst( 0, dst_y - bot_y ),
-#endif
 					       dst_width
 					     ) == -1
 				   )
+#else
+				if ( fb_write( dst_fbp, 0, dst_y,
+					       (RGBpixel *)Dst( 0, dst_y - bot_y
+							      ),
+					       dst_width
+					     ) == -1
+				   )
+#endif
 					Fatal( "Error writing scan line" );
 
 			--src_y;
