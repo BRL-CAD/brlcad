@@ -3,6 +3,9 @@
  *
  *  Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
  *
+ *  Remember that in MGED you need to say "set glob_compat_mode 0"
+ *  to get [] to work with TCL semantics rather than MGED glob semantics.
+ *
  *  Author -
  *	Michael John Muuss
  *  
@@ -513,6 +516,92 @@ char **argv;
 }
 
 /*
+ *			B U _ G E T _ V A L U E _ B Y _ K E Y W O R D
+ *
+ *  Given arguments of alternating keywords and values
+ *  and a specific keyword ("Iwant"),
+ *  return the value associated with that keyword.
+ *
+ *	example:  bu_get_value_by_keyword Iwant az 35 elev 25 temp 9.6
+ *
+ *  If only one argument is given after the search keyword, it is interpreted
+ *  as a list in the same format.
+ *
+ *	example:  bu_get_value_by_keyword Iwant {az 35 elev 25 temp 9.6}
+ *
+ *  Search order is left-to-right, only first match is returned.
+ *
+ *  Sample use:
+ *	 bu_get_value_by_keyword V8 [concat type [.inmem get box.s]]
+ */
+int
+bu_get_value_by_keyword(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int	listc;
+	char	**listv;
+	register char	*iwant;
+	char	**tofree = (char **)NULL;
+	int	i;
+
+	if( argc < 3 )  {
+		char	buf[32];
+		sprintf(buf, "%d", argc);
+		Tcl_AppendResult( interp,
+			"bu_get_value_by_keyword: wrong # of args (", buf, ").\n",
+			"Usage: bu_get_value_by_keyword iwant {list}\n",
+			"Usage: bu_get_value_by_keyword iwant key1 val1 key2 val2 ... keyN valN\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	iwant = argv[1];
+
+	if( argc == 3 )  {
+		if( Tcl_SplitList( interp, argv[2], &listc, &listv ) != TCL_OK )  {
+			Tcl_AppendResult( interp,
+				"bu_get_value_by_keyword: iwant='", iwant,
+				"', unable to split '",
+				argv[2], "'\n", (char *)NULL );
+			return TCL_ERROR;
+		}
+		tofree = listv;
+	} else {
+		/* Take search list from remaining arguments */
+		listc = argc - 2;
+		listv = argv + 2;
+	}
+
+	if( (listc & 1) != 0 )  {
+		char	buf[32];
+		sprintf(buf, "%d", listc);
+		Tcl_AppendResult( interp,
+			"bu_get_value_by_keyword: odd # of items in list (", buf, ").\n",
+			(char *)NULL );
+		if(tofree) free( (char *)tofree );	/* not bu_free() */
+		return TCL_ERROR;
+	}
+
+	for( i=0; i < listc; i += 2 )  {
+		if( strcmp( iwant, listv[i] ) == 0 )  {
+			Tcl_AppendElement( interp, listv[i+1] );
+			if(tofree) free( (char *)tofree );	/* not bu_free() */
+			return TCL_OK;
+		}
+	}
+	
+	/* Not found */
+	Tcl_AppendResult( interp, "bu_get_value_by_keyword: keyword '",
+		iwant, "' not found in list\n", (char *)NULL );
+	if(tofree) free( (char *)tofree );	/* not bu_free() */
+	return TCL_ERROR;
+}
+
+
+/*
  *			B U _ T C L _ S E T U P
  *
  *  Add all the supported Tcl interfaces to LIBBU routines to
@@ -536,6 +625,9 @@ Tcl_Interp *interp;
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp,
 		"bu_printb",		bu_tcl_printb,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp,
+		"bu_get_value_by_keyword", bu_get_value_by_keyword,
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_SetVar(interp, "bu_version", (char *)bu_version+5, TCL_GLOBAL_ONLY);	/* from vers.c */
