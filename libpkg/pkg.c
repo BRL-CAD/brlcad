@@ -11,6 +11,7 @@
  *	pkg_makeconn	Make a pkg_conn structure
  *	pkg_close	Close a network connection
  *	pkg_send	Send a message on the connection
+ *	pkg_2send	Send a two part message on the connection
  *	pkg_stream	Send a message that doesn't need a push
  *	pkg_flush	Empty the stream buffer of any queued messages
  *	pkg_waitfor	Wait for a specific msg, user buf, processing others
