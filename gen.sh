@@ -259,7 +259,7 @@ case "${MACHINE}" in
 		BDIRS=`echo ${BDIRS} | \
 			sed -e 's/libz//' -e 's/libpng//'`
 		;;
-	m4i65)
+	7d|m4i65)
 		# Be sure to look in /usr/lib64, not /usr/lib!
 		BDIRS=`echo ${BDIRS} | \
 		    sed -e 's/libz//' `
