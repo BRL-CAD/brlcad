@@ -683,32 +683,32 @@ menu .$id.menubar.settings.grid.spacing -tearoff $do_tearoffs
 	-command "do_grid_spacing $id b"
 .$id.menubar.settings.grid.spacing add separator
 .$id.menubar.settings.grid.spacing add command -label "micrometer" -underline 4\
-	-command "set_grid_spacing $id micrometer"
+	-command "set_grid_spacing $id micrometer 1"
 .$id.menubar.settings.grid.spacing add command -label "millimeter" -underline 2\
-	-command "set_grid_spacing $id millimeter"
+	-command "set_grid_spacing $id millimeter 1"
 .$id.menubar.settings.grid.spacing add command -label "centimeter" -underline 0\
-	-command "set_grid_spacing $id centimeter"
+	-command "set_grid_spacing $id centimeter 1"
 .$id.menubar.settings.grid.spacing add command -label "decimeter" -underline 0\
-	-command "set_grid_spacing $id decimeter"
+	-command "set_grid_spacing $id decimeter 1"
 .$id.menubar.settings.grid.spacing add command -label "meter" -underline 0\
-	-command "set_grid_spacing $id meter"
+	-command "set_grid_spacing $id meter 1"
 .$id.menubar.settings.grid.spacing add command -label "kilometer" -underline 0\
-	-command "set_grid_spacing $id kilometer"
+	-command "set_grid_spacing $id kilometer 1"
 .$id.menubar.settings.grid.spacing add separator
 .$id.menubar.settings.grid.spacing add command -label "1/10 inch" -underline 0\
-	-command "set_grid_spacing $id \"1/10 inch\""
+	-command "set_grid_spacing $id \"1/10 inch\" 1"
 .$id.menubar.settings.grid.spacing add command -label "1/4 inch" -underline 2\
-	-command "set_grid_spacing $id \"1/4 inch\""
+	-command "set_grid_spacing $id \"1/4 inch\" 1"
 .$id.menubar.settings.grid.spacing add command -label "1/2 inch" -underline 2\
-	-command "set_grid_spacing $id \"1/2 inch\""
+	-command "set_grid_spacing $id \"1/2 inch\" 1"
 .$id.menubar.settings.grid.spacing add command -label "inch" -underline 0\
-	-command "set_grid_spacing $id inch"
+	-command "set_grid_spacing $id inch 1"
 .$id.menubar.settings.grid.spacing add command -label "foot" -underline 0\
-	-command "set_grid_spacing $id foot"
+	-command "set_grid_spacing $id foot 1"
 .$id.menubar.settings.grid.spacing add command -label "yard" -underline 0\
-	-command "set_grid_spacing $id yard"
+	-command "set_grid_spacing $id yard 1"
 .$id.menubar.settings.grid.spacing add command -label "mile" -underline 0\
-	-command "set_grid_spacing $id mile"
+	-command "set_grid_spacing $id mile 1"
 
 menu .$id.menubar.settings.grid_spacing -tearoff $do_tearoffs
 .$id.menubar.settings.grid_spacing add command -label "Autosize" -underline 0\
@@ -717,32 +717,32 @@ menu .$id.menubar.settings.grid_spacing -tearoff $do_tearoffs
 	-command "do_grid_spacing $id b"
 .$id.menubar.settings.grid_spacing add separator
 .$id.menubar.settings.grid_spacing add command -label "micrometer" -underline 4\
-	-command "set_grid_spacing $id micrometer"
+	-command "set_grid_spacing $id micrometer 1"
 .$id.menubar.settings.grid_spacing add command -label "millimeter" -underline 2\
-	-command "set_grid_spacing $id millimeter"
+	-command "set_grid_spacing $id millimeter 1"
 .$id.menubar.settings.grid_spacing add command -label "centimeter" -underline 0\
-	-command "set_grid_spacing $id centimeter"
+	-command "set_grid_spacing $id centimeter 1"
 .$id.menubar.settings.grid_spacing add command -label "decimeter" -underline 0\
-	-command "set_grid_spacing $id decimeter"
+	-command "set_grid_spacing $id decimeter 1"
 .$id.menubar.settings.grid_spacing add command -label "meter" -underline 0\
-	-command "set_grid_spacing $id meter"
+	-command "set_grid_spacing $id meter 1"
 .$id.menubar.settings.grid_spacing add command -label "kilometer" -underline 0\
-	-command "set_grid_spacing $id kilometer"
+	-command "set_grid_spacing $id kilometer 1"
 .$id.menubar.settings.grid_spacing add separator
 .$id.menubar.settings.grid_spacing add command -label "1/10 inch" -underline 0\
-	-command "set_grid_spacing $id \"1/10 inch\""
+	-command "set_grid_spacing $id \"1/10 inch\" 1"
 .$id.menubar.settings.grid_spacing add command -label "1/4 inch" -underline 2\
-	-command "set_grid_spacing $id \"1/4 inch\""
+	-command "set_grid_spacing $id \"1/4 inch\" 1"
 .$id.menubar.settings.grid_spacing add command -label "1/2 inch" -underline 2\
-	-command "set_grid_spacing $id \"1/2 inch\""
+	-command "set_grid_spacing $id \"1/2 inch\" 1"
 .$id.menubar.settings.grid_spacing add command -label "inch" -underline 0\
-	-command "set_grid_spacing $id inch"
+	-command "set_grid_spacing $id inch 1"
 .$id.menubar.settings.grid_spacing add command -label "foot" -underline 0\
-	-command "set_grid_spacing $id foot"
+	-command "set_grid_spacing $id foot 1"
 .$id.menubar.settings.grid_spacing add command -label "yard" -underline 0\
-	-command "set_grid_spacing $id yard"
+	-command "set_grid_spacing $id yard 1"
 .$id.menubar.settings.grid_spacing add command -label "mile" -underline 0\
-	-command "set_grid_spacing $id mile"
+	-command "set_grid_spacing $id mile 1"
 
 menu .$id.menubar.settings.coord -tearoff $do_tearoffs
 .$id.menubar.settings.coord add radiobutton -value m -variable mged_coords($id)\
@@ -846,11 +846,14 @@ menu .$id.menubar.tools -tearoff $do_tearoffs
 	-command "init_grid_control $id"
 .$id.menubar.tools add command -label "Query Ray Control Panel..." -underline 0\
 	-command "init_qray_control $id"
-.$id.menubar.tools add command -label "Combination Edit Panel..." -underline 0\
+.$id.menubar.tools add separator
+.$id.menubar.tools add command -label "Combination Edit Tool..." -underline 0\
 	-command "init_comb $id"
+.$id.menubar.tools add command -label "Color Edit Tool..." -underline 1\
+	-command "cadColorWidget tool .$id -title \"Color Edit Tool\" -initialcolor black"
 .$id.menubar.tools add separator
 .$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
-	-label "Button Menu..." -underline 0\
+	-label "Classic Menu Tool..." -underline 0\
 	-command "toggle_button_menu $id"
 
 menu .$id.menubar.help -tearoff $do_tearoffs
