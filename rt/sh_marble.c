@@ -40,10 +40,8 @@
  *				which is helpful for instanced copies of a
  *				given combination.
  *
- *	m{atte}={0,1}		Specifying a one indicates a matte operation.  The
- *				shader will take its "lt_rgb[]" values from sw_color.
- *				This is used in conjunction with sh_stack to overlay
- *				multiple marble textures.
+ *	m{atte}={0,1,2}		Specifying a matte operation.  The lt_rgb or
+ *				dk_rgb will be taken from swp->sw_color.
  *
  *	ns=n			Number of noise samples to sum per pixel.
  *				Increasing this tends to "smooth out" the texture.
@@ -53,8 +51,10 @@
  *	s{cale}=n		Exponent applied to returned noise value before
  *				range limiting is done. 
  *
- *	t{ensor}=n		Controls how the raw value is interpreted:
- *					0 - linear, 1 - sin, 2 - cosin
+ *	t{ensor}=n		Controls how the noise value is interpreted:
+ *					0 - linear
+ *					1 - new algorithm
+ *					2 - Tom's original algorithm
  *
  *	a{ngle}=n		"Angle" of noise.  Useful for slightly shifting
  *				the texture's color.
@@ -70,7 +70,7 @@
  *	c{ompression}=n		Coefficient applied to normalized value to do
  *				post-normalized compression/expansion.
  *
- *	dither=x/y/z		Specifies starting point of overall RPP in the
+ *	d{ither}=x/y/z		Specifies starting point of overall RPP in the
  *				noise table; range of [0..1].
  *
  *	lt{_rgb}=a/b/c		Color for light portions of texture
@@ -123,12 +123,14 @@ struct	marble_specific  {
 	int			tensor;
 	int			ns;
 	int			matte;
-	double			e;
-	double			scale;
-	double			range[2];
-	double			angle;
-	double			compression;
-	double			jitter;
+	fastf_t			e;
+	fastf_t			scale;
+	fastf_t			range[2];
+	fastf_t			clamp[2];
+	fastf_t			angle;
+	fastf_t			compression;
+	fastf_t			jitter;
+	fastf_t			bias;
 	vect_t			mar_min;
 	vect_t			mar_max;
 	vect_t			dither;
@@ -143,6 +145,10 @@ struct	marble_specific  {
 #define	MP_IDENT	0x00000001
 #define MP_MATTE	0x00000002
 #define MP_STACK	0x00000004
+#define MP_RANGE	0x00000008
+#define MP_T2		0x00000010
+#define	MP_CLAMP	0x00000020
+#define MP_DITHER	0x00000040
 
 /*
  *	Offset declarations
@@ -168,30 +174,32 @@ HIDDEN void	marble_free( char * );
 extern int	mlib_zero(), mlib_one();
 extern void	mlib_void();
 
-HIDDEN void	marble_ident_set (CONST struct structparse *, CONST char *, CONST char *, char *);
-HIDDEN void	marble_matte_set (CONST struct structparse *, CONST char *, CONST char *, char *);
+HIDDEN void	marble_check_flags RT_ARGS((CONST struct structparse *sdp,
+			CONST char *name, CONST char *base, char *value));
 
 /*
  *	Marble-specific user data
  */
 
 struct	structparse marble_parse[] = {
-	{"%d",	1,	"id",		MARB_O(ident),		marble_ident_set },
+	{"%d",	1,	"id",		MARB_O(ident),		marble_check_flags },
 	{"%d",	1,	"ns",		MARB_O(ns),		FUNC_NULL },
-	{"%d",	1,	"matte",	MARB_O(matte),		marble_matte_set },
-	{"%d",	1,	"m",		MARB_O(matte),		marble_matte_set },
+	{"%d",	1,	"matte",	MARB_O(matte),		marble_check_flags },
+	{"%d",	1,	"m",		MARB_O(matte),		marble_check_flags },
 	{"%f",	1,	"exponent",	MARB_O(e),		FUNC_NULL },
 	{"%f",	1,	"e",		MARB_O(e),		FUNC_NULL },
 	{"%f",	1,	"scale",	MARB_O(scale),		FUNC_NULL },
 	{"%f",	1,	"s",		MARB_O(scale),		FUNC_NULL },
-	{"%f",	2,	"range",	MARB_OA(range),		FUNC_NULL },
-	{"%f",	2,	"r",		MARB_OA(range),		FUNC_NULL },
-	{"%f",	3,	"dither",	MARB_OA(dither),	FUNC_NULL },
-	{"%f",	3,	"d",		MARB_OA(dither),	FUNC_NULL },
+	{"%f",	2,	"range",	MARB_OA(range),		marble_check_flags },
+	{"%f",	2,	"r",		MARB_OA(range),		marble_check_flags },
+	{"%f",	2,	"clamp",	MARB_OA(clamp),		marble_check_flags },
+	{"%f",	2,	"cl",		MARB_OA(clamp),		marble_check_flags },
+	{"%f",	3,	"dither",	MARB_OA(dither),	marble_check_flags },
+	{"%f",	3,	"d",		MARB_OA(dither),	marble_check_flags },
 	{"%f",	1,	"jitter",	MARB_O(jitter),		FUNC_NULL },
 	{"%f",	1,	"j",		MARB_O(jitter),		FUNC_NULL },
-	{"%d",	1,	"tensor",	MARB_O(tensor),		FUNC_NULL },
-	{"%d",	1,	"t",		MARB_O(tensor),		FUNC_NULL },
+	{"%d",	1,	"tensor",	MARB_O(tensor),		marble_check_flags },
+	{"%d",	1,	"t",		MARB_O(tensor),		marble_check_flags },
 	{"%f",	1,	"angle",	MARB_O(angle),		FUNC_NULL },
 	{"%f",	1,	"a",		MARB_O(angle),		FUNC_NULL },
 	{"%f",	1,	"compression",	MARB_O(compression),	FUNC_NULL },
@@ -234,7 +242,9 @@ struct mfuncs marble_mfuncs[] = {
 /*
  *			M A R B L E _ P R E P
  *
- *	Initialize the static noise arrays.
+ *	This routine was originally used to initialize the noise table,
+ *	until we moved to using the static turb_table.  This hook has
+ *	been left in to accomodate future expansion of mf_init().
  */
 HIDDEN int marble_prep ()
 {
@@ -259,7 +269,7 @@ HIDDEN int marble_prep ()
  *	setting flag bits, indicating the presence of certain options.
  */
 
-HIDDEN void marble_ident_set (sdp, name, base, value)
+HIDDEN void marble_check_flags (sdp, name, base, value)
 CONST struct structparse *sdp;
 CONST char *name;
 CONST char *base;
@@ -268,19 +278,29 @@ char *value;
 	register struct marble_specific *mp =
 		(struct marble_specific *)base;
 
-	mp->flags |= MP_IDENT;
-}
+	if (!strcmp (name, "id")) {
+		mp->flags |= MP_IDENT;
+		}
 
-HIDDEN void marble_matte_set (sdp, name, base, value)
-CONST struct structparse *sdp;
-CONST char *name;
-CONST char *base;
-char *value;
-{
-	register struct marble_specific *mp =
-		(struct marble_specific *)base;
+	if (!strcmp(name, "m") || !strcmp(name, "matte")) {
+		mp->flags |= MP_MATTE;
+		}
 
-	mp->flags |= MP_MATTE;
+	if (!strcmp(name, "r") || !strcmp(name, "range")) {
+		mp->flags |= MP_RANGE;
+		}
+
+	if (!strcmp(name, "cl") || !strcmp(name, "clamp")) {
+		mp->flags |= MP_CLAMP;
+		}
+
+	if (!strcmp(name, "d") || !strcmp(name, "dither")) {
+		mp->flags |= MP_DITHER;
+		}
+
+	if (!strcmp(name, "t") || !strcmp(name, "tensor")) {
+		mp->flags |= MP_T2;
+		}
 }
 
 /*
@@ -335,7 +355,10 @@ char	**dpp;
 	mp->compression	 = 0.0;
 	mp->range[0]     = 0.0;
 	mp->range[1]     = 1.0;
+	mp->clamp[0]	 = -1.0;
+	mp->clamp[1]     = 1.0;
 	mp->jitter	 = 0.0;
+	mp->bias	 = 0.0;
 
 	VSETALL (mp->lt_rgb, 255);
 	VSETALL (mp->dk_rgb, 0);
@@ -348,21 +371,18 @@ char	**dpp;
 
 	for (mc = Marble_Chain; mc != MARB_NULL; mc = mc->forw) {
 		if (mc->rp == rp) {
+			mc->flags |= MP_STACK;
 			mp->flags |= MP_STACK;
+
 			VMOVE (mp->dither, mc->dither);
+			mp->flags |= MP_DITHER;
+
+			if (mc->flags & MP_IDENT) {
+				mp->flags |= MP_IDENT;
+				mp->ident  = mc->ident;
+				}
 			break;
 			}
-		}
-
-	/*
-	 *	If this is the first iteration of a user block for
-	 *	this region, go ahead and init the dither field
-	 */
-
-	if (!(mp->flags & MP_STACK)) {
-		mp->dither[X] = rand0to1 (resp->re_randptr);
-		mp->dither[Y] = rand0to1 (resp->re_randptr);
-		mp->dither[Z] = rand0to1 (resp->re_randptr);
 		}
 
 	/*
@@ -373,6 +393,27 @@ char	**dpp;
 		return(-1);
 
 	/*
+	 *	If the user didn't specify a dither, add one in.
+	 *	If specificed, then range-check it
+	 */
+
+	if (!(mp->flags & MP_DITHER)) {
+		mp->dither[X] = rand0to1 (resp->re_randptr);
+		mp->dither[Y] = rand0to1 (resp->re_randptr);
+		mp->dither[Z] = rand0to1 (resp->re_randptr);
+		}
+
+	   else {
+		for (i=0; i<3; i++) {
+			if (mp->dither[i] < 0.0 || mp->dither[i] > 1.0) {
+				rt_log ("marble_setup(%s):  dither is out of range.\n",
+					rp->reg_name);
+				return (-1);
+				}
+			}
+		}
+
+	/*
 	 *	Add the block to the marble chain
 	 */
 
@@ -380,7 +421,7 @@ char	**dpp;
 	Marble_Chain = mp;
 
 	/*
-	 *	Do sundry limit range checking
+	 *	Do sundry tasks
 	 */
 
 	mp->angle       *= rt_degtorad;
@@ -397,12 +438,14 @@ char	**dpp;
 		return (-1);
 		}
 
-	for (i=0; i<3; i++) {
-		if (mp->dither[i] < 0) {
-			rt_log ("marble_setup(%s):  dither is negative.\n",
-				rp->reg_name);
-			return (-1);
-			}
+	/*
+	 *	Compensate for a negative low range
+	 */
+
+	if (mp->range[0] < 0.0) {
+		mp->bias      = fabs (mp->range[0]);
+		mp->range[0]  = 0.0;
+		mp->range[1] += mp->bias;
 		}
 
 	/*
@@ -514,12 +557,14 @@ struct marble_specific *mp;
 	double	xr, yr, zr;		/* Remainders */
 	double	n1, n2, noise1, noise2, noise3, noise;	/* temps */
 
-	xi = x * IPOINTS;
-	xr = (x * IPOINTS) - xi;
-	yi = y * IPOINTS;
-	yr = (y * IPOINTS) - yi;
-	zi = z * IPOINTS;
-	zr = (z * IPOINTS) - zi;
+	xi = (x * IPOINTS) + (mp->dither[X] * IPOINTS);
+	xr = ((x * IPOINTS) + (mp->dither[X] * IPOINTS)) - xi;
+
+	yi = (y * IPOINTS) + (mp->dither[Y] * IPOINTS);
+	yr = ((y * IPOINTS) + (mp->dither[Y] * IPOINTS)) - yi;
+
+	zi = (z * IPOINTS) + (mp->dither[Z] * IPOINTS);
+	zr = ((z * IPOINTS) + (mp->dither[Z] * IPOINTS)) - zi;
 
 	n1     = (1 - xr) * pow (turb_table[xi][yi][zi], mp->e) +
 		       xr * pow (turb_table[xi + 1][yi][zi], mp->e);
@@ -559,21 +604,18 @@ struct marble_specific *mp;
 	double	a, b, c, turb = 0.0, scale = 1.0;
 
 	for (i=0; i<mp->ns; i++) {
-		scale = (double)i / (double)mp->ns;
+		scale = (double)(mp->ns - i) / (double)mp->ns;
 
 		a = (x * scale) + 
-		    (rand_half (resp->re_randptr) * mp->jitter) +
-		    mp->dither[X];
+		    (rand_half (resp->re_randptr) * mp->jitter);
 
 		b = (y * scale) +
-		    (rand_half (resp->re_randptr) * mp->jitter) +
-		    mp->dither[Y];
+		    (rand_half (resp->re_randptr) * mp->jitter);
 
 		c = (z * scale) +
-		    (rand_half (resp->re_randptr) * mp->jitter) +
-		    mp->dither[Z];
+		    (rand_half (resp->re_randptr) * mp->jitter);
 
-		turb += marble_noise (a, b, c, mp);
+		turb  += (marble_noise (a, b, c, mp) * scale);
 		}
 
 
@@ -593,11 +635,35 @@ char	*dp;
 {
 	register struct marble_specific *mp =
 		(struct marble_specific *)dp;
+	point_t	mat_lt, mat_dk;
 	double	value;
 	fastf_t	x,y,z;
-	vect_t	color;
 	fastf_t xd,yd,zd;
 	int	i;
+
+	/*
+	 *	Prep the light and dark colors
+	 */
+
+	switch (mp->matte) {
+
+		case 0:
+		default:
+			VMOVE (mat_lt, mp->lt_rgb);
+			VMOVE (mat_dk, mp->dk_rgb);
+			break;
+
+		case 1:
+			VMOVE (mat_lt, swp->sw_color);
+			VMOVE (mat_dk, mp->dk_rgb);
+			break;
+
+		case 2:
+			VMOVE (mat_lt, mp->lt_rgb);
+			VMOVE (mat_dk, swp->sw_color);
+			break;
+
+		}
 
 	/*
 	 *	Normalize the hit point to [0..1]
@@ -615,47 +681,92 @@ char	*dp;
 	 *	Obtain the raw value
 	 */
 
-	value = marble_turb (x,y,z,mp);
+	value = marble_turb (x,y,z,mp) + mp->bias;
+
+	/*
+	 *	Apply the clamp
+	 */
+
+	if (mp->flags & MP_CLAMP) {
+		if (value < mp->clamp[0]) value = mp->clamp[0];
+		if (value > mp->clamp[1]) value = mp->clamp[1];
+		}
 
 	/*
 	 *	Normalize the raw value
 	 */
 
-	if (value < mp->range[0]) value = 0;
-			    else  value -= mp->range[0];
+	if (mp->flags & MP_RANGE) {
+		if (value < mp->range[0]) value  = 0.0;
+				    else  value -= mp->range[0];
 
-	if (value > mp->range[1]) value = 1.0;
-			    else  value /= mp->range[1];
+		if (value > mp->range[1]) value  = 1.0;
+				    else  value /= mp->range[1];
+		}
+
+	/*
+	 *	Remove the bias
+	 */
+
+	if (mp->bias != 0.0) value -= mp->bias;
+
+	/*
+	 *	If we are emulating Tom's original algorithm, do his
+	 *	code here and return the value.
+	 */
+
+	if (mp->tensor == 2) {
+		value = sin (value + x);
+		if (value <= 0.25)
+			value *= 4.0;
+		else
+			if (value > 0.25 && value <= 0.5)
+				value = -((value-0.5) * 4.0);
+			else
+				if (value > 0.5 && value <= 0.75)
+					value = (value-0.5) * 4.0;
+				else
+					value = -((value-1.0) * 4.0);
+
+		VCOMB2 (swp->sw_color,
+				value,         mat_lt,
+				(1.0 - value), mat_dk);
+		return (1);
+		}
+
+	/*
+	 *	Apply any scaling effects
+	 */
+
+	if (mp->angle != 0.0) value *= mp->angle;
+	if (mp->compression != 0.0) value *= mp->compression;
 
 	/*
 	 *	Convert the normalized value into a curve
 	 */
 
-	if (mp->compression != 0.0)
-		value = value * mp->angle * mp->compression;
-	   else value = value * mp->angle;
-
-	if (mp->tensor == 1) value = sin (value);
-	if (mp->tensor == 2) value = cos (value);
-
-	if (value < 0.0) value = 0.0;
+	if (mp->tensor) value = sin (value);
 
 	/*
 	 *	Compute the color
 	 */
 
+	VCOMB2 (swp->sw_color,
+			value,         mat_dk,
+			(1.0 - value), mat_lt);
+
+	/*
+	 *	Apply final range checking
+	 */
+
 	for (i=0; i<3; i++) {
-		if (!(mp->flags & MP_MATTE))
-			color[i] = (value * mp->dk_rgb[i]) +
-				   ((1.0 - value) * mp->lt_rgb[i]);
-		   else color[i] = (value * mp->dk_rgb[i]) +
-				   ((1.0 - value) * swp->sw_color[i]);
+		if (swp->sw_color[i] < 0.0) swp->sw_color[i] = 0.0;
+		if (swp->sw_color[i] > 1.0) swp->sw_color[i] = 1.0;
 		}
 
 	/*
-	 *	Return the color and exit
+	 *	exit
 	 */
 
-	VMOVE (swp->sw_color, color);
 	return (1);
 }
