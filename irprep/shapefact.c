@@ -106,7 +106,7 @@ char **argv;
    /*  Check to see if arguments are implimented correctly.  */
    if( (argv[1] == NULL) || (argv[2] == NULL) )
    {
-	(void)fprintf(stderr,"\nusage:  rand.ray file.g objects\n\n");
+	(void)fprintf(stderr,"\nusage:  %s file.g objects\n\n", *argv);
    }
    else
    {						/*  START # 1  */
@@ -141,10 +141,11 @@ char **argv;
 		(void)scanf("%ld",&seed);
 	}
 #ifdef MSRMAXTBL
-   	msr_unif_init(seed, 0);
+   	msr = msr_unif_init(seed, 0);
 #else
 	(void) srand48(seed);
 #endif
+   	rt_log("seed initialized\n");
 
 	/*  Build directory.  */
 	index = 1;	/*  Set index for rt_dirbuild.  */
