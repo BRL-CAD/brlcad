@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "spectrum.h"
 
@@ -323,9 +324,98 @@ again:
 }
 
 /*
+ *			R T _ W R I T E _ S P E C T R U M
  *
+ *  Write out the spectrum structure in an ASCII file,
+ *  giving the number of wavelengths (minus 1), and the
+ *  actual wavelengths.
  */
-void
+int
+rt_write_spectrum( filename, spect )
+CONST char	*filename;
+CONST struct rt_spectrum	*spect;
+{
+	FILE	*fp;
+	int	j;
+
+	RT_CK_SPECTRUM(spect);
+
+	RES_ACQUIRE( &rt_g.res_syscall );
+	fp = fopen( filename, "w" );
+	RES_RELEASE( &rt_g.res_syscall );
+
+	if( fp == NULL )  {
+		perror(filename);
+		rt_log("rt_write_spectrum(%s, x%x) FAILED\n", filename, spect);
+		return -1;
+	}
+
+	RES_ACQUIRE( &rt_g.res_syscall );
+	fprintf(fp, "  %d sample starts, and one end.\n", spect->nwave );
+	for( j=0; j <= spect->nwave; j++ )  {
+		fprintf( fp, "%g\n", spect->wavel[j] );
+	}
+	fclose(fp);
+	RES_RELEASE( &rt_g.res_syscall );
+	return 0;
+}
+
+/*
+ *			R T _ R E A D _ S P E C T R U M
+ *
+ *  Allocate and read in the spectrum structure from an ASCII file,
+ *  giving the number of wavelengths (minus 1), and the
+ *  actual wavelengths.
+ */
+struct rt_spectrum *
+rt_read_spectrum( filename )
+CONST char	*filename;
+{
+	struct rt_spectrum	*spect;
+	struct rt_vls		line;
+	FILE	*fp;
+	int	nw;
+	int	j;
+
+	RES_ACQUIRE( &rt_g.res_syscall );
+	fp = fopen( filename, "r" );
+	RES_RELEASE( &rt_g.res_syscall );
+
+	if( fp == NULL )  {
+		perror(filename);
+		rt_log("rt_read_spectrum(%s) FAILED\n", filename);
+		return NULL;
+	}
+
+	rt_vls_init(&line);
+	rt_vls_gets( &line, fp );
+	nw = 0;
+	sscanf( rt_vls_addr(&line), "%d", &nw );
+	rt_vls_free(&line);
+
+	if( nw <= 0 ) rt_bomb("rt_read_spectrum() bad nw value\n");
+
+	RT_GET_SPECTRUM( spect, nw );
+
+	RES_ACQUIRE( &rt_g.res_syscall );
+	for( j=0; j <= spect->nwave; j++ )  {
+		fscanf( fp, "%g", spect->wavel[j] );
+	}
+	fclose(fp);
+	RES_RELEASE( &rt_g.res_syscall );
+	return spect;
+}
+
+/*
+ *			R T _ W R I T E _ S P E C T _ S A M P L E
+ *
+ *  Write out a given spectral sample into an ASCII file,
+ *  suitable for input to GNUPLOT.
+ *	(set term postscript)
+ *	(set output "|print-postscript")
+ *	(plot "filename" with lines)
+ */
+int
 rt_write_spect_sample( filename, ss )
 CONST char			*filename;
 CONST struct rt_spect_sample	*ss;
@@ -344,8 +434,8 @@ CONST struct rt_spect_sample	*ss;
 
 	if( fp == NULL )  {
 		perror(filename);
-		rt_log("rt_write_spect_sample(%s, %s) FAILED\n");
-		return;
+		rt_log("rt_write_spect_sample(%s, x%x) FAILED\n", filename, ss );
+		return -1;
 	}
 
 	RES_ACQUIRE( &rt_g.res_syscall );
@@ -354,6 +444,7 @@ CONST struct rt_spect_sample	*ss;
 	}
 	fclose(fp);
 	RES_RELEASE( &rt_g.res_syscall );
+	return 0;
 }
 
 
@@ -476,6 +567,7 @@ rt_log("rt_spect_black_body_points( x%x, %g degK )\n", ss, temp );
 	}
 }
 
+#if 0
 main()
 {
 	struct rt_spect_sample	*x, *y, *z;
@@ -504,4 +596,62 @@ main()
 	RT_GET_SPECT_SAMPLE( z, spect );
 	rt_spect_black_body_fast( z, 10000.0 );
 	rt_write_spect_sample( "/tmp/z", z );
+}
+#endif
+
+/*
+ *			R T _ G E T _ S P E C T _ S A M P L E _ A R R A Y
+ *
+ *  Allocate storage for, and initialize, an array of 'num' spectral sample
+ *  structures.
+ *  This subroutine is provided because the rt_spect_sample structures
+ *  are variable length.
+ */
+struct rt_spect_sample *
+rt_get_spect_sample_array( spect, num )
+CONST struct rt_spectrum	*spect;
+int	num;
+{
+	struct rt_spect_sample	*ss;
+	char	*cp;
+	int	i;
+	int	nw;
+	int	nbytes;
+
+	RT_CK_SPECTRUM(spect);
+	nw = spect->nwave;
+	nbytes = RT_SIZEOF_SPECT_SAMPLE(spect);
+
+	ss = (struct rt_spect_sample *)rt_calloc( num,
+		nbytes, "struct rt_spect_sample[]" );
+
+	cp = (char *)ss;
+	for( i = 0; i < num; i++ ) {
+		struct rt_spect_sample	*sp;
+
+		sp = (struct rt_spect_sample *)cp;
+		sp->magic = RT_SPECT_SAMPLE_MAGIC;
+		sp->nwave = nw;
+		sp->spectrum = spect;
+		cp += nbytes;
+	}
+	return ss;
+}
+
+/*
+ */
+void
+rt_spect_copy( out, in )
+struct rt_spect_sample		*out;
+CONST struct rt_spect_sample	*in;
+{
+	RT_CK_SPECT_SAMPLE( out );
+	RT_CK_SPECT_SAMPLE( in );
+
+	if( in->spectrum != out->spectrum )
+		rt_bomb("rt_spect_copy(): samples drawn from different spectra\n");
+	if( in->nwave != out->nwave )
+		rt_bomb("rt_spect_copy(): different number of wavelengths\n");
+
+	bcopy( (char *)in->val, (char *)out->val, in->nwave * sizeof(fastf_t) );
 }
