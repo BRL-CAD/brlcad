@@ -72,8 +72,9 @@ mat_t	es_mat;			/* accumulated matrix of path */
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 int	es_nlines;		/* # lines in printed display */
 char	es_display[ES_LINELEN*10];/* buffer for lines of display */
-int arb_faces[5][24];	/* from edarb.c */
-int arb_planes[5][24];	/* from edarb.c */
+
+extern int arb_faces[5][24];	/* from edarb.c */
+extern int arb_planes[5][24];	/* from edarb.c */
 
 struct menu_item  edge8_menu[] = {
 	{ "ARB8 EDGES", (void (*)())NULL, 0 },
