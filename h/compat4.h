@@ -41,6 +41,61 @@ extern "C" {
 #define RT_SETJUMP	BU_SETJUMP
 #define RT_UNSETJUMP	BU_UNSETJUMP
 
+/* hist.c */
+#define histogram		bu_hist		/* struct */
+#define RT_HISTOGRAM_MAGIC	BU_HIST_MAGIC
+#define RT_CK_HISTOGRAM		BU_CK_HIST
+#define RT_HISTOGRAM_TALLY	BU_HIST_TALLY
+#define rt_hist_free		bu_hist_free
+#define rt_hist_init		bu_hist_init
+#define rt_hist_range		bu_hist_range
+#define rt_hist_pr		bu_hist_pr
+
+/* list.c */
+#define rt_list			bu_list		/* struct */
+#define RT_LIST_HEAD_MAGIC	BU_LIST_HEAD_MAGIC
+#define RT_LIST_NULL		BU_LIST_NULL
+#define RT_LIST_INSERT		BU_LIST_INSERT
+#define RT_LIST_APPEND		BU_LIST_APPEND
+#define RT_LIST_DEQUEUE		BU_LIST_DEQUEUE
+#define RT_LIST_PUSH		BU_LIST_PUSH
+#define RT_LIST_POP		BU_LIST_POP
+#define RT_LIST_INSERT_LIST	BU_LIST_INSERT_LIST
+#define RT_LIST_APPEND_LIST	BU_LIST_APPEND_LIST
+#define RT_LIST_IS_EMPTY	BU_LIST_IS_EMPTY
+#define RT_LIST_NON_EMPTY	BU_LIST_NON_EMPTY
+#define RT_LIST_NON_EMPTY_P	BU_LIST_NON_EMPTY_P
+#define RT_LIST_IS_CLEAR	BU_LIST_IS_CLEAR
+#define	RT_LIST_UNINITIALIZED	BU_LIST_UNINITIALIZED
+#define RT_LIST_INIT		BU_LIST_INIT
+#define RT_LIST_MAGIC_SET	BU_LIST_MAGIC_SET
+#define RT_LIST_MAGIC_OK	BU_LIST_MAGIC_OK
+#define RT_LIST_MAGIC_WRONG	BU_LIST_MAGIC_WRONG
+#define RT_LIST_LAST		BU_LIST_LAST
+#define RT_LIST_PREV		BU_LIST_PREV
+#define RT_LIST_FIRST		BU_LIST_FIRST
+#define RT_LIST_NEXT		BU_LIST_NEXT
+#define RT_LIST_IS_HEAD		BU_LIST_IS_HEAD
+#define RT_LIST_NOT_HEAD	BU_LIST_NOT_HEAD
+#define RT_CK_LIST_HEAD		BU_CK_LIST_HEAD
+#define RT_LIST_NEXT_IS_HEAD	BU_LIST_NEXT_IS_HEAD
+#define RT_LIST_NEXT_NOT_HEAD	BU_LIST_NEXT_NOT_HEAD
+#define RT_LIST_FOR		BU_LIST_FOR
+#define	RT_LIST_FOR2		BU_LIST_FOR2
+#define RT_LIST_WHILE		BU_LIST_WHILE
+#define RT_LIST_FIRST_MAGIC	BU_LIST_FIRST_MAGIC
+#define RT_LIST_LAST_MAGIC	BU_LIST_LAST_MAGIC
+#define RT_LIST_PNEXT		BU_LIST_PNEXT
+#define RT_LIST_PLAST		BU_LIST_PLAST
+#define RT_LIST_PNEXT_PNEXT	BU_LIST_PNEXT_PNEXT
+#define RT_LIST_PNEXT_PLAST	BU_LIST_PNEXT_PLAST
+#define RT_LIST_PLAST_PNEXT	BU_LIST_PLAST_PNEXT
+#define RT_LIST_PLAST_PLAST	BU_LIST_PLAST_PLAST
+#define RT_LIST_PNEXT_CIRC	BU_LIST_PNEXT_CIRC
+#define RT_LIST_PPREV_CIRC	BU_LIST_PPREV_CIRC
+#define RT_LIST_PLAST_CIRC	BU_LIST_PPREV_CIRC
+#define RT_LIST_MAIN_PTR	BU_LIST_MAIN_PTR
+
 /* log.c */
 /* Change variable rt_g.rtg_logindent to a call to bu_log_indent_delta() */
 #define rt_log		bu_log
@@ -78,7 +133,6 @@ extern "C" {
 #define rt_parallel	bu_parallel
 
 /* parse.c */
-
 #define rt_struct_export	bu_struct_export
 #define rt_struct_import	bu_struct_import
 #define rt_struct_put		bu_struct_put
@@ -89,7 +143,7 @@ extern "C" {
 #define rt_plong		bu_plong
 #define rt_struct_buf		bu_struct_wrap_buf
 #define rt_structparse		bu_struct_parse
-#define structparse		bu_structparse
+#define structparse		bu_structparse		/* struct */
 
 #define rt_vls_item_print( v, sp, b )	 bu_vls_struct_item( v, sp, b, ',' )
 #define rt_vls_item_print_nc( v, sp, b ) bu_vls_struct_item( v, sp, b, ' ' )
@@ -104,6 +158,11 @@ extern "C" {
 #endif
 #define offsetofarray		bu_offsetofarray
 #define FUNC_NULL		BU_STRUCTPARSE_FUNC_NULL
+
+#define rt_external		bu_external
+#define RT_EXTERNAL_MAGIC	BU_EXTERNAL_MAGIC
+#define RT_INIT_EXTERNAL	BU_INIT_EXTERNAL
+#define RT_CK_EXTERNAL		BU_CK_EXTERNAL
 
 /* printb.c */
 #define rt_printb		bu_printb
