@@ -246,7 +246,18 @@
 /* We need sys/types.h for definitions and prototypes that will appear 
    everywhere. */
 
+#if SUNOS >= 52
+	/* For the duration of <sys/types.h>, set this, to get u_short
+	 * etc, defined properly.
+	 */
+#	define	_KERNEL	1
+#endif
+
 #include <sys/types.h>
+
+#if SUNOS >= 52
+#	undef	_KERNEL
+#endif
 
 #endif /* CONF_H */
 
