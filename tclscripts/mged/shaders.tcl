@@ -576,7 +576,7 @@ proc do_phong_apply { id } {
 	    }
 	if { [string length $shader_params($id,ri) ] > 0 } then {
 	    catch {
-		if { [expr compare $shader_params($id,ri) != $shader_params($id,def_ri)] } then {
+		if { [expr $shader_params($id,ri) != $shader_params($id,def_ri)] } then {
 			lappend params ri $shader_params($id,ri) } }
 	    }
 	if { [string length $shader_params($id,shine)] > 0 } then {
@@ -1445,11 +1445,7 @@ proc do_shader { shade_var id frame_name } {
 
 	set my_win ""
 
-	if { [llength $shade_str] < 1 } then {
-		set shade_str plastic
-		set shader_params($id,shader_name) $shade_str
-		set my_win [do_plastic $shade_var $id]
-	} else {
+	if { [llength $shade_str] > 0 } then {
 		set material [lindex $shade_str 0]
 		set shader_params($id,shader_name) $material
 		switch $material {
