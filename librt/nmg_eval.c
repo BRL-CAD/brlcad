@@ -1048,7 +1048,8 @@ int		delay;
 		if( nmg_vlblock_anim_upcall )  {
 			/* if requested, delay 1/4 second */
 			(*nmg_vlblock_anim_upcall)( vbp,
-				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0 );
+				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0,
+				0 );
 		} else {
 			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
