@@ -77,8 +77,6 @@ bn_decode_tol(tol, str)
 struct bn_tol *tol;
 const char *str;
 {
-	int ret;
-
 	tol->magic = BN_TOL_MAGIC;
 
 	/* provide meaningful defaults */
@@ -86,7 +84,7 @@ const char *str;
 	tol->perp = 1e-6;
 
 	if( *str == '{' )  str++;
-	ret = sscanf(str, "%lf %lf", &tol->dist, &tol->perp);
+	(void)sscanf(str, "%lf %lf", &tol->dist, &tol->perp);
 	tol->dist_sq = tol->dist * tol->dist;
 	tol->para = 1 - tol->perp;
 
