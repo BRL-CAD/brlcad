@@ -374,7 +374,8 @@ struct seg		*seghead;
 	LOCAL vect_t	dprime;		/* D' */
 	LOCAL point_t	pprime;		/* P' */
 	LOCAL point_t	xlated;		/* translated ray start point */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	LOCAL fastf_t	t1, t2;		/* distance constants of solution */
+	LOCAL fastf_t	f;
 	LOCAL struct hit hits[3];	/* 4 potential hit points */
 	register struct hit *hitp = &hits[0];
 
@@ -444,40 +445,47 @@ struct seg		*seghead;
 			(msq = m*m) * dprime[Z]*dprime[Z];
 		b = dprime[X]*pprime[X] + dprime[Y]*pprime[Y] -
 			msq * dprime[Z]*pprime[Z] -
-			m * VRAD_PRIME * dprime[Z];
+			m * dprime[Z];		/* * VRAD_PRIME */
 		c = pprime[X]*pprime[X] + pprime[Y]*pprime[Y] -
 			msq * pprime[Z]*pprime[Z] -
-			2 * m * VRAD_PRIME * pprime[Z] -
-			VRAD_PRIME * VRAD_PRIME;
+			2 * m * pprime[Z] - 1;
+			/* was: ... -2m * vrad' * Pz' - vrad'**2 */
 
 		if( (root = b*b - a * c) <= 0 )
 			goto check_hemispheres;
 		root = sqrt(root);
 
-		k1 = (root-b) / a;
-		k2 = -(root+b) / a;
+		t1 = (root-b) / a;
+		t2 = -(root+b) / a;
 	}
 
 	/*
-	 *  k1 and k2 are potential solutions to intersection with side.
-	 *  See if they fall in range.
+	 *  t1 and t2 are potential solutions to intersection with side.
+	 *  Find hit' point, see if Z values fall in range.
 	 */
-	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
-	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
-		hitp->hit_dist = k1;
+	if( (f = pprime[Z] + t1 * dprime[Z]) >= 0.0 && f <= 1.0 )  {
+		/** VJOIN1( hitp->hit_vpriv, pprime, t1, dprime ); **/
+		hitp->hit_vpriv[X] = pprime[X] + t1 * dprime[X];
+		hitp->hit_vpriv[Y] = pprime[Y] + t1 * dprime[Y];
+		hitp->hit_vpriv[Z] = f;
+		hitp->hit_dist = t1;
 		hitp->hit_surfno = RT_PARTICLE_SURF_BODY;
 		hitp++;
 	}
 
-	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
-	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
-		hitp->hit_dist = k2;
+	if( (f = pprime[Z] + t2 * dprime[Z]) >= 0.0 && f <= 1.0 )  {
+		/** VJOIN1( hitp->hit_vpriv, pprime, t2, dprime ); **/
+		hitp->hit_vpriv[X] = pprime[X] + t2 * dprime[X];
+		hitp->hit_vpriv[Y] = pprime[Y] + t2 * dprime[Y];
+		hitp->hit_vpriv[Z] = f;
+		hitp->hit_dist = t2;
 		hitp->hit_surfno = RT_PARTICLE_SURF_BODY;
 		hitp++;
 	}
 
 	/*
-	 * Check for hitting the end hemispheres.
+	 *  Check for hitting the end hemispheres, if there
+	 *  have been fewer than 2 hits so far.
 	 */
 check_hemispheres:
 	if( hitp < &hits[2] )  {
@@ -486,8 +494,6 @@ check_hemispheres:
 		FAST fastf_t	magsq_ov;	/* length squared of ov */
 		FAST fastf_t	b;
 		FAST fastf_t	root;		/* root of radical */
-		FAST fastf_t	t;
-		/* 0 or 1 hits so far, this is worthwhile */
 
 		/*
 		 *  First, consider a hit on V hemisphere.
@@ -511,16 +517,16 @@ check_hemispheres:
 			root = b*b - magsq_ov + rad_sq;
 		}
 		root = sqrt(root);
-		t = b - root;
+		t1 = b - root;
 		/* see if hit'[Z] is below end of cylinder */
-		if( pprime[Z] + t * dprime[Z] <= 0.0 )  {
-			hitp->hit_dist = t;
+		if( pprime[Z] + t1 * dprime[Z] <= 0.0 )  {
+			hitp->hit_dist = t1;
 			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
 		}
-		t = b + root;
-		if( pprime[Z] + t * dprime[Z] <= 0.0 )  {
-			hitp->hit_dist = t;
+		t2 = b + root;
+		if( pprime[Z] + t2 * dprime[Z] <= 0.0 )  {
+			hitp->hit_dist = t2;
 			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
 		}
@@ -533,7 +539,6 @@ check_h:
 		FAST fastf_t	magsq_ov;	/* length squared of ov */
 		FAST fastf_t	b;		/* second term of quadratic eqn */
 		FAST fastf_t	root;		/* root of radical */
-		FAST fastf_t	t;
 
 		/*
 		 *  Next, consider a hit on H hemisphere
@@ -558,15 +563,15 @@ check_h:
 			root = b*b - magsq_ov + rad_sq;
 		}
 		root = sqrt(root);
-		t = b - root;
-		if( pprime[Z] + t * dprime[Z] >= 1.0 )  {
-			hitp->hit_dist = t;
+		t1 = b - root;
+		if( pprime[Z] + t1 * dprime[Z] >= 1.0 )  {
+			hitp->hit_dist = t1;
 			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
 		}
-		t = b + root;
-		if( pprime[Z] + t * dprime[Z] >= 1.0 )  {
-			hitp->hit_dist = t;
+		t2 = b + root;
+		if( pprime[Z] + t2 * dprime[Z] >= 1.0 )  {
+			hitp->hit_dist = t2;
 			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
 		}
@@ -642,10 +647,18 @@ register struct xray	*rp;
 		break;
 	case RT_PARTICLE_SURF_BODY:
 		/* compute it */
+		if( part->part_int.part_type == RT_PARTICLE_TYPE_CYLINDER )  {
+			/* The X' and Y' components of hit' are N' */
+			hitp->hit_vpriv[Z] = 0;
+			MAT4X3VEC( hitp->hit_normal, part->part_invRoS,
+				hitp->hit_vpriv );
+			VUNITIZE( hitp->hit_normal );
+			break;
+		}
+		/* The cone case */
 		MAT4X3VEC( hitp->hit_normal, part->part_invRoS,
 			hitp->hit_vpriv );
 		VUNITIZE( hitp->hit_normal );
-		/* XXX probably wrong for cone case */
 		break;
 	}
 }
