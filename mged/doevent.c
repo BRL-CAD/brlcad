@@ -43,7 +43,6 @@ extern int doMotion;	/* defined in dm-generic.c */
 static void motion_event_handler();
 static void dials_event_handler();
 static void buttons_event_handler();
-static int forward_key();
 
 #ifdef IR_BUTTONS
 /*
@@ -115,10 +114,7 @@ XEvent *eventPtr;
 
   /* Continuing to process the event */
 
-  /* Forward key events to a command window */
-  if(mged_variables->send_key && eventPtr->type == KeyPress)
-    status = forward_key((XKeyEvent *)eventPtr);
-  else if(eventPtr->type == ConfigureNotify){
+  if(eventPtr->type == ConfigureNotify){
     XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
 
     dm_configureWindowShape(dmp);
@@ -1462,26 +1458,3 @@ int press;
   }
 }
 #endif
-
-/* Forward key events to a command window */
-static int
-forward_key(xkey)
-XKeyEvent *xkey;
-{
-  char buffer[2];
-  KeySym keysym;
-  struct dm_char_queue *dcqp;
-
-  XLookupString(xkey, buffer, 1, &keysym, (XComposeStatus *)NULL);
-
-  if(keysym == mged_variables->hot_key)
-    return TCL_OK;
-
-  BU_GETSTRUCT(dcqp, dm_char_queue);
-  dcqp->dlp = curr_dm_list;
-  BU_LIST_INSERT(&head_dm_char_queue.l, &dcqp->l);
-  write(dm_pipe[1], buffer, 1);
-
-  /* Use this so that these events won't propagate */
-  return TCL_RETURN;
-}
