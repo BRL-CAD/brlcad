@@ -85,6 +85,9 @@ set helplib_data(vo_rot)		{{"x y z"} {rotate the view}}
 set helplib_data(vo_tra)		{{"x y z"} {translate the view}}
 set helplib_data(vo_slew)		{{"x y"} {slew the view}}
 set helplib_data(vo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
+set helplib_data(vo_coord)		{[m|v]} {set/get the coodinate system}}
+set helplib_data(vo_keypoint)		{{[point]} {set/get the keypoint}}
+set helplib_data(vo_rotate_about)	{{[e|k|m|v]} {set/get the rotate about point}}
 set helplib_data(dgo_close)		{{} {close/destroy this drawable geometry object}}
 set helplib_data(dgo_open)		{{name wdb_obj} {open/create a new drawable geometry object}}
 set helplib_data(dgo_headSolid)		{{} {return pointer to solid list}}
