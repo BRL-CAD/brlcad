@@ -383,17 +383,16 @@ Ogl_load_startup()
   struct rt_vls str;
   char *path;
   char *filename;
-  int     found;
 
 /*XXX*/
 #define DM_OGL_RCFILE "oglinit.tk"
 
-#if 1
   bzero((void *)&head_ogl_vars, sizeof(struct ogl_vars));
   RT_LIST_INIT( &head_ogl_vars.l );
-#endif
 
-  found = 0;
+  /* Start with internal default */
+  Tcl_Eval( interp, ogl_init_str );
+
   rt_vls_init( &str );
 
   if((filename = getenv("DM_OGL_RCFILE")) == (char *)NULL )
@@ -406,45 +405,28 @@ Ogl_load_startup()
     rt_vls_strcat( &str, "/" );
     rt_vls_strcat( &str, filename );
 
-    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-      found = 1;
-  }
-
-  if(!found){
-    if( (path = getenv("HOME")) != (char *)NULL )  {
-      /* Use HOME path */
-      rt_vls_strcpy( &str, path );
-      rt_vls_strcat( &str, "/" );
-      rt_vls_strcat( &str, filename );
-
-      if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-	found = 1;
+    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL ) {
+      fclose(fp);
+      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
     }
   }
 
-  if( !found ) {
-    /* Check current directory */
-    if( (fp = fopen( filename, "r" )) != NULL )  {
-      rt_vls_strcpy( &str, filename );
-      found = 1;
+  if( (path = getenv("HOME")) != (char *)NULL )  {
+    /* Use HOME path */
+    rt_vls_strcpy( &str, path );
+    rt_vls_strcat( &str, "/" );
+    rt_vls_strcat( &str, filename );
+    
+    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
+      fclose(fp);
+      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
     }
   }
 
-  if(!found){
-    rt_vls_free(&str);
-
-    /* Using default */
-    if(Tcl_Eval( interp, ogl_init_str ) == TCL_ERROR)
-      return -1;
-
-    return 0;
-  }
-
-  fclose( fp );
-
-  if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-    rt_vls_free(&str);
-    return -1;
+  /* Check current directory */
+  if( (fp = fopen( filename, "r" )) != NULL )  {
+    fclose(fp);
+    (void)Tcl_EvalFile( interp, filename );
   }
 
   rt_vls_free(&str);
@@ -980,8 +962,6 @@ int dashed;
 
 	if( dashed )		/* restore solid */
 		glDisable(GL_LINE_STIPPLE); 
-
-
 }
 
 
@@ -1005,8 +985,9 @@ XEvent *eventPtr;
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
 
+  /* Forward key events to a command window */
   if(mged_variables.send_key && eventPtr->type == KeyPress){
-    char buffer[1];
+    char buffer[2];
     KeySym keysym;
 
     XLookupString(&(eventPtr->xkey), buffer, 1,
@@ -1015,7 +996,31 @@ XEvent *eventPtr;
     if(keysym == mged_variables.hot_key)
       goto end;
 
-    write(dm_pipe[1], buffer, 1);
+#if 0
+    /* drawing window is being aimed at by a Tcl/Tk command window */
+    if(curr_dm_list->aim &&
+       strcmp(rt_vls_addr(&curr_dm_list->aim->name), "mged")){
+#if 1
+      /* This doesn't work because Tk ignores key events if the
+	 text window we're sending to doesn't have the focus which defeats
+	 the purpose. */
+      Status status;
+#if 1
+      eventPtr->xkey.window = (Window)(curr_dm_list->aim->id);
+      eventPtr->xkey.display = (Display *)(curr_dm_list->aim->sp);
+#endif
+      status = XSendEvent((Display *)(curr_dm_list->aim->sp), (Window)(curr_dm_list->aim->id),
+		 True, KeyPressMask, eventPtr);
+#else
+      /* This doesn't properly handle control sequences or even \r */
+      buffer[1] = '\0';
+      rt_vls_printf(&cmd, "insert_text %s %s\n", curr_dm_list->aim->name, buffer);
+      (void)cmdline(&cmd, FALSE);
+#endif
+    }else
+#endif
+      write(dm_pipe[1], buffer, 1);
+
     rt_vls_free(&cmd);
     curr_dm_list = save_dm_list;
 
@@ -1069,8 +1074,20 @@ XEvent *eventPtr;
 
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
+#if 0
+      absolute_rotate[Y] += (mx - omx)/512.0;
+
+      /* wrap around */
+      if(absolute_rotate[Y] < -1.0)
+	absolute_rotate[Y] = absolute_rotate[Y] + 2.0;
+      else if(absolute_rotate[Y] > 1.0)
+	absolute_rotate[Y] = absolute_rotate[Y] - 2.0;
+
+      rt_vls_printf( &cmd, "iknob ax %f\n", (my - omy)/512.0);
+#else
       rt_vls_printf( &cmd, "iknob ax %f; iknob ay %f\n",
 		     (my - omy)/512.0, (mx - omx)/512.0 );
+#endif
       break;
     case VIRTUAL_TRACKBALL_TRANSLATE:
       {
@@ -1086,6 +1103,15 @@ XEvent *eventPtr;
 	else
 	  fx = 0.0;
 
+#if 1
+	if( fy < -1.0 )
+	  fy = -1.0;
+	else if( fy > 1.0 )
+	  fy = 1.0;
+	
+	absolute_slew[Y] = fy;
+	rt_vls_printf( &cmd, "knob aX %f\n", fx);
+#else
 	if(fy > 0.000001)
 	  fy += SL_TOL;
 	else if(fy < 0.000001)
@@ -1094,6 +1120,7 @@ XEvent *eventPtr;
 	  fy = 0.0;
 
 	rt_vls_printf( &cmd, "knob aX %f; knob aY %f\n", fx, fy );
+#endif
       }	     
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
@@ -2044,6 +2071,15 @@ char	**argv;
 	    else
 	      fx = 0.0;
 
+#if 1
+	    if( fy < -1.0 )
+	      fy = -1.0;
+	    else if( fy > 1.0 )
+	      fy = 1.0;
+
+	    absolute_slew[Y] = fy;
+	    rt_vls_printf( &vls, "knob aX %f\n", fx);
+#else
 	    if(fy > 0.000001)
 	      fy += SL_TOL;
 	    else if(fy < 0.000001)
@@ -2052,6 +2088,7 @@ char	**argv;
 	      fy = 0.0;
 
 	    rt_vls_printf( &vls, "knob aX %f; knob aY %f\n", fx, fy);
+#endif
 	    (void)cmdline(&vls, FALSE);
 	    rt_vls_free(&vls);
 	  }
