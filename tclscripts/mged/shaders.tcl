@@ -934,7 +934,7 @@ proc set_stack_defaults { id } {
 	set shader_params($id,stack_len) 0
 }
 
-proc stack_delete { index id } {
+proc stack_delete { index shade_var id } {
 	global shader_params
 
 # destroy the shader subwindow
@@ -946,6 +946,7 @@ proc stack_delete { index id } {
 # adjust the shader list
 	set shader_params($id,stk_$index,window) deleted
 	set shader_params($id,stk_$index,shader_name) ""
+	do_stack_apply $shade_var $id
 }
 
 proc stack_add { shader shade_var id } {
@@ -962,7 +963,7 @@ proc stack_add { shader shade_var id } {
 
 	set index_lab [expr $index + 1]
 	$shader_params($id,window).fr.del.m add command -label "$shader"\
-		-command "stack_delete $index $id"
+		-command "stack_delete $index $shade_var $id"
 
 	switch $shader {
 		plastic {
@@ -1049,7 +1050,7 @@ proc set_stack_values { shade_str id } {
 						if { [string compare $shader_params($id,stk_$i,shader_name) $shader] == 0 } then {
 							set_${shader}_values $sub_str $id,stk_$i
 						} else {
-							stack_delete $i $id
+							stack_delete $i $shader_params($id,shade_var) $id
 							if { [is_good_shader $shader] } then {
 								stack_add $shader $shader_params($id,shade_var) $id
 								set j [expr $shader_params($id,stack_len) - 1 ]
