@@ -1,142 +1,151 @@
 /*
- *			C M A P
- *
- * Mike Muuss, 7/17/82
- * VAX version 10/18/83
- *
- * Compile:	cc cmap.c iklib.o -o cmap
- *
- * Usage:	cmap [flavor]
- *
- * When invoked with no arguments, or with a flavor of 0,
- * the standard ramp color-map is written.
- * Other flavors provide interesting alternatives.
- */
+	SCCS id:	@(#) fbcmap.c	1.4
+	Last edit: 	3/13/85 at 22:13:07	G S M
+	Retrieved: 	8/13/86 at 03:12:58
+	SCCS archive:	/m/cad/fb_utils/RCS/s.fbcmap.c
 
-long cmap[1024];		/* Color map work area */
+*/
+#if ! defined( lint )
+static
+char	sccsTag[] = "@(#) fbcmap.c	1.4	last edit 3/13/85 at 22:13:07";
+#endif
+/*
+	F B C M A P
+
+	Mike Muuss, 7/17/82
+	VAX version 10/18/83
+
+	Conversion to generic frame buffer utility using libfb(3).
+	In the process, the name has been changed to fbclear from ikclear.
+	Gary S. Moss, BRL. 03/12/85
+
+	Compile:	make fbcmap
+
+	Usage:	fbcmap [flavor]
+
+	When invoked with no arguments, or with a flavor of 0,
+	the standard ramp color-map is written.
+	Other flavors provide interesting alternatives.
+ */
+#include <stdio.h>
+#include <fb.h>
+static ColorMap cmap;
+static int	flavor = 0;
 
 main(argc, argv)
 char *argv[];
 {
-	register int i;
-	register int flavor = 0;
-	register int fudge;
+	register int		i;
+	register int		fudge;
+	register ColorMap	*cp = &cmap;
 
-	if( argc > 1 )
-		flavor = atoi(argv[1] );
-
-	ikopen();
+	if( ! pars_Argv( argc, argv ) )
+		{
+		(void) fprintf( stderr, "Usage : fbcmap	[-h]\n" );
+		return	1;
+		}
+	if( fbopen( NULL, APPEND ) == -1 )
+		return	1;
 
 	switch( flavor )  {
-
-	case 0:
-		/* Standard */
-		for( i = 0; i < 256; i++ )  {
-			cmap[i] =
-				( i << (2+20) ) |		/* B */
-				( i << (2+10) ) |		/* G */
-				( i << (2+0 ) );		/* R */
-		}
+	case 0 : /* Standard - Linear color map.			*/
+		(void) fprintf( stderr,
+				"Color map #0, linear (standard).\n"
+				);
+		cp = (ColorMap *) NULL;
 		break;
-	case 1:
-		for( i = 0; i < 256; i++ )  {
-			cmap[i] =
-				( i << (2+20) ) |		/* B */
-				( i << (2+10) ) |		/* G */
-				( i << (2+0 ) );		/* R */
-			swap( &cmap[i] );
-		}
+	case 1 : /* Reverse linear color map.				*/
+		(void) fprintf( stderr,
+				"Color map #1, reverse-linear.\n"
+				);
+		for( i = 0; i < 256; i++ )
+			{
+			cp->cm_red[255-i] =
+			cp->cm_green[255-i] =
+			cp->cm_blue[255-i] = i;
+			}
 		break;
-	case 2:
-		for( i = 0; i < 256; i++ )  {
-			cmap[i] = (
-				( i << (2+20) ) |		/* B */
-				( i << (2+10) ) |		/* G */
-				( i << (2+0 ) )			/* R */
-			) & 0xFFFF;
-		}
-		break;
-	case 3:
-		/* Inverse Standard */
-		for( i = 0; i < 256; i++ )  {
-			cmap[255-i] =
-				( i << (2+20) ) |		/* B */
-				( i << (2+10) ) |		/* G */
-				( i << (2+0 ) );		/* R */
-		}
-		break;
-	case 4:
+	case 2 :
 		/* Experimental correction, for POLAROID 8x10 print film */
-		cmap[0] = 0;		/* BLACK */
+		(void) fprintf( stderr,
+			"Color map #2, corrected for POLAROID 809/891 film.\n"
+				);
+		/* First entry black.					*/
 #define BOOST(point, bias) \
 	((int)((bias)+((float)(point)/256.*(255-(bias)))))
 		for( i = 1; i < 256; i++ )  {
 			fudge = BOOST(i, 70);
-			cmap[i] |= ( fudge << (2+20) );		/* B */
+			cp->cm_red[i] = fudge;		/* B */
 		}
 		for( i = 1; i < 256; i++ )  {
 			fudge = i;
-			cmap[i] |= ( fudge << (2+10) );		/* G */
+			cp->cm_green[i] = fudge;	/* G */
 		}
 		for( i = 1; i < 256; i++ )  {
 			fudge = BOOST( i, 30 );
-			cmap[i] |= ( fudge << (2+0 ) );		/* R */
+			cp->cm_blue[i] = fudge;	/* R */
 		}
 		break;
-	case 5:
-		/* Standard, with low intensities set to black */
+	case 3 : /* Standard, with low intensities set to black.	*/
+		(void) fprintf( stderr,
+				"Color map #3, low 100 entries black.\n"
+				);
 		for( i = 100; i < 256; i++ )  {
-			cmap[i] =
-				( i << (2+20) ) |		/* B */
-				( i << (2+10) ) |		/* G */
-				( i << (2+0 ) );		/* R */
+			cp->cm_red[i] =
+			cp->cm_green[i] =
+			cp->cm_blue[i] = i;
 		}
 		break;
-	case 6:
-		/* Amplify middle of the range, for Moss's dim pictures */
+	case 4 : /* Amplify middle of the range, for Moss's dim pictures */
 #define UPSHIFT	64
-		cmap[0] = 0L;			/* Black */
-		for( i=1; i< 256-UPSHIFT; i++ )  {
+		(void) fprintf( stderr,
+	"Color map #4, amplify middle range to boost dim pictures.\n"
+				);
+		/* First entry black.					*/
+		for( i = 1; i< 256-UPSHIFT; i++ )  {
 			register int j = i + UPSHIFT;
-			cmap[i] =
-				( j << (2+20) ) |		/* B */
-				( j << (2+10) ) |		/* G */
-				( j << (2+0 ) );		/* R */
+			cp->cm_red[i] =
+			cp->cm_green[i] =
+			cp->cm_blue[i] = j;
 		}
-		for( i=256-UPSHIFT; i < 256; i++ )  {
-			cmap[i] = 0x3FFFFFFF;		/* Full Scale */
+		for( i = 256-UPSHIFT; i < 256; i++ )  {
+			cp->cm_red[i] =
+			cp->cm_green[i] =
+			cp->cm_blue[i] = 255;	/* Full Scale */
 		}
 		break;
-
 	default:
-		printf("Sorry, flavor %d not implemented\n", flavor);
-		exit(1);
+		(void) fprintf(	stderr,
+				"Color map #%d, flavor not implemented!\n",
+				flavor
+				);
+		return	1;
+	}
+	return fb_wmap( cp ) == -1;
+}
+
+/*	p a r s _ A r g v ( )
+ */
+int
+pars_Argv( argc, argv )
+register char	**argv;
+	{
+	register int	c;
+	extern int	optind;
+
+	while( (c = getopt( argc, argv, "h" )) != EOF )
+		{
+		switch( c )
+			{
+			case 'h' : /* High resolution frame buffer.	*/
+				setfbsize( 1024 );
+				break;
+			case '?' :
+				return	0;
+			}
+		}
+	if( argv[optind] != NULL )
+		flavor = atoi( argv[optind] );
+	return	1;
 	}
 
-	/*
-	 * Replicate first copy of color map onto second copy,
-	 * and also do the "overlay" portion too.
-	 */
-	 for( i=0; i < 256; i++ )
-		cmap[i+256] = cmap[i+512] = cmap[i+512+256] = cmap[i];
-
-	ikwmap( cmap );
-}
-
-/* For goeffy results only, a short-in-long swapper */
-swap(val)
-long *val;
-{
-	union {
-		long val32;
-		short val16[2];
-	} temp;
-	short tmp;
-
-	temp.val32 = *val;
-
-	tmp = temp.val16[0];
-	temp.val16[0] = temp.val16[1];
-	temp.val16[1] = tmp;
-	*val = temp.val32;
-}
