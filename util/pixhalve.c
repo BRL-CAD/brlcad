@@ -168,7 +168,7 @@ char	**argv;
 
 		/* Ripple down two scanlines, and acquire two more */
 		if( fread( inbuf, 3, file_width, infp ) != file_width )  {
-			exit(0);
+			break;
 		}
 		ripple( rlines, 5 );
 		ripple( glines, 5 );
@@ -177,7 +177,7 @@ char	**argv;
 			inbuf, file_width );
 
 		if( fread( inbuf, 3, file_width, infp ) != file_width )  {
-			exit(0);
+			break;
 		}
 		ripple( rlines, 5 );
 		ripple( glines, 5 );
@@ -186,6 +186,7 @@ char	**argv;
 			inbuf, file_width );
 
 	}
+	exit(0);
 }
 
 separate( rop, gop, bop, cp, num )
@@ -251,6 +252,8 @@ int	num;
 	d = lines[3];
 	e = lines[4];
 
+#if !defined(vax) && !defined(gould) && !defined(sun)
+	/* This version vectorizes */
 #	include "noalias.h"
 	for( i=0; i < num; i++ )  {
 		j = i*2;
@@ -262,4 +265,22 @@ int	num;
 			  e[j+0] + 2*e[j+1] + 4*e[j+2] + 2*e[j+3] +   e[j+4]
 			) / 100;
 	}
+#else
+	/* This version is better for non-vectorizing machines */
+	for( i=0; i < num; i++ )  {
+		j = i*2;
+		op[i] = (
+			  a[0] + 2*a[1] + 4*a[2] + 2*a[3] +   a[4] +
+			2*b[0] + 4*b[1] + 8*b[2] + 4*b[3] + 2*b[4] +
+			4*c[0] + 8*c[1] +16*c[2] + 8*c[3] + 4*c[4] +
+			2*d[0] + 4*d[1] + 8*d[2] + 4*d[3] + 2*d[4] +
+			  e[0] + 2*e[1] + 4*e[2] + 2*e[3] +   e[4]
+			) / 100;
+		a += 2;
+		b += 2;
+		c += 2;
+		d += 2;
+		e += 2;
+	}
+#endif
 }
