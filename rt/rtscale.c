@@ -243,6 +243,7 @@ fastf_t	m_len;
 	v_free_space = m_free_space / m2view[15];
 	v_char_width = v_free_space/nchar;
 	m_char_width = v_char_width / v2mod[15];
+	v_len = m_len / m2view[15];
 
 	v_x_offset = 0.1 * v_len;
 	v_y_offset = -(2 * v_tick_hgt + v_char_width);
@@ -263,7 +264,8 @@ fastf_t	m_len;
 	v2symbol[15] = 1;
 
 	/* Draw the basic scale with the two freebie end ticks.  Then,
-	 * if nticks is 0, nothing further is needed.
+	 * if nticks is 0, nothing further is needed.  If nticks is
+	 * greater than zero, then tickmarks must be made.
 	 */
 
 	ret = drawscale(outfp, m_startpt, m_len, m_tick_hgt, m_lenv, m_hgtv, m_inv_hgtv);
@@ -272,27 +274,27 @@ fastf_t	m_len;
 		return(-1);
 	}
 
-	if(nticks <= 0 )  {
-		return( 0 );
-	}
-	
-	/* Now make the ticks within the basic scale.  The ticks should
-	 * be half the height of the end ticks to be distinguishable.
-	 */
+	if(nticks >  0 )  {
 
-	for( tickno = 1; tickno < nticks; tickno++ )  {
+		/* Now make the ticks within the basic scale.  The ticks should
+		 * be half the height of the end ticks to be distinguishable.
+		 */
 
-		VJOIN1(centerpt, m_startpt, m_len * tickno/nticks, m_lenv);
+		for( tickno = 1; tickno < nticks; tickno++ )  {
+
+			VJOIN1(centerpt, m_startpt, m_len * tickno/nticks, m_lenv);
 /* VPRINT("centerpt", centerpt);
  */
 
-		ret = drawticks(outfp, centerpt, m_hgtv, m_tick_hgt * 0.5, m_inv_hgtv );
-		if( ret < 0 )  {
-			fprintf(stderr, "layout: drawtick skipping tickno %d\n",
-				tickno);
+			ret = drawticks(outfp, centerpt, m_hgtv, m_tick_hgt * 0.5, m_inv_hgtv );
+			if( ret < 0 )  {
+				fprintf(stderr, "layout: drawtick skipping tickno %d\n",
+					tickno);
+			}
 		}
 
 	}
+	
 
 fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %g, %g, %g, m_char_width=%g\n",
         label, V3ARGS(m_label_st), m_char_width);
@@ -301,7 +303,7 @@ mat_print("v2symbol", v2symbol);
 
 	/* Now put the label on the plot. */
 	tp_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
-
+	return( 0 );		/* OK */
 }
 
 /*		R E A D _ R T _ F I L E
