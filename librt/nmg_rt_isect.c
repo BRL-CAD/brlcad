@@ -76,6 +76,45 @@ point_t plane_pt;
 }
 
 
+nmg_rt_print_hitmiss(a_hit)
+struct hitmiss *a_hit;
+{
+	NMG_CK_HITMISS(a_hit);
+	rt_log("   dist:%12g pt(%g %g %g) %s state:",
+		a_hit->hit.hit_dist,
+		a_hit->hit.hit_point[0],
+		a_hit->hit.hit_point[1],
+		a_hit->hit.hit_point[2],
+		rt_identify_magic(*(int*)a_hit->hit.hit_private) );
+
+	switch(a_hit->in_out) {
+	case HMG_HIT_IN_IN:
+		rt_log("IN_IN"); break;
+	case HMG_HIT_IN_OUT:
+		rt_log("IN_OUT"); break;
+	case HMG_HIT_OUT_IN:
+		rt_log("OUT_IN"); break;
+	case HMG_HIT_OUT_OUT:
+		rt_log("OUT_OUT"); break;
+	case HMG_HIT_IN_ON:
+		rt_log("IN_ON"); break;
+	case HMG_HIT_ON_IN:
+		rt_log("ON_IN"); break;
+	case HMG_HIT_OUT_ON:
+		rt_log("OUT_ON"); break;
+	case HMG_HIT_ON_OUT:
+		rt_log("ON_OUT"); break;
+	default:
+		rt_log("?_?\n"); break;
+	}
+
+	switch (a_hit->start_stop) {
+	case NMG_HITMISS_SEG_IN:	rt_log(" SEG_START"); break;
+	case NMG_HITMISS_SEG_OUT:	rt_log(" SEG_STOP"); break;
+	}
+	rt_log("\n");
+
+}
 static void print_hitlist(hl)
 struct hitmiss *hl;
 {
@@ -84,37 +123,10 @@ struct hitmiss *hl;
 	if (!(rt_g.NMG_debug & DEBUG_RT_ISECT))
 		return;
 
-	rt_log("nmg/ray hit list\n\tRay_hit_dist	(hitpoint)	struct type	state\n");
-
+	rt_log("nmg/ray hit list\n\n");
+f
 	for (RT_LIST_FOR(a_hit, hitmiss, &(hl->l))) {
-		NMG_CK_HITMISS(a_hit);
-		rt_log("\t%12g  (%g %g %g) %s ",
-			a_hit->hit.hit_dist,
-			a_hit->hit.hit_point[0],
-			a_hit->hit.hit_point[1],
-			a_hit->hit.hit_point[2],
-			rt_identify_magic(*(int*)a_hit->hit.hit_private) );
-
-		switch(a_hit->in_out) {
-		case HMG_HIT_IN_IN:
-			rt_log("IN_IN\n"); break;
-		case HMG_HIT_IN_OUT:
-			rt_log("IN_OUT\n"); break;
-		case HMG_HIT_OUT_IN:
-			rt_log("OUT_IN\n"); break;
-		case HMG_HIT_OUT_OUT:
-			rt_log("OUT_OUT\n"); break;
-		case HMG_HIT_IN_ON:
-			rt_log("IN_ON\n"); break;
-		case HMG_HIT_ON_IN:
-			rt_log("ON_IN\n"); break;
-		case HMG_HIT_OUT_ON:
-			rt_log("OUT_ON\n"); break;
-		case HMG_HIT_ON_OUT:
-			rt_log("ON_OUT\n"); break;
-		default:
-			rt_log("?_?\n"); break;
-		}
+		nmg_rt_print_hitmiss(a_hit);
 	}
 }
 
@@ -538,17 +550,19 @@ struct edgeuse *eu;
 	vect_t edge_left;
 	vect_t norm;
 
-eu_p = RT_LIST_PNEXT_CIRC(edgeuse, eu);
-rt_log("edge_hit_ray_state(%g %g %g -> %g %g %g _vs_ %g %g %g)\n",
-	eu->vu_p->v_p->vg_p->coord[0],
-	eu->vu_p->v_p->vg_p->coord[1],
-	eu->vu_p->v_p->vg_p->coord[2],
-	eu_p->vu_p->v_p->vg_p->coord[0],
-	eu_p->vu_p->v_p->vg_p->coord[1],
-	eu_p->vu_p->v_p->vg_p->coord[2],
-	rd->rp->r_dir[0],
-	rd->rp->r_dir[1],
-	rd->rp->r_dir[2]);
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		eu_p = RT_LIST_PNEXT_CIRC(edgeuse, eu);
+		rt_log("edge_hit_ray_state(%g %g %g -> %g %g %g _vs_ %g %g %g)\n",
+			eu->vu_p->v_p->vg_p->coord[0],
+			eu->vu_p->v_p->vg_p->coord[1],
+			eu->vu_p->v_p->vg_p->coord[2],
+			eu_p->vu_p->v_p->vg_p->coord[0],
+			eu_p->vu_p->v_p->vg_p->coord[1],
+			eu_p->vu_p->v_p->vg_p->coord[2],
+			rd->rp->r_dir[0],
+			rd->rp->r_dir[1],
+			rd->rp->r_dir[2]);
+	}
 
 	eu_p = eu->e_p->eu_p;
 	do {
@@ -558,18 +572,27 @@ rt_log("edge_hit_ray_state(%g %g %g -> %g %g %g _vs_ %g %g %g)\n",
 				fu = fu->fumate_p;
 
 			if (fu->orientation != OT_SAME) {
-				rt_log("%s[%d]: I can't seem to find an OT_SAME faceuse\n", __FILE__, __LINE__);
-				rt_bomb("I give up\n");
+				rt_log("%s[%d]: I can't seem to find an OT_SAME faceuse\nThis must be a `dangling' face  I'll skip it\n", __FILE__, __LINE__);
+				goto next_edgeuse;
 			}
 
 			if (nmg_find_eu_leftvec(edge_left, eu_p)) {
 				rt_log("edgeuse not part of faceuse");
 				goto next_edgeuse;
 			}
+
+			if (! (NMG_3MANIFOLD & 
+			       NMG_MANIFOLDS(rd->rd_m->manifolds, fu->f_p)) ){
+				rt_log("This is not a 3-Manifold face.  I'll skip it\n");
+				goto next_edgeuse;
+			}
+
 			cos_angle = VDOT(edge_left, rd->rp->r_dir);
 
-			rt_log("left_vect:(%g %g %g)  cos_angle:%g\n",
-				edge_left[0], edge_left[1], edge_left[2], cos_angle);
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				rt_log("left_vect:(%g %g %g)  cos_angle:%g\n",
+					edge_left[0], edge_left[1],
+					edge_left[2], cos_angle);
 
 			if (cos_angle < min_cos_angle) {
 				min_cos_angle = cos_angle;
@@ -592,8 +615,11 @@ next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 	/* Compute the ray state on the inbound side */
 	NMG_GET_FU_NORMAL(norm, min_fu);
 	cos_angle = VDOT(norm, rd->rp->r_dir);
-VPRINT("\nmin face normal", norm);
-rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
+
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		VPRINT("\nmin face normal", norm);
+		rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
+	}
 
 	if (RT_VECT_ARE_PERP(cos_angle, rd->tol))
 		in_out |= NMG_RAY_STATE_ON << 4;
@@ -607,8 +633,10 @@ rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
 	NMG_GET_FU_NORMAL(norm, max_fu);
 	cos_angle = VDOT(norm, rd->rp->r_dir);
 
-	VPRINT("\nmax face normal", norm);
-	rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		VPRINT("\nmax face normal", norm);
+		rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
+	}
 
 	if (RT_VECT_ARE_PERP(cos_angle, rd->tol))
 		in_out |= NMG_RAY_STATE_ON;
@@ -618,28 +646,29 @@ rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
 		in_out |= NMG_RAY_STATE_INSIDE;
 
 
-rt_log("in_out: 0x%02x/", in_out);
-	switch(in_out) {
-	case HMG_HIT_IN_IN:
-		rt_log("IN_IN\n"); break;
-	case HMG_HIT_IN_OUT:
-		rt_log("IN_OUT\n"); break;
-	case HMG_HIT_OUT_IN:
-		rt_log("OUT_IN\n"); break;
-	case HMG_HIT_OUT_OUT:
-		rt_log("OUT_OUT\n"); break;
-	case HMG_HIT_IN_ON:
-		rt_log("IN_ON\n"); break;
-	case HMG_HIT_ON_IN:
-		rt_log("ON_IN\n"); break;
-	case HMG_HIT_OUT_ON:
-		rt_log("OUT_ON\n"); break;
-	case HMG_HIT_ON_OUT:
-		rt_log("ON_OUT\n"); break;
-	default:
-		rt_log("?_?\n"); break;
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		rt_log("in_out: 0x%02x/", in_out);
+		switch(in_out) {
+		case HMG_HIT_IN_IN:
+			rt_log("IN_IN\n"); break;
+		case HMG_HIT_IN_OUT:
+			rt_log("IN_OUT\n"); break;
+		case HMG_HIT_OUT_IN:
+			rt_log("OUT_IN\n"); break;
+		case HMG_HIT_OUT_OUT:
+			rt_log("OUT_OUT\n"); break;
+		case HMG_HIT_IN_ON:
+			rt_log("IN_ON\n"); break;
+		case HMG_HIT_ON_IN:
+			rt_log("ON_IN\n"); break;
+		case HMG_HIT_OUT_ON:
+			rt_log("OUT_ON\n"); break;
+		case HMG_HIT_ON_OUT:
+			rt_log("ON_OUT\n"); break;
+		default:
+			rt_log("?_?\n"); break;
+		}
 	}
-
 	return in_out;
 }
 

@@ -1070,21 +1070,8 @@ struct soltab		*stp;
 		a_hit = RT_LIST_FIRST(hitmiss, &rd->rd_hit);
 		NMG_CK_HITMISS(a_hit);
 
-		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
-			rt_log("build_seg w/ ray_hit_distance %g (%g %g %g)",
-				a_hit->hit.hit_dist,
-				a_hit->hit.hit_point[0],
-				a_hit->hit.hit_point[1],
-				a_hit->hit.hit_point[2]);
-
-			switch ( *(int*)a_hit->hit.hit_private) {
-			case NMG_FACE_MAGIC: rt_log("\tface\n"); break;
-			case NMG_EDGE_MAGIC: rt_log("\tedge\n"); break;
-			case NMG_VERTEX_MAGIC: rt_log("\tvertex\n"); break;
-			default : rt_log(" hit unknown magic (%d)\n", 
-				*(int*)a_hit->hit.hit_private); break;
-			}
-		}
+		if (rt_g.NMG_debug & DEBUG_RT_SEGS)
+			nmg_rt_print_hitmiss(a_hit);
 
 
 		switch (*(int *)a_hit->hit.hit_private) {
@@ -1140,7 +1127,7 @@ struct ray_data	*rd;
 		return(0);			/* MISS */
 	} else if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 
-		rt_log("\nsorted nmg/ray hit list\n");
+		rt_log("\nnmg_ray_segs(rd)\nsorted nmg/ray hit list\n");
 
 		for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 			rt_log("ray_hit_distance %g (%g %g %g)",
