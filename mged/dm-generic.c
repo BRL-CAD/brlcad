@@ -20,7 +20,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 
-#ifdef DM_X
+#ifdef DM_X 
 #  include "tk.h"
 #  include <X11/Xutil.h>
 #  include "dm_xvars.h"

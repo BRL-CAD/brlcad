@@ -25,7 +25,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <sys/types.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
        
 #ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>

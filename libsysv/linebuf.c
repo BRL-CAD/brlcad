@@ -15,6 +15,10 @@ void
 port_setlinebuf( fp )
 FILE *fp;
 {
+#ifdef WIN32
+	(void) setvbuf( fp, (char *) NULL, _IOLBF, BUFSIZ );
+#else
+
 #ifdef BSD
 	setlinebuf( fp );
 #else
@@ -26,5 +30,6 @@ FILE *fp;
 		if( setlinebuf( fp ) != 0 )
 			perror("setlinebuf(fp)");
 #	endif
+#endif
 #endif
 }

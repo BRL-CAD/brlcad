@@ -39,6 +39,11 @@ static const char RCSid[] = "$Header$";
 #include "./nirt.h"
 #include "./usrfmt.h"
 
+#ifdef WIN32
+#include <fcntl.h>
+#endif
+
+
 
 extern int	rt_bot_minpieces;	/* from g_bot.c */
 
@@ -332,6 +337,11 @@ char **argv;
     void		   show_menu();
     void		   print_item();
     void		   shoot();
+
+	#ifdef WIN32
+	_fmode = _O_BINARY;
+	#endif
+
 
     BU_LIST_INIT(&script_list);
 

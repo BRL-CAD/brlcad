@@ -43,7 +43,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern int cmd_name();
 
 static char	red_tmpfil[17];
+#ifndef WIN32
 static char	*red_tmpfil_init = "/tmp/GED.aXXXXXX";
+#else
+static char	*red_tmpfil_init = "C:\\GED.aXXXXXX";
+#endif
 static char	red_tmpcomb[16];
 static char	*red_tmpcomb_init = "red_tmp.aXXXXXX";
 static char	delims[] = " \t/";	/* allowable delimiters */
@@ -102,7 +106,7 @@ char **argv;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 		/* Make a file for the text editor */
-#if 0
+#ifdef WIN32
 		(void)mktemp( red_tmpfil );
 #else
 		if ((fd = mkstemp(red_tmpfil)) < 0) {
@@ -124,7 +128,7 @@ char **argv;
 	{
 		comb = (struct rt_comb_internal *)NULL;
 		/* Make a file for the text editor */
-#if 0
+#ifdef WIN32
 		(void)mktemp( red_tmpfil );
 #else
 		if ((fd = mkstemp(red_tmpfil)) < 0) {

@@ -21,11 +21,13 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifndef WIN32
 #ifdef BSD
 #undef BSD
 #include <sys/param.h>
 #else
 #include <sys/param.h>
+#endif
 #endif
 
 #include <ctype.h>

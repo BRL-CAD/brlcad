@@ -2025,6 +2025,7 @@ char *params;
 
 		bu_free( keyword, "bu_key_val_to_vls() keyword");
 		bu_free( value, "bu_key_val_to_vls() value");
+
 	}
 	return( 0 );
 }

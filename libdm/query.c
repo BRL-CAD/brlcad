@@ -7,7 +7,9 @@
 #include "tk.h"
 #else
 #include "tcl.h"
+#ifndef WIN32
 #include <X11/Xlib.h>
+#endif
 #endif
 
 #include "machine.h"
@@ -24,6 +26,11 @@ dm_validXType(char	*dpy_string,
 	      char	*name)
 {
 	int val = 0;
+
+#ifdef WIN32
+  if(!strcmp(name, "ogl"))
+     return 1;
+#else
 #if !defined(USE_MESA_GL) && defined(DM_OGL)
 	int return_val;
 #endif
@@ -62,6 +69,8 @@ dm_validXType(char	*dpy_string,
 
 #endif
 
+#endif /* WIN32*/
+
   return val;
 }
 
@@ -69,6 +78,11 @@ char *
 dm_bestXType(char *dpy_string)
 {
 	char *name = (char *)NULL;
+
+#ifdef WIN32
+  return "ogl";
+#else
+
 #if !defined(USE_MESA_GL) && defined(DM_OGL)
 	int return_val;
 #endif
@@ -102,6 +116,7 @@ dm_bestXType(char *dpy_string)
 	XCloseDisplay(dpy);
 
 #endif
+#endif /* WIN32 */
 
 	return name;
 }

@@ -41,6 +41,13 @@
 #include "bn.h"
 #include "raytrace.h"
 
+/*
+NOTES:
+	Changed near to near1 for win32 compatibility 
+	Changed far to far1 for win32 compatibility 
+*/
+
+
 int Vo_Init();
 
 static int vo_open_tcl();
@@ -2415,8 +2422,8 @@ static void
 vo_persp_mat(mat_t	m,
 	     fastf_t	fovy,
 	     fastf_t	aspect,
-	     fastf_t	near,
-	     fastf_t	far,
+	     fastf_t	near1,
+	     fastf_t	far1,
 	     fastf_t	backoff)
 {
 	mat_t	m2, tran;
@@ -2426,8 +2433,8 @@ vo_persp_mat(mat_t	m,
 	MAT_IDN(m2);
 	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
 	m2[0] = m2[5]/aspect;
-	m2[10] = (far+near) / (far-near);
-	m2[11] = 2*far*near / (far-near);	/* This should be negative */
+	m2[10] = (far1+near1) / (far1-near1);
+	m2[11] = 2*far1*near1 / (far1-near1);	/* This should be negative */
 
 	m2[14] = -1;		/* XXX This should be positive */
 	m2[15] = 0;

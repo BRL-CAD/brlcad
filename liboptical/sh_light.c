@@ -995,11 +995,19 @@ light_cleanup()
  *  a boolean, which could account for distance, etc.
  */
 
+#ifndef WIN32
 int
 light_hit(ap, PartHeadp, finished_segs )
 struct application *ap;
 struct partition *PartHeadp;
 struct seg *finished_segs;
+#else
+int
+light_hit(
+struct application *ap,
+struct partition *PartHeadp,
+struct seg *finished_segs)
+#endif
 {
 	register struct partition *pp;
 	register struct region	*regp = NULL;
@@ -1352,9 +1360,14 @@ out:
  *  the light, so return light_visible = TRUE.
  */
 /* ARGSUSED */
+#ifndef WIN32
 int
 light_miss(ap)
 register struct application *ap;
+#else
+int
+light_miss(register struct application *ap)
+#endif
 {
 	struct light_specific *lsp = (struct light_specific *)(ap->a_uptr);
 

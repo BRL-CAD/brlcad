@@ -69,7 +69,11 @@ void set_tran();
 void	aexists();
 
 static char	tmpfil[17];
+#ifndef WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
+#else
+static char	*tmpfil_init = "C:\\GED.aXXXXXX";
+#endif
 
 int		newedge;		/* new edge for arb editing */
 
@@ -356,7 +360,7 @@ char    *argv[];
   }
 
   strcpy(tmpfil, tmpfil_init);
-#if 0
+#ifdef WIN32
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
 #else

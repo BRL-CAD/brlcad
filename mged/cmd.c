@@ -34,7 +34,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
+#ifndef WIN32
 #include <sys/time.h>
+#endif
 #include <time.h>
 
 #ifdef DM_X
@@ -130,6 +132,10 @@ int mged_cmd();
 struct bu_vls tcl_output_hook;
 
 Tcl_Interp *interp = NULL;
+
+#ifdef WIN32
+void gettimeofday(struct timeval *tp, struct timezone *tzp);
+#endif
 
 #ifdef DM_X
 Tk_Window tkwin;
@@ -340,7 +346,9 @@ static struct cmdtab cmdtab[] = {
 	{"plot", f_plot},
 	{"pl", f_pl},
 	{"polybinout", f_polybinout},
+#ifdef TCP_FILES
 	{"pov", cmd_pov},
+#endif
 	{"prcolor", cmd_prcolor},
 	{"prefix", f_prefix},
 	{"press", f_press},
@@ -483,10 +491,14 @@ static struct cmdtab cmdtab[] = {
  * Gets the output from bu_log and appends it to clientdata vls.
  */
 
+#ifndef WIN32
 HIDDEN int
 output_catch(clientdata, str)
 	genptr_t clientdata;
 	genptr_t str;
+#else
+	HIDDEN int output_catch(genptr_t clientdata, genptr_t str)
+#endif
 {
 	register struct bu_vls *vp = (struct bu_vls *)clientdata;
 	register int len;
@@ -534,10 +546,15 @@ stop_catching_output(vp)
  * building.
  */
 
+#ifndef WIN32
 int
 gui_output(clientData, str)
 	genptr_t clientData;
 	genptr_t str;
+#else
+int
+	gui_output(genptr_t clientData, genptr_t str)
+#endif
 {
 	Tcl_DString tclcommand;
 	Tcl_Obj *save_result;
@@ -706,13 +723,23 @@ mged_setup()
 {
 	struct bu_vls str;
 	char *filename;
-
+	
 	/* The following is for GUI output hooks: contains name of function to
 	   run with output */
 	bu_vls_init(&tcl_output_hook);
 
 	/* Locate the BRL-CAD-specific Tcl scripts */
 	filename = bu_brlcad_path( "" );
+#ifdef WIN32
+	{
+	  /* XXX - nasty little hack to convert paths */
+	  int i;
+	  strcat(filename,"/");
+	  for (i=0;i<strlen(filename);i++) {
+	    if(filename[i]=='\\') 
+	      filename[i]='/'; }
+	}
+#endif
 
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
@@ -815,6 +842,17 @@ cmd_setup()
 
 		/* Locate the BRL-CAD-specific Tcl scripts */
 		pathname = bu_brlcad_path("");
+
+#ifdef WIN32
+	{
+		/* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
+	int i;
+	strcat(pathname,"/");
+	for (i=0;i<strlen(pathname);i++) {
+		if(pathname[i]=='\\') 
+			pathname[i]='/'; }
+	}
+#endif
 
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "source %stclscripts/mged/tree.tcl", pathname);
@@ -1514,6 +1552,8 @@ f_comm(clientData, interp, argc, argv)
 	char	**argv;
 {
 
+#ifndef WIN32
+
 	register int pid, rpid;
 	int retcode;
 
@@ -1539,6 +1579,7 @@ f_comm(clientData, interp, argc, argv)
 		;
 
 	Tcl_AppendResult(interp, "!\n", (char *)NULL);
+#endif
 
 	return TCL_OK;
 }
@@ -1590,8 +1631,10 @@ f_sync(clientData, interp, argc, argv)
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
-
+// XXXXXXXXXXXXXXX FIX LATER XXXXXXXXXXXXXXXXXx
+#ifndef WIN32
 	sync();
+#endif
     
 	return TCL_OK;
 }
@@ -3425,6 +3468,22 @@ cmd_bot_decimate( ClientData	clientData,
 	CHECK_DBI_NULL;
 	return wdb_bot_decimate_cmd( wdbp, interp, argc, argv );
 }
+
+#ifdef WIN32
+/* limited to seconds only */
+void gettimeofday(struct timeval *tp, struct timezone *tzp)
+{
+
+	time_t ltime;
+
+	time( &ltime );
+
+	tp->tv_sec = ltime;
+	tp->tv_usec = 0;
+
+}
+#endif
+
 
 #if USE_SURVICE_MODS
 int

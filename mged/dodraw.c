@@ -238,11 +238,19 @@ hack_for_lee()
  *
  *  This routine must be prepared to run in parallel.
  */
+#ifndef WIN32
 HIDDEN union tree *mged_wireframe_region_end( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 genptr_t		client_data;
+#else
+HIDDEN union tree *mged_wireframe_region_end(
+register struct db_tree_state	*tsp,
+struct db_full_path	*pathp,
+union tree		*curtree,
+genptr_t		client_data)
+#endif
 {
 	return( curtree );
 }
@@ -252,11 +260,16 @@ genptr_t		client_data;
  *
  *  This routine must be prepared to run in parallel.
  */
+#ifndef WIN32
 HIDDEN union tree *mged_wireframe_leaf( tsp, pathp, ip, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct rt_db_internal	*ip;
 genptr_t		client_data;
+#else
+HIDDEN union tree *mged_wireframe_leaf(struct db_tree_state *tsp,struct db_full_path *pathp,
+struct rt_db_internal *ip,genptr_t client_data)
+#endif
 {
 	union tree	*curtree;
 	int		dashflag;		/* draw with dashed lines */
@@ -339,12 +352,21 @@ static struct bn_vlblock	*mged_draw_edge_uses_vbp;
  *  further processing of this region.
  *  A hack to view polygonal models (converted from FASTGEN) more rapidly.
  */
+#ifndef WIN32
 int
 mged_nmg_region_start( tsp, pathp, combp, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 const struct rt_comb_internal *combp;
 genptr_t client_data;
+#else
+int
+mged_nmg_region_start(
+struct db_tree_state	*tsp,
+struct db_full_path	*pathp,
+const struct rt_comb_internal *combp,
+genptr_t client_data)
+#endif
 {
 	union tree		*tp;
 	struct directory	*dp;
@@ -441,11 +463,19 @@ out:
  *
  *  This routine must be prepared to run in parallel.
  */
+#ifndef WIN32
 HIDDEN union tree *mged_nmg_region_end( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 genptr_t client_data;
+#else
+HIDDEN union tree *mged_nmg_region_end(
+register struct db_tree_state	*tsp,
+struct db_full_path	*pathp,
+union tree		*curtree,
+genptr_t client_data)
+#endif
 {
 	struct nmgregion	*r;
 	struct bu_list		vhead;
@@ -1269,11 +1299,19 @@ static union tree	*mged_facetize_tree;
  *
  *  This routine must be prepared to run in parallel.
  */
+#ifndef WIN32
 HIDDEN union tree *mged_facetize_region_end( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 genptr_t		client_data;
+#else
+HIDDEN union tree *mged_facetize_region_end(
+register struct db_tree_state	*tsp,
+struct db_full_path	*pathp,
+union tree		*curtree,
+genptr_t		client_data)
+#endif
 {
 	struct bu_list		vhead;
 

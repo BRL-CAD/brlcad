@@ -32,7 +32,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-_LOCAL_ int	stk_open(),
+_LOCAL_ int	stk_open();
 		stk_close(),
 		stk_clear(),
 		stk_read(),
@@ -52,6 +52,7 @@ _LOCAL_ int	stk_open(),
 		stk_flush(),
 		stk_free(),
 		stk_help();
+
 
 /* This is the ONLY thing that we normally "export" */
 FBIO stk_interface =  {

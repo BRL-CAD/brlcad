@@ -39,7 +39,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <math.h>
 #include <signal.h>
-#include <sys/time.h>		/* For struct timeval */
+#ifndef WIN32
+#  include <sys/time.h>		/* For struct timeval */
+#endif
 #include <sys/stat.h>		/* for chmod() */
 
 #include "tcl.h"
@@ -58,6 +60,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./qray.h"
 #include "./cmd.h"
 
+#ifdef WIN32
+#  include <fcntl.h>
+#endif
+
 extern int mged_svbase();
 extern void set_perspective(); /* from set.c */
 /* from ged.c -- used to open databases quietly */
@@ -69,13 +75,30 @@ static int tree_walk_needed;
 struct run_rt head_run_rt;
 
 struct rtcheck {
-       int			fd;
-       FILE			*fp;
+#ifdef WIN32
+	HANDLE			fd;
+	HANDLE			hProcess;
+	DWORD			pid;
+#  ifdef TCL_OK
+	Tcl_Channel		chan;
+#  else
+	genptr_t chan;
+#  endif
+#else
+       int			fd;    
        int			pid;
+#endif
+	   FILE			*fp;
        struct bn_vlblock	*vbp;
        struct bu_list		*vhead;
        double			csize;  
 };
+//Tcl_Channel chan;
+#ifdef TCL_OK
+	Tcl_Channel chan1;
+#else
+	genptr_t chan1;
+#endif
 
 static vect_t	rtif_eye_model;
 static mat_t	rtif_viewrot;
@@ -379,23 +402,16 @@ cmd_rtabort(ClientData clientData,
 	return dgo_rtabort_cmd(dgop, interp, argc, argv);
 }
 
-#if 1
+#ifndef WIN32
 static void
 rt_output_handler(ClientData clientData, int mask)
 {
 	struct run_rt *run_rtp = (struct run_rt *)clientData;
 	int count;
-#if 0
 	char line[RT_MAXLINE+1];
 
 	/* Get data from rt */
 	if ((count = read((int)run_rtp->fd, line, RT_MAXLINE)) == 0) {
-#else
-	char line[5120+1];
-
-	/* Get data from rt */
-	if ((count = read((int)run_rtp->fd, line, 5120)) == 0) {
-#endif
 		int retcode;
 		int rpid;
 		int aborted;
@@ -406,6 +422,56 @@ rt_output_handler(ClientData clientData, int mask)
 		/* wait for the forked process */
 		while ((rpid = wait(&retcode)) != run_rtp->pid && rpid != -1)
 			pr_wait_status(retcode);
+
+		aborted = run_rtp->aborted;
+
+		/* free run_rtp */
+ 		BU_LIST_DEQUEUE(&run_rtp->l);
+		bu_free((genptr_t)run_rtp, "rt_output_handler: run_rtp");
+
+		if (aborted)
+			bu_log("Raytrace aborted.\n");
+		else
+			bu_log("Raytrace complete.\n");
+		return;
+	}
+
+	line[count] = '\0';
+
+	/*XXX For now just blather to stderr */
+	bu_log("%s", line);
+}
+#else
+void
+rt_output_handler(ClientData clientData, int mask)
+{
+	struct run_rt *run_rtp = (struct run_rt *)clientData;
+	int count;
+#if 0
+	char line[RT_MAXLINE+1];
+
+	/* Get data from rt */
+	if ((!ReadFile(run_rtp->fd, line, RT_MAXLINE,&count,0))) {
+#else
+	char line[5120+1];
+	
+
+	/* Get data from rt */
+	if ((!ReadFile(run_rtp->fd, line, 5120,&count,0))) {
+#endif
+		int aborted;
+
+		Tcl_DeleteChannelHandler(run_rtp->chan,rt_output_handler,(ClientData)run_rtp);
+		CloseHandle(run_rtp->fd);
+
+		/* wait for the forked process */
+
+		WaitForSingleObject( run_rtp->hProcess, INFINITE );
+		
+		if(GetLastError() == ERROR_PROCESS_ABORTED)
+		{
+			run_rtp->aborted = 1; 
+		}
 
 		aborted = run_rtp->aborted;
 
@@ -487,7 +553,7 @@ vect_t eye_model;
   }
 }
 
-#if 1
+#ifndef WIN32
 /*
  *			R U N _ R T
  */
@@ -550,6 +616,126 @@ run_rt()
 	run_rtp->pid = pid;
 
 	Tcl_CreateFileHandler(run_rtp->fd, TCL_READABLE,
+			      rt_output_handler, (ClientData)run_rtp);
+
+	return 0;
+}
+#else
+run_rt()
+{
+	register struct solid *sp;
+	register int i;
+	FILE *fp_in;
+	HANDLE pipe_in[2],hSaveStdin,pipe_inDup;
+	HANDLE pipe_err[2],hSaveStderr,pipe_errDup;
+	vect_t eye_model;
+	struct run_rt	*run_rtp;
+
+   STARTUPINFO si = {0};
+   PROCESS_INFORMATION pi = {0};
+   SECURITY_ATTRIBUTES sa          = {0};
+   char line[2048];
+   char name[256];
+
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+
+	// Save the handle to the current STDOUT.  
+	hSaveStderr = GetStdHandle(STD_ERROR_HANDLE);  
+	
+	// Create a pipe for the child process's STDOUT.  
+	CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
+
+	// Set a write handle to the pipe to be STDOUT.  
+	SetStdHandle(STD_ERROR_HANDLE, pipe_err[1]);  
+
+	// Create noninheritable read handle and close the inheritable read handle. 
+    DuplicateHandle( GetCurrentProcess(), pipe_err[0],
+        GetCurrentProcess(),  &pipe_errDup , 
+		0,  FALSE,
+        DUPLICATE_SAME_ACCESS );
+	CloseHandle( pipe_err[0] );
+	
+	// The steps for redirecting child process's STDIN: 
+	//     1.  Save current STDIN, to be restored later. 
+	//     2.  Create anonymous pipe to be STDIN for child process. 
+	//     3.  Set STDIN of the parent to be the read handle to the 
+	//         pipe, so it is inherited by the child process. 
+	//     4.  Create a noninheritable duplicate of the write handle, 
+	//         and close the inheritable write handle.  
+
+	// Save the handle to the current STDIN. 
+	hSaveStdin = GetStdHandle(STD_INPUT_HANDLE);  
+
+	// Create a pipe for the child process's STDIN.  
+	CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
+	// Set a read handle to the pipe to be STDIN.  
+	SetStdHandle(STD_INPUT_HANDLE, pipe_in[0]);
+	// Duplicate the write handle to the pipe so it is not inherited.  
+	DuplicateHandle(GetCurrentProcess(), pipe_in[1], 
+		GetCurrentProcess(), &pipe_inDup, 
+		0, FALSE,                  // not inherited       
+		DUPLICATE_SAME_ACCESS ); 
+	CloseHandle(pipe_in[1]); 
+
+
+   si.cb = sizeof(STARTUPINFO);
+   si.lpReserved = NULL;
+   si.lpReserved2 = NULL;
+   si.cbReserved2 = 0;
+   si.lpDesktop = NULL;
+   si.dwFlags = 0;
+   si.dwFlags = STARTF_USESTDHANDLES;
+   si.hStdInput   = pipe_in[0];
+   si.hStdOutput  = pipe_err[1];
+   si.hStdError   = pipe_err[1];
+
+
+   sprintf(line,"%s ",rt_cmd_vec[0]);
+   for(i=1;i<rt_cmd_vec_len;i++) {
+	   sprintf(name,"%s ",rt_cmd_vec[i]);
+	   strcat(line,name); }
+	   
+
+   if(CreateProcess( NULL,
+                     line,
+                     NULL,
+                     NULL,
+                     TRUE,
+                     DETACHED_PROCESS,
+                     NULL,
+                     NULL,
+                     &si,
+                     &pi )) {
+
+	SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
+	SetStdHandle(STD_OUTPUT_HANDLE, hSaveStderr);
+}
+
+
+	/* As parent, send view information down pipe */
+	CloseHandle(pipe_in[0]);
+	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "w" );
+	CloseHandle(pipe_err[1]);
+
+
+	rt_set_eye_model(eye_model);
+	rt_write(fp_in, eye_model);
+	(void)fclose( fp_in );
+
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
+		sp->s_wflag = DOWN;
+
+	BU_GETSTRUCT(run_rtp, run_rt);
+	BU_LIST_APPEND(&head_run_rt.l, &run_rtp->l);
+	run_rtp->fd = pipe_errDup;
+	run_rtp->hProcess = pi.hProcess;
+	run_rtp->pid = pi.dwProcessId;
+	run_rtp->aborted=0;
+
+	run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd,TCL_READABLE);
+	Tcl_CreateChannelHandler(run_rtp->chan,TCL_READABLE,
 			      rt_output_handler, (ClientData)run_rtp);
 
 	return 0;
@@ -1317,9 +1503,13 @@ static struct command_tab cmdtab[] = {
  *  then any further calls to bu_free() will hang.
  *  It isn't clear how to handle this.
  */
+#ifndef WIN32
 static void
 rtif_sigint( num )
 int	num;
+#else
+static void rtif_sigint(int	num)
+#endif
 {
 	if(dbip == DBI_NULL)
 	  return;
@@ -1334,7 +1524,7 @@ int	num;
 		rtif_vbp = (struct bn_vlblock *)NULL;
 	}
 	db_free_anim(dbip);	/* Forget any anim commands */
-	sig3();			/* Call main SIGINT handler */
+	sig3(num);			/* Call main SIGINT handler */
 	/* NOTREACHED */
 }
 
@@ -1500,11 +1690,23 @@ char	**argv;
 	register char **vp;
 	FILE *fp_in;
 	FILE *fp_out, *fp_err;
-	int pid, rpid;
+	int pid;
+	int rpid;
 	int retcode;
+#ifndef WIN32
 	int pipe_in[2];
 	int pipe_out[2];
 	int pipe_err[2];
+#else
+	HANDLE pipe_in[2],hSaveStdin,pipe_inDup;
+	HANDLE pipe_out[2],hSaveStdout,pipe_outDup;
+	HANDLE pipe_err[2],hSaveStderr,pipe_errDup;
+	STARTUPINFO si = {0};
+	PROCESS_INFORMATION pi = {0};
+	SECURITY_ATTRIBUTES sa          = {0};
+	char name[1024];
+	char line1[2048];
+#endif
 	int use_input_orig = 0;
 	vect_t	center_model;
 	vect_t dir;
@@ -1640,10 +1842,17 @@ char	**argv;
 	      count = cp - val;
 
 done:
+#ifndef WIN32
 	    if(*val == '\0')
 	      bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
 	    else{
 	      bu_vls_printf(&o_vls, " fmt r \"\\n%*s\" ", count, val);
+#else
+	      if(*val == '\0')
+		bu_vls_printf(&o_vls, " fmt r \\\"\\\\n\\\" ");
+	      else	{
+		bu_vls_printf(&o_vls, " fmt r \\\"\\\\n%*s\\\" ", count, val);
+#endif
 	      if(count)
 		val += count + 1;
 	      bu_vls_printf(&o_vls, "%s", val);
@@ -1700,7 +1909,7 @@ done:
 	else
 	  Tcl_AppendResult(interp, "\nFiring from view center...\n", (char *)NULL);
 
-
+#ifndef WIN32
 	(void)pipe( pipe_in );
 	(void)pipe( pipe_out );
 	(void)pipe( pipe_err );
@@ -1744,6 +1953,123 @@ done:
 	/* send quit command to nirt */
 	fwrite( "q\n", 1, 2, fp_in );
 	(void)fclose( fp_in );
+#else
+	sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+
+	// Save the handle to the current STDOUT.  
+	hSaveStdout = GetStdHandle(STD_OUTPUT_HANDLE);  
+	
+	// Create a pipe for the child process's STDOUT.  
+	CreatePipe( &pipe_out[0], &pipe_out[1], &sa, 0);
+
+	// Set a write handle to the pipe to be STDOUT.  
+	SetStdHandle(STD_OUTPUT_HANDLE, pipe_out[1]);  
+
+	// Create noninheritable read handle and close the inheritable read handle. 
+    DuplicateHandle( GetCurrentProcess(), pipe_out[0],
+        GetCurrentProcess(),  &pipe_outDup , 
+		0,  FALSE,
+        DUPLICATE_SAME_ACCESS );
+	CloseHandle( pipe_out[0] );
+
+	// Save the handle to the current STDERR.  
+	hSaveStderr = GetStdHandle(STD_ERROR_HANDLE);  
+	
+	// Create a pipe for the child process's STDERR.  
+	CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
+
+	// Set a write handle to the pipe to be STDERR.  
+	SetStdHandle(STD_ERROR_HANDLE, pipe_err[1]);  
+
+	// Create noninheritable read handle and close the inheritable read handle. 
+    DuplicateHandle( GetCurrentProcess(), pipe_err[0],
+        GetCurrentProcess(),  &pipe_errDup , 
+		0,  FALSE,
+        DUPLICATE_SAME_ACCESS );
+	CloseHandle( pipe_err[0] );
+	
+	// The steps for redirecting child process's STDIN: 
+	//     1.  Save current STDIN, to be restored later. 
+	//     2.  Create anonymous pipe to be STDIN for child process. 
+	//     3.  Set STDIN of the parent to be the read handle to the 
+	//         pipe, so it is inherited by the child process. 
+	//     4.  Create a noninheritable duplicate of the write handle, 
+	//         and close the inheritable write handle.  
+
+	// Save the handle to the current STDIN. 
+	hSaveStdin = GetStdHandle(STD_INPUT_HANDLE);  
+
+	// Create a pipe for the child process's STDIN.  
+	CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
+	// Set a read handle to the pipe to be STDIN.  
+	SetStdHandle(STD_INPUT_HANDLE, pipe_in[0]);
+	// Duplicate the write handle to the pipe so it is not inherited.  
+	DuplicateHandle(GetCurrentProcess(), pipe_in[1], 
+		GetCurrentProcess(), &pipe_inDup, 
+		0, FALSE,                  // not inherited       
+		DUPLICATE_SAME_ACCESS ); 
+	CloseHandle(pipe_in[1]); 
+
+
+   si.cb = sizeof(STARTUPINFO);
+   si.lpReserved = NULL;
+   si.lpReserved2 = NULL;
+   si.cbReserved2 = 0;
+   si.lpDesktop = NULL;
+   si.dwFlags = 0;
+   si.dwFlags = STARTF_USESTDHANDLES;
+   si.hStdInput   = pipe_in[0];
+   si.hStdOutput  = pipe_out[1];
+   si.hStdError   = pipe_err[1];
+
+
+   sprintf(line1,"%s ",rt_cmd_vec[0]);
+   for(i=1;i<rt_cmd_vec_len;i++) {
+	   sprintf(name,"%s ",rt_cmd_vec[i]);
+	   strcat(line1,name); 
+	   if(strstr(name,"-e") != NULL) {
+		   i++;
+		   sprintf(name,"\"%s\" ",rt_cmd_vec[i]);
+			strcat(line1,name);} 
+   }
+
+   if(CreateProcess( NULL,
+                     line1,
+                     NULL,
+                     NULL,
+                     TRUE,
+                     DETACHED_PROCESS,
+                     NULL,
+                     NULL,
+                     &si,
+                     &pi )) {
+
+	SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
+	SetStdHandle(STD_OUTPUT_HANDLE, hSaveStdout);
+	SetStdHandle(STD_ERROR_HANDLE, hSaveStderr);
+}
+ 
+	/* use fp_in to feed view info to nirt */
+	CloseHandle( pipe_in[0] );
+	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "w" );
+	//fp_in = fdopen( pipe_in[1], "w" );
+
+	/* use fp_out to read back the result */
+	CloseHandle( pipe_out[1] );
+	//fp_out = fdopen( pipe_out[0], "r" );
+	fp_out = _fdopen( _open_osfhandle((HFILE)pipe_outDup,_O_TEXT), "r" );
+
+	/* use fp_err to read any error messages */
+	CloseHandle(pipe_err[1]);
+	//fp_err = fdopen( pipe_err[0], "r" );
+	fp_err = _fdopen( _open_osfhandle((HFILE)pipe_errDup,_O_TEXT), "r" );
+
+	/* send quit command to nirt */
+	fwrite( "q\n", 1, 2, fp_in );
+	(void)fclose( fp_in );
+#endif
 
 	bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
 	if(QRAY_GRAPHICS){
@@ -1810,12 +2136,19 @@ done:
 	  Tcl_AppendResult(interp, line, (char *)NULL);
 	(void)fclose(fp_err);
 
+#ifndef WIN32
+
 	/* Wait for program to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
 
 	if( retcode != 0 )
 		pr_wait_status( retcode );
+#else
+	/* Wait for program to finish */
+	WaitForSingleObject( pi.hProcess, INFINITE );
+
+#endif
 
 #if 0
 	(void)signal(SIGINT, cur_sigint);

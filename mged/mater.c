@@ -57,7 +57,11 @@ void color_soltab();
 void color_putrec(), color_zaprec();
 
 static char	tmpfil[17];
+#ifndef WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
+#else
+static char	*tmpfil_init = "c:\\GED.aXXXXXX";
+#endif
 
 /*
  *  			F _ E D C O L O R
@@ -96,7 +100,7 @@ char	**argv;
 	}
 
 	strcpy(tmpfil, tmpfil_init);
-#if 0
+#ifdef WIN32
 	(void)mktemp(tmpfil);
 	if ((fp = fopen(tmpfil, "w")) == NULL) {
 		perror(tmpfil);

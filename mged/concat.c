@@ -25,7 +25,9 @@ static const char RCSconcat[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifndef WIN32
 #include <pwd.h>
+#endif
 #include <signal.h>
 #include <math.h>
 #include <time.h>

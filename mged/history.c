@@ -31,7 +31,9 @@
 #else
 #include <strings.h>
 #endif
+#ifndef WIN32
 #include <sys/time.h>
+#endif
 #include <time.h>
 
 #include "tcl.h"

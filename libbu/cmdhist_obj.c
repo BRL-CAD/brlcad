@@ -39,7 +39,7 @@ extern int bu_cmdhist_curr();
 extern int bu_cmdhist_next();
 extern int bu_cmdhist_prev();
 
-int cho_open_tcl();
+int cho_open_tcl(ClientData clientData,Tcl_Interp *interp, int argc, char **argv);
 
 static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object list */
 
@@ -72,12 +72,21 @@ static struct bu_cmdtab cho_cmds[] =
 	{(char *)NULL,	CMD_NULL}
 };
 
+#ifndef WIN32
 static int
 cho_cmd(clientData, interp, argc, argv)
      ClientData	clientData;
      Tcl_Interp	*interp;
      int		argc;
      char		**argv;
+#else
+static int
+cho_cmd(
+	 ClientData	clientData,
+     Tcl_Interp	*interp,
+     int		argc,
+     char		**argv)
+#endif
 {
 	return bu_cmd(clientData, interp, argc, argv, cho_cmds, 1);
 }
@@ -93,9 +102,13 @@ Cho_Init(interp)
 	return TCL_OK;
 }
 
+#ifndef WIN32
 static void
 cho_deleteProc(clientData)
      ClientData clientData;
+#else
+static void cho_deleteProc(ClientData clientData)
+#endif
 {
 	struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
 	struct bu_cmdhist *curr, *next;
@@ -189,12 +202,21 @@ cho_open(clientData, interp, name)
  * USAGE:
  *        ch_open name
  */
+#ifndef WIN32
 int
 cho_open_tcl(clientData, interp, argc, argv)
      ClientData      clientData;
      Tcl_Interp      *interp;
      int             argc;
      char            **argv;
+#else
+int
+cho_open_tcl(
+     ClientData      clientData,
+     Tcl_Interp      *interp,
+     int             argc,
+     char            **argv)
+#endif
 {
 	struct bu_cmdhist_obj *chop;
 	struct bu_vls vls;

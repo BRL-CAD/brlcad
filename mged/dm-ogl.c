@@ -28,6 +28,7 @@ static const char RCSid[] = "@(#)$Header";
 #include <math.h>
 #include "tk.h"
 
+#ifndef WIN32
 #ifdef USE_MESA_GL
 #include <GL/glx.h>
 #include <GL/gl.h>
@@ -35,6 +36,9 @@ static const char RCSid[] = "@(#)$Header";
 #include <GL/glx.h>
 #include <GL/gl.h>
 #include <gl/device.h>
+#endif
+#else
+#include <GL/gl.h>
 #endif
 
 #include "machine.h"
@@ -82,6 +86,11 @@ struct bu_structparse Ogl_vparse[] = {
 	{"%d",  1, "useBound",		Ogl_MV_O(boundFlag),	boundFlag_hook },
 	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+
+#ifdef WIN32  
+/* ??? not sure why this is needed? */
+extern FBIO ogl_interface;
+#endif
 
 int
 Ogl_dm_init(struct dm_list	*o_dm_list,
@@ -150,11 +159,17 @@ static int
 Ogl_doevent(ClientData	clientData,
 	    XEvent	*eventPtr)
 {
+#ifndef WIN32
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
 		/* allow further processing of this event */
 		return TCL_OK;
+#else
+	  if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
+		return TCL_OK;
+#endif
 
 	if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 #if 0

@@ -69,7 +69,7 @@ history_record(chop, cmdp, start, finish, status)
 
 static int
 timediff(tvdiff, start, finish)
-     struct timeval *tvdiff, *start, *finish;
+	struct timeval *tvdiff, *start, *finish;
 {
 	if (finish->tv_sec == 0 && finish->tv_usec == 0)
 		return -1;
@@ -153,6 +153,7 @@ bu_cmdhist_history(clientData, interp, argc, argv)
 			if (timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
 				bu_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
 					      tvdiff.tv_usec);
+
 		}
 
 		if (hp->h_status == TCL_ERROR)

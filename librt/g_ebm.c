@@ -42,6 +42,12 @@ static const char RCSebm[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "./fixpt.h"
 
+/*
+NOTES:
+	Changed small to small11 for win32 compatibility 
+*/
+
+
 struct rt_ebm_specific {
 	struct rt_ebm_internal	ebm_i;
 	vect_t		ebm_xnorm;	/* local +X norm in model coords */
@@ -915,7 +921,7 @@ struct rt_i		*rtip;
 	vect_t	norm;
 	vect_t	radvec;
 	vect_t	diam;
-	vect_t	small;
+	vect_t	small1;
 
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
 	RT_EBM_CK_MAGIC(eip);
@@ -940,10 +946,10 @@ struct rt_i		*rtip;
 	stp->st_specific = (genptr_t)ebmp;
 
 	/* Find bounding RPP of rotated local RPP */
-	VSETALL( small, 0 );
+	VSETALL( small1, 0 );
 	VSET( ebmp->ebm_large, ebmp->ebm_i.xdim, ebmp->ebm_i.ydim, ebmp->ebm_i.tallness );
 	bn_rotate_bbox( stp->st_min, stp->st_max, eip->mat,
-		small, ebmp->ebm_large );
+		small1, ebmp->ebm_large );
 
 	/* for now, EBM origin in ideal coordinates is at origin */
 	VSETALL( ebmp->ebm_origin, 0 );

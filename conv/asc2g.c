@@ -46,7 +46,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 #include "mater.h"
-
+#ifdef WIN32
+#include <fcntl.h>
+#endif
 
 extern void rt_dsp_ifree( struct rt_db_internal	*ip);
 extern void rt_ebm_ifree( struct rt_db_internal	*ip);
@@ -125,6 +127,9 @@ int argc;
 char **argv;
 {
 	char c1[3];
+#ifdef WIN32
+	_fmode = _O_BINARY;
+#endif
 
 	bu_debug = BU_DEBUG_COREDUMP;
 

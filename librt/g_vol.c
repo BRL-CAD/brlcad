@@ -38,6 +38,12 @@ static const char RCSvol[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "./fixpt.h"
 
+/*
+NOTES:
+	Changed small to small1 for win32 compatibility 
+*/
+
+
 struct rt_vol_specific {
 	struct rt_vol_internal vol_i;
 	vect_t		vol_xnorm;	/* local +X norm in model coords */
@@ -764,7 +770,8 @@ struct rt_i		*rtip;
 	vect_t	norm;
 	vect_t	radvec;
 	vect_t	diam;
-	vect_t	small;
+	vect_t	small1;
+
 
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
 	RT_VOL_CK_MAGIC(vip);
@@ -787,11 +794,11 @@ struct rt_i		*rtip;
 	stp->st_specific = (genptr_t)volp;
 
 	/* Find bounding RPP of rotated local RPP */
-	VSETALL( small, 0 );
+	VSETALL( small1, 0 );
 	VSET( volp->vol_large,
 		volp->vol_i.xdim*vip->cellsize[0], volp->vol_i.ydim*vip->cellsize[1], volp->vol_i.zdim*vip->cellsize[2] );/* type conversion */
 	bn_rotate_bbox( stp->st_min, stp->st_max, vip->mat,
-		small, volp->vol_large );
+		small1, volp->vol_large );
 
 	/* for now, VOL origin in ideal coordinates is at origin */
 	VSETALL( volp->vol_origin, 0 );

@@ -435,6 +435,14 @@ bu_avail_cpus()
 	}
 #endif
 
+#if defined(_WIN32)
+	/* Windows */
+	{
+	  GetSystemInfo(&sysinfo);
+	  ncpu = (int)sysinfo.dwNumberOfProcessors;
+	  goto DONE_NCPU;
+	}
+#endif
 
 DONE_NCPU:  ; /* allows debug and final validity check */
 

@@ -3539,11 +3539,19 @@ struct db_full_path	*pathp;
 	return (struct joint *) 0;
 }
 
+#ifndef WIN32
 HIDDEN union tree *mesh_leaf( tsp, pathp, ip, client_data)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct rt_db_internal	*ip;
 genptr_t		client_data;
+#else
+HIDDEN union tree *mesh_leaf(
+struct db_tree_state	*tsp,
+struct db_full_path	*pathp,
+struct rt_db_internal	*ip,
+genptr_t		client_data)
+#endif
 {
 	struct rt_grip_internal *gip;
 	struct	artic_joints	*newJoint;
@@ -3599,11 +3607,20 @@ genptr_t		client_data;
 
 	return curtree;
 }
+
+#ifndef WIN32
 HIDDEN union tree *mesh_end_region (tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
 union tree			*curtree;
 genptr_t			client_data;
+#else
+HIDDEN union tree *mesh_end_region (
+register struct db_tree_state	*tsp,
+struct db_full_path		*pathp,
+union tree			*curtree,
+genptr_t			client_data)
+#endif
 {
 	return curtree;
 }

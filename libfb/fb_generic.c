@@ -90,8 +90,10 @@ extern FBIO rat_interface;
 extern FBIO ug_interface;
 #endif
 #ifdef IF_X
+#ifndef WIN32 
 extern FBIO X24_interface;
 extern FBIO X_interface;
+#endif
 #endif
 #ifdef IF_PTTY
 extern FBIO ptty_interface;
@@ -130,8 +132,10 @@ FBIO *_if_list[] = {
 	&ug_interface,
 #endif
 #ifdef IF_X
+#ifndef WIN32
 	&X24_interface,
 	&X_interface,
+#endif
 #endif
 
 	&debug_interface,

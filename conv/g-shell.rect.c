@@ -28,6 +28,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+#ifdef WIN32
+#include <fcntl.h>
+#endif
+
+
 #define MAKE_TRIANGLES	0
 
 #define ABS( _x )	((_x)<0.0?(-(_x)):(_x))
@@ -1771,6 +1776,11 @@ char *argv[];
 	fastf_t bb_area[3];
 
 	bu_debug = BU_DEBUG_COREDUMP;
+
+#ifdef WIN32
+	_fmode = _O_BINARY;
+#endif
+
 
 #ifdef BSD
 	setlinebuf( stderr );

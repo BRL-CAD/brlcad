@@ -49,6 +49,7 @@ static struct qray_color qray_even_color = { 255, 255, 0 };
 static struct qray_color qray_void_color = { 255, 0, 255 };
 static struct qray_color qray_overlap_color = { 255, 255, 255 };
 
+#ifndef WIN32
 static struct qray_fmt_data def_qray_fmt_data[] = {
   {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
   {'h', "\"    Region Name               Entry (x y z)              LOS  Obliq_in\\n\""},
@@ -58,6 +59,17 @@ static struct qray_fmt_data def_qray_fmt_data[] = {
   {'o', "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
   {(char)NULL, (char *)NULL}
 };
+#else
+static struct qray_fmt_data def_qray_fmt_data[] = {
+  {'r', "\\\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
+  {'h', "\\\"    Region Name               Entry (x y z)              LOS  Obliq_in\\\\n\\\""},
+  {'p', "\\\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f\\\\n\\\" reg_name x_in y_in z_in los obliq_in"},
+  {'f', "\\\"\\\""},
+  {'m', "\\\"You missed the target\\\\n\\\""},
+  {'o', "\\\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\\\n\\\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
+  {(char)NULL, (char *)NULL}
+};
+#endif
 
 static char qray_syntax[] = "\
  qray vars			print a list of all variables (i.e. var = val)\n\

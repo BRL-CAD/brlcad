@@ -203,7 +203,7 @@ if {![info exists mged_browser]} {
 				} elseif { [file exists $path/mozilla] } {
 					set mged_browser $path/mozilla
 					break;
-				} elseif { ($tcl_platform(os) == "Darwin") && [file exists $path/open] } {
+				} elseif { ($::tcl_platform(os) == "Darwin") && [file exists $path/open] } {
 				        set mged_browser $path/open
 				        break
 				}
@@ -2119,7 +2119,13 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	}
 	scrollbar .$id.s -relief flat -command ".$id.t yview"
 
-	bind .$id.t <Enter> "focus .$id.t; break"
+        if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
+            bind .$id.t <Enter> "focus .$id.t; break"
+        } else {
+             # some platforms should not be forced window activiation
+            focus .$id.t
+        }
+
 	hoc_register_data .$id.t "Command Window"\
 			{ { summary "This is MGED's default command window. Its main
 	function is to allow the user to enter commands.
