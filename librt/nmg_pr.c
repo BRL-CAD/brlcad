@@ -355,6 +355,8 @@ char *h;
 	bu_log("%s%f %f %f Max\n", h, f->max_pt[X], f->max_pt[Y],
 		f->max_pt[Z]);
 
+	bu_log("%s%d Flip\n", h, f->flip );
+
 	if (f->g.plane_p)
 		nmg_pr_fg(f->g.magic_p, h);
 
