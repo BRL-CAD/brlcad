@@ -793,7 +793,12 @@ struct edgeuse	*eu;
 	if( !eg ) return new_eu;
 
 	/* Both these edges should be fresh, without geometry yet. */
-	if( eu->e_p->eg_p )  rt_bomb("nmg_ebreak() eu grew geometry?\n");
+	if( eu->e_p->eg_p )   {
+		rt_log("old eg=x%x, new_eg=x%x\n", eg, eu->e_p->eg_p);
+		nmg_pr_eg(eg, "old_");
+		nmg_pr_eg(eu->e_p->eg_p, "new_");
+		rt_bomb("nmg_ebreak() eu grew geometry?\n");
+	}
 	if( new_eu->e_p->eg_p )  rt_bomb("nmg_ebreak() new_eu grew geometry?\n");
 
 	/* Make sure the two edges share the same geometry. */
@@ -1137,8 +1142,12 @@ struct edgeuse *eu;
 	if (lu->up.magic_p != eu_r->up.lu_p->up.magic_p)
 		rt_bomb("nmg_jl: loopuses do not share parent\n");
 
-	if (eu_r->up.lu_p->orientation != lu->orientation)
+	if (eu_r->up.lu_p->orientation != lu->orientation)  {
+		rt_log("nmg_jl: eu_r->up = %s, lu = %s\n",
+			nmg_orientation(eu_r->up.lu_p->orientation),
+			nmg_orientation(lu->orientation) );
 		rt_bomb("nmg_jl: can't join loops of different orientation!\n");
+	}
 
 	if (eu->radial_p->eumate_p->radial_p->eumate_p != eu ||
 	    eu->eumate_p->radial_p->eumate_p->radial_p != eu)
