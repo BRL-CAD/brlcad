@@ -60,7 +60,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-
+#include "mater.h"
 
 
 int
@@ -73,6 +73,8 @@ char	**argv;
 	struct db_i	*dbip4;
 	struct directory	*dp;
 	struct bn_tol tol;
+	struct mater *mp;
+	struct bu_vls colortab;
 	char name[17];
 	int reverse=0;
 	int in_arg=1;
@@ -162,6 +164,18 @@ char	**argv;
           dbip->dbi_title="Untitled BRL-CAD Database";
         }
 	db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );
+
+	/* set regionid color table */
+	if( rt_material_head != MATER_NULL ) {
+		bu_vls_init( &colortab );
+		for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+			bu_vls_printf( &colortab, "{%d %d %d %d %d} ", mp->mt_low, mp->mt_high,
+				       mp->mt_r, mp->mt_g, mp->mt_b);
+		}
+		db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colortab), fp->dbip);
+		bu_vls_free( &colortab );
+	}
+	
 
 	/* Retrieve every item in the input database */
 	FOR_ALL_DIRECTORY_START(dp, dbip)  {
