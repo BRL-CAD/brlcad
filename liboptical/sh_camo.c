@@ -1,7 +1,8 @@
 /*
  *	S H _ C A M O . C
  *
- *	A camoflage shader
+ *	A shader to apply a crude camoflage color pattern to an object
+ *	using a fractional Brownian motion of 3 colors
  */
 #include "conf.h"
 
@@ -13,13 +14,10 @@
 #include "./material.h"
 #include "./mathtab.h"
 #include "./rdebug.h"
-#define M_PI            3.14159265358979323846
 
-#define CLAMP(_x,_a,_b)	(_x < _a ? _a : (_x > _b ? _b : _x))
-#define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
-#define CEIL(x)		(  (int)(x) + (  (x) > 0 && (x) != (int)(x)  )  )
-
+#define camo_MAGIC 0x18364	/* XXX change this number for each shader */
 struct camo_specific {
+	long	magic;
 	double	lacunarity;
 	double	h_val;
 	double	octaves;
@@ -32,8 +30,10 @@ struct camo_specific {
 	vect_t	delta;
 	mat_t	xform;
 };
+#define CK_camo_SP(_p) RT_CKMAG(_p, camo_MAGIC, "camo_specific")
 
 static struct camo_specific camo_defaults = {
+	camo_MAGIC,
 	2.1753974,	/* lacunarity */
 	1.0,		/* h_val */
 	4.0,		/* octaves */
@@ -46,26 +46,25 @@ static struct camo_specific camo_defaults = {
 	{ 1000.0, 1000.0, 1000.0 }	/* delta into noise space */
 	};
 
-#define CAMO_NULL	((struct camo_specific *)0)
-#define CAMO_O(m)	offsetof(struct camo_specific, m)
-#define CAMO_AO(m)	offsetofarray(struct camo_specific, m)
+#define SHDR_NULL	((struct camo_specific *)0)
+#define SHDR_O(m)	offsetof(struct camo_specific, m)
+#define SHDR_AO(m)	offsetofarray(struct camo_specific, m)
 
 struct structparse camo_parse[] = {
-	{"%f",	1, "lacunarity",	CAMO_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		CAMO_O(h_val),		FUNC_NULL },
-	{"%f",	1, "octaves", 		CAMO_O(octaves),		FUNC_NULL },
-	{"%f",	1, "t1",		CAMO_O(t1),		FUNC_NULL },
-	{"%f",	1, "t2",		CAMO_O(t2),		FUNC_NULL },
-	{"%f",  3, "scale",		CAMO_AO(scale),		FUNC_NULL },
-	{"%f",  3, "c1",		CAMO_AO(c1),		FUNC_NULL },
-	{"%f",  3, "c2",		CAMO_AO(c2),		FUNC_NULL },
-	{"%f",  3, "c3",		CAMO_AO(c3),		FUNC_NULL },
-	{"%f",  3, "delta",		CAMO_AO(delta),		FUNC_NULL },
-	{"%f",	1, "l",			CAMO_O(lacunarity),	FUNC_NULL },
-	{"%d",	1, "o", 		CAMO_O(octaves),		FUNC_NULL },
-	{"%f",  3, "s",			CAMO_AO(scale),		FUNC_NULL },
-	{"%f",  3, "d",			CAMO_AO(delta),		FUNC_NULL },
-
+	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
+	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
+	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
+	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
+	{"%f",	1, "t1",		SHDR_O(t1),		FUNC_NULL },
+	{"%f",	1, "t2",		SHDR_O(t2),		FUNC_NULL },
+	{"%f",  3, "scale",		SHDR_AO(scale),		FUNC_NULL },
+	{"%f",  3, "s",			SHDR_AO(scale),		FUNC_NULL },
+	{"%f",  3, "c1",		SHDR_AO(c1),		FUNC_NULL },
+	{"%f",  3, "c2",		SHDR_AO(c2),		FUNC_NULL },
+	{"%f",  3, "c3",		SHDR_AO(c3),		FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
+	{"%f",  3, "d",			SHDR_AO(delta),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -73,7 +72,7 @@ HIDDEN int	camo_setup(), camo_render();
 HIDDEN void	camo_print(), camo_free();
 
 struct mfuncs camo_mfuncs[] = {
-	{"camo",	0,		0,		MFI_NORMAL|MFI_HIT|MFI_UV,
+	{"camo",	0,	0,		MFI_HIT,
 	camo_setup,	camo_render,	camo_print,	camo_free },
 
 	{(char *)0,	0,		0,		0,
@@ -81,9 +80,11 @@ struct mfuncs camo_mfuncs[] = {
 };
 
 
-
-/*
- *	C A M O _ S E T U P
+/*	C A M O _ S E T U P
+ *
+ *	This routine is called (at prep time)
+ *	once for each region which uses this shader.
+ *	Any shader-specific initialization should be done here.
  */
 HIDDEN int
 camo_setup( rp, matparm, dpp, mfp, rtip)
@@ -91,60 +92,47 @@ register struct region	*rp;
 struct rt_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
-struct rt_i		*rtip;
+struct rt_i		*rtip;	/* New since 4.4 release */
 {
-	register struct camo_specific *camo;
-	struct db_full_path full_path;
-	mat_t	region_to_model;
+	register struct camo_specific	*camo_sp;
 	mat_t	model_to_region;
 	mat_t	tmp;
 
 	RT_CHECK_RTI(rtip);
 	RT_VLS_CHECK( matparm );
 	RT_CK_REGION(rp);
-	GETSTRUCT( camo, camo_specific );
-	*dpp = (char *)camo;
+	GETSTRUCT( camo_sp, camo_specific );
+	*dpp = (char *)camo_sp;
 
-	memcpy(camo, &camo_defaults, sizeof(struct camo_specific) );
-	if( rdebug&RDEBUG_SHADE)
-		rt_log("camo_setup\n");
+	memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific) );
 
-	if( rt_structparse( matparm, camo_parse, (char *)camo ) < 0 )
+	if( rt_structparse( matparm, camo_parse, (char *)camo_sp ) < 0 )
 		return(-1);
 
-	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( rp->reg_name, camo_parse, (char *)camo );
-
-	/* get transformation between world and "region" coordinates */
-	if (db_string_to_path( &full_path, rtip->rti_dbip, rp->reg_name) ) {
-		/* bad thing */
-		rt_bomb("db_string_to_path() error");
-	}
-	if(! db_path_to_mat(rtip->rti_dbip, &full_path, region_to_model, 0)) {
-		/* bad thing */
-		rt_bomb("db_path_to_mat() error");
-	}
-
-	/* get matrix to map points from model (world) space
-	 * to "region" space
+	/* Optional:  get the matrix which maps model space into
+	 *  "region" or "shader" space
 	 */
-	mat_inv(model_to_region, region_to_model);
-
+	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
 
 	/* add the noise-space scaling */
 	mat_idn(tmp);
-	tmp[0] = camo->scale[0];
-	tmp[5] = camo->scale[1];
-	tmp[10] = camo->scale[2];
+	tmp[0] = camo_sp->scale[0];
+	tmp[5] = camo_sp->scale[1];
+	tmp[10] = camo_sp->scale[2];
 
-	mat_mul(camo->xform, tmp2, model_to_region);
+	mat_mul(camo_sp->xform, tmp, model_to_region);
 
-	/* add the translation within noise space */
+	/* Add any translation within shader/region space */
 	mat_idn(tmp);
-	tmp[MDX] = camo->delta[0];
-	tmp[MDY] = camo->delta[1];
-	tmp[MDZ] = camo->delta[2];
-	mat_mul2(tmp, camo->xform);
+	tmp[MDX] = camo_sp->delta[0];
+	tmp[MDY] = camo_sp->delta[1];
+	tmp[MDZ] = camo_sp->delta[2];
+	mat_mul2(tmp, camo_sp->xform);
+
+	if( rdebug&RDEBUG_SHADE) {
+		rt_structprint( rp->reg_name, camo_parse, (char *)camo_sp );
+		mat_print( "xform", camo_sp->xform );
+	}
 
 	return(1);
 }
@@ -170,8 +158,11 @@ char *cp;
 	rt_free( cp, "camo_specific" );
 }
 
-/*
+/*
  *	C A M O _ R E N D E R
+ *
+ *	This is called (from viewshade() in shade.c)
+ *	once for each hit point to be shaded.
  */
 int
 camo_render( ap, pp, swp, dp )
@@ -182,30 +173,25 @@ char	*dp;
 {
 	register struct camo_specific *camo_sp =
 		(struct camo_specific *)dp;
-	vect_t v_noise;
 	point_t pt;
-	double  val;
+	double val;
 
-/*	pp->pt_inseg->seg_stp	/* struct soltab */
-/*	pp->pt_regionp		/* region */
-
-/*
- *	region rpp in ray-trace coordinates (changes as solid moves)
- *  rt_bound_tree(pp->pt_regionp->reg_treetop, reg_rpp_min, reg_rpp_max)
- */
+	RT_AP_CHECK(ap);
+	RT_CHECK_PT(pp);
+	CK_camo_SP(camo_sp);
 
 	if( rdebug&RDEBUG_SHADE)
 		rt_structprint( "foo", camo_parse, (char *)camo_sp );
 
-	/* transform point into "noise-space coordinates" */
+	/* Optional: transform hit point into "shader-space coordinates" */
 	MAT4X3PNT(pt, camo_sp->xform, swp->sw_hit.hit_point);
 
-	val = noise_fbm(pt, camo_sp->h_val, camo_sp->lacunarity, camo_sp->octaves );
 
-	if( rdebug&RDEBUG_SHADE)
-		rt_log("camo_render: point (%g %g %g) %g\n\tRGB(%g %g %g) -> ",
-			V3ARGS(swp->sw_hit.hit_point), val,
-			V3ARGS(swp->sw_color));
+	/* noise_fbm returns a value in the approximate range of
+	 *	-1.0 ~<= noise_fbm() ~<= 1.0
+	 */
+	val = noise_fbm(pt, camo_sp->h_val,
+		camo_sp->lacunarity, camo_sp->octaves );
 
 	if (val < camo_sp->t1) {
 		VMOVE(swp->sw_color, camo_sp->c1);
@@ -214,12 +200,6 @@ char	*dp;
 	} else {
 		VMOVE(swp->sw_color, camo_sp->c3);
 	}
-
-/*	swp->sw_color[1] += val * camo_sp->distortion;
-	swp->sw_basecolor[1] += val * camo_sp->distortion; */
-
-	if( rdebug&RDEBUG_SHADE)
-		rt_log("RGB(%g %g %g)\n", V3ARGS(swp->sw_color));
 
 	return(1);
 }
