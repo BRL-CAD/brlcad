@@ -45,6 +45,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
+#include <stdio.h>
+#include "machine.h"
+#include "bu.h"
 
 #include <stdio.h>
 
@@ -78,7 +81,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 void
 htond( out, in, count )
 register unsigned char	*out;
-register unsigned char	*in;
+register CONST unsigned char	*in;
 int			count;
 {
 #if	defined(NATURAL_IEEE)
@@ -402,7 +405,7 @@ ibm_normalized:
 void
 ntohd( out, in, count )
 register unsigned char	*out;
-register unsigned char	*in;
+register CONST unsigned char	*in;
 int			count;
 {
 #ifdef NATURAL_IEEE
