@@ -1516,3 +1516,45 @@ db5_put_color_table( struct db_i *dbip )
 	bu_vls_free( &str );
 	return ret;
 }
+
+/*			D B _ G E T _ A T T R I B U T E S
+ *
+ *	Get attributes for an object pointed to by *dp
+ *
+ *	returns:
+ *		0 - all is well
+ *		<0 - error
+ */
+int
+db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs, const struct directory *dp )
+{
+	struct bu_external	ext;
+	struct db5_raw_internal	raw;
+
+	RT_CK_DBI( dbip );
+
+	if( dbip->dbi_version < 5 )
+		return 0;	/* not an error, just no attributes */
+
+	RT_CK_DIR( dp );
+
+	BU_INIT_EXTERNAL(&ext);
+
+	if( db_get_external( &ext, dp, dbip ) < 0 )
+		return -1;		/* FAIL */
+
+	if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 ) {
+		bu_free_external( &ext );
+		return -2;
+	}
+
+	if( raw.attributes.ext_buf )  {
+		if( db5_import_attributes( avs, &raw.attributes ) < 0 ) {
+			bu_free_external( &ext );
+			return -3;
+		}
+	}
+
+	bu_free_external( &ext );
+	return 0;
+}
