@@ -137,6 +137,8 @@ RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
 				char name[NAMESIZE+1]; \
 				r_id = g_id * 1000 + c_id; \
 				make_region_name( name , g_id , c_id , e_id , type ); \
+				if( debug ) \
+					bu_log( "Making region: %s\n", name ); \
 				mk_lrcomb( fp , name , headp , 1 ,\
 					(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
 			}
@@ -2521,7 +2523,7 @@ int final;
 {
 
 	if( debug )
-		bu_log( "do_section: %s\n" , line );
+		bu_log( "do_section(%d): %s\n", final , line );
 
 	prev_sect = curr_sect;
 	curr_sect = curr_offset;
@@ -2603,9 +2605,10 @@ int final;
 		if( pass )
 			name_name[0] = '\0';
 
-		bot = 0;
-		face_count = 0;
 	}
+
+	bot = 0;
+	face_count = 0;
 }
 
 void
@@ -2714,18 +2717,6 @@ do_hex1()
 
 	for( i=0 ; i<12 ; i++ )
 		Add_bot_face( pts[hex_faces[i][0]], pts[hex_faces[i][1]], pts[hex_faces[i][2]], thick, pos );
-
-	BU_LIST_INIT( &head.l );
-
-	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
-		rt_bomb( "CHEX1: mk_addmember failed\n" );
-
-	Subtract_holes( &head, comp_id, group_id );
-
-	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
-
-	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
-		bu_log( "ERROR: bu_mem_barriercheck failed in Do_hex1\n" );
 }
 
 void
@@ -2832,7 +2823,7 @@ Process_hole_wall()
 
 	if( debug )
 	{
-		bu_log( "At end of Processa_hole_wall:\n" );
+		bu_log( "At end of Process_hole_wall:\n" );
 		List_holes();
 	}
 }
