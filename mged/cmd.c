@@ -66,6 +66,7 @@ extern mat_t    ModelDelta;
 
 extern int gui_setup();
 extern int cmd_stuff_str();
+extern int f_decompose();
 extern int f_nmg_simplify();
 extern int f_make_bb();
 extern int f_whatid();
@@ -225,6 +226,8 @@ static struct funtab funtab[] = {
 	f_debugmem, 1, 1, TRUE,
 "debugnmg", "[hex code]", "Show/set debugging bit vector for NMG",
 	f_debugnmg,1,2,TRUE,
+"decompose", "nmg_solid [prefix]", "decompose nmg_solid into maximally connected shells",
+	f_decompose, 2, 3, TRUE,
 "delay", "sec usec", "Delay for the specified amount of time",
 	f_delay,3,3,TRUE,
 "dm", "set var [val]", "Do display-manager specific command",
