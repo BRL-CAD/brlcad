@@ -91,7 +91,7 @@ char **argv;
 
 	if( (in_fbp = fb_open( in_fb_name, 0, 0 )) == NULL )  {
 		if( in_fb_name )
-			fprintf(stderr,"fb-fb: unable to open '%s'\n", in_fb_name );
+			fprintf(stderr,"fb-fb: unable to open input '%s'\n", in_fb_name );
 		exit(12);
 	}
 
@@ -101,7 +101,7 @@ char **argv;
 
 	if( (out_fbp = fb_open( out_fb_name, scr_width, scr_height )) == FBIO_NULL )  {
 		if( out_fb_name )
-			fprintf(stderr,"fb-fb: unable to open '%s'\n", out_fb_name );
+			fprintf(stderr,"fb-fb: unable to open output '%s'\n", out_fb_name );
 		exit(12);
 	}
 
@@ -116,7 +116,7 @@ char **argv;
 	}
 
 	/* Bottom to top with multi-line reads & writes */
-	for( y = 0; ; y += streamline )  {
+	for( y = 0; y < scr_height; y += streamline )  {
 		n = fb_readrect( in_fbp, 0, y, scr_width, streamline,
 			scanline );
 		if( n <= 0 ) break;
