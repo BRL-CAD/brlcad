@@ -1107,7 +1107,7 @@ add_seg(struct isect_stuff *isect,
     struct bu_list *spot;
 #endif
 
-    dlog("add_seg %g %g line %d\n", in_hit->hit_dist, out_hit->hit_dist, line);
+    dlog("add_seg %g %g line %d vpriv:%g %g\n", in_hit->hit_dist, out_hit->hit_dist, line, in_hit->hit_vpriv[X], in_hit->hit_vpriv[Y]);
 
     tt *= tt;
 
@@ -1127,6 +1127,10 @@ add_seg(struct isect_stuff *isect,
 	    seg->seg_out.hit_surfno = out_hit->hit_surfno;
 	    VMOVE(seg->seg_out.hit_normal, out_hit->hit_normal);
 #endif
+	    if (out_hit->hit_surfno == ZTOP) {
+		seg->seg_out.hit_vpriv[X] = out_hit->hit_vpriv[X];
+		seg->seg_out.hit_vpriv[Y] = out_hit->hit_vpriv[Y];
+	    }
 	    seg->seg_out.hit_vpriv[Z] = 1.0; /* flag as out-hit */
 
 	    if (RT_G_DEBUG & DEBUG_HF) {
@@ -1222,6 +1226,16 @@ add_seg(struct isect_stuff *isect,
     VMOVE(seg->seg_out.hit_normal, out_hit->hit_normal);
 
 #endif
+    if (in_hit->hit_surfno >= ZMAX) {
+	seg->seg_in.hit_vpriv[X] = in_hit->hit_vpriv[X];
+	seg->seg_in.hit_vpriv[Y] = in_hit->hit_vpriv[Y];
+    }
+
+    if (out_hit->hit_surfno >= ZMAX) {
+	seg->seg_out.hit_vpriv[X] = out_hit->hit_vpriv[X];
+	seg->seg_out.hit_vpriv[Y] = out_hit->hit_vpriv[Y];
+    }
+
     seg->seg_in.hit_vpriv[Z] = 0.0; /* flag as in-hit */
     seg->seg_out.hit_vpriv[Z] = 1.0; /* flag as out-hit */
 
@@ -1790,6 +1804,8 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	VMOVE(hits[0].hit_point, P);
 	VMOVE(hits[0].hit_normal, dsp_pl[isect->dmin]);
 	/* vpriv */
+	hits[0].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
+	hits[0].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
 	/* private */
 	hits[0].hit_surfno = isect->dmin;
 
@@ -1815,6 +1831,8 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	VMOVE(hits[3].hit_point, P);
 	VMOVE(hits[3].hit_normal, dsp_pl[isect->dmax]);
 	/* vpriv */
+	hits[3].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
+	hits[3].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
 	/* private */
 	hits[3].hit_surfno = isect->dmax;
 
@@ -1845,8 +1863,9 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 	hitcount++;
 	hitf |= 2; 
-	dlog("  hit triangle 1 (alpha: %g beta:%g alpha+beta: %g)\n",
-	     ab_first[0], ab_first[1], ab_first[0] + ab_first[1]);
+	dlog("  hit triangle 1 (alpha: %g beta:%g alpha+beta: %g) vpriv %g %g\n",
+	     ab_first[0], ab_first[1], ab_first[0] + ab_first[1],
+	     hits[1].hit_vpriv[X], hits[1].hit_vpriv[Y]);
     } else {
 	dlog("  miss triangle 1 (alpha: %g beta:%g a+b: %g) cond:%d\n",
 	     ab_first[0], ab_first[1], ab_first[0] + ab_first[1], cond);
@@ -1862,8 +1881,9 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	hitcount++;
 
 	hitf |= 4;
-	dlog("  hit triangle 2 (alpha: %g beta:%g alpha+beta: %g)\n",
-	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1]);
+	dlog("  hit triangle 2 (alpha: %g beta:%g alpha+beta: %g) vpriv %g %g\n",
+	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1],
+	     hits[2].hit_vpriv[X], hits[2].hit_vpriv[Y]);
 
 	if (hitf & 2) {
 	    /* if this hit occurs before the hit on the other triangle
@@ -2799,6 +2819,9 @@ rt_dsp_norm( hitp, stp, rp )
 	bu_log("rt_dsp_norm(%g %g %g)\n", V3ARGS(hitp->hit_normal));
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	VPRINT("\thit point", hitp->hit_point);
+	bu_log("hit dist: %g\n", hitp->hit_dist);
+	bu_log("%s:%d vpriv: %g,%g %g\n",
+	       __FILE__, __LINE__, V3ARGS(hitp->hit_vpriv));
     }
 
     if ( hitp->hit_surfno < XMIN || hitp->hit_surfno > ZTOP ) {
@@ -2811,7 +2834,7 @@ rt_dsp_norm( hitp, stp, rp )
     VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
 
-    if ( hitp->hit_surfno < ZTOP || !dsp->dsp_i.dsp_smooth ) {
+    if ( hitp->hit_surfno != ZTOP || !dsp->dsp_i.dsp_smooth ) {
 	/* We've hit one of the sides or bottom, or the user didn't
 	 * ask for smoothing of the elevation data,
 	 * so there's no interpolation to do.  Just transform the normal to
@@ -2843,7 +2866,9 @@ rt_dsp_norm( hitp, stp, rp )
 		      "dsp_gourand%02d.pl", plot_file_num++);
     }
 
-    /* get the cell we hit */
+    /* get the cell we hit
+     * XXX Does this still get kept????
+     */
     x = hitp->hit_vpriv[X];
     y = hitp->hit_vpriv[Y];
 
