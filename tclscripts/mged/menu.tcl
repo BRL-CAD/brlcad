@@ -240,8 +240,9 @@ proc do_edit_menu { type menu1 } {
 
 	.$id.menubar.edit entryconfigure 0 -state disabled
 	.$id.menubar.edit entryconfigure 1 -state disabled
-	.$id.menubar.edit entryconfigure 2 -state disabled
+#	.$id.menubar.edit entryconfigure 2 -state disabled
 #	.$id.menubar.edit entryconfigure 3 -state disabled
+#	.$id.menubar.edit entryconfigure 4 -state disabled
 
 	set i 0
 	foreach item $menu1 {
@@ -350,7 +351,7 @@ proc undo_edit_menu {} {
 		continue
 	    }
 
-	    if {[.$id.menubar.edit entrycget 0 -label] != "Solid..."} {
+	    if {[.$id.menubar.edit entrycget 0 -label] != "Solid Selection..."} {
 		.$id.menubar.edit delete 0
 	    } else {
 		break
@@ -405,4 +406,3 @@ proc post_edit_info { id type } {
 	build_edit_info $id
     }
 }
-
