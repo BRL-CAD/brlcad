@@ -76,25 +76,44 @@ struct dm {
 };
 extern struct dm *dmp;			/* ptr to current display mgr */
 
-/* Format of a vector list */
-struct veclist {
-	float	vl_pnt[3];	/* X, Y, Z of point in Model space */
-	char	vl_pen;		/* PEN_DOWN==draw, PEN_UP==move */
+/***** START TEMPORARY COPY OF DEFINITIONS FROM h/raytrace.h ****/
+struct vlist {
+	point_t		vl_pnt;		/* coordinates in space */
+	int		vl_draw;	/* 1=draw, 0=move */
+	struct vlist	*vl_forw;	/* next structure in list */
 };
-extern struct veclist *vlp;	/* pointer to first free veclist element */
-extern struct veclist *vlend;	/* pointer to first invalid veclist element */
-#define VLIST_NULL	((struct veclist *)0)
+#define VL_NULL		((struct vlist *)0)
 
-/*
- * Record an absolute vector and "pen" position in veclist array.
- */
-#define DM_GOTO(p,pen)	if(vlp>=vlend) \
-	(void)printf("%s/%d:  veclist overrun\n", __FILE__, __LINE__); \
-	else { VMOVE( vlp->vl_pnt, p ); (vlp++)->vl_pen = pen; }
+struct vlhead {
+	struct vlist	*vh_first;
+	struct vlist	*vh_last;
+};
+extern struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX */
 
-/* Virtual Pen settings */
-#define PEN_UP		0
-#define PEN_DOWN	1
+#define GET_VL(p)	{ \
+			if( ((p) = rtg_vlFree) == VL_NULL )  { \
+				(p) = (struct vlist *)malloc(sizeof(struct vlist) ); \
+			} else { \
+				rtg_vlFree = (p)->vl_forw; \
+			} }
+/* Free an entire chain of vlist structs */
+#define FREE_VL(p)	{ register struct vlist *_vp = (p); \
+			while( _vp->vl_forw != VL_NULL ) _vp=_vp->vl_forw; \
+			_vp->vl_forw = rtg_vlFree; \
+			rtg_vlFree = (p);  }
+#define ADD_VL(hd,pnt,draw)  { \
+			register struct vlist *_vp; \
+			GET_VL(_vp); \
+			VMOVE( _vp->vl_pnt, (pnt) ); \
+			_vp->vl_draw = draw; \
+			_vp->vl_forw = VL_NULL; \
+			if( (hd)->vh_first == VL_NULL ) { \
+				(hd)->vh_first = (hd)->vh_last = _vp; \
+			} else { \
+				(hd)->vh_last->vl_forw = _vp; \
+				(hd)->vh_last = _vp; \
+			} }
+/*****   END TEMPORARY COPY OF DEFINITIONS FROM h/raytrace.h ****/
 
 /*
  * Definitions for dealing with the buttons and lights.

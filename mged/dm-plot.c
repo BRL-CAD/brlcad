@@ -96,7 +96,7 @@ Plot_open()
 {
 	char line[64];
 
-	(void)printf("UNIX-Plot filter [plot-fb]? ");
+	(void)printf("UNIX-Plot filter [pl-fb]? ");
 	(void)gets( line );		/* Null terminated */
 	if( feof(stdin) )  quit();
 	if( line[0] != '\0' )  {
@@ -105,8 +105,8 @@ Plot_open()
 			return(1);		/* BAD */
 		}
 	} else {
-		if( (up_fp = popen("plot-fb", "w")) == NULL )  {
-			perror("plot-fb");
+		if( (up_fp = popen("pl-fb", "w")) == NULL )  {
+			perror("pl-fb");
 			return(1);	/* BAD */
 		}
 	}
@@ -151,6 +151,7 @@ Plot_prolog()
 void
 Plot_epilog()
 {
+	pl_flush( up_fp );			/* BRL-specific command */
 	pl_erase( up_fp );			/* forces drawing */
 	(void)fflush( up_fp );
 	return;
@@ -185,8 +186,7 @@ mat_t mat;
 double ratio;
 {
 	static vect_t last;
-	register struct veclist *vp;
-	int nvec;
+	register struct vlist *vp;
 	int useful = 0;
 
 	if( sp->s_soldash )
@@ -194,10 +194,9 @@ double ratio;
 	else
 		pl_linmod( up_fp, "solid");
 
-	nvec = sp->s_vlen;
-	for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		/* Viewing region is from -1.0 to +1.0 */
-		if( vp->vl_pen == PEN_UP )  {
+		if( vp->vl_draw == 0 )  {
 			/* Move, not draw */
 			MAT4X3PNT( last, mat, vp->vl_pnt );
 		}  else  {

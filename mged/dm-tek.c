@@ -208,8 +208,7 @@ mat_t mat;
 double ratio;
 {
 	static vect_t last;
-	register struct veclist *vp;
-	int nvec;
+	register struct vlist *vp;
 	int useful = 0;
 
 	if(  sp->s_soldash )
@@ -217,10 +216,9 @@ double ratio;
 	else
 		(void)putc('`',outfp);	/* Solid */
 
-	nvec = sp->s_vlen;
-	for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		/* Viewing region is from -1.0 to +1.0 */
-		if( vp->vl_pen == PEN_UP )  {
+		if( vp->vl_draw == 0 )  {
 			/* Move, not draw */
 			MAT4X3PNT( last, mat, vp->vl_pnt );
 		}  else  {

@@ -55,13 +55,12 @@ void
 f_plot()
 {
 	register struct solid *sp;
-	register struct veclist *vp;
+	register struct vlist *vp;
 	register FILE *fp;
 	static vect_t clipmin, clipmax;
 	static vect_t last;		/* last drawn point */
 	static vect_t fin;
 	static vect_t start;
-	int nvec;
 	int Three_D;			/* 0=2-D -vs- 1=3-D */
 	int Z_clip;			/* Z clipping */
 	int Dashing;			/* linetype is dashed */
@@ -154,18 +153,11 @@ f_plot()
 					pl_linmod( fp, "solid");
 				Dashing = sp->s_soldash;
 			}
-			nvec = sp->s_vlen;
-			for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
-				if( vp->vl_pen == PEN_UP )
-					pd_3move( fp,
-						vp->vl_pnt[X],
-						vp->vl_pnt[Y],
-						vp->vl_pnt[Z] );
+			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+				if( vp->vl_draw )
+					pdv_3cont( fp, vp->vl_pnt );
 				else
-					pd_3cont( fp,
-						vp->vl_pnt[X],
-						vp->vl_pnt[Y],
-						vp->vl_pnt[Z] );
+					pdv_3move( fp, vp->vl_pnt );
 			}
 		}
 		goto out;
@@ -204,9 +196,8 @@ f_plot()
 				pl_linmod( fp, "solid");
 			Dashing = sp->s_soldash;
 		}
-		nvec = sp->s_vlen;
-		for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
-			if( vp->vl_pen == PEN_UP )  {
+		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+			if( vp->vl_draw == 0 )  {
 				/* Move, not draw */
 				MAT4X3PNT( last, model2view, vp->vl_pnt );
 				continue;
@@ -253,12 +244,11 @@ void
 f_area()
 {
 	register struct solid *sp;
-	register struct veclist *vp;
+	register struct vlist *vp;
 	static vect_t last;
 	static vect_t fin;
 	char buf[128];
 	FILE *fp;
-	register int nvec;
 
 	if( not_state( ST_VIEW, "Presented Area Calculation" ) )
 		return;
@@ -290,9 +280,8 @@ f_area()
 	 * and unscaled vectors
 	 */
 	FOR_ALL_SOLIDS( sp )  {
-		nvec = sp->s_vlen;
-		for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
-			if( vp->vl_pen == PEN_UP )  {
+		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+			if( vp->vl_draw == 0 )  {
 				/* Move, not draw */
 				MAT4X3VEC( last, Viewrot, vp->vl_pnt );
 				continue;

@@ -23,10 +23,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include <stdio.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+
 #include "./ged.h"
 #include "./dm.h"
 
@@ -59,10 +61,11 @@ static int	param_count = 0; 	/* location in m_param[] array */
  *	 0	region drawn
  *	 1	more solids follow, please re-invoke w/next solid.
  */
-proc_reg( recordp, xform, flag, more )
+proc_reg( recordp, xform, flag, more, vhead )
 register union record *recordp;
 register mat_t xform;
 int flag, more;
+struct vlhead	*vhead;
 {
 	register int i;
 	register dbfloat_t *op;	/* Used for scanning vectors */
@@ -195,7 +198,7 @@ arbcom:		/* common area for arbs */
 			nmemb = param_count = memb_count = 0;
 			return(-1);	/* ERROR */
 		}
-		dwreg();
+		dwreg(vhead);
 		return(0);	/* OK, region was drawn */
 	}
 	return(1);		/* MORE solids follow */
@@ -600,7 +603,8 @@ static int	negpos;
 static char	oper;
 
 static void
-dwreg()
+dwreg(vhead)
+struct vlhead	*vhead;
 {
 	register int i,j;
 	static int k,l;
@@ -712,8 +716,8 @@ noskip:
 
 						VJOIN1( pi, xb, regi[n], wb );
 						VJOIN1( po, xb, rego[n], wb );
-						DM_GOTO( pi, PEN_UP);
-						DM_GOTO( po, PEN_DOWN);
+						ADD_VL( vhead, pi, 0 );
+						ADD_VL( vhead, po, 1 );
 					}
 skplane:				 ;
 				}

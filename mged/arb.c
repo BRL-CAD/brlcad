@@ -20,16 +20,21 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include	<math.h>
 #include	<stdio.h>
+#include	<math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+
 #include "./dm.h"
 #include "./objdir.h"
 #include "./ged.h"
 
-static void	face();
+#define FACE( valp, a, b, c, d ) \
+	ADD_VL( vhead, &valp[a*3], 0 ); \
+	ADD_VL( vhead, &valp[b*3], 1 ); \
+	ADD_VL( vhead, &valp[c*3], 1 ); \
+	ADD_VL( vhead, &valp[d*3], 1 );
 
 /*
  *  			D R A W _ A R B 8
@@ -39,9 +44,10 @@ static void	face();
  * from the first point to the remaining points.
  */
 void
-draw_arb8( origp, matp )
+draw_arb8( origp, matp, vhead )
 struct solidrec *origp;
 register matp_t matp;
+struct vlhead	*vhead;
 {
 	register int i;
 	register dbfloat_t *ip;
@@ -63,25 +69,10 @@ register matp_t matp;
 		op += ELEMENTS_PER_VECT;
 	}
 
-	face( points, 0, 1, 2, 3 );
-	face( points, 4, 0, 3, 7 );
-	face( points, 5, 4, 7, 6 );
-	face( points, 1, 5, 6, 2 );
-}
-
-/*
- *			F A C E
- *
- * This routine traces one face of an ARB8
- */
-static void
-face( valp, a, b, c, d )
-register fastf_t *valp;
-{
-	DM_GOTO( &valp[a*3], PEN_UP );
-	DM_GOTO( &valp[b*3], PEN_DOWN );
-	DM_GOTO( &valp[c*3], PEN_DOWN );
-	DM_GOTO( &valp[d*3], PEN_DOWN );
+	FACE( points, 0, 1, 2, 3 );
+	FACE( points, 4, 0, 3, 7 );
+	FACE( points, 5, 4, 7, 6 );
+	FACE( points, 1, 5, 6, 2 );
 }
 
 void

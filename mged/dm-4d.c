@@ -391,7 +391,7 @@ register struct solid *sp;
 register fastf_t *m;
 double ratio;
 {
-	register struct veclist *vp;
+	register struct vlist *vp;
 	im_setup;
 	register int nvec;
 	mat_t	mtmp, newm;
@@ -471,10 +471,9 @@ double ratio;
 
 	im_color( nvec );
 
-	nvec = sp->s_vlen;
-	for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		/* Viewing region is from -1.0 to +1.0 */
-		if( vp->vl_pen == PEN_UP )  {
+		if( vp->vl_draw == 0 )  {
 			/* Move, not draw */
 			im_outshort( GEmove | GEPA_3F );
 		}  else  {

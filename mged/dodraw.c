@@ -28,16 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./objdir.h"
 #include "./dm.h"
 
-extern char	*memcpy();
-extern void	perror();
-extern char	*malloc();
-extern int	printf(), write();
-
-#define NVL	5000
-static struct veclist veclist[NVL];
-
-struct veclist *vlp;		/* pointer to first free veclist element */
-struct veclist *vlend = &veclist[NVL]; /* pntr to 1st inval veclist element */
+struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX dm.h */
 
 int	reg_error;	/* error encountered in region processing */
 int	no_memory;	/* flag indicating memory for drawing is used up */
@@ -61,13 +52,14 @@ matp_t xform;
 union record *recordp;
 int regionid;
 {
-	register struct veclist *vp;
+	register struct vlist *vp;
 	register int i;
 	int dashflag;		/* draw with dashed lines */
 	int count;
-	vect_t	max, min;
+	struct vlhead	vhead;
+	vect_t		max, min;
 
-	vlp = &veclist[0];
+	vhead.vh_first = vhead.vh_last = VL_NULL;
 	if( regmemb >= 0 ) {
 		/* processing a member of a processed region */
 		/* regmemb  =>  number of members left */
@@ -84,7 +76,7 @@ int regionid;
 			flag = 999;
 
 		/* The hard part */
-		i = proc_reg( recordp, xform, flag, regmemb );
+		i = proc_reg( recordp, xform, flag, regmemb, &vhead );
 
 		if( i < 0 )  {
 			/* error somwhere */
@@ -114,23 +106,23 @@ int regionid;
 			switch( recordp->s.s_type )  {
 
 			case GENARB8:
-				draw_arb8( &recordp->s, xform );
+				draw_arb8( &recordp->s, xform, &vhead );
 				break;
 
 			case GENTGC:
-				draw_tgc( &recordp->s, xform );
+				draw_tgc( &recordp->s, xform, &vhead );
 				break;
 
 			case GENELL:
-				draw_ell( &recordp->s, xform );
+				draw_ell( &recordp->s, xform, &vhead );
 				break;
 
 			case TOR:
-				draw_torus( &recordp->s, xform );
+				draw_torus( &recordp->s, xform, &vhead );
 				break;
 
 			case HALFSPACE:
-				draw_half( &recordp->s, xform );
+				draw_half( &recordp->s, xform, &vhead );
 				break;
 
 			default:
@@ -141,15 +133,15 @@ int regionid;
 			break;
 
 		case ID_ARS_A:
-			draw_ars( &recordp->a, cur_path[pathpos], xform );
+			draw_ars( &recordp->a, cur_path[pathpos], xform, &vhead );
 			break;
 
 		case ID_BSOLID:
-			draw_spline( &recordp->B, cur_path[pathpos], xform );
+			draw_spline( &recordp->B, cur_path[pathpos], xform, &vhead );
 			break;
 
 		case ID_P_HEAD:
-			draw_poly( cur_path[pathpos], xform );
+			draw_poly( cur_path[pathpos], xform, &vhead );
 			break;
 
 		default:
@@ -160,15 +152,18 @@ int regionid;
 	}
 
 	/*
-	 * The vector list is now safely stored in veclist[].
 	 * Compute the min, max, and center points.
 	 */
-#define INFINITY	100000000.0
+#define INFINITY	1.0e20
 	VSETALL( max, -INFINITY );
 	VSETALL( min,  INFINITY );
-	for( vp = &veclist[0]; vp < vlp; vp++ )  {
+	sp->s_vlist = vhead.vh_first;
+	sp->s_vlen = 0;
+	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
 		VMINMAX( min, max, vp->vl_pnt );
+		sp->s_vlen++;
 	}
+
 	VSET( sp->s_center,
 		(max[X] + min[X])*0.5,
 		(max[Y] + min[Y])*0.5,
@@ -177,16 +172,6 @@ int regionid;
 	sp->s_size = max[X] - min[X];
 	MAX( sp->s_size, max[Y] - min[Y] );
 	MAX( sp->s_size, max[Z] - min[Z] );
-
-	/* Make a private copy of the vector list */
-	sp->s_vlen = vlp - &veclist[0];		/* # of structs */
-	count = sp->s_vlen * sizeof(struct veclist);
-	if( (sp->s_vlist = (struct veclist *)malloc((unsigned)count)) == VLIST_NULL )  {
-		no_memory = 1;
-		(void)printf("draw: malloc error\n");
-		return(-1);		/* ERROR */
-	}
-	(void)memcpy( (char *)sp->s_vlist, (char *)veclist, count );
 
 	/*
 	 * If this solid is not illuminated, fill in it's information.
@@ -228,6 +213,7 @@ int regionid;
 	}
 
 	/* Solid is successfully drawn.  Compute maximum. */
+	/* This should be done with an RPP instead! XXX */
 	MAX( maxview, sp->s_center[X] + sp->s_size );
 	MAX( maxview, sp->s_center[Y] + sp->s_size );
 	MAX( maxview, sp->s_center[Z] + sp->s_size );

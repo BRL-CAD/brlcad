@@ -1031,8 +1031,7 @@ f_rmats()
 	int	mode;
 	fastf_t	scale;
 	mat_t	rot;
-	register struct veclist *vp;
-	register int nvec;
+	register struct vlist *vp;
 
 	if( not_state( ST_VIEW, "animate from matrix file") )
 		return;
@@ -1052,12 +1051,12 @@ f_rmats()
 		}
 		db_getrec( dp, &rec, 0 );
 		FOR_ALL_SOLIDS(sp)  {
-			if( sp->s_path[sp->s_last] == dp )  {
-				VMOVE( sav_start, sp->s_vlist->vl_pnt );
-				VMOVE( sav_center, sp->s_center );
-				printf("animating EYE solid\n");
-				goto work;
-			}
+			if( sp->s_path[sp->s_last] != dp )  continue;
+			if( sp->s_vlist == VL_NULL )  continue;
+			VMOVE( sav_start, sp->s_vlist->vl_pnt );
+			VMOVE( sav_center, sp->s_center );
+			printf("animating EYE solid\n");
+			goto work;
 		}
 		/* Fall through */
 	default:
@@ -1107,9 +1106,9 @@ work:
 	    		VMOVE( sp->s_center, eye_model );
 
 	    		/* Adjust vector list for non-dl devices */
+	    		if( sp->s_vlist == VL_NULL )  break;
 	    		VSUB2( xlate, eye_model, sp->s_vlist->vl_pnt );
-			nvec = sp->s_vlen;
-			for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
+			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 				VADD2( vp->vl_pnt, vp->vl_pnt, xlate );
 			}
 	    		break;
@@ -1119,10 +1118,11 @@ work:
 	}
 	if( mode == 1 )  {
     		VMOVE( sp->s_center, sav_center );
-    		VSUB2( xlate, sav_start, sp->s_vlist->vl_pnt );
-		nvec = sp->s_vlen;
-		for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
-			VADD2( vp->vl_pnt, vp->vl_pnt, xlate );
+		if( sp->s_vlist != VL_NULL )  {
+	    		VSUB2( xlate, sav_start, sp->s_vlist->vl_pnt );
+			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+				VADD2( vp->vl_pnt, vp->vl_pnt, xlate );
+			}
 		}
 	}
 	dmaflag = 1;

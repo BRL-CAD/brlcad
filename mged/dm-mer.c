@@ -575,17 +575,15 @@ unsigned
 Mer_cvtvecs( sp )
 register struct solid *sp;
 {
-	register struct veclist *vp;
-	register int nvec;
+	register struct vlist *vp;
 
-	nvec = sp->s_vlen;
 	EdOpen( sp, 0, 1000, 0 );	/* need better size est */
 	EdDeleteOpenEntity();
 	EdInsert();
 	DbBegin( TY_LINE );
 
-	for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
-		if( vp->vl_pen == PEN_UP )  {
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+		if( vp->vl_draw == 0 )  {
 			/* Move, not draw */
 			DbEnd();
 /* Need to interact with INSERT command here! */
@@ -609,7 +607,7 @@ register struct solid *sp;
 }
 
 homog( vp )
-register struct veclist *vp;
+register struct vlist *vp;
 {
 	static double big, temp;
 	static double mul;
@@ -1773,123 +1771,4 @@ DbColorSelectAll( c )  {
 	db2( c );
 }
 DbHueSelectAll( h )  {
-	db1( 0x97 );
-	db1( h );
-}
-DbMaskedColorSelect( c, mask )  {
-	db1( 0x98 );
-	db2( c );
-	db2( mask );
-}
-DbMaskedHueSelect( h, mask )  {
-	db1( 0x99 );
-	db1( h );
-	db2( mask );
-}
-DbColorData( rgb, len )
-register struct rgbtab *rgb;
-int len;
-{
-	register int i, j;
-
-	/* We assume shading mix 0:  7 bits hue, 5 bits inten */
-	for( i=0; i < len; i++ )  {
-		EdInsert();
-		db1( 0x90 );
-		db2( i<<5 );	/* starting index */
-		db2( 32 );	/* 5 bits worth */
-		for( j=0; j < 32; j++ )  {
-			register int c;
-#define FOLD(p)		 {c = p - ((32-j)<<1); \
-			if( c < 0 )  c = 0; \
-			db1( c ); }
-			FOLD( rgb->r );
-			FOLD( rgb->g );
-			FOLD( rgb->b );
-		}
-		edflush();
-		rgb++;
-	}
-}
-DbShadingType( t )  {
-	db1( 0xB0 );
-	db1( t );
-}
-DbShadingMix( m )  {
-	db1( 0xB1 );
-	db1( m );
-}
-
-/* Section 10: Frame Buffer control */
-DbFrameBufferErase()  {
-	db1( 0xFD );
-}
-DbViewportErase()  {
-	db1( 0xFE );
-}
-DbFrameBufferCopy()  {
-	db1( 0xFC );
-}
-
-/* Many many more */
-
-/*** some quick hacks ** */
-/* Db* buffering */
-db1( c ) {
-	*db_next++ = c;
-}
-
-db2( s ) {
-	*db_next++ = s&0xFF;
-	*db_next++ = (s>>8)&0xFF;
-}
-
-db4( i )
-register long i;
-{
-	*db_next++ = i&0xFF;
-	*db_next++ = (i>>8)&0xFF;
-	*db_next++ = (i>>16)&0xFF;
-	*db_next++ = (i>>24)&0xFF;
-}
-
-dbflush()
-{
-	register int count;
-
-	count = db_next - DB_START;
-	if( count >= DB_SIZE )
-		(void)printf("dbflush(%d) > %d, Overrun!\n", count, DB_SIZE);
-	if(mer_debug>=3) (void)printf("dbflush(%d)\n",count);
-	if( count > 0 )  {
-		if( insert_mode )
-			end_insert_mode();
-		/* Sanity check -- see if any input leftover */
-		if( ck_input(0) )  {
-			(void)printf("dbflush:  eat_chars(): x%x\n", eat_chars() );
-		}
-		/* Actually send message */
-		Message_Send( 9, DB_START, count );
-	}
-	db_next = DB_START;
-}
-
-/* Ed* buffering -- not final */
-op1( c ) {
-	*db_next++ = c;
-}
-op2( s ) {
-	*db_next++ = s&0xFF;
-	*db_next++ = (s>>8)&0xFF;
-}
-op4( i )
-register long i;
-{
-	*db_next++ = i&0xFF;
-	*db_next++ = (i>>8)&0xFF;
-	*db_next++ = (i>>16)&0xFF;
-	*db_next++ = (i>>24)&0xFF;
-}
-edflush()  {
-	dbflush();
-}
+	db1

@@ -353,7 +353,7 @@ double          ratio;
 	register struct pr_pos *ptP;
 	u_char         *mvP;
 	static vect_t   pt;
-	register struct veclist *vp;
+	register struct vlist *vp;
 	struct mater   *mp;
 	int             nvec, totalvec;
 	int             useful = 0;
@@ -377,7 +377,7 @@ double          ratio;
 		nvec = 1024;
 	}
 	totalvec = nvec;
-	for (vp = sp->s_vlist; nvec-- > 0; vp++)  {
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		MAT4X3PNT(pt, mat, vp->vl_pnt);
 		/* Visible range is +/- 1.0 */
 		/* 2^31 ~= 2e9 -- dynamic range of a long int */
@@ -389,7 +389,7 @@ double          ratio;
 		ptP->x = GED_TO_SUNPW( 2048*pt[0]);
 		ptP->y = GED_TO_SUNPW(-2048*pt[1]);
 		ptP++;
-		if (vp->vl_pen == PEN_UP)
+		if (vp->vl_draw == 0)
 			*mvP++ = 1;
 		else
 			*mvP++ = 0;
