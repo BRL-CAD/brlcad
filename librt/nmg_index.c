@@ -848,9 +848,8 @@ struct model *m2;
 	 * number space if possible.
 	 */
 	nmg_m_reindex(m1, 0);
-	nmg_m_reindex(m2, 0);
 
-	/* no re-order the second model starting with an index number
+	/* now re-order the second model starting with an index number
 	 * of m1->maxindex.
 	 *
 	 * We might get away with using m1->maxindex-1, since the first
