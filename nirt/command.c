@@ -37,9 +37,37 @@ extern outval			ValTab[];
 extern int			overlap_claims;
 extern char			*ocname[];
 extern int			nirt_debug;
+extern int			rt_bot_minpieces;	/* grom g_bot.c */
 
 void		printusage();
 void		do_rt_gettrees();
+
+void
+bot_minpieces(char *buffer, com_table *ctp )
+{
+	int new_value;
+	int i=0;
+
+	while (isspace(*(buffer+i)))
+		++i;
+	if (*(buffer+i) == '\0')     /* display current rt_bot_minpieces */
+	{
+		bu_log( "rt_bot_minpieces = %d\n", rt_bot_minpieces );
+		return;
+	}
+
+	new_value = atoi( buffer );
+
+	if( new_value < 0 ) {
+		bu_log( "Error: rt_bot_minpieces cannot be less than 0\n" );
+		return;
+	}
+
+	if( new_value != rt_bot_minpieces ) {
+		rt_bot_minpieces = new_value;
+		need_prep = 1;
+	}
+}
 
 void az_el(buffer, ctp)
 char			*buffer;

@@ -65,6 +65,17 @@ This is probably only useful with the
 .B -M
 option.
 .TP
+.BI -B " rt_bot_minpieces"
+causes
+.I nirt
+to adjust the setting of
+.I rt_bot_minpieces
+to the indicated value. A value of zero here indicates that the "pieces" methodology should not
+be used. A value greater than zero indicates that all BOT primitives containing more than
+.I rt_bot_minpieces
+triangles should be broken down into a seperate piece for each triangle. This can result
+in significant improvement in raytrace speed at the cost of more memory use.
+.TP
 .BI -e " script"
 causes
 .I nirt
@@ -210,6 +221,16 @@ Changing azimuth and elevation will change the direction vector.
 .TP 12
 .B s
 Fires a ray from the current origination point in the current direction.
+.TP 12
+.B bot_minpieces [n]
+Sets "rt_bot_minpieces" to the new value
+.I n.
+If
+.I n
+is not provided, the current value of "rt_bot_minpieces" is diplayed.
+See the discussion of the
+.I -B
+option above for more details.
 .TP 12
 .B backout
 Backs the ray origination point out of the geometry:

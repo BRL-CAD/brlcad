@@ -48,7 +48,7 @@
 #define DEBUG_FMT	"\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
 /*	STRING FOR USE WITH GETOPT(3)	*/
-#define	OPT_STRING      "A:bEe:f:MO:su:vx:X:?"
+#define	OPT_STRING      "A:bB:Ee:f:MO:su:vx:X:?"
 
 #define	made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
@@ -120,4 +120,5 @@ extern void		set_diameter();
 extern void		report();
 extern int		check_conv_spec();
 extern void             do_rt_gettrees();
+extern void		bot_minpieces();
 extern int		need_prep;
