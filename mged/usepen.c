@@ -106,7 +106,7 @@ char	**argv;
 	mousevec[Y] =  ypos / 2047.0;
 	mousevec[Z] = 0;
 
-	if (mged_variables.faceplate && mged_variables.show_menu && !tran_set) {
+	if (mged_variables.faceplate && mged_variables.show_menu) {
         /*
 	 * If mouse press is in scroll area, see if scrolling, and if so,
 	 * divert this mouse press.
@@ -205,7 +205,10 @@ char	**argv;
 	  return TCL_OK;
 
 	case ST_S_EDIT:
-	  sedit_mouse( mousevec );
+	  if(!SEDIT_ROTATE && es_edflag > IDLE)
+	    aslewview( mousevec );
+	  else
+	    slewview( mousevec );
 	  return TCL_OK;
 
 	case ST_O_PATH:
@@ -235,8 +238,11 @@ char	**argv;
 		return TCL_OK;
 
 	case ST_O_EDIT:
-		objedit_mouse( mousevec );
-		return TCL_OK;
+	  if(!OEDIT_ROTATE && edobj)
+	    aslewview( mousevec );
+	  else
+	    slewview( mousevec );
+	  return TCL_OK;
 
 	default:
 		state_err( "mouse press" );
