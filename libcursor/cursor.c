@@ -55,7 +55,6 @@ char		termName[MAX_TERM_LEN] = "UNKNOWN";
 
 /* Individual terminal control strings (TCS).			*/
 char		*BC, /* Backspace.				*/
-		*PC, /* Padding character.			*/
 		*UP, /* Cursor up one line.			*/
 		*CS, /* Change scrolling region.		*/
 		*SO, /* Begin standout mode.			*/
@@ -184,7 +183,6 @@ LoadTCS()
 	HO = tgetstr( "ho", &tstr_addr );
 	CM = tgetstr( "cm", &tstr_addr );
 	BC = tgetstr( "bc", &tstr_addr );
-	PC = tgetstr( "pc", &tstr_addr );
 	UP = tgetstr( "up", &tstr_addr );
 	TI = tgetstr( "ti", &tstr_addr );
 	DL = tgetstr( "dl", &tstr_addr );
