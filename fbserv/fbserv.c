@@ -92,7 +92,11 @@ int argc; char **argv;
 #endif
 
 #ifdef BSD
-	openlog( "rfbd", LOG_PID|LOG_NOWAIT, LOG_DAEMON );
+#ifdef LOG_DAEMON
+	openlog( "rfbd", LOG_PID|LOG_NOWAIT, LOG_DAEMON );	/* 4.3 style */
+#else
+	openlog( "rfbd", LOG_PID );				/* 4.2 style */
+#endif
 	if( setsockopt( netfd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
 		openlog( argv[0], LOG_PID, 0 );
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
