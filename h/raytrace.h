@@ -2998,13 +2998,20 @@ BU_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
 /* From nmg_eval.c */
+BU_EXTERN(void			nmg_ck_lu_orientation, (struct loopuse *lu,
+				CONST struct bn_tol *tolp));
 BU_EXTERN(CONST char		*nmg_class_name, (int class_no) );
+BU_EXTERN(void			nmg_evaluate_boolean,
+				(struct shell	*sA,
+				struct shell	*sB,
+				int		op,
+				long		*classlist[8],
+				CONST struct bn_tol	*tol));
 #if 0
 /* These can't be included because struct nmg_bool_state is in nmg_eval.c */
-BU_EXTERN(void			nmg_eval_shell, (struct shell *s,
-				struct nmg_bool_state *bs ) );
-BU_EXTERN(void			nmg_eval_plot, (struct nmg_bool_state *bs,
-				int num, int delay) );
+/* nmg_eval_shell */
+/* nmg_eval_action */
+/* nmg_eval_plot */
 #endif
 
 
