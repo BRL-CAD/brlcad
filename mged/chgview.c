@@ -511,7 +511,7 @@ int	verbose;
 						" ??Perspective=[%g,%g,%g]??",
 						xmat[12], xmat[13], xmat[14] );
 				}
-				rt_log("\n");
+				rt_vls_printf( outstrp, "\n" );
 			} else {
 				register char	*cp;
 
