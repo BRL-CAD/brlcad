@@ -26,7 +26,8 @@ char *malloc();
 
 int	xnum, ynum;		/* Number of pixels in new map */
 int	xorig, yorig;		/* Bottom left corner to extract from */
-int	linelen;
+int	linelen, outbytes;
+int	bytes_per_pixel = 0;
 char	*buf;			/* output scanline buffer, malloc'd */
 
 main(argc, argv)
@@ -37,10 +38,20 @@ int argc; char **argv;
 	int	error;
 	long	offset;
 
-	if (argc < 3) {
-		printf("usage: pixrect infile outfile (I prompt!)\n");
+	/* Check for byte count */
+	if( argc > 1 && strncmp(argv[1], "-#", 2) == 0 ) {
+		bytes_per_pixel = atoi( &argv[1][2] );
+		argc--;
+		argv++;
+	}
+	if( bytes_per_pixel == 0 )
+		bytes_per_pixel = 3;
+
+	if (argc != 3) {
+		printf("usage: pixrect [-#bytes] infile outfile (I prompt!)\n");
 		exit( 1 );
 	}
+
 	if ((ifp = fopen(argv[1], "r")) == NULL) {
 		printf("pixrect: can't open %s\n", argv[1]);
 		exit( 2 );
@@ -58,13 +69,18 @@ int argc; char **argv;
 	printf( "Scan line length of input file " );
 	scanf( "%d", &linelen );
 
-	buf = malloc( xnum * 3 );
+	outbytes = xnum * bytes_per_pixel;
+
+	if( (buf = malloc(outbytes)) == NULL ) {
+		fprintf( stderr, "pixrect: malloc failed!\n" );
+		exit( 1 );
+	}
 
 	/* Move all points */
-	for (row = 0+yorig; row < ynum+yorig; row++) {
-		offset = row * 3 * linelen + (3 * xorig);
+	for( row = 0+yorig; row < ynum+yorig; row++ ) {
+		offset = (row * linelen + xorig) * bytes_per_pixel;
 		error = fseek(ifp, offset, 0);
-		error = fread(buf, sizeof(*buf), 3*xnum, ifp);
-		error = fwrite(buf, sizeof(*buf), 3*xnum, ofp);
+		error = fread(buf, sizeof(*buf), outbytes, ifp);
+		error = fwrite(buf, sizeof(*buf), outbytes, ofp);
 	}
 }
