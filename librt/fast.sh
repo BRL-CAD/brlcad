@@ -136,7 +136,7 @@ cake ${SILENT} \
  bomb.o wdb_obj.o view_obj.o dg_obj.o vdraw.o wdb_comb_std.o &
 
 wait
-if test "${SILENT}" == ""
+if test "${SILENT}" = ""
 then
 	echo --- Collecting any stragglers.
 fi
