@@ -39,8 +39,7 @@
 extern int optind;
 extern char *optarg;
 
-int last_steer, frame; /* used by steer_mat */
-   /* info from command line args */
+ /* info from command line args */
 int relative_a, relative_c, axes, translate, quaternion, rotate;/*flags*/
 int steer, view, readview, permute; /* flags*/
 int first_frame;
@@ -57,7 +56,7 @@ char **argv;
 	vect_t point, zero;
 	quat_t quat;
 	mat_t a, m_x;
-	int val, go;
+	int val, go, frame, last_steer;
 
 	frame=last_steer=go=view=relative_a=relative_c=axes=0;
 	VSETALL(centroid,0);
@@ -73,6 +72,8 @@ char **argv;
 
 	if (!get_args(argc,argv))
 		fprintf(stderr,"anim_script: Get_args error\n");
+
+	frame = (steer) ? first_frame -1 : first_frame;
 	
 	if (view && (viewsize > 0.0))
                 printf("viewsize %.10g;\n", viewsize);
@@ -101,7 +102,7 @@ char **argv;
 
 		/* calculate basic rotation matrix a */
 		if (steer)
-			go = steer_mat(a,point); /* warning: point changed by steer_mat */
+			go = anim_steer_mat(a,point,last_steer); /* warning: point changed by anim_steer_mat */
 		else if (quaternion) {
 			anim_quat2mat(a,quat);
 			go = 1;
@@ -132,7 +133,7 @@ char **argv;
 
 		/* print one frame of script */
 		if (go && view){
-	                printf("start %d;\n", first_frame + frame);
+	                printf("start %d;\n", frame);
 			printf("clean;\n");
 			if (readview)
 		                printf("viewsize %.10g;\n", viewsize);
@@ -145,7 +146,7 @@ char **argv;
 	                printf("end;\n");
 		}
 		else if (go){
-			printf("start %d;\n", first_frame + frame);
+			printf("start %d;\n", frame);
 			printf("clean;\n");
 			printf("anim %s matrix lmul\n", *(argv+optind));
 			anim_mat_print(a,1);
@@ -229,7 +230,6 @@ char **argv;
 			relative_a = 0;
 			rotate = 0;
 			translate = 1;
-			frame = -1;
 			break;
 		case 't':
 			translate = 1;
@@ -248,43 +248,5 @@ char **argv;
 		}
 	}
 	return(1);
-}
-
-/*STEER_MAT - given the next frame's position, remember the value of
-the previous frame's position and calculate a matrix which points the x-axis
-in the direction defined by those two positions. Return new matrix, and the
-remembered value of the current position, as arguments; return 1 as the 
-normal value, and 0 when there is not yet information to remember.
-*/
-int steer_mat(mat,point)
-mat_t  mat;
-vect_t point;
-{
-	void anim_dir2mat(), anim_add_trans(), anim_view_rev();
-	static vect_t p1, p2, p3;
-	vect_t dir, dir2;
-	static vect_t norm;
-
-	VMOVE(p1,p2);
-	VMOVE(p2,p3);
-	VMOVE(p3,point);
-	if (frame == 0){ /* first frame*/
-		VSUBUNIT(dir,p3,p2);
-		VSET(norm, 0.0, 1.0, 0.0);
-	}
-	else if (last_steer){ /*last frame*/
-		VSUBUNIT(dir,p2,p1);
-	}
-	else if (frame > 0){ /*normal*/
-		VSUBUNIT(dir,p3,p1);
-	}
-	else return(0); /* return signal 'don't print yet */
-
-	anim_dirn2mat(mat,dir,norm); /* create basic rotation matrix */
-	VSET(norm, mat[1], mat[5], 0.0); /* save for next time */
-
-	VMOVE(point,p2); /* for main's purposes, the current point is p2 */
-
-	return(1); /* return signal go 'ahead and print' */
 }
 
