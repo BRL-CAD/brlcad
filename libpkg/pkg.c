@@ -60,7 +60,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"		/* Can safely be removed for non-BRLCAD use */
 
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
-#  ifndef sgi
+#  if !defined(sgi) && !defined(i386)
 #	define HAS_UNIX_DOMAIN_SOCKETS
 #	include <sys/un.h>		/* UNIX Domain sockets */
 #  endif
@@ -99,7 +99,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #    endif
 #endif
 
-#if defined(BSD) && !defined(CRAY) && !defined(mips) && !defined(n16)
+#if defined(BSD) && !defined(CRAY) && !defined(mips) && !defined(n16) && !defined(i386)
 #define	HAS_WRITEV
 #endif
 
