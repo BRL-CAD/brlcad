@@ -116,6 +116,10 @@ struct rt_i		*rtip;
  * XXX That would be silly, because then they would overlap!  Don't bother.
  * (This might happen if a submodel is both subtracted and unioned).
  */
+	bu_semaphore_acquire(RT_SEM_MODEL);
+	/* This code must be prepared to run in parallel
+	 * without tripping over itself.
+	 */
 	if( sip->file[0] == '\0' )  {
 		/* No .g file name given, tree is in current .g file */
 		sub_dbip = rtip->rti_dbip;
@@ -127,17 +131,22 @@ struct rt_i		*rtip;
 			/* This is first open of db, build directory */
 			if( db_scan( sub_dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
 				db_close( sub_dbip );
+				bu_semaphore_release(RT_SEM_MODEL);
 				return -1;
 			}
 		}
 	}
+	/* XXX Need to search dbi_client list here */
+
+	sub_rtip = rt_new_rti( sub_dbip );
+	RT_CK_RTI(sub_rtip);
+
+	bu_semaphore_release(RT_SEM_MODEL);
+
 	if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
 		bu_log("rt_submodel_prep(%s): Opened database %s\n",
 			stp->st_dp->d_namep, sub_dbip->dbi_filename );
 	}
-
-	sub_rtip = rt_new_rti( sub_dbip );
-	if( sub_rtip == RTI_NULL )  return -1;
 
 	/* Propagate some important settings downward */
 	sub_rtip->useair = rtip->useair;
@@ -172,6 +181,7 @@ struct rt_i		*rtip;
 	/*
 	 *  Record the "up" pointer from the sub model.
 	 */
+	/* XXX This is evil and must be eliminated */
 	sub_rtip->rti_up = stp;
 
 	/*
@@ -266,6 +276,7 @@ struct application	*ap;
 struct submodel_gobetween {
 	struct application	*up_ap;
 	struct seg		*up_seghead;
+	struct soltab		*up_stp;
 	fastf_t			delta;		/* distance offset */
 };
 
@@ -294,7 +305,7 @@ struct seg		*segHeadp;
 	up_ap = gp->up_ap;
 	RT_AP_CHECK(up_ap);		/* original ap, in containing  */
 	RT_CK_RTI(up_ap->a_rt_i);
-	up_stp = ap->a_rt_i->rti_up;
+	up_stp = gp->up_stp;
 	RT_CK_SOLTAB(up_stp);
 	submodel = (struct submodel_specific *)up_stp->st_specific;
 	RT_CK_SUBMODEL_SPECIFIC(submodel);
@@ -303,8 +314,61 @@ struct seg		*segHeadp;
 	up_reg = (struct region *)BU_PTBL_GET(&(up_stp->st_regions), 0);
 	RT_CK_REGION(up_reg);
 
-	
+	/* Need to tackle this honestly --
+	 * build a totally new segment list,
+	 * with normals, uv, and curvature already computed,
+	 * and converted back into up_model coordinate system.
+	 * So the lazy-evaluation routines don't have to do anything.
+	 * This is probably almost as cheap as the coordinate
+	 * re-mapping in the special hook routines.
+	 * Then the submodel can be stacked arbitrarily deep.
+	 * Alternatively, submodels can't include submodels.
+	 */
+#if 0
+	for( BU_LIST_FOR( segp, seg, &(segHeadp->l) ) )  {
+		struct seg	*up_segp;
+		RT_CHECK_SEG(segp);
 
+		/* Construct a completely new segment */
+		RT_GET_SEG(up_segp, up_ap->a_resource );
+
+		*up_segp = *segp;	/* struct copy */
+		up_segp->seg_stp = up_stp;
+
+		/* Adjust for scale difference */
+		MAT4XSCALOR( up_segp->seg_in.hit_dist, submodel->subm2m, segp->seg_in.hit_dist);
+		up_segp->seg_in.hit_dist -= gp->delta;
+		MAT4XSCALOR( up_segp->seg_out.hit_dist, submodel->subm2m, segp->seg_out.hit_dist);
+		up_segp->seg_out.hit_dist -= gp->delta;
+
+		/* Link to ray in upper model, not submodel */
+		up_segp->seg_in.hit_rayp = &up_ap->a_ray;
+		up_segp->seg_out.hit_rayp = &up_ap->a_ray;
+		
+		/* Pre-calculate what would have been "lazy evaluation" */
+		VJOIN1( up_segp->seg_in.hit_point,  up_ap->a_ray.r_pt,
+			up_segp->seg_in.hit_dist, up_ap->a_ray.r_dir );
+		VJOIN1( up_segp->seg_out.hit_point,  up_ap->a_ray.r_pt,
+			up_segp->seg_out.hit_dist, up_ap->a_ray.r_dir );
+
+		/* RT_HIT_NORMAL */
+		segp->seg_stp->st_meth->ft_norm( &segp->seg_in,
+			segp->seg_stp, segp->seg_in.hit_rayp );
+		segp->seg_stp->st_meth->ft_norm( &segp->seg_out,
+			segp->seg_stp, segp->seg_out.hit_rayp );
+		MAT4X3VEC( up_segp->seg_in.hit_normal, submodel->subm2m,
+			segp->seg_in.hit_normal );
+		MAT4X3VEC( up_segp->seg_out.hit_normal, submodel->subm2m,
+			segp->seg_out.hit_normal );
+
+		/* RT_HIT_UV */
+		/* gak, no place to stash uv data! */
+		/* Could use hit_vpriv and hit_private */
+
+		/* RT_HIT_CURVATURE */
+		/* no place to stash curvature data! */
+	}
+#else
 	/* Steal & xform the segment list */
 	while( BU_LIST_NON_EMPTY( &(segHeadp->l) ) ) {
 		segp = BU_LIST_FIRST( seg, &(segHeadp->l) );
@@ -325,6 +389,7 @@ struct seg		*segHeadp;
 		BU_LIST_INSERT( &(gp->up_seghead->l), &(segp->l) );
 		count++;
 	}
+#endif
 	return count;
 }
 
@@ -350,7 +415,7 @@ struct seg		*seghead;
 		(struct submodel_specific *)stp->st_specific;
 	register struct seg *segp;
 	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
-	struct application	nap;
+	struct application	sub_ap;
 	struct submodel_gobetween	gb;
 	vect_t			vdiff;
 
@@ -360,21 +425,21 @@ struct seg		*seghead;
 
 	gb.up_ap = ap;
 	gb.up_seghead = seghead;
+	gb.up_stp = stp;
 
-	nap = *ap;		/* struct copy */
-	nap.a_rt_i = submodel->rtip;
-	nap.a_hit = rt_submodel_a_hit;
-	nap.a_miss = rt_submodel_a_miss;
-	nap.a_uptr = (genptr_t)&gb;
-	nap.a_dist = submodel->m2subm[15];	/* scale, local to world */
-	nap.a_purpose = "rt_submodel_shot";
+	sub_ap = *ap;		/* struct copy */
+	sub_ap.a_rt_i = submodel->rtip;
+	sub_ap.a_hit = rt_submodel_a_hit;
+	sub_ap.a_miss = rt_submodel_a_miss;
+	sub_ap.a_uptr = (genptr_t)&gb;
+	sub_ap.a_purpose = "rt_submodel_shot";
 
 	/* shootray already computed a_ray.r_min & r_max for us */
 	/* Construct the ray in submodel coords. */
 	/* Do this in a repeatable way */
 	/* Distances differ only by a scale factor of m[15] */
-	MAT4X3PNT( nap.a_ray.r_pt, submodel->m2subm, ap->a_ray.r_pt );
-	MAT4X3VEC( nap.a_ray.r_dir, submodel->m2subm, ap->a_ray.r_dir );
+	MAT4X3PNT( sub_ap.a_ray.r_pt, submodel->m2subm, ap->a_ray.r_pt );
+	MAT4X3VEC( sub_ap.a_ray.r_dir, submodel->m2subm, ap->a_ray.r_dir );
 
 	/* NOTE: ap->a_ray.r_pt is not the same as rp->r_pt! */
 	/* This changes the distances */
@@ -385,7 +450,7 @@ struct seg		*seghead;
 /* XXX rt_shootray() doesn't pay attention yet. */
 	submodel->rtip->rti_nobool = 1;
 
-	if( rt_shootray( &nap ) <= 0 )  return 0;	/* MISS */
+	if( rt_shootray( &sub_ap ) <= 0 )  return 0;	/* MISS */
 
 	/* All the real (sneaky) work is done in the hit routine */
 	/* a_hit routine will have added the segs to seghead */
@@ -918,6 +983,7 @@ register struct xray	*rp;
 	RT_CK_RTI(sub_rtip);
 	upper_stp = sub_rtip->rti_up;
 	RT_CK_SOLTAB(upper_stp);
+/* XXX Really need some other way to get upper_stp */
 	submodel = (struct submodel_specific *)upper_stp->st_specific;
 	RT_CK_SUBMODEL_SPECIFIC(submodel);
 

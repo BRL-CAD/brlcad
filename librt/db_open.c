@@ -143,6 +143,7 @@ CONST char	*mode;
 	}
 
 	dbip->dbi_filename = bu_strdup(name);
+	bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
 	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
 	if(rt_g.debug&DEBUG_DB)
@@ -204,6 +205,21 @@ CONST char *name;
 }
 
 /*
+ *			D B _ C L O S E _ C L I E N T
+ *
+ *  De-register a client of this database instance, and close out the instance.
+ */
+void
+db_close_client( dbip, client )
+struct db_i	*dbip;
+long		*client;
+{
+	RT_CK_DBI(dbip);
+	(void)bu_ptbl_rm( &dbip->dbi_clients, client );
+	db_close(dbip);
+}
+
+/*
  *			D B _ C L O S E
  *
  *  Close a database, releasing dynamic memory
@@ -220,7 +236,10 @@ register struct db_i	*dbip;
 	if(rt_g.debug&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
 		dbip->dbi_filename, dbip, dbip->dbi_uses );
 
-	if( (--dbip->dbi_uses) > 0 )  return;
+	if( (--dbip->dbi_uses) > 0 )  {
+		if(dbip->dbi_mf) bu_close_mapped_file( dbip->dbi_mf );
+		return;
+	}
 	/* Use count is now zero */
 
 	if( dbip->dbi_mf )  {
@@ -234,6 +253,7 @@ register struct db_i	*dbip;
 		 *  For speed of re-open, at the price of some address space,
 		 *  the second choice is taken.
 		 */
+		bu_close_mapped_file( dbip->dbi_mf );
 		return;
 	}
 
@@ -253,7 +273,9 @@ register struct db_i	*dbip;
 	rt_mempurge( &(dbip->dbi_freep) );
 	rt_memclose();
 
-	/* dbi_inmem */
+	dbip->dbi_inmem = NULL;		/* sanity */
+
+	bu_ptbl_free(&dbip->dbi_clients);
 
 	/* Free all directory entries */
 	for( i=0; i < RT_DBNHASH; i++ )  {
@@ -312,4 +334,22 @@ struct db_i	*dbip;		/* input */
 		}
 	}
 	return 0;
+}
+
+/*
+ *			D B _ C L O N E _ D B I
+ *
+ *  Obtain an additional instance of this same database.
+ *  The new client is registered at the same time.
+ */
+struct db_i *
+db_clone_dbi( dbip, client )
+struct db_i	*dbip;
+long		*client;
+{
+	RT_CK_DBI(dbip);
+
+	dbip->dbi_uses++;
+	bu_ptbl_ins_unique( &dbip->dbi_clients, client );
+	return dbip;
 }

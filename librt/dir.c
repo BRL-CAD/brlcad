@@ -60,7 +60,8 @@ int		len;
 	    	return( RTI_NULL );		/* FAIL */
 	}
 
-	rtip = rt_new_rti( dbip );
+	rtip = rt_new_rti( dbip );		/* clones dbip */
+	db_close(dbip);				/* releases original dbip */
 
 	if( buf != (char *)NULL )
 		strncpy( buf, dbip->dbi_title, len );

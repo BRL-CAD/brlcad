@@ -51,6 +51,8 @@ extern struct resource	rt_uniresource;		/* from shoot.c */
  *			R T _ N E W _ R T I
  *
  *  Given a db_i database instance, create an rt_i instance.
+ *  If caller just called db_open, they need to do a db_close(),
+ *  because we have cloned our own instance of the db_i.
  */
 struct rt_i *
 rt_new_rti( dbip )
@@ -71,9 +73,8 @@ struct db_i	*dbip;
 	for( i=0; i < RT_DBNHASH; i++ )  {
 		BU_LIST_INIT( &(rtip->rti_solidheads[i]) );
 	}
-	rtip->rti_dbip = dbip;
+	rtip->rti_dbip = db_clone_dbi( dbip, (long *)rtip );
 	rtip->needprep = 1;
-	dbip->dbi_uses++;
 
 	BU_LIST_INIT( &rtip->HeadRegion );
 
@@ -142,7 +143,7 @@ struct rt_i	*rtip;
 
 	rt_clean( rtip );
 
-	db_close( rtip->rti_dbip );
+	db_close_client( rtip->rti_dbip, (long *)rtip );
 	rtip->rti_dbip = (struct db_i *)NULL;
 
 	bu_ptbl_free( &rtip->rti_resources );

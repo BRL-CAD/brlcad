@@ -310,6 +310,10 @@ struct hit {
 	} \
  }
 
+/* A more powerful interface would be: */
+/* RT_GET_NORMAL( _normal, _partition, inhit/outhit flag, ap ) */
+
+
 
 /*
  *			C U R V A T U R E
@@ -347,6 +351,9 @@ struct curvature {
 	} \
  }
 
+/* A more powerful interface would be: */
+/* RT_GET_CURVATURE(_curvp, _partition, inhit/outhit flag, ap) */
+
 /*
  *			U V C O O R D
  *
@@ -363,6 +370,9 @@ struct uvcoord {
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
 	(_stp)->st_meth->ft_uv( ap, _stp, _hitp, uvp ); }
+
+/* A more powerful interface would be: */
+/* RT_GET_UVCOORD(_uvp, _partition, inhit/outhit flag, ap) */
 
 
 /*
@@ -724,6 +734,7 @@ struct db_i  {
 	genptr_t		dbi_inmem;	/* ptr to in-memory copy */
 	struct animate		*dbi_anroot;	/* heads list of anim at root lvl */
 	struct bu_mapped_file	*dbi_mf;	/* Only in read-only mode */
+	struct bu_ptbl		dbi_clients;	/* List of rtip's using this db_i */
 };
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
@@ -2033,7 +2044,12 @@ BU_EXTERN(struct db_i *db_open, ( CONST char *name, CONST char *mode ) );
 					/* create a new model database */
 BU_EXTERN(struct db_i *db_create, ( CONST char *name ) );
 					/* close a model database */
+BU_EXTERN(void db_close_client, (struct db_i *dbip, long *client));
 BU_EXTERN(void db_close, ( struct db_i *dbip ) );
+					/* dump a full copy of a database */
+BU_EXTERN(int db_dump, (struct rt_wdb *wdbp, struct db_i *dbip));
+BU_EXTERN(struct db_i *db_clone_dbi, (struct db_i *dbip, long *client));
+
 /* db_io.c */
 /* It is normal to test for __STDC__ when using *_DEFINED tests but in
  * in this case "union record" is used for db_getmrec's return type.  This
