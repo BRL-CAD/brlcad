@@ -154,13 +154,19 @@ extern void		dir_build(), buildHrot(), dozoom(),
 extern void		eraseobj(), mged_finish(), slewview(),
 			mmenu_init(), moveHinstance(), moveHobj(), pr_solid(),
 			quit(), refresh(), rej_sedit(), sedit(),
-			sig2(), dir_print(),
+			dir_print(),
 			usepen(), setview(),
 			adcursor(), mmenu_display(),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
 extern void		sedit_menu();
 extern void		attach(), release(), get_attached();
+#if defined(sgi) && !defined(mips)
+extern int		(*cur_sigint)();	/* Current SIGINT status */
+extern int		sig2(); 
+#else
 extern void		(*cur_sigint)();	/* Current SIGINT status */
+extern void		sig2();
+#endif
 extern void		aexists(), f_quit();
 extern int		clip(), getname(), use_pen();
 extern struct directory	*combadd(), **dir_getspace();
@@ -298,7 +304,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 /* mged command variables for affecting the user environment */
 struct mged_variables {
 	int	autosize;
-	int	sgi_win_size;
+    	int	sgi_win_size;
 	int	sgi_win_origin[2];
 };
 

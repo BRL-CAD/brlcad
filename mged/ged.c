@@ -79,8 +79,13 @@ int		dmaflag;		/* Set to 1 to force new screen DMA */
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
 static jmp_buf	jmp_env;		/* For non-local gotos */
+#if defined(sgi) && !defined(mips)
+int		(*cur_sigint)();	/* Current SIGINT status */
+int		sig2();
+#else
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2();
+#endif
 void		new_mats();
 void		usejoy();
 static int	do_rc();
@@ -261,10 +266,17 @@ char **argv;
 	/* Caught interrupts take us back here, via longjmp() */
 	if( setjmp( jmp_env ) == 0 )  {
 		/* First pass, determine SIGINT handler for interruptable cmds */
+#if defined(sgi) && !defined(mips)
+		if( cur_sigint == (int (*)())SIG_IGN )
+			cur_sigint = (int (*)())SIG_IGN; /* detached? */
+		else
+			cur_sigint = sig2;	/* back to here w/!0 return */
+#else
 		if( cur_sigint == (void (*)())SIG_IGN )
 			cur_sigint = (void (*)())SIG_IGN; /* detached? */
 		else
 			cur_sigint = sig2;	/* back to here w/!0 return */
+#endif
 	} else {
 		(void)fprintf(outfile, "\nAborted.\n");
 		/* If parallel routine was interrupted, need to reset */
@@ -292,7 +304,7 @@ char **argv;
 		/*
 		 * Cause the control portion of the displaylist to be
 		 * updated to reflect the changes made above.
-		 */	 
+		 */
 		refresh();
 	}
 	return(0);
@@ -688,12 +700,22 @@ quit()
 /*
  *  			S I G 2
  */
+#if defined(sgi) && !defined(mips)
+int
+sig2()
+{
+	longjmp( jmp_env, 1 );
+	/* NOTREACHED */
+}
+#else
 void
 sig2()
 {
 	longjmp( jmp_env, 1 );
 	/* NOTREACHED */
 }
+#endif
+
 
 /*
  *  			N E W _ M A T S
@@ -790,3 +812,4 @@ void memcpy(to,from,cnt)
 	bcopy(from,to,cnt);
 }
 #endif
+
