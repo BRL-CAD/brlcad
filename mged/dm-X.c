@@ -57,7 +57,7 @@ static void     x_var_init();
 static void     establish_perspective();
 static void     set_perspective();
 static void     X_configure_window_shape();
-static void     establish_vtb();
+static void     establish_am();
 
 /* Display Manager package interface */
 
@@ -81,6 +81,14 @@ static struct dm_list *get_dm_list();
 static Tk_GenericProc X_doevent;
 #else
 static int X_doevent();
+#endif
+
+#define TRY_COLOR_CUBE 1
+#if TRY_COLOR_CUBE
+#define NUM_PIXELS  216
+static unsigned long get_pixel();
+static void get_color_slot();
+static void allocate_color_cube();
 #endif
 
 struct dm dm_X = {
@@ -111,7 +119,7 @@ extern Tk_Window tkwin;
 struct modifiable_x_vars {
   int perspective_mode;
   int dummy_perspective;
-  int virtual_trackball;
+  int alt_mouse_mode;
   int debug;
 };
 
@@ -132,6 +140,10 @@ struct x_vars {
   int is_monochrome;
   unsigned long black,gray,white,yellow,red,blue;
   unsigned long bd, bg, fg;   /* color of border, background, foreground */
+#if TRY_COLOR_CUBE
+  Colormap cmap;
+  unsigned long   pixel[NUM_PIXELS];
+#endif
   struct modifiable_x_vars mvars;
 };
 
@@ -139,7 +151,7 @@ struct x_vars {
 struct structparse X_vparse[] = {
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
-  {"%d",  1, "virtual_trackball", X_MV_O(virtual_trackball),establish_vtb },
+  {"%d",  1, "alt_mouse_mode", X_MV_O(alt_mouse_mode),establish_am },
   {"%d",  1, "debug",             X_MV_O(debug),            FUNC_NULL },
   {"",    0, (char *)0,           0,                        FUNC_NULL }
 };
@@ -279,14 +291,30 @@ int white_flag;
     int	x, y;
     int	lastx = 0;
     int	lasty = 0;
+    int   line_width = 1;
+    int   line_style = LineSolid;
 
+#if TRY_COLOR_CUBE
+    if(white_flag){    /* if highlighted */
+      gcv.foreground = get_pixel(sp->s_color);
+
+      /* if solid color is already the same as the highlight color use double line width */
+      if(gcv.foreground == ((struct x_vars *)dm_vars)->white)
+	line_width = 2;
+      else
+	gcv.foreground = ((struct x_vars *)dm_vars)->white;
+    }else
+      gcv.foreground = get_pixel(sp->s_color);
+#else
     gcv.foreground = ((struct x_vars *)dm_vars)->fg;
+#endif
     XChangeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc, GCForeground, &gcv);
 
     if( sp->s_soldash )
-	XSetLineAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc, 1, LineOnOffDash, CapButt, JoinMiter );
-    else
-	XSetLineAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc, 1, LineSolid, CapButt, JoinMiter );
+      line_style = LineOnOffDash;
+
+    XSetLineAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc,
+			line_width, line_style, CapButt, JoinMiter );
 
     nseg = 0;
     segp = segbuf;
@@ -329,12 +357,13 @@ int white_flag;
 		    continue; /* omit this point (ugh) */
 		/* Integerize and let the X server do the clipping */
 		/*XXX Color */
+#if !TRY_COLOR_CUBE
 		gcv.foreground = ((struct x_vars *)dm_vars)->fg;
 		if( white_flag && !((struct x_vars *)dm_vars)->is_monochrome ){
 		    gcv.foreground = ((struct x_vars *)dm_vars)->white;
 		}
 		XChangeGC( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc, GCForeground, &gcv );
-		
+#endif
 		pnt[0] *= 2047;
 		pnt[1] *= 2047;
 		x = GED_TO_Xx(pnt[0]);
@@ -531,9 +560,9 @@ XEvent *eventPtr;
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch(((struct x_vars *)dm_vars)->mvars.virtual_trackball){
-    case VIRTUAL_TRACKBALL_OFF:
-    case VIRTUAL_TRACKBALL_ON:
+    switch(((struct x_vars *)dm_vars)->mvars.alt_mouse_mode){
+    case ALT_MOUSE_MODE_OFF:
+    case ALT_MOUSE_MODE_ON:
       if(scroll_active && eventPtr->xmotion.state & ((struct x_vars *)dm_vars)->mb_mask)
 	rt_vls_printf( &cmd, "M 1 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
       else if(XdoMotion)
@@ -544,12 +573,12 @@ XEvent *eventPtr;
 	goto end;
 
       break;
-    case VIRTUAL_TRACKBALL_ROTATE:
+    case ALT_MOUSE_MODE_ROTATE:
        rt_vls_printf( &cmd, "iknob ax %f ay %f\n",
 		      (my - ((struct x_vars *)dm_vars)->omy)/512.0,
 		      (mx - ((struct x_vars *)dm_vars)->omx)/512.0 );
       break;
-    case VIRTUAL_TRACKBALL_TRANSLATE:
+    case ALT_MOUSE_MODE_TRANSLATE:
       {
 	fastf_t fx, fy;
 
@@ -567,7 +596,7 @@ XEvent *eventPtr;
 	}
       }
       break;
-    case VIRTUAL_TRACKBALL_ZOOM:
+    case ALT_MOUSE_MODE_ZOOM:
       rt_vls_printf( &cmd, "iknob aS %f\n",
 		     (((struct x_vars *)dm_vars)->omy - my)/
 		     (fastf_t)((struct x_vars *)dm_vars)->height);
@@ -588,9 +617,8 @@ XEvent *eventPtr;
   status = cmdline(&cmd, FALSE);
   rt_vls_free(&cmd);
 end:
-#if 1
   curr_dm_list = save_dm_list;
-#endif
+
   if(status == CMD_OK)
     return TCL_OK;
 
@@ -912,7 +940,16 @@ char	*name;
   ((struct x_vars *)dm_vars)->black = BlackPixel( ((struct x_vars *)dm_vars)->dpy, a_screen );
   ((struct x_vars *)dm_vars)->white = WhitePixel( ((struct x_vars *)dm_vars)->dpy, a_screen );
 
+#if TRY_COLOR_CUBE
+#if 1
+  ((struct x_vars *)dm_vars)->cmap = a_cmap = Tk_Colormap(((struct x_vars *)dm_vars)->xtkwin);
+#else
+  ((struct x_vars *)dm_vars)->cmap = a_cmap = DefaultColormap(((struct x_vars *)dm_vars)->dpy,
+							      a_screen);
+#endif
+#else
   a_cmap = Tk_Colormap(((struct x_vars *)dm_vars)->xtkwin);
+#endif
   a_color.red = 255<<8;
   a_color.green=0;
   a_color.blue=0;
@@ -988,6 +1025,10 @@ char	*name;
 					       ((struct x_vars *)dm_vars)->win,
 					       (GCForeground|GCBackground),
 					       &gcv);
+
+#if TRY_COLOR_CUBE
+    allocate_color_cube();
+#endif
 
 #ifndef CRAY2
     X_configure_window_shape();
@@ -1128,7 +1169,7 @@ set_perspective()
 }
 
 static void
-establish_vtb()
+establish_am()
 {
   return;
 }
@@ -1175,12 +1216,12 @@ char *argv[];
     return TCL_OK;
   }
 
-  if( !strcmp( argv[0], "mouse")){
+  if( !strcmp( argv[0], "m")){
     scroll_active = 0;
 
     if( argc < 5){
-      Tcl_AppendResult(interp, "dm mouse: need more parameters\n",
-		       "mouse button 1|0 xpos ypos\n", (char *)NULL);
+      Tcl_AppendResult(interp, "dm m: need more parameters\n",
+		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -1196,7 +1237,7 @@ char *argv[];
       ((struct x_vars *)dm_vars)->mb_mask = Button3Mask;
       break;
     default:
-      Tcl_AppendResult(interp, "dm mouse: bad button value - ", argv[1], "\n", (char *)NULL);
+      Tcl_AppendResult(interp, "dm m: bad button value - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -1213,61 +1254,57 @@ char *argv[];
   }
 
   status = TCL_OK;
-  if(((struct x_vars *)dm_vars)->mvars.virtual_trackball){
-    if( !strcmp( argv[0], "vtb" )){
-      int buttonpress;
 
-      scroll_active = 0;
+  if( !strcmp( argv[0], "am" )){
+    int buttonpress;
+
+    scroll_active = 0;
     
-      if( argc < 5){
-	Tcl_AppendResult(interp, "dm: need more parameters\n",
-			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
-	return TCL_ERROR;
-      }
-
-
-      buttonpress = atoi(argv[2]);
-      ((struct x_vars *)dm_vars)->omx = atoi(argv[3]);
-      ((struct x_vars *)dm_vars)->omy = atoi(argv[4]);
-
-      if(buttonpress){
-	switch(*argv[1]){
-	case 'r':
-	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
-	  break;
-	case 't':
-	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-
-	  if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
-	                  (edobj || es_edflag > 0)){
-	    fastf_t fx, fy;
-
-	    rt_vls_init(&vls);
-	    fx = (((struct x_vars *)dm_vars)->omx/
-	      (fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
-	    fy = (0.5 - ((struct x_vars *)dm_vars)->omy/
-		   (fastf_t)((struct x_vars *)dm_vars)->height) * 2;
-	    rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
-	    (void)cmdline(&vls, FALSE);
-	    rt_vls_free(&vls);
-	  }
-
-	  break;
-	case 'z':
-	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
-	  break;
-      default:
-	Tcl_AppendResult(interp, "dm: need more parameters\n",
-			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
-	return TCL_ERROR;
-	}
-      }else{
-	((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
-      }
-
-      return status;
+    if( argc < 5){
+      Tcl_AppendResult(interp, "dm am: need more parameters\n",
+		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
     }
-  }else{
+
+    buttonpress = atoi(argv[2]);
+    ((struct x_vars *)dm_vars)->omx = atoi(argv[3]);
+    ((struct x_vars *)dm_vars)->omy = atoi(argv[4]);
+
+    if(buttonpress){
+      switch(*argv[1]){
+      case 'r':
+	((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ROTATE;
+	break;
+      case 't':
+	((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_TRANSLATE;
+
+	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
+	   (edobj || es_edflag > 0)){
+	  fastf_t fx, fy;
+
+	  rt_vls_init(&vls);
+	  fx = (((struct x_vars *)dm_vars)->omx/
+		(fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
+	  fy = (0.5 - ((struct x_vars *)dm_vars)->omy/
+		(fastf_t)((struct x_vars *)dm_vars)->height) * 2;
+	  rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
+	  (void)cmdline(&vls, FALSE);
+	  rt_vls_free(&vls);
+	}
+
+	break;
+      case 'z':
+	((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ZOOM;
+	break;
+      default:
+	Tcl_AppendResult(interp, "dm am: need more parameters\n",
+			 "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
+      }
+    }else{
+      ((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ON;
+    }
+
     return status;
   }
 
@@ -1285,7 +1322,7 @@ x_var_init()
 
   /* initialize the modifiable variables */
   ((struct x_vars *)dm_vars)->mvars.dummy_perspective = 1;
-  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = 1;
+  ((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = 1;
 }
 
 static void
@@ -1314,3 +1351,69 @@ Window window;
 
   return DM_LIST_NULL;
 }
+
+#if TRY_COLOR_CUBE
+/* Return the allocated pixel value that most closely represents
+the color requested. */
+static unsigned long
+get_pixel(s_color)
+unsigned char	*s_color;
+{
+  unsigned char	r, g, b;
+
+  get_color_slot(s_color[0], &r);
+  get_color_slot(s_color[1], &g);
+  get_color_slot(s_color[2], &b);
+
+  return(((struct x_vars *)dm_vars)->pixel[r * 36 + g * 6 + b]);
+}
+
+/* get color component value */
+static void
+get_color_slot(sc, c)
+unsigned char sc;
+unsigned char *c;
+{
+  if(sc < 42)
+	*c = 0;
+  else if(sc < 85)
+	*c = 1;
+  else if(sc < 127)
+	*c = 2;
+  else if(sc < 170)
+	*c = 3;
+  else if(sc < 212)
+	*c = 4;
+  else
+	*c = 5;
+}
+
+/* Try to allocate 216 colors. If a color cannot be
+allocated, the default foreground color will be used.*/
+static void
+allocate_color_cube()
+{
+  int	i = 0;
+  XColor	color;
+
+  int r, g, b;
+
+  for(r = 0; r < 65026; r = r + 13005)
+    for(g = 0; g < 65026; g = g + 13005)
+      for(b = 0; b < 65026; b = b + 13005){
+	color.red = (unsigned short)r;
+	color.green = (unsigned short)g;
+	color.blue = (unsigned short)b;
+	if(XAllocColor(((struct x_vars *)dm_vars)->dpy,
+		       ((struct x_vars *)dm_vars)->cmap, &color)){
+	  if(color.pixel == ((struct x_vars *)dm_vars)->bg)
+	    /* that is, if the allocated color is the same as
+	       the background color */
+	    ((struct x_vars *)dm_vars)->pixel[i++] = ((struct x_vars *)dm_vars)->fg;	/* default foreground color, which may not be black */
+	  else
+	    ((struct x_vars *)dm_vars)->pixel[i++] = color.pixel;
+	}else	/* could not allocate a color */
+	  ((struct x_vars *)dm_vars)->pixel[i++] = ((struct x_vars *)dm_vars)->fg;
+      }
+}
+#endif
