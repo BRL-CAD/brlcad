@@ -176,6 +176,9 @@ int		depth;
  *	to each node, whether to apply the function to the entire node
  *	(or just to its data), and the type of traversal (preorder,
  *	inorder, or postorder).
+ *
+ *	N.B. _rb_walk() is not declared static because it is called
+ *	by rb_diagnose_tree() in rb_diag.c.
  */
 void _rb_walk (tree, order, visit, what_to_visit, trav_type)
 
