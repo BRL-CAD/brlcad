@@ -22,6 +22,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
+#include "conf.h"
+
 #include <stdio.h>
 
 #define	NUM	3000
