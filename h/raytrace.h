@@ -1181,6 +1181,17 @@ struct run_rt {
  * The drawable geometry object is also capabable of raytracing geometry
  * that comes from a Brl-Cad database.
  */
+struct dg_qray_color {
+  unsigned char r;
+  unsigned char g;
+  unsigned char b;
+};
+
+struct dg_qray_fmt {
+  char type;
+  struct bu_vls fmt;
+};
+
 struct dg_obj {
 	struct bu_list	l;
 	struct bu_vls		dgo_name;	/* drawable geometry object name */
@@ -1192,6 +1203,15 @@ struct dg_obj {
 	int			dgo_rt_cmd_len;
 	struct bu_observer	dgo_observers;
 	struct run_rt		dgo_headRunRt;	/* head of forked rt processes */
+	struct bu_vls		dgo_qray_basename;	/* basename of query ray vlist */
+	struct bu_vls		dgo_qray_script;	/* query ray script */
+	char			dgo_qray_effects;	/* t for text, g for graphics or b for both */
+	int			dgo_qray_cmd_echo;	/* 0 - don't echo command, 1 - echo command */
+	struct dg_qray_fmt	*dgo_qray_fmts;
+	struct dg_qray_color	dgo_qray_odd_color;
+	struct dg_qray_color	dgo_qray_even_color;
+	struct dg_qray_color	dgo_qray_void_color;
+	struct dg_qray_color	dgo_qray_overlap_color;
 };
 extern struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 #define RT_DGO_NULL		((struct dg_obj *)NULL)
