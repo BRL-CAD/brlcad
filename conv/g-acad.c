@@ -42,14 +42,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "../librt/debug.h"
+#define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
-Usage: %s [-v] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n\
-	[-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n";
+Usage: %s [-v][-i][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
+[-e error_file ][-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -69,6 +70,7 @@ static struct db_tree_state	tree_state;	/* includes tol & model */
 static int	regions_tried = 0;
 static int	regions_converted = 0;
 static int	regions_written = 0;
+static int	inches = 0;
 
 /*
  *			M A I N
@@ -119,13 +121,15 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:u:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:i:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name. */
 			output_file = optarg;
@@ -155,8 +159,8 @@ char	*argv[];
 		case 'e':		/* Error file name. */
 			error_file = optarg;
 			break;
-		case 'u':
-
+		case 'i':
+			inches = 1;
 			break;
 		default:
 			rt_log(  usage, argv[0]);
@@ -208,8 +212,10 @@ char	*argv[];
 	RT_CK_TESS_TOL(tree_state.ts_ttol);
 
 /* Write out ACAD facet header */
-
-	fprintf(fp,"BRL-CAD generated ACAD FACET FILE (Units mm)\n");
+	if (inches)
+		fprintf(fp,"BRL-CAD generated ACAD FACET FILE (Units in)\n");
+	else
+		fprintf(fp,"BRL-CAD generated ACAD FACET FILE (Units mm)\n");
 
 /* Generate space for number of facet entities, will write over later */
 
@@ -385,8 +391,10 @@ int material_id;
 	{
 		v = (struct vertex *)NMG_TBL_GET( &verts, i );
 		NMG_CK_VERTEX( v );
-
-		fprintf( fp, "%f %f %f\n", V3ARGS( v->vg_p->coord ));
+		if (inches)
+			fprintf( fp, "%f %f %f\n", V3ARGSIN( v->vg_p->coord ));
+		else
+			fprintf( fp, "%f %f %f\n", V3ARGS( v->vg_p->coord ));
 	}
 
 /* Number of sub-parts (always 1 with BRL-CAD) */
