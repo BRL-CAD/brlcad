@@ -23,6 +23,24 @@ static const char libbu_list_RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 
+#include <assert.h>
+
+/*
+ *			B U _ L I S T _ N E W
+ *
+ *	Creates and initializes a bu_list head structure
+ */
+struct bu_list *
+bu_list_new()
+{
+	struct bu_list *new;
+
+	BU_GETSTRUCT( new, bu_list );
+	BU_LIST_INIT( new );
+
+	return( new );
+}
+
 /*
  *			B U _ L I S T _ L E N
  *
