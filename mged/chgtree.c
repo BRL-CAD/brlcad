@@ -164,7 +164,7 @@ f_instance()
 		return;
 
 	oper = UNION;
-	if( numargs == 5 )
+	if( numargs == 4 )
 		oper = cmd_args[3][0];
 	if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
 		(void)printf("bad operation: %c\n", oper );
