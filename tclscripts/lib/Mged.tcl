@@ -27,6 +27,7 @@ class Mged {
     destructor {}
 
     itk_option define -prompt prompt Prompt "mged> "
+    itk_option define -dmtype dmtype Dmtype X
 
     public method opendb {args}
     public method openFile {}
@@ -128,7 +129,7 @@ body Mged::constructor {file args} {
     eval itk_initialize $args
 
     add qd
-    set qd [QuadDisplay [childsite qd].qd ogl]
+    set qd [QuadDisplay [childsite qd].qd $itk_option(-dmtype)]
     pack $qd -fill both -expand yes
 
     add cmd
