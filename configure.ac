@@ -1967,6 +1967,12 @@ AC_CONFIG_FILES([
 	src/off/Makefile
 	src/other/Makefile
 	src/other/URToolkit/Makefile
+	src/other/URToolkit/cnv/Makefile
+	src/other/URToolkit/cnv/rletoabA62/Makefile
+	src/other/URToolkit/cnv/rletogif/Makefile
+	src/other/URToolkit/man/Makefile
+	src/other/URToolkit/tools/Makefile
+	src/other/URToolkit/tools/clock/Makefile
 	src/other/awf/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
