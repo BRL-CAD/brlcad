@@ -190,3 +190,31 @@ unsigned char	*rgb;
 
     return (1);
 }
+
+/*
+ *			B U _ S T R _ T O _ R G B
+ *
+ */
+int bu_str_to_rgb (str, rgb)
+
+char		*str;
+unsigned char	*rgb;
+
+{
+    int	num;
+    int	r, g, b;
+
+    r = g = b = -1;
+    while (isspace(*str))
+	++str;
+    
+    if (*str == '#')
+    {
+	if (strlen(++str) != 7)
+	    return 0;
+	num = sscanf(str, "%02x%02x%02x", &r, &g, &b);
+	printf("I read %d of %d, %d, %d\n", num, r, g, b);
+    }
+
+    return 1;
+}
