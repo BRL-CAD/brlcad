@@ -517,7 +517,7 @@ f_rt()
 
 	vp = &vec[0];
 	*vp++ = "rt";
-	*vp++ = "-f";
+	*vp++ = "-f50";
 	*vp++ = "-M";
 	for( i=1; i < numargs; i++ )
 		*vp++ = cmd_args[i];
