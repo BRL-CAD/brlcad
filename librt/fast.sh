@@ -96,7 +96,6 @@ cake \
  &
 
 cake \
- parse.o \
  inout.o \
  plane.o \
  plot3.o \
