@@ -1647,7 +1647,7 @@ fi
 if test "x$ECHO" = "x" ; then
 	ECHO=echo
 	AC_SUBST(ECHO)
-	AC_MSG_NOTICE([echowas not defined by configure])
+	AC_MSG_NOTICE([ECHO was not defined by configure so defining manually])
 fi
 if test "x$ECHO_N" = "x" ; then
 	ECHO_N=
