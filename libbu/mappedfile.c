@@ -90,19 +90,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 
 #ifdef HAVE_UNIX_IO
 	/* Obtain some initial information about the file */
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	ret = stat( name, &sb );
-	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if( ret < 0 )  {
-		perror(name);
-		goto fail;
-	}
-
-	if( sb.st_size == 0 )  {
-		bu_log("bu_open_mapped_file(%s) 0-length file\n", name);
-		goto fail;
-	}
 #endif
 
 	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
@@ -116,18 +104,25 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 			continue;
 		/* File is already mapped -- verify size and modtime */
 #ifdef HAVE_UNIX_IO
-		if( sb.st_size != mp->buflen )  {
-			bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n",
-				name, mp->buflen, sb.st_size );
-			goto dont_reuse;
+		if( !mp->dont_restat )  {
+			bu_semaphore_acquire(BU_SEM_SYSCALL);
+			ret = stat( name, &sb );
+			bu_semaphore_release(BU_SEM_SYSCALL);
+			if( ret < 0 )  goto do_reuse;	/* File vanished from disk, mapped copy still OK */
+			if( sb.st_size != mp->buflen )  {
+				bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n",
+					name, mp->buflen, sb.st_size );
+				goto dont_reuse;
+			}
+			if( sb.st_mtime != mp->modtime )  {
+				bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n",
+					name);
+				goto dont_reuse;
+			}
+			/* To be completely safe, should check st_dev and st_inum */
 		}
-		if( sb.st_mtime != mp->modtime )  {
-			bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n",
-				name);
-			goto dont_reuse;
-		}
-		/* To be completely safe, should check st_dev and st_inum */
 #endif
+do_reuse:
 		/* It is safe to reuse mp */
 		mp->uses++;
 		bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
@@ -149,6 +144,20 @@ dont_reuse:
 
 	if( fd < 0 )  {
 		perror(name);
+		goto fail;
+	}
+
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	ret = fstat( fd, &sb );
+	bu_semaphore_release(BU_SEM_SYSCALL);
+
+	if( ret < 0 )  {
+		perror(name);
+		goto fail;
+	}
+
+	if( sb.st_size == 0 )  {
+		bu_log("bu_open_mapped_file(%s) 0-length file\n", name);
 		goto fail;
 	}
 #endif /* HAVE_UNIX_IO */
