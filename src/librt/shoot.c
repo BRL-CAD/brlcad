@@ -50,18 +50,14 @@
 static const char RCSshoot[] = "@(#)$Header$ (BRL)";
 #endif
 
-char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991,2000 by the United States Army";
-
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include "machine.h"
 #include "vmath.h"
