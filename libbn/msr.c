@@ -1,7 +1,5 @@
-#ifndef lint
-static char rcsid[] = "$Header$";
-#endif
-/*				M S R A N . C
+/*
+ *				M S R . C
  *
  * Minimal Standard RANdom number generator
  *
@@ -10,42 +8,25 @@ static char rcsid[] = "$Header$";
  *	"Random number generators: good ones are hard to find"
  *	CACM vol 31 no 10, Oct 88
  *
- * Author:
+ *  Author -
  *	Christopher T. Johnson - 90/04/20
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
  *
- * Source:
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Balistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland 21005-5066
- *
- * Copyright Notice -
- *	This software is Copyright (C) 1991 by the United States Army.
- *	All rights reserved.
- *
- *
- * $Log$
- * Revision 10.3  1994/02/07  20:02:28  cjohnson
- * Fix the magic number check in *_unif_* routines.
- *
- * Revision 10.2  1994/02/07  17:54:36  cjohnson
- * Fix comments.
- *
- * Revision 10.1  1991/10/12  06:40:37  mike
- * Release_4.0
- *
- * Revision 1.4  91/07/25  01:26:10  butler
- * added magic number and checking to struct msr_unif & msr_gauss
- * 
- * Revision 1.3  91/06/22  05:43:33  cjohnson
- * Change to rt_malloc, add to many comments, add some NULL pointer tests.
- * 
- * Revision 1.2  1991/06/22  02:23:36  cjohnson
- * Sync RCS to source code
- *
- * Revision 1.1  90/04/20  02:05:36  cjohnson
- * Initial revision
- * 
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #include "conf.h"
 

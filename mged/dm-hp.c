@@ -5,12 +5,20 @@
  *
  *  Author -
  *	Mark H. Bowden
+ *  
+ *  Source -
  *	Research Institute, RI E47
  *	University of Alabama in Huntsville
  *	Huntsville, AL  35899
  *	(205) 876-1089 Redstone Arsenal
  *	(205) 895-6467 Research Institute
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #include "conf.h"
 

@@ -4,7 +4,25 @@
  *
  *	f_amtrack():	Adds "tracks" to the data file given the required info
  *
+ *  Author -
+ *	Keith A. Applin
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #include "conf.h"
 

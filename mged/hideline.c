@@ -16,15 +16,23 @@
  *
  * Author -  
  *	Mark Huston Bowden  
+ *
+ * History -
+ *	01 Aug 88		Began initial coding
+ *  
+ *  Source -
  *	Research  Institute,  E-47 
  *	University of Alabama in Huntsville  
  *	Huntsville, AL 35899
  *	(205) 895-6467	UAH
  *	(205) 876-1089	Redstone Arsenal
- *
- * History -
- *	01 Aug 88		Began initial coding
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #include "conf.h"
 

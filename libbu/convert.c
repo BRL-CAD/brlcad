@@ -1,19 +1,7 @@
 /*
  *			V E R T . C
- * Author -
- *	Christopher T. Johnson
  *
- * Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
- *	All rights reserved.
- *
- *
- * Vert.c is a routine to translate data formats.  The data formats are:
+ * Routines to translate data formats.  The data formats are:
  *
  *	Host/Network		is the data in host format or local format
  *	signed/unsigned		Is the data signed?
@@ -21,13 +9,21 @@
  *				Is the data 8bits, 16bits, 32bits, 64bits
  *				or a double?
  *
- *
  * The method of conversion is to convert up to double then back down the
  * the expected output format.
  *
+ * Author -
+ *	Christopher T. Johnson
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
-#ifndef line
-static char RCSid[] = "$Header$ (BRL)";
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
