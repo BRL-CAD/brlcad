@@ -424,7 +424,7 @@ struct rt_extrude_internal
 	vect_t		u_vec;	/* vector in U parameter direction */
 	vect_t		v_vec;	/* vector in V parameter direction */
 	int		keypoint;	/* index of keypoint vertex */
-	char		sketch_name[SKETCH_NAME_LEN];	/* name of sketch object that defines
+	char		*sketch_name;	/* name of sketch object that defines
 						 * the curve to be extruded */
 	struct rt_sketch_internal	*skt;	/* pointer to referenced sketch */
 };
