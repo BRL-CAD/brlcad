@@ -30,14 +30,13 @@ static const char RCSviewxray[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
 #include "fb.h"
+
 
 int	use_air = 0;			/* Handling of air in librt */
 int	using_mlib = 0;			/* Material routines NOT used */
@@ -53,8 +52,8 @@ static	unsigned char *scanbuf;
 static	int pixsize = 0;		/* bytes per pixel in scanbuf */
 static	double	contrast_boost = 2.0;
 
-static int xrayhit(register struct application *ap, struct partition *PartHeadp);
-static int xraymiss(register struct application *ap, struct partition *PartHeadp);
+static int xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
+static int xraymiss(register struct application *ap);
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -173,7 +172,7 @@ view_end(void)
 }
 
 static int
-xrayhit(register struct application *ap, struct partition *PartHeadp)
+xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -246,7 +245,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp)
 }
 
 static int
-xraymiss(register struct application *ap, struct partition *PartHeadp)
+xraymiss(register struct application *ap)
 {
 	static	double	zero = 0;
 

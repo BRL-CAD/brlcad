@@ -23,8 +23,6 @@
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -36,6 +34,7 @@
 
 #include "db.h"  /* Yes, I know I shouldn't be peeking, put I am only
 			looking to see what units we prefer... */
+
 
 extern struct resource resource[];
 
@@ -64,7 +63,7 @@ Files:\n\
  $HOME/.density\n\
 ";
 
-int	hit(struct application *ap, struct partition *PartHeadp);
+int	hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	miss(register struct application *ap);
 int	overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2);
 
@@ -346,7 +345,7 @@ void	view_setup(void) {}
 void	view_cleanup(void) {}
 
 int
-hit(struct application *ap, struct partition *PartHeadp)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
 	struct partition *pp;
 	register struct xray *rp = &ap->a_ray;

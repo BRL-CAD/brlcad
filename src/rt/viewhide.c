@@ -30,15 +30,11 @@
  *	This software is Copyright (C) 1989-2004 by the United States Army.
  *	All rights reserved.
  */
-
-
 #ifndef lint
 static const char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <math.h>
@@ -49,6 +45,7 @@ static const char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #include "./ext.h"
 #include "rtprivate.h"
 #include "plot3.h"
+
 
 #define SEEKING_START_PT 0
 #define FOUND_START_PT 1
@@ -103,7 +100,8 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(register struct application *ap, struct partition *PartHeadp), raymiss(register struct application *ap);
+int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *);
+int	raymiss(register struct application *ap);
 
 /*
  *  			V I E W _ I N I T
@@ -287,7 +285,7 @@ void view_cleanup(void) {}
  */
 
 int
-rayhit(struct application *ap, register struct partition *PartHeadp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct	cell	*posp;			/* stores current cell position */

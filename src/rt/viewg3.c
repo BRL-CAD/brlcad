@@ -37,15 +37,13 @@ static const char RCSrayg3[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -56,8 +54,10 @@ static const char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 #include "rtprivate.h"
 
+
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
 #define TOL 0.01/MM2IN			/* GIFT has a 0.01 inch tolerance */
+
 
 void	part_compact(register struct application *ap, register struct partition *PartHeadp, fastf_t tolerance);
 
@@ -104,7 +104,7 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(register struct application *ap, struct partition *PartHeadp);
+int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int     raymiss(register struct application *ap);
 
 /*
@@ -269,7 +269,7 @@ view_pixel(void)
  *  color vector display of ray-model intersections.
  */
 int
-rayhit(struct application *ap, register struct partition *PartHeadp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	int 			comp_count;	/* component count */

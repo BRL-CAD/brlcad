@@ -21,14 +21,13 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ext.h"
 #include "rtprivate.h"
+
 
 double	cell_depth;
 int	depth;
@@ -66,7 +65,7 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(register struct application *ap, struct partition *PartHeadp);
+int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
 
 /*
@@ -172,7 +171,7 @@ view_cleanup(struct rt_i *rtip)
  *  Called via a_hit linkage from rt_shootray() when ray hits.
  */
 int
-rayhit(register struct application *ap, struct partition *PartHeadp)
+rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
 	register struct partition *pp;
 	int		d;		/* current depth cell # */

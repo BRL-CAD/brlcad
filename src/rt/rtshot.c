@@ -25,14 +25,12 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <ctype.h>
@@ -43,6 +41,7 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "rtprivate.h"
 #include "../librt/debug.h"
 #include "plot3.h"
+
 
 extern void rt_raybundle_maker( struct xray	*rp,
 				double		radius,
@@ -91,7 +90,8 @@ int		rays_per_ring = 0;
 int		num_rings = 0;
 fastf_t		bundle_radius = 0.0;
 
-extern int hit(struct application *ap, struct partition *PartHeadp), miss(register struct application *ap);
+extern int hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
+extern int miss(register struct application *ap);
 extern int rt_bot_tri_per_piece;
 extern int rt_bot_minpieces;
 
@@ -386,7 +386,7 @@ err:
 	return(0);
 }
 
-int hit(register struct application *ap, struct partition *PartHeadp)
+int hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
 	register struct partition *pp;
 	register struct soltab *stp;

@@ -24,8 +24,6 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -36,6 +34,7 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "rtprivate.h"
 #include "../librt/debug.h"
 #include "plot3.h"
+
 
 char	usage[] = "\
 Usage:  rtwalk [options] startXYZ destXYZ model.g objects...\n\
@@ -79,7 +78,7 @@ fastf_t		incr_dist;
 double		clear_dist = 0.0;
 double		max_dist_togo;
 
-extern int hit(struct application *ap, struct partition *PartHeadp);
+extern int hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
 extern int miss(register struct application *ap);
 
 FILE		*plotfp;
@@ -366,7 +365,7 @@ advance:	;
 	exit(1);
 }
 
-int hit(register struct application *ap, struct partition *PartHeadp)
+int hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
 	register struct partition *pp;
 	register struct soltab *stp;

@@ -21,15 +21,13 @@ static const char RCScell[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -38,6 +36,7 @@ static const char RCScell[] = "@(#)$Header$ (BRL)";
 #include "./ext.h"
 
 #include "rtprivate.h"
+
 
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
 
@@ -71,7 +70,7 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(register struct application *ap, struct partition *PartHeadp);
+int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int     raymiss(register struct application *ap);
 
 /*
@@ -171,7 +170,7 @@ view_pixel(void)
  *  Write information about this "cell".
  */
 int
-rayhit(struct application *ap, register struct partition *PartHeadp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	point_t			hv;		/* GIFT h,v coords, in inches */
