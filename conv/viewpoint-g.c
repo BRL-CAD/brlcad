@@ -79,7 +79,7 @@ char *argv[];
 	int name_len;
 	struct rt_tol tol;
 	int done=0;
-	int i;
+	int i,j;
 	int no_of_verts;
 	int no_of_faces=0;
 	char line[LINELEN];
@@ -284,13 +284,12 @@ char *argv[];
 			{
 				i = atoi( ptr );
 				if( i >= no_of_verts )
-					rt_log( "vertex number too high in element (%d) only allowed for %d\n" , i , no_of_verts );
+					rt_log( "vertex number (%d) too high in element, only allowed for %d\n" , i , no_of_verts );
 
-				/* put vertex pointer in list for this face */
 				nmg_tbl( &vertices , TBL_INS , (long *)(&verts[i].vp) );
 			}
 
-			if( NMG_TBL_END( &vertices ) )
+			if( NMG_TBL_END( &vertices ) > 2 )
 			{
 				/* make face */
 				fu = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &vertices ) , NMG_TBL_END( &vertices ) );
@@ -300,7 +299,12 @@ char *argv[];
 				nmg_tbl( &faces , TBL_INS , (long *)fu );
 
 				/* restart the vertex list for the next face */
-				nmg_tbl( &vertices , TBL_RST , NULL );
+				nmg_tbl( &vertices , TBL_RST , (long *)NULL );
+			}
+			else
+			{
+				rt_log( "Skipping degenerate face\n" );
+				nmg_tbl( &vertices , TBL_RST , (long *)NULL );
 			}
 
 			/* skip elements with the wrong name */
@@ -344,11 +348,14 @@ char *argv[];
 			}
 		}
 
+		(void)nmg_model_vertex_fuse( m , &tol );
+
 		/* calculate plane equations for faces */
 		    NMG_CK_SHELL( s );
 		    fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
 		    while( RT_LIST_NOT_HEAD( fu , &s->fu_hd))
 		    {
+			struct faceuse *kill_fu=(struct faceuse *)NULL;
 		    	struct faceuse *next_fu;
 
 		        NMG_CK_FACEUSE( fu );
@@ -357,24 +364,38 @@ char *argv[];
 		        if( fu->orientation == OT_SAME )
 		    	{
 	    			struct loopuse *lu;
+		    		struct edgeuse *eu;
 	    			fastf_t area;
 	    			plane_t pl;
 
 	    			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-	    			area = nmg_loop_plane_area( lu , pl );
-	    			if( area <= 0.0 )
-	    			{
-	    				struct faceuse *kill_fu;
+		    		NMG_CK_LOOPUSE( lu );
+		    		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		    		{
+		    			NMG_CK_EDGEUSE( eu );
+		    			if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+		    				kill_fu = fu;
+		    		}
+		    		if( !kill_fu )
+		    		{
+		    			area = nmg_loop_plane_area( lu , pl );
+		    			if( area <= 0.0 )
+		    			{
 
-	    				rt_log( "ERROR: Can't get plane for face\n" );
+		    				rt_log( "ERROR: Can't get plane for face\n" );
 
-	    				kill_fu = fu;
+		    				kill_fu = fu;
+		    			}
+		    		}
+		    		if( kill_fu )
+		    		{
 	    				if( next_fu == kill_fu->fumate_p )
 	    					next_fu = RT_LIST_NEXT( faceuse , &next_fu->l );
+		    			nmg_tbl( &faces , TBL_RM , (long *)kill_fu );
 	    				nmg_kfu( kill_fu );
 	    			}
-
-	    			nmg_face_g( fu , pl );
+		    		else
+		    			nmg_face_g( fu , pl );
 		    	}
 		    	fu = next_fu;
 		    }
@@ -382,10 +403,15 @@ char *argv[];
 		/* glue faces together */
 		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 
+		nmg_rebound( m , &tol );
+		nmg_fix_normals( s , &tol );
+
 		/* restart the list of faces for the next object */
-		nmg_tbl( &faces , TBL_RST , NULL );
+		nmg_tbl( &faces , TBL_RST , (long *)NULL );
 
 		nmg_shell_coplanar_face_merge( s , &tol , 1 );
+
+		nmg_rebound( m , &tol );
 
 		/* write the nmg to the output file */
 		mk_nmg( out_fp , curr_name  , m );
@@ -411,7 +437,7 @@ char *argv[];
 	}
 
 	fprintf( stderr , "Making top level group (%s)\n" , base_name );
-	if( mk_lcomb( out_fp , base_name , &reg_head , 0, (char *)0, (char *)0, (char *)0, 0 ) )
+	if( mk_lcomb( out_fp , base_name , &reg_head , 0, (char *)0, (char *)0, (unsigned char *)0, 0 ) )
 		rt_log( "viewpoint-g: Error in making top level group" );
 
 	return 0;
