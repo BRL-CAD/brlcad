@@ -87,12 +87,12 @@ char *av[];
 		perror(av[arg_index]);
 		return(-1);
 	} else if (autosize &&
-	    !fb_common_file_size( &width, &height, av[arg_index], 3)) {
+	    !fb_common_file_size( &width, &height, av[arg_index], ipu_bytes_per_pixel)) {
 	    	fprintf(stderr, "unable to autosize\n");
 	}
 
 	/* get a buffer for the image */
-	img_bytes = width * height * 3;
+	img_bytes = width * height * ipu_bytes_per_pixel;
 
 	if ( ! (img_buffer=(u_char*)malloc(img_bytes)) ) {
 		(void)fprintf(stderr,
@@ -140,7 +140,7 @@ char *av[];
 	ipu_acquire(dsp, 120);
 
 	ipu_delete_file(dsp, 1);
-	ipu_create_file(dsp, (char)1, IPU_RGB_FILE, width, height, 0);
+	ipu_create_file(dsp, (char)1, ipu_filetype, width, height, 0);
 	ipu_put_image(dsp, (char)1, width, height, img_buffer);
 
 	ipu_print_config(dsp, units, divisor, conv,
