@@ -398,6 +398,9 @@ run_rt()
 	(void)pipe( pipe_err );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
+	  /* make this a process group leader */
+	  setpgid(0, 0);
+
 	  /* Redirect stdin and stderr */
 	  (void)close(0);
 	  (void)dup( pipe_in[0] );
