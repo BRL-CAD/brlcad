@@ -28,7 +28,8 @@
 #
 # Mike Muuss, BRL, 10-May-1988
 # With thanks to Terry Slattery and Bob Reschly for assistance
-# $Revision$
+#
+#  $Header$
 
 # Ensure /bin/sh.  Make no remarks here, just do it.
 export PATH || (sh $0 $*; kill $$)

@@ -4,6 +4,8 @@
 #
 # Build the symbolic link from the numbered version of a library
 # to the no-number library.  e.g. link librt.so.10 to librt.so
+#
+#  $Header$
 
 if test $# != 1
 then
