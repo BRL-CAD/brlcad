@@ -763,6 +763,7 @@ char **argv;
 /*		Hit, miss, and overlap functions.                            */
 /*****************************************************************************/
 
+int
 hit(ap_p,PartHeadp)
 /*  User supplied hit function.  */
 register struct application *ap_p;
@@ -986,7 +987,7 @@ struct partition *PartHeadp;
    }
 }						/*  END # 0H  */
 
-
+int
 miss()
 /*  User supplied miss function.  */
 {
@@ -1000,7 +1001,7 @@ miss()
    return(1);
 }
 
-
+int
 overlap()
 /*  User supplied overlap function.  */
 {
