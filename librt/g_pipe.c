@@ -3611,7 +3611,7 @@ const struct db_i		*dbip;
 		ptp->pp_id =		vec[i+3] / mat[15];
 		ptp->pp_od =		vec[i+4] / mat[15];
 		ptp->pp_bendradius =	vec[i+5] / mat[15];
-		BU_LIST_APPEND( &pipe->pipe_segs_head, &ptp->l );
+		BU_LIST_INSERT( &pipe->pipe_segs_head, &ptp->l );
 	}
 
 	bu_free((genptr_t)vec, "rt_pipe_import5: vec");
