@@ -2114,6 +2114,7 @@ long		*magic_p;
 		fastf_t		deg;
 		double		cos_ang;
 
+#if 0
 		VMOVE( dir_src, old->e_dir );
 		VUNITIZE( dir_src );
 		VMOVE( dir_dest, eg->e_dir );
@@ -2127,10 +2128,9 @@ long		*magic_p;
 			VPRINT( "dir_dest", dir_dest );
 			rt_log("nmg_use_edge_g() NOTICE Angle between old=x%x & new=x%x lines was %g deg.\n",
 				old, eg, deg );
-#if 0
 			rt_bomb("nmg_use_edge_g() angle between old & new lines is excessive\n");
-#endif
 		}
+#endif
 	}
 
 	/* Handle edgeuse */
