@@ -1881,7 +1881,7 @@ CONST char *name;
 
 
 
-/*		D B _ M O D E L _ T O _ S H A D E R _ M A T
+/*		D B _ S H A D E R _ M A T
  *
  *	Given a region, return a matrix which maps model coordinates into
  *	region "shader space".  This is a space where the bounding box
@@ -1914,5 +1914,5 @@ CONST struct region *rp;
 	VINVDIR(v_tmp, v_tmp);
 	mat_idn(tmp);
 	MAT_SCALE_VEC(tmp, v_tmp);
-	mat_mul(model_to_shader, tmp, model_to_region);
+	mat_mul(model_to_shader, model_to_region, tmp);
 }
