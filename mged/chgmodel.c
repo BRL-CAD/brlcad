@@ -1981,11 +1981,11 @@ f_make(ClientData	clientData,
 		csg->center_is_left = 1;
 		csg->orientation = 0;
 	} else if (strcmp(argv[2], "hf") == 0) {
-		Tcl_AppendResult(interp, "make: the height field is not supported by this command\nand is also deprecated. Use the dsp primitive.\n", (char *)NULL);
+		Tcl_AppendResult(interp, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n", (char *)NULL);
 		return TCL_ERROR;
 	} else if (strcmp(argv[2], "pg") == 0 ||
 		   strcmp(argv[2], "poly") == 0) {
-		Tcl_AppendResult(interp, "make: the polysolid is not supported by this command\nand is also deprecated. Use the bot primitive.\n", (char *)NULL);
+		Tcl_AppendResult(interp, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.\n", (char *)NULL);
 		return TCL_ERROR;
 	} else if (strcmp(argv[2], "cline") == 0 ||
 		   strcmp(argv[2], "dsp") == 0 ||
