@@ -40,8 +40,8 @@ double	rweight = 0.0;
 double	gweight = 0.0;
 double	bweight = 0.0;
 
-static char *Usage = "usage: pix-bw [-ntsc -crt -R[#] -G[#] -B[#]] < file.pix > file.bw\n";
-/* someday: [file.pix [file.bw]] */
+static char usage[] = "\
+Usage: pix-bw [-ntsc -crt -R[#] -G[#] -B[#]] [in.pix] > out.bw\n";
 
 main( argc, argv )
 int argc; char **argv;
@@ -83,21 +83,25 @@ int argc; char **argv;
 				break;
 			default:
 				fprintf( stderr, "pix-bw: bad flag \"%s\"\n", argv[1] );
-				fputs( Usage, stderr );
+				fputs( usage, stderr );
 				exit( 1 );
 		}
 		argc--;
 		argv++;
 	}
 
-	/*
-	 * Eventually we may accept file names
-	 */
-	finp = stdin;
+	if( argc > 1 ) {
+		if( (finp = fopen(argv[1], "r")) == NULL ) {
+			fprintf( stderr, "pix-bw: can't open \"%s\"\n", argv[1] );
+			exit( 2 );
+		}
+	} else
+		finp = stdin;
+
 	foutp = stdout;
 
-	if( isatty(fileno(finp)) ) {
-		fputs( Usage, stderr );
+	if( isatty(fileno(finp)) || isatty(fileno(foutp)) ) {
+		fputs( usage, stderr );
 		exit( 2 );
 	}
 
