@@ -107,7 +107,7 @@ static int	nlines_line;		/* how many scanlines worth in red_line */
 static char	*red_line;
 static char	*grn_line;
 static char	*blu_line;
-static char	framenum;
+extern int	curframe;		/* shared with do.c */
 
 static int	avail_cpus;		/* # of cpus avail on this system */
 static int	max_cpus;		/* max # cpus for use, <= avail_cpus */
@@ -173,6 +173,7 @@ char **argv;
 	FILE		*fp;
 	double		load = 0;
 
+	use_air = 1;	/* air & clouds are generally desired */
 	if( argc < 2 )  {
 		fprintf(stderr, srv_usage);
 		exit(1);
@@ -564,14 +565,18 @@ char *buf;
 	Tcl_LinkVar(interp, "dbip", (char *)&ap.a_rt_i->rti_dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
 	Tcl_LinkVar(interp, "rtip", (char *)&ap.a_rt_i, TCL_LINK_INT|TCL_LINK_READ_ONLY);
 
-	if( Tcl_Eval(interp,
-	    "set wdbp [wdb_open .inmem inmem $dbip]" ) != TCL_OK )  {
-		bu_log("%s\n%s\n",
-	    		interp->result,
-			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+	{
+		static char cmd[] = "set wdbp [wdb_open .inmem inmem $dbip]";
+		/* Tcl interpreter will write nulls into cmd string */
+		if( Tcl_Eval(interp, cmd ) != TCL_OK )  {
+			bu_log("%s\n%s\n",
+		    		interp->result,
+				Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		}
 	}
 
 	Tcl_LinkVar(interp, "test_fb_speed", (char *)&test_fb_speed, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "curframe", (char *)&curframe, TCL_LINK_INT);
 }
 
 /*
@@ -730,6 +735,8 @@ char			*buf;
 	}
 	if( rt_perspective < 0 || rt_perspective > 179 )  rt_perspective = 0;
 
+	curframe++;
+
 	viewsize = 2 * viewscale;
 	bn_mat_idn( Viewrotscale );
 	quat_quat2mat( Viewrotscale, orient );
@@ -766,7 +773,7 @@ char			*buf;
 		int	y;
 
 		/* Write out colored lines. */
-		switch( (framenum++)%3 )  {
+		switch( curframe%3 )  {
 		case 0:
 			buf = red_line;
 			break;
