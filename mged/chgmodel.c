@@ -54,6 +54,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "wdb.h"
 #include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
@@ -659,6 +660,7 @@ char	**argv;
 	struct rt_ehy_internal *ehy_ip;
 	struct rt_eto_internal *eto_ip;
 	struct rt_part_internal *part_ip;
+	struct rt_pipe_internal *pipe_ip;
 
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[1] );
@@ -958,12 +960,33 @@ char	**argv;
 		(void)nmg_ml( s );
 		internal.idb_type = ID_NMG;
 		internal.idb_ptr = (genptr_t)m;
+	} else if( strcmp( argv[2], "pipe" ) == 0 ) {
+		struct wdb_pipeseg *ps;
+
+		internal.idb_type = ID_PIPE;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal" );
+		pipe_ip = (struct rt_pipe_internal *)internal.idb_ptr;
+		pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+		RT_LIST_INIT( &pipe_ip->pipe_segs_head );
+		GETSTRUCT( ps, wdb_pipeseg );
+		ps->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+		ps->l.magic = WDB_PIPESEG_MAGIC;
+		VSET( ps->ps_start, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
+		ps->ps_od = 0.5*Viewscale;
+		ps->ps_id = 0.5*ps->ps_od;
+		RT_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
+		GETSTRUCT( ps, wdb_pipeseg );
+		ps->ps_type = WDB_PIPESEG_TYPE_END;
+		ps->l.magic = WDB_PIPESEG_MAGIC;
+		VSET( ps->ps_start, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]+Viewscale );
+		ps->ps_od = 0.5*Viewscale;
+		ps->ps_id = 0.5*ps->ps_od;
+		RT_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
 	} else if( strcmp( argv[2], "ars" ) == 0 ||
 		   strcmp( argv[2], "poly" ) == 0 ||
 		   strcmp( argv[2], "ebm" ) == 0 ||
 		   strcmp( argv[2], "vol" ) == 0 ||
 		   strcmp( argv[2], "arbn" ) == 0 ||
-		   strcmp( argv[2], "pipe" ) == 0 ||
 		   strcmp( argv[2], "nurb" ) == 0 ||
 		   strcmp( argv[2], "spline" ) == 0 )  {
 		rt_log("make %s not implimented yet\n", argv[2]);

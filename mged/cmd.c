@@ -375,7 +375,7 @@ static struct funtab funtab[] = {
 	dir_print,1,MAXARGS, FALSE,
 "M", "1|0 xpos ypos", "handle a mouse event",
 	f_mouse, 4,4, FALSE,
-"make", "name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg>", "create a primitive",
+"make", "name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg|pipe>", "create a primitive",
 	f_make,3,3,FALSE,
 "mater", "comb [material]", "assign/delete material to combination",
 	f_mater,2,3,FALSE,
