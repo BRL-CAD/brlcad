@@ -318,7 +318,7 @@ CONST struct rt_tol	*tol;
 }
 
 /*
- *			R T _ I S E C T _ 2 L I N E S
+ *			R T _ I S E C T _ L I N E 3 _ L I N E 3
  *
  *  Intersect two lines, each in given in parametric form:
  *
@@ -346,7 +346,7 @@ CONST struct rt_tol	*tol;
  *		substituting either of these into the original ray equations.
  */
 int
-rt_isect_2lines( t, u, p, d, a, c, tol )
+rt_isect_line3_line3( t, u, p, d, a, c, tol )
 fastf_t			*t;
 fastf_t			*u;
 CONST point_t		p;
@@ -537,8 +537,9 @@ CONST struct rt_tol	*tol;
  *  with a line segment defined by two distinct points A and B.
  *
  *  Explicit Return -
- *	-3	A and B are not distinct points
- *	-2	Intersection exists, but is outside of A--B
+ *	-4	A and B are not distinct points
+ *	-2	Intersection exists, < A (t is returned)
+ *	-2	Intersection exists, > B (t is returned)
  *	-1	Lines do not intersect
  *	 0	Lines are co-linear (t for A is returned)
  *	 1	Intersection at vertex A
@@ -556,6 +557,7 @@ CONST struct rt_tol	*tol;
  *		numeric error from creeping into the position of
  *		the endpoints.
  */
+/* XXX should probably be called rt_isect_line3_lseg3() */
 int
 rt_isect_line_lseg( t, p, d, a, b, tol )
 fastf_t			*t;
@@ -579,10 +581,10 @@ CONST struct rt_tol	*tol;
 	 *  C is a non-zero vector, (ie, that A and B are distinct).
 	 */
 	if( (fuzz = MAGSQ(c)) < tol->dist_sq )  {
-		return(-3);		/* points A and B are not distinct */
+		return(-4);		/* points A and B are not distinct */
 	}
 
-	if( (ret = rt_isect_2lines( t, &u, p, d, a, c, tol )) < 0 )  {
+	if( (ret = rt_isect_line3_line3( t, &u, p, d, a, c, tol )) < 0 )  {
 		/* No intersection found */
 		return( -1 );
 	}
@@ -602,9 +604,9 @@ CONST struct rt_tol	*tol;
 	 */
 	fuzz = tol->dist / sqrt(fuzz);
 	if( u < -fuzz )
-		return(-2);		/* Intersection outside of A--B */
+		return(-3);		/* Intersection < A */
 	if( (f=(u-1)) > fuzz )
-		return(-2);		/* Intersection outside of A--B */
+		return(-2);		/* Intersection > B */
 
 	/* Check for fuzzy intersection with one of the verticies */
 	if( u < fuzz )
