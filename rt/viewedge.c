@@ -65,7 +65,7 @@ struct cell {
 static unsigned char *writeable[MAX_PSW];
 static unsigned char *scanline[MAX_PSW];
 static unsigned char *blendline[MAX_PSW];
-static struct cell saved[MAX_PSW];
+static struct cell   *saved[MAX_PSW];
 
 
 int   		nEdges = 0;
@@ -273,12 +273,13 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
 
     if (Tcl_SplitList (NULL, bu_vls_addr (&occlusion_objects), &nObjs, 
 		       &objs) == TCL_ERROR) {
+      bu_log  ("rtedge: occlusion list = %s\n", 
+	       bu_vls_addr(&occlusion_objects));
       bu_bomb ("rtedge: could not parse occlusion objects list.\n");
     }
 
-
     for (i=0; i<nObjs; ++i) {
-      bu_log ("object %d = %s\n", i, objs[i]);
+      bu_log ("rtedge: occlusion object %d = %s\n", i, objs[i]);
     }
     
 
@@ -293,6 +294,9 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
     for (i=0; i<nObjs; ++i) {
       if (rt_gettree (occlusion_rtip, objs[i]) < 0) {
 	bu_log ("rtedge: gettree failed for %s\n", objs[i]);
+      }
+      else {
+	bu_log ("rtedge: got tree for object %d = %s\n", i, objs[i]);
       }
     }
 
@@ -326,7 +330,8 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
      */
     if (occlusion_mode == OCCLUSION_MODE_NONE) {
       occlusion_mode = OCCLUSION_MODE_DEFAULT;
-      bu_log ("occlusion mode = %d\n", occlusion_mode);
+      bu_log ("rtedge: occlusion mode = %d\n", 
+	      occlusion_mode);
     }
 
   }
@@ -372,6 +377,16 @@ view_2init( struct application *ap )
    * a time.
    */
   per_processor_chunk = width;
+
+  /*
+   * Create a cell to store current data for next cells left side.
+   */
+  for (i = 0; i < npsw; ++i) {
+    if (saved[i] == NULL) {
+      saved[i] = (struct cell *) bu_calloc( 1, sizeof(struct cell), 
+					      "saved cell info" );
+    }	
+  }
 
   /*
    * Create a edge flag buffer for each processor.
@@ -428,8 +443,7 @@ view_2init( struct application *ap )
       }	
     }
   }
-
-  
+ 
   /*
    * If operating in overlay mode, we want the rtedge background color 
    * to be the shaded images background. This sets the bg color 
@@ -773,7 +787,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   LOCAL struct cell		left;
   LOCAL int			edge = 0;
   LOCAL int			cpu;	
-  LOCAL int                     oc = 0;
+  LOCAL int                     oc = 1;
 
   RGBpixel                      col;
 
@@ -838,13 +852,13 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     rt_shootray(&a2);
   }
   else {
-    left.c_ishit    = saved[cpu].c_ishit;
-    left.c_id = saved[cpu].c_id;
-    left.c_dist = saved[cpu].c_dist;
-    left.c_region = saved[cpu].c_region;
-    VMOVE (left.c_rdir, saved[cpu].c_rdir);
-    VMOVE (left.c_hit, saved[cpu].c_hit);
-    VMOVE (left.c_normal, saved[cpu].c_normal);
+    left.c_ishit    = saved[cpu]->c_ishit;
+    left.c_id = saved[cpu]->c_id;
+    left.c_dist = saved[cpu]->c_dist;
+    left.c_region = saved[cpu]->c_region;
+    VMOVE (left.c_rdir, saved[cpu]->c_rdir);
+    VMOVE (left.c_hit, saved[cpu]->c_hit);
+    VMOVE (left.c_normal, saved[cpu]->c_normal);
   }
   
   /*
@@ -854,8 +868,10 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 
   /*
    * Does this pixel occlude the second geometry?
+   * Note that we must check on edges as well since right side and
+   * top edges are actually misses.
    */
-  if (me.c_ishit) {
+  if (me.c_ishit || edge) {
     if (occlusion_mode != OCCLUSION_MODE_NONE) {
       oc = occludes (ap, &me);
     }
@@ -864,8 +880,6 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   /*
    * Perverse Pixel Painting Paradigm(tm)
    * If a pixel should be written to the fb, writeable is set.
-   * 
-   * 
    */
   if (occlusion_mode == OCCLUSION_MODE_EDGES) {
       
@@ -910,13 +924,13 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   /*
    * Save the cell info for the next pixel.
    */
-  saved[cpu].c_ishit = me.c_ishit;
-  saved[cpu].c_id = me.c_id;
-  saved[cpu].c_dist = me.c_dist;
-  saved[cpu].c_region = me.c_region;
-  VMOVE (saved[cpu].c_rdir, me.c_rdir);
-  VMOVE (saved[cpu].c_hit, me.c_hit);
-  VMOVE (saved[cpu].c_normal, me.c_normal);
+  saved[cpu]->c_ishit = me.c_ishit;
+  saved[cpu]->c_id = me.c_id;
+  saved[cpu]->c_dist = me.c_dist;
+  saved[cpu]->c_region = me.c_region;
+  VMOVE (saved[cpu]->c_rdir, me.c_rdir);
+  VMOVE (saved[cpu]->c_hit, me.c_hit);
+  VMOVE (saved[cpu]->c_normal, me.c_normal);
 
   return edge;
 }
@@ -974,13 +988,13 @@ static int occlusion_hit (struct application *ap, struct partition *pt,
   struct hit		*hitp = pt->pt_forw->pt_inhit;
   
   ap->a_dist = hitp->hit_dist;
-  return(1);		
+  return 1;		
 }
 
 static int occlusion_miss (struct application *ap)
 {
   ap->a_dist = MAX_FASTF;
-  return(1);		
+  return 0;		
 }
 
 
@@ -988,6 +1002,7 @@ static int occlusion_miss (struct application *ap)
 static int occludes (struct application *ap, struct cell *here)
 { 
   int cpu = ap->a_resource->re_cpu;	
+  int oc_hit = 0;
   /*
    * Test the hit distance on the second geometry.
    * If the second geometry is closer, do not
@@ -997,19 +1012,41 @@ static int occludes (struct application *ap, struct cell *here)
   VMOVE (occlusion_apps[cpu]->a_ray.r_pt, ap->a_ray.r_pt);
   VMOVE (occlusion_apps[cpu]->a_ray.r_dir, ap->a_ray.r_dir);
 
-  rt_shootray (occlusion_apps[cpu]);
 
-  if (occlusion_apps[cpu]->a_dist <= here->c_dist) {
+  oc_hit = rt_shootray (occlusion_apps[cpu]);
+
+  if (!oc_hit) {
+    /*
+     * The occlusion ray missed, therefore this 
+     * pixel occludes the second geometry.
+     */
+    return 1;
+  }
+
+  if (occlusion_apps[cpu]->a_dist < here->c_dist) {
     /* 
      * The second geometry is close than the edge, therefore it
      * is 'foreground'. Do not draw the edge.
      *
      * - This pixel DOES NOT occlude the second geometry.
      */
-      return 0; 
+    return 0; 
   }    
   return 1;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
