@@ -400,14 +400,41 @@ CONST struct rt_tabdata	*in2;
 }
 
 /*
+ *			R T _ T A B L E _ F I N D _ X
+ *
+ *  Return the index in the table's x[] array of the interval which
+ *  contains 'xval'.
+ *
+ *  Returns -1 if less than start value, -2 if greater than end value.
+ *
+ *  A binary search would be more efficient, as the wavelengths (x values)
+ *  are known to be sorted in ascending order.
+ */
+int
+rt_table_find_x( tabp, xval )
+CONST struct rt_table	*tabp;
+double			xval;
+{
+	register int	i;
+
+	RT_CK_TABLE(tabp);
+
+	if( xval >= tabp->x[tabp->nx-1] )  return -2;
+
+	/* Search for proper interval in input spectrum */
+	for( i = tabp->nx-2; i >=0; i-- )  {
+		if( xval >= tabp->x[i] )  return i;
+	}
+	/* if( xval < tabp->x[0] )  return -1; */
+	return -1;
+}
+
+/*
  *			R T _ T A B L E _ L I N _ I N T E R P
  *
  *  Return the value of the curve at independent parameter value 'wl'.
  *  Linearly interpolate between values in the input table.
  *  Zero is returned for values outside the sampled range.
- *
- *  A binary search would be more efficient, as the wavelengths
- *  are known to be sorted in ascending order.
  */
 fastf_t
 rt_table_lin_interp( samp, wl )
@@ -415,77 +442,204 @@ CONST struct rt_tabdata	*samp;
 register double			wl;
 {
 	CONST struct rt_table	*tabp;
-	register int			i;
+	register int		i;
+	register fastf_t	fract;
 	register fastf_t	ret;
 
 	RT_CK_TABDATA(samp);
 	tabp = samp->table;
 	RT_CK_TABLE(tabp);
 
-	if( wl < tabp->x[0] || wl > tabp->x[tabp->nx] )  {
+	if( (i = rt_table_find_x( tabp, wl )) < 0 )  {
 		if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g) out of range %g to %g\n", wl, tabp->x[0], tabp->x[tabp->nx] );
 		return 0;
 	}
 
-	/* Search for proper interval in input spectrum */
-	for( i = 0; i < tabp->nx-1; i++ )  {
-		FAST fastf_t	fract;		/* fraction from [i] to [i+1] */
-
-		if( wl < tabp->x[i] )  {
-			rt_log("rt_table_lin_interp(%g) assertion1 failed at %g\n", wl, tabp->x[i] );
-			rt_bomb("rt_table_lin_interp() assertion1 failed\n");
-		}
-		if( wl >= tabp->x[i+1] )  continue;
-
-		/* The interval has been found */
-		fract = (wl - tabp->x[i]) /
-			(tabp->x[i+1] - tabp->x[i]);
-		if( fract < 0 || fract > 1 )  rt_bomb("rt_table_lin_interp() assertion2 failed\n");
-		ret = (1-fract) * samp->y[i] + fract * samp->y[i+1];
-		if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g in range %g to %g\n", wl, ret, tabp->x[i], tabp->x[i+1] );
-		return ret;
+	if( wl < tabp->x[i] || wl >= tabp->x[i+1] )  {
+		rt_log("rt_table_lin_interp(%g) assertion1 failed at %g\n", wl, tabp->x[i] );
+		rt_bomb("rt_table_lin_interp() assertion1 failed\n");
 	}
 
-	/* Assume value is constant in final interval. */
-	if( !( wl >= tabp->x[tabp->nx-1] ) )
-		rt_bomb("rt_table_lin_interp() assertion3 failed\n");
-	if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
-	return samp->y[tabp->nx-1];
+	if( i >= tabp->nx-2 )  {
+		/* Assume value is constant in final interval. */
+		if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
+		return samp->y[tabp->nx-1];
+	}
+
+	/* The interval has been found */
+	fract = (wl - tabp->x[i]) / (tabp->x[i+1] - tabp->x[i]);
+	if( fract < 0 || fract > 1 )  rt_bomb("rt_table_lin_interp() assertion2 failed\n");
+	ret = (1-fract) * samp->y[i] + fract * samp->y[i+1];
+	if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g in range %g to %g\n",
+		wl, ret, tabp->x[i], tabp->x[i+1] );
+	return ret;
 }
 
 /*
- *			R T _ T A B D A T A _ R E S A M P L E
+ *			R T _ T A B D A T A _ R E S A M P L E _ M A X
  *
  *  Given a set of sampled data 'olddata', resample it for different
- *  spacing, by linearly interpolating the values.
+ *  spacing, by linearly interpolating the values when an output span
+ *  is entirely contained within an input span, and by taking the
+ *  maximum when an output span covers more than one input span.
  *
  *  This assumes interpretation (2) of the data, i.e. that the values
  *  are the average value across the interval.
- *
- *  XXX Really should check to see if more than one input value spans
- *  interval in output, and if so, average those inputs together
- *  weighted by their fraction of the span.
  */
 struct rt_tabdata *
-rt_tabdata_resample( newtable, olddata )
+rt_tabdata_resample_max( newtable, olddata )
 CONST struct rt_table	*newtable;
 CONST struct rt_tabdata	*olddata;
 {
 	CONST struct rt_table	*oldtable;
-	struct rt_tabdata		*newsamp;
-	int				i;
+	struct rt_tabdata	*newsamp;
+	int			i;
+	int			j, k;
 
 	RT_CK_TABLE(newtable);
 	RT_CK_TABDATA(olddata);
 	oldtable = olddata->table;
 	RT_CK_TABLE(oldtable);
 
-	if( oldtable == newtable )  rt_log("rt_tabdata_resample() NOTICE old and new rt_table structs are the same\n");
+	if( oldtable == newtable )  rt_log("rt_tabdata_resample_max() NOTICE old and new rt_table structs are the same\n");
 
 	RT_GET_TABDATA( newsamp, newtable );
 
 	for( i = 0; i < newtable->nx; i++ )  {
-		newsamp->y[i] = rt_table_lin_interp( olddata, newtable->x[i] );
+		/*
+		 *  Find good value(s) in olddata to represent the span from
+		 *  newtable->x[i] to newtable->x[i+1].
+		 */
+		j = rt_table_find_x( oldtable, newtable->x[i] );
+		k = rt_table_find_x( oldtable, newtable->x[i+1] );
+		if( k == -1 )  {
+			/* whole new span is off left side of old table */
+			newsamp->y[i] = 0;
+			continue;
+		}
+		if( j == -2 )  {
+			/* whole new span is off right side of old table */
+			newsamp->y[i] = 0;
+			continue;
+		}
+
+		if( j == k && j > 0 )  {
+			register fastf_t tmp;
+			/*
+			 *  Simple case, ends of output span are completely
+			 *  contained within one input span.
+			 *  Interpolate for both ends, take max.
+			 *  XXX this could be more efficiently written inline here.
+			 */
+			newsamp->y[i] = rt_table_lin_interp( olddata, newtable->x[i] );
+			tmp = rt_table_lin_interp( olddata, newtable->x[i+1] );
+			if( tmp > newsamp->y[i] )  newsamp->y[i] = tmp;
+		} else {
+			register fastf_t tmp, n;
+			register int	s;
+			/*
+			 *  Complex case: find good representative value.
+			 *  Interpolate both ends, and consider all
+			 *  intermediate old samples in span.  Take max.
+			 *  One (but not both) new ends may be off old table.
+			 */
+			n = rt_table_lin_interp( olddata, newtable->x[i] );
+			tmp = rt_table_lin_interp( olddata, newtable->x[i+1] );
+			if( tmp > n )  n = tmp;
+			for( s = j+1; s <= k; s++ )  {
+				if( (tmp = olddata->y[s]) > n )
+					n = tmp;
+			}
+			newsamp->y[i] = n;
+		}
+	}
+	return newsamp;
+}
+
+/*
+ *			R T _ T A B D A T A _ R E S A M P L E _ A V G
+ *
+ *  Given a set of sampled data 'olddata', resample it for different
+ *  spacing, by linearly interpolating the values when an output span
+ *  is entirely contained within an input span, and by taking the
+ *  average when an output span covers more than one input span.
+ *
+ *  This assumes interpretation (2) of the data, i.e. that the values
+ *  are the average value across the interval.
+ */
+struct rt_tabdata *
+rt_tabdata_resample_avg( newtable, olddata )
+CONST struct rt_table	*newtable;
+CONST struct rt_tabdata	*olddata;
+{
+	CONST struct rt_table	*oldtable;
+	struct rt_tabdata	*newsamp;
+	int			i;
+	int			j, k;
+
+	RT_CK_TABLE(newtable);
+	RT_CK_TABDATA(olddata);
+	oldtable = olddata->table;
+	RT_CK_TABLE(oldtable);
+
+	if( oldtable == newtable )  rt_log("rt_tabdata_resample_avg() NOTICE old and new rt_table structs are the same\n");
+
+	RT_GET_TABDATA( newsamp, newtable );
+
+	for( i = 0; i < newtable->nx; i++ )  {
+		/*
+		 *  Find good value(s) in olddata to represent the span from
+		 *  newtable->x[i] to newtable->x[i+1].
+		 */
+		j = rt_table_find_x( oldtable, newtable->x[i] );
+		k = rt_table_find_x( oldtable, newtable->x[i+1] );
+
+		if( j < 0 || k < 0 || j == k )  {
+			/*
+			 *  Simple case, ends of output span are completely
+			 *  contained within one input span.
+			 *  Interpolate for both ends, take average.
+			 *  XXX this could be more efficiently written inline here.
+			 */
+			newsamp->y[i] = 0.5 * (
+			    rt_table_lin_interp( olddata, newtable->x[i] ) +
+			    rt_table_lin_interp( olddata, newtable->x[i+1] ) );
+		} else {
+			/*
+			 *  Complex case: find average value.
+			 *  Interpolate both end, and consider all
+			 *  intermediate old spans.
+			 *  There are three parts to sum:
+			 *	Partial interval from newx[i] to j+1
+			 *	Full intervals from j+1 to k
+			 *	Partial interval from k to newx[i+1]
+			 */
+			fastf_t	w_frac;
+			fastf_t wsum;		/* weighted sum */
+			fastf_t	a,b;		/* values being averaged */
+			int	s;
+
+			/* Partial interval from newx[i] to j+1 */
+			a = rt_table_lin_interp( olddata, newtable->x[i] );	/* in "j" bin */
+			b = olddata->y[j+1];
+			wsum = 0.5 * (a+b) * (oldtable->x[j+1] - newtable->x[i] );
+
+			/* Full intervals from j+1 to k */
+			for( s = j+1; s < k; s++ )  {
+				a = olddata->y[s];
+				b = olddata->y[s+1];
+				wsum += 0.5 * (a+b) * (oldtable->x[s+1] - oldtable->x[s] );
+			}
+
+			/* Partial interval from k to newx[i+1] */
+			a = olddata->y[k];
+			b = rt_table_lin_interp( olddata, newtable->x[i+1] );	/* in "k" bin */
+			wsum += 0.5 * (a+b) * (newtable->x[i+1] - oldtable->x[k] );
+
+			/* Adjust the weighted sum by the total width */
+			newsamp->y[i] =
+				wsum / (newtable->x[i+1] - newtable->x[i]);
+		}
 	}
 	return newsamp;
 }
