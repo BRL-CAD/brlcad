@@ -678,6 +678,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
     }
 
 /* Apply the 3x3 part of a mat_t to a 3-tuple. */
+/* This rotates a vector without scaling it (changing its length) */
 #ifdef SHORT_VECTORS
 #define MAT3X3VEC(o,mat,vec) \
 	{ register int _m3x3v; \
@@ -792,6 +793,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #endif /* SHORT_VECTORS */
 
 /* Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space */
+/* This macro can scale the length of the vector if [15] != 1.0 */
 #ifdef SHORT_VECTORS
 #define MAT4X3VEC(o,m,i) \
 	{ register double _f; \
