@@ -103,7 +103,7 @@ char	*argv[];
 	tol.magic = RT_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
+	tol.perp = 1e-5;
 	tol.para = 1 - tol.perp;
 
 	/* XXX For visualization purposes, in the debug plot files */
