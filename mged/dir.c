@@ -1042,7 +1042,7 @@ printnode(dp, pathpos, prefix, cflag)
 		if (node_count > 0) {
 			rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
 									   sizeof( struct rt_tree_array ), "tree list" );
-			actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
+			actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION, 0 ) - rt_tree_array;
 			if (actual_count > node_count)
 				bu_bomb("rt_comb_v4_export() array overflow!");
 			if (actual_count < node_count)

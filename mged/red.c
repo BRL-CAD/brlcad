@@ -594,16 +594,9 @@ char **argv;
     node_count = db_tree_nleaves( comb->tree );
     if( node_count > 0 ){
       rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count, sizeof( struct rt_tree_array ), "tree list" );
-      actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
-      if( actual_count > node_count )
-	bu_bomb("write_comb() array overflow!");
-      if( actual_count < node_count ){
-	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls, "WARNING write_comb() array underflow! %d < %d",
-		      actual_count, node_count);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-      }
+      actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION, 1 ) - rt_tree_array;
+      BU_ASSERT_LONG( actual_count, ==, node_count );
+      comb->tree = TREE_NULL;
     } else {
       rt_tree_array = (struct rt_tree_array *)NULL;
       actual_count = 0;
@@ -668,6 +661,7 @@ char **argv;
       bu_vls_printf(&vls, " %c %s" , op , rt_tree_array[i].tl_tree->tr_l.tl_name);
       vls_print_matrix(&vls, rt_tree_array[i].tl_tree->tr_l.tl_mat);
       bu_vls_printf(&vls, "\n");
+      db_free_tree( rt_tree_array[i].tl_tree );
     }
 
     Tcl_AppendElement(interp, bu_vls_addr(&vls));
@@ -891,9 +885,8 @@ char *name;
 	{
 		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
 			sizeof( struct rt_tree_array ), "tree list" );
-		actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
-		if( actual_count > node_count )  bu_bomb("write_comb() array overflow!");
-		if( actual_count < node_count )  bu_log("WARNING write_comb() array underflow! %d < %d", actual_count, node_count);
+		actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION, 0 ) - rt_tree_array;
+		BU_ASSERT_LONG( actual_count, ==, node_count );
 	}
 	else
 	{

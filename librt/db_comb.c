@@ -140,12 +140,17 @@ CONST union tree	*tp;
  *  Take a binary tree in "V4-ready" layout (non-unions pushed below unions,
  *  left-heavy), and flatten it into an array layout, ready for conversion
  *  back to the GIFT-inspired V4 database format.
+ *
+ *  If argument 'free' is non-zero, then
+ *  the non-leaf nodes are freed along the way, to prevent memory leaks.
+ *  In this case, the caller's copy of 'tp' will be invalid upon return.
  */
 struct rt_tree_array *
-db_flatten_tree( rt_tree_array, tp, op )
+db_flatten_tree( rt_tree_array, tp, op, free )
 struct rt_tree_array	*rt_tree_array;
 union tree		*tp;
 int			op;
+int			free;
 {
 
 	RT_CK_TREE(tp);
@@ -160,13 +165,19 @@ int			op;
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 		/* This node is known to be a binary op */
-		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_left, op );
-		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_right, tp->tr_op );
+		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_left, op, free );
+		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_right, tp->tr_op, free );
+		if(free)  {
+			/* The leaves have been stolen, free the binary op */
+			tp->tr_b.tb_left = TREE_NULL;
+			tp->tr_b.tb_right = TREE_NULL;
+			bu_free( (char *)tp, "union tree (db_flatten_tree");
+		}
 		return rt_tree_array;
 
 	default:
 		bu_log("db_flatten_tree: bad op %d\n", tp->tr_op);
-		rt_bomb("db_flatten_tree\n");
+		bu_bomb("db_flatten_tree\n");
 	}
 
 	return( (struct rt_tree_array *)NULL ); /* for the compiler */
@@ -422,9 +433,9 @@ CONST struct db_i		*dbip;
 		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
 
 		/* Convert tree into array form */
-		actual_count = db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
-		if( actual_count > node_count )  bu_bomb("rt_comb_export4() array overflow!");
-		if( actual_count < node_count )  bu_log("WARNING rt_comb_export4() array underflow! %d < %d", actual_count, node_count);
+		actual_count = db_flatten_tree( rt_tree_array, comb->tree, OP_UNION, 1 ) - rt_tree_array;
+		BU_ASSERT_LONG( actual_count, ==, node_count );
+		comb->tree = TREE_NULL;
 	} else {
 		rt_tree_array = (struct rt_tree_array *)NULL;
 		actual_count = 0;
@@ -462,6 +473,7 @@ CONST struct db_i		*dbip;
 		} else {
 			rt_dbmat_mat( rp[j+1].M.m_mat, bn_mat_identity );
 		}
+		db_free_tree( tp );
 	}
 
 	/* Build the Combination record, on the front */
@@ -527,6 +539,8 @@ CONST struct db_i		*dbip;
 
 	rp[0].c.c_inherit = comb->inherit;
 
+	if( rt_tree_array )  bu_free( (char *)rt_tree_array, "rt_tree_array" );
+
 	return 0;		/* OK */
 }
 
@@ -563,11 +577,10 @@ double			mm2local;
 		int status;
 
 		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
-#if 0
-		actual_count = db_flatten_tree( rt_tree_array, tp, OP_UNION ) - rt_tree_array;
-#else
-		(void)db_flatten_tree( rt_tree_array, tp, OP_UNION );
-#endif
+		/* We cast away the const here, knowing that the arg
+		 * free=0 means that it won't actually be modified.
+		 */
+		(void)db_flatten_tree( rt_tree_array, (union tree *)tp, OP_UNION, 0 );
 		for( i=0 ; i<node_count ; i++ )
 		{
 			switch (rt_tree_array[i].tl_op)
@@ -783,7 +796,6 @@ double		mm2local;
 	if( comb->tree )  {
 		if( verbose )  {
 			db_tree_flatten_describe( str, comb->tree, 0, 1, mm2local );
-/*			db_tree_describe( str, comb->tree, 0, 1, mm2local ); */
 		} else {
 			rt_pr_tree_vls( str, comb->tree );
 		}

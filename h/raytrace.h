@@ -2461,12 +2461,8 @@ extern int db_put_external5(struct bu_external *ep, struct directory *dp, struct
 
 struct rt_tree_array *db_flatten_tree(struct rt_tree_array	*rt_tree_array,
 				      union tree		*tp,
-				      int			op);
-
-extern struct rt_tree_array * db_flatten_tree(
-		      struct rt_tree_array	*rt_tree_array,
-		      union tree		*tp,
-		      int			op);
+				      int			op,
+				      int			free);
 extern int db_tree_nleaves( const union tree *tp );
 extern void db_wrap_v4_external( struct bu_external *op, const char *name );
 extern int db_ck_v4gift_tree( const union tree	*tp);

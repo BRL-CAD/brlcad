@@ -3047,11 +3047,9 @@ wdb_print_node(wdbp, interp, dp, pathpos, prefix)
 		if (node_count > 0) {
 			rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
 									   sizeof( struct rt_tree_array ), "tree list" );
-			actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
-			if (actual_count > node_count)
-				bu_bomb("wdb_print_node() array overflow!");
-			if (actual_count < node_count)
-				bu_log("WARNING wdb_print_node() array underflow! %d < %d", actual_count, node_count);
+			actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION, 1 ) - rt_tree_array;
+			BU_ASSERT_PTR( actual_count, ==, node_count );
+			comb->tree = TREE_NULL;
 		}
 
 		for (i=0 ; i<actual_count ; i++) {
@@ -3087,6 +3085,7 @@ wdb_print_node(wdbp, interp, dp, pathpos, prefix)
 				Tcl_AppendResult(interp, rt_tree_array[i].tl_tree->tr_l.tl_name, "\n", (char *)NULL);
 			} else
 				wdb_print_node(wdbp, interp, nextdp, pathpos+1, op);
+			db_free_tree( rt_tree_array[i].tl_tree );
 		}
 		bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
 	}
@@ -4505,9 +4504,9 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdb
 
 	/* flatten tree */
 	if (comb->tree) {
-		actual_count = 1 + (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
-		if( actual_count > node_count )  bu_bomb("combadd() array overflow!");
-		if( actual_count < node_count )  bu_log("WARNING combadd() array underflow! %d", actual_count, node_count);
+		actual_count = 1 + (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION, 1 ) - tree_list;
+		BU_ASSERT_LONG( actual_count, ==, node_count );
+		comb->tree = TREE_NULL;
 	}
 
 	/* insert new member at end */
