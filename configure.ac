@@ -147,6 +147,12 @@ dnl ***********************
 dnl *** Check arguments ***
 dnl ***********************
 
+dnl Arguments that are auto should check both yes and no values,
+dnl otherwise there only needs to be a check for not no to imply a yes
+dnl value.  Arguments should only set their flag as to whether they
+dnl are enabled -- usage of that flag should be handled by the 
+dnl appropriate section further below.
+
 # Allow user to specify flags without relying on environment
 AC_ARG_WITH(cflags, AC_HELP_STRING(--with-cflags,
 		    [Specify additional flags to pass to the C compiler]) ,
@@ -368,17 +374,23 @@ AC_ARG_ENABLE(profiling,
 
 # 64-bit compilation
 AC_ARG_ENABLE(64bit,,
-	[if test "x$enable_64bit" != "xno" ; then
+	[if test "x$enable_64bit" = "xno" ; then
+		build_64bit=no
+	elif test "x$enable_64bit" = "xyes" ; then
 		build_64bit=yes
 	fi]
 )
 AC_ARG_ENABLE(64-bit,,
-	[if test "x$enable_64_bit" != "xno" ; then
+	[if test "x$enable_64bit" = "xno" ; then
+		build_64bit=no
+	elif test "x$enable_64bit" = "xyes" ; then
 		build_64bit=yes
 	fi]
 )
 AC_ARG_ENABLE(64-bit-build,,
-	[if test "x$enable_64_bit_build" != "xno" ; then
+	[if test "x$enable_64bit" = "xno" ; then
+		build_64bit=no
+	elif test "x$enable_64bit" = "xyes" ; then
 		build_64bit=yes
 	fi]
 )
@@ -860,6 +872,9 @@ AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
+
+AC_CHECK_SIZEOF(void *, 4)
+pointer_size="$ac_cv_sizeof_void_p"
 
 dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped.
 AC_MSG_CHECKING([union wait])
@@ -1420,10 +1435,40 @@ else
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBZ)
-
-
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 
+dnl figure out whether we are building 64-bit
+build_brlcad_64bit="no"
+if test "x$build_64bit" = "xyes" ; then
+	build_brlcad_64bit=yes
+else
+	if test "x$build_64bit" = "xno" ; then
+		if test "x$pointer_size" = "x8" ; then
+			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([Try removing --disable-64bit-build or modifying the CFLAGS/LDFLAGS])
+			AC_MSG_ERROR([*** Building non-64-bit was requested, yet the build seems to be 64-bit ***])
+		fi
+	elif test "x$build_64bit" = "xyes" ; then
+		if test "x$pointer_size" != "x8" ; then
+			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([Try removing --enable-64bit-build or modifying the CFLAGS/LDFLAGS])
+			AC_MSG_ERROR([*** Building 64-bit was requested, yet the build seems to be non-64-bit ***])
+		fi
+	fi
+
+	dnl automatic detection
+	if test "x$pointer_size" = "x8" ; then
+		build_brlcad_64bit="yes"
+	elif test "x$pointer_size" = "x4" ; then
+		build_brlcad_64bit="no (32-bit)"
+	elif test "x$pointer_size" = "x2" ; then
+		build_brlcad_64bit="no (16-bit)"
+	elif test "x$pointer_size" = "x1" ; then
+		build_brlcad_64bit="no (8-bit)"
+	else
+		AC_MSG_WARN([Unknown pointer size: $pointer_size])
+	fi
+fi
 
 dnl ***************************
 dnl *** Configure Makefiles ***
@@ -1805,17 +1850,17 @@ echo Build Itcl/Itk .......................: yes
 echo Build Tcl ............................: yes
 # we have to build Tk as it's been customized with tkCanvBezier
 # echo Build Tk .............................: yes
-echo Build libpng .........................: ${build_brlcad_png}
-echo Build libregex .......................: ${build_brlcad_regex}
-echo Build libz ...........................: ${build_brlcad_zlib}
-echo Build jove ...........................: ${use_jove}
+echo Build libpng .........................: $build_brlcad_png
+echo Build libregex .......................: $build_brlcad_regex
+echo Build libz ...........................: $build_brlcad_zlib
+echo Build jove ...........................: $use_jove
 echo 
 echo Java Developer Kit support ...........: $with_java
 echo X11 support ..........................: yes
 echo Open GL support ......................: yes
 echo Enable run-time debugging ............: yes
 echo
-echo Build 64-bit release .................: $build_64bit
+echo Build 64-bit release .................: $build_brlcad_64bit
 echo Build optimized release ..............: $use_optimized
 echo Build debug release ..................: $use_debug
 echo Build profile release ................: $use_profiling
