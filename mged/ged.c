@@ -53,6 +53,7 @@ char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987,1990 by the United S
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./titles.h"
@@ -188,6 +189,8 @@ char **argv;
 	windowbounds[5] = -2048;	/* ZLR */
 	dmp->dmr_window(windowbounds);
 
+	rt_vls_init( &dm_values.dv_string );
+
 	dmaflag = 1;
 
 	/* Fire up the display manager, and the display processor */
@@ -284,8 +287,8 @@ int	non_blocking;
 {
 	char		input_line[MAXLINE];
 	vect_t		knobvec;	/* knob slew */
-	char		cmd[128];
 	int		i;
+	int		len;
 
 	/*
 	 * dmr_input() will suspend until some change has occured,
@@ -312,6 +315,36 @@ int	non_blocking;
 	}
 
 	non_blocking = 0;
+
+	/*
+	 *  Process any "string commands" sent to us by the display manager.
+	 *  Each one is expected to be newline terminated.
+	 */
+	if( (len = rt_vls_strlen( &dm_values.dv_string )) > 0 )  {
+		register char	*cp = rt_vls_addr( &dm_values.dv_string );
+		char		*ep;
+		char		*end = cp + len;
+		struct rt_vls	cmd;
+
+		rt_vls_init( &cmd );
+
+		while( cp < end )  {
+#ifdef BSD
+			ep = index( cp, '\n' );
+#else
+			ep = strchr( cp, '\n' );
+#endif
+			if( ep == NULL )  break;
+
+			/* Copy one cmd, incl newline.  Null terminate */
+			rt_vls_strncpy( &cmd, cp, ep-cp+1 );
+			/* cmdline insists on ending with newline&null */
+			(void)cmdline( rt_vls_addr(&cmd) );
+			cp = ep+1;
+		}
+		rt_vls_trunc( &dm_values.dv_string, 0 );
+		rt_vls_free( &cmd );
+	}
 
 	/* Process any function button presses */
 	if( dm_values.dv_buttonpress )
