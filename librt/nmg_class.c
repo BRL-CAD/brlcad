@@ -555,7 +555,11 @@ CONST struct rt_tol	*tol;
 #if 0
 	return nmg_class_pt_f_except(pt, fu, (struct loopuse *)0, tol);
 #else
-	return nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
+
+	point_t tmp_pt;
+
+	VMOVE( tmp_pt, pt );
+	return nmg_class_pt_fu_except(tmp_pt, fu, (struct loopuse *)0,
 			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
 			tol);
 #endif                                                                        
