@@ -68,29 +68,10 @@ db_open( name, mode )
 CONST char	*name;
 CONST char	*mode;
 {
-	register struct db_i	*dbip;
+	register struct db_i	*dbip = DBI_NULL;
 	register int		i;
-#ifdef HAVE_UNIX_IO
-	struct stat		sb;
-#endif
 
 	if(rt_g.debug&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
-
-	BU_GETSTRUCT( dbip, db_i );
-
-	for( i=0; i<RT_DBNHASH; i++ )
-		dbip->dbi_Head[i] = DIR_NULL;
-
-	dbip->dbi_eof = -1L;
-	dbip->dbi_local2base = 1.0;		/* mm */
-	dbip->dbi_base2local = 1.0;
-	dbip->dbi_title = (char *)0;
-	dbip->dbi_uses = 1;
-
-#ifdef HAVE_UNIX_IO
-	if( stat( name, &sb ) < 0 )
-		goto fail;
-#endif
 
 	if( mode[0] == 'r' && mode[1] == '\0' )  {
 		struct bu_mapped_file	*mfp;
@@ -100,7 +81,6 @@ CONST char	*mode;
 
 		/* Is this a re-use of a previously mapped file? */
 		if( mfp->apbuf )  {
-			bu_free( (genptr_t)dbip, "db_open: unwanted db_i");
 			dbip = (struct db_i *)mfp->apbuf;
 			RT_CK_DBI(dbip);
 			dbip->dbi_uses++;
@@ -109,6 +89,7 @@ CONST char	*mode;
 			return dbip;
 		}
 
+		BU_GETSTRUCT( dbip, db_i );
 		dbip->dbi_mf = mfp;
 		dbip->dbi_eof = mfp->buflen;
 		dbip->dbi_inmem = mfp->buf;
@@ -128,6 +109,8 @@ CONST char	*mode;
 		dbip->dbi_read_only = 1;
 	}  else  {
 		/* Read-write mode */
+		BU_GETSTRUCT( dbip, db_i );
+
 #		ifdef HAVE_UNIX_IO
 			if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
 				goto fail;
@@ -141,6 +124,16 @@ CONST char	*mode;
 		dbip->dbi_read_only = 0;
 	}
 
+	/* Initialize fields */
+	for( i=0; i<RT_DBNHASH; i++ )
+		dbip->dbi_Head[i] = DIR_NULL;
+
+	dbip->dbi_eof = -1L;
+	dbip->dbi_local2base = 1.0;		/* mm */
+	dbip->dbi_base2local = 1.0;
+	dbip->dbi_title = (char *)0;
+	dbip->dbi_uses = 1;
+
 	dbip->dbi_filename = bu_strdup(name);
 	bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
 	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
@@ -151,7 +144,7 @@ CONST char	*mode;
 fail:
 	if(rt_g.debug&DEBUG_DB)
 		bu_log("db_open(%s) FAILED\n", name);
-	bu_free( (char *)dbip, "struct db_i" );
+	if(dbip) bu_free( (char *)dbip, "struct db_i" );
 	return DBI_NULL;
 }
 
