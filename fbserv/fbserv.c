@@ -129,14 +129,21 @@ char *str;
 }
 
 /*
- *			R F B D _ L O G
+ *			F B _ L O G
  *
  *  Errors from the framebuffer library.  We route these back to
- *  our client.
+ *  our client in an ERROR packet.  Note that this is a replacement
+ *  for the default fb_log function in libfb (which just writes
+ *  to stderr).
  */
 /* VARARGS */
 void
+#ifdef cray
+/* Segloader can't handle the multiple defines */
 rfbd_log( va_alist )
+#else
+fb_log( va_alist )
+#endif
 va_dcl
 {
 	va_list	ap;
@@ -205,8 +212,13 @@ pkgfoo(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
+#ifdef cray
 	rfbd_log( "rfbd: unable to handle message type %d\n",
 		pcp->pkc_type );
+#else
+	fb_log( "rfbd: unable to handle message type %d\n",
+		pcp->pkc_type );
+#endif
 	(void)free(buf);
 }
 
@@ -231,7 +243,11 @@ char *buf;
 #if 0
 	{	char s[81];
 sprintf( s, "Device: \"%s\"", &buf[8] );
+#ifdef cray
 rfbd_log(s);
+#else
+fb_log(s);
+#endif
 	}
 #endif
 	ret = fbp == FBIO_NULL ? -1 : 0;
@@ -293,7 +309,11 @@ char *buf;
 		if( buflen < 1024*sizeof(RGBpixel) )
 			buflen = 1024*sizeof(RGBpixel);
 		if( (scanbuf = malloc( buflen )) == NULL ) {
+#ifdef cray
 			rfbd_log("fb_read: malloc failed!");
+#else
+			fb_log("fb_read: malloc failed!");
+#endif cray
 			if( buf ) (void)free(buf);
 			buflen = 0;
 			return;
