@@ -47,11 +47,6 @@
 
 #include <unistd.h>
 #include <ctype.h>
-#include <get.h>
-#include <device.h>
-#if 0
-#include <sys/invent.h>
-#endif
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <signal.h>
@@ -63,7 +58,7 @@
 #include "fb.h"
 #include "./fblocal.h"
 
-#define CJDEBUG 1
+#define CJDEBUG 0
 
 /*WWW these come from Iris gl gl.h*/
 #define XMAXSCREEN	1279
@@ -284,7 +279,7 @@ struct oglinfo {
 
 #define MARGIN	4			/* # pixels margin to screen edge */
 
-#define CLIP_XTRA 2
+#define CLIP_XTRA 1
 
 #define WIN_L (ifp->if_max_width - ifp->if_width - MARGIN)
 #define WIN_T (ifp->if_max_height - ifp->if_height - MARGIN)
@@ -565,17 +560,6 @@ int		npix;
 
 	/* Caller is expected handle attaching context, etc. */
 
-#if 0
-	if( ifp->if_zoomflag )  {
-		sw_zoom = 1;
-	} else {
-		sw_zoom = 0;
-	}
-	if( ifp->if_xcenter != ifp->if_width/2 ||
-	    ifp->if_ycenter != ifp->if_height/2 )  {
-	    	sw_zoom = 1;
-	}
-#endif
 	clp = &(OGL(ifp)->clip);
 
 	if( OGL(ifp)->soft_cmap_flag  && SGI(ifp)->mi_cmap_flag )  {
@@ -597,25 +581,54 @@ int		npix;
 		nlines = clp->ypixmax - ybase + 1;
 
 
-	/* in COPY mode, always draw full sized image into backbuffer.
-	 * backbuffer_to_screen() is used to update the front buffer
-	 */ 
-	if ( OGL(ifp)->copy_flag && OGL(ifp)->front_flag){
+	if (!OGL(ifp)->copy_flag){
+		/*
+		 * Blank out areas of the screen around the image, if exposed.
+		 * In COPY mode, this is done in backbuffer_to_screen().
+		 */
+
+		/* Blank out area left of image */
+		glColor3b( 0, 0, 0 );
+		if( clp->xscrmin < 0 )  glRecti(
+			clp->xscrmin - CLIP_XTRA,
+			clp->yscrmin - CLIP_XTRA,
+			CLIP_XTRA,
+			clp->yscrmax + CLIP_XTRA);
+
+		/* Blank out area below image */
+		if( clp->yscrmin < 0 )  glRecti(
+			clp->xscrmin - CLIP_XTRA,
+			clp->yscrmin - CLIP_XTRA,
+			clp->xscrmax + CLIP_XTRA,
+			CLIP_XTRA);
+
+		/* Blank out area right of image */
+		if( clp->xscrmax >= ifp->if_width )  glRecti(
+			ifp->if_width - CLIP_XTRA,
+			clp->yscrmin - CLIP_XTRA,
+			clp->xscrmax + CLIP_XTRA,
+			clp->yscrmax + CLIP_XTRA);
+		
+		/* Blank out area above image */
+		if( clp->yscrmax >= ifp->if_height )  glRecti(
+			clp->xscrmin - CLIP_XTRA,
+			ifp->if_height- CLIP_XTRA,
+			clp->xscrmax + CLIP_XTRA,
+			clp->yscrmax + CLIP_XTRA);
+		
+	} else if (OGL(ifp)->front_flag) {
+		/* in COPY mode, always draw full sized image into backbuffer.
+		 * backbuffer_to_screen() is used to update the front buffer
+		 */ 
 		glDrawBuffer(GL_BACK);
 		OGL(ifp)->front_flag = 0;
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();	/* store current view clipping matrix*/
 		glLoadIdentity();
-		glOrtho( -0.5, ((GLdouble) OGL(ifp)->vp_width)-0.5,
-			-0.5, ((GLdouble) OGL(ifp)->vp_height)-0.5,
+		glOrtho( -0.25, ((GLdouble) OGL(ifp)->vp_width)-0.25,
+			-0.25, ((GLdouble) OGL(ifp)->vp_height)-0.25,
 			-1.0, 1.0);
 		glPixelZoom( 1.0, 1.0);
-#if 0
-	} else {
-	/* Draw an extra edge of pixels for cleanness when zooming*/
-	if ((xbase + npix) < ifp->if_width) npix++;
-	if ((ybase + nlines) < ifp->if_height) nlines++;
-#endif
 	}
 
 	if( sw_cmap) { 
@@ -638,7 +651,6 @@ int		npix;
 				op[x].blue  = CMB(ifp)[oglp[x].blue];
 			}
 			
-
 			glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
 			glRasterPos2i(xbase,y);
 			glDrawPixels(npix,1,GL_RGBA,GL_UNSIGNED_BYTE,
@@ -654,68 +666,21 @@ int		npix;
 		glPixelStorei(GL_UNPACK_SKIP_ROWS,ybase);
 		
 		glRasterPos2i(xbase,ybase);
+		glDrawPixels(npix,nlines,GL_RGBA,GL_UNSIGNED_BYTE,
+				(unsigned long *) ifp->if_mem);
+
 if (CJDEBUG) {
-	int valid, error;
+	int valid;
 	float rpos[4];
 
 	glGetIntegerv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
 	glGetFloatv(GL_CURRENT_RASTER_POSITION, rpos);
-	error = glGetError();
 	printf("Raster position (%g, %g, %g, %g) has validity %d.\n",rpos[0],rpos[1],rpos[2],rpos[3],valid);
-	printf("Error code %d\t",error);
 }
-		glDrawPixels(npix,nlines,GL_RGBA,GL_UNSIGNED_BYTE,
-				(unsigned long *) ifp->if_mem);
 
-
-if (CJDEBUG) {
-	int error;
-	error = glGetError();
-	printf("Error code %d\n",error);
-}
 
 	}
 
-
-	/*
-	 * Blank out areas of the screen around the image, if exposed.
-	 * In COPY mode, this is done in backbuffer_to_screen().
-	 */
-	if (!OGL(ifp)->copy_flag){
-		/* Do a couple of extra pixels outside of the screen to eliminate 
-		 * rounding fuzz
-		 */
-		/* Blank out area left of image */
-		glColor3b( 0, 0, 0 );
-		if( clp->xscrmin < 0 )  glRecti(
-			clp->xscrmin - CLIP_XTRA,
-			clp->yscrmin - CLIP_XTRA,
-			0,
-			clp->yscrmax + CLIP_XTRA);
-
-
-		/* Blank out area below image */
-		if( clp->yscrmin < 0 )  glRecti(
-			clp->xscrmin - CLIP_XTRA,
-			clp->yscrmin - CLIP_XTRA,
-			clp->xscrmax + CLIP_XTRA,
-			0);
-
-		/* Blank out area right of image */
-		if( clp->xscrmax > ifp->if_width )  glRecti(
-			ifp->if_width,
-			clp->yscrmin - CLIP_XTRA,
-			clp->xscrmax + CLIP_XTRA,
-			clp->yscrmax + CLIP_XTRA);
-		
-		/* Blank out area above image */
-		if( clp->yscrmax > ifp->if_height )  glRecti(
-			clp->xscrmin - CLIP_XTRA,
-			ifp->if_height,
-			clp->xscrmax + CLIP_XTRA,
-			clp->yscrmax + CLIP_XTRA);
-		
-	}
 }
 
 
@@ -740,15 +705,7 @@ int	width, height;
 	GLXContext 	client_data2;
 	XEvent 		event;
 	int fargc = 0;
-	/* superceded by new visual selection procedure */
-#if 0
-	static String 	fallback_resources[] = {    
-		"*glwidget*doublebuffer: TRUE",    /* this must be the first resource */
-		"*glwidget*rgba: TRUE",    
-		"*glwidget*allocateBackground: TRUE",    
-		NULL    };
-	static String 	single_buf_resource = "*glwidget*doublebuffer: FALSE";
-#endif
+
 	FB_CK_FBIO(ifp);
 
 	/*
@@ -899,14 +856,6 @@ int	width, height;
 		SGI(ifp)->mi_curs_on = 0;
 	}
 
-#if 0
-	/* specify single buffering if set by the mode */
-	if( (ifp->if_mode & MODE_9MASK) == MODE_9SINGLEBUF )  {
-		fallback_resources[0] = single_buf_resource;
-	} 
-#endif
-	
-
 	/* Build a descriptive window title bar */
 	(void)sprintf( title, "BRL libfb /dev/ogl %s, %s",
 		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
@@ -931,8 +880,7 @@ int	width, height;
 		return(-1);
 
 
-
-
+	/* Start up XtIntrinsics */
 	XtToolkitInitialize();
 	OGL(ifp)->appc = XtCreateApplicationContext();
 	OGL(ifp)->dispp = XtOpenDisplay(OGL(ifp)->appc, NULL, NULL, NULL,
@@ -955,7 +903,7 @@ int	width, height;
 		/* initialize virtual colormap - it will be loaded into
 		 * the hardware. This code has not yet been tested.
 		 */
-		if(CJDEBUG) printf("Attempting colormap change\n");
+		if(CJDEBUG) printf("Loading read/write colormap.\n");
 	    	for (i = 0; i < 256; i++) {
 	    		color_cell[i].pixel = i;
 	    		color_cell[i].red = CMR(ifp)[i];
@@ -974,7 +922,7 @@ int	width, height;
 
 
 	/* 
-	 * Create Application context and widgets
+	 * Create Application shell and widgets
 	 */
 	n = 0;
 	XtSetArg(args[n], XmNtitle, title); n++;	
@@ -982,10 +930,7 @@ int	width, height;
 	XtSetArg(args[n], XmNy, ypos); n++;
 	OGL(ifp)->toplevel = XtAppCreateShell(NULL,NULL,
 			applicationShellWidgetClass, OGL(ifp)->dispp, args, n);
-#if 0
-	OGL(ifp)->toplevel = XtAppInitialize(&(OGL(ifp)->appc), "Top",    
-		(XrmOptionDescList) NULL , 0,&fake_argc, (String *) NULL, NULL, args, n);    
-#endif
+
 	n = 0;
 	XtSetArg(args[n], XmNnoResize, True); n++;
 	OGL(ifp)->form = XmCreateForm(OGL(ifp)->toplevel, "form", args, n);
@@ -1012,17 +957,10 @@ int	width, height;
 		input,    (XtPointer) ifp);     
 
 
-	ogl_nwindows++;		/* track # of simultaneous windows */
-
-
 
 	/* realize window on the screen */
 	XtRealizeWidget(OGL(ifp)->toplevel);
-
-	/* store information about the window used */
-#if 0
-	OGL(ifp)->dispp = XtDisplay(OGL(ifp)->glw);
-#endif
+	ogl_nwindows++;		
 	OGL(ifp)->wind = XtWindow(OGL(ifp)->glw);
 
 	/* 
@@ -1059,31 +997,7 @@ int	width, height;
 
 	/* Must call "is_linear_cmap" AFTER "ogl_getmem" which allocates
 		space for the color map.				*/
-#if 0
 
-	/* note: By this point software colormapping has been enabled by
-	 * init_window() if hardware mapping is not possible.
-	 * Send colormap to hardware if we still think we can do it,
-	 * and we think we need to (mi_cmap_flag)
-	 */          
-	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-	if( (!(OGL(ifp)->soft_cmap_flag)) && SGI(ifp)->mi_cmap_flag )  {
-	    	XColor cells[256];
-	    	int i;
-
-		/* Send color map to hardware - not yet tested */
-		if(CJDEBUG) printf("Attempted colormap change\n");
-
-	    	for (i = 0; i < 256; i++) {
-	    		color_cell[i].pixel = i;
-	    		color_cell[i].red = CMR(ifp)[i];
-	    		color_cell[i].green = CMG(ifp)[i];
-	    		color_cell[i].blue = CMB(ifp)[i];
-	    		color_cell[i].flags = DoRed | DoGreen | DoBlue;
-	    	}
-    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
-	}
-#endif
 	/* Loop through events until first exposure event is processed */
 	OGL(ifp)->firstTime = 1;
 	while(OGL(ifp)->firstTime){
@@ -1389,12 +1303,7 @@ int	xzoom, yzoom;
 	glLoadIdentity();
 	ogl_clipper(ifp);
 	clp = &(OGL(ifp)->clip);
-	glOrtho( clp->oleft,clp->oright,clp->obottom,clp->otop,-1.0,1.0);
-#if 0
-	glOrtho(((GLdouble) clp->xscrmin)-0.5, ((GLdouble) clp->xscrmax)-0.5, 
-		((GLdouble) clp->yscrmin)-0.5, ((GLdouble) clp->yscrmax)-0.5, 
-		-1.0, 1.0);
-#endif
+	glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
 	glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 
 	if (OGL(ifp)->copy_flag){
@@ -2088,52 +1997,13 @@ init_window(Widget w, XtPointer client_data, XtPointer call)
 	if(CJDEBUG) printf("entering init_window\n");
 
 	ifp = (FBIO *) client_data;
-#if 0
-        XtSetArg(args[0], GLwNvisualInfo, &vi);
-        XtGetValues(w, args, 1); 
-	OGL(ifp)->vip = vi;
-        OGL(ifp)->glxc = glXCreateContext(XtDisplay(w), vi, 0, GL_FALSE);
-#endif
+
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,OGL(ifp)->vip, 0, GL_FALSE);
-#if 0	
-	if(CJDEBUG) {
-
-
-
-		printf("HERE ");
-
-		glXGetConfig(XtDisplay(w),vi,GLX_USE_GL,&use);
-		printf("GL %d ",use);
-		glXGetConfig(XtDisplay(w),vi,GLX_RGBA,&rgba);
-		glXGetConfig(XtDisplay(w),vi,GLX_RED_SIZE,&red);
-		glXGetConfig(XtDisplay(w),vi,GLX_GREEN_SIZE,&green);
-		glXGetConfig(XtDisplay(w),vi,GLX_BLUE_SIZE,&blue);
-		glXGetConfig(XtDisplay(w),vi,GLX_ALPHA_SIZE,&alpha);
-		glXGetConfig(XtDisplay(w),vi,GLX_DOUBLEBUFFER,&dbfr);
-		glXGetConfig(XtDisplay(w),vi,GLX_STEREO,&stereo);
-		printf("GL %d rgba %d %d/%d/%d/%d dbfr %d stereo %d\n",use,rgba,red,green,blue,alpha,dbfr,stereo);
-		printf("CLass is %d\n",vi->class);
-	}
-
-	/* Determine whether the selected visual supports hardware cmapping.
-	 * This may never happen. In future, choose our own visual to find one
-	 * which does support hardware mapping
-	 */
-	if ((vi->class == DirectColor)&&(vi->depth == 24)&&(vi->colormap_size>=256)){
-		OGL(ifp)->cmap_size = vi->colormap_size;
-		OGL(ifp)->xcmap = XCreateColormap(XtDisplay(w), OGL(ifp)->wind,
-				vi->visual, AllocNone);
-	} else {
-		/* any cmapping must be done by software */
-		if(CJDEBUG) printf("NOTE: hardware colormapping not possible\n");
-		OGL(ifp)->cmap_size = 0;
-		ifp->if_mode |= MODE_7MASK; /* enables software flag */
-	}
-#endif
 
 }
   
-static void expose_callback (Widget w, XtPointer client_data, XtPointer call) 
+static void 
+expose_callback (Widget w, XtPointer client_data, XtPointer call) 
 {    
 	GLwDrawingAreaCallbackStruct *call_data;
 	FBIO *ifp;
@@ -2152,16 +2022,13 @@ static void expose_callback (Widget w, XtPointer client_data, XtPointer call)
 	if (OGL(ifp)->firstTime){
 		OGL(ifp)->firstTime = 0;
 		
-		/* just incase the configuration is double buffered but
+		/* just in case the configuration is double buffered but
 		 * we want to pretend it's not
 		 */
 		if ( !SGI(ifp)->mi_doublebuffer ){
 			glDrawBuffer(GL_FRONT);
 		}
-#if 0
-		/* determine whether or not double buffering succeeded. */
-		glGetIntegerv(GL_DOUBLEBUFFER,&(SGI(ifp)->mi_doublebuffer));
-#endif
+
 		if ((ifp->if_mode & MODE_4MASK)==MODE_4NODITH){
 			glDisable(GL_DITHER);
 		}
@@ -2210,11 +2077,6 @@ static void expose_callback (Widget w, XtPointer client_data, XtPointer call)
 		glLoadIdentity();
 		glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop,
 				-1.0,1.0);
-#if 0
-		glOrtho(((GLdouble) clp->xscrmin)-0.5, ((GLdouble) clp->xscrmax)-0.5, 
-			((GLdouble) clp->yscrmin)-0.5, ((GLdouble) clp->yscrmax)-0.5, 
-			-1.0, 1.0);
-#endif
 		glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 	} else if 
 	((call_data->width > ifp->if_width) || 
@@ -2252,13 +2114,13 @@ if(CJDEBUG) {
 	glGetIntegerv(GL_DOUBLEBUFFER,&dbb);
 	glGetIntegerv(GL_DRAW_BUFFER,&db);
 	printf("Viewport: x %d y %d width %d height %d\n",view[0],view[1],view[2],view[3]);
-	printf("expose: double buffer %d, draw buffer %d\n",dbb,db);
+	printf("expose: double buffered: %d, draw buffer %d\n",dbb,db);
 	printf("front %d\tback%d\n",GL_FRONT,GL_BACK);
-
 	glGetIntegerv(GL_STEREO,&getster);
 	glGetIntegerv(GL_AUX_BUFFERS,&getaux);
 	printf("double %d, stereo %d, aux %d\n",dbb,getster,getaux);
 }
+
 	/* unattach context for other threads to use */
 	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
 
@@ -2342,7 +2204,8 @@ int ybits;
 	if( ( xbytes = xbits/8 ) * 8 != xbits)
 		xbytes++;
 
-	if(CJDEBUG) printf("xbits %d, ybits %d, xbytes %d\n",xbits,ybits,xbytes);
+	if(CJDEBUG) printf("cursor: xbits %d, ybits %d, xbytes %d\n",xbits,ybits,xbytes);
+
 	if (xbytes*ybits > MAX_CURS_BYTES) {
 		fb_log("make_bitmap: cursor %d bits by %d bits too large\n", xbits, ybits);
 		return(0);
@@ -2403,25 +2266,13 @@ int		one_y;
 	if (one_y > clp->ypixmax) {
 		return;
 	} else if (one_y < 0) { /* do whole visible screen */
-#if 0
-		xpixels = clp->xpixmax - clp->xpixmin +1;
-		if( (clp->xpixmin + xpixels) < ifp->if_width) xpixels++;
-		ypixels = clp->ypixmax - clp->ypixmin + 1;
-		if( (clp->ypixmin + xpixels) < ifp->if_height) ypixels++;
-#endif
-		glRasterPos2i(clp->xpixmin,clp->ypixmin);
-		glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
-			SGI(ifp)->mi_yoff + clp->ypixmin,
-			clp->xpixmax - clp->xpixmin +1,
-			clp->ypixmax - clp->ypixmin +1,
-			GL_COLOR);
 
 		/* Blank out area left of image */
 		glColor3b( 0, 0, 0 );
 		if( clp->xscrmin < 0 )  glRecti(
 			clp->xscrmin - CLIP_XTRA,
 			clp->yscrmin - CLIP_XTRA,
-			0,
+			CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
 
 		/* Blank out area below image */
@@ -2429,24 +2280,32 @@ int		one_y;
 			clp->xscrmin - CLIP_XTRA,
 			clp->yscrmin - CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
-			0);
+			CLIP_XTRA);
 
 		/* We are in copy mode, so we use vp_width rather
 		 * than if_width
 		 */
 		/* Blank out area right of image */
-		if( clp->xscrmax > OGL(ifp)->vp_width )  glRecti(
-			ifp->if_width,
+		if( clp->xscrmax >= OGL(ifp)->vp_width )  glRecti(
+			ifp->if_width - CLIP_XTRA,
 			clp->yscrmin - CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
 		
 		/* Blank out area above image */
-		if( clp->yscrmax > OGL(ifp)->vp_height )  glRecti(
+		if( clp->yscrmax >= OGL(ifp)->vp_height )  glRecti(
 			clp->xscrmin - CLIP_XTRA,
-			OGL(ifp)->vp_height,
+			OGL(ifp)->vp_height - CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
+
+		/* copy image from backbuffer */
+		glRasterPos2i(clp->xpixmin,clp->ypixmin);
+		glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
+			SGI(ifp)->mi_yoff + clp->ypixmin,
+			clp->xpixmax - clp->xpixmin +1,
+			clp->ypixmax - clp->ypixmin +1,
+			GL_COLOR);
 
 
 	} else if (one_y < clp->ypixmin) {
@@ -2465,7 +2324,6 @@ int		one_y;
  *
  * Select an appropriate visual, and set flags.
  * 
- *
  * The user requires support for:
  *    	-OpenGL rendering in RGBA mode
  * 	
@@ -2538,6 +2396,7 @@ FBIO *ifp;
 					maxvip = vip;
 				}
 			}
+			/* set flags and return choice */
 			OGL(ifp)->soft_cmap_flag = !m_hard_cmap;
 			SGI(ifp)->mi_doublebuffer = m_doub_buf;
 			if (CJDEBUG) {
@@ -2550,9 +2409,7 @@ FBIO *ifp;
 		 * relax one of the criteria and try again.
 		 */
 		if (m_hard_cmap) {
-			/* relax hardware colormap requirement
-			 * and turn on software colormapping
-			 */
+			/* relax hardware colormap requirement */
 			m_hard_cmap = 0;
 			fb_log("ogl_open: hardware colormapping not available. Using software colormap.\n");
 		} else if (m_sing_buf) {
@@ -2562,14 +2419,11 @@ FBIO *ifp;
 			 */
 			m_sing_buf = 0;
 		} else if (m_doub_buf) {
-			/* relax double buffering requirement.
-			 * We must turn off double buffered mode 
-			 * and copy mode.
-			 */
+			/* relax double buffering requirement. */
 			m_doub_buf = 0;
 			fb_log("ogl_open: double buffering not available. Using single buffer.\n");
 		} else {
-			/* we're as relaxed as we can get already */
+			/* nothing else to relax */
 			return(NULL);
 		}
 
