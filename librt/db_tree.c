@@ -50,6 +50,7 @@ register CONST struct db_tree_state	*tsp;
 register CONST struct db_full_path	*pathp;
 {
 	struct combined_tree_state	*new;
+	int				shader_len=0;
 
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_DBI(tsp->ts_dbip);
@@ -57,6 +58,16 @@ register CONST struct db_full_path	*pathp;
 	BU_GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
 	new->cts_s = *tsp;		/* struct copy */
+	if( tsp->ts_mater.ma_shader )
+		shader_len = strlen( tsp->ts_mater.ma_shader );
+	if( shader_len )
+	{
+		new->cts_s.ts_mater.ma_shader = (char *)bu_malloc( shader_len+1, "db_new_combined_tree_state: ma_shader" );
+	strcpy( new->cts_s.ts_mater.ma_shader, tsp->ts_mater.ma_shader );
+	}
+	else
+		new->cts_s.ts_mater.ma_shader = (char *)NULL;
+
 	db_full_path_init( &(new->cts_p) );
 	db_dup_full_path( &(new->cts_p), pathp );
 	return new;
@@ -70,11 +81,22 @@ db_dup_combined_tree_state( old )
 CONST struct combined_tree_state	*old;
 {
 	struct combined_tree_state	*new;
+	int				shader_len=0;
 
  	RT_CK_CTS(old);
 	BU_GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
 	new->cts_s = old->cts_s;	/* struct copy */
+	if( old->cts_s.ts_mater.ma_shader )
+		shader_len = strlen( old->cts_s.ts_mater.ma_shader );
+	if( shader_len )
+	{
+		new->cts_s.ts_mater.ma_shader = (char *)bu_malloc( shader_len+1, "db_dup_combined_tree_state: ma_shader" );
+	strcpy( new->cts_s.ts_mater.ma_shader, old->cts_s.ts_mater.ma_shader );
+	}
+	else
+		new->cts_s.ts_mater.ma_shader = (char *)NULL;
+
 	db_full_path_init( &(new->cts_p) );
 	db_dup_full_path( &(new->cts_p), &(old->cts_p) );
 	return new;
@@ -89,6 +111,9 @@ register struct combined_tree_state	*ctsp;
 {
  	RT_CK_CTS(ctsp);
 	db_free_full_path( &(ctsp->cts_p) );
+	if( ctsp->cts_s.ts_mater.ma_shader )
+		bu_free( ctsp->cts_s.ts_mater.ma_shader, "db_free_combined_tree_state: ma_shader" );
+
 	bzero( (char *)ctsp, sizeof(*ctsp) );		/* sanity */
 	rt_free( (char *)ctsp, "combined_tree_state");
 }
@@ -192,7 +217,7 @@ register CONST struct rt_comb_internal	*comb;
 				bu_free( (genptr_t)tsp->ts_mater.ma_shader, "ma_shader" );
 			tsp->ts_mater.ma_shader = bu_vls_strdup(
 				&comb->shader);
-			tsp->ts_mater.ma_minherit = comb->inherit;
+		tsp->ts_mater.ma_minherit = comb->inherit;
 		}
 	}
 
