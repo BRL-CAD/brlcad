@@ -680,7 +680,7 @@ register struct rt_i *rtip;
 	for( ; head < &(rtip->rti_solidheads[RT_DBNHASH]); head++ )  {
 		while( BU_LIST_WHILE( stp, soltab, head ) )  {
 			RT_CHECK_SOLTAB(stp);
-			bu_free_soltab(stp);
+			rt_free_soltab(stp);
 		}
 	}
 	rtip->nsolids = 0;
