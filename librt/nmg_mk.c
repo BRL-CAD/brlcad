@@ -2280,14 +2280,26 @@ struct shell *s;
 
 	vu = v1->vu_p;
 	do {
+		/* look for an edgeuse pair on the vertices we want
+		 * the edgeuse pair should be a dangling edge
+		 */
 		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC && 
 		    vu->up.eu_p->eumate_p->vu_p->v_p == v2  &&
 		    vu->up.eu_p->eumate_p == vu->up.eu_p->radial_p) {
+
+		    	/* if the edgeuse we have found is a part of a face
+		    	 * in the proper shell, we've found what we're looking
+		    	 * for.
+		    	 */
 			eu = vu->up.eu_p;
 			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
 			    eu->up.lu_p->up.fu_p->s_p == s)
 			    	return(eu);
+#if 1
+		    	else
+		    		rt_log("ignoring an edge because it has wrong parent\n");
+#endif
 		}
 		vu = vu->next;
 	} while (vu != v1->vu_p);
