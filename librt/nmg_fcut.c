@@ -114,38 +114,36 @@ struct vertexuse *vu1, *vu2;
 {
 	struct loopuse *lu, *oldlu;
 	struct edgeuse *eu1, *eu2, *eunext, *neweu, *eu;
-	FILE *fd;
-	struct nmg_ptbl b;
-	char name[32];
-	static int i=0;
-
+	struct model	*m;
+	FILE		*fd;
+	char		name[32];
+	static int	i=0;
 
 	NMG_CK_VERTEXUSE(vu1);
 	NMG_CK_VERTEXUSE(vu2);
 
 	eu1 = vu1->up.eu_p;
 	eu2 = vu2->up.eu_p;
-
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
-	NMG_CK_LOOPUSE(eu1->up.lu_p);
-	NMG_CK_LOOPUSE(eu2->up.lu_p);
-	NMG_CK_FACEUSE(eu1->up.lu_p->up.fu_p);
-	NMG_CK_FACEUSE(eu2->up.lu_p->up.fu_p);
-
 	oldlu = eu1->up.lu_p;
+	NMG_CK_LOOPUSE(oldlu);
 	if (eu2->up.lu_p != oldlu) {
 		rt_log("at %d in %s vertices should be decendants of same loop\n",
 			__LINE__, __FILE__);
 		rt_bomb("subroutine cut_loop");
 	}
+	NMG_CK_FACEUSE(oldlu->up.fu_p);
+	m = oldlu->up.fu_p->s_p->r_p->m_p;
+	NMG_CK_MODEL(m);
 
 	if (rt_g.NMG_debug & DEBUG_CUTLOOP) {
 		rt_log("\tcut_loop\n");
 		if (rt_g.NMG_debug & DEBUG_PLOTEM) {
+			long		*tab;
+			tab = (long *)rt_calloc( m->maxindex, sizeof(long),
+				"cut_loop flag[] 1" );
 
-			(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
-	
 			(void)sprintf(name, "Before_cutloop%d.pl", ++i);
 			rt_log("plotting %s\n", name);
 			if ((fd = fopen(name, "w")) == (FILE *)NULL) {
@@ -153,18 +151,14 @@ struct vertexuse *vu1, *vu2;
 				exit(-1);
 			}
 
-			(void)nmg_pl_fu(fd, oldlu->up.fu_p, &b, 100, 100, 100);
-			(void)nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, &b, 100, 100, 100);
+			nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100);
+			nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100);
 			(void)fclose(fd);
+			rt_free( (char *)tab, "cut_loop flag[] 1" );
 		}
 	}
 
 	nmg_ck_lueu(oldlu, "oldlu (fresh)");
-
-	eu1 = vu1->up.eu_p;
-	eu2 = vu2->up.eu_p;
-
-	oldlu = eu1->up.lu_p;
 
 	/* make a new loop structure for the new loop & throw away
 	 * the vertexuse we don't need
@@ -223,7 +217,10 @@ struct vertexuse *vu1, *vu2;
 
 
 	if (rt_g.NMG_debug & DEBUG_CUTLOOP && rt_g.NMG_debug & DEBUG_PLOTEM) {
-		(void)nmg_tbl(&b, TBL_RST, (long *)NULL);
+		long		*tab;
+		tab = (long *)rt_calloc( m->maxindex, sizeof(long),
+			"cut_loop flag[] 2" );
+
 		(void)sprintf(name, "After_cutloop%d.pl", i);
 		rt_log("plotting %s\n", name);
 		if ((fd = fopen(name, "w")) == (FILE *)NULL) {
@@ -231,10 +228,10 @@ struct vertexuse *vu1, *vu2;
 			exit(-1);
 		}
 
-		(void)nmg_pl_fu(fd, oldlu->up.fu_p, &b, 100, 100, 100);
-		(void)nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, &b, 100, 100, 100);
+		nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100);
+		nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100);
 		(void)fclose(fd);
-		(void)nmg_tbl(&b, TBL_FREE,  (long *)NULL);
+		rt_free( (char *)tab, "cut_loop flag[] 2" );
 	}
 
 	nmg_loop_g(oldlu->l_p);
@@ -902,7 +899,7 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 		long **magic_p;
 	} p;
 	pointp_t	p1, p2;
-	struct nmg_ptbl tbl;
+	long		*tab;
 	FILE *fp;
 	static int pn=0;
 	static char name[32];
@@ -917,7 +914,9 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 				(void)perror(name);
 				exit(-1);
 			}
-			(void)nmg_tbl(&tbl, TBL_INIT, (long *)NULL);
+			tab = (long *)rt_calloc( fu1->s_p->r_p->m_p->maxindex,
+				sizeof(long),
+				"nmg_face_combine flags[]" );
 		/*	nmg_pl_fu(fp, fu1, &tbl, 200, 20, 200);
 			nmg_pl_fu(fp, fu2, &tbl, 20, 200, 200); */
 		}
@@ -953,11 +952,11 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 					tmpvg->coord[1],
 					tmpvg->coord[2]);
 
-				nmg_pl_eu(fp, p.vu[i]->up.eu_p, &tbl, 180, 180, 180);
+				nmg_pl_eu(fp, p.vu[i]->up.eu_p, tab, 180, 180, 180);
 
 			} else if (*p.vu[i]->up.magic_p == NMG_LOOPUSE_MAGIC) {
 				rt_log("LOOPUSE\n");
-				nmg_pl_lu(fp, p.vu[i]->up.lu_p, &tbl, 80, 180, 100);
+				nmg_pl_lu(fp, p.vu[i]->up.lu_p, tab, 80, 180, 100);
 
 				if ((struct vertexuse *)p.vu[i]->up.lu_p->down_hd.forw !=
 					p.vu[i]) {
@@ -1053,7 +1052,8 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 
 	nmg_face_bb(fu1->f_p);
 
-	if (rt_g.NMG_debug & DEBUG_COMBINE)
-		(void)nmg_tbl(&tbl, TBL_FREE, (long *)NULL);
+	if (rt_g.NMG_debug & DEBUG_COMBINE)  {
+		rt_free( (char *)tab, "nmg_face_combine flags[]" );
+	}
 }
                                                                                                                                       

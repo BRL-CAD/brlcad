@@ -1002,7 +1002,6 @@ int		delay;
 	FILE	*fp;
 	char	fname[128];
 	struct faceuse	*fu;
-	struct nmg_ptbl b;
 	int	do_plot = 0;
 	int	do_anim = 0;
 
@@ -1013,9 +1012,6 @@ int		delay;
 	if( !do_plot && !do_anim )  return;
 
 	if( do_plot )  {
-		/* get space for list of items processed */
-		(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
-
 		sprintf(fname, "/tmp/nmg_eval%d.pl", num);
 		if( (fp = fopen(fname,"w")) == NULL )  {
 			perror(fname);
@@ -1027,22 +1023,16 @@ int		delay;
 		nmg_pl_s( fp, bs->bs_src );
 
 		fclose(fp);
-
-		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 	}
 
 	if( do_anim )  {
 		extern void (*nmg_vlblock_anim_upcall)();
 		struct rt_vlblock	*vbp;
 
-		/* get space for list of items processed */
-		(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
 		vbp = rt_vlblock_init();
 
 		nmg_vlblock_s( vbp, bs->bs_dest, 0 );
 		nmg_vlblock_s( vbp, bs->bs_src, 0 );
-
-		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 
 		/* Cause animation of boolean operation as it proceeds! */
 		if( nmg_vlblock_anim_upcall )  {

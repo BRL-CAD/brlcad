@@ -25,8 +25,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "nmg.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "plot3.h"
 
 #define US_DELAY	10	/* Additional delay between frames */
@@ -120,6 +120,7 @@ int	r, g, b;
 /************************************************************************
  *									*
  *		NMG to VLIST routines, for MGED interface		*
+ * XXX should take a flags array, to ensure each item done only once!   *
  *									*
  ************************************************************************/
 
@@ -574,15 +575,15 @@ point_t		next_base;
 /*
  *			N M G _ P L _ V
  */
-static void nmg_pl_v(fp, v, b)
-FILE *fp;
-struct vertex *v;
-struct nmg_ptbl *b;
+void nmg_pl_v(fp, v, b)
+FILE		*fp;
+struct vertex	*v;
+long		*b;
 {
 	pointp_t p;
 	static char label[128];
 
-	if (nmg_tbl(b, TBL_INS_UNIQUE, &v->magic) >= 0) return;
+	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, v->index);
 
 	NMG_CK_VERTEX(v);
 	NMG_CK_VERTEX_G(v->vg_p);
@@ -600,17 +601,18 @@ struct nmg_ptbl *b;
 /*
  *			N M G _ P L _ E
  */
-void nmg_pl_e(fp, e, b, red, green, blue)
+void
+nmg_pl_e(fp, e, b, red, green, blue)
 FILE		*fp;
 struct edge	*e;
-struct nmg_ptbl	*b;
+long		*b;
 int		red, green, blue;
 {
-	pointp_t p0, p1;
-	point_t end0, end1;
-	vect_t v;
+	pointp_t	p0, p1;
+	point_t		end0, end1;
+	vect_t		v;
 
-	if (nmg_tbl(b, TBL_INS_UNIQUE, &e->magic) >= 0) return;
+	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, e->index);
 	
 	NMG_CK_EDGEUSE(e->eu_p);
 	NMG_CK_VERTEXUSE(e->eu_p->vu_p);
@@ -641,10 +643,11 @@ int		red, green, blue;
 /*
  *			M N G _ P L _ E U
  */
-void nmg_pl_eu(fp, eu, b, red, green, blue)
+void
+nmg_pl_eu(fp, eu, b, red, green, blue)
 FILE		*fp;
 struct edgeuse	*eu;
-struct nmg_ptbl	*b;
+long		*b;
 int		red, green, blue;
 {
 	point_t base, tip;
@@ -662,7 +665,7 @@ int		red, green, blue;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
-	if (nmg_tbl(b, TBL_INS_UNIQUE, &eu->l.magic) >= 0) return;
+	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, eu->index);
 
 	nmg_pl_e(fp, eu->e_p, b, red, green, blue);
 
@@ -702,14 +705,14 @@ int		red, green, blue;
 void nmg_pl_lu(fp, lu, b, red, green, blue)
 FILE		*fp;
 struct loopuse	*lu;
-struct nmg_ptbl	*b;
+long		*b;
 int		red, green, blue;
 {
 	struct edgeuse	*eu;
 	long		magic1;
 
 	NMG_CK_LOOPUSE(lu);
-	if (nmg_tbl(b, TBL_INS_UNIQUE, &lu->l.magic) >= 0) return;
+	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, lu->index);
 
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC &&
@@ -726,15 +729,16 @@ int		red, green, blue;
  *			M N G _ P L _ F U
  */
 void nmg_pl_fu(fp, fu, b, red, green, blue)
-FILE *fp;
-struct faceuse *fu;
-struct nmg_ptbl *b;
-int red, green, blue;
+FILE		*fp;
+struct faceuse	*fu;
+long		*b;
+int		red, green, blue;
 {
 	struct loopuse *lu;
 
 	NMG_CK_FACEUSE(fu);
-	if (nmg_tbl(b, TBL_INS_UNIQUE, &fu->l.magic) >= 0) return;
+
+	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, fu->index);
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pl_lu(fp, lu, b, red, green, blue);
@@ -743,16 +747,18 @@ int red, green, blue;
 
 /*
  *			N M G _ P L _ S
+ *
+ *  Note that "b" should probably be defined a level higher,
+ *  to reduce malloc/free calls when plotting multiple shells.
  */
 void nmg_pl_s(fp, s)
-FILE *fp;
-struct shell *s;
+FILE		*fp;
+struct shell	*s;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	struct nmg_ptbl b;
-
+	long		*b;
 
 	NMG_CK_SHELL(s);
 	if( s->sa_p )  {
@@ -760,43 +766,44 @@ struct shell *s;
 		pdv_3space( fp, s->sa_p->min_pt, s->sa_p->max_pt );
 	}
 
-	/* get space for list of items processed */
-	(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
+	/* get space for flag array, to ensure each item is done once */
+	b = (long *)rt_calloc( s->r_p->m_p->maxindex, sizeof(long),
+		"nmg_pl_s flag[]" );
 
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		nmg_pl_fu(fp, fu, &b, 80, 100, 170);
+		nmg_pl_fu(fp, fu, b, 80, 100, 170);
 	}
 
 	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		nmg_pl_lu(fp, lu, &b, 255, 0, 0);
+		nmg_pl_lu(fp, lu, b, 255, 0, 0);
 	}
 
 	for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 		NMG_CK_EDGEUSE(eu);
 		NMG_CK_EDGE(eu->e_p);
 
-		nmg_pl_eu(fp, eu, &b, 200, 200, 0 );
+		nmg_pl_eu(fp, eu, b, 200, 200, 0 );
 	}
 	if (s->vu_p) {
-		nmg_pl_v(fp, s->vu_p->v_p, &b );
+		nmg_pl_v(fp, s->vu_p->v_p, b );
 	}
 
 	if( RT_LIST_IS_EMPTY( &s->fu_hd ) &&
 	    RT_LIST_IS_EMPTY( &s->lu_hd ) &&
 	    RT_LIST_IS_EMPTY( &s->eu_hd ) && !s->vu_p) {
-	    	rt_log("WARNING nmg_pl_s() shell has no children\n");
+	    	rt_log("WARNING nmg_pl_s(): shell has no children\n");
 	}
 
-	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+	rt_free( (char *)b, "nmg_pl_s flag[]" );
 }
 
 /*
  *			N M G _ P L _ R
  */
 void nmg_pl_r(fp, r)
-FILE *fp;
+FILE		*fp;
 struct nmgregion *r;
 {
 	struct shell *s;
@@ -810,8 +817,8 @@ struct nmgregion *r;
  *			N M G _ P L _ M
  */
 void nmg_pl_m(fp, m)
-FILE *fp;
-struct model *m;
+FILE		*fp;
+struct model	*m;
 {
 	struct nmgregion *r;
 
@@ -829,10 +836,10 @@ struct model *m;
 /*
  *			N M G _ V L B L O C K _ V
  */
-static void nmg_vlblock_v(vbp, v, tab)
+void nmg_vlblock_v(vbp, v, tab)
 struct rt_vlblock	*vbp;
-struct vertex	*v;
-long		*tab;
+struct vertex		*v;
+long			*tab;
 {
 	pointp_t p;
 	static char label[128];
@@ -859,7 +866,7 @@ long		*tab;
 /*
  *			N M G _ V L B L O C K _ E
  */
-static void nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
+void nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
 struct rt_vlblock	*vbp;
 struct edge	*e;
 long		*tab;
@@ -906,10 +913,10 @@ int		fancy;
  */
 void nmg_vlblock_eu(vbp, eu, tab, red, green, blue, fancy)
 struct rt_vlblock	*vbp;
-struct edgeuse	*eu;
-long		*tab;
-int		red, green, blue;
-int		fancy;
+struct edgeuse		*eu;
+long			*tab;
+int			red, green, blue;
+int			fancy;
 {
 	point_t base, tip;
 	point_t	radial_tip;
@@ -964,7 +971,7 @@ int		fancy;
  *			N M G _ V L B L O C K _ L U
  */
 void nmg_vlblock_lu(vbp, lu, tab, red, green, blue, fancy)
-struct vlblock	*vbp;
+struct rt_vlblock	*vbp;
 struct loopuse	*lu;
 long		*tab;
 int		red, green, blue;
@@ -972,6 +979,7 @@ int		fancy;
 {
 	struct edgeuse	*eu;
 	long		magic1;
+	struct vertexuse *vu;
 
 	NMG_CK_LOOPUSE(lu);
 	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, lu->index );
@@ -979,7 +987,9 @@ int		fancy;
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC &&
 	    lu->orientation != OT_BOOLPLACE) {
-	    	nmg_vlblock_v(vbp, RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p, tab);
+	    	vu = RT_LIST_PNEXT(vertexuse, &lu->down_hd);
+	    	NMG_CK_VERTEXUSE(vu);
+	    	nmg_vlblock_v(vbp, vu->v_p, tab);
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_vlblock_eu(vbp, eu, tab, red, green, blue, fancy);
@@ -991,8 +1001,8 @@ int		fancy;
  *			M N G _ V L B L O C K _ F U
  */
 void nmg_vlblock_fu(vbp, fu, tab, fancy)
-struct vlblock	*vbp;
-struct faceuse *fu;
+struct rt_vlblock	*vbp;
+struct faceuse	*fu;
 long		*tab;
 int		fancy;
 {
@@ -1016,7 +1026,7 @@ int		fancy;
  *			N M G _ V L B L O C K _ S
  */
 void nmg_vlblock_s(vbp, s, fancy)
-struct vlblock	*vbp;
+struct rt_vlblock	*vbp;
 struct shell	*s;
 int		fancy;
 {
@@ -1071,7 +1081,7 @@ int		fancy;
  *			N M G _ V L B L O C K _ R
  */
 void nmg_vlblock_r(vbp, r, fancy)
-struct vlblock	*vbp;
+struct rt_vlblock	*vbp;
 struct nmgregion *r;
 int		fancy;
 {
@@ -1086,7 +1096,7 @@ int		fancy;
  *			N M G _ V L B L O C K _ M
  */
 void nmg_vlblock_m(vbp, m, fancy)
-struct vlblock	*vbp;
+struct rt_vlblock	*vbp;
 struct model	*m;
 int		fancy;
 {
@@ -1106,10 +1116,10 @@ int		fancy;
 /*
  *  Plot all edgeuses around an edge
  */
-static void nmg_pl_around_edge(fd, b, eu)
-FILE *fd;
-struct nmg_ptbl *b;
-struct edgeuse *eu;
+void nmg_pl_around_edge(fd, b, eu)
+FILE		*fd;
+long		*b;
+struct edgeuse	*eu;
 {
 	struct edgeuse *eur = eu;
 	do {
@@ -1124,9 +1134,9 @@ struct edgeuse *eu;
  *  uses around this edge.
  */
 void nmg_pl_edges_in_2_shells(fd, b, eu)
-FILE *fd;
-struct nmg_ptbl *b;
-struct edgeuse *eu;
+FILE		*fd;
+long		*b;
+struct edgeuse	*eu;
 {
 	struct edgeuse	*eur;
 	struct shell	*s;
@@ -1153,13 +1163,13 @@ struct edgeuse *eu;
 }
 
 void nmg_pl_isect(filename, s)
-char *filename;
-struct shell *s;
+char		*filename;
+struct shell	*s;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	struct nmg_ptbl b;
+	long		*b;
 	FILE	*fp;
 	long	magic1;
 
@@ -1170,7 +1180,8 @@ struct shell *s;
 		exit(-1);
 	}
 
-	(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
+	b = (long *)rt_calloc( s->r_p->m_p->maxindex+1, sizeof(long),
+		"nmg_pl_isect flags[]" );
 
 	rt_log("Plotting to \"%s\"\n", filename);
 	if( s->sa_p )  {
@@ -1186,7 +1197,7 @@ struct shell *s;
 			if (magic1 == NMG_EDGEUSE_MAGIC) {
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
-					nmg_pl_edges_in_2_shells(fp, &b, eu);
+					nmg_pl_edges_in_2_shells(fp, b, eu);
 				}
 			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 				;
@@ -1195,7 +1206,7 @@ struct shell *s;
 			}
 		}
 	}
-	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+	rt_free( (char *)b, "nmg_pl_isect flags[]" );
 
 	(void)fclose(fp);
 }
@@ -1215,13 +1226,20 @@ struct faceuse	*fu1;
 	char	name[64];
 	int	do_plot = 0;
 	int	do_anim = 0;
-	struct nmg_ptbl	tbl;
+	struct model	*m;
+	long	*tab;
 
 	if(rt_g.NMG_debug & DEBUG_PLOTEM &&
 	   rt_g.NMG_debug & DEBUG_COMBINE ) do_plot = 1;
 	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  do_anim = 1;
 
 	if( !do_plot && !do_anim )  return;
+
+	m = nmg_find_model( &fu1->l.magic );
+	NMG_CK_MODEL(m);
+	/* get space for list of items processed */
+	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+		"nmg_pl_comb_fu tab[]");
 
 	if( do_plot )  {
 	    	(void)sprintf(name, "comb%d.%d.pl", num1, num2);
@@ -1230,29 +1248,16 @@ struct faceuse	*fu1;
 			return;
 		}
 		rt_log("Plotting %s\n", name);
-		(void)nmg_tbl(&tbl, TBL_INIT, (long *)NULL);
-
-		nmg_pl_fu(fp, fu1, &tbl, 200, 200, 200);
-
+		nmg_pl_fu(fp, fu1, tab, 200, 200, 200);
 		(void)fclose(fp);
-		(void)nmg_tbl(&tbl, TBL_FREE, (long *)NULL);
 	}
 
 	if( do_anim )  {
 		struct rt_vlblock	*vbp;
-		long			*tab;
-		struct model		*m;
 
-		m = nmg_find_model( &fu1->l.magic );
-		NMG_CK_MODEL(m);
-		/* get space for list of items processed */
-		tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
-			"nmg_pl_comb_fu tab[]");
 		vbp = rt_vlblock_init();
 
-		nmg_vlblock_fu(vbp, fu1, tab, 200, 200, 200, 1);
-
-		rt_free( (char *)tab, "nmg_pl_comb_fu tab[]" );
+		nmg_vlblock_fu(vbp, fu1, tab, 1);
 
 		if( nmg_vlblock_anim_upcall )  {
 			(*nmg_vlblock_anim_upcall)( vbp, US_DELAY );
@@ -1261,6 +1266,7 @@ struct faceuse	*fu1;
 		}
 		rt_vlblock_free(vbp);
 	}
+	rt_free( (char *)tab, "nmg_pl_comb_fu tab[]" );
 }
 
 /*
@@ -1280,11 +1286,16 @@ int		show_mates;
 {
 	FILE		*fp;
 	char		name[32];
-	struct nmg_ptbl	b;
+	struct model	*m;
+	long		*tab;
+
+	m = nmg_find_model( &fu1->l.magic );
+	NMG_CK_MODEL(m);
+	/* get space for list of items processed */
+	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+		"nmg_pl_comb_fu tab[]");
 
 	if( rt_g.NMG_debug & DEBUG_PLOTEM )  {
-		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
-
 		(void)sprintf(name, str, num);
 		rt_log("plotting to %s\n", name);
 		if ((fp=fopen(name, "w")) == (FILE *)NULL)  {
@@ -1292,39 +1303,29 @@ int		show_mates;
 			return;
 		}
 
-		(void)nmg_pl_fu(fp, fu1, &b, 100, 100, 180);
+		nmg_pl_fu(fp, fu1, tab, 100, 100, 180);
 		if( show_mates )
-			(void)nmg_pl_fu(fp, fu1->fumate_p, &b, 100, 100, 180);
+			nmg_pl_fu(fp, fu1->fumate_p, tab, 100, 100, 180);
 
-		(void)nmg_pl_fu(fp, fu2, &b, 100, 100, 180);
+		nmg_pl_fu(fp, fu2, tab, 100, 100, 180);
 		if( show_mates )
-			(void)nmg_pl_fu(fp, fu2->fumate_p, &b, 100, 100, 180);
+			nmg_pl_fu(fp, fu2->fumate_p, tab, 100, 100, 180);
 
 		(void)fclose(fp);
-		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 	}
 
 	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  {
 		struct rt_vlblock	*vbp;
-		long			*tab;
-		struct model		*m;
 
-		m = nmg_find_model( &fu1->l.magic );
-		NMG_CK_MODEL(m);
-		/* get space for list of items processed */
-		tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
-			"nmg_pl_2fu tab[]");
 		vbp = rt_vlblock_init();
 
-		nmg_vlblock_fu( vbp, fu1, tab, 100, 100, 180, 1);
+		nmg_vlblock_fu( vbp, fu1, tab, 1);
 		if( show_mates )
-			nmg_vlblock_fu( vbp, fu1->fumate_p, tab, 100, 100, 180, 1);
+			nmg_vlblock_fu( vbp, fu1->fumate_p, tab, 1);
 
-		nmg_vlblock_fu( vbp, fu2, tab, 100, 100, 180, 1);
+		nmg_vlblock_fu( vbp, fu2, tab, 1);
 		if( show_mates )
-			nmg_vlblock_fu( vbp, fu2->fumate_p, tab, 100, 100, 180, 1);
-
-		rt_free( (char *)tab, "nmg_pl_2fu tab[]" );
+			nmg_vlblock_fu( vbp, fu2->fumate_p, tab, 1);
 
 		/* Cause animation of boolean operation as it proceeds! */
 		if( nmg_vlblock_anim_upcall )  {
@@ -1332,4 +1333,5 @@ int		show_mates;
 		}
 		rt_vlblock_free(vbp);
 	}
+	rt_free( (char *)tab, "nmg_pl_2fu tab[]" );
 }
