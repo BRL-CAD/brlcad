@@ -449,8 +449,8 @@ unsigned char	*pp;
 #endif
 	if( pp == (unsigned char *)NULL
 	 || ((pp)[RED] == 0 && (pp)[GRN] == 0 && (pp)[BLU] == 0) ) {
-		bzero( bitbuf, (ifp->if_width * ifp->if_height)/8 );
-		bzero( bytebuf, (ifp->if_width * ifp->if_height) );
+		bzero( (char *)bitbuf, (ifp->if_width * ifp->if_height)/8 );
+		bzero( (char *)bytebuf, (ifp->if_width * ifp->if_height) );
 		XClearWindow( XI(ifp)->dpy, XI(ifp)->win );
 	}
 	/*XXX*/

@@ -562,7 +562,7 @@ int		count;
 		else
 			scan_count = count;
 
-		bcopy( cp, &ifp->if_rgb[((y+yoff)*720+(x+xoff))*3],
+		bcopy( (char *)cp, &ifp->if_rgb[((y+yoff)*720+(x+xoff))*3],
 			scan_count*sizeof(RGBpixel) );
 		cp += scan_count * sizeof(RGBpixel);
 		ret += scan_count;
