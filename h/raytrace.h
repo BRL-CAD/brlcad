@@ -385,21 +385,24 @@ union bitv_elem {
  *			C U T
  *
  *  Structure for space subdivision.
+ *
+ *  cn_type is an integer for efficiency of access in rt_shootray()
+ *  on non-word addressing machines.
  */
 union cutter  {
 #define CUT_CUTNODE	1
 #define CUT_BOXNODE	2
-	char	cut_type;
+	int	cut_type;
 	union cutter *cut_forw;		/* Freelist forward link */
 	struct cutnode  {
-		char	cn_type;
-		char	cn_axis;	/* 0,1,2 = cut along X,Y,Z */
+		int	cn_type;
+		int	cn_axis;	/* 0,1,2 = cut along X,Y,Z */
 		fastf_t	cn_point;	/* cut through axis==point */
 		union cutter *cn_l;	/* val < point */
 		union cutter *cn_r;	/* val >= point */
 	} cn;
 	struct boxnode  {
-		char	bn_type;
+		int	bn_type;
 		fastf_t	bn_min[3];
 		fastf_t	bn_max[3];
 		struct soltab **bn_list;
@@ -604,6 +607,10 @@ struct rt_i {
 	vect_t		rti_pmax;	/* for plotting, max RPP */
 	fastf_t		rti_pconv;	/* scale from rti_pmin */
 	int		rti_nlights;	/* number of light sources */
+	int		rti_cut_maxlen;	/* max len RPP list in 1 cut bin */
+	int		rti_cut_nbins;	/* number of cut bins (leaves) */
+	int		rti_cut_totobj;	/* # objs in all bins, total */
+	int		rti_cut_maxdepth;/* max depth of cut tree */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x01016580	/* magic # for integrity check */
