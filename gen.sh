@@ -162,6 +162,7 @@ BDIRS="bench \
 	libnurb librt \
 	libredblack \
 	conv \
+	off \
 	db \
 	rt \
 	remrt \
