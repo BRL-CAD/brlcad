@@ -212,9 +212,9 @@ int	num;
 	ret = fbgetlong( buf );
 
 	/* Get Data */
-	if( ret == 0 )
+	if( ret > 0 )
 		pkg_waitfor( MSG_DATA, (char *) pixelp,	num*4, PCP(ifp) );
-	else
+	else if( ret < 0 )
 		fb_log( "remote_bread: read at <%d,%d> failed.\n", x, y );
 	return	ret;
 }
@@ -236,16 +236,16 @@ int	num;
 	(void)fbputlong( x, &buf[0] );
 	(void)fbputlong( y, &buf[4] );
 	(void)fbputlong( num, &buf[8] );
-	pkg_send( MSG_FBWRITE+MSG_NORETURN, buf, 3*4, PCP(ifp) );
+	pkg_stream( MSG_FBWRITE+MSG_NORETURN, buf, 3*4, PCP(ifp) );
 
 	/* Send DATA */
-	pkg_send( MSG_DATA, (char *)pixelp, num*4, PCP(ifp) );
+	pkg_stream( MSG_DATA, (char *)pixelp, num*4, PCP(ifp) );
 #ifdef NEVER
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
 	ret = fbgetlong( buf );
 	return(ret);
 #endif
-	return	0;	/* No error return, sacrificed for speed.	*/
+	return	num;	/* No error return, sacrificed for speed. */
 }
 
 /*
@@ -345,134 +345,3 @@ char *buf;
 	(void)free(buf);
 	return	0;	/* Declared as integer function in pkg_switch. */
 }
-#ifdef NEVER
-/***** Experimental Queueing routines *****/
-
-/*
- *  Format of the message header as it is transmitted over the network
- *  connection.  Internet network order is used.
- */
-typedef struct mypkg_header {
-	unsigned short	pkg_magic;		/* Ident */
-	unsigned short	pkg_type;		/* Message Type */
-	long		pkg_len;		/* Byte count of remainder */
-	long		pkg_data;		/* start of data */
-} mypkg_header;
-
-#define	MAXQUEUE	128	/* Largest packet we will queue */
-#define	QUEUELEN	16	/* max entries in queue */
-
-struct iovec queue[QUEUELEN];
-int q_len = 0;
-
-/*
- *	P K G _ Q U E U E
- *
- * NB: I am ignoring the fd!
- */
-static void
-pkg_queue( ifp, type, buf, len, pcp )
-FBIO	*ifp;
-int	type, len;
-char	*buf;
-struct	pkg_conn *pcp;
-{
-	mypkg_header	*pkg;
-
-	if( q_len >= QUEUELEN || len > MAXQUEUE )
-		flush_queue( ifp );
-	if( len > MAXQUEUE ) {
-		/* fb_log( "Too big to queue\n" ); */
-		pkg_send( type, buf, len, pcp );
-		return;
-	}
-/* fb_log( "Queueing packet\n" ); */
-
-	/* Construct a packet */
-	pkg = (mypkg_header *)malloc( sizeof(mypkg_header) + len - 4 );
-	pkg->pkg_magic = htons(PKG_MAGIC);
-	pkg->pkg_type = htons(type);	/* should see if it's a valid type */
-	pkg->pkg_len = htonl(len);
-	bcopy( buf, &pkg->pkg_data, len );
-
-	/* Link it in */
-	queue[q_len].iov_base = (char *)pkg;	
-	queue[q_len].iov_len = sizeof(mypkg_header) + len - 4;
-	q_len++;
-	return;
-}
-
-/*
- *	F L U S H _ Q U E U E 
- *
- * If there are packages on the queue, send them.
- */
-static void
-flush_queue( ifp )
-FBIO	*ifp;
-{
-	int	i;
-
-	if( q_len == 0 )
-		return;
-	/* fb_log( "Flushing queued data\n" ); */
-	raw_pkg_send( &queue[0], q_len, PCP(ifp) );
-
-	/* Free bufs */
-	for( i = 0; i < q_len; i++ )
-		free( queue[i].iov_base );
-	q_len = 0;
-	return;
-}
-
-#define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
-			fprintf(stderr,"pkg: bad pointer x%x\n",p);abort();}}
-
-/*
- *  			R A W _ P K G _ S E N D
- *
- *  Send an iovec list of "raw packets", i.e. user is responsible
- *   for putting on magic headers, network byte order, etc.
- *
- *  Note that the whole message should be transmitted by
- *  TCP with only one TCP_PUSH at the end, due to the use of writev().
- *
- *  Returns number of bytes of user data actually sent.
- */
-int
-raw_pkg_send( buf, len, pc )
-struct iovec buf[];
-int len;
-register struct pkg_conn *pc;
-{
-	long bits;
-	register int i;
-	int start;
-
-	PKG_CK(pc);
-	if( len < 0 )  len=0;
-
-	do  {
-		/* Finish any partially read message */
-		if( pc->pkc_left > 0 )
-			if( pkg_block(pc) < 0 )
-				return(-1);
-	} while( pc->pkc_left > 0 );
-
-	/*
-	 * TODO:  set this FD to NONBIO.  If not all output got sent,
-	 * loop in select() waiting for capacity to go out, and
-	 * reading input as well.  Prevents deadlocking.
-	 */
-	start = 0;
-	while( len > 0 ) {
-		if( (i = writev( pc->pkc_fd, &buf[start], (len>8?8:len) )) < 0 )  {
-			fb_log( "pkg_send: writev failed.\n" );
-			return(-1);
-		}
-		len -= 8;
-		start += 8;
-	}
-	return(len);
-}
-#endif NEVER
