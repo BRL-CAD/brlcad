@@ -1336,6 +1336,8 @@ struct resource			*resp;
 			return tr;
 		/* For sub and intersect, if lhs is 0, result is null */
 		db_free_tree(tr, resp);
+		tp->tr_b.tb_right = TREE_NULL;
+		tp->tr_op = OP_NOP;
 		return 0;
 	}
 	if (tr == 0 || !tr->tr_d.td_r) {
@@ -1343,6 +1345,8 @@ struct resource			*resp;
 			return 0;
 		if( op == NMG_BOOL_ISECT )  {
 			db_free_tree(tl, resp);
+			tp->tr_b.tb_left = TREE_NULL;
+			tp->tr_op = OP_NOP;
 			return 0;
 		}
 		/* For sub and add, if rhs is 0, result is lhs */
