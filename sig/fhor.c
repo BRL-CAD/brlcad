@@ -61,7 +61,7 @@ int	f[], num;
 
 	/* Fill left side */
 	Efill( );
-/*	Previously = fhvis( x, y );		/* <<< WHAT ARE X AND Y? */
+/*	Previously = fhvis( x, y );		<<< WHAT ARE X AND Y? */
 	Previously = fhvis( Xprev, Yprev );		/* <<< WHAT ARE X AND Y? */
 
 	/* Do each point in Z plane */
