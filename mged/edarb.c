@@ -518,9 +518,17 @@ vect_t	dir;
 {
 	dbfloat_t *op;
 	fastf_t	t1, t2;
+	struct rt_tol	tol;
 
-	if( rt_isect_ray_plane( &t1, thru, dir, es_peqn[bp1] ) < 0 ||
-	    rt_isect_ray_plane( &t2, thru, dir, es_peqn[bp2] ) < 0 )  {
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
+	if( rt_isect_line3_plane( &t1, thru, dir, es_peqn[bp1], &tol ) < 0 ||
+	    rt_isect_line3_plane( &t2, thru, dir, es_peqn[bp2], &tol ) < 0 )  {
 		(void)printf("edge (direction) parallel to face normal\n");
 		return( 1 );
 	}
