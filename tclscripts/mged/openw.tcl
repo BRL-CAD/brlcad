@@ -22,10 +22,6 @@
 
 check_externs "_mged_attach _mged_tie _mged_view_ring"
 
-#
-# Remove Prim Editor and Combination Editor entries from Create menu.
-#
-
 set mged_Priv(arb8) {arb8 arb7 arb6 arb5 arb4 rpp}
 set mged_Priv(cones) {rcc rec rhc rpc tec tgc trc}
 set mged_Priv(ellipses) {ehy ell ell1 epa sph}
@@ -718,7 +714,7 @@ hoc_register_menu_data "Edit" "Combination Editor" "Combination Editor"\
 menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
 
 .$id.menubar.create add cascade\
-	-label "Arb8" -underline 0 -menu .$id.menubar.create.arb8 -command "puts Arb8; update"
+	-label "Arb8" -underline 0 -menu .$id.menubar.create.arb8
 .$id.menubar.create add cascade\
 	-label "Cones & Cyls" -underline 0 -menu .$id.menubar.create.cones
 .$id.menubar.create add cascade\
