@@ -1268,6 +1268,7 @@ struct resource {
 	long		re_piece_shots;	/* # calls to ft_piece_shot() */
 	long		re_piece_shot_hit;	/* ft_piece_shot() returned a miss */
 	long		re_piece_shot_miss;	/* ft_piece_shot() returned a hit */
+	struct bu_ptbl	re_pieces_pending; /* pieces with an odd hit pending */
 };
 extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 #define RESOURCE_NULL	((struct resource *)0)

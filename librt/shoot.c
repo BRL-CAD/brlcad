@@ -80,6 +80,8 @@ struct rt_i	*rtip;
 		psp->shot = bu_bitv_new(stp->st_npieces);
 		psp->oddhit.hit_dist = INFINITY;	/* mark unused */
 	} RT_VISIT_ALL_SOLTABS_END
+
+	bu_ptbl_init( &resp->re_pieces_pending, 100, "re_pieces_pending" );
 }
 
 /*
