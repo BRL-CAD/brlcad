@@ -394,9 +394,14 @@ BU_EXTERN(double	bn_dist_pt2_along_line2, (CONST point_t p,
 				CONST vect_t d, CONST point_t x));
 BU_EXTERN(int		bn_between, (double left, double mid,
 				double right, CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_hlf_class, (CONST plane_t half_eqn,
+				       CONST vect_t min, CONST vect_t max,
+				       CONST struct bn_tol *tol));
 
-
-
+#define BN_CLASSIFY_UNIMPLEMENTED	0x0000
+#define BN_CLASSIFY_OVERLAPPING		0x0002
+#define BN_CLASSIFY_INSIDE		0x0001
+#define BN_CLASSIFY_OUTSIDE		0x0003
 
 /*----------------------------------------------------------------------*/
 /* poly.c */
