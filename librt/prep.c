@@ -534,6 +534,7 @@ register struct rt_i *rtip;
 			rt_free_resource(rtip, *rpp);
 		}
 	}
+	bu_ptbl_free( &rtip->rti_resources );
 
 	/*
 	 *  Re-initialize everything important.
