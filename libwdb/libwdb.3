@@ -21,6 +21,17 @@ FILE	*fp;
 char	*name;
 point_t	min, max;
 .sp
+mk_wedge( fp, name, vert, xdir, zdir, xlen, ylen, zlen, x_top_len );
+FILE	*fp;
+char	*name;
+point_t	vert;
+vect_t	xdir;
+vect_t	zdir;
+fastf_t	xlen;
+fastf_t	ylen;
+fastf_t	zlen;
+fastf_t	x_top_len;	
+.sp
 mk_arb4( fp, name, pts )
 FILE	*fp;
 char	*name;
@@ -55,6 +66,16 @@ char	*name;
 point_t	center;
 vect_t	n;
 double	r1, r2;
+.sp
+mk_cone( fp, name, base, dir, height, rad1, rad2 )
+FILE	*fp;
+char	*name;
+point_t	base;
+vect_t	dir;
+fastf_t	height;
+fastf_t	rad1;
+fastf_t	rad2;
+
 .sp
 mk_rcc( fp, name, base, height, radius )
 FILE	*fp;
@@ -155,6 +176,16 @@ normal vector ``norm''.
 makes an ARB8 called ``name''
 specified as a right rectangular parallelpiped in
 terms of a minimum point ``min'' and a maximum point ``max''.
+.PP
+.I mk_wedge\^
+makes a right angular wedge called ``name'' specified by
+a starting vertex located in the lower left corner of the solid, an x-direction
+vector, a z-direction vector, an x-lenghth, a y-lenghth, a z-lenghth, and
+a top x-lenghth.  The y-direction vector is the result of x-direction vector
+cross z-direction vector.
+All vertices are make in the counterclockwise direction,
+bottom face first.  The top face is made by extruding the bottom face in
+the z direction.
 .I mk_arb4\^
 makes an ARB8 called ``name''
 described as an ARB4, ie, by 4 points, the first 3 of which
@@ -192,6 +223,17 @@ with the torus lying in a plane with normal ``n''.
 Radius ``r1'' is the distance from the center point of the torus
 to the center of the solid part, and radius ``f2'' is
 the radius of the solid part.
+.PP
+.I mk_cone\^
+makes a right circular cone called ``name''
+specified by the center point of the base, a direction or height vector, 
+a height scalar, and a radius for each end of the cone.
+The direction vector is unitized and serves to derive a vector
+``a'', which is orthogonal to the direction vector and itself.  This vector
+is scaled by both radii to obtain two of four vectors required to make a
+cone.  It is then crossed with the unitized direction vector, and the
+result thereof is scaled by both radii as well to obtain the last of four
+vectors needed to make a cone.
 .PP
 .I mk_rcc\^
 makes a truncated general cone (TGC) with name ``name''
