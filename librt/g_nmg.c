@@ -270,53 +270,6 @@ struct rt_imexport rt_nmg_structs_fmt[] = {
 	"",	0,			0
 };
 
-/*
- *			R T _ N M G _ I M P O R T
- *
- *  Import an NMG from the database format to the internal format.
- *  Apply modeling transformations as well.
- */
-int
-rt_nmg_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
-{
-	LOCAL struct model		*m;
-	union record			*rp;
-	struct nmg_struct_counts	cntbuf;
-	struct rt_external		count_ext;
-
-	RT_CK_EXTERNAL( ep );
-	rp = (union record *)ep->ext_buf;
-	/* Check record type */
-	if( rp->u_id != DBID_NMG )  {
-		rt_log("rt_nmg_import: defective record\n");
-		return(-1);
-	}
-
-	bzero( (char *)&cntbuf, sizeof(cntbuf) );
-	RT_INIT_EXTERNAL(&count_ext);
-	count_ext.ext_nbytes = sizeof(rp->nmg.N_structs);
-	count_ext.ext_buf = rp->nmg.N_structs;
-	if( rt_struct_import( (genptr_t)&cntbuf, rt_nmg_structs_fmt, &count_ext ) <= 0 )  {
-		rt_log("rt_struct_import failure\n");
-		return(-1);
-	}
-	nmg_pr_struct_counts( &cntbuf, "After import" );
-
-return(-1);
-#if 0
-	RT_INIT_DB_INTERNAL( ip );
-	ip->idb_type = ID_NMG;
-	ip->idb_ptr = rt_malloc( sizeof(struct model), "model");
-	m = (struct model *)ip->idb_ptr;
-	m->magic = RT_NMG_INTERNAL_MAGIC;
-
-	return(0);			/* OK */
-#endif
-}
-
 /* ---------------------------------------------------------------------- */
 
 typedef	char		index_t[4];
@@ -967,6 +920,275 @@ double		local2mm;
 		return;
 	}
 	rt_log("rt_nmg_edisk kind=%d unknown\n", ecnt[index].kind);
+}
+
+/*
+ *			R T _ N M G _ I M P O R T
+ *
+ *  Import an NMG from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_nmg_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+register mat_t		mat;
+{
+	LOCAL struct model		*m = (struct model *)0;
+	union record			*rp;
+	struct nmg_struct_counts	cntbuf;
+	struct rt_external		count_ext;
+	int				indices[NSTRUCTS];
+	genptr_t			disk_arrays[NSTRUCTS];
+	char				*cp;
+	long				**ptrs;
+	struct nmg_exp_counts		*ecnt;
+	int				i;
+	int				j;
+	int				maxindex;
+	int				subscript;
+
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	/* Check record type */
+	if( rp->u_id != DBID_NMG )  {
+		rt_log("rt_nmg_import: defective record\n");
+		return(-1);
+	}
+
+	bzero( (char *)&cntbuf, sizeof(cntbuf) );
+	RT_INIT_EXTERNAL(&count_ext);
+	count_ext.ext_nbytes = sizeof(rp->nmg.N_structs);
+	count_ext.ext_buf = rp->nmg.N_structs;
+	if( rt_struct_import( (genptr_t)&cntbuf, rt_nmg_structs_fmt, &count_ext ) <= 0 )  {
+		rt_log("rt_struct_import failure\n");
+		return(-1);
+	}
+	nmg_pr_struct_counts( &cntbuf, "After import" );
+
+	maxindex = 1;
+	for( i = 0; i < NSTRUCTS; i++ )  {
+		indices[i] = ((long *)&cntbuf)[i];
+		maxindex += indices[i];
+	}
+	rt_log("import maxindex=%d\n", maxindex);
+
+	/* Collect overall new subscripts, and structure-specific indices */
+	ecnt = (struct nmg_exp_counts *)rt_calloc( maxindex+1,
+		sizeof(struct nmg_exp_counts), "ecnt[]" );
+	ptrs = (long **)rt_calloc( maxindex+1,
+		sizeof(long *), "ptrs[]" );
+
+	/* Mark off each kind of structure, and how many of them */
+	subscript = 1;
+	cp = (char *)(rp+1);	/* start at first granule in */
+	for( i = 0; i < NSTRUCTS; i++ )  {
+		rt_log("%d of kind %d\n", indices[i], i);
+		if( indices[i] <= 0 )  {
+			disk_arrays[i] = GENPTR_NULL;
+			continue;
+		}
+		disk_arrays[i] = (genptr_t)cp;
+rt_log("  magic=%4.4s\n", cp );
+		/* Mark off all the entries of this kind */
+		for( j = 0; j < indices[i]; j++ )  {
+			ecnt[subscript].kind = i;
+			ecnt[subscript].per_struct_index = j+1;
+			ecnt[subscript].new_subscript = 0;
+			switch( i )  {
+			case 0:
+				if( m )  rt_bomb("multiple models?");
+				m = nmg_mm();
+				ptrs[subscript] = (long *)m;
+				break;
+			case 1:
+				{
+					struct model_a	*ma;
+					GET_MODEL_A( ma, m );
+					ma->magic = NMG_MODEL_A_MAGIC;
+					ptrs[subscript] = (long *)ma;
+				}
+				break;
+			case 2:
+				{
+					struct nmgregion	*r;
+					GET_REGION( r, m );
+					r->l.magic = NMG_REGION_MAGIC;
+					ptrs[subscript] = (long *)r;
+				}
+				break;
+			case 3:
+				{
+					struct nmgregion_a		*ra;
+					GET_REGION_A( ra, m );
+					ra->magic = NMG_REGION_A_MAGIC;
+					ptrs[subscript] = (long *)ra;
+				}
+				break;
+			case 4:
+				{
+					struct shell	*s;
+					GET_SHELL( s, m );
+					s->l.magic = NMG_SHELL_MAGIC;
+					ptrs[subscript] = (long *)s;
+				}
+				break;
+			case 5:
+				{
+					struct shell_a	*sa;
+					GET_SHELL_A( sa, m );
+					sa->magic = NMG_SHELL_A_MAGIC;
+					ptrs[subscript] = (long *)sa;
+				}
+				break;
+			case 6:
+				{
+					struct faceuse	*fu;
+					GET_FACEUSE( fu, m );
+					fu->l.magic = NMG_FACEUSE_MAGIC;
+					ptrs[subscript] = (long *)fu;
+				}
+				break;
+			case 7:
+				{
+					struct faceuse_a	*fua;
+					GET_FACEUSE_A( fua, m );
+					fua->magic = NMG_FACEUSE_A_MAGIC;
+					ptrs[subscript] = (long *)fua;
+				}
+				break;
+			case 8:
+				{
+					struct face	*f;
+					GET_FACE( f, m );
+					f->magic = NMG_FACE_MAGIC;
+					ptrs[subscript] = (long *)f;
+				}
+				break;
+			case 9:
+				{
+					struct face_g	*fg;
+					GET_FACE_G( fg, m );
+					fg->magic = NMG_FACE_G_MAGIC;
+					ptrs[subscript] = (long *)fg;
+				}
+				break;
+			case 10:
+				{
+					struct loopuse	*lu;
+					GET_LOOPUSE( lu, m );
+					lu->l.magic = NMG_LOOPUSE_MAGIC;
+					ptrs[subscript] = (long *)lu;
+				}
+				break;
+			case 11:
+				{
+					struct loopuse_a	*lua;
+					GET_LOOPUSE_A( lua, m );
+					lua->magic = NMG_LOOPUSE_A_MAGIC;
+					ptrs[subscript] = (long *)lua;
+				}
+				break;
+			case 12:
+				{
+					struct loop	*l;
+					GET_LOOP( l, m );
+					l->magic = NMG_LOOP_MAGIC;
+					ptrs[subscript] = (long *)l;
+				}
+				break;
+			case 13:
+				{
+					struct loop_g	*lg;
+					GET_LOOP_G( lg, m );
+					lg->magic = NMG_LOOP_G_MAGIC;
+					ptrs[subscript] = (long *)lg;
+				}
+				break;
+			case 14:
+				{
+					struct edgeuse	*eu;
+					GET_EDGEUSE( eu, m );
+					eu->l.magic = NMG_EDGEUSE_MAGIC;
+					ptrs[subscript] = (long *)eu;
+				}
+				break;
+			case 15:
+				{
+					struct edgeuse_a	*eua;
+					GET_EDGEUSE_A( eua, m );
+					eua->magic = NMG_EDGEUSE_A_MAGIC;
+					ptrs[subscript] = (long *)eua;
+				}
+				break;
+			case 16:
+				{
+					struct edge	*e;
+					GET_EDGE( e, m );
+					e->magic = NMG_EDGE_MAGIC;
+					ptrs[subscript] = (long *)e;
+				}
+				break;
+			case 17:
+				{
+					struct edge_g	*eg;
+					GET_EDGE_G( eg, m );
+					eg->magic = NMG_EDGE_G_MAGIC;
+					ptrs[subscript] = (long *)eg;
+				}
+				break;
+			case 18:
+				{
+					struct vertexuse	*vu;
+					GET_VERTEXUSE( vu, m );
+					vu->l.magic = NMG_VERTEXUSE_MAGIC;
+					ptrs[subscript] = (long *)vu;
+				}
+				break;
+			case 19:
+				{
+					struct vertexuse_a	*vua;
+					GET_VERTEXUSE_A( vua, m );
+					vua->magic = NMG_VERTEXUSE_A_MAGIC;
+					ptrs[subscript] = (long *)vua;
+				}
+				break;
+			case 20:
+				{
+					struct vertex	*v;
+					GET_VERTEX( v, m );
+					v->magic = NMG_VERTEX_MAGIC;
+					ptrs[subscript] = (long *)v;
+				}
+				break;
+			case 21:
+				{
+					struct vertex_g	*vg;
+					GET_VERTEX_G( vg, m );
+					vg->magic = NMG_VERTEX_G_MAGIC;
+					ptrs[subscript] = (long *)vg;
+				}
+				break;
+			default:
+				rt_log("bad kind\n");
+				ptrs[subscript] = (long *)0;
+				break;
+			}
+			subscript++;
+		}
+		cp += indices[i] * rt_disk_sizes[i];
+	}
+
+return(-1);
+#if 0
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_NMG;
+	ip->idb_ptr = rt_malloc( sizeof(struct model), "model");
+	m = (struct model *)ip->idb_ptr;
+	m->magic = RT_NMG_INTERNAL_MAGIC;
+
+	return(0);			/* OK */
+#endif
 }
 
 /*
