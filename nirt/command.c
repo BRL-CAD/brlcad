@@ -519,15 +519,20 @@ com_table	*ctp;
 
 	/* This is really icky -- should have argc, argv interface */
 	while( *cp && isascii(*cp) && isspace(*cp) )  cp++;
-	if( *cp == '\0' )  {
-		/* display current value */
-		rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-		rt_log("\n");
-		return;
+	if (*cp == '\0')
+	{
+	    /* display current value */
+	    rt_printb( "libdebug ", rt_g.debug, DEBUG_FORMAT );
+	    rt_log("\n");
+	    return;
 	}
 
 	/* Set a new value */
-	sscanf( cp, "%x", &rt_g.debug );
-	rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-	rt_log("\n");
+	if (sscanf( cp, "%x", &rt_g.debug ) == 1)
+	{
+	    rt_printb( "libdebug ", rt_g.debug, DEBUG_FORMAT );
+	    rt_log("\n");
+	}
+	else
+	    com_usage(ctp);
 }
