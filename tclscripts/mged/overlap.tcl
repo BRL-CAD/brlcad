@@ -41,6 +41,8 @@ proc get_next_overlap { id glout counter length } {
 			set over_cont($id,max_depth) $depth
 		}
 		set counter [expr $counter + 7]
+		# this loop may be slow for large output, so do some updates
+		mged_update 1
 	}
 	return [expr $counter - 10]
 }
@@ -67,6 +69,8 @@ proc count_overlaps { id } {
 			set obj2 $tmp2
 		}
 		incr index 8
+		# this loop may be slow for large output, so do some updates
+		mged_update 1
 	}
 }
 
@@ -88,11 +92,19 @@ proc plot_overlaps { id } {
 		if { [string compare $obj1 [lindex $over_cont($id,glint_ret) [incr index]]] } break
 		if { [string compare $obj2 [lindex $over_cont($id,glint_ret) [incr index]]] } break
 		incr index
+		# this loop may be slow for large output, so do some updates
+		mged_update 1
 	}
-	if { [llength [db match $over_cont($id,tmp_obj1)]] > 0 } { kill $over_cont($id,tmp_obj1) }
-	if { [llength [db match $over_cont($id,tmp_obj2)]] > 0 } { kill $over_cont($id,tmp_obj2) }
-	.inmem put $over_cont($id,tmp_obj1) comb region yes tree [db get $obj1 tree] rgb { 0 255 0 }
-	.inmem put $over_cont($id,tmp_obj2) comb region yes tree [db get $obj2 tree] rgb { 0 255 255 }
+	if { [llength [db match $over_cont($id,tmp_obj1)]] == 0 } {
+		.inmem put $over_cont($id,tmp_obj1) comb region yes tree [db get $obj1 tree] rgb { 0 255 0 }
+	} else {
+		.inmem adjust $over_cont($id,tmp_obj1) tree [db get $obj1 tree]
+	}
+	if { [llength [db match $over_cont($id,tmp_obj2)]] == 0 } {
+		.inmem put $over_cont($id,tmp_obj2) comb region yes tree [db get $obj2 tree] rgb { 0 255 255 }
+	} else {
+		.inmem adjust $over_cont($id,tmp_obj2) tree [db get $obj2 tree]
+	}
 	B $over_cont($id,tmp_obj1) $over_cont($id,tmp_obj2)
 	vdraw show
 	mged_update 0
@@ -174,7 +186,7 @@ proc read_output { id } {
 	if { [eof $over_cont($id,fd)] } {
 		close $over_cont($id,fd)
 		if { [string length $inn] > 0 } {
-			set over_cont($id,glint_ret) $over_cont($id,glint_ret)$inn
+			append over_cont($id,glint_ret) $inn
 		}
 		exec rm /tmp/g_lint_error
 		$over_cont($id,top).status configure -text "Processing output..."
@@ -191,7 +203,7 @@ proc read_output { id } {
 		grid $over_cont($id,work_frame) -row 5 -column 0 -columnspan 6 -sticky ew
 		next_overlap $id
 	}
-	set over_cont($id,glint_ret) $over_cont($id,glint_ret)$inn
+	append over_cont($id,glint_ret) $inn
 }
 
 # run 'g_lint' and display the frame containing the fixing options
@@ -205,7 +217,6 @@ proc fix_overlaps { id } {
 	$over_cont($id,work_frame).b5 configure -state normal
 	update
 	set model [opendb]
-#	set file_name "| g_lint -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) | sort -b +1 -2 +2 -3 +3n -4 2> /tmp/g_lint_error"
 	set file_name "| g_lint -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) 2> /tmp/g_lint_error"
 	set over_cont($id,fd) [open $file_name]
 	fconfigure $over_cont($id,fd) -blocking false
@@ -359,6 +370,7 @@ proc over_quit { id } {
 		catch [close $over_cont($id,fd)]
 	}
 	catch [destroy $over_cont($id,dialog_window)]
+	unset over_cont($id,glint_ret)
 	destroy $over_cont($id,top)
 }
 
@@ -441,7 +453,9 @@ proc overlap_tool { id } {
 			looking for overlapping regions."}
 		{description "A very small spacing will result in a large number of rays\n\
 			being traced. This may take some time. A very large spacing\n\
-			is likely to miss some overlapping regions."}
+			is likely to miss some overlapping regions. A good strategy is\n\
+			to start with larger spacing and work towards smaller, eliminating\n\
+			the worst overlaps first."}
 	}
 	frame $over_cont($id,top).go_quit
 	button $over_cont($id,top).go_quit.go -text go -command "fix_overlaps $id"
