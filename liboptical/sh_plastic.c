@@ -396,6 +396,11 @@ char	*dp;
 
 		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 			continue;
+
+		if( rdebug & RDEBUG_LIGHT )  {
+			bu_log("phong_render light=%s lightfract=%g\n",
+				lp->lt_name, swp->sw_lightfract[i] );
+		}
 	
 		/* Light is not shadowed -- add this contribution */
 #if !RT_MULTISPECTRAL
