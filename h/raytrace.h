@@ -608,8 +608,10 @@ struct resource {
 	union tree	**re_boolstack;	/* Stack for rt_booleval() */
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	int		re_cpu;		/* processor number, for ID */
+	long		re_magic;	/* Magic number */
 };
 #define RESOURCE_NULL	((struct resource *)0)
+#define RESOURCE_MAGIC	0x83651835
 
 /*
  *			S T R U C T P A R S E
