@@ -165,6 +165,7 @@ BDIRS="bench \
 	libpng \
 	fbserv \
 	librt \
+	liboptical \
 	libredblack \
 	libtermio \
 	libtclcad \
