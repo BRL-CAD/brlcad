@@ -31,10 +31,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include	<fcntl.h>
-#include	<signal.h>
-#include	<time.h>
-#include	<setjmp.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <time.h>
+#include <setjmp.h>
+
 #include "ged_types.h"
 #include "ged.h"
 #include "solid.h"
