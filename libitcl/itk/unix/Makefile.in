@@ -251,9 +251,9 @@ install-binaries: $(ITK_LIB_FILE) itkwish
 	@$(INSTALL_DATA) itkConfig.sh $(LIB_INSTALL_DIR)/itkConfig.sh
 
 install-libraries:
-	@$(MKINSTALLDIRS) $(INCLUDE_INSTALL_DIR) $(SCRIPT_INSTALL_DIR)
-	@echo "Installing itk.h"
-	@$(INSTALL_DATA) $(GENERIC_DIR)/itk.h $(INCLUDE_INSTALL_DIR)
+	@$(MKINSTALLDIRS) $(SCRIPT_INSTALL_DIR)
+#	@echo "Installing itk.h"
+#	@$(INSTALL_DATA) $(GENERIC_DIR)/itk.h $(INCLUDE_INSTALL_DIR)
 	@for i in $(TOP_DIR)/library/*.* $(TOP_DIR)/library/tclIndex $(UNIX_DIR)/tkAppInit.c; \
 	    do \
 	    echo "Installing $$i"; \
