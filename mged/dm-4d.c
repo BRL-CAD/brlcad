@@ -1131,10 +1131,11 @@ checkevents()  {
 				/* toggle status */
 				if( lighting_on )  {
 					/* Turn it off */
-					mmode(MSINGLE);
+					mmode(MVIEWING);
 					lmbind(MATERIAL,0);
 					lmbind(LMODEL,0);
 					lighting_on = 0;
+					mmode(MSINGLE);
 				} else {
 					/* Turn it on */
 					if( cueing_on )  {
@@ -1143,6 +1144,7 @@ checkevents()  {
 						Ir_colorchange();
 					}
 
+					mmode(MVIEWING);
 					/* Define material properties */
 					make_materials();
 
@@ -1167,6 +1169,7 @@ checkevents()  {
 					lmcolor( LMC_EMISSION );
 #endif
 
+					mmode(MSINGLE);
 					lighting_on = 1;
 				}
 				dmaflag = 1;
