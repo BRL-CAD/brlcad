@@ -144,11 +144,11 @@ int	depth;
  *
  *	Does nothing.  Returns 1.
  */
-static int rpt_hit (ap, ph)
+static int rpt_hit (ap, ph, segs)
 
 struct application	*ap;
 struct partition	*ph;
-
+struct seg		*segs;
 {
     struct partition		*pp;
     struct seg			*sh;
@@ -234,10 +234,9 @@ struct partition	*ph;
  *
  *	Does nothing.  Returns 1.
  */
-static int no_op (ap, ph)
+static int no_op (ap)
 
 struct application	*ap;
-struct partition	*ph;
 
 {
     return (1);
