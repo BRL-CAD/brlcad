@@ -1,0 +1,80 @@
+'\"	fbfade.1	%W% %E%
+'\" Edit the next two lines to configure for your system:
+.ds ms 1\" utility manual section, normally 1B -- alternatives are 1, 1L, etc.
+.ds ls 3\" library manual section, normally 3B -- alternatives are 3, 3L, etc.
+.ds fs 5\" format manual section, normally 5B -- alternatives are 5, 5L, etc.
+.ie t .ds pf B\" "printout" font, normally (CW -- use B if you don't have one
+.el .ds pf 1
+'\"
+.de CW
+.lg 0
+\%\&\\$3\f\*(pf\\$1\fP\&\\$2
+.lg
+..
+.TH FBFADE \*(ms "BRL CAD package"
+.SH NAME
+fbfade \- fade a frame buffer image in or out
+.SH SYNOPSIS
+.CW fbfade
+[
+.CW -h
+] [
+.CW -i
+.I "input image name"
+] [
+.I "output frame buffer name"
+]
+.SH DESCRIPTION
+.CW fbfade
+gradually displays an image on a frame buffer,
+one randomly chosen pixel at a time.
+.SS Options
+.TP "\w'\fIoutput frame buffer name\fP\ \ \ 'u"
+.CW -h
+(``high resolution'')\ 
+Assumes 1024 by 1024 pixels for input frame buffer size
+instead of the default 512 by 512.
+The output frame buffer size requested will be the same as
+the actual input image size.
+Actual sizes depend on details of the specific frame buffers.
+.TP
+\f\*(pf-i\fP \fIinput image name\fP
+Inputs the image to be displayed
+from the specified frame buffer or \fIpix\fP(\*(fs) file,
+instead of using a constant-background image
+(which amounts to fading out the image initially on the output frame buffer).
+.TP
+.I "output frame buffer name"
+Outputs to the specified frame buffer
+instead of the one specified by the
+.CW FB_FILE
+environment variable
+(or the default frame buffer, if
+.CW FB_FILE
+is not set).
+.SH CAVEAT
+.CW fbfade
+works best in conjunction with a frame buffer having very fast access to pixels.
+.SH EXAMPLE
+The following shell script can be used to produce a slick ``slide show'':
+.RS
+\f\*(pffbclear
+.br
+for \|i \|in \|*.pix
+.br
+do	fbfade \|-i \|$i
+.br
+	sleep \|15
+.br
+done
+.br
+fbfade\fP
+.RE
+.SH "SEE ALSO"
+libfb(\*(ls), pix(\*(fs).
+.SH DIAGNOSTICS
+Error messages are intended to be self-explanatory.
+.SH AUTHORS
+Douglas A.\& Gwyn, BRL/VLD-VMB
+.br
+Gary S.\& Moss, BRL/VLD-VMB
