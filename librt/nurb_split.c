@@ -51,7 +51,7 @@ int		dir;
 	fastf_t value;
 	struct oslo_mat * oslo;
 	int i;
-	int k_index;
+	int k_index = 0;
 	struct snurb * srf1, * srf2;
 
 	NMG_CK_SNURB(srf);
@@ -264,7 +264,7 @@ CONST struct cnurb	*crv;
 	fastf_t value;
 	struct oslo_mat * oslo;
 	int i;
-	int k_index;
+	int k_index = 0;
 	struct cnurb * crv1, * crv2;
 	int coords;
 
