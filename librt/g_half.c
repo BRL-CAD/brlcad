@@ -393,6 +393,18 @@ struct soltab *stp;
 	bu_free( (char *)halfp, "half_specific");
 }
 
+/*
+ *			R T _ H L F _ C L A S S
+ *
+ *  Classify this halfspace against a bounding RPP.
+ *  Since this is an infinite solid, it is very important that this
+ *  function properly.
+ *
+ *  Returns -
+ *	BN_CLASSIFY_INSIDE
+ *	BN_CLASSIFY_OVERLAPPING
+ *	BN_CLASSIFY_OUTSIDE
+ */
 int
 rt_hlf_class( stp, min, max, tol )
 register CONST struct soltab	*stp;
