@@ -85,22 +85,15 @@ static char	RCSid[] =		/* for "what" utility */
 #else
 #include	<string.h>
 #endif
+#include "machine.h"
+#include "externs.h"
+
 #if __STDC__
 #include	<stdarg.h>
-#include	<stdlib.h>
-#if __STDC__ == 1	/* workaround for Cray nonsense */
-extern int	getopt( int, char const * const *, char const * );
-#endif
 #else
-#ifdef NO_STRRCHR
-#define	strrchr( s, c )	rindex( s, c )
-#endif
 #include	<varargs.h>
-extern void	exit();
-extern char	*calloc(), *getenv();
-extern int	atoi(), getopt();
-extern double	atof();
 #endif
+
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
 #endif
@@ -110,7 +103,7 @@ extern double	atof();
 extern char	*optarg;
 extern int	optind;
 
-#include	<fb.h>			/* BRL CAD package libfb.a interface */
+#include "fb.h"			/* BRL CAD package libfb.a interface */
 
 typedef int	bool;
 #define	false	0
@@ -145,7 +138,8 @@ Simple( path )
 	{
 	register char	*s;		/* -> past last '/' in path */
 
-	return (s = strrchr( path, '/' )) == NULL || *++s == '\0' ? path : s;
+	s = strrchr( path, '/' );
+	return s == NULL || *++s == '\0' ? path : s;
 	}
 
 
