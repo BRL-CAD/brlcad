@@ -251,6 +251,8 @@ char **argv;
 		exit(0);
 	}
 
+	if( pcsrv->pkc_fd <= 2 )  bu_log("ERROR pcsrv->pkc_fd = %d\n", pcsrv->pkc_fd);
+
 #if BSD == 43
 	{
 		int	val = 32767;
