@@ -45,6 +45,13 @@ CURSES="${LIBS}"
 AC_SUBST(CURSES)
 LIBS="${SAVELIBS}"
 
+SAVELIBS="${LIBS}"
+LIBS=
+AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL,1,Irix GL is present.))
+SGIGL="${LIBS}"
+AC_SUBST(SGIGL)
+LIBS="${SAVELIBS}"
+
 AC_SEARCH_LIBS(mallopt,malloc)
 AC_SEARCH_LIBS(matherr,mx)
 

@@ -173,6 +173,7 @@ pixhist3d_pl_SOURCES = pixhist3d-pl.c
 pixhist3d_pl_LDADD = @BN@
 
 pl_sgi_SOURCES = pl-sgi.c
+pl_sgi_LDADD = @SGIGL@ @BU@
 
 pl_ps_SOURCES = pl-ps.c
 pl_ps_LDADD = @BU@
@@ -224,6 +225,7 @@ pixcolors_SOURCES = pixcolors.c
 hd_SOURCES = hd.c
 
 sgi_pix_SOURCES = sgi-pix.c
+sgi_pix_LDADD = @SGIGL@
 
 pixsaturate_SOURCES = pixsaturate.c
 
