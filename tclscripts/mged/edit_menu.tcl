@@ -62,11 +62,34 @@ proc init_solid_edit_menus { stype menu } {
 	.$id.menubar.edit insert $i separator
 
 	incr i
+	.$id.menubar.edit insert $i radiobutton -variable edit_type \
+		-label "Rotate" -underline 0 -command "press srot; \
+		set mged_gui($id,transform) e; set_transform $id"
+	incr i
+	.$id.menubar.edit insert $i radiobutton -variable edit_type \
+		-label "Translate" -underline 0 -command "press sxy; \
+		set mged_gui($id,transform) e; set_transform $id"
+	incr i
+	.$id.menubar.edit insert $i radiobutton -variable edit_type \
+		-label "Scale" -underline 0 -command "press sscale; \
+		set mged_gui($id,transform) e; set_transform $id"
+	incr i
+	.$id.menubar.edit insert $i radiobutton -variable edit_type \
+		-label "None Of Above" -underline 0 -command "set edit_solid_flag 0; \
+		set mged_gui($id,transform) e; set_transform $id"
+	incr i
+
+	.$id.menubar.edit insert $i separator
+
+	incr i
 	.$id.menubar.edit insert $i command -label "Reject" -underline 2 \
 		-command "press reject"
 	incr i
 	.$id.menubar.edit insert $i command -label "Accept" -underline 0 \
 		-command "press accept"
+	incr i
+	.$id.menubar.edit insert $i command -label "Apply" -underline 1 \
+		-command "apply_edit_solid"
 	incr i
 	.$id.menubar.edit insert $i command -label "Reset" -underline 1 \
 		-command "reset_edit_solid"
@@ -328,6 +351,9 @@ proc init_solid_edit_menu_hoc { stype } {
     hoc_register_menu_data "Edit" "Accept" \
 	    "Solid Edit - Accept" \
 	    {{summary "Accept"}}
+    hoc_register_menu_data "Edit" "Apply" \
+	    "Solid Edit - Apply" \
+	    {{summary "Apply"}}
     hoc_register_menu_data "Edit" "Reset" \
 	    "Solid Edit - Reset" \
 	    {{summary "Reset"}}
