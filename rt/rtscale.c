@@ -50,8 +50,8 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "wdb.h"
 #include "raytrace.h"
+#include "wdb.h"
 #include "plot3.h"
 
 #define NAMELEN 40
