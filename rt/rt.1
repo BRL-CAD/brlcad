@@ -193,8 +193,20 @@ There is no maximum size limit.
 .TP
 .B \-v#
 sets the verbosity bit vector flags for rt.
-Use \-v\ 0 for no output.
-See rt/rdebug.h for various bit definitions.
+Use \-v\ 0 for no output or \-v\ fff for maximum verbosity.
+.nf
+   value		prints
+ 0x00000001	/* Library version strings */
+ 0x00000002	/* model title */
+ 0x00000004	/* model tolerance */
+ 0x00000008	/* stats about rt_gettrees() */
+ 0x00000010	/* current frame number */
+ 0x00000020	/* view specifications */
+ 0x00000040	/* scene lights */
+ 0x00000080	/* progressive/incremental state */
+ 0x00000100	/* # of CPU's to be used */
+ 0x00000200	/* name of output image */
+.fi
 .TP
 .B \-w#
 defines the width of each scanline in pixels.
