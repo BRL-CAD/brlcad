@@ -42,10 +42,10 @@ HIDDEN int cmd_hist();
 HIDDEN int cmd_quit();
 void quit();
 
-HIDDEN struct cmdhist histHead;
-HIDDEN struct cmdhist *currHist;
+HIDDEN struct bu_cmdhist histHead;
+HIDDEN struct bu_cmdhist *currHist;
 
-HIDDEN struct cmdtab _cmdtab[] =
+HIDDEN struct bu_cmdtab cwish_cmds[] =
 {
 	"exit",		cmd_quit,
 	"history",	cmd_history,
@@ -58,7 +58,7 @@ int
 cmdInit(interp)
 {
 	/* Register cwish commands */
-	register_cmds(interp, _cmdtab);
+	bu_register_cmds(interp, cwish_cmds);
 
 	/* initialize command history */
 	historyInit();
@@ -115,12 +115,12 @@ history_record(cmdp, start, finish, status)
      struct timeval *start, *finish;
      int status;   /* Either TCL_OK or TCL_ERROR */
 {
-	struct cmdhist *new_hist;
+	struct bu_cmdhist *new_hist;
 
 	if (strcmp(bu_vls_addr(cmdp), "\n") == 0)
 		return;
 
-	new_hist = (struct cmdhist *)bu_malloc(sizeof(struct cmdhist),
+	new_hist = (struct bu_cmdhist *)bu_malloc(sizeof(struct bu_cmdhist),
 					       "mged history");
 	bu_vls_init(&(new_hist->h_command));
 	bu_vls_vlscat(&(new_hist->h_command), cmdp);
@@ -166,12 +166,12 @@ timediff(tvdiff, start, finish)
 #if 0
 void
 history_journalize(hptr)
-     struct cmdhist *hptr;
+     struct bu_cmdhist *hptr;
 {
 	struct timeval tvdiff;
-	struct cmdhist *lasthptr;
+	struct bu_cmdhist *lasthptr;
 
-	lasthptr = BU_LIST_PREV(cmdhist, &(hptr->l));
+	lasthptr = BU_LIST_PREV(bu_cmdhist, &(hptr->l));
 
 	if (journal_delay && timediff(&tvdiff, &(lasthptr->h_finish), &(hptr->h_start)) >= 0)
 		fprintf(journalfp, "delay %d %ld\n", tvdiff.tv_sec, tvdiff.tv_usec);
@@ -294,7 +294,7 @@ cmd_history(clientData, interp, argc, argv )
 {
 	FILE *fp;
 	int with_delays = 0;
-	struct cmdhist *hp, *hp_prev;
+	struct bu_cmdhist *hp, *hp_prev;
 	struct bu_vls str;
 	struct timeval tvdiff;
 
@@ -338,9 +338,9 @@ cmd_history(clientData, interp, argc, argv )
 	}
 
 	bu_vls_init(&str);
-	for (BU_LIST_FOR(hp, cmdhist, &(histHead.l))) {
+	for (BU_LIST_FOR(hp, bu_cmdhist, &(histHead.l))) {
 		bu_vls_trunc(&str, 0);
-		hp_prev = BU_LIST_PREV(cmdhist, &(hp->l));
+		hp_prev = BU_LIST_PREV(bu_cmdhist, &(hp->l));
 		if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &(histHead.l))) {
 			if (timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
 				bu_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
@@ -369,9 +369,9 @@ cmd_history(clientData, interp, argc, argv )
 struct bu_vls *
 history_prev()
 {
-	struct cmdhist *hp;
+	struct bu_cmdhist *hp;
 
-	hp = BU_LIST_PREV(cmdhist, &(currHist->l));
+	hp = BU_LIST_PREV(bu_cmdhist, &(currHist->l));
 	if (BU_LIST_IS_HEAD(hp, &(histHead.l)))
 		return NULL;
 	else {
@@ -398,13 +398,13 @@ history_cur()
 struct bu_vls *
 history_next()
 {
-	struct cmdhist *hp;
+	struct bu_cmdhist *hp;
 
 	if (BU_LIST_IS_HEAD(currHist, &(histHead.l))) {
 		return 0;
 	}
     
-	hp = BU_LIST_NEXT(cmdhist, &(currHist->l));
+	hp = BU_LIST_NEXT(bu_cmdhist, &(currHist->l));
 	if (BU_LIST_IS_HEAD(hp, &(histHead.l))) {
 		currHist = hp;
 		return 0;
