@@ -243,7 +243,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
 
 	if (argc != 3) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dg_open");
+		bu_vls_printf(&vls, "helplib dgo_open");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1512,7 +1512,7 @@ dgo_observer_tcl(clientData, interp, argc, argv)
 
 		/* return help message */
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dg_observer");
+		bu_vls_printf(&vls, "helplib dgo_observer");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1535,18 +1535,18 @@ dgo_report_tcl(clientData, interp, argc, argv)
 	int		lvl = 0;
 	struct dg_obj	*dgop = (struct dg_obj *)clientData;
 
-	if (argc < 1 || 2 < argc) {
+	if (argc < 2 || 3 < argc) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dg_report");
+		bu_vls_printf(&vls, "helplib dgo_report");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
-	if (argc > 1)
-		lvl = atoi(argv[1]);
+	if (argc == 3)
+		lvl = atoi(argv[2]);
 	dgo_print_schain(dgop, interp, lvl);
 
 	return TCL_OK;
