@@ -218,7 +218,7 @@ ipu_remote(struct dsreq *dsp)
 	filldsreq(dsp, (u_char *)NULL, 0, DSRQ_SENSE);
 
 	if (i=doscsireq(getfd(dsp), dsp)) {
-		fprintf(stderr, "ipu_remote failure %d\n");
+		fprintf(stderr, "ipu_remote failed\n");
 		scsi_perror(i, dsp);
 		return -1;
 	}
@@ -392,7 +392,8 @@ ipu_put_image_frag(struct dsreq *dsp,
 
 	nbytes = w * ipu_bytes_per_pixel * h;
 	if( nbytes > (256 * 1024 - 2) )  {
-		fprintf(stderr, "ipu_put_image_frag() nbytes=%d exceeds SCSI maximum transfer\n");
+		fprintf(stderr, "ipu_put_image_frag() nbytes=%d exceeds SCSI maximum transfer\n",
+			nbytes);
 		return;
 	}
 
@@ -558,7 +559,7 @@ ipu_put_image(struct dsreq *dsp,
 			perror("gettimeofday()");
 		else
 			fprintf(stderr, "image transferred in %ld sec.\n",
-				tp2.tv_sec - tp1.tv_sec);
+				(long)(tp2.tv_sec - tp1.tv_sec));
 	}
 
 	if (dsdebug)
@@ -685,7 +686,7 @@ ipu_print_file(struct dsreq *dsp,
 
 	bzero(p=(u_char *)CMDBUF(dsp), 16);
 	p[0] = 0xc1;
-	toint(&p[6], sizeof(buf));
+	toint(&p[6], (int)sizeof(buf));
 	CMDLEN(dsp) = 12;
 
 	bzero(buf, sizeof(buf));
@@ -810,10 +811,10 @@ ipu_scan_file(struct dsreq *dsp,
 
 	bzero(p=(u_char *)CMDBUF(dsp), 16);
 	p[0] = 0xc0;
-	toint(&p[6], sizeof(buf));
+	toint(&p[6], (int)sizeof(buf));
 	CMDLEN(dsp) = 12;
 
-	bzero(buf, sizeof(buf));
+	bzero(buf, (int)sizeof(buf));
 	buf[0] = id;
 
 	if (!wait) buf[3] = 0x080;	/* quick return */
@@ -851,7 +852,7 @@ ipu_list_files(struct dsreq *dsp)
 
 	bzero(p=(u_char *)CMDBUF(dsp), 16);
 	p[0] = 0xc6;
-	toint(&p[6], sizeof(buf));
+	toint(&p[6], (int)sizeof(buf));
 	CMDLEN(dsp) = 12;
 
 	filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_READ|DSRQ_SENSE);
@@ -1066,7 +1067,7 @@ ipu_get_conf_long(struct dsreq *dsp)
 	bzero(p=(u_char *)CMDBUF(dsp), 16);
 	p[0] = 0x5a;			/* mode sense */
 	p[2] = 0x23;
-	toint(&p[7], sizeof(params));
+	toint(&p[7], (int)sizeof(params));
 	CMDLEN(dsp) = 10;
 
 	bzero(params, sizeof(params));
@@ -1106,7 +1107,7 @@ unsigned char	*cmap;		/* NULL or [768] */
 	int		i;
 	int		ret;
 
-	if (ipu_debug) fprintf(stderr, "ipu_set_palette(cmap=x%x)\n", cmap);
+	if (ipu_debug) fprintf(stderr, "ipu_set_palette(cmap=x%lx)\n", (long)cmap);
 	if( cmap == NULL )  {
 		register int	j;
 		register unsigned char *cp = linear;
