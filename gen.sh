@@ -30,6 +30,7 @@ NFS=1
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
 #RELEASE=4.8;	RCS_REVISION=11;	REL_DATE=Today
+RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=29-Dec-94	# Beta5
 RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=27-Dec-94	# Beta4
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=20-Dec-94	# Beta3
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=1-Dec-94	# Beta2
@@ -448,7 +449,7 @@ dist)
 	echo
 
 	echo "Copying CDIRS and top level files"
-	for i in ${CDIRS}
+	for i in ${CDIRS} ${TDIRS}
 	do
 		rm -fr ${DISTDIR}/$i
 		mkdir ${DISTDIR}/$i
