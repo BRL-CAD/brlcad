@@ -52,6 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
+#include "./dm.h"
 
 void	aexists();
 extern void f_quit();
