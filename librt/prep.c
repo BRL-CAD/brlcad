@@ -182,6 +182,9 @@ register struct rt_i *rtip;
 		}
 	}
 
+	/* If region-id expression file exists, process it */
+	rt_regionfix(rtip);
+
 	/* Partition space */
 	rt_cut_it(rtip);
 
