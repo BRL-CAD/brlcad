@@ -425,8 +425,8 @@ namespace eval RtWizard {
 	set ok false
 	while {[catch \
 		"exec fbserv -w $width -n $height -F /dev/X -p $port &" \
-		blek]} {
-	    puts $blek
+		catchResult]} {
+	    puts $catchResult
 	    incr port
 	}
 	#

@@ -181,6 +181,7 @@ namespace eval RtWizard {
 	    variable currentAzimuth 35
 	    variable currentElevation 25
 	    variable currentPerspective 0
+	    variable currentEyemodel ""
 	    
 	    # Azimuth Stuff
 	    variable oldAzimuth
@@ -618,9 +619,13 @@ namespace eval RtWizard {
     #               from the Mged object.
     #
     itcl::body MGEDpage::getEyeModel {} {
-	set vu [$::mgedObj component [$::mgedObj cget -pane]]
-	append view "::" $vu "_view"
-	return [$::mgedObj get_eyemodel $view]
+	if {$isSelected == "true"} {
+	    set vu [$::mgedObj component [$::mgedObj cget -pane]]
+	    append view "::" $vu "_view"
+	    set currentEyemodel [$::mgedObj get_eyemodel $view]
+	}
+	return $currentEyemodel
+
     }
 
     #
@@ -628,9 +633,9 @@ namespace eval RtWizard {
     #
     itcl::body MGEDpage::getEyepoint {} {
 	if {$isSelected == "true"} {
-	    set currentEyepoint [$::mgedObj eye]
+	    set currentEye [$::mgedObj eye]
 	}
-	return $currentEyepoint
+	return $currentEye
     }
 
     #
@@ -740,11 +745,23 @@ namespace eval RtWizard {
     #               that it may be restored by onSelect
     #
     ::itcl::body MGEDpage::captureView {} {
+	#
+	# All of the get* methods set the current values, so we'll
+	# use them.
+	#
 	set selected  [$itk_component(hier) selection get]
+	
+	getAzimuth
+	getElevation
+	getSize
+	getOrientation
+	getEyeModel
+	getPerspective
+
 	set currentEye [$::mgedObj eye]
 	set currentSize [$::mgedObj size]
 	set currentRmat [$::mgedObj rmat]
-#	set currentCenter [$::mgedObj center]
+	set currentCenter [$::mgedObj center]
     }
 
     #
@@ -764,7 +781,7 @@ namespace eval RtWizard {
 	# Reset the view
 	#
 	$::mgedObj eye $currentEye
-#	$::mgedObj center $currentCenter
+	$::mgedObj center $currentCenter
 	$::mgedObj size $currentSize
 	$::mgedObj rmat $currentRmat
     }

@@ -377,8 +377,8 @@ namespace eval RtWizard {
 	fileevent $pipe writable [ list testWrite $pipe ]
 	vwait ::waiting
 
-	catch "close $pipe" junk
-	puts $junk
+	catch "close $pipe" catchResult
+	puts $catchResult
     }
 
     #
