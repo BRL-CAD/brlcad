@@ -98,7 +98,6 @@ extern void prnt_Usage();
 extern void prnt3vec();
 extern void render_Model();
 extern void ring_Bell();
-extern void rt_log();
 extern void set_IRmapping();
 extern void set_Size_Grid();
 extern void update_Screen();
