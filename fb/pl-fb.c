@@ -297,6 +297,7 @@ char **argv;
 				debug = 1;
 				break;
 
+			case 'O':
 			case 'o':
 				overlay = 1;
 				break;
