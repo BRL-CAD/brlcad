@@ -1165,7 +1165,7 @@ char	**argv;
 /*
  *			F _ Q V R O T
  *
- *  Set current view direction from a quaternion.
+ *  Set view from direction vector and twist angle
  */
 int
 f_qvrot( argc, argv )
@@ -1194,35 +1194,13 @@ char	**argv;
 	az = 0.0;
     }
     else
-	az = atan2(-dy, -dx);
+	az = atan2(dy, dx);
     
-    el = atan2(-dz, sqrt(dx * dx + dy * dy));
+    el = atan2(dz, sqrt(dx * dx + dy * dy));
 
     setview( 270.0 + el * radtodeg, 0.0, 270.0 - az * radtodeg );
     theta = atof(argv[4]) * degtorad;
     usejoy(0.0, 0.0, theta);
 
     return CMD_OK;
-
-
-
-
-
-
-    buildHrot(mat1, three_halves_pi + el, 0.0, three_halves_pi - az);
-
-    theta = atof(argv[4]) * degtorad;
-    buildHrot(mat2, 0.0, theta, 0.0);
-    mat_mul(mat3, mat2, mat1);
-    for (i = 0; i < 3; ++i)
-	for (j = 0; j < 3; ++j)
-	    Viewrot[4 * i + j] = mat3[4 * i + j];
-    new_mats();
-    return CMD_OK;
-
-    /*
-     * setview( 270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]) );
-     *    buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
-     *    new_mats();
-     */
 }

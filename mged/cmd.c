@@ -238,7 +238,7 @@ static struct funtab funtab[] = {
 	f_quit,1,1,
 "quit", "", "quit",
 	f_quit,1,1,
-"qvrot", "dx dy dz theta", "Set view direction from quaternion",
+"qvrot", "dx dy dz theta", "set view from direction vector and twist angle",
 	f_qvrot, 5, 5,
 "r", "region <operation solid>", "create or extend a Region combination",
 	f_region,4,MAXARGS,
