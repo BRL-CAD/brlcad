@@ -1012,8 +1012,8 @@ struct solidrec *in;
 	case RAW:
 		VMOVE( O1, F1 );
 		VADD2( O2, F1, F3 );
+		VADD2( O4, F1, F2 );	/* next lines fliped for 4d uopt bug */
 		VMOVE( O3, O2 );
-		VADD2( O4, F1, F2 );
 		VADD2( O5, F1, F4 );
 		VADD3( O6, F1, F4, F3 );
 		VMOVE( O7, O6 );
