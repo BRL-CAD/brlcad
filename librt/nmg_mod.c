@@ -3793,6 +3793,8 @@ struct edgeuse	*eu2;
  *  on all edgeuses radial to this edgeuse's edge.
  *  The edge geometry must be shared, and all uses of the vertex
  *  to be disposed of must originate from this edge pair.
+ *  Also, the "non-B" ends of all edgeuses around e1 and e2 must
+ *  terminate at either A or B.
  *
  *  XXX for t-NURBS, this should probably be re-stated as
  *  saying that all the edgeuses must share the same 2 edges, and that
@@ -3828,11 +3830,13 @@ struct edgeuse	*eu1_first;
 {
 	struct edgeuse	*eu1;
 	struct edgeuse	*eu2;
+	struct edgeuse	*teu;
 	struct edge	*e1;
 	struct edge_g_lseg	*eg;
 	struct vertexuse *vu;
 	struct vertex	*vb = 0;
 	struct vertex	*vc;
+	struct vertex	*va;
 	struct shell	*s1;
 	int		ret = 0;
 
@@ -3870,6 +3874,7 @@ struct edgeuse	*eu1_first;
 		goto out;
 	}
 
+	va = eu1->vu_p->v_p;		/* start vertex (A) */
 	vb = eu2->vu_p->v_p;		/* middle vertex (B) */
 	vc = eu2->eumate_p->vu_p->v_p;	/* end vertex (C) */
 
@@ -3893,20 +3898,92 @@ struct edgeuse	*eu1_first;
 		}
 	}
 
+	/* Visit all edgeuse pairs radial to eu1 (A--B) */
+	teu = eu1;
+	for(;;)  {
+		register struct edgeuse	*teu2;
+		NMG_CK_EDGEUSE(teu);
+		if( teu->vu_p->v_p != va || teu->eumate_p->vu_p->v_p != vb )  {
+			ret = -6;
+			goto out;
+		}
+		/* We *may* encounter a teu2 not around eu2.  Seen in BigWedge */
+		teu2 = RT_LIST_PNEXT_CIRC( edgeuse, teu );
+		NMG_CK_EDGEUSE(teu2);
+		if( teu2->vu_p->v_p != vb || teu2->eumate_p->vu_p->v_p != vc )  {
+			ret = -7;
+			goto out;
+		}
+		teu = teu->eumate_p->radial_p;
+		if( teu == eu1 )  break;
+	}
+
+	/* Visit all edgeuse pairs radial to eu2 (B--C) */
+	teu = eu2;
+	for(;;)  {
+		NMG_CK_EDGEUSE(teu);
+		if( teu->vu_p->v_p != vb || teu->eumate_p->vu_p->v_p != vc )  {
+			ret = -8;
+			goto out;
+		}
+		teu = teu->eumate_p->radial_p;
+		if( teu == eu2 )  break;
+	}
+
+	/* All preconditions are met, begin the unbreak operation */
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_unbreak_edge va=x%x, vb=x%x, vc=x%x\n",
+			va, vb, vc );
+		rt_log("nmg_unbreak_edge A:(%g, %g, %g), B:(%g, %g, %g), C:(%g, %g, %g)\n",
+			V3ARGS( va->vg_p->coord ),
+			V3ARGS( vb->vg_p->coord ),
+			V3ARGS( vc->vg_p->coord ) );
+	}
+
 	/* visit all the edgeuse pairs radial to eu1 */
 	for(;;)  {
-		/* revector eu1mate's start vertex from B to C */
-		nmg_movevu( eu1->eumate_p->vu_p , vc );
-
-		/* Now kill off the unnecessary eu2 associated w/ cur eu1 */
+		/* Recheck initial conditions */
+		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vb )  {
+			rt_log( "nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n", 
+				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
+			nmg_pr_eu_briefly( eu1, " " );
+			rt_bomb( "nmg_unbreak_edge 1\n" );
+		}
 		eu2 = RT_LIST_PNEXT_CIRC( edgeuse, eu1 );
 		NMG_CK_EDGEUSE(eu2);
 		if( eu2->g.lseg_p != eg )  {
 			rt_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
 		}
+		if( eu2->vu_p->v_p != vb || eu2->eumate_p->vu_p->v_p != vc )  {
+			rt_log( "nmg_unbreak_edge: about to kill eu2, but does not got to/from correct vertices, x%x, x%x\n",
+				eu2->vu_p->v_p, eu2->eumate_p->vu_p->v_p );
+			nmg_pr_eu_briefly( eu2, " " );
+			rt_bomb( "nmg_unbreak_edge 3\n" );
+		}
+
+		/* revector eu1mate's start vertex from B to C */
+		nmg_movevu( eu1->eumate_p->vu_p , vc );
+
+		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc )  {
+			rt_log( "nmg_unbreak_edge: extended eu1 does not got to/from correct vertices, x%x, x%x\n",
+				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
+			nmg_pr_eu_briefly( eu1, " " );
+			rt_bomb( "nmg_unbreak_edge 2\n" );
+		}
+
+		if( eu2 != RT_LIST_PNEXT_CIRC( edgeuse, eu1 ) )
+			rt_bomb("nmg_unbreak_edge eu2 unexpected altered\n");
+
+		/* Now kill off the unnecessary eu2 associated w/ cur eu1 */
 		if( nmg_keu( eu2 ) )
 			rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
 
+		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc )  {
+			rt_log( "nmg_unbreak_edge: unbroken eu1 (after eu2 killed) does not got to/from correct vertices, x%x, x%x\n",
+				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
+			nmg_pr_eu_briefly( eu1, " " );
+			rt_bomb( "nmg_unbreak_edge 4\n" );
+		}
 		eu1 = eu1->eumate_p->radial_p;
 		if( eu1 == eu1_first )  break;
 	}
