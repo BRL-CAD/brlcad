@@ -47,25 +47,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "externs.h"
 #include "./ged.h"
+#include "./cmd.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 
 #include "./mgedtcl.h"
 
-int cmd_mged_glob();
-int cmd_init();
-int cmd_set();
-int cmd_get();
 int get_more_default();
-int f_tran();
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 
 
 extern void sync();
 extern int gui_setup();
-extern int cmd_stuff_str();
 extern int f_decompose();
 extern int f_nmg_simplify();
 extern int f_make_bb();
@@ -467,6 +462,8 @@ static struct funtab funtab[] = {
 	f_summary,1,2,TRUE,
 "sv", "x y [z]", "Move view center to (x, y, z)",
 	f_slewview, 3, 4,TRUE,
+"svb", "", "set view reference base",
+        f_svbase, 1, 1, TRUE,
 "sync",	"",	"forces UNIX sync",
 	f_sync, 1, 1,TRUE,
 "t", "", "table of contents",
@@ -742,151 +739,6 @@ char **argv;
 
   return status;
 }    
-
-/*
- *	G E T K N O B
- *
- *	Procedure called by the Tcl/Tk interface code to find the values
- *	of the knobs/sliders.
- */
-
-int
-cmd_getknob(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-  int len;
-  fastf_t f;
-  char *cp;
-
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
-
-  cp  = argv[1];
-  len = strlen(cp);
-  if(len == 1){
-    switch(*cp){
-    case 'x':
-      if(EDIT_ROTATE && mged_variables.edit)
-	f = edit_rate_rotate[X];
-      else
-	f = rate_rotate[X];
-      break;
-    case 'y':
-      if(EDIT_ROTATE && mged_variables.edit)
-	f = edit_rate_rotate[Y];
-      else
-	f = rate_rotate[Y];
-      break;
-    case 'z':
-      if(EDIT_ROTATE && mged_variables.edit)
-	f = edit_rate_rotate[Z];
-      else
-	f = rate_rotate[Z];
-      break;
-    case 'X':
-      if(EDIT_TRAN && mged_variables.edit)
-	f = edit_rate_tran[X];
-      else
-	f = rate_slew[X];
-      break;
-    case 'Y':
-      if(EDIT_TRAN && mged_variables.edit)
-	f = edit_rate_tran[Y];
-      else
-	f = rate_slew[Y];
-      break;
-    case 'Z':
-      if(EDIT_TRAN && mged_variables.edit)
-	f = edit_rate_tran[Z];
-      else
-	f = rate_slew[Z];
-      break;
-    case 'S':
-      if(EDIT_SCALE && mged_variables.edit)
-	f = edit_rate_scale;
-      else
-	f = rate_zoom;
-      break;
-    default:
-      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-  }else if(len == 2){
-    if(*cp++ != 'a'){
-      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-
-    switch(*cp){
-    case 'x':
-      if(EDIT_ROTATE && mged_variables.edit)
-	f = edit_absolute_rotate[X];
-      else
-	f = absolute_rotate[X];
-      break;
-    case 'y':
-      if(EDIT_ROTATE && mged_variables.edit)
-	f = edit_absolute_rotate[Y];
-      else
-	f = absolute_rotate[Y];
-      break;
-    case 'z':
-      if(EDIT_ROTATE && mged_variables.edit)
-	f = edit_absolute_rotate[Z];
-      else
-	f = absolute_rotate[Z];
-      break;
-    case 'X':
-      if(EDIT_TRAN && mged_variables.edit)
-	f = edit_absolute_tran[X];
-      else
-	f = absolute_slew[X];
-      break;
-    case 'Y':
-      if(EDIT_TRAN && mged_variables.edit)
-	f = edit_absolute_tran[Y];
-      else
-	f = absolute_slew[Y];
-      break;
-    case 'Z':
-      if(EDIT_TRAN && mged_variables.edit)
-	f = edit_absolute_tran[Z];
-      else
-	f = absolute_slew[Z];
-      break;
-    case 'S':
-      if(EDIT_SCALE && mged_variables.edit)
-	f = edit_absolute_scale;
-      else
-	f = absolute_zoom;
-      break;
-    default:
-      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-  }else{
-    if(strcmp(argv[1], "xadc") == 0)
-      f = dv_xadc;
-    else if(strcmp(argv[1], "yadc") == 0)
-      f = dv_yadc;
-    else if(strcmp(argv[1], "ang1") == 0)
-      f = dv_1adc;
-    else if(strcmp(argv[1], "ang2") == 0)
-      f = dv_2adc;
-    else if(strcmp(argv[1], "distadc") == 0)
-      f = dv_distadc;
-    else{
-      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
-       return TCL_ERROR;
-    }
-  }
-
-  sprintf(interp->result, "%lf", f);
-  return TCL_OK;
-}
 
 /*
  *   C M D _ O U T P U T _ H O O K
@@ -1443,6 +1295,7 @@ int record;
   /* Contemplate the result reported by the Tcl interpreter. */
 
   switch (status) {
+  case TCL_RETURN:
   case TCL_OK:
     if( setjmp( jmp_env ) == 0 ){
       (void)signal( SIGINT, sig3);  /* allow interupts */
@@ -2233,166 +2086,6 @@ char *argv[];
 }
 
 int
-f_setview(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    *argv[];
-{
-  double x, y, z;
-
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
-
-  if(sscanf(argv[1], "%lf", &x) < 1){
-    Tcl_AppendResult(interp, "f_setview: bad x value - ",
-		     argv[1], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%lf", &y) < 1){
-    Tcl_AppendResult(interp, "f_setview: bad y value - ",
-		     argv[2], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[3], "%lf", &z) < 1){
-    Tcl_AppendResult(interp, "f_setview: bad z value - ",
-		     argv[3], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  setview(x, y, z);
-
-  return TCL_OK;
-}
-
-
-int
-mged_tran(interp, tranvec)
-Tcl_Interp *interp;
-vect_t tranvec;
-{
-  vect_t old_pos;
-  vect_t new_pos;
-  vect_t diff;
-
-  VMOVE(absolute_slew, tranvec);
-  MAT4X3PNT( new_pos, view2model, absolute_slew );
-  MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
-  VSUB2( diff, new_pos, old_pos );
-  VADD2(new_pos, orig_pos, diff);
-  MAT_DELTAS_VEC( toViewcenter, new_pos);
-#if 0
-  MAT_DELTAS_VEC( ModelDelta, new_pos);
-#endif
-  new_mats();
-
-  return TCL_OK;
-}
-
-
-int
-f_tran(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	*argv[];
-{
-  int incr = 0;
-  int x, y, z;
-  vect_t tranvec;
-
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
-
-  /* Check for -i option */
-  if(argv[1][0] == '-' && argv[1][1] == 'i'){
-    incr = 1;  /* treat arguments as incremental values */
-    ++argv;
-    --argc;
-  }
-
-  if(sscanf(argv[1], "%d", &x) < 1){
-    Tcl_AppendResult(interp, "f_slewview: bad x value - ",
-		     argv[1], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%d", &y) < 1){
-    Tcl_AppendResult(interp, "f_slewview: bad y value - ",
-		     argv[2], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(argc == 4){
-    if(sscanf(argv[3], "%d", &z) < 1){
-      Tcl_AppendResult(interp, "f_slewview: bad z value - ",
-		       argv[3], "\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-  }else{
-    if(incr)
-      z = 0.0;
-    else
-      z = absolute_slew[Z];
-  }
-
-  if(incr){
-    point_t tpoint;
-
-    VSET(tpoint, x, y, z)
-    VADD2(tranvec, absolute_slew, tpoint);
-  }else{
-    VSET(tranvec, x, y, z);
-  }
-
-  return mged_tran(interp, tranvec);
-}
-
-
-int
-f_slewview(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	*argv[];
-{
-  int x, y, z;
-  vect_t slewvec;
-
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
-
-  if(sscanf(argv[1], "%d", &x) < 1){
-    Tcl_AppendResult(interp, "f_slewview: bad x value - ",
-		     argv[1], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%d", &y) < 1){
-    Tcl_AppendResult(interp, "f_slewview: bad y value - ",
-		     argv[2], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(argc == 4){
-    if(sscanf(argv[3], "%d", &z) < 1){
-      Tcl_AppendResult(interp, "f_slewview: bad z value - ",
-		       argv[3], "\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-  }else
-    z = 0;
-
-  VSET(slewvec, x/2047.0, y/2047.0, z/2047.0);
-  VSUB2(absolute_slew, absolute_slew, slewvec);
-  slewview( slewvec );
-
-  return TCL_OK;
-}
-
-int
 f_update(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -2448,3 +2141,5 @@ char    **argv;
 		    "\n", (char *)NULL);
   return TCL_ERROR;
 }
+
+
