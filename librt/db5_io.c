@@ -886,6 +886,8 @@ struct rt_db_internal	*ip;
 	RT_CK_DBI(dbip);
 	RT_CK_DB_INTERNAL( ip );
 
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
+
 	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip ) < 0 )  {
 		bu_log("rt_db_put_internal5(%s):  export failure\n",
 			dp->d_namep);
