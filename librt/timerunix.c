@@ -35,6 +35,7 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 #define HZ	60
 #endif
 
+#if !defined(cray)
 bzero( str, n )
 {
 	memset( str, '\0', n );
@@ -43,6 +44,7 @@ bzero( str, n )
 bcopy(from, to, count)  {
 	memcpy( to, from, count );
 }
+#endif
 
 /* Standard System V stuff */
 extern long time();
