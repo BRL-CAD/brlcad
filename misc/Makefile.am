@@ -8,7 +8,8 @@ EXTRA_DIST = \
 	Cakefile.defs \
 	Description.txt \
 	batch-indent-region.el \
-	enigma
+	enigma \
+	libtool.m4
 
 SUBDIRS = \
 	macosx \
