@@ -33,7 +33,8 @@
 	nmg_visit nmg_info nmg_pr \
 	units magic msr vert nmg_extrude nmg_tri nmg_fuse nmg_pt_fu \
 	rtassoc \
-	pr hist machine LIBRT_TIMER storage const global log bomb snoise
+	pr hist machine LIBRT_TIMER storage const global log bomb snoise \
+	rt_dspline
 
 #define NURB_OBJ	\
         nurb_basis.o nurb_bound.o nurb_diff.o nurb_eval.o nurb_flat.o \
