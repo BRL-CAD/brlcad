@@ -1,0 +1,18 @@
+/*
+ *		CAKE(1) specification file for G_LINT(1)
+ *
+ * $Header$
+ */
+
+#define	SRCDIR	g_lint
+#define	PRODUCTS	g_lint
+#define	SRCSUFF		.c
+#define	MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+g_lint:	g_lint.o LIBRT_DEP
+	CC LDFLAGS g_lint.o LIBRT LIBRT_LIBES LIBES -o g_lint
+
+#include "../Cakefile.rules"
