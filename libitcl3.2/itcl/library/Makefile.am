@@ -1,7 +1,6 @@
 # $Id$
 
-install:
-	mkdir -p ${prefix}/itcl3.2
-	${INSTALL} -m 444 ${srcdir}/itcl.tcl ${prefix}/itcl3.2
+itcldir = ${prefix}/itcl3.2
+itcl_SCRIPTS = itcl.tcl
+EXTRA_DIST = $(itcl_SCRIPTS)
 
-extra_DIST = itcl.tk
