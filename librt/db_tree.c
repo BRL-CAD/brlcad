@@ -1753,12 +1753,16 @@ int			id;
 	return(curtree);
 }
 
-static struct db_i	*db_dbip;
-static union tree	**db_reg_trees;
-static int		db_reg_count;
-static int		db_reg_current;		/* semaphored when parallel */
-static union tree *	(*db_reg_end_func)();
-static union tree *	(*db_reg_leaf_func)();
+struct db_walk_parallel_state {
+	long		magic;
+	union tree	**reg_trees;
+	int		reg_count;
+	int		reg_current;		/* semaphored when parallel */
+	union tree *	(*reg_end_func)();
+	union tree *	(*reg_leaf_func)();
+};
+#define DB_WALK_PARALLEL_STATE_MAGIC	0x64777073	/* dwps */
+#define DB_CK_WPS(_p)	BU_CKMAG(_p, DB_WALK_PARALLEL_STATE_MAGIC, "db_walk_parallel_state")
 
 /*
  *			D B _ W A L K _ S U B T R E E
@@ -1790,7 +1794,7 @@ union tree		 *(*leaf_func)();
 			tp->tr_a.tu_stp = 0;
 			return;
 		}
-		ctsp->cts_s.ts_dbip = db_dbip;
+		RT_CK_DBI(ctsp->cts_s.ts_dbip);
 		ctsp->cts_s.ts_stop_at_regions = 0;
 		/* All regions will be accepted, in this 2nd pass */
 		ctsp->cts_s.ts_region_start_func = 0;
@@ -1859,30 +1863,36 @@ union tree		 *(*leaf_func)();
  *  Pick off the next region's tree, and walk it.
  */
 void
-db_walk_dispatcher()
+db_walk_dispatcher( cpu, arg )
+int		cpu;
+genptr_t	arg;
 {
 	struct combined_tree_state	*region_start_statep;
 	int		mine;
 	union tree	*curtree;
+	struct db_walk_parallel_state	*wps = (struct db_walk_parallel_state *)arg;
+
+	DB_CK_WPS(wps);
 
 	while(1)  {
 		bu_semaphore_acquire( RT_SEM_WORKER );
-		mine = db_reg_current++;
+		mine = wps->reg_current++;
 		bu_semaphore_release( RT_SEM_WORKER );
 
-		if( mine >= db_reg_count )
+		if( mine >= wps->reg_count )
 			break;
 
 		if( rt_g.debug&DEBUG_TREEWALK )
 			bu_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
 
-		if( (curtree = db_reg_trees[mine]) == TREE_NULL )
+		if( (curtree = wps->reg_trees[mine]) == TREE_NULL )
 			continue;
 		RT_CK_TREE(curtree);
 
 		/* Walk the full subtree now */
 		region_start_statep = (struct combined_tree_state *)0;
-		db_walk_subtree( curtree, &region_start_statep, db_reg_leaf_func );
+		db_walk_subtree( curtree, &region_start_statep,
+			wps->reg_leaf_func );
 
 		/*  curtree->tr_op may be OP_NOP here.
 		 *  It is up to db_reg_end_func() to deal with this,
@@ -1905,8 +1915,8 @@ db_walk_dispatcher()
 		 *  reg_end_func() returns a pointer to any unused
 		 *  subtree for freeing.
 		 */
-		if( db_reg_end_func )  {
-			db_reg_trees[mine] = (*db_reg_end_func)(
+		if( wps->reg_end_func )  {
+			wps->reg_trees[mine] = (*(wps->reg_end_func))(
 				&(region_start_statep->cts_s),
 				&(region_start_statep->cts_p),
 				curtree );
@@ -1921,8 +1931,10 @@ db_walk_dispatcher()
  *
  *  This is the top interface to the tree walker.
  *
- *  This routine will employ multiple CPUs, but is not
- *  itself parallel-safe.  Call this routine from serial code only.
+ *  This routine will employ multiple CPUs if asked,
+ *  but is not multiply-parallel-recursive.
+ *  Call this routine with ncpu > 1 from serial code only.
+ *  When called from within an existing thread, ncpu must be 1.
  *
  *  If ncpu > 1, the caller is responsible for making sure that
  *	rt_g.rtg_parallel is non-zero, and that the various
@@ -1947,10 +1959,9 @@ union tree *	(*leaf_func)();
 	int			new_reg_count;
 	int			i;
 	union tree		**reg_trees;	/* (*reg_trees)[] */
+	struct db_walk_parallel_state	wps;
 
 	RT_CHECK_DBI(dbip);
-
-	db_dbip = dbip;			/* make global to this module */
 
 	/* Walk each of the given path strings */
 	for( i=0; i < argc; i++ )  {
@@ -2076,18 +2087,24 @@ union tree *	(*leaf_func)();
 	/*
 	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
 	 */
-	if( bu_is_parallel() )  bu_bomb("db_walk_tree() invoked inside parallel section.\n");
-	/* Export some state to read-only static variables */
-	db_reg_trees = reg_trees;
-	db_reg_count = new_reg_count;
-	db_reg_current = 0;			/* Semaphored */
-	db_reg_end_func = reg_end_func;
-	db_reg_leaf_func = leaf_func;
+	if( bu_is_parallel() && ncpu != 1 )  {
+		bu_log("db_walk_tree() recursively invoked while inside parallel section with additional parallelism of ncpu=%d requested.  Running only in one thread.\n",
+			ncpu );
+		ncpu = 1;
+	}
+
+	/* Make state available to the threads */
+	wps.magic = DB_WALK_PARALLEL_STATE_MAGIC;
+	wps.reg_trees = reg_trees;
+	wps.reg_count = new_reg_count;
+	wps.reg_current = 0;			/* Semaphored */
+	wps.reg_end_func = reg_end_func;
+	wps.reg_leaf_func = leaf_func;
 
 	if( ncpu <= 1 )  {
-		db_walk_dispatcher();
+		db_walk_dispatcher( 0, (genptr_t)&wps );
 	} else {
-		bu_parallel( db_walk_dispatcher, ncpu );
+		bu_parallel( db_walk_dispatcher, ncpu, (genptr_t)&wps );
 	}
 
 	/* Clean up any remaining sub-trees still in reg_trees[] */
