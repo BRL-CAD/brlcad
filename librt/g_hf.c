@@ -114,10 +114,14 @@ struct hf_specific {
 };
 
 /*
- *	Convert a HF internal to a DSP internal representation
+ *			R T _ H F _ T O _ D S P
+ *
+ *	Convert in-memory form of a height-field (HF) to a displacement-map
+ *	solid (DSP) in internal representation.
+ *	There is no record in the V5 database for an HF.
  */
 int
-hf_to_dsp(struct rt_db_internal *db_intern)
+rt_hf_to_dsp(struct rt_db_internal *db_intern)
 {
 	struct rt_hf_internal	*hip = (struct rt_hf_internal *)db_intern;
 	struct rt_db_internal	intern;
@@ -2140,6 +2144,30 @@ CONST struct db_i		*dbip;
 	bu_vls_free( &str );
 
 	return(0);
+}
+
+int
+rt_hf_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+CONST mat_t			mat;
+CONST struct db_i		*dbip;
+{
+	bu_log( "Import of HF solids from a version 5 database is not allowed.\n" );
+	bu_log( "\tHF solids should be converted to DSP solids using the rt_hf_to_dsp() routine or g4-g5 utility.\n" );
+	return -1;
+}
+
+int
+rt_hf_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	bu_log( "Export of HF solids from a version 5 database is not allowed.\n" );
+	bu_log( "\tHF solids should be converted to DSP solids using the rt_hf_to_dsp() routine or g4-g5 utility.\n" );
+	return -1;
 }
 
 /*

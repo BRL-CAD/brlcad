@@ -724,7 +724,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_hf_uv,	rt_hf_curve,	rt_hf_class,	rt_hf_free,
 		rt_hf_plot,	rt_vstub,	rt_hf_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_hf_import5,	rt_hf_export5,
 		rt_hf_import,	rt_hf_export,	rt_hf_ifree,
 		rt_hf_describe,rt_hf_xform,	rt_hf_parse,
 		sizeof(struct rt_hf_internal), RT_HF_INTERNAL_MAGIC,
