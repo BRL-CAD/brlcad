@@ -24,6 +24,7 @@ set sunz 0
 global air_shader1
 set air_shader1 "200 200 255"
 set air_shader2 "air dpm=.01"
+set air_region_name "air.r"
 
 puts "running rtsync.tcl"
 ##option add *background #ffffff
@@ -63,18 +64,18 @@ frame .words_fr
 frame .title3
 image create photo .eagle -file "/m/cad/remrt/eagleCAD.gif"
 label .logo -image .eagle
-label .title1 -text "RTSYNC"
-label .title2 -text "The Real-Time Ray-Tracer"
+label .title1 -text "BRL-CAD's SWISS"
+label .title2 -text "Real-Time Ray-Tracer"
 label .title3a -textvariable cpu_count
 label .title3b -text "CPUs active"
+label .title4 -textvariable database
 pack .title3a .title3b -side left -in .title3
-pack .title1 .title2 .title3 -side top -in .words_fr
+pack .title1 .title2 .title3 .title4 -side top -in .words_fr
 pack .logo .words_fr -side left -in .title_fr
 
 # The sun angle
-label .sunangle_title -text "Sun Angle"
-scale .sunangle -label "West to East" -from 180 -to 0 -orient horizontal \
-	-command new_sunangle
+label .sunangle_title -text "Sun Angle, West to East"
+scale .sunangle -from 180 -to 0 -orient horizontal -command new_sunangle
 pack .sunangle_title .sunangle -side top -in .sunangle_fr -fill x
 proc new_sunangle {degrees} {
 	global sunx suny sunz
@@ -83,8 +84,12 @@ proc new_sunangle {degrees} {
 	set suny -13
 	set sunz 5
 }
-button .apply_angle -text "Apply" -command apply_angle
-pack .apply_angle -side top -in .sunangle_fr
+
+frame .sunangle_apply_fr
+entry .sunangle_region -width 16 -relief sunken -bd 2 -textvariable sun_solid_name
+button .sunangle_apply -text "Apply" -command apply_angle
+pack .sunangle_region .sunangle_apply -side left -in .sunangle_apply_fr
+pack .sunangle_apply_fr -side top -in .sunangle_fr
 
 proc apply_angle {} {
 	global sunx suny sunz
@@ -105,30 +110,36 @@ proc apply_angle {} {
 }
 
 # The sun color
-label .suncolor_title -text "Sun Color"
-scale .suncolor -label "Yellow to Blue" -from 0 -to 100 -orient horizontal \
-	-command new_suncolor
+label .suncolor_title -text "Sun Color, Yellow to Blue"
+scale .suncolor -from 0 -to 100 -orient horizontal -command new_suncolor
 frame .suncolor_swatch -height 1c -width 6c
 pack .suncolor_title .suncolor .suncolor_swatch -in .suncolor_fr -fill x
 proc new_suncolor {percent} {
 	global red grn blu
-	# alpha is how much yellow, beta is how much blue.
-	set beta [expr $percent / 100.0 ]
-	set alpha [expr 1.0 - $beta ]
-	# yellow is 255,255,0 and SkyBlue2 is 126 192 238
-	set red [expr int(255 * $alpha + 126 * $beta)]
-	set grn [expr int(255 * $alpha + 192 * $beta)]
-	set blu [expr int(  0 * $alpha + 238 * $beta)]
+
+	if { $percent == 100 } {
+		set red 255
+		set grn 255
+		set blu 255
+	} else {
+		# alpha is how much yellow, beta is how much blue.
+		set beta [expr $percent / 100.0 ]
+		set alpha [expr 1.0 - $beta ]
+		# yellow is 255,255,0 and SkyBlue2 is 126 192 238
+		set red [expr int(255 * $alpha + 126 * $beta)]
+		set grn [expr int(255 * $alpha + 192 * $beta)]
+		set blu [expr int(  0 * $alpha + 238 * $beta)]
+	}
 	set hexcolor [format #%02x%02x%02x $red $grn $blu]
 	.suncolor_swatch config -background $hexcolor
 	#puts "Sun color $percent percent of yellow = $red $grn $blu"
 }
 
-button .apply_color -text "Apply" -command apply_color
-pack .apply_color -side top -in .suncolor_fr
-
+frame .suncolor_apply_fr
 entry .suncolor_region -width 16 -relief sunken -bd 2 -textvariable sun_region_name
-pack .suncolor_region -side top -in .suncolor_fr
+button .apply_color -text "Apply" -command apply_color
+pack .suncolor_region .apply_color -side left -in .suncolor_apply_fr
+pack .suncolor_apply_fr -side top -in .suncolor_fr
 
 proc apply_color {} {
 	global red grn blu
@@ -152,22 +163,27 @@ proc apply_color {} {
 label .air_title -text "Air Shader"
 entry .air_string1 -width 32 -relief sunken -bd 2 -textvariable air_shader1
 entry .air_string2 -width 32 -relief sunken -bd 2 -textvariable air_shader2
+
+frame .air_apply_fr
+entry .air_region -width 16 -relief sunken -bd 2 -textvariable air_region_name
 button .air_apply -text "Apply" -command apply_air
-pack .air_title .air_string1 .air_string2 .air_apply -side top -in .air_fr
+pack .air_region .air_apply -side left -in .air_apply_fr
+pack .air_title .air_string1 .air_string2 .air_apply_fr -side top -in .air_fr
 
 proc apply_air {} {
 	global air_shader1
 	global air_shader2
+	global air_region_name
 
 	# send new stuff to servers
-	# XXX region name is hardcoded for now.
-	node_send .inmem adjust air.r rgb "{" $air_shader1 "}" ";" \
-		  .inmem adjust air.r shader "{" $air_shader2 "}"
-	vrmgr_send .inmem adjust air.r rgb "{" $air_shader1 "}" ";" \
-		   .inmem adjust air.r shader "{" $air_shader2 "}"
+	node_send .inmem adjust $air_region_name rgb "{" $air_shader1 "}" ";" \
+		  .inmem adjust $air_region_name shader "{" $air_shader2 "}"
+	vrmgr_send .inmem adjust $air_region_name rgb "{" $air_shader1 "}" ";" \
+		   .inmem adjust $air_region_name shader "{" $air_shader2 "}"
 
 	# indicate LIBRT re-prep required.
 	reprep
+	# XXX Need short (1 sec) delay here.
 	# Use new POV if one receieved, else repeat last POV.
 	refresh
 }
@@ -182,6 +198,7 @@ proc space_partitioning {val} {
 	node_send \
 		sh_opt -,$val ";" \
 		set curframe 0
+	reprep
 }
 
 # Allow "send rtsync _stuff_" directives to reach us.
