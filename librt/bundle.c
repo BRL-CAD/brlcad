@@ -37,50 +37,6 @@ extern void	rt_plot_cell();		/* at end of file */
 #define AUTO /*let the compiler decide*/
 #endif
 
-#define NUGRID_T_SETUP(_ax,_cval,_cno) \
-	if( ssp->rstep[_ax] > 0 ) { \
-		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
-					    ssp->inv_dir[_ax]; \
-	} else if( ssp->rstep[_ax] < 0 ) { \
-		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
-					    ssp->inv_dir[_ax]; \
-	} else { \
-		ssp->tv[_ax] = INFINITY; \
-	}
-#define NUGRID_T_ADV(_ax,_cno) \
-	if( ssp->rstep[_ax] != 0 )  { \
-		ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
-			ssp->abs_inv_dir[_ax]; \
-	}
-
-#define BACKING_DIST	(-2.0)		/* mm to look behind start point */
-#define OFFSET_DIST	0.01		/* mm to advance point into box */
-
-struct shootray_status {
-	fastf_t			dist_corr;	/* correction distance */
-	fastf_t			odist_corr;
-	fastf_t			box_start;
-	fastf_t			obox_start; 
-	fastf_t			box_end;
-	fastf_t			obox_end;
-	fastf_t			model_start;
-	fastf_t			model_end;
-	struct xray		newray;		/* closer ray start */
-	struct application	*ap;
-	struct resource		*resp;
-	vect_t			inv_dir;      /* inverses of ap->a_ray.r_dir */
-	vect_t			abs_inv_dir;  /* absolute values of inv_dir */
-	int			rstep[3];     /* -/0/+ dir of ray in axis */
-	CONST union cutter	*lastcut, *lastcell;
-	CONST union cutter	*curcut;
-	vect_t			curmin, curmax;
-	int			igrid[3];     /* integer cell coordinates */
-	vect_t			tv;	      /* next t intercept values */
-	int			out_axis;     /* axis ray will leave through */
-	struct shootray_status	*old_status;
-};
-
-
 /*
  *			R T _ F I N D _ N U G R I D
  *
@@ -131,7 +87,7 @@ register struct application *ap;
 struct xray		*rays;
 int			nrays;
 {
-	struct shootray_status	ss;
+	struct rt_shootray_status	ss;
 	struct seg		new_segs;	/* from solid intersections */
 	struct seg		waiting_segs;	/* awaiting rt_boolweave() */
 	struct seg		finished_segs;	/* processed by rt_boolweave() */
@@ -374,7 +330,7 @@ int			nrays;
 		ss.box_start = BACKING_DIST; /* Only look a little bit behind */
 
 	ss.lastcut = CUTTER_NULL;
-	ss.old_status = (struct shootray_status *)NULL;
+	ss.old_status = (struct rt_shootray_status *)NULL;
 	ss.curcut = &ap->a_rt_i->rti_CutHead;
 	if( ss.curcut->cut_type == CUT_NUGRIDNODE ) {
 		ss.lastcell = CUTTER_NULL;

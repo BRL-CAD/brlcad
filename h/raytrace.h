@@ -1697,6 +1697,54 @@ extern CONST int rt_nfunctab;
 #define RT_CLASSIFY_OVERLAPPING		BN_CLASSIFY_OVERLAPPING
 #define RT_CLASSIFY_OUTSIDE		BN_CLASSIFY_OUTSIDE
 
+/*
+ *			R T _ S H O O T R A Y _ S T A T U S
+ *
+ *  Internal to shoot.c and bundle.c
+ */
+struct rt_shootray_status {
+	fastf_t			dist_corr;	/* correction distance */
+	fastf_t			odist_corr;
+	fastf_t			box_start;
+	fastf_t			obox_start; 
+	fastf_t			box_end;
+	fastf_t			obox_end;
+	fastf_t			model_start;
+	fastf_t			model_end;
+	struct xray		newray;		/* closer ray start */
+	struct application	*ap;
+	struct resource		*resp;
+	vect_t			inv_dir;      /* inverses of ap->a_ray.r_dir */
+	vect_t			abs_inv_dir;  /* absolute values of inv_dir */
+	int			rstep[3];     /* -/0/+ dir of ray in axis */
+	CONST union cutter	*lastcut, *lastcell;
+	CONST union cutter	*curcut;
+	vect_t			curmin, curmax;
+	int			igrid[3];     /* integer cell coordinates */
+	vect_t			tv;	      /* next t intercept values */
+	int			out_axis;     /* axis ray will leave through */
+	struct rt_shootray_status	*old_status;
+};
+
+#define NUGRID_T_SETUP(_ax,_cval,_cno) \
+	if( ssp->rstep[_ax] > 0 ) { \
+		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
+					    ssp->inv_dir[_ax]; \
+	} else if( ssp->rstep[_ax] < 0 ) { \
+		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
+					    ssp->inv_dir[_ax]; \
+	} else { \
+		ssp->tv[_ax] = INFINITY; \
+	}
+#define NUGRID_T_ADV(_ax,_cno) \
+	if( ssp->rstep[_ax] != 0 )  { \
+		ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
+			ssp->abs_inv_dir[_ax]; \
+	}
+
+#define BACKING_DIST	(-2.0)		/* mm to look behind start point */
+#define OFFSET_DIST	0.01		/* mm to advance point into box */
+
 /*********************************************************************************
  *	The following section is an exact copy of what was previously "nmg_rt.h" *
  *      (with minor changes to GET_HITMISS and NMG_FREE_HITLIST                  *
