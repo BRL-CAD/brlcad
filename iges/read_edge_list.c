@@ -19,13 +19,10 @@
 #else
 #include <string.h>
 #endif
-#include "./iges_struct.h"
-#include "./iges_extern.h"
-#include "rtlist.h"
-#include "rtstring.h"
-#include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "./iges_struct.h"
+#include "./iges_extern.h"
 
 struct iges_edge_list *
 Read_edge_list( edge )
@@ -48,7 +45,7 @@ struct iges_edge_use *edge;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num , "EDGE LIST: " );
 	if( sol_num != 504 )
 	{
 		/* this is not an edge list entity */
@@ -61,17 +58,18 @@ struct iges_edge_use *edge;
 
 	edge_list->edge_de = edge->edge_de;
 	edge_list->next = NULL;
-	Readint( &edge_list->no_of_edges , "" );
+	Readint( &edge_list->no_of_edges , "\tNo of edges: " );
 	edge_list->i_edge = (struct iges_edge *)rt_calloc( edge_list->no_of_edges , sizeof( struct iges_edge ) ,
 			"Read_edge_list: iges_edge" );
 
 	for( i=0 ; i<edge_list->no_of_edges ; i++ )
 	{
-		Readint( &edge_list->i_edge[i].curve_de , "" );
-		Readint( &edge_list->i_edge[i].start_vert_de , "" );
-		Readint( &edge_list->i_edge[i].start_vert_index , "" );
-		Readint( &edge_list->i_edge[i].end_vert_de , "" );
-		Readint( &edge_list->i_edge[i].end_vert_index , "" );
+		printf( "--- Edge index %d:\n" , i+1 );
+		Readint( &edge_list->i_edge[i].curve_de , "\t\tCurve DE: " );
+		Readint( &edge_list->i_edge[i].start_vert_de , "\t\t\tStart vertex DE: " );
+		Readint( &edge_list->i_edge[i].start_vert_index , "\t\t\tStart index: " );
+		Readint( &edge_list->i_edge[i].end_vert_de , "\t\t\tEnd vertex DE: " );
+		Readint( &edge_list->i_edge[i].end_vert_index , "\t\t\tEnd index: " );
 	}
 
 	return( edge_list );

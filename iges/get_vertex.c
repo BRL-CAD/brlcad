@@ -19,13 +19,10 @@
 #else
 #include <string.h>
 #endif
-#include "./iges_struct.h"
-#include "./iges_extern.h"
-#include "rtlist.h"
-#include "rtstring.h"
-#include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "./iges_struct.h"
+#include "./iges_extern.h"
 
 RT_EXTERN( struct iges_edge_list *Get_edge_list , (struct iges_edge_use *edge ) );
 RT_EXTERN( struct iges_vertex_list *Get_vertex_list , (int vert_de ) );

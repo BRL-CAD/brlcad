@@ -1,4 +1,4 @@
-/*
+	/*
  *			I G E S . C
  *
  *  Code to support the g-iges converter
@@ -44,6 +44,8 @@ static char RCSid[] = "$Header$";
 #include "db.h"
 #include "externs.h"
 #include "vmath.h"
+#include "rtlist.h"
+#include "rtstring.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -52,6 +54,12 @@ static char RCSid[] = "$Header$";
 
 /* define defaulted entry for directory entry array */
 #define	DEFAULT	(-99999)
+
+/* macro to determine if one bounding box is within another */
+#define V3RPP1_IN_RPP2( _lo1 , _hi1 , _lo2 , _hi2 )	( \
+	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
+	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
+	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
 static int	solids_to_nmg=0;/* Count of solids that were converted to nmg's in CSG mode */
 static int	verbose=0;
@@ -66,6 +74,15 @@ static char	*att_string="BRLCAD attribute definition:material name,material para
 static struct rt_tol tol;	/* tolerances */
 static struct rt_tess_tol ttol;	/* tolerances */
 static struct db_i *dbip=NULL;
+static char	*unknown="Unknown";
+static int	unknown_count=0;
+static int	brep_count=0;
+extern int	solid_is_brep;
+extern int	comb_form;
+extern int	do_nurbs;
+extern int	mode;
+
+RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ) );
 
 #define		NO_OF_TYPES	28
 static int	type_count[NO_OF_TYPES][2]={
@@ -161,13 +178,6 @@ static char	*type_name[NO_OF_TYPES]={
 			"Shell"
 		};
 
-static char	*unknown="Unknown";
-static int	unknown_count=0;
-extern int	solid_is_brep;
-extern int	comb_form;
-extern int	do_nurbs;
-extern struct db_i	*dbip;
-
 static unsigned char colortab[9][4]={
 	{ 0 , 217 , 217 , 217 }, /* index 0 actually represents an undefined color */
 	{ 1 ,   0 ,   0 ,   0 },
@@ -178,6 +188,371 @@ static unsigned char colortab[9][4]={
 	{ 6 , 255 ,   0 , 255 },
 	{ 7 ,   0 , 255 , 255 },
 	{ 8 , 255 , 255 , 255 }};
+
+struct top_face
+{
+	struct shell *s;
+	struct face *f;
+	vect_t normal;
+};
+
+void
+nmg_to_winged_edge( r )
+struct nmgregion *r;
+{
+	struct shell *s;
+
+	NMG_CK_REGION( r );
+
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+	{
+		struct faceuse *fu;
+
+		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		{
+			struct loopuse *lu;
+
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			{
+				struct edgeuse *eu1,*eu2;
+
+				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				for( RT_LIST_FOR( eu1 , edgeuse , &lu->down_hd ) )
+				{
+					struct edgeuse *eu_new;
+					struct vertex *v1=NULL,*v2=NULL;
+
+					if( eu1->radial_p == eu1->eumate_p )
+						continue;	/* dangling edge (?warning?) *?
+
+					if( eu1->radial_p->eumate_p->radial_p == eu1->eumate_p )
+						continue;	/* winged edge */
+
+					/* this edge has more than two radial faces
+					 * find the other face from this shell
+					 */
+rt_log( "nmg_to_winged_edge: Ungluing an edge\n" );
+					eu2 = eu1->radial_p;
+					while( eu2 != eu1 && eu2 != eu1->eumate_p
+						&& nmg_find_s_of_eu( eu2 ) != s )
+							eu2 = eu2->eumate_p->radial_p;
+
+					/* unglue edge eu1 */
+					nmg_unglueedge( eu1 );
+
+					/* Make a new edge */
+					eu_new = nmg_me( v1 , v2 , s );
+
+					/* Give the endpoints the same coordinates as the originbal edge */
+					nmg_vertex_gv( eu_new->vu_p->v_p , eu1->vu_p->v_p->vg_p->coord );
+					nmg_vertex_gv( eu_new->eumate_p->vu_p->v_p , eu1->eumate_p->vu_p->v_p->vg_p->coord );
+
+					/* Move edgeuses to the new vertices */
+					nmg_movevu( eu1->vu_p , eu_new->vu_p->v_p );
+					nmg_movevu( eu1->eumate_p->vu_p , eu_new->eumate_p->vu_p->v_p );
+
+					/* kill the new edge (I only wanted it for its vertices) */
+					if( nmg_keu( eu_new ) )
+						rt_bomb( "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!!!!\n" );
+
+					/* move the other edgeuse to the same edge */
+					if( eu2 == eu1 || eu2 == eu1->eumate_p )
+						rt_log( "nmg_to_winged_edge: couldn't find second radial face for eu x%x in shell x%x\n" , eu1 , s );
+					else
+						nmg_moveeu( eu1 , eu2 );
+				}
+			}
+		}
+	}
+}
+
+static void
+nmg_assoc_void_shells( r , shells , ttol )
+CONST struct nmgregion *r;
+struct nmg_ptbl *shells;
+CONST struct rt_tol *ttol;
+{
+	struct shell *outer_shell,*void_s,*s;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct face *ext_f;
+	long *flags;
+	struct top_face *top_faces;
+	int total_shells=0;
+	int i;
+
+	NMG_CK_REGION( r );
+	NMG_CK_PTBL( shells );
+	RT_CK_TOL( ttol );
+
+	outer_shell = (struct shell *)NMG_TBL_GET( shells , 0 );
+	NMG_CK_SHELL( outer_shell );
+rt_log( "Looking for voids in shell x%x\n" , outer_shell );
+
+	/* count shells in region */
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		total_shells++;
+
+	/* make an array of shells and top faces */
+	top_faces = (struct top_face *)rt_calloc( total_shells , sizeof( struct top_face ) , "nmg_assoc_void_shells: top_faces" );
+
+	/* make flags array for use by "nmg_find_top_face" */
+	flags = (long *)rt_calloc( r->m_p->maxindex , sizeof( long ) , "nmg_find_outer_and_void_shells: flags" );
+
+	top_faces[0].s = outer_shell;
+	top_faces[0].f = nmg_find_top_face( outer_shell , flags );
+	ext_f = top_faces[0].f;
+	fu = top_faces[0].f->fu_p;
+	NMG_GET_FU_NORMAL( top_faces[0].normal , fu );
+rt_log( "shell x%x, top_face = x%x , normal = ( %g %g %g )\n" , top_faces[0].s , top_faces[0].f , V3ARGS( top_faces[0].normal ) );
+
+	/* fill in top_faces array */
+	i = 0;
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+	{
+		if( s == outer_shell )
+			continue;
+
+		top_faces[++i].s = s;
+		top_faces[i].f = nmg_find_top_face( s , flags );
+		fu = top_faces[i].f->fu_p;
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+		NMG_GET_FU_NORMAL( top_faces[i].normal , fu );
+rt_log( "shell x%x, top_face = x%x , normal = ( %g %g %g )\n" , top_faces[i].s , top_faces[i].f , V3ARGS( top_faces[i].normal ) );
+	}
+
+	/* look for voids */
+	for( RT_LIST_FOR( void_s , shell , &r->s_hd ) )
+	{
+		struct face *void_f;
+		int wrong_void=0;
+		vect_t normal;
+
+		if( void_s == outer_shell )
+			continue;
+
+rt_log( "\t\tChecking shell x%x as possible void\n" , void_s );
+
+		NMG_CK_SHELL( void_s );
+
+		void_f = (struct face *)NULL;
+		for( i=0 ; i<total_shells ; i++ )
+		{
+			if( top_faces[i].s == void_s )
+			{
+				void_f = top_faces[i].f;
+				VMOVE( normal , top_faces[i].normal );
+				break;
+			}
+		}
+		if( void_f == (struct face *)NULL )
+			rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
+rt_log( "\t\t\tnormal = ( %g %g %g )\n" , V3ARGS( normal ) );
+
+		if( normal[Z] < 0.0  )
+		{
+			/* this is a void shell */
+			struct face *int_f;
+			struct shell *test_s;
+			int breakout=0;
+			int not_in_this_shell=0;
+rt_log( "\t\t\tIt is a void shell...\n" );
+
+			/* this is a void shell
+			 * but does it belong with outer_shell */
+			if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , outer_shell->sa_p->min_pt , outer_shell->sa_p->max_pt ) )
+			{
+rt_log( "\t\t\t\tNot for this external shell (bounding boxes not within one another)\n" );
+				continue;
+			}
+
+			for( RT_LIST_FOR( fu , faceuse , &void_s->fu_hd ) )
+			{
+				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				{
+					if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						continue;
+					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+					{
+						int class;
+
+						class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord , outer_shell , ttol );
+
+						if( class == NMG_CLASS_AoutB )
+						{
+rt_log( "\t\t\tNot for this external shell (point on void shell is outside external shell)\n" );
+							breakout = 1;
+							not_in_this_shell = 1;
+							break;
+						}
+					}
+					if( breakout )
+						break;
+				}
+				if( breakout )
+					break;
+			}
+
+			if( not_in_this_shell )
+				continue;
+
+			int_f = (struct face *)NULL;
+			for( i=0 ; i<total_shells ; i++ )
+			{
+				if( top_faces[i].s == void_s )
+				{
+					int_f = top_faces[i].f;
+					break;
+				}
+			}
+			if( int_f == (struct face *)NULL )
+				rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
+
+			/* Make sure there are no other external shells between these two */
+			for( RT_LIST_FOR( test_s , shell , &r->s_hd ) )
+			{
+				vect_t test_norm;
+				struct face *test_f;
+
+				test_f = (struct face *)NULL;
+				for( i=0 ; i<total_shells ; i++ )
+				{
+					if( top_faces[i].s == test_s )
+					{
+						test_f = top_faces[i].f;
+						VMOVE( test_norm , top_faces[i].normal );
+						break;
+					}
+				}
+				if( test_f == (struct face *)NULL )
+					rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
+
+				if( test_norm[Z] > 0.0 )
+				{
+					if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , test_s->sa_p->min_pt , test_s->sa_p->max_pt ) )
+						continue;
+
+					if( test_f->max_pt[Z] > int_f->max_pt[Z]
+					    && test_f->max_pt[Z] < ext_f->max_pt[Z] )
+					{
+						wrong_void = 1;
+						break;
+					}
+				}
+			}
+			if( wrong_void )
+			{
+rt_log( "\t\t\t\tWrong void\n" );
+				continue;
+			}
+
+			/* This void shell belongs with shell outer_s 
+			 * add it to the list of shells */
+			nmg_tbl( shells , TBL_INS , (long *)void_s );
+rt_log( "\t\t\t\tMarked this Shell (x%x) as void inside shell x%x\n" , void_s , outer_shell );
+		}
+	}
+	rt_free( (char *)flags , "nmg_assoc_void_shells: flags" );
+}
+
+int
+nmg_find_outer_and_void_shells( r , shells , tol )
+struct nmgregion *r;
+struct nmg_ptbl ***shells;
+CONST struct rt_tol *tol;
+{
+	struct nmg_ptbl outer_shells;
+	struct shell *s;
+	int i;
+	int total_shells=0;
+	int outer_shell_count;
+	int re_bound=0;
+	long *flags;
+
+	NMG_CK_REGION( r );
+	RT_CK_TOL( tol );
+
+	/* Decompose shells */
+	nmg_tbl( &outer_shells , TBL_INIT , NULL );
+	for (RT_LIST_FOR(s, shell, &r->s_hd))
+	{
+		NMG_CK_SHELL( s );
+		nmg_tbl( &outer_shells , TBL_INS , (long *)s );
+	}
+	for( i=0 ; i<NMG_TBL_END( &outer_shells ) ; i++ )
+	{
+		s = (struct shell *)NMG_TBL_GET( &outer_shells , i );
+		if( nmg_decompose_shell( s ) )
+			re_bound = 1;
+	}
+	nmg_tbl( &outer_shells , TBL_RST , NULL );
+
+	if( re_bound )
+		nmg_region_a( r , tol );
+
+	for (RT_LIST_FOR(s, shell, &r->s_hd))
+		total_shells++;
+
+	flags = (long *)rt_calloc( r->m_p->maxindex , sizeof( long ) , "nmg_find_outer_and_void_shells: flags" );
+
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+	{
+		struct face *f;
+		struct faceuse *fu;
+		vect_t normal;
+
+		f = nmg_find_top_face( s , flags );
+		fu = f->fu_p;
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+		if( fu->orientation != OT_SAME )
+			rt_bomb( "nmg_find_outer_and_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
+
+		NMG_GET_FU_NORMAL( normal , fu );
+		if( normal[Z] > 0.0 )
+		{
+			nmg_tbl( &outer_shells , TBL_INS , (long *)s );	/* outer shell */
+rt_log( "Shell x%x is an outer shell\n" , s );
+		}
+		else
+rt_log( "Shell x%x is a void shell\n" , s );
+	}
+
+	/* outer_shells is now a list of all the outer shells in the region */
+	outer_shell_count = NMG_TBL_END( &outer_shells );
+	if( outer_shell_count == total_shells )
+	{
+		/* there are no void shells */
+		*shells = (struct nmg_ptbl **)rt_malloc(  sizeof( struct nmg_ptbl *) ,
+			"nmg_find_outer_and_void_shells: shells" );
+		**shells = &outer_shells; /* return the list of outer shells */
+		return( outer_shell_count );		/* no void shells */
+	}
+
+	*shells = (struct nmg_ptbl **)rt_calloc( NMG_TBL_END( &outer_shells ) , sizeof( struct nmg_ptbl *) ,
+			"nmg_find_outer_and_void_shells: shells" );
+	for( i=0 ; i<NMG_TBL_END( &outer_shells ) ; i++ )
+	{
+		(*shells)[i] = (struct nmg_ptbl *)rt_malloc( sizeof( struct nmg_ptbl ) , 
+			"nmg_find_outer_and_void_shells: shells[]" );
+
+		nmg_tbl( (*shells)[i] , TBL_INIT , NULL );
+		NMG_CK_PTBL( (*shells)[i] );
+		nmg_tbl( (*shells)[i] , TBL_INS , (long *)NMG_TBL_GET( &outer_shells , i ) );
+		nmg_assoc_void_shells( r , (*shells)[i] , tol );
+	}
+
+	rt_free( (char *)flags , "nmg_find_outer_and_void_shells: flags" );
+	nmg_tbl( &outer_shells , TBL_FREE , NULL );
+	return( outer_shell_count );
+}
 
 void
 get_props( props , rp )
@@ -229,6 +604,9 @@ char *name;
 	props->color[1] = 0;
 	props->color[2] = 0;
 
+	if( name == NULL )
+		return( 1 );
+
 	dp  = db_lookup( dbip , name , 1 );
 	if( dp == DIR_NULL )
 		return( 1 );
@@ -271,7 +649,7 @@ FILE *fp_dir,*fp_param;
 	dir_entry[1] = 314;
 	dir_entry[2] = param_seq + 1;
 	dir_entry[8] = 0;
-	dir_entry[9] = 201;
+	dir_entry[9] = 10201;
 	dir_entry[11] = 314;
 	dir_entry[15] = 0;
 	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ) , dir_seq+1 , 'P' );
@@ -338,7 +716,7 @@ FILE *fp_dir,*fp_param;
 	/* write directory entry for line entity */
 	dir_entry[1] = 322;
 	dir_entry[8] = 0;
-	dir_entry[9] = 201;
+	dir_entry[9] = 10201;
 	dir_entry[11] = 322;
 	dir_entry[15] = 0;
 
@@ -704,31 +1082,141 @@ char *version;
 
 
 int
-nmgregion_to_iges( name , r , fp_dir , fp_param )
+nmgregion_to_iges( name , r , dependent , fp_dir , fp_param )
 char *name;
 struct nmgregion *r;
+int dependent;
 FILE *fp_dir,*fp_param;
 {
+	struct nmgregion	*new_r;		/* temporary nmgregion */
+	struct shell		*s_new;		/* shell made by nmg_mrsv */
 	struct nmg_ptbl		vtab;		/* vertex table */
 	struct nmg_ptbl		etab;		/* edge table */
-	int			brep_de;	/* Directory entry sequence # for BREP Object */
+	struct nmg_ptbl		**shells;	/* array of tables of shells */
+	int			*brep_de;	/* Directory entry sequence # for BREP Object(s) */
 	int			vert_de;	/* Directory entry sequence # for vertex list */
 	int			edge_de;	/* Directory entry sequence # for edge list */
+	int			outer_shell_count; /* number of outer shells in nmgregion */
+	int			i;
 
-	/* Make the vertex list entity */
-	vert_de = write_vertex_list( r , &vtab , fp_dir , fp_param );
+	NMG_CK_REGION( r );
 
-	/* Make the edge list entity */
-	edge_de = write_edge_list( r , vert_de , &etab , &vtab , fp_dir , fp_param );
+	{
+		struct shell *s;
+		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		{
+			struct faceuse *fu;
 
-	/* Make the face, loop, shell entities */
-	brep_de = write_shell_face_loop( name , r , edge_de , &etab , vert_de , &vtab , fp_dir , fp_param );
+			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+			{
+				struct loopuse *lu;
+
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				{
+					struct edgeuse *eu;
+
+					if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+					{
+						struct vertex *v;
+
+						v = eu->vu_p->v_p;
+						NMG_CK_VERTEX( v );
+						if( !v->vg_p )
+							rt_log( "vertex with no geometry!!\n" );
+					}
+				}
+			}
+		}
+	}
+
+	/* Find outer shells and void shells and their associations */
+	outer_shell_count = nmg_find_outer_and_void_shells( r , &shells , &tol );
+
+	/* debugging loop */
+	for( i=0 ; i<outer_shell_count ; i++ )
+	{
+		struct shell *s;
+		int j;
+
+		s = (struct shell *)NMG_TBL_GET( shells[i] , 0 );
+		rt_log( "Outer shell x%x has the following void shells:\n" , s );
+		NMG_CK_SHELL( s );
+		for( j=1 ; j<NMG_TBL_END( shells[i] ) ; j++ )
+		{
+			s = (struct shell *)NMG_TBL_GET( shells[i] , j );
+			rt_log( "\tx%x\n" , s );
+			NMG_CK_SHELL( s );
+		}
+	}
+
+	brep_de = (int *)rt_calloc( outer_shell_count , sizeof( int ) , "nmgregion_to_iges: brep_de" );
+
+	for( i=0 ; i<outer_shell_count ; i++ )
+	{
+		int j;
+		int tmp_dependent;
+		struct shell *s;
+		char *tmp_name;
+
+		if( outer_shell_count == 1 )
+		{
+rt_log( "only one outer shell, no new region created\n" );
+			new_r = r;
+			s_new = NULL;
+			tmp_name = name;
+			tmp_dependent = dependent;
+		}
+		else
+		{
+			new_r = nmg_mrsv( r->m_p );
+			s_new = RT_LIST_FIRST( shell , &new_r->s_hd );
+			tmp_name = NULL;
+			tmp_dependent = 1;
+rt_log( "For outer shell #%d new_r = x%x\n" , i , new_r );
+		}
+
+		for( j=NMG_TBL_END( shells[i] )-1 ; j >= 0  ; j-- )
+		{
+			s = (struct shell *)NMG_TBL_GET( shells[i] , j );
+rt_log( "Moving shell x%x to region x%x\n" , s , new_r );
+			nmg_mv_shell_to_region( s , new_r );
+		}
+		if( s_new )
+			(void)nmg_ks( s_new );
+
+		/* Make the vertex list entity */
+rt_log( "writing vertex list for region x%x\n" , new_r );
+		vert_de = write_vertex_list( new_r , &vtab , fp_dir , fp_param );
+
+		/* Make the edge list entity */
+rt_log( "writing edge list for region x%x\n" , new_r );
+		edge_de = write_edge_list( new_r , vert_de , &etab , &vtab , fp_dir , fp_param );
+
+		/* Make the face, loop, shell entities */
+		brep_de[i] = write_shell_face_loop( tmp_name , new_r , tmp_dependent , edge_de , &etab , vert_de , &vtab , fp_dir , fp_param );
+
+		/* Clear the tables */
+		(void)nmg_tbl( &vtab , TBL_RST , 0 );
+		(void)nmg_tbl( &etab , TBL_RST , 0 );
+
+		if( outer_shell_count != 1 )
+			(void)nmg_kr( new_r );
+	}
 
 	/* Free the tables */
 	(void)nmg_tbl( &vtab , TBL_FREE , 0 );
 	(void)nmg_tbl( &etab , TBL_FREE , 0 );
 
-	return( brep_de );
+	if( outer_shell_count != 1 )
+		return( write_solid_assembly( name, brep_de , outer_shell_count , dependent , fp_dir , fp_param ) );
+	else
+		return( brep_de[0] );
 }
 
 int
@@ -761,6 +1249,8 @@ FILE *fp_dir,*fp_param;
 		v = (struct vertex *)NMG_TBL_GET(vtab,i);
 		NMG_CK_VERTEX(v);
 		vg = v->vg_p;
+if( !vg )
+	rt_log( "No geometry for vertex x%x #%d in table\n" , v , i );
 		NMG_CK_VERTEX_G(vg);
 		rt_vls_printf( &str, ",%g,%g,%g",
 			vg->coord[X],
@@ -1181,9 +1671,10 @@ FILE *fp_param;
 }
 
 int
-write_shell_face_loop( name , r , edge_de , etab , vert_de , vtab , fp_dir , fp_param )
+write_shell_face_loop( name , r , dependent , edge_de , etab , vert_de , vtab , fp_dir , fp_param )
 char *name;
 struct nmgregion *r;
+int dependent;
 int edge_de;		/* directory entry # for edge list */
 struct nmg_ptbl *etab;	/* Table of edge pointers */
 int vert_de;		/* directory entry # for vertex list */
@@ -1197,7 +1688,7 @@ FILE *fp_dir,*fp_param;
 	struct vertex		*v;
 	struct rt_vls		str;
 	struct iges_properties	props;
-	int			outer_shell;
+	struct nmg_ptbl		**shells;
 	int			*shell_list;
 	int			i;
 	int			shell_count=0;
@@ -1210,56 +1701,19 @@ FILE *fp_dir,*fp_param;
 
 	rt_vls_init( &str );
 
-	/* Decompose shells */
-	for (RT_LIST_FOR(s, shell, &r->s_hd))
-	{
-		NMG_CK_SHELL( s );
-		(void)nmg_decompose_shell( s );
-	}
-
-	/* Count shells */
-	for (RT_LIST_FOR(s, shell, &r->s_hd))
-	{
-		NMG_CK_SHELL( s );
+	/* count the shells */
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
 		shell_count++;
-	}
-	shell_list = (int *)rt_calloc( shell_count , sizeof( int ) , "shell_list" );
 
-	if( shell_count > 1 )
-	{
-		/* determine outer shell by picking shell with biggest bounding box */
-		double diagonal_length;
-
-		diagonal_length = 0.0;
-		outer_shell = (-1);
-		shell_count = 0;
-		nmg_region_a( r , &tol );
-		for (RT_LIST_FOR(s, shell, &r->s_hd))
-		{
-			struct shell_a *sa;
-			double tmp_length;
-			vect_t diagonal;
-
-			sa = s->sa_p;
-			NMG_CK_SHELL_A( sa );
-			VSUB2( diagonal , sa->max_pt , sa->min_pt );
-			tmp_length = MAGSQ( diagonal );
-			if( tmp_length > diagonal_length )
-			{
-				diagonal_length = tmp_length;
-				outer_shell = shell_count;
-			}
-			shell_count++;
-		}
-		if( outer_shell == (-1) )
-			rt_bomb( "write_shell_face_loop: couldn`t find outer shell\n" );
-	}
+	/* make space for the list of shell DE's */
+	shell_list = (int *)rt_calloc( shell_count , sizeof( int ) , "write_shell_face_loop: shell_list" );
 
 	shell_count = 0;
-	for (RT_LIST_FOR(s, shell, &r->s_hd))
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
 	{
 		int	*face_list;
 		int	face_count=0;
+
 
 		/* Count faces */
 		for (RT_LIST_FOR(fu, faceuse, &s->fu_hd))
@@ -1473,12 +1927,11 @@ FILE *fp_dir,*fp_param;
 	}
 
 	/* Put outer shell in BREP object first */
-	rt_vls_printf( &str , "186,%d,1,%d" , shell_list[outer_shell] , shell_count-1 );
+	rt_vls_printf( &str , "186,%d,1,%d" , shell_list[0] , shell_count-1 );
 
 	/* Add all other shells */
-	for( i=0 ; i<shell_count ; i++ )
+	for( i=1 ; i<shell_count ; i++ )
 	{
-		if( i != outer_shell )
 			rt_vls_printf( &str , ",%d,1" , shell_list[i] );
 	}
 
@@ -1504,7 +1957,10 @@ FILE *fp_dir,*fp_param;
 	dir_entry[1] = 186;
 	dir_entry[2] = param_seq + 1;
 	dir_entry[8] = 0;
-	dir_entry[9] = 1;
+	if( dependent )
+		dir_entry[9] = 10001;
+	else
+		dir_entry[9] = 1;
 	dir_entry[11] = 186;
 	dir_entry[13] = color_de;
 	dir_entry[15] = 0;
@@ -1621,7 +2077,7 @@ FILE *fp_dir,*fp_param;
 	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ), dir_seq+1 , 'P' );
 	rt_vls_free( &str );
 
-	/* write directory entry for vertex list entity */
+	/* write directory entry for name property entity */
 	dir_entry[1] = 406;
 	dir_entry[8] = 0;
 	dir_entry[9] = 1010301;
@@ -1673,7 +2129,7 @@ FILE *fp_dir,*fp_param;
 	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ), dir_seq+1 , 'P' );
 	rt_vls_free( &str );
 
-	/* write directory entry for vertex list entity */
+	/* write directory entry for torus entity */
 	dir_entry[1] = 160;
 	dir_entry[8] = 0;
 	dir_entry[9] = 10001;
@@ -1727,7 +2183,7 @@ FILE *fp_dir,*fp_param;
 	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ), dir_seq+1 , 'P' );
 	rt_vls_free( &str );
 
-	/* write directory entry for vertex list entity */
+	/* write directory entry for sphere entity */
 	dir_entry[1] = 158;
 	dir_entry[8] = 0;
 	dir_entry[9] = 10001;
@@ -1798,7 +2254,7 @@ FILE *fp_dir,*fp_param;
 	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ), dir_seq+1 , 'P' );
 	rt_vls_free( &str );
 
-	/* write directory entry for vertex list entity */
+	/* write directory entry for ellipsoid entity */
 	dir_entry[1] = 168;
 	dir_entry[8] = 0;
 	dir_entry[9] = 10001;
@@ -1884,7 +2340,7 @@ FILE *fp_dir,*fp_param;
 	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ), dir_seq+1 , 'P' );
 	rt_vls_free( &str );
 
-	/* write directory entry for vertex list entity */
+	/* write directory entry for block entity */
 	dir_entry[1] = 150;
 	dir_entry[8] = 0;
 	dir_entry[9] = 10001;
@@ -2040,38 +2496,157 @@ FILE *fp_dir,*fp_param;
 }
 
 int
-write_tree_of_unions( name, de_list , length , fp_dir , fp_param )
+write_tree_of_unions( name, de_list , length , dependent , fp_dir , fp_param )
 char *name;
 int de_list[];
 int length;
+int dependent;
 FILE *fp_dir;
 FILE *fp_param;
 {
 	struct rt_vls		str;
+	struct iges_properties	props;
 	int			dir_entry[21];
 	int			name_de;
+	int			prop_de;
+	int			color_de;
 	int			i;
 
 	rt_vls_init( &str );
 
-	/* initialize directory entry */
-	for( i=0 ; i<21 ; i++ )
-		dir_entry[i] = DEFAULT;
-
 	/* write name entity */
-	name_de = write_name_entity( name , fp_dir , fp_param );
+	if( name != NULL )
+		name_de = write_name_entity( name , fp_dir , fp_param );
+	else
+		name_de = 0;
+
+	/* write color and attributes entities, if appropriate */
+	if( lookup_props( &props , name ) )
+	{
+		prop_de = 0;
+		color_de = 0;
+	}
+	else
+	{
+		prop_de = write_att_entity( &props , fp_dir , fp_param );
+		if( props.color_defined )
+			color_de = get_color( props.color , fp_dir , fp_param );
+	}
 
 	/* write parameter data into a string */
 	rt_vls_printf( &str , "180,%d,%d" , 2*length-1 , -de_list[0] );
 	for( i=1 ; i<length ; i++ )
 		rt_vls_printf( &str , ",%d,1" , -de_list[i] );
-	rt_vls_printf( &str , ",0,1,%d;" , name_de );
+
+	if( prop_de || name_de )
+	{
+		if( prop_de && name_de )
+			rt_vls_strcat( &str , ",0,2" );
+		else
+			rt_vls_printf( &str , ",0,1" );
+		if( prop_de )
+			rt_vls_printf( &str , ",%d" , prop_de );
+		if( name_de )
+			rt_vls_printf( &str , ",%d" , name_de );
+
+	}
+
+	rt_vls_strcat( &str , ";"  );
+
+	/* initialize directory entry */
+	for( i=0 ; i<21 ; i++ )
+		dir_entry[i] = DEFAULT;
 
 	dir_entry[1] = 180;
 	dir_entry[2] = param_seq + 1;
 	dir_entry[8] = 0;
-	dir_entry[9] = 10001;
+	if( dependent )
+		dir_entry[9] = 10001;
+	else
+		dir_entry[9] = 1;
 	dir_entry[11] = 180;
+	dir_entry[13] = color_de;
+	dir_entry[15] = 0;
+	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ) , dir_seq+1 , 'P' );
+
+	rt_vls_free( &str );
+
+	return( write_dir_entry( fp_dir , dir_entry ) );
+}
+
+int
+write_solid_assembly( name, de_list , length , dependent , fp_dir , fp_param )
+char *name;
+int de_list[];
+int length;
+int dependent;
+FILE *fp_dir;
+FILE *fp_param;
+{
+	struct rt_vls		str;
+	struct iges_properties	props;
+	int			dir_entry[21];
+	int			name_de;
+	int			prop_de;
+	int			color_de;
+	int			i;
+
+	rt_vls_init( &str );
+
+	/* write name entity */
+	if( name != NULL )
+		name_de = write_name_entity( name , fp_dir , fp_param );
+	else
+		name_de = 0;
+
+	/* write color and attributes entities, if appropriate */
+	if( lookup_props( &props , name ) )
+	{
+		prop_de = 0;
+		color_de = 0;
+	}
+	else
+	{
+		prop_de = write_att_entity( &props , fp_dir , fp_param );
+		if( props.color_defined )
+			color_de = get_color( props.color , fp_dir , fp_param );
+	}
+
+	/* write parameter data into a string */
+	rt_vls_printf( &str , "184,%d" , length );
+	for( i=0 ; i<length ; i++ )
+		rt_vls_printf( &str , ",%d" , de_list[i] );
+	for( i=0 ; i<length ; i++ )
+		rt_vls_printf( &str , ",0" );
+
+	if( prop_de || name_de )
+	{
+		if( prop_de && name_de )
+			rt_vls_strcat( &str , ",0,2" );
+		else
+			rt_vls_printf( &str , ",0,1" );
+		if( prop_de )
+			rt_vls_printf( &str , ",%d" , prop_de );
+		if( name_de )
+			rt_vls_printf( &str , ",%d" , name_de );
+
+	}
+
+	rt_vls_strcat( &str , ";"  );
+
+	/* initialize directory entry */
+	for( i=0 ; i<21 ; i++ )
+		dir_entry[i] = DEFAULT;
+
+	dir_entry[1] = 184;
+	dir_entry[2] = param_seq + 1;
+	dir_entry[8] = 0;
+	if( dependent )
+		dir_entry[9] = 10001;
+	else
+		dir_entry[9] = 1;
+	dir_entry[11] = 184;
+	dir_entry[13] = color_de;
 	dir_entry[15] = 0;
 	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ) , dir_seq+1 , 'P' );
 
@@ -2303,7 +2878,7 @@ FILE *fp_dir,*fp_param;
 	dir_entry[2] = param_seq + 1;
 	dir_entry[3] = (-attribute_de);
 	dir_entry[8] = 0;
-	dir_entry[9] = 10001;
+	dir_entry[9] = 10301;
 	dir_entry[11] = 422;
 	dir_entry[15] = 0;
 	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ) , dir_seq+1 , 'P' );
@@ -2405,7 +2980,9 @@ FILE *fp_dir,*fp_param;
 	int			props_de;
 	int			color_de;
 	int			union_count=0;
+	int			non_union_count=0;
 	int			status=1;
+	int			entity_type;
 	int			i;
 
 	/* if any part of this tree has not been converted, don't try to write the tree */
@@ -2438,26 +3015,48 @@ FILE *fp_dir,*fp_param;
 	else
 		color_de = 0;
 
-	/* write parameter data into a string */
-	rt_vls_printf( &str , "180,%d,%d" , 2*length-1 , -de_pointers[0] );
 	for( i=1 ; i<length ; i++ )
 	{
-		switch( rp[i+1].M.m_relation )
-		{
-		case UNION:
-			rt_vls_printf( &str , ",%d" , -de_pointers[i] );
-			union_count++;
-			break;
-		case INTERSECT:
-			rt_vls_printf( &str , ",%d,2" , -de_pointers[i] );
-			break;
-		case SUBTRACT:
-			rt_vls_printf( &str , ",%d,3" , -de_pointers[i] );
-			break;
-		}
+		if( rp[i+1].M.m_relation != UNION )
+			non_union_count++;
 	}
-	for( i=0 ; i<union_count ; i++ )
-		rt_vls_strcat( &str , ",1" );
+
+	if( mode == CSG_MODE || non_union_count )
+	{
+		/* write the combination as a Boolean tree */
+		entity_type = 180;
+
+		rt_vls_printf( &str , "%d,%d,%d" , entity_type , 2*length-1 , -de_pointers[0] );
+		for( i=1 ; i<length ; i++ )
+		{
+			switch( rp[i+1].M.m_relation )
+			{
+			case UNION:
+				rt_vls_printf( &str , ",%d" , -de_pointers[i] );
+				union_count++;
+				break;
+			case INTERSECT:
+				rt_vls_printf( &str , ",%d,2" , -de_pointers[i] );
+				break;
+			case SUBTRACT:
+				rt_vls_printf( &str , ",%d,3" , -de_pointers[i] );
+				break;
+			}
+		}
+		for( i=0 ; i<union_count ; i++ )
+			rt_vls_strcat( &str , ",1" );
+	}
+	else
+	{
+		/* write the combination as a solid assembly */
+		entity_type = 184;
+
+		rt_vls_printf( &str , "%d,%d" , entity_type , length );
+		for( i=0 ; i<length ; i++ )
+			rt_vls_printf( &str , ",%d" , de_pointers[i] );
+		for( i=0 ; i<length ; i++ )
+			rt_vls_strcat( &str , ",0" );
+	}
 
 	if( props_de || name_de )
 	{
@@ -2473,11 +3072,11 @@ FILE *fp_dir,*fp_param;
 	}
 	rt_vls_strcat( &str , ";" );
 
-	dir_entry[1] = 180;
+	dir_entry[1] = entity_type;
 	dir_entry[2] = param_seq + 1;
 	dir_entry[8] = 0;
 	dir_entry[9] = status;
-	dir_entry[11] = 180;
+	dir_entry[11] = entity_type;
 	dir_entry[13] = color_de;
 	dir_entry[15] = comb_form;
 	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ) , dir_seq+1 , 'P' );

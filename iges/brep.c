@@ -19,13 +19,12 @@
 #else
 #include <string.h>
 #endif
-#include "./iges_struct.h"
-#include "./iges_extern.h"
-#include "rtlist.h"
-#include "rtstring.h"
-#include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "./iges_struct.h"
+#include "./iges_extern.h"
+
+RT_EXTERN( struct model *nmg_mmr , () );
 
 brep( entityno )
 int entityno;
@@ -63,18 +62,18 @@ int entityno;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
-	Readint( &shell_de , "" );
-	Readint( &orient , "" );
-	Readint( &num_of_voids , "" );
+	Readint( &sol_num , "MSBO: " );
+	Readint( &shell_de , "\tShell de: " );
+	Readint( &orient , "\tShell orient: " );
+	Readint( &num_of_voids , "\tNo of voids: " );
 	if( num_of_voids )
 	{
 		void_shell_de = (int *)rt_calloc( num_of_voids , sizeof( int ) , "BREP: void shell DE's" );
 		void_orient = (int *)rt_calloc( num_of_voids , sizeof( int ) , "BREP: void shell orients" );
 		for( i=0 ; i<num_of_voids ; i++ )
 		{
-			Readint( &void_shell_de[i] , "" );
-			Readint( &void_orient[i] , "" );
+			Readint( &void_shell_de[i] , "\t\tVoid shell de: " );
+			Readint( &void_orient[i] , "\t\tVoid shell orient: " );
 		}
 	}
 
@@ -93,15 +92,21 @@ int entityno;
 			goto err;
 	}
 
+printf( "Associate geometry:\n" );
 	/* Associate geometry */
 	v_list = vertex_root;
 	while( v_list != NULL )
 	{
-		for( i=0 ; i < v_list->no_of_verts ; i++ )	
+printf( "\tFor list at DE %d (%d vertices)\n:" , v_list->vert_de , v_list->no_of_verts );
+		for( i=0 ; i < v_list->no_of_verts ; i++ )
 		{
-			if( v_list->i_verts[i].v )
+printf( "\t\t%d v = x%x, set to ( %g %g %g)\n" , i+1 , v_list->i_verts[i].v , V3ARGS( v_list->i_verts[i].pt) );
+			if( v_list->i_verts[i].v != NULL )
+			{
+				NMG_CK_VERTEX( v_list->i_verts[i].v );
 				nmg_vertex_gv( v_list->i_verts[i].v ,
 					v_list->i_verts[i].pt );
+			}
 		}
 		v_list = v_list->next;
 	}
@@ -122,7 +127,7 @@ int entityno;
 
 
 	/* Compute "geometry" for region and shell */
-	nmg_region_a( r );
+	nmg_region_a( r , &tol );
 
 	/* only do this in extreme cricumstances */
 /*	nmg_pr_m( m );	*/

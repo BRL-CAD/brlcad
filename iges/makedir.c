@@ -95,6 +95,12 @@ Makedir()
 		/* convert it to a "dir" index */
 		dir[entcount]->trans = (atoi( str ) - 1)/2;
 
+		/* skip next field */
+		counter += 8;
+
+		Readcols( str , 8 );	/* read status entry */
+		dir[entcount]->status = atoi( str );
+
 		Readrec( currec + 1 );	/* read next record into buffer */
 		counter += 16;		/* skip first two fields */
 
@@ -138,8 +144,18 @@ Makedir()
 			}
 			else
 			{
+				int j;
+
 				dir[entcount]->rot = (mat_t *)rt_malloc( sizeof( mat_t ) , "Makedir:matrix" );
 				Readmatrix( dir[entcount]->param , *dir[entcount]->rot );
+
+				rt_log( "Transform (in Makedir):\n" );
+				for( j=0 ; j<16 ; j++ )
+				{
+					rt_log( "%f " , (*dir[entcount]->rot)[j] );
+					if( (j+1)%4 == 0 )
+						rt_log( "\n" );
+				}
 			}
 		}
 		else /* set to NULL */

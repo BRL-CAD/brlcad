@@ -19,13 +19,13 @@
 #else
 #include <string.h>
 #endif
-#include "./iges_struct.h"
-#include "./iges_extern.h"
 #include "rtlist.h"
 #include "rtstring.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "./iges_struct.h"
+#include "./iges_extern.h"
 
 RT_EXTERN( struct faceuse *Make_face , ( struct shell *s , int entityno , int face_orient ) );
 RT_EXTERN( int Add_loop_to_face , (struct shell *s , struct faceuse *fu , int entityno , int face_orient ));

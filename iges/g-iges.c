@@ -36,16 +36,15 @@ extern char	version[];
 #include "db.h"
 #include "externs.h"
 #include "vmath.h"
+#include "rtlist.h"
+#include "rtstring.h"
 #include "nmg.h"
-#include "rtgeom.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "../iges-g/iges.h"
 #include "../librt/debug.h"
 
 #define	CP_BUF_SIZE	1024	/* size of buffer for file copy */
-
-#define	FACET_MODE	1
-#define	CSG_MODE	2
 
 RT_EXTERN( union tree *do_nmg_region_end , (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( void w_start_global , (FILE *fp_dir , FILE *fp_param , char *db_name , char *prog_name , char *output_file , char *id , char *version ));
@@ -53,7 +52,7 @@ RT_EXTERN( void w_terminate , (FILE *fp) );
 RT_EXTERN( void write_edge_list , (struct nmgregion *r , int vert_de , struct nmg_ptbl *etab , struct nmg_ptbl *vtab , FILE *fp_dir , FILE *fp_param ) );
 RT_EXTERN( void write_vertex_list , ( struct nmgregion *r , struct nmg_ptbl *vtab , FILE *fp_dir , FILE *fp_param ) );
 RT_EXTERN( void nmg_region_edge_list , ( struct nmg_ptbl *tab , struct nmgregion *r ) );
-RT_EXTERN( int nmgregion_to_iges , ( char *name , struct nmgregion *r , FILE *fp_dir , FILE *fp_param ) );
+RT_EXTERN( int nmgregion_to_iges , ( char *name , struct nmgregion *r , int dependent , FILE *fp_dir , FILE *fp_param ) );
 RT_EXTERN( int write_shell_face_loop , ( struct nmgregion *r , int edge_de , struct nmg_ptbl *etab , int vert_de , struct nmg_ptbl *vtab , FILE *fp_dir , FILE *fp_param ) );
 RT_EXTERN( void csg_comb_func , ( struct db_i *dbip , struct directory *dp ) );
 RT_EXTERN( void csg_leaf_func , ( struct db_i *dbip , struct directory *dp ) );
@@ -68,7 +67,6 @@ static char usage[] = "Usage: %s [-f|c] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel
 		v - verbose\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int	mode=CSG_MODE;	/* indicates which type of IGES file is desired */
 static int	verbose=0;
 static int	scale_error=0;	/* Count indicating how many scaled objects were encountered */
 static int	solid_error=0;	/* Count indicating how many solids were not converted */
@@ -129,6 +127,7 @@ struct iges_functab iges_write[ID_MAXIMUM+1]={
 
 static int	regions_tried = 0;
 static int	regions_done = 0;
+int		mode=CSG_MODE;	/* indicates which type of IGES file is desired */
 int		solid_is_brep;
 int		comb_form;
 char		**independent;
@@ -369,7 +368,8 @@ char	*argv[];
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_nmg_region_end(tsp, pathp, curtree)
+union tree *
+do_nmg_region_end(tsp, pathp, curtree)
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
@@ -377,6 +377,8 @@ union tree		*curtree;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
 	struct directory	*dp;
+	int 			dependent;
+	int			i;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	RT_CK_TOL(tsp->ts_tol);
@@ -429,7 +431,17 @@ union tree		*curtree;
 
 		dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-		dp->d_uses = (-nmgregion_to_iges( dp->d_namep , r , fp_dir , fp_param ));
+		dependent = 1;
+		for( i=0 ; i<no_of_indeps ; i++ )
+		{
+			if( !strncmp( dp->d_namep , independent[i] , NAMESIZE ) )
+			{
+				dependent = 0;
+				break;
+			}
+		}
+
+		dp->d_uses = (-nmgregion_to_iges( dp->d_namep , r , dependent , fp_dir , fp_param ));
 
 		/* NMG region is no longer necessary */
 		nmg_kr(r);

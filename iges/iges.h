@@ -1,3 +1,6 @@
+#define CSG_MODE	1
+#define FACET_MODE	2
+
 struct iges_properties
 {
 	char			name[NAMESIZE+1];

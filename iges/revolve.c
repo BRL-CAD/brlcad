@@ -25,7 +25,6 @@
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "rtlist.h"
 #include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"

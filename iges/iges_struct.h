@@ -1,3 +1,6 @@
+#include "rtlist.h"
+#include "rtstring.h"
+#include "nmg.h"
 
 extern fastf_t brlabs();
 
@@ -24,6 +27,7 @@ struct iges_directory
 	int param; /* record number for parameter entry */
 	int paramlines; /* number of lines for this entity in parameter section */
 	int direct; /* directory entry sequence number */
+	int status; /* status entry from directory entry */
 /*
  * Note that the directory entry sequence number and the directory structure
  * array index are not the same.  The index into the array can be calculated

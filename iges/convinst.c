@@ -29,8 +29,8 @@ Convinst()
 	int			pointer;
 	int			conv=0;
 	int			totinst=0;
-	int			no_of_assoc;
-	int			no_of_props;
+	int			no_of_assoc=0;
+	int			no_of_props=0;
 	int			att_de=0;
 	struct brlcad_att	brl_att;
 	mat_t			*rot;
@@ -91,6 +91,7 @@ Convinst()
 
 			RT_LIST_INIT( &head.l );
 			wmem = mk_addmember( dir[pointer]->name , &head , WMOP_INTERSECT );
+
 			/* Make the object */
 			if( dir[i]->colorp != 0 )
 				rgb = (char*)dir[i]->rgb;
@@ -123,17 +124,25 @@ Convinst()
 
 			/* fix up transformation matrix if needed */
 			if( dir[i]->trans == 0 && dir[pointer]->trans == 0 )
+			{
+				rt_log( "Instance and pointed to object both have no xforms\n" );
 				continue;	/* nothing to do */
+			}
 			else if( dir[i]->trans == 0 )
+			{
 				dir[i]->trans = dir[pointer]->trans;	/* same as instanced */
+				rt_log( "use pointed to object's xform\n" );
+			}
 			else if( dir[i]->trans != 0 )
 			{
 				/* this instance refers to a transformation entity
 				   but the original instanced object does too,
 				   these matrices need to be combined */
 
+				rt_log( "Must do a concatonation\n" );
+
 				rot = (mat_t *)malloc( sizeof( mat_t ) );
-				Matmult( rot , *(dir[i]->rot) , dir[pointer]->rot );
+				Matmult( *(dir[i]->rot) , dir[pointer]->rot , rot );
 				dir[i]->rot = rot;
 			}
 		}

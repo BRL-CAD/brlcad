@@ -19,15 +19,13 @@
 #else
 #include <string.h>
 #endif
-#include "./iges_struct.h"
-#include "./iges_extern.h"
-#include "rtlist.h"
-#include "rtstring.h"
-#include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "./iges_struct.h"
+#include "./iges_extern.h"
 
 RT_EXTERN( struct faceuse *Add_face_to_shell , ( struct shell *s , int entityno , int face_orient) );
+RT_EXTERN( struct shell *nmg_msv , (struct nmgregion *r) );
 
 int
 Get_outer_shell( r , entityno , shell_orient )
@@ -55,15 +53,17 @@ int shell_orient;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
-	Readint( &no_of_faces , "" );
+	Readint( &sol_num , "SHELL: " );
+	Readint( &no_of_faces , "\tNo of faces: " );
+
 	face_de = (int *)rt_calloc( no_of_faces , sizeof( int ) , "Get_outer_shell face DE's" );
 	face_orient = (int *)rt_calloc( no_of_faces , sizeof( int ) , "Get_outer_shell orients" );
 	fu = (struct faceuse **)rt_calloc( no_of_faces , sizeof( struct faceuse *) , "Get_outer_shell faceuses " );
+
 	for( face=0 ; face<no_of_faces ; face++ )
 	{
-		Readint( &face_de[face] , "" );
-		Readint( &face_orient[face] , "" );
+		Readint( &face_de[face] , "\t\tFace de: " );
+		Readint( &face_orient[face] , "\t\tFace orient: " );
 	}
 
 	s = nmg_msv( r );
@@ -77,6 +77,9 @@ int shell_orient;
 		fu[face] = Add_face_to_shell( s , (face_de[face]-1)/2 , face_use_orient  );
 	}
 
+	nmg_gluefaces( fu , no_of_faces );
+
+	rt_free( (char *)fu , "Get_outer_shell: faceuse list" );
 	rt_free( (char *)face_de , "Get_outer_shell: face DE's" );
 	rt_free( (char *)face_orient , "Get_outer_shell: face orients" );
 	return( 1 );

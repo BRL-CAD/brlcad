@@ -110,9 +110,10 @@ int entityno;
 			x = params[12+a+b+c + (i*(k1+1) + j)*3];
 			y = params[13+a+b+c + (i*(k1+1) + j)*3];
 			z = params[14+a+b+c + (i*(k1+1) + j)*3];
-			x *= 1000 * w;
+			/* Why were these mutiplied by 1000??? */
+/*			x *= 1000 * w;
 			y *= 1000 * w;
-			z *= 1000 * w;
+			z *= 1000 * w;	*/
 			*dp++ = x;
 			*dp++ = y;
 			*dp++ = z;

@@ -22,9 +22,6 @@
 #endif
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "rtlist.h"
-#include "rtstring.h"
-#include "nmg.h"
 #include "raytrace.h"
 
 int
