@@ -55,9 +55,6 @@ extern char	**promp;	/* pointer to a pointer to a char */
 
 void		arb_center();
 
-static int	nface, np, nm, mp;
-static fastf_t	thick[6];
-static vect_t	pc;
 static union record newrec;		/* new record to find inside solid */
 
 static char *p_arb4[] = {
@@ -117,6 +114,9 @@ f_inside()
 	register struct directory *dp;
 	mat_t newmat;
 	int type, p1, p2, p3;
+	int	nface;
+	int	np;		/* number of points */
+	fastf_t	thick[6];
 
 	(void)signal( SIGINT, sig2);	/* allow interrupts */
 
@@ -143,22 +143,12 @@ f_inside()
 					&es_rec.s.s_values[i*3] );
 		}
 
-		if(newrec.s.s_type == GENARB8) {
-			/* must find new plane equations to account for
-			 *	any editing in the es_mat matrix
-			 */
-			calc_planes( &newrec.s, newrec.s.s_cgtype );
-		}
-
 		(void)printf("Outside solid: ");
 		for(i=0; i <= illump->s_last; i++) {
 			(void)printf("/%s",illump->s_path[i]->d_namep);
 		}
 		(void)printf("\n");
-	}
-
-	else
-	if( state == ST_O_EDIT ) {
+	}  else if( state == ST_O_EDIT ) {
 		/* object edit mode */
 		if( illump->s_Eflag ) {
 			(void)printf("Cannot find inside of a processed (E'd) region\n");
@@ -175,21 +165,12 @@ f_inside()
 					&es_rec.s.s_values[i*3] );
 		}
 
-		if(newrec.s.s_type == GENARB8) {
-			/* must find new plane equations to account for
-			 *	any editing done in the path to this solid
-			 */
-			calc_planes( &newrec.s, newrec.s.s_cgtype );
-		}
-
 		(void)printf("Outside solid: ");
 		for(i=0; i <= illump->s_last; i++) {
 			(void)printf("/%s",illump->s_path[i]->d_namep);
 		}
 		(void)printf("\n");
-	}
-
-	else {
+	} else {
 		/* Not doing any editing....ask for outside solid */
 		(void)printf("Enter name of outside solid: ");
 		argcnt = getcmd(args);
@@ -198,37 +179,20 @@ f_inside()
 		args += argcnt;
 		if( db_get( dbip,  dp, &newrec, 0 , 1) < 0 )  READ_ERR_return;
 
-		if(newrec.u_id != ID_SOLID) {
-			(void)printf("%s: NOT a solid\n",dp->d_namep);
-			return;
-		}
-
-		if( (type = newrec.s.s_cgtype) < 0 )
-			type *= -1;
-		if( type == BOX || type == RPP )
-			type = ARB8;
-		if( type == RAW ) {
-			VMOVE(&newrec.s.s_values[3], &newrec.s.s_values[9]);
-			VMOVE(&newrec.s.s_values[6], &newrec.s.s_values[21]);
-			VMOVE(&newrec.s.s_values[9], &newrec.s.s_values[12]);
-			VMOVE(&newrec.s.s_values[12], &newrec.s.s_values[3]);
-			VMOVE(&newrec.s.s_values[15], &newrec.s.s_values[6]);
-			VMOVE(&newrec.s.s_values[18], &newrec.s.s_values[18]);
-			VMOVE(&newrec.s.s_values[21], &newrec.s.s_values[15]);
-		}
-		newrec.s.s_cgtype = type;
-
 		if( newrec.s.s_type == GENARB8 ) {
-			/* find the comgeom arb type */
+			/* find the comgeom arb type, & reorganize */
 			if( (type = type_arb( &newrec )) == 0 ) {
 				(void)printf("%s: BAD ARB\n",newrec.s.s_name);
 				return;
 			}
 			newrec.s.s_cgtype = type;
-
-			/* find the plane equations */
-			calc_planes( &newrec.s, type );
 		}
+	}
+	if(newrec.s.s_type == GENARB8) {
+		/* must find new plane equations to account for
+		 * any editing in the es_mat matrix or path to this solid.
+		 */
+		calc_planes( &newrec.s, newrec.s.s_cgtype );
 	}
 
 	/* newrec is now loaded with the outside solid data */
@@ -255,107 +219,102 @@ f_inside()
 	/* get thicknesses and calculate parameters for newrec */
 	switch( newrec.s.s_type ) {
 
-		case GENARB8:
-			nface = 6;
-			np = newrec.s.s_cgtype;
-			nm = np - 4;
-			mp = 8;
+	case GENARB8:
+		nface = 6;
+		np = newrec.s.s_cgtype;
 
-			/* point notation */
-			for(i=3; i<=21; i+=3) {
-				VADD2(	&newrec.s.s_values[i],
-					&newrec.s.s_values[i],
-					&newrec.s.s_values[0] );
-			}
+		/* point notation */
+		for(i=3; i<=21; i+=3) {
+			VADD2(	&newrec.s.s_values[i],
+				&newrec.s.s_values[i],
+				&newrec.s.s_values[0] );
+		}
 
-			switch( newrec.s.s_cgtype ) {
+		switch( newrec.s.s_cgtype ) {
+		case ARB8:
+			promp = p_arb8;
+			break;
 
-				case ARB8:
-					promp = p_arb8;
-				break;
+		case ARB7:
+			promp = p_arb7;
+			break;
 
-				case ARB7:
-					promp = p_arb7;
-				break;
+		case ARB6:
+			promp = p_arb6;
+			nface = 5;
+			VMOVE( &newrec.s.s_values[15],
+				&newrec.s.s_values[18] );
+			break;
 
-				case ARB6:
-					promp = p_arb6;
-					nface = 5;
-					mp = 6;
-					VMOVE( &newrec.s.s_values[15],
-						&newrec.s.s_values[18] );
-				break;
+		case ARB5:
+			promp = p_arb5;
+			nface = 5;
+			break;
 
-				case ARB5:
-					promp = p_arb5;
-					nface = 5;
-					mp = 6;
-				break;
+		case ARB4:
+			promp = p_arb4;
+			nface = 4;
+			VMOVE( &newrec.s.s_values[9],
+				&newrec.s.s_values[12] );
+			break;
+		}
 
-				case ARB4:
-					promp = p_arb4;
-					nface = mp = 4;
-					VMOVE( &newrec.s.s_values[9],
-						&newrec.s.s_values[12] );
-				break;
-			}
-
-			for(i=0; i<nface; i++) {
-				(void)printf("%s",promp[i]);
-				if( (argcnt = getcmd( args )) < 0 )
-					return;
-				thick[i] = atof(cmd_args[args]) * local2base;
-				args += argcnt;
-			}
-
-			if( arbin() )
+		for(i=0; i<nface; i++) {
+			(void)printf("%s",promp[i]);
+			if( (argcnt = getcmd( args )) < 0 )
 				return;
+			thick[i] = atof(cmd_args[args]) * local2base;
+			args += argcnt;
+		}
 
-			/* back to vector notation */
-			for(i=3; i<=21; i+=3) {
-				VSUB2(	&newrec.s.s_values[i],
-					&newrec.s.s_values[i],
-					&newrec.s.s_values[0] );
-			}
-		break;
-
-		case GENTGC:
-			promp = p_tgcin;
-			for(i=0; i<3; i++) {
-				(void)printf("%s",promp[i]);
-				if( (argcnt = getcmd(args)) < 0 )
-					return;
-				thick[i] = atof( cmd_args[args] ) * local2base;
-				args += argcnt;
-			}
-
-			if( tgcin() )
-				return;
-		break;
-
-		case GENELL:
-			(void)printf("Enter desired thickness: ");
-			if( (argcnt = getcmd(args)) < 0 )
-				return;
-			thick[0] = atof( cmd_args[args] ) * local2base;
-
-			if( ellgin() )
-				return;
-		break;
-
-		case TOR:
-			(void)printf("Enter desired thickness: ");
-			if( (argcnt = getcmd(args)) < 0 )
-				return;
-			thick[0] = atof( cmd_args[args] ) * local2base;
-
-			if( torin() )
-				return;
-		break;
-
-		default:
-			(void)printf("Cannot find inside for this record (%c) type\n",newrec.s.s_type);
+		if( arbin(thick, nface, np) )
 			return;
+
+		/* back to vector notation */
+		for(i=3; i<=21; i+=3) {
+			VSUB2(	&newrec.s.s_values[i],
+				&newrec.s.s_values[i],
+				&newrec.s.s_values[0] );
+		}
+		break;
+
+	case GENTGC:
+		promp = p_tgcin;
+		for(i=0; i<3; i++) {
+			(void)printf("%s",promp[i]);
+			if( (argcnt = getcmd(args)) < 0 )
+				return;
+			thick[i] = atof( cmd_args[args] ) * local2base;
+			args += argcnt;
+		}
+
+		if( tgcin(thick) )
+			return;
+		break;
+
+	case GENELL:
+		(void)printf("Enter desired thickness: ");
+		if( (argcnt = getcmd(args)) < 0 )
+			return;
+		thick[0] = atof( cmd_args[args] ) * local2base;
+
+		if( ellgin(thick) )
+			return;
+		break;
+
+	case TOR:
+		(void)printf("Enter desired thickness: ");
+		if( (argcnt = getcmd(args)) < 0 )
+			return;
+		thick[0] = atof( cmd_args[args] ) * local2base;
+
+		if( torin(thick) )
+			return;
+		break;
+
+	default:
+		(void)printf("Cannot find inside for this record (%c) type\n",newrec.s.s_type);
+		return;
 	}
 
 	/* don't allow interrupts while we update the database! */
@@ -381,8 +340,12 @@ f_inside()
 
 /* finds inside arbs */
 int
-arbin()
+arbin(thick, nface, np)
+fastf_t	thick[6];
+int	nface;
+int	np;
 {
+	vect_t	pc;
 	int i;
 
 	/* find reference point (pc[3]) to find direction of normals */
@@ -442,7 +405,8 @@ int npoints;
 
 /* finds inside of tgc */
 int
-tgcin()
+tgcin(thick)
+fastf_t	thick[6];
 {
 	fastf_t	mag[5], nmag[5];
 	vect_t	unitH, unitA, unitB;
@@ -516,7 +480,8 @@ tgcin()
 
 /* finds inside of torus */
 int
-torin()
+torin(thick)
+fastf_t	thick[6];
 {
 	fastf_t	mr1, mr2, mnewr2, msum, mdif, nmsum, nmdif;
 
@@ -553,13 +518,14 @@ torin()
 
 /* finds inside ellg */
 int
-ellgin()
+ellgin(thick)
+fastf_t	thick[6];
 {
 	int i, j, k, order[3];
 	fastf_t mag[3], nmag[3];
 	fastf_t ratio;
 
-	if( thick[0] == 0.0 ) 
+	if( thick[0] <= 0.0 ) 
 		return(0);
 
 	for(i=0; i<3; i++) {
