@@ -560,8 +560,8 @@ struct partition {
 union cutter  {
 #define CUT_CUTNODE	1
 #define CUT_BOXNODE	2
-#define CUT_NUBSPTNODE	3
-#define CUT_NUGRIDNODE	4
+#define CUT_NUGRIDNODE	3
+#define	CUT_MAXIMUM	3	
 	int	cut_type;
 	union cutter *cut_forw;		/* Freelist forward link */
 	struct cutnode  {
@@ -579,12 +579,6 @@ union cutter  {
 		int	bn_len;		/* # of solids in list */
 		int	bn_maxlen;	/* # of ptrs allocated to list */
 	} bn;
-	struct nubsptnode {
-		int	nu_type;
-		fastf_t	nu_min[3];
-		fastf_t	nu_max[3];
-		union cutter *first_cut;
-	} nubn;
 	struct nugridnode {
 		int	nu_type;
 		struct nu_axis {
@@ -1116,6 +1110,7 @@ struct rt_i {
 	int		rti_nlights;	/* number of light sources */
 	char		*rti_region_fix_file; /* rt_regionfix() file or NULL */
 	int		rti_space_partition;  /* space partitioning method */
+	int		rti_nugrid_dimlimit;  /* limit on nugrid dimensions */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
 	vect_t		mdl_max;	/* max corner of model bounding RPP */
@@ -1145,7 +1140,7 @@ struct rt_i {
 	struct bu_ptbl	rti_busy_cutter_nodes; /* List of "cutter" mallocs */
 	struct bu_ptbl	rti_cuts_waiting;
 	int		rti_cut_maxlen;	/* max len RPP list in 1 cut bin */
-	int		rti_ncut_by_type[5];	/* number of cuts by type */
+	int		rti_ncut_by_type[CUT_MAXIMUM+1];	/* number of cuts by type */
 	int		rti_cut_totobj;	/* # objs in all bins, total */
 	int		rti_cut_maxdepth;/* max depth of cut tree */
 	struct soltab	**rti_sol_by_type[ID_MAXIMUM+1];
