@@ -19,6 +19,7 @@
  *	This software is Copyright (C) 1985 by the United States Army.
  *	All rights reserved.
  */
+
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -36,43 +37,27 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>
 #include <time.h>
 
+#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
+#include "tcl.h"
+#include "tk.h"
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "rtstring.h"
+#include "rtlist.h"
+#include "rtgeom.h"
 #include "externs.h"
 #include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
-
-#ifdef XMGED
 #include "./sedit.h"
-#include "rtgeom.h"
-#endif
 
-#ifndef XMGED
-#  define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
-#  include "tcl.h"
-#  include "tk.h"
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef False
-#define False (0)
-#endif
-
-#ifndef True
-#define True (1)
-#endif
+#define MORE_ARGS_STR    "more arguments needed::"
 
 #ifdef XMGED
+
 #define DEFSHELL "/bin/sh"
 #define TIME_STR_SIZE 32
 #define NFUNC   ( (sizeof(funtab)) / (sizeof(struct funtab)) )
@@ -156,36 +141,21 @@ int     f_aip(), f_ps();
 int     f_bindkey();
 #endif /* XMGED */
 
-extern void	sync();
-
+extern void sync();
 int	inpara;			/* parameter input from keyboard */
 
-extern int cmd_glob(), cmd_glob_args();
-extern Tcl_CmdProc cmd_expand, cmd_db;
+int glob_compat_mode = 1;
+int output_as_return = 0;
 
-int	f_matpick();
+extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo;
+
 int	mged_cmd();
-int	f_sync();
-int	f_shells();
-int	f_arced();
-int	f_xpush();
+int	cmd_gui(), cmd_tk(), cmd_getknob(), gui_cmdline();
 
-#ifndef XMGED
-int	f_gui();
-int	f_tk();
-
-int gui_mode = 0;
-char text_widget_name[200];
+struct rt_vls tcl_output_hook;
 
 Tcl_Interp *interp;
 Tk_Window tkwin;
-#endif
-
-struct rt_vls history;
-struct rt_vls replay_history;
-struct timeval lastfinish;
-FILE *journalfp;
-int firstjournal;
 
 struct funtab {
     char *ft_name;
@@ -287,7 +257,7 @@ static struct funtab funtab[] = {
 "e", "<objects>", "edit objects",
 	f_edit,2,MAXARGS,FALSE,
 "echo", "[text]", "echo arguments back",
-	f_echo, 1, MAXARGS, FALSE,
+	f_echo, 1, MAXARGS, TRUE,
 "edcodes", "object(s)", "edit region ident codes",
 	f_edcodes, 2, MAXARGS, FALSE,
 "edcolor", "", "text edit color table",
@@ -300,6 +270,8 @@ static struct funtab funtab[] = {
 	f_ev, 2, MAXARGS, FALSE,
 "eqn", "A B C", "planar equation coefficients",
 	f_eqn, 4, 4, FALSE,
+"exit", "", "exit",
+	f_quit,1,1,FALSE,
 "extrude", "#### distance", "extrude dist from face",
 	f_extrude,3,3,FALSE,
 "expand", "wildcard expression", "expands wildcard expression",
@@ -317,8 +289,10 @@ static struct funtab funtab[] = {
 "g", "groupname <objects>", "group objects",
 	f_group,3,MAXARGS,FALSE,
 #ifndef XMGED
-"gui",	"text_widget_name", "Bring up a Tcl/Tk Graphical User Interface",
-	f_gui, 2, 2, FALSE,
+"getknob", "knobname", "Gets the current setting of the given knob",
+        cmd_getknob, 2, 2, TRUE,
+"gui", "output_hook", "Sends all output to the \"output_hook\" routine",
+	cmd_gui, 1, 2, TRUE,
 #endif
 #ifdef HIDELINE
 "H", "plotfile [step_size %epsilon]", "produce hidden-line unix-plot",
@@ -330,8 +304,10 @@ static struct funtab funtab[] = {
 "history", "[N]", "print out history of commands or last N commands",
 	f_history,1, 2,FALSE,
 #else
-"hist", "[-delays]", "describe command history",
+"history", "[-delays]", "list command history",
 	f_history, 1, 4,FALSE,
+"prev", "", "Returns previous command",
+        cmd_prev, 1, 1, TRUE,
 #endif
 "i", "obj combination [operation]", "add instance of obj to comb",
 	f_instance,3,4,FALSE,
@@ -390,8 +366,10 @@ static struct funtab funtab[] = {
 	f_pathsum, 1, MAXARGS, FALSE,
 #ifndef XMGED
 "loadtk", "", "Initializes Tk",
-        f_tk, 1, 1, FALSE,
+        cmd_tk, 1, 1, TRUE,
 #endif
+"look", "eyepoint vector", "Looks along the given ray and returns a list of hit solids",
+        cmd_look, 3, 3, TRUE,
 "ls", "", "table of contents",
 	dir_print,1,MAXARGS, FALSE,
 "M", "1|0 xpos ypos", "handle a mouse event",
@@ -404,6 +382,10 @@ static struct funtab funtab[] = {
 	f_matpick, 2,2,FALSE,
 "memprint", "", "print memory maps",
 	f_memprint, 1, 1,FALSE,
+#ifndef XMGED
+"mged", "cmd ?args...?", "Executes the given command and its arguments",
+        gui_cmdline, 1, MAXARGS, TRUE,
+#endif
 "mirface", "#### axis", "mirror an ARB face",
 	f_mirface,3,3,FALSE,
 "mirror", "old new axis", "Arb mirror ??",
@@ -592,56 +574,55 @@ static struct funtab funtab[] = {
 };
 
 
+/*
+ *                        O U T P U T _ C A T C H
+ *
+ * Gets the output from rt_log and appends it to clientdata vls.
+ */
+
+HIDDEN int
+output_catch(clientdata, str)
+genptr_t clientdata;
+char *str;
+{
+    register struct rt_vls *vp = (struct rt_vls *)clientdata;
+    register int len;
+
+    /* Temporarily shut off hooks in case the vls routines bomb! */
+
+    len = rt_vls_strlen(vp);
+    rt_vls_strcat(vp, str);
+    len = rt_vls_strlen(vp) - len;
+
+    return len;
+}
 
 /*
- *	H I S T O R Y _ R E C O R D
+ *                 S T A R T _ C A T C H I N G _ O U T P U T
  *
- *	Stores the given command with start and finish times in the
- *	  history vls'es.
+ * Sets up hooks to rt_log so that all output is caught in the given vls.
+ *
  */
 
 void
-history_record( cmdp, start, finish )
-struct rt_vls *cmdp;
-struct timeval *start, *finish;
+start_catching_output(vp)
+struct rt_vls *vp;
 {
-	static int done = 0;
-	struct rt_vls timing;
+    rt_add_hook(output_catch, (genptr_t)vp);
+}
 
-	rt_vls_vlscat( &history, cmdp );
+/*
+ *                 S T O P _ C A T C H I N G _ O U T P U T
+ *
+ * Turns off the output catch hook.
+ */
 
-	rt_vls_init( &timing );
-	if( done != 0 ) {
-		if( lastfinish.tv_usec > start->tv_usec ) {
-			rt_vls_printf( &timing, "delay %ld %08ld\n",
-			    start->tv_sec - lastfinish.tv_sec - 1,
-			    start->tv_usec - lastfinish.tv_usec + 1000000L );
-		} else {
-			rt_vls_printf( &timing, "delay %ld %08ld\n",
-				start->tv_sec - lastfinish.tv_sec,
-				start->tv_usec - lastfinish.tv_usec );
-		}
-	}		
-
-	/* As long as this isn't our first command to record after setting
-           up the journal (which would be "journal", which we don't want
-	   recorded!)... */
-
-	if( journalfp != NULL && !firstjournal ) {
-		rt_vls_fwrite( journalfp, &timing );
-		rt_vls_fwrite( journalfp, cmdp );
-	}
-
-	rt_vls_vlscat( &replay_history, &timing );
-	rt_vls_vlscat( &replay_history, cmdp );
-
-	lastfinish.tv_sec = finish->tv_sec;
-	lastfinish.tv_usec = finish->tv_usec;
-	done = 1;
-	firstjournal = 0;
-
-	rt_vls_free( &timing );
-}		
+void
+stop_catching_output(vp)
+struct rt_vls *vp;
+{
+    rt_delete_hook(output_catch, (genptr_t)vp);
+}
 
 #ifdef XMGED
 int
@@ -674,66 +655,7 @@ char	*argv[];
 	fclose(journal_file);
 	return CMD_OK;
 }
-#else
-/*
- *	F _ J O U R N A L
- *
- *	Opens the journal file, so each command and the time since the previous
- *	  one will be recorded.  Or, if called with no arguments, closes the
- *	  journal file.
- */
 
-int
-f_journal( argc, argv )
-int argc;
-char **argv;
-{
-	if( argc < 2 ) {
-		if( journalfp != NULL )
-			fclose( journalfp );
-		journalfp = NULL;
-		return CMD_OK;
-	} else {
-		if( journalfp != NULL ) {
-			rt_log("First shut off journaling with \"journal\" (no args)\n");
-			return CMD_BAD;
-		} else {
-			journalfp = fopen(argv[1], "a+");
-			if( journalfp == NULL ) {
-				rt_log( "Error opening %s for appending\n", argv[1] );
-				return CMD_BAD;
-			}
-			firstjournal = 1;
-		}
-	}
-
-	return CMD_OK;
-}
-#endif
-
-
-/*
- *	F _ D E L A Y
- *
- * 	Uses select to delay for the specified amount of seconds and 
- *	  microseconds.
- */
-
-int
-f_delay( argc, argv )
-int argc;
-char **argv;
-{
-	struct timeval tv;
-
-	tv.tv_sec = atoi( argv[1] );
-	tv.tv_usec = atoi( argv[2] );
-	select( 0, NULL, NULL, NULL, &tv );
-
-	return CMD_OK;
-}
-
-#ifdef XMGED
 int
 f_history(argc, argv)
 int	argc;
@@ -873,66 +795,7 @@ char	*str;
 		}
 	}
 }
-#else
-/*
- *	F _ H I S T O R Y
- *
- *	Prints out the command history, either to rt_log or to a file.
- */
-
-int
-f_history( argc, argv )
-int argc;
-char **argv;
-{
-	FILE *fp;
-	struct rt_vls *which_history;
-
-	fp = NULL;
-	which_history = &history;
-
-	while( argc >= 2 ) {
-		if( strcmp(argv[1], "-delays") == 0 ) {
-			if( which_history == &replay_history ) {
-				rt_log( "history: -delays option given more than once\n" );
-				return CMD_BAD;
-			}
-			which_history = &replay_history;
-		} else if( strcmp(argv[1], "-outfile") == 0 ) {
-			if( fp != NULL ) {
-				rt_log( "history: -outfile option given more than once\n" );
-				return CMD_BAD;
-			} else if( argc < 3 || strcmp(argv[2], "-delays") == 0 ) {
-				rt_log( "history: I need a file name\n" );
-				return CMD_BAD;
-			} else {
-				fp = fopen( argv[2], "a+" );
-				if( fp == NULL ) {
-					rt_log( "history: error opening file" );
-					return CMD_BAD;
-				}
-				--argc;
-				++argv;
-			}
-		} else {
-			rt_log( "Invalid option %s\n", argv[1] );
-		}
-		--argc;
-		++argv;
-	}
-
-	if( fp == NULL ) {
-		rt_log( "%s", rt_vls_addr(which_history) );
-	} else {
-		rt_vls_fwrite( fp, which_history );
-		fclose( fp );
-	}
-
-	return CMD_OK;
-}
 #endif
-
-#ifndef XMGED
 
 /*
  *	T C L _ A P P I N I T
@@ -944,14 +807,16 @@ char **argv;
 
 int
 Tcl_AppInit(interp)
-    Tcl_Interp *interp;		/* Interpreter for application. */
+Tcl_Interp *interp;		/* Interpreter for application. */
 {
-	return TCL_OK;
+    return TCL_OK;
 }
 
 
 /*			C M D _ W R A P P E R
  *
+ * Translates between MGED's "CMD_OK/BAD/MORE" result codes to ones that
+ * Tcl can understand.
  */
 
 int
@@ -961,235 +826,145 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-    int new_argc;
-    char **new_argv;
-    int result;
+    int status;
+    size_t len;
+    struct rt_vls result;
+    int catch_output;
 
     argv[0] = ((struct funtab *)clientData)->ft_name;
-#if 0
-    cmd_glob_args(argc, argv, &new_argc, &new_argv);
 
-    switch (mged_cmd(new_argc, new_argv, funtab)) {
-#else
-    switch (mged_cmd(argc, argv, funtab)) {
-#endif
+    /* We now leave the world of Tcl where everything prints its results
+       in the interp->result field.  Here, stuff gets printed with the
+       rt_log command; hence, we must catch such output and stuff it into
+       the result string.  Do this *only* if "output_as_return" global
+       variable is set.  Make a local copy of this variable in case it's
+       changed by our command. */
+
+    catch_output = output_as_return;
+    
+    rt_vls_init(&result);
+
+    if (catch_output)
+	start_catching_output(&result);
+    status = mged_cmd(argc, argv, funtab);
+    if (catch_output)
+	stop_catching_output(&result);
+
+    /* Remove any trailing newlines. */
+
+    if (catch_output) {
+	len = rt_vls_strlen(&result);
+	while (len > 0 && rt_vls_addr(&result)[len-1] == '\n')
+	    rt_vls_trunc(&result, --len);
+    }
+    
+    switch (status) {
     case CMD_OK:
-	interp->result = "MGED_Ok";
-	result = TCL_OK;
+	if (catch_output)
+	    Tcl_SetResult(interp, rt_vls_addr(&result), TCL_VOLATILE);
+	status = TCL_OK;
 	break;
     case CMD_BAD:
-	interp->result = "MGED_Error";
-	result = TCL_ERROR;
+	if (catch_output)
+	    Tcl_SetResult(interp, rt_vls_addr(&result), TCL_VOLATILE);
+	status = TCL_ERROR;
 	break;
     case CMD_MORE:
-	interp->result = "MGED_More";
-	result = TCL_ERROR;
+	Tcl_SetResult(interp, MORE_ARGS_STR, TCL_STATIC);
+	if (catch_output) {
+	    Tcl_AppendResult(interp, rt_vls_addr(&result), (char *)NULL);
+	}
+	status = TCL_ERROR;
 	break;
     default:
-	interp->result = "MGED_Unknown";
-	result = TCL_ERROR;
+	Tcl_SetResult(interp, "error executing mged routine::", TCL_STATIC);
+	if (catch_output) {
+	    Tcl_AppendResult(interp, rt_vls_addr(&result), (char *)NULL);
+	}
+	status = TCL_ERROR;
 	break;
     }
-#if 0
-    rt_free((char *)new_argv, "new_argv array for wildcard expansion");
-#endif
-    return result;
+    
+    rt_vls_free(&result);
+    return status;
 }
-
-void
-mged_tk_hook()
-{
-	while( Tk_DoOneEvent( TK_DONT_WAIT | TK_ALL_EVENTS ) )  /*NIL*/;
-}
-
-void
-mged_tk_idle(non_blocking)
-int	non_blocking;
-{
-	int	flags;
-
-	flags = TK_DONT_WAIT | TK_ALL_EVENTS;
-
-	while( Tk_DoOneEvent( flags ) )  {
-		/* NIL */	;
-	}
-}
-
-
 
 /*
- *	G U I _ O U T P U T
+ *                            G U I _ O U T P U T
  *
- *	Used as a hook for rt_log output.  Redirects output to the Tcl/Tk
- *		MGED Interaction window.
+ * Used as a hook for rt_log output.  Sends output to the Tcl procedure whose
+ * name is contained in the vls "tcl_output_hook".  Useful for user interface
+ * building.
  */
 
 int
-gui_output( str )
+gui_output(clientData, str)
+genptr_t clientData;
 char *str;
 {
-	char buf[10240];
-	char *old;
+    struct rt_vls tclcommand;
+    static int level = 0;
 
-	sprintf(buf, "%s insert insert \"%s\"", text_widget_name, str);
-	Tcl_Eval(interp, buf);
-	sprintf(buf, "%s yview -pickplace insert", text_widget_name);
-	Tcl_Eval(interp, buf);
-	sprintf(buf, "set printend [%s index insert]", text_widget_name);
-	Tcl_Eval(interp, buf);
+    if (level > 50) {
+	/* Uh-oh... some bonehead probably typed "gui mged" and all output
+	   is being redirected back into input... they deserve a core dump,
+	   but we'll be slightly more polite... */
+	rt_delete_hook(gui_output, clientData);
+	/* Now safe to run rt_log */
+    	rt_log("Ack! Something horrible just happened recursively.\n");
+	return 0;
+    }
+    rt_vls_init(&tclcommand);
+    rt_vls_vlscat(&tclcommand, &tcl_output_hook);
+    rt_vls_strcat(&tclcommand, " \"");
+    rt_vls_strcat(&tclcommand, str);
+    rt_vls_strcat(&tclcommand, "\"");
 
-	return strlen(str);
+    ++level;
+    Tcl_Eval((Tcl_Interp *)clientData, rt_vls_addr(&tclcommand));
+    --level;
+
+    rt_vls_free(&tclcommand);
+    return strlen(str);
 }
 
-
-
 /*
- *	G U I _ C M D L I N E
+ *                     C M D _ T K
  *
- *	Called from the Tcl/Tk section to process commands from
- *	the MGED Interaction window.
+ *  Command for initializing the Tk window and defaults.
  */
 
 int
-gui_cmdline( clientData, interp, argc, argv )
+cmd_tk(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	static struct rt_vls argstr, hargstr;
-	static int done = 0;
-	struct timeval start, finish;
-	int result;
-
-	if( done == 0 ) {
-		rt_vls_init( &argstr );
-		rt_vls_init( &hargstr );
-		done = 1;
-		rt_vls_strcpy( &argstr, "" );
-		rt_vls_strcpy( &hargstr, "" );
-	}
-
-	rt_vls_trunc( &hargstr, 0 );
-
-	if( rt_vls_strlen(&argstr) > 0 ) {
-		/* Remove newline */
-		rt_vls_trunc( &argstr, rt_vls_strlen(&argstr)-1 );
-		rt_vls_strcat( &argstr, " " );
-	}
-
-	rt_vls_strcat( &argstr, argv[1] );
-
-	gettimeofday( &start, NULL );
-	result = Tcl_Eval(interp, rt_vls_addr(&argstr));
-	gettimeofday( &finish, NULL );
-	
-	switch( result ) {
-	case TCL_OK:
-		if( strcmp(interp->result, "MGED_Ok") != 0 )
-			rt_log( interp->result );
-			    /* If the command was more than just \n, record. */
-		if( rt_vls_strlen(&argstr) > 1 )
-			history_record( &argstr, &start, &finish );
-		rt_vls_trunc( &argstr, 0 );
-		pr_prompt();
-		return TCL_OK;
-	case TCL_ERROR:
-		if( strcmp(interp->result, "MGED_Error") == 0 ) {
-			rt_vls_printf(&hargstr, "# %s", rt_vls_addr(&argstr));
-			history_record( &hargstr, &start, &finish );
-			rt_vls_trunc( &argstr, 0 );
-			pr_prompt();
-			return TCL_OK;
-		} else if( strcmp(interp->result, "MGED_More") == 0 ) {
-			return TCL_OK;
-		} else {
-			char *tmp;
-			tmp = (char *)malloc( strlen(interp->result)+1 );
-			strcpy( tmp, interp->result );
-			rt_log( "%s\n", tmp );
-			rt_vls_printf(&hargstr, "# %s", rt_vls_addr(&argstr));
-			history_record( &hargstr, &start, &finish );
-			rt_vls_trunc( &argstr, 0 );
-			pr_prompt();
-			interp->result = tmp;
-			interp->freeProc = (void (*)())free;
-			return TCL_ERROR;
-		}
-	default:
-		interp->result = "MGED: Unknown Error.";
-		return TCL_ERROR;
-	}
-}
-
-int
-f_tk( argc, argv )
-int argc;
-char **argv;
-{
-    /* Screen name should be same as attachment, or should ask, or
+    /* XXX Screen name should be same as attachment, or should ask, or
        should be settable from "-display" option. */
 
     if (tkwin != NULL)
-	return CMD_OK;
+	return TCL_OK;
 
-    tkwin = Tk_CreateMainWindow(interp, NULL, "TkMGED", "tkMGED");
+    tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "TkMGED", "tkMGED");
     if (tkwin == NULL)
-	rt_log("Error creating Tk window: %s\n", interp->result);
+	return TCL_ERROR;
 
     if (tkwin != NULL) {
-	/* XXX HACK! */
-	extern void (*extrapoll_hook)();	/* ged.c */
-	extern int  extrapoll_fd;		/* ged.c */
-
-	extrapoll_hook = mged_tk_hook;
-	extrapoll_fd = Tk_Display(tkwin)->fd;
-
 	Tk_GeometryRequest(tkwin, 200, 200);
-#if 0
-	Tk_MakeWindowExist(tkwin);
-	Tk_MapWindow(tkwin);
-#endif
+
 	/* This runs the tk.tcl script */
-	if( Tk_Init(interp) == TCL_ERROR )
-	    rt_log("Tk_init error %s\n", interp->result);
+	if (Tk_Init(interp) == TCL_ERROR)
+	    return TCL_ERROR;
     }
     
     /* Handle any delayed events which result */
-    while( Tk_DoOneEvent( TK_DONT_WAIT | TK_ALL_EVENTS ) )  /*NIL*/
+    while (Tk_DoOneEvent(TK_DONT_WAIT | TK_ALL_EVENTS))
 	;
 
-    return CMD_OK;
+    return TCL_OK;
 }    
-
-/*
- *	C M D _ P R E V
- */
-
-int
-cmd_prev( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	return TCL_OK;
-}
-
-/*
- *	C M D _ N E X T
- */
-
-int
-cmd_next( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	return TCL_OK;
-}
-
 
 /*
  *	G E T K N O B
@@ -1199,7 +974,7 @@ char **argv;
  */
 
 int
-getknob( clientData, interp, argc, argv )
+cmd_getknob(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -1228,7 +1003,7 @@ char **argv;
     };
 	
     if( argc < 2 ) {
-	interp->result = "getknob: need a knob name";
+	Tcl_SetResult(interp, "getknob: need a knob name", TCL_STATIC);
 	return TCL_ERROR;
     }
 
@@ -1238,151 +1013,535 @@ char **argv;
 	    return TCL_OK;
 	}
     
-    interp->result = "getknob: invalid knob name";
+    Tcl_SetResult(interp, "getknob: invalid knob name", TCL_STATIC);
     return TCL_ERROR;
 }
 
 /*
- *	G U I _ K N O B
+ *   C M D _ G U I
  *
- *	Replaces the regular knob function.
- *	All this one does is call the regular one knob function, then update
- *	  the Tk sliders.
+ *   Hooks the output to the given output hook.  (Maybe it shouldn't be called
+ *   "gui". Misleading name, although it is used to build up guis.)
+ *   Deletes the existing GUI hook!
  */
 
 int
-gui_knob( clientData, interp, argc, argv )
+cmd_gui(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;    
+int argc;
+char **argv;
+{
+    struct rt_vls infocommand;
+    int status;
+
+    if (argc > 2) {
+	Tcl_SetResult(interp, "too many args: should be \"gui [hookName]\"",
+		      TCL_STATIC);
+	return TCL_ERROR;
+    }
+
+    rt_delete_hook(gui_output, (genptr_t)interp);/* Delete the existing hook */
+
+    if (argc < 2)
+	return TCL_OK;
+
+    /* Make sure the command exists before putting in the hook! */
+    
+    rt_vls_init(&infocommand);
+    rt_vls_strcat(&infocommand, "info commands ");
+    rt_vls_strcat(&infocommand, argv[1]);
+    status = Tcl_Eval(interp, rt_vls_addr(&infocommand));
+    rt_vls_free(&infocommand);
+
+    if (status != TCL_OK || interp->result[0] == '\0') {
+	Tcl_SetResult(interp, "command does not exist", TCL_STATIC);
+	return TCL_ERROR;
+    }
+
+    /* Also, don't allow silly infinite loops. */
+
+    if (strcmp(argv[1], argv[0]) == 0) {
+	Tcl_SetResult(interp, "Don't be silly.", TCL_STATIC);
+	return TCL_ERROR;
+    }
+
+    /* Set up the hook! */
+
+    rt_vls_strcpy(&tcl_output_hook, argv[1]);
+    rt_add_hook(gui_output, (genptr_t)interp);
+    
+    Tcl_ResetResult(interp);
+    return TCL_OK;
+}
+
+
+
+/* Support routines for the math functions */
+
+static int
+decode_mat(m, str)
+mat_t m;
+char *str;
+{
+    return sscanf(str,
+	     "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+		 &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7],
+		 &m[8], &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
+}
+
+static int
+decode_quat(q, str)
+quat_t q;
+char *str;
+{
+    return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
+}
+
+static int
+decode_vect(v, str)
+vect_t v;
+char *str;
+{
+    return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
+}
+
+static void
+encode_mat(vp, m)
+struct rt_vls *vp;
+mat_t m;
+{
+    rt_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
+		  m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7],
+		  m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
+}
+
+static void
+encode_quat(vp, q)
+struct rt_vls *vp;
+quat_t q;
+{
+    rt_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
+}
+
+static void
+encode_vect(vp, v)
+struct rt_vls *vp;
+vect_t v;
+{
+    rt_vls_printf(vp, "%g %g %g", V3ARGS(v));
+}
+
+static void
+quat_distance_wrapper(dp, q1, q2)
+double *dp;
+quat_t q1, q2;
+{
+    *dp = quat_distance(q1, q2);
+}
+
+static void
+mat_scale_about_pt_wrapper(statusp, mat, pt, scale)
+int *statusp;
+mat_t mat;
+CONST point_t pt;
+CONST double scale;
+{
+    *statusp = mat_scale_about_pt(mat, pt, scale);
+}
+
+
+
+/*                      C M D _ M A T H
+ *
+ * Tcl wrappers for the math functions.
+ *
+ * This is where you should put clauses, in the below "if" statement, to add
+ * Tcl support for the librt math routines.
+ */
+
+int
+cmd_math(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	int result;
+    void (*math_func)();
+    struct rt_vls result;
 
-	/* First, call regular "knob" function and proceed if ok. */
-	if((result=cmd_wrapper( clientData, interp, argc, argv )) == TCL_OK) { 
-		struct rt_vls tclcmd;
+    math_func = (void (*)())clientData;
+    rt_vls_init(&result);
 
-		rt_vls_init( &tclcmd );
-		if( strcmp(argv[1], "zero") == 0 ) {
-			rt_vls_strcpy( &tclcmd, "sliders_zero" );
-		} else if( strcmp(argv[1], "calibrate") == 0 ) {
-			return result;
-		} else {
-			rt_vls_printf( &tclcmd, 
-     "global sliders; if { $sliders(exist) } then { .sliders.f.k%s set %d }",
-				argv[1], (int) (2048.0*atof(argv[2])) );
-		}
+    if (math_func == mat_mul) {
+	mat_t o, a, b;
+	if (argc < 3 || decode_mat(a, argv[1]) < 16 ||
+	    decode_mat(b, argv[2]) < 16) {
+	    rt_vls_printf(&result, "usage: %s matA matB", argv[0]);
+	    goto error;
+	}
+	(*math_func)(o, a, b);
+	encode_mat(&result, o);
+    } else if (math_func == mat_inv || math_func == mat_trn) {
+	mat_t o, a;
 
-		result = Tcl_Eval( interp, rt_vls_addr(&tclcmd) );
-		rt_vls_free( &tclcmd );
+	if (argc < 2 || decode_mat(a, argv[1]) < 16) {
+	    rt_vls_printf(&result, "usage: %s mat", argv[0]);
+	    goto error;
+	}
+	(*math_func)(o, a);
+	encode_mat(&result, o);
+    } else if (math_func == mat_ae) {
+	mat_t o;
+	double az, el;
+
+	if (argc < 3) {
+	    rt_vls_printf(&result, "usage: %s azimuth elevation", argv[0]);
+	    goto error;
+	}
+	if (Tcl_GetDouble(interp, argv[1], &az) != TCL_OK) goto error;
+	if (Tcl_GetDouble(interp, argv[2], &el) != TCL_OK) goto error;
+
+	(*math_func)(o, (fastf_t)az, (fastf_t)el);
+	encode_mat(&result, o);
+    } else if (math_func == mat_ae_vec) {
+	fastf_t az, el;
+	vect_t v;
+
+	if (argc < 2 || decode_vect(v, argv[1]) < 3) {
+	    rt_vls_printf(&result, "usage: %s vect", argv[0]);
+	    goto error;
 	}
 
-	return result;
-}
+	(*math_func)(&az, &el, v);
+	rt_vls_printf(&result, "%g %g", az, el);
+    } else if (math_func == mat_aet_vec) {
+	fastf_t az, el, twist, accuracy;
+	vect_t vec_ae, vec_twist;
 
-
-/*
- *	F _ G U I
- *
- *	Puts the necessary hooks in to interface with the MGED Interaction
- *		window.
- */
-
-int
-f_gui( argc, argv ) 
-int argc;
-char **argv;
-{
-	if( argc < 2 ) {
-		rt_log("Error: need an interaction window name\n");
-		return CMD_BAD;
+	if (argc < 4 || decode_vect(vec_ae, argv[1]) < 3 ||
+	    decode_vect(vec_twist, argv[2]) < 3) {
+	    rt_vls_printf(&result, "usage: %s vec_ae vec_twist accuracy",
+			  argv[0]);
+	    goto error;
 	}
 
-	strncpy(text_widget_name, argv[1], sizeof(text_widget_name));
+	(*math_func)(&az, &el, &twist, vec_ae, vec_twist, accuracy);
+	rt_vls_printf(&result, "%g %g %g", az, el, twist);
+    } else if (math_func == mat_angles) {
+	mat_t o;
+	double alpha, beta, ggamma;
 
-	rt_log("Please direct your attention to the mged interaction window.\n");
-	rt_add_hook( gui_output );
-	Tcl_CreateCommand(interp, "cmdline", gui_cmdline, (ClientData)NULL,
-			  (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "getknob", getknob, (ClientData)NULL,
-			  (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "knob", gui_knob, (ClientData)NULL,
-			  (Tcl_CmdDeleteProc *)NULL);
-	gui_mode = 1;
-	return CMD_OK;
+	if (argc < 4) {
+	    rt_vls_printf(&result, "usage: %s alpha beta gamma", argv[0]);
+	    goto error;
+	}
+	if (Tcl_GetDouble(interp, argv[1], &alpha) != TCL_OK)  goto error;
+	if (Tcl_GetDouble(interp, argv[2], &beta) != TCL_OK)   goto error;
+	if (Tcl_GetDouble(interp, argv[3], &ggamma) != TCL_OK) goto error;
+
+	(*math_func)(o, alpha, beta, gamma);
+	encode_mat(&result, o);
+    } else if (math_func == mat_eigen2x2) {
+	fastf_t val1, val2;
+	vect_t vec1, vec2;
+	double a, b, c;
+
+	if (argc < 4) {
+	    rt_vls_printf(&result, "usage: %s a b c", argv[0]);
+	    goto error;
+	}
+	if (Tcl_GetDouble(interp, argv[1], &a) != TCL_OK) goto error;
+	if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
+	if (Tcl_GetDouble(interp, argv[3], &b) != TCL_OK) goto error;
+
+	(*math_func)(&val1, &val2, vec1, vec2, (fastf_t)a, (fastf_t)b,
+		     (fastf_t)c);
+	rt_vls_printf(&result, "%g %g {%g %g %g} {%g %g %g}", val1, val2,
+		      V3ARGS(vec1), V3ARGS(vec2));
+    } else if (math_func == mat_fromto) {
+	mat_t o;
+	vect_t from, to;
+
+	if (argc < 3 || decode_vect(from, argv[1]) < 3 ||
+	    decode_vect(to, argv[2]) < 3) {
+	    rt_vls_printf(&result, "usage: %s vecFrom vecTo", argv[0]);
+	    goto error;
+	}
+	(*math_func)(o, from, to);
+	encode_mat(&result, o);
+    } else if (math_func == mat_xrot || math_func == mat_yrot ||
+	       math_func == mat_zrot) {
+	mat_t o;
+	double s, c;
+	if (argc < 3) {
+	    rt_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
+	    goto error;
+	}
+	if (Tcl_GetDouble(interp, argv[1], &s) != TCL_OK) goto error;
+	if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
+
+	(*math_func)(o, s, c);
+	encode_mat(&result, o);
+    } else if (math_func == mat_lookat) {
+	mat_t o;
+	vect_t dir;
+	int yflip;
+	if (argc < 3 || decode_vect(dir, argv[1]) < 3) {
+	    rt_vls_printf(&result, "usage: %s dir yflip", argv[0]);
+	    goto error;
+	}
+	if (Tcl_GetBoolean(interp, argv[2], &yflip) != TCL_OK) goto error;
+
+	(*math_func)(o, dir, yflip);
+	encode_mat(&result, o);
+    } else if (math_func == mat_vec_ortho || math_func == mat_vec_perp) {
+	vect_t ov, vec;
+
+	if (argc < 2 || decode_vect(vec, argv[1]) < 3) {
+	    rt_vls_printf(&result, "usage: %s vec", argv[0]);
+	    goto error;
+	}
+
+	(*math_func)(ov, vec);
+	encode_vect(&result, ov);
+    } else if (math_func == mat_scale_about_pt_wrapper) {
+	mat_t o;
+	vect_t v;
+	double scale;
+	int status;
+
+	if (argc < 3 || decode_vect(v, argv[1]) < 3) {
+	    rt_vls_printf(&result, "usage: %s pt scale", argv[0]);
+	    goto error;
+	}
+	if (Tcl_GetDouble(interp, argv[2], &scale) != TCL_OK) goto error;
+
+	(*math_func)(&status, o, v, scale);
+	if (status != 0) {
+	    rt_vls_printf(&result, "error performing calculation");
+	    goto error;
+	}
+	encode_mat(&result, o);
+    } else if (math_func == mat_xform_about_pt) {
+	mat_t o, xform;
+	vect_t v;
+
+	if (argc < 3 || decode_mat(xform, argv[1]) < 16 ||
+	    decode_vect(v, argv[2]) < 3) {
+	    rt_vls_printf(&result, "usage: %s xform pt", argv[0]);
+	    goto error;
+	}
+
+	(*math_func)(o, xform, v);
+	encode_mat(&result, o);
+    } else if (math_func == mat_arb_rot) {
+	mat_t o;
+	point_t pt;
+	vect_t dir;
+	double angle;
+
+	if (argc < 4 || decode_vect(pt, argv[1]) < 3 ||
+	    decode_vect(dir, argv[2]) < 3) {
+	    rt_vls_printf(&result, "usage: %s pt dir angle", argv[0]);
+	    goto error;
+	}
+	if (Tcl_GetDouble(interp, argv[3], &angle) != TCL_OK)
+	    return TCL_ERROR;
+
+	(*math_func)(o, pt, dir, (fastf_t)angle);
+	encode_mat(&result, o);
+    } else if (math_func == quat_mat2quat) {
+	mat_t mat;
+	quat_t quat;
+
+	if (argc < 2 || decode_mat(mat, argv[1]) < 16) {
+	    rt_vls_printf(&result, "usage: %s mat", argv[0]);
+	    goto error;
+	}
+
+	(*math_func)(quat, mat);
+	encode_quat(&result, quat);
+    } else if (math_func == quat_quat2mat) {
+	mat_t mat;
+	quat_t quat;
+
+	if (argc < 2 || decode_quat(quat, argv[1]) < 4) {
+	    rt_vls_printf(&result, "usage: %s quat", argv[0]);
+	    goto error;
+	}
+
+	(*math_func)(mat, quat);
+	encode_mat(&result, mat);
+    } else if (math_func == quat_distance_wrapper) {
+	quat_t q1, q2;
+	double d;
+
+	if (argc < 3 || decode_quat(q1, argv[1]) < 4 ||
+	    decode_quat(q2, argv[2]) < 4) {
+	    rt_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
+	    goto error;
+	}
+
+	(*math_func)(&d, q1, q2);
+	rt_vls_printf(&result, "%g", d);
+    } else if (math_func == quat_double || math_func == quat_bisect ||
+	       math_func == quat_make_nearest) {
+	quat_t oqot, q1, q2;
+
+	if (argc < 3 || decode_quat(q1, argv[1]) < 4 ||
+	    decode_quat(q2, argv[2]) < 4) {
+	    rt_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
+	    goto error;
+	}
+
+	(*math_func)(oqot, q1, q2);
+	encode_quat(&result, oqot);
+    } else if (math_func == quat_slerp) {
+	quat_t oq, q1, q2;
+	double d;
+
+	if (argc < 4 || decode_quat(q1, argv[1]) < 4 ||
+	    decode_quat(q2, argv[2]) < 4) {
+	    rt_vls_printf(&result, "usage: %s quat1 quat2 factor", argv[0]);
+	    goto error;
+	}
+	if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
+
+	(*math_func)(oq, q1, q2, d);
+	encode_quat(&result, oq);
+    } else if (math_func == quat_sberp) {
+	quat_t oq, q1, qa, qb, q2;
+	double d;
+
+	if (argc < 6 || decode_quat(q1, argv[1]) < 4 ||
+	    decode_quat(qa, argv[2]) < 4 || decode_quat(qb, argv[3]) < 4 ||
+	    decode_quat(q2, argv[4]) < 4) {
+	    rt_vls_printf(&result, "usage: %s quat1 quatA quatB quat2 factor",
+			  argv[0]);
+	    goto error;
+	}
+	if (Tcl_GetDouble(interp, argv[5], &d) != TCL_OK) goto error;
+
+	(*math_func)(oq, q1, qa, qb, q2, d);
+	encode_quat(&result, oq);
+    } else if (math_func == quat_exp || math_func == quat_log) {
+	quat_t qout, qin;
+
+	if (argc < 2 || decode_quat(qin, argv[1]) < 4) {
+	    rt_vls_printf(&result, "usage: %s quat", argv[0]);
+	    goto error;
+	}
+
+	(*math_func)(qout, qin);
+	encode_quat(&result, qout);
+    } else {
+	rt_vls_printf(&result, "math function %s not supported yet", argv[0]);
+	goto error;
+    }
+
+    Tcl_SetResult(interp, rt_vls_addr(&result), TCL_VOLATILE);
+    rt_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, rt_vls_addr(&result), (char *)NULL);
+    rt_vls_free(&result);
+    return TCL_ERROR;
 }
 
-#endif
+static struct math_func_link {
+    char *name;
+    void (*func)();
+} math_funcs[] = {
+    "mat_mul",            mat_mul,
+    "mat_inv",            mat_inv,
+    "mat_trn",            mat_trn,
+    "mat_ae",             mat_ae,
+    "mat_ae_vec",         mat_ae_vec,
+    "mat_aet_vec",        mat_aet_vec,
+    "mat_angles",         mat_angles,
+    "mat_eigen2x2",       mat_eigen2x2,
+    "mat_fromto",         mat_fromto,
+    "mat_xrot",           mat_xrot,
+    "mat_yrot",           mat_yrot,
+    "mat_zrot",           mat_zrot,
+    "mat_lookat",         mat_lookat,
+    "mat_vec_ortho",      mat_vec_ortho,
+    "mat_vec_perp",       mat_vec_perp,
+    "mat_scale_about_pt", mat_scale_about_pt_wrapper,
+    "mat_xform_about_pt", mat_xform_about_pt,
+    "mat_arb_rot",        mat_arb_rot,
+    "quat_mat2quat",      quat_mat2quat,
+    "quat_quat2mat",      quat_quat2mat,
+    "quat_distance",      quat_distance_wrapper,
+    "quat_double",        quat_double,
+    "quat_bisect",        quat_bisect,
+    "quat_slerp",         quat_bisect,
+    "quat_sberp",         quat_sberp,
+    "quat_make_nearest",  quat_make_nearest,
+    "quat_exp",           quat_exp,
+    "quat_log",           quat_log,
+    0, 0
+};
 
 
 /* 			C M D _ S E T U P
  *
- * Sets up the Tcl interpreter, if running in Tcl mode.
+ * Sets up the Tcl interpreter and calls other setup functions.
  */ 
 
 void
 cmd_setup(interactive)
 int interactive;
 {
-#ifndef XMGED
     register struct funtab *ftp;
-    char	buf[1024];
-    extern int glob_compat_mode;
-    struct rt_vls _mged_name;
+    struct rt_vls temp;
+    struct math_func_link *mp;
 
-    rt_vls_init( &_mged_name );
+    rt_vls_init(&temp);
 
-#endif
-    rt_vls_init( &history );
-    rt_vls_strcpy( &history, "" );
-    
-    rt_vls_init( &replay_history );
-    rt_vls_strcpy( &replay_history, "" );
+    /* The following is for GUI output hooks: contains name of function to
+       run with output */
+    rt_vls_init(&tcl_output_hook);
 
-    journalfp = NULL;
-
-#ifndef XMGED
+    /* Create the interpreter */
 
     interp = Tcl_CreateInterp();
 
-    /* XXX This is done so the user doesn't run the Tcl version of exit
-       (we want to run "quit" instead).  Needs to be improved */
-    
-    (void)Tcl_CreateCommand(interp, "exit", cmd_wrapper, (ClientData)NULL,
-			    (Tcl_CmdDeleteProc *)NULL);
-
-    Tcl_SetVar(interp, "tcl_interactive",
-	       interactive ? "1" : "0", TCL_GLOBAL_ONLY);
+#if 0
+    Tcl_SetVar(interp, "tcl_interactive", interactive ? "1" : "0",
+	       TCL_GLOBAL_ONLY);
+#endif
 
     /* This runs the init.tcl script */
     if( Tcl_Init(interp) == TCL_ERROR )
 	rt_log("Tcl_Init error %s\n", interp->result);
 
-    /* The Tk initialization stuff is run with the "loadtk" command */
-
     /* Finally, add in all the MGED commands.  Warn if they conflict */
-    for (ftp = funtab+1; ftp->ft_name != NULL; ftp++)  {
-	sprintf(buf, "info commands %s", ftp->ft_name);
-	if( Tcl_Eval(interp, buf) != TCL_OK ||
-	   interp->result[0] != '\0' )  {
+    for (ftp = funtab+1; ftp->ft_name != NULL; ftp++) {
+#if 0
+	rt_vls_strcpy(&temp, "info commands ");
+	rt_vls_strcat(&temp, ftp->ft_name);
+	if (Tcl_Eval(interp, rt_vls_addr(&temp)) != TCL_OK ||
+	    interp->result[0] != '\0') {
 	    rt_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name,
 		   interp->result);
 	}
-
-	rt_vls_trunc( &_mged_name, 0 );
-	rt_vls_printf( &_mged_name, "_mged_%s", ftp->ft_name );
+#endif
+	rt_vls_strcpy(&temp, "_mged_");
+	rt_vls_strcat(&temp, ftp->ft_name);
 	
 	if (ftp->tcl_converted) {
-	    Tcl_CreateCommand(interp, ftp->ft_name, ftp->ft_func,
-			      (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
-	    Tcl_CreateCommand(interp, rt_vls_addr( &_mged_name ), ftp->ft_func,
-			      (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
+	    (void)Tcl_CreateCommand(interp, ftp->ft_name, ftp->ft_func,
+				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
+	    (void)Tcl_CreateCommand(interp, rt_vls_addr(&temp), ftp->ft_func,
+				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
 	} else {
-	    Tcl_CreateCommand(interp, ftp->ft_name, cmd_wrapper, 	    
-			      (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
-	    Tcl_CreateCommand(interp, rt_vls_addr( &_mged_name ), cmd_wrapper,
-			      (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
+	    (void)Tcl_CreateCommand(interp, ftp->ft_name, cmd_wrapper, 	    
+			           (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
+	    (void)Tcl_CreateCommand(interp, rt_vls_addr(&temp), cmd_wrapper,
+				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
 	}
     }
 
@@ -1396,28 +1555,30 @@ int interactive;
 		TCL_LINK_DOUBLE);
 
 #endif
+
     Tcl_LinkVar(interp, "glob_compat_mode", (char *)&glob_compat_mode,
 		TCL_LINK_BOOLEAN);
-    mged_variable_setup(interp);
+    Tcl_LinkVar(interp, "output_as_return", (char *)&output_as_return,
+		TCL_LINK_BOOLEAN);
 
+    for (mp = math_funcs; mp->name != NULL; mp++) {
+	(void)Tcl_CreateCommand(interp, mp->name, cmd_math,
+				(ClientData)mp->func,
+				(Tcl_CmdDeleteProc *)NULL);
+    }
+    
+    rt_vls_free(&temp);
     tkwin = NULL;
-#endif
-}
 
-/* wrapper for sync() */
-
-int
-f_sync(argc, argv)
-int argc;
-char **argv;
-{
-    sync();
-    return CMD_OK;
+    history_setup();
+    mged_variable_setup(interp);
 }
 
 
 /*
-   */
+ * debackslash, backslash_specials, mged_compat: routines for original
+ *   mged emulation mode
+ */
 
 void
 debackslash( dest, src )
@@ -1462,8 +1623,6 @@ struct rt_vls *dest, *src;
 	}
     }
 }
-
-int glob_compat_mode = 1;
 
 /*                    M G E D _ C O M P A T
  *
@@ -1571,365 +1730,251 @@ cmdline(vp)
 struct rt_vls	*vp;
 #endif
 {
-    int	i;
-    int	need_prompt = 0;
-    int	len;
-    register char	*cp;
-    char		*ep;
-    char		*end;
-    struct rt_vls	line;
-    struct rt_vls       line_globbed;
-    struct rt_vls	cmd_buf;
-    struct rt_vls	str;
-    int  	result;
-    int	argc;
-    char 	*argv[MAXARGS+2];
+    int	done, status;
+    size_t len;
+    struct rt_vls line, line_globbed, str;
     struct timeval start, finish;
-
-    struct rt_vls	hadd;
+    int	need_prompt = 0;
+    char *argv[MAXARGS+2];
+    register char *cp, *ep, *end;
 
     RT_VLS_CHECK(vp);
 
-    if( (len = rt_vls_strlen( vp )) <= 0 )  return 0;
+    len = rt_vls_strlen(vp);
+    if (len <= 0) return 0;
 		
-    cp = rt_vls_addr( vp );
+    cp = rt_vls_addr(vp);
     end = cp + len;
 
-    rt_vls_init( &line );
-    rt_vls_init( &line_globbed );
-    rt_vls_init( &cmd_buf );
-    rt_vls_init( &str );
-    rt_vls_init( &hadd );
+    rt_vls_init(&line);
+    rt_vls_init(&line_globbed);
+    rt_vls_init(&str);
 
-    while( cp < end ) {
-	ep = strchr( cp, '\n' );
-	if( ep == NULL )  break;
+    while (cp < end) {
+	ep = strchr(cp, '\n');
+	if (ep == NULL) break; /* Quit if there are no more complete commands*/
+	/* Copy one cmd, including newline.  Null terminate */
+	rt_vls_strncpy(&line, cp, ep-cp+1);
 
-	/* Copy one cmd, incl newline.  Null terminate */
-	rt_vls_strncpy( &line, cp, ep-cp+1 );
-	/* parse_line insists on it ending with newline&null */
-#ifdef XMGED
-	rt_vls_strcpy( &cmd_buf, rt_vls_addr(&line) );
-	i = parse_line( record, &cmd_buf, &argc, argv );
-#endif
+	/* If the command was not complete, pick up additional fragments
+	   as required. */
+	while (!Tcl_CommandComplete(rt_vls_addr(&line)) && ep+1 < end) {
+	    cp = ep + 1;
+	    ep = strchr(cp, '\n');
+	    if (ep == NULL)
+		break;
+	    rt_vls_strncat(&line, cp, ep-cp+1);
+	}
+
 	while (1) {
-	    int done;
 	    done = 0;
-#ifndef XMGED
-	    gettimeofday( &start, NULL );
-	    rt_vls_trunc( &line_globbed, 0 );
-	    if( glob_compat_mode )
-		mged_compat( &line_globbed, &line );
+
+	    rt_vls_trunc(&line_globbed, 0);
+	    if (glob_compat_mode)
+		mged_compat(&line_globbed, &line);
 	    else
-		rt_vls_vlscat( &line_globbed, &line );
-#if 0
-	    printf("BEFORE::%s", rt_vls_addr(&line));
-	    printf("AFTER:::%s", rt_vls_addr(&line_globbed));
-#endif
-	    result = Tcl_Eval( interp, rt_vls_addr(&line_globbed) );
-	    gettimeofday( &finish, NULL );
+		rt_vls_vlscat(&line_globbed, &line);
 
-	    switch( result ) {
+	    gettimeofday(&start, (struct timezone *)NULL);
+	    status = Tcl_Eval(interp, rt_vls_addr(&line_globbed));
+	    gettimeofday(&finish, (struct timezone *)NULL);
+
+    /* Contemplate the result reported by the Tcl interpreter. */
+
+	    switch (status) {
 	    case TCL_OK:
-    /* If it's TCL's OK, then print out the associated return value. */
-		if( strcmp(interp->result, "MGED_Ok") != 0
-		   && strlen(interp->result) > 0 ) {
-		    /* Some TCL value to display */
-		    rt_log("%s\n", interp->result);
-		}
-		rt_vls_strcpy( &hadd, rt_vls_addr(&line) );
+		len = strlen(interp->result);
+
+    /* If the command had something to say, print it out. */	     
+
+		if (len > 0) rt_log("%s%s", interp->result,
+				    interp->result[len-1] == '\n' ? "" : "\n");
+
+    /* Then record it for posterity, and notify that we're done. */
+
+		history_record(&line, &start, &finish, CMD_OK);
 		done = 1;
 		break;
-	    case TCL_ERROR:
-    /* If it's an MGED error, don't print out an error message. */
-		if( strcmp(interp->result, "MGED_Error") == 0 ) {
-		    rt_vls_printf( &hadd, "# %s", rt_vls_addr(&line) );
-		    done = 1;
-		    break;
-		} 
-    /* If it's a TCL error, print out the associated error message. */
-		if( strcmp(interp->result, "MGED_More") != 0 ){
-		    rt_vls_printf( &hadd, "# %s", rt_vls_addr(&line) );
-		    rt_log("%s\n", interp->result);
-		    done = 1;
+
+	    default:
+
+    /* First check to see if it's a secret message from cmd_wrapper. */
+
+		if (strstr(interp->result, MORE_ARGS_STR) == interp->result) {
+		    struct rt_vls temp;
+
+		    rt_vls_init(&temp);
+		    rt_vls_strcat(&temp,
+				  interp->result+sizeof(MORE_ARGS_STR)-1);
+		    Tcl_SetResult(interp, rt_vls_addr(&temp), TCL_VOLATILE);
+		    rt_vls_free(&temp);
+		    done = 0;
 		    break;
 		}
 
-    /* Fall through to here iff it's MGED_More. */
-		done = 0;
-		break;
-	    }
-#else
-	    gettimeofday( &start, NULL );
-	    result = mged_cmd(argc, argv, funtab);
-	    gettimeofday( &finish, NULL );
-	    switch( result ) {
-	    case CMD_OK:
-		rt_vls_strcpy( &hadd, rt_vls_addr(&line) );
-		done = 1;
-		break;
-	    case CMD_BAD:
-		rt_vls_printf( &hadd, "# %s", rt_vls_addr(&line) );
-		done = 1;
-		break;
-	    case CMD_MORE:
-		done = 0;
-		break;
-	    }
-#endif
-    /* Record into history and return if we're all done. */
+    /* Otherwise, it's just a regular old error. */    
 
-	    if( done ) {
+		len = strlen(interp->result);
+		if (len > 0) rt_log("%s%s", interp->result,
+				    interp->result[len-1] == '\n' ? "" : "\n");
+
+		history_record(&line, &start, &finish, CMD_BAD);
+		done = 1;
+		break;
+	    }
+
 #ifdef XMGED
-		if(record){
-		    addtohist(rt_vls_addr(&hadd));
-		       /* reset hcurr to point to most recent command */
-		    hcurr = htail;
-		}
-#endif
-		/* Record non-newline commands */
-		if( rt_vls_strlen(&hadd) > 1 )
-		    history_record( &hadd, &start, &finish );
-		break;
+	    if (done && record) {
+		addtohist(rt_vls_addr(&hadd));
+		/* reset hcurr to point to most recent command */
+		hcurr = htail;
 	    }
-
+#endif
 	    /* If we get here, it means the command failed due
 	       to insufficient arguments.  In this case, grab some
 	       more from stdin and call the command again. */
+
+	    if (done)
+		break;
 	    
-	    rt_vls_gets( &str, stdin );
+	    rt_vls_trunc(&str, 0);
+	    rt_log("%s", interp->result);
+	    rt_vls_gets(&str, stdin);  /* Feh. We should continue to respond
+					  to events! */
 
-	    /* Remove newline */
-	    rt_vls_trunc( &line, rt_vls_strlen(&line)-1 );
-
-	    rt_vls_strcat( &line, " " );
-	    rt_vls_vlscatzap( &line, &str );
-	    rt_vls_strcat( &line, "\n" );
-#ifdef XMGED
-	    rt_vls_strcpy( &cmd_buf, rt_vls_addr(&line) );
-	    i = parse_line( record, &cmd_buf, &argc, argv );
-#endif
-	    rt_vls_free( &str );
+	    /* Remove newline and append new string */
+	    rt_vls_trunc(&line, rt_vls_strlen(&line)-1);
+	    rt_vls_strcat(&line, " ");
+	    rt_vls_vlscatzap(&line, &str);
+	    rt_vls_strcat(&line, "\n");
 	}
-#ifdef XMGED
-	if( i < 0 )  continue;	/* some kind of error */
-#endif
-	need_prompt = 1;
 
+	need_prompt = 1;
 	cp = ep+1;
     }
 
     rt_vls_free( &line );
     rt_vls_free( &line_globbed );
-    rt_vls_free( &cmd_buf );
     rt_vls_free( &str );
-    rt_vls_free( &hadd );
+
     return need_prompt;
 }
 
-/*
- *			P A R S E _ L I N E
- *
- * Parse commandline into argument vector
- * Returns nonzero value if input is to be ignored
- * Returns less than zero if there is no input to read.
- */
-
 int
-#ifdef XMGED
-parse_line(record, cmd, argcp, argv)
-int	record;		/* if true, add command to the history list */
-struct rt_vls   *cmd;
-#else
-parse_line(line, argcp, argv)
-char	*line;
-#endif
-int	*argcp;
-char   **argv;
+cmd_look(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
-	register char *lp;
-	register char *lp1;
-#ifdef XMGED
-	struct rt_vls   tmp_cmd;
-        int     n;
-#endif
+    point_t pnt;
+    vect_t v;
+    struct rt_vls result;
 
-	(*argcp) = 0;
-#ifdef XMGED
-	lp = rt_vls_addr(cmd);
-#else
-	lp = &line[0];
-#endif
+    if (argc < 3 || decode_vect(pnt, argv[1]) < 3 ||
+	decode_vect(v, argv[2]) < 3) {
+	Tcl_SetResult(interp, "usage: look eyePoint vect", TCL_STATIC);
+	return TCL_ERROR;
+    }
 
-	/* Delete leading white space */
-	while( (*lp == ' ') || (*lp == '\t'))
-		lp++;
-
-	argv[0] = lp;
-
-	if( *lp == '\n' )
-		return(1);		/* NOP */
-
-	if( *lp == '#' )
-		return 1;		/* NOP -- a comment line */
-
-#ifdef XMGED
-	/*
-	 * Recall command from history list.
-	 */
-	if( *lp == '@' ){
-		rt_vls_init( &tmp_cmd );
-		n = parse_history( &tmp_cmd, ++lp );
-		if( n )
-			return( n );	/* Don't process command line! */
-
-		rt_vls_free( cmd );
-		rt_vls_strcpy( cmd, rt_vls_addr( &tmp_cmd ) );
-		rt_vls_free( &tmp_cmd );
-		return parse_line(record, cmd, argcp, argv);
-	}
-
-	if(journal && strncmp("journal", rt_vls_addr(cmd), 7)){
-		n = rt_vls_strlen(cmd);
-		cmd->vls_str[n - 1] = NULL;
-		fprintf(journal_file, "%s\n", rt_vls_addr(cmd));
-		cmd->vls_str[n - 1] = '\n';
-	}
-#endif
-
-	/* Handle "!" shell escape char so the shell can parse the line */
-	if( *lp == '!' )  {
-		(void)system( ++lp);
-		rt_log("!\n");
-		return(1);		/* Don't process command line! */
-	}
-
-	/*  Starting with the first non-whitespace, search ahead for the
-	 *  first whitespace (or newline) at the end of each command
-	 *  element and turn it into a null.  Then while there is more
-	 *  turn it into nulls.  Once the next string is spotted (or
-	 *  the of the command line) glob it if necessary and prepare
-	 *  for the next command element.
-	 */
-	for( ; *lp != '\0'; lp++ )  {
-		if((*lp == ' ') || (*lp == '\t') || (*lp == '\n'))  {
-			*lp = '\0';
-			lp1 = lp + 1;
-			if((*lp1 == ' ') || (*lp1 == '\t') || (*lp1 == '\n'))
-				continue;
-			/* If not cmd [0], check for regular exp */
-			if( *argcp > 0 )
-				(void)cmd_glob(argcp, argv, MAXARGS);
-			if( (*argcp)++ >= MAXARGS )  {
-				rt_log("More than %d arguments, excess flushed\n", MAXARGS);
-				argv[MAXARGS] = (char *)0;
-				return(0);
-			}
-			argv[*argcp] = lp1;
-		}
-		/* Finally, a non-space char */
-	}
-	/* Null terminate pointer array */
-	argv[*argcp] = (char *)0;
-	return(0);
+    return TCL_OK;
 }
 
 /*
  *			M G E D _ C M D
  *
- *  Check a table for the command, check for the correct
- *  minimum and maximum number of arguments, and pass control
- *  to the proper function.  If the number of arguments is
- *  incorrect, print out a short help message.
+ *  Check a table for the command, check for the correct minimum and maximum
+ *  number of arguments, and pass control to the proper function.  If the
+ *  number of arguments is incorrect, print out a short help message.
  */
+
 int
-mged_cmd( argc, argv, functions )
-int	argc;
-char	**argv;
+mged_cmd(argc, argv, functions)
+int argc;
+char **argv;
 struct funtab *functions;
 {
-	register struct funtab *ftp;
+    register struct funtab *ftp;
 #ifdef XMGED
-	AliasList	curr;
-	struct rt_vls	cmd;
-	int result;
-	int	i, cmp;
-	int 	save_journal;
+    AliasList	curr;
+    struct rt_vls	cmd;
+    int result;
+    int	i, cmp;
+    int 	save_journal;
 #endif
 
-	if( argc == 0 )  {
-		/* No command entered, that's fine */
-		return CMD_OK;
-	}
+    if (argc == 0)
+	return CMD_OK;	/* No command entered, that's fine */
+
 #ifdef XMGED
-/* check for aliases first */
-	for(curr = atop; curr != NULL;){
-		if((cmp = strcmp(argv[0], curr->name)) == 0){
-			if(curr->marked)
-		/* alias has same name as real command, so call real command */
-				break;
+    /* check for aliases first */
+    for(curr = atop; curr != NULL;){
+	if((cmp = strcmp(argv[0], curr->name)) == 0){
+	    if(curr->marked)
+      /* alias has same name as real command, so call real command */
+		break;
 
-	/* repackage alias commands with any arguments and call cmdline again */
-			save_journal = journal;
-			journal = 0;	/* temporarily shut off journalling */
-			rt_vls_init( &cmd );
-			curr->marked = 1;
-			if(!extract_alias_def(&cmd, curr, argc, argv))
-				(void)cmdline(&cmd, False);
-
-			rt_vls_free( &cmd );
-			curr->marked = 0;
-			journal = save_journal;	/* restore journal state */
-			return CMD_OK;
-		}else if(cmp > 0)
-			curr = curr->right;
-		else
-			curr = curr->left;
-	}
+      /* repackage alias commands with any arguments and call cmdline again */
+	    save_journal = journal;
+	    journal = 0;	/* temporarily shut off journalling */
+	    rt_vls_init( &cmd );
+	    curr->marked = 1;
+	    if(!extract_alias_def(&cmd, curr, argc, argv))
+		(void)cmdline(&cmd, False);
+	    
+	    rt_vls_free( &cmd );
+	    curr->marked = 0;
+	    journal = save_journal;	/* restore journal state */
+	    return CMD_OK;
+	}else if(cmp > 0)
+	    curr = curr->right;
+	else
+	    curr = curr->left;
+    }
 #endif
-	for( ftp = functions+1; ftp->ft_name ; ftp++ )  {
-		if( strcmp( ftp->ft_name, argv[0] ) != 0 )
-			continue;
-		/* We have a match */
-		if( (ftp->ft_min <= argc) &&
-		    (argc <= ftp->ft_max) )  {
-			/* Input has the right number of args.
-		    	 * Call function listed in table, with
-		    	 * main(argc, argv) style args
-		    	 */
+
+    for (ftp = functions+1; ftp->ft_name; ftp++) {
+	if (strcmp(ftp->ft_name, argv[0]) != 0)
+	    continue;
+	/* We have a match */
+	if ((ftp->ft_min <= argc) && (argc <= ftp->ft_max)) {
+	    /* Input has the right number of args.
+	     * Call function listed in table, with
+	     * main(argc, argv) style args
+	     */
 #ifdef XMGED
-		  result = ftp->ft_func(argc, argv);
+	    result = ftp->ft_func(argc, argv);
 
 /*  This needs to be done here in order to handle multiple commands within
     an alias.  */
-			if( sedraw > 0) {
-				sedit();
-				sedraw = 0;
-				dmaflag = 1;
-			}
-			return result;
+	    if( sedraw > 0) {
+		sedit();
+		sedraw = 0;
+		dmaflag = 1;
+	    }
+	    return result;
 #else
-			switch (ftp->ft_func(argc, argv)) {
-			case CMD_OK:
-				return CMD_OK;
-			case CMD_BAD:
-				return CMD_BAD;
-			case CMD_MORE:
-				return CMD_MORE;
-			default:
-				rt_log("mged_cmd(): Invalid return from %s\n",
-					ftp->ft_name);
-				return CMD_BAD;
-			}
-#endif
-		}
-		rt_log("Usage: %s%s %s\n\t(%s)\n",functions->ft_name,
-		    ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
+	    switch (ftp->ft_func(argc, argv)) {
+	    case CMD_OK:
+		return CMD_OK;
+	    case CMD_BAD:
 		return CMD_BAD;
+	    case CMD_MORE:
+		return CMD_MORE;
+	    default:
+		rt_log("mged_cmd(): Invalid return from %s\n",
+		       ftp->ft_name);
+		return CMD_BAD;
+	    }
+#endif
 	}
-	rt_log("%s%s: no such command, type '%s?' for help\n",
-	    functions->ft_name, argv[0], functions->ft_name);
+	rt_log("Usage: %s%s %s\n\t(%s)\n",functions->ft_name,
+	       ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 	return CMD_BAD;
+    }
+    rt_log("%s%s: no such command, type '%s?' for help\n",
+	   functions->ft_name, argv[0], functions->ft_name);
+    return CMD_BAD;
 }
 
 /* Let the user temporarily escape from the editor */
@@ -1976,6 +2021,20 @@ char	**argv;
 		button( BE_REJECT );
 	quit();			/* Exiting time */
 	/* NOTREACHED */
+}
+
+/* wrapper for sync() */
+
+int
+f_sync(argc, argv)
+int argc;
+char **argv;
+{
+
+    register int i;
+    sync();
+    
+    return CMD_OK;
 }
 
 /*
@@ -2252,23 +2311,25 @@ register FILE	*fp;
 #endif
 
 /*
- *	F _ E C H O
- *
+ * F _ E C H O
+ *      
  */
 
 int
-f_echo( argc, argv )
+f_echo(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	*argv[];
 {
-	register int i;
+    register int i;
 
-	for( i=1; i < argc; i++ )  {
-		rt_log( i==1 ? "%s" : " %s", argv[i] );
-	}
-	rt_log("\n");
+    for( i=1; i < argc; i++ )  {
+	rt_log( i==1 ? "%s" : " %s", argv[i] );
+    }
+    rt_log("\n");
 
-	return CMD_OK;
+    return TCL_OK;
 }
 
 #ifdef XMGED
