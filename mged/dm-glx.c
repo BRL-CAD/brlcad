@@ -349,6 +349,38 @@ XEvent *eventPtr;
 	setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob ang1 %f\n",
 		       45.0 - 45.0*((double)setting)/2047.0);
+      }else{
+	if(mged_variables.rateknobs){
+	  f = rate_azimuth;
+
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(512.5 * f)) +
+	       M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	  bu_vls_printf( &cmd, "knob azim %f\n", setting / 512.0 );
+	}else{
+	  f = curr_dm_list->s_info->azimuth;
+
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	     !f )
+	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	      M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	      dm_unlimit((int)(2.847 * f)) +
+	       M->axis_data[0] - knob_values[M->first_axis];
+
+	  f = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 1024.0;
+	  bu_vls_printf( &cmd, "knob aazim %f\n", f * 360.0);
+	}
       }
       break;
     case DIAL1:
@@ -436,7 +468,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(2.85 * f)) +
+	      dm_unlimit((int)(2.847 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  f = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
@@ -542,7 +574,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(2.85 * f)) +
+	      dm_unlimit((int)(2.847 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  f = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
@@ -635,7 +667,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(2.85 * f)) +
+	      dm_unlimit((int)(2.847 * f)) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  f = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
