@@ -92,9 +92,13 @@ col_eol()
  * on the respective names and return that value.
  */
 int
-cmpdirname(dp1, dp2)
-struct directory **dp1, **dp2;
+cmpdirname(a, b)
+CONST genptr_t a, b;
 {
+	register struct directory **dp1, **dp2;
+
+	dp1 = (struct directory **)a;
+	dp2 = (struct directory **)b;
 	return( strcmp( (*dp1)->d_namep, (*dp2)->d_namep));
 }
 
@@ -111,8 +115,9 @@ int num_in_list;
 {
 	int lines, i, j, namelen, this_one;
 
-	qsort(list_of_names, num_in_list, sizeof(struct directory *),
-	  cmpdirname);
+	qsort( (genptr_t)list_of_names,
+		num_in_list, sizeof(struct directory *),
+		cmpdirname);
 	/*
 	 * For the number of (full and partial) lines that will be needed,
 	 * print in vertical format.
