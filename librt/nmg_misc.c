@@ -50,7 +50,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  */
 int
 nmg_snurb_calc_lu_uv_orient( lu )
-struct loopuse *lu;
+CONST struct loopuse *lu;
 {
 	struct edgeuse *eu;
 	int edge_count=0;
@@ -271,7 +271,7 @@ vect_t norm;
 
 void
 nmg_find_zero_length_edges( m )
-struct model *m;
+CONST struct model *m;
 {
 	struct bu_ptbl eu_tab;
 	struct edgeuse *eu;
@@ -1057,85 +1057,6 @@ CONST struct face_g_plane *fg;
 	}
 }
 
-/*	R T _ I S E C T _ P L A N E S
- *
- * Calculates the point that is the minimum distance from all the
- * planes in the "planes" array.  If the planes intersect at a single point,
- * that point is the solution.
- *
- * The method used here is based on:
- *	An expression for the distance from a point to a plane is VDOT(pt,plane)-plane[H].
- *	Square that distance and sum for all planes to get the "total" distance.
- *	For minimum total distance, the partial derivatives of this expression (with
- *	respect to x, y, and z) must all be zero. 
- *	This produces a set of three equations in three unknowns (x, y, and z).
- *	This routine sets up the three equations as [matrix][pt] = [hpq]
- *	and solves by inverting "matrix" into "inverse" and
- *	[pt] = [inverse][hpq].
- *
- * There is likely a more economical solution rather than matrix inversion, but
- * bn_mat_inv was handy at the time.
- *
- * Checks if these planes form a singular matrix and returns:
- *	0 - all is well
- *	1 - planes form a singular matrix (no solution)
-XXX Should be renamed bn_isect_nplanes() and moved to libbn/plane.c
- */
-int
-rt_isect_planes( pt , planes , pl_count )
-point_t pt;
-CONST plane_t planes[];
-CONST int pl_count;
-{
-	mat_t matrix;
-	mat_t inverse;
-	vect_t hpq;
-	fastf_t det;
-	int i;
-
-	if( rt_g.NMG_debug & DEBUG_BASIC )
-	{
-		bu_log( "rt_isect_planes:\n" );
-		for( i=0 ; i<pl_count ; i++ )
-		{
-			bu_log( "Plane #%d (%f %f %f %f)\n" , i , V4ARGS( planes[i] ) );
-		}
-	}
-
-	bn_mat_zero( matrix );
-	VSET( hpq , 0.0 , 0.0 , 0.0 );
-
-	for( i=0 ; i<pl_count ; i++ )
-	{
-		matrix[0] += planes[i][X] * planes[i][X];
-		matrix[5] += planes[i][Y] * planes[i][Y];
-		matrix[10] += planes[i][Z] * planes[i][Z];
-		matrix[1] += planes[i][X] * planes[i][Y];
-		matrix[2] += planes[i][X] * planes[i][Z];
-		matrix[6] += planes[i][Y] * planes[i][Z];
-		hpq[X] += planes[i][X] * planes[i][H];
-		hpq[Y] += planes[i][Y] * planes[i][H];
-		hpq[Z] += planes[i][Z] * planes[i][H];
-	}
-
-	matrix[4] = matrix[1];
-	matrix[8] = matrix[2];
-	matrix[9] = matrix[6];
-	matrix[15] = 1.0;
-
-	/* Check that we don't have a singular matrix */
-	det = bn_mat_determinant( matrix );
-	if( NEAR_ZERO( det , SMALL_FASTF ) )
-		return( 1 );
-
-	bn_mat_inv( inverse , matrix );
-
-	MAT4X3PNT( pt , inverse , hpq );
-
-	return( 0 );
-
-}
-
 /* 	N M G _ I S E C T _ S H E L L _ S E L F
  *
  * Intersects all faces in a shell with all other faces in the same shell
@@ -1364,8 +1285,8 @@ CONST struct shell *s;
  */
 int
 nmg_check_closed_shell( s , tol )
-struct shell *s;
-struct bn_tol *tol;
+CONST struct shell *s;
+CONST struct bn_tol *tol;
 {
 	struct faceuse *fu;
 
@@ -2601,7 +2522,7 @@ int *loop_size;
 void
 nmg_close_shell( s , tol )
 struct shell *s;
-struct bn_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct bu_ptbl eu_tbl;		/* table of free edgeuses from shell */
 	struct bu_ptbl vert_tbl;	/* table of vertices for use in nmg_cface */
@@ -3082,7 +3003,7 @@ struct shell *
 nmg_dup_shell( s , trans_tbl, tol )
 struct shell *s;
 long ***trans_tbl;
-struct bn_tol *tol;
+CONST struct bn_tol *tol;
 {
 
 	struct model *m;
@@ -4219,7 +4140,7 @@ CONST struct bn_tol *tol;
 int
 nmg_break_long_edges( s , tol )
 struct shell *s;
-struct bn_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -4393,7 +4314,7 @@ struct loopuse *lu;
 struct nmg_split_loops_state
 {
 	long		*flags;		/* index based array of flags for model */
-	struct bn_tol	*tol;
+	CONST struct bn_tol	*tol;
 	int		split;		/* count of faces split */
 };
 
@@ -4406,7 +4327,7 @@ int after;
 	struct faceuse *fu;
 	struct nmg_split_loops_state *state;
 	struct loopuse *lu;
-	struct bn_tol *tol;
+	CONST struct bn_tol *tol;
 	int otsame_loops=0;
 	int otopp_loops=0;
 
@@ -4596,7 +4517,7 @@ int after;
 int
 nmg_split_loops_into_faces( magic_p , tol )
 long		*magic_p;
-struct bn_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	struct model *m;
 	struct nmg_visit_handlers htab;
@@ -4643,7 +4564,7 @@ struct bn_tol	*tol;
 int
 nmg_decompose_shell( s , tol )
 struct shell *s;
-struct bn_tol *tol;
+CONST struct bn_tol *tol;
 {
 	int missed_faces;
 	int no_of_shells=1;
@@ -5501,7 +5422,7 @@ int
 nmg_simple_vertex_solve( new_v , faces, tol )
 struct vertex *new_v;
 CONST struct bu_ptbl *faces;
-struct bn_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct vertex_g *vg;
 	int failed=0;
@@ -7498,7 +7419,7 @@ CONST struct bn_tol *tol;
 
 	if( pl_count > 2 )
 	{
-		if( rt_isect_planes( new_v->vg_p->coord , (CONST plane_t *)planes , pl_count ) )
+		if( bn_isect_planes( new_v->vg_p->coord , (CONST plane_t *)planes , pl_count ) )
 		{
 			bu_log( "nmg_cacl_new_v: Cannot solve for new geometry at ( %f %f %f )\n",
 				V3ARGS( new_v->vg_p->coord ) );
@@ -7683,7 +7604,7 @@ CONST struct bn_tol *tol;
 			}
 		}
 
-		if( rt_isect_planes( new_v->vg_p->coord , (CONST plane_t *)planes , plane_count ) )
+		if( bn_isect_planes( new_v->vg_p->coord , (CONST plane_t *)planes , plane_count ) )
 		{
 			bu_log( "nmg_complex_vertex_solve: Could not calculate new geometry at ( %f %f %f )\n",
 				V3ARGS( new_v->vg_p->coord ) );
@@ -8248,9 +8169,9 @@ CONST struct bn_tol *tol;
 void
 nmg_vlist_to_wire_edges( s , vhead )
 struct shell *s;
-struct bu_list *vhead;
+CONST struct bu_list *vhead;
 {
-	struct bn_vlist *vp;
+	CONST struct bn_vlist *vp;
 	struct edgeuse *eu;
 	struct vertex *v1,*v2;
 	point_t pt1,pt2;
@@ -9779,7 +9700,7 @@ CONST struct bn_tol *tol;
 void
 nmg_intersect_loops_self( s, tol )
 struct shell *s;
-struct bn_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct bu_ptbl edgeuses;
@@ -9886,6 +9807,7 @@ top:
 
 	bu_ptbl_free( &edgeuses);
 }
+
 /*	R T _ J O I N _ C N U R B S
  *
  * Join a list of cnurb structs into a single cnurb.
@@ -10084,7 +10006,7 @@ point_t i_center;
 point_t i_start;
 point_t i_end;
 int point_type;
-struct bn_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct edge_g_cnurb *crv;
 	struct bu_list crv_head;
@@ -10351,7 +10273,7 @@ start:
 int
 nmg_break_edges( magic_p, tol )
 long *magic_p;
-struct bn_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct bu_ptbl edges;
 	struct bu_ptbl verts;
@@ -11503,7 +11425,7 @@ CONST struct bn_tol *tol;
 #define EDGE_COLLAPSE_DEBUG 0
 
 int
-select_collapse( max_dist1, max_dot1, flip1, max_dist2, max_dot2, flip2, max_dot, tol_dist )
+nmg_select_collapse( max_dist1, max_dot1, flip1, max_dist2, max_dot2, flip2, max_dot, tol_dist )
 CONST fastf_t max_dist1, max_dot1, max_dist2, max_dot2, max_dot, tol_dist;
 CONST int flip1, flip2;
 {
@@ -11996,7 +11918,7 @@ CONST fastf_t min_angle;
 				continue;
 			}
 
-			choice = select_collapse( max_dist1, max_dot1, flip1,
+			choice = nmg_select_collapse( max_dist1, max_dot1, flip1,
 						  max_dist2, max_dot2, flip2,
 						  max_dot, tol_coll );
 

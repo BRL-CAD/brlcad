@@ -2657,19 +2657,104 @@ BU_EXTERN(void			nmg_pl_lu_around_eu, (CONST struct edgeuse *eu));
 BU_EXTERN(void			nmg_pr_fus_in_fg, (CONST long *fg_magic));
 
 /* From nmg_misc.c */
-BU_EXTERN(int			bu_ptbl, (struct bu_ptbl *b, int func, long *p) );
+BU_EXTERN(int			nmg_snurb_calc_lu_uv_orient, (CONST struct loopuse *lu));
+BU_EXTERN(void			nmg_snurb_fu_eval, (CONST struct faceuse *fu,
+				CONST fastf_t u,
+				CONST fastf_t v,
+				point_t pt_on_srf));
+BU_EXTERN(void			nmg_snurb_fu_get_norm,
+				(CONST struct faceuse *fu,
+				CONST fastf_t u,
+				CONST fastf_t v,
+				vect_t norm));
+BU_EXTERN(void			nmg_snurb_fu_get_norm_at_vu,
+				(CONST struct faceuse *fu,
+				CONST struct vertexuse *vu,
+				vect_t norm));
+BU_EXTERN(void			nmg_find_zero_length_edges, (CONST struct model *m));
+BU_EXTERN(struct face		*nmg_find_top_face_in_dir,
+				(CONST struct shell *s,
+				int dir, long *flags));
+BU_EXTERN(struct face		*nmg_find_top_face,
+				(CONST struct shell *s,
+				int *dir, long *flags));
+BU_EXTERN(int			nmg_find_outer_and_void_shells,
+				(struct nmgregion *r,
+				struct bu_ptbl ***shells,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_mark_edges_real, (CONST long *magic_p));
+BU_EXTERN(void			nmg_tabulate_face_g_verts,
+				(struct bu_ptbl *tab, CONST struct face_g_plane *fg));
+BU_EXTERN(void			nmg_isect_shell_self,
+				(struct shell *s, CONST struct bn_tol *tol));
+BU_EXTERN(struct edgeuse	*nmg_next_radial_eu, (CONST struct edgeuse *eu,
+				CONST struct shell *s, CONST int wires));
+BU_EXTERN(struct edgeuse	*nmg_prev_radial_eu, (CONST struct edgeuse *eu,
+				CONST struct shell *s, CONST int wires));
+BU_EXTERN(int			nmg_radial_face_count,
+				(CONST struct edgeuse *eu, CONST struct shell *s));
+BU_EXTERN(int			nmg_check_closed_shell, (CONST struct shell *s,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_move_lu_between_fus, (struct faceuse *dest,
+				struct faceuse *src, struct loopuse *lu));
+BU_EXTERN(void			nmg_loop_plane_newell, (CONST struct loopuse *lu,
+				plane_t pl));
+BU_EXTERN(fastf_t		nmg_loop_plane_area, (CONST struct loopuse *lu,
+				plane_t pl));
+BU_EXTERN(int			nmg_calc_face_plane, (struct faceuse *fu_in,
+				plane_t pl));
+BU_EXTERN(int			nmg_calc_face_g, (struct faceuse *fu));
+BU_EXTERN(fastf_t		nmg_faceuse_area, (CONST struct faceuse *fu));
+BU_EXTERN(fastf_t		nmg_shell_area, (CONST struct shell *s));
+BU_EXTERN(fastf_t		nmg_region_area, (CONST struct nmgregion *r));
+BU_EXTERN(fastf_t		nmg_model_area, (CONST struct model *m));
+/* Some stray rt_ plane functions here */
 BU_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct bu_ptbl *vert_list, fastf_t *mag, CONST struct faceuse *fu, CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct bu_ptbl *b) );
 BU_EXTERN(void			nmg_rebound, (struct model *m, CONST struct bn_tol *tol) );
 BU_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
+BU_EXTERN(void			nmg_close_shell, (struct shell *s, CONST struct bn_tol *tol));
+BU_EXTERN(struct shell		*nmg_dup_shell , ( struct shell *s , long ***copy_tbl, CONST struct bn_tol *tol ) );
+BU_EXTERN(struct edgeuse	*nmg_pop_eu, (struct bu_ptbl *stack));
+BU_EXTERN(void			nmg_reverse_radials, (struct faceuse *fu, CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_reverse_face_and_radials, (struct faceuse *fu, CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_shell_is_void, (CONST struct shell *s));
+BU_EXTERN(void			nmg_propagate_normals, (struct faceuse *fu_in,
+				long *flags, CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_connect_same_fu_orients, (struct shell *s));
+BU_EXTERN(void			nmg_fix_decomposed_shell_normals, (struct shell *s, CONST struct bn_tol *tol));
+BU_EXTERN(struct model		*nmg_mk_model_from_region, (struct nmgregion *r, int reindex));
+BU_EXTERN(void			nmg_fix_normals, (struct shell *s_orig,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_break_long_edges, (struct shell *s,
+				CONST struct bn_tol *tol));
+BU_EXTERN(struct faceuse	*nmg_mk_new_face_from_loop, (struct loopuse *lu));
+BU_EXTERN(int			nmg_split_loops_into_faces, (long *magic_p, CONST struct bn_tol	*tol));
+BU_EXTERN(int			nmg_decompose_shell, (struct shell *s, CONST struct bn_tol *tol));
 BU_EXTERN(void			nmg_stash_model_to_file, (CONST char *filename,
 				CONST struct model *m, CONST char *title) );
-BU_EXTERN(void			nmg_fix_normals, (struct shell *s_orig,
+BU_EXTERN(int			nmg_unbreak_region_edges, (long *magic_p));
+/* rt_dist_pt3_line3 */
+BU_EXTERN(int			nmg_mv_shell_to_region, (struct shell *s, struct nmgregion *r));
+BU_EXTERN(int			nmg_find_isect_faces, (CONST struct vertex *new_v,
+				struct bu_ptbl *faces,
+				int *free_edges,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_simple_vertex_solve,
+				(struct vertex *new_v, CONST struct bu_ptbl *faces,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_ck_vert_on_fus, (CONST struct vertex *v,
 				CONST struct bn_tol *tol));
 BU_EXTERN(void			nmg_make_faces_at_vert, (struct vertex *new_v,
 				struct bu_ptbl *int_faces,
 				CONST struct bn_tol *tol));
 BU_EXTERN(void			nmg_kill_cracks_at_vertex, (CONST struct vertex *vp));
+BU_EXTERN(int			nmg_complex_vertex_solve,
+				(struct vertex *new_v,
+				CONST struct bu_ptbl *faces,
+				CONST int free_edges,
+				CONST int approximate,
+				CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_bad_face_normals, (CONST struct shell *s,
 				CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_faces_are_radial,
@@ -2678,10 +2763,23 @@ BU_EXTERN(int			nmg_faces_are_radial,
 BU_EXTERN(int			nmg_move_edge_thru_pt, (struct edgeuse *mv_eu,
 				CONST point_t pt, CONST struct bn_tol *tol));
 BU_EXTERN(void			nmg_vlist_to_wire_edges, (struct shell *s,
-				struct bu_list *vhead));
+				CONST struct bu_list *vhead));
+BU_EXTERN(void			nmg_follow_free_edges_to_vertex,
+				(CONST struct vertex *vpa,
+				CONST struct vertex *vpb,
+				struct bu_ptbl *bad_verts,
+				CONST struct shell *s,
+				CONST struct edgeuse *eu,
+				struct bu_ptbl *verts,
+				int *found));
 BU_EXTERN(void			nmg_glue_face_in_shell,
 				(CONST struct faceuse *fu,
 				struct shell *s,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_open_shells_connect,
+				(struct shell *dst,
+				struct shell *src,
+				CONST long **copy_tbl,
 				CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_in_vert,
 				(struct vertex *new_v,
@@ -2692,11 +2790,21 @@ BU_EXTERN(int			nmg_kill_cracks, (struct shell *s));
 BU_EXTERN(int			nmg_kill_zero_length_edgeuses, (struct model *m));
 BU_EXTERN(void			nmg_make_faces_within_tol, (struct shell *s,
 				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_intersect_loops_self,
+				(struct shell *s, CONST struct bn_tol *tol));
 BU_EXTERN(struct edge_g_cnurb *rt_join_cnurbs, (struct bu_list *crv_head));
+BU_EXTERN(struct edge_g_cnurb *rt_arc2d_to_cnurb,
+				(point_t i_center,
+				point_t i_start,
+				point_t i_end,
+				int point_type,
+				CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_break_edge_at_verts, (struct edge *e,
 				struct bu_ptbl *verts, CONST struct bn_tol *tol));
+BU_EXTERN( void nmg_isect_shell_self , ( struct shell *s , CONST struct bn_tol *tol ) );
+BU_EXTERN(fastf_t		nmg_loop_plane_area , (CONST struct loopuse *lu , plane_t pl ) );
 BU_EXTERN(int			nmg_break_edges, (long *magic_p,
-				struct bn_tol *tol));
+				CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_lu_is_convex, (struct loopuse *lu,
 				CONST struct bn_tol *tol));
 
@@ -2710,6 +2818,7 @@ BU_EXTERN(int			nmg_to_poly, (CONST struct model *m,
 				struct rt_pg_internal *poly_int,
 				CONST struct bn_tol *tol));
 #endif
+
 BU_EXTERN(int			nmg_simplify_shell_edges, (struct shell *s,
 				CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_edge_collapse, (struct model *m,
