@@ -177,6 +177,7 @@ char	**argv;
 	struct color_vlist	color_vlist[32];
 	char		shortname[32];
 	char		namebuf[64];
+	char		cmd_buf[64];
 
 	if( argc <= 2 )
 		name = "_PLOT_OVERLAY_";
@@ -197,13 +198,18 @@ char	**argv;
 	fclose(fp);
 	if( ret < 0 )  return;
 
+	strncpy( shortname, name, 16-6 );
+	shortname[16-6] = '\0';
+	/* Remove any residue colors from a previous overlay w/same name */
+	sprintf( cmd_buf, "kill %s*\n", shortname );
+	cmdline(cmd_buf);
+
 	for( i=0; i<32; i++ )  {
 		if( i== 0 )  {
 			invent_solid( name, &color_vlist[0] );
 			continue;
 		}
-		strncpy( shortname, name, 16-6 );
-		shortname[16-6] = '\0';
+		if( color_vlist[i].rgb == 0 )  continue;
 		sprintf( namebuf, "%s%x",
 			shortname, color_vlist[i].rgb );
 		invent_solid( namebuf, &color_vlist[i] );
