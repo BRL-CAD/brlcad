@@ -844,7 +844,11 @@ char	**argv;
   register struct directory *dp;
   register int arg;
   struct bu_vls str;
+  int start_arg=1;
+  int recurse=0;
   char *listeval="listeval";
+  int id;
+  struct rt_db_internal intern;
 
   if(dbip == DBI_NULL)
     return TCL_OK;
@@ -868,8 +872,14 @@ char	**argv;
     return TCL_OK;
   }
 
-  for( arg = 1; arg < argc; arg++ )  {
-  	if( strchr( argv[arg], '/' ) )
+  if( strcmp( argv[1], "-r" ) == 0 )
+	{
+		recurse = 1;
+		start_arg = 2;
+	}
+
+  for( arg = start_arg; arg < argc; arg++ )  {
+  	if( recurse )
   	{
   		char *tmp_argv[2];
 
@@ -878,13 +888,45 @@ char	**argv;
 
   		f_pathsum( clientData, interp, 2, tmp_argv );
   	}
+  	else if( strchr( argv[arg], '/' ) )
+  	{
+  		struct db_tree_state ts;
+  		struct db_full_path path;
+
+  		bzero( (char *)&ts, sizeof( ts ) );
+  		db_full_path_init( &path );
+
+  		ts.ts_dbip = dbip;
+  		mat_idn(ts.ts_mat);
+
+  		if( db_follow_path_for_state( &ts, &path, argv[arg], 1 ) )
+  			continue;
+
+  		dp = DB_FULL_PATH_CUR_DIR( &path );
+
+		if( (id = rt_db_get_internal( &intern, dp, dbip, ts.ts_mat)) < 0 )
+		{
+			Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
+				") failure\n", (char *)NULL );
+			continue;
+		}
+
+  		db_free_full_path( &path );
+
+		bu_vls_printf( &str, "%s:  ", argv[arg] );
+
+		if( rt_functab[id].ft_describe( &str, &intern, 99, base2local ) < 0 )
+  			Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
+
+  		rt_functab[id].ft_ifree( &intern );
+  	}
   	else
   	{
 	    if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 	      continue;
 
 	    do_list( &str, dp, 99 );	/* very verbose */
-  	}
+ 	 }
   }
 
   Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
