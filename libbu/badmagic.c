@@ -32,12 +32,7 @@ static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
  *  Support routine for BU_CKMAG macro
  */
 void
-bu_badmagic( ptr, magic, str, file, line )
-const long	*ptr;
-long		magic;
-const char	*str;
-const char	*file;
-int		line;
+bu_badmagic(const long int *ptr, unsigned long int magic, const char *str, const char *file, int line)
 {
 	char	buf[512];
 
@@ -46,12 +41,12 @@ int		line;
 			str, file, line ); 
 		bu_bomb(buf); 
 	}
-	if( ((long)(ptr)) & (sizeof(long)-1) )  {
+	if( ((size_t)(ptr)) & (sizeof(long)-1) )  {
 		sprintf(buf, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n", 
 			(long)ptr, str, file, line ); 
 		bu_bomb(buf); 
 	}
-	if( *(ptr) != (magic) )  { 
+	if( *(ptr) != (long int)(magic) )  { 
 		sprintf(buf, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
 			(long)ptr,
 			str, magic,

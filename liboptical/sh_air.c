@@ -41,7 +41,7 @@ static struct air_specific air_defaults = {
 #define SHDR_O(m)	offsetof(struct air_specific, m)
 #define SHDR_AO(m)	bu_offsetofarray(struct air_specific, m)
 
-static void dpm_hook();
+static void dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
 
 struct bu_structparse air_parse[] = {
 	{"%f",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook },
@@ -52,8 +52,8 @@ struct bu_structparse air_parse[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	air_setup(), airtest_render(), air_render(), emist_render(), tmist_render();
-HIDDEN void	air_print(), air_free();
+HIDDEN int	air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), airtest_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), air_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), emist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), tmist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	air_print(register struct region *rp, char *dp), air_free(char *cp);
 
 struct mfuncs air_mfuncs[] = {
 	{MF_MAGIC,	"airtest",	0,		MFI_HIT, MFF_PROC,
@@ -75,11 +75,11 @@ struct mfuncs air_mfuncs[] = {
 	0,		0,		0,		0 }
 };
 static void 
-dpm_hook(sdp, name, base, value)
-register const struct bu_structparse	*sdp;	/* structure description */
-register const char			*name;	/* struct member name */
-char					*base;	/* begining of structure */
-const char				*value;	/* string containing value */
+dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+                                    	     	/* structure description */
+                   			      	/* struct member name */
+    					      	/* begining of structure */
+          				       	/* string containing value */
 {
 #define meters_to_millimeters 0.001
 	struct air_specific *air_sp = (struct air_specific *)base;
@@ -93,12 +93,12 @@ const char				*value;	/* string containing value */
  *	Any shader-specific initialization should be done here.
  */
 HIDDEN int
-air_setup( rp, matparm, dpp, mfp, rtip)
-register struct region	*rp;
-struct bu_vls		*matparm;
-char			**dpp;	/* pointer to reg_udata in *rp */
-struct mfuncs		*mfp;
-struct rt_i		*rtip;	/* New since 4.4 release */
+air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+                      	    
+             		         
+    			      	/* pointer to reg_udata in *rp */
+             		     
+           		      	/* New since 4.4 release */
 {
 	register struct air_specific	*air_sp;
 
@@ -133,9 +133,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
  *	A I R _ P R I N T
  */
 HIDDEN void
-air_print( rp, dp )
-register struct region *rp;
-char	*dp;
+air_print(register struct region *rp, char *dp)
 {
 	bu_struct_print( rp->reg_name, air_parse, (char *)dp );
 }
@@ -144,8 +142,7 @@ char	*dp;
  *	A I R _ F R E E
  */
 HIDDEN void
-air_free( cp )
-char *cp;
+air_free(char *cp)
 {
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("air_free(%s:%d)\n", __FILE__, __LINE__);
@@ -161,11 +158,7 @@ char *cp;
  *
  */
 int
-airtest_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+airtest_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct air_specific *air_sp =
 		(struct air_specific *)dp;
@@ -198,11 +191,7 @@ char	*dp;
  *	transmission = e^(-Tau)
  */
 int
-air_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+air_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct air_specific *air_sp =
 		(struct air_specific *)dp;
@@ -252,18 +241,8 @@ char	*dp;
 	return(1);
 }
 
-#ifndef WIN32
 int
-tmist_hit(ap, PartHeadp, segHeadp)
-register struct application *ap;
-struct partition *PartHeadp;
-struct seg *segHeadp;
-#else
-int tmist_hit(
-register struct application *ap,
-struct partition *PartHeadp,
-struct seg *segHeadp)
-#endif
+tmist_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
 {
 	/* go looking for the object named in
 	 * ((struct air_specific *)ap->a_uptr)->name
@@ -272,15 +251,8 @@ struct seg *segHeadp)
 	 */
 	return 0;
 }
-
-#ifndef WIN32
 int
-tmist_miss( ap )
-register struct application *ap;
-#else
-int
-tmist_miss( register struct application *ap )
-#endif
+tmist_miss(register struct application *ap)
 {
 	/* we missed?!  This is bogus!
 	 * but set ap->a_dist to something big
@@ -298,11 +270,7 @@ tmist_miss( register struct application *ap )
  *	once for each hit point to be shaded.
  */
 int
-tmist_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+tmist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct air_specific *air_sp =
 		(struct air_specific *)dp;
@@ -392,11 +360,7 @@ char	*dp;
  *	once for each hit point to be shaded.
  */
 int
-emist_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+emist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct air_specific *air_sp =
 		(struct air_specific *)dp;
@@ -467,11 +431,7 @@ char	*dp;
  *	once for each hit point to be shaded.
  */
 int
-emist_fbm_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+emist_fbm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 #ifndef NO_MAGIC_CHECKING
 	register struct air_specific *air_sp =

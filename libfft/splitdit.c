@@ -12,9 +12,7 @@ int	rfft_adds, rfft_mults;
 #define	INVSQ2	0.70710678118654752440
 
 void
-rfft( X, N )
-double	X[];
-int	N;
+rfft(double *X, int N)
 {
 	int	i0, i1, i2, i3;
 	int	a0, a1, a2, a3, b0, b1, b2, b3;

@@ -55,16 +55,15 @@ Mat_Db_Entry		mat_nul_entry =
 				MF_NULL,	/* Mode flag.		*/
 				"(null)"	/* Material name.	*/
 				};
-STATIC int	get_Mat_Entry(), put_Mat_Entry();
+STATIC int	get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp), put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp);
 
 /*	m a t _ R d _ D b ( )
 	Open material database and read entries into table,
 	return number of entries successfully read.
  */
 int
-mat_Rd_Db( file )
-char	*file;
-	{	register Mat_Db_Entry	*entry;
+mat_Rd_Db(char *file)
+{	register Mat_Db_Entry	*entry;
 		register FILE		*fp;
 	if( (fp = fopen( file, "r" )) == NULL )
 		return	0;
@@ -86,9 +85,8 @@ char	*file;
 	Print material database entry.
  */
 int
-mat_Print_Db( material_id )
-int		material_id;
-	{	register Mat_Db_Entry	*entry;
+mat_Print_Db(int material_id)
+{	register Mat_Db_Entry	*entry;
 		register int		stop;
 		register int		success = 0;
 		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
@@ -163,9 +161,8 @@ int		material_id;
 	Return 1 for success, 0 for failure.
  */
 int
-mat_Save_Db( file )
-char	*file;
-	{	register Mat_Db_Entry	*entry;
+mat_Save_Db(char *file)
+{	register Mat_Db_Entry	*entry;
 		register FILE		*fp;
 	if( (fp = fopen( file, "w" )) == NULL )
 		return	0;
@@ -187,9 +184,8 @@ char	*file;
 	Create or overwrite entry in material table.
  */
 int
-mat_Edit_Db_Entry( id )
-int	id;
-	{	register Mat_Db_Entry	*entry;
+mat_Edit_Db_Entry(int id)
+{	register Mat_Db_Entry	*entry;
 		char			input_buf[MAX_LN];
 		char			prompt[MAX_LN];
 		int			red, grn, blu;
@@ -271,9 +267,8 @@ int	id;
 	Return pointer to entry indexed by id or NULL.
  */
 Mat_Db_Entry *
-mat_Get_Db_Entry( id )
-int	id;
-	{
+mat_Get_Db_Entry(int id)
+{
 	if( id < 0 )
 		return	MAT_DB_NULL;
 	if( id < mat_db_size )
@@ -283,10 +278,8 @@ int	id;
 	}
 
 STATIC int
-get_Mat_Entry( entry, fp )
-register Mat_Db_Entry	*entry;
-FILE	*fp;
-	{	register char	*ptr;
+get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
+{	register char	*ptr;
 		int		items;
 		int		red, grn, blu, mode;
 	if( fgets( entry->name, MAX_MAT_NM, fp ) == NULL )
@@ -338,10 +331,8 @@ FILE	*fp;
 	}
 
 STATIC int
-put_Mat_Entry( entry, fp )
-register Mat_Db_Entry	*entry;
-register FILE		*fp;
-	{
+put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp)
+{
 	if( entry->mode_flag == MF_NULL )
 		entry = &mat_nul_entry;
 	(void) fprintf( fp, "%s\n", entry->name );

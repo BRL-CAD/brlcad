@@ -37,14 +37,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./font.h"
 
 #define BUFFSIZ 200
-STATIC int	bitx();
-STATIC void	do_char();
+STATIC int	bitx(register char *bitstring, register int posn);
+STATIC void	do_char(int c, register int xpos, register int ypos);
 
 void
-do_line( xpos, ypos, line )
-int		xpos, ypos;
-register char	*line;
-	{	register int    currx;
+do_line(int xpos, int ypos, register char *line)
+{	register int    currx;
 		register int    char_count, char_id;
 		register int	len = strlen( line );
 	if( ffdes == NULL )
@@ -97,10 +95,8 @@ register char	*line;
 	to be in the correct position.
  */
 STATIC void
-do_char( c, xpos, ypos )
-int		c;
-register int	xpos, ypos;
-	{	int     	up = dir[c].up / ir_aperture;
+do_char(int c, register int xpos, register int ypos)
+{	int     	up = dir[c].up / ir_aperture;
 		int		left = dir[c].left / ir_aperture;
 		static char	bitbuf[BUFFSIZ][BUFFSIZ];
 		static RGBpixel	pixel;
@@ -165,10 +161,8 @@ register int	xpos, ypos;
  */
 /*ARGSUSED*/
 STATIC int
-bitx( bitstring, posn )
-register char *bitstring;
-register int posn;
-	{
+bitx(register char *bitstring, register int posn)
+{
 #if defined( vax )
    	register field;
 

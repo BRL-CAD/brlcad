@@ -55,13 +55,7 @@ static const char libbu_rb_walk_RCSid[] = "@(#) $Header$";
  *
  *	    Perform a preorder traversal of a red-black tree
  */
-static void prewalknodes (root, order, visit, depth)
-
-struct bu_rb_node	*root;
-int			order;
-void			(*visit)();
-int			depth;
-
+static void prewalknodes (struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     BU_RB_CKORDER(root -> rbn_tree, order);
@@ -77,13 +71,7 @@ int			depth;
  *
  *	    Perform an inorder traversal of a red-black tree
  */
-static void inwalknodes (root, order, visit, depth)
-
-struct bu_rb_node	*root;
-int			order;
-void			(*visit)();
-int			depth;
-
+static void inwalknodes (struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     BU_RB_CKORDER(root -> rbn_tree, order);
@@ -99,13 +87,7 @@ int			depth;
  *
  *	    Perform a postorder traversal of a red-black tree
  */
-static void postwalknodes (root, order, visit, depth)
-
-struct bu_rb_node	*root;
-int			order;
-void			(*visit)();
-int			depth;
-
+static void postwalknodes (struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     BU_RB_CKORDER(root -> rbn_tree, order);
@@ -121,13 +103,7 @@ int			depth;
  *
  *	    Perform a preorder traversal of a red-black tree
  */
-static void prewalkdata (root, order, visit, depth)
-
-struct bu_rb_node	*root;
-int			order;
-void			(*visit)();
-int			depth;
-
+static void prewalkdata (struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     BU_RB_CKORDER(root -> rbn_tree, order);
@@ -143,13 +119,7 @@ int			depth;
  *
  *	    Perform an inorder traversal of a red-black tree
  */
-static void inwalkdata (root, order, visit, depth)
-
-struct bu_rb_node	*root;
-int			order;
-void			(*visit)();
-int			depth;
-
+static void inwalkdata (struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     BU_RB_CKORDER(root -> rbn_tree, order);
@@ -165,13 +135,7 @@ int			depth;
  *
  *	    Perform a postorder traversal of a red-black tree
  */
-static void postwalkdata (root, order, visit, depth)
-
-struct bu_rb_node	*root;
-int			order;
-void			(*visit)();
-int			depth;
-
+static void postwalkdata (struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     BU_RB_CKORDER(root -> rbn_tree, order);
@@ -196,14 +160,7 @@ int			depth;
  *	N.B. _rb_walk() is not declared static because it is called
  *	by bu_rb_diagnose_tree() in rb_diag.c.
  */
-void _rb_walk (tree, order, visit, what_to_visit, trav_type)
-
-bu_rb_tree	*tree;
-int		order;
-void		(*visit)();
-int		what_to_visit;
-int		trav_type;
-
+void _rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type)
 {
     static void (*walk[][3])() =
 		{
@@ -247,13 +204,7 @@ int		trav_type;
  *	to each node, and the type of traversal (preorder, inorder,
  *	or postorder).
  */
-void bu_rb_walk (tree, order, visit, trav_type)
-
-bu_rb_tree	*tree;
-int		order;
-void		(*visit)();
-int		trav_type;
-
+void bu_rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int trav_type)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);

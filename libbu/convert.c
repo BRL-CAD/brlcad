@@ -152,7 +152,7 @@ void
 bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 {
 	register char *cp = buf;
-	int	len;
+	unsigned int	len;
 	
 	if( buflen == 0 )	{
 		fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
@@ -278,13 +278,7 @@ bu_cv_pr_cookie( char *title, int cookie )
  *
  */
 int
-cv(out, outfmt, size, in, infmt, count)
-genptr_t out;
-char	*outfmt;
-int	size;
-genptr_t in;
-char	*infmt;
-int	count;
+cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
 {
 	int	incookie, outcookie;
 	incookie = bu_cv_cookie(infmt);
@@ -300,8 +294,7 @@ int	count;
  *  network format, modify the cookie to request host format.
  */
 int
-bu_cv_optimize( cookie )
-register int	cookie;
+bu_cv_optimize(register int cookie)
 {
 	static int Indian = IND_NOTSET;
 	int	fmt;
@@ -314,13 +307,14 @@ register int	cookie;
 	
 	/* Run time check:  which kind of integers does this machine have? */
 	if (Indian == IND_NOTSET) {
+		size_t soli = sizeof(long int);
 		unsigned long int	testval;
 		register int		i;
 		for (i=0; i<4; i++) {
 			((char *)&testval)[i] = i+1;
 		}
 		
-		if (sizeof (long int) == 8) {
+		if (soli == 8) {
 			Indian = IND_CRAY;	/* is this good enough? */
 			if ( ( (testval >> 31) >> 1 ) == 0x01020304) { 
 				Indian = IND_BIG; /* XXX 64bit */
@@ -399,11 +393,7 @@ bu_cv_itemlen(register int cookie)
  *	Straight-forward.
  */
 int
-bu_cv_ntohss(out, size, in, count)
-register signed short	*out;
-int			size;
-register genptr_t	in;
-int			count;
+bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, int count)
 {
 	int limit;
 	register int i;
@@ -423,11 +413,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_ntohus(out, size, in, count)
-register unsigned short	*out;
-int			size;
-register genptr_t	in;
-int			count;
+bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in, int count)
 {
 	int limit;
 	register int i;
@@ -443,11 +429,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_ntohsl(out, size, in, count)
-register signed long int	*out;
-int				size;
-register genptr_t		in;
-int				count;
+bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, int count)
 {
 	int limit;
 	register int i;
@@ -467,11 +449,7 @@ int				count;
 	return(count);
 }
 int
-bu_cv_ntohul(out, size, in, count)
-register unsigned long int	*out;
-int				size;
-register genptr_t		in;
-int				count;
+bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in, int count)
 {
 	int limit;
 	register int i;
@@ -491,11 +469,7 @@ int				count;
 
 /*****/
 int
-bu_cv_htonss(out, size, in, count)
-genptr_t		out;
-int			size;
-register short		*in;
-int			count;
+bu_cv_htonss(genptr_t out, size_t size, register short int *in, int count)
 {
 	int		limit;
 	register int	i;
@@ -512,11 +486,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_htonus(out, size, in, count)
-genptr_t		out;
-int			size;
-register unsigned short	*in;
-int			count;
+bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, int count)
 {
 	int		limit;
 	register int	i;
@@ -533,11 +503,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_htonsl(out, size, in, count)
-genptr_t		out;
-int			size;
-register long		*in;
-int			count;
+bu_cv_htonsl(genptr_t out, size_t size, register long int *in, int count)
 {
 	int		limit;
 	register int	i;
@@ -556,11 +522,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_htonul(out, size, in, count)
-genptr_t		out;
-int			size;
-register unsigned long	*in;
-int			count;
+bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int count)
 {
 	int		limit;
 	register int	i;
@@ -669,12 +631,12 @@ int			count;
  *	done
  */
 int
-bu_cv_w_cookie(genptr_t out, int outcookie, int	size, genptr_t in,  int incookie,  int	count)
+bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incookie,  int	count)
 {
 	int	work_count = 4096;
 	int	number_done = 0;
 	int	inIsHost,outIsHost,infmt,outfmt,insize,outsize;
-	int	bufsize;
+	size_t	bufsize;
 	genptr_t	t1,t2,t3;
 	genptr_t	from;
 	genptr_t	to;
@@ -723,7 +685,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size, genptr_t in,  int incookie
 			 * No conversion required.
 			 * Check the amount of space remaining before doing the bcopy.
 			 */
-			if (count * outsize > size) {
+			if ((unsigned int)count * outsize > size) {
 		    number_done = size / outsize;
 			} else {
 		    number_done = count;
@@ -732,8 +694,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size, genptr_t in,  int incookie
 			/*
 			 * This is the simplest case, binary copy and out.
 			 */
-			(void) bcopy((genptr_t) in, (genptr_t) out,
-									 number_done * outsize);
+			(void) bcopy((genptr_t) in, (genptr_t) out, (size_t)number_done * outsize);
 			return(number_done);
 			
 			/*
@@ -795,7 +756,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size, genptr_t in,  int incookie
 	/*
 	 * From here on we will be working on a chunk of process at a time.
 	 */
-	while ( size >= outsize  && number_done < count) {
+	while ( size >= (unsigned int)outsize  && number_done < count) {
 		int remaining;
 		
 		/*

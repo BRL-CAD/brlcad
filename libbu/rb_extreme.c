@@ -42,13 +42,7 @@ static const char libbu_rb_extreme_RCSid[] = "@(#) $Header$";
  *	as the nil node pointer. _rb_extreme() returns a pointer to the
  *	extreme node.
  */
-static struct bu_rb_node *_rb_extreme (root, order, sense, empty_node)
-
-struct bu_rb_node	*root;
-int			order;
-int			sense;
-struct bu_rb_node	*empty_node;
-
+static struct bu_rb_node *_rb_extreme (struct bu_rb_node *root, int order, int sense, struct bu_rb_node *empty_node)
 {
     struct bu_rb_node	*child;
     bu_rb_tree		*tree;
@@ -84,12 +78,7 @@ struct bu_rb_node	*empty_node;
  *	(min or max).  On success, bu_rb_extreme() returns a pointer to the
  *	data in the extreme node.  Otherwise it returns NULL.
  */
-void *bu_rb_extreme (tree, order, sense)
-
-bu_rb_tree	*tree;
-int		order;
-int		sense;
-
+void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
 {
     struct bu_rb_node	*node;
 
@@ -123,12 +112,7 @@ int		sense;
  *	returns a pointer to the adjacent node.  This function is
  *	modeled after the routine TREE-SUCCESSOR on p. 249 of Cormen et al.
  */
-struct bu_rb_node *_rb_neighbor (node, order, sense)
-
-struct bu_rb_node	*node;
-int			order;
-int			sense;
-
+struct bu_rb_node *_rb_neighbor (struct bu_rb_node *node, int order, int sense)
 {
     struct bu_rb_node	*child;
     struct bu_rb_node	*parent;
@@ -170,12 +154,7 @@ int			sense;
  *	in the specified direction, if that node exists.  Otherwise,
  *	it returns NULL.
  */
-void *bu_rb_neighbor (tree, order, sense)
-
-bu_rb_tree	*tree;
-int		order;
-int		sense;
-
+void *bu_rb_neighbor (bu_rb_tree *tree, int order, int sense)
 {
     struct bu_rb_node	*node;
 
@@ -211,11 +190,7 @@ int		sense;
  *	the data in the current node, if it exists.  Otherwise,
  *	it returns NULL.
  */
-void *bu_rb_curr (tree, order)
-
-bu_rb_tree	*tree;
-int		order;
-
+void *bu_rb_curr (bu_rb_tree *tree, int order)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);

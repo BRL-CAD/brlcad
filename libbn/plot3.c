@@ -51,9 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 
 void
-pl_point( plotfp, x, y )
-register FILE *plotfp;
-int x, y;
+pl_point(register FILE *plotfp, int x, int y)
 {
 	putc( 'p', plotfp );
 	putsi( x );
@@ -61,9 +59,7 @@ int x, y;
 }
 
 void
-pl_line( plotfp, x1, y1, x2, y2 )
-register FILE *plotfp;
-int x1, y1, x2, y2;
+pl_line(register FILE *plotfp, int x1, int y1, int x2, int y2)
 {
 	putc( 'l', plotfp );
 	putsi( x1 );
@@ -73,9 +69,7 @@ int x1, y1, x2, y2;
 }
 
 void
-pl_linmod( plotfp, s )
-register FILE *plotfp;
-register char *s;
+pl_linmod(register FILE *plotfp, register char *s)
 {
 	putc( 'f', plotfp );
 	while( *s )
@@ -84,9 +78,7 @@ register char *s;
 }
 
 void
-pl_move( plotfp, x, y )
-register FILE *plotfp;
-int x, y;
+pl_move(register FILE *plotfp, int x, int y)
 {
 	putc( 'm', plotfp );
 	putsi( x );
@@ -94,9 +86,7 @@ int x, y;
 }
 
 void
-pl_cont( plotfp, x, y )
-register FILE *plotfp;
-int x, y;
+pl_cont(register FILE *plotfp, int x, int y)
 {
 	putc( 'n', plotfp );
 	putsi( x );
@@ -104,9 +94,7 @@ int x, y;
 }
 
 void
-pl_label( plotfp, s )
-register FILE *plotfp;
-register char *s;
+pl_label(register FILE *plotfp, register char *s)
 {
 	putc( 't', plotfp );
 	while( *s )
@@ -115,9 +103,7 @@ register char *s;
 }
 
 void
-pl_space( plotfp, x1, y1, x2, y2 )
-register FILE *plotfp;
-int x1, y1, x2, y2;
+pl_space(register FILE *plotfp, int x1, int y1, int x2, int y2)
 {
 	putc( 's', plotfp );
 	putsi( x1 );
@@ -127,16 +113,13 @@ int x1, y1, x2, y2;
 }
 
 void
-pl_erase( plotfp )
-register FILE *plotfp;
+pl_erase(register FILE *plotfp)
 {
 	putc( 'e', plotfp );
 }
 
 void
-pl_circle( plotfp, x, y, r )
-register FILE *plotfp;
-int x, y, r;
+pl_circle(register FILE *plotfp, int x, int y, int r)
 {
 	putc( 'c', plotfp );
 	putsi( x );
@@ -145,9 +128,7 @@ int x, y, r;
 }
 
 void
-pl_arc( plotfp, xc, yc, x1, y1, x2, y2 )
-register FILE *plotfp;
-int xc, yc, x1, y1, x2, y2;
+pl_arc(register FILE *plotfp, int xc, int yc, int x1, int y1, int x2, int y2)
 {
 	putc( 'a', plotfp );
 	putsi( xc );
@@ -159,9 +140,7 @@ int xc, yc, x1, y1, x2, y2;
 }
 
 void
-pl_box( plotfp, x1, y1, x2, y2 )
-register FILE *plotfp;
-int x1, y1, x2, y2;
+pl_box(register FILE *plotfp, int x1, int y1, int x2, int y2)
 {
 	pl_move( plotfp, x1, y1 );
 	pl_cont( plotfp, x1, y2 );
@@ -177,9 +156,7 @@ int x1, y1, x2, y2;
 
 /* Warning: r, g, b are ints.  The output is chars. */
 void
-pl_color( plotfp, r, g, b )
-register FILE *plotfp;
-int r, g, b;
+pl_color(register FILE *plotfp, int r, int g, int b)
 {
 	putc( 'C', plotfp );
 	putc( r, plotfp );
@@ -188,17 +165,14 @@ int r, g, b;
 }
 
 void
-pl_flush( plotfp )
-register FILE *plotfp;
+pl_flush(register FILE *plotfp)
 {
 	putc( 'F', plotfp );
 	fflush( plotfp );
 }
 
 void
-pl_3space( plotfp, x1, y1, z1, x2, y2, z2 )
-register FILE *plotfp;
-int x1, y1, z1, x2, y2, z2;
+pl_3space(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 {
 	putc( 'S', plotfp );
 	putsi( x1 );
@@ -210,9 +184,7 @@ int x1, y1, z1, x2, y2, z2;
 }
 
 void
-pl_3point( plotfp, x, y, z )
-register FILE *plotfp;
-int x, y, z;
+pl_3point(register FILE *plotfp, int x, int y, int z)
 {
 	putc( 'P', plotfp );
 	putsi( x );
@@ -221,9 +193,7 @@ int x, y, z;
 }
 
 void
-pl_3move( plotfp, x, y, z )
-register FILE *plotfp;
-int x, y, z;
+pl_3move(register FILE *plotfp, int x, int y, int z)
 {
 	putc( 'M', plotfp );
 	putsi( x );
@@ -232,9 +202,7 @@ int x, y, z;
 }
 
 void
-pl_3cont( plotfp, x, y, z )
-register FILE *plotfp;
-int x, y, z;
+pl_3cont(register FILE *plotfp, int x, int y, int z)
 {
 	putc( 'N', plotfp );
 	putsi( x );
@@ -243,9 +211,7 @@ int x, y, z;
 }
 
 void
-pl_3line( plotfp, x1, y1, z1, x2, y2, z2 )
-register FILE *plotfp;
-int x1, y1, z1, x2, y2, z2;
+pl_3line(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 {
 	putc( 'L', plotfp );
 	putsi( x1 );
@@ -257,9 +223,7 @@ int x1, y1, z1, x2, y2, z2;
 }
 
 void
-pl_3box( plotfp, x1, y1, z1, x2, y2, z2 )
-register FILE *plotfp;
-int x1, y1, z1, x2, y2, z2;
+pl_3box(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 {
 	pl_3move( plotfp, x1, y1, z1 );
 	/* first side */
@@ -290,9 +254,7 @@ int x1, y1, z1, x2, y2, z2;
  */
 
 void
-pd_point( plotfp, x, y )
-register FILE *plotfp;
-double x, y;
+pd_point(register FILE *plotfp, double x, double y)
 {
 	double	in[2];
 	unsigned char	out[2*8+1];
@@ -306,9 +268,7 @@ double x, y;
 }
 
 void
-pd_line( plotfp, x1, y1, x2, y2 )
-register FILE *plotfp;
-double x1, y1, x2, y2;
+pd_line(register FILE *plotfp, double x1, double y1, double x2, double y2)
 {
 	double	in[4];
 	unsigned char	out[4*8+1];
@@ -326,9 +286,7 @@ double x1, y1, x2, y2;
 /* Note: no pd_linmod(), just use pl_linmod() */
 
 void
-pd_move( plotfp, x, y )
-register FILE *plotfp;
-double x, y;
+pd_move(register FILE *plotfp, double x, double y)
 {
 	double	in[2];
 	unsigned char	out[2*8+1];
@@ -342,9 +300,7 @@ double x, y;
 }
 
 void
-pd_cont( plotfp, x, y )
-register FILE *plotfp;
-double x, y;
+pd_cont(register FILE *plotfp, double x, double y)
 {
 	double	in[2];
 	unsigned char	out[2*8+1];
@@ -358,9 +314,7 @@ double x, y;
 }
 
 void
-pd_space( plotfp, x1, y1, x2, y2 )
-register FILE *plotfp;
-double x1, y1, x2, y2;
+pd_space(register FILE *plotfp, double x1, double y1, double x2, double y2)
 {
 	double	in[4];
 	unsigned char	out[4*8+1];
@@ -376,9 +330,7 @@ double x1, y1, x2, y2;
 }
 
 void
-pd_circle( plotfp, x, y, r )
-register FILE *plotfp;
-double x, y, r;
+pd_circle(register FILE *plotfp, double x, double y, double r)
 {
 	double	in[3];
 	unsigned char	out[3*8+1];
@@ -393,9 +345,7 @@ double x, y, r;
 }
 
 void
-pd_arc( plotfp, xc, yc, x1, y1, x2, y2 )
-register FILE *plotfp;
-double xc, yc, x1, y1, x2, y2;
+pd_arc(register FILE *plotfp, double xc, double yc, double x1, double y1, double x2, double y2)
 {
 	double	in[6];
 	unsigned char	out[6*8+1];
@@ -413,9 +363,7 @@ double xc, yc, x1, y1, x2, y2;
 }
 
 void
-pd_box( plotfp, x1, y1, x2, y2 )
-register FILE *plotfp;
-double x1, y1, x2, y2;
+pd_box(register FILE *plotfp, double x1, double y1, double x2, double y2)
 {
 	pd_move( plotfp, x1, y1 );
 	pd_cont( plotfp, x1, y2 );
@@ -427,10 +375,7 @@ double x1, y1, x2, y2;
 
 /* Double 3-D, both in vector and enumerated versions */
 void
-pdv_3space( plotfp, min, max )
-register FILE *plotfp;
-const vect_t	min;
-const vect_t	max;
+pdv_3space(register FILE *plotfp, const fastf_t *min, const fastf_t *max)
 {
 	unsigned char	out[6*8+1];
 
@@ -442,9 +387,7 @@ const vect_t	max;
 }
 
 void
-pd_3space( plotfp, x1, y1, z1, x2, y2, z2 )
-register FILE *plotfp;
-double x1, y1, z1, x2, y2, z2;
+pd_3space(register FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2)
 {
 	double	in[6];
 	unsigned char	out[6*8+1];
@@ -462,9 +405,7 @@ double x1, y1, z1, x2, y2, z2;
 }
 
 void
-pdv_3point( plotfp, pt )
-register FILE *plotfp;
-const vect_t	pt;
+pdv_3point(register FILE *plotfp, const fastf_t *pt)
 {
 	unsigned char	out[3*8+1];
 
@@ -475,9 +416,7 @@ const vect_t	pt;
 }
 
 void
-pd_3point( plotfp, x, y, z )
-register FILE *plotfp;
-double x, y, z;
+pd_3point(register FILE *plotfp, double x, double y, double z)
 {
 	double	in[3];
 	unsigned char	out[3*8+1];
@@ -492,9 +431,7 @@ double x, y, z;
 }
 
 void
-pdv_3move( plotfp, pt )
-register FILE *plotfp;
-const vect_t	pt;
+pdv_3move(register FILE *plotfp, const fastf_t *pt)
 {
 	unsigned char	out[3*8+1];
 
@@ -505,9 +442,7 @@ const vect_t	pt;
 }
 
 void
-pd_3move( plotfp, x, y, z )
-register FILE *plotfp;
-double x, y, z;
+pd_3move(register FILE *plotfp, double x, double y, double z)
 {
 	double	in[3];
 	unsigned char	out[3*8+1];
@@ -522,9 +457,7 @@ double x, y, z;
 }
 
 void
-pdv_3cont( plotfp, pt )
-register FILE *plotfp;
-const vect_t	pt;
+pdv_3cont(register FILE *plotfp, const fastf_t *pt)
 {
 	unsigned char	out[3*8+1];
 
@@ -535,9 +468,7 @@ const vect_t	pt;
 }
 
 void
-pd_3cont( plotfp, x, y, z )
-register FILE *plotfp;
-double x, y, z;
+pd_3cont(register FILE *plotfp, double x, double y, double z)
 {
 	double	in[3];
 	unsigned char	out[3*8+1];
@@ -552,9 +483,7 @@ double x, y, z;
 }
 
 void
-pdv_3line( plotfp, a, b )
-register FILE *plotfp;
-const vect_t	a, b;
+pdv_3line(register FILE *plotfp, const fastf_t *a, const fastf_t *b)
 {
 	unsigned char	out[6*8+1];
 
@@ -566,9 +495,7 @@ const vect_t	a, b;
 }
 
 void
-pd_3line( plotfp, x1, y1, z1, x2, y2, z2 )
-register FILE *plotfp;
-double x1, y1, z1, x2, y2, z2;
+pd_3line(register FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2)
 {
 	double	in[6];
 	unsigned char	out[6*8+1];
@@ -586,9 +513,7 @@ double x1, y1, z1, x2, y2, z2;
 }
 
 void
-pdv_3box( plotfp, a, b )
-register FILE *plotfp;
-const vect_t	a, b;
+pdv_3box(register FILE *plotfp, const fastf_t *a, const fastf_t *b)
 {
 	pd_3move( plotfp, a[X], a[Y], a[Z] );
 	/* first side */
@@ -615,9 +540,7 @@ const vect_t	a, b;
 }
 
 void
-pd_3box( plotfp, x1, y1, z1, x2, y2, z2 )
-register FILE *plotfp;
-double x1, y1, z1, x2, y2, z2;
+pd_3box(register FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2)
 {
 	pd_3move( plotfp, x1, y1, z1 );
 	/* first side */
@@ -647,11 +570,7 @@ double x1, y1, z1, x2, y2, z2;
  *  Draw a ray
  */
 void
-pdv_3ray( fp, pt, dir, t )
-FILE		*fp;
-const point_t	pt;
-const vect_t	dir;
-double		t;
+pdv_3ray(FILE *fp, const fastf_t *pt, const fastf_t *dir, double t)
 {
 	point_t	tip;
 

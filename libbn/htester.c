@@ -31,8 +31,7 @@ double	orig[NUM], after[NUM];
 
 char	buf[NUM*8];
 
-main(argc, argv)
-char	**argv;
+main(int argc, char **argv)
 {
 	register int i;
 	register int nbytes;
@@ -95,8 +94,7 @@ char	**argv;
 	exit(0);
 }
 
-flpr( cp )
-register unsigned char *cp;
+flpr(register unsigned char *cp)
 {
 	register int i;
 	for( i=0; i<sizeof(double); i++ )  {
@@ -106,10 +104,7 @@ register unsigned char *cp;
 	}
 }
 
-ckbytes( a, b, n )
-register unsigned char *a;
-register unsigned char *b;
-register int n;
+ckbytes(register unsigned char *a, register unsigned char *b, register int n)
 {
 #ifndef vax
 	while( n-- > 0 )  {

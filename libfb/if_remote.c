@@ -60,32 +60,32 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	PCPL(ptr)	((ptr)->u1.p)	/* left hand side version */
 
 /* Package Handlers. */
-static void	pkgerror();	/* error message handler */
+static void	pkgerror(struct pkg_conn *pcpp, char *buf);	/* error message handler */
 static struct pkg_switch pkgswitch[] = {
 	{ MSG_ERROR, pkgerror, "Error Message" },
 	{ 0, NULL, NULL }
 };
 
-_LOCAL_ int	rem_open(),
-		rem_close(),
-		rem_clear(),
-		rem_read(),
-		rem_write(),
-		rem_rmap(),
-		rem_wmap(),
-		rem_view(),
-		rem_getview(),
-		rem_cursor(),
-		rem_getcursor(),
-		rem_setcursor(),
-		rem_readrect(),
-		rem_writerect(),
-		rem_bwreadrect(),
-		rem_bwwriterect(),
-		rem_poll(),
-		rem_flush(),
-		rem_free(),
-		rem_help();
+_LOCAL_ int	rem_open(register FBIO *ifp, register char *file, int width, int height),
+		rem_close(FBIO *ifp),
+		rem_clear(FBIO *ifp, unsigned char *bgpp),
+		rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, int num),
+		rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int num),
+		rem_rmap(register FBIO *ifp, register ColorMap *cmap),
+		rem_wmap(register FBIO *ifp, register ColorMap *cmap),
+		rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
+		rem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
+		rem_cursor(FBIO *ifp, int mode, int x, int y),
+		rem_getcursor(FBIO *ifp, int *mode, int *x, int *y),
+		rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
+		rem_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
+		rem_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
+		rem_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
+		rem_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
+		rem_poll(FBIO *ifp),
+		rem_flush(FBIO *ifp),
+		rem_free(FBIO *ifp),
+		rem_help(FBIO *ifp);
 
 FBIO remote_interface = {
 	0,
@@ -133,14 +133,13 @@ FBIO remote_interface = {
 void	pkg_queue(), flush_queue();
 
 /* from getput.c */
-extern unsigned short fbgetshort();
-extern unsigned long fbgetlong();
-extern char *fbputshort(), *fbputlong();
+extern unsigned short fbgetshort(char *msgp);
+extern unsigned long fbgetlong(char *msgp);
+extern char *fbputshort(register short unsigned int s, register char *msgp), *fbputlong(register long unsigned int l, register char *msgp);
 
 /* True if the non-null string s is all digits */
 static int
-numeric( s )
-register char *s;
+numeric(register char *s)
 {
 	if( s == (char *)0 || *s == 0 )
 		return	0;
@@ -170,11 +169,11 @@ register char *s;
  *  Return -1 on error, else 0.
  */
 int
-parse_file( file, host, portp, device )
-char *file;	/* input file spec */
-char *host;	/* host part */
-int  *portp;	/* port number */
-char *device;	/* device part */
+parse_file(char *file, char *host, int *portp, char *device)
+           	/* input file spec */
+           	/* host part */
+            	/* port number */
+             	/* device part */
 {
 	int	port;
 	char	prefix[256];
@@ -265,10 +264,7 @@ done:
  *  devname (or NULL if default).
  */
 _LOCAL_ int
-rem_open( ifp, file, width, height )
-register FBIO	*ifp;
-register char	*file;
-int	width, height;
+rem_open(register FBIO *ifp, register char *file, int width, int height)
 {
 	register int	i;
 	struct pkg_conn *pc;
@@ -345,8 +341,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-rem_close( ifp )
-FBIO	*ifp;
+rem_close(FBIO *ifp)
 {
 	char	buf[NET_LONG_LEN+1];
 
@@ -370,8 +365,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-rem_free( ifp )
-FBIO	*ifp;
+rem_free(FBIO *ifp)
 {
 	char	buf[NET_LONG_LEN+1];
 
@@ -385,9 +379,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-rem_clear( ifp, bgpp )
-FBIO	*ifp;
-unsigned char	*bgpp;
+rem_clear(FBIO *ifp, unsigned char *bgpp)
 {
 	char	buf[NET_LONG_LEN+1];
 
@@ -410,11 +402,7 @@ unsigned char	*bgpp;
  *  Send as longs:  x, y, num
  */
 _LOCAL_ int
-rem_read( ifp, x, y, pixelp, num )
-register FBIO	*ifp;
-int		x, y;
-unsigned char	*pixelp;
-int		num;
+rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, int num)
 {
 	int	ret;
 	char	buf[3*NET_LONG_LEN+1];
@@ -443,11 +431,7 @@ int		num;
  * As longs, x, y, num
  */
 _LOCAL_ int
-rem_write( ifp, x, y, pixelp, num )
-register FBIO	*ifp;
-int		x, y;
-const unsigned char	*pixelp;
-int		num;
+rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int num)
 {
 	int	ret;
 	char	buf[3*NET_LONG_LEN+1];
@@ -473,11 +457,7 @@ int		num;
  *			R E M _ R E A D R E C T
  */
 _LOCAL_ int
-rem_readrect( ifp, xmin, ymin, width, height, pp )
-FBIO	*ifp;
-int	xmin, ymin;
-int	width, height;
-unsigned char	*pp;
+rem_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	int	num;
 	int	ret;
@@ -509,11 +489,7 @@ unsigned char	*pp;
  *			R E M _ W R I T E R E C T
  */
 _LOCAL_ int
-rem_writerect( ifp, xmin, ymin, width, height, pp )
-FBIO	*ifp;
-int	xmin, ymin;
-int	width, height;
-const unsigned char	*pp;
+rem_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	int	num;
 	int	ret;
@@ -545,11 +521,7 @@ const unsigned char	*pp;
  *  Issue:  Determining if other end has support for this yet.
  */
 _LOCAL_ int
-rem_bwreadrect( ifp, xmin, ymin, width, height, pp )
-FBIO	*ifp;
-int	xmin, ymin;
-int	width, height;
-unsigned char	*pp;
+rem_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	int	num;
 	int	ret;
@@ -580,11 +552,7 @@ unsigned char	*pp;
  *			R E M _ B W W R I T E R E C T
  */
 _LOCAL_ int
-rem_bwwriterect( ifp, xmin, ymin, width, height, pp )
-FBIO	*ifp;
-int	xmin, ymin;
-int	width, height;
-const unsigned char	*pp;
+rem_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	int	num;
 	int	ret;
@@ -614,10 +582,7 @@ const unsigned char	*pp;
  *  32-bit longs: mode, x, y
  */
 _LOCAL_ int
-rem_cursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
+rem_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	char	buf[3*NET_LONG_LEN+1];
 
@@ -635,10 +600,7 @@ int	x, y;
 /*
  */
 _LOCAL_ int
-rem_getcursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	*mode;
-int	*x, *y;
+rem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 	char	buf[4*NET_LONG_LEN+1];
 
@@ -667,11 +629,7 @@ int	*x, *y;
  *  Do not confuse this routine with the old fb_scursor() call.
  */
 _LOCAL_ int
-rem_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
-FBIO	*ifp;
-const unsigned char	*bits;
-int		xbits, ybits;
-int		xorig, yorig;
+rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	char	buf[4*NET_LONG_LEN+1];
 	int	ret;
@@ -707,10 +665,7 @@ int		xorig, yorig;
 /*
  */
 _LOCAL_ int
-rem_view( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	xcenter, ycenter;
-int	xzoom, yzoom;
+rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	char	buf[4*NET_LONG_LEN+1];
 
@@ -729,10 +684,7 @@ int	xzoom, yzoom;
 /*
  */
 _LOCAL_ int
-rem_getview( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	*xcenter, *ycenter;
-int	*xzoom, *yzoom;
+rem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	char	buf[5*NET_LONG_LEN+1];
 
@@ -755,9 +707,7 @@ int	*xzoom, *yzoom;
 #define REM_CMAP_BYTES	(256*3*2)
 
 _LOCAL_ int
-rem_rmap( ifp, cmap )
-register FBIO		*ifp;
-register ColorMap	*cmap;
+rem_rmap(register FBIO *ifp, register ColorMap *cmap)
 {
 	register int	i;
 	char	buf[NET_LONG_LEN+1];
@@ -778,9 +728,7 @@ register ColorMap	*cmap;
 }
 
 _LOCAL_ int
-rem_wmap( ifp, cmap )
-register FBIO		*ifp;
-register ColorMap	*cmap;
+rem_wmap(register FBIO *ifp, register ColorMap *cmap)
 {
 	register int	i;
 	char	buf[NET_LONG_LEN+1];
@@ -810,8 +758,7 @@ register ColorMap	*cmap;
  *  In fact, we may not want to send polls at all....
  */
 _LOCAL_ int
-rem_poll( ifp )
-FBIO	*ifp;
+rem_poll(FBIO *ifp)
 {
 	/* send a poll package to remote */
 	if( pkg_send( MSG_FBPOLL, (char *)0, 0, PCP(ifp) ) < 0 )
@@ -820,8 +767,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-rem_flush( ifp )
-FBIO	*ifp;
+rem_flush(FBIO *ifp)
 {
 	char	buf[NET_LONG_LEN+1];
 
@@ -837,8 +783,7 @@ FBIO	*ifp;
  *			R E M _ H E L P
  */
 _LOCAL_ int
-rem_help( ifp )
-FBIO	*ifp;
+rem_help(FBIO *ifp)
 {
 	char	buf[1*NET_LONG_LEN+1];
 
@@ -861,9 +806,7 @@ FBIO	*ifp;
  *  name to messages, so we don't touch them ourselves.
  */
 static void
-pkgerror(pcpp, buf)
-struct pkg_conn *pcpp;
-char *buf;
+pkgerror(struct pkg_conn *pcpp, char *buf)
 {
 	fb_log( "%s", buf );
 	free(buf);

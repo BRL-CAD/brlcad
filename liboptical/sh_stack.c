@@ -31,9 +31,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "shadework.h"
 #include "rtprivate.h"
 
-HIDDEN int	stk_setup(), stk_render();
-HIDDEN void	stk_print(), stk_free();
-HIDDEN int	ext_setup();
+HIDDEN int	stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp), stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	stk_print(register struct region *rp, char *dp), stk_free(char *cp);
+HIDDEN int	ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp);
 
 struct mfuncs stk_mfuncs[] = {
 	{MF_MAGIC,	"stack",	0,		0,	0,
@@ -63,13 +63,13 @@ struct bu_structparse stk_parse[] = {
  *  Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-ext_setup( rp, matparm, dpp, mf_p, rtip, headp )
-register struct region *rp;
-struct bu_vls	*matparm;	/* parameter string */
-char		**dpp;		/* pointer to user data pointer */
-struct mfuncs	*mf_p;
-struct rt_i	*rtip;
-struct mfuncs	**headp;
+ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
+                           
+             	         	/* parameter string */
+    		      		/* pointer to user data pointer */
+             	      
+           	      
+             	        
 {
 	struct bu_mapped_file	*parameter_file;
 	struct bu_vls		parameter_data;
@@ -108,13 +108,13 @@ struct mfuncs	**headp;
 /*
  *			S T K _ D O S E T U P
  */
-static int stk_dosetup( cp, rp, dpp, mpp, rtip, headp )
-char	*cp;
-struct region	*rp;
-char	**dpp;		/* udata pointer address */
-char	**mpp;		/* mfuncs pointer address */
-struct rt_i	*rtip;
-struct mfuncs	**headp;
+static int stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, struct rt_i *rtip, struct mfuncs **headp)
+    	    
+             	    
+    	      		/* udata pointer address */
+    	      		/* mfuncs pointer address */
+           	      
+             	        
 {
 	register struct mfuncs *mfp;
 #ifdef HAVE_DLOPEN
@@ -203,13 +203,13 @@ out:
  *  Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-stk_setup( rp, matparm, dpp, mf_p, rtip, headp )
-register struct region *rp;
-struct bu_vls	*matparm;	/* parameter string */
-char		**dpp;		/* pointer to user data pointer */
-struct mfuncs	*mf_p;
-struct rt_i	*rtip;
-struct mfuncs	**headp;
+stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
+                           
+             	         	/* parameter string */
+    		      		/* pointer to user data pointer */
+             	      
+           	      
+             	        
 {
 	register struct stk_specific *sp;
 	char	*cp, *start;
@@ -284,11 +284,7 @@ struct mfuncs	**headp;
  *	1	stack processed to completion
  */
 HIDDEN int
-stk_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct stk_specific *sp =
 		(struct stk_specific *)dp;
@@ -320,9 +316,7 @@ char	*dp;
  *			S T K _ P R I N T
  */
 HIDDEN void
-stk_print( rp, dp )
-register struct region *rp;
-char	*dp;
+stk_print(register struct region *rp, char *dp)
 {
 	register struct stk_specific *sp =
 		(struct stk_specific *)dp;
@@ -342,8 +336,7 @@ char	*dp;
  *			S T K _ F R E E
  */
 HIDDEN void
-stk_free( cp )
-char *cp;
+stk_free(char *cp)
 {
 	register struct stk_specific *sp =
 		(struct stk_specific *)cp;

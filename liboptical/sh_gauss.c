@@ -134,8 +134,8 @@ struct bu_structparse gauss_parse_tab[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	gauss_setup(), gauss_render();
-HIDDEN void	gauss_print(), gauss_free();
+HIDDEN int	gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), gauss_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	gauss_print(register struct region *rp, char *dp), gauss_free(char *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -155,11 +155,7 @@ struct mfuncs gauss_mfuncs[] = {
 
 
 static void
-tree_solids(tp, tb, op, resp)
-union tree *tp;
-struct tree_bark *tb;
-int op;
-struct resource *resp;
+tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 {
 	RT_CK_TREE(tp);
 
@@ -298,12 +294,12 @@ struct resource *resp;
  *	Any shader-specific initialization should be done here.
  */
 HIDDEN int
-gauss_setup( rp, matparm, dpp, mfp, rtip)
-register struct region	*rp;
-struct bu_vls		*matparm;
-char			**dpp;	/* pointer to reg_udata in *rp */
-struct mfuncs		*mfp;
-struct rt_i		*rtip;	/* New since 4.4 release */
+gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+                      	    
+             		         
+    			      	/* pointer to reg_udata in *rp */
+             		     
+           		      	/* New since 4.4 release */
 {
 	register struct gauss_specific	*gauss_sp;
 	struct tree_bark tb;
@@ -370,9 +366,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
  *	G A U S S _ P R I N T
  */
 HIDDEN void
-gauss_print( rp, dp )
-register struct region *rp;
-char	*dp;
+gauss_print(register struct region *rp, char *dp)
 {
 	bu_struct_print( rp->reg_name, gauss_print_tab, (char *)dp );
 }
@@ -381,8 +375,7 @@ char	*dp;
  *	G A U S S _ F R E E
  */
 HIDDEN void
-gauss_free( cp )
-char *cp;
+gauss_free(char *cp)
 {
 	register struct gauss_specific *gauss_sp =
 		(struct gauss_specific *)cp;
@@ -409,10 +402,7 @@ char *cp;
  * the size of 1 standard deviation is {sigmaX,sigmaY,sigmaZ}
  */
 static double
-gauss_eval(pt, ell_center, sigma)
-point_t pt;
-point_t ell_center;
-vect_t sigma;
+gauss_eval(fastf_t *pt, fastf_t *ell_center, fastf_t *sigma)
 {
 	double term2;
 	point_t p;
@@ -440,10 +430,7 @@ vect_t sigma;
  * the transmission on the path
  */
 static double
-eval_seg(ap, dbint, seg_p)
-struct application	*ap;
-struct reg_db_internals *dbint;
-struct seg *seg_p;
+eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg_p)
 {
 	double span;
 	point_t pt;
@@ -497,11 +484,11 @@ struct seg *seg_p;
  *	structure.
  */
 int
-gauss_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;	/* defined in material.h */
-char			*dp;	/* ptr to the shader-specific struct */
+gauss_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+                  	    
+                	    
+                	     	/* defined in material.h */
+    			    	/* ptr to the shader-specific struct */
 {
 	register struct gauss_specific *gauss_sp =
 		(struct gauss_specific *)dp;

@@ -38,6 +38,27 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 /*#include "../rt/mathtab.h"*/
 #include "rtprivate.h"
 
+#define TXT_NAME_LEN 128
+struct txt_specific {
+	int	tx_transp[3];	/* RGB for transparency */
+	/*	char	tx_file[TXT_NAME_LEN];	 Filename */
+	struct bu_vls tx_name;  /* name of object or file (depending on tx_datasrc flag) */
+	int	tx_w;		/* Width of texture in pixels */
+	int	tx_n;		/* Number of scanlines */
+	int	tx_trans_valid;	/* boolean: is tx_transp valid ? */
+	fastf_t	tx_scale[2];	/* replication factors in U, V */
+	int	tx_mirror;	/* flag: repetitions are mirrored */
+#define TXT_SRC_FILE 'f'
+#define TXT_SRC_OBJECT  'o'
+#define TXT_SRC_AUTO 0
+	char tx_datasrc; /* which type of datasource */
+	struct rt_binunif_internal *tx_binunifp;  /* db internal object when TXT_SRC_OBJECT */
+	struct bu_mapped_file	*tx_mp;    /* mapped file when TXT_SRC_FILE */
+};
+#define TX_NULL	((struct txt_specific *)0)
+#define TX_O(m)	offsetof(struct txt_specific, m)
+#define TX_AO(m)	bu_offsetofarray(struct txt_specific, m)
+
 struct region	env_region;  /* initialized in the app code view handler */
 
 extern int rr_render(struct application	*ap,
@@ -45,20 +66,23 @@ extern int rr_render(struct application	*ap,
 		     struct shadework   *swp);
 
 HIDDEN void rt_binunif_free();
-HIDDEN void	txt_transp_hook();
-HIDDEN void txt_source_hook();
-HIDDEN int txt_load_datasource();
-HIDDEN int	bwtxt_render();
-HIDDEN int	txt_setup(), txt_render();
-HIDDEN int	ckr_setup(), ckr_render();
-HIDDEN int	bmp_setup(), bmp_render();
-HIDDEN void	bwtxtprint(), bwtxtfree();
-HIDDEN void	txt_print(), txt_free();
-HIDDEN void	ckr_print(), ckr_free();
-HIDDEN void	bmp_print(), bmp_free();
-HIDDEN int tstm_render();
-HIDDEN int star_render();
-HIDDEN int envmap_setup();
+HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
+HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p);
+HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const long unsigned int size);
+HIDDEN int bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN int txt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip), txt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN int ckr_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), ckr_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp);
+HIDDEN int bmp_setup(), bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void bwtxtprint(), bwtxtfree();
+HIDDEN void txt_print(register struct region *rp), txt_free(char *cp);
+HIDDEN void ckr_print(register struct region *rp), ckr_free(char *cp);
+HIDDEN void bmp_print(), bmp_free();
+HIDDEN int tstm_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp);
+HIDDEN int star_render(register struct application *ap, register struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN int envmap_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip, struct mfuncs **headp);
+extern int mlib_zero(), mlib_one();
+extern void mlib_void();
+
 
 struct mfuncs txt_mfuncs[] = {
 	{MF_MAGIC,	"texture",	0,		MFI_UV,		0,
@@ -85,28 +109,6 @@ struct mfuncs txt_mfuncs[] = {
 	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
-
-#define TXT_NAME_LEN 128
-struct txt_specific {
-	int	tx_transp[3];	/* RGB for transparency */
-	/*	char	tx_file[TXT_NAME_LEN];	 Filename */
-	struct bu_vls tx_name;  /* name of object or file (depending on tx_datasrc flag) */
-	int	tx_w;		/* Width of texture in pixels */
-	int	tx_n;		/* Number of scanlines */
-	int	tx_trans_valid;	/* boolean: is tx_transp valid ? */
-	fastf_t	tx_scale[2];	/* replication factors in U, V */
-	int	tx_mirror;	/* flag: repetitions are mirrored */
-#define TXT_SRC_FILE 'f'
-#define TXT_SRC_OBJECT  'o'
-#define TXT_SRC_AUTO 0
-	char tx_datasrc; /* which type of datasource */
-	struct rt_binunif_internal *tx_binunifp;  /* db internal object when TXT_SRC_OBJECT */
-	struct bu_mapped_file	*tx_mp;    /* mapped file when TXT_SRC_FILE */
-};
-#define TX_NULL	((struct txt_specific *)0)
-#define TX_O(m)	offsetof(struct txt_specific, m)
-#define TX_AO(m)	bu_offsetofarray(struct txt_specific, m)
-
 
 struct bu_structparse txt_parse[] = {
 	{"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
@@ -151,11 +153,7 @@ HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name
  *  Hooked function, called by bu_structparse
  */
 HIDDEN void
-txt_transp_hook( ptab, name, cp, value )
-struct bu_structparse *ptab;
-char	*name;
-char	*cp;
-char	*value;
+txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value)
 {
 	register struct txt_specific *tp =
 		(struct txt_specific *)cp;
@@ -264,11 +262,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
  *  which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-txt_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+txt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct txt_specific *tp =
 		(struct txt_specific *)dp;
@@ -545,11 +539,7 @@ opaque:
  *  which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-bwtxt_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct txt_specific *tp =
 		(struct txt_specific *)dp;
@@ -726,8 +716,7 @@ txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const
  *			T X T _ P R I N T
  */
 HIDDEN void
-txt_print( rp )
-register struct region *rp;
+txt_print(register struct region *rp)
 {
 	bu_struct_print(rp->reg_name, txt_parse, (char *)rp->reg_udata);
 }
@@ -736,8 +725,7 @@ register struct region *rp;
  *			T X T _ F R E E
  */
 HIDDEN void
-txt_free( cp )
-char *cp;
+txt_free(char *cp)
 {
 	struct txt_specific *tp =	(struct txt_specific *)cp;
 
@@ -768,11 +756,7 @@ struct bu_structparse ckr_parse[] = {
  *			C K R _ R E N D E R
  */
 HIDDEN int
-ckr_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-register struct shadework	*swp;
-char	*dp;
+ckr_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp)
 {
 	register struct ckr_specific *ckp =
 		(struct ckr_specific *)dp;
@@ -812,12 +796,12 @@ char	*dp;
  *			C K R _ S E T U P
  */
 HIDDEN int
-ckr_setup( rp, matparm, dpp, mfp, rtip )
-register struct region	 *rp;
-struct bu_vls		*matparm;
-char			**dpp;
-struct mfuncs           *mfp;
-struct rt_i             *rtip;  /* New since 4.4 release */
+ckr_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+                      	     
+             		         
+    			      
+                             
+                                /* New since 4.4 release */
 {
 	register struct ckr_specific *ckp;
 
@@ -844,8 +828,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
  *			C K R _ P R I N T
  */
 HIDDEN void
-ckr_print( rp )
-register struct region *rp;
+ckr_print(register struct region *rp)
 {
 	bu_struct_print(rp->reg_name, ckr_parse, rp->reg_udata);
 }
@@ -854,8 +837,7 @@ register struct region *rp;
  *			C K R _ F R E E
  */
 HIDDEN void
-ckr_free( cp )
-char *cp;
+ckr_free(char *cp)
 {
 	bu_free( cp, "ckr_specific" );
 }
@@ -867,11 +849,7 @@ char *cp;
  *  Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN int
-tstm_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-register struct shadework	*swp;
-char	*dp;
+tstm_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp)
 {
 	VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 
@@ -904,11 +882,7 @@ static vect_t star_colors[] = {
  *			S T A R _ R E N D E R
  */
 HIDDEN int
-star_render( ap, pp, swp, dp )
-register struct application *ap;
-register struct partition *pp;
-struct shadework	*swp;
-char	*dp;
+star_render(register struct application *ap, register struct partition *pp, struct shadework *swp, char *dp)
 {
 	/* Probably want to diddle parameters based on what part of sky */
 	if (bn_rand0to1(ap->a_resource->re_randptr) >= 0.98 )  {
@@ -945,11 +919,7 @@ char	*dp;
  *  which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-bmp_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct txt_specific *tp =
 		(struct txt_specific *)dp;
@@ -1029,13 +999,7 @@ char	*dp;
  *			E N V M A P _ S E T U P
  */
 HIDDEN int
-envmap_setup( rp, matparm, dpp, mfp, rtip, headp )
-register struct region *rp;
-struct bu_vls *matparm;
-char	**dpp;
-const struct mfuncs	*mfp;
-struct rt_i	*rtip;
-struct mfuncs	**headp;
+envmap_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip, struct mfuncs **headp)
 {
 
 	BU_CK_VLS( matparm );

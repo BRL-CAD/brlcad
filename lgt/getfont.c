@@ -37,9 +37,8 @@ int		width = 0,	/* Size of current character.		*/
 		height = 0;
 
 int
-get_Font( fontname )
-char *fontname;
-	{	FILE		*newff;
+get_Font(char *fontname)
+{	FILE		*newff;
 		struct header	lochdr;
 		static char	fname[FONTNAMESZ];
 	if( fontname == NULL )

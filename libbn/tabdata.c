@@ -54,8 +54,7 @@ static const char RCStabdata[] = "@(#)$Header$ (ARL)";
  *			B N _ T A B L E _ F R E E
  */
 void
-bn_table_free( tabp )
-struct bn_table	*tabp;
+bn_table_free(struct bn_table *tabp)
 {
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_free(x%x)\n", tabp);
 	BN_CK_TABLE(tabp);
@@ -68,8 +67,7 @@ struct bn_table	*tabp;
  *			B N _ T A B D A T A _ F R E E
  */
 void
-bn_tabdata_free( data )
-struct bn_tabdata *data;
+bn_tabdata_free(struct bn_tabdata *data)
 {
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_free(x%x)\n", data);
 
@@ -85,8 +83,7 @@ struct bn_tabdata *data;
  *			B N _ C K _ T A B L E
  */
 void
-bn_ck_table( tabp )
-const struct bn_table	*tabp;
+bn_ck_table(const struct bn_table *tabp)
 {
 	register int	i;
 
@@ -109,10 +106,7 @@ const struct bn_table	*tabp;
  *  inclusive, using 'num' uniformly spaced samples.  Num >= 1.
  */
 struct bn_table *
-bn_table_make_uniform( num, first, last )
-int	num;
-double	first;
-double	last;
+bn_table_make_uniform(int num, double first, double last)
 {
 	struct bn_table	*tabp;
 	fastf_t			*fp;
@@ -143,10 +137,7 @@ double	last;
  *  Sum the values from two data tables.
  */
 void
-bn_tabdata_add( out, in1, in2 )
-struct bn_tabdata		*out;
-const struct bn_tabdata	*in1;
-const struct bn_tabdata	*in2;
+bn_tabdata_add(struct bn_tabdata *out, const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -177,10 +168,7 @@ const struct bn_tabdata	*in2;
  *  Element-by-element multiply the values from two data tables.
  */
 void
-bn_tabdata_mul( out, in1, in2 )
-struct bn_tabdata		*out;
-const struct bn_tabdata	*in1;
-const struct bn_tabdata	*in2;
+bn_tabdata_mul(struct bn_tabdata *out, const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -211,11 +199,7 @@ const struct bn_tabdata	*in2;
  *  Element-by-element multiply the values from three data tables.
  */
 void
-bn_tabdata_mul3( out, in1, in2, in3 )
-struct bn_tabdata		*out;
-const struct bn_tabdata	*in1;
-const struct bn_tabdata	*in2;
-const struct bn_tabdata	*in3;
+bn_tabdata_mul3(struct bn_tabdata *out, const struct bn_tabdata *in1, const struct bn_tabdata *in2, const struct bn_tabdata *in3)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -250,12 +234,7 @@ const struct bn_tabdata	*in3;
  *	out += in1 * in2 * in3 * scale
  */
 void
-bn_tabdata_incr_mul3_scale( out, in1, in2, in3, scale )
-struct bn_tabdata	*out;
-const struct bn_tabdata	*in1;
-const struct bn_tabdata	*in2;
-const struct bn_tabdata	*in3;
-register double		scale;
+bn_tabdata_incr_mul3_scale(struct bn_tabdata *out, const struct bn_tabdata *in1, const struct bn_tabdata *in2, const struct bn_tabdata *in3, register double scale)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -289,11 +268,7 @@ register double		scale;
  *	out += in1 * in2 * scale
  */
 void
-bn_tabdata_incr_mul2_scale( out, in1, in2, scale )
-struct bn_tabdata	*out;
-const struct bn_tabdata	*in1;
-const struct bn_tabdata	*in2;
-register double		scale;
+bn_tabdata_incr_mul2_scale(struct bn_tabdata *out, const struct bn_tabdata *in1, const struct bn_tabdata *in2, register double scale)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -323,10 +298,7 @@ register double		scale;
  *  Multiply every element in a data table by a scalar value 'scale'.
  */
 void
-bn_tabdata_scale( out, in1, scale )
-struct bn_tabdata		*out;
-const struct bn_tabdata	*in1;
-register double			scale;
+bn_tabdata_scale(struct bn_tabdata *out, const struct bn_tabdata *in1, register double scale)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -355,9 +327,7 @@ register double			scale;
  *  Scale the indepentent axis of a table by 'scale'.
  */
 void
-bn_table_scale( tabp, scale )
-struct bn_table	*tabp;
-register double		scale;
+bn_table_scale(struct bn_table *tabp, register double scale)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -380,11 +350,7 @@ register double		scale;
  *  'out' may overlap in1 or in2.
  */
 void
-bn_tabdata_join1( out, in1, scale, in2 )
-struct bn_tabdata		*out;
-const struct bn_tabdata		*in1;
-register double			scale;
-const struct bn_tabdata		*in2;
+bn_tabdata_join1(struct bn_tabdata *out, const struct bn_tabdata *in1, register double scale, const struct bn_tabdata *in2)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -420,13 +386,7 @@ const struct bn_tabdata		*in2;
  *  'out' may overlap in1 or in2.
  */
 void
-bn_tabdata_join2( out, in1, scale2, in2, scale3, in3 )
-struct bn_tabdata		*out;
-const struct bn_tabdata		*in1;
-register double			scale2;
-const struct bn_tabdata		*in2;
-register double			scale3;
-const struct bn_tabdata		*in3;
+bn_tabdata_join2(struct bn_tabdata *out, const struct bn_tabdata *in1, register double scale2, const struct bn_tabdata *in2, register double scale3, const struct bn_tabdata *in3)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -460,12 +420,7 @@ const struct bn_tabdata		*in3;
  *			B N _ T A B D A T A _ B L E N D 2
  */
 void
-bn_tabdata_blend2( out, scale1, in1, scale2, in2 )
-struct bn_tabdata		*out;
-register double			scale1;
-const struct bn_tabdata		*in1;
-register double			scale2;
-const struct bn_tabdata		*in2;
+bn_tabdata_blend2(struct bn_tabdata *out, register double scale1, const struct bn_tabdata *in1, register double scale2, const struct bn_tabdata *in2)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -496,14 +451,7 @@ const struct bn_tabdata		*in2;
  *			B N _ T A B D A T A _ B L E N D 3
  */
 void
-bn_tabdata_blend3( out, scale1, in1, scale2, in2, scale3, in3 )
-struct bn_tabdata		*out;
-register double			scale1;
-const struct bn_tabdata		*in1;
-register double			scale2;
-const struct bn_tabdata		*in2;
-register double			scale3;
-const struct bn_tabdata		*in3;
+bn_tabdata_blend3(struct bn_tabdata *out, register double scale1, const struct bn_tabdata *in1, register double scale2, const struct bn_tabdata *in2, register double scale3, const struct bn_tabdata *in3)
 {
 	register int		j;
 	register fastf_t	*op;
@@ -542,8 +490,7 @@ const struct bn_tabdata		*in3;
  *  This is simply totaling up the areas from each of the intervals.
  */
 double
-bn_tabdata_area1( in )
-const struct bn_tabdata	*in;
+bn_tabdata_area1(const struct bn_tabdata *in)
 {
 	FAST fastf_t		area;
 	register const fastf_t	*ip;
@@ -570,8 +517,7 @@ const struct bn_tabdata	*in;
  *  sum the areas of the rectangles.
  */
 double
-bn_tabdata_area2( in )
-const struct bn_tabdata	*in;
+bn_tabdata_area2(const struct bn_tabdata *in)
 {
 	const struct bn_table	*tabp;
 	FAST fastf_t		area;
@@ -602,9 +548,7 @@ const struct bn_tabdata	*in;
  *  in1 and in2.
  */
 double
-bn_tabdata_mul_area1( in1, in2 )
-const struct bn_tabdata	*in1;
-const struct bn_tabdata	*in2;
+bn_tabdata_mul_area1(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 {
 	FAST fastf_t		area;
 	register const fastf_t	*i1, *i2;
@@ -632,9 +576,7 @@ const struct bn_tabdata	*in2;
  *  in1 and in2.
  */
 double
-bn_tabdata_mul_area2( in1, in2 )
-const struct bn_tabdata	*in1;
-const struct bn_tabdata	*in2;
+bn_tabdata_mul_area2(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 {
 	const struct bn_table	*tabp;
 	FAST fastf_t		area;
@@ -672,9 +614,7 @@ const struct bn_tabdata	*in2;
  *  are known to be sorted in ascending order.
  */
 int
-bn_table_find_x( tabp, xval )
-const struct bn_table	*tabp;
-double			xval;
+bn_table_find_x(const struct bn_table *tabp, double xval)
 {
 	register int	i;
 
@@ -700,9 +640,7 @@ double			xval;
  *  Zero is returned for values outside the sampled range.
  */
 fastf_t
-bn_table_lin_interp( samp, wl )
-const struct bn_tabdata	*samp;
-register double			wl;
+bn_table_lin_interp(const struct bn_tabdata *samp, register double wl)
 {
 	const struct bn_table	*tabp;
 	register int		i;
@@ -752,9 +690,7 @@ register double			wl;
  *  are the average value across the interval.
  */
 struct bn_tabdata *
-bn_tabdata_resample_max( newtable, olddata )
-const struct bn_table	*newtable;
-const struct bn_tabdata	*olddata;
+bn_tabdata_resample_max(const struct bn_table *newtable, const struct bn_tabdata *olddata)
 {
 	const struct bn_table	*oldtable;
 	struct bn_tabdata	*newsamp;
@@ -835,9 +771,7 @@ const struct bn_tabdata	*olddata;
  *  are the average value across the interval.
  */
 struct bn_tabdata *
-bn_tabdata_resample_avg( newtable, olddata )
-const struct bn_table	*newtable;
-const struct bn_tabdata	*olddata;
+bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata *olddata)
 {
 	const struct bn_table	*oldtable;
 	struct bn_tabdata	*newsamp;
@@ -920,9 +854,7 @@ const struct bn_tabdata	*olddata;
  *  actual values.
  */
 int
-bn_table_write( filename, tabp )
-const char	*filename;
-const struct bn_table	*tabp;
+bn_table_write(const char *filename, const struct bn_table *tabp)
 {
 	FILE	*fp;
 	int	j;
@@ -959,8 +891,7 @@ const struct bn_table	*tabp;
  *  actual values.
  */
 struct bn_table *
-bn_table_read( filename )
-const char	*filename;
+bn_table_read(const char *filename)
 {
 	struct bn_table	*tabp;
 	struct bu_vls		line;
@@ -1007,9 +938,7 @@ const char	*filename;
  *			B N _ P R _ T A B L E
  */
 void
-bn_pr_table( title, tabp )
-const char		*title;
-const struct bn_table	*tabp;
+bn_pr_table(const char *title, const struct bn_table *tabp)
 {
 	int	j;
 
@@ -1025,9 +954,7 @@ const struct bn_table	*tabp;
  *			B N _ P R _ T A B D A T A
  */
 void
-bn_pr_tabdata( title, data )
-const char		*title;
-const struct bn_tabdata	*data;
+bn_pr_tabdata(const char *title, const struct bn_tabdata *data)
 {
 	int	j;
 
@@ -1050,9 +977,7 @@ const struct bn_tabdata	*data;
  *	(plot "filename" with lines)
  */
 int
-bn_print_table_and_tabdata( filename, data )
-const char			*filename;
-const struct bn_tabdata	*data;
+bn_print_table_and_tabdata(const char *filename, const struct bn_tabdata *data)
 {
 	FILE	*fp;
 	const struct bn_table	*tabp;
@@ -1095,8 +1020,7 @@ const struct bn_tabdata	*data;
  *  The final wavelength is guessed at.
  */
 struct bn_tabdata *
-bn_read_table_and_tabdata( filename )
-const char	*filename;
+bn_read_table_and_tabdata(const char *filename)
 {
 	struct bn_table	*tabp;
 	struct bn_tabdata	*data;
@@ -1156,10 +1080,7 @@ const char	*filename;
  *			B N _ T A B D A T A _ B I N A R Y _ R E A D
  */
 struct bn_tabdata *
-bn_tabdata_binary_read( filename, num, tabp )
-const char			*filename;
-int				num;
-const struct bn_table	*tabp;
+bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tabp)
 {
 	struct bn_tabdata	*data;
 	char	*cp;
@@ -1229,9 +1150,7 @@ const struct bn_table	*tabp;
  *  are variable length.
  */
 struct bn_tabdata *
-bn_tabdata_malloc_array( tabp, num )
-const struct bn_table	*tabp;
-int	num;
+bn_tabdata_malloc_array(const struct bn_table *tabp, int num)
 {
 	struct bn_tabdata	*data;
 	char	*cp;
@@ -1265,9 +1184,7 @@ int	num;
  *			B N _ T A B D A T A _ C O P Y
  */
 void
-bn_tabdata_copy( out, in )
-struct bn_tabdata	*out;
-const struct bn_tabdata	*in;
+bn_tabdata_copy(struct bn_tabdata *out, const struct bn_tabdata *in)
 {
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_copy(x%x, x%x)\n", out, in);
 
@@ -1286,8 +1203,7 @@ const struct bn_tabdata	*in;
  *			B N _ T A B D A T A _ D U P
  */
 struct bn_tabdata *
-bn_tabdata_dup( in )
-const struct bn_tabdata	*in;
+bn_tabdata_dup(const struct bn_tabdata *in)
 {
 	struct bn_tabdata *data;
 
@@ -1307,9 +1223,7 @@ const struct bn_tabdata	*in;
  *  with all elements initialized to 'val'.
  */
 struct bn_tabdata *
-bn_tabdata_get_constval( val, tabp )
-double			val;
-const struct bn_table	*tabp;
+bn_tabdata_get_constval(double val, const struct bn_table *tabp)
 {
 	struct bn_tabdata	*data;
 	int			todo;
@@ -1333,9 +1247,7 @@ const struct bn_table	*tabp;
  *  Set all the tabdata elements to 'val'
  */
 void
-bn_tabdata_constval( data, val )
-struct bn_tabdata	*data;
-double			val;
+bn_tabdata_constval(struct bn_tabdata *data, double val)
 {
 	int			todo;
 	register fastf_t	*op;
@@ -1357,9 +1269,7 @@ double			val;
  *	x {...} y {...} nx # ymin # ymax #
  */
 void
-bn_tabdata_to_tcl( vp, data )
-struct bu_vls		*vp;
-const struct bn_tabdata	*data;
+bn_tabdata_to_tcl(struct bu_vls *vp, const struct bn_tabdata *data)
 {
 	const struct bn_table	*tabp;
 	register int i;
@@ -1397,8 +1307,7 @@ const struct bn_tabdata	*data;
  *  invent a final span ending x value.
  */
 struct bn_tabdata *
-bn_tabdata_from_array( array )
-const double *array;
+bn_tabdata_from_array(const double *array)
 {
 	register const double	*dp;
 	int			len = 0;
@@ -1434,10 +1343,7 @@ const double *array;
  *  (often frequency), interpolating new sample values.
  */
 void
-bn_tabdata_freq_shift( out, in, offset )
-struct bn_tabdata		*out;
-const struct bn_tabdata		*in;
-double				offset;
+bn_tabdata_freq_shift(struct bn_tabdata *out, const struct bn_tabdata *in, double offset)
 {
 	const struct bn_table	*tabp;
 	register int 		i;
@@ -1464,10 +1370,7 @@ double				offset;
  *  Returns number of sample points between 'low' and 'hi', inclusive.
  */
 int
-bn_table_interval_num_samples( tabp, low, hi )
-const struct bn_table *tabp;
-double	low;
-double	hi;
+bn_table_interval_num_samples(const struct bn_table *tabp, double low, double hi)
 {
 	register int	i;
 	register int	count = 0;
@@ -1490,10 +1393,7 @@ double	hi;
  *  Returns number of points removed.
  */
 int
-bn_table_delete_sample_pts( tabp, i, j )
-struct bn_table *tabp;
-int	i;
-int	j;
+bn_table_delete_sample_pts(struct bn_table *tabp, int i, int j)
 {
 	int	tokill;
 	int	k;
@@ -1524,9 +1424,7 @@ int	j;
  *  each of the input tables.
  */
 struct bn_table *
-bn_table_merge2( a, b )
-const struct bn_table	*a;
-const struct bn_table	*b;
+bn_table_merge2(const struct bn_table *a, const struct bn_table *b)
 {
 	struct bn_table *new;
 	register int i, j, k;
@@ -1581,10 +1479,7 @@ const struct bn_table	*b;
  *	tabdata*
  */
 struct bn_tabdata *
-bn_tabdata_mk_linear_filter( spectrum, lower_wavelen, upper_wavelen )
-const struct bn_table *spectrum;
-double		lower_wavelen;
-double		upper_wavelen;
+bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavelen, double upper_wavelen)
 {
 	struct bn_tabdata *filt;
 	int	first;

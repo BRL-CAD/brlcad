@@ -93,9 +93,8 @@ struct nmllist
 	};
 
 STATIC void
-prnt_HMitem( itemp )
-HMitem	*itemp;
-	{
+prnt_HMitem(HMitem *itemp)
+{
 	if( itemp->text == NULL )
 		return;
 	(void) fprintf( stderr, "text=\"%s\"\n", itemp->text );
@@ -111,9 +110,8 @@ HMitem	*itemp;
 	}
 
 STATIC void
-prnt_HMllist( listp )
-HMllist	*listp;
-	{
+prnt_HMllist(HMllist *listp)
+{
 	if( listp == (HMllist *) 0 )
 		return;
 	prnt_HMitem( listp->itemp );
@@ -122,9 +120,8 @@ HMllist	*listp;
 	}
 
 STATIC void
-free_HMitems( itemp )
-HMitem	*itemp;
-	{	register HMitem	*citemp;
+free_HMitems(HMitem *itemp)
+{	register HMitem	*citemp;
 	for( citemp = itemp; citemp->text != NULL; citemp++ )
 		{
 		free( citemp->text );
@@ -136,9 +133,8 @@ HMitem	*itemp;
 	}
 
 STATIC void
-free_HMllist( listp )
-HMllist	*listp;
-	{
+free_HMllist(HMllist *listp)
+{
 	if( listp == (HMllist *) 0 )
 		return;
 	free_HMllist( listp->next );
@@ -148,12 +144,8 @@ HMllist	*listp;
 	}
 
 STATIC void
-hm_Put_Item( win, itemp, flag )
-register HWindow	*win;
-register HMitem		*itemp;
-int			flag;
-
-		{	register int	label_len = strlen( itemp->text );
+hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
+{	register int	label_len = strlen( itemp->text );
 			static char	buf[MAXLINE];
 			register char	*p = buf;
 			register int	col = win->menux;
@@ -235,11 +227,8 @@ int			flag;
 		}
 
 STATIC void
-hm_Put_Border( win, row, mark )
-register HWindow	*win;
-register int		row;
-char			mark;
-	{	register int	i;
+hm_Put_Border(register HWindow *win, register int row, char mark)
+{	register int	i;
 		register int	bit = 1;
 		register int	col = win->menux;
 		register int	bitmap = win->dirty[row - win->menuy];
@@ -262,37 +251,31 @@ char			mark;
 	}
 
 STATIC void
-hm_Setbit( win, col, row )
-register HWindow	*win;
-int			col, row;
-	{	register int	bit = col - win->menux;
+hm_Setbit(register HWindow *win, int col, int row)
+{	register int	bit = col - win->menux;
 	win->dirty[row-(win->menuy-win->menup->prevtop)] |= bit == 0 ? 1 : 1 << bit;
 	return;
 	}
 
 STATIC void
-hm_Clrmap( win )
-HWindow	*win;
-	{	register int	row;
+hm_Clrmap(HWindow *win)
+{	register int	row;
 	for( row = 0; row <= win->height+1; row++ )
 		win->dirty[row] = 0;
 	return;
 	}
 
 STATIC void
-hm_Setmap( win )
-HWindow	*win;
-	{	register int	row;
+hm_Setmap(HWindow *win)
+{	register int	row;
 	for( row = 0; row <= win->height+1; row++ )
 		win->dirty[row] = ~0; /* 0xffff... */
 	return;
 	}
 
 STATIC HWindow	*
-hm_In_Win( x, y, win )
-register int		x, y;
-register HWindow	*win;
-	{
+hm_In_Win(register int x, register int y, register HWindow *win)
+{
 	for( ; win != (HWindow *) 0; win = win->next )
 		{	register int	height = Min( win->height, MAXVISABLE );
 		if( !	(x < win->menux || x > win->menux + win->width + 1 ||
@@ -304,9 +287,8 @@ register HWindow	*win;
 	}
 
 STATIC void
-hm_Draw_Win( win )
-register HWindow	*win;
-	{	register HMitem	*itemp;
+hm_Draw_Win(register HWindow *win)
+{	register HMitem	*itemp;
 		int	height;
 	hm_Put_Border( win, win->menuy, win->menup->prevtop > 0 ? '^' : '+' );
 	for(	itemp = win->menup->item + win->menup->prevtop;
@@ -324,9 +306,8 @@ register HWindow	*win;
 	}
 
 STATIC void
-hm_Redraw_Win( win )
-HWindow	*win;
-	{
+hm_Redraw_Win(HWindow *win)
+{
 	if( win == (HWindow *) 0 )
 		{
 		hm_dirty = 0;
@@ -338,10 +319,8 @@ HWindow	*win;
 	}
 
 STATIC void
-hm_Help( win, entry )
-register HWindow	*win;
-int	entry;
-	{	int	bottomline = 1;
+hm_Help(register HWindow *win, int entry)
+{	int	bottomline = 1;
 		register HWindow	*curwin;
 	for( curwin = windows; curwin != (HWindow *) 0; curwin = curwin->next )
 		{
@@ -365,9 +344,8 @@ int	entry;
 	}
 
 STATIC void
-hm_Lift_Win( win )
-register HWindow	*win;
-	{	register int	row, col;
+hm_Lift_Win(register HWindow *win)
+{	register int	row, col;
 		register int	lastcol = -1, lastrow = -1;
 		register int	endcol = win->menux + win->width + 2;
 		register int	endrow = win->menuy +
@@ -397,8 +375,8 @@ register HWindow	*win;
 	}
 
 void
-hmredraw()
-	{	register HWindow	*win;
+hmredraw(void)
+{	register HWindow	*win;
 	for( win = windows; win != (HWindow *) 0; win = win->next )
 		hm_Setmap( win );
 	hm_dirty = 1;
@@ -406,9 +384,9 @@ hmredraw()
 	}
 
 HMitem *
-hmenuhit( menup, menux, menuy )
-HMenu	*menup;			/* -> first HMitem in array.		*/
-int	menux, menuy;
+hmenuhit(HMenu *menup, int menux, int menuy)
+     	       			/* -> first HMitem in array.		*/
+   	             
 	{	register HMitem	*itemp;
 		HMitem		*retitemp = 0;
 		HWindow		*win;

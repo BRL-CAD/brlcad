@@ -76,14 +76,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "plot3.h"
 
 void
-tp_scale( idata, elements, mode, length, odata, min, dx )
-int idata[];
-int elements;
-register int mode;
-int length;
-int odata[];
-double *min;
-double *dx;
+tp_scale(int *idata, int elements, register int mode, int length, int *odata, double *min, double *dx)
 {
 	double xmax, xmin, x, workdx;
 	register int i;			/* Index variable */

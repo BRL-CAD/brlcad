@@ -18,8 +18,8 @@
 #include "vmath.h"
 #include "dm.h"
 
-int dm_validXType();
-char *dm_bestXType();
+int dm_validXType(char *dpy_string, char *name);
+char *dm_bestXType(char *dpy_string);
 
 int
 dm_validXType(char	*dpy_string,

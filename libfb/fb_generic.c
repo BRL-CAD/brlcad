@@ -33,7 +33,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-static int fb_totally_numeric();
+static int fb_totally_numeric(register char *s);
 
 /*
  * Disk interface enable flag.  Used so the the remote daemon
@@ -46,8 +46,7 @@ int _fb_disk_enable = 1;
  *
  *  Filler for FBIO function slots not used by a particular device
  */
-int fb_null(ifp)
-FBIO *ifp;
+int fb_null(FBIO *ifp)
 {
 	return	0;
 }
@@ -57,11 +56,7 @@ FBIO *ifp;
  *
  *  Used by if_*.c routines that don't have programmable cursor patterns.
  */
-int fb_null_setcursor(ifp, bits, xbits, ybits, xorig, yorig )
-FBIO		*ifp;
-const unsigned char	*bits;
-int		xbits, ybits;
-int		xorig, yorig;
+int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	return	0;
 }
@@ -159,9 +154,7 @@ FBIO *_if_list[] = {
  *			F B _ O P E N
  */
 FBIO *
-fb_open( file, width, height )
-char	*file;
-int	width, height;
+fb_open(char *file, int width, int height)
 {
 	register FBIO	*ifp;
 	int	i;
@@ -252,8 +245,7 @@ found_interface:
 }
 
 int
-fb_close( ifp )
-FBIO	*ifp;
+fb_close(FBIO *ifp)
 {
 	int	i;
 
@@ -276,7 +268,7 @@ FBIO	*ifp;
  *  Print out the list of available frame buffers.
  */
 int
-fb_genhelp()
+fb_genhelp(void)
 {
 	int	i;
 
@@ -305,8 +297,7 @@ fb_genhelp()
 
 /* True if the non-null string s is all digits */
 static int
-fb_totally_numeric( s )
-register char *s;
+fb_totally_numeric(register char *s)
 {
 	if( s == (char *)0 || *s == 0 )
 		return	0;
@@ -329,8 +320,7 @@ register char *s;
  *  (ie, non-identity map).
  */
 int
-fb_is_linear_cmap(cmap)
-register const ColorMap	*cmap;
+fb_is_linear_cmap(register const ColorMap *cmap)
 {
 	register int i;
 
@@ -346,8 +336,7 @@ register const ColorMap	*cmap;
  *			F B _ M A K E _ L I N E A R _ C M A P
  */
 void
-fb_make_linear_cmap(cmap)
-register ColorMap	*cmap;
+fb_make_linear_cmap(register ColorMap *cmap)
 {
 	register int i;
 

@@ -40,12 +40,12 @@
 
 extern int rr_render(struct application	*ap, struct partition *pp, struct shadework *swp);
 
-HIDDEN int	flat_setup(), flat_render();
-HIDDEN void	flat_print(), flat_free();
+HIDDEN int	flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), flat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	flat_print(register struct region *rp, char *dp), flat_free(char *cp);
 
 /* these are two helper functions to process input color and transparency values */
-void normalizedInput_hook();
-void singleNormalizedInput_hook();
+void normalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
+void singleNormalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
 
 /*
  * the shader specific structure contains all variables which are unique

@@ -48,19 +48,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	TITLE_YOFF	(5*char_width)	/* title offset from line */
 
 void
-tp_3axis( fp, string, origin, rot, length, ccw,
-	ndigits, label_start, label_incr, tick_separation, char_width )
-FILE	*fp;
-char	*string;		/* label for axis */
-point_t	origin;
-mat_t	rot;
-double	length;			/* length of axis */
-int	ccw;			/* 0=clockwise, !0=counter clockwise (ccw) */
-int	ndigits;		/* # digits wide */
-double	label_start;		/* label starting value */
-double	label_incr;		/* label increment between ticks */
-double	tick_separation;	/* plot distance between ticks */
-double	char_width;		/* character scale (size) */
+tp_3axis(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double length, int ccw, int ndigits, double label_start, double label_incr, double tick_separation, double char_width)
+    	    
+    	        		/* label for axis */
+       	       
+     	    
+      	       			/* length of axis */
+   	    			/* 0=clockwise, !0=counter clockwise (ccw) */
+   	        		/* # digits wide */
+      	            		/* label starting value */
+      	           		/* label increment between ticks */
+      	                	/* plot distance between ticks */
+      	           		/* character scale (size) */
 {
 	register int i;
 	int	nticks;

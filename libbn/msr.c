@@ -73,9 +73,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define Q	127773		/* Q = M / A */
 #define R	2836		/* R = M % A */
 struct bn_unif *
-bn_unif_init(setseed,method)
-long setseed;
-int method;
+bn_unif_init(long int setseed, int method)
 {
 	struct bn_unif *p;
 	p = (struct bn_unif *) bu_malloc(sizeof(struct bn_unif),"bn_unif");
@@ -118,8 +116,7 @@ int method;
  *	msr_seed is updated.
  */
 long
-bn_unif_long_fill(p)
-struct bn_unif *p;
+bn_unif_long_fill(struct bn_unif *p)
 {
 	register long test,work_seed;
 	register int i;
@@ -180,8 +177,7 @@ struct bn_unif *p;
  *	msr_seed is updated.
  */
 double
-bn_unif_double_fill(p)
-struct bn_unif *p;
+bn_unif_double_fill(struct bn_unif *p)
 {
 	register long test,work_seed;
 	register int i;
@@ -221,8 +217,7 @@ struct bn_unif *p;
  *
  */
 void
-bn_unif_free(p)
-struct bn_unif *p;
+bn_unif_free(struct bn_unif *p)
 {
 	bu_free(p->msr_doubles, "msr double table");
 	bu_free(p->msr_longs, "msr long table");
@@ -255,9 +250,7 @@ struct bn_unif *p;
  *	if setseed != 0 then seed = setseed
  */
 struct bn_gauss *
-bn_gauss_init(setseed,method)
-long setseed;
-int method;
+bn_gauss_init(long int setseed, int method)
 {
 	struct bn_gauss *p;
 	p = (struct bn_gauss *) bu_malloc(sizeof(struct bn_gauss),"bn_msr_guass");
@@ -303,8 +296,7 @@ int method;
  *	msr_seed is updated.
  */
 double
-bn_gauss_fill(p)
-struct bn_gauss *p;
+bn_gauss_fill(struct bn_gauss *p)
 {
 	register int i;
 	/* register */ double v1,v2,r,fac;
@@ -332,8 +324,7 @@ struct bn_gauss *p;
  *
  */
 void
-bn_gauss_free(p)
-struct bn_gauss *p;
+bn_gauss_free(struct bn_gauss *p)
 {
 	bu_free(p->msr_gauss_doubles, "msr guass doubles");
 	bu_free(p->msr_gausses,"msr guass table");

@@ -28,7 +28,7 @@ extern char *dm_bestXType();
 #endif
 
 /* from libdm/dm_obj.c */
-extern int Dmo_Init();
+extern int Dmo_Init(Tcl_Interp *interp);
 
 HIDDEN int dm_validXType_tcl();
 HIDDEN int dm_bestXType_tcl();
@@ -44,8 +44,7 @@ HIDDEN struct bu_cmdtab cmdtab[] = {
 };
 
 int
-Dm_Init(interp)
-     Tcl_Interp *interp;
+Dm_Init(Tcl_Interp *interp)
 {
 	const char		*version_number;
 	struct bu_vls	vls;

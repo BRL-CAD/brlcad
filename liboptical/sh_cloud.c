@@ -44,8 +44,8 @@ struct bu_structparse cloud_parse[] = {
 	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	cloud_setup(), cloud_render();
-HIDDEN void	cloud_print(), cloud_free();
+HIDDEN int	cloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), cloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	cloud_print(register struct region *rp, char *dp), cloud_free(char *cp);
 
 struct mfuncs cloud_mfuncs[] = {
 	{MF_MAGIC,	"cloud",	0,		MFI_UV,		0,
@@ -63,9 +63,7 @@ struct mfuncs cloud_mfuncs[] = {
  * Returns the texture value for a plane point
  */
 double
-cloud_texture(x,y,Contrast,initFx,initFy)
-register fastf_t x, y;
-fastf_t Contrast, initFx, initFy;
+cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t initFx, fastf_t initFy)
 {
 	register int	i;
 	FAST fastf_t	Px, Py, Fx, Fy, C;
@@ -112,12 +110,7 @@ fastf_t Contrast, initFx, initFy;
  *			C L O U D _ S E T U P
  */
 HIDDEN int
-cloud_setup( rp, matparm, dpp, mfp, rtip )
-register struct region *rp;
-struct bu_vls	*matparm;
-char	**dpp;
-struct mfuncs	*mfp;
-struct rt_i	*rtip;
+cloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 {
 	register struct cloud_specific *cp;
 
@@ -137,9 +130,7 @@ struct rt_i	*rtip;
  *			C L O U D _ P R I N T
  */
 HIDDEN void
-cloud_print( rp, dp )
-register struct region *rp;
-char	*dp;
+cloud_print(register struct region *rp, char *dp)
 {
 	bu_struct_print( rp->reg_name, cloud_parse, (char *)dp );
 }
@@ -148,8 +139,7 @@ char	*dp;
  *			C L O U D _ F R E E
  */
 HIDDEN void
-cloud_free( cp )
-char *cp;
+cloud_free(char *cp)
 {
 	bu_free( cp, "cloud_specific" );
 }
@@ -164,11 +154,7 @@ char *cp;
  *  thresh=0.35, range=0.3 for decent clouds.
  */
 int
-cloud_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+cloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct cloud_specific *cp =
 		(struct cloud_specific *)dp;

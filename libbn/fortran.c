@@ -70,10 +70,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  (and non-portable) to contemplate.
  */
 void
-pl_strncpy( out, in, sz )
-register char *out;
-register char *in;
-register int sz;
+pl_strncpy(register char *out, register char *in, register int sz)
 {
 	register int c = '\0';
 

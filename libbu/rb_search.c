@@ -42,13 +42,7 @@ static const char libbu_rb_search_RCSid[] = "@(#) $Header$";
  *	returns a pointer to the discovered node.  Otherwise, it returns
  *	(tree -> rbt_empty_node).
  */
-static struct bu_rb_node *_rb_search (root, order_nm, order, data)
-
-struct bu_rb_node	*root;
-int			order_nm;
-int			(*order)();
-void			*data;
-
+static struct bu_rb_node *_rb_search (struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void *data)
 {
     int		result;
     bu_rb_tree	*tree;
@@ -83,12 +77,7 @@ void			*data;
  *	pointer to the data block in the discovered node.  Otherwise,
  *	it returns NULL.
  */
-void *bu_rb_search (tree, order, data)
-
-bu_rb_tree	*tree;
-int		order;
-void		*data;
-
+void *bu_rb_search (bu_rb_tree *tree, int order, void *data)
 {
 
     int			(*compare)();

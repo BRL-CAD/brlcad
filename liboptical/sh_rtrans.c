@@ -65,8 +65,8 @@ struct bu_structparse rtrans_parse[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	rtrans_setup(), rtrans_render();
-HIDDEN void	rtrans_print(), rtrans_free();
+HIDDEN int	rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), rtrans_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	rtrans_print(register struct region *rp, char *dp), rtrans_free(char *cp);
 
 struct mfuncs rtrans_mfuncs[] = {
 	{MF_MAGIC,	"rtrans",	0,		0,	0,
@@ -84,12 +84,12 @@ struct mfuncs rtrans_mfuncs[] = {
  *	Any shader-specific initialization should be done here.
  */
 HIDDEN int
-rtrans_setup( rp, matparm, dpp, mfp, rtip)
-register struct region	*rp;
-struct bu_vls		*matparm;
-char			**dpp;	/* pointer to reg_udata in *rp */
-struct mfuncs		*mfp;
-struct rt_i		*rtip;	/* New since 4.4 release */
+rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+                      	    
+             		         
+    			      	/* pointer to reg_udata in *rp */
+             		     
+           		      	/* New since 4.4 release */
 {
 	register struct rtrans_specific	*rtrans_sp;
 
@@ -116,9 +116,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
  *	R T R A N S _ P R I N T
  */
 HIDDEN void
-rtrans_print( rp, dp )
-register struct region *rp;
-char	*dp;
+rtrans_print(register struct region *rp, char *dp)
 {
 	bu_struct_print( rp->reg_name, rtrans_parse, (char *)dp );
 }
@@ -127,8 +125,7 @@ char	*dp;
  *	R T R A N S _ F R E E
  */
 HIDDEN void
-rtrans_free( cp )
-char *cp;
+rtrans_free(char *cp)
 {
 	bu_free( cp, "rtrans_specific" );
 }
@@ -140,11 +137,7 @@ char *cp;
  *	once for each hit point to be shaded.
  */
 int
-rtrans_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+rtrans_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct rtrans_specific *rtrans_sp =
 		(struct rtrans_specific *)dp;

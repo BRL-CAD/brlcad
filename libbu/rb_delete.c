@@ -40,12 +40,7 @@ static char const libbu_rb_delete_RCSid[] = "@(#) $Header$";
  *	is an implementation of the routine RB-DELETE-FIXUP on p. 274
  *	of Cormen et al.
  */
-static void bu_rb_fixup (tree, node, order)
-
-bu_rb_tree		*tree;
-struct bu_rb_node	*node;
-int		order;
-
+static void bu_rb_fixup (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 {
     int			direction;
     struct bu_rb_node	*parent;
@@ -111,12 +106,7 @@ int		order;
  *	and the order from which to delete it.  _rb_delete() is an
  *	implementation of the routine RB-DELETE on p. 273 of Cormen et al.
  */
-static void _rb_delete (tree, node, order)
-
-bu_rb_tree		*tree;
-struct bu_rb_node	*node;
-int			order;
-
+static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 {
     struct bu_rb_node	*y;		/* The node to splice out */
     struct bu_rb_node	*parent;
@@ -174,11 +164,7 @@ int			order;
  *	in the current node (in the position of the specified order)
  *	from every order in the tree.
  */
-void bu_rb_delete (tree, order)
-
-bu_rb_tree	*tree;
-int		order;
-
+void bu_rb_delete (bu_rb_tree *tree, int order)
 {
     int				nm_orders;
     struct bu_rb_node		**node;		/* Nodes containing data */

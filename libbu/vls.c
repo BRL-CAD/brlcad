@@ -55,8 +55,7 @@ extern const char bu_strdup_message[];
  *  and bu_vls_addr() must be able to live with that.
  */
 void
-bu_vls_init( vp )
-register struct bu_vls	*vp;
+bu_vls_init(register struct bu_vls *vp)
 {
 	if (vp == (struct bu_vls  *)NULL)
 		bu_bomb("bu_vls_init() passed NULL pointer");
@@ -75,8 +74,7 @@ register struct bu_vls	*vp;
  *  append to it.
  */
 void
-bu_vls_init_if_uninit( vp )
-register struct bu_vls	*vp;
+bu_vls_init_if_uninit(register struct bu_vls *vp)
 {
 	if (vp == (struct bu_vls  *)NULL)
 		bu_bomb("bu_vls_init_if_uninit() passed NULL pointer");
@@ -93,7 +91,7 @@ register struct bu_vls	*vp;
  *  the result.  Allows for creation of dynamically allocated vls strings.
  */
 struct bu_vls *
-bu_vls_vlsinit()
+bu_vls_vlsinit(void)
 {
 	register struct bu_vls	*vp;	
 
@@ -110,8 +108,7 @@ bu_vls_vlsinit()
  *  If no storage has been allocated yet, give back a valid string.
  */
 char *
-bu_vls_addr( vp )
-register const struct bu_vls	*vp;
+bu_vls_addr(register const struct bu_vls *vp)
 {
 	static char	nullbuf[4];
 
@@ -141,9 +138,7 @@ register const struct bu_vls	*vp;
  *			B U _ V L S _ E X T E N D
  */
 void
-bu_vls_extend( vp, extra )
-register struct bu_vls	*vp;
-int			extra;
+bu_vls_extend(register struct bu_vls *vp, unsigned int extra)
 {
 	BU_CK_VLS(vp);
 	if( extra < 40 )  extra = 40;
@@ -174,9 +169,7 @@ int			extra;
  *  Does not initialize the value of any of the new bytes.
  */
 void
-bu_vls_setlen( vp, newlen )
-struct bu_vls	*vp;
-int		newlen;
+bu_vls_setlen(struct bu_vls *vp, int newlen)
 {
 	BU_CK_VLS(vp);
 	if( vp->vls_len >= newlen )  return;
@@ -190,8 +183,7 @@ int		newlen;
  *  Return length of the string, in bytes, not including the null terminator.
  */
 int
-bu_vls_strlen(vp)
-register const struct bu_vls	*vp;
+bu_vls_strlen(register const struct bu_vls *vp)
 {
 	BU_CK_VLS(vp);
 	if( vp->vls_len <= 0 )  return  0;
@@ -207,9 +199,7 @@ register const struct bu_vls	*vp;
  *  just going to refill it again, e.g. with bu_vls_gets().
  */
 void
-bu_vls_trunc( vp, len )
-register struct bu_vls	*vp;
-int			len;
+bu_vls_trunc(register struct bu_vls *vp, int len)
 {
 	BU_CK_VLS(vp);
 	if( len < 0 )  len = vp->vls_len + len;	/* now an absolute length */
@@ -226,9 +216,7 @@ int			len;
  *  Same as bu_vls_trunc except that it doesn't take negative len.
  */
 void
-bu_vls_trunc2( vp, len )
-register struct bu_vls	*vp;
-int			len;
+bu_vls_trunc2(register struct bu_vls *vp, int len)
 {
 	BU_CK_VLS(vp);
 	if( vp->vls_len <= len )  return;
@@ -247,9 +235,7 @@ int			len;
  *  If negative, characters are un-nibbled.
  */
 void
-bu_vls_nibble(vp, len)
-register struct bu_vls	*vp;
-int len;
+bu_vls_nibble(register struct bu_vls *vp, int len)
 {
 	BU_CK_VLS(vp);
 	if( len < 0 && (-len) > vp->vls_offset )  len = -vp->vls_offset;
@@ -266,8 +252,7 @@ int len;
  *  Releases the memory used for the string buffer.
  */
 void
-bu_vls_free( vp )
-register struct bu_vls	*vp;
+bu_vls_free(register struct bu_vls *vp)
 {
 	BU_CK_VLS(vp);
 	if( vp->vls_str )  {
@@ -285,8 +270,7 @@ register struct bu_vls	*vp;
  *  the vls structure
  */
 void
-bu_vls_vlsfree( vp )
-register struct bu_vls *vp;
+bu_vls_vlsfree(register struct bu_vls *vp)
 {
 	if ( *(long *)vp != BU_VLS_MAGIC) return;
 
@@ -301,8 +285,7 @@ register struct bu_vls *vp;
  *  The source string is not affected.
  */
 char *
-bu_vls_strdup( vp )
-register const struct bu_vls *vp;
+bu_vls_strdup(register const struct bu_vls *vp)
 {
 	register char *str;
 	register int len;
@@ -325,8 +308,7 @@ register const struct bu_vls *vp;
  *  The source string is destroyed, as if bu_vls_free() had been called.
  */
 char *
-bu_vls_strgrab( vp )
-register struct bu_vls *vp;
+bu_vls_strgrab(register struct bu_vls *vp)
 {
 	register char *str;
 
@@ -349,9 +331,7 @@ register struct bu_vls *vp;
  *  Empty the vls string, and copy in a regular string.
  */
 void
-bu_vls_strcpy( vp, s )
-register struct bu_vls	*vp;
-const char		*s;
+bu_vls_strcpy(register struct bu_vls *vp, const char *s)
 {
 	register int	len;
 
@@ -376,10 +356,7 @@ const char		*s;
  *  Empty the vls string, and copy in a regular string, up to N bytes long.
  */
 void
-bu_vls_strncpy( vp, s, n )
-register struct bu_vls	*vp;
-const char		*s;
-long			n;
+bu_vls_strncpy(register struct bu_vls *vp, const char *s, long int n)
 {
 	register int	len;
 
@@ -404,9 +381,7 @@ long			n;
  *  Concatenate a new string onto the end of the existing vls string.
  */
 void
-bu_vls_strcat( vp, s )
-register struct bu_vls	*vp;
-const char		*s;
+bu_vls_strcat(register struct bu_vls *vp, const char *s)
 {
 	register int	len;
 
@@ -425,10 +400,7 @@ const char		*s;
  *  Concatenate a new string onto the end of the existing vls string.
  */
 void
-bu_vls_strncat( vp, s, n )
-register struct bu_vls	*vp;
-const char		*s;
-long			n;
+bu_vls_strncat(register struct bu_vls *vp, const char *s, long int n)
 {
 	register int	len;
 
@@ -451,9 +423,7 @@ long			n;
  *  The storage of the source string is not affected.
  */
 void
-bu_vls_vlscat( dest, src )
-register struct bu_vls		*dest;
-register const struct bu_vls	*src;
+bu_vls_vlscat(register struct bu_vls *dest, register const struct bu_vls *src)
 {
 	BU_CK_VLS(src);
 	BU_CK_VLS(dest);
@@ -474,8 +444,7 @@ register const struct bu_vls	*src;
  *  The storage of the source string is released (zapped).
  */
 void
-bu_vls_vlscatzap( dest, src )
-register struct bu_vls	*dest, *src;
+bu_vls_vlscatzap(register struct bu_vls *dest, register struct bu_vls *src)
 {
 	BU_CK_VLS(src);
 	BU_CK_VLS(dest);
@@ -491,10 +460,7 @@ register struct bu_vls	*dest, *src;
  *  separated words.
  */
 void
-bu_vls_from_argv( vp, argc, argv )
-register struct bu_vls	*vp;
-int	argc;
-char	**argv;
+bu_vls_from_argv(register struct bu_vls *vp, int argc, char **argv)
 {
 	BU_CK_VLS(vp);
 	for( ; argc > 0; argc--, argv++ )  {
@@ -522,10 +488,7 @@ char	**argv;
  *  Built from rt_split_cmd(), but without the shell escape support.
  */
 int
-bu_argv_from_string(argv, lim, lp )
-char		**argv;
-int		lim;
-register char	*lp;
+bu_argv_from_string(char **argv, int lim, register char *lp)
 {
 	register int	nwords;			/* number of words seen */
 	register char	*lp1;
@@ -564,9 +527,7 @@ register char	*lp;
  *			B U _ V L S _ F W R I T E
  */
 void
-bu_vls_fwrite( fp, vp )
-FILE			*fp;
-const struct bu_vls	*vp;
+bu_vls_fwrite(FILE *fp, const struct bu_vls *vp)
 {
 	int status;
 
@@ -672,9 +633,7 @@ bu_vls_read( struct bu_vls *vp, int fd )
  *	 -1	on EOF where no characters were added to the vls.
  */
 int
-bu_vls_gets( vp, fp )
-register struct bu_vls	*vp;
-register FILE		*fp;
+bu_vls_gets(register struct bu_vls *vp, register FILE *fp)
 {
 	int	startlen;
 	int	c;
@@ -705,9 +664,7 @@ register FILE		*fp;
  *  Append the given character to the vls.
  */
 void
-bu_vls_putc( vp, c )
-register struct bu_vls	*vp;
-int			c;
+bu_vls_putc(register struct bu_vls *vp, int c)
 {
 	BU_CK_VLS(vp);
 
@@ -749,10 +706,7 @@ bu_vls_trimspace( struct bu_vls *vp )
  */
 
 void
-bu_vls_vprintf(vls, fmt, ap)
-struct bu_vls *vls;
-const char *fmt;
-va_list ap;
+bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 {
     register const char	*sp;			/* start pointer */
     register const char	*ep;			/* end pointer */
@@ -1052,9 +1006,7 @@ char *fmt;
  *  Efficiently append 'cnt' spaces to the current vls.
  */
 void
-bu_vls_spaces( vp, cnt )
-register struct bu_vls	*vp;
-int			cnt;
+bu_vls_spaces(register struct bu_vls *vp, int cnt)
 {
 	BU_CK_VLS(vp);
 	if( cnt <= 0 )  return;
@@ -1078,8 +1030,7 @@ int			cnt;
  *	0-7 --> 8, 8-15 --> 16, 16-23 --> 24, etc.
  */
 int
-bu_vls_print_positions_used( vp )
-const struct bu_vls	*vp;
+bu_vls_print_positions_used(const struct bu_vls *vp)
 {
 	char	*start;
 	int	used;
@@ -1108,8 +1059,7 @@ const struct bu_vls	*vp;
  *  according to the UNIX tab convention.
  */
 void
-bu_vls_detab( vp )
-struct bu_vls	*vp;
+bu_vls_detab(struct bu_vls *vp)
 {
 	struct bu_vls	src;
 	register char	*cp;

@@ -52,21 +52,20 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # define NSIG	64		/* conservative */
 #endif
 
-int	ready_Output_Device();
-void	close_Output_Device();
+int	ready_Output_Device(int frame);
+void	close_Output_Device(int frame);
 #if STD_SIGNAL_DECLS
-STATIC void	intr_sig();
+STATIC void	intr_sig(int sig);
 #else
 STATIC int	intr_sig();
 #endif
-STATIC void	init_Lgts();
-void		exit_Neatly();
-int		key_Frame();
+STATIC void	init_Lgts(void);
+void		exit_Neatly(int status);
+int		key_Frame(void);
 
 STATIC int
-substr( str, pattern )
-char	*str, *pattern;
-	{
+substr(char *str, char *pattern)
+{
 	if( *str == '\0' )
 		return	FALSE;
 	if( *str != *pattern || strncmp( str, pattern, strlen( pattern ) ) )
@@ -76,8 +75,7 @@ char	*str, *pattern;
 
 /*	m a i n ( )							*/
 int
-main( argc, argv )
-char	*argv[];
+main(int argc, char **argv)
 {	register int	i;
 #if ! defined( BSD ) && ! defined( sgi ) && ! defined( CRAY2 )
 	(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
@@ -194,9 +192,8 @@ tty_sig:
 
 /*	i n t e r p o l a t e _ F r a m e ( )				*/
 int
-interpolate_Frame( frame )
-int	frame;
-	{	fastf_t	rel_frame = (fastf_t) frame / movie.m_noframes;
+interpolate_Frame(int frame)
+{	fastf_t	rel_frame = (fastf_t) frame / movie.m_noframes;
 	if( movie.m_noframes == 1 )
 		return	TRUE;
 	if( ! movie.m_fullscreen )
@@ -250,18 +247,16 @@ int	frame;
 
 /*	e x i t _ N e a t l y ( )					*/
 void
-exit_Neatly( status )
-int	status;
-	{
+exit_Neatly(int status)
+{
 	prnt_Event( "Quitting...\n" );
 	exit( status );
 	}
 
 /*	r e a d y _ O u t p u t _ D e v i c e ( )			*/
 int
-ready_Output_Device( frame )
-int	frame;
-	{	int size;
+ready_Output_Device(int frame)
+{	int size;
 	if( force_cellsz )
 		{
 		grid_sz = (int)(view_size / cell_sz);
@@ -297,9 +292,8 @@ int	frame;
 
 /*	c l o s e _ O u t p u t _ D e v i c e ( )			*/
 void
-close_Output_Device( frame )
-int frame;
-	{
+close_Output_Device(int frame)
+{
 	assert( fbiop != FBIO_NULL );
 #if SGI_WINCLOSE_BUG
 	if( strncmp( fbiop->if_name, "/dev/sgi", 8 ) != 0 )
@@ -319,9 +313,8 @@ STATIC void
 STATIC int
 #endif
 /*ARGSUSED*/
-intr_sig( sig )
-int	sig;
-	{
+intr_sig(int sig)
+{
 	(void) signal( SIGINT, intr_sig );
 #if STD_SIGNAL_DECLS
 	return;
@@ -334,8 +327,8 @@ int	sig;
 	Set certain default lighting info.
  */
 STATIC void
-init_Lgts()
-	{
+init_Lgts(void)
+{
 	/* Ambient lighting.						*/
 	(void) strcpy( lgts[0].name, "EYE" );
 	lgts[0].beam = FALSE;

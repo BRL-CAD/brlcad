@@ -41,7 +41,7 @@ int	bu_pid_of_initiating_thread = 0;	/* don't declare in h/bu.h */
  */
 #ifndef WIN32
 int
-bu_is_parallel()
+bu_is_parallel(void)
 {
 	if( bu_pid_of_initiating_thread != 0 )  return 1;
 	return 0;
@@ -54,7 +54,7 @@ bu_is_parallel()
  *  without dragging in the whole parallel library if it isn't being used.
  */
 void
-bu_kill_parallel()
+bu_kill_parallel(void)
 {
 	if( bu_pid_of_initiating_thread == 0 )  return;
 	if( bu_pid_of_initiating_thread == getpid() )  return;

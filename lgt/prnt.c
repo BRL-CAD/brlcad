@@ -134,10 +134,8 @@ char	screen[TOP_SCROLL_WIN+1][TEMPLATE_COLS+1];
 	destination buffer, but pads it with blanks.
  */
 STATIC void
-pad_Strcpy( des, src, len )
-register char	*des, *src;
-register int	len;
-	{
+pad_Strcpy(register char *des, register char *src, register int len)
+{
 	while( len > 0 && *src != '\0' )
 		{
 		*des++ = *src++;
@@ -150,8 +148,8 @@ register int	len;
 
 /*	i n i t _ S t a t u s ( )					*/
 void
-init_Status()
-	{	register int	row, col;
+init_Status(void)
+{	register int	row, col;
 	for( row = 0; row <= TOP_SCROLL_WIN; row++ )
 		for( col = 0; col <= TEMPLATE_COLS; col++ )
 			screen[row][col] = '\0';
@@ -160,8 +158,8 @@ init_Status()
 
 /*	p r n t _ S t a t u s ( )					*/
 void
-prnt_Status()
-	{	static char	scratchbuf[TEMPLATE_COLS+1];
+prnt_Status(void)
+{	static char	scratchbuf[TEMPLATE_COLS+1];
 	pad_Strcpy( TITLE_PTR, title, TITLE_LEN - 1 );
 	pad_Strcpy( TIMER_PTR, timer, TIMER_LEN - 1 );
 	pad_Strcpy( F_SCRIPT_PTR, script_file, 32 );
@@ -213,8 +211,8 @@ prnt_Status()
 	}
 
 void
-update_Screen()
-	{	register int	tem_co, row, col;
+update_Screen(void)
+{	register int	tem_co, row, col;
 	tem_co = Min( co, TEMPLATE_COLS );
 	for( row = 0; template[row][0] != '\0'; row++ )
 		{	register int	lastcol = -2;
@@ -238,9 +236,8 @@ update_Screen()
 
 /*	p r n t _ P a g e d _ M e n u ( )				*/
 void
-prnt_Paged_Menu( menu )
-register char	**menu;
-	{	register int	done = FALSE;
+prnt_Paged_Menu(register char **menu)
+{	register int	done = FALSE;
 		int		lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
 	if( ! tty )
 		{
@@ -261,9 +258,8 @@ register char	**menu;
 	}
 
 int
-do_More( linesp )
-int	*linesp;
-	{	register int	ret = TRUE;
+do_More(int *linesp)
+{	register int	ret = TRUE;
 	if( ! tty )
 		return	TRUE;
 	save_Tty( 0 );
@@ -296,8 +292,8 @@ int	*linesp;
 
 /*	p r n t _ M e n u ( )						*/
 void
-prnt_Menu()
-	{
+prnt_Menu(void)
+{
 	prnt_Paged_Menu( lgt_menu );
 	if( ir_mapping )
 		prnt_Paged_Menu( ir_menu );
@@ -307,9 +303,8 @@ prnt_Menu()
 
 /*	p r n t _ P r o m p t ( )					*/
 void
-prnt_Prompt( prompt )
-char	*prompt;
-	{
+prnt_Prompt(char *prompt)
+{
 	if( tty )
 		{
 		PROMPT_MOVE();
@@ -324,9 +319,8 @@ char	*prompt;
 
 /*	p r n t _ T i m e r ( )						*/
 void
-prnt_Timer( eventstr )
-char	*eventstr;
-	{
+prnt_Timer(char *eventstr)
+{
 	(void) rt_read_timer( timer, TIMER_LEN-1 );
 	if( tty )
 		{
@@ -340,9 +334,8 @@ char	*eventstr;
 
 /*	p r n t _ E v e n t ( )						*/
 void
-prnt_Event( s )
-char	*s;
-	{	static int	lastlen = 0;
+prnt_Event(char *s)
+{	static int	lastlen = 0;
 		register int	i;
 	if( ! tty )
 		return;
@@ -369,9 +362,8 @@ char	*s;
 
 /*	p r n t _ T i t l e ( )						*/
 void
-prnt_Title( titleptr )
-char	*titleptr;
-	{
+prnt_Title(char *titleptr)
+{
 	if( ! tty || RT_G_DEBUG )
 		bu_log( "%s\n", titleptr == NULL ? "(null)" : titleptr );
 	return;
@@ -381,8 +373,8 @@ char	*titleptr;
 	Print usage message.
  */
 void
-prnt_Usage()
-	{	register char	**p = usage;
+prnt_Usage(void)
+{	register char	**p = usage;
 	while( *p != NULL )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;

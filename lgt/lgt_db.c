@@ -25,15 +25,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./screen.h"
-STATIC int	get_Lgt_Entry(), put_Lgt_Entry();
+STATIC int	get_Lgt_Entry(register Lgt_Source *entry, FILE *fp), put_Lgt_Entry(register Lgt_Source *entry, FILE *fp);
 
 /*	l g t _ P r i n t _ D b ( )
 	Print light source database entry.
  */
 int
-lgt_Print_Db( id )
-int		id;
-	{	register Lgt_Source	*entry;
+lgt_Print_Db(int id)
+{	register Lgt_Source	*entry;
 		register int		stop;
 		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
 	if( id >= lgt_db_size )
@@ -102,9 +101,8 @@ int		id;
 	return number of entries successfully read.
  */
 int
-lgt_Rd_Db( file )
-char	*file;
-	{	register Lgt_Source	*entry;
+lgt_Rd_Db(char *file)
+{	register Lgt_Source	*entry;
 		register FILE		*fp;
 	if( (fp = fopen( file, "r" )) == NULL )
 		return	0;
@@ -124,9 +122,8 @@ char	*file;
 	Return 1 for success, 0 for failure.
  */
 int
-lgt_Save_Db( file )
-char	*file;
-	{
+lgt_Save_Db(char *file)
+{
 	register Lgt_Source	*entry;
 	register FILE		*fp;
 
@@ -149,9 +146,8 @@ char	*file;
 	Create or overwrite entry in light source table.
  */
 int
-lgt_Edit_Db_Entry( id )
-int	id;
-	{	register Lgt_Source	*entry;
+lgt_Edit_Db_Entry(int id)
+{	register Lgt_Source	*entry;
 		char			input_buf[MAX_LN];
 		char			prompt[MAX_LN];
 		int			red, grn, blu;
@@ -218,10 +214,8 @@ int	id;
 	}
 
 STATIC int
-get_Lgt_Entry( entry, fp )
-register Lgt_Source	*entry;
-FILE			*fp;
-	{	register char	*ptr;
+get_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
+{	register char	*ptr;
 		int		red, grn, blu;
 	if( fgets( entry->name, MAX_LGT_NM, fp ) == NULL )
 		return	0;
@@ -255,10 +249,8 @@ FILE			*fp;
 	}
 
 STATIC int
-put_Lgt_Entry( entry, fp )
-register Lgt_Source	*entry;
-FILE			*fp;
-	{
+put_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
+{
 	(void) fprintf( fp, "%s\n", entry->name );
 	(void) fprintf(	fp,
 			"%d\n%d\n%u %u %u\n",

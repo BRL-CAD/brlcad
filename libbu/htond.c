@@ -82,10 +82,7 @@ static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
  *  Host to Network Doubles
  */
 void
-htond( out, in, count )
-register unsigned char	*out;
-register const unsigned char	*in;
-int			count;
+htond(register unsigned char *out, register const unsigned char *in, int count)
 {
 #if	defined(NATURAL_IEEE)
 	/*
@@ -407,10 +404,7 @@ ibm_normalized:
  *  Network to Host Doubles
  */
 void
-ntohd( out, in, count )
-register unsigned char	*out;
-register const unsigned char	*in;
-int			count;
+ntohd(register unsigned char *out, register const unsigned char *in, int count)
 {
 #ifdef NATURAL_IEEE
 	/*

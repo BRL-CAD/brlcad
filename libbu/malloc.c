@@ -77,10 +77,7 @@ char *sbrk(i)
  *  Add another entry to the memory debug table
  */
 HIDDEN void
-bu_memdebug_add( ptr, cnt, str )
-char		*ptr;
-unsigned int	cnt;
-const char	*str;
+bu_memdebug_add(char *ptr, unsigned int cnt, const char *str)
 {
 	register struct memdebug *mp;
 top:
@@ -142,9 +139,7 @@ again:
  *  Check an entry against the memory debug table, based upon it's address.
  */
 HIDDEN struct memdebug *
-bu_memdebug_check( ptr, str )
-register char	*ptr;
-const char	*str;
+bu_memdebug_check(register char *ptr, const char *str)
 {
 	register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
 	register long	*ip;
@@ -183,9 +178,7 @@ const char	*str;
  *  Failure results in bu_bomb() being called.
  */
 genptr_t
-bu_malloc(cnt, str)
-unsigned int	cnt;
-const char	*str;
+bu_malloc(unsigned int cnt, const char *str)
 {
 	register genptr_t ptr;
 
@@ -234,9 +227,7 @@ const char	*str;
  *			B U _ F R E E
  */
 void
-bu_free(ptr,str)
-genptr_t	ptr;
-const char	*str;
+bu_free(genptr_t ptr, const char *str)
 {
 	if(bu_debug&BU_DEBUG_MEM_LOG) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -282,10 +273,7 @@ const char	*str;
  *  tracked back to it's original creator.
  */
 genptr_t
-bu_realloc(ptr, cnt, str)
-register genptr_t	ptr;
-unsigned int		cnt;
-const char		*str;
+bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
 {
 	struct memdebug		*mp=NULL;
 	char	*original_ptr = ptr;
@@ -344,10 +332,7 @@ const char		*str;
  *			B U _ C A L L O C
  */
 genptr_t
-bu_calloc( nelem, elsize, str )
-unsigned int	nelem;
-unsigned int	elsize;
-const char	*str;
+bu_calloc(unsigned int nelem, unsigned int elsize, const char *str)
 {
 	unsigned	len;
 	genptr_t	ret;
@@ -364,8 +349,7 @@ const char	*str;
  *  Print map of memory currently in use.
  */
 void
-bu_prmem(str)
-const char *str;
+bu_prmem(const char *str)
 {
 	register struct memdebug *mp;
 	register long *ip;
@@ -411,11 +395,10 @@ const char *str;
  * duplicate the strings, returns a pointer to the new string.
  */
 char *
-bu_strdup( cp )
-register const char *cp;
+bu_strdup(register const char *cp)
 {
 	register char	*base;
-	register int	len;
+	register size_t	len;
 
 	len = strlen( cp )+2;
 	base = bu_malloc( len, bu_strdup_message );
@@ -450,8 +433,7 @@ register const char *cp;
  *	../a/b		../a
  */
 char *
-bu_dirname( cp )
-const char *cp;
+bu_dirname(const char *cp)
 {
 	char	*ret;
 	char	*slash;
@@ -506,8 +488,7 @@ const char *cp;
  *  unused memory will be consumed.
  */
 int
-bu_malloc_len_roundup(nbytes)
-register int nbytes;
+bu_malloc_len_roundup(register int nbytes)
 {
 #if !defined(HAVE_CALTECH_MALLOC)
 	return(nbytes);
@@ -547,9 +528,7 @@ register int nbytes;
  *	bombs if memory is corrupted.
  */
 void
-bu_ck_malloc_ptr( ptr, str )
-genptr_t	ptr;
-const char	*str;
+bu_ck_malloc_ptr(genptr_t ptr, const char *str)
 {
 	register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
 	register long	*ip;
@@ -606,7 +585,7 @@ const char	*str;
  *	 0	all is OK;
  */
 int
-bu_mem_barriercheck()
+bu_mem_barriercheck(void)
 {
 	register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
 	register long	*ip;

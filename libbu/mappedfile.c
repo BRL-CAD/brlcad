@@ -77,9 +77,9 @@ static struct bu_list	bu_mapped_file_list = {
  *  If the system does not support mapped files, the data is read into memory.
  */
 struct bu_mapped_file *
-bu_open_mapped_file( name, appl )
-const char	*name;		/* file name */
-const char	*appl;		/* non-null only when app. will use 'apbuf' */
+bu_open_mapped_file(const char *name, const char *appl)
+          	      		/* file name */
+          	      		/* non-null only when app. will use 'apbuf' */
 {
 	struct bu_mapped_file	*mp = (struct bu_mapped_file *)NULL;
 #ifdef HAVE_UNIX_IO
@@ -187,7 +187,7 @@ dont_reuse:
 	/* Attempt to access as memory-mapped file */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	mp->buf = mmap(
-		(caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
+		(caddr_t)0, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE,
 		fd, (off_t)0 );
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -200,10 +200,10 @@ dont_reuse:
 #  endif /* HAVE_SYS_MMAN_H */
 	{
 		/* Allocate a local buffer, and slurp it in */
-		mp->buf = bu_malloc( sb.st_size, mp->name );
+		mp->buf = bu_malloc( (size_t)sb.st_size, mp->name );
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		ret = read( fd, mp->buf, sb.st_size );
+		ret = read( fd, mp->buf, (size_t)sb.st_size );
 		bu_semaphore_release(BU_SEM_SYSCALL);
 
 		if( ret != sb.st_size )  {
@@ -312,8 +312,7 @@ fail:
  *  animations.
  */
 void
-bu_close_mapped_file( mp )
-struct bu_mapped_file	*mp;
+bu_close_mapped_file(struct bu_mapped_file *mp)
 {
 	BU_CK_MAPPED_FILE(mp);
 
@@ -334,9 +333,7 @@ struct bu_mapped_file	*mp;
  *			B U _ P R _ M A P P E D _ F I L E
  */
 void
-bu_pr_mapped_file( title, mp )
-const char			*title;
-const struct bu_mapped_file	*mp;
+bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
 {
 	BU_CK_MAPPED_FILE(mp);
 
@@ -356,8 +353,7 @@ const struct bu_mapped_file	*mp;
  *  animations.
  */
 void
-bu_free_mapped_files(verbose)
-int	verbose;
+bu_free_mapped_files(int verbose)
 {
 	struct bu_mapped_file	*mp, *next;
 
@@ -389,7 +385,7 @@ int	verbose;
 		if( mp->is_mapped )  {
 			int	ret;
 			bu_semaphore_acquire(BU_SEM_SYSCALL);
-			ret = munmap( mp->buf, mp->buflen );
+			ret = munmap( mp->buf, (size_t)mp->buflen );
 			bu_semaphore_release(BU_SEM_SYSCALL);
 			if( ret < 0 )  perror("munmap");
 			/* XXX How to get this chunk of address space back to malloc()? */
@@ -416,10 +412,10 @@ int	verbose;
  *  If the file name begins with a slash ('/') the path is not used.
  */
 struct bu_mapped_file *
-bu_open_mapped_file_with_path( path, name, appl )
-char * const *path;
-const char	*name;		/* file name */
-const char	*appl;		/* non-null only when app. will use 'apbuf' */
+bu_open_mapped_file_with_path(char *const *path, const char *name, const char *appl)
+                   
+          	      		/* file name */
+          	      		/* non-null only when app. will use 'apbuf' */
 {
 	char	* const *pathp = path;
 	struct bu_vls	str;
