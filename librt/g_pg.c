@@ -486,7 +486,11 @@ struct rt_tol		*tol;
 
 		/* Associate face geometry */
 		if( nmg_fu_planeeqn( fu, tol ) < 0 )
+		{
+			rt_free( (char *)verts, "pg_tess verts[]" );
+			rt_free( (char *)vertp, "pg_tess vertp[]" );
 			return -1;			/* FAIL */
+		}
 	}
 
 	/* Polysolids are often built with incorrect face normals.
@@ -497,6 +501,9 @@ struct rt_tol		*tol;
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
 
+	/* mark edges as real */
+	(void)nmg_mark_edges_real( &s->l );
+	
 	rt_free( (char *)verts, "pg_tess verts[]" );
 	rt_free( (char *)vertp, "pg_tess vertp[]" );
 
