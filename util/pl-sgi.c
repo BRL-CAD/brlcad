@@ -928,9 +928,9 @@ int	n;
 		break;
 	case MENU_SNAP:
 		cursoff();
-		system("/usr/brl/bin/Set30");
-		ret = system("/usr/brlcad/bin/dunnsnap");
-		system("/usr/brl/bin/Set60");
+		system("Set30");
+		ret = system("dunnsnap");
+		system("Set60");
 		curson();
 		if( ret ) {
 			fprintf( stderr, "pl-sgi: Snap failed. Out of film?\n" );
