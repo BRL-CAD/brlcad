@@ -939,7 +939,7 @@ va_list ap;
 		} else if (flags & SHORTINT) {
 		    /* short int */
 		    register short int sh;
-		    sh = va_arg(ap, short);
+		    sh = (short int)va_arg(ap, int);
 		    if (flags & FIELDLEN)
 				sprintf(buf, fbuf, fieldlen, sh);
 			else
