@@ -891,7 +891,9 @@ CONST struct rt_tol	*tol;
 		rt_log("\tnmg_isect_two_colinear_edge2p_both_ways()=%d, dist: %g, %g\n",
 			status, eu2dist[0], eu2dist[1] );
 	}
-	
+	if(fu1)nmg_ck_face_worthless_edges( fu1 );
+	if(fu2)nmg_ck_face_worthless_edges( fu2 );
+
 	if( status != 0 )  return ret;
 #endif
 
@@ -902,6 +904,8 @@ CONST struct rt_tol	*tol;
 	> 0 )  {
 		ret |= ISECT_SPLIT2;	/* eu2 was broken */
 	}
+	if(fu1)nmg_ck_face_worthless_edges( fu1 );
+	if(fu2)nmg_ck_face_worthless_edges( fu2 );
 	return ret;
 }
 
@@ -967,7 +971,7 @@ CONST char		*str;
 	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_two_colinear_edge2p(x%x, x%x) %s\n", eu1, eu2, str);
+		rt_log("nmg_isect_two_colinear_edge2p(eu1=x%x, eu2=x%x) %s\n", eu1, eu2, str);
 	if(fu1)nmg_ck_face_worthless_edges( fu1 );
 	if(fu2)nmg_ck_face_worthless_edges( fu2 );
 
@@ -1116,11 +1120,13 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	else
 		magic2 = &nmg_find_s_of_eu(eu2)->l.magic;
 
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_edge2p_edge2p(eu1=x%x, eu2=x%x, fu1=x%x, fu2=x%x)\n\tvu1a=%x vu1b=%x, vu2a=%x vu2b=%x\n\tv1a=%x v1b=%x,   v2a=%x v2b=%x\n",
-			eu1, eu2, fu1, fu2,
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		rt_log("nmg_isect_edge2p_edge2p(eu1=x%x, eu2=x%x) START\n\tfu1=x%x, fu2=x%x\n\tvu1a=%x vu1b=%x, vu2a=%x vu2b=%x\n\tv1a=%x v1b=%x,   v2a=%x v2b=%x\n",
+			eu1, eu2,
+			fu1, fu2,
 			vu1a, vu1b, vu2a, vu2b,
 			vu1a->v_p, vu1b->v_p, vu2a->v_p, vu2b->v_p );
+	}
 
 	/*
 	 *  Topology check.
@@ -3022,7 +3028,6 @@ hit_b:
 				if( hit_v != vu1_final->v_p )  rt_bomb("hit_v changed?\n");
 			}
 			nmg_insert_fu_vu_in_other_list( is, list, hit_v, fu2 );
-			nmg_ck_face_worthless_edges( fu1 );
 			break;
 		}
 	}
