@@ -40,6 +40,7 @@
  *	Michael John Muuss
  *	Phil Dykstra
  *	Gary S. Moss
+ *	Lee A. Butler
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -211,27 +212,25 @@ struct suninfo
 static int	sun_damaged = FALSE; /* SIGWINCH fired, need to repair damage. */
 static int	sun_pixwin = FALSE;  /* Running under SUNTOOLS. */
 static RGBpixel black = { 0, 0, 0 };
-struct sun_cmap
-	{
+struct sun_cmap {
 	unsigned char	cmr[256];
 	unsigned char	cmg[256];
 	unsigned char	cmb[256];
-	};
+};
 
 static int	dither_flg = FALSE;   /* dither output */
 
 /* dither pattern (threshold level) */
-static short	dither[MAXDITHERSZ][MAXDITHERSZ] =
-	{
-	6,  51,  14,  78,   8,  57,  16,  86,
+static short	dither[MAXDITHERSZ][MAXDITHERSZ] = {
+	  6,  51,  14,  78,   8,  57,  16,  86,
 	118,  22, 178,  34, 130,  25, 197,  37,
-	18,  96,  10,  63,  20, 106,  12,  70,
+	 18,  96,  10,  63,  20, 106,  12,  70,
 	219,  42, 145,  27, 243,  46, 160,  30,
-	9,  60,  17,  91,   7,  54,  15,  82,
+	  9,  60,  17,  91,   7,  54,  15,  82,
 	137,  26, 208,  40, 124,  23, 187,  36,
-	21, 112,  13,  74,  19, 101,  11,  66,
+	 21, 112,  13,  74,  19, 101,  11,  66,
 	254,  49, 169,  32, 230,  44, 152,  29
-	};
+};
 
 #define NDITHER   8
 #define LNDITHER  3
@@ -252,22 +251,129 @@ EXTERN struct pixrect *bluscr;	/* blue screen */
 unsigned char   red8Amap[256];	/* red 8bit dither color map */
 unsigned char   grn8Amap[256];	/* green 8bit dither color map */
 unsigned char   blu8Amap[256];	/* blue 8bit dither color map */
-
+/*
+ *	Sun Hardware colormap support
+ *
+ *	The color map is organized as a 6x6x6 colorcube, with 10 extra  
+ *	entries each for the primary colors and grey values.
+ *
+ *	entries 0 -> 215 are the color cube
+ *	entries 216 -> 225 are extra "red" values
+ *	entries 226 -> 235 are extra "green" values
+ *	entries 236 -> 245 are extra "blue" values
+ *	entries 246 -> 255 are extra "grey" values
+ *
+ *	Sun wants the first entry in the colormap to be white (all 255)
+ *	and the last entry to be black (all 0).  In order to maintain some
+ *	compatibility here, we store our colorcube and "extras" backwards
+ *	from what makes sense so that our map is compatible with Sun's
+ */
 /* Our copy of the *hardware* colormap */
 static unsigned char redmap[256], grnmap[256], blumap[256];
 
-#define RR	6
-#define GR	7
-#define BR	6
+/* values for color cube entries */
+static unsigned char cubevec[6] = { 0, 51, 102, 153, 204, 255 };
+
+/* additional values for primaries */
+static unsigned char primary[10] = {
+	238, 221, 187, 170, 136, 119, 85, 68, 34, 17
+};
+
+/* indicies of the primary colors and grey values in the color map */
+static unsigned char redvec[16] = {
+215, 225, 224, 214, 223, 222, 213, 221, 220, 212, 219, 218, 211, 217, 216, 210
+};
+static unsigned char grnvec[16] = {
+215, 235, 234, 209, 233, 232, 203, 231, 230, 197, 229, 228, 191, 227, 226, 185
+};
+static unsigned char bluvec[16] = {
+215, 245, 244, 179, 243, 242, 143, 241, 240, 107, 239, 238, 71, 237, 236, 35
+};
+static unsigned char greyvec[16] = {
+215, 255, 254, 172, 253, 252, 129, 251, 250, 86, 249, 248, 43, 247, 246, 0
+};
+
+
+/*
+ *	c o n v R G B
+ *
+ *	convert a single RGBpixel to its corresponding entry in the Sun
+ *	colormap.
+ */
+_LOCAL_ unsigned char convRGB(v)
+register RGBpixel *v;
+{
+	register int r, g, b;
+
+	r = ( (*v)[RED]+26 ) / 51;
+	g = ( (*v)[GRN]+26 ) / 51;
+	b = ( (*v)[BLU]+26 ) / 51;
+
+	if ( r == g & r == b ) /* all grey, take average */
+		return greyvec[( ((*v)[RED]+(*v)[GRN]+(*v)[BLU]) / 3 ) /16];
+		
+	else if (g == b && g == 0)	/* all red */
+		return redvec[((*v)[RED])/16];
+		
+	else if (r == b && r == 0)	/* all green */
+		return grnvec[((*v)[GRN])/16];
+		
+	else if (r == g && r == 0)	/* all blue */
+		return bluvec[((*v)[BLU])/16];
+		
+	else				/* color cube val */
+		return 215 - (r + g * 6 + b * 36);
+}
+
+
+/*
+ *	G E N M A P
+ *
+ *	initialize the Sun harware colormap
+ */
+void genmap(redmap, grnmap, blumap)
+unsigned char redmap[], grnmap[], blumap[];
+{
+	register r, g, b;
+
+	/* build the basic color cube */
+	for (r=0 ; r < 6 ; r++)
+		for (g=0 ; g < 6 ; g ++)
+			for (b=0 ; b < 6 ; b++) {
+				redmap[215 - (r + g * 6 + b * 36)] = cubevec[r];
+				grnmap[215 - (r + g * 6 + b * 36)] = cubevec[g];
+				blumap[215 - (r + g * 6 + b * 36)] = cubevec[b];
+			}
+
+	/* put in the linear sections */
+	for (r=216 ; r < 226 ; ++r) {
+		redmap[r] = primary[r-216];	/* red */
+		grnmap[r] = blumap[r] = 0;
+	}
+
+	for (g=226 ; g < 236 ; ++g) {
+		grnmap[g] = primary[g-226];	/* green */
+		redmap[g] = blumap[g] = 0;
+	}
+	
+	for (b=236 ; b < 246 ; ++b) {
+		blumap[b] = primary[b-236];	/* blue */
+		redmap[b] = grnmap[b] = 0;
+	}
+
+	for (r=246 ; r < 256 ; ++r) {		/* grey */
+		redmap[r] = grnmap[r] = 
+		blumap[r] = primary[r-246];
+	}
+}
+
+
+
+
 
 #ifdef DIT
 static int      biggest = RR * GR * BR - 1;
 #endif
-
-#define COLOR_APPROX(p) \
-	(((p)[RED] * RR ) / 256) * GR*BR + \
-	(((p)[GRN] * GR ) / 256) * BR  + \
-	(((p)[BLU] * BR ) / 256) + 1
 
 #define SUN_CMAPVAL( p, o )\
 	if( SUN(ifp)->su_cmap_flag )\
@@ -312,27 +418,26 @@ struct modeflags {
 
 _LOCAL_ int
 sun_sigwinch( sig )
-	{
+{
 	sun_damaged = TRUE;
 	return	sig;
-	}
+}
 
 _LOCAL_ int
 sun_sigalarm( sig )
-	{
+{
 	if( imagepw == (Pixwin *) NULL )
 		return	sig;
 	(void) signal( SIGALRM, sun_sigalarm );
-	if( sun_damaged )
-		{
+	if( sun_damaged ) {
 		pw_damaged( imagepw );
 		pw_repairretained( imagepw );
 		pw_donedamaged( imagepw );
 		sun_damaged = FALSE;
-		}
+	}
 	alarm( TIMEOUT );
 	return	sig;
-	}
+}
 
 #ifdef INEFFICIENT
 _LOCAL_ void
@@ -341,17 +446,18 @@ FBIO			*ifp;
 int			x, y;
 register RGBpixel	*p;
 register int		count;
-	{	register RGBpixel	*memp;
+{
+	register RGBpixel	*memp;
 	for(	memp =	(RGBpixel *)
 			(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]);
 		count > 0;
 		memp++, p++, count--
 		)
 		{
-		COPYRGB( *memp, *p );
+			COPYRGB( *memp, *p );
 		}
 	return;
-	}
+}
 #endif
 
 _LOCAL_ void
@@ -382,30 +488,29 @@ register int		count;
 	return;
 }
 
-/* These lock routines are unused.  They do not seem to provide any speedup when
-bracketing raster op routines.  This may pan out differently when other processes
-are actively competing for raster ops. */
-_LOCAL_ void
-sun_lock( ifp )
-FBIO	*ifp;
-	{
-	if( sun_pixwin )
-		{ /* Lock the display and get the cursor out of the way. */
+/* These lock routines are unused.  They do not seem to provide any
+speedup when bracketing raster op routines.  This may pan out
+differently when other processes are actively competing for raster ops. 
+*/
+_LOCAL_ void sun_lock( ifp ) FBIO *ifp;
+{
+	if( sun_pixwin ) {
+		 /* Lock the display and get the cursor out of the way. */
 		pw_lock( SUNPW(ifp), SUNPW(ifp)->pw_pixrect );
-		}
-	return;
 	}
+	return;
+}
 
 _LOCAL_ void
 sun_unlock( ifp )
 FBIO	*ifp;
-	{
-	if( sun_pixwin )
-		{ /* Release display lock and restore cursor. */
+{
+	if( sun_pixwin ) {
+		/* Release display lock and restore cursor. */
 		pw_unlock( SUNPW(ifp) );
-		}
-	return;
 	}
+	return;
+}
 
 /* Dither pattern pixrect for fast raster ops.  (1bit displays) */
 static char	dither_mpr_buf[8];
@@ -420,26 +525,26 @@ sun_rectclear( ifp, xlft, ytop, width, height, pp )
 FBIO		*ifp;
 int		xlft, ytop, width, height;
 RGBpixel	*pp;
-	{	static int		lastvalue = 0;
-		register int		value;
-		RGBpixel		v;
+{
+	static int		lastvalue = 0;
+	register int		value;
+	RGBpixel		v;
 
 	/*fb_log( "sun_rectclear(%d,%d,%d,%d)\n", xlft, ytop, width, height ); /* XXX-debug */
 	/* Get color map value for pixel. */
 	SUN_CMAPVAL( pp, v );
 
- 	if( SUN(ifp)->su_depth == 1 )
-		{ /* Construct dither pattern in memory pixrect. */
+ 	if( SUN(ifp)->su_depth == 1 ) {
+		/* Construct dither pattern in memory pixrect. */
 		value = (v[RED] + v[GRN] + v[BLU]);
-		if( value == 0 )
-			{
+		if( value == 0 ) {
 			sunrop( xlft, ytop, width, height,
 				PIX_SET, (Pixrect *) 0, 0, 0
 				);
 			return;
-			}
-		if( value != lastvalue )
-			{	register int	i, j;
+		}
+		if( value != lastvalue ) {
+			register int	i, j;
 			for( i = 0; i < DITHERSZ; i++ )
 				for( j = 0; j < DITHERSZ; j++ )
 					{	register int	op;
@@ -449,20 +554,20 @@ RGBpixel	*pp;
 						(Pixrect *) NULL, 0, 0 );
 					}
 			lastvalue = value;
-			}
+		}
 		/* Blat out dither pattern. */
 		sunreplrop( xlft, ytop, width, height,
 			PIX_SRC, &dither_mpr, DITHMASK(xlft), DITHMASK(ytop) );
-		}
-	else
-		{ /* Grey-scale or color image. */
-		pixel_mpr_buf[0] = COLOR_APPROX(v);
-		sunreplrop( xlft, ytop, width, height,
-			PIX_SRC, &pixel_mpr, 0, 0
-			);
-		}
-	return;
 	}
+	else {
+		/* Grey-scale or color image. */
+		pixel_mpr_buf[0] = convRGB(v);
+
+		sunreplrop(xlft, ytop, width, height,
+			PIX_SRC, &pixel_mpr, 0, 0);
+	}
+	return;
+}
 
 /*
  * Scanline dither pattern pixrect.  One each for 1bit, and 8bit
@@ -532,19 +637,20 @@ RGBpixel	*pp;
 			(xrgt-xlft+1)*xzoom, yzoom,
 			PIX_SRC, &scan1_mpr,
 			xl, 0 );
-	} else {
+	}
+	else {
 		/* Grey-scale or color image. */
 		register int	x;
 		register int	sx = xl;
 
 		for( x = xlft; x <= xrgt; x++, pp++, sx += xzoom ) {
-			register int	dx;
-			register int	value;
+			register int	dx, value, r, g, b;
 			RGBpixel	v;
+
 
 			/* Get color map value for pixel. */
 			SUN_CMAPVAL( pp, v );
-			value = COLOR_APPROX(v);
+			value = convRGB(v);
 
 			for( dx = 0; dx < xzoom; dx++ )
 				scan_mpr_buf[sx+dx] = value; 
@@ -565,25 +671,27 @@ int			xmax;
 register int		ymax;
 RGBpixel		*buf;
 register int		offset;
-	{	register int		y;
-		register RGBpixel	*p;
+{
+	register int		y;
+	register RGBpixel	*p;
 	/*fb_log( "sun_rectwrite(xmin=%d,ymin=%d,xmax=%d,ymax=%d,buf=0x%x,offset=%d)\n",
 		xmin, ymin, xmax, ymax, buf, offset ); /* XXX--debug */
 	p = buf-offset+ymin*ifp->if_width+xmin;
 	for( y = ymin; y <= ymax; y++, p += ifp->if_width )
 		sun_scanwrite(	ifp, xmin, y, xmax, p );
 	return;
-	}
+}
 
 _LOCAL_ void
 sun_repaint( ifp )
 register FBIO	*ifp;
-	{	register int	i;
-		register int	ymin, ymax;
-		int		xmin, xmax;
-		int		xwidth;
-		int		xscroff, yscroff;
-		int		xscrpad, yscrpad;
+{
+	register int	i;
+	register int	ymin, ymax;
+	int		xmin, xmax;
+	int		xwidth;
+	int		xscroff, yscroff;
+	int		xscrpad, yscrpad;
 	/*fb_log( "sun_repaint: xzoom=%d yzoom=%d xcenter=%d ycenter=%d\n",
 		SUN(ifp)->su_xzoom, SUN(ifp)->su_yzoom,
 		SUN(ifp)->su_xcenter, SUN(ifp)->su_ycenter ); /* XXX-debug */
@@ -596,26 +704,22 @@ register FBIO	*ifp;
 	i = (ifp->if_height/2)/SUN(ifp)->su_yzoom;
 	ymin = SUN(ifp)->su_ycenter - i;
 	ymax = SUN(ifp)->su_ycenter + i - 1;
-	if( xmin < 0 )
-		{
+	if( xmin < 0 ) {
 		xscroff = -xmin * SUN(ifp)->su_xzoom;
 		xmin = 0;
-		}
-	if( ymin < 0 )
-		{
+	}
+	if( ymin < 0 ) {
 		yscroff = -ymin * SUN(ifp)->su_yzoom;
 		ymin = 0;
-		}
-	if( xmax > ifp->if_width-1 )
-		{
+	}
+	if( xmax > ifp->if_width-1 ) {
 		xscrpad = (xmax-(ifp->if_width-1))*SUN(ifp)->su_xzoom;
 		xmax = ifp->if_width-1;
-		}
-	if( ymax > ifp->if_height-1 )
-		{
+	}
+	if( ymax > ifp->if_height-1 ) {
 		yscrpad = (ymax-(ifp->if_height-1))*SUN(ifp)->su_yzoom;
 		ymax = ifp->if_height-1;
-		}
+	}
 	/* Blank out area left of image.			*/
 	if( xscroff > 0 )
 		sun_rectclear(	ifp, 0, 0, xscroff, ifp->if_height,
@@ -637,7 +741,7 @@ register FBIO	*ifp;
 				(RGBpixel *) black );
 	sun_rectwrite( ifp, xmin, ymin, xmax, ymax, (RGBpixel *)ifp->if_mem, 0 );
 	return;
-	}
+}
 
 /*
  *			S U N _ G E T M E M
@@ -719,53 +823,22 @@ common:
  */
 _LOCAL_ void
 sun_zapmem()
-	{ 	int	shmid;
-		int	i;
-	if( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 )
-		{
+{
+ 	int	shmid;
+	int	i;
+	if( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 ) {
 		fb_log( "sun_zapmem shmget failed, errno=%d\n", errno );
 		return;
-		}
+	}
 
 	i = shmctl( shmid, IPC_RMID, 0 );
-	if( i < 0 )
-		{
+	if( i < 0 ) {
 		fb_log( "sun_zapmem shmctl failed, errno=%d\n", errno );
 		return;
-		}
+	}
 	fb_log( "if_sun: shared memory released\n" );
 	return;
-	}
-
-#ifdef SUN_USE_AGENT
-_LOCAL_ Notify_value
-event_func( client, event, arg, when )
-Notify_client		client;
-Event			*event;
-Notify_arg		arg;
-Notify_event_type	when;
-	{
-	fb_log( "event_func(%s)\n", client );
-	switch( event_id( event ) )
-		{
-	case WIN_REPAINT :
-		sun_repair( win_get_pixwin( client ) );
-		break;
-	default :
-		break;
-		}
-	return	NOTIFY_DONE;
-	}
-
-_LOCAL_ Notify_value
-destroy_func( client, status )
-Notify_client	client;
-Destroy_status	status;
-	{
-	fb_log( "destroy_func(%s)\n", client );
-	return	NOTIFY_DONE;
-	}
-#endif
+}
 
 /*
  *			S U N _ D O P E N 
@@ -775,12 +848,13 @@ sun_dopen(ifp, file, width, height)
 FBIO	*ifp;
 char	*file;
 int	width, height;
-	{	char		sun_parentwinname[WIN_NAMESIZE];
-		Rect		winrect;
-		int		x;
-		struct pr_prpos	where;
-		struct pixfont	*myfont;
-		int	mode;
+{
+	char		sun_parentwinname[WIN_NAMESIZE];
+	Rect		winrect;
+	int		x, r, g, b;
+	struct pr_prpos	where;
+	struct pixfont	*myfont;
+	int	mode;
 
 	/*
 	 *  First, attempt to determine operating mode for this open,
@@ -800,7 +874,8 @@ int	width, height;
 		if( strncmp(file, "/dev/sun", 8) ) {
 			/* How did this happen?? */
 			mode = 0;
-		} else {
+		}
+		else {
 			/* Parse the options */
 			alpha = 0;
 			mp = &modebuf[0];
@@ -847,16 +922,14 @@ int	width, height;
 	if ( height > ifp->if_max_height) 
 		height = ifp->if_max_height;
 
-	if( SUN(ifp) != (struct suninfo *) NULL )
-		{
+	if( SUN(ifp) != (struct suninfo *) NULL ) {
 		fb_log( "sun_dopen, already open\n" );
 		return	-1;	/* FAIL */
-		}
-	if( (SUNL(ifp) = calloc( 1, sizeof(struct suninfo) )) == NULL )
-		{
+	}
+	if( (SUNL(ifp) = calloc( 1, sizeof(struct suninfo) )) == NULL ) {
 		fb_log( "sun_dopen:  suninfo calloc failed\n" );
 		return	-1;
-		}
+	}
 	SUN(ifp)->su_mode = mode;
 	myfont = pf_open( "/usr/lib/fonts/fixedwidthfonts/screen.b.14" );
 
@@ -864,14 +937,10 @@ int	width, height;
 	 * Initialize what we want an 8bit *hardware* colormap to
 	 * look like.  Note that our software colormap is totally
 	 * separate from this.
-	 * r | g | b, values = RR, GR, BR
 	 */
-	for (x = 0; x < (RR * GR * BR); x++) {
-		blumap[x + 1] = ((x % BR)) * 255 / (BR - 1);
-		grnmap[x + 1] = (((x / BR) % GR)) * 255 / (GR - 1);
-		redmap[x + 1] = ((x / (BR * GR))) * 255 / (RR - 1);
-	}
 
+	genmap(redmap, grnmap, blumap);
+	
 	/* Create window. */
         if( sun_pixwin = (we_getgfxwindow(sun_parentwinname) == 0) ) {
         	/************** SunView Open **************/
@@ -909,68 +978,35 @@ int	width, height;
 		window_set(frame, WIN_SHOW, TRUE, 0);	/* display it! */
 		(void) notify_dispatch();		/* process event */
 
-		if( SUN(ifp)->su_depth == 8 )
-			{
-			if( dither_flg )
-				{
+		if( SUN(ifp)->su_depth == 8 ) {
+			if( dither_flg ) {
 #ifdef DIT
 				draw8Ainit();
 				dither8Ainit();
 				pw_set8Amap(imagepw, &sun_cmap);
 #endif DIT
-				}
-			else
-				{
+			}
+			else {
 				/* set a new cms name; initialize it */
 				x = pw_setcmsname(imagepw, "libfb");
-				/*
-				 * set first (background) and last (foreground)
-				 * entries the same so suntools will fill them
-				 * in for us.
-				 */
-				redmap[0] = redmap[255] = 0;
-				grnmap[0] = grnmap[255] = 0;
-				blumap[0] = blumap[255] = 0;
-				x = pw_putcolormap(imagepw, 0, 256, redmap, grnmap, blumap);
-				x = pw_getcolormap(imagepw, 0, 256, redmap, grnmap, blumap);
-				/*
-				 * save the filled in foreground color in
-				 * last-1 since this is where the usual
-				 * monochrome colormap segment lives.
-				 */
-				redmap[254] = redmap[0];
-				grnmap[254] = grnmap[0];
-				blumap[254] = blumap[0];
-				x = pw_putcolormap(imagepw, 0, 256, redmap, grnmap, blumap);
-				}
+				x = pw_putcolormap(imagepw, 0, 256, 
+						redmap, grnmap, blumap);
 			}
-#ifdef SHOULDNOTNEEDTHIS
-		(void) signal( SIGWINCH, sun_sigwinch );
-		(void) signal( SIGALRM, sun_sigalarm );
-		alarm( TIMEOUT );
-#endif
-#ifdef SUN_USE_AGENT
-		/* Register pixwin with Agent so it can manage repaints. */
-		win_register(	(Notify_client) ifp->if_type,
-				SUNPW(ifp),
-				event_func, destroy_func,
-				PW_RETAIN | PW_REPAINT_ALL
-				);
-#endif SUN_USE_AGENT
-	} else {
+		}
+	}
+	else {
         	/************ Raw Screen Open ************/
 		static Pixrect	*screenpr = NULL;
 		static Pixrect	*windowpr;
 
-		if( screenpr == (Pixrect *) NULL )
-			{
+		if( screenpr == (Pixrect *) NULL ) {
 			screenpr = pr_open( "/dev/fb" );
 			windowpr = pr_region(	screenpr,
 					XMAXSCREEN-width-BORDER*2,
 					YMAXSCREEN-(height+BANNER+BORDER*3),
 					width+BORDER*2, height+BANNER+BORDER*3
 					);
-			}
+		}
 		SUNPRL(ifp) = (char *)
 			pr_region(	windowpr,
 					BORDER, BANNER+BORDER*2,
@@ -1000,8 +1036,8 @@ int	width, height;
 				myfont, "BRL libfb Frame Buffer" );
 		SUN(ifp)->su_depth = SUNPR(ifp)->pr_depth;
 		if( SUN(ifp)->su_depth == 8 ) {
-			pr_putcolormap(windowpr, 1, 253,
-				&redmap[1], &grnmap[1], &blumap[1] );
+			pr_putcolormap(windowpr, 0, 256,
+				redmap, grnmap, blumap );
 		}
 	}
 
@@ -1049,14 +1085,12 @@ FBIO	*ifp;
 				return	0;  /* parent leaves the display */
 		}
 		/* child or single process */
-#ifdef SUN_USE_AGENT
-		win_unregister( ifp->if_type );
-#endif
 		alarm( 0 ); /* Turn off window redraw daemon. */
 		window_set(SUN(ifp)->frame, FRAME_NO_CONFIRM, TRUE, 0);
 		window_destroy(SUN(ifp)->frame);
 		imagepw = NULL;
-	} else {
+	}
+	else {
 		pr_close( SUNPR(ifp) );
 	}
 	(void) free( (char *) SUNL(ifp) );
@@ -1071,7 +1105,7 @@ _LOCAL_ int
 sun_dclear(ifp, pp)
 FBIO			*ifp;
 register RGBpixel	*pp;
-	{
+{
 	if( pp == (RGBpixel *) NULL )
 		pp = (RGBpixel *) black;
 
@@ -1081,7 +1115,7 @@ register RGBpixel	*pp;
 	/* Clear entire screen. */
 	sun_rectclear( ifp, 0, 0, ifp->if_width, ifp->if_height, pp );
 	return	0;
-	}
+}
 
 /*
  *			S U N _ W I N D O W _ S E T 
@@ -1090,7 +1124,7 @@ _LOCAL_ int
 sun_window_set(ifp, xcenter, ycenter)
 FBIO	*ifp;
 int     xcenter, ycenter;
-	{
+{
 	/*fb_log( "sun_window_set(0x%x,%d,%d)\n", ifp, xcenter , ycenter );*/
 	if( SUN(ifp)->su_xcenter == xcenter && SUN(ifp)->su_ycenter == ycenter )
 		return	0;
@@ -1104,7 +1138,7 @@ int     xcenter, ycenter;
 	/* Redraw 24-bit image from memory. */
 	sun_repaint(ifp);
 	return	0;
-	}
+}
 
 /*
  *			S U N _ Z O O M _ S E T 
@@ -1113,7 +1147,7 @@ _LOCAL_ int
 sun_zoom_set(ifp, xzoom, yzoom)
 FBIO	*ifp;
 int	xzoom, yzoom;
-	{
+{
 	/*fb_log( "sun_zoom_set(0x%x,%d,%d)\n", ifp, xzoom, yzoom );*/
 	if( SUN(ifp)->su_xzoom == xzoom && SUN(ifp)->su_yzoom == yzoom )
 		return	0;
@@ -1125,7 +1159,7 @@ int	xzoom, yzoom;
 	/* Redraw 24-bit image from memory. */
 	sun_repaint( ifp );
 	return	0;
-	}
+}
 
 /*
  *			S U N _ C U R S _ S E T
@@ -1136,10 +1170,11 @@ FBIO		*ifp;
 unsigned char	*bits;
 int		xbits, ybits;
 int		xorig, yorig;
-	{	register int	xbytes;
-		register int	y;
-		Cursor		newcursor;
-	/* Check size of cursor.					*/
+{
+	register int	xbytes;
+	register int	y;
+	Cursor		newcursor;
+	/* Check size of cursor. */
 	if( xbits < 0 )
 		return	-1;
 	if( xbits > 16 )
@@ -1151,15 +1186,14 @@ int		xorig, yorig;
 	if( (xbytes = xbits / 8) * 8 != xbits )
 		xbytes++;
 #if 0
-	for( y = 0; y < ybits; y++ )
-		{
+	for( y = 0; y < ybits; y++ ) {
 		newcursor[y] = bits[(y*xbytes)+0] << 8 & 0xFF00;
 		if( xbytes == 2 )
 			newcursor[y] |= bits[(y*xbytes)+1] & 0x00FF;
-		}
+	}
 #endif
 	return	0;
-	}
+}
 
 /*
  *			S U N _ C M E M O R Y _ A D D R
@@ -1169,17 +1203,17 @@ sun_cmemory_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
-	{	short	xmin, ymin;
-		register short	i;
-		short	xwidth;
+{
+	short	xmin, ymin;
+	register short	i;
+	short	xwidth;
 	if( ! sun_pixwin )
 		return	0; /* No cursor outside of suntools yet. */
 	SUN(ifp)->su_curs_on = mode;
-	if( ! mode )
-		{
+	if( ! mode ) {
 		/* XXX turn off cursor. */
 		return	0;
-		}
+	}
 	xwidth = ifp->if_width/SUN(ifp)->su_xzoom;
 	i = xwidth/2;
 	xmin = SUN(ifp)->su_xcenter - i;
@@ -1202,7 +1236,7 @@ int	x, y;
 	SUN(ifp)->su_ycursor = y;
 	win_setmouseposition( ifp->if_windowfd, x, y );
 	return	0;
-	}
+}
 
 /*
  *			S U N _ C S C R E E N _ A D D R
@@ -1212,15 +1246,14 @@ sun_cscreen_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
-	{
+{
 	if( ! sun_pixwin )
 		return	0; /* No cursor outside of suntools yet. */
 	SUN(ifp)->su_curs_on = mode;
-	if( ! mode )
-		{
+	if( ! mode ) {
 		/* XXX turn off cursor. */
 		return	0;
-		}
+	}
 	y = ifp->if_height - y;
 	/* Move cursor/mouse to <x,y>. */	
 	if(	x < 1 || x > ifp->if_width
@@ -1234,7 +1267,7 @@ int	x, y;
 	SUN(ifp)->su_ycursor = y;
 	win_setmouseposition( ifp->if_windowfd, x, y );
 	return	0;
-	}
+}
 
 /*
  *			S U N _ B R E A D 
@@ -1245,17 +1278,19 @@ FBIO			*ifp;
 int			x, y;
 register RGBpixel	*p;
 register int		count;
-	{	register RGBpixel	*memp;
+{
+	register RGBpixel	*memp;
+
 	for(	memp =	(RGBpixel *)
 			(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]);
 		count > 0;
 		memp++, p++, count--
 		)
 		{
-		COPYRGB( *p, *memp );
+			COPYRGB( *p, *memp );
 		}
 	return	count;
-	}
+}
 
 /*
  *			S U N _ B W R I T E
@@ -1266,8 +1301,10 @@ register FBIO	*ifp;
 int		x, y;
 RGBpixel	*p;
 register int	count;
-	{	int		xmax, ymax;
-		register int	xwidth;
+{
+	int		xmax, ymax;
+	register int	xwidth;
+
 	/*fb_log( "sun_bwrite(0x%x,%d,%d,0x%x,%d)\n", ifp, x, y, p, count );
 		/* XXX--debug */
 	/* Store pixels in memory. */
@@ -1280,7 +1317,7 @@ register int	count;
 	ymax = y + (count-1)/ ifp->if_width;
 	sun_rectwrite( ifp, x, y, xmax, ymax, p, y*ifp->if_width+x );
 	return	count;
-	}
+}
 
 /*
  *			S U N _ V I E W P O R T _ S E T 
@@ -1288,9 +1325,9 @@ register int	count;
 _LOCAL_ int
 sun_viewport_set( ifp )
 FBIO	*ifp;
-	{
+{
 	return	0;
-	}
+}
 
 /*
  *			S U N _ C M R E A D 
@@ -1299,7 +1336,9 @@ _LOCAL_ int
 sun_cmread( ifp, cmp )
 register FBIO		*ifp;
 register ColorMap	*cmp;
-	{	register int i;
+{
+	register int i;
+
 	/* Just parrot back the stored colormap */
 	for( i = 0; i < 256; i++)
 		{
@@ -1308,7 +1347,7 @@ register ColorMap	*cmp;
 		cmp->cm_blue[i] = CMB(ifp)[i]<<8;
 		}
 	return	0;
-	}
+}
 
 /*
  *			I S _ L I N E A R _ C M A P
@@ -1320,7 +1359,8 @@ register ColorMap	*cmp;
 static int
 is_linear_cmap(ifp)
 register FBIO	*ifp;
-	{ 	register int i;
+{
+ 	register int i;
 	for( i=0; i<256; i++ )
 		{
 		if( CMR(ifp)[i] != i )  return(0);
@@ -1328,7 +1368,7 @@ register FBIO	*ifp;
 		if( CMB(ifp)[i] != i )  return(0);
 		}
 	return	1;
-	}
+}
 
 /*
  *			S U N _ C M W R I T E 
@@ -1337,34 +1377,31 @@ _LOCAL_ int
 sun_cmwrite(ifp, cmp)
 register FBIO		*ifp;
 register ColorMap	*cmp;
-	{	register int i;
-	if( cmp == COLORMAP_NULL )
-		{
-		for( i = 0; i < 256; i++)
-			{
+{
+	register int i;
+	if( cmp == COLORMAP_NULL ) {
+		for( i = 0; i < 256; i++) {
 			CMR(ifp)[i] = i;
 			CMG(ifp)[i] = i;
 			CMB(ifp)[i] = i;
-			}
-		if( SUN(ifp)->su_cmap_flag )
-			{
+		}
+		if( SUN(ifp)->su_cmap_flag ) {
 			SUN(ifp)->su_cmap_flag = FALSE;
 			sun_repaint( ifp );
-			}
+		}
 		SUN(ifp)->su_cmap_flag = FALSE;
 		return	0;
-		}
+	}
 	
-	for( i = 0; i < 256; i++ )
-		{
+	for( i = 0; i < 256; i++ ) {
 		CMR(ifp)[i] = cmp-> cm_red[i]>>8;
 		CMG(ifp)[i] = cmp-> cm_green[i]>>8; 
 		CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
-		}
+	}
 	SUN(ifp)->su_cmap_flag = !is_linear_cmap(ifp);
 	sun_repaint( ifp );
 	return	0;
-	}
+}
 
 /* --------------------------------------------------------------- */
 
@@ -1403,7 +1440,6 @@ draw8Abit(x, y, r, g, b)
 		return (PIX_ERR);
 	return (0);
 }
-#endif DIT
 
 draw8Ainit()
 {
@@ -1421,6 +1457,7 @@ draw8Ainit()
 			}
 }
 
+
 /*
  * pw_dither8Abit.c 
  *
@@ -1436,7 +1473,7 @@ draw8Ainit()
  * Bugs: 
  *
  */
-#ifdef DIT
+
 pw_dither8Abit(pw, x, y, r, g, b)
 	Pixwin         *pw;
 	int             x, y;	/* pixel location */
