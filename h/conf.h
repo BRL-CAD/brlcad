@@ -166,6 +166,7 @@
 #endif
 
 #if defined(linux)
+#       define STDIN_FILENO    0
 #	define HAVE_GETOPT_H	1
 #	define HAVE_XOSDEFS_H	1
 #	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
