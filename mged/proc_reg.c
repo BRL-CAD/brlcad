@@ -115,14 +115,14 @@ int flag, more;
 	case ARB8:
 		length = 8;
 arbcom:		/* common area for arbs */
-		MAT4X3PNT( work, xform, recordp->s.s_values );
-		VMOVE( recordp->s.s_values, work );
-		VMOVE(&m_param[param_count], &(recordp->s.s_values[0]));
+		MAT4X3PNT( work, xform, &input.s.s_values[0] );
+		VMOVE( &input.s.s_values[0], work );
+		VMOVE(&m_param[param_count], &input.s.s_values[0]);
 		param_count += 3;
-		op = &recordp->s.s_values[1*3];
+		op = &input.s.s_values[1*3];
 		for( i=1; i<length; i++ )  {
 			MAT4X3VEC( work, xform, op );
-			VADD2(op, recordp->s.s_values, work);
+			VADD2(op, input.s.s_values, work);
 			VMOVE(&m_param[param_count], op);
 			param_count += 3;
 			op += 3;
