@@ -150,6 +150,11 @@ extern char	*realloc();
 
 /*
  *			B U _ A S S E R T
+ *
+ *  Quick and easy macros to generate an informative error message and
+ *  abort execution if the specified condition does not hold true.
+ *
+ *  Example:		BU_ASSERT_LONG( j+7, <, 42 );
  */
 #ifdef __STDC__
 #define BU_ASSERT(_equation)	\
@@ -164,6 +169,42 @@ extern char	*realloc();
 		bu_log("BU_ASSERT( _equation ) failed, file %s, line %d\n", \
 			__FILE__, __LINE__ ); \
 		bu_bomb("assertion failure\n"); \
+	}
+#endif
+
+#ifdef __STDC__
+#define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
+	if( !((_lhs) _relation (_rhs)) )  { \
+		bu_log("BU_ASSERT_PTR( " #_lhs #_relation #_rhs " ) failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
+			(long)(_lhs), (long)(_rhs),\
+			__FILE__, __LINE__ ); \
+		bu_bomb("BU_ASSERT_PTR failure\n"); \
+	}
+#else
+#define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
+	if( !((_lhs) _relation (_rhs)) )  { \
+		bu_log("BU_ASSERT_PTR( _lhs _relation _rhs ) failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
+			(long)(_lhs), (long)(_rhs),\
+			__FILE__, __LINE__ ); \
+		bu_bomb("BU_ASSERT_PTR failure\n"); \
+	}
+#endif
+
+#ifdef __STDC__
+#define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
+	if( !((_lhs) _relation (_rhs)) )  { \
+		bu_log("BU_ASSERT_LONG( " #_lhs #_relation #_rhs " ) failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
+			(long)(_lhs), (long)(_rhs),\
+			__FILE__, __LINE__ ); \
+		bu_bomb("BU_ASSERT_LONG failure\n"); \
+	}
+#else
+#define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
+	if( !((_lhs) _relation (_rhs)) )  { \
+		bu_log("BU_ASSERT_LONG( _lhs _relation _rhs ) failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
+			(long)(_lhs), (long)(_rhs),\
+			__FILE__, __LINE__ ); \
+		bu_bomb("BU_ASSERT_LONG failure\n"); \
 	}
 #endif
 
