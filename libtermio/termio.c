@@ -20,7 +20,9 @@ char	sccsTag[] = "@(#) termio.c	1.5	last edit 6/18/86 at 09:57:54";
 /**#ifndef	TANDEM	/* USG derivatives */
 #include <termio.h>
 #include <memory.h>
-#endif
+
+static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
+#endif SYSV
 
 #ifdef BSD
 #include <sys/ioctl.h>
@@ -29,22 +31,23 @@ char	sccsTag[] = "@(#) termio.c	1.5	last edit 6/18/86 at 09:57:54";
 #define TCGETA	TIOCGETP
 #ifndef	XTABS
 #define	XTABS	(TAB1 | TAB2)
-#endif
+#endif XTABS
 
 #ifndef _NFILE
 #define _NFILE	32
-#endif
+#endif _NFILE
 
 static struct sgttyb	save_tio[_NFILE], curr_tio[_NFILE];
-#else		/* USG derivatives */
-static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
-#endif
+#endif BSD
+
 static int		fileStatus[_NFILE];
 int			reset_Fil_Stat(), read_Key_Brd();
 void			save_Tty(), reset_Tty();
 void			set_Raw(), clr_Raw();
 void			set_Echo(), clr_Echo();
 void			set_Tabs(), clr_Tabs();
+void			set_HUPCL();
+void			clr_CRNL();
 void			prnt_Tio();
 static void		copy_Tio();
 
@@ -142,6 +145,37 @@ int	fd;
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
+	}
+
+/*	s e t _ H U P C L ( )
+	Turn on "Hang up on last close", 'fd'.
+ */
+void
+set_HUPCL( fd )
+int	fd;
+	{
+#ifdef BSD
+	(void) ioctl( fd, TIOCHPCL, NULL );
+#else
+	curr_tio[fd].c_cflag |= HUPCL;
+	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
+#endif
+	return;
+	}
+
+/*	c l r _ C R N L ( )
+	Turn off CR/LF mapping, fd.
+ */
+void
+clr_CRNL( fd )
+	{
+#ifdef BSD
+	curr_tio[fd].sg_flags &= ~CRMOD;
+#else
+	curr_tio[fd].c_oflag &= ~(ONLCR|OCRNL);
+	curr_tio[fd].c_iflag &= ~(ICRNL|INLCR);
+#endif
+	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	}
 
 /*	g e t _ O _ S p e e d ( )
