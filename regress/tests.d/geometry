@@ -166,7 +166,7 @@ ell_DB_ARGS="V { 0 0 0 } A {45 0 0} B {0 30 0} C {0 0 15}"
 # in args =>
 #
 epa_IN_ARGS="0 0 0  0 0 10  5 0 0 2"
-epa_DB_ARGS="epa V {0 0 0} H {0 0 10} A {1 0 0} r_1 5 r_2 2"
+epa_DB_ARGS="V {0 0 0} H {0 0 10} A {1 0 0} r_1 5 r_2 2"
 
 #
 # Elliptical Toroid (eto) Arguments
@@ -174,7 +174,7 @@ epa_DB_ARGS="epa V {0 0 0} H {0 0 10} A {1 0 0} r_1 5 r_2 2"
 # in args =>
 #
 eto_IN_ARGS="0 0 0 0 0 1 8 0 0 4 1 "
-eto_DB_ARGS="eto V {0 0 0} N {0 0 1} C {0 0 4} r 8 r_d 1"
+eto_DB_ARGS="V {0 0 0} N {0 0 1} C {0 0 4} r 8 r_d 1"
 
 #
 # (extrude) Arguments
@@ -272,7 +272,7 @@ rhc_DB_ARGS="V {0 0 0} H {0 0 100} B {100 0 0} r 10 c 50"
 # in args =>
 #
 rpc_IN_ARGS="0 0 0  10 0 0 0 0 10 2"
-rpc_DB_ARGS="rpc V {0 0 0} H {10 0 0} B {0 0 10} r 2"
+rpc_DB_ARGS="V {0 0 0} H {10 0 0} B {0 0 10} r 2"
 
 #
 # (sketch) Arguments
