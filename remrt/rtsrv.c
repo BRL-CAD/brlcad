@@ -382,15 +382,15 @@ char *buf;
 	}
 
 	for( y = a; y <= b; y++)  {
-		char buf[4];
+		char rbuf[4];
 
 		cur_pixel = y*npts + 0;
 		last_pixel = cur_pixel + npts;
 		worker();	/* fills scanbuf */
 
-		buf[0] = y&0xFF;
-		buf[1] = (y>>8);
-		pkg_2send( MSG_PIXELS, buf, 2,
+		rbuf[0] = y&0xFF;
+		rbuf[1] = (y>>8);
+		pkg_2send( MSG_PIXELS, rbuf, 2,
 			scanbuf, npts*3, pcsrv );
 	}
 	(void)free(buf);
@@ -423,8 +423,8 @@ char *str;
 
 	if( print_on == 0 )  return;
 	(void)sprintf( cp, str, a, b, c, d, e, f, g, h );
-	while( *cp++ )  ;		/* leave at null */
-	if( cp[-1] != '\n' )
+	while( *cp++ )  ;		/* leaves one beyond null */
+	if( cp[-2] != '\n' )
 		return;
 	if( pcsrv == PKC_NULL )  {
 		fprintf(stderr, "%s", buf+1);
