@@ -1213,6 +1213,7 @@ BU_EXTERN(genptr_t		bu_calloc, (unsigned int nelem,
 				unsigned int elsize, CONST char *str));
 BU_EXTERN(void			bu_prmem, (CONST char *str));
 BU_EXTERN(char *		bu_strdup, (CONST char *cp));
+BU_EXTERN(char *		bu_dirname, (CONST char *cp));
 BU_EXTERN(int			bu_malloc_len_roundup, (int nbytes));
 BU_EXTERN(void			bu_ck_malloc_ptr, (genptr_t ptr, CONST char *str));
 BU_EXTERN(int			bu_mem_barriercheck, ());
