@@ -80,7 +80,7 @@ FBIO	*ifp;
 char	*file;
 int	width, height;
 	{
-	static unsigned char zero = 0;
+	static char zero = 0;
 
 	/* check for default size */
 	if( width == 0 )
@@ -97,7 +97,7 @@ int	width, height;
 				fb_log( "disk_device_open : can not seek to end of new file.\n" );
 				return	-1;
 				}
-			if( write( ifp->if_fd, zero, 1 ) < 0 )
+			if( write( ifp->if_fd, &zero, 1 ) < 0 )
 				{
 				fb_log( "disk_device_open : initial write failed.\n" );
 				return	-1;
