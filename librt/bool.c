@@ -364,7 +364,7 @@ struct region			*reg2;
 
 	/* Attempt to control tremendous error outputs */
 	if( ++count > 100 )  {
-		if( (count%100) != 3 )  return;
+		if( (count%100) != 3 )  return(1);
 		rt_log("(overlaps omitted)\n");
 	}
 
