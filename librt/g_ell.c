@@ -1219,7 +1219,7 @@ CONST struct db_i		*dbip;
 	eip->magic = RT_ELL_INTERNAL_MAGIC;
 
 	/* Convert from database (network) to internal (host) format */
-	ntohd( (unsigned char *)vec, ep->ext_buf, 4*4 );
+	ntohd( (unsigned char *)vec, ep->ext_buf, 3*4 );
 
 	/* Apply modeling transformations */
 	MAT4X3PNT( eip->v, mat, &vec[0*3] );
@@ -1255,7 +1255,7 @@ CONST struct db_i		*dbip;
 	RT_ELL_CK_MAGIC(eip);
 
 	BU_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 4*4;
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*4;
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "ell external");
 
 	/* scale 'em into local buffer */
@@ -1265,7 +1265,7 @@ CONST struct db_i		*dbip;
 	VSCALE( &vec[3*3], eip->c, local2mm );
 
 	/* Convert from internal (host) to database (network) format */
-	htond( ep->ext_buf, (unsigned char *)vec, 4*4 );
+	htond( ep->ext_buf, (unsigned char *)vec, 3*4 );
 
 	return 0;
 }
