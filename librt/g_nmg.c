@@ -491,7 +491,7 @@ struct disk_faceuse {
 
 #define DISK_FACEUSE_A_MAGIC	0x4e667561	/* Nfua */
 struct disk_faceuse_a {
-	unsigned char		magic[4];
+	unsigned char		magic[4];	/* XXX */
 };
 
 #define DISK_LOOP_MAGIC		0x4e6c6f70	/* Nlop */
@@ -522,7 +522,7 @@ struct disk_loopuse {
 
 #define DISK_LOOPUSE_A_MAGIC	0x4e6c7561	/* Nlua */
 struct disk_loopuse_a {
-	unsigned char		magic[4];
+	unsigned char		magic[4];	/* XXX */
 };
 
 #define DISK_EDGE_MAGIC		0x4e656467	/* Nedg */
@@ -556,7 +556,7 @@ struct disk_edgeuse {
 
 #define DISK_EDGEUSE_A_MAGIC	0x4e657561	/* Neua */
 struct disk_edgeuse_a {
-	unsigned char		magic[4];
+	unsigned char		magic[4];	/* XXX */
 };
 
 #define DISK_VERTEX_MAGIC	0x4e767274	/* Nvrt */
@@ -596,19 +596,20 @@ struct disk_vertexuse_a {
 #define NMG_KIND_SHELL		4
 #define NMG_KIND_SHELL_A	5
 #define NMG_KIND_FACEUSE	6
-#define NMG_KIND_FACEUSE_A	7
+#define NMG_KIND_FACEUSE_A	7		/* XXX */
 #define NMG_KIND_FACE		8
 #define NMG_KIND_FACE_G_PLANE	9
 #define NMG_KIND_LOOPUSE	10
-#define NMG_KIND_LOOPUSE_A	11
+#define NMG_KIND_LOOPUSE_A	11		/* XXX */
 #define NMG_KIND_LOOP		12
 #define NMG_KIND_LOOP_G		13
 #define NMG_KIND_EDGEUSE	14
-#define NMG_KIND_EDGEUSE_A	15
+#define NMG_KIND_EDGEUSE_A	15		/* XXX */
 #define NMG_KIND_EDGE		16
 #define NMG_KIND_EDGE_G		17
 #define NMG_KIND_VERTEXUSE	18
-#define NMG_KIND_VERTEXUSE_A	19
+#define NMG_KIND_VERTEXUSE_A_PLANE	19
+#define NMG_KIND_VERTEXUSE_A_CNURB	0	/* XXX reuse */
 #define NMG_KIND_VERTEX		20
 #define NMG_KIND_VERTEX_G	21
 
@@ -638,7 +639,7 @@ int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_vertex),
 	sizeof(struct disk_vertex_g)
 };
-char	rt_nmg_kind_names[NMG_N_KINDS][12] = {
+char	rt_nmg_kind_names[NMG_N_KINDS][18] = {
 	"model",
 	"model_a",
 	"nmgregion",
@@ -658,7 +659,7 @@ char	rt_nmg_kind_names[NMG_N_KINDS][12] = {
 	"edge",
 	"edge_g",
 	"vertexuse",
-	"vertexuse_a",
+	"vertexuse_a_plane",
 	"vertex",
 	"vertex_g"
 };
@@ -688,32 +689,26 @@ register long	magic;
 		return NMG_KIND_SHELL_A;
 	case NMG_FACEUSE_MAGIC:
 		return NMG_KIND_FACEUSE;
-	case NMG_FACEUSE_A_MAGIC:
-		return NMG_KIND_FACEUSE_A;
 	case NMG_FACE_MAGIC:
 		return NMG_KIND_FACE;
 	case NMG_FACE_G_PLANE_MAGIC:
 		return NMG_KIND_FACE_G_PLANE;
 	case NMG_LOOPUSE_MAGIC:
 		return NMG_KIND_LOOPUSE;
-	case NMG_LOOPUSE_A_MAGIC:
-		return NMG_KIND_LOOPUSE_A;
-	case NMG_LOOP_MAGIC:
-		return NMG_KIND_LOOP;
 	case NMG_LOOP_G_MAGIC:
 		return NMG_KIND_LOOP_G;
 	case NMG_EDGEUSE_MAGIC:
 		return NMG_KIND_EDGEUSE;
-	case NMG_EDGEUSE_A_MAGIC:
-		return NMG_KIND_EDGEUSE_A;
 	case NMG_EDGE_MAGIC:
 		return NMG_KIND_EDGE;
 	case NMG_EDGE_G_MAGIC:
 		return NMG_KIND_EDGE_G;
 	case NMG_VERTEXUSE_MAGIC:
 		return NMG_KIND_VERTEXUSE;
-	case NMG_VERTEXUSE_A_MAGIC:
-		return NMG_KIND_VERTEXUSE_A;
+	case NMG_VERTEXUSE_A_PLANE_MAGIC:
+		return NMG_KIND_VERTEXUSE_A_PLANE;
+	case NMG_VERTEXUSE_A_CNURB_MAGIC:
+		return NMG_KIND_VERTEXUSE_A_CNURB;
 	case NMG_VERTEX_MAGIC:
 		return NMG_KIND_VERTEX;
 	case NMG_VERTEX_G_MAGIC:
@@ -887,18 +882,11 @@ double		local2mm;
 			INDEX( d, fu, fumate_p );
 			rt_plong( d->orientation, fu->orientation );
 			INDEX( d, fu, f_p );
-			INDEX( d, fu, fua_p );
 			INDEXL( d, fu, lu_hd );
 		}
 		return;
 	case NMG_KIND_FACEUSE_A:
-		{
-			struct faceuse_a	*fua = (struct faceuse_a *)ip;
-			struct disk_faceuse_a	*d;
-			d = &((struct disk_faceuse_a *)op)[oindex];
-			NMG_CK_FACEUSE_A(fua);
-			PUTMAGIC( DISK_FACEUSE_A_MAGIC );
-		}
+		rt_bomb("nmg_kind_faceuse_a\n");
 		return;
 	case NMG_KIND_FACE:
 		{
@@ -939,18 +927,11 @@ double		local2mm;
 			INDEX( d, lu, lumate_p );
 			rt_plong( d->orientation, lu->orientation );
 			INDEX( d, lu, l_p );
-			INDEX( d, lu, lua_p );
 			INDEXL( d, lu, down_hd );
 		}
 		return;
 	case NMG_KIND_LOOPUSE_A:
-		{
-			struct loopuse_a	*lua = (struct loopuse_a *)ip;
-			struct disk_loopuse_a	*d;
-			d = &((struct disk_loopuse_a *)op)[oindex];
-			NMG_CK_LOOPUSE_A(lua);
-			PUTMAGIC( DISK_LOOPUSE_A_MAGIC );
-		}
+		rt_bomb("nmg_kind_loopuse_a\n");
 		return;
 	case NMG_KIND_LOOP:
 		{
@@ -989,19 +970,12 @@ double		local2mm;
 			INDEX( d, eu, eumate_p );
 			INDEX( d, eu, radial_p );
 			INDEX( d, eu, e_p );
-			INDEX( d, eu, eua_p );
 			rt_plong( d->orientation, eu->orientation);
 			INDEX( d, eu, vu_p );
 		}
 		return;
 	case NMG_KIND_EDGEUSE_A:
-		{
-			struct edgeuse_a	*eua = (struct edgeuse_a *)ip;
-			struct disk_edgeuse_a	*d;
-			d = &((struct disk_edgeuse_a *)op)[oindex];
-			NMG_CK_EDGEUSE_A(eua);
-			PUTMAGIC( DISK_EDGEUSE_A_MAGIC );
-		}
+		rt_bomb("nmg_kind_edgeuse_a\n");
 		return;
 	case NMG_KIND_EDGE:
 		{
@@ -1040,7 +1014,7 @@ double		local2mm;
 			INDEX( d, vu, vua_p );
 		}
 		return;
-	case NMG_KIND_VERTEXUSE_A:
+	case NMG_KIND_VERTEXUSE_A_PLANE:
 		{
 			struct vertexuse_a	*vua = (struct vertexuse_a *)ip;
 			struct disk_vertexuse_a	*d;
@@ -1221,7 +1195,6 @@ mat_t		mat;
 			INDEX( d, fu, faceuse, fumate_p );
 			fu->orientation = rt_glong( d->orientation );
 			INDEX( d, fu, face, f_p );
-			INDEX( d, fu, faceuse_a, fua_p );
 			INDEXL_HD( d, fu, lu_hd, fu->lu_hd );
 			INDEXL_HD( d, fu, l, fu->s_p->fu_hd ); /* after fu->s_p */
 			NMG_CK_FACE(fu->f_p);
@@ -1229,13 +1202,7 @@ mat_t		mat;
 		}
 		return 0;
 	case NMG_KIND_FACEUSE_A:
-		{
-			struct faceuse_a	*fua = (struct faceuse_a *)op;
-			struct disk_faceuse_a	*d;
-			d = &((struct disk_faceuse_a *)ip)[iindex];
-			NMG_CK_FACEUSE_A(fua);
-			RT_CK_DISKMAGIC( d->magic, DISK_FACEUSE_A_MAGIC );
-		}
+		rt_bomb("nmg_kind_faceuse_a\n");
 		return 0;
 	case NMG_KIND_FACE:
 		{
@@ -1284,7 +1251,6 @@ mat_t		mat;
 			INDEX( d, lu, loopuse, lumate_p );
 			lu->orientation = rt_glong( d->orientation );
 			INDEX( d, lu, loop, l_p );
-			INDEX( d, lu, loopuse_a, lua_p );
 			up_kind = ecnt[up_index].kind;
 			if( up_kind == NMG_KIND_FACEUSE )  {
 				INDEXL_HD( d, lu, l, lu->up.fu_p->lu_hd );
@@ -1298,13 +1264,7 @@ mat_t		mat;
 		}
 		return 0;
 	case NMG_KIND_LOOPUSE_A:
-		{
-			struct loopuse_a	*lua = (struct loopuse_a *)op;
-			struct disk_loopuse_a	*d;
-			d = &((struct disk_loopuse_a *)ip)[iindex];
-			NMG_CK_LOOPUSE_A(lua);
-			RT_CK_DISKMAGIC( d->magic, DISK_LOOPUSE_A_MAGIC );
-		}
+		rt_bomb("nmg_kind_loopuse_a\n");
 		return 0;
 	case NMG_KIND_LOOP:
 		{
@@ -1346,7 +1306,6 @@ mat_t		mat;
 			INDEX( d, eu, edgeuse, eumate_p );
 			INDEX( d, eu, edgeuse, radial_p );
 			INDEX( d, eu, edge, e_p );
-			INDEX( d, eu, edgeuse_a, eua_p );
 			eu->orientation = rt_glong( d->orientation );
 			INDEX( d, eu, vertexuse, vu_p );
 			up_kind = ecnt[up_index].kind;
@@ -1362,13 +1321,7 @@ mat_t		mat;
 		}
 		return 0;
 	case NMG_KIND_EDGEUSE_A:
-		{
-			struct edgeuse_a	*eua = (struct edgeuse_a *)op;
-			struct disk_edgeuse_a	*d;
-			d = &((struct disk_edgeuse_a *)ip)[iindex];
-			NMG_CK_EDGEUSE_A(eua);
-			RT_CK_DISKMAGIC( d->magic, DISK_EDGEUSE_A_MAGIC );
-		}
+		rt_bomb("nmg_kind_edgeuse_a\n");
 		return 0;
 	case NMG_KIND_EDGE:
 		{
@@ -1409,7 +1362,7 @@ mat_t		mat;
 			INDEXL_HD( d, vu, l, vu->v_p->vu_hd );
 		}
 		return 0;
-	case NMG_KIND_VERTEXUSE_A:
+	case NMG_KIND_VERTEXUSE_A_PLANE:
 		{
 			struct vertexuse_a	*vua = (struct vertexuse_a *)op;
 			struct disk_vertexuse_a	*d;
@@ -1537,12 +1490,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				}
 				break;
 			case NMG_KIND_FACEUSE_A:
-				{
-					struct faceuse_a	*fua;
-					GET_FACEUSE_A( fua, m );
-					fua->magic = NMG_FACEUSE_A_MAGIC;
-					ptrs[subscript] = (long *)fua;
-				}
+				rt_bomb("nmg_kind_faceuse_a\n");
 				break;
 			case NMG_KIND_FACE:
 				{
@@ -1571,12 +1519,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				}
 				break;
 			case NMG_KIND_LOOPUSE_A:
-				{
-					struct loopuse_a	*lua;
-					GET_LOOPUSE_A( lua, m );
-					lua->magic = NMG_LOOPUSE_A_MAGIC;
-					ptrs[subscript] = (long *)lua;
-				}
+				rt_bomb("nmg_kind_loopuse_a\n");
 				break;
 			case NMG_KIND_LOOP:
 				{
@@ -1603,12 +1546,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				}
 				break;
 			case NMG_KIND_EDGEUSE_A:
-				{
-					struct edgeuse_a	*eua;
-					GET_EDGEUSE_A( eua, m );
-					eua->magic = NMG_EDGEUSE_A_MAGIC;
-					ptrs[subscript] = (long *)eua;
-				}
+				rt_bomb("nmg_kind_edgeuse_a\n");
 				break;
 			case NMG_KIND_EDGE:
 				{
@@ -1634,7 +1572,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					ptrs[subscript] = (long *)vu;
 				}
 				break;
-			case NMG_KIND_VERTEXUSE_A:
+			case NMG_KIND_VERTEXUSE_A_PLANE:
 				{
 					struct vertexuse_a	*vua;
 					GET_VERTEXUSE_A( vua, m );

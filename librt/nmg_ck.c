@@ -126,14 +126,6 @@ long		*up_magic_p;
 	if (vu->vua_p) nmg_vvua(vu->vua_p);
 }
 
-/* Verify edgeuse attributes */
-void
-nmg_veua(eua)
-struct edgeuse_a *eua;
-{
-	NMG_CK_EDGEUSE_A(eua);
-}
-
 /* Verify edge geometry */
 void
 nmg_veg(eg)
@@ -273,8 +265,6 @@ long	*up_magic_p;
 
 		nmg_vedge(eu->e_p, eu);
 		
-		if (eu->eua_p) nmg_veua(eu->eua_p);
-
 		switch (eu->orientation) {
 		case OT_NONE	: break;
 		case OT_SAME	: break;
@@ -335,14 +325,6 @@ struct loopuse *lup;
 	if (l->lg_p) nmg_vlg(l->lg_p);
 }
 
-/* Verify loop attributes */
-void
-nmg_vlua(lua)
-struct loopuse_a *lua;
-{
-	NMG_CK_LOOPUSE_A(lua);
-}
-
 /*
  *			N M G _ V L U
  *
@@ -397,8 +379,6 @@ long		*up;
 		else {
 			nmg_vloop(lu->l_p, lu);
 		}
-
-		if (lu->lua_p) nmg_vlua(lu->lua_p);
 
 		if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
 			nmg_veu( &lu->down_hd, &lu->l.magic);
@@ -460,14 +440,6 @@ struct faceuse *fup;
 	if (f->g.plane_p) nmg_vfg(f->g.plane_p);
 }
 
-/* Verify faceuse attributes */
-void
-nmg_vfua(fua)
-struct faceuse_a *fua;
-{
-	NMG_CK_FACEUSE_A(fua);
-}
-
 /*
  *			N M G _ V F U
  *
@@ -517,8 +489,6 @@ struct shell *s;
 		default		: rt_bomb("nmg_vfu() unknown faceuse orintation\n"); break;
 		}
 
-		if (fu->fua_p) nmg_vfua(fu->fua_p);
-		
 		NMG_CK_FACE(fu->f_p);
 		nmg_vface(fu->f_p, fu);
 		

@@ -59,32 +59,28 @@ register long	*p;
 		return ((struct shell_a *)p)->index;
 	case NMG_FACEUSE_MAGIC:
 		return ((struct faceuse *)p)->index;
-	case NMG_FACEUSE_A_MAGIC:
-		return ((struct faceuse_a *)p)->index;
 	case NMG_FACE_MAGIC:
 		return ((struct face *)p)->index;
 	case NMG_FACE_G_PLANE_MAGIC:
 		return ((struct face_g_plane *)p)->index;
 	case NMG_LOOPUSE_MAGIC:
 		return ((struct loopuse *)p)->index;
-	case NMG_LOOPUSE_A_MAGIC:
-		return ((struct loopuse_a *)p)->index;
 	case NMG_LOOP_MAGIC:
 		return ((struct loop *)p)->index;
 	case NMG_LOOP_G_MAGIC:
 		return ((struct loop_g *)p)->index;
 	case NMG_EDGEUSE_MAGIC:
 		return ((struct edgeuse *)p)->index;
-	case NMG_EDGEUSE_A_MAGIC:
-		return ((struct edgeuse_a *)p)->index;
 	case NMG_EDGE_MAGIC:
 		return ((struct edge *)p)->index;
 	case NMG_EDGE_G_MAGIC:
 		return ((struct edge_g *)p)->index;
 	case NMG_VERTEXUSE_MAGIC:
 		return ((struct vertexuse *)p)->index;
-	case NMG_VERTEXUSE_A_MAGIC:
+	case NMG_VERTEXUSE_A_PLANE_MAGIC:
 		return ((struct vertexuse_a *)p)->index;
+	case NMG_VERTEXUSE_A_CNURB_MAGIC:
+		return ((struct vertexuse_a_cnurb *)p)->index;
 	case NMG_VERTEX_MAGIC:
 		return ((struct vertex *)p)->index;
 	case NMG_VERTEX_G_MAGIC:
@@ -151,10 +147,6 @@ struct model	*m;
 			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 				NMG_CK_FACEUSE(fu);
 				NMG_MARK_INDEX(fu);
-				if( fu->fua_p )  {
-					NMG_CK_FACEUSE_A(fu->fua_p);
-					NMG_MARK_INDEX(fu->fua_p);
-				}
 				f = fu->f_p;
 				NMG_CK_FACE(f);
 				NMG_MARK_INDEX(f);
@@ -166,10 +158,6 @@ struct model	*m;
 				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 					NMG_CK_LOOPUSE(lu);
 					NMG_MARK_INDEX(lu);
-					if( lu->lua_p )  {
-						NMG_CK_LOOPUSE_A(lu->lua_p);
-						NMG_MARK_INDEX(lu->lua_p);
-					}
 					l = lu->l_p;
 					NMG_CK_LOOP(l);
 					NMG_MARK_INDEX(l);
@@ -198,10 +186,6 @@ struct model	*m;
 					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 						NMG_CK_EDGEUSE(eu);
 						NMG_MARK_INDEX(eu);
-						if(eu->eua_p)  {
-							NMG_CK_EDGEUSE_A(eu->eua_p);
-							NMG_MARK_INDEX(eu->eua_p);
-						}
 						e = eu->e_p;
 						NMG_CK_EDGE(e);
 						NMG_MARK_INDEX(e);
@@ -226,10 +210,6 @@ struct model	*m;
 			for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 				NMG_CK_LOOPUSE(lu);
 				NMG_MARK_INDEX(lu);
-				if( lu->lua_p )  {
-					NMG_CK_LOOPUSE_A(lu->lua_p);
-					NMG_MARK_INDEX(lu->lua_p);
-				}
 				l = lu->l_p;
 				NMG_CK_LOOP(l);
 				NMG_MARK_INDEX(l);
@@ -258,10 +238,6 @@ struct model	*m;
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
 					NMG_MARK_INDEX(eu);
-					if(eu->eua_p)  {
-						NMG_CK_EDGEUSE_A(eu->eua_p);
-						NMG_MARK_INDEX(eu->eua_p);
-					}
 					e = eu->e_p;
 					NMG_CK_EDGE(e);
 					NMG_MARK_INDEX(e);
@@ -285,10 +261,6 @@ struct model	*m;
 			for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 				NMG_CK_EDGEUSE(eu);
 				NMG_MARK_INDEX(eu);
-				if(eu->eua_p)  {
-					NMG_CK_EDGEUSE_A(eu->eua_p);
-					NMG_MARK_INDEX(eu->eua_p);
-				}
 				e = eu->e_p;
 				NMG_CK_EDGE(e);
 				NMG_MARK_INDEX(e);
@@ -375,7 +347,6 @@ register long	newindex;
 			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 				NMG_CK_FACEUSE(fu);
 				NMG_ASSIGN_NEW_INDEX(fu);
-				if( fu->fua_p )  NMG_ASSIGN_NEW_INDEX(fu->fua_p);
 				f = fu->f_p;
 				NMG_CK_FACE(f);
 				NMG_ASSIGN_NEW_INDEX(f);
@@ -384,7 +355,6 @@ register long	newindex;
 				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 					NMG_CK_LOOPUSE(lu);
 					NMG_ASSIGN_NEW_INDEX(lu);
-					if( lu->lua_p )  NMG_ASSIGN_NEW_INDEX(lu->lua_p);
 					l = lu->l_p;
 					NMG_CK_LOOP(l);
 					NMG_ASSIGN_NEW_INDEX(l);
@@ -404,7 +374,6 @@ register long	newindex;
 					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 						NMG_CK_EDGEUSE(eu);
 						NMG_ASSIGN_NEW_INDEX(eu);
-						if(eu->eua_p) NMG_ASSIGN_NEW_INDEX(eu->eua_p);
 						e = eu->e_p;
 						NMG_CK_EDGE(e);
 						NMG_ASSIGN_NEW_INDEX(e);
@@ -423,7 +392,6 @@ register long	newindex;
 			for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 				NMG_CK_LOOPUSE(lu);
 				NMG_ASSIGN_NEW_INDEX(lu);
-				if( lu->lua_p )  NMG_ASSIGN_NEW_INDEX(lu->lua_p);
 				l = lu->l_p;
 				NMG_CK_LOOP(l);
 				NMG_ASSIGN_NEW_INDEX(l);
@@ -443,7 +411,6 @@ register long	newindex;
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
 					NMG_ASSIGN_NEW_INDEX(eu);
-					if(eu->eua_p) NMG_ASSIGN_NEW_INDEX(eu->eua_p);
 					e = eu->e_p;
 					NMG_CK_EDGE(e);
 					NMG_ASSIGN_NEW_INDEX(e);
@@ -461,7 +428,6 @@ register long	newindex;
 			for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 				NMG_CK_EDGEUSE(eu);
 				NMG_ASSIGN_NEW_INDEX(eu);
-				if(eu->eua_p) NMG_ASSIGN_NEW_INDEX(eu->eua_p);
 				e = eu->e_p;
 				NMG_CK_EDGE(e);
 				NMG_ASSIGN_NEW_INDEX(e);
@@ -515,17 +481,15 @@ CONST struct nmg_struct_counts	*ctr;
 	rt_vls_printf(str, "\t%6d face_g_plane\n", ctr->face_g_plane);
 	rt_vls_printf(str, "\t%6d face_g_snurb\n", ctr->face_g_snurb);
 	rt_vls_printf(str, "\t%6d faceuse\n", ctr->faceuse);
-	rt_vls_printf(str, "\t%6d faceuse_a\n", ctr->faceuse_a);
 	rt_vls_printf(str, "\t%6d loopuse\n", ctr->loopuse);
-	rt_vls_printf(str, "\t%6d loopuse_a\n", ctr->loopuse_a);
 	rt_vls_printf(str, "\t%6d loop\n", ctr->loop);
 	rt_vls_printf(str, "\t%6d loop_g\n", ctr->loop_g);
 	rt_vls_printf(str, "\t%6d edgeuse\n", ctr->edgeuse);
-	rt_vls_printf(str, "\t%6d edgeuse_a\n", ctr->edgeuse_a);
 	rt_vls_printf(str, "\t%6d edge\n", ctr->edge);
 	rt_vls_printf(str, "\t%6d edge_g\n", ctr->edge_g);
 	rt_vls_printf(str, "\t%6d vertexuse\n", ctr->vertexuse);
-	rt_vls_printf(str, "\t%6d vertexuse_a\n", ctr->vertexuse_a);
+	rt_vls_printf(str, "\t%6d vertexuse_a_plane\n", ctr->vertexuse_a_plane);
+	rt_vls_printf(str, "\t%6d vertexuse_a_cnurb\n", ctr->vertexuse_a_cnurb);
 	rt_vls_printf(str, "\t%6d vertex\n", ctr->vertex);
 	rt_vls_printf(str, "\t%6d vertex_g\n", ctr->vertex_g);
 	rt_vls_printf(str, " Abstractions:\n");
@@ -623,10 +587,6 @@ CONST struct model			*m;
 			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 				NMG_CK_FACEUSE(fu);
 				NMG_UNIQ_INDEX(fu, faceuse);
-				if( fu->fua_p )  {
-					NMG_CK_FACEUSE_A(fu->fua_p);
-					NMG_UNIQ_INDEX(fu->fua_p, faceuse_a);
-				}
 				f = fu->f_p;
 				NMG_CK_FACE(f);
 				NMG_UNIQ_INDEX(f, face);
@@ -642,10 +602,6 @@ CONST struct model			*m;
 				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 					NMG_CK_LOOPUSE(lu);
 					NMG_UNIQ_INDEX(lu, loopuse);
-					if( lu->lua_p )  {
-						NMG_CK_LOOPUSE_A(lu->lua_p);
-						NMG_UNIQ_INDEX(lu->lua_p, loopuse_a);
-					}
 					l = lu->l_p;
 					NMG_CK_LOOP(l);
 					NMG_UNIQ_INDEX(l, loop);
@@ -677,10 +633,6 @@ CONST struct model			*m;
 						ctr->face_edges++;
 						NMG_CK_EDGEUSE(eu);
 						NMG_UNIQ_INDEX(eu, edgeuse);
-						if(eu->eua_p)  {
-							NMG_CK_EDGEUSE_A(eu->eua_p);
-							NMG_UNIQ_INDEX(eu->eua_p, edgeuse_a);
-						}
 						e = eu->e_p;
 						NMG_CK_EDGE(e);
 						NMG_UNIQ_INDEX(e, edge);
@@ -705,10 +657,6 @@ CONST struct model			*m;
 			for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 				NMG_CK_LOOPUSE(lu);
 				NMG_UNIQ_INDEX(lu, loopuse);
-				if( lu->lua_p )  {
-					NMG_CK_LOOPUSE_A(lu->lua_p);
-					NMG_UNIQ_INDEX(lu->lua_p, loopuse_a);
-				}
 				l = lu->l_p;
 				NMG_CK_LOOP(l);
 				NMG_UNIQ_INDEX(l, loop);
@@ -739,10 +687,6 @@ CONST struct model			*m;
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
 					NMG_UNIQ_INDEX(eu, edgeuse);
-					if(eu->eua_p)  {
-						NMG_CK_EDGEUSE_A(eu->eua_p);
-						NMG_UNIQ_INDEX(eu->eua_p, edgeuse_a);
-					}
 					e = eu->e_p;
 					NMG_CK_EDGE(e);
 					NMG_UNIQ_INDEX(e, edge);
@@ -768,10 +712,6 @@ CONST struct model			*m;
 				NMG_CK_EDGEUSE(eu);
 				ctr->wire_edges++;
 				NMG_UNIQ_INDEX(eu, edgeuse);
-				if(eu->eua_p)  {
-					NMG_CK_EDGEUSE_A(eu->eua_p);
-					NMG_UNIQ_INDEX(eu->eua_p, edgeuse_a);
-				}
 				e = eu->e_p;
 				NMG_CK_EDGE(e);
 				NMG_UNIQ_INDEX(e, edge);

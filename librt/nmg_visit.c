@@ -110,9 +110,6 @@ genptr_t			*state;		/* Handler's private state */
 	nmg_visit_vertexuse( eu->vu_p, htab, state );
 	nmg_visit_edge( eu->e_p, htab, state );
 
-	if(htab->vis_edgeuse_a && eu->eua_p)
-		htab->vis_edgeuse_a( (long *)eu->eua_p, state, 0 );
-
 	if(htab->aft_edgeuse) htab->aft_edgeuse( (long *)eu, state, 1 );
 }
 
@@ -157,8 +154,6 @@ genptr_t			*state;		/* Handler's private state */
 		}
 	}
 	nmg_visit_loop( lu->l_p, htab, state );
-	if(htab->vis_loopuse_a && lu->lua_p)
-		htab->vis_loopuse_a( (long *)lu->lua_p, state, 0 );
 
 	if(htab->aft_loopuse) htab->aft_loopuse( (long *)lu, state, 1 );
 }
@@ -199,8 +194,6 @@ genptr_t			*state;		/* Handler's private state */
 	}
 
 	nmg_visit_face( fu->f_p, htab, state );
-	if(htab->vis_faceuse_a && fu->fua_p)
-		htab->vis_faceuse_a( (long *)fu->fua_p, state, 0 );
 
 	if(htab->aft_faceuse) htab->aft_faceuse( (long *)fu, state, 1 );
 }

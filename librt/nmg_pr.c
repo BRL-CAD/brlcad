@@ -359,7 +359,6 @@ char *h;
 	rt_log("%s%8x l.back\n", h, fu->l.back);
 	rt_log("%s%8x fumate_p\n", h, fu->fumate_p);
 	nmg_pr_orient(fu->orientation, h);
-	rt_log("%s%8x fua_p\n", h, fu->fua_p);
 
 	rt_log("%s%8x f_p\n", h, fu->f_p);
 	if (fu->f_p)
@@ -446,7 +445,6 @@ char *h;
 	rt_log("%s%8x l.forw\n", h, lu->l.forw);
 	rt_log("%s%8x l.back\n", h, lu->l.back);
 	rt_log("%s%8x lumate_p\n", h, lu->lumate_p);
-	rt_log("%s%8x lua_p\n", h, lu->lua_p);
 	nmg_pr_orient(lu->orientation, h);
 	rt_log("%s%8x l_p\n", h, lu->l_p);
 	if (lu->l_p)
@@ -578,7 +576,6 @@ char *h;
 	rt_log("%s%8x l.back\n", h, eu->l.back);
 	rt_log("%s%8x eumate_p\n", h, eu->eumate_p);
 	rt_log("%s%8x radial_p\n", h, eu->radial_p);
-	rt_log("%s%8x eua_p\n", h, eu->eua_p);
 	nmg_pr_orient(eu->orientation, h);
 	rt_log("%s%8x e_p\n", h, eu->e_p);
 	rt_log("%s%8x vu_p\n", h, eu->vu_p);

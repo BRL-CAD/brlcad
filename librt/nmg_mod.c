@@ -3442,11 +3442,9 @@ struct edgeuse *oldeu;
 	/* Copy parentage (loop affiliation) and orientation */
 	eu1->up.magic_p = oldeu->up.magic_p;
 	eu1->orientation = oldeu->orientation;
-	eu1->eua_p = (struct edgeuse_a *)NULL;
 
 	eu2->up.magic_p = oldeumate->up.magic_p;
 	eu2->orientation = oldeumate->orientation;
-	eu2->eua_p = (struct edgeuse_a *)NULL;
 
 	/* Build mate relationship */
 	eu1->eumate_p = oldeumate;

@@ -438,7 +438,6 @@ struct loopuse *lu1;
 	fu2->fumate_p = fu1;
 	fu1->orientation = fu2->orientation = OT_UNSPEC;
 	fu1->f_p = fu2->f_p = f;
-	fu1->fua_p = fu2->fua_p = (struct faceuse_a *)NULL;
 	fu1->l.magic = 
 	    fu2->l.magic = NMG_FACEUSE_MAGIC; /* Faceuse structs are GOOD */
 
@@ -534,7 +533,6 @@ int		orientation;
 
 	RT_LIST_INIT( &lu1->down_hd );
 	RT_LIST_INIT( &lu2->down_hd );
-	lu1->lua_p = lu2->lua_p = (struct loopuse_a *)NULL;
 	lu1->l_p = lu2->l_p = l;
 	lu1->orientation = lu2->orientation = orientation;
 
@@ -738,7 +736,6 @@ struct shell *s;
 	eu2->radial_p = eu2->eumate_p = eu1;
 
 	eu1->e_p = eu2->e_p = e;
-	eu1->eua_p = eu2->eua_p = (struct edgeuse_a *)NULL;
 	eu1->orientation = eu2->orientation = OT_NONE;
 	/* XXX - why not OT_UNSPEC? ctj */
 	eu1->vu_p = eu2->vu_p = (struct vertexuse *) NULL;
@@ -832,7 +829,6 @@ struct vertexuse *vu;
 	eu1->radial_p = eu1->eumate_p = eu2;
 	eu2->radial_p = eu2->eumate_p = eu1;
 	eu1->e_p = eu2->e_p = e;
-	eu1->eua_p = eu2->eua_p = (struct edgeuse_a *)NULL;
 	eu1->orientation = eu2->orientation = OT_NONE;
 	/* XXX Why not OT_UNSPEC? */
 	eu1->vu_p = vu;
@@ -973,7 +969,6 @@ struct shell *s;
 
 	RT_LIST_INIT( &lu1->down_hd );
 	RT_LIST_INIT( &lu2->down_hd );
-	lu1->lua_p = lu2->lua_p = (struct loopuse_a *)NULL;
 	lu1->l_p = lu2->l_p = l;
 	lu1->orientation = lu2->orientation = OT_UNSPEC;
 	lu1->lumate_p = lu2;
@@ -1229,16 +1224,6 @@ struct faceuse *fu1;
 	FREE_FACE(f1);
 	fu1->f_p = fu2->f_p = (struct face *)NULL;
 
-	/* kill the attributes */
-	if (fu1->fua_p) {
-		NMG_CK_FACEUSE_A(fu1->fua_p);
-		FREE_FACEUSE_A(fu1->fua_p);
-	}
-	if (fu2->fua_p) {
-		NMG_CK_FACEUSE_A(fu2->fua_p);
-		FREE_FACEUSE_A(fu2->fua_p);
-	}
-
 	/* remove ourselves from the parent list */
 	RT_LIST_DEQUEUE( &fu1->l );
 	if( RT_LIST_IS_EMPTY( &s->fu_hd ) )
@@ -1319,15 +1304,6 @@ struct loopuse *lu1;
 		ret = RT_LIST_IS_EMPTY( &lu1->up.fu_p->lu_hd );
 	} else {
 		rt_bomb("nmg_klu() unknown parent for loopuse\n");
-	}
-
-	if (lu1->lua_p) {
-		NMG_CK_LOOPUSE_A(lu1->lua_p);
-		FREE_LOOPUSE_A(lu1->lua_p);
-	}
-	if (lu2->lua_p) {
-		NMG_CK_LOOPUSE_A(lu2->lua_p);
-		FREE_LOOPUSE_A(lu2->lua_p);
 	}
 
 	NMG_CK_LOOP(lu1->l_p);
@@ -1437,19 +1413,6 @@ register struct edgeuse *eu1;
 	} else {
 		rt_bomb("nmg_keu() bad up pointer\n");
 	}
-
-	/* get rid of any attributes */
-	if (eu1->eua_p) {
-		if (eu1->eua_p == eu2->eua_p) {
-			FREE_EDGEUSE_A(eu1->eua_p);
-		} else {
-			FREE_EDGEUSE_A(eu1->eua_p);
-		}
-	}
-	if (eu2->eua_p) {
-		FREE_EDGEUSE_A(eu2->eua_p);
-	}
-
 
 	/* kill the vertexuses associated with these edgeuses */
 	if (eu1->vu_p) {
@@ -1659,9 +1622,9 @@ CONST vect_t norm;
 		GET_VERTEXUSE_A( vua_p , m );
 		vua_p->magic = NMG_VERTEXUSE_A_MAGIC;
 		vu->vua_p = vua_p;
-	}
-	else
+	}  else  {
 		NMG_CK_VERTEXUSE_A( vu->vua_p );
+	}
 
 	VMOVE( vu->vua_p->N , norm );
 
