@@ -58,9 +58,10 @@ rb_tree *rb_create1	(
 			    char	*description,
 			    int		(*order_func)()
 			);
-void *rb_delete		(
+int rb_delete		(
 			    rb_tree	*tree,
 			    void	*data
+			);
 void rb_diagnose_tree	(
 			    rb_tree	*tree,
 			    int		order
