@@ -757,7 +757,7 @@ struct nmg_exp_counts	*ecnt;
 		if( index == -1 )  {
 			ret = DISK_INDEX_LISTHEAD; /* FLAG:  special list head */
 		} else if( index < -1 ) {
-			ret = DISK_INDEX_NULL;	/* ERROR. Use null ptr on import */
+			rt_bomb("rt_nmg_reindex(): unable to obtain struct index\n");
 		} else {
 			ret = ecnt[index].new_subscript;
 		}
@@ -906,7 +906,7 @@ double		local2mm;
 			d = &((struct disk_face *)op)[oindex];
 			NMG_CK_FACE(f);
 			PUTMAGIC( DISK_FACE_MAGIC );
-			INDEXL( d, f, l );
+			INDEXL( d, f, l );	/* face is member of fg list */
 			INDEX( d, f, fu_p );
 			INDEX( d, f, fg_p );
 			rt_plong( d->flip, f->flip );
@@ -1083,7 +1083,8 @@ double		local2mm;
 
 #define RT_CK_DISKMAGIC(_cp,_magic)	\
 	if( rt_glong(_cp) != _magic )  { \
-		rt_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x\n", rt_glong(_cp), _magic); \
+		rt_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
+			rt_glong(_cp), _magic, __FILE__, __LINE__); \
 		rt_bomb("bad magic\n"); \
 	}
 
@@ -1191,8 +1192,8 @@ mat_t		mat;
 			INDEXL_HD( d, s, lu_hd, s->lu_hd );
 			INDEXL_HD( d, s, eu_hd, s->eu_hd );
 			INDEX( d, s, vertexuse, vu_p );
-			INDEXL_HD( d, s, l, s->r_p->s_hd ); /* after s->r_p */
 			NMG_CK_REGION(s->r_p);
+			INDEXL_HD( d, s, l, s->r_p->s_hd ); /* after s->r_p */
 		}
 		return 0;
 	case NMG_KIND_SHELL_A:
@@ -1245,6 +1246,8 @@ mat_t		mat;
 			INDEX( d, f, faceuse, fu_p );
 			INDEX( d, f, face_g, fg_p );
 			f->flip = rt_glong( d->flip );
+			/* Enrole this face on fg's list of users */
+			NMG_CK_FACE_G(f->fg_p);
 			INDEXL_HD( d, f, l, f->fg_p->f_hd ); /* after fu->fg_p set */
 			NMG_CK_FACEUSE(f->fu_p);
 		}
@@ -1550,6 +1553,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct face_g	*fg;
 					GET_FACE_G( fg, m );
 					fg->magic = NMG_FACE_G_MAGIC;
+					RT_LIST_INIT( &fg->f_hd );
 					ptrs[subscript] = (long *)fg;
 				}
 				break;
