@@ -496,7 +496,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "helplib wdb_comb_std");
+	  bu_vls_printf(&vls, "helplib_alias wdb_comb_std %s", argv[0]);
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
