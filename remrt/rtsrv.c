@@ -35,9 +35,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
+#include "./list.h"
 #include "./rtsrv.h"
 #include "./inout.h"
 #include "./protocol.h"
+
+struct list	*FreeList;
+struct list	WorkHead;
 
 extern char	*sbrk();
 extern double atof();
@@ -149,7 +153,9 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-	register int n;
+	register int	n;
+	struct timeval	nowait;
+	auto int	ibits;
 
 	if( argc < 2 )  {
 		fprintf(stderr, srv_usage);
@@ -220,8 +226,34 @@ char **argv;
 #endif
 	}
 
+/**
 	while( pkg_block(pcsrv) >= 0 )
 		;
+**/
+	WorkHead.li_forw = WorkHead.li_back = &WorkHead;
+	nowait.tv_sec = 0;
+	nowait.tv_usec = 0;
+
+	for(;;)  {
+		ibits = 1 << pcsrv->pkc_fd;
+		n = select(32, (char *)&ibits, (char *)0, (char *)0,
+			WorkHead.li_forw != LIST_NULL ? 
+				&nowait : (struct timeval *)0 );
+		if( n < 0 )  {
+			perror("select");
+			rt_log("select failure\n");
+			exit(9);
+		}
+		if( ibits )  {
+			if( pkg_get(pcsrv) < 0 )
+				break;
+		}
+		/* More work may have just arrived, recheck queue */
+		if( WorkHead.li_forw != LIST_NULL )  {
+			do_work();
+		}
+	}
+
 	exit(0);
 }
 
@@ -394,18 +426,15 @@ char *buf;
 /* 
  *			P H _ L I N E S
  *
- *  Process scanlines from 'a' to 'b', inclusive, sending each back
- *  as soon as it's done.
+ *  Queue a request for some pixels.
  */
 void
 ph_lines(pc, buf)
 struct pkg_comm *pc;
 char *buf;
 {
-	register int y;
+	register struct list	*lp;
 	auto int a,b;
-	int	i;
-	register struct rt_i *rtip = ap.a_rt_i;
 
 	if( debug > 1 )  fprintf(stderr, "ph_lines: %s\n", buf );
 	if( !seen_start )  {
@@ -424,10 +453,36 @@ char *buf;
 		exit(2);
 	}
 
-	for( y = a; y <= b; y++)  {
-		struct line_info	info;
-		int	len;
-		char	*cp;
+	GET_LIST( lp );
+	lp->li_start = a;
+	lp->li_stop = b;
+	APPEND_LIST( lp, WorkHead.li_back );
+
+	(void)free(buf);
+}
+
+/*
+ *			D O _ W O R K
+ *
+ *  Process scanlines from 'a' to 'b', inclusive, sending each back
+ *  as soon as it's done.
+ */
+do_work()
+{
+	register struct list	*lp;
+	struct line_info	info;
+	register struct rt_i	*rtip = ap.a_rt_i;
+	register int	y;
+	int	len;
+	char	*cp;
+
+	if( (lp = WorkHead.li_forw) == &WorkHead )
+		return;
+
+	DEQUEUE_LIST( lp );
+	if(debug) fprintf(stderr,"do_work %d %d\n", lp->li_start, lp->li_stop);
+
+	for( y = lp->li_start; y <= lp->li_stop; y++)  {
 
 		rtip->rti_nrays = 0;
 		rt_prep_timer();
@@ -451,7 +506,8 @@ char *buf;
 			fprintf(stderr,"MSG_PIXELS send error\n");
 		(void)free(cp);
 	}
-	(void)free(buf);
+
+	FREE_LIST( lp );
 }
 
 int print_on = 1;
