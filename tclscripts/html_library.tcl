@@ -427,10 +427,10 @@ proc HMtag_img {win param text} {
 }
 
 # The app needs to supply one of these
-proc HMset_image {handle src} {
-	puts "Found an image <$src> to put in $handle"
-	HMgot_image $handle "can't get\n$src"
-}
+#proc HMset_image {handle src} {
+#	puts "Found an image <$src> to put in $handle"
+#	HMgot_image $handle "can't get\n$src"
+#}
 
 # When the image is available, the application should call back here.
 # If we have the image, put it in the label, otherwise display the error
@@ -486,9 +486,9 @@ proc HMlink_hit {win x y} {
 #   win:   The name of the text widget to render into
 #   href:  The HREF link for this <a> tag.
 
-proc HMlink_callback {win href} {
-	puts "Got hit on $win, link $href"
-}
+#proc HMlink_callback {win href} {
+#	puts "Got hit on $win, link $href"
+#}
 
 # extract a value from parameter list (this needs a re-do)
 # returns "1" if the keyword is found, "0" otherwise
