@@ -1061,9 +1061,6 @@ struct rt_tol		*tol;
 		}
 	}
 
-	/* Mark the edges as real */
-	(void)nmg_mark_edges_real( &state.s->l );
-
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
 
