@@ -176,7 +176,7 @@ set -S2 "/bin/sh"
 #	define	MANDIR	/usr/catman/u_man/man
 #endif
 
-#ifdef alliant
+#if defined(alliant) && !defined(i860)
 /*	Alliant FX/8.  Compile all programs for the CEs */
 #	undef	fx
 #	undef	alliant
@@ -202,6 +202,28 @@ set -S2 "/bin/sh"
 #	define	FC	/usr/alliant/fortran
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_LIBES	-lcvec -lcommon
+#	define	LIBRT_TIMER	timer42
+#endif
+
+#if defined(alliant) && defined(i860)
+/*	Alliant FX/2800 */
+/*	Notes:  librt/machine.c has to be compiled -Ogc (for parallelism) */
+/*	Notes:  librt/tree.c has to be compiled -Ogu (compiler bug) */
+#	undef	fy
+#	undef	alliant
+#	define	MTYPE	fy
+#	define	BSD	43
+#	define	HAS_TCP	0
+#	if 0
+/*		Standard Alliant C Compiler */
+#	else
+/*		FX/C */
+#		define	CC	/bin/fxc
+#		define	OPTIMIZER -Oguvi
+#	endif
+#	define	FC	/usr/alliant/fortran
+#	define	LIBMALLOC	/* use vendor library */
+#	define	LIBRT_LIBES	-lcommon
 #	define	LIBRT_TIMER	timer42
 #endif
 
