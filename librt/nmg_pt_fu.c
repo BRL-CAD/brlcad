@@ -528,6 +528,8 @@ struct edge_info *ei;
  *
  * Given a list of edge_info structures for the edges of a loop,
  *	determine what the classification for the loop should be.
+ *
+ *  If passed a "crack" loop, will produce random results.
  */
 
 static int
@@ -746,6 +748,19 @@ struct fpi	*fpi;
 		register struct edgeuse	*eu;
 		struct edge_info edge_list;
 		struct edge_info *ei;
+		int		is_crack;
+
+		is_crack = nmg_loop_is_a_crack(lu);
+		if( lu->orientation == OT_OPPOSITE && is_crack )  {
+			/*  Even if point lies on a crack, if it's an
+			 *  OT_OPPOSITE crack loop, it subtracts nothing.
+			 *  Just ignore it.
+			 */
+			lu_class = NMG_CLASS_AinB;
+			if (rt_g.NMG_debug & DEBUG_PT_FU )
+				rt_log("nmg_class_pt_lu() ignoring OT_OPPOSITE crack loop\n");
+			goto out;
+		}
 
 		RT_LIST_INIT(&edge_list.l);
 
@@ -759,10 +774,19 @@ struct fpi	*fpi;
 			}
 		}
 		/* */
-		if (lu_class == NMG_CLASS_Unknown)
-			lu_class = compute_loop_class(fpi, lu, &edge_list);
-		else if (rt_g.NMG_debug & DEBUG_PT_FU )
-			rt_log("loop class already known (pt must touch edge)\n");
+		if (lu_class == NMG_CLASS_Unknown)  {
+			/* pt does not touch any edge or vertex */
+			if( is_crack )  {
+				/* orientation here is OT_SAME */
+				lu_class = NMG_CLASS_AoutB;
+			} else {
+				lu_class = compute_loop_class(fpi, lu, &edge_list);
+			}
+		} else {
+			/* pt touches edge or vertex */
+			if (rt_g.NMG_debug & DEBUG_PT_FU )
+				rt_log("loop class already known (pt must touch edge)\n");
+		}
 
 		/* free up the edge_list elements */
 		while ( RT_LIST_WHILE(ei, edge_info, &edge_list.l) ) {
@@ -803,6 +827,7 @@ struct fpi	*fpi;
 	}
 
 
+out:
 	if (rt_g.NMG_debug & DEBUG_PT_FU )
 		rt_log("nmg_class_pt_lu() pt classed %s vs loop\n", nmg_class_name(lu_class));
 
@@ -1009,6 +1034,20 @@ CONST struct rt_tol     *tol;
 
 		plot_parity_error(fu, pt);
 
+#if 0
+		/* Debug code -- go back and do it again while I'm watching! */
+		rt_g.NMG_debug |= DEBUG_PT_FU;
+		for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+			if( ignore_lu && (ignore_lu==lu || ignore_lu==lu->lumate_p) )
+				continue;
+
+			/* Ignore OT_BOOLPLACE, etc */
+			if( lu->orientation != OT_SAME && lu->orientation != OT_OPPOSITE )
+				continue;
+
+			lu_class = nmg_class_pt_lu(lu, &fpi);
+		}
+#endif
 		rt_bomb("nmg_class_pt_fu_except() loop classification parity error\n");
 	}
 
@@ -1033,6 +1072,7 @@ CONST struct rt_tol     *tol;
  *	ignoring any uses of a particular edge in the loop.
  *
  *	This routine must be called with a face-loop of edges!
+ *	It will not work properly on crack loops.
  */
 int
 nmg_class_pt_lu_except(pt, lu, e_p, tol)
