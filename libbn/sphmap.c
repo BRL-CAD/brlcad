@@ -1,7 +1,7 @@
 /*
- *			S P M . C
+ *			S P H M A P . C
  *
- *  Spherical Data Structures/Texture Maps
+ *  Common Subroutines for Spherical Data Structures/Texture Maps Subroutines
  *
  *  Author -
  *	Phillip Dykstra
@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
 #include "spm.h"
 
 char	*malloc();
