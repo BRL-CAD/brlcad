@@ -32,6 +32,7 @@ static const char RCSid[] = "$Header$";
 #else
 #include <strings.h>
 #endif
+#include <ctype.h>
 #include <errno.h>
 
 #include "machine.h"
@@ -1169,7 +1170,7 @@ get_cbar()
 	sprintf( cbar_name, "cbar.%d", eid );
 	mk_rcc( fdout, cbar_name, pt1, height, radius );
 
-	mk_addmember( cbar_name, &pb->head, WMOP_UNION );
+	mk_addmember( cbar_name, &pb->head.l, WMOP_UNION );
 }
 
 int
@@ -1481,12 +1482,12 @@ char *argv[];
 		else
 			mk_nmg( fdout, name, m );
 
-		mk_addmember( name, &head, WMOP_UNION );
+		mk_addmember( name, &head.l, WMOP_UNION );
 	}
 	if( BU_LIST_NON_EMPTY( &head.l ) )
 	{
 		mk_lfcomb( fdout, "shells", &head, 0 );
-		mk_addmember( "shells", &all_head, WMOP_UNION );
+		mk_addmember( "shells", &all_head.l, WMOP_UNION );
 	}
 
 	BU_LIST_INIT( &head.l );
@@ -1500,12 +1501,12 @@ char *argv[];
 		sprintf( name, "pbar_group.%d", pb->pid );
 		mk_lfcomb( fdout, name, &pb->head, 0 );
 
-		mk_addmember( name, &head, WMOP_UNION );
+		mk_addmember( name, &head.l, WMOP_UNION );
 	}
 	if( BU_LIST_NON_EMPTY( &head.l ) )
 	{
 		mk_lfcomb( fdout, "pbars", &head, 0 );
-		mk_addmember( "pbars", &all_head, WMOP_UNION );
+		mk_addmember( "pbars", &all_head.l, WMOP_UNION );
 	}
 
 	if( BU_LIST_NON_EMPTY( &all_head.l ) )
