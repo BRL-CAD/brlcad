@@ -1519,6 +1519,116 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ E H Y _ I M P O R T 5
+ *
+ *  Import an EHY from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_ehy_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	LOCAL struct rt_ehy_internal	*xip;
+	fastf_t				vec[3*4];
+
+	BU_CK_EXTERNAL( ep );
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_EHY;
+	ip->idb_meth = &rt_functab[ID_EHY];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_ehy_internal), "rt_ehy_internal");
+
+	xip = (struct rt_ehy_internal *)ip->idb_ptr;
+	xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)vec, ep->ext_buf, 3*4 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( xip->ehy_V, mat, &vec[0*3] );
+	MAT4X3VEC( xip->ehy_H, mat, &vec[1*3] );
+	MAT4X3VEC( xip->ehy_Au, mat, &vec[2*3] );
+	VUNITIZE( xip->ehy_Au );
+	xip->ehy_r1 = vec[3*3] / mat[15];
+	xip->ehy_r2 = vec[3*3+1] / mat[15];
+	xip->ehy_c  = vec[3*3+2] / mat[15];
+
+	if( xip->ehy_r1 < SMALL_FASTF || xip->ehy_r2 < SMALL_FASTF || xip->ehy_c < SMALL_FASTF )
+	{
+		bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
+		bu_free( (char *)ip->idb_ptr , "rt_ehy_import: ip->idb_ptr" );
+		return( -1 );
+	}
+
+	return(0);			/* OK */
+}
+
+/*
+ *			R T _ E H Y _ E X P O R T 5
+ *
+ *  The name is added by the caller, in the usual place.
+ */
+int
+rt_ehy_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_ehy_internal	*xip;
+	fastf_t			vec[3*4];
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_EHY )  return(-1);
+	xip = (struct rt_ehy_internal *)ip->idb_ptr;
+	RT_EHY_CK_MAGIC(xip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*4;
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "ehy external");
+
+	if (!NEAR_ZERO( MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
+		bu_log("rt_ehy_export: Au not a unit vector!\n");
+		return(-1);
+	}
+
+	if (MAGNITUDE(xip->ehy_H) < RT_LEN_TOL
+		|| xip->ehy_c < RT_LEN_TOL
+		|| xip->ehy_r1 < RT_LEN_TOL
+		|| xip->ehy_r2 < RT_LEN_TOL) {
+		bu_log("rt_ehy_export: not all dimensions positive!\n");
+		return(-1);
+	}
+	
+	if ( !NEAR_ZERO( VDOT(xip->ehy_Au, xip->ehy_H), RT_DOT_TOL) ) {
+		bu_log("rt_ehy_export: Au and H are not perpendicular!\n");
+		return(-1);
+	}
+	
+	if (xip->ehy_r2 > xip->ehy_r1) {
+		bu_log("rt_ehy_export: semi-minor axis cannot be longer than semi-major axis!\n");
+		return(-1);
+	}
+
+	/* Warning:  type conversion */
+	VSCALE( &vec[0*3], xip->ehy_V, local2mm );
+	VSCALE( &vec[1*3], xip->ehy_H, local2mm );
+	/* don't scale ehy_Au (unit vector!!) */
+	VMOVE( &vec[2*3], xip->ehy_Au );
+	vec[3*3] = xip->ehy_r1 * local2mm;
+	vec[3*3+1] = xip->ehy_r2 * local2mm;
+	vec[3*3+2] = xip->ehy_c * local2mm;
+
+	/* Convert from internal (host) to database (network) format */
+	htond( ep->ext_buf, (unsigned char *)vec, 3*4 );
+
+	return(0);
+}
+
+/*
  *			R T _ E H Y _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
