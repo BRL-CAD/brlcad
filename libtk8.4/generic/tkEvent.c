@@ -838,7 +838,12 @@ Tk_HandleEvent(eventPtr)
 	 * available on the Windows version of Tk.
 	 */
     
+#ifdef MAC_OSX_TK
+        /* MouseWheel events are not focus specific on Mac OS X */
+	if (mask & (KeyPressMask|KeyReleaseMask)) {
+#else
 	if (mask & (KeyPressMask|KeyReleaseMask|MouseWheelMask)) {
+#endif
 	    winPtr->dispPtr->lastEventTime = eventPtr->xkey.time;
 	    winPtr = TkFocusKeyEvent(winPtr, eventPtr);
 	    if (winPtr == NULL) {

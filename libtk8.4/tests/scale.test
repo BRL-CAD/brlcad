@@ -817,6 +817,56 @@ test scale-18.1 {DestroyScale, -cursor option [Bug: 3897]} {
     destroy .s
 } {}
 
+test scale-18.2 {Scale button 1 events [Bug 787065]} \
+    -setup {
+        catch {destroy .s}
+        set y 5
+        scale .s -from 0 -to 10 -variable y -orient horizontal -length 150
+        pack .s
+        tkwait visibility .s
+        set ::error {}
+        proc bgerror {args} {set ::error $args}
+    } \
+    -body {
+        list [catch {
+            event generate .s <1> -x 0 -y 0
+            event generate .s <ButtonRelease-1> -x 0 -y 0
+            update
+            set ::error
+        } msg] $msg
+    } \
+    -cleanup {
+        unset ::error
+        rename bgerror {}
+        catch {destroy .s}
+    } \
+    -result {0 {}}
+
+test scale-18.3 {Scale button 2 events [Bug 787065]} \
+    -setup {
+        catch {destroy .s}
+        set y 5
+        scale .s -from 0 -to 10 -variable y -orient horizontal -length 150
+        pack .s
+        tkwait visibility .s
+        set ::error {}
+        proc bgerror {args} {set ::error $args}
+    } \
+    -body {
+        list [catch {
+            event generate .s <2> -x 0 -y 0
+            event generate .s <ButtonRelease-2> -x 0 -y 0
+            update
+            set ::error
+        } msg] $msg
+    } \
+    -cleanup {
+        unset ::error
+        rename bgerror {}
+        catch {destroy .s}
+    } \
+    -result {0 {}}
+
 catch {destroy .s}
 option clear
 

@@ -11,16 +11,29 @@ AC_PREREQ(2.13)
 TK_VERSION=8.4
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=4
-TK_PATCH_LEVEL=".4"
+TK_PATCH_LEVEL=".6"
 VERSION=${TK_VERSION}
 LOCALES="cs de el en en_gb es fr it nl ru"
+
+#--------------------------------------------------------------------
+# Find and load the tclConfig.sh file
+#--------------------------------------------------------------------
+
+SC_PATH_TCLCONFIG
+SC_LOAD_TCLCONFIG
+
+if test "${TCL_VERSION}" != "${TK_VERSION}"; then
+    AC_MSG_ERROR([${TCL_BIN_DIR}/tclConfig.sh is for Tcl ${TCL_VERSION}.
+Tk ${TK_VERSION}${TK_PATCH_LEVEL} needs Tcl ${TK_VERSION}.
+Use --with-tcl= option to indicate location of tclConfig.sh file for Tcl ${TK_VERSION}.])
+fi
 
 #------------------------------------------------------------------------
 # Handle the --prefix=... option
 #------------------------------------------------------------------------
 
 if test "${prefix}" = "NONE"; then
-    prefix=/usr/local
+    prefix="$TCL_PREFIX"
 fi
 if test "${exec_prefix}" = "NONE"; then
     exec_prefix=$prefix
@@ -86,13 +99,6 @@ SC_TCL_EARLY_FLAGS
 SC_TCL_64BIT_FLAGS
 
 #--------------------------------------------------------------------
-# Find and load the tclConfig.sh file
-#--------------------------------------------------------------------
-
-SC_PATH_TCLCONFIG
-SC_LOAD_TCLCONFIG
-
-#--------------------------------------------------------------------
 # Recompute the necessary flags to run the compiler
 #--------------------------------------------------------------------
 
@@ -113,6 +119,12 @@ TK_DBGX=${DBGX}
 
 if test "$TCL_EXEC_PREFIX" != "$exec_prefix"; then
     LIB_RUNTIME_DIR="${LIB_RUNTIME_DIR}:${TCL_EXEC_PREFIX}/lib"
+fi
+
+if test "$TCL_PREFIX" != "$prefix"; then
+    AC_MSG_WARN([
+	Different --prefix selected for Tk and Tcl!
+	[[package require Tk]] may not work correctly in tclsh.])
 fi
 
 #--------------------------------------------------------------------

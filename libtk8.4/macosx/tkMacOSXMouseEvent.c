@@ -156,12 +156,13 @@ TkMacOSXProcessMouseEvent(TkMacOSXEvent *eventPtr, MacEventStatus * statusPtr)
         medPtr->state |= Mod2Mask;              /* option key */
     }
     if (eventPtr->eKind == kEventMouseDown 
-            || eventPtr->eKind== kEventMouseDragged ) {
+            || eventPtr->eKind == kEventMouseDragged ) {
         EventMouseButton mouseButton;
-        if ((status=GetEventParameter(eventPtr->eventRef,
-             kEventParamMouseButton,
-             typeMouseButton, NULL,
-             sizeof(mouseButton), NULL,&mouseButton)) != noErr ) {
+        status = GetEventParameter(eventPtr->eventRef,
+                kEventParamMouseButton,
+                typeMouseButton, NULL,
+	        sizeof(mouseButton), NULL,&mouseButton);
+        if (status != noErr ) {
              fprintf (stderr, "Failed to retrieve mouse button, %d\n", status);
              statusPtr->err = 1;
              return 0;
@@ -169,7 +170,7 @@ TkMacOSXProcessMouseEvent(TkMacOSXEvent *eventPtr, MacEventStatus * statusPtr)
          medPtr->state |= 1 << ((mouseButton-1)+8);
     }
 
-    medPtr->windowPart= FindWindow(where, &medPtr->whichWin);
+    medPtr->windowPart = FindWindow(where, &medPtr->whichWin);
     window = TkMacOSXGetXWindow(medPtr->whichWin);
     if (medPtr->whichWin != NULL && window == None) {
         return 0;
@@ -193,10 +194,11 @@ TkMacOSXProcessMouseEvent(TkMacOSXEvent *eventPtr, MacEventStatus * statusPtr)
             window, medPtr->state);
     }
     if (eventPtr->eKind == kEventMouseWheelMoved) {
-        if ((status=GetEventParameter(eventPtr->eventRef,
-             kEventParamMouseWheelDelta,
-             typeLongInteger, NULL,
-             sizeof(medPtr->delta), NULL,&medPtr->delta)) != noErr ) {
+        status = GetEventParameter(eventPtr->eventRef,
+                kEventParamMouseWheelDelta,
+                typeLongInteger, NULL,
+		sizeof(medPtr->delta), NULL,&medPtr->delta);
+        if (status != noErr ) {
              fprintf (stderr,
                  "Failed to retrieve mouse wheel delta, %d\n", status);
              statusPtr->err = 1;
@@ -233,23 +235,26 @@ TkMacOSXProcessMouseEvent(TkMacOSXEvent *eventPtr, MacEventStatus * statusPtr)
         }
     }
 
-    if (medPtr->whichWin && eventPtr->eKind==kEventMouseDown) {
+    if (medPtr->whichWin && eventPtr->eKind == kEventMouseDown) {
         ProcessSerialNumber frontPsn, ourPsn;
         Boolean             flag;
-        if ((err=GetFrontProcess(&frontPsn))!=noErr) {
+	err = GetFrontProcess(&frontPsn);
+        if (err != noErr) {
             fprintf(stderr, "GetFrontProcess failed, %d\n", err);
             statusPtr->err = 1;
             return 1;
         }
         
         GetCurrentProcess(&ourPsn);
-        if ((err=SameProcess(&frontPsn, &ourPsn, &flag))!=noErr) {
+	err = SameProcess(&frontPsn, &ourPsn, &flag);
+        if (err != noErr) {
             fprintf(stderr, "SameProcess failed, %d\n", err);
             statusPtr->err = 1;
             return 1;
         } else {
             if (!flag) {
-                if ((err=SetFrontProcess(&ourPsn)) != noErr) {
+	      err = SetFrontProcess(&ourPsn);
+                if (err != noErr) {
                     fprintf(stderr,"SetFrontProcess failed,%d\n", err);
                     statusPtr->err = 1;
                     return 1;
@@ -271,11 +276,25 @@ TkMacOSXProcessMouseEvent(TkMacOSXEvent *eventPtr, MacEventStatus * statusPtr)
          if (!(TkpIsWindowFloating(medPtr->whichWin))
              && (medPtr->whichWin != medPtr->activeNonFloating)) {
              Tk_Window grabWin = TkMacOSXGetCapture();
+             if ((grabWin == NULL)) {
+                int grabState = TkGrabState((TkWindow*)tkwin);
+                if (grabState != TK_GRAB_NONE && grabState != TK_GRAB_IN_TREE) {
+                   /* Now we want to set the focus to the local grabWin */
+                    TkMacOSXSetEatButtonUp(true);
+                    grabWin = (Tk_Window) (((TkWindow*)tkwin)->dispPtr->grabWinPtr);
+                    BringWindowForward(GetWindowFromPort(TkMacOSXGetDrawablePort(((TkWindow*)grabWin)->window)));
+                   statusPtr->stopProcessing = 1;
+                   return false;
+                }
+             }
              if ((grabWin != NULL) && (grabWin != tkwin)) {
                  TkWindow * tkw, * grb;
                  tkw = (TkWindow *)tkwin;
                  grb = (TkWindow *)grabWin;
-                 SysBeep(1);  
+		 /* Now we want to set the focus to the global grabWin */
+                 TkMacOSXSetEatButtonUp(true);
+                 BringWindowForward(GetWindowFromPort(TkMacOSXGetDrawablePort(((TkWindow*)grabWin)->window)));
+                   statusPtr->stopProcessing = 1;
                  return false;
              }
 
@@ -470,7 +489,7 @@ HandleInCollapse(WindowRef win)
 static int
 GeneratePollingEvents(MouseEventData * medPtr)
 {
-    Tk_Window tkwin, rootwin, grabWin, topPtr;
+    Tk_Window tkwin, rootwin, grabWin;
     Window window;
     int local_x, local_y;
     TkDisplay *dispPtr;
@@ -589,6 +608,7 @@ GenerateMouseWheelEvent(MouseEventData * medPtr)
     winPtr = ( TkWindow *)tkwin;
     xEvent.type = MouseWheelEvent;
     xEvent.xkey.keycode = medPtr->delta;
+    xEvent.xbutton.state = TkMacOSXButtonKeyState();
     xEvent.xany.serial = LastKnownRequestProcessed(winPtr->display);
     xEvent.xany.send_event = false;
     xEvent.xany.display = winPtr->display;

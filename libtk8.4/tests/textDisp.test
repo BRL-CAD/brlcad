@@ -2869,6 +2869,30 @@ test textDisp-29.3 {miscellaneous: lines wrap but are still too long} {fonts} {
     list [.t2.t xview] [winfo geom .t2.t.f] [.t2.t bbox 1.3]
 } {{0.536667 1} 300x50+-156+18 {}}
 
+test textDisp-33.5 {bold or italic fonts} {winOnly} {
+    destroy .tt
+    pack [text .tt -wrap char -font {{MS Sans Serif} 15}]
+    font create no -family [lindex [.tt cget -font] 0] -size 24
+    font create bi -family [lindex [.tt cget -font] 0] -size 24
+    font configure bi -weight bold -slant italic
+    .tt tag configure bi -font bi
+    .tt tag configure no -font no
+    .tt insert end abcd no efgh bi ijkl\n no
+    update
+    set bb {}
+    for {set i 0} {$i < 12} {incr i 4} {
+	lappend bb [lindex [.tt bbox 1.$i] 0]
+    }
+    foreach {a b c} $bb {}
+    unset bb
+    if {($b - $a) * 1.5 < ($c - $b)} {
+	set result "italic font has much too much space"
+    } else {
+	set result "italic font measurement ok"
+    }
+} {italic font measurement ok}
+destroy .tt
+
 deleteWindows
 option clear
 

@@ -1166,7 +1166,7 @@ TkMacOSXIsCharacterMissing(
     fm.device = 0;
     fm.numer.h = fm.numer.v = fm.denom.h = fm.denom.v = 1;
     
-    fmOutPtr=FMSwapFont(&fm);
+    fmOutPtr = FMSwapFont(&fm);
     fprintf(stderr,"fmOut %08x, handle %08x\n", (int)fmOutPtr, fmOutPtr->fontHandle);
     
 #if !defined(UNIVERSAL_INTERFACES_VERSION) || (UNIVERSAL_INTERFACES_VERSION < 0x0300)
@@ -1749,13 +1749,13 @@ FontMapLoadPage(
  * For some reason, FMSwapFont alywas returns a structure where the returned font handle
  * is NULL. Until we figure this one out, assume all characters are allowed
  */
-    fmOut=FMSwapFont(&fm);
-    fHandle=fmOut->fontHandle;
-    isMultiByteFont=subFontPtr->familyPtr->isMultiByteFont;
+    fmOut = FMSwapFont(&fm);
+    fHandle = fmOut->fontHandle;
+    isMultiByteFont = subFontPtr->familyPtr->isMultiByteFont;
 #ifndef MAC_OSX_TK
     GetResInfo(fHandle, &theID, &theType, theName);
     fprintf ( stderr, "ResError() %d, %x\n", ResError (), fHandle );
-    if (theType=='sfnt') {
+    if (theType == 'sfnt') {
 #endif
         /*
          * Found an outline font which has very complex font record.
@@ -2241,7 +2241,7 @@ int TkMacOSXUseAntialiasedText(interp, enable)
     static UInt32 (*swaptextflags)(UInt32) = NULL;
     
     if(!initialized) {
-        NSSymbol nsSymbol=NULL;
+        NSSymbol nsSymbol = NULL;
         if(NSIsSymbolNameDefinedWithHint("_QDSwapTextFlags", "QD")) {
             nsSymbol = NSLookupAndBindSymbolWithHint("_QDSwapTextFlags", "QD");
         } else if(NSIsSymbolNameDefinedWithHint("_SwapQDTextFlags", "QD")) {
@@ -2267,9 +2267,9 @@ int TkMacOSXUseAntialiasedText(interp, enable)
             Tcl_ResetResult(interp);
         }
     }
-    if(swaptextflags) {
+    if (swaptextflags) {
         swaptextflags(enable ? kQDUseCGTextRendering | kQDUseCGTextMetrics 
-                             : kQDUseTrueTypeScalerGlyphs);
+                : kQDUseTrueTypeScalerGlyphs);
         TkMacOSXAntialiasedTextEnabled = enable;
         return TCL_OK;
     } else {

@@ -152,7 +152,7 @@ TkpDisplayScale(clientData)
     SInt16       maxValue;
     SInt16       procID;
     SInt32       controlReference;
-    Boolean      initiallyVisible=true;
+    Boolean      initiallyVisible = true;
 
     fprintf(stderr,"TkpDisplayScale\n");
     scalePtr->flags &= ~REDRAW_PENDING;
@@ -206,8 +206,8 @@ TkpDisplayScale(clientData)
      * Set up port for drawing Macintosh control.
      */
     macDraw = (MacDrawable *) Tk_WindowId(tkwin);
-    destPort=TkMacOSXGetDrawablePort(Tk_WindowId(tkwin));
-    windowRef=GetWindowFromPort(destPort);
+    destPort = TkMacOSXGetDrawablePort(Tk_WindowId(tkwin));
+    windowRef = GetWindowFromPort(destPort);
     GetGWorld(&saveWorld, &saveDevice);
     SetGWorld(destPort, NULL);
     TkMacOSXSetUpClippingRgn(Tk_WindowId(tkwin));
@@ -217,16 +217,16 @@ TkpDisplayScale(clientData)
      */
     if (macScalePtr->scaleHandle == NULL) {
         fprintf(stderr,"Initialising scale\n");
-        r.left=macDraw->xOff;
-        r.top=macDraw->yOff;
-        r.right=macDraw->xOff+Tk_Width(tkwin) - scalePtr->inset;
-        r.bottom=macDraw->yOff+Tk_Height(tkwin) - scalePtr->inset;
+        r.left = macDraw->xOff;
+        r.top = macDraw->yOff;
+        r.right = macDraw->xOff+Tk_Width(tkwin) - scalePtr->inset;
+        r.bottom = macDraw->yOff+Tk_Height(tkwin) - scalePtr->inset;
 
-        initialValue=scalePtr->value;
-        minValue=scalePtr->toValue;
-        maxValue=scalePtr->fromValue;
-        procID=kControlSliderProc;
-        controlReference=(SInt32) macScalePtr;
+        initialValue = scalePtr->value;
+        minValue = scalePtr->toValue;
+        maxValue = scalePtr->fromValue;
+        procID = kControlSliderProc;
+        controlReference = (SInt32) macScalePtr;
 	macScalePtr->scaleHandle = NewControl(windowRef, 
 		&r, "\p", initiallyVisible, initialValue,minValue,maxValue,
 		procID, controlReference);
@@ -234,7 +234,7 @@ TkpDisplayScale(clientData)
 	/*
 	 * If we are foremost than make us active.
 	 */
-	if (windowRef==FrontWindow()) {
+	if (windowRef == FrontWindow()) {
 	    macScalePtr->flags |= ACTIVE;
 	}
     }

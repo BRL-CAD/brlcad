@@ -8,6 +8,7 @@
  * Copyright (c) 1994 The Australian National University.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  * Copyright (c) 2002 Donal K. Fellows
+ * Copyright (c) 2003 ActiveState Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -178,10 +179,13 @@ typedef struct PhotoMaster {
  *				components.
  * IMAGE_CHANGED:		1 means that the instances of this image
  *				need to be redithered.
+ * COMPLEX_ALPHA:		1 means that the instances of this image
+ *				have alpha values that aren't 0 or 255.
  */
 
 #define COLOR_IMAGE		1
 #define IMAGE_CHANGED		2
+#define COMPLEX_ALPHA		4
 
 /*
  * The following data structure represents all of the instances of
@@ -389,6 +393,11 @@ static int		ImgPhotoConfigureMaster _ANSI_ARGS_((
 			    int objc, Tcl_Obj *CONST objv[], int flags));
 static void		ImgPhotoConfigureInstance _ANSI_ARGS_((
 			    PhotoInstance *instancePtr));
+static int              ToggleComplexAlphaIfNeeded _ANSI_ARGS_((
+                            PhotoMaster *mPtr));
+static void             ImgPhotoBlendComplexAlpha _ANSI_ARGS_((
+			    XImage *bgImg, PhotoInstance *iPtr,
+			    int xOffset, int yOffset, int width, int height));
 static int		ImgPhotoSetSize _ANSI_ARGS_((PhotoMaster *masterPtr,
 			    int width, int height));
 static void		ImgPhotoInstanceSetSize _ANSI_ARGS_((
@@ -2082,6 +2091,9 @@ ImgPhotoConfigureMaster(interp, masterPtr, objc, objv, flags)
     if (oldFormat != NULL) {
 	Tcl_DecrRefCount(oldFormat);
     }
+
+    ToggleComplexAlphaIfNeeded(masterPtr);
+
     return TCL_OK;
 
   errorExit:
@@ -2234,7 +2246,6 @@ ImgPhotoConfigureInstance(instancePtr)
 		    validBox.width, validBox.height);
 	}
     }
-
 }
 
 /*
@@ -2434,6 +2445,200 @@ ImgPhotoGet(tkwin, masterData)
 /*
  *----------------------------------------------------------------------
  *
+ * ToggleComplexAlphaIfNeeded --
+ *
+ *	This procedure is called when an image is modified to
+ *	check if any partially transparent pixels exist, which
+ *	requires blending instead of straight copy.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	(Re)sets COMPLEX_ALPHA flag of master.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+ToggleComplexAlphaIfNeeded(PhotoMaster *mPtr)
+{
+    size_t len = MAX(mPtr->userWidth, mPtr->width) *
+	MAX(mPtr->userHeight, mPtr->height) * 4;
+    unsigned char *c   = mPtr->pix32;
+    unsigned char *end = c + len;
+
+    /*
+     * Set the COMPLEX_ALPHA flag if we have an image with partially
+     * transparent bits.
+     */
+    mPtr->flags &= ~COMPLEX_ALPHA;
+    c += 3; /* start at first alpha byte */
+    for (; c < end; c += 4) {
+	if (*c && *c != 255) {
+     	    mPtr->flags |= COMPLEX_ALPHA;
+	    break;
+	}
+    }
+    return (mPtr->flags & COMPLEX_ALPHA);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * ImgPhotoBlendComplexAlpha --
+ *
+ *	This procedure is called when an image with partially
+ *	transparent pixels must be drawn over another image.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Background image passed in gets drawn over with image data.
+ *
+ *----------------------------------------------------------------------
+ */
+/*
+ * This should work on all platforms that set mask and shift data properly
+ * from the visualInfo.
+ * RGB is really only a 24+ bpp version whereas RGB15 is the correct version
+ * and works for 15bpp+, but it slower, so it's only used for 15bpp+.
+ */
+#ifndef __WIN32__
+#define GetRValue(rgb)	(UCHAR((rgb & red_mask) >> red_shift))
+#define GetGValue(rgb)	(UCHAR((rgb & green_mask) >> green_shift))
+#define GetBValue(rgb)	(UCHAR((rgb & blue_mask) >> blue_shift))
+#define RGB(r,g,b)      ((unsigned)((UCHAR(r)<<red_shift)|(UCHAR(g)<<green_shift)|(UCHAR(b)<<blue_shift)))
+#define RGB15(r,g,b)    ((unsigned)(((r*red_mask/255)&red_mask)|((g*green_mask/255)&green_mask)|((b*blue_mask/255)&blue_mask)))
+#endif
+
+static void ImgPhotoBlendComplexAlpha (
+    XImage *bgImg,            /* background image to draw on */
+    PhotoInstance *iPtr,      /* image instance to draw */
+    int xOffset, int yOffset, /* X & Y offset into image instance to draw */
+    int width, int height     /* width & height of image to draw */
+    )
+{
+    int x, y, line;
+    unsigned long pixel;
+    unsigned char r, g, b, alpha, unalpha;
+    unsigned char *alphaAr = iPtr->masterPtr->pix32;
+    unsigned char *masterPtr;
+
+#ifndef __WIN32__
+    /*
+     * We have to get the mask and shift info from the visual.
+     * This might be cached for better performance.
+     */
+    unsigned long red_mask, green_mask, blue_mask;
+    unsigned long red_shift, green_shift, blue_shift;
+    Visual *visual = iPtr->visualInfo.visual;
+
+    red_mask    = visual->red_mask;
+    green_mask  = visual->green_mask;
+    blue_mask   = visual->blue_mask;
+    red_shift   = 0;
+    green_shift = 0;
+    blue_shift  = 0;
+    while ((0x0001 & (red_mask >> red_shift)) == 0)	red_shift++;
+    while ((0x0001 & (green_mask >> green_shift)) == 0)	green_shift++;
+    while ((0x0001 & (blue_mask >> blue_shift)) == 0)	blue_shift++;
+#endif
+
+#define ALPHA_BLEND(bgPix, imgPix, alpha, unalpha) \
+		((bgPix * unalpha + imgPix * alpha) / 255)
+
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK))
+    /*
+     * Only unix requires the special case for <24bpp.  It varies with
+     * 3 extra shifts and uses RGB15.  The 24+bpp version could also
+     * then be further optimized.
+     */
+    if (bgImg->depth < 24) {
+	unsigned char red_mlen, green_mlen, blue_mlen;
+
+	red_mlen   = 8 - CountBits(red_mask >> red_shift);
+	green_mlen = 8 - CountBits(green_mask >> green_shift);
+	blue_mlen  = 8 - CountBits(blue_mask >> blue_shift);
+	for (y = 0; y < height; y++) {
+	    line = (y + yOffset) * iPtr->masterPtr->width;
+	    for (x = 0; x < width; x++) {
+		masterPtr = alphaAr + ((line + x + xOffset) * 4);
+		alpha     = masterPtr[3];
+		/*
+		 * Ignore pixels that are fully transparent
+		 */
+		if (alpha) {
+		    /*
+		     * We could perhaps be more efficient than XGetPixel for
+		     * 24 and 32 bit displays, but this seems "fast enough".
+		     */
+		    r = masterPtr[0];
+		    g = masterPtr[1];
+		    b = masterPtr[2];
+		    if (alpha != 255) {
+			/*
+			 * Only blend pixels that have some transparency
+			 */
+			unsigned char ra, ga, ba;
+
+			pixel = XGetPixel(bgImg, x, y);
+			ra = GetRValue(pixel) << red_mlen;
+			ga = GetGValue(pixel) << green_mlen;
+			ba = GetBValue(pixel) << blue_mlen;
+			unalpha = 255 - alpha;
+			r = ALPHA_BLEND(ra, r, alpha, unalpha);
+			g = ALPHA_BLEND(ga, g, alpha, unalpha);
+			b = ALPHA_BLEND(ba, b, alpha, unalpha);
+		    }
+		    XPutPixel(bgImg, x, y, RGB15(r, g, b));
+		}
+	    }
+	}
+    } else
+#endif
+	for (y = 0; y < height; y++) {
+	    line = (y + yOffset) * iPtr->masterPtr->width;
+	    for (x = 0; x < width; x++) {
+		masterPtr = alphaAr + ((line + x + xOffset) * 4);
+		alpha     = masterPtr[3];
+		/*
+		 * Ignore pixels that are fully transparent
+		 */
+		if (alpha) {
+		    /*
+		     * We could perhaps be more efficient than XGetPixel for
+		     * 24 and 32 bit displays, but this seems "fast enough".
+		     */
+		    r = masterPtr[0];
+		    g = masterPtr[1];
+		    b = masterPtr[2];
+		    if (alpha != 255) {
+			/*
+			 * Only blend pixels that have some transparency
+			 */
+			unsigned char ra, ga, ba;
+
+			pixel = XGetPixel(bgImg, x, y);
+			ra = GetRValue(pixel);
+			ga = GetGValue(pixel);
+			ba = GetBValue(pixel);
+			unalpha = 255 - alpha;
+			r = ALPHA_BLEND(ra, r, alpha, unalpha);
+			g = ALPHA_BLEND(ga, g, alpha, unalpha);
+			b = ALPHA_BLEND(ba, b, alpha, unalpha);
+		    }
+		    XPutPixel(bgImg, x, y, RGB(r, g, b));
+		}
+	    }
+	}
+#undef ALPHA_BLEND
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * ImgPhotoDisplay --
  *
  *	This procedure is invoked to draw a photo image.
@@ -2461,6 +2666,7 @@ ImgPhotoDisplay(clientData, display, drawable, imageX, imageY, width,
 				 * correspond to imageX and imageY. */
 {
     PhotoInstance *instancePtr = (PhotoInstance *) clientData;
+    XVisualInfo visInfo = instancePtr->visualInfo;
 
     /*
      * If there's no pixmap, it means that an error occurred
@@ -2471,21 +2677,56 @@ ImgPhotoDisplay(clientData, display, drawable, imageX, imageY, width,
 	return;
     }
 
-    /*
-     * masterPtr->region describes which parts of the image contain
-     * valid data.  We set this region as the clip mask for the gc,
-     * setting its origin appropriately, and use it when drawing the
-     * image.
-     */
+    if (
+#if defined(MAC_TCL)
+	/*
+	 * The retrieval of bgImg is currently not functional on OS9
+	 * so skip attempts to alpha blend.
+	 */
+	0 &&
+#endif
+	(instancePtr->masterPtr->flags & COMPLEX_ALPHA)
+	    && visInfo.depth >= 15
+	    && (visInfo.class == DirectColor || visInfo.class == TrueColor)) {
+	XImage *bgImg = NULL;
 
-    TkSetRegion(display, instancePtr->gc, instancePtr->masterPtr->validRegion);
-    XSetClipOrigin(display, instancePtr->gc, drawableX - imageX,
-	    drawableY - imageY);
-    XCopyArea(display, instancePtr->pixels, drawable, instancePtr->gc,
-	    imageX, imageY, (unsigned) width, (unsigned) height,
-	    drawableX, drawableY);
-    XSetClipMask(display, instancePtr->gc, None);
-    XSetClipOrigin(display, instancePtr->gc, 0, 0);
+	/*
+	 * Pull the current background from the display to blend with
+	 */
+	bgImg = XGetImage(display, drawable, drawableX, drawableY,
+		(unsigned int)width, (unsigned int)height, AllPlanes, ZPixmap);
+	if (bgImg == NULL) {
+	    return;
+	}
+
+	ImgPhotoBlendComplexAlpha(bgImg, instancePtr,
+		imageX, imageY, width, height);
+
+	/*
+	 * Color info is unimportant as we only do this operation for
+	 * depth >= 15.
+	 */
+	TkPutImage(NULL, 0, display, drawable, instancePtr->gc,
+		bgImg, 0, 0, drawableX, drawableY,
+		(unsigned int) width, (unsigned int) height);
+	XDestroyImage(bgImg);
+    } else {
+	/*
+	 * masterPtr->region describes which parts of the image contain
+	 * valid data.  We set this region as the clip mask for the gc,
+	 * setting its origin appropriately, and use it when drawing the
+	 * image.
+	 */
+	TkSetRegion(display, instancePtr->gc, instancePtr->masterPtr->validRegion);
+	XSetClipOrigin(display, instancePtr->gc, drawableX - imageX,
+	               drawableY - imageY);
+	XCopyArea(display, instancePtr->pixels, drawable, instancePtr->gc,
+	          imageX, imageY, (unsigned) width, (unsigned) height,
+	          drawableX, drawableY);
+	XSetClipMask(display, instancePtr->gc, None);
+	XSetClipOrigin(display, instancePtr->gc, 0, 0);
+    }
+    XFlush (display);
 }
 
 /*
@@ -2789,6 +3030,8 @@ ImgPhotoSetSize(masterPtr, width, height)
 	    masterPtr->ditherY = 0;
 	}
     }
+
+    ToggleComplexAlphaIfNeeded(masterPtr);
 
     /*
      * Now adjust the sizes of the pixmaps for all of the instances.
@@ -4020,11 +4263,17 @@ Tk_PhotoPutBlock(handle, blockPtr, x, y, width, height, compRule)
     xEnd = x + width;
     yEnd = y + height;
     if ((xEnd > masterPtr->width) || (yEnd > masterPtr->height)) {
+	int sameSrc = (blockPtr->pixelPtr == masterPtr->pix32);
 	if (ImgPhotoSetSize(masterPtr, MAX(xEnd, masterPtr->width),
 		MAX(yEnd, masterPtr->height)) == TCL_ERROR) {
 	    panic(TK_PHOTO_ALLOC_FAILURE_MESSAGE);
 	}
+	if (sameSrc) {
+	    blockPtr->pixelPtr = masterPtr->pix32;
+	    blockPtr->pitch = masterPtr->width * 4;
+	}
     }
+
 
     if ((y < masterPtr->ditherY) || ((y == masterPtr->ditherY)
 	    && (x < masterPtr->ditherX))) {
@@ -4326,6 +4575,7 @@ Tk_PhotoPutZoomedBlock(handle, blockPtr, x, y, width, height, zoomX, zoomY,
 	}
 	if (sameSrc) {
 	    blockPtr->pixelPtr = masterPtr->pix32;
+	    blockPtr->pitch = masterPtr->width * 4;
 	}
     }
 

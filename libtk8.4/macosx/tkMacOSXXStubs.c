@@ -142,7 +142,7 @@ TkpOpenDisplay(
     screen->root_visual->green_mask = 0x0000FF00;
     screen->root_visual->blue_mask = 0x000000FF;
     screen->root_visual->bits_per_rgb = 24;
-    screen->root_visual->map_entries = 2 ^ 8;
+    screen->root_visual->map_entries = 256;
 
     gMacDisplay = (TkDisplay *) ckalloc(sizeof(TkDisplay));
     
@@ -328,19 +328,45 @@ XGetImage(display, d, x, y, width, height, plane_mask, format)
     unsigned long plane_mask;
     int format;
 { 
-    XImage * imagePtr;
-    Visual * visual = NULL;
-    int      depth = 0;
-    int      offset = 0;
-    char   * data   = NULL;
-    int      bitmap_pad = 0;
-    int      bytes_per_line = 0;
-    CGrafPtr     grafPtr;
-
-    imagePtr = XCreateImage(display,visual,depth,format, offset, data,
-        width, height, bitmap_pad, bytes_per_line );
-    grafPtr = TkMacOSXGetDrawablePort(d);
-    imagePtr->data = (char *) grafPtr;
+    XImage *   imagePtr = NULL;
+    Pixmap     pixmap = NULL;
+    Tk_Window  win = (Tk_Window) ((MacDrawable *) d)->winPtr;
+    GC         gc;
+    int        depth = 32;
+    int        offset = 0;
+    int        bitmap_pad = 32;
+    int        bytes_per_line = 0;
+    
+    if (TkMacOSXGetDrawablePort(d)) {
+        if (format == ZPixmap) {
+            if (width > 0 && height > 0) {
+                /* Tk_GetPixmap fails for zero width or height */
+                pixmap = Tk_GetPixmap(display, d, width, height, depth);
+            }
+            if (win) {
+                XGCValues values;
+                gc = Tk_GetGC(win, 0, &values);
+            } else {
+                gc = XCreateGC(display, pixmap, 0, NULL);
+            }
+            if (pixmap) {
+                XCopyArea(display, d, pixmap, gc, x, y, width, height, 0, 0);
+            }
+            imagePtr = XCreateImage(display, NULL, depth, format, offset,
+                (char*)TkMacOSXGetDrawablePort(pixmap), 
+                width, height, bitmap_pad, bytes_per_line);
+            /* Track Pixmap underlying the XImage in the unused obdata field *
+             * so that we can treat XImages coming from XGetImage specially. */
+            imagePtr->obdata = (XPointer) pixmap;
+            if (!win) {
+                XFreeGC(display, gc);
+            }
+        } else {
+            TkpDisplayWarning(
+                "XGetImage: only ZPixmap types are implemented",
+                "XGetImage Failure");
+        }
+    }
     return imagePtr;
 }
 
@@ -459,6 +485,7 @@ XCreateImage(
     ximage->green_mask = 0x0000FF00;
     ximage->blue_mask = 0x000000FF;
 
+    ximage->obdata = NULL;
     ximage->f.destroy_image = TkMacOSXXDestroyImage;
     ximage->f.get_pixel = TkMacOSXXGetPixel;
     ximage->f.put_pixel = TkMacOSXXPutPixel;
@@ -667,7 +694,8 @@ int
 TkMacOSXXDestroyImage(
     XImage *image)
 {
-    Debugger();
+    if (image->obdata)
+        Tk_FreePixmap((Display*)gMacDisplay,(Pixmap)image->obdata);
     return 0;
 }
 
@@ -683,9 +711,16 @@ TkMacOSXXGetPixel(
     grafPtr = (CGrafPtr)image->data;
     SetPort(grafPtr);
     GetCPixel(x,y,&cPix);
-    r = cPix . red;
-    g = cPix . green;
-    b = cPix . blue;
+    if (image->obdata) {
+        /* Image from XGetImage, 16 bit color values */
+        r = (cPix . red) >> 8;
+        g = (cPix . green) >> 8;
+        b = (cPix . blue) >> 8;
+    } else {
+        r = cPix . red;
+        g = cPix . green;
+        b = cPix . blue;
+    }
     c = (r<<16)|(g<<8)|(b);
     return c;
 }
@@ -705,9 +740,16 @@ TkMacOSXXPutPixel(
     r  = (pixel & image->red_mask)>>16;
     g  = (pixel & image->green_mask)>>8;
     b  = (pixel & image->blue_mask);
-    cPix . red = r;  
-    cPix . green = g;
-    cPix . blue = b;
+    if (image->obdata) {
+        /* Image from XGetImage, 16 bit color values */
+        cPix . red = r << 8;  
+        cPix . green = g << 8;
+        cPix . blue = b << 8;
+    } else {
+        cPix . red = r;  
+        cPix . green = g;
+        cPix . blue = b;
+    }
     SetCPixel(x,y,&cPix);
     return 0;
 }

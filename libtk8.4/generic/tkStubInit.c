@@ -329,6 +329,7 @@ TkIntStubs tkIntStubs = {
     TkStylePkgInit, /* 146 */
     TkStylePkgFree, /* 147 */
     TkToplevelWindowForCommand, /* 148 */
+    TkGetOptionSpec, /* 149 */
 };
 
 TkIntPlatStubs tkIntPlatStubs = {

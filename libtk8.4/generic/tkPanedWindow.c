@@ -1224,7 +1224,7 @@ PanedWindowWorldChanged(instanceData)
 
     /*
      * Allocated a graphics context for drawing the paned window widget
-     * elements (background, sashes, etc.).
+     * elements (background, sashes, etc.) and set the window background.
      */
     
     gcValues.background = Tk_3DBorderColor(pwPtr->background)->pixel;
@@ -1233,6 +1233,7 @@ PanedWindowWorldChanged(instanceData)
 	Tk_FreeGC(pwPtr->display, pwPtr->gc);
     }
     pwPtr->gc = newGC;
+    Tk_SetWindowBackground(pwPtr->tkwin, gcValues.background);
 
     /*
      * Issue geometry size requests to Tk.

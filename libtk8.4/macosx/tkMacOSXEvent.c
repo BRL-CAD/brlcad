@@ -69,8 +69,18 @@ tkMacOSXFlushWindows ()
         if (QDIsPortBuffered(portPtr)) {
             QDFlushPortBuffer(portPtr, NULL);
         }
-        wRef=GetNextWindow(wRef);
+        wRef = GetNextWindow(wRef);
     }
+}
+
+
+
+int
+XSync (Display *display, Bool flag)
+{
+    tkMacOSXFlushWindows();
+    display->request++;
+    return 0;
 }
 
 /*
@@ -133,8 +143,8 @@ TkMacOSXProcessAppleEvent(TkMacOSXEvent * eventPtr, MacEventStatus * statusPtr)
     EventRecord eventRecord;
     if (ConvertEventRefToEventRecord(eventPtr->eventRef,
         &eventRecord )) {
-        err=TkMacOSXDoHLEvent(&eventRecord);
-        if (err!=noErr) {
+        err = TkMacOSXDoHLEvent(&eventRecord);
+        if (err != noErr) {
             char buf1 [ 256 ];
             char buf2 [ 256 ];
             fprintf(stderr,
@@ -243,7 +253,7 @@ ReceiveAndProcessEvent()
      * into this routine, and are guaranteed to have one waiting.
      */
      
-    err=ReceiveNextEvent(0, NULL, kEventDurationNoWait, 
+    err = ReceiveNextEvent(0, NULL, kEventDurationNoWait, 
             true, &macEvent.eventRef);
     if (err != noErr) {
         return err;
@@ -254,10 +264,10 @@ ReceiveAndProcessEvent()
         TkMacOSXProcessEvent(&macEvent,&eventStatus);
         if (!eventStatus.stopProcessing) {
             if (!targetRef) {
-                targetRef=GetEventDispatcherTarget();
+                targetRef = GetEventDispatcherTarget();
             }
             
-            err= SendEventToEventTarget(macEvent.eventRef,targetRef);
+            err = SendEventToEventTarget(macEvent.eventRef,targetRef);
             if (err != noErr
 #if !TK_MAC_DEBUG
                     && err != eventNotHandledErr
@@ -265,7 +275,7 @@ ReceiveAndProcessEvent()
                 ) {
                 fprintf(stderr,
                         "RCNE SendEventToEventTarget (%s) failed, %d\n",
-                        CarbonEventToAscii(macEvent.eventRef,buf ),err);
+                        CarbonEventToAscii(macEvent.eventRef, buf),err);
             }
          }
          ReleaseEvent(macEvent.eventRef);

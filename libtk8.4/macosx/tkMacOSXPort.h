@@ -159,8 +159,9 @@ extern int		strncasecmp _ANSI_ARGS_((CONST char *s1,
 #define XNoOp(display) {display->request++;}
 #define XUngrabServer(display)
 #define XSynchronize(display, bool) {display->request++;}
-#define XSync(display, bool) {display->request++;}
 #define XVisualIDFromVisual(visual) (visual->visualid)
+
+int XSync(Display *display, Bool discard);
 
 /*
  * The following functions are not used on the Mac, so we stub them out.

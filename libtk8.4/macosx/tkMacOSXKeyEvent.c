@@ -365,7 +365,7 @@ GenerateKeyEvent(
 
     } else {
 
-        for (i=0; i<numChars; ++i) {
+        for (i = 0; i < numChars; ++i) {
 
             /*
              * Encode one char in the trans_chars array that was already

@@ -1,5 +1,4 @@
 /*
-/*
  * tkMacOSXWm.h --
  *
  *	Declarations of Macintosh specific functions for implementing the

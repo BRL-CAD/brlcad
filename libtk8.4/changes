@@ -5479,7 +5479,7 @@ on Windows. (martin)
 of the event structure when that field is valid for that event type. (fellows)
 	*** POTENTIAL INCOMPATIBILITY ***
 
---- Released 8.4.2, March 3, 2002 --- See ChangeLog for details ---
+--- Released 8.4.2, March 3, 2003 --- See ChangeLog for details ---
 
 2003-03-14 (bug fix)[701812] Stop buttons from being very wide when a
 tk_messageBox has a lot of content on Unix
@@ -5502,7 +5502,7 @@ charset fonts.  gb2312.enc was made to be euc-cn for Tcl because that is
 what is most often meant, but X really wants the original (-raw) gb2312
 encoding.
 
---- Released 8.4.3, May 20, 2002 --- See ChangeLog for details ---
+--- Released 8.4.3, May 20, 2003 --- See ChangeLog for details ---
 
 2003-07-07 (bug fix)[749353] Improve deletion of images on exit.
 
@@ -5544,3 +5544,81 @@ on unix.
 while moving the thumb.
 
 --- Released 8.4.4, July 22, 2003 --- See ChangeLog for details ---
+
+2003-08-13 (bug fix)[787065] Fix Button-2 binding for scale widget.
+
+2003-08-19 (bug fix)[791500] Fix panedwindow refresh glitches for bg.
+
+2003-09-17 (bug fix)[808039] Prevent [image create] from generating an
+image command name that overwrites an existing command.
+
+2003-09-25 (enhancement) Added -compound support for OS X bevel buttons.
+
+2003-10-10 (bug fix) Fix image offset stippling for disabled buttons.
+
+2003-10-22 (enhancement)[827535] Constrain tk_dialog to be sensibly sized and
+placed
+
+2003-10-28 (bug fix) Add 16bpp XGetImage support on Windows
+
+2003-10-29 (enhancement)[795717] Allow some control of foreground and
+background colors on Tk's tk_getOpenFile/tk_chooseDirectory.
+
+2003-11-01 (enhancement)[820519] Updated Dutch (nl) message catalog.
+
+2003-11-10 (enhancement)[826614] Provide more Tk build info in tkConfig.sh.
+
+2003-11-10 (enhancement)[809157] Add alpha blending for images with partial
+transparency on Windows and Unix on 15bpp+ displays.
+
+2003-11-10 (enhancement)[820282] Use the XGCValues.function parameter when
+filling rectangles with XFillRectangles on Windows.
+
+2003-11-11 (enhancement)[840107] Add OS X unicode clipboard support.
+
+2003-11-11 (enhancement)[833819] Improve Tk's
+tk_getOpenFile/tk_chooseDirectory directory glob'ing speed.
+
+2003-11-11 (bug fix)[836483] Fix mem leak in '$listbox itemconfigure'.
+
+2003-11-11 (bug fix)[723856] Correctly handle menu (un)posting on menus
+with spaces in their names.
+
+2003-11-11 (enhancement) Improve AIX-64 build configuration.
+
+2003-11-17 (bug fix) Fix menubutton -compound state disabled drawing.
+
+--- Released 8.4.5, November 20, 2003 --- See ChangeLog for details ---
+
+2003-12-17 (platform support)[842952] Mac OS X: [scrollbar]
+
+2004-02-13 (platform support)[776646] Win: native hand2/fleur cursors
+
+2004-02-03 (enhancement) post menubuttons so they stay on screen.
+
+2004-02-09 (bug fix)[877950] stop crash during intra-image copy/resize
+
+2004-02-10 (enhancement) New msg catalogs for Esperanto and Polish (trzewik)
+
+2004-02-13 (platform support)[478568] Win: bold/italic font handling
+
+2004-02-15 (platform support)[860454] Mac OS X: [event generate]
+
+2004-02-15 (platform support)[840107] Mac OS X: Unicode clipboard (senn)
+
+2004-02-15 (platform support)[517600] Mac OS X: handle FSRef's
+
+2004-02-15 (platform support) Mac OS X: native [tk_messageBox]
+
+2004-02-15 (platform support) Mac OS X: PowerBook keycode 0x34 -> <Return>
+
+2004-02-18 (platform support) Mac OS MouseWheel event handling
+
+2004-02-18 (bug fix)[899246] fix shrinking grid geometry calculations
+
+2004-02-23 (platform support)[809157] Mac OS X: Add alpha blending for
+images with partial transparency.
+
+2004-03-01 (platform support)[218561] Allow 64-bit configure on IRIX64-6.5*
+
+--- Released 8.4.6, March 1, 2004 --- See ChangeLog for details ---

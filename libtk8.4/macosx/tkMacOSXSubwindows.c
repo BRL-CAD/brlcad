@@ -898,8 +898,8 @@ TkMacOSXInvalidateWindow(
     WindowRef windowRef;
     CGrafPtr  grafPtr;
 
-    grafPtr=TkMacOSXGetDrawablePort((Drawable)macWin);
-    windowRef=GetWindowFromPort(grafPtr);
+    grafPtr = TkMacOSXGetDrawablePort((Drawable)macWin);
+    windowRef = GetWindowFromPort(grafPtr);
     
     if (flag == TK_WINDOW_ONLY) {
 	InvalWindowRgn(windowRef,macWin->clipRgn);

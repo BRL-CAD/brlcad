@@ -187,18 +187,18 @@ TkpDisplayMenuButton(
     SetGWorld(dstPort, NULL);
     TkMacOSXSetUpClippingRgn(Tk_WindowId(tkwin));
 
-    winPtr=(TkWindow *)butPtr->tkwin;
-    paneRect.left=winPtr->privatePtr->xOff;
-    paneRect.top=winPtr->privatePtr->yOff;
-    paneRect.right=paneRect.left+Tk_Width(butPtr->tkwin)-1;
-    paneRect.bottom=paneRect.top+Tk_Height(butPtr->tkwin)-1;
+    winPtr = (TkWindow *)butPtr->tkwin;
+    paneRect.left = winPtr->privatePtr->xOff;
+    paneRect.top = winPtr->privatePtr->yOff;
+    paneRect.right = paneRect.left+Tk_Width(butPtr->tkwin)-1;
+    paneRect.bottom = paneRect.top+Tk_Height(butPtr->tkwin)-1;
     
-    cntrRect=paneRect;
+    cntrRect = paneRect;
         
-    cntrRect.left+=butPtr->inset;
-    cntrRect.top+=butPtr->inset;
-    cntrRect.right-=butPtr->inset;
-    cntrRect.bottom-=butPtr->inset;
+    cntrRect.left += butPtr->inset;
+    cntrRect.top += butPtr->inset;
+    cntrRect.right -= butPtr->inset;
+    cntrRect.bottom -= butPtr->inset;
 
     if (mbPtr->userPane) {
         MenuButtonControlParams params;
@@ -246,7 +246,8 @@ TkpDisplayMenuButton(
         }
         if ((titleChanged||styleChanged) && titleParams .len) {
             if (hasImageOrBitmap) {
-                if ((err=SetControlFontStyle(mbPtr->control,&titleParams.style))!=noErr) {
+	      err = SetControlFontStyle(mbPtr->control,&titleParams.style);
+                if (err !=noErr) {
                     fprintf(stderr,"SetControlFontStyle failed %d\n", err);
                     return;
                 }
@@ -284,10 +285,11 @@ TkpDisplayMenuButton(
         ClosePicture();
         
         tkPictureIsOpen = 0;
-        if ( (err=SetControlData(mbPtr->control, kControlButtonPart,
+	err = SetControlData(mbPtr->control, kControlButtonPart,
                     kControlBevelButtonContentTag,
                     sizeof(ControlButtonContentInfo),
-                    (char *) &mbPtr->bevelButtonContent)) != noErr ) {
+			   (char *) &mbPtr->bevelButtonContent);
+        if (err != noErr) {
                 fprintf(stderr,"SetControlData BevelButtonContent failed, %d\n", err );
         }
         switch (butPtr->anchor) {
@@ -320,10 +322,11 @@ TkpDisplayMenuButton(
                 break;
         }
     
-        if ((err=SetControlData(mbPtr->control, kControlButtonPart,
+	err = SetControlData(mbPtr->control, kControlButtonPart,
                 kControlBevelButtonGraphicAlignTag,
                 sizeof(ControlButtonGraphicAlignment),
-                (char *) &theAlignment)) != noErr ) {
+		(char *) &theAlignment);
+        if (err != noErr ) {
             fprintf(stderr,"SetControlData BevelButtonGraphicAlign failed, %d\n", err );
         }
     }
@@ -449,7 +452,7 @@ TkpComputeMenuButtonGeometry(mbPtr)
     if (mbPtr->indicatorOn) {
         mm = WidthMMOfScreen(Tk_Screen(mbPtr->tkwin));
         pixels = WidthOfScreen(Tk_Screen(mbPtr->tkwin));
-        mbPtr->indicatorHeight= kTriangleHeight;
+        mbPtr->indicatorHeight = kTriangleHeight;
         mbPtr->indicatorWidth = kTriangleWidth + kTriangleMargin;
         width += mbPtr->indicatorWidth;
     } else {
@@ -604,31 +607,32 @@ MenuButtonInitControl (
     int        length;
     Str255     itemText;
 
-    rootControl=TkMacOSXGetRootControl(Tk_WindowId(butPtr->tkwin));
-    mbPtr->windowRef=GetWindowFromPort(TkMacOSXGetDrawablePort(Tk_WindowId(butPtr->tkwin)));
+    rootControl = TkMacOSXGetRootControl(Tk_WindowId(butPtr->tkwin));
+    mbPtr->windowRef = GetWindowFromPort(TkMacOSXGetDrawablePort(Tk_WindowId(butPtr->tkwin)));
     /* 
      * Set up the user pane
      */
     initiallyVisible = false;
     initialValue = kControlSupportsEmbedding|
-        kControlHasSpecialBackground;
+            kControlHasSpecialBackground;
     minValue = 0;
     maxValue = 1;
     procID = kControlUserPaneProc;
     controlReference = (SInt32)mbPtr;
-    mbPtr->userPane=NewControl(mbPtr->windowRef,
-        paneRect, "\p",
-        initiallyVisible,
-        initialValue,
-        minValue,
-        maxValue,
-        procID,
-        controlReference );
+    mbPtr->userPane = NewControl(mbPtr->windowRef,
+            paneRect, "\p",
+            initiallyVisible,
+            initialValue,
+            minValue,
+            maxValue,
+            procID,
+            controlReference );
     if (!mbPtr->userPane) {
         fprintf(stderr,"Failed to create user pane control\n");
         return 1;
     }
-    if ((status=EmbedControl(mbPtr->userPane,rootControl))!=noErr) {
+    status = EmbedControl(mbPtr->userPane,rootControl);
+    if (status != noErr) {
         fprintf(stderr,"Failed to embed user pane control %d\n", status);
         return 1;
     }
@@ -651,7 +655,8 @@ MenuButtonInitControl (
         fprintf(stderr,"failed to create control of type %d : line %d\n",mbPtr->params.procID, __LINE__);
         return 1;
     }
-    if ((err=EmbedControl(mbPtr->control,mbPtr->userPane)) != noErr ) {
+    err = EmbedControl(mbPtr->control,mbPtr->userPane);
+    if (err != noErr ) {
         fprintf(stderr,"failed to embed control of type %d,%d\n",procID, err);
         return 1;
     }
@@ -662,35 +667,36 @@ MenuButtonInitControl (
         SetControlTitleWithCFString(mbPtr->control, cf);
         CFRelease(cf);
         if (mbPtr->titleParams.len) {
-            if ((err=SetControlFontStyle(mbPtr->control,&mbPtr->titleParams.style))!=noErr) {
+	  err = SetControlFontStyle(mbPtr->control,&mbPtr->titleParams.style);
+            if (err !=noErr) {
                 fprintf(stderr,"SetControlFontStyle failed %d\n", err);
                 return 1;
              }
         }
     } else {
-            CFStringRef cf;    	    
+        CFStringRef cf;    	    
         err = TkMacOSXGetNewMenuID(mbPtr->info.interp, (TkMenu *)mbPtr, 0, &menuID);
         if (err != TCL_OK) {
             return err;
         }       
         length = strlen(Tk_PathName(mbPtr->info.tkwin));
         memmove(&itemText[1], Tk_PathName(mbPtr->info.tkwin),
-            (length > 230) ? 230 : length);
+                (length > 230) ? 230 : length);
         itemText[0] = (length > 230) ? 230 : length;
         if (!(mbPtr->menuRef = NewMenu(menuID,itemText))) {
             return 1;
         }
-            cf = CFStringCreateWithCString(NULL,
-                  mbPtr->titleParams.title, kCFStringEncodingUTF8);
+        cf = CFStringCreateWithCString(NULL,
+                mbPtr->titleParams.title, kCFStringEncodingUTF8);
         AppendMenuItemText(mbPtr->menuRef, "\px");
         if (cf != NULL) {
         SetMenuItemTextWithCFString(mbPtr->menuRef, 1, cf);
         CFRelease(cf);
         }
         err = SetControlData(mbPtr->control,
-            kControlNoPart,
-            kControlPopupButtonMenuRefTag,
-            sizeof(mbPtr->menuRef), &mbPtr->menuRef);
+                kControlNoPart,
+                kControlPopupButtonMenuRefTag,
+                sizeof(mbPtr->menuRef), &mbPtr->menuRef);
         SetControlMinimum(mbPtr->control, 1);
         SetControlMaximum(mbPtr->control, 1);
         SetControlValue(mbPtr->control, 1);
@@ -723,9 +729,9 @@ OSErr SetUserPaneDrawProc (
     ControlUserPaneDrawUPP myControlUserPaneDrawUPP;
     myControlUserPaneDrawUPP = NewControlUserPaneDrawUPP(upp);        
     return SetControlData (control, 
-        kControlNoPart, kControlUserPaneDrawProcTag, 
-        sizeof(myControlUserPaneDrawUPP), 
-        (Ptr) &myControlUserPaneDrawUPP);
+            kControlNoPart, kControlUserPaneDrawProcTag, 
+            sizeof(myControlUserPaneDrawUPP), 
+            (Ptr) &myControlUserPaneDrawUPP);
 }
 
 /*

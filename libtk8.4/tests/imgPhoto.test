@@ -661,6 +661,14 @@ test imgPhoto-15.1 {photo images can fail to allocate memory gracefully} \
     list [catch {image create photo -width 32000 -height 32000} msg] $msg
 } {1 {not enough free memory for image buffer}}
 
+test imgPhoto-16.1 {copying to self doesn't access freed memory} {
+    # Bug 877950 makes this crash when trying to copy out of a deallocated area
+    set i [image create photo]
+    $i put red -to 0 0 1000 1000
+    $i copy $i -from 0 0 1000 1000 -to 500 0
+    image delete $i
+} {}
+
 destroy .c
 eval image delete [image names]
 
