@@ -15,6 +15,8 @@
  *	Roy Hall and his book "Illumination and Color in Computer
  *	Generated Imagery", Springer Verlag, New York, 1989.
  *	ISBN 0-387-96774-5
+ *
+ *  With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (ARL)";
