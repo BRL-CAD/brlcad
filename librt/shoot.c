@@ -660,10 +660,8 @@ register struct application *ap;
 		cutp = &(rtip->rti_inf_box);
 		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
-			register struct soltab *stp;
-			register struct seg *newseg;
+			register CONST struct soltab *stp = *stpp;
 
-			stp = *stpp;
 			/* Shoot a ray */
 			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
 			BITSET( solidbits->be_v, stp->st_bit );
@@ -753,13 +751,10 @@ register struct application *ap;
 		/* Consider all objects within the box */
 		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
-			register struct soltab *stp;
-			register struct seg *newseg;
+			register CONST struct soltab *stp = *stpp;
 
-			stp = *stpp;
+			/* On m35.g, this block of code eats 15% of CPU! */
 			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
-				if(debug_shoot)rt_log("eff skip %s\n", stp->st_name);
-				rtip->nmiss_tree++;
 				continue;	/* already shot */
 			}
 
