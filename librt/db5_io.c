@@ -1287,6 +1287,81 @@ double			conv2mm;
 }
 
 /*
+ *			R T _ D B _ E X T E R N A L 5 _ T O _ I N T E R N A L 5
+ *
+ *  Given an object in external form, convert it to internal form.
+ *  The caller is responsible for freeing the external form.
+ *
+ *  Returns -
+ *	<0	On error
+ *	id	On success.
+ */
+int
+rt_db_external5_to_internal5(
+	struct rt_db_internal		*ip,
+	const struct bu_external	*ep,
+	const char			*name,
+	const struct db_i		*dbip,
+	const mat_t			mat)
+{
+	register int		id;
+	struct db5_raw_internal	raw;
+
+	BU_CK_EXTERNAL(ep);
+	RT_CK_DB_INTERNAL(ip);
+	RT_CK_DBI(dbip);
+
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
+
+	if( db5_get_raw_internal_ptr( &raw, ep->ext_buf ) < 0 )  {
+		bu_log("rt_db_get_internal5(%s):  import failure\n",
+			name );
+		return -3;
+	}
+
+	if( raw.major_type == DB5_MAJORTYPE_BRLCAD )  {
+		id = raw.minor_type;
+		/* As a convenience to older ft_import routines */
+		if( mat == NULL )  mat = bn_mat_identity;
+	} else {
+		bu_log("rt_db_get_internal5(%s):  unable to import non-BRL-CAD object, major=%d\n",
+			name, raw.major_type );
+		return -1;		/* FAIL */
+	}
+
+	/* If attributes are present in the object, make them available
+	 * in the internal form.
+	 */
+	if( raw.attributes.ext_buf )  {
+		if( db5_import_attributes( &ip->idb_avs, &raw.attributes ) < 0 )  {
+			bu_log("rt_db_get_internal5(%s):  mal-formed attributes in database\n",
+				name );
+			return -8;
+		}
+	}
+
+	if( !raw.body.ext_buf )  {
+		bu_log("rt_db_get_internal5(%s):  object has no body\n",
+			name );
+		return -4;
+	}
+
+	/* ip has already been initialized, and should not be re-initted */
+	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip ) < 0 )  {
+		bu_log("rt_db_get_internal5(%s):  import failure\n",
+			name );
+		rt_db_free_internal( ip );
+		return -1;		/* FAIL */
+	}
+	/* Don't free &raw.body */
+
+	RT_CK_DB_INTERNAL( ip );
+	ip->idb_type = id;
+	ip->idb_meth = &rt_functab[id];
+	return id;			/* OK */
+}
+
+/*
  *			R T _ D B _ G E T _ I N T E R N A L 5
  *
  *  Get an object from the database, and convert it into it's internal
@@ -1307,8 +1382,7 @@ CONST struct db_i	*dbip;
 CONST mat_t		mat;
 {
 	struct bu_external	ext;
-	register int		id;
-	struct db5_raw_internal	raw;
+	int			ret;
 
 	BU_INIT_EXTERNAL(&ext);
 	RT_INIT_DB_INTERNAL(ip);
@@ -1318,57 +1392,9 @@ CONST mat_t		mat;
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
-	if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 )  {
-		bu_log("rt_db_get_internal5(%s):  import failure\n",
-			dp->d_namep );
-		bu_free_external( &ext );
-		return -3;
-	}
-
-	if( raw.major_type == DB5_MAJORTYPE_BRLCAD )  {
-		id = raw.minor_type;
-		/* As a convenience to older ft_import routines */
-		if( mat == NULL )  mat = bn_mat_identity;
-	} else {
-		bu_log("rt_db_get_internal5(%s):  unable to import non-BRL-CAD object, major=%d\n",
-			dp->d_namep, raw.major_type );
-		bu_free_external( &ext );
-		return -1;		/* FAIL */
-	}
-
-	/* If attributes are present in the object, make them available
-	 * in the internal form.
-	 */
-	if( raw.attributes.ext_buf )  {
-		if( db5_import_attributes( &ip->idb_avs, &raw.attributes ) < 0 )  {
-			bu_log("rt_db_get_internal5(%s):  mal-formed attributes in database\n",
-				dp->d_namep );
-			return -8;
-		}
-	}
-
-	if( !raw.body.ext_buf )  {
-		bu_log("rt_db_get_internal5(%s):  object has no body\n",
-			dp->d_namep );
-		bu_free_external( &ext );
-		return -4;
-	}
-
-	/* ip has already been initialized, and should not be re-initted */
-	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip ) < 0 )  {
-		bu_log("rt_db_get_internal5(%s):  import failure\n",
-			dp->d_namep );
-		rt_db_free_internal( ip );
-		bu_free_external( &ext );
-		return -1;		/* FAIL */
-	}
-	bu_free_external( &ext );
-	/* Don't free &raw.body */
-
-	RT_CK_DB_INTERNAL( ip );
-	ip->idb_type = id;
-	ip->idb_meth = &rt_functab[id];
-	return id;			/* OK */
+	ret = rt_db_external5_to_internal5( ip, &ext, dp->d_namep, dbip, mat );
+	bu_free_external(&ext);
+	return ret;
 }
 
 /*
