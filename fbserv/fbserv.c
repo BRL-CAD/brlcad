@@ -306,8 +306,6 @@ char *buf;
 {
 	int	x, y, num;
 	char	rbuf[4+1];
-	long	ret;
-	char	*datap;
 	int	type;
 
 	x = fbgetlong( &buf[0*4] );
@@ -320,7 +318,6 @@ char *buf;
 		(void)fbputlong( ret, &rbuf[0] );
 		pkg_send( MSG_RETURN, rbuf, 4, pcp );
 	}
-	free( datap );
 	if( buf ) (void)free(buf);
 }
 
