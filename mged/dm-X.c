@@ -332,7 +332,7 @@ X_update()
 /* ARGSUSED */
 void
 X_puts( str, x, y, size, color )
-register u_char *str;
+register char *str;
 {
 	XGCValues gcv;
 	unsigned long fg;
@@ -605,7 +605,7 @@ char	*name;
 
 	width = height = 512;
 
-	if( name == NULL || *name == NULL ) {
+	if( name == NULL || *name == '\0' ) {
 		if( (envp = getenv("DISPLAY")) == NULL ) {
 			/* Env not set, use local host */
 			gethostname( hostname, 80 );
