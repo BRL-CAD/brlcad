@@ -425,7 +425,8 @@ install-binaries: $(TCL_LIB_FILE) tclsh
 	@(cd $(LIB_INSTALL_DIR); $(RANLIB) $(TCL_LIB_FILE))
 	@chmod 555 $(LIB_INSTALL_DIR)/$(TCL_LIB_FILE)
 	@echo "Installing tclsh"
-	@$(INSTALL_PROGRAM) tclsh $(BIN_INSTALL_DIR)/tclsh$(VERSION)
+#	@$(INSTALL_PROGRAM) tclsh $(BIN_INSTALL_DIR)/tclsh$(VERSION)
+	@$(INSTALL_PROGRAM) tclsh $(BIN_INSTALL_DIR)/tclsh
 	@echo "Installing tclConfig.sh"
 	@$(INSTALL_DATA) tclConfig.sh $(LIB_INSTALL_DIR)/tclConfig.sh
 
