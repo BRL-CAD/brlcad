@@ -314,6 +314,7 @@ int		ncpus;
 	return(0);	/* OK */
 }
 
+#if 0	/* XXX rt_plookup replaced by db_follow_path_for_state */
 /*
  *			R T _ P L O O K U P
  * 
@@ -347,6 +348,7 @@ int		noisy;
 	*dirp = path.fp_names;
 	return(path.fp_len);
 }
+#endif
 
 /*
  *			R T _ B O U N D _ T R E E
