@@ -1204,7 +1204,7 @@ dnl tk
 dnl Need to update version number(s) in src/other/libtk/Makefile.am
 TK_VERSION="8.4"
 TK_LIBRARY="'${prefix}/lib/tk${TK_VERSION}'"
-TK='${top_builddir}/src/other/libtk/build/libtk${TK_VERSION}.so'
+TK='${top_builddir}/src/other/libtk/build/libtk${TK_VERSION}.so -Wl,--rpath -Wl,${libdir}'
 dnl TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 AC_SUBST(TK_VERSION)
 AC_SUBST(TK_LIBRARY)
