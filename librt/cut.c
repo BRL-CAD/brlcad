@@ -96,7 +96,7 @@ register struct rt_i *rtip;
 	rtip->rti_CutHead.bn.bn_list = (struct soltab **)rt_malloc(
 		rtip->rti_CutHead.bn.bn_maxlen * sizeof(struct soltab *),
 		"rt_cut_it: root list" );
-	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
 		if( stp->st_aradius >= INFINITY )  {
@@ -105,7 +105,7 @@ register struct rt_i *rtip;
 		} else {
 			rt_cut_extend( &rtip->rti_CutHead, stp );
 		}
-	}
+	} RT_VISIT_ALL_SOLTABS_END
 
 	/* For plotting, compute a slight enlargement of the model RPP,
 	 * to allow room for rays clipped to the model RPP to be depicted.
@@ -163,7 +163,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	rt_hist_init( &xhist, (int)rtip->rti_pmin[X], (int)rtip->rti_pmax[X], RT_NUGRID_NBINS );
 	rt_hist_init( &yhist, (int)rtip->rti_pmin[Y], (int)rtip->rti_pmax[Y], RT_NUGRID_NBINS );
 	rt_hist_init( &zhist, (int)rtip->rti_pmin[Z], (int)rtip->rti_pmax[Z], RT_NUGRID_NBINS );
-	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
 		if( stp->st_aradius >= INFINITY )  continue;
@@ -179,7 +179,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			RT_HISTOGRAM_TALLY( &end_hist[i],
 				(int)stp->st_max[i] );
 		}
-	}
+	} RT_VISIT_ALL_SOLTABS_END
 	if(rt_g.debug&DEBUG_CUT)  {
 		char	obuf[128];
 		rt_hist_pr( &xhist, "cut_tree:  solid RPP extent distribution in X" );
@@ -297,13 +297,15 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		VMOVE( nu_xbox.bn_min, xmin );
 		VMOVE( nu_xbox.bn_max, xmax );
 		nu_xbox.bn_len = 0;
+
 		/* Search all solids for those in this X slice */
-		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 			RT_CHECK_SOLTAB(stp);
 			if( !rt_ck_overlap( xmin, xmax, stp ) )
 				continue;
 			nu_xbox.bn_list[nu_xbox.bn_len++] = stp;
-		}
+		} RT_VISIT_ALL_SOLTABS_END
+
 		/* Build each of the Y slices in this X slice */
 		for( yp = 0; yp < nu_cells_per_axis[Y]; yp++ )  {
 			VMOVE( ymin, xmin );

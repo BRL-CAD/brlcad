@@ -48,11 +48,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  Internal function to return pointer to head of hash chain
  *  corresponding to the given string.
  */
-static int
+int
 db_dirhash(str)
-char *str;
+CONST char *str;
 {
-	register unsigned char *s = (unsigned char *)str;
+	register CONST unsigned char *s = (unsigned char *)str;
 	register long sum;
 	register int i;
 

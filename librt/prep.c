@@ -77,12 +77,13 @@ register struct rt_i *rtip;
 	/*
 	 *  Allocate space for a per-solid bit of rtip->nregions length.
 	 */
-	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		stp->st_regions = (bitv_t *)rt_calloc(
 			RT_BITV_BITS2WORDS(rtip->nregions),
 			sizeof(bitv_t), "st_regions bitv" );
 		stp->st_maxreg = 0;
-	}
+	} RT_VISIT_ALL_SOLTABS_END
+
 
 	/* In case everything is a halfspace, set a minimum space */
 	if( rtip->mdl_min[X] >= INFINITY )  {
@@ -125,11 +126,11 @@ register struct rt_i *rtip;
 		}
 	}
 	if(rt_g.debug&DEBUG_REGIONS)  {
-		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 			rt_log("solid %s ", stp->st_name);
 			rt_pr_bitv( "regions ref", stp->st_regions,
 				stp->st_maxreg);
-		}
+		} RT_VISIT_ALL_SOLTABS_END
 	}
 
 	/*  Space for array of soltab pointers indexed by solid bit number.
@@ -144,10 +145,11 @@ register struct rt_i *rtip;
 	 *  Last element for each kind will be found in
 	 *	rti_sol_by_type[id][rti_nsol_by_type[id]-1]
 	 */
-	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		rtip->rti_Solids[stp->st_bit] = stp;
 		rtip->rti_nsol_by_type[stp->st_id]++;
-	}
+	} RT_VISIT_ALL_SOLTABS_END
+
 	/* Find solid type with maximum length (for rt_shootray) */
 	rtip->rti_maxsol_by_type = 0;
 	for( i=0; i <= ID_MAXIMUM; i++ )  {
@@ -164,11 +166,11 @@ register struct rt_i *rtip;
 		rtip->rti_nsol_by_type[i] = 0;
 	}
 	/* Fill in the array and rebuild the count (aka index) */
-	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		register int	id;
 		id = stp->st_id;
 		rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
-	}
+	} RT_VISIT_ALL_SOLTABS_END
 	if( rt_g.debug & DEBUG_DB )  {
 		for( i=1; i <= ID_MAXIMUM; i++ )  {
 			rt_log("%5d %s (%d)\n",
@@ -219,14 +221,14 @@ struct rt_i	*rtip;
 
 	RT_CK_RTI(rtip);
 	pdv_3space( fp, rtip->rti_pmin, rtip->rti_pmax );
-	for( RT_LIST_FOR( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
 		/* Don't draw infinite solids */
 		if( stp->st_aradius >= INFINITY )
 			continue;
 		pdv_3box( fp, stp->st_min, stp->st_max );
-	}
+	} RT_VISIT_ALL_SOLTABS_END
 }
 
 /*
@@ -243,7 +245,7 @@ struct rt_i	*rtip;
 
 	pdv_3space( fp, rtip->rti_pmin, rtip->rti_pmax );
 
-	for( RT_LIST_FOR( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
 
@@ -252,7 +254,7 @@ struct rt_i	*rtip;
 			continue;
 
 		(void)rt_plot_solid( fp, rtip, stp );
-	}
+	} RT_VISIT_ALL_SOLTABS_END
 }
 
 /*
@@ -400,6 +402,7 @@ rt_clean( rtip )
 register struct rt_i *rtip;
 {
 	register struct region *regp;
+	register struct rt_list	*head;
 	register struct soltab *stp;
 	int	i;
 
@@ -408,18 +411,21 @@ register struct rt_i *rtip;
 	/*
 	 *  Clear out the solid table
 	 */
-	while( RT_LIST_WHILE( stp, soltab, &(rtip->rti_headsolid) ) )  {
-		RT_CHECK_SOLTAB(stp);
-		RT_LIST_DEQUEUE( &(stp->l) );
-		if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
-			rt_bomb("rt_clean:  bad st_id");
-		rt_functab[stp->st_id].ft_free( stp );
-		rt_free( (char *)stp->st_regions, "st_regions bitv" );
-		if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
-		stp->st_matp = (matp_t)0;
-		stp->st_regions = (bitv_t *)0;
-		stp->st_dp = DIR_NULL;		/* was ptr to directory */
-		rt_free( (char *)stp, "struct soltab");
+	head = &(rtip->rti_solidheads[0]);
+	for( ; head < &(rtip->rti_solidheads[RT_DBNHASH]); head++ )  {
+		while( RT_LIST_WHILE( stp, soltab, head ) )  {
+			RT_CHECK_SOLTAB(stp);
+			RT_LIST_DEQUEUE( &(stp->l) );
+			if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
+				rt_bomb("rt_clean:  bad st_id");
+			rt_functab[stp->st_id].ft_free( stp );
+			rt_free( (char *)stp->st_regions, "st_regions bitv" );
+			if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
+			stp->st_matp = (matp_t)0;
+			stp->st_regions = (bitv_t *)0;
+			stp->st_dp = DIR_NULL;		/* was ptr to directory */
+			rt_free( (char *)stp, "struct soltab");
+		}
 	}
 	rtip->nsolids = 0;
 

@@ -202,6 +202,15 @@ static CONST mat_t	rt_equal_matrix = {
  *  In order to avoid a race between searching the soltab list and
  *  adding new solids to it, the new solid to be added *must* be
  *  enrolled in the list before exiting the critical section.
+ *
+ *  To limit the size of the list to be searched, there are many lists.
+ *  The selection of which list is determined by the hash value
+ *  computed from the solid's name.
+ *  This is the same optimization used in searching the directory lists.
+ *
+ *  This subroutine is the critical bottleneck in parallel tree walking.
+ *  XXX As a future enhancement, it would be safe (and faster!) to use
+ *  XXX different critical sections for the different lists.
  */
 HIDDEN struct soltab *rt_find_identical_solid( mat, dp, rtip )
 register CONST matp_t		mat;
@@ -212,14 +221,20 @@ struct rt_i			*rtip;
 	register struct rt_list	*head;
 	register int		i;
 	int			have_match;
+	int			hash;
 
 	RT_CK_RTI(rtip);
 
 	have_match = 0;
+	hash = db_dirhash( dp->d_namep );
+
 	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
 
-	head = &(rtip->rti_headsolid);
-	for( RT_LIST_FOR( stp, soltab, head ) )  {
+	head = &(rtip->rti_solidheads[hash]);
+
+	/* If solid has not been referenced yet, the search can be skipped */
+	if( dp->d_uses > 0 )  for( RT_LIST_FOR( stp, soltab, head ) )  {
+
 		/* Leaf solids must be the same before comparing matrices */
 		if( dp != stp->st_dp )  continue;
 
@@ -264,6 +279,7 @@ next_one: ;
 		GETSTRUCT(stp, soltab);
 		stp->l.magic = RT_SOLTAB_MAGIC;
 		stp->st_dp = dp;
+		dp->d_uses++;
 		stp->st_bit = rtip->nsolids++;
 
 		if( mat )  {
@@ -272,7 +288,7 @@ next_one: ;
 		} else {
 			stp->st_matp = (matp_t)0;
 		}
-
+		/* Add to the appropriate linked list */
 		RT_LIST_INSERT( head, &(stp->l) );
 	}
 
@@ -419,7 +435,7 @@ CONST char	*node;
  *  User-called function to add a set of tree hierarchies to the active set.
  *
  *  Semaphores used for critical sections in parallel mode:
- *	res_model	protects rti_headsolid & list
+ *	res_model	protects rti_solidheads[] lists
  *	res_results	protects HeadRegion, mdl_min/max, d_uses, nregions
  *	res_worker	(db_walk_dispatcher, from db_walk_tree)
  *  
@@ -457,10 +473,10 @@ int		ncpus;
 
 	if(rt_g.debug&DEBUG_SOLIDS)  {
 		register CONST struct soltab	*stp;
-		for( RT_LIST_FOR( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 			RT_CK_SOLTAB(stp);
 			rt_pr_soltab( stp );
-		}
+		} RT_VISIT_ALL_SOLTABS_END
 	}
 
 	if( i < 0 )  return(-1);
@@ -763,12 +779,12 @@ register CONST char	*name;
 	RT_CHECK_RTI(rtip);
 	c = name[0];
 
-	for( RT_LIST_FOR( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		if( *(cp = stp->st_dp->d_namep) == c  &&
 		    strcmp( cp, name ) == 0 )  {
 			return(stp);
 		}
-	}
+	} RT_VISIT_ALL_SOLTABS_END
 	return(RT_SOLTAB_NULL);
 }
 
