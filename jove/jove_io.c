@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.8  91/08/30  19:34:16  mike
+ * Changed VMUNIX to !defined(pdp11)
+ * 
  * Revision 2.7  91/08/30  19:17:44  mike
  * Stardent ANSI lint
  * 
@@ -691,7 +694,7 @@ disk_line	atl;
 }
 
 #if !defined(pdp11)
-/* Cache 64 disk blocks in memory */
+/* Cache the first 64 disk blocks of temp file in memory */
 #define	INCORB	64
 char	incorb[INCORB+1][BSIZ];
 #define	pagrnd(a)	((char *)(((int)a)&~(BSIZ-1)))
@@ -702,6 +705,7 @@ short	b;
 char	*buf;
 int	(*iofcn)();
 {
+	extern int read();
 
 #ifdef INCORB
 	if (b < INCORB) {
