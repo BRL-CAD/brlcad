@@ -522,7 +522,10 @@ register struct rt_i *rtip;
 		bu_free( (genptr_t)regp->reg_name, "region name str");
 		regp->reg_name = (char *)0;
 		if( regp->reg_mater.ma_shader )
+		{
 			bu_free( (genptr_t)regp->reg_mater.ma_shader, "ma_shader" );
+			regp->reg_mater.ma_shader = (char *)NULL;
+		}
 
 		bu_free( (genptr_t)regp, "struct region");
 		regp = nextregp;
