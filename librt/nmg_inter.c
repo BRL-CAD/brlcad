@@ -2863,6 +2863,8 @@ struct faceuse		*fu2;
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
 	)  {
 		NMG_CK_EDGEUSE(*eup);
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("\tConsidering *eup=x%x for colinearity\n", *eup);
 		/* XXX Should do same thing as nmg_edge_geom_isect_line() does in
 		 * XXX nmg_fcut.c, and force edge geom to isect line if it has none.
 		 */
@@ -2884,7 +2886,7 @@ struct faceuse		*fu2;
 		 *  List both vertexuse structures.
 		 */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\t\tedge colinear with isect line.  Listing vu1a, vu1b\n");
+			rt_log("\tedgeuse x%x colinear with isect line.  Listing vu1a, vu1b\n", *eup);
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
 		nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
@@ -2903,8 +2905,14 @@ struct faceuse		*fu2;
 	 *  Found the ONE point in 2D where the two lines intersect.
 	 */
 not_colinear:
-	VJOIN1_2D( hit2d, is->pt2d, dist[0], is->dir2d );
 	VJOIN1( hit3d, is->pt, dist[0], is->dir );
+	if( !V3PT_IN_RPP( hit3d, fu1->f_p->min_pt, fu1->f_p->max_pt ) )  {
+		/* Lines intersect outside bounds of this face.  Done. */
+		ret = 0;
+		goto out;
+	}
+
+	VJOIN1_2D( hit2d, is->pt2d, dist[0], is->dir2d );
 	hit_v = (struct vertex *)NULL;
 	ret = 0;
 
@@ -2916,7 +2924,7 @@ not_colinear:
 
 		NMG_CK_EDGEUSE(*eup);
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\t\tConsidering *eup=x%x\n", *eup);
+			rt_log("\tConsidering *eup=x%x\n", *eup);
 
 		vu1a = (*eup)->vu_p;
 		vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eup) )->vu_p;
@@ -2927,54 +2935,64 @@ not_colinear:
 		if( vu1a->v_p == hit_v )  {
 hit_a:
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("\t\tlisting intersect point at vu1a=x%x\n", vu1a);
-			if( !rt_pt3_pt3_equal(hit3d, vu1a->v_p->vg_p->coord, &(is->tol) ) )
-				rt_bomb("vu1a does not match calculated point\n");
+				rt_log("\tlisting intersect point at vu1a=x%x\n", vu1a);
 			(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
 			nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
 		}
 		if( vu1b->v_p == hit_v )  {
 hit_b:
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("\t\tlisting intersect point at vu1b=x%x\n", vu1b);
-			if( !rt_pt3_pt3_equal(hit3d, vu1b->v_p->vg_p->coord, &(is->tol) ) )
-				rt_bomb("vu1b does not match calculated point\n");
+				rt_log("\tlisting intersect point at vu1b=x%x\n", vu1b);
 			(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
 			nmg_insert_fu_vu_in_other_list( is, list, vu1b->v_p, fu2 );
 		}
 		if( vu1a->v_p == hit_v || vu1b->v_p == hit_v )  continue;
 
-		/* Second, a geometry check on the edgeuse line segment */
 		nmg_get_2d_vertex( eu1_pt2d, vu1a->v_p, is, fu1 );
 		nmg_get_2d_vertex( eu1_end2d, vu1b->v_p, is, fu1 );
 
+		/* Second, a geometry check on the edgeuse ENDPOINTS -vs- the line segment */
+		if( rt_distsq_line2_point2( is->pt2d, is->dir2d, eu1_pt2d ) <= is->tol.dist_sq  )  {
+			hit_v = vu1a->v_p;
+			goto hit_a;
+		}
+		if( rt_distsq_line2_point2( is->pt2d, is->dir2d, eu1_end2d ) <= is->tol.dist_sq )  {
+			hit_v = vu1b->v_p;
+			goto hit_b;
+		}
+
+		/* Third, a geometry check of the HITPT -vs- the line segment */
 		ldist = 0;
 		code = rt_isect_pt2_lseg2( &ldist, eu1_pt2d, eu1_end2d, hit2d, &(is->tol) );
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\t\trt_isect_pt2_lseg2() returned %d, ldist=%e\n", code, ldist);
+			rt_log("\trt_isect_pt2_lseg2() returned %d, ldist=%g\n", code, ldist);
 		switch(code)  {
 		case -2:
 			continue;	/* outside lseg AB pts */
 		default:
 		case -1:
+			VPRINT("  pt", is->pt);
+			VPRINT(" dir", is->dir);
 			VPRINT("  A3", vu1a->v_p->vg_p->coord);
 			VPRINT("Hit3", hit3d);
 			VPRINT("  B3", vu1b->v_p->vg_p->coord);
+			V2PRINT("\n pt2", is->pt2d);
+			V2PRINT("dir2", is->dir2d);
 			V2PRINT("  A2", eu1_pt2d );
 			V2PRINT("Hit2", hit2d);
 			V2PRINT("  B2", eu1_end2d );
-			rt_log("rt_isect_pt2_lseg2() returned %d, ldist=%e, dist[0]=%e\n", code, ldist, dist[0]);
+			rt_log("rt_isect_pt2_lseg2() returned %d, ldist=%g, dist[0]=%e\n", code, ldist, dist[0]);
 			rt_bomb("not on line of AB within tolerance??\n");
 			continue;
 		case 1:
 			/* Point is at A (vu1a) by geometry */
 			hit_v = vu1a->v_p;
-			if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\t\thit_v = x%x (vu1a)\n", hit_v);
+			if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\thit_v = x%x (vu1a)\n", hit_v);
 			goto hit_a;
 		case 2:
 			/* Point is at B (vu1b) by geometry */
 			hit_v = vu1b->v_p;
-			if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\t\thit_v = x%x (vu1b)\n", hit_v);
+			if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\thit_v = x%x (vu1b)\n", hit_v);
 			goto hit_b;
 		case 3:
 			/* Point hits the line segment amidships!  Split edge!
@@ -2984,6 +3002,8 @@ hit_b:
 			if( !hit_v )  {
 				hit_v = nmg_find_pt_in_model(fu1->s_p->r_p->m_p,
 					hit3d, &(is->tol));
+				if( hit_v == vu1a->v_p || hit_v == vu1b->v_p )
+					rt_bomb("About to make 0-length edge!\n");
 			}
 			vu1_final = nmg_ebreak(hit_v, *eup)->vu_p;
 			ret++;		/* tally # of edges broken */
@@ -2992,11 +3012,11 @@ hit_b:
 				hit_v = vu1_final->v_p;
 				nmg_vertex_gv( hit_v, hit3d );
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
-					rt_log("\t\tmaking new vertex vu=x%x hit_v=x%x\n",
+					rt_log("\tmaking new vertex vu=x%x hit_v=x%x\n",
 						vu1_final, hit_v);
 			} else {
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
-					rt_log("\t\tre-using hit_v=x%x, vu=x%x\n", hit_v, vu1_final);
+					rt_log("\tre-using hit_v=x%x, vu=x%x\n", hit_v, vu1_final);
 				if( hit_v != vu1_final->v_p )  rt_bomb("hit_v changed?\n");
 			}
 			nmg_insert_fu_vu_in_other_list( is, list, hit_v, fu2 );
