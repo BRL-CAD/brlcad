@@ -1,3 +1,7 @@
+/* XXX move to vmath.h */
+#define V2MOVE(a,b)	{ \
+			(a)[X] = (b)[X];\
+			(a)[Y] = (b)[Y]; }
 /*
  *			N M G _ M K . C
  *
@@ -1931,8 +1935,8 @@ fastf_t		*points;
 				eu->eumate_p->vu_p->a.cnurb_p->param );
 			break;
 		case 2:
-			VMOVE( eg->ctl_points, eu->vu_p->a.cnurb_p->param );
-			VMOVE( &eg->ctl_points[ (n_pts-1)*ncoord ],
+			V2MOVE( eg->ctl_points, eu->vu_p->a.cnurb_p->param );
+			V2MOVE( &eg->ctl_points[ (n_pts-1)*ncoord ],
 				eu->eumate_p->vu_p->a.cnurb_p->param );
 			break;
 		default:
