@@ -62,7 +62,7 @@ struct _mged_variables default_mged_variables = {
 };
 
 static void set_view();
-static void set_scroll();
+void set_scroll();
 
 
 /*
@@ -306,11 +306,18 @@ set_view()
   }
 }
 
-static void
+void
 set_scroll()
 {
+  if(es_edclass && mged_variables.edit)
+    scroll_edit = es_edclass;
+  else
+    scroll_edit = EDIT_CLASS_NULL;
+
   if( mged_variables.scroll_enabled )
     Tcl_Eval(interp, "sliders on");
   else
     Tcl_Eval(interp, "sliders off");
+
+  dmaflag = 1;
 }

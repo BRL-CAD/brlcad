@@ -84,6 +84,7 @@ struct shared_info {
 /* Absolute stuff */
   vect_t  _absolute_tran;
   vect_t  _absolute_rotate;
+  vect_t  _last_absolute_rotate;
   fastf_t _absolute_scale;
 
 /* Virtual trackball stuff */
@@ -93,12 +94,14 @@ struct shared_info {
   int _scroll_top;
   int _scroll_active;
   int _scroll_y;
+  int _scroll_edit;
   struct scroll_item *_scroll_array[6];
 
   int _dmaflag;
   int _rc;         /* reference count */
 
   /* Tcl variable names for use with sliders */
+  struct bu_vls _scroll_edit_vls;
   struct bu_vls _rate_tran_vls[3];
   struct bu_vls _rate_rotate_vls[3];
   struct bu_vls _rate_scale_vls;
@@ -179,6 +182,7 @@ extern struct dm_list *curr_dm_list;
 #define rateflag_rotate curr_dm_list->s_info->_rateflag_rotate
 #define rate_rotate curr_dm_list->s_info->_rate_rotate
 #define absolute_rotate curr_dm_list->s_info->_absolute_rotate
+#define last_absolute_rotate curr_dm_list->s_info->_last_absolute_rotate
 #define rateflag_zoom curr_dm_list->s_info->_rateflag_scale
 #define rate_zoom curr_dm_list->s_info->_rate_scale
 #define absolute_zoom curr_dm_list->s_info->_absolute_scale
@@ -206,6 +210,7 @@ extern struct dm_list *curr_dm_list;
 #define dmaflag curr_dm_list->s_info->_dmaflag
 #define rc curr_dm_list->s_info->_rc
 
+#define scroll_edit_vls curr_dm_list->s_info->_scroll_edit_vls
 #define rate_tran_vls curr_dm_list->s_info->_rate_tran_vls
 #define rate_rotate_vls curr_dm_list->s_info->_rate_rotate_vls
 #define rate_scale_vls curr_dm_list->s_info->_rate_scale_vls
@@ -221,6 +226,7 @@ extern struct dm_list *curr_dm_list;
 #define scroll_top curr_dm_list->s_info->_scroll_top
 #define scroll_active curr_dm_list->s_info->_scroll_active
 #define scroll_y curr_dm_list->s_info->_scroll_y
+#define scroll_edit curr_dm_list->s_info->_scroll_edit
 #define scroll_array curr_dm_list->s_info->_scroll_array
 
 #define MINVIEW		0.001				

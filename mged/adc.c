@@ -34,6 +34,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_dm.h"
 
+extern void set_scroll();   /* defined in set.c */
+
 #ifndef M_SQRT2
 #define M_SQRT2		1.41421356237309504880
 #endif
@@ -228,15 +230,7 @@ char	**argv;
 	    mged_variables.adcflag = 1;
 	  }
 
-	  if(mged_variables.scroll_enabled){
-	    /* 
-	     * We need to send this through the interpreter in case
-	     * the built-in "sliders" command has been redefined.
-	     */
-	    Tcl_Eval(interp, "sliders on");
-	  }
-
-	  dmaflag = 1;
+	  set_scroll();
 	  return TCL_OK;
 	}
 
@@ -256,7 +250,7 @@ char	**argv;
 	      dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
 
 	    dmaflag = 1;
-	    adc_a1_deg = ((2047.0 + (fastf_t)-dv_1adc) * bn_pi) / (4.0 * 2047.0) * radtodeg;
+	    adc_a1_deg = pt[0];
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang1_vls));
 
 	    return TCL_OK;
@@ -272,7 +266,7 @@ char	**argv;
 	      dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
 
 	    dmaflag = 1;
-	    adc_a2_deg = ((2047.0 + (fastf_t)-dv_2adc) * bn_pi) / (4.0 * 2047.0) * radtodeg;
+	    adc_a2_deg = pt[0];
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang2_vls));
 
 	    return TCL_OK;
@@ -410,7 +404,13 @@ char	**argv;
 	    dv_xadc = dv_yadc = 0;
 	    dv_1adc = dv_2adc = 0;
 	    dv_distadc = 0;
+	    adc_a1_deg = adc_a2_deg = 45.0;
 	    dmaflag = 1;
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&xadc_vls));
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&yadc_vls));
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang1_vls));
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang2_vls));
+	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&distadc_vls));
 	    return TCL_OK;
 	  }
 	  Tcl_AppendResult(interp, "The 'adc reset' command accepts no arguments\n", (char *)NULL);

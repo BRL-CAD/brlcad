@@ -62,6 +62,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define TRY_EDIT_NEW_WAY
 #endif
 
+extern void set_scroll();   /* defined in set.c */
 extern void bv_edit_toggle();
 extern struct bn_tol		mged_tol;	/* from ged.c */
 
@@ -109,6 +110,7 @@ struct rt_db_internal	es_int_orig;
 
 int	es_type;		/* COMGEOM solid type */
 int     es_edflag;		/* type of editing for this solid */
+int     es_edclass;		/* type of editing class for this solid */
 fastf_t	es_scale;		/* scale factor */
 fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t	es_m[3];		/* edge(line) slope */
@@ -1976,14 +1978,30 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
   if(both){
     VMOVE(e_axes_pos, curr_e_axes_pos);
 
-    if(EDIT_ROTATE)
-      VSETALL( edit_absolute_rotate, 0.0 )
-    else if(EDIT_TRAN)
-      VSETALL( edit_absolute_tran, 0.0 )
-    else if(SEDIT_SCALE){
-      edit_absolute_scale = 0;
-      acc_sc_sol = 1;
-    }
+    if(EDIT_ROTATE){
+      es_edclass = EDIT_CLASS_ROTATE;
+      VSETALL( edit_absolute_rotate, 0.0 );
+    }else if(EDIT_TRAN){
+      es_edclass = EDIT_CLASS_TRAN;
+      VSETALL( edit_absolute_tran, 0.0 );
+#if 0
+    }else if(SEDIT_SCALE){
+#else
+    }else if(EDIT_SCALE){
+#endif
+      es_edclass = EDIT_CLASS_SCALE;
+
+      if(SEDIT_SCALE){
+	edit_absolute_scale = 0;
+	acc_sc_sol = 1;
+      }
+    }else
+      es_edclass = EDIT_CLASS_NULL;
+
+    if(mged_variables.edit)
+      scroll_edit = es_edclass;
+    else
+      scroll_edit = EDIT_CLASS_NULL;
 
     bn_mat_idn(acc_rot_sol);
 
@@ -4538,7 +4556,8 @@ CONST vect_t	mousevec;
     if(edit_absolute_scale > 0)
       edit_absolute_scale /= 3.0;
 
-    break;
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
+    goto end;
   case STRANS:
     /* 
      * Use mouse to change solid's location.
@@ -4584,7 +4603,6 @@ CONST vect_t	mousevec;
       transform_editing_solid(&es_int, xlatemat, &es_int, 1);
     }
 
-    update_edit_absolute_tran(pos_view);
     break;
   case ECMD_VTRANS:
     /* 
@@ -4613,7 +4631,6 @@ CONST vect_t	mousevec;
 #endif
     /* Leave the rest to code in sedit() */
 
-    update_edit_absolute_tran(pos_view);
     break;
   case ECMD_TGC_MV_H:
   case ECMD_TGC_MV_HH:
@@ -4644,7 +4661,6 @@ CONST vect_t	mousevec;
 #endif
     }
 
-    update_edit_absolute_tran(pos_view);
     break;
   case PTARB:
     /* move an arb point to indicated point */
@@ -4673,7 +4689,6 @@ CONST vect_t	mousevec;
 #endif
     editarb( pos_model );
 
-    update_edit_absolute_tran(pos_view);
     break;
   case EARB:
 #ifdef TRY_EDIT_NEW_WAY
@@ -4690,7 +4705,6 @@ CONST vect_t	mousevec;
 #endif
     editarb( pos_model );
 
-    update_edit_absolute_tran(pos_view);
     break;
   case ECMD_ARB_MOVE_FACE:
 #ifdef TRY_EDIT_NEW_WAY
@@ -4716,7 +4730,6 @@ CONST vect_t	mousevec;
       (void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
     }
 
-    update_edit_absolute_tran(pos_view);
     break;
   case ECMD_NMG_EPICK:
     /* XXX Should just leave desired location in es_mparam for sedit() */
@@ -4765,10 +4778,7 @@ CONST vect_t	mousevec;
 	mged_print_result( TCL_ERROR );
 	bu_vls_free(&tmp_vls);
       }
-#ifdef TRY_EDIT_NEW_WAY
-      update_edit_absolute_tran(pos_view);
-#endif
-    }
+  }
 
     break;
   case ECMD_NMG_LEXTRU:
@@ -4796,14 +4806,15 @@ CONST vect_t	mousevec;
 #endif
     es_mvalid = 1;
 
-    update_edit_absolute_tran(pos_view);
     break;
   default:
     Tcl_AppendResult(interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
     mged_print_result( TCL_ERROR );
     return;
-  }
+    }
 
+  update_edit_absolute_tran(pos_view);
+end:
   sedit();
 }
 
@@ -4818,9 +4829,10 @@ vect_t pos_view;
   MAT4X3PNT(model_pos, view2model, pos_view);
   VSUB2(diff, model_pos, e_axes_pos);
   VSCALE(edit_absolute_tran, diff, inv_Viewscale);
-  
-  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
-    (void)Tcl_Eval(interp, "set_sliders");
+
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
 }
 
 void
@@ -5005,6 +5017,9 @@ vect_t tvec;
   }
 
   sedit();
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
 }
 
 #define MGED_SMALL_SCALE 1.0e-10
@@ -5032,6 +5047,7 @@ sedit_abs_scale()
 
   es_scale = acc_sc_sol / old_acc_sc_sol;
   sedit();
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
 }
 
 
@@ -5110,6 +5126,7 @@ CONST vect_t	mousevec;
 
     bn_mat_idn( incr_change );
     new_mats();
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
   }  else if( movedir & (RARROW|UARROW) )  {
     mat_t oldchanges;	/* temporary matrix */
 
@@ -5161,6 +5178,10 @@ vect_t tvec;
   bn_mat_mul( modelchanges, incr_mat, oldchanges );
 
   new_mats();
+
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
 }
 
 
@@ -5224,6 +5245,7 @@ oedit_abs_scale()
   wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
   new_mats();
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
 }
 
 
@@ -6127,6 +6149,7 @@ oedit_accept()
 	}
 	bn_mat_idn( modelchanges );
 	bn_mat_idn( acc_rot_sol );
+	es_edclass = EDIT_CLASS_NULL;
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
@@ -6136,11 +6159,13 @@ oedit_accept()
 void
 oedit_reject()
 {
-    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-	es_int.idb_ptr = (genptr_t)NULL;
-	db_free_external( &es_ext );
+  es_edclass = EDIT_CLASS_NULL;
 
-	bn_mat_idn( acc_rot_sol );
+  if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+  es_int.idb_ptr = (genptr_t)NULL;
+  db_free_external( &es_ext );
+
+  bn_mat_idn( acc_rot_sol );
 }
 
 /* 			F _ E Q N ( )
@@ -6244,6 +6269,7 @@ sedit_accept()
 	}
 
 	es_edflag = -1;
+	es_edclass = EDIT_CLASS_NULL;
 	menuflag = 0;
 	movedir = 0;
 
@@ -6288,6 +6314,7 @@ sedit_reject()
 	menuflag = 0;
 	movedir = 0;
 	es_edflag = -1;
+	es_edclass = EDIT_CLASS_NULL;
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;

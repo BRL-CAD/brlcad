@@ -21,6 +21,12 @@
  *  $Header$
  */
 
+/* These EDIT_CLASS_ values go in es_edclass. */
+#define EDIT_CLASS_NULL 0
+#define EDIT_CLASS_TRAN 1
+#define EDIT_CLASS_ROTATE 2
+#define EDIT_CLASS_SCALE 3
+
 /* These ECMD_ values go in es_edflag.  Some names not changed yet */
 #define IDLE		0	/* edarb.c */
 #define STRANS		1	/* buttons.c */
@@ -139,6 +145,7 @@
 		     es_edflag == ECMD_ARS_PICK))
 
 extern vect_t edit_absolute_rotate;
+extern vect_t last_edit_absolute_rotate;
 extern vect_t edit_rate_rotate;
 extern int edit_rateflag_rotate;
 
@@ -162,6 +169,7 @@ extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
 extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
 extern int	es_menu;		/* item/edit_mode selected from menu */
 extern int	es_edflag;		/* type of editing for this solid */
+extern int	es_edclass;		/* type of editing class for this solid */
 extern int	es_type;		/* COMGEOM solid type */
 
 extern mat_t	es_mat;			/* accumulated matrix of path */ 
