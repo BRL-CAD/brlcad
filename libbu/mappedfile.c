@@ -48,7 +48,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 # include <sys/stat.h>
 #endif
 
-#undef HAVE_SYS_MMAN_H
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
@@ -177,7 +176,8 @@ dont_reuse:
 		fd, (off_t)0 );
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if( mp->buf != (caddr_t)-1L )  {
+	if( mp->buf == MAP_FAILED )  perror(mp->name);
+	if( mp->buf != MAP_FAILED )  {
 	    	/* OK, it's memory mapped in! */
 	    	mp->is_mapped = 1;
 	    	/* It's safe to close the fd now, the manuals say */
@@ -295,8 +295,8 @@ struct bu_mapped_file	*mp;
  */
 void
 bu_pr_mapped_file( title, mp )
-CONST char		*title;
-struct bu_mapped_file	*mp;
+CONST char			*title;
+CONST struct bu_mapped_file	*mp;
 {
 	BU_CK_MAPPED_FILE(mp);
 
@@ -337,6 +337,7 @@ int	verbose;
 
 #ifdef HAVE_SYS_MMAN_H
 		if( mp->is_mapped )  {
+			int	ret;
 			bu_semaphore_acquire(BU_SEM_SYSCALL);
 			ret = munmap( mp->buf, mp->buflen );
 			bu_semaphore_release(BU_SEM_SYSCALL);
@@ -357,4 +358,47 @@ int	verbose;
 		bu_free( (genptr_t)mp, "struct bu_mapped_file" );
 	}
 	bu_semaphore_release(BU_SEM_MAPPEDFILE);
+}
+
+/*
+ *	B U _ O P E N _ M A P P E D _ F I L E _ W I T H _ P A T H
+ *
+ *  A wrapper for bu_open_mapped_file() which uses a search path
+ *  to locate the file.
+ *  The search path is specified as a normal C argv array,
+ *  terminated by a null string pointer.
+ *  If the file name begins with a slash ('/') the path is not used.
+ */
+struct bu_mapped_file *
+bu_open_mapped_file_with_path( path, name, appl )
+CONST char * CONST path[];
+CONST char	*name;		/* file name */
+CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
+{
+	CONST char	* CONST *pathp = path;
+	struct bu_vls	str;
+	struct bu_mapped_file	*ret;
+
+	/* Do not resort to path for a rooted filename */
+	if( name[0] == '/' )
+		return bu_open_mapped_file( name, appl );
+
+	bu_vls_init(&str);
+
+	/* Try each path prefix in sequence */
+	for( pathp = path; *pathp != NULL; pathp++ )  {
+		bu_vls_strcpy( &str, *pathp );
+		bu_vls_putc( &str, '/' );
+		bu_vls_strcat( &str, name );
+
+		ret = bu_open_mapped_file( bu_vls_addr(&str), appl );
+		if( ret )  {
+			bu_vls_free( &str );
+			return ret;
+		}
+	}
+
+	/* Failure, none of the opens succeeded */
+	bu_vls_free( &str );
+	return (struct bu_mapped_file *)NULL;
 }
