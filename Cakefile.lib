@@ -39,3 +39,6 @@ PRODUCTS::	EXTRA_OBJ OBJ
 #undef	BINPERM
 #define	BINDIR	LIBDIR
 #define	BINPERM	LIBPERM
+
+/* If RANLIB is specified, be sure it is run when installing libraries */
+#define AFTERINSTALL	RANLIB
