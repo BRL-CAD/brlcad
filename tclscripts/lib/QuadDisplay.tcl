@@ -67,7 +67,7 @@ class QuadDisplay {
     public method view2model {args}
     public method vrot {args}
     public method vtra {args}
-    public method zoom {sf}
+    public method zoom {args}
 
     public method autoview {{gindex 0}}
     public method autoviewall {{gindex 0}}
