@@ -1197,7 +1197,7 @@ region_end:
 				goto out;
 			}
 			if( rt_g.debug & DEBUG_REGIONS )  {
-			    	bu_log("WARNING: db_recurse(): solid '%s' not contained in a region\n",
+			    	bu_log("NOTICE: db_recurse(): solid '%s' not contained in a region, creating a region for it of the same name.\n",
 			    		sofar );
 			}
 
