@@ -16,4 +16,5 @@ libtcl8_4_la_LIBADD = $(libtcl8_4_la_SOURCES)
 libtcl8_4_la_LDFLAGS = -version-info 1
 
 tclsh_SOURCES = unix/tclAppInit.c
-tclsh_LDADD = @TCL_LIBS@
+# the lib_LTLIBRARIES is to help the dependancy graph
+tclsh_LDADD = $(lib_LTLIBRARIES) @TCL_LIBS@
