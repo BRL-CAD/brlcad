@@ -211,8 +211,8 @@ struct hitlist	*a_hit;
 	 *
 	 */
 
-	bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
-	bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
+	bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
+	bcopy(&a_hit->hit, &seg_p->seg_out, sizeof(struct hit));
 
 	/* make the normal for the ray
 	 *
@@ -489,8 +489,8 @@ int		filled;
 	    		}
 	    	}
 	    	
-		bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
-		bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
+		bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
+		bcopy(&a_hit->hit, &seg_p->seg_out, sizeof(struct hit));
 
 	    	if (found) {
 		    	/* we've found a 2manifold vertexuse.
@@ -556,8 +556,8 @@ int		filled;
 	    	if (filled == 0) {
 	    		/* we didn't find an edge.  How did this happen? */
 	    		rt_log("1manifold lone vertex?\n");
-			bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
-			bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
+			bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
+			bcopy(&a_hit->hit, &seg_p->seg_out, sizeof(struct hit));
 			VREVERSE(seg_p->seg_in.hit_normal, rp->r_dir);
 			VMOVE(seg_p->seg_out.hit_normal, rp->r_dir);
 
@@ -570,8 +570,8 @@ int		filled;
 	} else if (manifolds & NMG_0MANIFOLD ) {
 	    if (filled == 0) {
 		/* we've hit a lone vertex */
-		bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
-		bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
+		bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
+		bcopy(&a_hit->hit, &seg_p->seg_out, sizeof(struct hit));
 		VREVERSE(seg_p->seg_in.hit_normal, rp->r_dir);
 		VMOVE(seg_p->seg_out.hit_normal, rp->r_dir);
 
@@ -1085,8 +1085,8 @@ int		filled;
 	} else if (filled == 0) {
 		/* just hit an exterior dangling face */
 
-		bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
-		bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
+		bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
+		bcopy(&a_hit->hit, &seg_p->seg_out, sizeof(struct hit));
 		if (VDOT(f_p->fg_p->N, rp->r_dir) <= 0.0) {
 			/* face normal points back along ray */
 			VMOVE(seg_p->seg_in.hit_normal, f_p->fg_p->N);
