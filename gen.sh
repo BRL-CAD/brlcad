@@ -203,6 +203,7 @@ BDIRS="bench \
 	canon \
 	burst \
 	tcl \
+	tk \
 	dhrystone"
 
 TDIRS="libtk"
