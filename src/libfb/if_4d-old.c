@@ -49,6 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/shm.h>
 #include <gl/immed.h>
 #include <signal.h>
+#include <errno.h>
 #undef RED
 #include <gl/addrs.h>
 #include <gl/cg2vme.h>
@@ -60,7 +61,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern char *sbrk();
 extern char *malloc();
-extern int errno;
 extern char *shmat();
 extern int brk();
 
