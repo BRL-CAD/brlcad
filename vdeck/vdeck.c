@@ -567,7 +567,7 @@ int			id;
 	 *  Check to see if this exact solid has already been processed.
 	 *  Match on leaf name and matrix.
 	 */
-	for( RT_LIST( stp, soltab, &(sol_hd.l) ) )  {
+	for( RT_LIST_FOR( stp, soltab, &(sol_hd.l) ) )  {
 		RT_CHECK_SOLTAB(stp);				/* debug */
 
 		/* Leaf solids must be the same */
