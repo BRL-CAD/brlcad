@@ -18,7 +18,7 @@
 
 /* Explicit composition of each product */
 
-fbserv:	OBJ
+fbserv:	OBJ LIBFB_DEP
 	CC LDFLAGS -o fbserv OBJ LIBFB LIBFB_LIBES RFBD_LIBES LIBES
 
 #include "../Cakefile.rules"
