@@ -1812,7 +1812,7 @@ struct rt_vls *str;
 			weightfound = 1;
 			break;
 		case KEY_PRI:
-			if (!parse_assign(&hp->priority, fip, str)) {
+			if (!parse_assign((double *)&hp->priority, fip, str)) {
 				free_hold(hp);
 				skip_group(fip,str);
 				return 0;
