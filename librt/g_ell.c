@@ -666,7 +666,6 @@ static point_t	octa_verts[6] = {
 	{ 0, 0, 1 },	/* ZPLUS */
 	{ 0, 0,-1 }	/* ZMINUS */
 };
-#endif
 
 #define XPLUS 0
 #define XMIN  1
@@ -674,6 +673,7 @@ static point_t	octa_verts[6] = {
 #define YMIN  3
 #define ZPLUS 4
 #define ZMIN  5
+#endif
 
 /* Vertices of a unit octahedron */
 /* These need to be organized properly to give reasonable normals */

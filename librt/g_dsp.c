@@ -2901,3 +2901,18 @@ struct rt_db_internal	*ip;
 	bu_free( (char *)dsp_ip, "dsp ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+
+/* Important when concatenating source files together */
+#undef dlog
+#undef XMIN
+#undef XMAX
+#undef YMIN
+#undef YMAX
+#undef ZMIN
+#undef ZMAX
+#undef ZMID
+#undef DSP
+#undef XCNT
+#undef YCNT
+#undef XSIZ
+#undef YSIZ
