@@ -28,6 +28,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nmg.h"
 
+/* Move to vmath.h */
+#define VJOIN3(a,b,c,d,e,f,g,h)	\
+	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X];\
+	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y];\
+	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z]
+
 #define NMG_TAB_RETURN_IF_SET_ELSE_SET(_tab,_index)	\
 	{ if( (_tab)[_index] )  return; \
 	  else (_tab)[_index] = 1; }
@@ -353,25 +359,44 @@ int		poly_markers;
 #define LEE_DIVIDE_TOL	(1.0e-5)	/* sloppy tolerance */
 
 /*
- *			N M G _ E U _ C O O R D
+ *			N M G _ O F F S E T _ E U _ C O O R D
  *
- *  Given an edgeuse structure, return the coordinates of the "base point"
- *  of this edge.  This base point will be offset inwards along the edge
+ *  Given an edgeuse structure, return the coordinates of
+ *  the "base" and "tip" of this edge, suitable for visualization.
+ *  These points will be offset inwards along the edge
  *  slightly, to avoid obscuring the vertex, and will be offset off the
  *  face (in the direction of the face normal) slightly, to avoid
  *  obscuring the edge itself.
+ *
+ *		    final_pt_p		    next_pt_p
+ *			* <-------------------- *
+ *				final_vec	^
+ *						|
+ *						|
+ *						| edge_vec
+ *						|
+ *						|
+ *				prev_vec	|
+ *			* <-------------------- *
+ *		    prev_pt_p		     cur_pt_p
  */
-static void nmg_eu_coord(eu, base)
-struct edgeuse *eu;
-point_t base;
+static void nmg_offset_eu_coord( base, tip, eu, face_normal )
+point_t		base;
+point_t		tip;
+struct edgeuse	*eu;
+vect_t		face_normal;
 {
-	fastf_t dist1;
-	struct edgeuse *peu;
-	struct loopuse *lu;
-	vect_t v_eu,		/* vector of edgeuse */
-		v_other,	/* vector of last edgeuse */
-		N;		/* normal vector for this edgeuse's face */
-	pointp_t pt_other, pt_eu;
+	fastf_t		dist1;
+	struct edgeuse	*prev_eu;
+	struct edgeuse	*next_eu;
+	struct edgeuse	*final_eu;
+	vect_t		edge_vec;	/* from cur_pt to next_pt */
+	vect_t		prev_vec;	/* from cur_pt to prev_pt */
+	vect_t		final_vec;	/* from next_pt to final_pt */
+	pointp_t	prev_pt_p;
+	pointp_t	cur_pt_p;
+	pointp_t	next_pt_p;
+	pointp_t	final_pt_p;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
@@ -383,53 +408,43 @@ point_t base;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
-	pt_eu = eu->vu_p->v_p->vg_p->coord;
-	pt_other = eu->eumate_p->vu_p->v_p->vg_p->coord;
+	cur_pt_p = eu->vu_p->v_p->vg_p->coord;
+	next_pt_p = eu->eumate_p->vu_p->v_p->vg_p->coord;
+	VSUB2(edge_vec, next_pt_p, cur_pt_p); 
+	VUNITIZE(edge_vec);
 
-	if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC ||
-	    *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC) {
-		rt_log("in %s at %d edgeuse has bad parent\n", __FILE__, __LINE__);
-		rt_bomb("nmg_eu_coord\n");
+	/* find previous vertex in the loop, not colinear with the edge */
+	prev_eu = NMG_LIST_PLAST_CIRC( edgeuse, eu );
+	prev_pt_p = prev_eu->vu_p->v_p->vg_p->coord;
+	dist1 = rt_dist_line_point(cur_pt_p, edge_vec, prev_pt_p);
+	while (NEAR_ZERO(dist1, LEE_DIVIDE_TOL) && prev_eu != eu) {
+		prev_eu = NMG_LIST_PLAST_CIRC( edgeuse, prev_eu );
+		prev_pt_p = prev_eu->vu_p->v_p->vg_p->coord;
+		dist1 = rt_dist_line_point(cur_pt_p, edge_vec, prev_pt_p);
 	}
 
-	lu = eu->up.lu_p;
-	NMG_CK_FACE(lu->up.fu_p->f_p);
-	NMG_CK_FACE_G(lu->up.fu_p->f_p->fg_p);
-
-	VMOVE(N, lu->up.fu_p->f_p->fg_p->N);
-	if (lu->up.fu_p->orientation == OT_OPPOSITE) {
-		VREVERSE(N,N);
+	/* find vertex after "next" in the loop, not colinear with the edge */
+	next_eu = NMG_LIST_PNEXT_CIRC( edgeuse, eu );
+	final_eu = NMG_LIST_PNEXT_CIRC( edgeuse, next_eu );
+	final_pt_p = final_eu->vu_p->v_p->vg_p->coord;
+	dist1 = rt_dist_line_point(cur_pt_p, edge_vec, final_pt_p);
+	while (NEAR_ZERO(dist1, LEE_DIVIDE_TOL) && final_eu != eu) {
+		final_eu = NMG_LIST_PNEXT_CIRC( edgeuse, final_eu );
+		final_pt_p = final_eu->vu_p->v_p->vg_p->coord;
+		dist1 = rt_dist_line_point(cur_pt_p, edge_vec, final_pt_p);
 	}
 
-	/* v_eu is the vector of the edgeuse
-	 * mag is the magnitude of the edge vector
-	 */
-	VSUB2(v_eu, pt_other, pt_eu); 
-	VUNITIZE(v_eu);
+	VSUB2(prev_vec, prev_pt_p, cur_pt_p);
+	VADD2( prev_vec, prev_vec, edge_vec );
+	VUNITIZE(prev_vec);
 
-	/* find a point not on the edge */
-	peu = NMG_LIST_PLAST_CIRC( edgeuse, eu );
-	pt_other = peu->vu_p->v_p->vg_p->coord;
-	dist1 = rt_dist_line_point(pt_eu, v_eu, pt_other);
-	while (NEAR_ZERO(dist1, LEE_DIVIDE_TOL) && peu != eu) {
-		peu = NMG_LIST_PLAST_CIRC( edgeuse, peu );
-		pt_other = peu->vu_p->v_p->vg_p->coord;
-		dist1 = rt_dist_line_point(pt_eu, v_eu, pt_other);
-	}
+	VSUB3(final_vec, final_pt_p, next_pt_p, edge_vec);
+	VUNITIZE(final_vec);
 
-	/* make a vector from the "last" edgeuse (reversed) */
-	VSUB2(v_other, pt_other, pt_eu); VUNITIZE(v_other);
-
-	/* combine the two vectors to get a vector
-	 * pointing to the location where the edgeuse
-	 * should start
-	 */
-	VADD2(v_other, v_other, v_eu); VUNITIZE(v_other);
-
-	/* XXX vector lengths should be scaled by 5% of face size */
+	/* XXX offset vector lengths should be scaled by 5% of face size */
 	
-	/* compute the start of the edgeuse */
-	VJOIN2(base, pt_eu, 0.125,v_other, 0.05,N);
+	VJOIN2(base, cur_pt_p, 0.125,prev_vec, 0.05,face_normal);
+	VJOIN2(tip, next_pt_p, 0.125,final_vec, 0.05,face_normal);
 }
 
 
@@ -459,11 +474,17 @@ point_t base, tip60;
 	else if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 	    	/* Loop in face */
-	    	register struct edgeuse *eutmp;
-		nmg_eu_coord(eu, base);
-		eutmp = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
-		NMG_CK_EDGEUSE(eutmp);
-		nmg_eu_coord( eutmp, tip );
+	    	struct faceuse	*fu;
+	    	vect_t		face_normal;
+
+	    	fu = eu->up.lu_p->up.fu_p;
+		if (fu->orientation == OT_OPPOSITE) {
+			VREVERSE( face_normal, fu->f_p->fg_p->N );
+		} else {
+		    	VMOVE( face_normal, fu->f_p->fg_p->N );
+		}
+
+		nmg_offset_eu_coord(base, tip, eu, face_normal);
 	} else
 		rt_bomb("nmg_eu_coords: bad edgeuse up. What's going on?\n");
 
@@ -607,9 +628,7 @@ int		red, green, blue;
 	 */
 	VSUB2SCALE(v, p1, p0, 0.95);
 	VADD2(end0, p0, v);
-	VREVERSE(v, v);
-
-	VADD2(end1, p1, v);
+	VSUB2(end1, p1, v);
 
 	pl_color(fp, red, green, blue);
 	pdv_3line( fp, end0, end1 );
@@ -869,9 +888,7 @@ int		red, green, blue;
 	 */
 	VSUB2SCALE(v, p1, p0, 0.95);
 	VADD2(end0, p0, v);
-	VREVERSE(v, v);
-
-	VADD2(end1, p1, v);
+	VSUB2(end1, p1, v);
 
 	vh = rt_vlblock_find( vbp, red, green, blue );
 	ADD_VL( vh, end0, VL_CMD_LINE_MOVE );
