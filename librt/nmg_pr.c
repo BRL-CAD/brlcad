@@ -1017,8 +1017,17 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
 
-	/* Erect coordinate system around eu */
-	nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, tol );
+	if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+	{
+		VSET( xvec , 1 , 0 , 0 );
+		VSET( yvec , 0 , 1 , 0 );
+		VSET( zvec , 0 , 1 , 1 );
+	}
+	else
+	{
+		/* Erect coordinate system around eu */
+		nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, tol );
+	}
 
 	nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
 }
