@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char RCSid[] = "$Header$";
+static const char RCSid[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -89,8 +89,9 @@ struct bu_structparse vrml_mat_parse[]={
 };
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *nmg_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
-static char	usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
@@ -102,6 +103,9 @@ static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
+
+static	char*	units=NULL;
+static fastf_t	scale_factor=1.0;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
 
@@ -165,6 +169,42 @@ genptr_t			client_data;
 	return( !select_lights( tsp, pathp, combp, client_data ) );
 }
 
+union tree *
+leaf_tess(tsp, pathp, ep, id, client_data)
+struct db_tree_state    *tsp;
+struct db_full_path     *pathp;
+struct bu_external	*ep;
+int			id;
+genptr_t                client_data;
+{
+	struct rt_db_internal intern;
+	struct rt_bot_internal *bot;
+	struct directory *dp;
+
+	if( id != ID_BOT )
+		return( nmg_booltree_leaf_tess(tsp, pathp, ep, id, client_data) );
+
+        RT_INIT_DB_INTERNAL(&intern);
+        if (rt_functab[id].ft_import(&intern, ep, tsp->ts_mat, tsp->ts_dbip) < 0) {
+                bu_log("nmg_booltree_leaf_tess(%s):  solid import failure\n", dp->d_namep);
+                if (intern.idb_ptr)  rt_functab[id].ft_ifree(&intern);
+                return(TREE_NULL);              /* ERROR */
+        }
+        RT_CK_DB_INTERNAL(&intern);
+
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC( bot );
+
+	if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_SURFACE )
+	{
+		rt_db_free_internal( &intern );
+		return( (union tree *)NULL );
+	}
+
+	rt_db_free_internal( &intern );
+	return( nmg_booltree_leaf_tess(tsp, pathp, ep, id, client_data) );
+}
+
 /*
  *			M A I N
  */
@@ -210,7 +250,7 @@ char	*argv[];
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "d:a:n:o:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
@@ -244,6 +284,16 @@ char	*argv[];
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
 			break;
+		case 'u':
+			units = bu_strdup( optarg );
+			scale_factor = bu_units_conversion( units );
+			if( scale_factor == 0.0 )
+			{
+				bu_log( "Unrecognized units (%s)\n", units );
+				bu_bomb( "Unrecognized units\n" );
+			}
+			scale_factor = 1.0 / scale_factor;
+			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
 			exit(1);
@@ -255,6 +305,9 @@ char	*argv[];
 		fprintf(stderr, usage, argv[0]);
 		exit(1);
 	}
+
+	if( !units )
+		units = "mm";
 
 	/* Open brl-cad database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
@@ -278,7 +331,7 @@ char	*argv[];
 	}
 
 	fprintf( fp_out, "#VRML V2.0 utf8\n" );
-	fprintf( fp_out, "#Original Database Units were %s, VRML units are meters\n",rt_units_string(dbip->dbi_local2base));
+	fprintf( fp_out, "#Units are %s\n", units);
 	/* Note we may want to inquire about bounding boxes for the various groups and add Viewpoints nodes that
 	 * point the camera to the center and orient for Top, Side, etc Views
 	 *
@@ -320,7 +373,7 @@ char	*argv[];
 			&tree_state,
 			select_lights,
 			do_region_end,
-			nmg_booltree_leaf_tess,
+			leaf_tess,
 			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 
@@ -339,13 +392,12 @@ char	*argv[];
 		&tree_state,
 		select_non_lights,
 		do_region_end,
-		nmg_booltree_leaf_tess,
+		leaf_tess,
 		(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 	/* Release dynamic storage */
 	nmg_km(the_model);
 
-	bn_vlist_cleanup();
 	db_close(dbip);
 
 		/* Now we need to close each group set */
@@ -653,8 +705,8 @@ struct mater_info *mater;
 		vg = v->vg_p;
 		NMG_CK_VERTEX_G( vg );
 
-		/* convert to meters */
-		VSCALE( pt_meters, vg->coord, 0.001 );
+		/* convert to desired units */
+		VSCALE( pt_meters, vg->coord, scale_factor );
 
 		if( is_light )
 			VADD2( ave_pt, ave_pt, pt_meters )
@@ -758,6 +810,91 @@ struct mater_info *mater;
 	}
 }
 
+void
+is_leaf_bot( dbip, dp, clientdata )
+struct db_i *dbip;
+struct directory *dp;
+genptr_t clientdata;
+{
+	struct rt_bot_internal *bot, **abot;
+	struct rt_db_internal intern;
+	int id;
+
+	id = rt_db_get_internal( &intern, dp, dbip, bn_mat_identity );
+	if( id < 0 )
+	{
+		bu_log( "Error importing solid (%s)\n", dp->d_namep );
+		bu_bomb( "Error importing solid\n" );
+	}
+
+	if( id == ID_BOT )
+	{
+		int *i;
+
+		i = (int *)clientdata;
+		(*i)++;
+	}
+	else
+		rt_db_free_internal( &intern );
+}
+
+void
+bot2vrml( dbip, comb, tree, ptr1, ptr2, ptr3 )
+struct db_i *dbip;
+struct rt_comb_internal *comb;
+union tree *tree;
+genptr_t ptr1, ptr2, ptr3;
+{
+	struct db_full_path *pathp;
+	char *path_str;
+	int appearance;
+	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_bot_internal *bot;
+	int id;
+	int i;
+
+	if( (dp = db_lookup( dbip, tree->tr_l.tl_name, 1 )) == DIR_NULL )
+		bu_bomb( "db_lookup failed!!\n" );
+
+	id = rt_db_get_internal( &intern, dp, dbip, tree->tr_l.tl_mat );
+	if( id != ID_BOT )
+	{
+		bu_log( "ERROR: %s is not a BOT solid!!!!\n", tree->tr_l.tl_name );
+		bu_bomb( "ERROR: expecting a BOT solid!!!!\n" );
+	}
+
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC( bot );
+
+	pathp = (struct db_full_path *)ptr1;
+	path_str = db_path_to_string( pathp );
+
+	fprintf( fp_out, "\t\tShape {\n\t\t\t# Component_ID: %d   %s\n", comb->region_id, path_str );
+	bu_free( path_str, "result of db_path_to_string" );
+
+	appearance = comb->region_id / 1000;
+	appearance = appearance * 1000 + 999;
+	fprintf( fp_out, "\t\t\tappearance Appearance {\n\t\t\tmaterial USE Material_%d\n\t\t\t}\n", appearance );
+	fprintf( fp_out, "\t\t\tgeometry IndexedFaceSet {\n\t\t\t\tcoord Coordinate {\n\t\t\t\tpoint [\n" );
+
+	for( i=0 ; i<bot->num_vertices ; i++ )
+	{
+		point_t pt;
+
+		VSCALE( pt, &bot->vertices[i*3], scale_factor );
+		fprintf( fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt ), i );
+	}
+	fprintf( fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t\tcoordIndex [\n" );
+	for( i=0 ; i<bot->num_faces ; i++ )
+		fprintf( fp_out, "\t\t\t\t\t%d, %d, %d, -1,\n", V3ARGS( &bot->faces[i*3] ) );
+	fprintf( fp_out, "\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n" );
+	fprintf( fp_out, "\t\t\t\tconvex TRUE\n" );
+	fprintf( fp_out, "\t\t\t\tcreaseAngle 0.5\n" );
+	fprintf( fp_out, "\t\t\t\tsolid FALSE\n" );
+	fprintf( fp_out, "\t\t\t}\n\t\t}\n" );
+}
+
 /*
 *			D O _ R E G I O N _ E N D
 *
@@ -771,10 +908,48 @@ struct db_full_path	*pathp;
 union tree		*curtree;
 genptr_t		client_data;
 {
-	extern FILE		*fp_fig;
+	struct directory *dp;
+	struct rt_comb_internal *comb;
+	struct rt_db_internal intern;
+	int id;
+	int bot=0;
+	char *name;
+
+	if( tsp->ts_is_fastgen != REGION_FASTGEN_PLATE )
+		return( nmg_region_end(tsp, pathp, curtree, client_data) );
+
+	/* FASTGEN plate mode region, just spew the bot triangles */
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
+	db_functree( tsp->ts_dbip, dp, NULL, is_leaf_bot, (genptr_t)&bot );
+	if( !bot )
+		return( nmg_region_end(tsp, pathp, curtree, client_data) );
+	else
+	{
+		id = rt_db_get_internal( &intern, dp, dbip, bn_mat_identity );
+		if( id != ID_COMBINATION )
+		{
+			bu_log( "ERROR: %s is not a combination????\n", dp->d_namep );
+			bu_bomb( "Expected a region!!!!\n" );
+		}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		name = db_path_to_string( pathp );
+		bu_log( "Attempting %s\n", name );
+		bu_free( name, "db_path_to_string" );
+		db_tree_funcleaf( tsp->ts_dbip, comb, comb->tree, bot2vrml, pathp, NULL, NULL );
+		return( (union tree *)NULL );
+	}
+}
+
+union tree *nmg_region_end(tsp, pathp, curtree, client_data)
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+genptr_t		client_data;
+{
 	struct nmgregion	*r;
 	struct bu_list		vhead;
 	union tree		*ret_tree;
+	char			*name;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
@@ -794,7 +969,9 @@ genptr_t		client_data;
 	if (curtree->tr_op == OP_NOP)
 		return  curtree;
 
-	bu_log( "Attempting %s\n", db_path_to_string( pathp ) );
+	name = db_path_to_string( pathp );
+	bu_log( "Attempting %s\n", name );
+	bu_free( name, "db_path_to_string" );
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
