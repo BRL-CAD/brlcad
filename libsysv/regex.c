@@ -81,7 +81,7 @@ re_error( n )
 #define	step	re_step
 #define	advance	re_advance
 #define getrnge	re_getrnge
-#if !defined(sgi) && !defined(__sgi) && !defined(i386)
+#if !defined(sgi) && !defined(__sgi) && !defined(i386) && !defined(sparc)
 #	define ecmp	re_ecmp
 #endif
 
