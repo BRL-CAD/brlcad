@@ -21,8 +21,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include <brlcad/machine.h>
-#include <brlcad/db.h>
+#include "machine.h"
+#include "db.h"
 #include "./mat_db.h"
 
 union record rec;
