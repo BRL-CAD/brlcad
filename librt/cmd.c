@@ -19,101 +19,74 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCScloud[] = "@(#)$Header$ (BRL)";
+static char RCScmd[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
 #include <ctype.h>
-
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 /*
- *			R E A D _ C M D
+ *			R T _ R E A D _ C M D
  *
- *  Returns -1 on EOF, 0 on good read.
+ *  Read one semi-colon terminated string of arbitrary length from
+ *  the given file into a dynamicly allocated buffer.
+ *  Various commenting and escaping conventions are implemented here.
+ *
+ *  Returns:
+ *	NULL	On EOF
+ *	char *	On good read
  */
-read_cmd( fp, buf, len )
+char *
+rt_read_cmd( fp )
 register FILE	*fp;
-char	*buf;
-int	len;
 {
 	register int	c;
-	register char	*pos;
-	register char	*epos;
+	register char	*buf;
+	register int	curpos;
+	register int	curlen;
 
-	pos = buf;
-	epos = buf+len;
-	*pos = '\0';
+	curpos = 0;
+	curlen = 400;
+	buf = rt_malloc( curlen, "rt_read_cmd buffer" );
 
-	while( (c = fgetc(fp)) != EOF )  {
-		/* All comments run to the end of the line */
-		if( c == '#' )  {
+	do  {
+		c = fgetc(fp);
+		if( c == EOF )  {
+			c = '\0';
+		} else if( c == '#' )  {
+			/* All comments run to the end of the line */
 			while( (c = fgetc(fp)) != EOF && c != '\n' )  ;
 			continue;
+		} else if( c == '\n' )  {
+			c = ' ';
+		} else if( c == ';' )  {
+			c = '\0';
+		} else if( c == '\\' )  {
+			/*  Backslash takes next character literally.
+			 *  EOF detection here is not a problem, next
+			 *  pass will detect it.
+			 */
+			c = fgetc(fp);
+		} else if( !isascii(c) )  {
+			c = '?';
 		}
-		if( c == '\n' )  {
-			*pos++ = ' ';
-			if( pos >= epos )  {
-				fprintf(stderr, "read_cmd:  buffer overrun\n");
-				return(-1);	/* EOF */
-			}
-			continue;
+		if( curpos >= curlen )  {
+			curlen *= 2;
+			buf = rt_realloc( buf, curlen, "rt_read_cmd buffer" );
 		}
-		if( c == ';' )  {
-			*pos++ = '\0';
-			return(0);	/* OK */
-		}
-		if( !isascii(c) )  {
-			fprintf(stderr, "read_cmd:  non-ASCII char read\n");
-			return(-1);	/* EOF */
-		}
-		*pos++ = c;
-		if( pos >= epos )  {
-			fprintf(stderr, "read_cmd:  buffer overrun\n");
-			return(-1);	/* EOF */
-		}
-	}
-	if( pos > buf )  {
-		*pos++ = '\0';
-		return(0);		/* OK */
-	}
-	return(-1);			/* EOF */
+		buf[curpos++] = c;
+	} while( c != '\0' );
+	if( curpos <= 1 )
+		return( (char *)0 );		/* EOF */
+	return( buf );				/* OK */
 }
-
-extern int	cm_start();
-extern int	cm_vsize();
-extern int	cm_eyept();
-extern int	cm_vrot();
-extern int	cm_end();
-extern int	cm_multiview();
-extern int	cm_anim();
-extern int	cm_tree();
-extern int	cm_clean();
-extern int	cm_set();
 
 #define MAXWORDS		32	/* Maximum number of args per command */
 
-struct cmd_tab {
-	char	*ct_cmd;
-	char	*ct_parms;
-	int	(*ct_func)();
-	int	ct_min;		/* min number of words in cmd */
-	int	ct_max;		/* max number of words in cmd */
-};
-static struct cmd_tab cmdtab[] = {
-	"start",	"frame number",	cm_start,	2, 2,
-	"viewsize",	"size in mm",	cm_vsize,	2, 2,
-	"eye_pt",	"xyz of eye",	cm_eyept,	4, 4,
-	"viewrot",	"4x4 matrix",	cm_vrot,	17,17,
-	"end",		"",		cm_end,		1, 1,
-	"multiview",	"",		cm_multiview,	1, 1,
-	"anim",		"path type args", cm_anim,	4, MAXWORDS,
-	"tree",		"treetop(s)",	cm_tree,	1, MAXWORDS,
-	"clean",	"",		cm_clean,	1, 1,
-	"set",		"",		cm_set,		1, MAXWORDS,
-	(char *)0,	(char *)0,	0,		0, 0	/* END */
-};
-
 /*
- *			D O _ C M D
+ *			R T _ D O _ C M D
  *
  *  Slice up input buffer into whitespace separated "words",
  *  look up the first word as a command, and if it has the
@@ -125,11 +98,13 @@ static struct cmd_tab cmdtab[] = {
  *  Based heavily on mged/cmd.c by Chuck Kennedy.
  */
 int
-do_cmd( lp )
-register char *lp;
+rt_do_cmd( rtip, lp, ctp )
+struct rt_i		*rtip;			/* FUTURE:  for globbing */
+register char		*lp;
+register struct command_tab	*ctp;
 {
 	register int	nwords;			/* number of words seen */
-	register struct cmd_tab *tp;
+	register struct command_tab *tp;
 	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
 
 	nwords = 0;
@@ -172,7 +147,7 @@ register char *lp;
 	if( nwords <= 0 )
 		return(0);	/* No command to process */
 
-	for( tp = cmdtab; tp->ct_cmd != (char *)0; tp++ )  {
+	for( tp = ctp; tp->ct_cmd != (char *)0; tp++ )  {
 		if( cmd_args[0][0] != tp->ct_cmd[0] ||
 		    strcmp( cmd_args[0], tp->ct_cmd ) != 0 )
 			continue;
