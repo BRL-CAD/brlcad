@@ -615,7 +615,9 @@ register struct application *ap;
 		rt_prep(rtip);
 
 	InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
+	InitialPart.pt_magic = PT_HD_MAGIC;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
+	FinalPart.pt_magic = PT_HD_MAGIC;
 
 	RT_LIST_INIT( &new_segs.l );
 	RT_LIST_INIT( &waiting_segs.l );
