@@ -48,6 +48,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define	ORDER_BY_NAME		 0
 #define	ORDER_BY_DISTANCE	 1
 
+#define	made_it()		printf("Made it to %s%d\n", \
+					__FILE__, __LINE__); \
+				fflush(stdout)
+
 /*
  *		S O L _ N A M E _ D I S T
  *
@@ -213,22 +217,24 @@ struct solid	*sp;
  */
 
 static int
-rpt_solids(ap, ph, final_segs)
+rpt_solids(ap, ph, finished_segs)
 struct application	*ap;
 struct partition	*ph;
-struct seg		*final_segs;
+struct seg		*finished_segs;
 {
     char			**result;
     struct db_full_path		*fp;
     int				i;
     int				full_path; /* Get full path, not base? */
     struct partition		*pp;
+    struct reg_db_internals	*dbintp;
     rb_tree			*solids;
     struct seg			*segh;
     struct seg			*segp;
     struct solid		*sp;
     struct sol_name_dist	*old_sol;
     struct sol_name_dist	*sol;
+    struct soltab		*stp;
     struct bu_vls		sol_path_name;
     static int			(*orders[])() =
 				{
@@ -248,129 +254,203 @@ struct seg		*final_segs;
     }
     solids -> rbt_print = print_solid;
     rb_uniq_on(solids, ORDER_BY_NAME);
-    printf("HELLO %s:%d\n", __FILE__, __LINE__);
 
-    if (1)
+    bu_vls_init(&sol_path_name);
+
+    /*
+     *	Get the list of segments along this ray
+     *	and seek to its head
+     */
+    BU_CKMAG(ph, PT_HD_MAGIC, "partition head");
+    pp = ph -> pt_forw;
+    BU_CKMAG(pp, PT_MAGIC, "partition structure");
+    if (BU_LIST_MAGIC_WRONG((struct bu_list *) finished_segs,
+			    RT_SEG_MAGIC))
+	BU_CKMAG(finished_segs, BU_LIST_HEAD_MAGIC, "list head");
+
+    /*
+     *	New stuff
+     */
+
+    RT_CK_LIST_HEAD(&finished_segs->l);
+
+    for (RT_LIST_FOR(pp, partition, (struct bu_list *) &ph -> pt_magic))
     {
-	printf("HELLO %s:%d\n", __FILE__, __LINE__);
-	bu_vls_init(&sol_path_name);
-
-	/*
-	 *	Get the list of segments along this ray
-	 *	and seek to its head
-	 */
-	BU_CKMAG(ph, PT_HD_MAGIC, "partition head");
-	pp = ph -> pt_forw;
-	BU_CKMAG(pp, PT_MAGIC, "partition structure");
-	BU_CKMAG(final_segs, RT_SEG_MAGIC, "segment structure");
-	for (segh = pp -> pt_inseg;
-		*((long *) segh) != BU_LIST_HEAD_MAGIC;
-		segh = (struct seg *) (segh -> l.forw))
-	    BU_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
-
-	/*
-	 *	Let's see what final_segs contains...
-	 */
-	RT_CHECK_SEG(final_segs -> seg_stp);
-	bu_vls_trunc(&sol_path_name, 0);
-	fp = &(final_segs -> seg_stp -> st_path);
-	bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
-	printf("At line %d, sol_path_name contains '%s'\n",
-		__LINE__, bu_vls_addr(&sol_path_name));
-
-	/*
-	 *	March down the segment list
-	 */
-	for (segp = (struct seg *) (segh -> l.forw);
-		segp != segh;
-		segp = (struct seg *) segp -> l.forw)
+	BU_CKMAG(pp, PT_MAGIC, "partition");
+	BU_CKMAG(pp -> pt_regionp, RT_REGION_MAGIC, "region");
+	printf("    Partition <%x> is '%s' ",
+	    pp, pp -> pt_regionp -> reg_name);
+	
+	printf("\n--- Solids hit on this partition ---\n");
+	for (i = 0; i < (pp -> pt_solids_hit).end; ++i)
 	{
-	    BU_CKMAG(segp, RT_SEG_MAGIC, "seg structure");
-	    
+	    stp = (struct soltab *) ((pp -> pt_solids_hit).buffer[i]);
+	    BU_CKMAG(stp, RT_SOLTAB_MAGIC, "soltab");
+	    bu_vls_trunc(&sol_path_name, 0);
+	    fp = &(stp -> st_path);
+	    if (fp -> magic != 0)
+	    {
+		printf(" full path... ");fflush(stdout);
+		RT_CK_FULL_PATH(fp);
+		bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
+	    }
+	    else
+	    {
+		printf(" dir-entry name... ");fflush(stdout);
+		BU_CKMAG(stp -> st_dp, RT_DIR_MAGIC,
+		    "directory");
+		bu_vls_strcpy(&sol_path_name, stp -> st_name);
+	    }
+	    printf("'%s'\n", bu_vls_addr(&sol_path_name));fflush(stdout);
+	}
+	printf("------------------------------------\n");
+
+    /*
+     *	Look at each segment that participated in the ray partition(s)
+     */
+    for (RT_LIST_FOR(segp, seg, &finished_segs->l))
+    {
+	int	index;
+
+	RT_CK_SEG(segp);
+	RT_CK_SOLTAB(segp -> seg_stp);
+
+	/*
+	 *	Check to see if the seg/solid is in this partition
+	 */
+	if ((index = bu_ptbl_locate(&pp -> pt_solids_hit,
+			    (long *) segp -> seg_stp)) != -1)
+	{
+	    printf("Solid #%d in this partition is ", index);fflush(stdout);
+	    BU_CKMAG(segp -> seg_stp, RT_SOLTAB_MAGIC, "soltab");
 	    bu_vls_trunc(&sol_path_name, 0);
 	    fp = &(segp -> seg_stp -> st_path);
-	    printf("At line %d, sol_path_name contains '%s'\n",
-		    __LINE__, bu_vls_addr(&sol_path_name));
-	    if (fp -> magic)
-		bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
-	    printf("At line %d, sol_path_name contains '%s'\n",
-		    __LINE__, bu_vls_addr(&sol_path_name));
-	    bu_vls_strcat(&sol_path_name, segp -> seg_stp -> st_name);
-	    printf("At line %d, sol_path_name contains '%s'\n",
-		    __LINE__, bu_vls_addr(&sol_path_name));
-	    sol = mk_solid(bu_vls_addr(&sol_path_name),
-			segp -> seg_in.hit_dist);
-	    printf("and segp -> seg_stp = %x\n", segp -> seg_stp);
-	    /*
-	     *	Attempt to record the new solid.
-	     *	If it shares its name with a previously recorded solid,
-	     *	then retain the one that appears earlier on the ray.
-	     */
-	    if (rb_insert(solids, (void *) sol) < 0)
+	    if (fp -> magic != 0)
 	    {
-		old_sol = (struct sol_name_dist *)
-			    rb_curr(solids, ORDER_BY_NAME);
-		BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
-		    "sol_name_dist structure");
-		if (sol -> dist >= old_sol -> dist)
-		    free_solid(sol, 1);
-		else
-		{
-		    rb_delete(solids, ORDER_BY_NAME);
-		    rb_insert(solids, sol);
-		    free_solid(old_sol, 1);
-		}
+		printf(" full path... ");fflush(stdout);
+		RT_CK_FULL_PATH(fp);
+		bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
+	    }
+	    else
+	    {
+		printf(" dir-entry name... ");fflush(stdout);
+		BU_CKMAG(segp -> seg_stp -> st_dp, RT_DIR_MAGIC,
+		    "directory");
+		bu_vls_strcpy(&sol_path_name, segp -> seg_stp -> st_name);
+	    }
+	    printf("'%s'\n", bu_vls_addr(&sol_path_name));
+	}
+	else
+	    printf("No, this seg isn't in this partition\n");
+
+	/*
+	 *	Attempt to record the new solid.
+	 *	If it shares its name with a previously recorded solid,
+	 *	then retain the one that appears earlier on the ray.
+	 */
+	sol = mk_solid(bu_vls_addr(&sol_path_name),
+		    segp -> seg_in.hit_dist);
+	if (rb_insert(solids, (void *) sol) < 0)
+	{
+	    old_sol = (struct sol_name_dist *)
+			rb_curr(solids, ORDER_BY_NAME);
+	    BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
+		"sol_name_dist structure");
+	    if (sol -> dist >= old_sol -> dist)
+		free_solid(sol, 1);
+	    else
+	    {
+		rb_delete(solids, ORDER_BY_NAME);
+		rb_insert(solids, sol);
+		free_solid(old_sol, 1);
 	    }
 	}
     }
-    else
+    }
+
+    /*
+     *	Record the resulting list of solid names
+     *	for use by the calling function
+     */
+    result = (char **)
+		bu_malloc((solids -> rbt_nm_nodes + 1) * sizeof(char *),
+			  "names of solids on ray");
+    for (sol = (struct sol_name_dist *) rb_min(solids, ORDER_BY_DISTANCE),
+		i=0;
+	 sol != NULL;
+	 sol = (struct sol_name_dist *) rb_succ(solids, ORDER_BY_DISTANCE),
+		++i)
     {
-	printf("HELLO %s:%d\n", __FILE__, __LINE__);
-	bu_vls_init(&sol_path_name);
-	bu_log("Path names for all solids...\n");
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-	{
-	    build_path_name_of_solid (&sol_path_name, sp);
-	    printf("%s\n", bu_vls_addr(&sol_path_name));
-	}
-	bu_log("...the end\n");
+	result[i] = sol -> name;
+	free_solid(sol, 0);
+    }
+    result[i] = 0;
+    ap -> a_uptr = (char *) result;
 
-	/*
-	 *	Get the list of segments along this ray
-	 *	and seek to its head
-	 */
-	BU_CKMAG(ph, PT_HD_MAGIC, "partition head");
-	pp = ph -> pt_forw;
-	BU_CKMAG(pp, PT_MAGIC, "partition structure");
-	for (segh = pp -> pt_inseg;
-		*((long *) segh) != BU_LIST_HEAD_MAGIC;
-		segh = (struct seg *) (segh -> l.forw))
-	    BU_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
+    rb_free(solids, RB_RETAIN_DATA);
 
+    return 1;
+    /*
+     *	End new stuff
+     */
+#if 0
+
+    for (segh = pp -> pt_inseg;
+	    *((long *) segh) != BU_LIST_HEAD_MAGIC;
+	    segh = (struct seg *) (segh -> l.forw))
+	BU_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
+
+    /*
+     *	Let's see what final_segs contains...
+     */
+    RT_CHECK_SEG(final_segs -> seg_stp);
+    bu_vls_trunc(&sol_path_name, 0);
+    fp = &(final_segs -> seg_stp -> st_path);
+    bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
+    printf("At line %d, sol_path_name contains '%s'\n",
+	    __LINE__, bu_vls_addr(&sol_path_name));
+
+    /*
+     *	March down the segment list
+     */
+    for (segp = (struct seg *) (segh -> l.forw);
+	    segp != segh;
+	    segp = (struct seg *) segp -> l.forw)
+    {
+	BU_CKMAG(segp, RT_SEG_MAGIC, "seg structure");
+	
+	bu_vls_trunc(&sol_path_name, 0);
+	fp = &(segp -> seg_stp -> st_path);
+	printf("At line %d, sol_path_name contains '%s'\n",
+		__LINE__, bu_vls_addr(&sol_path_name));
+	if (fp -> magic)
+	    bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
+	printf("At line %d, sol_path_name contains '%s'\n",
+		__LINE__, bu_vls_addr(&sol_path_name));
+	bu_vls_strcat(&sol_path_name, segp -> seg_stp -> st_name);
+	printf("At line %d, sol_path_name contains '%s'\n",
+		__LINE__, bu_vls_addr(&sol_path_name));
+	sol = mk_solid(bu_vls_addr(&sol_path_name),
+		    segp -> seg_in.hit_dist);
+	printf("and segp -> seg_stp = %x\n", segp -> seg_stp);
 	/*
-	 *	March down the segment list
+	 *	Attempt to record the new solid.
+	 *	If it shares its name with a previously recorded solid,
+	 *	then retain the one that appears earlier on the ray.
 	 */
-	for (segp = (struct seg *) (segh -> l.forw);
-		segp != segh;
-		segp = (struct seg *) segp -> l.forw)
+	if (rb_insert(solids, (void *) sol) < 0)
 	{
-	    BU_CKMAG(segp, RT_SEG_MAGIC, "seg structure");
-	    
-	    sol = mk_solid(segp -> seg_stp -> st_name, segp -> seg_in.hit_dist);
-	    if (rb_insert(solids, (void *) sol) < 0)
+	    old_sol = (struct sol_name_dist *)
+			rb_curr(solids, ORDER_BY_NAME);
+	    BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
+		"sol_name_dist structure");
+	    if (sol -> dist >= old_sol -> dist)
+		free_solid(sol, 1);
+	    else
 	    {
-		old_sol = (struct sol_name_dist *)
-			    rb_curr(solids, ORDER_BY_NAME);
-		BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
-		    "sol_name_dist structure");
-		if (sol -> dist >= old_sol -> dist)
-		    free_solid(sol, 1);
-		else
-		{
-		    rb_delete(solids, ORDER_BY_NAME);
-		    rb_insert(solids, sol);
-		    free_solid(old_sol, 1);
-		}
+		rb_delete(solids, ORDER_BY_NAME);
+		rb_insert(solids, sol);
+		free_solid(old_sol, 1);
 	    }
 	}
     }
@@ -393,6 +473,7 @@ struct seg		*final_segs;
 
     rb_free(solids, RB_RETAIN_DATA);
     return (1);
+#endif
 }
 
 /*
@@ -451,7 +532,43 @@ int		full_path;
 	*ptr = 0;
 	return ptr;
     }
-	
+
+    {
+	char			**result;
+	register struct solid	*sp;
+	struct bu_vls		vls;
+	register int		nm_solids;
+	register int		i;
+
+	/*
+	 *	Count the solids presently in view
+	 */
+	nm_solids = 0;
+	FOR_ALL_SOLIDS (sp, &HeadSolid.l)
+	    if (sp -> s_flag == UP)
+		++nm_solids;
+
+	/*
+	 *	Now go back and record all their names
+	 */
+	result = (char **) bu_malloc((nm_solids + 1) * sizeof(char *),
+			  "names of solids in view");
+	bu_vls_init(&vls);
+	i = 0;
+	FOR_ALL_SOLIDS (sp, &HeadSolid.l)
+	    if (sp -> s_flag == UP)
+	    {
+		build_path_name_of_solid(&vls, sp);
+		result[i++] = bu_vls_strdup(&vls);
+	    }
+	result[i] = 0;
+	/*
+	 *	XXX	The calling routine is responsible to free
+	 *		the result!
+	 */
+	return (result);
+    }
+#if 0
     if ((rtip = rt_dirbuild(dbip -> dbi_filename, (char *) 0, 0)) == RTI_NULL)
     {
       Tcl_AppendResult(interp, "Cannot build directory for file '",
@@ -488,4 +605,5 @@ int		full_path;
     (void) rt_shootray(&ap);
 
     return ((char **) ap.a_uptr);
+#endif
 }
