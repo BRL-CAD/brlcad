@@ -220,7 +220,10 @@ rt_db_free_internal( struct rt_db_internal *ip )
 {
 	RT_CK_DB_INTERNAL( ip );
 	RT_CK_FUNCTAB( ip->idb_meth );
-	if( ip->idb_ptr )  ip->idb_meth->ft_ifree(ip);
+	if( ip->idb_ptr )  {
+		ip->idb_meth->ft_ifree(ip);
+		ip->idb_ptr = NULL;		/* sanity.  Should be handled by INIT, below */
+	}
 	if( ip->idb_avs.magic == BU_AVS_MAGIC )  bu_avs_free(&ip->idb_avs);
 	RT_INIT_DB_INTERNAL(ip);
 }
