@@ -697,9 +697,6 @@ wdb_reopen_cmd(struct rt_wdb	*wdbp,
 
 		wdbp->dbip = dbip;
 
-		/* --- Scan geometry database and build in-memory directory --- */
-		db_dirbuild(wdbp->dbip);
-
 		Tcl_AppendResult(interp, wdbp->dbip->dbi_filename, (char *)NULL);
 		return TCL_OK;
 	}
