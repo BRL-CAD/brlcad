@@ -1250,7 +1250,7 @@ mat_t		mat;
 			d = &((struct disk_face_g *)ip)[iindex];
 			NMG_CK_FACE_G(fg);
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_MAGIC );
-			htond( plane, d->N, 4 );
+			ntohd( plane, d->N, 4 );
 			ntohd( min, d->min_pt, 3 );
 			ntohd( max, d->max_pt, 3 );
 			rt_rotate_plane( fg->N, mat, plane );
@@ -1399,7 +1399,7 @@ mat_t		mat;
 			d = &((struct disk_vertexuse_a *)ip)[iindex];
 			NMG_CK_VERTEXUSE_A(vua);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_MAGIC );
-			htond( plane, d->N, 4 );
+			ntohd( plane, d->N, 4 );
 			rt_rotate_plane( vua->N, mat, plane );
 		}
 		return;
@@ -1480,14 +1480,18 @@ register mat_t		mat;
 		rt_log("rt_struct_import failure\n");
 		return(-1);
 	}
+#if 0
 	nmg_pr_struct_counts( &cntbuf, "After import" );
+#endif
 
 	maxindex = 1;
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
 		kind_counts[kind] = ((long *)&cntbuf)[kind];
 		maxindex += kind_counts[kind];
 	}
+#if 0
 	rt_log("import maxindex=%d\n", maxindex);
+#endif
 
 	/* Collect overall new subscripts, and structure-specific indices */
 	ecnt = (struct nmg_exp_counts *)rt_calloc( maxindex+3,
@@ -1717,6 +1721,9 @@ ptrs[subscript], rt_nmg_index_of_struct(ptrs[subscript]) );
 		cp += rt_disk_sizes[ecnt[i].kind];
 	}
 
+	/* XXX Perhaps bounding boxes should be recomputed here? */
+	/* XXX Perhaps _a structures need not be stored to disk? */
+
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_NMG;
 	ip->idb_ptr = (genptr_t)m;
@@ -1762,7 +1769,9 @@ double			local2mm;
 
 	bzero( (char *)&cntbuf, sizeof(cntbuf) );
 	ptrs = nmg_m_struct_count( &cntbuf, m );
+#if 0
 	nmg_pr_struct_counts( &cntbuf, "Counts in rt_nmg_export" );
+#endif
 
 	/* Collect overall new subscripts, and structure-specific indices */
 	ecnt = (struct nmg_exp_counts *)rt_calloc( m->maxindex,
@@ -1808,8 +1817,10 @@ rt_log("Mapping of old index to new index, and kind\n");
 
 	tot_size = 0;
 	for( i = 0; i < NMG_N_KINDS; i++ )  {
+#if 0
 		rt_log("%d of kind %s (%d)\n",
 			kind_counts[i], rt_nmg_kind_names[i], i);
+#endif
 		if( kind_counts[i] <= 0 )  {
 			disk_arrays[i] = GENPTR_NULL;
 			continue;
@@ -1870,6 +1881,9 @@ double			mm2local;
 
 	NMG_CK_MODEL(m);
 	rt_vls_strcat( str, "truncated general nmg (NMG)\n");
+
+	/* Should print out # of database granules used */
+	/* If verbose, should print out structure counts */
 
 #if 0
 	sprintf(buf, "\tV (%g, %g, %g)\n",
