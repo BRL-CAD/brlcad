@@ -1976,8 +1976,9 @@ struct faceuse		*fu1, *fu2;
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
 
-#if 1
+#if 0
 	/* r71, r23 are useful demonstrations */
+	/* Turn these flags on only for early code debugging */
 	rt_g.NMG_debug |= DEBUG_POLYSECT;
 	rt_g.NMG_debug |= DEBUG_FCUT;
 	rt_g.NMG_debug |= DEBUG_VU_SORT;
