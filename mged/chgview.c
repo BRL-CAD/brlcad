@@ -66,6 +66,10 @@ int		drawreg;	/* if > 0, process and draw regions */
 
 double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
+double		mged_nrm_tol;			/* normal ang tol, radians */
+
+extern CONST double rt_degtorad;	/* XXX move to raytrace.h */
+extern CONST double rt_radtodeg;	/* XXX move to raytrace.h */
 
 static void	eedit();
 void	f_zap();
@@ -870,7 +874,7 @@ char	**argv;
 	printf(" tess %s\n", dp->d_namep );
 	if( rt_functab[rt_id_solid(recp)].ft_tessellate(
 	    &r1, m, recp, mat, dp,
-	    mged_abs_tol, mged_rel_tol ) < 0 )  {
+	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
 		rt_log("%s tessellation failure\n", dp->d_namep);
 	    	return;
 	}
@@ -888,7 +892,8 @@ char	**argv;
 		/* Tessellate Solid to NMG */
 		printf("  %s %s\n", argv[i], dp->d_namep );
 		if( rt_functab[rt_id_solid(recp)].ft_tessellate(
-		    &r2, m, recp, mat, dp ) < 0 )  {
+		    &r2, m, recp, mat, dp,
+		    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
 			rt_log("%s tessellation failure\n", dp->d_namep);
 			rt_free( (char *)recp, "record");
 			continue;
@@ -914,7 +919,7 @@ char	**argv;
 			op = NMG_BOOL_SUB;
 		}
 		/* input r1 and r2 are destroyed, output is new r1 */
-		r1 = nmg_do_bool( r1, r2, op );
+		r1 = nmg_do_bool( r1, r2, op, 0.1 );
 		NMG_CK_REGION( r1 );
 		nmg_ck_closed_surf( r1->s_p );	/* debug */
 	}
@@ -986,6 +991,7 @@ out:
  *  "tol"	displays current settings
  *  "tol abs #"	sets absolute tolerance.  # > 0.0
  *  "tol rel #"	sets relative tolerance.  0.0 < # < 1.0
+ *  "tol norm #" sets normal tolerance, in degrees.
  */
 void
 f_tol( argc, argv )
@@ -994,7 +1000,7 @@ char	**argv;
 {
 	double	f;
 
-	if( argc != 3 )  {
+	if( argc < 3 )  {
 		(void)printf("Current tolerance settings are:\n");
 		if( mged_abs_tol > 0.0 )  {
 			(void)printf("\tabs %g %s\n",
@@ -1009,11 +1015,28 @@ char	**argv;
 		} else {
 			(void)printf("\trel None\n");
 		}
+		if( mged_nrm_tol > 0.0 )  {
+			int	deg, min;
+			double	sec;
+
+			sec = mged_nrm_tol * rt_radtodeg;
+			deg = (int)(sec);
+			sec = (sec - (double)deg) * 60;
+			min = (int)(sec);
+			sec = (sec - (double)min) * 60;
+
+			(void)printf("\tnorm %g degrees (%d deg %d min %g sec)\n",
+				mged_nrm_tol * rt_radtodeg,
+				deg, min, sec );
+		} else {
+			(void)printf("\tnorm None\n");
+		}
 		return;
 	}
 
 	f = atof(argv[2]);
-	if( strcmp( argv[1], "abs" ) == 0 )  {
+	if( argv[1][0] == 'a' )  {
+		/* Absolute tol */
 		if( f <= 0.0 )  {
 			mged_abs_tol = 0.0;	/* None */
 			return;
@@ -1021,13 +1044,24 @@ char	**argv;
 		mged_abs_tol = f * local2base;
 		return;
 	}
-	if( strcmp( argv[1], "rel" ) == 0 )  {
+	if( argv[1][0] == 'r' )  {
+		/* Relative */
 		if( f < 0.0 || f >= 1.0 )  {
 			(void)printf("relative tolerance must be between 0 and 1, not changed\n");
 			return;
 		}
 		/* Note that a value of 0.0 will disable relative tolerance */
 		mged_rel_tol = f;
+		return;
+	}
+	if( argv[1][0] == 'n' )  {
+		/* Normal tolerance, in degrees */
+		if( f < 0.0 || f > 90.0 )  {
+			(void)printf("Normal tolerance must be in positive degrees, < 90.0\n");
+			return;
+		}
+		/* Note that a value of 0.0 or 360.0 will disable this tol */
+		mged_nrm_tol = f * rt_degtorad;
 		return;
 	}
 	(void)printf("Error, tolerance '%s' unknown\n", argv[1] );
