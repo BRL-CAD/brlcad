@@ -51,7 +51,7 @@ int		id;
 	struct rt_external	ext;
 	union record		*rec;
 
-	if( id <= 0 || id > ID_MAXIMUM )  {
+	if( (id <= 0 || id > ID_MAXIMUM) && id != ID_COMBINATION )  {
 		rt_log("mk_export_fwrite(%s): id=%d bad\n",
 			name, id );
 		return(-1);
