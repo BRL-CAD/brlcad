@@ -109,6 +109,8 @@ extern int	unlink();
 extern int	wait();
 extern int	write();
 
+extern void	*shmat();
+extern int	shmget();
 
 /*
  *	C Library Routines
