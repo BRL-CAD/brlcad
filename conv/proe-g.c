@@ -90,9 +90,10 @@ static char *proe_usage="%s [-psdarS] [-u reg_exp] [-x rt_debug_flag] [-X nmg_de
 	The -S option indicates that the input file is raw STL (STereoLithography) format.\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n\
 	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
-static char *stl_usage="%s [-psda] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] input.stl output.g\n\
+static char *stl_usage="%s [-psda] [-c units_str] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
+	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\",... default is \"mm\"\n\
 	The -N option specifies a name to use for the object.\n\
 	The -n option is to NMG solids rather than polysolids.\n\
 	The -s option is to simplify the objects to ARB's where possible.\n\
