@@ -132,7 +132,7 @@ proc end_word { w } {
 }
 
 proc backward_delete_char { w } {
-    catch {$w tag remove sel sel.first promptEnd}
+#    catch {$w tag remove sel sel.first promptEnd}
     if [$w compare insert > promptEnd] {
 	$w mark set insert {insert - 1c}
 	$w delete insert
@@ -141,7 +141,7 @@ proc backward_delete_char { w } {
 }
 
 proc delete_char { w } {
-    catch {$w tag remove sel sel.first promptEnd}
+#    catch {$w tag remove sel sel.first promptEnd}
     if {[$w compare insert >= promptEnd] && [$w compare insert < {end - 2c}]} {
 	$w delete insert
 	cursor_highlight $w
