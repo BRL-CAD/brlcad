@@ -1,20 +1,25 @@
 # $Id$
 
-SUBDIRS = generic unix doc library
+configure:
+	mkdir -p build
+	(cd build && \
+		${top_srcdir}/../libtcl8.4/unix/configure  \
+		--srcdir=${top_srcdir}/../libtcl8.4/unix \
+		--enable-shared \
+		--exec-prefix=${prefix} \
+		--prefix=${prefix} \
+		--x-includes=@X_PREFIX@/include \
+		--x-libraries=@X_PREFIX@/lib \
+		--with-tcl=${top_builddir}/../libtcl8.4\
+	)
 
-bin_PROGRAMS = tclsh
-#lib_LTLIBRARIES = libtcl.la
- 
-#libtcl_la_SOURCES = generic/libtclgeneric.la unix/libtclunix.la
-#libtcl_la_LIBADD = $(libtcl_la_SOURCES)
-#libtcl_la_LDFLAGS = -version-info 1 -release 8.4
+all-am:
+	if [ ! -d build ] ; then make configure ; fi
+	if [ ! -e build/Makefile ] ; then rm -rf build && make configure ; fi
+	(cd build && $(MAKE) -$(MAKEFLAGS))
 
-# Ugh.
-lib_LTLIBRARIES = libtcl8.4.la
-libtcl8_4_la_SOURCES = generic/libtclgeneric.la unix/libtclunix.la
-libtcl8_4_la_LIBADD = $(libtcl8_4_la_SOURCES)
-libtcl8_4_la_LDFLAGS = -version-info 1
+install-am:
+	(cd build && $(MAKE) -$(MAKEFLAGS) install)
 
-tclsh_SOURCES = unix/tclAppInit.c
-# the lib_LTLIBRARIES is to help the dependancy graph
-tclsh_LDADD = $(lib_LTLIBRARIES) @TCL_LIBS@
+clean-am:
+	rm -rf build

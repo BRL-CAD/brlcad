@@ -46,13 +46,13 @@ AC_SEARCH_LIBS(matherr,mx)
 
 
 dnl X
+X_PREFIX=/usr/X11R6
 X_LIBS="-L/usr/X11R6/lib -lX11 -lXi"
-
 
 dnl tcl
 TCLVER=8.4
 TCL=libtcl${TCLVER}
-TCL_LIBS='${top_builddir}/${TCL}/${TCL}.la ${DL} ${SOCKET} -lm'
+TCL_LIBS='-L${top_builddir}/libtcl${TCLVER}/build -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
 TCL_LIBRARY="$prefix/tcl${TCLVER}"
 if test "$FRAMEWORK_BUILD" = "1" ; then
 	dnl this may be wrong
@@ -61,10 +61,9 @@ else
     TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 fi
 
-
 dnl tk
 TKVER="8.4"
-TK_LIBS='${top_builddir}/libtk${TKVER}/libtk${TKVER}.la ${TCL_LIBS} ${X_LIBS}'
+TK_LIBS='-L${top_builddir}/libtk${TKVER}/build -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
 TK_LIBRARY="$prefix/tk${TKVER}"
 
 dnl itcl
@@ -169,7 +168,7 @@ dnl REGEX
 dnl BSDGETTIMEOFDAY
 
 BN='${top_builddir}/libbn/libbn.la ${BU}'
-BU='${top_builddir}/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS} -lm ${DL}'
+BU='${top_builddir}/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS}'
 CURSOR='${top_builddir}/libcursor/libcursor.la ${CURSES}'
 DM='${top_builddir}/libdm/libdm.la ${TK_LIBS} ${RT}'
 FB='${top_builddir}/libfb/libfb.la ${X_LIBS} ${PKG} ${BU}'
@@ -221,6 +220,7 @@ AC_SUBST(TK_LIBS)
 AC_SUBST(WDB)
 AC_SUBST(X_CFLAGS)
 AC_SUBST(X_LIBS)
+AC_SUBST(X_PREFIX)
 
 AC_CONFIG_FILES([
 	Makefile
@@ -287,33 +287,8 @@ AC_CONFIG_FILES([
 	librtserver/Makefile
 	libsysv/Makefile
 	libtcl8.4/Makefile
-	libtcl8.4/doc/Makefile
-	libtcl8.4/generic/Makefile
-	libtcl8.4/library/Makefile
-	libtcl8.4/library/dde/Makefile
-	libtcl8.4/library/encoding/Makefile
-	libtcl8.4/library/http/Makefile
-	libtcl8.4/library/http1.0/Makefile
-	libtcl8.4/library/msgcat/Makefile
-	libtcl8.4/library/opt/Makefile
-	libtcl8.4/library/reg/Makefile
-	libtcl8.4/library/tcltest/Makefile
-	libtcl8.4/unix/Makefile
-	libtcl8.4/unix/tclConfig.sh
 	libtermio/Makefile
 	libtk8.4/Makefile
-	libtk8.4/bitmaps/Makefile
-	libtk8.4/doc/Makefile
-	libtk8.4/generic/Makefile
-	libtk8.4/library/Makefile
-	libtk8.4/library/demos/Makefile
-	libtk8.4/library/demos/images/Makefile
-	libtk8.4/library/images/Makefile
-	libtk8.4/library/msgs/Makefile
-	libtk8.4/library/pkgIndex.tcl
-	libtk8.4/unix/Makefile
-	libtk8.4/unix/tkConfig.sh
-	libtk8.4/xlib/Makefile
 	libutahrle/Makefile
 	libwdb/Makefile
 	libz/Makefile
