@@ -30,6 +30,7 @@ double		base2local;		/* from db_i struct, not fastf_t */
 double		local2base;		/* from db_i struct, not fastf_t */
 
 extern fastf_t			bsphere_diameter;
+extern int			do_backout;
 extern int			silent_flag;
 extern struct application	ap;
 extern struct rt_i		*rti_tab[];	/* For use w/ and w/o air */
@@ -52,7 +53,7 @@ com_table		*ctp;
 		++i;
 	if (*(buffer+i) == '\0')     /* display current az and el values */
 	{
-		rt_log("(az, el) = (%4.2f, %4.2f)\n",
+		bu_log("(az, el) = (%4.2f, %4.2f)\n",
 		    azimuth(), elevation());
 		return;
 	}
@@ -63,7 +64,7 @@ com_table		*ctp;
 	}
 	if (abs(az) > 360)       /* check for valid az value */
 	{
-		rt_log("Error:  |azimuth| <= 360\n"); 
+		bu_log("Error:  |azimuth| <= 360\n"); 
 		return;
 	}
 	i += rc; 
@@ -76,7 +77,7 @@ com_table		*ctp;
 	}
 	if (abs(el) > 90)       /* check for valid el value */
 	{
-		rt_log("Error:  |elevation| <= 90\n"); 
+		bu_log("Error:  |elevation| <= 90\n"); 
 		return;
 	}
 	i += rc; 
@@ -126,7 +127,7 @@ com_table		*ctp;
 		++i;
 	if (*(buffer+i) == '\0')    /* display current grid coordinates */
 	{
-		rt_log("(h,v,d) = (%4.2f, %4.2f, %4.2f)\n",
+		bu_log("(h,v,d) = (%4.2f, %4.2f, %4.2f)\n",
 			grid(HORZ) * base2local,
 			grid(VERT) * base2local,
 			grid(DIST) * base2local);
@@ -185,7 +186,7 @@ com_table		*ctp;
 		++i;
 	if (*(buffer+i) == '\0')         /* display current target coors */
 	{
-		rt_log("(x,y,z) = (%4.2f, %4.2f, %4.2f)\n",
+		bu_log("(x,y,z) = (%4.2f, %4.2f, %4.2f)\n",
 			    target(X) * base2local,
 			    target(Y) * base2local,
 			    target(Z) * base2local);
@@ -238,7 +239,7 @@ com_table		*ctp;
 		++i;
 	if (*(buffer+i) == '\0')         /* display current direct coors */
 	{
-		rt_log("(x,y,z) = (%4.2f, %4.2f, %4.2f)\n",
+		bu_log("(x,y,z) = (%4.2f, %4.2f, %4.2f)\n",
 			    direct(X), direct(Y), direct(Z));
 		return;
 	}
@@ -289,7 +290,7 @@ char	*buffer;
 	com_table	*ctp;
 
 	for (ctp = ComTab; ctp -> com_name; ++ctp)
-	    (void) rt_log("%-10s %s\n", ctp -> com_name, ctp -> com_desc);
+	    (void) bu_log("%*s %s\n", -10, ctp -> com_name, ctp -> com_desc);
 }
 
 void shoot(buffer, ctp)
@@ -299,6 +300,12 @@ int			ctp;
     int		i;
 
     extern void	init_ovlp();
+
+    if (do_backout)
+    {
+	backout();
+	do_backout = 0;
+    }
 
     for (i = 0; i < 3; ++i)
     {
@@ -329,7 +336,7 @@ com_table		*ctp;
 	    ++buffer;
     if (*buffer == '\0')     /* display current value of use_of_air */
     {
-	rt_log("use_air = %d\n", ap.a_rt_i -> useair);
+	bu_log("use_air = %d\n", ap.a_rt_i -> useair);
 	return;
     }
     if (!isdigit(*buffer))
@@ -344,43 +351,37 @@ com_table		*ctp;
     }
     if (new_use && (new_use != 1))
     {
-	rt_log("Warning: useair=%d specified, will set to 1\n",
+	bu_log("Warning: useair=%d specified, will set to 1\n",
 	    new_use);
 	new_use = 1;
     }
     if (rti_tab[new_use] == RTI_NULL)
     {
-	rt_log(" Air %s in the current directory of database objects.\n",
+	bu_log(" Air %s in the current directory of database objects.\n",
 	    new_use ? "is not included" : "is included");
-	rt_log(
+	bu_log(
 	    " To set useair=%d requires building/prepping another directory.\n",
 	    new_use);
-	rt_log(" Do you want to do that now (y|n)[n]? ");
+	bu_log(" Do you want to do that now (y|n)[n]? ");
 	gets(response);
 	while ((*rp == ' ') || (*rp == '\t'))
 	    ++rp;
 	if ((*rp != 'y') && (*rp != 'Y'))
 	{
-	    rt_log("useair remains %d\n", ap.a_rt_i -> useair);
+	    bu_log("useair remains %d\n", ap.a_rt_i -> useair);
 	    return;
 	}
-#if 0
-	rt_log("Building the directory...");fflush(stdout);
-#endif
-	rt_log("Building the directory...");fflush(stderr);
+	bu_log("Building the directory...");fflush(stderr);
 	if ((rtip = rt_dirbuild( db_name , db_title, TITLE_LEN )) == RTI_NULL)
 	{
-	    rt_log("Could not load file %s\n", db_name);
+	    bu_log("Could not load file %s\n", db_name);
 	    printusage();
 	    exit(1);
 	}
 	rti_tab[new_use] = rtip;
 	rtip -> useair = new_use;
 
-#if 0
-	rt_log("\nPrepping the geometry...");fflush(stdout);
-#endif
-	rt_log("Prepping the geometry...");fflush(stderr);
+	bu_log("Prepping the geometry...");fflush(stderr);
 	for (op = &object_list; op -> obj_next != NULL; op = op -> obj_next)
 	    do_rt_gettree( rtip, op -> obj_name, 0);
     }
@@ -405,7 +406,7 @@ com_table	*ctp;
 	    ++i;
     if (*(buffer+i) == '\0')     /* display current destination */
     {
-	rt_log("units = '%s'\n", local_u_name);
+	bu_log("units = '%s'\n", local_u_name);
 	return;
     }
     
@@ -425,7 +426,7 @@ com_table	*ctp;
     {
 	if ((tmp_dbl = mk_cvt_factor(buffer + i)) == 0.0)
 	{
-	    rt_log("Invalid unit specification: '%s'\n", buffer + i);
+	    bu_log("Invalid unit specification: '%s'\n", buffer + i);
 	    return;
 	}
 	strncpy(local_u_name, buffer + i, 64);
@@ -538,7 +539,7 @@ com_table	*ctp;
 	{
 	    /* display current value */
 	    rt_printb( "libdebug ", rt_g.debug, DEBUG_FORMAT );
-	    rt_log("\n");
+	    bu_log("\n");
 	    return;
 	}
 
@@ -546,7 +547,7 @@ com_table	*ctp;
 	if (sscanf( cp, "%x", &rt_g.debug ) == 1)
 	{
 	    rt_printb( "libdebug ", rt_g.debug, DEBUG_FORMAT );
-	    rt_log("\n");
+	    bu_log("\n");
 	}
 	else
 	    com_usage(ctp);
