@@ -220,7 +220,11 @@ int entityno;
 		ch = trcptr->name;
 
 		/* Make the TRC */
-		mk_trc( fdout , ch , base , top , r1 , r2 );
+		if( mk_trc( fdout , ch , base , top , r1 , r2 ) < 0 )  {
+			printf( "Unable to write TRC for entity D%07d (%s)\n" ,
+				dir[entityno]->direct , dir[entityno]->name );
+			return( 0 );
+		}
 
 		/* Count 'em */
 		ntrcs++;
@@ -384,7 +388,11 @@ int entityno;
 		}
 
 		/* Make the BRLCAD solid */
-		mk_arb8( fdout , cutname , pts );
+		if( mk_arb8( fdout , cutname , pts ) < 0 )  {
+			printf( "Unable to write ARB8 for entity D%07d (%s)\n" ,
+				dir[entityno]->direct , dir[entityno]->name );
+			return( 0 );
+		}
 	}
 
 	/* Build region */
@@ -394,22 +402,19 @@ int entityno;
 		/* Union together all the TRC's that are not subtracts */
 		if( trcptr->op != 1 )
 		{
-			wmem = mk_addmember( trcptr->name , &head );
-			wmem->wm_op = operator[Union];
+			wmem = mk_addmember( trcptr->name , &head, operator[Union] );
 
 			if( fract < 1.0 )
 			{
 				/* include cutting solid */
-				wmem = mk_addmember( cutname , &head );
-				wmem->wm_op = operator[cutop];
+				wmem = mk_addmember( cutname , &head, operator[cutop] );
 			}
 
 			subp = trcptr->subtr;
 			/* Subtract the inside TRC's */
 			while( subp != NULL )
 			{
-				wmem = mk_addmember( subp->name , &head );
-				wmem->wm_op = operator[Subtract];
+				wmem = mk_addmember( subp->name , &head, operator[Subtract] );
 				subp = subp->next;
 			}
 		}
@@ -417,7 +422,12 @@ int entityno;
 	}
 
 	/* Make the object */
-	mk_lcomb( fdout , dir[entityno]->name , &head , 0 , (char *)0 , (char *)0 , (char *)0 , 0 );
+	if( mk_lcomb( fdout , dir[entityno]->name , &head , 0 , (char *)0 , (char *)0 , (char *)0 , 0 ) < 0 )  {
+		printf( "Unable to make combination for entity D%07d (%s)\n" ,
+			dir[entityno]->direct , dir[entityno]->name );
+		return( 0 );
+	}
+
 
 	/* Free the TRC structures */
 	trcptr = trcs;
