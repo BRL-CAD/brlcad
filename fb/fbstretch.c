@@ -378,7 +378,7 @@ main( argc, argv )
 			x_scale = 1.0;
 		else
 			x_scale = (double)dst_width / (double)src_width;
-			
+
 	if ( y_scale < 0.0 )
 		if ( src_height == 0 || dst_height == 0 )
 			y_scale = 1.0;
@@ -401,33 +401,20 @@ main( argc, argv )
 			       )
 	     ) == FBIO_NULL
 	   )
-		Fatal( "Couldn't open input frame buffer" );
+		Fatal( "Couldn't open input image" );
 	else	{
-		register int	wt = fb_getwidth( src_fbp );
-		register int	ht = fb_getheight( src_fbp );
+		register int	wt, ht;	/* actual frame buffer size */
 
-		/* Use smaller input image size instead of 512/1024. */
+		/* Use smaller input size in preference to requested size. */
 
-		if ( wt < src_width )
+		if ( (wt = fb_getwidth( src_fbp )) < src_width )
 			src_width = wt;
 
-		if ( ht < src_height )
+		if ( (ht = fb_getheight( src_fbp )) < src_height )
 			src_height = ht;
 
 		if ( verbose )
 			Message( "Source image %dx%d", src_width, src_height );
-		}
-
-	if ( src_file == NULL
-	  || dst_file != NULL && strcmp( src_file, dst_file ) == 0
-	   )	{
-		dst_width = src_width;	/* don't try to change existing size */
-		dst_height = src_height;
-
-		dst_fbp = src_fbp;	/* use same f.b. for input & output */
-		}
-	else	{
-		register int	wt, ht;
 
 		if ( dst_width == 0 )
 			dst_width = src_width * x_scale + EPSILON;
@@ -440,9 +427,13 @@ main( argc, argv )
 				 dst_width, dst_height
 			       );
 
-		if ( (dst_fbp = fb_open( dst_file, dst_width, dst_height ))
-		  == FBIO_NULL
+		if ( src_file == NULL
+		  || dst_file != NULL && strcmp( src_file, dst_file ) == 0
 		   )
+			dst_fbp = src_fbp;	/* No No No Not a Second Time */
+		else if ( (dst_fbp = fb_open( dst_file, dst_width, dst_height ))
+		       == FBIO_NULL
+			)
 			Fatal( "Couldn't open output frame buffer" );
 
 		/* Use smaller output size in preference to requested size. */
@@ -457,7 +448,7 @@ main( argc, argv )
 			Message( "Destination image %dx%d",
 				 dst_width, dst_height
 			       );
-		}
+	}
 
 	/* Determine compression/expansion directions. */
 
