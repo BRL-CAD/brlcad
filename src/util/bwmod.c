@@ -43,7 +43,7 @@ char	*file_name;
 
 char usage[] = "\
 Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
-                   -S shift -M and -O or -X xor -t trunc} [file.bw]\n";
+                   -S shift -M and -O or -X xor -t trunc} [file.bw] > file2.bw\n";
 
 #define	ADD	1
 #define MULT	2
@@ -68,8 +68,8 @@ int char_arith = 0;
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
-	double	d;
+	register int c = 0;
+	double	d = 0.0;
 
 	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:" )) != EOF )
 	{
@@ -89,6 +89,7 @@ get_args(int argc, register char **argv)
 		case 'd':
 			op[ numop ] = MULT;
 			d = atof(optarg);
+			/*			printf("d is %f\n", d); */
 			if( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
 				exit( 2 );
