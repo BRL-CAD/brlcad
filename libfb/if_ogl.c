@@ -63,6 +63,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 /* Internal callbacks etc.*/
 _LOCAL_ void		do_event();
 _LOCAL_ void		expose_callback();
+void ogl_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
 
 /* Other Internal routines */
 _LOCAL_ void		ogl_clipper();
@@ -80,6 +81,8 @@ _LOCAL_ int	multiple_windows = 0;	/* someone wants to be ready
 					 */
 _LOCAL_	XColor	color_cell[256];		/* used to set colormap */
 
+int ogl_refresh();
+int ogl_close_existing();
 int ogl_open_existing();
 _LOCAL_ int _ogl_open_existing();
 
@@ -226,6 +229,7 @@ struct oglinfo {
 	Window		cursor;
 	XVisualInfo    *vip;		/* pointer to info on current visual */
 	Colormap	xcmap;		/* xstyle color map */
+	int		use_ext_ctrl;	/* for controlling the Ogl graphics engine externally */
 };
 
 #define	SGI(ptr)	((struct sgiinfo *)((ptr)->u1.p))
@@ -386,7 +390,7 @@ FBIO	*ifp;
 		pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
 		size = pixsize + sizeof(struct ogl_cmap);
 
-		sp = malloc( size );
+		sp = calloc( 1, size );
 		if( sp == 0 )  {
 			fb_log("ogl_getmem: frame buffer memory malloc failed\n");
 			goto fail;
@@ -466,7 +470,7 @@ success:
 	return(0);
 fail:
 	fb_log("ogl_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_4d.c for details\n");
-	if( (sp = malloc( size )) == NULL )  {
+	if( (sp = calloc( 1, size )) == NULL )  {
 		fb_log("ogl_getmem:  malloc failure\n");
 		return(-1);
 	}
@@ -556,7 +560,7 @@ int		npix;
 	if((ybase + nlines - 1) > clp->ypixmax)
 		nlines = clp->ypixmax - ybase + 1;
 
-
+	if(!OGL(ifp)->use_ext_ctrl){
 	if (!OGL(ifp)->copy_flag){
 		/*
 		 * Blank out areas of the screen around the image, if exposed.
@@ -605,6 +609,7 @@ int		npix;
 			-0.25, ((GLdouble) OGL(ifp)->vp_height)-0.25,
 			-1.0, 1.0);
 		glPixelZoom( 1.0, 1.0);
+	}
 	}
 
 	if( sw_cmap ) { 
@@ -1053,7 +1058,8 @@ int soft_cmap;
 {
   Pixmap src_bitmap, nil_bitmap;
 
-  ifp->if_mode = 1;  /*XXX for now use private memory */
+  /*XXX for now use private memory */
+  ifp->if_mode = MODE_1MALLOC;
 
   /*
    *  Allocate extension memory sections,
@@ -1069,12 +1075,16 @@ int soft_cmap;
     return -1;
   }
 
+  OGL(ifp)->use_ext_ctrl = 1;
+
   SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
   multiple_windows = 1;
-  ifp->if_width = width;
-  ifp->if_height = height;
-  OGL(ifp)->win_width = width;
-  OGL(ifp)->win_height = height;
+  ifp->if_width = ifp->if_max_width = width;
+  ifp->if_height = ifp->if_max_height = height;
+
+  OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
+  OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
+
   SGI(ifp)->mi_curs_on = 1;
 
   /* initialize window state variables before calling ogl_getmem */
@@ -1086,7 +1096,7 @@ int soft_cmap;
   SGI(ifp)->mi_pid = getpid();
 
   /* Attach to shared memory, potentially with a screen repaint */
-  if( ogl_getmem(ifp) < 0 )
+  if(ogl_getmem(ifp) < 0)
     return -1;
 
   OGL(ifp)->dispp = dpy;
@@ -1104,6 +1114,8 @@ int soft_cmap;
 
   OGL(ifp)->alive = 1;
   OGL(ifp)->firstTime = 1;
+
+  ogl_clipper(ifp);
 
   return 0;
 }
@@ -1318,6 +1330,9 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 
 
 	/* Update screen */
+	if(OGL(ifp)->use_ext_ctrl){
+		glClear(GL_COLOR_BUFFER_BIT);
+	}else{
 	if ( OGL(ifp)->copy_flag){
 		/* COPY mode: clear both buffers */
 		if (OGL(ifp)->front_flag){
@@ -1341,6 +1356,7 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 	if (multiple_windows) {
 		/* unattach context for other threads to use */
 		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
 	}
 
 	return(0);
@@ -1383,6 +1399,9 @@ int	xzoom, yzoom;
 	else	ifp->if_zoomflag = 0;
 
 
+	if(OGL(ifp)->use_ext_ctrl){
+		ogl_clipper(ifp);
+	}else{
 	if (multiple_windows) {
 		if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 			fb_log("Warning, ogl_view: glXMakeCurrent unsuccessful.\n");
@@ -1400,6 +1419,7 @@ int	xzoom, yzoom;
 		OGL(ifp)->front_flag = 1;
 	}
 	glLoadIdentity();
+
 	ogl_clipper(ifp);
 	clp = &(OGL(ifp)->clip);
 	glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
@@ -1417,6 +1437,7 @@ int	xzoom, yzoom;
 	if (multiple_windows) {
 		/* unattach context for other threads to use */
 		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
 	}
 
 	return(0);
@@ -1590,6 +1611,7 @@ int	count;
 		}
 	}
 
+	if(!OGL(ifp)->use_ext_ctrl){
 	if( xstart + count <= ifp->if_width  )  {
 		/* "Fast path" case for writes of less than one scanline.
 		 * The assumption is that there will be a lot of short
@@ -1622,6 +1644,7 @@ int	count;
 	if (multiple_windows) {
 		/* unattach context for other threads to use */
 		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
 	}
 
 	return(ret);
@@ -1670,6 +1693,7 @@ CONST unsigned char	*pp;
 		}
 	}
 
+	if(!OGL(ifp)->use_ext_ctrl){
 	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
@@ -1690,6 +1714,7 @@ CONST unsigned char	*pp;
 	if (multiple_windows) {
 	/* unattach context for other threads to use */
 	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
 	}
 
 	return(width*height);
@@ -1780,6 +1805,7 @@ register CONST ColorMap	*cmp;
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
 
 
+	if(!OGL(ifp)->use_ext_ctrl){
 	if( OGL(ifp)->soft_cmap_flag )  {
 		/* if current and previous maps are linear, return */
 		if( SGI(ifp)->mi_cmap_flag == 0 && prev == 0 )  return(0);
@@ -1815,7 +1841,7 @@ register CONST ColorMap	*cmp;
 	    	}
     		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
 	}
-
+	}
 
 	return(0);
 }
@@ -2070,26 +2096,39 @@ _LOCAL_ void
 do_event(ifp)
 FBIO *ifp;	
 {
-	XEvent event;
+  XEvent event;
 
-	while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
-				 OGL(ifp)->event_mask, &event)) {
-		switch (event.type) {
-		case Expose:
-			expose_callback(ifp, &event);
-			break;
-		case ButtonPress:
-			break;
-		case ButtonRelease:
-			OGL(ifp)->alive = 0;
-			break;
-		case KeyPress:
-			break;
-		case KeyRelease:
-			OGL(ifp)->alive = 0;
-			break;
-		}
-	}
+  while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
+			   OGL(ifp)->event_mask, &event)) {
+    switch (event.type) {
+    case Expose:
+      if(!OGL(ifp)->use_ext_ctrl)
+	expose_callback(ifp, &event);
+      break;
+    case ButtonPress:
+      break;
+    case ButtonRelease:
+      OGL(ifp)->alive = 0;
+      break;
+    case KeyPress:
+      break;
+    case KeyRelease:
+      OGL(ifp)->alive = 0;
+      break;
+    case ConfigureNotify:
+      {
+	XConfigureEvent *conf = (XConfigureEvent *)&event;
+
+	if(conf->width == OGL(ifp)->win_width &&
+	   conf->height == OGL(ifp)->win_height)
+	  return;
+
+	ogl_configureWindow(ifp, conf->width, conf->height);
+      }
+    default:
+      break;
+    }
+  }
 }
 
 _LOCAL_ void
@@ -2229,8 +2268,27 @@ XEvent *eventPtr;
 #endif
 }  
 
- 
+void
+ogl_configureWindow(ifp, width, height)
+FBIO *ifp;
+int width, height;
+{
+  if(width == OGL(ifp)->win_width &&
+     height == OGL(ifp)->win_height)
+    return;
 
+  ifp->if_width = ifp->if_max_width = width;
+  ifp->if_height = ifp->if_max_height = height;
+
+  OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
+  OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
+
+  ifp->if_xcenter = width/2;
+  ifp->if_ycenter = height/2;
+
+  ogl_getmem(ifp);
+  ogl_clipper(ifp);
+}
 
 /* reorder_cursor - reverses the order of the scanlines. 
  * scanlines are byte aligned, the specified cursor is xbits
@@ -2458,4 +2516,41 @@ FBIO *ifp;
 
 	}
 		
+}
+
+int
+ogl_refresh(ifp, x, y, w, h)
+FBIO *ifp;
+int x, y, w, h;
+{
+  int mm;
+
+  if(w < 0){
+    w = -w;
+    x -= w;
+  }
+
+  if(h < 0){
+    h = -h;
+    y -= h;
+  }
+
+  glGetIntegerv(GL_MATRIX_MODE, &mm);
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(0.0, OGL(ifp)->win_width, 0.0, OGL(ifp)->win_height, -1.0, 1.0);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+  glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
+  ogl_xmit_scanlines(ifp, y, h, x, w);
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+  glMatrixMode(mm);
+
+  glFlush();
+  return 0;
 }
