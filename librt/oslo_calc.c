@@ -22,6 +22,9 @@
  * dealing mostly with surfaces. This routine computes the refinement
  * matrix and returns a oslo structure which will allow a new curve or
  * surface to be built.
+ *
+ * Since we only want the last row of the alpha's as outlined in the
+ * paper we can use a one dimensional array for the ah.
  */
 
 #include <stdio.h>
@@ -32,40 +35,33 @@
 #define AMAX(i,j)    ( (i) > (j) ? (i) : (j) )
 #define AMIN(i,j)    ( (i) < (j) ? (i) : (j) )
 
-/* Simplification needed thanks to the SGI: */
-/* ah[AH_INDEX(j,t)] gives result of former ah_index(j,t) macro */
-#define AH_INDEX(_j,_t)   (( (_j) * ((_j)+1)/2) + (_t) - ((order-1) - (_j)))
-#define ah_index(__j,__t)	ah[AH_INDEX(__j,__t)]
-
 struct oslo_mat *
-rt_nurb_calc_oslo(order, tau_kv, t_kv )
-int order;
+orig_nurb_calc_oslo(order, tau_kv, t_kv )
+register int order;
 register struct knot_vector * tau_kv;	/* old knot vector */
 register struct knot_vector * t_kv;	/* new knot vector */
 {
-	fastf_t * ah;
-	fastf_t * newknots;			/* new knots */
-	register int  i;
+	register fastf_t * t_p, * tau_p;
+	fastf_t ah[20];
+	fastf_t newknots[20];			/* new knots */
 	register int  j;			/* d(j), j = 0 : # of new ctl points */
 	int     mu,				/* mu:  tau[mu] <= t[j] < tau[mu+1]*/
-	muprim;
-	int     v,				/* Nu value (order of matrix) */
-	p;
-	int     iu,				/* upper bound loop counter */
-	il,				/* lower bound loop counter */
-	ih,
-	n1;				/* upper bound of t knot vector - order*/
-	int     ahi;			/* ah[] index */
-	fastf_t beta1;
+		muprim,
+		v,				/* Nu value (order of matrix) */
+		p,
+		iu,				/* upper bound loop counter */
+		il,				/* lower bound loop counter */
+		ih,
+		n1;				/* upper bound of t knot vector - order*/
+
 	fastf_t tj;
+
 	struct oslo_mat * head, * o_ptr, *new_o;
-	
-	ah = (fastf_t *) rt_malloc (sizeof (fastf_t) * order * ( order + 1)/2,
-	    "rt_nurb_calc_oslo: alpha matrix");
-	newknots = (fastf_t *) rt_malloc (sizeof (fastf_t) * (order), 
-	    "rt_nurb_calc_oslo: New knots");
 
 	n1 = t_kv->k_size - order;
+
+	t_p = t_kv->knots;
+	tau_p = tau_kv->knots;
 
 	mu = 0;				/* initialize mu */
 
@@ -75,6 +71,7 @@ register struct knot_vector * t_kv;	/* new knot vector */
 	o_ptr = head;
 
 	for (j = 0; j < n1; j++) {
+		register int  i;
 
 		if ( j != 0 )
 		{
@@ -85,13 +82,14 @@ register struct knot_vector * t_kv;	/* new knot vector */
 			o_ptr = new_o;
 		}
 
-		while (tau_kv->knots[mu + 1] <= t_kv->knots[j])
-			mu = mu + 1;		/* find the bounding mu */
+		/* find the bounding mu */
+		while (tau_p[mu + 1] <= t_p[j]) mu++;
 
-		i = j + 1;
 		muprim = mu;
 
-		while ((t_kv->knots[i] == tau_kv->knots[muprim]) && i < (j + order)) {
+		i = j + 1;
+
+		while ((t_p[i] == tau_p[muprim]) && i < (j + order)) {
 			i++;
 			muprim--;
 		}
@@ -99,24 +97,28 @@ register struct knot_vector * t_kv;	/* new knot vector */
 		ih = muprim + 1;
 
 		for (v = 0, p = 1; p < order; p++) {
-			if (t_kv->knots[j + p] == tau_kv->knots[ih])
+			if (t_p[j + p] == tau_p[ih])
 				ih++;
 			else
-				newknots[++v - 1] = t_kv->knots[j + p];
+				newknots[++v - 1] = t_p[j + p];
 		}
 
-		/* Separating these two is needed to avoid the SGI 4D compiler bug */
-		ahi = AH_INDEX(0, order - 1);
-		ah[ahi] = 1.0;
+		ah[order-1] = 1.0;
 
 		for (p = 1; p <= v; p++) {
+
+			fastf_t beta1;
+			int o_m;
+
 			beta1 = 0.0;
+			o_m = order - muprim;
+
 			tj = newknots[p-1];
 
-			if (p - 1 >= muprim) {
-				beta1 = ah_index (p - 1, order - muprim);
-				beta1 = ((tj - tau_kv->knots[0]) * beta1) /
-				    (tau_kv->knots[p + order - v] - tau_kv->knots[0]);
+			if (p > muprim) {
+				beta1 = ah[o_m];
+				beta1 = ((tj - tau_p[0]) * beta1) /
+				    (tau_p[p + order - v] - tau_p[0]);
 			}
 			i = muprim - p + 1;
 			il = AMAX (1, i);
@@ -124,29 +126,29 @@ register struct knot_vector * t_kv;	/* new knot vector */
 			iu = AMIN (muprim, i);
 
 			for (i = il; i <= iu; i++) {
-				register fastf_t d1, d2;
-				register fastf_t beta;
+				fastf_t d1, d2;
+				fastf_t beta;
 
-				d1 = tj - tau_kv->knots[i];
-				d2 = tau_kv->knots[i + p + order - v - 1] - tj;
+				d1 = tj - tau_p[i];
+				d2 = tau_p[i + p + order - v - 1] - tj;
 
-				beta = ah_index (p - 1, i + order - muprim - 1) / (d1 + d2);
+				beta = ah[i + o_m - 1] / (d1 + d2);
 
-				ah_index (p, i + order - muprim - 2) = d2 * beta + beta1;
+				ah[i + o_m - 2] = d2 * beta + beta1;
 				beta1 = d1 * beta;
 			}
 
-			ah_index (p, iu + order - muprim - 1) = beta1;
+			ah[iu + o_m - 1] = beta1;
 
 			if (iu < muprim) {
 				register fastf_t kkk;
 				register fastf_t ahv;
 
-				kkk = tau_kv->knots[n1 - 1 + order];
-				ahv = ah_index (p - 1, iu + order - muprim);
-				ah_index (p, iu + order - muprim - 1) =
+				kkk = tau_p[n1 - 1 + order];
+				ahv = ah[iu + o_m];
+				ah[iu + o_m - 1] =
 				    beta1 + (kkk - tj) *
-				    ahv / (kkk - tau_kv->knots[iu + 1]);
+				    ahv / (kkk - tau_p[iu + 1]);
 			}
 		}
 
@@ -157,11 +159,9 @@ register struct knot_vector * t_kv;	/* new knot vector */
 		o_ptr->osize = v;
 
 		for ( i = v, p = 0; i >= 0; i--)
-			o_ptr->o_vec[p++] =  ah_index(v, (order-1) - i);
+			o_ptr->o_vec[p++] =  ah[(order-1) - i];
 	}
 
-	rt_free ( (char *)ah, "rt_nurb_calc_oslo: alpha matrix" );
-	rt_free ( (char *)newknots, "rt_nurb_calc_oslo: new knots" );
 	o_ptr->next = (struct oslo_mat*) 0;
 	return head;
 }
@@ -171,7 +171,7 @@ register struct knot_vector * t_kv;	/* new knot vector */
  *  rt_pr_oslo() - FOR DEBUGGING PURPOSES
  */
 void
-rt_nurb_pr_oslo( om)
+orig_nurb_pr_oslo( om)
 struct oslo_mat * om;
 {
 	struct oslo_mat * omp;
@@ -195,11 +195,11 @@ struct oslo_mat * om;
  */
 
 void
-rt_nurb_free_oslo( om )
+orig_nurb_free_oslo( om )
 struct oslo_mat * om;
 {
 	register struct oslo_mat * omp;
-	
+
 	while( om != (struct oslo_mat *) 0 )
 	{
 		omp = om;
