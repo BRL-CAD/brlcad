@@ -125,7 +125,7 @@ FBIO ogl_interface =
 	fb_sim_readrect,	/* read rectangle	*/
 	ogl_writerect,		/* write rectangle	*/
 	ogl_poll,		/* process events	*/
-	fb_cnull,		/* flush output		*/
+	ogl_flush,		/* flush output		*/
 	ogl_free,		/* free resources	*/
 	ogl_help,		/* help message		*/
 	"Silicon Graphics OpenGL",	/* device description	*/
@@ -291,6 +291,10 @@ struct oglinfo {
 #define MODE_11MASK	(1<<10)
 #define MODE_11NORMAL	(0<<10)		/* always draw from mem. to window*/
 #define MODE_11COPY	(1<<10)		/* keep full image on back buffer,*/
+
+#define MODE_12MASK	(1<<11)
+#define MODE_12NORMAL	(0<<11)
+#define MODE_12DELAY_WRITES_TILL_FLUSH	(1<<11)
 					/* and copy current view to front */
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
@@ -318,6 +322,8 @@ _LOCAL_ struct modeflags {
 		"Single buffer -  else double buffer if possible" },
 	{ 'b',	MODE_11MASK, MODE_11COPY,
 		"Fast pan and zoom using backbuffer copy -  else normal " },
+	{ 'D',	MODE_12DELAY_WRITES_TILL_FLUSH, MODE_12DELAY_WRITES_TILL_FLUSH,
+		"Don't update screen until fb_flush() is called.  (Double buffer sim)" },
 	{ 'z',	MODE_15MASK, MODE_15ZAP,
 		"Zap (free) shared memory.  Can also be done with fbfree command" },
 	{ '\0', 0, 0, "" }
@@ -1605,6 +1611,9 @@ int	count;
 			break;
 	}
 
+	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
+		return ret;
+
 	if (multiple_windows) {
 		if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 			fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
@@ -1692,6 +1701,9 @@ CONST unsigned char	*pp;
 			cp += 3;
 		}
 	}
+
+	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
+		return width*height;
 
 	if(!OGL(ifp)->use_ext_ctrl){
 	if (multiple_windows) {
@@ -1998,6 +2010,22 @@ _LOCAL_ int
 ogl_flush( ifp )
 FBIO	*ifp;
 {
+	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
+		if (multiple_windows) {
+			if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+				fb_log("Warning, ogl_flush: glXMakeCurrent unsuccessful.\n");
+			}
+		}
+		/* Send entire in-memory buffer to the screen, all at once */
+		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+		if ( SGI(ifp)->mi_doublebuffer) {
+			glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
+		} else {
+			if (OGL(ifp)->copy_flag){
+				backbuffer_to_screen(ifp,-1);
+			}
+		}
+	}
 	XFlush(OGL(ifp)->dispp);
 	glFlush();
 	return(0);
