@@ -43,7 +43,7 @@ void	f_debug(), f_regdebug(), f_name(), f_copy(), f_instance();
 void	f_region(), f_itemair(), f_modify(), f_kill(), f_list();
 void	f_zap(), f_group(), f_param(), f_mirror(), f_extrude();
 void	f_delmem(), f_arbdef(), f_return(), f_comm(), f_quit();
-void	f_edcomb(), f_status(), f_rot();
+void	f_edcomb(), f_status(), f_vrot();
 void	f_refresh(), f_fix(), f_rt();
 void	f_make(), f_attach(), f_release();
 void	f_tedit(), f_memprint();
