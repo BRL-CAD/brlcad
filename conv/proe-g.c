@@ -80,8 +80,10 @@ static char *usage="proe-g [-p] [-s] [-d] [-a] [-u reg_exp] [-x rt_debug_flag] [
 	The -u option indicates that portions of object names that match the regular expression\n\
 		'reg_exp' shouold be ignored.\n\
 	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
-	The -r option indicates that the model should not be re-oriented,\n\
+	The -r option indicates that the model should not be re-oriented or scaled,\n\
 		but left in the same orientation as it was in Pro/E.\n\
+		This is to allow conversion of parts to be included in\n\
+		previously converted Pro/E assemblies.\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n\
 	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
 static FILE *fd_in;		/* input file (from Pro/E) */
@@ -1077,6 +1079,9 @@ Convert_input()
 		return;
 
 	sscanf( line, "%f", &conv_factor );
+
+	if( !do_reorient )
+		conv_factor = 1.0;
 
 	while( fgets( line, MAX_LINE_LEN, fd_in ) )
 	{
