@@ -114,7 +114,7 @@ char **argv;
 
 	scanbytes = width * 3;
 
-	if( (fbp = fb_open( NULL, height, width )) == NULL )  {
+	if( (fbp = fb_open( NULL, width, height )) == NULL )  {
 		fprintf(stderr,"fb_open failed\n");
 		exit(12);
 	}
