@@ -207,6 +207,17 @@ FILE	*fp;
 				out_mat( mat, stdout );
 				continue;
 			}
+			if( strcmp( tokenwords[0], "xlate" ) == 0 )  {
+				mat_t	mat;
+
+				mat_idn( mat );
+				MAT_DELTAS( mat, 
+				    atof( chanwords[str2chan_index(tokenwords[1])] ),
+				    atof( chanwords[str2chan_index(tokenwords[2])] ),
+				    atof( chanwords[str2chan_index(tokenwords[3])] ) );
+				out_mat( mat, stdout );
+				continue;
+			}
 
 			fprintf(stderr,"Line %d: keyword @(%s) unknown\n", line, token);
 			fprintf(stdout, "@(%s)", token );
