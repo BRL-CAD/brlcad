@@ -53,24 +53,27 @@ struct shadework	*swp;
 char		*dp;
 {
 	struct application sub_ap;
-	fastf_t	f;
 	vect_t	work;
 	vect_t	incident_dir;
 	vect_t	filter_color;
-	fastf_t	attenuation;
-	fastf_t	transmit;
+	fastf_t	shader_fract;
+	vect_t	shader_color;
 	fastf_t	reflect;
+	vect_t	reflect_color;
+	fastf_t	transmit;
+	vect_t	transmit_color;
+	fastf_t	attenuation;
 
 	reflect = swp->sw_reflect;
 	transmit = swp->sw_transmit;
 	if( reflect <= 0 && transmit <= 0 )
-		goto finish;
+		goto out;
 
 	if( ap->a_level >= max_bounces )  {
 		/* Nothing more to do for this ray */
 		static long count = 0;		/* Not PARALLEL, should be OK */
 
-		if( (rdebug&RDEBUG_SHOWERR) && (
+		if( (rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
 			count++ < MSG_PROLOGUE ||
 			(count%MSG_INTERVAL) == 3
 		) )  {
@@ -89,7 +92,7 @@ char		*dp;
 		 */
 		VMOVE( swp->sw_color, swp->sw_basecolor );
 		ap->a_cumlen += pp->pt_inhit->hit_dist;
-		goto finish;
+		goto out;
 	}
 	VMOVE( filter_color, swp->sw_basecolor );
 
@@ -115,13 +118,23 @@ char		*dp;
 	 *  Diminish base color appropriately, and add in
 	 *  contributions from mirror reflection & transparency
 	 */
-	f = 1 - (reflect + transmit);
-	if( f < 0 )  f = 0;
-	else if( f > 1 )  f = 1;
-	VSCALE( swp->sw_color, swp->sw_color, f );
+	shader_fract = 1 - (reflect + transmit);
+	if( shader_fract < 0 )  {
+		shader_fract = 0;
+	} else if( shader_fract >= 1 )  {
+		goto out;
+	}
+	if(rdebug&RDEBUG_REFRACT) {
+		rt_log("rr_render: lvl=%d shader=%g, reflect=%g, transmit=%g %s\n",
+			ap->a_level,
+			shader_fract, reflect, transmit,
+			pp->pt_regionp->reg_name );
+	}
+	VSCALE( shader_color, swp->sw_color, shader_fract );
 
 	if( reflect > 0 )  {
-		LOCAL vect_t	to_eye;
+		LOCAL vect_t		to_eye;
+		register fastf_t	f;
 
 		/* Mirror reflection */
 		sub_ap = *ap;		/* struct copy */
@@ -139,12 +152,13 @@ char		*dp;
 		/* a_user has hit/miss flag! */
 		if( sub_ap.a_user == 0 )  {
 			/* MISS */
-			VMOVE( sub_ap.a_color, background );
+			VMOVE( reflect_color, background );
 		} else {
 			ap->a_cumlen += sub_ap.a_cumlen;
+			VMOVE( reflect_color, sub_ap.a_color );
 		}
-		VJOIN1(swp->sw_color, swp->sw_color,
-			reflect, sub_ap.a_color);
+	} else {
+		VSETALL( reflect_color, 0 );
 	}
 	if( transmit > 0 )  {
 		/*
@@ -163,9 +177,9 @@ char		*dp;
 
 		if( sub_ap.a_refrac_index != swp->sw_refrac_index &&
 		    !rr_refract( incident_dir,		/* input direction */
-			swp->sw_hit.hit_normal,
-			sub_ap.a_refrac_index,
-			swp->sw_refrac_index,
+			swp->sw_hit.hit_normal,		/* exit normal */
+			sub_ap.a_refrac_index,		/* current RI */
+			swp->sw_refrac_index,		/* next RI */
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
 			/* Reflected back outside solid */
@@ -194,8 +208,8 @@ do_inside:
 		case 0:
 		default:
 			/* Dreadful error */
-			VSET( swp->sw_color, 0, 99, 0 );	/* very green */
-			goto finish;			/* abandon hope */
+			VSET( swp->sw_color, 0, 99, 0 ); /* very green */
+			goto out;			/* abandon hope */
 		}
 
 		/* NOTE: rr_hit returns EXIT Point in sub_ap.a_uvec,
@@ -241,7 +255,7 @@ do_inside:
 			 *  which is much better than just returning
 			 *  grey or black, as before.
 			 */
-			if( (rdebug&RDEBUG_SHOWERR) && (
+			if( (rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
 				count++ < MSG_PROLOGUE ||
 				(count%MSG_INTERVAL) == 3
 			) )  {
@@ -284,15 +298,31 @@ do_exit:
 
 		/* a_user has hit/miss flag! */
 		if( sub_ap.a_user == 0 )  {
-			VMOVE( sub_ap.a_color, background );
+			VMOVE( transmit_color, background );
 			sub_ap.a_cumlen = 0;
+		} else {
+			VMOVE( transmit_color, sub_ap.a_color );
 		}
-		f = transmit * attenuation;
-		VELMUL( work, filter_color, sub_ap.a_color );
-		VJOIN1( swp->sw_color, swp->sw_color,
-			f, work );
+		transmit *= attenuation;
+		VELMUL( transmit_color, filter_color, transmit_color );
+	} else {
+		VSETALL( transmit_color, 0 );
 	}
-finish:
+	VJOIN2( swp->sw_color, shader_color,
+		reflect, reflect_color,
+		transmit, transmit_color );
+	if(rdebug&RDEBUG_REFRACT)  {
+		rt_log("rr_render: lvl=%d shader=%g reflect=%g, transmit=%g, (final)\n",
+			ap->a_level,
+			shader_fract, reflect, transmit );
+		VPRINT("shader  ", shader_color);
+		VPRINT("reflect ", reflect_color);
+		VPRINT("transmit", transmit_color);
+	}
+out:
+	if(rdebug&RDEBUG_REFRACT)  {
+		VPRINT("final   ", swp->sw_color);
+	}
 	return(1);
 }
 
@@ -342,7 +372,7 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist > 0.0 )  break;
 	if( pp == PartHeadp )  {
-		if(rdebug&RDEBUG_SHOWERR)  {
+		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
 			rt_log("rr_hit:  %d,%d no hit out front?\n",
 				ap->a_x, ap->a_y );
 			return(0);	/* error */
@@ -362,7 +392,7 @@ struct partition *PartHeadp;
 	for( ; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_regionp == (struct region *)(ap->a_user) )  break;
 	if( pp == PartHeadp )  {
-		if(rdebug&RDEBUG_SHOWERR)  {
+		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
 			rt_log("rr_hit:  %d,%d Ray int.reflected in %s landed in %s\n",
 				ap->a_x, ap->a_y,
 				((struct region *)(ap->a_user))->reg_name,
