@@ -4,7 +4,7 @@
  *	Routines to implement the click-to-pick-an-edit-solid feature.
  *
  *  Functions -
- *	cmd_solids_on_ray	trace a single ray from current view
+ *	skewer_solids		fire a ray and list the solids hit
  *
  *  Author -
  *	Paul Tanenbaum
@@ -148,7 +148,6 @@ int	depth;
     rt_log("solid %s at distance %g along ray\n", sol -> name, sol -> dist);
 }
 
-
 /*
  *			    N O _ O P
  *
@@ -173,8 +172,8 @@ struct partition	*ph;
  *	Grabs the first partition it sees, extracting thence
  *	the segment list.  Rpt_solids() sorts the solids along
  *	the ray by first encounter.  As a side-effect, rpt_solids()
- *	fills the rt_list structure pointed to by ap->a_uptr with
- *	the names of the solids.  It returns 1.
+ *	stores in ap->a_uptr the address of a null-terminated array
+ *	of the sorted solid names.  It returns 1.
  */
 
 static int rpt_solids (ap, ph)
@@ -252,26 +251,59 @@ struct partition	*ph;
     rb_walk(solids, ORDER_BY_DISTANCE, print_solid, INORDER);
 
     result = (char **)
-		rt_malloc(solids -> rbt_nm_nodes * sizeof(char *),
+		rt_malloc((solids -> rbt_nm_nodes + 1) * sizeof(char *),
 			  "names of solids on ray");
     for (sol = (struct sol_name_dist *) rb_min(solids, ORDER_BY_DISTANCE), i=0;
 	 sol != NULL;
 	 sol = (struct sol_name_dist *) rb_succ(solids, ORDER_BY_DISTANCE), ++i)
     {
 	result[i] = sol -> name;
+	rt_log("before free_solid(%x)... '%s'\n", sol, result[i]);
 	free_solid(sol);
+	rt_log("after free_solid(%x)... '%s'\n", sol, result[i]);
     }
-    ap -> a_uptr = result;
+    result[i] = 0;
+    ap -> a_uptr = (char *) result;
+
+    rb_free(solids, RB_RETAIN_DATA);
     return (1);
+}
+
+/*
+ *			R P T _ M I S S
+ *
+ *		Miss handler for use by rt_shootray().
+ *
+ *	Stuffs the address of a null string in ap->a_uptr and returns 0.
+ */
+
+static int rpt_miss (ap, ph)
+
+struct application	*ap;
+struct partition	*ph;
+
+{
+    rt_log("I missed!\n");
+    ap -> a_uptr = rt_malloc(sizeof(char *), "names of solids on ray");
+    *((char **) (ap -> a_uptr)) = 0;
+
+    return (0);
 }
 
 /*
  *		S K E W E R _ S O L I D S
  *
- *	Fire a ray at some geometry and return a list of
+ *	Fire a ray at some geometry and obtain a list of
  *	the solids encountered, sorted by first intersection.
  *
- *	N.B. - It is the caller's responsibility to free the list.
+ *	The function has four parameters: the model and objects
+ *	at which to fire (in an argc/argv pair) and the origination
+ *	point and direction for the ray.  So long as it could find
+ *	the objects in the model, skewer_solids() returns a
+ *	null-terminated array of solid names.  Otherwise, it returns 0.
+ *
+ *	N.B. - It is the caller's responsibility to free the array
+ *	of solid names.
  */
 char **skewer_solids (argc, argv, ray_orig, ray_dir)
 
@@ -307,7 +339,7 @@ vect_t		ray_dir;
      *	Initialize the application
      */
     ap.a_hit = rpt_solids;
-    ap.a_miss = no_op;
+    ap.a_miss = rpt_miss;
     ap.a_resource = RESOURCE_NULL;
     ap.a_overlap = no_op;
     ap.a_onehit = 0;
