@@ -74,7 +74,7 @@ Example Use -
 Acknowledgements:
   Modifications by Bob Parker:
         *- adapt for use in LIBRT's "Drawable Geometry" object
-	*- build seperate vdraw commands
+	*- build separate vdraw commands
 
 ********************************************************************/
 #include "conf.h"
@@ -137,7 +137,7 @@ struct bu_cmdtab vdraw_cmds[] = {
 
 /*
  * Usage:
- *        procname vdraw write
+ *        write i|next c x y z
  */
 static int
 vdraw_write_tcl(clientData, interp, argc, argv)
@@ -154,11 +154,11 @@ vdraw_write_tcl(clientData, interp, argc, argv)
 		Tcl_AppendResult(interp, "vdraw write: no vlist is currently open.", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argc < 6) {
+	if (argc < 4) {
 		Tcl_AppendResult(interp, "vdraw write: not enough args\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argv[3][0] == 'n') { /* next */
+	if (argv[1][0] == 'n') { /* next */
 		for (REV_BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
 			if (vp->nused > 0) {
 				break;
@@ -181,7 +181,7 @@ vdraw_write_tcl(clientData, interp, argc, argv)
 		}
 		cp = vp;
 		index = vp->nused;
-	} else if (sscanf(argv[3], "%d", &uind) < 1) {
+	} else if (sscanf(argv[1], "%d", &uind) < 1) {
 		Tcl_AppendResult(interp, "vdraw: write index not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	} else {
@@ -215,17 +215,17 @@ vdraw_write_tcl(clientData, interp, argc, argv)
 		index = uind;
 	}
 
-	if (sscanf(argv[4],"%d",&(cp->cmd[index])) < 1) {
+	if (sscanf(argv[2],"%d",&(cp->cmd[index])) < 1) {
 		Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argc == 8) {
-		cp->pt[index][0] = atof(argv[5]);
-		cp->pt[index][1] = atof(argv[6]);
-		cp->pt[index][2] = atof(argv[7]);
+	if (argc == 6) {
+		cp->pt[index][0] = atof(argv[3]);
+		cp->pt[index][1] = atof(argv[4]);
+		cp->pt[index][2] = atof(argv[5]);
 	} else {
-		if (argc != 6 ||
-		    bn_decode_vect(cp->pt[index], argv[5]) != 3) {
+		if (argc != 4 ||
+		    bn_decode_vect(cp->pt[index], argv[3]) != 3) {
 			Tcl_AppendResult(interp,
 					 "vdraw write: wrong # args, need either x y z or {x y z}\n", (char *)NULL);
 			return TCL_ERROR;
@@ -240,7 +240,7 @@ vdraw_write_tcl(clientData, interp, argc, argv)
 
 /*
  * Usage:
- *        procname vdraw insert
+ *        insert i c x y z
  */
 int
 vdraw_insert_tcl(clientData, interp, argc, argv)
@@ -259,11 +259,11 @@ vdraw_insert_tcl(clientData, interp, argc, argv)
 		Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argc < 8) {
+	if (argc < 6) {
 		Tcl_AppendResult(interp, "vdraw: not enough args", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (sscanf(argv[3], "%d", &uind) < 1) {
+	if (sscanf(argv[2], "%d", &uind) < 1) {
 		Tcl_AppendResult(interp, "vdraw: insert index not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	} 
@@ -315,20 +315,20 @@ vdraw_insert_tcl(clientData, interp, argc, argv)
 		vp->cmd[i] = vp->cmd[i-1];
 		VMOVE(vp->pt[i],vp->pt[i-1]);
 	}
-	if (sscanf(argv[4],"%d",&(vp->cmd[index])) < 1) {
+	if (sscanf(argv[2],"%d",&(vp->cmd[index])) < 1) {
 		Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-	vp->pt[index][0] = atof(argv[5]);
-	vp->pt[index][1] = atof(argv[6]);
-	vp->pt[index][2] = atof(argv[7]);
+	vp->pt[index][0] = atof(argv[3]);
+	vp->pt[index][1] = atof(argv[4]);
+	vp->pt[index][2] = atof(argv[5]);
 
 	return TCL_OK;
 }
 
 /*
  * Usage:
- *        procname vdraw delete
+ *        delete i|last|all
  */
 int
 vdraw_delete_tcl(clientData, interp, argc, argv)
@@ -346,18 +346,18 @@ vdraw_delete_tcl(clientData, interp, argc, argv)
 		Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argc < 4) {
+	if (argc < 2) {
 		Tcl_AppendResult(interp, "vdraw: not enough args\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argv[3][0] == 'a') {
+	if (argv[1][0] == 'a') {
 		/* delete all */
 		for (BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
 			vp->nused = 0;
 		}
 		return TCL_OK;
 	} 
-	if (argv[3][0] == 'l') {
+	if (argv[1][0] == 'l') {
 		/* delete last */
 		for (REV_BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
 			if (vp->nused > 0) {
@@ -367,7 +367,7 @@ vdraw_delete_tcl(clientData, interp, argc, argv)
 		}
 		return TCL_OK;
 	}
-	if (sscanf(argv[3], "%d", &uind) < 1) {
+	if (sscanf(argv[1], "%d", &uind) < 1) {
 		Tcl_AppendResult(interp, "vdraw: delete index not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	}  
@@ -423,7 +423,7 @@ vdraw_delete_tcl(clientData, interp, argc, argv)
 
 /*
  * Usage:
- *        procname vdraw read
+ *        read i|color|length|name
  */
 static int
 vdraw_read_tcl(clientData, interp, argc, argv)
@@ -442,11 +442,11 @@ vdraw_read_tcl(clientData, interp, argc, argv)
 		Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argc < 4) {
+	if (argc < 2) {
 		Tcl_AppendResult(interp, "vdraw: need index to read\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argv[3][0] == 'c') {
+	if (argv[1][0] == 'c') {
 		/* read color of current solid */
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "%.6lx", dgop->dgo_currVHead->vdc_rgb);
@@ -454,7 +454,7 @@ vdraw_read_tcl(clientData, interp, argc, argv)
 		bu_vls_free(&vls);
 		return TCL_OK;
 	}
-	if (argv[3][0] == 'n') {
+	if (argv[1][0] == 'n') {
 		/*read name of currently open solid*/
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "%.89s", dgop->dgo_currVHead->vdc_name);
@@ -462,7 +462,7 @@ vdraw_read_tcl(clientData, interp, argc, argv)
 		bu_vls_free(&vls);
 		return TCL_OK;
 	}
-	if (argv[3][0] == 'l') {
+	if (argv[1][0] == 'l') {
 		/* return lenght of list */
 		length = 0;
 		vp = BU_LIST_FIRST(rt_vlist, &(dgop->dgo_currVHead->vdc_vhd));
@@ -476,7 +476,7 @@ vdraw_read_tcl(clientData, interp, argc, argv)
 		bu_vls_free(&vls);
 		return TCL_OK;
 	}
-	if (sscanf(argv[3], "%d", &uind) < 1) {
+	if (sscanf(argv[1], "%d", &uind) < 1) {
 		Tcl_AppendResult(interp, "vdraw: read index not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -510,7 +510,7 @@ vdraw_read_tcl(clientData, interp, argc, argv)
 
 /*
  * Usage:
- *        procname vdraw send
+ *        send
  */
 static int
 vdraw_send_tcl(clientData, interp, argc, argv)
@@ -577,7 +577,7 @@ vdraw_send_tcl(clientData, interp, argc, argv)
 
 /*
  * Usage:
- *        procname vdraw params
+ *        params color|name
  */
 static int
 vdraw_params_tcl(clientData, interp, argc, argv)
@@ -594,29 +594,29 @@ vdraw_params_tcl(clientData, interp, argc, argv)
 		Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argc < 5) {
+	if (argc < 3) {
 		Tcl_AppendResult(interp, "vdraw: need params to set\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if (argv[3][0] == 'c') {
-		if (sscanf(argv[4],"%lx", &rgb)>0)
+	if (argv[1][0] == 'c') {
+		if (sscanf(argv[2],"%lx", &rgb)>0)
 			dgop->dgo_currVHead->vdc_rgb = rgb;
 		return TCL_OK;
 	}
-	if (argv[3][0] == 'n') {
+	if (argv[1][0] == 'n') {
 		/* check for conflicts with existing vlists*/
 		for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
-			if (!strncmp( rcp->vdc_name, argv[3], RT_VDRW_MAXNAME)) {
+			if (!strncmp( rcp->vdc_name, argv[1], RT_VDRW_MAXNAME)) {
 				struct bu_vls vls;
 
 				bu_vls_init(&vls);
-				bu_vls_printf(&vls, "vdraw: name %.40s is already in use\n", argv[3]);
+				bu_vls_printf(&vls, "vdraw: name %.40s is already in use\n", argv[1]);
 				Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 				return TCL_ERROR;
 			}
 		}
 		/* otherwise name not yet used */
-		strncpy(dgop->dgo_currVHead->vdc_name, argv[4], RT_VDRW_MAXNAME);
+		strncpy(dgop->dgo_currVHead->vdc_name, argv[2], RT_VDRW_MAXNAME);
 		dgop->dgo_currVHead->vdc_name[RT_VDRW_MAXNAME] = (char) NULL;
 		Tcl_AppendResult(interp,"0",(char *)NULL);
 		return TCL_OK;
@@ -627,7 +627,7 @@ vdraw_params_tcl(clientData, interp, argc, argv)
 
 /*
  * Usage:
- *        procname vdraw open [name]
+ *        open [name]
  */
 static int
 vdraw_open_tcl(clientData, interp, argc, argv)
@@ -641,7 +641,7 @@ vdraw_open_tcl(clientData, interp, argc, argv)
 	struct rt_vlist *vp;
 	char temp_name[RT_VDRW_MAXNAME+1];
 
-	if (argc < 3 || 4 < argc) {
+	if (argc < 1 || 2 < argc) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -652,7 +652,7 @@ vdraw_open_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if (argc == 3) {
+	if (argc == 1) {
 		if (dgop->dgo_currVHead) {
 			Tcl_AppendResult(interp, "1", (char *)NULL);
 			return TCL_OK;
@@ -662,7 +662,7 @@ vdraw_open_tcl(clientData, interp, argc, argv)
 		}
 	}
 
-	strncpy(temp_name, argv[3], RT_VDRW_MAXNAME);
+	strncpy(temp_name, argv[1], RT_VDRW_MAXNAME);
 	temp_name[RT_VDRW_MAXNAME] = (char) NULL;
 	dgop->dgo_currVHead = (struct vd_curve *) NULL;
 	for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
@@ -699,7 +699,8 @@ vdraw_open_tcl(clientData, interp, argc, argv)
 
 /*
  * Usage:
- *        procname vdraw vlist
+ *        vlist list
+ *        vlist delete name
  */
 static int
 vdraw_vlist_tcl(clientData, interp, argc, argv)
@@ -712,12 +713,12 @@ vdraw_vlist_tcl(clientData, interp, argc, argv)
 	struct vd_curve *rcp, *rcp2;
 	struct bu_vls vls;
 
-	if (argc < 4) {
+	if (argc < 2) {
 		Tcl_AppendResult(interp,"vdraw: need more args",(char *)NULL);
 		return TCL_ERROR;
 	}
 
-	switch  (argv[3][0]) {
+	switch  (argv[1][0]) {
 	case 'l':
 		bu_vls_init(&vls);
 		for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
@@ -729,20 +730,20 @@ vdraw_vlist_tcl(clientData, interp, argc, argv)
 		bu_vls_free(&vls);
 		return TCL_OK;
 	case 'd':
-		if (argc < 5) {
+		if (argc < 3) {
 			Tcl_AppendResult(interp,"vdraw: need name of vlist to delete", (char *)NULL);
 			return TCL_ERROR;
 		}
 		rcp2 = (struct vd_curve *)NULL;
 		for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
-			if (!strncmp(rcp->vdc_name,argv[4],RT_VDRW_MAXNAME)) {
+			if (!strncmp(rcp->vdc_name,argv[2],RT_VDRW_MAXNAME)) {
 				rcp2 = rcp;
 				break;
 			}
 		}
 		if (!rcp2) {
 			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "vdraw: vlist %.40s not found", argv[4]);
+			bu_vls_printf(&vls, "vdraw: vlist %.40s not found", argv[2]);
 			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 			bu_vls_free(&vls);
 			return TCL_ERROR;
