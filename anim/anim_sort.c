@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define MAXLEN	50		/*maximum length of lines to be read */
 
@@ -41,7 +42,7 @@ char **argv;
 	long	last_pos;
 	char	line[MAXLEN];
 
-	LINE_LIST *buf_start, *buf_end;
+	LINE_LIST *buf_start=NULL, *buf_end=NULL;
 	void do_free();
 
         if (!get_args(argc,argv))
