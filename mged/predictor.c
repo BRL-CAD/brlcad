@@ -256,6 +256,9 @@ predictor_frame()
 	vect_t	right, up;
 	vect_t	norm;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	if( rateflag_rotate == 0 && rateflag_slew == 0 && rateflag_zoom == 0 )  {
 		/* If no motion, and predictor is drawn, get rid of it */
 		if( db_lookup( dbip, PREDICTOR_NAME, LOOKUP_QUIET ) != DIR_NULL )  {

@@ -555,6 +555,9 @@ char	**argv;
 	char			*cp;
 	register int		j;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 2 || 2 < argc){
 	  struct bu_vls vls;
 

@@ -80,8 +80,9 @@ char *p_half[] = {
 
 char *p_dsp[] = {
 	"Enter name of displacement-map file: ",
-	"Enter width of displacement-map (number of cells): ",
-	"Enter length of displacement-map (number of cells): "
+	"Enter width of displacement-map (number of values): ",
+	"Enter length of displacement-map (number of values): ",
+	"Normal Interpolation? 0=no 1=yes default=1: "
 };
 
 char *p_hf[] = {
@@ -405,6 +406,9 @@ char **argv;
 				trc_in(), ebm_in(), vol_in(), hf_in(),
 				dsp_in();
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -489,7 +493,7 @@ char **argv;
 		menu = p_hf;
 		fn_in = hf_in;
 	} else if( strcmp( argv[2], "dsp" ) == 0 )  {
-		nvals = 3;
+		nvals = 4;
 		menu = p_dsp;
 		fn_in = dsp_in;
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
@@ -642,6 +646,9 @@ struct rt_db_internal	*intern;
 {
 	struct rt_ebm_internal	*ebm;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	BU_GETSTRUCT( ebm, rt_ebm_internal );
 	intern->idb_type = ID_EBM;
 	intern->idb_ptr = (genptr_t)ebm;
@@ -675,6 +682,7 @@ struct rt_db_internal	*intern;
 	strcpy( dsp->dsp_file, cmd_argvs[3] );
 	dsp->dsp_xcnt = atoi( cmd_argvs[4] );
 	dsp->dsp_ycnt = atoi( cmd_argvs[5] );
+	dsp->dsp_smooth = atoi( cmd_argvs[6] );
 	bn_mat_idn( dsp->dsp_mtos );
 	bn_mat_idn( dsp->dsp_stom );
 
@@ -695,6 +703,9 @@ struct rt_db_internal	*intern;
 {
 	struct rt_hf_internal	*hf;
 	vect_t work;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	BU_GETSTRUCT( hf, rt_hf_internal );
 	intern->idb_type = ID_HF;
@@ -758,6 +769,9 @@ struct rt_db_internal	*intern;
 {
 	struct rt_vol_internal	*vol;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	BU_GETSTRUCT( vol, rt_vol_internal );
 	intern->idb_type = ID_VOL;
 	intern->idb_ptr = (genptr_t)vol;
@@ -793,8 +807,11 @@ char			*promp[];
 	int			cv;	/* current curve (waterline) # */
 	int			axis;	/* current fastf_t in waterline */
 	int			ncurves_minus_one;
-
 	int num_pts, num_curves;
+
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if( argc < 5 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-3], (char *)NULL);
@@ -908,6 +925,9 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_half_internal	*hip;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	intern->idb_type = ID_HALF;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_half_internal),
 		"rt_half_internal" );
@@ -938,6 +958,9 @@ struct rt_db_internal	*intern;
 {
 	int			i, j, n;
 	struct rt_arb_internal	*aip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	intern->idb_type = ID_ARB8;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
@@ -984,6 +1007,9 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_ell_internal	*sip;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	intern->idb_type = ID_ELL;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal),
 		"rt_ell_internal" );
@@ -1018,6 +1044,9 @@ struct rt_db_internal	*intern;
 	fastf_t			len, mag_b, r_rev, vals[12];
 	int			i, n;
 	struct rt_ell_internal	*eip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	n = 7;				/* ELL and ELL1 have seven params */
 	if (cmd_argvs[2][3] == 'g')	/* ELLG has twelve */
@@ -1092,6 +1121,9 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_tor_internal	*tip;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	intern->idb_type = ID_TOR;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tor_internal),
 		"rt_tor_internal" );
@@ -1130,6 +1162,9 @@ struct rt_db_internal	*intern;
 	fastf_t			r1, r2;
 	int			i;
 	struct rt_tgc_internal	*tip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
@@ -1181,6 +1216,9 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_tgc_internal	*tip;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
@@ -1225,6 +1263,9 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_tgc_internal	*tip;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
@@ -1265,6 +1306,9 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_tgc_internal	*tip;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
@@ -1304,6 +1348,9 @@ struct rt_db_internal	*intern;
 	fastf_t			r1, r2;
 	int			i;
 	struct rt_tgc_internal	*tip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
@@ -1352,6 +1399,9 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_arb_internal	*aip;
 	vect_t			Dpth, Hgt, Vrtx, Wdth;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	intern->idb_type = ID_ARB8;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
@@ -1408,6 +1458,9 @@ struct rt_db_internal	*intern;
 	fastf_t			xmin, xmax, ymin, ymax, zmin, zmax;
 	struct rt_arb_internal	*aip;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	intern->idb_type = ID_ARB8;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
 		"rt_arb_internal" );
@@ -1458,6 +1511,9 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_rpc_internal	*rip;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	intern->idb_type = ID_RPC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_rpc_internal),
 		"rt_rpc_internal" );
@@ -1494,6 +1550,9 @@ struct rt_db_internal	*intern;
 {
 	int			i;
 	struct rt_rhc_internal	*rip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	intern->idb_type = ID_RHC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_rhc_internal),
@@ -1532,6 +1591,9 @@ struct rt_db_internal	*intern;
 {
 	int			i;
 	struct rt_epa_internal	*rip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	intern->idb_type = ID_EPA;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_epa_internal),
@@ -1575,6 +1637,9 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_ehy_internal	*rip;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	intern->idb_type = ID_EHY;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ehy_internal),
 		"rt_ehy_internal" );
@@ -1617,6 +1682,9 @@ struct rt_db_internal	*intern;
 {
 	int			i;
 	struct rt_eto_internal	*eip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	intern->idb_type = ID_ETO;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_eto_internal),

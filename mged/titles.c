@@ -245,6 +245,9 @@ struct bu_vls *overlay_vls;
 	auto c_buf      cent_x, cent_y, cent_z, size, ang_x, ang_y, ang_z;
 	int             ss_line_not_drawn=1; /* true if the second status line has not been drawn */
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	bu_vls_init(&vls);
 	
 	/* Set the Tcl variables to the appropriate values. */

@@ -64,6 +64,9 @@ matp_t xlate;
 	register int		i;
 	int			id;
 
+	if(dbip == DBI_NULL)
+	  return;
+
     	RT_INIT_DB_INTERNAL(&intern);
 	if( (id=rt_db_get_internal( &intern, dp, dbip, xlate )) < 0 )
 	{
@@ -102,6 +105,9 @@ matp_t xlate;
 	struct rt_comb_internal	*comb;
 	int found=0;
 	mat_t temp, xmat;		/* Temporary for mat_mul */
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	if( rt_db_get_internal( &intern, cdp, dbip, (mat_t *)NULL ) < 0 )
 		READ_ERR_return;
@@ -156,6 +162,9 @@ int air;				/* Air code */
 	struct rt_tree_array *tree_list;
 	int node_count;
 	int actual_count;
+
+	if(dbip == DBI_NULL)
+	  return DIR_NULL;
 
 	/*
 	 * Check to see if we have to create a new combination

@@ -106,6 +106,9 @@ char	*argv[];
   char *tmpfil = "/tmp/GED.aXXXXX";
   char **av;
 
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   CHECK_READ_ONLY;
 
   if(argc < 2 || MAXARGS < argc){
@@ -175,6 +178,9 @@ char	*argv[];
   FILE *fp;
   register struct directory *dp;
 
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 3 || MAXARGS < argc){
     struct bu_vls vls;
 
@@ -222,6 +228,9 @@ char		*argv[];
   register struct directory *dp;
   struct rt_db_internal intern;
   struct rt_comb_internal *comb;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   CHECK_READ_ONLY;
 
@@ -332,6 +341,9 @@ int pathpos;
 	struct rt_comb_internal *comb;
 	int id;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(pathpos >= MAX_LEVELS)
 	{
 		regflag = ABORTED;
@@ -410,6 +422,9 @@ char	**argv;
 	struct rt_comb_internal *comb;
 	int		item;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -472,6 +487,9 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	int item;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -533,6 +551,9 @@ char	**argv;
 	int		item;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -608,6 +629,9 @@ char	**argv;
 	struct shell *kill_s;
 	struct directory *dp;
 	struct rt_db_internal nmg_intern;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -809,6 +833,9 @@ int flag;
 	int actual_count;
 	int i,k;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	RT_CK_DIR( dp );
 	BU_CK_PTBL( cur_path );
 
@@ -996,6 +1023,9 @@ char	**argv;
 	char *timep;
 	time_t now;
 	int i;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 3 || MAXARGS < argc){
 	  struct bu_vls vls;

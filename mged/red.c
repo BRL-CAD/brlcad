@@ -63,6 +63,9 @@ char **argv;
 	struct rt_comb_internal	*comb;
 	int node_count;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 2 < argc){
@@ -594,6 +597,9 @@ char *old_name;
 	struct rt_db_internal intern;
 	matp_t matrix;
 
+	if(dbip == DBI_NULL)
+	  return 0;
+
 	if( comb )
 	{
 		RT_CK_COMB( comb );
@@ -952,6 +958,9 @@ char *str;
 	char *ptr;
 
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	/* Set "ptr" to start of X's */
 
 	ptr = str;
@@ -981,6 +990,9 @@ struct directory *dpold;
 
 	register struct directory	*dp;
 	struct rt_db_internal		intern;
+
+	if(dbip == DBI_NULL)
+	  return 0;
 
 	/* Make a new name */
 	mktemp_comb( red_tmpcomb );

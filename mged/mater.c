@@ -116,6 +116,9 @@ char	**argv;
 {
 	register struct mater *newp,*next_mater;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 7 || 7 < argc){
@@ -187,6 +190,9 @@ char	**argv;
 	register FILE *fp;
 	char line[128];
 	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -285,6 +291,9 @@ register struct mater *mp;
 	struct directory dir;
 	union record rec;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	if( dbip->dbi_read_only )
 		return;
 	rec.md.md_id = ID_MATERIAL;
@@ -319,6 +328,9 @@ color_zaprec( mp )
 register struct mater *mp;
 {
 	struct directory dir;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	if( dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR )
 		return;

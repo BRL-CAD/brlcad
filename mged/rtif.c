@@ -349,6 +349,9 @@ char	**argv;
 	char	pstring[32];
 	struct bu_vls cmd;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -400,6 +403,9 @@ char	**argv;
 	char	*dm;
 	struct bu_vls cmd;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -445,6 +451,9 @@ char	**argv;
 	FILE	*fp;
 	struct solid *sp;
 	struct rt_vlblock	*vbp;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -579,6 +588,9 @@ char	**argv;
 	register FILE *fp;
 	char *base;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -669,6 +681,9 @@ char	**argv;
 	fastf_t	scale;
 	mat_t	rot;
 	register struct rt_vlist *vp;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -945,6 +960,9 @@ static void
 rtif_sigint( num )
 int	num;
 {
+	if(dbip == DBI_NULL)
+	  return;
+
 	write( 2, "rtif_sigint\n", 12);
 
 	/* Restore state variables */
@@ -972,6 +990,9 @@ char	**argv;
 	char	*cmd;
 	int	c;
 	vect_t	temp;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -1119,6 +1140,9 @@ char	**argv;
 	vect_t	extremum[2];
 	vect_t	minus, plus;	/* vers of this solid's bounding box */
 	vect_t	unit_H, unit_V;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -1447,6 +1471,9 @@ int	argc;
 char	**argv;
 {
 
+  if(dbip == DBI_NULL)
+    return 0;
+
   if( db_parse_anim( dbip, argc, argv ) < 0 )  {
     Tcl_AppendResult(interp, "cm_anim:  ", argv[1], " ", argv[2], " failed\n", (char *)NULL);
     return(-1);		/* BAD */
@@ -1492,6 +1519,9 @@ cm_clean(argc, argv)
 char	**argv;
 int	argc;
 {
+	if(dbip == DBI_NULL)
+	  return 0;
+
 	/*f_zap( (ClientData)NULL, interp, 0, (char **)0 );*/
 
 	/* Free animation structures */

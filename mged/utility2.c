@@ -60,6 +60,9 @@ char **argv;
 	char shell_name[NAMESIZE];
 	long **trans_tbl;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 2 < argc){
@@ -172,6 +175,9 @@ char	**argv;
 {
 	int i, flag, pos_in;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -283,6 +289,9 @@ char **argv;
 	int	i;
 	int	endpos;
 	int status = TCL_OK;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -487,6 +496,9 @@ int flag;
 	int nparts, i, k;
 	int id;
 	struct bu_vls str;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	bu_vls_init( &str );
 
@@ -764,6 +776,9 @@ char **argv;
 	struct bu_external	es_ext;
 	struct rt_db_internal	es_int;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -946,6 +961,9 @@ struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	if( dp->d_flags & DIR_SOLID )
 		return;
 	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
@@ -1026,6 +1044,9 @@ struct directory *dp;
 	struct rt_db_internal sol_int;
 	int id;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	RT_CK_DIR( dp );
 
 	while( BU_LIST_NON_EMPTY( &dp->d_use_hd ) )
@@ -1057,6 +1078,9 @@ struct directory *dp;
 	int j;
 	char format[25];
 	char name[NAMESIZE];
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	/* only one use and not referenced elsewhere, nothing to do */
 	if( dp->d_uses < 2 && dp->d_uses == dp->d_nref )
@@ -1126,6 +1150,9 @@ mat_t xform;
 	struct rt_db_internal sol_int;
 	struct object_use *use;
 	int id;
+
+	if(dbip == DBI_NULL)
+	  return DIR_NULL;
 
 	RT_CK_DIR( dp );
 
@@ -1257,6 +1284,9 @@ mat_t xform;
 	mat_t new_xform;
 	int i;
 
+	if(dbip == DBI_NULL)
+	  return DIR_NULL;
+
 	RT_CK_DIR( dp );
 
 	/* Look for a copy that already has this transform matrix */
@@ -1359,6 +1389,9 @@ char **argv;
 	struct bu_ptbl tops;
 	mat_t xform;
 	int i,j;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -1504,6 +1537,9 @@ char **argv;
 	mat_t acc_matrix;
 	struct bu_vls tmp_vls;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 2 || 2 < argc){
 	  struct bu_vls vls;
 
@@ -1602,6 +1638,9 @@ char *argv[];
 	char *nmg_name;
 	int success = 0;
 	int shell_count=0;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -1845,6 +1884,9 @@ char **argv;
 	struct region		*regp;
 	char			*new_name;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
@@ -2054,6 +2096,9 @@ char **argv;
 	struct rt_comb_internal *comb;
 	char id[10];
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -2096,6 +2141,9 @@ char **argv;
 	struct bu_vls v;
 	int new_argc;
 	int lim;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;

@@ -161,6 +161,9 @@ char **argv;
 	int arg = 1;
 	int status = TCL_OK;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
 

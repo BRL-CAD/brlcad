@@ -65,6 +65,9 @@ int			flags;
 	struct directory	*dupdp;
 	char			local[NAMESIZE+2];
 
+	if(dbip == DBI_NULL)
+	  return 0;
+
 	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_check:  bad dbip\n");
 
 	/* Add the prefix, if any */
@@ -104,6 +107,9 @@ char	**argv;
   struct directory	**dirp0 = (struct directory **)NULL;
   int status = TCL_OK;
   struct bu_vls vls;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   if(argc < 2 || 3 < argc){
     struct bu_vls vls;
@@ -198,6 +204,9 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	char	*prestr;
 	int	*ncharadd;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( comb_leaf );
 
@@ -231,6 +240,9 @@ int			flags;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	char			local[NAMESIZE+2+2];
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_add:  bad dbip\n");
 
@@ -350,6 +362,9 @@ char	**argv;
 {
 	struct db_i		*newdbp;
 	int bad = 0;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 

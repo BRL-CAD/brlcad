@@ -84,6 +84,9 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 6 < argc){
@@ -162,6 +165,9 @@ char	**argv;
 	char inherit;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -318,6 +324,9 @@ char    *argv[];
 
   char **av;
   
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   CHECK_READ_ONLY;
 
   if(argc < 2 || MAXARGS < argc){
@@ -379,6 +388,9 @@ char    *argv[];
   register struct directory *dp;
   struct rt_db_internal	intern;
   struct rt_comb_internal	*comb;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   if(argc < 3 || MAXARGS < argc){
     struct bu_vls vls;
@@ -448,6 +460,9 @@ char    *argv[];
   int r,g,b;
   int override;
   int inherit;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   CHECK_READ_ONLY;
 
@@ -575,6 +590,9 @@ char	**argv;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
 
+    if(dbip == DBI_NULL)
+      return TCL_OK;
+
     CHECK_READ_ONLY;
 
     if(argc < 5 || 5 < argc){
@@ -637,6 +655,9 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	struct bu_vls		args;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
@@ -689,6 +710,9 @@ char	**argv;
 	int			id;
 	mat_t mirmat;
 	mat_t temp;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -1220,6 +1244,9 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 6 || 7 < argc){
@@ -1282,6 +1309,9 @@ char	**argv;
 	int	new_unit = 0;
 	struct bu_vls vls;
 	CONST char	*str;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -1378,6 +1408,9 @@ char	**argv;
 	struct bu_vls	title;
 	int bad = 0;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || MAXARGS < argc){
@@ -1446,6 +1479,9 @@ char	**argv;
 	struct rt_eto_internal *eto_ip;
 	struct rt_part_internal *part_ip;
 	struct rt_pipe_internal *pipe_ip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -1905,6 +1941,9 @@ char	**argv;
   mat_t temp;
   vect_t s_point, point, v_work, model_pt;
 
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   CHECK_READ_ONLY;
 
   if(argc < 4 || 5 < argc){
@@ -1947,6 +1986,9 @@ char	**argv;
 {
 	mat_t incr;
 	vect_t point, temp;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -2039,6 +2081,9 @@ char	**argv;
 	register int i;
 	mat_t incr, old;
 	vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -2140,6 +2185,9 @@ struct model *m;
 	struct directory *new_dp;
 	struct nmgregion *r;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	if( db_lookup( dbip,  newname, LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( newname );
 		/* Free memory here */
@@ -2201,6 +2249,9 @@ char	**argv;
 	struct faceuse *fu;
 	struct vertex *v_new, *v;
 	unsigned long tw, tf, tp;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -2354,6 +2405,9 @@ char	**argv;
 	mat_t temp;
 	vect_t s_point, point, v_work, model_pt;
 	vect_t	specified_pt, direc;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 

@@ -210,6 +210,9 @@ char	**argv;
 	int	i;
 	int     iadc = 0;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 1 || 5 < argc){
 	  struct bu_vls vls;
 

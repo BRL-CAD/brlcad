@@ -420,6 +420,9 @@ int	kind;
 	int		ncpu;
 	int		mged_nmg_use_tnurbs = 0;
 
+	if(dbip == DBI_NULL)
+	  return 0;
+
 	RT_CHECK_DBI(dbip);
 
 	if( argc <= 0 )  return(-1);	/* FAIL */
@@ -789,6 +792,9 @@ matp_t matp;
 	auto mat_t		tmat;
 	register int		i;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	bn_mat_idn( matp );
 	for( i=0; i <= depth; i++ )  {
 		parentp = sp->s_path[i];
@@ -846,6 +852,9 @@ struct solid	*sp;
 	struct directory	*dp;
 	mat_t			mat;
 	int			id;
+
+	if(dbip == DBI_NULL)
+	  return 0;
 
 	dp = sp->s_path[sp->s_last];
 	if( sp->s_Eflag )  {
@@ -1006,6 +1015,9 @@ int		copy;
 	register struct directory	*dp;
 	register struct solid		*sp;
 
+	if(dbip == DBI_NULL)
+	  return 0;
+
 	if( (dp = db_lookup( dbip,  name, LOOKUP_QUIET )) != DIR_NULL )  {
 	  if( dp->d_addr != RT_DIR_PHONY_ADDR )  {
 	    Tcl_AppendResult(interp, "invent_solid(", name,
@@ -1146,6 +1158,9 @@ char	**argv;
 	struct directory	*dp;
 	int			failed;
 	int			mged_nmg_use_tnurbs = 0;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 3 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -1340,6 +1355,9 @@ char	**argv;
 	union tree		*tmp_tree;
 	char			op;
 	int			failed;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -1613,6 +1631,9 @@ char	**argv;
 {
 	struct directory	*dp;
 	int		i;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if( argc < 2 )  {
 		Tcl_AppendResult(interp, "Usage: rtdraw_vlist object(s)\n", NULL);

@@ -98,6 +98,9 @@ char	**argv;
 	mat_t			mat;
 	fastf_t			scale;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 

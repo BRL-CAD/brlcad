@@ -159,6 +159,9 @@ char	**argv;
 	vect_t last,dir;
 	register struct rt_vlist	*vp;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 2 || 4 < argc){
 	  struct bu_vls vls;
 

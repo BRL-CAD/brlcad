@@ -73,6 +73,9 @@ char	*argv[];
 	struct bu_vls		v;
 	struct rt_db_internal	intern;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -224,6 +227,9 @@ CONST struct rt_db_internal	*ip;
 	int		cgtype;		/* COMGEOM arb type: # of vertices */
 	int		type;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	/* find the specific arb type, in GIFT order. */
 	if( (cgtype = rt_arb_std_type( ip, &mged_tol )) == 0 ) {
 		bu_vls_printf(vp,"arb_anal: bad ARB\n");
@@ -371,6 +377,9 @@ CONST struct bn_tol	*tol;
 	plane_t	plane;
 	double	face_area = 0;
 
+	if(dbip == DBI_NULL)
+	  return 0;
+
 	a = arb_faces[type][face*4+0];
 	b = arb_faces[type][face*4+1];
 	c = arb_faces[type][face*4+2];
@@ -447,6 +456,9 @@ int			type;
 {
 	register int a, b;
 	static vect_t v_temp;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	a = nedge[type][edge*2];
 	b = nedge[type][edge*2+1];
@@ -526,6 +538,9 @@ CONST struct rt_db_internal	*ip;
 	struct rt_tor_internal	*tor = (struct rt_tor_internal *)ip->idb_ptr;
 	fastf_t r1, r2, vol, sur_area;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	RT_TOR_CK_MAGIC( tor );
 
 	r1 = tor->r_a;
@@ -562,6 +577,9 @@ CONST struct rt_db_internal	*ip;
 	fastf_t ecc, major, minor;
 	fastf_t vol, sur_area;
 	int	type;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	RT_ELL_CK_MAGIC( ell );
 
@@ -664,6 +682,9 @@ CONST struct rt_db_internal	*ip;
 	fastf_t area_base, area_top, area_side, vol;
 	vect_t axb;
 	int cgtype = 0;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	RT_TGC_CK_MAGIC( tgc );
 
@@ -772,6 +793,9 @@ CONST struct rt_db_internal	*ip;
 	fastf_t	area_parab, area_body, b, h, r, vol_parab;
 	struct rt_rpc_internal	*rpc = (struct rt_rpc_internal *)ip->idb_ptr;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	RT_RPC_CK_MAGIC( rpc );
 
 	b = MAGNITUDE( rpc->rpc_B );
@@ -806,6 +830,9 @@ CONST struct rt_db_internal	*ip;
 {
 	fastf_t	area_hyperb, area_body, b, c, h, r, vol_hyperb,	work1;
 	struct rt_rhc_internal	*rhc = (struct rt_rhc_internal *)ip->idb_ptr;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	RT_RHC_CK_MAGIC( rhc );
 

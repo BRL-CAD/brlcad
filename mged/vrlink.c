@@ -56,6 +56,7 @@ static struct pkg_switch pkgswitch[] = {
 	{ 0,			0,		(char *)0 }
 };
 
+#if 0
 /*
  *			P K G _ S E N D _ V L S
  */
@@ -72,6 +73,7 @@ struct pkg_conn	*pc;
 	}
 	return pkg_send( type, bu_vls_addr(vp), bu_vls_strlen(vp)+1, pc );
 }
+#endif
 
 /*
  *  Called from cmdline() for now.

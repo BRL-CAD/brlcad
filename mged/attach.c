@@ -451,6 +451,7 @@ get_attached()
   char *argv[3];
   char line[80];
   register struct w_dm *wp;
+  struct bu_vls vls;
 
   while(1){
     bu_log("attach (nu");
@@ -476,11 +477,18 @@ get_attached()
     /* Not a valid choice, loop. */
   }
 
+#if 0
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "openw -s -gt %s\n", line);
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+#else
   argc = 2;
   argv[0] = "";
   argv[1] = "";
   argv[2] = (char *)NULL;
   (void)mged_attach(wp, argc, argv);
+#endif
 }
 
 
@@ -808,14 +816,18 @@ struct dm_list *initial_dm_list;
   int i;
 
   BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
+#if 0
   mged_variables = default_mged_variables; /* struct copy */
+#else
+  mged_variables = initial_dm_list->_mged_variables; /* struct copy */
+#endif
 
   bn_mat_copy(Viewrot, bn_mat_identity);
   size_reset();
   MAT_DELTAS_GET_NEG(orig_pos, toViewcenter);
   new_mats();
 
-  am_mode = ALT_IDLE;
+  am_mode = AMM_IDLE;
   rc = 1;
   dmaflag = 1;
   owner = 1;

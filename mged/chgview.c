@@ -152,6 +152,9 @@ char    **argv;
   register struct directory *dp;
   register int i;
 
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
 
@@ -179,6 +182,9 @@ char    **argv;
 {
   register struct directory *dp;
   register int i;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
@@ -208,6 +214,9 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 4 || 4 < argc){
     struct bu_vls vls;
 
@@ -442,6 +451,9 @@ char	**argv;
 {
   fastf_t f;
 
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 2 || 2 < argc){
     struct bu_vls vls;
 
@@ -650,6 +662,9 @@ int	catch_sigint;
   double		elapsed_time;
   int		initial_blank_screen;
   struct bu_vls vls;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   bu_vls_init(&vls);
   initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
@@ -980,6 +995,9 @@ int	verbose;
 	int			id;
 	struct rt_db_internal	intern;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	bu_vls_printf( outstrp, "%s:  ", dp->d_namep );
 
 	if( (id = rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL )) < 0 )  {
@@ -1010,6 +1028,9 @@ char	**argv;
   register struct directory *dp;
   register int arg;
   struct bu_vls str;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
@@ -1056,6 +1077,9 @@ char	**argv;
   register struct directory *dp;
   register int arg;
   struct bu_vls str;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
@@ -1129,6 +1153,9 @@ char	**argv;
 	register struct solid *nsp;
 	struct directory	*dp;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 1 || 1 < argc){
 	  struct bu_vls vls;
 
@@ -1179,6 +1206,9 @@ int	argc;
 char	**argv;
 {
   struct bu_vls vls;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   if(argc < 1 || 1 < argc){
     struct bu_vls vls;
@@ -1347,6 +1377,9 @@ register struct directory *dp;
   static struct solid *nsp;
   register int i;
 
+  if(dbip == DBI_NULL)
+    return;
+
   update_views = 1;
 
   RT_CK_DIR(dp);
@@ -1386,6 +1419,9 @@ register struct directory *dp;
 {
   register struct solid *sp;
   register struct solid *nsp;
+
+  if(dbip == DBI_NULL)
+    return;
 
   update_views = 1;
   RT_CK_DIR(dp);
@@ -1433,6 +1469,9 @@ int		lvl;			/* debug level */
   int			nvlist;
   int			npts;
   struct bu_vls vls;
+
+  if(dbip == DBI_NULL)
+    return;
 
   bu_vls_init(&vls);
 
@@ -1521,6 +1560,9 @@ char	**argv;
 	char	**path_piece = 0;
 	char	*basename;
 	char	*sname;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 2 || 2 < argc){
 	  struct bu_vls vls;
@@ -1648,6 +1690,9 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   CHECK_READ_ONLY;
 
   if(argc < 2 || 2 < argc){
@@ -1873,6 +1918,9 @@ char	**argv;
   int model_flag = 0; /* manipulate view using model coords */
   int edit_flag = 0;  /* force edit interpretation */
   struct bu_vls vls;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   if(argc < 1 || MAXARGS < argc){
     struct bu_vls vls;
@@ -2684,7 +2732,7 @@ int edit_flag;
 void
 mged_do_rate_rotate()
 {
-  (void)mged_vrot(rate_rotate[X], rate_rotate[Y], rate_rotate[Z]);
+  (void)mged_vrot(mged_variables.rotate_about, rate_rotate[X], rate_rotate[Y], rate_rotate[Z]);
   absolute_rotate[X] += rate_rotate[X];
   absolute_rotate[Y] += rate_rotate[Y];
   absolute_rotate[Z] += rate_rotate[Z];
@@ -2744,6 +2792,9 @@ char	**argv;
 {
 	double	f;
 	int argind=1;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 1 || 11 < argc){
 	  struct bu_vls vls;
@@ -3880,6 +3931,9 @@ char	**argv;
 	fastf_t new_az, new_el;
 	int status;
 	struct bu_vls vls;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 4 || 4 < argc){
 	  struct bu_vls vls;

@@ -484,6 +484,9 @@ char **argv;
 	register struct hold *hp;
 	int joints, holds;
 
+	if(dbip == DBI_NULL)
+	  return CMD_OK;
+
 	db_free_anim(dbip);
 	holds = 0;
 	while (BU_LIST_WHILE(hp, hold, &hold_head)) {
@@ -1965,6 +1968,9 @@ char **argv;
 	struct	joint *jp;
 	struct	hold *hp;
 
+	if(dbip == DBI_NULL)
+	  return CMD_OK;
+
 	optind = 1;
 	while ((c=getopt(argc,argv,"uam")) != EOF ) {
 		switch (c) {
@@ -2118,6 +2124,9 @@ char **argv;
 	register struct joint *jp;
 	register int i;
 	FILE *fop;
+
+	if(dbip == DBI_NULL)
+	  return CMD_OK;
 
 	--argc;
 	++argv;
@@ -2295,6 +2304,9 @@ struct hold_point *hp;
 	struct bu_external	es_ext;
 	struct rt_db_internal	es_int;
 	int id;
+
+	if(dbip == DBI_NULL)
+	  return 1;
 
 	VSETALL(loc, 0.0);	/* default is the origin. */
 	switch (hp->type) {
@@ -3283,6 +3295,9 @@ struct joint *jp;
 	quat_t	q1;
 	int i;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	/*
 	 * If no animate structure, cons one up.
 	 */
@@ -3415,6 +3430,9 @@ char **argv;
 	struct joint *jp;
 	int i;
 	double tmp;
+
+	if(dbip == DBI_NULL)
+	  return CMD_OK;
 
 	/*
 	 * find the joint.
@@ -3672,6 +3690,9 @@ char **argv;
 	int i;
 	char			**topv[2000];
 	int			topc;
+
+	if(dbip == DBI_NULL)
+	  return CMD_OK;
 
 	if( argc <= 2) {
 		name = "_ANIM_";

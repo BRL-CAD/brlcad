@@ -402,6 +402,9 @@ struct directory *dp;
 	int errors=0;
 	short last_tok=TOK_NULL;
 
+	if(dbip == DBI_NULL)
+	  return 0;
+
 	for( BU_LIST_FOR( tok, tokens, hp ) )
 	{
 		switch( tok->type )
@@ -502,6 +505,9 @@ char	**argv;
 	short				last_tok;
 	int				i;
 	union tree			*final_tree;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 

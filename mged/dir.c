@@ -71,12 +71,15 @@ static void printnode();
  *  b) the number of entries specified by the argument if > 0.
  */
 struct directory **
-dir_getspace( num_entries)
+dir_getspace(num_entries)
 register int num_entries;
 {
 	register struct directory *dp;
 	register int i;
 	register struct directory **dir_basep;
+
+	if(dbip == DBI_NULL)
+	  return (struct directory **) 0;
 
 	if( num_entries < 0) {
 		bu_log( "dir_getspace: was passed %d, used 0\n",
@@ -115,6 +118,9 @@ char	**argv;
   struct directory **dirp;
   struct directory **dirp0 = (struct directory **)NULL;
   struct bu_vls vls;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   if(argc < 1 || MAXARGS < argc){
     struct bu_vls vls;
@@ -183,6 +189,9 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 1 || 1 < argc){
     struct bu_vls vls;
 
@@ -217,6 +226,9 @@ dir_summary(flag)
 	struct directory **dirp;
 	struct directory **dirp0 = (struct directory **)NULL;
 	struct bu_vls vls;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	bu_vls_init(&vls);
 	if( setjmp( jmp_env ) == 0 )
@@ -290,6 +302,9 @@ char	**argv;
 	struct directory **dirp;
 	struct directory **dirp0 = (struct directory **)NULL;
 	struct bu_vls vls;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 1 || 1 < argc){
 	  struct bu_vls vls;
@@ -366,6 +381,9 @@ int   maxargs;
 	register int i;
 	int escaped = 0;
 	int orig_numargs = *argcp;
+
+	if(dbip == DBI_NULL)
+	  return 0;
 
 	strncpy( word, argv[*argcp], sizeof(word)-1 );
 	/* If * ? [ or \ are present, this is a regular expression */
@@ -479,6 +497,9 @@ char **argv;
     register int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
 
+    if(dbip == DBI_NULL)
+      return TCL_OK;
+
     if(argc < 1 || MAXARGS < argc){
       struct bu_vls vls;
 
@@ -588,6 +609,9 @@ char	**argv;
   struct rt_db_internal intern;
   register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
 
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 1 || MAXARGS < argc){
     struct bu_vls vls;
 
@@ -672,6 +696,9 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;
 	char		tempstring[NAMESIZE+2];
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -779,6 +806,9 @@ char	**argv;
 	struct bu_vls		units;
 	register int		i;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	if(argc < 3 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -875,6 +905,9 @@ char	**argv;
   register struct directory *dp;
   register int j;
 
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
 
@@ -915,6 +948,9 @@ char prefix;
   register struct directory *nextdp;
   struct rt_db_internal intern;
   struct rt_comb_internal *comb;
+
+  if(dbip == DBI_NULL)
+    return;
 
   for( i=0; i<pathpos; i++) 
     Tcl_AppendResult(interp, "\t", (char *)NULL);
@@ -1059,6 +1095,9 @@ char	**argv;
 	struct rt_comb_internal *comb;
 	struct bu_ptbl		stack;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 3 < argc){
@@ -1186,6 +1225,9 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	int			ret;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -1276,6 +1318,9 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -1311,6 +1356,9 @@ killtree( dbip, dp )
 struct db_i	*dbip;
 register struct directory *dp;
 {
+	if(dbip == DBI_NULL)
+	  return;
+
 	Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 		   ":  ", dp->d_namep, "\n", (char *)NULL);
 
@@ -1328,6 +1376,9 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 1 || 1 < argc){
     struct bu_vls vls;
 

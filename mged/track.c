@@ -82,6 +82,9 @@ char **argv;
 	int arg;
 	int edit_result;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 27 < argc){
@@ -563,6 +566,9 @@ int flags;
 	struct rt_db_internal intern;
 	int i;
 
+	if(dbip == DBI_NULL)
+	  return 0;
+
 	if( db_lookup( dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
 	  Tcl_AppendResult(interp, "track naming error: ", name,
 			   " already exists\n", (char *)NULL);
@@ -866,6 +872,9 @@ int members[], number;
 {
   struct directory *dp;
   int i;
+
+  if(dbip == DBI_NULL)
+    return;
 
   for(i=0; i<number; i++) {
     solidname[8] = '\0';

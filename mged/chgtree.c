@@ -79,6 +79,9 @@ char	**argv;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 3 < argc){
@@ -131,6 +134,9 @@ char	**argv;
 	register struct directory *proto;
 	register struct directory *dp;
 	struct bu_external external;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -195,6 +201,9 @@ char	**argv;
 	register struct directory *dp;
 	char oper;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 4 < argc){
@@ -242,6 +251,9 @@ char	**argv;
 	int i;
 	int ident, air;
 	char oper;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -343,6 +355,9 @@ char	**argv;
 	register int	i;
 	char	oper;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || MAXARGS < argc){
@@ -424,6 +439,9 @@ char	**argv;
 	int	is_phony;
 	int	verbose = LOOKUP_NOISY;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -471,6 +489,9 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
@@ -511,6 +532,9 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	union tree		*tp;
 	int			ret;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -580,6 +604,9 @@ char	**argv;
 	struct rt_db_internal internal;
 	struct rt_tgc_internal *tgc_ip;
 	int id;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -680,6 +707,9 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	union tree		*tp;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -816,6 +846,9 @@ Tcl_Interp	*interp;
 int		argc;
 char	        **argv;
 {
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 1 || MAXARGS < argc){
     struct bu_vls vls;
 
@@ -910,6 +943,9 @@ char      	**argv;
 	struct db_full_path	both;
 	char			*new_argv[4];
 	char			number[32];
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	if(argc < 3 || 3 < argc){
 	  struct bu_vls vls;
@@ -1044,6 +1080,9 @@ char	**argv;
     char		*newargv[20];
     struct bu_vls	*avp;
 
+    if(dbip == DBI_NULL)
+      return TCL_OK;
+
     CHECK_READ_ONLY;
 
     if(argc < 3 || MAXARGS < argc){
@@ -1142,6 +1181,9 @@ char **argv;
     struct rt_db_internal	intern;
     struct animate		*anp;
     union tree			*tp;
+
+    if(dbip == DBI_NULL)
+      return TCL_OK;
 
     CHECK_READ_ONLY;
 

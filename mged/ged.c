@@ -62,13 +62,6 @@ in all countries except the USA.  All rights reserved.";
 
 #include "tk.h"
 
-/* defined in cmd.c */
-extern Tcl_Interp *interp;
-extern Tk_Window tkwin;
-
-/* defined in attach.c */
-extern int mged_slider_link_vars();
-
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -85,20 +78,25 @@ extern int mged_slider_link_vars();
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
-int dm_pipe[2];
-struct db_i *dbip = DBI_NULL;	/* database instance pointer */
+/* defined in cmd.c */
+extern Tcl_Interp *interp;
+extern Tk_Window tkwin;
 
-int    update_views = 0;
+/* defined in attach.c */
+extern int mged_slider_link_vars();
+
 extern struct dm dm_Null;
 extern struct _mged_variables default_mged_variables;
 
+int dm_pipe[2];
+struct db_i *dbip = DBI_NULL;	/* database instance pointer */
+int    update_views = 0;
 mat_t		ModelDelta;		/* Changes to Viewrot this frame */
-
 int		(*cmdline_hook)() = NULL;
-
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
-
 jmp_buf	jmp_env;		/* For non-local gotos */
+
+int bit_bucket();
 int             cmd_stuff_str();
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2(), sig3();
@@ -107,6 +105,7 @@ void		usejoy();
 void            slewview();
 int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
+int		classic_mged=0;
 
 static struct bu_vls input_str, scratchline, input_str_prefix;
 static int input_str_index = 0;
@@ -156,20 +155,29 @@ char **argv;
 	int	c;
 	int	read_only_flag=0;
 
+#if 0
 	/* Check for proper invocation */
-	if( argc < 2 )  {
-		fprintf(stdout, "Usage:  %s [-r] database [command]\n", argv[0]);
+	if( argc < 1 )  {
+		fprintf(stdout, "Usage:  %s [-n] [-r] [database [command]]\n", argv[0]);
 		fflush(stdout);
 		return(1);		/* NOT finish() */
 	}
+#endif
 
-	while ((c = getopt(argc, argv, "r")) != EOF)
+	while ((c = getopt(argc, argv, "hnr")) != EOF)
 	{
 		switch( c )
 		{
 			case 'r':
 				read_only_flag = 1;
 				break;
+			case 'n':
+				classic_mged = 1;
+				break;
+			case 'h':
+				fprintf(stdout, "Usage:  %s [-h] [-n] [-r] [database [command]]\n", argv[0]);
+				fflush(stdout);
+				return(1);
 			default:
 				fprintf( stdout, "Unrecognized option (%c)\n", c );
 				fflush(stdout);
@@ -180,32 +188,36 @@ char **argv;
 	argc -= (optind - 1);
 	argv += (optind - 1);
 
+#if 0
 	/* Check again for proper invocation */
 	if( argc < 2 )  {
 	  argv -= (optind - 1);
-	  fprintf(stdout, "Usage:  %s [-r] database [command]\n", argv[0]);
+	  fprintf(stdout, "Usage:  %s [-n] [-r] [database [command]]\n", argv[0]);
 	  fflush(stdout);
 	  return(1);		/* NOT finish() */
 	}
+#endif
 
 	/* Identify ourselves if interactive */
-	if( argc == 2 )  {
-		if( isatty(fileno(stdin)) )
-			interactive = 1;
+	if( argc <= 2 )  {
+	  if( isatty(fileno(stdin)) )
+	    interactive = 1;
 
-		fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
-		fflush(stdout);
+	  if(classic_mged){
+	    fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
+	    fflush(stdout);
 		
-		if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 #ifndef COMMAND_LINE_EDITING
 #define COMMAND_LINE_EDITING 1
 #endif
- 		    cbreak_mode = COMMAND_LINE_EDITING;
-		}
+	      cbreak_mode = COMMAND_LINE_EDITING;
+	    }
+	  }
 	}
 
 	/* Set up for character-at-a-time terminal IO. */
-	if (cbreak_mode) 
+	if(classic_mged && cbreak_mode)
 	    save_Tty(fileno(stdin));
 	
 	(void)signal( SIGPIPE, SIG_IGN );
@@ -262,7 +274,7 @@ char **argv;
 	bu_vls_strcpy(&tkName, "nu");
 	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
 	mged_variables = default_mged_variables;
-	am_mode = ALT_IDLE;
+	am_mode = AMM_IDLE;
 	rc = 1;
 	owner = 1;
 	frametime = 1;
@@ -319,6 +331,9 @@ char **argv;
 	btn_head_menu(0,0,0);
 	mged_slider_link_vars(curr_dm_list);
 
+	/* This initializes libdm */
+	(void)dm_Tcl_Init(interp);
+
 	setview( 0.0, 0.0, 0.0 );
 
 	windowbounds[0] = XMAX;		/* XHR */
@@ -328,14 +343,16 @@ char **argv;
 	windowbounds[4] = 2047;		/* ZHR */
 	windowbounds[5] = -2048;	/* ZLR */
 
-	/* Open the database, attach a display manager */
-	/* Command line may have more than 2 args, opendb only wants 2 */
-	if(f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR)
-	  mged_finish(1);
-	else
-	  bu_log("%s", interp->result);
+	if(argc >= 2){
+	  /* Open the database, attach a display manager */
+	  /* Command line may have more than 2 args, opendb only wants 2 */
+	  if(f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR)
+	    mged_finish(1);
+	  else
+	    bu_log("%s", interp->result);
+	}
 
-	if( read_only_flag || dbip->dbi_read_only )
+	if( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) )
 	{
 		dbip->dbi_read_only = 1;
 		bu_log( "Opened in READ ONLY mode\n" );
@@ -346,10 +363,28 @@ char **argv;
 #endif
 
 	/* --- Now safe to process commands. --- */
-	if( interactive )  {
-		/* This is an interactive mged, process .mgedrc */
-		do_rc();
-		get_attached();
+	if(interactive){
+	  /* This is an interactive mged, process .mgedrc */
+	  do_rc();
+
+	  if(classic_mged)
+	    get_attached();
+	  else{
+	    int pid;
+
+	    if ((pid = fork()) == 0){
+	      struct bu_vls vls;
+
+	      bu_vls_init(&vls);
+	      bu_vls_strcpy(&vls, "openw");
+	      (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	      bu_vls_free(&vls);
+
+	      bu_add_hook(bit_bucket, (genptr_t)NULL);
+	    }else{
+	      exit(0);
+	    }
+	  }
 	}
 
 	/* --- Now safe to process geometry. --- */
@@ -382,26 +417,27 @@ char **argv;
 	dmp->dm_light( dmp, LIGHT_RESET, 0 );
 #endif
 
-	(void)pipe(dm_pipe);
-	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
-			      TCL_READABLE, stdin_input,
-			     (ClientData)STDIN_FILENO);
-	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)dm_pipe[0], TCL_UNIX_FD),
-			      TCL_READABLE, stdin_input,
-			     (ClientData)dm_pipe[0]);
+	if(classic_mged){
+	  (void)pipe(dm_pipe);
+	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
+				TCL_READABLE, stdin_input,
+				(ClientData)STDIN_FILENO);
+	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)dm_pipe[0], TCL_UNIX_FD),
+				TCL_READABLE, stdin_input,
+				(ClientData)dm_pipe[0]);
 
-	(void)signal( SIGINT, SIG_IGN );
+	  (void)signal( SIGINT, SIG_IGN );
 
-	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
-	pr_prompt();
+	  bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+	  pr_prompt();
 
-	/****************  M A I N   L O O P   *********************/
-
-	if (cbreak_mode) {
+	  if (cbreak_mode) {
 	    set_Cbreak(fileno(stdin));
 	    clr_Echo(fileno(stdin));
+	  }
 	}
 
+	/****************  M A I N   L O O P   *********************/
 	while(1) {
 		/* This test stops optimizers from complaining about an infinite loop */
 		if( (rateflag = event_check( rateflag )) < 0 )  break;
@@ -1617,7 +1653,7 @@ char	**argv;
 
   if( argc <= 1 )  {
     /* Invoked without args, return name of current database */
-    if( dbip )  {
+    if( dbip != DBI_NULL )  {
       Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
       return TCL_OK;
     }
@@ -1656,7 +1692,7 @@ char	**argv;
     char line[128];
 
     if( isatty(0) ) {
-      if(first){
+      if(first && classic_mged){
 	perror( argv[1] );
 	bu_log("Create new database (y|n)[n]? ");
 	(void)fgets(line, sizeof(line), stdin);
@@ -1733,4 +1769,12 @@ char	**argv;
   Tcl_ResetResult( interp );
 
   return TCL_OK;
+}
+
+int
+bit_bucket(clientdata, str)
+genptr_t clientdata;
+genptr_t str;
+{
+  /* do nothing */
 }

@@ -80,6 +80,7 @@ static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
 static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
 static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 
+void build_tcl_edit_menu();
 void pscale();
 #if 0
 void	calc_planes();
@@ -773,6 +774,9 @@ int arg;
 {
 	struct wdb_pipept *next;
 	struct wdb_pipept *prev;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	switch( arg )
 	{
@@ -2084,6 +2088,9 @@ init_sedit()
 	register int		type;
 	int			id;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	/*
 	 * Check for a processed region or other illegal solid.
 	 */
@@ -2161,14 +2168,9 @@ init_sedit()
 	es_ars_col = (-1);
 
 	sedit_menu();		/* put up menu header */
+	build_tcl_edit_menu();
 
 	/* Finally, enter solid edit state */
-#if 0
-	dmp->dm_light( dmp, LIGHT_ON, BE_ACCEPT );
-	dmp->dm_light( dmp, LIGHT_ON, BE_REJECT );
-	dmp->dm_light( dmp, LIGHT_OFF, BE_S_ILLUMINATE );
-#endif
-
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
 	chg_l2menu(ST_S_EDIT);
 	es_edflag = IDLE;
@@ -2443,6 +2445,8 @@ sedit()
 	mat_t	mat1;
 	mat_t	edit;
 
+	if(dbip == DBI_NULL)
+	  return;
 
 	sedraw = 0;
 	update_views = 1;
@@ -5340,6 +5344,9 @@ CONST mat_t			mat;
 	struct rt_db_internal	intern;
 	int			id;
 
+	if(dbip == DBI_NULL)
+	  return;
+
 	BU_CK_VLS(vp);
 	RT_CK_DB_INTERNAL(ip);
 
@@ -6104,11 +6111,15 @@ init_objedit()
 {
 	int			id;
 	char			*strp="";
+	struct bu_vls		vls;
 
 	/* for safety sake */
 	es_menu = 0;
 	es_edflag = -1;
 	bn_mat_idn(es_mat);
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	/*
 	 * Check for a processed region 
@@ -6160,6 +6171,11 @@ init_objedit()
 	bn_mat_inv( es_invmat, es_mat );
 
 	set_e_axes_pos(1);
+
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "do_edit_menu {}");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 }
 
 void oedit_reject();
@@ -6175,6 +6191,9 @@ oedit_accept()
 	mat_t inv_topm;	/* inverse */
 	mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
 	mat_t tempm;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	if( dbip->dbi_read_only )
 	{
@@ -6284,6 +6303,9 @@ char	*argv[];
 	vect_t tempvec;
 	struct rt_arb_internal *arb;
 
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || 4 < argc){
@@ -6341,6 +6363,9 @@ void
 sedit_accept()
 {
 	struct directory	*dp;
+
+	if(dbip == DBI_NULL)
+	  return;
 
 	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
 
@@ -6448,6 +6473,9 @@ int argc;
 vect_t argvect;
 {
   register int i;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   if( es_edflag <= 0 )  {
     Tcl_AppendResult(interp,
@@ -6560,6 +6588,9 @@ char	**argv;
 {
   register int i;
   vect_t argvect;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
   CHECK_READ_ONLY;
 
@@ -7357,6 +7388,9 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
   if(argc < 1 || 4 < argc){
     struct bu_vls vls;
 
@@ -7410,4 +7444,154 @@ char	**argv;
 
   dmaflag = 1;
   return TCL_ERROR;
+}
+
+
+void
+build_tcl_edit_menu()
+{
+  struct menu_item *mip;
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+
+  switch( es_int.idb_type ) {
+  case ID_ARB8:
+    bu_vls_printf(&vls, "do_arb_edit_menu {");
+
+    /* build "move edge" menu */
+    mip = which_menu[es_type-4];
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    /* end "move edge" menu and start "move face" menu */
+    bu_vls_printf(&vls, " } {");
+
+    /* build "move face" menu */
+    mip = which_menu[es_type+1];
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    /* end "move face" menu and start "rotate face" menu */
+    bu_vls_printf(&vls, " } {");
+
+    /* build "rotate face" menu */
+    mip = which_menu[es_type+6];
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    /* end "rotate face" menu */
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_TGC:
+    bu_vls_printf(&vls, "do_edit_menu {");
+    mip = tgc_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_TOR:
+    mip = tor_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_ELL:
+    mip = ell_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_ARS:
+    mip = ars_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_BSPLINE:
+    mip = spline_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_RPC:
+    mip = rpc_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_RHC:
+    mip = rhc_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_EPA:
+    mip = epa_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_EHY:
+    mip = ehy_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_ETO:
+    mip = eto_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_NMG:
+    mip = nmg_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_PIPE:
+    mip = pipe_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_VOL:
+    mip = vol_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_EBM:
+    mip = ebm_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  case ID_DSP:
+    mip = dsp_menu;
+    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+
+    bu_vls_printf(&vls, " }\n");
+    break;
+  }
+
+
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
 }

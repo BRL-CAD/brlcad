@@ -1121,6 +1121,11 @@ mged_compat( dest, src )
 	struct bu_vls word;         /* Current word being processed */
 	struct bu_vls temp;
 
+	if(dbip == DBI_NULL){
+	  bu_vls_vlscat(dest, src);
+	  return;
+	}
+
 	bu_vls_init( &word );
 	bu_vls_init( &temp );
     
