@@ -48,18 +48,25 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  Users can change the database title by calling: ???
  */
 struct rt_wdb *
-wdb_fopen( const char *filename )
+wdb_fopen_v( const char *filename, int version )
 {
 	struct db_i	*dbip;
 
 	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
 		rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( (dbip = db_create( filename, 5 )) == DBI_NULL )
+	if( (dbip = db_create( filename, version )) == DBI_NULL )
 		return RT_WDB_NULL;
 
 	return wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK );
 }
+
+struct rt_wdb *
+wdb_fopen( const char *filename)
+{
+    return wdb_fopen_v(filename, 5);
+}
+
 
 /*
  *			W D B _ D B O P E N

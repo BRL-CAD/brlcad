@@ -2484,6 +2484,7 @@ int rt_do_cmd(struct rt_i *rtip, char *lp, const struct command_tab *tp );  /* d
 
 /* wdb.c */
 struct rt_wdb *wdb_fopen( const char *filename );
+struct rt_wdb *wdb_fopen_v( const char *filename, int version );
 struct rt_wdb *wdb_dbopen( struct db_i *dbip, int mode );
 int wdb_import(
 	struct rt_wdb *wdbp,

@@ -5900,19 +5900,39 @@ wdb_keep_cmd(struct rt_wdb	*wdbp,
 	}
 
 	/* Alert user if named file already exists */
-	if ((new_dbip = db_open(argv[1], "w")) !=  DBI_NULL  &&
-	    (keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) != NULL) {
+	
+	new_dbip = db_open(argv[1], "w");
+
+
+	if (new_dbip != DBI_NULL) {
+	    if (new_dbip->dbi_version != wdbp->dbip->dbi_version) {
+		Tcl_AppendResult(interp,
+				 "keep: File format mismatch between '",
+				 argv[1], "' and '",
+				 wdbp->dbip->dbi_filename, "'\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	    }
+	    
+	    if ((keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) == NULL) {
+		Tcl_AppendResult(interp, "keep:  Error opening '", argv[1],
+				 "'\n", (char *)NULL);
+		return TCL_ERROR;
+	    } else {
 		Tcl_AppendResult(interp, "keep:  appending to '", argv[1],
 				 "'\n", (char *)NULL);
 
 		/* --- Scan geometry database and build in-memory directory --- */
 		db_dirbuild(new_dbip);
+	    }
 	} else {
-		/* Create a new database */
-		if ((keepfp = wdb_fopen(argv[1])) == NULL) {
-			perror(argv[1]);
-			return TCL_ERROR;
-		}
+	    /* Create a new database */
+	    keepfp = wdb_fopen_v(argv[1], wdbp->dbip->dbi_version);
+
+	    if (keepfp == NULL) {
+		perror(argv[1]);
+		return TCL_ERROR;
+	    }
 	}
 	
 	/* ident record */
