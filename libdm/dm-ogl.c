@@ -724,7 +724,7 @@ fastf_t *m;
    *  This hack ensures that the buffer has this alignment.
    *  Note that this requires gtbuf to be 16 bytes longer than needed.
    */
-  gtvec = (float *)((((int)gtbuf)+15) & (~0xF));
+  gtvec = (float *)((((long)gtbuf)+15) & (~0xF));
 
 #if 0
   if (illum && ((struct ogl_vars *)dmp->dm_vars)->mvars.cueing_on)
