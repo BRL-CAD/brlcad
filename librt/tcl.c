@@ -246,6 +246,116 @@ union tree		*tp;
 }
 
 /*
+ */
+union tree *
+db_tcl_tree_parse( interp, str )
+Tcl_Interp	*interp;
+char		*str;
+{
+	int	argc;
+	char	**argv;
+	union tree	*tp = TREE_NULL;
+	union tree	*lhs;
+	union tree	*rhs;
+
+	/* Skip over leading spaces in input */
+	while( *str && isspace(*str) ) str++;
+
+	if( Tcl_SplitList( interp, str, &argc, &argv ) != TCL_OK )
+		return TREE_NULL;
+
+	if( argc <= 0 || argc > 3 )  {
+		Tcl_AppendResult( interp, "db_tcl_tree_parse: argc <=0 or >3 on this subtree: ",
+			str, (char *)NULL );
+		goto out;
+	}
+
+Tcl_AppendResult( interp, "\n\ndb_tcl_tree_parse(): ", str, "\n", NULL );
+
+Tcl_AppendResult( interp, "db_tcl_tree_parse() arg0=", argv[0], NULL );
+if(argc > 1 ) Tcl_AppendResult( interp, "\n\targ1=", argv[1], NULL );
+if(argc > 2 ) Tcl_AppendResult( interp, "\n\targ2=", argv[2], NULL );
+Tcl_AppendResult( interp, "\n\n", NULL);
+
+	if( argv[0][1] != '\0' )  {
+		Tcl_AppendResult( interp, "db_tcl_tree_parse() operator is not single character: ",
+			argv[0], "\n", (char *)NULL );
+		goto out;
+	}
+
+	switch( argv[0][0] )  {
+	case 'l':
+		/* Leaf node: {l name {mat}} */
+		BU_GETUNION( tp, tree );
+		tp->tr_l.magic = RT_TREE_MAGIC;
+		tp->tr_op = OP_DB_LEAF;
+		tp->tr_l.tl_name = bu_strdup( argv[1] );
+		if( argc == 3 )  {
+			tp->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat");
+			if( bn_decode_mat( tp->tr_l.tl_mat, argv[2] ) != 16 )  {
+				Tcl_AppendResult( interp, "db_tcl_tree_parse: unable to parse matrix '",
+					argv[2], "', using all-zeros\n", (char *)NULL );
+				bn_mat_zero( tp->tr_l.tl_mat );
+			}
+		}
+		break;
+
+	case 'u':
+		/* Binary: Union: {u {lhs} {rhs}} */
+		BU_GETUNION( tp, tree );
+		tp->tr_b.tb_op = OP_UNION;
+		goto binary;
+	case 'n':
+		/* Binary: Intersection */
+		BU_GETUNION( tp, tree );
+		tp->tr_b.tb_op = OP_INTERSECT;
+		goto binary;
+	case '-':
+		/* Binary: Union */
+		BU_GETUNION( tp, tree );
+		tp->tr_b.tb_op = OP_SUBTRACT;
+		goto binary;
+	case '^':
+		/* Binary: Xor */
+		BU_GETUNION( tp, tree );
+		tp->tr_b.tb_op = OP_XOR;
+		goto binary;
+binary:
+		tp->tr_b.magic = RT_TREE_MAGIC;
+		if( argv[1] == (char *)NULL || argv[2] == (char *)NULL )  {
+			Tcl_AppendResult( interp, "db_tcl_tree_parse: binary operator ",
+				argv[0], " has insufficient operands in ",
+				str, "\n", (char *)NULL );
+			bu_free( (char *)tp, "union tree" );
+			tp = TREE_NULL;
+			goto out;
+		}
+		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1] );
+		if( tp->tr_b.tb_left == TREE_NULL )  {
+			bu_free( (char *)tp, "union tree" );
+			tp = TREE_NULL;
+			goto out;
+		}
+		tp->tr_b.tb_right = db_tcl_tree_parse( interp, argv[2] );
+		if( tp->tr_b.tb_left == TREE_NULL )  {
+			db_free_tree( tp->tr_b.tb_left );
+			bu_free( (char *)tp, "union tree" );
+			tp = TREE_NULL;
+			goto out;
+		}
+		break;
+
+	default:
+		Tcl_AppendResult( interp, "db_tcl_tree_parse: unable to interpret operator '",
+			argv[1], "'\n", (char *)NULL );
+	}
+
+out:
+	free( (char *)argv);		/* not bu_free() */
+	return tp;
+}
+
+/*
  *		D B _ T C L _ C O M B _ D E S C R I B E
  *
  * Sets the interp->result string to a description of the given combination.
@@ -459,9 +569,18 @@ char			      **argv;
 				return TCL_ERROR;
 			comb->inherit = (char)i;
 		} else if( strcmp(buf, "tree" )==0 ) {
-			;
+			union tree	*new;
+
+			new = db_tcl_tree_parse( interp, argv[1] );
+			if( new == TREE_NULL )  {
+				Tcl_AppendResult( interp, "db adjust tree: bad tree '",
+					argv[1], "'\n", (char *)NULL );
+				return TCL_ERROR;
+			}
+			db_free_tree( comb->tree );
+			comb->tree = new;
 		} else {
-			Tcl_AppendResult( interp, buf,
+			Tcl_AppendResult( interp, "db adjust ", buf,
 					  ": no such attribute",
 					  (char *)NULL );
 			return TCL_ERROR;
