@@ -223,19 +223,33 @@ int	bool_op;
  *  forward and backward links.
  */
 struct wmember *
-mk_addmember( name, headp )
+mk_addmember( name, headp, op )
 char	*name;
 register struct wmember *headp;
+int	op;
 {
 	register struct wmember *wp;
 
 	if( (wp = (struct wmember *)malloc(sizeof(struct wmember))) == WMEMBER_NULL )  {
-		fprintf(stderr,"mk_wmember:  malloc failure\n");
+		fprintf(stderr,"mk_addmember:  malloc failure\n");
 		return(WMEMBER_NULL);
 	}
 	wp->l.magic = WMEMBER_MAGIC;
 	strncpy( wp->wm_name, name, sizeof(wp->wm_name) );
-	wp->wm_op = UNION;
+	switch( op )  {
+	case WMOP_UNION:
+		wp->wm_op = UNION;
+		break;
+	case WMOP_INTERSECT:
+		wp->wm_op = INTERSECT;
+		break;
+	case WMOP_SUBTRACT:
+		wp->wm_op = SUBTRACT;
+		break;
+	default:
+		fprintf(stderr, "mk_addmember() op=x%x is bad\n", op);
+		return(WMEMBER_NULL);
+	}
 	bcopy( ident_mat, wp->wm_mat, sizeof(mat_t) );
 	/* Append to end of doubly linked list */
 	RT_LIST_INSERT( &headp->l, &wp->l );

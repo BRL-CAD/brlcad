@@ -101,9 +101,10 @@ char	*name;
 mat_t	mat;
 int	op;
 .sp
-mk_addmember( name, headp )
+mk_addmember( name, headp, op )
 char	*name;
 struct	wmember *headp;
+int	op;
 .sp
 mk_lcomb( fp, name, headp, region, matname, matparm, rgb, inherit )
 FILE	*fp;
@@ -287,15 +288,25 @@ is used to obtain dynamic storage for a new wmember structure
 can be used in the same way as 
 .I mk_comb\^
 to make a combination of a linked list of wmember structures.
-This is easier and less risky to use, because it produces the 
-combination and member records all at once, rather than in two
+This is the only recommended way to create combinations,
+because it collects up the details in memory, and produces the 
+combination and member records all at once, rather than in multiple
 calls, as in 
 .I mk_comb\^
 and
 .I mk_memb\^.
+The ``op'' argument must be one of
+WMOP_UNION, WMOP_SUBTRACT, or WMOP_INTERSECT.
+In the future, 
+.I mk_comb\^
+and
+.I mk_memb\^
+will no longer be supported.
 .I mk_lfcomb\^
 is the linked list equivalent of
 .I mk_fcomb\^.
+Note that the linked list heads must be initizlized by an
+invocation of RT_LIST_INIT( &head.l );
 .PP
 .I mk_polysolid\^
 writes the header record for a polygon solid called ``name'',
