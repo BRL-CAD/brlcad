@@ -599,43 +599,47 @@ struct faceuse *fu1, *fu;
 }
 
 
-/*	I S E C T _ F A C E S
+/*
+ *			N M G _ I S E C T _ 2 F A C E S
  *
  *	Intersect a pair of faces
  */
-static void nmg_isect_faces(fu1, fu2, tol)
+static void nmg_isect_2faces(fu1, fu2, tol)
 struct faceuse *fu1, *fu2;
 fastf_t tol;
 {
 	struct nmg_ptbl vert_list1, vert_list2;
 	struct nmg_boolstruct bs;
-	int i;
-	fastf_t *pl1, *pl2;
-
+	int		i;
+	fastf_t		*pl1, *pl2;
+	struct face	*f1;
+	struct face	*f2;
 	union {
 		struct vertexuse **vu;
 		long **magic_p;
 	} p;
 
+	NMG_CK_FACEUSE(fu1);
+	f1 = fu1->f_p;
+	NMG_CK_FACE(f1);
+	NMG_CK_FACE_G(f1->fg_p);
+
+	NMG_CK_FACEUSE(fu2);
+	f2 = fu2->f_p;
+	NMG_CK_FACE(f2);
+	NMG_CK_FACE_G(f2->fg_p);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		pl1 = fu1->f_p->fg_p->N;
-		pl2 = fu2->f_p->fg_p->N;
+		pl1 = f1->fg_p->N;
+		pl2 = f2->fg_p->N;
 
 		rt_log("\nPlanes\t%gx + %gy + %gz = %g\n\t%gx + %gy + %gz = %g\n",
 			pl1[0], pl1[1], pl1[2], pl1[3],
 			pl2[0], pl2[1], pl2[2], pl2[3]);
 	}
 
-	NMG_CK_FACEUSE(fu1);
-	NMG_CK_FACE(fu1->f_p);
-	NMG_CK_FACE_G(fu1->f_p->fg_p);
-	NMG_CK_FACEUSE(fu2);
-	NMG_CK_FACE(fu2->f_p);
-	NMG_CK_FACE_G(fu2->f_p->fg_p);
-
-	if ( !NMG_EXTENT_OVERLAP(fu2->f_p->fg_p->min_pt,fu2->f_p->fg_p->max_pt,
-	    fu1->f_p->fg_p->min_pt,fu1->f_p->fg_p->max_pt) )  return;
+	if ( !NMG_EXTENT_OVERLAP(f2->fg_p->min_pt, f2->fg_p->max_pt,
+	    f1->fg_p->min_pt, f1->fg_p->max_pt) )  return;
 
 	/* Extents of face1 overlap face2 */
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
@@ -760,10 +764,11 @@ fastf_t tol;
 	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
 }
 
-/*	C R A C K S H E L L S
+/*
+ *			N M G _ C R A C K S H E L L S
  *
- *	split the faces of two shells in preparation for performing boolean
- *	operations with them.
+ *	Split the components of two shells wherever they may intersect,
+ *	in preparation for performing boolean operations on the shells.
  */
 void nmg_crackshells(s1, s2, tol)
 struct shell *s1, *s2;
@@ -777,57 +782,58 @@ fastf_t tol;
 	NMG_CK_SHELL(s1);
 	NMG_CK_SHELL_A(s1->sa_p);
 
+	/* XXX this isn't true for non-manifold geometry! */
 	if (!s1->fu_p || !s2->fu_p)
 		rt_bomb("ERROR:shells must contain faces for boolean operations.");
 
+	if ( ! NMG_EXTENT_OVERLAP(s1->sa_p->min_pt, s1->sa_p->max_pt,
+	    s2->sa_p->min_pt, s2->sa_p->max_pt) )
+		return;
+
 	(void)nmg_tbl(&faces, TBL_INIT, (long *)NULL);
 
-	if (NMG_EXTENT_OVERLAP(s1->sa_p->min_pt, s1->sa_p->max_pt,
-	    s2->sa_p->min_pt, s2->sa_p->max_pt) ) {
+	/* shells overlap */
+	fu1 = s1->fu_p;
+	do {
+		/* check each of the faces in shell 1 to see
+		 * if they overlap the extent of shell 2
+		 */
+		NMG_CK_FACEUSE(fu1);
+		NMG_CK_FACE(fu1->f_p);
+		NMG_CK_FACE_G(fu1->f_p->fg_p);
 
-		/* shells overlap */
-		fu1 = s1->fu_p;
-		do {/* check each of the faces in shell 1 to see
-		     * if they overlap the extent of shell 2
-		     */
-			NMG_CK_FACEUSE(fu1);
-			NMG_CK_FACE(fu1->f_p);
-			NMG_CK_FACE_G(fu1->f_p->fg_p);
+		if (nmg_tbl(&faces, TBL_LOC, &fu1->f_p->magic) < 0 &&
+		    NMG_EXTENT_OVERLAP(s2->sa_p->min_pt,
+		    s2->sa_p->max_pt, fu1->f_p->fg_p->min_pt,
+		    fu1->f_p->fg_p->max_pt) ) {
 
-			if (nmg_tbl(&faces, TBL_LOC, &fu1->f_p->magic) < 0 &&
-			    NMG_EXTENT_OVERLAP(s2->sa_p->min_pt,
-			    s2->sa_p->max_pt, fu1->f_p->fg_p->min_pt,
-			    fu1->f_p->fg_p->max_pt) ) {
+			/* poly1 overlaps shell2 */
+			fu2 = s2->fu_p;
+			do {
+				/* now we check the face of shell 1
+				 * against each of the faces of shell
+				 * 2.
+	 			 */
+				nmg_isect_2faces(fu1, fu2, tol);
 
-				/* poly1 overlaps shell2 */
-				fu2 = s2->fu_p;
-				do {
-					/* now we check the face of shell 1
-					 * against each of the faces of shell
-					 * 2.
-		 			 */
-					nmg_isect_faces(fu1, fu2, tol);
+				/* try to avoid processing redundant
+				 * faceuses.
+				 */
+				if (fu2->next != s2->fu_p &&
+				    fu2->next->f_p == fu2->f_p)
+					fu2 = fu2->next->next;
+				else
+					fu2 = fu2->next;
+			} while (fu2 != s2->fu_p);
+			(void)nmg_tbl(&faces, TBL_INS, &fu1->f_p->magic);
+		    }
 
-					/* try to avoid processing redundant
-					 * faceuses.
-					 */
-					if (fu2->next != s2->fu_p &&
-					    fu2->next->f_p == fu2->f_p)
-						fu2 = fu2->next->next;
-					else
-						fu2 = fu2->next;
+		/* try not to process redundant faceuses */
+		if (fu1->next != s1->fu_p && fu1->next->f_p == fu1->f_p)
+			fu1 = fu1->next->next;
+		else
+			fu1 = fu1->next;
+	} while (fu1 != s1->fu_p);
 
-				} while (fu2 != s2->fu_p);
-				(void)nmg_tbl(&faces, TBL_INS, &fu1->f_p->magic);
-			    }
-
-			/* try not to process redundant faceuses */
-			if (fu1->next != s1->fu_p && fu1->next->f_p == fu1->f_p)
-				fu1 = fu1->next->next;
-			else
-				fu1 = fu1->next;
-
-		} while (fu1 != s1->fu_p);
-	}
-
+	(void)nmg_tbl(&faces, TBL_FREE, (long *)NULL );
 }
