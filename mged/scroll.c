@@ -41,8 +41,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./sedit.h"
 
+extern int mged_svbase();   /* defined in chgview.c */
 extern void set_scroll();   /* defined in set.c */
-extern void set_dirty_flag();
 
 /************************************************************************
  *									*
@@ -118,6 +118,7 @@ void
 sl_toggle_scroll()
 {
   mged_variables->slidersflag = mged_variables->slidersflag ? 0 : 1;
+
   set_scroll();
 }
 
@@ -137,7 +138,8 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  struct dm_list *p;
+  struct dm_list *dmlp;
+  struct dm_list *save_cdmlp;
 
   if(argc < 1 || 2 < argc){
     struct bu_vls vls;
@@ -157,18 +159,41 @@ char **argv;
   if (Tcl_GetBoolean(interp, argv[1], &mged_variables->slidersflag) == TCL_ERROR)
     return TCL_ERROR;
 
-  if (mged_variables->slidersflag) {
-    if(mged_variables->rateknobs)
-      scroll_array[0] = sl_menu;
-    else
-      scroll_array[0] = sl_abs_menu;
-  } else {
-    scroll_array[0] = SCROLL_NULL;	
-    scroll_array[1] = SCROLL_NULL;	
-  }
+  save_cdmlp = curr_dm_list;
+  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+    /* if sharing mged_variables or view */
+    if(dmlp->_mged_variables == save_cdmlp->_mged_variables ||
+       dmlp->s_info == save_cdmlp->s_info){
+      curr_dm_list = dmlp;
 
-  if(mged_variables->faceplate && mged_variables->orig_gui)
-    set_dirty_flag();
+      if (mged_variables->slidersflag) {
+	if(mged_variables->rateknobs)
+	  scroll_array[0] = sl_menu;
+	else
+	  scroll_array[0] = sl_abs_menu;
+
+	if(mged_variables->adcflag)
+	  scroll_array[1] = sl_adc_menu;
+	else
+	  scroll_array[1] = SCROLL_NULL;
+
+	if(mged_variables->faceplate && mged_variables->orig_gui){
+	  /* zero slider variables */
+	  if(mged_variables == save_cdmlp->_mged_variables)
+	    mged_svbase();
+
+	  dirty = 1;
+	}
+      }else{
+	scroll_array[0] = SCROLL_NULL;	
+	scroll_array[1] = SCROLL_NULL;	
+
+	if(mged_variables->faceplate && mged_variables->orig_gui)
+	  dirty = 1;
+      }
+    }
+  }
+  curr_dm_list = save_cdmlp;
 
   return TCL_OK;
 }
@@ -337,12 +362,6 @@ int y_top;
   int		xpos;
   int second_menu = -1;
   fastf_t f;
-
-  /* XXX this should be driven by the button event */
-  if( mged_variables->adcflag && mged_variables->slidersflag )
-    scroll_array[1] = sl_adc_menu;
-  else
-    scroll_array[1] = SCROLL_NULL;
 
   scroll_top = y_top;
   y = y_top;
