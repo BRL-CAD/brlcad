@@ -145,8 +145,8 @@ if [ X${SILENT} = X ] ; then
 	echo "Cleaning out ${BASEDIR}."
 fi
 
-inst_dirs=" bin etc html include itcl3.0 itk3.0 lib man pro-engineer \
-	sample_applications tcl8.2 tclscripts tk8.2 vfont"
+inst_dirs=" bin etc html include itcl3.2 itk3.2 lib man pro-engineer \
+	sample_applications tcl8.3 tclscripts tk8.3 vfont"
 
 echo "Is it OK to delete the following directories:"
 for dir in $inst_dirs ; do
