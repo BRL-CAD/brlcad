@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.14  91/08/30  18:11:05  mike
+ * Made explicit that termcap.h to be used is the local version
+ * 
  * Revision 2.13  91/08/30  17:54:35  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -550,6 +553,7 @@ emalloc(size)
 	}
 	error("out of memory");
 	/* NOTREACHED */
+	return (char *)NULL;
 }
 
 dispatch(c)
@@ -594,7 +598,7 @@ register char	*argv[];
 	BUFFER	*secondbuf = 0;
 	register char	c;
 
-	s_mess("Jonathan's Own Version of Emacs  (%s)", version);
+	s_mess("Jonathan's Own Version of Emacs  (BRL %s)", version);
 
 	*argv = (char *) 0;
 	argvp = argv + 1;
