@@ -41,7 +41,8 @@
 		RTDIR/worker.o RTDIR/wray.o \
 		RTDIR/material.o RTDIR/refract.o RTDIR/sh_stack.o \
 		RTDIR/sh_plastic.o RTDIR/sh_cook.o \
-		RTDIR/mathtab.o RTDIR/sh_marble.o RTDIR/sh_stxt.o \
+		RTDIR/mathtab.o RTDIR/sh_wood.o \
+		RTDIR/sh_marble.o RTDIR/sh_stxt.o \
 		RTDIR/sh_points.o RTDIR/sh_toyota.o \
 		RTDIR/sh_spm.o RTDIR/sh_light.o RTDIR/do.o \
 		LIBPKG LIBRT LIBRT_LIBES LIBES
