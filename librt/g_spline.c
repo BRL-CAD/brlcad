@@ -436,6 +436,10 @@ struct soltab *stp;
 		L = VDOT(norm, u2e);
 		M = VDOT(norm, uve);
 		N = VDOT(norm, v2e);
+	} else {
+		rt_log("spl_curve: bad mesh point type %d\n",
+			s_ptr->root->ctl_mesh->pt_type);
+		goto	cleanup;
 	}
 
 	denom = ( (E*G) - (F*F) ); 
@@ -484,6 +488,7 @@ struct soltab *stp;
 
 	VUNITIZE( cvp->crv_pdir );
 
+cleanup:
 	rt_free( (char *)s_eval, "spl_curve:s_eval");
 	rt_free( (char *)u_eval, "spl_curve:u_eval");
 	rt_free( (char *)v_eval, "spl_curve:v_eval");
@@ -619,6 +624,12 @@ register struct xray *rp;
 		VUNITIZE( norm);
 		VMOVE(hitp->hit_normal, norm);
 		rt_free( (char *)spl_eval, "ray_poly: spl_eval" );
+	}
+	else
+	{
+		rt_log("spl_curve: bad mesh point type %d\n",
+			h_ptr->root->ctl_mesh->pt_type);
+		return;
 	}
 
 	if ( hitp->hit_vpriv[2] )
@@ -870,7 +881,7 @@ struct local_hit *
 get_next_hit(  )
 {
 	register struct local_hit * list_ptr;
-	struct local_hit * rt_hit;
+	struct local_hit *rt_hit = NULLHIT;
 	float dist;
 
 	dist = INFINITY;
