@@ -60,7 +60,11 @@ static char	RCSid[] =		/* for "what" utility */
 
 #include	<signal.h>
 #include	<stdio.h>
+#ifdef BSD
+#include	<strings.h>
+#else
 #include	<string.h>
+#endif
 #if __STDC__
 #include	<stdarg.h>
 #include	<stdlib.h>
