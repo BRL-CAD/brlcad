@@ -328,20 +328,23 @@ dotitles()
  *			L A B E L _ E D I T E D _ S O L I D
  *
  *  Put labels on the vertices of the currently edited solid.
+ *  XXX This really should use import/export interface!!!
  */
 label_edited_solid()
 {
 	register int	i;
-	union record	temp_rec;		/* copy of es_rec record */
+	union record	temp_rec;	/* copy of es_rec record */
 	point_t		work;
 	point_t		temp;
 	point_t		pos_view;
+	mat_t		xform;		/* model2objview * es_mat */
+
+	mat_mul( xform, model2objview, es_mat );
 
 	switch( es_gentype )  {
 
 	case GENARB8:
-		MAT4X3PNT( work, es_mat, es_rec.s.s_values );
-		MAT4X3PNT( pos_view, model2objview, work );
+		MAT4X3PNT( pos_view, xform, es_rec.s.s_values );
 		dmp->dmr_puts( "1", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 		temp_rec.s = es_rec.s;
 		if(es_type == ARB4) {
@@ -353,68 +356,60 @@ label_edited_solid()
 		for(i=1; i<es_type; i++) {
 			static char kvt[4] = "X\0";/* Cvts chars to strings */
 			VADD2( work, es_rec.s.s_values, &temp_rec.s.s_values[i*3] );
-			MAT4X3PNT(temp, es_mat, work);
-			MAT4X3PNT( pos_view, model2objview, temp );
+			MAT4X3PNT(pos_view, xform, work);
 			kvt[0] = i + '1';
 			dmp->dmr_puts( kvt, ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 		}
 		break;
 	case GENTGC:
 		VADD2( work, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_A );
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "A", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 
 		VADD2( work, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_B );
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "B", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 
-		VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
-		VADD2( work, temp, &es_rec.s.s_tgc_C );
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		VADD3( work, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H, &es_rec.s.s_tgc_C );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "C", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 
-		VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
-		VADD2( work, temp, &es_rec.s.s_tgc_D );
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		VADD3( work, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H, &es_rec.s.s_tgc_D );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "D", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 		break;
 
 	case GENELL:
 		VADD2( work, &es_rec.s.s_ell_V, &es_rec.s.s_ell_A );
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "A", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+
 		VADD2( work, &es_rec.s.s_ell_V, &es_rec.s.s_ell_B );
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "B", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+
 		VADD2( work, &es_rec.s.s_ell_V, &es_rec.s.s_ell_C );
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "C", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 		break;
+
 	case TOR:
 		VADD2( work, &es_rec.s.s_tor_V, &es_rec.s.s_tor_C );
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "I", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+
 		VADD2( work, &es_rec.s.s_tor_V, &es_rec.s.s_tor_E );
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "O", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+
 		VADD3( work, &es_rec.s.s_tor_V, &es_rec.s.s_tor_A, &es_rec.s.s_tor_H);
-		MAT4X3PNT(temp, es_mat, work);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		MAT4X3PNT(pos_view, xform, work);
 		dmp->dmr_puts( "H", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 		break;
+
 	case ARS:
 	case ARSCONT:
-		MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
-		MAT4X3PNT( pos_view, model2objview, temp );
+		MAT4X3PNT(pos_view, xform, es_rec.s.s_values);
 		dmp->dmr_puts( "V", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 		break;
 	}
