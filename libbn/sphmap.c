@@ -24,8 +24,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"
+#include "bn.h"
 #include "spm.h"
 
 /*
@@ -47,19 +48,19 @@ int	elsize;
 	int	i, nx, total, index;
 	register spm_map_t *mapp;
 
-	mapp = (spm_map_t *)rt_malloc( sizeof(spm_map_t), "spm_map_t");
+	mapp = (spm_map_t *)bu_malloc( sizeof(spm_map_t), "spm_map_t");
 	if( mapp == SPM_NULL )
 		return( SPM_NULL );
 	bzero( (char *)mapp, sizeof(spm_map_t) );
 
 	mapp->elsize = elsize;
 	mapp->ny = N/2;
-	mapp->nx = (int *) rt_malloc( (unsigned)(N/2 * sizeof(*(mapp->nx))), "sph nx" );
+	mapp->nx = (int *) bu_malloc( (unsigned)(N/2 * sizeof(*(mapp->nx))), "sph nx" );
 	if( mapp->nx == NULL ) {
 		spm_free( mapp );
 		return( SPM_NULL );
 	}
-	mapp->xbin = (unsigned char **) rt_malloc( (unsigned)(N/2 * sizeof(char *)), "sph xbin" );
+	mapp->xbin = (unsigned char **) bu_malloc( (unsigned)(N/2 * sizeof(char *)), "sph xbin" );
 	if( mapp->xbin == NULL ) {
 		spm_free( mapp );
 		return( SPM_NULL );
@@ -67,7 +68,7 @@ int	elsize;
 
 	total = 0;
 	for( i = 0; i < N/4; i++ ) {
-		nx = ceil( N*cos( i*rt_twopi/N ) );
+		nx = ceil( N*cos( i*bn_twopi/N ) );
 		if( nx > N ) nx = N;
 		mapp->nx[ N/4 + i ] = nx;
 		mapp->nx[ N/4 - i -1 ] = nx;
@@ -75,7 +76,7 @@ int	elsize;
 		total += 2*nx;
 	}
 
-	mapp->_data = (unsigned char *) rt_calloc( (unsigned)total, elsize, "spm_init data" );
+	mapp->_data = (unsigned char *) bu_calloc( (unsigned)total, elsize, "spm_init data" );
 	if( mapp->_data == NULL ) {
 		spm_free( mapp );
 		return( SPM_NULL );
@@ -104,21 +105,21 @@ spm_map_t *mp;
 		return;
 
 	if( mp->_data != NULL )  {
-		(void) rt_free( (char *)mp->_data, "sph _data" );
+		(void) bu_free( (char *)mp->_data, "sph _data" );
 		mp->_data = NULL;
 	}
 
 	if( mp->nx != NULL )  {
-		(void) rt_free( (char *)mp->nx, "sph nx" );
+		(void) bu_free( (char *)mp->nx, "sph nx" );
 		mp->nx = NULL;
 	}
 
 	if( mp->xbin != NULL )  {
-		(void) rt_free( (char *)mp->xbin, "sph xbin" );
+		(void) bu_free( (char *)mp->xbin, "sph xbin" );
 		mp->xbin = NULL;
 	}
 
-	(void) rt_free( (char *)mp, "spm_map_t" );
+	(void) bu_free( (char *)mp, "spm_map_t" );
 }
 
 /*
@@ -285,7 +286,7 @@ char	*filename;
 		    mapp->nx[i], fp );
 		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if( got != mapp->nx[i] ) {
-			rt_log("spm_save(%s): write error\n", filename);
+			bu_log("spm_save(%s): write error\n", filename);
 			bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 		    	(void) fclose( fp );
 			bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
@@ -336,13 +337,13 @@ int	nx, ny;
 	}
 
 	/* Shamelessly suck it all in */
-	buffer = (unsigned char *)rt_malloc( (unsigned)(nx*nx*3), "spm_px_load buffer" );
+	buffer = (unsigned char *)bu_malloc( (unsigned)(nx*nx*3), "spm_px_load buffer" );
 	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	i = fread( (char *)buffer, 3, nx*ny, fp );	/* res_syscall */
 	(void) fclose( fp );
 	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	if( i != nx*ny )  {
-		rt_log("spm_px_load(%s) read error\n", filename);
+		bu_log("spm_px_load(%s) read error\n", filename);
 		return( -1 );
 	}
 
@@ -372,7 +373,7 @@ int	nx, ny;
 			*cp++ = (unsigned char)(blue/count);
 		}
 	}
-	(void) rt_free( (char *)buffer, "spm buffer" );
+	(void) bu_free( (char *)buffer, "spm buffer" );
 
 	return( 0 );
 }
@@ -413,7 +414,7 @@ int	nx, ny;
 			got = fwrite( (char *)pixel, sizeof(pixel), 1, fp );	/* res_syscall */
 			bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 			if( got != 1 )  {
-				rt_log("spm_px_save(%s): write error\n", filename);
+				bu_log("spm_px_save(%s): write error\n", filename);
 				bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 				(void) fclose( fp );
 				bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
@@ -444,12 +445,12 @@ int	verbose;
 
 	RT_CK_SPM(mp);
 
-	rt_log("elsize = %d\n", mp->elsize );
-	rt_log("ny = %d\n", mp->ny );
-	rt_log("_data = 0x%x\n", mp->_data );
+	bu_log("elsize = %d\n", mp->elsize );
+	bu_log("ny = %d\n", mp->ny );
+	bu_log("_data = 0x%x\n", mp->_data );
 	if( !verbose )  return;
 	for( i = 0; i < mp->ny; i++ ) {
-		rt_log("  nx[%d] = %3d, xbin[%d] = 0x%x\n",
+		bu_log("  nx[%d] = %3d, xbin[%d] = 0x%x\n",
 			i, mp->nx[i], i, mp->xbin[i] );
 	}
 }

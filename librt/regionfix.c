@@ -65,7 +65,7 @@ struct rt_i	*rtip;
 	int	ret;
 	int	oldid;
 	int	newid;
-	struct rt_vls	name;
+	struct bu_vls	name;
 
 	RT_CK_RTI(rtip);
 
@@ -74,24 +74,24 @@ struct rt_i	*rtip;
 	 *  Otherwise, replace ".g" suffix on database name
 	 *  with ".regexp".
 	 */
-	rt_vls_init(&name);
+	bu_vls_init(&name);
 	file = rtip->rti_region_fix_file;
 	if( file == (char *)NULL )  {
-		rt_vls_strcpy( &name, rtip->rti_dbip->dbi_filename );
-		if( (tabp = strrchr( rt_vls_addr(&name), '.' )) != NULL )  {
+		bu_vls_strcpy( &name, rtip->rti_dbip->dbi_filename );
+		if( (tabp = strrchr( bu_vls_addr(&name), '.' )) != NULL )  {
 			/* Chop off "." and suffix */
-			rt_vls_trunc( &name, tabp-rt_vls_addr(&name) );
+			bu_vls_trunc( &name, tabp-bu_vls_addr(&name) );
 		}
-		rt_vls_strcat( &name, ".regexp" );
-		file = rt_vls_addr(&name);
+		bu_vls_strcat( &name, ".regexp" );
+		file = bu_vls_addr(&name);
 	}
 
 	if( (fp = fopen( file, "r" )) == NULL )	 {
 		if( rtip->rti_region_fix_file ) perror(file);
-		rt_vls_free(&name);
+		bu_vls_free(&name);
 		return;
 	}
-	rt_log("librt/rt_regionfix(%s):  Modifying instanced region-ids.\n", file);
+	bu_log("librt/rt_regionfix(%s):  Modifying instanced region-ids.\n", file);
 
 	while( (line = rt_read_cmd( fp )) != (char *) 0 )  {
 #if USE_REGCOMP
@@ -102,19 +102,19 @@ struct rt_i	*rtip;
 		 *  regexp TAB [more_white_space] formula SEMICOLON
 		 */
 		if( (tabp = strchr( line, '\t' )) == (char *)0 )  {
-			rt_log("%s: missing TAB on line %d:\n%s\n", file, linenum, line );
+			bu_log("%s: missing TAB on line %d:\n%s\n", file, linenum, line );
 			continue;		/* just ignore it */
 		}
 		*tabp++ = '\0';
 		while( *tabp && isspace( *tabp ) )  tabp++;
 #if USE_REGCOMP
 		if( (ret = regcomp(&re_space,line,0)) != 0 )  {
-			rt_log("%s: line %d, regcomp error '%d'\n", file, line, ret );
+			bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret );
 			continue;		/* just ignore it */
 		}
 #else
 		if( (err = re_comp(line)) != (char *)0 )  {
-			rt_log("%s: line %d, re_comp error '%s'\n", file, line, err );
+			bu_log("%s: line %d, re_comp error '%s'\n", file, line, err );
 			continue;		/* just ignore it */
 		}
 #endif
@@ -127,14 +127,14 @@ struct rt_i	*rtip;
 			ret = re_exec((char *)rp->reg_name);
 #endif
 			if(rt_g.debug&DEBUG_INSTANCE)  {
-				rt_log("'%s' %s '%s'\n", line,
+				bu_log("'%s' %s '%s'\n", line,
 					ret==1 ? "==" : "!=",
 					rp->reg_name);
 			}
 			if( (ret) == 0  )
 				continue;	/* didn't match */
 			if( ret == -1 )  {
-				rt_log("%s: line %d, invalid regular expression\n", file, linenum);
+				bu_log("%s: line %d, invalid regular expression\n", file, linenum);
 				break;		/* on to next RE */
 			}
 			/*
@@ -154,10 +154,10 @@ struct rt_i	*rtip;
 				newid = oldid + atoi( tabp+1 );
 			} else {
 				newid = atoi( tabp );
-				if( newid == 0 )  rt_log("%s, line %d Warning:  new id = 0\n", file, linenum );
+				if( newid == 0 )  bu_log("%s, line %d Warning:  new id = 0\n", file, linenum );
 			}
 			if(rt_g.debug&DEBUG_INSTANCE)  {
-				rt_log("%s instance %d:  region id changed from %d to %d\n",
+				bu_log("%s instance %d:  region id changed from %d to %d\n",
 					rp->reg_name, rp->reg_instnum,
 					oldid, newid );
 			}
@@ -166,8 +166,8 @@ struct rt_i	*rtip;
 #if USE_REGCOMP
 		regfree(&re_space);
 #endif
-		rt_free( line, "reg_expr line");
+		bu_free( line, "reg_expr line");
 	}
 	fclose( fp );
-	rt_vls_free(&name);
+	bu_vls_free(&name);
 }

@@ -23,7 +23,7 @@
  *
  *	for (p = 0.0 ; p <= 1.0 ; p += 0.0625 ) {
  *		rt_dspline(v, m, kn, 5, 3, p);
- *		rt_log("%g (%g %g %g)\n", p, V3ARGS(v));
+ *		bu_log("%g (%g %g %g)\n", p, V3ARGS(v));
  *	}
  *
  *  Author -
@@ -123,7 +123,7 @@ CONST double	bias;		/* only for B spline */
 	else if (!strncmp(type, "Catmull", 7))	GetCardinal(m, 0.5);
 	else if (!strncmp(type, "Beta", 4)) 	GetBeta(m, bias, tension);
 	else {
-		rt_log( "Error: %s:%d spline type \"%s\" Unknown\n", 
+		bu_log( "Error: %s:%d spline type \"%s\" Unknown\n", 
 			__FILE__, __LINE__, type);
 		abort();
 	}
@@ -204,8 +204,8 @@ CONST double alpha;	/* 0 <= alpha <= 1 */
  *		mat_t	m;
  *		int	knot_count, depth;
  *
- *		knots = rt_malloc(sizeof(double) * knot_length * knot_count);
- *		result = rt_malloc(sizeof(double) * knot_length);
+ *		knots = bu_malloc(sizeof(double) * knot_length * knot_count);
+ *		result = bu_malloc(sizeof(double) * knot_length);
  *
  *		rt_dspline4_matrix(m, "Catmull", (double *)NULL, 0.0);
  *
