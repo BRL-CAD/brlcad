@@ -356,7 +356,7 @@ void (*errlog)();
 		errlog = pkg_errlog;
 
 	if( (pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn)))==PKC_NULL )  {
-		errlog( "pkg_makeconn: malloc failure\n" );
+		pkg_perror(errlog, "pkg_makeconn: malloc failure\n" );
 		return(PKC_ERROR);
 	}
 	pc->pkc_magic = PKG_MAGIC;
@@ -728,7 +728,10 @@ again:
 	if( pc->pkc_hdr.pkg_type != type )  {
 		/* A message of some other type has unexpectedly arrived. */
 		if( pc->pkc_hdr.pkg_len > 0 )  {
-			pc->pkc_buf = malloc(pc->pkc_hdr.pkg_len+2);
+			if( (pc->pkc_buf = malloc(pc->pkc_hdr.pkg_len+2)) == NULL )  {
+				pkg_perror(pc->pkc_errlog, "pkg_waitfor: malloc");
+				return(-1);
+			}
 			pc->pkc_curpos = pc->pkc_buf;
 		}
 		goto again;
@@ -750,7 +753,10 @@ again:
 			return(-1);
 		}
 		excess = pc->pkc_hdr.pkg_len - len;	/* size of excess message */
-		bp = malloc(excess);
+		if( (bp = malloc(excess)) == NULL )  {
+			pkg_perror(pc->pkc_errlog, "pkg_waitfor: excess malloc");
+			return(-1);
+		}
 		if( (i = pkg_mread( pc, bp, excess )) != excess )  {
 			sprintf(errbuf,
 				"pkg_waitfor: pkg_mread of excess, %d gave %d\n",
@@ -973,7 +979,10 @@ char *buf;
 		pc->pkc_buf = buf;
 	} else {
 		/* Prepare to read message into dynamic buffer */
-		pc->pkc_buf = malloc(pc->pkc_hdr.pkg_len+2);
+		if( (pc->pkc_buf = malloc(pc->pkc_hdr.pkg_len+2)) == NULL )  {
+			pkg_perror(pc->pkc_errlog, "pkg_gethdr: malloc");
+			return(-1);
+		}
 	}
 	pc->pkc_curpos = pc->pkc_buf;
 	return(1);			/* something ready */
