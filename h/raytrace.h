@@ -678,7 +678,7 @@ union cutter  {
 		struct soltab **bn_list; /* bn_list[bn_len] */
 		int	bn_len;		/* # of solids in list */
 		int	bn_maxlen;	/* # of ptrs allocated to list */
-		struct rt_piecelist **bn_piecelist; /* [] solids with pieces */
+		struct rt_piecelist *bn_piecelist; /* [] solids with pieces */
 		int	bn_piecelen;	/* # of solids with pieces */
 	} bn;
 	struct nugridnode {
