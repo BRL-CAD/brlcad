@@ -20,6 +20,6 @@
 nirt:	NIRT_OBJ
 	sh ../newvers.sh version "Natalie's Interactive Ray Tracer"
 	CC CFLAGS -c vers.c
-	CC LDFLAGS NIRT_OBJ vers.o LIBRT LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o nirt
+	CC LDFLAGS NIRT_OBJ vers.o LIBRT LIBFB LIBFB_LIBES LIBRT_LIBES LIBES -o nirt
 
 #include "../Cakefile.rules"
