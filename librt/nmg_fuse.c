@@ -50,16 +50,63 @@ CONST struct vertex	*v;
 CONST struct face	*f;
 {
 	CONST struct vertexuse	*vu;
+	CONST struct loopuse	*lu;
 	CONST struct faceuse	*fu;
 
 	NMG_CK_VERTEX(v);
 	NMG_CK_FACE(f);
 
 	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
-		if( !(fu = nmg_find_fu_of_vu(vu)) )  continue;
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+		if( *vu->up.eu_p->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+		lu = vu->up.eu_p->up.lu_p;
+		if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  continue;
+		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
 		if( fu->f_p != f )  continue;
 		return 1;
+	}
+	return 0;
+}
+
+/*
+ *			N M G _ I S _ C O M M O N _ B I G L O O P
+ *
+ *  Do two faces share by topology at least one loop of 3 or more vertices?
+ *
+ * XXX Won't catch sharing of faces with only self-loops and no edge loops.
+ */
+int
+nmg_is_common_bigloop( f1, f2 )
+CONST struct face	*f1;
+CONST struct face	*f2;
+{
+	CONST struct faceuse	*fu1;
+	CONST struct loopuse	*lu1;
+	CONST struct edgeuse	*eu1;
+	int	nverts;
+	int	nbadv;
+
+	NMG_CK_FACE(f1);
+	NMG_CK_FACE(f2);
+
+	fu1 = f1->fu_p;
+	NMG_CK_FACEUSE(fu1);
+
+	/* For all loopuses in fu1 */
+	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+		if( RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC )
+			continue;
+		nverts = 0;
+		nbadv = 0;
+		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
+			nverts++;
+			if( nmg_is_vertex_in_face( eu1->vu_p->v_p, f2 ) )
+				continue;
+			nbadv++;
+			break;
+		}
+		if( nbadv <= 0 && nverts >= 3 )  return 1;
 	}
 	return 0;
 }
@@ -454,6 +501,9 @@ if(total>0)rt_log("nmg_model_edge_g_fuse(): %d edge_g's fused\n", total);
  *  Check that all the vertices in fu1 are within tol->dist of fu2's surface.
  *  fu1 and fu2 may be the same face, or different.
  *
+ *  This is intended to be a geometric check only, not a topology check.
+ *  Topology may have become inappropriately shared.
+ *
  *  Returns -
  *	0	All is well.
  *	count	Number of verts *not* on fu2's surface.
@@ -491,11 +541,6 @@ CONST struct rt_tol	*tol;
 		vg = v->vg_p;
 		if( !vg )  rt_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
 		NMG_CK_VERTEX_G(vg);
-
-		/* Topology check */
-		if( nmg_is_vertex_in_face( v, f2 ) )  {
-			continue;
-		}
 
 		/* Geometry check */
 		dist = DIST_PT_PLANE(vg->coord, fg2->N);
@@ -578,6 +623,21 @@ CONST struct rt_tol	*tol;
 		return 0;	/* Already shared */
 	}
 
+	/*
+	 *  First, a topology check.
+	 *  If the two faces share one entire loop (of at least 3 verts)
+	 *  according to topology, then by all rights the faces MUST be
+	 *  shared.
+	 */
+	if( nmg_is_common_bigloop( f1, f2 ) )  {
+		if( VDOT( fg1->N, fg2->N ) < 0 )  flip2 = 1;
+		if (rt_g.NMG_debug & DEBUG_MESH)  {
+			rt_log("nmg_two_face_fuse(x%x, x%x) faces have a common loop, they MUST be fused.  flip2=%d\n",
+				f1, f2, flip2);
+		}
+		goto must_fuse;
+	}
+
 	/* Compare distances from origin */
 	dist = fg1->N[3] - fg2->N[3];
 	if( !NEAR_ZERO(dist, tol->dist) )  {
@@ -657,6 +717,7 @@ CONST struct rt_tol	*tol;
 		return 0;
 	}
 
+must_fuse:
 	/* All points are on the plane, it's OK to fuse */
 	if( flip2 == 0 )  {
 		if (rt_g.NMG_debug & DEBUG_MESH)  {
