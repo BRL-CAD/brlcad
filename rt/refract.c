@@ -189,7 +189,9 @@ show_err:		;
 			if(rdebug&RDEBUG_SHOWERR) {
 				VSET( swp->sw_color, 0, 9, 0 );	/* green */
 			} else {
-				VSETALL( swp->sw_color, .18 ); /* 18% grey */
+				/* 18% grey, filtered */
+				VSETALL( work, .18*swp->sw_transmit );
+				VELMUL( swp->sw_color, filter_color, work );
 			}
 			goto finish;
 		}
