@@ -1321,7 +1321,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add l_help {
-	label $itk_interior.l_help -relief flat -textvariable [scope helpvar] -justify left
+	label $itk_interior.l_help -relief flat -textvariable [scope helpvar] -justify left -height 3 -width 99
     }
     
     itk_component add fb_progress {
