@@ -280,6 +280,8 @@ free_empty_parts()
 		free( prev->name );
 		free( prev );
 	}
+
+	empty_parts_root = NULL;
 }
 
 /* routine to check for bad triangles
@@ -564,6 +566,7 @@ output_part( ProMdl model )
 			ProMessageClear();
 			fprintf( stderr, "%s\n", astr );
 			(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+			add_to_empty_list( curr_part_name );
 			ret = 2;
 		} else {
 			int i;
