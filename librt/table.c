@@ -80,76 +80,84 @@ extern struct seg *spl_shot();
 extern struct seg *sph_shot();
 extern struct seg *ebm_shot();
 
-struct rt_functab rt_functab[] = {
+extern void	nul_vshot();
+extern void	ell_vshot();
+extern void	sph_vshot();
+extern void	hlf_vshot();
+extern void	rec_vshot();
+extern void	arb_vshot();
+extern void	rt_vstub();	/* XXX vshoot.c */
+
+struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_NULL",	0,
 		nul_prep,	nul_shot,	nul_print, 	nul_norm,
 	 	nul_uv,		nul_curve,	nul_class,	nul_free,
-		nul_plot,
+		nul_plot,	nul_vshot,
 		
 	"ID_TOR",	1,
 		tor_prep,	tor_shot,	tor_print,	tor_norm,
 		tor_uv,		tor_curve,	tor_class,	tor_free,
-		tor_plot,
+		tor_plot,	rt_vstub,
 
 	"ID_TGC",	1,
 		tgc_prep,	tgc_shot,	tgc_print,	tgc_norm,
 		tgc_uv,		tgc_curve,	tgc_class,	tgc_free,
-		tgc_plot,
+		tgc_plot,	rt_vstub,
 
 	"ID_ELL",	1,
 		ell_prep,	ell_shot,	ell_print,	ell_norm,
 		ell_uv,		ell_curve,	ell_class,	ell_free,
-		ell_plot,
+		ell_plot,	ell_vshot,
 
 	"ID_ARB8",	0,
 		arb_prep,	arb_shot,	arb_print,	arb_norm,
 		arb_uv,		arb_curve,	arb_class,	arb_free,
-		arb_plot,
+		arb_plot,	arb_vshot,
 
 	"ID_ARS",	1,
 		ars_prep,	ars_shot,	ars_print,	ars_norm,
 		ars_uv,		ars_curve,	ars_class,	ars_free,
-		ars_plot,
+		ars_plot,	rt_vstub,
 
 	"ID_HALF",	0,
 		hlf_prep,	hlf_shot,	hlf_print,	hlf_norm,
 		hlf_uv,		hlf_curve,	hlf_class,	hlf_free,
-		hlf_plot,
+		hlf_plot,	hlf_vshot,
 
 	"ID_REC",	1,
 		rec_prep,	rec_shot,	rec_print,	rec_norm,
 		rec_uv,		rec_curve,	rec_class,	rec_free,
-		rec_plot,
+		rec_plot,	rec_vshot,
 
 	"ID_POLY",	1,
 		pg_prep,	pg_shot,	pg_print,	pg_norm,
 		pg_uv,		pg_curve,	pg_class,	pg_free,
-		pg_plot,
+		pg_plot,	rt_vstub,
 
 	"ID_BSPLINE",	1,
 		spl_prep,	spl_shot,	spl_print,	spl_norm,
 		spl_uv,		spl_curve,	spl_class,	spl_free,
-		spl_plot,
+		spl_plot,	rt_vstub,
 
 	"ID_SPH",	1,
 		sph_prep,	sph_shot,	sph_print,	sph_norm,
 		sph_uv,		sph_curve,	sph_class,	sph_free,
-		sph_plot,
+		sph_plot,	sph_vshot,
 
 	"ID_STRINGSOL",	0,
 		nul_prep,	nul_shot,	nul_print,	nul_norm,
 		nul_uv,		nul_curve,	nul_class,	nul_free,
-		nul_plot,
+		nul_plot,	nul_vshot,
 
 	"ID_EBM",	1,
 		ebm_prep,	ebm_shot,	ebm_print,	ebm_norm,
 		ebm_uv,		ebm_curve,	ebm_class,	ebm_free,
-		ebm_plot,
+		ebm_plot,	rt_vstub,
 
 	">ID_NULL",	0,
 		nul_prep,	nul_shot,	nul_print,	nul_norm,
 		nul_uv,		nul_curve,	nul_class,	nul_free,
-		nul_plot
+		nul_plot,	nul_vshot
 };
 int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 
@@ -168,3 +176,4 @@ void DEF(nul_curve)
 int IDEF(nul_class)
 void DEF(nul_free)
 void DEF(nul_plot)
+void DEF(nul_vshot)
