@@ -23,3 +23,5 @@ g4-g5 chokes on the _GLOBAL object (skips it)
 ---
 avg4 doesn't complains that an image output from pix-rle is not an rle.  does output the correct rle. 
 
+---
+mged is hard-wired to the libraries.  i.e. mged knows the hard path to the libraries it needs.  question: would it be possible to make the linking reletive (e.g. ../lib/libfb.so, etc)
