@@ -144,16 +144,17 @@ get_machinetype()
 	FILE	*fp;
 	struct bu_vls	str;
 
-	if( (fp = popen( "machinetype.sh -m", "r" )) == NULL )  {
-		machinetype = "???1";
+	if( (fp = popen( "PATH=/usr/brlcad/bin:$PATH; machinetype.sh -m", "r" )) == NULL )  {
+		machinetype = "???error:popen";
 		return;
 	}
 	bu_vls_init( &str );
 	if( bu_vls_gets( &str, fp ) <= 0 )  {
-		machinetype = "???2";
+		machinetype = "???error:EOF";
 		fclose(fp);
 		return;
 	}
+	bu_vls_trimspace( &str );
 	machinetype = bu_vls_strgrab( &str );
 	bu_vls_free( &str );
 }
