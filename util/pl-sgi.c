@@ -816,6 +816,7 @@ Coord	max[3], min[3];
 			break;
 		case 'X':
 			getieee( fp, d, 3 );
+			xp = d[0]; yp = d[1]; zp = d[2];
 			pnt( d[0], d[1], d[2] );
 			break;
 		case 'v':
