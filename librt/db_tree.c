@@ -1,5 +1,3 @@
-#define USE_NEW_IMPORT	1
-
 /*
  *			D B _ T R E E . C
  *
@@ -8,7 +6,7 @@
  *	db_path_to_mat		Given a path, return a matrix.
  *	db_region_mat		Given a name, return a matrix
  *
- *  Authors -
+ *  Author -
  *	Michael John Muuss
  *  
  *  Source -
@@ -900,7 +898,6 @@ int			noisy;
 		if( db_get_external( &ext, comb_dp, tsp->ts_dbip ) < 0 )
 			goto fail;
 
-#if USE_NEW_IMPORT
 		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
 			bu_log("db_follow_path_for_state() import of %s failed\n", comb_dp->d_namep);
 			goto fail;
@@ -919,47 +916,6 @@ int			noisy;
 		/* Done */
 		rt_comb_ifree( &intern );
 
-#else
-		/* Apply state changes from new combination */
-		if( db_apply_state_from_comb( tsp, pathp, &ext ) < 0 )
-			goto fail;
-
-		for( i=1; i < comb_dp->d_len; i++ )  {
-			register union record *rp =
-				(union record *)ext.ext_buf;
-			mp = &(rp[i].M);
-
-			/* If this is not the desired element, skip it */
-			if( strncmp( mp->m_instname, cp, sizeof(mp->m_instname)) == 0 )
-				goto found_it;
-		}
-		if(noisy) bu_log("db_follow_path_for_state() ERROR: unable to find '%s/%s'\n", comb_dp->d_namep, cp );
-		goto fail;
-found_it:
-		if( db_apply_state_from_memb( tsp, pathp, mp ) < 0 )  {
-			bu_log("db_follow_path_for_state() ERROR: unable to apply member %s state\n", dp->d_namep);
-			goto fail;
-		}
-		/* directory entry was pushed */
-
-		/* If not first element of comb, take note of operation */
-		if( i > 1 )  {
-			switch( mp->m_relation )  {
-			default:
-				break;		/* handle as union */
-			case UNION:
-				break;
-			case SUBTRACT:
-				tsp->ts_sofar |= TS_SOFAR_MINUS;
-				break;
-			case INTERSECT:
-				tsp->ts_sofar |= TS_SOFAR_INTER;
-				break;
-			}
-		} else {
-			/* Handle as a union */
-		}
-#endif
 		db_free_external( &ext );
 
 		/* If member is a leaf, handle leaf processing too. */
@@ -1253,9 +1209,6 @@ struct combined_tree_state	**region_start_statepp;
 	}
 
 	if( dp->d_flags & DIR_COMB )  {
-#if !USE_NEW_IMPORT
-		register CONST union record	*rp = (union record *)ext.ext_buf;
-#endif
 		struct rt_comb_internal	*comb;
 		struct db_tree_state	nts;
 		int			is_region;
@@ -1263,7 +1216,6 @@ struct combined_tree_state	**region_start_statepp;
 		/*  Handle inheritance of material property. */
 		nts = *tsp;	/* struct copy */
 
-#if USE_NEW_IMPORT
 		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
 			bu_log("db_recurse() import of %s failed\n", dp->d_namep);
 			curtree = TREE_NULL;		/* FAIL */
@@ -1275,12 +1227,6 @@ struct combined_tree_state	**region_start_statepp;
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
-#else
-		if( (is_region = db_apply_state_from_comb( &nts, pathp, &ext )) < 0 )  {
-			curtree = TREE_NULL;		/* FAIL */
-			goto out;
-		}
-#endif
 
 		if( is_region > 0 )  {
 			struct combined_tree_state	*ctsp;
@@ -1314,64 +1260,6 @@ struct combined_tree_state	**region_start_statepp;
 			}
 		}
 
-#if !USE_NEW_IMPORT
-		tlp = trees = (struct tree_list *)rt_malloc(
-			sizeof(struct tree_list) * (dp->d_len),
-			"tree_list array" );
-
-		for( i=1; i < dp->d_len; i++ )  {
-			register CONST struct member *mp;
-			struct db_tree_state	memb_state;
-
-			memb_state = nts;	/* struct copy */
-
-			mp = &(rp[i].M);
-
-			if( db_apply_state_from_memb( &memb_state, pathp, mp ) < 0 )
-				continue;
-			/* Member was pushed on pathp stack */
-
-			/* Note & store operation on subtree */
-			if( i > 1 )  {
-				switch( mp->m_relation )  {
-				default:
-				bu_log("%s: bad m_relation '%c'\n",
-						dp->d_namep, mp->m_relation );
-					tlp->tl_op = OP_UNION;
-					break;
-				case UNION:
-					tlp->tl_op = OP_UNION;
-					break;
-				case SUBTRACT:
-					tlp->tl_op = OP_SUBTRACT;
-					memb_state.ts_sofar |= TS_SOFAR_MINUS;
-					break;
-				case INTERSECT:
-					tlp->tl_op = OP_INTERSECT;
-					memb_state.ts_sofar |= TS_SOFAR_INTER;
-					break;
-				}
-			} else {
-				/* Handle first one as union */
-				tlp->tl_op = OP_UNION;
-			}
-
-			/* Recursive call */
-			if( (tlp->tl_tree = db_recurse( &memb_state, pathp, region_start_statepp )) != TREE_NULL )  {
-				tlp++;
-			}
-
-			DB_FULL_PATH_POP(pathp);
-		}
-		if( tlp <= trees )  {
-			/* No subtrees in this region, invent a NOP */
-			BU_GETUNION( curtree, tree );
-			curtree->magic = RT_TREE_MAGIC;
-			curtree->tr_op = OP_NOP;
-		} else {
-			curtree = db_mkgift_tree( trees, tlp-trees, tsp );
-		}
-#else
 		if( comb->tree )  {
 			/* Steal tree from combination, so it won't be freed */
 			curtree = comb->tree;
@@ -1386,7 +1274,6 @@ struct combined_tree_state	**region_start_statepp;
 			curtree->tr_op = OP_NOP;
 			if(curtree) RT_CK_TREE(curtree);
 		}
-#endif
 
 region_end:
 		if( is_region > 0 )  {
@@ -2302,13 +2189,9 @@ struct db_full_path *pathp;
 mat_t mat;
 int depth;			/* number of arcs */
 {
-#if USE_NEW_IMPORT
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	union tree		*tp;
-#else
-	register union record	*rp;
-#endif
 	struct directory	*kidp;
 	struct directory	*parentp;
 	int			i,j;
@@ -2348,7 +2231,6 @@ int depth;			/* number of arcs */
 			return 0;
 		}
 
-#if USE_NEW_IMPORT
 		if( rt_get_comb( &intern, parentp, NULL, dbip ) < 0 )  return 0;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
@@ -2374,37 +2256,6 @@ int depth;			/* number of arcs */
 		}
 		pathp->fp_len = holdlength;
 		rt_comb_ifree( &intern );
-#else
-		if (!(rp= db_getmrec(dbip, parentp))) return 0;
-		for (j=1; j< parentp->d_len; j++ ) {
-			mat_t xmat;	/* temporary matrix */
-
-			/* search for the right member */
-			if (strcmp(kidp->d_namep, rp[j].M.m_instname) != 0) {
-				continue;
-			}
-			/* convert matrix to fastf_t from disk format */
-			rt_mat_dbmat( xmat, rp[j].M.m_mat);
-			/*
-			 * xmat is the matrix from the disk.
-			 * mat is the collection of all operations so far.
-			 * (Stack)
-			 */
-			holdlength = pathp->fp_len;
-			pathp->fp_len = i+2;
-			db_apply_anims(pathp, kidp, mat, xmat, 0);
-			pathp->fp_len = holdlength;
-			mat_mul(tmat, mat, xmat);
-			mat_copy(mat, tmat);
-			break;
-		}
-		if (j >= parentp->d_len) {
-			bu_log("db_path_to_mat: unable to follow %s/%s path\n",
-			    parentp->d_namep, kidp->d_namep);
-			return 0;
-		}
-		rt_free((char *) rp, "db_path_to_mat recs");
-#endif
 	}
 	return 1;
 }
