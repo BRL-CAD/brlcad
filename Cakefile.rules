@@ -85,7 +85,7 @@ do-uninstall-stub&:  [[SUB ../SRCDIR/X.stub X.uninstall-stub ../SRCDIR/''*.stub]
 
 /* XXX Something needs to be done about checking for the master machine!! */ 
 
-install&: install-prod install-man install-stub
+install&: install-prod install-man install-stub inst-dist
 
 #ifdef PRODUCTS
 install-prod&: [[SUB X X.install-prod PRODUCTS]]
@@ -116,7 +116,7 @@ do-install-man&: [[SUB ../SRCDIR/X X.install-man ../SRCDIR/''*.MANSECTION ]]
 	then	exit 0; fi; \
 	mv -f MANDIR''MANSECTION/% MANDIR''MANSECTION/%.bak 2>/dev/null; \
 	if INS ../SRCDIR/% MANDIR''MANSECTION/%; \
-	then	echo "++++++INSTALLED" MANDIR''MANSECTION/%; \
+	then	echo "++++++INSTALLED" MANDIR''MANSECTION/% 1>&2; \
 		chmod MANPERM MANDIR''MANSECTION/%; \
 	fi
 
@@ -130,7 +130,7 @@ do-install-stub&: [[SUB ../SRCDIR/X.stub X.install-stub ../SRCDIR/''*.stub]]
 	then	exit 0; fi; \
 	mv -f MANDIR''MANSECTION/% MANDIR''MANSECTION/%.bak 2>/dev/null; \
 	if INS ../SRCDIR/%.stub MANDIR''MANSECTION/%; \
-	then	echo "++++++INSTALLED" MANDIR''MANSECTION/%; \
+	then	echo "++++++INSTALLED" MANDIR''MANSECTION/% 1>&2; \
 		chmod MANPERM MANDIR''MANSECTION/%; \
 	fi
 
@@ -148,8 +148,8 @@ do-install-stub&: [[SUB ../SRCDIR/X.stub X.install-stub ../SRCDIR/''*.stub]]
 
 inst-dist&:	inst-dist-main	if IS_MASTER
 
+/* inst-dist is also called from "install", so say nothing if not master */
 inst-dist&:			if not IS_MASTER
-	@echo This is not the master CAD source machine, MASTERHOST is.
 
 inst-dist-main&: dist-clobber [[SUB X X.do-inst-dist INSTALL_PATTERNS]]
 
