@@ -861,6 +861,11 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
+#	define  XMGED_OBJS      dm-X
+#	define  XMGED_CONFIG    -DDM_X
+#	define  XMGED_LIBES     -L/usr/lpp/X11/Motif1.2/lib -L''XLIBDIR \
+				-L../lib -lXm -lXt -lX11 -lm -lXext -ll -lXi
+#	define  XMGED_ALLOCA alloca
 #endif
 
 #if defined(__CAKE__at)
