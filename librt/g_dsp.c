@@ -219,7 +219,7 @@ struct bu_structparse rt_dsp_ptab[] = {
 };
 
 static int plot_file_num=0;
-static int plot_em=0;
+static int plot_em=1;
 static int debug_pprint=0;
 static void
 dsp_print(vls, dsp_ip)
@@ -734,6 +734,7 @@ char *ts;
 int cell[3];
 int line;
 {
+	/* XXX what if we're inside, leave tri2 before we enter tri1 ? */
 	if (NdotD < 0.0) {
 		/* Entering Solid */
 		if (*inside) {
@@ -883,6 +884,8 @@ int *inside;
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("hit tri1 dist %g (inv:%g)\n", dist, VDOT( N, PA));
 
+
+	/* XXX what if we're inside, leave tri2 and enter tri1 ? */
 
 	do_hit(dist, inside, NdotD, isect, TRI1, "tri1", cell, __LINE__);
 
