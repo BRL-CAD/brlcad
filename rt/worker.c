@@ -211,9 +211,8 @@ int cpu;
 	com = nworkers++;
 	RES_RELEASE( &rt_g.res_worker );
 
-	a.a_resource = &resource[cpu];
 	resource[cpu].re_cpu = cpu;
-	a.a_onehit = 1;
+	ap.a_onehit = 1;
 
 	while(1)  {
 		RES_ACQUIRE( &rt_g.res_worker );
@@ -224,6 +223,7 @@ int cpu;
 			break;
 		/* Note: ap.... may not be valid until first time here */
 		a = ap;				/* struct copy */
+		a.a_resource = &resource[cpu];
 		a.a_x = com%width;
 		a.a_y = com/width;
 		VSETALL( colorsum, 0 );
