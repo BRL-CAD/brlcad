@@ -185,8 +185,13 @@ char	*fmt;
  */
 static int
 sortFunc( a, b )
+#if __STDC__
+CONST void	*a;		/* The exact template expected by qsort */
+CONST void	*b;
+#else
 CONST genptr_t	a;
 CONST genptr_t	b;
+#endif
 {
 	CONST char **lhs = (CONST char **)a;
 	CONST char **rhs = (CONST char **)b;
