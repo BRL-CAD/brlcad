@@ -25,6 +25,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <sys/resource.h>
 #endif
 
+#if BSD == 43
+# include <sys/types.h>
+# include <sys/socket.h>
+#endif
+
 #undef	VMIN
 #include "machine.h"
 #include "vmath.h"
@@ -204,6 +209,15 @@ char **argv;
 		(void)pkg_send( MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv );
 		exit(0);
 	}
+
+#if BSD == 43
+	{
+		int	val = 32767;
+		n = setsockopt( pcsrv->pkc_fd, SOL_SOCKET,
+			SO_SNDBUF, (char *)&val, sizeof(val) );
+		if( n < 0 )  perror("setsockopt: SO_SNDBUF");
+	}
+#endif
 
 	if( !debug )  {
 		/* A fresh process */
