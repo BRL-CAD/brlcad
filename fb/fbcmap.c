@@ -35,7 +35,6 @@ extern char	*optarg;
 extern int	optind;
 
 void		usage();
-typedef unsigned char	u_char;
 
 static char	*framebuffer = NULL;
 static int	scr_width = 0;
@@ -44,8 +43,8 @@ static int	scr_height = 0;
 
 static ColorMap cmap;
 static int	flavor = 0;
-extern u_char	utah8[], utah9[];	/* defined at end of file */
-static u_char	utah_cmap[256] = {
+extern unsigned char	utah8[], utah9[];	/* defined at end of file */
+static unsigned char	utah_cmap[256] = {
 	  0,  4,  9, 13, 17, 21, 25, 29, 32, 36, 39, 42, 45, 48, 51, 54,
 	 57, 59, 62, 64, 67, 69, 72, 74, 76, 78, 81, 83, 85, 87, 89, 91,
 	 92, 94, 96, 98,100,101,103,105,106,108,110,111,113,114,116,117,
@@ -294,7 +293,7 @@ usage()
 }
 
 /* Ikcmap 8 & 9 colormaps */
-u_char utah8[256*3] = {
+unsigned char utah8[256*3] = {
 	/* from 27.rle */
 	249, 58, 8,
 	250, 50, 7,
@@ -553,7 +552,7 @@ u_char utah8[256*3] = {
 	0, 0, 0,
 	255, 255, 255,
 };
-u_char utah9[256*3] = {
+unsigned char utah9[256*3] = {
 	/* from 31.rle */
 	42, 89, 105,
 	37, 85, 101,
