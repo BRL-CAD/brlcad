@@ -1189,7 +1189,7 @@ struct vert_root {
 
 extern struct vert_root *create_vert_tree();
 extern void free_vert_tree( struct vert_root *tree_root );
-extern int Add_vert( float x, float y, float z, struct vert_root *tree_root, fastf_t local_tol_sq );
+extern int Add_vert( double x, double y, double z, struct vert_root *tree_root, fastf_t local_tol_sq );
 extern void clean_vert_tree( struct vert_root *tree_root );
 
 /*----------------------------------------------------------------------*/

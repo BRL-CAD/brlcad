@@ -174,7 +174,7 @@ free_vert_tree( struct vert_root *vert_root )
  *	Returns index into the array of vertices where this vertex is stored
  */
 int
-Add_vert( float x, float y, float z, struct vert_root *vert_root, fastf_t local_tol_sq )
+Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t local_tol_sq )
 {
 	union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
 	vect_t diff;
