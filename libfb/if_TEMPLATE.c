@@ -28,7 +28,7 @@ _LOCAL_ int	DEVNAME_dopen(),
 		DEVNAME_viewport_set(),
 		DEVNAME_window_set(),
 		DEVNAME_zoom_set(),
-		DEVNAME_cinit_bitmap(),
+		DEVNAME_curs_set(),
 		DEVNAME_cmemory_addr(),
 		DEVNAME_cscreen_addr();
 
@@ -45,7 +45,7 @@ FBIO DEVNAME_interface =  {
 	DEVNAME_viewport_set,		/* viewport_set		*/
 	DEVNAME_window_set,		/* window_set		*/
 	DEVNAME_zoom_set,		/* zoom_set		*/
-	DEVNAME_cinit_bitmap,		/* cursor_init_bitmap	*/
+	DEVNAME_curs_set,		/* curs_set		*/
 	DEVNAME_cmemory_addr,		/* cursor_move_memory_addr */
 	DEVNAME_cscreen_addr,		/* cursor_move_screen_addr */
 	"Device description",		/* device description	*/
@@ -146,9 +146,11 @@ int	x, y;
 }
 
 _LOCAL_ int
-DEVNAME_cinit_bitmap( ifp, bitmap )
+DEVNAME_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-long	*bitmap;
+unsigned char *bits;
+int	xbits, ybits;
+int	xorig, yorig;
 {
 }
 

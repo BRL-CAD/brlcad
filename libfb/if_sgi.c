@@ -56,7 +56,7 @@ _LOCAL_ int	sgi_dopen(),
 		sgi_viewport_set(),
 		sgi_window_set(),
 		sgi_zoom_set(),
-		sgi_cinit_bitmap(),
+		sgi_curs_set(),
 		sgi_cmemory_addr(),
 		sgi_cscreen_addr();
 

@@ -23,7 +23,7 @@ _LOCAL_ int	deb_dopen(),
 		deb_viewport_set(),
 		deb_window_set(),
 		deb_zoom_set(),
-		deb_cinit_bitmap(),
+		deb_curs_set(),
 		deb_cmemory_addr(),
 		deb_cscreen_addr();
 
@@ -41,7 +41,7 @@ FBIO debug_interface =
 		deb_viewport_set,
 		deb_window_set,
 		deb_zoom_set,
-		deb_cinit_bitmap,
+		deb_curs_set,
 		deb_cmemory_addr,
 		deb_cscreen_addr,
 		"Debugging Interface",
@@ -232,12 +232,14 @@ int	x, y;
 }
 
 _LOCAL_ int
-deb_cinit_bitmap( ifp, bitmap )
+deb_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-long	*bitmap;
+unsigned char *bits;
+int	xbits, ybits;
+int	xorig, yorig;
 {
-	fb_log( "fb_setcursor( 0x%lx, 0x%lx )\n",
-		(unsigned long)ifp, bitmap );
+	fb_log( "fb_setcursor( 0x%lx, 0x%lx, %d, %d, %d, %d )\n",
+		(unsigned long)ifp, bits, xbits, ybits, xorig, yorig );
 	return	1;
 }
 
