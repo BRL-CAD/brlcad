@@ -31,6 +31,7 @@ static char RCSid[] = "$Header$";
 #include "../librt/debug.h"
 
 extern int errno;
+static int keep_1001=0;
 
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64
@@ -102,8 +103,10 @@ Add_solid( int comp_code_num )
  *	Converts "tankill" format geometry to BRLCAD model
  */
 
-static char *usage="Usage: tankill-g [-p] [-t tolerance] [-i input_tankill_file] [-o output_brlcad_model]\n\
-	where tolerance is the minimum distance (mm) between distinct vertices\n";
+static char *usage="Usage: tankill-g [-p] [-k] [-t tolerance] [-i input_tankill_file] [-o output_brlcad_model]\n\
+	where tolerance is the minimum distance (mm) between distinct vertices\n\
+	-p -> write output as polysolids rather than NMG's\n\
+	-k -> keep components with id = 1001 (normally skipped)\n";
 
 main( int argc , char *argv[] )
 {
@@ -154,6 +157,9 @@ main( int argc , char *argv[] )
 	{
 		switch( c )
 		{
+			case 'k': /* keep component codes of 1001 */
+				keep_1001 = 1;
+				break;
 			case 'p': /* choose polysolid output */
 				polysolids = 1;
 				break;
@@ -241,7 +247,7 @@ main( int argc , char *argv[] )
 		}
 
 		/* skip component codes of 1001 (these are not real components) */
-		if( comp_code == 1001 )
+		if( comp_code == 1001 && !keep_1001 )
 			continue;
 
 		/* now start making faces */
