@@ -87,7 +87,7 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 	char *timep;
-	long now;
+	time_t now;
 	static CONST char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
 	static CONST char catcmd[] = "cat /tmp/ord_id >> ";
 
@@ -276,13 +276,9 @@ int flag;
 
 	struct directory *nextdp;
 	mat_t new_xlate;
-	int nparts, i, k, j;
-	int	arslen;
-	int	kk = 1;
-	int	npt, n, nsoltemp;
+	int nparts, i, k;
+	int	nsoltemp;
 	int dchar = 0;
-	vect_t	vertex;
-	vect_t	vec;
 
 	if( pathpos >= MAX_LEVELS ) {
 		(void)printf("nesting exceeds %d levels\n",MAX_LEVELS);
