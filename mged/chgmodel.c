@@ -2291,6 +2291,18 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  if (argc == 1) {
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "ident %d air %d los %d material %d",
+		  item_default, air_default, los_default, mat_default);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+  }
+
   if(argc < 2 || 5 < argc){
     struct bu_vls vls;
 
@@ -2298,6 +2310,7 @@ char	**argv;
     bu_vls_printf(&vls, "help regdef");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
+
     return TCL_ERROR;
   }
 
