@@ -175,13 +175,13 @@ struct rtnode {
 	int		busy;		/* !0 -> still working */
 	int		lump;		/* # of lines in last assignment */
 	int		finish_order;	/* 1st in the race? */
-	struct timeval	time_start;
+	struct timeval	time_start;	/* elapsed time of last assignment (sec) */
 	fastf_t		time_delta;
 	fastf_t		i_lps;		/* instantaneous # lines per sec */
 	fastf_t		w_lps;		/* weighted # lines per sec */
-	fastf_t		rt_time;	/* elapsed time for ray-tracing */
-	fastf_t		fb_time;	/* elapsed time for fb_write() */
-	fastf_t		ck_time;	/* elapsed time for fb sync check */
+	fastf_t		rt_time;	/* elapsed time for ray-tracing (ms) */
+	fastf_t		fb_time;	/* elapsed time for fb_write() (ms) */
+	fastf_t		ck_time;	/* elapsed time for fb sync check (ms) */
 };
 #define MAX_NODES	32
 struct rtnode	rtnodes[MAX_NODES];
@@ -323,7 +323,7 @@ char **argv;
 	if( i < 0 || i >= MAX_NODES )  {
 		/* Use this as a signal to generate a title. */
 		Tcl_AppendResult(interp,
-			"##: CP ord i_lps w_lps lump rt/fb/ck state", NULL);
+			"##: CP ord i_lps w_lps lump tot/rt/fb/ck state", NULL);
 		return TCL_OK;
 	}
 	if( rtnodes[i].fd <= 0 )  {
@@ -338,13 +338,15 @@ char **argv;
 		message = states[rtnodes[i].state];
 
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "%2.2d: %2.2d %2.2d %5.5d %5.5d %4.4d %d/%d/%d %s %s",
+	bu_vls_printf(&str,
+		"%2.2d: %2.2d %2.2d %5.5d %5.5d %4.4d %d=%d/%d/%d %s %s",
 		i,
 		rtnodes[i].ncpus,
 		rtnodes[i].finish_order,
 		(int)rtnodes[i].i_lps,
 		(int)rtnodes[i].w_lps,
 		rtnodes[i].lump,
+		(int)(rtnodes[i].time_delta * 1000),
 		(int)rtnodes[i].rt_time,
 		(int)rtnodes[i].fb_time,
 		(int)rtnodes[i].ck_time,
@@ -1649,17 +1651,16 @@ check_others:
 	interval = tvdiff( &time_end, &frame_start );
 	if( interval <= 0 )  interval = 999;
 	ms_total = interval * 1000;
-	bu_log("%s Complete in %6d ms, %6.2g Mbps (%6.2g fps)\n",
-		stamp(),
-		ms_total,
-		width * height * 3 * 8 / interval / 1000000.0,
-		1.0/interval );
-
 	ms_assigned = tvdiff( &t_assigned, &frame_start ) * 1000;
 	ms_1st_done = tvdiff( &t_1st_done, &frame_start ) * 1000;
 	ms_all_done = tvdiff( &t_all_done, &frame_start ) * 1000;
 	ms_flush = tvdiff( &time_end, &t_all_done ) * 1000;
-	bu_log("\tassignment=%d 1st_done=%d, all_done=%d, flush=%d ms\n",
+
+	bu_log("%s %6d ms, %6.1f Mbps, %6.1f fps, %d/%d/%d/%d\n",
+		stamp(),
+		ms_total,
+		width * height * 3 * 8 / interval / 1000000.0,
+		1.0/interval,
 		ms_assigned, ms_1st_done, ms_all_done, ms_flush );
 
 	/* Trigger TCL code to auto-update cpu status window on major changes */
