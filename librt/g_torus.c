@@ -943,7 +943,7 @@ rt_tor_plot( vhead, ip, ttol, tol )
 struct rt_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+CONST struct rt_tol	*tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
