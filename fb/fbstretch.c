@@ -55,6 +55,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	NO_STRRCHR	1
 #endif
 
+#if defined(sgi) && !defined(mips)	/* Not all SYSVs are perfect */
+#define	NO_VFPRINTF	1
+#endif
+
 #ifndef DEBUG
 #define	NDEBUG
 #endif
