@@ -902,6 +902,120 @@ CONST struct db_i		*dbip;
 
 
 /*
+ *			R T _ A R B N _ I M P O R T 5
+ *
+ *  Convert from "network" doubles to machine specific.
+ *  Transform
+ */
+int
+rt_arbn_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	struct rt_arbn_internal	*aip;
+	register int		i;
+	unsigned long		neqn;
+	int			double_count;
+	int			byte_count;
+
+	BU_CK_EXTERNAL( ep );
+
+	neqn = bu_glong((unsigned char *)ep->ext_buf);
+	double_count = neqn * ELEMENTS_PER_PLANE;
+	byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
+
+	BU_ASSERT_LONG(ep->ext_nbytes, ==, 4+ byte_count);
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_ARBN;
+	ip->idb_meth = &rt_functab[ID_ARBN];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_arbn_internal), "rt_arbn_internal");
+
+	aip = (struct rt_arbn_internal *)ip->idb_ptr;
+	aip->magic = RT_ARBN_INTERNAL_MAGIC;
+	aip->neqn = neqn;
+	if (aip->neqn <= 0)  return(-1);
+	aip->eqn = (plane_t *)bu_malloc(byte_count, "arbn plane eqn[]");
+
+	ntohd((unsigned char *)aip->eqn, (unsigned char *)ep->ext_buf + 4, double_count);
+
+	/* Transform by the matrix */
+#	include "noalias.h"
+	for (i=0; i < aip->neqn; i++) {
+		point_t	orig_pt;
+		point_t	pt;
+		vect_t	norm;
+
+		/* Pick a point on the original halfspace */
+		VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][3] );
+
+		/* Transform the point, and the normal */
+		MAT4X3VEC( norm, mat, aip->eqn[i] );
+		MAT4X3PNT( pt, mat, orig_pt );
+
+		/* Measure new distance from origin to new point */
+		VMOVE( aip->eqn[i], norm );
+		aip->eqn[i][3] = VDOT( pt, norm );
+	}
+
+	return(0);
+}
+
+/*
+ *			R T _ A R B N _ E X P O R T 5
+ */
+int
+rt_arbn_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_arbn_internal	*aip;
+	int			ngrans;
+	register int		i;
+	fastf_t			*vec;
+	register fastf_t	*sp;
+	int			double_count;
+	int			byte_count;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_ARBN )  return(-1);
+	aip = (struct rt_arbn_internal *)ip->idb_ptr;
+	RT_ARBN_CK_MAGIC(aip);
+
+	if( aip->neqn <= 0 )  return(-1);
+
+	double_count = aip->neqn * ELEMENTS_PER_PLANE;
+	byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = 4 + byte_count;
+	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arbn external");
+
+	(void)bu_plong((unsigned char *)ep->ext_buf, aip->neqn);
+
+	/* Take the data from the caller, and scale it, into vec */
+	sp = vec = (double *)bu_malloc(byte_count, "arbn temp");
+	for (i=0; i<aip->neqn; i++) {
+		/* Normal is unscaled, should have unit length; d is scaled */
+		*sp++ = aip->eqn[i][X];
+		*sp++ = aip->eqn[i][Y];
+		*sp++ = aip->eqn[i][Z];
+		*sp++ = aip->eqn[i][3] * local2mm;
+	}
+
+	/* Convert from internal (host) to database (network) format */
+	htond((unsigned char *)ep->ext_buf + 4, (unsigned char *)vec, double_count);
+
+	bu_free((char *)vec, "arbn temp");
+	return(0);			/* OK */
+}
+
+
+/*
  *			R T _ A R B N _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.

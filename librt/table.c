@@ -565,7 +565,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_arbn_uv,	rt_arbn_curve,	rt_arbn_class,	rt_arbn_free,
 		rt_arbn_plot,	rt_arbn_vshot,	rt_arbn_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_arbn_import5, rt_arbn_export5,
 		rt_arbn_import,	rt_arbn_export,	rt_arbn_ifree,
 		rt_arbn_describe,rt_arbn_xform,	NULL,
 		sizeof(struct rt_arbn_internal), RT_ARBN_INTERNAL_MAGIC,
