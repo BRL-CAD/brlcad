@@ -3159,7 +3159,11 @@ rt_log("nmg_lu_reorient() eu midpoint=(%g, %g, %g), class=%s\n", V3ARGS(mid), nm
 		default:
 			rt_bomb("nmg_lu_reorient() bad class from nmg_class_lu_fu()\n");
 		}
-rt_log("nmg_lu_reorient() class=%s, orient=%s\n", nmg_class_name(class), nmg_orientation(geom_orient) );
+		if( rt_g.NMG_debug & DEBUG_BASIC )  {
+			rt_log("nmg_lu_reorient() class=%s, orient=%s\n",
+				nmg_class_name(class),
+				nmg_orientation(geom_orient) );
+		}
 	} else {
 		if( ccw > 0 )  {
 			geom_orient = OT_SAME;	/* same as face (OT_SAME faceuse) */
