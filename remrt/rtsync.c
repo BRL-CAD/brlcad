@@ -808,7 +808,8 @@ ClientData clientData;
 			bu_vls_free(&msg);
 			continue;	/* Don't update start_line */
 		}
-		bu_log("%s sending %d..%d to %s\n", stamp(), start_line, end_line, rtnodes[i].host->ht_name);
+		if( debug )
+			bu_log("%s sending %d..%d to %s\n", stamp(), start_line, end_line, rtnodes[i].host->ht_name);
 
 		bu_vls_free(&msg);
 		start_line = end_line + 1;
@@ -1199,7 +1200,14 @@ char			*buf;
 		if( rtnodes[i].pkg != pc )  continue;
 
 		/* Found it */
-		bu_log("%s DONE %s\n", stamp(), rtnodes[i].host->ht_name );
+		(void)gettimeofday( &time_end, (struct timezone *)NULL );
+		interval = tvdiff( &time_end, &time_start );
+		if( interval <= 0 )  interval = 999;
+
+		bu_log("%s DONE %s (%g ms)\n", stamp(),
+			rtnodes[i].host->ht_name,
+			interval * 1000.0
+			);
 		rtnodes[i].busy = 0;
 		if( buf )  free(buf);
 		goto check_others;
@@ -1220,9 +1228,11 @@ check_others:
 	(void)gettimeofday( &time_end, (struct timezone *)NULL );
 	interval = tvdiff( &time_end, &time_start );
 	if( interval <= 0 )  interval = 999;
-	bu_log("%s Frame complete in %g seconds (%g fps)\n",
+	bu_log("%s Complete in %g sec, %g Kbps (%g fps)\n",
 		stamp(),
-		interval, 1.0/interval );
+		interval,
+		width * height * 3 * 8 / interval / 1000.0,
+		1.0/interval );
 }
 
 /*
