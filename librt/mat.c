@@ -48,9 +48,9 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"
 
 double mat_degtorad = 0.0174532925199433;
 
@@ -319,7 +319,7 @@ register vectp_t v, h;
 		*v   = *h;
 	}  else  {
 		if( h[3] == 0.0 )  {
-			(void)fprintf(stderr, "htov_move: divide by %f!\n", h[3]);
+			rt_log("htov_move: divide by %f!\n", h[3]);
 			return;
 		}
 		inv = 1.0 / h[3];
