@@ -59,6 +59,8 @@
  *	HAVE_SBRK		Set if unistd.h declares sbrk().
  *	HAVE_UNIX_DOMAIN_SOCKETS
  *
+ *	HAVE_UNISTD_H		Set if unistd.h exists
+ *
  *	HAVE_DLOPEN		Dynamic library loading support.
  *
  *  $Header$
@@ -234,13 +236,33 @@
 #if defined(linux)
 #	define _BSD_SOURCE	1	/* for sys/types.h to define caddr_t */
 #       define STDIN_FILENO    0
+#	define HAVE_GETOPT	1
 #	define HAVE_GETOPT_H	1
+#	define HAVE_GETOPT_DECL 1
 #	define HAVE_STRDUP_DECL	1
 #	define HAVE_XOSDEFS_H	1
 #	define HAVE_SYS_ERRLIST_DECL	1
 #	define HAVE_POSIX_REGEXEC	1
 #	define HAVE_UNISTD_H	1
-#	define HAVE_DLOPEN 1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_GETOPT_H	1
+#	define HAVE_XOSDEFS_H	1
+#	define HAVE_STRING_H	1
+#	define HAVE_POSIX_REGEXEC	1
+#	define HAVE_STRCHR	1
+#	define HAVE_VFORK	1
+#	define HAVE_VPRINTF	1
+#	define HAVE_WRITEV	1
+#	define HAVE_SBRK	1
+#	define HAVE_DLOPEN	1
+#	define HAVE_UNIX_DOMAIN_SOCKETS 1
+#	define HAVE_SHELL_ESCAPE	1
+#	define HAVE_UNIX_IO	1
+#	define HAVE_DRAND48	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_LIMITS_H	1
+#	define HAVE_BZERO	1
 #	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
 #endif
 
