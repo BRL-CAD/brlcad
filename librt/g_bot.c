@@ -39,9 +39,9 @@ static const char RCSbot[] = "@(#)$Header$ (BRL)";
 #include "./plane.h"
 #include "./bot.h"
 
-/* XXX Set this to 32 to enable pieces by default */
-int rt_bot_minpieces = 32;
-int rt_bot_tri_per_piece = 4;
+/* Set to 32 to enable pieces by default */
+int rt_bot_minpieces = RT_DEFAULT_MINPIECES;
+int rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
 
 /*
  *			R T _ B O T F A C E
