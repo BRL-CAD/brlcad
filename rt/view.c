@@ -1142,7 +1142,7 @@ char	*framename;
 	} else if( incr_mode )  {
 		buf_mode = BUFMODE_INCR;
 	} else if( rt_g.rtg_parallel )  {
-		if( npsw >= 4 && npsw <= height )  {
+		if( npsw > 1 && npsw <= height )  {
 		    	/* Have each CPU do a whole scanline.
 		    	 * Saves lots of semaphore overhead.
 		    	 */
