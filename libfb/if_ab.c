@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <errno.h>
+#include <math.h>
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -98,8 +99,8 @@ FBIO abekas_interface = {
 
 #define if_frame	u1.l		/* frame number on A60 disk */
 #define if_mode		u2.l		/* see MODE_ defines */
-#define if_yuv		u3.p		/* buffer for YUV format image */
-#define if_rgb		u4.p		/* buffer for RGB format image */
+#define if_yuv		u3.p		/* YUV image, 4th quadrant */
+#define if_rgb		u4.p		/* RGB image, 1st quadrant */
 #define if_state	u5.l		/* see STATE_ defines */
 #define if_host		u6.p		/* Hostname */
 
@@ -261,6 +262,7 @@ FBIO	*ifp;
 	}
 
 	/* convert YUV to RGB */
+fb_log("Unable to convert YUV to RGB, gak\n");
 
 	ifp->if_state |= STATE_FRAME_WAS_READ;
 	return(0);			/* OK */
@@ -275,9 +277,18 @@ FBIO	*ifp;
 {
 	int	ret = 0;
 
+fb_log("ab_dclose, state=x%x\n", ifp->if_state);
 	if( ifp->if_state & STATE_USER_HAS_WRITTEN )  {
+		register int y;		/* in Abekas coordinates */
 
 		/* Convert RGB to YUV */
+fb_log("Starting conversion\n");
+		for( y=0; y < 486; y++ )  {
+			ab_rgb_to_yuv(
+			    &ifp->if_yuv[y*720*2],
+			    &ifp->if_rgb[(486-1-y)*720*3],
+			    720 );
+		}
 
 		if( ab_yuvio( 1, ifp->if_host, ifp->if_yuv,
 		    720*486*2, ifp->if_frame ) != 720*486*2 )  {
@@ -307,17 +318,18 @@ RGBpixel	*bgpp;
 	register int	count;
 	register char	*cp;
 
+fb_log("ab_dclear\n");
 	/* send a clear package to remote */
 	if( bgpp == PIXEL_NULL )  {
 		/* Clear to black */
-		bzero( ifp->if_rgb, 720*484*3 );
+		bzero( ifp->if_rgb, 720*486*3 );
 	} else {
 		r = (*bgpp)[RED];
 		g = (*bgpp)[GRN];
 		b = (*bgpp)[BLU];
 
 		cp = ifp->if_rgb;
-		for( count = 720*484-1; count >= 0; count-- )  {
+		for( count = 720*486-1; count >= 0; count-- )  {
 			*cp++ = r;
 			*cp++ = g;
 			*cp++ = b;
@@ -332,20 +344,19 @@ RGBpixel	*bgpp;
  *			A B _ B R E A D
  */
 _LOCAL_ int
-ab_bread( ifp, x, y, pixelp, num )
+ab_bread( ifp, x, y, pixelp, count )
 register FBIO	*ifp;
 int		x;
 register int	y;
 RGBpixel	*pixelp;
-int		num;
+int		count;
 {
 	register short		scan_count;	/* # pix on this scanline */
 	register char		*cp;
-	int			count;
 	int			ret;
 	int			ybase;
 
-	if( num <= 0 )
+	if( count <= 0 )
 		return(0);
 
 	if( x < 0 || x > ifp->if_width ||
@@ -393,19 +404,18 @@ int		num;
  *			A B _ B W R I T E
  */
 _LOCAL_ int
-ab_bwrite( ifp, x, y, pixelp, num )
+ab_bwrite( ifp, x, y, pixelp, count )
 register FBIO	*ifp;
 int		x, y;
 RGBpixel	*pixelp;
-int		num;
+int		count;
 {
 	register short		scan_count;	/* # pix on this scanline */
 	register char		*cp;
-	int			count;
 	int			ret;
 	int			ybase;
 
-	if( num <= 0 )
+	if( count <= 0 )
 		return(0);
 
 	if( x < 0 || x > ifp->if_width ||
@@ -419,10 +429,12 @@ int		num;
 	 */
 	if( (ifp->if_state & STATE_FRAME_WAS_READ) == 0 &&
 	    (ifp->if_state & STATE_USER_HAS_WRITTEN) == 0 )  {
+fb_log("Initial check, x=%d, y=%d\n", x, y );
 		if( x != 0 || y != 0 )  {
 	    		/* Try to read in the frame */
 			(void)ab_readframe(ifp);
 		} else {
+fb_log("clear to black\n");
 			/* Just clear to black and proceed */
 			(void)ab_dclear( ifp, PIXEL_NULL );
 		}
@@ -506,7 +518,8 @@ ab_cmwrite( ifp, cmap )
 register FBIO		*ifp;
 register ColorMap	*cmap;
 {
-	return(-1);
+	/* Just pretend it worked OK */
+	return(0);
 }
 
 /*
@@ -652,22 +665,26 @@ int	frame;		/* frame number */
 		}
 		if( ab_get_reply(netfd) < 0 )  goto err;
 
-		if( write( netfd, buf, len ) != len )  {
+fprintf(stderr,"before write\n");
+		if( (got = write( netfd, buf, len )) != len )  {
 			perror("write()");
 			goto err;
 		}
+fprintf(stderr,"after write, did %d\n", got);
 
 		/* Send final go-ahead */
-fprintf(stderr,"before write\n");
-		if( write( netfd, "\0", 1 ) != 1 )  {
+		if( (got = write( netfd, "\0", 1 )) != 1 )  {
+			fprintf(stderr,"go-ahead write got %d\n", got);
 			perror("write()");
 			goto err;
 		}
-fprintf(stderr,"after write\n");
-		if( ab_get_reply(netfd) < 0 )  goto err;
+		if( (got = ab_get_reply(netfd)) < 0 )  {
+			fprintf(stderr,"get_reply got %d\n", got);
+			goto err;
+		}
 
 		(void)close(netfd);
-		return(0);		/* OK */
+		return(len);		/* OK */
 	} else {
 		register char	*cp;
 		int		perm;
@@ -722,7 +739,7 @@ fprintf(stderr,"before ab_mread\n");
 			fprintf(stderr,"ab_mread len=%d, got %d\n", len, got );
 			goto err;
 		}
-fprintf(stderr,"after ab_mread\n");
+fprintf(stderr,"after ab_mread, got %d\n", got);
 
 		/* Send go-ahead */
 		if( write( netfd, "\0", 1 ) != 1 )  {
@@ -730,7 +747,7 @@ fprintf(stderr,"after ab_mread\n");
 			goto err;
 		}
 		(void)close(netfd);
-		return(0);		/* OK */
+		return(len);		/* OK */
 	}
 
 err:
@@ -747,6 +764,7 @@ int	fd;
 
 	if( (got = read( fd, rep_buf, sizeof(rep_buf) )) < 0 )  {
 		perror("ab_get_reply()/read()");
+		fprintf(stderr,"ab_get_reply() read error\n");
 		return(-1);
 	}
 
@@ -801,4 +819,98 @@ int	n;
 	 } while(count < n);
 
 	return((int)count);
+}
+
+/*************************************************************************
+ *************************************************************************
+ *  Herein lies the conversion between YUV and RGB
+ *************************************************************************
+ *************************************************************************
+ */
+/*  A 4:2:2 framestore uses 2 bytes per pixel.  The even bytes (from 0)
+ *  hold Cb and Y, the odd bytes Cr and Y.  Thus a scan line has:
+ *      Cb Y Cr Y Cb Y Cr Y ...
+ *  If we are at an even pixel, we use the Cr value following it.  If
+ *  we are at an odd pixel, we use the Cb value following it.
+ */
+
+#define	VSET(v,a,b,c)	{v[0] = a; v[1] = b; v[2] = c;}
+#define	VDOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
+#define	V5DOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
+#define	SHIFTUP(v,n)	{v[4]=v[3]; v[3]=v[2]; v[2]=v[1]; v[1]=v[0]; v[0]=n;}
+#define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
+
+#define	LINE_LENGTH	720
+#define	FRAME_LENGTH	486
+
+static double	y_weights[] = {  0.299,   0.587,   0.114 };
+static double	u_weights[] = { -0.1686, -0.3311,  0.4997 };
+static double	v_weights[] = {  0.4998, -0.4185, -0.0813 };
+
+static double	y_filter[] = { -0.05674, 0.01883, 1.07582, 0.01883, -0.05674 };
+static double	u_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
+static double	v_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
+
+static double	y_buf[5], u_buf[5], v_buf[5];
+
+/*
+ */
+ab_rgb_to_yuv( yuv_buf, rgb_buf, len )
+unsigned char *yuv_buf;
+unsigned char *rgb_buf;
+int	len;
+{
+	int	pixel;
+	double	rgb[3];
+	double	y, u, v;
+	unsigned char tmp;
+
+	unsigned char *rgbp;
+	unsigned char *yuvp;
+
+	rgbp = rgb_buf;
+	yuvp = yuv_buf;
+	for( pixel = len/2; pixel; pixel-- ) {
+		/*
+		 * first pixel gives Y and both chroma
+		 */
+		VSET( rgb, *rgbp++/255.0, *rgbp++/255.0, *rgbp++/255.0 );
+
+		y = VDOT( y_weights, rgb );
+		SHIFTUP( y_buf, y );
+		u = VDOT( u_weights, rgb );
+		SHIFTUP( u_buf, u );
+		v = VDOT( v_weights, rgb );
+		SHIFTUP( v_buf, v );
+
+		u = V5DOT(u_filter,u_buf);
+		y = V5DOT(y_filter,y_buf);
+		v = V5DOT(v_filter,v_buf);
+
+		u *= 224.0;			/* -112 .. +112 range */
+		*yuvp++ = floor(u) + 128;	/* centered on 128 */
+
+		y *= 219.0;			/* 16 .. 235 range */
+		*yuvp++ = floor(y) + 16;	/* offset by 16 */
+
+		v *= 224.0;			/* -112 .. +112 range */
+		*yuvp++ = floor(v) + 128;	/* centered on 128 */
+
+		/*
+		 * second pixel just yields a Y
+		 */
+		VSET( rgb, *rgbp++/255.0, *rgbp++/255.0, *rgbp++/255.0 );
+
+		y = VDOT( y_weights, rgb );
+		SHIFTUP( y_buf, y );
+		u = VDOT( u_weights, rgb );
+		SHIFTUP( u_buf, u );
+		v = VDOT( v_weights, rgb );
+		SHIFTUP( v_buf, v );
+
+		/* only filter a Y */
+		y = V5DOT(y_filter,y_buf);
+		y *= 219.0;			/* 16 .. 235 range */
+		*yuvp++ = floor(y) + 16;	/* offset by 16 */
+	}
 }
