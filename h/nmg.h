@@ -183,18 +183,6 @@ struct nmg_ptbl {
 #define NMG_CK_SHELL_A(_p)	NMG_CKMAG(_p, NMG_SHELL_A_MAGIC, "shell_a")
 #define NMG_CK_FACE(_p)		NMG_CKMAG(_p, NMG_FACE_MAGIC, "face")
 #define NMG_CK_FACE_G(_p)	NMG_CKMAG(_p, NMG_FACE_G_MAGIC, "face_g")
-/*
-#define NMG_CK_FACE_G(_p)	{ \
-NMG_CKMAG(_p, NMG_FACE_G_MAGIC, "face_g") \
-if ( (_p)->N[X] == 0.0 && (_p)->N[Y] == 0.0 && (_p)->N[Z] == 0.0 && \
-(_p)->N[H] != 0.0) { \
-rt_log( \
-"ERROR: in file %s, line %d\nbad NMG plane equation %fX + %fY + %fZ = %f\n", \
-__FILE__, __LINE__, \
-(_p)->N[X], (_p)->N[Y], (_p)->N[Z], (_p)->N[H]); \
-rt_bomb("Bad NMG geometry\n"); \
-} }
-*/
 #define NMG_CK_FACEUSE(_p)	NMG_CKMAG(_p, NMG_FACEUSE_MAGIC, "faceuse")
 #define NMG_CK_FACEUSE_A(_p)	NMG_CKMAG(_p, NMG_FACEUSE_A_MAGIC, "faceuse_a")
 #define NMG_CK_LOOP(_p)		NMG_CKMAG(_p, NMG_LOOP_MAGIC, "loop")
@@ -529,14 +517,60 @@ struct vertexuse_a {
 #	define bzero(str,n)		memset( str, '\0', n )
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
+/*
+ *  Macros to create and destroy storage for the NMG data structures.
+ *  Since nmg_mk.c is the only source file which should perform these
+ *  most fundamental operations, the macros do not belong in nmg.h
+ *  In particular, application code should NEVER do these things.
+ *  Any need to do so should be handled by extending nmg_mk.c
+ */
+#define NMG_INCR_INDEX(_p,_m)	\
+	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
-/* compare value to min/max and do appropriate assignments */
-#define MINMAX(_a, _b, _c) { if (_a < _b) _b = _a; if (_a > _c) _c = _a; }
+#define GET_MODEL_A(p,m)    {NMG_GETSTRUCT(p, model_a); NMG_INCR_INDEX(p,m);}
+#define GET_REGION(p,m)	    {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p,m);}
+#define GET_REGION_A(p,m)   {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p,m);}
+#define GET_SHELL(p,m)	    {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p,m);}
+#define GET_SHELL_A(p,m)    {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p,m);}
+#define GET_FACE(p,m)	    {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p,m);}
+#define GET_FACE_G(p,m)	    {NMG_GETSTRUCT(p, face_g); NMG_INCR_INDEX(p,m);}
+#define GET_FACEUSE(p,m)    {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p,m);}
+#define GET_FACEUSE_A(p,m)  {NMG_GETSTRUCT(p, faceuse_a); NMG_INCR_INDEX(p,m);}
+#define GET_LOOP(p,m)	    {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p,m);}
+#define GET_LOOP_G(p,m)	    {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p,m);}
+#define GET_LOOPUSE(p,m)    {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p,m);}
+#define GET_LOOPUSE_A(p,m)  {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p,m);}
+#define GET_EDGE(p,m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p,m);}
+#define GET_EDGE_G(p,m)	    {NMG_GETSTRUCT(p, edge_g); (p)->usage = 1; NMG_INCR_INDEX(p,m);}
+#define GET_EDGEUSE(p,m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p,m);}
+#define GET_EDGEUSE_A(p,m)  {NMG_GETSTRUCT(p, edgeuse_a); NMG_INCR_INDEX(p,m);}
+#define GET_VERTEX(p,m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p,m);}
+#define GET_VERTEX_G(p,m)   {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p,m);}
+#define GET_VERTEXUSE(p,m)  {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p,m);}
+#define GET_VERTEXUSE_A(p,m) {NMG_GETSTRUCT(p, vertexuse_a); NMG_INCR_INDEX(p,m);}
 
-/* compare two extents and if they overlap, return non-zero */
-#define NMG_EXTENT_OVERLAP(_l1, _h1, _l2, _h2) \
-    (! ((_l1)[0] > (_h2)[0] || (_l1)[1] > (_h2)[1] || (_l1)[2] > (_h2)[2] || \
-	(_l2)[0] > (_h1)[0] || (_l2)[1] > (_h1)[1] || (_l2)[2] > (_h1)[2]) )
+#define FREE_MODEL(p)	    NMG_FREESTRUCT(p, model)
+#define FREE_MODEL_A(p)	    NMG_FREESTRUCT(p, model_a)
+#define FREE_REGION(p)	    NMG_FREESTRUCT(p, nmgregion)
+#define FREE_REGION_A(p)    NMG_FREESTRUCT(p, nmgregion_a)
+#define FREE_SHELL(p)	    NMG_FREESTRUCT(p, shell)
+#define FREE_SHELL_A(p)	    NMG_FREESTRUCT(p, shell_a)
+#define FREE_FACE(p)	    NMG_FREESTRUCT(p, face)
+#define FREE_FACE_G(p)	    NMG_FREESTRUCT(p, face_g)
+#define FREE_FACEUSE(p)	    NMG_FREESTRUCT(p, faceuse)
+#define FREE_FACEUSE_A(p)   NMG_FREESTRUCT(p, faceuse_a)
+#define FREE_LOOP(p)	    NMG_FREESTRUCT(p, loop)
+#define FREE_LOOP_G(p)	    NMG_FREESTRUCT(p, loop_g)
+#define FREE_LOOPUSE(p)	    NMG_FREESTRUCT(p, loopuse)
+#define FREE_LOOPUSE_A(p)   NMG_FREESTRUCT(p, loopuse_a)
+#define FREE_EDGE(p)	    NMG_FREESTRUCT(p, edge)
+#define FREE_EDGE_G(p)	    if (--((p)->usage) <= 0)  NMG_FREESTRUCT(p, edge_g)
+#define FREE_EDGEUSE(p)	    NMG_FREESTRUCT(p, edgeuse)
+#define FREE_EDGEUSE_A(p)   NMG_FREESTRUCT(p, edgeuse_a)
+#define FREE_VERTEX(p)	    NMG_FREESTRUCT(p, vertex)
+#define FREE_VERTEX_G(p)    NMG_FREESTRUCT(p, vertex_g)
+#define FREE_VERTEXUSE(p)   NMG_FREESTRUCT(p, vertexuse)
+#define FREE_VERTEXUSE_A(p) NMG_FREESTRUCT(p, vertexuse_a)
 
 /* two edges share same vertices */
 #define EDGESADJ(_e1, _e2) (((_e1)->vu_p->v_p == (_e2)->vu_p->v_p && \
@@ -544,17 +578,7 @@ struct vertexuse_a {
 		 ((_e1)->vu_p->v_p == (_e2)->eumate_p->vu_p->v_p && \
 		 (_e1)->eumate_p->vu_p->v_p == (_e2)->vu_p->v_p ) )
 
-/* Minimum distance from a point to a plane */
-#define NMG_DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[H])
-/*#define NMG_DIST_PT_PLANE(_pt, _pl) pnt_pln_dist(_pt, _pl) */
-
-#ifndef MAXVAL
-# define MAXVAL(_a, _b) ((_a) > (_b) ? (_a) : (_b))
-#endif
-#ifndef MINVAL
-# define MINVAL(_a, _b) ((_a) < (_b) ? (_a) : (_b))
-#endif
-
+/* Used by nmg_class.c */
 #define EUPRINT(_s, _eu)	nmg_euprint( (_s), (_eu) )
 #define PLPRINT(_s, _pl) rt_log("%s %gx + %gy + %gz = %g\n", (_s), \
 	(_pl)[0], (_pl)[1], (_pl)[2], (_pl)[3])
