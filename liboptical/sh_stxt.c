@@ -39,7 +39,7 @@ HIDDEN void	stxt_transp_hook();
 
 #define STX_NAME_LEN 128
 struct	stxt_specific  {
-	unsigned char stx_transp[8];	/* RGB for transparency */
+	int	stx_transp[3];	/* RGB for transparency */
 	char	stx_file[STX_NAME_LEN];	/* Filename */
 	int	stx_magic;
 	int	stx_w;		/* Width of texture in pixels */
@@ -58,10 +58,10 @@ struct	stxt_specific  {
 struct	structparse stxt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for Cray compiler */
-	"%C",	1, "transp",		0,		stxt_transp_hook,
+	"%d",	1, "transp",		0,		stxt_transp_hook,
 	"%s",	STX_NAME_LEN, "file",	1,			FUNC_NULL,
 #else
-	"%C",	1, "transp",	offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook,
+	"%d",	1, "transp",	offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook,
 	"%s",	STX_NAME_LEN, "file",	offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL,
 #endif
 	"%d",	1, "w",			SOL_O(stx_w),		FUNC_NULL,
