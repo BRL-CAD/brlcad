@@ -184,6 +184,16 @@ CONST vect_t dir;
 	VJOIN1( o, pnt, scale, dir );
 }
 
+static void bn_vblend( a, b, c, d, e )
+point_t a;
+fastf_t b;
+point_t c;
+fastf_t d;
+point_t e;
+{
+	VBLEND2( a, b, c, d, e )
+}
+
 /*
  *			B N _ M A T H _ C M D
  *
@@ -278,6 +288,22 @@ char **argv;
 
 		VJOIN1( o, b, c, d );	/* bn_vjoin1( o, b, c, d ) */
 		bn_encode_vect(&result, o);
+	} else if ( math_func == bn_vblend) {
+		point_t a, c, e;
+		fastf_t b, d;
+
+		if( argc < 5 ) {
+			bu_vls_printf(&result, "usage: %s scale pnt scale pnt", argv[0]);
+			goto error;
+		}
+
+		if( Tcl_GetDouble(interp, argv[1], &b) != TCL_OK) goto error;
+		if( bn_decode_vect( c, argv[2] ) < 3) goto error;
+		if( Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
+		if( bn_decode_vect( e, argv[4] ) < 3) goto error;
+
+		VBLEND2( a, b, c, d, e )
+		bn_encode_vect( &result, a );
 	} else if (math_func == bn_mat_ae) {
 		mat_t o;
 		double az, el;
@@ -550,6 +576,7 @@ static struct math_func_link {
 	{"mat4x3pnt",          bn_mat4x3pnt},
 	{"hdivide",            bn_hdivide},
 	{"vjoin1",	      bn_vjoin1},
+	{"vblend",		bn_vblend},
 	{"mat_ae",             bn_mat_ae},
 	{"mat_ae_vec",         bn_ae_vec},
 	{"mat_aet_vec",        bn_aet_vec},
