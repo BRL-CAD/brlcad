@@ -22,9 +22,7 @@
  *	#include <stdio.h>
  *	#include <math.h>
  *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
- *	#include "vmath.h"	/_* For vect_t definition *_/
  *	#include "rtlist.h"	/_* OPTIONAL, auto-included by bu.h *_/
- *	#include "rtstring.h"	/_* OPTIONAL, auto-included by bu.h *_/
  *
  *  Libraries Used -
  *	-lm -lc
@@ -116,7 +114,7 @@ extern char	*realloc();
 
 /* rt_mapped_file */
 
-/* formerly rt_g.rtg_logindent, now use bu_log_indent() */
+/* formerly rt_g.rtg_logindent, now use bu_log_indent_delta() */
 typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
 #define BUHOOK_NULL 0
 
@@ -185,8 +183,26 @@ BU_EXTERN(void			bu_badmagic, (CONST long *ptr, long magic,
 /* bomb.c */
 BU_EXTERN(void			bu_bomb, (CONST char *str) );
 
+/* getopt.c */
+#define opterr			bu_opterr	/* libsysv compat */
+#define optind			bu_optind
+#define optopt			bu_optopt
+#define optarg			bu_optarg
+extern int			bu_opterr;
+extern int			bu_optind;
+extern int			bu_optopt;
+extern char *			bu_optarg;
+#define getopt			bu_getopt
+BU_EXTERN(int			bu_getopt, (int nargc, char * CONST nargv[],
+				CONST char *ostr) );
+
+/* linebuf.c */
+#define port_setlinebuf		bu_setlinebuf	/* libsysv compat */
+BU_EXTERN(void			bu_setlinebuf, (FILE *fp) );
+
 /* log.c */
-BU_EXTERN(void			bu_log_indent, (int delta) );
+BU_EXTERN(void			bu_log_indent_delta, (int delta) );
+BU_EXTERN(void			bu_log_indent_vls, (struct bu_vls *v) );
 BU_EXTERN(void			bu_add_hook, (bu_hook_t func, genptr_t clientdata));
 BU_EXTERN(void			bu_delete_hook, (bu_hook_t func, genptr_t clientdata));
 BU_EXTERN(void			bu_putchar, (int c) );
@@ -210,7 +226,7 @@ BU_EXTERN(genptr_t		bu_calloc, (unsigned int nelem,
 				unsigned int elsize, CONST char *str));
 BU_EXTERN(void			bu_prmem, (CONST char *str));
 BU_EXTERN(char *		bu_strdup, (CONST char *cp));
-BU_EXTERN(int			bu_byte_roundup, (int nbytes));
+BU_EXTERN(int			bu_malloc_len_roundup, (int nbytes));
 BU_EXTERN(void			bu_ck_malloc_ptr, (genptr_t ptr, CONST char *str));
 BU_EXTERN(int			bu_mem_barriercheck, ());
 
@@ -236,11 +252,13 @@ BU_EXTERN(void			bu_semaphore_release, (unsigned int i));
 
 /* vls.c */
 BU_EXTERN(void			bu_vls_init, (struct bu_vls *vp) );
+BU_EXTERN(void			bu_vls_init_if_uninit, (struct bu_vls *vp) );
 BU_EXTERN(struct bu_vls *	bu_vls_vlsinit, () );
 BU_EXTERN(char *		bu_vls_addr, (CONST struct bu_vls *vp) );
 BU_EXTERN(char *		bu_vls_strdup, (CONST struct bu_vls *vp) );
 BU_EXTERN(char *		bu_vls_strgrab, (struct bu_vls *vp) );
 BU_EXTERN(void			bu_vls_extend, (struct bu_vls *vp, int extra) );
+BU_EXTERN(void			bu_vls_setlen, (struct bu_vls *vp, int newlen));
 BU_EXTERN(int			bu_vls_strlen, (CONST struct bu_vls *vp) );
 BU_EXTERN(void			bu_vls_trunc, (struct bu_vls *vp, int len) );
 BU_EXTERN(void			bu_vls_trunc2, (struct bu_vls *vp, int len) );
@@ -254,7 +272,6 @@ BU_EXTERN(void			bu_vls_strncat, (struct bu_vls *vp, CONST char *s, int n) );
 BU_EXTERN(void			bu_vls_vlscat, (struct bu_vls *dest, CONST struct bu_vls *src) );
 BU_EXTERN(void			bu_vls_vlscatzap, (struct bu_vls *dest, struct bu_vls *src) );
 BU_EXTERN(void			bu_vls_from_argv, (struct bu_vls *vp, int argc, char **argv) );
-BU_EXTERN(void			bu_vls_bomb, (CONST char *str, CONST struct bu_vls *badp) );
 BU_EXTERN(void			bu_vls_fwrite, (FILE *fp, CONST struct bu_vls *vp) );
 BU_EXTERN(int			bu_vls_gets, (struct bu_vls *vp, FILE *fp) );
 BU_EXTERN(void			bu_vls_putc, (struct bu_vls *vp, int c) );
@@ -266,6 +283,9 @@ BU_EXTERN(void			bu_vls_printf, (struct bu_vls *vls, char *fmt, ... ) );
 #if 0
 BU_EXTERN(void			bu_vls_blkset, (struct bu_vls *vp, int len, int ch) );
 #endif
+
+/* vers.c (created by the Cakefile) */
+extern CONST char		bu_version[];
 
 #ifdef __cplusplus
 }
