@@ -93,17 +93,22 @@ struct application	*ap;
 		if( segp->seg_out.hit_dist < -10.0 )
 			continue;
 
-		/*  Eliminate very thin segments, or they will cause
-		 *  trouble below.
+		/*
+		 *  Force "very thin" segments to have exactly zero thickness.
+		 *  If a zero thickness segment abutts another partition,
+		 *  it will be fused in, later.
+		 *  If it is free standing, then it will remain as a
+		 *  zero thickness partition, which probably signals
+		 *  going through some solid an odd number of times.
 		 */
 		diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
 		if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
+			segp->seg_out.hit_dist = segp->seg_in.hit_dist;
 			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
-				"rt_boolweave:  Thin seg discarded: %s (%g,%g)\n",
+				"rt_boolweave:  Zero thickness seg: %s (%g,%g)\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist );
-			continue;
 		}
 		if( !(segp->seg_in.hit_dist >= -INFINITY &&
 		    segp->seg_out.hit_dist <= INFINITY) )  {
