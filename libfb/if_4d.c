@@ -1239,8 +1239,10 @@ FBIO	*ifp;
 	/* Close the framebuffer */
 	ret = sgi_final_close( ifp );
 
-	/* Zap memory after closing the framebuffer */
-	sgi_zapmem();
+	if( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED ) {
+		/* If shared mem, release the shared memory segment */
+		sgi_zapmem();
+	}
 	return ret;
 }
 
