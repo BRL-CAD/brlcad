@@ -1209,6 +1209,9 @@ struct rt_tol		*tol;
 	rt_free( (char *)pts, "rt_tor_tess pts[]" );
 	rt_free( (char *)verts, "rt_tor_tess *verts[]" );
 	rt_free( (char *)faces, "rt_tor_tess *faces[]" );
+	for( len=0 ; len<nlen ; len++ )
+		rt_free( (char *)norms[i] , "rt_tor_tess norms[]" );
+	rt_free( (char *)norms , "rt_tor_tess norms" );
 	return(0);
 }
 
