@@ -1,4 +1,5 @@
 # $Id$
+
 bin_PROGRAMS = \
 	alias-pix \
 	ap-pix \
@@ -429,7 +430,9 @@ dsp_add_LDADD = @BU@
 binfo_SOURCES = binfo.c 
 binfo_LDADD = @BN@ @FB@
 
-rtwizard = $(top_srcdir)//rtwizard
+# rtwizard = $(top_srcdir)/rtwizard
+# 	cp $(top_srcdir)/tclscripts/rtwizard rtwizard
+rtwizard:
 	cp $(top_srcdir)/tclscripts/rtwizard rtwizard
 
 AM_CFLAGS = -I$(top_srcdir)/h
