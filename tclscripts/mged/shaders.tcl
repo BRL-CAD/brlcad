@@ -12,7 +12,8 @@
 #	4. add the new shader to the switch command in 'stack_add', if this shader is
 #		appropriate for being in a stack
 #	5. add a menu item for the new shader in 'init_comb' (comb.tcl)
-#	6. add the following routines:
+#	6. add the new shader to the list of shader names in the 'is_good_shader' proc
+#	7. add the following routines:
 
 # proc do_newshader { shade_var id } - Creates the frame to hold the shader widgets and
 #	creates the labels, entries, buttons... Also registers 'help-in-context' data
@@ -121,10 +122,10 @@ proc do_checker { shade_var id } {
 
 	set_checker_values $shader_str $id
 
-	grid $shader_params($id,window).fr.color1 -row 0 -column 1
-	grid $shader_params($id,window).fr.color1_e -row 0 -column 2
-	grid $shader_params($id,window).fr.color2 -row 1 -column 1
-	grid $shader_params($id,window).fr.color2_e -row 1 -column 2
+	grid $shader_params($id,window).fr.color1 -row 0 -column 1 -sticky e
+	grid $shader_params($id,window).fr.color1_e -row 0 -column 2 -sticky w
+	grid $shader_params($id,window).fr.color2 -row 1 -column 1 -sticky e
+	grid $shader_params($id,window).fr.color2_e -row 1 -column 2 -sticky w
 
 	grid $shader_params($id,window).fr -columnspan 4
 
@@ -379,20 +380,20 @@ proc do_phong { shade_var id } {
 
 	set_phong_values $shader_str $id
 
-	grid $shader_params($id,window).fr.trans -row 0 -column 0
-	grid $shader_params($id,window).fr.trans_e -row 0 -column 1
-	grid $shader_params($id,window).fr.refl -row 0 -column 2
-	grid $shader_params($id,window).fr.refl_e -row 0 -column 3
-	grid $shader_params($id,window).fr.spec -row 1 -column 0
-	grid $shader_params($id,window).fr.spec_e -row 1 -column 1
-	grid $shader_params($id,window).fr.diff -row 1 -column 2
-	grid $shader_params($id,window).fr.diff_e -row 1 -column 3
-	grid $shader_params($id,window).fr.ri -row 2 -column 1
-	grid $shader_params($id,window).fr.ri_e -row 2 -column 2
-	grid $shader_params($id,window).fr.shine -row 3 -column 1
-	grid $shader_params($id,window).fr.shine_e -row 3 -column 2
-	grid $shader_params($id,window).fr.ext -row 4 -column 1
-	grid $shader_params($id,window).fr.ext_e -row 4 -column 2
+	grid $shader_params($id,window).fr.trans -row 0 -column 0 -sticky e
+	grid $shader_params($id,window).fr.trans_e -row 0 -column 1 -sticky w
+	grid $shader_params($id,window).fr.refl -row 0 -column 2 -sticky e
+	grid $shader_params($id,window).fr.refl_e -row 0 -column 3 -sticky w
+	grid $shader_params($id,window).fr.spec -row 1 -column 0 -sticky e
+	grid $shader_params($id,window).fr.spec_e -row 1 -column 1 -sticky w
+	grid $shader_params($id,window).fr.diff -row 1 -column 2 -sticky e
+	grid $shader_params($id,window).fr.diff_e -row 1 -column 3 -sticky w
+	grid $shader_params($id,window).fr.ri -row 2 -column 1 -sticky e
+	grid $shader_params($id,window).fr.ri_e -row 2 -column 2 -sticky w
+	grid $shader_params($id,window).fr.shine -row 3 -column 1 -sticky e
+	grid $shader_params($id,window).fr.shine_e -row 3 -column 2 -sticky w
+	grid $shader_params($id,window).fr.ext -row 4 -column 1 -sticky e
+	grid $shader_params($id,window).fr.ext_e -row 4 -column 2 -sticky w
 	
 	grid $shader_params($id,window).fr -columnspan 4
 
@@ -809,7 +810,6 @@ proc stack_delete { index id } {
 	global shader_params
 
 # destroy the shader subwindow
-puts "destroying window ($index) $shader_params($id,stk_$index,window)"
 	catch {destroy $shader_params($id,stk_$index,window) }
 
 # remove the shader from the 'delete' menu
@@ -869,22 +869,49 @@ proc stack_add { shader shade_var id } {
 		}
 	}
 
-	grid $shader_params($id,window).fr.stk_$index -columnspan 2
+	grid $shader_params($id,window).fr.stk_$index -columnspan 2 -sticky ew
 }
 
 proc set_stack_values { shade_str id } {
 	global shader_params
 
-	set shade_length [llength $shade_str]
+	set err [catch "set shade_length [llength $shade_str]"]
+	if { $err != 0 } {return}
+
 	if {$shade_length < 2 } {return}
+
 	set shader_list [lindex $shade_str 1]
-	set no_of_shaders [llength $shader_list]
+
+	set err [catch "set no_of_shaders [llength $shader_list]"]
+	if { $err != 0 } {return}
+
 	for {set index 0} {$index < $no_of_shaders} {incr index } {
 		set sub_str [lindex $shader_list $index]
 		set shader [lindex $sub_str 0]
 		if { $index >= $shader_params($id,stack_len) } {
-			stack_add $shader $shader_params($id,shade_var) $id
-			set_${shader}_values $sub_str $id,stk_$index
+			if { [is_good_shader $shader]} then {
+				stack_add $shader $shader_params($id,shade_var) $id
+				set_${shader}_values $sub_str $id,stk_$index
+			}
+		} else {
+			set count -1
+			for { set i 0 } { $i < $shader_params($id,stack_len) } { incr i } {
+				if { $shader_params($id,stk_$i,shader_name) != "" } {
+					incr count
+					if { $count == $index } then {
+						if { [string compare $shader_params($id,stk_$i,shader_name) $shader] == 0 } then {
+							set_${shader}_values $sub_str $id,stk_$i
+						} else {
+							stack_delete $i $id
+							if { [is_good_shader $shader] } then {
+								stack_add $shader $shader_params($id,shade_var) $id
+								set j [expr $shader_params($id,stack_len) - 1 ]
+								set_${shader}_values $sub_str $id,stk_$j
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
@@ -928,7 +955,7 @@ proc do_stack { shade_var id } {
 
 	grid $shader_params($id,window).fr.add $shader_params($id,window).fr.del
 
-	grid $shader_params($id,window).fr
+	grid $shader_params($id,window).fr -ipadx 3 -ipady 3 -sticky ew
 
 	set_stack_values $shade_str $id
 
@@ -941,11 +968,7 @@ proc set_shader_params { shade_var id } {
 
 	set err [catch "set shader [lindex $shade_str 0]"]
 
-	if { $err != 0 } {
-		tk_messageBox -title "Shader String Error" -type ok -icon error \
-			-message "Invalid shader string ($shade_str)"
-		return
-	}
+	if { $err != 0 } {return}
 
 	if { $shader != $shader_params($id,shader_name) } { 
 		do_shader $shade_var $id $shader_params($id,window)
@@ -953,13 +976,21 @@ proc set_shader_params { shade_var id } {
 	}
 	
 	switch $shader {
-		glass -
-		mirror -
+		glass {
+			set_glass_values $shade_str $id
+		}
+		mirror {
+			set_mirror_values $shade_str $id
+		}
 		plastic {
 			set_phong_values $shade_str $id
 		}
-		bump -
-		bwtexture -
+		bump {
+			set_bump_values $shade_str $id
+		}
+		bwtexture {
+			set_bwtexture_values $shade_str $id
+		}
 		texture {
 			set_texture_values $shade_str $id
 		}
@@ -973,7 +1004,7 @@ proc set_shader_params { shade_var id } {
 			set_fakestar_values $shade_str $id
 		}
 		stack {
-			set_stack_values $shade_sr $id
+			set_stack_values $shade_str $id
 		}
 	}
 }
@@ -988,6 +1019,8 @@ proc do_shader { shade_var id frame_name } {
 
 	set shader_params($id,parent_window_id) $id
 	set shader_params($id,window) $frame_name
+
+	set my_win ""
 
 	if { [llength $shade_str] < 1 } then {
 		set shade_str plastic
@@ -1031,12 +1064,6 @@ proc do_shader { shade_var id frame_name } {
 				set_stack_defaults $id
 				set my_win [do_stack $shade_var $id]
 			}
-
-			default {
-				tk_messageBox -title "Shader Name Error" -type ok -icon error \
-					 -message "Invalid shader name ($material)"
-				set my_win ""
-			}
 		}
 	}
 
@@ -1079,5 +1106,21 @@ proc do_shader_apply { shade_var id } {
 		stack {
 			do_stack_apply $shade_var $id
 		}
+	}
+}
+
+proc is_good_shader { shader } {
+	switch $shader {
+		stack -
+		plastic -
+		glass -
+		mirror -
+		bump -
+		texture -
+		bwtexture -
+		fakestar -
+		checker -
+		testmap { return 1 }
+		default { return 0 }
 	}
 }

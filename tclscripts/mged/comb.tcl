@@ -191,7 +191,7 @@ parameters. Note - when entering the
 shader parameters directly, pressing \"Enter\"
 will update the rest of the shader GUI." } }
 
-    bind $top.shaderE <Return> "set_shader_params comb_control($id,shader) $id"
+    bind $top.shaderE <KeyRelease> "set_shader_params comb_control($id,shader) $id"
 
     menubutton $top.shaderMB -relief raised -bd 2\
 	    -menu $top.shaderMB.m -indicatoron 1
