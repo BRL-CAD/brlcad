@@ -78,6 +78,8 @@ extern struct bool_tree_node	*comb_bool_tree;
 /*
  *	
  */
+
+#ifdef USE_PROTOTYPES
 extern struct bool_tree_node	*bt_create_internal (
 				    int,
 				    struct bool_tree_node *,
@@ -87,6 +89,15 @@ extern void			show_tree_infix (
 				    struct bool_tree_node *,
 				    int);
 extern void			show_tree_lisp (struct bool_tree_node *);
+extern int			cvt_to_gift_bool (struct bool_tree_node *);
+extern void			show_gift_bool (struct bool_tree_node *, int);
+#else
+extern struct bool_tree_node *bt_create_internal(), *bt_create_leaf();
+extern void show_tree_infix(), show_tree_lisp(), show_gift_bool();
+extern int cvt_to_gift_bool();
+#endif
+
+
 #define show_tree(t,l)		if (l)				\
 				{				\
 				    show_tree_lisp((t));	\
@@ -94,5 +105,3 @@ extern void			show_tree_lisp (struct bool_tree_node *);
 				}				\
 				else				\
 				    show_tree_infix((t), 0)
-extern int			cvt_to_gift_bool (struct bool_tree_node *);
-extern void			show_gift_bool (struct bool_tree_node *, int);
