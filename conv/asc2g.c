@@ -212,10 +212,12 @@ combbld()	/* Build Combination record */
 	cp = nxt_spc( cp );
 	record.c.c_inherit = atoi( cp );
 
-	if( record.c.c_flags == 'Y' )
+	if( record.c.c_flags == 'Y' )  {
 		record.c.c_flags = 'R';
-	else
+	}  else  {
 		record.c.c_flags = ' ';
+		record.c.c_regionid = 0;		/* sanity */
+	}
 
 	if( temp_nflag )  {
 		fgets( buf, BUFSIZE, stdin );
