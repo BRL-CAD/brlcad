@@ -170,8 +170,8 @@ for file in COPYING INSTALL ; do
 		if test "x$backup_rev" = "x" ; then
 			backup_rev=0
 		fi
-		if test "$current_rev" -gt "$backup_rev" ; then
-			AC_MSG_RESULT(no)
+		if test "$current_rev" -ge "$backup_rev" ; then
+			AC_MSG_RESULT(no, saving backup)
 			# new version from cvs.. back it up
 			cp -pr "$curr" "$back"
 		else
