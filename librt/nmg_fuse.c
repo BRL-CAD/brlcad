@@ -36,39 +36,40 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./debug.h"
 
 /* XXX Move to raytrace.h */
-RT_EXTERN(int	 	nmg_is_vertex_in_face, (CONST struct vertex *v,
-			CONST struct face *f));
+RT_EXTERN(struct vertexuse 	*nmg_is_vertex_in_face, (CONST struct vertex *v,
+				CONST struct face *f));
 /* XXX Move to nmg_info.c */
 /*
  *			N M G _ I S _ V E R T E X _ I N _ F A C E
  *
  *  Returns -
- *	!0	If there is at least one use of vertex 'v' in face 'f'.
- *	0	If there are no uses of 'v' in 'f'.
+ *	vu	One use of vertex 'v' in face 'f'.
+ *	NULL	If there are no uses of 'v' in 'f'.
  */
-int
+struct vertexuse *
 nmg_is_vertex_in_face( v, f )
 CONST struct vertex	*v;
 CONST struct face	*f;
 {
-	CONST struct vertexuse	*vu;
-	CONST struct loopuse	*lu;
-	CONST struct faceuse	*fu;
+	struct vertexuse	*vu;
 
 	NMG_CK_VERTEX(v);
 	NMG_CK_FACE(f);
 
 	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
+		CONST register struct edgeuse	*eu;
+		CONST register struct loopuse	*lu;
+		CONST register struct faceuse	*fu;
+
 		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
-		if( *vu->up.eu_p->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
-		lu = vu->up.eu_p->up.lu_p;
+		if( *(eu = vu->up.eu_p)->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+		lu = eu->up.lu_p;
 		if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  continue;
 		fu = lu->up.fu_p;
-		NMG_CK_FACEUSE(fu);
 		if( fu->f_p != f )  continue;
-		return 1;
+		return vu;
 	}
-	return 0;
+	return (struct vertexuse *)NULL;
 }
 
 /*
