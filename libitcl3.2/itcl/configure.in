@@ -27,7 +27,7 @@ PACKAGE=itcl
 
 MAJOR_VERSION=3
 MINOR_VERSION=2
-PATCHLEVEL=.0
+PATCHLEVEL=.1
 
 VERSION=${MAJOR_VERSION}.${MINOR_VERSION}
 NODOT_VERSION=${MAJOR_VERSION}${MINOR_VERSION}
@@ -42,6 +42,17 @@ AC_SUBST(VERSION)
 #--------------------------------------------------------------------
 
 eval AC_DEFINE_UNQUOTED(VERSION, "${VERSION}")
+
+#------------------------------------------------------------------------
+# Handle the --prefix=... option
+#------------------------------------------------------------------------
+
+if test "${prefix}" = "NONE"; then
+    prefix=/usr/local
+fi
+if test "${exec_prefix}" = "NONE"; then
+    exec_prefix=$prefix
+fi
 
 #--------------------------------------------------------------------
 # Check whether --enable-gcc or --disable-gcc was given.  Do this 
@@ -99,6 +110,7 @@ AC_EXEEXT
 case "`uname -s`" in
     *win32* | *WIN32* | *CYGWIN_NT*|*CYGWIN_98*|*CYGWIN_95*)
 	CYGPATH="cygpath -w"
+	AC_CHECK_PROG(CYGPATH, cygpath, cygpath -w, echo)
 	RELPATH=".. .. bin"
     ;;
     *)
@@ -284,7 +296,7 @@ case "`uname -s`" in
 	;;
     *)
 	if test "${SHARED_BUILD}" = "1" ; then
-	    SHLIB_LD_LIBS="${TCL_STUB_LIB_SPEC}"
+	    SHLIB_LD_LIBS="${TCL_BUILD_STUB_LIB_SPEC}"
 	    eval "${PACKAGE}_LIB_FILE=lib${PACKAGE}${SHARED_LIB_SUFFIX}"
 	    RANLIB=:
 	else
@@ -327,4 +339,4 @@ SC_PROG_TCLSH
 #--------------------------------------------------------------------
 
 AC_OUTPUT([Makefile \
-	pkgIndex.tcl])
+	pkgIndex.tcl itclConfig.sh])

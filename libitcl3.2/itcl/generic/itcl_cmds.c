@@ -36,7 +36,7 @@
 static void ItclDelObjectInfo _ANSI_ARGS_((char* cdata));
 static int Initialize _ANSI_ARGS_((Tcl_Interp *interp));
 static int ItclHandleStubCmd _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 static void ItclDeleteStub _ANSI_ARGS_((ClientData cdata));
 
 /*
@@ -103,6 +103,9 @@ static char safeInitScript[] =
 
 extern ItclStubs itclStubs;
 
+
+int itclCompatFlags = -1;
+
 
 /*
  * ------------------------------------------------------------------------
@@ -138,6 +141,26 @@ Initialize(interp)
         Tcl_SetResult(interp, "already installed: [incr Tcl]", TCL_STATIC);
         return TCL_ERROR;
     }
+
+    /*
+     *  Set the compatability options.  Stubs allows us to load into many
+     *  version of the Tcl core.  Some problems have crept-in, and we need
+     *  to adapt dynamically regarding use of some internal structures that
+     *  have changed since 8.1.0
+     *
+     *  TODO: make a TIP for exporting a Tcl_CommandIsDeleted function in the core.
+     */
+    if (itclCompatFlags == -1) {
+	int maj, min, ptch, type;
+
+	itclCompatFlags = 0;
+	Tcl_GetVersion(&maj, &min, &ptch, &type);
+
+	if ((maj == 8) && (min >= 4)) {
+	    itclCompatFlags = ITCL_COMPAT_USECMDFLAGS;
+	}
+    }
+
 
     /*
      *  Initialize the ensemble package first, since we need this
@@ -392,7 +415,15 @@ ItclDelObjectInfo(cdata)
     while (entry) {
         contextObj = (ItclObject*)Tcl_GetHashValue(entry);
         Tcl_DeleteCommandFromToken(info->interp, contextObj->accessCmd);
-        entry = Tcl_NextHashEntry(&place);
+	    /*
+	     * Fix 227804: Whenever an object to delete was found we
+	     * have to reset the search to the beginning as the
+	     * current entry in the search was deleted and accessing it
+	     * is therefore not allowed anymore.
+	     */
+
+	    entry = Tcl_FirstHashEntry(&info->objects, &place);
+	    /*entry = Tcl_NextHashEntry(&place);*/
     }
     Tcl_DeleteHashTable(&info->objects);
 
@@ -431,15 +462,15 @@ Itcl_FindClassesCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* class/object info */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     Tcl_Namespace *activeNs = Tcl_GetCurrentNamespace(interp);
     Tcl_Namespace *globalNs = Tcl_GetGlobalNamespace(interp);
     int forceFullNames = 0;
 
     char *pattern;
-    char *name;
-    int i, newEntry, handledActiveNs;
+    CONST char *name;
+    int newEntry, handledActiveNs;
     Tcl_HashTable unique;
     Tcl_HashEntry *entry;
     Tcl_HashSearch place;
@@ -466,7 +497,7 @@ Itcl_FindClassesCmd(clientData, interp, objc, objv)
      *  in this interpreter.  If we find any commands that
      *  represent classes, report them.
      */
-    listPtr = Tcl_NewListObj(0, (Tcl_Obj* const*)NULL);
+    listPtr = Tcl_NewListObj(0, (Tcl_Obj* CONST*)NULL);
 
     Itcl_InitStack(&search);
     Itcl_PushStack((ClientData)globalNs, &search);
@@ -557,7 +588,7 @@ Itcl_FindObjectsCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* class/object info */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     Tcl_Namespace *activeNs = Tcl_GetCurrentNamespace(interp);
     Tcl_Namespace *globalNs = Tcl_GetGlobalNamespace(interp);
@@ -568,7 +599,8 @@ Itcl_FindObjectsCmd(clientData, interp, objc, objv)
     ItclClass *isaDefn = NULL;
 
     char *name, *token;
-    int i, pos, newEntry, match, handledActiveNs;
+    CONST char *cmdName;
+    int pos, newEntry, match, handledActiveNs;
     ItclObject *contextObj;
     Tcl_HashTable unique;
     Tcl_HashEntry *entry;
@@ -637,7 +669,7 @@ Itcl_FindObjectsCmd(clientData, interp, objc, objv)
      *  in this interpreter.  If we find any commands that
      *  represent objects, report them.
      */
-    listPtr = Tcl_NewListObj(0, (Tcl_Obj* const*)NULL);
+    listPtr = Tcl_NewListObj(0, (Tcl_Obj* CONST*)NULL);
 
     Itcl_InitStack(&search);
     Itcl_PushStack((ClientData)globalNs, &search);
@@ -679,8 +711,8 @@ Itcl_FindObjectsCmd(clientData, interp, objc, objv)
                     Tcl_GetCommandFullName(interp, cmd, objPtr);
                     name = Tcl_GetStringFromObj(objPtr, (int*)NULL);
                 } else {
-                    name = Tcl_GetCommandName(interp, cmd);
-                    objPtr = Tcl_NewStringObj(name, -1);
+                    cmdName = Tcl_GetCommandName(interp, cmd);
+                    objPtr = Tcl_NewStringObj(cmdName, -1);
                 }
 
                 Tcl_CreateHashEntry(&unique, (char*)cmd, &newEntry);
@@ -757,7 +789,7 @@ Itcl_ProtectionCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* protection level (public/protected/private) */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     int pLevel = (int)clientData;
 
@@ -819,7 +851,7 @@ Itcl_DelClassCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     int i;
     char *name;
@@ -874,7 +906,7 @@ Itcl_DelObjectCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* object management info */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     int i;
     char *name;
@@ -941,7 +973,7 @@ Itcl_ScopeCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     int result = TCL_OK;
     Tcl_Namespace *contextNs = Tcl_GetCurrentNamespace(interp);
@@ -1132,7 +1164,7 @@ Itcl_CodeCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     Tcl_Namespace *contextNs = Tcl_GetCurrentNamespace(interp);
 
@@ -1233,7 +1265,7 @@ Itcl_StubCreateCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* not used */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     char *cmdName;
     Command *cmdPtr;
@@ -1279,7 +1311,7 @@ Itcl_StubExistsCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* not used */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     char *cmdName;
     Tcl_Command cmd;
@@ -1347,7 +1379,7 @@ ItclHandleStubCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* command token for this stub */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     Tcl_Command cmd = (Tcl_Command) clientData;
 

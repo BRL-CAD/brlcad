@@ -189,7 +189,7 @@ Itcl_ClassCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ItclObjectInfo* info = (ItclObjectInfo*)clientData;
 
@@ -307,7 +307,7 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -559,7 +559,7 @@ Itcl_ClassProtectionCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* protection level (public/protected/private) */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ProtectionCmdInfo *pInfo = (ProtectionCmdInfo*)clientData;
 
@@ -618,7 +618,7 @@ Itcl_ClassConstructorCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -676,7 +676,7 @@ Itcl_ClassDestructorCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -723,7 +723,7 @@ Itcl_ClassMethodCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -771,7 +771,7 @@ Itcl_ClassProcCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -817,7 +817,7 @@ Itcl_ClassVariableCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -887,7 +887,7 @@ Itcl_ClassCommonCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);

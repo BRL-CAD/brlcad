@@ -25,11 +25,23 @@
  */
 #include "itk.h"
 
+/*  
+ * The following script is used to initialize Itcl in a safe interpreter.
+ */
+ 
+static char safeInitScript[] =
+"proc ::itcl::local {class name args} {\n\
+    set ptr [uplevel [list $class $name] $args]\n\
+    uplevel [list set itcl-local-$ptr $ptr]\n\
+    set cmd [uplevel namespace which -command $ptr]\n\
+    uplevel [list trace variable itcl-local-$ptr u \"::itcl::delete object $cmd; list\"]\n\
+    return $ptr\n\
+}";  
+
 /*
  *  FORWARD DECLARATIONS
  */
 static int Initialize _ANSI_ARGS_((Tcl_Interp *interp));
-
 /*
  * The following string is the startup script executed in new
  * interpreters.  It looks on disk in several different directories
@@ -79,9 +91,6 @@ namespace eval ::itk {\n\
     }\n\
     _find_init\n\
 }";
-
-extern ItkStubs itkStubs;
-
 
 /*
  * ------------------------------------------------------------------------
@@ -102,6 +111,7 @@ Initialize(interp)
 {
     Tcl_Namespace *itkNs, *parserNs;
     ClientData parserInfo;
+    extern ItkStubs itkStubs;
 
     if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
 	return TCL_ERROR;
@@ -109,7 +119,7 @@ Initialize(interp)
     if (Tk_InitStubs(interp, "8.1", 0) == NULL) {
 	return TCL_ERROR;
     };
-    if (Itcl_InitStubs(interp, ITCL_VERSION, 0) == NULL) {
+    if (Itcl_InitStubs(interp, ITCL_VERSION, 1) == NULL) {
 	return TCL_ERROR;
     }
 
@@ -193,7 +203,10 @@ Initialize(interp)
     Tcl_SetVar(interp, "::itk::patchLevel", ITCL_PATCH_LEVEL, 0);
 
     /*
-     *  Signal that the package has been loaded.
+     *  Signal that the package has been loaded and provide the Itk Stubs table
+     *  for dependent modules.  I know this is unlikely, but possible that
+     *  someone could be extending Itk.  Who is to say that Itk is the
+     *  end-of-the-line?
      */
     if (Tcl_PkgProvideEx(interp, "Itk", ITCL_VERSION,
             (ClientData) &itkStubs) != TCL_OK) {
@@ -230,6 +243,31 @@ Itk_Init(interp)
 
 /*
  * ------------------------------------------------------------------------
+ *  Itk_SafeInit()
+ *   
+ *  Invoked whenever a new SAFE INTERPRETER is created to install
+ *  the [incr Tcl] package.
+ *      
+ *  Creates the "::itk" namespace and installs access commands for
+ *  creating classes and querying info.
+ *  
+ *  Returns TCL_OK on success, or TCL_ERROR (along with an error 
+ *  message in the interpreter) if anything goes wrong.
+ * ------------------------------------------------------------------------
+ */  
+int 
+Itk_SafeInit(interp)
+    Tcl_Interp *interp;  /* interpreter to be updated */ 
+{   
+    if (Initialize(interp) != TCL_OK) {
+        return TCL_ERROR;
+    }
+    return Tcl_Eval(interp, safeInitScript);
+}
+
+
+/*
+ * ------------------------------------------------------------------------
  *  Itk_ConfigBodyCmd()
  *
  *  Replacement for the usual "itcl::configbody" command.  Recognizes
@@ -256,7 +294,7 @@ Itk_ConfigBodyCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *const objv[];   /* argument objects */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     int result = TCL_OK;
 

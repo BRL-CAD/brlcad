@@ -17,6 +17,8 @@
 # Edit the following few lines when writing a new extension
 #========================================================================
 
+OBJEXT = @OBJEXT@
+
 #========================================================================
 # Change the name of the variable "exampleA_LIB_FILE" to match the one
 # used in the configure script.  This is the parameterized name of the
@@ -67,7 +69,6 @@ SOURCES = $(itcl_SOURCES)
 WIN_OBJECTS = dllEntryPoint.$(OBJEXT)
 UNIX_OBJECTS =
 GENERIC_OBJECTS = itclStubInit.$(OBJEXT) \
-	itclStubLib.$(OBJEXT) \
 	itcl_bicmds.$(OBJEXT) \
 	itcl_class.$(OBJEXT) \
 	itcl_cmds.$(OBJEXT) \
@@ -82,7 +83,7 @@ GENERIC_OBJECTS = itclStubInit.$(OBJEXT) \
 PLATFORM_OBJECTS = @PLATFORM_OBJECTS@
 itclstub_OBJECTS = itclStubLib.$(OBJEXT)
 itcl_OBJECTS = $(PLATFORM_OBJECTS) $(GENERIC_OBJECTS)
-OBJECTS = $(itcl_OBJECTS)
+OBJECTS = $(itcl_OBJECTS) $(itclstub_OBJECTS)
 
 #========================================================================
 # The substitution of "exampleA_LIB_FILE" into the variable name below
@@ -116,7 +117,6 @@ GENERIC_HDRS= \
 
 SAMPLE_NEW_VAR=@SAMPLE_NEW_VAR@
 
-#ITCL_LIBRARY = $(prefix)/lib/itcl$(VERSION)
 ITCL_LIBRARY = $(prefix)/itcl$(VERSION)
 
 ITCL_GENERIC_DIR_NATIVE = @ITCL_GENERIC_DIR_NATIVE@
@@ -152,8 +152,7 @@ oldincludedir = /usr/include
 DESTDIR =
 
 pkgdatadir = $(datadir)/@PACKAGE@@VERSION@
-#pkglibdir = $(libdir)/@PACKAGE@@VERSION@
-pkglibdir = $(ITCL_LIBRARY)
+pkglibdir = $(libdir)/@PACKAGE@@VERSION@
 pkgincludedir = $(includedir)/@PACKAGE@@VERSION@
 
 top_builddir = .
@@ -187,7 +186,6 @@ LDFLAGS_OPTIMIZE = @LDFLAGS_OPTIMIZE@
 MAKE_LIB = @MAKE_LIB@
 MAKE_SHARED_LIB = @MAKE_SHARED_LIB@
 MAKE_STATIC_LIB = @MAKE_STATIC_LIB@
-OBJEXT = @OBJEXT@
 RANLIB = @RANLIB@
 SHLIB_CFLAGS = @SHLIB_CFLAGS@
 SHLIB_LD = @SHLIB_LD@
@@ -295,7 +293,7 @@ install-doc: doc
 	@for i in $(srcdir)/doc/*.n; \
 	    do \
 	    echo "Installing $$i"; \
-	    rm -f $(mandir)/mann/$$i; \
+	    rm -f $(mandir)/mann/`basename $$i`; \
 	    $(INSTALL_DATA) $$i $(mandir)/mann ; \
 	    done
 
@@ -326,7 +324,7 @@ $(itcl_LIB_FILE): $(itcl_OBJECTS)
 
 $(itclstub_LIB_FILE): $(itclstub_OBJECTS)
 	-rm -f $(itclstub_LIB_FILE)
-	@MAKE_STATIC_LIB@
+	@MAKE_STUB_LIB@
 	$(RANLIB) $(itclstub_LIB_FILE)
 
 #========================================================================

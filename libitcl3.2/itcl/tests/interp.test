@@ -72,5 +72,20 @@ test interp-1.4 {one namespace can cause another to be destroyed} {
     interp delete slave
 } {}
 
+test interp-1.5 {cleanup interp object list, this should not
+        include an object that deletes itself in ctor} {
+    interp create slave
+    load "" Itcl slave
+    slave eval {
+        itcl::class DeleteSelf {
+            constructor {} {
+                itcl::delete object $this
+            }
+        }
+        DeleteSelf ds
+    }
+    interp delete slave
+} {}
+
 ::tcltest::cleanupTests
 return

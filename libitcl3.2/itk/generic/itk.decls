@@ -26,9 +26,9 @@ interface itk
 declare 0 generic {
     int Itk_Init (Tcl_Interp *interp)
 }
-#declare 1 generic {
-#    int Itk_SafeInit (Tcl_Interp *interp)
-#}
+declare 1 generic {
+    int Itk_SafeInit (Tcl_Interp *interp)
+}
 
 
 #
@@ -37,11 +37,11 @@ declare 0 generic {
 
 declare 2 generic {
     int Itk_ConfigBodyCmd (ClientData cdata, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *const objv[])
+        int objc, Tcl_Obj *CONST objv[])
 }
 declare 3 generic {
     int Itk_UsualCmd (ClientData cdata, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *const objv[])
+        Tcl_Obj *CONST objv[])
 }
 
 
@@ -51,11 +51,11 @@ declare 3 generic {
 
 declare 4 generic {
     int Itk_ClassOptionDefineCmd (ClientData cdata, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *const objv[])
+        int objc, Tcl_Obj *CONST objv[])
 }
 declare 5 generic {
     int Itk_ClassOptionIllegalCmd (ClientData cdata, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *const objv[])
+        int objc, Tcl_Obj *CONST objv[])
 }
 declare 6 generic {
     int Itk_ConfigClassOption (Tcl_Interp *interp, ItclObject *contextObj, \

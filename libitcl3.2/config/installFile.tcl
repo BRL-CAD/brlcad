@@ -59,9 +59,8 @@ if {[string length $dst] == 0} {
 }
 
 # Compatibility with CYGNUS-style pathnames
-
-regsub -nocase {^//([a-z])/(.*)$} $src {\1:/\2} src
-regsub -nocase {^//([a-z])/(.*)$} $dst {\1:/\2} dst
+regsub {^/(cygdrive)?/(.)/(.*)} $src {\2:/\3} src
+regsub {^/(cygdrive)?/(.)/(.*)} $dst {\2:/\3} dst
 
 if {$verbose && $doStrip} {
     puts stderr "Ignoring -s (strip) option for $dst"
