@@ -441,7 +441,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.4 (on a MIPS4 machine) */
 #	undef	sgi
 #	define	MTYPE	m4i64
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
@@ -479,8 +479,6 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	endif
-#	define	TCL_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
-#	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=64
 #	define	LGT_CONFIG	GFLAG
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
@@ -692,18 +690,19 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
 #		define	RANLIB		true
 #		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR
+#		define	LIBBU_LIBES	-lthread LIBTCL LIBTCL_LIBES
 #	else
 #		define  ARCH_SUF	a
 #		define	LIBVERS		../sh/newvers.sh
 #		define	RANLIB		ranlib
 #		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl
+#		define	LIBBU_LIBES	-lthread
 #	endif
 
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
 #	define	LIBPKG_LIBES	-lnsl -lsocket
 
 #	define	LIBRT_TIMER	timerunix
-#	define	LIBBU_LIBES	-lthread
 
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
@@ -845,6 +844,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	BUILD_LIBRARY	gcc -shared -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #	else
 /*		Static linked executables */
 #		define	CC	gcc
@@ -870,7 +870,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DNO_DLFCN_H=1
 #	define	TK_DEFS		OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DTK_PACKAGE_PATH='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
-#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 /*	Use the system-provided TCL and Tk libraries */
 #	define	LIBTCL_DIR	_use_system_tcl_
 #	define	LIBTCL		-ltcl8.0
