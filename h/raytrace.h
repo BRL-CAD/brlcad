@@ -2573,7 +2573,7 @@ struct rt_tree_array *db_flatten_tree(
 int rt_comb_import4(
 	struct rt_db_internal		*ip,
 	const struct bu_external	*ep,
-	const matp_t			matrix,		/* NULL if identity */
+	const mat_t			matrix,		/* NULL if identity */
 	const struct db_i		*dbip,
 	struct resource			*resp);
 int rt_comb_export4(
