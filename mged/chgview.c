@@ -907,10 +907,24 @@ char	**argv;
 	} else if( strcmp( cmd, "distadc" ) == 0 )  {
 		dm_values.dv_distadc = i;
 		dm_values.dv_flagadc = 1;
+	} else if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
+		VSETALL( rate_rotate, 0 );
+		dm_values.dv_xjoy = 0;
+		dm_values.dv_yjoy = 0;
+		dm_values.dv_zjoy = 0;
+
+		VSETALL( rate_slew, 0 );
+		dm_values.dv_xslew = 0;
+		dm_values.dv_yslew = 0;
+		dm_values.dv_zslew = 0;
+
+		rate_zoom = 0;
+		dm_values.dv_zoom = 0;
 	} else {
 usage:
 		(void)printf("knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n");
 		(void)printf("knob: xadc, yadc, zadc, ang1, ang2, distadc (values, range -2048..+2047)\n");
+		(void)printf("knob: zero (cancel motion)\n");
 	}
 
 	check_nonzero_rates();
