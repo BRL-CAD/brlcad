@@ -178,7 +178,7 @@ int len;
 				}
 
 				/* Just skip over knots and control mesh */
-				j = (record.d.d_nknots + record.d.d_nctls);
+				j = (rec2.d.d_nknots + rec2.d.d_nctls);
 				while( j-- > 0 )
 					fread( (char *)&rec2, sizeof(rec2), 1, rtip->fp );
 				nrec += j+1;
