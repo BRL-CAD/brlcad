@@ -36,10 +36,8 @@
 
 #ifdef gould
 #define MAXOBJECTS	1000
-#define NAMELEN		40
 #else
 #define MAXOBJECTS	3000
-#define NAMELEN		80
 #endif /* gould */
 #define VIEWSIZE	(2*Viewscale)
 #define TRUE	1
@@ -71,7 +69,7 @@ f_hideline()
     char 	visible;
     extern int 	hit_headon(),hit_tangent(),hit_overlap();
     int 	i,j,numobjs;
-    char 	objname[MAXOBJECTS][NAMELEN],title[1];
+    char 	*objname[MAXOBJECTS],title[1];
     fastf_t 	len,u,step;
     FAST float 	ratio;
     vect_t	last_move;
@@ -97,11 +95,12 @@ f_hideline()
  */
     numobjs = 0;
     FOR_ALL_SOLIDS(sp) {
-	for (i = 0; i < numobjs; i++)
-	    if (!strcmp(objname[i],sp->s_path[0]->d_namep))
-		break;
+	for (i = 0; i < numobjs; i++)  {
+		if( objname[i] == sp->s_path[0]->d_namep )
+			break;
+	}
 	if (i == numobjs)
-	    strncpy(objname[numobjs++],sp->s_path[0]->d_namep,NAMELEN);
+	    objname[numobjs++] = sp->s_path[0]->d_namep;
     }
 
     (void)printf("Generating hidden-line drawing of the following regions:\n");
