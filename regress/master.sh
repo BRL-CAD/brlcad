@@ -233,10 +233,10 @@ log "\tWAIT_FOR_LOCK_TIMEOUT=$WAIT_FOR_LOCK_TIMEOUT" $TLOG
 log "\tNO_WARNINGS=$NO_WARNINGS" $TLOG
 log "\tCLOBBER_FIRST=$CLOBBER_FIRST" $TLOG
 log "\tLOGFILE=$LOGFILE" $TLOG
-log "Private Settings:" $TLOG
-log "\tLPWD=$LPWD" $TLOG
+#log "Private Settings:" $TLOG
+#log "\tLPWD=$LPWD" $TLOG
 log "\tHOSTNAME=$HOSTNAME" $TLOG
-log "\tLOG=$LOG" $TLOG
+#log "\tLOG=$LOG" $TLOG
 
 
 # from here on we need a lock to avoid nfs and multiple run clobbering
