@@ -356,9 +356,16 @@ top:
 			/* tvu is in fu.  Is tvu on the line? */
 			if( nmg_tbl(p, TBL_LOC, &tvu->l.magic ) >= 0 )  continue;
 			/* No, not on list */
-			rt_log("ERROR: vu=x%x v=x%x is on isect line, tvu=x%x eu=x%x isn't.\n",
-				vu, v, tvu, tvu->up.magic_p );
+			rt_log("ERROR: vu=x%x v=x%x %s=x%x is on isect line, tvu=x%x %s=x%x isn't.\n",
+				vu, v,
+				rt_identify_magic( *vu->up.magic_p ),
+				vu->up.magic_p,
+				tvu,
+				rt_identify_magic( *tvu->up.magic_p ),
+				tvu->up.magic_p );
 			/* XXX bomb here? */
+			nmg_pr_ptbl( "intersect line vu table", p, 1 );
+			rt_bomb("nmg_ck_vu_ptbl() missing vertexuse\n");
 /* XXXXXXXXXXXXXXXXXXXXXXXX Horrible temporizing measure */
 			/* Another strategy:  add it in! */
 			(void)nmg_tbl( p, TBL_INS, &tvu->l.magic );
@@ -815,6 +822,23 @@ static CONST char *nmg_wedgeclass_string[] = {
 	"ON",
 	"???"
 };
+
+/*
+ *			N M G _ P R _ V U _ S T U F F
+ */
+void
+nmg_pr_vu_stuff( vs )
+CONST struct nmg_vu_stuff	*vs;
+{
+	rt_log("nmg_pr_vu_stuff(x%x) vu=x%x, loop_index=%d, lsp=x%x\n",
+		vs, vs->vu, vs->loop_index, vs->lsp);
+	rt_log(" in_vu_angle=%g, out_vu_angle=%g, min_vu_dot=%g\n",
+		vs->in_vu_angle, vs->out_vu_angle, vs->min_vu_dot);
+	rt_log(" lo_ang=%g, hi_ang=%g, seq=%d, wedge_class=%s\n",
+		vs->lo_ang, vs->hi_ang, vs->seq,
+		WEDGECLASS2STR(vs->wedge_class) );
+}
+
 /*
  *			N M G _ W E D G E _ C L A S S
  *
@@ -856,8 +880,14 @@ double	b;
 	}
 
 	if( NEAR_ZERO( ha, .01 ) )  {
-		/* A is on the ray */
+		/* A is on the ray, within tol */
 		if( NEAR_ZERO( hb, .01 ) )  {
+			/* B is on the ray, within tol */
+			/* This is a 0-angle wedge entering & leaving.
+			 * This is not WEDGE_ON, and it's not WEDGE_CROSS.
+			 * Call it WEDGE_LEFT.
+			 */
+rt_log("nmg_wedge_class() 0-angle wedge\n");
 			ret = WEDGE_CROSS;
 			goto out;
 		}
@@ -1315,6 +1345,8 @@ tie_break:
 			/* Gak, this really means trouble! */
 			rt_log("nmg_face_vu_compare(): two loops (single vertex) have same in_vu_angle%g?\n",
 				a->in_vu_angle);
+			nmg_pr_vu_stuff(a);
+			nmg_pr_vu_stuff(b);
 			rt_bomb("nmg_face_vu_compare():  can't decide\n");
 			AB_EQUAL;
 		}
@@ -1327,6 +1359,8 @@ tie_break:
 		case WEDGE_ON:
 			goto tie_break;
 		default:
+			nmg_pr_vu_stuff(a);
+			nmg_pr_vu_stuff(b);
 			rt_bomb("nmg_face_vu_compare() WEDGE_ON 1?\n");
 		}
 		break;
@@ -1349,6 +1383,8 @@ tie_break:
 			if( b->lo_ang <= diff )  A_GT_B;
 			A_LT_B;
 		case WEDGE_ON:
+			nmg_pr_vu_stuff(a);
+			nmg_pr_vu_stuff(b);
 			rt_bomb("nmg_face_vu_compare() WEDGE_ON 2?\n");
 		}
 	case WEDGE_CROSS:
@@ -1369,6 +1405,8 @@ tie_break:
 			if( nmg_is_wedge_before_cross( b, a ) )  A_GT_B;
 			A_LT_B;
 		case WEDGE_ON:
+			nmg_pr_vu_stuff(a);
+			nmg_pr_vu_stuff(b);
 			rt_bomb("nmg_face_vu_compare() WEDGE_ON 3?\n");
 		}
 	case WEDGE_RIGHT:
@@ -1389,6 +1427,8 @@ tie_break:
 			if( a->lo_ang < b->lo_ang )  A_LT_B;
 			A_GT_B;
 		case WEDGE_ON:
+			nmg_pr_vu_stuff(a);
+			nmg_pr_vu_stuff(b);
 			rt_bomb("nmg_face_vu_compare() WEDGE_ON 4?\n");
 		}
 	}
