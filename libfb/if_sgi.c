@@ -110,8 +110,8 @@ FBIO sgi_interface =
 		1024,			/* max width */
 		768,			/* max height */
 		"/dev/sgi",
-		512,			/* current/default width  */
-		512,			/* current/default height */
+		1024,			/* current/default width  */
+		768,			/* current/default height */
 		-1,			/* file descriptor */
 		PIXEL_NULL,		/* page_base */
 		PIXEL_NULL,		/* page_curp */
@@ -161,8 +161,8 @@ static FBIO sgiw_interface =
 		1024,			/* max width */
 		768,			/* max height */
 		"/dev/sgiw",
-		512,			/* current/default width  */
-		512,			/* current/default height */
+		1024,			/* current/default width  */
+		768,			/* current/default height */
 		-1,			/* file descriptor */
 		PIXEL_NULL,		/* page_base */
 		PIXEL_NULL,		/* page_curp */
@@ -314,6 +314,7 @@ int	x, y;
 	if( y < 1 )  y = 1;
 	npts = npts / y;
 	ifp->if_yzoom = ifp->if_max_height/npts;
+	return(0);
 }
 
 _LOCAL_ int
