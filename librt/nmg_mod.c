@@ -210,6 +210,83 @@ int n;
 }
 
 /*
+ *	N M G _ A D D _ L O O P _ T O _ F A C E
+ *
+ *	Create a new loop within a face, given a list of vertices.
+ *	Modified version of nmg_cface().
+ *
+ *	"verts" is an array of "n" pointers to (struct vertex).  "s" is the
+ *	parent shell for the new face.  The face will consist of a single loop
+ *	made from edges between the n vertices.
+ *
+ *	If verts is a null pointer (no vertex list), all vertices of the face
+ *	will be new points.  Otherwise, verts is a pointer to a list of
+ *	vertices to use in creating the face/loop.  Null entries within the
+ *	list will cause a new vertex to be created for that point.  Such new
+ *	vertices will be inserted into the list for return to the caller.
+ *
+ *	The vertices should be listed in "counter-clockwise" (CCW) order if
+ *	this is an ordinary face (loop), and in "clockwise" (CW) order if
+ *	this is an interior ("hole" or "subtracted") face (loop).  This
+ *	routine makes only topology, without reference to any geometry.
+ *
+ *	Note that this routine inserts new vertices (by edge use splitting)
+ *	at the head of the loop, which reverses the order.  Therefore, the
+ *	caller's vertices are traversed in reverse order to counter this
+ *	behavior, and to effect the proper vertex order in the final face
+ *	loop.
+ */
+
+struct faceuse *
+nmg_add_loop_to_face(s, fu, verts, n, dir)
+struct shell *s;
+struct faceuse *fu;
+struct vertex *verts[];
+int n, dir;
+{
+	int i, j;
+	struct edgeuse *eu;
+	struct loopuse *lu;
+	struct vertexuse *vu;
+
+	NMG_CK_SHELL(s);
+	if (n < 1) {
+		rt_log("nmg_add_loop_to_face(s=x%x, verts=x%x, n=%d.)\n",
+			s, verts, n );
+		rt_bomb("nmg_add_loop_to_face: request to make 0 faces\n");
+	}
+
+	if (verts) {
+		if (!fu) {
+			lu = nmg_mlv(&s->l.magic, verts[n-1], dir);
+			fu = nmg_mf(lu);
+		} else {
+			lu = nmg_mlv(&fu->l.magic, verts[n-1], dir);
+		}
+		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+		eu = nmg_meonvu(vu);
+		if (!verts[n-1])
+			verts[n-1] = eu->vu_p->v_p;
+
+		for (i = n-2 ; i >= 0 ; i--) {
+			eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
+			eu = nmg_eusplit(verts[i], eu);
+			if (!verts[i])
+				verts[i] = eu->vu_p->v_p;
+		}
+	} else {
+		lu = nmg_mlv(&s->l.magic, (struct vertex *)NULL, dir);
+		fu = nmg_mf(lu);
+		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+		eu = nmg_meonvu(vu);
+		while (--n) {
+			(void)nmg_eusplit((struct vertex *)NULL, eu);
+		}
+	}
+	return (fu);
+}
+
+/*
  *			N M G _ C M F A C E
  *
  *	Create a face with exactly one exterior loop (and no holes),
