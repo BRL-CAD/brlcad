@@ -215,7 +215,7 @@ rt_log("ptol=%g, qtol=%g\n", ptol, qtol);
 	if( dist[0] < 0 || dist[0] > 1 || dist[1] < 0 || dist[1] > 1 )
 		return -1;		/* missed */
 rt_log("  HIT!\n");
-	return 0;			/* hit, normal intersection */
+	return 1;			/* hit, normal intersection */
 }
 
 /* Was nmg_boolstruct, but that name has appeared in nmg.h */
@@ -259,10 +259,11 @@ struct ee_2d_state {
  *  one of the 3D print routines.
  */
 static void
-nmg_get_2d_vertex( v2d, v, is )
+nmg_get_2d_vertex( v2d, v, is, fu )
 point_t		v2d;		/* a 3-tuple */
 struct vertex	*v;
 struct nmg_inter_struct	*is;
+CONST struct faceuse	*fu;	/* for plane equation */
 {
 	register fastf_t	*pt2d;
 	point_t			pt;
@@ -270,6 +271,12 @@ struct nmg_inter_struct	*is;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEX(v);
+
+	/* If 2D preparations have not been made yet, do it now */
+	if( !is->vert2d )  {
+		nmg_isect2d_prep( is, fu->f_p );
+	}
+
 	if( !v->vg_p )  rt_bomb("nmg_get_2d_vertex:  vertex with no geometry!\n");
 	vg = v->vg_p;
 	NMG_CK_VERTEX_G(vg);
@@ -408,8 +415,8 @@ struct nmg_ptbl	*tbl;
  */
 static struct vertexuse *
 nmg_find_vertexuse_on_face(v, fu)
-struct vertex *v;
-struct faceuse *fu;
+CONST struct vertex	*v;
+CONST struct faceuse	*fu;
 {
 	struct vertexuse *vu;
 	struct edgeuse *eu;
@@ -525,7 +532,7 @@ struct faceuse		*fu;
 		struct vertexuse *vu2;
 
 		NMG_CK_LOOPUSE(lu);
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_LOOPUSE_MAGIC )  {
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			vu2 = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 			if( vu->v_p == vu2->v_p )  return;
 			/* Perhaps a 2d routine here? */
@@ -590,9 +597,13 @@ struct faceuse *fu;
 
 	if ( !NEAR_ZERO(dist, bs->tol.dist) )  return;
 
-	/* The point lies on the plane of the face. */
+	/* The point lies on the plane of the face, by geometry. */
+
+	/* XXX shouldn't the edges be intersected?  point-on-line? */
+	/* XXX nmg_isect_vert2p_face2p( is, vu, fu ); */
 	if (nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic) < 0) {
-		/* XXX shouldn't the edges be intersected?  point-on-line? */
+		/* XXX should re-check nmg_find_vertexuse_on_face(),
+		 * XXX use new vu if it turned up, else make lone-vert-loop */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		    	VPRINT("Making vertexloop", vu->v_p->vg_p->coord);
 
@@ -773,10 +784,11 @@ struct vertex	*v1mate;
  *  Actual 2d intersector, called from nmg_isect_2edge_2face via nmg_visit()
  */
 void
-nmg_isect_edge2p_edge2p( is, eu1, eu2 )
+nmg_isect_edge2p_edge2p( is, eu1, eu2, fu )
 struct nmg_inter_struct	*is;
 struct edgeuse		*eu1;
 struct edgeuse		*eu2;
+CONST struct faceuse	*fu;		/* for plane equation */
 {
 	point_t	other_start;
 	point_t	other_end;
@@ -792,8 +804,8 @@ struct edgeuse		*eu2;
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
 
-	nmg_get_2d_vertex( other_start, eu2->vu_p->v_p, is );
-	nmg_get_2d_vertex( other_end, eu2->eumate_p->vu_p->v_p, is );
+	nmg_get_2d_vertex( other_start, eu2->vu_p->v_p, is, fu );
+	nmg_get_2d_vertex( other_end, eu2->eumate_p->vu_p->v_p, is, fu );
 	VSUB2( other_dir, other_end, other_start );
 
 	status = rt_isect_2dlseg_2dlseg(&dist[0], is->pt, is->dir,
@@ -1292,25 +1304,29 @@ struct faceuse	*fu2;
  *  cutjoin/mesh pass will be needed for each one.
  */
 static void
-nmg_isect_edge2p_face2p( is, eu, fu )
+nmg_isect_edge2p_face2p( is, eu, fu, eu_fu )
 struct nmg_inter_struct	*is;
 struct edgeuse		*eu;
 struct faceuse		*fu;
+struct faceuse		*eu_fu;		/* fu that eu is from */
 {
 	struct nmg_ptbl vert_list1, vert_list2;
 	struct loopuse	*lu;
 	point_t		endpt;
 
 	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACEUSE(eu_fu);
 
-	rt_bomb("nmg_isect_edge2p_face2p\n");
+	rt_log("nmg_isect_edge2p_face2p\n");
 
 	/* See if this edge is topologically on other face already */
-	if( nmg_find_vertexuse_on_face( eu->vu_p, fu ) &&
-	    nmg_find_vertexuse_on_face( eu->eumate_p->vu_p, fu ) )  return;
+	if( nmg_find_vertexuse_on_face( eu->vu_p->v_p, fu ) &&
+	    nmg_find_vertexuse_on_face( eu->eumate_p->vu_p->v_p, fu ) )  return;
 
-	nmg_get_2d_vertex( is->pt, eu->vu_p->v_p, is );
-	nmg_get_2d_vertex( endpt, eu->eumate_p->vu_p->v_p, is );
+	nmg_get_2d_vertex( is->pt, eu->vu_p->v_p, is, fu );
+	nmg_get_2d_vertex( endpt, eu->eumate_p->vu_p->v_p, is, fu );
 	VSUB2( is->dir, endpt, is->pt );
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		VPRINT("isect ray 2d is->pt ", is->pt);
@@ -1326,13 +1342,12 @@ struct faceuse		*fu;
     	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
     		static int fno=1;
- 	   	/* XXX Will this work with both fu's being the same? */
-    	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu, fu, 0 );
+    	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu, eu_fu, 0 );
     	}
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		struct edgeuse	*eu2;
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_LOOPUSE_MAGIC )  {
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			struct vertexuse	*vu;
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 			/* XXX How to ensure that if original edge is split,
@@ -1344,7 +1359,7 @@ struct faceuse		*fu;
 		for( RT_LIST_FOR( eu2, edgeuse, &lu->down_hd ) )  {
 			/* isect eu with eu */
 			/* XXX same question here */
-			nmg_isect_edge2p_edge2p( is, eu, eu2 );
+			nmg_isect_edge2p_edge2p( is, eu, eu2, fu );
 		}
 	}
 
@@ -1354,11 +1369,8 @@ struct faceuse		*fu;
     		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
     	}
 
-#if 0
-	/* XXX fu1 fu2 ? */
-	nmg_purge_unwanted_intersection_points(&vert_list1, fu2);
-	nmg_purge_unwanted_intersection_points(&vert_list2, fu1);
-#endif
+	nmg_purge_unwanted_intersection_points(&vert_list1, fu);
+	nmg_purge_unwanted_intersection_points(&vert_list2, eu_fu);
 
     	if (rt_g.NMG_debug & DEBUG_FCUT) {
 	    	rt_log("nmg_isect_edge2p_face2p(eu=x%x, fu=x%x) vert_lists B:\n", eu, fu );
@@ -1371,10 +1383,8 @@ struct faceuse		*fu;
     		goto out;
     	}
 
-	/* XXX Make sure we can deal with both fu's being the same! */
-	nmg_face_cutjoin(&vert_list1, &vert_list2, fu, fu, is->pt, is->dir, &is->tol);
-	/* XXX What to do here? */
-	nmg_mesh_faces(fu, fu);
+	nmg_face_cutjoin(&vert_list1, &vert_list2, fu, eu_fu, is->pt, is->dir, &is->tol);
+	nmg_mesh_faces(fu, eu_fu);
 
 out:
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
@@ -1399,31 +1409,30 @@ struct faceuse		*fu1, *fu2;
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
 
-	nmg_isect2d_prep( is, fu1->f_p );
 	/* r71 is a useful demonstration */
 /*	rt_g.NMG_debug |= DEBUG_POLYSECT; */
 
 	/* For every edge in f1, intersect with f2, incl. cutjoin */
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_LOOPUSE_MAGIC )  {
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 			nmg_isect_vert2p_face2p( is, vu, fu2 );
 			continue;
 		}
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-			nmg_isect_edge2p_face2p( is, eu, fu2 );
+			nmg_isect_edge2p_face2p( is, eu, fu2, fu1 );
 		}
 	}
 
 	/* For every edge in f2, intersect with f1, incl. cutjoin */
 	for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )  {
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_LOOPUSE_MAGIC )  {
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 			nmg_isect_vert2p_face2p( is, vu, fu1 );
 			continue;
 		}
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-			nmg_isect_edge2p_face2p( is, eu, fu1 );
+			nmg_isect_edge2p_face2p( is, eu, fu1, fu2 );
 		}
 	}
 }
@@ -1506,7 +1515,6 @@ out:
  *			N M G _ I S E C T _ T W O _ G E N E R I C _ F A C E S
  *
  *	Intersect a pair of faces
- *  XXX What about wire loops and wire edges ?
  */
 static void
 nmg_isect_two_generic_faces(fu1, fu2, tol)
@@ -1564,9 +1572,7 @@ CONST struct rt_tol	*tol;
 		/* co-planar */
 		rt_log("co-planar faces.\n");
 		bs.coplanar = 1;
-#if 0
 		nmg_isect_two_face2p( &bs, fu1, fu2 );
-#endif
 		break;
 	case -2:
 		/* parallel and distinct, no intersection */
@@ -1662,7 +1668,7 @@ CONST struct rt_tol	*tol;
 
 		/* Check f1 from s1 against wire loops and edges of s2 */
 
-		/* Check f1 from s1 against lone verts of s2 */
+		/* Check f1 from s1 against lone vert of s2 */
 
 	    	NMG_INDEX_SET(flags, f1);
 	}
