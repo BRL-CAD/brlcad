@@ -441,7 +441,7 @@ delay(us)
 
 	tv.tv_sec = 0;
 	tv.tv_usec = us;
-#ifdef __sgi
+#if 1
 	(void)select( 1, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tv );
 #else
 	(void)select( 1, (char *)0, (char *)0, (char *)0, &tv );
