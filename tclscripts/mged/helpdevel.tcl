@@ -5,10 +5,7 @@
 #==============================================================================
 
 set mged_helpdevel_data(aip)		{{[fb]}	{advance illumination pointer or path position forward or backward}}
-set mged_helpdevel_data(cmd_close)	{{id}	{close the command window represented by id}}
-set mged_helpdevel_data(cmd_get)	{{}	{returns a list of ids associated with the current command window}}
-set mged_helpdevel_data(cmd_init)	{{id}	{initialize a new command window whose name will be id}}
-set mged_helpdevel_data(cmd_set)	{{id}	{set the current command window to id}}
+set mged_helpdevel_data(cmd_win)	{{cmd}	{routine for manipulating command windows}}
 set mged_helpdevel_data(get_comb)	{{comb_name}	{get information about combination}}
 set mged_helpdevel_data(get_dm_list)	{{}	{returns a list of all display managers}}
 set mged_helpdevel_data(get_edit_solid)	{{[-c]}	{get the solid parameters for the solid currently
