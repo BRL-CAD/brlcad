@@ -141,8 +141,8 @@ struct partition *PartHeadp;
 		pknum( last_item );
 		last_solidp = SOLTAB_NULL;
 	}
-	if( last_solidp != pp->pt_instp )  {
-		last_solidp = pp->pt_instp;
+	if( last_solidp != pp->pt_inseg->seg_stp )  {
+		last_solidp = pp->pt_inseg->seg_stp;
 		pchar( '!' );		/* new solid cmd */
 	}
 	i = cosI0 * 255.0;		/* integer angle */
