@@ -547,17 +547,19 @@ double ratio;
 	if( ir_has_rgb )  {
 		register short	r, g, b;
 		if( white )  {
-			r = g = b = 250;
+			r = g = b = 230;
 		} else {
 			r = (short)sp->s_color[0];
 			g = (short)sp->s_color[1];
 			b = (short)sp->s_color[2];
 		}
 		if(cueing_on)  {
+			/* RGBrange marked obsolete, use lRGBrange! */
 			RGBrange(
 				r/10, g/10, b/10,
 				r, g, b,
 				0, 768 );
+			/* XXX should investigate lRGBrange, lshaderange, lsetdepth */
 		}
 		RGBcolor( r, g, b );
 	} else {
@@ -969,6 +971,25 @@ checkevents()  {
 						cueing_on = 0;
 						Ir_colorchange();
 					}
+
+					/*
+					 * Establish GL library operating modes
+					 */
+					/* Don't draw polygon edges */
+					glcompat( GLC_OLDPOLYGON, 0 );
+					/* Z-range mapping */
+#if 0
+					/* Optional:  Z from 0 to 0x007fffff */
+					glcompat( GLC_ZRANGEMAP, 1 );
+#else
+					/* Z range from getgdesc(GD_ZMIN)
+					 * to getgdesc(GD_ZMAX).
+					 * Hardware specific.
+					 */
+					glcompat( GLC_ZRANGEMAP, 0 );	/* default */
+#endif
+
+					/* Define material properties */
 					make_materials();
 
 					lmbind(LMODEL, 2);	/* infinite */
@@ -977,6 +998,20 @@ checkevents()  {
 					lmbind(LIGHT3,3);
 					lmbind(LIGHT4,4);
 					lmbind(LIGHT5,5);
+
+					/* RGB color commands & lighting */
+#if 0
+					/* Good for debugging */
+					/* Material color does not apply,
+					 * when lighting is on */
+					lmcolor( LMC_COLOR );	/* default */
+#else
+					/* Good for looking.
+					 * RGBcolor() values go to emissions
+					 * durring lighting calculations.
+					 */
+					lmcolor( LMC_EMISSION );
+#endif
 
 					lighting_on = 1;
 				}
