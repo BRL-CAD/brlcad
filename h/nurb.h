@@ -76,58 +76,58 @@
 #define STRIDE(pt)		(EXTRACT_COORDS(pt) * sizeof( fastf_t))
 
 struct knot_vector {
-	int k_size;			/* knot vector size */
+	int	k_size;			/* knot vector size */
 	fastf_t * knots;		/* pointer to knot vector  */
 };
 
 struct c_mesh {
-	int c_size;		/* number of ctl points */
-	int pt_type;		/* curve point type */
-	fastf_t * ctl_points;   /* floating point values from machine.h */
+	int	c_size;			/* number of ctl points */
+	int	pt_type;		/* curve point type */
+	fastf_t * ctl_points;  		/* array [c_size] */
 };
 
 struct s_mesh {
-	int s_size[2];		/* mesh size */
-	int pt_type;		/* surface point type */
-	fastf_t * ctl_points;   /* floating point values from machine.h */
+	int	s_size[2];		/* mesh size, u,v */
+	int	pt_type;		/* surface point type */
+	fastf_t * ctl_points; 		/* array [size[0]*size[1]] */
 };
 
 struct cnurb {
-	struct cnurb * next;		/* next curve in list */
-	int order;			/* Curve Order */
+	struct cnurb	* next;		/* next curve in list */
+	int		order;		/* Curve Order */
 	struct knot_vector * knot;	/* curve knot vector */
-	struct c_mesh * mesh;		/* curve control polygon */
+	struct c_mesh	* mesh;		/* curve control polygon */
 };
 
 struct snurb {
-	struct snurb * next;		/* next surface */
-	struct cnurb * trim;		/* surface trimming curves */
-	int order[2];			/* surface order [0] = u, [1] = v */
-	short dir;			/* last direction of refinement */
+	struct snurb	* next;		/* next surface */
+	int		order[2];	/* surface order [0] = u, [1] = v */
+	int		dir;		/* last direction of refinement */
 	struct knot_vector * u_knots;	/* surface knot vectors */
 	struct knot_vector * v_knots;	/* surface knot vectors */
-	struct s_mesh * mesh;		/* surface control points */
+	struct s_mesh	* mesh;		/* surface control points */
 };
+
+/* ----- Internal structures ----- */
 
 struct rt_nurb_poly {
 	struct rt_nurb_poly * next;
-	point_t ply[3];			/* Vertices */
-	fastf_t uv[3][2];		/* U,V parametric values */
+	point_t		ply[3];		/* Vertices */
+	fastf_t		uv[3][2];	/* U,V parametric values */
 };
 
 
 struct oslo_mat {
 	struct oslo_mat * next;
-	int offset;
-	int osize;
-	fastf_t * o_vec;
+	int		offset;
+	int		osize;
+	fastf_t		* o_vec;
 };
 
 #define EPSILON 0.0001
 #define APX_EQ(x,y)    (fabs(x - y) < EPSILON)
 #define MAX(i,j)    ( (i) > (j) ? (i) : (j) )
 #define MIN(i,j)    ( (i) < (j) ? (i) : (j) )
-#define SPL_INFINIT	(1.0e20)
 
 /* nurb_basis.c */
 RT_EXTERN(fastf_t rt_nurb_basis_eval, (struct knot_vector *knts, int interval,
@@ -149,22 +149,20 @@ RT_EXTERN(struct snurb *rt_nurb_scopy, (struct snurb *srf));
 /* nurb_diff.c */
 RT_EXTERN(struct snurb *rt_nurb_s_diff, (struct snurb *srf, int	dir));
 RT_EXTERN(struct cnurb *rt_nurb_c_diff, (struct cnurb *crv));
-/* XXX Needs new name */
-RT_EXTERN(int internal_mesh_diff, (int order, fastf_t *o_pts, fastf_t *n_pts,
+RT_EXTERN(void rt_nurb_mesh_diff, (int order, fastf_t *o_pts, fastf_t *n_pts,
 			fastf_t *knots, int o_stride, int n_stride,
 			int o_size, int pt_type));
 
 /* nurb_eval.c */
 RT_EXTERN(fastf_t *rt_nurb_s_eval, (struct snurb *srf, fastf_t u, fastf_t v));
 RT_EXTERN(fastf_t *rt_nurb_c_eval, (struct cnurb *crv, fastf_t param));
-/* XXX Needs new name */
-RT_EXTERN(fastf_t *internal_eval_crv, (fastf_t *crv, int order, fastf_t param,
+RT_EXTERN(fastf_t *rt_nurb_eval_crv, (fastf_t *crv, int order, fastf_t param,
 			struct knot_vector *k_vec, int k_index, int coords));
-RT_EXTERN(void internal_pr_crv, (fastf_t *crv, int c_size, int coords));
+RT_EXTERN(void rt_nurb_pr_crv, (fastf_t *crv, int c_size, int coords));
 
 /* nurb_flat.c */
 RT_EXTERN(int rt_nurb_s_flat, (struct snurb *srf, fastf_t epsilon));
-RT_EXTERN(fastf_t internal_crv_flat, (fastf_t *crv, int	size, int pt_type));
+RT_EXTERN(fastf_t rt_nurb_crv_flat, (fastf_t *crv, int	size, int pt_type));
 
 /* nurb_knot.c */
 RT_EXTERN(struct knot_vector *rt_nurb_kvknot, (int order,
