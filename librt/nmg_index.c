@@ -788,3 +788,135 @@ struct model *m2;
 
 	FREE_MODEL(m2);
 }
+
+#define CHECK_INDEX( _p ) if((_p)->index > maxindex ) maxindex = (_p)->index
+long
+nmg_find_max_index( m )
+CONST struct model *m;
+{
+	long			maxindex=0;
+	struct nmgregion	*r;
+	struct shell		*s;
+	struct faceuse		*fu;
+	struct face		*f;
+	struct loopuse		*lu;
+	struct loop		*l;
+	register struct edgeuse		*eu;
+	struct edge			*e;
+	register struct vertexuse	*vu;
+	struct vertex			*v;
+
+	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
+		NMG_CK_REGION(r);
+		CHECK_INDEX(r);
+		if( r->ra_p )  CHECK_INDEX(r->ra_p);
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )  {
+			NMG_CK_SHELL(s);
+			CHECK_INDEX(s);
+			if( s->sa_p )  CHECK_INDEX(s->sa_p);
+			/* Faces in shell */
+			for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+				NMG_CK_FACEUSE(fu);
+				CHECK_INDEX(fu);
+				f = fu->f_p;
+				NMG_CK_FACE(f);
+				CHECK_INDEX(f);
+				if( f->g.plane_p ) switch( *f->g.magic_p )  {
+				case NMG_FACE_G_PLANE_MAGIC:
+					CHECK_INDEX(f->g.plane_p);
+					break;
+				case NMG_FACE_G_SNURB_MAGIC:
+					CHECK_INDEX(f->g.snurb_p);
+					break;
+				}
+				/* Loops in face */
+				for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+					NMG_CK_LOOPUSE(lu);
+					CHECK_INDEX(lu);
+					l = lu->l_p;
+					NMG_CK_LOOP(l);
+					CHECK_INDEX(l);
+					if( l->lg_p )  CHECK_INDEX(l->lg_p);
+					if( BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+						/* Loop of Lone vertex */
+						vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
+						CHECK_INDEX(vu);
+						continue;
+					}
+					for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+						NMG_CK_EDGEUSE(eu);
+						CHECK_INDEX(eu);
+						e = eu->e_p;
+						NMG_CK_EDGE(e);
+						CHECK_INDEX(e);
+						if( eu->g.magic_p ) switch(*eu->g.magic_p)  {
+						case NMG_EDGE_G_LSEG_MAGIC:
+							CHECK_INDEX(eu->g.lseg_p);
+							break;
+						case NMG_EDGE_G_CNURB_MAGIC:
+							CHECK_INDEX(eu->g.cnurb_p);
+							break;
+						}
+						vu = eu->vu_p;
+						CHECK_INDEX(vu);
+					}
+				}
+			}
+			/* Wire loops in shell */
+			for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+				NMG_CK_LOOPUSE(lu);
+				CHECK_INDEX(lu);
+				l = lu->l_p;
+				NMG_CK_LOOP(l);
+				CHECK_INDEX(l);
+				if( l->lg_p )  CHECK_INDEX(l->lg_p);
+				if( BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+					/* Wire loop of Lone vertex */
+					vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
+					CHECK_INDEX(vu);
+					continue;
+				}
+				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+					NMG_CK_EDGEUSE(eu);
+					CHECK_INDEX(eu);
+					e = eu->e_p;
+					NMG_CK_EDGE(e);
+					CHECK_INDEX(e);
+					if( eu->g.magic_p ) switch(*eu->g.magic_p)  {
+					case NMG_EDGE_G_LSEG_MAGIC:
+						CHECK_INDEX(eu->g.lseg_p);
+						break;
+					case NMG_EDGE_G_CNURB_MAGIC:
+						CHECK_INDEX(eu->g.cnurb_p);
+						break;
+					}
+					vu = eu->vu_p;
+					CHECK_INDEX(vu);
+				}
+			}
+			/* Wire edges in shell */
+			for( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
+				NMG_CK_EDGEUSE(eu);
+				CHECK_INDEX(eu);
+				e = eu->e_p;
+				NMG_CK_EDGE(e);
+				CHECK_INDEX(e);
+				if( eu->g.magic_p ) switch(*eu->g.magic_p)  {
+				case NMG_EDGE_G_LSEG_MAGIC:
+					CHECK_INDEX(eu->g.lseg_p);
+					break;
+				case NMG_EDGE_G_CNURB_MAGIC:
+					CHECK_INDEX(eu->g.cnurb_p);
+					break;
+				}
+				vu = eu->vu_p;
+				CHECK_INDEX(vu);
+			}
+			/* Lone vertex in shell */
+			if( vu = s->vu_p )  {
+				CHECK_INDEX(vu);
+			}
+		}
+	}
+	return( maxindex );
+}
