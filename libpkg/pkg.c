@@ -8,6 +8,7 @@
  *	pkg_open	Open a network connection to a host
  *	pkg_initserver	Create a network server, and listen for connection
  *	pkg_getclient	As network server, accept a new connection
+ *	pkg_makeconn	Make a pkg_conn structure.
  *	pkg_close	Close a network connection
  *	pkg_send	Send a message on the connection
  *	pkg_waitfor	Wait for a specific msg, user buf, processing others
@@ -221,7 +222,6 @@ void (*errlog)();
 	register int s2;
 	auto int fromlen = sizeof (from);
 	auto int onoff;
-	register struct pkg_conn *pc;
 
 	/* Check for default error handler */
 	if( errlog == NULL )
@@ -250,12 +250,40 @@ void (*errlog)();
 		if( ioctl(s2, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 3");
 	}
+
+	return( pkg_makeconn(s2, switchp, errlog) );
+}
+
+/*
+ *			P K G _ M A K E C O N N
+ *
+ *  Malloc and initialize a pkg_conn structure.
+ *  Assumes a client has already been accepted on the given file
+ *  descriptor.  This is the case with processes spawned by inetd,
+ *  or those comming from pkg_getclient.
+ *
+ *  Returns -
+ *	>0		ptr to pkg_conn block of new connection
+ *	PKC_NULL	accept would block, try again later
+ *	PKC_ERROR	fatal error
+ */
+struct pkg_conn *
+pkg_makeconn(fd, switchp, errlog)
+struct pkg_switch *switchp;
+void (*errlog)();
+{
+	register struct pkg_conn *pc;
+
+	/* Check for default error handler */
+	if( errlog == NULL )
+		errlog = pkg_errlog;
+
 	if( (pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn)))==PKC_NULL )  {
-		errlog( "pkg_getclient: malloc failure\n" );
+		errlog( "pkg_makeconn: malloc failure\n" );
 		return(PKC_ERROR);
 	}
 	pc->pkc_magic = PKG_MAGIC;
-	pc->pkc_fd = s2;
+	pc->pkc_fd = fd;
 	pc->pkc_switch = switchp;
 	pc->pkc_errlog = errlog;
 	pc->pkc_left = -1;

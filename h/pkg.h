@@ -43,6 +43,7 @@ struct pkg_conn {
 extern struct pkg_conn *pkg_open();
 extern int pkg_initserver();
 extern struct pkg_conn *pkg_getclient();
+extern struct pkg_conn *pkg_makeconn();
 extern void pkg_close();
 extern int pkg_send();
 extern int pkg_waitfor();
