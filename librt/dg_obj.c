@@ -1777,11 +1777,7 @@ dgo_rtcheck_output_handler(clientData, mask)
 	int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 
 	/* Get textual output from rtcheck */
-#if 0
 	if((count = read((int)fd, line, RT_MAXLINE)) == 0){
-#else
-	if((count = read((int)fd, line, 5120)) == 0){
-#endif
 		Tcl_DeleteFileHandler(fd);
 		close(fd);
 
@@ -1844,11 +1840,7 @@ dgo_rtcheck_output_handler(ClientData clientData, int mask)
 	HANDLE fd = (HANDLE)clientData;
 
 	/* Get textual output from rtcheck */
-#if 0
 	if((!ReadFile(fd, line, RT_MAXLINE,&count,0))){
-#else
-	if((!ReadFile(fd, line, 5120,&count,0))){
-#endif
 
 	Tcl_DeleteChannelHandler(chan1,dgo_rtcheck_output_handler,(ClientData)fd);
 	CloseHandle(fd);
@@ -1871,6 +1863,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 {
 	register char **vp;
 	register int i;
+	int	pid; 	 
 #ifndef WIN32
 	int	i_pipe[2];	/* object reads results for building vectors */
 	int	o_pipe[2];	/* object writes view parameters */
@@ -3748,17 +3741,10 @@ dgo_rt_output_handler(ClientData	clientData,
 {
 	struct run_rt *run_rtp = (struct run_rt *)clientData;
 	int count;
-#if 0
-	char line[10240+1];
+	char line[RT_MAXLINE+1];
 
 	/* Get data from rt */
-	if ((count = read((int)run_rtp->fd, line, 10240)) == 0) {
-#else
-	char line[5120+1];
-
-	/* Get data from rt */
-	if ((count = read((int)run_rtp->fd, line, 5120)) == 0) {
-#endif
+	if ((count = read((int)run_rtp->fd, line, RT_MAXLINE)) == 0) {
 		int retcode;
 		int rpid;
 		int aborted;
@@ -3795,18 +3781,10 @@ dgo_rt_output_handler(ClientData	clientData,
 {
 	struct run_rt *run_rtp = (struct run_rt *)clientData;
 	int count;
-#if 0
 	char line[10240+1];
 
 	/* Get data from rt */
-	if((!ReadFile(run_rtp->fd, line, 10240,&count,0)){
-#else
-	char line[5120+1];
-
-	/* Get data from rt */
-#if _WIN32
-  if (Tcl_Eof(run_rtp->chan) || (!ReadFile(run_rtp->fd, line, 5120,&count,0))) {
-#endif
+	if (Tcl_Eof(run_rtp->chan) || (!ReadFile(run_rtp->fd, line, 10240,&count,0))) {
 		int aborted;
 
 		Tcl_DeleteChannelHandler(run_rtp->chan,dgo_rt_output_handler,(ClientData)run_rtp);
@@ -3932,6 +3910,7 @@ dgo_run_rt(struct dg_obj *dgop,
     char name[256];
 #endif
 	vect_t		eye_model;
+	int		pid; 	 
 	struct run_rt	*run_rtp;
 
 #ifndef WIN32
