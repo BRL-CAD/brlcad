@@ -5,7 +5,6 @@
  *	init_sedit	set up for a Solid Edit
  *	sedit		Apply Solid Edit transformation(s)
  *	findang		Given a normal vector, find rotation & fallback angles
- *	pr_solid	Print a description of a solid
  *	pscale		Partial scaling of a solid
  *	init_objedit	set up for object edit?
  *	f_eqn		change face of GENARB8 to new equation
@@ -702,26 +701,24 @@ sedit_menu()  {
 	menu_array[MENU_L1] = MENU_NULL;
 	chg_l2menu(ST_S_EDIT);
                                                                       
-	switch( es_gentype ) {
+	switch( es_int.idb_type ) {
 
-	case GENARB8:
+	case ID_ARB8:
 		menu_array[MENU_L1] = cntrl_menu;
 		break;
-	case GENTGC:
+	case ID_TGC:
 		menu_array[MENU_L1] = tgc_menu;
 		break;
-	case TOR:
+	case ID_TOR:
 		menu_array[MENU_L1] = tor_menu;
 		break;
-	case GENELL:
+	case ID_ELL:
 		menu_array[MENU_L1] = ell_menu;
 		break;
-
-	/* These two sections are wrong!!  Not solid records at all! */
-	case ARS:
+	case ID_ARS:
 		menu_array[MENU_L1] = ars_menu;
 		break;
-	case SPLINE:
+	case ID_BSPLINE:
 		menu_array[MENU_L1] = spline_menu;
 		break;
 	}
@@ -933,7 +930,6 @@ sedit()
 		replot_editing_solid();
 
 		inpara = 0;
-		pr_solid( &es_rec.s );
 		return;
 
 	case SSCALE:
@@ -1121,7 +1117,6 @@ sedit()
 	replot_editing_solid();
 
 	inpara = 0;
-	pr_solid( &es_rec.s );
 	return;
 }
 
@@ -1196,184 +1191,36 @@ register vect_t		unitv;
 		str, (base)[0], (base)[1], (base)[2], \
 		(base)[3], (base)[4], '\0' )
 
-/*
- *			P R _ S O L I D
- *
- * Generate neatly formatted representation of the solid,
- * for display purposes.
- */
 void
-pr_solid( sp )
+vls_solid( vp, sp, mat )
+register struct rt_vls	*vp;
 register struct solidrec *sp;
+CONST mat_t		mat;
 {
-	static vect_t work;
-	register int i;
-	static fastf_t ma;
-	static fastf_t r1, r2;
-	static vect_t unitv;
-	static fastf_t ang[5];
-	static struct solidrec local;
-	register int length;
-	int cgtype;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	struct solidrec		sol;
+	mat_t			ident;
+	int			id;
 
-	/* make a private copy in local units */
-	for(i=0; i<24; i+=3) {
-		VSCALE(work, &sp->s_values[i], base2local);
-		VMOVE(&local.s_values[i], work);
+	RT_VLS_CHECK(vp);
+
+	/* Fake up an external record.  Does not need to be freed */
+	sol = *sp;		/* struct copy */
+	RT_INIT_EXTERNAL(&ext);
+	ext.ext_nbytes = sizeof(sol);
+	ext.ext_buf = (genptr_t)&sol;
+
+	id = rt_id_solid( &ext );
+	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
+		printf("vls_solid: database import error\n");
+		return;
 	}
-	if( (cgtype = sp->s_cgtype) < 0 )
-		cgtype *= -1;
 
-	switch( sp->s_type ) {
-
-	case HALFSPACE:
-		PR_PT( 0, 'N', &sp->s_values[0]);
-		(void)sprintf( &es_display[1*ES_LINELEN],
-			"\td=%f", local.s_values[3]);
-		es_nlines = 2;
-		break;
-
-	case ARS:
-	case ARSCONT:
-		PR_PT( 0, 'V', &local.s_values[0]);
-		es_nlines = 1;
-		break;
-
-	case TOR:
-		r1 = MAGNITUDE(&local.s_tor_A);
-		r2 = MAGNITUDE(&local.s_tor_H);
-		PR_PT( 0, 'V', &local.s_tor_V );
-
-		(void)sprintf( &es_display[1*ES_LINELEN],
-			"\tr1=%f, r2=%f%c", r1, r2, '\0' );
-
-		if( r2 < EPSILON )  {
-			PR_STR( 2, "N too small");
-		} else {
-			VSCALE( unitv, &local.s_tor_H, 1.0/r2 );/* N == H^ */
-			PR_PT( 2, 'N', unitv );
-		}
-
-		findang( ang, unitv );
-		PR_ANG( 3, "N", ang );
-
-		PR_PT( 4, 'I', &local.s_tor_C );
-		PR_PT( 5, 'O', &local.s_tor_E );
-		PR_PT( 6, 'H', &local.s_tor_H );
-		es_nlines = 7;
-		break;
-
-	case GENARB8:
-		PR_PT( 0, '1', &local.s_values[0] );
-		switch( cgtype ) {
-			case ARB8:
-				es_nlines = length = 8;
-/* common area for arbs */
-arbcommon:
-				for(i=3; i<3*length; i+=3) {
-					VADD2( work, &local.s_values[i], &local.s_values[0] );
-					PR_PT( i/3, '1'+(i/3), work );
-				}
-				break;
-
-			case ARB7:
-				es_nlines = length = 7;
-				goto arbcommon;
-
-			case ARB6:
-				es_nlines = length = 6;
-				VMOVE(&local.s_values[15], &local.s_values[18]);
-				goto arbcommon;
-
-			case ARB5:
-				es_nlines = length = 5;
-				goto arbcommon;
-
-			case ARB4:
-				es_nlines = length = 4;
-				VMOVE(&local.s_values[9], &local.s_values[12]);
-				goto arbcommon;
-
-			default:
-				/* use ARB8 */
-				es_nlines = length = 8;
-				goto arbcommon;
-		}
-		break;
-
-	case GENELL:
-		PR_PT( 0, 'V', &local.s_ell_V );
-
-		ma = MAGNITUDE( &local.s_ell_A );
-		PR_VECM( 1, 'A', &local.s_ell_A, ma );
-
-		if( ma < EPSILON )  {
-			PR_STR( 2, "A too small");
-		} else {
-			VSCALE( unitv, &local.s_ell_A, 1.0/ma );
-			findang( ang, unitv );
-			PR_ANG( 2, "A", ang );
-		}
-
-		ma = MAGNITUDE( &local.s_ell_B );
-		PR_VECM( 3, 'B', &local.s_ell_B, ma );
-
-		if( ma < EPSILON )  {
-			PR_STR( 4, "B too small");
-		} else {
-			VSCALE( unitv, &local.s_ell_B, 1.0/ma );
-			findang( ang, unitv );
-			PR_ANG( 4, "B", ang );
-		}
-
-		ma = MAGNITUDE( &local.s_ell_C );
-		PR_VECM( 5, 'C', &local.s_ell_C, ma );
-
-		if( ma < EPSILON )  {
-			PR_STR( 6, "C too small");
-		} else {
-			VSCALE( unitv, &local.s_ell_C, 1.0/ma );
-			findang( ang, unitv );
-			PR_ANG( 6, "C", ang );
-		}
-
-		es_nlines = 7;
-		break;
-
-	case GENTGC:
-		PR_PT( 0, 'V', &local.s_tgc_V );
-
-		ma = MAGNITUDE( &local.s_tgc_H );
-		PR_VECM( 1, 'H', &local.s_tgc_H, ma );
-
-		if( ma < EPSILON )  {
-			PR_STR( 2, "H magnitude too small");
-		} else {
-			VSCALE( unitv, &local.s_tgc_H, 1.0/ma );
-			findang( ang, unitv );
-			PR_ANG( 2, "H", ang );
-		}
-
-		ma = MAGNITUDE( &local.s_tgc_A );
-		PR_VECM( 3, 'A', &local.s_tgc_A, ma );
-
-		ma = MAGNITUDE( &local.s_tgc_B );
-		PR_VECM( 4, 'B', &local.s_tgc_B, ma );
-
-		(void)sprintf( &es_display[5*ES_LINELEN],
-			"\tc = %f, d = %f%c",
-			MAGNITUDE( &local.s_tgc_C ),
-			MAGNITUDE( &local.s_tgc_D ), '\0' );
-
-		/* AxB */
-		VCROSS( unitv, &local.s_tgc_C, &local.s_tgc_D );
-		VUNITIZE( unitv );
-		findang( ang, unitv );
-		PR_ANG( 6, "AxB", ang );
-
-		es_nlines = 7;
-		break;
-	}
+	if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
+	    base2local ) < 0 )
+		printf("vls_solid: describe error\n");
+	rt_functab[id].ft_ifree( &intern );
 }
 
 /*
@@ -1460,9 +1307,9 @@ torcom:
 
 	case MENUA:
 		/* scale vector A */
-		switch( es_gentype ) {
+		switch( es_int.idb_type ) {
 
-		case GENELL:
+		case ID_ELL:
 			op = &es_rec.s.s_ell_A;
 			if( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
@@ -1472,7 +1319,7 @@ torcom:
 			VSCALE(op, op, es_scale);
 			break;
 
-		case GENTGC:
+		case ID_TGC:
 			op = &es_rec.s.s_tgc_A;
 			if( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
@@ -1487,9 +1334,9 @@ torcom:
 
 	case MENUB:
 		/* scale vector B */
-		switch(es_gentype) {
+		switch( es_int.idb_type ) {
 
-		case GENELL:
+		case ID_ELL:
 			op = &es_rec.s.s_ell_B;
 			if( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
@@ -1499,7 +1346,7 @@ torcom:
 			VSCALE(op, op, es_scale);
 			break;
 
-		case GENTGC:
+		case ID_TGC:
 			op = &es_rec.s.s_tgc_B;
 			if( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
@@ -1619,7 +1466,6 @@ torcom:
 void
 init_objedit()
 {
-	struct rt_external	es_ext;	/* This should be external */
 	register int		i;
 	register int		type;
 	int			id;
@@ -1649,13 +1495,23 @@ init_objedit()
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
-	/* XXX should be db_getmrec() */
 	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 )  {
 		(void)printf("init_objedit(%s): db_get_external failure\n",
 			illump->s_path[illump->s_last]->d_namep );
 		button(BE_REJECT);
 		return;
 	}
+
+	id = rt_id_solid( &es_ext );
+	if( rt_functab[id].ft_import( &es_int, &es_ext, rt_identity ) < 0 )  {
+		rt_log("init_sedit(%s):  solid import failure\n",
+			illump->s_path[illump->s_last]->d_namep );
+	    	if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
+		db_free_external( &es_ext );
+		return;				/* FAIL */
+	}
+	RT_CK_DB_INTERNAL( &es_int );
+
 	/* XXX hack:  get first granule into es_rec (ugh) */
 	bcopy( (char *)es_ext.ext_buf, (char *)&es_rec, sizeof(es_rec) );
 
@@ -1721,9 +1577,8 @@ init_objedit()
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );
 
-	/* fill the display array */
-	pr_solid( &es_rec.s );
-
+	/* XXX These should move to oedit_accept() and oedit_reject() ! */
+    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	db_free_external( &es_ext );
 }
 
@@ -1806,7 +1661,6 @@ f_eqn()
 	replot_editing_solid();
 
 	/* update display information */
-	pr_solid( &es_rec.s );
 	dmaflag = 1;
 }
 
