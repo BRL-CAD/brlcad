@@ -1894,6 +1894,7 @@ struct vertexuse	*split_vu;
 	struct loopuse		*newlu;
 	struct loopuse		*newlumate;
 	struct vertex		*split_v;
+	int			iteration;
 
 	split_v = split_vu->v_p;
 	NMG_CK_VERTEX(split_v);
@@ -1926,7 +1927,7 @@ begin:
 	/* nmg_kvu() does RT_LIST_INIT() on down_hd */
 
 	/* Move edges & mates into new loop until vertex is repeated */
-	for( ;; )  {
+	for( iteration=0; iteration < 10000; iteration++ )  {
 		struct edgeuse	*eunext;
 		eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
@@ -1947,6 +1948,7 @@ begin:
 		NMG_CK_VERTEXUSE(vu);
 		if( vu->v_p == split_v )  break;
 	}
+	if( iteration >= 10000 )  rt_bomb("nmg_split_lu_at_vu:  infinite loop");
 
 	/* Create new bounding boxes for both old & new loops */
 	nmg_loop_g(lu->l_p);
