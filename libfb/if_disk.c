@@ -1,17 +1,17 @@
 /*
-  Author -
-	Gary S. Moss
-
-  Source -
-	SECAD/VLD Computing Consortium, Bldg 394
-	The U. S. Army Ballistic Research Laboratory
-	Aberdeen Proving Ground, Maryland  21005-5066
-  
-  Copyright Notice -
-	This software is Copyright (C) 1986 by the United States Army.
-	All rights reserved.
-
-	$Header$ (BRL)
+ *			I F _ D I S K . C
+ *
+ *  Author -
+ *	Gary S. Moss
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -26,8 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-extern int	fb_sim_readrect(), fb_sim_writerect();
-
 #define FILE_CMAP_ADDR	((long) ifp->if_width*ifp->if_height\
 			*sizeof(RGBpixel))
 
@@ -35,59 +33,61 @@ extern int	fb_sim_readrect(), fb_sim_writerect();
 #define	DISK_DMA_BYTES	(16*1024/sizeof(RGBpixel)*sizeof(RGBpixel))
 #define	DISK_DMA_PIXELS	(DISK_DMA_BYTES/sizeof(RGBpixel))
 
-_LOCAL_ int	dsk_dopen(),
-		dsk_dclose(),
-		dsk_dclear(),
-		dsk_bread(),
-		dsk_bwrite(),
-		dsk_cmread(),
-		dsk_cmwrite(),
+_LOCAL_ int	dsk_open(),
+		dsk_close(),
+		dsk_clear(),
+		dsk_read(),
+		dsk_write(),
+		dsk_rmap(),
+		dsk_wmap(),
+		dsk_free(),
 		dsk_help();
 
-FBIO disk_interface =
-		{
-		dsk_dopen,
-		dsk_dclose,
-		fb_null,		/* dreset */
-		dsk_dclear,
-		dsk_bread,
-		dsk_bwrite,
-		dsk_cmread,
-		dsk_cmwrite,
-		fb_null,		/* viewport_set */
-		fb_null,		/* window_set */
-		fb_null,		/* zoom_set */
-		fb_null,		/* curs_set */
-		fb_null,		/* cmemory_addr */
-		fb_null,		/* cscreen_addr */
-		fb_sim_readrect,
-		fb_sim_writerect,
-		dsk_help,
-		"Disk File Interface",
-		16*1024,		/* the sky's really the limit here */
-		16*1024,
-		"filename",		/* not in list so name is safe */
-		512,
-		512,
-		-1,
-		PIXEL_NULL,
-		PIXEL_NULL,
-		PIXEL_NULL,
-		-1,
-		0,
-		0L,
-		0L,
-		0
-		};
+FBIO disk_interface = {
+	dsk_open,
+	dsk_close,
+	fb_null,		/* reset */
+	dsk_clear,
+	dsk_read,
+	dsk_write,
+	dsk_rmap,
+	dsk_wmap,
+	fb_null,		/* viewport_set */
+	fb_null,		/* window_set */
+	fb_null,		/* zoom_set */
+	fb_null,		/* setcursor */
+	fb_null,		/* cursor */
+	fb_null,		/* scursor */
+	fb_sim_readrect,
+	fb_sim_writerect,
+	fb_null,		/* flush */
+	dsk_free,
+	dsk_help,
+	"Disk File Interface",
+	16*1024,		/* the sky's really the limit here */
+	16*1024,
+	"filename",		/* not in list so name is safe */
+	512,
+	512,
+	-1,
+	PIXEL_NULL,
+	PIXEL_NULL,
+	PIXEL_NULL,
+	-1,
+	0,
+	0L,
+	0L,
+	0
+};
 
 _LOCAL_ int	disk_color_clear();
 
 _LOCAL_ int
-dsk_dopen( ifp, file, width, height )
+dsk_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
-	{
+{
 	static char zero = 0;
 
 	/* check for default size */
@@ -100,38 +100,43 @@ int	width, height;
 	  && (ifp->if_fd = open( file, O_RDONLY, 0 )) == -1 ) {
 		if( (ifp->if_fd = open( file, O_RDWR|O_CREAT, 0664 )) > 0 ) {
 			/* New file, write byte at end */
-			if( lseek( ifp->if_fd, height*width*sizeof(RGBpixel)-1, 0 ) == -1 )
-				{
+			if( lseek( ifp->if_fd, height*width*sizeof(RGBpixel)-1, 0 ) == -1 ) {
 				fb_log( "disk_device_open : can not seek to end of new file.\n" );
 				return	-1;
-				}
-			if( write( ifp->if_fd, &zero, 1 ) < 0 )
-				{
+			}
+			if( write( ifp->if_fd, &zero, 1 ) < 0 ) {
 				fb_log( "disk_device_open : initial write failed.\n" );
 				return	-1;
-				}
+			}
 		} else
 			return	-1;
 	}
 	ifp->if_width = width;
 	ifp->if_height = height;
-	if( lseek( ifp->if_fd, 0L, 0 ) == -1L )
-		{
+	if( lseek( ifp->if_fd, 0L, 0 ) == -1L ) {
 		fb_log( "disk_device_open : can not seek to beginning.\n" );
 		return	-1;
-		}
+	}
 	return	0;
-	}
+}
 
 _LOCAL_ int
-dsk_dclose( ifp )
+dsk_close( ifp )
 FBIO	*ifp;
-	{
+{
 	return	close( ifp->if_fd );
-	}
+}
 
 _LOCAL_ int
-dsk_dclear( ifp, bgpp )
+dsk_free( ifp )
+FBIO	*ifp;
+{
+	close( ifp->if_fd );
+	return	unlink( ifp->if_name );
+}
+
+_LOCAL_ int
+dsk_clear( ifp, bgpp )
 FBIO	*ifp;
 RGBpixel	*bgpp;
 {
@@ -144,63 +149,52 @@ RGBpixel	*bgpp;
 }
 
 _LOCAL_ int
-dsk_bread( ifp, x, y, pixelp, count )
+dsk_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x,  y;
 RGBpixel	*pixelp;
 int	count;
-{	register long bytes = count * (long) sizeof(RGBpixel);
+{
+	register long bytes = count * (long) sizeof(RGBpixel);
 	register long todo;
 
-	if( lseek(	ifp->if_fd,
-			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(RGBpixel),
-			0
-			)
-	    == -1L
-		)
-		{
+	if( lseek(ifp->if_fd,
+	     (((long) y * (long) ifp->if_width) + (long) x)
+	     * (long) sizeof(RGBpixel), 0) == -1L ) {
 		fb_log( "disk_buffer_read : seek to %ld failed.\n",
 			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(RGBpixel)
-			);
+			* (long) sizeof(RGBpixel) );
 		return	-1;
-		}
-	while( bytes > 0 )
-		{
+	}
+	while( bytes > 0 ) {
 		todo = bytes;
 		if( read( ifp->if_fd, (char *) pixelp, todo ) != todo )
 			return	-1;
 		bytes -= todo;
 		pixelp += todo / sizeof(RGBpixel);
-		}
-	return	count;
 	}
+	return	count;
+}
 
 _LOCAL_ int
-dsk_bwrite( ifp, x, y, pixelp, count )
+dsk_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
 long	count;
-	{	register long	bytes = count * (long) sizeof(RGBpixel);
-		register int	todo;
-	if( lseek(	ifp->if_fd,
-			((long) y * (long) ifp->if_width + (long) x)
-			* (long) sizeof(RGBpixel),
-			0
-			)
-	    == -1L
-		)
-		{
+{
+	register long	bytes = count * (long) sizeof(RGBpixel);
+	register int	todo;
+
+	if( lseek(ifp->if_fd,
+	     ((long) y * (long) ifp->if_width + (long) x)
+	     * (long) sizeof(RGBpixel), 0) == -1L ) {
 		fb_log( "disk_buffer_write : seek to %ld failed.\n",
 			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(RGBpixel)
-			);
+			* (long) sizeof(RGBpixel) );
 		return	-1;
-		}
-	while( bytes > 0 )
-		{
+	}
+	while( bytes > 0 ) {
 		todo = bytes;
 		if( write( ifp->if_fd, (char *) pixelp, todo ) != todo )  {
 			fb_log( "disk_buffer_write: write failed\n" );
@@ -208,58 +202,51 @@ long	count;
 		}
 		bytes -= todo;
 		pixelp += todo / sizeof(RGBpixel);
-		}
+	}
 	return	count;
-	}
+}
 
 _LOCAL_ int
-dsk_cmread( ifp, cmap )
+dsk_rmap( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
-	{
-	if( lseek( ifp->if_fd, FILE_CMAP_ADDR, 0 ) == -1 )
-		{
+{
+	if( lseek( ifp->if_fd, FILE_CMAP_ADDR, 0 ) == -1 ) {
 		fb_log(	"disk_colormap_read : seek to %ld failed.\n",
-				FILE_CMAP_ADDR
-				);
+				FILE_CMAP_ADDR );
 	   	return	-1;
-		}
-	if( read( ifp->if_fd, (char *) cmap, sizeof(ColorMap) )
-		!= sizeof(ColorMap)
-		)
-		{ /* Not necessarily an error.  It is not required
-			that a color map be saved and the standard 
-			map is not generally saved.
-		   */
-		return	-1;
-		}
-	return	0;
 	}
+	if( read( ifp->if_fd, (char *) cmap, sizeof(ColorMap) )
+		!= sizeof(ColorMap) ) {
+		/* Not necessarily an error.  It is not required
+		 * that a color map be saved and the standard 
+		 * map is not generally saved.
+		 */
+		return	-1;
+	}
+	return	0;
+}
 
 _LOCAL_ int
-dsk_cmwrite( ifp, cmap )
+dsk_wmap( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
-	{
+{
 	if( cmap == (ColorMap *) NULL )
-		/* Do not write default map to file.			*/
+		/* Do not write default map to file. */
 		return	0;
-	if( lseek( ifp->if_fd, FILE_CMAP_ADDR, 0 ) == -1 )
-		{
+	if( lseek( ifp->if_fd, FILE_CMAP_ADDR, 0 ) == -1 ) {
 		fb_log(	"disk_colormap_write : seek to %ld failed.\n",
-				FILE_CMAP_ADDR
-				);
+				FILE_CMAP_ADDR );
 		return	-1;
-		}
+	}
 	if( write( ifp->if_fd, (char *) cmap, sizeof(ColorMap) )
-		!= sizeof(ColorMap)
-		)
-		{
+	    != sizeof(ColorMap) ) {
 	    	fb_log( "disk_colormap_write : write failed.\n" );
 		return	-1;
-		}
-	return	0;
 	}
+	return	0;
+}
 
 /*
  *		D I S K _ C O L O R _ C L E A R
