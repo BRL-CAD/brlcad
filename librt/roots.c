@@ -67,20 +67,18 @@ register complex	roots[];	/* space to put roots found	*/
 
 	while ( eqn->dgr > 2 ){
 
-		if ( eqn->dgr == 4 ){
-			if(   ! quartic( eqn, &roots[n] )
-			   &&	evalpoly( eqn, &roots[n], 4 ) == 0
-				)
-				{
-				return ( n+=4 );
-				}
+		if ( eqn->dgr == 4 )  {
+			if( quartic( eqn, &roots[n] ) )
+				return( n+4 );
+			if( evalpoly( eqn, &roots[n], 4 ) == 0 )
+				return ( n+4 );
 		}
 
-		if ( eqn->dgr == 3 ){
-			cubic( eqn, &roots[n] );
-			if ( evalpoly( eqn, &roots[n], 3 ) == 0 ){
-				return ( n+=3 );
-			}
+		if ( eqn->dgr == 3 )  {
+			if( cubic( eqn, &roots[n] ) )
+				return( n+3 );
+			if ( evalpoly( eqn, &roots[n], 3 ) == 0 )
+				return ( n+3 );
 		}
 
 		if ( (findRoot( eqn, &roots[n] )) < 0 )

@@ -3,6 +3,8 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include <signal.h>
+#include <setjmp.h>
 #include "vmath.h"
 #include "polyno.h"
 #include "complex.h"
@@ -209,15 +211,30 @@ register complex	root[];
  *	If D = 0, there will be three real roots at least two of
  *	which are equal.
  *	If D < 0, there will be three unequal real roots.
+ *
+ *	Returns 1 for success, 0 for fail.
  */
-void
+static jmp_buf abort_buf;
+static void cubic_catch()  {
+	fprintf(stderr,"cubic FPE\n");
+	longjmp(abort_buf, 1);	/* return error code */
+}
+
+int
 cubic( eqn, root )
 register poly		*eqn;
 register complex	root[];
-
 {
 	LOCAL fastf_t		a, b, c1, delta;
 	register int		i;
+	void (*sav)();
+
+	sav=signal(SIGFPE, cubic_catch);
+	if( setjmp( abort_buf ) )  {
+		signal(SIGFPE, sav);
+		pr_poly(eqn);
+		return(0);	/* FAIL */
+	}
 
 	c1 = eqn->cf[1];
 
@@ -235,29 +252,29 @@ register complex	root[];
 		LOCAL fastf_t		r_delta, A, B;
 
 		r_delta = sqrt( delta );
-		A = -b/2.0 + r_delta;
-		B = -b/2.0 - r_delta;
+		A = -b*0.5 + r_delta;
+		B = -b*0.5 - r_delta;
 
 		A = CubeRoot( A );
 		B = CubeRoot( B );
 
-		root[2].re = root[1].re = -( root[0].re = A + B )/2.0;
+		root[2].re = root[1].re = -( root[0].re = A + B )*0.5;
 
 		root[0].im = 0.0;
-		root[2].im = -( root[1].im = (A - B)*SQRT3/2.0 );
+		root[2].im = -( root[1].im = (A - B)*SQRT3*0.5 );
 	} else if ( delta == 0.0 ){
 		LOCAL fastf_t	b_2;
-		b_2 = -b/2.0;
+		b_2 = -b*0.5;
 
 		root[0].re = 2.0* CubeRoot( b_2 );
-		root[2].re = root[1].re = -root[0].re/2.0;
+		root[2].re = root[1].re = -root[0].re*0.5;
 		root[2].im = root[1].im = root[0].im = 0.0;
 	} else {
 		LOCAL fastf_t		cs_3phi, phi, fact;
 		LOCAL fastf_t		cs_phi, sn_phi;
 
 		fact = sqrt( -a/3.0 );
-		cs_3phi = ( -b/2.0 )/( fact*fact*fact );
+		cs_3phi = ( -b*0.5 )/( fact*fact*fact );
 		phi = acos( cs_3phi )/3.0;
 		cs_phi = cos( phi );
 		sn_phi = sin( phi );
@@ -271,6 +288,8 @@ register complex	root[];
 	for ( i=0; i < 3; ++i ){
 		root[i].re -= c1/3.0;
 	}
+	(void)signal(SIGFPE, sav);
+	return(1);		/* OK */
 }
 
 
@@ -278,12 +297,13 @@ register complex	root[];
  *
  *	Uses the quartic formula to find the roots ( in `complex' form )
  *	of any quartic equation with real coefficients.
+ *
+ *	Returns 1 for success, 0 for fail.
  */
-void
+int
 quartic( eqn, root )
 register poly		*eqn;
 register complex	root[];
-
 {
 	LOCAL poly		cube, quad1, quad2;
 	LOCAL complex		u[3];
@@ -299,7 +319,8 @@ register complex	root[];
 			- eqn->cf[4]*eqn->cf[1]*eqn->cf[1]
 			+ 4*eqn->cf[4]*eqn->cf[2];
 
-	cubic( &cube, u );
+	if( !cubic( &cube, u ) )
+		return( 0 );		/* FAIL */
 	if ( u[1].im != 0.0 ){
 		U = u[0].re;
 	} else {
@@ -312,7 +333,7 @@ register complex	root[];
 	NearZero( p );
 	NearZero( q );
 	if ( p < 0 || q < 0 ){
-		return;
+		return(0);	/* FAIL */
 	} else {
 		p = sqrt( p );
 		q = sqrt( q );
@@ -320,10 +341,10 @@ register complex	root[];
 
 	quad1.dgr = quad2.dgr = 2;
 	quad1.cf[0] = quad2.cf[0] = 1.0;
-	quad1.cf[1] = eqn->cf[1]/2.0 - p;
-	quad2.cf[1] = eqn->cf[1]/2.0 + p;
-	q1 = U/2.0 - q;
-	q2 = U/2.0 + q;
+	quad1.cf[1] = eqn->cf[1]*0.5 - p;
+	quad2.cf[1] = eqn->cf[1]*0.5 + p;
+	q1 = U*0.5 - q;
+	q2 = U*0.5 + q;
 	if ( Abs( quad1.cf[1]*q2 + quad2.cf[1]*q1 - eqn->cf[3] ) < SMALL){
 		quad1.cf[2] = q1;
 		quad2.cf[2] = q2;
@@ -331,11 +352,12 @@ register complex	root[];
 		quad1.cf[2] = q2;
 		quad2.cf[2] = q1;
 	} else {
-		return;
+		return(0);	/* FAIL */
 	}
 
 	quadratic( &quad1, root );
 	quadratic( &quad2, &root[2] );
+	return(1);		/* SUCCESS */
 }
 
 
