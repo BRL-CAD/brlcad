@@ -929,28 +929,23 @@ void
 bu_log( char *fmt, ... )
 {
 	va_list ap;
-	static char buf[512];		/* a generous output line */
-	static char *cp = buf+1;
+	char buf[512];		/* a generous output line.  Must be AUTO, else non-PARALLEL. */
 
 	if( print_on == 0 )  return;
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	va_start( ap, fmt );
-	(void)vsprintf( cp, fmt, ap );
+	(void)vsprintf( buf, fmt, ap );
 	va_end(ap);
 
-	while( *cp++ )  ;		/* leaves one beyond null */
-	if( cp[-2] != '\n' )
-		goto out;
 	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
-		fprintf(stderr, "%s", buf+1);
+		fprintf(stderr, "%s", buf);
 		goto out;
 	}
-	if(debug) fprintf(stderr, "%s", buf+1);
-	if( pkg_send( RTSYNCMSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )  {
+	if(debug) fprintf(stderr, "%s", buf);
+	if( pkg_send( RTSYNCMSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send RTSYNCMSG_PRINT failed\n");
 		exit(12);
 	}
-	cp = buf+1;
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );
 }
@@ -974,24 +969,22 @@ va_dcl
 {
 	va_list		ap;
 	char		*fmt;
-	static char	buf[512];
-	static char	*cp;
+	char		buf[512];
 	FILE		strbuf;
 
 	if( print_on == 0 )  return;
-	if( cp == (char *)0 )  cp = buf+1;
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #if defined(mips) || (defined(alliant) && defined(i860))
-	(void) vsprintf( cp, fmt, ap );
+	(void) vsprintf( buf, fmt, ap );
 #else
 	strbuf._flag = _IOWRT|_IOSTRG;
 #if defined(sun)
-	strbuf._ptr = (unsigned char *)cp;
+	strbuf._ptr = (unsigned char *)buf;
 #else
-	strbuf._ptr = cp;
+	strbuf._ptr = buf
 #endif
 	strbuf._cnt = sizeof(buf)-(cp-buf);
 	(void) _doprnt( fmt, ap, &strbuf );
@@ -999,19 +992,15 @@ va_dcl
 #endif
 	va_end(ap);
 
-	if(debug) fprintf(stderr, "%s", buf+1);
-	while( *cp++ )  ;		/* leaves one beyond null */
-	if( cp[-2] != '\n' )
-		goto out;
+	if(debug) fprintf(stderr, "%s", buf);
 	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
-		fprintf(stderr, "%s", buf+1);
+		fprintf(stderr, "%s", buf);
 		goto out;
 	}
-	if( pkg_send( RTSYNCRTSYNCMSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )  {
+	if( pkg_send( RTSYNCRTSYNCMSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send RTSYNCRTSYNCMSG_PRINT failed\n");
 		exit(12);
 	}
-	cp = buf+1;
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 }
@@ -1022,25 +1011,20 @@ bu_log( str, a, b, c, d, e, f, g, h )
 char	*str;
 int	a, b, c, d, e, f, g, h;
 {
-	static char buf[512];		/* a generous output line */
-	static char *cp = buf+1;
+	char	buf[512];		/* a generous output line */
 
 	if( print_on == 0 )  return;
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	(void)sprintf( cp, str, a, b, c, d, e, f, g, h );
-	while( *cp++ )  ;		/* leaves one beyond null */
-	if( cp[-2] != '\n' )
-		goto out;
+	(void)sprintf( buf, str, a, b, c, d, e, f, g, h );
 	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
-		fprintf(stderr, "%s", buf+1);
+		fprintf(stderr, "%s", buf);
 		goto out;
 	}
-	if(debug) fprintf(stderr, "%s", buf+1);
-	if( pkg_send( RTSYNCRTSYNCMSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )  {
+	if(debug) fprintf(stderr, "%s", buf);
+	if( pkg_send( RTSYNCRTSYNCMSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send RTSYNCRTSYNCMSG_PRINT failed\n");
 		exit(12);
 	}
-	cp = buf+1;
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );
 }
