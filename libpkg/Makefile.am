@@ -7,4 +7,4 @@ AM_CFLAGS = -I$(top_srcdir)/h
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	$(top_srcdir)/sh/newvers.sh
+	sh $(top_srcdir)/sh/vers.sh > $@

@@ -20,7 +20,7 @@ rtsrv_CFLAGS = -DRTSRV
 noinst_HEADERS = ihost.h protocol.h
 
 vers.c: $(remrt_srcs) Makefile.am
-	$(top_srcdir)/sh/newvers2.sh version "Network-Distributed RT (REMRT)" > vers.c
+	sh $(top_srcdir)/sh/vers.sh version "Network-Distributed RT (REMRT)" > $@
 
 dist_man_MANS = remrt.1
 

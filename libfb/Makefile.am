@@ -42,6 +42,6 @@ libfb_la_LIBADD = @PKG@ @X_LIBS@
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	$(top_srcdir)/sh/newvers.sh fb_version libfb
+	sh $(top_srcdir)/sh/vers.sh fb_version libfb > $@
 
 dist_man_MANS = libfb.3

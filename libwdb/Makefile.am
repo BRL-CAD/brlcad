@@ -29,4 +29,4 @@ EXTRA_DIST = $(man_MANS)
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	$(top_srcdir)/sh/newvers.sh
+	sh $(top_srcdir)/sh/vers.sh > $@

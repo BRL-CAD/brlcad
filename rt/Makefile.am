@@ -127,6 +127,7 @@ EXTRA_DIST=$(man_MANS) $(ALLSRCS)
 
 BUILT_SOURCES = vers.c rt_bot_faces_vers.c
 vers.c: $(ALLSRCS)
-	$(top_srcdir)/sh/newvers2.sh > $@
+	sh $(top_srcdir)/sh/vers.sh > $@
+
 rt_bot_faces_vers.c: $(ALLSRCS)
-	$(top_srcdir)/sh/newvers2.sh version "RT BOT FACES" > $@
+	sh $(top_srcdir)/sh/vers.sh version "RT BOT FACES" > $@

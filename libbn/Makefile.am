@@ -45,4 +45,4 @@ libbn_la_LDFLAGS = -version-info 19:1
 BUILT_SOURCES = vers.c
 
 vers.c: $(SRCS)
-	$(top_srcdir)/sh/newvers.sh bn_version libbn
+	sh $(top_srcdir)/sh/vers.sh bn_version libbn > $@

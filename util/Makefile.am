@@ -436,7 +436,7 @@ AM_CFLAGS = -I$(top_srcdir)/h
 
 .PHONY : vers.c
 vers.c:
-	$(top_srcdir)/sh/newvers.sh version "BRL-CAD info"
+	sh $(top_srcdir)/sh/vers.sh version "BRL-CAD info" > $@
 
 man_MANS = \
 	alias-pix.1 \

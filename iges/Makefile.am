@@ -89,10 +89,10 @@ g_iges_SOURCES = $(g_iges_srcs) g-iges-vers.c
 g_iges_LDADD = @RT@
 
 iges-g-vers.c: $(iges_g_srcs) Makefile.am
-	sh $(top_srcdir)/sh/newvers2.sh version "IGES-to-BRLCAD Translator" > $@
+	sh $(top_srcdir)/sh/vers.sh version "IGES-to-BRLCAD Translator" > $@
 
 g-iges-vers.c: $(g_iges_srcs) Makefile.am
-	sh $(top_srcdir)/sh/newvers2.sh version "BRLCAD-to-IGES Translator" > $@
+	sh $(top_srcdir)/sh/vers.sh version "BRLCAD-to-IGES Translator" > $@
 
 BUILT_SOURCES = iges-g-vers.c g-iges-vers.c
 

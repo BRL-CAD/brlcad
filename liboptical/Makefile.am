@@ -44,4 +44,4 @@ AM_CFLAGS = -I$(top_srcdir)/h
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	$(top_srcdir)/sh/newvers.sh liboptical_version liboptical
+	sh $(top_srcdir)/sh/vers.sh liboptical_version liboptical > $@

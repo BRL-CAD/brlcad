@@ -10,5 +10,5 @@ AM_CFLAGS = -I$(top_srcdir)/h @X_CFLAGS@
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	$(top_srcdir)/sh/newvers.sh tclcad_version libtclcad
+	sh $(top_srcdir)/sh/vers.sh tclcad_version libtclcad > $@
 
