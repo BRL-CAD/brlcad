@@ -193,6 +193,7 @@ long		*novote;
 	point_t pca;	/* point of closest approach from pt to edge lseg */
 	fastf_t dist;	/* distance from pca to pt */
 	fastf_t dot, mag;
+	int	code;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGEUSE(eu->eumate_p);
@@ -213,11 +214,10 @@ long		*novote;
 	 * except in the case of a near miss.
 	 * Even if "pt" is far, far away.  This can be confusing.
 	 */
-	dist = rt_dist_pt_lseg(pca, eupt, matept, pt, tol);
-	if( dist < 0.0 )  rt_log("pt_hitmis_e: neg dist=%g?\n", dist);
-
+	code = rt_dist_pt3_lseg3( &dist, pca, eupt, matept, pt, tol);
+	if( code <= 0 )  dist = 0;
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		rt_log("          \tdist: %g\n", dist);
+		rt_log("          \tcode=%d, dist: %g\n", code, dist);
 		VPRINT("          \tpca:", pca);
 	}
 

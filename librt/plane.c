@@ -1157,10 +1157,10 @@ CONST struct rt_tol	*tol;
 }
 
 /*
- *			R T _ D I S T _ P T _ L S E G
+ *			R T _ D I S T _ P T 3 _ L S E G 3
  *
- *	Find the distance from a point P to a line segment described
- *	by the two endpoints A and B.
+ *  Find the distance from a point P to a line segment described
+ *  by the two endpoints A and B, and the point of closest approach (PCA).
  *
  *			P
  *		       *
@@ -1173,19 +1173,23 @@ CONST struct rt_tol	*tol;
  *		*------*--------*
  *		A      PCA	B
  *
- *  There are six distinct cases:
+ *  There are six distinct cases, with these return codes -
+ *	0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
+ *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
+ *	1	P is within tolerance of point A.  *dist = 0, pca=A.
+ *	2	P is within tolerance of point B.  *dist = 0, pca=B.
+ *	3	P is to the "left" of point A.  *dist=|P-A|, pca=A.
+ *	4	P is to the "right" of point B.  *dist=|P-B|, pca=B.
+ *	5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
  *
- *	Explicit return
- *	    distance from the point of closest approach on lseg to point
- *	    0.0 if within tol->dist of A or B or the line segment.
- *
- *	Implicit return
- *	    pca 	the point of closest approach
+ * This routine was formerly called rt_dist_pt_lseg().
  *
  * XXX For efficiency, a version of this routine that provides the
  * XXX distance squared would be faster.
  */
-double rt_dist_pt_lseg(pca, a, b, p, tol)
+int
+rt_dist_pt3_lseg3( dist, pca, a, b, p, tol )
+fastf_t		*dist;
 point_t		pca;
 CONST point_t	a, b, p;
 CONST struct rt_tol *tol;
@@ -1202,7 +1206,7 @@ CONST struct rt_tol *tol;
 	RT_CK_TOL(tol);
 
 	if( rt_g.debug & DEBUG_MATH )  {
-		rt_log("rt_dist_pt_lseg() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
+		rt_log("rt_dist_pt3_lseg3() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
 			V3ARGS(a),
 			V3ARGS(b),
 			V3ARGS(p),
@@ -1215,7 +1219,8 @@ CONST struct rt_tol *tol;
 		/* P is within the tol->dist radius circle around A */
 		VMOVE( pca, a );
 		if( rt_g.debug & DEBUG_MATH )  rt_log("  at A\n");
-		return 0.0;
+		*dist = 0.0;
+		return 1;
 	}
 
 	/* Check proximity to endpoint B */
@@ -1224,7 +1229,8 @@ CONST struct rt_tol *tol;
 		/* P is within the tol->dist radius circle around B */
 		VMOVE( pca, b );
 		if( rt_g.debug & DEBUG_MATH )  rt_log("  at B\n");
-		return 0.0;
+		*dist = 0.0;
+		return 2;
 	}
 
 	VSUB2(AtoB, b, a);
@@ -1235,18 +1241,19 @@ CONST struct rt_tol *tol;
 	 */
 	t = VDOT(PtoA, AtoB) / B_A;
 	if( rt_g.debug & DEBUG_MATH )  {
-		rt_log("rt_dist_pt_lseg() B_A=%g, t=%g\n",
+		rt_log("rt_dist_pt3_lseg3() B_A=%g, t=%g\n",
 			B_A, t );
 	}
 
 	if( t <= 0 )  {
-		/* P is "below" A */
+		/* P is "left" of A */
+		if( rt_g.debug & DEBUG_MATH )  rt_log("  left of A\n");
 		VMOVE( pca, a );
-		if( rt_g.debug & DEBUG_MATH )  rt_log("  below A\n");
-		return sqrt(P_A_sq);
+		*dist = sqrt(P_A_sq);
+		return 3;
 	}
 	if( t < B_A )  {
-		/* P falls between A and B */
+		/* PCA falls between A and B */
 		register fastf_t	dsq;
 		fastf_t			param_dist;	/* parametric dist */
 
@@ -1256,16 +1263,20 @@ CONST struct rt_tol *tol;
 
 		/* Find distance from PCA to line segment (Pythagorus) */
 		if( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
-			if( rt_g.debug & DEBUG_MATH )  rt_log("  on lseg\n");
-			return 0.0;
+			if( rt_g.debug & DEBUG_MATH )  rt_log("  ON lseg\n");
+			/* Distance from PCA to lseg is zero, give param instead */
+			*dist = param_dist;	/* special! */
+			return 0;
 		}
 		if( rt_g.debug & DEBUG_MATH )  rt_log("  closest to lseg\n");
-		return sqrt(dsq);
+		*dist = sqrt(dsq);
+		return 5;
 	}
-	/* P is "above" B */
+	/* P is "right" of B */
+	if( rt_g.debug & DEBUG_MATH )  rt_log("  right of B\n");
 	VMOVE(pca, b);
-	if( rt_g.debug & DEBUG_MATH )  rt_log("  above B\n");
-	return sqrt(P_B_sq);
+	*dist = sqrt(P_B_sq);
+	return 4;
 }
 
 /*
