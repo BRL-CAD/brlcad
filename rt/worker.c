@@ -36,7 +36,8 @@ point_t		viewbase_model;	/* model-space location of viewplane corner */
 /* Local communication with worker() */
 HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
 HIDDEN int last_pixel;		/* last pixel number */
-HIDDEN int nworkers;		/* number of workers now running */
+HIDDEN int nworkers_started;	/* number of workers started */
+HIDDEN int nworkers_finished;	/* number of workers properly finished */
 
 /*
  *			G R I D _ S E T U P
@@ -189,7 +190,8 @@ do_run( a, b )
 		/*
 		 *  Parallel case.
 		 */
-		nworkers = 0;
+		nworkers_started = 0;
+		nworkers_finished = 0;
 		rt_parallel( worker, npsw );
 
 		/*
@@ -197,9 +199,13 @@ do_run( a, b )
 		 *  On some systems, if threads core dump, the rest of
 		 *  the gang keeps going, so this can actually happen (sigh).
 		 */
-		if( nworkers > 0 )  {
+		if( nworkers_finished != npsw )  {
 			rt_log("\n***ERROR: %d workers did not finish!\n\n",
-				nworkers);
+				npsw - nworkers_finished);
+		}
+		if( nworkers_started != npsw )  {
+			rt_log("\nNOTICE:  only %d workers started, expected %d\n",
+				nworkers_started, npsw );
 		}
 	}
 
@@ -232,7 +238,7 @@ worker()
 	int	cpu;			/* our CPU (PSW) number */
 
 	RES_ACQUIRE( &rt_g.res_worker );
-	cpu = nworkers++;
+	cpu = nworkers_started++;
 	RES_RELEASE( &rt_g.res_worker );
 
 	resource[cpu].re_cpu = cpu;
@@ -327,6 +333,6 @@ worker()
 			view_eol( &a );		/* End of scan line */
 	}
 	RES_ACQUIRE( &rt_g.res_worker );
-	nworkers--;
+	nworkers_finished++;
 	RES_RELEASE( &rt_g.res_worker );
 }
