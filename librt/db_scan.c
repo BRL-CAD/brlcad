@@ -146,6 +146,10 @@ int			(*handler)();
 			handler( dbip, record.s.s_name, addr, nrec,
 				DIR_SOLID );
 			break;
+		case ID_STRSOL:
+			handler( dbip, record.ss.ss_name, addr, nrec,
+				DIR_SOLID );
+			break;
 		case ID_MATERIAL:
 			/* This is common to RT and MGED */
 			rt_color_addrec( &record, addr );
