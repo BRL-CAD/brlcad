@@ -448,6 +448,9 @@ struct _mged_variables {
 	int	edit;
         int     context;
         int     eyerot;
+	int	constrain;
+	int	model;
+	char	origin;
 	int	predictor;
 	double	predictor_advance;
 	double	predictor_length;
