@@ -64,7 +64,70 @@ extern struct db_i	*dbip;		       /* defined in ged.c */
 #define localunit	(dbip->dbi_localunit)  /* current local unit (index) */
 #define	cur_title	(dbip->dbi_title)      /* current model title */
 
+#ifdef MULTI_ATTACH
+extern struct dm_list *dm_list_curr;
+
+#define mged_variables dm_list_curr->_mged_variables
+#define dmaflag dm_list_curr->_dmaflag
+
+#define adcflag dm_list_curr->_adcflag
+#define curs_x dm_list_curr->_curs_x
+#define curs_y dm_list_curr->_curs_y
+#define c_tdist dm_list_curr->_c_tdist
+#define angle1 dm_list_curr->_angle1
+#define angle2 dm_list_curr->_angle2
+
+#define rateflag_slew dm_list_curr->_rateflag_slew
+#define rate_slew dm_list_curr->_rate_slew
+#define absolute_slew dm_list_curr->_absolute_slew
+#define rateflag_rotate dm_list_curr->_rateflag_rotate
+#define rate_rotate dm_list_curr->_rate_rotate
+#define absolute_rotate dm_list_curr->_absolute_rotate
+#define rateflag_zoom dm_list_curr->_rateflag_zoom
+#define rate_zoom dm_list_curr->_rate_zoom
+#define absolute_zoom dm_list_curr->_absolute_zoom
+
+#define Viewscale dm_list_curr->_Viewscale
+#define Viewrot dm_list_curr->_Viewrot
+#define toViewcenter dm_list_curr->_toViewcenter
+#define model2view dm_list_curr->_model2view
+#define view2model dm_list_curr->_view2model
+#define model2objview dm_list_curr->_model2objview
+#define objview2model dm_list_curr->_objview2model
+
+#if 0
+#define dmp->dmr_open dm_list_curr->dmp->dmr_open
+#define dmp->dmr_close dm_list_curr->dmp->dmr_close
+#define dmp->dmr_input dm_list_curr->dmp->dmr_input
+#define dmp->dmr_prolog dm_list_curr->dmp->dmr_prolog
+#define dmp->dmr_epilog dm_list_curr->dmp->dmr_epilog
+#define dmp->dmr_normal dm_list_curr->dmp->dmr_normal
+#define dmp->dmr_newrot dm_list_curr->dmp->dmr_newrot
+#define dmp->dmr_update dm_list_curr->dmp->dmr_update
+#define dmp->dmr_puts dm_list_curr->dmp->dmr_puts
+#define dmp->dmr_2d_line dm_list_curr->dmp->dmr_2d_line
+#define dmp->dmr_light dm_list_curr->dmp->dmr_light
+#define dmp->dmr_object dm_list_curr->dmp->dmr_object
+#define dmp->dmr_cvtvecs dm_list_curr->dmp->dmr_cvtvecs
+#define dmp->dmr_load dm_list_curr->dmp->dmr_load
+#define dmp->dmr_statechange dm_list_curr->dmp->dmr_statechange
+#define dmp->dmr_viewchange dm_list_curr->dmp->dmr_viewchange
+#define dmp->dmr_colorchange dm_list_curr->dmp->dmr_colorchange
+#define dmp->dmr_window dm_list_curr->dmp->dmr_window
+#define dmp->dmr_debug dm_list_curr->dmp->dmr_debug
+#define dmp->dmr_displaylist dm_list_curr->dmp->dmr_displaylist
+#define dmp->dmr_releasedisplay dm_list_curr->dmp->dmr_releasedisplay
+#define dmp->dmr_bound dm_list_curr->dmp->dmr_bound
+#define dmp->dmr_name dm_list_curr->dmp->dmr_name
+#define dmp->dmr_lname dm_list_curr->dmp->dmr_lname
+#define dmp->dmr_map dm_list_curr->dmp->dmr_map
+#define dmp->dmr_cmd dm_list_curr->dmp->dmr_cmd
+#else
+#define dmp dm_list_curr->_dmp
+#endif
+#else
 extern int		dmaflag;	       /* !0 forces screen update */
+#endif
 
 
 /* Some useful constants, if they haven't been defined elsewhere. */
@@ -125,11 +188,14 @@ extern int	los_default;
  *
  *  These are allocated storage in dozoom.c
  */
+#ifndef MULTI_ATTACH
 extern fastf_t	Viewscale;		/* dist from center to edge of RPP */
 extern mat_t	Viewrot;
 extern mat_t	toViewcenter;
 extern mat_t	model2view, view2model;
 extern mat_t	model2objview, objview2model;
+#endif
+
 extern mat_t	modelchanges;		/* full changes this edit */
 extern mat_t	incr_change;		/* change(s) from last cycle */
 extern point_t	recip_vanishing_point;
@@ -153,6 +219,7 @@ extern int	no_memory;	/* flag indicating memory for drawing is used up */
 /* defined in menu.c */
 extern int	menuflag;	/* flag indicating if a menu item is selected */
 
+#ifndef MULTI_ATTACH
 /* defined in chgview.c */
 extern int	rateflag_slew;
 extern vect_t	rate_slew;
@@ -175,6 +242,7 @@ extern fastf_t	curs_y;		/* cursor Y position */
 extern fastf_t	c_tdist;	/* Cursor tick distance */
 extern fastf_t	angle1;		/* Angle to solid wiper */
 extern fastf_t	angle2;		/* Angle to dashed wiper */
+#endif
 
 /* defined in ged.c */
 extern FILE *infile;
@@ -245,7 +313,9 @@ extern struct solid	*illump;/* == 0 if none, else points to ill. solid */
 extern int	sedraw;		/* apply solid editing changes */
 
 /* defined in buttons.c */
+#ifndef MULTI_ATTACH
 extern int	adcflag;	/* angle/distance cursor in use */
+#endif
 
 /* defined in chgview.c */
 extern int	inpara;		/* parameter input from keyboard flag */
@@ -351,7 +421,11 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 
 /* mged command variables for affecting the user environment */
+#ifdef MULTI_ATTACH
+struct _mged_variables {
+#else
 struct mged_variables {
+#endif
 	int	autosize;
 	int	rateknobs;
     	int	sgi_win_size;
@@ -373,7 +447,9 @@ struct mged_variables {
 	char	difference_lexeme[1024];
 };
 
+#ifndef MULTI_ATTACH
 extern struct mged_variables mged_variables;
+#endif
 
 #define	MAXARGS		9000	/* Maximum number of args per line */
 
