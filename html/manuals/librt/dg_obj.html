@@ -169,6 +169,27 @@ Each color corresponds to 2 hex digits, so that white becomes "ffffff",
 red becomes "ff0000",  green is "00ff00", etc.
 </DD>
 <P>
+<DT><I>dgName</I> <a NAME="report"><B>report</B> [<I>level</I>]</DT>
+<DD> Report all the <a href="../mged/brlcad_glossary.html#SOLID">primitive solids</a>
+currently drawn. The <I>level</I> determines how much detail should
+be included in the list. For <I>level</I> zero (the default),
+only a list of paths to solids in the display list is produced
+with and indication of whether they are being iluminated/highlighted.
+If <I>level</I> is greater than zero, the center, size,
+<a href="../mged/brlcad_glossary.html#IDENT">ident number</a>,
+<a href="../mged/brlcad_glossary.html#RGB">RGB</a> color assigned to the region,
+and the actual color used to draw the solid are also listed.
+If <I>level</I> is greater than one, the number of vlist structures and the number of
+points in each vlist structure are also listed for each solid.
+If <I>level</I> is greater than two, then the actual lines drawn for each solid are also listed.
+The <a href="#who">who</a> command performs a similar function, but lists
+only the top level objects that are displayed.
+Going in the other direction, if <I>level</I> is -1,
+only a list of paths to solids in the display list is produced with
+no indication of whether they are being illuminated.
+If <I>level</I> is less than -1, only the leaves are printed.
+</DD>
+<P>
 <DT><I>dgName</I> <A NAME="rt"><B>rt</B></A> <I>view_obj</I> [<I>options</I>] [-- <I>objects</I>]</I></DT>
 <DD>Execute the <I>BRL&#173CAD</I> <I>rt</I> program with the default
 options of ``-s50 -M''.
