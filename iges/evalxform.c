@@ -48,9 +48,6 @@ Evalxform()
 
 		if( dir[i]->trans && !dir[i]->referenced )
 		{
-			rt_log( "\tTranformation matrix at DE %d references matrix at %d\n" , 
-				i*2+1 , dir[i]->trans * 2 + 1 );
-
 			/* Make a linked list of the xform matrices
 				in reverse order */
 			xform = i;
@@ -98,24 +95,7 @@ Evalxform()
 			continue;
 
 		if( dir[i]->trans )
-		{
-			rt_log( "Transform:\n" );
-			for( j=0 ; j<16 ; j++ )
-			{
-				rt_log( "%f " , (*dir[dir[i]->trans]->rot)[j] );
-				if( (j+1)%4 == 0 )
-					rt_log( "\n" );
-			}
 			dir[i]->rot = dir[dir[i]->trans]->rot;
-			rt_log( "matrix for entity %d is:\n" , i*2+1 );
-			for( j=0 ; j<16 ; j++ )
-			{
-				rt_log( "%f " , (*dir[i]->rot)[j] );
-				if( (j+1)%4 == 0 )
-					rt_log( "\n" );
-			}
-				
-		}
 		else
 			dir[i]->rot = identity;
 	}

@@ -37,7 +37,7 @@ mat_t rot;
 	/* read the actual transformation matrix and store */
 
 	Readrec( xform );
-	Readint( &i , "matrix: " );
+	Readint( &i , "" );
 	if( i != 124 && i != 700  )
 	{
 		printf( "Error in transformation parameter data at P%d\n" , xform );
@@ -50,21 +50,14 @@ mat_t rot;
 		for( i=0 ; i<12 ; i++ )
 		{
 			if( !((i+1)%4) ) /* convert translation */
-				Readcnv( &rot[i] , "translate: " );
+				Readcnv( &rot[i] , "" );
 			else	/* Don't convert rotations */
-				Readflt( &rot[i] , "rotate: " );
+				Readflt( &rot[i] , "" );
 		}
 		for( i=12 ; i<15 ; i++ )
 			rot[i] = 0.0;
 		rot[15] = 1.0;
 
-		rt_log( "In Readmatrix:\n" );
-		for( j=0 ; j<16 ; j++ )
-		{
-			rt_log( "%f " , rot[j] );
-			if( (j+1)%4 == 0 )
-				rt_log( "\n" );
-		}
 	}
 	else
 	{

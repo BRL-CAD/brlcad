@@ -149,13 +149,6 @@ Makedir()
 				dir[entcount]->rot = (mat_t *)rt_malloc( sizeof( mat_t ) , "Makedir:matrix" );
 				Readmatrix( dir[entcount]->param , *dir[entcount]->rot );
 
-				rt_log( "Transform (in Makedir):\n" );
-				for( j=0 ; j<16 ; j++ )
-				{
-					rt_log( "%f " , (*dir[entcount]->rot)[j] );
-					if( (j+1)%4 == 0 )
-						rt_log( "\n" );
-				}
 			}
 		}
 		else /* set to NULL */
@@ -164,8 +157,8 @@ Makedir()
 	Readrec( saverec ); /* restore previous record */
 	}
 
-printf( "\t%d\n\n" ,entcount+1 );
-if( paramguess )
-	printf( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
+	printf( "\t%d\n\n" ,entcount+1 );
+	if( paramguess )
+		printf( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
 }
 
