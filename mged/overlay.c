@@ -38,10 +38,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-extern void	perror();
-extern int	atoi(), execl(), fork(), nice(), wait();
-extern long	time();
-
 /*
  *  Character stroke table, taken from libtig/symbol.c
  *
@@ -158,10 +154,83 @@ struct uplot uplot_letters[] = {
 static int	getshort();
 extern void	vlist_3symbol();
 
-struct color_vlist {
-	long		rgb;
-	struct vlhead	head;
+struct color_vlist_head {
+	int			count;
+	struct color_vlist	*cvp;
 };
+
+struct color_vlist {
+	long			rgb;
+	struct vlhead		head;
+};
+
+struct color_vlist_head *
+color_vlist_init()
+{
+	struct color_vlist_head *cvh;
+	int	i;
+
+	GETSTRUCT( cvh, color_vlist_head );
+	cvh->count = 32;
+	cvh->cvp = (struct color_vlist *)rt_malloc(
+		cvh->count * sizeof(struct color_vlist),
+		"color_vlist[]");
+
+	for( i=0; i < cvh->count; i++ )  {
+		cvh->cvp[i].rgb = 0;	/* black, unused */
+		cvh->cvp[i].head.vh_first = VL_NULL;
+		cvh->cvp[i].head.vh_last = VL_NULL;
+	}
+	cvh->cvp[0].rgb = 0xFFFF00L;	/* Yellow, default */
+	cvh->cvp[1].rgb = 0xFFFFFFL;	/* White */
+
+	return(cvh);
+}
+
+void
+color_vlist_free(cvh)
+struct color_vlist_head *cvh;
+{
+	int	i;
+
+	for( i=0; i < cvh->count; i++ )  {
+		/* Release any remaining vlist storage */
+		if( cvh->cvp[i].rgb == 0 )  continue;
+		if( cvh->cvp[i].head.vh_first == VL_NULL) continue;
+		FREE_VL( cvh->cvp[i].head.vh_first );
+	}
+
+	rt_free( (char *)(cvh->cvp), "color_vlist[]" );
+	rt_free( (char *)cvh, "color_vlist_head" );
+}
+
+struct vlhead *
+color_vlist_find( cvh, r, g, b )
+struct color_vlist_head *cvh;
+{
+	long	new;
+	int	n;
+
+	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
+
+	/* Map black plots into default color (yellow) */
+	if( new == 0 ) return( &cvh->cvp[0].head );
+
+	for( n=0; n < cvh->count; n++ )  {
+		if( cvh->cvp[n].rgb == 0 )  {
+			/* Allocate empty slot */
+			cvh->cvp[n].rgb = new;
+			return( &cvh->cvp[n].head );
+		}
+		if( cvh->cvp[n].rgb == new )
+			return( &cvh->cvp[n].head );
+	}
+	/*  RGB does not match any existing entry, and table is full.
+	 *  Eventually, enlarge table.
+	 *  For now, just default to yellow.
+	 */
+	return( &cvh->cvp[0].head );
+}
 
 /* Usage:  overlay file.plot [name] */
 void
@@ -173,11 +242,7 @@ char	**argv;
 	FILE		*fp;
 	struct vlhead	vhead;
 	int		ret;
-	int		i;
-	struct color_vlist	color_vlist[32];
-	char		shortname[32];
-	char		namebuf[64];
-	char		cmd_buf[64];
+	struct color_vlist_head	*cvh;
 
 	if( argc <= 2 )
 		name = "_PLOT_OVERLAY_";
@@ -189,14 +254,28 @@ char	**argv;
 		return;
 	}
 
-	for( i=0; i<32; i++ )  {
-		color_vlist[i].rgb = 0;		/* black, unused */
-		color_vlist[i].head.vh_first =
-			color_vlist[i].head.vh_last = VL_NULL;
-	}
-	ret = uplot_vlist( color_vlist, 32, fp );
+	cvh = color_vlist_init();
+	ret = uplot_vlist( cvh, fp );
 	fclose(fp);
-	if( ret < 0 )  return;
+	if( ret < 0 )  {
+		color_vlist_free(cvh);
+		return;
+	}
+
+	cvt_vlist_to_solids( cvh, name );
+
+	color_vlist_free(cvh);
+	dmaflag = 1;
+}
+
+cvt_vlist_to_solids( cvh, name )
+struct color_vlist_head	*cvh;
+char		*name;
+{
+	int		i;
+	char		shortname[32];
+	char		namebuf[64];
+	char		cmd_buf[64];
 
 	strncpy( shortname, name, 16-6 );
 	shortname[16-6] = '\0';
@@ -204,18 +283,16 @@ char	**argv;
 	sprintf( cmd_buf, "kill %s*\n", shortname );
 	cmdline(cmd_buf);
 
-	for( i=0; i<32; i++ )  {
+	for( i=0; i < cvh->count; i++ )  {
 		if( i== 0 )  {
-			invent_solid( name, &color_vlist[0] );
+			invent_solid( name, &cvh->cvp[0] );
 			continue;
 		}
-		if( color_vlist[i].rgb == 0 )  continue;
+		if( cvh->cvp[i].rgb == 0 )  continue;
 		sprintf( namebuf, "%s%x",
-			shortname, color_vlist[i].rgb );
-		invent_solid( namebuf, &color_vlist[i] );
+			shortname, cvh->cvp[i].rgb );
+		invent_solid( namebuf, &cvh->cvp[i] );
 	}
-
-	dmaflag++;
 }
 
 /*
@@ -261,8 +338,10 @@ struct color_vlist	*cvl;
 	VSETALL( max, -INFINITY );
 	VSETALL( min,  INFINITY );
 	sp->s_vlist = vhead->vh_first;
+	vhead->vh_first = vhead->vh_last = VL_NULL;
 	sp->s_vlen = 0;
-	for( vp = vhead->vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+		/* XXX need to look at types here */
 		VMINMAX( min, max, vp->vl_pnt );
 		sp->s_vlen++;
 	}
@@ -317,9 +396,8 @@ struct color_vlist	*cvl;
  *  This might be more naturally located in mged/plot.c
  */
 int
-uplot_vlist( cvl, ncvl, fp )
-struct color_vlist	*cvl;
-int			ncvl;
+uplot_vlist( cvh, fp )
+struct color_vlist_head	*cvh;
 register FILE		*fp;
 {
 	register struct vlhead	*vhead;
@@ -335,8 +413,7 @@ register FILE		*fp;
 	int	i;
 	int	j;
 
-	cvl[0].rgb = 0xFFFF00L;		/* Yellow */
-	vhead = &cvl[0].head;
+	vhead = &cvh->cvp[0].head;	/* Yellow */
 
 	while( (c = getc(fp)) != EOF ) {
 		/* look it up */
@@ -440,21 +517,8 @@ register FILE		*fp;
 			break;
 		case 'C':
 			/* Color */
-			{
-				long	new;
-				int	n;
-				new = ((carg[0]&0xFF)<<16)|((carg[1]&0xFF)<<8)|(carg[2]&0xFF);
-				for( n=0; n<ncvl; n++ )  {
-					if( cvl[n].rgb == 0 )  {
-						cvl[n].rgb = new;
-						goto match;
-					}
-					if( cvl[n].rgb == new )  goto match;
-				}
-				n = 0;	/* not found, table full => yellow */
-match:
-				vhead = &cvl[n].head;
-			}
+			vhead = color_vlist_find( cvh,
+				carg[0], carg[1], carg[2] );
 			break;
 		case 't':
 			/* Text string */
