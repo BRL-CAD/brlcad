@@ -1465,9 +1465,11 @@ checkevents()  {
 			break;
 		case MOUSEX:
 			pending_x = irisX2ged( (int)valp[1] );
+			if(ir_debug>1)printf("mousex %d\n", pending_x);
 			break;
 		case MOUSEY:
 			pending_y = irisY2ged( (int)valp[1] );
+			if(ir_debug>1)printf("mousey %d\n", pending_y);
 			/*
 			 *  Thanks to the tie() call, when a MIDDLEMOUSE
 			 *  event is signalled, it will be (eventually)
