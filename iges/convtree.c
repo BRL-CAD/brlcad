@@ -121,6 +121,11 @@ Convtree()
 			bu_log( "mk_export_fwrite() failed for combination (%s)\n", dir[i]->name );
 			exit( 1 );
 		}
+		if(comb->tree) db_free_tree( comb->tree );
+		comb->tree = NULL;
+		bu_vls_free( &comb->shader );
+		bu_vls_free( &comb->material );
+		bu_free( (genptr_t)comb, "comb ifree" );
 		conv++;
 	}
 	rt_log( "Converted %d trees successfully out of %d total trees\n", conv , tottrees );
