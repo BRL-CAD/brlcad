@@ -2290,7 +2290,8 @@ char			**argv;
 			  return( TCL_ERROR );
 			}
 		      bot->num_vertices = len;
-		      bu_free( (char *)bot->vertices, "BOT vertices" );
+		      if( bot->vertices )
+			      bu_free( (char *)bot->vertices, "BOT vertices" );
 		      bot->vertices = (fastf_t *)bu_calloc( len*3, sizeof( fastf_t ), "BOT vertices" );
 		      for( i=0 ; i<len ; i++ )
 			{
@@ -2367,7 +2368,8 @@ char			**argv;
 			    return( TCL_ERROR );
 			  }
 			bot->num_faces = len;
-			bu_free( (char *)bot->faces, "BOT faces" );
+			if( bot->faces )
+				bu_free( (char *)bot->faces, "BOT faces" );
 			bot->faces = (int *)bu_calloc( len*3, sizeof( int ), "BOT faces" );
 			for( i=0 ; i<len ; i++ )
 			  {
