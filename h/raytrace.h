@@ -2392,6 +2392,7 @@ BU_EXTERN(void rt_fr_cut, (struct rt_i *rtip, union cutter *cutp) );
 extern void rt_rebuild_overlaps(struct partition	*PartHdp,
 				struct application	*ap,
 				int		rebuild_fastgen_plates_only);
+int rt_partition_len( const struct partition *partheadp );
 
 
 /* mater.c */

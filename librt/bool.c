@@ -1988,8 +1988,7 @@ register struct resource	*resp;
  *  Return the length of a partition linked list.
  */
 int
-rt_partition_len( partheadp )
-register struct partition	*partheadp;
+rt_partition_len( const struct partition *partheadp )
 {
 	register struct partition	*pp;
 	register long	count = 0;
