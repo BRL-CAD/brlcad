@@ -1065,20 +1065,6 @@ start_cell:
 						bu_ptbl_ins_unique( &resp->re_pieces_pending, (long *)psp );
 				}
 			}
-			if( ap->a_onehit != 0 && BU_PTBL_LEN( &resp->re_pieces_pending ) > 0 )  {
-				/* Find the lowest pending mindist, that's as far as boolfinal can progress to */
-				struct rt_piecestate **psp;
-				for( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
-					FAST fastf_t dist;
-
-					dist = (*psp)->mindist;
-					BU_ASSERT_DOUBLE( dist, <, INFINITY );
-					if( dist < pending_hit )  {
-						pending_hit = dist;
-						if(debug_shoot) bu_log("pending_hit lowered to %g by %s\n", pending_hit, (*psp)->stp->st_name);
-					}
-				}
-			}
 		}
 
 		/* Consider all solids within the box */
@@ -1167,6 +1153,21 @@ start_cell:
 
 				/* Weave these segments into partition list */
 				rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
+
+				if( BU_PTBL_LEN( &resp->re_pieces_pending ) > 0 )  {
+					/* Find the lowest pending mindist, that's as far as boolfinal can progress to */
+					struct rt_piecestate **psp;
+					for( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
+						FAST fastf_t dist;
+						
+						dist = (*psp)->mindist;
+						BU_ASSERT_DOUBLE( dist, <, INFINITY );
+						if( dist < pending_hit )  {
+							pending_hit = dist;
+							if(debug_shoot) bu_log("pending_hit lowered to %g by %s\n", pending_hit, (*psp)->stp->st_name);
+						}
+					}
+				}
 
 				/* Evaluate regions upto end of good segs */
 				if( ss.box_end < pending_hit )  pending_hit = ss.box_end;
