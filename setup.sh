@@ -56,6 +56,43 @@ then
 	exit 1		# Die
 fi
 
+# Acquire current machine type, etc.
+eval `sh machinetype.sh -b`
+
+#  Ensure that machinetype.sh and Cakefile.defs are set up the same way.
+#  This is just a double-check on people porting to new machines.
+FILE=/tmp/cadsetup$$
+trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
+
+/lib/cpp -DDEFINES_ONLY << EOF > ${FILE}
+#line 1 "$0"
+#include "Cakefile.defs"
+
+C_MACHINE=MTYPE;
+#if UNIXTYPE == BSD
+	C_UNIXTYPE="BSD";
+#else
+	C_UNIXTYPE="SYSV";
+#endif
+C_HAS_TCP=HAS_TCP;
+EOF
+
+# Note that we depend on CPP's "#line" messages to be ignored as comments
+# when sourced by the "." command here:
+. ${FILE}
+/bin/rm -f ${FILE}
+
+# See if things match up
+if test x${MACHINE} != x${C_MACHINE} -o \
+	x${UNIXTYPE} != x${C_UNIXTYPE} -o \
+	x${HAS_TCP} != x${C_HAS_TCP}
+then
+	echo "$0 ERROR:  Mis-match between machinetype.sh and Cakefile.defs"
+	echo "$0 ERROR:  machinetype.sh claims ${MACHINE} ${UNIXTYPE} ${HAS_TCP}"
+	echo "$0 ERROR:  Cakefile.defs claims ${C_MACHINE} ${C_UNIXTYPE} ${C_HAS_TCP}"
+	exit 1		# Die
+fi
+
 # Install the necessary shell scripts in BINDIR
 
 SCRIPTS="machinetype.sh cakeinclude.sh cray.sh"
@@ -94,7 +131,7 @@ fi
 # Handle any vendor-specific configurations and setups.
 # This is messy, and should be avoided where possible.
 chmod 664 Cakefile.defs
-eval `sh machinetype.sh -b`
+
 case X$MACHINE in
 
 X4gt|X4d|X4d2)
