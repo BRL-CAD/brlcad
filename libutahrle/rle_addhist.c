@@ -26,6 +26,7 @@
  */
 
 #include <stdio.h>
+#include "rle.h"		/* must be before #ifdef's */
 #ifdef USE_STRING_H
 #include <string.h>
 #else
@@ -37,7 +38,6 @@
 #else
 #include <time.h>
 #endif
-#include "rle.h"
 
 /*****************************************************************
  * TAG( rle_addhist )
