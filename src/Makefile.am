@@ -33,7 +33,6 @@ kitchensink_dirs = \
 	burst \
 	bwish \
 	comgeom-g \
-	canon \
 	fb \
 	fbed \
 	gtools \
@@ -102,6 +101,8 @@ endif
 endif
 # end ONLY_BENCHMARK
 
+DIST_SUBDIRS= \
+	canon
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
