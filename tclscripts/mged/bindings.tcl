@@ -31,6 +31,61 @@ proc print_return_val str {
     }
 }
 
+if ![info exists mged_default(dm_key_bindings)] {
+    set mged_default(dm_key_bindings) "\tKey\t\t\tBehavior
+\ta\t\t\ttoggle angle distance cursor (ADC)
+\te\t\t\ttoggle edit axes
+\tm\t\t\ttoggle model axes
+\tv\t\t\ttoggle view axes
+\ti\t\t\tadvance illumation pointer forward
+\tI\t\t\tadvance illumation pointer backward
+\tp\t\t\tsimulate mouse press (i.e. to pick a solid)
+\t0\t\t\tzero knobs
+\tx\t\t\trate rotate about x axis
+\ty\t\t\trate rotate about y axis
+\tz\t\t\trate rotate about z axis
+\tX\t\t\trate translate in X direction
+\tY\t\t\trate translate in Y direction
+\tZ\t\t\trate translate in Z direction
+\t3\t\t\tview - ae 35 25
+\t4\t\t\tview - ae 45 45
+\tf\t\t\tfront view
+\tt\t\t\ttop view
+\tb\t\t\tbottom view
+\tl\t\t\tleft view
+\tr\t\t\tright view
+\tR\t\t\trear view
+\ts\t\t\tenter solid illumination state
+\to\t\t\tenter object illumination state
+\tq\t\t\treject edit
+\tu\t\t\tzero knobs and sliders
+\t<F1>\t\t\ttoggle depthcue
+\t<F2>\t\t\ttoggle zclip
+\t<F3>\t\t\ttoggle perspective
+\t<F4>\t\t\ttoggle zbuffer
+\t<F5>\t\t\ttoggle lighting
+\t<F6>\t\t\ttoggle perspective angle
+\t<F7>\t\t\ttoggle faceplate
+\t<F8>\t\t\ttoggle faceplate GUI
+\t<F9>\t\t\ttoggle keystroke forwarding
+\t<F12>\t\t\tzero knobs
+\t<Left>\t\t\tabsolute rotate about y axis
+\t<Right>\t\t\tabsolute rotate about y axis
+\t<Down>\t\t\tabsolute rotate about x axis
+\t<Up>\t\t\tabsolute rotate about x axis
+\t<Shift-Left>\t\tabsolute translate in X direction
+\t<Shift-Right>\t\tabsolute translate in X direction
+\t<Shift-Down>\t\tabsolute translate in Z direction
+\t<Shift-Up>\t\tabsolute translate in Z direction
+\t<Control-Shift-Left>\tabsolute rotate about z axis
+\t<Control-Shift-Right>\tabsolute rotate about z axis
+\t<Control-Shift-Down>\tabsolute translate in Y direction
+\t<Control-Shift-Up>\tabsolute translate in Y direction
+\t<Control-n>\t\tgoto next view
+\t<Control-p>\t\tgoto previous view
+\t<Control-t>\t\ttoggle between the current view and the last view"
+}
+
 proc default_key_bindings { w } {
     bind $w a "winset $w; adc; break"
     bind $w e "winset $w; rset ax edit_draw !;\
