@@ -371,12 +371,12 @@ struct mged_variables {
 	int	sgi_win_origin[2];
 	int	faceplate;
         int     show_menu;
-	int	predictor;
 	int     w_axis;  /* world view axis */
 	int     v_axis;  /* view axis */
 	int     e_axis;  /* edit axis */
 	int     focus;
 	int     view;
+	int	predictor;
 	double	predictor_advance;
 	double	predictor_length;
 	double	perspective;	/* >0 implies perspective viewing is on. */

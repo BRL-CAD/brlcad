@@ -59,7 +59,7 @@ struct dm_list {
   struct dm *_dmp;
 
 /* New stuff to allow more than one active display manager */
-  char *_dm_vars;   /* pointer to display manager variables */
+  char *_dm_vars;   /* pointer to dependant display manager variables */
   struct rt_vls _pathName; /* full name of drawing window */
   int     _dmaflag;
   fastf_t _Viewscale;
@@ -96,6 +96,16 @@ struct dm_list {
   int     _rateflag_zoom;
   fastf_t  _rate_zoom;
   fastf_t  _absolute_zoom;
+
+#ifdef VIRTUAL_TRACKBALL
+  double _rot_x;
+  double _rot_y;
+  double _rot_z;
+  double _tran_x;
+  double _tran_y;
+  double _tran_z;
+  point_t _orig_pos;
+#endif
 };
 
 extern int update_views;   /* from dm-X.h */
@@ -138,6 +148,16 @@ extern struct dm_list *curr_dm_list;
 #define view2model curr_dm_list->_view2model
 #define model2objview curr_dm_list->_model2objview
 #define objview2model curr_dm_list->_objview2model
+
+#ifdef VIRTUAL_TRACKBALL
+#define rot_x curr_dm_list->_rot_x
+#define rot_y curr_dm_list->_rot_y
+#define rot_z curr_dm_list->_rot_z
+#define tran_x curr_dm_list->_tran_x
+#define tran_y curr_dm_list->_tran_y
+#define tran_z curr_dm_list->_tran_z
+#define orig_pos curr_dm_list->_orig_pos
+#endif
 
 #else
 /* Not MULTI_ATTACH */
