@@ -1,3 +1,4 @@
+#define NEW_IF	0
 /*
  *			G _ P A R T . C
  *
@@ -215,14 +216,27 @@ struct part_specific {
  *  	A struct part_specific is created, and it's address is stored in
  *  	stp->st_specific for use by part_shot().
  */
+#if NEW_IF
+/* new way */
+int
+rt_part_prep( stp, ep, rtip )
+struct soltab		*stp;
+struct rt_external	*ep;
+struct rt_i		*rtip;
+{
+#else
+/* old interface */
 int
 rt_part_prep( stp, rec, rtip )
 struct soltab		*stp;
 union record		*rec;
 struct rt_i		*rtip;
 {
+	struct rt_external	ext, *ep;
+#endif
 	register struct part_specific *part;
-	struct part_internal	pi;
+	struct rt_db_internal	intern;
+	struct part_internal	*pip;
 	int			i;
 	vect_t		Hunit;
 	vect_t		a, b;
@@ -231,36 +245,42 @@ struct rt_i		*rtip;
 	vect_t		max, min;
 	vect_t		tip;
 
-	if( rec == (union record *)0 )  {
-		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
-		i = rt_part_import( &pi, rec, stp->st_pathmat );
-		rt_free( (char *)rec, "part record" );
-	} else {
-		i = rt_part_import( &pi, rec, stp->st_pathmat );
-	}
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+#endif
+	i = rt_part_import( &intern, ep, stp->st_pathmat );
 	if( i < 0 )  {
 		rt_log("rt_part_setup(%s): db import failure\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
+	RT_CK_DB_INTERNAL( &intern );
 
 	GETSTRUCT( part, part_specific );
 	stp->st_specific = (genptr_t)part;
-	part->part_int = pi;		/* struct copy */
+	part->part_int = *((struct part_internal *)intern.idb_ptr);	/* struct copy */
+	/* XXX need to free intern.idb_ptr */
+	pip = &part->part_int;
+	intern.idb_ptr = GENPTR_NULL;	/* sanity */
 
-	if( pi.part_type == RT_PARTICLE_TYPE_SPHERE )  {
+	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
 		/* Compute bounding sphere and RPP */
-		VMOVE( stp->st_center, pi.part_V );
-		stp->st_aradius = stp->st_bradius = pi.part_vrad;
-		stp->st_min[X] = pi.part_V[X] - pi.part_vrad;
-		stp->st_max[X] = pi.part_V[X] + pi.part_vrad;
-		stp->st_min[Y] = pi.part_V[Y] - pi.part_vrad;
-		stp->st_max[Y] = pi.part_V[Y] + pi.part_vrad;
-		stp->st_min[Z] = pi.part_V[Z] - pi.part_vrad;
-		stp->st_max[Z] = pi.part_V[Z] + pi.part_vrad;
+		VMOVE( stp->st_center, pip->part_V );
+		stp->st_aradius = stp->st_bradius = pip->part_vrad;
+		stp->st_min[X] = pip->part_V[X] - pip->part_vrad;
+		stp->st_max[X] = pip->part_V[X] + pip->part_vrad;
+		stp->st_min[Y] = pip->part_V[Y] - pip->part_vrad;
+		stp->st_max[Y] = pip->part_V[Y] + pip->part_vrad;
+		stp->st_min[Z] = pip->part_V[Z] - pip->part_vrad;
+		stp->st_max[Z] = pip->part_V[Z] + pip->part_vrad;
 		return(0);		/* OK */
 	}
 
-	VMOVE( Hunit, pi.part_H );
+	VMOVE( Hunit, pip->part_H );
 	VUNITIZE( Hunit );
 	vec_ortho( a, Hunit );
 	VCROSS( b, Hunit, a );
@@ -274,32 +294,32 @@ struct rt_i		*rtip;
 
 	/* Compute scale matrix S */
 	mat_idn( S );
-	S[ 0] = 1.0 / pi.part_vrad;	/* |A| = |B| */
+	S[ 0] = 1.0 / pip->part_vrad;	/* |A| = |B| */
 	S[ 5] = S[0];
-	S[10] = 1.0 / MAGNITUDE( pi.part_H );
+	S[10] = 1.0 / MAGNITUDE( pip->part_H );
 
 	mat_mul( part->part_SoR, S, R );
 	mat_mul( part->part_invRoS, Rinv, S );
 
 	/* RPP and bounding sphere */
-	VJOIN1( stp->st_center, pi.part_V, 0.5, pi.part_H );
+	VJOIN1( stp->st_center, pip->part_V, 0.5, pip->part_H );
 
-	stp->st_aradius = stp->st_bradius = pi.part_vrad;
+	stp->st_aradius = stp->st_bradius = pip->part_vrad;
 
-	stp->st_min[X] = pi.part_V[X] - pi.part_vrad;
-	stp->st_max[X] = pi.part_V[X] + pi.part_vrad;
-	stp->st_min[Y] = pi.part_V[Y] - pi.part_vrad;
-	stp->st_max[Y] = pi.part_V[Y] + pi.part_vrad;
-	stp->st_min[Z] = pi.part_V[Z] - pi.part_vrad;
-	stp->st_max[Z] = pi.part_V[Z] + pi.part_vrad;
+	stp->st_min[X] = pip->part_V[X] - pip->part_vrad;
+	stp->st_max[X] = pip->part_V[X] + pip->part_vrad;
+	stp->st_min[Y] = pip->part_V[Y] - pip->part_vrad;
+	stp->st_max[Y] = pip->part_V[Y] + pip->part_vrad;
+	stp->st_min[Z] = pip->part_V[Z] - pip->part_vrad;
+	stp->st_max[Z] = pip->part_V[Z] + pip->part_vrad;
 
-	VADD2( tip, pi.part_V, pi.part_H );
-	min[X] = tip[X] - pi.part_hrad;
-	max[X] = tip[X] + pi.part_hrad;
-	min[Y] = tip[Y] - pi.part_hrad;
-	max[Y] = tip[Y] + pi.part_hrad;
-	min[Z] = tip[Z] - pi.part_hrad;
-	max[Z] = tip[Z] + pi.part_hrad;
+	VADD2( tip, pip->part_V, pip->part_H );
+	min[X] = tip[X] - pip->part_hrad;
+	max[X] = tip[X] + pip->part_hrad;
+	min[Y] = tip[Y] - pip->part_hrad;
+	max[Y] = tip[Y] + pip->part_hrad;
+	min[Z] = tip[Z] - pip->part_hrad;
+	max[Z] = tip[Z] + pip->part_hrad;
 	VMINMAX( stp->st_min, stp->st_max, min );
 	VMINMAX( stp->st_min, stp->st_max, max );
 
@@ -811,6 +831,17 @@ vect_t		h;
 /*
  *			R T _ P A R T _ P L O T
  */
+#if NEW_IF
+int
+rt_part_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_part_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
 union record	*rp;
@@ -821,7 +852,10 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-	struct part_internal	pi;
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct part_internal	*pip;
 	point_t		tail;
 	point_t		sphere_rim[16];
 	point_t		vhemi[13];
@@ -831,30 +865,42 @@ double		norm_tol;
 	vect_t		Hunit;
 	register int	i;
 
-	if( rt_part_import( &pi, rp, mat ) < 0 )  {
-		rt_log("rt_part_plot(%s): db import failure\n", dp->d_namep);
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_part_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_part_plot(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	pip = (struct part_internal *)ip->idb_ptr;
 
-	if( pi.part_type == RT_PARTICLE_TYPE_SPHERE )  {
+	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
 		/* For the sphere, 3 rings of 16 points */
-		VSET( a, pi.part_vrad, 0, 0 );
-		VSET( b, 0, pi.part_vrad, 0 );
-		VSET( c, 0, 0, pi.part_vrad );
+		VSET( a, pip->part_vrad, 0, 0 );
+		VSET( b, 0, pip->part_vrad, 0 );
+		VSET( c, 0, 0, pip->part_vrad );
 
-		ell_16pts( sphere_rim, pi.part_V, a, b );
+		ell_16pts( sphere_rim, pip->part_V, a, b );
 		ADD_VL( vhead, sphere_rim[15], 0 );
 		for( i=0; i<16; i++ )  {
 			ADD_VL( vhead, sphere_rim[i], 1 );
 		}
 
-		ell_16pts( sphere_rim, pi.part_V, b, c );
+		ell_16pts( sphere_rim, pip->part_V, b, c );
 		ADD_VL( vhead, sphere_rim[15], 0 );
 		for( i=0; i<16; i++ )  {
 			ADD_VL( vhead, sphere_rim[i], 1 );
 		}
 
-		ell_16pts( sphere_rim, pi.part_V, a, c );
+		ell_16pts( sphere_rim, pip->part_V, a, c );
 		ADD_VL( vhead, sphere_rim[15], 0 );
 		for( i=0; i<16; i++ )  {
 			ADD_VL( vhead, sphere_rim[i], 1 );
@@ -862,22 +908,22 @@ double		norm_tol;
 		return(0);		/* OK */
 	}
 
-	VMOVE( Hunit, pi.part_H );
+	VMOVE( Hunit, pip->part_H );
 	VUNITIZE( Hunit );
 	vec_perp( a, Hunit );
 	VUNITIZE(a);
 	VCROSS( b, Hunit, a );
 	VUNITIZE(b);
 
-	VSCALE( as, a, pi.part_vrad );
-	VSCALE( bs, b, pi.part_vrad );
-	VSCALE( hs, Hunit, -pi.part_vrad );
-	rt_part_hemisphere( vhemi, pi.part_V, as, bs, hs );
+	VSCALE( as, a, pip->part_vrad );
+	VSCALE( bs, b, pip->part_vrad );
+	VSCALE( hs, Hunit, -pip->part_vrad );
+	rt_part_hemisphere( vhemi, pip->part_V, as, bs, hs );
 
-	VADD2( tail, pi.part_V, pi.part_H );
-	VSCALE( as, a, pi.part_hrad );
-	VSCALE( bs, b, pi.part_hrad );
-	VSCALE( hs, Hunit, pi.part_hrad );
+	VADD2( tail, pip->part_V, pip->part_H );
+	VSCALE( as, a, pip->part_hrad );
+	VSCALE( bs, b, pip->part_hrad );
+	VSCALE( hs, Hunit, pip->part_hrad );
 	rt_part_hemisphere( hhemi, tail, as, bs, hs );
 
 	/* Draw V end hemisphere */
@@ -944,9 +990,9 @@ double			norm_tol;
  *			R T _ P A R T _ I M P O R T
  */
 int
-rt_part_import( part, rp, mat )
-struct part_internal	*part;
-union record		*rp;
+rt_part_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
 register mat_t		mat;
 {
 	point_t		v;
@@ -954,7 +1000,11 @@ register mat_t		mat;
 	double		vrad;
 	double		hrad;
 	fastf_t		maxrad, minrad;
+	union record	*rp;
+	struct part_internal	*part;
 
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_PARTICLE )  {
 		rt_log("rt_part_import: defective record\n");
@@ -967,13 +1017,22 @@ register mat_t		mat;
 	ntohd( &vrad, rp->part.p_vrad, 1 );
 	ntohd( &hrad, rp->part.p_hrad, 1 );
 
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_PARTICLE;
+	ip->idb_ptr = rt_malloc( sizeof(struct part_internal), "part_internal");
+	part = (struct part_internal *)ip->idb_ptr;
+
 	/* Apply modeling transformations */
 	MAT4X3PNT( part->part_V, mat, v );
 	MAT4X3VEC( part->part_H, mat, h );
-	if( (part->part_vrad = vrad / mat[15]) < 0 )
+	if( (part->part_vrad = vrad / mat[15]) < 0 )  {
+		rt_free( ip->idb_ptr, "part_internal" );
 		return(-2);
-	if( (part->part_hrad = hrad / mat[15]) < 0 )
+	}
+	if( (part->part_hrad = hrad / mat[15]) < 0 )  {
+		rt_free( ip->idb_ptr, "part_internal" );
 		return(-3);
+	}
 
 	if( part->part_vrad > part->part_hrad )  {
 		maxrad = part->part_vrad;
@@ -982,8 +1041,10 @@ register mat_t		mat;
 		maxrad = part->part_hrad;
 		minrad = part->part_vrad;
 	}
-	if( maxrad <= 0 )
+	if( maxrad <= 0 )  {
+		rt_free( ip->idb_ptr, "part_internal" );
 		return(-4);
+	}
 
 	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
 		/* Height vector is insignificant, particle is a sphere */
@@ -1002,5 +1063,79 @@ register mat_t		mat;
 
 	part->part_type = RT_PARTICLE_TYPE_CONE;
 	return(0);		/* OK */
+}
 
+/*
+ *			R T _ P A R T _ E X P O R T
+ */
+int
+rt_part_export( ep, ip )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+{
+	return(-1);
+}
+
+/*
+ *			R T _ P A R T _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_part_describe( str, ip, verbose )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+{
+	register struct part_internal	*pip =
+		(struct part_internal *)ip->idb_ptr;
+	char	buf[256];
+
+	switch( pip->part_type )  {
+	case RT_PARTICLE_TYPE_SPHERE:
+		rt_vls_strcat( str, "spherical particle\n");
+		sprintf(buf, "\tV (%g, %g, %g)\n", V3ARGS(pip->part_V) );
+		rt_vls_strcat( str, buf );
+		sprintf(buf, "\tradius = %g\n", pip->part_vrad );
+		rt_vls_strcat( str, buf );
+		break;
+	case RT_PARTICLE_TYPE_CYLINDER:
+		rt_vls_strcat( str, "cylindrical particle (lozenge)\n");
+		sprintf(buf, "\tV (%g, %g, %g)\n", V3ARGS(pip->part_V) );
+		rt_vls_strcat( str, buf );
+		sprintf(buf, "\tH (%g, %g, %g)\n", V3ARGS(pip->part_H) );
+		rt_vls_strcat( str, buf );
+		sprintf(buf, "\tradius = %g\n", pip->part_vrad );
+		rt_vls_strcat( str, buf );
+		break;
+	case RT_PARTICLE_TYPE_CONE:
+		rt_vls_strcat( str, "conical particle\n");
+		sprintf(buf, "\tV (%g, %g, %g)\n", V3ARGS(pip->part_V) );
+		rt_vls_strcat( str, buf );
+		sprintf(buf, "\tH (%g, %g, %g)\n", V3ARGS(pip->part_H) );
+		rt_vls_strcat( str, buf );
+		sprintf(buf, "\tv end radius = %g\n", pip->part_vrad );
+		rt_vls_strcat( str, buf );
+		sprintf(buf, "\th end radius = %g\n", pip->part_hrad );
+		rt_vls_strcat( str, buf );
+		break;
+	default:
+		rt_vls_strcat( str, "Unknown particle type\n");
+		return(-1);
+	}
+	return(0);
+}
+
+/*
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ *  XXX The suffix of this name is temporary.
+ */
+void
+rt_part_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	RT_CK_DB_INTERNAL(ip);
+	rt_free( ip->idb_ptr, "particle ifree" );
 }
