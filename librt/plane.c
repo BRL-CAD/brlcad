@@ -83,16 +83,54 @@ rt_3pts_collinear(a, b, c, tol)
 point_t	a, b, c;
 struct rt_tol	*tol;
 {
-	fastf_t	dist, mag_ba, mag_ca, theta;
-	vect_t	ba, ca;
+	fastf_t	mag_ab, mag_bc, mag_ca, max_len, dist_sq;
+	fastf_t cos_a, cos_b, cos_c;
+	vect_t	ab, bc, ca;
+	int max_edge_no;
 
-	VSUB2(ba, b, a);
-	VSUB2(ca, c, a);
-	mag_ba = MAGNITUDE(ba);
+	VSUB2(ab, b, a);
+	VSUB2(bc, c, b);
+	VSUB2(ca, a, c);
+	mag_ab = MAGNITUDE(ab);
+	mag_bc = MAGNITUDE(bc);
 	mag_ca = MAGNITUDE(ca);
-	theta = acos(VDOT(ba, ca)/(mag_ba * mag_ca));
-	dist = mag_ba * sin(theta);
-	return(fabs(dist) < tol->dist);
+
+	/* find longest edge */
+	max_len = mag_ab;
+	max_edge_no = 1;
+
+	if( mag_bc > max_len )
+	{
+		max_len = mag_bc;
+		max_edge_no = 2;
+	}
+
+	if( mag_ca > max_len )
+	{
+		max_len = mag_ca;
+		max_edge_no = 3;
+	}
+
+	switch( max_edge_no )
+	{
+		case 1:
+			cos_b = (-VDOT( ab , bc ))/(mag_ab * mag_bc );
+			dist_sq = mag_bc*mag_bc*( 1.0 - cos_b*cos_b);
+			break;
+		case 2:
+			cos_c = (-VDOT( bc , ca ))/(mag_bc * mag_ca );
+			dist_sq = mag_ca*mag_ca*(1.0 - cos_c*cos_c);
+			break;
+		case 3:
+			cos_a = (-VDOT( ca , ab ))/(mag_ca * mag_ab );
+			dist_sq = mag_ab*mag_ab*(1.0 - cos_a*cos_a);
+			break;
+	}
+
+	if( dist_sq <= tol->dist_sq )
+		return( 1 );
+	else
+		return( 0 );
 }
 
 
