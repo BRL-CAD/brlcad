@@ -853,25 +853,29 @@ struct combined_tree_state {
 #define OP_NMG_TESS	MKOP(11)	/* Leaf: tr_stp -> nmgregion */
 
 union tree {
-	long	magic;
-	int	tr_op;		/* Operation */
+	long	magic;				/* First word: magic number */
+	/* Second word is always OP code */
 	struct tree_node {
+		long		magic;
 		int		tb_op;		/* non-leaf */
 		struct region	*tb_regionp;	/* ptr to containing region */
 		union tree	*tb_left;
 		union tree	*tb_right;
 	} tr_b;
 	struct tree_leaf {
+		long		magic;
 		int		tu_op;		/* leaf, OP_SOLID */
 		struct region	*tu_regionp;	/* ptr to containing region */
 		struct soltab	*tu_stp;
 	} tr_a;
 	struct tree_cts {
+		long		magic;
 		int		tc_op;		/* leaf, OP_REGION */
 		struct region	*tc_pad;	/* unused */
 		struct combined_tree_state	*tc_ctsp;
 	} tr_c;
 	struct tree_nmgregion {
+		long		magic;
 		int		td_op;		/* leaf, OP_NMG_TESS */
 		struct region	*td_pad;	/* unused */
 #if defined(NMG_H)
@@ -882,6 +886,7 @@ union tree {
 	} tr_d;
 };
 /* Things which are in the same place in both structures */
+#define tr_op		tr_a.tu_op
 #define tr_regionp	tr_a.tu_regionp
 
 #define TREE_NULL	((union tree *)0)
