@@ -169,19 +169,19 @@ union tree		*curtree;
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *rt_gettree_leaf( tsp, pathp, rp, id )
+HIDDEN union tree *rt_gettree_leaf( tsp, pathp, ep, id )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-union record		*rp;
+struct rt_external	*ep;
 int			id;
 {
 	register fastf_t	f;
 	register struct soltab	*stp;
 	union tree		*curtree;
 	struct directory	*dp;
-	struct rt_external	ext, *ep;
 	struct rt_db_internal	intern;
 
+	RT_CK_EXTERNAL(ep);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	/*
@@ -221,12 +221,6 @@ next_one: ;
 	/* init solid's maxima and minima */
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
-
-	/* XXX this should be passed in as an arg */
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
 
     	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_functab[id].ft_import( &intern, ep, stp->st_pathmat ) < 0 )  {
