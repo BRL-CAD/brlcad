@@ -94,7 +94,8 @@ void rb_delete		(
 			);
 void rb_diagnose_tree	(
 			    rb_tree	*tree,
-			    int		order
+			    int		order,
+			    int		trav_type
 			);
 void *rb_extreme	(
 			    rb_tree	*tree,
