@@ -565,21 +565,21 @@ int axes;
       MAT4X3PNT(v2, Viewrot, a2);
 
       /* possibly translate */
-      if(mged_variables.v_axes > 1){
+      if(mged_variables.v_axes > 2){
 	switch(mged_variables.v_axes){
-	case 2:     /* lower left */
+	case 3:     /* lower left */
 	  ox = -0.8 / dmp->dm_aspect;
 	  oy = -0.8;
 	  break;
-	case 3:     /* upper left */
+	case 4:     /* upper left */
 	  ox = -0.8 / dmp->dm_aspect;
 	  oy = 0.8;
 	  break;
-	case 4:     /* upper right */
+	case 5:     /* upper right */
 	  ox = 0.8 / dmp->dm_aspect;
 	  oy = 0.8;
 	  break;
-	case 5:     /* lower right */
+	case 6:     /* lower right */
 	  ox = 0.8 / dmp->dm_aspect;
 	  oy = -0.8;
 	  break;
