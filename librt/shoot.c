@@ -85,7 +85,12 @@ register struct ray *rayp;
 			newseg->seg_out = temp;		/* struct copy */
 		}
 		/* Add to list */
-		newseg->seg_next = HeadSeg;
-		HeadSeg = newseg;
+		{
+			register struct seg *seg2 = newseg;
+			while( seg2->seg_next != SEG_NULL )
+				seg2 = seg2->seg_next;
+			seg2->seg_next = HeadSeg;
+			HeadSeg = newseg;
+		}
 	}
 }
