@@ -189,8 +189,6 @@ CONST struct rt_tol *ttol;
 		if( !s->sa_p )
 			nmg_shell_a( s , ttol );
 
-rt_log( "Checking Shell x%x\n" , s );
-
 		if( NMG_INDEX_GET( flags , s ) == 1 )
 		{
 			struct shell *void_s;
@@ -198,7 +196,6 @@ rt_log( "Checking Shell x%x\n" , s );
 
 			/* identify this external shell */
 			NMG_INDEX_ASSIGN( flags , s , ++ext_shell_id );
-rt_log( "\tIt is an external shell, give it id %d\n" , NMG_INDEX_GET( flags , s ) );
 
 			ext_f = nmg_find_top_face( s , flags );
 
@@ -210,8 +207,6 @@ rt_log( "\tIt is an external shell, give it id %d\n" , NMG_INDEX_GET( flags , s 
 				if( void_s == s )
 					continue;
 
-rt_log( "\t\tChecking shell x%x as possible void\n" , void_s );
-
 				NMG_CK_SHELL( s );
 				if( !s->sa_p )
 					nmg_shell_a( s , ttol );
@@ -222,15 +217,11 @@ rt_log( "\t\tChecking shell x%x as possible void\n" , void_s );
 					struct shell *test_s;
 					int breakout=0;
 					int not_in_this_shell=0;
-rt_log( "\t\t\tIt is a void shell...\n" );
 
 					/* this is a void shell
 					 * but does it belong with external shell s */
 					if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , s->sa_p->min_pt , s->sa_p->max_pt ) )
-					{
-rt_log( "\t\t\t\tNot for this external shell (bounding boxes not within one another)\n" );
 						continue;
-					}
 
 					for( RT_LIST_FOR( fu , faceuse , &void_s->fu_hd ) )
 					{
@@ -246,7 +237,6 @@ rt_log( "\t\t\t\tNot for this external shell (bounding boxes not within one anot
 
 								if( class == NMG_CLASS_AoutB )
 								{
-rt_log( "\t\t\tNot for this external shell (point on void shell is outside external shell)\n" );
 									breakout = 1;
 									not_in_this_shell = 1;
 									break;
@@ -290,15 +280,11 @@ rt_log( "\t\t\tNot for this external shell (point on void shell is outside exter
 						}
 					}
 					if( wrong_void )
-					{
-rt_log( "\t\t\t\tWrong void\n" );
 						continue;
-					}
 
 					/* This void shell belongs with shell s
 					 * mark it with the negative of external shells flag id */
 					NMG_INDEX_ASSIGN( flags , void_s , (-NMG_INDEX_GET( flags , s )) );
-rt_log( "\t\t\t\tMarked this Shell (x%x) as %d\n" , void_s , NMG_INDEX_GET( flags , void_s ) );
 				}
 			}
 		}
@@ -380,8 +366,6 @@ struct db_full_path *pathp;
 		{
 			struct shell *s2;
 
-			rt_log( "Shell x%x is an external shell\n" , s );
-
 			s2 = RT_LIST_FIRST( shell , &r->s_hd );
 			while( RT_LIST_NOT_HEAD( s2 , &r->s_hd ) )
 			{
@@ -389,7 +373,6 @@ struct db_full_path *pathp;
 				{
 					struct shell *s_next;
 
-					rt_log( "\tShell x%x is a void shell\n" , s2 );
 					s_next = RT_LIST_PNEXT( shell , s2 );
 					nmg_js( s , s2 , &tol );
 					s2 = s_next;
@@ -419,8 +402,11 @@ struct db_full_path *pathp;
 		/* Put entire first loop on list */
 		fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
 		NMG_CK_FACEUSE( fu );
-		while( fu->orientation != OT_SAME )
+		while( fu->orientation != OT_SAME && RT_LIST_NOT_HEAD( fu , &s->fu_hd ) )
 			fu = RT_LIST_PNEXT( faceuse , fu );
+
+		if( RT_LIST_IS_HEAD( fu , &s->fu_hd ) )
+			continue;
 
 		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
 		NMG_CK_LOOPUSE( lu );
@@ -518,6 +504,7 @@ struct db_full_path *pathp;
 						if( lu->orientation != OT_SAME )
 						{
 							rt_log( "g-tankill: Found a hole in a triangulated face!!!\n" );
+							nmg_pr_fu_briefly( fu , (char *)NULL );
 							goto outt;
 						}
 
