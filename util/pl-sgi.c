@@ -135,7 +135,7 @@ char	**argv;
 	getmatrix( centermat );
 
 	/* set up the command menu */
-	menu = defpup( "Axis|Exit" );
+	menu = defpup( "Center|Axis|Exit" );
 
 	view_loop();
 	exit( 0 );
@@ -171,6 +171,10 @@ char	**argv;
 #define	LEFT	SW30
 #define	V3525	SW31
 
+/*XXX*/
+float	tran[3];	/* x, y, z screen space translate */
+float	scal[3];	/* pre-translate scale */
+
 view_loop()
 {
 	Matrix	m, newm;
@@ -179,8 +183,6 @@ view_loop()
 	int	end_it = 0;
 	int	o = 1;
 	long	menuval;
-	float	tran[3];	/* x, y, z screen space translate */
-	float	scal[3];	/* pre-translate scale */
 
 	/* Initial translate/rotate/scale matrix */
 	loadmatrix( centermat );
@@ -263,7 +265,7 @@ view_loop()
 			if( val == 0 )
 				break;
 			menuval = dopup( menu );
-			if( menuval == 2 )
+			if( menuval == 3 )
 				end_it = 1;
 			else
 				domenu( menuval );
@@ -456,7 +458,6 @@ init_display()
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
 	qdevice(RIGHTMOUSE);
-	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
 
 	/* enable all buttons */
 	for( i = 0; i < 32; i++ )
@@ -773,34 +774,61 @@ int	rx, ry, rz;
 #endif
 }
 
-newview( m, newm, viewmat, tran, scal )
-Matrix	m, newm, viewmat;
+newview( rotmat, rotdelta, viewmat, tran, scal )
+Matrix	rotmat, rotdelta, viewmat;
 float	tran[3], scal[3];
 {
-	/* combine new rot/trans with old */
-	multmatrix( m );
-	getmatrix( m );
+	/*
+	 * combine new rots with old
+	 *  rotmat = rotmat * rotdela
+	 */
+	loadmatrix( rotdelta );
+	multmatrix( rotmat );
+	getmatrix( rotmat );
 
 	/* set up total viewing transformation */
 	loadmatrix( viewmat );
-	/* mult m here rotates about view but translates along model */
+	/*
+	 * mult m here rotates about view but translates along those
+	 * rotated model axis.
+	 */
 	translate( tran[0], tran[1], tran[2] );
 	scale( scal[0], scal[1], scal[2] );
-	/* mult m here translates along view but rotates about model */
+	/*
+	 * mult m here translates along view but rotates about about the
+	 * translated axis.
+	 */
 	multmatrix( m );
 }
 
 domenu( n )
 int	n;
 {
+	long	left, bottom, winx_size, winy_size;
+	long	x, y;
+	double	fx, fy;
+
 	switch( n ) {
 	case 1:
+		/* position */
+		x = getvaluator(CURSORX);
+		y = getvaluator(CURSORY);
+		getsize( &winx_size, &winy_size);
+		getorigin( &left, &bottom );
+		fx = 0.5 - (x - left) / (double)winx_size;
+		fy = 0.5 - (y - bottom) / (double)winy_size;
+		tran[0] += fx * 2.0 * viewsize;
+		tran[1] += fy * 2.0 * viewsize;
+		break;
+	case 2:
+		/* axis */
 		if( axis == 0 )
 			axis = 1;
 		else
 			axis = 0;
 		break;
-	case 2:
+	case 3:
+		/* quit */
 		break;
 	}
 }
