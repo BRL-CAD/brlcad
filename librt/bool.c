@@ -233,7 +233,8 @@ struct application	*ap;
 		if( segp->seg_out.hit_dist < -10.0 )
 			continue;
 
-		if( !(segp->seg_in.hit_dist >= -INFINITY &&
+		if( segp->seg_stp->st_aradius < INFINITY &&
+		    !(segp->seg_in.hit_dist >= -INFINITY &&
 		    segp->seg_out.hit_dist <= INFINITY) )  {
 		    	bu_log("rt_boolweave:  Defective %s segment %s (%.18e,%.18e) %d,%d\n",
 		    		rt_functab[segp->seg_stp->st_id].ft_name,
