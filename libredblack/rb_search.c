@@ -24,13 +24,15 @@
 struct rb_node *_rb_search
 	(struct rb_node *root, int order_nm, int (*order)(), void *data)
 {
-    int	result;
+    int		result;
+    rb_tree	*tree;
+
+    RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
+    tree = root -> rbn_tree;
+    RB_CKORDER(tree, order_nm);
 
     while (1)
     {
-	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
-	RB_CKORDER(root -> rbn_tree, order_nm);
-
 	if (root == rb_null(root -> rbn_tree))
 	    return (root);
 	if ((result = (*order)(data, rb_data(root, order_nm))) == 0)
@@ -39,8 +41,9 @@ struct rb_node *_rb_search
 	    root = rb_left_child(root, order_nm);
 	else	/* result > 0 */
 	    root = rb_right_child(root, order_nm);
+	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
     }
-    current_node = root;
+    rb_current(tree) = root;
     return (root);
 }
 

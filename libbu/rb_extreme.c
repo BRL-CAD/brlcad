@@ -23,11 +23,13 @@ static struct rb_node *_rb_extreme (struct rb_node *root, int order,
 				    int sense, struct rb_node *empty_node)
 {
     struct rb_node	*child;
+    rb_tree		*tree;
 
     while (1)
     {
 	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
-	RB_CKORDER(root -> rbn_tree, order);
+	tree = root -> rbn_tree;
+	RB_CKORDER(tree, order);
 
 	child = (sense == SENSE_MIN) ? rb_left_child(root, order) :
 				       rb_right_child(root, order);
@@ -37,7 +39,7 @@ static struct rb_node *_rb_extreme (struct rb_node *root, int order,
     }
 
     /* Record the node with which we've been working */
-    current_node = root;
+    rb_current(tree) = root;
 
     return (root);
 }
@@ -91,10 +93,14 @@ struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
 {
     struct rb_node	*child;
     struct rb_node	*parent;
-    struct rb_node	*empty_node = rb_null(node -> rbn_tree);
+    rb_tree		*tree;
+    struct rb_node	*empty_node;
 
     RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(node -> rbn_tree, order);
+    tree = node -> rbn_tree;
+    RB_CKORDER(tree, order);
+
+    empty_node = rb_null(tree);
 
     fprintf(stderr,
 	"_rb_neighbor(<%x>, %d, %d)...\n", (int) node, order, sense);
@@ -111,7 +117,7 @@ struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
     }
 
     /* Record the node with which we've been working */
-    current_node = parent;
+    rb_current(tree) = parent;
 
     return (parent);
 }
@@ -125,13 +131,11 @@ struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
  *	successor).  Rb_neighbor() returns a pointer to the data in the
  *	adjacent node, if that node exists.  Otherwise, it returns NULL.
  */
-void *rb_neighbor (int order, int sense)
+void *rb_neighbor (rb_tree *tree, int order, int sense)
 {
-    rb_tree		*tree;
     struct rb_node	*node;
 
-    RB_CKMAG(current_node, RB_NODE_MAGIC, "red-black node");
-    tree = current_node -> rbn_tree;
+    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
@@ -143,14 +147,14 @@ void *rb_neighbor (int order, int sense)
     }
 
     /* Wade throught the tree */
-    node = _rb_neighbor(current_node, order, sense);
+    node = _rb_neighbor(rb_current(tree), order, sense);
 
     if (node == rb_null(tree))
 	return (NULL);
     else
     {
 	/* Record the node with which we've been working */
-	current_node = node;
+	rb_current(tree) = node;
 	return (rb_data(node, order));
     }
 }
