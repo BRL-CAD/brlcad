@@ -244,7 +244,7 @@ char *str;{
 		return;
 	}
 
-	for( menu=0, m=menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
+	for( menu=0, m=menu_array; m - menu_array < NMENU; m++,menu++ )  {
 		if( *m == MENU_NULL )  continue;
 		for( item=0, mptr = *m;
 		     mptr->menu_string[0] != '\0';
@@ -577,7 +577,6 @@ static void
 be_accept()  {
 	register struct solid *sp;
 	register struct dm_list *dmlp;
-	struct bu_vls vls;
 
 	if( state == ST_S_EDIT )  {
 		/* Accept a solid edit */
@@ -615,16 +614,20 @@ be_accept()  {
 	  if(dmlp->_mged_variables->transform == 'e')
 	    dmlp->_mged_variables->transform = 'v';
 
-	bu_vls_init(&vls);
-	bu_vls_strcpy(&vls, "undo_edit_menu");
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	{
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_strcpy(&vls, "end_edit_callback");
+	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	}
 }
 
 static void
 be_reject()  {
 	register struct solid *sp;
 	register struct dm_list *dmlp;
-	struct bu_vls vls;
 
 	update_views = 1;
 
@@ -673,9 +676,14 @@ be_reject()  {
 	  if(dmlp->_mged_variables->transform == 'e')
 	    dmlp->_mged_variables->transform = 'v';
 
-	bu_vls_init(&vls);
-	bu_vls_strcpy(&vls, "undo_edit_menu");
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	{
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_strcpy(&vls, "end_edit_callback");
+	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	}
 }
 
 static void
@@ -810,7 +818,7 @@ char *str;
   curr_dm_list = save_dm_list;
 
   bu_vls_init(&vls);
-  bu_vls_strcpy(&vls, "mged_display(state)");
+  bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
   Tcl_SetVar(interp, bu_vls_addr(&vls), state_str[state], TCL_GLOBAL_ONLY);
   bu_vls_free(&vls);
 
