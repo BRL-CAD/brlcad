@@ -504,7 +504,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_sph_uv,	rt_sph_curve,	rt_sph_class,	rt_sph_free,
 		rt_ell_plot,	rt_sph_vshot,	rt_ell_tess,	rt_ell_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_ell_import5, rt_ell_export5,
 		rt_ell_import,	rt_ell_export,	rt_ell_ifree,
 		rt_ell_describe,rt_sph_xform,	rt_ell_parse,
 		sizeof(struct rt_ell_internal), RT_ELL_INTERNAL_MAGIC,
