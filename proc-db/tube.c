@@ -29,7 +29,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 #include "../libspl/b_spline.h"
-#include "../rt/mathtab.h"
 
 extern struct b_spline *spl_new();
 

@@ -26,8 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "wdb.h"
 
-#include "../rt/mathtab.h"
-
 
 struct colors {
 	char		*name;
