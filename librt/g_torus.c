@@ -494,6 +494,292 @@ struct application	*ap;
 	return(segp);			/* HIT */
 }
 
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+/*
+ *			T O R _ V S H O T
+ *
+ *  This is the Becker vector version
+ */
+void
+tor_vshot( stp, rp, segp, n, resp)
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct resource         *resp; /* pointer to a list of free segs */
+{
+	register int    i;
+	register struct tor_specific *tor;
+	LOCAL vect_t	dprime;		/* D' */
+	LOCAL vect_t	pprime;		/* P' */
+	LOCAL vect_t	work;		/* temporary vector */
+	LOCAL poly	*C;		/* The final equation */
+	LOCAL complex	(*val)[MAXP];	/* The complex roots */
+	LOCAL double	k[4];		/* The real roots */
+	LOCAL int	j;
+	LOCAL int	num_roots;
+	LOCAL int	num_zero;
+	LOCAL poly	A, Asqr;
+	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
+	LOCAL vect_t	cor_pprime;	/* new ray origin */
+	LOCAL fastf_t	*cor_proj;
+	LOCAL poly      tmp;
+
+	/* Allocate space for polys and roots */
+        C = (poly *)rt_malloc(n * sizeof(poly), "tor poly");
+	val = (complex (*)[MAXP])rt_malloc(n * sizeof(complex (*)[MAXP]), "tor complex");
+	cor_proj = (fastf_t *)malloc(n * sizeof(fastf_t), "tor proj");
+
+	/* Initialize seg_stp to assume hit (zero will then flag miss) */
+#	include "noalias.h"
+	for(i = 0; i < n; i++) segp[i].seg_stp = stp[i];
+
+	/* for each ray/torus pair */
+#	include "noalias.h"
+	for(i = 0; i < n; i++){
+#if !CRAY	/* currently prevents vectorization on cray */
+	 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
+#endif
+		tor = (struct tor_specific *)stp[i]->st_specific;
+
+		/* Convert vector into the space of the unit torus */
+		MAT4X3VEC( dprime, tor->tor_SoR, rp[i]->r_dir );
+		VUNITIZE( dprime );
+
+		/* Use segp[i].seg_in.hit_normal as tmp to hold dprime */
+		VMOVE( segp[i].seg_in.hit_normal, dprime );
+
+		VSUB2( work, rp[i]->r_pt, tor->tor_V );
+		MAT4X3VEC( pprime, tor->tor_SoR, work );
+
+		/* Use segp[i].seg_out.hit_normal as tmp to hold pprime */
+		VMOVE( segp[i].seg_out.hit_normal, pprime );
+
+		/* normalize distance from torus.  substitute
+		 * corrected pprime which contains a translation along ray
+		 * direction to closest approach to vertex of torus.
+		 * Translating ray origin along direction of ray to closest
+		 * pt. to origin of solid's coordinate system, new ray origin is
+		 * 'cor_pprime'.
+		 */
+		cor_proj[i] = VDOT( pprime, dprime );
+		VSCALE( cor_pprime, dprime, cor_proj[i] );
+		VSUB2( cor_pprime, pprime, cor_pprime );
+
+		/*
+		 *  Given a line and a ratio, alpha, finds the equation of the
+		 *  unit torus in terms of the variable 't'.
+		 *
+		 *  The equation for the torus is:
+		 *
+		 * [X**2 + Y**2 + Z**2 + (1 - alpha**2)]**2 - 4*(X**2 + Y**2) =0
+		 *
+		 *  First, find X, Y, and Z in terms of 't' for this line, then
+		 *  substitute them into the equation above.
+		 *
+		 *  	Wx = Dx*t + Px
+		 *
+		 *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
+		 *  		[0]                [1]           [2]    dgr=2
+		 */
+		X2_Y2.dgr = 2;
+		X2_Y2.cf[0] = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
+		X2_Y2.cf[1] = 2.0 * (dprime[X] * cor_pprime[X] +
+				     dprime[Y] * cor_pprime[Y]);
+		X2_Y2.cf[2] = cor_pprime[X] * cor_pprime[X] +
+			      cor_pprime[Y] * cor_pprime[Y];
+	
+		/* A = X2_Y2 + Z2 */
+		A.dgr = 2;
+		A.cf[0] = X2_Y2.cf[0] + dprime[Z] * dprime[Z];
+		A.cf[1] = X2_Y2.cf[1] + 2.0 * dprime[Z] * cor_pprime[Z];
+		A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
+			  1.0 - tor->tor_alpha * tor->tor_alpha;
+
+		/* Inline expansion of (void) polyMul( &A, &A, &Asqr ) */
+		/* Both polys have degree two */
+		Asqr.dgr = 4;
+		Asqr.cf[0] = A.cf[0] * A.cf[0];
+		Asqr.cf[1] = A.cf[0] * A.cf[1] +
+				 A.cf[1] * A.cf[0];
+		Asqr.cf[2] = A.cf[0] * A.cf[2] +
+				 A.cf[1] * A.cf[1] +
+				 A.cf[2] * A.cf[0];
+		Asqr.cf[3] = A.cf[1] * A.cf[2] +
+				 A.cf[2] * A.cf[1];
+		Asqr.cf[4] = A.cf[2] * A.cf[2];
+
+		/* Inline expansion of (void) polyScal( &X2_Y2, 4.0 ) */
+		X2_Y2.cf[0] *= 4.0;
+		X2_Y2.cf[1] *= 4.0;
+		X2_Y2.cf[2] *= 4.0;
+
+		/* Inline expansion of (void) polySub( &Asqr, &X2_Y2, &C ) */
+		/* offset is know to be 2 */
+		C[i].dgr	= 4;
+		C[i].cf[0] = Asqr.cf[0];
+		C[i].cf[1] = Asqr.cf[1];
+		C[i].cf[2] = Asqr.cf[2];
+		C[i].cf[3] = Asqr.cf[3];
+		C[i].cf[4] = Asqr.cf[4];
+		C[i].cf[2] -= X2_Y2.cf[0];
+		C[i].cf[3] -= X2_Y2.cf[1];
+		C[i].cf[4] -= X2_Y2.cf[2];
+
+	}
+
+	/* Unfortunately finding the 4th order roots are too ugly to inline */
+	for(i = 0; i < n; i++){
+		if (stp[i] != 0) continue; /* stp[i] == 0 signals skip ray */
+
+		/*  It is known that the equation is 4th order.  Therefore,
+	 	*  if the root finder returns other than 4 roots, error.
+	 	*/
+		if ( (num_roots = polyRoots( &C[i], val[i] )) != 4 ){
+			if( num_roots != 0 )  {
+				rt_log("tor:  polyRoots() 4!=%d\n", num_roots);
+				rt_pr_roots( num_roots, val );
+			}
+			SEG_MISS(segp[i]);		/* MISS */
+		}
+	}
+
+	/* for each ray/torus pair */
+#	include "noalias.h"
+	for(i = 0; i < n; i++){
+		if (stp[i] == 0 || segp[i].seg_stp == 0) continue; /* Skip */
+
+		/*  Only real roots indicate an intersection in real space.
+	 	 *
+	 	 *  Look at each root returned; if the imaginary part is zero
+	 	 *  or sufficiently close, then use the real part as one value
+	 	 *  of 't' for the intersections
+	 	 */
+	        /* Also reverse translation by adding distance to all 'k' values. */
+		/* Reuse C to hold k values */
+		num_zero = 0;
+		if( NEAR_ZERO( val[i][0].im, 0.0001 ) )
+			C[i].cf[num_zero++] = val[i][0].re - cor_proj[i];
+		if( NEAR_ZERO( val[i][1].im, 0.0001 ) ) {
+			C[i].cf[num_zero++] = val[i][1].re - cor_proj[i];
+		}
+		if( NEAR_ZERO( val[i][2].im, 0.0001 ) ) {
+			C[i].cf[num_zero++] = val[i][2].re - cor_proj[i];
+		}
+		if( NEAR_ZERO( val[i][3].im, 0.0001 ) ) {
+			C[i].cf[num_zero++] = val[i][3].re - cor_proj[i];
+		}
+		C[i].dgr   = num_zero;
+
+		/* Here, 'i' is number of points found */
+		if( num_zero == 0 ) {
+			SEG_MISS(segp[i]);		/* MISS */
+		}
+		else if( num_zero != 2 && num_zero != 4 ) {
+#if 0
+			rt_log("tor_shot: reduced 4 to %d roots\n",i);
+			rt_pr_roots( 4, val );
+#endif
+			SEG_MISS(segp[i]);		/* MISS */
+		}
+	}
+
+	/* Process each two segment hit */
+#	include "noalias.h"
+	for(i = 0; i < n; i++){
+		if (stp[i] == 0 || segp[i].seg_stp == 0) continue; /* Skip */
+
+		if( C[i].dgr != 2 )  continue;  /* Not one segment */
+
+		if (C[i].cf[0] <= 0.0 && C[i].cf[1] <= 0.0) {
+			SEG_MISS(segp[i]);		/* MISS */
+		}
+		else {
+			segp[i].seg_next = SEG_NULL;
+			segp[i].seg_stp = stp[i];
+
+			/* C[i].cf[1] is entry point */
+			/* segp[r].seg_in.hit_normal holds dprime */
+			/* segp[r].seg_out.hit_normal holds pprime */
+			if (C[i].cf[1] < C[i].cf[0]) {
+				segp[i].seg_in.hit_dist = C[i].cf[1]*tor->tor_r1;
+				segp[i].seg_out.hit_dist = C[i].cf[0]*tor->tor_r1;
+				/* Set aside vector for tor_norm() later */
+				VJOIN1( segp[i].seg_in.hit_vpriv,
+					segp[i].seg_out.hit_normal,
+					C[i].cf[1], segp[i].seg_in.hit_normal );
+				VJOIN1( segp[i].seg_out.hit_vpriv,
+					segp[i].seg_out.hit_normal,
+					C[i].cf[0], segp[i].seg_in.hit_normal );
+
+			} else { /* C[i].cf[0] is entry point */
+				segp[i].seg_in.hit_dist = C[i].cf[0]*tor->tor_r1;
+				segp[i].seg_out.hit_dist = C[i].cf[1]*tor->tor_r1;
+				/* Set aside vector for tor_norm() later */
+				VJOIN1( segp[i].seg_in.hit_vpriv,
+					segp[i].seg_out.hit_normal,
+					C[i].cf[0], segp[i].seg_in.hit_normal );
+				VJOIN1( segp[i].seg_out.hit_vpriv,
+					segp[i].seg_out.hit_normal,
+					C[i].cf[1], segp[i].seg_in.hit_normal );
+
+			}
+		}
+	}
+
+	/* Process each two segment hit */
+	for(i = 0; i < n; i++){
+		if (stp[i] == 0 || segp[i].seg_stp == 0) continue; /* Skip */
+
+		if( C[i].dgr != 4 )  continue;  /* Not two segment */
+
+		/* Sort most distant to least distant. */
+		rt_pt_sort( C[i].cf, 4 );
+
+		/* Now, t[0] > t[npts-1].  See if this is an easy out. */
+		if( C[i].cf[0] <= 0.0 ) {
+			SEG_MISS(segp[C[i].dgr]);		/* MISS */
+		} else {
+			register int r;
+			register struct seg *seg2p;		/* XXX */
+
+			r = C[i].dgr; /* holds the ray/torus pair number */
+
+			/* Attach second hit to segment chain */
+			GET_SEG(seg2p, resp);
+			segp[r].seg_next = seg2p;
+
+			/* segp[r].seg_in.hit_normal holds dprime */
+			VMOVE( dprime, segp[r].seg_in.hit_normal );
+
+			/* segp[r].seg_out.hit_normal holds pprime */
+			VMOVE( pprime, segp[r].seg_out.hit_normal );
+
+			segp[r].seg_next = SEG_NULL;
+			segp[r].seg_stp = stp[r];
+
+			/* C[i].cf[1] is entry point */
+			segp[r].seg_in.hit_dist = C[i].cf[1]*tor->tor_r1;
+			segp[r].seg_out.hit_dist = C[i].cf[0]*tor->tor_r1;
+			/* Set aside vector for tor_norm() later */
+			VJOIN1(segp[r].seg_in.hit_vpriv, pprime, C[i].cf[1], dprime );
+			VJOIN1(segp[r].seg_out.hit_vpriv, pprime, C[i].cf[0], dprime);
+
+			/* C[i].cf[2] is entry point */
+			seg2p->seg_stp = stp[r];
+			seg2p->seg_in.hit_dist = C[i].cf[3]*tor->tor_r1;
+			seg2p->seg_out.hit_dist = C[i].cf[2]*tor->tor_r1;
+			VJOIN1( seg2p->seg_in.hit_vpriv, pprime, C[i].cf[3], dprime );
+			VJOIN1(seg2p->seg_out.hit_vpriv, pprime, C[i].cf[2], dprime );
+		}
+	}
+
+	/* Free tmp space used */
+	free(C);
+	free(val);
+	free(cor_proj);
+}
+
 /*
  *			T O R _ N O R M
  *
