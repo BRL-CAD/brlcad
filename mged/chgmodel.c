@@ -2278,6 +2278,13 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
+	if( old_intern.idb_type != ID_NMG )
+	{
+		Tcl_AppendResult(interp, argv[1], " is not an NMG solid!!\n", (char *)NULL );
+		rt_db_free_internal( &old_intern );
+		return TCL_ERROR;
+	}
+
 	m = (struct model *)old_intern.idb_ptr;
 	NMG_CK_MODEL(m);
 
