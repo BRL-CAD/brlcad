@@ -396,6 +396,9 @@ union tree		*curtree;
 		nmg_r_to_vlist( &vhead, r, style );
 
 		drawH_part2( 0, vhead.vh_first, pathp, tsp, SOLID_NULL );
+
+		/* NMG region is no longer necessary, only vlist remains */
+		nmg_kr( r );
 	}
 
 	/* Return original tree -- it needs to be freed (by caller) */
