@@ -173,7 +173,7 @@ fi
 reconfigure_manually=no
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
   echo $ECHO_N "Automatically preparing build ... $ECHO_C"
-  autoreconf -i > /dev/null 2>&1
+  autoreconf -if > /dev/null 2>&1
   if [ ! $? = 0 ] ; then
     echo "Warning: autoreconf failed"
     echo "Attempting to run the configuration steps individually"
@@ -217,7 +217,7 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
   autoheader 
   [ ! $? = 0 ] && echo "ERROR: autoheader failed" && exit 2
 
-  automake -a -c 
+  automake -a -c -f
   [ ! $? = 0 ] && echo "ERROR: automake failed" && exit 2
 fi
 
