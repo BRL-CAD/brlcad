@@ -2273,47 +2273,6 @@ struct rt_tol		*tol;
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = RT_LIST_FIRST( shell, &(*r)->s_hd);
 
-	/* Create topology for top cap surface */
-
-	verts[0] = verts[1] = NULL;
-	vertp[0] = &verts[0];
-	top_fu = nmg_cmface(s, vertp, 1);
-
-	lu = RT_LIST_FIRST( loopuse, &top_fu->lu_hd);
-	NMG_CK_LOOPUSE(lu);
-	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
-	NMG_CK_EDGEUSE(eu);
-	top_eu = eu;
-
-	VSET( uvw, 0,0,0);
-	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw);
-	VSET( uvw, 1, 0, 0);
-	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
-	eu = RT_LIST_NEXT( edgeuse, &eu->l);
-
-	/* Create topology for cylinder surface  */
-
-	vertp[0] = &verts[0];
-	vertp[1] = &verts[0];
-	vertp[2] = &verts[1];
-	vertp[3] = &verts[1];
-	cyl_fu = nmg_cmface(s, vertp, 4);
-
-	/* Create topology for bottom cap surface */
-
-	vertp[0] = &verts[1];
-	bot_fu = nmg_cmface(s, vertp, 1);
-
-	lu = RT_LIST_FIRST( loopuse, &bot_fu->lu_hd);
-	NMG_CK_LOOPUSE(lu);
-	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
-	NMG_CK_EDGEUSE(eu);
-	bot_eu = eu;
-
-	VSET( uvw, 0,0,0);
-	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw);
-	VSET( uvw, 1, 0, 0);
-	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
 
 	/* Create transformation matrix  for the top cap surface*/
 
@@ -2344,8 +2303,30 @@ struct rt_tol		*tol;
 
 	mat_mul(top_mat, omat, imat);
 
+	/* Create topology for top cap surface */
+
+	verts[0] = verts[1] = NULL;
+	vertp[0] = &verts[0];
+	top_fu = nmg_cmface(s, vertp, 1);
+
+	lu = RT_LIST_FIRST( loopuse, &top_fu->lu_hd);
+	NMG_CK_LOOPUSE(lu);
+	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	NMG_CK_EDGEUSE(eu);
+	top_eu = eu;
+
+	VSET( uvw, 0,0,0);
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw);
+	VSET( uvw, 1, 0, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+
 	/* Top cap surface */
 	nmg_tgc_disk( top_fu, top_mat, 0.0, 0 );
+
+rt_log("after top cap surf\n");
+nmg_region_a( *r,tol);
+nmg_vmodel( m );
 
 	/* Create transformation matrix  for the bottom cap surface*/
 
@@ -2375,35 +2356,61 @@ struct rt_tol		*tol;
 
         mat_mul(bot_mat, omat, imat);
 
+	/* Create topology for bottom cap surface */
+
+	vertp[0] = &verts[1];
+	bot_fu = nmg_cmface(s, vertp, 1);
+
+	lu = RT_LIST_FIRST( loopuse, &bot_fu->lu_hd);
+	NMG_CK_LOOPUSE(lu);
+	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	NMG_CK_EDGEUSE(eu);
+	bot_eu = eu;
+
+	VSET( uvw, 0,0,0);
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw);
+	VSET( uvw, 1, 0, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+
+
 	nmg_tgc_disk( bot_fu, bot_mat, 0.0, 1 );
+
+rt_log("disk\n");
+nmg_region_a( *r,tol);
+nmg_vmodel( m );
+rt_log("after disk\n");
+
+	/* Create topology for cylinder surface  */
+
+	vertp[0] = &verts[0];
+	vertp[1] = &verts[0];
+	vertp[2] = &verts[1];
+	vertp[3] = &verts[1];
+	cyl_fu = nmg_cmface(s, vertp, 4);
 
 	nmg_tgc_nurb_cyl( cyl_fu, top_mat, bot_mat);
 
+rt_log("before fuse\n");
+nmg_region_a( *r,tol);
+nmg_vmodel( m );
+rt_log("after fuse\n");
+
 	/* fuse top cylinder edge to matching edge on body of cylinder */
 	lu = RT_LIST_FIRST( loopuse, &cyl_fu->lu_hd);
-{
-	int i;
-	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
-	for(i=0; i<4; i++ )  {
-		rt_log(" %d  eu=x%x, e=x%x, v=x%x\n", i,
-			eu, eu->e_p, eu->vu_p->v_p);
-		eu = RT_LIST_NEXT( edgeuse, &eu->l);
-	}
-}
 
 	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
-rt_log("je x%x e=(x%x) x%x e=(x%x)\n", top_eu, top_eu->e_p, eu, eu->e_p);
+
 	nmg_je( top_eu, eu );
-nmg_pr_eg( (CONST long *) top_eu->g.cnurb_p, 0 );
 
 	eu= RT_LIST_LAST( edgeuse, &lu->down_hd);
 	eu= RT_LIST_LAST( edgeuse, &eu->l);
-rt_log("je x%x e=(x%x) x%x e=(x%x)\n", bot_eu, bot_eu->e_p, eu, eu->e_p);
+
 	nmg_je( bot_eu, eu );
 
-nmg_pr_eg( (CONST long *) bot_eu->g.cnurb_p, 0 );
-		
 	nmg_region_a( *r,tol);
+
+rt_log("end fuse\n");
+nmg_vmodel( m );
 }
 
 
@@ -2476,12 +2483,12 @@ int	flip;
 		fg->ctl_points[1] = -1.;
 		fg->ctl_points[2] = height;
 
-		fg->ctl_points[3] = 1;
-		fg->ctl_points[4] = 1.;
+		fg->ctl_points[3] = -1;
+		fg->ctl_points[4] = -1.;
 		fg->ctl_points[5] = height;
 
-		fg->ctl_points[6] = -1.;
-		fg->ctl_points[7] = -1.;
+		fg->ctl_points[6] = 1.;
+		fg->ctl_points[7] = 1.;
 		fg->ctl_points[8] = height;
 
 		fg->ctl_points[9] = -1.;
@@ -2527,8 +2534,18 @@ int	flip;
 	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
-	rt_nurb_s_eval( fu->f_p->g.snurb_p, nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point );
-	nmg_vertex_gv( eu->vu_p->v_p, point );
+	
+	if(!flip)
+	{
+		rt_nurb_s_eval( fu->f_p->g.snurb_p, 
+			nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point );
+		nmg_vertex_gv( eu->vu_p->v_p, point );
+	} else
+	{
+		rt_nurb_s_eval( fu->f_p->g.snurb_p, 
+			nmg_uv_unitcircle[12], nmg_uv_unitcircle[13], point );
+		nmg_vertex_gv( eu->vu_p->v_p, point );
+	}
 
 	nmg_edge_g_cnurb(eu, 3, 12, NULL, 9, RT_NURB_MAKE_PT_TYPE(3,3,1),
 		NULL);
@@ -2539,21 +2556,34 @@ int	flip;
 	eg->k.knots[0] = 0.0;
 	eg->k.knots[1] = 0.0;
 	eg->k.knots[2] = 0.0;
-	eg->k.knots[3] = 1.0;
-	eg->k.knots[4] = 1.0;
-	eg->k.knots[5] = 2.0;
-	eg->k.knots[6] = 2.0;
-	eg->k.knots[7] = 3.0;
-	eg->k.knots[8] = 3.0;
-	eg->k.knots[9] = 4.0;
-	eg->k.knots[10] = 4.0;
-	eg->k.knots[11] = 4.0;
+	eg->k.knots[3] = .25;
+	eg->k.knots[4] = .25;
+	eg->k.knots[5] = .5;
+	eg->k.knots[6] = .5;
+	eg->k.knots[7] = .75;
+	eg->k.knots[8] = .75;
+	eg->k.knots[9] = 1.0;
+	eg->k.knots[10] = 1.0;
+	eg->k.knots[11] = 1.0;
 
-	for( i = 0; i < 27; i++)
+	if( !flip ) 
 	{
-		eg->ctl_points[i] = nmg_uv_unitcircle[i];
+		for( i = 0; i < 27; i++)
+			eg->ctl_points[i] = nmg_uv_unitcircle[i];
 	}
+	else 
+	{
 
+		VSET(&eg->ctl_points[0], 0.0, .5, 1.0);
+		VSET(&eg->ctl_points[3], 0.0, 0.0, RAT);
+		VSET(&eg->ctl_points[6], 0.5, 0.0, 1.0);
+		VSET(&eg->ctl_points[9], RAT, 0.0, RAT);
+		VSET(&eg->ctl_points[12], 1.0, .5, 1.0);
+		VSET(&eg->ctl_points[15], RAT,RAT, RAT);
+		VSET(&eg->ctl_points[18], .5, 1.0, 1.0);
+		VSET(&eg->ctl_points[21], 0.0, RAT, RAT);
+		VSET(&eg->ctl_points[24], 0.0, .5, 1.0);
+	}
 }
 	
 /* Create a cylinder with a top surface and a bottom surfce 
@@ -2571,6 +2601,7 @@ mat_t	bot_mat;
 	struct face_g_snurb 	* fg;
 	struct loopuse		* lu;
 	struct edgeuse		* eu;
+	struct edge_g_cnurb	* eg;
 	fastf_t		* mptr;
 	int		i;
 	hvect_t		vect;
@@ -2595,15 +2626,15 @@ mat_t	bot_mat;
 	fg->u.knots[0] = 0.0;
 	fg->u.knots[1] = 0.0;
 	fg->u.knots[2] = 0.0;
-	fg->u.knots[3] = 1.0;
-	fg->u.knots[4] = 1.0;
-	fg->u.knots[5] = 2.0;
-	fg->u.knots[6] = 2.0;
-	fg->u.knots[7] = 3.0;
-	fg->u.knots[8] = 3.0;
-	fg->u.knots[9] = 4.0;
-	fg->u.knots[10] = 4.0;
-	fg->u.knots[11] = 4.0;
+	fg->u.knots[3] = .25;
+	fg->u.knots[4] = .25;
+	fg->u.knots[5] = .5;
+	fg->u.knots[6] = .5;
+	fg->u.knots[7] = .75;
+	fg->u.knots[8] = .75;
+	fg->u.knots[9] = 1.0;
+	fg->u.knots[10] = 1.0;
+	fg->u.knots[11] = 1.0;
 
 	mptr = fg->ctl_points;
 
@@ -2650,7 +2681,7 @@ mat_t	bot_mat;
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
 	HDIVIDE( point, &fg->ctl_points[(2*9-1)*4] );
-	nmg_vertex_gv( eu->vu_p->v_p, point );	/* 1,1 vertex */
+	nmg_vertex_gv( eu->vu_p->v_p, point );		/* 4,1 vertex */
 
 	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
 	VSET( uvw, 0, 1, 0);
@@ -2658,7 +2689,7 @@ mat_t	bot_mat;
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
 	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
-	VSET( uvw, 0,0, 0);
+	VSET( uvw, 0, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
 	eu = RT_LIST_NEXT( edgeuse, &eu->l);
 
@@ -2669,11 +2700,11 @@ mat_t	bot_mat;
 	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
+
 	for( i = 0; i < 4; i++)
 	{
 		nmg_edge_g_cnurb_plinear(eu);
 		eu = RT_LIST_NEXT(edgeuse, &eu->l);
 	}
 }
-
 
