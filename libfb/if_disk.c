@@ -20,6 +20,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+       
 #ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
 #else
