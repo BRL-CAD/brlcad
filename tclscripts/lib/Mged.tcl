@@ -29,7 +29,7 @@ class Mged {
     itk_option define -prompt prompt Prompt "mged> "
 
     public method opendb {args}
-    public method opendbFile {}
+    public method openFile {}
     public method match {args}
     public method get {args}
     public method put {args}
@@ -101,6 +101,7 @@ class Mged {
 
     public method reset_panes {}
     public method default_views {}
+    public method edit_style {style}
 
     protected method attach_view {}
     protected method attach_drawable {}
@@ -114,6 +115,7 @@ class Mged {
     private variable cmd ""
     private variable top ""
     private variable screen ""
+    private variable fsd ""
 
     private variable ftypes {{{MGED Database} {.g}} {{All Files} {*}}}
     private variable dir ""
@@ -128,7 +130,8 @@ body Mged::constructor {file args} {
     pack $qd -fill both -expand yes
 
     add cmd
-    set cmd [Command [childsite cmd].cmd -prompt $itk_option(-prompt) -cmd_prefix $this]
+    set cmd [Command [childsite cmd].cmd -prompt $itk_option(-prompt) -wrap word \
+	    -hscrollmode dynamic -vscrollmode dynamic -cmd_prefix $this]
     pack $cmd -fill both -expand yes
 
     set db [Database #auto $file]
@@ -146,6 +149,9 @@ body Mged::constructor {file args} {
     set top [winfo toplevel [string map {:: ""} $this]]
     set screen [winfo screen $top]
     wm title $top $file
+
+    # create and initialize file selection dialog
+    set fsd [fileselectiondialog $top#auto -modality application]
 }
 
 body Mged::destructor {} {
@@ -163,21 +169,16 @@ body Mged::opendb {args} {
     return $file
 }
 
-body Mged::opendbFile {} {
-    set filename [tk_getOpenFile -parent $top -filetypes $ftypes \
-	    -initialdir $dir -title "Open MGED Database"]
-
-    if {$filename != ""} {
-	# save the directory
-	set dir [file dirname $filename]
-
-	set ret [catch {opendb $filename} msg]
-	if {$ret} {
-	    cad_dialog .uncool $screen "Error" \
-		    $msg info 0 OK
-	} else {
-	    cad_dialog .cool $screen "File loaded" \
-		    $msg info 0 OK
+body Mged::openFile {} {
+    #XXX the fileselectiondialog is slow to activate
+    if {[$fsd activate]} {
+	set filename [$fsd get]
+	if {$filename != ""} {
+	    set ret [catch {opendb $filename} msg]
+	    if {$ret} {
+		cad_dialog .uncool $screen "Error" \
+			$msg info 0 OK
+	    }
 	}
     }
 }
@@ -478,6 +479,10 @@ body Mged::rtcheck {args} {
 
 body Mged::default_views {} {
     $qd default_views
+}
+
+body Mged::edit_style {args} {
+    eval $cmd edit_style $args
 }
 
 body Mged::attach_view {} {
