@@ -1221,10 +1221,11 @@ CONST struct rt_tol	*tol;
 			nmg_face_lu_plot( eur->up.lu_p, eur->vu_p,
 				eur->eumate_p->vu_p );
 
-		    	sprintf(buf, "Orientation problem %g %g %g -> %g %g %g\n"
+		    	sprintf(buf, "Orientation problem %g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
 
-		    	nmg_stash_model_to_file("radial.g", m, buf);
+		    	nmg_stash_model_to_file("radial.g", 
+		    		nmg_find_model(&(fu->l.magic)), buf);
 
 			nmg_pr_fu_around_eu( eu1, tol );
 
