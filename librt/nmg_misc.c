@@ -47,11 +47,13 @@ int func;
 long *p;
 {
 	if (func == TBL_INIT) {
+		b->magic = NMG_PTBL_MAGIC;
 		b->buffer = (long **)rt_calloc(b->blen=64,
 						sizeof(p), "pointer table");
 		b->end = 0;
 		return(0);
 	} else if (func == TBL_RST) {
+		NMG_CK_PTBL(b);
 		b->end = 0;
 		return(0);
 	} else if (func == TBL_INS) {
@@ -66,6 +68,7 @@ long *p;
 		if (rt_g.NMG_debug & DEBUG_INS)
 			rt_log("nmg_tbl Inserting %8x\n", p);
 
+		NMG_CK_PTBL(b);
 		pp.l = p;
 
 		if (b->blen == 0) (void)nmg_tbl(b, TBL_INIT, p);
@@ -84,6 +87,7 @@ long *p;
 		register int	k;
 		register long	**pp = b->buffer;
 
+		NMG_CK_PTBL(b);
 #		include "noalias.h"
 		for( k = b->end-1; k >= 0; k-- )
 			if (pp[k] == p) return(k);
@@ -97,6 +101,7 @@ long *p;
 		register int	k;
 		register long	**pp = b->buffer;
 
+		NMG_CK_PTBL(b);
 #		include "noalias.h"
 		for( k = b->end-1; k >= 0; k-- )
 			if (pp[k] == p) return(k);
@@ -121,6 +126,7 @@ long *p;
 		register int end = b->end, j, k, l;
 		register long **pp = b->buffer;
 
+		NMG_CK_PTBL(b);
 		for (l = b->end-1 ; l >= 0 ; --l)
 			if (pp[l] == p){
 				/* delete occurrence(s) of p */
@@ -142,6 +148,7 @@ long *p;
 			struct nmg_ptbl *t;
 		} d;
 
+		NMG_CK_PTBL(b);
 		d.l = p;
 
 		if ((b->blen - b->end) < d.t->end) {
@@ -153,6 +160,7 @@ long *p;
 		bcopy(d.t->buffer, &b->buffer[b->end], d.t->end*sizeof(p));
 		return(0);
 	} else if (func == TBL_FREE) {
+		NMG_CK_PTBL(b);
 		bzero((char *)b->buffer, b->blen * sizeof(p));
 		rt_free((char *)b->buffer, "pointer table");
 		bzero(b, sizeof(struct nmg_ptbl));
