@@ -419,7 +419,7 @@ char	**argv;
 	  return TCL_OK;
 	} else {
 	  Tcl_AppendResult(interp, "ADC: unrecognized command: '",
-			   argv[1], "'\nUsage:\n", adc_syntax);
+			   argv[1], "'\nUsage:\n", adc_syntax, (char *)NULL);
 	}
 	return TCL_ERROR;
 }
