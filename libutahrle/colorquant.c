@@ -28,6 +28,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 10.2  94/08/10  23:19:00  gdurf
+ * Altered #defines and #includes to conform to BRL-CAD standards
+ * 
  * Revision 10.1  1991/10/12  06:38:13  mike
  * Release_4.0
  *
@@ -256,9 +259,9 @@ int fast, accum_hist;
 	/*
 	 * Zero-out the projected frequency arrays of the largest box.
 	 */
-	bzero(Boxes->freq[0], ColormaxI * sizeof(unsigned long));
-	bzero(Boxes->freq[1], ColormaxI * sizeof(unsigned long));
-	bzero(Boxes->freq[2], ColormaxI * sizeof(unsigned long));
+	bzero((char *)Boxes->freq[0], ColormaxI * sizeof(unsigned long));
+	bzero((char *)Boxes->freq[1], ColormaxI * sizeof(unsigned long));
+	bzero((char *)Boxes->freq[2], ColormaxI * sizeof(unsigned long));
 	SumPixels = 0;
     }
 
@@ -519,9 +522,9 @@ register Box *box1, *box2;
 	register int b, g, r;
 	int roff;
 
-	bzero(box1->freq[0], ColormaxI * sizeof(unsigned long));
-	bzero(box1->freq[1], ColormaxI * sizeof(unsigned long));
-	bzero(box1->freq[2], ColormaxI * sizeof(unsigned long)); 
+	bzero((char *)box1->freq[0], ColormaxI * sizeof(unsigned long));
+	bzero((char *)box1->freq[1], ColormaxI * sizeof(unsigned long));
+	bzero((char *)box1->freq[2], ColormaxI * sizeof(unsigned long)); 
 
 	for (r = box1->low[0]; r < box1->high[0]; r++) {
 		roff = r << Bits;
