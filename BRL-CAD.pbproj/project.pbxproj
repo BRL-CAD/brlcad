@@ -9088,7 +9088,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh bn_version \"The BRL-CAD Numerical Computation Library\"\ncp vers.c $TEMP_DIR/../libbn/.";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh bn_version \"The BRL-CAD Numerical Computation Library\"\ncp vers.c $TEMP_ROOT/../libbn/.";
 		};
 		4E8E3EE203B6FBD4003F204C = {
 			buildActionMask = 2147483647;
