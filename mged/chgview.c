@@ -185,25 +185,52 @@ char	**argv;
   return TCL_OK;
 }
 
-
+/*
+ *			M G E D _ V R O T
+ */
 int
 mged_vrot(x, y, z)
 double x, y, z;
 {
   mat_t newrot;
   vect_t new_pos;
+  mat_t   newinv;
+  char	*var;
 
   bn_mat_idn( newrot );
   buildHrot( newrot, x * degtorad, y * degtorad, z * degtorad);
-  bn_mat_mul2( newrot, Viewrot );
+  bn_mat_inv( newinv, newrot );
 
+  if( (var = Tcl_GetVar(interp, "mged_rotate_view_around_eye", TCL_GLOBAL_ONLY)) == NULL ||
+	atoi(var) == 0 )
   {
-    mat_t   newinv;
+	/* Traditional method:  rotate around view center (0,0,0) viewspace */
+	wrt_view( ModelDelta, newinv, ModelDelta );
+  } else {
+  	/* "VR driver" method: rotate around "eye" point (0,0,1) viewspace */
+  	point_t		eye_view;
+  	point_t		new_origin;
+  	mat_t		viewchg, viewchginv;
+  	point_t		new_cent_view;
+  	point_t		new_cent_model;
 
-    bn_mat_inv( newinv, newrot );
-    wrt_view( ModelDelta, newinv, ModelDelta );
+  	VSET( eye_view, 0, 0, 1 );		/* point to rotate around */
+  	bn_mat_xform_about_pt( viewchg, newrot, eye_view );
+  	bn_mat_inv( viewchginv, viewchg );
+
+  	/* Convert origin in new (viewchg) coords back to old view coords */
+  	VSET( new_origin, 0, 0, 0 );
+  	MAT4X3PNT( new_cent_view, viewchginv, new_origin );
+  	MAT4X3PNT( new_cent_model, view2model, new_cent_view );
+  	MAT_DELTAS_VEC_NEG( toViewcenter, new_cent_model );
+
+  	/* XXX This should probably capture the translation too */
+  	/* XXX I think the only consumer of ModelDelta is the predictor frame */
+	wrt_view( ModelDelta, newinv, ModelDelta );		/* pure rotation */
   }
 
+  /* Update the rotation component of the model2view matrix */
+  bn_mat_mul2( newrot, Viewrot );			/* pure rotation */
   new_mats();
 
   if(absolute_slew[X] != 0.0 ||
@@ -2489,7 +2516,7 @@ vect_t tranvec;
   VADD2(new_pos, orig_pos, diff);
   MAT_DELTAS_VEC( toViewcenter, new_pos);
 #if 0
-  MAT_DELTAS_VEC( ModelDelta, new_pos);
+  MAT_DELTAS_VEC( ModelDelta, new_pos);		/* #if 0 */
 #endif
   new_mats();
 
@@ -2835,7 +2862,7 @@ double	xangle, yangle, zangle;
 	{
 		mat_t	newinv;
 		bn_mat_inv( newinv, newrot );
-		wrt_view( ModelDelta, newinv, ModelDelta );
+		wrt_view( ModelDelta, newinv, ModelDelta );	/* Updates ModelDelta */
 	}
 	new_mats();
 }
@@ -2914,7 +2941,7 @@ vect_t view_pos;
   VSUB2( diff, new_model_center, old_model_center );
   bn_mat_idn( delta );
   MAT_DELTAS_VEC( delta, diff );
-  bn_mat_mul2( delta, ModelDelta );
+  bn_mat_mul2( delta, ModelDelta );	/* updates ModelDelta */
   new_mats();
 
   VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
