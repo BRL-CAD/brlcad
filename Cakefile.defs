@@ -1496,6 +1496,7 @@ set -S2 "/bin/sh"
 #	define	VFONTDIR	/usr/brlcad/vfont
 #	define	TCLLIBDIR	/usr/brlcad/tcl
 #	define	TKLIBDIR	/usr/brlcad/tk
+#	define	TCLSCRIPTSDIR	/usr/brlcad/tclscripts
 #endif
 
 #if	!defined(XLIBDIR)
