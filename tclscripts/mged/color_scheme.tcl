@@ -410,8 +410,8 @@ proc color_scheme_reset { id top } {
 
 	set mged_color_scheme($id,$key_a) $color_a
 	set mged_color_scheme($id,$key_ia) $color_ia
-	color_entry_update $top $key_a $color_a
-	color_entry_update $top $key_ia $color_ia
+	color_entry_update $top $key_a mged_color_scheme($id,$key_a) $color_a
+	color_entry_update $top $key_ia mged_color_scheme($id,$key_ia) $color_ia
     }
 
     foreach key_name_pair $mged_color_scheme(secondary_map) {
@@ -425,8 +425,8 @@ proc color_scheme_reset { id top } {
 	set mged_color_scheme($id,$key_ia) $color_ia
 
 	if $mged_color_scheme($id,smflag) {
-	    color_entry_update $top $key_a $color_a
-	    color_entry_update $top $key_ia $color_ia
+	    color_entry_update $top $key_a mged_color_scheme($id,$key_a) $color_a
+	    color_entry_update $top $key_ia mged_color_scheme($id,$key_ia) $color_ia
 	}
     }
 }
@@ -512,8 +512,10 @@ proc color_scheme_load_canned { id top\
 	set key_a $key\_a
 	set key_ia $key\_ia
 
-	color_entry_update $top $key_a $mged_color_scheme($id,$key_a)
-	color_entry_update $top $key_ia $mged_color_scheme($id,$key_ia)
+	color_entry_update $top $key_a mged_color_scheme($id,$key_a) \
+		$mged_color_scheme($id,$key_a)
+	color_entry_update $top $key_ia mged_color_scheme($id,$key_ia) \
+		$mged_color_scheme($id,$key_ia)
     }
 
     if $mged_color_scheme($id,smflag) {
@@ -522,8 +524,10 @@ proc color_scheme_load_canned { id top\
 	    set key_a $key\_a
 	    set key_ia $key\_ia
 
-	    color_entry_update $top $key_a $mged_color_scheme($id,$key_a)
-	    color_entry_update $top $key_ia $mged_color_scheme($id,$key_ia)
+	    color_entry_update $top $key_a mged_color_scheme($id,$key_a) \
+		    $mged_color_scheme($id,$key_a)
+	    color_entry_update $top $key_ia mged_color_scheme($id,$key_ia) \
+		    $mged_color_scheme($id,$key_ia)
 	}
     }
 }
