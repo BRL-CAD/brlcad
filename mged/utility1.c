@@ -671,28 +671,11 @@ char	**argv;
 				new_intern.idb_meth = &rt_functab[ID_NMG];
 				new_intern.idb_ptr = (genptr_t)new_m;
 
-				if( dbip->dbi_version < 5 ) {
-					if( (new_dp=db_diradd( dbip, bu_vls_addr( &solid_name ), -1, 0, DIR_SOLID,
-							       (genptr_t)&new_intern.idb_type)) == DIR_NULL ) {
-						bu_vls_free( &solid_name );
-						TCL_ALLOC_ERR;
-						return TCL_ERROR;;
-					}
-				} else {
-					struct bu_attribute_value_set avs;
-
-					bu_avs_init( &avs, 1, "avs" );
-					if ((new_dp = db_diradd5(wdbp->dbip, bu_vls_addr( &solid_name ), -1L,
-							     new_intern.idb_major_type, new_intern.idb_minor_type,
-							     (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
-						bu_avs_free( &avs );
-						Tcl_AppendResult(interp, "An error has occured while adding '",
-								 bu_vls_addr( &solid_name ), "' to the database.\n", (char *)NULL);
-						bu_vls_free( &solid_name );
-						TCL_ALLOC_ERR;
-						return TCL_ERROR;
-					}
-					bu_avs_free( &avs );
+				if( (new_dp=db_diradd( dbip, bu_vls_addr( &solid_name ), -1, 0, DIR_SOLID,
+						       (genptr_t)&new_intern.idb_type)) == DIR_NULL ) {
+					bu_vls_free( &solid_name );
+					TCL_ALLOC_ERR;
+					return TCL_ERROR;;
 				}
 
 				if( rt_db_put_internal( new_dp, dbip, &new_intern, &rt_uniresource ) < 0 )
