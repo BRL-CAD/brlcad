@@ -881,6 +881,105 @@ bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
 	return(0);
 }
 
+
+/*
+ *			R T _ S U B M O D E L _ I M P O R T 5
+ *
+ *  Import an SUBMODEL from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_submodel_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	LOCAL struct rt_submodel_internal	*sip;
+	struct bu_vls		str;
+
+	BU_CK_EXTERNAL( ep );
+	RT_CK_DBI(dbip);
+
+	RT_CK_DB_INTERNAL( ip );
+	ip->idb_type = ID_SUBMODEL;
+	ip->idb_meth = &rt_functab[ID_SUBMODEL];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_submodel_internal), "rt_submodel_internal");
+	sip = (struct rt_submodel_internal *)ip->idb_ptr;
+	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
+	sip->dbip = dbip;
+
+	bn_mat_copy( sip->root2leaf, mat );
+
+	bu_vls_init( &str );
+	bu_vls_strcpy( &str, ep->ext_buf );
+#if 0
+bu_log("rt_submodel_import: '%s'\n", rp->ss.ss_args);
+#endif
+	if( bu_struct_parse( &str, rt_submodel_parse, (char *)sip ) < 0 )  {
+		bu_vls_free( &str );
+fail:
+		bu_free( (char *)sip , "rt_submodel_import: sip" );
+		ip->idb_type = ID_NULL;
+		ip->idb_ptr = (genptr_t)NULL;
+		return -2;
+	}
+	bu_vls_free( &str );
+
+	/* Check for reasonable values */
+	if( sip->treetop[0] == '\0' )  {
+		bu_log("rt_submodel_import() treetop= must be specified\n");
+		goto fail;
+	}
+#if 0
+bu_log("import: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
+bn_mat_print("root2leaf", sip->root2leaf );
+#endif
+
+	return(0);			/* OK */
+}
+
+/*
+ *			R T _ S U B M O D E L _ E X P O R T 5
+ *
+ *  The name is added by the caller, in the usual place.
+ */
+int
+rt_submodel_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_submodel_internal	*sip;
+	struct bu_vls		str;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_SUBMODEL )  return(-1);
+	sip = (struct rt_submodel_internal *)ip->idb_ptr;
+	RT_SUBMODEL_CK_MAGIC(sip);
+#if 0
+bu_log("export: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
+#endif
+
+	/* Ignores scale factor */
+	BU_ASSERT( local2mm == 1.0 );
+	BU_CK_EXTERNAL(ep);
+
+	bu_vls_init( &str );
+	bu_vls_struct_print( &str, rt_submodel_parse, (char *)sip );
+	ep->ext_nbytes = bu_vls_strlen( &str );
+	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "submodel external");
+
+	strcpy( ep->ext_buf, bu_vls_addr(&str) );
+	bu_vls_free( &str );
+#if 0
+bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
+#endif
+
+	return(0);
+}
+
 /*
  *			R T _ S U B M O D E L _ D E S C R I B E
  *

@@ -780,7 +780,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_submodel_uv,		rt_submodel_curve,	rt_submodel_class,	rt_submodel_free,
 		rt_submodel_plot,	rt_vstub,		rt_submodel_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_submodel_import5, rt_submodel_export5,
 		rt_submodel_import,	rt_submodel_export,	rt_submodel_ifree,
 		rt_submodel_describe,	rt_submodel_xform,	rt_submodel_parse,
 		sizeof(struct rt_submodel_internal), RT_SUBMODEL_INTERNAL_MAGIC,
