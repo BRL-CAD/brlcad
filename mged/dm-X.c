@@ -59,6 +59,7 @@ static int	xsetup();
 static void     x_var_init();
 static void     establish_perspective();
 static void     set_perspective();
+static void     X_configure_window_shape();
 #ifdef VIRTUAL_TRACKBALL
 static void     establish_vtb();
 #endif
@@ -185,6 +186,8 @@ X_open()
   char	*envp;
 
   x_var_init();
+  rt_vls_init(&pathName);
+
   /* get or create the default display */
   if( (envp = getenv("DISPLAY")) == NULL ) {
     /* Env not set, use local host */
@@ -587,9 +590,11 @@ XEvent *eventPtr;
     refresh();
     goto end;
   }else if(eventPtr->type == ConfigureNotify){
+#if 0
     ((struct x_vars *)dm_vars)->height = eventPtr->xconfigure.height;
     ((struct x_vars *)dm_vars)->width = eventPtr->xconfigure.width;
-
+#endif
+    X_configure_window_shape();
     dmaflag = 1;
     refresh();
     goto end;
@@ -842,8 +847,12 @@ char	*str;
 	       ((struct x_vars *)dm_vars)->gc, sx, sy, str, strlen(str) );
 }
 
-#define	FONT	"6x10"
-#define FONT2	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
+#define FONTBACK	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
+#define FONT5	"5x7"
+#define FONT6	"6x10"
+#define FONT7	"7x13"
+#define FONT8	"8x13"
+#define FONT9	"9x15"
 
 static XWMHints xwmh = {
         StateHint,		        /* flags */
@@ -872,7 +881,6 @@ char	*name;
   Display *tmp_dpy;
 
   rt_vls_init(&str);
-  rt_vls_init(&pathName);
 
   /* Only need to do this once */
   if(tkwin == NULL){
@@ -1074,28 +1082,13 @@ char	*name;
 
     gcv.foreground = ((struct x_vars *)dm_vars)->fg;
     gcv.background = ((struct x_vars *)dm_vars)->bg;
-
-#ifndef CRAY2
-    cp = FONT;
-    if ( (((struct x_vars *)dm_vars)->fontstruct =
-	 XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, cp)) == NULL ) {
-      /* Try hardcoded backup font */
-      if ( (((struct x_vars *)dm_vars)->fontstruct =
-	    XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONT2)) == NULL) {
-	rt_log( "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
-	return -1;
-      }
-    }
-    gcv.font = ((struct x_vars *)dm_vars)->fontstruct->fid;
     ((struct x_vars *)dm_vars)->gc = XCreateGC(((struct x_vars *)dm_vars)->dpy,
 					       ((struct x_vars *)dm_vars)->win,
-					       (GCFont|GCForeground|GCBackground),
-						&gcv);
-#else
-    ((struct x_vars *)dm_vars)->gc = XCreateGC(((struct x_vars *)dm_vars)->dpy,
-`					       ((struct x_vars *)dm_vars)->win,
 					       (GCForeground|GCBackground),
 					       &gcv);
+
+#ifndef CRAY2
+    X_configure_window_shape();
 #endif
 
 #if 0    
@@ -1107,6 +1100,89 @@ char	*name;
     Tk_MapWindow(((struct x_vars *)dm_vars)->xtkwin);
 
     return 0;
+}
+
+static void
+X_configure_window_shape()
+{
+  XWindowAttributes xwa;
+  XFontStruct     *newfontstruct;
+  XGCValues       gcv;
+
+  XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy,
+			((struct x_vars *)dm_vars)->win, &xwa );
+  ((struct x_vars *)dm_vars)->height = xwa.height;
+  ((struct x_vars *)dm_vars)->width = xwa.width;
+
+  /* First time through, load a font or quit */
+  if (((struct x_vars *)dm_vars)->fontstruct == NULL) {
+    if ((((struct x_vars *)dm_vars)->fontstruct = XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONT9)) == NULL ) {
+      /* Try hardcoded backup font */
+      if ((((struct x_vars *)dm_vars)->fontstruct = XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONTBACK)) == NULL) {
+	rt_log( "dm-X: Can't open font '%s' or '%s'\n", FONT9, FONTBACK );
+	return;
+      }
+    }
+
+    gcv.font = ((struct x_vars *)dm_vars)->fontstruct->fid;
+    XChangeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc,
+	      GCFont, &gcv);
+  }
+
+  /* Always try to choose a the font that best fits the window size.
+   */
+
+  if (((struct x_vars *)dm_vars)->width < 582) {
+    if (((struct x_vars *)dm_vars)->fontstruct->per_char->width != 5) {
+      if ((newfontstruct = XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONT5)) != NULL ) {
+	XFreeFont(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->fontstruct);
+	((struct x_vars *)dm_vars)->fontstruct = newfontstruct;
+	gcv.font = ((struct x_vars *)dm_vars)->fontstruct->fid;
+	XChangeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc,
+		  GCFont, &gcv);
+      }
+    }
+  } else if (((struct x_vars *)dm_vars)->width < 679) {
+    if (((struct x_vars *)dm_vars)->fontstruct->per_char->width != 6){
+      if ((newfontstruct = XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONT6)) != NULL ) {
+	XFreeFont(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->fontstruct);
+	((struct x_vars *)dm_vars)->fontstruct = newfontstruct;
+	gcv.font = ((struct x_vars *)dm_vars)->fontstruct->fid;
+	XChangeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc,
+		  GCFont, &gcv);
+      }
+    }
+  } else if (((struct x_vars *)dm_vars)->width < 776) {
+    if (((struct x_vars *)dm_vars)->fontstruct->per_char->width != 7){
+      if ((newfontstruct = XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONT7)) != NULL ) {
+	XFreeFont(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->fontstruct);
+	((struct x_vars *)dm_vars)->fontstruct = newfontstruct;
+	gcv.font = ((struct x_vars *)dm_vars)->fontstruct->fid;
+	XChangeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc,
+		  GCFont, &gcv);
+      }
+    }
+  } else if (((struct x_vars *)dm_vars)->width < 873) {
+    if (((struct x_vars *)dm_vars)->fontstruct->per_char->width != 8){
+      if ((newfontstruct = XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONT8)) != NULL ) {
+	XFreeFont(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->fontstruct);
+	((struct x_vars *)dm_vars)->fontstruct = newfontstruct;
+	gcv.font = ((struct x_vars *)dm_vars)->fontstruct->fid;
+	XChangeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc,
+		  GCFont, &gcv);
+      }
+    }
+  } else {
+    if (((struct x_vars *)dm_vars)->fontstruct->per_char->width != 9){
+      if ((newfontstruct = XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONT9)) != NULL ) {
+	XFreeFont(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->fontstruct);
+	((struct x_vars *)dm_vars)->fontstruct = newfontstruct;
+	gcv.font = ((struct x_vars *)dm_vars)->fontstruct->fid;
+	XChangeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc,
+		  GCFont, &gcv);
+      }
+    }
+  }
 }
 
 static void
@@ -1288,10 +1364,8 @@ X_load_startup()
 
 #define DM_X_RCFILE "xinit.tk"
 
-#if 1
   bzero((void *)&head_x_vars, sizeof(struct x_vars));
   RT_LIST_INIT( &head_x_vars.l );
-#endif
 
   found = 0;
   rt_vls_init( &str );
