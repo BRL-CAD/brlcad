@@ -29,11 +29,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef __NetBSD__
 #	define USE_OLD_TTY
 #	include <sys/ioctl_compat.h>
-#	define TAB3 (TAB1|TAB2)
 #endif
 #if defined(__bsdi__)
 #	include <sys/ioctl_compat.h>
-#	define TAB3 (TAB1|TAB2)
 #	define OCRNL   0000010
 #endif
 
@@ -42,28 +40,25 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /*
  *  This file will work IFF one of these three flags is set:
- *	HAVE_XOPEN	use POSIX termios and tcsetattr() call with XOPEN flags
+ *	HAVE_TERMIOS_H	use POSIX termios and tcsetattr() call with XOPEN flags
  *	SYSV		use SysV Rel3 termio and TCSETA ioctl
  *	BSD		use Version 7 / BSD sgttyb and TIOCSETP ioctl
  */
 
-#if defined(HAVE_XOPEN)
+#if defined(HAVE_TERMIOS_H)
 #  undef SYSV
 #  undef BSD
 #  include <termios.h>
 
 	static struct termios	tty;
 
-#else	/* !defined(HAVE_XOPEN) */
+#else	/* !defined(HAVE_TERMIOS_H) */
 
 #  ifdef BSD
 #    include <sys/ioctl.h>
      struct	sgttyb	tty;
 #    define TCSETA	TIOCSETP
 #    define TCGETA	TIOCGETP
-#    ifndef	XTABS
-#	define	XTABS	(TAB1 | TAB2)
-#    endif /* Not XTABS */
 #  endif	/* BSD */
 
 #  ifdef SYSV
@@ -78,6 +73,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  endif /* SYSV */
 
 #endif /* _POSIX_SOURCE */
+#ifndef	XTABS
+#	define	XTABS	(TAB1 | TAB2)
+#endif /* XTABS */
 
 int fd;
 char cmd;
@@ -103,7 +101,7 @@ dunnopen()
 
 	/* open the camera device */
 
-#ifdef HAVE_XOPEN
+#ifdef HAVE_TERMIOS_H
 	if( (fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0 )
 #else
 	if( (fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0 )
@@ -113,7 +111,7 @@ dunnopen()
 		close(fd);
 		exit(10);
 	}
-#ifdef HAVE_XOPEN
+#ifdef HAVE_TERMIOS_H
 	if( tcgetattr( fd, &tty ) < 0 )
 #else
 	if( ioctl(fd, TCGETA, &tty) < 0)
@@ -130,7 +128,7 @@ dunnopen()
 	tty.sg_ispeed = tty.sg_ospeed = B9600;
 	tty.sg_flags = RAW | EVENP | ODDP | XTABS;
 #endif
-#if defined(SYSV) || defined(HAVE_XOPEN)
+#if defined(SYSV) || defined(HAVE_TERMIOS_H)
 	tty.c_cflag = B9600 | CS8;	/* Character size = 8 bits */
 	tty.c_cflag &= ~CSTOPB;		/* One stop bit */
 	tty.c_cflag |= CREAD;		/* Enable the reader */
@@ -142,7 +140,9 @@ dunnopen()
 	tty.c_iflag |= IGNBRK|IGNPAR;
 
 	tty.c_oflag &= ~(OPOST|ONLCR|OCRNL);	/* Turn off all post-processing */
-	tty.c_oflag |= TAB3;		/* output tab expansion ON */
+#if defined(XTABS)
+	tty.c_oflag |= XTABS;		/* output tab expansion ON */
+#endif
 	tty.c_cc[VMIN] = 1;
 	tty.c_cc[VTIME] = 0;
 
@@ -151,7 +151,7 @@ dunnopen()
 	tty.c_lflag &= ~(ECHO|ECHOE|ECHOK);	/* Echo mode OFF */
 #endif
 
-#if HAVE_XOPEN
+#if HAVE_TERMIOS_H
 	if( tcsetattr( fd, TCSAFLUSH, &tty ) < 0 )
 #else
 	if( ioctl(fd, TCSETA, &tty) < 0 )
