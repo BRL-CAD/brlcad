@@ -38,8 +38,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "externs.h"
 #include "db.h"
@@ -53,20 +56,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../rt/mathtab.h"
 
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***trans_tbl ) );
-
-#if defined(sgi) && !defined(mips)
-/* Horrible bug in 3.3.1 and 3.4 and 3.5 -- hypot ruins stack! */
-long float
-hypot(a,b)
-double a,b;
-{
-	return(sqrt(a*a+b*b));
-}
-#else
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>		/* not needed on SGI 3030s */
-#endif
-#endif /* sgi */
 
 void	proc_label();
 void	mk_cyladdmember();
@@ -201,13 +190,9 @@ char	*argv[];
 			case 'c':  /* center of object (used for some plate mode
 				    * triangle surface normal calculations
 							    */
-#if defined( sgi ) && ! defined( mips )			
-				sscanf( optarg,"%f %f %f", 
-				    &Centroid[0],&Centroid[1],&Centroid[2]);
-#else
 				sscanf( optarg,"%lf %lf %lf", 
 				    &Centroid[0],&Centroid[1],&Centroid[2]);
-#endif
+
 				rt_log( "Centroid = ( %f %f %f )\n" , V3ARGS( Centroid ) );
 				VSCALE( Centroid, Centroid, mmtin );
 				break;
@@ -333,21 +318,12 @@ char	*argv[];
 
 		if(nread != 0){         /*  For valid reads, assign values to the input array  */
 
-#if defined( sgi ) && ! defined( mips )
-			sscanf(buf,"%f %f %f %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-			    &in[i].x,&in[i].y,&in[i].z,&in[i].surf_mode,&in[i].surf_type,
-			    &in[i].surf_thick,&in[i].spacecode, &in[i].cc,
-			    &in[i].ept[0],&in[i].ept[1],&in[i].ept[2],
-			    &in[i].ept[3],&in[i].ept[4],&in[i].ept[5],
-			    &in[i].ept[6],&in[i].ept[7],&in[i].mirror,&in[i].vc);
-#else
 			sscanf(buf,"%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 			    &in[i].x,&in[i].y,&in[i].z,&in[i].surf_mode,&in[i].surf_type,
 			    &in[i].surf_thick,&in[i].spacecode, &in[i].cc,
 			    &in[i].ept[0],&in[i].ept[1],&in[i].ept[2],
 			    &in[i].ept[3],&in[i].ept[4],&in[i].ept[5],
 			    &in[i].ept[6],&in[i].ept[7],&in[i].mirror,&in[i].vc);
-#endif
 
 			/*  Perform english to metric conversions.  */
 			in[i].x = mmtin*in[i].x;
