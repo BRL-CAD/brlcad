@@ -3767,7 +3767,6 @@ int rt_bot_find_e_nearest_pt2(
 	const struct rt_bot_internal *bot,
 	const point_t	pt2,
 	const mat_t	mat);
-int rt_bot_find_e_nearest_pt2();	/* needs rt_bot_internal for arg list */
 int rt_bot_vertex_fuse( struct rt_bot_internal *bot );
 int rt_bot_face_fuse( struct rt_bot_internal *bot );
 int rt_bot_condense( struct rt_bot_internal *bot );
