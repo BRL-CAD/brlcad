@@ -1,46 +1,26 @@
 # $Id$
 
-SUBDIRS = \
-	doc \
-	generic \
-	library \
-	unix
+configure:
+	mkdir -p build
+	(cd build && \
+		${top_srcdir}/../src/other/libtk/unix/configure  \
+		--srcdir=${top_srcdir}/../src/other/libtk/unix \
+		--enable-shared \
+		--exec-prefix=${prefix} \
+		--prefix=${prefix} \
+		--x-includes=@X_PREFIX@/include \
+		--x-libraries=@X_PREFIX@/lib \
+		--with-tcl=${top_builddir}/../src/other/libtcl/build\
+	)
 
-EXTRA_DIST = \
-	README \
-	bitmaps \
-	changes \
-	compat \
-	license.terms \
-	mac \
-	macosx \
-	tests \
-	unix \
-	win \
-	xlib
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
+all-am:
+	if [ ! -d build ] ; then $(MAKE) configure ; fi
+	if [ ! -e build/Makefile ] ; then rm -rf build && $(MAKE) configure ; fi
+	$(MAKE) -$(MAKEFLAGS) -C build all
 
-lib_LTLIBRARIES = libtk@TK_VERSION@.la
+install-am: all-am
+	$(MAKE) -$(MAKEFLAGS) -C build install
 
-libtk@TK_VERSION@_la_SOURCES =
-
-libtk@TK_VERSION@_la_LDFLAGS = -version-info 19:1
-
-libtk@TK_VERSION@_la_LIBADD = \
-	generic/libtkgeneric.la \
-	unix/libtkunix.la \
-	${TCLSTUB} \
-	${X_LIBS} \
-	${LIBM}
-
-bin_PROGRAMS = wish
-
-wish_SOURCES = unix/tkAppInit.c
-
-wish_LDADD = \
-	$(lib_LTLIBRARIES) \
-	${TCL}
-
-wish_CFLAGS = ${X_CFLAGS}
+clean-am:
+	rm -rf build
