@@ -74,6 +74,20 @@ const struct db_tree_state	rt_initial_tree_state = {
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0},
 	REGION_NON_FASTGEN,		/* ts_is_fastgen */
+#if __STDC__
+	{
+#endif
+		/* attribute value set */
+		BU_AVS_MAGIC,
+		0,
+		0,
+		NULL,
+		NULL,
+		NULL
+#if __STDC__
+	}
+#endif
+	,
 	0,				/* ts_stop_at_regions */
 	NULL,				/* ts_region_start_func */
 	NULL,				/* ts_region_end_func */
@@ -162,6 +176,7 @@ genptr_t			client_data;
 	struct directory	*dp;
 	int			shader_len=0;
 	struct rt_i		*rtip;
+	int			i;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
@@ -182,6 +197,18 @@ genptr_t			client_data;
 	rp->reg_aircode = tsp->ts_aircode;
 	rp->reg_gmater = tsp->ts_gmater;
 	rp->reg_los = tsp->ts_los;
+
+	if( tsp->ts_attrs.count ) {
+		rp->attr_values = (struct bu_mro **)bu_calloc( tsp->ts_attrs.count+1,
+				     sizeof( struct bu_mro *), "regp->attr_values" );
+		for( i=0 ; i<tsp->ts_attrs.count ; i++ ) {
+			rp->attr_values[i] = bu_malloc( sizeof( struct bu_mro ),
+							"rp->attr_values[i]" );
+			bu_mro_init_with_string( rp->attr_values[i], tsp->ts_attrs.avp[i].value );
+		}
+	} else
+		rp->attr_values = (struct bu_mro **)NULL;
+
 	rp->reg_mater = tsp->ts_mater;		/* struct copy */
 	if( tsp->ts_mater.ma_shader )
 		shader_len = strlen( tsp->ts_mater.ma_shader );
@@ -630,26 +657,7 @@ struct soltab	*stp;
 }
 
 /*
- *  			R T _ G E T T R E E
- *
- *  User-called function to add a tree hierarchy to the displayed set.
- *
- *  This function is not multiply re-entrant.
- *  
- *  Returns -
- *  	0	Ordinarily
- *	-1	On major error
- */
-int
-rt_gettree( rtip, node )
-struct rt_i	*rtip;
-const char	*node;
-{
-	return( rt_gettrees( rtip, 1, &node, 1 ) );
-}
-
-/*
- *  			R T _ G E T T R E E S
+ *  			R T _ G E T T R E E S _ A N D _ A T T R S
  *
  *  User-called function to add a set of tree hierarchies to the active set.
  *
@@ -667,8 +675,9 @@ const char	*node;
  *	-1	On major error
  */
 int
-rt_gettrees( rtip, argc, argv, ncpus )
+rt_gettrees_and_attrs( rtip, attrs, argc, argv, ncpus )
 struct rt_i	*rtip;
+const char	**attrs;
 int		argc;
 const char	**argv;
 int		ncpus;
@@ -677,6 +686,7 @@ int		ncpus;
 	register struct region	*regp;
 	int			prev_sol_count;
 	int			i;
+	int			num_attrs=0;
 	point_t			region_min, region_max;
 
 	RT_CHECK_RTI(rtip);
@@ -699,11 +709,23 @@ int		ncpus;
 		tree_state.ts_rtip = rtip;
 		tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */
 
+		if( attrs ) {
+			while( attrs[num_attrs] ) {
+				num_attrs++;
+			}
+			bu_avs_init( &tree_state.ts_attrs, num_attrs, "tree_state" );
+			num_attrs = 0;
+			while( attrs[num_attrs] ) {
+				tree_state.ts_attrs.avp[num_attrs].name = bu_strdup( attrs[num_attrs] );
+				num_attrs++;
+			}
+			tree_state.ts_attrs.count = num_attrs;
+		}
 		i = db_walk_tree( rtip->rti_dbip, argc, argv, ncpus,
-			&tree_state,
-			rt_gettree_region_start,
-			rt_gettree_region_end,
-			rt_gettree_leaf, (genptr_t)NULL );
+				  &tree_state,
+				  rt_gettree_region_start,
+				  rt_gettree_region_end,
+				  rt_gettree_leaf, (genptr_t)NULL );
 	}
 
 	/* DEBUG:  Ensure that all region trees are valid */
@@ -785,6 +807,35 @@ again:
 	if( rtip->nsolids <= prev_sol_count )
 		bu_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
 	return(0);	/* OK */
+}
+
+/*
+ *  			R T _ G E T T R E E
+ *
+ *  User-called function to add a tree hierarchy to the displayed set.
+ *
+ *  This function is not multiply re-entrant.
+ *  
+ *  Returns -
+ *  	0	Ordinarily
+ *	-1	On major error
+ */
+int
+rt_gettree( rtip, node )
+struct rt_i	*rtip;
+const char	*node;
+{
+	return( rt_gettrees_and_attrs( rtip, NULL, 1, &node, 1 ) );
+}
+
+int
+rt_gettrees( rtip, argc, argv, ncpus )
+struct rt_i	*rtip;
+int		argc;
+const char	**argv;
+int		ncpus;
+{
+	return( rt_gettrees_and_attrs( rtip, NULL, argc, argv, ncpus ) );
 }
 
 /*
