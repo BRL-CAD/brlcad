@@ -1915,7 +1915,7 @@ RT_EXTERN(void			nmg_km, (struct model *m) );
 RT_EXTERN(void			nmg_vertex_gv, (struct vertex *v, CONST point_t pt) );
 RT_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
 RT_EXTERN(void			nmg_edge_g, (struct edgeuse *eu) );
-RT_EXTERN(void			nmg_use_edge_g, (struct edgeuse *eu, long *eg) );
+RT_EXTERN(int			nmg_use_edge_g, (struct edgeuse *eu, long *eg) );
 RT_EXTERN(void			nmg_loop_g, (struct loop *l, CONST struct rt_tol *tol) );
 RT_EXTERN(void			nmg_face_g, (struct faceuse *fu, CONST plane_t p) );
 RT_EXTERN(void			nmg_face_bb, (struct face *f, CONST struct rt_tol *tol) );
