@@ -7,8 +7,8 @@
  *  as compact as possible (typically just an array of power levels),
  *  with all the context stored in one place.
  *
- *  The context is kept in an 'rt_table' structure, and
- *  the data for one particular sample are kept in an 'rt_tabdata'
+ *  The context is kept in an 'bn_table' structure, and
+ *  the data for one particular sample are kept in an 'bn_tabdata'
  *  structure.
  *  tabdata.h provides the data structures, 
  *  librt/tabdata.c provides the routines.
@@ -57,7 +57,7 @@
  *  but that might preclude very narrow-band calculations, such as might
  *  be required to study a single spectral line,
  *  and it might also preclude future extensions to X-rays.
- *  Because there are likely to be very few rt_table structures
+ *  Because there are likely to be very few bn_table structures
  *  in use, the extra storage isn't a likely problem.
  *  The worst effect of this decision will be floating-point grunge
  *  when printing wavelengths, e.g. 650nm might print as 649.99nm.

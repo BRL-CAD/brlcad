@@ -21,8 +21,8 @@ struct shadework {
 	fastf_t		sw_extinction;	/* extinction coeff, mm^-1 */
 	fastf_t		sw_refrac_index;
 #if RT_MULTISPECTRAL
-	struct rt_tabdata *msw_color;
-	struct rt_tabdata *msw_basecolor;
+	struct bn_tabdata *msw_color;
+	struct bn_tabdata *msw_basecolor;
 #else
 	fastf_t		sw_color[3];	/* shaded color */
 	fastf_t		sw_basecolor[3]; /* base color */
@@ -30,7 +30,7 @@ struct shadework {
 	struct hit	sw_hit;		/* ray hit (dist,point,normal) */
 	struct uvcoord	sw_uv;
 #if RT_MULTISPECTRAL
-	struct rt_tabdata *msw_intensity[SW_NLIGHTS];
+	struct bn_tabdata *msw_intensity[SW_NLIGHTS];
 #else
 	fastf_t		sw_intensity[3*SW_NLIGHTS]; /* light intensities */
 #endif
