@@ -553,6 +553,8 @@ struct bu_bitv {
 	((_bv)->bits[(bit)>>BITV_SHIFT] |= (((bitv_t)1)<<((bit)&BITV_MASK)))
 #define BU_BITCLR(_bv,bit)	\
 	((_bv)->bits[(bit)>>BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BITV_MASK)))
+#define BU_BITV_ZEROALL(_bv)	\
+	{ bzero( (char *)((_bv)->bits), BU_BITS2BYTES( (_bv)->nbits ) ); }
 
 /* This is not done by default for performance reasons */
 #define BU_BITV_BITNUM_CHECK(_bv,_bit)	/* Validate bit number */ \
