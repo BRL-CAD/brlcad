@@ -530,6 +530,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 		if { $_showAllGeometry } {
 			set topsCommand "tops -n"
 		} else {
+			# XXX the -u option only works on v6.0.1+
 			set topsCommand "tops -n -u"
 		}
 
@@ -543,6 +544,10 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 		# the children are all of the top geometry
 		set childList ""
 		foreach topItem $roots {
+			# XXX handle the case where tops returns decorated paths
+			if { [ llength [ split $topItem / ] ] >= 2 } {
+				set topItem [ lindex [ split $topItem / ] 0 ]
+			}
 			lappend childList "/$topItem"
 		}
 
@@ -565,6 +570,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 	# primitive or a combinatorial (branch or leaf node).
 	set children ""
 	foreach child $childList {
+
 		set childName [ lindex [ split $child / ] end ]
 
 		# we do not call getObjectType for performance reasons (big directories
@@ -653,6 +659,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 	if { $_showAllGeometry } {
 		set topsCommand "tops -n"
 	} else {
+		# XXX the -u option only works on v6.0.1+
 		set topsCommand "tops -n -u"
 	}
 	
@@ -662,6 +669,11 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 	}
 	set objects ""
 	foreach obj $objs {
+
+		# XXX handle the case where tops returns decorated paths
+		if { [ llength [ split $obj / ] ] >= 2 } {
+			set obj [ lindex [ split $obj / ] 0 ]
+		}
 		lappend objects $obj
 	}
 	
@@ -1324,9 +1336,6 @@ body GeometryBrowser::validateGeometry { } {
 		set dbNotOpen 1
 	}
 
-	puts "dbnotopen: $dbNotOpen"
-	puts "goodGeom: $_goodGeometry"
-
 	# do nothing until a database is open
 	if { $dbNotOpen == 0 } {
 
@@ -1357,8 +1366,6 @@ body GeometryBrowser::validateGeometry { } {
 #				}
 #			}
 		}
-
-		puts "redraw: $redraw"
 
 		# redraw, invokes a recall of getNodeChildren for all displayed nodes
 		if { $redraw > 0 } {
