@@ -226,7 +226,7 @@ void (*errlog)();
 	if( atoi( host ) > 0 )  {
 		/* Numeric */
 		sinhim.sin_family = AF_INET;
-#ifdef cray
+#ifdef CRAY
 		addr_tmp = inet_addr(host);
 		sinhim.sin_addr = addr_tmp;
 #else
@@ -242,12 +242,12 @@ void (*errlog)();
 		}
 		sinhim.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, (char *)&addr_tmp, hp->h_length);
-#ifdef cray
-		sinhim.sin_addr = addr_tmp;
-#else
-		sinhim.sin_addr.s_addr = addr_tmp;
-#endif cray
-#endif BSD
+#		ifdef CRAY
+			sinhim.sin_addr = addr_tmp;
+#		else
+			sinhim.sin_addr.s_addr = addr_tmp;
+#		endif
+#endif
 #ifdef SGI_EXCELAN
 		char **hostp = &host;
 		if((sinhim.sin_addr.s_addr = rhost(&hostp)) == -1) {

@@ -968,7 +968,8 @@ register int	*dat;
  	SWAB( *((short *)&instruction) );
 	if( feof( fp ) )
 		return	EOF;
-#ifndef cray
+#ifndef CRAY
+	/* These only work on machines where sizeof(short) == 2 */
 	*op = instruction.opcode;
 	*dat = instruction.datum;
 #endif
