@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./extern.h"
 #include "./ascii.h"
 #include "./vecmath.h"
+#include "./lgt.h"
 
 #define WINBORDER	4  /* Thickness of window border. */
 #define WINBANNER	16 /* Thickness of window title bar. */
@@ -58,6 +59,32 @@ static char	*winpupstr[] =
 			"Click the right mouse button to quit.",
 			(char *) NULL
 			};
+
+/*
+	bool tryGetOrigin( long *xp, long *yp )
+
+	There is no way to inquire as to the frame buffer window origin
+	through the frame buffer library (libfb(3)), so we need to use
+	the SGI Graphics Library call getorigin(), but it will dump core
+	if winopen() has not been called.  This is indeed the case if a
+	remote frame buffer window is being used.  This routine simply
+	tests as to whether the current frame buffer is remote.  This
+	test could easily break if libfb changes its name for the remote
+	frame buffer since it doesn't advertise the values returned by
+	fb_gettype().
+ */
+STATIC bool
+tryGetOrigin( xp, yp )
+long *xp, *yp;
+	{	char *fbtype = fb_gettype( fbiop );
+	if( strcmp( fbtype, "Remote Device Interface" ) == 0 )	/* trouble */
+		{
+		prnt_Scroll( "Can't get window origin from remote device.\n" );
+		return false;
+		}
+	getorigin( xp, yp );
+	return true;
+	}
 
 STATIC void
 sgi_Rect( x0, y0, x1, y1 )
@@ -132,7 +159,6 @@ sgi_OL_Erase()
 	}
 
 extern char	*get_Input();
-extern void	sgi_Pt_Select();
 long		main_menu;
 long		buffering_menu;
 long		cursorect_menu;
@@ -151,6 +177,7 @@ long		two_digit_menu;
 static long	popup_gid = -1;
 
 void		sgi_Animate();
+STATIC void	sgi_Pt_Select();
 STATIC void	sgi_Read_Keyboard();
 
 STATIC int
@@ -274,6 +301,50 @@ sgi_Pup_Strs()
 	}
 
 STATIC void
+sgi_Pt_Select( x, y, xp, yp, originp )
+register int	x, y, *xp, *yp, *originp;
+	{	char		*args[3];
+		char		buf1[5], buf2[5];
+		long		xwin, ywin;
+	if( ! tryGetOrigin( &xwin, &ywin ) )
+		return; /* XXX */
+	args[1] = buf1;
+	args[2] = buf2;
+	if( *originp )
+		{
+		*xp = x;
+		*yp = y;
+		(void) sprintf( args[1], "%d", SGI_XCVT( x ) + x_fb_origin );
+		(void) sprintf( args[2], "%d", grid_x_fin );
+		(void) f_Grid_X_Pos( (HMitem *) 0, args );
+		(void) sprintf( args[1], "%d", SGI_YCVT( y ) + y_fb_origin );
+		(void) sprintf( args[2], "%d", grid_y_fin );
+		(void) f_Grid_Y_Pos( (HMitem *) 0, args );
+		}
+	else
+		{	int	x_fin, y_fin;
+		x_fin = SGI_XCVT( x ) + x_fb_origin;
+		y_fin = SGI_YCVT( y ) + y_fb_origin;
+		if( x_fin < grid_x_org )
+			{
+			Swap_Integers( x_fin, grid_x_org );
+			}
+		if( y_fin < grid_y_org )
+			{
+			Swap_Integers( y_fin, grid_y_org );
+			}
+		(void) sprintf( args[1], "%d", grid_x_org );
+		(void) sprintf( args[2], "%d", x_fin );
+		(void) f_Grid_X_Pos( (HMitem *) 0, args );
+		(void) sprintf( args[1], "%d", grid_y_org );
+		(void) sprintf( args[2], "%d", y_fin );
+		(void) f_Grid_Y_Pos( (HMitem *) 0, args );
+		}
+	Toggle( *originp );
+	return;
+	}
+
+STATIC void
 sgi_Pup_Redraw()
 	{	long	gid = winget();
 	winset( popup_gid );
@@ -293,7 +364,8 @@ int	origin, x, y, x0, y0;
 	qdevice( MOUSEX );
 	qdevice( MOUSEY );
 	qdevice( MIDDLEMOUSE );
-	getorigin( &xwin, &ywin );
+	if( ! tryGetOrigin( &xwin, &ywin ) )
+		return -1; /* XXX */
 	(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
 	(void) fb_cursor( fbiop, 1, x, y );
 	pupstr = tagpupstr;
@@ -351,7 +423,8 @@ sgi_Sweep_Rect( origin, x, y, x0, y0 )
 int	origin, x, y, x0, y0;
 	{	short	val;
 		long	xwin, ywin;
-	getorigin( &xwin, &ywin );
+	if( ! tryGetOrigin( &xwin, &ywin ) )
+		return -1; /* XXX */
 	qdevice( MOUSEX );
 	qdevice( MOUSEY );
 	qdevice( MIDDLEMOUSE );
@@ -439,7 +512,8 @@ int	origin, x, y, x0, y0, out_flag;
 		double		relscale;
 		double		x_translate, y_translate;
 		long		xwin, ywin;
-	getorigin( &xwin, &ywin );
+	if( ! tryGetOrigin( &xwin, &ywin ) )
+		return -1; /* XXX */
 	qdevice( MOUSEX );
 	qdevice( MOUSEY );
 	qdevice( MIDDLEMOUSE );
@@ -924,7 +998,8 @@ int	fps;
 		fps = HZ;
 
 	/* Get origin of frame buffer window (source). */
-	getorigin( &xwin, &ywin );
+	if( ! tryGetOrigin( &xwin, &ywin ) )
+		return; /* XXX */
 
 	/* Get size of frame buffer window (source). */
 	/* getsize( &xsiz, &ysiz ); */
@@ -951,7 +1026,8 @@ int	fps;
 		return;
 		}
 	/* Adjust window position optimally for fast "rectcopy()". */
-	getorigin( &movie_xwin, &movie_ywin );
+	if( ! tryGetOrigin( &movie_xwin, &movie_ywin ) )
+		return; /* XXX */
 	if( ((xwin - movie_xwin) % 16) != 0 )
 		movie_xwin += (xwin - movie_xwin) % 16;
 	while( movie_xwin > XMAXSCREEN - framesz )

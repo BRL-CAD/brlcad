@@ -34,6 +34,11 @@
 #define true		1
 #define false		0
 #endif
+#define Swap_Integers( i_, j_ ) \
+		{	register int	k_ = i_; \
+		i_ = j_; \
+		j_ = k_; \
+		}
 #define Toggle(f)	(f) = !(f)
 #define Malloc_Bomb( _bytes_ ) \
 		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
