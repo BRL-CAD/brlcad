@@ -26,8 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "spm.h"
 
-double	rt_twopi = 6.283185307179586476925286;
-
 /*
  *		S P M _ I N I T
  *
