@@ -573,7 +573,7 @@ double			mm2local;
 	if( node_count > 0 )
 	{
 		int i;
-		char op;
+		char op = OP_NOP;
 		int status;
 
 		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );

@@ -363,7 +363,7 @@ FILE			*fp;
 {
 	struct db5_ondisk_header	header;
 	unsigned char			lenbuf[8];
-	int				count;
+	int				count = 0;
 	int				used;
 	long				want, got;
 	unsigned char			*cp;
