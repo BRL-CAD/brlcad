@@ -114,7 +114,6 @@ setupSigs()
 #define SIGTSTP	18
 #endif
 		case SIGTSTP :
-			(void) signal( i, stop_sig );
 			break;
 #endif
 			}
