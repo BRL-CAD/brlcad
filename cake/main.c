@@ -368,6 +368,186 @@ int	sig;
 	exit_cake(FALSE);
 }
 
+/*
+ *			I S _ E X E C U T A B L E
+ *
+ *  Returns -
+ *	0	path does not exist, or is not executable
+ *	1	path is executable
+ */
+int
+is_executable( file )
+char *file;
+{
+	Stat		statbuf;
+
+	if( stat( file, &statbuf ) != 0 )  return 0;
+	if( (statbuf.st_mode & 0111) == 0 ) return 0;
+	return 1;
+}
+
+/*
+ *			B U I L D _ C P P A R G V
+ *
+ *  Run the external program "machinetype.sh" to determine the
+ *  type of system we are currently running on, and use that to
+ *  corral up the proper options for this system.
+ *  This is done at runtime now, rather that compile time,
+ *  because one binary of CAKE might be run on a system other than
+ *  it was compiled for, e.g. an Irix5.3 binary running on an Irix6.2
+ *  system.
+ */
+void
+build_cppargv()
+{
+	char	buf[128];
+	char	buf2[128*2];
+	int	len;
+	FILE	*fp;
+	Wait	status;
+
+	if( (fp = popen( "machinetype.sh -m", "r" ) ) == NULL )  {
+		fprintf(stderr, "cake:  Unable to run \"machinetype.sh\" to determine system type, aborting.\nCheck your $PATH variable.\n");
+		exit(42);
+	}
+	if( fgets( buf, sizeof(buf)-2, fp ) == NULL )  {
+		fprintf(stderr, "cake:  \"machinetype.sh\" returned null string, unable to determine system type, aborting.\nTry running machinetype.sh -v manually before proceeding.\n");
+		exit(42);
+	}
+	fclose(fp);
+
+	/* Slurp up dead process indication from popen() */
+#if defined(__convexc__) || defined(__bsdi__)
+	while (wait(&status.w_status) != -1) ;
+#else
+	while (wait(&status) != -1) ;
+#endif
+
+	/* Ensure proper null termination, even if string overran buffer */
+	buf[sizeof(buf)-1] = '\0';
+	buf[sizeof(buf)-2] = '\0';
+	len = strlen(buf);
+	if( buf[len-1] == '\n' )  buf[len-1] = '\0';
+
+	/* Trudge through all the possibilities */
+	if( strcmp( buf, "vax" ) == 0 )  {
+		/* VAX 11/780, mircoVAX, etc. */
+		cppargv[cppargc++] = new_name("cc");
+		cppargv[cppargc++] = new_name("-E");	
+		goto out;
+	}
+	if( strcmp( buf, "mips" ) == 0 )  {
+		/* DECStation with MIPS chip */
+		cppargv[cppargc++] = new_name("cc");
+		cppargv[cppargc++] = new_name("-E");	
+		goto out;
+	}
+	if( strcmp( buf, "c1" ) == 0 )  {
+		/* CPP is necessary on the Convex, cc -E needs .c suffix */
+		cppargv[cppargc++] = new_name("/lib/cpp");
+		cppargv[cppargc++] = new_name("-pcc");
+		goto out;
+	}
+	if( strcmp( buf, "cr2" ) == 0 )  {
+		/* Cray-2 */
+		cppargv[cppargc++] = new_name("/lib/cpp");
+		cppargv[cppargc++] = new_name("-N");
+		goto out;
+	}
+	if( strcmp( buf, "xmp" ) == 0 )  {
+		/* Cray XMP */
+		cppargv[cppargc++] = new_name("/lib/cpp");
+		cppargv[cppargc++] = new_name("-N");
+		goto out;
+	}
+	if( strcmp( buf, "li" ) == 0 )  {
+		/* Linux with GNU CPP */
+		cppargv[cppargc++] = new_name("/lib/cpp");
+		cppargv[cppargc++] = new_name("-traditional");
+		goto out;
+	}
+	if( strcmp( buf, "next" ) == 0 )  {
+		/* Next with Gnu CPP */
+		cppargv[cppargc++] = new_name("/lib/cpp");
+		cppargv[cppargc++] = new_name("-traditional");
+		goto out;
+	}
+	if( strcmp( buf, "sun5" ) == 0 )  {
+#if defined( __GNUC__ )
+		/* GNU compiler */
+		cppargv[cppargc++] = new_name("gcc");
+		cppargv[cppargc++] = new_name("-E");
+		cppargv[cppargc++] = new_name("-traditional");
+#else
+		/* SunOS 5 with unbundled compilers
+		 * WARNING:  Make sure /opt/SUNWspro/bin is ahead of /usr/ucb
+		 * in your path.
+		 * /opt/SUNWspro/bin/cc -E puts unwanted spaces around
+		 * substitutions so fall back to old SunC mode
+		 */
+		cppargv[cppargc++] = new_name("cc");
+		cppargv[cppargc++] = new_name("-E");
+		cppargv[cppargc++] = new_name("-Xs");
+#endif
+		goto out;
+	}
+
+	/*
+	 *  Notes:
+	 *  On the SGI, cc -E appends a space after each substitution,
+	 *  need to use /lib/cpp.
+	 */
+
+	/*
+	 *  The default case:  Look for /lib/cpp, then cc -E
+	 */
+	if( is_executable( "/lib/cpp" ) )  {
+		cppargv[cppargc++] = new_name("/lib/cpp");
+		goto out;
+	}
+	if( is_executable( "/usr/lib/cpp" ) )  {
+		cppargv[cppargc++] = new_name("/usr/lib/cpp");
+		goto out;
+	}
+	if( is_executable( "/bin/cpp" ) )  {
+		cppargv[cppargc++] = new_name("/bin/cpp");
+		goto out;
+	}
+	if( is_executable( "/usr/bin/cpp" ) )  {
+		cppargv[cppargc++] = new_name("/usr/bin/cpp");
+		goto out;
+	}
+	if( is_executable( "/bin/cc" ) )  {
+		cppargv[cppargc++] = new_name("/bin/cc");
+		cppargv[cppargc++] = new_name("-E");
+		goto out;
+	}
+	if( is_executable( "/usr/bin/cc" ) )  {
+		cppargv[cppargc++] = new_name("/usr/bin/cc");
+		cppargv[cppargc++] = new_name("-E");
+		goto out;
+	}
+	if( is_executable( "/usr/ucb/cc" ) )  {
+		cppargv[cppargc++] = new_name("/usr/ucb/cc");
+		cppargv[cppargc++] = new_name("-E");
+		goto out;
+	}
+	fprintf(stderr,
+"cake: unable to locate c-preprocessor as /lib/cpp, /bin/cc, or /usr/bin/cc\n\
+and no special built-in support for machine type '%s', aborting.\n",
+		buf);
+	exit(42);
+
+	/* Add final argument of -D__CAKE__`machinetype.sh` */
+out:
+	sprintf( buf2, "-D__CAKE__%s", buf );
+	cppargv[cppargc++] = new_name(buf2);
+	return;
+}
+
+/*
+ *			M A I N
+ */
 main(argc, argv)
 int	argc;
 char	**argv;
@@ -411,16 +591,9 @@ char	**argv;
 		cakedebug = TRUE;
 
 	init_sym();
-	cppargv[cppargc++] = new_name(CPP);
-#if defined(CPP_OPTIONS)
-	cppargv[cppargc++] = new_name(CPP_OPTIONS);	
-#endif
-#if defined(CPP_OPTIONS2)
-	cppargv[cppargc++] = new_name(CPP_OPTIONS2);
-#endif
-#if defined(CPP_OPTIONS3)
-	cppargv[cppargc++] = new_name(CPP_OPTIONS3);
-#endif
+
+	build_cppargv();
+
 	strcpy(cakeflagbuf, "-DCAKEFLAGS=");
 
 	if ((envstr = getenv("CAKE")) != NULL)
