@@ -205,15 +205,13 @@ char	**argv;
      */
 
     if (bool_bufp == 0)
-    {
 	bu_vls_init(&vp);
-	bool_bufp = bu_vls_addr(&vp);
-    }
     else
 	bu_vls_trunc(&vp, 0);
 
     bu_vls_from_argv(&vp, argc, argv);
-    Tcl_AppendResult(interp, "Will define ", (region_flag ? "region" : "group"),
+    bool_bufp = bu_vls_addr(&vp);
+    Tcl_AppendResult(interp, "Will define ", ((region_flag == 1) ? "region" : "group"),
 		     " '", comb_name, "' as '", bool_bufp, "'\n", (char *)NULL);
     if (yyparse() != 0)
     {
