@@ -1393,6 +1393,23 @@ rt_tcl_setup(interp)
 }
 
 
+/*
+ *			R T _ I N I T
+ *
+ *  Allows LIBRT to be dynamically loade to a vanilla tclsh/wish with
+ *  "load /usr/brlcad/lib/libbu.so"
+ *  "load /usr/brlcad/lib/libbn.so"
+ *  "load /usr/brlcad/lib/librt.so"
+ */
+int
+Rt_Init(interp)
+Tcl_Interp *interp;
+{
+	rt_tcl_setup(interp);
+	return TCL_OK;
+}
+
+
 /* ====================================================================== */
 
 /* TCL-oriented C support for LIBRT */
