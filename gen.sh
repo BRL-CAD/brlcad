@@ -422,7 +422,8 @@ perms)
 	#
 	#########################################
 
-	chown -R bin.bin /usr/brlcad
+	chown -R bin /usr/brlcad
+	chgrp -R bin /usr/brlcad
 
 	for dir in /usr/brlcad/etc /usr/brlcad/html /usr/brlcad/include \
 		/usr/brlcad/man /usr/brlcad/sample_applications \
