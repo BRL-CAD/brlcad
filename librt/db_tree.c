@@ -3,7 +3,7 @@
  *
  * Functions -
  *	db_walk_tree		Parallel tree walker
- *
+ *	db_path_to_mat		Given a path, return a matrix.
  *
  *  Authors -
  *	Michael John Muuss
@@ -1608,4 +1608,141 @@ union tree *	(*leaf_func)();
 	rt_free( (char *)reg_trees, "*reg_trees[]" );
 
 	return(0);	/* OK */
+}
+
+int
+db_path_to_mat( dbip, pathp, mat, depth)
+struct db_i	*dbip;
+struct db_full_path *pathp;
+mat_t mat;
+int depth;			/* number of arcs */
+{
+	register union record	*rp;
+	struct directory	*kidp;
+	struct directory	*parentp;
+	int			i,j;
+	mat_t			tmat;
+
+	RT_CHECK_DBI(dbip);
+	RT_CK_FULL_PATH(pathp);
+	/*
+	 * if depth <= 0 then use the full path.
+	 */
+	if (depth <= 0) depth = pathp->fp_len-1;
+	/*
+	 * set depth to the max of depth or path length.
+	 */
+	if (depth > pathp->fp_len-1) depth = pathp->fp_len-1;
+
+	mat_idn(mat);
+	/*
+	 * if there is no arc, return ident matrix now
+	 */
+	if (depth == 1) return 1;
+
+	for (i=0; i < i< depth; i++) {
+		parentp = pathp->fp_names[i];
+		kidp = pathp->fp_names[i+1];
+		if (!(parentp->d_flags & DIR_COMB)) {
+			char *sofar = db_path_to_string(pathp);
+			rt_log("db_path_to_mat: '%s' of '%s' not a combination.\n",
+			    parentp->d_namep, sofar);
+			rt_free(sofar, "path string");
+			return 0;
+		}
+
+		if (!(rp= db_getmrec(dbip, parentp))) return 0;
+		for (j=1; j< parentp->d_len; j++ ) {
+			mat_t xmat;	/* temporary matrix */
+			int holdlength;
+
+			/* search for the right member */
+			if (strcmp(kidp->d_namep, rp[j].M.m_instname) != 0) {
+				continue;
+			}
+			/* convert matrix to fastf_t from disk format */
+			rt_mat_dbmat( xmat, rp[j].M.m_mat);
+			/*
+			 * xmat is the matrix from the disk.
+			 * mat is the collection of all operations so far.
+			 * (Stack)
+			 */
+			holdlength = pathp->fp_len;
+			pathp->fp_len = i+2;
+			db_apply_anims(pathp, kidp, mat, xmat, 0);
+			pathp->fp_len = holdlength;
+			mat_mul(tmat, mat, xmat);
+			mat_copy(mat, tmat);
+			break;
+		}
+		if (j >= parentp->d_len) {
+			rt_log("db_path_to_mat: unable to follow %s/%s path\n",
+			    parentp->d_namep, kidp->d_namep);
+			return 0;
+		}
+		rt_free((char *) rp, "db_path_to_mat recs");
+	}
+	return 1;
+}
+
+void
+db_apply_anims(pathp, dp, stack, arc, materp)
+struct db_full_path *pathp;
+struct directory *dp;
+mat_t	stack;
+mat_t	arc;
+struct mater_info *materp;
+{
+	register struct animate *anp;
+	register int i,j;
+
+	/* Check here for animation to apply */
+
+	if ((dp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("Animate %s with...\n", sofar);
+		rt_free(sofar, "path string");
+	}
+
+	/*
+	 * For each of the animations attached to the
+	 * mentioned object,  see if the current accumulated
+	 * path matches the path  specified in the animation.
+	 * Comparison is performed right-to-left (from
+	 * leafward to rootward).
+	 */
+	for( anp = dp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
+		register int anim_flag;
+
+		j = pathp->fp_len-1;
+		
+		RT_CK_ANIMATE(anp);
+		i = anp->an_path.fp_len-1;
+		anim_flag = 1;
+
+		if (rt_g.debug & DEBUG_ANIM) {
+			char	*str;
+
+			str = db_path_to_string( &(anp->an_path) );
+			rt_log( "\t%s\t", str );
+			rt_free( str, "path string" );
+		}
+
+		for( ; i>=0 && j>=0; i--, j-- )  {
+			if( anp->an_path.fp_names[i] != pathp->fp_names[j] ) {
+				if (rt_g.debug & DEBUG_ANIM) {
+					rt_log("%s != %s\n",
+					     anp->an_path.fp_names[i]->d_namep,
+					     pathp->fp_names[j]->d_namep);
+				}
+				anim_flag = 0;
+				break;
+			}
+		}
+
+				/* anim, stack, arc, mater */
+		if (anim_flag)
+			db_do_anim( anp, stack, arc, materp);
+	}
+	return;
 }
