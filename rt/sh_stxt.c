@@ -3,6 +3,8 @@
  *
  *  Routines to implement solid (ie, 3-D) texture maps.
  *
+ *  XXX Solid texturing is still preliminary.
+ *
  *  Author -
  *	Tom DiGiacinto
  *  
@@ -34,15 +36,16 @@ extern double	modf();
 struct	stxt_specific  {
 	unsigned char stx_transp[8];	/* RGB for transparency */
 	char	stx_file[128];	/* Filename */
+	int	stx_magic;
 	int	stx_w;		/* Width of texture in pixels */
 	int	stx_fw;		/* File width of texture in pixels */
 	int	stx_n;		/* Number of scanlines */
 	int	stx_d;		/* Depth of texture (Num pix files)*/
-	int	stx_norm;
 	vect_t	stx_min;
 	vect_t	stx_max;
 	char	*stx_pixels;	/* Pixel holding area */
 };
+#define STXT_MAGIC	0xfeedbaad
 #define SOL_NULL	((struct stxt_specific *)0)
 #define SOL_O(m)	offsetof(struct stxt_specific, m)
 
@@ -63,16 +66,17 @@ struct	structparse stxt_parse[] = {
 };
 
 HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
+HIDDEN void	stxt_print();
 
 struct	mfuncs stxt_mfuncs[] = {
 	"brick",	0,		0,		MFI_HIT,
-	stxt_setup,	brick_render,	0,		0,
+	stxt_setup,	brick_render,	stxt_print,	0,
 
 	"mbound",	0,		0,		MFI_HIT,
-	stxt_setup,	mbound_render,	0,		0,
+	stxt_setup,	mbound_render,	stxt_print,	0,
 
 	"rbound",	0,		0,		MFI_HIT,
-	stxt_setup,	rbound_render,	0,		0,
+	stxt_setup,	rbound_render,	stxt_print,	0,
 
 	(char *)0,	0,		0,		0,
 	0,		0,		0,		0
@@ -150,9 +154,9 @@ char	**dpp;
 	*dpp = (char *)stp;
 
 	/**  Set up defaults  **/
+	stp->stx_magic = STXT_MAGIC;
 	stp->stx_file[0] = '\0';
 	stp->stx_w = stp->stx_fw = stp->stx_n = stp->stx_d = -1;
-	stp->stx_norm = 0;
 
 	if( rt_bound_tree(rp->reg_treetop, stp->stx_min, stp->stx_max) < 0 )
 		return(-1);
@@ -175,6 +179,13 @@ char	**dpp;
 	return( stxt_read(stp) );
 }
 
+HIDDEN void
+stxt_print( rp, dp )
+register struct region *rp;
+char	*dp;
+{
+	rt_structprint(rp->reg_name, stxt_parse, (char *)dp);
+}
 
 
 HIDDEN
@@ -187,20 +198,19 @@ char	*dp;
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)dp;
 	register struct soltab *sp;
-
 	vect_t  lx, ly, lz;	/* local coordinate axis */
 	fastf_t f;
 	double iptr;
-
 	fastf_t sx, sy, sz;
-	fastf_t tx, ty, tz;
+	int	tx, ty, tz;
 	int line;
 	int dx, dy;
 	int x,y;
 	register long r,g,b;
-
 	int u1, u2, u3;
 	register unsigned char *cp;
+
+	if( stp->stx_magic != STXT_MAGIC )  rt_log("brick_render(): bad magic\n");
 
 	/*
 	 * If no texture file present, or if
@@ -253,9 +263,9 @@ char	*dp;
 /*rt_log("sx = %f\tsy = %f\tsz = %f\n",sx,sy,sz);*/
 
 	/* Index into TEXTURE SPACE */
-	tx = sx * stp->stx_w;
-	ty = sy * stp->stx_n;
-	tz = sz * stp->stx_d;
+	tx = sx * (stp->stx_w-1);
+	ty = sy * (stp->stx_n-1);
+	tz = sz * (stp->stx_d-1);
 
 	u1 = (int)tz * stp->stx_n * stp->stx_w *  3.0;
 	u2 = (int)ty * stp->stx_w * 3.0;
@@ -275,7 +285,11 @@ char	*dp;
 	return(1);
 }
 
-
+/*
+ *			R B O U N D _ R E N D E R
+ *
+ *  Use region RPP to bound solid texture (rbound).
+ */
 HIDDEN
 rbound_render( ap, pp, swp, dp )
 struct application	*ap;
@@ -288,7 +302,7 @@ char	*dp;
 	register struct soltab *sp;
 	fastf_t xmin, xmax, ymin, ymax;
 	fastf_t sx, sy, sz;
-	fastf_t tx, ty, tz;
+	int	tx, ty, tz;
 	int line;
 	int dx, dy;
 	int x,y;
@@ -296,6 +310,8 @@ char	*dp;
 
 	int u1, u2, u3;
 	register unsigned char *cp;
+
+	if( stp->stx_magic != STXT_MAGIC )  rt_log("rbound_render(): bad magic\n");
 
 	/*
 	 * If no texture file present, or if
@@ -308,14 +324,17 @@ char	*dp;
 	}
 
 	/* NORMALIZE x,y,z to [0..1) */
-	sx = (swp->sw_hit.hit_point[0] - stp->stx_min[0]) / (stp->stx_max[0] - stp->stx_min[0] + 1.0);
-	sy = (swp->sw_hit.hit_point[1] - stp->stx_min[1]) / (stp->stx_max[1] - stp->stx_min[1] + 1.0);
-	sz = (swp->sw_hit.hit_point[2] - stp->stx_min[2]) / (stp->stx_max[2] - stp->stx_min[2] + 1.0);
+	sx = (swp->sw_hit.hit_point[0] - stp->stx_min[0]) /
+		(stp->stx_max[0] - stp->stx_min[0] + 1.0);
+	sy = (swp->sw_hit.hit_point[1] - stp->stx_min[1]) /
+		(stp->stx_max[1] - stp->stx_min[1] + 1.0);
+	sz = (swp->sw_hit.hit_point[2] - stp->stx_min[2]) /
+		(stp->stx_max[2] - stp->stx_min[2] + 1.0);
 
 	/* Index into TEXTURE SPACE */
-	tx = sx * stp->stx_w;
-	ty = sy * stp->stx_n;
-	tz = sz * stp->stx_d;
+	tx = sx * (stp->stx_w-1);
+	ty = sy * (stp->stx_n-1);
+	tz = sz * (stp->stx_d-1);
 
 	u1 = (int)tz * stp->stx_n * stp->stx_w *  3.0;
 	u2 = (int)ty * stp->stx_w * 3.0;
@@ -336,6 +355,11 @@ char	*dp;
 }
 
 
+/*
+ *			M B O U N D _ R E N D E R
+ *
+ *  Use model RPP as solid texture bounds.  (mbound).
+ */
 HIDDEN
 mbound_render( ap, pp, swp, dp )
 struct application	*ap;
@@ -348,14 +372,15 @@ char	*dp;
 	register struct soltab *sp;
 	fastf_t xmin, xmax, ymin, ymax;
 	fastf_t sx, sy, sz;
-	fastf_t tx, ty, tz;
+	int	tx, ty, tz;
 	int line;
 	int dx, dy;
 	int x,y;
 	register long r,g,b;
-
 	int u1, u2, u3;
 	register unsigned char *cp;
+
+	if( stp->stx_magic != STXT_MAGIC )  rt_log("mbound_render(): bad magic\n");
 
 	/*
 	 * If no texture file present, or if
@@ -367,26 +392,22 @@ char	*dp;
 		return(1);
 	}
 
-   /**  Using Model-RPP as Texture Bounds **/
-	if( stp->stx_norm <= 0 )  {
-		VMOVE(stp->stx_min,ap->a_rt_i->mdl_min);
-		VMOVE(stp->stx_max,ap->a_rt_i->mdl_max);
-		stp->stx_norm++;
-	}
-
 	/* NORMALIZE x,y,z to [0..1) */
-	sx = (swp->sw_hit.hit_point[0] - stp->stx_min[0]) / (stp->stx_max[0] - stp->stx_min[0] + 1.0);
-	sy = (swp->sw_hit.hit_point[1] - stp->stx_min[1]) / (stp->stx_max[1] - stp->stx_min[1] + 1.0);
-	sz = (swp->sw_hit.hit_point[2] - stp->stx_min[2]) / (stp->stx_max[2] - stp->stx_min[2] + 1.0);
+	sx = (swp->sw_hit.hit_point[0] - ap->a_rt_i->mdl_min[0]) /
+		(ap->a_rt_i->mdl_max[0] - ap->a_rt_i->mdl_min[0] + 1.0);
+	sy = (swp->sw_hit.hit_point[1] - ap->a_rt_i->mdl_min[1]) /
+		(ap->a_rt_i->mdl_max[1] - ap->a_rt_i->mdl_min[1] + 1.0);
+	sz = (swp->sw_hit.hit_point[2] - ap->a_rt_i->mdl_min[2]) /
+		(ap->a_rt_i->mdl_max[2] - ap->a_rt_i->mdl_min[2] + 1.0);
 
 	/* Index into TEXTURE SPACE */
-	tx = sx * stp->stx_w;
-	ty = sy * stp->stx_n;
-	tz = sz * stp->stx_d;
+	tx = sx * (stp->stx_w-1);
+	ty = sy * (stp->stx_n-1);
+	tz = sz * (stp->stx_d-1);
 
-	u1 = (int)tz * stp->stx_n * stp->stx_w *  3.0;
-	u2 = (int)ty * stp->stx_w * 3.0;
-	u3 = (int)tx * 3.0;
+	u1 = (int)tz * stp->stx_n * stp->stx_w *  3;
+	u2 = (int)ty * stp->stx_w * 3;
+	u3 = (int)tx * 3;
 
 	cp = (unsigned char *)(stp->stx_pixels + u1 + u2 + u3 );
 
