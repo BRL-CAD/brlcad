@@ -1375,18 +1375,16 @@ nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
  *	0	All is well, or all verts are within TOL_MULTIPLES*tol->dist of fu2
  *	count	Number of verts *not* on fu2's surface when at least one is
  *		more than TOL_MULTIPLES*tol->dist from fu2.
- *
- *  XXX It would be more efficient to use nmg_visit() for this.
  */
 int
 nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 {
 	const struct face_g_plane	*fg2;
-	struct bu_ptbl		vtab;
 	FAST fastf_t		dist;
 	fastf_t			worst = 0;
 	int			k;
 	int			count = 0;
+	struct loopuse		*lu;
 
 	NMG_CK_FACEUSE( fu1 );
 	NMG_CK_FACE( f2 );
@@ -1395,46 +1393,72 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 	fg2 = f2->g.plane_p;
 	NMG_CK_FACE_G_PLANE(fg2);
 
-	nmg_vertex_tabulate( &vtab, &fu1->l.magic );
+	for ( BU_LIST_FOR( lu, loopuse, &fu1->lu_hd ) ) {
+		struct edgeuse *eu;
+	
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+			register struct vertexuse *vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
+			register struct vertex *v = vu->v_p;
+			register struct vertex_g *vg;
 
-	for( k = BU_PTBL_END(&vtab)-1; k >= 0; k-- )  {
-		register struct vertex		*v;
-		register struct vertex_g	*vg;
+			NMG_CK_VERTEX(v);
+			vg = v->vg_p;
+			if( !vg )  rt_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
+			NMG_CK_VERTEX_G(vg);
 
-		v = (struct vertex *)BU_PTBL_GET(&vtab, k);
-		NMG_CK_VERTEX(v);
-		vg = v->vg_p;
-		if( !vg )  rt_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
-		NMG_CK_VERTEX_G(vg);
-
-		/* Geometry check */
-		dist = DIST_PT_PLANE(vg->coord, fg2->N);
-		if( dist > tol->dist || dist < (-tol->dist) )  {
-			if (rt_g.NMG_debug & DEBUG_MESH)  {
-				bu_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
-					fu1, f2,
-					v, dist );
-				VPRINT(" pt", vg->coord);
-				PLPRINT(" fg2", fg2->N);
+			/* Geometry check */
+			dist = DIST_PT_PLANE(vg->coord, fg2->N);
+			if( dist > tol->dist || dist < (-tol->dist) )  {
+				if (rt_g.NMG_debug & DEBUG_MESH)  {
+					bu_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
+					       fu1, f2, v, dist );
+					VPRINT(" pt", vg->coord);
+					PLPRINT(" fg2", fg2->N);
+				}
+				count++;
+				if( dist < 0.0 ) {
+					dist = (-dist);
+				}
+				if( dist > worst ) {
+					worst = dist;
+				}
 			}
-			count++;
-			if( dist < 0.0 )
-				dist = (-dist);
-			if( dist > worst )  worst = dist;
+		}
+
+		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+			struct vertex *v = eu->vu_p->v_p;
+			struct vertex_g *vg;
+
+			NMG_CK_VERTEX(v);
+			vg = v->vg_p;
+			if( !vg )  rt_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
+			NMG_CK_VERTEX_G(vg);
+
+			/* Geometry check */
+			dist = DIST_PT_PLANE(vg->coord, fg2->N);
+			if( dist > tol->dist || dist < (-tol->dist) )  {
+				if (rt_g.NMG_debug & DEBUG_MESH)  {
+					bu_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
+					       fu1, f2, v, dist );
+					VPRINT(" pt", vg->coord);
+					PLPRINT(" fg2", fg2->N);
+				}
+				count++;
+				if( dist < 0.0 ) {
+					dist = (-dist);
+				}
+				if( dist > worst ) {
+					worst = dist;
+				}
+			}
 		}
 	}
-	bu_ptbl_free( &vtab);
 
-	if ( count && (rt_g.NMG_debug & DEBUG_BASIC))  {
-		bu_log("nmg_ck_fu_verts(fu1=x%x, f2=x%x, tol=%g) f1=x%x, ret=%d, worst=%gmm (%e)\n",
-			fu1, f2, tol->dist, fu1->f_p,
-			count, worst, worst );
-	}
-
-	if( worst > TOL_MULTIPLES*tol->dist )
+	if (worst > TOL_MULTIPLES*tol->dist) {
 		return count;
-	else
+	} else {
 		return( 0 );
+	}
 }
 
 /*			N M G _ C K _ F G _ V E R T S
@@ -1838,7 +1862,8 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
 				struct edgeuse		*new_eu;
 
 				v = *vp;
-				NMG_CK_VERTEX(v);
+				/* very expensive to keep checking on this inner loop */
+				/* NMG_CK_VERTEX(v); */
 				if( va == v )  continue;
 				if( vb == v )  continue;
 
