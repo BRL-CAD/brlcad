@@ -178,10 +178,10 @@ have been numerous improvements.  These include:
 </dl>
 
 <dl>
-<dt><b>OTHER ENHANCEMENTS</b></dt>f
+<dt><b>OTHER ENHANCEMENTS</b></dt>
 <dd>
 <dl>
-<dt><b>Opaque Binary Object Support for DSP Primitive and <i>Texture</i> Shaders</b></dt>
+<dt><b>Opaque Binary Object Support for <i>dsp</i> Primitive and <i>Texture</i> Shaders</b></dt>
 <dd>The <i>dsp</i> primitive can accept an opaque binary object as the source for its elevation data.  Likewise, <i>texture</i> shaders 
 can now accept opaque binary objects as the source for their image data.
 </dd>
@@ -191,32 +191,35 @@ can now accept opaque binary objects as the source for their image data.
 
 
 <dt><b>Improved <i>dsp</i> Primitive Raytracing</b></dt>
-<dd>The <i>bot</i> primitive implements a <i>octtree bounding-box</i> technique to achieve a substantial speedup during raytracing.</dd>
+<dd>The <i>bot</i> primitive implements an <i>octtree bounding-box</i> technique to achieve a substantial speedup during raytracing.</dd>
 
-<dt><b>ASCII representation for <i>ebm</i> and <i>vol</i> Primitives</b></dt>
+<dt><b>ASCII Representation for <i>ebm</i> and <i>vol</i> Primitives</b></dt>
 <dd>These two primitives did not have an ASCII representation in previous releases.  This omission has been corrected.</dd>
 
-<dt><b>Support for MacOS X added</b></dt>
-<dd>Requires XDarwin or other X11 server to compile or run</dd>
-
-<dt><b>Improved Pro-Engineer<tm> Interface</b></dt>
-<dd>The converter for Pro-Engineer has been improved and brought up to date with Pro-Engineer 2001.  Improvements include:
-<ul><li>Oriented and non-oriented triangle support</li>
-    <li>Unlimited name length support</li></ul>
+<dt><b>Support for MacOS X</b></dt>
+<dd>BRL-CAD again supports the MacOS platform.  It requires that the 
+XDarwin or other X11 server be installed for correct operation.
 </dd>
 
-<dt><b>FASTGEN 4 Name Extensions</b></dt>
-<dd>The FASTGEN 4 converter <b>fast4-g</b> now supports names longer than 16 characters</dd>
+<dt><b>Improved Pro/Engineer<tm> Interface</b></dt>
+<dd>The converter for Pro/Engineer has been improved and brought up to date with Pro/Engineer 2001.  Improvements include:
+<ul><li>Oriented and non-oriented triangle support.</li>
+    <li>Unlimited-name-length support.</li></ul>
+</dd>
+
+<dt><b>FASTGEN4 Name Extensions</b></dt>
+<dd>The FASTGEN4 converter <b>fast4-g</b> now supports names longer than 16 characters.</dd>
 
 <dt><b>Improved Hidden-Line Drawing Support</b></dt>
-<dd>A new program <b>rtedge</b> for rendering Hidden-line drawings through a raytracing technique.</dd>
+<dd>A new program called <b>rtedge</b> is included for rendering hidden-line drawings through a raytracing technique.</dd>
 
 
-<dt><b>Software library for Multiply Referenced Objects</b></dt>
-<dd>A C implementation of the Tcl/Tk dual-ported object type.</dd>
+<dt><b>Software Library for Multiply Referenced Objects</b></dt>
+<dd>A C implementation of the Tcl/Tk dual-ported object type is included.</dd>
 
 <dt><b>New Shaders</b></dt>
-<dd>New shaders <i>flat</i> and <i>invisible</i></dd>
+<dd>Two new shaders <i>flat</i> and <i>invisible</i> are included.  
+The <i>flat</i> shader support per-channel alpha blending.</dd>
 </dl>
 </dl>
 
@@ -226,39 +229,46 @@ can now accept opaque binary objects as the source for their image data.
 <dd>The following are new to release 6.0:
     <dl>
 	<dt><b>pixcmp</b></dt>
-	<dd>Compares two <b>pix</b> format images.  Although not technically new 
-	(formerly included in source distributions), pixcmp is now installed.</dd>
+	<dd>This program Compares two <b>pix</b> format images.  
+	Although not technically new 
+	(it was formerly included in source distributions), <b>pixcmp</b> is now 
+	installed.</dd>
 
 	<dt><b>rtedge</b></dt>
-	<dd>Raytraces models, detects edges, and writes BRL-CAD color image (.pix) files</dd>
+	<dd>This program raytraces models, detects edges, 
+	and writes BRL-CAD color image (.pix) files.</dd>
 
 
 	<dt><b>g_diff</b></dt>
-	<dd>Compares two geometry database files and reports differences between the two.
-	This allows databases which had identical objeccts created in different orders to
-	 be recognized as being the same.</dd>
+	<dd>This program compares two geometry database files and reports differences 
+	between the two.
+	This allows databases that contain the same objects in different orders to
+	be recognized as being the same.</dd>
 
 	<dt><b>dbupgrade</b></dt>
-	<dd>Upgrades an old BRL-CAD database to the current BRL-CAD release file format.
+	<dd>This program upgrades an old BRL-CAD database to the current BRL-CAD release
+	file format.
 	This allows older geometry to take advantage of space savings and new functionality 
-	only available with the newer database formats.
-	(e.g. Convert a database created with BRL-CAD rel4.5 to one that is fully functional in BRL-CAD rel6.0)</dd>
+	only available with the newer database formats
+	(e.g., convert a database created with BRL-CAD rel4.5 to one that is fully functional
+	in BRL-CAD rel6.0).</dd>
     </dl>
 </dd>
 </dl>
 
 <dl>
 <dt><b>DEVELOPER NOTES</b></dt>
-<dd>
+<dd>These items are of interest to developers and others who compile BRL-CAD:
 <ul>
-  <li>Compile-time optimizations that significantly increase raytrace performance (at cost of run-time debugging)</li>
-  <li>Removed dependency on X (and Tk) during source compilation</li>
-  <li>Consolidated <b>cake</b> build options</li>
-  <li>Mged <b>db</b> developer command facilities</li>
-  <li>New and improved regression test suite</li>
-  <li>Improved ANSI source conformance (still in transition)</li>
-  <li>New general purpose bourne-shell-based utility library (part of regression suite)
-    <p>Includes support for file locking, semaphores, stdout/stderr/file logging, mail, cvs, packaging, and remote host querying facilities
+  <li>Compile-time optimizations that significantly increase raytrace performance (at cost of run-time debugging).</li>
+  <li>Removed dependency on X (and Tk) during source compilation.</li>
+  <li>Consolidated <b>cake</b> build options.</li>
+  <li>MGED <b>db</b> developer command facilities.</li>
+  <li>New and improved regression test suite.</li>
+  <li>Improved ANSI source conformance (still in transition).</li>
+  <li>New general-purpose Bourne-shell-based utility library (part of regression suite).
+    <p>Includes support for file locking, semaphores, stdout/stderr/file logging, mail,
+    cvs, packaging, and remote-host querying facilities.
   </li>
 </ul>
 </dd>
@@ -267,12 +277,25 @@ can now accept opaque binary objects as the source for their image data.
 <dd>
 <dl>
 	<dt><b>lgt</b></dt>
-	<dd>lgt is being replaced by the new <b>rtedge</b> tool</dd>
+	<dd>lgt is being replaced by the new <b>rtedge</b> tool.</dd>
 
 	<dt><b>Redirection of I/O in <i>g2asc</i> and <i>asc2g</i></b></dt>
 	<dd>To support the new database file format, it was necessary to remove
-	the ability to run <b>g2asc</b> and <b>asc2g</b> on streaming data</dd>
+	the ability to run <b>g2asc</b> and <b>asc2g</b> on streaming data.</dd>
 </dl>
+</dd>
+
+<dt><b>SPECIAL ACKNOWLEGEMENT</b></dt>
+
+<dd>This release is the last to introduce new features developed by
+Mike Muuss.  Mike embodied a unique blend of unparalleled intellect,
+unquenchable cur iosity, and unending enthusiasm to advance the
+capabilities and performance of everything and everyone he touched.
+He was the original architect of BRL-CAD and for 20 years guided its
+development and emergence as one of the most advanced physically based
+computer-aided design packages in the world.  His presence and his 
+abilities will be missed.
+
 </dd>
 </dl>
 
