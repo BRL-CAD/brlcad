@@ -180,7 +180,8 @@ float		*char_width;	/* character scale (size) */
 	VSET( pnt, *x, *y, *z );
 	mat_idn(mat);
 	mat_angles( mat, 0.0, 0.0, *theta );
-	pl_strncpy( buf, string, sizeof(buf) );
+	strncpy( buf, string, sizeof(buf)-1 );
+	buf[sizeof(buf)-1] = '\0';
 	tp_3axis( *fp, buf, pnt, mat, *length, *ccw,
 		*ndigits, *label_start, *label_incr,
 		*tick_separation, *char_width );

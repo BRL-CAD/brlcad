@@ -1159,6 +1159,7 @@ float	*theta;
 {
 	char buf[128];
 
-	pl_strncpy( buf, string, sizeof(buf) );
+	strncpy( buf, string, sizeof(buf)-1 );
+	buf[sizeof(buf)-1] = '\0';
 	tp_2symbol( *fp, buf, *x, *y, *scale, *theta );
 }
