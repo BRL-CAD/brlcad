@@ -120,7 +120,7 @@ DISTDIR=/m/dist/.
 ARCHDIR=/m/.
 ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 
-TOP_FILES="Copyright* README Cakefile* Makefile \
+TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		cray.sh cray-ar.sh ranlib5.sh sgisnap.sh \
 		machinetype.sh gen.sh setup.sh newvers.sh \
 		cakeinclude.sh newbindir.sh pixinfo.sh"
