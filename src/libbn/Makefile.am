@@ -11,7 +11,6 @@ SRCS = \
 	const.c \
 	font.c \
 	fortran.c \
-	htester.c \
 	list.c \
 	marker.c \
 	mat.c \
@@ -37,7 +36,10 @@ libbn_la_SOURCES = $(SRCS) vers.c
 
 man_MANS = libplot3.3
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = \
+	htester.c \
+	$(man_MANS)
+
 
 libbn_la_LDFLAGS = -version-info 19:1
 
