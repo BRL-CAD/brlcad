@@ -317,17 +317,17 @@ char *argv[];
 	BU_LIST_INIT(&comb1.l);
 
 	regnam[6] = '1';
-	(void)mk_addmember(regnam,&comb1,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
 	regnam[6] = '2';
-	(void)mk_addmember(regnam,&comb1,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
 	regnam[6] = '3';
-	(void)mk_addmember(regnam,&comb1,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
 	regnam[6] = '4';
-	(void)mk_addmember(regnam,&comb1,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
 	regnam[6] = '5';
-	(void)mk_addmember(regnam,&comb1,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
 	regnam[6] = '6';
-	(void)mk_addmember(regnam,&comb1,WMOP_UNION);
+	(void)mk_addmember(regnam,&comb1.l,WMOP_UNION);
 
 	grpnam[3] = 97 + i;
 	mk_lfcomb(fpw,grpnam,&comb1,0);
