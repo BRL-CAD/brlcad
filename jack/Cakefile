@@ -12,10 +12,10 @@
 
 /* Explicit composition of each product */
 
-g-jack:	g-jack.o LIBRT
-	CC LDFLAGS -o g-jack g-jack.o LIB_PRE''LIBRT LIBRT_LIBES LIBES
+g-jack:	g-jack.o LIBRT_DEP
+	CC LDFLAGS -o g-jack g-jack.o LIBRT LIBRT_LIBES LIBES
 
-jack-g:	jack-g.o LIBWDB LIBRT
-	CC LDFLAGS -o jack-g jack-g.o LIBWDB LIB_PRE''LIBRT LIBRT_LIBES LIBES
+jack-g:	jack-g.o LIBWDB_DEP LIBRT_DEP
+	CC LDFLAGS -o jack-g jack-g.o LIBWDB LIBRT LIBRT_LIBES LIBES
 
 #include "../Cakefile.rules"
