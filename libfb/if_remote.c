@@ -134,8 +134,8 @@ int	width, height;
 	for( i = 0; devicename[i] != ':' && i < MAX_HOSTNAME; i++ )
 		hostname[i] = devicename[i];
 	hostname[i] = '\0';
-	if( (pc = pkg_open( hostname, "remotefb", pkgswitch, fb_log )) == PKC_ERROR &&
-	    (pc = pkg_open( hostname, "5558", pkgswitch, fb_log )) == PKC_ERROR ) {
+	if( (pc = pkg_open( hostname, "remotefb", 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR &&
+	    (pc = pkg_open( hostname, "5558", 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR ) {
 		fb_log(	"remote_open: can't connect to remotefb server on host \"%s\".\n",
 			hostname );
 		return	-1;
