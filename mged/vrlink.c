@@ -66,6 +66,10 @@ struct bu_vls	*vp;
 struct pkg_conn	*pc;
 {
 	BU_CK_VLS(vp);
+	if(!pc)  {
+		bu_log("pkg_send_vls:  NULL pointer\n");
+		return -1;
+	}
 	return pkg_send( type, bu_vls_addr(vp), bu_vls_strlen(vp)+1, pc );
 }
 
@@ -128,6 +132,11 @@ vr_viewpoint_hook()
 	struct bu_vls	str;
 	static struct bu_vls	old_str;
 	quat_t		orient;
+
+	if( vrmgr == PKC_NULL )  {
+		cmdline_hook = 0;	/* Relinquish this hook */
+		return;
+	}
 
 	bu_vls_init_if_uninit(&old_str);
 	bu_vls_init(&str);
