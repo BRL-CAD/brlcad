@@ -651,61 +651,6 @@ also be traversed or queried.
 </DD>
 <HR>
 
-<DT><a NAME="viewget"><B>viewget</B> <I>parameter</I></DT>
-
-<DD>The ``viewget'' command displays various <I>mged</I> view parameters. The
-possible parameters are:
-<ul>
-	<li>aet -- list the <a href="brlcad_glossary.html#AZIMUTH">azimuth</a>,
-		<a href="brlcad_glossary.html#ELEVATION">elevation</a>,
-		and <a href="brlcad_glossary.html#TWIST">twist</a> for the current
-		viewing aspect.</li>
-	<li>center -- list the model coordinates (mm) of the center of the viewing cube.</li>
-	<li>size -- list the size (mm) of a side the current <I>mged</I> display.</li>
-	<li>eye -- list the model coordinates (mm) of the current eye point.</li>
-	<li>ypr -- list the yaw, pitch, and roll angles (degrees) of the current viewing aspect.</li>
-	<li>quat -- list the quaternion for the current viewing aspect.</li>
-</ul>
- 
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>viewget center</b><br>
-		-- list the model coordinates of the center of the
-		<I>mged</I> viewing cube
-	</DD>
-	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="viewset"><B>viewset</B> &lt;<I>parameter value</I>&gt</DT>
-
-<DD>The ``viewset'' command sets various <I>mged</I> view parameters.
-More than one parameter may be set with one command.
-The possible parameters are:
-<ul>
-	<li>aet -- set the <a href="brlcad_glossary.html#AZIMUTH">azimuth</a>,
-		<a href="brlcad_glossary.html#ELEVATION">elevation</a>,
-		and <a href="brlcad_glossary.html#TWIST">twist</a> for the current
-		viewing aspect.</li>
-	<li>center -- set the model coordinates (mm) of the center of the viewing cube.</li>
-	<li>size -- set the size (mm) of a side the current <I>mged</I> display.</li>
-	<li>eye -- set the model coordinates (mm) of the current eye point.</li>
-	<li>ypr -- set the yaw, pitch, and roll angles (degrees) of the current viewing aspect.</li>
-	<li>quat -- set the quaternion for the current viewing aspect.</li>
-</ul>
- 
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>viewset center 1 2 3 size 100</b><br>
-		-- set the model coordinates of the center of the
-		<I>mged</I> viewing cube to the point (1 2 3) and set the size of the viewing cube to 100 mm
-	</DD>
-	</DL>
-</DD>
-<HR>
-
 <DT><a NAME="winset"><B>winset</B> [<I>pathName</I>]</DT>
 <DD>The ``winset'' command sets the current display manager to <I>pathName</I>.
      If <I>pathName</I> is not given, the current display manager is returned.
