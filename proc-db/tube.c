@@ -28,9 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "rtlist.h"
 #include "nurb.h"
-#include "wdb.h"			/* after b_spline.h */
-
-extern struct snurb * rt_nurb_new_snurb();
+#include "wdb.h"
 
 mat_t	identity;
 double	degtorad = 0.0174532925199433;
