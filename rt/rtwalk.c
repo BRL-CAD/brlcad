@@ -452,27 +452,9 @@ write_matrix(frame)
 	vect_t	model;
 	vect_t	view;
 
-	fprintf(outfp, "viewsize %g;\n", viewsize);
-	fprintf(outfp, "eye_pt %g %g %g;\n",
-		pt_prev_step[X],
-		pt_prev_step[Y],
-		pt_prev_step[Z]);
-#if 0
-	/* Build viewrot matrix */
-	VSUB2( model, goal_point, pt_prev_step );
-	VUNITIZE( model );
-
-	mat_lookat( viewrot, model, 0 );
-	fprintf(outfp, "viewrot ");
-	for( i=0; i < 16; i++ ) {
-		(void)fprintf(outfp, "%.9e ", viewrot[i] );
-		if( (i%4) == 3 )
-			(void)fprintf(outfp, "\n");
-	}
-	(void)fprintf(outfp,";\n");
-#else
-	fprintf(outfp, "lookat_pt %g %g %g  0;\n", V3ARGS(goal_point) );
-#endif
 	fprintf(outfp, "start %d;\n", frame);
+	fprintf(outfp, "viewsize %g;\n", viewsize);
+	fprintf(outfp, "eye_pt %g %g %g;\n", V3ARGS(pt_prev_step) );
+	fprintf(outfp, "lookat_pt %g %g %g  0;\n", V3ARGS(goal_point) );
 	fprintf(outfp, "end;\n\n" );
 }
