@@ -151,65 +151,66 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_TGC_MV_H		25
 #define MENU_TGC_MV_HH		26
 #define MENU_TGC_SCALE_H	27
-#define MENU_TGC_SCALE_A	28
-#define MENU_TGC_SCALE_B	29
-#define MENU_TGC_SCALE_C	30
-#define MENU_TGC_SCALE_D	31
-#define MENU_TGC_SCALE_AB	32
-#define MENU_TGC_SCALE_CD	33
-#define MENU_TGC_SCALE_ABCD	34
-#define MENU_ARB_MV_EDGE	35
-#define MENU_ARB_MV_FACE	36
-#define MENU_ARB_ROT_FACE	37
-#define MENU_ELL_SCALE_A	38
-#define MENU_ELL_SCALE_B	39
-#define MENU_ELL_SCALE_C	40
-#define MENU_ELL_SCALE_ABC	41
-#define MENU_RPC_B		42
-#define MENU_RPC_H		43
-#define MENU_RPC_R		44
-#define MENU_RHC_B		45
-#define MENU_RHC_H		46
-#define MENU_RHC_R		47
-#define MENU_RHC_C		48
-#define MENU_EPA_H		49
-#define MENU_EPA_R1		50
-#define MENU_EPA_R2		51
-#define MENU_EHY_H		52
-#define MENU_EHY_R1		53
-#define MENU_EHY_R2		54
-#define MENU_EHY_C		55
-#define MENU_ETO_R		56
-#define MENU_ETO_RD		57
-#define MENU_ETO_SCALE_C	58
-#define MENU_ETO_ROT_C		59
-#define	MENU_PIPE_SELECT	60
-#define	MENU_PIPE_NEXT_PT	61
-#define MENU_PIPE_PREV_PT	62
-#define MENU_PIPE_SPLIT		63
-#define MENU_PIPE_PT_OD		64
-#define MENU_PIPE_PT_ID		65
-#define	MENU_PIPE_SCALE_OD	66
-#define	MENU_PIPE_SCALE_ID	67
-#define	MENU_PIPE_ADD_PT	68
-#define MENU_PIPE_INS_PT	69
-#define MENU_PIPE_DEL_PT	70
-#define	MENU_PIPE_MOV_PT	71
-#define	MENU_PIPE_PT_RADIUS	72
-#define	MENU_PIPE_SCALE_RADIUS	73
-#define	MENU_VOL_FNAME		74
-#define	MENU_VOL_FSIZE		75
-#define	MENU_VOL_CSIZE		76
-#define	MENU_VOL_THRESH_LO	77
-#define	MENU_VOL_THRESH_HI	78
-#define	MENU_EBM_FNAME		79
-#define	MENU_EBM_FSIZE		80
-#define	MENU_EBM_HEIGHT		81
-#define	MENU_DSP_FNAME		82
-#define	MENU_DSP_FSIZE		83	/* Not implemented yet */
-#define	MENU_DSP_SCALE_X	84
-#define	MENU_DSP_SCALE_Y	85
-#define	MENU_DSP_SCALE_ALT	86
+#define	MENU_TGC_SCALE_H_V	28
+#define MENU_TGC_SCALE_A	29
+#define MENU_TGC_SCALE_B	30
+#define MENU_TGC_SCALE_C	31
+#define MENU_TGC_SCALE_D	32
+#define MENU_TGC_SCALE_AB	33
+#define MENU_TGC_SCALE_CD	34
+#define MENU_TGC_SCALE_ABCD	35
+#define MENU_ARB_MV_EDGE	36
+#define MENU_ARB_MV_FACE	37
+#define MENU_ARB_ROT_FACE	38
+#define MENU_ELL_SCALE_A	39
+#define MENU_ELL_SCALE_B	40
+#define MENU_ELL_SCALE_C	41
+#define MENU_ELL_SCALE_ABC	42
+#define MENU_RPC_B		43
+#define MENU_RPC_H		44
+#define MENU_RPC_R		45
+#define MENU_RHC_B		46
+#define MENU_RHC_H		47
+#define MENU_RHC_R		48
+#define MENU_RHC_C		49
+#define MENU_EPA_H		50
+#define MENU_EPA_R1		51
+#define MENU_EPA_R2		52
+#define MENU_EHY_H		53
+#define MENU_EHY_R1		54
+#define MENU_EHY_R2		55
+#define MENU_EHY_C		56
+#define MENU_ETO_R		57
+#define MENU_ETO_RD		58
+#define MENU_ETO_SCALE_C	59
+#define MENU_ETO_ROT_C		60
+#define	MENU_PIPE_SELECT	61
+#define	MENU_PIPE_NEXT_PT	62
+#define MENU_PIPE_PREV_PT	63
+#define MENU_PIPE_SPLIT		64
+#define MENU_PIPE_PT_OD		65
+#define MENU_PIPE_PT_ID		66
+#define	MENU_PIPE_SCALE_OD	67
+#define	MENU_PIPE_SCALE_ID	68
+#define	MENU_PIPE_ADD_PT	69
+#define MENU_PIPE_INS_PT	70
+#define MENU_PIPE_DEL_PT	71
+#define	MENU_PIPE_MOV_PT	72
+#define	MENU_PIPE_PT_RADIUS	73
+#define	MENU_PIPE_SCALE_RADIUS	74
+#define	MENU_VOL_FNAME		75
+#define	MENU_VOL_FSIZE		76
+#define	MENU_VOL_CSIZE		77
+#define	MENU_VOL_THRESH_LO	78
+#define	MENU_VOL_THRESH_HI	79
+#define	MENU_EBM_FNAME		80
+#define	MENU_EBM_FSIZE		81
+#define	MENU_EBM_HEIGHT		82
+#define	MENU_DSP_FNAME		83
+#define	MENU_DSP_FSIZE		84	/* Not implemented yet */
+#define	MENU_DSP_SCALE_X	85
+#define	MENU_DSP_SCALE_Y	86
+#define	MENU_DSP_SCALE_ALT	87
 
 
 extern int arb_faces[5][24];	/* from edarb.c */
@@ -317,6 +318,7 @@ struct menu_item  point4_menu[] = {
 struct menu_item  tgc_menu[] = {
 	{ "TGC MENU", (void (*)())NULL, 0 },
 	{ "scale H",	tgc_ed, MENU_TGC_SCALE_H },
+	{ "scale H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
 	{ "scale A",	tgc_ed, MENU_TGC_SCALE_A },
 	{ "scale B",	tgc_ed, MENU_TGC_SCALE_B },
 	{ "scale c",	tgc_ed, MENU_TGC_SCALE_C },
@@ -5394,6 +5396,24 @@ pscale()
 				es_scale = es_para[0] / MAGNITUDE(tgc->h);
 			}
 			VSCALE(tgc->h, tgc->h, es_scale);
+		}
+		break;
+
+	case MENU_TGC_SCALE_H_V:	/* scale height vector (but move V) */
+		{
+			point_t old_top;
+
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->h);
+			}
+			VADD2( old_top, tgc->v, tgc->h );
+			VSCALE(tgc->h, tgc->h, es_scale);
+			VSUB2( tgc->v, old_top, tgc->h );
 		}
 		break;
 
