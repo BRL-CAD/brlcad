@@ -8,8 +8,8 @@ and
 RAY-TRACING BENCHMARK
 .sp
 DISTRIBUTION PACKAGE
-Release 1.27
-(11-July-87)
+Release 2.1
+(27-Oct-87)
 .fi
 .sp
 .sp "VERSION"
@@ -24,10 +24,12 @@ tape.
 .sp
 To obtain a copy of the distribution, you should send the authors:
 .sp
-1)  Enough magnetic tape for 20 Mbytes of data.  For 9-track 1/2 inch magtape,
-specify density (800, 1600, or 6250).  Silicon Graphics and SUN tape
-cartridges can also be accommodated.  Specify TAR or CPIO, and blocksize
-of 5k (CPIO default), 10k (TAR default), 200k (SGI default), or other.
+1)  Enough magnetic tape for 20 Mbytes of data. Standard nine-track
+half-inch magtape is the strongly preferred format, and can be written
+at either 1600 or 6250 bpi, in either TAR format with 10k byte records,
+or CPIO format with 5k byte records. For sites with no half-inch tape
+drives, Silicon Graphics and SUN tape cartridges can also be
+accommodated.
 .sp
 2)  A letter indicating:
 .sp
@@ -61,15 +63,14 @@ To obtain authorization for use at additional sites, or for permission
 to use this work as part of a commercial package, please contact the
 authors at the address below.
 .sp
-For non-US sites, an extra step is required.  You must send your letter
-and tape to your Ambassador to the United States in Washington DC, and
-have them forwarded to BRL through official channels.  Our current
-understanding is that any requests from Foreign governments should be
-sent on a Government to Government basis. The non-US Embassy should
-forward requests to the Deputy Chief of Staff for Intelligence,
-Department of the Army.  They handle all requests from foreign
-governments, and they decide where it goes from there.  The address
-to use is claimed to be:
+For non-US sites, an extra step is required. Any requests from Foreign
+governments should be sent on a Government to Government basis. You must
+send your letter and tape to your Ambassador to the United States in
+Washington DC, and have them sent to BRL through official channels.
+Have your Embassy forward the request to the Deputy Chief of Staff
+for Intelligence, Department of the Army; they handle all requests from
+foreign governments.  This procedure has been used many times now, and
+works successfully. The address to use is:
 .sp
 .nf
 	Deputy Chief of Staff for Intelligence
