@@ -102,7 +102,7 @@ fastf_t		rt_dist_tol = 0;	/* Value for rti_tol.dist */
 fastf_t		rt_perp_tol = 0;	/* Value for rti_tol.perp */
 char		*framebuffer;		/* desired framebuffer */
 
-int		space_partition = 0;	/* space partitioning algorithm
+int		space_partition = 1;	/* space partitioning algorithm
 					   to use. */
 
 #define MAX_WIDTH	(32*1024)
