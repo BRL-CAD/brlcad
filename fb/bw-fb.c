@@ -31,7 +31,6 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
-#define	INFIN		999999		/* An "infinite" file size */
 #define	MAX_LINE	(16*1024)	/* Largest output scan line length */
 
 char	ibuf[MAX_LINE];
@@ -40,7 +39,7 @@ RGBpixel obuf[MAX_LINE];
 int	fileinput = 0;		/* file of pipe on input? */
 
 int	file_width = 512;	/* default input width */
-int	file_height = INFIN;	/* default input height */
+int	file_height = 512;	/* default input height */
 int	scr_width = 0;		/* screen tracks file if not given */
 int	scr_height = 0;
 int	file_xoff, file_yoff;
@@ -72,6 +71,7 @@ register char **argv;
 		switch( c )  {
 		case 'h':
 			/* high-res */
+			file_height = file_width = 1024;
 			scr_height = scr_width = 1024;
 			break;
 		case 'i':
@@ -172,7 +172,7 @@ int argc; char **argv;
 	/* If screen size was not set, track the file size */
 	if( scr_width == 0 )
 		scr_width = file_width;
-	if( scr_height == 0 && file_height != INFIN )
+	if( scr_height == 0 )
 		scr_height = file_height;
 
 	/* Open Display Device */
@@ -201,26 +201,13 @@ int argc; char **argv;
 		fb_clear( fbp, PIXEL_NULL );
 		fb_wmap( fbp, COLORMAP_NULL );
 	}
-	/*
-	 * We use Xout in the Y values if file_height == INFIN since we
-	 * assume files have infinite height! (thus yout is always
-	 * scr_height-scr_yoff)
-	 */
 	if( zoom ) {
-		/* Zoom in, in the center of view */
-		if( file_height == INFIN ) {
-			fb_zoom( fbp, scr_width/xout, scr_height/xout );
-			if( inverse )
-				fb_window( fbp, scr_xoff+xout/2, scr_height-1-(scr_yoff+xout/2) );
-			else
-				fb_window( fbp, scr_xoff+xout/2, scr_yoff+xout/2 );
-		} else {
-			fb_zoom( fbp, scr_width/xout, scr_height/yout );
-			if( inverse )
-				fb_window( fbp, scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2) );
-			else
-				fb_window( fbp, scr_xoff+xout/2, scr_yoff+yout/2 );
-		}
+		/* Zoom in, and center the file */
+		fb_zoom( fbp, scr_width/xout, scr_height/yout );
+		if( inverse )
+			fb_window( fbp, scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2) );
+		else
+			fb_window( fbp, scr_xoff+xout/2, scr_yoff+yout/2 );
 	}
 
 	if( file_yoff != 0 ) skipbytes( infd, file_yoff*file_width );
