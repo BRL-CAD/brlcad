@@ -177,8 +177,8 @@ register matp_t output;
 	register int i, j;			/* Indices */
 	static int k;				/* Indices */
 	static int	z[4];			/* Temporary */
-	static float	b[4];			/* Temporary */
-	static float	c[4];			/* Temporary */
+	static fastf_t	b[4];			/* Temporary */
+	static fastf_t	c[4];			/* Temporary */
 
 	mat_copy( output, input );	/* Duplicate */
 
@@ -188,12 +188,12 @@ register matp_t output;
 
 	/* Main Loop */
 	for( i = 0; i < 4; i++ )  {
-		static float y;				/* local temporary */
+		FAST fastf_t y;				/* local temporary */
 
 		k = i;
 		y = output[i*4+i];
 		for( j = i+1; j < 4; j++ )  {
-			static float w;			/* local temporary */
+			FAST fastf_t w;			/* local temporary */
 
 			w = output[i*4+j];
 			if( fabs(w) > fabs(y) )  {
@@ -209,7 +209,7 @@ register matp_t output;
 		y = 1.0 / y;
 
 		for( j = 0; j < 4; j++ )  {
-			static float temp;		/* Local */
+			FAST fastf_t temp;		/* Local */
 
 			c[j] = output[j*4+k];
 			output[j*4+k] = output[j*4+i];
@@ -238,7 +238,7 @@ register matp_t output;
 			static int p;			/* Local temp */
 
 			for( j = 0; j < 4; j++ )  {
-				static float w;		/* Local temp */
+				FAST fastf_t w;		/* Local temp */
 
 				w = output[i*4+j];
 				output[i*4+j] = output[k*4+j];
@@ -260,7 +260,7 @@ register matp_t output;
  */
 void
 vtoh_move( h, v )
-register float *h, *v;
+register vectp_t h, v;
 {
 	*h++ = *v++;
 	*h++ = *v++;
@@ -277,9 +277,9 @@ register float *h, *v;
  */
 void
 htov_move( v, h )
-register float *v, *h;
+register vectp_t v, h;
 {
-	static float inv;
+	FAST fastf_t inv;
 
 	if( h[3] == 1.0 )  {
 		*v++ = *h++;
@@ -319,7 +319,7 @@ mat_t m;
  */
 void
 mat_trn( om, im )
-register float *om;
+register matp_t om;
 register matp_t im;
 {
 	*om++ = im[0];
@@ -355,11 +355,11 @@ register matp_t im;
 void
 mat_ae( m, azimuth, elev )
 register matp_t m;
-float azimuth;
-float elev;
+double azimuth;
+double elev;
 {
-	static float sin_az, sin_el;
-	static float cos_az, cos_el;
+	static double sin_az, sin_el;
+	static double cos_az, cos_el;
 	extern double sin(), cos();
 
 	azimuth *= degtorad;
@@ -400,8 +400,8 @@ mat_angles( mat, alpha, beta, ggamma )
 register matp_t mat;
 double alpha, beta, ggamma;
 {
-	static float calpha, cbeta, cgamma;
-	static float salpha, sbeta, sgamma;
+	static double calpha, cbeta, cgamma;
+	static double salpha, sbeta, sgamma;
 
 	if( alpha == 0.0 && beta == 0.0 && ggamma == 0.0 )  {
 		mat_idn( mat );
