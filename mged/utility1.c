@@ -284,7 +284,7 @@ f_dup( )
 		args += argcnt;
 		/* no prefix is acceptable */
 		if(args == 2)
-			cmd_args[2] = '\0';
+			cmd_args[2][0] = '\0';
 	}
 
 	ndup = 0;
