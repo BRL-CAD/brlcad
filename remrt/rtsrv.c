@@ -231,6 +231,10 @@ char **argv;
 		if( setpgrp( n, n ) < 0 )
 			perror("setpgrp");
 
+		/* Deal with CPU limits on "those kinds" of systems */
+		if( rt_cpuget() > 0 )  {
+			rt_cpuset( 9999999 );
+		}
 #ifdef CRAY
 		rt_pri_set(6);		/* highest "free" priority */
 #else
