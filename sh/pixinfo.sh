@@ -34,8 +34,8 @@ BASE=
 case "$SUFFIX" in
 pix|bw)
 	eval `echo $LHS|sed \
--e 's/\\(.*\\)-\\(.*\\)x\\(.*\\)/;BASE=\\1;WIDTH=\\2;HEIGHT=\\3;/'   \
--e 's/\\(.*\\)-w\\(.*\\)-n\\(.*\\)/;BASE=\\1;WIDTH=\\2;HEIGHT=\\3;/' \
+-e 's/\\(.*\\)-\\([0-9]*\\)x\\([0-9]*\\)/;BASE=\\1;WIDTH=\\2;HEIGHT=\\3;/'   \
+-e 's/\\(.*\\)-w\\([0-9]*\\)-n\\([0-9]*\\)/;BASE=\\1;WIDTH=\\2;HEIGHT=\\3;/' \
 -e 's/^/GOOP=/' `
 	# if BASE is not set, then the file name is not of this form,
 	# and GOOP will have the full string in it.
@@ -52,13 +52,16 @@ fi
 # Second, see if some program can tell us more about this file,
 # usually giving -w -n style info.
 BASE=$LHS
+ARGS=""
 case "$SUFFIX" in
-pix|bw)
-	# XXX Need to run a new autosize program on these guys.
-	# fall through
-	ARGS="-w0 -n0"
-	SUFFIX=unknown_pix
-	;;
+pix)
+	eval `pixautosize -b 3 -f $FILE`;;	# Sets WIDTH, HEIGHT
+bw)
+	eval `pixautosize -b 1 -f $FILE`;;	# Sets WIDTH, HEIGHT
+dpix)
+	eval `pixautosize -b 24 -f $FILE`;;	# Sets WIDTH, HEIGHT
+dbw)
+	eval `pixautosize -b 8 -f $FILE`;;	# Sets WIDTH, HEIGHT
 jpg|jpeg)
 	ARGS=`jpeg-fb -h $FILE` ;;
 rle)
