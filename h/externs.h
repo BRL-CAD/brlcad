@@ -63,7 +63,6 @@
 	if (!FD_ISSET(_i, a) || !FD_ISSET(_i, b)) FD_CLR(_i, a) }
 #endif
 
-
 /* Needed on Irix 6 to declare struct timeval for unistd.h for select() */
 #ifdef IRIX
 #	include <sys/time.h>
@@ -73,22 +72,20 @@
    of things such as off_t.  If we don't have it, make some good guesses. */
 
 #ifdef HAVE_UNISTD_H
-#	include <unistd.h>		/* For many important definitions */
-#endif
+	/* Has close(), fork(), exec(), getopt() */
+	/* But *not* open()!!!! */
+#	include <unistd.h>
 
-#ifdef HAVE_STDLIB_H
-#	include <stdlib.h>
-#	if defined(__stardent)
-		extern FILE	*popen( const char *, const char * );
-		extern FILE	*fdopen( int, const char * );
+	/* This is UNIX, pick up the header files for remaining system calls */
+#	include <fcntl.h>	/* for open() */
+#	include <sys/wait.h>	/* for wait() */
+
+#else /* HAVE_UNISTD_H */
+
+#	if !defined(OFF_T) && !defined(HAVE_OFF_T)
+#		define	off_t	long
+#		define	OFF_T	long
 #	endif
-#else
-
-#if !defined(OFF_T) && !defined(HAVE_OFF_T)
-#	define	off_t	long
-#endif
-
-#ifndef HAVE_UNISTD_H    /* We will have already included many of these in unistd.h */
 
 /*
  *	System calls
@@ -116,6 +113,14 @@ extern int	write();
 
 extern void	*shmat();
 extern int	shmget();
+#endif
+
+
+
+#ifdef HAVE_STDLIB_H
+	/* Has abort(), atof(), exit(), malloc(), free(), qsort(), atof() */
+#	include <stdlib.h>
+#else /* HAVE_STDLIB_H */
 
 /*
  *	C Library Routines
@@ -134,29 +139,14 @@ extern char	*strncat();
 extern char	*mktemp();
 
 extern int	atoi();
+extern double	atof();
 extern int	qsort();
 extern int	strcmp();
 
 extern long	time();
 
-#endif
+#endif /* HAVE_STDLIB_H */
 
-/*
- *	STDIO Library Routine supplements
- */
-#if defined(alliant) ||  defined(__stardent)
-	extern FILE	*popen(); /* Not declared in stdio.h */
-#endif
-#if defined(__stardent)
-	extern FILE	*fdopen();
-#endif
-
-/*
- *	Math Library Routines
- */
-extern double	atof();			/* Should be in math.h or stdlib.h */
-
-#endif /* __STDC__ */
 
 #if defined(alliant) && !defined(__STDC__)
 extern double   modf();
@@ -221,13 +211,13 @@ extern int	brk();
  * But we need them, and all UNIX systems provide them.
  */
 #if __STDC__
-#ifndef HAVE_POPEN_DECL
-extern FILE	*fdopen( int filedes, const char *type );
-extern FILE	*popen( const char *command, const char *type );
-#endif
-#ifndef HAVE_STRDUP_DECL
-extern char	*strdup(const char *s);
-#endif
-#endif
+#	ifndef HAVE_POPEN_DECL
+	extern FILE	*fdopen( int filedes, const char *type );
+	extern FILE	*popen( const char *command, const char *type );
+#	endif
+#	ifndef HAVE_STRDUP_DECL
+	extern char	*strdup(const char *s);
+#	endif
+#endif /* __STDC__ */
 
 #endif /* EXTERNS_H */
