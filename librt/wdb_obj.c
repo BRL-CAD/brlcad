@@ -102,7 +102,7 @@ struct do_trace_state {
 	int	flag;
 };
 static void wdb_do_trace();
-static void wdb_trace();
+static int wdb_trace();
 
 int wdb_cmpdirname();
 void wdb_vls_col_pr4v();
@@ -120,9 +120,6 @@ struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
 static struct directory *wdb_objects[WDB_MAX_LEVELS];
 static int wdb_objpos;
 static struct directory *wdb_path[WDB_MAX_LEVELS];
-
-/* print flag */
-static int wdb_prflag;
 
 /* ==== END evil stuff ==== */
 
@@ -1199,8 +1196,13 @@ wdb_do_trace(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 }
 
 /*
+ *			W D B _ T R A C E
+ *
+ *  Return -
+ *	0	path not found
+ *	1	OK
  */
-static void
+static int
 wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
      Tcl_Interp			*interp;
      struct db_i		*dbip;
@@ -1232,13 +1234,13 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 			Tcl_AppendResult(interp, "/", wdb_path[i]->d_namep, (char *)NULL);
 
 		Tcl_AppendResult(interp, "\n", (char *)NULL);
-		return;
+		return 0;
 	}
 
 	if (dp->d_flags & DIR_COMB) {
 		if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
 			Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
-			return;
+			return 0;
 		}
 
 		wdb_path[pathpos] = dp;
@@ -1253,7 +1255,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 				(genptr_t)&dts, NULL, NULL );
 		}
 		rt_comb_ifree(&intern);
-		return;
+		return 0;
 	}
 
 	/* not a combination  -  should have a solid */
@@ -1265,16 +1267,15 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 	for (k=0; k<wdb_objpos; k++) {
 		if (wdb_path[k]->d_addr != wdb_objects[k]->d_addr) {
 			/* not the desired path */
-			return;
+			return 0;
 		}
 	}
 
 	/* have the desired path up to wdb_objpos */
 	bn_mat_copy(wdb_xform, old_xlate);
-	wdb_prflag = 1;
 
 	if (flag == WDB_CPEVAL)
-		return;
+		return 1;
 
 	/* print the path */
 	for (k=0; k<pathpos; k++)
@@ -1284,7 +1285,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 		bu_vls_printf( &str, "/%16s:\n", dp->d_namep );
 		Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 		bu_vls_free(&str);
-		return;
+		return 1;
 	}
 
 	/* NOTE - only reach here if flag == WDB_LISTEVAL */
@@ -1292,7 +1293,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 	if ((id=rt_db_get_internal(&intern, dp, dbip, wdb_xform)) < 0) {
 		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 				 ") failure", (char *)NULL );
-		return;
+		return 0;			/* ERROR */
 	}
 	bu_vls_printf(&str, "%16s:\n", dp->d_namep);
 	if (rt_functab[id].ft_describe(&str, &intern, 1, dbip->dbi_base2local) < 0)
@@ -1300,6 +1301,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 	rt_functab[id].ft_ifree(&intern);
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
+	return 1;
 }
 
 /*
@@ -1341,7 +1343,6 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 	 *	paths are matched up to last input member
 	 *      ANY path the same up to this point is considered as matching
 	 */
-	wdb_prflag = 0;
 
 	/* find out which command was entered */
 	if (strcmp(argv[0], "paths") == 0) {
@@ -1377,15 +1378,15 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 
 	bn_mat_idn( wdb_xform );
 
-	wdb_trace(interp, wdbop->wdb_wp->dbip, wdb_objects[0], 0, bn_mat_identity, flag, wdb_xform);
-
-	if (wdb_prflag == 0) {
+	if( wdb_trace(interp, wdbop->wdb_wp->dbip, wdb_objects[0], 0,
+	    bn_mat_identity, flag, wdb_xform) == 0 )  {
 		/* path not found */
 		Tcl_AppendResult(interp, "PATH:  ", (char *)NULL);
 		for (i=0; i<wdb_objpos; i++)
 			Tcl_AppendResult(interp, "/", wdb_objects[i]->d_namep, (char *)NULL);
 
 		Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
+	    	return TCL_ERROR;
 	}
 
 	return TCL_OK;
@@ -2029,7 +2030,7 @@ wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 	comb_leaf->tr_l.tl_name = bu_strdup(mref);
 }
 
-BU_EXTERN(static int wdb_dir_add, ( struct db_i *input_dbip, CONST char
+static int wdb_dir_add BU_ARGS((struct db_i *input_dbip, CONST char
 	*name, long laddr, int len, int flags, genptr_t ptr));
 
 struct dir_add_stuff {
