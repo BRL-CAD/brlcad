@@ -15,6 +15,12 @@ typedef int	bool;
 #define false		0
 #define success		0
 #define failure		1
+/* allow for SGI screw-up, the single-precision math libraries */
+#if defined( sgi ) && ! defined( mips )
+#define SINGLE_PRECISION true
+#else
+#define SINGLE_PRECISION false
+#endif
 /* menu configuration */
 #define MENU_LFT	1
 #define MENU_TOP	2
@@ -42,6 +48,7 @@ typedef int	bool;
 
 /* default parameters */
 #define DFL_AZIMUTH	0.0
+#define DFL_BARRIERS	100
 #define DFL_BDIST	0.0
 #define DFL_CELLSIZE	1.0
 #define DFL_CONEANGLE	90.0
@@ -50,15 +57,17 @@ typedef int	bool;
 #define DFL_ELEVATION	0.0
 #define DFL_NRAYS	200
 #define DFL_OVERLAPS	true
+#define DFL_RIPLEVELS	1
 #define DFL_UNITS	U_MILLIMETERS
 
 /* firing mode bit definitions */
-#define FM_GRID 0	/* generate grid of shotlines */
-#define FM_DFLT	FM_GRID
-#define FM_PART (1)	/* bit 0: ON = partial envelope, OFF = full */
-#define FM_SHOT	(1<<1)	/* bit 1: ON = discrete shots, OFF = gridding */
-#define FM_FILE	(1<<2)	/* bit 2: ON = file input, OFF = direct input */
-#define FM_3DIM	(1<<3)	/* bit 3: ON = 3-D coords., OFF = 2-D coords */
+#define FM_GRID  0	/* generate grid of shotlines */
+#define FM_DFLT	 FM_GRID
+#define FM_PART  (1)	/* bit 0: ON = partial envelope, OFF = full */
+#define FM_SHOT	 (1<<1)	/* bit 1: ON = discrete shots, OFF = gridding */
+#define FM_FILE	 (1<<2)	/* bit 2: ON = file input, OFF = direct input */
+#define FM_3DIM	 (1<<3)	/* bit 3: ON = 3-D coords., OFF = 2-D coords */
+#define FM_BURST (1<<4) /* bit 4: ON = discrete burst points, OFF = shots */
 
 /* flags for notify() */
 #define	NOTIFY_APPEND	1

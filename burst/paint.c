@@ -9,7 +9,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define DEBUG_PAINT	false
+#define DEBUG_CELLFB	false
+#define DEBUG_SPALLFB	true
 
 #include <stdio.h>
 #include "machine.h"
@@ -19,6 +20,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./vecmath.h"
 #include "./extern.h"
 
+/* Offset frame buffer coordinates to center of cell from grid lines. */
+#define CenterCell(b)	(b += round( (fastf_t) zoom / 2.0 ))
+
 /* Compare one RGB pixel to another. */
 #define	SAMERGB(a,b)	((a)[RED] == (b)[RED] &&\
 			 (a)[GRN] == (b)[GRN] &&\
@@ -27,6 +31,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static RGBpixel	pixbuf[MAXDEVWID];
 static int	gridxmargin;
 static int	gridymargin;
+
+/*
+	fastf_t abs( fastf_t a )
+
+	Returns the absolute value of 'a'.  Useful when a macro would
+	cause side-effects or redundant computation.
+ */
+_LOCAL_ fastf_t
+abs( a )
+fastf_t	a;
+	{
+	return	Abs( a );
+	}
 
 void
 gridToFb( gx, gy, fxp, fyp )
@@ -47,15 +64,15 @@ paintGridFb()
 		int		fxfin, fyfin;
 		int		fxorg, fyorg;
 		int		fgridwid;
-		fastf_t		fcellrad; /* half-width of cell on image */
 	if( fb_clear( fbiop, pixbkgr ) == -1 )
 		return;
 	gridxmargin = (devwid - (gridwidth*zoom)) / 2.0;
 	gridymargin = (devhgt - (gridheight*zoom)) / 2.0;
-	fcellrad = zoom / 2;
 	gridToFb( gridxorg, gridyorg, &fxbeg, &fybeg );
 	gridToFb( gridxfin+1, gridyfin+1, &fxfin, &fyfin );
 	gridToFb( 0, 0, &fxorg, &fyorg );
+	CenterCell( fxorg ); /* center of cell */
+	CenterCell( fyorg );
 	if( zoom == 1 )
 		{
 		fgridwid = gridwidth + 2;
@@ -94,6 +111,12 @@ RGBpixel			*pixexpendable;
 		register int	gxorg, gyorg;
 		register int	x, y;
 		int		cnt;
+#if DEBUG_CELLFB
+	rt_log( "paintCellFb: expendable {%d,%d,%d}\n",
+		(*pixexpendable)[RED],
+		(*pixexpendable)[GRN],
+		(*pixexpendable)[BLU] );
+#endif
 	gridToFb( ap->a_x, ap->a_y, &gx, &gy );
 	gxorg = gx+1;
 	gyorg = gy+1;
@@ -109,11 +132,10 @@ RGBpixel			*pixexpendable;
 		RES_RELEASE( &rt_g.res_stats );
 		for( x = gxorg; x < gxfin; x++ )
 			{
-			if(	zoom == 1
-			    ||	SAMERGB( pixbuf[x-gxorg], *pixexpendable )
+			if( SAMERGB( pixbuf[x-gxorg], *pixexpendable )
 				)
 				{
-#if DEBUG_PAINT
+#if DEBUG_CELLFB
 				rt_log( "Clobbering:<%d,%d>{%d,%d,%d}\n",
 					x, y,
 					(pixbuf[x-gxorg])[RED],
@@ -122,7 +144,7 @@ RGBpixel			*pixexpendable;
 #endif
 				COPYRGB( pixbuf[x-gxorg], *pixpaint );
 				}
-#if DEBUG_PAINT
+#if DEBUG_CELLFB
 			else
 				rt_log( "Preserving:<%d,%d>{%d,%d,%d}\n",
 					x, y,
@@ -134,7 +156,7 @@ RGBpixel			*pixexpendable;
 		RES_ACQUIRE( &rt_g.res_stats );
 		(void) fb_write( fbiop, gxorg, y, pixbuf, cnt );
 		RES_RELEASE( &rt_g.res_stats );
-#if DEBUG_PAINT
+#if DEBUG_CELLFB
 		rt_log( "paintCellFb: fb_write(%d,%d)\n", x, y );
 #endif
 		}
@@ -144,22 +166,31 @@ RGBpixel			*pixexpendable;
 void
 paintSpallFb( ap )
 register struct application	*ap;
-	{	RGBpixel	pixel;
-		int		x, y;
-		int		err;
+	{	RGBpixel pixel;
+		int x, y;
+		int err;
+		fastf_t	celldist;
+#if DEBUG_SPALLFB
+	rt_log( "paintSpallFb: a_x=%d a_y=%d a_cumlen=%g cellsz=%g zoom=%d\n",
+		ap->a_x, ap->a_y, ap->a_cumlen, cellsz, zoom );
+#endif
 	pixel[RED] = ap->a_color[RED] * 255;
 	pixel[GRN] = ap->a_color[GRN] * 255;
 	pixel[BLU] = ap->a_color[BLU] * 255;
 	gridToFb( ap->a_x, ap->a_y, &x, &y );
-	x = round( x + Dot( ap->a_ray.r_dir, gridhor ) *
-		(ap->a_cumlen / cellsz) * zoom );
-	y = round( y + Dot( ap->a_ray.r_dir, gridver ) *
-		(ap->a_cumlen / cellsz) * zoom );
+	CenterCell( x );	/* center of cell */
+	CenterCell( y );
+	celldist = ap->a_cumlen/cellsz * zoom;
+	x = round( x + Dot( ap->a_ray.r_dir, gridhor ) * celldist );
+	y = round( y + Dot( ap->a_ray.r_dir, gridver ) * celldist );
 	RES_ACQUIRE( &rt_g.res_stats );
 	err = fb_write( fbiop, x, y, pixel, 1 );
 	RES_RELEASE( &rt_g.res_stats );
-#if DEBUG_BURST
-	rt_log( "fb_write(%d,%d,{%d,%d,%d})\n",
+#if DEBUG_SPALLFB
+	rt_log( "paintSpallFb:gridhor=<%g,%g,%g> gridver=<%g,%g,%g>\n",
+		gridhor[X], gridhor[Y], gridhor[Z],
+		gridver[X], gridver[Y], gridver[Z] );
+	rt_log( "paintSpallFb:fb_write(x=%d,y=%d,pixel={%d,%d,%d})\n",
 		x, y,
 		(int) pixel[RED],
 		(int) pixel[GRN],
@@ -167,6 +198,7 @@ register struct application	*ap;
 		);
 #endif
 	if( err == -1 )
-		rt_log( "Write failed to pixel <%d,%d>.\n", x, y );
+		rt_log( "Write failed to pixel <%d,%d> from cell <%d,%d>.\n",
+			x, y, ap->a_x, ap->a_y );
 	return;
 	}

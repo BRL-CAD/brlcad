@@ -122,7 +122,7 @@ register Pt_Queue	*qp;
 	/* Fill in hit point and normal.				*/
 	ohitp = qp->q_part->pt_outhit;
 	VJOIN1( ohitp->hit_point, rayp->r_pt, ohitp->hit_dist, rayp->r_dir );
-	color_Part( qp->q_part->pt_regionp, C_SHIELD );
+	colorPartition( qp->q_part->pt_regionp, C_SHIELD );
 	plotPartition( qp->q_part->pt_inhit, ohitp, rayp, qp->q_part->pt_regionp );
 	return;
 	}

@@ -10,19 +10,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <stdio.h>
 #include <signal.h>
+#include <assert.h>
 #include "./burst.h"
 #include "./trie.h"
 #include "./ascii.h"
 #include "./extern.h"
 #define DEBUG_BURST	false
 
+/*
+	bool getCommand( char *name, char *buf, int len, FILE *fp )
+
+	Read next command line into 'buf' and stuff the command name
+	into 'name' from input stream 'fp'.
+	RETURN CODES: false for end-of-file, true for success.
+ */
 _LOCAL_ bool
 getCommand( name, buf, len, fp )
-char	*name;
-char	*buf;
-int	len;
-FILE	*fp;
+char *name;
+char *buf;
+int len;
+FILE *fp;
 	{
+	assert( fp != (FILE *) NULL );
 	while( fgets( buf, len, fp ) != NULL )
 		if(	buf[0] != CHAR_COMMENT
 		     &&	sscanf( buf, "%s", name ) == 1
@@ -36,6 +45,11 @@ FILE	*fp;
 	return	false; /* EOF */
 	}
 
+/*
+	void setupSigs( void )
+
+	Initialize all signal handlers.
+ */
 _LOCAL_ void
 setupSigs()
 	{	register int	i;
@@ -75,9 +89,15 @@ setupSigs()
 	return;
 	}
 
+/*
+	int parsArgv( int argc, char **argv )
+
+	Parse program command line.
+ */
 _LOCAL_ int
 parsArgv( argc, argv )
-register char	**argv;
+int argc;
+char **argv;
 	{	register int	c;
 		extern int	optind;
 		extern char	*optarg;
@@ -96,10 +116,16 @@ register char	**argv;
 	return	true;
 	}
 
+/*
+	void readBatchInput( FILE *fp )
+
+	Read and execute commands from input stream 'fp'.
+ */
 void
 readBatchInput( fp )
 FILE	*fp;
 	{
+	assert( fp != (FILE *) NULL );
 	batchmode = true;
 	while( getCommand( cmdname, cmdbuf, LNBUFSZ, fp ) )
 		{	Func	*cmdfunc;
@@ -123,10 +149,13 @@ FILE	*fp;
 	return;
 	}
 
+/*
+	int main( int argc, char *argv[] )
+ */
 _LOCAL_ int
 main( argc, argv )
-int	argc;
-char	*argv[];
+int argc;
+char *argv[];
 	{
 #if ! defined( BSD ) && ! defined( sgi )
 	setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
@@ -144,12 +173,16 @@ char	*argv[];
 	if( ! parsArgv( argc, argv ) )
 		{
 		prntUsage();
+		(void) unlink( tmpfname );
 		return	failure;
 		}
 
 	setupSigs();
-	if( ! initUi() ) /* Must be called before any output is produced. */
+	if( ! initUi() ) /* must be called before any output is produced */
+		{
+		(void) unlink( tmpfname );
 		return	failure;
+		}
 #if DEBUG_BURST
 	prntTrie( cmdtrie, 0 );
 #endif
@@ -161,6 +194,11 @@ char	*argv[];
 	return	success;
 	}
 
+/*
+	void exitCleanly( int sig )
+
+	Should be only exit from program after success of 'initUi()'.
+ */
 void
 exitCleanly( sig )
 int	sig;

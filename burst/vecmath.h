@@ -9,7 +9,6 @@
 #ifndef _POLY9
 #include <math.h>
 #endif
-extern double	sqrt();
 #ifndef Abs
 #define Abs( a )		((a) > 0 ? (a) : -(a))
 #endif

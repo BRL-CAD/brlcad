@@ -32,6 +32,25 @@ static char	*pgmverp = "$Revision$";
 	else	p->l.t_func = f;\
 	}
 
+#define GetBool( var, ptr ) \
+	if( getInput( ptr ) ) \
+		{ \
+		if( ptr->buffer[0] == 'y' ) \
+			var = true; \
+		else \
+		if( ptr->buffer[0] == 'n' ) \
+			var = false; \
+		else \
+			{ \
+			(void) sprintf( scrbuf, \
+					"Illegal input \"%s\".", \
+					ptr->buffer ); \
+			warning( scrbuf ); \
+			return; \
+			} \
+		(ptr)++; \
+		}
+
 #define GetVar( var, ptr, conv )\
 	{\
 	if( ! batchmode )\
@@ -52,8 +71,9 @@ static char	*pgmverp = "$Revision$";
 			{\
 			rt_log( "ERROR -- command syntax:\n" );\
 			rt_log( "\t%s\n", cmdbuf );\
-			rt_log( "\targument (%s) is of wrong type\n",\
-				tokptr == NULL ? "(null)" : tokptr );\
+			rt_log( "\tcommand (%s): argument (%s) is of wrong type, %s expected.\n",\
+				cmdptr, tokptr == NULL ? "(null)" : tokptr,\
+				(ptr)->fmt );\
 			}\
 		cmdptr = NULL;\
 		}\
@@ -88,17 +108,20 @@ _LOCAL_ void	Mexecute();
 _LOCAL_ void	MfbFile();
 _LOCAL_ void	MgedFile();
 _LOCAL_	void	MgridFile();
+_LOCAL_ void	MgroundPlane();
 _LOCAL_ void	MhistFile();
 _LOCAL_ void	Minput2dShot();
 _LOCAL_ void	Minput3dShot();
-_LOCAL_ void	Minput3dBurst();
+_LOCAL_ void	MinputBurst();
 _LOCAL_ void	Mnop();
 _LOCAL_ void	Mobjects();
 _LOCAL_ void	Moverlaps();
 _LOCAL_ void	MplotFile();
 _LOCAL_ void	Mread2dShotFile();
 _LOCAL_ void	Mread3dShotFile();
+_LOCAL_ void	MreadBurstFile();
 _LOCAL_ void	MreadCmdFile();
+_LOCAL_ void	MmaxBarriers();
 _LOCAL_ void	MmaxSpallRays();
 _LOCAL_ void	Munits();
 _LOCAL_ void	MwriteCmdFile();
@@ -127,8 +150,7 @@ Ftable	shot2dmenu[] =
 	{ "input-2d-shot",
 		"type in shotline coordinates",
 		0, Minput2dShot },
-	{ "execute",
-		"begin ray tracing", 0, Mexecute },
+	{ "execute", "begin ray tracing", 0, Mexecute },
 	{ 0 },
 	};
 
@@ -140,6 +162,7 @@ Ftable	shot3dmenu[] =
 	{ "input-3d-shot",
 		"type in shotline coordinates",
 		0, Minput3dShot },
+	{ "execute", "begin ray tracing", 0, Mexecute },
 	{ 0 },
 	};
 
@@ -162,8 +185,7 @@ Ftable	gridmenu[] =
 	{ "enclose-portion",
 		"generate a grid which covers a portion of the target",
 		0, MenclosePortion },
-	{ "execute",
-		"begin ray tracing", 0, Mexecute },
+	{ "execute", "begin ray tracing", 0, Mexecute },
 	{ 0 }
 	};
 
@@ -174,6 +196,18 @@ Ftable	locoptmenu[] =
 	{ "discrete shots",
 		"specify each shotline by coordinates", shotcoordmenu, 0 },
 	{ 0 }
+	};
+
+Ftable	burstcoordmenu[] =
+	{
+	{ "read-burst-file",
+		"input burst coordinates from file",
+		0, MreadBurstFile },
+	{ "burst-coordinates",
+		"specify each burst point in target coordinates (3-d)",
+		0, MinputBurst },
+	{ "execute", "begin ray tracing", 0, Mexecute },
+	{ 0 },
 	};
 
 Ftable	burstoptmenu[] =
@@ -190,17 +224,20 @@ Ftable	burstoptmenu[] =
 	{ "max-spall-rays",
 		"maximum rays generated per burst point (ray density)",
 		0, MmaxSpallRays },
+	{ "max-barriers",
+		"maximum number of shielding components along spall ray",
+		0, MmaxBarriers },
 	{ 0 }
 	};
 
 Ftable	burstlocmenu[] =
 	{
-	{ "burst-coordinates",
-		"specify each burst point in target coordinates (3-d)",
-		0, Minput3dBurst },
-	{ "ground plane",
+	{ "burst point coordinates",
+		"input explicit burst points in 3-d target coordinates",
+		burstcoordmenu, 0 },
+	{ "ground-plane",
 		"burst on impact with ground plane",
-		0, Mnop },
+		0, MgroundPlane },
 	{ "shotline-burst",
 		"burst along shotline on impact with critical components",
 		0, MautoBurst },
@@ -295,8 +332,7 @@ Ftable	mainmenu[] =
 		"shotline generation (grid specification)", shotlnmenu, 0 },
 	{ "burst points",
 		"burst point generation", burstmenu, 0 },
-	{ "execute",
-		"begin ray tracing", 0, Mexecute },
+	{ "execute", "begin ray tracing", 0, Mexecute },
 	{ "preferences",
 		"options for tailoring behavior of user interface",
 		prefmenu, 0 },
@@ -405,8 +441,12 @@ Input *ip;
 		prompt( (char *) NULL );
 		}
 	else
-		if( sscanf( cmdptr, "%s", ip->buffer ) != 1 )
+		{	char *str = strtok( cmdptr, WHITESPACE );
+		if( str == NULL )
 			return	false;
+		(void) strcpy( ip->buffer, str );
+		cmdptr = NULL;
+		}
 	return  true;
 	}
 
@@ -513,26 +553,12 @@ HmItem	*itemp;
 			{ "Burst along shotline", "n", "%d", "y or n" },
 			};
 		register Input	*ip = input;
-	if( getInput( ip ) )
-		{
-		if( ip->buffer[0] == 'y' )
-			nriplevels = 1;
-		else
-		if( ip->buffer[0] == 'n' )
-			nriplevels = 0;
-		else
-			{
-			(void) sprintf( scrbuf,
-					"Illegal input \"%s\".",
-					ip->buffer );
-			warning( scrbuf );
-			return;
-			}
-		}
+	GetBool( nriplevels, ip );
 	(void) sprintf( scrbuf, "%s\t\t%s",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			nriplevels == 1 ? "yes" : "no" );
 	logCmd( scrbuf );
+	firemode &= ~FM_BURST; /* disable discrete burst point option */
 	return;
 	}
 
@@ -562,7 +588,7 @@ HmItem	*itemp;
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			airfile );
 	logCmd( scrbuf );
-	notify( "Reading burst air idents...", NOTIFY_APPEND );
+	notify( "Reading burst air idents", NOTIFY_APPEND );
 	readIdents( &airids, airfp );
 	notify( NULL, NOTIFY_DELETE );
 	return;
@@ -594,7 +620,7 @@ HmItem	*itemp;
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			armorfile );
 	logCmd( scrbuf );
-	notify( "Reading burst armor idents...", NOTIFY_APPEND );
+	notify( "Reading burst armor idents", NOTIFY_APPEND );
 	readIdents( &armorids, armorfp );
 	notify( NULL, NOTIFY_DELETE );
 	return;
@@ -609,11 +635,12 @@ HmItem	*itemp;
 			{ "Burst distance", "", "%lf", 0 },
 			};
 		register Input	*ip = input;
-	GetVar( bdist, ip, 1.0 );
+	GetVar( bdist, ip, unitconv );
 	(void) sprintf( scrbuf, "%s\t\t%g",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			bdist );
 	logCmd( scrbuf );
+	bdist /= unitconv; /* convert to millimeters */
 	return;
 	}
 
@@ -659,7 +686,7 @@ HmItem	*itemp;
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			cellsz );
 	logCmd( scrbuf );
-	cellsz /= unitconv;
+	cellsz /= unitconv; /* convert to millimeters */
 	return;
 	}
 
@@ -690,7 +717,7 @@ HmItem	*itemp;
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			colorfile );
 	logCmd( scrbuf );
-	notify( "Reading ident-to-color mappings...", NOTIFY_APPEND );
+	notify( "Reading ident-to-color mappings", NOTIFY_APPEND );
 	readColors( &colorids, colorfp );
 	notify( NULL, NOTIFY_DELETE );
 	return;
@@ -740,7 +767,7 @@ HmItem	*itemp;
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			critfile );
 	logCmd( scrbuf );
-	notify( "Reading critical component idents...", NOTIFY_APPEND );
+	notify( "Reading critical component idents", NOTIFY_APPEND );
 	readIdents( &critids, critfp );
 	notify( NULL, NOTIFY_DELETE );
 	return;
@@ -756,23 +783,8 @@ HmItem	*itemp;
 			{ "Deflect cone", "n", "%d", "y or n" },
 			};
 		register Input	*ip = input;
-	if( getInput( ip ) )
-		{
-		if( ip->buffer[0] == 'y' )
-			deflectcone = true;
-		else
-		if( ip->buffer[0] == 'n' )
-			deflectcone = false;
-		else
-			{
-			(void) sprintf( scrbuf,
-					"Illegal input \"%s\".",
-					ip->buffer );
-			warning( scrbuf );
-			return;
-			}
-		}
-	(void) sprintf( scrbuf, "%s\t\t%s",
+	GetBool( deflectcone, ip );
+	(void) sprintf( scrbuf, "%s\t%s",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			deflectcone ? "yes" : "no" );
 	logCmd( scrbuf );
@@ -788,22 +800,7 @@ HmItem	*itemp;
 			{ "Dither cells", "n", "%d", "y or n" },
 			};
 		register Input	*ip = input;
-	if( getInput( ip ) )
-		{
-		if( ip->buffer[0] == 'y' )
-			dithercells = true;
-		else
-		if( ip->buffer[0] == 'n' )
-			dithercells = false;
-		else
-			{
-			(void) sprintf( scrbuf,
-					"Illegal input \"%s\".",
-					ip->buffer );
-			warning( scrbuf );
-			return;
-			}
-		}
+	GetBool( dithercells, ip );
 	(void) sprintf( scrbuf, "%s\t\t%s",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			dithercells ? "yes" : "no" );
@@ -827,17 +824,16 @@ HmItem	*itemp;
 	GetVar( gridrt, ip, unitconv );
 	GetVar( griddn, ip, unitconv );
 	GetVar( gridup, ip, unitconv );
-
-	firemode = FM_PART;
 	(void) sprintf( scrbuf,
 			"%s\t\t%g %g %g %g",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			gridlf, gridrt, griddn, gridup );
 	logCmd( scrbuf );
-	gridlf /= unitconv;
+	gridlf /= unitconv; /* convert to millimeters */
 	gridrt /= unitconv;
 	griddn /= unitconv;
 	gridup /= unitconv;
+	firemode = FM_PART;
 	return;
 	}
 
@@ -846,11 +842,11 @@ _LOCAL_ void
 MencloseTarget( itemp )
 HmItem	*itemp;
 	{
-	firemode = FM_GRID;
 	(void) sprintf( scrbuf,
 			"%s",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname );
 	logCmd( scrbuf );
+	firemode = FM_GRID;
 	return;
 	}
 
@@ -907,7 +903,7 @@ HmItem	*itemp;
 		warning( "No target file has been specified." );
 		return;
 		}
-	notify( "Reading target data base...", NOTIFY_APPEND );
+	notify( "Reading target data base", NOTIFY_APPEND );
 	rt_prep_timer();
 	if(	rtip == RTI_NULL
 	    && (rtip = rt_dirbuild( gedfile, title, TITLE_LEN ))
@@ -930,7 +926,7 @@ HmItem	*itemp;
 			ptr = NULL
 			)
 			{
-			(void) sprintf( scrbuf, "Loading \"%s\"...", obj );
+			(void) sprintf( scrbuf, "Loading \"%s\"", obj );
 			notify( scrbuf, NOTIFY_APPEND );
 			if( rt_gettree( rtip, obj ) != 0 )
 				{
@@ -949,7 +945,7 @@ HmItem	*itemp;
 		return;
 	if( rtip->needprep )
 		{
-		notify( "Prepping solids...", NOTIFY_APPEND );
+		notify( "Prepping solids", NOTIFY_APPEND );
 		rt_prep_timer();
 		rt_prep( rtip );
 		prntTimer( "prep" );
@@ -1040,6 +1036,51 @@ HmItem	*itemp;
 
 /*ARGSUSED*/
 _LOCAL_ void
+MgroundPlane( itemp )
+HmItem	*itemp;
+	{	static Input	input[] =
+			{
+			{ "Activate ground plane bursting",
+				"n", "%d", "y or n" },
+			{ "Distance of target origin above ground plane",
+				"", "%lf", 0 },
+			{ "Distance out positive X-axis of target to edge",
+				"", "%lf", 0 },
+			{ "Distance out negative X-axis of target to edge",
+				"", "%lf", 0 },
+			{ "Distance out positive Y-axis of target to edge",
+				"", "%lf", 0 },
+			{ "Distance out negative Y-axis of target to edge",
+				"", "%lf", 0 },
+			};
+		register Input	*ip = input;
+	GetBool( groundburst, ip );
+	if( groundburst )
+		{
+		GetVar( grndht, ip, unitconv );
+		GetVar( grndfr, ip, unitconv );
+		GetVar( grndbk, ip, unitconv );
+		GetVar( grndlf, ip, unitconv );
+		GetVar( grndrt, ip, unitconv );
+		(void) sprintf( scrbuf, "%s\t\tyes %g %g %g %g %g",
+				itemp != (HmItem *) 0 ? itemp->text : cmdname,
+				grndht, grndfr, grndbk, grndlf, grndrt );
+		grndht /= unitconv; /* convert to millimeters */
+		grndfr /= unitconv;
+		grndbk /= unitconv;
+		grndlf /= unitconv;
+		grndrt /= unitconv;
+		}
+	else
+		(void) sprintf( scrbuf, "%s\t\tno",
+				itemp != (HmItem *) 0 ? itemp->text : cmdname
+				);
+	logCmd( scrbuf );
+	return;
+	}
+
+/*ARGSUSED*/
+_LOCAL_ void
 MhistFile( itemp )
 HmItem	*itemp;
 	{	static Input	input[] =
@@ -1067,7 +1108,7 @@ HmItem	*itemp;
 	}
 
 _LOCAL_ void
-Minput3dBurst( itemp )
+MinputBurst( itemp )
 HmItem	*itemp;
 	{	static Input	input[] =
 			{
@@ -1086,6 +1127,8 @@ HmItem	*itemp;
 	burstpoint[X] /= unitconv; /* convert to millimeters */
 	burstpoint[Y] /= unitconv;
 	burstpoint[Z] /= unitconv;
+	nriplevels = 1;
+	firemode = FM_BURST | FM_3DIM;
 	return;
 	}
 
@@ -1122,7 +1165,6 @@ HmItem	*itemp;
 			{ "Firing coordinate (Z)", "", "%lf", 0 },
 			};
 		register Input	*ip = input;
-		fastf_t		burstpoint[3];
 	GetVar( fire[X], ip, unitconv );
 	GetVar( fire[Y], ip, unitconv );
 	GetVar( fire[Z], ip, unitconv );
@@ -1172,25 +1214,27 @@ HmItem	*itemp;
 			{ "Report overlaps", "y", "%d", "y or n" },
 			};
 		register Input	*ip = input;
-	if( getInput( ip ) )
-		{
-		if( ip->buffer[0] == 'y' )
-			reportoverlaps = true;
-		else
-		if( ip->buffer[0] == 'n' )
-			reportoverlaps = false;
-		else
-			{
-			(void) sprintf( scrbuf,
-					"Illegal input \"%s\".",
-					ip->buffer );
-			warning( scrbuf );
-			return;
-			}
-		}
+	GetBool( reportoverlaps, ip );
 	(void) sprintf( scrbuf, "%s\t\t%s",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			reportoverlaps ? "yes" : "no" );
+	logCmd( scrbuf );
+	return;
+	}
+
+/*ARGSUSED*/
+_LOCAL_ void
+MmaxBarriers( itemp )
+HmItem	*itemp;
+	{	static Input	input[] =
+			{
+			{ "Maximum spall barriers per ray", "", "%d", 0 },
+			};
+		register Input	*ip = input;
+	GetVar( nbarriers, ip, 1 );
+	(void) sprintf( scrbuf, "%s\t\t%d",
+			itemp != (HmItem *) 0 ? itemp->text : cmdname,
+			nbarriers );
 	logCmd( scrbuf );
 	return;
 	}
@@ -1259,11 +1303,11 @@ HmItem	*itemp;
 		warning( scrbuf );
 		return;
 		}
-	firemode = FM_SHOT | FM_FILE;
 	(void) sprintf( scrbuf, "%s\t%s",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			shotfile );
 	logCmd( scrbuf );
+	firemode = FM_SHOT | FM_FILE;
 	return;
 	}
 
@@ -1286,11 +1330,39 @@ HmItem	*itemp;
 		warning( scrbuf );
 		return;
 		}
-	firemode = FM_SHOT | FM_FILE | FM_3DIM;
 	(void) sprintf( scrbuf, "%s\t%s",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			shotfile );
 	logCmd( scrbuf );
+	firemode = FM_SHOT | FM_FILE | FM_3DIM;
+	return;
+	}
+
+/*ARGSUSED*/
+_LOCAL_ void
+MreadBurstFile( itemp )
+HmItem	*itemp;
+	{	static Input	input[] =
+			{
+			{ "Name of 3-D burst input file", "", "%s", 0 },
+			};
+		register Input	*ip = input;
+	if( getInput( ip ) )
+		(void) strcpy( burstfile, ip->buffer );
+	if( (burstfp = fopen( burstfile, "r" )) == NULL )
+		{
+		(void) sprintf( scrbuf,
+				"Read access denied for \"%s\"",
+				burstfile );
+		warning( scrbuf );
+		return;
+		}
+	(void) sprintf( scrbuf, "%s\t%s",
+			itemp != (HmItem *) 0 ? itemp->text : cmdname,
+			burstfile );
+	logCmd( scrbuf );
+	nriplevels = 1;
+	firemode = FM_BURST | FM_3DIM | FM_FILE;
 	return;
 	}
 
