@@ -1,30 +1,28 @@
 # $Id$
 
 data_DATA = \
-	4.4-bugs.doc \
-	anim.doc \
+	anim.txt \
 	benchmark.doc \
-	blurb100.doc \
+	bsd.txt \
+	cvs.txt \
+	description.txt \
+	fdl.txt \
 	ged.doc \
-	hypot.doc \
+	gpl.txt \
+	hypot.txt \
 	irprep.doc \
-	mater.doc \
-	matrix.doc \
+	lgpl.txt \
+	mater.txt \
+	matrix.txt \
 	mged.doc \
 	mk.doc \
-	more-summary.doc \
-	movie.doc \
+	movie.txt \
 	old-mged.doc \
 	pkg.doc \
-	port.doc \
-	press-release \
-	regions.doc \
-	rounding.doc \
-	summary.doc \
-	summary-mil.doc \
-	sun.doc \
-	test.doc \
-	tube.doc
+	regions.txt \
+	rounding.txt \
+	sun.txt \
+	tube.txt
 
 man_MANS = \
 	bw.5 \
