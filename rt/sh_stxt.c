@@ -25,7 +25,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
-#include "./mathtab.h"
 #include "./rdebug.h"
 
 #if defined(alliant) && !__STDC__
