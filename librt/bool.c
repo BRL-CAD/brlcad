@@ -353,19 +353,26 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
  *	!0	to retain partition in output list
  */
 int
-rt_defoverlap( ap, pp, name1, name2 )
+rt_defoverlap( ap, pp, reg1, reg2 )
 register struct application	*ap;
 register struct partition	*pp;
-char				*name1;
-char				*name2;
+struct region			*reg1;
+struct region			*reg2;
 {
 	point_t	pt;
+	static long count = 0;
+
+	/* Attempt to control tremendous error outputs */
+	if( ++count > 100 )  {
+		if( (count%100) != 3 )  return;
+		rt_log("(overlaps omitted)\n");
+	}
 
 	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 		ap->a_ray.r_dir );
 	rt_log("OVERLAP: reg=%s sol=%s, reg=%s sol=%s (x%d y%d lvl%d)\n",
-		name1, pp->pt_inseg->seg_stp->st_name,
-		name2, pp->pt_outseg->seg_stp->st_name,
+		reg1->reg_name, pp->pt_inseg->seg_stp->st_name,
+		reg2->reg_name, pp->pt_outseg->seg_stp->st_name,
 		ap->a_x, ap->a_y, ap->a_level );
 	rt_log("OVERLAP depth %gmm at (%g,%g,%g)\n",
 		pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist,
@@ -487,8 +494,7 @@ struct application *ap;
 			   	 */
 			   	if( ap->a_overlap == RT_AFN_NULL )
 			   		ap->a_overlap = rt_defoverlap;
-				if( ap->a_overlap( ap, pp,
-				    regp->reg_name, lastregion->reg_name ) )  {
+				if( ap->a_overlap(ap, pp, regp, lastregion) )  {
 				    	/* non-zero => retain last partition */
 					if( lastregion->reg_aircode != 0 )
 						lastregion = regp;
