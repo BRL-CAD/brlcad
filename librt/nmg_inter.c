@@ -1955,6 +1955,83 @@ struct faceuse *fu;
 }
 
 /*
+ *			N M G _ I S E C T _ C O N S T R U C T _ N I C E _ R A Y
+ *
+ *  Construct a nice ray for is->pt, is->dir
+ *  which contains the line of intersection, is->on_eg.
+ *
+ *  See the comment in nmg_isect_two_generic_faces() for details
+ *  on the constraints on this ray, and the algorithm.
+ *
+ *  XXX Danger?
+ *  The ray -vs- RPP check is being done in 3D.
+ *  It really ought to be done in 2D, to ensure that
+ *  long edge lines on nearly axis-aligned faces don't
+ *  get discarded prematurely!
+ *  XXX Can't just comment out the code, I think the selection
+ *  XXX of is->pt is significant:
+ *	1)  All intersections are at positive distances on the ray,
+ *	2)  dir cross N will point "left".
+ *
+ *  Returns -
+ *	0	OK
+ *	1	ray misses fu2 bounding box
+ */
+int
+nmg_isect_construct_nice_ray( is, fu2 )
+struct nmg_inter_struct	*is;
+struct faceuse		*fu2;
+{
+	struct xray		line;
+	vect_t			invdir;
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_FACEUSE(fu2);
+
+	VMOVE( line.r_pt, is->on_eg->e_pt );			/* 3D line */
+	VMOVE( line.r_dir, is->on_eg->e_dir );
+	VUNITIZE( line.r_dir );
+	VINVDIR( invdir, line.r_dir );
+
+	/* nmg_loop_g() makes sure there are no 0-thickness faces */
+	if( !rt_in_rpp( &line, invdir, fu2->f_p->min_pt, fu2->f_p->max_pt ) )  {
+		/* The edge ray missed the face RPP, nothing to do. */
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			VPRINT("r_pt ", line.r_pt);
+			VPRINT("r_dir", line.r_dir);
+			VPRINT("fu2 min", fu2->f_p->min_pt);
+			VPRINT("fu2 max", fu2->f_p->max_pt);
+			rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
+			rt_log("nmg_isect_construct_nice_ray() edge ray missed face bounding RPP, ret=1\n");
+		}
+		return 1;	/* Missed */
+	}
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		VPRINT("fu2 min", fu2->f_p->min_pt);
+		VPRINT("fu2 max", fu2->f_p->max_pt);
+		rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
+	}
+	/* Start point will lie at min or max dist, outside of face RPP */
+	VJOIN1( is->pt, line.r_pt, line.r_min, line.r_dir );
+	if( line.r_min > line.r_max )  {
+		/* Direction is heading the wrong way, flip it */
+		VREVERSE( is->dir, line.r_dir );
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("flipping dir\n");
+	} else {
+		VMOVE( is->dir, line.r_dir );
+	}
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		VPRINT("r_pt ", line.r_pt);
+		VPRINT("r_dir", line.r_dir);
+		VPRINT("->pt ", is->pt);
+		VPRINT("->dir", is->dir);
+		rt_log("nmg_isect_construct_nice_ray() ret=0\n");
+	}
+	return 0;
+}
+
+/*
  *			N M G _ I S E C T _ E D G E 2 P _ F A C E 2 P
  *
  *  Given one (2D) edge (eu1) lying in the plane of another face (fu2),
@@ -2002,10 +2079,6 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	struct vertexuse	*vu1;
 	struct vertexuse	*vu2;
 	struct edgeuse		*fu2_eu;	/* use of edge in fu2 */
-	struct xray		line;
-	point_t			min_pt;
-	point_t			max_pt;
-	vect_t			invdir;
 	int			total_splits = 0;
 	int			ret = 0;
 	struct nmg_ptbl		eu1_list;
@@ -2045,6 +2118,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	(void)nmg_tbl(&eu1_list, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&eu2_list, TBL_INIT,(long *)NULL);
 
+	NMG_CK_EDGE_G_LSEG(eu1->g.lseg_p);
 	is->on_eg = eu1->g.lseg_p;
     	is->l1 = &vert_list1;
     	is->l2 = &vert_list2;
@@ -2058,74 +2132,19 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
     	    	nmg_pl_2fu( "Iface%d.pl", 0, fu2, fu1, 0 );
     	}
 
-	/*
-	 *  Construct the ray which contains the line of intersection,
-	 *  i.e. the line that contains the edge "eu1".
-	 *
-	 *  See the comment in nmg_isect_two_generic_faces() for details
-	 *  on the constraints on this ray, and the algorithm.
-	 *
-	 *  XXX Danger?
-	 *  The ray -vs- RPP check is being done in 3D.
-	 *  It really ought to be done in 2D, to ensure that
-	 *  long edge lines on nearly axis-aligned faces don't
-	 *  get discarded prematurely!
-	 *  XXX Can't just comment out the code, I think the selection
-	 *  XXX of is->pt is significant:
-	 *	1)  All intersections are at positive distances on the ray,
-	 *	2)  dir cross N will point "left".
-	 */
 	vu1 = eu1->vu_p;
 	vu2 = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
 	if( vu1->v_p == vu2->v_p )  {
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("nmg_isect_edge2p_face2p(eu1=x%x) skipping 0-len edge (topology)\n", eu1);
+		rt_log("nmg_isect_edge2p_face2p(eu1=x%x) skipping 0-len edge (topology)\n", eu1);
+		/* Call nmg_k0eu() ? */
 		goto out;
 	}
-	VMOVE( line.r_pt, is->on_eg->e_pt );			/* 3D line */
-	VMOVE( line.r_dir, is->on_eg->e_dir );
-	VUNITIZE( line.r_dir );
-	VINVDIR( invdir, line.r_dir );
 
-	/* nmg_loop_g() makes sure there are no 0-thickness faces */
-	VMOVE( min_pt, fu2->f_p->min_pt );
-	VMOVE( max_pt, fu2->f_p->max_pt );
-
-	if( !rt_in_rpp( &line, invdir, min_pt, max_pt ) )  {
-		/* The edge ray missed the face RPP, nothing to do. */
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-			VPRINT("r_pt ", line.r_pt);
-			VPRINT("r_dir", line.r_dir);
-			VPRINT("fu2 min", fu2->f_p->min_pt);
-			VPRINT("fu2 max", fu2->f_p->max_pt);
-			VPRINT("min_pt", min_pt);
-			VPRINT("max_pt", max_pt);
-			rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
-			rt_log("nmg_isect_edge2p_face2p() edge ray missed face bounding RPP\n");
-		}
-		goto out;
-	}
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		VPRINT("fu2 min", fu2->f_p->min_pt);
-		VPRINT("fu2 max", fu2->f_p->max_pt);
-		rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
-	}
-	/* Start point will lie at min or max dist, outside of face RPP */
-	VJOIN1( is->pt, line.r_pt, line.r_min, line.r_dir );
-	if( line.r_min > line.r_max )  {
-		/* Direction is heading the wrong way, flip it */
-		VREVERSE( is->dir, line.r_dir );
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("flipping dir\n");
-	} else {
-		VMOVE( is->dir, line.r_dir );
-	}
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		VPRINT("r_pt ", line.r_pt);
-		VPRINT("r_dir", line.r_dir);
-		VPRINT("->pt ", is->pt);
-		VPRINT("->dir", is->dir);
-	}
+	/*
+	 *  Construct the ray which contains the line of intersection,
+	 *  i.e. the line that contains the edge "eu1" (is->on_eg).
+	 */
+	if( nmg_isect_construct_nice_ray( is, fu2 ) )  goto out;
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_fu_touchingloops(fu2);
@@ -2640,6 +2659,7 @@ CONST struct rt_tol	*tol;
 	struct nmg_ptbl	eutab;
 	struct edgeuse	**eup;
 	struct edge_g_lseg	*ret = (struct edge_g_lseg *)NULL;
+	vect_t		dir1, dir2;
 
 	RT_CK_TOL(tol);
 
@@ -2654,11 +2674,24 @@ CONST struct rt_tol	*tol;
 			continue;
 		}
 		if( (*eup)->g.lseg_p == ret ) continue;	/* OK */
-		/* Found different edge_g_lseg, claimed to be colinear */
-		rt_log("*eup=x%x, g=x%x, ret=x%x\n", *eup, (*eup)->g.lseg_p, ret );
-		rt_bomb("nmg_find_eg_on_line() 2 different eg's, fuser failure.\n");
+
+		/* Found 2 different edge_g_lseg, pick best one */
+		VMOVE( dir1, ret->e_dir );
+		VUNITIZE(dir1);
+		VMOVE( dir2, (*eup)->g.lseg_p->e_dir );
+		VUNITIZE(dir2);
+		if( fabs(VDOT(dir1,dir)) > fabs(VDOT(dir2,dir)) )  {
+			/* ret is better, do nothing */
+		} else {
+			/* *eup is better, take it instead */
+			ret = (*eup)->g.lseg_p;
+		}
+		rt_log("nmg_find_eg_on_line() 2 different eg's, taking better one.\n");
 	}
 	(void)nmg_tbl( &eutab, TBL_FREE, 0 );
+	if( rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("rt_find_eg_on_line( x%x ) ret=x%x\n", magic_p, ret);
+	}
 	return ret;
 }
 
@@ -2912,11 +2945,15 @@ CONST struct rt_tol	*tol;
  *
  *  Note that the geometric intersection of the two faces is
  *  stored in is->pt and is->dir.
- *  If is->on_eg is set, use the line equation from there, as it
- *  may be slightly different than the original geometric one.
+ *  If is->on_eg is set, it is the callers' responsibility to make sure
+ *  it is not much different than the original geometric one.
  *
  *  Go to great pains to ensure that two non-colinear lines intersect
  *  at either 0 or 1 points, and no more.
+ *
+ *  Called from -
+ *	nmg_isect_edge2p_face2p()
+ *	nmg_isect_two_face3p()
  */
 void
 nmg_isect_line2_face2pNEW( is, fu1, fu2, eu1_list, eu2_list )
@@ -2949,45 +2986,6 @@ struct nmg_ptbl		*eu2_list;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_line2_face2pNEW(, fu1=x%x, fu2=x%x) on_eg=x%x\n", fu1, fu2, is->on_eg);
-
-	if( is->on_eg )  {
-	    	fastf_t	dot;
-	    	vect_t	unit_e_dir;
-
-	    	VMOVE( unit_e_dir, is->on_eg->e_dir );
-	    	VUNITIZE( unit_e_dir );
-	    	dot = VDOT(is->dir, unit_e_dir);
-
-		if( fabs(dot) < is->tol.para &&	/* not parallel */
-		    !rt_2line3_colinear(
-		    is->pt, is->dir,
-		    is->on_eg->e_pt, unit_e_dir, 1000.0, &(is->tol) ) )  {
-
-#if 0
-			VPRINT("   is->pt   ", is->pt);
-			VPRINT("   is->dir  ", is->dir);
-			VPRINT("unit  e_dir ", unit_e_dir);
-			VPRINT("on_eg->e_pt ", is->on_eg->e_pt);
-			VPRINT("on_eg->e_dir", is->on_eg->e_dir);
-		    	rt_log(" dot=%g, ang=%g deg\n", dot,
-				acos(fabs(dot)) * rt_radtodeg );
-#endif
-			rt_log("WARNING nmg_isect_line2_face2pNEW() is->pt and on_eg lines differ by %g deg.  Using on_eg line.  |on_eg|=%gmm\n",
-				acos(fabs(dot)) * rt_radtodeg,
-				MAGNITUDE(is->on_eg->e_dir) );
-
-			/* Ensure absolute consistency between the two versions of the line! */
-			VMOVE( is->pt, is->on_eg->e_pt );
-			VMOVE( is->dir, is->on_eg->e_dir );
-			VUNITIZE(is->dir);
-			/*
-			 * XXX What about the constraints on the ray?
-			 *	1)  All intersections are at positive distances on the ray,
-			 *	2)  dir cross N will point "left".
-			 * XXX Don't they have to be recomputed here?
-			 */
-		}
-	}
 
 	/* Project the intersect line into 2D.  Build matrix first. */
 	nmg_isect2d_prep( is, &fu1->l.magic );
@@ -3746,6 +3744,9 @@ struct faceuse		*fu1, *fu2;
 	struct nmg_ptbl		eu1_list;	/* all eu's in fu1 */
 	struct nmg_ptbl		eu2_list;	/* all eu's in fu2 */
 	plane_t			n1, n2;
+    	fastf_t			dot;
+	fastf_t			ang;
+    	vect_t			unit_e_dir;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACEUSE(fu1);
@@ -3782,7 +3783,6 @@ struct faceuse		*fu1, *fu2;
 	/* Topology search */
 	/* See if 2 faces share an edge already.  If so, get edge_geom line */
 	if( (is->on_eg = nmg_find_eg_between_2fg(fu1, fu2, &(is->tol))) )  {
-
 		NMG_CK_EDGE_G_LSEG(is->on_eg);
 #if TOO_STRICT
 		/* Verify that this edge_g is with tol of both planes */
@@ -3802,11 +3802,46 @@ struct faceuse		*fu1, *fu2;
 		 *  but a full intersection may not have been performed
 		 *  on both faceuses yet.
 		 */
+		/* Check angle first */
+	    	VMOVE( unit_e_dir, is->on_eg->e_dir );
+	    	VUNITIZE( unit_e_dir );
+	    	dot = VDOT(is->dir, unit_e_dir);
+		if( fabs(dot) < is->tol.para &&	/* not parallel */
+		    !rt_2line3_colinear(
+		    is->pt, is->dir,
+		    is->on_eg->e_pt, unit_e_dir, 1000.0, &(is->tol) ) )  {
+		    	ang = acos(fabs(dot));
+			rt_log("WARNING nmg_isect_two_face3p() is->pt and on_eg lines differ by %g deg. (shared topo)\n",
+				ang * rt_radtodeg );
+		    	if( ang * rt_radtodeg > 1.0 )
+				rt_bomb("nmg_isect_two_face3p() line direction mismatch\n");
+		}
+		/* Take geometry from the known shared edge is->on_eg */
+		nmg_isect_construct_nice_ray( is, fu2 );
 	}
 	if( !is->on_eg )  {
 		/* Geometry search */
 		if( !(is->on_eg = nmg_find_eg_on_line( &fu1->l.magic, is->pt, is->dir, &(is->tol) ) ) )  {
 			is->on_eg = nmg_find_eg_on_line( &fu2->l.magic, is->pt, is->dir, &(is->tol) );
+		}
+		if( is->on_eg )  {
+			/* Check angle */
+		    	VMOVE( unit_e_dir, is->on_eg->e_dir );
+		    	VUNITIZE( unit_e_dir );
+		    	dot = VDOT(is->dir, unit_e_dir);
+			if( fabs(dot) < is->tol.para &&	/* not parallel */
+			    !rt_2line3_colinear(
+			    is->pt, is->dir,
+			    is->on_eg->e_pt, unit_e_dir, 1000.0, &(is->tol) ) )  {
+			    	ang = acos(fabs(dot));
+				rt_log("WARNING nmg_isect_two_face3p() is->pt and on_eg lines differ by %g deg. (geom search)\n",
+					ang * rt_radtodeg );
+			    	if( ang * rt_radtodeg > 1.0 )  {
+					/* Forget about this shared topology */
+					rt_log("nmg_isect_two_face3p() line direction mismatch (geom), clearing on_eg.\n");
+			    		is->on_eg = (struct edge_g_lseg *)NULL;
+			    	}
+			}
 		}
 	}
 	if( is->on_eg )  {
@@ -3814,13 +3849,6 @@ struct faceuse		*fu1, *fu2;
 			VPRINT("is->on_eg->e_pt ", is->on_eg->e_pt);
 			VPRINT("is->on_eg->e_dir", is->on_eg->e_dir);
 		}
-#if TOO_STRICT
-		if( !rt_2line3_colinear(
-		    is->pt, is->dir,
-		    is->on_eg->e_pt, is->on_eg->e_dir, 1000.0, &(is->tol) ) )  {
-		    	rt_bomb("nmg_isect_two_face3p() on_eg does not represent is->pt/dir line\n");
-		}
-#endif
 	}
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
