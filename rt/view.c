@@ -395,7 +395,8 @@ struct application *ap;
 	register struct light_specific *lp, *nlp;
 
 #ifdef PARALLEL
-	if( fwrite( scanbuf, sizeof(char), npts*npts*3, outfp ) != npts*npts*3 )  {
+	if( (outfp != NULL) &&
+	    fwrite( scanbuf, sizeof(char), npts*npts*3, outfp ) != npts*npts*3 )  {
 		fprintf(stderr,"view_end:  fwrite failure\n");
 		return(-1);		/* BAD */
 	}
