@@ -14,7 +14,7 @@ proc mged_apply { id cmd } {
     } elseif {$mged_gui($id,apply_to) == 2} {
 	mged_apply_using_list $id $cmd
     } elseif {$mged_gui($id,apply_to) == 3} {
-	mged_apply_all $cmd
+	mged_apply_all $mged_gui($id,active_dm) $cmd
     } else {
 	mged_apply_active $id $cmd
     }
@@ -63,16 +63,14 @@ proc mged_apply_using_list { id cmd } {
     return $msg
 }
 
-proc mged_apply_all { cmd } {
-    global mged_gui
-
+proc mged_apply_all { win cmd } {
     set msg ""
     foreach dm [get_dm_list] {
 	winset $dm
 	catch { uplevel #0 $cmd } msg
     }
 
-    winset $mged_gui($id,active_dm)
+    winset $win
 
     return $msg
 }
