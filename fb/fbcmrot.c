@@ -21,22 +21,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>	
+#include <math.h>
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
-
-double	atof();
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
-extern double	atof();
 
 ColorMap cm1, cm2;
 ColorMap *inp, *outp;
-
-#ifdef SYSV
-#define bzero(p,cnt)	memset(p,'\0',cnt);
-#endif
 
 int size = 512;
 double fps = 0.0;	/* frames per second */
