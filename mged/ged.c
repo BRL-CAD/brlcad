@@ -87,7 +87,6 @@ extern int mged_slider_link_vars();
 
 int dm_pipe[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
-int dbih = 0;			/* Tcl DB handle to the database instance */
 
 int    update_views = 0;
 extern struct dm dm_Null;
@@ -1721,14 +1720,13 @@ char	**argv;
     Tcl_AppendResult(interp, dbip->dbi_title, " (units=",
 		     units_str[dbip->dbi_localunit], ")\n", (char *)NULL);
 
-  /* 0 is not a valid database handle. */
-  if( !dbih )
-	  dbih = db_tcl_register( dbip );
-  else {
-/*	  db_tcl_change_registered( dbih, dbip ); */
-	  db_tcl_unregister( dbih );
-	  dbih = db_tcl_register( dbip );
-  }
+#if NOT_READY_YET
+  if( Tcl_Eval( interp, "wdb_close $wdbp" ) != TCL_OK )
+	  return TCL_ERROR;
+#endif
+  if( Tcl_Eval( interp, "set wdbp [wdb_open db disk [get_dbip]]" ) != TCL_OK )
+	  return TCL_ERROR;
+  Tcl_ResetResult( interp );
 
   return TCL_OK;
 }
