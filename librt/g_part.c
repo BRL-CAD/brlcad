@@ -1605,6 +1605,110 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ P A R T _ I M P O R T 5
+ */
+int
+rt_part_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	fastf_t			maxrad, minrad;
+	struct rt_part_internal	*part;
+	fastf_t			vec[8];
+
+	BU_CK_EXTERNAL( ep );
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_PARTICLE;
+	ip->idb_meth = &rt_functab[ID_PARTICLE];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_part_internal), "rt_part_internal");
+
+	part = (struct rt_part_internal *)ip->idb_ptr;
+	part->part_magic = RT_PART_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)vec, ep->ext_buf, 8 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( part->part_V, mat, &vec[0*3] );
+	MAT4X3VEC( part->part_H, mat, &vec[1*3] );
+	if( (part->part_vrad = vec[2*3] / mat[15]) < 0 )  {
+		bu_free( ip->idb_ptr, "rt_part_internal" );
+		return(-2);
+	}
+	if( (part->part_hrad = vec[2*3+1] / mat[15]) < 0 )  {
+		bu_free( ip->idb_ptr, "rt_part_internal" );
+		return(-3);
+	}
+
+	if( part->part_vrad > part->part_hrad )  {
+		maxrad = part->part_vrad;
+		minrad = part->part_hrad;
+	} else {
+		maxrad = part->part_hrad;
+		minrad = part->part_vrad;
+	}
+	if( maxrad <= 0 )  {
+		bu_free( ip->idb_ptr, "rt_part_internal" );
+		return(-4);
+	}
+
+	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
+		/* Height vector is insignificant, particle is a sphere */
+		part->part_vrad = part->part_hrad = maxrad;
+		VSETALL( part->part_H, 0 );		/* sanity */
+		part->part_type = RT_PARTICLE_TYPE_SPHERE;
+		return(0);		/* OK */
+	}
+
+	if( (maxrad - minrad) / maxrad < 0.001 )  {
+		/* radii are nearly equal, particle is a cylinder (lozenge) */
+		part->part_vrad = part->part_hrad = maxrad;
+		part->part_type = RT_PARTICLE_TYPE_CYLINDER;
+		return(0);		/* OK */
+	}
+
+	part->part_type = RT_PARTICLE_TYPE_CONE;
+	return(0);		/* OK */
+}
+
+/*
+ *			R T _ P A R T _ E X P O R T 5
+ */
+int
+rt_part_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_part_internal	*pip;
+	fastf_t			vec[8];
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_PARTICLE )  return(-1);
+	pip = (struct rt_part_internal *)ip->idb_ptr;
+	RT_PART_CK_MAGIC(pip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8;
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "part external");
+
+	/* scale 'em into local buffer */
+	VSCALE( &vec[0*3], pip->part_V, local2mm );
+	VSCALE( &vec[1*3], pip->part_H, local2mm );
+	vec[2*3] = pip->part_vrad * local2mm;
+	vec[2*3+1] = pip->part_hrad * local2mm;
+
+	/* Convert from internal (host) to database (network) format */
+	htond( ep->ext_buf, (unsigned char *)vec, 8 );
+
+	return(0);
+}
+
+/*
  *			R T _ P A R T _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
