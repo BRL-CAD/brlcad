@@ -306,8 +306,14 @@ bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
 
 	if( ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG )  {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		fprintf(stderr,"%8lx realloc%6d %s %s\n", (long)ptr, cnt, str,
-			ptr == original_ptr ? "[grew in place]" : "[moved]" );
+		if (ptr == original_ptr) {
+			fprintf(stderr,"%8lx realloc%6d %s [grew in place]\n",
+				   (long)ptr,       cnt, str );
+		} else {
+			fprintf(stderr,"%8lx realloc%6d %s [moved from %8lx]\n",
+				   (long)ptr,       cnt, str, original_ptr);
+		}
+
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 	if( ptr==(char *)0 && cnt > 0 )  {
@@ -400,11 +406,16 @@ bu_prmem(const char *str)
 char *
 bu_strdup(register const char *cp)
 {
+	return bu_strdupm(cp, bu_strdup_message);
+}
+char *
+bu_strdupm(register const char *cp, const char *label)
+{
 	register char	*base;
 	register size_t	len;
 
 	len = strlen( cp )+2;
-	base = bu_malloc( len, bu_strdup_message );
+	base = bu_malloc( len, label);
 
 	if(bu_debug&BU_DEBUG_MEM_LOG) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
