@@ -26,20 +26,24 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
-#define MAX_LINE	2048		/* Max pixels/line */
-RGBpixel scanline[MAX_LINE];	/* 1 scanline pixel buffer */
-static int scanbytes;			/* # of bytes of scanline */
+static RGBpixel	*scanline;		/* 1 scanline pixel buffer */
+static int	scanbytes;		/* # of bytes of scanline */
+static int	scanpix;		/* # of pixels of scanline */
+static ColorMap	cmap;			/* libfb color map */
 
 char	*framebuffer = NULL;
 char	*file_name;
 FILE	*outfp;
 
-int inverse = 0;			/* Draw upside-down */
-int height;				/* input height */
-int width;				/* input width */
+static int	crunch = 0;		/* Color map crunch? */
+static int	inverse = 0;		/* Draw upside-down */
+int	screen_height;			/* input height */
+int	screen_width;			/* input width */
+
+extern void	cmap_crunch();
 
 char usage[] = "\
-Usage: fb-pix [-h -i] [-F framebuffer]\n\
+Usage: fb-pix [-h -i -c] [-F framebuffer]\n\
 	[-s squaresize] [-w width] [-n height] [file.pix]\n";
 
 get_args( argc, argv )
@@ -47,11 +51,14 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hiF:s:w:n:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
 		switch( c )  {
+		case 'c':
+			crunch = 1;
+			break;
 		case 'h':
 			/* high-res */
-			height = width = 1024;
+			screen_height = screen_width = 1024;
 			break;
 		case 'i':
 			inverse = 1;
@@ -61,13 +68,13 @@ register char **argv;
 			break;
 		case 's':
 			/* square size */
-			height = width = atoi(optarg);
+			screen_height = screen_width = atoi(optarg);
 			break;
 		case 'w':
-			width = atoi(optarg);
+			screen_width = atoi(optarg);
 			break;
 		case 'n':
-			height = atoi(optarg);
+			screen_height = atoi(optarg);
 			break;
 
 		default:		/* '?' */
@@ -104,27 +111,43 @@ char **argv;
 	register FBIO *fbp;
 	register int y;
 
-	height = width = 512;		/* Defaults */
+	screen_height = screen_width = 512;		/* Defaults */
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
 
-	scanbytes = width * sizeof(RGBpixel);
+	scanpix = screen_width;
+	scanbytes = scanpix * sizeof(RGBpixel);
+	if( (scanline = (RGBpixel *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
+		fprintf(stderr,
+			"fb-pix:  malloc(%d) failure\n", scanbytes );
+		exit(2);
+	}
 
-	if( (fbp = fb_open( framebuffer, width, height )) == NULL )
+	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
 		exit(12);
 
-	if( height > fb_getheight(fbp) )
-		height = fb_getheight(fbp);
-	if( width > fb_getwidth(fbp) )
-		width = fb_getwidth(fbp);
+	if( screen_height > fb_getheight(fbp) )
+		screen_height = fb_getheight(fbp);
+	if( screen_width > fb_getwidth(fbp) )
+		screen_width = fb_getwidth(fbp);
+
+	if( crunch )  {
+		if( fb_rmap( fbp, &cmap ) == -1 )  {
+			crunch = 0;
+		} else if( is_linear_cmap( &cmap ) ) {
+			crunch = 0;
+		}
+	}
 
 	if( !inverse )  {
 		/*  Regular -- read bottom to top */
-		for( y=0; y < height; y++ )  {
-			fb_read( fbp, 0, y, scanline, width );
+		for( y=0; y < screen_height; y++ )  {
+			fb_read( fbp, 0, y, scanline, screen_width );
+			if( crunch )
+				cmap_crunch( scanline, scanpix, &cmap );
 			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
 				perror("fwrite");
 				break;
@@ -132,8 +155,10 @@ char **argv;
 		}
 	}  else  {
 		/*  Inverse -- read top to bottom */
-		for( y = height-1; y >= 0; y-- )  {
-			fb_read( fbp, 0, y, scanline, width );
+		for( y = screen_height-1; y >= 0; y-- )  {
+			fb_read( fbp, 0, y, scanline, screen_width );
+			if( crunch )
+				cmap_crunch( scanline, scanpix, &cmap );
 			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
 				perror("fwrite");
 				break;
