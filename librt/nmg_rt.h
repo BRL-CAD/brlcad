@@ -129,6 +129,7 @@ struct hitmiss {
 #define NMG_PCA_EDGE_VERTEX 2
 #define NMG_PCA_VERTEX 3
 #define NMG_RAY_DATA_MAGIC 0x1651771
+#define NMG_CK_RD(_rd) NMG_CKMAG(_rd, NMG_RAY_DATA_MAGIC, "ray data");
 struct ray_data {
 	long magic;
 	struct model		*rd_m;
