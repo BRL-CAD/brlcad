@@ -5624,7 +5624,7 @@ struct bn_tol *tol;
 			fp2 = (struct face *)BU_PTBL_GET( faces , 1 );
 
 			pl_dot = VDOT( fp1->g.plane_p->N, fp2->g.plane_p->N );
-			if( NEAR_ZERO( pl_dot - 1.0 , tol->perp ) )
+			if( NEAR_ZERO( pl_dot - 1.0 , tol->perp ) || NEAR_ZERO( pl_dot + 1.0, tol->perp) )
 			{
 				vect_t move_vect;
 
