@@ -1104,6 +1104,7 @@ int		copy;
 	sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
 	sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
 	sp->s_regionid = 0;
+	sp->s_dlist = BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist + 1;
 
 	/* Solid successfully drawn, add to linked list of solid structs */
 	BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
