@@ -1,5 +1,5 @@
 /*
- *			S U N - P I X . C
+ *			 S U N - P I X . C
  *
  *  Program to take Sun bitmap files created with Sun's ``screendump''
  *  command, and convert them to pix(5) format files.
@@ -71,16 +71,23 @@ char	inbuf[sizeof(struct rasterfile)];
  */
 
 int	pixout = 1;		/* 0 = bw(5) output, 1 = pix(5) output */
+int	colorout = 0;
 int	hflag;
 int	inverted;
 int	pure;			/* No Sun header */
 int	verbose;
+struct colors {
+	unsigned char	CL_red;
+	unsigned char	CL_green;
+	unsigned char	CL_blue;
+};
+struct colors Cmap[256];
 
 static char	*file_name;
 static FILE	*fp = stdin;
 
 char	usage[] = "\
-Usage: sun-pix [-b -h -i -P -v] [sun.bitmap]\n";
+Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]\n";
 
 
 #define NET_LONG_LEN	4	/* # bytes to network long */
@@ -103,10 +110,13 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "bhiPv" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "bhiPvC" )) != EOF )  {
 		switch( c )  {
 		case 'b':
 			pixout = 0;	/* bw(5) */
+			break;
+		case 'C':
+			colorout = 1;	/* output just the color map */
 			break;
 		case 'h':
 			hflag = 1;	/* print header */
@@ -160,7 +170,7 @@ char **argv;
 	register int	width;			/* line width in bits */
 	register int	scanbytes;		/* bytes/line (padded to 16 bits) */
 	register int	n;
-	char	buf[4096];
+	unsigned char	buf[4096];
 
 	if ( !get_args( argc, argv ) || (isatty(fileno(stdout)) && (hflag == 0)) ) {
 		(void)fputs(usage, stderr);
@@ -213,6 +223,7 @@ char **argv;
 
 	switch( header.ras_type )  {
 	case RT_OLD:		/* ??? */
+	case RT_BYTE_ENCODED:
 	case RT_STANDARD:
 		break;
 	default:
@@ -221,19 +232,28 @@ char **argv;
 		exit(1);
 	}
 
-	/*  Gobble colormap -- ought to know what to do with it */
-	for( x=0; x<header.ras_maplength; x++)  {
-		(void)getc(fp);
-	}
-
 	width = header.ras_width;
-	scanbytes = ((width + 15) & ~15L) / 8;
 	x = 0;
 
 	switch( header.ras_depth )  {
 	case 1:
 		/* 1-bit image */
-		while( n = fread(buf, sizeof(*buf), scanbytes, fp) ) {
+		/*  Gobble colormap -- ought to know what to do with it */
+		for( x=0; x<header.ras_maplength; x++)  {
+			(void)getc(fp);
+		}
+		if (colorout) {
+			fprintf(stdout,"%d\t%04x %04x %04x\n",off,off<<8,
+			    off<<8,off<<8);
+			fprintf(stdout,"%d\t%04x %04x %04x\n",on,on<<8,
+			    on<<8,on<<8);
+			break;
+		}
+
+		scanbytes = ((width + 15) & ~15L) / 8;
+		while( n = (header.ras_type == RT_BYTE_ENCODED) ?
+		    decoderead(buf, sizeof(*buf), scanbytes, fp) :
+		    fread(buf, sizeof(*buf), scanbytes, fp) ) {
 			for( x = 0; x < width; x++ ) {
 				if( buf[x>>3] & bits[x&7] ) {
 					putchar(on);
@@ -245,10 +265,136 @@ char **argv;
 			}
 		}
 		break;
+	case 8:
+		/* 8-bit image */
+		if (header.ras_maptype != RMT_EQUAL_RGB) {
+			fprintf(stderr,"sun-pix:  unable to handle depth=8, maptype = %d.\n",
+				header.ras_maptype);
+			exit(1);
+		}
+		scanbytes = width;
+		for (x = 0; x < header.ras_maplength/3; x++) {
+			if (inverted) {
+				Cmap[x].CL_red = 255-(unsigned char)getc(fp);
+			} else {
+				Cmap[x].CL_red = getc(fp);
+			}
+		}
+		for (x = 0; x < header.ras_maplength/3; x++) {
+			if (inverted) {
+				Cmap[x].CL_green = 255-(unsigned char)getc(fp);
+			} else {
+				Cmap[x].CL_green = getc(fp);
+			}
+		}
+		for (x = 0; x < header.ras_maplength/3; x++) {
+			if (inverted) {
+				Cmap[x].CL_blue = 255-(unsigned char) getc(fp);
+			} else {
+				Cmap[x].CL_blue = getc(fp);
+			}
+		}
+		if (colorout) {
+			for (x = 0; x <header.ras_maplength/3; x++) {
+				fprintf(stdout,"%d\t%04x %04x %04x\n",
+				    x, Cmap[x].CL_red<<8, Cmap[x].CL_green<<8,
+				    Cmap[x].CL_blue<<8);
+			}
+			break;
+		}
+
+		while (n = (header.ras_type == RT_BYTE_ENCODED) ?
+		    decoderead(buf, sizeof(*buf), scanbytes, fp):
+		    fread(buf, sizeof(*buf), scanbytes, fp) ) {
+			for (x=0; x < width; x++ ) {
+				if (pixout) {
+					putchar(Cmap[buf[x]].CL_red);
+					putchar(Cmap[buf[x]].CL_green);
+					putchar(Cmap[buf[x]].CL_blue);
+				} else {
+					putchar(buf[x]);
+				}
+			}
+		}
+		break;
 	default:
 		fprintf(stderr,"sun-pix:  unable to handle depth=%d\n",
 			header.ras_depth );
 		exit(1);
 	}
 	exit(0);
+}
+/*
+ * Encode/decode functions for RT_BYTE_ENCODED images:
+ *
+ * The "run-length encoding" is of the form
+ *
+ *	<byte><byte>...<ESC><0>...<byte><ESC><count><byte>...
+ *
+ * where the counts are in the range 0..255 and the actual number of
+ * instances of <byte> is <count>+1 (i.e. actual is 1..256). One- or
+ * two-character sequences are left unencoded; three-or-more character
+ * sequences are encoded as <ESC><count><byte>.  <ESC> is the character
+ * code 128.  Each single <ESC> in the input data stream is encoded as
+ * <ESC><0>, because the <count> in this scheme can never be 0 (actual
+ * count can never be 1).  <ESC><ESC> is encoded as <ESC><1><ESC>. 
+ *
+ * This algorithm will fail (make the "compressed" data bigger than the
+ * original data) only if the input stream contains an excessive number of
+ * one- and two-character sequences of the <ESC> character.  
+ */
+
+#define ESCAPE		128
+
+int
+decoderead(buf,size,length,fp)
+unsigned char	*buf;
+int		size;		/* should be one! */
+int		length;		/* number of items to read */
+FILE		*fp;		/* input file pointer */
+{
+	static	int	repeat = -1;
+	static	int	lastchar = 0;
+	int		number_read;
+
+	number_read = 0;
+
+	if (size != 1) {
+		fprintf(stderr,"decoderead: unable to process size = %d.\n",
+			size);
+		exit(1);
+	}
+
+	while (length) {
+		if (repeat >= 0) {
+			*buf = lastchar;
+			--length;
+			++buf;
+			number_read++;
+			--repeat;
+		} else {
+			lastchar = getc(fp);
+			if (lastchar < 0) return(number_read);
+			if (lastchar == ESCAPE) {
+				repeat = getc(fp);
+				if (repeat <0) return(number_read);
+				if (repeat == 0) {
+					*buf = ESCAPE;
+					++buf;
+					number_read++;
+					--length;
+					--repeat;
+				} else {
+					lastchar = getc(fp);
+					if (lastchar < 0) return(number_read);
+				}
+			} else {
+				*buf = lastchar;
+				--length;
+				++buf;
+				++number_read;
+			}
+		}
+	}
+	return(number_read);
 }
