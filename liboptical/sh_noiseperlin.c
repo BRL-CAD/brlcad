@@ -278,15 +278,16 @@ float linearNoise( float u, float v )
 {
    int iu, iv, ip, iq;
    float du, dv, bot, top;
+   float scale = 10.0f;
 
-   iu = u * NOISESIZE;
-   iv = v * NOISESIZE;
-   du = (u*NOISESIZE) - iu;
-   dv = (v*NOISESIZE) - iv;
+   iu = (u * NOISESIZE) / scale;
+   iv = (v * NOISESIZE) / scale;
+   du = ((u*NOISESIZE)/scale) - iu;
+   dv = ((v*NOISESIZE)/scale) - iv;
 
    iu = iu % NOISESIZE;
    iv = iv % NOISESIZE;
-   ip = ( iu+1) % NOISESIZE;
+   ip = (iu+1) % NOISESIZE;
    iq = (iv+1) % NOISESIZE;
    bot = noiseTable[iu][iv] + du * ( noiseTable[ip][iv]-noiseTable[iu][iv]);
    top = noiseTable[iu][iq] + du*(noiseTable[ip][iq]-noiseTable[iu][iq]);
