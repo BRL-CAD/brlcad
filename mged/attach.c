@@ -72,6 +72,10 @@ extern struct dm dm_Vg;
 extern struct dm dm_Rat;
 #endif
 
+#ifdef DM_RAT80
+extern struct dm dm_Rat80;
+#endif
+
 #ifdef DM_MER
 extern struct dm dm_Mer;
 #endif
