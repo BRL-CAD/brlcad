@@ -360,6 +360,8 @@ static int	overlay_from_stdin = 0;	/* overlay FROM STDIN rather than fb */
 static int	debug = 0;
 static int	output_pix = 0;		/* output pixfile, rather than to fb */
 
+void		ofile();
+
 static char usage[] = "\
 Usage: cat-fb [-h -c -O -o] [-F framebuffer] [-C r/g/b]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n\
@@ -518,6 +520,7 @@ readrailmag()
 	close(rmfd);
 }
 
+void
 ofile(fp)
 register FILE	*fp;
 {
