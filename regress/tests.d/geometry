@@ -175,11 +175,20 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set nmg_IN_ARGS ""
+    set nmg_DB_ARGS ""
 
     #
     # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set nurb_IN_ARGS ""
+    set nurb_DB_ARGS ""
+
+    #
+    # (part) Arguments
     # 
     # in args =>
     # db args =>
@@ -188,7 +197,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
+    # (pg) Arguments
     # 
     # in args =>
     # db args =>
@@ -197,7 +206,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
+    # (pipe) Arguments
     # 
     # in args =>
     # db args =>
@@ -206,7 +215,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
+    # (rec) Arguments
     # 
     # in args =>
     # db args =>
@@ -215,7 +224,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
+    # (rhc) Arguments
     # 
     # in args =>
     # db args =>
@@ -224,7 +233,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
+    # (rpc) Arguments
     # 
     # in args =>
     # db args =>
@@ -233,7 +242,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
+    # (sketch) Arguments
     # 
     # in args =>
     # db args =>
@@ -242,7 +251,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
+    # (submodel) Arguments
     # 
     # in args =>
     # db args =>
@@ -251,7 +260,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
+    # (tgc) Arguments
     # 
     # in args =>
     # db args =>
@@ -260,7 +269,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
+    # (vol) Arguments
     # 
     # in args =>
     # db args =>
@@ -269,43 +278,7 @@ for PRIM in $PRIMITIVES ; do
     set _DB_ARGS ""
 
     #
-    # () Arguments
-    # 
-    # in args =>
-    # db args =>
-    #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
-
-    #
-    # () Arguments
-    # 
-    # in args =>
-    # db args =>
-    #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
-
-    #
-    # () Arguments
-    # 
-    # in args =>
-    # db args =>
-    #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
-
-    #
-    # () Arguments
-    # 
-    # in args =>
-    # db args =>
-    #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
-
-    #
-    # () Arguments
+    # (xxx) Arguments
     # 
     # in args =>
     # db args =>
