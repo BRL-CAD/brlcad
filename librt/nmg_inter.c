@@ -3383,6 +3383,7 @@ eu_search:
 			fastf_t			ldist;
 			point_t			eu1_pt2d;	/* 2D */
 			point_t			eu1_end2d;	/* 2D */
+			double			tmp_dist_sq;
 
 			eu1 = (struct edgeuse *)NMG_TBL_GET(eu1_list, eu1_index);
 
@@ -3437,7 +3438,11 @@ hit_b:
 			 *  -vs- the line segment.  This is 3D, for consistency
 			 *  with comparisons elsewhere.
 			 */
-			if( rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord ) <= is->tol.dist_sq  )  {
+			tmp_dist_sq = rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord );
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+				rt_log( "\tvu1a is sqrt(%g) from the intersect line\n" , tmp_dist_sq );
+			}
+			if( tmp_dist_sq <= is->tol.dist_sq  )  {
 				if( !hit_v )  {
 					if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 						rt_log( "\tnmg_isect_line2_face2pNEW: using nearby vu1a vertex x%x from eu x%x\n", vu1a->v_p, eu1 );
@@ -3455,7 +3460,11 @@ hit_b:
 				/* Fall through to rt_isect_pt2_lseg2() */
 #endif
 			}
-			if( rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord ) <= is->tol.dist_sq )  {
+			tmp_dist_sq = rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord );
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+				rt_log( "\tvu1b is sqrt(%g) from the intersect line\n" , tmp_dist_sq );
+			}
+			if(tmp_dist_sq <= is->tol.dist_sq )  {
 				if( !hit_v )  {
 					if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 						rt_log( "\tnmg_isect_line2_face2pNEW: using nearby vu1b vertex x%x from eu x%x\n", vu1b->v_p, eu1 );
@@ -3546,6 +3555,13 @@ hit_b:
 						rt_log("\tre-using hit_v=x%x, vu=x%x\n", hit_v, vu1_midpt);
 					}
 					if( hit_v != vu1_midpt->v_p )  rt_bomb("hit_v changed?\n");
+				}
+				if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+					rt_log( "Faceuses after nmg_ebreaker() call\n") ;
+					rt_log( "fu1:\n" );
+					nmg_pr_fu_briefly( fu1 , "\t" );
+					rt_log( "fu2:\n" );
+					nmg_pr_fu_briefly( fu2 , "\t" );
 				}
 				nmg_enlist_vu(is, vu1_midpt, 0, dist[0]);
 				/* Neither old nor new edgeuse need further handling */
