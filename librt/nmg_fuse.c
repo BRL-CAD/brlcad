@@ -501,12 +501,14 @@ CONST struct rt_tol	*tol;
 			if( !nmg_2edgeuse_g_coincident( eu1, eu2, tol ) )  continue;
 
 			/* Comitted to fusing two edge_g_lseg's.
-			 * Make all instances of eg2 become eg1.
+			 * Make all instances of eg1 become eg2.
 			 * XXX really should check ALL edges using eg1
 			 * XXX against ALL edges using eg2 for coincidence.
 			 */
 		     	total++;
-			nmg_move_eg( eg2, eg1 );
+			nmg_move_eg( eg1, eg2 );
+			NMG_TBL_GET(&etab,i) = (long *)NULL;
+			break;
 		}
 	}
 	nmg_tbl( &etab, TBL_FREE, (long *)0 );
