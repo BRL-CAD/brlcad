@@ -2155,9 +2155,9 @@ struct faceuse		*fu1, *fu2;
  */
 
 	/* For every edge in f1, intersect with f2, incl. cutjoin */
-f1_again:
 	/* XXX I think this could be moved before the label, for efficiency */
 	bzero( (char *)tags, tagsize );
+f1_again:
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_fu_touchingloops(fu1);
 		nmg_fu_touchingloops(fu2);
@@ -2168,6 +2168,7 @@ f1_again:
 		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
+			if( !NMG_INDEX_FIRST_TIME(tags, vu->v_p) )  continue;
 			nmg_isect_vert2p_face2p( is, vu, fu2 );
 			continue;
 		}
@@ -2192,8 +2193,8 @@ f1_again:
 	nmg_isect2d_cleanup(is);
 
 	/* For every edge in f2, intersect with f1, incl. cutjoin */
-f2_again:
 	bzero( (char *)tags, tagsize );
+f2_again:
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_fu_touchingloops(fu1);
 		nmg_fu_touchingloops(fu2);
@@ -2204,6 +2205,7 @@ f2_again:
 		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
+			if( !NMG_INDEX_FIRST_TIME(tags, vu->v_p) )  continue;
 			nmg_isect_vert2p_face2p( is, vu, fu1 );
 			continue;
 		}
