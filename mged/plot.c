@@ -337,8 +337,8 @@ char	**argv;
 	}
 
 	if ((pid1 = fork()) == 0){
-	  dup2(fd1[0], STDIN_FILENO);
-	  dup2(fd2[1], STDOUT_FILENO);
+	  dup2(fd1[0], fileno(stdin));
+	  dup2(fd2[1], fileno(stdout));
 
 	  close(fd1[0]);
 	  close(fd1[1]);
@@ -351,8 +351,8 @@ char	**argv;
 	}
 
 	if ((pid2 = fork()) == 0){
-	  dup2(fd2[0], STDIN_FILENO);
-	  dup2(fd3[1], STDOUT_FILENO);
+	  dup2(fd2[0], fileno(stdin));
+	  dup2(fd3[1], fileno(stdout));
 
 	  close(fd1[0]);
 	  close(fd1[1]);
