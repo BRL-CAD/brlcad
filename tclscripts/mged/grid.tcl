@@ -1,10 +1,20 @@
 #
 #                       G R I D . T C L
 #
-#       Widget(s) for setting grid options.
+# Author -
+#	Robert G. Parker
 #
-#       Author - Robert G. Parker
+# Source -
+#	The U. S. Army Research Laboratory
+#	Aberdeen Proving Ground, Maryland  21005
 #
+# Distribution Notice -
+#	Re-distribution of this software is restricted, as described in
+#       your "Statement of Terms and Conditions for the Release of
+#       The BRL-CAD Package" agreement.
+#
+# Description -
+#	Control Panel for MGED's grid.
 
 proc do_grid_spacing { id spacing_type } {
     global player_screen
@@ -339,7 +349,7 @@ proc init_grid_control { id } {
     grid x $top.tickSpacingL x $top.majorSpacingL -in $top.gridFF1 -padx 8 -pady 8
     grid $top.hL $top.hE x $top.maj_hE -sticky "ew" -in $top.gridFF1 -padx 8 -pady 8
     grid $top.vL $top.vE x $top.maj_vE -sticky "ew" -in $top.gridFF1 -padx 8 -pady 8
-    grid $top.squareGridCB - - - x -in $top.gridFF1 -padx 8 -pady 8
+    grid $top.squareGridCB - - - -in $top.gridFF1 -padx 8 -pady 8
 
     grid $top.anchorL -sticky "ew" -in $top.anchorF
     grid $top.anchorE -sticky "ew" -in $top.anchorFF
@@ -453,22 +463,22 @@ proc grid_control_apply { id } {
     global grid_control_square
 
     winset $mged_active_dm($id)
-    set grid_draw $grid_control_draw($id)
-    set grid_snap $grid_control_snap($id)
-    set grid_color $grid_control_color($id)
-    set grid_anchor $grid_control_anchor($id)
+    doit $id "set grid_draw \$grid_control_draw($id)"
+    doit $id "set grid_snap \$grid_control_snap($id)"
+    doit $id "set grid_color \$grid_control_color($id)"
+    doit $id "set grid_anchor \$grid_control_anchor($id)"
 
-    set grid_res_h $grid_control_h($id)
-    set grid_res_major_h $grid_control_maj_h($id)
+    doit $id "set grid_res_h \$grid_control_h($id)"
+    doit $id "set grid_res_major_h \$grid_control_maj_h($id)"
 
     if {$grid_control_square($id)} {
-	set grid_res_v $grid_control_h($id)
-	set grid_res_major_v $grid_control_maj_h($id)
-	set grid_control_v($id) $grid_control_h($id)
-	set grid_control_maj_v($id) $grid_control_maj_h($id)
+	doit $id "set grid_res_v \$grid_control_h($id)"
+	doit $id "set grid_res_major_v \$grid_control_maj_h($id)"
+	doit $id "set grid_control_v($id) \$grid_control_h($id)"
+	doit $id "set grid_control_maj_v($id) \$grid_control_maj_h($id)"
     } else {
-	set grid_res_v $grid_control_v($id)
-	set grid_res_major_v $grid_control_maj_v($id)
+	doit $id "set grid_res_v \$grid_control_v($id)"
+	doit $id "set grid_res_major_v \$grid_control_maj_v($id)"
     }
 
     set mged_grid_draw($id) $grid_control_draw($id)
