@@ -1,0 +1,174 @@
+.TH CELL-FB 1V VMB
+'\"	RCS ID:	$Header$
+.SH NAME
+cell-fb \- display cell-by-cell data on a frame buffer
+.SH SYNOPSIS
+.B cell-fb
+[ options... ]
+.SH DESCRIPTION
+.P
+.I Cell-fb\^
+is a graphics program that reads cell-by-cell data on the standard input
+and displays the data, one view at a time on a frame buffer.
+Following are the command-line options.
+.SS Options
+.TP "\w'-m ``n r g b\'\'    |'u"
+.BI \-F file\^
+Write graphics output to
+.I file\^
+or display on
+.IR device .
+By default the output is displayed on a frame buffer.
+The default frame buffer is configured by the frame buffer library
+(see
+.IR libfb\^ (3B)),
+based on available graphics devices.
+The default may be overridden more generally with the environment variable
+.SM
+.B FB_FILE
+(see
+.IR brlcad\^ (1)).
+.TP
+.BI \-b n\^
+Ignore values not equal to
+.IR n ,
+that is,
+all other values are mapped to the background color.
+.TP
+.BI \-c n\^
+Specify cell size of grid as
+.IR n\^ .
+The default is 4 units.
+.TP
+.B \-e
+Erase the frame buffer before displaying each view.
+.TP
+.BI \-f n\^
+Display field number
+.I n\^
+of the cell-by-cell data.
+The default is to display field 1.
+.TP
+.B \-g
+Leave space between cells (display grid).
+.TP
+.B \-h
+Force high-resolution display.
+Normally the high-resolution device is selected if necessary to display the
+data as requested (see
+.B \-p
+and
+.B \-s
+options below),
+but this option will override this default.
+This may be useful in combining views on the same display.
+.TP
+.B \-i
+Round values to the nearest discrete level (as listed below) so that they match
+those displayed in the color key.
+.TP
+.B \-k
+Display the color key.
+This option displays the color mappings for 11 discrete values underneath
+the picture.
+The values represented are, from left to right:
+0.0, 0.1, 0.2, ..., 0.9, and 1.0.
+.TP
+.BI \-m "``n r g b''"\^
+Map cell data value
+.I n\^
+to color
+.IR "r g b" .
+This option allows the color mapping to be changed.
+The value should be one of the discrete values as listed above, otherwise it
+will be truncated to the next lowest one.
+The color is specified as three numbers between 0 and 255 (inclusive),
+which represent intensities on each of the red, green and blue pixel fields.
+The background color can be indexed by specifying the value
+.I 1.1
+for
+.IR n\^ .
+.TP
+.BI \-p "``x y''"\^
+Offset the picture from the bottom-left corner of the frame buffer display
+by
+.I x\^
+pixels horizontally, and
+.I y\^
+pixels vertically.
+.TP
+.BI \-s "``w h''"\^
+Specify the width and height, in pixels, as
+.I w\^
+and
+.IR h ,
+for display of each cell.
+This option has the effect of scaling the picture independently in the
+horizontal and vertical dimensions.
+The default is 10 pixels per cell in each dimension, not including the
+grid.
+If the grid is used, there will be 1 pixel of background between each
+cell.
+.TP
+.BI \-v n\^
+Specify view number to display as
+.IR n\^ .
+Views are numbered starting at one.
+If a view number is given,
+only that view is displayed,
+otherwise all views will be displayed sequentially (see
+.SM
+HINT
+section below).
+.SH HINT
+If multiple views are input,
+the user will be asked between views whether he wants to see the next view.
+While being prompted, the user can save the previous image by using a
+utility such as
+.IR fb-rle\^ (1).
+.SH DEFINITION
+A cell-by-cell data file is defined as containing one or more views,
+each of which is preceded by view-header information and contains
+one line of data for each cell.
+The cell data must be in the following format:
+.sp
+.I "x y fields..."
+.sp
+All of the fields are numbers, separated by white-space (blanks or tabs),
+and there may be leading white-space on the line.
+There must be at least 3 numbers on a line, where
+.I x\^
+and
+.I y\^
+are grid cell coordinates and are spaced consistently with the cell size,
+and are followed by at least 1 field which represents the data associated
+with that grid cell.
+If the
+.BI \-f n\^
+option is used, then there must be at least
+.I n\^
+fields of cell data.
+The view-header information may span multiple lines, and the only restriction
+on its format is that it not pass for data.
+.SH EXAMPLE
+The following invocation will display the cell-by-cell data from
+.I file\^
+on the default frame buffer on the network host
+.IR viva.brl.mil .
+It will display all views with the grid turned
+on (space between cells), positioned with
+the left-most cell
+.I 20\^
+cells to the right of the display origin (bottom-left),
+and the bottom-most cell
+.I 30\^
+cells above the display origin, the color key will appear underneath the
+grid of cells, and the display will be erased before each view is drawn.
+.sp
+.RS
+$ \|\fIcell-fb \|\-F \|viva.brl.mil: \|\-gek \|\-p \|``20 30'' \|\< \|file
+.RE
+.SH "SEE ALSO"
+fb-rle(1), libfb(3)
+.SH AUTHOR
+G. S. Moss, BRL/VLD-VMB
