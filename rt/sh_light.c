@@ -474,6 +474,7 @@ struct seg *finished_segs;
 	extern int	light_render();
 	vect_t	filter_color;
 	int	light_visible;
+	int	air_sols_seen = 0;
 
 	RT_CK_LIST_HEAD(&finished_segs->l);
 
@@ -492,6 +493,11 @@ struct seg *finished_segs;
 	 *  not be missed.
 	 */
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+		if( pp->pt_regionp->reg_aircode != 0 )  {
+			/* XXX Should be accumulating transmission through each */
+			air_sols_seen++;
+			continue;
+		}
 		if( pp->pt_inhit->hit_dist >= ap->a_rt_i->rti_tol.dist )
 			break;
 		if( pp->pt_outhit->hit_dist >= ap->a_rt_i->rti_tol.dist*10 )
@@ -501,11 +507,12 @@ struct seg *finished_segs;
 		pp=PartHeadp->pt_forw;
 		RT_CK_PT(pp);
 
+		if( air_sols_seen > 0 )  return 1;	/* light_visible = 1 */
+
 		if (pp->pt_inhit->hit_dist <= ap->a_rt_i->rti_tol.dist) {
 			int retval;
 
 			/* XXX This is bogus if air is being used */
-
 			/* What has probably happened is that the shadow ray
 			 * has produced an Out-hit from the current solid
 			 * which looks valid, but is in fact an intersection
@@ -550,6 +557,7 @@ struct seg *finished_segs;
 	if( lp->lt_rp == regp )  {
 		VSETALL( ap->a_color, 1 );
 		light_visible = 1;
+		/* XXX Need to tally up air attenuation here */
 		goto out;
 	}
 
@@ -560,6 +568,7 @@ struct seg *finished_segs;
 		if( pp->pt_inhit->hit_dist >= MAGNITUDE(tolight) ) {
 			VSETALL( ap->a_color, 1 );
 			light_visible = 1;
+			/* XXX Need to tally up air attenuation here */
 			goto out;
 		}
 	}
@@ -580,6 +589,7 @@ struct seg *finished_segs;
 		goto out;
 	}
 
+	/* XXX Need to tally up air attenuation here */
 
 	/*
 	 *  Determine transparency parameters of this object.
@@ -652,7 +662,9 @@ struct partition *PartHeadp;
 }
 
 /*
- *	Determine the visibility of each light source in the scen from a
+ *			L I G H T _ V I S I B I L I T Y
+ *
+ *	Determine the visibility of each light source in the scene from a
  *	particular location.
  */
 void
@@ -748,8 +760,9 @@ int have;
 			sub_ap.a_user = -1;		/* sanity */
 			sub_ap.a_uptr = (genptr_t)lp;	/* so we can tell.. */
 			sub_ap.a_level = 0;
-			/* Will need entry & exit pts, for filter glass */
-			sub_ap.a_onehit = 2;
+			/* Will need entry & exit pts, for filter glass ==> 2 */
+			/* Continue going through air ==> negative */
+			sub_ap.a_onehit = -2;
 
 			VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
 			sub_ap.a_purpose = lp->lt_name;	/* name of light shot at */
