@@ -762,7 +762,7 @@ int framenumber;
 
 	/* Just while doing the ray-tracing */
 	if(rdebug&RDEBUG_RTMEM)
-		rt_g.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
+		bu_debug |= (BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_LOG);
 
 	rtip->nshots = 0;
 	rtip->nmiss_model = 0;
@@ -805,7 +805,7 @@ int framenumber;
 
 	/* Stop memory debug printing until next frame, leave full checking on */
 	if(rdebug&RDEBUG_RTMEM)
-		rt_g.debug &= ~DEBUG_MEM;
+		bu_debug &= ~BU_DEBUG_MEM_LOG;
 
 	/*
 	 *  Certain parallel systems (eg, Alliant) count the entire 
