@@ -164,7 +164,6 @@ proc gui_create_default { args } {
     global edit_info_pos
     global show_edit_info
     global mged_multi_view
-    global buttons_on
     global win_size
     global mged_show_cmd
     global mged_show_dm
@@ -624,12 +623,16 @@ menu .$id.menubar.file.pref.special_chars -title "Special Characters" -tearoff $
 .$id.menubar.file.pref.special_chars add radiobutton -value 0 -variable glob_compat_mode\
 	-label "Tcl Evaluation" -underline 0
 hoc_register_menu_data "Special Characters" "Tcl Evaluation" "Tcl Evaluation"\
-	{ { summary "Set the command interpretation mode to Tcl mode." } }
+	{ { summary "Set the command interpretation mode to Tcl mode.
+In this mode, globbing is not performed against
+MGED database objects. Rather, the command string
+is passed, unmodified, to the Tcl interpreter." } }
 .$id.menubar.file.pref.special_chars add radiobutton -value 1 -variable glob_compat_mode\
 	-label "Object Name Matching" -underline 0
 hoc_register_menu_data "Special Characters" "Object Name Matching" "Object Name Matching"\
-	{ { summary "Set the command interpretation mode to MGED object name matching.
-In this mode globbing is performed against MGED database objects."\
+	{ { summary "Set the command interpretation mode to MGED object
+name matching. In this mode, globbing is performed
+against MGED database objects."\
         } }
 
 menu .$id.menubar.edit -title "Edit" -tearoff $do_tearoffs
@@ -681,42 +684,50 @@ menu .$id.menubar.view -title "View" -tearoff $do_tearoffs
 .$id.menubar.view add command -label "Top" -underline 0\
 	-command "mged_apply $id \"press top\""
 hoc_register_menu_data "View" "Top" "Top View"\
-	{ { summary "View of the top (i.e. azimuth = 270, elevation = 90). " }
+	{ { summary "View of the top (i.e. azimuth = 270, elevation = 90)." }
+          { accelerator "t" }
           { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Bottom" -underline 0\
 	-command "mged_apply $id \"press bottom\""
 hoc_register_menu_data "View" "Bottom" "Bottom View"\
 	{ { summary "View of the bottom (i.e. azimuth = 270 , elevation = -90)." }
+          { accelerator "b" }
           { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Right" -underline 0\
 	-command "mged_apply $id \"press right\""
 hoc_register_menu_data "View" "Right" "Right View"\
 	{ { summary "View of the right side (i.e. azimuth = 270, elevation = 0)." }
+          { accelerator "r" }
           { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Left" -underline 0\
 	-command "mged_apply $id \"press left\""
 hoc_register_menu_data "View" "Left" "Left View"\
 	{ { summary "View of the left side (i.e. azimuth = 90, elevation = 0)." }
+          { accelerator "l" }
           { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Front" -underline 0\
 	-command "mged_apply $id \"press front\""
 hoc_register_menu_data "View" "Front" "Front View"\
 	{ { summary "View of the front (i.e. azimuth = 0, elevation = 0)." }
+          { accelerator "f" }
           { see_also "press, ae, view, viewset, viewget" } }
-.$id.menubar.view add command -label "Back" -underline 3\
+.$id.menubar.view add command -label "Rear" -underline 3\
 	-command "mged_apply $id \"press rear\""
-hoc_register_menu_data "View" "Back" "Back View"\
-	{ { summary "View of the back (i.e. azimuth = 180, elevation = 0)." }
+hoc_register_menu_data "View" "Rear" "Rear View"\
+	{ { summary "View of the rear (i.e. azimuth = 180, elevation = 0)." }
+          { accelerator "R" }
           { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "az35,el25" -underline 2\
 	-command "mged_apply $id \"press 35,25\""
 hoc_register_menu_data "View" "az35,el25" "View - 35,25"\
 	{ { summary "View with an azimuth of 35 and an elevation of 25." }
+          { accelerator "3" }
           { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "az45,el45" -underline 2\
 	-command "mged_apply $id \"press 45,45\""
 hoc_register_menu_data "View" "az45,el45" "View - 45,45"\
 	{ { summary "View with an azimuth of 45 and an elevation of 45." }
+          { accelerator "4" }
           { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add separator
 .$id.menubar.view add command -label "Zoom In" -underline 5\
@@ -748,6 +759,7 @@ hoc_register_menu_data "View" "Multipane Defaults" "Multipane Default Views"\
 	-command "mged_apply $id \"knob zero\""
 hoc_register_menu_data "View" "Zero" "Zero Knobs"\
 	{ { summary "Stop all rate transformations." }
+          { accelerator "0" }
           { see_also "knob, press" } }
 
 menu .$id.menubar.viewring -title "ViewRing" -tearoff $do_tearoffs
@@ -757,7 +769,7 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
           { description "A view ring is a mechanism for managing multiple
 views within a single pane or display manager. Each pane
 has its own view ring where any number of views can be stored.
-The stored views can then be traversed or even removed." }
+The stored views can be removed or traversed." }
           { see_also "view_ring" } }
 .$id.menubar.viewring add cascade -label "Select View" -underline 0 -menu .$id.menubar.viewring.select
 .$id.menubar.viewring add cascade -label "Delete View" -underline 0 -menu .$id.menubar.viewring.delete
@@ -995,8 +1007,8 @@ of firing a query ray." }
 	-command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
 hoc_register_menu_data "Query Ray Effects" "both" "Query Ray Effects - Both"\
 	{ { summary "Set qray effects mode to 'both'. In this mode,
-both textual and graphical output is used to represent the results
-of firing a query ray." }
+both textual and graphical output is used to
+represent the results of firing a query ray." }
           { see_also "qray" } }
 
 menu .$id.menubar.settings.mpane -title "Active Pane" -tearoff $do_tearoffs
@@ -1005,29 +1017,33 @@ menu .$id.menubar.settings.mpane -title "Active Pane" -tearoff $do_tearoffs
 	-command "set_active_dm $id"
 hoc_register_menu_data "Active Pane" "Upper Left" "Active Pane - Upper Left"\
 	{ { summary "Set the active pane to be the upper left pane.
-Any interaction with the GUI that affects a pane/\"display manager\"
-will be directed at the upper left pane." } }
+Any interaction with the GUI that affects a pane
+(display manager) will be directed at the upper
+left pane." } }
 .$id.menubar.settings.mpane add radiobutton -value ur -variable mged_dm_loc($id)\
 	-label "Upper Right" -underline 6\
 	-command "set_active_dm $id"
 hoc_register_menu_data "Active Pane" "Upper Right" "Active Pane - Upper Right"\
 	{ { summary "Set the active pane to be the upper right pane.
-Any interaction with the GUI that affects a pane/\"display manager\"
-will be directed at the upper right pane." } }
+Any interaction with the GUI that affects a pane
+(display manager) will be directed at the upper
+right pane." } }
 .$id.menubar.settings.mpane add radiobutton -value ll -variable mged_dm_loc($id)\
 	-label "Lower Left" -underline 2\
 	-command "set_active_dm $id"
 hoc_register_menu_data "Active Pane" "Lower Left" "Active Pane - Lower Left"\
 	{ { summary "Set the active pane to be the lower left pane.
-Any interaction with the GUI that affects a pane/\"display manager\"
-will be directed at the lower left pane." } }
+Any interaction with the GUI that affects a pane
+(display manager) will be directed at the lower
+left pane." } }
 .$id.menubar.settings.mpane add radiobutton -value lr -variable mged_dm_loc($id)\
 	-label "Lower Right" -underline 3\
 	-command "set_active_dm $id"
 hoc_register_menu_data "Active Pane" "Lower Right" "Active Pane - Lower Right"\
 	{ { summary "Set the active pane to be the lower right pane.
-Any interaction with the GUI that affects a pane/\"geometry window\"
-will be directed at the lower right pane." } }
+Any interaction with the GUI that affects a pane
+(geometry window) will be directed at the lower
+right pane." } }
 
 menu .$id.menubar.settings.fb -title "Framebuffer" -tearoff $do_tearoffs
 .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_fb_all($id)\
@@ -1124,21 +1140,22 @@ hoc_register_menu_data "Grid" "Anchor..." "Grid Anchor"\
 	-label "Draw Grid" -underline 0\
 	-command "mged_apply $id \"rset grid draw \$mged_grid($id,draw)\""
 hoc_register_menu_data "Grid" "Draw Grid" "Draw Grid"\
-	{ { summary "Toggle drawing the grid. The grid is
-a lattice of points over the pane (geometry window).
-The regular spacing between the points gives the user
-accurate visual cues regarding dimension. This spacing
-can be set by the user." }
+	{ { summary "Toggle drawing the grid. The grid is a lattice
+of points over the pane (geometry window). The
+regular spacing between the points gives the user
+accurate visual cues regarding dimension. This
+spacing can be set by the user." }
           { see_also "rset" } }
 .$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,snap)\
 	-label "Snap To Grid" -underline 0\
 	-command "mged_apply $id \"rset grid snap \$mged_grid($id,snap)\""
 hoc_register_menu_data "Grid" "Snap To Grid" "Snap To Grid"\
 	{ { summary "Toggle grid snapping. When snapping to grid,
-the internal routines that use the mouse pointer location,
-move/snap that location to the nearest grid point. This gives
-the user high accuracy with the mouse for transforming the
-view or editing solids/matrices." }
+the internal routines that use the mouse pointer
+location, move/snap that location to the nearest
+grid point. This gives the user high accuracy with
+the mouse for transforming the view or editing
+solids/matrices." }
           { see_also "rset" } }
 
 menu .$id.menubar.settings.grid.spacing -title "Grid Spacing" -tearoff $do_tearoffs
@@ -1152,88 +1169,89 @@ The major spacing will be set to 10 ticks per major." }
 .$id.menubar.settings.grid.spacing add command -label "Arbitrary..." -underline 1\
 	-command "do_grid_spacing $id b"
 hoc_register_menu_data "Grid Spacing" "Arbitrary..." "Grid Spacing - Arbitrary"\
-	{ { summary "Pops up the grid spacing entry dialog. The user can
-use this to set both the horizontal and vertical tick spacing." }
+	{ { summary "Pops up the grid spacing entry dialog. The user
+can use this to set both the horizontal and
+vertical tick spacing." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add separator
 .$id.menubar.settings.grid.spacing add command -label "micrometer" -underline 4\
 	-command "set_grid_spacing $id micrometer 1"
 hoc_register_menu_data "Grid Spacing" "micrometer" "Grid Spacing - micrometer"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 micrometer." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 micrometer." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "millimeter" -underline 2\
 	-command "set_grid_spacing $id millimeter 1"
 hoc_register_menu_data "Grid Spacing" "millimeter" "Grid Spacing - millimeter"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 millimeter." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 millimeter." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "centimeter" -underline 0\
 	-command "set_grid_spacing $id centimeter 1"
 hoc_register_menu_data "Grid Spacing" "centimeter" "Grid Spacing - centimeter"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 centimeter." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 centimeter." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "decimeter" -underline 0\
 	-command "set_grid_spacing $id decimeter 1"
 hoc_register_menu_data "Grid Spacing" "decimeter" "Grid Spacing - decimeter"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 decimeter." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 decimeter." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "meter" -underline 0\
 	-command "set_grid_spacing $id meter 1"
 hoc_register_menu_data "Grid Spacing" "meter" "Grid Spacing - meter"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 meter." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 meter." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "kilometer" -underline 0\
 	-command "set_grid_spacing $id kilometer 1"
 hoc_register_menu_data "Grid Spacing" "kilometer" "Grid Spacing - kilometer"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 kilometer." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 kilometer." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add separator
 .$id.menubar.settings.grid.spacing add command -label "1/10 inch" -underline 0\
 	-command "set_grid_spacing $id \"1/10 inch\" 1"
 hoc_register_menu_data "Grid Spacing" "1/10 inch" "Grid Spacing - 1/10 inch"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1/10 inches." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1/10 inches." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "1/4 inch" -underline 2\
 	-command "set_grid_spacing $id \"1/4 inch\" 1"
 hoc_register_menu_data "Grid Spacing" "1/4 inch" "Grid Spacing - 1/4 inch"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1/4 inches." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1/4 inches." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "1/2 inch" -underline 2\
 	-command "set_grid_spacing $id \"1/2 inch\" 1"
 hoc_register_menu_data "Grid Spacing" "1/2 inch" "Grid Spacing - 1/2 inch"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1/2 inches." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1/2 inches." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "inch" -underline 0\
 	-command "set_grid_spacing $id inch 1"
 hoc_register_menu_data "Grid Spacing" "inch" "Grid Spacing - inch"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 inch." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 inch." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "foot" -underline 0\
 	-command "set_grid_spacing $id foot 1"
 hoc_register_menu_data "Grid Spacing" "foot" "Grid Spacing - foot"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 foot." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 foot." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "yard" -underline 0\
 	-command "set_grid_spacing $id yard 1"
 hoc_register_menu_data "Grid Spacing" "yard" "Grid Spacing - yard"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 yard." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 yard." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "mile" -underline 0\
 	-command "set_grid_spacing $id mile 1"
 hoc_register_menu_data "Grid Spacing" "mile" "mile"\
-	{ { summary "Set the horizontal and vertical tick spacing
-to 1 mile." }
+	{ { summary "Set the horizontal and vertical tick
+spacing to 1 mile." }
           { see_also "rset" } }
 
 #
@@ -1350,21 +1368,22 @@ menu .$id.menubar.modes -title "Modes" -tearoff $do_tearoffs
 	-label "Draw Grid" -underline 0\
 	-command "mged_apply $id \"rset grid draw \$mged_grid($id,draw)\""
 hoc_register_menu_data "Modes" "Draw Grid" "Draw Grid"\
-	{ { summary "Toggle drawing the grid. The grid is
-a lattice of points over the pane (geometry window).
-The regular spacing between the points gives the user
-accurate visual cues regarding dimension. This spacing
-can be set by the user." }
+	{ { summary "Toggle drawing the grid. The grid is a lattice
+of points over the pane (geometry window). The
+regular spacing between the points gives the user
+accurate visual cues regarding dimension. This
+spacing can be set by the user." }
           { see_also "rset" } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,snap)\
 	-label "Snap To Grid" -underline 0\
 	-command "mged_apply $id \"rset grid snap \$mged_grid($id,snap)\""
 hoc_register_menu_data "Modes" "Snap To Grid" "Snap To Grid"\
 	{ { summary "Toggle grid snapping. When snapping to grid,
-the internal routines that use the mouse pointer location,
-move/snap that location to the nearest grid point. This gives
-the user high accuracy with the mouse for transforming the
-view or editing solids/matrices." }
+the internal routines that use the mouse pointer
+location, move/snap that location to the nearest
+grid point. This gives the user high accuracy with
+the mouse for transforming the view or editing
+solids/matrices." }
           { see_also "rset" } }
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
@@ -1377,11 +1396,13 @@ hoc_register_menu_data "Modes" "Framebuffer Active" "Framebuffer Active"\
 	-label "Listen For Clients" -underline 0\
 	-command "set_listen $id" -state disabled
 hoc_register_menu_data "Modes" "Listen For Clients" "Listen For Clients"\
-	{ { summary "This activates/deactivates listening for clients.
-If the framebuffer is listening for clients, new data can
+	{ { summary "
+This activates/deactivates listening for clients. If
+the framebuffer is listening for clients, new data can
 be passed into the framebuffer. Otherwise, the framebuffer
-is write protected. Actually, it is also read protected with
-one exception. MGED can still read the framebuffer data." }
+is write protected. Actually, it is also read protected
+with one exception. MGED can still read the framebuffer
+data." }
           { see_also "rset, vars" } }
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
@@ -1408,19 +1429,22 @@ hoc_register_menu_data "Modes" "Faceplate" "Faceplate"\
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_multi_view($id)\
 	-label "Multipane" -underline 0 -command "setmv $id"
 hoc_register_menu_data "Modes" "Multipane" "Multipane"\
-	{ { summary "Toggle between multipane and single pane mode. In
-multipane mode there are four panes, each with its own state." } }
+	{ { summary "
+Toggle between multipane and single pane mode.
+In multipane mode there are four panes, each
+with its own state." } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable show_edit_info($id)\
 	-label "Edit Info" -underline 0\
 	-command "toggle_edit_info $id"
 hoc_register_menu_data "Modes" "Edit Info" "Edit Info"\
-	{ { summary "Toggle display of edit information.
-If in solid edit state, the edit information is
-displayed in the internal solid editor. This editor,
-as its name implies, can be used to edit the solid
-as well as view its contents. If in object edit
-state, the object information is displayed in a
-dialog box." } }
+	{ { summary "
+Toggle display of edit information. If in
+solid edit state, the edit information is
+displayed in the internal solid editor. This
+editor, as its name implies, can be used to
+edit the solid as well as view its contents.
+If in object edit state, the object information
+is displayed in a dialog box." } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_show_status($id)\
 	-label "Status Bar" -underline 7\
 	-command "toggle_status_bar $id"
@@ -1445,9 +1469,9 @@ hoc_register_menu_data "Modes" "Graphics Window" "Graphics Window"\
 hoc_register_menu_data "Modes" "Rateknobs" "Rate Knobs"\
 	{ { summary "Toggle rate knob mode. When in rate knob mode,
 transformation with the mouse becomes rate based.
-For example, if the user rotates the view about the
-X axis, the view continues to rotate about the X axis
-until the rate rotation is stopped." }
+For example, if the user rotates the view about
+the X axis, the view continues to rotate about the
+X axis until the rate rotation is stopped." }
           { see_also "knob" } }
 
 menu .$id.menubar.modes.axes -title "Axes" -tearoff $do_tearoffs
@@ -1455,34 +1479,36 @@ menu .$id.menubar.modes.axes -title "Axes" -tearoff $do_tearoffs
 	-variable mged_axes($id,view_draw) -label "View" -underline 0\
 	-command "mged_apply $id \"rset ax view_draw \$mged_axes($id,view_draw)\""
 hoc_register_menu_data "Axes" "View" "View Axes"\
-	{ { summary "Toggle display of the view axes. The view
-axes are used to give the user visual cues indicating
-the current view of model space. These axes are drawn
-the same as the model axes, except that the view axes'
-position is fixed in view space. This position as
-well as other characteristics can be set by the user." }
+	{ { summary "Toggle display of the view axes. The view axes
+are used to give the user visual cues indicating
+the current view of model space. These axes are
+drawn the same as the model axes, except that the
+view axes' position is fixed in view space. This
+position as well as other characteristics can be
+set by the user." }
           { see_also "rset" } }
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_axes($id,model_draw) -label "Model" -underline 0\
 	-command "mged_apply $id \"rset ax model_draw \$mged_axes($id,model_draw)\""
 hoc_register_menu_data "Axes" "Model" "Model Axes"\
-	{ { summary "Toggle display of the model axes. The model
-axes are used to give the user visual cues indicating
-the current view of model space. The model axes are by default
-located at the model origin and are fixed in model space.
-So, if the user transforms the view, the model axes will potentially
-move in view space. The model axes position as well
-as other characteristics can be set by the user." }
+	{ { summary "Toggle display of the model axes. The model axes
+are used to give the user visual cues indicating
+the current view of model space. The model axes
+are by default located at the model origin and are
+fixed in model space. So, if the user transforms
+the view, the model axes will move with respect to
+the view. The model axes position as well as other
+characteristics can be set by the user." }
           { see_also "rset" } }
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_axes($id,edit_draw) -label "Edit" -underline 0\
 	-command "mged_apply $id \"rset ax edit_draw \$mged_axes($id,edit_draw)\""
 hoc_register_menu_data "Axes" "Edit" "Edit Axes"\
-	{ { summary "Toggle display of the edit axes. The edit
-axes are used to give the user visual cues indicating
-how the edit is progressing. They consist of a pair of axes.
-One remains unmoved, while the other moves to indicate
-how things have changed." }
+	{ { summary "Toggle display of the edit axes. The edit axes
+are used to give the user visual cues indicating
+how the edit is progressing. They consist of a
+pair of axes. One remains unmoved, while the other
+moves to indicate how things have changed." }
           { see_also "rset" } }
 
 menu .$id.menubar.tools -title "Tools" -tearoff $do_tearoffs
@@ -1530,8 +1556,6 @@ menu .$id.menubar.help -title "Help" -tearoff $do_tearoffs
 	-command "do_About_MGED $id"
 hoc_register_menu_data "Help" "About" "About MGED"\
 	{ { summary "Information about MGED" } }
-#.$id.menubar.help add command -label "On Context" -underline 0\
-#	-command "on_context_help $id"
 .$id.menubar.help add command -label "Commands..." -underline 0\
 	-command "command_help $id"
 hoc_register_menu_data "Help" "Commands..." "Commands"\
@@ -1601,7 +1625,9 @@ hoc_register_data .$id.status.ang "Rateknobs"\
         { see_also knob} }
 label .$id.status.illum.label -textvar ia_illum_label($id)
 hoc_register_data .$id.status.illum.label "Status Area"\
-	{ { summary "This area is for displaying either the frames per second,\nthe illuminated path or the keypoint during an edit." } }
+	{ { summary "This area is for displaying either the frames per second,
+the illuminated path, the keypoint during an edit
+or the ADC attributes." } }
 
 #==============================================================================
 # PHASE 4: Text widget for interaction
@@ -1624,7 +1650,41 @@ if {$use_grid_gm} {
 scrollbar .$id.s -relief flat -command ".$id.t yview"
 
 bind .$id.t <Enter> "focus .$id.t; break"
-hoc_register_data .$id.t "Command Window" { { summary "Enter commands here!" } }
+hoc_register_data .$id.t "Command Window"\
+	{ { summary "This is MGED's default command window. Its main
+function is to allow the user to enter commands.
+The command window supports command line editing
+and command history. The two supported command line
+edit modes are emacs and vi. Look under File/
+Preferences/Command_Line_Edit to change the edit mode.
+
+There are also two command interpretation modes. One
+is where MGED performs object name matching (i.e. globbing
+against the database) before passing the line to MGED's
+built-in Tcl interpreter. This is the same behavior seen
+in previous releases. The other command interpretation
+mode (Tcl Evaluation) passes the command line directly to
+the Tcl interpreter. Look under File/Preferences/
+Special_Characters to change the interpetation mode.
+
+The command window also supports cut and paste as well
+as text scrolling. The default bindings are similar to
+those found in typical X Window applications such as xterm.
+For example:
+
+ButtonPress-1           begin text selection
+Button1-Motion         add to text selection
+Shift-Button1            modify text selection
+Double-Button-1        select word
+Triple-Button-1         select line
+ButtonPress-2           begin text operation
+ButtonRelease-2        paste text
+Button2-Motion         scroll text
+
+Note - If motion was detected while Button2 was
+being pressed, no text will be pasted. In this case,
+it is assumed that scrolling was the intended operation.
+The user can also scroll the window using the scrollbar." } }
 
 set mged_edit_style($id) $mged_default_edit_style
 set dm_insert_char_flag(.$id.t) 0
@@ -1814,7 +1874,6 @@ proc gui_destroy_default args {
     global mged_players
     global mged_collaborators
     global mged_multi_view
-    global buttons_on
     global edit_info
     global show_edit_info
     global mged_top
@@ -1844,7 +1903,6 @@ proc gui_destroy_default args {
     }
 
     set mged_multi_view($id) 0
-    set buttons_on($id) 0
     set show_edit_info($id) 0
 
     releasemv $id
