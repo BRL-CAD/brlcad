@@ -63,7 +63,7 @@ set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_nor
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{low high r g b} {make color entry}}
 set helplib_data(wdb_comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
-set helplib_data(wdb_comb_std)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
+set helplib_data(wdb_comb_std)		{{[-cr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
 set helplib_data(wdb_concat)		{{file.g prefix} {concatenate another GED file into the current database}}
 set helplib_data(wdb_copy)		{{from to} {copy a database object}}
 set helplib_data(wdb_copyeval)		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
@@ -151,13 +151,13 @@ set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_autoview)		{{view_obj} {calculate an appropriate view size and center for view_obj}}
-set helplib_data(dgo_blast)		{{[-A -o -C#/#/#] <object(s) | attribute name/value pairs>} {erase all currently displayed geometry and draw the specified object(s)}}
+set helplib_data(dgo_blast)		{{[-A -o -C#/#/# -S] <object(s) | attribute name/value pairs>} {erase all currently displayed geometry and draw the specified object(s)}}
 set helplib_data(dgo_clear)		{{} {erase all objects from the display}}
-set helplib_data(dgo_draw)		{{[-A -o -C#/#/#] <objects | attribute name/value pairs>} {prepare object(s) for display}}
+set helplib_data(dgo_draw)		{{[-A -o -C#/#/# -S] <objects | attribute name/value pairs>} {prepare object(s) for display}}
 set helplib_data(dgo_E)			{{[-s] <objects>} {evaluated display of objects}}
 set helplib_data(dgo_erase)		{{<objects>} {erase objects from the display}}
 set helplib_data(dgo_erase_all)		{{<objects>} {erase all occurrences of objects from the display}}
-set helplib_data(dgo_ev)		{{[-dfnqstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
+set helplib_data(dgo_ev)		{{[-dfnstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
 set helplib_data(dgo_get_autoview)	{{}	{get view size and center such that all displayed solids would be in view}}
 set helplib_data(dgo_headSolid)		{{} {return pointer to solid list}}
 set helplib_data(dgo_illum)		{{[-n] obj} {illuminate/highlight obj}}
@@ -171,7 +171,7 @@ set helplib_data(dgo_rt)		{{[options] [-- objects]}	{do raytrace of view or spec
 set helplib_data(dgo_rtabort)		{{} {abort the associated raytraces}}
 set helplib_data(dgo_rtcheck)		{{[options]}	{check for overlaps in current view}}
 set helplib_data(dgo_rtedge)		{{[options] [-- objects]}	{do edge rendering of view or specified objects}}
-set helplib_data(dgo_vdraw)		{{write|insert|delete|read|length|send [args]}	{Expermental drawing (cnuzman)}}
+set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Expermental drawing (cnuzman)}}
 set helplib_data(dgo_who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set helplib_data(dgo_zap)		{{} {erase all objects from the display}}
 
