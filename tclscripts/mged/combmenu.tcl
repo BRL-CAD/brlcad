@@ -89,7 +89,7 @@ proc ray_build_comb_menu { x y } {
 
 proc build_comb_menu { id combs } {
     global player_screen
-    global comb_name
+    global comb_control
     global mged_edit_menu
 
     if {[info exists mged_edit_menu($id)] && \
@@ -118,7 +118,7 @@ proc build_comb_menu { id combs } {
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
 	    matrix_illum \$spath \$path_pos; break"
     bind_listbox $top "<Double-1>"\
-	    "set comb_name($id) \[%W get @%x,%y\];\
+	    "set comb_control($id,name) \[%W get @%x,%y\];\
 	    comb_reset $id;\
 	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
