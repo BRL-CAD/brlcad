@@ -166,6 +166,8 @@ long winx_size, winy_size;
 # include "forms.h"
 # include "./mged_widgets.h"
 
+static int win_focus = 0;
+
 void button_call(obj, val)
 OBJECT *obj;
 long val;
@@ -488,6 +490,7 @@ Ir_open()
 # else
 		qdevice(i);
 # endif
+
 #endif
 #if IR_BUTTONS || IR_WIDGETS
 	/*
@@ -1031,7 +1034,7 @@ checkevents()  {
 
 #if IR_WIDGETS
 	n = fl_usrblkqread( values, NVAL );/* n is # of shorts returned */
-	if( ir_debug ) printf("blkqread gave %d\n", n);
+	if( ir_debug ) printf("fl_usrblkqread gave %d\n", n);
 	for (valp = values ; n > 0  ; n -= 4, valp += 4 ) {
 		ret = *valp;
 
@@ -1043,7 +1046,7 @@ checkevents()  {
 		ret = *valp;
 		if( ir_debug ) printf("qread ret=%d, val=%d\n", ret, valp[1]);
 #endif
-#if IR_BUTTONS
+#if IR_BUTTONS || IR_WIDGETS
 		if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
 		  || ret == F1KEY || ret == F2KEY || ret == F3KEY
 		  || ret == F4KEY || ret == F5KEY || ret == F6KEY
@@ -1081,7 +1084,8 @@ checkevents()  {
 				continue;
 				
 			}
-#if IR_KNOBS
+
+#if IR_KNOBS || IR_WIDGETS
 			/*
 			 *  If button 1 is pressed, reset run away knobs.
 			 */
@@ -1092,12 +1096,17 @@ checkevents()  {
 					ir_dbtext("ZeroKnob");
 					continue;
 				}
+#if IR_WIDGETS
+				/* zero the widget knobs */
+#endif
+#if IR_KNOBS
 				/* zap the knobs */
 				for(i = 0; i < 8; i++)  {
 					setvaluator(DIAL0+i, 0,
 					  -2048-NOISE, 2047+NOISE);
 					knobs[i] = 0;
 				}
+#endif
 				continue;
 			}
 #endif
@@ -1338,19 +1347,19 @@ checkevents()  {
 #if IR_WIDGETS
 		switch( ret ) {
 		case LEFTMOUSE:
-			if (winget() == gr_id && valp[1] &&
+			if (win_focus && valp[1] &&
 			    dm_values.dv_penpress != DV_PICK )
 				dm_values.dv_penpress = DV_OUTZOOM;
 			break;
 		case MIDDLEMOUSE:
-			if (winget() == gr_id) {
+			if (win_focus) {
 				dm_values.dv_xpen = irisX2ged( (int)valp[2] );
 				dm_values.dv_ypen = irisY2ged( (int)valp[3] );
 				dm_values.dv_penpress = DV_PICK;
 			}
 			break;
 		case RIGHTMOUSE:
-			if( winget() == gr_id() &&valp[1] &&
+			if( win_focus && valp[1] && 
 			    dm_values.dv_penpress != DV_PICK )
 				dm_values.dv_penpress = DV_INZOOM;
 			break;
@@ -1362,7 +1371,8 @@ checkevents()  {
 			dmaflag = 1;
 			break;
 		case INPUTCHANGE:
-			/* Means we got or lost the keyboard.  Ignore */
+			/* Means we got or lost the input focus. */
+			win_focus = (valp[1] == gr_id);
 			break;
 		case WMREPLY:
 			/* This guy speaks, but has nothing to say */
