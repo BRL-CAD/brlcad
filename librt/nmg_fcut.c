@@ -624,7 +624,8 @@ static CONST char *nmg_wedge2_string[] = {
 	"WEDGE2_AB_IN_CD",
 	"WEDGE2_CD_IN_AB",
 	"WEDGE2_IDENTICAL",
-	"WEDGE2_AB_TOUCH_CD",
+	"WEDGE2_TOUCH_AT_BC",
+	"WEDGE2_TOUCH_AT_DA",
 	"WEDGE2_???"
 };
 #define WEDGE2_OVERLAP		-2
@@ -632,7 +633,9 @@ static CONST char *nmg_wedge2_string[] = {
 #define WEDGE2_AB_IN_CD		0
 #define WEDGE2_CD_IN_AB		1
 #define WEDGE2_IDENTICAL	2
-#define WEDGE2_AB_TOUCH_CD	3
+#define WEDGE2_TOUCH_AT_BC	3
+#define WEDGE2_TOUCH_AT_DA	4
+
 /*
  *			N M G _ C O M P A R E _ 2 _W E D G E S
  *
@@ -652,10 +655,12 @@ double	a,b,c,d;
 	int	b_in_cd = 0;
 	int	c_in_ab = 0;
 	int	d_in_ab = 0;
+	int	a_eq_b = 0;
 	int	a_eq_c = 0;
 	int	a_eq_d = 0;
 	int	b_eq_c = 0;
 	int	b_eq_d = 0;
+	int	c_eq_d = 0;
 	int	ret;
 
 #define	ANG_SMASH(_a)	{\
@@ -681,10 +686,12 @@ double	a,b,c,d;
 		d = t;
 	}
 
+	if( NEAR_ZERO( a-b, 0.01 ) )  a_eq_b = 1;
 	if( NEAR_ZERO( a-c, 0.01 ) )  a_eq_c = 1;
 	if( NEAR_ZERO( a-d, 0.01 ) )  a_eq_d = 1;
 	if( NEAR_ZERO( b-c, 0.01 ) )  b_eq_c = 1;
 	if( NEAR_ZERO( b-d, 0.01 ) )  b_eq_d = 1;
+	if( NEAR_ZERO( c-d, 0.01 ) )  c_eq_d = 1;
 
 	if( a_eq_c )  {
 		if( b_eq_d )  {
@@ -706,7 +713,23 @@ double	a,b,c,d;
 
 	if( b_eq_c )  {
 		/* Wedges touch along B-C junction */
-		ret = WEDGE2_AB_TOUCH_CD;
+		ret = WEDGE2_TOUCH_AT_BC;
+		goto out;
+	}
+
+	if( a_eq_d )  {
+		/* We know c <= d, d==a, a <= b */
+		if( b_eq_c )  {
+			ret = WEDGE2_IDENTICAL;
+			goto out;
+		}
+		if( a_eq_b )  {
+			ret = WEDGE2_AB_IN_CD;
+		} else if( c_eq_d )  {
+			ret = WEDGE2_CD_IN_AB;
+		} else {
+			ret = WEDGE2_TOUCH_AT_DA;
+		}
 		goto out;
 	}
 
@@ -745,7 +768,10 @@ out:
 		rt_log("nmg_compare_2_wedges(%g,%g, %g,%g) = %d %s\n",
 			a, b, c, d, ret, nmg_wedge2_string[ret+2] );
 	}
-	if(ret <= -2 )  rt_log("nmg_compare_2_wedges(%g,%g, %g,%g) ERROR!\n", a, b, c, d);
+	if(ret <= -2 )  {
+		rt_log("nmg_compare_2_wedges(%g,%g, %g,%g) ERROR!\n", a, b, c, d);
+		rt_bomb("nmg_compare_2_wedges() ERROR\n");
+	}
 	return ret;
 }
 
