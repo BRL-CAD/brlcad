@@ -57,7 +57,7 @@ proc mouse_get_spath { x y } {
 	    "%W selection clear 0 end; _mged_press reject; break"
 
     while {$mged_gui($id,mgs_path) == ""} {
-	mged_update
+	mged_update 0
     }
 
     return $mged_gui($id,mgs_path)
@@ -100,7 +100,7 @@ proc mouse_get_spath_and_pos { x y } {
 	    "%W selection clear 0 end; _mged_press reject; break"
 
     while {$mged_gui($id,mgs_pos) == -1} {
-	mged_update
+	mged_update 0
     }
 
     return "$mged_gui($id,mgs_path) $mged_gui($id,mgs_pos)"
@@ -162,7 +162,7 @@ proc mouse_get_comb { x y } {
 	    _mged_press reject; break"
 
     while {$mged_gui($id,mgc_comb) == ""} {
-	mged_update
+	mged_update 0
     }
 
     return $mged_gui($id,mgc_comb)
