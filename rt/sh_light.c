@@ -46,7 +46,7 @@ HIDDEN int light_setup(), light_render(), light_print();
 int light_free();
 
 struct mfuncs light_mfuncs[] = {
-	"light",	0,		0,		0,
+	"light",	0,		0,		MFI_NORMAL,
 	light_setup,	light_render,	light_print,	light_free,
 
 	(char *)0,	0,		0,
@@ -69,7 +69,8 @@ char	*dp;
 		(struct light_specific *)dp;
 	register fastf_t f, dot;
 
-	if( (dot= -VDOT( ap->a_ray.r_dir, lp->lt_aim)) < lp->lt_cosangle )  {
+	/* See if surface normal falls in light beam direction */
+	if( (dot= VDOT( lp->lt_aim, swp->sw_hit.hit_normal)) < lp->lt_cosangle )  {
 		/* dark, outside of light beam area */
 		f = lp->lt_fraction * 0.5;
 	} else {
