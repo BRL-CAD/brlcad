@@ -858,7 +858,44 @@ EOF
 	;;
 
 # For SGI IRIX, use the "swpkg" GUI tool.
-
+	# swpkg -nofork
+	# Critical note: Product Name may *not* have a "-" in it!
+	# DON'T SAY "BRL-CAD"!!!
+	# Lee established the convention of using "brlcad".
+	#
+	# On first tab (Create Product Hierarchy):
+	# Product Name = brlcad
+	# Description = "The BRL-CAD Solid Modeling System"
+	# click "< Assign"
+	# click books, click delete
+	# click relnotes, click delete
+	# click optional, click delete
+	# click "sw".
+	# Version = 5.1
+	# click "< Assign"
+	# click "man"
+	# Version = 5.1
+	# click "< Assign"
+	# Select second tab:  "Tag Files"
+	# In File Broswer box, delete "/tmp", enter "/usr/brlcad/" return.
+	# Click "All".
+	# Control-left-click on "html" and "man" to un-highlight them.
+	# click "> Add"  (watch a bazillion files go by)
+	# In "Tags" box, click on "brlcad.man.manpages".
+	# In "File Browser", click on "html", control-left-click on "man".
+	# click "> Add" (watch the manual stuff go by)
+	# Select 5th tab, "Build Product"
+	# Change "Distribution Directory" to "/var/tmp"
+	# Check off "Verbose" checkbox
+	# Click on "Build All"
+	# Click OK on "save spec"
+	# Click OK on "Save Idb"
+	# Watch files scroll by in uppermost scrolling window
+	# When done, select menu "File > Exit"
+	# Four files should have been created.  Bundle them up with:
+	# tar cvf brlcad51.tardist brlcad brlcad.idb brlcad.man brlcad.sw
+	# gzip -9 < brlcad51.tardist > brlcad51.tardist.gz
+	# crypt xyzzy < brlcad51.tardist.gz > brlcad51.tardist.gz.crypt
 
 *)
 	echo "$0: No code to make ${TARGET}, use 'help' for help"
