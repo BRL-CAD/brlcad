@@ -72,6 +72,9 @@ struct mfuncs scloud_mfuncs[] = {
 	{"scloud",	0,		0,	MFI_HIT, MFF_PROC,
 	scloud_setup,	scloud_render,	scloud_print,	scloud_free },
 
+	{"tsplat",	0,		0,	MFI_HIT, MFF_PROC,
+	scloud_setup,	tcloud_render,	scloud_print,	scloud_free },
+
 	{(char *)0,	0,		0,		0, 0,
 	0,		0,		0,		0 }
 };
@@ -105,8 +108,6 @@ struct rt_i		*rtip;
 
 	if( bu_struct_parse( matparm, scloud_parse, (char *)scloud ) < 0 )
 		return(-1);
-
-	(void)bu_struct_print( rp->reg_name, scloud_pr, (char *)scloud );
 
 	if( rdebug&RDEBUG_SHADE)
 		(void)bu_struct_print( rp->reg_name, scloud_parse, (char *)scloud );
@@ -166,6 +167,46 @@ char *cp;
 	rt_free( cp, "scloud_specific" );
 }
 
+
+
+/*
+ *	T C L O U D _ R E N D E R
+ *
+ *	Sort of a surface spot transparency shader.  Picks transparency
+ *	based upon noise value of surface spot.
+ */
+int
+tcloud_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
+{
+	register struct scloud_specific *scloud_sp =
+		(struct scloud_specific *)dp;
+	point_t in_pt;	/* point where ray enters scloud solid */
+	double  val;
+
+	RT_CHECK_PT(pp);
+	RT_AP_CHECK(ap);
+	RT_CK_REGION(pp->pt_regionp);
+
+
+	/* just shade the surface with a transparency */
+	MAT4X3PNT(in_pt, scloud_sp->xform, swp->sw_hit.hit_point);
+	val = noise_fbm(in_pt, scloud_sp->h_val,
+			scloud_sp->lacunarity, scloud_sp->octaves );
+	swp->sw_transmit = 1.0 - CLAMP(val, 0.0, 1.0);
+
+
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
+
+	return 1;
+}
+
+
+
 /*
  *	S C L O U D _ R E N D E R
  */
@@ -200,20 +241,6 @@ char	*dp;
 	RT_AP_CHECK(ap);
 	RT_CK_REGION(pp->pt_regionp);
 
-#if 0
-	/* just shade the surface with a transparency */
-	MAT4X3PNT(in_pt, scloud_sp->xform, swp->sw_hit.hit_point);
-	val = noise_fbm(in_pt, scloud_sp->h_val,
-			scloud_sp->lacunarity, scloud_sp->octaves );
-	swp->sw_transmit = 1.0 - CLAMP(val, 0.0, 1.0);
-
-/* 	VSET(swp->sw_color, val, val, val); */
-
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-		(void)rr_render( ap, pp, swp );
-
-	return 1;
-#endif
 	/* compute the ray/solid in and out points,
 	 * and transform them into "shader space" coordinates 
 	 */
@@ -229,15 +256,6 @@ char	*dp;
 	 */
 	VSUB2(v_cloud, out_pt, in_pt);
 	thickness = MAGNITUDE(v_cloud);
-
-#if 0
-	/* shade with a transparency proportional to the thickness */
-	swp->sw_transmit = exp( - scloud_sp->max_d_p_mm * thickness );
-	swp->sw_transmit = CLAMP(swp->sw_transmit, 0.0, 1.0);
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-		(void)rr_render( ap, pp, swp );
-	return 1;
-#endif
 
 	/* The noise field used by the noise_turb and noise_fbm routines
 	 * has a maximum frequency of about 1 cycle per integer step in
@@ -258,10 +276,10 @@ char	*dp;
 	model_step = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist) /
 		(double)steps;
 
-#ifdef LEELOG
-	rt_log("steps=%d  delta=%g  thickness=%g\n",
-		steps, step_delta, thickness);
-#endif
+	if( rdebug&RDEBUG_SHADE)
+		rt_log("steps=%d  delta=%g  thickness=%g\n",
+			steps, step_delta, thickness);
+
 	VUNITIZE(v_cloud);
 	VMOVE(pt, in_pt);
 	trans = 1.0;
@@ -343,3 +361,7 @@ char	*dp;
 
 	return(1);
 }
+
+
+
+
