@@ -385,6 +385,46 @@ struct rt_i	*rtip;
 }
 
 /*
+ *			R T _ V L I S T _ S O L I D
+ *
+ *  "Draw" a solid with the same kind of wireframes that MGED would display,
+ *  appending vectors to an already initialized vlist head.
+ *
+ *  Returns -
+ *	<0	failure
+ *	 0	OK
+ */
+int
+rt_vlist_solid( vhead, rtip, stp )
+struct rt_i		*rtip;
+struct soltab		*stp;
+struct bu_list		*vhead;
+{
+	struct rt_db_internal		intern;
+
+	if( rt_db_get_internal( &intern, stp->st_dp, rtip->rti_dbip, stp->st_matp ) < 0 )  {
+		bu_log("rt_vlist_solid(%s): rt_db_get_internal() failed\n",
+			stp->st_name);
+		return(-1);			/* FAIL */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
+	if( rt_functab[intern.idb_type].ft_plot(
+		vhead,
+		&intern,
+		&rtip->rti_ttol,
+		&rtip->rti_tol
+	    ) < 0 )  {
+		bu_log("rt_vlist_solid(%s): ft_plot() failure\n",
+			stp->st_name);
+		rt_db_free_internal( &intern );
+	    	return(-2);
+	}
+	rt_db_free_internal( &intern );
+	return 0;
+}
+
+/*
  *			R T _ P L O T _ S O L I D
  *
  *  Plot a solid with the same kind of wireframes that MGED would display,
@@ -403,33 +443,23 @@ struct soltab		*stp;
 {
 	struct bu_list			vhead;
 	struct region			*regp;
-	struct rt_db_internal		intern;
-	int				rnum;
 
 	RT_CK_RTI(rtip);
 	RT_CK_SOLTAB(stp);
 
 	BU_LIST_INIT( &vhead );
 
-	if( rt_db_get_internal( &intern, stp->st_dp, rtip->rti_dbip, stp->st_matp ) < 0 )  {
-		bu_log("rt_plot_solid(%s): rt_db_get_internal() failed\n",
+	if( rt_vlist_solid( vhead, rtip, stp ) < 0 )  {
+		bu_log("rt_plot_solid(%s): rt_vlist_solid() failed\n",
 			stp->st_name);
 		return(-1);			/* FAIL */
 	}
-	RT_CK_DB_INTERNAL( &intern );
 
-	if( rt_functab[intern.idb_type].ft_plot(
-		&vhead,
-		&intern,
-		&rtip->rti_ttol,
-		&rtip->rti_tol
-	    ) < 0 )  {
-		bu_log("rt_plot_solid(%s): ft_plot() failure\n",
+	if( BU_LIST_IS_EMPTY( &vhead ) )  {
+		bu_log("rt_plot_solid(%s): no vectors to plot?\n",
 			stp->st_name);
-		rt_db_free_internal( &intern );
-	    	return(-2);
+		return(-3);		/* FAIL */
 	}
-	rt_db_free_internal( &intern );
 
 	/* Take color from one region */
 	if( (regp = (struct region *)BU_PTBL_GET(&stp->st_regions,0)) != REGION_NULL )  {
@@ -439,13 +469,8 @@ struct soltab		*stp;
 			(int)(255*regp->reg_mater.ma_color[2]) );
 	}
 
-	if( BU_LIST_IS_EMPTY( &vhead ) )  {
-		bu_log("rt_plot_solid(%s): no vectors to plot?\n",
-			stp->st_name);
-		return(-3);		/* FAIL */
-	}
-
 	rt_vlist_to_uplot( fp, &vhead );
+
 	RT_FREE_VLIST( &vhead );
 	return(0);			/* OK */
 }
