@@ -26,6 +26,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <unistd.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
@@ -39,6 +40,70 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 #include "./debug.h"
+
+/*
+ *			D B _ R E A D
+ *
+ *  Reads 'count' bytes at file offset 'offset' into buffer at 'addr'.
+ *  A wrapper for the UNIX read() sys-call that takes into account
+ *  syscall semaphores, stdio-only machines, and in-memory buffering.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	failure
+ */
+/* should be HIDDEN */
+int
+db_read( dbip, addr, count, offset )
+CONST struct db_i	*dbip;
+genptr_t	addr;
+long		count;		/* byte count */
+long		offset;		/* byte offset from start of file */
+{
+	register int	got;
+	register long	s;
+
+	RT_CK_DBI(dbip);
+	if(rt_g.debug&DEBUG_DB)  {
+		bu_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
+			dbip, addr, count, offset );
+	}
+	if( count <= 0 || offset < 0 )  {
+		return(-1);
+	}
+	if( dbip->dbi_inmem )  {
+		if( offset+count > dbip->dbi_eof )  {
+			/* Attempt to read off the end of the (mapped) file */
+			bu_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
+				dbip->dbi_filename,
+				offset, count, dbip->dbi_eof );
+			return -1;
+		}
+		memcpy( addr, ((char *)dbip->dbi_inmem) + offset, count );
+		return(0);
+	}
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
+#ifdef HAVE_UNIX_IO
+	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
+		bu_log("db_read: lseek returns %d not %d\n", s, offset);
+		bu_bomb("db_read: Goodbye");
+	}
+	got = read( dbip->dbi_fd, addr, count );
+#else
+	if (fseek( dbip->dbi_fp, offset, 0 ))
+		bu_bomb("db_read: fseek error\n");
+	got = fread( addr, 1, count, dbip->dbi_fp );
+#endif
+	bu_semaphore_release( BU_SEM_SYSCALL );
+
+	if( got != count )  {
+		perror("db_read");
+		bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",
+			dbip->dbi_filename, count, got );
+		return(-1);
+	}
+	return(0);			/* OK */
+}
 
 /*
  *  			D B _ G E T M R E C
@@ -134,120 +199,6 @@ int		len;
 }
 
 /*
- *  			D B _ P U T
- *
- *  Store 'len' records to the database,
- *  "offset" granules into this entry.
- *
- *  Returns -
- *	 0	OK
- *	-1	failure
- */
-int
-db_put( dbip, dp, where, offset, len )
-CONST struct db_i	*dbip;
-CONST struct directory	*dp;
-union record	*where;
-int		offset;
-int		len;
-{
-
-	RT_CK_DBI(dbip);
-	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
-		dp->d_namep, dbip, dp, where, offset, len );
-
-	if( offset < 0 || offset+len > dp->d_len )  {
-		bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
-			dp->d_namep, offset, offset+len, dp->d_len );
-		return(-1);
-	}
-
-	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( (char *)where,
-			((char *)dp->d_un.ptr) + offset * sizeof(union record),
-			len * sizeof(union record) );
-		return 0;		/* OK */
-	}
-
-	if( dbip->dbi_read_only )  {
-		bu_log("db_put(%s):  READ-ONLY file\n",
-			dbip->dbi_filename);
-		return(-1);
-	}
-
-	if( db_write( dbip, (char *)where, (long)len * sizeof(union record),
-	    dp->d_addr + offset * sizeof(union record) ) < 0 )  {
-		return(-1);
-	}
-	return(0);
-}
-
-/*
- *			D B _ R E A D
- *
- *  Reads 'count' bytes at file offset 'offset' into buffer at 'addr'.
- *  A wrapper for the UNIX read() sys-call that takes into account
- *  syscall semaphores, stdio-only machines, and in-memory buffering.
- *
- *  Returns -
- *	 0	OK
- *	-1	failure
- */
-/* should be HIDDEN */
-int
-db_read( dbip, addr, count, offset )
-CONST struct db_i	*dbip;
-genptr_t	addr;
-long		count;		/* byte count */
-long		offset;		/* byte offset from start of file */
-{
-	register int	got;
-	register long	s;
-
-	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB)  {
-		bu_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
-			dbip, addr, count, offset );
-	}
-	if( count <= 0 || offset < 0 )  {
-		return(-1);
-	}
-	if( dbip->dbi_inmem )  {
-		if( offset+count > dbip->dbi_eof )  {
-			/* Attempt to read off the end of the (mapped) file */
-			bu_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
-				dbip->dbi_filename,
-				offset, count, dbip->dbi_eof );
-			return -1;
-		}
-		memcpy( addr, ((char *)dbip->dbi_inmem) + offset, count );
-		return(0);
-	}
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-#ifdef HAVE_UNIX_IO
-	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
-		bu_log("db_read: lseek returns %d not %d\n", s, offset);
-		bu_bomb("db_read: Goodbye");
-	}
-	got = read( dbip->dbi_fd, addr, count );
-#else
-	if (fseek( dbip->dbi_fp, offset, 0 ))
-		bu_bomb("db_read: fseek error\n");
-	got = fread( addr, 1, count, dbip->dbi_fp );
-#endif
-	bu_semaphore_release( BU_SEM_SYSCALL );
-
-	if( got != count )  {
-		perror("db_read");
-		bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",
-			dbip->dbi_filename, count, got );
-		return(-1);
-	}
-	return(0);			/* OK */
-}
-
-/*
  *			D B _ W R I T E
  *
  *  Writes 'count' bytes into at file offset 'offset' from buffer at 'addr'.
@@ -303,6 +254,58 @@ long		offset;
 	}
 	return(0);			/* OK */
 }
+
+/*
+ *  			D B _ P U T
+ *
+ *  Store 'len' records to the database,
+ *  "offset" granules into this entry.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	failure
+ */
+int
+db_put( dbip, dp, where, offset, len )
+CONST struct db_i	*dbip;
+CONST struct directory	*dp;
+union record	*where;
+int		offset;
+int		len;
+{
+
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
+	if(rt_g.debug&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
+		dp->d_namep, dbip, dp, where, offset, len );
+
+	if( offset < 0 || offset+len > dp->d_len )  {
+		bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
+			dp->d_namep, offset, offset+len, dp->d_len );
+		return(-1);
+	}
+
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( (char *)where,
+			((char *)dp->d_un.ptr) + offset * sizeof(union record),
+			len * sizeof(union record) );
+		return 0;		/* OK */
+	}
+
+	if( dbip->dbi_read_only )  {
+		bu_log("db_put(%s):  READ-ONLY file\n",
+			dbip->dbi_filename);
+		return(-1);
+	}
+
+	if( db_write( dbip, (char *)where, (long)len * sizeof(union record),
+	    dp->d_addr + offset * sizeof(union record) ) < 0 )  {
+		return(-1);
+	}
+	return(0);
+}
+
+
 
 /*
  *			D B _ G E T _ E X T E R N A L
@@ -399,7 +402,6 @@ struct db_i		*dbip;
 		return db_put_external5( ep, dp, dbip );
 
 	if( dbip->dbi_version <= 4 )  {
-		union record		*rec;
 		int	ngran;
 
 		ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);

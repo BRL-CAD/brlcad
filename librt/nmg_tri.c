@@ -100,8 +100,7 @@ struct trap {
 
 
 /* subroutine version to pass to the rt_tree functions */
-PvsV(p, v)
-struct trap *p, *v;
+int PvsV(struct trap *p, struct trap *v)
 {
 	NMG_CK_TRAP(p);
 	NMG_CK_TRAP(v);

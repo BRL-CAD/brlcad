@@ -27,6 +27,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <unistd.h>
 #include <fcntl.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -194,7 +195,7 @@ CONST char *name;
 		return(DBI_NULL);
 	}
 
-#if 1
+#if 0
 	/* Create a v5 database */
 	if( db5_fwrite_ident( fp, "Untitled v5 BRL-CAD Database", 1.0 ) < 0 )  {
 		(void)fclose(fp);

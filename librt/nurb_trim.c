@@ -69,7 +69,7 @@ int quad_table[16]  = {		/* A = 0, B = 2, C = 3 */
  * curves. If the original trimming curve is a CASE C curve then further
  * processing is required.
  */
-
+int 
 rt_uv_in_trim(trim, u,v)
 struct edge_g_cnurb * trim;
 fastf_t u, v;
@@ -154,7 +154,7 @@ fastf_t u,v;
  * the curve crosses the u,v axis a even number of times (TRIM_OUT).
  * No further processing is required.
  */
-
+int
 rt_process_caseb(trim, u, v)
 struct edge_g_cnurb * trim;
 fastf_t u, v;
@@ -440,6 +440,7 @@ fastf_t u,v;
 }
 
 /* Return the SIGN of the value */
+int
 _SIGN(f)
 fastf_t f;
 {

@@ -177,7 +177,7 @@ vo_close_tcl(clientData, interp, argc, argv)
  *
  * USAGE: v_open [name]
  */
-vo_open_tcl(clientData, interp, argc, argv)
+int vo_open_tcl(clientData, interp, argc, argv)
      ClientData      clientData;
      Tcl_Interp      *interp;
      int             argc;

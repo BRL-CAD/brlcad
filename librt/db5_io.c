@@ -890,7 +890,7 @@ db5_update_attribute( const char *obj_name, const char *aname, const char *value
  *	 0	Success
  *	-1	Fatal Error
  */
-db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
+int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 {
 	struct bu_attribute_value_set avs;
 	struct directory *dp;

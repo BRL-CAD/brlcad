@@ -293,7 +293,7 @@ struct animate	*
 db_parse_1anim( dbip, argc, argv )
 struct db_i	*dbip;
 int		argc;
-CONST char	**argv;
+const char	**argv;
 {
 	struct db_tree_state	ts;
 	struct animate		*anp;
@@ -432,11 +432,9 @@ bad:
  *  Experimental.
  *  Not the best name for this.
  */
-int
-db_parse_anim( dbip, argc, argv )
-struct db_i	*dbip;
-int		argc;
-CONST char		**argv;
+int db_parse_anim(struct db_i	*dbip,
+		int		argc,
+		const char	**argv)
 {
 	struct animate		*anp;
 	int	at_root = 0;
