@@ -35,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
 #endif
+#include <X11/extensions/XInput.h>
 #if defined(linux)
 #	undef   X_NOT_STDC_ENV
 #	undef   X_NOT_POSIX
@@ -134,13 +135,19 @@ int argc;
 char *argv[];
 {
   static int count = 0;
-  int i;
+  int i, j, k;
   int a_screen;
   int make_square = -1;
   XGCValues gcv;
   XColor a_color;
   Visual *a_visual;
   Colormap  a_cmap;
+  int ndevices;
+  int nclass = 0;
+  XDeviceInfoPtr olist, list;
+  XDevice *dev;
+  XEventClass e_class[15];
+  XInputClassInfo *cip;
   struct bu_vls str;
   struct bu_vls top_vls;
   struct bu_vls init_proc_vls;
@@ -348,6 +355,62 @@ char *argv[];
   ((struct x_vars *)dmp->dm_vars)->gc = XCreateGC(((struct x_vars *)dmp->dm_vars)->dpy,
 						  ((struct x_vars *)dmp->dm_vars)->win,
 						  (GCForeground|GCBackground), &gcv);
+
+  /*
+   * Take a look at the available input devices. We're looking
+   * for "dial+buttons".
+   */
+  olist = list =
+    (XDeviceInfoPtr)XListInputDevices(((struct x_vars *)dmp->dm_vars)->dpy,
+				      &ndevices);
+
+  if( list == (XDeviceInfoPtr)NULL ||
+      list == (XDeviceInfoPtr)1 )  goto Done;
+
+  for(j = 0; j < ndevices; ++j, list++){
+    if(list->use == IsXExtensionDevice){
+      if(!strcmp(list->name, "dial+buttons")){
+	if((dev = XOpenDevice(((struct x_vars *)dmp->dm_vars)->dpy,
+			      list->id)) == (XDevice *)NULL){
+	  Tcl_AppendResult(interp,
+			   "Glx_open: Couldn't open the dials+buttons\n",
+			   (char *)NULL);
+	  goto Done;
+	}
+
+	for(cip = dev->classes, k = 0; k < dev->num_classes;
+	    ++k, ++cip){
+	  switch(cip->input_class){
+#if IR_BUTTONS
+	  case ButtonClass:
+	    DeviceButtonPress(dev, ((struct x_vars *)dmp->dm_vars)->devbuttonpress,
+			      e_class[nclass]);
+	    ++nclass;
+	    DeviceButtonRelease(dev, ((struct x_vars *)dmp->dm_vars)->devbuttonrelease,
+				e_class[nclass]);
+	    ++nclass;
+	    break;
+#endif
+#if IR_KNOBS
+	  case ValuatorClass:
+	    DeviceMotionNotify(dev, ((struct x_vars *)dmp->dm_vars)->devmotionnotify,
+			       e_class[nclass]);
+	    ++nclass;
+	    break;
+#endif
+	  default:
+	    break;
+	  }
+	}
+
+	XSelectExtensionEvent(((struct x_vars *)dmp->dm_vars)->dpy,
+			      ((struct x_vars *)dmp->dm_vars)->win, e_class, nclass);
+	goto Done;
+      }
+    }
+  }
+Done:
+  XFreeDeviceList(olist);
 
 #ifndef CRAY2
   X_configure_window_shape(dmp);
