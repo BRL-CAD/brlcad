@@ -6,7 +6,7 @@ merge two pix(5) or bw(5) images by a formula
 .B pixmerge
 .RB [ \-glen ]
 .RB [ \-w\  bytes_wide]
-.RB [ \-c\  r/g/b]
+.RB [ \-C\  r/g/b]
 foreground.pix background.pix > out.pix
 .SH DESCRIPTION
 .I pixmerge
@@ -46,7 +46,7 @@ file format.  A width of 1 is used for processing
 .IR bw (5)
 files.  It is unclear if other widths are useful.
 If the
-.B \-c\ r/g/b
+.B \-C\ r/g/b
 option is specified, then the constant color specified by r/g/b
 is used in place of the appropriate background pixel values.
 It is expected that there will be up to
@@ -58,15 +58,15 @@ pixels greater than black (all bytes zero), which can be specified
 as:
 .br
 .ft I
-   pixmerge -g -c 0/0/0 fg.pix bg.pix
+   pixmerge -g -C 0/0/0 fg.pix bg.pix
 .ft R
 .SH EXAMPLES
 .ft I
    gencolor 200 0 200 | 
-      pixmerge -g -c 20/20/20 fg.pix - > out.pix
+      pixmerge -g -C 20/20/20 fg.pix - > out.pix
 .sp .5
    pixbackgnd -t0 160 200 |
-      pixmerge -n -c 63/0/127 fg.pix - | pix-fb
+      pixmerge -n -C 63/0/127 fg.pix - | pix-fb
 .ft R
 The second example is used to composite an
 .IR rt (1)
