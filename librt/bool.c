@@ -322,7 +322,7 @@ equal_start:
 			newpp->pt_outhit = &segp->seg_in;
 			newpp->pt_outflip = 1;
 			INSERT_PT( newpp, pp );
-			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts after p starts, ends after p ends\n");
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts after p starts, ends after p ends. Split p in two, advance.\n");
 			goto equal_start;
 		}
 
@@ -396,7 +396,13 @@ struct region			*reg2;
  *			R T _ B O O L F I N A L
  *
  *
- * For each partition, evaluate the boolean expression tree.
+ *  Consider each partition on the sorted & woven input partition list.
+ *  If the partition ends before this box's start, discard it immediately.
+ *  If the partition begins beyond this box's end, return.
+ *
+ *  Next, evaluate the boolean expression tree for all regions that have
+ *  some presence in the partition.
+ *
  * If 0 regions result, continue with next partition.
  * If 1 region results, a valid hit has occured, so transfer
  * the partition from the Input list to the Final list.
@@ -404,8 +410,35 @@ struct region			*reg2;
  * If the overlap handler gives a non-zero return, then the overlapping
  * partition is kept, with the region ID being the first one encountered.
  * Otherwise, the partition is eliminated from further consideration. 
+ *
+ *  All partitions in the indicated range of the ray are evaluated.
+ *  All partitions which really exist (booleval is true) are appended
+ *  to the Final partition list.
+ *  All partitions on the Final partition list have completely valid
+ *  entry and exit information, except for the last partition's exit
+ *  information when a_onehit>0 and a_onehit is odd.
+ *
+ *  The flag a_onehit is interpreted as follows:
+ *
+ *  If a_onehit = 0, then the ray is traced to +infinity, and all
+ *  hit points in the final partition list are valid.
+ *
+ *  If a_onehit > 0, the ray is traced through a_onehit hit points.
+ *  (Recall that each partition has 2 hit points, entry and exit).
+ *  Thus, if a_onehit is odd, the value of pt_outhit.hit_dist in
+ *  the last partition may be incorrect;  this should not mater because
+ *  the application specifically said it only wanted pt_inhit there.
+ *  This is most commonly seen when a_onehit = 1, which is useful for
+ *  lighting models.  Not having to correctly determine the exit point
+ *  can result in a significant savings of computer time.
+ *
+ *  Returns -
+ *	0	If more partitions need to be done
+ *	1	Requested number of hits are available in FinalHdp
+ *
+ *  The caller must free whatever is in both partition chains.
  */
-void
+int
 rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regionbits, ap )
 struct partition *InputHdp;
 struct partition *FinalHdp;
@@ -413,19 +446,37 @@ fastf_t startdist, enddist;
 bitv_t *regionbits;
 struct application *ap;
 {
-	register struct partition *pp;
 	LOCAL struct region *lastregion;
-	register int hitcnt;
 	LOCAL struct region *TrueRg[2];
-	register int i;
+	register struct partition *pp;
+	register int	claiming_regions;
+	register int	i;
 	struct soltab	*stp;
+	int		hits_avail = 0;
+
+#define HITS_TODO	(ap->a_onehit - hits_avail)
 
 	RT_CHECK_RTI(ap->a_rt_i);
+
+	if( enddist <= 0 )
+		return(0);		/* not done, behind start point! */
+
+	if( ap->a_onehit > 0 )  {
+		register struct partition *npp = FinalHdp->pt_forw;
+
+		for(; npp != FinalHdp; npp = npp->pt_forw )  {
+			if( npp->pt_inhit->hit_dist < 0.0 )
+				continue;
+			hits_avail += 2;	/* both in and out listed */
+		}
+		if( HITS_TODO <= 0 )
+			return(1);		/* done */
+	}
 
 	pp = InputHdp->pt_forw;
 	while( pp != InputHdp )  {
 		RT_CHECK_PT(pp);
-		hitcnt = 0;
+		claiming_regions = 0;
 		if(rt_g.debug&DEBUG_PARTITION)  {
 			rt_log("rt_boolfinal: (%g,%g)\n", startdist, enddist );
 			rt_pr_pt( ap->a_rt_i, pp );
@@ -440,28 +491,56 @@ struct application *ap;
 			rt_log("rt_boolfinal:  sorting defect!\n");
 			if( !(rt_g.debug & DEBUG_PARTITION) )
 				rt_pr_partitions( ap->a_rt_i, InputHdp, "With DEFECT" );
-			return; /* give up */
+			return(0);	/* give up */
 		}
 
-		/* If partition begins beyond current box, stop */
-		if( pp->pt_inhit->hit_dist > enddist )
-			return;
+		/*
+		 *  If partition ends before current box starts,
+		 *  discard it immediately.
+		 *  If all the solids are properly located in the space
+		 *  partitioning tree's cells, no intersection calculations
+		 *  further forward on the ray should ever produce valid
+		 *  segments or partitions earlier in the ray.
+		 *
+		 *  If partition is behind ray start point, also
+		 *  discard it.
+		 */
+		if( pp->pt_outhit->hit_dist < startdist ||
+		    pp->pt_outhit->hit_dist <= 0.001 /* milimeters */ )  {
+			register struct partition *zap_pp;
+			if(rt_g.debug&DEBUG_PARTITION)rt_log(
+				"discarding early part x%x, out dist=%g\n",
+				pp, pp->pt_outhit->hit_dist);
+			zap_pp = pp;
+			pp = pp->pt_forw;
+			DEQUEUE_PT(zap_pp);
+			FREE_PT(zap_pp, ap->a_resource);
+			continue;
+		}
 
 		/*
-		 * If partition exists entirely behind start position, or
-		 * if partition ends before current box starts,
-		 * discard it, as we should never need to look back.
+		 *  If partition begins beyond current box end,
+		 *  the state of the partition is not fully known yet,
+		 *  so stop now.
 		 */
-		if( pp->pt_outhit->hit_dist < -10.0
-		    || pp->pt_outhit->hit_dist < startdist
-		)  {
-			register struct partition *zappp;
-			if(rt_g.debug&DEBUG_PARTITION)rt_log("rt_boolfinal discarding partition x%x\n", pp);
-			zappp = pp;
-			pp = pp->pt_forw;
-			DEQUEUE_PT(zappp);
-			FREE_PT(zappp, ap->a_resource);
-			continue;
+		if( pp->pt_inhit->hit_dist > enddist )
+			return(0);
+
+		/*
+		 *  If partition ends somewhere beyond the end of the current
+		 *  box, the condition of the outhit information is not fully
+		 *  known yet.
+		 */
+		if( pp->pt_outhit->hit_dist > enddist )  {
+			if( ap->a_onehit <= 0 )
+				return(0);
+			if( HITS_TODO > 1 )
+				return(0);
+			/*  In this case, proceed as if pt_outhit was correct,
+			 *  even though it probably is not.
+			 *  Application asked for this behavior, and it
+			 *  saves having to do more ray-tracing.
+			 */
 		}
 
 		/*
@@ -515,7 +594,7 @@ struct application *ap;
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("TRUE\n");
 			}
 			/* This region claims partition */
-			if( ++hitcnt <= 1 )  {
+			if( ++claiming_regions <= 1 )  {
 				lastregion = regp;
 				continue;
 			}
@@ -541,26 +620,42 @@ struct application *ap;
 				    	/* non-zero => retain last partition */
 					if( lastregion->reg_aircode != 0 )
 						lastregion = regp;
-				    	hitcnt--;	/* now = 1 */
+				    	claiming_regions--;	/* now = 1 */
 				}
 			} else {
 				/* last region is air, replace with solid */
 				if( lastregion->reg_aircode != 0 )
 					lastregion = regp;
-				hitcnt--;		/* now = 1 */
+				claiming_regions--;		/* now = 1 */
 			}
 		}
-		if( hitcnt == 0 )  {
+		if( claiming_regions == 0 )  {
 			pp=pp->pt_forw;			/* onwards! */
 			continue;
 		}
-		if( pp->pt_outhit->hit_dist <= 0.001 /* milimeters */ )  {
-			/* partition is behind start point (k=0), ignore */
-			pp=pp->pt_forw;
+
+		if( claiming_regions > 1 )  {
+			/*
+			 *  Discard partition containing overlap.
+			 *  Nothing further along the ray will fix it.
+			 */
+			register struct partition	*zap_pp;
+
+			if(rt_g.debug&DEBUG_PARTITION)rt_log("rt_boolfinal discarding overlap partition x%x\n", pp);
+			zap_pp = pp;
+			pp = pp->pt_forw;
+			DEQUEUE_PT( zap_pp );
+			FREE_PT( zap_pp, ap->a_resource );
 			continue;
 		}
 
-		/* Add this partition to the result queue */
+		/*
+		 *  Remove this partition from the input queue, and
+		 *  append it to the result queue.
+		 *  XXX Could there be sorting trouble on final call to
+		 *  XXX boolfinal when a_onehit > 0??
+		 *  XXX No, because input queue shouldn't be interesting on 2nd visit.
+		 */
 		{
 			register struct partition *newpp;
 
@@ -568,15 +663,15 @@ struct application *ap;
 			pp=pp->pt_forw;
 			DEQUEUE_PT( newpp );
 			newpp->pt_regionp = lastregion;
-			if( hitcnt > 1 )  {
-				/* Overlapping partition, discard it.	*/
-				FREE_PT(newpp, ap->a_resource);
-			}  else if( lastregion == FinalHdp->pt_back->pt_regionp
-			         &&  rt_fdiff(	newpp->pt_inhit->hit_dist,
-					FinalHdp->pt_back->pt_outhit->hit_dist
-					) == 0
+
+			/*  See if this new partition extends the previous
+			 *  last partition, "exactly" matching.
+			 */
+			if( lastregion == FinalHdp->pt_back->pt_regionp &&
+			    rt_fdiff( newpp->pt_inhit->hit_dist,
+				FinalHdp->pt_back->pt_outhit->hit_dist ) == 0
 			)  {
-				/* Adjacent partitions, same region, so join */
+				/* same region, extend last final partition */
 				FinalHdp->pt_back->pt_outhit = newpp->pt_outhit;
 				FinalHdp->pt_back->pt_outflip = newpp->pt_outflip;
 				FinalHdp->pt_back->pt_outseg = newpp->pt_outseg;
@@ -584,24 +679,20 @@ struct application *ap;
 				newpp = FinalHdp->pt_back;
 			}  else  {
 				APPEND_PT( newpp, FinalHdp->pt_back );
+				hits_avail += 2;
 			}
 
 			RT_CHECK_SEG(newpp->pt_inseg);
 			RT_CHECK_SEG(newpp->pt_outseg);
-
-			/* Shameless efficiency hack:
-			 * If the application is for viewing only,
-			 * the first hit beyond the start point is
-			 * all we care about.
-			 */
-			if( ap->a_onehit && newpp->pt_inhit->hit_dist > 0.0 )
-				break;
-
 		}
+
+		if( ap->a_onehit > 0 && HITS_TODO <= 0 )
+			return(1);		/* done */
 	}
 	if( rt_g.debug&DEBUG_PARTITION )
 		rt_pr_partitions( ap->a_rt_i, FinalHdp, "rt_boolfinal: Partitions returned" );
-	/* Caller must free both partition chains */
+
+	return(0);			/* not done */
 }
 
 /*
@@ -878,4 +969,29 @@ register struct resource	*resp;
 			sizeof(union tree *) * resp->re_boolslen,
 			"extend boolstack" );
 	}
+}
+
+/*
+ *			R T _ P A R T I T I O N _ L E N
+ *
+ *  Return the length of a partition linked list.
+ */
+int
+rt_partition_len( partheadp )
+register struct partition	*partheadp;
+{
+	register struct partition	*pp;
+	register long	count = 0;
+
+	pp = partheadp->pt_forw;
+	if( pp == PT_NULL )
+		return(0);		/* Header not initialized yet */
+	for( ; pp != partheadp; pp = pp->pt_forw )  {
+		if( pp->pt_magic != 0 )  {
+			/* Partitions on the free queue have pt_magic = 0 */
+			RT_CHECK_PT(pp);
+		}
+		if( ++count > 1000000 )  rt_bomb("partition length > 10000000 elements\n");
+	}
+	return( (int)count );
 }

@@ -87,7 +87,6 @@ register struct application *ap;
 	AUTO fastf_t		last_bool_start;
 	AUTO union bitv_elem	*solidbits;	/* bits for all solids shot so far */
 	AUTO bitv_t		*regionbits;	/* bits for all involved regions */
-	AUTO int		trybool;
 	AUTO char		*status;
 	AUTO union cutter	*lastcut;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
@@ -101,6 +100,7 @@ register struct application *ap;
 	AUTO int		push_flag = 0;
 	double			fraction;
 	int			exponent;
+	int			end_free_len;
 
 	RT_AP_CHECK(ap);
 	if( ap->a_resource == RESOURCE_NULL )  {
@@ -263,7 +263,6 @@ register struct application *ap;
 	box_end = model_end = ap->a_ray.r_max;
 	lastcut = CUTTER_NULL;
 	last_bool_start = BACKING_DIST;
-	trybool = 0;
 	newray = ap->a_ray;		/* struct copy */
 	odist_corr = obox_start = obox_end = -99;
 
@@ -274,7 +273,6 @@ register struct application *ap;
 	 *  It is vitally important to always stay within the model RPP, or
 	 *  the space partitoning tree will pick wrong boxes & miss them.
 	 */
-RT_RESOURCE_CHECK(ap->a_resource);	/* XXX */
 	for(;;)  {
 		/*
 		 * Move newray point (not box_start)
@@ -348,7 +346,8 @@ RT_RESOURCE_CHECK(ap->a_resource);	/* XXX */
 rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 				newray.r_min, newray.r_max,
 				box_start, box_end);
-/**		     	if(rt_g.debug&DEBUG_SHOOT)  { ***/ {
+/**		     	if(rt_g.debug&DEBUG_SHOOT)  ***/
+			{
 				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
 			     	VPRINT("Point", newray.r_pt);
 				VPRINT("Dir", newray.r_dir);
@@ -446,14 +445,26 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 				seg2->seg_next = waitsegs;
 				waitsegs = newseg;
 			}
-			trybool++;	/* flag to rerun bool, below */
 			ap->a_rt_i->nhits++;
 		}
 
-		/* Special case for efficiency -- first hit only */
-		/* Only run this every three hits, to balance cost/benefit */
-		if( trybool>=3 && ap->a_onehit && waitsegs != SEG_NULL )  {
-RT_RESOURCE_CHECK(ap->a_resource);	/* XXX */
+		/*
+		 *  If a_onehit <= 0, then the ray is traced to +infinity.
+		 *
+		 *  If a_onehit > 0, then it indicates how many hit points
+		 *  (which are greater than the ray start point of 0.0)
+		 *  the application requires, ie, partitions with inhit >= 0.
+		 *  If this box yielded additional segments,
+		 *  immediately weave them into the partition list,
+		 *  and perform final boolean evaluation.
+		 *  If this results in the required number of final
+		 *  partitions, then cease ray-tracing and hand the
+		 *  partitions over to the application.
+		 *  All partitions will have valid in and out distances.
+		 */
+		if( ap->a_onehit > 0 && waitsegs != SEG_NULL )  {
+			int	done;
+
 			/* Weave these segments into partition list */
 			rt_boolweave( waitsegs, &InitialPart, ap );
 
@@ -466,16 +477,14 @@ RT_RESOURCE_CHECK(ap->a_resource);	/* XXX */
 				HeadSeg = waitsegs;
 				waitsegs = SEG_NULL;
 			}
+
 			/* Evaluate regions upto box_end */
-			rt_boolfinal( &InitialPart, &FinalPart,
+			done = rt_boolfinal( &InitialPart, &FinalPart,
 				last_bool_start, box_end, regionbits, ap );
-
-			/* If anything was found, it's a hit! */
-			if( FinalPart.pt_forw != &FinalPart )
-				goto hitit;
-
 			last_bool_start = box_end;
-			trybool = 0;
+
+			/* See if enough partitions have been acquired */
+			if( done > 0 )  goto hitit;
 		}
 
 		/* Push ray onwards to next box */
@@ -511,7 +520,7 @@ weave:
 	 *  All intersections of the ray with the model have
 	 *  been computed.  Evaluate the boolean trees over each partition.
 	 */
-	rt_boolfinal( &InitialPart, &FinalPart, BACKING_DIST,
+	(void)rt_boolfinal( &InitialPart, &FinalPart, BACKING_DIST,
 		ap->a_rt_i->rti_inf_box.bn.bn_len > 0 ? INFINITY : model_end,
 		regionbits, ap);
 
@@ -536,7 +545,32 @@ weave:
 hitit:
 	if(rt_g.debug&DEBUG_SHOOT)  rt_pr_partitions(ap->a_rt_i,&FinalPart,"a_hit()");
 
-RT_RESOURCE_CHECK(ap->a_resource);	/* XXX */
+	/*
+	 *  Before recursing, release storage for unused Initial partitions
+	 *  and segments.  Otherwise, this can amount to a source of
+	 *  persistent memory growth.
+	 */
+	{
+		register struct partition *pp;
+
+		for( pp = InitialPart.pt_forw; pp != &InitialPart;  )  {
+			register struct partition *newpp;
+			newpp = pp;
+			pp = pp->pt_forw;
+			FREE_PT(newpp, ap->a_resource);
+		}
+		InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
+	}
+	{
+		register struct seg *segp;
+
+		while( HeadSeg != SEG_NULL )  {
+			segp = HeadSeg->seg_next;
+			FREE_SEG( HeadSeg, ap->a_resource );
+			HeadSeg = segp;
+		}
+		HeadSeg = SEG_NULL;
+	}
 	ret = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
 
@@ -587,6 +621,18 @@ out:
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?",
 			status, ret);
 	}
+
+#if 0
+	/* For now, a good sanity check XXX */
+	end_free_len = rt_partition_len( &ap->a_resource->re_parthead );
+	if( ap->a_level == 0 &&
+	    ap->a_purpose && strcmp( ap->a_purpose, "main ray" ) == 0 &&
+	    end_free_len != ap->a_resource->re_partlen ) {
+		rt_log("PP free error, qlen=%d, s/b=%d (%s)\n",
+			end_free_len, ap->a_resource->re_partlen,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
+	}
+#endif
 	return( ret );
 }
 
