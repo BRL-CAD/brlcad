@@ -49,7 +49,7 @@ char *strchop();
 
 int	combdump();
 void	idendump(), polyhead(), polydata();
-void	soldump();
+void	soldump(), extrdump(), sketchdump();
 void	membdump(), arsadump(), arsbdump();
 void	materdump(), bspldump(), bsurfdump();
 void	pipe_dump(), particle_dump(), dump_pipe_segs();
@@ -154,6 +154,12 @@ top:
 	    		continue;
 	    	case ID_BSURF:
 			bsurfdump();
+	    		continue;
+	    	case DBID_SKETCH:
+	    		sketchdump();
+	    		continue;
+	    	case DBID_EXTR:
+	    		extrdump();
 	    		continue;
 	    	default:
 			(void)fprintf(stderr,
@@ -934,4 +940,111 @@ char *str;
 		return("-=STRING=-");
 	}
 	return(buf);
+}
+
+void
+extrdump()
+{
+	struct rt_extrude_internal	*extr;
+	int				ngranules;
+	char				*myname;
+	struct bu_external		ext;
+	struct rt_db_internal		intern;
+	int				i;
+
+	myname = record.extr.ex_name;
+	ngranules = bu_glong( record.extr.ex_count) + 1;
+	get_ext( &ext, ngranules );
+
+	/* Hand off to librt's import() routine */
+	if( (rt_extrude_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
+		fprintf(stderr, "g2asc: extrusion import failure\n");
+		exit(-1);
+	}
+
+	extr = (struct rt_extrude_internal *)intern.idb_ptr;
+	RT_EXTRUDE_CK_MAGIC(extr);
+
+	(void)fprintf(ofp, "%c ", DBID_EXTR );	/* e */
+	(void)fprintf(ofp, "%.16s ", name( myname ) );	/* unique name */
+	(void)fprintf(ofp, "%.16s ", name( extr->sketch_name ) );
+	(void)fprintf(ofp, "%.16s ", name( extr->curve_name ) );
+	(void)fprintf(ofp, "%d ", extr->keypoint );
+	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( extr->V ) );
+	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( extr->h ) );
+	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( extr->u_vec ) );
+	(void)fprintf(ofp, "%.12e %.12e %.12e\n", V3ARGS( extr->v_vec ) );
+}
+
+void
+sketchdump()
+{
+	struct rt_sketch_internal	*skt;
+	int				ngranules;
+	char				*myname;
+	struct bu_external		ext;
+	struct rt_db_internal		intern;
+	int				i, j;
+
+	myname = record.skt.skt_name;
+	ngranules = bu_glong( record.skt.skt_count) + 1;
+	get_ext( &ext, ngranules );
+
+	/* Hand off to librt's import() routine */
+	if( (rt_sketch_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
+		fprintf(stderr, "g2asc: sketch import failure\n");
+		exit( -1 );
+	}
+
+	skt = (struct rt_sketch_internal *)intern.idb_ptr;
+	RT_SKETCH_CK_MAGIC( skt );
+	(void)fprintf(ofp, "%c ", DBID_SKETCH ); /* d */
+	(void)fprintf(ofp, "%.16s ", name( myname ) );  /* unique name */
+	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->V ) );
+	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->u_vec ) );
+	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->v_vec ) );
+	(void)fprintf(ofp, "%d %d\n ", skt->vert_count, skt->curve_count );
+	for( i=0 ; i<skt->vert_count ; i++ )
+		(void)fprintf(ofp, "%.12e %.12e ", V2ARGS( skt->verts[i] ) );
+	(void)fprintf(ofp, "\n" );
+	for( i=0 ; i<skt->curve_count ; i++ )
+	{
+		struct curve *crv;
+
+		crv = &skt->curves[i];
+		(void)fprintf(ofp, " %.16s %d\n", name( crv->crv_name ), crv->seg_count );
+		for( j=0 ; j<crv->seg_count ; j++ )
+		{
+			long *lng;
+			struct line_seg *lsg;
+			struct carc_seg *csg;
+			struct nurb_seg *nsg;
+			int k;
+
+			lng = (long *)crv->segments[j];
+			switch( *lng )
+			{
+				case CURVE_LSEG_MAGIC:
+					lsg = (struct line_seg *)lng;
+					(void)fprintf(ofp, "  L %d %d %d\n", crv->reverse[j], lsg->start, lsg->end );
+					break;
+				case CURVE_CARC_MAGIC:
+					csg = (struct carc_seg *)lng;
+					(void)fprintf(ofp, "  A %d %d %d %.12e %d %d\n", crv->reverse[j], csg->start, csg->end,
+						csg->radius, csg->center_is_left, csg->orientation );
+					break;
+				case CURVE_NURB_MAGIC:
+					nsg = (struct nurb_seg *)lng;
+					(void)fprintf(ofp, "  N %d %d %d %d %d\n   ", crv->reverse[j], nsg->order, nsg->pt_type,
+						nsg->k.k_size, nsg->c_size );
+					for( k=0 ; k<nsg->k.k_size ; k++ )
+						(void)fprintf(ofp, " %.12e", nsg->k.knots[k] );
+					(void)fprintf(ofp, "\n   " );
+					for( k=0 ; k<nsg->c_size ; k++ )
+						(void)fprintf(ofp, " %d", nsg->ctl_points[k] );
+					(void)fprintf(ofp, "\n" );
+					break;
+			}
+		}
+	}
 }
