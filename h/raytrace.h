@@ -110,7 +110,8 @@ struct soltab {
 	fastf_t		st_aradius;	/* Radius of APPROXIMATING sphere */
 	fastf_t		st_bradius;	/* Radius of BOUNDING sphere */
 	int		*st_specific;	/* -> ID-specific (private) struct */
-	struct soltab	*st_forw;	/* Linked list of solids */
+	struct soltab	*st_forw;	/* Forward linked list of solids */
+	struct soltab	*st_back;	/* Backward links */
 	char		*st_name;	/* Leaf name of solid */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
@@ -322,7 +323,7 @@ union cutter  {
 	struct cutnode  {
 		char	cn_type;
 		char	cn_axis;	/* 0,1,2 = cut along X,Y,Z */
-		fastf_t	cn_point;	/* cut through axis==point */
+		long	cn_point;	/* cut through axis==point */
 		union cutter *cn_l;	/* val < point */
 		union cutter *cn_r;	/* val >= point */
 	} cn;
