@@ -214,7 +214,7 @@ char	*argv[];
 	cm_save_needed = 1;
 	if( fb_rmap( fbp, &cmap ) == -1 )
 		cm_save_needed = 0;
-	if( cm_save_needed && is_linear_cmap( &cmap ) )
+	if( cm_save_needed && fb_is_linear_cmap( &cmap ) )
 		cm_save_needed = 0;
 	if( crunch && (cm_save_needed == 0) )
 		crunch = 0;
