@@ -606,19 +606,29 @@ struct combined_tree_state	**region_start_statepp;
 	switch( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-		if( db_apply_state_from_memb( &memb_state, pathp, tp ) < 0 )
-			return;		/* error? */
+		if( db_apply_state_from_memb( &memb_state, pathp, tp ) < 0 )  {
+			/* Lookup of this leaf failed, NOP it out. */
+			if( tp->tr_l.tl_mat )  {
+				rt_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+				tp->tr_l.tl_mat = NULL;
+			}
+			rt_free( tp->tr_l.tl_name, "tl_name" );
+			tp->tr_l.tl_name = NULL;
+			tp->tr_op = OP_NOP;
+			return;
+		}
 
 		/* Recursive call */
 		if( (subtree = db_recurse( &memb_state, pathp, region_start_statepp )) != TREE_NULL )  {
-			union tree	tmp;
+			union tree	*tmp;
 
 			/* graft subtree on in place of 'tp' leaf node */
 			/* exchange what subtree and tp point at */
+			BU_GETUNION(tmp, tree);
 			RT_CK_TREE(subtree);
-			tmp = *tp;	/* struct copy */
+			*tmp = *tp;	/* struct copy */
 			*tp = *subtree;	/* struct copy */
-			db_free_tree( &tmp );
+			db_free_tree( tmp );
 			RT_CK_TREE(tp);
 		}
 		DB_FULL_PATH_POP(pathp);
