@@ -110,7 +110,7 @@ unsigned char			*pixexpendable;
 		register int	x, y;
 		int		cnt;
 #if DEBUG_CELLFB
-	bu_log( "paintCellFb: expendable {%d,%d,%d}\n",
+	brst_log( "paintCellFb: expendable {%d,%d,%d}\n",
 		pixexpendable[RED],
 		pixexpendable[GRN],
 		pixexpendable[BLU] );
@@ -134,7 +134,7 @@ unsigned char			*pixexpendable;
 				)
 				{
 #if DEBUG_CELLFB
-				bu_log( "Clobbering:<%d,%d>{%d,%d,%d}\n",
+				brst_log( "Clobbering:<%d,%d>{%d,%d,%d}\n",
 					x, y,
 					pixbuf[x-gxorg][RED],
 					pixbuf[x-gxorg][GRN],
@@ -144,7 +144,7 @@ unsigned char			*pixexpendable;
 				}
 #if DEBUG_CELLFB
 			else
-				bu_log( "Preserving:<%d,%d>{%d,%d,%d}\n",
+				brst_log( "Preserving:<%d,%d>{%d,%d,%d}\n",
 					x, y,
 					pixbuf[x-gxorg][RED],
 					pixbuf[x-gxorg][GRN],
@@ -155,7 +155,7 @@ unsigned char			*pixexpendable;
 		(void) fb_write( fbiop, gxorg, y, (unsigned char *)pixbuf, cnt );
 		bu_semaphore_release( RT_SEM_STATS );
 #if DEBUG_CELLFB
-		bu_log( "paintCellFb: fb_write(%d,%d)\n", x, y );
+		brst_log( "paintCellFb: fb_write(%d,%d)\n", x, y );
 #endif
 		}
 	return;
@@ -169,7 +169,7 @@ register struct application	*ap;
 		int err;
 		fastf_t	celldist;
 #if DEBUG_SPALLFB
-	bu_log( "paintSpallFb: a_x=%d a_y=%d a_cumlen=%g cellsz=%g zoom=%d\n",
+	brst_log( "paintSpallFb: a_x=%d a_y=%d a_cumlen=%g cellsz=%g zoom=%d\n",
 		ap->a_x, ap->a_y, ap->a_cumlen, cellsz, zoom );
 #endif
 	pixel[RED] = ap->a_color[RED] * 255;
@@ -185,10 +185,10 @@ register struct application	*ap;
 	err = fb_write( fbiop, x, y, pixel, 1 );
 	bu_semaphore_release( RT_SEM_STATS );
 #if DEBUG_SPALLFB
-	bu_log( "paintSpallFb:gridhor=<%g,%g,%g> gridver=<%g,%g,%g>\n",
+	brst_log( "paintSpallFb:gridhor=<%g,%g,%g> gridver=<%g,%g,%g>\n",
 		gridhor[X], gridhor[Y], gridhor[Z],
 		gridver[X], gridver[Y], gridver[Z] );
-	bu_log( "paintSpallFb:fb_write(x=%d,y=%d,pixel={%d,%d,%d})\n",
+	brst_log( "paintSpallFb:fb_write(x=%d,y=%d,pixel={%d,%d,%d})\n",
 		x, y,
 		(int) pixel[RED],
 		(int) pixel[GRN],
@@ -196,7 +196,7 @@ register struct application	*ap;
 		);
 #endif
 	if( err == -1 )
-		bu_log( "Write failed to pixel <%d,%d> from cell <%d,%d>.\n",
+		brst_log( "Write failed to pixel <%d,%d> from cell <%d,%d>.\n",
 			x, y, ap->a_x, ap->a_y );
 	return;
 	}

@@ -28,7 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./Sc.h"
 #include "./Hm.h"
 #include "./Mm.h"
-#define ErLog	bu_log
+#define ErLog	brst_log
 #if __STDC__
 extern void	exit( int s );
 extern unsigned alarm( unsigned s );
