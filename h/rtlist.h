@@ -272,4 +272,20 @@ struct rt_list {
 /* compat */
 #define RT_LIST_PLAST_CIRC(structure,p)	RT_LIST_PPREV_CIRC(structure,p)
 
+/*
+ *  Support for membership on multiple linked lists.
+ *
+ *  When a structure of type '_type' contains more than one rt_list structure
+ *  within it (such as the NMG edgeuse), this macro can be used to convert
+ *  a pointer '_ptr2' to a "midway" rt_list structure (an element called
+ *  '_name2' in structure '_type') back into a pointer to the overall
+ *  enclosing structure.  Examples:
+ *
+ *  eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
+ *
+ *  eu1 = RT_LIST_MAIN_PTR(edgeuse, RT_LIST_FIRST(rt_list, &eg1->eu_hd2), l2);
+ */  
+#define RT_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
+	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
+
 #endif /* SEEN_RTLIST_H */
