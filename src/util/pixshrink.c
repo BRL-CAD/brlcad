@@ -115,8 +115,6 @@ void write_image(int Width, int Height, unsigned char *buffer)
 }
 
 /*	S H R I N K _ I M A G E
- *
- *	
  */
 void
 shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor)

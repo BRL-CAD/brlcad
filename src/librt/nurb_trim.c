@@ -34,8 +34,6 @@
  * 	Aberdeen Proving Ground, Maryland 21005
  * 
  * Date: Mon June 1, 1992
- * 
- * 
  */
 #ifndef lint
 static const char rcs_ident[] = "$Header$";

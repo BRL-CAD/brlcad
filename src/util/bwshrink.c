@@ -63,8 +63,6 @@ char *progname = "(noname)";
 char *filename = "(stdin)";
 
 /*	S H R I N K _ I M A G E
- *
- *	
  */
 void
 shrink_image(int w, int h, unsigned char *buffer, int Factor)

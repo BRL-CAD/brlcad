@@ -1514,8 +1514,6 @@ struct bu_observer {
 #define BU_OBSERVER_NULL	((struct bu_observer *)0)
 
 /*			B U _ C M D T A B
- *
- *
  */
 struct bu_cmdtab {
   char *ct_name;

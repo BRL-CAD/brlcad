@@ -546,8 +546,6 @@ dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 }
 
 /*	D S P _ P R I N T _ V 5
- *
- *
  */
 static void
 dsp_print_v5(struct bu_vls *vls,

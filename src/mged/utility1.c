@@ -144,8 +144,6 @@ reg_compare( const void *p1, const void *p2 )
  *	F _ E D C O D E S ( )
  *
  *		control routine for editing region ident codes
- *
- *
  */
 int
 f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)

@@ -97,8 +97,6 @@ extern BU_FILE			bu_iob[1];
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
- *
  */
 static const char RCSrtstring[] = "@(#)$Header$ (BRL)";
 

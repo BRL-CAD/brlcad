@@ -141,8 +141,6 @@ typedef struct {
  *
  * 
  *
- *
- * 
  */
 
 #define GLXWIN_BOUND 1

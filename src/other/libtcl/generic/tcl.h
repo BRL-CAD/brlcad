@@ -289,8 +289,6 @@ extern "C" {
  * If we don't replicate it here, then <windows.h> can't be included 
  * after tcl.h, since tcl.h also defines VOID.
  * This block is skipped under Cygwin and Mingw.
- * 
- * 
  */
 #if defined(__WIN32__) && !defined(HAVE_WINNT_IGNORE_VOID)
 #ifndef VOID
