@@ -178,7 +178,10 @@ static char idmap[] = {
 
 HIDDEN char *rt_path_str();
 
-static struct mater_info rt_no_mater;
+static struct mater_info rt_no_mater = {
+	1.0, 1.0, 1.0,		/* color, RGB */
+	0			/* override */
+};
 
 /*
  *  			R T _ G E T _ T R E E
@@ -276,7 +279,7 @@ matp_t		mat;
 	if( ! NEAR_ZERO(fx, 0.0001) ||
 	    ! NEAR_ZERO(fy, 0.0001) ||
 	    ! NEAR_ZERO(fz, 0.0001) )  {
-		rt_log("rt_add_solid(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%f, Y.Z=%f, X.Z=%f\n",
+		rt_log("rt_add_solid(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
 			name, fx, fy, fz );
 		mat_print("bad matrix", mat);
 		return( SOLTAB_NULL );		/* BAD */
@@ -368,8 +371,8 @@ next_one: ;
 		rt_log("-------------- %s (bit %d) -------------\n",
 			stp->st_name, stp->st_bit );
 		VPRINT("Bound Sph CENTER", stp->st_center);
-		rt_log("Approx Sph Radius = %f\n", stp->st_aradius);
-		rt_log("Bounding Sph Radius = %f\n", stp->st_bradius);
+		rt_log("Approx Sph Radius = %g\n", stp->st_aradius);
+		rt_log("Bounding Sph Radius = %g\n", stp->st_bradius);
 		VPRINT("Bound RPP min", stp->st_min);
 		VPRINT("Bound RPP max", stp->st_max);
 		rt_functab[stp->st_id].ft_print( stp );
@@ -498,9 +501,9 @@ struct mater_info *materp;
 		} else {
 			if( rec.c.c_override == 1 )  {
 				curmater.ma_override = 1;
-				curmater.ma_rgb[0] = rec.c.c_rgb[0];
-				curmater.ma_rgb[1] = rec.c.c_rgb[1];
-				curmater.ma_rgb[2] = rec.c.c_rgb[2];
+				curmater.ma_color[0] = rec.c.c_rgb[0]/255.;
+				curmater.ma_color[1] = rec.c.c_rgb[1]/255.;
+				curmater.ma_color[2] = rec.c.c_rgb[2]/255.;
 			}
 			if( rec.c.c_matname[0] != '\0' )  {
 				strncpy( curmater.ma_matname, rec.c.c_matname, sizeof(rec.c.c_matname) );
@@ -876,9 +879,9 @@ register struct region *rp;
 		rp->reg_gmater, rp->reg_los );
 	if( rp->reg_mater.ma_override == 1 )
 		rt_log("Color %d %d %d\n",
-			rp->reg_mater.ma_rgb[0],
-			rp->reg_mater.ma_rgb[1],
-			rp->reg_mater.ma_rgb[2] );
+			(int)rp->reg_mater.ma_color[0]*255.,
+			(int)rp->reg_mater.ma_color[1]*255.,
+			(int)rp->reg_mater.ma_color[2]*255. );
 	if( rp->reg_mater.ma_matname[0] != '\0' )
 		rt_log("Material '%s' '%s'\n",
 			rp->reg_mater.ma_matname,
@@ -1147,7 +1150,7 @@ register union tree *tp;
 	rtip->HeadRegion = regp;
 
 	/* Determine material properties */
-	regp->reg_mfuncs = MF_NULL;
+	regp->reg_mfuncs = (char *)0;
 	regp->reg_udata = (char *)0;
 	if( regp->reg_mater.ma_override == 0 )
 		rt_region_color_map(regp);
