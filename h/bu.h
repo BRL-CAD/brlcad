@@ -87,6 +87,32 @@ extern char	*realloc();
 #endif
 
 /*
+ *			B U _ F O R T R A N
+ *
+ *  This macro is used to take the 'C' function name,
+ *  and convert it at compile time to the
+ *  FORTRAN calling convention used for this particular system.
+ *
+ *  Both lower-case and upper-case alternatives have to be provided
+ *  because there is no way to get the C preprocessor to change the
+ *  case of a token.
+ */
+#if CRAY
+#	define	BU_FORTRAN(lc,uc)	uc
+#endif
+#if defined(apollo) || defined(mips) || defined(aux)
+	/* Lower case, with a trailing underscore */
+#ifdef __STDC__
+#	define	BU_FORTRAN(lc,uc)	lc ## _
+#else
+#	define	BU_FORTRAN(lc,uc)	lc/**/_
+#endif
+#endif
+#if !defined(BU_FORTRAN)
+#	define	BU_FORTRAN(lc,uc)	lc
+#endif
+
+/*
  * Handy memory allocator macro
  */
 
