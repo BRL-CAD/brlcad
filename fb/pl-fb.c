@@ -163,7 +163,7 @@ STATIC struct
 	}	space;	 		/* plot scale data */
 
 struct	relvect {
-	char	x,y;			/* x, y values (255,255 is end) */
+	short	x,y;			/* x, y values (255,255 is end) */
 };
 
 #define	END	-1,-1			/* end of stroke description */
