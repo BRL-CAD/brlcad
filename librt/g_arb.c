@@ -36,9 +36,10 @@ struct plane_specific  {
 	vect_t	pl_Xbasis;		/* X (B-A) vector (for 2d coords) */
 	vect_t	pl_Ybasis;		/* Y (C-A) vector (for 2d coords) */
 	vect_t	pl_N;			/* Unit-length Normal (outward) */
-	float	pl_NdotA;		/* Normal dot A */
-	float	pl_2d_x[MAXPTS];	/* X 2d-projection of points */
-	float	pl_2d_y[MAXPTS];	/* Y 2d-projection of points */
+	fastf_t	pl_NdotA;		/* Normal dot A */
+	fastf_t	pl_2d_x[MAXPTS];	/* X 2d-projection of points */
+	fastf_t	pl_2d_y[MAXPTS];	/* Y 2d-projection of points */
+	fastf_t	pl_2d_com[MAXPTS];	/* pre-computed common-term */
 	struct plane_specific *pl_forw;	/* Forward link */
 	char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
 };
@@ -55,12 +56,13 @@ matp_t mat;
 	register float *op;		/* Used for scanning vectors */
 	static float xmax, ymax, zmax;	/* For finding the bounding spheres */
 	static float xmin, ymin, zmin;	/* For finding the bounding spheres */
-	static float dx, dy, dz;	/* For finding the bounding spheres */
+	static fastf_t dx, dy, dz;	/* For finding the bounding spheres */
 	static vect_t	work;		/* Vector addition work area */
 	static vect_t	homog;		/* Vect/Homog.Vect conversion buf */
 	static int	faces;		/* # of faces produced */
-	static float	scale;		/* width across widest axis */
+	static fastf_t	scale;		/* width across widest axis */
 	static int	i;
+	static vect_t	V;		/* vertex */
 
 	/* init maxima and minima */
 	xmax = ymax = zmax = -INFINITY;
@@ -74,14 +76,15 @@ matp_t mat;
 	 * Convert from vector to point notation in place
 	 * by rotating vectors and adding base vector.
 	 */
-	vtoh_move( homog, sp->s_values );
+	VMOVE( V, sp->s_values );	/* cvt to fastf_t */
+	vtoh_move( homog, V );
 	matXvec( work, mat, homog );
-	htov_move( sp->s_values, work );		/* divide out W */
+	htov_move( V, work );		/* divide out W */
 
 	op = &sp->s_values[1*3];
 	for( i=1; i<8; i++ )  {
 		MAT3XVEC( homog, mat, op );
-		VADD2( op, sp->s_values, homog );
+		VADD2( op, V, homog );
 		op += 3;
 	}
 
@@ -135,6 +138,7 @@ int a, b, c, d;
 {
 	register struct plane_specific *plp;
 	register int pts;
+	register int i;
 
 	GETSTRUCT( plp, plane_specific );
 	plp->pl_npts = 0;
@@ -149,6 +153,17 @@ int a, b, c, d;
 	}
 	/* Make the 2d-point list contain the origin as start+end */
 	plp->pl_2d_x[plp->pl_npts] = plp->pl_2d_y[plp->pl_npts] = 0.0;
+
+	/* Compute the common sub-expression for inside() */
+	for( i=0; i < pts; i++ )  {
+		static fastf_t f;
+		f = (plp->pl_2d_y[i+1] - plp->pl_2d_y[i]);
+		if( NEAR_ZERO(f) )
+			plp->pl_2d_com[i] = 0.0;	/* anything */
+		else
+			plp->pl_2d_com[i] =
+				(plp->pl_2d_x[i+1] - plp->pl_2d_x[i]) / f;
+	}
 
 	/* Add this face onto the linked list for this solid */
 	plp->pl_forw = (struct plane_specific *)stp->st_specific;
@@ -166,7 +181,7 @@ register struct plane_specific *plp;
 int a;
 {
 	register int i;
-	register pointp_t point;
+	register float *point;
 	static vect_t work;
 	static vect_t P_A;		/* new point - A */
 	static float f;
@@ -206,17 +221,17 @@ int a;
 		VCROSS( plp->pl_N, plp->pl_Xbasis, P_A );
 		VUNITIZE( plp->pl_N );
 
-		/* Extra checking:  test for outward normal direction */
+		/*
+		 *  For some reason, some (but not all) of the normals
+		 *  come out pointing inwards.  Rather than try to understand
+		 *  this, I'm just KLUDGEING it for now, because we have
+		 *  enough information to fix it up.  1000 pardons.
+		 */
 		VSUB2( work, plp->pl_A, stp->st_center );
 		f = VDOT( work, plp->pl_N );
 		if( f < 0.0 )  {
-			printf("WARNING: arb8(%s) face %s has bad normal!  (A-cent).N=%f\n", stp->st_name, plp->pl_code, f);
-			VPRINT("(A-cent)", work);
-			VPRINT("N", plp->pl_N);
-			/* HACK HACK HACK -- "fix" normal */
-			plp->pl_N[0] = - plp->pl_N[0];
-			plp->pl_N[1] = - plp->pl_N[1];
-			plp->pl_N[2] = - plp->pl_N[2];
+/**			printf("WARNING: arb8(%s) face %s has bad normal!  (A-cent).N=%f\n", stp->st_name, plp->pl_code, f); * */
+			VREVERSE(plp->pl_N, plp->pl_N);	/* "fix" normal */
 		}
 		/* Generate an arbitrary Y basis perp to Xbasis & Normal */
 		VCROSS( plp->pl_Ybasis, plp->pl_N, plp->pl_Xbasis );
@@ -285,7 +300,7 @@ register struct soltab *stp;
 struct seg *
 arb8_shot( stp, rp )
 struct soltab *stp;
-struct ray *rp;
+register struct ray *rp;
 {
 	register struct plane_specific *plp =
 		(struct plane_specific *)stp->st_specific;
@@ -298,8 +313,9 @@ struct ray *rp;
 	flags = 0;
 	/* consider each face */
 	for( ; plp; plp = plp->pl_forw )  {
-		register float dn;	/* Direction dot Normal */
-		static float k;		/* (NdotA - (N dot P))/ (N dot D) */
+		FAST fastf_t dn;		/* Direction dot Normal */
+		static fastf_t k;	/* (NdotA - (N dot P))/ (N dot D) */
+		FAST fastf_t f;
 		/*
 		 *  Ray Direction dot N.  (N is outward-pointing normal)
 		 */
@@ -314,7 +330,8 @@ struct ray *rp;
 
 		if( dn < 0 )  {
 			/* Entering solid */
-			if( NEAR_ZERO( k - in.hit_dist ) )  {
+			f = k - in.hit_dist;
+			if( NEAR_ZERO( f ) )  {
 				if( debug & DEBUG_ARB8)printf("skipping nearby entry surface, k=%f\n", k);
 				continue;
 			}
@@ -324,7 +341,8 @@ struct ray *rp;
 			flags |= SEG_IN;
 		} else {
 			/* Exiting solid */
-			if( NEAR_ZERO( k - out.hit_dist ) )  {
+			f = k - out.hit_dist;
+			if( NEAR_ZERO( f ) )  {
 				if( debug & DEBUG_ARB8)printf("skipping nearby exit surface, k=%f\n", k);
 				continue;
 			}
@@ -345,11 +363,11 @@ struct ray *rp;
 	}
 
 	/* SEG_OUT, or SEG_IN|SEG_OUT */
-	GETSTRUCT(segp, seg);
+	GET_SEG(segp);
 	segp->seg_stp = stp;
 	segp->seg_flag = flags;
-	segp->seg_in = in;
-	segp->seg_out = out;
+	segp->seg_in = in;		/* struct copy */
+	segp->seg_out = out;		/* struct copy */
 	return(segp);			/* HIT */
 }
 
@@ -357,13 +375,14 @@ pl_shot( plp, rp, hitp, k )
 register struct plane_specific *plp;
 register struct ray *rp;
 register struct hit *hitp;
-register float	k;			/* dist along ray */
+double	k;			/* dist along ray */
 {
 	static vect_t	hit_pt;		/* ray hits solid here */
 	static vect_t	work;
-	static float	xt, yt;
+	FAST fastf_t	xt, yt;
 
 	VCOMPOSE1( hit_pt, rp->r_pt, k, rp->r_dir );
+	/* Project the hit point onto the plane, making this a 2-d problem */
 	VSUB2( work, hit_pt, plp->pl_A );
 	xt = VDOT( work, plp->pl_Xbasis );
 	yt = VDOT( work, plp->pl_Ybasis );
@@ -372,7 +391,11 @@ register float	k;			/* dist along ray */
 		printf("k = %f, xt,yt=(%f,%f), ", k, xt, yt );
 		VPRINT("hit_pt", hit_pt);
 	}
-	if( !inside( xt, yt, plp->pl_2d_x, plp->pl_2d_y, plp->pl_npts ) )
+	if( !inside(
+		&xt, &yt,
+		plp->pl_2d_x, plp->pl_2d_y, plp->pl_2d_com,
+		plp->pl_npts )
+	)
 		return(1);			/* MISS */
 
 	/* Hit is within planar face */
@@ -408,24 +431,25 @@ register float	k;			/* dist along ray */
  *	Douglas A. Gwyn (Algorithm, original FORTRAN subroutine)
  *	Michael Muuss (This "C" routine)
  */
-inside( xt, yt, x, y, n )
-register float xt, yt;
-register float *x, *y;
+inside( xt, yt, x, y, com, n )
+register fastf_t *xt, *yt;
+register fastf_t *x, *y, *com;
 int n;
 {
-	register float *xend = &x[n];
+	register fastf_t *xend;
 	static int ret;
 
 	/*
 	 * Starts with 0 intersections, an even number ==> outside.
 	 * Proceed around the polygon, testing each side for intersection.
 	 */
-	for( ret=0; x < xend; x++,y++ )  {
+	xend = &x[n];
+	for( ret=0; x < xend; x++,y++,com++ )  {
 		/* See if edge is crossed by horiz line through test point */
-		if( (yt  > *y || yt <= y[1])  &&  (yt <= *y || yt >  y[1]) )
+		if( (*yt > *y || *yt <= y[1])  &&  (*yt <= *y || *yt > y[1]) )
 			continue;
 		/* Yes.  See if intersection is to the right of test point */
-		if( (xt - *x - (yt - *y) * (x[1] - *x) / (y[1] - *y)) < 0.0 )
+		if( (*xt - *x) < (*yt-*y) * (*com) )
 			ret = !ret;
 	}
 	return(ret);
