@@ -28,7 +28,6 @@
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "db.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./ged.h"
@@ -690,8 +689,8 @@ static struct db_tree_state push_initial_tree_state = {
 		/* struct mater_info ts_mater */
 		1.0, 0.0, 0.0,	/* color, RGB */
 		0,		/* override */
-		DB_INH_LOWER,	/* color inherit */
-		DB_INH_LOWER,	/* mater inherit */
+		0,		/* color inherit */
+		0,		/* mater inherit */
 #if 0
 		""		/* shader */
 #else

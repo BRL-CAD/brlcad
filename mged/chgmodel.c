@@ -51,7 +51,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "bn.h"
 #include "externs.h"
-#include "db.h"			/* Needed for ID_MM_UNIT only */
 #include "nmg.h"
 #include "nurb.h"
 #include "raytrace.h"

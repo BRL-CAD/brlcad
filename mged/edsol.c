@@ -45,7 +45,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
@@ -83,7 +82,9 @@ static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
 static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 
 void pscale();
+#if 0
 void	calc_planes();
+#endif
 void update_edit_absolute_tran();
 void set_e_axes_pos();
 vect_t e_axes_pos;
@@ -2011,46 +2012,6 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
   }
 }
 
-
-/* 	CALC_PLANES()
- *		calculate the plane (face) equations for an arb
- *		in solidrec pointed at by sp
- * XXX replaced by rt_arb_calc_planes()
- */
-void
-calc_planes( sp, type )
-struct solidrec *sp;
-int type;
-{
-	struct solidrec temprec;
-	register int i, p1, p2, p3;
-
-	/* find the plane equations */
-	/* point notation - use temprec record */
-	VMOVE( &temprec.s_values[0], &sp->s_values[0] );
-	for(i=3; i<=21; i+=3) {
-		VADD2( &temprec.s_values[i], &sp->s_values[i], &sp->s_values[0] );
-	}
-	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
-	for(i=0; i<6; i++) {
-		if(arb_faces[type][i*4] == -1)
-			break;	/* faces are done */
-		p1 = arb_faces[type][i*4];
-		p2 = arb_faces[type][i*4+1];
-		p3 = arb_faces[type][i*4+2];
-		if(planeqn(i, p1, p2, p3, &temprec)) {
-		  struct bu_vls tmp_vls;
-
-		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "No eqn for face %d%d%d%d\n",
-				p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
-		  return;
-		}
-	}
-}
-
 /*
  *			I N I T _ S E D I T
  *
@@ -2270,45 +2231,6 @@ sedit_menu()  {
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
 	es_menu = 0;
-}
-
-/* 			C A L C _ P N T S (  )
- * XXX replaced by rt_arb_calc_points() in facedef.c
- *
- * Takes the array es_peqn[] and intersects the planes to find the vertices
- * of a GENARB8.  The vertices are stored in the solid record 'old_srec' which
- * is of type 'type'.  If intersect fails, the points (in vector notation) of
- * 'old_srec' are used to clean up the array es_peqn[] for anyone else. The
- * vertices are put in 'old_srec' in vector notation.  This is an analog to
- * calc_planes().
- */
-void
-calc_pnts( old_srec, type )
-struct solidrec *old_srec;
-int type;
-{
-	struct solidrec temp_srec;
-	short int i;
-
-	/* find new points for entire solid */
-	for(i=0; i<8; i++){
-	  /* use temp_srec until we know intersect doesn't fail */
-	  if( intersect(type,i*3,i,&temp_srec) ){
-	    Tcl_AppendResult(interp, "Intersection of planes fails\n", (char *)NULL);
-	    /* clean up array es_peqn for anyone else */
-	    calc_planes( old_srec, type );
-	    return;				/* failure */
-	  }
-	}
-
-	/* back to vector notation */
-	VMOVE( &old_srec->s_values[0], &temp_srec.s_values[0] );
-	for(i=3; i<=21; i+=3){
-		VSUB2(	&old_srec->s_values[i],
-			&temp_srec.s_values[i],
-			&temp_srec.s_values[0]  );
-	}
-	return;						/* success */
 }
 
 int

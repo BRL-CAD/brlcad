@@ -41,7 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
-#include "db.h"
 #include "raytrace.h"
 #include "externs.h"
 #include "rtgeom.h"
@@ -415,30 +414,6 @@ err:
 	return(1);		/* BAD */
 }
 
-/*   PLANEQN:
- *	finds equation of a plane defined by 3 points use1,use2,use3
- *	of solid record sp.  Equation is stored at "loc" of es_peqn
- *	array.
- *
- *  Returns -
- *	 0	success
- *	-1	failure
- */
-int
-planeqn(loc, use1, use2, use3, sp)
-int loc, use1, use2, use3;
-struct solidrec *sp;
-{
-	vect_t	a,b,c;
-
-	/* XXX This converts data types as well! */
-	VMOVE( a, &sp->s_values[use1*3] );
-	VMOVE( b, &sp->s_values[use2*3] );
-	VMOVE( c, &sp->s_values[use3*3] );
-
-	return( bn_mk_plane_3pts( es_peqn[loc], a, b, c, &mged_tol ) );
-}
-
 /* planes to define ARB vertices */
 CONST int rt_arb_planes[5][24] = {
 	{0,1,3, 0,1,2, 0,2,3, 0,1,3, 1,2,3, 1,2,3, 1,2,3, 1,2,3},	/* ARB4 */
@@ -447,44 +422,6 @@ CONST int rt_arb_planes[5][24] = {
 	{0,2,4, 0,3,4, 0,3,5, 0,2,5, 1,4,5, 1,3,4, 1,3,5, 1,2,4},	/* ARB7 */
 	{0,2,4, 0,3,4, 0,3,5, 0,2,5, 1,2,4, 1,3,4, 1,3,5, 1,2,5},	/* ARB8 */
 };
-
-/*	INTERSECT:
- *	Finds intersection point of three planes.
- *		The planes are at es_planes[type][loc] and
- *		the result is stored at "pos" in solid struct sp.
- *
- *  XXX replaced by rt_arb_3face_intersect().
- *
- *  Returns -
- *	 0	success
- *	 1	failure
- */
-int
-intersect( type, loc, pos, sp )
-int type, loc, pos;
-struct solidrec *sp;
-{
-	struct rt_arb_internal *arb;
-	vect_t	vec1;
-	int	j;
-	int	i1, i2, i3;
-
-	j = type - 4;
-
-	i1 = rt_arb_planes[j][loc];
-	i2 = rt_arb_planes[j][loc+1];
-	i3 = rt_arb_planes[j][loc+2];
-
-	if( bn_mkpoint_3planes( vec1, es_peqn[i1], es_peqn[i2],
-	    es_peqn[i3] ) < 0 )
-		return(1);
-
-	arb = (struct rt_arb_internal *)es_int.idb_ptr;
-	RT_ARB_CK_MAGIC( arb );
-	VMOVE( arb->pt[pos] , vec1 )
-
-	return( 0 );
-}
 
 /*  MV_EDGE:
  *	Moves an arb edge (end1,end2) with bounding
@@ -1088,30 +1025,6 @@ register struct rt_arb_internal *arb;
 	for( i=0 ; i<8 ; i++ )
 		VMOVE(arb->pt[i], pts[i])
 
-}
-void
-old_ext4to6(pt1, pt2, pt3, sp)
-int pt1, pt2, pt3;
-register struct solidrec *sp;
-{
-	struct solidrec tmp;
-	register int i;
-
-	VMOVE(&tmp.s_values[0], &sp->s_values[pt1*3]);
-	VMOVE(&tmp.s_values[3], &sp->s_values[pt2*3]);
-	VMOVE(&tmp.s_values[12], &sp->s_values[pt3*3]);
-	VMOVE(&tmp.s_values[15], &sp->s_values[pt3*3]);
-
-	/* extrude "distance" to get remaining points */
-	VADD2(&tmp.s_values[6], &tmp.s_values[3], &es_peqn[6][0]);
-	VADD2(&tmp.s_values[9], &tmp.s_values[0], &es_peqn[6][0]);
-	VADD2(&tmp.s_values[18], &tmp.s_values[12], &es_peqn[6][0]);
-	VMOVE(&tmp.s_values[21], &tmp.s_values[18]);
-
-	/* copy to the original record */
-	for(i=0; i<=21; i+=3) {
-		VMOVE(&sp->s_values[i], &tmp.s_values[i]);
-	}
 }
 
 /* Permute command - permute the vertex labels of an ARB

@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "./ged.h"
@@ -69,8 +68,8 @@ struct db_tree_state	mged_initial_tree_state = {
 		/* struct mater_info ts_mater */
 		1.0, 0.0, 0.0,		/* color, RGB */
 		0,			/* override */
-		DB_INH_LOWER,		/* color inherit */
-		DB_INH_LOWER,		/* mater inherit */
+		0,			/* color inherit */
+		0,			/* mater inherit */
 		(char *)NULL		/* shader */
 #if __STDC__
 	}
