@@ -55,9 +55,12 @@ char	*dp;
 
 	if( swp->sw_reflect <= 0 && swp->sw_transmit <= 0 )
 		goto finish;
-	if( ap->a_level > MAX_BOUNCE )  {
+	if( ap->a_level >= MAX_BOUNCE )  {
 		/* Nothing more to do for this ray */
-		rt_log("rr_render: lvl=%d, stopping\n", ap->a_level);
+		rt_log("rr_render: lvl=%d, stopping at %s\n",
+			ap->a_level,
+			pp->pt_inseg->seg_stp->st_name);
+		VSET( swp->sw_color, 99, 99, 0 );
 		goto finish;
 	}
 
@@ -96,7 +99,7 @@ char	*dp;
 
 		/* Calculate refraction at entrance. */
 		sub_ap = *ap;		/* struct copy */
-		sub_ap.a_level = (ap->a_level+1) * 100;	/* flag */
+		sub_ap.a_level = 0;	/* # of internal reflections */
 		sub_ap.a_onehit = 1;
 		sub_ap.a_user = (int)(pp->pt_regionp);
 		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
@@ -112,7 +115,12 @@ char	*dp;
 		}
 		VMOVE( filter_color, pp->pt_regionp->reg_mater.ma_transmit );
 
-		/* Find new exit point from the inside. */
+		/*
+		 *  Find new exit point from the inside. 
+		 *  We will iterate, but not recurse, due to the special
+		 *  (non-recursing) hit and miss routines used here for
+		 *  internal reflection.
+		 */
 do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
@@ -157,20 +165,22 @@ do_inside:
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
 			/* Reflected internally -- keep going */
-			if( (++sub_ap.a_level)%100 > MAX_IREFLECT )  {
-				rt_log("rr_render: %s Excessive internal reflection (x%d, y%d, lvl=%d)\n",
-					pp->pt_inseg->seg_stp->st_name,
-					sub_ap.a_x, sub_ap.a_y, sub_ap.a_level );
-				if(rdebug&RDEBUG_SHOWERR) {
-					VSET( swp->sw_color, 0, 9, 0 );	/* green */
-				} else {
-					VSETALL( swp->sw_color, .18 ); /* 18% grey */
-				}
-				goto finish;
+			if( (++sub_ap.a_level) <= MAX_IREFLECT )
+				goto do_inside;
+
+			rt_log("rr_render: %s Internal reflection stopped after %d bounces, (x%d, y%d, lvl=%d)\n",
+				pp->pt_inseg->seg_stp->st_name,
+				sub_ap.a_level,
+				sub_ap.a_x, sub_ap.a_y, ap->a_level );
+			if(rdebug&RDEBUG_SHOWERR) {
+				VSET( swp->sw_color, 0, 9, 0 );	/* green */
+			} else {
+				VSETALL( swp->sw_color, .18 ); /* 18% grey */
 			}
-			goto do_inside;
+			goto finish;
 		}
 do_exit:
+		/* This is the only place we might recurse dangerously */
 		sub_ap.a_hit =  ap->a_hit;
 		sub_ap.a_miss = ap->a_miss;
 		sub_ap.a_level++;
@@ -237,6 +247,9 @@ struct partition *PartHeadp;
 		{
 			stp = pp->pt_inseg->seg_stp;
 			RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+			if( pp->pt_inflip )  {
+				VREVERSE( hitp->hit_normal, hitp->hit_normal );
+			}
 			rt_log("rr_hit:  '%s' inhit %g not near zero!\n",
 				stp->st_name, hitp->hit_dist);
 			rt_pr_hit("inhit", hitp);
@@ -247,15 +260,20 @@ struct partition *PartHeadp;
 
 	hitp = pp->pt_outhit;
 	stp = pp->pt_outseg->seg_stp;
-	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
 	if( hitp->hit_dist >= INFINITY )  {
 		if(rdebug&RDEBUG_SHOWERR)
 			rt_log("rr_hit:  (%g,%g) bad!\n",
 				pp->pt_inhit->hit_dist, hitp->hit_dist);
 		goto bad;
 	}
-
+	VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
+		hitp->hit_dist, ap->a_ray.r_dir );
+	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+	if( pp->pt_outflip )  {
+		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+	}
 	VMOVE( ap->a_uvec, hitp->hit_point );
+
 	/* Safety check */
 	if( (rdebug&RDEBUG_SHOWERR) && (
 	    !NEAR_ZERO(hitp->hit_normal[X], 1.001) ||
