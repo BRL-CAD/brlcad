@@ -47,3 +47,6 @@ ${PIXDIFF} ../pix/bldg391.pix bldg391.pix  | ${PIX_FB}
 
 echo +++++ m35.pix
 ${PIXDIFF} ../pix/m35.pix m35.pix  | ${PIX_FB}
+
+echo +++++ sphflake.pix
+${PIXDIFF} ../pix/sphflake.pix sphflake.pix  | ${PIX_FB}

@@ -168,6 +168,30 @@ else
 	echo m35.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
 fi
 
+echo +++++ sphflake
+if test -f sphflake.pix; then mv -f sphflake.pix sphflake.pix.$$; fi
+if test -f sphflake.log; then mv -f sphflake.log sphflake.log.$$; fi
+time $RT -B -M -s512 $* \
+	-o sphflake.pix \
+	$DB/sphflake.g \
+	"scene.r" \
+	2> sphflake.log \
+	<< EOF
+viewsize 2.556283261452611e+04;
+orientation 4.406810841785839e-01 4.005093234738861e-01 5.226451688385938e-01 6.101102288499644e-01;
+eye_pt 2.418500583758302e+04 -3.328563644344796e+03 8.489926952850350e+03;
+start 0;
+end;
+EOF
+${CMP} ../pix/sphflake.pix sphflake.pix
+if test $? = 0
+then
+	echo sphflake.pix:  answers are RIGHT
+else
+	echo sphflake.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
+fi
+
+
 echo
 echo Testing complete, check times against reference files in ../pix/.
 
@@ -177,3 +201,7 @@ else	HOST=`uname -n`
 fi
 
 sh ../bench/perf.sh "$HOST" "`date`" "$*" >> summary
+
+
+
+
