@@ -5,6 +5,8 @@
 #
 #  $Header$
 
+puts "disp.tcl: start"
+
 set wavel 0
 global wavel
 
@@ -70,7 +72,10 @@ proc update { {foo 0} } {
 	global line_num
 	global cursor_on
 
-	doit1 $wavel
+	if { [catch "doit1 $wavel" status ] } {
+		puts "update: doit1 error= $status"
+		return
+	}
 	scanline
 	pixelplot
 
@@ -150,6 +155,8 @@ proc scanline { {foo 0} } {
 	}
 }
 
+puts "disp.tcl: about to define proc pixelplot"
+
 
 # Draw spectral curve for one pixel.
 # Remember: 4th quadrant addressing!
@@ -169,6 +176,7 @@ proc pixelplot { {foo 0} } {
 	set ymax 256
 
 	.canvas_pixel delete T
+	# put a vertical rule at current wavelength.
 	.canvas_pixel create line $wavel 0 $wavel $ymax -tags T -fill grey
 
 	set x $pixel_num
@@ -196,6 +204,8 @@ proc pixelplot { {foo 0} } {
 }
 
 
+puts "disp.tcl: about to define proc plot_tabdata"
+
 #			P L O T _ T A B D A T A
 #
 # Draw spectral curve from one Tcl-ified rt_tabdata structure.  Form is:
@@ -203,38 +213,98 @@ proc pixelplot { {foo 0} } {
 #
 # Remember: 4th quadrant addressing!
 #
-proc plot_tabdata { data minval maxval {ymax 256} }
-{
+proc plot_tabdata { canvas data {minval -1} {maxval -1} {screen_ymax 256} } {
+puts "plot_tabdata starting"
+puts "canvas = $canvas"
+puts "data   = $data"
+puts "llength= [llength $data]"
+	# Sets key_x, key_y, key_nx, key_ymin, key_ymax
+#	bu_get_all_keyword_values $data
+	if { [catch {set ret [bu_get_all_keyword_values $data]} status] } {
+		puts "error in bu_get_all_keyword_values= $status"
+		return
+	}
+puts "ret    = $ret"
+puts "nx     = $key_nx"
+puts "key_x  = $key_x"
+puts "key_y  = $key_y"
 
-	set nx [bu_get_value_by_keyword nx $data]
+	# If minval and maxval not set, scale data.
+	if {$minval == $maxval} {
+		set minval $key_ymin
+		set maxval $key_ymax
+	}
+puts "minval = $minval"
+puts "maxval = $maxval"
 
-	set x  [bu_get_value_by_keyword x $data]
-	set y  [bu_get_value_by_keyword y $data]
 
-	set wavel [lindex $x 0]
-
-	.canvas_pixel delete T
-	.canvas_pixel create line $wavel 0 $wavel $ymax -tags T -fill grey
-
+	# Draw a vertical line to control screen-size auto-scale of widget.
 	set x0 0
-	set y0 [expr $ymax - 1]
+	set y0 [expr $screen_ymax - 1]
+
+	$canvas delete T
+	$canvas create line $x0 0 $x0 $screen_ymax -tags T -fill grey
+
 	set scale [expr 255 / ($maxval - $minval) ]
 
-	for {set x1 0} {$x1 < $nx} {incr x1} {
-		set y1 [expr $ymax - 1 - \
-			( [getspectval $x $y $x1] - $minval ) * $scale]
+	for {set x1 0} {$x1 < $key_nx} {incr x1} {
+		set y1 [expr $screen_ymax - 1 - \
+			( [lindex $key_y $x1] - $minval ) * $scale]
 		if {$y1 < 0} {
 			set y1 0
 		} elseif {$y1 > 255} {
 			set y1 255
 		}
-		.canvas_pixel create line $x0 $y0 $x1 $y1 -tags T
+		$canvas create line $x0 $y0 $x1 $y1 -tags T
 		set x0 $x1
 		set y0 $y1
 ##		puts "$x0 $y0 $x1 $y1"
 	}
 }
 
+puts "disp.tcl: about to define proc popup_plot_tabdata"
+
+#			P O P U P _ P L O T _ T A B D A T A
+#
+#  Create a one-time throwaway pop-up window with a tabdata plot in it.
+#
+set popup_counter 0
+proc popup_plot_tabdata { title data {minval -1} {maxval -1} {screen_ymax 256} }  {
+	global	popup_counter
+
+	incr popup_counter
+	set popup .popup$popup_counter
+
+	toplevel $popup
+	wm title $popup $title
+
+	puts "About to run canvas ${popup}.canvas"
+
+	canvas ${popup}.canvas -width 256 -height 256
+	button ${popup}.dismiss -text "Dismiss" -command "destroy $popup"
+	pack ${popup}.canvas ${popup}.dismiss -side top -in $popup
+
+puts "about to call plot_tabdata"
+	plot_tabdata ${popup}.canvas $data $minval $maxval $screen_ymax
+	return $popup
+}
+
+puts "disp.tcl: about to define proc do_testing"
+
+proc do_testing {} {
+	# sets ntsc_r, ntsc_g, ntsc_b
+	getntsccurves
+	puts "do_testing: ntsc_r = $ntsc_r"
+	popup_plot_tabdata "NTSC Red" $ntsc_r
+	popup_plot_tabdata "NTSC Green" $ntsc_g
+	popup_plot_tabdata "NTSC Blue" $ntsc_b
+}
+
+puts "disp.tcl: About to run first_command= $first_command"
 
 ### XXX Hack:  Last thing:
-doit1 42
+##doit1 42
+# This variable is set by C startoff.
+eval $first_command
+
+puts "disp.tcl: finished"
