@@ -1722,6 +1722,7 @@ struct rt_i {
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
 	struct bu_list	HeadRegion;	/* ptr of list of regions in model */
 	genptr_t	Orca_hash_tbl;	/* Hash table in matrices for ORCA */
+	struct bu_ptbl	delete_regs;	/* list of region pointers to delete after light_init() */
 	/* Ray-tracing statistics */
 	long		nregions;	/* total # of regions participating */
 	long		nsolids;	/* total # of solids participating */
