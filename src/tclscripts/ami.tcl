@@ -31,6 +31,8 @@ then
 # this is a comment \
 else
 # this is a comment \
+	echo "ERROR: could not find btclsh"
+# this is a comment \
 	exit 1
 # this is a comment \
 fi
