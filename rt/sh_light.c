@@ -318,6 +318,10 @@ light_init()
 	register int		nlights = 0;
 	register fastf_t	inten = 0.0;
 
+	if( RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+		RT_LIST_INIT( &(LightHead.l) );
+		return;
+	}
 	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		nlights++;
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
@@ -513,6 +517,10 @@ light_cleanup()
 {
 	register struct light_specific *lp, *zaplp;
 
+	if( RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+		RT_LIST_INIT( &(LightHead.l) );
+		return;
+	}
 	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		if( lp->lt_rp != REGION_NULL && lp->lt_invisible == 0 )  {
 			/* Will be cleaned up by mlib_free() */
