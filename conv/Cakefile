@@ -10,7 +10,7 @@
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g g-nff \
 			asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave g-stl \
 			nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g bot_shell-vtk \
-			g-xxx g-xxx_facets
+			g-dxf g-xxx g-xxx_facets
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -23,6 +23,9 @@
 
 g-stl: g-stl.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 	CC LDFLAGS g-stl.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-stl
+
+g-dxf: g-dxf.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
+	CC LDFLAGS g-dxf.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-dxf
 
 g-xxx: g-xxx.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 	CC LDFLAGS g-xxx.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-xxx
