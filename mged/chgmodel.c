@@ -2065,7 +2065,11 @@ vect_t argvect;
   }
 
   /* find point for rotation to take place wrt */
+#if 0
   MAT4X3PNT(model_pt, es_mat, es_keypoint);
+#else
+  VMOVE(model_pt, es_keypoint);
+#endif
   MAT4X3PNT(point, modelchanges, model_pt);
 
   /* Find absolute translation vector to go from "model_pt" to
@@ -2283,7 +2287,11 @@ char	**argv;
 	for(i=0; i<3; i++) {
 		new_vertex[i] = atof(argv[i+1]) * local2base;
 	}
+#if 0
 	MAT4X3PNT(model_sol_pt, es_mat, es_keypoint);
+#else
+	VMOVE(model_sol_pt, es_keypoint);
+#endif
 	MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
 	VSUB2(model_incr, new_vertex, ed_sol_pt);
 	MAT_DELTAS(incr, model_incr[0], model_incr[1], model_incr[2]);
