@@ -292,8 +292,12 @@ int
 ClrText()
 	{
 	if( CL != NULL )
+		{
 		tputs( CL, LI, PutChr );
-	return;
+		return	1;
+		}
+	else
+		return	0;
 	}
 
 /*	S e t S c r l R e g ( )
