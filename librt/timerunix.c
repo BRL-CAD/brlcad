@@ -40,13 +40,16 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 #	define	DEFAULT_HZ	yes
 #endif
 
+#include "machine.h"
+#include "rtstring.h"
+
 /* Standard System V stuff */
 extern long time();
 static long time0;
 static struct tms tms0;
 
 /*
- *			P R E P _ T I M E R
+ *			R T _ P R E P _ T I M E R
  */
 void
 rt_prep_timer()
@@ -55,46 +58,80 @@ rt_prep_timer()
 	(void)times(&tms0);
 }
 
+/*
+ *			R T _ G E T _ T I M E R
+ *
+ *  Reports on the passage of time, since rt_prep_timer() was called.
+ *  Explicit return is number of CPU seconds.
+ *  String return is descriptive.
+ *  If "elapsed" pointer is non-null, number of elapsed seconds are returned.
+ *  Times returned will never be zero.
+ */
+double
+rt_get_timer( vp, elapsed )
+struct rt_vls	*vp;
+double		*elapsed;
+{
+	long	now;
+	double	user_cpu_secs;
+	double	sys_cpu_secs;
+	double	elapsed_secs;
+	double	percent;
+	struct tms tmsnow;
+
+	/* Real time.  1 second resolution. */
+	(void)time(&now);
+	elapsed_secs = now-time0;
+
+	/* CPU time */
+	(void)times(&tmsnow);
+	user_cpu_secs = (tmsnow.tms_utime + tmsnow.tms_cutime) - 
+		(tms0.tms_utime + tms0.tms_cutime );
+	user_cpu_secs /= HZ;
+	sys_cpu_secs = (tmsnow.tms_stime + tmsnow.tms_cstime) - 
+		(tms0.tms_stime + tms0.tms_cstime );
+	sys_cpu_secs /= HZ;
+	if( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
+	if( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
+
+	if( elapsed )  *elapsed = elapsed_secs;
+
+	if( vp )  {
+		percent = user_cpu_secs/elapsed_secs*100.0;
+		RT_VLS_CHECK(vp);
+#ifdef DEFAULT_HZ
+		rt_vls_printf( vp,
+"%g user + %g sys in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
+			user_cpu_secs, sys_cpu_secs, elapsed_secs, percent );
+#else
+		rt_vls_printf( vp,
+			"%g user + %g sys in %g elapsed secs (%g%%)",
+			user_cpu_secs, sys_cpu_secs, elapsed_secs, percent );
+#endif
+	}
+	return( user_cpu_secs );
+}
 
 /*
- *			R E A D _ T I M E R
+ *			R T _ R E A D _ T I M E R
  * 
+ *  Compatability routine
  */
 double
 rt_read_timer(str,len)
 char *str;
 {
-	long now;
-	double usert;
-	double syst;
-	double realt;
-	double	percent;
-	struct tms tmsnow;
-	char line[256];
+	struct rt_vls	vls;
+	double		cpu;
+	int		todo;
 
-	/* Real time */
-	(void)time(&now);
-	realt = now-time0;
+	if( !str )  return  rt_get_timer( (struct rt_vls *)0, (double *)0 );
 
-	/* CPU time */
-	(void)times(&tmsnow);
-	usert = (tmsnow.tms_utime + tmsnow.tms_cutime) - 
-		(tms0.tms_utime + tms0.tms_cutime );
-	usert /= HZ;
-	syst = (tmsnow.tms_stime + tmsnow.tms_cstime) - 
-		(tms0.tms_stime + tms0.tms_cstime );
-	syst /= HZ;
-	if( usert < 0.00001 )  usert = 0.00001;
-	if( realt < 0.00001 )  realt = usert;
-	percent = usert/realt*100.0;
-#ifdef DEFAULT_HZ
-	sprintf(line,
-		"%g user + %g sys in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
-		usert, syst, realt, percent );
-#else
-	sprintf(line,"%g user + %g sys in %g elapsed secs (%g%%)",
-		usert, syst, realt, percent );
-#endif
-	(void)strncpy( str, line, len );
-	return( usert );
+	rt_vls_init( &vls );
+	cpu = rt_get_timer( &vls, (double *)0 );
+	todo = rt_vls_strlen( &vls );
+	if( todo > len )  todo = len-1;
+	strncpy( str, rt_vls_addr(&vls), todo );
+	str[todo] = '\0';
+	return cpu;
 }

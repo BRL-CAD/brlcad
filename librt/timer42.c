@@ -22,6 +22,9 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "machine.h"
+#include "rtstring.h"
+
 static struct	timeval time0;	/* Time at which timeing started */
 static struct	rusage ru0;	/* Resource utilization at the start */
 
@@ -31,7 +34,7 @@ static void tvsub();
 static void psecs();
 
 /*
- *			P R E P _ T I M E R
+ *			R T _ P R E P _ T I M E R
  */
 void
 rt_prep_timer()
@@ -41,34 +44,49 @@ rt_prep_timer()
 }
 
 /*
- *			R E A D _ T I M E R
- * 
+ *			R T _ G E T _ T I M E R
+ *
+ *  Reports on the passage of time, since rt_prep_timer() was called.
+ *  Explicit return is number of CPU seconds.
+ *  String return is descriptive.
+ *  If "elapsed" pointer is non-null, number of elapsed seconds are returned.
+ *  Times returned will never be zero.
  */
 double
-rt_read_timer(str,len)
-char *str;
+rt_get_timer( vp, elapsed )
+struct rt_vls	*vp;
+double		*elapsed;
 {
 	struct timeval timedol;
 	struct rusage ru1;
 	struct timeval td;
-	double usert;
-	char line[132];
+	double	user_cpu_secs;
+	double	elapsed_secs;
 
 	getrusage(RUSAGE_SELF, &ru1);
 	gettimeofday(&timedol, (struct timezone *)0);
-	prusage(&ru0, &ru1, &timedol, &time0, line);
-	(void)strncpy( str, line, len );
+
+	elapsed_secs = (timedol.tv_sec - time0.tv_sec) +
+		(timedol.tv_usec - time0.tv_usec)/1000000.0;
+
 	tvsub( &td, &ru1.ru_utime, &ru0.ru_utime );
-	usert = td.tv_sec + ((double)td.tv_usec) / 1000000;
-	if( usert < 0.00001 )  usert = 0.00001;
-	return( usert );
+	user_cpu_secs = td.tv_sec + ((double)td.tv_usec) / 1000000;
+	if( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
+	if( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
+
+	if( elapsed )  *elapsed = elapsed_secs;
+
+	if( vp )
+		prusage(&ru0, &ru1, &timedol, &time0, vp);
+
+	return( user_cpu_secs );
 }
 
 static void
-prusage(r0, r1, e, b, outp)
-	register struct rusage *r0, *r1;
-	struct timeval *e, *b;
-	char *outp;
+prusage(r0, r1, e, b, vp)
+register struct rusage *r0, *r1;
+struct timeval *e, *b;
+struct rt_vls	*vp;	
 {
 	struct timeval tdiff;
 	register time_t t;
@@ -76,97 +94,83 @@ prusage(r0, r1, e, b, outp)
 	register int i;
 	int ms;
 
+	RT_VLS_CHECK(vp);
+
 	t = (r1->ru_utime.tv_sec-r0->ru_utime.tv_sec)*100+
 	    (r1->ru_utime.tv_usec-r0->ru_utime.tv_usec)/10000+
 	    (r1->ru_stime.tv_sec-r0->ru_stime.tv_sec)*100+
 	    (r1->ru_stime.tv_usec-r0->ru_stime.tv_usec)/10000;
 	ms =  (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
 
-#define END(x)	{while(*x) x++;}
 	cp = "%Uuser %Ssys %Ereal %P %Xi+%Dd %Mmaxrss %F+%Rpf %Ccsw";
 	for (; *cp; cp++)  {
 		if (*cp != '%')
-			*outp++ = *cp;
+			rt_vls_putc( vp, *cp );
 		else if (cp[1]) switch(*++cp) {
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-			sprintf(outp,"%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
-			END(outp);
+			rt_vls_printf(vp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
 			break;
 
 		case 'S':
 			tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-			sprintf(outp,"%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
-			END(outp);
+			rt_vls_printf(vp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
 			break;
 
 		case 'E':
-			psecs(ms / 100, outp);
-			END(outp);
+			psecs(ms / 100, vp);
 			break;
 
 		case 'P':
-			sprintf(outp,"%d%%", (int) (t*100 / ((ms ? ms : 1))));
-			END(outp);
+			rt_vls_printf(vp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
 			break;
 
 		case 'W':
 			i = r1->ru_nswap - r0->ru_nswap;
-			sprintf(outp,"%d", i);
-			END(outp);
+			rt_vls_printf(vp, "%d", i);
 			break;
 
 		case 'X':
-			sprintf(outp,"%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
-			END(outp);
+			rt_vls_printf(vp, "%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
 			break;
 
 		case 'D':
-			sprintf(outp,"%d", t == 0 ? 0 :
+			rt_vls_printf(vp, "%d", t == 0 ? 0 :
 			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
-			END(outp);
 			break;
 
 		case 'K':
-			sprintf(outp,"%d", t == 0 ? 0 :
+			rt_vls_printf(vp, "%d", t == 0 ? 0 :
 			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
 			    (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
-			END(outp);
 			break;
 
 		case 'M':
-			sprintf(outp,"%d", r1->ru_maxrss/2);
-			END(outp);
+			rt_vls_printf(vp, "%d", r1->ru_maxrss/2);
 			break;
 
 		case 'F':
-			sprintf(outp,"%d", r1->ru_majflt-r0->ru_majflt);
-			END(outp);
+			rt_vls_printf(vp, "%d", r1->ru_majflt-r0->ru_majflt);
 			break;
 
 		case 'R':
-			sprintf(outp,"%d", r1->ru_minflt-r0->ru_minflt);
-			END(outp);
+			rt_vls_printf(vp, "%d", r1->ru_minflt-r0->ru_minflt);
 			break;
 
 		case 'I':
-			sprintf(outp,"%d", r1->ru_inblock-r0->ru_inblock);
-			END(outp);
+			rt_vls_printf(vp, "%d", r1->ru_inblock-r0->ru_inblock);
 			break;
 
 		case 'O':
-			sprintf(outp,"%d", r1->ru_oublock-r0->ru_oublock);
-			END(outp);
+			rt_vls_printf(vp, "%d", r1->ru_oublock-r0->ru_oublock);
 			break;
 		case 'C':
-			sprintf(outp,"%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
+			rt_vls_printf(vp, "%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
 				r1->ru_nivcsw-r0->ru_nivcsw );
-			END(outp);
 			break;
 		}
 	}
-	*outp = '\0';
 }
 
 static void
@@ -192,25 +196,47 @@ tvsub(tdiff, t1, t0)
 }
 
 static void
-psecs(l,cp)
-long l;
-register char *cp;
+psecs(l, vp)
+long		l;
+struct rt_vls	*vp;
 {
 	register int i;
 
 	i = l / 3600;
 	if (i) {
-		sprintf(cp,"%d:", i);
-		END(cp);
+		register int	j;
+		rt_vls_printf(vp, "%d:", i);
 		i = l % 3600;
-		sprintf(cp,"%d%d", (i/60) / 10, (i/60) % 10);
-		END(cp);
+		j = i / 60;
+		rt_vls_printf(vp, "%d%d", j / 10, j % 10);
 	} else {
 		i = l;
-		sprintf(cp,"%d", i / 60);
-		END(cp);
+		rt_vls_printf(vp, "%d", i / 60);
 	}
 	i = i % 60; /* GSM: bug in Alliant CE optimization prohibits "%=" here */
-	*cp++ = ':';
-	sprintf(cp,"%d%d", i / 10, i % 10);
+	rt_vls_printf(vp, ":%d%d", i / 10, i % 10);
+}
+
+/*
+ *			R T _ R E A D _ T I M E R
+ * 
+ *  Compatability routine
+ */
+double
+rt_read_timer(str,len)
+char *str;
+{
+	struct rt_vls	vls;
+	double		cpu;
+	int		todo;
+
+	if( !str )  return  rt_get_timer( (struct rt_vls *)0, (double *)0 );
+
+	rt_vls_init( &vls );
+	cpu = rt_get_timer( &vls, (double *)0 );
+	todo = rt_vls_strlen( &vls );
+	if( todo > len )  todo = len-1;
+	strncpy( str, rt_vls_addr(&vls), todo );
+	str[todo] = '\0';
+	return cpu;
 }
