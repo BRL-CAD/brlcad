@@ -1833,9 +1833,13 @@ struct soltab *stp;
 
 struct tgc_pts
 {
-	vect_t tan_axb;
-	struct vertex *v;
+	point_t		pt;
+	vect_t		tan_axb;
+	struct vertex	*v;
+	char		dont_use;
 };
+
+#define	MAX_RATIO	10.0	/* maximum allowed height-to-width ration for triangles */
 
 /* version using tolerances */
 int
@@ -1851,7 +1855,10 @@ struct rt_tol		*tol;
 	struct rt_tgc_internal	*tip;
 	fastf_t			radius;		/* bounding sphere radius */
 	fastf_t			max_radius,min_radius; /* max/min of a,b,c,d */
+	fastf_t			min_tri;	/* minimum width of triangle */
 	fastf_t			h,a,b,c,d;	/* lengths of TGC vectors */
+	fastf_t			inv_length;	/* 1.0/length of a vector */
+	vect_t			unit_a,unit_b,unit_c,unit_d; /* units vectors in a,b,c,d directions */
 	fastf_t			rel,abs,norm;	/* interpreted tolerances */
 	fastf_t			alpha_tol;	/* final tolerance for ellipse parameter */
 	fastf_t			ratio;		/* L/D for narrowest triangle */
@@ -1861,6 +1868,7 @@ struct rt_tol		*tol;
 	int			nsegs;		/* number of vertices/ellipse */
 	vect_t			*A;		/* array of A vectors for ellipses */
 	vect_t			*B;		/* array of B vectors for ellipses */
+	fastf_t			*factors;	/* array of ellipse locations along height vector */
 	vect_t			vtmp;
 	vect_t			normal;		/* normal vector */
 	vect_t			rev_norm;	/* reverse normal */
@@ -1874,12 +1882,59 @@ struct rt_tol		*tol;
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
+	if( ttol->abs > 0.0 && ttol->abs < tol->dist )
+	{
+		rt_log( "tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
+			ttol->abs , tol->dist );
+		rt_log( "Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n" );
+		return( -1 );
+	}
 
 	h = MAGNITUDE( tip->h );
 	a = MAGNITUDE( tip->a );
+	if( 2.0*a <= tol->dist )
+		a = 0.0;
 	b = MAGNITUDE( tip->b );
+	if( 2.0*b <= tol->dist )
+		b = 0.0;
 	c = MAGNITUDE( tip->c );
+	if( 2.0*c <= tol->dist )
+		c = 0.0;
 	d = MAGNITUDE( tip->d );
+	if( 2.0*d <= tol->dist )
+		d = 0.0;
+
+	if( a == 0.0 && b == 0.0 && (c == 0.0 || d == 0.0) )
+	{
+		rt_log( "Illegal TGC a, b, and c or d less than tolerance\n" );
+		return( -1);
+	}
+	else if( c == 0.0 && d == 0.0 && (a == 0.0 || b == 0.0 ) )
+	{
+		rt_log( "Illegal TGC c, d, and a or b less than tolerance\n" );
+		return( -1 );
+	}
+
+	if( a > 0.0 )
+	{
+		inv_length = 1.0/a;
+		VSCALE( unit_a, tip->a, inv_length );
+	}
+	if( b > 0.0 )
+	{
+		inv_length = 1.0/b;
+		VSCALE( unit_b, tip->b, inv_length );
+	}
+	if( c > 0.0 )
+	{
+		inv_length = 1.0/c;
+		VSCALE( unit_c, tip->c, inv_length );
+	}
+	if( d > 0.0 )
+	{
+		inv_length = 1.0/d;
+		VSCALE( unit_d, tip->d, inv_length );
+	}
 
 	/* get bounding sphere radius for relative tolerance */
 	radius = h/2.0;
@@ -1897,13 +1952,13 @@ struct rt_tol		*tol;
 		radius = max_radius;
 
 	min_radius = MAX_FASTF;
-	if( a < min_radius )
+	if( a < min_radius && a > 0.0 )
 		min_radius = a;
-	if( b < min_radius )
+	if( b < min_radius && b > 0.0 )
 		min_radius = b;
-	if( c < min_radius )
+	if( c < min_radius && c > 0.0 )
 		min_radius = c;
-	if( d < min_radius )
+	if( d < min_radius && d > 0.0 )
 		min_radius = d;
 
 	if( ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
@@ -1969,52 +2024,200 @@ struct rt_tol		*tol;
 	/* and for complete ellipse */
 	nsegs *= 4;
 
-	/* check for long skinny triangles.
-	 * narrowest will be: */
-	narrow = 2.0 * min_radius * sin( alpha_tol );
-	/* use h for height of triangle,
-	 * (note that this may not be true for AxB !|| CxD */
-	ratio = h/narrow;
-	if( ratio > 10.0 )
-		nsplits = ratio/10.0;
-	else
-		nsplits = 0;
-
-	nells = nsplits + 2;
-
-	/* construct a list of ellipses from the bottom to
-	 * the top of the tgc, with intermediate ellipses interpolated
-	 * from top and bottom
-	 */
-	A = (vect_t *)rt_calloc( nells , sizeof( vect_t ) , "rt_tgc_tess: A" );
-	B = (vect_t *)rt_calloc( nells , sizeof( vect_t ) , "rt_tgc_tess: B" );
-
-	/* set top and bottom ellipses */
-	VMOVE( A[0] , tip->a );
-	VMOVE( B[0] , tip->b );
-	VMOVE( A[nells-1] , tip->c );
-	VMOVE( B[nells-1] , tip->d );
-
-	/* make sure that AxB points in the general direction of H */
-	VCROSS( vtmp , A[0] , B[0] );
-	if( VDOT( vtmp , tip->h ) < 0.0 )
+	/* get nunber and placement of intermediate ellipses */
 	{
-		/* exchange A's and B's */
-		VMOVE( B[0] , tip->a );
-		VMOVE( A[0] , tip->b );
-		VMOVE( B[nells-1] , tip->c );
-		VMOVE( A[nells-1] , tip->d );
+		fastf_t ratios[4],max_ratio,new_ratio;
+		int which_ratio;
+		fastf_t len_ha,len_hb;
+		vect_t ha,hb;
+		fastf_t ang;
+		fastf_t sin_ang,cos_ang,cos_m_1_sq, sin_sq;
+		fastf_t len_A, len_B, len_C, len_D;
+		int bot_ell=0, top_ell=1;
+		int reversed=0;
 
-	}
+		nells = 2;
 
-	/* set intermediate ellipses */
-	for( i=1 ; i<nells-1 ; i++ )
-	{
-		fastf_t factor;
+		max_ratio = MAX_RATIO + 1.0;
 
-		factor = (double)i/(double)(nells-1);
-		VCOMB2( A[i] , factor , A[nells-1] , (1.0-factor) , A[0] );
-		VCOMB2( B[i] , factor , B[nells-1] , (1.0-factor) , B[0] );
+		factors = (fastf_t *)rt_malloc( nells*sizeof( fastf_t ), "factors" );
+		A = (vect_t *)rt_malloc( nells*sizeof( vect_t ), "A vectors" );
+		B = (vect_t *)rt_malloc( nells*sizeof( vect_t ), "B vectors" );
+
+		factors[bot_ell] = 0.0;
+		factors[top_ell] = 1.0;
+		VMOVE( A[bot_ell], tip->a );
+		VMOVE( A[top_ell], tip->c );
+		VMOVE( B[bot_ell], tip->b );
+		VMOVE( B[top_ell], tip->d );
+
+		/* make sure that AxB points in the general direction of H */
+		VCROSS( vtmp , A[0] , B[0] );
+		if( VDOT( vtmp , tip->h ) < 0.0 )
+		{
+			VMOVE( A[bot_ell], tip->b );
+			VMOVE( A[top_ell], tip->d );
+			VMOVE( B[bot_ell], tip->a );
+			VMOVE( B[top_ell], tip->c );
+			reversed = 1;
+		}
+		ang = 2.0*rt_pi/((double)nsegs);
+		sin_ang = sin( ang );
+		cos_ang = cos( ang );
+		cos_m_1_sq = (cos_ang - 1.0)*(cos_ang - 1.0);
+		sin_sq = sin_ang*sin_ang;
+
+		VJOIN2( ha, tip->h, 1.0, tip->c, -1.0, tip->a )
+		VJOIN2( hb, tip->h, 1.0, tip->d, -1.0, tip->b )
+		len_ha = MAGNITUDE( ha );
+		len_hb = MAGNITUDE( hb );
+
+		while( max_ratio > MAX_RATIO )
+		{
+			fastf_t tri_width;
+
+			len_A = MAGNITUDE( A[bot_ell] );
+			if( 2.0*len_A <= tol->dist )
+				len_A = 0.0;
+			len_B = MAGNITUDE( B[bot_ell] );
+			if( 2.0*len_B <= tol->dist )
+				len_B = 0.0;
+			len_C = MAGNITUDE( A[top_ell] );
+			if( 2.0*len_C <= tol->dist )
+				len_C = 0.0;
+			len_D = MAGNITUDE( B[top_ell] );
+			if( 2.0*len_D <= tol->dist )
+				len_D = 0.0;
+
+			if( (len_B > 0.0 && len_D > 0.0) ||
+				(len_B > 0.0 && (len_D == 0.0 && len_C == 0.0 )) )
+			{
+				tri_width = sqrt( cos_m_1_sq*len_A*len_A + sin_sq*len_B*len_B );
+				ratios[0] = (factors[top_ell] - factors[bot_ell])*len_ha
+						/tri_width;
+			}
+			else
+				ratios[0] = 0.0;
+
+			if( (len_A > 0.0 && len_C > 0.0) ||
+				( len_A > 0.0 && (len_C == 0.0 && len_D == 0.0)) )
+			{
+				tri_width = sqrt( sin_sq*len_A*len_A + cos_m_1_sq*len_B*len_B );
+				ratios[1] = (factors[top_ell] - factors[bot_ell])*len_hb
+						/tri_width;
+			}
+			else
+				ratios[1] = 0.0;
+
+			if( (len_D > 0.0 && len_B > 0.0) ||
+				(len_D > 0.0 && (len_A == 0.0 && len_B == 0.0)) )
+			{
+				tri_width = sqrt( cos_m_1_sq*len_C*len_C + sin_sq*len_D*len_D );
+				ratios[2] = (factors[top_ell] - factors[bot_ell])*len_ha
+						/tri_width;
+			}
+			else
+				ratios[2] = 0.0;
+
+			if( (len_C > 0.0 && len_A > 0.0) ||
+				(len_C > 0.0 && (len_A == 0.0 && len_B == 0.0)) )
+			{
+				tri_width = sqrt( sin_sq*len_C*len_C + cos_m_1_sq*len_D*len_D );
+				ratios[3] = (factors[top_ell] - factors[bot_ell])*len_hb
+						/tri_width;
+			}
+			else
+				ratios[3] = 0.0;
+
+			which_ratio = -1;
+			max_ratio = 0.0;
+
+			for( i=0 ; i<4 ; i++ )
+			{
+				if( ratios[i] > max_ratio )
+				{
+					max_ratio = ratios[i];
+					which_ratio = i;
+				}
+			}
+
+			if( len_A == 0.0 && len_B == 0.0 && len_C == 0.0 && len_D == 0.0 )
+			{
+				if( top_ell == nells - 1 )
+				{
+					VMOVE( A[top_ell-1], A[top_ell] )
+					VMOVE( B[top_ell-1], A[top_ell] )
+					factors[top_ell-1] = factors[top_ell];
+				}
+				else if( bot_ell == 0 )
+				{
+					for( i=0 ; i<nells-1 ; i++ )
+					{
+						VMOVE( A[i], A[i+1] )
+						VMOVE( B[i], B[i+1] )
+						factors[i] = factors[i+1];
+					}
+				}
+
+				nells -= 1;
+				break;
+			}
+
+			if( max_ratio <= MAX_RATIO )
+				break;
+
+			if( which_ratio == 0 || which_ratio == 1 )
+			{
+				new_ratio = MAX_RATIO/max_ratio;
+				if( bot_ell == 0 && new_ratio > 0.5 )
+					new_ratio = 0.5;
+			}
+			else if( which_ratio == 2 || which_ratio == 3 )
+			{
+				new_ratio = 1.0 - MAX_RATIO/max_ratio;
+				if( top_ell == nells - 1 && new_ratio < 0.5 )
+					new_ratio = 0.5;
+			}
+			else	/* no MAX??? */
+			{
+				rt_log( "rt_tgc_tess: Should never get here!!\n" );
+				rt_bomb( "rt_tgc_tess: Should never get here!!\n" );
+			}
+
+			nells++;
+			factors = (fastf_t *)rt_realloc( factors, nells*sizeof( fastf_t ), "factors" );
+			A = (vect_t *)rt_realloc( A, nells*sizeof( vect_t ), "A vectors" );
+			B = (vect_t *)rt_realloc( B, nells*sizeof( vect_t ), "B vectors" );
+
+			for( i=nells-1 ; i>top_ell ; i-- )
+			{
+				factors[i] = factors[i-1];
+				VMOVE( A[i], A[i-1] )
+				VMOVE( B[i], B[i-1] )
+			}
+
+			factors[top_ell] = factors[bot_ell] +
+				new_ratio*(factors[top_ell+1] - factors[bot_ell]);
+
+			if( reversed )
+			{
+				VBLEND2( A[top_ell], (1.0-factors[top_ell]), tip->b, factors[top_ell], tip->d )
+				VBLEND2( B[top_ell], (1.0-factors[top_ell]), tip->a, factors[top_ell], tip->c )
+			}
+			else
+			{
+				VBLEND2( A[top_ell], (1.0-factors[top_ell]), tip->a, factors[top_ell], tip->c )
+				VBLEND2( B[top_ell], (1.0-factors[top_ell]), tip->b, factors[top_ell], tip->d )
+			}
+
+			if( which_ratio == 0 || which_ratio == 1 )
+			{
+				top_ell++;
+				bot_ell++;
+			}
+
+		}
+
 	}
 
 	/* get memory for points */
@@ -2022,26 +2225,116 @@ struct rt_tol		*tol;
 	for( i=0 ; i<nells ; i++ )
 		pts[i] = (struct tgc_pts *)rt_calloc( nsegs , sizeof( struct tgc_pts ) , "rt_tgc_tess: pts" );
 
+	/* calculate geometry for points */
+	for( i=0 ; i<nells ; i++ )
+	{
+		fastf_t h_factor;
+		int j;
+
+		h_factor = factors[i];
+		for( j=0 ; j<nsegs ; j++ )
+		{
+			double alpha;
+			double sin_alpha,cos_alpha;
+
+			alpha = rt_twopi * (double)(2*j+1)/(double)(2*nsegs);
+			sin_alpha = sin( alpha );
+			cos_alpha = cos( alpha );
+
+			/* vertex geometry */
+			if( i == 0 && a == 0.0 && b == 0.0 )
+				VMOVE( pts[i][j].pt , tip->v )
+			else if( i == nells-1 && c == 0.0 && d == 0.0 )
+				VADD2( pts[i][j].pt, tip->v, tip->h )
+			else
+				VJOIN3( pts[i][j].pt , tip->v , h_factor , tip->h , cos_alpha , A[i] , sin_alpha , B[i] )
+
+			/* Storing the tangent here while sines and cosines are available */
+			if( i == 0 && a == 0.0 && b == 0.0 )
+				VCOMB2( pts[0][j].tan_axb, -sin_alpha, unit_c, cos_alpha, unit_d )
+			else if( i == nells-1 && c == 0.0 && d == 0.0 )
+				VCOMB2( pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b )
+			else
+				VCOMB2( pts[i][j].tan_axb , -sin_alpha , A[i] , cos_alpha , B[i] )
+		}
+	}
+
+	/* make sure no edges will be created with length < tol->dist */
+	for( i=0 ; i<nells ; i++ )
+	{
+		int j;
+		point_t curr_pt;
+		vect_t edge_vect;
+
+		if( i == 0 && (a == 0.0 || b == 0.0) )
+			continue;
+		else if( i == nells-1 && (c == 0.0 || d == 0.0) )
+			continue;
+
+		VMOVE( curr_pt, pts[i][0].pt )
+		for( j=1 ; j<nsegs ; j++ )
+		{
+			fastf_t edge_len_sq;
+
+			VSUB2( edge_vect, curr_pt, pts[i][j].pt )
+			edge_len_sq = MAGSQ( edge_vect );
+			if(edge_len_sq > tol->dist_sq )
+				VMOVE( curr_pt, pts[i][j].pt )
+			else
+			{
+				/* don't use this point, it will create a too short edge */
+				pts[i][j].dont_use = 'n';
+			}
+		}
+	}
+
 	/* make region, shell, vertex */
 	*r = nmg_mrsv( m );
 	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
 
-	/* Make bottom face */
 	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
-	for( i=nsegs-1 ; i>=0 ; i-- ) /* reverse order to get outward normal */
-		nmg_tbl( &verts , TBL_INS , (long *)&pts[0][i].v );
+	/* Make bottom face */
+	if( a > 0.0 && b > 0.0 )
+	{
+		for( i=nsegs-1 ; i>=0 ; i-- ) /* reverse order to get outward normal */
+		{
+			if( !pts[0][i].dont_use )
+				nmg_tbl( &verts , TBL_INS , (long *)&pts[0][i].v );
+		}
 
-	fu_base = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), nsegs );
-	nmg_tbl( &faces , TBL_INS , (long *)fu_base );
+		if( NMG_TBL_END( &verts ) > 2 )
+		{
+			fu_base = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), NMG_TBL_END( &verts ) );
+			nmg_tbl( &faces , TBL_INS , (long *)fu_base );
+		}
+		else
+			fu_base = (struct faceuse *)NULL;
+	}
+	else
+		fu_base = (struct faceuse *)NULL;
+	
 
 	/* Make top face */
-	nmg_tbl( &verts , TBL_RST , (long *)NULL );
-	for( i=0 ; i<nsegs ; i++ )
-		nmg_tbl( &verts , TBL_INS , (long *)&pts[nells-1][i].v );
+	if( c > 0.0 && d > 0.0 )
+	{
+		nmg_tbl( &verts , TBL_RST , (long *)NULL );
+		for( i=0 ; i<nsegs ; i++ )
+		{
+			if( !pts[nells-1][i].dont_use )
+				nmg_tbl( &verts , TBL_INS , (long *)&pts[nells-1][i].v );
+		}
 
-	fu_top = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), nsegs );
-	nmg_tbl( &faces , TBL_INS , (long *)fu_top );
+		if( NMG_TBL_END( &verts ) > 2 )
+		{
+			fu_top = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), NMG_TBL_END( &verts ) );
+			nmg_tbl( &faces , TBL_INS , (long *)fu_top );
+		}
+		else
+			fu_top = (struct faceuse *)NULL;
+	}
+	else
+		fu_top = (struct faceuse *)NULL;
 
 	/* Free table of vertices */
 	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
@@ -2050,7 +2343,11 @@ struct rt_tol		*tol;
 	for( i=0 ; i<nells-1 ; i++ )
 	{
 		int j;
+		struct vertex **curr_top;
+		struct vertex **curr_bot;
 
+		curr_bot = &pts[i][0].v;
+		curr_top = &pts[i+1][0].v;
 		for( j=0 ; j<nsegs ; j++ )
 		{
 			int k;
@@ -2058,17 +2355,37 @@ struct rt_tol		*tol;
 			k = j+1;
 			if( k == nsegs )
 				k = 0;
-			v[0] = &pts[i][j].v;
-			v[1] = &pts[i][k].v;
-			v[2] = &pts[i+1][j].v;
-			fu = nmg_cmface( s , v , 3 );
-			nmg_tbl( &faces , TBL_INS , (long *)fu );
+			if( i != 0 || a > 0.0 || b > 0.0 )
+			{
+				if( !pts[i][k].dont_use )
+				{
+					v[0] = curr_bot;
+					v[1] = &pts[i][k].v;
+					if( i+1 == nells-1 && c == 0.0 && d == 0.0 )
+						v[2] = &pts[i+1][0].v;
+					else
+						v[2] = curr_top;
+					fu = nmg_cmface( s , v , 3 );
+					nmg_tbl( &faces , TBL_INS , (long *)fu );
+					curr_bot = &pts[i][k].v;
+				}
+			}
 
-			v[0] = &pts[i+1][k].v;
-			v[1] = &pts[i+1][j].v;
-			v[2] = &pts[i][k].v;
-			fu = nmg_cmface( s , v , 3 );
-			nmg_tbl( &faces , TBL_INS , (long *)fu );
+			if( i != nells-2 || c > 0.0 || d > 0.0 )
+			{
+				if( !pts[i+1][k].dont_use )
+				{
+					v[0] = &pts[i+1][k].v;
+					v[1] = curr_top;
+					if( i == 0 && a == 0.0 && b == 0.0 )
+						v[2] = &pts[i][0].v;
+					else
+						v[2] = curr_bot;
+					fu = nmg_cmface( s , v , 3 );
+					nmg_tbl( &faces , TBL_INS , (long *)fu );
+					curr_top = &pts[i+1][k].v;
+				}
+			}
 		}
 	}
 
@@ -2078,23 +2395,41 @@ struct rt_tol		*tol;
 		fastf_t h_factor;
 		int j;
 
-		h_factor = (double)i/(double)(nells-1);
+		h_factor = factors[i];
 		for( j=0 ; j<nsegs ; j++ )
 		{
+			point_t pt_geom;
 			double alpha;
 			double sin_alpha,cos_alpha;
-			point_t pt_geom;
 
 			alpha = rt_twopi * (double)(2*j+1)/(double)(2*nsegs);
 			sin_alpha = sin( alpha );
 			cos_alpha = cos( alpha );
 
 			/* vertex geometry */
-			VJOIN3( pt_geom , tip->v , h_factor , tip->h , cos_alpha , A[i] , sin_alpha , B[i] );
-			nmg_vertex_gv( pts[i][j].v , pt_geom );
+			if( i == 0 && a == 0.0 && b == 0.0 )
+			{
+				if( j == 0 )
+					nmg_vertex_gv( pts[0][0].v, tip->v );
+			}
+			else if( i == nells-1 && c == 0.0 && d == 0.0 )
+			{
+				if( j == 0 )
+				{
+					VADD2( pt_geom, tip->v, tip->h );
+					nmg_vertex_gv( pts[i][0].v , pt_geom );
+				}
+			}
+			else if( pts[i][j].v )
+				nmg_vertex_gv( pts[i][j].v , pts[i][j].pt );
 
 			/* Storing the tangent here while sines and cosines are available */
-			VCOMB2( pts[i][j].tan_axb , -sin_alpha , A[i] , cos_alpha , B[i] );
+			if( i == 0 && a == 0.0 && b == 0.0 )
+				VCOMB2( pts[0][j].tan_axb, -sin_alpha, unit_c, cos_alpha, unit_d )
+			else if( i == nells-1 && c == 0.0 && d == 0.0 )
+				VCOMB2( pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b )
+			else
+				VCOMB2( pts[i][j].tan_axb , -sin_alpha , A[i] , cos_alpha , B[i] )
 		}
 	}
 
@@ -2107,6 +2442,7 @@ struct rt_tol		*tol;
 		if( nmg_calc_face_g( fu ) )
 		{
 			rt_log( "rt_tess_tgc: failed to calculate plane equation\n" );
+			nmg_pr_fu_briefly( fu, "" );
 			return( -1 );
 		}
 	}
@@ -2115,7 +2451,7 @@ struct rt_tol		*tol;
 	/* Calculate vertexuse normals */
 	for( i=0 ; i<nells ; i++ )
 	{
-		int j,k;
+		int j,k,l,m;
 
 		k = i + 1;
 		if( k == nells )
@@ -2128,35 +2464,61 @@ struct rt_tol		*tol;
 
 			/* normal at vertex */
 			if( i == nells - 1 )
-				VSUB2( tan_h , pts[i][j].v->vg_p->coord , pts[k][j].v->vg_p->coord )
-			    else
-				VSUB2( tan_h , pts[k][j].v->vg_p->coord , pts[i][j].v->vg_p->coord )
+			{
+				if( c == 0.0 && d == 0.0 )
+					VSUB2( tan_h , pts[i][0].pt , pts[k][j].pt )
+				else if( k == 0 && c == 0.0 && d == 0.0 )
+					VSUB2( tan_h , pts[i][j].pt , pts[k][0].pt )
+				else
+					VSUB2( tan_h , pts[i][j].pt , pts[k][j].pt )
+			}
+			else if( i == 0 )
+			{
+				if( a == 0.0 && b == 0.0 )
+					VSUB2( tan_h , pts[k][j].pt , pts[i][0].pt )
+				else if( k == nells-1 && c == 0.0 && d == 0.0 )
+					VSUB2( tan_h , pts[k][0].pt , pts[i][j].pt )
+				else
+					VSUB2( tan_h , pts[k][j].pt , pts[i][j].pt )
+			}
+			else if( k == 0 && a == 0.0 && b == 0.0 )
+				VSUB2( tan_h , pts[k][0].pt , pts[i][j].pt )
+			else if( k == nells-1 && c == 0.0 && d == 0.0 )
+				VSUB2( tan_h , pts[k][0].pt , pts[i][j].pt )
+			else
+				VSUB2( tan_h , pts[k][j].pt , pts[i][j].pt )
 
-				    VCROSS( normal , pts[i][j].tan_axb , tan_h );
+			VCROSS( normal , pts[i][j].tan_axb , tan_h );
 			VUNITIZE( normal );
 			VREVERSE( rev_norm , normal );
 
-			for( RT_LIST_FOR( vu , vertexuse , &pts[i][j].v->vu_hd ) )
+			if( !(i == 0 && a == 0.0 && b == 0.0) &&
+			    !(i == nells-1 && c == 0.0 && d == 0.0 ) &&
+			      pts[i][j].v )
 			{
-				NMG_CK_VERTEXUSE( vu );
+				for( RT_LIST_FOR( vu , vertexuse , &pts[i][j].v->vu_hd ) )
+				{
+					NMG_CK_VERTEXUSE( vu );
 
-				fu = nmg_find_fu_of_vu( vu );
-				NMG_CK_FACEUSE( fu );
+					fu = nmg_find_fu_of_vu( vu );
+					NMG_CK_FACEUSE( fu );
 
-				/* don't need vertexuse normals for faces that are really flat */
-				if( fu == fu_base || fu == fu_base->fumate_p ||
-				    fu == fu_top  || fu == fu_top->fumate_p )
-					continue;
+					/* don't need vertexuse normals for faces that are really flat */
+					if( fu == fu_base || fu->fumate_p == fu_base ||
+					    fu == fu_top  || fu->fumate_p == fu_top )
+						continue;
 
-				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , normal );
-				else if( fu->orientation == OT_OPPOSITE )
-					nmg_vertexuse_nv( vu , rev_norm );
+					if( fu->orientation == OT_SAME )
+						nmg_vertexuse_nv( vu , normal );
+					else if( fu->orientation == OT_OPPOSITE )
+						nmg_vertexuse_nv( vu , rev_norm );
+				}
 			}
 		}
 	}
 
 	/* Finished with storage, so free it */
+	rt_free( (char *)factors, "rt_tgc_tess: factors" );
 	rt_free( (char *)A , "rt_tgc_tess: A" );
 	rt_free( (char *)B , "rt_tgc_tess: B" );
 	for( i=0 ; i<nells ; i++ )
@@ -2172,6 +2534,9 @@ struct rt_tol		*tol;
 			fu = fu_base;
 		else
 			fu = fu_top;
+
+		if( fu == (struct faceuse *)NULL )
+			continue;
 
 		NMG_CK_FACEUSE( fu );
 
