@@ -92,6 +92,8 @@ register char **argv;
 	register int c;
 	register int i;
 
+	optind = 1;		/* restart */
+
 	while( (c=getopt( argc, argv, "E:SJ:H:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:" )) != EOF )  {
 		switch( c )  {
 		case 'U':
