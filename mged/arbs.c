@@ -547,6 +547,7 @@ thckagain:
 	f_edit( 2, cmd_args );	/* depends on name being in cmd_args[1] */
 }
 
+/* ------------------------------ old way ------------------------------ */
 
 static void	move(), points(), vectors();
 static int	redoarb();
@@ -928,7 +929,8 @@ points()
 	}
 }
 
-/* -------------------------------- */
+/* ------------------------------ new way ------------------------------ */
+/* XXX This should move to librt/g_arb.c at some point */
 
 #define NO	0
 #define YES	1
@@ -1055,11 +1057,13 @@ register int *svec;	/* array of like points */
 			numuvec);
 		return(0);
 	}
-printf("uvec: ");
-for(j=0; j<8; j++) printf("%d, ", uvec[j]);
-printf("\nsvec: ");
-for(j=0; j<11; j++ ) printf("%d, ", svec[j]);
-printf("\n");
+#if 0
+	printf("uvec: ");
+	for(j=0; j<8; j++) printf("%d, ", uvec[j]);
+	printf("\nsvec: ");
+	for(j=0; j<11; j++ ) printf("%d, ", svec[j]);
+	printf("\n");
+#endif
 	return( numuvec );
 }
 
@@ -1328,9 +1332,6 @@ struct rt_tol		*tol;
 
 	arb = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
-	for( i=0; i<8; i++)  {
-		VPRINT("before pt[]", arb->pt[i]);
-	}
 
 	if( (nedge = rt_arb_get_cgtype( &cgtype, arb, tol, uvec, svec )) == 0 )
 		return(0);
@@ -1340,9 +1341,6 @@ struct rt_tol		*tol;
 		return( 0 );
 
 	*arb = arbo;		/* struct copy of reorganized arb */
-	for( i=0; i<8; i++)  {
-		VPRINT("after pt[]", arb->pt[i]);
-	}
 	return( cgtype );
 }
 
