@@ -1,6 +1,7 @@
-proc mike_dedication {} {
+proc mike_dedication {id} {
+        global mged_gui
 
-	set top .mike
+	set top .$id\_mike
 
 	if { [winfo exists $top] } {
 		wm deiconify $top
@@ -8,7 +9,7 @@ proc mike_dedication {} {
 		return
 	}
 
-	toplevel $top
+	toplevel $top -screen $mged_gui($id,screen)
 	set row 0
 
 	set mike_file [bu_brlcad_path "tclscripts/mged"]/mike-tux.ppm
@@ -21,7 +22,7 @@ proc mike_dedication {} {
 	
 	label $top.dates -text "Michael John Muuss\nOctober 16, 1958 - November 20, 2000"
 	grid $top.dates -row $row -column 0 -columnspan 2
-	grid rowconfigure $top $row -weight 1
+#	grid rowconfigure $top $row -weight 1
 	incr row
 
 	set dedi_file [bu_brlcad_path "tclscripts/mged"]/mike-dedication.txt
@@ -34,7 +35,7 @@ proc mike_dedication {} {
 			set tab_len [font measure  $text_font -displayof $top "Oooo"]
 			$top.dedi configure -tabs $tab_len
 			$top.dedi insert end $dedi_text
-			grid $top.dedi -row $row -column 0 -sticky e -pady 3
+			grid $top.dedi -row $row -column 0 -sticky nsew -pady 3
 			grid $top.sb -row $row -column 1 -sticky nsw -pady 3
 			grid rowconfigure $top $row -weight 1
 			incr row
