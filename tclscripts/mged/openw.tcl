@@ -382,6 +382,11 @@ hoc_register_menu_data "File" "Extract..." "Extract Objects"\
 hoc_register_menu_data "File" "g2asc..." "Convert to Ascii"\
 	{ { summary "Convert the current database into an ascii file." } }
 .$id.menubar.file add separator
+.$id.menubar.file add command -label "Load Script..." -underline 0 \
+	-command "do_LoadScript $id"
+hoc_register_menu_data "File" "Load Script..." "Load Script"\
+	{ { summary "Browse directories for a Tcl script file to load." } }
+.$id.menubar.file add separator
 .$id.menubar.file add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
 hoc_register_menu_data "File" "Raytrace..." "Raytrace View"\
 	{ { summary "Tool for raytracing the current view." }
