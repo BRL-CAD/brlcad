@@ -83,7 +83,7 @@ FBIO adage_interface =
 		"Adage RDS3000",
 		1024,
 		1024,
-		"ik",
+		"/dev/ik",
 		512,
 		512,
 		-1,
@@ -148,12 +148,30 @@ int		width, height;
 	{	register int	i;
 		long	xbsval[34];
 		int	dev_mode;
+		char	ourfile[16];
+
+	/* Only 512 and 1024 opens are available */
+	if( width > 512 )
+		width = 1024;
+	else if( width < 512 )
+		width = 512;
+	if( height > 512 )
+		height = 1024;
+	else if( height < 512 )
+		height = 512;
 
 	/* /dev/ik0l */
 	/* 012345678 */
+	if( strlen( file ) > 12 )
+		return -1;
+	sprintf( ourfile, "%s0l", file );
 	if( width > 512 )
-		file[8] = 'h';
-	if( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1 )
+		ourfile[8] = 'h';
+	else
+		ourfile[8] = 'l';
+	ourfile[9] = '\0';
+
+	if( (ifp->if_fd = open( ourfile, O_RDWR, 0 )) == -1 )
 		return	-1;
 #if defined( vax )
 	if( ioctl( ifp->if_fd, IKIOGETADDR, &_ikUBaddr ) < 0 )
@@ -262,7 +280,7 @@ Pixel	*bgpp;
 		hardware support for this.
 	 */
 	if( bgpp != NULL && (bgpp->red != 0 || bgpp->green != 0 || bgpp->blue != 0) )
-		return	fb_fast_dma_bg( ifp );
+		return	fb_fast_dma_bg( ifp, bgpp );
 
 	if( ifp->if_width == 1024 )
 		dev_mode = 2;
