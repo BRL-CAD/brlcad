@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "machine.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "wdb.h"
 
 extern int	getopt();
@@ -280,7 +281,7 @@ char **argv;
 		exit(42);
 	}
 	for( i=reg_total+1; i>=0; i-- )  {
-		wmp[i].wm_forw = wmp[i].wm_back = &wmp[i];
+		RT_LIST_INIT( &wmp[i].l );
 	}
 
 	cur_col = 0;

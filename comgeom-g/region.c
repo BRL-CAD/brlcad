@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "machine.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "wdb.h"
 
 extern char	name_it[];
@@ -236,7 +237,7 @@ printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
 #endif
 
 	wp = &wmp[reg_num];
-	if( wp->wm_forw == wp )  {
+	if( RT_LIST_IS_EMPTY( &wp->l ) )  {
 		if( verbose )  {
 			char	paren[32];
 
@@ -304,7 +305,7 @@ char	*name;
 	sprintf( nbuf, "%s%s", name, name_it );
 	strncpy( wp->wm_name, nbuf, sizeof(wp->wm_name) );
 
-	wp->wm_forw = wp->wm_back = wp;
+	RT_LIST_INIT( &wp->l );
 
 	groups[ngroups].grp_lo = lo;
 	groups[ngroups].grp_hi = hi;
@@ -337,7 +338,7 @@ group_write()
 	for( i=0; i < ngroups; i++ )  {
 		wp = &groups[i].grp_wm;
 		/* Skip empty groups */
-		if( wp->wm_forw == wp )  continue;
+		if( RT_LIST_IS_EMPTY( &wp->l ) )  continue;
 
 		/* Make a non-region combination */
 		mk_lfcomb( outfp, wp->wm_name, wp, 0 );
