@@ -96,7 +96,7 @@ int	trav_type;
  *		    Describe a red-black tree
  *
  *	This function has one parameter: a pointer to a red-black
- *	tree.  Rb_describe() prints out the header information
+ *	tree.  Rb_summarize_tree() prints out the header information
  *	for the tree.  It is intended for diagnostic purposes.
  */
 void rb_summarize_tree (tree)
@@ -117,10 +117,10 @@ rb_tree	*tree;
 	rt_log("No orders\n");
     else
     {
-	rt_log("i    Order[i]   Uniq[i]  Root[i]       Package[i]    Data[i]\n");
+	rt_log("i    Order[i]   Uniq[i]  Root[i]      Package[i]     Data[i]\n");
 	for (i = 0; i < tree -> rbt_nm_orders; ++i)
 	{
-	    rt_log("%-3d  <%x>    %c    <%x>    <%x>    <%x>\n",
+	    rt_log("%-3d  <%x>    %c      <%x>    <%x>    <%x>\n",
 		    i,
 		    rb_order_func(tree, i),
 		    rb_get_uniqueness(tree, i) ? 'Y' : 'N',
