@@ -146,15 +146,15 @@ char	**argv;
 		exit(4);
 	}
 
-	/* Pre-fetch the first line */
-	load_buffer();
+	/* Pre-fetch the first line (after skipping) */
+	for( i= -1; i<border_inset; i++ )  load_buffer();
 
 	/* Write out duplicates at bottom, including real copy of 1st line */
-	ydup = (yout - yin) / 2 + 1;
+	ydup = (yout - yin) / 2 + border_inset + 1;
 	for( y = 0; y < ydup; y++ )  write_buffer();
 
 	/* Read and write the remaining lines */
-	for( i = 1; i < yin; i++, y++ )  {
+	for( ; i < yin-border_inset; i++, y++ )  {
 		load_buffer();
 		write_buffer();
 	}
