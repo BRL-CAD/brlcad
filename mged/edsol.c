@@ -1580,6 +1580,12 @@ init_objedit()
 {
 	register int i, type;
 	union record trec;
+	int	id;
+
+	/* for safety sake */
+	es_menu = 0;
+	es_edflag = -1;
+	mat_idn(es_mat);
 
 	/*
 	 * Check for a processed region 
@@ -1589,6 +1595,7 @@ init_objedit()
 		/* Have a processed (E'd) region - NO key solid.
 		 * 	Use the 'center' as the key
 		 */
+		/* XXX should have an es_keypoint for this */
 		VMOVE(es_rec.s.s_values, illump->s_center);
 
 		/* Zero the other values */
@@ -1596,56 +1603,54 @@ init_objedit()
 			es_rec.s.s_values[i] = 0.0;
 
 		/* The s_center takes the es_mat into account already */
-		mat_idn(es_mat);
-
-		/* for safety sake */
-		es_menu = 0;
-		es_edflag = -1;
-
 		return;
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
+	/* XXX should be db_getmrec() */
 	db_get( dbip,  illump->s_path[illump->s_last], &es_rec, 0 , 1);
 
-	if( es_rec.u_id == ID_BSOLID ) {
-		(void)printf("SPLINE may not work well\n");
-		mat_idn(es_mat);
-		es_menu = 0;
-		es_edflag = -1;
+	/* XXX should have an es_keypoint here;
+	 * instead, be certain that es_rec.s.s_values[0] has key point! */
+	switch( id = rt_id_solid( &es_rec ) )  {
+	case ID_NULL:
+		(void)printf("init_objedit(%s): bad database record\n",
+			illump->s_path[illump->s_last]->d_namep );
+		button(BE_REJECT);
 		return;
-	}
 
-	if( es_rec.u_id == ID_ARS_A ) { 
+	case ID_ARS_A:
 		/* read the first B-record into trec */
 		db_get( dbip,  illump->s_path[illump->s_last], &trec, 1 , 1);
 		/* only interested in vertex */
 		VMOVE(es_rec.s.s_values, trec.b.b_values);
-		es_rec.s.s_type = es_rec.s.s_cgtype = ARS;
-	}
+		es_rec.s.s_type = ARS;		/* XXX wrong */
+		es_rec.s.s_cgtype = ARS;
+		break;
 
-	if( es_rec.u_id != ID_SOLID && es_rec.u_id != ID_ARS_A ) {
-		(void)printf(
-"ERROR - Should have a SOLID at bottom of path\n");
-		return;
-	}
+	case ID_SOLID:
+		if( es_rec.s.s_cgtype < 0 )
+			es_rec.s.s_cgtype *= -1;
 
-	es_menu = 0;
-	es_edflag = -1;
-
-	if( es_rec.s.s_cgtype < 0 )
-		es_rec.s.s_cgtype *= -1;
-
-	if( es_rec.s.s_type == GENARB8 ) {
-		/* find the comgeom arb type */
-		if( (type = type_arb( &es_rec )) == 0 ) {
-			(void)printf("%s: BAD ARB\n",es_rec.s.s_name);
-			return;
+		if( es_rec.s.s_type == GENARB8 ) {
+			/* find the comgeom arb type */
+			if( (type = type_arb( &es_rec )) == 0 ) {
+				(void)printf("%s: BAD ARB\n",es_rec.s.s_name);
+				return;
+			}
+			es_rec.s.s_cgtype = type;
 		}
+		break;
 
-		es_rec.s.s_cgtype = type;
+	case ID_EBM:
+		/* Use model origin as key point */
+		VSETALL(es_rec.s.s_values, 0 );
+		break;
+
+	default:
+		/* XXX Need SOMETHING in s_values, s/b es_keypoint */
+		VMOVE(es_rec.s.s_values, illump->s_center);
 	}
-
 
 	/* Save aggregate path matrix */
 	pathHmat( illump, es_mat, illump->s_last-1 );
