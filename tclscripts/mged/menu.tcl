@@ -134,6 +134,8 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 
     set edit_type "none of above"
     foreach id $mged_players {
+	build_edit_info $id
+
 	.$id.m.settings.m.cm_transform entryconfigure 2 -state normal
 	set mged_transform($id) "e"
 	set_transform $id
@@ -217,6 +219,8 @@ proc do_edit_menu { menu1 } {
 
     set edit_type "none of above"
     foreach id $mged_players {
+	build_edit_info $id
+
 	.$id.m.settings.m.cm_transform entryconfigure 2 -state normal
 	set mged_transform($id) "e"
 	set_transform $id
@@ -319,6 +323,8 @@ proc undo_edit_menu {} {
     }
 
     foreach id $mged_players {
+	destroy_edit_info $id
+
 	while {1} {
 	    if {[.$id.m.edit.m type 0] == "separator"} {
 		.$id.m.edit.m delete 0
