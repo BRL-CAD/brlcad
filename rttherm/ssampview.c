@@ -499,7 +499,7 @@ char	**argv;
 	/* Read atmosphere curve -- input is in microns, not nm */
 	atmosphere_orig = rt_read_table_and_tabdata( "std_day_1km.dat" );
 	rt_table_scale( (struct rt_table *)(atmosphere_orig->table), 1000.0 );
-	atmosphere = rt_tabdata_resample( spectrum, atmosphere_orig );
+	atmosphere = rt_tabdata_resample_max( spectrum, atmosphere_orig );
 
 	/* Allocate and read 2-D spectrum array */
 	data = rt_tabdata_binary_read( basename, width*height, spectrum );

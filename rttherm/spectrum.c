@@ -307,12 +307,22 @@ bu_log("ntsc_B: area=%g\n", rt_tabdata_area2(rt_NTSC_b_tabdata) );
 	rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_b_tabdata );
 
 	/* Resample original NTSC curves to match given rt_table sampling */
-	*rp = rt_tabdata_resample( tabp, rt_NTSC_r_tabdata );
-	*gp = rt_tabdata_resample( tabp, rt_NTSC_g_tabdata );
-	*bp = rt_tabdata_resample( tabp, rt_NTSC_b_tabdata );
+#if 0
+	/* just to test the routine */
+	*rp = rt_tabdata_resample_avg( tabp, rt_NTSC_r_tabdata );
+	*gp = rt_tabdata_resample_avg( tabp, rt_NTSC_g_tabdata );
+	*bp = rt_tabdata_resample_avg( tabp, rt_NTSC_b_tabdata );
+#else
+	/* use this one for real */
+	*rp = rt_tabdata_resample_max( tabp, rt_NTSC_r_tabdata );
+	*gp = rt_tabdata_resample_max( tabp, rt_NTSC_g_tabdata );
+	*bp = rt_tabdata_resample_max( tabp, rt_NTSC_b_tabdata );
+#endif
 }
 
 /*
+ *			R T _ S P E C T _ R E F L E C T A N C E _ R G B
+ *
  *  Given reflectance data (in range 0..1) in terms of RGB color,
  *  convert that to a spectral reflectance curve.
  *
@@ -373,6 +383,8 @@ CONST static point_t      rgb_NTSC[4] = {
     {0.313,     0.329,      0.358}};    /* white */
 
 /*
+ *			R T _ M A K E _ N T S C _ X Y Z 2 R G B
+ *
  *  Create the map from 
  *  CIE XYZ perceptual space into
  *  an idealized RGB space assuming NTSC primaries with D6500 white.
@@ -688,6 +700,8 @@ rt_log(" tab_area = %g\n", tab_area);
  *  for a NTSC television camera, from Benson "Television Engineering
  *  Handbook" page 4.58, convert an RGB value in range 0..1 to
  *  a spectral curve also in range 0..1.
+ *
+ *  XXX This is completely wrong, don't do this.
  */
 void
 rt_spect_rgb_to_curve( tabp, rgb, ntsc_r, ntsc_g, ntsc_b )
