@@ -593,7 +593,7 @@ char **argv;
 	thismatch = 0;
 	for( i = 0; i < RT_DBNHASH; i++ )  {
 	    for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-		if( !regexp_match( pattern, dp->d_namep, '*', '?', '[', ']' ) )
+		if( !regexp_match( pattern, dp->d_namep, "*?[]" ) )
 		    continue;
 		/* Successful match */
 		if( nummatch == 0 )
