@@ -451,16 +451,16 @@ char				*base;	/* structure ponter */
 				break;
 			case 'C':
 				{
-					register unsigned char *cp =
+					register unsigned char *ucp =
 						(unsigned char *)loc;
 
 					rt_vls_extend(vls,
 						16+strlen(ptab->sp_name) );
-
+					/* WARNING: peeks inside rt_vls structure */
 					cp = &vls->vls_str[vls->vls_len];
-					sprintf(cp, " %s=%d/%d/%d",
+					sprintf( cp, " %s=%d/%d/%d",
 						ptab->sp_name,
-						cp[0], cp[1], cp[2]);
+						ucp[0], ucp[1], ucp[2]);
 					vls->vls_len += strlen(cp);
 					break;
 				}
