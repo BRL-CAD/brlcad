@@ -545,6 +545,7 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
+	sedraw = 1;
 	if(arg == 7)  {
 		es_edflag = CONTROL;
 		sedraw = 1;
@@ -557,6 +558,7 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
+	sedraw = 1;
 	if(arg == 7)  {
 		es_edflag = CONTROL;
 		sedraw = 1;
@@ -569,6 +571,7 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
+	sedraw = 1;
 	if(arg == 6)  {
 		es_edflag = CONTROL;
 		sedraw = 1;
@@ -581,6 +584,7 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
+	sedraw = 1;
 	if(arg == 6)  {
 		es_edflag = CONTROL;
 		sedraw = 1;
@@ -593,6 +597,7 @@ int arg;
 {
 	es_menu = arg - 1;
 	es_edflag = SETUP_ROTFACE;
+	sedraw = 1;
 	if(arg == 5)  {
 		es_edflag = CONTROL;
 		sedraw = 1;
@@ -605,6 +610,7 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = CHGMENU;
+	sedraw = 1;
 }
 
 /*ARGSUSED*/
