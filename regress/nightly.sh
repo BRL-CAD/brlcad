@@ -21,28 +21,32 @@
 
 case $1 in
 master)
+    TASK=master
     echo "RUNNING MASTER"
-    if [ ! -x brlcad/regress/master.sh ] ; then
-	cvs -q -d /c/CVS export -D today -N brlcad/regress
-    else 
-	cvs -d /c/CVS update brlcad
-    fi
-    cd brlcad/regress
-    ./master.sh -d /c/regress -r /c/CVS
-    echo "DONE RUNNING MASTER"
     ;;
 status)
+    TASK=status
     echo "CHECKING STATUS"
-    if [ ! -x brlcad/regress/master.sh ] ; then
-	cvs -q -d /c/CVS export -D today -N brlcad/regress
-    else
-	cvs -d /c/CVS update brlcad
-    fi
-    cd brlcad/regress
-    ./status.sh -d /c/regress -a lamas@arl.army.mil
-    echo "DONE CHECKING STATUS"
     ;;
 *)
     /bin/echo 'must specify "master" or "status" argument'
+    exit -1
     ;;
 esac
+
+cvs -q -d /c/CVS export -D today -N brlcad/regress
+cd brlcad/regress
+cp nightly.sh ../..
+
+if [ "x$TASK" = "xmaster" ] ; then
+    ./master.sh -d /c/regress -r /c/CVS
+    echo "DONE RUNNING MASTER"
+elif [ "x#TASK" = "xstatus" ] ; then
+    ./status.sh -d /c/regress -a morrison@arl.army.mil
+    echo "DONE CHECKING STATUS"
+else
+    echo "INTERNAL ERROR -- not master or status"
+    exit -1
+fi
+
+exit 0
