@@ -1,18 +1,12 @@
 /*
-	SCCS id:	@(#) vproc.c	2.7
-	Last edit: 	7/10/86 at 11:07:27
-	Retrieved: 	8/13/86 at 08:27:02
-	SCCS archive:	/m/cad/vdeck/RCS/s.vproc.c
-
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) vproc.c	2.7	last edit 7/10/86 at 11:07:27";
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 /*
 	Procedures for vproc.c
@@ -545,37 +539,42 @@ char	 *args[];
 	return;
 	}
 
+#define MAX_COL	(NAMESIZE*5)
+#define SEND_LN()	{\
+			buf[column++] = '\n';\
+			ewrite( 1, buf, (unsigned) column );\
+			column = 0;\
+			}
+
 /*	c o l _ p r t ( )
 	Print list of names in tabular columns.
  */
 col_prt( list, ct )
 register char	*list[];
 register int	ct;
-	{	char		buf[72];
+	{	char		buf[MAX_COL+2];
 		register int	i, column, spaces;
 
 	for( i = 0, column = 0; i < ct; i++ )
 		{
-		(void) strcpy( &buf[column], list[i] );
-		column += strlen( list[i] );
-		if( column > 56 )
+		if( column + strlen( list[i] ) > MAX_COL )
 			{
-			buf[column++] = '\n';
-			ewrite( 1, buf, (unsigned) column );
-			column = 0;
+			SEND_LN();
+			i--;
 			}
 		else
 			{
-			for(	spaces = NAMESIZE - (column % NAMESIZE );
-				spaces > 0;
-				spaces--
-				)
-				buf[column++] = ' ';
+			(void) strcpy( &buf[column], list[i] );
+			column += strlen( list[i] );
+			spaces = NAMESIZE - (column % NAMESIZE );
+			if( column + spaces < MAX_COL )
+				for( ; spaces > 0; spaces-- )
+					buf[column++] = ' ';
+			else
+				SEND_LN();
 			}
 		}
-	buf[column++] = '\n';
-	ewrite( 1, buf, (unsigned) column );
-	column = 0;
+	SEND_LN();
 	return	ct;
 	}
 
