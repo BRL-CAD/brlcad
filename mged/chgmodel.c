@@ -1316,6 +1316,12 @@ Tcl_Interp *interp;
 int iflag;
 vect_t argvect;
 {
+	point_t model_pt;
+	point_t point;
+	point_t s_point;
+	mat_t temp;
+	vect_t v_work;
+
   update_views = 1;
 
   if(movedir != ROTARROW) {
