@@ -359,14 +359,13 @@ illuminate( y )  {
 	FOR_ALL_SOLIDS( sp )  {
 		if( sp->s_flag == UP )
 			if( count-- == 0 && illump != sp )  {
+				sp->s_iflag = UP;
+				dmp->dmr_viewchange( DM_CHGV_ILLUM, sp );
 				illump = sp;
-				illump->s_iflag = UP;
-				dmaflag++;
-				/* Inform display manager */
-				dmp->dmr_viewchange();
 			}  else
 				sp->s_iflag = DOWN;
 	}
+	dmaflag++;
 }
 
 /*
