@@ -1392,6 +1392,7 @@ struct application  {
 #define RT_AP_MAGIC	0x4170706c	/* "Appl" */
 #define RT_CK_AP(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
+#define RT_CK_AP_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,RT_AP_MAGIC,"struct application")
 #define RT_APPLICATION_INIT(_p)	{ \
 		bzero( (char *)(_p), sizeof(struct application) ); \
 		(_p)->a_magic = RT_AP_MAGIC; \
@@ -2225,6 +2226,7 @@ BU_EXTERN(int rt_rpp_region, (struct rt_i *rtip, CONST char *reg_name,
 BU_EXTERN(void rt_bomb, (CONST char *s));
 BU_EXTERN(int rt_in_rpp, (struct xray *rp, CONST fastf_t *invdir,
 		CONST fastf_t *min, CONST fastf_t *max));
+BU_EXTERN(CONST union cutter *rt_cell_n_on_ray, (struct application *ap, int n));
 
 /* The database library */
 
