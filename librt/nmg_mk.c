@@ -1740,7 +1740,7 @@ CONST vect_t norm;
 void
 nmg_vertexuse_a_cnurb( vu, uvw )
 struct vertexuse	*vu;
-CONST vect_t		uvw;
+CONST fastf_t		*uvw;
 {
 	struct vertexuse_a_cnurb	*vua;
 	struct model	*m;
