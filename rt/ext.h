@@ -30,6 +30,7 @@ extern int		lightmodel;		/* Select lighting model */
 extern int		rpt_overlap;		/* Warn about overlaps? */
 extern int		rpt_dist;		/* Output depth along w/ RGB? */
 extern int		space_partition;		/* Space partitioning algorithm to use */
+extern int		nugrid_dimlimit;		/* limit to dimensions of nugrid; <= 0 means no limit */
 extern double		nu_gfactor;	/* constant factor in NUgrid algorithm,
 					   if applicable */
 
