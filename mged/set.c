@@ -64,6 +64,8 @@ struct _mged_variables default_mged_variables = {
 
 static void set_view();
 void set_scroll();
+void set_rateknobs();
+void set_adcflag();
 
 
 /*
@@ -92,8 +94,8 @@ nmg_eu_dist_set()
 #define MV_O(_m)	offsetof(struct _mged_variables, _m)
 struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "rateknobs",		MV_O(rateknobs),	set_scroll },
-	{"%d",	1, "adcflag",		MV_O(adcflag),          set_scroll },
+	{"%d",	1, "rateknobs",		MV_O(rateknobs),	set_rateknobs },
+	{"%d",	1, "adcflag",		MV_O(adcflag),          set_adcflag },
 	{"%d",	1, "scroll_enabled",	MV_O(scroll_enabled),   set_scroll },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
@@ -103,7 +105,7 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "v_axes",            MV_O(v_axes),           refresh_hook },
 	{"%d",  1, "e_axes",            MV_O(e_axes),           refresh_hook },
 	{"%d",  1, "send_key",          MV_O(send_key),         BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "hot_key",           MV_O(hot_key),         BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "view",              MV_O(view),             set_view },
 	{"%d",  1, "edit",              MV_O(edit),             set_scroll },
 	{"%d",  1, "context",           MV_O(context),          refresh_hook },
@@ -135,8 +137,26 @@ Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
+#if TRY_NEW_MGED_VARS
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
+    register int i = (int)clientData;
+
+    /* Ask the libbu structparser for the value of the variable */
+
+    bu_vls_init( &str );
+    bu_vls_struct_item( &str, &mged_vparse[i], (CONST char *)&mged_variables, ' ');
+
+    /* Next, set the Tcl variable to this value */
+    (void)Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->mged_variable_names[i]),
+		     bu_vls_addr(&str), (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
+
+    bu_vls_free(&str);
+    return NULL;
+#else
+    struct bu_structparse *sp = (struct bu_structparse *)clientData;
+    struct bu_vls str;
+    register int i;
 
     /* Ask the libbu structparser for the value of the variable */
 
@@ -144,10 +164,11 @@ int flags;
     bu_vls_struct_item( &str, sp, (CONST char *)&mged_variables, ' ');
 
     /* Next, set the Tcl variable to this value */
-
     (void)Tcl_SetVar(interp, sp->sp_name, bu_vls_addr(&str),
 		     (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
+
     return NULL;
+#endif
 }
 
 /**
@@ -164,6 +185,24 @@ Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
+#if TRY_NEW_MGED_VARS
+    struct bu_vls str;
+    char *newvalue;
+    register int i = (int)clientData;
+
+    newvalue = Tcl_GetVar(interp,
+			  bu_vls_addr(&curr_dm_list->s_info->mged_variable_names[i]),
+			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
+    bu_vls_init( &str );
+    bu_vls_printf( &str, "%s=\"%s\"", mged_vparse[i].sp_name, newvalue );
+    if( bu_struct_parse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
+      Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", mged_vparse[i].sp_name,
+		       " TO ", newvalue, "\n", (char *)NULL);
+    }
+    bu_vls_free(&str);
+    return read_var(clientData, interp, name1, name2,
+		    (flags&(~TCL_TRACE_WRITES))|TCL_TRACE_READS);
+#else
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
     char *newvalue;
@@ -178,6 +217,7 @@ int flags;
     }
     return read_var(clientData, interp, name1, name2,
 		    (flags&(~TCL_TRACE_WRITES))|TCL_TRACE_READS);
+#endif
 }
 
 /**
@@ -194,6 +234,22 @@ Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
+#if TRY_NEW_MGED_VARS
+  if( flags & TCL_INTERP_DESTROYED )
+            return NULL;
+
+  Tcl_AppendResult(interp, "mged variables cannot be unset\n", (char *)NULL);
+  Tcl_TraceVar( interp, name1, TCL_TRACE_READS, read_var,
+		clientData );
+  Tcl_TraceVar( interp, name1, TCL_TRACE_WRITES, write_var,
+		clientData );
+  Tcl_TraceVar( interp, name1, TCL_TRACE_UNSETS, unset_var,
+		clientData );
+  read_var(clientData, interp, name1, name2,
+	   (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
+
+  return NULL;
+#else
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
 
     if( flags & TCL_INTERP_DESTROYED )
@@ -209,7 +265,9 @@ int flags;
     read_var(clientData, interp, name1, name2,
 	     (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
     return NULL;
+#endif
 }
+
 
 /**
  **           M G E D _ V A R I A B L E _ S E T U P
@@ -219,12 +277,62 @@ int flags;
  **
  **/
 
+#if TRY_NEW_MGED_VARS
+void
+mged_variable_setup(p)
+struct dm_list *p;
+{
+  register int i;
+
+  for(i = 0; mged_vparse[i].sp_name != NULL; ++i){
+    bu_vls_init(&p->s_info->mged_variable_names[i]);
+    bu_vls_printf(&p->s_info->mged_variable_names[i], "mged_variable(%S,%s)",
+		  &p->_dmp->dm_pathName, mged_vparse[i].sp_name);
+    read_var( (ClientData)i, interp,
+	      bu_vls_addr(&p->s_info->mged_variable_names[i]), (char *)NULL, 0 );
+    Tcl_TraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		  TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		  read_var, (ClientData)i );
+    Tcl_TraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		  TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		  write_var, (ClientData)i );
+    Tcl_TraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		  TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		  unset_var, (ClientData)i );
+  }
+}
+
+
+mged_variable_free_vls(p)
+struct dm_list *p;
+{
+  register int i;
+
+  for(i = 0; mged_vparse[i].sp_name != NULL; ++i){
+    Tcl_UntraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		    TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		    read_var, (ClientData)i);
+    Tcl_UntraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		    TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		    write_var, (ClientData)i);
+    Tcl_UntraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		    TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		    unset_var, (ClientData)i);
+    bu_vls_free(&p->s_info->mged_variable_names[i]);
+  }
+}
+
+
+
+
+
+#else
 void
 mged_variable_setup(interp)
 Tcl_Interp *interp;    
 {
-    register struct bu_structparse *sp;
-    register int i;
+  register struct bu_structparse *sp;
+  register int i;
 
     for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
 	read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
@@ -236,6 +344,8 @@ Tcl_Interp *interp;
 		      unset_var, (ClientData)sp );
     }
 }
+#endif
+
 
 int
 f_set(clientData, interp, argc, argv)
@@ -311,10 +421,33 @@ set_scroll()
   else
     scroll_edit = EDIT_CLASS_NULL;
 
+  if(!strcmp("nu", bu_vls_addr(&pathName)))
+    return;
+
   if( mged_variables.scroll_enabled )
     Tcl_Eval(interp, "sliders on");
   else
     Tcl_Eval(interp, "sliders off");
 
+#if 0
   dmaflag = 1;
+#endif
+}
+
+
+void
+set_rateknobs()
+{
+  (void)Tcl_SetVar(interp, "rateknobs", mged_variables.rateknobs ? "1" : "0",
+		   TCL_GLOBAL_ONLY);
+  set_scroll();
+}
+
+
+void
+set_adcflag()
+{
+  (void)Tcl_SetVar(interp, "adcflag", mged_variables.adcflag ? "1" : "0",
+		   TCL_GLOBAL_ONLY);
+  set_scroll();
 }
