@@ -143,7 +143,9 @@ static int	lighting_on = 0;	/* Lighting model on */
 static int	ir_debug;		/* 2 for basic, 3 for full */
 static int	no_faceplate = 0;	/* Don't draw faceplate */
 static int	ir_linewidth = 1;	/* Line drawing width */
+#if 0
 static int      focus = 0;              /* send key events to the command window */
+#endif
 static int      dummy_perspective = 1;
 static int      perspective_mode = 0;	/* Perspective flag */
 /*
@@ -270,7 +272,6 @@ struct structparse Ir_vparse[] = {
 	{"%d",  1, "lighting",		(int)&lighting_on,	establish_lighting },
 	{"%d",  1, "perspective",       (int)&perspective_mode, establish_perspective },
 	{"%d",  1, "set_perspective",(int)&dummy_perspective,  set_perspective },
-	{"%d",  1, "focus",             (int)&focus,            FUNC_NULL },
 	{"%d",  1, "no_faceplate",	(int)&no_faceplate,	refresh_hook },
 	{"%d",  1, "has_zbuf",		(int)&ir_has_zbuf,	refresh_hook },
 	{"%d",  1, "has_rgb",		(int)&ir_has_rgb,	Ir_colorchange },
@@ -283,6 +284,7 @@ struct structparse Ir_vparse[] = {
 };
 
 
+static char ref[] = "mged_glx";
 static int	ir_oldmonitor;		/* Old monitor type */
 long gr_id;
 long win_l, win_b, win_r, win_t;
@@ -472,7 +474,6 @@ Ir_open()
 	int		win_size=1000;
 	int		win_o_x=272;
 	int		win_o_y=12;
-	char ref[] = "mged_glx";
 	struct rt_vls str;
 	int j, k;
 	int ndevices;
@@ -492,13 +493,6 @@ Ir_open()
 
 	/* Invoke script to create a mixed-mode X window */
 	Ir_loadGLX();
-
-	if(TkGLXwin_RefExists(ref))
-	  xtkwin = TkGLXwin_RefGetTkwin(ref);
-	else{
-	  rt_log("Ir_open: ref - %s doesn't exist!!!\n", ref);
-	  mged_finish(1);
-	}
 
 	/* Do this now to force a GLXlink */
 	Tk_MapWindow(xtkwin);
@@ -676,6 +670,9 @@ Done:
 	XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
 		     KeyPressMask|StructureNotifyMask);
 
+	/* Ignore the old scrollbars and menus */
+	ignore_scroll_and_menu = 1;
+
 	return (0);
 }
 
@@ -685,6 +682,13 @@ Ir_loadGLX()
 {
   if(Tcl_EvalFile(interp, "/m/cad/mged/glxinit.tk") == TCL_ERROR){
     rt_log("Ir_open: %s\n", interp->result);
+    mged_finish(1);
+  }
+
+  if(TkGLXwin_RefExists(ref))
+    xtkwin = TkGLXwin_RefGetTkwin(ref);
+  else{
+    rt_log("Ir_open: ref - %s doesn't exist!!!\n", ref);
     mged_finish(1);
   }
 }
@@ -1025,7 +1029,9 @@ Ir_close()
 
 	winclose(gr_id);
 #endif
-	return;
+
+	/* Stop ignoring the old scrollbars and menus */
+	ignore_scroll_and_menu = 0;
 }
 
 /*
@@ -1596,7 +1602,7 @@ else if( eventPtr->type == ConfigureNotify )
 #endif
 
 #if TRY_PIPES
-  if(focus && eventPtr->type == KeyPress){
+  if(mged_variables.focus && eventPtr->type == KeyPress){
     char buffer[1];
 
     XLookupString(&(eventPtr->xkey), buffer, 1,
