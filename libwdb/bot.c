@@ -99,7 +99,7 @@ mk_bot_w_normals(
 	}
 
 	if( (num_normals > 0) && (fp->dbip->dbi_version >= 5 ) ) {
-		bot->bot_flags = RT_BOT_HAS_SURFACE_NORMALS;
+		bot->bot_flags = RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS;
 		bot->num_normals = num_normals;
 		bot->num_face_normals = bot->num_faces;
 		bot->normals = (fastf_t *)bu_calloc( bot->num_normals * 3, sizeof( fastf_t ), "BOT normals" );
