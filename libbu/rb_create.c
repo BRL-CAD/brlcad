@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "redblack.h"
 #define		RB_CREATE	1
 #include "rb_internals.h"
@@ -27,9 +30,17 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
     int		order;
     rb_tree	*tree;
 
-    if (((tree = (rb_tree *) malloc(sizeof(rb_tree))) == RB_TREE_NULL)	||
+    if (((tree = (rb_tree *) rt_malloc(sizeof(rb_tree), "red-black tree"))
+	    == RB_TREE_NULL)						||
 	((tree -> rbt_root = (struct rb_node **)
-		    malloc(nm_orders * sizeof(struct rb_node))) == 0))
+		    rt_malloc(nm_orders * sizeof(struct rb_node),
+			"red-black roots")) == 0)			||
+	((tree -> rbt_empty_node = (struct rb_node *)
+		    rt_malloc(sizeof(struct rb_node),
+			"red-black empty node")) == RB_NODE_NULL)	||
+	((tree -> rbt_empty_node  -> rbn_parent = (struct rb_node **)
+		rt_malloc(nm_orders * sizeof(struct rb_node *),
+			    "red-black parents")) == 0))
     {
 	fputs("rb_create(): Ran out of memory\n", stderr);
 	return (RB_TREE_NULL);
@@ -38,8 +49,19 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
     tree -> rbt_description = description;
     tree -> rbt_nm_orders = nm_orders;
     tree -> rbt_order = order_funcs;
+
+    /*
+     *	Initialize the nil sentinel
+     */
+    tree -> rbt_empty_node -> rbn_magic = RB_NODE_MAGIC;
+    tree -> rbt_empty_node -> rbn_tree = tree;
     for (order = 0; order < nm_orders; ++order)
-	rb_root(tree, order) = RB_NODE_NULL;
+	(tree -> rbt_empty_node -> rbn_parent)[order] = RB_NODE_NULL;
+    tree -> rbt_empty_node -> rbn_left = 0;
+    tree -> rbt_empty_node -> rbn_right = 0;
+
+    for (order = 0; order < nm_orders; ++order)
+	rb_root(tree, order) = rb_null(tree);
     return (tree);
 }
 
@@ -48,10 +70,9 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
  *	    Insert a node into one linear order of a red-black tree
  *
  *	This function has three parameters: the tree and linear order into
- *	which to insert the new node and the contents of the node. On success,
- *	_rb_insert() returns the value 1.  Otherwise, it returns 0.
+ *	which to insert the new node and the contents of the node.
  */
-static int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
+static void _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
 {
     struct rb_node	*node;
     struct rb_node	*parent;
@@ -66,28 +87,26 @@ static int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
      */
     rb_parent(new_node, order) =
     rb_left_child(new_node, order) =
-    rb_right_child(new_node, order) = RB_NODE_NULL;
+    rb_right_child(new_node, order) = rb_null(tree);
 
-    parent = RB_NODE_NULL;
+    parent = rb_null(tree);
     node = rb_root(tree, order);
     compare = rb_order_func(tree, order);
-    while (node != RB_NODE_NULL)
+    while (node != rb_null(tree))
     {
 	parent = node;
-	if ((*compare)(new_node -> rbn_data, node -> rbn_data) < 0)
+	if ((*compare)(rb_data(new_node, order), rb_data(node, order)) < 0)
 	    node = rb_left_child(node, order);
 	else
 	    node = rb_right_child(node, order);
     }
     rb_parent(new_node, order) = parent;
-    if (parent == RB_NODE_NULL)
+    if (parent == rb_null(tree))
 	rb_root(tree, order) = new_node;
-    else if ((*compare)(new_node -> rbn_data, parent -> rbn_data) < 0)
+    else if ((*compare)(rb_data(new_node, order), rb_data(parent, order)) < 0)
 	rb_left_child(parent, order) = new_node;
     else
 	rb_right_child(parent, order) = new_node;
-
-    return (1);
 }
 
 /*		    R B _ I N S E R T ( )
@@ -111,16 +130,24 @@ int rb_insert (rb_tree *tree, void *data)
     nm_orders = tree -> rbt_nm_orders;
 
     /* Create a new node */
-    if (((node = (struct rb_node *) malloc(sizeof(struct rb_node)))
+    if (((node = (struct rb_node *)
+		rt_malloc(sizeof(struct rb_node), "red-black node"))
 	== RB_NODE_NULL)						||
 	((node -> rbn_parent = (struct rb_node **)
-		    malloc(nm_orders * sizeof(struct rb_node))) == 0)	||
+		rt_malloc(nm_orders * sizeof(struct rb_node *),
+			    "red-black parents")) == 0)			||
 	((node -> rbn_left = (struct rb_node **)
-		    malloc(nm_orders * sizeof(struct rb_node))) == 0)	||
+		rt_malloc(nm_orders * sizeof(struct rb_node *),
+			    "red-black left children")) == 0)		||
 	((node -> rbn_right = (struct rb_node **)
-		    malloc(nm_orders * sizeof(struct rb_node))) == 0)	||
+		rt_malloc(nm_orders * sizeof(struct rb_node *),
+			    "red-black right children")) == 0)		||
 	((node -> rbn_color =
-	    malloc((size_t) ceil((double) (nm_orders / 8.0)))) == 0))
+		rt_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+			    "red-black colors")) == 0)			||
+	((node -> rbn_data = (void **)
+		    rt_malloc(nm_orders * sizeof(void *),
+			    "red-black data")) == 0))
     {
 	fputs("rb_insert(): Ran out of memory\n", stderr);
 	return (0);
@@ -131,18 +158,21 @@ int rb_insert (rb_tree *tree, void *data)
      */
     node -> rbn_magic = RB_NODE_MAGIC;
     node -> rbn_tree = tree;
-    node -> rbn_data = data;
+    for (order = 0; order < nm_orders; ++order)
+	rb_data(node, order) = data;
+    node -> rbn_data_count = nm_orders;
+
     /*
      *	If the tree was empty, install this node as the root
      *	and give it a null parent and null children
      */
-    if (rb_root(tree, 0) == RB_NODE_NULL)
+    if (rb_root(tree, 0) == rb_null(tree))
 	for (order = 0; order < nm_orders; ++order)
 	{
 	    rb_root(tree, order) = node;
 	    rb_parent(node, order) =
 	    rb_left_child(node, order) =
-	    rb_right_child(node, order) = RB_NODE_NULL;
+	    rb_right_child(node, order) = rb_null(tree);
 	}
     /*	Otherwise, insert the node into the tree */
     else
@@ -171,7 +201,9 @@ rb_tree *rb_create1 (char *description, int (*order_func)())
 {
     int		(**ofp)();
 
-    if ((ofp = (int (**)()) malloc(sizeof(int (*)()))) == NULL)
+    if ((ofp = (int (**)())
+		rt_malloc(sizeof(int (*)()),
+		    "red-black function table")) == NULL)
     {
 	fputs("rb_create1(): Ran out of memory\n", stderr);
 	return (RB_TREE_NULL);
