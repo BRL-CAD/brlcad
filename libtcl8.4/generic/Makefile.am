@@ -6,4 +6,4 @@ libtclgeneric_la_SOURCES = regcomp.c regerror.c regexec.c regfree.c tclAlloc.c t
 
 noinst_HEADERS = regcustom.h regerrs.h regex.h regguts.h tclCompile.h tclDecls.h tcl.h tclInitScript.h tclIntDecls.h tclInt.h tclIntPlatDecls.h tclIO.h tclMath.h tclPlatDecls.h tclPort.h tclRegexp.h
 
-
+EXTRA_DIST = regc_color.c regc_cvec.c regc_lex.c regc_locale.c regc_nfa.c rege_dfa.c tclUniData.c

@@ -1,6 +1,6 @@
 # $Id$
 
-SUBDIRS = generic unix doc library
+SUBDIRS = xlib bitmaps generic unix doc library
 
 lib_LTLIBRARIES = libtk.la
  
