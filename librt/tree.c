@@ -98,6 +98,11 @@ union tree		*curtree;
 	struct directory	*dp;
 	vect_t			region_min, region_max;
 
+	if( curtree->tr_op == OP_NOP )  {
+		/* Ignore empty regions */
+		return  curtree;
+	}
+
 	GETSTRUCT( rp, region );
 	rp->reg_forw = REGION_NULL;
 	rp->reg_regionid = tsp->ts_regionid;
