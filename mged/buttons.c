@@ -247,7 +247,9 @@ char *str;{
 		     * if no arrow is desired */
 		    if( mptr->menu_func != ((void (*)())0) )
 			(*(mptr->menu_func))(mptr->menu_arg, menu, item);
-		    dmaflag = 1;
+
+		    if(!ignore_scroll_and_menu)
+		      dmaflag = 1;
 		    return;
 		}
 	}
@@ -776,7 +778,9 @@ btn_head_menu(i, menu, item)  {
 		rt_log("btn_head_menu(%d): bad arg\n", i);
 		break;
 	}
-	dmaflag = 1;
+
+	if(!ignore_scroll_and_menu)
+	  dmaflag = 1;
 }
 
 void
