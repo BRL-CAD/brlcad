@@ -392,8 +392,14 @@ struct nmg_ptbl class_table[];
 	if(sB->vu_p) {
 		rt_log("WARNING:  nmg_evaluate_boolean():  shell B still has verts!\n");
 	}
+
 	/* Regardless of what is in it, kill shell B */
 	nmg_ks( sB );
+
+#if 0
+	/* Remove loops/edges/vertices that appear more than once in result */
+	nmg_rm_redundancies( sA );
+#endif
 }
 
 /*
@@ -707,27 +713,34 @@ struct nmg_list		*hd;
 {
 	register struct edgeuse	*eu;
 
+	NMG_CK_VERTEX(v);
 	for( NMG_LIST( eu, edgeuse, hd ) )  {
 		NMG_CK_EDGEUSE(eu);
+		NMG_CK_VERTEXUSE(eu->vu_p);
+		NMG_CK_VERTEX(eu->vu_p->v_p);
 		if( eu->vu_p->v_p == v )  return(1);
 	}
 	return(0);
 }
 
-nmg_find_vertex_in_looplist( v, hd )
+nmg_find_vertex_in_looplist( v, hd, singletons )
 register struct vertex	*v;
 struct nmg_list		*hd;
+int			singletons;
 {
 	register struct loopuse	*lu;
 	long			magic1;
 
+	NMG_CK_VERTEX(v);
 	for( NMG_LIST( lu, loopuse, hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
 		if( magic1 == NMG_VERTEXUSE_MAGIC )  {
 			register struct vertexuse	*vu;
+			if( !singletons )  continue;
 			vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd );
 			NMG_CK_VERTEXUSE(vu);
+			NMG_CK_VERTEX(vu->v_p);
 			if( vu->v_p == v )  return(1);
 		} else if( magic1 == NMG_EDGEUSE_MAGIC )  {
 			if( nmg_find_vertex_in_edgelist( v, &lu->down_hd ) )
@@ -739,10 +752,72 @@ struct nmg_list		*hd;
 	return(0);
 }
 
+nmg_find_vertex_in_facelist( v, hd )
+register struct vertex	*v;
+struct nmg_list		*hd;
+{
+	register struct faceuse	*fu;
+
+	NMG_CK_VERTEX(v);
+	for( NMG_LIST( fu, faceuse, hd ) )  {
+		NMG_CK_FACEUSE(fu);
+		if( nmg_find_vertex_in_looplist( v, &fu->lu_hd, 1 ) )
+			return(1);
+	}
+	return(0);
+}
+
+nmg_find_edge_in_edgelist( e, hd )
+struct edge	*e;
+struct nmg_list	*hd;
+{
+	register struct edgeuse	*eu;
+
+	NMG_CK_EDGE(e);
+	for( NMG_LIST( eu, edgeuse, hd ) )  {
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_EDGE(eu->e_p);
+		if( e == eu->e_p )  return(1);
+	}
+	return(0);
+}
+
 nmg_find_edge_in_looplist( e, hd )
 struct edge	*e;
 struct nmg_list	*hd;
 {
+	register struct loopuse	*lu;
+	long			magic1;
+
+	NMG_CK_EDGE(e);
+	for( NMG_LIST( lu, loopuse, hd ) )  {
+		NMG_CK_LOOPUSE(lu);
+		magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+		if( magic1 == NMG_VERTEXUSE_MAGIC )  {
+			/* Loop of a single vertex does not have an edge */
+			continue;
+		} else if( magic1 == NMG_EDGEUSE_MAGIC )  {
+			if( nmg_find_edge_in_edgelist( e, &lu->down_hd ) )
+				return(1);
+		} else {
+			rt_bomb("nmg_find_edge_in_loopuse() bad magic\n");
+		}
+	}
+	return(0);
+}
+
+nmg_find_edge_in_facelist( e, hd )
+struct edge	*e;
+struct nmg_list	*hd;
+{
+	register struct faceuse	*fu;
+
+	NMG_CK_EDGE(e);
+	for( NMG_LIST( fu, faceuse, hd ) )  {
+		NMG_CK_FACEUSE(fu);
+		if( nmg_find_edge_in_looplist( e, &fu->lu_hd ) )
+			return(1);
+	}
 	return(0);
 }
 
@@ -750,15 +825,34 @@ nmg_find_loop_in_facelist( l, hd )
 struct loop	*l;
 struct nmg_list	*hd;
 {
+	register struct loopuse	*lu;
+
+	NMG_CK_LOOP(l);
+	for( NMG_LIST( lu, loopuse, hd ) )  {
+		NMG_CK_LOOPUSE(lu);
+		NMG_CK_LOOP(lu->l_p);
+		if( l == lu->l_p )  return(1);
+	}
 	return(0);
 }
 
+/*
+ *			N M G _ R M _ R E D U N D A N C I E S
+ *
+ *  Remove all redundant parts between the different "levels" of a shell.
+ *  Remove wire loops that match face loops.
+ *  Remove wire edges that match edges in wire loops or face loops.
+ *  Remove lone vertices (stored as wire loops on a single vertex) that
+ *  match vertices in a face loop, wire loop, or wire edge.
+ */
 nmg_rm_redundancies(s)
 struct shell	*s;
 {
 	struct faceuse	*fu;
 	struct loopuse	*lu;
 	struct edgeuse	*eu;
+	struct vertexuse	*vu;
+	long		magic1;
 
 	NMG_CK_SHELL(s);
 
@@ -780,12 +874,9 @@ struct shell	*s;
 		while( NMG_LIST_MORE( eu, edgeuse, &s->eu_hd ) )  {
 			register struct edgeuse *nexteu;
 			nexteu = NMG_LIST_PNEXT( edgeuse, eu );
-			/* Walk all the faces */
-			for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
-				if( nmg_find_edge_in_looplist( eu->e_p, &fu->lu_hd ) )  {
-					nmg_keu(eu);
-					break;
-				}
+			if( nmg_find_edge_in_facelist( eu->e_p, &s->fu_hd ) )  {
+				/* Dispose of wire edge */
+				nmg_keu(eu);
 			}
 			eu = nexteu;
 		}
@@ -803,6 +894,31 @@ struct shell	*s;
 		eu = nexteu;
 	}
 
-	/* There really shouldn't be a lone vertex by now */
+	/* Compare lone vertices against everything else */
+	/* Individual vertices are stored as wire loops on a single vertex */
+	lu = NMG_LIST_FIRST( loopuse, &s->lu_hd );
+	while( NMG_LIST_MORE( lu, loopuse, &s->lu_hd ) )  {
+		register struct loopuse	*nextlu;
+		nextlu = NMG_LIST_PNEXT( loopuse, lu );
 
+		NMG_CK_LOOPUSE(lu);
+		magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+		if( magic1 != NMG_VERTEXUSE_MAGIC )  {
+			lu = nextlu;
+			continue;
+		}
+		vu = NMG_LIST_PNEXT( vertexuse, &lu->down_hd );
+		NMG_CK_VERTEXUSE(vu);
+		NMG_CK_VERTEX(vu->v_p);
+		if( nmg_find_vertex_in_facelist( vu->v_p, &s->fu_hd ) ||
+		    nmg_find_vertex_in_looplist( vu->v_p, &s->lu_hd,0 ) ||
+		    nmg_find_vertex_in_edgelist( vu->v_p, &s->eu_hd ) )  {
+			nmg_klu( lu );
+			lu = nextlu;
+			continue;
+		}
+	}
+
+	/* There really shouldn't be a lone vertex by now */
+	if( s->vu_p )  rt_log("nmg_rm_redundancies() lone vertex?\n");
 }
