@@ -173,7 +173,7 @@ db5_diradd_handler(
 			return;
 		}
 		bu_log("db5_diradd_handler: Duplicate of '%s', given temporary name '%s'\n",
-			rip->name, cp );
+			rip->name.ext_buf, cp );
 	}
 
 	BU_GETSTRUCT( dp, directory );
