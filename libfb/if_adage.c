@@ -133,7 +133,7 @@ static struct ik_fbc ikfbc_setup[4] = {
 	/* 3 - LORES, 30 hz, interlaced, *NTSC*, external sync */
 	0,	32,		/* x, y, viewport */
 	511,	511,		/* x, y, sizeview */
-	0,	4067,		/* x, y, window */
+	0,	4080,		/* x, y, window */
 	0,	0,		/* x, y, zoom */
 	300,	560,		/* horiztime, nlines [no effect] */
 	FBC_EXTERNSYNC,	FBCH_PIXELCLOCK(47) | FBCH_DRIVEBPCK,
@@ -233,8 +233,11 @@ int	width, height;
 			ntsc = 1;
 			width = height = 512;
 			break;
+		case 'l':
+		case 'h':
+			break;		/* Discard, for compatability */
 		default:
-			fb_log( "adage_device_open: Bad unit suffix\n" );
+			fb_log( "adage_device_open: Bad unit suffix %s\n", cp );
 			return(-1);
 	}
 
