@@ -804,12 +804,6 @@ vect_t		dir;
 	rs.sB = fu2->s_p;
 	VMOVE( rs.pt, pt );
 	VMOVE( rs.dir, dir );
-	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
-		rt_log("fu->orientation=%s\n", nmg_orientation(fu1->orientation) );
-		VPRINT("fg_p->N", fu1->f_p->fg_p->N);
-		VPRINT(" pt", pt);
-		VPRINT("dir", dir);
-	}
 	VCROSS( rs.left, fu1->f_p->fg_p->N, dir );
 	switch( fu1->orientation )  {
 	case OT_SAME:
@@ -820,9 +814,13 @@ vect_t		dir;
 	default:
 		rt_bomb("nmg_face_combine: bad orientation\n");
 	}
-if(rt_g.NMG_debug&DEBUG_COMBINE) {
-VPRINT("left", rs.left);
-}
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("\tfu->orientation=%s\n", nmg_orientation(fu1->orientation) );
+		HPRINT("\tfg N", fu1->f_p->fg_p->N);
+		VPRINT("\t  pt", pt);
+		VPRINT("\t dir", dir);
+		VPRINT("\tleft", rs.left);
+	}
 	rs.state = NMG_STATE_OUT;
 
 	/* For measuring angle CCW around plane from -dir */
@@ -1116,7 +1114,7 @@ int			multi;
 			vu, pos,
 			nmg_state_names[old], nmg_v_assessment_names[assessment],
 			nmg_state_names[stp->new_state], action_names[stp->action] );
-		rt_log("This loopuse, before action: ");
+		rt_log("This loopuse, before action:\n");
 		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs);
 	}
 
@@ -1249,7 +1247,7 @@ rt_log("force next eu to ray\n");
 		/* Kill lone vertex loop */
 		nmg_klu(lu);
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
-			rt_log("After LONE_V_ESPLIT, the final loop: ");
+			rt_log("After LONE_V_ESPLIT, the final loop:\n");
 			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		}
 		break;
@@ -1286,7 +1284,7 @@ rt_log("force next eu to ray\n");
 		/* Because vu changed, update vu table, for next action */
 		rs->vu[pos] = second_new_eu->vu_p;
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
-			rt_log("After LONE_V_JAUNT, the final loop: ");
+			rt_log("After LONE_V_JAUNT, the final loop:\n");
 			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		}
 		break;
@@ -1312,7 +1310,7 @@ rt_log("force next eu to ray\n");
 				rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x)\n", prev_vu, vu);
 			nmg_cut_loop( prev_vu, vu );
 			if(rt_g.NMG_debug&DEBUG_COMBINE)  {
-				rt_log("After CUT, the final loop: ");
+				rt_log("After CUT, the final loop:\n");
 				nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
 				nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 			}
@@ -1335,7 +1333,7 @@ rt_log("force next eu to ray\n");
 		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse,prev_vu->up.eu_p)->vu_p;
 
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
-			rt_log("After JOIN, the final loop: ");
+			rt_log("After JOIN, the final loop:\n");
 			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		}
 		break;

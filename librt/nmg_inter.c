@@ -92,6 +92,9 @@ struct faceuse *fu;
 	pointp_t pt;
 	fastf_t dist;
 
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("isect_vertex_face(, vu=x%x, fu=x%x)\n", vu, fu);
+
 	/* check the topology first */	
 	if (vup=vertex_on_face(vu->v_p, fu)) {
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
@@ -142,6 +145,9 @@ struct faceuse *fu;
 	struct loopuse	*plu;
 	fastf_t		dist1, dist2;
 	vect_t		start_pt;
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("isect_edge_face(, eu=x%x, fu=x%x)\n", eu, fu);
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
@@ -533,7 +539,7 @@ struct faceuse *fu;
 	long		magic1;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("isect_loop_faces\n");
+		rt_log("isect_loop_face(, lu=x%x, fu=x%x)\n", lu, fu);
 
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_FACEUSE(fu);
@@ -586,20 +592,63 @@ struct faceuse	*fu2;
 {
 	struct loopuse	*lu;
 
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_2face_loops(, fu1=x%x, fu2=x%x) START ++++++++++\n", fu1, fu2);
+
 	NMG_CK_FACE_G(fu2->f_p->fg_p);
 	NMG_CK_FACE_G(fu1->f_p->fg_p);
 
 	/* process each loop in face 1 */
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
-
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\nLoop %8x\n", lu);
-
+		NMG_CK_LOOPUSE(lu);
 		if (lu->up.fu_p != fu1) {
 			rt_bomb("nmg_isect_2face_loops() Child loop doesn't share parent!\n");
 		}
-
 		isect_loop_face(bs, lu, fu2);
+	}
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_2face_loops(, fu1=x%x, fu2=x%x) RETURN ++++++++++\n\n", fu1, fu2);
+}
+
+/*
+ *			N M G _ P R _ V E R T _ L I S T
+ */
+static void
+nmg_pr_vert_list( str, tbl )
+char		*str;
+struct nmg_ptbl	*tbl;
+{
+	int			i;
+	struct vertexuse	**vup;
+	struct vertexuse	*vu;
+	struct vertex		*v;
+	struct vertex_g		*vg;
+
+    	rt_log("nmg_pr_vert_list(%s):\n", str);
+
+	vup = (struct vertexuse **)tbl->buffer;
+	for (i=0 ; i < tbl->end ; ++i) {
+		vu = vup[i];
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+		vg = v->vg_p;
+		NMG_CK_VERTEX_G(vg);
+		rt_log("%d\t%g, %g, %g\t", i, V3ARGS(vg->coord) );
+		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
+			rt_log("EDGEUSE\n");
+		} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+			rt_log("LOOPUSE\n");
+			if ((struct vertexuse *)vu->up.lu_p->down_hd.forw != vu) {
+				rt_log("ERROR vertexuse's parent disowns us!\n");
+				if (((struct vertexuse *)(vu->up.lu_p->lumate_p->down_hd.forw))->l.magic == NMG_VERTEXUSE_MAGIC)
+					rt_bomb("lumate has vertexuse\n");
+				else
+					rt_bomb("lumate has garbage\n");
+			}
+		} else {
+			rt_log("UNKNOWN\n");
+		}
 	}
 }
 
@@ -619,10 +668,6 @@ CONST struct rt_tol	*tol;
 	struct face	*f1;
 	struct face	*f2;
 	point_t		min_pt;
-	union {
-		struct vertexuse **vu;
-		long **magic_p;
-	} p;
 	int		status;
 
 	NMG_CK_FACEUSE(fu1);
@@ -636,10 +681,11 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACE_G(f2->fg_p);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("\nnmg_isect_2faces(fu1=x%x, fu2=x%x)\n", fu1, fu2);
 		pl1 = f1->fg_p->N;
 		pl2 = f2->fg_p->N;
 
-		rt_log("\nPlanes\t%gx + %gy + %gz = %g\n\t%gx + %gy + %gz = %g\n",
+		rt_log("Planes\t%gx + %gy + %gz = %g\n\t%gx + %gy + %gz = %g\n",
 			pl1[0], pl1[1], pl1[2], pl1[3],
 			pl2[0], pl2[1], pl2[2], pl2[3]);
 	}
@@ -659,7 +705,7 @@ CONST struct rt_tol	*tol;
 		break;
 	case -1:
 		/* co-planar */
-		rt_log("co-planar faces?\n");
+		rt_log("co-planar faces.  Skipping, for now.\n");
 		bs.coplanar = 1;
 		return;
 	case -2:
@@ -687,32 +733,20 @@ CONST struct rt_tol	*tol;
 	nmg_isect_2face_loops(&bs, fu1, fu2);
 
     	if (rt_g.NMG_debug & DEBUG_COMBINE) {
-	    	p.magic_p = vert_list1.buffer;
-	    	rt_log("vert_list1\n");
-		for (i=0 ; i < vert_list1.end ; ++i) {
-			rt_log("%d\t%g, %g, %g\t", i,
-				p.vu[i]->v_p->vg_p->coord[X],
-				p.vu[i]->v_p->vg_p->coord[Y],
-				p.vu[i]->v_p->vg_p->coord[Z]);
-			if (*p.vu[i]->up.magic_p == NMG_EDGEUSE_MAGIC) {
-				rt_log("EDGEUSE\n");
-			} else if (*p.vu[i]->up.magic_p == NMG_LOOPUSE_MAGIC){
-				rt_log("LOOPUSE\n");
-	if ((struct vertexuse *)p.vu[i]->up.lu_p->down_hd.forw != p.vu[i]) {
-		rt_log("vertexuse's parent disowns us!\n");
-		if (((struct vertexuse *)(p.vu[i]->up.lu_p->lumate_p->down_hd.forw))->l.magic == NMG_VERTEXUSE_MAGIC)
-			rt_bomb("lumate has vertexuse\n");
-		else
-			rt_bomb("lumate has garbage\n");
-	}
-			} else
-				rt_log("UNKNOWN\n");
-		}
+	    	rt_log("nmg_isect_2faces(fu1=x%x, fu2=x%x) vert_lists A:\n", fu1, fu2);
+    		nmg_pr_vert_list( "vert_list1", &vert_list1 );
+    		nmg_pr_vert_list( "vert_list2", &vert_list2 );
     	}
 
     	bs.l2 = &vert_list1;
     	bs.l1 = &vert_list2;
 	nmg_isect_2face_loops(&bs, fu2, fu1);
+
+    	if (rt_g.NMG_debug & DEBUG_COMBINE) {
+	    	rt_log("nmg_isect_2faces(fu1=x%x, fu2=x%x) vert_lists B:\n", fu1, fu2);
+    		nmg_pr_vert_list( "vert_list1", &vert_list1 );
+    		nmg_pr_vert_list( "vert_list2", &vert_list2 );
+    	}
 
     	if (vert_list1.end == 0) {
     		/* there were no intersections */
@@ -764,6 +798,9 @@ CONST struct rt_tol	*tol;
 	struct faceuse	*fu1, *fu2;
 	struct shell_a	*sa1, *sa2;
 	long		*flags;
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_crackshells(s1=x%x, s2=x%x)\n", s1, s2);
 
 	NMG_CK_SHELL(s1);
 	sa1 = s1->sa_p;
