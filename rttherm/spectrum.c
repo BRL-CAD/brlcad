@@ -28,9 +28,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "rtstring.h"
 #include "raytrace.h"
-#include "tabdata.h"
 #include "spectrum.h"
 
 /* This is the data for the CIE_XYZ curves take from Judd and
@@ -98,24 +96,24 @@ static CONST double	rt_CIE_XYZ[81][4] = {
  */
 void
 rt_spect_make_CIE_XYZ( x, y, z, tabp )
-struct rt_tabdata		**x;
-struct rt_tabdata		**y;
-struct rt_tabdata		**z;
-CONST struct rt_table	*tabp;
+struct bn_tabdata		**x;
+struct bn_tabdata		**y;
+struct bn_tabdata		**z;
+CONST struct bn_table	*tabp;
 {
-	struct rt_tabdata	*a, *b, *c;
+	struct bn_tabdata	*a, *b, *c;
 	fastf_t	xyz_scale;
 	int	i;
 	int	j;
 
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
-	i = rt_table_interval_num_samples( tabp, 430., 650. );
+	i = bn_table_interval_num_samples( tabp, 430., 650. );
 	if( i <= 4 )  bu_log("rt_spect_make_CIE_XYZ: insufficient samples (%d) in visible band\n", i);
 
-	RT_GET_TABDATA( a, tabp );
-	RT_GET_TABDATA( b, tabp );
-	RT_GET_TABDATA( c, tabp );
+	BN_GET_TABDATA( a, tabp );
+	BN_GET_TABDATA( b, tabp );
+	BN_GET_TABDATA( c, tabp );
 	*x = a;
 	*y = b;
 	*z = c;
@@ -151,15 +149,15 @@ again:
 	}
 
 	/* Normalize the curves so that area under Y curve is 1.0 */
-	xyz_scale = rt_tabdata_area2( b );
+	xyz_scale = bn_tabdata_area2( b );
 	if( fabs(xyz_scale) < VDIVIDE_TOL )  {
 		rt_log("rt_spect_make_CIE_XYZ(): Area = 0 (no luminance) in this part of the spectrum, skipping normalization step\n");
 		return;
 	}
 	xyz_scale = 1 / xyz_scale;
-	rt_tabdata_scale( a, a, xyz_scale );
-	rt_tabdata_scale( b, b, xyz_scale );
-	rt_tabdata_scale( c, c, xyz_scale );
+	bn_tabdata_scale( a, a, xyz_scale );
+	bn_tabdata_scale( b, b, xyz_scale );
+	bn_tabdata_scale( c, c, xyz_scale );
 }
 
 static CONST double rt_NTSC_R[][2] = {
@@ -234,9 +232,9 @@ static CONST double rt_NTSC_B[][2] = {
 	{-1, -1}
 };
 
-struct rt_tabdata *rt_NTSC_r_tabdata;
-struct rt_tabdata *rt_NTSC_g_tabdata;
-struct rt_tabdata *rt_NTSC_b_tabdata;
+struct bn_tabdata *rt_NTSC_r_tabdata;
+struct bn_tabdata *rt_NTSC_g_tabdata;
+struct bn_tabdata *rt_NTSC_b_tabdata;
 
 /*
  *			R T _ S P E C T _ M A K E _ N T S C _ R G B
@@ -251,36 +249,36 @@ struct rt_tabdata *rt_NTSC_b_tabdata;
  */
 void
 rt_spect_make_NTSC_RGB( rp, gp, bp, tabp )
-struct rt_tabdata		**rp;
-struct rt_tabdata		**gp;
-struct rt_tabdata		**bp;
-CONST struct rt_table		*tabp;
+struct bn_tabdata		**rp;
+struct bn_tabdata		**gp;
+struct bn_tabdata		**bp;
+CONST struct bn_table		*tabp;
 {
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
-	/* Convert array of number pairs into rt_tabdata & rt_table */
-	rt_NTSC_r_tabdata = rt_tabdata_from_array( &rt_NTSC_R[0][0] );
-	rt_NTSC_g_tabdata = rt_tabdata_from_array( &rt_NTSC_G[0][0] );
-	rt_NTSC_b_tabdata = rt_tabdata_from_array( &rt_NTSC_B[0][0] );
+	/* Convert array of number pairs into bn_tabdata & bn_table */
+	rt_NTSC_r_tabdata = bn_tabdata_from_array( &rt_NTSC_R[0][0] );
+	rt_NTSC_g_tabdata = bn_tabdata_from_array( &rt_NTSC_G[0][0] );
+	rt_NTSC_b_tabdata = bn_tabdata_from_array( &rt_NTSC_B[0][0] );
 
-bu_log("ntsc_R: area=%g\n", rt_tabdata_area2(rt_NTSC_r_tabdata) );
-	rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_r_tabdata );
-bu_log("ntsc_G: area=%g\n", rt_tabdata_area2(rt_NTSC_g_tabdata) );
-	rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_g_tabdata );
-bu_log("ntsc_B: area=%g\n", rt_tabdata_area2(rt_NTSC_b_tabdata) );
-	rt_pr_table_and_tabdata( "/dev/tty", rt_NTSC_b_tabdata );
+bu_log("ntsc_R: area=%g\n", bn_tabdata_area2(rt_NTSC_r_tabdata) );
+	bn_print_table_and_tabdata( "/dev/tty", rt_NTSC_r_tabdata );
+bu_log("ntsc_G: area=%g\n", bn_tabdata_area2(rt_NTSC_g_tabdata) );
+	bn_print_table_and_tabdata( "/dev/tty", rt_NTSC_g_tabdata );
+bu_log("ntsc_B: area=%g\n", bn_tabdata_area2(rt_NTSC_b_tabdata) );
+	bn_print_table_and_tabdata( "/dev/tty", rt_NTSC_b_tabdata );
 
-	/* Resample original NTSC curves to match given rt_table sampling */
+	/* Resample original NTSC curves to match given bn_table sampling */
 #if 0
 	/* just to test the routine */
-	*rp = rt_tabdata_resample_avg( tabp, rt_NTSC_r_tabdata );
-	*gp = rt_tabdata_resample_avg( tabp, rt_NTSC_g_tabdata );
-	*bp = rt_tabdata_resample_avg( tabp, rt_NTSC_b_tabdata );
+	*rp = bn_tabdata_resample_avg( tabp, rt_NTSC_r_tabdata );
+	*gp = bn_tabdata_resample_avg( tabp, rt_NTSC_g_tabdata );
+	*bp = bn_tabdata_resample_avg( tabp, rt_NTSC_b_tabdata );
 #else
 	/* use this one for real */
-	*rp = rt_tabdata_resample_max( tabp, rt_NTSC_r_tabdata );
-	*gp = rt_tabdata_resample_max( tabp, rt_NTSC_g_tabdata );
-	*bp = rt_tabdata_resample_max( tabp, rt_NTSC_b_tabdata );
+	*rp = bn_tabdata_resample_max( tabp, rt_NTSC_r_tabdata );
+	*gp = bn_tabdata_resample_max( tabp, rt_NTSC_g_tabdata );
+	*bp = bn_tabdata_resample_max( tabp, rt_NTSC_b_tabdata );
 #endif
 }
 
@@ -298,21 +296,21 @@ bu_log("ntsc_B: area=%g\n", rt_tabdata_area2(rt_NTSC_b_tabdata) );
  *	blue	1nm to 492nm		(includes Ultraviolet)
  *
  *  As the caller may be doing a lot of this, the caller is expected
- *  to provide a pointer to a valid rt_tabdata structure which is
+ *  to provide a pointer to a valid bn_tabdata structure which is
  *  to be filled in.  Allowing caller to re-cycle them rather than
  *  doing constant malloc/free cycle.
  */
 void
 rt_spect_reflectance_rgb( curve, rgb )
-struct rt_tabdata	*curve;
+struct bn_tabdata	*curve;
 CONST point_t		rgb;
 {
 	register int	i;
-	register CONST struct rt_table	*tabp;
+	register CONST struct bn_table	*tabp;
 
-	RT_CK_TABDATA(curve);
+	BN_CK_TABDATA(curve);
 	tabp = curve->table;
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
 	/* Fill in blue values, everything up to but not including 492nm */
 	for( i=0; i < tabp->nx; i++ )  {
@@ -521,16 +519,16 @@ mat_t		rgb2xyz;
  */
 void
 rt_spect_black_body( data, temp, n )
-struct rt_tabdata	*data;
+struct bn_tabdata	*data;
 double			temp;		/* Degrees Kelvin */
 unsigned int		n;		/* # wavelengths to eval at */
 {
-	CONST struct rt_table	*tabp;
+	CONST struct bn_table	*tabp;
 	int				j;
 
-	RT_CK_TABDATA(data);
+	BN_CK_TABDATA(data);
 	tabp = data->table;
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 if(rt_g.debug) rt_log("rt_spect_black_body( x%x, %g degK ) %g um to %g um\n", data, temp,
 tabp->x[0] * 0.001,	/* nm to um */
 tabp->x[tabp->nx] * 0.001	/* nm to um */
@@ -576,15 +574,15 @@ tabp->x[tabp->nx] * 0.001	/* nm to um */
  */
 void
 rt_spect_black_body_fast( data, temp )
-struct rt_tabdata	*data;
+struct bn_tabdata	*data;
 double			temp;		/* Degrees Kelvin */
 {
-	CONST struct rt_table	*tabp;
+	CONST struct bn_table	*tabp;
 	int				j;
 
-	RT_CK_TABDATA(data);
+	BN_CK_TABDATA(data);
 	tabp = data->table;
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 if(rt_g.debug) rt_log("rt_spect_black_body_fast( x%x, %g degK )\n", data, temp );
 
 	for( j = 0; j < tabp->nx; j++ )  {
@@ -602,15 +600,15 @@ if(rt_g.debug) rt_log("rt_spect_black_body_fast( x%x, %g degK )\n", data, temp )
  */
 void
 rt_spect_black_body_points( data, temp )
-struct rt_tabdata	*data;
+struct bn_tabdata	*data;
 double			temp;		/* Degrees Kelvin */
 {
-	CONST struct rt_table	*tabp;
+	CONST struct bn_table	*tabp;
 	int				j;
 
-	RT_CK_TABDATA(data);
+	BN_CK_TABDATA(data);
 	tabp = data->table;
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 if(rt_g.debug) rt_log("rt_spect_black_body_points( x%x, %g degK )\n", data, temp );
 
 	for( j = 0; j < tabp->nx; j++ )  {
@@ -623,23 +621,23 @@ if(rt_g.debug) rt_log("rt_spect_black_body_points( x%x, %g degK )\n", data, temp
  *
  *  Convenience routine.
  *  Serves same function as Roy Hall's CLR_spect_to_xyz(), pg 233.
- *  The normalization xyz_scale = 1.0 / rt_tabdata_area2( cie_y );
+ *  The normalization xyz_scale = 1.0 / bn_tabdata_area2( cie_y );
  *  has been folded into rt_spect_make_CIE_XYZ();
  */
 void
 rt_spect_curve_to_xyz( xyz, tabp, cie_x, cie_y, cie_z )
 point_t			xyz;
-CONST struct rt_tabdata	*tabp;
-CONST struct rt_tabdata	*cie_x;
-CONST struct rt_tabdata	*cie_y;
-CONST struct rt_tabdata	*cie_z;
+CONST struct bn_tabdata	*tabp;
+CONST struct bn_tabdata	*cie_x;
+CONST struct bn_tabdata	*cie_y;
+CONST struct bn_tabdata	*cie_z;
 {
 	FAST fastf_t	tab_area;
 
-	RT_CK_TABDATA(tabp);
+	BN_CK_TABDATA(tabp);
 
 #if 0
-	tab_area = rt_tabdata_area2( tabp );
+	tab_area = bn_tabdata_area2( tabp );
 rt_log(" tab_area = %g\n", tab_area);
 	if( fabs(tab_area) < VDIVIDE_TOL )  {
 		rt_log("rt_spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
@@ -652,9 +650,9 @@ rt_log(" tab_area = %g\n", tab_area);
 	tab_area = 1;
 #endif
 
-	xyz[X] = rt_tabdata_mul_area2( tabp, cie_x ) * tab_area;
-	xyz[Y] = rt_tabdata_mul_area2( tabp, cie_y ) * tab_area;
-	xyz[Z] = rt_tabdata_mul_area2( tabp, cie_z ) * tab_area;
+	xyz[X] = bn_tabdata_mul_area2( tabp, cie_x ) * tab_area;
+	xyz[Y] = bn_tabdata_mul_area2( tabp, cie_y ) * tab_area;
+	xyz[Z] = bn_tabdata_mul_area2( tabp, cie_z ) * tab_area;
 }
 
 /*
@@ -669,13 +667,13 @@ rt_log(" tab_area = %g\n", tab_area);
  */
 void
 rt_spect_rgb_to_curve( tabp, rgb, ntsc_r, ntsc_g, ntsc_b )
-struct rt_tabdata	*tabp;
+struct bn_tabdata	*tabp;
 CONST point_t		rgb;
-CONST struct rt_tabdata	*ntsc_r;
-CONST struct rt_tabdata	*ntsc_g;
-CONST struct rt_tabdata	*ntsc_b;
+CONST struct bn_tabdata	*ntsc_r;
+CONST struct bn_tabdata	*ntsc_g;
+CONST struct bn_tabdata	*ntsc_b;
 {
-	rt_tabdata_blend3( tabp,
+	bn_tabdata_blend3( tabp,
 		rgb[0], ntsc_r,
 		rgb[1], ntsc_g,
 		rgb[2], ntsc_b );
@@ -693,13 +691,13 @@ XXX Converting rgb to a curve, directly, should be easy.
  */
 void
 rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z )
-struct rt_tabdata	*tabp;
+struct bn_tabdata	*tabp;
 CONST point_t		xyz;
-CONST struct rt_tabdata	*cie_x;
-CONST struct rt_tabdata	*cie_y;
-CONST struct rt_tabdata	*cie_z;
+CONST struct bn_tabdata	*cie_x;
+CONST struct bn_tabdata	*cie_y;
+CONST struct bn_tabdata	*cie_z;
 {
-	rt_tabdata_blend3( tabp,
+	bn_tabdata_blend3( tabp,
 		xyz[X], cie_x,
 		xyz[Y], cie_y,
 		xyz[Z], cie_z );
@@ -710,26 +708,26 @@ CONST struct rt_tabdata	*cie_z;
  *
  *  A quick hack to make sure there are enough samples in the visible band.
  */
-struct rt_table *
-rt_table_make_visible_and_uniform( num, first, last, vis_nsamp )
+struct bn_table *
+bn_table_make_visible_and_uniform( num, first, last, vis_nsamp )
 int	num;
 double	first;
 double	last;
 int	vis_nsamp;
 {
-	struct rt_table	*new;
-	struct rt_table *uniform;
-	struct rt_table	*vis;
+	struct bn_table	*new;
+	struct bn_table *uniform;
+	struct bn_table	*vis;
 
 	if( vis_nsamp < 10 )  vis_nsamp = 10;
-	uniform = rt_table_make_uniform( num, first, last );
-	vis = rt_table_make_uniform( vis_nsamp, 340.0, 700.0 );
+	uniform = bn_table_make_uniform( num, first, last );
+	vis = bn_table_make_uniform( vis_nsamp, 340.0, 700.0 );
 
-	new = rt_table_merge2( uniform, vis );
-	rt_ck_table(new);
+	new = bn_table_merge2( uniform, vis );
+	bn_ck_table(new);
 
-	rt_table_free(uniform);
-	rt_table_free(vis);
+	bn_table_free(uniform);
+	bn_table_free(vis);
 
 	return new;
 }
@@ -737,31 +735,31 @@ int	vis_nsamp;
 #if 0
 main()
 {
-	struct rt_tabdata	*x, *y, *z;
-	struct rt_table	*tabp;
+	struct bn_tabdata	*x, *y, *z;
+	struct bn_table	*tabp;
 
 #if 0
-	tabp = rt_table_make_uniform( 200, 360.0, 800.0 );
+	tabp = bn_table_make_uniform( 200, 360.0, 800.0 );
 
 	rt_spect_make_CIE_XYZ( &x, &y, &z, tabp );
 	
-	rt_pr_table_and_tabdata( "/tmp/x", x );
-	rt_pr_table_and_tabdata( "/tmp/y", y );
-	rt_pr_table_and_tabdata( "/tmp/z", z );
+	bn_print_table_and_tabdata( "/tmp/x", x );
+	bn_print_table_and_tabdata( "/tmp/y", y );
+	bn_print_table_and_tabdata( "/tmp/z", z );
 #endif
 
-	tabp = rt_table_make_uniform( 100, 3.0, 3000.0 );
+	tabp = bn_table_make_uniform( 100, 3.0, 3000.0 );
 
-	RT_GET_TABDATA( x, tabp );
+	BN_GET_TABDATA( x, tabp );
 	rt_spect_black_body_points( x, 10000.0 );
-	rt_pr_table_and_tabdata( "/tmp/x", x );
+	bn_print_table_and_tabdata( "/tmp/x", x );
 
-	RT_GET_TABDATA( y, tabp );
+	BN_GET_TABDATA( y, tabp );
 	rt_spect_black_body( y, 10000.0, 3 );
-	rt_pr_table_and_tabdata( "/tmp/y", y );
+	bn_print_table_and_tabdata( "/tmp/y", y );
 
-	RT_GET_TABDATA( z, tabp );
+	BN_GET_TABDATA( z, tabp );
 	rt_spect_black_body_fast( z, 10000.0 );
-	rt_pr_table_and_tabdata( "/tmp/z", z );
+	bn_print_table_and_tabdata( "/tmp/z", z );
 }
 #endif

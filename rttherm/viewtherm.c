@@ -1,4 +1,4 @@
-#define NO_MATER 0
+#define NO_MATER 1
 /*
  *	./rttherm -P1 -s64 -o mtherm ../.db.6d/moss.g all.g
  *
@@ -49,7 +49,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtlist.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "tabdata.h"
 #include "spectrum.h"
 #include "shadefuncs.h"
 #include "shadework.h"
@@ -66,7 +65,7 @@ BU_EXTERN( double	rt_pixel_footprint, (CONST struct application *ap,
 
 
 /* XXX move to h/tabdata.h when function moves out of spectrum.c */
-BU_EXTERN(struct rt_table	*rt_table_make_visible_and_uniform, (int num,
+BU_EXTERN(struct bn_table	*bn_table_make_visible_and_uniform, (int num,
 				double first, double last, int vis_nsamp));
 
 
@@ -129,8 +128,8 @@ struct bu_structparse view_parse[] = {
 };
 
 /********* spectral parameters *************/
-CONST struct rt_table		*spectrum;	/* definition of spectrum */
-struct rt_tabdata		*background;		/* radiant emittance of bg */
+CONST struct bn_table		*spectrum;	/* definition of spectrum */
+struct bn_tabdata		*background;		/* radiant emittance of bg */
 /********* spectral parameters *************/
 
 /*
@@ -146,7 +145,7 @@ register struct application *ap;
 	RT_CK_RTI(ap->a_rt_i);
 
 	if( ap->a_spectrum )  {
-		RT_CK_TABDATA( ap->a_spectrum );
+		BN_CK_TABDATA( ap->a_spectrum );
 		return;
 	}
 
@@ -154,14 +153,14 @@ register struct application *ap;
 	slp = &scanline[ap->a_y];
 	bu_semaphore_acquire( RT_SEM_RESULTS );
 	if( slp->sl_buf == (char *)0 )  {
-		slp->sl_buf = (char *)rt_tabdata_malloc_array( spectrum, width );
+		slp->sl_buf = (char *)bn_tabdata_malloc_array( spectrum, width );
 	}
 	bu_semaphore_release( RT_SEM_RESULTS );
-	RT_CK_TABDATA( slp->sl_buf );	/* pun for first struct in array (sanity) */
+	BN_CK_TABDATA( slp->sl_buf );	/* pun for first struct in array (sanity) */
 
-	ap->a_spectrum = (struct rt_tabdata *)
-		(slp->sl_buf+(ap->a_x*RT_SIZEOF_TABDATA(spectrum)));
-	RT_CK_TABDATA( ap->a_spectrum );
+	ap->a_spectrum = (struct bn_tabdata *)
+		(slp->sl_buf+(ap->a_x*BN_SIZEOF_TABDATA(spectrum)));
+	BN_CK_TABDATA( ap->a_spectrum );
 	BU_ASSERT( ap->a_spectrum->table == spectrum );
 }
 
@@ -198,11 +197,11 @@ register struct application *ap;
 
 		/* XXX This should be attenuated by some atmosphere now */
 		/* At least it's in proper power units */
-		rt_tabdata_scale( ap->a_spectrum, background, cm2 );
+		bn_tabdata_scale( ap->a_spectrum, background, cm2 );
 	} else {
 		if( !ap->a_spectrum )
 			rt_bomb("view_pixel called with no spectral curve associated\n");
-		RT_CK_TABDATA(ap->a_spectrum);
+		BN_CK_TABDATA(ap->a_spectrum);
 	}
 
 	slp = &scanline[ap->a_y];
@@ -219,10 +218,10 @@ register struct application *ap;
 		/* XXX This writes an array of structures out, including magic */
 		/* XXX in machine-specific format */
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		if( fseek( outfp, ap->a_y*(long)width*RT_SIZEOF_TABDATA(spectrum), 0 ) != 0 )
+		if( fseek( outfp, ap->a_y*(long)width*BN_SIZEOF_TABDATA(spectrum), 0 ) != 0 )
 			rt_log("fseek error\n");
 		count = fwrite( scanline[ap->a_y].sl_buf,
-			RT_SIZEOF_TABDATA(spectrum), width, outfp );
+			BN_SIZEOF_TABDATA(spectrum), width, outfp );
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		if( count != width )
 			rt_bomb("view_pixel:  fwrite failure\n");
@@ -390,15 +389,15 @@ register struct application *ap;
 			rt_invpi + 0.5;
 		u.sw.sw_uv.uv_du = u.sw.sw_uv.uv_dv = 0;
 
-		u.sw.msw_color = rt_tabdata_get_constval( 1.0, spectrum );
-		u.sw.msw_basecolor = rt_tabdata_get_constval( 1.0, spectrum );
+		u.sw.msw_color = bn_tabdata_get_constval( 1.0, spectrum );
+		u.sw.msw_basecolor = bn_tabdata_get_constval( 1.0, spectrum );
 
 		if (rdebug&RDEBUG_SHADE)
 			rt_log("hit_nothing calling viewshade\n");
 
 		(void)viewshade( ap, &u.part, &u.sw );
 
-		rt_tabdata_copy( ap->a_spectrum, u.sw.msw_color );
+		bn_tabdata_copy( ap->a_spectrum, u.sw.msw_color );
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
 		return(1);
 	}
@@ -429,7 +428,7 @@ struct seg *finished_segs;
 	fastf_t		cm2;
 	fastf_t		cosine;
 	fastf_t		powerfrac;
-	struct rt_tabdata	*pixelp;
+	struct bn_tabdata	*pixelp;
 	vect_t		normal;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
@@ -531,19 +530,21 @@ struct seg *finished_segs;
 	sw.sw_inputs = 0;		/* no fields filled yet */
 	sw.sw_frame = curframe;
 	sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
-	sw.msw_color = rt_tabdata_get_constval( 1.0, spectrum );
-	sw.msw_basecolor = rt_tabdata_get_constval( 1.0, spectrum );
+	sw.msw_color = bn_tabdata_get_constval( 1.0, spectrum );
+	sw.msw_basecolor = bn_tabdata_get_constval( 1.0, spectrum );
 
 	if (rdebug&RDEBUG_SHADE)
 		rt_log("colorview calling viewshade\n");
+if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework before viewshade", &sw);
 
 	(void)viewshade( ap, pp, &sw );
+if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework after viewshade", &sw);
 
 	/* As a special case for now, handle reflection & refraction */
 	if( sw.sw_reflect > 0 || sw.sw_transmit > 0 )
 		(void)rr_render( ap, pp, &sw );
 
-	rt_tabdata_copy( ap->a_spectrum, sw.msw_color );
+	bn_tabdata_copy( ap->a_spectrum, sw.msw_color );
 	bu_free( sw.msw_color, "sw.msw_color");
 	bu_free( sw.msw_basecolor, "sw.msw_basecolor");
 #else
@@ -558,7 +559,7 @@ struct seg *finished_segs;
 	 */
 	if( !ap->a_spectrum )  curve_attach(ap);
 	pixelp = ap->a_spectrum;
-	RT_CK_TABDATA(pixelp);
+	BN_CK_TABDATA(pixelp);
 
 	degK = 10000;	/* XXX extract from region! */
 degK = 700;
@@ -592,7 +593,7 @@ if( cm2 > 10 ) rt_log("****\n");
 rt_log("area=%g, cos = %g, a*c = %g, pfrac = %g\n", cm2, cosine, cm2*cosine, powerfrac );
 powerfrac = 1;
 #endif
-	rt_tabdata_scale( pixelp, pixelp, cm2 * cosine * powerfrac );
+	bn_tabdata_scale( pixelp, pixelp, cm2 * cosine * powerfrac );
 
 	/* Spectrum is now in terms of Watts of power radiating
 	 * on the path to this pixel.
@@ -647,12 +648,12 @@ char *file, *obj;
 	bu_struct_print( "rttherm variables", view_parse, NULL );
 
 	/* Build spectrum definition */
-	spectrum = rt_table_make_visible_and_uniform( (int)spectrum_param[0],
+	spectrum = bn_table_make_visible_and_uniform( (int)spectrum_param[0],
 		spectrum_param[1], spectrum_param[2], 20 );
 
 	rt_vls_init( &name );
 	rt_vls_printf( &name, "%s.spect", outputfile ? outputfile : "RTTHERM" );
-	rt_table_write( rt_vls_addr(&name), spectrum );
+	bn_table_write( rt_vls_addr(&name), spectrum );
 	rt_vls_free( &name );
 
 	/* Output is destined for a file */
@@ -723,7 +724,7 @@ char	*framename;
 
 	/* Compute radiant emittance of background */
 	/* XXX This is wrong, need actual power (radiant flux) emitted */
-	RT_GET_TABDATA( background, spectrum );
+	BN_GET_TABDATA( background, spectrum );
 	rt_spect_black_body( background, bg_temp, 9 );
 }
 

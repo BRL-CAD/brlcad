@@ -26,7 +26,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "tabdata.h"
 #include "spectrum.h"
 #include "fb.h"
 #include "tcl.h"
@@ -40,24 +39,24 @@ char	spectrum_name[100];
 
 FBIO	*fbp;
 
-struct rt_table		*spectrum;
+struct bn_table		*spectrum;
 
-struct rt_tabdata	*data;
+struct bn_tabdata	*data;
 
-struct rt_tabdata	*atmosphere_orig;
-struct rt_tabdata	*atmosphere;
+struct bn_tabdata	*atmosphere_orig;
+struct bn_tabdata	*atmosphere;
 int			use_atmosphere = 0;	/* Linked with TCL */
 
-struct rt_tabdata	*cie_x;
-struct rt_tabdata	*cie_y;
-struct rt_tabdata	*cie_z;
+struct bn_tabdata	*cie_x;
+struct bn_tabdata	*cie_y;
+struct bn_tabdata	*cie_z;
 int			use_cie_xyz = 0;	/* Linked with TCL */
 mat_t			xyz2rgb;
 /* mat_t			rgb2xyz; */
 
-struct rt_tabdata	*ntsc_r;
-struct rt_tabdata	*ntsc_g;
-struct rt_tabdata	*ntsc_b;
+struct bn_tabdata	*ntsc_r;
+struct bn_tabdata	*ntsc_g;
+struct bn_tabdata	*ntsc_b;
 
 unsigned char	*pixels;		/* en-route to framebuffer */
 
@@ -76,22 +75,22 @@ char			*first_command = "no_command?";
 /*
  *		A S S I G N _ T A B D A T A _ T O _ T C L _ V A R
  *
- *  Assign the given "C" rt_tabdata structure to the named Tcl variable,
+ *  Assign the given "C" bn_tabdata structure to the named Tcl variable,
  *  and add the name of that variable to the Tcl result string.
  */
 void
 assign_tabdata_to_tcl_var( interp, name, tabp )
 Tcl_Interp	*interp;
 CONST char	*name;
-CONST struct rt_tabdata *tabp;
+CONST struct bn_tabdata *tabp;
 {
 	struct bu_vls	str;
 
-	RT_CK_TABDATA(tabp);
+	BN_CK_TABDATA(tabp);
 
 	bu_vls_init(&str);
 
-	rt_tabdata_to_tcl(&str, tabp);
+	bn_tabdata_to_tcl(&str, tabp);
 	Tcl_SetVar( interp, (char *)name, bu_vls_addr(&str), 0 );
 	Tcl_AppendResult( interp, name, " ", (char *)NULL );
 
@@ -109,9 +108,9 @@ Tcl_Interp	*interp;
 int		argc;
 char		*argv[];
 {
-	extern struct rt_tabdata *rt_NTSC_r_tabdata;
-	extern struct rt_tabdata *rt_NTSC_g_tabdata;
-	extern struct rt_tabdata *rt_NTSC_b_tabdata;
+	extern struct bn_tabdata *rt_NTSC_r_tabdata;
+	extern struct bn_tabdata *rt_NTSC_g_tabdata;
+	extern struct bn_tabdata *rt_NTSC_b_tabdata;
 
 	/* These are the curves as sampled to our spectrum intervals */
 	assign_tabdata_to_tcl_var( interp, "ntsc_r_samp", ntsc_r );
@@ -127,24 +126,24 @@ char		*argv[];
 
 	/* Sum togther the sampled curves */
 	{
-		struct rt_tabdata	*sum;
-		RT_GET_TABDATA( sum, ntsc_r->table );
-		rt_tabdata_add( sum, ntsc_r, ntsc_g );
-		rt_tabdata_add( sum, sum, ntsc_b );
+		struct bn_tabdata	*sum;
+		BN_GET_TABDATA( sum, ntsc_r->table );
+		bn_tabdata_add( sum, ntsc_r, ntsc_g );
+		bn_tabdata_add( sum, sum, ntsc_b );
 		assign_tabdata_to_tcl_var( interp, "ntsc_sum", sum );
-		rt_tabdata_free( sum );
+		bn_tabdata_free( sum );
 	}
 
 #if 0
 	/* Check out the RGB to spectrum curves */
 	{
-		struct rt_tabdata	*r, *g, *b, *sum;
+		struct bn_tabdata	*r, *g, *b, *sum;
 		point_t		rgb;
 
-		RT_GET_TABDATA( r, ntsc_r->table );
-		RT_GET_TABDATA( g, ntsc_r->table );
-		RT_GET_TABDATA( b, ntsc_r->table );
-		RT_GET_TABDATA( sum, ntsc_r->table );
+		BN_GET_TABDATA( r, ntsc_r->table );
+		BN_GET_TABDATA( g, ntsc_r->table );
+		BN_GET_TABDATA( b, ntsc_r->table );
+		BN_GET_TABDATA( sum, ntsc_r->table );
 
 		VSET( rgb, 1, 0, 0 );
 		rt_spect_reflectance_rgb( r, rgb );
@@ -158,24 +157,24 @@ char		*argv[];
 		rt_spect_reflectance_rgb( b, rgb );
 		assign_tabdata_to_tcl_var( interp, "reflectance_b", b );
 
-		rt_tabdata_add( sum, r, g );
-		rt_tabdata_add( sum, sum, b );
+		bn_tabdata_add( sum, r, g );
+		bn_tabdata_add( sum, sum, b );
 		assign_tabdata_to_tcl_var( interp, "reflectance_sum", sum );
 
-		rt_tabdata_free( r );
-		rt_tabdata_free( g );
-		rt_tabdata_free( b );
-		rt_tabdata_free( sum );
+		bn_tabdata_free( r );
+		bn_tabdata_free( g );
+		bn_tabdata_free( b );
+		bn_tabdata_free( sum );
 	}
 #endif
 
 	/* Check out the black body curves */
 	{
-		struct rt_tabdata	*a, *b, *c;
+		struct bn_tabdata	*a, *b, *c;
 
-		RT_GET_TABDATA( a, ntsc_r->table );
-		RT_GET_TABDATA( b, ntsc_r->table );
-		RT_GET_TABDATA( c, ntsc_r->table );
+		BN_GET_TABDATA( a, ntsc_r->table );
+		BN_GET_TABDATA( b, ntsc_r->table );
+		BN_GET_TABDATA( c, ntsc_r->table );
 
 		rt_spect_black_body_fast( a, 5000.0 );
 		assign_tabdata_to_tcl_var( interp, "a_5000", a );
@@ -186,9 +185,9 @@ char		*argv[];
 		rt_spect_black_body_fast( c, 10000.0 );
 		assign_tabdata_to_tcl_var( interp, "c_10000", c );
 
-		rt_tabdata_free( a );
-		rt_tabdata_free( b );
-		rt_tabdata_free( c );
+		bn_tabdata_free( a );
+		bn_tabdata_free( b );
+		bn_tabdata_free( c );
 	}
 
 	return TCL_OK;
@@ -210,7 +209,7 @@ char		*argv[];
 {
 	int	wl;
 
-	RT_CK_TABLE(spectrum);
+	BN_CK_TABLE(spectrum);
 
 	if( argc <= 1 )  {
 		sprintf( interp->result, "%d", spectrum->nx );
@@ -238,7 +237,7 @@ Tcl_Interp	*interp;
 int		argc;
 char		*argv[];
 {
-	struct rt_tabdata	*sp;
+	struct bn_tabdata	*sp;
 	int	x, y, wl;
 	char	*cp;
 	fastf_t	val;
@@ -251,7 +250,7 @@ char		*argv[];
 	y = atoi(argv[2]);
 	wl = atoi(argv[3]);
 
-	RT_CK_TABLE(spectrum);
+	BN_CK_TABLE(spectrum);
 
 	if( x < 0 || x > width || y < 0 || y > height )  {
 		interp->result = "x or y out of range";
@@ -268,9 +267,9 @@ char		*argv[];
 	}
 
 	cp = (char *)data;
-	cp = cp + (y * width + x) * RT_SIZEOF_TABDATA(spectrum);
-	sp = (struct rt_tabdata *)cp;
-	RT_CK_TABDATA(sp);
+	cp = cp + (y * width + x) * BN_SIZEOF_TABDATA(spectrum);
+	sp = (struct bn_tabdata *)cp;
+	BN_CK_TABDATA(sp);
 	val = sp->y[wl];
 	if( use_atmosphere )
 		val *= atmosphere->y[wl];
@@ -291,7 +290,7 @@ Tcl_Interp	*interp;
 int		argc;
 char		*argv[];
 {
-	struct rt_tabdata	*sp;
+	struct bn_tabdata	*sp;
 	int	x, y;
 	char	*cp;
 	struct bu_vls	str;
@@ -303,7 +302,7 @@ char		*argv[];
 	x = atoi(argv[1]);
 	y = atoi(argv[2]);
 
-	RT_CK_TABLE(spectrum);
+	BN_CK_TABLE(spectrum);
 
 	if( x < 0 || x > width || y < 0 || y > height )  {
 		interp->result = "x or y out of range";
@@ -315,12 +314,12 @@ char		*argv[];
 		return TCL_ERROR;
 	}
 	cp = (char *)data;
-	cp = cp + (y * width + x) * RT_SIZEOF_TABDATA(spectrum);
-	sp = (struct rt_tabdata *)cp;
-	RT_CK_TABDATA(sp);
+	cp = cp + (y * width + x) * BN_SIZEOF_TABDATA(spectrum);
+	sp = (struct bn_tabdata *)cp;
+	BN_CK_TABDATA(sp);
 
 	bu_vls_init(&str);
-	rt_tabdata_to_tcl( &str, sp );
+	bn_tabdata_to_tcl( &str, sp );
 	Tcl_SetResult( interp, bu_vls_addr(&str), TCL_VOLATILE);
 	bu_vls_free(&str);
 
@@ -450,10 +449,10 @@ double x, y, z;
 	point_t	xyz;
 	point_t	rgb;
 	point_t	xyz2, rgb2;
-	struct rt_tabdata	*tabp;
+	struct bn_tabdata	*tabp;
 	FAST fastf_t	tab_area;
 
-	RT_GET_TABDATA( tabp, spectrum );
+	BN_GET_TABDATA( tabp, spectrum );
 	xyz[X] = x;
 	xyz[Y] = y;
 	xyz[Z] = z;
@@ -467,8 +466,8 @@ double x, y, z;
 	VPRINT( "rgb", rgb );
 	rt_spect_reflectance_rgb( tabp, rgb );
 #endif
-	rt_pr_table_and_tabdata( "/dev/tty", tabp );
-	tab_area = rt_tabdata_area2( tabp );
+	bn_print_table_and_tabdata( "/dev/tty", tabp );
+	tab_area = bn_tabdata_area2( tabp );
 	bu_log(" tab_area = %g\n", tab_area);
 
 	rt_spect_curve_to_xyz( xyz2, tabp, cie_x, cie_y, cie_z );
@@ -477,38 +476,38 @@ double x, y, z;
 	MAT3X3VEC( rgb2, xyz2rgb, xyz2 );
 	VPRINT( "rgb2", rgb2 );
 
-	rt_tabdata_free( tabp );
+	bn_tabdata_free( tabp );
 exit(2);
 }
 
 void
 conduct_tests()
 {
-	struct rt_tabdata	*flat;
+	struct bn_tabdata	*flat;
 	vect_t			xyz;
 
 	/* Code for testing library routines */
-	spectrum = rt_table_make_uniform( 20, 340.0, 760.0 );
+	spectrum = bn_table_make_uniform( 20, 340.0, 760.0 );
 	rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
-bu_log("X:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_x );
-bu_log("Y:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_y );
-bu_log("Z:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_z );
+bu_log("X:\n");bn_print_table_and_tabdata( "/dev/tty", cie_x );
+bu_log("Y:\n");bn_print_table_and_tabdata( "/dev/tty", cie_y );
+bu_log("Z:\n");bn_print_table_and_tabdata( "/dev/tty", cie_z );
 
 	rt_spect_make_NTSC_RGB( &ntsc_r, &ntsc_g, &ntsc_b, spectrum );
-bu_log("R:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_r );
-bu_log("G:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_g );
-bu_log("B:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_b );
+bu_log("R:\n");bn_print_table_and_tabdata( "/dev/tty", ntsc_r );
+bu_log("G:\n");bn_print_table_and_tabdata( "/dev/tty", ntsc_g );
+bu_log("B:\n");bn_print_table_and_tabdata( "/dev/tty", ntsc_b );
 	{
 		struct bu_vls str;
 		bu_vls_init(&str);
-		rt_tabdata_to_tcl( &str, ntsc_r );
+		bn_tabdata_to_tcl( &str, ntsc_r );
 		bu_log("ntsc_r tcl:  %s\n", bu_vls_addr(&str) );
 		bu_vls_free(&str);
 	}
 
 /* "A flat spectral curve is represente by equal XYZ values".  Hall pg 52 */
-	flat = rt_tabdata_get_constval( 42.0, spectrum );
-	bu_log("flat:\n");rt_pr_table_and_tabdata( "/dev/tty", flat );
+	flat = bn_tabdata_get_constval( 42.0, spectrum );
+	bu_log("flat:\n");bn_print_table_and_tabdata( "/dev/tty", flat );
 	rt_spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z );
 	VPRINT("flat xyz?", xyz);
 
@@ -566,19 +565,19 @@ char	**argv;
 
 	/* Read spectrum definition */
 	sprintf( spectrum_name, "%s.spect", basename );
-	spectrum = (struct rt_table *)rt_table_read( spectrum_name );
+	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
 	if( spectrum == NULL )  {
 		rt_bomb("Unable to read spectrum\n");
 	}
 
 	/* Read atmosphere curve -- input is in microns, not nm */
-	atmosphere_orig = rt_read_table_and_tabdata( "../rttherm/std_day_1km.dat" );
-	rt_table_scale( (struct rt_table *)(atmosphere_orig->table), 1000.0 );
-	atmosphere = rt_tabdata_resample_max( spectrum, atmosphere_orig );
+	atmosphere_orig = bn_read_table_and_tabdata( "../rttherm/std_day_1km.dat" );
+	bn_table_scale( (struct bn_table *)(atmosphere_orig->table), 1000.0 );
+	atmosphere = bn_tabdata_resample_max( spectrum, atmosphere_orig );
 
 	/* Allocate and read 2-D spectrum array */
-	data = rt_tabdata_binary_read( basename, width*height, spectrum );
-	if( !data )  bu_bomb("rt_tabdata_binary_read() of basename failed\n");
+	data = bn_tabdata_binary_read( basename, width*height, spectrum );
+	if( !data )  bu_bomb("bn_tabdata_binary_read() of basename failed\n");
 
 	/* Allocate framebuffer image buffer */
 	pixels = (unsigned char *)bu_malloc( width * height * 3, "pixels[]" );
@@ -668,15 +667,15 @@ find_minmax()
 	int		j;
 
 	cp = (char *)data;
-	nbytes = RT_SIZEOF_TABDATA(spectrum);
+	nbytes = BN_SIZEOF_TABDATA(spectrum);
 
 	max = -INFINITY;
 	min =  INFINITY;
 
 	for( todo = width * height; todo > 0; todo--, cp += nbytes )  {
-		struct rt_tabdata	*sp;
-		sp = (struct rt_tabdata *)cp;
-		RT_CK_TABDATA(sp);
+		struct bn_tabdata	*sp;
+		sp = (struct bn_tabdata *)cp;
+		BN_CK_TABDATA(sp);
 		for( j = 0; j < spectrum->nx; j++ )  {
 			register fastf_t	v;
 
@@ -706,7 +705,7 @@ int	wav;
 	fastf_t		atmos_scale;
 
 	cp = (char *)data;
-	nbytes = RT_SIZEOF_TABDATA(spectrum);
+	nbytes = BN_SIZEOF_TABDATA(spectrum);
 
 	pp = pixels;
 
@@ -718,11 +717,11 @@ int	wav;
 		atmos_scale = 1;
 
 	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
-		struct rt_tabdata	*sp;
+		struct bn_tabdata	*sp;
 		register int		val;
 
-		sp = (struct rt_tabdata *)cp;
-		RT_CK_TABDATA(sp);
+		sp = (struct bn_tabdata *)cp;
+		BN_CK_TABDATA(sp);
 
 		val = (sp->y[wav] * atmos_scale - minval) * scale;
 		if( val > 255 )  val = 255;
@@ -748,10 +747,10 @@ int	off;
 	int		todo;
 	int		nbytes;
 	fastf_t		scale;
-	struct rt_tabdata *new;
+	struct bn_tabdata *new;
 
 	cp = (char *)data;
-	nbytes = RT_SIZEOF_TABDATA(spectrum);
+	nbytes = BN_SIZEOF_TABDATA(spectrum);
 
 	pp = pixels;
 
@@ -761,22 +760,22 @@ int	off;
 	if( cie_x->magic == 0 )
 		rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
 
-	RT_GET_TABDATA(new, spectrum);
+	BN_GET_TABDATA(new, spectrum);
 
 	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
-		struct rt_tabdata	*sp;
+		struct bn_tabdata	*sp;
 		point_t			xyz;
 		point_t			rgb;
 		register int		val;
 
-		sp = (struct rt_tabdata *)cp;
-		RT_CK_TABDATA(sp);
+		sp = (struct bn_tabdata *)cp;
+		BN_CK_TABDATA(sp);
 
 		if( use_atmosphere )  {
-			rt_tabdata_mul( new, sp, atmosphere );
-			rt_tabdata_freq_shift( new, new, spectrum->x[off] - 380.0 );
+			bn_tabdata_mul( new, sp, atmosphere );
+			bn_tabdata_freq_shift( new, new, spectrum->x[off] - 380.0 );
 		} else {
-			rt_tabdata_freq_shift( new, sp, spectrum->x[off] - 380.0 );
+			bn_tabdata_freq_shift( new, sp, spectrum->x[off] - 380.0 );
 		}
 
 #if 0
@@ -785,13 +784,13 @@ int	off;
 			bu_vls_init(&str);
 
 			bu_vls_printf(&str, "popup_plot_tabdata centerpoint {");
-			rt_tabdata_to_tcl(&str, sp);
+			bn_tabdata_to_tcl(&str, sp);
 			bu_vls_printf(&str, "}" );
 			Tcl_Eval( interp, bu_vls_addr(&str) );
 
 			bu_vls_trunc(&str,0);
 			bu_vls_printf(&str, "popup_plot_tabdata centerpoint_shifted {");
-			rt_tabdata_to_tcl(&str, new);
+			bn_tabdata_to_tcl(&str, new);
 			bu_vls_printf(&str, "}" );
 			Tcl_Eval( interp, bu_vls_addr(&str) );
 			bu_vls_free(&str);
@@ -818,5 +817,5 @@ int	off;
 		pp[BLU] = val;
 	}
 
-	rt_tabdata_free( new );
+	bn_tabdata_free( new );
 }
