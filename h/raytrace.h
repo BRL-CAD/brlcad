@@ -251,6 +251,7 @@ struct rt_functab {
 	void		(*ft_free)();
 	void		(*ft_plot)();
 	void		(*ft_vshot)();
+	void		(*ft_tessellate)();
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
