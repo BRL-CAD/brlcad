@@ -71,7 +71,7 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 		translate_nmg_face(fu2->fumate_p, Vec, tol);
 
 	nfaces = verts_in_nmg_face( fu );
-	outfaces = (struct faceuse **)rt_calloc( nfaces , sizeof( struct faceuse *) ,
+	outfaces = (struct faceuse **)rt_calloc( nfaces+2 , sizeof( struct faceuse *) ,
 		"nmg_extrude_face: outfaces" );
 
 	outfaces[0] = fu;
@@ -114,6 +114,8 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 	}
 
 	nmg_gluefaces( outfaces , face_count );
+
+	rt_free( (char *)outfaces , "nmg_extrude_face: outfaces" );
 }
 
 /*
