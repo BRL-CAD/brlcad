@@ -4,8 +4,9 @@
  *  Program to convert a BRL-CAD model (in a .g file) to an ACAD file
  *  by calling on the NMG booleans.
  *
- *  Author -
+ *  Authors -
  *	John R. Anderson
+ *	Bill Mermagen Jr.
  *  
  *  Source -
  *	The U. S. Army Research Laboratory
@@ -14,7 +15,7 @@
  *  Distribution Notice -
  *	Re-distribution of this software is restricted, as described in
  *	your "Statement of Terms and Conditions for the Release of
- *	The BRL-CAD Pacakge" agreement.
+ *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
  *	This software is Copyright (C) 1996 by the United States Army
@@ -43,7 +44,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
-void	nmg_to_psurf();
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
@@ -77,7 +77,7 @@ char	*argv[];
 {
 	register int	c;
 	double		percent;
-
+	char 		buf[80];
 #ifdef BSD
 	setlinebuf( stderr );
 #else
@@ -166,7 +166,7 @@ char	*argv[];
 	else
 	{
 		/* Open output file */
-		if( (fp=fopen( output_file, "w" )) == NULL )
+		if( (fp=fopen( output_file, "w+" )) == NULL )
 		{
 			rt_log( "Cannot open output file (%s) for writing\n", output_file );
 			perror( argv[0] );
@@ -187,6 +187,14 @@ char	*argv[];
 	RT_CK_TOL(tree_state.ts_tol);
 	RT_CK_TESS_TOL(tree_state.ts_ttol);
 
+/* Write out ACAD facet header */
+
+	fprintf(fp,"BRL-CAD generated ACAD FACET FILE (Units mm)\n");
+
+/* Generate space for number of facet entities, will write over later */
+
+	fprintf(fp,"               ");
+
 	/* Walk indicated tree(s).  Each region will be output separately */
 	(void) db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
 		1,			/* ncpu */
@@ -200,13 +208,20 @@ char	*argv[];
 	printf("Tried %d regions, %d converted successfully.  %g%%\n",
 		regions_tried, regions_done, percent);
 
+/* XXX Write out number of facet entities to .facet file */
+
+	rewind(fp);
+	fseek(fp,46,0); /* Re-position pointer to 2nd line */
+	fprintf(fp,"%d\n",regions_done); /* Write out number of regions */
+	fclose(fp);
+
 	/* Release dynamic storage */
 	nmg_km(the_model);
 	rt_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING
-	rt_prmem("After complete G-JACK conversion");
+	rt_prmem("After complete G-ACAD conversion");
 #endif
 
 	return 0;
@@ -224,6 +239,9 @@ int material_id;
 	struct vertex *v;
 	struct nmg_ptbl verts;
 	char *region_name;
+	int numverts = 0;		/* Number of vertices to output */
+	int numtri   = 0;		/* Number of triangles to output */
+	int tricount = 0;		/* Triangle number */
 	int i;
 
 	NMG_CK_REGION( r );
@@ -231,26 +249,118 @@ int material_id;
 
 	region_name = db_path_to_string( pathp );
 
+	printf("Attempting to process region %s\n",region_name);
+	fflush(stdout);
+
 	m = r->m_p;
 	NMG_CK_MODEL( m );
 
 	/* triangulate model */
 	nmg_triangulate_model( m, &tol );
 
-	fprintf( fp, "%s icomp=%d material=%d:\n", (region_name+1), region_id, material_id );
 
 	/* list all vertices in result */
 	nmg_vertex_tabulate( &verts, &r->l.magic );
-	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+
+	/* Get number of vertices */
+
+	numverts = NMG_TBL_END (&verts);
+
+/* XXX Check vertices, shells faces first? Do not want to punt mid-stream */
+/* BEGIN CHECK SECTION */
+/* Check vertices */
+
+	for( i=0 ; i<numverts ; i++ )
+	{
+		v = (struct vertex *)NMG_TBL_GET( &verts, i );
+		NMG_CK_VERTEX( v );
+	}
+
+/* Check triangles */
+ 	for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+	{
+		struct faceuse *fu;
+
+		NMG_CK_SHELL( s );
+
+		for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+		{
+			struct loopuse *lu;
+
+			NMG_CK_FACEUSE( fu );
+
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+			{
+				struct edgeuse *eu;
+				int vert_count=0;
+
+				NMG_CK_LOOPUSE( lu );
+
+				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				/* check vertex numbers for each triangle */
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					NMG_CK_EDGEUSE( eu );
+
+					v = eu->vu_p->v_p;
+					NMG_CK_VERTEX( v );
+
+					vert_count++;
+					i = nmg_tbl( &verts, TBL_LOC, (long *)v );
+					if( i < 0 )
+					{
+		/*XXX*/				nmg_tbl( &verts, TBL_FREE, (long *)NULL );
+		/*XXX*/				rt_free( region_name, "region name" );
+						rt_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
+						rt_bomb( "Can't find vertex in list!!!" );
+					}
+				}
+				if( vert_count != 3 )
+				{
+		/*XXX*/			nmg_tbl( &verts, TBL_FREE, (long *)NULL );
+		/*XXX*/			rt_free( region_name, "region name" );
+					rt_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
+					rt_bomb( "LU is not a triangle" );
+				}
+				numtri++;
+			}
+		}
+	}
+
+/* END CHECK SECTION */
+/* Write pertinent info for this region */
+
+	fprintf( fp, "%s\n", (region_name+1)); 
+/* No mirror plane */
+	fprintf( fp, "%d\n", 0);
+/* Number of vertices */
+	fprintf( fp, "%d\n",numverts);
+
+
+	/* Write numverts, then vertices */
+
+	for( i=0 ; i<numverts ; i++ )
 	{
 		v = (struct vertex *)NMG_TBL_GET( &verts, i );
 		NMG_CK_VERTEX( v );
 
-		fprintf( fp, "%f %f %f %d\n", V3ARGS( v->vg_p->coord ), i+1 );
+		fprintf( fp, "%f %f %f\n", V3ARGS( v->vg_p->coord ));
 	}
 
+/* Number of sub-parts (always 1 with BRL-CAD) */
+	fprintf( fp, "%d\n",1);
+/* Write out name again */
+	fprintf( fp, "%s\n", (region_name+1)); 
+/* Number of triangles, number of vert/tri (3) */
+	fprintf( fp,"%d       %d\n",numtri,3);
+
 	/* output triangles */
-	for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+ 	for( RT_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
@@ -287,21 +397,35 @@ int material_id;
 					i = nmg_tbl( &verts, TBL_LOC, (long *)v );
 					if( i < 0 )
 					{
+						nmg_tbl( &verts, TBL_FREE, (long *)NULL );
 						rt_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
-						rt_bomb( "Can't find vertex in list!!!" );
+		/*XXX*/				rt_free( region_name, "region name" );
+		/*XXX*/				rt_bomb( "Can't find vertex in list!!!" );
 					}
 
 					fprintf( fp, " %d", i+1 );
 				}
-				fprintf( fp, "\n" );
+/* Output other info. for triangle ICOAT, component#, facet# */
+/* XXX Map Icoat from material table later */
+/* fprintf( fp, "%s icomp=%d material=%d:\n", (region_name+1), region_id, material_id );*/
+
+				fprintf( fp, " %d    %d    %d\n", 0, region_id, ++tricount);
+
 				if( vert_count != 3 )
 				{
+					nmg_tbl( &verts, TBL_FREE, (long *)NULL );
+					rt_free( region_name, "region name" );
 					rt_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
 					rt_bomb( "LU is not a triangle" );
 				}
 			}
 		}
 	}
+	regions_done++;  
+	printf("Processed region %s\n",region_name);
+	printf("Regions attempted = %d Regions done = %d\n",regions_tried,regions_done);
+	fflush(stdout);
+	nmg_tbl( &verts, TBL_FREE, (long *)NULL );
 	rt_free( region_name, "region name" );
 }
 
@@ -374,15 +498,15 @@ union tree		*curtree;
 		}
 	}
 	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol );	/* librt/nmg_bool.c */
-	RT_UNSETJUMP;		/* Relinquish the protection */
+
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
 	else
 		r = (struct nmgregion *)NULL;
-	regions_done++;
+/*	regions_done++;  XXX */
 	if( r )
 		nmg_to_acad( r, pathp, tsp->ts_regionid, tsp->ts_gmater );
-
+	RT_UNSETJUMP;		/* Relinquish the protection */
 	/*
 	 *  Dispose of original tree, so that all associated dynamic
 	 *  memory is released now, not at the end of all regions.
