@@ -433,6 +433,9 @@ set_perspective()
 	/* keep view object in sync */
 	view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
 
+	/* keep display manager in sync */
+	dmp->dm_perspective = mged_variables->mv_perspective_mode;
+
 	set_dirty_flag();
 }
 
