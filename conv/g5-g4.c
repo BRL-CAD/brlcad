@@ -65,7 +65,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-
+#include "wdb.h"
 
 
 int
