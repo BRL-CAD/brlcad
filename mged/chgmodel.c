@@ -84,7 +84,7 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	int			ident, air, GIFTmater, los;
+	int			ident, air, GIFTmater=0, los=0;
 	int			GIFTmater_set, los_set;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;

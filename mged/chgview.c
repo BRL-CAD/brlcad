@@ -3009,6 +3009,9 @@ char	**argv;
 	  arp = edit_absolute_view_rotate;
 	  larp = last_edit_absolute_view_rotate;
 	  break;
+	default:
+		bu_log("unknown mv_coords\n");
+		arp = larp = NULL;
 	}
 
 	if(arp[X] < -180.0)
@@ -3110,6 +3113,9 @@ char	**argv;
 	  arp = edit_absolute_view_rotate;
 	  larp = last_edit_absolute_view_rotate;
 	  break;
+	default:
+		bu_log("unknown mv_transform\n");
+		arp = larp = NULL;
 	}
 
 	if(arp[Y] < -180.0)
@@ -3211,6 +3217,9 @@ char	**argv;
 	  arp = edit_absolute_view_rotate;
 	  larp = last_edit_absolute_view_rotate;
 	  break;
+	default:
+		bu_log("unknown mv_coords\n");
+		arp = larp = NULL;
 	}
 
 	if(arp[Z] < -180.0)
@@ -4773,8 +4782,8 @@ struct _view_state *vsp2;
   BU_LIST_INIT(&vsp1->vs_headView.l);
 
   if(vsp2 != (struct _view_state *)NULL){
-    struct view_ring *vrp1_current_view;
-    struct view_ring *vrp1_last_view;
+    struct view_ring *vrp1_current_view = NULL;
+    struct view_ring *vrp1_last_view = NULL;
 
     for(BU_LIST_FOR(vrp2, view_ring, &vsp2->vs_headView.l)){
       BU_GETSTRUCT(vrp1, view_ring);
