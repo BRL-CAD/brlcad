@@ -55,8 +55,12 @@ alias-pix
 all_sf
   status: ok
   desc: obtain shape factors for objects from a geometry database
-anim_cascade sean
-anim_fly
+anim_cascade
+  status: ok
+  desc: evaluate movement of an object relative to a moving frame of reference
+  notes: waits for standard input without redirector (e.g. no args given)
+  notes: doesn't take -?
+anim_fly sean
 anim_hardtrack
 anim_keyread
 anim_lookat
