@@ -302,12 +302,19 @@ register struct partition *PartHeadp;
 	if( rt_perspective > 0 )  {
 		ae_vec( &azimuth, &elevation, ap->a_ray.r_dir );
 	}
+#ifdef SYSV
+	/* On SysV, sprintf() is not parallel! ^%@#&^@^&#% */
+	RES_ACQUIRE( &rt_g.res_syscall );
+#endif
 	sprintf(buf, SHOT_FMT,
 		hcen * MM2IN, vcen * MM2IN,
 		h * MM2IN, v * MM2IN,
 		comp_count,
 		dfirst * MM2IN, dlast * MM2IN,
 		azimuth, elevation );
+#ifdef SYSV
+	RES_RELEASE( &rt_g.res_syscall );
+#endif
 	rt_vls_strcat( &str, buf );
 
 	/* loop here to deal with individual components */
@@ -418,11 +425,17 @@ register struct partition *PartHeadp;
 			fmt = "%4d%6.1f%5.1f%5.1f%1d%5.0f";
 		else
 			fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
+#ifdef SYSV
+		RES_ACQUIRE( &rt_g.res_syscall );
+#endif
 		sprintf(buf, fmt,
 			region_id,
 			comp_thickness,
 			in_obliq, out_obliq,
 			air_id, air_thickness*MM2IN );
+#ifdef SYSV
+		RES_RELEASE( &rt_g.res_syscall );
+#endif
 		rt_vls_strcat( &str, buf );
 		card_count++;
 		if( card_count >= 3 )  {
