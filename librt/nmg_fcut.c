@@ -834,11 +834,11 @@ vect_t		dir;
  *  Return value is where next interval starts.
  */
 HIDDEN int
-nmg_face_next_vu_interval( rs, cur, mag, other_rs )
+nmg_face_next_vu_interval( rs, cur, mag, other_rs_state )
 struct nmg_ray_state	*rs;
 int		cur;
 fastf_t		*mag;
-struct nmg_ray_state	*other_rs;
+int		other_rs_state;
 {
 	int	j;
 	int	k;
@@ -849,7 +849,7 @@ struct nmg_ray_state	*other_rs;
 		/* Single vertexuse at this dist */
 		if(rt_g.NMG_debug&DEBUG_COMBINE)
 			rt_log("single vertexuse at index %d\n", cur);
-		nmg_face_state_transition( rs->vu[cur], rs, cur, 0, other_rs );
+		nmg_face_state_transition( rs->vu[cur], rs, cur, 0, other_rs_state );
 		nmg_face_plot( rs->fu1 );
 		return cur+1;
 	}
@@ -873,7 +873,7 @@ struct nmg_ray_state	*other_rs;
 
 	/* Process vu list, up to cutoff index 'm', which can be less than j */
 	for( k = cur; k < m; k++ )  {
-		nmg_face_state_transition( rs->vu[k], rs, k, 1, other_rs );
+		nmg_face_state_transition( rs->vu[k], rs, k, 1, other_rs_state );
 		nmg_face_plot( rs->fu1 );
 	}
 	rs->vu[j-1] = rs->vu[m-1]; /* for next iteration's lookback */
@@ -904,8 +904,8 @@ fastf_t			*mag2;
 	/* Handle next block of coincident vertexuses */
 	cur1 = cur2 = 0;
 	for( ; cur1 < rs1->nvu && cur2 < rs2->nvu; cur1=nxt1, cur2=nxt2 )  {
-		nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2 );
-		nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, rs1 );
+		nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
+		nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, rs1->state );
 	}
 
 	if( rs1->state != NMG_STATE_OUT || rs2->state != NMG_STATE_OUT )  {
@@ -1058,6 +1058,94 @@ struct nmg_ray_state	*rs;
 	nmg_move_eg( e->eg_p, rs->eg_p, rs->sB );
 }
 
+/* XXX This should move into nmg_join_2loops, or be called by it */
+/*
+ *			N M G _ J O I N _ S I N G V U _ L O O P
+ *
+ *  vu1 is in a regular loop, vu2 is in a loop of a single vertex
+ *  A jaunt is taken from vu1 to vu2 and back to vu1, and the
+ *  old loop at vu2 is destroyed.
+ *  Return is the new vu that replaces vu2.
+ */
+struct vertexuse *
+nmg_join_singvu_loop( vu1, vu2 )
+struct vertexuse	*vu1, *vu2;
+{
+    	struct edgeuse	*eu1;
+	struct edgeuse	*first_new_eu, *second_new_eu;
+	struct loopuse	*lu2;
+
+	NMG_CK_VERTEXUSE( vu1 );
+	NMG_CK_VERTEXUSE( vu2 );
+
+	if( *vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
+	    *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )  rt_bomb("nmg_join_singvu_loop bad args\n");
+
+	if( vu1->v_p == vu2->v_p )  rt_bomb("nmg_join_singvu_loop same vertex\n");
+
+    	/* Take jaunt from vu1 to vu2 and back */
+    	eu1 = vu1->up.eu_p;
+    	NMG_CK_EDGEUSE(eu1);
+
+    	/* Insert 0 length edge */
+    	first_new_eu = nmg_eins(eu1);
+	/* split the new edge, and connect it to vertex 2 */
+	second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
+	first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
+	/* Make the two new edgeuses share just one edge */
+	nmg_moveeu( second_new_eu, first_new_eu );
+
+	/* Kill loop lu2 associated with vu2 */
+	lu2 = vu2->up.lu_p;
+	NMG_CK_LOOPUSE(lu2);
+	nmg_klu(lu2);
+	return second_new_eu->vu_p;
+}
+
+/*
+ *			N M G _ J O I N _ 2 S I N G V U _ L O O P S
+ *
+ *  Both vertices are part of single vertex loops.
+ *  Converts loop on vu1 into a real loop that connects them together,
+ *  with a single edge (two edgeuses).
+ *  Loop on vu2 is killed.
+ *  Returns replacement vu for vu2.
+ *  Does not change the orientation.
+ */
+struct vertexuse *
+nmg_join_2singvu_loops( vu1, vu2 )
+struct vertexuse	*vu1, *vu2;
+{
+    	struct edgeuse	*eu1;
+	struct edgeuse	*first_new_eu, *second_new_eu;
+	struct loopuse	*lu2;
+
+rt_log("nmg_join_2singvu_loops( x%x, x%x )\n", vu1, vu2 );
+
+	NMG_CK_VERTEXUSE( vu1 );
+	NMG_CK_VERTEXUSE( vu2 );
+
+	if( *vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
+	    *vu1->up.magic_p != NMG_LOOPUSE_MAGIC )  rt_bomb("nmg_join_2singvu_loops bad args\n");
+
+	if( vu1->v_p == vu2->v_p )  rt_bomb("nmg_join_2singvu_loops same vertex\n");
+
+    	/* Take jaunt from vu1 to vu2 and back */
+	/* Make a 0 length edge on vu1 */
+	first_new_eu = nmg_meonvu(vu1);
+	/* split the new edge, and connect it to vertex 2 */
+	second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
+	first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
+	/* Make the two new edgeuses share just one edge */
+	nmg_moveeu( second_new_eu, first_new_eu );
+
+	/* Kill loop lu2 associated with vu2 */
+	lu2 = vu2->up.lu_p;
+	NMG_CK_LOOPUSE(lu2);
+	nmg_klu(lu2);
+	return second_new_eu->vu_p;
+}
+
 /*
  *  State machine transition tables
  *  Indexed by MNG_V_ASSESSMENT values.
@@ -1189,12 +1277,12 @@ static CONST struct state_transitions nmg_state_is_in[17] = {
  *			N M G _ F A C E _ S T A T E _ T R A N S I T I O N
  */
 int
-nmg_face_state_transition( vu, rs, pos, multi, other_rs )
+nmg_face_state_transition( vu, rs, pos, multi, other_rs_state )
 struct vertexuse	*vu;
 struct nmg_ray_state	*rs;
 int			pos;
 int			multi;
-struct nmg_ray_state	*other_rs;
+int			other_rs_state;
 {
 	int			assessment;
 	int			old;
@@ -1267,7 +1355,7 @@ rt_log("force next eu to ray\n");
 	action = stp->action;
 #if 0
 	/* XXX This is the new part */
-	if( other_rs->state == NMG_STATE_OUT )
+	if( other_rs_state == NMG_STATE_OUT )
 		action = NMG_ACTION_NONE;
 #endif
 
@@ -1400,39 +1488,35 @@ rt_log("force next eu to ray\n");
 		break;
 	case NMG_ACTION_LONE_V_JAUNT:
 		/*
-		 * Take current loop on a jaunt from current edge up to the
-		 * vertex from this lone vertex loop,
+		 * Take current loop on a jaunt from current (prev_vu) edge
+		 * up to the vertex (vu) of this lone vertex loop,
 		 * and back again.
 		 * This only happens in "IN" state.
 		 */
-		lu = nmg_lu_of_vu( vu );
-		NMG_CK_LOOPUSE(lu);
 		prev_vu = rs->vu[pos-1];
 		NMG_CK_VERTEXUSE(prev_vu);
-		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
-			eu = nmg_meonvu(prev_vu);
-		}
-		eu = prev_vu->up.eu_p;
-		NMG_CK_EDGEUSE(eu);
 
-		/* insert 0 length edge */
-		first_new_eu = nmg_eins(eu);
-		/* split the new edge, and connect it to vertex of "vu" */
-		second_new_eu = nmg_eusplit( vu->v_p, first_new_eu );
-		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
-		/* Make the two new edgeuses share just one edge */
-		nmg_moveeu( second_new_eu, first_new_eu );
+		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+			/* Both prev and current are lone vertex loops */
+			rs->vu[pos] = nmg_join_2singvu_loops( prev_vu, vu );
+		    	/* Set orientation */
+			lu = nmg_lu_of_vu(rs->vu[pos]);
+			NMG_CK_LOOPUSE(lu);
+			if( old == NMG_STATE_IN )  {
+				/* Interior (crack) loop */
+				lu->orientation = OT_OPPOSITE;
+			} else {
+				/* Exterior loop */
+				lu->orientation = OT_SAME;
+			}
+		} else {
+			rs->vu[pos] = nmg_join_singvu_loop( prev_vu, vu );
+		}
 
 		/*  We know edge geom is null, make it be the isect line */
+		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, rs->vu[pos]->up.eu_p);
 		nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
 
-		/*  Kill lone vertex loop and that vertex use.
-		 *  Vertex is still safe, being also used by new edge.
-		 */
-		nmg_klu(lu);
-
-		/* Because vu changed, update vu table, for next action */
-		rs->vu[pos] = second_new_eu->vu_p;
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After LONE_V_JAUNT, the final loop:\n");
 			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
@@ -1480,17 +1564,51 @@ rt_log("force next eu to ray\n");
 		/* XXX This checking routine does not work */
 		nmg_vmodel(nmg_find_model(&vu->l.magic));
 #endif
-		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
-			(void)nmg_meonvu(prev_vu);
+		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC ||
+		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+		    	/* One (or both) is a loop of a single vertex */
+		    	/* This is the special boolean vertex marker */
+			if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+			    *vu->up.magic_p != NMG_LOOPUSE_MAGIC )  {
+			    	rs->vu[pos-1] = nmg_join_singvu_loop( vu, prev_vu );
+			} else if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+			    *prev_vu->up.magic_p != NMG_LOOPUSE_MAGIC )  {
+			    	rs->vu[pos] = nmg_join_singvu_loop( prev_vu, vu );
+			} else {
+				/* Both are loops of single vertex */
+				vu = rs->vu[pos] = nmg_join_2singvu_loops( prev_vu, vu );
+			    	/* Set orientation */
+				lu = nmg_lu_of_vu(vu);
+				NMG_CK_LOOPUSE(lu);
+				if( old == NMG_STATE_IN )  {
+					/* Interior (crack) loop */
+					lu->orientation = OT_OPPOSITE;
+				} else {
+					/* Exterior loop */
+					lu->orientation = OT_SAME;
+				}
+			}
+		} else {
+			nmg_join_2loops( prev_vu, vu );
+			/* update vu[pos], as it will have changed. */
+			/* Must be all on one line for SGI 3d compiler */
+			rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse,prev_vu->up.eu_p)->vu_p;
+			/* XXX This should be the return from nmg_join_2loops */
 		}
-		if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
-			(void)nmg_meonvu(vu);
-		}
-		nmg_join_2loops( prev_vu, vu );
 
-		/* update vu[pos], as it will have changed. */
-		/* Must be all on one line for SGI 3d compiler */
-		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse,prev_vu->up.eu_p)->vu_p;
+		/* XXX If an edge has been built between prev_vu and vu,
+		 * force it's geometry to lie on the ray.
+		 */
+		vu = rs->vu[pos];
+		prev_vu = rs->vu[pos-1];
+		eu = prev_vu->up.eu_p;
+		NMG_CK_EDGEUSE(eu);
+		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, rs->vu[pos]->up.eu_p);
+		NMG_CK_EDGEUSE(first_new_eu);
+		if( eu == first_new_eu )  {
+			/*  We know edge geom is null, make it be the isect line */
+			nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
+		}
 
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After JOIN, the final loop:\n");
