@@ -650,7 +650,7 @@ struct edgeuse *oldeu;
 	oldeu->eumate_p = eu2;
 
 	/*  Build radial relationship.
-	 *  Simply only because this edge has no other uses.
+	 *  Simple only because this edge has no other uses.
 	 */
 	eu1->radial_p = oldeumate;
 	oldeumate->radial_p = eu1;
@@ -667,7 +667,9 @@ struct edgeuse *oldeu;
 /*
  *			N M G _ M O V E L T O F
  *
- *	move first pair of shell loopuses to an existing face
+ *	move first pair of shell wire loopuses out to become a genuine loop
+ *	in an existing face.
+ * XXX This routine is not used anywhere.
  */
 void nmg_moveltof(fu, s)
 struct faceuse *fu;
@@ -691,6 +693,7 @@ struct shell *s;
 
 	RT_LIST_APPEND( &fu->lu_hd, &lu1->l );
 	RT_LIST_APPEND( &fu->fumate_p->lu_hd, &lu2->l );
+	/* XXX What about loopuse "up" pointers? */
 }
 
 /*
@@ -1402,6 +1405,8 @@ struct loopuse *lu;
 /*
  *			N M G _ K I L L _ S N A K E S
  *
+ *  Removes "snake" or "disconnected crack" edges from loopuse.
+ *
  *  Returns -
  *	0	If all went well
  *	1	If the loopuse is now empty and needs to be killed.
@@ -2062,31 +2067,6 @@ struct edgeuse *eu;
 #endif
 
 /*
- *			N M G _ M O V E _ F U _ F U
- *
- *  Move everything from the source faceuse into the destination faceuse.
- */
-void
-nmg_move_fu_fu( dest_fu, src_fu )
-register struct faceuse	*dest_fu;
-register struct faceuse	*src_fu;
-{
-	register struct loopuse	*lu;
-
-	NMG_CK_FACEUSE(dest_fu);
-	NMG_CK_FACEUSE(src_fu);
-
-	if( dest_fu->orientation != src_fu->orientation )
-		rt_bomb("nmg_move_fu_fu: differing orientations\n");
-
-	/* Move all loopuses from src to dest faceuse */
-	while( RT_LIST_WHILE( lu, loopuse, &src_fu->lu_hd ) )  {
-		RT_LIST_DEQUEUE( &(lu->l) );
-		RT_LIST_INSERT( &(dest_fu->lu_hd), &(lu->l) );
-		lu->up.fu_p = dest_fu;
-	}
-}
-/*
  *			N M G _ R E V E R S E _ F A C E
  *
  *  Reverse the orientation of a face.
@@ -2235,6 +2215,8 @@ register struct loopuse	*lu;
 
 /*
  *			N M G _ M V _ E U _ B E T W E E N _ S H E L L S
+ *
+ *  Move a wire edgeuse and it's mate from one shell to another.
  */
 void
 nmg_mv_eu_between_shells( dest, src, eu )
@@ -2304,10 +2286,39 @@ register struct vertexuse	*vu;
 }
 
 /*
+ *			N M G _ M O V E _ F U _ F U
+ *
+ *  Move everything from the source faceuse into the destination faceuse.
+ *  Exists as a support routine for nmg_jf() only.
+ */
+static void
+nmg_move_fu_fu( dest_fu, src_fu )
+register struct faceuse	*dest_fu;
+register struct faceuse	*src_fu;
+{
+	register struct loopuse	*lu;
+
+	NMG_CK_FACEUSE(dest_fu);
+	NMG_CK_FACEUSE(src_fu);
+
+	if( dest_fu->orientation != src_fu->orientation )
+		rt_bomb("nmg_move_fu_fu: differing orientations\n");
+
+	/* Move all loopuses from src to dest faceuse */
+	while( RT_LIST_WHILE( lu, loopuse, &src_fu->lu_hd ) )  {
+		RT_LIST_DEQUEUE( &(lu->l) );
+		RT_LIST_INSERT( &(dest_fu->lu_hd), &(lu->l) );
+		lu->up.fu_p = dest_fu;
+	}
+	/* The src_fu is invalid here, with an empty lu_hd list */
+}
+
+/*
  *			N M G _ M E R G E _ 2 F A C E S
  *
  *  Move everything from the source face and mate into the
  *  destination face and mate, taking into account face orientations.
+ *  XXX should be called nmg_jf().
  */
 void
 nmg_merge_2faces(dest_fu, src_fu)
@@ -2316,6 +2327,9 @@ register struct faceuse	*src_fu;
 {
 	NMG_CK_FACEUSE(dest_fu);
 	NMG_CK_FACEUSE(src_fu);
+
+	if( src_fu->f_p == dest_fu->f_p )
+		rt_bomb("nmg_jf() src and dest faces are the same\n");
 
 	if( dest_fu->orientation == src_fu->orientation )  {
 		nmg_move_fu_fu(dest_fu, src_fu);
