@@ -2711,7 +2711,7 @@ struct rt_tess_tol *ttol;
 	point_t origin;
 	point_t center;
 	point_t old_center;
-	int bend_segs=3;	/* minimum number of edges along bend */
+	int bend_segs=1;	/* minimum number of edges along bend */
 	int bend_seg;
 	int tol_segs;
 	int i,j;
