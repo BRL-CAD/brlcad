@@ -1186,7 +1186,7 @@ set -S2 "/bin/sh"
 #define	TYPESET_MAN0	tbl
 #define	TYPESET_MAN1	/usr/lib/tmac/tmac.an
 #define	TYPESET_MAN2	/usr/5lib/troff -Ti300 | /usr/5bin/dimp -t | \
-			    qpr -q im231
+			    qpr -q imt1
 #ifdef never
 #define	TYPESET_MAN2	| /usr/5lib/troff -Ti10 | /usr/5bin/di10 -t | \
 			    qpr -q im328-raw
