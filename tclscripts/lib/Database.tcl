@@ -27,6 +27,35 @@ class Database {
 	Drawable::constructor [Db::get_dbname]
     } {}
 
-    destructor {
+    destructor {}
+
+    public method ? {}
+    public method apropos {key}
+    public method help {args}
+    public method getUserCmds {}
+}
+
+body Database::? {} {
+    return "[Db::?]\n[Drawable::?]"
+}
+
+body Database::apropos {key} {
+    return "[Db::apropos $key] [Drawable::apropos $key]"
+}
+
+body Database::help {args} {
+    if {[llength $args] && [lindex $args 0] != {}} {
+	if {[catch {eval Db::help $args} result]} {
+	    set result [eval Drawable::help $args]
+	}
+
+	return $result
     }
+
+    # list all help messages for Db and Drawable
+    return "[Db::help][Drawable::help]"
+}
+
+body Database::getUserCmds {} {
+    return "[Db::getUserCmds] [Drawable::getUserCmds]"
 }

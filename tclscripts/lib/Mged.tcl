@@ -70,7 +70,7 @@ class Mged {
     public method push {args}
     public method put {args}
     public method r {args}
-    public method report_on_drawable {args}
+    public method report {args}
     public method rm {args}
     public method rt_gettrees {args}
     public method title {args}
@@ -84,8 +84,13 @@ class Mged {
     public method who {args}
     public method zap {}
 
-    private variable db ""
-    private variable dg ""
+    public method ? {}
+    public method apropos {key}
+    public method help {args}
+    public method getUserCmds {}
+
+    private variable db
+    private variable dg
 }
 
 body Mged::constructor {file args} {
@@ -338,6 +343,31 @@ body Mged::label {args} {
     eval $db label $args
 }
 
-body Mged::report_on_drawable {args} {
+body Mged::report {args} {
     eval $db report $args
+}
+
+body Mged::? {} {
+    return "[QuadDisplay::?]\n[$db ?]"
+}
+
+body Mged::apropos {key} {
+    return "[QuadDisplay::apropos $key] [$db apropos $key]"
+}
+
+body Mged::help {args} {
+    if {[llength $args] && [lindex $args 0] != {}} {
+	if {[catch {eval QuadDisplay::help $args} result]} {
+	    set result [eval $db help $args]
+	}
+
+	return $result
+    }
+
+    # list all help messages for QuadDisplay and Db
+    return "[QuadDisplay::help][$db help]"
+}
+
+body Mged::getUserCmds {} {
+    return "[QuadDisplay::getUserCmds] [$db getUserCmds]"
 }

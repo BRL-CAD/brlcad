@@ -41,7 +41,14 @@ class View {
     public method tra {args}
     public method zoom {sf}
 
-    private variable view ""
+    public method ? {}
+    public method apropos {key}
+    public method help {args}
+    public method getUserCmds {}
+    private method help_init {}
+
+    private variable view
+    private variable help
 }
 
 configbody View::size {
@@ -71,10 +78,12 @@ body View::constructor {args} {
     eval View::center $center
     eval View::aet $aet
     View::perspective $perspective_angle
+    View::help_init
 }
 
 body View::destructor {} {
     $view close
+    delete object $help
 }
 
 body View::get_viewname {} {
@@ -162,4 +171,33 @@ body View::perspective {args} {
 
     $view perspective $args
     set perspective_angle $args
+}
+
+body View::? {} {
+    return [$help ? 20 4]
+}
+
+body View::apropos {key} {
+    return [$help apropos $key]
+}
+
+body View::getUserCmds {} {
+    return [$help getCmds]
+}
+
+body View::help {args} {
+    return [eval $help get $args]
+}
+
+body View::help_init {} {
+    set help [cadwidgets::Help #auto]
+
+    $help add aet		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
+    $help add center		{{["x y z"]} {set/get the view center}}
+    $help add perspective	{{[angle]} {set/get the perspective angle}}
+    $help add rot		{{"x y z"} {rotate the view}}
+    $help add size		{{vsize} {set/get the view size}}
+    $help add slew		{{"x y"} {slew the view}}
+    $help add tra		{{"x y z"} {translate the view}}
+    $help add zoom		{{sf} {zoom view by specified scale factor}}
 }
