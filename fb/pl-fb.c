@@ -437,8 +437,8 @@ DoFile( )	/* returns vpl status code */
 {
 	register bool	plotted;	/* false => empty frame image */
 	register int	c;		/* input character */
-	coords		newpos; 	/* current input coordinates */
-	coords		virpos; 	/* virtual pen position */
+	static coords	newpos; 	/* current input coordinates */
+	static coords	virpos; 	/* virtual pen position */
 	static unsigned char buf3[6*2];
 	static unsigned char buf2[4*2];
 	static	bool	firsterase = true;
@@ -913,21 +913,9 @@ register coords	*coop;		/* -> input coordinates */
 STATIC bool Get3DCoords( coop )
 register coords	*coop;
 {
-	char	trash[8];
-	register bool	ret;
-
-	ret = GetDCoords( coop );
-	fread( trash, sizeof(trash), 1, pfin );
-	return( ret );
-}
-
-STATIC bool
-GetDCoords( coop )
-register coords	*coop;		/* -> input coordinates */
-{
-	char	in[2*8];
-	double	out[2];
-	double	x,y;
+	static char	in[3*8];
+	static double	out[2];
+	register double	x,y;
 
 	/* read coordinates */
 	if ( fread( in, sizeof(in), 1, pfin ) != 1 )
@@ -935,8 +923,6 @@ register coords	*coop;		/* -> input coordinates */
 	ntohd( out, in, 2 );
 	x = out[0];
 	y = out[1];
-
-	if( debug )  fprintf(stderr,"Coord: (%g,%g) ", x, y);
 
 	/* limit left, bottom */
 	if ( (x -= space.left) < 0 )
@@ -954,9 +940,48 @@ register coords	*coop;		/* -> input coordinates */
 	if ( coop->y > YMAX )
 		coop->y = YMAX;
 
-	if( debug )
-		fprintf( stderr,"Pixel: (%d,%d)\n", coop->x, coop->y);
-		
+	if( debug )  {
+		fprintf(stderr,"Coord3: (%g,%g) ", out[0], out[1]);
+		fprintf(stderr,"Pixel3: (%d,%d)\n", coop->x, coop->y);
+	}
+	return( true );
+}
+
+STATIC bool
+GetDCoords( coop )
+register coords	*coop;		/* -> input coordinates */
+{
+	static char	in[2*8];
+	static double	out[2];
+	register double	x,y;
+
+	/* read coordinates */
+	if ( fread( in, sizeof(in), 1, pfin ) != 1 )
+		return false;
+	ntohd( out, in, 2 );
+	x = out[0];
+	y = out[1];
+
+	/* limit left, bottom */
+	if ( (x -= space.left) < 0 )
+		x = 0;
+	if ( (y -= space.bottom) < 0 )
+		y = 0;
+
+	/* convert to device pixels */
+	coop->x = (short)(x * Npixels / (double)delta + 0.5);
+	coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
+
+	/* limit right, top */
+	if ( coop->x > XMAX )
+		coop->x = XMAX;
+	if ( coop->y > YMAX )
+		coop->y = YMAX;
+
+	if( debug )  {
+		fprintf(stderr,"Coord2: (%g,%g) ", out[0], out[1]);
+		fprintf(stderr,"Pixel2: (%d,%d)\n", coop->x, coop->y);
+	}
 	return true;
 }
 
