@@ -106,7 +106,7 @@ do-uninstall-stub&:  [[SUB ../SRCDIR/X.stub X.uninstall-stub ../SRCDIR/''*.stub]
 
 install&: install-prod install-man install-stub inst-dist
 
-#ifdef PRODUCTS
+#if defined(PRODUCTS) && !defined(DONT_INSTALL)
 install-prod&: [[SUB X X.install-prod PRODUCTS]]
 #else
 install-prod&:
@@ -160,9 +160,17 @@ do-install-stub&: [[SUB ../SRCDIR/X.stub X.install-stub ../SRCDIR/''*.stub]]
 #ifndef	STATIC_PRODUCTS
 #	define STATIC_PRODUCTS	/**/
 #endif
+#ifdef NFS
+#define	INSTALL_PATTERNS	STATIC_PRODUCTS \
+	../SRCDIR/Cakefile ../SRCDIR/\\\\*.[hcsfyl] \
+	../SRCDIR/\\\\*.sh \
+	../SRCDIR/\\\\*.MANSECTION ../SRCDIR/\\\\*.MANSECTION.stub \
+	../SRCDIR/\\\\*.doc
+#else
 #define	INSTALL_PATTERNS	STATIC_PRODUCTS \
 	./Cakefile \\\\*.[hcsfyl] \\\\*.sh \
 	\\\\*.MANSECTION \\\\*.MANSECTION.stub \\\\*.doc
+#endif
 #define IS_MASTER	{{test x''MASTERHOST = x`GETHOST`}}
 
 inst-dist&:	inst-dist-main	if IS_MASTER
