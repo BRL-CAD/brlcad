@@ -281,7 +281,7 @@ and
 .RS
 A program can be loaded as follows:
 .sp
-$ \|\fIcc \|\-I/usr/include/brlcad \|main.c \|/usr/brl/lib/librt.a \|\-lm\fP
+$ \|\fIcc \|\-I/usr/brlcad/include \|main.c \|/usr/brlcad/lib/librt.a \|\-lm\fP
 .sp
 Here is a portion of a hypothetical program which uses the library:
 .sp
@@ -398,7 +398,8 @@ in the model.
 .SH AUTHOR(S)
 Michael John Muuss
 .SH BUGS
-The rootfinder detects ``hard'' cases by taking a SIGFPE and retrying
+On a VAX, the rootfinder detects ``hard'' cases by taking a SIGFPE
+and retrying
 with a slower but more stable algorithm.
 This is unfortunate.
 .SH SOURCE
