@@ -37,6 +37,12 @@
 #	endif
 #endif
 
+#if defined(_GNU_SOURCE)
+#	define _POSIX_SOURCE	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_MEMORY_H	1				/* XXX */
+#endif
+
 
 /*
  *	Include handling
@@ -133,7 +139,7 @@
 #	define HAVE_DRAND48	1
 #endif
 
-#if defined(BSD)
+#if defined(BSD) || defined(linux) || defined(sgi) || defined(_BSD_SOURCE)
 #	define HAVE_GETHOSTNAME	1
 #endif
 
@@ -154,8 +160,8 @@
 #endif
 
 /* For those systems without regex, pick the alternative */
-#if defined(__bsdi__)
-#	define USE_REGCOMP 1
+#if defined(__bsdi__) || defined(__GNUC__)
+#	define USE_REGCOMP 1	/* This is the POSIX way */
 #else
 #	define USE_SYSV_RE 1
 #endif
@@ -181,7 +187,7 @@
 #endif
 
 #if defined(unix) || defined(__unix) || defined(__unix__) || defined(BSD) || \
-		defined(SUNOS)
+		defined(SUNOS) || defined(linux)
 #	define HAVE_SHELL_ESCAPE	1
 #	define HAVE_UNIX_IO		1
 #	define HAVE_SBRK		1
@@ -200,7 +206,7 @@
  *	_XOPEN_SOURCE
  */
 
-#if defined(__bsdi__) || defined(_POSIX_SOURCE) && !defined(__convex__)	/* XXX */
+#if (defined(__bsdi__) || defined(_POSIX_SOURCE) ) && !defined(__convex__)	/* XXX */
 #	define HAVE_XOPEN	1
 #	define HAVE_TERMIOS_H	1
 #	define HAVE_MEMORY_H	1				/* XXX */
