@@ -23,21 +23,32 @@
  *	Bob Suckling
  *	Gary Steven Moss
  *	Earl P Weaver
+ *	Phil Dykstra
+ *	Bob Parker
  *
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1985,1987 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987,1990 by the United States Army";
+char MGEDCopyRight_Notice[] = "@(#) \
+Re-distribution of this software is restricted, as described in \
+your 'Statement of Terms and Conditions for the Release of \
+The BRL-CAD Pacakge' agreement. \
+This software is Copyright (C) 1985,1987,1990,1993 by the United States Army \
+in all countries except the USA.  All rights reserved.";
 
 #include <stdio.h>
 #ifdef BSD
@@ -95,6 +106,8 @@ void		sig2();
 #endif
 void		new_mats();
 void		usejoy();
+void		f_opendb();
+int		interactive = 0;	/* !0 means interactive */
 static int	do_rc();
 static void	log_event();
 extern char	version[];		/* from vers.c */
@@ -143,8 +156,10 @@ char **argv;
 	}
 
 	/* Identify ourselves if interactive */
-	if( argc == 2 )
+	if( argc == 2 )  {
+		interactive = 1;
 		(void)fprintf(outfile, "%s\n", version+5);	/* skip @(#) */
+	}
 
 	(void)signal( SIGPIPE, SIG_IGN );
 
@@ -157,37 +172,9 @@ char **argv;
 	cur_sigint = signal( SIGINT, SIG_IGN );		/* sample */
 	(void)signal( SIGINT, cur_sigint );		/* restore */
 
-	/* Get input file */
-	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
-	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
-		char line[128];
-
-		if( isatty(0) ) {
-
-		    perror( argv[1] );
-		    (void)fprintf(outfile, "Create new database (y|n)[n]? ");
-		    fflush(outfile);
-		    (void)fgets(line, sizeof(line), infile);
-		    if( line[0] != 'y' && line[0] != 'Y' )
-			exit(0);		/* NOT finish() */
-		} else
-		    (void)fprintf(outfile,
-		    	"Creating new database \"%s\"\n", argv[1]);
-			
-
-		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
-			perror( argv[1] );
-			exit(2);		/* NOT finish() */
-		}
-	}
-	if( dbip->dbi_read_only )
-		(void)printf("%s:  READ ONLY\n", dbip->dbi_filename );
-
-	/* Quick -- before he gets away -- write a logfile entry! */
-	log_event( "START", argv[1] );
-
 	/* If multiple processors might be used, initialize for it.
 	 * Do not run any commands before here.
+	 * Do not use rt_log() or rt_malloc() before here.
 	 */
 	if( rt_avail_cpus() > 1 )  {
 		rt_g.rtg_parallel = 1;
@@ -231,39 +218,27 @@ char **argv;
 	mmenu_init();
 	btn_head_menu(0,0,0);		/* unlabeled menu */
 
-	dmaflag = 1;
-
-	/* --- Now safe to process commands.  BUT, no geometry yet. --- */
-
-	if( argc == 2 )  {
-		/* This is an interactive mged */
-
-		/* Process any .mgedrc file, before attaching */
-		do_rc();
-
-		/* Ask which one, and fire up the display manager */
-		get_attached();
-	}
-
 	windowbounds[0] = XMAX;		/* XHR */
 	windowbounds[1] = XMIN;		/* XLR */
 	windowbounds[2] = YMAX;		/* YHR */
 	windowbounds[3] = YMIN;		/* YLR */
 	windowbounds[4] = 2047;		/* ZHR */
 	windowbounds[5] = -2048;	/* ZLR */
+
+	dmaflag = 1;
+
+	/* --- Now safe to process commands.  BUT, no geometry yet. --- */
+	if( interactive )  {
+		/* This is an interactive mged, process .mgedrc */
+		do_rc();
+	}
+
+	/* Open the database, attach a display manager */
+	f_opendb( argc, argv );
+
 	dmp->dmr_window(windowbounds);
 
-	/* --- Scan geometry database and build in-memory directory --- */
-	db_scan( dbip, (int (*)())db_diradd, 1);
-	/* XXX - save local units */
-	localunit = dbip->dbi_localunit;
-	local2base = dbip->dbi_local2base;
-	base2local = dbip->dbi_base2local;
-
-	/* Print title/units information */
-	if( argc == 2 )
-		(void)printf("%s (units=%s)\n", dbip->dbi_title,
-			units_str[dbip->dbi_localunit] );
+	/* --- Now safe to process geometry. --- */
 
 	/* If this is an argv[] invocation, do it now */
 	if( argc > 2 )  {
@@ -908,3 +883,83 @@ void memcpy(to,from,cnt)
 	bcopy(from,to,cnt);
 }
 #endif
+
+/*
+ *			F _ O P E N D B
+ *
+ *  Close the current database, if open, and then open a new database.
+ *  May also open a display manager, if interactive and none selected yet.
+ *
+ *  argv[1] is the filename.
+ *
+ *  There are two invocations:
+ *	main()
+ *	cmdline()		Only one arg is permitted.
+ */
+void
+f_opendb( argc, argv )
+int	argc;
+char	**argv;
+{
+	if( dbip )  {
+		/* Clear out anything in the display */
+		f_zap( 0, (char **)NULL );
+
+		/* Close current database.  Releases MaterHead, etc. too. */
+		db_close(dbip);
+		dbip = DBI_NULL;
+
+		log_event( "CEASE", "(close)" );
+	}
+
+	/* Get input file */
+	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
+	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
+		char line[128];
+
+		if( isatty(0) ) {
+
+		    perror( argv[1] );
+		    (void)fprintf(outfile, "Create new database (y|n)[n]? ");
+		    fflush(outfile);
+		    (void)fgets(line, sizeof(line), infile);
+		    if( line[0] != 'y' && line[0] != 'Y' )
+			exit(0);		/* NOT finish() */
+		} else
+		    (void)fprintf(outfile,
+		    	"Creating new database \"%s\"\n", argv[1]);
+			
+
+		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
+			perror( argv[1] );
+			exit(2);		/* NOT finish() */
+		}
+	}
+	if( dbip->dbi_read_only )
+		(void)printf("%s:  READ ONLY\n", dbip->dbi_filename );
+
+	/* Quick -- before he gets away -- write a logfile entry! */
+	log_event( "START", argv[1] );
+
+	if( interactive && is_dm_null() )  {
+		/*
+		 * This is an interactive mged, with no display yet.
+		 * Ask which DM, and fire up the display manager.
+		 * Ask this question BEFORE the db_scan, because
+		 * that can take a long time for large models.
+		 */
+		get_attached();
+	}
+
+	/* --- Scan geometry database and build in-memory directory --- */
+	db_scan( dbip, (int (*)())db_diradd, 1);
+	/* XXX - save local units */
+	localunit = dbip->dbi_localunit;
+	local2base = dbip->dbi_local2base;
+	base2local = dbip->dbi_base2local;
+
+	/* Print title/units information */
+	if( interactive )
+		(void)printf("%s (units=%s)\n", dbip->dbi_title,
+			units_str[dbip->dbi_localunit] );
+}
