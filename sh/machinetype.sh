@@ -171,8 +171,15 @@ cat << EOF > ${IN_FILE}
 /*	Silicon Graphics 4D, which uses the MIPS chip */
 #	undef	sgi
 #	if __STDC__
-/*		Irix 5.0 system */
-		MACHINE=6d;
+/*		Irix 5.0 system or later */
+/*		Irix 5.0 = 6d, Irix 6.0 = 7d */
+		case `uname -r` in
+		4.*)	MACHINE=5d;;
+		5.*)	MACHINE=6d;;
+		6.*)	MACHINE=7d;;
+		7.*)	MACHINE=8d;;
+		*)	echo ERROR unknown SGI software version `uname -a` 1>&2;;
+		esac
 #	else
 #		if defined(__sgi)
 /*			IRIX 4.0, "cypress" */
