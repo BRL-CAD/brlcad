@@ -43,8 +43,8 @@ struct mfuncs {
  *			S H A D E W O R K
  */
 struct shadework {
-	fastf_t		sw_transmit;
-	fastf_t		sw_reflect;
+	fastf_t		sw_transmit;	/* 0.0 -> 1.0 */
+	fastf_t		sw_reflect;	/* 0.0 -> 1.0 */
 	fastf_t		sw_refrac_index;
 	fastf_t		sw_extinction;	/* extinction coeff, mm^-1 */
 	fastf_t		sw_color[3];	/* shaded color */
