@@ -1,5 +1,7 @@
 # $Id$
 
+SUBDIRS = library
+
 lib_LTLIBRARIES = \
 	libitcl3.3.la \
 	libitclstub3.3.la
@@ -34,10 +36,6 @@ pkglibdir = $(libdir)/itcl3.3
 
 install-data-hook:
 	@mkdir -p $(DESTDIR)$(pkglibdir)
-	@for i in $(top_srcdir)/src/other/incrTcl/itcl/library/*.tcl ; do \
-	    echo "Installing $$i" ; \
-	    $(INSTALL_DATA) $$i $(DESTDIR)$(pkglibdir)/. ; \
-	done;
 	$(INSTALL_DATA) $(top_builddir)/src/other/incrTcl/itcl/pkgIndex.tcl $(DESTDIR)$(pkglibdir)/. 
 
 EXTRA_DIST = pkgIndex.tcl

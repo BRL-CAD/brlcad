@@ -1293,6 +1293,7 @@ AC_CONFIG_FILES([
 	src/other/awf/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/itcl/Makefile
+	src/other/incrTcl/itcl/library/Makefile
 	src/other/incrTcl/itcl/pkgIndex.tcl
 	src/other/incrTcl/itk/Makefile
 	src/other/incrTcl/itk/pkgIndex.tcl
