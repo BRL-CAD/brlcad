@@ -7,7 +7,7 @@
 #define SRCDIR	proc-db
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
 			pipetest nmgmodel brickwall wall tea_nmg \
-			pipe terrain
+			pipe terrain sphflake
 #define STATIC_PRODUCTS		\
 	../SRCDIR/mol-data.dat ../SRCDIR/mol-data1.dat \
 	../SRCDIR/mol-data2.dat \
@@ -71,5 +71,8 @@ brickwall:	brickwall.o
 
 wall:	wall.o
 	CC LDFLAGS wall.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o wall
+
+sphflake: sphflake.o
+	CC LDFLAGS sphflake.o LIBWDB LIBRT LIBBN LIBBU LIBU_LIBES LIBES -o sphflake
 
 #include "../Cakefile.rules"
