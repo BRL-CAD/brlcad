@@ -484,7 +484,7 @@ check_hemispheres:
 		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
 		FAST fastf_t	rad_sq;
 		FAST fastf_t	magsq_ov;	/* length squared of ov */
-		FAST fastf_t	a,b,c;
+		FAST fastf_t	b;
 		FAST fastf_t	root;		/* root of radical */
 		FAST fastf_t	t;
 		/* 0 or 1 hits so far, this is worthwhile */
