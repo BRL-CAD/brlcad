@@ -803,6 +803,23 @@ CONST char	*filename;
 }
 
 /*
+ */
+void
+rt_pr_table( title, tabp )
+CONST char		*title;
+CONST struct rt_table	*tabp;
+{
+	int	j;
+
+	bu_log("rt_pr_table(%s):\n", title);
+	RT_CK_TABLE(tabp);
+
+	for( j=0; j <= tabp->nx; j++ )  {
+		bu_log("%3d: %g\n", j, tabp->x[j] );
+	}
+}
+
+/*
  *			R T _ P R _ T A B L E _ A N D _ T A B D A T A
  *
  *  Write out a given data table into an ASCII file,
@@ -1270,18 +1287,18 @@ CONST struct rt_table	*b;
 	RT_CK_TABLE(a);
 	RT_CK_TABLE(b);
 
-	RT_GET_TABLE(new, a->nx + b->nx );
+	RT_GET_TABLE(new, a->nx + b->nx + 2 );
 
 	i = j = 0;		/* input subscripts */
 	k = 0;			/* output subscript */
-	while( i < a->nx && j < b->nx )  {
-		if( i >= a->nx )  {
-			while( j < b->nx )
+	while( i <= a->nx || j <= b->nx )  {
+		if( i > a->nx )  {
+			while( j <= b->nx )
 				new->x[k++] = b->x[j++];
 			break;
 		}
-		if( j >= b->nx )  {
-			while( i < a->nx )
+		if( j > b->nx )  {
+			while( i <= a->nx )
 				new->x[k++] = a->x[i++];
 			break;
 		}
@@ -1298,7 +1315,7 @@ CONST struct rt_table	*b;
 		}
 	}
 	if( k > new->nx )  bu_bomb("rt_table_merge2() assertion failed, k>nx?\n");
-	new->nx = k;
+	new->nx = k-1;
 
 	return new;
 }
