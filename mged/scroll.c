@@ -86,17 +86,8 @@ struct scroll_item sl_adc_menu[] = {
  */
 void sl_halt_scroll()
 {
-	struct scroll_item      **m;
-	register struct scroll_item     *mptr;
-
-	/* Re-init scrollers */
-	for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
-		for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ ){
-			*(mptr->scroll_val) = 0.0;
-		}
-	}
-
-	dmaflag = 1;
+	/* The 'knob' command will zero the rate_slew[] array, etc. */
+	rt_vls_printf(&dm_values.dv_string, "knob zero\n");
 }
 
 /*
@@ -145,31 +136,36 @@ register struct scroll_item     *mptr;
 static void sl_xadc( mptr )
 register struct scroll_item     *mptr;
 {
-	dm_values.dv_xadc = *(mptr->scroll_val) * 2047;
+	rt_vls_printf(&dm_values.dv_string, "knob xadc %d\n",
+		(int)(*(mptr->scroll_val) * 2047) );
 }
 
 static void sl_yadc( mptr )
 register struct scroll_item     *mptr;
 {
-	dm_values.dv_yadc = *(mptr->scroll_val) * 2047;
+	rt_vls_printf(&dm_values.dv_string, "knob yadc %d\n",
+		(int)(*(mptr->scroll_val) * 2047) );
 }
 
 static void sl_1adc( mptr )
 register struct scroll_item     *mptr;
 {
-	dm_values.dv_1adc = *(mptr->scroll_val) * 2047;
+	rt_vls_printf(&dm_values.dv_string, "knob ang1 %d\n",
+		(int)(*(mptr->scroll_val) * 2047) );
 }
 
 static void sl_2adc( mptr )
 register struct scroll_item     *mptr;
 {
-	dm_values.dv_2adc = *(mptr->scroll_val) * 2047;
+	rt_vls_printf(&dm_values.dv_string, "knob ang2 %d\n",
+		(int)(*(mptr->scroll_val) * 2047) );
 }
 
 static void sl_distadc( mptr )
 register struct scroll_item     *mptr;
 {
-	dm_values.dv_distadc = *(mptr->scroll_val) * 2047;
+	rt_vls_printf(&dm_values.dv_string, "knob distadc %d\n",
+		(int)(*(mptr->scroll_val) * 2047) );
 }
 
 
