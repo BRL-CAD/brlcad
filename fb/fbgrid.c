@@ -23,19 +23,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-RGBpixel white_line[1024], grey_line[1024], dark_line[1024];
-FBIO *fbp;
+static RGBpixel	white_line[1024], grey_line[1024], dark_line[1024];
+static FBIO *fbp;
 
 #define OLD	0
 #define	BINARY	1
 #define	DECIMAL 2
 
-int	fbwidth = 512;
-int	fbheight = 512;
-int	flavor = DECIMAL;
-int	clear = 0;
+static int	fbwidth = 512;
+static int	fbheight = 512;
+static int	flavor = DECIMAL;
+static int	clear = 0;
 
-char usage[] = "\
+static char usage[] = "\
 Usage: fbgrid [-h -c] [-b | -d | -o]\n";
 
 main( argc, argv )

@@ -27,26 +27,26 @@ extern char	*optarg;
 extern int	optind;
 
 #define MAX_LINE	2048		/* Max pixels/line */
-RGBpixel scanline[MAX_LINE];		/* 1 scanline pixel buffer */
+static RGBpixel scanline[MAX_LINE];	/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 
-char	*framebuffer = NULL;
-char	*file_name;
-int	infd;
+static char	*framebuffer = NULL;
+static char	*file_name;
+static int	infd;
 
-int	fileinput = 0;		/* file of pipe on input? */
+static int	fileinput = 0;		/* file of pipe on input? */
 
-int	file_width = 512;	/* default input width */
-int	file_height = 512;	/* default input height */
-int	scr_width = 0;		/* screen tracks file if not given */
-int	scr_height = 0;
-int	file_xoff, file_yoff;
-int	scr_xoff, scr_yoff;
-int	clear = 0;
-int	zoom = 0;
-int	inverse = 0;			/* Draw upside-down */
+static int	file_width = 512;	/* default input width */
+static int	file_height = 512;	/* default input height */
+static int	scr_width = 0;		/* screen tracks file if not given */
+static int	scr_height = 0;
+static int	file_xoff, file_yoff;
+static int	scr_xoff, scr_yoff;
+static int	clear = 0;
+static int	zoom = 0;
+static int	inverse = 0;		/* Draw upside-down */
 
-char usage[] = "\
+static char usage[] = "\
 Usage: pix-fb [-h -i -c -z] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\

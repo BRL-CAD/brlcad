@@ -33,30 +33,30 @@ extern int	optind;
 
 #define	MAX_LINE	(16*1024)	/* Largest output scan line length */
 
-char	ibuf[MAX_LINE];
-RGBpixel obuf[MAX_LINE];
+static char	ibuf[MAX_LINE];
+static RGBpixel obuf[MAX_LINE];
 
-int	fileinput = 0;		/* file of pipe on input? */
+static int	fileinput = 0;		/* file of pipe on input? */
 
-int	file_width = 512;	/* default input width */
-int	file_height = 512;	/* default input height */
-int	scr_width = 0;		/* screen tracks file if not given */
-int	scr_height = 0;
-int	file_xoff, file_yoff;
-int	scr_xoff, scr_yoff;
-int	clear = 0;
-int	zoom = 0;
-int	inverse = 0;
-int	redflag   = 0;
-int	greenflag = 0;
-int	blueflag  = 0;
+static int	file_width = 512;	/* default input width */
+static int	file_height = 512;	/* default input height */
+static int	scr_width = 0;		/* screen tracks file if not given */
+static int	scr_height = 0;
+static int	file_xoff, file_yoff;
+static int	scr_xoff, scr_yoff;
+static int	clear = 0;
+static int	zoom = 0;
+static int	inverse = 0;
+static int	redflag   = 0;
+static int	greenflag = 0;
+static int	blueflag  = 0;
 
-char	*framebuffer = NULL;
-char	*file_name;
-int	infd;
-FBIO	*fbp;
+static char	*framebuffer = NULL;
+static char	*file_name;
+static int	infd;
+static FBIO	*fbp;
 
-char	usage[] = "\
+static char	usage[] = "\
 Usage: bw-fb [-h -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
