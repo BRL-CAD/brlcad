@@ -729,7 +729,7 @@ int			no_unions;
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-		if( tp->tr_b.tb_right->tr_op != OP_DB_LEAF )
+		if( db_ck_left_heavy_tree( tp->tr_b.tb_right, no_unions ) < 0 )
 			return -1;
 		return db_ck_left_heavy_tree( tp->tr_b.tb_left, no_unions );
 
