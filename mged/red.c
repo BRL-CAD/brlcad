@@ -20,6 +20,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
 
 #include <stdio.h>
 #include <signal.h>
@@ -31,10 +32,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 #include <ctype.h>
-#ifdef SYSV
-# include <string.h>
+#ifdef USE_STRING_H
+#	include <string.h>
 #else
-# include <strings.h>
+#	include <strings.h>
 #endif
 
 extern int errno;
