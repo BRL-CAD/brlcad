@@ -49,7 +49,7 @@ extern int	verbose;
 
 /*		R E A D _ R T _ F I L E
  *
- * This routine reads an rt_log file line by line until it either finds
+ * Read an RT program's log file line by line until it either finds
  * view, orientation, eye_postion, and size of the model, or it hits the
  * end of file.  When a colon is found, sscanf() retrieves the
  * necessary information.  It takes a file pointer, file name, and a matrix
@@ -124,7 +124,7 @@ mat_t 	model2view;
 			/* This needs to be seen only if there is an
 			 * unexpected end.
 			 */
-			fprintf(stderr, "read_rt_log: read failure on file %s\n",
+			fprintf(stderr, "read_rt_file: read failure on file %s\n",
  				name);
  			return(-1);
 		}
