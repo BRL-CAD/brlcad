@@ -293,11 +293,16 @@ view_loop()
 }
 
 /* Window Location */
-#define MARGIN	4			/* # pixels margin to screen edge */
+#ifdef mips
+#define WINDIM	1024
+#define WIN_R	(1279-MARGIN)
+#else
 #define WINDIM	768
+#define WIN_R	(1023-MARGIN)
+#endif
+#define MARGIN	4			/* # pixels margin to screen edge */
 #define BANNER	20
-#define WIN_L	(1024-WINDIM-MARGIN)
-#define WIN_R	(1024-1-MARGIN)
+#define WIN_L	(WIN_R-WINDIM)
 #define WIN_B	MARGIN
 #define WIN_T	(WINDIM-BANNER-MARGIN)
 
@@ -428,19 +433,17 @@ Coord max[3], min[3];
 		switch( c ) {
 		/* One of a kind functions */
 		case 'e':
-#ifdef never	/* what's the point? */
-			l = getcolor();
-			color( BLACK );
-			clear();
-			color( l );
-#endif
-			/*XXX*/
 			/* remove any objects, start a new one */
 			closeobj( maxobj );
 			for( o = minobj; o <= maxobj; o++ )
 				delobj( o );
 			minobj = maxobj;
 			makeobj( maxobj );
+			/* set the default drawing color */
+			if( ismex() )
+				color( COLOR_APPROX(255,255,255) );
+			else
+				color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
 			break;
 		case 'F':
 			/* display everything up to here */
@@ -561,8 +564,8 @@ Coord max[3], min[3];
 		/* 2D and 3D IEEE */
 		case 'w':
 			getieee( d, 4 );
-			min[0] = d[0]; min[1] = d[1]; min[2] = -32768.0;
-			max[0] = d[2]; max[1] = d[3]; max[2] = 32768.0;
+			min[0] = d[0]; min[1] = d[1]; min[2] = -1.0;
+			max[0] = d[2]; max[1] = d[3]; max[2] = 1.0;
 			break;
 		case 'W':
 			getieee( d, 6 );
