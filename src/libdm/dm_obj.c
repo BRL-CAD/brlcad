@@ -1947,6 +1947,30 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 
 
 #ifndef WIN32
+
+#if 1
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift,_mask) { \
+        _shift = 24 - _shift; \
+	switch (_shift) { \
+	case 0: \
+	     _mask >>= 24; \
+	     break; \
+	case 8: \
+	     _mask >>= 8; \
+	     break; \
+	case 16: \
+	     _mask <<= 8; \
+	     break; \
+	case 24: \
+	     _mask <<= 24; \
+	     break; \
+	} \
+}
+#else
+/* Do nothing */
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift,_mask)
+#endif
+
 static int
 dmo_png_cmd(struct dm_obj	*dmop,
 	    Tcl_Interp		*interp,
@@ -2012,20 +2036,13 @@ dmo_png_cmd(struct dm_obj	*dmop,
 	return TCL_ERROR;
     }
 
-#if 0
-    bu_log("size of unsigned short - %d\n", sizeof(unsigned short));
-    bu_log("size of unsigned int - %d\n", sizeof(unsigned int));
-    bu_log("size of unsigned long - %d\n", sizeof(unsigned long));
-
-    bu_log("red mask - %ld\n", ximage_p->red_mask);
-    bu_log("green mask - %ld\n", ximage_p->green_mask);
-    bu_log("blue mask - %ld\n", ximage_p->blue_mask);
-#endif
-
     bytes_per_pixel = ximage_p->bytes_per_line / ximage_p->width;
+
     if (bytes_per_pixel == 4) {
 	unsigned long mask;
 	unsigned long tmask;
+
+	/* This section assumes 8 bits per channel */
 
 	mask = ximage_p->red_mask;
 	tmask = 1;
@@ -2050,10 +2067,41 @@ dmo_png_cmd(struct dm_obj	*dmop,
 		break;
 	    tmask = tmask << 1;
 	}
+
+	/*
+	 * We need to reverse things if the image byte order
+	 * is different from the system's byte order.
+	 */
+	if ((BYTE_ORDER == LITTLE_ENDIAN &&
+	     ximage_p->byte_order == MSBFirst) ||
+	    (BYTE_ORDER == BIG_ENDIAN &&
+	     ximage_p->byte_order == LSBFirst)) {
+#if 0
+	    bu_log("red mask - %ld\n", ximage_p->red_mask);
+	    bu_log("green mask - %ld\n", ximage_p->green_mask);
+	    bu_log("blue mask - %ld\n", ximage_p->blue_mask);
+
+	    bu_log("red_shift - %ld\n", red_shift);
+	    bu_log("green_shift - %ld\n", green_shift);
+	    bu_log("blue_shift - %ld\n", blue_shift);
+	    bu_log("Reversing the byte order!!!\n");
+#endif
+	    DM_REVERSE_COLOR_BYTE_ORDER(red_shift,ximage_p->red_mask);
+	    DM_REVERSE_COLOR_BYTE_ORDER(green_shift,ximage_p->green_mask);
+	    DM_REVERSE_COLOR_BYTE_ORDER(blue_shift,ximage_p->blue_mask);
+	}
+
     } else if (bytes_per_pixel == 2) {
 	unsigned long mask;
 	unsigned long tmask;
 	int bpb = 8;   /* bits per byte */
+
+	/*XXX
+	 * This section probably needs logic similar
+	 * to the previous section (i.e. bytes_per_pixel == 4).
+	 * That is we may need to reverse things depending on
+	 * the image byte order and the system's byte order.
+	 */
 
 	mask = ximage_p->red_mask;
 	tmask = 1;
@@ -2140,6 +2188,22 @@ dmo_png_cmd(struct dm_obj	*dmop,
 
 	return TCL_ERROR;
     }
+
+#if 0
+    bu_log("bytes_per_pixel - %ld\n", bytes_per_pixel);
+    bu_log("byte_order - %d\n", ximage_p->byte_order);
+    bu_log("size of unsigned short - %d\n", sizeof(unsigned short));
+    bu_log("size of unsigned int - %d\n", sizeof(unsigned int));
+    bu_log("size of unsigned long - %d\n", sizeof(unsigned long));
+
+    bu_log("red mask - %ld\n", ximage_p->red_mask);
+    bu_log("green mask - %ld\n", ximage_p->green_mask);
+    bu_log("blue mask - %ld\n", ximage_p->blue_mask);
+
+    bu_log("red_shift - %ld\n", red_shift);
+    bu_log("green_shift - %ld\n", green_shift);
+    bu_log("blue_shift - %ld\n", blue_shift);
+#endif
 
     rows = (unsigned char **)bu_calloc(ximage_p->height, sizeof(unsigned char *), "rows");
     idata = (unsigned char *)bu_calloc(ximage_p->height * ximage_p->width, 4, "png data");
