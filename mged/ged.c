@@ -783,7 +783,7 @@ do_rc()
 	return(-1);
 }
 
-#ifdef BSD
+#if defined(BSD) && !defined(__convexc__)
 extern void bcopy();
 void memcpy(to,from,cnt)
 {
