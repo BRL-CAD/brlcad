@@ -2648,7 +2648,8 @@ int			other_rs_state;
 			vu, pos);
 		rt_log("Plotting this loopuse, before action:\n");
 		nmg_pr_lu_briefly(nmg_find_lu_of_vu(vu), (char *)0);
-		nmg_face_lu_plot(nmg_find_lu_of_vu(vu), rs->vu[0], rs->vu[rs->nvu-1] );
+		nmg_plot_lu_ray(nmg_find_lu_of_vu(vu),
+			rs->vu[0], rs->vu[rs->nvu-1], rs->left );
 	}
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
@@ -2764,7 +2765,7 @@ rt_log("force next eu to ray\n");
 		/* Drop a plot file */
 		rt_g.NMG_debug |= DEBUG_FCUT|DEBUG_PLOTEM;
 		nmg_pl_comb_fu( 0, 1, lu->up.fu_p );
-		nmg_face_lu_plot(lu, rs->vu[0], rs->vu[rs->nvu-1] );
+		nmg_plot_lu_ray(lu, rs->vu[0], rs->vu[rs->nvu-1], rs->left );
 		{
 			FILE	*fp = fopen("error.pl", "w");
 			nmg_pl_m(fp, nmg_find_model((long *)lu));
@@ -2872,7 +2873,7 @@ rt_log("force next eu to ray\n");
 			lu = nmg_find_lu_of_vu(rs->vu[pos]);
 			NMG_CK_LOOPUSE(lu);
 			nmg_pr_lu(lu, "   ");
-			nmg_face_lu_plot(lu, rs->vu[0], rs->vu[rs->nvu-1] );
+			nmg_plot_lu_ray(lu, rs->vu[0], rs->vu[rs->nvu-1], rs->left );
 		}
 		break;
 	case NMG_ACTION_LONE_V_JAUNT:
@@ -2909,7 +2910,8 @@ rt_log("force next eu to ray\n");
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
 			rt_log("After LONE_V_JAUNT, the final loop:\n");
 			nmg_pr_lu_briefly(nmg_find_lu_of_vu(rs->vu[pos]), (char *)0);
-			nmg_face_lu_plot(nmg_find_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
+			nmg_plot_lu_ray(nmg_find_lu_of_vu(rs->vu[pos]),
+				rs->vu[0], rs->vu[rs->nvu-1], rs->left );
 		}
 		break;
 	case NMG_ACTION_CUTJOIN:
@@ -2946,7 +2948,8 @@ rt_log("force next eu to ray\n");
 			if(rt_g.NMG_debug&DEBUG_FCUT)  {
 				rt_log("After CUT, the final loop:\n");
 				nmg_pr_lu_briefly(nmg_find_lu_of_vu(rs->vu[pos]), (char *)0);
-				nmg_face_lu_plot(nmg_find_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
+				nmg_plot_lu_ray(nmg_find_lu_of_vu(rs->vu[pos]),
+					rs->vu[0], rs->vu[rs->nvu-1], rs->left );
 			}
 			break;
 		}
@@ -3032,7 +3035,7 @@ rt_log("force next eu to ray\n");
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
 			rt_log("After JOIN, the final loop:\n");
 			nmg_pr_lu_briefly(lu, (char *)0);
-			nmg_face_lu_plot( lu, rs->vu[0], rs->vu[rs->nvu-1] );
+			nmg_plot_lu_ray( lu, rs->vu[0], rs->vu[rs->nvu-1], rs->left );
 		}
 		break;
 	}
