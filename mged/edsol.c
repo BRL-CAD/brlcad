@@ -787,6 +787,7 @@ init_sedit()
 
 			temprec = es_rec.s;
 			es_rec.s.s_cgtype = type;
+			es_type = type;	/* !!! Needed for facedef.c */
 
 			/* find the plane equations */
 			calc_planes( &es_rec.s, type );
@@ -3019,4 +3020,43 @@ char			*name;
 	}
 	RT_CK_DB_INTERNAL( os );
 	return 0;				/* OK */
+}
+
+/* 			C A L C _ P N T S (  )
+ * XXX replaced by rt_arb_calc_points() in facedef.c
+ *
+ * Takes the array es_peqn[] and intersects the planes to find the vertices
+ * of a GENARB8.  The vertices are stored in the solid record 'old_srec' which
+ * is of type 'type'.  If intersect fails, the points (in vector notation) of
+ * 'old_srec' are used to clean up the array es_peqn[] for anyone else. The
+ * vertices are put in 'old_srec' in vector notation.  This is an analog to
+ * calc_planes().
+ */
+void
+calc_pnts( old_srec, type )
+struct solidrec *old_srec;
+int type;
+{
+	struct solidrec temp_srec;
+	short int i;
+
+	/* find new points for entire solid */
+	for(i=0; i<8; i++){
+		/* use temp_srec until we know intersect doesn't fail */
+		if( intersect(type,i*3,i,&temp_srec) ){
+			(void)printf("Intersection of planes fails\n");
+			/* clean up array es_peqn for anyone else */
+			calc_planes( old_srec, type );
+			return;				/* failure */
+		}
+	}
+
+	/* back to vector notation */
+	VMOVE( &old_srec->s_values[0], &temp_srec.s_values[0] );
+	for(i=3; i<=21; i+=3){
+		VSUB2(	&old_srec->s_values[i],
+			&temp_srec.s_values[i],
+			&temp_srec.s_values[0]  );
+	}
+	return;						/* success */
 }

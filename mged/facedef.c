@@ -30,6 +30,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include <signal.h>
 
+extern struct rt_db_internal	es_int;	/* from edsol.c */
+
 extern int numargs;   			/* number of arguments */
 extern int args;       			/* total number of args available */
 extern int argcnt;     			/* holder for number of args added later */
@@ -62,12 +64,12 @@ char *p_nupnt[] = {
 	"Enter Z of fixed point: "
 };
 
-void	f_facedef();
-
 static void	get_pleqn(), get_rotfb(), get_nupnt();
 static int	get_3pts();
 
-/*			F _ F A C E D E F ( )
+/*
+ *			F _ F A C E D E F
+ *
  * Redefines one of the defining planes for a GENARB8. Finds
  * which plane to redefine and gets input, then shuttles the process over to
  * one of four functions before calculating new vertices.
@@ -75,9 +77,13 @@ static int	get_3pts();
 void
 f_facedef()
 {
-	short int 	i,face,prod,plane;
-	static vect_t 	tempvec;	/* because MAT4X3PNT,MAT4X3VEC corrupts the vector */
+	short int 	i;
+	int		face,prod,plane;
 	struct rt_tol	tol;
+	struct rt_db_internal	intern;
+	struct rt_arb_internal	*arb;
+	struct rt_arb_internal	*arbo;
+	plane_t		planes[6];
 
 	/* XXX These need to be improved */
 	tol.magic = RT_TOL_MAGIC;
@@ -88,26 +94,25 @@ f_facedef()
 
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 	if( state != ST_S_EDIT ){
-		(void)printf("Facedef: must be in solid edit\n");
+		(void)printf("Facedef: must be in solid edit mode\n");
 		return;
 	}
-	if( es_rec.s.s_type != GENARB8 ){
-		(void)printf("Facedef: type must be GENARB8\n");
+	if( es_int.idb_type != ID_ARB8 )  {
+		(void)printf("Facedef: solid type must be ARB\n");
 		return;
 	}	
 
-	/* apply es_mat editing to parameters,put into es_rec.s */
-	VMOVE( tempvec, &es_rec.s.s_values[0] );
-	MAT4X3PNT( &es_rec.s.s_values[0], es_mat, tempvec );
-	for(i=1; i<8; i++){
-		VMOVE( tempvec, &es_rec.s.s_values[i*3] );
-		MAT4X3VEC( 	&es_rec.s.s_values[i*3],
-				es_mat,
-				tempvec			);
-	}
+	/* apply es_mat editing to parameters */
+	transform_editing_solid( &intern, es_mat, &es_int, 0 );
+
+	arb = (struct rt_arb_internal *)intern.idb_ptr;
+	RT_ARB_CK_MAGIC(arb);
 
 	/* find new planes to account for any editing */
-	calc_planes( &es_rec.s, es_rec.s.s_cgtype );
+	if( rt_arb_calc_planes( planes, arb, es_type, &tol ) < 0 )  {
+		rt_log("Unable to determine plane equations\n");
+		return;
+	}
 
 	/* get face, initialize args and argcnt */
 	face = atoi( cmd_args[1] );
@@ -115,11 +120,12 @@ f_facedef()
 	argcnt = 0;
 	
 	/* use product of vertices to distinguish faces */
-	for(i=0,prod=1;i<4;i++)
+	for(i=0,prod=1;i<4;i++)  {
 		if( face > 0 ){
 			prod *= face%10;
 			face /= 10;
 		}
+	}
 
 	switch( prod ){
 		case    6:			/* face  123 of arb4 */
@@ -127,7 +133,7 @@ f_facedef()
 						/* face 1234 of arb7 */
 						/* face 1234 of arb6 */
 						/* face 1234 of arb5 */
-			  if(es_rec.s.s_cgtype==ARB4 && prod==24)
+			  if(es_type==4 && prod==24)
 				plane=2; 	/* face  234 of arb4 */
 			  break;
 		case    8:			/* face  124 of arb4 */
@@ -139,20 +145,20 @@ f_facedef()
 		case  120:			/* face 1564 of arb6 */
 		case   20:      		/* face  145 of arb7 */
 		case  160:plane=2;		/* face 1584 of arb8 */
-			  if(es_rec.s.s_cgtype==ARB5)
+			  if(es_type==5)
 				plane=4; 	/* face  145 of arb5 */
 			  break;
 		case   12:			/* face  134 of arb4 */
 		case   10:			/* face  125 of arb6 */
 		case  252:plane=3;		/* face 2376 of arb8 */
 						/* face 2376 of arb7 */
-			  if(es_rec.s.s_cgtype==ARB5)
+			  if(es_type==5)
 				plane=1; 	/* face  125 of arb5 */
 		 	  break;
 		case   72:               	/* face  346 of arb6 */
 		case   60:plane=4;	 	/* face 1265 of arb8 */
 						/* face 1265 of arb7 */
-			  if(es_rec.s.s_cgtype==ARB5)
+			  if(es_type==5)
 				plane=3; 	/* face  345 of arb5 */
 			  break;
 		case  420:			/* face 4375 of arb7 */
@@ -180,7 +186,7 @@ f_facedef()
 	switch( cmd_args[2][0] ){
 	case 'a': 
 		/* special case for arb7, because of 2 4-pt planes meeting */
-		if( es_rec.s.s_cgtype == ARB7 )
+		if( es_type == 7 )
 			if( plane!=0 && plane!=3 ){
 				(void)printf("Facedef: can't redefine that arb7 plane\n");
 				return;
@@ -193,11 +199,11 @@ f_facedef()
 			}
 			args += argcnt;
 		}
-		get_pleqn( es_peqn[plane], &cmd_args[3] );
+		get_pleqn( planes[plane], &cmd_args[3] );
 		break;
 	case 'b': 
 		/* special case for arb7, because of 2 4-pt planes meeting */
-		if( es_rec.s.s_cgtype == ARB7 )
+		if( es_type == 7 )
 			if( plane!=0 && plane!=3 ){
 				(void)printf("Facedef: can't redefine that arb7 plane\n");
 				return;
@@ -210,15 +216,13 @@ f_facedef()
 			}
 			args += argcnt;
 		}
-		if( get_3pts( es_peqn[plane], &cmd_args[3], &tol) ){
-			/* clean up array es_peqn for anyone else */
-			calc_planes( &es_rec.s, es_rec.s.s_cgtype );
+		if( get_3pts( planes[plane], &cmd_args[3], &tol) ){
 			return;				/* failure */
 		}
 		break;
 	case 'c': 
 		/* special case for arb7, because of 2 4-pt planes meeting */
-		if( es_rec.s.s_cgtype == ARB7 && (plane != 0 && plane != 3) ) {
+		if( es_type == 7 && (plane != 0 && plane != 3) ) {
 			while( args < 5 ){ 	/* total # of args under this option */
 				(void)printf("%s",p_rotfb[args-3]);
 				if( (argcnt = getcmd(args)) < 0){
@@ -240,11 +244,11 @@ f_facedef()
 			}
 			args += argcnt;
 		}
-		get_rotfb(es_peqn[plane], &cmd_args[3], &es_rec.s);
+		get_rotfb(planes[plane], &cmd_args[3], arb);
 		break;
 	case 'd': 
 		/* special case for arb7, because of 2 4-pt planes meeting */
-		if( es_rec.s.s_cgtype == ARB7 )
+		if( es_type == 7 )
 			if( plane!=0 && plane!=3 ){
 				(void)printf("Facedef: can't redefine that arb7 plane\n");
 				return;
@@ -257,7 +261,7 @@ f_facedef()
 			}
 			args += argcnt;
 		}
-		get_nupnt(es_peqn[plane], &cmd_args[3]);
+		get_nupnt(planes[plane], &cmd_args[3]);
 		break;
 	case 'q': 
 		return;
@@ -266,24 +270,24 @@ f_facedef()
 		return;
 	}
 
-	/* find all vertices, put in vector notation */
-	calc_pnts( &es_rec.s, es_rec.s.s_cgtype, es_peqn );
-
-	/* go back to before es_mat changes */
-	VMOVE( tempvec, &es_rec.s.s_values[0] );
-	MAT4X3PNT( &es_rec.s.s_values[0], es_invmat, tempvec );
-	for(i=1; i<8; i++){
-		VMOVE( tempvec, &es_rec.s.s_values[i*3] );
-		MAT4X3VEC(	&es_rec.s.s_values[i*3],
-				es_invmat,
-				tempvec			);
+	/* find all vertices from the plane equations */
+	if( rt_arb_calc_points( arb, es_type, planes, &tol ) < 0 )  {
+		rt_log("facedef:  unable to find points\n");
+		return;
 	}
+
+	/* Transform points back to before es_mat changes */
+	arbo = (struct rt_arb_internal *)es_int.idb_ptr;
+	RT_ARB_CK_MAGIC(arbo);
+
+	MAT4X3PNT( arbo->pt[0], es_invmat, arb->pt[0] );
+	for(i=1; i<8; i++){
+		MAT4X3VEC( arbo->pt[i], es_invmat, arb->pt[i] );
+	}
+	rt_db_free_internal(&intern);
 
 	/* draw the new solid */
 	replot_editing_solid();
-
-	/* update display information */
-	dmaflag = 1;
 	return;				/* everything OK */
 }
 
@@ -352,10 +356,10 @@ struct rt_tol	*tol;
  * pointed to by 's_recp' are used if a vertex is chosen as fixed point.
  */
 static void
-get_rotfb(plane, argv, s_recp)
+get_rotfb(plane, argv, arb)
 plane_t	plane;
 char	*argv[];
-struct solidrec *s_recp;
+CONST struct rt_arb_internal	*arb;
 {
 	fastf_t rota, fb;
 	short int i,temp;
@@ -372,13 +376,8 @@ struct solidrec *s_recp;
 	if( argv[2][0] == 'v' ){     	/* vertex given */
 		/* strip off 'v', subtract 1 */
 		temp = atoi(argv[2]+1) - 1;
-		if(temp > 0){
-			VADD2( &pt[0], &s_recp->s_values[0], &s_recp->s_values[temp*3] );
-			plane[3]= VDOT(&plane[0], pt);
-		} else {
-			plane[3]= VDOT(&plane[0],&s_recp->s_values[0]);
-		}
-	} else {				         /* definite point given */
+		plane[3]= VDOT(&plane[0], arb->pt[temp]);
+	} else {		         /* definite point given */
 		for(i=0; i<3; i++)
 			pt[i]=atof(argv[2+i]) * local2base;
 		plane[3]=VDOT(&plane[0], pt);
@@ -405,52 +404,11 @@ char	*argv[];
 	plane[3] = VDOT(&plane[0], pt);
 }
 
-/* 			C A L C _ P N T S (  )
- * XXX replaced by rt_arb_calc_points
- *
- * Takes the array es_peqn[] and intersects the planes to find the vertices
- * of a GENARB8.  The vertices are stored in the solid record 'old_srec' which
- * is of type 'type'.  If intersect fails, the points (in vector notation) of
- * 'old_srec' are used to clean up the array es_peqn[] for anyone else. The
- * vertices are put in 'old_srec' in vector notation.  This is an analog to
- * calc_planes().
- */
-void
-calc_pnts( old_srec, type )
-struct solidrec *old_srec;
-int type;
-{
-	struct solidrec temp_srec;
-	short int i;
-
-	/* find new points for entire solid */
-	for(i=0; i<8; i++){
-		/* use temp_srec until we know intersect doesn't fail */
-		if( intersect(type,i*3,i,&temp_srec) ){
-			(void)printf("Intersection of planes fails\n");
-			/* clean up array es_peqn for anyone else */
-			calc_planes( old_srec, type );
-			return;				/* failure */
-		}
-	}
-
-	/* back to vector notation */
-	VMOVE( &old_srec->s_values[0], &temp_srec.s_values[0] );
-	for(i=3; i<=21; i+=3){
-		VSUB2(	&old_srec->s_values[i],
-			&temp_srec.s_values[i],
-			&temp_srec.s_values[0]  );
-	}
-	return;						/* success */
-}
-
 /*
  *			R T _ A R B _ C A L C _ P O I N T S
  *
  * Takes the planes[] array and intersects the planes to find the vertices
  * of a GENARB8.  The vertices are stored into arb->pt[].
- * If the intersect fails, the existing points of arb->pt[]
- * are used to clean up the planes[] array for anyone else.
  * This is an analog of rt_arb_calc_planes().
  */
 int
@@ -469,8 +427,6 @@ struct rt_tol	*tol;
 	for(i=0; i<8; i++){
 		if( rt_arb_3face_intersect( pt[i], planes, cgtype, i*3 ) < 0 )  {
 			rt_log("rt_arb_calc_points: Intersection of planes fails %d\n", i);
-			/* clean up planes[] for anyone else */
-			(void)rt_arb_calc_planes( planes, arb, cgtype, tol );
 			return -1;			/* FAIL */
 		}
 	}
