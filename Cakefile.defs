@@ -506,10 +506,15 @@ set -S2 "/bin/sh"
 /*	-g -hnobtreg for debugging */
 #	if 1
 /*		Cray ANSI Standard C */
-/*		 -hreport=v gives vectorization report */
-/*		 -hmsglevel_0 gives full warnings, as well as errors */
 #		define	CC	/bin/scc
-#		define	CC_DEFS	-hmsglevel_0
+#		if 1
+/*			Production configuration */
+#			define	CC_DEFS	/**/
+#		else
+/*			 -hreport=v gives vectorization report */
+/*			 -hmsglevel_0 gives full warnings, as well as errors */
+#			define	CC_DEFS	-hmsglevel_0
+#		endif
 #	else
 #		if 1
 /*			Plain old /bin/cc */
