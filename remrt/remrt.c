@@ -732,7 +732,8 @@ FILE *fp;
 		}
 		return;
 	}
-	if( strcmp( cmd_args[0], "stat" ) == 0 )  {
+	if( strcmp( cmd_args[0], "stat" ) == 0 ||
+	    strcmp( cmd_args[0], "status" ) == 0 )  {
 		register struct servers *sp;
 
 		if( start_cmd[0] == '\0' )
