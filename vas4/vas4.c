@@ -1,12 +1,26 @@
 /*
- * vas4.c - program to control the Lyon-Lamb VAS IV 
+ *			V A S 4 . C
  *
- * See man page for details.
+ *  Program to control the Lyon-Lamb VAS IV video animation controller
+ *  with Sony BVU-850 recorder (or equiv).
  *
- * Steve Satterfield, CADIG, USNA
  *
- * The vas record routines are based upon work by Joe Johnson
+ *  Authors -
+ *	Steve Satterfield, USNA
+ *	Joe Johnson, USNA
+ *	Michael John Muuss, BRL
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include "./vas4.h"
@@ -66,7 +80,7 @@ char **argv;
 			number_of_images = atoi(argv[2]);
 			if (number_of_images < 1)
 				usage_seq();
-			number_of_frames = atoi(argv[3]);
+			number_of_frames = str2frames(argv[3]);
 			if (number_of_frames < 1)
 				usage_seq();
 			start_seq_number = 1;
@@ -75,7 +89,7 @@ char **argv;
 			number_of_images = atoi(argv[2]);
 			if (number_of_images < 1)
 				usage_seq();
-			number_of_frames = atoi(argv[3]);
+			number_of_frames = str2frames(argv[3]);
 			if (number_of_frames < 1)
 				usage_seq();
 			start_seq_number = atoi(argv[4]);
@@ -128,7 +142,7 @@ char **argv;
 		exit(1);
 	if( strcmp(argv[1], "search") == 0 )  {
 		if( argc >= 3 )
-			start_frame = atoi(argv[2]);
+			start_frame = str2frames(argv[2]);
 		else
 			start_frame = 1;
 		exit_code = search_frame(start_frame);
@@ -143,7 +157,7 @@ char **argv;
 	}
 	else if (strcmp(argv[1], "new") == 0) {
 		if( argc >= 4 )  {
-			if( (start_frame = atoi(argv[3])) < 1 )
+			if( (start_frame = str2frames(argv[3])) < 1 )
 				usage_new();
 		}
 		if (argc >= 3) {
@@ -161,7 +175,7 @@ char **argv;
 	}
 	else if (strcmp(argv[1], "old") == 0) {
 		if( argc >= 4 )  {
-			if( (start_frame = atoi(argv[3])) < 1 )
+			if( (start_frame = str2frames(argv[3])) < 1 )
 				usage_new();
 		}
 		if (argc >= 3) {
@@ -180,7 +194,7 @@ char **argv;
 	}
 	else if (strcmp(argv[1],"record") == 0) {
 		if (argc == 3) {
-			number_of_frames = atoi(argv[2]);
+			number_of_frames = str2frames(argv[2]);
 			if (number_of_frames < 1) {
 				usage_record();
 			}
@@ -320,7 +334,7 @@ int number_of_frames;
 				goto done;
 			vas_response(c);
 			if (c == R_MISSED) {
-				fprintf(stderr,"Preroll failed\n");
+				fprintf(stderr,"Preroll failed (typ. due to timer), backspacing for retry\n");
 				vas_await(R_RECORD,99);
 				break;
 			}
@@ -493,4 +507,44 @@ get_tape_position()
 	buf[8] = '\0';
 	fprintf(stderr, "Tape counter is at %s\n", buf);
 	/* May want to do more here */
+}
+
+/*
+ *			S T R 2 F R A M E S
+ *
+ *  Given a numeric string, convert it to frames.
+ *  The input is expected to be a number followed by letters,
+ *  which will apply a multiplier, eg
+ *	10	10 frames
+ *	12f	12 frames
+ *	3s	3 seconds (90 frames)
+ *	1m	1 minute (1800 frames)
+ *
+ *  Excess characters in the string are ignored, so inputs of the form
+ *  "32sec" and "3min" are fine.
+ */
+int
+str2frames(str)
+char	*str;
+{
+	int	num;
+	char	suffix[32];
+
+	suffix[0] = '\0';
+	sscanf( str, "%d%s", &num, suffix );
+	switch( suffix[0] )  {
+	case 'f':
+	case '\0':
+		break;
+	case 's':
+		num *= 30;
+		break;
+	case 'm':
+		num *= 60 * 30;
+		break;
+	default:
+		fprintf(stderr, "str2frames:  suffix '%s' unknown\n", str);
+		break;
+	}
+	return(num);
 }
