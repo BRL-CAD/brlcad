@@ -146,6 +146,16 @@ typedef	long	Cast;
 #	define	CPP_OPTIONS	"-D__CAKE__6d"
 #	define	CPP_OPTIONS2	"-D__CAKE__irix5"
 #endif
+#if __MACHINETYPE__7d
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__7d"
+#	define	CPP_OPTIONS2	"-D__CAKE__irix6"
+#endif
+#if __MACHINETYPE__8d
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__8d"
+#	define	CPP_OPTIONS2	"-D__CAKE__irix7"
+#endif
 
 #if !defined(CPP)
 #    if 1
