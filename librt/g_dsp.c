@@ -1142,10 +1142,9 @@ add_seg(struct isect_stuff *isect,
     }
 #else
     /* insert the segment in the list by in-hit distance */
-    if (RT_G_DEBUG & DEBUG_HF) {
-	bu_log("searching for insertion point for seg w in/out dist %g %g\n",
+    dlog("searching for insertion point for seg w in/out dist %g %g\n",
 	       in_hit->hit_dist, out_hit->hit_dist);
-    }
+
     for ( BU_LIST_FOR(seg, seg, &isect->seglist) ) {
 	dlog("checking %g->%g seg\n", seg->seg_in.hit_dist,
 	     seg->seg_out.hit_dist);
@@ -2405,7 +2404,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 	seg_out.hit_dist = r->r_max;
 
-	VMOVE(seg_out.hit_point, minpt);
+	VMOVE(seg_out.hit_point, maxpt);
 	VMOVE(seg_out.hit_normal, dsp_pl[isect->dmax]);
 	/* hit_priv   */
 	/* hit_private */
@@ -2413,10 +2412,10 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	/* hit_rayp */
 
 	if (RT_G_DEBUG & DEBUG_HF) {
-	    /* we need these for debug output */
-	    VMOVE(seg_in.hit_point, minpt);
-	    VMOVE(seg_out.hit_point, maxpt);
-
+	    /* we need these for debug output
+	     * VMOVE(seg_in.hit_point, minpt);
+	     * VMOVE(seg_out.hit_point, maxpt);
+	     */
 	    /* create a special bounding box for plotting purposes */
 	    VMOVE(bbmax,  dsp_bb->dspb_rpp.dsp_max);
 	    VMOVE(bbmin,  dsp_bb->dspb_rpp.dsp_min);
