@@ -234,3 +234,44 @@ extern char *state_str[];		/* identifying strings */
 #endif
 
 #define	MAXLINE		10240	/* Maximum number of chars per line */
+
+/*
+ *  Helpful macros to inform the user of trouble encountered in
+ *  library routines, and bail out.
+ *  They are intended to be used mainly in top-level command processing
+ *  routines, and therefore include a "return" statement and curley brackets.
+ *  Thus, they should only be used in void functions.
+ *  The word "return" is not in upper case in these macros,
+ *  to enable editor searches for the word "return" to succeed.
+ */
+/* For errors from db_get() or db_getmrec() */
+#define READ_ERR_return		{ \
+	(void)printf("Database read error, aborting\n"); \
+	return;  }
+
+/* For errors from db_put() */
+#define WRITE_ERR_return	{ \
+	(void)printf("Database write error, aborting.\n"); \
+	ERROR_RECOVERY_SUGGESTION; \
+	return;  }
+
+/* For errors from db_diradd() or db_alloc() */
+#define ALLOC_ERR_return	{ \
+	(void)printf("\
+An error has occured while adding a new object to the database.\n"); \
+	ERROR_RECOVERY_SUGGESTION; \
+	return;  }
+
+/* For errors from db_delete() or db_dirdelete() */
+#define DELETE_ERR_return(_name)	{  \
+	(void)printf("\
+An error has occured while deleting '%s' from the database.\n", _name); \
+	ERROR_RECOVERY_SUGGESTION; \
+	return;  }
+
+/* A verbose message to attempt to soothe and advise the user */
+#define	ERROR_RECOVERY_SUGGESTION	\
+	(void)printf("\
+The in-memory table of contents may not match the status of the on-disk\n\
+database.  The on-disk database should still be intact.  For safety,\n\
+you should exit MGED now, and resolve the I/O problem, before continuing.\n")
