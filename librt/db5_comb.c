@@ -54,7 +54,7 @@ struct db_tree_counter_state {
 	long	n_mat;			/* # leaves with non-identity matricies */
 	long	n_leaf;			/* # leaf nodes */
 	long	n_oper;			/* # operator nodes */
-	long	namebytes;		/* # bytes for name section */
+	long	leafbytes;		/* # bytes for name section */
 	int	non_union_seen;		/* boolean, 1 = non-unions seen */
 };
 #define DB_TREE_COUNTER_STATE_MAGIC	0x64546373	/* dTcs */
@@ -73,7 +73,7 @@ struct db_tree_counter_state {
  *	We over-estimate the size of the width fields used for
  *	holding the matrix subscripts.
  *	The caller is responsible for correcting by saying:
- *		tcsp->namebytes -= tcsp->n_leaf * (8 - db5_enc_len[wid]);
+ *		tcsp->leafbytes -= tcsp->n_leaf * (8 - db5_enc_len[wid]);
  */
 long
 db_tree_counter( CONST union tree *tp, struct db_tree_counter_state *tcsp )
@@ -88,7 +88,7 @@ db_tree_counter( CONST union tree *tp, struct db_tree_counter_state *tcsp )
 		tcsp->n_leaf++;
 		if( tp->tr_l.tl_mat )  tcsp->n_mat++;
 		/* Over-estimate storage requirement for matrix # */
-		tcsp->namebytes += strlen(tp->tr_l.tl_name) + 1 + 8;
+		tcsp->leafbytes += strlen(tp->tr_l.tl_name) + 1 + 8;
 		return 1;
 
 	case OP_NOT:
@@ -269,26 +269,26 @@ CONST struct db_i		*dbip;
 	}
 
 	wid = db5_select_length_encoding(
-		tcs.n_mat | tcs.n_leaf | tcs.namebytes |
+		tcs.n_mat | tcs.n_leaf | tcs.leafbytes |
 		rpn_len | max_stack_depth );
 
-	/* Apply correction factor to tcs.namebytes now that we know 'wid'.
+	/* Apply correction factor to tcs.leafbytes now that we know 'wid'.
 	 * Ignore the slight chance that a smaller 'wid' might now be possible.
 	 */
-	tcs.namebytes -= tcs.n_leaf * (8 - db5_enc_len[wid]);
+	tcs.leafbytes -= tcs.n_leaf * (8 - db5_enc_len[wid]);
 
-bu_log("wid=%d, n_max=%d, n_leaf=%d, n_oper=%d, namebytes=%d, non_union_seen=%d, max_stack_depth=%d, rpn_len=%d\n",
-wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.namebytes, tcs.non_union_seen, max_stack_depth, rpn_len);
+bu_log("wid=%d, n_max=%d, n_leaf=%d, n_oper=%d, leafbytes=%d, non_union_seen=%d, max_stack_depth=%d, rpn_len=%d\n",
+wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.leafbytes, tcs.non_union_seen, max_stack_depth, rpn_len);
 
 	/* Second pass -- determine amount of on-disk storage needed */
 	need =  1 +			/* width code */
 		db5_enc_len[wid] + 	/* size for nmatricies */
 		db5_enc_len[wid] +	/* size for nleaves */
-		db5_enc_len[wid] +	/* size for namebytes */
+		db5_enc_len[wid] +	/* size for leafbytes */
 		db5_enc_len[wid] +	/* size for len of RPN */
 		db5_enc_len[wid] +	/* size for max_stack_depth */
 		tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) +	/* sizeof matrix array */
-		tcs.namebytes +		/* size for leaf nodes */
+		tcs.leafbytes +		/* size for leaf nodes */
 		rpn_len;		/* storage for RPN expression */
 
 	BU_INIT_EXTERNAL(ep);
@@ -304,7 +304,7 @@ wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.namebytes, tcs.non_union_seen, max_s
 	*cp++ = wid;
 	cp = db5_encode_length( cp, tcs.n_mat, wid );
 	cp = db5_encode_length( cp, tcs.n_leaf, wid );
-	cp = db5_encode_length( cp, tcs.namebytes, wid );
+	cp = db5_encode_length( cp, tcs.leafbytes, wid );
 	cp = db5_encode_length( cp, rpn_len, wid );
 	cp = db5_encode_length( cp, max_stack_depth, wid );
 
@@ -323,7 +323,7 @@ wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.namebytes, tcs.non_union_seen, max_s
 	ss.mat_num = 0;
 	ss.matp = cp;
 	ss.leafp = cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
-	leafp_end = ss.leafp + tcs.namebytes;
+	leafp_end = ss.leafp + tcs.leafbytes;
 	if( rpn_len )
 		ss.exprp = leafp_end;
 	else
@@ -357,7 +357,7 @@ const struct db_i	*dbip;
 	unsigned char	*cp;
 	int		wid;
 	long		nmat, nleaf, rpn_len, max_stack_depth;
-	long		namebytes;
+	long		leafbytes;
 	unsigned char	*matp;
 	unsigned char	*leafp;
 	unsigned char	*leafp_end;
@@ -383,12 +383,12 @@ const struct db_i	*dbip;
 	wid = *cp++;
 	cp += db5_decode_length( &nmat, cp, wid );
 	cp += db5_decode_length( &nleaf, cp, wid );
-	cp += db5_decode_length( &namebytes, cp, wid );
+	cp += db5_decode_length( &leafbytes, cp, wid );
 	cp += db5_decode_length( &rpn_len, cp, wid );
 	cp += db5_decode_length( &max_stack_depth, cp, wid );
 	matp = cp;
 	leafp = cp + nmat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
-	exprp = leafp + namebytes;
+	exprp = leafp + leafbytes;
 	leafp_end = exprp;
 bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_len, max_stack_depth);
 
