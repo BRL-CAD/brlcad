@@ -2092,8 +2092,8 @@ get_rotation_vertex()
   }
   rt_vls_printf(&str, ") [%d]: ",arb_vertices[type][loc]);
 
-  rt_vls_printf(&cmd, "mged_input_dialog .get_vertex %s \{Need vertex for solid rotate\}\
- \{%s\} vertex_num %d 0 OK", dname, rt_vls_addr(&str), arb_vertices[type][loc]);
+  rt_vls_printf(&cmd, "mged_input_dialog .get_vertex %s {Need vertex for solid rotate}\
+ {%s} vertex_num %d 0 OK", dname, rt_vls_addr(&str), arb_vertices[type][loc]);
 
   while(!valid){
     if(Tcl_Eval(interp, rt_vls_addr(&cmd)) != TCL_OK){
