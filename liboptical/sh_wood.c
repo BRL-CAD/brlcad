@@ -92,8 +92,8 @@ HIDDEN int	wood_init(), wood_setup(), wood_render();
 HIDDEN void	wood_print();
 HIDDEN void	wood_free( char * );
 
-HIDDEN void	wood_V_set (struct structparse *, char *, char *, char *);
-HIDDEN void	wood_D_set (struct structparse *, char *, char *, char *);
+HIDDEN void	wood_V_set (CONST struct structparse *, CONST char *, CONST char *, char *);
+HIDDEN void	wood_D_set (CONST struct structparse *, CONST char *, CONST char *, char *);
 
 /*
  *	functions block for the shader

@@ -168,8 +168,8 @@ HIDDEN void	marble_free( char * );
 extern int	mlib_zero(), mlib_one();
 extern void	mlib_void();
 
-HIDDEN void	marble_ident_set (struct structparse *, char *, char *, char *);
-HIDDEN void	marble_matte_set (struct structparse *, char *, char *, char *);
+HIDDEN void	marble_ident_set (CONST struct structparse *, CONST char *, CONST char *, char *);
+HIDDEN void	marble_matte_set (CONST struct structparse *, CONST char *, CONST char *, char *);
 
 /*
  *	Marble-specific user data
