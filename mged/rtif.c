@@ -299,6 +299,8 @@ int mask;
   if((count = read((int)fd, line, 5120)) == 0){
 #endif
     Tcl_DeleteFileHandler(fd);
+    close(fd);
+
     return;
   }
 
@@ -328,7 +330,7 @@ run_rt()
 	(void)pipe( pipe_err );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
-	  /* Redirect stdin, stdout, stderr */
+	  /* Redirect stdin and stderr */
 	  (void)close(0);
 	  (void)dup( pipe_in[0] );
 	  (void)close(2);
