@@ -340,16 +340,16 @@ char **argv;
 			DEQUEUE_LIST( lp );
 			switch( lp->li_start )  {
 			case MSG_MATRIX:
-				ph_matrix( (struct pkg_comm *)0, (char *)lp->li_stop );
+				ph_matrix( (struct pkg_conn *)0, (char *)lp->li_stop );
 				break;
 			case MSG_LINES:
-				ph_lines( (struct pkg_comm *)0, (char *)lp->li_stop );
+				ph_lines( (struct pkg_conn *)0, (char *)lp->li_stop );
 				break;
 			case MSG_OPTIONS:
-				ph_options( (struct pkg_comm *)0, (char *)lp->li_stop );
+				ph_options( (struct pkg_conn *)0, (char *)lp->li_stop );
 				break;
 			case MSG_GETTREES:
-				ph_gettrees( (struct pkg_comm *)0, (char *)lp->li_stop );
+				ph_gettrees( (struct pkg_conn *)0, (char *)lp->li_stop );
 				break;
 			default:
 				rt_log("bad list element %d\n", lp->li_start );
@@ -387,7 +387,7 @@ char	*buf;
 
 void
 ph_cd(pc, buf)
-register struct pkg_comm *pc;
+register struct pkg_conn *pc;
 char *buf;
 {
 	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
@@ -400,7 +400,7 @@ char *buf;
 
 void
 ph_restart(pc, buf)
-register struct pkg_comm *pc;
+register struct pkg_conn *pc;
 char *buf;
 {
 
@@ -419,7 +419,7 @@ char *buf;
  */
 void
 ph_dirbuild(pc, buf)
-register struct pkg_comm *pc;
+register struct pkg_conn *pc;
 char *buf;
 {
 #define MAXARGS 1024
@@ -464,7 +464,7 @@ char *buf;
  */
 void
 ph_gettrees(pc, buf)
-register struct pkg_comm *pc;
+register struct pkg_conn *pc;
 char *buf;
 {
 #define MAXARGS 1024
@@ -487,10 +487,8 @@ char *buf;
 	}
 
 	/* Load the desired portion of the model */
-#define npsw 1		/* XXXXXXXXX Temp. disable parallel prep, it may be buggy XXXXX -M */
-	if( rt_gettrees(rtip, argc, argv, npsw) < 0 )
+	if( rt_gettrees(rtip, argc, (CONST char **)argv, npsw) < 0 )
 		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[0]);
-#undef npsw
 
 	/* In case it changed from startup time via an OPT command */
 	if( npsw > 1 )  {
@@ -545,7 +543,7 @@ char	*buf;
 
 void
 ph_options( pc, buf )
-register struct pkg_comm *pc;
+register struct pkg_conn *pc;
 char	*buf;
 {
 
@@ -569,7 +567,7 @@ char	*buf;
 
 void
 ph_matrix(pc, buf)
-register struct pkg_comm *pc;
+register struct pkg_conn *pc;
 char *buf;
 {
 	register struct rt_i *rtip = ap.a_rt_i;
@@ -641,7 +639,7 @@ prepare()
  */
 void
 ph_lines(pc, buf)
-struct pkg_comm *pc;
+struct pkg_conn *pc;
 char *buf;
 {
 	auto int		a,b, fr;
