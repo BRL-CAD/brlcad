@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  86/01/17  13:23:37  gwyn
+ * fixed SYS5 terminal mode setup
+ * 
  * Revision 2.3  86/01/11  03:01:51  gwyn
  * fixed window size code
  * 
@@ -138,7 +141,8 @@ getchar()
 		do {
 			nchars = read(Input, smbuf, sizeof smbuf);
 #ifdef SYS5
-		} while (nchars == 0 || (nchars < 0 && errno == EINTR));
+		} while ((nchars == 0 && Input == 0)	/* DAG -- added Input test */
+			 || (nchars < 0 && errno == EINTR));
 #else
 		} while (nchars < 0 && errno == EINTR);
 #endif SYS5
