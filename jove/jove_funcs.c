@@ -1,9 +1,23 @@
 /*
+ *			J O V E _ F U N C S . C 
+ *
+ * $Revision$
+ *
+ * $Log$
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$";
+#endif
+
+/*
  *			jove_funcs.c
  *
  * $Revision$
  *
  * $Log$
+ * Revision 1.1  83/12/16  00:08:01  dpk
+ * Original 4.2 Distribution Source
+ * 
  * Revision 1.2  83/12/02  00:22:28  dpk
  * Fixed botch of incremental search modification (mapping)
  * 

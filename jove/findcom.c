@@ -1,3 +1,14 @@
+/*
+ *			F I N D C O M . C 
+ *
+ * $Revision$
+ *
+ * $Log$
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$";
+#endif
+
 #include <stdio.h>
 #include "jove_tune.h"
 

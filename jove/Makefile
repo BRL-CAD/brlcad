@@ -1,3 +1,9 @@
+#
+#		M A K E F I L E 
+#
+#  $Revision$
+#  @(#)$Header$;
+#
 CFLAGS=	-O -DBRL
 CC = cc
 #BRL CC = cc -7

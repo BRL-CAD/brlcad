@@ -1,4 +1,15 @@
 /*
+ *			J O V E _ T E R M . C 
+ *
+ * $Revision$
+ *
+ * $Log$
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$";
+#endif
+
+/*
    Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
 
    jove_term.c

@@ -1,3 +1,11 @@
+/*
+ *			T E R M C A P . H 
+ *
+ * $Revision$
+ *
+ * $Log$
+ */
+
 /* Termcap definitions */
 
 extern char	*UP,	/* Scroll reverse, or up */

@@ -1,4 +1,15 @@
 /*
+ *			J O V E _ I N S E R T . C 
+ *
+ * $Revision$
+ *
+ * $Log$
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$";
+#endif
+
+/*
    Jonathan Payne at Lincoln-Sudbury Regional High School 5/25/83
   
    Insert routines: the routine to Yank from the kill buffer

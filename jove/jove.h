@@ -1,3 +1,11 @@
+/*
+ *			J O V E . H 
+ *
+ * $Revision$
+ *
+ * $Log$
+ */
+
 /* jove.h header file to be included by EVERYONE */
 
 #include <setjmp.h>

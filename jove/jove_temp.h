@@ -1,4 +1,12 @@
 /*
+ *			J O V E _ T E M P . H 
+ *
+ * $Revision$
+ *
+ * $Log$
+ */
+
+/*
  * The editor uses a temporary file for files being edited, in a structure
  * similar to that of ed.
  * Lines are represented in core by a pointer into the temporary file which
