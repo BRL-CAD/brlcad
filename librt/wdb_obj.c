@@ -6231,6 +6231,19 @@ wdb_node_write(struct db_i		*dbip,
 	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
 		WDB_READ_ERR_return;
 
+	/* if this is an extrusion, keep the referenced sketch */
+	if( dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE ) {
+		struct rt_extrude_internal *extr;
+		struct directory *dp2;
+
+		extr = (struct rt_extrude_internal *)intern.idb_ptr;
+		RT_EXTRUDE_CK_MAGIC( extr );
+
+		if( (dp2 = db_lookup( dbip, extr->sketch_name, LOOKUP_QUIET )) != DIR_NULL ) {
+			wdb_node_write( dbip, dp2, ptr );
+		}
+	}
+
 	if (wdb_put_internal(keepfp, dp->d_namep, &intern, 1.0) < 0)
 		WDB_WRITE_ERR_return;
 }
