@@ -927,11 +927,20 @@ register struct application *ap;
 	 *  what region they are leaving from should probably back their
 	 *  own start-point up, rather than depending on it here, but
 	 *  it isn't much trouble here.
+	 *
+	 *  Modification by JRA for pieces methodology:
+	 *	The original algorithm here assumed that if we encountered any primitive
+	 *	along the positive direction of the ray, all its intersections would be calculated.
+	 *	With pieces, we may see only an exit hit if the entrance piece is in a space partition cell
+	 *	that is more than "BACKING_DIST" behind the ray start point (leading to incorrect results).
+	 *	I have modified the setting of "ss.box_start", to allow it to remain at the model minimum
+	 *	if we have solids with pieces present. This means that we will trace the ray through the
+	 *	entire model if there are any "pieces" in the model (performance loss for the sake of
+	 *	correct results).
 	 */
 	ss.box_start = ss.model_start = ap->a_ray.r_min;
 	ss.box_end = ss.model_end = ap->a_ray.r_max;
-
-	if( ss.box_start < BACKING_DIST )
+	if( ss.box_start < BACKING_DIST && ap->a_rt_i->rti_nsolids_with_pieces < 1 )
 		ss.box_start = BACKING_DIST; /* Only look a little bit behind */
 
 	ss.lastcut = CUTTER_NULL;
