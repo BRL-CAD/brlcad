@@ -723,6 +723,9 @@ struct nmg_struct_counts {
 #define NMG_INDEX_GETP(_ty,_tab,_p)	((struct _ty *)((_tab)[(_p)->index]))
 #define NMG_INDEX_OR(_tab,_p,_val)	{(_tab)[(_p)->index] |= _val;}
 #define NMG_INDEX_AND(_tab,_p,_val)	{(_tab)[(_p)->index] &= _val;}
+#define NMG_INDEX_RETURN_IF_SET_ELSE_SET(_tab,_index)	\
+	{ if( (_tab)[_index] )  return; \
+	  else (_tab)[_index] = 1; }
 
 /* flags for manifold-ness */
 #define NMG_3MANIFOLD	16
