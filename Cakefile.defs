@@ -853,7 +853,7 @@ set -S2 "/bin/sh"
 /*					-Xt k&r but allow ansi */
 /*					-Xs k&r */
 /*		SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
-#		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=58 -U__STDC__ -D__STDC__
+#		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=58 -D__STDC__
 #	endif
 
 /*	Shared library support */
