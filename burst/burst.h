@@ -38,11 +38,11 @@ typedef char *pointer;			/* generic pointer */
 #define signed          /* nothing */   /* ANSI C type specifier */
 #define volatile        /* nothing */   /* ANSI C type qualifier */
 #endif
-#ifndef EXIT_SUCCESS
-#define EXIT_SUCCESS	0
+#ifndef BURST_EXIT_SUCCESS
+#define BURST_EXIT_SUCCESS	0
 #endif
-#ifndef EXIT_FAILURE
-#define EXIT_FAILURE	1
+#ifndef BURST_EXIT_FAILURE
+#define BURST_EXIT_FAILURE	1
 #endif
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
 

@@ -237,9 +237,9 @@ char *argv[];
 		readBatchInput( stdin );
 	if( tty )
 		(void) HmHit( mainhmenu );
-	exitCleanly( EXIT_SUCCESS );
+	exitCleanly( BURST_EXIT_SUCCESS );
 clean:	(void) unlink( tmpfname );
-death:	return	EXIT_FAILURE;
+death:	return	BURST_EXIT_FAILURE;
 	}
 
 /*
