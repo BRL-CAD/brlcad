@@ -394,13 +394,6 @@ int flag;
 	}
 
 	/* not a combination  -  should have a solid */
-	/*
-	 *	TO DO ..... include SPLINES and POLYGONS 
- 	 */
-	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A) {
-		(void)printf("bad record type '%c' should be 'S' or 'A'\n",record.u_id);
-		return;
-	}
 
 	/* last (bottom) position */
 	path[pathpos] = dp;
@@ -432,81 +425,10 @@ int flag;
 	}
 
 	/* NOTE - only reach here if flag == LISTEVAL */
-	if(record.u_id == ID_SOLID) {
-		(void)printf("/%s:\n",record.s.s_name);
-		MAT4X3PNT(vec, xform, &record.s.s_values[0]);
-		VMOVE(&record.s.s_values[0], vec);
-		for(i=3; i<=21; i+=3) {
-			MAT4X3VEC(	vec, xform,
-					&record.s.s_values[i] );
-			VMOVE(&record.s.s_values[i], vec);
-		}
-		/* put parameters in "nice" format and print */
-		pr_solid( &record.s );
-		for( i=0; i < es_nlines; i++ )
-			(void)printf("%s\n",&es_display[ES_LINELEN*i]);
-
-		/* If in solid edit, re-compute solid params */
-		if(state == ST_S_EDIT)
-			pr_solid(&es_rec.s);
-
-		return;
-	}
-
-	if(record.u_id == ID_ARS_A) {
-		(void)printf("/%s:\n",record.a.a_name);
-		n = record.a.a_n;
-		(void)printf("%d curves  %d points per curve\n",record.a.a_m,n);
-		arslen = record.a.a_totlen;
-		for(i=1; i<=arslen; i++) {
-			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
-			if( (npt = (n - ((record.b.b_ngranule-1)*8))) > 8 )
-				npt = 8;
-			if(i == 1) {
-				/* vertex */
-				MAT4X3PNT(	vertex,
-						xform,
-						&record.b.b_values[0] );
-				VMOVE( &record.b.b_values[0], vertex );
-				kk = 1;
-			}
-			/* rest of vectors */
-			for(k=kk; k<npt; k++) {
-				MAT4X3VEC(	vec,
-						xform,
-						&record.b.b_values[k*3] );
-				VADD2(	&record.b.b_values[k*3],
-					vertex,
-					vec	);
-			}
-			kk = 0;
-			/* print this granule */
-			for(k=0; k<npt; k+=2) {
-				for(j=k*3; (j<(k+2)*3 && j<npt*3); j++) 
-					(void)printf("%10.4f ",record.b.b_values[j]);
-				(void)printf("\n");
-			}
-
-		}
-		return;
-	}
-	if(record.u_id == ID_P_HEAD) {
-		(void)printf("/%s:\n",record.p.p_name);
-		(void)printf("POLYGON data print not implemented\n");
-		return;
-	}
-	if(record.u_id == ID_BSOLID) {
-		(void)printf("/%s:\n",record.B.B_name);
-		(void)printf("B-SPLINE data print not implemented\n");
-		return;
-	}
-
+	/* do_list will print actual solid name */
+	(void)printf("/");
+	do_list( stdout, dp, 1 );
 }
-
-
-
-
-
 
 /*
  *			M A T R I X _ P R I N T
