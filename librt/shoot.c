@@ -566,8 +566,8 @@ register struct application *ap;
 	struct seg		waiting_segs;	/* awaiting rt_boolweave() */
 	struct seg		finished_segs;	/* processed by rt_boolweave() */
 	AUTO fastf_t		last_bool_start;
-	AUTO struct bu_bitv	*solidbits;	/* bits for all solids shot so far */
-	AUTO struct bu_bitv	*regionbits;	/* bits for all involved regions */
+	struct bu_bitv		*solidbits;	/* bits for all solids shot so far */
+	struct bu_ptbl		*regionbits;	/* table of all involved regions */
 	AUTO char		*status;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
@@ -639,12 +639,12 @@ register struct application *ap;
 	if( RT_LIST_UNINITIALIZED( &resp->re_region_bitv ) )
 		RT_LIST_INIT(  &resp->re_region_bitv );
 	if( RT_LIST_IS_EMPTY( &resp->re_region_bitv ) )  {
-		regionbits = bu_bitv_new( rtip->nregions );
+		BU_GETSTRUCT( regionbits, bu_ptbl );
+		bu_ptbl_init( regionbits, 7 );
 	} else {
-		regionbits = RT_LIST_FIRST( bu_bitv, &resp->re_region_bitv );
+		regionbits = RT_LIST_FIRST( bu_ptbl, &resp->re_region_bitv );
 		RT_LIST_DEQUEUE( &regionbits->l );
-		BU_CK_BITV(regionbits);
-		BU_BITV_NBITS_CHECK( regionbits, rtip->nregions );
+		BU_CK_PTBL(regionbits);
 	}
 
 	/* Verify that direction vector has unit length */
@@ -947,10 +947,10 @@ hitit:
 	 * Processing of this ray is complete.
 	 */
 out:
-	/*  Free dynamic resources.  */
+	/*  Return dynamic resources to their freelists.  */
 	BU_CK_BITV(solidbits);
 	RT_LIST_APPEND( &resp->re_solid_bitv, &solidbits->l );
-	BU_CK_BITV(regionbits);
+	BU_CK_PTBL(regionbits);
 	RT_LIST_APPEND( &resp->re_region_bitv, &regionbits->l );
 
 	/*

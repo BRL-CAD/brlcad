@@ -327,6 +327,9 @@ struct rt_i			*rtip;
 		/* Also add to the directory structure list head */
 		/* PARALLEL NOTE:  Needs critical section on this 'dp' */
 		RT_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
+
+		/* Tables of regions using this solid.  Usually small. */
+		bu_ptbl_init( &stp->st_regions, 7 );
 	}
 
 	/* Leave the appropriate critical section */
@@ -537,8 +540,7 @@ struct soltab	*stp;
 	if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
 	stp->st_matp = (matp_t)0;	/* Sanity */
 
-	if( stp->st_regions ) rt_free( (char *)stp->st_regions, "st_regions bitv" );
-	stp->st_regions = (bitv_t *)0;	/* Sanity */
+	bu_ptbl_free(&stp->st_regions);
 
 	stp->st_dp = DIR_NULL;		/* Sanity */
 	rt_free( (char *)stp, "struct soltab" );

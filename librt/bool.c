@@ -720,7 +720,7 @@ rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regionbits, ap )
 struct partition *InputHdp;
 struct partition *FinalHdp;
 fastf_t startdist, enddist;
-struct bu_bitv	*regionbits;
+struct bu_ptbl	*regionbits;
 struct application *ap;
 {
 	LOCAL struct region *lastregion = (struct region *)NULL;
@@ -734,7 +734,7 @@ struct application *ap;
 
 	RT_CK_PT_HD(InputHdp);
 	RT_CK_PT_HD(FinalHdp);
-	BU_CK_BITV(regionbits);
+	BU_CK_PTBL(regionbits);
 	RT_CHECK_RTI(ap->a_rt_i);
 
 	if( enddist <= 0 )
@@ -861,42 +861,40 @@ struct application *ap;
 		}
 
 		/* Start with a clean slate when evaluating this partition */
-		bu_bitv_clear(regionbits);
+		bu_ptbl_reset(regionbits);
 
 		/*
 		 *  For each solid that lies in this partition,
 		 *  set (OR) that solid's region bit vector into "regionbits".
 		 */
+/* XXX Change pt_solhit over to a bu_ptbl too! */
 		RT_BITV_LOOP_START( pp->pt_solhit, ap->a_rt_i->nsolids )  {
 			struct soltab	*stp;
-			register int	words;
-			register bitv_t *in;
-			register bitv_t *out;
+			register struct region	**regp;
 
 			stp = ap->a_rt_i->rti_Solids[RT_BITV_LOOP_INDEX];
 			RT_CK_SOLTAB(stp);
-			BU_BITV_NBITS_CHECK(regionbits, stp->st_maxreg);
-			RT_BITV_LOOP_START( stp->st_regions, stp->st_maxreg )  {
-				BU_BITSET(regionbits, RT_BITV_LOOP_INDEX);
-			} RT_BITV_LOOP_END;
+			bu_ptbl_cat_uniq( regionbits, &stp->st_regions );
 		} RT_BITV_LOOP_END;
 
 		if(rt_g.debug&DEBUG_PARTITION)
-			bu_pr_bitv( "regionbits", regionbits);
+			bu_pr_ptbl( "regionbits", regionbits, 1 );
 
 		/* Evaluate the boolean trees of any regions involved */
-		BU_BITV_LOOP_START( regionbits )  {
+		{
+		struct region **regpp;
+		for( BU_PTBL_FOR( regpp, (struct region **), regionbits ) )  {
 			register struct region *regp;
 			int	code;
 
-			regp = ap->a_rt_i->Regions[BU_BITV_LOOP_INDEX];
+			regp = *regpp;
 			RT_CK_REGION(regp);
 			if(rt_g.debug&DEBUG_PARTITION)  {
 				rt_pr_tree_val( regp->reg_treetop, pp, 2, 0 );
 				rt_pr_tree_val( regp->reg_treetop, pp, 1, 0 );
 				rt_pr_tree_val( regp->reg_treetop, pp, 0, 0 );
 				rt_log("%.8x=bit%d, %s: ",
-					regp, BU_BITV_LOOP_INDEX,
+					regp, regp->reg_bit,
 					regp->reg_name );
 			}
 			if( rt_booleval( regp->reg_treetop, pp, TrueRg,
@@ -956,7 +954,8 @@ struct application *ap;
 				if(rt_g.debug&DEBUG_PARTITION)  rt_log("rt_boolfinal:  overlap code=%d, p retained in region=%s\n",
 					code, lastregion->reg_name );
 			}
-		} BU_BITV_LOOP_END;
+		 }
+		}
 		if( claiming_regions == 0 )  {
 			pp=pp->pt_forw;			/* onwards! */
 			continue;
@@ -1068,6 +1067,9 @@ struct resource	*resp;		/* resource pointer for this CPU */
 	register int ret;
 	register union tree **stackend;
 
+	RT_CK_TREE(treep);
+	RT_CK_PT(partp);
+	RT_CK_RESOURCE(resp);
 	if( treep->tr_op != OP_XOR )
 		trueregp[0] = treep->tr_regionp;
 	else

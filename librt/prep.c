@@ -78,18 +78,6 @@ int			ncpu;
 		( RT_BITV_BITS2WORDS(rtip->nsolids) +
 		RT_BITV_BITS2WORDS(rtip->nregions) + 4 );
 
-	/*
-	 *  Allocate space for a per-solid bit of rtip->nregions length.
-	 */
-	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
-		RT_CK_SOLTAB(stp);
-		stp->st_regions = (bitv_t *)rt_calloc(
-			RT_BITV_BITS2WORDS(rtip->nregions),
-			sizeof(bitv_t), "st_regions bitv" );
-		stp->st_maxreg = 0;
-	} RT_VISIT_ALL_SOLTABS_END
-
-
 	/* In case everything is a halfspace, set a minimum space */
 	if( rtip->mdl_min[X] >= INFINITY )  {
 		rt_log("All solids are halspaces, setting minimum\n");
@@ -126,7 +114,7 @@ int			ncpu;
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
 		rtip->Regions[regp->reg_bit] = regp;
 		rt_optim_tree( regp->reg_treetop, &rt_uniresource );
-		rt_solid_bitfinder( regp->reg_treetop, regp->reg_bit,
+		rt_solid_bitfinder( regp->reg_treetop, regp,
 			&rt_uniresource );
 		if(rt_g.debug&DEBUG_REGIONS)  {
 			rt_pr_region( regp );
@@ -135,8 +123,7 @@ int			ncpu;
 	if(rt_g.debug&DEBUG_REGIONS)  {
 		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 			rt_log("solid %s ", stp->st_name);
-			rt_pr_bitv( "regions ref", stp->st_regions,
-				stp->st_maxreg);
+			bu_pr_ptbl( "st_regions", &stp->st_regions, 1 );
 		} RT_VISIT_ALL_SOLTABS_END
 	}
 
@@ -355,8 +342,7 @@ struct soltab		*stp;
 	db_free_external( &ext );
 
 	/* Take color from one region */
-	if( (rnum = stp->st_maxreg-1) < 0 ) rnum = 0;
-	if( (regp = rtip->Regions[rnum]) != REGION_NULL )  {
+	if( (regp = (struct region *)BU_PTBL_GET(&stp->st_regions,0)) != REGION_NULL )  {
 		pl_color( fp,
 			(int)(255*regp->reg_mater.ma_color[0]),
 			(int)(255*regp->reg_mater.ma_color[1]),
@@ -542,15 +528,16 @@ zot:
  *  have been assigned.
  */
 HIDDEN void
-rt_solid_bitfinder( treep, regbit, resp )
+rt_solid_bitfinder( treep, regp, resp )
 register union tree	*treep;
-register int		regbit;
+struct region		*regp;
 struct resource		*resp;
 {
 	register union tree	**sp;
 	register struct soltab	*stp;
 	register union tree	**stackend;
 
+	RT_CK_REGION(regp);
 	while( (sp = resp->re_boolstack) == (union tree **)0 )
 		rt_grow_boolstack( resp );
 	stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
@@ -562,14 +549,7 @@ struct resource		*resp;
 			break;
 		case OP_SOLID:
 			stp = treep->tr_a.tu_stp;
-			BITSET( stp->st_regions, regbit );
-			if( !BITTEST( stp->st_regions, regbit ) )
-				rt_bomb("BITSET failure\n");	/* sanity check */
-			if( regbit+1 > stp->st_maxreg )  stp->st_maxreg = regbit+1;
-			if( rt_g.debug&DEBUG_REGIONS )  {
-				rt_pr_bitv( stp->st_name, stp->st_regions,
-					stp->st_maxreg );
-			}
+			bu_ptbl_ins( &stp->st_regions, (long *)regp );
 			break;
 		case OP_UNION:
 		case OP_INTERSECT:

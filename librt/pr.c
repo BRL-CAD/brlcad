@@ -54,8 +54,7 @@ register CONST struct soltab	*stp;
 	bu_log("Bounding Sph Radius = %g\n", stp->st_bradius);
 	VPRINT("Bound RPP min", stp->st_min);
 	VPRINT("Bound RPP max", stp->st_max);
-	rt_pr_bitv( "Referenced by Regions",
-		stp->st_regions, stp->st_maxreg );
+	bu_pr_ptbl( "st_regions", &stp->st_regions, 1 );
 	rt_functab[id].ft_print( stp );
 }
 
