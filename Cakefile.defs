@@ -1468,6 +1468,12 @@ set -S2 "/bin/sh"
 #	define	LIBSYSV_DIR	../libsysv
 #	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../libsysv/libsysv.ARCH_SUF]]
+#	define	LIBTCL_DIR	../libtck
+#	define	LIBTCL		-L''LIBTCL_DIR -ltck
+#	define	LIBTCL_DEP	[[LIBVERS ../libtck/libtck.ARCH_SUF]]
+#	define	LIBTK_DIR	../libtk
+#	define	LIBTK		-L''LIBTK_DIR -ltk
+#	define	LIBTK_DEP	[[LIBVERS ../libtk/libtk.ARCH_SUF]]
 #	if HAS_TCP
 #		define	LIBPKG_DIR	../libpkg
 #		define	LIBPKG	-L''LIBPKG_DIR -lpkg
@@ -1521,6 +1527,12 @@ set -S2 "/bin/sh"
 #	define	LIBSYSV_DIR	../.libsysv.MTYPE
 #	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../.libsysv.MTYPE/libsysv.ARCH_SUF]]
+#	define	LIBTCL_DIR	../.libtcl.MTYPE
+#	define	LIBTCL		-L''LIBTCL_DIR -ltcl
+#	define	LIBTCL_DEP	[[LIBVERS ../.libtcl.MTYPE/libtcl.ARCH_SUF]]
+#	define	LIBTK_DIR	../.libtk.MTYPE
+#	define	LIBTK		-L''LIBTK_DIR -ltk
+#	define	LIBTK_DEP	[[LIBVERS ../.libtk.MTYPE/libtk.ARCH_SUF]]
 #	if HAS_TCP
 #		define	LIBPKG_DIR	../.libpkg.MTYPE
 #		define	LIBPKG	-L''LIBPKG_DIR -lpkg
