@@ -1105,3 +1105,81 @@ unsigned long *total_points;
 
 	rt_free((char *)tbl, "face/wire/point counted table");
 }
+
+
+struct loopuse *
+nmg_find_lu_of_vu( vu )
+struct vertexuse *vu;
+{
+	NMG_CK_VERTEXUSE( vu );
+	if ( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )
+		return vu->up.lu_p;
+
+	if ( *vu->up.magic_p == NMG_SHELL_MAGIC )
+		return (struct loopuse *)NULL;
+
+	NMG_CK_EDGEUSE( vu->up.eu_p );
+
+	if ( *vu->up.eu_p->up.magic_p == NMG_SHELL_MAGIC )
+		return (struct loopuse *)NULL;
+
+	NMG_CK_LOOPUSE( vu->up.eu_p->up.lu_p );
+
+	return vu->up.eu_p->up.lu_p;
+}
+
+
+#define FACE_OF_LOOP(lu) { switch (*lu->up.magic_p) { \
+	case NMG_FACEUSE_MAGIC:	return lu->up.fu_p; break; \
+	case NMG_SHELL_MAGIC: return (struct faceuse *)NULL; break; \
+	default: \
+	    rt_log("Error at %s %d:\nInvalid loopuse parent magic (0x%x %d)\n", \
+		__FILE__, __LINE__, *lu->up.magic_p, *lu->up.magic_p); \
+	    rt_bomb("giving up on loopuse"); \
+	} }
+
+
+/*	N M G _ F I N D _ F U _ O F _ V U
+ *
+ *	return a pointer to the parent faceuse of the vertexuse
+ *	or a null pointer if vu is not a child of a faceuse.
+ */
+struct faceuse *
+nmg_find_fu_of_vu(vu)
+struct vertexuse *vu;
+{
+	NMG_CK_VERTEXUSE(vu);
+
+	switch (*vu->up.magic_p) {
+	case NMG_LOOPUSE_MAGIC:
+		FACE_OF_LOOP( vu->up.lu_p );
+		break;
+	case NMG_SHELL_MAGIC:
+		rt_log("nmg_find_fu_of_vu() vertexuse is child of shell, can't find faceuse\n");
+		return ((struct faceuse *)NULL);
+		break;
+	case NMG_EDGEUSE_MAGIC:
+		switch (*vu->up.eu_p->up.magic_p) {
+		case NMG_LOOPUSE_MAGIC:
+			FACE_OF_LOOP( vu->up.eu_p->up.lu_p );
+			break;
+		case NMG_SHELL_MAGIC:
+			rt_log("nmg_find_fu_of_vu() vertexuse is child of shell/edgeuse, can't find faceuse\n");
+			return ((struct faceuse *)NULL);
+			break;
+		}
+		rt_log(stderr,
+			"Error at %s %d:\nInvalid loopuse parent magic 0x%x\n",
+			__FILE__, __LINE__, *vu->up.lu_p->up.magic_p);
+		abort();
+		break;
+	default:
+		rt_log("Error at %s %d:\nInvalid vertexuse parent magic 0x%x\n",
+			__FILE__, __LINE__,
+			*vu->up.magic_p);
+		abort();
+		break;
+	}
+	rt_log("How did I get here %s %d?\n", __FILE__, __LINE__);
+	abort();
+}
