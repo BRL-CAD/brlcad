@@ -629,7 +629,8 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	LOCAL fastf_t diffuse0, cosI0;
+	LOCAL fastf_t	diffuse0 = 0;
+	LOCAL fastf_t	cosI0 = 0;
 	LOCAL vect_t work0, work1;
 	LOCAL struct light_specific *lp;
 
