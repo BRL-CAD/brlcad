@@ -470,20 +470,29 @@ l l | n n n n | n | l.
 A/*	H/W	Moss	World	Star	Bldg	Mean	S/W Notes
 _
 .TH
-Abs	vgr	?	?	?	?	?	BSD 4.3 [PRELIM]
+Abs	vgr	122.64	59.33	46.28	45.95	68.55	BSD 4.3
 *vgr	vgr	1.0	1.0	1.0	1.0	1.0
 _
-Abs	vmb	409.5	201.9	181.0	179.0	?	UTX 2.0 [PRELIM]
-*vgr	vmb	?	?	?	?	?
-_
 Abs	sun4	767.7	373.7	315.5	284.5	435.6	Unix 3.5
-*vgr	sun4	6.26	6.3	6.81	6.19	6.38	-O2 optimization
+*vgr	sun4	6.26	6.3	6.81	6.19	6.38	-O2 optim
 _
 Abs     vhs     954.81  471.90  409.78  392.55  557.26  IRix 3.1 
-*vgr    vhs     7.78    7.95    8.85    8.54    8.28    Parallel code -P1
+*vgr    vhs     7.78    7.95    8.85    8.54    8.28    Parallel, -P1
 _
 Abs	vector	5802.92	2261.92	1640.83	1419.19	2781.21	Alliant 3.0
-*vgr	vector	47.31	38.12	35.45	30.88	37.94	8 Processors
+*vgr	vector	47.31	38.12	35.45	30.88	37.94	-P 8
+_
+Abs	patton	4550.67	1920.15	1298.61	1153.02	2230.61	UNICOS 3.0, /bin/cc
+*vgr	patton	37.10	32.36	28.05	25.09	30.65	-P 1
+_
+Abs	patton	8898.79	3782.55	2559.48	2292.13	4383.23	UNICOS 3.0, /bin/cc
+*vgr	patton	72.56	63.75	55.30	49.88	60.37	-P 2
+_
+Abs	patton	13078.79	5631.95	3832.88	3416.90	6490.13	UNICOS 3.0, /bin/cc
+*vgr	patton	106.64	94.92	82.81	74.36	89.68	-P 3
+_
+Abs	patton	17157.78	7437.55	5073.58	4531.25	8550.04	UNICOS 3.0, /bin/cc
+*vgr	patton	139.90	125.35	109.62	98.61	118.37	-P 4
 .TE
 .NH 1
 ADDITIONAL STATISTICS
