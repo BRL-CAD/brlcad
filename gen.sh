@@ -23,6 +23,22 @@
 SHELL=/bin/sh
 export SHELL
 
+# Set to 0 for non-NFS environment
+NFS=1
+
+# Label number for this CAD Release,
+# RCS main Revision number, and date.
+#RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
+RELEASE=2.8;	RCS_REVISION=8;		REL_DATE=20-Sep-88	# internal
+#RELEASE=2.7;	RCS_REVISION=8;		REL_DATE=12-Sep-88	# internal
+#RELEASE=2.6;	RCS_REVISION=8;		REL_DATE=09-Sep-88	# internal
+#RELEASE=2.5;	RCS_REVISION=8;		REL_DATE=08-Sep-88	# internal
+#RELEASE=2.4;	RCS_REVISION=8;		REL_DATE=10-Jun-88	# internal
+#RELEASE=2.3;	RCS_REVISION=7;		REL_DATE=02-Nov-87
+#RELEASE=2.0;	RCS_REVISION=6;		REL_DATE=11-Jul-87
+#RELEASE=1.24;	RCS_REVISION=5;		REL_DATE=11-Jun-87
+#RELEASE=1.20;	RCS_REVISION=1;		REL_DATE=12-Feb-87
+
 #
 # Sanity check -- make sure that all the necessary programs have
 # made it into the search path.  Otherwise, nothing will work.
@@ -32,7 +48,7 @@ NECESSARY_CMDS="cake cakesub machinetype.sh cakeinclude.sh"
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
-				s/:\\.://g
+				s/:\\.:/:/g
 				s/:/ /g'`
 for CMD in ${NECESSARY_CMDS}
 do
@@ -63,25 +79,22 @@ done
 # This will set Shell variables MACHINE, UNIXTYPE, and HAS_TCP
 eval `machinetype.sh -b`
 
-# Label number for this CAD Release,
-# RCS main Revision number, and date.
-RELEASE=2.5;	RCS_REVISION=8;		REL_DATE=dd-mmm-yy
-#RELEASE=2.4;	RCS_REVISION=8;		REL_DATE=10-Jun-88	# internal
-#RELEASE=2.3;	RCS_REVISION=7;		REL_DATE=02-Nov-87
-#RELEASE=2.0;	RCS_REVISION=6;		REL_DATE=11-Jul-87
-#RELEASE=1.24;	RCS_REVISION=5;		REL_DATE=11-Jun-87
-#RELEASE=1.20;	RCS_REVISION=1;		REL_DATE=12-Feb-87
-
 DISTDIR=/m/dist/.
 ARCHDIR=/m/.
 ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 
-TOP_FILES="README Cakefile* \
-		cray.sh cray-ar.sh mtype.sh"
+TOP_FILES="Copyright* README Cakefile* \
+		cray.sh cray-ar.sh \
+		machinetype.sh gen.sh setup.sh \
+		cakeinclude.sh newbindir.sh"
 
-# No compilation or tools needed, not machine specific
-ADIRS="h doc papers cake cakeaux pix bench contributed"
-# Machine specific directories
+# Has Cakefile, but no compilation or tools needed, not machine specific
+ADIRS="h doc pix bench"
+
+# Has no Cakefile, just copy it verbatim
+CDIRS="cake cakeaux papers contributed"
+
+# Source directories that will have Machine specific binary directories
 BDIRS="libsysv \
 	libmalloc \
 	conv \
@@ -95,9 +108,10 @@ BDIRS="libsysv \
 	libtig \
 	libwdb \
 	libfont \
+	liborle \
 	librle \
-	liburt \
 	libspl librt rt \
+	remrt \
 	mged \
 	proc-db \
 	util \
@@ -112,6 +126,7 @@ BDIRS="libsysv \
 if test HAS_TCP = 0
 then
 	BDIRS=`echo ${BDIRS} | sed -e  's/libpkg//
+					s/remrt//
 					s/rfbd//'`
 fi
 
@@ -120,11 +135,24 @@ then	TARGET=all
 else	TARGET=$1
 fi
 
+# For handline multiple machines in an NFS environment
+if test x$NFS = x1
+then
+	DIRPRE=.
+	DIRSUF=.${MACHINE}
+else
+	DIRPRE=
+	DIRSUF=
+fi
+
+
 echo
 echo "This Release = ${RELEASE} of ${REL_DATE}      Making Target: ${TARGET}"
+echo "Has Symlinks = ${HAS_SYMLINKS}"
 echo "   UNIX Type = ${UNIXTYPE}"
 echo "     Has TCP = ${HAS_TCP}"
 echo "     Machine = ${MACHINE}"
+echo "         NFS = ${NFS}"
 echo
 
 # Now, actually work on making the target
@@ -133,19 +161,19 @@ case ${TARGET} in
 
 benchmark)
 	sh $0 relink
-	(cd libsysv.${MACHINE};  cake -k)
-	(cd libmalloc.${MACHINE};  cake -k)
-	(cd conv.${MACHINE}; cake -k)
-	(cd db.${MACHINE}; cake -k)
+	(cd ${DIRPRE}libsysv${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libmalloc${DIRSUF};  cake -k)
+	(cd ${DIRPRE}conv${DIRSUF}; cake -k)
+	(cd ${DIRPRE}db${DIRSUF}; cake -k)
 	if test ${HAS_TCP} = 1
 	then
-		(cd libpkg.${MACHINE};  cake -k)  # needed for IF_REMOTE
+		(cd ${DIRPRE}libpkg${DIRSUF};  cake -k)  # needed for IF_REMOTE
 	fi
-	(cd libfb.${MACHINE};  cake -k)
-	(cd libplot3.${MACHINE};  cake -k)
-	(cd libspl.${MACHINE};  cake -k)
-	(cd librt.${MACHINE};  cake -k)
-	(cd rt.${MACHINE};  cake -k)
+	(cd ${DIRPRE}libfb${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libplot3${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libspl${DIRSUF};  cake -k)
+	(cd ${DIRPRE}librt${DIRSUF};  cake -k)
+	(cd ${DIRPRE}rt${DIRSUF};  cake -k)
 	;;
 
 #  These directives operate in the machine-specific directories
@@ -157,14 +185,14 @@ benchmark)
 #  lint
 all)
 	for dir in ${BDIRS}; do
-		echo -------------------------------- ${dir}.${MACHINE};
-		( cd ${dir}.${MACHINE}; cake -k )
+		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k )
 	done;;
 
 clean|noprod|clobber|lint)
 	for dir in ${BDIRS}; do
-		echo -------------------------------- ${dir}.${MACHINE};
-		( cd ${dir}.${MACHINE}; cake -k ${TARGET} )
+		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k ${TARGET} )
 	done;;
 
 # These operate in a mixture of places, treating both source and binary
@@ -174,8 +202,8 @@ install|uninstall)
 		( cd ${dir}; cake -k ${TARGET} )
 	done
 	for dir in ${BDIRS}; do
-		echo -------------------------------- ${dir}.${MACHINE};
-		( cd ${dir}.${MACHINE}; cake -k ${TARGET} )
+		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k ${TARGET} )
 	done;;
 
 #  These directives operate in the source directory
@@ -195,24 +223,29 @@ inst-man|inst-dist|print|typeset|nroff)
 #	rmdir	remove binary directories for current machine type
 #	relink	recreate links to SRCDIR/Cakefile for current mach type
 mkdir|relink)
-	if test ${UNIXTYPE} = BSD
+	if test x${DIRSUF} = x
+	then
+		echo "${TARGET}:  unnecessary in non-NFS environment"
+		exit 0;		# Nothing to do
+	fi
+	if test ${HAS_SYMLINKS} = 1
 	then	lnarg="-s"
 	else	lnarg=""
 	fi
 	for dir in ${BDIRS}; do
-		if test -d ${dir}.${MACHINE}
+		if test -d ${DIRPRE}${dir}${DIRSUF}
 		then
-			rm -f ${dir}.${MACHINE}/Cakefile
+			rm -f ${DIRPRE}${dir}${DIRSUF}/Cakefile
 		else
-			mkdir ${dir}.${MACHINE}
+			mkdir ${DIRPRE}${dir}${DIRSUF}
 		fi
-		(cd ${dir}.${MACHINE}; ln ${lnarg} ../${dir}/Cakefile .)
+		(cd ${DIRPRE}${dir}${DIRSUF}; ln ${lnarg} ../${dir}/Cakefile .)
 	done;;
 
 rmdir)
 	set -x
 	for dir in ${BDIRS}; do
-		rm -fr ${dir}.${MACHINE}
+		rm -fr ${dir}${DIRSUF}
 	done;;
 
 shell)
@@ -241,12 +274,40 @@ checkin)
 #	"make arch"	to create TAR archive
 #
 dist)
-	cp Copyright* README Cakefile* *.sh ${DISTDIR}
+	if test `grep "#define NFS" Cakefile.defs|wc -l` -eq 0
+	then 	echo "Shipping non-NFS version of Cakefile.defs (this is good)";
+	else
+		echo "ERROR: Update Cakefile.defs for non-NFS before proceeding!"
+		exit 1;
+	fi
+	if test `grep "^NFS=1" gen.sh|wc -l` -eq 0
+	then 	echo "Shipping non-NFS version of gen.sh (this is good)";
+	else
+		echo "ERROR: Update gen.sh for non-NFS before proceeding!"
+		exit 1;
+	fi
+	echo
+	echo "I hope you have made Cakefile.defs tidy!"
+	echo
+
+	for i in ${CDIRS}
+	do
+		rm -fr ${DISTDIR}/$i
+		mkdir ${DISTDIR}/$i
+		# Get everything except the RCS subdirs
+		cp $i/[!R]* ${DISTDIR}/$i/.
+	done
+	for i in ${TOP_FILES}
+	do
+		rm -f ${DISTDIR}/$i
+	done
+	cp ${TOP_FILES} ${DISTDIR}/.
 	echo "Preparing the 'bench' directory"
+	echo "End of BRL-CAD Release $RELEASE tape, `date`" > ${DISTDIR}/zzzzEND
 	echo "End of BRL-CAD Release $RELEASE tape, `date`" > ${DISTDIR}/zzzEND
 	cd ${DISTDIR}; du -a > Contents
 	;;
-# Use as step 3 of making a distribution -- write the archive
+
 # Use as final step of making a distribution -- write the archive
 arch)
 	# $4 will be file size in bytes, pad to 200K byte boundary for SGI
@@ -257,6 +318,7 @@ arch)
 	then
 		gencolor -r${PADBYTES} 0 >> ${ARCHIVE}
 	fi
+	chmod 444 ${ARCHIVE}
 	rm -f ${EXCLUDE}
 	;;
 
