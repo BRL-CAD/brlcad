@@ -90,6 +90,12 @@ int		curframe = 0;		/* current frame number,
 char		*outputfile = (char *)0;/* name of base of output file */
 int		interactive = 0;	/* human is watching results */
 int		benchmark = 0;		/* No random numbers:  benchmark */
+
+int		sub_grid_mode = 0;	/* mode to raytrace a rectangular portion of view */
+int		sub_xmin = 0;		/* lower left of sub rectangle */
+int		sub_ymin = 0;
+int		sub_xmax = 0;		/* upper right of sub rectangle */
+int		sub_ymax = 0;
 /***** end variables shared with do.c *****/
 
 
@@ -125,10 +131,37 @@ register char **argv;
 	bu_optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
+	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
+		case 'j':
+			{
+				register char	*cp = bu_optarg;
+
+				sub_xmin = atoi(cp);
+				while( (*cp >= '0' && *cp <= '9') )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				sub_ymin = atoi(cp);
+				while( (*cp >= '0' && *cp <= '9') )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				sub_xmax = atoi(cp);
+				while( (*cp >= '0' && *cp <= '9') )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				sub_ymax = atoi(cp);
+
+				bu_log("Sub-rectangle: (%d,%d) (%d,%d)\n",
+					sub_xmin, sub_ymin,
+					sub_xmax, sub_ymax );
+				if( sub_xmin >= 0 && sub_xmin < sub_xmax &&
+				    sub_ymin >= 0 && sub_ymin < sub_ymax )  {
+					sub_grid_mode = 1;
+				} else {
+					sub_grid_mode = 0;
+					bu_log("ERROR, bad sub-rectangle, ignored\n");
+				}
+			}
+			break;
 		case '.':
 			nu_gfactor = (double)atof( bu_optarg );
 			break;
