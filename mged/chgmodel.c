@@ -649,13 +649,13 @@ f_units()
 	if( strcmp(cmd_args[1], "cm") == 0 ) 
 		new_unit = ID_CM_UNIT;
 	else
-	if( strcmp(cmd_args[1], "m") == 0 ) 
+	if( strcmp(cmd_args[1],"m")==0 || strcmp(cmd_args[1],"meters")==0 ) 
 		new_unit = ID_M_UNIT;
 	else
-	if( strcmp(cmd_args[1], "in") == 0 ) 
+	if( strcmp(cmd_args[1],"in")==0 || strcmp(cmd_args[1],"inches")==0 ) 
 		new_unit = ID_IN_UNIT;
 	else
-	if( strcmp(cmd_args[1], "ft") == 0 ) 
+	if( strcmp(cmd_args[1],"ft")==0 || strcmp(cmd_args[1],"feet")==0 ) 
 		new_unit = ID_FT_UNIT;
 
 	if( new_unit ) {
@@ -669,9 +669,8 @@ f_units()
 		return;
 	}
 
-	(void)printf("%s: unrecognized unit\n");
-	(void)printf("<mm|cm|m|in|ft> are only recognized units\n");
-	return;
+	(void)printf("%s: unrecognized unit\n", cmd_args[1]);
+	(void)printf("valid units: <mm|cm|m|in|ft|meters|inches|feet>\n");
 }
 
 /*
@@ -707,7 +706,63 @@ char	*name;
  */
 void
 f_make()  {
-	printf("unimplemented\n");
+	register struct directory *dp;
+	union record record;
+
+	if( lookup( cmd_args[1], LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( cmd_args[1] );
+		return;
+	}
+	/* Position this solid at view center */
+	record.s.s_values[0] = -toViewcenter[MDX];
+	record.s.s_values[1] = -toViewcenter[MDY];
+	record.s.s_values[2] = -toViewcenter[MDZ];
+	record.s.s_id = ID_SOLID;
+
+	/* make name <arb8|ellg|tor|tgc> */
+	if( strcmp( cmd_args[2], "arb8" ) == 0 )  {
+		record.s.s_type = GENARB8;
+		record.s.s_cgtype = ARB8;
+		VSET( &record.s.s_values[0*3],
+			-toViewcenter[MDX] +1,
+			-toViewcenter[MDX] -1,
+			-toViewcenter[MDX] -1 );
+		VSET( &record.s.s_values[1*3],  0, 2, 0 );
+		VSET( &record.s.s_values[2*3],  0, 2, 2 );
+		VSET( &record.s.s_values[3*3],  0, 0, 2 );
+		VSET( &record.s.s_values[4*3],  -2, 0, 0 );
+		VSET( &record.s.s_values[5*3],  -2, 2, 0 );
+		VSET( &record.s.s_values[6*3],  -2, 2, 2 );
+		VSET( &record.s.s_values[7*3],  -2, 0, 2  );
+	} else if( strcmp( cmd_args[2], "sph" ) == 0 )  {
+		record.s.s_type = GENELL;
+		record.s.s_cgtype = SPH;
+		VSET( &record.s.s_values[1*3], 1, 0, 0 );	/* A */
+		VSET( &record.s.s_values[2*3], 0, 1, 0 );	/* B */
+		VSET( &record.s.s_values[3*3], 0, 0, 1 );	/* C */
+	} else if( strcmp( cmd_args[2], "ellg" ) == 0 )  {
+		record.s.s_type = GENELL;
+		record.s.s_cgtype = ELL;
+		printf("unimplemented\n"); return;
+	} else if( strcmp( cmd_args[2], "tor" ) == 0 )  {
+		record.s.s_type = TOR;
+		printf("unimplemented\n"); return;
+	} else if( strcmp( cmd_args[2], "tgc" ) == 0 )  {
+		record.s.s_type = GENTGC;
+		printf("unimplemented\n"); return;
+	} else {
+		printf("make:  %s is not a known primitive\n", cmd_args[2]);
+		return;
+	}
+
+	/* Add to in-core directory */
+	if( (dp = dir_add( cmd_args[1], -1, DIR_SOLID, 0 )) == DIR_NULL )
+		return;
+	db_alloc( dp, 1 );
+
+	NAMEMOVE( cmd_args[1], record.s.s_name );
+	db_putrec( dp, &record, 0 );
+	(void)printf("done\n");
 }
 
 /* allow precise changes to object rotation */
