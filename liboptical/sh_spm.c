@@ -4,7 +4,7 @@
  *  Spherical Data Structures/Texture Maps
  *
  *  Author -
- *	Phil Dykstra
+ *	Phillip Dykstra
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -43,27 +43,27 @@ char	*calloc();
  *  single pixel.
  *  Returns SPH_NULL on error.
  */
-sph_map_t *
-sph_init( N )
+spm_map_t *
+spm_init( N )
 int	N;
 {
 	int	i, nx, total, index;
-	register sph_map_t *mapp;
+	register spm_map_t *mapp;
 
-	mapp = (sph_map_t *)rt_malloc( sizeof(sph_map_t), "sph_map_t");
+	mapp = (spm_map_t *)rt_malloc( sizeof(spm_map_t), "spm_map_t");
 	if( mapp == SPH_NULL )
 		return( SPH_NULL );
-	bzero( (char *)mapp, sizeof(sph_map_t) );
+	bzero( (char *)mapp, sizeof(spm_map_t) );
 
 	mapp->ny = N/2;
 	mapp->nx = (int *) rt_malloc( (unsigned)(N/2 * sizeof(*(mapp->nx))), "sph nx" );
 	if( mapp->nx == NULL ) {
-		sph_free( mapp );
+		spm_free( mapp );
 		return( SPH_NULL );
 	}
 	mapp->xbin = (unsigned char **) rt_malloc( (unsigned)(N/2 * sizeof(char *)), "sph xbin" );
 	if( mapp->xbin == NULL ) {
-		sph_free( mapp );
+		spm_free( mapp );
 		return( SPH_NULL );
 	}
 
@@ -79,7 +79,7 @@ int	N;
 
 	mapp->_data = (unsigned char *) calloc( (unsigned)total, sizeof(RGBpixel) );
 	if( mapp->_data == NULL ) {
-		sph_free( mapp );
+		spm_free( mapp );
 		return( SPH_NULL );
 	}
 
@@ -98,8 +98,8 @@ int	N;
  *  Free the storage associated with a sphere structure.
  */
 void
-sph_free( mp )
-sph_map_t *mp;
+spm_free( mp )
+spm_map_t *mp;
 {
 	if( mp == SPH_NULL )
 		return;
@@ -113,7 +113,7 @@ sph_map_t *mp;
 	if( mp->xbin != NULL )
 		(void) rt_free( (char *)mp->xbin, "sph xbin" );
 
-	(void) rt_free( (char *)mp, "sph_map_t" );
+	(void) rt_free( (char *)mp, "spm_map_t" );
 }
 
 /*
@@ -126,8 +126,8 @@ sph_map_t *mp;
  *  0.0 <= v < 1.0	Bottom to Top
  */
 void
-sph_read( mapp, valp, u, v )
-register sph_map_t	*mapp;
+spm_read( mapp, valp, u, v )
+register spm_map_t	*mapp;
 register unsigned char	*valp;
 double	u, v;
 {
@@ -153,8 +153,8 @@ double	u, v;
  *  0.0 <= v < 1.0	Bottom to Top
  */
 void
-sph_write( mapp, valp, u, v )
-register sph_map_t	*mapp;
+spm_write( mapp, valp, u, v )
+register spm_map_t	*mapp;
 register unsigned char	*valp;
 double	u, v;
 {
@@ -179,8 +179,8 @@ double	u, v;
  *  Returns -1 on error, else 0.
  */
 int
-sph_load( mapp, filename )
-sph_map_t *mapp;
+spm_load( mapp, filename )
+spm_map_t *mapp;
 char	*filename;
 {
 	int	y, total;
@@ -211,8 +211,8 @@ char	*filename;
  *  Returns -1 on error, else 0.
  */
 int
-sph_save( mapp, filename )
-sph_map_t *mapp;
+spm_save( mapp, filename )
+spm_map_t *mapp;
 char	*filename;
 {
 	int	i;
@@ -244,8 +244,8 @@ char	*filename;
  *  Returns -1 on error, else 0.
  */
 int
-sph_px_load( mapp, filename, nx, ny )
-sph_map_t *mapp;
+spm_px_load( mapp, filename, nx, ny )
+spm_map_t *mapp;
 char	*filename;
 int	nx, ny;
 {
@@ -308,8 +308,8 @@ int	nx, ny;
  *  Returns -1 on error, else 0.
  */
 int
-sph_px_save( mapp, filename, nx, ny )
-sph_map_t *mapp;
+spm_px_save( mapp, filename, nx, ny )
+spm_map_t *mapp;
 char	*filename;
 int	nx, ny;
 {
@@ -324,7 +324,7 @@ int	nx, ny;
 
 	for( y = 0; y < ny; y++ ) {
 		for( x = 0; x < nx; x++ ) {
-			sph_read( mapp, pixel, (double)x/(double)nx, (double)y/(double)ny );
+			spm_read( mapp, pixel, (double)x/(double)nx, (double)y/(double)ny );
 			(void) fwrite( (char *)pixel, sizeof(pixel), 1, fp );
 		}
 	}
@@ -339,8 +339,8 @@ int	nx, ny;
  *  Used for debugging.
  */
 void
-sph_dump( mp )
-sph_map_t *mp;
+spm_dump( mp )
+spm_map_t *mp;
 {
 	int	i;
 
@@ -353,14 +353,14 @@ sph_map_t *mp;
 }
 
 /*****/
-struct sph_specific {
+struct spm_specific {
 	char	sp_file[128];	/* Filename */
 	int	sp_n;		/* number of pixels around equator */
-	sph_map_t *sp_map;	/* stuff */
+	spm_map_t *sp_map;	/* stuff */
 };
-#define SP_NULL	((struct sph_specific *)0)
+#define SP_NULL	((struct spm_specific *)0)
 
-struct matparse sph_parse[] = {
+struct matparse spm_parse[] = {
 #ifndef cray
 	"file",		(mp_off_ty)(SP_NULL->sp_file),	"%s",
 #else
@@ -370,11 +370,11 @@ struct matparse sph_parse[] = {
 	(char *)0,	(mp_off_ty)0,			(char *)0
 };
 
-HIDDEN int sph_setup(), sph_render(), sph_print(), sph_mfree();
+HIDDEN int spm_setup(), spm_render(), spm_print(), spm_mfree();
 
-struct mfuncs sph_mfuncs[] = {
+struct mfuncs spm_mfuncs[] = {
 	"sph",		0,		0,
-	sph_setup,	sph_render,	sph_print,	sph_mfree,
+	spm_setup,	spm_render,	spm_print,	spm_mfree,
 
 	(char *)0,	0,		0,
 	0,		0,		0,		0
@@ -387,12 +387,12 @@ struct mfuncs sph_mfuncs[] = {
  *  return a pointer to the relevant pixel.
  */
 HIDDEN int
-sph_render( ap, pp )
+spm_render( ap, pp )
 struct application *ap;
 struct partition *pp;
 {
-	register struct sph_specific *spp =
-		(struct sph_specific *)pp->pt_regionp->reg_udata;
+	register struct spm_specific *spp =
+		(struct spm_specific *)pp->pt_regionp->reg_udata;
 	auto struct uvcoord uv;
 	int	x, y;
 	register unsigned char *cp;
@@ -402,7 +402,7 @@ struct partition *pp;
 	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
 		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
 
-	/** sph_read( spp->sp_map, xxx ); **/
+	/** spm_read( spp->sp_map, xxx ); **/
 	/* Limits checking? */
 	y = uv.uv_v * spp->sp_map->ny;
 	x = uv.uv_u * spp->sp_map->nx[y];
@@ -418,27 +418,27 @@ struct partition *pp;
  *	>0	success
  */
 HIDDEN int
-sph_setup( rp )
+spm_setup( rp )
 register struct region *rp;
 {
-	register struct sph_specific *spp;
+	register struct spm_specific *spp;
 
-	GETSTRUCT( spp, sph_specific );
+	GETSTRUCT( spp, spm_specific );
 	rp->reg_udata = (char *)spp;
 
 	spp->sp_file[0] = '\0';
 	spp->sp_n = -1;
-	mlib_parse( rp->reg_mater.ma_matparm, sph_parse, (mp_off_ty)spp );
+	mlib_parse( rp->reg_mater.ma_matparm, spm_parse, (mp_off_ty)spp );
 	if( spp->sp_n < 0 )  spp->sp_n = 512;
 	if( spp->sp_file[0] == '\0' )
 		goto fail;
-	if( (spp->sp_map = sph_init( spp->sp_n )) == SPH_NULL )
+	if( (spp->sp_map = spm_init( spp->sp_n )) == SPH_NULL )
 		goto fail;
-	if( sph_load( spp->sp_map, spp->sp_file ) < 0 )
+	if( spm_load( spp->sp_map, spp->sp_file ) < 0 )
 		goto fail;
 	return(1);
 fail:
-	rt_free( (char *)spp, "sph_specific" );
+	rt_free( (char *)spp, "spm_specific" );
 	return(-1);
 }
 
@@ -446,16 +446,16 @@ fail:
  *			S P H _ P R I N T
  */
 HIDDEN int
-sph_print( rp )
+spm_print( rp )
 register struct region *rp;
 {
-	mlib_print("sph_setup", sph_parse, (mp_off_ty)rp->reg_udata);
+	mlib_print("spm_setup", spm_parse, (mp_off_ty)rp->reg_udata);
 	/* Should be more here */
 }
 
 HIDDEN int
-sph_mfree( cp )
+spm_mfree( cp )
 char *cp;
 {
-	sph_free( (sph_map_t *)cp );
+	spm_free( (spm_map_t *)cp );
 }

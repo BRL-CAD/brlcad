@@ -4,7 +4,7 @@
  *  Sphere data structure and function declarations.
  *
  *  Author -
- *	Phil Dykstra
+ *	Phillip Dykstra
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -21,16 +21,16 @@ typedef	struct	{
 	int	*nx;		/* Number of "x" bins per "y" bin */
 	unsigned char **xbin;	/* staring addresses of "x" bins */
 	unsigned char *_data;	/* For freeing purposes, start of data */
-} sph_map_t;
+} spm_map_t;
 
-#define	SPH_NULL (sph_map_t *)0
+#define	SPH_NULL (spm_map_t *)0
 
-sph_map_t *sph_init();
-void	sph_free();
-void	sph_read();
-void	sph_write();
-int	sph_load();
-int	sph_save();
-int	sph_pix_load();
-int	sph_pix_save();
-void	sph_dump();
+spm_map_t *spm_init();
+void	spm_free();
+void	spm_read();
+void	spm_write();
+int	spm_load();
+int	spm_save();
+int	spm_pix_load();
+int	spm_pix_save();
+void	spm_dump();
