@@ -9,6 +9,8 @@ plrot \- rotate, translate, or scale a UnixPlot file
 .RB [ \-a#\ \-e# ]
 .RB [ \-g# ]
 .RB [ \-M ]
+.RB [ \-m# ]
+.RB [ \-v ]
 < unix_plot > unix_plot
 .SH DESCRIPTION
 .I Plrot
@@ -45,6 +47,17 @@ this space and the diameter and center of this sphere are used as
 the center and width of the plot in all three dimensions.  This has
 the advantage of keeping the entire model in view from any angle and
 is invariant with respect to viewing direction.
+.PP
+The
+.B \-v
+flag signals that verbose mode is requested.  When set, the resgistration
+matrix (if any) is printed, along with the dimensions of the plot (space),
+the coordinates of its center (center), and the size of the plotted object.
+.PP
+The
+.B \-m#
+flag takes a quoted string as its parameter.  This string is a registration
+matrix.
 .PP
 UnixPlot is traditionally a first quadrant 2D plotting space with
 X increasing to the right of the plot, and Y increasing up the plot.
