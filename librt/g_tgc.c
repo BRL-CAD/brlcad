@@ -12,6 +12,8 @@
  *	Jeff Hanes		(Programming)
  *	Gary Moss		(Improvement)
  *	Mike Muuss		(Optimization)
+ *	Peter F. Stiller	(Curvature)
+ *	Phillip Dykstra		(Curvature)
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -47,10 +49,10 @@ struct  tgc_specific {
 	fastf_t	tgc_B;		/*  magnitude of B vector		*/
 	fastf_t	tgc_C;		/*  magnitude of C vector		*/
 	fastf_t	tgc_D;		/*  magnitude of D vector		*/
-	fastf_t	tgc_CA_H;	/*  (C-A)/H  X_of_Z */
-	fastf_t tgc_DB_H;	/*  (D-B)/H  Y_of_Z */
-	fastf_t	tgc_AAdCC;	/*  (|A|**2)/(|C|**2) */
-	fastf_t	tgc_BBdDD;	/*  (|B|**2)/(|D|**2) */
+	fastf_t	tgc_CdAm1;	/*  (C/A - 1)				*/
+	fastf_t tgc_DdBm1;	/*  (D/B - 1)				*/
+	fastf_t	tgc_AAdCC;	/*  (|A|**2)/(|C|**2)			*/
+	fastf_t	tgc_BBdDD;	/*  (|B|**2)/(|D|**2)			*/
 	vect_t	tgc_N;		/*  normal at 'top' of cone		*/
 	mat_t	tgc_ScShR;	/*  Scale( Shear( Rot( vect )))		*/
 	mat_t	tgc_invRtShSc;	/*  invRot( trnShear( Scale( vect )))	*/
@@ -218,12 +220,12 @@ struct rt_i		*rtip;
 	MAT4X3VEC( nH, Rot, Hv );
 	tgc->tgc_sH = nH[Z];
 
-	tgc->tgc_CA_H = tgc->tgc_C/tgc->tgc_A - 1.0;
-	tgc->tgc_DB_H = tgc->tgc_D/tgc->tgc_B - 1.0;
-	if( NEAR_ZERO( tgc->tgc_CA_H, 0.0001 ) )
-		tgc->tgc_CA_H = 0.0;
-	if( NEAR_ZERO( tgc->tgc_DB_H, 0.0001 ) )
-		tgc->tgc_DB_H = 0.0;
+	tgc->tgc_CdAm1 = tgc->tgc_C/tgc->tgc_A - 1.0;
+	tgc->tgc_DdBm1 = tgc->tgc_D/tgc->tgc_B - 1.0;
+	if( NEAR_ZERO( tgc->tgc_CdAm1, 0.0001 ) )
+		tgc->tgc_CdAm1 = 0.0;
+	if( NEAR_ZERO( tgc->tgc_DdBm1, 0.0001 ) )
+		tgc->tgc_DdBm1 = 0.0;
 
 	/*
 	 *	Added iShr parameter to tgc_shear().
@@ -235,6 +237,7 @@ struct rt_i		*rtip;
 	 */
 	tgc_shear( nH, Z, Shr, tShr, iShr );
 	tgc_scale( tgc->tgc_A, tgc->tgc_B, tgc->tgc_sH, Scl, iScl );
+
 	mat_mul( tmp, Shr, Rot );
 	mat_mul( tgc->tgc_ScShR, Scl, tmp );
 
@@ -380,14 +383,14 @@ mat_t	Shr, Trn, Inv;
 	mat_idn( Inv );
 
 	if ( axis == X ){
-		Inv[4] = -1.0 * (Shr[4] = Trn[1] = -vect[Y]/vect[X]);
-		Inv[8] = -1.0 * (Shr[8] = Trn[2] = -vect[Z]/vect[X]);
+		Inv[4] = -(Shr[4] = Trn[1] = -vect[Y]/vect[X]);
+		Inv[8] = -(Shr[8] = Trn[2] = -vect[Z]/vect[X]);
 	} else if ( axis == Y ){
-		Inv[1] = -1.0 * (Shr[1] = Trn[4] = Inv[1] = -vect[X]/vect[Y]);
-		Inv[9] = -1.0 * (Shr[9] = Trn[6] = Inv[9] = -vect[Z]/vect[Y]);
+		Inv[1] = -(Shr[1] = Trn[4] = -vect[X]/vect[Y]);
+		Inv[9] = -(Shr[9] = Trn[6] = -vect[Z]/vect[Y]);
 	} else if ( axis == Z ){
-		Inv[2] = -1.0 * (Shr[2] = Trn[8] = -vect[X]/vect[Z]);
-		Inv[6] = -1.0 * (Shr[6] = Trn[9] = -vect[Y]/vect[Z]);
+		Inv[2] = -(Shr[2] = Trn[8] = -vect[X]/vect[Z]);
+		Inv[6] = -(Shr[6] = Trn[9] = -vect[Y]/vect[Z]);
 	}
 }
 
@@ -434,8 +437,8 @@ register struct soltab	*stp;
 	} else {
 		rt_log( "A*D != C*B.  Quartic equation.\n");
 	}
-	rt_log( "(C-A)/H = %f\n", tgc->tgc_CA_H );
-	rt_log( "(D-B)/H = %f\n", tgc->tgc_DB_H );
+	rt_log( "(C/A - 1) = %f\n", tgc->tgc_CdAm1 );
+	rt_log( "(D/B - 1) = %f\n", tgc->tgc_DdBm1 );
 	rt_log( "(|A|**2)/(|C|**2) = %f\n", tgc->tgc_AAdCC );
 	rt_log( "(|B|**2)/(|D|**2) = %f\n", tgc->tgc_BBdDD );
 }
@@ -550,9 +553,9 @@ struct application	*ap;
 	Ysqr.cf[2] = cor_pprime[Y] * cor_pprime[Y];
 
 	R.dgr = 1;
-	R.cf[0] = dprime[Z] * tgc->tgc_CA_H;
+	R.cf[0] = dprime[Z] * tgc->tgc_CdAm1;
 	/* A vector is unitized (tgc->tgc_A == 1.0) */
-	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CA_H) + 1.0;
+	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
 	(void) polyMul( &R, &R, &Rsqr );
 
 	/*
@@ -583,9 +586,9 @@ struct application	*ap;
 		register int nroots;
 
 		Q.dgr = 1;
-		Q.cf[0] = dprime[Z] * tgc->tgc_DB_H;
+		Q.cf[0] = dprime[Z] * tgc->tgc_DdBm1;
 		/* B vector is unitized (tgc->tgc_B == 1.0) */
-		Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DB_H) + 1.0;
+		Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
 		(void) polyMul( &Q, &Q, &Qsqr );
 
 		(void) polyMul( &Qsqr, &Xsqr, &T1 );
@@ -823,34 +826,50 @@ register fastf_t t[];
  *  Compute the normal to the cone, given a point on the STANDARD
  *  CONE centered at the origin of the X-Y plane.
  *
- *  The gradient of the cone at that point is the normal vector
- *  in the standard space.  This vector will need to be rotated
+ *  The gradient of the cone at that point is the normal vector in
+ *  the standard space.  This vector will need to be transformed
  *  back to the coordinate system of the original cone in order
- *  to be useful.  Then the rotated vector must be 'unitized.'
+ *  to be useful.  Then the transformed vector must be 'unitized.'
  *
- *  NOTE:  The rotation required is NOT the inverse of the of the
- *	   rotation to the standard cone.  If you really want to 
- *	   know why, talk to Ed Davisson or to me (only if you're
- *	   truly desperate would I advise this).
+ *  NOTE:  The transformation required is NOT the inverse of the of
+ *	   the rotation to the standard cone, due to the shear involved
+ *	   in the mapping.  The inverse maps points back to points,
+ *	   but it is the transpose which maps normals back to normals.
+ *	   If you really want to know why, talk to Ed Davisson or
+ *	   Peter Stiller.
  *
- *  The equation for the standard cone is:
+ *  The equation for the standard cone *without* scaling is:
+ *  (rotated the sheared)
  *
- *	   X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
+ *	f(X,Y,Z) =  X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
  *
  *  where,
  *		R = a + ((c - a)/|H'|)*Z 
  *		Q = b + ((d - b)/|H'|)*Z
  *
- *  Therefore, the gradient of f(x,y,z) = 0 is:
+ *  When the equation is scaled so the A, B, and the sheared H are
+ *  unit length, as is done here, the equation can be coerced back
+ *  into this same form with R and Q now being:
+ *
+ *		R = 1 + (c/a - 1)*Z
+ *		Q = 1 + (d/b - 1)*Z
+ *
+ *  The gradient of f(x,y,z) = 0 is:
  *
  *	df/dx = 2 * x * Q**2
  *	df/dy = 2 * y * R**2
- *	df/dz = x**2 * 2 * Q * dQ/dz + y**2 * 2 * R * dR/dz +
- *		R**2 * 2 * Q * dQ/dz + 2 * R * dR/dz * Q**2
+ *	df/dz = x**2 * 2 * Q * dQ/dz + y**2 * 2 * R * dR/dz
+ *	      - R**2 * 2 * Q * dQ/dz - Q**2 * 2 * R * dR/dz
+ *	      = 2 [(x**2 - R**2) * Q * dQ/dz + (y**2 - Q**2) * R * dR/dz]
  *
  *  where,
- *		dQ/dz = (c - a)/|H'|
- *		dR/dz = (d - b)/|H'|
+ *		dR/dz = (c/a - 1)
+ *		dQ/dz = (d/b - 1)
+ *
+ *  [in the *unscaled* case these would be (c - a)/|H'| and (d - b)/|H'|]
+ *  Since the gradient (normal) needs to be rescaled to unit length
+ *  after mapping back to absolute coordinates, we divide the 2 out of
+ *  the above expressions.
  */
 tgc_norm( hitp, stp, rp )
 register struct hit *hitp;
@@ -876,15 +895,16 @@ register struct xray *rp;
 		break;
 	case 0:
 		/* Compute normal, given hit point on standard (unit) cone */
-		R = 1 + tgc->tgc_CA_H * hitp->hit_vpriv[Z];
-		Q = 1 + tgc->tgc_DB_H * hitp->hit_vpriv[Z];
-		stdnorm[X] = 2 * hitp->hit_vpriv[X] * Q * Q;
-		stdnorm[Y] = 2 * hitp->hit_vpriv[Y] * R * R;
-		stdnorm[Z] = 2 * ( Q * tgc->tgc_DB_H *
-				(hitp->hit_vpriv[X]*hitp->hit_vpriv[X] - R*R)
-			     + R * tgc->tgc_CA_H *
-				(hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q*Q) );
+		R = 1 + tgc->tgc_CdAm1 * hitp->hit_vpriv[Z];
+		Q = 1 + tgc->tgc_DdBm1 * hitp->hit_vpriv[Z];
+		stdnorm[X] = hitp->hit_vpriv[X] * Q * Q;
+		stdnorm[Y] = hitp->hit_vpriv[Y] * R * R;
+		stdnorm[Z] = (hitp->hit_vpriv[X]*hitp->hit_vpriv[X] - R*R)
+			     * Q * tgc->tgc_DdBm1
+			   + (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q*Q)
+			     * R * tgc->tgc_CdAm1;
 		MAT4X3VEC( hitp->hit_normal, tgc->tgc_invRtShSc, stdnorm );
+/*XXX - save scale */
 		VUNITIZE( hitp->hit_normal );
 		break;
 	default:
@@ -917,31 +937,80 @@ tgc_plot()
 {
 }
 
+/*
+ *			T G C _ C U R V E
+ *
+ *  Return the curvature of the TGC.
+ */
 tgc_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
 {
-	static int count = 0;
 	register struct tgc_specific *tgc =
 		(struct tgc_specific *)stp->st_specific;
+	fastf_t	R, Q, R2, Q2;
+	mat_t	M, dN, mtmp;
+	vect_t	gradf, tmp, u, v;
+	fastf_t	a, b, c, scale;
+	vect_t	vec1, vec2;
 
-	if( count++ == 0 )
-		rt_log("WARNING: tgc_curve is not fully implemented\n");
-
-	switch( hitp->hit_private-tgc_compute )  {
-	case 0:
-		rt_orthovec( cvp->crv_pdir, hitp->hit_normal );	/* XXX - random guess */
-		cvp->crv_c1 = 0;
-		cvp->crv_c2 = 0;			/* XXX - to do */
-		break;
-	case 1:
-	case 2:
+	if( hitp->hit_private > tgc_compute ) {
+		/* We hit an end plate.  Choose any tangent vector. */
 		rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;
-		break;
-	default:
-		rt_log("tgc_curve: bad flag x%x\n", (int)hitp->hit_private);
-		break;
+		return;
 	}
+
+	R = 1 + tgc->tgc_CdAm1 * hitp->hit_vpriv[Z];
+	Q = 1 + tgc->tgc_DdBm1 * hitp->hit_vpriv[Z];
+	R2 = R*R;
+	Q2 = Q*Q;
+
+	/*
+	 * Compute derivatives of the gradient (normal) field
+	 * in ideal coords.  This is a symmetric matrix with
+	 * the columns (dNx, dNy, dNz).
+	 */
+	mat_idn( dN );
+	dN[0] = Q2;
+	dN[2] = dN[8] = 2.0*Q*tgc->tgc_DdBm1 * hitp->hit_vpriv[X];
+	dN[5] = R2;
+	dN[6] = dN[9] = 2.0*R*tgc->tgc_CdAm1 * hitp->hit_vpriv[Y];
+	dN[10] = tgc->tgc_DdBm1*tgc->tgc_DdBm1 * hitp->hit_vpriv[X]*hitp->hit_vpriv[X]
+	       + tgc->tgc_CdAm1*tgc->tgc_CdAm1 * hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y]
+	       - tgc->tgc_DdBm1*tgc->tgc_DdBm1 * R2
+	       - tgc->tgc_CdAm1*tgc->tgc_CdAm1 * Q2
+	       - 4.0*tgc->tgc_CdAm1*tgc->tgc_DdBm1 * R*Q;
+
+	/* M = At * dN * A */
+	mat_mul( mtmp, dN, tgc->tgc_ScShR );
+	mat_mul( M, tgc->tgc_invRtShSc, mtmp );
+
+	/* XXX - determine the scaling */
+	gradf[X] = Q2 * hitp->hit_vpriv[X];
+	gradf[Y] = R2 * hitp->hit_vpriv[Y];
+	gradf[Z] = (hitp->hit_vpriv[X]*hitp->hit_vpriv[X] - R2) * Q * tgc->tgc_DdBm1 +
+		   (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q2) * R * tgc->tgc_CdAm1;
+	MAT4X3VEC( tmp, tgc->tgc_invRtShSc, gradf );
+	scale = -1.0 / MAGNITUDE(tmp);
+	/* XXX */
+
+	/*
+	 * choose a tangent plane coordinate system
+	 *  (u, v, normal) form a right-handed triple
+	 */
+	rt_orthovec( u, hitp->hit_normal );
+	VCROSS( v, hitp->hit_normal, u );
+
+	/* find the second fundamental form */
+	MAT4X3VEC( tmp, M, u );
+	a = VDOT(u, tmp) * scale;
+	b = VDOT(v, tmp) * scale;
+	MAT4X3VEC( tmp, M, v );
+	c = VDOT(v, tmp) * scale;
+
+	eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
+	VCOMB2( cvp->crv_pdir, vec1[X], u, vec1[Y], v );
+	VUNITIZE( cvp->crv_pdir );
 }
